@@ -24,6 +24,7 @@ import (
 // already have any required authentication middleware applied.
 func (h *Handlers) RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
 	navReg.RegisterAdminControlCenter("Categories", "/admin/categories", 20)
+	navReg.RegisterAdminControlCenter("Roles", "/admin/roles", 25)
 	navReg.RegisterAdminControlCenter("Notifications", "/admin/notifications", 90)
 	navReg.RegisterAdminControlCenter("Queued Emails", "/admin/email/queue", 110)
 	navReg.RegisterAdminControlCenter("Failed Emails", "/admin/email/failed", 112)
@@ -39,6 +40,8 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navRe
 	ar.HandleFunc("", AdminPage).Methods("GET")
 	ar.HandleFunc("/", AdminPage).Methods("GET")
 	ar.HandleFunc("/categories", AdminCategoriesPage).Methods("GET")
+	ar.HandleFunc("/roles", AdminRolesPage).Methods("GET")
+	ar.HandleFunc("/roles", handlers.TaskHandler(rolePublicProfileTask)).Methods("POST").MatcherFunc(rolePublicProfileTask.Matcher())
 	ar.HandleFunc("/email/queue", AdminEmailQueuePage).Methods("GET")
 	ar.HandleFunc("/email/failed", AdminFailedEmailsPage).Methods("GET")
 	ar.HandleFunc("/email/sent", AdminSentEmailsPage).Methods("GET")

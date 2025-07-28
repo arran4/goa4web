@@ -3,7 +3,6 @@ package writings
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -38,7 +37,7 @@ func (WritingCategoryChangeTask) Action(w http.ResponseWriter, r *http.Request) 
 	if loop, err := writingCategoryWouldLoop(r.Context(), queries, int32(cid), int32(parentID)); err != nil {
 		return fmt.Errorf("check writing category loop %w", handlers.ErrRedirectOnSamePageHandler(err))
 	} else if loop {
-		return fmt.Errorf("invalid parent category %w", handlers.ErrRedirectOnSamePageHandler(errors.New("category hierarchy loop")))
+		return common.UserError{ErrorMessage: "invalid parent category"}
 	}
 
 	if err := queries.UpdateWritingCategory(r.Context(), db.UpdateWritingCategoryParams{

@@ -132,3 +132,36 @@ func TestWritingCategoryWouldLoopAfterNode(t *testing.T) {
 		t.Fatalf("expectations: %v", err)
 	}
 }
+
+func TestWritingCategoryChangeTaskLoop(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer db.Close()
+
+	queries := dbpkg.New(db)
+
+	rows := sqlmock.NewRows([]string{"idwritingcategory", "writing_category_id", "title", "description"}).
+		AddRow(1, 2, "a", "").
+		AddRow(2, 1, "b", "")
+	mock.ExpectQuery("SELECT wc.idwritingcategory").WillReturnRows(rows)
+
+	form := url.Values{"name": {"A"}, "desc": {"B"}, "pcid": {"2"}, "cid": {"1"}}
+	req := httptest.NewRequest("POST", "/admin/writings/categories", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	cd := common.NewCoreData(req.Context(), queries, config.NewRuntimeConfig())
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+
+	if v := writingCategoryChangeTask.Action(nil, req); v == nil {
+		t.Fatalf("expected error")
+	} else if ue, ok := v.(common.UserError); !ok {
+		t.Fatalf("expected user error got %T", v)
+	} else if ue.UserErrorMessage() != "invalid parent category" {
+		t.Fatalf("unexpected error message %q", ue.UserErrorMessage())
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}

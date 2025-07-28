@@ -50,7 +50,7 @@ func adminPendingUsersApprove(w http.ResponseWriter, r *http.Request) {
 		if err := queries.CreateUserRole(r.Context(), db.CreateUserRoleParams{UsersIdusers: id, Name: "user"}); err != nil {
 			data.Errors = append(data.Errors, fmt.Errorf("add role: %w", err).Error())
 		} else {
-			data.Messages = append(data.Messages, "user approved")
+			data.Messages = append(data.Messages, "User approved")
 		}
 
 	}

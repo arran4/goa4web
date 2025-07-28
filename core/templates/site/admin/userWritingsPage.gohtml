@@ -1,0 +1,14 @@
+{{ template "head" $ }}
+<h2>Writings by {{ .User.Username.String }}</h2>
+<table border="1">
+    <tr><th>ID</th><th>Date</th><th>Comments</th><th>Link</th></tr>
+    {{- range .Writings }}
+    <tr>
+        <td>{{ .Idwriting }}</td>
+        <td>{{ .Published }}</td>
+        <td>{{ .Comments }}</td>
+        <td><a href="/writings/article/{{ .Idwriting }}">View</a></td>
+    </tr>
+    {{- end }}
+</table>
+{{ template "tail" $ }}

@@ -23,7 +23,7 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 	} else if err != sql.ErrNoRows {
 		log.Printf("imagebbsAdminPage stats: %v", err)
 	}
+	cd.PageTitle = "Image Board Admin"
 	data := Data{CoreData: cd, Stats: stats}
-	handlers.SetPageTitle(r, "Image Board Admin")
 	handlers.TemplateHandler(w, r, "imagebbsAdminPage", data)
 }

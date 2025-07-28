@@ -38,11 +38,10 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 		CurrentLtr string
 	}
 
-	handlers.SetPageTitle(r, "Search Word List")
-
 	data := Data{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
+	data.CoreData.PageTitle = "Search Word List"
 
 	letters := make([]string, len(handlers.Alphabet))
 	for i, c := range handlers.Alphabet {

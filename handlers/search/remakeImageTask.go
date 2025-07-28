@@ -40,12 +40,13 @@ func (RemakeImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("GetAllImagePostsForIndex: %w", err).Error())
 	} else {
+		cache := map[string]int64{}
 		for _, row := range rows {
 			text := strings.TrimSpace(row.Description.String)
 			if text == "" {
 				continue
 			}
-			err := indexText(ctx, queries, text, func(c context.Context, wid int64, count int32) error {
+			err := indexText(ctx, queries, cache, text, func(c context.Context, wid int64, count int32) error {
 				return queries.AddToImagePostSearch(c, db.AddToImagePostSearchParams{
 					ImagePostID:                    row.Idimagepost,
 					SearchwordlistIdsearchwordlist: int32(wid),

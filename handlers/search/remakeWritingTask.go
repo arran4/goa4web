@@ -40,12 +40,13 @@ func (RemakeWritingTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("GetAllWritingsForIndex: %w", err).Error())
 	} else {
+		cache := map[string]int64{}
 		for _, row := range rows {
 			text := strings.TrimSpace(row.Title.String + " " + row.Abstract.String + " " + row.Writing.String)
 			if text == "" {
 				continue
 			}
-			err := indexText(ctx, queries, text, func(c context.Context, wid int64, count int32) error {
+			err := indexText(ctx, queries, cache, text, func(c context.Context, wid int64, count int32) error {
 				return queries.AddToForumWritingSearch(c, db.AddToForumWritingSearchParams{
 					WritingID:                      row.Idwriting,
 					SearchwordlistIdsearchwordlist: int32(wid),

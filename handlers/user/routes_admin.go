@@ -23,4 +23,6 @@ func RegisterAdminRoutes(ar *mux.Router, navReg *navpkg.Registry) {
 	ar.HandleFunc("/user/{id}/permissions", handlers.TaskHandler(permissionUserAllowTask)).Methods("POST").MatcherFunc(permissionUserAllowTask.Matcher())
 	ar.HandleFunc("/user/{id}/permissions", handlers.TaskHandler(permissionUserDisallowTask)).Methods("POST").MatcherFunc(permissionUserDisallowTask.Matcher())
 	ar.HandleFunc("/user/{id}/permissions", handlers.TaskHandler(permissionUpdateTask)).Methods("POST").MatcherFunc(permissionUpdateTask.Matcher())
+	ar.HandleFunc("/user/{id}/disable", adminUserDisableConfirmPage).Methods("GET")
+	ar.HandleFunc("/user/{id}/disable", adminUserDisablePage).Methods("POST")
 }

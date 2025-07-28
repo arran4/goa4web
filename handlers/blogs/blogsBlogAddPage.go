@@ -99,7 +99,7 @@ func (AddBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 func BlogAddPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	handlers.SetPageTitle(r, "Add Blog")
+	cd.PageTitle = "Add Blog"
 	if !(cd.HasRole("content writer") || cd.HasRole("administrator")) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return

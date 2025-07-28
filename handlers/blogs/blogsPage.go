@@ -45,7 +45,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	handlers.SetPageTitle(r, "Blogs")
+	cd.PageTitle = "Blogs"
 	queries := cd.Queries()
 	rows, err := queries.GetBlogEntriesForUserDescendingLanguages(r.Context(), db.GetBlogEntriesForUserDescendingLanguagesParams{
 		UsersIdusers:  int32(userId),

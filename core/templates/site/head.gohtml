@@ -5,7 +5,11 @@
 {{ end }}
     {{ if cd.Marked "head" }}
         <head>
+                {{ if cd.PageTitle }}
+                <title>{{cd.PageTitle}} - {{cd.Title}}</title>
+                {{ else }}
                 <title>{{cd.Title}}</title>
+                {{ end }}
                 {{template "headdata"}}
                <link rel="stylesheet" href="/main.css">
                <link rel="icon" href="/favicon.svg" type="image/svg+xml">

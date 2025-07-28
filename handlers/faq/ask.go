@@ -44,6 +44,7 @@ func (AskTask) Page(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Ask a Question"
 	data := Data{
 		CoreData:           cd,
 		SelectedLanguageId: cd.PreferredLanguageID(cd.Config.DefaultLanguage),

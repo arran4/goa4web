@@ -20,6 +20,8 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
+	cd := data.CoreData
+	cd.PageTitle = "FAQ Categories"
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 

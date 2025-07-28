@@ -29,6 +29,8 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{}
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "FAQ"
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 

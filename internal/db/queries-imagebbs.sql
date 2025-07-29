@@ -48,6 +48,15 @@ WHERE i.users_idusers = ? AND i.approved = 1
 ORDER BY i.posted DESC
 LIMIT ? OFFSET ?;
 
+-- name: GetImagePostsByUserDescendingAll :many
+SELECT i.*, u.username, th.comments
+FROM imagepost i
+LEFT JOIN users u ON i.users_idusers = u.idusers
+LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
+WHERE i.users_idusers = ?
+ORDER BY i.posted DESC
+LIMIT ? OFFSET ?;
+
 -- name: GetAllImageBoards :many
 SELECT b.*
 FROM imageboard b

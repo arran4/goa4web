@@ -5,12 +5,11 @@
             <th>Order</th>
             <th>Title</th>
             <th>Links</th>
-            <th>Order</th>
             <th>Options</th>
         </tr>
         {{- range .Categories }}
             <tr>
-                <td><a id="lc{{ .Idlinkercategory }}" href="/linker/category/{{ .Idlinkercategory }}">{{ .Idlinkercategory }}</a></td>
+                <td><a id="lc{{ .Idlinkercategory }}" href="/admin/linker/category/{{ .Idlinkercategory }}">{{ .Idlinkercategory }}</a></td>
                 <td>
                     <form method="post">
         {{ csrfField }}
@@ -21,23 +20,22 @@
                 <td>{{ .Linkcount }}</td>
                 <td>
                     <input type="submit" name="task" value="Update">
-                    <input type="submit" name="task" value="Rename Category">
                     {{ if eq .Linkcount 0 }}<input type="submit" name="task" value="Delete Category">{{ end }}<br>
-                    <a href="/linker/admin/category/{{ .Idlinkercategory }}/grants">Permissions</a>
+                    <a href="/admin/linker/category/{{ .Idlinkercategory }}/grants">Permissions</a>
+                    <a href="/linker/category/{{ .Idlinkercategory }}">View</a>
                     </form>
                 </td>
             </tr>
         {{- end }}
         <tr>
             <td>NEW</td>
-            <td></td>
+            <td><input name="order" type="number" value="0" style="width:4em"></td>
             <td>
                 <form method="post">
         {{ csrfField }}
                     <input name="title" value="">
             </td>
             <td>0</td>
-            <td><input name="order" type="number" value="0" style="width:4em"></td>
             <td>
                 <input type="submit" name="task" value="Create Category">
                 </form>

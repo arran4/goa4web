@@ -1,10 +1,15 @@
 package websocket
 
 import (
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/gorilla/mux"
+
 	"github.com/arran4/goa4web/config"
+	nav "github.com/arran4/goa4web/internal/navigation"
+	routerpkg "github.com/arran4/goa4web/internal/router"
 )
 
 func TestNotificationsHandlerCheckOriginConfig(t *testing.T) {
@@ -45,5 +50,28 @@ func TestNotificationsHandlerCheckOriginDenied(t *testing.T) {
 	req.Header.Set("Origin", "http://bad.com")
 	if h.Upgrader.CheckOrigin(req) {
 		t.Fatal("mismatched origin should be denied")
+	}
+}
+
+func TestNotificationsJSRoute(t *testing.T) {
+	reg := routerpkg.NewRegistry()
+	mod := NewModule(nil, &config.RuntimeConfig{})
+	mod.Register(reg)
+	r := mux.NewRouter()
+	navReg := nav.NewRegistry()
+	routerpkg.RegisterRoutes(r, reg, &config.RuntimeConfig{}, navReg)
+
+	req := httptest.NewRequest("GET", "http://example.com/websocket/notifications.js", nil)
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status=%d", rec.Code)
+	}
+	if ct := rec.Header().Get("Content-Type"); ct != "application/javascript" {
+		t.Fatalf("content-type=%q", ct)
+	}
+	if rec.Body.Len() == 0 {
+		t.Fatal("empty body")
 	}
 }

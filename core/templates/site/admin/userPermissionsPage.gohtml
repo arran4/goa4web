@@ -1,5 +1,5 @@
 {{ template "head" $ }}
-[<a href="/admin">Admin:</a> <a href="/admin/user/{{.User.Idusers}}">Profile</a>: <a href="/admin/user/{{.User.Idusers}}/permissions">(This page/Refresh)</a>]<br />
+[<a href="/admin">Admin:</a> <a href="/admin/user/{{.User.Idusers}}">Admin profile</a>: <a href="/admin/user/{{.User.Idusers}}/permissions">(This page/Refresh)</a>]<br />
 <table border="1" class="perm-table">
     <thead>
         <tr>
@@ -21,7 +21,7 @@
     </tbody>
 </table>
 <h3>Add Permission</h3>
-<form id="add-permission-form">
+<form id="add-permission-form" action="/admin/user/{{.User.Idusers}}/permissions" method="POST">
     <input type="hidden" name="username" value="{{.User.Username.String}}">
     Role:
     <select name="role">

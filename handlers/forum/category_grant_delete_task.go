@@ -21,7 +21,8 @@ var categoryGrantDeleteTask = &CategoryGrantDeleteTask{TaskString: TaskCategoryG
 var _ tasks.Task = (*CategoryGrantDeleteTask)(nil)
 
 func (CategoryGrantDeleteTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	vars := mux.Vars(r)
 	categoryID, err := strconv.Atoi(vars["category"])
 	if err != nil {

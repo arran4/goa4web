@@ -10,8 +10,8 @@ func TestIndexItemsOrdering(t *testing.T) {
 
 	RegisterIndexLink("b", "/b", 20)
 	RegisterIndexLink("a", "/a", 10)
-	RegisterAdminControlCenter("b", "/admin/b", 20)
-	RegisterAdminControlCenter("a", "/admin/a", 10)
+	RegisterAdminControlCenter("sec", "b", "/admin/b", 20)
+	RegisterAdminControlCenter("sec", "a", "/admin/a", 10)
 
 	items := IndexItems()
 	if len(items) != 2 {
@@ -21,12 +21,12 @@ func TestIndexItemsOrdering(t *testing.T) {
 		t.Errorf("index 0 want a got %s", items[0].Name)
 	}
 
-	links := AdminLinks()
-	if len(links) != 2 {
-		t.Fatalf("want 2 links got %d", len(links))
+	secs := AdminSections()
+	if len(secs) != 1 {
+		t.Fatalf("want 1 section got %d", len(secs))
 	}
-	if links[0].Name != "a" {
-		t.Errorf("admin link 0 want a got %s", links[0].Name)
+	if len(secs[0].Links) != 2 || secs[0].Links[0].Name != "a" {
+		t.Fatalf("unexpected admin section %#v", secs)
 	}
 }
 
@@ -34,13 +34,13 @@ func TestIndexItemsSkipEmpty(t *testing.T) {
 	defaultRegistry = NewRegistry()
 	t.Cleanup(func() { defaultRegistry = NewRegistry() })
 
-	RegisterAdminControlCenter("no", "/admin/no", 5)
+	RegisterAdminControlCenter("sec", "no", "/admin/no", 5)
 	items := IndexItems()
 	if len(items) != 0 {
 		t.Fatalf("expected 0 items got %d", len(items))
 	}
-	links := AdminLinks()
-	if len(links) != 1 || links[0].Name != "no" {
-		t.Fatalf("unexpected admin links %#v", links)
+	secs := AdminSections()
+	if len(secs) != 1 || len(secs[0].Links) != 1 || secs[0].Links[0].Name != "no" {
+		t.Fatalf("unexpected admin sections %#v", secs)
 	}
 }

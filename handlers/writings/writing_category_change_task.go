@@ -37,7 +37,7 @@ func (WritingCategoryChangeTask) Action(w http.ResponseWriter, r *http.Request) 
 	if loop, err := writingCategoryWouldLoop(r.Context(), queries, int32(cid), int32(parentID)); err != nil {
 		return fmt.Errorf("check writing category loop %w", handlers.ErrRedirectOnSamePageHandler(err))
 	} else if loop {
-		return common.UserError{ErrorMessage: "invalid parent category"}
+		return common.UserError{ErrorMessage: "invalid parent category: loop detected"}
 	}
 
 	if err := queries.UpdateWritingCategory(r.Context(), db.UpdateWritingCategoryParams{

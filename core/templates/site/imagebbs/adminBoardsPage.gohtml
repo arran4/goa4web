@@ -1,4 +1,5 @@
 {{ template "head" $ }}
+<a href="/admin/imagebbs/board">Create New Board</a><br>
                 <table border="1">
                         <tr>
                                 <th>ID
@@ -6,25 +7,35 @@
                                 <th>Description
                                 <th>Parent board
                                 <th>Threads
+                                <th>View
                                 <th>Visible
                                 <th>Options?
                         {{ range .Boards }}
                                 <tr>
                                         <form method="post" action="/admin/imagebbs/board/{{.Idimageboard}}">
         {{ csrfField }}
-                                                <td>{{ .Idimageboard }}
+                                                <td><a href="/admin/imagebbs/board/{{ .Idimageboard }}">{{ .Idimageboard }}</a>
                                                 <td><input name="name" value="{{ .Title.String }}">
                                                 <td><textarea name="desc">{{ .Description.String }}</textarea>
                                                 <td>{{ $pbid := .ImageboardIdimageboard }} {{ $pbid }} <select name="pbid" value="{{ .ImageboardIdimageboard }}"><option value="0">None</option>{{ range $.Boards }}<option value="{{.Idimageboard}}" {{if eq $pbid .Idimageboard}}selected{{end}}>{{.Title.String}}</option>{{ end }}</select>
                                                 <td>{{ .Threads }}
+                                                <td><a href="/imagebbs/board/{{ .Idimageboard }}">View</a>
                                                 <td>{{ if .Visible }}Yes{{ else }}No{{ end }}
                                                 <td>
                                                         <input type="hidden" name="bid" value="{{ .Idimageboard }}">
                                                         <input type="submit" name="task" value="Modify board">
-                                                        <input type="submit" name="task" value="Toggle NSFW">
                                                 </td>
                                         </form>
                                 </tr>
                         {{ end }}
                 </table>
+
+    <h2>New board:</h2>
+    <form method="post" action="/admin/imagebbs/board">
+        {{ csrfField }}
+        Name: <input name="name" value=""><br>
+        Description: <textarea name="desc" cols="40" rows="5"></textarea><br>
+        Parent Board: <select name="pbid" value=""><option value="0">None</option>{{ range $.Boards }}<option value="{{.Idimageboard}}">{{.Title.String}}</option>{{ end }}</select>
+        <input type="submit" name="task" value="New board">
+    </form>
 {{ template "tail" $ }}

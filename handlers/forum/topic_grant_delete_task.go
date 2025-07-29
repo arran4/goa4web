@@ -21,7 +21,8 @@ var topicGrantDeleteTask = &TopicGrantDeleteTask{TaskString: TaskTopicGrantDelet
 var _ tasks.Task = (*TopicGrantDeleteTask)(nil)
 
 func (TopicGrantDeleteTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	vars := mux.Vars(r)
 	topicID, err := strconv.Atoi(vars["topic"])
 	if err != nil {

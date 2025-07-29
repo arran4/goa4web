@@ -170,6 +170,42 @@ func (q *Queries) GetAllFAQQuestions(ctx context.Context) ([]*Faq, error) {
 	return items, nil
 }
 
+const getFAQAnsweredQuestions = `-- name: GetFAQAnsweredQuestions :many
+SELECT idfaq, faqCategories_idfaqCategories, language_idlanguage, users_idusers, answer, question
+FROM faq
+WHERE answer IS NOT NULL AND deleted_at IS NULL
+`
+
+func (q *Queries) GetFAQAnsweredQuestions(ctx context.Context) ([]*Faq, error) {
+	rows, err := q.db.QueryContext(ctx, getFAQAnsweredQuestions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Faq
+	for rows.Next() {
+		var i Faq
+		if err := rows.Scan(
+			&i.Idfaq,
+			&i.FaqcategoriesIdfaqcategories,
+			&i.LanguageIdlanguage,
+			&i.UsersIdusers,
+			&i.Answer,
+			&i.Question,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getFAQByID = `-- name: GetFAQByID :one
 SELECT idfaq, faqcategories_idfaqcategories, language_idlanguage, users_idusers, answer, question FROM faq WHERE idfaq = ?
 `
@@ -211,6 +247,42 @@ func (q *Queries) GetFAQCategoriesWithQuestionCount(ctx context.Context) ([]*Get
 	for rows.Next() {
 		var i GetFAQCategoriesWithQuestionCountRow
 		if err := rows.Scan(&i.Idfaqcategories, &i.Name, &i.Questioncount); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getFAQDismissedQuestions = `-- name: GetFAQDismissedQuestions :many
+SELECT idfaq, faqCategories_idfaqCategories, language_idlanguage, users_idusers, answer, question
+FROM faq
+WHERE deleted_at IS NOT NULL
+`
+
+func (q *Queries) GetFAQDismissedQuestions(ctx context.Context) ([]*Faq, error) {
+	rows, err := q.db.QueryContext(ctx, getFAQDismissedQuestions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Faq
+	for rows.Next() {
+		var i Faq
+		if err := rows.Scan(
+			&i.Idfaq,
+			&i.FaqcategoriesIdfaqcategories,
+			&i.LanguageIdlanguage,
+			&i.UsersIdusers,
+			&i.Answer,
+			&i.Question,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)

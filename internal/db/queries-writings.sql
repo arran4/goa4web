@@ -212,6 +212,14 @@ WHERE w.users_idusers = sqlc.arg(author_id)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY w.published DESC;
+
+-- name: GetAllWritingsByUserAdmin :many
+SELECT w.*, u.username,
+    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) AS Comments
+FROM writing w
+LEFT JOIN users u ON w.users_idusers = u.idusers
+WHERE w.users_idusers = ?
+ORDER BY w.published DESC;
 -- name: ListWritersForViewer :many
 WITH RECURSIVE role_ids(id) AS (
     SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
@@ -284,3 +292,12 @@ UPDATE writing SET last_index = NOW() WHERE idwriting = ?;
 -- name: GetAllWritingsForIndex :many
 SELECT idwriting, title, abstract, writing FROM writing WHERE deleted_at IS NULL;
 
+-- name: GetWritingCategoryById :one
+SELECT * FROM writing_category WHERE idwritingCategory = ?;
+
+-- name: GetWritingsByCategoryId :many
+SELECT w.*, u.username
+FROM writing w
+LEFT JOIN users u ON w.users_idusers = u.idusers
+WHERE w.writing_category_id = ?
+ORDER BY w.published DESC;

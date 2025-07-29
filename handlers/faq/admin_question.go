@@ -14,15 +14,16 @@ import (
 func AdminQuestionsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
-		Categories []*db.FaqCategory
-		Rows       []*db.Faq
+		Categories     []*db.FaqCategory
+		UnansweredRows []*db.Faq
+		AnsweredRows   []*db.Faq
+		DismissedRows  []*db.Faq
 	}
 
 	data := Data{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 	}
 	cd := data.CoreData
-	cd.PageTitle = "FAQ Questions"
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
@@ -37,7 +38,9 @@ func AdminQuestionsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Categories = catrows
 
-	rows, err := queries.GetAllFAQQuestions(r.Context())
+	cd.PageTitle = "FAQ Questions"
+
+	unansweredRows, err := queries.GetFAQUnansweredQuestions(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -46,7 +49,29 @@ func AdminQuestionsPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	data.Rows = rows
+	data.UnansweredRows = unansweredRows
+
+	answeredRows, err := queries.GetFAQAnsweredQuestions(r.Context())
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+	}
+	data.AnsweredRows = answeredRows
+
+	dismissedRows, err := queries.GetFAQDismissedQuestions(r.Context())
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+		default:
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+	}
+	data.DismissedRows = dismissedRows
 
 	handlers.TemplateHandler(w, r, "adminQuestionPage.gohtml", data)
 }

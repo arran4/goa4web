@@ -199,3 +199,8 @@ FROM forumthread th
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
 ORDER BY t.idforumtopic, th.lastaddition DESC;
 
+-- name: GetForumCategoryById :one
+SELECT * FROM forumcategory WHERE idforumcategory = ?;
+
+-- name: GetForumTopicsByCategoryId :many
+SELECT * FROM forumtopic WHERE forumcategory_idforumcategory = ? ORDER BY lastaddition DESC;

@@ -2,9 +2,7 @@
 
 [![CI](https://github.com/arran4/goa4web/actions/workflows/go_test.yaml/badge.svg)](https://github.com/arran4/goa4web/actions/workflows/go_test.yaml)
 
-This repository hosts Go web services that began in 2006.
-
-Goa4Web is a monolithic Go application powering the original `arran4` website. It offers community features like blogs, forums, bookmarks and an image board.
+Goa4Web is composed of modular packages written in Go. It powers the original `arran4` website, providing a collection of community features including blogs, forums, a bookmark manager and an image board.
 
 Project URL: <https://github.com/arran4/goa4web>
 

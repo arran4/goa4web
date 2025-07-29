@@ -37,15 +37,14 @@ Optional notification emails are sent through [AWS SES](https://aws.amazon.com/s
    ```
    There are CLI options to do this too.
    Apply any SQL scripts from the `migrations/` directory to bring the database
-   up to date. See [Database Upgrades](#database-upgrades) for details on
-   applying migrations with the command line. All table changes should be shipped
-   with a migration script under this directory.
-   After applying migrations you can insert the initial roles and grants using
-   the provided seed file:
-   ```bash
-   ./goa4web db seed
-   ```
-3. Configure your database connection. See [Database Configuration](#database-configuration) for the relevant flags and environment variables. Example connection strings:
+   up to date. All table changes should be shipped with a migration script under
+   this directory.
+  After applying migrations you can insert the initial roles and grants from
+  `seed.sql` in the repository root. The `db seed` command executes this file:
+  ```bash
+  ./goa4web db seed
+  ```
+3. Provide your database connection string and driver via command line flags, a configuration file, or environment variables. Examples:
    * MySQL TCP: `user:password@tcp(127.0.0.1:3306)/a4web?parseTime=true`
    * MySQL socket: `user:password@unix(/var/run/mysqld/mysqld.sock)/a4web?parseTime=true`
    * PostgreSQL: `postgres://user:pass@localhost/a4web?sslmode=disable`

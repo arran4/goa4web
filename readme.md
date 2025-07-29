@@ -34,8 +34,9 @@ Optional notification emails are sent through [AWS SES](https://aws.amazon.com/s
    mysql -u a4web -p a4web < schema/schema.mysql.sql
    ```
    Apply any SQL scripts from the `migrations/` directory to bring the database
-   up to date. All table changes should be shipped with a migration script under
-   this directory.
+   up to date. See [Database Upgrades](#database-upgrades) for details on
+   applying migrations with the command line. All table changes should be shipped
+   with a migration script under this directory.
    After applying migrations you can insert the initial roles and grants using
    the provided seed file:
    ```bash
@@ -395,10 +396,10 @@ go build -o goa4web ./cmd/goa4web
 
 ### Database operations
 
-```bash
-# apply SQL migrations from ./migrations
-./goa4web db migrate
+Refer to the [Database Upgrades](#database-upgrades) section for migration
+instructions.
 
+```bash
 # create a backup
 ./goa4web db backup --file backup.sql
 

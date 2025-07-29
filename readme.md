@@ -33,6 +33,7 @@ Optional notification emails are sent through [AWS SES](https://aws.amazon.com/s
    ```bash
    mysql -u a4web -p a4web < schema/schema.mysql.sql
    ```
+   There are CLI options to do this too.
    Apply any SQL scripts from the `migrations/` directory to bring the database
    up to date. See [Database Upgrades](#database-upgrades) for details on
    applying migrations with the command line. All table changes should be shipped

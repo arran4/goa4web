@@ -1,0 +1,13 @@
+{{ template "head" $ }}
+<h2>Subscriptions of {{ .User.Username.String }}</h2>
+<table border="1">
+    <tr><th>ID</th><th>Pattern</th><th>Method</th></tr>
+    {{- range .Subs }}
+    <tr>
+        <td>{{ .ID }}</td>
+        <td>{{ .Pattern }}</td>
+        <td>{{ .Method }}</td>
+    </tr>
+    {{- end }}
+</table>
+{{ template "tail" $ }}

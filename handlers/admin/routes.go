@@ -75,6 +75,8 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navRe
 	ar.HandleFunc("/user/{id}/linker", adminUserLinkerPage).Methods("GET")
 	ar.HandleFunc("/user/{id}/imagebbs", adminUserImagebbsPage).Methods("GET")
 	ar.HandleFunc("/user/{id}/forum", adminUserForumPage).Methods("GET")
+	ar.HandleFunc("/user/{id}/comments", adminUserCommentsPage).Methods("GET")
+	ar.HandleFunc("/user/{id}/subscriptions", adminUserSubscriptionsPage).Methods("GET")
 	ar.HandleFunc("/user/{id}/comment", adminUserAddCommentPage).Methods("POST")
 	ar.HandleFunc("/role/{id}", adminRolePage).Methods("GET")
 	ar.HandleFunc("/grant/delete", handlers.TaskHandler(roleGrantDeleteTask)).Methods("POST").MatcherFunc(roleGrantDeleteTask.Matcher())

@@ -1,4 +1,5 @@
 # GOA4Web
+[![CI](https://github.com/arran4/goa4web/actions/workflows/go_test.yaml/badge.svg)](https://github.com/arran4/goa4web/actions/workflows/go_test.yaml)
 
 This repository contains the source code for a collection of web services written in Go. The original project dates back to 2006.
 

@@ -20,6 +20,7 @@ Commands:
   password manage pending password resets
   email   manage emails
   config  manage configuration
+  test    run manual tests
 
 Examples:
   {{.Prog}} serve

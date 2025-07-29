@@ -321,3 +321,5 @@ LIMIT ? OFFSET ?;
 -- name: GetAllLinkersForIndex :many
 SELECT idlinker, title, description FROM linker WHERE deleted_at IS NULL;
 
+-- name: GetLinkerCategoryById :one
+SELECT * FROM linker_category WHERE idlinkerCategory = ?;

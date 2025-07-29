@@ -731,6 +731,83 @@ func (q *Queries) GetWritingByIdForUserDescendingByPublishedDate(ctx context.Con
 	return &i, err
 }
 
+const getWritingCategoryById = `-- name: GetWritingCategoryById :one
+SELECT idwritingcategory, writing_category_id, title, description FROM writing_category WHERE idwritingCategory = ?
+`
+
+func (q *Queries) GetWritingCategoryById(ctx context.Context, idwritingcategory int32) (*WritingCategory, error) {
+	row := q.db.QueryRowContext(ctx, getWritingCategoryById, idwritingcategory)
+	var i WritingCategory
+	err := row.Scan(
+		&i.Idwritingcategory,
+		&i.WritingCategoryID,
+		&i.Title,
+		&i.Description,
+	)
+	return &i, err
+}
+
+const getWritingsByCategoryId = `-- name: GetWritingsByCategoryId :many
+SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, w.last_index, u.username
+FROM writing w
+LEFT JOIN users u ON w.users_idusers = u.idusers
+WHERE w.writing_category_id = ?
+ORDER BY w.published DESC
+`
+
+type GetWritingsByCategoryIdRow struct {
+	Idwriting          int32
+	UsersIdusers       int32
+	ForumthreadID      int32
+	LanguageIdlanguage int32
+	WritingCategoryID  int32
+	Title              sql.NullString
+	Published          sql.NullTime
+	Writing            sql.NullString
+	Abstract           sql.NullString
+	Private            sql.NullBool
+	DeletedAt          sql.NullTime
+	LastIndex          sql.NullTime
+	Username           sql.NullString
+}
+
+func (q *Queries) GetWritingsByCategoryId(ctx context.Context, writingCategoryID int32) ([]*GetWritingsByCategoryIdRow, error) {
+	rows, err := q.db.QueryContext(ctx, getWritingsByCategoryId, writingCategoryID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetWritingsByCategoryIdRow
+	for rows.Next() {
+		var i GetWritingsByCategoryIdRow
+		if err := rows.Scan(
+			&i.Idwriting,
+			&i.UsersIdusers,
+			&i.ForumthreadID,
+			&i.LanguageIdlanguage,
+			&i.WritingCategoryID,
+			&i.Title,
+			&i.Published,
+			&i.Writing,
+			&i.Abstract,
+			&i.Private,
+			&i.DeletedAt,
+			&i.LastIndex,
+			&i.Username,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getWritingsByIdsForUserDescendingByPublishedDate = `-- name: GetWritingsByIdsForUserDescendingByPublishedDate :many
 WITH RECURSIVE role_ids(id) AS (
     SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?

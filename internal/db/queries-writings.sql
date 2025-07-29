@@ -284,3 +284,12 @@ UPDATE writing SET last_index = NOW() WHERE idwriting = ?;
 -- name: GetAllWritingsForIndex :many
 SELECT idwriting, title, abstract, writing FROM writing WHERE deleted_at IS NULL;
 
+-- name: GetWritingCategoryById :one
+SELECT * FROM writing_category WHERE idwritingCategory = ?;
+
+-- name: GetWritingsByCategoryId :many
+SELECT w.*, u.username
+FROM writing w
+LEFT JOIN users u ON w.users_idusers = u.idusers
+WHERE w.writing_category_id = ?
+ORDER BY w.published DESC;

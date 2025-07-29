@@ -9,6 +9,7 @@ import (
 func RegisterAdminRoutes(ar *mux.Router) {
 	lar := ar.PathPrefix("/linker").Subrouter()
 	lar.HandleFunc("/categories", AdminCategoriesPage).Methods("GET")
+	lar.HandleFunc("/category/{category}", AdminCategoryPage).Methods("GET")
 	lar.HandleFunc("/categories", handlers.TaskHandler(UpdateCategoryTask)).Methods("POST").MatcherFunc(UpdateCategoryTask.Matcher())
 	lar.HandleFunc("/categories", handlers.TaskHandler(RenameCategoryTask)).Methods("POST").MatcherFunc(RenameCategoryTask.Matcher())
 	lar.HandleFunc("/categories", handlers.TaskHandler(DeleteCategoryTask)).Methods("POST").MatcherFunc(DeleteCategoryTask.Matcher())

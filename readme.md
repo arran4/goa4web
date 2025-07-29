@@ -79,7 +79,7 @@ requests.
 
 ## Repository Layout
 
-```
+```text
 .
 ├── cmd/goa4web/         – HTTP router and entry point
 ├── config/              – environment variable helpers
@@ -102,7 +102,7 @@ accepts a weight value; lower numbers appear first.
 
 Example weights:
 
-```
+```text
 News        10
 Help        20
 Blogs       30

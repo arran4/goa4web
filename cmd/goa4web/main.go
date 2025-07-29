@@ -337,6 +337,12 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("config: %w", err)
 		}
 		return c.Run()
+	case "test":
+		c, err := parseTestCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("test: %w", err)
+		}
+		return c.Run()
 	default:
 		r.fs.Usage()
 		return fmt.Errorf("unknown command %q", args[0])

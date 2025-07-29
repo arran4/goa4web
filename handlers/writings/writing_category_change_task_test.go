@@ -158,7 +158,7 @@ func TestWritingCategoryChangeTaskLoop(t *testing.T) {
 		t.Fatalf("expected error")
 	} else if ue, ok := v.(common.UserError); !ok {
 		t.Fatalf("expected user error got %T", v)
-	} else if ue.UserErrorMessage() != "invalid parent category" {
+	} else if ue.UserErrorMessage() != "invalid parent category: loop detected" {
 		t.Fatalf("unexpected error message %q", ue.UserErrorMessage())
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {

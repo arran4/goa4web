@@ -26,16 +26,17 @@
     <tr>
         <form method="post" action="/admin/forum/category/{{ .Idforumcategory }}">
         {{ csrfField }}
-            <td><a id="fc{{ .Idforumcategory }}" href="/forum/category/{{ .Idforumcategory }}">{{ .Idforumcategory }}</a></td>
+            <td><a id="fc{{ .Idforumcategory }}" href="/admin/forum/category/{{ .Idforumcategory }}">{{ .Idforumcategory }}</a></td>
             <td>{{ $fcid := .ForumcategoryIdforumcategory }} <a href="#fc{{ $fcid }}">{{ $fcid }}</a> <select name="pcid" value="{{ .ForumcategoryIdforumcategory }}"><option value="0">None</option>{{ range $.ForumCategories }}<option value="{{.Idforumcategory}}" {{if eq $fcid .Idforumcategory}}selected{{end}}>{{.Title.String}}</option>{{ end }}</select></td>
             <td><input name="name" value="{{ .Title.String }}"></td>
             <td><textarea name="desc" rows="3" cols="60">{{ .Description.String }}</textarea></td>
             <td>{{ .Subcategorycount }}</td>
-            <td>{{ .Topiccount }}</td>
+            <td><a href="/admin/forum/category/{{ .Idforumcategory }}#topics">{{ .Topiccount }}</a></td>
             <td>
                 <input type="hidden" name="cid" value="{{ .Idforumcategory }}">
                 <input type="submit" name="task" value="Forum category change">
-                {{ if eq .Topiccount 0 }}<input type="submit" name="task" formaction="/admin/forum/category/delete" value="Delete Category">{{ end }}
+                {{ if eq .Topiccount 0 }}<input type="submit" name="task" formaction="/admin/forum/category/delete" value="Delete Category">{{ end }}<br>
+                <a href="/forum/category/{{ .Idforumcategory }}">View on site</a>
             </td>
         </form>
     </tr>
@@ -69,7 +70,7 @@
     <tr>
         <form method="post" action="/admin/writings/categories">
         {{ csrfField }}
-            <td><input type="hidden" name="wcid" value="{{ .Idwritingcategory }}"><a id="wc{{ .Idwritingcategory }}" href="/writings/category/{{ .Idwritingcategory }}">{{ .Idwritingcategory }}</a></td>
+            <td><input type="hidden" name="wcid" value="{{ .Idwritingcategory }}"><a id="wc{{ .Idwritingcategory }}" href="/admin/writings/category/{{ .Idwritingcategory }}">{{ .Idwritingcategory }}</a></td>
             <td>{{ $fcid := .WritingCategoryID }} <a href="#wc{{ $fcid }}">{{ $fcid }}</a> <select name="pcid" value="{{ .WritingCategoryID }}"><option value="0">None</option>{{ range $.WritingCategories }}<option value="{{.Idwritingcategory}}" {{if eq $fcid .Idwritingcategory}}selected{{end}}>{{.Title.String}}</option>{{ end }}</select></td>
             <td><input name="name" value="{{ .Title.String }}"></td>
             <td><textarea name="desc" rows="3" cols="60">{{ .Description.String }}</textarea></td>
@@ -77,6 +78,7 @@
                 <input type="hidden" name="cid" value="{{ .Idwritingcategory }}">
                 <input type="submit" name="task" value="writing category change">
                 <br><a href="/admin/writings/category/{{ .Idwritingcategory }}/permissions">Permissions</a>
+                <br><a href="/writings/category/{{ .Idwritingcategory }}">View on site</a>
             </td>
         </form>
     </tr>
@@ -106,7 +108,7 @@
     </tr>
     {{- range .LinkerCategories }}
     <tr>
-        <td><a id="lc{{ .Idlinkercategory }}" href="/linker/category/{{ .Idlinkercategory }}">{{ .Idlinkercategory }}</a></td>
+        <td><a id="lc{{ .Idlinkercategory }}" href="/admin/linker/category/{{ .Idlinkercategory }}">{{ .Idlinkercategory }}</a></td>
         <td>
             <form method="post" action="/admin/linker/categories">
         {{ csrfField }}
@@ -118,7 +120,8 @@
         <td>
             <input type="submit" name="task" value="Update">
             <input type="submit" name="task" value="Rename Category">
-            {{ if eq .Linkcount 0 }}<input type="submit" name="task" value="Delete Category">{{ end }}
+            {{ if eq .Linkcount 0 }}<input type="submit" name="task" value="Delete Category">{{ end }}<br>
+            <a href="/linker/category/{{ .Idlinkercategory }}">View on site</a>
             </form>
         </td>
     </tr>

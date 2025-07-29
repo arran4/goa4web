@@ -403,6 +403,22 @@ func (q *Queries) GetAllForumTopicsForUser(ctx context.Context, arg GetAllForumT
 	return items, nil
 }
 
+const getForumCategoryById = `-- name: GetForumCategoryById :one
+SELECT idforumcategory, forumcategory_idforumcategory, title, description FROM forumcategory WHERE idforumcategory = ?
+`
+
+func (q *Queries) GetForumCategoryById(ctx context.Context, idforumcategory int32) (*Forumcategory, error) {
+	row := q.db.QueryRowContext(ctx, getForumCategoryById, idforumcategory)
+	var i Forumcategory
+	err := row.Scan(
+		&i.Idforumcategory,
+		&i.ForumcategoryIdforumcategory,
+		&i.Title,
+		&i.Description,
+	)
+	return &i, err
+}
+
 const getForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText = `-- name: GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText :many
 WITH RECURSIVE role_ids(id) AS (
     SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
@@ -568,6 +584,42 @@ func (q *Queries) GetForumTopicByIdForUser(ctx context.Context, arg GetForumTopi
 		&i.Lastposterusername,
 	)
 	return &i, err
+}
+
+const getForumTopicsByCategoryId = `-- name: GetForumTopicsByCategoryId :many
+SELECT idforumtopic, lastposter, forumcategory_idforumcategory, title, description, threads, comments, lastaddition FROM forumtopic WHERE forumcategory_idforumcategory = ? ORDER BY lastaddition DESC
+`
+
+func (q *Queries) GetForumTopicsByCategoryId(ctx context.Context, forumcategoryIdforumcategory int32) ([]*Forumtopic, error) {
+	rows, err := q.db.QueryContext(ctx, getForumTopicsByCategoryId, forumcategoryIdforumcategory)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Forumtopic
+	for rows.Next() {
+		var i Forumtopic
+		if err := rows.Scan(
+			&i.Idforumtopic,
+			&i.Lastposter,
+			&i.ForumcategoryIdforumcategory,
+			&i.Title,
+			&i.Description,
+			&i.Threads,
+			&i.Comments,
+			&i.Lastaddition,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const rebuildAllForumTopicMetaColumns = `-- name: RebuildAllForumTopicMetaColumns :exec

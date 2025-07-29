@@ -24,25 +24,37 @@ func NewSigner(cfg *config.RuntimeConfig, key string) *Signer {
 	return &Signer{cfg: cfg, key: key}
 }
 
-func (s *Signer) sign(data string) (int64, string) {
-	expires := time.Now().Add(24 * time.Hour).Unix()
+func (s *Signer) sign(data string, exp time.Time) (int64, string) {
+	expires := exp.Unix()
 	mac := hmac.New(sha256.New, []byte(s.key))
 	io.WriteString(mac, fmt.Sprintf("%s:%d", data, expires))
 	return expires, hex.EncodeToString(mac.Sum(nil))
 }
 
+func (s *Signer) defaultExpiry() time.Time { return time.Now().Add(24 * time.Hour) }
+
 // SignedURL maps an image identifier to a signed URL.
 func (s *Signer) SignedURL(id string) string {
+	return s.SignedURLTTL(id, 24*time.Hour)
+}
+
+// SignedURLTTL maps an image identifier to a signed URL that expires after ttl.
+func (s *Signer) SignedURLTTL(id string, ttl time.Duration) string {
 	id = strings.TrimPrefix(strings.TrimPrefix(id, "image:"), "img:")
 	host := strings.TrimSuffix(s.cfg.HTTPHostname, "/")
-	ts, sig := s.sign("image:" + id)
+	ts, sig := s.sign("image:"+id, time.Now().Add(ttl))
 	return fmt.Sprintf("%s/images/image/%s?ts=%d&sig=%s", host, id, ts, sig)
 }
 
 // SignedCacheURL maps a cache identifier to a signed URL.
 func (s *Signer) SignedCacheURL(id string) string {
+	return s.SignedCacheURLTTL(id, 24*time.Hour)
+}
+
+// SignedCacheURLTTL maps a cache identifier to a signed URL that expires after ttl.
+func (s *Signer) SignedCacheURLTTL(id string, ttl time.Duration) string {
 	host := strings.TrimSuffix(s.cfg.HTTPHostname, "/")
-	ts, sig := s.sign("cache:" + id)
+	ts, sig := s.sign("cache:"+id, time.Now().Add(ttl))
 	return fmt.Sprintf("%s/images/cache/%s?ts=%d&sig=%s", host, id, ts, sig)
 }
 
@@ -74,7 +86,7 @@ func (s *Signer) SignedRef(ref string) string {
 	default:
 		return ref
 	}
-	ts, sig := s.sign(prefix + id)
+	ts, sig := s.sign(prefix+id, s.defaultExpiry())
 	return fmt.Sprintf("%s%s?ts=%d&sig=%s", prefix, id, ts, sig)
 }
 

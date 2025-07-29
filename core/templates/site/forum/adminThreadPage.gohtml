@@ -1,0 +1,14 @@
+{{ template "head" $ }}
+<h2>Forum thread {{ .Thread.Idforumthread }}</h2>
+<table border="1">
+    <tr><th>ID<th>Posts<th>Last Addition<th>View public</tr>
+    <tr>
+        <td>{{ .Thread.Idforumthread }}</td>
+        <td>{{ .Thread.Comments.Int32 }}</td>
+        <td>{{ .Thread.Lastaddition.Time }}</td>
+        <td><a href="/forum/topic/{{ .Thread.ForumtopicIdforumtopic }}/thread/{{ .Thread.Idforumthread }}">View</a></td>
+    </tr>
+</table>
+<p><a href="/admin/forum/thread/{{ .Thread.Idforumthread }}/delete">Delete thread</a></p>
+<p><a href="/admin/forum/conversations">Back</a></p>
+{{ template "tail" $ }}

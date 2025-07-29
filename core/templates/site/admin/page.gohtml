@@ -3,8 +3,14 @@
     [<a href="/admin">(This page/Refresh)</a>]<br />
 <p>Please select an option:</p>
 <ul>
-    {{- range $l := .AdminLinks }}
-    <li><a href="{{ $l.Link }}">{{ $l.Name }}</a></li>
+    {{- range $s := .AdminSections }}
+    <li>{{ $s.Name }}
+        <ul>
+            {{- range $l := $s.Links }}
+            <li><a href="{{ $l.Link }}">{{ $l.Name }}</a></li>
+            {{- end }}
+        </ul>
+    </li>
     {{- end }}
 </ul>
 

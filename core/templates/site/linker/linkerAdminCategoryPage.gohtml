@@ -1,0 +1,21 @@
+{{ template "head" $ }}
+<h2>Linker Category {{ .Category.Idlinkercategory }} - {{ .Category.Title.String }}</h2>
+<p>Order: {{ .Category.Position }}</p>
+<h3 id="links">Links</h3>
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <th>Title</th>
+        <th>URL</th>
+        <th>Poster</th>
+    </tr>
+    {{ range .Links }}
+    <tr>
+        <td>{{ .Idlinker }}</td>
+        <td>{{ .Title.String }}</td>
+        <td><a href="{{ .Url.String }}">{{ .Url.String }}</a></td>
+        <td>{{ .Posterusername.String }}</td>
+    </tr>
+    {{ end }}
+</table>
+{{ template "tail" $ }}

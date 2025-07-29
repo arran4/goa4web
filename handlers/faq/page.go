@@ -79,10 +79,6 @@ func CustomFAQIndex(data *common.CoreData, r *http.Request) {
 			Link: "/admin/faq/questions",
 		})
 		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-			Name: "Answer",
-			Link: "/admin/faq/answer",
-		})
-		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "Category Controls",
 			Link: "/admin/faq/categories",
 		})

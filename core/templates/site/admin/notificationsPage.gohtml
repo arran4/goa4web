@@ -3,19 +3,6 @@
     <div>Total: {{ .Total }} Unread: {{ .Unread }}</div>
 <form method="post">
     {{ csrfField }}
-    Message: <input type="text" name="message" size="40"><br />
-    Link: <input type="text" name="link" size="40"><br />
-    Users: <input type="text" name="users" id="users" size="20"> (comma separated usernames)<br />
-    Role: <select name="role">
-        <option value="">Everyone</option>
-        {{- range $.Roles }}
-        <option value="{{.Name}}">{{.Name}}</option>
-        {{- end }}
-    </select>
-    <input type="submit" name="task" value="Notify">
-</form>
-<form method="post">
-    {{ csrfField }}
 <table border="1">
     <tr><th><label><input type="checkbox" id="select-all"> All</label>
         <button type="button" id="select-none">None</button>
@@ -36,6 +23,23 @@
 <input type="submit" name="task" value="Mark unread">
 <input type="submit" name="task" value="Purge selected">
 <button type="submit" name="task" value="Purge read">Purge read notifications</button>
+</form>
+<form method="post">
+    {{ csrfField }}
+    <fieldset>
+        <legend>Send Notification</legend>
+        Message: <input type="text" name="message" size="40"><br />
+        Link: <input type="text" name="link" size="40"><br />
+        Users: <input type="text" name="users" id="users" size="20"> (comma separated usernames)<br />
+        <em>or</em> Role:
+        <select name="role">
+            <option value="">Everyone</option>
+            {{- range $.Roles }}
+            <option value="{{.Name}}">{{.Name}}</option>
+            {{- end }}
+        </select><br />
+        <input type="submit" name="task" value="Notify">
+    </fieldset>
 </form>
 <script>
 (() => {

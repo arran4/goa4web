@@ -10,6 +10,7 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/tasks"
+	"github.com/gorilla/mux"
 )
 
 // TopicGrantDeleteTask removes a grant from a forum topic.
@@ -20,7 +21,13 @@ var topicGrantDeleteTask = &TopicGrantDeleteTask{TaskString: TaskTopicGrantDelet
 var _ tasks.Task = (*TopicGrantDeleteTask)(nil)
 
 func (TopicGrantDeleteTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
+	vars := mux.Vars(r)
+	topicID, err := strconv.Atoi(vars["topic"])
+	if err != nil {
+		return fmt.Errorf("topic id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
 	grantID, err := strconv.Atoi(r.PostFormValue("grantid"))
 	if err != nil {
 		return fmt.Errorf("grant id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
@@ -29,5 +36,5 @@ func (TopicGrantDeleteTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("DeleteGrant: %v", err)
 		return fmt.Errorf("delete grant %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	return nil
+	return handlers.RefreshDirectHandler{TargetURL: fmt.Sprintf("/admin/forum/topic/%d/grants", topicID)}
 }

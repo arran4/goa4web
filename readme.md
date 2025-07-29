@@ -427,6 +427,13 @@ Container images can be built from the provided `Dockerfile`:
 docker build -t goa4web .
 ```
 
+Note: Containers that use SQLite must build the binary with the `sqlite` tag,
+for example:
+
+```bash
+go build -tags sqlite ./cmd/goa4web
+```
+
 Start the container with environment variables for your database connection:
 
 ```bash

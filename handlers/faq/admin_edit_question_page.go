@@ -60,3 +60,10 @@ func AdminEditQuestionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	handlers.TemplateHandler(w, r, "adminQuestionEditPage.gohtml", data)
 }
+
+// AdminCreateQuestionPage redirects to AdminEditQuestionPage with id zero to
+// display the form for creating a new FAQ entry.
+func AdminCreateQuestionPage(w http.ResponseWriter, r *http.Request) {
+	r = mux.SetURLVars(r, map[string]string{"id": "0"})
+	AdminEditQuestionPage(w, r)
+}

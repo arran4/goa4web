@@ -1,19 +1,7 @@
-{{ template "head" $ }}
-<h4>Unanswered Questions</h4>
-{{ template "adminQuestionTable" .UnansweredRows }}
-
-<h4>FAQ Questions</h4>
-
-{{ template "adminQuestionTable" .AnsweredRows }}
-
-<h4>Dismissed Questions</h4>
-{{ template "adminQuestionTable" .DismissedRows }}
-
-<p><a href="/admin/faq/question/0/edit">Create New Question</a></p>
-
+{{ define "adminQuestionTable" }}
 <table>
 <tr><th>Question</th><th>Category</th><th>Actions</th></tr>
-{{- range .Rows }}
+{{- range . }}
 <tr>
     <td>{{ .Question.String }}</td>
     <td>{{ $cat := .FaqcategoriesIdfaqcategories }}{{ range $.Categories }}{{ if eq $cat .Idfaqcategories }}{{ .Name.String }}{{ end }}{{ end }}</td>
@@ -29,7 +17,4 @@
 </tr>
 {{- end }}
 </table>
-
-<p><a href="/admin/faq/question/create">Create New Question</a></p>
-
-{{ template "tail" $ }}
+{{ end }}

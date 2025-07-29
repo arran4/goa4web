@@ -3,6 +3,16 @@ SELECT *
 FROM faq
 WHERE faqCategories_idfaqCategories = '0' OR answer IS NULL;
 
+-- name: GetFAQAnsweredQuestions :many
+SELECT idfaq, faqCategories_idfaqCategories, language_idlanguage, users_idusers, answer, question
+FROM faq
+WHERE answer IS NOT NULL AND deleted_at IS NULL;
+
+-- name: GetFAQDismissedQuestions :many
+SELECT idfaq, faqCategories_idfaqCategories, language_idlanguage, users_idusers, answer, question
+FROM faq
+WHERE deleted_at IS NOT NULL;
+
 -- name: GetAllFAQQuestions :many
 SELECT *
 FROM faq;

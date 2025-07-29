@@ -111,7 +111,7 @@ func adminUserResetPasswordConfirmPage(w http.ResponseWriter, r *http.Request) {
 	queries := cd.Queries()
 	userRow, err := queries.GetUserById(r.Context(), int32(id))
 	if err != nil {
-		http.Error(w, "user not found", http.StatusNotFound)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("user not found"))
 		return
 	}
 	data := struct {

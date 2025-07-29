@@ -162,7 +162,7 @@ When using SQLite you must compile the binary with the `sqlite` build tag.
 
 ## Email Provider Configuration
 
-Email notifications can be sent via several backends. Set `EMAIL_PROVIDER` to select one of the following modes:
+The application supports multiple email backends. Choose one by setting `EMAIL_PROVIDER`:
 
 - `ses` (default): Amazon SES. Requires valid AWS credentials and `AWS_REGION`.
   The provider is built only when the `ses` build tag is enabled.

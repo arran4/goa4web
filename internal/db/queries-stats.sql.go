@@ -328,19 +328,14 @@ func (q *Queries) UserPostCounts(ctx context.Context) ([]*UserPostCountsRow, err
 }
 
 const userPostCountsByID = `-- name: UserPostCountsByID :one
-SELECT COUNT(DISTINCT b.idblogs) AS blogs,
-       COUNT(DISTINCT n.idsiteNews) AS news,
-       COUNT(DISTINCT c.idcomments) AS comments,
-       COUNT(DISTINCT i.idimagepost) AS images,
-       COUNT(DISTINCT l.idlinker) AS links,
-       COUNT(DISTINCT w.idwriting) AS writings
+SELECT
+  (SELECT COUNT(*) FROM blogs b WHERE b.users_idusers = u.idusers)      AS blogs,
+  (SELECT COUNT(*) FROM site_news n WHERE n.users_idusers = u.idusers)  AS news,
+  (SELECT COUNT(*) FROM comments c WHERE c.users_idusers = u.idusers)   AS comments,
+  (SELECT COUNT(*) FROM imagepost i WHERE i.users_idusers = u.idusers)  AS images,
+  (SELECT COUNT(*) FROM linker l WHERE l.users_idusers = u.idusers)     AS links,
+  (SELECT COUNT(*) FROM writing w WHERE w.users_idusers = u.idusers)    AS writings
 FROM users u
-LEFT JOIN blogs b ON b.users_idusers = u.idusers
-LEFT JOIN site_news n ON n.users_idusers = u.idusers
-LEFT JOIN comments c ON c.users_idusers = u.idusers
-LEFT JOIN imagepost i ON i.users_idusers = u.idusers
-LEFT JOIN linker l ON l.users_idusers = u.idusers
-LEFT JOIN writing w ON w.users_idusers = u.idusers
 WHERE u.idusers = ?
 `
 

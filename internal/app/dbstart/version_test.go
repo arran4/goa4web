@@ -24,7 +24,11 @@ func TestExpectedSchemaVersionMatchesMigrations(t *testing.T) {
 		if !strings.HasSuffix(name, ".sql") {
 			continue
 		}
-		n, err := strconv.Atoi(strings.TrimSuffix(name, ".sql"))
+		parts := strings.Split(name, ".")
+		if len(parts) < 3 {
+			continue
+		}
+		n, err := strconv.Atoi(parts[0])
 		if err != nil {
 			continue
 		}

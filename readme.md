@@ -29,9 +29,9 @@ Optional notification emails are sent through [AWS SES](https://aws.amazon.com/s
 ## Getting Started
 
 1. Install Go 1.23 or newer and ensure `go` is available in your `PATH`.
-2. Create a database named `a4web` using your preferred server. The schema is defined in `schema/schema.sql` and can be loaded with `mysql` or `psql`.
+2. Create a database named `a4web` using your preferred server. The schema is defined in `schema/schema.mysql.sql`, `schema/schema.psql.sql`, or `schema/schema.sqlite.sql`
    ```bash
-   mysql -u a4web -p a4web < schema/schema.sql
+   mysql -u a4web -p a4web < schema/schema.mysql.sql
    ```
    Apply any SQL scripts from the `migrations/` directory to bring the database
    up to date. All table changes should be shipped with a migration script under
@@ -86,7 +86,7 @@ requests.
 ├── core/templates/      – HTML and email templates
 ├── examples/            – generated configuration examples
 ├── migrations/          – database schema migrations
-├── schema/schema.sql    – initial database schema
+├── schema/schema.mysql.sql    – initial database schema
 ├── core/templates/embedded.go  – embed templates and CSS for production builds
 ├── core/templates/live.go      – load templates from disk in development
 ├── internal/db/models.go       – sqlc generated data models
@@ -332,11 +332,11 @@ database connection. Set `AUTO_MIGRATE=true` to perform this step
 automatically when the server starts.
 Every new migration must conclude with an `UPDATE schema_version` statement, and the `ExpectedSchemaVersion` constant in `handlers/constants.go` should be incremented.
 
-When upgrading from v0.0.1 the script `migrations/0002.sql` must be applied.
+When upgrading from v0.0.1 the script `migrations/0002.mysql.sql` must be applied.
 This can be done manually using the `mysql` client:
 
 ```bash
-mysql -u a4web -p a4web < migrations/0002.sql
+mysql -u a4web -p a4web < migrations/0002.mysql.sql
 ```
 
 The script adds new tables for notifications and email queues, updates existing

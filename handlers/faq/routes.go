@@ -20,8 +20,7 @@ func noTask() mux.MatcherFunc {
 func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
 	navReg.RegisterIndexLink("Help", "/faq", SectionWeight)
 	navReg.RegisterAdminControlCenter("Help Questions", "/admin/faq/questions", SectionWeight)
-	navReg.RegisterAdminControlCenter("Help Answers", "/admin/faq/answer", SectionWeight+1)
-	navReg.RegisterAdminControlCenter("Help Categories", "/admin/faq/categories", SectionWeight+2)
+	navReg.RegisterAdminControlCenter("Help Categories", "/admin/faq/categories", SectionWeight+1)
 	faqr := r.PathPrefix("/faq").Subrouter()
 	faqr.Use(handlers.IndexMiddleware(CustomFAQIndex))
 	faqr.HandleFunc("", Page).Methods("GET", "POST")
@@ -33,9 +32,6 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 func RegisterAdminRoutes(ar *mux.Router) {
 	farq := ar.PathPrefix("/faq").Subrouter()
 	farq.Use(handlers.IndexMiddleware(CustomFAQIndex))
-	farq.HandleFunc("/answer", AdminAnswerPage).Methods("GET").MatcherFunc(noTask())
-	farq.HandleFunc("/answer", handlers.TaskHandler(answerTask)).Methods("POST").MatcherFunc(answerTask.Matcher())
-	farq.HandleFunc("/answer", handlers.TaskHandler(removeQuestionTask)).Methods("POST").MatcherFunc(removeQuestionTask.Matcher())
 	farq.HandleFunc("/categories", AdminCategoriesPage).Methods("GET")
 	farq.HandleFunc("/categories", handlers.TaskHandler(renameCategoryTask)).Methods("POST").MatcherFunc(renameCategoryTask.Matcher())
 	farq.HandleFunc("/categories", handlers.TaskHandler(deleteCategoryTask)).Methods("POST").MatcherFunc(deleteCategoryTask.Matcher())

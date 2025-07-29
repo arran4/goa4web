@@ -32,14 +32,6 @@ func requireNotificationTemplate(t *testing.T, name *string) {
 	}
 }
 
-func TestAnswerTaskTemplatesCompile(t *testing.T) {
-	var task AnswerTask
-	requireEmailTemplates(t, task.AdminEmailTemplate())
-	requireNotificationTemplate(t, task.AdminInternalNotificationTemplate())
-	requireEmailTemplates(t, task.SelfEmailTemplate())
-	requireNotificationTemplate(t, task.SelfInternalNotificationTemplate())
-}
-
 func TestAskTaskTemplatesCompile(t *testing.T) {
 	var task AskTask
 	requireEmailTemplates(t, task.AdminEmailTemplate())

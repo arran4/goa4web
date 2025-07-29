@@ -460,17 +460,3 @@ An example `docker-compose.yaml` under `examples/` runs MySQL and applies migrat
 docker compose -f examples/docker-compose.yaml up
 ```
 
-## Flutter Client Notifications
-
-The server exposes a WebSocket endpoint at `/ws/notifications`.
-Clients must include the normal session cookie when connecting.
-Events published on the server's event bus are sent in JSON format only
-when the connected user is subscribed to the matching event pattern.
-
-Example Dart usage:
-```dart
-final channel = WebSocketChannel.connect(
-  Uri.parse('ws://<host>/ws/notifications'),
-);
-```
-

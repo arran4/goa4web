@@ -51,9 +51,9 @@ Optional notification emails go through [AWS SES](https://aws.amazon.com/ses/). 
    go build -o goa4web ./cmd/goa4web
    ```
 
-During development use the `live` build tag to load templates from `core/templates`:
+During development you can load templates directly from the `core/templates` directory. Use the `live` build tag and add `sqlite` when using SQLite:
 ```bash
-go run -tags live ./cmd/goa4web
+go run -tags "live,sqlite" ./cmd/goa4web
 ```
 The default build embeds templates and `main.css`, producing a self-contained binary.
 

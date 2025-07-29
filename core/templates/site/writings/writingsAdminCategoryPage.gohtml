@@ -1,0 +1,30 @@
+{{ template "head" $ }}
+<form method="post" action="/admin/writings/categories">
+    {{ csrfField }}
+    <input type="hidden" name="cid" value="{{ .Category.Idwritingcategory }}">
+    <table border="1">
+        <tr><th>ID</th><td>{{ .Category.Idwritingcategory }}</td></tr>
+        <tr>
+            <th>Parent ID</th>
+            <td>{{ $pid := .Category.WritingCategoryID }}
+                <a href="/admin/writings/category/{{ $pid }}">{{ $pid }}</a>
+                <select name="pcid" value="{{ $pid }}">
+                    <option value="0">None</option>
+                    {{- range .Categories }}
+                        <option value="{{ .Idwritingcategory }}" {{ if eq $pid .Idwritingcategory }}selected{{ end }}>{{ .Title.String }}</option>
+                    {{- end }}
+                </select>
+            </td>
+        </tr>
+        <tr><th>Title</th><td><input name="name" value="{{ .Category.Title.String }}"></td></tr>
+        <tr><th>Description</th><td><textarea name="desc">{{ .Category.Description.String }}</textarea></td></tr>
+        <tr>
+            <td colspan="2">
+                <input type="submit" name="task" value="writing category change">
+                <a href="/admin/writings/category/{{ .Category.Idwritingcategory }}/permissions">Permissions</a>
+                <a href="/writings/category/{{ .Category.Idwritingcategory }}">View</a>
+            </td>
+        </tr>
+    </table>
+</form>
+{{ template "tail" $ }}

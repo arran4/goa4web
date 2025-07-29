@@ -150,6 +150,9 @@ UPDATE writing_category
 SET title = ?, description = ?, writing_category_id = ?
 WHERE idwritingCategory = ?;
 
+-- name: GetWritingCategory :one
+SELECT * FROM writing_category WHERE idwritingcategory = ?;
+
 -- name: GetAllWritingCategories :many
 SELECT *
 FROM writing_category

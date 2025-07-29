@@ -731,6 +731,22 @@ func (q *Queries) GetWritingByIdForUserDescendingByPublishedDate(ctx context.Con
 	return &i, err
 }
 
+const getWritingCategory = `-- name: GetWritingCategory :one
+SELECT idwritingcategory, writing_category_id, title, description FROM writing_category WHERE idwritingcategory = ?
+`
+
+func (q *Queries) GetWritingCategory(ctx context.Context, idwritingcategory int32) (*WritingCategory, error) {
+	row := q.db.QueryRowContext(ctx, getWritingCategory, idwritingcategory)
+	var i WritingCategory
+	err := row.Scan(
+		&i.Idwritingcategory,
+		&i.WritingCategoryID,
+		&i.Title,
+		&i.Description,
+	)
+	return &i, err
+}
+
 const getWritingsByIdsForUserDescendingByPublishedDate = `-- name: GetWritingsByIdsForUserDescendingByPublishedDate :many
 WITH RECURSIVE role_ids(id) AS (
     SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?

@@ -11,7 +11,7 @@
             <tr>
                 <form method="post" action="/admin/writings/categories">
         {{ csrfField }}
-                    <td><input type="hidden" name="wcid" value="{{ .Idwritingcategory }}"><a id="wc{{ .Idwritingcategory }}" href="/writings/category/{{ .Idwritingcategory }}">{{ .Idwritingcategory }}</a>
+                    <td><input type="hidden" name="wcid" value="{{ .Idwritingcategory }}"><a id="wc{{ .Idwritingcategory }}" href="/admin/writings/category/{{ .Idwritingcategory }}">{{ .Idwritingcategory }}</a>
                     <td>{{ $fcid := .WritingCategoryID }} <a href="#wc{{ $fcid }}">{{ $fcid }}</a> <select name="pcid" value="{{ .WritingCategoryID }}"><option value="0">None</option>{{ range $.Categories }}<option value="{{.Idwritingcategory}}" {{if eq $fcid .Idwritingcategory}}selected{{end}}>{{.Title.String}}</option>  {{ end }}</select>
                     <td><input name="name" value="{{ .Title.String }}">
                     <td><textarea name="desc">{{ .Description.String }}</textarea>
@@ -19,6 +19,7 @@
                         <input type="hidden" name="cid" value="{{ .Idwritingcategory }}">
                         <input type="submit" name="task" value="writing category change">
                         <br><a href="/admin/writings/category/{{ .Idwritingcategory }}/permissions">Permissions</a>
+                        <br><a href="/writings/category/{{ .Idwritingcategory }}">View</a>
                     </td>
                 </form>
             </tr>

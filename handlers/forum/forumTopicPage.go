@@ -54,14 +54,18 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 
 	categoryRows, err := data.CoreData.ForumCategories()
 	if err != nil {
-		log.Printf("getAllForumCategories Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		log.Printf("getAllForumCategories Error: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 	topicRow, err := data.CoreData.ForumTopicByID(int32(topicId))
 	if err != nil {
-		log.Printf("showTableTopics Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		if errors.Is(err, sql.ErrNoRows) {
+			http.NotFound(w, r)
+		} else {
+			log.Printf("showTableTopics Error: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Forum - %s", topicRow.Title.String)

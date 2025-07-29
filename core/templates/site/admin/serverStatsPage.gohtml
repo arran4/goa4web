@@ -9,6 +9,10 @@
     <tr><td>Heap Alloc</td><td>{{ .Stats.HeapAlloc }}</td></tr>
     <tr><td>Heap Sys</td><td>{{ .Stats.HeapSys }}</td></tr>
     <tr><td>GC Count</td><td>{{ .Stats.NumGC }}</td></tr>
+    <tr><td>CPU Cores</td><td>{{ .Stats.NumCPU }}</td></tr>
+    <tr><td>Architecture</td><td>{{ .Stats.Arch }}</td></tr>
+    <tr><td>Disk Free</td><td>{{ .Stats.DiskFree }}</td></tr>
+    <tr><td>RAM Free</td><td>{{ .Stats.RAMFree }}</td></tr>
 </table>
 <p>Uptime: {{ .Uptime }}</p>
 <h3>Registered Components</h3>

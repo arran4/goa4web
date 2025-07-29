@@ -208,6 +208,11 @@ See `examples/config.env` for an auto-generated configuration file.
 
 `HOSTNAME` should include the scheme and optional port, e.g. `http://example.com`.
 
+When serving traffic over HTTPS via a reverse proxy, set `--hostname` to the external
+`https://` address so generated links use the correct scheme. The server continues to
+listen on the address specified by `--listen`. Use `--hsts-header` to configure the
+`Strict-Transport-Security` header or disable it by providing an empty value.
+
 ## Pagination Configuration
 
 The allowed page size range and default value are resolved in the following order:

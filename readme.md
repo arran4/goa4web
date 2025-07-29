@@ -1,5 +1,7 @@
 # Goa4Web
 
+[![CI](https://github.com/arran4/goa4web/actions/workflows/go_test.yaml/badge.svg)](https://github.com/arran4/goa4web/actions/workflows/go_test.yaml)
+
 This repository contains the source code for a collection of web services written in Go. The original project dates back to 2006.
 
 Goa4Web is a monolithic web application written in Go. It powers the original `arran4` website, providing a collection of community features including blogs, forums, a bookmark manager and an image board.

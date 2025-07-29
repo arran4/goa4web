@@ -41,7 +41,7 @@ func applyMigrations(ctx context.Context, cfg *config.RuntimeConfig, reg *dbdriv
 		return err
 	}
 	fsys := os.DirFS("migrations")
-	return Apply(ctx, db, fsys, false)
+	return Apply(ctx, db, fsys, false, cfg.DBDriver)
 }
 
 // MaybeAutoMigrate runs migrations when enabled via AUTO_MIGRATE.

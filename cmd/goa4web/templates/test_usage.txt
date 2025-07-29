@@ -1,0 +1,11 @@
+Usage:
+  {{.Prog}} test <command> [<args>]
+
+Commands:
+  migrations  run migration tests
+
+Examples:
+  {{.Prog}} test migrations apply all -database-type sqlite3 -connection-string :memory:
+  {{.Prog}} test migrations clean -database-type sqlite3 -connection-string :memory:
+
+{{template "flag_groups_section" .FlagGroups}}

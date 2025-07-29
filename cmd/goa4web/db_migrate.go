@@ -61,7 +61,7 @@ func (c *dbMigrateCmd) Run() error {
 	ctx := context.Background()
 	fsys := os.DirFS(c.Dir)
 	c.rootCmd.Verbosef("applying migrations from %s", c.Dir)
-	if err := dbstart.Apply(ctx, db, fsys, c.rootCmd.Verbosity >= 0); err != nil {
+	if err := dbstart.Apply(ctx, db, fsys, c.rootCmd.Verbosity >= 0, c.rootCmd.cfg.DBDriver); err != nil {
 		return err
 	}
 	c.rootCmd.Infof("database migrated successfully")

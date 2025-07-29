@@ -4,9 +4,6 @@
 
 Goa4Web is composed of modular packages written in Go. It powers the original `arran4` website, providing a collection of community features including blogs, forums, a bookmark manager and an image board.
 
-Project URL: <https://github.com/arran4/goa4web>
-
-Gorilla Mux routes all pages and a SQL database stores the data. The application supports MySQL, PostgreSQL and SQLite; enable the `sqlite` build tag to use SQLite. Templates rely on Go's `html/template` package and are embedded by default, but with the `live` tag they load from disk.
 
 ## Features
 

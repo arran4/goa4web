@@ -44,6 +44,7 @@ func RegisterAdminRoutes(ar *mux.Router) {
 	farq.HandleFunc("/questions", handlers.TaskHandler(editQuestionTask)).Methods("POST").MatcherFunc(editQuestionTask.Matcher())
 	farq.HandleFunc("/questions", handlers.TaskHandler(deleteQuestionTask)).Methods("POST").MatcherFunc(deleteQuestionTask.Matcher())
 	farq.HandleFunc("/questions", handlers.TaskHandler(createQuestionTask)).Methods("POST").MatcherFunc(createQuestionTask.Matcher())
+	farq.HandleFunc("/question/create", AdminCreateQuestionPage).Methods("GET")
 	farq.HandleFunc("/question/{id:[0-9]+}/edit", AdminEditQuestionPage).Methods("GET")
 	farq.HandleFunc("/revisions/{id:[0-9]+}", AdminRevisionHistoryPage).Methods("GET")
 }

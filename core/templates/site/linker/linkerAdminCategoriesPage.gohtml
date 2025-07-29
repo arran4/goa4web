@@ -23,7 +23,7 @@
                     <input type="submit" name="task" value="Update">
                     <input type="submit" name="task" value="Rename Category">
                     {{ if eq .Linkcount 0 }}<input type="submit" name="task" value="Delete Category">{{ end }}<br>
-                    <a href="/linker/admin/category/{{ .Idlinkercategory }}/grants">Permissions</a>
+                    <a href="/admin/linker/category/{{ .Idlinkercategory }}/grants">Permissions</a>
                     </form>
                 </td>
             </tr>

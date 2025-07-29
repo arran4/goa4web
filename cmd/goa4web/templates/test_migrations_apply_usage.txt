@@ -1,0 +1,6 @@
+Usage:
+  {{.Prog}} test migrations apply all [flags]
+
+Apply all migration files to the database.
+
+{{template "flag_groups_section" .FlagGroups}}

@@ -1,0 +1,6 @@
+Usage:
+  {{.Prog}} test migrations clean [flags]
+
+Drop all tables from the database.
+
+{{template "flag_groups_section" .FlagGroups}}

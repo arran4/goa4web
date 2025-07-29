@@ -13,10 +13,12 @@
                 <input type="hidden" name="id" value="{{ .ID }}">
                 {{ if .PublicProfileAllowedAt.Valid }}
                     <input type="hidden" name="enable" value="0">
-                    <input type="submit" name="task" value="Disable">
+                    <input type="hidden" name="task" value="Toggle role public profile">
+                    <input type="submit" value="Disable">
                 {{ else }}
                     <input type="hidden" name="enable" value="1">
-                    <input type="submit" name="task" value="Enable">
+                    <input type="hidden" name="task" value="Toggle role public profile">
+                    <input type="submit" value="Enable">
                 {{ end }}
             </form>
         </td>

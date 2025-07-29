@@ -149,16 +149,19 @@ Generate example settings with:
 ```bash
 go run ./cmd/goa4web config as-env-file > examples/config.env
 ```
-Run `goa4web config options --extended` to see detailed descriptions of all
-configuration keys.
 
-Example environment based launch:
-```bash
+`examples/config.env` might contain:
+```conf
+# examples/config.env
 DB_DRIVER=sqlite
-DB_CONN=file:./a4web.sqlite?_fk=1 \
-AUTO_MIGRATE=true ./goa4web serve
+DB_CONN=file:./a4web.sqlite?_fk=1
+LISTEN=:8080
+HOSTNAME=http://localhost:8080
+AUTO_MIGRATE=true
 ```
-When using SQLite you must compile the binary with the `sqlite` build tag.
+
+Run `goa4web config options --extended` to see detailed descriptions of all
+configuration keys. When using SQLite you must compile the binary with the `sqlite` build tag.
 
 ## Email Provider Configuration
 

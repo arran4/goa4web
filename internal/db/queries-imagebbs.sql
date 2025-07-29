@@ -205,3 +205,12 @@ UPDATE imagepost SET last_index = NOW() WHERE idimagepost = ?;
 -- name: GetAllImagePostsForIndex :many
 SELECT idimagepost, description FROM imagepost WHERE deleted_at IS NULL;
 
+-- name: GetImagePostInfoByPath :one
+SELECT i.idimagepost, i.imageboard_idimageboard, i.users_idusers, i.posted, u.username, b.title
+FROM imagepost i
+LEFT JOIN users u ON i.users_idusers = u.idusers
+LEFT JOIN imageboard b ON i.imageboard_idimageboard = b.idimageboard
+WHERE i.fullimage = ? OR i.thumbnail = ?
+LIMIT 1;
+
+

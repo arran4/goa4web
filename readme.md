@@ -1,4 +1,6 @@
-# GOA4Web
+# Goa4Web
+
+[![CI](https://github.com/arran4/goa4web/actions/workflows/go_test.yaml/badge.svg)](https://github.com/arran4/goa4web/actions/workflows/go_test.yaml)
 
 This repository contains the source code for a collection of web services written in Go. The original project dates back to 2006.
 
@@ -28,11 +30,12 @@ Optional notification emails are sent through [AWS SES](https://aws.amazon.com/s
 
 ## Getting Started
 
-1. Install Go 1.20 or newer and ensure `go` is available in your `PATH`.
-2. Create a database named `a4web` using your preferred server. The schema is defined in `schema/schema.sql` and can be loaded with `mysql` or `psql`.
+1. Install Go 1.23 or newer and ensure `go` is available in your `PATH`.
+2. Create a database named `a4web` using your preferred server. The schema is defined in `schema/schema.mysql.sql`, `schema/schema.psql.sql`, or `schema/schema.sqlite.sql`
    ```bash
-   mysql -u a4web -p a4web < schema/schema.sql
+   mysql -u a4web -p a4web < schema/schema.mysql.sql
    ```
+   There are CLI options to do this too.
    Apply any SQL scripts from the `migrations/` directory to bring the database
    up to date. All table changes should be shipped with a migration script under
    this directory.
@@ -60,7 +63,7 @@ The default build embeds templates and `main.css` so the resulting binary is sel
 
 ## Running
 
-Run the compiled binary and open <http://localhost:8080> in your browser:
+Run the compiled binary and open <http://localhost:8080> in your browser. By default the server listens on port 8080; change this with the `--listen` flag or `LISTEN` environment variable:
 ```bash
 ./goa4web
 ```
@@ -69,7 +72,7 @@ The secret used to sign these cookies is resolved in the following order:
 1. `--session-secret` flag
 2. `SESSION_SECRET` environment variable
 3. The file specified by `--session-secret-file` or `SESSION_SECRET_FILE` (a default location is chosen when unset)
-   (`GOA4WEB_DOCKER` places it under `/var/lib/goa4web/`)
+   (`GOA4WEB_DOCKER` stores secrets under `/var/lib/goa4web/` by default)
 
 If the file does not exist a new random secret is generated and written to it.
 
@@ -79,14 +82,14 @@ requests.
 
 ## Repository Layout
 
-```
+```text
 .
 ├── cmd/goa4web/         – HTTP router and entry point
 ├── config/              – environment variable helpers
 ├── core/templates/      – HTML and email templates
 ├── examples/            – generated configuration examples
 ├── migrations/          – database schema migrations
-├── schema/schema.sql    – initial database schema
+├── schema/schema.mysql.sql    – initial database schema
 ├── core/templates/embedded.go  – embed templates and CSS for production builds
 ├── core/templates/live.go      – load templates from disk in development
 ├── internal/db/models.go       – sqlc generated data models
@@ -102,7 +105,7 @@ accepts a weight value; lower numbers appear first.
 
 Example weights:
 
-```
+```text
 News        10
 Help        20
 Blogs       30
@@ -126,7 +129,6 @@ go test -tags nosqlite ./...
 
 This project was originally developed for a single server environment and remains a work in progress. Contributions are welcome!
 
-
 ## Application Configuration File
 
 The path to a general configuration file can be specified with the `--config-file`
@@ -149,20 +151,23 @@ Generate example settings with:
 ```bash
 go run ./cmd/goa4web config as-env-file > examples/config.env
 ```
-Run `goa4web config options --extended` to see detailed descriptions of all
-configuration keys.
 
-Example environment based launch:
-```bash
+`examples/config.env` might contain:
+```conf
+# examples/config.env
 DB_DRIVER=sqlite
-DB_CONN=file:./a4web.sqlite?_fk=1 \
-AUTO_MIGRATE=true ./goa4web serve
+DB_CONN=file:./a4web.sqlite?_fk=1
+LISTEN=:8080
+HOSTNAME=http://localhost:8080
+AUTO_MIGRATE=true
 ```
-When using SQLite you must compile the binary with the `sqlite` build tag.
+
+Run `goa4web config options --extended` to see detailed descriptions of all
+configuration keys. When using SQLite you must compile the binary with the `sqlite` build tag.
 
 ## Email Provider Configuration
 
-Email notifications can be sent via several backends. Set `EMAIL_PROVIDER` to select one of the following modes:
+The application supports multiple email backends. Choose one by setting `EMAIL_PROVIDER`:
 
 - `ses` (default): Amazon SES. Requires valid AWS credentials and `AWS_REGION`.
   The provider is built only when the `ses` build tag is enabled.
@@ -207,6 +212,11 @@ can be configured the same way as other settings:
 See `examples/config.env` for an auto-generated configuration file.
 
 `HOSTNAME` should include the scheme and optional port, e.g. `http://example.com`.
+
+When serving traffic over HTTPS via a reverse proxy, set `--hostname` to the external
+`https://` address so generated links use the correct scheme. The server continues to
+listen on the address specified by `--listen`. Use `--hsts-header` to configure the
+`Strict-Transport-Security` header or disable it by providing an empty value.
 
 ## Pagination Configuration
 
@@ -260,7 +270,7 @@ environment variables listed below.
 | `SESSION_SECRET` | `--session-secret` | No | generated | Secret used to encrypt session cookies. |
 | `SESSION_SECRET_FILE` | `--session-secret-file` | No | auto | File containing the session secret. |
 | `SESSION_SAME_SITE` | `--session-same-site` | No | `strict` | Cookie SameSite policy for sessions. |
-| `GOA4WEB_DOCKER` | n/a | No | - | Set when running inside Docker to adjust defaults. |
+| `GOA4WEB_DOCKER` | n/a | No | - | Places secret files under `/var/lib/goa4web` when unset paths rely on defaults. |
 | `SENDGRID_KEY` | `--sendgrid-key` | No | - | API key for the SendGrid email provider. |
 | `EMAIL_WORKER_INTERVAL` | `--email-worker-interval` | No | `60` | Minimum seconds between queued email sends. |
 | `PASSWORD_RESET_EXPIRY_HOURS` | `--password-reset-expiry-hours` | No | `24` | Hours a password reset request remains valid. |
@@ -307,7 +317,6 @@ HOSTNAME=http://example.com:8080
 
 Example files under `examples/` are generated automatically.
 
-
 ### Implementing Custom Providers
 
 New email backends can be added by satisfying the `Provider` interface
@@ -332,11 +341,11 @@ database connection. Set `AUTO_MIGRATE=true` to perform this step
 automatically when the server starts.
 Every new migration must conclude with an `UPDATE schema_version` statement, and the `ExpectedSchemaVersion` constant in `handlers/constants.go` should be incremented.
 
-When upgrading from v0.0.1 the script `migrations/0002.sql` must be applied.
+When upgrading from v0.0.1 the script `migrations/0002.mysql.sql` must be applied.
 This can be done manually using the `mysql` client:
 
 ```bash
-mysql -u a4web -p a4web < migrations/0002.sql
+mysql -u a4web -p a4web < migrations/0002.mysql.sql
 ```
 
 The script adds new tables for notifications and email queues, updates existing
@@ -395,10 +404,10 @@ go build -o goa4web ./cmd/goa4web
 
 ### Database operations
 
-```bash
-# apply SQL migrations from ./migrations
-./goa4web db migrate
+Refer to the [Database Upgrades](#database-upgrades) section for migration
+instructions.
 
+```bash
 # create a backup
 ./goa4web db backup --file backup.sql
 
@@ -427,6 +436,13 @@ Container images can be built from the provided `Dockerfile`:
 docker build -t goa4web .
 ```
 
+Note: Containers that use SQLite must build the binary with the `sqlite` tag,
+for example:
+
+```bash
+go build -tags sqlite ./cmd/goa4web
+```
+
 Start the container with environment variables for your database connection:
 
 ```bash
@@ -437,6 +453,10 @@ docker run -p 8080:8080 \
   -v $(pwd)/data:/data \
   goa4web
 ```
+
+Setting `GOA4WEB_DOCKER=1` tells the application to store generated secret files
+such as `session_secret` under `/var/lib/goa4web`. Mount this directory as a
+volume to keep the secrets across container restarts.
 
 ### Docker Compose
 
@@ -460,5 +480,4 @@ final channel = WebSocketChannel.connect(
   Uri.parse('ws://<host>/ws/notifications'),
 );
 ```
-
 

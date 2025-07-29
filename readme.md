@@ -1,4 +1,4 @@
-# GOA4Web
+# Goa4Web
 
 This repository contains the source code for a collection of web services written in Go. The original project dates back to 2006.
 
@@ -28,17 +28,22 @@ Optional notification emails are sent through [AWS SES](https://aws.amazon.com/s
 
 ## Getting Started
 
-1. Install Go 1.20 or newer and ensure `go` is available in your `PATH`.
-2. Create a database named `a4web` using your preferred server. Use your database client to execute `schema/schema.sql`.
+1. Install Go 1.23 or newer and ensure `go` is available in your `PATH`.
+2. Create a database named `a4web` using your preferred server. The schema is defined in `schema/schema.mysql.sql`, `schema/schema.psql.sql`, or `schema/schema.sqlite.sql`
+   ```bash
+   mysql -u a4web -p a4web < schema/schema.mysql.sql
+   ```
+   There are CLI options to do this too.
    Apply any SQL scripts from the `migrations/` directory to bring the database
-   up to date. All table changes should be shipped with a migration script under
-   this directory.
+   up to date. See [Database Upgrades](#database-upgrades) for details on
+   applying migrations with the command line. All table changes should be shipped
+   with a migration script under this directory.
    After applying migrations you can insert the initial roles and grants using
    the provided seed file:
    ```bash
    ./goa4web db seed
    ```
-3. Provide your database connection string and driver via command line flags, a configuration file, or environment variables. Examples:
+3. Configure your database connection. See [Database Configuration](#database-configuration) for the relevant flags and environment variables. Example connection strings:
    * MySQL TCP: `user:password@tcp(127.0.0.1:3306)/a4web?parseTime=true`
    * MySQL socket: `user:password@unix(/var/run/mysqld/mysqld.sock)/a4web?parseTime=true`
    * PostgreSQL: `postgres://user:pass@localhost/a4web?sslmode=disable`
@@ -83,7 +88,7 @@ requests.
 ├── core/templates/      – HTML and email templates
 ├── examples/            – generated configuration examples
 ├── migrations/          – database schema migrations
-├── schema/schema.sql    – initial database schema
+├── schema/schema.mysql.sql    – initial database schema
 ├── core/templates/embedded.go  – embed templates and CSS for production builds
 ├── core/templates/live.go      – load templates from disk in development
 ├── internal/db/models.go       – sqlc generated data models
@@ -146,20 +151,23 @@ Generate example settings with:
 ```bash
 go run ./cmd/goa4web config as-env-file > examples/config.env
 ```
-Run `goa4web config options --extended` to see detailed descriptions of all
-configuration keys.
 
-Example environment based launch:
-```bash
+`examples/config.env` might contain:
+```conf
+# examples/config.env
 DB_DRIVER=sqlite
-DB_CONN=file:./a4web.sqlite?_fk=1 \
-AUTO_MIGRATE=true ./goa4web serve
+DB_CONN=file:./a4web.sqlite?_fk=1
+LISTEN=:8080
+HOSTNAME=http://localhost:8080
+AUTO_MIGRATE=true
 ```
-When using SQLite you must compile the binary with the `sqlite` build tag.
+
+Run `goa4web config options --extended` to see detailed descriptions of all
+configuration keys. When using SQLite you must compile the binary with the `sqlite` build tag.
 
 ## Email Provider Configuration
 
-Email notifications can be sent via several backends. Set `EMAIL_PROVIDER` to select one of the following modes:
+The application supports multiple email backends. Choose one by setting `EMAIL_PROVIDER`:
 
 - `ses` (default): Amazon SES. Requires valid AWS credentials and `AWS_REGION`.
   The provider is built only when the `ses` build tag is enabled.
@@ -329,11 +337,11 @@ database connection. Set `AUTO_MIGRATE=true` to perform this step
 automatically when the server starts.
 Every new migration must conclude with an `UPDATE schema_version` statement, and the `ExpectedSchemaVersion` constant in `handlers/constants.go` should be incremented.
 
-When upgrading from v0.0.1 the script `migrations/0002.sql` must be applied.
+When upgrading from v0.0.1 the script `migrations/0002.mysql.sql` must be applied.
 This can be done manually using the `mysql` client:
 
 ```bash
-mysql -u a4web -p a4web < migrations/0002.sql
+mysql -u a4web -p a4web < migrations/0002.mysql.sql
 ```
 
 The script adds new tables for notifications and email queues, updates existing
@@ -392,10 +400,10 @@ go build -o goa4web ./cmd/goa4web
 
 ### Database operations
 
-```bash
-# apply SQL migrations from ./migrations
-./goa4web db migrate
+Refer to the [Database Upgrades](#database-upgrades) section for migration
+instructions.
 
+```bash
 # create a backup
 ./goa4web db backup --file backup.sql
 
@@ -422,6 +430,13 @@ Container images can be built from the provided `Dockerfile`:
 
 ```bash
 docker build -t goa4web .
+```
+
+Note: Containers that use SQLite must build the binary with the `sqlite` tag,
+for example:
+
+```bash
+go build -tags sqlite ./cmd/goa4web
 ```
 
 Start the container with environment variables for your database connection:

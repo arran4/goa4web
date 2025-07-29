@@ -34,7 +34,7 @@ func ensureVersionTable(ctx context.Context, db *sql.DB) (int, error) {
 // Apply reads SQL migration files from the provided filesystem and executes
 // each one in order, updating the schema_version table after every successful
 // script. When verbose is true, progress information is printed to stdout.
-func Apply(ctx context.Context, db *sql.DB, f fs.FS, verbose bool) error {
+func Apply(ctx context.Context, db *sql.DB, f fs.FS, verbose bool, driver string) error {
 	version, err := ensureVersionTable(ctx, db)
 	if err != nil {
 		return err
@@ -49,10 +49,12 @@ func Apply(ctx context.Context, db *sql.DB, f fs.FS, verbose bool) error {
 			continue
 		}
 		name := e.Name()
-		if !strings.HasSuffix(name, ".sql") {
+		suffix := "." + driver + ".sql"
+		if !strings.HasSuffix(name, suffix) {
 			continue
 		}
-		n, err := strconv.Atoi(strings.TrimSuffix(name, ".sql"))
+		base := strings.TrimSuffix(name, suffix)
+		n, err := strconv.Atoi(base)
 		if err != nil {
 			continue
 		}
@@ -64,7 +66,7 @@ func Apply(ctx context.Context, db *sql.DB, f fs.FS, verbose bool) error {
 		if n <= version {
 			continue
 		}
-		path := fmt.Sprintf("%04d.sql", n)
+		path := fmt.Sprintf("%04d.%s.sql", n, driver)
 		if verbose {
 			fmt.Printf("applying %s\n", path)
 		}

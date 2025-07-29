@@ -3,16 +3,18 @@
 <table border="1">
     <tr>
         <th>ID</th>
-        <th>User</th>
-        <th>Role</th>
+        <th>User / Role</th>
         <th>Action</th>
         <th>Delete?</th>
     </tr>
     {{- range .Grants }}
     <tr>
         <td>{{ .ID }}</td>
-        <td>{{ if .Username.Valid }}{{ .Username.String }}{{ end }}</td>
-        <td>{{ if .RoleName.Valid }}{{ .RoleName.String }}{{ end }}</td>
+        <td>
+            {{- if .Username.Valid }}User: {{ .Username.String }}{{ end -}}
+            {{- if and .Username.Valid .RoleName.Valid }}<br>{{ end -}}
+            {{- if .RoleName.Valid }}Role: {{ .RoleName.String }}{{ end -}}
+        </td>
         <td>{{ .Action }}</td>
         <td>
             <form method="post" action="/linker/admin/category/{{ $.CategoryID }}/grant/delete">
@@ -27,8 +29,8 @@
         <form method="post" action="/linker/admin/category/{{ $.CategoryID }}/grant">
         {{ csrfField }}
             <td>NEW</td>
-            <td><input name="username"></td>
             <td>
+                <input name="username" placeholder="username"><br>
                 <select name="role">
                     <option value="">None</option>
                     {{- range $.Roles }}<option value="{{ .Name }}">{{ .Name }}</option>{{- end }}

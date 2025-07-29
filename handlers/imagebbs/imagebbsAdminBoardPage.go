@@ -2,10 +2,12 @@ package imagebbs
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -51,4 +53,47 @@ func (ModifyBoardTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("update image board fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	return handlers.RefreshDirectHandler{TargetURL: "/admin/imagebbs/boards"}
+}
+
+// AdminBoardPage shows a form to edit an existing board.
+func AdminBoardPage(w http.ResponseWriter, r *http.Request) {
+	type Data struct {
+		*common.CoreData
+		Board  *db.Imageboard
+		Boards []*db.Imageboard
+	}
+
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Edit Image Board"
+	queries := cd.Queries()
+
+	vars := mux.Vars(r)
+	bid, err := strconv.Atoi(vars["board"])
+	if err != nil {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+
+	board, err := queries.GetImageBoardById(r.Context(), int32(bid))
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			http.NotFound(w, r)
+		default:
+			log.Printf("getImageBoard error: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	boards, err := cd.ImageBoards()
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		log.Printf("imageBoards error: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	data := Data{CoreData: cd, Board: board, Boards: boards}
+
+	handlers.TemplateHandler(w, r, "adminBoardPage.gohtml", data)
 }

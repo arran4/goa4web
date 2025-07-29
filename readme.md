@@ -126,7 +126,6 @@ go test -tags nosqlite ./...
 
 This project was originally developed for a single server environment and remains a work in progress. Contributions are welcome!
 
-
 ## Application Configuration File
 
 The path to a general configuration file can be specified with the `--config-file`
@@ -307,7 +306,6 @@ HOSTNAME=http://example.com:8080
 
 Example files under `examples/` are generated automatically.
 
-
 ### Implementing Custom Providers
 
 New email backends can be added by satisfying the `Provider` interface
@@ -460,5 +458,4 @@ final channel = WebSocketChannel.connect(
   Uri.parse('ws://<host>/ws/notifications'),
 );
 ```
-
 

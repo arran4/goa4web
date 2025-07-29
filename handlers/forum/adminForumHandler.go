@@ -18,6 +18,12 @@ import (
 )
 
 func AdminForumPage(w http.ResponseWriter, r *http.Request) {
+	type Stats struct {
+		Categories int64
+		Topics     int64
+		Threads    int64
+	}
+
 	type Data struct {
 		*common.CoreData
 		Categories              []*ForumcategoryPlus
@@ -26,6 +32,7 @@ func AdminForumPage(w http.ResponseWriter, r *http.Request) {
 		CopyDataToSubCategories func(rootCategory *ForumcategoryPlus) *Data
 		Category                *ForumcategoryPlus
 		Back                    bool
+		Stats                   Stats
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -83,6 +90,16 @@ func AdminForumPage(w http.ResponseWriter, r *http.Request) {
 
 	categoryTree := NewCategoryTree(categoryRows, topicRows)
 	data.Categories = categoryTree.CategoryChildrenLookup[0]
+
+	ctx := r.Context()
+	count := func(q string, dest *int64) {
+		if err := queries.DB().QueryRowContext(ctx, q).Scan(dest); err != nil && err != sql.ErrNoRows {
+			log.Printf("forumAdminPage count query error: %v", err)
+		}
+	}
+	count("SELECT COUNT(*) FROM forumcategory", &data.Stats.Categories)
+	count("SELECT COUNT(*) FROM forumtopic", &data.Stats.Topics)
+	count("SELECT COUNT(*) FROM forumthread", &data.Stats.Threads)
 
 	handlers.TemplateHandler(w, r, "forumAdminPage", data)
 }

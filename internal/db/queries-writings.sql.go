@@ -236,6 +236,70 @@ func (q *Queries) GetAllWritingsByUser(ctx context.Context, arg GetAllWritingsBy
 	return items, nil
 }
 
+const getAllWritingsByUserAdmin = `-- name: GetAllWritingsByUserAdmin :many
+SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, w.last_index, u.username,
+    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) AS Comments
+FROM writing w
+LEFT JOIN users u ON w.users_idusers = u.idusers
+WHERE w.users_idusers = ?
+ORDER BY w.published DESC
+`
+
+type GetAllWritingsByUserAdminRow struct {
+	Idwriting          int32
+	UsersIdusers       int32
+	ForumthreadID      int32
+	LanguageIdlanguage int32
+	WritingCategoryID  int32
+	Title              sql.NullString
+	Published          sql.NullTime
+	Writing            sql.NullString
+	Abstract           sql.NullString
+	Private            sql.NullBool
+	DeletedAt          sql.NullTime
+	LastIndex          sql.NullTime
+	Username           sql.NullString
+	Comments           int64
+}
+
+func (q *Queries) GetAllWritingsByUserAdmin(ctx context.Context, usersIdusers int32) ([]*GetAllWritingsByUserAdminRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllWritingsByUserAdmin, usersIdusers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetAllWritingsByUserAdminRow
+	for rows.Next() {
+		var i GetAllWritingsByUserAdminRow
+		if err := rows.Scan(
+			&i.Idwriting,
+			&i.UsersIdusers,
+			&i.ForumthreadID,
+			&i.LanguageIdlanguage,
+			&i.WritingCategoryID,
+			&i.Title,
+			&i.Published,
+			&i.Writing,
+			&i.Abstract,
+			&i.Private,
+			&i.DeletedAt,
+			&i.LastIndex,
+			&i.Username,
+			&i.Comments,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAllWritingsForIndex = `-- name: GetAllWritingsForIndex :many
 SELECT idwriting, title, abstract, writing FROM writing WHERE deleted_at IS NULL
 `

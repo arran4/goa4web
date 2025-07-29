@@ -73,7 +73,7 @@ The secret used to sign these cookies is resolved in the following order:
 1. `--session-secret` flag
 2. `SESSION_SECRET` environment variable
 3. The file specified by `--session-secret-file` or `SESSION_SECRET_FILE` (a default location is chosen when unset)
-   (`GOA4WEB_DOCKER` places it under `/var/lib/goa4web/`)
+   (`GOA4WEB_DOCKER` stores secrets under `/var/lib/goa4web/` by default)
 
 If the file does not exist a new random secret is generated and written to it.
 
@@ -271,7 +271,7 @@ environment variables listed below.
 | `SESSION_SECRET` | `--session-secret` | No | generated | Secret used to encrypt session cookies. |
 | `SESSION_SECRET_FILE` | `--session-secret-file` | No | auto | File containing the session secret. |
 | `SESSION_SAME_SITE` | `--session-same-site` | No | `strict` | Cookie SameSite policy for sessions. |
-| `GOA4WEB_DOCKER` | n/a | No | - | Set when running inside Docker to adjust defaults. |
+| `GOA4WEB_DOCKER` | n/a | No | - | Places secret files under `/var/lib/goa4web` when unset paths rely on defaults. |
 | `SENDGRID_KEY` | `--sendgrid-key` | No | - | API key for the SendGrid email provider. |
 | `EMAIL_WORKER_INTERVAL` | `--email-worker-interval` | No | `60` | Minimum seconds between queued email sends. |
 | `PASSWORD_RESET_EXPIRY_HOURS` | `--password-reset-expiry-hours` | No | `24` | Hours a password reset request remains valid. |
@@ -454,6 +454,10 @@ docker run -p 8080:8080 \
   -v $(pwd)/data:/data \
   goa4web
 ```
+
+Setting `GOA4WEB_DOCKER=1` tells the application to store generated secret files
+such as `session_secret` under `/var/lib/goa4web`. Mount this directory as a
+volume to keep the secrets across container restarts.
 
 ### Docker Compose
 

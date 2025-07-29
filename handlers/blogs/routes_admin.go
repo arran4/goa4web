@@ -13,4 +13,5 @@ func RegisterAdminRoutes(ar *mux.Router) {
 	br.HandleFunc("/users/roles", UsersPermissionsDisallowPage).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(userDisallowTask.Matcher())
 	br.HandleFunc("/users/roles", UsersPermissionsBulkAllowPage).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(usersAllowTask.Matcher())
 	br.HandleFunc("/users/roles", UsersPermissionsBulkDisallowPage).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(usersDisallowTask.Matcher())
+	br.HandleFunc("/blog/{blog}", BlogPage).Methods("GET").MatcherFunc(handlers.RequiredAccess("administrator"))
 }

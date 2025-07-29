@@ -33,6 +33,12 @@ type IndexItem struct {
 	Link string
 }
 
+// AdminSection groups admin navigation links under a section heading.
+type AdminSection struct {
+	Name  string
+	Links []IndexItem
+}
+
 // SessionManager defines optional hooks for storing and removing session
 // information. Implementations may persist session metadata in a database or
 // other storage.
@@ -52,6 +58,7 @@ type MailProvider interface {
 type NavigationProvider interface {
 	IndexItems() []IndexItem
 	AdminLinks() []IndexItem
+	AdminSections() []AdminSection
 }
 
 // No package-level pagination constants as runtime config provides these values.

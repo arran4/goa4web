@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/sys/unix"
+
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -25,6 +27,10 @@ func (h *Handlers) AdminServerStatsPage(w http.ResponseWriter, r *http.Request) 
 		HeapAlloc  uint64
 		HeapSys    uint64
 		NumGC      uint32
+		NumCPU     int
+		Arch       string
+		DiskFree   uint64
+		RAMFree    uint64
 	}
 
 	type Data struct {
@@ -46,6 +52,21 @@ func (h *Handlers) AdminServerStatsPage(w http.ResponseWriter, r *http.Request) 
 	var mem runtime.MemStats
 	runtime.ReadMemStats(&mem)
 
+	var diskFree uint64
+	if varStat := new(unix.Statfs_t); unix.Statfs("/", varStat) == nil {
+		diskFree = varStat.Bavail * uint64(varStat.Bsize)
+	}
+
+	var sysInfo unix.Sysinfo_t
+	var ramFree uint64
+	if unix.Sysinfo(&sysInfo) == nil {
+		unit := uint64(sysInfo.Unit)
+		if unit == 0 {
+			unit = 1
+		}
+		ramFree = sysInfo.Freeram * unit
+	}
+
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Server Stats"
 	data := Data{
@@ -58,6 +79,10 @@ func (h *Handlers) AdminServerStatsPage(w http.ResponseWriter, r *http.Request) 
 			HeapAlloc:  mem.HeapAlloc,
 			HeapSys:    mem.HeapSys,
 			NumGC:      mem.NumGC,
+			NumCPU:     runtime.NumCPU(),
+			Arch:       runtime.GOARCH,
+			DiskFree:   diskFree,
+			RAMFree:    ramFree,
 		},
 		Uptime: time.Since(StartTime),
 	}

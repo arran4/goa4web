@@ -48,6 +48,15 @@ WHERE i.users_idusers = ? AND i.approved = 1
 ORDER BY i.posted DESC
 LIMIT ? OFFSET ?;
 
+-- name: GetImagePostsByUserDescendingAll :many
+SELECT i.*, u.username, th.comments
+FROM imagepost i
+LEFT JOIN users u ON i.users_idusers = u.idusers
+LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
+WHERE i.users_idusers = ?
+ORDER BY i.posted DESC
+LIMIT ? OFFSET ?;
+
 -- name: GetAllImageBoards :many
 SELECT b.*
 FROM imageboard b
@@ -195,4 +204,13 @@ UPDATE imagepost SET last_index = NOW() WHERE idimagepost = ?;
 
 -- name: GetAllImagePostsForIndex :many
 SELECT idimagepost, description FROM imagepost WHERE deleted_at IS NULL;
+
+-- name: GetImagePostInfoByPath :one
+SELECT i.idimagepost, i.imageboard_idimageboard, i.users_idusers, i.posted, u.username, b.title
+FROM imagepost i
+LEFT JOIN users u ON i.users_idusers = u.idusers
+LEFT JOIN imageboard b ON i.imageboard_idimageboard = b.idimageboard
+WHERE i.fullimage = ? OR i.thumbnail = ?
+LIMIT 1;
+
 

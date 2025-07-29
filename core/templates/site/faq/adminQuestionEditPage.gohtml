@@ -1,5 +1,5 @@
 {{ template "head" $ }}
-<h4>Edit FAQ Entry</h4>
+<h4>{{ if eq .Faq.Idfaq 0 }}Create FAQ Entry{{ else }}Edit FAQ Entry{{ end }}</h4>
 <form method="post" action="/admin/faq/questions">
 {{ csrfField }}
 <textarea name="question" cols="80" rows="15">{{ .Faq.Question.String }}</textarea><br>
@@ -12,6 +12,10 @@
     {{- end }}
 </select><br>
 <input type="hidden" name="faq" value="{{ .Faq.Idfaq }}">
+{{ if eq .Faq.Idfaq 0 }}
+<input type="submit" name="task" value="Create">
+{{ else }}
 <input type="submit" name="task" value="Edit">
+{{ end }}
 </form>
 {{ template "tail" $ }}

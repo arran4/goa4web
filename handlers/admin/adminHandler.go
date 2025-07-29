@@ -24,15 +24,15 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 
 	type Data struct {
 		*common.CoreData
-		AdminLinks []common.IndexItem
-		Stats      Stats
+		AdminSections []common.AdminSection
+		Stats         Stats
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Admin"
 	data := Data{
-		CoreData:   cd,
-		AdminLinks: cd.Nav.AdminLinks(),
+		CoreData:      cd,
+		AdminSections: cd.Nav.AdminSections(),
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	ctx := r.Context()

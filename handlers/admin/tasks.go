@@ -277,4 +277,7 @@ const (
 
 	// TaskToggleRolePublicProfile toggles whether a role allows public profiles.
 	TaskToggleRolePublicProfile tasks.TaskString = "Toggle role public profile"
+
+	// TaskRoleGrantDelete removes a grant from a role.
+	TaskRoleGrantDelete tasks.TaskString = "Delete grant"
 )

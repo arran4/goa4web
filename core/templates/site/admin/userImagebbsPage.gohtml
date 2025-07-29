@@ -1,13 +1,21 @@
 {{ template "head" $ }}
 <h2>Images by {{ .User.Username.String }}</h2>
 <table border="1">
-    <tr><th>ID</th><th>Date</th><th>Board</th><th>Link</th></tr>
+    <tr><th>ID</th><th>Date</th><th>Board</th><th>Approved</th><th>Link</th></tr>
     {{- range .Posts }}
     <tr>
         <td>{{ .Idimagepost }}</td>
         <td>{{ .Posted }}</td>
         <td>{{ .ImageboardIdimageboard }}</td>
-        <td><a href="/imagebbs/post/{{ .Idimagepost }}">View</a></td>
+        <td>{{ if .Approved }}Yes{{ else }}No{{ end }}</td>
+        <td>
+            <a href="/imagebbs/post/{{ .Idimagepost }}">View</a>
+            {{- if not .Approved }}
+            <form style="display:inline" method="post" action="/admin/imagebbs/approve/{{ .Idimagepost }}">
+                {{ csrfField }}<input type="submit" name="task" value="Approve">
+            </form>
+            {{- end }}
+        </td>
     </tr>
     {{- end }}
 </table>

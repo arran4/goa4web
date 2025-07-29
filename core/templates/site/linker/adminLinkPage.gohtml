@@ -1,0 +1,11 @@
+{{ template "head" $ }}
+    <form method="post" action="">
+        {{ csrfField }}
+        <label>Title <input name="title" value="{{ .Link.Title.String }}"></label><br>
+        <label>URL <input name="URL" value="{{ .Link.Url.String }}"></label><br>
+        <label>Description:<br><textarea name="desc" cols="40" rows="20">{{ .Link.Description.String }}</textarea></label><br>
+        {{ template "categoryCombobox" $ }}
+        {{ template "languageCombobox" $ }}
+        <input type="submit" name="task" value="Update">
+    </form>
+{{ template "tail" $ }}

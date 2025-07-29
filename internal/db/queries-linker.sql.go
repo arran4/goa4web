@@ -800,6 +800,22 @@ func (q *Queries) GetLinkerCategoriesWithCount(ctx context.Context) ([]*GetLinke
 	return items, nil
 }
 
+const getLinkerCategoryById = `-- name: GetLinkerCategoryById :one
+SELECT idlinkercategory, position, title, sortorder FROM linker_category WHERE idlinkerCategory = ?
+`
+
+func (q *Queries) GetLinkerCategoryById(ctx context.Context, idlinkercategory int32) (*LinkerCategory, error) {
+	row := q.db.QueryRowContext(ctx, getLinkerCategoryById, idlinkercategory)
+	var i LinkerCategory
+	err := row.Scan(
+		&i.Idlinkercategory,
+		&i.Position,
+		&i.Title,
+		&i.Sortorder,
+	)
+	return &i, err
+}
+
 const getLinkerCategoryLinkCounts = `-- name: GetLinkerCategoryLinkCounts :many
 SELECT c.idlinkerCategory, c.title, c.position, COUNT(l.idlinker) as LinkCount
 FROM linker_category c

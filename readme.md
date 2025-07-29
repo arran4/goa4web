@@ -64,7 +64,7 @@ The default build embeds templates and `main.css` so the resulting binary is sel
 
 ## Running
 
-Run the compiled binary and open <http://localhost:8080> in your browser:
+Run the compiled binary and open <http://localhost:8080> in your browser. By default the server listens on port 8080; change this with the `--listen` flag or `LISTEN` environment variable:
 ```bash
 ./goa4web
 ```

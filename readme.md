@@ -50,6 +50,7 @@ Optional notification emails are sent through [AWS SES](https://aws.amazon.com/s
    ```bash
    go mod download
    go build -o goa4web ./cmd/goa4web
+   ./goa4web serve
    ```
 
 During development you can load templates directly from the `core/templates` directory by using the `live` build tag:

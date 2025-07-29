@@ -91,3 +91,12 @@ FROM forumthread th
 JOIN comments c ON th.firstpost = c.idcomments
 WHERE c.users_idusers = ?
 ORDER BY th.lastaddition DESC;
+
+-- name: GetThreadsStartedByUserWithTopic :many
+SELECT th.*, t.title AS topic_title, fc.idforumcategory AS category_id, fc.title AS category_title
+FROM forumthread th
+JOIN comments c ON th.firstpost = c.idcomments
+LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
+LEFT JOIN forumcategory fc ON t.forumcategory_idforumcategory = fc.idforumcategory
+WHERE c.users_idusers = ?
+ORDER BY th.lastaddition DESC;

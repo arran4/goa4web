@@ -1,47 +1,44 @@
 {{ template "head" $ }}
-    <table border="1">
-        <tr>
-            <th>ID</th>
-            <th>User</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Delete?</th>
-        </tr>
-        {{- if .UserLevels }}
-            {{- range .UserLevels }}
-                <tr>
-                    <td>{{ .IduserRoles }}</td>
-                    <td>{{ .Username.String }}</td>
-                    <td>{{ .Email }}</td>
-                    <td>{{ .Role }}</td>
-                    <td>
-                        <form method="post">
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <th>User</th>
+        <th>Email</th>
+        <th>Roles</th>
+        <th>Actions</th>
+    </tr>
+    {{- range .Users }}
+    <tr>
+        <td>{{ .ID }}</td>
+        <td>{{ .Username.String }}</td>
+        <td>{{ .Email }}</td>
+        <td>
+            {{- if .Roles }}
+            <ul>
+                {{- range .Roles }}
+                <li>{{ .Name }}
+                    <form method="post" style="display:inline">
         {{ csrfField }}
-                            <input type="hidden" name="permid" value="{{ .IduserRoles }}">
-                            <input type="submit" name="task" value="remove">
-                        </form>
-                    </td>
-                </tr>
-            {{- end }}
-        {{- else }}
-            <tr><td colspan="5">No results</td></tr>
-        {{- end }}
-        <tr>
+                        <input type="hidden" name="permid" value="{{ .PermID }}">
+                        <button type="submit" name="task" value="remove">Remove Role</button>
+                    </form>
+                </li>
+                {{- end }}
+            </ul>
+            {{- else }}None{{- end }}
+        </td>
+        <td>
             <form method="post">
         {{ csrfField }}
-                <td>NEW</td>
-                <td><input name="username"></td>
-                <td>?</td>
-                <td>
-                    <select name="role">
-                        {{- range $.Roles }}<option value="{{.Name}}">{{.Name}}</option>{{- end }}
-                    </select>
-                </td>
-                <td>
-                    <input type="submit" name="task" value="allow">
-                </td>
+                <input type="hidden" name="username" value="{{ .Username.String }}">
+                <select name="role">
+                    {{- range $.Roles }}<option value="{{.Name}}">{{.Name}}</option>{{- end }}
+                </select>
+                <button type="submit" name="task" value="allow">Add Role</button>
             </form>
-        </tr>
-    </table>
-    <p>Permissions should be valid only.</p>
+        </td>
+    </tr>
+    {{- end }}
+</table>
+<p>Permissions should be valid only.</p>
 {{ template "tail" $ }}

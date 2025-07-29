@@ -29,6 +29,7 @@ func AdminPageSizePage(w http.ResponseWriter, r *http.Request) {
 
 		data := struct {
 			*common.CoreData
+			Errors   []string
 			Messages []string
 			Back     string
 		}{

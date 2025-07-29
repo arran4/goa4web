@@ -23,7 +23,7 @@ func adminUserImagebbsPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "user not found", http.StatusNotFound)
 		return
 	}
-	rows, err := queries.GetImagePostsByUserDescending(r.Context(), db.GetImagePostsByUserDescendingParams{
+	rows, err := queries.GetImagePostsByUserDescendingAll(r.Context(), db.GetImagePostsByUserDescendingAllParams{
 		UsersIdusers: int32(id),
 		Limit:        100,
 		Offset:       0,
@@ -36,7 +36,7 @@ func adminUserImagebbsPage(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		*common.CoreData
 		User  *db.User
-		Posts []*db.GetImagePostsByUserDescendingRow
+		Posts []*db.GetImagePostsByUserDescendingAllRow
 	}{
 		CoreData: cd,
 		User:     &db.User{Idusers: user.Idusers, Username: user.Username},

@@ -174,13 +174,12 @@ func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	user := &db.User{Idusers: urow.Idusers, Username: urow.Username}
 	data := struct {
 		*common.CoreData
-		User *db.User
+		User *db.GetUserByIdRow
 	}{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-		User:     user,
+		User:     urow,
 	}
 	handlers.TemplateHandler(w, r, "userEditPage.gohtml", data)
 }
@@ -205,8 +204,10 @@ func adminUserEditSavePage(w http.ResponseWriter, r *http.Request) {
 	}
 	if uidi, err := strconv.Atoi(uid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else if _, err := queries.DB().ExecContext(r.Context(), "UPDATE users SET username=?, email=? WHERE idusers=?", username, email, uidi); err != nil {
+	} else if _, err := queries.DB().ExecContext(r.Context(), "UPDATE users SET username=? WHERE idusers=?", username, uidi); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("update user: %w", err).Error())
+	} else if err := queries.UpdateUserEmail(r.Context(), db.UpdateUserEmailParams{Email: email, UserID: int32(uidi)}); err != nil {
+		data.Errors = append(data.Errors, fmt.Errorf("update user email: %w", err).Error())
 	}
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }

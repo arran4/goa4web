@@ -36,7 +36,9 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 		*common.CoreData
 		Errors     []*db.DeadLetter
 		FileErrors []filedlq.Record
+		FileErr    string
 		DirErrors  []dirdlq.Record
+		DirErr     string
 		Providers  string
 	}{
 		CoreData:  cd,
@@ -61,12 +63,14 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 				data.FileErrors = recs
 			} else {
 				log.Printf("read dlq file: %v", err)
+				data.FileErr = err.Error()
 			}
 		case "dir":
 			if recs, err := dirdlq.List(cd.Config.DLQFile, 100); err == nil {
 				data.DirErrors = recs
 			} else {
 				log.Printf("read dlq dir: %v", err)
+				data.DirErr = err.Error()
 			}
 		}
 	}

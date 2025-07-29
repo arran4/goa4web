@@ -128,6 +128,63 @@ func (q *Queries) GetThreadsStartedByUser(ctx context.Context, usersIdusers int3
 	return items, nil
 }
 
+const getThreadsStartedByUserWithTopic = `-- name: GetThreadsStartedByUserWithTopic :many
+SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, t.title AS topic_title, fc.idforumcategory AS category_id, fc.title AS category_title
+FROM forumthread th
+JOIN comments c ON th.firstpost = c.idcomments
+LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
+LEFT JOIN forumcategory fc ON t.forumcategory_idforumcategory = fc.idforumcategory
+WHERE c.users_idusers = ?
+ORDER BY th.lastaddition DESC
+`
+
+type GetThreadsStartedByUserWithTopicRow struct {
+	Idforumthread          int32
+	Firstpost              int32
+	Lastposter             int32
+	ForumtopicIdforumtopic int32
+	Comments               sql.NullInt32
+	Lastaddition           sql.NullTime
+	Locked                 sql.NullBool
+	TopicTitle             sql.NullString
+	CategoryID             sql.NullInt32
+	CategoryTitle          sql.NullString
+}
+
+func (q *Queries) GetThreadsStartedByUserWithTopic(ctx context.Context, usersIdusers int32) ([]*GetThreadsStartedByUserWithTopicRow, error) {
+	rows, err := q.db.QueryContext(ctx, getThreadsStartedByUserWithTopic, usersIdusers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetThreadsStartedByUserWithTopicRow
+	for rows.Next() {
+		var i GetThreadsStartedByUserWithTopicRow
+		if err := rows.Scan(
+			&i.Idforumthread,
+			&i.Firstpost,
+			&i.Lastposter,
+			&i.ForumtopicIdforumtopic,
+			&i.Comments,
+			&i.Lastaddition,
+			&i.Locked,
+			&i.TopicTitle,
+			&i.CategoryID,
+			&i.CategoryTitle,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const makeThread = `-- name: MakeThread :execlastid
 INSERT INTO forumthread (forumtopic_idforumtopic) VALUES (?)
 `

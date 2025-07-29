@@ -88,7 +88,7 @@ Gorilla/csrf protects form submissions. Templates embed tokens and the middlewar
 ### Section registration
 
 Site sections register navigation items with the `navigation` package so menus assemble dynamically.
-Use `navigation.RegisterIndexLink` for public links and `navigation.RegisterAdminControlCenter` for admin navigation. Each call accepts a weight value; lower numbers appear first.
+Use `navigation.RegisterIndexLink` for public links and `navigation.RegisterAdminControlCenter` for admin navigation. The admin call also accepts a `section` string used to group links. Each call accepts a weight value; lower numbers appear first.
 
 Example weights:
 

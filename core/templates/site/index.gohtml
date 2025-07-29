@@ -7,9 +7,6 @@
     {{ if cd.HasRole "administrator" }}
         {{ if cd.AdminMode }}
             <a href="{{ addmode "/admin" }}">Admin Dashboard</a><br>
-            <a href="?">Disable admin mode</a><br>
-        {{ else }}
-            <a href="?mode=admin">Enable admin mode</a><br>
         {{ end }}
     {{ end }}
 {{- end}}

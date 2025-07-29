@@ -1,0 +1,9 @@
+{{ template "head" $ }}
+<form method="post" action="/admin/imagebbs/board/{{ .Board.Idimageboard }}">
+    {{ csrfField }}
+    Name: <input name="name" value="{{ .Board.Title.String }}"><br>
+    Description: <textarea name="desc" cols="40" rows="5">{{ .Board.Description.String }}</textarea><br>
+    Parent Board: <select name="pbid" value="{{ .Board.ImageboardIdimageboard }}"><option value="0">None</option>{{ range .Boards }}<option value="{{ .Idimageboard }}" {{ if eq $.Board.ImageboardIdimageboard .Idimageboard }}selected{{ end }}>{{ .Title.String }}</option>{{ end }}</select><br>
+    <input type="submit" name="task" value="Modify board">
+</form>
+{{ template "tail" $ }}

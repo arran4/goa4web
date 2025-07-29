@@ -12,14 +12,21 @@
 </ul>
 <h3>Grants</h3>
 <table border="1">
-    <tr><th>ID</th><th>Section</th><th>Item</th><th>Item ID</th><th>Action</th></tr>
+    <tr><th>ID</th><th>Section</th><th>Item</th><th>Item ID</th><th>Action</th><th>Delete?</th></tr>
     {{- range .Grants }}
-    <tr>
-        <td>{{ .ID }}</td>
+    <tr id="g{{ .ID }}">
+        <td>{{ if .Link }}<a href="{{ .Link }}">{{ .ID }}</a>{{ else }}{{ .ID }}{{ end }}</td>
         <td>{{ .Section }}</td>
         <td>{{ .Item.String }}</td>
         <td>{{ if .ItemID.Valid }}{{ .ItemID.Int32 }}{{ end }}</td>
         <td>{{ .Action }}</td>
+        <td>
+            <form method="post" action="/admin/grant/delete">
+        {{ csrfField }}
+                <input type="hidden" name="grantid" value="{{ .ID }}">
+                <input type="submit" name="task" value="Delete grant">
+            </form>
+        </td>
     </tr>
     {{- end }}
 </table>

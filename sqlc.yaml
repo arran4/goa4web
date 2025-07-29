@@ -1,7 +1,7 @@
 version: 2
 sql:
     - engine: "mysql"
-      schema: "schema/schema.sql"
+      schema: "schema/schema.mysql.sql"
       queries:
         - "internal/db/queries.sql"
         - "internal/db/queries-languages.sql"

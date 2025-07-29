@@ -9,7 +9,9 @@
             {{ end }}
         {{ end }}
     </div>
-    <div class="navbar-center"><strong>{{cd.Title}}</strong></div>
+    <div class="navbar-center"><strong>
+        {{- if cd.PageTitle }}{{ cd.PageTitle }} - {{ end -}}{{ cd.Title }}
+    </strong></div>
     <div class="navbar-right user-links">
         {{ if cd.UserID }}
             {{ with $u := cd.CurrentUserLoaded }}{{ if $u }}<span class="username">{{ $u.Username.String }}</span>{{ end }}{{ end }}

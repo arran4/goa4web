@@ -28,7 +28,7 @@ Optional notification emails are sent through [AWS SES](https://aws.amazon.com/s
 
 ## Getting Started
 
-1. Install Go 1.20 or newer and ensure `go` is available in your `PATH`.
+1. Install Go 1.23 or newer and ensure `go` is available in your `PATH`.
 2. Create a database named `a4web` using your preferred server. The schema is defined in `schema/schema.sql` and can be loaded with `mysql` or `psql`.
    ```bash
    mysql -u a4web -p a4web < schema/schema.sql

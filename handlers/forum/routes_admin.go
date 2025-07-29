@@ -16,6 +16,7 @@ func RegisterAdminRoutes(ar *mux.Router) {
 	far.HandleFunc("/logs", AdminForumModeratorLogsPage).Methods("GET")
 	far.HandleFunc("/list", AdminForumWordListPage).Methods("GET")
 	far.HandleFunc("/categories", AdminCategoriesPage).Methods("GET")
+	far.HandleFunc("/category/{category}", AdminCategoryPage).Methods("GET")
 	far.HandleFunc("/categories", handlers.TaskDoneAutoRefreshPage).Methods("POST")
 	far.HandleFunc("/category/{category}", AdminCategoryEditPage).Methods("POST").MatcherFunc(categoryChangeTask.Matcher())
 	far.HandleFunc("/category", AdminCategoryCreatePage).Methods("POST").MatcherFunc(categoryCreateTask.Matcher())

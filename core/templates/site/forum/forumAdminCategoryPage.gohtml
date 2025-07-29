@@ -1,0 +1,25 @@
+{{ template "head" $ }}
+<h2>Forum Category {{ .Category.Idforumcategory }} - {{ .Category.Title.String }}</h2>
+<p>{{ .Category.Description.String }}</p>
+<h3 id="topics">Topics</h3>
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <th>Title</th>
+        <th>Description</th>
+        <th>Threads</th>
+        <th>Posts</th>
+        <th>View</th>
+    </tr>
+    {{ range .Topics }}
+    <tr>
+        <td>{{ .Idforumtopic }}</td>
+        <td>{{ .Title.String }}</td>
+        <td>{{ .Description.String }}</td>
+        <td>{{ .Threads.Int32 }}</td>
+        <td>{{ .Comments.Int32 }}</td>
+        <td><a href="/forum/topic/{{ .Idforumtopic }}">View</a></td>
+    </tr>
+    {{ end }}
+</table>
+{{ template "tail" $ }}

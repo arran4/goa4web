@@ -174,13 +174,12 @@ func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	user := &db.User{Idusers: urow.Idusers, Username: urow.Username}
 	data := struct {
 		*common.CoreData
-		User *db.User
+		User *db.GetUserByIdRow
 	}{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-		User:     user,
+		User:     urow,
 	}
 	handlers.TemplateHandler(w, r, "userEditPage.gohtml", data)
 }

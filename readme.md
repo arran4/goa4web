@@ -124,7 +124,9 @@ go test -tags nosqlite ./...
 
 ---
 
-This project was originally developed for a single server environment and remains a work in progress. Contributions are welcome!
+## Contributing
+
+This project is primarily maintained for personal use, but others are welcome to adopt it and contribute improvements.
 
 
 ## Application Configuration File

@@ -29,10 +29,7 @@ Optional notification emails are sent through [AWS SES](https://aws.amazon.com/s
 ## Getting Started
 
 1. Install Go 1.20 or newer and ensure `go` is available in your `PATH`.
-2. Create a database named `a4web` using your preferred server. The schema is defined in `schema/schema.sql` and can be loaded with `mysql` or `psql`.
-   ```bash
-   mysql -u a4web -p a4web < schema/schema.sql
-   ```
+2. Create a database named `a4web` using your preferred server. Use your database client to execute `schema/schema.sql`.
    Apply any SQL scripts from the `migrations/` directory to bring the database
    up to date. All table changes should be shipped with a migration script under
    this directory.

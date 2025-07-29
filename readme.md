@@ -41,7 +41,7 @@ Optional notification emails are sent through [AWS SES](https://aws.amazon.com/s
    ```bash
    ./goa4web db seed
    ```
-3. Provide your database connection string and driver via command line flags, a configuration file, or environment variables. Examples:
+3. Configure your database connection. See [Database Configuration](#database-configuration) for the relevant flags and environment variables. Example connection strings:
    * MySQL TCP: `user:password@tcp(127.0.0.1:3306)/a4web?parseTime=true`
    * MySQL socket: `user:password@unix(/var/run/mysqld/mysqld.sock)/a4web?parseTime=true`
    * PostgreSQL: `postgres://user:pass@localhost/a4web?sslmode=disable`

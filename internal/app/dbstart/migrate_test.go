@@ -17,7 +17,7 @@ func TestApply(t *testing.T) {
 	defer db.Close()
 
 	mfs := fstest.MapFS{
-		"0002.sql": {Data: []byte("CREATE TABLE t (id int);")},
+		"0002.mysql.sql": {Data: []byte("CREATE TABLE t (id int);")},
 	}
 
 	mock.ExpectExec("CREATE TABLE IF NOT EXISTS schema_version").
@@ -31,7 +31,7 @@ func TestApply(t *testing.T) {
 	mock.ExpectExec("UPDATE schema_version SET version = ?").WithArgs(2).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
-	if err := Apply(context.Background(), db, mfs, false); err != nil {
+	if err := Apply(context.Background(), db, mfs, false, "mysql"); err != nil {
 		t.Fatalf("apply: %v", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {

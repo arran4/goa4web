@@ -37,6 +37,8 @@
                     <a style="display:inline-block;margin:0 4px" href="/admin/user/{{.Idusers}}/linker">Links</a>
                     <a style="display:inline-block;margin:0 4px" href="/admin/user/{{.Idusers}}/imagebbs">Images</a>
                     <a style="display:inline-block;margin:0 4px" href="/admin/user/{{.Idusers}}/forum">Forum</a>
+                    <a style="display:inline-block;margin:0 4px" href="/admin/user/{{.Idusers}}/comments">Comments</a>
+                    <a style="display:inline-block;margin:0 4px" href="/admin/user/{{.Idusers}}/subscriptions">Subscriptions</a>
                     <form style="display:inline-block;margin:0 4px" method="get" action="/admin/users/edit">
                         {{ csrfField }}
                         <input type="hidden" name="uid" value="{{.Idusers}}">

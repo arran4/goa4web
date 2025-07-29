@@ -1,0 +1,16 @@
+{{ template "head" $ }}
+<h2>Comments by {{ .User.Username.String }}</h2>
+<table border="1">
+    <tr><th>ID</th><th>Date</th><th>Topic</th><th>Thread</th><th>Excerpt</th><th>Link</th></tr>
+    {{- range .Comments }}
+    <tr>
+        <td>{{ .Idcomments }}</td>
+        <td>{{ if .Written.Valid }}{{ .Written.Time }}{{ end }}</td>
+        <td>{{ if .ForumtopicIdforumtopic.Valid }}{{ .ForumtopicIdforumtopic.Int32 }}{{ end }}</td>
+        <td>{{ .ForumthreadID }}</td>
+        <td>{{ if .Text.Valid }}{{ left 40 .Text.String }}{{ end }}</td>
+        <td><a href="/forum/topic/{{ .ForumtopicIdforumtopic.Int32 }}/thread/{{ .ForumthreadID }}#c{{ .Idcomments }}">View</a></td>
+    </tr>
+    {{- end }}
+</table>
+{{ template "tail" $ }}

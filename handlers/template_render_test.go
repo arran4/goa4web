@@ -103,8 +103,8 @@ func TestPageTemplatesRender(t *testing.T) {
 		}{&common.CoreData{}, struct{ Words, Comments, News, Blogs, Linker, Writing, Writings, Images int64 }{}}},
 		{"adminPage", struct {
 			*common.CoreData
-			AdminLinks []common.IndexItem
-			Stats      adminStats
+			AdminSections []common.AdminSection
+			Stats         adminStats
 		}{&common.CoreData{}, nil, adminStats{}}},
 		{"forumAdminPage", struct {
 			*common.CoreData

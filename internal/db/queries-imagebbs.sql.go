@@ -665,6 +665,77 @@ func (q *Queries) GetImagePostsByUserDescending(ctx context.Context, arg GetImag
 	return items, nil
 }
 
+const getImagePostsByUserDescendingAll = `-- name: GetImagePostsByUserDescendingAll :many
+SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
+FROM imagepost i
+LEFT JOIN users u ON i.users_idusers = u.idusers
+LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
+WHERE i.users_idusers = ?
+ORDER BY i.posted DESC
+LIMIT ? OFFSET ?
+`
+
+type GetImagePostsByUserDescendingAllParams struct {
+	UsersIdusers int32
+	Limit        int32
+	Offset       int32
+}
+
+type GetImagePostsByUserDescendingAllRow struct {
+	Idimagepost            int32
+	ForumthreadID          int32
+	UsersIdusers           int32
+	ImageboardIdimageboard int32
+	Posted                 sql.NullTime
+	Description            sql.NullString
+	Thumbnail              sql.NullString
+	Fullimage              sql.NullString
+	FileSize               int32
+	Approved               bool
+	DeletedAt              sql.NullTime
+	LastIndex              sql.NullTime
+	Username               sql.NullString
+	Comments               sql.NullInt32
+}
+
+func (q *Queries) GetImagePostsByUserDescendingAll(ctx context.Context, arg GetImagePostsByUserDescendingAllParams) ([]*GetImagePostsByUserDescendingAllRow, error) {
+	rows, err := q.db.QueryContext(ctx, getImagePostsByUserDescendingAll, arg.UsersIdusers, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetImagePostsByUserDescendingAllRow
+	for rows.Next() {
+		var i GetImagePostsByUserDescendingAllRow
+		if err := rows.Scan(
+			&i.Idimagepost,
+			&i.ForumthreadID,
+			&i.UsersIdusers,
+			&i.ImageboardIdimageboard,
+			&i.Posted,
+			&i.Description,
+			&i.Thumbnail,
+			&i.Fullimage,
+			&i.FileSize,
+			&i.Approved,
+			&i.DeletedAt,
+			&i.LastIndex,
+			&i.Username,
+			&i.Comments,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getImagePostsByUserDescendingForUser = `-- name: GetImagePostsByUserDescendingForUser :many
 WITH RECURSIVE role_ids(id) AS (
     SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?

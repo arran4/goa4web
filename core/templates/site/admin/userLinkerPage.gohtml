@@ -1,13 +1,14 @@
 {{ template "head" $ }}
 <h2>Links by {{ .User.Username.String }}</h2>
 <table border="1">
-    <tr><th>ID</th><th>Date</th><th>Title</th><th>Link</th></tr>
+    <tr><th>ID</th><th>Date</th><th>Title</th><th>URL</th><th>View</th></tr>
     {{- range .Links }}
     <tr>
-        <td>{{ .Idlinker }}</td>
-        <td>{{ .Listed }}</td>
-        <td>{{ .Title }}</td>
-        <td><a href="/linker/link/{{ .Idlinker }}">View</a></td>
+        <td><a href="/admin/linker/link/{{ .Idlinker }}">{{ .Idlinker }}</a></td>
+        <td>{{ if .Listed.Valid }}{{ .Listed.Time }}{{ end }}</td>
+        <td>{{ if .Title.Valid }}{{ .Title.String }}{{ end }}</td>
+        <td>{{ if .Url.Valid }}<a href="{{ .Url.String }}" target="_blank">{{ .Url.String }}</a>{{ end }}</td>
+        <td><a href="/linker/show/{{ .Idlinker }}">View</a></td>
     </tr>
     {{- end }}
 </table>

@@ -47,6 +47,7 @@ Optional notification emails can be sent through several providers. See the [Ema
    ```bash
    go mod download
    go build -o goa4web ./cmd/goa4web
+   ./goa4web serve
    ```
 
 During development you can load templates directly from the `core/templates` directory. Use the `live` build tag and add `sqlite` when using SQLite:

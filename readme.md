@@ -419,6 +419,26 @@ go build -o goa4web ./cmd/goa4web
 ./goa4web config reload
 ```
 
+### Additional subcommands
+
+The CLI exposes many other commands for day‑to‑day maintenance. Some commonly
+used examples include:
+
+- `role` – manage site roles and view users assigned to each role.
+- `grant` – control the default permission grants applied to new users.
+- `board` – create and update image boards.
+- `blog` – inspect blog posts and their comments.
+- `writing` – access writings and comment threads.
+- `news` – list news items and manage comments.
+- `faq` – administer frequently asked questions.
+- `ipban` – list or update IP bans.
+- `images` – view uploaded images and metadata.
+- `email queue` – inspect, resend or delete queued emails.
+- `audit` – display recent audit log entries.
+- `notifications` – trigger notification tasks.
+- `server shutdown` – gracefully stop a running instance.
+- `repl` – start an interactive shell for running commands.
+
 ## Docker Deployment
 
 Container images can be built from the provided `Dockerfile`:

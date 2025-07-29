@@ -26,7 +26,7 @@ Gorilla Mux routes all pages and a SQL database stores the data. The application
 
 Most handlers share one package and `cmd/goa4web/main.go` maps them directly for simplicity. [sqlc](https://github.com/kyleconroy/sqlc) generates the `internal/db/models.go` file and the `Queries` type used across handlers.
 
-Optional notification emails go through [AWS SES](https://aws.amazon.com/ses/). The template sits at `core/templates/email/updateEmail.gotxt`.
+Optional notification emails can be sent through several providers. See the [Email Provider Configuration](#email-provider-configuration) section for details. The template for these messages lives under `core/templates/email/updateEmail.gotxt`.
 
 ## Getting Started
 

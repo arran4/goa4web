@@ -4,8 +4,6 @@ This repository contains the source code for a collection of web services writte
 
 Goa4Web is a monolithic web application written in Go. It powers the original `arran4` website, providing a collection of community features including blogs, forums, a bookmark manager and an image board.
 
-Project URL: <https://github.com/arran4/goa4web>
-
 The code in this repository exposes all pages using the [Gorilla Mux](https://github.com/gorilla/mux) router and stores its data in a SQL database. MySQL, PostgreSQL and SQLite are supported. SQLite support is optional and requires the `sqlite` build tag when compiling. Templating uses Go's `html/template` package, either embedded in the binary or loaded from disk when built with the `live` tag.
 
 ## Features

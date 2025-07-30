@@ -19,8 +19,15 @@ func NewSigner(cfg *config.RuntimeConfig, key string) *Signer {
 	return &Signer{cfg: cfg, signer: &sign.Signer{Key: key}}
 }
 
+func (s *Signer) defaultExpiry() time.Time { return time.Now().Add(24 * time.Hour) }
+
 // SignedURL maps an image identifier to a signed URL.
 func (s *Signer) SignedURL(id string) string {
+	return s.SignedURLTTL(id, 24*time.Hour)
+}
+
+// SignedURLTTL maps an image identifier to a signed URL that expires after ttl.
+func (s *Signer) SignedURLTTL(id string, ttl time.Duration) string {
 	id = strings.TrimPrefix(strings.TrimPrefix(id, "image:"), "img:")
 	host := strings.TrimSuffix(s.cfg.HTTPHostname, "/")
 	ts, sig := s.signer.Sign("image:" + id)
@@ -29,6 +36,11 @@ func (s *Signer) SignedURL(id string) string {
 
 // SignedCacheURL maps a cache identifier to a signed URL.
 func (s *Signer) SignedCacheURL(id string) string {
+	return s.SignedCacheURLTTL(id, 24*time.Hour)
+}
+
+// SignedCacheURLTTL maps a cache identifier to a signed URL that expires after ttl.
+func (s *Signer) SignedCacheURLTTL(id string, ttl time.Duration) string {
 	host := strings.TrimSuffix(s.cfg.HTTPHostname, "/")
 	ts, sig := s.signer.Sign("cache:" + id)
 	return fmt.Sprintf("%s/images/cache/%s?ts=%d&sig=%s", host, id, ts, sig)

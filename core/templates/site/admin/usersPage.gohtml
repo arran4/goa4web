@@ -37,15 +37,12 @@
                     <a style="display:inline-block;margin:0 4px" href="/admin/user/{{.Idusers}}/linker">Links</a>
                     <a style="display:inline-block;margin:0 4px" href="/admin/user/{{.Idusers}}/imagebbs">Images</a>
                     <a style="display:inline-block;margin:0 4px" href="/admin/user/{{.Idusers}}/forum">Forum</a>
-                    <form style="display:inline-block;margin:0 4px" method="get" action="/admin/users/edit">
-                        {{ csrfField }}
-                        <input type="hidden" name="uid" value="{{.Idusers}}">
-                        <input type="submit" value="Edit">
-                    </form>
+                    <a style="display:inline-block;margin:0 4px" href="/admin/user/{{.Idusers}}/comments">Comments</a>
+                    <a style="display:inline-block;margin:0 4px" href="/admin/user/{{.Idusers}}/subscriptions">Subscriptions</a>
                     <a style="display:inline-block;margin:0 4px" href="/admin/user/{{.Idusers}}/disable">Disable account</a>
                     <a style="display:inline-block;margin:0 4px" href="/admin/user/{{.Idusers}}/reset">Reset password</a>
                     <a style="display:inline-block;margin:0 4px" href="/user/profile/{{.Username.String}}">Profile</a>
-                    <a style="display:inline-block;margin:0 4px" href="/admin/user/{{.Idusers}}">Profile</a>
+                    <a style="display:inline-block;margin:0 4px" href="/admin/user/{{.Idusers}}">Admin profile</a>
                     <a style="display:inline-block;margin:0 4px" href="/admin/user/{{.Idusers}}/permissions">Permissions</a>
                     <a style="display:inline-block;margin:0 4px" href="/admin/users/export?uid={{.Idusers}}">Export ZIP</a>
                 </td>

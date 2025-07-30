@@ -23,7 +23,6 @@ import (
 // RegisterRoutes attaches the admin endpoints to ar. The router is expected to
 // already have any required authentication middleware applied.
 func (h *Handlers) RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
-	navReg.RegisterAdminControlCenter("Core", "Categories", "/admin/categories", 20)
 	navReg.RegisterAdminControlCenter("Core", "Roles", "/admin/roles", 25)
 	navReg.RegisterAdminControlCenter("Core", "External Links", "/admin/external-links", 30)
 	navReg.RegisterAdminControlCenter("Core", "Notifications", "/admin/notifications", 90)
@@ -40,7 +39,6 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navRe
 
 	ar.HandleFunc("", AdminPage).Methods("GET")
 	ar.HandleFunc("/", AdminPage).Methods("GET")
-	ar.HandleFunc("/categories", AdminCategoriesPage).Methods("GET")
 	ar.HandleFunc("/roles", AdminRolesPage).Methods("GET")
 	ar.HandleFunc("/roles", handlers.TaskHandler(rolePublicProfileTask)).Methods("POST").MatcherFunc(rolePublicProfileTask.Matcher())
 	ar.HandleFunc("/external-links", AdminExternalLinksPage).Methods("GET")
@@ -79,8 +77,11 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navRe
 	ar.HandleFunc("/user/{id}/linker", adminUserLinkerPage).Methods("GET")
 	ar.HandleFunc("/user/{id}/imagebbs", adminUserImagebbsPage).Methods("GET")
 	ar.HandleFunc("/user/{id}/forum", adminUserForumPage).Methods("GET")
+	ar.HandleFunc("/user/{id}/comments", adminUserCommentsPage).Methods("GET")
+	ar.HandleFunc("/user/{id}/subscriptions", adminUserSubscriptionsPage).Methods("GET")
 	ar.HandleFunc("/user/{id}/comment", adminUserAddCommentPage).Methods("POST")
 	ar.HandleFunc("/role/{id}", adminRolePage).Methods("GET")
+	ar.HandleFunc("/grant/delete", handlers.TaskHandler(roleGrantDeleteTask)).Methods("POST").MatcherFunc(roleGrantDeleteTask.Matcher())
 	ar.HandleFunc("/user/{id}/reset", adminUserResetPasswordConfirmPage).Methods("GET")
 	ar.HandleFunc("/user/{id}/reset", handlers.TaskHandler(userPasswordResetTask)).Methods("POST").MatcherFunc(userPasswordResetTask.Matcher())
 	ar.HandleFunc("/announcements", AdminAnnouncementsPage).Methods("GET")

@@ -94,14 +94,14 @@ Example weights:
 
 ```text
 News        10
-Help        20
-Blogs       30
+Blogs       20
+Writings    30
 Forum       40
 Linker      50
-Bookmarks   60
-ImageBBS    70
+ImageBBS    60
+Bookmarks   70
 Search      80
-Writings    90
+Help        90
 Server Stats 140
 ```
 

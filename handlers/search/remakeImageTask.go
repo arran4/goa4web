@@ -24,6 +24,7 @@ func (RemakeImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := struct {
 		*common.CoreData
+		Errors   []string
 		Messages []string
 		Back     string
 	}{

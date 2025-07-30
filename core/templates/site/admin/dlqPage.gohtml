@@ -11,6 +11,9 @@ Configured providers: {{ .Providers }}<br />
 {{- end }}
 </table>
 {{- end }}
+{{- if .FileErr }}
+<p>Error reading file DLQ: {{ .FileErr }}</p>
+{{- end }}
 
 {{- if .DirErrors }}
 <h2>Directory DLQ</h2>
@@ -20,6 +23,9 @@ Configured providers: {{ .Providers }}<br />
 <tr><td>{{ .Name }}</td><td>{{ .Message }}</td></tr>
 {{- end }}
 </table>
+{{- end }}
+{{- if .DirErr }}
+<p>Error reading directory DLQ: {{ .DirErr }}</p>
 {{- end }}
 
 {{- if .Errors }}

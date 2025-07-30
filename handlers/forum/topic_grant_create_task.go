@@ -80,5 +80,5 @@ func (TopicGrantCreateTask) Action(w http.ResponseWriter, r *http.Request) any {
 			return fmt.Errorf("create grant %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
-	return nil
+	return handlers.RefreshDirectHandler{TargetURL: fmt.Sprintf("/admin/forum/topic/%d/grants", topicID)}
 }

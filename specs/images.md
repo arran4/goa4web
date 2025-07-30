@@ -8,10 +8,11 @@ The signing key comes from the `IMAGE_SIGN_SECRET` setting (or the file referenc
 
 Functions in `pkg/images/sign.go` produce signed URLs:
 
-- `SignedURL` returns a URL for an uploaded image.
+- `SignedURL` returns a URL for an uploaded image using the default 24 hour expiration.
 - `SignedCacheURL` does the same for cache entries.
+- `SignedURLTTL` and `SignedCacheURLTTL` accept a custom `time.Duration` specifying how long the link should remain valid.
 
-Each helper appends `ts` and `sig` query parameters to the host configured in `HTTPHostname`. The signature uses HMAC‑SHA256 and expires after 24 hours.
+All helpers append `ts` and `sig` query parameters to the host configured in `HTTPHostname`. Signatures use HMAC‑SHA256 and expire after the supplied duration.
 
 ## Verification
 

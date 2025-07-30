@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/arran4/goa4web/core"
@@ -76,6 +77,13 @@ func (AskTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if !cd.HasGrant("faq", "question", "post", 0) {
+		r.URL.RawQuery = "error=" + url.QueryEscape("Forbidden")
+		handlers.TaskErrorAcknowledgementPage(w, r)
+		return nil
+	}
+
 	if err := queries.CreateFAQQuestion(r.Context(), db.CreateFAQQuestionParams{
 		Question: sql.NullString{
 			String: text,
@@ -87,7 +95,6 @@ func (AskTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("faq fetch fail: %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	evt := cd.Event()
 	evt.Path = "/admin/faq"
 	if evt.Data == nil {

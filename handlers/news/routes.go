@@ -42,7 +42,7 @@ func runTemplate(name string) http.HandlerFunc {
 func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
 	log.Printf("News: Registering Routes")
 	navReg.RegisterIndexLink("News", "/", SectionWeight)
-	navReg.RegisterAdminControlCenter("News", "News", "/admin/news/users/roles", SectionWeight)
+	navReg.RegisterAdminControlCenter("News", "News", "/admin/news", SectionWeight)
 	r.Use(handlers.IndexMiddleware(CustomNewsIndex))
 	r.HandleFunc("/", runTemplate("newsPage")).Methods("GET")
 	r.HandleFunc("/", handlers.TaskDoneAutoRefreshPage).Methods("POST")

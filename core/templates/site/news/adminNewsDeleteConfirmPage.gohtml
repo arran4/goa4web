@@ -1,0 +1,9 @@
+{{ template "head" $ }}
+<p>Are you sure you want to delete news post {{ .PostID }}?</p>
+<form method="post">
+    {{ csrfField }}
+    <input type="hidden" name="task" value="Delete">
+    <input type="submit" value="{{ .ConfirmLabel }}">
+</form>
+<a href="{{ .Back }}">Cancel</a>
+{{ template "tail" $ }}

@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/arran4/goa4web/internal/algorithms"
 	"github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -43,7 +44,19 @@ func (ModifyBoardTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
-	err := queries.UpdateImageBoard(r.Context(), db.UpdateImageBoardParams{
+	boards, err := queries.GetAllImageBoards(r.Context())
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return fmt.Errorf("fetch boards %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	parents := make(map[int32]int32, len(boards))
+	for _, b := range boards {
+		parents[b.Idimageboard] = b.ImageboardIdimageboard
+	}
+	if path, loop := algorithms.WouldCreateLoop(parents, int32(bid), int32(parentBoardId)); loop {
+		return common.UserError{ErrorMessage: fmt.Sprintf("invalid parent board: loop %v", path)}
+	}
+
+	err = queries.UpdateImageBoard(r.Context(), db.UpdateImageBoardParams{
 		ImageboardIdimageboard: int32(parentBoardId),
 		Title:                  sql.NullString{Valid: true, String: name},
 		Description:            sql.NullString{Valid: true, String: desc},

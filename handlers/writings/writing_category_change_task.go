@@ -10,6 +10,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/algorithms"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -34,10 +35,10 @@ func (WritingCategoryChangeTask) Action(w http.ResponseWriter, r *http.Request) 
 		return fmt.Errorf("cid parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	if loop, err := writingCategoryWouldLoop(r.Context(), queries, int32(cid), int32(parentID)); err != nil {
+	if path, loop, err := writingCategoryWouldLoop(r.Context(), queries, int32(cid), int32(parentID)); err != nil {
 		return fmt.Errorf("check writing category loop %w", handlers.ErrRedirectOnSamePageHandler(err))
 	} else if loop {
-		return common.UserError{ErrorMessage: "invalid parent category: loop detected"}
+		return common.UserError{ErrorMessage: fmt.Sprintf("invalid parent category: loop %v", path)}
 	}
 
 	if err := queries.UpdateWritingCategory(r.Context(), db.UpdateWritingCategoryParams{
@@ -58,35 +59,20 @@ func (WritingCategoryChangeTask) Action(w http.ResponseWriter, r *http.Request) 
 	return nil
 }
 
-func writingCategoryWouldLoop(ctx context.Context, queries *db.Queries, cid, parentID int32) (bool, error) {
-	if parentID == 0 {
-		return false, nil
-	}
-	if parentID == cid {
-		return true, nil
-	}
-	cats, err := queries.FetchAllCategories(ctx)
-	if err != nil {
-		return false, err
-	}
-	parents := make(map[int32]int32, len(cats))
-	for _, c := range cats {
-		parents[c.Idwritingcategory] = c.WritingCategoryID
-	}
-	seen := map[int32]struct{}{}
-	for p := parentID; p != 0; {
-		if _, ok := seen[p]; ok {
-			return true, nil
+func writingCategoryWouldLoop(ctx context.Context, queries *db.Queries, cid, parentID int32) ([]int32, bool, error) {
+	var parents map[int32]int32
+	if queries != nil {
+		cats, err := queries.FetchAllCategories(ctx)
+		if err != nil {
+			return nil, false, err
 		}
-		seen[p] = struct{}{}
-		if p == cid {
-			return true, nil
+		parents = make(map[int32]int32, len(cats))
+		for _, c := range cats {
+			parents[c.Idwritingcategory] = c.WritingCategoryID
 		}
-		np, ok := parents[p]
-		if !ok {
-			break
-		}
-		p = np
+	} else {
+		parents = map[int32]int32{}
 	}
-	return false, nil
+	path, loop := algorithms.WouldCreateLoop(parents, cid, parentID)
+	return path, loop, nil
 }

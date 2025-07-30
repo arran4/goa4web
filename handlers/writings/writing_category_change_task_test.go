@@ -23,6 +23,10 @@ func TestWritingCategoryChangeTask(t *testing.T) {
 
 	queries := dbpkg.New(db)
 
+	rows := sqlmock.NewRows([]string{"idwritingcategory", "writing_category_id", "title", "description"}).
+		AddRow(1, 0, "a", "")
+	mock.ExpectQuery("SELECT wc.idwritingcategory").WillReturnRows(rows)
+
 	mock.ExpectExec("UPDATE writing_category").
 		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), int32(0), int32(1)).
 		WillReturnResult(sqlmock.NewResult(0, 1))
@@ -56,7 +60,7 @@ func TestWritingCategoryWouldLoop(t *testing.T) {
 		AddRow(2, 1, "b", "")
 	mock.ExpectQuery("SELECT wc.idwritingcategory").WillReturnRows(rows)
 
-	loop, err := writingCategoryWouldLoop(context.Background(), queries, 1, 2)
+	_, loop, err := writingCategoryWouldLoop(context.Background(), queries, 1, 2)
 	if err != nil {
 		t.Fatalf("writingCategoryWouldLoop: %v", err)
 	}
@@ -69,7 +73,7 @@ func TestWritingCategoryWouldLoop(t *testing.T) {
 }
 
 func TestWritingCategoryWouldLoopSelfRef(t *testing.T) {
-	loop, err := writingCategoryWouldLoop(context.Background(), nil, 3, 3)
+	_, loop, err := writingCategoryWouldLoop(context.Background(), nil, 3, 3)
 	if err != nil {
 		t.Fatalf("writingCategoryWouldLoop: %v", err)
 	}
@@ -94,7 +98,7 @@ func TestWritingCategoryWouldLoopHeadToTail(t *testing.T) {
 		AddRow(4, 3, "d", "")
 	mock.ExpectQuery("SELECT wc.idwritingcategory").WillReturnRows(rows)
 
-	loop, err := writingCategoryWouldLoop(context.Background(), queries, 1, 4)
+	_, loop, err := writingCategoryWouldLoop(context.Background(), queries, 1, 4)
 	if err != nil {
 		t.Fatalf("writingCategoryWouldLoop: %v", err)
 	}
@@ -121,7 +125,7 @@ func TestWritingCategoryWouldLoopAfterNode(t *testing.T) {
 		AddRow(3, 2, "c", "")
 	mock.ExpectQuery("SELECT wc.idwritingcategory").WillReturnRows(rows)
 
-	loop, err := writingCategoryWouldLoop(context.Background(), queries, 1, 2)
+	_, loop, err := writingCategoryWouldLoop(context.Background(), queries, 1, 2)
 	if err != nil {
 		t.Fatalf("writingCategoryWouldLoop: %v", err)
 	}
@@ -158,7 +162,7 @@ func TestWritingCategoryChangeTaskLoop(t *testing.T) {
 		t.Fatalf("expected error")
 	} else if ue, ok := v.(common.UserError); !ok {
 		t.Fatalf("expected user error got %T", v)
-	} else if ue.UserErrorMessage() != "invalid parent category: loop detected" {
+	} else if !strings.HasPrefix(ue.UserErrorMessage(), "invalid parent category: loop") {
 		t.Fatalf("unexpected error message %q", ue.UserErrorMessage())
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {

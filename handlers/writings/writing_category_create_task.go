@@ -9,6 +9,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/algorithms"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -29,6 +30,17 @@ func (WritingCategoryCreateTask) Action(w http.ResponseWriter, r *http.Request) 
 	}
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cats, err := queries.FetchAllCategories(r.Context())
+	if err != nil {
+		return fmt.Errorf("fetch categories %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	parents := make(map[int32]int32, len(cats))
+	for _, c := range cats {
+		parents[c.Idwritingcategory] = c.WritingCategoryID
+	}
+	if path, loop := algorithms.WouldCreateLoop(parents, 0, int32(pcid)); loop && len(path) > 0 {
+		return common.UserError{ErrorMessage: "invalid parent category: loop detected"}
+	}
 	if err := queries.InsertWritingCategory(r.Context(), db.InsertWritingCategoryParams{
 		WritingCategoryID: int32(pcid),
 		Title: sql.NullString{

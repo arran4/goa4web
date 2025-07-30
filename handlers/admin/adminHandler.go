@@ -43,7 +43,8 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 	}
 	count("SELECT COUNT(*) FROM users", &data.Stats.Users)
 	count("SELECT COUNT(*) FROM language", &data.Stats.Languages)
-	count("SELECT COUNT(*) FROM siteNews", &data.Stats.News)
+	// site_news renamed from siteNews in schema version 24
+	count("SELECT COUNT(*) FROM site_news", &data.Stats.News)
 	count("SELECT COUNT(*) FROM blogs", &data.Stats.Blogs)
 	count("SELECT COUNT(*) FROM forumtopic", &data.Stats.ForumTopics)
 	count("SELECT COUNT(*) FROM forumthread", &data.Stats.ForumThreads)

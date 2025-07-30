@@ -5,6 +5,7 @@ import (
 	"github.com/arran4/goa4web/handlers/auth"
 	"github.com/arran4/goa4web/handlers/blogs"
 	"github.com/arran4/goa4web/handlers/bookmarks"
+	"github.com/arran4/goa4web/handlers/externallink"
 	"github.com/arran4/goa4web/handlers/faq"
 	"github.com/arran4/goa4web/handlers/forum"
 	"github.com/arran4/goa4web/handlers/imagebbs"
@@ -35,6 +36,7 @@ func registerModules(reg *router.Registry, ah *admin.Handlers) {
 	news.Register(reg)
 	search.Register(reg)
 	images.Register(reg)
+	externallink.Register(reg)
 	user.Register(reg)
 	writings.Register(reg)
 	for _, fn := range extraRegistrations {

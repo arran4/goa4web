@@ -130,6 +130,11 @@ const (
 	// EnvImageSignSecretFile specifies the file containing the signing key.
 	EnvImageSignSecretFile = "IMAGE_SIGN_SECRET_FILE"
 
+	// EnvLinkSignSecret provides the signing key for external link URLs.
+	EnvLinkSignSecret = "LINK_SIGN_SECRET"
+	// EnvLinkSignSecretFile specifies the file containing the link signing key.
+	EnvLinkSignSecretFile = "LINK_SIGN_SECRET_FILE"
+
 	// EnvDefaultLanguage specifies the site's default language.
 	EnvDefaultLanguage = "DEFAULT_LANGUAGE"
 

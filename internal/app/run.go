@@ -21,6 +21,7 @@ import (
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
 	imagesign "github.com/arran4/goa4web/internal/images"
+	linksign "github.com/arran4/goa4web/internal/linksign"
 	"github.com/arran4/goa4web/internal/middleware"
 	csrfmw "github.com/arran4/goa4web/internal/middleware/csrf"
 	nav "github.com/arran4/goa4web/internal/navigation"
@@ -49,6 +50,7 @@ type ServerOption func(*serverOptions)
 type serverOptions struct {
 	SessionSecret   string
 	ImageSignSecret string
+	LinkSignSecret  string
 	APISecret       string
 	DBReg           *dbdrivers.Registry
 	EmailReg        *email.Registry
@@ -68,6 +70,11 @@ func WithSessionSecret(secret string) ServerOption {
 // WithImageSignSecret supplies the image signing secret.
 func WithImageSignSecret(secret string) ServerOption {
 	return func(o *serverOptions) { o.ImageSignSecret = secret }
+}
+
+// WithLinkSignSecret supplies the external link signing secret.
+func WithLinkSignSecret(secret string) ServerOption {
+	return func(o *serverOptions) { o.LinkSignSecret = secret }
 }
 
 // WithAPISecret sets the administrator API secret.
@@ -159,6 +166,7 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 		return nil, fmt.Errorf("smtp fallback: %w", err)
 	}
 	imgSigner := imagesign.NewSigner(cfg, o.ImageSignSecret)
+	linkSigner := linksign.NewSigner(cfg, o.LinkSignSecret)
 	adminhandlers.AdminAPISecret = o.APISecret
 	email.SetDefaultFromName(cfg.EmailFrom)
 
@@ -185,6 +193,7 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 		server.WithBus(o.Bus),
 		server.WithEmailRegistry(o.EmailReg),
 		server.WithImageSigner(imgSigner),
+		server.WithLinkSigner(linkSigner),
 		server.WithDBRegistry(o.DBReg),
 		server.WithWebsocket(wsMod),
 		server.WithTasksRegistry(o.TasksReg),

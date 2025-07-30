@@ -47,7 +47,7 @@ func TestToEnvMapIncludesAllKeys(t *testing.T) {
 			t.Errorf("missing %s", o.Env)
 		}
 	}
-	extras = []string{config.EnvConfigFile, config.EnvSessionSecret, config.EnvSessionSecretFile, config.EnvImageSignSecret, config.EnvImageSignSecretFile}
+	extras = []string{config.EnvConfigFile, config.EnvSessionSecret, config.EnvSessionSecretFile, config.EnvImageSignSecret, config.EnvImageSignSecretFile, config.EnvLinkSignSecret, config.EnvLinkSignSecretFile}
 	for _, k := range extras {
 		if _, ok := m[k]; !ok {
 			t.Errorf("missing %s", k)

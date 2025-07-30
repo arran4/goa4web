@@ -24,6 +24,7 @@ import (
 	"github.com/arran4/goa4web/internal/eventbus"
 	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/lazy"
+	linksign "github.com/arran4/goa4web/internal/linksign"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -88,6 +89,7 @@ type CoreData struct {
 	NotificationCount int32
 	Config            *config.RuntimeConfig
 	ImageSigner       *imagesign.Signer
+	LinkSigner        *linksign.Signer
 	Nav               NavigationProvider
 	mapMu             sync.Mutex
 	TasksReg          *tasks.Registry
@@ -173,6 +175,30 @@ func WithImageURLMapper(fn func(tag, val string) string) CoreOption {
 	return func(cd *CoreData) { cd.a4codeMapper = fn }
 }
 
+func (cd *CoreData) composeMapper() {
+	var fns []func(tag, val string) string
+	if cd.ImageSigner != nil {
+		fns = append(fns, cd.ImageSigner.MapURL)
+	}
+	if cd.LinkSigner != nil {
+		fns = append(fns, cd.LinkSigner.MapURL)
+	}
+	if len(fns) == 0 {
+		cd.a4codeMapper = nil
+		return
+	}
+	cd.a4codeMapper = func(tag, val string) string {
+		for _, fn := range fns {
+			newVal := fn(tag, val)
+			if newVal != val {
+				return newVal
+			}
+			val = newVal
+		}
+		return val
+	}
+}
+
 // WithSession stores the gorilla session on the CoreData object.
 func WithSession(s *sessions.Session) CoreOption {
 	return func(cd *CoreData) { cd.session = s }
@@ -205,9 +231,15 @@ func WithConfig(cfg *config.RuntimeConfig) CoreOption {
 func WithImageSigner(s *imagesign.Signer) CoreOption {
 	return func(cd *CoreData) {
 		cd.ImageSigner = s
-		if s != nil {
-			cd.a4codeMapper = s.MapURL
-		}
+		cd.composeMapper()
+	}
+}
+
+// WithLinkSigner registers the external link signer on CoreData.
+func WithLinkSigner(s *linksign.Signer) CoreOption {
+	return func(cd *CoreData) {
+		cd.LinkSigner = s
+		cd.composeMapper()
 	}
 }
 

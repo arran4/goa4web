@@ -301,6 +301,12 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("images: %w", err)
 		}
 		return c.Run()
+	case "links":
+		c, err := parseLinksCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("links: %w", err)
+		}
+		return c.Run()
 	case "audit":
 		c, err := parseAuditCmd(r, args[1:])
 		if err != nil {

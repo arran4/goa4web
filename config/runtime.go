@@ -100,6 +100,11 @@ type RuntimeConfig struct {
 	// ImageSignSecretFile specifies the path to the image signing key.
 	ImageSignSecretFile string
 
+	// LinkSignSecret is used to sign external link URLs.
+	LinkSignSecret string
+	// LinkSignSecretFile specifies the path to the external link signing key.
+	LinkSignSecretFile string
+
 	// AdminAPISecret is used to sign administrator API tokens.
 	AdminAPISecret string
 	// AdminAPISecretFile specifies the path to the administrator API signing key.

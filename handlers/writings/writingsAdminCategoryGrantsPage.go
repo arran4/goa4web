@@ -67,6 +67,4 @@ func AdminCategoryGrantsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	handlers.TemplateHandler(w, r, "adminCategoryGrantsPage.gohtml", data)
-
-	// TODO ??? handlers.TemplateHandler(w, r, "writingsAdminCategoryGrantsPage.gohtml", data)
 }

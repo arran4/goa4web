@@ -1,0 +1,15 @@
+Usage:
+  {{.Prog}} links <command> [<args>]
+
+Commands:
+  sign       sign a link and output the redirect URL
+  verify     verify a signed link
+  list       list tracked external links
+  delete     delete an external link
+  refresh    refresh cached data for a link
+
+Examples:
+  {{.Prog}} links sign https://example.com
+  {{.Prog}} links verify -ts 123 -sig abc https://example.com
+
+{{template "flag_groups_section" .FlagGroups}}

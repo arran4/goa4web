@@ -19,6 +19,7 @@ import (
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
 	imagesign "github.com/arran4/goa4web/internal/images"
+	linksign "github.com/arran4/goa4web/internal/linksign"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	"github.com/gorilla/sessions"
 )
@@ -32,7 +33,7 @@ func handleDie(w http.ResponseWriter, message string) {
 // templates using the supplied database handle. The verbosity controls optional
 // logging of database pool statistics. The navigation registry provides menu
 // links for templates and allows dependency injection during tests.
-func CoreAdderMiddlewareWithDB(db *sql.DB, cfg *config.RuntimeConfig, verbosity int, emailReg *email.Registry, signer *imagesign.Signer, navReg *nav.Registry) func(http.Handler) http.Handler {
+func CoreAdderMiddlewareWithDB(db *sql.DB, cfg *config.RuntimeConfig, verbosity int, emailReg *email.Registry, signer *imagesign.Signer, linkSigner *linksign.Signer, navReg *nav.Registry) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			session, err := core.GetSession(r)
@@ -97,6 +98,7 @@ func CoreAdderMiddlewareWithDB(db *sql.DB, cfg *config.RuntimeConfig, verbosity 
 			}
 			cd := common.NewCoreData(r.Context(), queries, cfg,
 				common.WithImageSigner(signer),
+				common.WithLinkSigner(linkSigner),
 				common.WithSession(session),
 				common.WithEmailProvider(provider),
 				common.WithAbsoluteURLBase(base),

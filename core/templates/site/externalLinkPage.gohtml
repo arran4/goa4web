@@ -1,0 +1,9 @@
+{{ template "head" $ }}
+<p>Are you sure you want to visit <a href="{{$.URL}}" target="_blank">{{$.URL}}</a>?</p>
+{{ if .CardImage }}<img src="{{.CardImage}}" alt="preview"><br>{{ end }}
+{{ if .Favicon }}<img src="{{.Favicon}}" alt="icon">{{ end }}
+{{ if .Title }}<p><strong>{{.Title}}</strong></p>{{ end }}
+{{ if .Desc }}<p>{{.Desc}}</p>{{ end }}
+<a href="{{$.RedirectURL}}">Yes</a>
+<a href="{{$.ReloadURL}}">(re)load from social media card</a>
+{{ template "tail" $ }}

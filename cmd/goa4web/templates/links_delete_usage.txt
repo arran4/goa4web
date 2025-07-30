@@ -1,0 +1,7 @@
+Usage:
+  {{.Prog}} links delete -id <id>
+
+Flags:
+  -id int   link id
+
+{{template "flag_groups_section" .FlagGroups}}

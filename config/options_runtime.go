@@ -70,6 +70,8 @@ var StringOptions = []StringOption{
 	{"session-same-site", EnvSessionSameSite, "session cookie SameSite policy", "strict", nil, "", func(c *RuntimeConfig) *string { return &c.SessionSameSite }},
 	{"image-sign-secret", EnvImageSignSecret, "image signing key", "", nil, "", func(c *RuntimeConfig) *string { return &c.ImageSignSecret }},
 	{"image-sign-secret-file", EnvImageSignSecretFile, "path to image signing key", "", nil, "", func(c *RuntimeConfig) *string { return &c.ImageSignSecretFile }},
+	{"link-sign-secret", EnvLinkSignSecret, "external link signing key", "", nil, "", func(c *RuntimeConfig) *string { return &c.LinkSignSecret }},
+	{"link-sign-secret-file", EnvLinkSignSecretFile, "path to external link signing key", "", nil, "", func(c *RuntimeConfig) *string { return &c.LinkSignSecretFile }},
 	{"admin-api-secret", EnvAdminAPISecret, "admin API signing key", "", nil, "", func(c *RuntimeConfig) *string { return &c.AdminAPISecret }},
 	{"admin-api-secret-file", EnvAdminAPISecretFile, "path to admin API signing key", "", nil, "", func(c *RuntimeConfig) *string { return &c.AdminAPISecretFile }},
 }

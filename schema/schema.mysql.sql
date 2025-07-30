@@ -634,3 +634,19 @@ CREATE TABLE IF NOT EXISTS `admin_request_comments` (
   PRIMARY KEY (`id`),
   KEY `admin_request_comments_request_idx` (`request_id`)
 );
+
+CREATE TABLE IF NOT EXISTS `external_links` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `url` tinytext NOT NULL,
+  `clicks` int NOT NULL DEFAULT 0,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `updated_by` int DEFAULT NULL,
+  `card_title` tinytext,
+  `card_description` tinytext,
+  `card_image` tinytext,
+  `card_image_cache` tinytext,
+  `favicon_cache` tinytext,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `external_links_url_idx` (`url`(255))
+);

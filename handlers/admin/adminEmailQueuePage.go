@@ -48,14 +48,25 @@ func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 	}
 	for _, e := range rows {
 		emailStr := ""
-		if e.ToUserID.Valid {
+		if e.ToUserID.Valid && !e.DirectEmail {
 			if u, ok := users[e.ToUserID.Int32]; ok && u.Email.Valid && u.Email.String != "" {
 				emailStr = u.Email.String
 			}
 		}
 		subj := ""
 		if m, err := mail.ReadMessage(strings.NewReader(e.Body)); err == nil {
+			if emailStr == "" {
+				emailStr = m.Header.Get("To")
+			}
 			subj = m.Header.Get("Subject")
+		}
+		if emailStr == "" {
+			emailStr = "(unknown)"
+		}
+		if e.DirectEmail {
+			emailStr += " (direct)"
+		} else if !e.ToUserID.Valid {
+			emailStr += " (userless)"
 		}
 		data.Emails = append(data.Emails, EmailItem{e, emailStr, subj})
 	}

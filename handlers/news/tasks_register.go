@@ -11,6 +11,7 @@ func RegisterTasks() []tasks.NamedTask {
 		cancelTask,
 		replyTask,
 		editTask,
+		deleteNewsPostTask,
 		newPostTask,
 	}
 }

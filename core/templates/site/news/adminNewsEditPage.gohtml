@@ -1,0 +1,10 @@
+{{ template "head" $ }}
+<form method="post">
+    {{ csrfField }}
+    <input type="hidden" name="task" value="Edit">
+    <textarea name="text" cols=40 rows=20>{{ .Post.News.String }}</textarea><br>
+    {{ template "languageCombobox" $ }}
+    <input type="submit" value="Save">
+</form>
+<p><a href="/admin/news/{{ .Post.Idsitenews }}">Cancel</a></p>
+{{ template "tail" $ }}

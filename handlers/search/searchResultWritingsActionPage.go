@@ -34,8 +34,13 @@ func (SearchWritingsTask) Action(w http.ResponseWriter, r *http.Request) any {
 		EmptyWords         bool
 	}
 
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if !common.CanSearch(cd, "writing") {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return nil
+	}
 	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	session, ok := core.GetSessionOrFail(w, r)

@@ -35,8 +35,13 @@ func (SearchLinkerTask) Action(w http.ResponseWriter, r *http.Request) any {
 		WritingCategoryID  int32
 	}
 
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if !common.CanSearch(cd, "linker") {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return nil
+	}
 	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	session, ok := core.GetSessionOrFail(w, r)

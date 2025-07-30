@@ -68,6 +68,7 @@ Permission actions describe groups of related operations. The main verbs are:
 - **invite** – invite additional users
 - **approve** – mark content as reviewed or published
 - **moderate** – hide or otherwise flag inappropriate content
+- **search** – run a search query
 
 Sections may introduce extra actions but these form the base vocabulary used by
 the templates and permission checks.

@@ -26,8 +26,13 @@ func SearchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 		EmptyWords         bool
 	}
 
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if !common.CanSearch(cd, "news") {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
 	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 	}
 	data.CoreData.PageTitle = "News Search Results"
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()

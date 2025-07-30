@@ -9,7 +9,7 @@
         <td>{{ if .ForumtopicIdforumtopic.Valid }}{{ .ForumtopicIdforumtopic.Int32 }}{{ end }}</td>
         <td>{{ .ForumthreadID }}</td>
         <td>{{ if .Text.Valid }}{{ left 40 .Text.String }}{{ end }}</td>
-        <td><a href="/forum/topic/{{ .ForumtopicIdforumtopic.Int32 }}/thread/{{ .ForumthreadID }}#c{{ .Idcomments }}">View</a></td>
+        <td><a href="/forum/topic/{{ .ForumtopicIdforumtopic.Int32 }}/thread/{{ .ForumthreadID }}#c{{ .Idcomments }}">View</a> | <a href="/admin/comment/{{ .Idcomments }}">Admin</a></td>
     </tr>
     {{- end }}
 </table>

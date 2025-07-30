@@ -20,6 +20,7 @@ type commentForTest struct {
 	ShowReply          bool
 	EditUrl            string
 	EditSaveUrl        string
+	AdminUrl           string
 	Editing            bool
 	Languages          []struct{}
 	SelectedLanguageId int32
@@ -41,6 +42,7 @@ func TestCommentTemplateEditing(t *testing.T) {
 	c.ShowReply = true
 	c.EditUrl = "/edit"
 	c.EditSaveUrl = "/save"
+	c.AdminUrl = "/admin"
 	c.Editing = true
 
 	var buf bytes.Buffer

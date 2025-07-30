@@ -34,7 +34,7 @@ func (q *Queries) DeleteTemplateOverride(ctx context.Context, name string) error
 }
 
 const forumCategoryThreadCounts = `-- name: ForumCategoryThreadCounts :many
-SELECT c.title, COUNT(th.idforumthread) AS count
+SELECT c.idforumcategory, c.title, COUNT(th.idforumthread) AS count
 FROM forumcategory c
 LEFT JOIN forumtopic t ON c.idforumcategory = t.forumcategory_idforumcategory
 LEFT JOIN forumthread th ON th.forumtopic_idforumtopic = t.idforumtopic
@@ -43,8 +43,9 @@ ORDER BY c.title
 `
 
 type ForumCategoryThreadCountsRow struct {
-	Title sql.NullString
-	Count int64
+	Idforumcategory int32
+	Title           sql.NullString
+	Count           int64
 }
 
 func (q *Queries) ForumCategoryThreadCounts(ctx context.Context) ([]*ForumCategoryThreadCountsRow, error) {
@@ -56,7 +57,7 @@ func (q *Queries) ForumCategoryThreadCounts(ctx context.Context) ([]*ForumCatego
 	var items []*ForumCategoryThreadCountsRow
 	for rows.Next() {
 		var i ForumCategoryThreadCountsRow
-		if err := rows.Scan(&i.Title, &i.Count); err != nil {
+		if err := rows.Scan(&i.Idforumcategory, &i.Title, &i.Count); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -71,7 +72,7 @@ func (q *Queries) ForumCategoryThreadCounts(ctx context.Context) ([]*ForumCatego
 }
 
 const forumTopicThreadCounts = `-- name: ForumTopicThreadCounts :many
-SELECT t.title, COUNT(th.idforumthread) AS count
+SELECT t.idforumtopic, t.title, COUNT(th.idforumthread) AS count
 FROM forumtopic t
 LEFT JOIN forumthread th ON th.forumtopic_idforumtopic = t.idforumtopic
 GROUP BY t.idforumtopic
@@ -79,8 +80,9 @@ ORDER BY t.title
 `
 
 type ForumTopicThreadCountsRow struct {
-	Title sql.NullString
-	Count int64
+	Idforumtopic int32
+	Title        sql.NullString
+	Count        int64
 }
 
 func (q *Queries) ForumTopicThreadCounts(ctx context.Context) ([]*ForumTopicThreadCountsRow, error) {
@@ -92,7 +94,7 @@ func (q *Queries) ForumTopicThreadCounts(ctx context.Context) ([]*ForumTopicThre
 	var items []*ForumTopicThreadCountsRow
 	for rows.Next() {
 		var i ForumTopicThreadCountsRow
-		if err := rows.Scan(&i.Title, &i.Count); err != nil {
+		if err := rows.Scan(&i.Idforumtopic, &i.Title, &i.Count); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -167,7 +169,7 @@ func (q *Queries) GetTemplateOverride(ctx context.Context, name string) (string,
 }
 
 const imageboardPostCounts = `-- name: ImageboardPostCounts :many
-SELECT ib.title, COUNT(ip.idimagepost) AS count
+SELECT ib.idimageboard, ib.title, COUNT(ip.idimagepost) AS count
 FROM imageboard ib
 LEFT JOIN imagepost ip ON ip.imageboard_idimageboard = ib.idimageboard
 GROUP BY ib.idimageboard
@@ -175,8 +177,9 @@ ORDER BY ib.title
 `
 
 type ImageboardPostCountsRow struct {
-	Title sql.NullString
-	Count int64
+	Idimageboard int32
+	Title        sql.NullString
+	Count        int64
 }
 
 func (q *Queries) ImageboardPostCounts(ctx context.Context) ([]*ImageboardPostCountsRow, error) {
@@ -188,7 +191,7 @@ func (q *Queries) ImageboardPostCounts(ctx context.Context) ([]*ImageboardPostCo
 	var items []*ImageboardPostCountsRow
 	for rows.Next() {
 		var i ImageboardPostCountsRow
-		if err := rows.Scan(&i.Title, &i.Count); err != nil {
+		if err := rows.Scan(&i.Idimageboard, &i.Title, &i.Count); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -269,7 +272,7 @@ func (q *Queries) SetTemplateOverride(ctx context.Context, arg SetTemplateOverri
 }
 
 const userPostCounts = `-- name: UserPostCounts :many
-SELECT u.username,
+SELECT u.idusers, u.username,
        COALESCE(b.blogs, 0)     AS blogs,
        COALESCE(n.news, 0)      AS news,
        COALESCE(c.comments, 0)  AS comments,
@@ -287,6 +290,7 @@ ORDER BY u.username
 `
 
 type UserPostCountsRow struct {
+	Idusers  int32
 	Username sql.NullString
 	Blogs    int64
 	News     int64
@@ -306,6 +310,7 @@ func (q *Queries) UserPostCounts(ctx context.Context) ([]*UserPostCountsRow, err
 	for rows.Next() {
 		var i UserPostCountsRow
 		if err := rows.Scan(
+			&i.Idusers,
 			&i.Username,
 			&i.Blogs,
 			&i.News,
@@ -363,7 +368,7 @@ func (q *Queries) UserPostCountsByID(ctx context.Context, idusers int32) (*UserP
 }
 
 const writingCategoryCounts = `-- name: WritingCategoryCounts :many
-SELECT wc.title, COUNT(w.idwriting) AS count
+SELECT wc.idwritingCategory, wc.title, COUNT(w.idwriting) AS count
 FROM writing_category wc
 LEFT JOIN writing w ON w.writing_category_id = wc.idwritingCategory
 GROUP BY wc.idwritingCategory
@@ -371,8 +376,9 @@ ORDER BY wc.title
 `
 
 type WritingCategoryCountsRow struct {
-	Title sql.NullString
-	Count int64
+	Idwritingcategory int32
+	Title             sql.NullString
+	Count             int64
 }
 
 func (q *Queries) WritingCategoryCounts(ctx context.Context) ([]*WritingCategoryCountsRow, error) {
@@ -384,7 +390,7 @@ func (q *Queries) WritingCategoryCounts(ctx context.Context) ([]*WritingCategory
 	var items []*WritingCategoryCountsRow
 	for rows.Next() {
 		var i WritingCategoryCountsRow
-		if err := rows.Scan(&i.Title, &i.Count); err != nil {
+		if err := rows.Scan(&i.Idwritingcategory, &i.Title, &i.Count); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)

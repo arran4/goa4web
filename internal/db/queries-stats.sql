@@ -4,14 +4,14 @@ FROM imagepost
 WHERE imageboard_idimageboard = ?;
 
 -- name: ForumTopicThreadCounts :many
-SELECT t.title, COUNT(th.idforumthread) AS count
+SELECT t.idforumtopic, t.title, COUNT(th.idforumthread) AS count
 FROM forumtopic t
 LEFT JOIN forumthread th ON th.forumtopic_idforumtopic = t.idforumtopic
 GROUP BY t.idforumtopic
 ORDER BY t.title;
 
 -- name: ForumCategoryThreadCounts :many
-SELECT c.title, COUNT(th.idforumthread) AS count
+SELECT c.idforumcategory, c.title, COUNT(th.idforumthread) AS count
 FROM forumcategory c
 LEFT JOIN forumtopic t ON c.idforumcategory = t.forumcategory_idforumcategory
 LEFT JOIN forumthread th ON th.forumtopic_idforumtopic = t.idforumtopic
@@ -19,21 +19,21 @@ GROUP BY c.idforumcategory
 ORDER BY c.title;
 
 -- name: ImageboardPostCounts :many
-SELECT ib.title, COUNT(ip.idimagepost) AS count
+SELECT ib.idimageboard, ib.title, COUNT(ip.idimagepost) AS count
 FROM imageboard ib
 LEFT JOIN imagepost ip ON ip.imageboard_idimageboard = ib.idimageboard
 GROUP BY ib.idimageboard
 ORDER BY ib.title;
 
 -- name: WritingCategoryCounts :many
-SELECT wc.title, COUNT(w.idwriting) AS count
+SELECT wc.idwritingCategory, wc.title, COUNT(w.idwriting) AS count
 FROM writing_category wc
 LEFT JOIN writing w ON w.writing_category_id = wc.idwritingCategory
 GROUP BY wc.idwritingCategory
 ORDER BY wc.title;
 
 -- name: UserPostCounts :many
-SELECT u.username,
+SELECT u.idusers, u.username,
        COALESCE(b.blogs, 0)     AS blogs,
        COALESCE(n.news, 0)      AS news,
        COALESCE(c.comments, 0)  AS comments,

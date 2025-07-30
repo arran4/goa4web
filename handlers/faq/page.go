@@ -69,10 +69,12 @@ func Page(w http.ResponseWriter, r *http.Request) {
 func CustomFAQIndex(data *common.CoreData, r *http.Request) {
 	userHasAdmin := data.HasRole("administrator") && data.AdminMode
 	data.CustomIndexItems = []common.IndexItem{}
-	data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-		Name: "Ask",
-		Link: "/faq/ask",
-	})
+	if data.HasGrant("faq", "question", "post", 0) {
+		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
+			Name: "Ask",
+			Link: "/faq/ask",
+		})
+	}
 	if userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "Question Qontrols",

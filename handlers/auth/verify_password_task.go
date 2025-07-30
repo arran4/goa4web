@@ -39,12 +39,16 @@ func (VerifyPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	id := int32(id64)
 	code := r.FormValue("code")
+	pw := r.FormValue("password")
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
 	expiry := time.Now().Add(-time.Duration(cd.Config.PasswordResetExpiryHours) * time.Hour)
 	reset, err := queries.GetPasswordResetByCode(r.Context(), db.GetPasswordResetByCodeParams{VerificationCode: code, CreatedAt: expiry})
 	if err != nil || reset.ID != id {
 		return handlers.ErrRedirectOnSamePageHandler(errors.New("invalid code"))
+	}
+	if !VerifyPassword(pw, reset.Passwd, reset.PasswdAlgorithm) {
+		return handlers.ErrRedirectOnSamePageHandler(errors.New("invalid password"))
 	}
 	if err := queries.MarkPasswordResetVerified(r.Context(), reset.ID); err != nil {
 		log.Printf("mark reset verified: %v", err)

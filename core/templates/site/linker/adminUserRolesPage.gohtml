@@ -1,43 +1,48 @@
 {{ template "head" $ }}
-    <form method="get">
-        Username: <input name="search" value="{{$.Search}}">
-        <input type="submit" value="Filter">
-    </form>
-    <form method="post">
+<form method="get">
+    Username: <input name="search" value="{{$.Search}}">
+    <input type="submit" value="Filter">
+</form>
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <th>User</th>
+        <th>Email</th>
+        <th>Roles</th>
+        <th>Actions</th>
+    </tr>
+    {{- range .Users }}
+    <tr>
+        <td>{{ .ID }}</td>
+        <td>{{ .Username.String }}</td>
+        <td>{{ .Email }}</td>
+        <td>
+            {{- if .Roles }}
+            <ul>
+                {{- range .Roles }}
+                <li>{{ .Name }}
+                    <form method="post" style="display:inline">
         {{ csrfField }}
-    <table border="1">
-        <tr>
-            <th>Select</th>
-            <th>ID</th>
-            <th>User</th>
-            <th>Email</th>
-            <th>Role</th>
-        </tr>
-        {{- if .UserLevels }}
-            {{- range $result := .UserLevels }}
-                <tr>
-                    <td><input type="checkbox" name="permids" value="{{ $result.ID }}"></td>
-                    <td>{{ $result.ID }}</td>
-                    <td>{{ $result.Username.String }}</td>
-                    <td>{{ $result.Email.String }}</td>
-                    <td>{{ $result.Role }}</td>
-                </tr>
-            {{- end }}
-        {{- else }}
-            <tr><td colspan="6">No results</td></tr>
-        {{- end }}
-        <tr>
-            <td colspan="6">
-                Usernames (space or comma separated):<br>
-                <textarea name="usernames" rows="2" cols="40"></textarea><br>
+                        <input type="hidden" name="permid" value="{{ .PermID }}">
+                        <button type="submit" name="task" value="remove">Remove Role</button>
+                    </form>
+                </li>
+                {{- end }}
+            </ul>
+            {{- else }}None{{- end }}
+        </td>
+        <td>
+            <form method="post">
+        {{ csrfField }}
+                <input type="hidden" name="username" value="{{ .Username.String }}">
                 <select name="role">
                     {{- range $.Roles }}<option value="{{.Name}}">{{.Name}}</option>{{- end }}
                 </select>
-            </td>
-        </tr>
-    </table>
-    <input type="submit" name="task" value="User Disallow">
-    <input type="submit" name="task" value="User Allow">
-    </form>
-    <p>Permissions should be valid only.</p>
+                <button type="submit" name="task" value="allow">Add Role</button>
+            </form>
+        </td>
+    </tr>
+    {{- end }}
+</table>
+<p>Permissions should be valid only.</p>
 {{ template "tail" $ }}

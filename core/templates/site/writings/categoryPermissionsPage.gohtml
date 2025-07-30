@@ -8,7 +8,7 @@ Category {{.CategoryID}} permissions:<br>
         <th>Role</th>
         <th>Delete?</th>
     </tr>
-    {{- range .UserLevels }}
+    {{- range .Users }}
     <tr>
         <td>{{ .IduserRoles }}</td>
         <td>{{ .Username.String }}</td>

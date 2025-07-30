@@ -35,6 +35,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		Languages          []*db.Language
 		SelectedLanguageId int
 		EditSaveUrl        string
+		AdminUrl           string
 	}
 	type Post struct {
 		*db.GetNewsPostByIdWithWriterIdAndThreadCommentCountRow
@@ -174,6 +175,13 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 			Offset:                          i + offset,
 			Languages:                       languageRows,
 			SelectedLanguageId:              int(row.LanguageIdlanguage),
+			AdminUrl: func() string {
+				if cd.HasRole("administrator") {
+					return fmt.Sprintf("/admin/comment/%d", row.Idcomments)
+				} else {
+					return ""
+				}
+			}(),
 		})
 	}
 

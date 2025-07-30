@@ -118,3 +118,13 @@ UPDATE comments SET last_index = NOW() WHERE idcomments = ?;
 -- name: GetAllCommentsForIndex :many
 SELECT idcomments, text FROM comments WHERE deleted_at IS NULL;
 
+-- name: ListAllCommentsWithThreadInfo :many
+SELECT c.idcomments, c.written, c.text, c.deleted_at,
+       th.idforumthread, t.idforumtopic, t.title AS forumtopic_title,
+       u.idusers, u.username AS posterusername
+FROM comments c
+LEFT JOIN forumthread th ON c.forumthread_id = th.idforumthread
+LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
+LEFT JOIN users u ON u.idusers = c.users_idusers
+ORDER BY c.written DESC
+LIMIT ? OFFSET ?;

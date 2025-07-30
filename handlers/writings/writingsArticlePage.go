@@ -32,6 +32,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		Languages          []*db.Language
 		SelectedLanguageId int32
 		EditSaveUrl        string
+		AdminUrl           string
 	}
 	type Data struct {
 		*common.CoreData
@@ -260,6 +261,13 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 			Offset:                          i + offset,
 			Languages:                       languageRows,
 			SelectedLanguageId:              row.LanguageIdlanguage,
+			AdminUrl: func() string {
+				if data.CoreData.HasRole("administrator") {
+					return fmt.Sprintf("/admin/comment/%d", row.Idcomments)
+				} else {
+					return ""
+				}
+			}(),
 		})
 	}
 

@@ -453,6 +453,68 @@ func (q *Queries) GetCommentsByThreadIdForUser(ctx context.Context, arg GetComme
 	return items, nil
 }
 
+const listAllCommentsWithThreadInfo = `-- name: ListAllCommentsWithThreadInfo :many
+SELECT c.idcomments, c.written, c.text, c.deleted_at,
+       th.idforumthread, t.idforumtopic, t.title AS forumtopic_title,
+       u.idusers, u.username AS posterusername
+FROM comments c
+LEFT JOIN forumthread th ON c.forumthread_id = th.idforumthread
+LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
+LEFT JOIN users u ON u.idusers = c.users_idusers
+ORDER BY c.written DESC
+LIMIT ? OFFSET ?
+`
+
+type ListAllCommentsWithThreadInfoParams struct {
+	Limit  int32
+	Offset int32
+}
+
+type ListAllCommentsWithThreadInfoRow struct {
+	Idcomments      int32
+	Written         sql.NullTime
+	Text            sql.NullString
+	DeletedAt       sql.NullTime
+	Idforumthread   sql.NullInt32
+	Idforumtopic    sql.NullInt32
+	ForumtopicTitle sql.NullString
+	Idusers         sql.NullInt32
+	Posterusername  sql.NullString
+}
+
+func (q *Queries) ListAllCommentsWithThreadInfo(ctx context.Context, arg ListAllCommentsWithThreadInfoParams) ([]*ListAllCommentsWithThreadInfoRow, error) {
+	rows, err := q.db.QueryContext(ctx, listAllCommentsWithThreadInfo, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListAllCommentsWithThreadInfoRow
+	for rows.Next() {
+		var i ListAllCommentsWithThreadInfoRow
+		if err := rows.Scan(
+			&i.Idcomments,
+			&i.Written,
+			&i.Text,
+			&i.DeletedAt,
+			&i.Idforumthread,
+			&i.Idforumtopic,
+			&i.ForumtopicTitle,
+			&i.Idusers,
+			&i.Posterusername,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const setCommentLastIndex = `-- name: SetCommentLastIndex :exec
 UPDATE comments SET last_index = NOW() WHERE idcomments = ?
 `

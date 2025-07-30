@@ -28,6 +28,7 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 		Languages          []*db.Language
 		SelectedLanguageId int32
 		EditSaveUrl        string
+		AdminUrl           string
 	}
 	type Data struct {
 		*common.CoreData
@@ -133,6 +134,13 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 			Offset:                          i + offset,
 			Languages:                       nil,
 			SelectedLanguageId:              0,
+			AdminUrl: func() string {
+				if cd.HasRole("administrator") {
+					return fmt.Sprintf("/admin/comment/%d", row.Idcomments)
+				} else {
+					return ""
+				}
+			}(),
 		})
 	}
 

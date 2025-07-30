@@ -1,0 +1,17 @@
+{{ template "head" $ }}
+<h2>Comment {{ .Comment.Idcomments }}</h2>
+<p>Topic {{ .Comment.ForumtopicTitle.String }} thread {{ .Comment.Idforumthread }}</p>
+<p>{{ if .Comment.Text.Valid }}{{ .Comment.Text.String | a4code2html }}{{ end }}</p>
+<p><a href="/forum/topic/{{ .Comment.Idforumtopic }}/thread/{{ .Comment.Idforumthread }}#c{{ .Comment.Idcomments }}">Original</a></p>
+<h3>Thread Context</h3>
+{{ range .Context }}
+<p>{{ .Posterusername.String }}: {{ if .Text.Valid }}{{ .Text.String | left 80 }}{{ end }}</p>
+{{ end }}
+<form method="post" action="/admin/comment/{{ .Comment.Idcomments }}">
+    {{ csrfField }}
+    <textarea name="replytext" rows="3" cols="40">{{ if .Comment.Text.Valid }}{{ .Comment.Text.String }}{{ end }}</textarea><br>
+    <input type="submit" name="task" value="Edit">
+    <input type="submit" name="task" value="Delete">
+    <input type="submit" name="task" value="Ban">
+</form>
+{{ template "tail" $ }}

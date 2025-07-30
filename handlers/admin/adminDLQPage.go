@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -37,8 +38,17 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 		Errors     []*db.DeadLetter
 		FileErrors []filedlq.Record
 		FileErr    string
+		FilePath   string
+		FileSize   int64
+		FileMod    string
+		FileTail   []string
 		DirErrors  []dirdlq.Record
 		DirErr     string
+		DirPath    string
+		DirCount   int
+		DirMod     string
+		DBCount    int64
+		DBLatest   string
 		Providers  string
 	}{
 		CoreData:  cd,
@@ -58,7 +68,23 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 			} else {
 				log.Printf("list dead letters: %v", err)
 			}
+			if c, err := queries.CountDeadLetters(r.Context()); err == nil {
+				data.DBCount = c
+			}
+			if lt, err := queries.LatestDeadLetter(r.Context()); err == nil {
+				if t, ok := lt.(time.Time); ok {
+					data.DBLatest = t.Format(time.RFC3339)
+				}
+			}
 		case "file":
+			data.FilePath = cd.Config.DLQFile
+			if st, err := os.Stat(cd.Config.DLQFile); err == nil {
+				data.FileSize = st.Size()
+				data.FileMod = st.ModTime().Format(time.RFC3339)
+			}
+			if lines, err := filedlq.Tail(cd.Config.DLQFile, 10); err == nil {
+				data.FileTail = lines
+			}
 			if recs, err := filedlq.List(cd.Config.DLQFile, 100); err == nil {
 				data.FileErrors = recs
 			} else {
@@ -66,6 +92,13 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 				data.FileErr = err.Error()
 			}
 		case "dir":
+			data.DirPath = cd.Config.DLQFile
+			if entries, err := os.ReadDir(cd.Config.DLQFile); err == nil {
+				data.DirCount = len(entries)
+				if st, err2 := os.Stat(cd.Config.DLQFile); err2 == nil {
+					data.DirMod = st.ModTime().Format(time.RFC3339)
+				}
+			}
 			if recs, err := dirdlq.List(cd.Config.DLQFile, 100); err == nil {
 				data.DirErrors = recs
 			} else {

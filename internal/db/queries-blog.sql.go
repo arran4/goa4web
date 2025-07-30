@@ -347,9 +347,15 @@ LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
 WHERE (b.users_idusers = ? OR ? = 0)
 AND (
-    NOT EXISTS (SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?)
-    OR b.language_idlanguage IN (
-        SELECT ul.language_idlanguage FROM user_language ul WHERE ul.users_idusers = ?
+    b.language_idlanguage = 0
+    OR b.language_idlanguage IS NULL
+    OR EXISTS (
+        SELECT 1 FROM user_language ul
+        WHERE ul.users_idusers = ?
+          AND ul.language_idlanguage = b.language_idlanguage
+    )
+    OR NOT EXISTS (
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
     )
 )
 ORDER BY b.written DESC
@@ -508,9 +514,15 @@ SELECT u.username, COUNT(b.idblogs) AS count
 FROM blogs b
 JOIN users u ON b.users_idusers = u.idusers
 WHERE (
-    NOT EXISTS (SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?)
-    OR b.language_idlanguage IN (
-        SELECT ul.language_idlanguage FROM user_language ul WHERE ul.users_idusers = ?
+    b.language_idlanguage = 0
+    OR b.language_idlanguage IS NULL
+    OR EXISTS (
+        SELECT 1 FROM user_language ul
+        WHERE ul.users_idusers = ?
+          AND ul.language_idlanguage = b.language_idlanguage
+    )
+    OR NOT EXISTS (
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
     )
 )
 AND EXISTS (
@@ -584,9 +596,15 @@ FROM blogs b
 JOIN users u ON b.users_idusers = u.idusers
 WHERE (LOWER(u.username) LIKE LOWER(?) OR LOWER((SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1)) LIKE LOWER(?))
   AND (
-    NOT EXISTS (SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?)
-    OR b.language_idlanguage IN (
-        SELECT ul.language_idlanguage FROM user_language ul WHERE ul.users_idusers = ?
+    b.language_idlanguage = 0
+    OR b.language_idlanguage IS NULL
+    OR EXISTS (
+        SELECT 1 FROM user_language ul
+        WHERE ul.users_idusers = ?
+          AND ul.language_idlanguage = b.language_idlanguage
+    )
+    OR NOT EXISTS (
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
     )
   )
   AND EXISTS (

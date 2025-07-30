@@ -33,6 +33,7 @@ func (h *Handlers) RegisterTasks() []tasks.NamedTask {
 		newsUserAllow,
 		newsUserRemove,
 		userPasswordResetTask,
+		roleGrantCreateTask,
 		roleGrantDeleteTask,
 		h.NewServerShutdownTask(),
 	}

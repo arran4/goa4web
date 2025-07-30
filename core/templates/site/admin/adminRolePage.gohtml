@@ -29,5 +29,16 @@
         </td>
     </tr>
     {{- end }}
+    <tr>
+        <form method="post" action="/admin/role/{{ $.Role.ID }}/grant">
+        {{ csrfField }}
+            <td>NEW</td>
+            <td><input name="section"></td>
+            <td><input name="item"></td>
+            <td><input name="item_id"></td>
+            <td><input name="action"></td>
+            <td><input type="submit" name="task" value="Create grant"></td>
+        </form>
+    </tr>
 </table>
 {{ template "tail" $ }}

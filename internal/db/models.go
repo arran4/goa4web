@@ -177,6 +177,20 @@ type DeadLetter struct {
 	CreatedAt time.Time
 }
 
+type ExternalLink struct {
+	ID              int32
+	Url             string
+	Clicks          int32
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	UpdatedBy       sql.NullInt32
+	CardTitle       sql.NullString
+	CardDescription sql.NullString
+	CardImage       sql.NullString
+	CardImageCache  sql.NullString
+	FaviconCache    sql.NullString
+}
+
 type Faq struct {
 	Idfaq                        int32
 	FaqcategoriesIdfaqcategories int32

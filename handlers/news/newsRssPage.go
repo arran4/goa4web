@@ -36,7 +36,7 @@ func NewsRssPage(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		text := row.News.String
-		conv := a4code2html.New(cd.ImageSigner.MapURL)
+		conv := a4code2html.New(cd.ImageURLMapper)
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(text)
 		out, _ := io.ReadAll(conv.Process())

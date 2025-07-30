@@ -240,6 +240,7 @@ type MonthlyUsageRow struct {
 
 // UserMonthlyUsageRow aggregates monthly post counts for a single user.
 type UserMonthlyUsageRow struct {
+	Idusers  int32
 	Username sql.NullString
 	Year     int32
 	Month    int32
@@ -270,21 +271,24 @@ func (q *Queries) monthlyCounts(ctx context.Context, table, column string, start
 	return m, rows.Err()
 }
 
-func (q *Queries) userMonthlyCounts(ctx context.Context, table, column string, startYear int32) (map[string]map[[2]int32]int64, error) {
-	query := fmt.Sprintf("SELECT u.username, YEAR(%s), MONTH(%s), COUNT(*) FROM %s t JOIN users u ON t.users_idusers = u.idusers WHERE YEAR(%s) >= ? GROUP BY u.idusers, YEAR(%s), MONTH(%s)", column, column, table, column, column, column)
+func (q *Queries) userMonthlyCounts(ctx context.Context, table, column string, startYear int32) (map[string]map[[2]int32]int64, map[string]int32, error) {
+	query := fmt.Sprintf("SELECT u.idusers, u.username, YEAR(%s), MONTH(%s), COUNT(*) FROM %s t JOIN users u ON t.users_idusers = u.idusers WHERE YEAR(%s) >= ? GROUP BY u.idusers, YEAR(%s), MONTH(%s)", column, column, table, column, column, column)
 	rows, err := q.db.QueryContext(ctx, query, startYear)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer rows.Close()
 	data := make(map[string]map[[2]int32]int64)
+	ids := make(map[string]int32)
 	for rows.Next() {
+		var id int32
 		var user string
 		var year, month int32
 		var count int64
-		if err := rows.Scan(&user, &year, &month, &count); err != nil {
-			return nil, err
+		if err := rows.Scan(&id, &user, &year, &month, &count); err != nil {
+			return nil, nil, err
 		}
+		ids[user] = id
 		m, ok := data[user]
 		if !ok {
 			m = make(map[[2]int32]int64)
@@ -292,7 +296,7 @@ func (q *Queries) userMonthlyCounts(ctx context.Context, table, column string, s
 		}
 		m[[2]int32{year, month}] = count
 	}
-	return data, rows.Err()
+	return data, ids, rows.Err()
 }
 
 func (q *Queries) MonthlyUsageCounts(ctx context.Context, startYear int32) ([]*MonthlyUsageRow, error) {
@@ -357,12 +361,16 @@ func (q *Queries) UserMonthlyUsageCounts(ctx context.Context, startYear int32) (
 	}
 
 	data := make(map[string]map[[2]int32]*UserMonthlyUsageRow)
+	ids := make(map[string]int32)
 	for _, t := range types {
-		counts, err := q.userMonthlyCounts(ctx, t.table, t.column, startYear)
+		counts, gotIds, err := q.userMonthlyCounts(ctx, t.table, t.column, startYear)
 		if err != nil {
 			return nil, err
 		}
 		for user, months := range counts {
+			if id, ok := gotIds[user]; ok {
+				ids[user] = id
+			}
 			m, ok := data[user]
 			if !ok {
 				m = make(map[[2]int32]*UserMonthlyUsageRow)
@@ -403,7 +411,11 @@ func (q *Queries) UserMonthlyUsageCounts(ctx context.Context, startYear int32) (
 
 	var rows []*UserMonthlyUsageRow
 	for _, k := range keys {
-		rows = append(rows, data[k.user][k.ym])
+		row := data[k.user][k.ym]
+		if id, ok := ids[k.user]; ok {
+			row.Idusers = id
+		}
+		rows = append(rows, row)
 	}
 	return rows, nil
 }

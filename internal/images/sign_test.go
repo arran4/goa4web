@@ -18,6 +18,15 @@ func TestMapURLUploading(t *testing.T) {
 	}
 }
 
+func TestMapURLImage(t *testing.T) {
+	cfg := &config.RuntimeConfig{HTTPHostname: "http://mysite"}
+	signer := NewSigner(cfg, "k")
+	got := signer.MapURL("img", "image:foo")
+	if got == "image:foo" || !strings.Contains(got, "/images/image/") {
+		t.Fatalf("expected signed image url, got %s", got)
+	}
+}
+
 func TestSignedURLTTL(t *testing.T) {
 	cfg := &config.RuntimeConfig{HTTPHostname: "http://example.com"}
 	signer := NewSigner(cfg, "k")

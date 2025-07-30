@@ -23,8 +23,8 @@ import (
 // RegisterRoutes attaches the admin endpoints to ar. The router is expected to
 // already have any required authentication middleware applied.
 func (h *Handlers) RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
-	navReg.RegisterAdminControlCenter("Core", "Categories", "/admin/categories", 20)
 	navReg.RegisterAdminControlCenter("Core", "Roles", "/admin/roles", 25)
+	navReg.RegisterAdminControlCenter("Core", "External Links", "/admin/external-links", 30)
 	navReg.RegisterAdminControlCenter("Core", "Notifications", "/admin/notifications", 90)
 	navReg.RegisterAdminControlCenter("Core", "Queued Emails", "/admin/email/queue", 110)
 	navReg.RegisterAdminControlCenter("Core", "Failed Emails", "/admin/email/failed", 112)
@@ -39,9 +39,11 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navRe
 
 	ar.HandleFunc("", AdminPage).Methods("GET")
 	ar.HandleFunc("/", AdminPage).Methods("GET")
-	ar.HandleFunc("/categories", AdminCategoriesPage).Methods("GET")
 	ar.HandleFunc("/roles", AdminRolesPage).Methods("GET")
 	ar.HandleFunc("/roles", handlers.TaskHandler(rolePublicProfileTask)).Methods("POST").MatcherFunc(rolePublicProfileTask.Matcher())
+	ar.HandleFunc("/external-links", AdminExternalLinksPage).Methods("GET")
+	ar.HandleFunc("/external-links", handlers.TaskHandler(refreshExternalLinkTask)).Methods("POST").MatcherFunc(refreshExternalLinkTask.Matcher())
+	ar.HandleFunc("/external-links", handlers.TaskHandler(deleteExternalLinkTask)).Methods("POST").MatcherFunc(deleteExternalLinkTask.Matcher())
 	ar.HandleFunc("/email/queue", AdminEmailQueuePage).Methods("GET")
 	ar.HandleFunc("/email/failed", AdminFailedEmailsPage).Methods("GET")
 	ar.HandleFunc("/email/sent", AdminSentEmailsPage).Methods("GET")

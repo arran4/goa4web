@@ -23,6 +23,7 @@ import (
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
 	imagesign "github.com/arran4/goa4web/internal/images"
+	linksign "github.com/arran4/goa4web/internal/linksign"
 	"github.com/arran4/goa4web/internal/middleware"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	"github.com/arran4/goa4web/internal/router"
@@ -42,6 +43,7 @@ type Server struct {
 	Bus         *eventbus.Bus
 	EmailReg    *email.Registry
 	ImageSigner *imagesign.Signer
+	LinkSigner  *linksign.Signer
 	TasksReg    *tasks.Registry
 	DBReg       *dbdrivers.Registry
 	DLQReg      *dlq.Registry
@@ -138,6 +140,11 @@ func WithImageSigner(signer *imagesign.Signer) Option {
 	return func(s *Server) { s.ImageSigner = signer }
 }
 
+// WithLinkSigner sets the external link signer.
+func WithLinkSigner(signer *linksign.Signer) Option {
+	return func(s *Server) { s.LinkSigner = signer }
+}
+
 // WithDBRegistry sets the database driver registry.
 func WithDBRegistry(r *dbdrivers.Registry) Option { return func(s *Server) { s.DBReg = r } }
 
@@ -220,6 +227,7 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 			provider := s.EmailReg.ProviderFromConfig(s.Config)
 			cd := common.NewCoreData(r.Context(), queries, s.Config,
 				common.WithImageSigner(s.ImageSigner),
+				common.WithLinkSigner(s.LinkSigner),
 				common.WithSession(session),
 				common.WithEmailProvider(provider),
 				common.WithAbsoluteURLBase(base),

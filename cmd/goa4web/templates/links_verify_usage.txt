@@ -1,0 +1,8 @@
+Usage:
+  {{.Prog}} links verify [<flags>] <url>
+
+Flags:
+  -ts string   timestamp parameter
+  -sig string  signature parameter
+
+{{template "flag_groups_section" .FlagGroups}}

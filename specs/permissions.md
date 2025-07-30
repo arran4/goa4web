@@ -156,6 +156,10 @@ Many queries now filter results directly in SQL using `viewer_id` together with 
 | `blogs` | `entry` | `post` | `viewer_id` | viewer role ID | grant requiring both user and role |
 | `blogs` | `entry` | `post` | `NULL` | viewer role ID | role-based grant |
 | `blogs` | `entry` | `post` | `NULL` | `NULL` | public grant for everyone |
+| `faq` | `question` | `post` | `viewer_id` | `NULL` | grant specific to that user |
+| `faq` | `question` | `post` | `viewer_id` | viewer role ID | grant requiring both user and role |
+| `faq` | `question` | `post` | `NULL` | viewer role ID | role-based grant |
+| `faq` | `question` | `post` | `NULL` | `NULL` | public grant for everyone |
 | `writing` | `article` | `see` or `view` | `viewer_id` | `NULL` | grant specific to that user |
 | `writing` | `article` | `see` or `view` | `viewer_id` | viewer role ID | grant requiring both user and role |
 | `writing` | `article` | `see` or `view` | `NULL` | viewer role ID | role-based grant |

@@ -15,6 +15,7 @@ import (
 	dbpkg "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
 	imagesign "github.com/arran4/goa4web/internal/images"
+	linksign "github.com/arran4/goa4web/internal/linksign"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	"github.com/google/go-cmp/cmp"
 	"github.com/gorilla/sessions"
@@ -53,7 +54,8 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 
 	reg := email.NewRegistry()
 	signer := imagesign.NewSigner(cfg, "k")
-	CoreAdderMiddlewareWithDB(db, cfg, 0, reg, signer, navReg)(handler).ServeHTTP(httptest.NewRecorder(), req)
+	linkSigner := linksign.NewSigner(cfg, "k")
+	CoreAdderMiddlewareWithDB(db, cfg, 0, reg, signer, linkSigner, navReg)(handler).ServeHTTP(httptest.NewRecorder(), req)
 
 	want := []string{"anonymous", "user", "moderator"}
 	if diff := cmp.Diff(want, cdOut.UserRoles()); diff != "" {
@@ -94,7 +96,8 @@ func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
 
 	reg := email.NewRegistry()
 	signer := imagesign.NewSigner(cfg, "k")
-	CoreAdderMiddlewareWithDB(db, cfg, 0, reg, signer, navReg)(handler).ServeHTTP(httptest.NewRecorder(), req)
+	linkSigner := linksign.NewSigner(cfg, "k")
+	CoreAdderMiddlewareWithDB(db, cfg, 0, reg, signer, linkSigner, navReg)(handler).ServeHTTP(httptest.NewRecorder(), req)
 
 	want := []string{"anonymous"}
 	if diff := cmp.Diff(want, cdOut.UserRoles()); diff != "" {

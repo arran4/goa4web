@@ -3,6 +3,7 @@ package forum
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -12,13 +13,17 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 
+	"github.com/arran4/goa4web/internal/algorithms"
 	"github.com/gorilla/mux"
+	"html/template"
+	"strings"
 )
 
 func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
 		Categories []*db.GetAllForumCategoriesWithSubcategoryCountRow
+		Tree       template.HTML
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Forum Admin Categories"
@@ -40,6 +45,29 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.Categories = categoryRows
+	catsAll, err := queries.GetAllForumCategories(r.Context())
+	if err == nil {
+		children := map[int32][]*db.Forumcategory{}
+		for _, c := range catsAll {
+			children[c.ForumcategoryIdforumcategory] = append(children[c.ForumcategoryIdforumcategory], c)
+		}
+		var build func(parent int32) string
+		build = func(parent int32) string {
+			var sb strings.Builder
+			if cs, ok := children[parent]; ok {
+				sb.WriteString("<ul>")
+				for _, c := range cs {
+					sb.WriteString("<li>")
+					sb.WriteString(template.HTMLEscapeString(c.Title.String))
+					sb.WriteString(build(c.Idforumcategory))
+					sb.WriteString("</li>")
+				}
+				sb.WriteString("</ul>")
+			}
+			return sb.String()
+		}
+		data.Tree = template.HTML(build(0))
+	}
 
 	handlers.TemplateHandler(w, r, "forumAdminCategoriesPage.gohtml", data)
 }
@@ -55,6 +83,20 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	vars := mux.Vars(r)
 	categoryId, _ := strconv.Atoi(vars["category"])
+
+	cats, err := queries.GetAllForumCategories(r.Context())
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	parents := make(map[int32]int32, len(cats))
+	for _, c := range cats {
+		parents[c.Idforumcategory] = c.ForumcategoryIdforumcategory
+	}
+	if path, loop := algorithms.WouldCreateLoop(parents, int32(categoryId), int32(pcid)); loop {
+		http.Redirect(w, r, "?error="+fmt.Sprintf("loop %v", path), http.StatusTemporaryRedirect)
+		return
+	}
 
 	if err := queries.UpdateForumCategory(r.Context(), db.UpdateForumCategoryParams{
 		Title: sql.NullString{
@@ -85,6 +127,20 @@ func AdminCategoryCreatePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cats, err := queries.GetAllForumCategories(r.Context())
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	parents := make(map[int32]int32, len(cats))
+	for _, c := range cats {
+		parents[c.Idforumcategory] = c.ForumcategoryIdforumcategory
+	}
+	if path, loop := algorithms.WouldCreateLoop(parents, 0, int32(pcid)); loop {
+		http.Redirect(w, r, "?error="+fmt.Sprintf("loop %v", path), http.StatusTemporaryRedirect)
+		return
+	}
+
 	if err := queries.CreateForumCategory(r.Context(), db.CreateForumCategoryParams{
 		ForumcategoryIdforumcategory: int32(pcid),
 		Title: sql.NullString{

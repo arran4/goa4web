@@ -4,8 +4,10 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/arran4/goa4web/core/consts"
+	"html/template"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/arran4/goa4web/core/common"
 
@@ -23,6 +25,7 @@ func AdminBoardsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
 		Boards []*BoardRow
+		Tree   template.HTML
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -42,19 +45,39 @@ func AdminBoardsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	children := map[int32][]*BoardRow{}
 	for _, b := range boardRows {
 		threads, err := queries.CountThreadsByBoard(r.Context(), b.Idimageboard)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			log.Printf("countThreads error: %s", err)
 			threads = 0
 		}
-		data.Boards = append(data.Boards, &BoardRow{
+		row := &BoardRow{
 			Imageboard: b,
 			Threads:    int32(threads),
 			Visible:    true,
 			Nsfw:       false,
-		})
+		}
+		data.Boards = append(data.Boards, row)
+		children[b.ImageboardIdimageboard] = append(children[b.ImageboardIdimageboard], row)
 	}
+
+	var build func(parent int32) string
+	build = func(parent int32) string {
+		var sb strings.Builder
+		if cs, ok := children[parent]; ok {
+			sb.WriteString("<ul>")
+			for _, c := range cs {
+				sb.WriteString("<li>")
+				sb.WriteString(template.HTMLEscapeString(c.Title.String))
+				sb.WriteString(build(c.Idimageboard))
+				sb.WriteString("</li>")
+			}
+			sb.WriteString("</ul>")
+		}
+		return sb.String()
+	}
+	data.Tree = template.HTML(build(0))
 
 	handlers.TemplateHandler(w, r, "adminBoardsPage.gohtml", data)
 }

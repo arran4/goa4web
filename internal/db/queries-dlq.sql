@@ -14,3 +14,6 @@ DELETE FROM dead_letters WHERE created_at < ?;
 
 -- name: CountDeadLetters :one
 SELECT COUNT(*) FROM dead_letters;
+
+-- name: LatestDeadLetter :one
+SELECT MAX(created_at) FROM dead_letters;

@@ -39,6 +39,17 @@ func (q *Queries) InsertDeadLetter(ctx context.Context, message string) error {
 	return err
 }
 
+const latestDeadLetter = `-- name: LatestDeadLetter :one
+SELECT MAX(created_at) FROM dead_letters
+`
+
+func (q *Queries) LatestDeadLetter(ctx context.Context) (interface{}, error) {
+	row := q.db.QueryRowContext(ctx, latestDeadLetter)
+	var max interface{}
+	err := row.Scan(&max)
+	return max, err
+}
+
 const listDeadLetters = `-- name: ListDeadLetters :many
 SELECT id, message, created_at FROM dead_letters
 ORDER BY id DESC

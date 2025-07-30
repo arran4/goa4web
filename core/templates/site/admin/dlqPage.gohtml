@@ -1,6 +1,9 @@
 {{ template "head" $ }}
 [<a href="/admin">Admin:</a> <a href="/admin/dlq">(This page/Refresh)</a>]<br />
 Configured providers: {{ .Providers }}<br />
+{{- if .FilePath }}File: {{ .FilePath }} ({{ .FileSize }} bytes{{- if .FileMod }}, updated {{ .FileMod }}{{- end }})<br />{{- end }}
+{{- if .DirPath }}Directory: {{ .DirPath }} ({{ .DirCount }} files{{- if .DirMod }}, updated {{ .DirMod }}{{- end }})<br />{{- end }}
+{{- if .DBCount }}Database entries: {{ .DBCount }}{{- if .DBLatest }} (latest {{ .DBLatest }}){{- end }}<br />{{- end }}
 
 {{- if .FileErrors }}
 <h2>File DLQ</h2>
@@ -10,6 +13,14 @@ Configured providers: {{ .Providers }}<br />
 <tr><td>{{ .Time }}</td><td>{{ .Message }}</td></tr>
 {{- end }}
 </table>
+{{- end }}
+{{- if .FileTail }}
+<h3>File Tail</h3>
+<pre>
+{{- range .FileTail }}
+{{ . }}
+{{- end }}
+</pre>
 {{- end }}
 {{- if .FileErr }}
 <p>Error reading file DLQ: {{ .FileErr }}</p>

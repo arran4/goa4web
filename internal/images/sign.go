@@ -3,6 +3,7 @@ package images
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/sign"
@@ -30,7 +31,7 @@ func (s *Signer) SignedURL(id string) string {
 func (s *Signer) SignedURLTTL(id string, ttl time.Duration) string {
 	id = strings.TrimPrefix(strings.TrimPrefix(id, "image:"), "img:")
 	host := strings.TrimSuffix(s.cfg.HTTPHostname, "/")
-	ts, sig := s.signer.Sign("image:" + id)
+	ts, sig := s.signer.Sign("image:"+id, time.Now().Add(ttl))
 	return fmt.Sprintf("%s/images/image/%s?ts=%d&sig=%s", host, id, ts, sig)
 }
 
@@ -42,7 +43,7 @@ func (s *Signer) SignedCacheURL(id string) string {
 // SignedCacheURLTTL maps a cache identifier to a signed URL that expires after ttl.
 func (s *Signer) SignedCacheURLTTL(id string, ttl time.Duration) string {
 	host := strings.TrimSuffix(s.cfg.HTTPHostname, "/")
-	ts, sig := s.signer.Sign("cache:" + id)
+	ts, sig := s.signer.Sign("cache:"+id, time.Now().Add(ttl))
 	return fmt.Sprintf("%s/images/cache/%s?ts=%d&sig=%s", host, id, ts, sig)
 }
 

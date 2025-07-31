@@ -254,3 +254,12 @@ The same lookup pattern covers every action. Whether a user wants to `post`,
 `reply`, `comment`, `write` or `edit`, the query matches grants by `viewer_id`
 and roles using the unified action names above. This ensures consistent
 terminology across sections and avoids duplicated rules.
+
+## Query Naming Conventions
+
+SQL queries now include the intended audience as part of the name. Operations
+exposed through the administrator interface use the `Admin` prefix while
+background or maintenance queries use the `System` prefix. Queries returning
+results for a viewer include a `ForViewer` or `ForUser` suffix as appropriate.
+The file `specs/sql_query_naming_tasks.md` lists outstanding renames following
+this convention.

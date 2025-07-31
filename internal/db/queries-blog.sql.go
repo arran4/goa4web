@@ -208,6 +208,89 @@ func (q *Queries) GetAllBlogsForIndex(ctx context.Context) ([]*GetAllBlogsForInd
 	return items, nil
 }
 
+const getBlogEntriesByAuthorForUserDescendingLanguages = `-- name: GetBlogEntriesByAuthorForUserDescendingLanguages :many
+SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
+       b.users_idusers = ? AS is_owner
+FROM blogs b
+LEFT JOIN users u ON b.users_idusers=u.idusers
+LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
+WHERE (b.users_idusers = ? OR ? = 0)
+AND (
+    b.language_idlanguage = 0
+    OR b.language_idlanguage IS NULL
+    OR EXISTS (
+        SELECT 1 FROM user_language ul
+        WHERE ul.users_idusers = ?
+          AND ul.language_idlanguage = b.language_idlanguage
+    )
+    OR NOT EXISTS (
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+    )
+)
+ORDER BY b.written DESC
+LIMIT ? OFFSET ?
+`
+
+type GetBlogEntriesByAuthorForUserDescendingLanguagesParams struct {
+	ViewerID int32
+	AuthorID int32
+	Limit    int32
+	Offset   int32
+}
+
+type GetBlogEntriesByAuthorForUserDescendingLanguagesRow struct {
+	Idblogs            int32
+	ForumthreadID      sql.NullInt32
+	UsersIdusers       int32
+	LanguageIdlanguage int32
+	Blog               sql.NullString
+	Written            time.Time
+	Username           sql.NullString
+	Comments           int32
+	IsOwner            bool
+}
+
+func (q *Queries) GetBlogEntriesByAuthorForUserDescendingLanguages(ctx context.Context, arg GetBlogEntriesByAuthorForUserDescendingLanguagesParams) ([]*GetBlogEntriesByAuthorForUserDescendingLanguagesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getBlogEntriesByAuthorForUserDescendingLanguages,
+		arg.ViewerID,
+		arg.AuthorID,
+		arg.AuthorID,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetBlogEntriesByAuthorForUserDescendingLanguagesRow
+	for rows.Next() {
+		var i GetBlogEntriesByAuthorForUserDescendingLanguagesRow
+		if err := rows.Scan(
+			&i.Idblogs,
+			&i.ForumthreadID,
+			&i.UsersIdusers,
+			&i.LanguageIdlanguage,
+			&i.Blog,
+			&i.Written,
+			&i.Username,
+			&i.Comments,
+			&i.IsOwner,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getBlogEntriesByIdsDescending = `-- name: GetBlogEntriesByIdsDescending :many
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written
 FROM blogs b
@@ -315,89 +398,6 @@ func (q *Queries) GetBlogEntriesForUserDescending(ctx context.Context, arg GetBl
 	var items []*GetBlogEntriesForUserDescendingRow
 	for rows.Next() {
 		var i GetBlogEntriesForUserDescendingRow
-		if err := rows.Scan(
-			&i.Idblogs,
-			&i.ForumthreadID,
-			&i.UsersIdusers,
-			&i.LanguageIdlanguage,
-			&i.Blog,
-			&i.Written,
-			&i.Username,
-			&i.Comments,
-			&i.IsOwner,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getBlogEntriesForUserDescendingLanguages = `-- name: GetBlogEntriesForUserDescendingLanguages :many
-SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
-       b.users_idusers = ? AS is_owner
-FROM blogs b
-LEFT JOIN users u ON b.users_idusers=u.idusers
-LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
-WHERE (b.users_idusers = ? OR ? = 0)
-AND (
-    b.language_idlanguage = 0
-    OR b.language_idlanguage IS NULL
-    OR EXISTS (
-        SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = ?
-          AND ul.language_idlanguage = b.language_idlanguage
-    )
-    OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
-    )
-)
-ORDER BY b.written DESC
-LIMIT ? OFFSET ?
-`
-
-type GetBlogEntriesForUserDescendingLanguagesParams struct {
-	ViewerIdusers int32
-	UsersIdusers  int32
-	Limit         int32
-	Offset        int32
-}
-
-type GetBlogEntriesForUserDescendingLanguagesRow struct {
-	Idblogs            int32
-	ForumthreadID      sql.NullInt32
-	UsersIdusers       int32
-	LanguageIdlanguage int32
-	Blog               sql.NullString
-	Written            time.Time
-	Username           sql.NullString
-	Comments           int32
-	IsOwner            bool
-}
-
-func (q *Queries) GetBlogEntriesForUserDescendingLanguages(ctx context.Context, arg GetBlogEntriesForUserDescendingLanguagesParams) ([]*GetBlogEntriesForUserDescendingLanguagesRow, error) {
-	rows, err := q.db.QueryContext(ctx, getBlogEntriesForUserDescendingLanguages,
-		arg.ViewerIdusers,
-		arg.UsersIdusers,
-		arg.UsersIdusers,
-		arg.ViewerIdusers,
-		arg.ViewerIdusers,
-		arg.Limit,
-		arg.Offset,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*GetBlogEntriesForUserDescendingLanguagesRow
-	for rows.Next() {
-		var i GetBlogEntriesForUserDescendingLanguagesRow
 		if err := rows.Scan(
 			&i.Idblogs,
 			&i.ForumthreadID,

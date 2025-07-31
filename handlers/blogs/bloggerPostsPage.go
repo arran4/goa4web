@@ -22,7 +22,7 @@ import (
 // BloggerPostsPage shows the posts written by a specific blogger.
 func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 	type BlogRow struct {
-		*db.GetBlogEntriesForUserDescendingLanguagesRow
+		*db.GetBlogEntriesByAuthorForUserDescendingLanguagesRow
 		EditUrl string
 	}
 	type Data struct {
@@ -62,11 +62,11 @@ func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 
 	buid := bu.Idusers
 
-	rows, err := queries.GetBlogEntriesForUserDescendingLanguages(r.Context(), db.GetBlogEntriesForUserDescendingLanguagesParams{
-		UsersIdusers:  buid,
-		ViewerIdusers: uid,
-		Limit:         15,
-		Offset:        int32(offset),
+	rows, err := queries.GetBlogEntriesByAuthorForUserDescendingLanguages(r.Context(), db.GetBlogEntriesByAuthorForUserDescendingLanguagesParams{
+		AuthorID: buid,
+		ViewerID: uid,
+		Limit:    15,
+		Offset:   int32(offset),
 	})
 	if err != nil {
 		switch {
@@ -90,7 +90,7 @@ func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 			editUrl = fmt.Sprintf("/blogs/blog/%d/edit", row.Idblogs)
 		}
 		data.Rows = append(data.Rows, &BlogRow{
-			GetBlogEntriesForUserDescendingLanguagesRow: row,
+			GetBlogEntriesByAuthorForUserDescendingLanguagesRow: row,
 			EditUrl: editUrl,
 		})
 	}

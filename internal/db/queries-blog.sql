@@ -13,6 +13,7 @@ SET forumthread_id = ?
 WHERE idblogs = ?;
 
 -- name: GetBlogEntriesForUserDescending :many
+-- name: GetBlogEntriesByAuthorForUserDescendingLanguages :many
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
        b.users_idusers = sqlc.arg(Viewer_idusers) AS is_owner
 FROM blogs b
@@ -23,23 +24,23 @@ AND (b.users_idusers = sqlc.arg(Users_idusers) OR sqlc.arg(Users_idusers) = 0)
 ORDER BY b.written DESC
 LIMIT ? OFFSET ?;
 
--- name: GetBlogEntriesForUserDescendingLanguages :many
+-- name: GetBlogEntriesByAuthorForUserDescendingLanguages :many
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
-       b.users_idusers = sqlc.arg(Viewer_idusers) AS is_owner
+       b.users_idusers = sqlc.arg(viewer_id) AS is_owner
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
-WHERE (b.users_idusers = sqlc.arg(Users_idusers) OR sqlc.arg(Users_idusers) = 0)
+WHERE (b.users_idusers = sqlc.arg(author_id) OR sqlc.arg(author_id) = 0)
 AND (
     b.language_idlanguage = 0
     OR b.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = sqlc.arg(Viewer_idusers)
+        WHERE ul.users_idusers = sqlc.arg(viewer_id)
           AND ul.language_idlanguage = b.language_idlanguage
     )
     OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(Viewer_idusers)
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
     )
 )
 ORDER BY b.written DESC

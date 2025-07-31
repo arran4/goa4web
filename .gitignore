@@ -110,3 +110,4 @@ dbbackups
 /dlq
 /.idea/
 /.admin_api_secret
+/.link_sign_secret

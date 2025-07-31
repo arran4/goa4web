@@ -13,7 +13,6 @@ SET forumthread_id = ?
 WHERE idblogs = ?;
 
 -- name: GetBlogEntriesForUserDescending :many
--- name: GetBlogEntriesByAuthorForUserDescendingLanguages :many
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
        b.users_idusers = sqlc.arg(Viewer_idusers) AS is_owner
 FROM blogs b

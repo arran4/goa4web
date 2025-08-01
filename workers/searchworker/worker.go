@@ -89,7 +89,7 @@ func index(ctx context.Context, q *dbpkg.Queries, data IndexEventData) error {
 	}
 	switch data.Type {
 	case TypeComment:
-		return q.SetCommentLastIndex(ctx, data.ID)
+		return q.SetCommentLastIndexForSystem(ctx, data.ID)
 	case TypeWriting:
 		return q.SetWritingLastIndex(ctx, data.ID)
 	case TypeLinker:

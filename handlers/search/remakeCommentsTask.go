@@ -39,7 +39,7 @@ func (RemakeCommentsTask) BackgroundTask(ctx context.Context, q *dbpkg.Queries) 
 	if err := q.DeleteCommentsSearch(ctx); err != nil {
 		return nil, err
 	}
-	rows, err := q.GetAllCommentsForIndex(ctx)
+	rows, err := q.GetAllCommentsForIndexForSystem(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("GetAllCommentsForIndex: %w", err)
 	}
@@ -58,7 +58,7 @@ func (RemakeCommentsTask) BackgroundTask(ctx context.Context, q *dbpkg.Queries) 
 		}); err != nil {
 			return nil, err
 		}
-		if err := q.SetCommentLastIndex(ctx, row.Idcomments); err != nil {
+		if err := q.SetCommentLastIndexForSystem(ctx, row.Idcomments); err != nil {
 			return nil, err
 		}
 	}

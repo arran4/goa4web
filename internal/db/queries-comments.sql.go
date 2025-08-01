@@ -36,7 +36,7 @@ func (q *Queries) CreateComment(ctx context.Context, arg CreateCommentParams) (i
 	return result.LastInsertId()
 }
 
-const getAllCommentsByUser = `-- name: GetAllCommentsByUser :many
+const getAllCommentsByUserForAdmin = `-- name: GetAllCommentsByUserForAdmin :many
 SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, c.last_index, th.forumtopic_idforumtopic
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id = th.idforumthread
@@ -44,7 +44,7 @@ WHERE c.users_idusers = ?
 ORDER BY c.written
 `
 
-type GetAllCommentsByUserRow struct {
+type GetAllCommentsByUserForAdminRow struct {
 	Idcomments             int32
 	ForumthreadID          int32
 	UsersIdusers           int32
@@ -56,15 +56,15 @@ type GetAllCommentsByUserRow struct {
 	ForumtopicIdforumtopic sql.NullInt32
 }
 
-func (q *Queries) GetAllCommentsByUser(ctx context.Context, usersIdusers int32) ([]*GetAllCommentsByUserRow, error) {
-	rows, err := q.db.QueryContext(ctx, getAllCommentsByUser, usersIdusers)
+func (q *Queries) GetAllCommentsByUserForAdmin(ctx context.Context, usersIdusers int32) ([]*GetAllCommentsByUserForAdminRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllCommentsByUserForAdmin, usersIdusers)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetAllCommentsByUserRow
+	var items []*GetAllCommentsByUserForAdminRow
 	for rows.Next() {
-		var i GetAllCommentsByUserRow
+		var i GetAllCommentsByUserForAdminRow
 		if err := rows.Scan(
 			&i.Idcomments,
 			&i.ForumthreadID,
@@ -89,24 +89,24 @@ func (q *Queries) GetAllCommentsByUser(ctx context.Context, usersIdusers int32) 
 	return items, nil
 }
 
-const getAllCommentsForIndex = `-- name: GetAllCommentsForIndex :many
+const getAllCommentsForIndexForSystem = `-- name: GetAllCommentsForIndexForSystem :many
 SELECT idcomments, text FROM comments WHERE deleted_at IS NULL
 `
 
-type GetAllCommentsForIndexRow struct {
+type GetAllCommentsForIndexForSystemRow struct {
 	Idcomments int32
 	Text       sql.NullString
 }
 
-func (q *Queries) GetAllCommentsForIndex(ctx context.Context) ([]*GetAllCommentsForIndexRow, error) {
-	rows, err := q.db.QueryContext(ctx, getAllCommentsForIndex)
+func (q *Queries) GetAllCommentsForIndexForSystem(ctx context.Context) ([]*GetAllCommentsForIndexForSystemRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllCommentsForIndexForSystem)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetAllCommentsForIndexRow
+	var items []*GetAllCommentsForIndexForSystemRow
 	for rows.Next() {
-		var i GetAllCommentsForIndexRow
+		var i GetAllCommentsForIndexForSystemRow
 		if err := rows.Scan(&i.Idcomments, &i.Text); err != nil {
 			return nil, err
 		}
@@ -453,7 +453,7 @@ func (q *Queries) GetCommentsByThreadIdForUser(ctx context.Context, arg GetComme
 	return items, nil
 }
 
-const listAllCommentsWithThreadInfo = `-- name: ListAllCommentsWithThreadInfo :many
+const listAllCommentsWithThreadInfoForAdmin = `-- name: ListAllCommentsWithThreadInfoForAdmin :many
 SELECT c.idcomments, c.written, c.text, c.deleted_at,
        th.idforumthread, t.idforumtopic, t.title AS forumtopic_title,
        u.idusers, u.username AS posterusername
@@ -465,12 +465,12 @@ ORDER BY c.written DESC
 LIMIT ? OFFSET ?
 `
 
-type ListAllCommentsWithThreadInfoParams struct {
+type ListAllCommentsWithThreadInfoForAdminParams struct {
 	Limit  int32
 	Offset int32
 }
 
-type ListAllCommentsWithThreadInfoRow struct {
+type ListAllCommentsWithThreadInfoForAdminRow struct {
 	Idcomments      int32
 	Written         sql.NullTime
 	Text            sql.NullString
@@ -482,15 +482,15 @@ type ListAllCommentsWithThreadInfoRow struct {
 	Posterusername  sql.NullString
 }
 
-func (q *Queries) ListAllCommentsWithThreadInfo(ctx context.Context, arg ListAllCommentsWithThreadInfoParams) ([]*ListAllCommentsWithThreadInfoRow, error) {
-	rows, err := q.db.QueryContext(ctx, listAllCommentsWithThreadInfo, arg.Limit, arg.Offset)
+func (q *Queries) ListAllCommentsWithThreadInfoForAdmin(ctx context.Context, arg ListAllCommentsWithThreadInfoForAdminParams) ([]*ListAllCommentsWithThreadInfoForAdminRow, error) {
+	rows, err := q.db.QueryContext(ctx, listAllCommentsWithThreadInfoForAdmin, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*ListAllCommentsWithThreadInfoRow
+	var items []*ListAllCommentsWithThreadInfoForAdminRow
 	for rows.Next() {
-		var i ListAllCommentsWithThreadInfoRow
+		var i ListAllCommentsWithThreadInfoForAdminRow
 		if err := rows.Scan(
 			&i.Idcomments,
 			&i.Written,
@@ -515,12 +515,12 @@ func (q *Queries) ListAllCommentsWithThreadInfo(ctx context.Context, arg ListAll
 	return items, nil
 }
 
-const setCommentLastIndex = `-- name: SetCommentLastIndex :exec
+const setCommentLastIndexForSystem = `-- name: SetCommentLastIndexForSystem :exec
 UPDATE comments SET last_index = NOW() WHERE idcomments = ?
 `
 
-func (q *Queries) SetCommentLastIndex(ctx context.Context, idcomments int32) error {
-	_, err := q.db.ExecContext(ctx, setCommentLastIndex, idcomments)
+func (q *Queries) SetCommentLastIndexForSystem(ctx context.Context, idcomments int32) error {
+	_, err := q.db.ExecContext(ctx, setCommentLastIndexForSystem, idcomments)
 	return err
 }
 

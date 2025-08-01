@@ -104,21 +104,21 @@ WHERE c.forumthread_id=sqlc.arg(thread_id) AND c.forumthread_id!=0 AND EXISTS (
 ORDER BY c.written;
 
 
--- name: GetAllCommentsByUser :many
+-- name: GetAllCommentsByUserForAdmin :many
 SELECT c.*, th.forumtopic_idforumtopic
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id = th.idforumthread
 WHERE c.users_idusers = ?
 ORDER BY c.written;
 
--- name: SetCommentLastIndex :exec
+-- name: SetCommentLastIndexForSystem :exec
 UPDATE comments SET last_index = NOW() WHERE idcomments = ?;
 
 
--- name: GetAllCommentsForIndex :many
+-- name: GetAllCommentsForIndexForSystem :many
 SELECT idcomments, text FROM comments WHERE deleted_at IS NULL;
 
--- name: ListAllCommentsWithThreadInfo :many
+-- name: ListAllCommentsWithThreadInfoForAdmin :many
 SELECT c.idcomments, c.written, c.text, c.deleted_at,
        th.idforumthread, t.idforumtopic, t.title AS forumtopic_title,
        u.idusers, u.username AS posterusername

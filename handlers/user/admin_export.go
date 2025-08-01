@@ -120,7 +120,7 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	comments, err := queries.GetAllCommentsByUser(r.Context(), int32(uid))
+	comments, err := queries.GetAllCommentsByUserForAdmin(r.Context(), int32(uid))
 	if err != nil {
 		log.Printf("fetch comments: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

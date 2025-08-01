@@ -18,7 +18,6 @@ WHERE s.idsiteNews = ?;
 UPDATE site_news SET forumthread_id = ? WHERE idsiteNews = ?;
 
 -- name: GetNewsPostByIdWithWriterIdAndThreadCommentCount :one
-
 WITH RECURSIVE role_ids(id) AS (
     SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
     UNION

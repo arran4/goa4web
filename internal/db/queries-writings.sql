@@ -32,10 +32,10 @@ WHERE w.private = 0 AND w.users_idusers = sqlc.arg(author_id)
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='writing'
-      AND g.item='article'
+      AND (g.item='article' OR g.item IS NULL)
       AND g.action='see'
       AND g.active=1
-      AND g.item_id = w.idwriting
+      AND (g.item_id = w.idwriting OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -69,10 +69,10 @@ WHERE w.private = 0 AND w.writing_category_id = sqlc.arg(writing_category_id)
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='writing'
-      AND g.item='article'
+      AND (g.item='article' OR g.item IS NULL)
       AND g.action='see'
       AND g.active=1
-      AND g.item_id = w.idwriting
+      AND (g.item_id = w.idwriting OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -174,10 +174,10 @@ FROM writing_category wc
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='writing'
-      AND g.item='category'
+      AND (g.item='category' OR g.item IS NULL)
       AND g.action='see'
       AND g.active=1
-      AND g.item_id = wc.idwritingcategory
+      AND (g.item_id = wc.idwritingcategory OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 );
@@ -241,10 +241,10 @@ WHERE (
 AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'writing'
-      AND g.item = 'article'
+      AND (g.item = 'article' OR g.item IS NULL)
       AND g.action = 'see'
       AND g.active = 1
-      AND g.item_id = w.idwriting
+      AND (g.item_id = w.idwriting OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
@@ -274,10 +274,10 @@ WHERE (LOWER(u.username) LIKE LOWER(sqlc.arg(query)) OR LOWER((SELECT email FROM
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'writing'
-      AND g.item = 'article'
+      AND (g.item = 'article' OR g.item IS NULL)
       AND g.action = 'see'
       AND g.active = 1
-      AND g.item_id = w.idwriting
+      AND (g.item_id = w.idwriting OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )

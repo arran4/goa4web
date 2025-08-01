@@ -139,10 +139,10 @@ WHERE b.imageboard_idimageboard = ?
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='imagebbs'
-      AND g.item='board'
+      AND (g.item='board' OR g.item IS NULL)
       AND g.action='see'
       AND g.active=1
-      AND g.item_id = b.idimageboard
+      AND (g.item_id = b.idimageboard OR g.item_id IS NULL)
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -231,10 +231,10 @@ FROM imageboard b
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='imagebbs'
-      AND g.item='board'
+      AND (g.item='board' OR g.item IS NULL)
       AND g.action='see'
       AND g.active=1
-      AND g.item_id = b.idimageboard
+      AND (g.item_id = b.idimageboard OR g.item_id IS NULL)
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -791,10 +791,10 @@ WHERE i.users_idusers = ?
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='imagebbs'
-      AND g.item='board'
+      AND (g.item='board' OR g.item IS NULL)
       AND g.action='see'
       AND g.active=1
-      AND g.item_id = i.imageboard_idimageboard
+      AND (g.item_id = i.imageboard_idimageboard OR g.item_id IS NULL)
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )

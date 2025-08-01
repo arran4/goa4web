@@ -35,10 +35,10 @@ FROM linker_category lc
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='linker'
-      AND g.item='category'
+      AND (g.item='category' OR g.item IS NULL)
       AND g.action='see'
       AND g.active=1
-      AND g.item_id = lc.idlinkerCategory
+      AND (g.item_id = lc.idlinkerCategory OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(viewer_user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
@@ -122,10 +122,10 @@ WHERE (lc.idlinkerCategory = sqlc.arg(idlinkercategory) OR sqlc.arg(idlinkercate
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='linker'
-      AND g.item='link'
+      AND (g.item='link' OR g.item IS NULL)
       AND g.action='see'
       AND g.active=1
-      AND g.item_id = l.idlinker
+      AND (g.item_id = l.idlinker OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(viewer_user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -159,10 +159,10 @@ WHERE (lc.idlinkerCategory = sqlc.arg(idlinkercategory) OR sqlc.arg(idlinkercate
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='linker'
-      AND g.item='link'
+      AND (g.item='link' OR g.item IS NULL)
       AND g.action='see'
       AND g.active=1
-      AND g.item_id = l.idlinker
+      AND (g.item_id = l.idlinker OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(viewer_user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -187,10 +187,10 @@ WHERE l.users_idusers = sqlc.arg(user_id)
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='linker'
-      AND g.item='link'
+      AND (g.item='link' OR g.item IS NULL)
       AND g.action='see'
       AND g.active=1
-      AND g.item_id = l.idlinker
+      AND (g.item_id = l.idlinker OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(viewer_user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -308,10 +308,10 @@ WHERE (lc.idlinkerCategory = sqlc.arg(idlinkercategory) OR sqlc.arg(idlinkercate
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='linker'
-      AND g.item='link'
+      AND (g.item='link' OR g.item IS NULL)
       AND g.action='see'
       AND g.active=1
-      AND g.item_id = l.idlinker
+      AND (g.item_id = l.idlinker OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(viewer_user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )

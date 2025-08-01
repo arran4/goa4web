@@ -85,7 +85,7 @@ WHERE c.idfaqCategories <> 0
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='faq'
-        AND (g.item='question' OR g.item IS NULL)
+        AND (g.item='question/answer' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
         AND (g.item_id = f.idfaq OR g.item_id IS NULL)

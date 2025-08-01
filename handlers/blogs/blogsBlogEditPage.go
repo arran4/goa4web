@@ -52,6 +52,8 @@ func (EditBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 			String: text,
 			Valid:  true,
 		},
+		UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		ViewerID: cd.UserID,
 	}); err != nil {
 		return fmt.Errorf("update blog fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

@@ -45,6 +45,8 @@ func (c *blogCreateCmd) Run() error {
 		UsersIdusers:       int32(c.UserID),
 		LanguageIdlanguage: int32(c.LangID),
 		Blog:               sql.NullString{String: c.Text, Valid: true},
+		UserID:             sql.NullInt32{Int32: int32(c.UserID), Valid: true},
+		ViewerID:           int32(c.UserID),
 	})
 	if err != nil {
 		return fmt.Errorf("create blog: %w", err)

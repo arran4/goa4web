@@ -30,8 +30,8 @@ func (DeleteAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) any
 	}
 	for _, idStr := range r.Form["id"] {
 		id, _ := strconv.Atoi(idStr)
-		if err := queries.AdminDemoteAnnouncement(r.Context(), int32(id)); err != nil {
-			return fmt.Errorf("delete announcement fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+		if err := queries.DemoteAnnouncement(r.Context(), int32(id)); err != nil {
+			return fmt.Errorf("demote announcement fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 			if evt := cd.Event(); evt != nil {

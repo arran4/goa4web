@@ -107,17 +107,44 @@ func (q *Queries) BlogsSearchNext(ctx context.Context, arg BlogsSearchNextParams
 
 const createBlogEntry = `-- name: CreateBlogEntry :execlastid
 INSERT INTO blogs (users_idusers, language_idlanguage, blog, written)
-VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+SELECT ?, ?, ?, CURRENT_TIMESTAMP
+WHERE EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section = 'blogs'
+      AND g.item = 'entry'
+      AND g.action = 'post'
+      AND g.active = 1
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (
+          SELECT rid FROM (
+              SELECT ur.role_id AS rid FROM user_roles ur WHERE ur.users_idusers = ?
+              UNION
+              SELECT r2.id FROM user_roles ur2
+                  JOIN grants gr ON gr.role_id = ur2.role_id AND gr.section = 'role' AND gr.active = 1
+                  JOIN roles r2 ON r2.name = gr.action
+              WHERE ur2.users_idusers = ?
+          ) AS role_ids
+      ))
+)
 `
 
 type CreateBlogEntryParams struct {
 	UsersIdusers       int32
 	LanguageIdlanguage int32
 	Blog               sql.NullString
+	UserID             sql.NullInt32
+	ViewerID           int32
 }
 
 func (q *Queries) CreateBlogEntry(ctx context.Context, arg CreateBlogEntryParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, createBlogEntry, arg.UsersIdusers, arg.LanguageIdlanguage, arg.Blog)
+	result, err := q.db.ExecContext(ctx, createBlogEntry,
+		arg.UsersIdusers,
+		arg.LanguageIdlanguage,
+		arg.Blog,
+		arg.UserID,
+		arg.ViewerID,
+		arg.ViewerID,
+	)
 	if err != nil {
 		return 0, err
 	}
@@ -677,18 +704,46 @@ func (q *Queries) SetBlogLastIndex(ctx context.Context, idblogs int32) error {
 }
 
 const updateBlogEntry = `-- name: UpdateBlogEntry :exec
-UPDATE blogs
-SET language_idlanguage = ?, blog = ?
-WHERE idblogs = ?
+UPDATE blogs b
+SET b.language_idlanguage = ?, b.blog = ?
+WHERE b.idblogs = ?
+  AND EXISTS (
+      SELECT 1 FROM grants g
+       WHERE g.section = 'blogs'
+         AND g.item = 'entry'
+         AND g.action = 'edit'
+         AND g.active = 1
+         AND g.item_id = b.idblogs
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (
+            SELECT rid FROM (
+                SELECT ur.role_id AS rid FROM user_roles ur WHERE ur.users_idusers = ?
+                UNION
+                SELECT r2.id FROM user_roles ur2
+                    JOIN grants gr ON gr.role_id = ur2.role_id AND gr.section = 'role' AND gr.active = 1
+                    JOIN roles r2 ON r2.name = gr.action
+                WHERE ur2.users_idusers = ?
+            ) AS role_ids
+        ))
+  )
 `
 
 type UpdateBlogEntryParams struct {
 	LanguageIdlanguage int32
 	Blog               sql.NullString
 	Idblogs            int32
+	UserID             sql.NullInt32
+	ViewerID           int32
 }
 
 func (q *Queries) UpdateBlogEntry(ctx context.Context, arg UpdateBlogEntryParams) error {
-	_, err := q.db.ExecContext(ctx, updateBlogEntry, arg.LanguageIdlanguage, arg.Blog, arg.Idblogs)
+	_, err := q.db.ExecContext(ctx, updateBlogEntry,
+		arg.LanguageIdlanguage,
+		arg.Blog,
+		arg.Idblogs,
+		arg.UserID,
+		arg.ViewerID,
+		arg.ViewerID,
+	)
 	return err
 }

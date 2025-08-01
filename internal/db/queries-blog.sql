@@ -1,11 +1,48 @@
 -- name: UpdateBlogEntry :exec
-UPDATE blogs
-SET language_idlanguage = ?, blog = ?
-WHERE idblogs = ?;
+UPDATE blogs b
+SET b.language_idlanguage = ?, b.blog = ?
+WHERE b.idblogs = ?
+  AND EXISTS (
+      SELECT 1 FROM grants g
+       WHERE g.section = 'blogs'
+         AND g.item = 'entry'
+         AND g.action = 'edit'
+         AND g.active = 1
+         AND g.item_id = b.idblogs
+        AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (
+            SELECT rid FROM (
+                SELECT ur.role_id AS rid FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+                UNION
+                SELECT r2.id FROM user_roles ur2
+                    JOIN grants gr ON gr.role_id = ur2.role_id AND gr.section = 'role' AND gr.active = 1
+                    JOIN roles r2 ON r2.name = gr.action
+                WHERE ur2.users_idusers = sqlc.arg(viewer_id)
+            ) AS role_ids
+        ))
+  );
 
 -- name: CreateBlogEntry :execlastid
 INSERT INTO blogs (users_idusers, language_idlanguage, blog, written)
-VALUES (?, ?, ?, CURRENT_TIMESTAMP);
+SELECT ?, ?, ?, CURRENT_TIMESTAMP
+WHERE EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section = 'blogs'
+      AND g.item = 'entry'
+      AND g.action = 'post'
+      AND g.active = 1
+      AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (
+          SELECT rid FROM (
+              SELECT ur.role_id AS rid FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+              UNION
+              SELECT r2.id FROM user_roles ur2
+                  JOIN grants gr ON gr.role_id = ur2.role_id AND gr.section = 'role' AND gr.active = 1
+                  JOIN roles r2 ON r2.name = gr.action
+              WHERE ur2.users_idusers = sqlc.arg(viewer_id)
+          ) AS role_ids
+      ))
+);
 
 -- name: AssignThreadIdToBlogEntry :exec
 UPDATE blogs

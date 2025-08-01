@@ -16,6 +16,7 @@ type blogUpdateCmd struct {
 	ID     int
 	LangID int
 	Text   string
+	UserID int
 }
 
 func parseBlogUpdateCmd(parent *blogCmd, args []string) (*blogUpdateCmd, error) {
@@ -24,6 +25,7 @@ func parseBlogUpdateCmd(parent *blogCmd, args []string) (*blogUpdateCmd, error) 
 	c.fs.IntVar(&c.ID, "id", 0, "blog id")
 	c.fs.IntVar(&c.LangID, "lang", 0, "language id")
 	c.fs.StringVar(&c.Text, "text", "", "blog text")
+	c.fs.IntVar(&c.UserID, "user", 0, "viewer user id")
 	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
@@ -41,10 +43,13 @@ func (c *blogUpdateCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
+	uid := int32(c.UserID)
 	err = queries.UpdateBlogEntry(ctx, dbpkg.UpdateBlogEntryParams{
 		LanguageIdlanguage: int32(c.LangID),
 		Blog:               sql.NullString{String: c.Text, Valid: c.Text != ""},
 		Idblogs:            int32(c.ID),
+		UserID:             sql.NullInt32{Int32: uid, Valid: uid != 0},
+		ViewerID:           uid,
 	})
 	if err != nil {
 		return fmt.Errorf("update blog: %w", err)

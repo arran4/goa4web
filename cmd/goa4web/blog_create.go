@@ -41,10 +41,13 @@ func (c *blogCreateCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
+	uid := int32(c.UserID)
 	_, err = queries.CreateBlogEntry(ctx, dbpkg.CreateBlogEntryParams{
-		UsersIdusers:       int32(c.UserID),
+		UsersIdusers:       uid,
 		LanguageIdlanguage: int32(c.LangID),
 		Blog:               sql.NullString{String: c.Text, Valid: true},
+		UserID:             sql.NullInt32{Int32: uid, Valid: uid != 0},
+		ViewerID:           uid,
 	})
 	if err != nil {
 		return fmt.Errorf("create blog: %w", err)

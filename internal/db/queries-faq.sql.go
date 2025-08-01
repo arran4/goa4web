@@ -56,15 +56,51 @@ func (q *Queries) DeleteFAQCategory(ctx context.Context, idfaqcategories int32) 
 	return err
 }
 
-const getAllAnsweredFAQWithFAQCategories = `-- name: GetAllAnsweredFAQWithFAQCategories :many
-SELECT c.idfaqcategories, c.name, f.idfaq, f.faqcategories_idfaqcategories, f.language_idlanguage, f.users_idusers, f.answer, f.question
+const getAllAnsweredFAQWithFAQCategoriesForUser = `-- name: GetAllAnsweredFAQWithFAQCategoriesForUser :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
+SELECT c.idfaqCategories, c.name, f.idfaq, f.faqCategories_idfaqCategories, f.language_idlanguage, f.users_idusers, f.answer, f.question
 FROM faq f
 LEFT JOIN faq_categories c ON c.idfaqCategories = f.faqCategories_idfaqCategories
-WHERE c.idfaqCategories <> 0 AND f.answer IS NOT NULL
-ORDER BY c.idfaqCategories
+WHERE c.idfaqCategories <> 0
+  AND f.answer IS NOT NULL
+  AND (
+      f.language_idlanguage = 0
+      OR f.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = f.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='faq'
+        AND g.item='question'
+        AND g.action='see'
+        AND g.active=1
+        AND g.item_id = f.idfaq
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+ORDER BY c.idfaqCategories, f.idfaq
 `
 
-type GetAllAnsweredFAQWithFAQCategoriesRow struct {
+type GetAllAnsweredFAQWithFAQCategoriesForUserParams struct {
+	ViewerID int32
+	UserID   sql.NullInt32
+}
+
+type GetAllAnsweredFAQWithFAQCategoriesForUserRow struct {
 	Idfaqcategories              sql.NullInt32
 	Name                         sql.NullString
 	Idfaq                        int32
@@ -75,15 +111,20 @@ type GetAllAnsweredFAQWithFAQCategoriesRow struct {
 	Question                     sql.NullString
 }
 
-func (q *Queries) GetAllAnsweredFAQWithFAQCategories(ctx context.Context) ([]*GetAllAnsweredFAQWithFAQCategoriesRow, error) {
-	rows, err := q.db.QueryContext(ctx, getAllAnsweredFAQWithFAQCategories)
+func (q *Queries) GetAllAnsweredFAQWithFAQCategoriesForUser(ctx context.Context, arg GetAllAnsweredFAQWithFAQCategoriesForUserParams) ([]*GetAllAnsweredFAQWithFAQCategoriesForUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllAnsweredFAQWithFAQCategoriesForUser,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.UserID,
+	)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetAllAnsweredFAQWithFAQCategoriesRow
+	var items []*GetAllAnsweredFAQWithFAQCategoriesForUserRow
 	for rows.Next() {
-		var i GetAllAnsweredFAQWithFAQCategoriesRow
+		var i GetAllAnsweredFAQWithFAQCategoriesForUserRow
 		if err := rows.Scan(
 			&i.Idfaqcategories,
 			&i.Name,

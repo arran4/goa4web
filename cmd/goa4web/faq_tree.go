@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"flag"
 	"fmt"
 
@@ -31,7 +32,7 @@ func (c *faqTreeCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
-	rows, err := queries.GetAllAnsweredFAQWithFAQCategories(ctx)
+	rows, err := queries.GetAllAnsweredFAQWithFAQCategoriesForUser(ctx, dbpkg.GetAllAnsweredFAQWithFAQCategoriesForUserParams{ViewerID: 0, UserID: sql.NullInt32{}})
 	if err != nil {
 		return fmt.Errorf("tree: %w", err)
 	}

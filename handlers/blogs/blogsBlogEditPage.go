@@ -80,7 +80,7 @@ func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
 		Languages          []*db.Language
-		Blog               *db.GetBlogEntryForUserByIdRow
+		Blog               *db.GetBlogEntryForViewerByIdRow
 		SelectedLanguageId int
 		Mode               string
 	}

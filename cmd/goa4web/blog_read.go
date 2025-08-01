@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"flag"
 	"fmt"
 	"strconv"
@@ -44,9 +45,10 @@ func (c *blogReadCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
-	row, err := queries.GetBlogEntryForUserById(ctx, dbpkg.GetBlogEntryForUserByIdParams{
-		ViewerIdusers: 0,
-		ID:            int32(c.ID),
+	row, err := queries.GetBlogEntryForViewerById(ctx, dbpkg.GetBlogEntryForViewerByIdParams{
+		ViewerID: 0,
+		UserID:   sql.NullInt32{Int32: 0, Valid: false},
+		ID:       int32(c.ID),
 	})
 	if err != nil {
 		return fmt.Errorf("get blog: %w", err)

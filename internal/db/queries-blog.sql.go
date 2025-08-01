@@ -227,37 +227,53 @@ func (q *Queries) GetAllBlogsForIndex(ctx context.Context) ([]*GetAllBlogsForInd
 	return items, nil
 }
 
-const getBlogEntriesByAuthorForUserDescendingLanguages = `-- name: GetBlogEntriesByAuthorForUserDescendingLanguages :many
+const getBlogEntryForViewerById = `-- name: GetBlogEntryForViewerById :one
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
        b.users_idusers = ? AS is_owner
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
-WHERE (b.users_idusers = ? OR ? = 0)
-AND (
-    b.language_idlanguage = 0
-    OR b.language_idlanguage IS NULL
-    OR EXISTS (
-        SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = ?
-          AND ul.language_idlanguage = b.language_idlanguage
-    )
-    OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
-    )
-)
-ORDER BY b.written DESC
-LIMIT ? OFFSET ?
+WHERE b.idblogs = ?
+  AND (
+      b.language_idlanguage = 0
+      OR b.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = b.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section = 'blogs'
+        AND g.item = 'entry'
+        AND g.action = 'see'
+        AND g.active = 1
+        AND g.item_id = b.idblogs
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+LIMIT 1
 `
 
-type GetBlogEntriesByAuthorForUserDescendingLanguagesParams struct {
+type GetBlogEntryForViewerByIdParams struct {
 	ViewerID int32
-	AuthorID int32
-	Limit    int32
-	Offset   int32
+	ID       int32
+	UserID   sql.NullInt32
 }
 
-type GetBlogEntriesByAuthorForUserDescendingLanguagesRow struct {
+type GetBlogEntryForViewerByIdRow struct {
 	Idblogs            int32
 	ForumthreadID      sql.NullInt32
 	UsersIdusers       int32
@@ -269,13 +285,135 @@ type GetBlogEntriesByAuthorForUserDescendingLanguagesRow struct {
 	IsOwner            bool
 }
 
-func (q *Queries) GetBlogEntriesByAuthorForUserDescendingLanguages(ctx context.Context, arg GetBlogEntriesByAuthorForUserDescendingLanguagesParams) ([]*GetBlogEntriesByAuthorForUserDescendingLanguagesRow, error) {
-	rows, err := q.db.QueryContext(ctx, getBlogEntriesByAuthorForUserDescendingLanguages,
+func (q *Queries) GetBlogEntryForViewerById(ctx context.Context, arg GetBlogEntryForViewerByIdParams) (*GetBlogEntryForViewerByIdRow, error) {
+	row := q.db.QueryRowContext(ctx, getBlogEntryForViewerById,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.ID,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.UserID,
+	)
+	var i GetBlogEntryForViewerByIdRow
+	err := row.Scan(
+		&i.Idblogs,
+		&i.ForumthreadID,
+		&i.UsersIdusers,
+		&i.LanguageIdlanguage,
+		&i.Blog,
+		&i.Written,
+		&i.Username,
+		&i.Comments,
+		&i.IsOwner,
+	)
+	return &i, err
+}
+
+const getCountOfBlogPostsByUser = `-- name: GetCountOfBlogPostsByUser :many
+SELECT u.username, COUNT(b.idblogs)
+FROM blogs b, users u
+WHERE b.users_idusers = u.idusers
+GROUP BY u.idusers
+`
+
+type GetCountOfBlogPostsByUserRow struct {
+	Username sql.NullString
+	Count    int64
+}
+
+func (q *Queries) GetCountOfBlogPostsByUser(ctx context.Context) ([]*GetCountOfBlogPostsByUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, getCountOfBlogPostsByUser)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetCountOfBlogPostsByUserRow
+	for rows.Next() {
+		var i GetCountOfBlogPostsByUserRow
+		if err := rows.Scan(&i.Username, &i.Count); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listBlogEntriesForViewerByAuthor = `-- name: ListBlogEntriesForViewerByAuthor :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
+SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
+       b.users_idusers = ? AS is_owner
+FROM blogs b
+LEFT JOIN users u ON b.users_idusers=u.idusers
+LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
+WHERE (b.users_idusers = ? OR ? = 0)
+  AND (
+      b.language_idlanguage = 0
+      OR b.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = b.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section = 'blogs'
+        AND g.item = 'entry'
+        AND g.action = 'see'
+        AND g.active = 1
+        AND g.item_id = b.idblogs
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+ORDER BY b.written DESC
+LIMIT ? OFFSET ?
+`
+
+type ListBlogEntriesForViewerByAuthorParams struct {
+	ViewerID int32
+	AuthorID int32
+	UserID   sql.NullInt32
+	Limit    int32
+	Offset   int32
+}
+
+type ListBlogEntriesForViewerByAuthorRow struct {
+	Idblogs            int32
+	ForumthreadID      sql.NullInt32
+	UsersIdusers       int32
+	LanguageIdlanguage int32
+	Blog               sql.NullString
+	Written            time.Time
+	Username           sql.NullString
+	Comments           int32
+	IsOwner            bool
+}
+
+func (q *Queries) ListBlogEntriesForViewerByAuthor(ctx context.Context, arg ListBlogEntriesForViewerByAuthorParams) ([]*ListBlogEntriesForViewerByAuthorRow, error) {
+	rows, err := q.db.QueryContext(ctx, listBlogEntriesForViewerByAuthor,
+		arg.ViewerID,
 		arg.ViewerID,
 		arg.AuthorID,
 		arg.AuthorID,
 		arg.ViewerID,
 		arg.ViewerID,
+		arg.UserID,
 		arg.Limit,
 		arg.Offset,
 	)
@@ -283,9 +421,9 @@ func (q *Queries) GetBlogEntriesByAuthorForUserDescendingLanguages(ctx context.C
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetBlogEntriesByAuthorForUserDescendingLanguagesRow
+	var items []*ListBlogEntriesForViewerByAuthorRow
 	for rows.Next() {
-		var i GetBlogEntriesByAuthorForUserDescendingLanguagesRow
+		var i ListBlogEntriesForViewerByAuthorRow
 		if err := rows.Scan(
 			&i.Idblogs,
 			&i.ForumthreadID,
@@ -310,16 +448,52 @@ func (q *Queries) GetBlogEntriesByAuthorForUserDescendingLanguages(ctx context.C
 	return items, nil
 }
 
-const getBlogEntriesByIdsDescending = `-- name: GetBlogEntriesByIdsDescending :many
+const listBlogEntriesForViewerByIDs = `-- name: ListBlogEntriesForViewerByIDs :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
 WHERE b.idblogs IN (/*SLICE:blogids*/?)
+  AND (
+      b.language_idlanguage = 0
+      OR b.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = b.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section = 'blogs'
+        AND g.item = 'entry'
+        AND g.action = 'see'
+        AND g.active = 1
+        AND g.item_id = b.idblogs
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
 ORDER BY b.written DESC
 `
 
-type GetBlogEntriesByIdsDescendingRow struct {
+type ListBlogEntriesForViewerByIDsParams struct {
+	ViewerID int32
+	Blogids  []int32
+	UserID   sql.NullInt32
+}
+
+type ListBlogEntriesForViewerByIDsRow struct {
 	Idblogs            int32
 	ForumthreadID      sql.NullInt32
 	UsersIdusers       int32
@@ -328,25 +502,29 @@ type GetBlogEntriesByIdsDescendingRow struct {
 	Written            time.Time
 }
 
-func (q *Queries) GetBlogEntriesByIdsDescending(ctx context.Context, blogids []int32) ([]*GetBlogEntriesByIdsDescendingRow, error) {
-	query := getBlogEntriesByIdsDescending
+func (q *Queries) ListBlogEntriesForViewerByIDs(ctx context.Context, arg ListBlogEntriesForViewerByIDsParams) ([]*ListBlogEntriesForViewerByIDsRow, error) {
+	query := listBlogEntriesForViewerByIDs
 	var queryParams []interface{}
-	if len(blogids) > 0 {
-		for _, v := range blogids {
+	queryParams = append(queryParams, arg.ViewerID)
+	if len(arg.Blogids) > 0 {
+		for _, v := range arg.Blogids {
 			queryParams = append(queryParams, v)
 		}
-		query = strings.Replace(query, "/*SLICE:blogids*/?", strings.Repeat(",?", len(blogids))[1:], 1)
+		query = strings.Replace(query, "/*SLICE:blogids*/?", strings.Repeat(",?", len(arg.Blogids))[1:], 1)
 	} else {
 		query = strings.Replace(query, "/*SLICE:blogids*/?", "NULL", 1)
 	}
+	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.UserID)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetBlogEntriesByIdsDescendingRow
+	var items []*ListBlogEntriesForViewerByIDsRow
 	for rows.Next() {
-		var i GetBlogEntriesByIdsDescendingRow
+		var i ListBlogEntriesForViewerByIDsRow
 		if err := rows.Scan(
 			&i.Idblogs,
 			&i.ForumthreadID,
@@ -368,7 +546,7 @@ func (q *Queries) GetBlogEntriesByIdsDescending(ctx context.Context, blogids []i
 	return items, nil
 }
 
-const getBlogEntriesForViewerDescending = `-- name: GetBlogEntriesForViewerDescending :many
+const listBlogEntriesForViewerDescending = `-- name: ListBlogEntriesForViewerDescending :many
 WITH RECURSIVE role_ids(id) AS (
     SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
     UNION
@@ -408,14 +586,14 @@ ORDER BY b.written DESC
 LIMIT ? OFFSET ?
 `
 
-type GetBlogEntriesForViewerDescendingParams struct {
+type ListBlogEntriesForViewerDescendingParams struct {
 	ViewerID int32
 	UserID   sql.NullInt32
 	Limit    int32
 	Offset   int32
 }
 
-type GetBlogEntriesForViewerDescendingRow struct {
+type ListBlogEntriesForViewerDescendingRow struct {
 	Idblogs            int32
 	ForumthreadID      sql.NullInt32
 	UsersIdusers       int32
@@ -427,8 +605,8 @@ type GetBlogEntriesForViewerDescendingRow struct {
 	IsOwner            bool
 }
 
-func (q *Queries) GetBlogEntriesForViewerDescending(ctx context.Context, arg GetBlogEntriesForViewerDescendingParams) ([]*GetBlogEntriesForViewerDescendingRow, error) {
-	rows, err := q.db.QueryContext(ctx, getBlogEntriesForViewerDescending,
+func (q *Queries) ListBlogEntriesForViewerDescending(ctx context.Context, arg ListBlogEntriesForViewerDescendingParams) ([]*ListBlogEntriesForViewerDescendingRow, error) {
+	rows, err := q.db.QueryContext(ctx, listBlogEntriesForViewerDescending,
 		arg.ViewerID,
 		arg.ViewerID,
 		arg.ViewerID,
@@ -441,9 +619,9 @@ func (q *Queries) GetBlogEntriesForViewerDescending(ctx context.Context, arg Get
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetBlogEntriesForViewerDescendingRow
+	var items []*ListBlogEntriesForViewerDescendingRow
 	for rows.Next() {
-		var i GetBlogEntriesForViewerDescendingRow
+		var i ListBlogEntriesForViewerDescendingRow
 		if err := rows.Scan(
 			&i.Idblogs,
 			&i.ForumthreadID,
@@ -455,85 +633,6 @@ func (q *Queries) GetBlogEntriesForViewerDescending(ctx context.Context, arg Get
 			&i.Comments,
 			&i.IsOwner,
 		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getBlogEntryForUserById = `-- name: GetBlogEntryForUserById :one
-SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
-       b.users_idusers = ? AS is_owner
-FROM blogs b
-LEFT JOIN users u ON b.users_idusers=u.idusers
-LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
-WHERE b.idblogs = ?
-LIMIT 1
-`
-
-type GetBlogEntryForUserByIdParams struct {
-	ViewerIdusers int32
-	ID            int32
-}
-
-type GetBlogEntryForUserByIdRow struct {
-	Idblogs            int32
-	ForumthreadID      sql.NullInt32
-	UsersIdusers       int32
-	LanguageIdlanguage int32
-	Blog               sql.NullString
-	Written            time.Time
-	Username           sql.NullString
-	Comments           int32
-	IsOwner            bool
-}
-
-func (q *Queries) GetBlogEntryForUserById(ctx context.Context, arg GetBlogEntryForUserByIdParams) (*GetBlogEntryForUserByIdRow, error) {
-	row := q.db.QueryRowContext(ctx, getBlogEntryForUserById, arg.ViewerIdusers, arg.ID)
-	var i GetBlogEntryForUserByIdRow
-	err := row.Scan(
-		&i.Idblogs,
-		&i.ForumthreadID,
-		&i.UsersIdusers,
-		&i.LanguageIdlanguage,
-		&i.Blog,
-		&i.Written,
-		&i.Username,
-		&i.Comments,
-		&i.IsOwner,
-	)
-	return &i, err
-}
-
-const getCountOfBlogPostsByUser = `-- name: GetCountOfBlogPostsByUser :many
-SELECT u.username, COUNT(b.idblogs)
-FROM blogs b, users u
-WHERE b.users_idusers = u.idusers
-GROUP BY u.idusers
-`
-
-type GetCountOfBlogPostsByUserRow struct {
-	Username sql.NullString
-	Count    int64
-}
-
-func (q *Queries) GetCountOfBlogPostsByUser(ctx context.Context) ([]*GetCountOfBlogPostsByUserRow, error) {
-	rows, err := q.db.QueryContext(ctx, getCountOfBlogPostsByUser)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*GetCountOfBlogPostsByUserRow
-	for rows.Next() {
-		var i GetCountOfBlogPostsByUserRow
-		if err := rows.Scan(&i.Username, &i.Count); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)

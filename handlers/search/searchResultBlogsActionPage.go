@@ -114,7 +114,11 @@ func BlogSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid
 		}
 	}
 
-	rows, err := queries.GetBlogEntriesByIdsDescending(r.Context(), blogIds)
+	rows, err := queries.ListBlogEntriesForViewerByIDs(r.Context(), db.ListBlogEntriesForViewerByIDsParams{
+		Blogids:  blogIds,
+		ViewerID: uid,
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
+	})
 	if err != nil {
 		log.Printf("getBlogEntriesByIdsDescending Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

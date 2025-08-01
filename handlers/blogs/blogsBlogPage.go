@@ -22,7 +22,7 @@ import (
 
 func BlogPage(w http.ResponseWriter, r *http.Request) {
 	type BlogRow struct {
-		*db.GetBlogEntryForUserByIdRow
+		*db.GetBlogEntryForViewerByIdRow
 		EditUrl     string
 		IsReplyable bool
 	}
@@ -73,9 +73,10 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	blog, err := queries.GetBlogEntryForUserById(r.Context(), db.GetBlogEntryForUserByIdParams{
-		ViewerIdusers: uid,
-		ID:            int32(blogId),
+	blog, err := queries.GetBlogEntryForViewerById(r.Context(), db.GetBlogEntryForViewerByIdParams{
+		ViewerID: uid,
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
+		ID:       int32(blogId),
 	})
 	if err == nil {
 		if blog.Username.Valid {
@@ -110,9 +111,9 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.Blog = &BlogRow{
-		GetBlogEntryForUserByIdRow: blog,
-		EditUrl:                    editUrl,
-		IsReplyable:                true,
+		GetBlogEntryForViewerByIdRow: blog,
+		EditUrl:                      editUrl,
+		IsReplyable:                  true,
 	}
 
 	if !blog.ForumthreadID.Valid {

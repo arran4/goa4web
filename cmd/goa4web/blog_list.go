@@ -39,7 +39,7 @@ func (c *blogListCmd) Run() error {
 	ctx := context.Background()
 	queries := dbpkg.New(db)
 	uid := int32(c.UserID)
-	rows, err := queries.GetBlogEntriesForViewerDescending(ctx, dbpkg.GetBlogEntriesForViewerDescendingParams{
+	rows, err := queries.ListBlogEntriesForViewerDescending(ctx, dbpkg.ListBlogEntriesForViewerDescendingParams{
 		ViewerID: uid,
 		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 		Limit:    int32(c.Limit),

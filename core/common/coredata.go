@@ -143,7 +143,7 @@ type CoreData struct {
 	currentWritingID         int32
 	writingRows              map[int32]*lazy.Value[*db.GetWritingByIdForUserDescendingByPublishedDateRow]
 	currentBlogID            int32
-	blogEntries              map[int32]*lazy.Value[*db.GetBlogEntryForUserByIdRow]
+	blogEntries              map[int32]*lazy.Value[*db.GetBlogEntryForViewerByIdRow]
 
 	absoluteURLBase lazy.Value[string]
 	dbRegistry      *dbdrivers.Registry
@@ -527,7 +527,7 @@ func (cd *CoreData) CurrentWritingLoaded() *db.GetWritingByIdForUserDescendingBy
 func (cd *CoreData) SetCurrentBlog(id int32) { cd.currentBlogID = id }
 
 // CurrentBlog returns the currently requested blog entry lazily loaded.
-func (cd *CoreData) CurrentBlog(ops ...lazy.Option[*db.GetBlogEntryForUserByIdRow]) (*db.GetBlogEntryForUserByIdRow, error) {
+func (cd *CoreData) CurrentBlog(ops ...lazy.Option[*db.GetBlogEntryForViewerByIdRow]) (*db.GetBlogEntryForViewerByIdRow, error) {
 	if cd.currentBlogID == 0 {
 		return nil, nil
 	}
@@ -535,7 +535,7 @@ func (cd *CoreData) CurrentBlog(ops ...lazy.Option[*db.GetBlogEntryForUserByIdRo
 }
 
 // CurrentBlogLoaded returns the cached current blog entry without database access.
-func (cd *CoreData) CurrentBlogLoaded() *db.GetBlogEntryForUserByIdRow {
+func (cd *CoreData) CurrentBlogLoaded() *db.GetBlogEntryForViewerByIdRow {
 	if cd.blogEntries == nil {
 		return nil
 	}
@@ -1010,14 +1010,15 @@ func (cd *CoreData) WritingByID(id int32, ops ...lazy.Option[*db.GetWritingByIdF
 }
 
 // BlogEntryByID returns a blog entry lazily loading it once per ID.
-func (cd *CoreData) BlogEntryByID(id int32, ops ...lazy.Option[*db.GetBlogEntryForUserByIdRow]) (*db.GetBlogEntryForUserByIdRow, error) {
-	fetch := func(i int32) (*db.GetBlogEntryForUserByIdRow, error) {
+func (cd *CoreData) BlogEntryByID(id int32, ops ...lazy.Option[*db.GetBlogEntryForViewerByIdRow]) (*db.GetBlogEntryForViewerByIdRow, error) {
+	fetch := func(i int32) (*db.GetBlogEntryForViewerByIdRow, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
-		return cd.queries.GetBlogEntryForUserById(cd.ctx, db.GetBlogEntryForUserByIdParams{
-			ViewerIdusers: cd.UserID,
-			ID:            i,
+		return cd.queries.GetBlogEntryForViewerById(cd.ctx, db.GetBlogEntryForViewerByIdParams{
+			ViewerID: cd.UserID,
+			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+			ID:       i,
 		})
 	}
 	return lazy.Map(&cd.blogEntries, &cd.mapMu, id, fetch, ops...)

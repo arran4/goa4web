@@ -57,7 +57,9 @@ func TestCommentPageLockedThreadDisablesReply(t *testing.T) {
 
 	blogRows := sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_idlanguage", "blog", "written", "username", "coalesce(th.comments, 0)", "is_owner"}).
 		AddRow(1, 1, 2, 1, "hi", time.Unix(0, 0), "bob", 0, false)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT b.idblogs")).WithArgs(int32(2), int32(1)).WillReturnRows(blogRows)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT b.idblogs")).
+		WithArgs(int32(2), int32(2), int32(1), int32(2), int32(2), sql.NullInt32{Int32: 2, Valid: true}).
+		WillReturnRows(blogRows)
 
 	threadRows := sqlmock.NewRows([]string{"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername"}).
 		AddRow(1, 1, 1, 1, 0, time.Unix(0, 0), true, "bob")
@@ -97,7 +99,9 @@ func TestCommentPageUnlockedThreadShowsReply(t *testing.T) {
 
 	blogRows := sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_idlanguage", "blog", "written", "username", "coalesce(th.comments, 0)", "is_owner"}).
 		AddRow(1, 1, 2, 1, "hi", time.Unix(0, 0), "bob", 0, false)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT b.idblogs")).WithArgs(int32(2), int32(1)).WillReturnRows(blogRows)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT b.idblogs")).
+		WithArgs(int32(2), int32(2), int32(1), int32(2), int32(2), sql.NullInt32{Int32: 2, Valid: true}).
+		WillReturnRows(blogRows)
 
 	threadRows := sqlmock.NewRows([]string{"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername"}).
 		AddRow(1, 1, 1, 1, 0, time.Unix(0, 0), false, "bob")

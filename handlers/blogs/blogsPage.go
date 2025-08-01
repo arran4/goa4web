@@ -25,7 +25,7 @@ import (
 
 func Page(w http.ResponseWriter, r *http.Request) {
 	type BlogRow struct {
-		*db.GetBlogEntriesByAuthorForUserDescendingLanguagesRow
+		*db.ListBlogEntriesForViewerByAuthorRow
 		EditUrl string
 	}
 	type Data struct {
@@ -47,7 +47,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Blogs"
 	queries := cd.Queries()
-	rows, err := queries.GetBlogEntriesByAuthorForUserDescendingLanguages(r.Context(), db.GetBlogEntriesByAuthorForUserDescendingLanguagesParams{
+	rows, err := queries.ListBlogEntriesForViewerByAuthor(r.Context(), db.ListBlogEntriesForViewerByAuthorParams{
 		AuthorID: int32(userId),
 		ViewerID: uid,
 		Limit:    15,
@@ -78,8 +78,8 @@ func Page(w http.ResponseWriter, r *http.Request) {
 			editUrl = fmt.Sprintf("/blogs/blog/%d/edit", row.Idblogs)
 		}
 		data.Rows = append(data.Rows, &BlogRow{
-			GetBlogEntriesByAuthorForUserDescendingLanguagesRow: row,
-			EditUrl: editUrl,
+			ListBlogEntriesForViewerByAuthorRow: row,
+			EditUrl:                             editUrl,
 		})
 	}
 
@@ -210,7 +210,7 @@ func FeedGen(r *http.Request, queries *db.Queries, uid int, username string) (*f
 		Created:     time.Date(2005, 6, 25, 0, 0, 0, 0, time.UTC),
 	}
 
-	rows, err := queries.GetBlogEntriesByAuthorForUserDescendingLanguages(r.Context(), db.GetBlogEntriesByAuthorForUserDescendingLanguagesParams{
+	rows, err := queries.ListBlogEntriesForViewerByAuthor(r.Context(), db.ListBlogEntriesForViewerByAuthorParams{
 		AuthorID: int32(uid),
 		ViewerID: int32(uid),
 		Limit:    15,

@@ -113,11 +113,6 @@ LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
 WHERE b.idblogs = sqlc.arg(id)
 LIMIT 1;
 
--- name: GetCountOfBlogPostsByUser :many
-SELECT u.username, COUNT(b.idblogs)
-FROM blogs b, users u
-WHERE b.users_idusers = u.idusers
-GROUP BY u.idusers;
 
 -- name: BlogsSearchFirst :many
 SELECT DISTINCT cs.blog_id

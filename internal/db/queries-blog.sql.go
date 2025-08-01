@@ -411,16 +411,49 @@ func (q *Queries) GetBlogEntriesByAuthorForUserDescendingLanguages(ctx context.C
 	return items, nil
 }
 
-const getBlogEntriesByIdsDescending = `-- name: GetBlogEntriesByIdsDescending :many
+const getBlogEntriesByIdsDescendingForUser = `-- name: GetBlogEntriesByIdsDescendingForUser :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written
 FROM blogs b
+JOIN grants g ON g.item_id = b.idblogs
+    AND g.section = 'blogs'
+    AND g.item = 'entry'
+    AND g.action = 'see'
+    AND g.active = 1
+    AND (g.user_id = ? OR g.user_id IS NULL)
+    AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
 WHERE b.idblogs IN (/*SLICE:blogids*/?)
+  AND (
+      b.language_idlanguage = 0
+      OR b.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = b.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
 ORDER BY b.written DESC
 `
 
-type GetBlogEntriesByIdsDescendingRow struct {
+type GetBlogEntriesByIdsDescendingForUserParams struct {
+	ViewerID int32
+	UserID   sql.NullInt32
+	Blogids  []int32
+}
+
+type GetBlogEntriesByIdsDescendingForUserRow struct {
 	Idblogs            int32
 	ForumthreadID      sql.NullInt32
 	UsersIdusers       int32
@@ -429,25 +462,29 @@ type GetBlogEntriesByIdsDescendingRow struct {
 	Written            time.Time
 }
 
-func (q *Queries) GetBlogEntriesByIdsDescending(ctx context.Context, blogids []int32) ([]*GetBlogEntriesByIdsDescendingRow, error) {
-	query := getBlogEntriesByIdsDescending
+func (q *Queries) GetBlogEntriesByIdsDescendingForUser(ctx context.Context, arg GetBlogEntriesByIdsDescendingForUserParams) ([]*GetBlogEntriesByIdsDescendingForUserRow, error) {
+	query := getBlogEntriesByIdsDescendingForUser
 	var queryParams []interface{}
-	if len(blogids) > 0 {
-		for _, v := range blogids {
+	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.UserID)
+	if len(arg.Blogids) > 0 {
+		for _, v := range arg.Blogids {
 			queryParams = append(queryParams, v)
 		}
-		query = strings.Replace(query, "/*SLICE:blogids*/?", strings.Repeat(",?", len(blogids))[1:], 1)
+		query = strings.Replace(query, "/*SLICE:blogids*/?", strings.Repeat(",?", len(arg.Blogids))[1:], 1)
 	} else {
 		query = strings.Replace(query, "/*SLICE:blogids*/?", "NULL", 1)
 	}
+	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.ViewerID)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetBlogEntriesByIdsDescendingRow
+	var items []*GetBlogEntriesByIdsDescendingForUserRow
 	for rows.Next() {
-		var i GetBlogEntriesByIdsDescendingRow
+		var i GetBlogEntriesByIdsDescendingForUserRow
 		if err := rows.Scan(
 			&i.Idblogs,
 			&i.ForumthreadID,
@@ -481,6 +518,13 @@ WITH RECURSIVE role_ids(id) AS (
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
        b.users_idusers = ? AS is_owner
 FROM blogs b
+JOIN grants g ON g.item_id = b.idblogs
+    AND g.section = 'blogs'
+    AND g.item = 'entry'
+    AND g.action = 'see'
+    AND g.active = 1
+    AND (g.user_id = ? OR g.user_id IS NULL)
+    AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
 WHERE (
@@ -494,16 +538,6 @@ WHERE (
     OR NOT EXISTS (
         SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
     )
-)
-AND EXISTS (
-    SELECT 1 FROM grants g
-    WHERE g.section = 'blogs'
-      AND g.item = 'entry'
-      AND g.action = 'see'
-      AND g.active = 1
-      AND g.item_id = b.idblogs
-      AND (g.user_id = ? OR g.user_id IS NULL)
-      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
 ORDER BY b.written DESC
 LIMIT ? OFFSET ?
@@ -532,9 +566,9 @@ func (q *Queries) GetBlogEntriesForViewerDescending(ctx context.Context, arg Get
 	rows, err := q.db.QueryContext(ctx, getBlogEntriesForViewerDescending,
 		arg.ViewerID,
 		arg.ViewerID,
-		arg.ViewerID,
-		arg.ViewerID,
 		arg.UserID,
+		arg.ViewerID,
+		arg.ViewerID,
 		arg.Limit,
 		arg.Offset,
 	)

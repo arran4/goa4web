@@ -135,7 +135,7 @@ AND cs.blog_id IN (sqlc.slice('ids'))
 ;
 
 
--- name: GetAllBlogEntriesByUser :many
+-- name: GetAllBlogEntriesByUserForAdmin :many
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0)
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers

@@ -46,7 +46,8 @@ func (EditBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 	row := cd.CurrentBlogLoaded()
 
 	if err = queries.UpdateBlogEntry(r.Context(), db.UpdateBlogEntryParams{
-		Idblogs:            row.Idblogs,
+		BlogID:             row.Idblogs,
+		ItemID:             sql.NullInt32{Int32: row.Idblogs, Valid: true},
 		LanguageIdlanguage: int32(languageId),
 		Blog: sql.NullString{
 			String: text,

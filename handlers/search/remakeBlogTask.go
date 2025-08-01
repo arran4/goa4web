@@ -39,7 +39,7 @@ func (RemakeBlogTask) BackgroundTask(ctx context.Context, q *dbpkg.Queries) (tas
 	if err := q.DeleteBlogsSearch(ctx); err != nil {
 		return nil, err
 	}
-	rows, err := q.GetAllBlogsForIndex(ctx)
+	rows, err := q.SystemGetAllBlogsForIndex(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("GetAllBlogsForIndex: %w", err)
 	}
@@ -58,7 +58,7 @@ func (RemakeBlogTask) BackgroundTask(ctx context.Context, q *dbpkg.Queries) (tas
 		}); err != nil {
 			return nil, err
 		}
-		if err := q.SetBlogLastIndex(ctx, row.Idblogs); err != nil {
+		if err := q.SystemSetBlogLastIndex(ctx, row.Idblogs); err != nil {
 			return nil, err
 		}
 	}

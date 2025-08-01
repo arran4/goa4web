@@ -195,38 +195,6 @@ func (q *Queries) GetAllBlogEntriesByUser(ctx context.Context, usersIdusers int3
 	return items, nil
 }
 
-const getAllBlogsForIndex = `-- name: GetAllBlogsForIndex :many
-SELECT idblogs, blog FROM blogs WHERE deleted_at IS NULL
-`
-
-type GetAllBlogsForIndexRow struct {
-	Idblogs int32
-	Blog    sql.NullString
-}
-
-func (q *Queries) GetAllBlogsForIndex(ctx context.Context) ([]*GetAllBlogsForIndexRow, error) {
-	rows, err := q.db.QueryContext(ctx, getAllBlogsForIndex)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*GetAllBlogsForIndexRow
-	for rows.Next() {
-		var i GetAllBlogsForIndexRow
-		if err := rows.Scan(&i.Idblogs, &i.Blog); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getBlogEntriesByAuthorForUserDescendingLanguages = `-- name: GetBlogEntriesByAuthorForUserDescendingLanguages :many
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
        b.users_idusers = ? AS is_owner
@@ -713,12 +681,44 @@ func (q *Queries) SearchBloggersForViewer(ctx context.Context, arg SearchBlogger
 	return items, nil
 }
 
-const setBlogLastIndex = `-- name: SetBlogLastIndex :exec
+const systemGetAllBlogsForIndex = `-- name: SystemGetAllBlogsForIndex :many
+SELECT idblogs, blog FROM blogs WHERE deleted_at IS NULL
+`
+
+type SystemGetAllBlogsForIndexRow struct {
+	Idblogs int32
+	Blog    sql.NullString
+}
+
+func (q *Queries) SystemGetAllBlogsForIndex(ctx context.Context) ([]*SystemGetAllBlogsForIndexRow, error) {
+	rows, err := q.db.QueryContext(ctx, systemGetAllBlogsForIndex)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*SystemGetAllBlogsForIndexRow
+	for rows.Next() {
+		var i SystemGetAllBlogsForIndexRow
+		if err := rows.Scan(&i.Idblogs, &i.Blog); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const systemSetBlogLastIndex = `-- name: SystemSetBlogLastIndex :exec
 UPDATE blogs SET last_index = NOW() WHERE idblogs = ?
 `
 
-func (q *Queries) SetBlogLastIndex(ctx context.Context, idblogs int32) error {
-	_, err := q.db.ExecContext(ctx, setBlogLastIndex, idblogs)
+func (q *Queries) SystemSetBlogLastIndex(ctx context.Context, idblogs int32) error {
+	_, err := q.db.ExecContext(ctx, systemSetBlogLastIndex, idblogs)
 	return err
 }
 

@@ -76,10 +76,10 @@ WHERE c.idfaqCategories <> 0
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='faq'
-        AND g.item='question'
+        AND (g.item='question' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
-        AND g.item_id = f.idfaq
+        AND (g.item_id = f.idfaq OR g.item_id IS NULL)
         AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )

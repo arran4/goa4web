@@ -14,14 +14,14 @@ func AdminCommentsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Comments"
 	queries := cd.Queries()
-	rows, err := queries.ListAllCommentsWithThreadInfo(r.Context(), db.ListAllCommentsWithThreadInfoParams{Limit: 50, Offset: 0})
+	rows, err := queries.AdminListAllCommentsWithThreadInfo(r.Context(), db.AdminListAllCommentsWithThreadInfoParams{Limit: 50, Offset: 0})
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 	data := struct {
 		*common.CoreData
-		Comments []*db.ListAllCommentsWithThreadInfoRow
+		Comments []*db.AdminListAllCommentsWithThreadInfoRow
 	}{cd, rows}
 	handlers.TemplateHandler(w, r, "commentsPage.gohtml", data)
 }

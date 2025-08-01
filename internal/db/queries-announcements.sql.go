@@ -35,15 +35,15 @@ FROM site_announcements a
 JOIN site_news n ON n.idsiteNews = a.site_news_id
 WHERE a.active = 1
   AND (
-      n.language_idlanguage = 0
-      OR n.language_idlanguage IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?
-            AND ul.language_idlanguage = n.language_idlanguage
-      )
-      OR NOT EXISTS (
+      NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+      OR n.language_idlanguage = 0
+      OR n.language_idlanguage IS NULL
+      OR n.language_idlanguage IN (
+          SELECT ul.language_idlanguage
+          FROM user_language ul
+          WHERE ul.users_idusers = ?
       )
   )
   AND EXISTS (

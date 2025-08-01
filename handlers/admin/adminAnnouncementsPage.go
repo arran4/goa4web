@@ -15,14 +15,14 @@ import (
 func AdminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
-		Announcements []*db.AdminListAnnouncementsWithNewsRow
+		Announcements []*db.ListAnnouncementsWithNewsForAdminRow
 		NewsID        string
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Admin Announcements"
 	data := Data{CoreData: cd}
 	queries := cd.Queries()
-	rows, err := queries.AdminListAnnouncementsWithNews(r.Context())
+	rows, err := queries.ListAnnouncementsWithNewsForAdmin(r.Context())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("list announcements: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

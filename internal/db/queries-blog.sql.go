@@ -512,41 +512,6 @@ func (q *Queries) GetBlogEntryForUserById(ctx context.Context, arg GetBlogEntryF
 	return &i, err
 }
 
-const getCountOfBlogPostsByUser = `-- name: GetCountOfBlogPostsByUser :many
-SELECT u.username, COUNT(b.idblogs)
-FROM blogs b, users u
-WHERE b.users_idusers = u.idusers
-GROUP BY u.idusers
-`
-
-type GetCountOfBlogPostsByUserRow struct {
-	Username sql.NullString
-	Count    int64
-}
-
-func (q *Queries) GetCountOfBlogPostsByUser(ctx context.Context) ([]*GetCountOfBlogPostsByUserRow, error) {
-	rows, err := q.db.QueryContext(ctx, getCountOfBlogPostsByUser)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*GetCountOfBlogPostsByUserRow
-	for rows.Next() {
-		var i GetCountOfBlogPostsByUserRow
-		if err := rows.Scan(&i.Username, &i.Count); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listBloggersForViewer = `-- name: ListBloggersForViewer :many
 WITH RECURSIVE role_ids(id) AS (
     SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?

@@ -84,9 +84,13 @@ func BlogSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid
 
 	for i, word := range searchWords {
 		if i == 0 {
-			ids, err := queries.BlogsSearchFirst(r.Context(), sql.NullString{
-				String: word,
-				Valid:  true,
+			ids, err := queries.BlogsSearchFirst(r.Context(), db.BlogsSearchFirstParams{
+				ViewerID: uid,
+				Word: sql.NullString{
+					String: word,
+					Valid:  true,
+				},
+				UserID: sql.NullInt32{Int32: uid, Valid: true},
 			})
 			if err != nil {
 				log.Printf("blogsSearchFirst Error: %s", err)
@@ -96,11 +100,13 @@ func BlogSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid
 			blogIds = ids
 		} else {
 			ids, err := queries.BlogsSearchNext(r.Context(), db.BlogsSearchNextParams{
+				ViewerID: uid,
 				Word: sql.NullString{
 					String: word,
 					Valid:  true,
 				},
-				Ids: blogIds,
+				Ids:    blogIds,
+				UserID: sql.NullInt32{Int32: uid, Valid: true},
 			})
 			if err != nil {
 				log.Printf("blogsSearchNext Error: %s", err)

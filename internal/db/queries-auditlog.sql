@@ -1,7 +1,7 @@
--- name: InsertAuditLog :exec
+-- name: SystemInsertAuditLog :exec
 INSERT INTO audit_log (users_idusers, action, path, details, data) VALUES (?, ?, ?, ?, ?);
 
--- name: ListAuditLogs :many
+-- name: AdminListAuditLogs :many
 SELECT a.id, a.users_idusers, a.action, a.path, a.details, a.data, a.created_at, u.username
 FROM audit_log a
 LEFT JOIN users u ON a.users_idusers = u.idusers

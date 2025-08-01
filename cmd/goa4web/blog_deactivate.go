@@ -48,7 +48,7 @@ func (c *blogDeactivateCmd) Run() error {
 	if b.ForumthreadID.Valid {
 		threadID = b.ForumthreadID.Int32
 	}
-	if err := queries.ArchiveBlog(ctx, dbpkg.ArchiveBlogParams{
+	if err := queries.AdminArchiveBlog(ctx, dbpkg.AdminArchiveBlogParams{
 		Idblogs:            b.Idblogs,
 		ForumthreadID:      threadID,
 		UsersIdusers:       b.UsersIdusers,
@@ -58,7 +58,7 @@ func (c *blogDeactivateCmd) Run() error {
 	}); err != nil {
 		return fmt.Errorf("archive blog: %w", err)
 	}
-	if err := queries.ScrubBlog(ctx, dbpkg.ScrubBlogParams{Blog: sql.NullString{String: "", Valid: true}, Idblogs: b.Idblogs}); err != nil {
+	if err := queries.AdminScrubBlog(ctx, dbpkg.AdminScrubBlogParams{Blog: sql.NullString{String: "", Valid: true}, Idblogs: b.Idblogs}); err != nil {
 		return fmt.Errorf("scrub blog: %w", err)
 	}
 	return nil

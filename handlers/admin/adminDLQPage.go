@@ -63,15 +63,15 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 	for _, n := range names {
 		switch n {
 		case "db":
-			if rows, err := queries.ListDeadLetters(r.Context(), 100); err == nil {
+			if rows, err := queries.AdminListDeadLetters(r.Context(), 100); err == nil {
 				data.Errors = rows
 			} else {
 				log.Printf("list dead letters: %v", err)
 			}
-			if c, err := queries.CountDeadLetters(r.Context()); err == nil {
+			if c, err := queries.SystemCountDeadLetters(r.Context()); err == nil {
 				data.DBCount = c
 			}
-			if lt, err := queries.LatestDeadLetter(r.Context()); err == nil {
+			if lt, err := queries.AdminLatestDeadLetter(r.Context()); err == nil {
 				if t, ok := lt.(time.Time); ok {
 					data.DBLatest = t.Format(time.RFC3339)
 				}
@@ -123,7 +123,7 @@ func (DeleteDLQTask) Action(w http.ResponseWriter, r *http.Request) any {
 				continue
 			}
 			id, _ := strconv.Atoi(idStr)
-			if err := queries.DeleteDeadLetter(r.Context(), int32(id)); err != nil {
+			if err := queries.AdminDeleteDeadLetter(r.Context(), int32(id)); err != nil {
 				return fmt.Errorf("delete error %w", handlers.ErrRedirectOnSamePageHandler(err))
 			}
 			if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -143,7 +143,7 @@ func (DeleteDLQTask) Action(w http.ResponseWriter, r *http.Request) any {
 				t = tt
 			}
 		}
-		if err := queries.PurgeDeadLettersBefore(r.Context(), t); err != nil {
+		if err := queries.AdminPurgeDeadLettersBefore(r.Context(), t); err != nil {
 			return fmt.Errorf("purge errors %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {

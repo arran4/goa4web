@@ -37,7 +37,7 @@ func (c *ipBanDeleteCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
-	if err := queries.CancelBannedIp(ctx, c.IP); err != nil {
+	if err := queries.AdminCancelBannedIp(ctx, c.IP); err != nil {
 		return fmt.Errorf("cancel banned ip: %w", err)
 	}
 	return nil

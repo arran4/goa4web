@@ -10,54 +10,34 @@ import (
 	"time"
 )
 
-const countDeadLetters = `-- name: CountDeadLetters :one
-SELECT COUNT(*) FROM dead_letters
-`
-
-func (q *Queries) CountDeadLetters(ctx context.Context) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countDeadLetters)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
-const deleteDeadLetter = `-- name: DeleteDeadLetter :exec
+const adminDeleteDeadLetter = `-- name: AdminDeleteDeadLetter :exec
 DELETE FROM dead_letters WHERE id = ?
 `
 
-func (q *Queries) DeleteDeadLetter(ctx context.Context, id int32) error {
-	_, err := q.db.ExecContext(ctx, deleteDeadLetter, id)
+func (q *Queries) AdminDeleteDeadLetter(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, adminDeleteDeadLetter, id)
 	return err
 }
 
-const insertDeadLetter = `-- name: InsertDeadLetter :exec
-INSERT INTO dead_letters (message) VALUES (?)
-`
-
-func (q *Queries) InsertDeadLetter(ctx context.Context, message string) error {
-	_, err := q.db.ExecContext(ctx, insertDeadLetter, message)
-	return err
-}
-
-const latestDeadLetter = `-- name: LatestDeadLetter :one
+const adminLatestDeadLetter = `-- name: AdminLatestDeadLetter :one
 SELECT MAX(created_at) FROM dead_letters
 `
 
-func (q *Queries) LatestDeadLetter(ctx context.Context) (interface{}, error) {
-	row := q.db.QueryRowContext(ctx, latestDeadLetter)
+func (q *Queries) AdminLatestDeadLetter(ctx context.Context) (interface{}, error) {
+	row := q.db.QueryRowContext(ctx, adminLatestDeadLetter)
 	var max interface{}
 	err := row.Scan(&max)
 	return max, err
 }
 
-const listDeadLetters = `-- name: ListDeadLetters :many
+const adminListDeadLetters = `-- name: AdminListDeadLetters :many
 SELECT id, message, created_at FROM dead_letters
 ORDER BY id DESC
 LIMIT ?
 `
 
-func (q *Queries) ListDeadLetters(ctx context.Context, limit int32) ([]*DeadLetter, error) {
-	rows, err := q.db.QueryContext(ctx, listDeadLetters, limit)
+func (q *Queries) AdminListDeadLetters(ctx context.Context, limit int32) ([]*DeadLetter, error) {
+	rows, err := q.db.QueryContext(ctx, adminListDeadLetters, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -79,11 +59,31 @@ func (q *Queries) ListDeadLetters(ctx context.Context, limit int32) ([]*DeadLett
 	return items, nil
 }
 
-const purgeDeadLettersBefore = `-- name: PurgeDeadLettersBefore :exec
+const adminPurgeDeadLettersBefore = `-- name: AdminPurgeDeadLettersBefore :exec
 DELETE FROM dead_letters WHERE created_at < ?
 `
 
-func (q *Queries) PurgeDeadLettersBefore(ctx context.Context, createdAt time.Time) error {
-	_, err := q.db.ExecContext(ctx, purgeDeadLettersBefore, createdAt)
+func (q *Queries) AdminPurgeDeadLettersBefore(ctx context.Context, createdAt time.Time) error {
+	_, err := q.db.ExecContext(ctx, adminPurgeDeadLettersBefore, createdAt)
+	return err
+}
+
+const systemCountDeadLetters = `-- name: SystemCountDeadLetters :one
+SELECT COUNT(*) FROM dead_letters
+`
+
+func (q *Queries) SystemCountDeadLetters(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, systemCountDeadLetters)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const systemInsertDeadLetter = `-- name: SystemInsertDeadLetter :exec
+INSERT INTO dead_letters (message) VALUES (?)
+`
+
+func (q *Queries) SystemInsertDeadLetter(ctx context.Context, message string) error {
+	_, err := q.db.ExecContext(ctx, systemInsertDeadLetter, message)
 	return err
 }

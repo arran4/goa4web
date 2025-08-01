@@ -1,19 +1,19 @@
--- name: InsertDeadLetter :exec
+-- name: SystemInsertDeadLetter :exec
 INSERT INTO dead_letters (message) VALUES (?);
 
--- name: ListDeadLetters :many
+-- name: AdminListDeadLetters :many
 SELECT id, message, created_at FROM dead_letters
 ORDER BY id DESC
 LIMIT ?;
 
--- name: DeleteDeadLetter :exec
+-- name: AdminDeleteDeadLetter :exec
 DELETE FROM dead_letters WHERE id = ?;
 
--- name: PurgeDeadLettersBefore :exec
+-- name: AdminPurgeDeadLettersBefore :exec
 DELETE FROM dead_letters WHERE created_at < ?;
 
--- name: CountDeadLetters :one
+-- name: SystemCountDeadLetters :one
 SELECT COUNT(*) FROM dead_letters;
 
--- name: LatestDeadLetter :one
+-- name: AdminLatestDeadLetter :one
 SELECT MAX(created_at) FROM dead_letters;

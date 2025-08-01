@@ -30,7 +30,7 @@ func (DeleteIPBanTask) Action(w http.ResponseWriter, r *http.Request) any {
 	var ips []string
 	for _, ip := range r.Form["ip"] {
 		ipNet := NormalizeIPNet(ip)
-		if err := queries.CancelBannedIp(r.Context(), ipNet); err != nil {
+		if err := queries.AdminCancelBannedIp(r.Context(), ipNet); err != nil {
 			return fmt.Errorf("cancel banned ip %s fail %w", ipNet, handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		if ipNet != "" {

@@ -10,21 +10,86 @@ import (
 	"database/sql"
 )
 
-const cancelBannedIp = `-- name: CancelBannedIp :exec
+const adminCancelBannedIp = `-- name: AdminCancelBannedIp :exec
 UPDATE banned_ips SET canceled_at = CURRENT_TIMESTAMP WHERE ip_net = ? AND canceled_at IS NULL
 `
 
-func (q *Queries) CancelBannedIp(ctx context.Context, ipNet string) error {
-	_, err := q.db.ExecContext(ctx, cancelBannedIp, ipNet)
+func (q *Queries) AdminCancelBannedIp(ctx context.Context, ipNet string) error {
+	_, err := q.db.ExecContext(ctx, adminCancelBannedIp, ipNet)
 	return err
 }
 
-const getBannedIpByAddress = `-- name: GetBannedIpByAddress :one
+const adminInsertBannedIp = `-- name: AdminInsertBannedIp :exec
+INSERT INTO banned_ips (ip_net, reason, expires_at)
+VALUES (?, ?, ?)
+`
+
+type AdminInsertBannedIpParams struct {
+	IpNet     string
+	Reason    sql.NullString
+	ExpiresAt sql.NullTime
+}
+
+func (q *Queries) AdminInsertBannedIp(ctx context.Context, arg AdminInsertBannedIpParams) error {
+	_, err := q.db.ExecContext(ctx, adminInsertBannedIp, arg.IpNet, arg.Reason, arg.ExpiresAt)
+	return err
+}
+
+const adminListBannedIps = `-- name: AdminListBannedIps :many
+SELECT id, ip_net, reason, created_at, expires_at, canceled_at FROM banned_ips ORDER BY created_at DESC
+`
+
+func (q *Queries) AdminListBannedIps(ctx context.Context) ([]*BannedIp, error) {
+	rows, err := q.db.QueryContext(ctx, adminListBannedIps)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*BannedIp
+	for rows.Next() {
+		var i BannedIp
+		if err := rows.Scan(
+			&i.ID,
+			&i.IpNet,
+			&i.Reason,
+			&i.CreatedAt,
+			&i.ExpiresAt,
+			&i.CanceledAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminUpdateBannedIp = `-- name: AdminUpdateBannedIp :exec
+UPDATE banned_ips SET reason = ?, expires_at = ? WHERE id = ?
+`
+
+type AdminUpdateBannedIpParams struct {
+	Reason    sql.NullString
+	ExpiresAt sql.NullTime
+	ID        int32
+}
+
+func (q *Queries) AdminUpdateBannedIp(ctx context.Context, arg AdminUpdateBannedIpParams) error {
+	_, err := q.db.ExecContext(ctx, adminUpdateBannedIp, arg.Reason, arg.ExpiresAt, arg.ID)
+	return err
+}
+
+const systemGetBannedIpByAddress = `-- name: SystemGetBannedIpByAddress :one
 SELECT id, ip_net, reason, created_at, expires_at, canceled_at FROM banned_ips WHERE ip_net = ?
 `
 
-func (q *Queries) GetBannedIpByAddress(ctx context.Context, ipNet string) (*BannedIp, error) {
-	row := q.db.QueryRowContext(ctx, getBannedIpByAddress, ipNet)
+func (q *Queries) SystemGetBannedIpByAddress(ctx context.Context, ipNet string) (*BannedIp, error) {
+	row := q.db.QueryRowContext(ctx, systemGetBannedIpByAddress, ipNet)
 	var i BannedIp
 	err := row.Scan(
 		&i.ID,
@@ -37,28 +102,12 @@ func (q *Queries) GetBannedIpByAddress(ctx context.Context, ipNet string) (*Bann
 	return &i, err
 }
 
-const insertBannedIp = `-- name: InsertBannedIp :exec
-INSERT INTO banned_ips (ip_net, reason, expires_at)
-VALUES (?, ?, ?)
-`
-
-type InsertBannedIpParams struct {
-	IpNet     string
-	Reason    sql.NullString
-	ExpiresAt sql.NullTime
-}
-
-func (q *Queries) InsertBannedIp(ctx context.Context, arg InsertBannedIpParams) error {
-	_, err := q.db.ExecContext(ctx, insertBannedIp, arg.IpNet, arg.Reason, arg.ExpiresAt)
-	return err
-}
-
-const listActiveBans = `-- name: ListActiveBans :many
+const systemListActiveBans = `-- name: SystemListActiveBans :many
 SELECT id, ip_net, reason, created_at, expires_at, canceled_at FROM banned_ips WHERE canceled_at IS NULL AND (expires_at IS NULL OR expires_at > NOW())
 `
 
-func (q *Queries) ListActiveBans(ctx context.Context) ([]*BannedIp, error) {
-	rows, err := q.db.QueryContext(ctx, listActiveBans)
+func (q *Queries) SystemListActiveBans(ctx context.Context) ([]*BannedIp, error) {
+	rows, err := q.db.QueryContext(ctx, systemListActiveBans)
 	if err != nil {
 		return nil, err
 	}
@@ -85,53 +134,4 @@ func (q *Queries) ListActiveBans(ctx context.Context) ([]*BannedIp, error) {
 		return nil, err
 	}
 	return items, nil
-}
-
-const listBannedIps = `-- name: ListBannedIps :many
-SELECT id, ip_net, reason, created_at, expires_at, canceled_at FROM banned_ips ORDER BY created_at DESC
-`
-
-func (q *Queries) ListBannedIps(ctx context.Context) ([]*BannedIp, error) {
-	rows, err := q.db.QueryContext(ctx, listBannedIps)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*BannedIp
-	for rows.Next() {
-		var i BannedIp
-		if err := rows.Scan(
-			&i.ID,
-			&i.IpNet,
-			&i.Reason,
-			&i.CreatedAt,
-			&i.ExpiresAt,
-			&i.CanceledAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const updateBannedIp = `-- name: UpdateBannedIp :exec
-UPDATE banned_ips SET reason = ?, expires_at = ? WHERE id = ?
-`
-
-type UpdateBannedIpParams struct {
-	Reason    sql.NullString
-	ExpiresAt sql.NullTime
-	ID        int32
-}
-
-func (q *Queries) UpdateBannedIp(ctx context.Context, arg UpdateBannedIpParams) error {
-	_, err := q.db.ExecContext(ctx, updateBannedIp, arg.Reason, arg.ExpiresAt, arg.ID)
-	return err
 }

@@ -24,7 +24,7 @@ var _ tasks.Task = (*DeleteCommentTask)(nil)
 func (DeleteCommentTask) Action(w http.ResponseWriter, r *http.Request) any {
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
 	q := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	if err := q.ScrubComment(r.Context(), db.ScrubCommentParams{Text: sql.NullString{String: "", Valid: true}, Idcomments: int32(id)}); err != nil {
+	if err := q.AdminScrubComment(r.Context(), db.AdminScrubCommentParams{Text: sql.NullString{String: "", Valid: true}, Idcomments: int32(id)}); err != nil {
 		return fmt.Errorf("delete comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	return nil
@@ -62,7 +62,7 @@ func (BanCommentTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil {
 		return fmt.Errorf("fetch comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	if err := q.ArchiveComment(r.Context(), db.ArchiveCommentParams{
+	if err := q.AdminArchiveComment(r.Context(), db.AdminArchiveCommentParams{
 		Idcomments:         c.Idcomments,
 		ForumthreadID:      c.ForumthreadID,
 		UsersIdusers:       c.UsersIdusers,
@@ -72,7 +72,7 @@ func (BanCommentTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}); err != nil {
 		return fmt.Errorf("archive comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	if err := q.ScrubComment(r.Context(), db.ScrubCommentParams{Text: sql.NullString{String: "", Valid: true}, Idcomments: c.Idcomments}); err != nil {
+	if err := q.AdminScrubComment(r.Context(), db.AdminScrubCommentParams{Text: sql.NullString{String: "", Valid: true}, Idcomments: c.Idcomments}); err != nil {
 		return fmt.Errorf("scrub comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	return nil

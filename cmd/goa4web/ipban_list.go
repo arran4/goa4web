@@ -31,7 +31,7 @@ func (c *ipBanListCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
-	rows, err := queries.ListBannedIps(ctx)
+	rows, err := queries.AdminListBannedIps(ctx)
 	if err != nil {
 		return fmt.Errorf("list banned ips: %w", err)
 	}

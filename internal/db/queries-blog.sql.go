@@ -308,6 +308,14 @@ func (q *Queries) GetAllBlogsForIndexSystem(ctx context.Context) ([]*GetAllBlogs
 }
 
 const getBlogEntriesByAuthorForUserDescendingLanguages = `-- name: GetBlogEntriesByAuthorForUserDescendingLanguages :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
        b.users_idusers = ? AS is_owner
 FROM blogs b
@@ -326,6 +334,16 @@ AND (
         SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
     )
 )
+AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section = 'blogs'
+      AND g.item = 'entry'
+      AND g.action = 'see'
+      AND g.active = 1
+      AND g.item_id = b.idblogs
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+)
 ORDER BY b.written DESC
 LIMIT ? OFFSET ?
 `
@@ -333,6 +351,7 @@ LIMIT ? OFFSET ?
 type GetBlogEntriesByAuthorForUserDescendingLanguagesParams struct {
 	ViewerID int32
 	AuthorID int32
+	UserID   sql.NullInt32
 	Limit    int32
 	Offset   int32
 }
@@ -352,10 +371,12 @@ type GetBlogEntriesByAuthorForUserDescendingLanguagesRow struct {
 func (q *Queries) GetBlogEntriesByAuthorForUserDescendingLanguages(ctx context.Context, arg GetBlogEntriesByAuthorForUserDescendingLanguagesParams) ([]*GetBlogEntriesByAuthorForUserDescendingLanguagesRow, error) {
 	rows, err := q.db.QueryContext(ctx, getBlogEntriesByAuthorForUserDescendingLanguages,
 		arg.ViewerID,
+		arg.ViewerID,
 		arg.AuthorID,
 		arg.AuthorID,
 		arg.ViewerID,
 		arg.ViewerID,
+		arg.UserID,
 		arg.Limit,
 		arg.Offset,
 	)

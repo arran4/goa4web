@@ -50,6 +50,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	rows, err := queries.GetBlogEntriesByAuthorForUserDescendingLanguages(r.Context(), db.GetBlogEntriesByAuthorForUserDescendingLanguagesParams{
 		AuthorID: int32(userId),
 		ViewerID: uid,
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 		Limit:    15,
 		Offset:   int32(offset),
 	})
@@ -213,6 +214,7 @@ func FeedGen(r *http.Request, queries *db.Queries, uid int, username string) (*f
 	rows, err := queries.GetBlogEntriesByAuthorForUserDescendingLanguages(r.Context(), db.GetBlogEntriesByAuthorForUserDescendingLanguagesParams{
 		AuthorID: int32(uid),
 		ViewerID: int32(uid),
+		UserID:   sql.NullInt32{Int32: int32(uid), Valid: uid != 0},
 		Limit:    15,
 		Offset:   0,
 	})

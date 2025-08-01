@@ -31,7 +31,7 @@ func (c *faqTreeCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
-	rows, err := queries.GetAllAnsweredFAQWithFAQCategories(ctx)
+	rows, err := queries.GetAllAnsweredFAQWithFAQCategoriesForAdmin(ctx)
 	if err != nil {
 		return fmt.Errorf("tree: %w", err)
 	}

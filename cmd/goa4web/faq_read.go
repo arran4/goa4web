@@ -43,7 +43,7 @@ func (c *faqReadCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
-	rows, err := queries.GetAllFAQQuestions(ctx)
+	rows, err := queries.GetAllFAQQuestionsForAdmin(ctx)
 	if err != nil {
 		return fmt.Errorf("get faq: %w", err)
 	}

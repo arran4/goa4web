@@ -20,7 +20,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type CategoryFAQs struct {
-		Category *db.GetAllAnsweredFAQWithFAQCategoriesRow
+		Category *db.GetAllAnsweredFAQWithFAQCategoriesForViewerRow
 		FAQs     []*FAQ
 	}
 
@@ -36,7 +36,10 @@ func Page(w http.ResponseWriter, r *http.Request) {
 
 	var currentCategoryFAQs CategoryFAQs
 
-	faqRows, err := queries.GetAllAnsweredFAQWithFAQCategories(r.Context())
+	faqRows, err := queries.GetAllAnsweredFAQWithFAQCategoriesForViewer(r.Context(), db.GetAllAnsweredFAQWithFAQCategoriesForViewerParams{
+		ViewerID: cd.UserID,
+		UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

@@ -13,9 +13,43 @@ SELECT idfaq, faqCategories_idfaqCategories, language_idlanguage, users_idusers,
 FROM faq
 WHERE deleted_at IS NOT NULL;
 
--- name: GetAllFAQQuestions :many
+-- name: GetAllFAQQuestionsForAdmin :many
 SELECT *
 FROM faq;
+
+-- name: GetAllFAQQuestionsForViewer :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
+SELECT f.*
+FROM faq f
+WHERE (
+    f.language_idlanguage = 0
+    OR f.language_idlanguage IS NULL
+    OR EXISTS (
+        SELECT 1 FROM user_language ul
+        WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          AND ul.language_idlanguage = f.language_idlanguage
+    )
+    OR NOT EXISTS (
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+    )
+)
+AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section = 'faq'
+      AND g.item = 'question'
+      AND g.action = 'see'
+      AND g.active = 1
+      AND g.item_id = f.idfaq
+      AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+);
 
 -- name: RenameFAQCategory :exec
 UPDATE faq_categories
@@ -47,11 +81,49 @@ WHERE idfaq = ?;
 SELECT *
 FROM faq_categories;
 
--- name: GetAllAnsweredFAQWithFAQCategories :many
+-- name: GetAllAnsweredFAQWithFAQCategoriesForAdmin :many
 SELECT c.*, f.*
 FROM faq f
 LEFT JOIN faq_categories c ON c.idfaqCategories = f.faqCategories_idfaqCategories
 WHERE c.idfaqCategories <> 0 AND f.answer IS NOT NULL
+ORDER BY c.idfaqCategories;
+
+-- name: GetAllAnsweredFAQWithFAQCategoriesForViewer :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
+SELECT c.*, f.*
+FROM faq f
+LEFT JOIN faq_categories c ON c.idfaqCategories = f.faqCategories_idfaqCategories
+WHERE c.idfaqCategories <> 0
+  AND f.answer IS NOT NULL
+  AND (
+      f.language_idlanguage = 0
+      OR f.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+            AND ul.language_idlanguage = f.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section = 'faq'
+        AND g.item = 'question'
+        AND g.action = 'see'
+        AND g.active = 1
+        AND g.item_id = f.idfaq
+        AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
 ORDER BY c.idfaqCategories;
 
 -- name: GetFAQCategoriesWithQuestionCount :many

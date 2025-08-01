@@ -56,7 +56,7 @@ func (q *Queries) DeleteFAQCategory(ctx context.Context, idfaqcategories int32) 
 	return err
 }
 
-const getAllAnsweredFAQWithFAQCategories = `-- name: GetAllAnsweredFAQWithFAQCategories :many
+const getAllAnsweredFAQWithFAQCategoriesForAdmin = `-- name: GetAllAnsweredFAQWithFAQCategoriesForAdmin :many
 SELECT c.idfaqcategories, c.name, f.idfaq, f.faqcategories_idfaqcategories, f.language_idlanguage, f.users_idusers, f.answer, f.question
 FROM faq f
 LEFT JOIN faq_categories c ON c.idfaqCategories = f.faqCategories_idfaqCategories
@@ -64,7 +64,7 @@ WHERE c.idfaqCategories <> 0 AND f.answer IS NOT NULL
 ORDER BY c.idfaqCategories
 `
 
-type GetAllAnsweredFAQWithFAQCategoriesRow struct {
+type GetAllAnsweredFAQWithFAQCategoriesForAdminRow struct {
 	Idfaqcategories              sql.NullInt32
 	Name                         sql.NullString
 	Idfaq                        int32
@@ -75,15 +75,107 @@ type GetAllAnsweredFAQWithFAQCategoriesRow struct {
 	Question                     sql.NullString
 }
 
-func (q *Queries) GetAllAnsweredFAQWithFAQCategories(ctx context.Context) ([]*GetAllAnsweredFAQWithFAQCategoriesRow, error) {
-	rows, err := q.db.QueryContext(ctx, getAllAnsweredFAQWithFAQCategories)
+func (q *Queries) GetAllAnsweredFAQWithFAQCategoriesForAdmin(ctx context.Context) ([]*GetAllAnsweredFAQWithFAQCategoriesForAdminRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllAnsweredFAQWithFAQCategoriesForAdmin)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetAllAnsweredFAQWithFAQCategoriesRow
+	var items []*GetAllAnsweredFAQWithFAQCategoriesForAdminRow
 	for rows.Next() {
-		var i GetAllAnsweredFAQWithFAQCategoriesRow
+		var i GetAllAnsweredFAQWithFAQCategoriesForAdminRow
+		if err := rows.Scan(
+			&i.Idfaqcategories,
+			&i.Name,
+			&i.Idfaq,
+			&i.FaqcategoriesIdfaqcategories,
+			&i.LanguageIdlanguage,
+			&i.UsersIdusers,
+			&i.Answer,
+			&i.Question,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAllAnsweredFAQWithFAQCategoriesForViewer = `-- name: GetAllAnsweredFAQWithFAQCategoriesForViewer :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
+SELECT c.idfaqcategories, c.name, f.idfaq, f.faqcategories_idfaqcategories, f.language_idlanguage, f.users_idusers, f.answer, f.question
+FROM faq f
+LEFT JOIN faq_categories c ON c.idfaqCategories = f.faqCategories_idfaqCategories
+WHERE c.idfaqCategories <> 0
+  AND f.answer IS NOT NULL
+  AND (
+      f.language_idlanguage = 0
+      OR f.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = f.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section = 'faq'
+        AND g.item = 'question'
+        AND g.action = 'see'
+        AND g.active = 1
+        AND g.item_id = f.idfaq
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+ORDER BY c.idfaqCategories
+`
+
+type GetAllAnsweredFAQWithFAQCategoriesForViewerParams struct {
+	ViewerID int32
+	UserID   sql.NullInt32
+}
+
+type GetAllAnsweredFAQWithFAQCategoriesForViewerRow struct {
+	Idfaqcategories              sql.NullInt32
+	Name                         sql.NullString
+	Idfaq                        int32
+	FaqcategoriesIdfaqcategories int32
+	LanguageIdlanguage           int32
+	UsersIdusers                 int32
+	Answer                       sql.NullString
+	Question                     sql.NullString
+}
+
+func (q *Queries) GetAllAnsweredFAQWithFAQCategoriesForViewer(ctx context.Context, arg GetAllAnsweredFAQWithFAQCategoriesForViewerParams) ([]*GetAllAnsweredFAQWithFAQCategoriesForViewerRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllAnsweredFAQWithFAQCategoriesForViewer,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.UserID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetAllAnsweredFAQWithFAQCategoriesForViewerRow
+	for rows.Next() {
+		var i GetAllAnsweredFAQWithFAQCategoriesForViewerRow
 		if err := rows.Scan(
 			&i.Idfaqcategories,
 			&i.Name,
@@ -135,13 +227,88 @@ func (q *Queries) GetAllFAQCategories(ctx context.Context) ([]*FaqCategory, erro
 	return items, nil
 }
 
-const getAllFAQQuestions = `-- name: GetAllFAQQuestions :many
+const getAllFAQQuestionsForAdmin = `-- name: GetAllFAQQuestionsForAdmin :many
 SELECT idfaq, faqcategories_idfaqcategories, language_idlanguage, users_idusers, answer, question
 FROM faq
 `
 
-func (q *Queries) GetAllFAQQuestions(ctx context.Context) ([]*Faq, error) {
-	rows, err := q.db.QueryContext(ctx, getAllFAQQuestions)
+func (q *Queries) GetAllFAQQuestionsForAdmin(ctx context.Context) ([]*Faq, error) {
+	rows, err := q.db.QueryContext(ctx, getAllFAQQuestionsForAdmin)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Faq
+	for rows.Next() {
+		var i Faq
+		if err := rows.Scan(
+			&i.Idfaq,
+			&i.FaqcategoriesIdfaqcategories,
+			&i.LanguageIdlanguage,
+			&i.UsersIdusers,
+			&i.Answer,
+			&i.Question,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAllFAQQuestionsForViewer = `-- name: GetAllFAQQuestionsForViewer :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
+SELECT f.idfaq, f.faqcategories_idfaqcategories, f.language_idlanguage, f.users_idusers, f.answer, f.question
+FROM faq f
+WHERE (
+    f.language_idlanguage = 0
+    OR f.language_idlanguage IS NULL
+    OR EXISTS (
+        SELECT 1 FROM user_language ul
+        WHERE ul.users_idusers = ?
+          AND ul.language_idlanguage = f.language_idlanguage
+    )
+    OR NOT EXISTS (
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+    )
+)
+AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section = 'faq'
+      AND g.item = 'question'
+      AND g.action = 'see'
+      AND g.active = 1
+      AND g.item_id = f.idfaq
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+)
+`
+
+type GetAllFAQQuestionsForViewerParams struct {
+	ViewerID int32
+	UserID   sql.NullInt32
+}
+
+func (q *Queries) GetAllFAQQuestionsForViewer(ctx context.Context, arg GetAllFAQQuestionsForViewerParams) ([]*Faq, error) {
+	rows, err := q.db.QueryContext(ctx, getAllFAQQuestionsForViewer,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.UserID,
+	)
 	if err != nil {
 		return nil, err
 	}

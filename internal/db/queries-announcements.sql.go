@@ -11,22 +11,13 @@ import (
 	"time"
 )
 
-const createAnnouncement = `-- name: CreateAnnouncement :exec
-INSERT INTO site_announcements (site_news_id)
-VALUES (?)
-`
-
-func (q *Queries) CreateAnnouncement(ctx context.Context, siteNewsID int32) error {
-	_, err := q.db.ExecContext(ctx, createAnnouncement, siteNewsID)
-	return err
-}
-
-const deleteAnnouncement = `-- name: DeleteAnnouncement :exec
+const demoteAnnouncement = `-- name: DemoteAnnouncement :exec
 DELETE FROM site_announcements WHERE id = ?
 `
 
-func (q *Queries) DeleteAnnouncement(ctx context.Context, id int32) error {
-	_, err := q.db.ExecContext(ctx, deleteAnnouncement, id)
+// This admin task removes an announcement.
+func (q *Queries) DemoteAnnouncement(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, demoteAnnouncement, id)
 	return err
 }
 
@@ -95,14 +86,14 @@ func (q *Queries) GetLatestAnnouncementByNewsID(ctx context.Context, siteNewsID 
 	return &i, err
 }
 
-const listAnnouncementsWithNews = `-- name: ListAnnouncementsWithNews :many
+const listAnnouncementsWithNewsForAdmin = `-- name: ListAnnouncementsWithNewsForAdmin :many
 SELECT a.id, a.site_news_id, a.active, a.created_at, n.news
 FROM site_announcements a
 JOIN site_news n ON n.idsiteNews = a.site_news_id
 ORDER BY a.created_at DESC
 `
 
-type ListAnnouncementsWithNewsRow struct {
+type ListAnnouncementsWithNewsForAdminRow struct {
 	ID         int32
 	SiteNewsID int32
 	Active     bool
@@ -110,15 +101,16 @@ type ListAnnouncementsWithNewsRow struct {
 	News       sql.NullString
 }
 
-func (q *Queries) ListAnnouncementsWithNews(ctx context.Context) ([]*ListAnnouncementsWithNewsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listAnnouncementsWithNews)
+// This admin task lists announcements with their news content.
+func (q *Queries) ListAnnouncementsWithNewsForAdmin(ctx context.Context) ([]*ListAnnouncementsWithNewsForAdminRow, error) {
+	rows, err := q.db.QueryContext(ctx, listAnnouncementsWithNewsForAdmin)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*ListAnnouncementsWithNewsRow
+	var items []*ListAnnouncementsWithNewsForAdminRow
 	for rows.Next() {
-		var i ListAnnouncementsWithNewsRow
+		var i ListAnnouncementsWithNewsForAdminRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.SiteNewsID,
@@ -137,6 +129,17 @@ func (q *Queries) ListAnnouncementsWithNews(ctx context.Context) ([]*ListAnnounc
 		return nil, err
 	}
 	return items, nil
+}
+
+const promoteAnnouncement = `-- name: PromoteAnnouncement :exec
+INSERT INTO site_announcements (site_news_id)
+VALUES (?)
+`
+
+// This admin task adds a news post to the announcements.
+func (q *Queries) PromoteAnnouncement(ctx context.Context, siteNewsID int32) error {
+	_, err := q.db.ExecContext(ctx, promoteAnnouncement, siteNewsID)
+	return err
 }
 
 const setAnnouncementActive = `-- name: SetAnnouncementActive :exec

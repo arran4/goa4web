@@ -29,7 +29,7 @@ func (AddAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil {
 		return fmt.Errorf("news id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	if err := queries.CreateAnnouncement(r.Context(), int32(nid)); err != nil {
+	if err := queries.PromoteAnnouncement(r.Context(), int32(nid)); err != nil {
 		return fmt.Errorf("create announcement fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {

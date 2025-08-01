@@ -1,8 +1,10 @@
--- name: CreateAnnouncement :exec
+-- name: PromoteAnnouncement :exec
+-- This admin task adds a news post to the announcements.
 INSERT INTO site_announcements (site_news_id)
 VALUES (?);
 
--- name: DeleteAnnouncement :exec
+-- name: DemoteAnnouncement :exec
+-- This admin task removes an announcement.
 DELETE FROM site_announcements WHERE id = ?;
 
 -- name: GetLatestAnnouncementByNewsID :one
@@ -41,7 +43,8 @@ WHERE a.active = 1
 ORDER BY a.created_at DESC
 LIMIT 1;
 
--- name: ListAnnouncementsWithNews :many
+-- name: ListAnnouncementsWithNewsForAdmin :many
+-- This admin task lists announcements with their news content.
 SELECT a.id, a.site_news_id, a.active, a.created_at, n.news
 FROM site_announcements a
 JOIN site_news n ON n.idsiteNews = a.site_news_id

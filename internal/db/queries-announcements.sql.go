@@ -21,7 +21,7 @@ func (q *Queries) DemoteAnnouncement(ctx context.Context, id int32) error {
 	return err
 }
 
-const getActiveAnnouncementWithNewsForUser = `-- name: GetActiveAnnouncementWithNewsForUser :one
+const getActiveAnnouncementWithNewsForViewer = `-- name: GetActiveAnnouncementWithNewsForViewer :one
 WITH RECURSIVE role_ids(id) AS (
     SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
     UNION
@@ -60,25 +60,25 @@ ORDER BY a.created_at DESC
 LIMIT 1
 `
 
-type GetActiveAnnouncementWithNewsForUserParams struct {
+type GetActiveAnnouncementWithNewsForViewerParams struct {
 	ViewerID int32
 	UserID   sql.NullInt32
 }
 
-type GetActiveAnnouncementWithNewsForUserRow struct {
+type GetActiveAnnouncementWithNewsForViewerRow struct {
 	ID         int32
 	Idsitenews int32
 	News       sql.NullString
 }
 
-func (q *Queries) GetActiveAnnouncementWithNewsForUser(ctx context.Context, arg GetActiveAnnouncementWithNewsForUserParams) (*GetActiveAnnouncementWithNewsForUserRow, error) {
-	row := q.db.QueryRowContext(ctx, getActiveAnnouncementWithNewsForUser,
+func (q *Queries) GetActiveAnnouncementWithNewsForViewer(ctx context.Context, arg GetActiveAnnouncementWithNewsForViewerParams) (*GetActiveAnnouncementWithNewsForViewerRow, error) {
+	row := q.db.QueryRowContext(ctx, getActiveAnnouncementWithNewsForViewer,
 		arg.ViewerID,
 		arg.ViewerID,
 		arg.ViewerID,
 		arg.UserID,
 	)
-	var i GetActiveAnnouncementWithNewsForUserRow
+	var i GetActiveAnnouncementWithNewsForViewerRow
 	err := row.Scan(&i.ID, &i.Idsitenews, &i.News)
 	return &i, err
 }

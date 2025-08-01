@@ -17,7 +17,7 @@ LIMIT 1;
 -- name: SetAnnouncementActive :exec
 UPDATE site_announcements SET active = ? WHERE id = ?;
 
--- name: GetActiveAnnouncementWithNewsForUser :one
+-- name: GetActiveAnnouncementWithNewsForViewer :one
 WITH RECURSIVE role_ids(id) AS (
     SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
     UNION

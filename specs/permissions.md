@@ -130,6 +130,10 @@ When a writer publishes a post they automatically receive an `edit` grant tied t
 
 Other content sections such as blogs and writings follow the same pattern: authors can post entries and receive item-scoped `edit` grants while administrators hold broader `edit` privileges.
 
+### Announcements
+
+Active announcements reference a news post and are only shown to viewers permitted to `view` that post. The `GetActiveAnnouncementWithNewsForViewer` query filters by `viewer_id` and checks the `news` section grants for the linked post.
+
 ### SQL Query Filtering
 
 Many queries now filter results directly in SQL using `viewer_id` together with the viewer's effective roles. Each query matches against grants so only records the viewer may access are returned. The table below lists the combinations used for each section.

@@ -30,7 +30,7 @@ func (q *Queries) DeleteAnnouncement(ctx context.Context, id int32) error {
 	return err
 }
 
-const getActiveAnnouncementWithNews = `-- name: GetActiveAnnouncementWithNews :one
+const getActiveAnnouncementWithNewsForUser = `-- name: GetActiveAnnouncementWithNewsForUser :one
 WITH RECURSIVE role_ids(id) AS (
     SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
     UNION
@@ -43,6 +43,18 @@ SELECT a.id, n.idsiteNews, n.news
 FROM site_announcements a
 JOIN site_news n ON n.idsiteNews = a.site_news_id
 WHERE a.active = 1
+  AND (
+        n.language_idlanguage = 0
+        OR n.language_idlanguage IS NULL
+        OR EXISTS (
+            SELECT 1 FROM user_language ul
+            WHERE ul.users_idusers = ?
+              AND ul.language_idlanguage = n.language_idlanguage
+        )
+        OR NOT EXISTS (
+            SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+        )
+  )
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='news'
@@ -57,20 +69,25 @@ ORDER BY a.created_at DESC
 LIMIT 1
 `
 
-type GetActiveAnnouncementWithNewsParams struct {
+type GetActiveAnnouncementWithNewsForUserParams struct {
 	ViewerID int32
 	UserID   sql.NullInt32
 }
 
-type GetActiveAnnouncementWithNewsRow struct {
+type GetActiveAnnouncementWithNewsForUserRow struct {
 	ID         int32
 	Idsitenews int32
 	News       sql.NullString
 }
 
-func (q *Queries) GetActiveAnnouncementWithNews(ctx context.Context, arg GetActiveAnnouncementWithNewsParams) (*GetActiveAnnouncementWithNewsRow, error) {
-	row := q.db.QueryRowContext(ctx, getActiveAnnouncementWithNews, arg.ViewerID, arg.UserID)
-	var i GetActiveAnnouncementWithNewsRow
+func (q *Queries) GetActiveAnnouncementWithNewsForUser(ctx context.Context, arg GetActiveAnnouncementWithNewsForUserParams) (*GetActiveAnnouncementWithNewsForUserRow, error) {
+	row := q.db.QueryRowContext(ctx, getActiveAnnouncementWithNewsForUser,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.UserID,
+	)
+	var i GetActiveAnnouncementWithNewsForUserRow
 	err := row.Scan(&i.ID, &i.Idsitenews, &i.News)
 	return &i, err
 }

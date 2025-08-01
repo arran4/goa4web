@@ -103,7 +103,7 @@ type CoreData struct {
 	emailProvider lazy.Value[MailProvider]
 
 	allRoles                 lazy.Value[[]*db.Role]
-	announcement             lazy.Value[*db.GetActiveAnnouncementWithNewsRow]
+	announcement             lazy.Value[*db.GetActiveAnnouncementWithNewsForUserRow]
 	annMu                    sync.Mutex
 	bloggers                 lazy.Value[[]*db.BloggerCountRow]
 	bookmarks                lazy.Value[*db.GetBookmarksForUserRow]
@@ -640,12 +640,12 @@ func (cd *CoreData) AllRoles() ([]*db.Role, error) {
 }
 
 // Announcement returns the active announcement row loaded lazily.
-func (cd *CoreData) Announcement() *db.GetActiveAnnouncementWithNewsRow {
-	ann, err := cd.announcement.Load(func() (*db.GetActiveAnnouncementWithNewsRow, error) {
+func (cd *CoreData) Announcement() *db.GetActiveAnnouncementWithNewsForUserRow {
+	ann, err := cd.announcement.Load(func() (*db.GetActiveAnnouncementWithNewsForUserRow, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
-		row, err := cd.queries.GetActiveAnnouncementWithNews(cd.ctx, db.GetActiveAnnouncementWithNewsParams{
+		row, err := cd.queries.GetActiveAnnouncementWithNewsForUser(cd.ctx, db.GetActiveAnnouncementWithNewsForUserParams{
 			ViewerID: cd.UserID,
 			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
@@ -661,7 +661,7 @@ func (cd *CoreData) Announcement() *db.GetActiveAnnouncementWithNewsRow {
 }
 
 // AnnouncementLoaded returns the cached active announcement without querying the database.
-func (cd *CoreData) AnnouncementLoaded() *db.GetActiveAnnouncementWithNewsRow {
+func (cd *CoreData) AnnouncementLoaded() *db.GetActiveAnnouncementWithNewsForUserRow {
 	ann, ok := cd.announcement.Peek()
 	if !ok {
 		return nil

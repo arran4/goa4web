@@ -195,24 +195,24 @@ func (q *Queries) GetAllBlogEntriesByUser(ctx context.Context, usersIdusers int3
 	return items, nil
 }
 
-const getAllBlogsForIndex = `-- name: GetAllBlogsForIndex :many
+const getAllBlogsForIndexSystem = `-- name: GetAllBlogsForIndexSystem :many
 SELECT idblogs, blog FROM blogs WHERE deleted_at IS NULL
 `
 
-type GetAllBlogsForIndexRow struct {
+type GetAllBlogsForIndexSystemRow struct {
 	Idblogs int32
 	Blog    sql.NullString
 }
 
-func (q *Queries) GetAllBlogsForIndex(ctx context.Context) ([]*GetAllBlogsForIndexRow, error) {
-	rows, err := q.db.QueryContext(ctx, getAllBlogsForIndex)
+func (q *Queries) GetAllBlogsForIndexSystem(ctx context.Context) ([]*GetAllBlogsForIndexSystemRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllBlogsForIndexSystem)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetAllBlogsForIndexRow
+	var items []*GetAllBlogsForIndexSystemRow
 	for rows.Next() {
-		var i GetAllBlogsForIndexRow
+		var i GetAllBlogsForIndexSystemRow
 		if err := rows.Scan(&i.Idblogs, &i.Blog); err != nil {
 			return nil, err
 		}
@@ -713,12 +713,12 @@ func (q *Queries) SearchBloggersForViewer(ctx context.Context, arg SearchBlogger
 	return items, nil
 }
 
-const setBlogLastIndex = `-- name: SetBlogLastIndex :exec
+const setBlogLastIndexSystem = `-- name: SetBlogLastIndexSystem :exec
 UPDATE blogs SET last_index = NOW() WHERE idblogs = ?
 `
 
-func (q *Queries) SetBlogLastIndex(ctx context.Context, idblogs int32) error {
-	_, err := q.db.ExecContext(ctx, setBlogLastIndex, idblogs)
+func (q *Queries) SetBlogLastIndexSystem(ctx context.Context, idblogs int32) error {
+	_, err := q.db.ExecContext(ctx, setBlogLastIndexSystem, idblogs)
 	return err
 }
 

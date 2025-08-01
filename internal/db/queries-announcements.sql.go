@@ -11,26 +11,70 @@ import (
 	"time"
 )
 
-const createAnnouncement = `-- name: CreateAnnouncement :exec
+const adminDemoteAnnouncement = `-- name: AdminDemoteAnnouncement :exec
+DELETE FROM site_announcements WHERE id = ?
+`
+
+func (q *Queries) AdminDemoteAnnouncement(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, adminDemoteAnnouncement, id)
+	return err
+}
+
+const adminListAnnouncementsWithNews = `-- name: AdminListAnnouncementsWithNews :many
+SELECT a.id, a.site_news_id, a.active, a.created_at, n.news
+FROM site_announcements a
+JOIN site_news n ON n.idsiteNews = a.site_news_id
+ORDER BY a.created_at DESC
+`
+
+type AdminListAnnouncementsWithNewsRow struct {
+	ID         int32
+	SiteNewsID int32
+	Active     bool
+	CreatedAt  time.Time
+	News       sql.NullString
+}
+
+func (q *Queries) AdminListAnnouncementsWithNews(ctx context.Context) ([]*AdminListAnnouncementsWithNewsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListAnnouncementsWithNews)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListAnnouncementsWithNewsRow
+	for rows.Next() {
+		var i AdminListAnnouncementsWithNewsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.SiteNewsID,
+			&i.Active,
+			&i.CreatedAt,
+			&i.News,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminPromoteAnnouncement = `-- name: AdminPromoteAnnouncement :exec
 INSERT INTO site_announcements (site_news_id)
 VALUES (?)
 `
 
-func (q *Queries) CreateAnnouncement(ctx context.Context, siteNewsID int32) error {
-	_, err := q.db.ExecContext(ctx, createAnnouncement, siteNewsID)
+func (q *Queries) AdminPromoteAnnouncement(ctx context.Context, siteNewsID int32) error {
+	_, err := q.db.ExecContext(ctx, adminPromoteAnnouncement, siteNewsID)
 	return err
 }
 
-const deleteAnnouncement = `-- name: DeleteAnnouncement :exec
-DELETE FROM site_announcements WHERE id = ?
-`
-
-func (q *Queries) DeleteAnnouncement(ctx context.Context, id int32) error {
-	_, err := q.db.ExecContext(ctx, deleteAnnouncement, id)
-	return err
-}
-
-const getActiveAnnouncementWithNews = `-- name: GetActiveAnnouncementWithNews :one
+const getActiveAnnouncementWithNewsForUser = `-- name: GetActiveAnnouncementWithNewsForUser :one
 WITH RECURSIVE role_ids(id) AS (
     SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
     UNION
@@ -43,6 +87,18 @@ SELECT a.id, n.idsiteNews, n.news
 FROM site_announcements a
 JOIN site_news n ON n.idsiteNews = a.site_news_id
 WHERE a.active = 1
+  AND (
+      n.language_idlanguage = 0
+      OR n.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = n.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='news'
@@ -57,20 +113,25 @@ ORDER BY a.created_at DESC
 LIMIT 1
 `
 
-type GetActiveAnnouncementWithNewsParams struct {
+type GetActiveAnnouncementWithNewsForUserParams struct {
 	ViewerID int32
 	UserID   sql.NullInt32
 }
 
-type GetActiveAnnouncementWithNewsRow struct {
+type GetActiveAnnouncementWithNewsForUserRow struct {
 	ID         int32
 	Idsitenews int32
 	News       sql.NullString
 }
 
-func (q *Queries) GetActiveAnnouncementWithNews(ctx context.Context, arg GetActiveAnnouncementWithNewsParams) (*GetActiveAnnouncementWithNewsRow, error) {
-	row := q.db.QueryRowContext(ctx, getActiveAnnouncementWithNews, arg.ViewerID, arg.UserID)
-	var i GetActiveAnnouncementWithNewsRow
+func (q *Queries) GetActiveAnnouncementWithNewsForUser(ctx context.Context, arg GetActiveAnnouncementWithNewsForUserParams) (*GetActiveAnnouncementWithNewsForUserRow, error) {
+	row := q.db.QueryRowContext(ctx, getActiveAnnouncementWithNewsForUser,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.UserID,
+	)
+	var i GetActiveAnnouncementWithNewsForUserRow
 	err := row.Scan(&i.ID, &i.Idsitenews, &i.News)
 	return &i, err
 }
@@ -93,50 +154,6 @@ func (q *Queries) GetLatestAnnouncementByNewsID(ctx context.Context, siteNewsID 
 		&i.CreatedAt,
 	)
 	return &i, err
-}
-
-const listAnnouncementsWithNews = `-- name: ListAnnouncementsWithNews :many
-SELECT a.id, a.site_news_id, a.active, a.created_at, n.news
-FROM site_announcements a
-JOIN site_news n ON n.idsiteNews = a.site_news_id
-ORDER BY a.created_at DESC
-`
-
-type ListAnnouncementsWithNewsRow struct {
-	ID         int32
-	SiteNewsID int32
-	Active     bool
-	CreatedAt  time.Time
-	News       sql.NullString
-}
-
-func (q *Queries) ListAnnouncementsWithNews(ctx context.Context) ([]*ListAnnouncementsWithNewsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listAnnouncementsWithNews)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*ListAnnouncementsWithNewsRow
-	for rows.Next() {
-		var i ListAnnouncementsWithNewsRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.SiteNewsID,
-			&i.Active,
-			&i.CreatedAt,
-			&i.News,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const setAnnouncementActive = `-- name: SetAnnouncementActive :exec

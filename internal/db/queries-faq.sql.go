@@ -10,6 +10,28 @@ import (
 	"database/sql"
 )
 
+const adminInsertFAQRevision = `-- name: AdminInsertFAQRevision :exec
+INSERT INTO faq_revisions (faq_id, users_idusers, question, answer)
+VALUES (?, ?, ?, ?)
+`
+
+type AdminInsertFAQRevisionParams struct {
+	FaqID        int32
+	UsersIdusers int32
+	Question     sql.NullString
+	Answer       sql.NullString
+}
+
+func (q *Queries) AdminInsertFAQRevision(ctx context.Context, arg AdminInsertFAQRevisionParams) error {
+	_, err := q.db.ExecContext(ctx, adminInsertFAQRevision,
+		arg.FaqID,
+		arg.UsersIdusers,
+		arg.Question,
+		arg.Answer,
+	)
+	return err
+}
+
 const createFAQCategory = `-- name: CreateFAQCategory :exec
 INSERT INTO faq_categories (name)
 VALUES (?)
@@ -366,24 +388,43 @@ func (q *Queries) GetFAQUnansweredQuestions(ctx context.Context) ([]*Faq, error)
 	return items, nil
 }
 
-const insertFAQRevision = `-- name: InsertFAQRevision :exec
+const insertFAQRevisionForUser = `-- name: InsertFAQRevisionForUser :exec
 INSERT INTO faq_revisions (faq_id, users_idusers, question, answer)
-VALUES (?, ?, ?, ?)
+SELECT ?, ?, ?, ?
+WHERE EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section = 'faq'
+      AND g.item = 'question'
+      AND g.action = 'post'
+      AND g.active = 1
+      AND g.item_id = ?
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (
+          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+      ))
+)
 `
 
-type InsertFAQRevisionParams struct {
+type InsertFAQRevisionForUserParams struct {
 	FaqID        int32
 	UsersIdusers int32
 	Question     sql.NullString
 	Answer       sql.NullString
+	ItemID       sql.NullInt32
+	UserID       sql.NullInt32
+	ViewerID     int32
 }
 
-func (q *Queries) InsertFAQRevision(ctx context.Context, arg InsertFAQRevisionParams) error {
-	_, err := q.db.ExecContext(ctx, insertFAQRevision,
+// renamed to InsertFAQRevisionForUser
+func (q *Queries) InsertFAQRevisionForUser(ctx context.Context, arg InsertFAQRevisionForUserParams) error {
+	_, err := q.db.ExecContext(ctx, insertFAQRevisionForUser,
 		arg.FaqID,
 		arg.UsersIdusers,
 		arg.Question,
 		arg.Answer,
+		arg.ItemID,
+		arg.UserID,
+		arg.ViewerID,
 	)
 	return err
 }

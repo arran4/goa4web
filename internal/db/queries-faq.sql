@@ -64,7 +64,24 @@ GROUP BY c.idfaqCategories;
 -- name: GetFAQByID :one
 SELECT * FROM faq WHERE idfaq = ?;
 
--- name: InsertFAQRevision :exec
+-- renamed to InsertFAQRevisionForUser
+-- name: InsertFAQRevisionForUser :exec
+INSERT INTO faq_revisions (faq_id, users_idusers, question, answer)
+SELECT sqlc.arg(faq_id), sqlc.arg(users_idusers), sqlc.arg(question), sqlc.arg(answer)
+WHERE EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section = 'faq'
+      AND g.item = 'question'
+      AND g.action = 'post'
+      AND g.active = 1
+      AND g.item_id = sqlc.arg(item_id)
+      AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (
+          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+      ))
+);
+
+-- name: AdminInsertFAQRevision :exec
 INSERT INTO faq_revisions (faq_id, users_idusers, question, answer)
 VALUES (?, ?, ?, ?);
 

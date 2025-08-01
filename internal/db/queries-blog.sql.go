@@ -191,9 +191,10 @@ SELECT ?, ?, ?, CURRENT_TIMESTAMP
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'blogs'
-      AND g.item = 'entry'
+      AND (g.item = 'entry' OR g.item IS NULL)
       AND g.action = 'post'
       AND g.active = 1
+      AND (g.item_id = 0 OR g.item_id IS NULL)
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (
           SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
@@ -829,9 +830,10 @@ WHERE idblogs = ?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section = 'blogs'
-        AND g.item = 'entry'
+        AND (g.item = 'entry' OR g.item IS NULL)
         AND g.action = 'post'
         AND g.active = 1
+        AND (g.item_id = ? OR g.item_id IS NULL)
         AND (g.user_id = ? OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (
             SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
@@ -842,7 +844,8 @@ WHERE idblogs = ?
 type UpdateBlogEntryParams struct {
 	LanguageIdlanguage int32
 	Blog               sql.NullString
-	Idblogs            int32
+	BlogID             int32
+	ItemID             sql.NullInt32
 	UserID             sql.NullInt32
 	ViewerID           int32
 }
@@ -851,7 +854,8 @@ func (q *Queries) UpdateBlogEntry(ctx context.Context, arg UpdateBlogEntryParams
 	_, err := q.db.ExecContext(ctx, updateBlogEntry,
 		arg.LanguageIdlanguage,
 		arg.Blog,
-		arg.Idblogs,
+		arg.BlogID,
+		arg.ItemID,
 		arg.UserID,
 		arg.ViewerID,
 	)

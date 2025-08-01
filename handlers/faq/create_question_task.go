@@ -49,11 +49,13 @@ func (CreateQuestionTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("insert faq fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	id, _ := res.LastInsertId()
-	_ = queries.InsertFAQRevision(r.Context(), db.InsertFAQRevisionParams{
+	_ = queries.InsertFAQRevisionForUser(r.Context(), db.InsertFAQRevisionForUserParams{
 		FaqID:        int32(id),
 		UsersIdusers: uid,
 		Question:     sql.NullString{String: question, Valid: true},
 		Answer:       sql.NullString{String: answer, Valid: true},
+		UserID:       sql.NullInt32{Int32: uid, Valid: true},
+		ViewerID:     uid,
 	})
 
 	return nil

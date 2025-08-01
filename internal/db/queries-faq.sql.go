@@ -296,12 +296,12 @@ func (q *Queries) GetFAQDismissedQuestions(ctx context.Context) ([]*Faq, error) 
 	return items, nil
 }
 
-const getFAQRevisionsForFAQ = `-- name: GetFAQRevisionsForFAQ :many
+const getFAQRevisionsForAdmin = `-- name: GetFAQRevisionsForAdmin :many
 SELECT id, faq_id, users_idusers, question, answer, created_at FROM faq_revisions WHERE faq_id = ? ORDER BY id DESC
 `
 
-func (q *Queries) GetFAQRevisionsForFAQ(ctx context.Context, faqID int32) ([]*FaqRevision, error) {
-	rows, err := q.db.QueryContext(ctx, getFAQRevisionsForFAQ, faqID)
+func (q *Queries) GetFAQRevisionsForAdmin(ctx context.Context, faqID int32) ([]*FaqRevision, error) {
+	rows, err := q.db.QueryContext(ctx, getFAQRevisionsForAdmin, faqID)
 	if err != nil {
 		return nil, err
 	}
@@ -366,24 +366,39 @@ func (q *Queries) GetFAQUnansweredQuestions(ctx context.Context) ([]*Faq, error)
 	return items, nil
 }
 
-const insertFAQRevision = `-- name: InsertFAQRevision :exec
+const insertFAQRevisionForUser = `-- name: InsertFAQRevisionForUser :exec
 INSERT INTO faq_revisions (faq_id, users_idusers, question, answer)
-VALUES (?, ?, ?, ?)
+SELECT ?, ?, ?, ?
+WHERE EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section = 'faq'
+      AND g.item = 'question'
+      AND g.action = 'post'
+      AND g.active = 1
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (
+          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+      ))
+)
 `
 
-type InsertFAQRevisionParams struct {
+type InsertFAQRevisionForUserParams struct {
 	FaqID        int32
 	UsersIdusers int32
 	Question     sql.NullString
 	Answer       sql.NullString
+	UserID       sql.NullInt32
+	ViewerID     int32
 }
 
-func (q *Queries) InsertFAQRevision(ctx context.Context, arg InsertFAQRevisionParams) error {
-	_, err := q.db.ExecContext(ctx, insertFAQRevision,
+func (q *Queries) InsertFAQRevisionForUser(ctx context.Context, arg InsertFAQRevisionForUserParams) error {
+	_, err := q.db.ExecContext(ctx, insertFAQRevisionForUser,
 		arg.FaqID,
 		arg.UsersIdusers,
 		arg.Question,
 		arg.Answer,
+		arg.UserID,
+		arg.ViewerID,
 	)
 	return err
 }

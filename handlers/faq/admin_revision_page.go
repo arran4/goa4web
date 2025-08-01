@@ -35,7 +35,7 @@ func AdminRevisionHistoryPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	revs, _ := queries.GetFAQRevisionsForFAQ(r.Context(), int32(id))
+	revs, _ := queries.GetFAQRevisionsForAdmin(r.Context(), int32(id))
 	type Data struct {
 		*common.CoreData
 		Faq       *db.Faq

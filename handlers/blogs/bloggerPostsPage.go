@@ -65,6 +65,7 @@ func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 	rows, err := queries.GetBlogEntriesByAuthorForUserDescendingLanguages(r.Context(), db.GetBlogEntriesByAuthorForUserDescendingLanguagesParams{
 		AuthorID: buid,
 		ViewerID: uid,
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 		Limit:    15,
 		Offset:   int32(offset),
 	})

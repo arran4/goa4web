@@ -53,11 +53,13 @@ func (EditQuestionTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("update faq question fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	_ = queries.InsertFAQRevision(r.Context(), db.InsertFAQRevisionParams{
+	_ = queries.InsertFAQRevisionForUser(r.Context(), db.InsertFAQRevisionForUserParams{
 		FaqID:        int32(faq),
 		UsersIdusers: uid,
 		Question:     sql.NullString{String: question, Valid: true},
 		Answer:       sql.NullString{String: answer, Valid: true},
+		UserID:       sql.NullInt32{Int32: uid, Valid: true},
+		ViewerID:     uid,
 	})
 
 	return nil

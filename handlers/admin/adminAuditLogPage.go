@@ -26,7 +26,7 @@ func copyValues(v url.Values) url.Values {
 func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
-		Rows     []*db.ListAuditLogsRow
+		Rows     []*db.ListAuditLogsForAdminRow
 		User     string
 		Action   string
 		NextLink string
@@ -55,7 +55,7 @@ func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 		actionFilter = "%" + data.Action + "%"
 	}
 
-	rows, err := queries.ListAuditLogs(r.Context(), db.ListAuditLogsParams{
+	rows, err := queries.ListAuditLogsForAdmin(r.Context(), db.ListAuditLogsForAdminParams{
 		Username: sql.NullString{String: usernameFilter, Valid: true},
 		Action:   actionFilter,
 		Limit:    int32(data.PageSize + 1),

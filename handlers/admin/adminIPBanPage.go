@@ -22,7 +22,7 @@ func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 	cd.PageTitle = "IP Bans"
 	data := Data{CoreData: cd}
 	queries := cd.Queries()
-	rows, err := queries.ListBannedIps(r.Context())
+	rows, err := queries.ListBannedIpsForAdmin(r.Context())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("list banned ips: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

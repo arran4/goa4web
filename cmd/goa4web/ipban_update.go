@@ -51,7 +51,7 @@ func (c *ipBanUpdateCmd) Run() error {
 		}
 		expires = sql.NullTime{Time: t, Valid: true}
 	}
-	err = queries.UpdateBannedIp(ctx, dbpkg.UpdateBannedIpParams{
+	err = queries.UpdateBannedIpForAdmin(ctx, dbpkg.UpdateBannedIpForAdminParams{
 		Reason:    sql.NullString{String: c.Reason, Valid: c.Reason != ""},
 		ExpiresAt: expires,
 		ID:        int32(c.ID),

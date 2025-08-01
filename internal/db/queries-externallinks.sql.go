@@ -10,58 +10,35 @@ import (
 	"database/sql"
 )
 
-const clearExternalLinkCache = `-- name: ClearExternalLinkCache :exec
+const clearExternalLinkCacheForAdmin = `-- name: ClearExternalLinkCacheForAdmin :exec
 UPDATE external_links SET card_image_cache = NULL, favicon_cache = NULL, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE id = ?
 `
 
-type ClearExternalLinkCacheParams struct {
+type ClearExternalLinkCacheForAdminParams struct {
 	UpdatedBy sql.NullInt32
 	ID        int32
 }
 
-func (q *Queries) ClearExternalLinkCache(ctx context.Context, arg ClearExternalLinkCacheParams) error {
-	_, err := q.db.ExecContext(ctx, clearExternalLinkCache, arg.UpdatedBy, arg.ID)
+func (q *Queries) ClearExternalLinkCacheForAdmin(ctx context.Context, arg ClearExternalLinkCacheForAdminParams) error {
+	_, err := q.db.ExecContext(ctx, clearExternalLinkCacheForAdmin, arg.UpdatedBy, arg.ID)
 	return err
 }
 
-const deleteExternalLink = `-- name: DeleteExternalLink :exec
+const deleteExternalLinkForAdmin = `-- name: DeleteExternalLinkForAdmin :exec
 DELETE FROM external_links WHERE id = ?
 `
 
-func (q *Queries) DeleteExternalLink(ctx context.Context, id int32) error {
-	_, err := q.db.ExecContext(ctx, deleteExternalLink, id)
+func (q *Queries) DeleteExternalLinkForAdmin(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, deleteExternalLinkForAdmin, id)
 	return err
 }
 
-const getExternalLink = `-- name: GetExternalLink :one
-SELECT id, url, clicks, created_at, updated_at, updated_by, card_title, card_description, card_image, card_image_cache, favicon_cache FROM external_links WHERE url = ? LIMIT 1
-`
-
-func (q *Queries) GetExternalLink(ctx context.Context, url string) (*ExternalLink, error) {
-	row := q.db.QueryRowContext(ctx, getExternalLink, url)
-	var i ExternalLink
-	err := row.Scan(
-		&i.ID,
-		&i.Url,
-		&i.Clicks,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.UpdatedBy,
-		&i.CardTitle,
-		&i.CardDescription,
-		&i.CardImage,
-		&i.CardImageCache,
-		&i.FaviconCache,
-	)
-	return &i, err
-}
-
-const getExternalLinkByID = `-- name: GetExternalLinkByID :one
+const getExternalLinkByIDForAdmin = `-- name: GetExternalLinkByIDForAdmin :one
 SELECT id, url, clicks, created_at, updated_at, updated_by, card_title, card_description, card_image, card_image_cache, favicon_cache FROM external_links WHERE id = ? LIMIT 1
 `
 
-func (q *Queries) GetExternalLinkByID(ctx context.Context, id int32) (*ExternalLink, error) {
-	row := q.db.QueryRowContext(ctx, getExternalLinkByID, id)
+func (q *Queries) GetExternalLinkByIDForAdmin(ctx context.Context, id int32) (*ExternalLink, error) {
+	row := q.db.QueryRowContext(ctx, getExternalLinkByIDForAdmin, id)
 	var i ExternalLink
 	err := row.Scan(
 		&i.ID,
@@ -79,19 +56,42 @@ func (q *Queries) GetExternalLinkByID(ctx context.Context, id int32) (*ExternalL
 	return &i, err
 }
 
-const listExternalLinks = `-- name: ListExternalLinks :many
+const getExternalLinkSystem = `-- name: GetExternalLinkSystem :one
+SELECT id, url, clicks, created_at, updated_at, updated_by, card_title, card_description, card_image, card_image_cache, favicon_cache FROM external_links WHERE url = ? LIMIT 1
+`
+
+func (q *Queries) GetExternalLinkSystem(ctx context.Context, url string) (*ExternalLink, error) {
+	row := q.db.QueryRowContext(ctx, getExternalLinkSystem, url)
+	var i ExternalLink
+	err := row.Scan(
+		&i.ID,
+		&i.Url,
+		&i.Clicks,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.UpdatedBy,
+		&i.CardTitle,
+		&i.CardDescription,
+		&i.CardImage,
+		&i.CardImageCache,
+		&i.FaviconCache,
+	)
+	return &i, err
+}
+
+const listExternalLinksForAdmin = `-- name: ListExternalLinksForAdmin :many
 SELECT id, url, clicks, created_at, updated_at, updated_by, card_title, card_description, card_image, card_image_cache, favicon_cache FROM external_links
 ORDER BY created_at DESC
 LIMIT ? OFFSET ?
 `
 
-type ListExternalLinksParams struct {
+type ListExternalLinksForAdminParams struct {
 	Limit  int32
 	Offset int32
 }
 
-func (q *Queries) ListExternalLinks(ctx context.Context, arg ListExternalLinksParams) ([]*ExternalLink, error) {
-	rows, err := q.db.QueryContext(ctx, listExternalLinks, arg.Limit, arg.Offset)
+func (q *Queries) ListExternalLinksForAdmin(ctx context.Context, arg ListExternalLinksForAdminParams) ([]*ExternalLink, error) {
+	rows, err := q.db.QueryContext(ctx, listExternalLinksForAdmin, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -125,24 +125,24 @@ func (q *Queries) ListExternalLinks(ctx context.Context, arg ListExternalLinksPa
 	return items, nil
 }
 
-const registerExternalLinkClick = `-- name: RegisterExternalLinkClick :exec
+const registerExternalLinkClickSystem = `-- name: RegisterExternalLinkClickSystem :exec
 INSERT INTO external_links (url, clicks)
 VALUES (?, 1)
 ON DUPLICATE KEY UPDATE clicks = clicks + 1
 `
 
-func (q *Queries) RegisterExternalLinkClick(ctx context.Context, url string) error {
-	_, err := q.db.ExecContext(ctx, registerExternalLinkClick, url)
+func (q *Queries) RegisterExternalLinkClickSystem(ctx context.Context, url string) error {
+	_, err := q.db.ExecContext(ctx, registerExternalLinkClickSystem, url)
 	return err
 }
 
-const updateExternalLink = `-- name: UpdateExternalLink :exec
+const updateExternalLinkForAdmin = `-- name: UpdateExternalLinkForAdmin :exec
 UPDATE external_links
 SET url = ?, card_title = ?, card_description = ?, card_image = ?, card_image_cache = ?, favicon_cache = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?
 WHERE id = ?
 `
 
-type UpdateExternalLinkParams struct {
+type UpdateExternalLinkForAdminParams struct {
 	Url             string
 	CardTitle       sql.NullString
 	CardDescription sql.NullString
@@ -153,8 +153,8 @@ type UpdateExternalLinkParams struct {
 	ID              int32
 }
 
-func (q *Queries) UpdateExternalLink(ctx context.Context, arg UpdateExternalLinkParams) error {
-	_, err := q.db.ExecContext(ctx, updateExternalLink,
+func (q *Queries) UpdateExternalLinkForAdmin(ctx context.Context, arg UpdateExternalLinkForAdminParams) error {
+	_, err := q.db.ExecContext(ctx, updateExternalLinkForAdmin,
 		arg.Url,
 		arg.CardTitle,
 		arg.CardDescription,

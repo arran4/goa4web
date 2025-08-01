@@ -38,7 +38,7 @@ func (c *linksRefreshCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
-	if err := queries.ClearExternalLinkCache(ctx, dbpkg.ClearExternalLinkCacheParams{UpdatedBy: sql.NullInt32{}, ID: int32(c.ID)}); err != nil {
+	if err := queries.ClearExternalLinkCacheForAdmin(ctx, dbpkg.ClearExternalLinkCacheForAdminParams{UpdatedBy: sql.NullInt32{}, ID: int32(c.ID)}); err != nil {
 		return fmt.Errorf("refresh link: %w", err)
 	}
 	return nil

@@ -11,11 +11,11 @@ import (
 	"time"
 )
 
-const insertAuditLog = `-- name: InsertAuditLog :exec
+const insertAuditLogSystem = `-- name: InsertAuditLogSystem :exec
 INSERT INTO audit_log (users_idusers, action, path, details, data) VALUES (?, ?, ?, ?, ?)
 `
 
-type InsertAuditLogParams struct {
+type InsertAuditLogSystemParams struct {
 	UsersIdusers int32
 	Action       string
 	Path         string
@@ -23,8 +23,8 @@ type InsertAuditLogParams struct {
 	Data         sql.NullString
 }
 
-func (q *Queries) InsertAuditLog(ctx context.Context, arg InsertAuditLogParams) error {
-	_, err := q.db.ExecContext(ctx, insertAuditLog,
+func (q *Queries) InsertAuditLogSystem(ctx context.Context, arg InsertAuditLogSystemParams) error {
+	_, err := q.db.ExecContext(ctx, insertAuditLogSystem,
 		arg.UsersIdusers,
 		arg.Action,
 		arg.Path,
@@ -34,7 +34,7 @@ func (q *Queries) InsertAuditLog(ctx context.Context, arg InsertAuditLogParams) 
 	return err
 }
 
-const listAuditLogs = `-- name: ListAuditLogs :many
+const listAuditLogsForAdmin = `-- name: ListAuditLogsForAdmin :many
 SELECT a.id, a.users_idusers, a.action, a.path, a.details, a.data, a.created_at, u.username
 FROM audit_log a
 LEFT JOIN users u ON a.users_idusers = u.idusers
@@ -43,14 +43,14 @@ ORDER BY a.id DESC
 LIMIT ? OFFSET ?
 `
 
-type ListAuditLogsParams struct {
+type ListAuditLogsForAdminParams struct {
 	Username sql.NullString
 	Action   string
 	Limit    int32
 	Offset   int32
 }
 
-type ListAuditLogsRow struct {
+type ListAuditLogsForAdminRow struct {
 	ID           int32
 	UsersIdusers int32
 	Action       string
@@ -61,8 +61,8 @@ type ListAuditLogsRow struct {
 	Username     sql.NullString
 }
 
-func (q *Queries) ListAuditLogs(ctx context.Context, arg ListAuditLogsParams) ([]*ListAuditLogsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listAuditLogs,
+func (q *Queries) ListAuditLogsForAdmin(ctx context.Context, arg ListAuditLogsForAdminParams) ([]*ListAuditLogsForAdminRow, error) {
+	rows, err := q.db.QueryContext(ctx, listAuditLogsForAdmin,
 		arg.Username,
 		arg.Action,
 		arg.Limit,
@@ -72,9 +72,9 @@ func (q *Queries) ListAuditLogs(ctx context.Context, arg ListAuditLogsParams) ([
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*ListAuditLogsRow
+	var items []*ListAuditLogsForAdminRow
 	for rows.Next() {
-		var i ListAuditLogsRow
+		var i ListAuditLogsForAdminRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.UsersIdusers,

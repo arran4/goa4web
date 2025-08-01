@@ -25,14 +25,14 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if r.URL.Query().Get("go") != "" {
-		if err := cd.Queries().RegisterExternalLinkClick(r.Context(), raw); err != nil {
+		if err := cd.Queries().RegisterExternalLinkClickSystem(r.Context(), raw); err != nil {
 			log.Printf("record external link click: %v", err)
 		}
 		http.Redirect(w, r, raw, http.StatusTemporaryRedirect)
 		return
 	}
 
-	link, err := cd.Queries().GetExternalLink(r.Context(), raw)
+	link, err := cd.Queries().GetExternalLinkSystem(r.Context(), raw)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("get external link: %v", err)
 	}

@@ -31,7 +31,7 @@ func (c *linksListCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
-	rows, err := queries.ListExternalLinks(ctx, dbpkg.ListExternalLinksParams{Limit: 200, Offset: 0})
+	rows, err := queries.ListExternalLinksForAdmin(ctx, dbpkg.ListExternalLinksForAdminParams{Limit: 200, Offset: 0})
 	if err != nil {
 		return fmt.Errorf("list links: %w", err)
 	}

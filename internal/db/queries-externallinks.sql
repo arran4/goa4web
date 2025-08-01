@@ -1,26 +1,26 @@
--- name: RegisterExternalLinkClick :exec
+-- name: RegisterExternalLinkClickSystem :exec
 INSERT INTO external_links (url, clicks)
 VALUES (?, 1)
 ON DUPLICATE KEY UPDATE clicks = clicks + 1;
 
--- name: GetExternalLink :one
+-- name: GetExternalLinkSystem :one
 SELECT * FROM external_links WHERE url = ? LIMIT 1;
 
--- name: ListExternalLinks :many
+-- name: ListExternalLinksForAdmin :many
 SELECT * FROM external_links
 ORDER BY created_at DESC
 LIMIT ? OFFSET ?;
 
--- name: GetExternalLinkByID :one
+-- name: GetExternalLinkByIDForAdmin :one
 SELECT * FROM external_links WHERE id = ? LIMIT 1;
 
--- name: UpdateExternalLink :exec
+-- name: UpdateExternalLinkForAdmin :exec
 UPDATE external_links
 SET url = ?, card_title = ?, card_description = ?, card_image = ?, card_image_cache = ?, favicon_cache = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?
 WHERE id = ?;
 
--- name: DeleteExternalLink :exec
+-- name: DeleteExternalLinkForAdmin :exec
 DELETE FROM external_links WHERE id = ?;
 
--- name: ClearExternalLinkCache :exec
+-- name: ClearExternalLinkCacheForAdmin :exec
 UPDATE external_links SET card_image_cache = NULL, favicon_cache = NULL, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE id = ?;

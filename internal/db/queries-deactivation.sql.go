@@ -10,12 +10,12 @@ import (
 	"database/sql"
 )
 
-const archiveBlog = `-- name: ArchiveBlog :exec
+const archiveBlogForAdmin = `-- name: ArchiveBlogForAdmin :exec
 INSERT INTO deactivated_blogs (idblogs, forumthread_id, users_idusers, language_idlanguage, blog, written, deleted_at)
 VALUES (?, ?, ?, ?, ?, ?, NOW())
 `
 
-type ArchiveBlogParams struct {
+type ArchiveBlogForAdminParams struct {
 	Idblogs            int32
 	ForumthreadID      int32
 	UsersIdusers       int32
@@ -24,8 +24,8 @@ type ArchiveBlogParams struct {
 	Written            sql.NullTime
 }
 
-func (q *Queries) ArchiveBlog(ctx context.Context, arg ArchiveBlogParams) error {
-	_, err := q.db.ExecContext(ctx, archiveBlog,
+func (q *Queries) ArchiveBlogForAdmin(ctx context.Context, arg ArchiveBlogForAdminParams) error {
+	_, err := q.db.ExecContext(ctx, archiveBlogForAdmin,
 		arg.Idblogs,
 		arg.ForumthreadID,
 		arg.UsersIdusers,
@@ -36,12 +36,12 @@ func (q *Queries) ArchiveBlog(ctx context.Context, arg ArchiveBlogParams) error 
 	return err
 }
 
-const archiveComment = `-- name: ArchiveComment :exec
+const archiveCommentForAdmin = `-- name: ArchiveCommentForAdmin :exec
 INSERT INTO deactivated_comments (idcomments, forumthread_id, users_idusers, language_idlanguage, written, text, deleted_at)
 VALUES (?, ?, ?, ?, ?, ?, NOW())
 `
 
-type ArchiveCommentParams struct {
+type ArchiveCommentForAdminParams struct {
 	Idcomments         int32
 	ForumthreadID      int32
 	UsersIdusers       int32
@@ -50,8 +50,8 @@ type ArchiveCommentParams struct {
 	Text               sql.NullString
 }
 
-func (q *Queries) ArchiveComment(ctx context.Context, arg ArchiveCommentParams) error {
-	_, err := q.db.ExecContext(ctx, archiveComment,
+func (q *Queries) ArchiveCommentForAdmin(ctx context.Context, arg ArchiveCommentForAdminParams) error {
+	_, err := q.db.ExecContext(ctx, archiveCommentForAdmin,
 		arg.Idcomments,
 		arg.ForumthreadID,
 		arg.UsersIdusers,
@@ -62,12 +62,12 @@ func (q *Queries) ArchiveComment(ctx context.Context, arg ArchiveCommentParams) 
 	return err
 }
 
-const archiveImagepost = `-- name: ArchiveImagepost :exec
+const archiveImagepostForAdmin = `-- name: ArchiveImagepostForAdmin :exec
 INSERT INTO deactivated_imageposts (idimagepost, forumthread_id, users_idusers, imageboard_idimageboard, posted, description, thumbnail, fullimage, file_size, approved, deleted_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
 `
 
-type ArchiveImagepostParams struct {
+type ArchiveImagepostForAdminParams struct {
 	Idimagepost            int32
 	ForumthreadID          int32
 	UsersIdusers           int32
@@ -80,8 +80,8 @@ type ArchiveImagepostParams struct {
 	Approved               sql.NullBool
 }
 
-func (q *Queries) ArchiveImagepost(ctx context.Context, arg ArchiveImagepostParams) error {
-	_, err := q.db.ExecContext(ctx, archiveImagepost,
+func (q *Queries) ArchiveImagepostForAdmin(ctx context.Context, arg ArchiveImagepostForAdminParams) error {
+	_, err := q.db.ExecContext(ctx, archiveImagepostForAdmin,
 		arg.Idimagepost,
 		arg.ForumthreadID,
 		arg.UsersIdusers,
@@ -96,12 +96,12 @@ func (q *Queries) ArchiveImagepost(ctx context.Context, arg ArchiveImagepostPara
 	return err
 }
 
-const archiveLink = `-- name: ArchiveLink :exec
+const archiveLinkForAdmin = `-- name: ArchiveLinkForAdmin :exec
 INSERT INTO deactivated_linker (idlinker, language_idlanguage, users_idusers, linker_category_id, forumthread_id, title, url, description, listed, deleted_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
 `
 
-type ArchiveLinkParams struct {
+type ArchiveLinkForAdminParams struct {
 	Idlinker           int32
 	LanguageIdlanguage int32
 	UsersIdusers       int32
@@ -113,8 +113,8 @@ type ArchiveLinkParams struct {
 	Listed             sql.NullTime
 }
 
-func (q *Queries) ArchiveLink(ctx context.Context, arg ArchiveLinkParams) error {
-	_, err := q.db.ExecContext(ctx, archiveLink,
+func (q *Queries) ArchiveLinkForAdmin(ctx context.Context, arg ArchiveLinkForAdminParams) error {
+	_, err := q.db.ExecContext(ctx, archiveLinkForAdmin,
 		arg.Idlinker,
 		arg.LanguageIdlanguage,
 		arg.UsersIdusers,
@@ -128,7 +128,7 @@ func (q *Queries) ArchiveLink(ctx context.Context, arg ArchiveLinkParams) error 
 	return err
 }
 
-const archiveUser = `-- name: ArchiveUser :exec
+const archiveUserForAdmin = `-- name: ArchiveUserForAdmin :exec
 
 INSERT INTO deactivated_users (idusers, email, passwd, passwd_algorithm, username, deleted_at)
 SELECT u.idusers, u.email, u.passwd, u.passwd_algorithm, u.username, NOW()
@@ -136,17 +136,17 @@ FROM users u WHERE u.idusers = ?
 `
 
 // Queries for user deactivation and restoration
-func (q *Queries) ArchiveUser(ctx context.Context, idusers int32) error {
-	_, err := q.db.ExecContext(ctx, archiveUser, idusers)
+func (q *Queries) ArchiveUserForAdmin(ctx context.Context, idusers int32) error {
+	_, err := q.db.ExecContext(ctx, archiveUserForAdmin, idusers)
 	return err
 }
 
-const archiveWriting = `-- name: ArchiveWriting :exec
+const archiveWritingForAdmin = `-- name: ArchiveWritingForAdmin :exec
 INSERT INTO deactivated_writings (idwriting, users_idusers, forumthread_id, language_idlanguage, writing_category_id, title, published, writing, abstract, private, deleted_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
 `
 
-type ArchiveWritingParams struct {
+type ArchiveWritingForAdminParams struct {
 	Idwriting          int32
 	UsersIdusers       int32
 	ForumthreadID      int32
@@ -159,8 +159,8 @@ type ArchiveWritingParams struct {
 	Private            sql.NullBool
 }
 
-func (q *Queries) ArchiveWriting(ctx context.Context, arg ArchiveWritingParams) error {
-	_, err := q.db.ExecContext(ctx, archiveWriting,
+func (q *Queries) ArchiveWritingForAdmin(ctx context.Context, arg ArchiveWritingForAdminParams) error {
+	_, err := q.db.ExecContext(ctx, archiveWritingForAdmin,
 		arg.Idwriting,
 		arg.UsersIdusers,
 		arg.ForumthreadID,
@@ -175,69 +175,69 @@ func (q *Queries) ArchiveWriting(ctx context.Context, arg ArchiveWritingParams) 
 	return err
 }
 
-const markBlogRestored = `-- name: MarkBlogRestored :exec
+const markBlogRestoredForAdmin = `-- name: MarkBlogRestoredForAdmin :exec
 UPDATE deactivated_blogs SET restored_at = NOW() WHERE idblogs = ?
 `
 
-func (q *Queries) MarkBlogRestored(ctx context.Context, idblogs int32) error {
-	_, err := q.db.ExecContext(ctx, markBlogRestored, idblogs)
+func (q *Queries) MarkBlogRestoredForAdmin(ctx context.Context, idblogs int32) error {
+	_, err := q.db.ExecContext(ctx, markBlogRestoredForAdmin, idblogs)
 	return err
 }
 
-const markCommentRestored = `-- name: MarkCommentRestored :exec
+const markCommentRestoredForAdmin = `-- name: MarkCommentRestoredForAdmin :exec
 UPDATE deactivated_comments SET restored_at = NOW() WHERE idcomments = ?
 `
 
-func (q *Queries) MarkCommentRestored(ctx context.Context, idcomments int32) error {
-	_, err := q.db.ExecContext(ctx, markCommentRestored, idcomments)
+func (q *Queries) MarkCommentRestoredForAdmin(ctx context.Context, idcomments int32) error {
+	_, err := q.db.ExecContext(ctx, markCommentRestoredForAdmin, idcomments)
 	return err
 }
 
-const markImagepostRestored = `-- name: MarkImagepostRestored :exec
+const markImagepostRestoredForAdmin = `-- name: MarkImagepostRestoredForAdmin :exec
 UPDATE deactivated_imageposts SET restored_at = NOW() WHERE idimagepost = ?
 `
 
-func (q *Queries) MarkImagepostRestored(ctx context.Context, idimagepost int32) error {
-	_, err := q.db.ExecContext(ctx, markImagepostRestored, idimagepost)
+func (q *Queries) MarkImagepostRestoredForAdmin(ctx context.Context, idimagepost int32) error {
+	_, err := q.db.ExecContext(ctx, markImagepostRestoredForAdmin, idimagepost)
 	return err
 }
 
-const markLinkRestored = `-- name: MarkLinkRestored :exec
+const markLinkRestoredForAdmin = `-- name: MarkLinkRestoredForAdmin :exec
 UPDATE deactivated_linker SET restored_at = NOW() WHERE idlinker = ?
 `
 
-func (q *Queries) MarkLinkRestored(ctx context.Context, idlinker int32) error {
-	_, err := q.db.ExecContext(ctx, markLinkRestored, idlinker)
+func (q *Queries) MarkLinkRestoredForAdmin(ctx context.Context, idlinker int32) error {
+	_, err := q.db.ExecContext(ctx, markLinkRestoredForAdmin, idlinker)
 	return err
 }
 
-const markWritingRestored = `-- name: MarkWritingRestored :exec
+const markWritingRestoredForAdmin = `-- name: MarkWritingRestoredForAdmin :exec
 UPDATE deactivated_writings SET restored_at = NOW() WHERE idwriting = ?
 `
 
-func (q *Queries) MarkWritingRestored(ctx context.Context, idwriting int32) error {
-	_, err := q.db.ExecContext(ctx, markWritingRestored, idwriting)
+func (q *Queries) MarkWritingRestoredForAdmin(ctx context.Context, idwriting int32) error {
+	_, err := q.db.ExecContext(ctx, markWritingRestoredForAdmin, idwriting)
 	return err
 }
 
-const pendingDeactivatedBlogs = `-- name: PendingDeactivatedBlogs :many
+const pendingDeactivatedBlogsForAdmin = `-- name: PendingDeactivatedBlogsForAdmin :many
 SELECT idblogs, blog FROM deactivated_blogs WHERE users_idusers = ? AND restored_at IS NULL
 `
 
-type PendingDeactivatedBlogsRow struct {
+type PendingDeactivatedBlogsForAdminRow struct {
 	Idblogs int32
 	Blog    sql.NullString
 }
 
-func (q *Queries) PendingDeactivatedBlogs(ctx context.Context, usersIdusers int32) ([]*PendingDeactivatedBlogsRow, error) {
-	rows, err := q.db.QueryContext(ctx, pendingDeactivatedBlogs, usersIdusers)
+func (q *Queries) PendingDeactivatedBlogsForAdmin(ctx context.Context, usersIdusers int32) ([]*PendingDeactivatedBlogsForAdminRow, error) {
+	rows, err := q.db.QueryContext(ctx, pendingDeactivatedBlogsForAdmin, usersIdusers)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*PendingDeactivatedBlogsRow
+	var items []*PendingDeactivatedBlogsForAdminRow
 	for rows.Next() {
-		var i PendingDeactivatedBlogsRow
+		var i PendingDeactivatedBlogsForAdminRow
 		if err := rows.Scan(&i.Idblogs, &i.Blog); err != nil {
 			return nil, err
 		}
@@ -252,25 +252,25 @@ func (q *Queries) PendingDeactivatedBlogs(ctx context.Context, usersIdusers int3
 	return items, nil
 }
 
-const pendingDeactivatedComments = `-- name: PendingDeactivatedComments :many
+const pendingDeactivatedCommentsForAdmin = `-- name: PendingDeactivatedCommentsForAdmin :many
 SELECT idcomments, text FROM deactivated_comments
 WHERE users_idusers = ? AND restored_at IS NULL
 `
 
-type PendingDeactivatedCommentsRow struct {
+type PendingDeactivatedCommentsForAdminRow struct {
 	Idcomments int32
 	Text       sql.NullString
 }
 
-func (q *Queries) PendingDeactivatedComments(ctx context.Context, usersIdusers int32) ([]*PendingDeactivatedCommentsRow, error) {
-	rows, err := q.db.QueryContext(ctx, pendingDeactivatedComments, usersIdusers)
+func (q *Queries) PendingDeactivatedCommentsForAdmin(ctx context.Context, usersIdusers int32) ([]*PendingDeactivatedCommentsForAdminRow, error) {
+	rows, err := q.db.QueryContext(ctx, pendingDeactivatedCommentsForAdmin, usersIdusers)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*PendingDeactivatedCommentsRow
+	var items []*PendingDeactivatedCommentsForAdminRow
 	for rows.Next() {
-		var i PendingDeactivatedCommentsRow
+		var i PendingDeactivatedCommentsForAdminRow
 		if err := rows.Scan(&i.Idcomments, &i.Text); err != nil {
 			return nil, err
 		}
@@ -285,26 +285,26 @@ func (q *Queries) PendingDeactivatedComments(ctx context.Context, usersIdusers i
 	return items, nil
 }
 
-const pendingDeactivatedImageposts = `-- name: PendingDeactivatedImageposts :many
+const pendingDeactivatedImagepostsForAdmin = `-- name: PendingDeactivatedImagepostsForAdmin :many
 SELECT idimagepost, description, thumbnail, fullimage FROM deactivated_imageposts WHERE users_idusers = ? AND restored_at IS NULL
 `
 
-type PendingDeactivatedImagepostsRow struct {
+type PendingDeactivatedImagepostsForAdminRow struct {
 	Idimagepost int32
 	Description sql.NullString
 	Thumbnail   sql.NullString
 	Fullimage   sql.NullString
 }
 
-func (q *Queries) PendingDeactivatedImageposts(ctx context.Context, usersIdusers int32) ([]*PendingDeactivatedImagepostsRow, error) {
-	rows, err := q.db.QueryContext(ctx, pendingDeactivatedImageposts, usersIdusers)
+func (q *Queries) PendingDeactivatedImagepostsForAdmin(ctx context.Context, usersIdusers int32) ([]*PendingDeactivatedImagepostsForAdminRow, error) {
+	rows, err := q.db.QueryContext(ctx, pendingDeactivatedImagepostsForAdmin, usersIdusers)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*PendingDeactivatedImagepostsRow
+	var items []*PendingDeactivatedImagepostsForAdminRow
 	for rows.Next() {
-		var i PendingDeactivatedImagepostsRow
+		var i PendingDeactivatedImagepostsForAdminRow
 		if err := rows.Scan(
 			&i.Idimagepost,
 			&i.Description,
@@ -324,26 +324,26 @@ func (q *Queries) PendingDeactivatedImageposts(ctx context.Context, usersIdusers
 	return items, nil
 }
 
-const pendingDeactivatedLinks = `-- name: PendingDeactivatedLinks :many
+const pendingDeactivatedLinksForAdmin = `-- name: PendingDeactivatedLinksForAdmin :many
 SELECT idlinker, title, url, description FROM deactivated_linker WHERE users_idusers = ? AND restored_at IS NULL
 `
 
-type PendingDeactivatedLinksRow struct {
+type PendingDeactivatedLinksForAdminRow struct {
 	Idlinker    int32
 	Title       sql.NullString
 	Url         sql.NullString
 	Description sql.NullString
 }
 
-func (q *Queries) PendingDeactivatedLinks(ctx context.Context, usersIdusers int32) ([]*PendingDeactivatedLinksRow, error) {
-	rows, err := q.db.QueryContext(ctx, pendingDeactivatedLinks, usersIdusers)
+func (q *Queries) PendingDeactivatedLinksForAdmin(ctx context.Context, usersIdusers int32) ([]*PendingDeactivatedLinksForAdminRow, error) {
+	rows, err := q.db.QueryContext(ctx, pendingDeactivatedLinksForAdmin, usersIdusers)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*PendingDeactivatedLinksRow
+	var items []*PendingDeactivatedLinksForAdminRow
 	for rows.Next() {
-		var i PendingDeactivatedLinksRow
+		var i PendingDeactivatedLinksForAdminRow
 		if err := rows.Scan(
 			&i.Idlinker,
 			&i.Title,
@@ -363,12 +363,12 @@ func (q *Queries) PendingDeactivatedLinks(ctx context.Context, usersIdusers int3
 	return items, nil
 }
 
-const pendingDeactivatedWritings = `-- name: PendingDeactivatedWritings :many
+const pendingDeactivatedWritingsForAdmin = `-- name: PendingDeactivatedWritingsForAdmin :many
 SELECT idwriting, title, writing, abstract, private FROM deactivated_writings
 WHERE users_idusers = ? AND restored_at IS NULL
 `
 
-type PendingDeactivatedWritingsRow struct {
+type PendingDeactivatedWritingsForAdminRow struct {
 	Idwriting int32
 	Title     sql.NullString
 	Writing   sql.NullString
@@ -376,15 +376,15 @@ type PendingDeactivatedWritingsRow struct {
 	Private   sql.NullBool
 }
 
-func (q *Queries) PendingDeactivatedWritings(ctx context.Context, usersIdusers int32) ([]*PendingDeactivatedWritingsRow, error) {
-	rows, err := q.db.QueryContext(ctx, pendingDeactivatedWritings, usersIdusers)
+func (q *Queries) PendingDeactivatedWritingsForAdmin(ctx context.Context, usersIdusers int32) ([]*PendingDeactivatedWritingsForAdminRow, error) {
+	rows, err := q.db.QueryContext(ctx, pendingDeactivatedWritingsForAdmin, usersIdusers)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*PendingDeactivatedWritingsRow
+	var items []*PendingDeactivatedWritingsForAdminRow
 	for rows.Next() {
-		var i PendingDeactivatedWritingsRow
+		var i PendingDeactivatedWritingsForAdminRow
 		if err := rows.Scan(
 			&i.Idwriting,
 			&i.Title,
@@ -405,47 +405,47 @@ func (q *Queries) PendingDeactivatedWritings(ctx context.Context, usersIdusers i
 	return items, nil
 }
 
-const restoreBlog = `-- name: RestoreBlog :exec
+const restoreBlogForAdmin = `-- name: RestoreBlogForAdmin :exec
 UPDATE blogs SET blog = ?, deleted_at = NULL WHERE idblogs = ?
 `
 
-type RestoreBlogParams struct {
+type RestoreBlogForAdminParams struct {
 	Blog    sql.NullString
 	Idblogs int32
 }
 
-func (q *Queries) RestoreBlog(ctx context.Context, arg RestoreBlogParams) error {
-	_, err := q.db.ExecContext(ctx, restoreBlog, arg.Blog, arg.Idblogs)
+func (q *Queries) RestoreBlogForAdmin(ctx context.Context, arg RestoreBlogForAdminParams) error {
+	_, err := q.db.ExecContext(ctx, restoreBlogForAdmin, arg.Blog, arg.Idblogs)
 	return err
 }
 
-const restoreComment = `-- name: RestoreComment :exec
+const restoreCommentForAdmin = `-- name: RestoreCommentForAdmin :exec
 UPDATE comments SET text = ?, deleted_at = NULL WHERE idcomments = ?
 `
 
-type RestoreCommentParams struct {
+type RestoreCommentForAdminParams struct {
 	Text       sql.NullString
 	Idcomments int32
 }
 
-func (q *Queries) RestoreComment(ctx context.Context, arg RestoreCommentParams) error {
-	_, err := q.db.ExecContext(ctx, restoreComment, arg.Text, arg.Idcomments)
+func (q *Queries) RestoreCommentForAdmin(ctx context.Context, arg RestoreCommentForAdminParams) error {
+	_, err := q.db.ExecContext(ctx, restoreCommentForAdmin, arg.Text, arg.Idcomments)
 	return err
 }
 
-const restoreImagepost = `-- name: RestoreImagepost :exec
+const restoreImagepostForAdmin = `-- name: RestoreImagepostForAdmin :exec
 UPDATE imagepost SET description = ?, thumbnail = ?, fullimage = ?, deleted_at = NULL WHERE idimagepost = ?
 `
 
-type RestoreImagepostParams struct {
+type RestoreImagepostForAdminParams struct {
 	Description sql.NullString
 	Thumbnail   sql.NullString
 	Fullimage   sql.NullString
 	Idimagepost int32
 }
 
-func (q *Queries) RestoreImagepost(ctx context.Context, arg RestoreImagepostParams) error {
-	_, err := q.db.ExecContext(ctx, restoreImagepost,
+func (q *Queries) RestoreImagepostForAdmin(ctx context.Context, arg RestoreImagepostForAdminParams) error {
+	_, err := q.db.ExecContext(ctx, restoreImagepostForAdmin,
 		arg.Description,
 		arg.Thumbnail,
 		arg.Fullimage,
@@ -454,19 +454,19 @@ func (q *Queries) RestoreImagepost(ctx context.Context, arg RestoreImagepostPara
 	return err
 }
 
-const restoreLink = `-- name: RestoreLink :exec
+const restoreLinkForAdmin = `-- name: RestoreLinkForAdmin :exec
 UPDATE linker SET title = ?, url = ?, description = ?, deleted_at = NULL WHERE idlinker = ?
 `
 
-type RestoreLinkParams struct {
+type RestoreLinkForAdminParams struct {
 	Title       sql.NullString
 	Url         sql.NullString
 	Description sql.NullString
 	Idlinker    int32
 }
 
-func (q *Queries) RestoreLink(ctx context.Context, arg RestoreLinkParams) error {
-	_, err := q.db.ExecContext(ctx, restoreLink,
+func (q *Queries) RestoreLinkForAdmin(ctx context.Context, arg RestoreLinkForAdminParams) error {
+	_, err := q.db.ExecContext(ctx, restoreLinkForAdmin,
 		arg.Title,
 		arg.Url,
 		arg.Description,
@@ -475,22 +475,22 @@ func (q *Queries) RestoreLink(ctx context.Context, arg RestoreLinkParams) error 
 	return err
 }
 
-const restoreUser = `-- name: RestoreUser :exec
+const restoreUserForAdmin = `-- name: RestoreUserForAdmin :exec
 UPDATE users u JOIN deactivated_users d ON u.idusers = d.idusers
 SET u.email = d.email, u.passwd = d.passwd, u.passwd_algorithm = d.passwd_algorithm, u.username = d.username, u.deleted_at = NULL, d.restored_at = NOW()
 WHERE u.idusers = ? AND d.restored_at IS NULL
 `
 
-func (q *Queries) RestoreUser(ctx context.Context, idusers int32) error {
-	_, err := q.db.ExecContext(ctx, restoreUser, idusers)
+func (q *Queries) RestoreUserForAdmin(ctx context.Context, idusers int32) error {
+	_, err := q.db.ExecContext(ctx, restoreUserForAdmin, idusers)
 	return err
 }
 
-const restoreWriting = `-- name: RestoreWriting :exec
+const restoreWritingForAdmin = `-- name: RestoreWritingForAdmin :exec
 UPDATE writing SET title = ?, writing = ?, abstract = ?, private = ?, deleted_at = NULL WHERE idwriting = ?
 `
 
-type RestoreWritingParams struct {
+type RestoreWritingForAdminParams struct {
 	Title     sql.NullString
 	Writing   sql.NullString
 	Abstract  sql.NullString
@@ -498,8 +498,8 @@ type RestoreWritingParams struct {
 	Idwriting int32
 }
 
-func (q *Queries) RestoreWriting(ctx context.Context, arg RestoreWritingParams) error {
-	_, err := q.db.ExecContext(ctx, restoreWriting,
+func (q *Queries) RestoreWritingForAdmin(ctx context.Context, arg RestoreWritingForAdminParams) error {
+	_, err := q.db.ExecContext(ctx, restoreWritingForAdmin,
 		arg.Title,
 		arg.Writing,
 		arg.Abstract,
@@ -509,85 +509,85 @@ func (q *Queries) RestoreWriting(ctx context.Context, arg RestoreWritingParams) 
 	return err
 }
 
-const scrubBlog = `-- name: ScrubBlog :exec
+const scrubBlogForAdmin = `-- name: ScrubBlogForAdmin :exec
 UPDATE blogs SET blog = ?, deleted_at = NOW() WHERE idblogs = ?
 `
 
-type ScrubBlogParams struct {
+type ScrubBlogForAdminParams struct {
 	Blog    sql.NullString
 	Idblogs int32
 }
 
-func (q *Queries) ScrubBlog(ctx context.Context, arg ScrubBlogParams) error {
-	_, err := q.db.ExecContext(ctx, scrubBlog, arg.Blog, arg.Idblogs)
+func (q *Queries) ScrubBlogForAdmin(ctx context.Context, arg ScrubBlogForAdminParams) error {
+	_, err := q.db.ExecContext(ctx, scrubBlogForAdmin, arg.Blog, arg.Idblogs)
 	return err
 }
 
-const scrubComment = `-- name: ScrubComment :exec
+const scrubCommentForAdmin = `-- name: ScrubCommentForAdmin :exec
 UPDATE comments SET text = ?, deleted_at = NOW() WHERE idcomments = ?
 `
 
-type ScrubCommentParams struct {
+type ScrubCommentForAdminParams struct {
 	Text       sql.NullString
 	Idcomments int32
 }
 
-func (q *Queries) ScrubComment(ctx context.Context, arg ScrubCommentParams) error {
-	_, err := q.db.ExecContext(ctx, scrubComment, arg.Text, arg.Idcomments)
+func (q *Queries) ScrubCommentForAdmin(ctx context.Context, arg ScrubCommentForAdminParams) error {
+	_, err := q.db.ExecContext(ctx, scrubCommentForAdmin, arg.Text, arg.Idcomments)
 	return err
 }
 
-const scrubImagepost = `-- name: ScrubImagepost :exec
+const scrubImagepostForAdmin = `-- name: ScrubImagepostForAdmin :exec
 UPDATE imagepost SET description = '', thumbnail = '', fullimage = '', deleted_at = NOW() WHERE idimagepost = ?
 `
 
-func (q *Queries) ScrubImagepost(ctx context.Context, idimagepost int32) error {
-	_, err := q.db.ExecContext(ctx, scrubImagepost, idimagepost)
+func (q *Queries) ScrubImagepostForAdmin(ctx context.Context, idimagepost int32) error {
+	_, err := q.db.ExecContext(ctx, scrubImagepostForAdmin, idimagepost)
 	return err
 }
 
-const scrubLink = `-- name: ScrubLink :exec
+const scrubLinkForAdmin = `-- name: ScrubLinkForAdmin :exec
 UPDATE linker SET title = ?, url = '', description = '', deleted_at = NOW() WHERE idlinker = ?
 `
 
-type ScrubLinkParams struct {
+type ScrubLinkForAdminParams struct {
 	Title    sql.NullString
 	Idlinker int32
 }
 
-func (q *Queries) ScrubLink(ctx context.Context, arg ScrubLinkParams) error {
-	_, err := q.db.ExecContext(ctx, scrubLink, arg.Title, arg.Idlinker)
+func (q *Queries) ScrubLinkForAdmin(ctx context.Context, arg ScrubLinkForAdminParams) error {
+	_, err := q.db.ExecContext(ctx, scrubLinkForAdmin, arg.Title, arg.Idlinker)
 	return err
 }
 
-const scrubUser = `-- name: ScrubUser :exec
+const scrubUserForAdmin = `-- name: ScrubUserForAdmin :exec
 UPDATE users SET username = ?, email = '', passwd = '', passwd_algorithm = '', deleted_at = NOW()
 WHERE idusers = ?
 `
 
-type ScrubUserParams struct {
+type ScrubUserForAdminParams struct {
 	Username sql.NullString
 	Idusers  int32
 }
 
-func (q *Queries) ScrubUser(ctx context.Context, arg ScrubUserParams) error {
-	_, err := q.db.ExecContext(ctx, scrubUser, arg.Username, arg.Idusers)
+func (q *Queries) ScrubUserForAdmin(ctx context.Context, arg ScrubUserForAdminParams) error {
+	_, err := q.db.ExecContext(ctx, scrubUserForAdmin, arg.Username, arg.Idusers)
 	return err
 }
 
-const scrubWriting = `-- name: ScrubWriting :exec
+const scrubWritingForAdmin = `-- name: ScrubWritingForAdmin :exec
 UPDATE writing SET title = ?, writing = ?, abstract = ?, deleted_at = NOW() WHERE idwriting = ?
 `
 
-type ScrubWritingParams struct {
+type ScrubWritingForAdminParams struct {
 	Title     sql.NullString
 	Writing   sql.NullString
 	Abstract  sql.NullString
 	Idwriting int32
 }
 
-func (q *Queries) ScrubWriting(ctx context.Context, arg ScrubWritingParams) error {
-	_, err := q.db.ExecContext(ctx, scrubWriting,
+func (q *Queries) ScrubWritingForAdmin(ctx context.Context, arg ScrubWritingForAdminParams) error {
+	_, err := q.db.ExecContext(ctx, scrubWritingForAdmin,
 		arg.Title,
 		arg.Writing,
 		arg.Abstract,

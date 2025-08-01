@@ -17,7 +17,7 @@ func (d DLQ) Record(ctx context.Context, message string) error {
 	if d.Queries == nil {
 		return fmt.Errorf("no db")
 	}
-	return d.Queries.InsertDeadLetter(ctx, message)
+	return d.Queries.InsertDeadLetterSystem(ctx, message)
 }
 
 // Register registers the database provider.

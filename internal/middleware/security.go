@@ -47,7 +47,7 @@ func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ip := requestIP(r)
 		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-			bans, err := cd.Queries().ListActiveBans(r.Context())
+			bans, err := cd.Queries().ListActiveBansSystem(r.Context())
 			if err != nil && !errors.Is(err, sql.ErrNoRows) {
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 				return

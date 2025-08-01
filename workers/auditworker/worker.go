@@ -34,7 +34,7 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q *dbpkg.Queries) {
 			}
 			details := aud.AuditRecord(evt.Data)
 			data, _ := json.Marshal(evt.Data)
-			if err := q.InsertAuditLog(ctx, dbpkg.InsertAuditLogParams{
+			if err := q.InsertAuditLogSystem(ctx, dbpkg.InsertAuditLogSystemParams{
 				UsersIdusers: evt.UserID,
 				Action:       named.Name(),
 				Path:         evt.Path,

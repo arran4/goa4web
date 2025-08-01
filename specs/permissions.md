@@ -69,9 +69,12 @@ Permission actions describe groups of related operations. The main verbs are:
 - **approve** – mark content as reviewed or published
 - **moderate** – hide or otherwise flag inappropriate content
 - **search** – run a search query
+- **promote** – feature a news post as a site announcement
+- **demote** – remove a post from the announcements
 
 Sections may introduce extra actions but these form the base vocabulary used by
 the templates and permission checks.
+Announcements use these actions to control which news posts appear globally. Administrator pages call `AdminPromoteAnnouncement` and `AdminDemoteAnnouncement` while `GetActiveAnnouncementWithNewsForUser` retrieves the visible announcement.
 
 Each section may define additional actions, but these are the core verbs used by the system.
 
@@ -129,6 +132,7 @@ The migrations seed baseline rules for the `news` section:
 When a writer publishes a post they automatically receive an `edit` grant tied to that post, effectively granting them update rights for that item.
 
 Other content sections such as blogs and writings follow the same pattern: authors can post entries and receive item-scoped `edit` grants while administrators hold broader `edit` privileges.
+FAQ and blog listings also honour viewer language preferences and check grants in SQL. Queries such as `GetBlogEntriesForViewerDescending`, `GetBlogEntriesByAuthorForUserDescendingLanguages` and `GetFAQAnsweredQuestions` filter content based on `viewer_id` and permitted languages.
 
 ### SQL Query Filtering
 
@@ -248,6 +252,7 @@ loads roles for the current user using the `GetPermissionsByUserID` query from
 `internal/db/queries-permissions.sql`. Only users with the `administrator` role
 can reach these routes.
 
+Queries dealing with administration are now separated from viewer paths. Queries prefixed with `Admin` such as `AdminPromoteAnnouncement` operate only in admin handlers while regular pages call the corresponding `Get...ForUser` functions like `GetActiveAnnouncementWithNewsForUser`.
 Listing pages and RSS feeds still invoke `HasGrant` on each row for extra safety.
 
 The same lookup pattern covers every action. Whether a user wants to `post`,

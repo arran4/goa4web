@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"flag"
 	"fmt"
 
@@ -37,11 +38,12 @@ func (c *blogListCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
-	rows, err := queries.GetBlogEntriesForUserDescending(ctx, dbpkg.GetBlogEntriesForUserDescendingParams{
-		UsersIdusers:       int32(c.UserID),
-		LanguageIdlanguage: 0,
-		Limit:              int32(c.Limit),
-		Offset:             int32(c.Offset),
+	uid := int32(c.UserID)
+	rows, err := queries.GetBlogEntriesForViewerDescending(ctx, dbpkg.GetBlogEntriesForViewerDescendingParams{
+		ViewerID: uid,
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
+		Limit:    int32(c.Limit),
+		Offset:   int32(c.Offset),
 	})
 	if err != nil {
 		return fmt.Errorf("list blogs: %w", err)

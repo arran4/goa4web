@@ -349,27 +349,54 @@ func (q *Queries) GetBlogEntriesByIdsDescending(ctx context.Context, blogids []i
 	return items, nil
 }
 
-const getBlogEntriesForUserDescending = `-- name: GetBlogEntriesForUserDescending :many
+const getBlogEntriesForViewerDescending = `-- name: GetBlogEntriesForViewerDescending :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
        b.users_idusers = ? AS is_owner
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
-WHERE (b.language_idlanguage = ? OR ? = 0)
-AND (b.users_idusers = ? OR ? = 0)
+WHERE (
+    b.language_idlanguage = 0
+    OR b.language_idlanguage IS NULL
+    OR EXISTS (
+        SELECT 1 FROM user_language ul
+        WHERE ul.users_idusers = ?
+          AND ul.language_idlanguage = b.language_idlanguage
+    )
+    OR NOT EXISTS (
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+    )
+)
+AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section = 'blogs'
+      AND g.item = 'entry'
+      AND g.action = 'see'
+      AND g.active = 1
+      AND g.item_id = b.idblogs
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+)
 ORDER BY b.written DESC
 LIMIT ? OFFSET ?
 `
 
-type GetBlogEntriesForUserDescendingParams struct {
-	ViewerIdusers      int32
-	LanguageIdlanguage int32
-	UsersIdusers       int32
-	Limit              int32
-	Offset             int32
+type GetBlogEntriesForViewerDescendingParams struct {
+	ViewerID int32
+	UserID   sql.NullInt32
+	Limit    int32
+	Offset   int32
 }
 
-type GetBlogEntriesForUserDescendingRow struct {
+type GetBlogEntriesForViewerDescendingRow struct {
 	Idblogs            int32
 	ForumthreadID      sql.NullInt32
 	UsersIdusers       int32
@@ -381,13 +408,13 @@ type GetBlogEntriesForUserDescendingRow struct {
 	IsOwner            bool
 }
 
-func (q *Queries) GetBlogEntriesForUserDescending(ctx context.Context, arg GetBlogEntriesForUserDescendingParams) ([]*GetBlogEntriesForUserDescendingRow, error) {
-	rows, err := q.db.QueryContext(ctx, getBlogEntriesForUserDescending,
-		arg.ViewerIdusers,
-		arg.LanguageIdlanguage,
-		arg.LanguageIdlanguage,
-		arg.UsersIdusers,
-		arg.UsersIdusers,
+func (q *Queries) GetBlogEntriesForViewerDescending(ctx context.Context, arg GetBlogEntriesForViewerDescendingParams) ([]*GetBlogEntriesForViewerDescendingRow, error) {
+	rows, err := q.db.QueryContext(ctx, getBlogEntriesForViewerDescending,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.UserID,
 		arg.Limit,
 		arg.Offset,
 	)
@@ -395,9 +422,9 @@ func (q *Queries) GetBlogEntriesForUserDescending(ctx context.Context, arg GetBl
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetBlogEntriesForUserDescendingRow
+	var items []*GetBlogEntriesForViewerDescendingRow
 	for rows.Next() {
-		var i GetBlogEntriesForUserDescendingRow
+		var i GetBlogEntriesForViewerDescendingRow
 		if err := rows.Scan(
 			&i.Idblogs,
 			&i.ForumthreadID,

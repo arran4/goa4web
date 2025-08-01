@@ -30,7 +30,7 @@ func (RemoveQuestionTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
-	if err := queries.DeleteFAQ(r.Context(), int32(faq)); err != nil {
+	if err := queries.AdminDeleteFAQ(r.Context(), int32(faq)); err != nil {
 		return fmt.Errorf("delete faq fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 

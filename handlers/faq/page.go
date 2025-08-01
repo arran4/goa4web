@@ -3,6 +3,7 @@ package faq
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -20,7 +21,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type CategoryFAQs struct {
-		Category *db.GetAllAnsweredFAQWithFAQCategoriesRow
+               Category *db.GetAllAnsweredFAQWithFAQCategoriesForUserRow
 		FAQs     []*FAQ
 	}
 
@@ -34,9 +35,18 @@ func Page(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
+	session, _ := core.GetSession(r)
+	var uid int32
+	if session != nil {
+		uid, _ = session.Values["UID"].(int32)
+	}
+
 	var currentCategoryFAQs CategoryFAQs
 
-	faqRows, err := queries.GetAllAnsweredFAQWithFAQCategories(r.Context())
+	faqRows, err := queries.GetAllAnsweredFAQWithFAQCategoriesForUser(r.Context(), db.GetAllAnsweredFAQWithFAQCategoriesForUserParams{
+		ViewerID: uid,
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

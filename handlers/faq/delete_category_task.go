@@ -29,7 +29,7 @@ func (DeleteCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
-	if err := queries.DeleteFAQCategory(r.Context(), int32(cid)); err != nil {
+	if err := queries.AdminDeleteFAQCategory(r.Context(), int32(cid)); err != nil {
 		return fmt.Errorf("delete category fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 

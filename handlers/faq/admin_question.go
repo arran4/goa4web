@@ -27,7 +27,7 @@ func AdminQuestionsPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
-	catrows, err := queries.GetAllFAQCategories(r.Context())
+	catrows, err := queries.AdminGetAllFAQCategories(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -40,7 +40,7 @@ func AdminQuestionsPage(w http.ResponseWriter, r *http.Request) {
 
 	cd.PageTitle = "FAQ Questions"
 
-	unansweredRows, err := queries.GetFAQUnansweredQuestions(r.Context())
+	unansweredRows, err := queries.AdminGetFAQUnansweredQuestions(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -51,7 +51,7 @@ func AdminQuestionsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.UnansweredRows = unansweredRows
 
-	answeredRows, err := queries.GetFAQAnsweredQuestions(r.Context())
+	answeredRows, err := queries.AdminGetFAQAnsweredQuestions(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -62,7 +62,7 @@ func AdminQuestionsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.AnsweredRows = answeredRows
 
-	dismissedRows, err := queries.GetFAQDismissedQuestions(r.Context())
+	dismissedRows, err := queries.AdminGetFAQDismissedQuestions(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

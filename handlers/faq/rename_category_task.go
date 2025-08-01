@@ -32,7 +32,7 @@ func (RenameCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
-	if err := queries.RenameFAQCategory(r.Context(), db.RenameFAQCategoryParams{
+       if err := queries.AdminRenameFAQCategory(r.Context(), db.AdminRenameFAQCategoryParams{
 		Name: sql.NullString{
 			String: text,
 			Valid:  true,

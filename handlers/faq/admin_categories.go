@@ -14,7 +14,7 @@ import (
 func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
-		Rows []*db.GetFAQCategoriesWithQuestionCountRow
+               Rows []*db.AdminGetFAQCategoriesWithQuestionCountRow
 	}
 
 	data := Data{
@@ -25,7 +25,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
-	rows, err := queries.GetFAQCategoriesWithQuestionCount(r.Context())
+	rows, err := queries.AdminGetFAQCategoriesWithQuestionCount(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

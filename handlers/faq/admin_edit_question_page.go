@@ -27,7 +27,7 @@ func AdminEditQuestionPage(w http.ResponseWriter, r *http.Request) {
 	var faq *db.Faq
 	if id != 0 {
 		var err error
-		faq, err = queries.GetFAQByID(r.Context(), int32(id))
+		faq, err = queries.AdminGetFAQByID(r.Context(), int32(id))
 		if err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):
@@ -41,7 +41,7 @@ func AdminEditQuestionPage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		faq = &db.Faq{Idfaq: 0}
 	}
-	cats, _ := queries.GetAllFAQCategories(r.Context())
+	cats, _ := queries.AdminGetAllFAQCategories(r.Context())
 	type Data struct {
 		*common.CoreData
 		Faq        *db.Faq

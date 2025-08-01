@@ -26,7 +26,7 @@ func (CreateCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 	text := r.PostFormValue("cname")
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
-	if err := queries.CreateFAQCategory(r.Context(), sql.NullString{
+	if err := queries.AdminCreateFAQCategory(r.Context(), sql.NullString{
 		String: text,
 		Valid:  true,
 	}); err != nil {

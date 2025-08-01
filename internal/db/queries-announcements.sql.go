@@ -20,50 +20,6 @@ func (q *Queries) AdminDemoteAnnouncement(ctx context.Context, id int32) error {
 	return err
 }
 
-const adminListAnnouncementsWithNews = `-- name: AdminListAnnouncementsWithNews :many
-SELECT a.id, a.site_news_id, a.active, a.created_at, n.news
-FROM site_announcements a
-JOIN site_news n ON n.idsiteNews = a.site_news_id
-ORDER BY a.created_at DESC
-`
-
-type AdminListAnnouncementsWithNewsRow struct {
-	ID         int32
-	SiteNewsID int32
-	Active     bool
-	CreatedAt  time.Time
-	News       sql.NullString
-}
-
-func (q *Queries) AdminListAnnouncementsWithNews(ctx context.Context) ([]*AdminListAnnouncementsWithNewsRow, error) {
-	rows, err := q.db.QueryContext(ctx, adminListAnnouncementsWithNews)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*AdminListAnnouncementsWithNewsRow
-	for rows.Next() {
-		var i AdminListAnnouncementsWithNewsRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.SiteNewsID,
-			&i.Active,
-			&i.CreatedAt,
-			&i.News,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const adminPromoteAnnouncement = `-- name: AdminPromoteAnnouncement :exec
 INSERT INTO site_announcements (site_news_id)
 VALUES (?)
@@ -154,6 +110,50 @@ func (q *Queries) GetLatestAnnouncementByNewsID(ctx context.Context, siteNewsID 
 		&i.CreatedAt,
 	)
 	return &i, err
+}
+
+const listAnnouncementsWithNewsForAdmin = `-- name: ListAnnouncementsWithNewsForAdmin :many
+SELECT a.id, a.site_news_id, a.active, a.created_at, n.news
+FROM site_announcements a
+JOIN site_news n ON n.idsiteNews = a.site_news_id
+ORDER BY a.created_at DESC
+`
+
+type ListAnnouncementsWithNewsForAdminRow struct {
+	ID         int32
+	SiteNewsID int32
+	Active     bool
+	CreatedAt  time.Time
+	News       sql.NullString
+}
+
+func (q *Queries) ListAnnouncementsWithNewsForAdmin(ctx context.Context) ([]*ListAnnouncementsWithNewsForAdminRow, error) {
+	rows, err := q.db.QueryContext(ctx, listAnnouncementsWithNewsForAdmin)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListAnnouncementsWithNewsForAdminRow
+	for rows.Next() {
+		var i ListAnnouncementsWithNewsForAdminRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.SiteNewsID,
+			&i.Active,
+			&i.CreatedAt,
+			&i.News,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const setAnnouncementActive = `-- name: SetAnnouncementActive :exec

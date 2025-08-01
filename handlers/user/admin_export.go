@@ -108,7 +108,7 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 		ws = append(ws, writingExport{wrow, catMap[wrow.WritingCategoryID]})
 	}
 
-	blogs, err := queries.GetAllBlogEntriesByUser(r.Context(), int32(uid))
+	blogs, err := queries.GetAllBlogEntriesByUserForAdmin(r.Context(), int32(uid))
 	if err != nil {
 		log.Printf("fetch blogs: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -120,7 +120,7 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	comments, err := queries.GetAllCommentsByUser(r.Context(), int32(uid))
+	comments, err := queries.AdminGetAllCommentsByUser(r.Context(), int32(uid))
 	if err != nil {
 		log.Printf("fetch comments: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

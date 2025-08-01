@@ -19,24 +19,6 @@ func (q *Queries) CancelBannedIp(ctx context.Context, ipNet string) error {
 	return err
 }
 
-const getBannedIpByAddress = `-- name: GetBannedIpByAddress :one
-SELECT id, ip_net, reason, created_at, expires_at, canceled_at FROM banned_ips WHERE ip_net = ?
-`
-
-func (q *Queries) GetBannedIpByAddress(ctx context.Context, ipNet string) (*BannedIp, error) {
-	row := q.db.QueryRowContext(ctx, getBannedIpByAddress, ipNet)
-	var i BannedIp
-	err := row.Scan(
-		&i.ID,
-		&i.IpNet,
-		&i.Reason,
-		&i.CreatedAt,
-		&i.ExpiresAt,
-		&i.CanceledAt,
-	)
-	return &i, err
-}
-
 const insertBannedIp = `-- name: InsertBannedIp :exec
 INSERT INTO banned_ips (ip_net, reason, expires_at)
 VALUES (?, ?, ?)

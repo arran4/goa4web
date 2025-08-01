@@ -65,7 +65,7 @@ func (c *userDeactivateCmd) Run() error {
 		tx.Rollback()
 		return fmt.Errorf("scrub user: %w", err)
 	}
-	comments, err := qtx.GetAllCommentsByUser(ctx, u.Idusers)
+	comments, err := qtx.AdminGetAllCommentsByUser(ctx, u.Idusers)
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("list comments: %w", err)
@@ -123,7 +123,7 @@ func (c *userDeactivateCmd) Run() error {
 			return fmt.Errorf("scrub writing: %w", err)
 		}
 	}
-	blogs, err := qtx.GetAllBlogEntriesByUser(ctx, u.Idusers)
+	blogs, err := qtx.GetAllBlogEntriesByUserForAdmin(ctx, u.Idusers)
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("list blogs: %w", err)

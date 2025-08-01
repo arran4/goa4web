@@ -1,11 +1,33 @@
 -- name: UpdateBlogEntry :exec
 UPDATE blogs
 SET language_idlanguage = ?, blog = ?
-WHERE idblogs = ?;
+WHERE idblogs = ?
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section = 'blogs'
+        AND g.item = 'entry'
+        AND g.action = 'post'
+        AND g.active = 1
+        AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (
+            SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+        ))
+  );
 
 -- name: CreateBlogEntry :execlastid
 INSERT INTO blogs (users_idusers, language_idlanguage, blog, written)
-VALUES (?, ?, ?, CURRENT_TIMESTAMP);
+SELECT sqlc.arg(users_idusers), sqlc.arg(language_idlanguage), sqlc.arg(blog), CURRENT_TIMESTAMP
+WHERE EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section = 'blogs'
+      AND g.item = 'entry'
+      AND g.action = 'post'
+      AND g.active = 1
+      AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (
+          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+      ))
+);
 
 -- name: AssignThreadIdToBlogEntry :exec
 UPDATE blogs

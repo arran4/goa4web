@@ -29,14 +29,57 @@ func (q *Queries) AssignThreadIdToBlogEntry(ctx context.Context, arg AssignThrea
 }
 
 const blogsSearchFirst = `-- name: BlogsSearchFirst :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT DISTINCT cs.blog_id
 FROM blogs_search cs
-LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
-WHERE swl.word=?
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearchwordlist
+JOIN blogs b ON b.idblogs = cs.blog_id
+WHERE swl.word = ?
+  AND (
+      b.language_idlanguage = 0
+      OR b.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = b.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section = 'blogs'
+        AND g.item = 'entry'
+        AND g.action = 'see'
+        AND g.active = 1
+        AND g.item_id = b.idblogs
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
 `
 
-func (q *Queries) BlogsSearchFirst(ctx context.Context, word sql.NullString) ([]int32, error) {
-	rows, err := q.db.QueryContext(ctx, blogsSearchFirst, word)
+type BlogsSearchFirstParams struct {
+	ViewerID int32
+	Word     sql.NullString
+	UserID   sql.NullInt32
+}
+
+func (q *Queries) BlogsSearchFirst(ctx context.Context, arg BlogsSearchFirstParams) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx, blogsSearchFirst,
+		arg.ViewerID,
+		arg.Word,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.UserID,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -59,21 +102,55 @@ func (q *Queries) BlogsSearchFirst(ctx context.Context, word sql.NullString) ([]
 }
 
 const blogsSearchNext = `-- name: BlogsSearchNext :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT DISTINCT cs.blog_id
 FROM blogs_search cs
-LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
-WHERE swl.word=?
-AND cs.blog_id IN (/*SLICE:ids*/?)
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearchwordlist
+JOIN blogs b ON b.idblogs = cs.blog_id
+WHERE swl.word = ?
+  AND cs.blog_id IN (/*SLICE:ids*/?)
+  AND (
+      b.language_idlanguage = 0
+      OR b.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = b.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section = 'blogs'
+        AND g.item = 'entry'
+        AND g.action = 'see'
+        AND g.active = 1
+        AND g.item_id = b.idblogs
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
 `
 
 type BlogsSearchNextParams struct {
-	Word sql.NullString
-	Ids  []int32
+	ViewerID int32
+	Word     sql.NullString
+	Ids      []int32
+	UserID   sql.NullInt32
 }
 
 func (q *Queries) BlogsSearchNext(ctx context.Context, arg BlogsSearchNextParams) ([]int32, error) {
 	query := blogsSearchNext
 	var queryParams []interface{}
+	queryParams = append(queryParams, arg.ViewerID)
 	queryParams = append(queryParams, arg.Word)
 	if len(arg.Ids) > 0 {
 		for _, v := range arg.Ids {
@@ -83,6 +160,9 @@ func (q *Queries) BlogsSearchNext(ctx context.Context, arg BlogsSearchNextParams
 	} else {
 		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
 	}
+	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.UserID)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
 		return nil, err

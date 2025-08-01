@@ -75,6 +75,8 @@ func (SearchBlogsTask) Action(w http.ResponseWriter, r *http.Request) any {
 }
 
 func BlogSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid int32) ([]*db.Blog, bool, bool, error) {
+	viewerID := uid
+	userID := uid
 	searchWords := searchutil.BreakupTextToWords(r.PostFormValue("searchwords"))
 	var blogIds []int32
 
@@ -114,7 +116,11 @@ func BlogSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid
 		}
 	}
 
-	rows, err := queries.GetBlogEntriesByIdsDescending(r.Context(), blogIds)
+	rows, err := queries.GetBlogEntriesByIdsDescendingForUser(r.Context(), db.GetBlogEntriesByIdsDescendingForUserParams{
+		ViewerID: viewerID,
+		UserID:   sql.NullInt32{Int32: userID, Valid: userID != 0},
+		Blogids:  blogIds,
+	})
 	if err != nil {
 		log.Printf("getBlogEntriesByIdsDescending Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

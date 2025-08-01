@@ -223,7 +223,7 @@ func (q *Queries) CreateBlogEntry(ctx context.Context, arg CreateBlogEntryParams
 	return result.LastInsertId()
 }
 
-const getAllBlogEntriesByUser = `-- name: GetAllBlogEntriesByUser :many
+const getAllBlogEntriesByUserForAdmin = `-- name: GetAllBlogEntriesByUserForAdmin :many
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0)
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
@@ -232,7 +232,7 @@ WHERE b.users_idusers = ?
 ORDER BY b.written DESC
 `
 
-type GetAllBlogEntriesByUserRow struct {
+type GetAllBlogEntriesByUserForAdminRow struct {
 	Idblogs            int32
 	ForumthreadID      sql.NullInt32
 	UsersIdusers       int32
@@ -243,15 +243,15 @@ type GetAllBlogEntriesByUserRow struct {
 	Comments           int32
 }
 
-func (q *Queries) GetAllBlogEntriesByUser(ctx context.Context, usersIdusers int32) ([]*GetAllBlogEntriesByUserRow, error) {
-	rows, err := q.db.QueryContext(ctx, getAllBlogEntriesByUser, usersIdusers)
+func (q *Queries) GetAllBlogEntriesByUserForAdmin(ctx context.Context, usersIdusers int32) ([]*GetAllBlogEntriesByUserForAdminRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllBlogEntriesByUserForAdmin, usersIdusers)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetAllBlogEntriesByUserRow
+	var items []*GetAllBlogEntriesByUserForAdminRow
 	for rows.Next() {
-		var i GetAllBlogEntriesByUserRow
+		var i GetAllBlogEntriesByUserForAdminRow
 		if err := rows.Scan(
 			&i.Idblogs,
 			&i.ForumthreadID,

@@ -318,10 +318,10 @@ GROUP BY u.idusers
 ORDER BY u.username
 LIMIT ? OFFSET ?;
 
--- name: SetBlogLastIndexSystem :exec
+-- name: SystemSetBlogLastIndex :exec
 UPDATE blogs SET last_index = NOW() WHERE idblogs = ?;
 
 
--- name: GetAllBlogsForIndexSystem :many
+-- name: SystemGetAllBlogsForIndex :many
 SELECT idblogs, blog FROM blogs WHERE deleted_at IS NULL;
 

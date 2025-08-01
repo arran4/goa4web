@@ -1,5 +1,13 @@
 {{ template "head" $ }}
 <h2>Role {{ .Role.Name }} (ID {{ .Role.ID }})</h2>
+<table border="1">
+    <tr><th>Can Login</th><th>Is Admin</th><th>Public Profiles</th></tr>
+    <tr>
+        <td>{{ if .Role.CanLogin }}yes{{ else }}no{{ end }}</td>
+        <td>{{ if .Role.IsAdmin }}yes{{ else }}no{{ end }}</td>
+        <td>{{ if .Role.PublicProfileAllowedAt.Valid }}enabled{{ else }}disabled{{ end }}</td>
+    </tr>
+</table>
 <h3>Users</h3>
 <ul>
     {{- if .Users }}

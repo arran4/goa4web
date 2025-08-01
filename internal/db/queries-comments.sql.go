@@ -11,6 +11,121 @@ import (
 	"strings"
 )
 
+const adminGetAllCommentsByUser = `-- name: AdminGetAllCommentsByUser :many
+SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, c.last_index, th.forumtopic_idforumtopic
+FROM comments c
+LEFT JOIN forumthread th ON c.forumthread_id = th.idforumthread
+WHERE c.users_idusers = ?
+ORDER BY c.written
+`
+
+type AdminGetAllCommentsByUserRow struct {
+	Idcomments             int32
+	ForumthreadID          int32
+	UsersIdusers           int32
+	LanguageIdlanguage     int32
+	Written                sql.NullTime
+	Text                   sql.NullString
+	DeletedAt              sql.NullTime
+	LastIndex              sql.NullTime
+	ForumtopicIdforumtopic sql.NullInt32
+}
+
+func (q *Queries) AdminGetAllCommentsByUser(ctx context.Context, usersIdusers int32) ([]*AdminGetAllCommentsByUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminGetAllCommentsByUser, usersIdusers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminGetAllCommentsByUserRow
+	for rows.Next() {
+		var i AdminGetAllCommentsByUserRow
+		if err := rows.Scan(
+			&i.Idcomments,
+			&i.ForumthreadID,
+			&i.UsersIdusers,
+			&i.LanguageIdlanguage,
+			&i.Written,
+			&i.Text,
+			&i.DeletedAt,
+			&i.LastIndex,
+			&i.ForumtopicIdforumtopic,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminListAllCommentsWithThreadInfo = `-- name: AdminListAllCommentsWithThreadInfo :many
+SELECT c.idcomments, c.written, c.text, c.deleted_at,
+       th.idforumthread, t.idforumtopic, t.title AS forumtopic_title,
+       u.idusers, u.username AS posterusername
+FROM comments c
+LEFT JOIN forumthread th ON c.forumthread_id = th.idforumthread
+LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
+LEFT JOIN users u ON u.idusers = c.users_idusers
+ORDER BY c.written DESC
+LIMIT ? OFFSET ?
+`
+
+type AdminListAllCommentsWithThreadInfoParams struct {
+	Limit  int32
+	Offset int32
+}
+
+type AdminListAllCommentsWithThreadInfoRow struct {
+	Idcomments      int32
+	Written         sql.NullTime
+	Text            sql.NullString
+	DeletedAt       sql.NullTime
+	Idforumthread   sql.NullInt32
+	Idforumtopic    sql.NullInt32
+	ForumtopicTitle sql.NullString
+	Idusers         sql.NullInt32
+	Posterusername  sql.NullString
+}
+
+func (q *Queries) AdminListAllCommentsWithThreadInfo(ctx context.Context, arg AdminListAllCommentsWithThreadInfoParams) ([]*AdminListAllCommentsWithThreadInfoRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListAllCommentsWithThreadInfo, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListAllCommentsWithThreadInfoRow
+	for rows.Next() {
+		var i AdminListAllCommentsWithThreadInfoRow
+		if err := rows.Scan(
+			&i.Idcomments,
+			&i.Written,
+			&i.Text,
+			&i.DeletedAt,
+			&i.Idforumthread,
+			&i.Idforumtopic,
+			&i.ForumtopicTitle,
+			&i.Idusers,
+			&i.Posterusername,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const createComment = `-- name: CreateComment :execlastid
 INSERT INTO comments (language_idlanguage, users_idusers, forumthread_id, text, written)
 VALUES (?, ?, ?, ?, NOW() )
@@ -34,59 +149,6 @@ func (q *Queries) CreateComment(ctx context.Context, arg CreateCommentParams) (i
 		return 0, err
 	}
 	return result.LastInsertId()
-}
-
-const getAllCommentsByUser = `-- name: GetAllCommentsByUser :many
-SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, c.last_index, th.forumtopic_idforumtopic
-FROM comments c
-LEFT JOIN forumthread th ON c.forumthread_id = th.idforumthread
-WHERE c.users_idusers = ?
-ORDER BY c.written
-`
-
-type GetAllCommentsByUserRow struct {
-	Idcomments             int32
-	ForumthreadID          int32
-	UsersIdusers           int32
-	LanguageIdlanguage     int32
-	Written                sql.NullTime
-	Text                   sql.NullString
-	DeletedAt              sql.NullTime
-	LastIndex              sql.NullTime
-	ForumtopicIdforumtopic sql.NullInt32
-}
-
-func (q *Queries) GetAllCommentsByUser(ctx context.Context, usersIdusers int32) ([]*GetAllCommentsByUserRow, error) {
-	rows, err := q.db.QueryContext(ctx, getAllCommentsByUser, usersIdusers)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*GetAllCommentsByUserRow
-	for rows.Next() {
-		var i GetAllCommentsByUserRow
-		if err := rows.Scan(
-			&i.Idcomments,
-			&i.ForumthreadID,
-			&i.UsersIdusers,
-			&i.LanguageIdlanguage,
-			&i.Written,
-			&i.Text,
-			&i.DeletedAt,
-			&i.LastIndex,
-			&i.ForumtopicIdforumtopic,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const getAllCommentsForIndex = `-- name: GetAllCommentsForIndex :many
@@ -439,68 +501,6 @@ func (q *Queries) GetCommentsByThreadIdForUser(ctx context.Context, arg GetComme
 			&i.LastIndex,
 			&i.Posterusername,
 			&i.IsOwner,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listAllCommentsWithThreadInfo = `-- name: ListAllCommentsWithThreadInfo :many
-SELECT c.idcomments, c.written, c.text, c.deleted_at,
-       th.idforumthread, t.idforumtopic, t.title AS forumtopic_title,
-       u.idusers, u.username AS posterusername
-FROM comments c
-LEFT JOIN forumthread th ON c.forumthread_id = th.idforumthread
-LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
-LEFT JOIN users u ON u.idusers = c.users_idusers
-ORDER BY c.written DESC
-LIMIT ? OFFSET ?
-`
-
-type ListAllCommentsWithThreadInfoParams struct {
-	Limit  int32
-	Offset int32
-}
-
-type ListAllCommentsWithThreadInfoRow struct {
-	Idcomments      int32
-	Written         sql.NullTime
-	Text            sql.NullString
-	DeletedAt       sql.NullTime
-	Idforumthread   sql.NullInt32
-	Idforumtopic    sql.NullInt32
-	ForumtopicTitle sql.NullString
-	Idusers         sql.NullInt32
-	Posterusername  sql.NullString
-}
-
-func (q *Queries) ListAllCommentsWithThreadInfo(ctx context.Context, arg ListAllCommentsWithThreadInfoParams) ([]*ListAllCommentsWithThreadInfoRow, error) {
-	rows, err := q.db.QueryContext(ctx, listAllCommentsWithThreadInfo, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*ListAllCommentsWithThreadInfoRow
-	for rows.Next() {
-		var i ListAllCommentsWithThreadInfoRow
-		if err := rows.Scan(
-			&i.Idcomments,
-			&i.Written,
-			&i.Text,
-			&i.DeletedAt,
-			&i.Idforumthread,
-			&i.Idforumtopic,
-			&i.ForumtopicTitle,
-			&i.Idusers,
-			&i.Posterusername,
 		); err != nil {
 			return nil, err
 		}

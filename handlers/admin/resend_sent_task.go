@@ -31,7 +31,7 @@ func (ResendSentEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	for _, idStr := range r.Form["id"] {
 		id, _ := strconv.Atoi(idStr)
-		e, err := queries.GetPendingEmailByID(r.Context(), int32(id))
+		e, err := queries.AdminGetPendingEmailByID(r.Context(), int32(id))
 		if err != nil {
 			return fmt.Errorf("get email fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}

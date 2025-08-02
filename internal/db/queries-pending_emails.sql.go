@@ -11,13 +11,240 @@ import (
 	"time"
 )
 
-const deletePendingEmail = `-- name: DeletePendingEmail :exec
+const adminDeletePendingEmail = `-- name: AdminDeletePendingEmail :exec
 DELETE FROM pending_emails WHERE id = ?
 `
 
-func (q *Queries) DeletePendingEmail(ctx context.Context, id int32) error {
-	_, err := q.db.ExecContext(ctx, deletePendingEmail, id)
+// admin task
+func (q *Queries) AdminDeletePendingEmail(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, adminDeletePendingEmail, id)
 	return err
+}
+
+const adminGetPendingEmailByID = `-- name: AdminGetPendingEmailByID :one
+SELECT id, to_user_id, body, error_count, direct_email
+FROM pending_emails
+WHERE id = ?
+`
+
+type AdminGetPendingEmailByIDRow struct {
+	ID          int32
+	ToUserID    sql.NullInt32
+	Body        string
+	ErrorCount  int32
+	DirectEmail bool
+}
+
+// admin task
+func (q *Queries) AdminGetPendingEmailByID(ctx context.Context, id int32) (*AdminGetPendingEmailByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, adminGetPendingEmailByID, id)
+	var i AdminGetPendingEmailByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.ToUserID,
+		&i.Body,
+		&i.ErrorCount,
+		&i.DirectEmail,
+	)
+	return &i, err
+}
+
+const adminListFailedEmails = `-- name: AdminListFailedEmails :many
+SELECT pe.id, pe.to_user_id, pe.body, pe.error_count, pe.created_at, pe.direct_email
+FROM pending_emails pe
+LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers
+LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers
+LEFT JOIN roles r ON ur.role_id = r.id
+WHERE pe.sent_at IS NULL AND pe.error_count > 0
+  AND (? IS NULL OR p.language_idlanguage = ?)
+  AND (? IS NULL OR r.name = ?)
+ORDER BY pe.id
+LIMIT ? OFFSET ?
+`
+
+type AdminListFailedEmailsParams struct {
+	LanguageID int32
+	RoleName   string
+	Limit      int32
+	Offset     int32
+}
+
+type AdminListFailedEmailsRow struct {
+	ID          int32
+	ToUserID    sql.NullInt32
+	Body        string
+	ErrorCount  int32
+	CreatedAt   time.Time
+	DirectEmail bool
+}
+
+// admin task
+func (q *Queries) AdminListFailedEmails(ctx context.Context, arg AdminListFailedEmailsParams) ([]*AdminListFailedEmailsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListFailedEmails,
+		arg.LanguageID,
+		arg.LanguageID,
+		arg.RoleName,
+		arg.RoleName,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListFailedEmailsRow
+	for rows.Next() {
+		var i AdminListFailedEmailsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ToUserID,
+			&i.Body,
+			&i.ErrorCount,
+			&i.CreatedAt,
+			&i.DirectEmail,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminListSentEmails = `-- name: AdminListSentEmails :many
+SELECT pe.id, pe.to_user_id, pe.body, pe.error_count, pe.created_at, pe.sent_at, pe.direct_email
+FROM pending_emails pe
+LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers
+LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers
+LEFT JOIN roles r ON ur.role_id = r.id
+WHERE pe.sent_at IS NOT NULL
+  AND (? IS NULL OR p.language_idlanguage = ?)
+  AND (? IS NULL OR r.name = ?)
+ORDER BY pe.sent_at DESC
+LIMIT ? OFFSET ?
+`
+
+type AdminListSentEmailsParams struct {
+	LanguageID int32
+	RoleName   string
+	Limit      int32
+	Offset     int32
+}
+
+type AdminListSentEmailsRow struct {
+	ID          int32
+	ToUserID    sql.NullInt32
+	Body        string
+	ErrorCount  int32
+	CreatedAt   time.Time
+	SentAt      sql.NullTime
+	DirectEmail bool
+}
+
+// admin task
+func (q *Queries) AdminListSentEmails(ctx context.Context, arg AdminListSentEmailsParams) ([]*AdminListSentEmailsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListSentEmails,
+		arg.LanguageID,
+		arg.LanguageID,
+		arg.RoleName,
+		arg.RoleName,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListSentEmailsRow
+	for rows.Next() {
+		var i AdminListSentEmailsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ToUserID,
+			&i.Body,
+			&i.ErrorCount,
+			&i.CreatedAt,
+			&i.SentAt,
+			&i.DirectEmail,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminListUnsentPendingEmails = `-- name: AdminListUnsentPendingEmails :many
+SELECT pe.id, pe.to_user_id, pe.body, pe.error_count, pe.created_at, pe.direct_email
+FROM pending_emails pe
+LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers
+LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers
+LEFT JOIN roles r ON ur.role_id = r.id
+WHERE pe.sent_at IS NULL
+  AND (? IS NULL OR p.language_idlanguage = ?)
+  AND (? IS NULL OR r.name = ?)
+ORDER BY pe.id
+`
+
+type AdminListUnsentPendingEmailsParams struct {
+	LanguageID int32
+	RoleName   string
+}
+
+type AdminListUnsentPendingEmailsRow struct {
+	ID          int32
+	ToUserID    sql.NullInt32
+	Body        string
+	ErrorCount  int32
+	CreatedAt   time.Time
+	DirectEmail bool
+}
+
+// admin task
+func (q *Queries) AdminListUnsentPendingEmails(ctx context.Context, arg AdminListUnsentPendingEmailsParams) ([]*AdminListUnsentPendingEmailsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListUnsentPendingEmails,
+		arg.LanguageID,
+		arg.LanguageID,
+		arg.RoleName,
+		arg.RoleName,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListUnsentPendingEmailsRow
+	for rows.Next() {
+		var i AdminListUnsentPendingEmailsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ToUserID,
+			&i.Body,
+			&i.ErrorCount,
+			&i.CreatedAt,
+			&i.DirectEmail,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const fetchPendingEmails = `-- name: FetchPendingEmails :many
@@ -65,33 +292,6 @@ func (q *Queries) FetchPendingEmails(ctx context.Context, limit int32) ([]*Fetch
 	return items, nil
 }
 
-const getPendingEmailByID = `-- name: GetPendingEmailByID :one
-SELECT id, to_user_id, body, error_count, direct_email
-FROM pending_emails
-WHERE id = ?
-`
-
-type GetPendingEmailByIDRow struct {
-	ID          int32
-	ToUserID    sql.NullInt32
-	Body        string
-	ErrorCount  int32
-	DirectEmail bool
-}
-
-func (q *Queries) GetPendingEmailByID(ctx context.Context, id int32) (*GetPendingEmailByIDRow, error) {
-	row := q.db.QueryRowContext(ctx, getPendingEmailByID, id)
-	var i GetPendingEmailByIDRow
-	err := row.Scan(
-		&i.ID,
-		&i.ToUserID,
-		&i.Body,
-		&i.ErrorCount,
-		&i.DirectEmail,
-	)
-	return &i, err
-}
-
 const getPendingEmailErrorCount = `-- name: GetPendingEmailErrorCount :one
 SELECT error_count FROM pending_emails WHERE id = ?
 `
@@ -126,158 +326,6 @@ type InsertPendingEmailParams struct {
 func (q *Queries) InsertPendingEmail(ctx context.Context, arg InsertPendingEmailParams) error {
 	_, err := q.db.ExecContext(ctx, insertPendingEmail, arg.ToUserID, arg.Body, arg.DirectEmail)
 	return err
-}
-
-const listFailedEmails = `-- name: ListFailedEmails :many
-SELECT id, to_user_id, body, error_count, created_at, direct_email
-FROM pending_emails
-WHERE sent_at IS NULL AND error_count > 0
-ORDER BY id
-LIMIT ? OFFSET ?
-`
-
-type ListFailedEmailsParams struct {
-	Limit  int32
-	Offset int32
-}
-
-type ListFailedEmailsRow struct {
-	ID          int32
-	ToUserID    sql.NullInt32
-	Body        string
-	ErrorCount  int32
-	CreatedAt   time.Time
-	DirectEmail bool
-}
-
-func (q *Queries) ListFailedEmails(ctx context.Context, arg ListFailedEmailsParams) ([]*ListFailedEmailsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listFailedEmails, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*ListFailedEmailsRow
-	for rows.Next() {
-		var i ListFailedEmailsRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.ToUserID,
-			&i.Body,
-			&i.ErrorCount,
-			&i.CreatedAt,
-			&i.DirectEmail,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listSentEmails = `-- name: ListSentEmails :many
-SELECT id, to_user_id, body, error_count, created_at, sent_at, direct_email
-FROM pending_emails
-WHERE sent_at IS NOT NULL
-ORDER BY sent_at DESC
-LIMIT ? OFFSET ?
-`
-
-type ListSentEmailsParams struct {
-	Limit  int32
-	Offset int32
-}
-
-type ListSentEmailsRow struct {
-	ID          int32
-	ToUserID    sql.NullInt32
-	Body        string
-	ErrorCount  int32
-	CreatedAt   time.Time
-	SentAt      sql.NullTime
-	DirectEmail bool
-}
-
-func (q *Queries) ListSentEmails(ctx context.Context, arg ListSentEmailsParams) ([]*ListSentEmailsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listSentEmails, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*ListSentEmailsRow
-	for rows.Next() {
-		var i ListSentEmailsRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.ToUserID,
-			&i.Body,
-			&i.ErrorCount,
-			&i.CreatedAt,
-			&i.SentAt,
-			&i.DirectEmail,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listUnsentPendingEmails = `-- name: ListUnsentPendingEmails :many
-SELECT id, to_user_id, body, error_count, created_at, direct_email
-FROM pending_emails
-WHERE sent_at IS NULL
-ORDER BY id
-`
-
-type ListUnsentPendingEmailsRow struct {
-	ID          int32
-	ToUserID    sql.NullInt32
-	Body        string
-	ErrorCount  int32
-	CreatedAt   time.Time
-	DirectEmail bool
-}
-
-func (q *Queries) ListUnsentPendingEmails(ctx context.Context) ([]*ListUnsentPendingEmailsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listUnsentPendingEmails)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*ListUnsentPendingEmailsRow
-	for rows.Next() {
-		var i ListUnsentPendingEmailsRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.ToUserID,
-			&i.Body,
-			&i.ErrorCount,
-			&i.CreatedAt,
-			&i.DirectEmail,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const markEmailSent = `-- name: MarkEmailSent :exec

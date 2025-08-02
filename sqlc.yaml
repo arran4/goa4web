@@ -47,3 +47,4 @@ sql:
               emit_result_struct_pointers: true
               emit_enum_valid_method: true
               emit_all_enum_values: true
+              emit_interface: true

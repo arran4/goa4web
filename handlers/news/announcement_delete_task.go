@@ -24,8 +24,14 @@ var announcementDeleteTask = &AnnouncementDeleteTask{TaskString: TaskDelete}
 var _ tasks.Task = (*AnnouncementDeleteTask)(nil)
 
 func (AnnouncementDeleteTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if cd == nil || !cd.HasRole("administrator") {
+		return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+		})
+	}
+
+	queries := cd.Queries()
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
 

@@ -24,7 +24,14 @@ var _ tasks.AuditableTask = (*DeleteAnnouncementTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*DeleteAnnouncementTask)(nil)
 
 func (DeleteAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if cd == nil || !cd.HasRole("administrator") {
+		return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+		})
+	}
+
+	queries := cd.Queries()
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

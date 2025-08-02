@@ -54,7 +54,7 @@ func SearchWordIdsFromText(w http.ResponseWriter, r *http.Request, text string, 
 	}
 	results := make([]WordCount, 0, len(counts))
 	for word, c := range counts {
-		id, err := queries.CreateSearchWord(r.Context(), strings.ToLower(word))
+		id, err := queries.SystemCreateSearchWord(r.Context(), strings.ToLower(word))
 		if err != nil {
 			log.Printf("Error: createSearchWord: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -68,7 +68,7 @@ func SearchWordIdsFromText(w http.ResponseWriter, r *http.Request, text string, 
 // InsertWordsToLinkerSearch associates search words with a linker post.
 func InsertWordsToLinkerSearch(w http.ResponseWriter, r *http.Request, words []WordCount, queries *db.Queries, lid int64) bool {
 	return InsertWords(w, r, words, func(ctx context.Context, wid int64, count int32) error {
-		return queries.AddToLinkerSearch(ctx, db.AddToLinkerSearchParams{
+		return queries.SystemAddToLinkerSearch(ctx, db.SystemAddToLinkerSearchParams{
 			LinkerID:                       int32(lid),
 			SearchwordlistIdsearchwordlist: int32(wid),
 			WordCount:                      count,
@@ -79,7 +79,7 @@ func InsertWordsToLinkerSearch(w http.ResponseWriter, r *http.Request, words []W
 // InsertWordsToImageSearch associates search words with an image post.
 func InsertWordsToImageSearch(w http.ResponseWriter, r *http.Request, words []WordCount, queries *db.Queries, pid int64) bool {
 	return InsertWords(w, r, words, func(ctx context.Context, wid int64, count int32) error {
-		return queries.AddToImagePostSearch(ctx, db.AddToImagePostSearchParams{
+		return queries.SystemAddToImagePostSearch(ctx, db.SystemAddToImagePostSearchParams{
 			ImagePostID:                    int32(pid),
 			SearchwordlistIdsearchwordlist: int32(wid),
 			WordCount:                      count,
@@ -90,7 +90,7 @@ func InsertWordsToImageSearch(w http.ResponseWriter, r *http.Request, words []Wo
 // InsertWordsToWritingSearch associates search words with a writing post.
 func InsertWordsToWritingSearch(w http.ResponseWriter, r *http.Request, words []WordCount, queries *db.Queries, wacid int64) bool {
 	return InsertWords(w, r, words, func(ctx context.Context, wid int64, count int32) error {
-		return queries.AddToForumWritingSearch(ctx, db.AddToForumWritingSearchParams{
+		return queries.SystemAddToForumWritingSearch(ctx, db.SystemAddToForumWritingSearchParams{
 			WritingID:                      int32(wacid),
 			SearchwordlistIdsearchwordlist: int32(wid),
 			WordCount:                      count,
@@ -101,7 +101,7 @@ func InsertWordsToWritingSearch(w http.ResponseWriter, r *http.Request, words []
 // InsertWordsToForumSearch associates search words with a forum comment.
 func InsertWordsToForumSearch(w http.ResponseWriter, r *http.Request, words []WordCount, queries *db.Queries, cid int64) bool {
 	return InsertWords(w, r, words, func(ctx context.Context, wid int64, count int32) error {
-		return queries.AddToForumCommentSearch(ctx, db.AddToForumCommentSearchParams{
+		return queries.SystemAddToForumCommentSearch(ctx, db.SystemAddToForumCommentSearchParams{
 			CommentID:                      int32(cid),
 			SearchwordlistIdsearchwordlist: int32(wid),
 			WordCount:                      count,

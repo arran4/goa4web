@@ -1,9 +1,9 @@
--- name: CompleteWordList :many
+-- name: AdminCompleteWordList :many
 -- This query selects all words from the "searchwordlist" table and prints them.
 SELECT word
 FROM searchwordlist;
 
--- name: WordListWithCounts :many
+-- name: AdminWordListWithCounts :many
 -- Show each search word with total usage counts across all search tables.
 SELECT swl.word,
        (SELECT IFNULL(SUM(cs.word_count),0) FROM comments_search cs WHERE cs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
@@ -16,16 +16,16 @@ FROM searchwordlist swl
 ORDER BY swl.word
 LIMIT ? OFFSET ?;
 
--- name: CountWordList :one
+-- name: AdminCountWordList :one
 SELECT COUNT(*)
 FROM searchwordlist;
 
--- name: CountWordListByPrefix :one
+-- name: AdminCountWordListByPrefix :one
 SELECT COUNT(*)
 FROM searchwordlist
 WHERE word LIKE CONCAT(sqlc.arg(prefix), '%');
 
--- name: WordListWithCountsByPrefix :many
+-- name: AdminWordListWithCountsByPrefix :many
 SELECT swl.word,
        (SELECT IFNULL(SUM(cs.word_count),0) FROM comments_search cs WHERE cs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
        + (SELECT IFNULL(SUM(ns.word_count),0) FROM site_news_search ns WHERE ns.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
@@ -44,108 +44,226 @@ LIMIT ? OFFSET ?;
 
 
 
--- name: DeleteCommentsSearch :exec
+-- name: SystemDeleteCommentsSearch :exec
 -- This query deletes all data from the "comments_search" table.
 DELETE FROM comments_search;
 
 
--- name: DeleteSiteNewsSearch :exec
+-- name: SystemDeleteSiteNewsSearch :exec
 -- This query deletes all data from the "site_news_search" table.
 DELETE FROM site_news_search;
 
 
--- name: DeleteBlogsSearch :exec
+-- name: SystemDeleteBlogsSearch :exec
 -- This query deletes all data from the "blogs_search" table.
 DELETE FROM blogs_search;
 
 
--- name: DeleteWritingSearch :exec
+-- name: SystemDeleteWritingSearch :exec
 -- This query deletes all data from the "writing_search" table.
 DELETE FROM writing_search;
 
 
--- name: DeleteLinkerSearch :exec
+-- name: SystemDeleteLinkerSearch :exec
 -- This query deletes all data from the "linker_search" table.
 DELETE FROM linker_search;
 
--- name: GetSearchWordByWordLowercased :one
+-- name: SystemGetSearchWordByWordLowercased :one
 SELECT *
 FROM searchwordlist
 WHERE word = lcase(?);
 
--- name: CreateSearchWord :execlastid
+-- name: SystemCreateSearchWord :execlastid
 INSERT INTO searchwordlist (word)
 VALUES (lcase(sqlc.arg(word)))
 ON DUPLICATE KEY UPDATE idsearchwordlist=LAST_INSERT_ID(idsearchwordlist);
 
--- name: AddToForumCommentSearch :exec
+-- name: SystemAddToForumCommentSearch :exec
 INSERT INTO comments_search
 (comment_id, searchwordlist_idsearchwordlist, word_count)
 VALUES (?, ?, ?)
 ON DUPLICATE KEY UPDATE word_count=VALUES(word_count);
 
+
 -- name: CommentsSearchFirstNotInRestrictedTopic :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT DISTINCT cs.comment_id
 FROM comments_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 LEFT JOIN comments c ON c.idcomments=cs.comment_id
 LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_id
 LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
-WHERE swl.word=?
-AND ft.forumcategory_idforumcategory!=0
-;
+WHERE swl.word=sqlc.arg(word)
+  AND ft.forumcategory_idforumcategory!=0
+  AND (
+      c.language_idlanguage = 0
+      OR c.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+            AND ul.language_idlanguage = c.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='forum'
+        AND g.item='topic'
+        AND g.action='see'
+        AND g.active=1
+        AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
+        AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  );
 
 -- name: CommentsSearchNextNotInRestrictedTopic :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT DISTINCT cs.comment_id
 FROM comments_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 LEFT JOIN comments c ON c.idcomments=cs.comment_id
 LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_id
 LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
-WHERE swl.word=?
-AND cs.comment_id IN (sqlc.slice('ids'))
-AND ft.forumcategory_idforumcategory!=0
-;
+WHERE swl.word=sqlc.arg(word)
+  AND cs.comment_id IN (sqlc.slice('ids'))
+  AND ft.forumcategory_idforumcategory!=0
+  AND (
+      c.language_idlanguage = 0
+      OR c.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+            AND ul.language_idlanguage = c.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='forum'
+        AND g.item='topic'
+        AND g.action='see'
+        AND g.active=1
+        AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
+        AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  );
 
 -- name: CommentsSearchFirstInRestrictedTopic :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT DISTINCT cs.comment_id
 FROM comments_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 LEFT JOIN comments c ON c.idcomments=cs.comment_id
 LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_id
-WHERE swl.word=?
-AND fth.forumtopic_idforumtopic IN (sqlc.slice('ftids'))
-;
+LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
+WHERE swl.word=sqlc.arg(word)
+  AND fth.forumtopic_idforumtopic IN (sqlc.slice('ftids'))
+  AND (
+      c.language_idlanguage = 0
+      OR c.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+            AND ul.language_idlanguage = c.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='forum'
+        AND g.item='topic'
+        AND g.action='see'
+        AND g.active=1
+        AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
+        AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  );
 
 -- name: CommentsSearchNextInRestrictedTopic :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT DISTINCT cs.comment_id
 FROM comments_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 LEFT JOIN comments c ON c.idcomments=cs.comment_id
 LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_id
-WHERE swl.word=?
-AND cs.comment_id IN (sqlc.slice('ids'))
-AND fth.forumtopic_idforumtopic IN (sqlc.slice('ftids'))
-;
-
--- name: AddToForumWritingSearch :exec
+LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
+WHERE swl.word=sqlc.arg(word)
+  AND cs.comment_id IN (sqlc.slice('ids'))
+  AND fth.forumtopic_idforumtopic IN (sqlc.slice('ftids'))
+  AND (
+      c.language_idlanguage = 0
+      OR c.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+            AND ul.language_idlanguage = c.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='forum'
+        AND g.item='topic'
+        AND g.action='see'
+        AND g.active=1
+        AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
+        AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  );
+-- name: SystemAddToForumWritingSearch :exec
 INSERT INTO writing_search
 (writing_id, searchwordlist_idsearchwordlist, word_count)
 VALUES (?, ?, ?)
 ON DUPLICATE KEY UPDATE word_count=VALUES(word_count);
 
--- name: AddToLinkerSearch :exec
+-- name: SystemAddToLinkerSearch :exec
 INSERT INTO linker_search
 (linker_id, searchwordlist_idsearchwordlist, word_count)
 VALUES (?, ?, ?)
 ON DUPLICATE KEY UPDATE word_count=VALUES(word_count);
--- name: AddToBlogsSearch :exec
+-- name: SystemAddToBlogsSearch :exec
 INSERT INTO blogs_search
 (blog_id, searchwordlist_idsearchwordlist, word_count)
 VALUES (?, ?, ?)
 ON DUPLICATE KEY UPDATE word_count=VALUES(word_count);
 
--- name: AddToSiteNewsSearch :exec
+-- name: SystemAddToSiteNewsSearch :exec
 INSERT INTO site_news_search
 (site_news_id, searchwordlist_idsearchwordlist, word_count)
 VALUES (?, ?, ?)
@@ -157,72 +275,240 @@ ON DUPLICATE KEY UPDATE word_count=VALUES(word_count);
 DELETE FROM writing_search
 WHERE writing_id=?
 ;
-
 -- name: WritingSearchFirst :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT DISTINCT cs.writing_id
 FROM writing_search cs
-LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
-WHERE swl.word=?
-;
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearchwordlist
+JOIN writing w ON w.idwriting = cs.writing_id
+WHERE swl.word = sqlc.arg(word)
+  AND (
+      w.language_idlanguage = 0
+      OR w.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+            AND ul.language_idlanguage = w.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='writing'
+        AND g.item='article'
+        AND g.action='see'
+        AND g.active=1
+        AND g.item_id = w.idwriting
+        AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  );
 
 -- name: WritingSearchNext :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT DISTINCT cs.writing_id
 FROM writing_search cs
-LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
-WHERE swl.word=?
-AND cs.writing_id IN (sqlc.slice('ids'))
-;
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearchwordlist
+JOIN writing w ON w.idwriting = cs.writing_id
+WHERE swl.word = sqlc.arg(word)
+  AND cs.writing_id IN (sqlc.slice('ids'))
+  AND (
+      w.language_idlanguage = 0
+      OR w.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+            AND ul.language_idlanguage = w.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='writing'
+        AND g.item='article'
+        AND g.action='see'
+        AND g.active=1
+        AND g.item_id = w.idwriting
+        AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  );
 
 -- name: SiteNewsSearchFirst :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT DISTINCT cs.site_news_id
 FROM site_news_search cs
-LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
-WHERE swl.word=?
-;
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearchwordlist
+JOIN site_news sn ON sn.idsiteNews = cs.site_news_id
+WHERE swl.word = sqlc.arg(word)
+  AND (
+      sn.language_idlanguage = 0
+      OR sn.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+            AND ul.language_idlanguage = sn.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='news'
+        AND g.item='post'
+        AND g.action='see'
+        AND g.active=1
+        AND g.item_id = sn.idsiteNews
+        AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  );
 
 -- name: SiteNewsSearchNext :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT DISTINCT cs.site_news_id
 FROM site_news_search cs
-LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
-WHERE swl.word=?
-AND cs.site_news_id IN (sqlc.slice('ids'))
-;
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearchwordlist
+JOIN site_news sn ON sn.idsiteNews = cs.site_news_id
+WHERE swl.word = sqlc.arg(word)
+  AND cs.site_news_id IN (sqlc.slice('ids'))
+  AND (
+      sn.language_idlanguage = 0
+      OR sn.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+            AND ul.language_idlanguage = sn.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='news'
+        AND g.item='post'
+        AND g.action='see'
+        AND g.active=1
+        AND g.item_id = sn.idsiteNews
+        AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  );
+
+
 
 -- name: LinkerSearchFirst :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT DISTINCT cs.linker_id
 FROM linker_search cs
-LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
-WHERE swl.word=?
-;
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearchwordlist
+JOIN linker l ON l.idlinker = cs.linker_id
+WHERE swl.word = sqlc.arg(word)
+  AND (
+      l.language_idlanguage = 0
+      OR l.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+            AND ul.language_idlanguage = l.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='linker'
+        AND g.item='link'
+        AND g.action='see'
+        AND g.active=1
+        AND g.item_id = l.idlinker
+        AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  );
 
 -- name: LinkerSearchNext :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT DISTINCT cs.linker_id
 FROM linker_search cs
-LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
-WHERE swl.word=?
-AND cs.linker_id IN (sqlc.slice('ids'))
-;
-
--- name: AddToImagePostSearch :exec
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearchwordlist
+JOIN linker l ON l.idlinker = cs.linker_id
+WHERE swl.word = sqlc.arg(word)
+  AND cs.linker_id IN (sqlc.slice('ids'))
+  AND (
+      l.language_idlanguage = 0
+      OR l.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+            AND ul.language_idlanguage = l.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='linker'
+        AND g.item='link'
+        AND g.action='see'
+        AND g.active=1
+        AND g.item_id = l.idlinker
+        AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  );
+-- name: SystemAddToImagePostSearch :exec
 INSERT INTO imagepost_search
 (image_post_id, searchwordlist_idsearchwordlist, word_count)
 VALUES (?, ?, ?)
 ON DUPLICATE KEY UPDATE word_count=VALUES(word_count);
 
--- name: DeleteImagePostSearch :exec
+-- name: SystemDeleteImagePostSearch :exec
 DELETE FROM imagepost_search;
 
 
--- name: ImagePostSearchFirst :many
-SELECT DISTINCT cs.image_post_id
-FROM imagepost_search cs
-LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
-WHERE swl.word=?;
-
--- name: ImagePostSearchNext :many
-SELECT DISTINCT cs.image_post_id
-FROM imagepost_search cs
-LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
-WHERE swl.word=?
-AND cs.image_post_id IN (sqlc.slice('ids'));
 

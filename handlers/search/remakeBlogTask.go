@@ -36,7 +36,7 @@ func (RemakeBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 }
 
 func (RemakeBlogTask) BackgroundTask(ctx context.Context, q *dbpkg.Queries) (tasks.Task, error) {
-	if err := q.DeleteBlogsSearch(ctx); err != nil {
+	if err := q.SystemDeleteBlogsSearch(ctx); err != nil {
 		return nil, err
 	}
 	rows, err := q.SystemGetAllBlogsForIndex(ctx)
@@ -50,7 +50,7 @@ func (RemakeBlogTask) BackgroundTask(ctx context.Context, q *dbpkg.Queries) (tas
 			continue
 		}
 		if err := indexText(ctx, q, cache, text, func(c context.Context, wid int64, count int32) error {
-			return q.AddToBlogsSearch(c, dbpkg.AddToBlogsSearchParams{
+			return q.SystemAddToBlogsSearch(c, dbpkg.SystemAddToBlogsSearchParams{
 				BlogID:                         row.Idblogs,
 				SearchwordlistIdsearchwordlist: int32(wid),
 				WordCount:                      count,

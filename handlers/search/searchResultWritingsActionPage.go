@@ -85,9 +85,13 @@ func WritingSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, 
 
 	for i, word := range searchWords {
 		if i == 0 {
-			ids, err := queries.WritingSearchFirst(r.Context(), sql.NullString{
-				String: word,
-				Valid:  true,
+			ids, err := queries.WritingSearchFirst(r.Context(), db.WritingSearchFirstParams{
+				ViewerID: uid,
+				Word: sql.NullString{
+					String: word,
+					Valid:  true,
+				},
+				UserID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 			})
 			if err != nil {
 				switch {
@@ -101,11 +105,13 @@ func WritingSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, 
 			writingsIds = ids
 		} else {
 			ids, err := queries.WritingSearchNext(r.Context(), db.WritingSearchNextParams{
+				ViewerID: uid,
 				Word: sql.NullString{
 					String: word,
 					Valid:  true,
 				},
-				Ids: writingsIds,
+				Ids:    writingsIds,
+				UserID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 			})
 			if err != nil {
 				switch {

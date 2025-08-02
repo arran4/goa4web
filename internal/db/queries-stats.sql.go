@@ -11,29 +11,29 @@ import (
 	"time"
 )
 
-const countThreadsByBoard = `-- name: CountThreadsByBoard :one
+const adminCountThreadsByBoard = `-- name: AdminCountThreadsByBoard :one
 SELECT COUNT(DISTINCT forumthread_id)
 FROM imagepost
 WHERE imageboard_idimageboard = ?
 `
 
-func (q *Queries) CountThreadsByBoard(ctx context.Context, imageboardIdimageboard int32) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countThreadsByBoard, imageboardIdimageboard)
+func (q *Queries) AdminCountThreadsByBoard(ctx context.Context, imageboardIdimageboard int32) (int64, error) {
+	row := q.db.QueryRowContext(ctx, adminCountThreadsByBoard, imageboardIdimageboard)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
-const deleteTemplateOverride = `-- name: DeleteTemplateOverride :exec
+const adminDeleteTemplateOverride = `-- name: AdminDeleteTemplateOverride :exec
 DELETE FROM template_overrides WHERE name = ?
 `
 
-func (q *Queries) DeleteTemplateOverride(ctx context.Context, name string) error {
-	_, err := q.db.ExecContext(ctx, deleteTemplateOverride, name)
+func (q *Queries) AdminDeleteTemplateOverride(ctx context.Context, name string) error {
+	_, err := q.db.ExecContext(ctx, adminDeleteTemplateOverride, name)
 	return err
 }
 
-const forumCategoryThreadCounts = `-- name: ForumCategoryThreadCounts :many
+const adminForumCategoryThreadCounts = `-- name: AdminForumCategoryThreadCounts :many
 SELECT c.idforumcategory, c.title, COUNT(th.idforumthread) AS count
 FROM forumcategory c
 LEFT JOIN forumtopic t ON c.idforumcategory = t.forumcategory_idforumcategory
@@ -42,21 +42,21 @@ GROUP BY c.idforumcategory
 ORDER BY c.title
 `
 
-type ForumCategoryThreadCountsRow struct {
+type AdminForumCategoryThreadCountsRow struct {
 	Idforumcategory int32
 	Title           sql.NullString
 	Count           int64
 }
 
-func (q *Queries) ForumCategoryThreadCounts(ctx context.Context) ([]*ForumCategoryThreadCountsRow, error) {
-	rows, err := q.db.QueryContext(ctx, forumCategoryThreadCounts)
+func (q *Queries) AdminForumCategoryThreadCounts(ctx context.Context) ([]*AdminForumCategoryThreadCountsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminForumCategoryThreadCounts)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*ForumCategoryThreadCountsRow
+	var items []*AdminForumCategoryThreadCountsRow
 	for rows.Next() {
-		var i ForumCategoryThreadCountsRow
+		var i AdminForumCategoryThreadCountsRow
 		if err := rows.Scan(&i.Idforumcategory, &i.Title, &i.Count); err != nil {
 			return nil, err
 		}
@@ -71,7 +71,7 @@ func (q *Queries) ForumCategoryThreadCounts(ctx context.Context) ([]*ForumCatego
 	return items, nil
 }
 
-const forumTopicThreadCounts = `-- name: ForumTopicThreadCounts :many
+const adminForumTopicThreadCounts = `-- name: AdminForumTopicThreadCounts :many
 SELECT t.idforumtopic, t.title, COUNT(th.idforumthread) AS count
 FROM forumtopic t
 LEFT JOIN forumthread th ON th.forumtopic_idforumtopic = t.idforumtopic
@@ -79,21 +79,21 @@ GROUP BY t.idforumtopic
 ORDER BY t.title
 `
 
-type ForumTopicThreadCountsRow struct {
+type AdminForumTopicThreadCountsRow struct {
 	Idforumtopic int32
 	Title        sql.NullString
 	Count        int64
 }
 
-func (q *Queries) ForumTopicThreadCounts(ctx context.Context) ([]*ForumTopicThreadCountsRow, error) {
-	rows, err := q.db.QueryContext(ctx, forumTopicThreadCounts)
+func (q *Queries) AdminForumTopicThreadCounts(ctx context.Context) ([]*AdminForumTopicThreadCountsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminForumTopicThreadCounts)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*ForumTopicThreadCountsRow
+	var items []*AdminForumTopicThreadCountsRow
 	for rows.Next() {
-		var i ForumTopicThreadCountsRow
+		var i AdminForumTopicThreadCountsRow
 		if err := rows.Scan(&i.Idforumtopic, &i.Title, &i.Count); err != nil {
 			return nil, err
 		}
@@ -108,13 +108,13 @@ func (q *Queries) ForumTopicThreadCounts(ctx context.Context) ([]*ForumTopicThre
 	return items, nil
 }
 
-const getRecentAuditLogs = `-- name: GetRecentAuditLogs :many
+const adminGetRecentAuditLogs = `-- name: AdminGetRecentAuditLogs :many
 SELECT a.id, a.users_idusers, u.username, a.action, a.path, a.details, a.data, a.created_at
 FROM audit_log a LEFT JOIN users u ON a.users_idusers = u.idusers
 ORDER BY a.id DESC LIMIT ?
 `
 
-type GetRecentAuditLogsRow struct {
+type AdminGetRecentAuditLogsRow struct {
 	ID           int32
 	UsersIdusers int32
 	Username     sql.NullString
@@ -125,15 +125,15 @@ type GetRecentAuditLogsRow struct {
 	CreatedAt    time.Time
 }
 
-func (q *Queries) GetRecentAuditLogs(ctx context.Context, limit int32) ([]*GetRecentAuditLogsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getRecentAuditLogs, limit)
+func (q *Queries) AdminGetRecentAuditLogs(ctx context.Context, limit int32) ([]*AdminGetRecentAuditLogsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminGetRecentAuditLogs, limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetRecentAuditLogsRow
+	var items []*AdminGetRecentAuditLogsRow
 	for rows.Next() {
-		var i GetRecentAuditLogsRow
+		var i AdminGetRecentAuditLogsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.UsersIdusers,
@@ -157,18 +157,7 @@ func (q *Queries) GetRecentAuditLogs(ctx context.Context, limit int32) ([]*GetRe
 	return items, nil
 }
 
-const getTemplateOverride = `-- name: GetTemplateOverride :one
-SELECT body FROM template_overrides WHERE name = ?
-`
-
-func (q *Queries) GetTemplateOverride(ctx context.Context, name string) (string, error) {
-	row := q.db.QueryRowContext(ctx, getTemplateOverride, name)
-	var body string
-	err := row.Scan(&body)
-	return body, err
-}
-
-const imageboardPostCounts = `-- name: ImageboardPostCounts :many
+const adminImageboardPostCounts = `-- name: AdminImageboardPostCounts :many
 SELECT ib.idimageboard, ib.title, COUNT(ip.idimagepost) AS count
 FROM imageboard ib
 LEFT JOIN imagepost ip ON ip.imageboard_idimageboard = ib.idimageboard
@@ -176,21 +165,21 @@ GROUP BY ib.idimageboard
 ORDER BY ib.title
 `
 
-type ImageboardPostCountsRow struct {
+type AdminImageboardPostCountsRow struct {
 	Idimageboard int32
 	Title        sql.NullString
 	Count        int64
 }
 
-func (q *Queries) ImageboardPostCounts(ctx context.Context) ([]*ImageboardPostCountsRow, error) {
-	rows, err := q.db.QueryContext(ctx, imageboardPostCounts)
+func (q *Queries) AdminImageboardPostCounts(ctx context.Context) ([]*AdminImageboardPostCountsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminImageboardPostCounts)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*ImageboardPostCountsRow
+	var items []*AdminImageboardPostCountsRow
 	for rows.Next() {
-		var i ImageboardPostCountsRow
+		var i AdminImageboardPostCountsRow
 		if err := rows.Scan(&i.Idimageboard, &i.Title, &i.Count); err != nil {
 			return nil, err
 		}
@@ -205,73 +194,23 @@ func (q *Queries) ImageboardPostCounts(ctx context.Context) ([]*ImageboardPostCo
 	return items, nil
 }
 
-const listUserInfo = `-- name: ListUserInfo :many
-SELECT u.idusers, u.username,
-       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
-       IF(r.id IS NULL, 0, 1) AS admin,
-       MIN(s.created_at) AS created_at
-FROM users u
-LEFT JOIN user_roles ur ON ur.users_idusers = u.idusers
-LEFT JOIN roles r ON ur.role_id = r.id AND r.is_admin = 1
-LEFT JOIN sessions s ON s.users_idusers = u.idusers
-GROUP BY u.idusers
-ORDER BY u.idusers
-`
-
-type ListUserInfoRow struct {
-	Idusers   int32
-	Username  sql.NullString
-	Email     string
-	Admin     interface{}
-	CreatedAt interface{}
-}
-
-func (q *Queries) ListUserInfo(ctx context.Context) ([]*ListUserInfoRow, error) {
-	rows, err := q.db.QueryContext(ctx, listUserInfo)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*ListUserInfoRow
-	for rows.Next() {
-		var i ListUserInfoRow
-		if err := rows.Scan(
-			&i.Idusers,
-			&i.Username,
-			&i.Email,
-			&i.Admin,
-			&i.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const setTemplateOverride = `-- name: SetTemplateOverride :exec
+const adminSetTemplateOverride = `-- name: AdminSetTemplateOverride :exec
 INSERT INTO template_overrides (name, body)
 VALUES (?, ?)
 ON DUPLICATE KEY UPDATE body = VALUES(body)
 `
 
-type SetTemplateOverrideParams struct {
+type AdminSetTemplateOverrideParams struct {
 	Name string
 	Body string
 }
 
-func (q *Queries) SetTemplateOverride(ctx context.Context, arg SetTemplateOverrideParams) error {
-	_, err := q.db.ExecContext(ctx, setTemplateOverride, arg.Name, arg.Body)
+func (q *Queries) AdminSetTemplateOverride(ctx context.Context, arg AdminSetTemplateOverrideParams) error {
+	_, err := q.db.ExecContext(ctx, adminSetTemplateOverride, arg.Name, arg.Body)
 	return err
 }
 
-const userPostCounts = `-- name: UserPostCounts :many
+const adminUserPostCounts = `-- name: AdminUserPostCounts :many
 SELECT u.idusers, u.username,
        COALESCE(b.blogs, 0)     AS blogs,
        COALESCE(n.news, 0)      AS news,
@@ -289,7 +228,7 @@ LEFT JOIN (SELECT users_idusers AS uid, COUNT(*) AS writings FROM writing GROUP 
 ORDER BY u.username
 `
 
-type UserPostCountsRow struct {
+type AdminUserPostCountsRow struct {
 	Idusers  int32
 	Username sql.NullString
 	Blogs    int64
@@ -300,15 +239,15 @@ type UserPostCountsRow struct {
 	Writings int64
 }
 
-func (q *Queries) UserPostCounts(ctx context.Context) ([]*UserPostCountsRow, error) {
-	rows, err := q.db.QueryContext(ctx, userPostCounts)
+func (q *Queries) AdminUserPostCounts(ctx context.Context) ([]*AdminUserPostCountsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminUserPostCounts)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*UserPostCountsRow
+	var items []*AdminUserPostCountsRow
 	for rows.Next() {
-		var i UserPostCountsRow
+		var i AdminUserPostCountsRow
 		if err := rows.Scan(
 			&i.Idusers,
 			&i.Username,
@@ -332,7 +271,7 @@ func (q *Queries) UserPostCounts(ctx context.Context) ([]*UserPostCountsRow, err
 	return items, nil
 }
 
-const userPostCountsByID = `-- name: UserPostCountsByID :one
+const adminUserPostCountsByID = `-- name: AdminUserPostCountsByID :one
 SELECT
   (SELECT COUNT(*) FROM blogs b WHERE b.users_idusers = u.idusers)      AS blogs,
   (SELECT COUNT(*) FROM site_news n WHERE n.users_idusers = u.idusers)  AS news,
@@ -344,7 +283,7 @@ FROM users u
 WHERE u.idusers = ?
 `
 
-type UserPostCountsByIDRow struct {
+type AdminUserPostCountsByIDRow struct {
 	Blogs    int64
 	News     int64
 	Comments int64
@@ -353,9 +292,9 @@ type UserPostCountsByIDRow struct {
 	Writings int64
 }
 
-func (q *Queries) UserPostCountsByID(ctx context.Context, idusers int32) (*UserPostCountsByIDRow, error) {
-	row := q.db.QueryRowContext(ctx, userPostCountsByID, idusers)
-	var i UserPostCountsByIDRow
+func (q *Queries) AdminUserPostCountsByID(ctx context.Context, idusers int32) (*AdminUserPostCountsByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, adminUserPostCountsByID, idusers)
+	var i AdminUserPostCountsByIDRow
 	err := row.Scan(
 		&i.Blogs,
 		&i.News,
@@ -367,7 +306,7 @@ func (q *Queries) UserPostCountsByID(ctx context.Context, idusers int32) (*UserP
 	return &i, err
 }
 
-const writingCategoryCounts = `-- name: WritingCategoryCounts :many
+const adminWritingCategoryCounts = `-- name: AdminWritingCategoryCounts :many
 SELECT wc.idwritingCategory, wc.title, COUNT(w.idwriting) AS count
 FROM writing_category wc
 LEFT JOIN writing w ON w.writing_category_id = wc.idwritingCategory
@@ -375,22 +314,83 @@ GROUP BY wc.idwritingCategory
 ORDER BY wc.title
 `
 
-type WritingCategoryCountsRow struct {
+type AdminWritingCategoryCountsRow struct {
 	Idwritingcategory int32
 	Title             sql.NullString
 	Count             int64
 }
 
-func (q *Queries) WritingCategoryCounts(ctx context.Context) ([]*WritingCategoryCountsRow, error) {
-	rows, err := q.db.QueryContext(ctx, writingCategoryCounts)
+func (q *Queries) AdminWritingCategoryCounts(ctx context.Context) ([]*AdminWritingCategoryCountsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminWritingCategoryCounts)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*WritingCategoryCountsRow
+	var items []*AdminWritingCategoryCountsRow
 	for rows.Next() {
-		var i WritingCategoryCountsRow
+		var i AdminWritingCategoryCountsRow
 		if err := rows.Scan(&i.Idwritingcategory, &i.Title, &i.Count); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const systemGetTemplateOverride = `-- name: SystemGetTemplateOverride :one
+SELECT body FROM template_overrides WHERE name = ?
+`
+
+func (q *Queries) SystemGetTemplateOverride(ctx context.Context, name string) (string, error) {
+	row := q.db.QueryRowContext(ctx, systemGetTemplateOverride, name)
+	var body string
+	err := row.Scan(&body)
+	return body, err
+}
+
+const systemListUserInfo = `-- name: SystemListUserInfo :many
+SELECT u.idusers, u.username,
+       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
+       IF(r.id IS NULL, 0, 1) AS admin,
+       MIN(s.created_at) AS created_at
+FROM users u
+LEFT JOIN user_roles ur ON ur.users_idusers = u.idusers
+LEFT JOIN roles r ON ur.role_id = r.id AND r.is_admin = 1
+LEFT JOIN sessions s ON s.users_idusers = u.idusers
+GROUP BY u.idusers
+ORDER BY u.idusers
+`
+
+type SystemListUserInfoRow struct {
+	Idusers   int32
+	Username  sql.NullString
+	Email     string
+	Admin     interface{}
+	CreatedAt interface{}
+}
+
+func (q *Queries) SystemListUserInfo(ctx context.Context) ([]*SystemListUserInfoRow, error) {
+	rows, err := q.db.QueryContext(ctx, systemListUserInfo)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*SystemListUserInfoRow
+	for rows.Next() {
+		var i SystemListUserInfoRow
+		if err := rows.Scan(
+			&i.Idusers,
+			&i.Username,
+			&i.Email,
+			&i.Admin,
+			&i.CreatedAt,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)

@@ -19,7 +19,7 @@ type NewTemplateEngine[TE TemplateEngine] interface {
 
 func renderTemplate[TE TemplateEngine](ctx context.Context, q *db.Queries, filename string, data any, tmpls TE, templateNew func(string) NewTemplateEngine[TE]) ([]byte, error) {
 	var buf bytes.Buffer
-	if body, err := q.GetTemplateOverride(ctx, filename); err == nil && body != "" {
+	if body, err := q.SystemGetTemplateOverride(ctx, filename); err == nil && body != "" {
 		if parsed, err := templateNew("").Parse(body); err != nil {
 			return nil, err
 		} else if err := parsed.ExecuteTemplate(&buf, "", data); err != nil {

@@ -113,7 +113,7 @@ func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	q := cd.Queries()
-	body, _ := q.GetTemplateOverride(r.Context(), name)
+	body, _ := q.SystemGetTemplateOverride(r.Context(), name)
 	data := struct {
 		*common.CoreData
 		Name    string

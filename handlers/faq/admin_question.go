@@ -51,7 +51,10 @@ func AdminQuestionsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.UnansweredRows = unansweredRows
 
-	answeredRows, err := queries.GetFAQAnsweredQuestions(r.Context())
+	answeredRows, err := queries.GetFAQAnsweredQuestions(r.Context(), db.GetFAQAnsweredQuestionsParams{
+		ViewerID: cd.UserID,
+		UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

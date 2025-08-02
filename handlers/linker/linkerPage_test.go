@@ -77,11 +77,11 @@ func TestLinkerApproveAddsToSearch(t *testing.T) {
 	evt := &eventbus.TaskEvent{Data: map[string]any{}}
 	cd := common.NewCoreData(req.Context(), queries, config.NewRuntimeConfig())
 	cd.SetEvent(evt)
-	cd.SetEventTask(ApproveTask)
+	cd.SetEventTask(AdminApproveTask)
 	ctxreq := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctxreq)
 	rr := httptest.NewRecorder()
-	ApproveTask.Action(rr, req)
+	AdminApproveTask.Action(rr, req)
 
 	if err := bus.Publish(*evt); err != nil {
 		t.Fatalf("publish: %v", err)

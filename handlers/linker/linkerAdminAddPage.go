@@ -60,7 +60,7 @@ func AdminAddPage(w http.ResponseWriter, r *http.Request) {
 
 type addTask struct{ tasks.TaskString }
 
-var AddTask = &addTask{TaskString: TaskAdd}
+var AdminAddTask = &addTask{TaskString: TaskAdd}
 
 // Compile-time interface conformance with context. When a link is submitted we
 // alert subscribers of new content and notify administrators so they can review
@@ -70,7 +70,8 @@ var _ notif.SubscribersNotificationTemplateProvider = (*addTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*addTask)(nil)
 
 func (addTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
@@ -90,6 +91,7 @@ func (addTask) Action(w http.ResponseWriter, r *http.Request) any {
 		Title:            sql.NullString{Valid: true, String: title},
 		Url:              sql.NullString{Valid: true, String: url},
 		Description:      sql.NullString{Valid: true, String: description},
+		AdminID:          cd.UserID,
 	}); err != nil {
 		return fmt.Errorf("create linker item fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

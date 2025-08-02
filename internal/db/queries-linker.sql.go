@@ -37,22 +37,34 @@ func (q *Queries) CountLinksByCategory(ctx context.Context, linkerCategoryID int
 }
 
 const createLinkerCategory = `-- name: CreateLinkerCategory :exec
-INSERT INTO linker_category (title, position) VALUES (?, ?)
+INSERT INTO linker_category (title, position)
+SELECT ?, ?
+WHERE EXISTS (
+    SELECT 1 FROM user_roles ur
+    JOIN roles r ON ur.role_id = r.id
+    WHERE ur.users_idusers = ? AND r.is_admin = 1
+)
 `
 
 type CreateLinkerCategoryParams struct {
 	Title    sql.NullString
 	Position int32
+	AdminID  int32
 }
 
 func (q *Queries) CreateLinkerCategory(ctx context.Context, arg CreateLinkerCategoryParams) error {
-	_, err := q.db.ExecContext(ctx, createLinkerCategory, arg.Title, arg.Position)
+	_, err := q.db.ExecContext(ctx, createLinkerCategory, arg.Title, arg.Position, arg.AdminID)
 	return err
 }
 
 const createLinkerItem = `-- name: CreateLinkerItem :exec
 INSERT INTO linker (users_idusers, linker_category_id, title, url, description, listed)
-VALUES (?, ?, ?, ?, ?, NOW())
+SELECT ?, ?, ?, ?, ?, NOW()
+WHERE EXISTS (
+    SELECT 1 FROM user_roles ur
+    JOIN roles r ON ur.role_id = r.id
+    WHERE ur.users_idusers = ? AND r.is_admin = 1
+)
 `
 
 type CreateLinkerItemParams struct {
@@ -61,6 +73,7 @@ type CreateLinkerItemParams struct {
 	Title            sql.NullString
 	Url              sql.NullString
 	Description      sql.NullString
+	AdminID          int32
 }
 
 func (q *Queries) CreateLinkerItem(ctx context.Context, arg CreateLinkerItemParams) error {
@@ -70,6 +83,7 @@ func (q *Queries) CreateLinkerItem(ctx context.Context, arg CreateLinkerItemPara
 		arg.Title,
 		arg.Url,
 		arg.Description,
+		arg.AdminID,
 	)
 	return err
 }
@@ -98,20 +112,42 @@ func (q *Queries) CreateLinkerQueuedItem(ctx context.Context, arg CreateLinkerQu
 }
 
 const deleteLinkerCategory = `-- name: DeleteLinkerCategory :exec
-DELETE FROM linker_category WHERE idlinkerCategory = ?
+DELETE FROM linker_category
+WHERE idlinkerCategory = ?
+  AND EXISTS (
+    SELECT 1 FROM user_roles ur
+    JOIN roles r ON ur.role_id = r.id
+    WHERE ur.users_idusers = ? AND r.is_admin = 1
+  )
 `
 
-func (q *Queries) DeleteLinkerCategory(ctx context.Context, idlinkercategory int32) error {
-	_, err := q.db.ExecContext(ctx, deleteLinkerCategory, idlinkercategory)
+type DeleteLinkerCategoryParams struct {
+	Idlinkercategory int32
+	AdminID          int32
+}
+
+func (q *Queries) DeleteLinkerCategory(ctx context.Context, arg DeleteLinkerCategoryParams) error {
+	_, err := q.db.ExecContext(ctx, deleteLinkerCategory, arg.Idlinkercategory, arg.AdminID)
 	return err
 }
 
 const deleteLinkerQueuedItem = `-- name: DeleteLinkerQueuedItem :exec
-DELETE FROM linker_queue WHERE idlinkerQueue = ?
+DELETE FROM linker_queue
+WHERE idlinkerQueue = ?
+  AND EXISTS (
+    SELECT 1 FROM user_roles ur
+    JOIN roles r ON ur.role_id = r.id
+    WHERE ur.users_idusers = ? AND r.is_admin = 1
+  )
 `
 
-func (q *Queries) DeleteLinkerQueuedItem(ctx context.Context, idlinkerqueue int32) error {
-	_, err := q.db.ExecContext(ctx, deleteLinkerQueuedItem, idlinkerqueue)
+type DeleteLinkerQueuedItemParams struct {
+	Idlinkerqueue int32
+	AdminID       int32
+}
+
+func (q *Queries) DeleteLinkerQueuedItem(ctx context.Context, arg DeleteLinkerQueuedItemParams) error {
+	_, err := q.db.ExecContext(ctx, deleteLinkerQueuedItem, arg.Idlinkerqueue, arg.AdminID)
 	return err
 }
 
@@ -178,6 +214,12 @@ WHERE EXISTS (
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
+  AND EXISTS (
+    SELECT 1 FROM linker l
+    WHERE l.linker_category_id = lc.idlinkerCategory
+      AND l.listed IS NOT NULL
+      AND l.deleted_at IS NULL
+  )
 ORDER BY lc.position
 `
 
@@ -214,44 +256,6 @@ func (q *Queries) GetAllLinkerCategoriesForUser(ctx context.Context, arg GetAllL
 	return items, nil
 }
 
-const getAllLinkerCategoriesWithSortOrder = `-- name: GetAllLinkerCategoriesWithSortOrder :many
-SELECT
-    idlinkerCategory,
-    position,
-    title,
-    sortorder
-FROM linker_category
-ORDER BY sortorder
-`
-
-func (q *Queries) GetAllLinkerCategoriesWithSortOrder(ctx context.Context) ([]*LinkerCategory, error) {
-	rows, err := q.db.QueryContext(ctx, getAllLinkerCategoriesWithSortOrder)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*LinkerCategory
-	for rows.Next() {
-		var i LinkerCategory
-		if err := rows.Scan(
-			&i.Idlinkercategory,
-			&i.Position,
-			&i.Title,
-			&i.Sortorder,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending = `-- name: GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending :many
 SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linker_category_id, l.forumthread_id, l.title, l.url, l.description, l.listed, th.Comments, lc.title as Category_Title, u.Username as PosterUsername
 FROM linker l
@@ -259,6 +263,8 @@ LEFT JOIN users u ON l.users_idusers = u.idusers
 LEFT JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
 LEFT JOIN forumthread th ON l.forumthread_id = th.idforumthread
 WHERE (lc.idlinkerCategory = ? OR ? = 0)
+  AND l.listed IS NOT NULL
+  AND l.deleted_at IS NULL
 ORDER BY l.listed DESC
 `
 
@@ -332,6 +338,8 @@ LEFT JOIN users u ON l.users_idusers = u.idusers
 LEFT JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
 LEFT JOIN forumthread th ON l.forumthread_id = th.idforumthread
 WHERE (lc.idlinkerCategory = ? OR ? = 0)
+  AND l.listed IS NOT NULL
+  AND l.deleted_at IS NULL
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='linker'
@@ -517,6 +525,8 @@ LEFT JOIN users u ON l.users_idusers = u.idusers
 LEFT JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
 LEFT JOIN forumthread th ON l.forumthread_id = th.idforumthread
 WHERE (lc.idlinkerCategory = ? OR ? = 0)
+  AND l.listed IS NOT NULL
+  AND l.deleted_at IS NULL
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='linker'
@@ -725,7 +735,7 @@ func (q *Queries) GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails(ctx co
 }
 
 const getAllLinkersForIndex = `-- name: GetAllLinkersForIndex :many
-SELECT idlinker, title, description FROM linker WHERE deleted_at IS NULL
+SELECT idlinker, title, description FROM linker WHERE deleted_at IS NULL AND listed IS NOT NULL
 `
 
 type GetAllLinkersForIndexRow struct {
@@ -760,7 +770,7 @@ func (q *Queries) GetAllLinkersForIndex(ctx context.Context) ([]*GetAllLinkersFo
 const getLinkerCategoriesWithCount = `-- name: GetLinkerCategoriesWithCount :many
 SELECT c.idlinkerCategory, c.title, c.sortorder, COUNT(l.idlinker) AS linkcount
 FROM linker_category c
-LEFT JOIN linker l ON l.linker_category_id = c.idlinkerCategory
+LEFT JOIN linker l ON l.linker_category_id = c.idlinkerCategory AND l.listed IS NOT NULL AND l.deleted_at IS NULL
 GROUP BY c.idlinkerCategory
 ORDER BY c.sortorder
 `
@@ -819,7 +829,7 @@ func (q *Queries) GetLinkerCategoryById(ctx context.Context, idlinkercategory in
 const getLinkerCategoryLinkCounts = `-- name: GetLinkerCategoryLinkCounts :many
 SELECT c.idlinkerCategory, c.title, c.position, COUNT(l.idlinker) as LinkCount
 FROM linker_category c
-LEFT JOIN linker l ON c.idlinkerCategory = l.linker_category_id
+LEFT JOIN linker l ON c.idlinkerCategory = l.linker_category_id AND l.listed IS NOT NULL AND l.deleted_at IS NULL
 GROUP BY c.idlinkerCategory
 ORDER BY c.position
 `
@@ -914,6 +924,8 @@ FROM linker l
 JOIN users u ON l.users_idusers = u.idusers
 JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
 WHERE l.idlinker = ?
+  AND l.listed IS NOT NULL
+  AND l.deleted_at IS NULL
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='linker'
@@ -1047,6 +1059,8 @@ FROM linker l
 JOIN users u ON l.users_idusers = u.idusers
 JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
 WHERE l.idlinker IN (/*SLICE:linkerids*/?)
+  AND l.listed IS NOT NULL
+  AND l.deleted_at IS NULL
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='linker'
@@ -1209,6 +1223,8 @@ LEFT JOIN users u ON l.users_idusers = u.idusers
 LEFT JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
 LEFT JOIN forumthread th ON l.forumthread_id = th.idforumthread
 WHERE l.users_idusers = ?
+  AND l.listed IS NOT NULL
+  AND l.deleted_at IS NULL
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='linker'
@@ -1289,17 +1305,29 @@ func (q *Queries) GetLinkerItemsByUserDescendingForUser(ctx context.Context, arg
 }
 
 const renameLinkerCategory = `-- name: RenameLinkerCategory :exec
-UPDATE linker_category SET title = ?, position = ? WHERE idlinkerCategory = ?
+UPDATE linker_category SET title = ?, position = ?
+WHERE idlinkerCategory = ?
+  AND EXISTS (
+    SELECT 1 FROM user_roles ur
+    JOIN roles r ON ur.role_id = r.id
+    WHERE ur.users_idusers = ? AND r.is_admin = 1
+  )
 `
 
 type RenameLinkerCategoryParams struct {
 	Title            sql.NullString
 	Position         int32
 	Idlinkercategory int32
+	AdminID          int32
 }
 
 func (q *Queries) RenameLinkerCategory(ctx context.Context, arg RenameLinkerCategoryParams) error {
-	_, err := q.db.ExecContext(ctx, renameLinkerCategory, arg.Title, arg.Position, arg.Idlinkercategory)
+	_, err := q.db.ExecContext(ctx, renameLinkerCategory,
+		arg.Title,
+		arg.Position,
+		arg.Idlinkercategory,
+		arg.AdminID,
+	)
 	return err
 }
 
@@ -1308,10 +1336,20 @@ INSERT INTO linker (users_idusers, linker_category_id, language_idlanguage, titl
 SELECT l.users_idusers, l.linker_category_id, l.language_idlanguage, l.title, l.url, l.description
 FROM linker_queue l
 WHERE l.idlinkerQueue = ?
+  AND EXISTS (
+    SELECT 1 FROM user_roles ur
+    JOIN roles r ON ur.role_id = r.id
+    WHERE ur.users_idusers = ? AND r.is_admin = 1
+  )
 `
 
-func (q *Queries) SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId(ctx context.Context, idlinkerqueue int32) (int64, error) {
-	result, err := q.db.ExecContext(ctx, selectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId, idlinkerqueue)
+type SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueIdParams struct {
+	Idlinkerqueue int32
+	AdminID       int32
+}
+
+func (q *Queries) SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId(ctx context.Context, arg SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueIdParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, selectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId, arg.Idlinkerqueue, arg.AdminID)
 	if err != nil {
 		return 0, err
 	}
@@ -1328,22 +1366,34 @@ func (q *Queries) SetLinkerLastIndex(ctx context.Context, idlinker int32) error 
 }
 
 const updateLinkerCategorySortOrder = `-- name: UpdateLinkerCategorySortOrder :exec
-UPDATE linker_category SET sortorder = ? WHERE idlinkerCategory = ?
+UPDATE linker_category SET sortorder = ?
+WHERE idlinkerCategory = ?
+  AND EXISTS (
+    SELECT 1 FROM user_roles ur
+    JOIN roles r ON ur.role_id = r.id
+    WHERE ur.users_idusers = ? AND r.is_admin = 1
+  )
 `
 
 type UpdateLinkerCategorySortOrderParams struct {
 	Sortorder        int32
 	Idlinkercategory int32
+	AdminID          int32
 }
 
 func (q *Queries) UpdateLinkerCategorySortOrder(ctx context.Context, arg UpdateLinkerCategorySortOrderParams) error {
-	_, err := q.db.ExecContext(ctx, updateLinkerCategorySortOrder, arg.Sortorder, arg.Idlinkercategory)
+	_, err := q.db.ExecContext(ctx, updateLinkerCategorySortOrder, arg.Sortorder, arg.Idlinkercategory, arg.AdminID)
 	return err
 }
 
 const updateLinkerItem = `-- name: UpdateLinkerItem :exec
 UPDATE linker SET title = ?, url = ?, description = ?, linker_category_id = ?, language_idlanguage = ?
 WHERE idlinker = ?
+  AND EXISTS (
+    SELECT 1 FROM user_roles ur
+    JOIN roles r ON ur.role_id = r.id
+    WHERE ur.users_idusers = ? AND r.is_admin = 1
+  )
 `
 
 type UpdateLinkerItemParams struct {
@@ -1353,6 +1403,7 @@ type UpdateLinkerItemParams struct {
 	LinkerCategoryID   int32
 	LanguageIdlanguage int32
 	Idlinker           int32
+	AdminID            int32
 }
 
 func (q *Queries) UpdateLinkerItem(ctx context.Context, arg UpdateLinkerItemParams) error {
@@ -1363,12 +1414,19 @@ func (q *Queries) UpdateLinkerItem(ctx context.Context, arg UpdateLinkerItemPara
 		arg.LinkerCategoryID,
 		arg.LanguageIdlanguage,
 		arg.Idlinker,
+		arg.AdminID,
 	)
 	return err
 }
 
 const updateLinkerQueuedItem = `-- name: UpdateLinkerQueuedItem :exec
-UPDATE linker_queue SET linker_category_id = ?, title = ?, url = ?, description = ? WHERE idlinkerQueue = ?
+UPDATE linker_queue SET linker_category_id = ?, title = ?, url = ?, description = ?
+WHERE idlinkerQueue = ?
+  AND EXISTS (
+    SELECT 1 FROM user_roles ur
+    JOIN roles r ON ur.role_id = r.id
+    WHERE ur.users_idusers = ? AND r.is_admin = 1
+  )
 `
 
 type UpdateLinkerQueuedItemParams struct {
@@ -1377,6 +1435,7 @@ type UpdateLinkerQueuedItemParams struct {
 	Url              sql.NullString
 	Description      sql.NullString
 	Idlinkerqueue    int32
+	AdminID          int32
 }
 
 func (q *Queries) UpdateLinkerQueuedItem(ctx context.Context, arg UpdateLinkerQueuedItemParams) error {
@@ -1386,6 +1445,7 @@ func (q *Queries) UpdateLinkerQueuedItem(ctx context.Context, arg UpdateLinkerQu
 		arg.Url,
 		arg.Description,
 		arg.Idlinkerqueue,
+		arg.AdminID,
 	)
 	return err
 }

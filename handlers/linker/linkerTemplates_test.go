@@ -34,7 +34,7 @@ func requireNotificationTemplate(t *testing.T, name *string) {
 
 func TestLinkerTemplatesExist(t *testing.T) {
 	requireEmailTemplates(t, "linkerAddEmail")
-	requireNotificationTemplate(t, AddTask.SubscribedInternalNotificationTemplate())
+	requireNotificationTemplate(t, AdminAddTask.SubscribedInternalNotificationTemplate())
 	requireEmailTemplates(t, "adminNotificationLinkerAddEmail")
-	requireNotificationTemplate(t, AddTask.AdminInternalNotificationTemplate())
+	requireNotificationTemplate(t, AdminAddTask.AdminInternalNotificationTemplate())
 }

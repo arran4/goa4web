@@ -19,7 +19,7 @@ import (
 // bulkApproveTask approves multiple queued linker items.
 type bulkApproveTask struct{ tasks.TaskString }
 
-var BulkApproveTask = &bulkApproveTask{TaskString: TaskBulkApprove}
+var AdminBulkApproveTask = &bulkApproveTask{TaskString: TaskBulkApprove}
 
 var (
 	_ tasks.Task                                    = (*bulkApproveTask)(nil)
@@ -45,12 +45,15 @@ func (bulkApproveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	var links []map[string]any
 	for _, q := range r.Form["qid"] {
 		id, _ := strconv.Atoi(q)
-		lid, err := queries.SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId(r.Context(), int32(id))
+		cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		lid, err := queries.SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId(r.Context(), db.SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueIdParams{
+			Idlinkerqueue: int32(id),
+			AdminID:       cd.UserID,
+		})
 		if err != nil {
 			log.Printf("selectInsert Error: %s", err)
 			continue
 		}
-		cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 		link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(r.Context(), db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams{
 			ViewerID:     cd.UserID,
 			Idlinker:     int32(lid),

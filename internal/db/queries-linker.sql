@@ -1,11 +1,29 @@
 -- name: DeleteLinkerCategory :exec
-DELETE FROM linker_category WHERE idlinkerCategory = ?;
+DELETE FROM linker_category
+WHERE idlinkerCategory = ?
+  AND EXISTS (
+    SELECT 1 FROM user_roles ur
+    JOIN roles r ON ur.role_id = r.id
+    WHERE ur.users_idusers = sqlc.arg(admin_id) AND r.is_admin = 1
+  );
 
 -- name: RenameLinkerCategory :exec
-UPDATE linker_category SET title = ?, position = ? WHERE idlinkerCategory = ?;
+UPDATE linker_category SET title = ?, position = ?
+WHERE idlinkerCategory = ?
+  AND EXISTS (
+    SELECT 1 FROM user_roles ur
+    JOIN roles r ON ur.role_id = r.id
+    WHERE ur.users_idusers = sqlc.arg(admin_id) AND r.is_admin = 1
+  );
 
 -- name: CreateLinkerCategory :exec
-INSERT INTO linker_category (title, position) VALUES (?, ?);
+INSERT INTO linker_category (title, position)
+SELECT sqlc.arg(title), sqlc.arg(position)
+WHERE EXISTS (
+    SELECT 1 FROM user_roles ur
+    JOIN roles r ON ur.role_id = r.id
+    WHERE ur.users_idusers = sqlc.arg(admin_id) AND r.is_admin = 1
+);
 
 -- name: GetAllLinkerCategories :many
 SELECT
@@ -42,31 +60,41 @@ WHERE EXISTS (
       AND (g.user_id = sqlc.arg(viewer_user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
+  AND EXISTS (
+    SELECT 1 FROM linker l
+    WHERE l.linker_category_id = lc.idlinkerCategory
+      AND l.listed IS NOT NULL
+      AND l.deleted_at IS NULL
+  )
 ORDER BY lc.position;
 
 -- name: GetLinkerCategoryLinkCounts :many
 SELECT c.idlinkerCategory, c.title, c.position, COUNT(l.idlinker) as LinkCount
 FROM linker_category c
-LEFT JOIN linker l ON c.idlinkerCategory = l.linker_category_id
+LEFT JOIN linker l ON c.idlinkerCategory = l.linker_category_id AND l.listed IS NOT NULL AND l.deleted_at IS NULL
 GROUP BY c.idlinkerCategory
 ORDER BY c.position
 ;
 
--- name: GetAllLinkerCategoriesWithSortOrder :many
-SELECT
-    idlinkerCategory,
-    position,
-    title,
-    sortorder
-FROM linker_category
-ORDER BY sortorder;
 
 
 -- name: DeleteLinkerQueuedItem :exec
-DELETE FROM linker_queue WHERE idlinkerQueue = ?;
+DELETE FROM linker_queue
+WHERE idlinkerQueue = ?
+  AND EXISTS (
+    SELECT 1 FROM user_roles ur
+    JOIN roles r ON ur.role_id = r.id
+    WHERE ur.users_idusers = sqlc.arg(admin_id) AND r.is_admin = 1
+  );
 
 -- name: UpdateLinkerQueuedItem :exec
-UPDATE linker_queue SET linker_category_id = ?, title = ?, url = ?, description = ? WHERE idlinkerQueue = ?;
+UPDATE linker_queue SET linker_category_id = ?, title = ?, url = ?, description = ?
+WHERE idlinkerQueue = ?
+  AND EXISTS (
+    SELECT 1 FROM user_roles ur
+    JOIN roles r ON ur.role_id = r.id
+    WHERE ur.users_idusers = sqlc.arg(admin_id) AND r.is_admin = 1
+  );
 
 -- name: CreateLinkerQueuedItem :exec
 INSERT INTO linker_queue (users_idusers, linker_category_id, title, url, description) VALUES (?, ?, ?, ?, ?);
@@ -82,15 +110,29 @@ INSERT INTO linker (users_idusers, linker_category_id, language_idlanguage, titl
 SELECT l.users_idusers, l.linker_category_id, l.language_idlanguage, l.title, l.url, l.description
 FROM linker_queue l
 WHERE l.idlinkerQueue = ?
-;
+  AND EXISTS (
+    SELECT 1 FROM user_roles ur
+    JOIN roles r ON ur.role_id = r.id
+    WHERE ur.users_idusers = sqlc.arg(admin_id) AND r.is_admin = 1
+  );
 
 -- name: CreateLinkerItem :exec
 INSERT INTO linker (users_idusers, linker_category_id, title, url, description, listed)
-VALUES (?, ?, ?, ?, ?, NOW());
+SELECT sqlc.arg(users_idusers), sqlc.arg(linker_category_id), sqlc.arg(title), sqlc.arg(url), sqlc.arg(description), NOW()
+WHERE EXISTS (
+    SELECT 1 FROM user_roles ur
+    JOIN roles r ON ur.role_id = r.id
+    WHERE ur.users_idusers = sqlc.arg(admin_id) AND r.is_admin = 1
+);
 
 -- name: UpdateLinkerItem :exec
 UPDATE linker SET title = ?, url = ?, description = ?, linker_category_id = ?, language_idlanguage = ?
-WHERE idlinker = ?;
+WHERE idlinker = ?
+  AND EXISTS (
+    SELECT 1 FROM user_roles ur
+    JOIN roles r ON ur.role_id = r.id
+    WHERE ur.users_idusers = sqlc.arg(admin_id) AND r.is_admin = 1
+  );
 
 -- name: AssignLinkerThisThreadId :exec
 UPDATE linker SET forumthread_id = ? WHERE idlinker = ?;
@@ -102,6 +144,8 @@ LEFT JOIN users u ON l.users_idusers = u.idusers
 LEFT JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
 LEFT JOIN forumthread th ON l.forumthread_id = th.idforumthread
 WHERE (lc.idlinkerCategory = sqlc.arg(idlinkercategory) OR sqlc.arg(idlinkercategory) = 0)
+  AND l.listed IS NOT NULL
+  AND l.deleted_at IS NULL
 ORDER BY l.listed DESC;
 
 -- name: GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUser :many
@@ -119,6 +163,8 @@ LEFT JOIN users u ON l.users_idusers = u.idusers
 LEFT JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
 LEFT JOIN forumthread th ON l.forumthread_id = th.idforumthread
 WHERE (lc.idlinkerCategory = sqlc.arg(idlinkercategory) OR sqlc.arg(idlinkercategory) = 0)
+  AND l.listed IS NOT NULL
+  AND l.deleted_at IS NULL
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='linker'
@@ -156,6 +202,8 @@ LEFT JOIN users u ON l.users_idusers = u.idusers
 LEFT JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
 LEFT JOIN forumthread th ON l.forumthread_id = th.idforumthread
 WHERE (lc.idlinkerCategory = sqlc.arg(idlinkercategory) OR sqlc.arg(idlinkercategory) = 0)
+  AND l.listed IS NOT NULL
+  AND l.deleted_at IS NULL
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='linker'
@@ -184,6 +232,8 @@ LEFT JOIN users u ON l.users_idusers = u.idusers
 LEFT JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
 LEFT JOIN forumthread th ON l.forumthread_id = th.idforumthread
 WHERE l.users_idusers = sqlc.arg(user_id)
+  AND l.listed IS NOT NULL
+  AND l.deleted_at IS NULL
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='linker'
@@ -218,6 +268,8 @@ FROM linker l
 JOIN users u ON l.users_idusers = u.idusers
 JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
 WHERE l.idlinker = sqlc.arg(idlinker)
+  AND l.listed IS NOT NULL
+  AND l.deleted_at IS NULL
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='linker'
@@ -251,6 +303,8 @@ FROM linker l
 JOIN users u ON l.users_idusers = u.idusers
 JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
 WHERE l.idlinker IN (sqlc.slice(linkerIds))
+  AND l.listed IS NOT NULL
+  AND l.deleted_at IS NULL
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='linker'
@@ -265,12 +319,18 @@ WHERE l.idlinker IN (sqlc.slice(linkerIds))
 -- name: GetLinkerCategoriesWithCount :many
 SELECT c.idlinkerCategory, c.title, c.sortorder, COUNT(l.idlinker) AS linkcount
 FROM linker_category c
-LEFT JOIN linker l ON l.linker_category_id = c.idlinkerCategory
+LEFT JOIN linker l ON l.linker_category_id = c.idlinkerCategory AND l.listed IS NOT NULL AND l.deleted_at IS NULL
 GROUP BY c.idlinkerCategory
 ORDER BY c.sortorder;
 
 -- name: UpdateLinkerCategorySortOrder :exec
-UPDATE linker_category SET sortorder = ? WHERE idlinkerCategory = ?;
+UPDATE linker_category SET sortorder = ?
+WHERE idlinkerCategory = ?
+  AND EXISTS (
+    SELECT 1 FROM user_roles ur
+    JOIN roles r ON ur.role_id = r.id
+    WHERE ur.users_idusers = sqlc.arg(admin_id) AND r.is_admin = 1
+  );
 
 -- name: CountLinksByCategory :one
 SELECT COUNT(*) FROM linker WHERE linker_category_id = ?;
@@ -319,7 +379,7 @@ ORDER BY l.listed DESC
 LIMIT ? OFFSET ?;
 
 -- name: GetAllLinkersForIndex :many
-SELECT idlinker, title, description FROM linker WHERE deleted_at IS NULL;
+SELECT idlinker, title, description FROM linker WHERE deleted_at IS NULL AND listed IS NOT NULL;
 
 -- name: GetLinkerCategoryById :one
 SELECT * FROM linker_category WHERE idlinkerCategory = ?;

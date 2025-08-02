@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"net/mail"
+	"strconv"
 	"strings"
 
 	"github.com/arran4/goa4web/core/common"
@@ -14,7 +15,7 @@ import (
 
 func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 	type EmailItem struct {
-		*db.ListUnsentPendingEmailsRow
+		*db.AdminListUnsentPendingEmailsRow
 		Email   string
 		Subject string
 	}
@@ -28,7 +29,12 @@ func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 		CoreData: cd,
 	}
 	queries := cd.Queries()
-	rows, err := queries.ListUnsentPendingEmails(r.Context())
+	langID, _ := strconv.Atoi(r.URL.Query().Get("lang"))
+	role := r.URL.Query().Get("role")
+	rows, err := queries.AdminListUnsentPendingEmails(r.Context(), db.AdminListUnsentPendingEmailsParams{
+		LanguageID: int32(langID),
+		RoleName:   role,
+	})
 	if err != nil {
 		log.Printf("list pending emails: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

@@ -22,20 +22,20 @@ func adminRolePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
 
-	role, err := queries.GetRoleByID(r.Context(), int32(id))
+	role, err := queries.AdminGetRoleByID(r.Context(), int32(id))
 	if err != nil {
 		http.Error(w, "role not found", http.StatusNotFound)
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Role %s", role.Name)
 
-	users, err := queries.ListUsersByRoleID(r.Context(), int32(id))
+	users, err := queries.AdminListUsersByRoleID(r.Context(), int32(id))
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	grants, err := queries.ListGrantsByRoleID(r.Context(), sql.NullInt32{Int32: int32(id), Valid: true})
+	grants, err := queries.AdminListGrantsByRoleID(r.Context(), sql.NullInt32{Int32: int32(id), Valid: true})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -82,7 +82,7 @@ func adminRolePage(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		*common.CoreData
 		Role   *db.Role
-		Users  []*db.ListUsersByRoleIDRow
+		Users  []*db.AdminListUsersByRoleIDRow
 		Grants []GrantInfo
 	}{
 		CoreData: cd,

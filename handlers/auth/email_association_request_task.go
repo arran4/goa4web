@@ -53,7 +53,7 @@ func (EmailAssociationRequestTask) Action(w http.ResponseWriter, r *http.Request
 		return fmt.Errorf("insert admin request %w", err)
 	}
 	id, _ := res.LastInsertId()
-	_ = queries.InsertAdminRequestComment(r.Context(), db.InsertAdminRequestCommentParams{RequestID: int32(id), Comment: reason})
+	_ = queries.AdminInsertRequestComment(r.Context(), db.AdminInsertRequestCommentParams{RequestID: int32(id), Comment: reason})
 	_ = queries.InsertAdminUserComment(r.Context(), db.InsertAdminUserCommentParams{UsersIdusers: row.Idusers, Comment: "email association requested"})
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {

@@ -77,7 +77,7 @@ func adminRequestPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
-	comments, _ := queries.ListAdminRequestComments(r.Context(), int32(id))
+	comments, _ := queries.AdminListRequestComments(r.Context(), int32(id))
 	user, _ := queries.GetUserById(r.Context(), req.UsersIdusers)
 	data := struct {
 		*common.CoreData
@@ -110,7 +110,7 @@ func adminRequestAddCommentPage(w http.ResponseWriter, r *http.Request) {
 	}
 	if comment == "" || id == 0 {
 		data.Errors = append(data.Errors, "invalid")
-	} else if err := queries.InsertAdminRequestComment(r.Context(), db.InsertAdminRequestCommentParams{RequestID: int32(id), Comment: comment}); err != nil {
+	} else if err := queries.AdminInsertRequestComment(r.Context(), db.AdminInsertRequestCommentParams{RequestID: int32(id), Comment: comment}); err != nil {
 		data.Errors = append(data.Errors, err.Error())
 	} else {
 		data.Messages = append(data.Messages, "comment added")
@@ -146,11 +146,11 @@ func handleRequestAction(w http.ResponseWriter, r *http.Request, status string) 
 	} else {
 		auto = fmt.Sprintf("status changed to %s", status)
 		data.Messages = append(data.Messages, auto)
-		if err := queries.InsertAdminRequestComment(r.Context(), db.InsertAdminRequestCommentParams{RequestID: int32(id), Comment: auto}); err != nil {
+		if err := queries.AdminInsertRequestComment(r.Context(), db.AdminInsertRequestCommentParams{RequestID: int32(id), Comment: auto}); err != nil {
 			data.Errors = append(data.Errors, err.Error())
 		}
 		if comment != "" {
-			if err := queries.InsertAdminRequestComment(r.Context(), db.InsertAdminRequestCommentParams{RequestID: int32(id), Comment: comment}); err != nil {
+			if err := queries.AdminInsertRequestComment(r.Context(), db.AdminInsertRequestCommentParams{RequestID: int32(id), Comment: comment}); err != nil {
 				data.Errors = append(data.Errors, err.Error())
 			}
 		}

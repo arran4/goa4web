@@ -30,7 +30,7 @@ func (RefreshExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) an
 	uid := sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0}
 	for _, idStr := range r.Form["id"] {
 		id, _ := strconv.Atoi(idStr)
-		if err := queries.ClearExternalLinkCache(r.Context(), db.ClearExternalLinkCacheParams{UpdatedBy: uid, ID: int32(id)}); err != nil {
+		if err := queries.ClearExternalLinkCache(r.Context(), db.ClearExternalLinkCacheParams{UpdatedBy: uid, AdminID: uid.Int32, ID: int32(id)}); err != nil {
 			return fmt.Errorf("clear external link cache fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		if evt := cd.Event(); evt != nil {
@@ -64,9 +64,10 @@ func (DeleteExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) any
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	queries := cd.Queries()
+	uid := sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0}
 	for _, idStr := range r.Form["id"] {
 		id, _ := strconv.Atoi(idStr)
-		if err := queries.DeleteExternalLink(r.Context(), int32(id)); err != nil {
+		if err := queries.DeleteExternalLink(r.Context(), db.DeleteExternalLinkParams{ID: int32(id), AdminID: uid.Int32}); err != nil {
 			return fmt.Errorf("delete external link fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		if evt := cd.Event(); evt != nil {

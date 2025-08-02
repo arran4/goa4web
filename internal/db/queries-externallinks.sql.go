@@ -11,25 +11,47 @@ import (
 )
 
 const clearExternalLinkCache = `-- name: ClearExternalLinkCache :exec
-UPDATE external_links SET card_image_cache = NULL, favicon_cache = NULL, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE id = ?
+UPDATE external_links
+SET card_image_cache = NULL,
+    favicon_cache    = NULL,
+    updated_at       = CURRENT_TIMESTAMP,
+    updated_by       = ?
+WHERE external_links.id = ?
+  AND EXISTS (
+    SELECT 1 FROM user_roles ur
+    JOIN roles r ON ur.role_id = r.id AND r.is_admin = 1
+    WHERE ur.users_idusers = ?
+  )
 `
 
 type ClearExternalLinkCacheParams struct {
 	UpdatedBy sql.NullInt32
 	ID        int32
+	AdminID   int32
 }
 
 func (q *Queries) ClearExternalLinkCache(ctx context.Context, arg ClearExternalLinkCacheParams) error {
-	_, err := q.db.ExecContext(ctx, clearExternalLinkCache, arg.UpdatedBy, arg.ID)
+	_, err := q.db.ExecContext(ctx, clearExternalLinkCache, arg.UpdatedBy, arg.ID, arg.AdminID)
 	return err
 }
 
 const deleteExternalLink = `-- name: DeleteExternalLink :exec
-DELETE FROM external_links WHERE id = ?
+DELETE FROM external_links
+WHERE external_links.id = ?
+  AND EXISTS (
+    SELECT 1 FROM user_roles ur
+    JOIN roles r ON ur.role_id = r.id AND r.is_admin = 1
+    WHERE ur.users_idusers = ?
+  )
 `
 
-func (q *Queries) DeleteExternalLink(ctx context.Context, id int32) error {
-	_, err := q.db.ExecContext(ctx, deleteExternalLink, id)
+type DeleteExternalLinkParams struct {
+	ID      int32
+	AdminID int32
+}
+
+func (q *Queries) DeleteExternalLink(ctx context.Context, arg DeleteExternalLinkParams) error {
+	_, err := q.db.ExecContext(ctx, deleteExternalLink, arg.ID, arg.AdminID)
 	return err
 }
 
@@ -39,29 +61,6 @@ SELECT id, url, clicks, created_at, updated_at, updated_by, card_title, card_des
 
 func (q *Queries) GetExternalLink(ctx context.Context, url string) (*ExternalLink, error) {
 	row := q.db.QueryRowContext(ctx, getExternalLink, url)
-	var i ExternalLink
-	err := row.Scan(
-		&i.ID,
-		&i.Url,
-		&i.Clicks,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.UpdatedBy,
-		&i.CardTitle,
-		&i.CardDescription,
-		&i.CardImage,
-		&i.CardImageCache,
-		&i.FaviconCache,
-	)
-	return &i, err
-}
-
-const getExternalLinkByID = `-- name: GetExternalLinkByID :one
-SELECT id, url, clicks, created_at, updated_at, updated_by, card_title, card_description, card_image, card_image_cache, favicon_cache FROM external_links WHERE id = ? LIMIT 1
-`
-
-func (q *Queries) GetExternalLinkByID(ctx context.Context, id int32) (*ExternalLink, error) {
-	row := q.db.QueryRowContext(ctx, getExternalLinkByID, id)
 	var i ExternalLink
 	err := row.Scan(
 		&i.ID,
@@ -133,36 +132,5 @@ ON DUPLICATE KEY UPDATE clicks = clicks + 1
 
 func (q *Queries) RegisterExternalLinkClick(ctx context.Context, url string) error {
 	_, err := q.db.ExecContext(ctx, registerExternalLinkClick, url)
-	return err
-}
-
-const updateExternalLink = `-- name: UpdateExternalLink :exec
-UPDATE external_links
-SET url = ?, card_title = ?, card_description = ?, card_image = ?, card_image_cache = ?, favicon_cache = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?
-WHERE id = ?
-`
-
-type UpdateExternalLinkParams struct {
-	Url             string
-	CardTitle       sql.NullString
-	CardDescription sql.NullString
-	CardImage       sql.NullString
-	CardImageCache  sql.NullString
-	FaviconCache    sql.NullString
-	UpdatedBy       sql.NullInt32
-	ID              int32
-}
-
-func (q *Queries) UpdateExternalLink(ctx context.Context, arg UpdateExternalLinkParams) error {
-	_, err := q.db.ExecContext(ctx, updateExternalLink,
-		arg.Url,
-		arg.CardTitle,
-		arg.CardDescription,
-		arg.CardImage,
-		arg.CardImageCache,
-		arg.FaviconCache,
-		arg.UpdatedBy,
-		arg.ID,
-	)
 	return err
 }

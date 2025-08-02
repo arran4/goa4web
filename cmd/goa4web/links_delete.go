@@ -37,7 +37,7 @@ func (c *linksDeleteCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
-	if err := queries.DeleteExternalLink(ctx, int32(c.ID)); err != nil {
+	if err := queries.DeleteExternalLink(ctx, dbpkg.DeleteExternalLinkParams{ID: int32(c.ID), AdminID: 0}); err != nil {
 		return fmt.Errorf("delete link: %w", err)
 	}
 	return nil

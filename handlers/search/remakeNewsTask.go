@@ -36,7 +36,7 @@ func (RemakeNewsTask) Action(w http.ResponseWriter, r *http.Request) any {
 }
 
 func (RemakeNewsTask) BackgroundTask(ctx context.Context, q *dbpkg.Queries) (tasks.Task, error) {
-	if err := q.DeleteSiteNewsSearch(ctx); err != nil {
+	if err := q.SystemDeleteSiteNewsSearch(ctx); err != nil {
 		return nil, err
 	}
 	rows, err := q.GetAllSiteNewsForIndex(ctx)
@@ -50,7 +50,7 @@ func (RemakeNewsTask) BackgroundTask(ctx context.Context, q *dbpkg.Queries) (tas
 			continue
 		}
 		if err := indexText(ctx, q, cache, text, func(c context.Context, wid int64, count int32) error {
-			return q.AddToSiteNewsSearch(c, dbpkg.AddToSiteNewsSearchParams{
+			return q.SystemAddToSiteNewsSearch(c, dbpkg.SystemAddToSiteNewsSearchParams{
 				SiteNewsID:                     row.Idsitenews,
 				SearchwordlistIdsearchwordlist: int32(wid),
 				WordCount:                      count,

@@ -24,7 +24,7 @@ func TestNewsSearchFiltersUnauthorized(t *testing.T) {
 
 	firstRows := sqlmock.NewRows([]string{"site_news_id"}).AddRow(1).AddRow(2)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT DISTINCT cs.site_news_id")).
-		WithArgs(sql.NullString{String: "foo", Valid: true}).
+		WithArgs(int32(1), sql.NullString{String: "foo", Valid: true}, int32(1), int32(1), sql.NullInt32{Int32: 1, Valid: true}).
 		WillReturnRows(firstRows)
 
 	newsRows := sqlmock.NewRows([]string{

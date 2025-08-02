@@ -36,7 +36,7 @@ func (RemakeImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 }
 
 func (RemakeImageTask) BackgroundTask(ctx context.Context, q *dbpkg.Queries) (tasks.Task, error) {
-	if err := q.DeleteImagePostSearch(ctx); err != nil {
+	if err := q.SystemDeleteImagePostSearch(ctx); err != nil {
 		return nil, err
 	}
 	rows, err := q.GetAllImagePostsForIndex(ctx)
@@ -50,7 +50,7 @@ func (RemakeImageTask) BackgroundTask(ctx context.Context, q *dbpkg.Queries) (ta
 			continue
 		}
 		if err := indexText(ctx, q, cache, text, func(c context.Context, wid int64, count int32) error {
-			return q.AddToImagePostSearch(c, dbpkg.AddToImagePostSearchParams{
+			return q.SystemAddToImagePostSearch(c, dbpkg.SystemAddToImagePostSearchParams{
 				ImagePostID:                    row.Idimagepost,
 				SearchwordlistIdsearchwordlist: int32(wid),
 				WordCount:                      count,

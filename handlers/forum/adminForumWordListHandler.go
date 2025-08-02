@@ -25,7 +25,7 @@ func AdminForumWordListPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := cd.Queries()
 
-	rows, err := queries.CompleteWordList(r.Context())
+	rows, err := queries.AdminCompleteWordList(r.Context())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

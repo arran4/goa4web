@@ -36,7 +36,7 @@ func (RemakeLinkerTask) Action(w http.ResponseWriter, r *http.Request) any {
 }
 
 func (RemakeLinkerTask) BackgroundTask(ctx context.Context, q *dbpkg.Queries) (tasks.Task, error) {
-	if err := q.DeleteLinkerSearch(ctx); err != nil {
+	if err := q.SystemDeleteLinkerSearch(ctx); err != nil {
 		return nil, err
 	}
 	rows, err := q.GetAllLinkersForIndex(ctx)
@@ -50,7 +50,7 @@ func (RemakeLinkerTask) BackgroundTask(ctx context.Context, q *dbpkg.Queries) (t
 			continue
 		}
 		if err := indexText(ctx, q, cache, text, func(c context.Context, wid int64, count int32) error {
-			return q.AddToLinkerSearch(c, dbpkg.AddToLinkerSearchParams{
+			return q.SystemAddToLinkerSearch(c, dbpkg.SystemAddToLinkerSearchParams{
 				LinkerID:                       row.Idlinker,
 				SearchwordlistIdsearchwordlist: int32(wid),
 				WordCount:                      count,

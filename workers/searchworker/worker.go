@@ -64,25 +64,25 @@ func index(ctx context.Context, q *dbpkg.Queries, data IndexEventData) error {
 		counts[strings.ToLower(w)]++
 	}
 	for word, count := range counts {
-		id, err := q.CreateSearchWord(ctx, strings.ToLower(word))
+		id, err := q.SystemCreateSearchWord(ctx, strings.ToLower(word))
 		if err != nil {
 			return err
 		}
 		switch data.Type {
 		case TypeComment:
-			if err := q.AddToForumCommentSearch(ctx, dbpkg.AddToForumCommentSearchParams{CommentID: data.ID, SearchwordlistIdsearchwordlist: int32(id), WordCount: count}); err != nil {
+			if err := q.SystemAddToForumCommentSearch(ctx, dbpkg.SystemAddToForumCommentSearchParams{CommentID: data.ID, SearchwordlistIdsearchwordlist: int32(id), WordCount: count}); err != nil {
 				return err
 			}
 		case TypeWriting:
-			if err := q.AddToForumWritingSearch(ctx, dbpkg.AddToForumWritingSearchParams{WritingID: data.ID, SearchwordlistIdsearchwordlist: int32(id), WordCount: count}); err != nil {
+			if err := q.SystemAddToForumWritingSearch(ctx, dbpkg.SystemAddToForumWritingSearchParams{WritingID: data.ID, SearchwordlistIdsearchwordlist: int32(id), WordCount: count}); err != nil {
 				return err
 			}
 		case TypeLinker:
-			if err := q.AddToLinkerSearch(ctx, dbpkg.AddToLinkerSearchParams{LinkerID: data.ID, SearchwordlistIdsearchwordlist: int32(id), WordCount: count}); err != nil {
+			if err := q.SystemAddToLinkerSearch(ctx, dbpkg.SystemAddToLinkerSearchParams{LinkerID: data.ID, SearchwordlistIdsearchwordlist: int32(id), WordCount: count}); err != nil {
 				return err
 			}
 		case TypeImage:
-			if err := q.AddToImagePostSearch(ctx, dbpkg.AddToImagePostSearchParams{ImagePostID: data.ID, SearchwordlistIdsearchwordlist: int32(id), WordCount: count}); err != nil {
+			if err := q.SystemAddToImagePostSearch(ctx, dbpkg.SystemAddToImagePostSearchParams{ImagePostID: data.ID, SearchwordlistIdsearchwordlist: int32(id), WordCount: count}); err != nil {
 				return err
 			}
 		}

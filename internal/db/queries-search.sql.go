@@ -11,132 +11,207 @@ import (
 	"strings"
 )
 
-const addToBlogsSearch = `-- name: AddToBlogsSearch :exec
-INSERT INTO blogs_search
-(blog_id, searchwordlist_idsearchwordlist, word_count)
-VALUES (?, ?, ?)
-ON DUPLICATE KEY UPDATE word_count=VALUES(word_count)
+const adminCompleteWordList = `-- name: AdminCompleteWordList :many
+SELECT word
+FROM searchwordlist
 `
 
-type AddToBlogsSearchParams struct {
-	BlogID                         int32
-	SearchwordlistIdsearchwordlist int32
-	WordCount                      int32
+// This query selects all words from the "searchwordlist" table and prints them.
+func (q *Queries) AdminCompleteWordList(ctx context.Context) ([]sql.NullString, error) {
+	rows, err := q.db.QueryContext(ctx, adminCompleteWordList)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []sql.NullString
+	for rows.Next() {
+		var word sql.NullString
+		if err := rows.Scan(&word); err != nil {
+			return nil, err
+		}
+		items = append(items, word)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
-func (q *Queries) AddToBlogsSearch(ctx context.Context, arg AddToBlogsSearchParams) error {
-	_, err := q.db.ExecContext(ctx, addToBlogsSearch, arg.BlogID, arg.SearchwordlistIdsearchwordlist, arg.WordCount)
-	return err
-}
-
-const addToForumCommentSearch = `-- name: AddToForumCommentSearch :exec
-INSERT INTO comments_search
-(comment_id, searchwordlist_idsearchwordlist, word_count)
-VALUES (?, ?, ?)
-ON DUPLICATE KEY UPDATE word_count=VALUES(word_count)
+const adminCountWordList = `-- name: AdminCountWordList :one
+SELECT COUNT(*)
+FROM searchwordlist
 `
 
-type AddToForumCommentSearchParams struct {
-	CommentID                      int32
-	SearchwordlistIdsearchwordlist int32
-	WordCount                      int32
+func (q *Queries) AdminCountWordList(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, adminCountWordList)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
-func (q *Queries) AddToForumCommentSearch(ctx context.Context, arg AddToForumCommentSearchParams) error {
-	_, err := q.db.ExecContext(ctx, addToForumCommentSearch, arg.CommentID, arg.SearchwordlistIdsearchwordlist, arg.WordCount)
-	return err
-}
-
-const addToForumWritingSearch = `-- name: AddToForumWritingSearch :exec
-INSERT INTO writing_search
-(writing_id, searchwordlist_idsearchwordlist, word_count)
-VALUES (?, ?, ?)
-ON DUPLICATE KEY UPDATE word_count=VALUES(word_count)
+const adminCountWordListByPrefix = `-- name: AdminCountWordListByPrefix :one
+SELECT COUNT(*)
+FROM searchwordlist
+WHERE word LIKE CONCAT(?, '%')
 `
 
-type AddToForumWritingSearchParams struct {
-	WritingID                      int32
-	SearchwordlistIdsearchwordlist int32
-	WordCount                      int32
+func (q *Queries) AdminCountWordListByPrefix(ctx context.Context, prefix interface{}) (int64, error) {
+	row := q.db.QueryRowContext(ctx, adminCountWordListByPrefix, prefix)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
-func (q *Queries) AddToForumWritingSearch(ctx context.Context, arg AddToForumWritingSearchParams) error {
-	_, err := q.db.ExecContext(ctx, addToForumWritingSearch, arg.WritingID, arg.SearchwordlistIdsearchwordlist, arg.WordCount)
-	return err
-}
-
-const addToImagePostSearch = `-- name: AddToImagePostSearch :exec
-INSERT INTO imagepost_search
-(image_post_id, searchwordlist_idsearchwordlist, word_count)
-VALUES (?, ?, ?)
-ON DUPLICATE KEY UPDATE word_count=VALUES(word_count)
+const adminWordListWithCounts = `-- name: AdminWordListWithCounts :many
+SELECT swl.word,
+       (SELECT IFNULL(SUM(cs.word_count),0) FROM comments_search cs WHERE cs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT IFNULL(SUM(ns.word_count),0) FROM site_news_search ns WHERE ns.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT IFNULL(SUM(bs.word_count),0) FROM blogs_search bs WHERE bs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT IFNULL(SUM(ls.word_count),0) FROM linker_search ls WHERE ls.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT IFNULL(SUM(ws.word_count),0) FROM writing_search ws WHERE ws.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT IFNULL(SUM(ips.word_count),0) FROM imagepost_search ips WHERE ips.searchwordlist_idsearchwordlist=swl.idsearchwordlist) AS count
+FROM searchwordlist swl
+ORDER BY swl.word
+LIMIT ? OFFSET ?
 `
 
-type AddToImagePostSearchParams struct {
-	ImagePostID                    int32
-	SearchwordlistIdsearchwordlist int32
-	WordCount                      int32
+type AdminWordListWithCountsParams struct {
+	Limit  int32
+	Offset int32
 }
 
-func (q *Queries) AddToImagePostSearch(ctx context.Context, arg AddToImagePostSearchParams) error {
-	_, err := q.db.ExecContext(ctx, addToImagePostSearch, arg.ImagePostID, arg.SearchwordlistIdsearchwordlist, arg.WordCount)
-	return err
+type AdminWordListWithCountsRow struct {
+	Word  sql.NullString
+	Count int32
 }
 
-const addToLinkerSearch = `-- name: AddToLinkerSearch :exec
-INSERT INTO linker_search
-(linker_id, searchwordlist_idsearchwordlist, word_count)
-VALUES (?, ?, ?)
-ON DUPLICATE KEY UPDATE word_count=VALUES(word_count)
+// Show each search word with total usage counts across all search tables.
+func (q *Queries) AdminWordListWithCounts(ctx context.Context, arg AdminWordListWithCountsParams) ([]*AdminWordListWithCountsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminWordListWithCounts, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminWordListWithCountsRow
+	for rows.Next() {
+		var i AdminWordListWithCountsRow
+		if err := rows.Scan(&i.Word, &i.Count); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminWordListWithCountsByPrefix = `-- name: AdminWordListWithCountsByPrefix :many
+SELECT swl.word,
+       (SELECT IFNULL(SUM(cs.word_count),0) FROM comments_search cs WHERE cs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT IFNULL(SUM(ns.word_count),0) FROM site_news_search ns WHERE ns.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT IFNULL(SUM(bs.word_count),0) FROM blogs_search bs WHERE bs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT IFNULL(SUM(ls.word_count),0) FROM linker_search ls WHERE ls.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT IFNULL(SUM(ws.word_count),0) FROM writing_search ws WHERE ws.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
+       + (SELECT IFNULL(SUM(ips.word_count),0) FROM imagepost_search ips WHERE ips.searchwordlist_idsearchwordlist=swl.idsearchwordlist) AS count
+FROM searchwordlist swl
+WHERE swl.word LIKE CONCAT(?, '%')
+ORDER BY swl.word
+LIMIT ? OFFSET ?
 `
 
-type AddToLinkerSearchParams struct {
-	LinkerID                       int32
-	SearchwordlistIdsearchwordlist int32
-	WordCount                      int32
+type AdminWordListWithCountsByPrefixParams struct {
+	Prefix interface{}
+	Limit  int32
+	Offset int32
 }
 
-func (q *Queries) AddToLinkerSearch(ctx context.Context, arg AddToLinkerSearchParams) error {
-	_, err := q.db.ExecContext(ctx, addToLinkerSearch, arg.LinkerID, arg.SearchwordlistIdsearchwordlist, arg.WordCount)
-	return err
+type AdminWordListWithCountsByPrefixRow struct {
+	Word  sql.NullString
+	Count int32
 }
 
-const addToSiteNewsSearch = `-- name: AddToSiteNewsSearch :exec
-INSERT INTO site_news_search
-(site_news_id, searchwordlist_idsearchwordlist, word_count)
-VALUES (?, ?, ?)
-ON DUPLICATE KEY UPDATE word_count=VALUES(word_count)
-`
-
-type AddToSiteNewsSearchParams struct {
-	SiteNewsID                     int32
-	SearchwordlistIdsearchwordlist int32
-	WordCount                      int32
-}
-
-func (q *Queries) AddToSiteNewsSearch(ctx context.Context, arg AddToSiteNewsSearchParams) error {
-	_, err := q.db.ExecContext(ctx, addToSiteNewsSearch, arg.SiteNewsID, arg.SearchwordlistIdsearchwordlist, arg.WordCount)
-	return err
+func (q *Queries) AdminWordListWithCountsByPrefix(ctx context.Context, arg AdminWordListWithCountsByPrefixParams) ([]*AdminWordListWithCountsByPrefixRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminWordListWithCountsByPrefix, arg.Prefix, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminWordListWithCountsByPrefixRow
+	for rows.Next() {
+		var i AdminWordListWithCountsByPrefixRow
+		if err := rows.Scan(&i.Word, &i.Count); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const commentsSearchFirstInRestrictedTopic = `-- name: CommentsSearchFirstInRestrictedTopic :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT DISTINCT cs.comment_id
 FROM comments_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 LEFT JOIN comments c ON c.idcomments=cs.comment_id
 LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_id
+LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
 WHERE swl.word=?
-AND fth.forumtopic_idforumtopic IN (/*SLICE:ftids*/?)
+  AND fth.forumtopic_idforumtopic IN (/*SLICE:ftids*/?)
+  AND (
+      c.language_idlanguage = 0
+      OR c.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = c.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='forum'
+        AND g.item='topic'
+        AND g.action='see'
+        AND g.active=1
+        AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
 `
 
 type CommentsSearchFirstInRestrictedTopicParams struct {
-	Word  sql.NullString
-	Ftids []int32
+	ViewerID int32
+	Word     sql.NullString
+	Ftids    []int32
+	UserID   sql.NullInt32
 }
 
 func (q *Queries) CommentsSearchFirstInRestrictedTopic(ctx context.Context, arg CommentsSearchFirstInRestrictedTopicParams) ([]int32, error) {
 	query := commentsSearchFirstInRestrictedTopic
 	var queryParams []interface{}
+	queryParams = append(queryParams, arg.ViewerID)
 	queryParams = append(queryParams, arg.Word)
 	if len(arg.Ftids) > 0 {
 		for _, v := range arg.Ftids {
@@ -146,6 +221,9 @@ func (q *Queries) CommentsSearchFirstInRestrictedTopic(ctx context.Context, arg 
 	} else {
 		query = strings.Replace(query, "/*SLICE:ftids*/?", "NULL", 1)
 	}
+	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.UserID)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
 		return nil, err
@@ -169,6 +247,14 @@ func (q *Queries) CommentsSearchFirstInRestrictedTopic(ctx context.Context, arg 
 }
 
 const commentsSearchFirstNotInRestrictedTopic = `-- name: CommentsSearchFirstNotInRestrictedTopic :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT DISTINCT cs.comment_id
 FROM comments_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
@@ -176,11 +262,45 @@ LEFT JOIN comments c ON c.idcomments=cs.comment_id
 LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_id
 LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
 WHERE swl.word=?
-AND ft.forumcategory_idforumcategory!=0
+  AND ft.forumcategory_idforumcategory!=0
+  AND (
+      c.language_idlanguage = 0
+      OR c.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = c.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='forum'
+        AND g.item='topic'
+        AND g.action='see'
+        AND g.active=1
+        AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
 `
 
-func (q *Queries) CommentsSearchFirstNotInRestrictedTopic(ctx context.Context, word sql.NullString) ([]int32, error) {
-	rows, err := q.db.QueryContext(ctx, commentsSearchFirstNotInRestrictedTopic, word)
+type CommentsSearchFirstNotInRestrictedTopicParams struct {
+	ViewerID int32
+	Word     sql.NullString
+	UserID   sql.NullInt32
+}
+
+func (q *Queries) CommentsSearchFirstNotInRestrictedTopic(ctx context.Context, arg CommentsSearchFirstNotInRestrictedTopicParams) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx, commentsSearchFirstNotInRestrictedTopic,
+		arg.ViewerID,
+		arg.Word,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.UserID,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -203,25 +323,59 @@ func (q *Queries) CommentsSearchFirstNotInRestrictedTopic(ctx context.Context, w
 }
 
 const commentsSearchNextInRestrictedTopic = `-- name: CommentsSearchNextInRestrictedTopic :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT DISTINCT cs.comment_id
 FROM comments_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 LEFT JOIN comments c ON c.idcomments=cs.comment_id
 LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_id
+LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
 WHERE swl.word=?
-AND cs.comment_id IN (/*SLICE:ids*/?)
-AND fth.forumtopic_idforumtopic IN (/*SLICE:ftids*/?)
+  AND cs.comment_id IN (/*SLICE:ids*/?)
+  AND fth.forumtopic_idforumtopic IN (/*SLICE:ftids*/?)
+  AND (
+      c.language_idlanguage = 0
+      OR c.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = c.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='forum'
+        AND g.item='topic'
+        AND g.action='see'
+        AND g.active=1
+        AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
 `
 
 type CommentsSearchNextInRestrictedTopicParams struct {
-	Word  sql.NullString
-	Ids   []int32
-	Ftids []int32
+	ViewerID int32
+	Word     sql.NullString
+	Ids      []int32
+	Ftids    []int32
+	UserID   sql.NullInt32
 }
 
 func (q *Queries) CommentsSearchNextInRestrictedTopic(ctx context.Context, arg CommentsSearchNextInRestrictedTopicParams) ([]int32, error) {
 	query := commentsSearchNextInRestrictedTopic
 	var queryParams []interface{}
+	queryParams = append(queryParams, arg.ViewerID)
 	queryParams = append(queryParams, arg.Word)
 	if len(arg.Ids) > 0 {
 		for _, v := range arg.Ids {
@@ -239,6 +393,9 @@ func (q *Queries) CommentsSearchNextInRestrictedTopic(ctx context.Context, arg C
 	} else {
 		query = strings.Replace(query, "/*SLICE:ftids*/?", "NULL", 1)
 	}
+	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.UserID)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
 		return nil, err
@@ -262,6 +419,14 @@ func (q *Queries) CommentsSearchNextInRestrictedTopic(ctx context.Context, arg C
 }
 
 const commentsSearchNextNotInRestrictedTopic = `-- name: CommentsSearchNextNotInRestrictedTopic :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT DISTINCT cs.comment_id
 FROM comments_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
@@ -269,18 +434,43 @@ LEFT JOIN comments c ON c.idcomments=cs.comment_id
 LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_id
 LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
 WHERE swl.word=?
-AND cs.comment_id IN (/*SLICE:ids*/?)
-AND ft.forumcategory_idforumcategory!=0
+  AND cs.comment_id IN (/*SLICE:ids*/?)
+  AND ft.forumcategory_idforumcategory!=0
+  AND (
+      c.language_idlanguage = 0
+      OR c.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = c.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='forum'
+        AND g.item='topic'
+        AND g.action='see'
+        AND g.active=1
+        AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
 `
 
 type CommentsSearchNextNotInRestrictedTopicParams struct {
-	Word sql.NullString
-	Ids  []int32
+	ViewerID int32
+	Word     sql.NullString
+	Ids      []int32
+	UserID   sql.NullInt32
 }
 
 func (q *Queries) CommentsSearchNextNotInRestrictedTopic(ctx context.Context, arg CommentsSearchNextNotInRestrictedTopicParams) ([]int32, error) {
 	query := commentsSearchNextNotInRestrictedTopic
 	var queryParams []interface{}
+	queryParams = append(queryParams, arg.ViewerID)
 	queryParams = append(queryParams, arg.Word)
 	if len(arg.Ids) > 0 {
 		for _, v := range arg.Ids {
@@ -290,6 +480,9 @@ func (q *Queries) CommentsSearchNextNotInRestrictedTopic(ctx context.Context, ar
 	} else {
 		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
 	}
+	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.UserID)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
 		return nil, err
@@ -312,232 +505,58 @@ func (q *Queries) CommentsSearchNextNotInRestrictedTopic(ctx context.Context, ar
 	return items, nil
 }
 
-const completeWordList = `-- name: CompleteWordList :many
-SELECT word
-FROM searchwordlist
-`
-
-// This query selects all words from the "searchwordlist" table and prints them.
-func (q *Queries) CompleteWordList(ctx context.Context) ([]sql.NullString, error) {
-	rows, err := q.db.QueryContext(ctx, completeWordList)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []sql.NullString
-	for rows.Next() {
-		var word sql.NullString
-		if err := rows.Scan(&word); err != nil {
-			return nil, err
-		}
-		items = append(items, word)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const countWordList = `-- name: CountWordList :one
-SELECT COUNT(*)
-FROM searchwordlist
-`
-
-func (q *Queries) CountWordList(ctx context.Context) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countWordList)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
-const countWordListByPrefix = `-- name: CountWordListByPrefix :one
-SELECT COUNT(*)
-FROM searchwordlist
-WHERE word LIKE CONCAT(?, '%')
-`
-
-func (q *Queries) CountWordListByPrefix(ctx context.Context, prefix interface{}) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countWordListByPrefix, prefix)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
-const createSearchWord = `-- name: CreateSearchWord :execlastid
-INSERT INTO searchwordlist (word)
-VALUES (lcase(?))
-ON DUPLICATE KEY UPDATE idsearchwordlist=LAST_INSERT_ID(idsearchwordlist)
-`
-
-func (q *Queries) CreateSearchWord(ctx context.Context, word string) (int64, error) {
-	result, err := q.db.ExecContext(ctx, createSearchWord, word)
-	if err != nil {
-		return 0, err
-	}
-	return result.LastInsertId()
-}
-
-const deleteBlogsSearch = `-- name: DeleteBlogsSearch :exec
-DELETE FROM blogs_search
-`
-
-// This query deletes all data from the "blogs_search" table.
-func (q *Queries) DeleteBlogsSearch(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, deleteBlogsSearch)
-	return err
-}
-
-const deleteCommentsSearch = `-- name: DeleteCommentsSearch :exec
-DELETE FROM comments_search
-`
-
-// This query deletes all data from the "comments_search" table.
-func (q *Queries) DeleteCommentsSearch(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, deleteCommentsSearch)
-	return err
-}
-
-const deleteImagePostSearch = `-- name: DeleteImagePostSearch :exec
-DELETE FROM imagepost_search
-`
-
-func (q *Queries) DeleteImagePostSearch(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, deleteImagePostSearch)
-	return err
-}
-
-const deleteLinkerSearch = `-- name: DeleteLinkerSearch :exec
-DELETE FROM linker_search
-`
-
-// This query deletes all data from the "linker_search" table.
-func (q *Queries) DeleteLinkerSearch(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, deleteLinkerSearch)
-	return err
-}
-
-const deleteSiteNewsSearch = `-- name: DeleteSiteNewsSearch :exec
-DELETE FROM site_news_search
-`
-
-// This query deletes all data from the "site_news_search" table.
-func (q *Queries) DeleteSiteNewsSearch(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, deleteSiteNewsSearch)
-	return err
-}
-
-const deleteWritingSearch = `-- name: DeleteWritingSearch :exec
-DELETE FROM writing_search
-`
-
-// This query deletes all data from the "writing_search" table.
-func (q *Queries) DeleteWritingSearch(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, deleteWritingSearch)
-	return err
-}
-
-const getSearchWordByWordLowercased = `-- name: GetSearchWordByWordLowercased :one
-SELECT idsearchwordlist, word
-FROM searchwordlist
-WHERE word = lcase(?)
-`
-
-func (q *Queries) GetSearchWordByWordLowercased(ctx context.Context, lcase string) (*Searchwordlist, error) {
-	row := q.db.QueryRowContext(ctx, getSearchWordByWordLowercased, lcase)
-	var i Searchwordlist
-	err := row.Scan(&i.Idsearchwordlist, &i.Word)
-	return &i, err
-}
-
-const imagePostSearchFirst = `-- name: ImagePostSearchFirst :many
-SELECT DISTINCT cs.image_post_id
-FROM imagepost_search cs
-LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
-WHERE swl.word=?
-`
-
-func (q *Queries) ImagePostSearchFirst(ctx context.Context, word sql.NullString) ([]int32, error) {
-	rows, err := q.db.QueryContext(ctx, imagePostSearchFirst, word)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []int32
-	for rows.Next() {
-		var image_post_id int32
-		if err := rows.Scan(&image_post_id); err != nil {
-			return nil, err
-		}
-		items = append(items, image_post_id)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const imagePostSearchNext = `-- name: ImagePostSearchNext :many
-SELECT DISTINCT cs.image_post_id
-FROM imagepost_search cs
-LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
-WHERE swl.word=?
-AND cs.image_post_id IN (/*SLICE:ids*/?)
-`
-
-type ImagePostSearchNextParams struct {
-	Word sql.NullString
-	Ids  []int32
-}
-
-func (q *Queries) ImagePostSearchNext(ctx context.Context, arg ImagePostSearchNextParams) ([]int32, error) {
-	query := imagePostSearchNext
-	var queryParams []interface{}
-	queryParams = append(queryParams, arg.Word)
-	if len(arg.Ids) > 0 {
-		for _, v := range arg.Ids {
-			queryParams = append(queryParams, v)
-		}
-		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(arg.Ids))[1:], 1)
-	} else {
-		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
-	}
-	rows, err := q.db.QueryContext(ctx, query, queryParams...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []int32
-	for rows.Next() {
-		var image_post_id int32
-		if err := rows.Scan(&image_post_id); err != nil {
-			return nil, err
-		}
-		items = append(items, image_post_id)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const linkerSearchFirst = `-- name: LinkerSearchFirst :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT DISTINCT cs.linker_id
 FROM linker_search cs
-LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
-WHERE swl.word=?
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearchwordlist
+JOIN linker l ON l.idlinker = cs.linker_id
+WHERE swl.word = ?
+  AND (
+      l.language_idlanguage = 0
+      OR l.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = l.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='linker'
+        AND g.item='link'
+        AND g.action='see'
+        AND g.active=1
+        AND g.item_id = l.idlinker
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
 `
 
-func (q *Queries) LinkerSearchFirst(ctx context.Context, word sql.NullString) ([]int32, error) {
-	rows, err := q.db.QueryContext(ctx, linkerSearchFirst, word)
+type LinkerSearchFirstParams struct {
+	ViewerID int32
+	Word     sql.NullString
+	UserID   sql.NullInt32
+}
+
+func (q *Queries) LinkerSearchFirst(ctx context.Context, arg LinkerSearchFirstParams) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx, linkerSearchFirst,
+		arg.ViewerID,
+		arg.Word,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.UserID,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -560,21 +579,55 @@ func (q *Queries) LinkerSearchFirst(ctx context.Context, word sql.NullString) ([
 }
 
 const linkerSearchNext = `-- name: LinkerSearchNext :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT DISTINCT cs.linker_id
 FROM linker_search cs
-LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
-WHERE swl.word=?
-AND cs.linker_id IN (/*SLICE:ids*/?)
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearchwordlist
+JOIN linker l ON l.idlinker = cs.linker_id
+WHERE swl.word = ?
+  AND cs.linker_id IN (/*SLICE:ids*/?)
+  AND (
+      l.language_idlanguage = 0
+      OR l.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = l.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='linker'
+        AND g.item='link'
+        AND g.action='see'
+        AND g.active=1
+        AND g.item_id = l.idlinker
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
 `
 
 type LinkerSearchNextParams struct {
-	Word sql.NullString
-	Ids  []int32
+	ViewerID int32
+	Word     sql.NullString
+	Ids      []int32
+	UserID   sql.NullInt32
 }
 
 func (q *Queries) LinkerSearchNext(ctx context.Context, arg LinkerSearchNextParams) ([]int32, error) {
 	query := linkerSearchNext
 	var queryParams []interface{}
+	queryParams = append(queryParams, arg.ViewerID)
 	queryParams = append(queryParams, arg.Word)
 	if len(arg.Ids) > 0 {
 		for _, v := range arg.Ids {
@@ -584,6 +637,9 @@ func (q *Queries) LinkerSearchNext(ctx context.Context, arg LinkerSearchNextPara
 	} else {
 		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
 	}
+	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.UserID)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
 		return nil, err
@@ -607,14 +663,57 @@ func (q *Queries) LinkerSearchNext(ctx context.Context, arg LinkerSearchNextPara
 }
 
 const siteNewsSearchFirst = `-- name: SiteNewsSearchFirst :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT DISTINCT cs.site_news_id
 FROM site_news_search cs
-LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
-WHERE swl.word=?
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearchwordlist
+JOIN site_news sn ON sn.idsiteNews = cs.site_news_id
+WHERE swl.word = ?
+  AND (
+      sn.language_idlanguage = 0
+      OR sn.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = sn.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='news'
+        AND g.item='post'
+        AND g.action='see'
+        AND g.active=1
+        AND g.item_id = sn.idsiteNews
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
 `
 
-func (q *Queries) SiteNewsSearchFirst(ctx context.Context, word sql.NullString) ([]int32, error) {
-	rows, err := q.db.QueryContext(ctx, siteNewsSearchFirst, word)
+type SiteNewsSearchFirstParams struct {
+	ViewerID int32
+	Word     sql.NullString
+	UserID   sql.NullInt32
+}
+
+func (q *Queries) SiteNewsSearchFirst(ctx context.Context, arg SiteNewsSearchFirstParams) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx, siteNewsSearchFirst,
+		arg.ViewerID,
+		arg.Word,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.UserID,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -637,21 +736,55 @@ func (q *Queries) SiteNewsSearchFirst(ctx context.Context, word sql.NullString) 
 }
 
 const siteNewsSearchNext = `-- name: SiteNewsSearchNext :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT DISTINCT cs.site_news_id
 FROM site_news_search cs
-LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
-WHERE swl.word=?
-AND cs.site_news_id IN (/*SLICE:ids*/?)
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearchwordlist
+JOIN site_news sn ON sn.idsiteNews = cs.site_news_id
+WHERE swl.word = ?
+  AND cs.site_news_id IN (/*SLICE:ids*/?)
+  AND (
+      sn.language_idlanguage = 0
+      OR sn.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = sn.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='news'
+        AND g.item='post'
+        AND g.action='see'
+        AND g.active=1
+        AND g.item_id = sn.idsiteNews
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
 `
 
 type SiteNewsSearchNextParams struct {
-	Word sql.NullString
-	Ids  []int32
+	ViewerID int32
+	Word     sql.NullString
+	Ids      []int32
+	UserID   sql.NullInt32
 }
 
 func (q *Queries) SiteNewsSearchNext(ctx context.Context, arg SiteNewsSearchNextParams) ([]int32, error) {
 	query := siteNewsSearchNext
 	var queryParams []interface{}
+	queryParams = append(queryParams, arg.ViewerID)
 	queryParams = append(queryParams, arg.Word)
 	if len(arg.Ids) > 0 {
 		for _, v := range arg.Ids {
@@ -661,6 +794,9 @@ func (q *Queries) SiteNewsSearchNext(ctx context.Context, arg SiteNewsSearchNext
 	} else {
 		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
 	}
+	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.UserID)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
 		return nil, err
@@ -683,99 +819,198 @@ func (q *Queries) SiteNewsSearchNext(ctx context.Context, arg SiteNewsSearchNext
 	return items, nil
 }
 
-const wordListWithCounts = `-- name: WordListWithCounts :many
-SELECT swl.word,
-       (SELECT IFNULL(SUM(cs.word_count),0) FROM comments_search cs WHERE cs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT IFNULL(SUM(ns.word_count),0) FROM site_news_search ns WHERE ns.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT IFNULL(SUM(bs.word_count),0) FROM blogs_search bs WHERE bs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT IFNULL(SUM(ls.word_count),0) FROM linker_search ls WHERE ls.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT IFNULL(SUM(ws.word_count),0) FROM writing_search ws WHERE ws.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT IFNULL(SUM(ips.word_count),0) FROM imagepost_search ips WHERE ips.searchwordlist_idsearchwordlist=swl.idsearchwordlist) AS count
-FROM searchwordlist swl
-ORDER BY swl.word
-LIMIT ? OFFSET ?
+const systemAddToBlogsSearch = `-- name: SystemAddToBlogsSearch :exec
+INSERT INTO blogs_search
+(blog_id, searchwordlist_idsearchwordlist, word_count)
+VALUES (?, ?, ?)
+ON DUPLICATE KEY UPDATE word_count=VALUES(word_count)
 `
 
-type WordListWithCountsParams struct {
-	Limit  int32
-	Offset int32
+type SystemAddToBlogsSearchParams struct {
+	BlogID                         int32
+	SearchwordlistIdsearchwordlist int32
+	WordCount                      int32
 }
 
-type WordListWithCountsRow struct {
-	Word  sql.NullString
-	Count int32
+func (q *Queries) SystemAddToBlogsSearch(ctx context.Context, arg SystemAddToBlogsSearchParams) error {
+	_, err := q.db.ExecContext(ctx, systemAddToBlogsSearch, arg.BlogID, arg.SearchwordlistIdsearchwordlist, arg.WordCount)
+	return err
 }
 
-// Show each search word with total usage counts across all search tables.
-func (q *Queries) WordListWithCounts(ctx context.Context, arg WordListWithCountsParams) ([]*WordListWithCountsRow, error) {
-	rows, err := q.db.QueryContext(ctx, wordListWithCounts, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*WordListWithCountsRow
-	for rows.Next() {
-		var i WordListWithCountsRow
-		if err := rows.Scan(&i.Word, &i.Count); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const wordListWithCountsByPrefix = `-- name: WordListWithCountsByPrefix :many
-SELECT swl.word,
-       (SELECT IFNULL(SUM(cs.word_count),0) FROM comments_search cs WHERE cs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT IFNULL(SUM(ns.word_count),0) FROM site_news_search ns WHERE ns.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT IFNULL(SUM(bs.word_count),0) FROM blogs_search bs WHERE bs.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT IFNULL(SUM(ls.word_count),0) FROM linker_search ls WHERE ls.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT IFNULL(SUM(ws.word_count),0) FROM writing_search ws WHERE ws.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
-       + (SELECT IFNULL(SUM(ips.word_count),0) FROM imagepost_search ips WHERE ips.searchwordlist_idsearchwordlist=swl.idsearchwordlist) AS count
-FROM searchwordlist swl
-WHERE swl.word LIKE CONCAT(?, '%')
-ORDER BY swl.word
-LIMIT ? OFFSET ?
+const systemAddToForumCommentSearch = `-- name: SystemAddToForumCommentSearch :exec
+INSERT INTO comments_search
+(comment_id, searchwordlist_idsearchwordlist, word_count)
+VALUES (?, ?, ?)
+ON DUPLICATE KEY UPDATE word_count=VALUES(word_count)
 `
 
-type WordListWithCountsByPrefixParams struct {
-	Prefix interface{}
-	Limit  int32
-	Offset int32
+type SystemAddToForumCommentSearchParams struct {
+	CommentID                      int32
+	SearchwordlistIdsearchwordlist int32
+	WordCount                      int32
 }
 
-type WordListWithCountsByPrefixRow struct {
-	Word  sql.NullString
-	Count int32
+func (q *Queries) SystemAddToForumCommentSearch(ctx context.Context, arg SystemAddToForumCommentSearchParams) error {
+	_, err := q.db.ExecContext(ctx, systemAddToForumCommentSearch, arg.CommentID, arg.SearchwordlistIdsearchwordlist, arg.WordCount)
+	return err
 }
 
-func (q *Queries) WordListWithCountsByPrefix(ctx context.Context, arg WordListWithCountsByPrefixParams) ([]*WordListWithCountsByPrefixRow, error) {
-	rows, err := q.db.QueryContext(ctx, wordListWithCountsByPrefix, arg.Prefix, arg.Limit, arg.Offset)
+const systemAddToForumWritingSearch = `-- name: SystemAddToForumWritingSearch :exec
+INSERT INTO writing_search
+(writing_id, searchwordlist_idsearchwordlist, word_count)
+VALUES (?, ?, ?)
+ON DUPLICATE KEY UPDATE word_count=VALUES(word_count)
+`
+
+type SystemAddToForumWritingSearchParams struct {
+	WritingID                      int32
+	SearchwordlistIdsearchwordlist int32
+	WordCount                      int32
+}
+
+func (q *Queries) SystemAddToForumWritingSearch(ctx context.Context, arg SystemAddToForumWritingSearchParams) error {
+	_, err := q.db.ExecContext(ctx, systemAddToForumWritingSearch, arg.WritingID, arg.SearchwordlistIdsearchwordlist, arg.WordCount)
+	return err
+}
+
+const systemAddToImagePostSearch = `-- name: SystemAddToImagePostSearch :exec
+INSERT INTO imagepost_search
+(image_post_id, searchwordlist_idsearchwordlist, word_count)
+VALUES (?, ?, ?)
+ON DUPLICATE KEY UPDATE word_count=VALUES(word_count)
+`
+
+type SystemAddToImagePostSearchParams struct {
+	ImagePostID                    int32
+	SearchwordlistIdsearchwordlist int32
+	WordCount                      int32
+}
+
+func (q *Queries) SystemAddToImagePostSearch(ctx context.Context, arg SystemAddToImagePostSearchParams) error {
+	_, err := q.db.ExecContext(ctx, systemAddToImagePostSearch, arg.ImagePostID, arg.SearchwordlistIdsearchwordlist, arg.WordCount)
+	return err
+}
+
+const systemAddToLinkerSearch = `-- name: SystemAddToLinkerSearch :exec
+INSERT INTO linker_search
+(linker_id, searchwordlist_idsearchwordlist, word_count)
+VALUES (?, ?, ?)
+ON DUPLICATE KEY UPDATE word_count=VALUES(word_count)
+`
+
+type SystemAddToLinkerSearchParams struct {
+	LinkerID                       int32
+	SearchwordlistIdsearchwordlist int32
+	WordCount                      int32
+}
+
+func (q *Queries) SystemAddToLinkerSearch(ctx context.Context, arg SystemAddToLinkerSearchParams) error {
+	_, err := q.db.ExecContext(ctx, systemAddToLinkerSearch, arg.LinkerID, arg.SearchwordlistIdsearchwordlist, arg.WordCount)
+	return err
+}
+
+const systemAddToSiteNewsSearch = `-- name: SystemAddToSiteNewsSearch :exec
+INSERT INTO site_news_search
+(site_news_id, searchwordlist_idsearchwordlist, word_count)
+VALUES (?, ?, ?)
+ON DUPLICATE KEY UPDATE word_count=VALUES(word_count)
+`
+
+type SystemAddToSiteNewsSearchParams struct {
+	SiteNewsID                     int32
+	SearchwordlistIdsearchwordlist int32
+	WordCount                      int32
+}
+
+func (q *Queries) SystemAddToSiteNewsSearch(ctx context.Context, arg SystemAddToSiteNewsSearchParams) error {
+	_, err := q.db.ExecContext(ctx, systemAddToSiteNewsSearch, arg.SiteNewsID, arg.SearchwordlistIdsearchwordlist, arg.WordCount)
+	return err
+}
+
+const systemCreateSearchWord = `-- name: SystemCreateSearchWord :execlastid
+INSERT INTO searchwordlist (word)
+VALUES (lcase(?))
+ON DUPLICATE KEY UPDATE idsearchwordlist=LAST_INSERT_ID(idsearchwordlist)
+`
+
+func (q *Queries) SystemCreateSearchWord(ctx context.Context, word string) (int64, error) {
+	result, err := q.db.ExecContext(ctx, systemCreateSearchWord, word)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
-	defer rows.Close()
-	var items []*WordListWithCountsByPrefixRow
-	for rows.Next() {
-		var i WordListWithCountsByPrefixRow
-		if err := rows.Scan(&i.Word, &i.Count); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+	return result.LastInsertId()
+}
+
+const systemDeleteBlogsSearch = `-- name: SystemDeleteBlogsSearch :exec
+DELETE FROM blogs_search
+`
+
+// This query deletes all data from the "blogs_search" table.
+func (q *Queries) SystemDeleteBlogsSearch(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, systemDeleteBlogsSearch)
+	return err
+}
+
+const systemDeleteCommentsSearch = `-- name: SystemDeleteCommentsSearch :exec
+DELETE FROM comments_search
+`
+
+// This query deletes all data from the "comments_search" table.
+func (q *Queries) SystemDeleteCommentsSearch(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, systemDeleteCommentsSearch)
+	return err
+}
+
+const systemDeleteImagePostSearch = `-- name: SystemDeleteImagePostSearch :exec
+DELETE FROM imagepost_search
+`
+
+func (q *Queries) SystemDeleteImagePostSearch(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, systemDeleteImagePostSearch)
+	return err
+}
+
+const systemDeleteLinkerSearch = `-- name: SystemDeleteLinkerSearch :exec
+DELETE FROM linker_search
+`
+
+// This query deletes all data from the "linker_search" table.
+func (q *Queries) SystemDeleteLinkerSearch(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, systemDeleteLinkerSearch)
+	return err
+}
+
+const systemDeleteSiteNewsSearch = `-- name: SystemDeleteSiteNewsSearch :exec
+DELETE FROM site_news_search
+`
+
+// This query deletes all data from the "site_news_search" table.
+func (q *Queries) SystemDeleteSiteNewsSearch(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, systemDeleteSiteNewsSearch)
+	return err
+}
+
+const systemDeleteWritingSearch = `-- name: SystemDeleteWritingSearch :exec
+DELETE FROM writing_search
+`
+
+// This query deletes all data from the "writing_search" table.
+func (q *Queries) SystemDeleteWritingSearch(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, systemDeleteWritingSearch)
+	return err
+}
+
+const systemGetSearchWordByWordLowercased = `-- name: SystemGetSearchWordByWordLowercased :one
+SELECT idsearchwordlist, word
+FROM searchwordlist
+WHERE word = lcase(?)
+`
+
+func (q *Queries) SystemGetSearchWordByWordLowercased(ctx context.Context, lcase string) (*Searchwordlist, error) {
+	row := q.db.QueryRowContext(ctx, systemGetSearchWordByWordLowercased, lcase)
+	var i Searchwordlist
+	err := row.Scan(&i.Idsearchwordlist, &i.Word)
+	return &i, err
 }
 
 const writingSearchDelete = `-- name: WritingSearchDelete :exec
@@ -789,14 +1024,57 @@ func (q *Queries) WritingSearchDelete(ctx context.Context, writingID int32) erro
 }
 
 const writingSearchFirst = `-- name: WritingSearchFirst :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT DISTINCT cs.writing_id
 FROM writing_search cs
-LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
-WHERE swl.word=?
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearchwordlist
+JOIN writing w ON w.idwriting = cs.writing_id
+WHERE swl.word = ?
+  AND (
+      w.language_idlanguage = 0
+      OR w.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = w.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='writing'
+        AND g.item='article'
+        AND g.action='see'
+        AND g.active=1
+        AND g.item_id = w.idwriting
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
 `
 
-func (q *Queries) WritingSearchFirst(ctx context.Context, word sql.NullString) ([]int32, error) {
-	rows, err := q.db.QueryContext(ctx, writingSearchFirst, word)
+type WritingSearchFirstParams struct {
+	ViewerID int32
+	Word     sql.NullString
+	UserID   sql.NullInt32
+}
+
+func (q *Queries) WritingSearchFirst(ctx context.Context, arg WritingSearchFirstParams) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx, writingSearchFirst,
+		arg.ViewerID,
+		arg.Word,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.UserID,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -819,21 +1097,55 @@ func (q *Queries) WritingSearchFirst(ctx context.Context, word sql.NullString) (
 }
 
 const writingSearchNext = `-- name: WritingSearchNext :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT DISTINCT cs.writing_id
 FROM writing_search cs
-LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
-WHERE swl.word=?
-AND cs.writing_id IN (/*SLICE:ids*/?)
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearchwordlist
+JOIN writing w ON w.idwriting = cs.writing_id
+WHERE swl.word = ?
+  AND cs.writing_id IN (/*SLICE:ids*/?)
+  AND (
+      w.language_idlanguage = 0
+      OR w.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = w.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='writing'
+        AND g.item='article'
+        AND g.action='see'
+        AND g.active=1
+        AND g.item_id = w.idwriting
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
 `
 
 type WritingSearchNextParams struct {
-	Word sql.NullString
-	Ids  []int32
+	ViewerID int32
+	Word     sql.NullString
+	Ids      []int32
+	UserID   sql.NullInt32
 }
 
 func (q *Queries) WritingSearchNext(ctx context.Context, arg WritingSearchNextParams) ([]int32, error) {
 	query := writingSearchNext
 	var queryParams []interface{}
+	queryParams = append(queryParams, arg.ViewerID)
 	queryParams = append(queryParams, arg.Word)
 	if len(arg.Ids) > 0 {
 		for _, v := range arg.Ids {
@@ -843,6 +1155,9 @@ func (q *Queries) WritingSearchNext(ctx context.Context, arg WritingSearchNextPa
 	} else {
 		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
 	}
+	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.UserID)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
 		return nil, err

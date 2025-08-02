@@ -36,7 +36,7 @@ func (RemakeCommentsTask) Action(w http.ResponseWriter, r *http.Request) any {
 }
 
 func (RemakeCommentsTask) BackgroundTask(ctx context.Context, q *dbpkg.Queries) (tasks.Task, error) {
-	if err := q.DeleteCommentsSearch(ctx); err != nil {
+	if err := q.SystemDeleteCommentsSearch(ctx); err != nil {
 		return nil, err
 	}
 	rows, err := q.GetAllCommentsForIndex(ctx)
@@ -50,7 +50,7 @@ func (RemakeCommentsTask) BackgroundTask(ctx context.Context, q *dbpkg.Queries) 
 			continue
 		}
 		if err := indexText(ctx, q, cache, text, func(c context.Context, wid int64, count int32) error {
-			return q.AddToForumCommentSearch(c, dbpkg.AddToForumCommentSearchParams{
+			return q.SystemAddToForumCommentSearch(c, dbpkg.SystemAddToForumCommentSearchParams{
 				CommentID:                      row.Idcomments,
 				SearchwordlistIdsearchwordlist: int32(wid),
 				WordCount:                      count,

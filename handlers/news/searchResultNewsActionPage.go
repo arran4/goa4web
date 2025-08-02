@@ -78,9 +78,13 @@ func NewsSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid
 
 	for i, word := range searchWords {
 		if i == 0 {
-			ids, err := queries.SiteNewsSearchFirst(r.Context(), sql.NullString{
-				String: word,
-				Valid:  true,
+			ids, err := queries.SiteNewsSearchFirst(r.Context(), db.SiteNewsSearchFirstParams{
+				ViewerID: uid,
+				Word: sql.NullString{
+					String: word,
+					Valid:  true,
+				},
+				UserID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 			})
 			if err != nil {
 				switch {
@@ -94,11 +98,13 @@ func NewsSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid
 			newsIds = ids
 		} else {
 			ids, err := queries.SiteNewsSearchNext(r.Context(), db.SiteNewsSearchNextParams{
+				ViewerID: uid,
 				Word: sql.NullString{
 					String: word,
 					Valid:  true,
 				},
-				Ids: newsIds,
+				Ids:    newsIds,
+				UserID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 			})
 			if err != nil {
 				switch {
@@ -145,11 +151,13 @@ func forumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request,
 	for i, word := range searchWords {
 		if i == 0 {
 			ids, err := queries.CommentsSearchFirstInRestrictedTopic(r.Context(), db.CommentsSearchFirstInRestrictedTopicParams{
+				ViewerID: uid,
 				Word: sql.NullString{
 					String: word,
 					Valid:  true,
 				},
-				Ftids: forumTopicId,
+				Ftids:  forumTopicId,
+				UserID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 			})
 			if err != nil {
 				switch {
@@ -163,12 +171,14 @@ func forumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request,
 			commentIds = ids
 		} else {
 			ids, err := queries.CommentsSearchNextInRestrictedTopic(r.Context(), db.CommentsSearchNextInRestrictedTopicParams{
+				ViewerID: uid,
 				Word: sql.NullString{
 					String: word,
 					Valid:  true,
 				},
-				Ids:   commentIds,
-				Ftids: forumTopicId,
+				Ids:    commentIds,
+				Ftids:  forumTopicId,
+				UserID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 			})
 			if err != nil {
 				switch {

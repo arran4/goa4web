@@ -66,7 +66,7 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	if r.URL.Query().Get("download") != "" {
-		rows, err := queries.CompleteWordList(r.Context())
+		rows, err := queries.AdminCompleteWordList(r.Context())
 		if err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
@@ -89,12 +89,12 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 		totalCount int64
 	)
 	if letter != "" {
-		totalCount, err = queries.CountWordListByPrefix(r.Context(), letter)
+		totalCount, err = queries.AdminCountWordListByPrefix(r.Context(), letter)
 		if err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
-		prefRows, err2 := queries.WordListWithCountsByPrefix(r.Context(), db.WordListWithCountsByPrefixParams{
+		prefRows, err2 := queries.AdminWordListWithCountsByPrefix(r.Context(), db.AdminWordListWithCountsByPrefixParams{
 			Prefix: letter,
 			Limit:  int32(pageSize),
 			Offset: int32(offset),
@@ -107,12 +107,12 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 			rows = append(rows, WordCount{Word: r.Word, Count: r.Count})
 		}
 	} else {
-		totalCount, err = queries.CountWordList(r.Context())
+		totalCount, err = queries.AdminCountWordList(r.Context())
 		if err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
-		allRows, err2 := queries.WordListWithCounts(r.Context(), db.WordListWithCountsParams{
+		allRows, err2 := queries.AdminWordListWithCounts(r.Context(), db.AdminWordListWithCountsParams{
 			Limit:  int32(pageSize),
 			Offset: int32(offset),
 		})
@@ -154,7 +154,7 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 func adminSearchWordListDownloadPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
-	rows, err := queries.CompleteWordList(r.Context())
+	rows, err := queries.AdminCompleteWordList(r.Context())
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

@@ -36,7 +36,7 @@ func (RemakeWritingTask) Action(w http.ResponseWriter, r *http.Request) any {
 }
 
 func (RemakeWritingTask) BackgroundTask(ctx context.Context, q *dbpkg.Queries) (tasks.Task, error) {
-	if err := q.DeleteWritingSearch(ctx); err != nil {
+	if err := q.SystemDeleteWritingSearch(ctx); err != nil {
 		return nil, err
 	}
 	rows, err := q.GetAllWritingsForIndex(ctx)
@@ -50,7 +50,7 @@ func (RemakeWritingTask) BackgroundTask(ctx context.Context, q *dbpkg.Queries) (
 			continue
 		}
 		if err := indexText(ctx, q, cache, text, func(c context.Context, wid int64, count int32) error {
-			return q.AddToForumWritingSearch(c, dbpkg.AddToForumWritingSearchParams{
+			return q.SystemAddToForumWritingSearch(c, dbpkg.SystemAddToForumWritingSearchParams{
 				WritingID:                      row.Idwriting,
 				SearchwordlistIdsearchwordlist: int32(wid),
 				WordCount:                      count,

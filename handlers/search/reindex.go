@@ -21,12 +21,12 @@ func indexText(ctx context.Context, q *db.Queries, cache map[string]int64, text 
 		id, ok := cache[w]
 		if !ok {
 			var err error
-			id, err = q.CreateSearchWord(ctx, w)
+			id, err = q.SystemCreateSearchWord(ctx, w)
 			if err != nil {
 				return err
 			}
 			if id == 0 {
-				sw, err := q.GetSearchWordByWordLowercased(ctx, w)
+				sw, err := q.SystemGetSearchWordByWordLowercased(ctx, w)
 				if err != nil {
 					return err
 				}

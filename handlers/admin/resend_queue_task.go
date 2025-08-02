@@ -30,11 +30,11 @@ func (ResendQueueTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	var emails []*db.GetPendingEmailByIDRow
+	var emails []*db.AdminGetPendingEmailByIDRow
 	var ids []int32
 	for _, idStr := range r.Form["id"] {
 		id, _ := strconv.Atoi(idStr)
-		e, err := queries.GetPendingEmailByID(r.Context(), int32(id))
+		e, err := queries.AdminGetPendingEmailByID(r.Context(), int32(id))
 		if err != nil {
 			return fmt.Errorf("get email fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}

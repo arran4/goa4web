@@ -7,7 +7,7 @@ import (
 
 // ThreadDelete removes a forum thread and updates topic statistics.
 func ThreadDelete(ctx context.Context, q *db.Queries, threadID, topicID int32) error {
-	if err := q.DeleteForumThread(ctx, threadID); err != nil {
+	if err := q.AdminDeleteForumThread(ctx, threadID); err != nil {
 		return err
 	}
 	return q.RebuildForumTopicByIdMetaColumns(ctx, topicID)

@@ -10,12 +10,171 @@ import (
 	"database/sql"
 )
 
-const deleteForumThread = `-- name: DeleteForumThread :exec
+const adminDeleteForumThread = `-- name: AdminDeleteForumThread :exec
 UPDATE forumthread SET deleted_at = NOW() WHERE idforumthread = ?
 `
 
-func (q *Queries) DeleteForumThread(ctx context.Context, idforumthread int32) error {
-	_, err := q.db.ExecContext(ctx, deleteForumThread, idforumthread)
+func (q *Queries) AdminDeleteForumThread(ctx context.Context, idforumthread int32) error {
+	_, err := q.db.ExecContext(ctx, adminDeleteForumThread, idforumthread)
+	return err
+}
+
+const adminGetThreadsStartedByUser = `-- name: AdminGetThreadsStartedByUser :many
+SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked
+FROM forumthread th
+JOIN comments c ON th.firstpost = c.idcomments
+WHERE c.users_idusers = ?
+ORDER BY th.lastaddition DESC
+`
+
+func (q *Queries) AdminGetThreadsStartedByUser(ctx context.Context, usersIdusers int32) ([]*Forumthread, error) {
+	rows, err := q.db.QueryContext(ctx, adminGetThreadsStartedByUser, usersIdusers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Forumthread
+	for rows.Next() {
+		var i Forumthread
+		if err := rows.Scan(
+			&i.Idforumthread,
+			&i.Firstpost,
+			&i.Lastposter,
+			&i.ForumtopicIdforumtopic,
+			&i.Comments,
+			&i.Lastaddition,
+			&i.Locked,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminGetThreadsStartedByUserWithTopic = `-- name: AdminGetThreadsStartedByUserWithTopic :many
+SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, t.title AS topic_title, fc.idforumcategory AS category_id, fc.title AS category_title
+FROM forumthread th
+JOIN comments c ON th.firstpost = c.idcomments
+LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
+LEFT JOIN forumcategory fc ON t.forumcategory_idforumcategory = fc.idforumcategory
+WHERE c.users_idusers = ?
+ORDER BY th.lastaddition DESC
+`
+
+type AdminGetThreadsStartedByUserWithTopicRow struct {
+	Idforumthread          int32
+	Firstpost              int32
+	Lastposter             int32
+	ForumtopicIdforumtopic int32
+	Comments               sql.NullInt32
+	Lastaddition           sql.NullTime
+	Locked                 sql.NullBool
+	TopicTitle             sql.NullString
+	CategoryID             sql.NullInt32
+	CategoryTitle          sql.NullString
+}
+
+func (q *Queries) AdminGetThreadsStartedByUserWithTopic(ctx context.Context, usersIdusers int32) ([]*AdminGetThreadsStartedByUserWithTopicRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminGetThreadsStartedByUserWithTopic, usersIdusers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminGetThreadsStartedByUserWithTopicRow
+	for rows.Next() {
+		var i AdminGetThreadsStartedByUserWithTopicRow
+		if err := rows.Scan(
+			&i.Idforumthread,
+			&i.Firstpost,
+			&i.Lastposter,
+			&i.ForumtopicIdforumtopic,
+			&i.Comments,
+			&i.Lastaddition,
+			&i.Locked,
+			&i.TopicTitle,
+			&i.CategoryID,
+			&i.CategoryTitle,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminRecalculateAllForumThreadMetaData = `-- name: AdminRecalculateAllForumThreadMetaData :exec
+UPDATE forumthread
+SET lastaddition = (
+    SELECT written
+    FROM comments
+    WHERE forumthread_id = idforumthread
+    ORDER BY written DESC
+    LIMIT 1
+), comments = (
+    SELECT COUNT(users_idusers) - 1
+    FROM comments
+    WHERE forumthread_id = idforumthread
+), lastposter = (
+    SELECT users_idusers
+    FROM comments
+    WHERE forumthread_id = idforumthread
+    ORDER BY written DESC
+    LIMIT 1
+), firstpost = (
+    SELECT idcomments
+    FROM comments
+    WHERE forumthread_id = idforumthread
+    LIMIT 1
+)
+`
+
+func (q *Queries) AdminRecalculateAllForumThreadMetaData(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, adminRecalculateAllForumThreadMetaData)
+	return err
+}
+
+const adminRecalculateForumThreadByIdMetaData = `-- name: AdminRecalculateForumThreadByIdMetaData :exec
+UPDATE forumthread
+SET lastaddition = (
+    SELECT written
+    FROM comments
+    WHERE forumthread_id = idforumthread
+    ORDER BY written DESC
+    LIMIT 1
+), comments = (
+    SELECT COUNT(users_idusers) - 1
+    FROM comments
+    WHERE forumthread_id = idforumthread
+), lastposter = (
+    SELECT users_idusers
+    FROM comments
+    WHERE forumthread_id = idforumthread
+    ORDER BY written DESC
+    LIMIT 1
+), firstpost = (
+    SELECT idcomments
+    FROM comments
+    WHERE forumthread_id = idforumthread
+    LIMIT 1
+)
+WHERE idforumthread = ?
+`
+
+func (q *Queries) AdminRecalculateForumThreadByIdMetaData(ctx context.Context, idforumthread int32) error {
+	_, err := q.db.ExecContext(ctx, adminRecalculateForumThreadByIdMetaData, idforumthread)
 	return err
 }
 
@@ -42,7 +201,20 @@ SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic
 FROM forumthread th
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN users lu ON lu.idusers = t.lastposter
+LEFT JOIN comments fc ON th.firstpost = fc.idcomments
 WHERE th.idforumthread=?
+  AND (
+      fc.language_idlanguage = 0
+      OR fc.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = fc.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='forum'
@@ -74,7 +246,13 @@ type GetThreadLastPosterAndPermsRow struct {
 }
 
 func (q *Queries) GetThreadLastPosterAndPerms(ctx context.Context, arg GetThreadLastPosterAndPermsParams) (*GetThreadLastPosterAndPermsRow, error) {
-	row := q.db.QueryRowContext(ctx, getThreadLastPosterAndPerms, arg.ViewerID, arg.ThreadID, arg.ViewerMatchID)
+	row := q.db.QueryRowContext(ctx, getThreadLastPosterAndPerms,
+		arg.ViewerID,
+		arg.ThreadID,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.ViewerMatchID,
+	)
 	var i GetThreadLastPosterAndPermsRow
 	err := row.Scan(
 		&i.Idforumthread,
@@ -89,102 +267,6 @@ func (q *Queries) GetThreadLastPosterAndPerms(ctx context.Context, arg GetThread
 	return &i, err
 }
 
-const getThreadsStartedByUser = `-- name: GetThreadsStartedByUser :many
-SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked
-FROM forumthread th
-JOIN comments c ON th.firstpost = c.idcomments
-WHERE c.users_idusers = ?
-ORDER BY th.lastaddition DESC
-`
-
-func (q *Queries) GetThreadsStartedByUser(ctx context.Context, usersIdusers int32) ([]*Forumthread, error) {
-	rows, err := q.db.QueryContext(ctx, getThreadsStartedByUser, usersIdusers)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*Forumthread
-	for rows.Next() {
-		var i Forumthread
-		if err := rows.Scan(
-			&i.Idforumthread,
-			&i.Firstpost,
-			&i.Lastposter,
-			&i.ForumtopicIdforumtopic,
-			&i.Comments,
-			&i.Lastaddition,
-			&i.Locked,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getThreadsStartedByUserWithTopic = `-- name: GetThreadsStartedByUserWithTopic :many
-SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, t.title AS topic_title, fc.idforumcategory AS category_id, fc.title AS category_title
-FROM forumthread th
-JOIN comments c ON th.firstpost = c.idcomments
-LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
-LEFT JOIN forumcategory fc ON t.forumcategory_idforumcategory = fc.idforumcategory
-WHERE c.users_idusers = ?
-ORDER BY th.lastaddition DESC
-`
-
-type GetThreadsStartedByUserWithTopicRow struct {
-	Idforumthread          int32
-	Firstpost              int32
-	Lastposter             int32
-	ForumtopicIdforumtopic int32
-	Comments               sql.NullInt32
-	Lastaddition           sql.NullTime
-	Locked                 sql.NullBool
-	TopicTitle             sql.NullString
-	CategoryID             sql.NullInt32
-	CategoryTitle          sql.NullString
-}
-
-func (q *Queries) GetThreadsStartedByUserWithTopic(ctx context.Context, usersIdusers int32) ([]*GetThreadsStartedByUserWithTopicRow, error) {
-	rows, err := q.db.QueryContext(ctx, getThreadsStartedByUserWithTopic, usersIdusers)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*GetThreadsStartedByUserWithTopicRow
-	for rows.Next() {
-		var i GetThreadsStartedByUserWithTopicRow
-		if err := rows.Scan(
-			&i.Idforumthread,
-			&i.Firstpost,
-			&i.Lastposter,
-			&i.ForumtopicIdforumtopic,
-			&i.Comments,
-			&i.Lastaddition,
-			&i.Locked,
-			&i.TopicTitle,
-			&i.CategoryID,
-			&i.CategoryTitle,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const makeThread = `-- name: MakeThread :execlastid
 INSERT INTO forumthread (forumtopic_idforumtopic) VALUES (?)
 `
@@ -195,67 +277,4 @@ func (q *Queries) MakeThread(ctx context.Context, forumtopicIdforumtopic int32) 
 		return 0, err
 	}
 	return result.LastInsertId()
-}
-
-const recalculateAllForumThreadMetaData = `-- name: RecalculateAllForumThreadMetaData :exec
-UPDATE forumthread
-SET lastaddition = (
-    SELECT written
-    FROM comments
-    WHERE forumthread_id = idforumthread
-    ORDER BY written DESC
-    LIMIT 1
-), comments = (
-    SELECT COUNT(users_idusers) - 1
-    FROM comments
-    WHERE forumthread_id = idforumthread
-), lastposter = (
-    SELECT users_idusers
-    FROM comments
-    WHERE forumthread_id = idforumthread
-    ORDER BY written DESC
-    LIMIT 1
-), firstpost = (
-    SELECT idcomments
-    FROM comments
-    WHERE forumthread_id = idforumthread
-    LIMIT 1
-)
-`
-
-func (q *Queries) RecalculateAllForumThreadMetaData(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, recalculateAllForumThreadMetaData)
-	return err
-}
-
-const recalculateForumThreadByIdMetaData = `-- name: RecalculateForumThreadByIdMetaData :exec
-UPDATE forumthread
-SET lastaddition = (
-    SELECT written
-    FROM comments
-    WHERE forumthread_id = idforumthread
-    ORDER BY written DESC
-    LIMIT 1
-), comments = (
-    SELECT COUNT(users_idusers) - 1
-    FROM comments
-    WHERE forumthread_id = idforumthread
-), lastposter = (
-    SELECT users_idusers
-    FROM comments
-    WHERE forumthread_id = idforumthread
-    ORDER BY written DESC
-    LIMIT 1
-), firstpost = (
-    SELECT idcomments
-    FROM comments
-    WHERE forumthread_id = idforumthread
-    LIMIT 1
-)
-WHERE idforumthread = ?
-`
-
-func (q *Queries) RecalculateForumThreadByIdMetaData(ctx context.Context, idforumthread int32) error {
-	_, err := q.db.ExecContext(ctx, recalculateForumThreadByIdMetaData, idforumthread)
-	return err
 }

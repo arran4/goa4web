@@ -170,7 +170,7 @@ func (n *Notifier) NotificationPurgeWorker(ctx context.Context, interval time.Du
 	for {
 		select {
 		case <-ticker.C:
-			if err := n.Queries.PurgeReadNotifications(ctx); err != nil {
+			if err := n.Queries.AdminPurgeReadNotifications(ctx); err != nil {
 				log.Printf("purge notifications: %v", err)
 			}
 		case <-ctx.Done():

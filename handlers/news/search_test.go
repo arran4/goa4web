@@ -33,7 +33,7 @@ func TestNewsSearchFiltersUnauthorized(t *testing.T) {
 		"Comments",
 	}).AddRow("bob", 1, 1, 0, 1, 1, "text", time.Unix(0, 0), 0)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.username AS writerName")).
-		WithArgs(int32(1), int32(1), int32(2), sql.NullInt32{Int32: 1, Valid: true}).
+		WithArgs(int32(1), int32(1), int32(2), int32(1), int32(1), sql.NullInt32{Int32: 1, Valid: true}).
 		WillReturnRows(newsRows)
 
 	form := url.Values{"searchwords": {"foo"}}

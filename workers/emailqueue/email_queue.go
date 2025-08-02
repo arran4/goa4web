@@ -175,7 +175,7 @@ func ProcessPendingEmail(ctx context.Context, q *db.Queries, provider email.Prov
 				msg := fmt.Sprintf("email %d to %s failed: %v\n%s", e.ID, addr.Address, err, e.Body)
 				_ = dlqProvider.Record(ctx, msg)
 			}
-			if delErr := q.DeletePendingEmail(ctx, e.ID); delErr != nil {
+			if delErr := q.AdminDeletePendingEmail(ctx, e.ID); delErr != nil {
 				log.Printf("delete email: %v", delErr)
 			}
 		}

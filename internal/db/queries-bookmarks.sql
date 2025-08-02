@@ -1,8 +1,7 @@
 -- name: CreateBookmarks :exec
--- This query adds a new entry to the "bookmarks" table and returns the last inserted ID as "returnthis".
+-- This query adds a new entry to the "bookmarks" table for a user.
 INSERT INTO bookmarks (users_idusers, list)
 VALUES (?, ?);
-SELECT LAST_INSERT_ID() AS returnthis;
 
 -- name: UpdateBookmarks :exec
 -- This query updates the "list" column in the "bookmarks" table for a specific user based on their "users_idusers".

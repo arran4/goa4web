@@ -20,7 +20,7 @@ type CreateBookmarksParams struct {
 	List         sql.NullString
 }
 
-// This query adds a new entry to the "bookmarks" table and returns the last inserted ID as "returnthis".
+// This query adds a new entry to the "bookmarks" table for a user.
 func (q *Queries) CreateBookmarks(ctx context.Context, arg CreateBookmarksParams) error {
 	_, err := q.db.ExecContext(ctx, createBookmarks, arg.UsersIdusers, arg.List)
 	return err

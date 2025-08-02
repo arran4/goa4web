@@ -24,7 +24,7 @@ func (DeleteTemplateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	name := r.PostFormValue("name")
 	q := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	if err := q.DeleteTemplateOverride(r.Context(), name); err != nil {
+	if err := q.AdminDeleteTemplateOverride(r.Context(), name); err != nil {
 		return fmt.Errorf("db delete template fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {

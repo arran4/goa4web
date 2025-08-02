@@ -49,7 +49,7 @@ func (TopicGrantCreateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	var rid sql.NullInt32
 	if role != "" {
-		roles, err := queries.ListRoles(r.Context())
+		roles, err := queries.AdminListRoles(r.Context())
 		if err != nil {
 			log.Printf("ListRoles: %v", err)
 			return fmt.Errorf("list roles %w", handlers.ErrRedirectOnSamePageHandler(err))

@@ -36,7 +36,7 @@ func (c *emailQueueDeleteCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
-	if err := queries.DeletePendingEmail(ctx, int32(c.ID)); err != nil {
+	if err := queries.AdminDeletePendingEmail(ctx, int32(c.ID)); err != nil {
 		return fmt.Errorf("delete email: %w", err)
 	}
 	return nil

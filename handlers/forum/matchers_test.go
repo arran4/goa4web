@@ -24,7 +24,7 @@ func TestRequireThreadAndTopicTrue(t *testing.T) {
 	defer sqldb.Close()
 
 	mock.ExpectQuery("SELECT th.idforumthread").
-		WithArgs(int32(0), int32(2), sql.NullInt32{Int32: 0, Valid: false}).
+		WithArgs(int32(0), int32(2), int32(0), int32(0), sql.NullInt32{Int32: 0, Valid: false}).
 		WillReturnRows(sqlmock.NewRows([]string{
 			"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername",
 		}).AddRow(2, 0, 0, 1, sql.NullInt32{}, sql.NullTime{}, sql.NullBool{}, sql.NullString{}))
@@ -35,9 +35,9 @@ func TestRequireThreadAndTopicTrue(t *testing.T) {
 			"idforumtopic", "lastposter", "forumcategory_idforumcategory", "title", "description", "threads", "comments", "lastaddition", "LastPosterUsername",
 		}).AddRow(1, 0, 0, sql.NullString{}, sql.NullString{}, sql.NullInt32{}, sql.NullInt32{}, sql.NullTime{}, sql.NullString{}))
 
-	// handler will trigger another load
+		// handler will trigger another load
 	mock.ExpectQuery("SELECT th.idforumthread").
-		WithArgs(int32(0), int32(2), sql.NullInt32{Int32: 0, Valid: false}).
+		WithArgs(int32(0), int32(2), int32(0), int32(0), sql.NullInt32{Int32: 0, Valid: false}).
 		WillReturnRows(sqlmock.NewRows([]string{
 			"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername",
 		}).AddRow(2, 0, 0, 1, sql.NullInt32{}, sql.NullTime{}, sql.NullBool{}, sql.NullString{}))
@@ -82,7 +82,7 @@ func TestRequireThreadAndTopicFalse(t *testing.T) {
 	defer sqldb.Close()
 
 	mock.ExpectQuery("SELECT th.idforumthread").
-		WithArgs(int32(0), int32(2), sql.NullInt32{Int32: 0, Valid: false}).
+		WithArgs(int32(0), int32(2), int32(0), int32(0), sql.NullInt32{Int32: 0, Valid: false}).
 		WillReturnRows(sqlmock.NewRows([]string{
 			"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername",
 		}).AddRow(2, 0, 0, 3, sql.NullInt32{}, sql.NullTime{}, sql.NullBool{}, sql.NullString{}))
@@ -127,7 +127,7 @@ func TestRequireThreadAndTopicError(t *testing.T) {
 	defer sqldb.Close()
 
 	mock.ExpectQuery("SELECT th.idforumthread").
-		WithArgs(int32(0), int32(2), sql.NullInt32{Int32: 0, Valid: false}).
+		WithArgs(int32(0), int32(2), int32(0), int32(0), sql.NullInt32{Int32: 0, Valid: false}).
 		WillReturnError(sql.ErrNoRows)
 
 	req := httptest.NewRequest("GET", "/forum/topic/1/thread/2", nil)

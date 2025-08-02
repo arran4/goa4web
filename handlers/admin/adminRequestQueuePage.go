@@ -122,6 +122,10 @@ func handleRequestAction(w http.ResponseWriter, r *http.Request, status string) 
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
 	comment := r.PostFormValue("comment")
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if cd == nil || !cd.HasRole("administrator") {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
 	cd.PageTitle = fmt.Sprintf("Request %d", id)
 	queries := cd.Queries()
 	req, err := queries.GetAdminRequestByID(r.Context(), int32(id))

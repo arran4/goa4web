@@ -1,5 +1,6 @@
 {{ template "head" $ }}
 <h2>Role {{ .Role.Name }} (ID {{ .Role.ID }})</h2>
+<p><a href="/admin/role/{{ .Role.ID }}/edit">Edit Role</a></p>
 <table border="1">
     <tr><th>Can Login</th><th>Is Admin</th><th>Public Profiles</th></tr>
     <tr>
@@ -20,13 +21,14 @@
 </ul>
 <h3>Grants</h3>
 <table border="1">
-    <tr><th>ID</th><th>Section</th><th>Item</th><th>Item ID</th><th>Action</th><th>Delete?</th></tr>
+    <tr><th>ID</th><th>Section</th><th>Item</th><th>Item ID</th><th>Info</th><th>Action</th><th>Delete?</th></tr>
     {{- range .Grants }}
     <tr id="g{{ .ID }}">
         <td>{{ if .Link }}<a href="{{ .Link }}">{{ .ID }}</a>{{ else }}{{ .ID }}{{ end }}</td>
         <td>{{ .Section }}</td>
         <td>{{ .Item.String }}</td>
         <td>{{ if .ItemID.Valid }}{{ .ItemID.Int32 }}{{ end }}</td>
+        <td>{{ .Info }}</td>
         <td>{{ .Action }}</td>
         <td>
             <form method="post" action="/admin/grant/delete">

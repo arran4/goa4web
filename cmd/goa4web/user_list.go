@@ -42,9 +42,9 @@ func (c *userListCmd) Run() error {
 	ctx := context.Background()
 	queries := dbpkg.New(db)
 
-	var rows []*dbpkg.ListUserInfoRow
+	var rows []*dbpkg.SystemListUserInfoRow
 	if c.showAdmin || c.showCreated || c.jsonOut {
-		rows, err = queries.ListUserInfo(ctx)
+		rows, err = queries.SystemListUserInfo(ctx)
 	} else {
 		// fall back to basic user list when no extra columns requested
 		basic, err2 := queries.AdminAllUsers(ctx)

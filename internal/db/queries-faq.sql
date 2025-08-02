@@ -4,9 +4,40 @@ FROM faq
 WHERE faqCategories_idfaqCategories = '0' OR answer IS NULL;
 
 -- name: GetFAQAnsweredQuestions :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT idfaq, faqCategories_idfaqCategories, language_idlanguage, users_idusers, answer, question
 FROM faq
-WHERE answer IS NOT NULL AND deleted_at IS NULL;
+WHERE answer IS NOT NULL
+  AND deleted_at IS NULL
+  AND (
+      language_idlanguage = 0
+      OR language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+            AND ul.language_idlanguage = faq.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='faq'
+        AND (g.item='question/answer' OR g.item IS NULL)
+        AND g.action='see'
+        AND g.active=1
+        AND (g.item_id = faq.idfaq OR g.item_id IS NULL)
+        AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  );
 
 -- name: GetFAQDismissedQuestions :many
 SELECT idfaq, faqCategories_idfaqCategories, language_idlanguage, users_idusers, answer, question
@@ -20,15 +51,33 @@ FROM faq;
 -- name: RenameFAQCategory :exec
 UPDATE faq_categories
 SET name = ?
-WHERE idfaqCategories = ?;
+WHERE idfaqCategories = ?
+  AND EXISTS (
+      SELECT 1 FROM user_roles ur
+      JOIN roles r ON ur.role_id = r.id
+      WHERE ur.users_idusers = sqlc.arg(viewer_id)
+        AND r.is_admin = 1
+  );
 
 -- name: DeleteFAQCategory :exec
 UPDATE faq_categories SET deleted_at = NOW()
-WHERE idfaqCategories = ?;
+WHERE idfaqCategories = ?
+  AND EXISTS (
+      SELECT 1 FROM user_roles ur
+      JOIN roles r ON ur.role_id = r.id
+      WHERE ur.users_idusers = sqlc.arg(viewer_id)
+        AND r.is_admin = 1
+  );
 
 -- name: CreateFAQCategory :exec
 INSERT INTO faq_categories (name)
-VALUES (?);
+SELECT sqlc.arg(name)
+WHERE EXISTS (
+    SELECT 1 FROM user_roles ur
+    JOIN roles r ON ur.role_id = r.id
+    WHERE ur.users_idusers = sqlc.arg(viewer_id)
+      AND r.is_admin = 1
+);
 
 -- name: CreateFAQQuestion :exec
 INSERT INTO faq (question, users_idusers, language_idlanguage)
@@ -37,11 +86,23 @@ VALUES (?, ?, ?);
 -- name: UpdateFAQQuestionAnswer :exec
 UPDATE faq
 SET answer = ?, question = ?, faqCategories_idfaqCategories = ?
-WHERE idfaq = ?;
+WHERE idfaq = ?
+  AND EXISTS (
+      SELECT 1 FROM user_roles ur
+      JOIN roles r ON ur.role_id = r.id
+      WHERE ur.users_idusers = sqlc.arg(viewer_id)
+        AND r.is_admin = 1
+  );
 
 -- name: DeleteFAQ :exec
 UPDATE faq SET deleted_at = NOW()
-WHERE idfaq = ?;
+WHERE idfaq = ?
+  AND EXISTS (
+      SELECT 1 FROM user_roles ur
+      JOIN roles r ON ur.role_id = r.id
+      WHERE ur.users_idusers = sqlc.arg(viewer_id)
+        AND r.is_admin = 1
+  );
 
 -- name: GetAllFAQCategories :many
 SELECT *

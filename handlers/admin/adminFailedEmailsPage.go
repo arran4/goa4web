@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"net/mail"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -16,7 +17,7 @@ import (
 // AdminFailedEmailsPage shows queued emails with errors.
 func AdminFailedEmailsPage(w http.ResponseWriter, r *http.Request) {
 	type EmailItem struct {
-		*db.ListFailedEmailsRow
+		*db.AdminListFailedEmailsRow
 		Email   string
 		Subject string
 	}
@@ -39,9 +40,13 @@ func AdminFailedEmailsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := cd.Queries()
-	rows, err := queries.ListFailedEmails(r.Context(), db.ListFailedEmailsParams{
-		Limit:  int32(pageSize + 1),
-		Offset: int32(offset),
+	langID, _ := strconv.Atoi(r.URL.Query().Get("lang"))
+	role := r.URL.Query().Get("role")
+	rows, err := queries.AdminListFailedEmails(r.Context(), db.AdminListFailedEmailsParams{
+		LanguageID: int32(langID),
+		RoleName:   role,
+		Limit:      int32(pageSize + 1),
+		Offset:     int32(offset),
 	})
 	if err != nil {
 		log.Printf("list failed emails: %v", err)
@@ -92,15 +97,32 @@ func AdminFailedEmailsPage(w http.ResponseWriter, r *http.Request) {
 		data.Emails = append(data.Emails, EmailItem{e, emailStr, subj})
 	}
 
+	params := url.Values{}
+	if role != "" {
+		params.Set("role", role)
+	}
+	if langID > 0 {
+		params.Set("lang", strconv.Itoa(langID))
+	}
 	if hasMore {
-		data.NextLink = "/admin/email/failed?offset=" + strconv.Itoa(offset+pageSize)
+		nextVals := url.Values{}
+		for k, v := range params {
+			nextVals[k] = v
+		}
+		nextVals.Set("offset", strconv.Itoa(offset+pageSize))
+		data.NextLink = "/admin/email/failed?" + nextVals.Encode()
 	}
 	if offset > 0 {
 		prev := offset - pageSize
 		if prev < 0 {
 			prev = 0
 		}
-		data.PrevLink = "/admin/email/failed?offset=" + strconv.Itoa(prev)
+		prevVals := url.Values{}
+		for k, v := range params {
+			prevVals[k] = v
+		}
+		prevVals.Set("offset", strconv.Itoa(prev))
+		data.PrevLink = "/admin/email/failed?" + prevVals.Encode()
 	}
 
 	handlers.TemplateHandler(w, r, "emailFailedPage.gohtml", data)

@@ -16,13 +16,13 @@ func TestTemplateOverride(t *testing.T) {
 	q := New(db)
 
 	mock.ExpectExec("INSERT INTO template_overrides").WithArgs("t", "body").WillReturnResult(sqlmock.NewResult(1, 1))
-	if err := q.SetTemplateOverride(context.Background(), SetTemplateOverrideParams{Name: "t", Body: "body"}); err != nil {
+	if err := q.AdminSetTemplateOverride(context.Background(), AdminSetTemplateOverrideParams{Name: "t", Body: "body"}); err != nil {
 		t.Fatalf("set: %v", err)
 	}
 
 	rows := sqlmock.NewRows([]string{"body"}).AddRow("body")
 	mock.ExpectQuery("SELECT body FROM template_overrides").WithArgs("t").WillReturnRows(rows)
-	body, err := q.GetTemplateOverride(context.Background(), "t")
+	body, err := q.SystemGetTemplateOverride(context.Background(), "t")
 	if err != nil {
 		t.Fatalf("get: %v", err)
 	}
@@ -31,7 +31,7 @@ func TestTemplateOverride(t *testing.T) {
 	}
 
 	mock.ExpectExec("DELETE FROM template_overrides").WithArgs("t").WillReturnResult(sqlmock.NewResult(1, 1))
-	if err := q.DeleteTemplateOverride(context.Background(), "t"); err != nil {
+	if err := q.AdminDeleteTemplateOverride(context.Background(), "t"); err != nil {
 		t.Fatalf("delete: %v", err)
 	}
 

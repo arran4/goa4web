@@ -37,7 +37,7 @@ func (c *emailQueueResendCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
-	e, err := queries.GetPendingEmailByID(ctx, int32(c.ID))
+	e, err := queries.AdminGetPendingEmailByID(ctx, int32(c.ID))
 	if err != nil {
 		return fmt.Errorf("get email: %w", err)
 	}

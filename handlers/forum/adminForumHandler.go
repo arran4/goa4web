@@ -123,7 +123,7 @@ func AdminForumRemakeForumThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Messages = append(data.Messages, "Recalculating forum thread metadata...")
 
-	if err := queries.RecalculateAllForumThreadMetaData(r.Context()); err != nil {
+	if err := queries.AdminRecalculateAllForumThreadMetaData(r.Context()); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("recalculateForumThreadByIdMetaData_firstpost: %w", err).Error())
 	} else {
 		data.Messages = append(data.Messages, "Thread metadata rebuild complete.")

@@ -47,7 +47,7 @@ func AdminBoardsPage(w http.ResponseWriter, r *http.Request) {
 
 	children := map[int32][]*BoardRow{}
 	for _, b := range boardRows {
-		threads, err := queries.CountThreadsByBoard(r.Context(), b.Idimageboard)
+		threads, err := queries.AdminCountThreadsByBoard(r.Context(), b.Idimageboard)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			log.Printf("countThreads error: %s", err)
 			threads = 0

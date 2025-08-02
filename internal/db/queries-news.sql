@@ -42,30 +42,6 @@ WHERE s.idsiteNews = sqlc.arg(id) AND EXISTS (
 )
 LIMIT 1;
 
--- name: GetNewsPostsByIdsWithWriterIdAndThreadCommentCount :many
-WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
-)
-SELECT u.username AS writerName, u.idusers as writerId, s.idsiteNews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, th.comments as Comments
-FROM site_news s
-LEFT JOIN users u ON s.users_idusers = u.idusers
-LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
-WHERE s.Idsitenews IN (sqlc.slice(newsIds)) AND EXISTS (
-    SELECT 1 FROM grants g
-    WHERE g.section='news'
-      AND (g.item='post' OR g.item IS NULL)
-      AND g.action='see'
-      AND g.active=1
-      AND (g.item_id = s.idsiteNews OR g.item_id IS NULL)
-      AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
-      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
-)
-ORDER BY s.occurred DESC;
 
 -- name: GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCount :many
 WITH RECURSIVE role_ids(id) AS (
@@ -80,7 +56,20 @@ SELECT u.username AS writerName, u.idusers as writerId, s.idsiteNews, s.forumthr
 FROM site_news s
 LEFT JOIN users u ON s.users_idusers = u.idusers
 LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
-WHERE s.Idsitenews IN (sqlc.slice(newsIds)) AND EXISTS (
+WHERE s.Idsitenews IN (sqlc.slice(newsIds))
+  AND (
+      NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+      )
+      OR s.language_idlanguage = 0
+      OR s.language_idlanguage IS NULL
+      OR s.language_idlanguage IN (
+          SELECT ul.language_idlanguage
+          FROM user_language ul
+          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+      )
+  )
+  AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='news'
       AND g.item='post'
@@ -105,7 +94,17 @@ SELECT u.username AS writerName, u.idusers as writerId, s.idsiteNews, s.forumthr
 FROM site_news s
 LEFT JOIN users u ON s.users_idusers = u.idusers
 LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
-WHERE EXISTS (
+WHERE (
+    NOT EXISTS (
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+    )
+    OR s.language_idlanguage = 0
+    OR s.language_idlanguage IS NULL
+    OR s.language_idlanguage IN (
+        SELECT ul.language_idlanguage FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+    )
+)
+  AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='news'
       AND (g.item='post' OR g.item IS NULL)

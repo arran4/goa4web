@@ -23,7 +23,7 @@ var _ notif.AdminEmailTemplateProvider = (*CreateLanguageTask)(nil)
 func (CreateLanguageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cname := r.PostFormValue("cname")
-	res, err := queries.InsertLanguage(r.Context(), sql.NullString{String: cname, Valid: true})
+	res, err := queries.AdminInsertLanguage(r.Context(), sql.NullString{String: cname, Valid: true})
 	if err != nil {
 		return fmt.Errorf("create language fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

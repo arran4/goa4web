@@ -30,7 +30,7 @@ func adminLanguagesPage(w http.ResponseWriter, r *http.Request) {
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	rows, err := cd.Languages()
+	rows, err := cd.AllLanguages()
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -55,7 +55,7 @@ func adminLanguagesRenamePage(w http.ResponseWriter, r *http.Request) {
 	}
 	if cidi, err := strconv.Atoi(cid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else if err := queries.RenameLanguage(r.Context(), db.RenameLanguageParams{
+	} else if err := queries.AdminRenameLanguage(r.Context(), db.AdminRenameLanguageParams{
 		Nameof:     sql.NullString{Valid: true, String: cname},
 		Idlanguage: int32(cidi),
 	}); err != nil {
@@ -87,7 +87,7 @@ func adminLanguagesDeletePage(w http.ResponseWriter, r *http.Request) {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
 	} else {
 		var name string
-		if rows, err := queries.FetchLanguages(r.Context()); err == nil {
+		if rows, err := queries.AdminListLanguages(r.Context()); err == nil {
 			for _, l := range rows {
 				if l.Idlanguage == int32(cidi) {
 					name = l.Nameof.String
@@ -95,7 +95,7 @@ func adminLanguagesDeletePage(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		}
-		if err := queries.DeleteLanguage(r.Context(), int32(cidi)); err != nil {
+		if err := queries.AdminDeleteLanguage(r.Context(), int32(cidi)); err != nil {
 			data.Errors = append(data.Errors, fmt.Errorf("DeleteLanguage: %w", err).Error())
 		} else if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 			if evt := cd.Event(); evt != nil {
@@ -121,7 +121,7 @@ func adminLanguagesCreatePage(w http.ResponseWriter, r *http.Request) {
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Back:     "/admin/languages",
 	}
-	if res, err := queries.InsertLanguage(r.Context(), sql.NullString{
+	if res, err := queries.AdminInsertLanguage(r.Context(), sql.NullString{
 		String: cname,
 		Valid:  true,
 	}); err != nil {

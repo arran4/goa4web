@@ -132,7 +132,7 @@ func adminNewsEditFormPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/admin/news?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	langs, err := cd.Languages()
+	langs, err := cd.AllLanguages()
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

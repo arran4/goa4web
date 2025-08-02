@@ -45,7 +45,7 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	langs, err := cd.Languages()
+	langs, err := cd.AllLanguages()
 	if err != nil {
 		log.Printf("Error getting languages: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -92,7 +92,7 @@ func updateLanguageSelections(r *http.Request, cd *common.CoreData, queries *db.
 		return err
 	}
 
-	langs, err := cd.Languages()
+	langs, err := cd.AllLanguages()
 	if err != nil {
 		return err
 	}

@@ -39,7 +39,7 @@ func (c *langUpdateCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
-	err = queries.RenameLanguage(ctx, dbpkg.RenameLanguageParams{Nameof: sql.NullString{String: c.Name, Valid: true}, Idlanguage: int32(c.ID)})
+	err = queries.AdminRenameLanguage(ctx, dbpkg.AdminRenameLanguageParams{Nameof: sql.NullString{String: c.Name, Valid: true}, Idlanguage: int32(c.ID)})
 	if err != nil {
 		return fmt.Errorf("update language: %w", err)
 	}

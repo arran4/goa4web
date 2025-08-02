@@ -160,7 +160,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 
 	languageRows, err := cd.Languages()
 	if err != nil {
-		log.Printf("FetchLanguages Error: %s", err)
+		log.Printf("ListLanguagesForUser Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

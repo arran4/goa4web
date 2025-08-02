@@ -64,6 +64,6 @@ func EnsureDefaultLanguage(ctx context.Context, q *db.Queries, name string) erro
 	if err := validateLanguageName(name); err != nil {
 		return err
 	}
-	_, err = q.InsertLanguage(ctx, sql.NullString{String: name, Valid: true})
+	_, err = q.AdminInsertLanguage(ctx, sql.NullString{String: name, Valid: true})
 	return err
 }

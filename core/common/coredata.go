@@ -591,7 +591,7 @@ func (cd *CoreData) Languages() ([]*db.Language, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
-		return cd.queries.FetchLanguages(cd.ctx)
+		return cd.queries.ListLanguagesForUser(cd.ctx, db.ListLanguagesForUserParams{ViewerID: cd.UserID})
 	})
 }
 
@@ -601,7 +601,7 @@ func (cd *CoreData) AllLanguages() ([]*db.Language, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
-		return cd.queries.FetchLanguages(cd.ctx)
+		return cd.queries.AdminListLanguages(cd.ctx)
 	})
 }
 

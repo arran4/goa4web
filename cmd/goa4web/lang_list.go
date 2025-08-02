@@ -31,7 +31,7 @@ func (c *langListCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
-	langs, err := queries.AllLanguages(ctx)
+	langs, err := queries.AdminListLanguages(ctx)
 	if err != nil {
 		return fmt.Errorf("list languages: %w", err)
 	}

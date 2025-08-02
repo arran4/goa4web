@@ -27,7 +27,7 @@ func (DeleteLanguageTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("cid parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	var name string
-	if rows, err := queries.FetchLanguages(r.Context()); err == nil {
+	if rows, err := queries.AdminListLanguages(r.Context()); err == nil {
 		for _, l := range rows {
 			if l.Idlanguage == int32(cid) {
 				name = l.Nameof.String
@@ -35,7 +35,7 @@ func (DeleteLanguageTask) Action(w http.ResponseWriter, r *http.Request) any {
 			}
 		}
 	}
-	if err := queries.DeleteLanguage(r.Context(), int32(cid)); err != nil {
+	if err := queries.AdminDeleteLanguage(r.Context(), int32(cid)); err != nil {
 		return fmt.Errorf("delete language fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {

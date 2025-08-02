@@ -34,7 +34,7 @@ func adminLinkPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cats, _ := queries.GetAllLinkerCategories(r.Context())
-	langs, _ := cd.Languages()
+	langs, _ := cd.AllLanguages()
 
 	cd.PageTitle = fmt.Sprintf("Edit Link %d", id)
 	data := struct {

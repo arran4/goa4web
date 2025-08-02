@@ -34,7 +34,24 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 	queries := cd.Queries()
-	notifs, err := queries.GetUnreadNotifications(r.Context(), uid)
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	showAll := r.URL.Query().Get("all") == "1"
+	var notifs []*db.Notification
+	var err error
+	limit := int32(cd.Config.PageSizeDefault)
+	if showAll {
+		notifs, err = queries.ListUserNotifications(r.Context(), db.ListUserNotificationsParams{
+			UsersIdusers: uid,
+			Limit:        limit,
+			Offset:       int32(offset),
+		})
+	} else {
+		notifs, err = queries.ListUserUnreadNotifications(r.Context(), db.ListUserUnreadNotificationsParams{
+			UsersIdusers: uid,
+			Limit:        limit,
+			Offset:       int32(offset),
+		})
+	}
 	if err != nil {
 		log.Printf("get notifications: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -52,11 +69,15 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		Notifications []*db.Notification
 		Emails        []*db.UserEmail
 		MaxPriority   int32
+		ShowAll       bool
+		Offset        int
 	}{
 		CoreData:      cd,
 		Notifications: notifs,
 		Emails:        emails,
 		MaxPriority:   maxPr,
+		ShowAll:       showAll,
+		Offset:        offset,
 	}
 	handlers.TemplateHandler(w, r, "notifications.gohtml", data)
 }

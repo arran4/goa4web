@@ -18,7 +18,7 @@ func adminLoginAttemptsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data := Data{CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData)}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	items, err := queries.ListLoginAttempts(r.Context())
+	items, err := queries.AdminListLoginAttempts(r.Context())
 	if err != nil {
 		log.Printf("list login attempts: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

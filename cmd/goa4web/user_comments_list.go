@@ -47,7 +47,7 @@ func (c *userCommentsListCmd) Run() error {
 		}
 		c.ID = int(u.Idusers)
 	}
-	rows, err := queries.ListAdminUserComments(ctx, int32(c.ID))
+	rows, err := queries.AdminListUserComments(ctx, int32(c.ID))
 	if err != nil {
 		return fmt.Errorf("list comments: %w", err)
 	}

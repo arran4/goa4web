@@ -1,14 +1,14 @@
--- name: InsertAdminUserComment :exec
+-- name: AdminInsertUserComment :exec
 INSERT INTO admin_user_comments (users_idusers, comment)
 VALUES (?, ?);
 
--- name: ListAdminUserComments :many
+-- name: AdminListUserComments :many
 SELECT id, users_idusers, comment, created_at
 FROM admin_user_comments
 WHERE users_idusers = ?
 ORDER BY id DESC;
 
--- name: LatestAdminUserComment :one
+-- name: AdminGetLatestUserComment :one
 SELECT id, users_idusers, comment, created_at
 FROM admin_user_comments
 WHERE users_idusers = ?

@@ -81,7 +81,7 @@ func adminPendingUsersReject(w http.ResponseWriter, r *http.Request) {
 			data.Messages = append(data.Messages, "user rejected")
 		}
 		if reason != "" {
-			if err := queries.InsertAdminUserComment(r.Context(), db.InsertAdminUserCommentParams{UsersIdusers: id, Comment: reason}); err != nil {
+			if err := queries.AdminInsertUserComment(r.Context(), db.AdminInsertUserCommentParams{UsersIdusers: id, Comment: reason}); err != nil {
 				log.Printf("insert admin user comment: %v", err)
 			} else {
 				data.Messages = append(data.Messages, "comment recorded")

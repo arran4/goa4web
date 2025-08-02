@@ -56,7 +56,7 @@ func (c *userProfileCmd) Run() error {
 	for _, e := range emails {
 		fmt.Printf("Email: %s verified:%t priority:%d\n", e.Email, e.VerifiedAt.Valid, e.NotificationPriority)
 	}
-	comments, _ := queries.ListAdminUserComments(ctx, int32(c.ID))
+	comments, _ := queries.AdminListUserComments(ctx, int32(c.ID))
 	if len(comments) > 0 {
 		fmt.Println("Admin comments:")
 		for _, cm := range comments {

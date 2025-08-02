@@ -9,30 +9,30 @@ import (
 	"context"
 )
 
-const insertAdminRequestComment = `-- name: InsertAdminRequestComment :exec
+const adminInsertRequestComment = `-- name: AdminInsertRequestComment :exec
 INSERT INTO admin_request_comments (request_id, comment)
 VALUES (?, ?)
 `
 
-type InsertAdminRequestCommentParams struct {
+type AdminInsertRequestCommentParams struct {
 	RequestID int32
 	Comment   string
 }
 
-func (q *Queries) InsertAdminRequestComment(ctx context.Context, arg InsertAdminRequestCommentParams) error {
-	_, err := q.db.ExecContext(ctx, insertAdminRequestComment, arg.RequestID, arg.Comment)
+func (q *Queries) AdminInsertRequestComment(ctx context.Context, arg AdminInsertRequestCommentParams) error {
+	_, err := q.db.ExecContext(ctx, adminInsertRequestComment, arg.RequestID, arg.Comment)
 	return err
 }
 
-const listAdminRequestComments = `-- name: ListAdminRequestComments :many
+const adminListRequestComments = `-- name: AdminListRequestComments :many
 SELECT id, request_id, comment, created_at
 FROM admin_request_comments
 WHERE request_id = ?
 ORDER BY id DESC
 `
 
-func (q *Queries) ListAdminRequestComments(ctx context.Context, requestID int32) ([]*AdminRequestComment, error) {
-	rows, err := q.db.QueryContext(ctx, listAdminRequestComments, requestID)
+func (q *Queries) AdminListRequestComments(ctx context.Context, requestID int32) ([]*AdminRequestComment, error) {
+	rows, err := q.db.QueryContext(ctx, adminListRequestComments, requestID)
 	if err != nil {
 		return nil, err
 	}

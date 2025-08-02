@@ -9,22 +9,7 @@ import (
 	"context"
 )
 
-const insertAdminUserComment = `-- name: InsertAdminUserComment :exec
-INSERT INTO admin_user_comments (users_idusers, comment)
-VALUES (?, ?)
-`
-
-type InsertAdminUserCommentParams struct {
-	UsersIdusers int32
-	Comment      string
-}
-
-func (q *Queries) InsertAdminUserComment(ctx context.Context, arg InsertAdminUserCommentParams) error {
-	_, err := q.db.ExecContext(ctx, insertAdminUserComment, arg.UsersIdusers, arg.Comment)
-	return err
-}
-
-const latestAdminUserComment = `-- name: LatestAdminUserComment :one
+const adminGetLatestUserComment = `-- name: AdminGetLatestUserComment :one
 SELECT id, users_idusers, comment, created_at
 FROM admin_user_comments
 WHERE users_idusers = ?
@@ -32,8 +17,8 @@ ORDER BY id DESC
 LIMIT 1
 `
 
-func (q *Queries) LatestAdminUserComment(ctx context.Context, usersIdusers int32) (*AdminUserComment, error) {
-	row := q.db.QueryRowContext(ctx, latestAdminUserComment, usersIdusers)
+func (q *Queries) AdminGetLatestUserComment(ctx context.Context, usersIdusers int32) (*AdminUserComment, error) {
+	row := q.db.QueryRowContext(ctx, adminGetLatestUserComment, usersIdusers)
 	var i AdminUserComment
 	err := row.Scan(
 		&i.ID,
@@ -44,15 +29,30 @@ func (q *Queries) LatestAdminUserComment(ctx context.Context, usersIdusers int32
 	return &i, err
 }
 
-const listAdminUserComments = `-- name: ListAdminUserComments :many
+const adminInsertUserComment = `-- name: AdminInsertUserComment :exec
+INSERT INTO admin_user_comments (users_idusers, comment)
+VALUES (?, ?)
+`
+
+type AdminInsertUserCommentParams struct {
+	UsersIdusers int32
+	Comment      string
+}
+
+func (q *Queries) AdminInsertUserComment(ctx context.Context, arg AdminInsertUserCommentParams) error {
+	_, err := q.db.ExecContext(ctx, adminInsertUserComment, arg.UsersIdusers, arg.Comment)
+	return err
+}
+
+const adminListUserComments = `-- name: AdminListUserComments :many
 SELECT id, users_idusers, comment, created_at
 FROM admin_user_comments
 WHERE users_idusers = ?
 ORDER BY id DESC
 `
 
-func (q *Queries) ListAdminUserComments(ctx context.Context, usersIdusers int32) ([]*AdminUserComment, error) {
-	rows, err := q.db.QueryContext(ctx, listAdminUserComments, usersIdusers)
+func (q *Queries) AdminListUserComments(ctx context.Context, usersIdusers int32) ([]*AdminUserComment, error) {
+	rows, err := q.db.QueryContext(ctx, adminListUserComments, usersIdusers)
 	if err != nil {
 		return nil, err
 	}

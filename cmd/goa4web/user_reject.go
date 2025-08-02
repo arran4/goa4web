@@ -55,7 +55,7 @@ func (c *userRejectCmd) Run() error {
 		return fmt.Errorf("add role: %w", err)
 	}
 	if c.Reason != "" {
-		if err := queries.InsertAdminUserComment(ctx, dbpkg.InsertAdminUserCommentParams{UsersIdusers: int32(c.ID), Comment: c.Reason}); err != nil {
+		if err := queries.AdminInsertUserComment(ctx, dbpkg.AdminInsertUserCommentParams{UsersIdusers: int32(c.ID), Comment: c.Reason}); err != nil {
 			log.Printf("insert admin user comment: %v", err)
 		}
 	}

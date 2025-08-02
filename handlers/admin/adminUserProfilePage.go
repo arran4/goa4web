@@ -26,7 +26,7 @@ func adminUserProfilePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	emails, _ := queries.GetUserEmailsByUserID(r.Context(), int32(id))
-	comments, _ := queries.ListAdminUserComments(r.Context(), int32(id))
+	comments, _ := queries.AdminListUserComments(r.Context(), int32(id))
 	roles, _ := queries.GetPermissionsByUserID(r.Context(), int32(id))
 	stats, _ := queries.UserPostCountsByID(r.Context(), int32(id))
 	bm, _ := queries.GetBookmarksForUser(r.Context(), int32(id))
@@ -80,7 +80,7 @@ func adminUserAddCommentPage(w http.ResponseWriter, r *http.Request) {
 		data.Errors = append(data.Errors, "empty comment")
 	} else {
 		queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-		if err := queries.InsertAdminUserComment(r.Context(), db.InsertAdminUserCommentParams{UsersIdusers: int32(id), Comment: comment}); err != nil {
+		if err := queries.AdminInsertUserComment(r.Context(), db.AdminInsertUserCommentParams{UsersIdusers: int32(id), Comment: comment}); err != nil {
 			data.Errors = append(data.Errors, err.Error())
 		} else {
 			data.Messages = append(data.Messages, "comment added")

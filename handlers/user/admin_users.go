@@ -86,7 +86,7 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Rows = rows
 	for _, u := range rows {
-		if c, err := queries.LatestAdminUserComment(r.Context(), u.Idusers); err == nil {
+		if c, err := queries.AdminGetLatestUserComment(r.Context(), u.Idusers); err == nil {
 			data.Comments[u.Idusers] = c
 		}
 	}

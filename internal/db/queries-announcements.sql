@@ -1,10 +1,8 @@
--- name: PromoteAnnouncement :exec
--- admin task
+-- name: AdminPromoteAnnouncement :exec
 INSERT INTO site_announcements (site_news_id)
 VALUES (?);
 
--- name: DemoteAnnouncement :exec
--- admin task
+-- name: AdminDemoteAnnouncement :exec
 DELETE FROM site_announcements WHERE id = ?;
 
 -- name: GetLatestAnnouncementByNewsID :one
@@ -55,8 +53,7 @@ WHERE a.active = 1
 ORDER BY a.created_at DESC
 LIMIT 1;
 
--- name: ListAnnouncementsWithNewsForAdmin :many
--- admin task
+-- name: AdminListAnnouncementsWithNews :many
 SELECT a.id, a.site_news_id, a.active, a.created_at, n.news
 FROM site_announcements a
 JOIN site_news n ON n.idsiteNews = a.site_news_id

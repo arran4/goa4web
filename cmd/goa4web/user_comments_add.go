@@ -54,7 +54,7 @@ func (c *userCommentsAddCmd) Run() error {
 		c.ID = int(u.Idusers)
 	}
 	c.rootCmd.Verbosef("adding comment for user %d", c.ID)
-	if err := queries.InsertAdminUserComment(ctx, dbpkg.InsertAdminUserCommentParams{UsersIdusers: int32(c.ID), Comment: c.Comment}); err != nil {
+	if err := queries.AdminInsertUserComment(ctx, dbpkg.AdminInsertUserCommentParams{UsersIdusers: int32(c.ID), Comment: c.Comment}); err != nil {
 		return fmt.Errorf("insert comment: %w", err)
 	}
 	c.rootCmd.Infof("added comment for user %d", c.ID)

@@ -5,11 +5,12 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
 	"github.com/arran4/goa4web/config"
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dbdrivers"
 )
 
@@ -34,14 +35,19 @@ func applyMigrations(ctx context.Context, cfg *config.RuntimeConfig, reg *dbdriv
 	if err != nil {
 		return err
 	}
-	var connector driver.Connector = dbpkg.NewLoggingConnector(c, cfg.DBLogVerbosity)
-	db := sql.OpenDB(connector)
-	defer db.Close()
-	if err := db.PingContext(ctx); err != nil {
+	var connector driver.Connector = db.NewLoggingConnector(c, cfg.DBLogVerbosity)
+	sdb := sql.OpenDB(connector)
+	defer func(sdb *sql.DB) {
+		err := sdb.Close()
+		if err != nil {
+			log.Printf("failed to close DB connection: %v", err)
+		}
+	}(sdb)
+	if err := sdb.PingContext(ctx); err != nil {
 		return err
 	}
 	fsys := os.DirFS("migrations")
-	return Apply(ctx, db, fsys, false, cfg.DBDriver)
+	return Apply(ctx, sdb, fsys, false, cfg.DBDriver)
 }
 
 // MaybeAutoMigrate runs migrations when enabled via AUTO_MIGRATE.

@@ -10,7 +10,7 @@ import (
 	"os"
 
 	"github.com/arran4/goa4web/config"
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dbdrivers"
 )
 
@@ -24,13 +24,17 @@ func openDB(cfg *config.RuntimeConfig, reg *dbdrivers.Registry) (*sql.DB, error)
 	if err != nil {
 		return nil, err
 	}
-	var connector driver.Connector = dbpkg.NewLoggingConnector(c, cfg.DBLogVerbosity)
-	db := sql.OpenDB(connector)
-	if err := db.Ping(); err != nil {
-		db.Close()
+	var connector driver.Connector = db.NewLoggingConnector(c, cfg.DBLogVerbosity)
+	sdb := sql.OpenDB(connector)
+	if err := sdb.Ping(); err != nil {
+		// TODO better error reporting also consolidate?
+		err := sdb.Close()
+		if err != nil {
+			return nil, err
+		}
 		return nil, err
 	}
-	return db, nil
+	return sdb, nil
 }
 
 // dbMigrateCmd implements "db migrate".

@@ -3,6 +3,7 @@ package notifications
 import (
 	"context"
 	"database/sql"
+	htemplate "html/template"
 	"log"
 	"os"
 	"strings"
@@ -12,10 +13,9 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/templates"
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
-	htemplate "html/template"
 )
 
 // Notifier dispatches updates via email and internal notifications.
@@ -23,7 +23,7 @@ import (
 type Notifier struct {
 	Bus            *eventbus.Bus
 	EmailProvider  email.Provider
-	Queries        *dbpkg.Queries
+	Queries        db.Querier
 	Config         *config.RuntimeConfig
 	noteOnce       sync.Once
 	noteTmpls      *ttemplate.Template
@@ -31,13 +31,19 @@ type Notifier struct {
 	emailTextTmpls *ttemplate.Template
 	emailHTMLOnce  sync.Once
 	emailHTMLTmpls *htemplate.Template
+	CustomQueries  db.CustomQueries
 }
 
 // Option configures a Notifier instance.
 type Option func(*Notifier)
 
 // WithQueries sets the db.Queries dependency.
-func WithQueries(q *dbpkg.Queries) Option { return func(n *Notifier) { n.Queries = q } }
+func WithQueries(q db.Querier) Option { return func(n *Notifier) { n.Queries = q } }
+
+// WithCustomQueries sets the db.CustomQueries dependency.
+func WithCustomQueries(cq db.CustomQueries) Option {
+	return func(n *Notifier) { n.CustomQueries = cq }
+}
 
 // WithEmailProvider sets the email provider dependency.
 func WithEmailProvider(p email.Provider) Option { return func(n *Notifier) { n.EmailProvider = p } }
@@ -145,7 +151,7 @@ func (n *Notifier) notifyAdmins(ctx context.Context, et *EmailTemplates, nt *str
 				return err
 			}
 			if uid != nil {
-				if err := n.Queries.InsertNotification(ctx, dbpkg.InsertNotificationParams{
+				if err := n.Queries.InsertNotification(ctx, db.InsertNotificationParams{
 					UsersIdusers: *uid,
 					Link:         sql.NullString{String: link, Valid: link != ""},
 					Message:      sql.NullString{String: string(msg), Valid: len(msg) > 0},
@@ -181,7 +187,7 @@ func (n *Notifier) NotificationPurgeWorker(ctx context.Context, interval time.Du
 
 // sendInternalNotification stores an internal notification for the user.
 func (n *Notifier) sendInternalNotification(ctx context.Context, userID int32, path, msg string) error {
-	return n.Queries.InsertNotification(ctx, dbpkg.InsertNotificationParams{
+	return n.Queries.InsertNotification(ctx, db.InsertNotificationParams{
 		UsersIdusers: userID,
 		Link:         sql.NullString{String: path, Valid: path != ""},
 		Message:      sql.NullString{String: msg, Valid: msg != ""},

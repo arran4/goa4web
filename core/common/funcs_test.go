@@ -12,7 +12,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 func TestTemplateFuncsFirstline(t *testing.T) {
@@ -57,7 +57,7 @@ func TestLatestNewsRespectsPermissions(t *testing.T) {
 	}
 	defer db.Close()
 
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 
 	now := time.Now()
 	rows := sqlmock.NewRows([]string{

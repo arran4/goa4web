@@ -76,7 +76,7 @@ func (SearchLinkerTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return handlers.TemplateWithDataHandler("resultLinkerActionPage.gohtml", data)
 }
 
-func LinkerSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid int32) ([]*db.GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow, bool, bool, error) {
+func LinkerSearch(w http.ResponseWriter, r *http.Request, queries db.Querier, uid int32) ([]*db.GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow, bool, bool, error) {
 	searchWords := searchutil.BreakupTextToWords(r.PostFormValue("searchwords"))
 	var LinkerIds []int32
 

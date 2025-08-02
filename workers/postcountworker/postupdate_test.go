@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 func TestPostUpdate(t *testing.T) {
@@ -15,7 +15,7 @@ func TestPostUpdate(t *testing.T) {
 	}
 	defer db.Close()
 
-	q := dbpkg.New(db)
+	q := db.New(db)
 	mock.ExpectExec("AdminRecalculateForumThreadByIdMetaData").
 		WithArgs(int32(1)).
 		WillReturnResult(sqlmock.NewResult(0, 0))

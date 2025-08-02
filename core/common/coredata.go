@@ -97,7 +97,8 @@ type CoreData struct {
 	sessionManager SessionManager
 
 	ctx           context.Context
-	queries       *db.Queries
+	queries       db.Querier
+	customQueries db.CustomQueries
 	emailProvider lazy.Value[MailProvider]
 
 	allRoles                 lazy.Value[[]*db.Role]
@@ -257,7 +258,7 @@ func WithNavRegistry(r NavigationProvider) CoreOption {
 }
 
 // NewCoreData creates a CoreData with context and queries applied.
-func NewCoreData(ctx context.Context, q *db.Queries, cfg *config.RuntimeConfig, opts ...CoreOption) *CoreData {
+func NewCoreData(ctx context.Context, q db.Querier, cfg *config.RuntimeConfig, opts ...CoreOption) *CoreData {
 	cd := &CoreData{
 		ctx:               ctx,
 		queries:           q,
@@ -271,7 +272,7 @@ func NewCoreData(ctx context.Context, q *db.Queries, cfg *config.RuntimeConfig, 
 }
 
 // Queries returns the db.Queries instance associated with this CoreData.
-func (cd *CoreData) Queries() *db.Queries { return cd.queries }
+func (cd *CoreData) Queries() db.Querier { return cd.queries }
 
 // ImageURLMapper maps image references like "image:" or "cache:" to full URLs.
 func (cd *CoreData) ImageURLMapper(tag, val string) string {
@@ -922,14 +923,14 @@ func (cd *CoreData) Bloggers(r *http.Request) ([]*db.BloggerCountRow, error) {
 		ps := cd.PageSize()
 		search := r.URL.Query().Get("search")
 		if search != "" {
-			return cd.queries.SearchBloggers(cd.ctx, db.SearchBloggersParams{
+			return cd.customQueries.SearchBloggers(cd.ctx, db.SearchBloggersParams{
 				ListerID: cd.UserID,
 				Query:    search,
 				Limit:    int32(ps + 1),
 				Offset:   int32(offset),
 			})
 		}
-		return cd.queries.ListBloggers(cd.ctx, db.ListBloggersParams{
+		return cd.customQueries.ListBloggers(cd.ctx, db.ListBloggersParams{
 			ListerID: cd.UserID,
 			Limit:    int32(ps + 1),
 			Offset:   int32(offset),
@@ -947,14 +948,14 @@ func (cd *CoreData) Writers(r *http.Request) ([]*db.WriterCountRow, error) {
 		ps := cd.PageSize()
 		search := r.URL.Query().Get("search")
 		if search != "" {
-			return cd.queries.SearchWriters(cd.ctx, db.SearchWritersParams{
+			return cd.customQueries.SearchWriters(cd.ctx, db.SearchWritersParams{
 				ListerID: cd.UserID,
 				Query:    search,
 				Limit:    int32(ps + 1),
 				Offset:   int32(offset),
 			})
 		}
-		return cd.queries.ListWriters(cd.ctx, db.ListWritersParams{
+		return cd.customQueries.ListWriters(cd.ctx, db.ListWritersParams{
 			ListerID: cd.UserID,
 			Limit:    int32(ps + 1),
 			Offset:   int32(offset),

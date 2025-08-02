@@ -6,7 +6,7 @@ import (
 	"flag"
 	"fmt"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // grantAddCmd implements "grant add".
@@ -46,8 +46,8 @@ func (c *grantAddCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	q := dbpkg.New(db)
-	_, err = q.CreateGrant(ctx, dbpkg.CreateGrantParams{
+	q := db.New(db)
+	_, err = q.CreateGrant(ctx, db.CreateGrantParams{
 		UserID:   sql.NullInt32{Int32: int32(c.User), Valid: c.User != 0},
 		RoleID:   sql.NullInt32{},
 		Section:  c.Section,

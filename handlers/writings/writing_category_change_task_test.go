@@ -11,7 +11,7 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 func TestWritingCategoryChangeTask(t *testing.T) {
@@ -21,7 +21,7 @@ func TestWritingCategoryChangeTask(t *testing.T) {
 	}
 	defer db.Close()
 
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 
 	rows := sqlmock.NewRows([]string{"idwritingcategory", "writing_category_id", "title", "description"}).
 		AddRow(1, 0, "a", "")
@@ -53,7 +53,7 @@ func TestWritingCategoryWouldLoop(t *testing.T) {
 	}
 	defer db.Close()
 
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 
 	rows := sqlmock.NewRows([]string{"idwritingcategory", "writing_category_id", "title", "description"}).
 		AddRow(1, 0, "a", "").
@@ -89,7 +89,7 @@ func TestWritingCategoryWouldLoopHeadToTail(t *testing.T) {
 	}
 	defer db.Close()
 
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 
 	rows := sqlmock.NewRows([]string{"idwritingcategory", "writing_category_id", "title", "description"}).
 		AddRow(1, 0, "a", "").
@@ -117,7 +117,7 @@ func TestWritingCategoryWouldLoopAfterNode(t *testing.T) {
 	}
 	defer db.Close()
 
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 
 	rows := sqlmock.NewRows([]string{"idwritingcategory", "writing_category_id", "title", "description"}).
 		AddRow(1, 0, "a", "").
@@ -144,7 +144,7 @@ func TestWritingCategoryChangeTaskLoop(t *testing.T) {
 	}
 	defer db.Close()
 
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 
 	rows := sqlmock.NewRows([]string{"idwritingcategory", "writing_category_id", "title", "description"}).
 		AddRow(1, 2, "a", "").

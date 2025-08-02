@@ -215,7 +215,7 @@ func UsersPermissionsBulkDisallowPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 
-func roleInfoByPermID(ctx context.Context, q *db.Queries, id int32) (int32, string, string, error) {
+func roleInfoByPermID(ctx context.Context, q db.Querier, id int32) (int32, string, string, error) {
 	rows, err := q.GetPermissionsWithUsers(ctx, db.GetPermissionsWithUsersParams{Username: sql.NullString{}})
 	if err != nil {
 		return 0, "", "", err

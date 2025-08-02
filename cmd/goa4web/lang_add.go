@@ -6,7 +6,7 @@ import (
 	"flag"
 	"fmt"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // langAddCmd implements "lang add".
@@ -38,7 +38,7 @@ func (c *langAddCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 	c.rootCmd.Verbosef("adding language %s (%s)", c.Name, c.Code)
 	if _, err := queries.InsertLanguage(ctx, sql.NullString{String: c.Name, Valid: true}); err != nil {
 		return fmt.Errorf("insert language: %w", err)

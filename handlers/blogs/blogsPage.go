@@ -196,7 +196,7 @@ func AtomPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func FeedGen(r *http.Request, queries *db.Queries, uid int, username string) (*feeds.Feed, error) {
+func FeedGen(r *http.Request, queries db.Querier, uid int, username string) (*feeds.Feed, error) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
 	title := "Everyone's blog"

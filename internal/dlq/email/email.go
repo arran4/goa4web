@@ -7,7 +7,7 @@ import (
 	"net/mail"
 
 	"github.com/arran4/goa4web/config"
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
 )
@@ -15,7 +15,7 @@ import (
 // DLQ sends DLQ messages to administrator emails using the configured provider.
 type DLQ struct {
 	Provider email.Provider
-	Queries  *dbpkg.Queries
+	Queries  db.Querier
 	From     mail.Address
 	Config   *config.RuntimeConfig
 }
@@ -45,7 +45,7 @@ func (e DLQ) Record(ctx context.Context, message string) error {
 
 // Register registers the email provider.
 func Register(r *dlq.Registry, er *email.Registry) {
-	r.RegisterProvider("email", func(cfg *config.RuntimeConfig, q *dbpkg.Queries) dlq.DLQ {
+	r.RegisterProvider("email", func(cfg *config.RuntimeConfig, q db.Querier) dlq.DLQ {
 		p := er.ProviderFromConfig(cfg)
 		if p == nil {
 			return dlq.LogDLQ{}

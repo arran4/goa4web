@@ -7,7 +7,7 @@ import (
 	"flag"
 	"fmt"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // userAddRoleCmd implements the "user add-role" command.
@@ -40,19 +40,19 @@ func (c *userAddRoleCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 	c.rootCmd.Verbosef("adding role %s to %s", c.Role, c.Username)
 	u, err := queries.GetUserByUsername(ctx, sql.NullString{String: c.Username, Valid: true})
 	if err != nil {
 		return fmt.Errorf("get user: %w", err)
 	}
-	if _, err := queries.UserHasRole(ctx, dbpkg.UserHasRoleParams{UsersIdusers: u.Idusers, Name: c.Role}); err == nil {
+	if _, err := queries.UserHasRole(ctx, db.UserHasRoleParams{UsersIdusers: u.Idusers, Name: c.Role}); err == nil {
 		c.rootCmd.Verbosef("%s already has role %s", c.Username, c.Role)
 		return nil
 	} else if !errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("check role: %w", err)
 	}
-	if err := queries.CreateUserRole(ctx, dbpkg.CreateUserRoleParams{
+	if err := queries.CreateUserRole(ctx, db.CreateUserRoleParams{
 		UsersIdusers: u.Idusers,
 		Name:         c.Role,
 	}); err != nil {

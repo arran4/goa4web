@@ -8,7 +8,7 @@ import (
 )
 
 // UserCanCreateThread reports whether uid may create a thread in the topic.
-func UserCanCreateThread(ctx context.Context, q *db.Queries, topicID, uid int32) (bool, error) {
+func UserCanCreateThread(ctx context.Context, q db.Querier, topicID, uid int32) (bool, error) {
 	_, err := q.CheckGrant(ctx, db.CheckGrantParams{
 		ViewerID: uid,
 		Section:  "forum",

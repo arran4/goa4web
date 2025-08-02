@@ -7,7 +7,7 @@ import (
 	"flag"
 	"fmt"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // permGrantCmd implements "perm grant".
@@ -39,7 +39,7 @@ func (c *permGrantCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 	c.rootCmd.Verbosef("granting %s to %s", c.Role, c.User)
 	u, err := queries.GetUserByUsername(ctx, sql.NullString{String: c.User, Valid: true})
 	if err != nil {
@@ -53,7 +53,7 @@ func (c *permGrantCmd) Run() error {
 			return fmt.Errorf("check admin: %w", err)
 		}
 	}
-	if err := queries.CreateUserRole(ctx, dbpkg.CreateUserRoleParams{
+	if err := queries.CreateUserRole(ctx, db.CreateUserRoleParams{
 		UsersIdusers: u.Idusers,
 		Name:         c.Role,
 	}); err != nil {

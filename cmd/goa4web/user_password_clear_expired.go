@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // userPasswordClearExpiredCmd implements "user password clear-expired".
@@ -36,7 +36,7 @@ func (c *userPasswordClearExpiredCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 	expiry := time.Now().Add(-time.Duration(c.Hours) * time.Hour)
 	res, err := queries.PurgePasswordResetsBefore(ctx, expiry)
 	if err != nil {

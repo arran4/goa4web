@@ -157,14 +157,16 @@ func AdminForumRemakeForumTopicPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 
-func countForumThreads(ctx context.Context, q *db.Queries) (int64, error) {
+func countForumThreads(ctx context.Context, q db.Querier) (int64, error) {
 	var c int64
+	// TODO make query
 	err := q.DB().QueryRowContext(ctx, "SELECT COUNT(*) FROM forumthread").Scan(&c)
 	return c, err
 }
 
-func countForumTopics(ctx context.Context, q *db.Queries) (int64, error) {
+func countForumTopics(ctx context.Context, q db.Querier) (int64, error) {
 	var c int64
+	// TODO make query
 	err := q.DB().QueryRowContext(ctx, "SELECT COUNT(*) FROM forumtopic").Scan(&c)
 	return c, err
 }

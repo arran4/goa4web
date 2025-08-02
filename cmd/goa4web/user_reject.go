@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"log"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // userRejectCmd rejects a pending user account.
@@ -42,7 +42,7 @@ func (c *userRejectCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 	if c.ID == 0 {
 		u, err := queries.GetUserByUsername(ctx, sql.NullString{String: c.Username, Valid: true})
 		if err != nil {
@@ -51,11 +51,11 @@ func (c *userRejectCmd) Run() error {
 		c.ID = int(u.Idusers)
 	}
 	c.rootCmd.Verbosef("rejecting user %d", c.ID)
-	if err := queries.CreateUserRole(ctx, dbpkg.CreateUserRoleParams{UsersIdusers: int32(c.ID), Name: "rejected"}); err != nil {
+	if err := queries.CreateUserRole(ctx, db.CreateUserRoleParams{UsersIdusers: int32(c.ID), Name: "rejected"}); err != nil {
 		return fmt.Errorf("add role: %w", err)
 	}
 	if c.Reason != "" {
-		if err := queries.InsertAdminUserComment(ctx, dbpkg.InsertAdminUserCommentParams{UsersIdusers: int32(c.ID), Comment: c.Reason}); err != nil {
+		if err := queries.InsertAdminUserComment(ctx, db.InsertAdminUserCommentParams{UsersIdusers: int32(c.ID), Comment: c.Reason}); err != nil {
 			log.Printf("insert admin user comment: %v", err)
 		}
 	}

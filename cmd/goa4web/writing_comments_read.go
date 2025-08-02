@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strconv"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // writingCommentsReadCmd implements "writing comments read".
@@ -58,14 +58,14 @@ func (c *writingCommentsReadCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 	uid := int32(c.UserID)
-	w, err := queries.GetWritingForListerByID(ctx, dbpkg.GetWritingForListerByIDParams{ListerID: uid, Idwriting: int32(c.WritingID), ListerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0}})
+	w, err := queries.GetWritingForListerByID(ctx, db.GetWritingForListerByIDParams{ListerID: uid, Idwriting: int32(c.WritingID), ListerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0}})
 	if err != nil {
 		return fmt.Errorf("get writing: %w", err)
 	}
 	if c.All {
-		rows, err := queries.GetCommentsByThreadIdForUser(ctx, dbpkg.GetCommentsByThreadIdForUserParams{
+		rows, err := queries.GetCommentsByThreadIdForUser(ctx, db.GetCommentsByThreadIdForUserParams{
 			ViewerID: uid,
 			ThreadID: w.ForumthreadID,
 			UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
@@ -81,7 +81,7 @@ func (c *writingCommentsReadCmd) Run() error {
 	if c.CommentID == 0 {
 		return fmt.Errorf("comment id required")
 	}
-	cm, err := queries.GetCommentByIdForUser(ctx, dbpkg.GetCommentByIdForUserParams{
+	cm, err := queries.GetCommentByIdForUser(ctx, db.GetCommentByIdForUserParams{
 		ViewerID: uid,
 		ID:       int32(c.CommentID),
 		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},

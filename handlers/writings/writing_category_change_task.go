@@ -59,7 +59,7 @@ func (WritingCategoryChangeTask) Action(w http.ResponseWriter, r *http.Request) 
 	return nil
 }
 
-func writingCategoryWouldLoop(ctx context.Context, queries *db.Queries, cid, parentID int32) ([]int32, bool, error) {
+func writingCategoryWouldLoop(ctx context.Context, queries db.Querier, cid, parentID int32) ([]int32, bool, error) {
 	var parents map[int32]int32
 	if queries != nil {
 		cats, err := queries.FetchAllCategories(ctx)

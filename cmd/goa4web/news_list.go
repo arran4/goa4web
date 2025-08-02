@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/arran4/goa4web/core/common"
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // newsListCmd implements "news list".
@@ -35,7 +35,7 @@ func (c *newsListCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 	cd := common.NewCoreData(ctx, queries, c.rootCmd.cfg)
 	posts, err := cd.LatestNewsList(int32(c.Offset), int32(c.Limit))
 	if err != nil {

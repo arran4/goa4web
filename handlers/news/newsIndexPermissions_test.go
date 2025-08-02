@@ -7,7 +7,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 func TestCustomNewsIndexRoles(t *testing.T) {
@@ -29,7 +29,7 @@ func TestCustomNewsIndexRoles(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	q := dbpkg.New(db)
+	q := db.New(db)
 	ctx := req.Context()
 	cd = common.NewCoreData(ctx, q, config.NewRuntimeConfig())
 	cd.SetRoles([]string{"content writer", "administrator"})

@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/config"
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dlq"
 )
 
@@ -57,7 +57,7 @@ func (f *DLQ) Record(_ context.Context, message string) error {
 
 // Register registers the file provider.
 func Register(r *dlq.Registry) {
-	r.RegisterProvider("file", func(cfg *config.RuntimeConfig, _ *dbpkg.Queries) dlq.DLQ {
+	r.RegisterProvider("file", func(cfg *config.RuntimeConfig, _ db.Querier) dlq.DLQ {
 		return &DLQ{Path: cfg.DLQFile, Appender: osAppender{}}
 	})
 }

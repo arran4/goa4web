@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -34,9 +34,9 @@ func buildPatterns(task tasks.Name, path string) []string {
 
 // collectSubscribers returns a set of user IDs subscribed to any of the
 // patterns using the specified delivery method.
-func collectSubscribers(ctx context.Context, q *dbpkg.Queries, patterns []string, method string) (map[int32]struct{}, error) {
+func collectSubscribers(ctx context.Context, q db.Querier, patterns []string, method string) (map[int32]struct{}, error) {
 	subs := map[int32]struct{}{}
-	ids, err := q.ListSubscribersForPatterns(ctx, dbpkg.ListSubscribersForPatternsParams{Patterns: patterns, Method: method})
+	ids, err := q.ListSubscribersForPatterns(ctx, db.ListSubscribersForPatternsParams{Patterns: patterns, Method: method})
 	if err != nil {
 		return nil, fmt.Errorf("list subscribers: %w", err)
 	}
@@ -177,7 +177,7 @@ func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp Se
 			return err
 		}
 		if len(msg) > 0 {
-			if err := n.Queries.InsertNotification(ctx, dbpkg.InsertNotificationParams{
+			if err := n.Queries.InsertNotification(ctx, db.InsertNotificationParams{
 				UsersIdusers: evt.UserID,
 				Link:         sql.NullString{String: evt.Path, Valid: true},
 				Message:      sql.NullString{String: string(msg), Valid: true},
@@ -230,7 +230,7 @@ func (n *Notifier) notifyTargetUsers(ctx context.Context, evt eventbus.TaskEvent
 				return err
 			}
 			if len(msg) > 0 {
-				if err := n.Queries.InsertNotification(ctx, dbpkg.InsertNotificationParams{
+				if err := n.Queries.InsertNotification(ctx, db.InsertNotificationParams{
 					UsersIdusers: id,
 					Link:         sql.NullString{String: evt.Path, Valid: true},
 					Message:      sql.NullString{String: string(msg), Valid: true},
@@ -271,7 +271,7 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 			filterSubs := func(m map[int32]struct{}) {
 				for id := range m {
 					for _, g := range reqs {
-						if _, err := n.Queries.CheckGrant(ctx, dbpkg.CheckGrantParams{
+						if _, err := n.Queries.CheckGrant(ctx, db.CheckGrantParams{
 							ViewerID: id,
 							Section:  g.Section,
 							Item:     sql.NullString{String: g.Item, Valid: g.Item != ""},
@@ -347,11 +347,11 @@ func (n *Notifier) handleAutoSubscribe(ctx context.Context, evt eventbus.TaskEve
 	return nil
 }
 
-func ensureSubscription(ctx context.Context, q *dbpkg.Queries, userID int32, pattern, method string) {
+func ensureSubscription(ctx context.Context, q db.Querier, userID int32, pattern, method string) {
 	if q == nil || userID == 0 {
 		return
 	}
-	ids, err := q.ListSubscribersForPattern(ctx, dbpkg.ListSubscribersForPatternParams{Pattern: pattern, Method: method})
+	ids, err := q.ListSubscribersForPattern(ctx, db.ListSubscribersForPatternParams{Pattern: pattern, Method: method})
 	if err == nil {
 		for _, id := range ids {
 			if id == userID {
@@ -359,23 +359,23 @@ func ensureSubscription(ctx context.Context, q *dbpkg.Queries, userID int32, pat
 			}
 		}
 	}
-	if err := q.InsertSubscription(ctx, dbpkg.InsertSubscriptionParams{UsersIdusers: userID, Pattern: pattern, Method: method}); err != nil {
+	if err := q.InsertSubscription(ctx, db.InsertSubscriptionParams{UsersIdusers: userID, Pattern: pattern, Method: method}); err != nil {
 		log.Printf("insert subscription: %v", err)
 	}
 }
 
-func notifyMissingEmail(ctx context.Context, q *dbpkg.Queries, userID int32) error {
+func notifyMissingEmail(ctx context.Context, q db.Querier, userID int32) error {
 	if q == nil || userID == 0 {
 		return nil
 	}
-	last, err := q.LastNotificationByMessage(ctx, dbpkg.LastNotificationByMessageParams{UsersIdusers: userID, Message: sql.NullString{String: "missing email address", Valid: true}})
+	last, err := q.LastNotificationByMessage(ctx, db.LastNotificationByMessageParams{UsersIdusers: userID, Message: sql.NullString{String: "missing email address", Valid: true}})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("last notification: %w", err)
 	}
 	if err == nil && time.Since(last.CreatedAt) < 7*24*time.Hour {
 		return nil
 	}
-	if err := q.InsertNotification(ctx, dbpkg.InsertNotificationParams{UsersIdusers: userID, Message: sql.NullString{String: "missing email address", Valid: true}}); err != nil {
+	if err := q.InsertNotification(ctx, db.InsertNotificationParams{UsersIdusers: userID, Message: sql.NullString{String: "missing email address", Valid: true}}); err != nil {
 		return fmt.Errorf("insert notification: %w", err)
 	}
 	return nil

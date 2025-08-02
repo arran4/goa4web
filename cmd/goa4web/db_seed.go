@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 )
@@ -38,9 +39,14 @@ func (c *dbSeedCmd) Run() error {
 	if err != nil {
 		return err
 	}
-	db := sql.OpenDB(connector)
-	defer db.Close()
-	if err := db.Ping(); err != nil {
+	sdb := sql.OpenDB(connector)
+	defer func(sdb *sql.DB) {
+		err := sdb.Close()
+		if err != nil {
+			log.Printf("failed to close db connection: %v", err)
+		}
+	}(sdb)
+	if err := sdb.Ping(); err != nil {
 		return err
 	}
 	f, err := os.Open(c.File)
@@ -59,7 +65,7 @@ func (c *dbSeedCmd) Run() error {
 		stmt.WriteString(line)
 		if strings.HasSuffix(line, ";") {
 			sqlStmt := strings.TrimSuffix(stmt.String(), ";")
-			if _, err := db.ExecContext(ctx, sqlStmt); err != nil {
+			if _, err := sdb.ExecContext(ctx, sqlStmt); err != nil {
 				return err
 			}
 			stmt.Reset()
@@ -71,7 +77,7 @@ func (c *dbSeedCmd) Run() error {
 		return err
 	}
 	if s := strings.TrimSpace(stmt.String()); s != "" {
-		if _, err := db.ExecContext(ctx, s); err != nil {
+		if _, err := sdb.ExecContext(ctx, s); err != nil {
 			return err
 		}
 	}

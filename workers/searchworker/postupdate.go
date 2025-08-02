@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 )
 
@@ -20,7 +20,7 @@ type IndexedTask interface {
 }
 
 // processEvent indexes text for tasks implementing IndexableTask.
-func processEvent(ctx context.Context, evt eventbus.TaskEvent, q *dbpkg.Queries) {
+func processEvent(ctx context.Context, evt eventbus.TaskEvent, q db.Querier) {
 	task, ok := evt.Task.(IndexedTask)
 	if !ok || evt.Data == nil {
 		return

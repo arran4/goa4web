@@ -77,6 +77,7 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("hashPassword Error: %s", err)
 		return fmt.Errorf("hash password %w", err)
 	}
+	// TODO make a system query
 	result, err := queries.DB().ExecContext(r.Context(),
 		"INSERT INTO users (username) VALUES (?)",
 		username,
@@ -89,6 +90,7 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("insert user %w", err)
 	}
 
+	// TODO sqlc has a last inserted capture mode
 	lastInsertID, err := result.LastInsertId()
 	if err != nil {
 		log.Printf("LastInsertId Error: %s", err)

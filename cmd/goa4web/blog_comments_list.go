@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strconv"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // blogCommentsListCmd implements "blog comments list".
@@ -46,9 +46,9 @@ func (c *blogCommentsListCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 	listerID := int32(c.UserID)
-	b, err := queries.GetBlogEntryForListerByID(ctx, dbpkg.GetBlogEntryForListerByIDParams{
+	b, err := queries.GetBlogEntryForListerByID(ctx, db.GetBlogEntryForListerByIDParams{
 		ListerID: listerID,
 		ID:       int32(c.ID),
 		UserID:   sql.NullInt32{Int32: listerID, Valid: listerID != 0},
@@ -60,7 +60,7 @@ func (c *blogCommentsListCmd) Run() error {
 	if b.ForumthreadID.Valid {
 		threadID = b.ForumthreadID.Int32
 	}
-	rows, err := queries.GetCommentsByThreadIdForUser(ctx, dbpkg.GetCommentsByThreadIdForUserParams{
+	rows, err := queries.GetCommentsByThreadIdForUser(ctx, db.GetCommentsByThreadIdForUserParams{
 		ViewerID: listerID,
 		ThreadID: threadID,
 		UserID:   sql.NullInt32{Int32: listerID, Valid: listerID != 0},

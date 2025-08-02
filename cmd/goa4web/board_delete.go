@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // boardDeleteCmd implements "board delete".
@@ -40,7 +40,7 @@ func (c *boardDeleteCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 	if err := queries.DeleteImageBoard(ctx, int32(c.ID)); err != nil {
 		return fmt.Errorf("delete board: %w", err)
 	}

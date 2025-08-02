@@ -17,7 +17,7 @@ import (
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dbdrivers"
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
@@ -202,8 +202,8 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 				return
 			}
 
-			queries := dbpkg.New(s.DB)
-			sm := dbpkg.NewSessionProxy(queries)
+			queries := db.New(s.DB)
+			sm := db.NewSessionProxy(queries)
 			if s.Config.DBLogVerbosity > 0 {
 				log.Printf("db pool stats: %+v", s.DB.Stats())
 			}
@@ -267,7 +267,7 @@ func (s *Server) startWorkers(ctx context.Context) {
 	if s.Config.EmailEnabled && s.Config.EmailProvider != "" && s.Config.EmailFrom == "" {
 		log.Printf("%s not set while EMAIL_PROVIDER=%s", config.EnvEmailFrom, s.Config.EmailProvider)
 	}
-	dlqProvider := s.DLQReg.ProviderFromConfig(s.Config, dbpkg.New(s.DB))
+	dlqProvider := s.DLQReg.ProviderFromConfig(s.Config, db.New(s.DB))
 	workers.Start(workerCtx, s.DB, emailProvider, dlqProvider, s.Config, s.Bus)
 	s.WorkerCancel = cancel
 }

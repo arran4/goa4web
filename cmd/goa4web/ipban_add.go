@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // ipBanAddCmd implements "ipban add".
@@ -42,7 +42,7 @@ func (c *ipBanAddCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 	var expires sql.NullTime
 	if c.Expires != "" {
 		t, err := time.Parse("2006-01-02", c.Expires)
@@ -51,7 +51,7 @@ func (c *ipBanAddCmd) Run() error {
 		}
 		expires = sql.NullTime{Time: t, Valid: true}
 	}
-	err = queries.AdminInsertBannedIp(ctx, dbpkg.AdminInsertBannedIpParams{
+	err = queries.AdminInsertBannedIp(ctx, db.AdminInsertBannedIpParams{
 		IpNet:     c.IP,
 		Reason:    sql.NullString{String: c.Reason, Valid: c.Reason != ""},
 		ExpiresAt: expires,

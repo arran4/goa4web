@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/arran4/goa4web/config"
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dlq"
 )
 
@@ -26,7 +26,7 @@ func (p *Provider) Record(_ context.Context, msg string) error {
 	return nil
 }
 
-func providerFromConfig(_ *config.RuntimeConfig, _ *dbpkg.Queries) dlq.DLQ {
+func providerFromConfig(_ *config.RuntimeConfig, _ db.Querier) dlq.DLQ {
 	return &Provider{}
 }
 

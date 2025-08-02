@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // userListRolesCmd implements the "user list-roles" command.
@@ -30,7 +30,7 @@ func (c *userListRolesCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 	roles, err := queries.AdminListRoles(ctx)
 	if err != nil {
 		return fmt.Errorf("list roles: %w", err)

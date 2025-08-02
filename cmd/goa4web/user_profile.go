@@ -6,7 +6,7 @@ import (
 	"flag"
 	"fmt"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // userProfileCmd implements "user profile" to show user details.
@@ -41,7 +41,7 @@ func (c *userProfileCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 	if c.ID == 0 {
 		u, err := queries.GetUserByUsername(ctx, sql.NullString{String: c.Username, Valid: true})
 		if err != nil {
@@ -54,11 +54,11 @@ func (c *userProfileCmd) Run() error {
 		return fmt.Errorf("get user: %w", err)
 	}
 	fmt.Printf("ID: %d\nUsername: %s\n", c.ID, u.Username.String)
-	var emails []*dbpkg.UserEmail
+	var emails []*db.UserEmail
 	if c.UserID == 0 {
 		emails, _ = queries.GetUserEmailsByUserIDAdmin(ctx, int32(c.ID))
 	} else {
-		emails, _ = queries.GetUserEmailsByUserID(ctx, dbpkg.GetUserEmailsByUserIDParams{UserID: int32(c.ID), ViewerID: int32(c.UserID)})
+		emails, _ = queries.GetUserEmailsByUserID(ctx, db.GetUserEmailsByUserIDParams{UserID: int32(c.ID), ViewerID: int32(c.UserID)})
 	}
 	for _, e := range emails {
 		fmt.Printf("Email: %s verified:%t priority:%d\n", e.Email, e.VerifiedAt.Valid, e.NotificationPriority)

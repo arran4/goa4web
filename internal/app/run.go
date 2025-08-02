@@ -15,7 +15,7 @@ import (
 	"github.com/arran4/goa4web/core"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	adminhandlers "github.com/arran4/goa4web/handlers/admin"
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dbdrivers"
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
@@ -154,7 +154,7 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 			return nil, fmt.Errorf("startup checks: %w", err)
 		}
 	}
-	queries := dbpkg.New(o.DB)
+	queries := db.New(o.DB)
 	if err := corelanguage.EnsureDefaultLanguage(context.Background(), queries, cfg.DefaultLanguage); err != nil {
 		return nil, fmt.Errorf("ensure default language: %w", err)
 	}

@@ -6,7 +6,7 @@ import (
 	"flag"
 	"fmt"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // roleUsersCmd implements "role users".
@@ -34,7 +34,7 @@ func (c *roleUsersCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 	rows, err := queries.AdminListRolesWithUsers(ctx)
 	if err != nil {
 		return fmt.Errorf("list roles with users: %w", err)

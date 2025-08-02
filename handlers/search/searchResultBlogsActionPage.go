@@ -74,7 +74,7 @@ func (SearchBlogsTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return handlers.TemplateWithDataHandler("resultBlogsActionPage.gohtml", data)
 }
 
-func BlogSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid int32) ([]*db.Blog, bool, bool, error) {
+func BlogSearch(w http.ResponseWriter, r *http.Request, queries db.Querier, uid int32) ([]*db.Blog, bool, bool, error) {
 	viewerID := uid
 	userID := uid
 	searchWords := searchutil.BreakupTextToWords(r.PostFormValue("searchwords"))

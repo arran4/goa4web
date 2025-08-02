@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 const defaultAuditLimit = 20 // number of rows shown when --limit not provided
@@ -29,12 +29,12 @@ func parseAuditCmd(parent *rootCmd, args []string) (*auditCmd, error) {
 }
 
 func (c *auditCmd) Run() error {
-	db, err := c.DB()
+	sdb, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(sdb)
 	rows, err := queries.AdminGetRecentAuditLogs(ctx, int32(c.Limit))
 	if err != nil {
 		return fmt.Errorf("audit logs: %w", err)

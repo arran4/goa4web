@@ -175,6 +175,6 @@ func AdminNewsDeleteConfirmPage(w http.ResponseWriter, r *http.Request) {
 }
 
 // NewsDelete deactivates a news post.
-func NewsDelete(ctx context.Context, q *db.Queries, postID int32) error {
+func NewsDelete(ctx context.Context, q db.Querier, postID int32) error {
 	return q.DeactivateNewsPost(ctx, postID)
 }

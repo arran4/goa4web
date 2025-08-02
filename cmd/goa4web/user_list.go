@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"time"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // userListCmd implements "user list".
@@ -40,9 +40,9 @@ func (c *userListCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 
-	var rows []*dbpkg.SystemListUserInfoRow
+	var rows []*db.SystemListUserInfoRow
 	if c.showAdmin || c.showCreated || c.jsonOut {
 		rows, err = queries.SystemListUserInfo(ctx)
 	} else {

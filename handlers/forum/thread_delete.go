@@ -6,7 +6,7 @@ import (
 )
 
 // ThreadDelete removes a forum thread and updates topic statistics.
-func ThreadDelete(ctx context.Context, q *db.Queries, threadID, topicID int32) error {
+func ThreadDelete(ctx context.Context, q db.Querier, threadID, topicID int32) error {
 	if err := q.AdminDeleteForumThread(ctx, threadID); err != nil {
 		return err
 	}

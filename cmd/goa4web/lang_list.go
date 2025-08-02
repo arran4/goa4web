@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // langListCmd implements "lang list".
@@ -30,7 +30,7 @@ func (c *langListCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 	langs, err := queries.AllLanguages(ctx)
 	if err != nil {
 		return fmt.Errorf("list languages: %w", err)

@@ -56,7 +56,7 @@ func (SearchForumTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return handlers.TemplateWithDataHandler("resultForumActionPage.gohtml", data)
 }
 
-func ForumCommentSearchNotInRestrictedTopic(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid int32) ([]*db.GetCommentsByIdsForUserWithThreadInfoRow, bool, bool, error) {
+func ForumCommentSearchNotInRestrictedTopic(w http.ResponseWriter, r *http.Request, queries db.Querier, uid int32) ([]*db.GetCommentsByIdsForUserWithThreadInfoRow, bool, bool, error) {
 	searchWords := searchutil.BreakupTextToWords(r.PostFormValue("searchwords"))
 	var commentIds []int32
 
@@ -128,7 +128,7 @@ func ForumCommentSearchNotInRestrictedTopic(w http.ResponseWriter, r *http.Reque
 	return comments, false, false, nil
 }
 
-func ForumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request, queries *db.Queries, forumTopicId []int32, uid int32) ([]*db.GetCommentsByIdsForUserWithThreadInfoRow, bool, bool, error) {
+func ForumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request, queries db.Querier, forumTopicId []int32, uid int32) ([]*db.GetCommentsByIdsForUserWithThreadInfoRow, bool, bool, error) {
 	searchWords := searchutil.BreakupTextToWords(r.PostFormValue("searchwords"))
 	var commentIds []int32
 

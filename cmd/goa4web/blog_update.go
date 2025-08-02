@@ -6,7 +6,7 @@ import (
 	"flag"
 	"fmt"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // blogUpdateCmd implements "blog update".
@@ -40,8 +40,8 @@ func (c *blogUpdateCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
-	err = queries.UpdateBlogEntry(ctx, dbpkg.UpdateBlogEntryParams{
+	queries := db.New(db)
+	err = queries.UpdateBlogEntry(ctx, db.UpdateBlogEntryParams{
 		LanguageIdlanguage: int32(c.LangID),
 		Blog:               sql.NullString{String: c.Text, Valid: c.Text != ""},
 		BlogID:             int32(c.ID),

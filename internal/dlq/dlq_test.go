@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/arran4/goa4web/config"
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dlq"
 	dbdlq "github.com/arran4/goa4web/internal/dlq/db"
 	dirdlq "github.com/arran4/goa4web/internal/dlq/dir"
@@ -30,7 +30,7 @@ func TestProviderFromConfigRegistry(t *testing.T) {
 	}
 
 	cfg = config.RuntimeConfig{DLQProvider: "db"}
-	if _, ok := reg.ProviderFromConfig(&cfg, (&dbpkg.Queries{})).(dbdlq.DLQ); !ok {
+	if _, ok := reg.ProviderFromConfig(&cfg, (&db.Queries{})).(dbdlq.DLQ); !ok {
 		t.Fatalf("expected db.DLQ")
 	}
 
@@ -43,7 +43,7 @@ func TestProviderFromConfigRegistry(t *testing.T) {
 	}
 
 	cfg = config.RuntimeConfig{DLQProvider: "db,log"}
-	if _, ok := reg.ProviderFromConfig(&cfg, (&dbpkg.Queries{})).(dlq.MultiDLQ); !ok {
+	if _, ok := reg.ProviderFromConfig(&cfg, (&db.Queries{})).(dlq.MultiDLQ); !ok {
 		t.Fatalf("expected MultiDLQ")
 	}
 }
@@ -51,7 +51,7 @@ func TestProviderFromConfigRegistry(t *testing.T) {
 func TestRegisterProviderCustom(t *testing.T) {
 	reg := dlq.NewRegistry()
 	called := false
-	reg.RegisterProvider("custom", func(cfg *config.RuntimeConfig, q *dbpkg.Queries) dlq.DLQ {
+	reg.RegisterProvider("custom", func(cfg *config.RuntimeConfig, q db.Querier) dlq.DLQ {
 		called = true
 		return dlq.LogDLQ{}
 	})

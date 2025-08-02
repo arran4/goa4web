@@ -6,7 +6,7 @@ import (
 	"flag"
 	"fmt"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // linksRefreshCmd implements "links refresh".
@@ -37,8 +37,8 @@ func (c *linksRefreshCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
-	if err := queries.AdminClearExternalLinkCache(ctx, dbpkg.AdminClearExternalLinkCacheParams{UpdatedBy: sql.NullInt32{}, ID: int32(c.ID)}); err != nil {
+	queries := db.New(db)
+	if err := queries.AdminClearExternalLinkCache(ctx, db.AdminClearExternalLinkCacheParams{UpdatedBy: sql.NullInt32{}, ID: int32(c.ID)}); err != nil {
 		return fmt.Errorf("refresh link: %w", err)
 	}
 	return nil

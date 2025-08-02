@@ -12,7 +12,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 	mockdlq "github.com/arran4/goa4web/internal/dlq/mock"
 	"github.com/arran4/goa4web/internal/email"
 	jmapProv "github.com/arran4/goa4web/internal/email/jmap"
@@ -94,10 +94,10 @@ func TestInsertPendingEmail(t *testing.T) {
 	}
 	defer db.Close()
 
-	q := dbpkg.New(db)
+	q := db.New(db)
 	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(sql.NullInt32{Int32: 1, Valid: true}, "body", false).WillReturnResult(sqlmock.NewResult(1, 1))
 
-	if err := q.InsertPendingEmail(context.Background(), dbpkg.InsertPendingEmailParams{ToUserID: sql.NullInt32{Int32: 1, Valid: true}, Body: "body", DirectEmail: false}); err != nil {
+	if err := q.InsertPendingEmail(context.Background(), db.InsertPendingEmailParams{ToUserID: sql.NullInt32{Int32: 1, Valid: true}, Body: "body", DirectEmail: false}); err != nil {
 		t.Fatalf("insert: %v", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -114,7 +114,7 @@ func TestEmailQueueWorker(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	q := dbpkg.New(db)
+	q := db.New(db)
 	rows := sqlmock.NewRows([]string{"id", "to_user_id", "body", "error_count", "direct_email"}).AddRow(1, 2, "b", 0, false)
 	mock.ExpectQuery("SELECT id, to_user_id, body, error_count, direct_email").WillReturnRows(rows)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username, u.public_profile_enabled_at FROM users u LEFT JOIN user_emails ue ON ue.id = ( SELECT id FROM user_emails ue2 WHERE ue2.user_id = u.idusers AND ue2.verified_at IS NOT NULL ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1 ) WHERE u.idusers = ?")).
@@ -150,7 +150,7 @@ func TestProcessPendingEmailDLQ(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	q := dbpkg.New(db)
+	q := db.New(db)
 	rows := sqlmock.NewRows([]string{"id", "to_user_id", "body", "error_count", "direct_email"}).AddRow(1, 2, "b", 4, false)
 	mock.ExpectQuery("SELECT id, to_user_id, body, error_count, direct_email").WillReturnRows(rows)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username, u.public_profile_enabled_at FROM users u LEFT JOIN user_emails ue ON ue.id = ( SELECT id FROM user_emails ue2 WHERE ue2.user_id = u.idusers AND ue2.verified_at IS NOT NULL ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1 ) WHERE u.idusers = ?")).

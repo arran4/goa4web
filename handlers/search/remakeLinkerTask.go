@@ -9,7 +9,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -35,7 +35,7 @@ func (RemakeLinkerTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return handlers.TemplateWithDataHandler("runTaskPage.gohtml", data)
 }
 
-func (RemakeLinkerTask) BackgroundTask(ctx context.Context, q *dbpkg.Queries) (tasks.Task, error) {
+func (RemakeLinkerTask) BackgroundTask(ctx context.Context, q db.Querier) (tasks.Task, error) {
 	if err := q.SystemDeleteLinkerSearch(ctx); err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func (RemakeLinkerTask) BackgroundTask(ctx context.Context, q *dbpkg.Queries) (t
 			continue
 		}
 		if err := indexText(ctx, q, cache, text, func(c context.Context, wid int64, count int32) error {
-			return q.SystemAddToLinkerSearch(c, dbpkg.SystemAddToLinkerSearchParams{
+			return q.SystemAddToLinkerSearch(c, db.SystemAddToLinkerSearchParams{
 				LinkerID:                       row.Idlinker,
 				SearchwordlistIdsearchwordlist: int32(wid),
 				WordCount:                      count,

@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // boardListCmd implements "board list".
@@ -30,7 +30,7 @@ func (c *boardListCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 	rows, err := queries.GetAllImageBoards(ctx)
 	if err != nil {
 		return fmt.Errorf("list boards: %w", err)

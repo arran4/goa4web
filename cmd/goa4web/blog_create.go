@@ -6,7 +6,7 @@ import (
 	"flag"
 	"fmt"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // blogCreateCmd implements "blog create".
@@ -40,8 +40,8 @@ func (c *blogCreateCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
-	_, err = queries.CreateBlogEntry(ctx, dbpkg.CreateBlogEntryParams{
+	queries := db.New(db)
+	_, err = queries.CreateBlogEntry(ctx, db.CreateBlogEntryParams{
 		UsersIdusers:       int32(c.UserID),
 		LanguageIdlanguage: int32(c.LangID),
 		Blog:               sql.NullString{String: c.Text, Valid: true},

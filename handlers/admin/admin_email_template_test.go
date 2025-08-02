@@ -136,7 +136,7 @@ func TestNotifyAdminsEnv(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer sqldb.Close()
-	var q *db.Queries
+	var q db.Querier
 	emails := []string{"a@test.com", "b@test.com"}
 	for _, e := range emails {
 		mock.ExpectQuery("UserByEmail").

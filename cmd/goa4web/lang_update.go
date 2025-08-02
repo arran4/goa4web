@@ -6,7 +6,7 @@ import (
 	"flag"
 	"fmt"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // langUpdateCmd implements "lang update".
@@ -38,8 +38,8 @@ func (c *langUpdateCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
-	err = queries.RenameLanguage(ctx, dbpkg.RenameLanguageParams{Nameof: sql.NullString{String: c.Name, Valid: true}, Idlanguage: int32(c.ID)})
+	queries := db.New(db)
+	err = queries.RenameLanguage(ctx, db.RenameLanguageParams{Nameof: sql.NullString{String: c.Name, Valid: true}, Idlanguage: int32(c.ID)})
 	if err != nil {
 		return fmt.Errorf("update language: %w", err)
 	}

@@ -6,7 +6,7 @@ import (
 	"flag"
 	"fmt"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // blogListCmd implements "blog list".
@@ -37,9 +37,9 @@ func (c *blogListCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 	uid := int32(c.UserID)
-	rows, err := queries.ListBlogEntriesForLister(ctx, dbpkg.ListBlogEntriesForListerParams{
+	rows, err := queries.ListBlogEntriesForLister(ctx, db.ListBlogEntriesForListerParams{
 		ListerID: uid,
 		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 		Limit:    int32(c.Limit),

@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strconv"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // newsCommentsListCmd implements "news comments list".
@@ -46,9 +46,9 @@ func (c *newsCommentsListCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 	uid := int32(c.UserID)
-	n, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCount(ctx, dbpkg.GetNewsPostByIdWithWriterIdAndThreadCommentCountParams{
+	n, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCount(ctx, db.GetNewsPostByIdWithWriterIdAndThreadCommentCountParams{
 		ViewerID: uid,
 		ID:       int32(c.ID),
 		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
@@ -56,7 +56,7 @@ func (c *newsCommentsListCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("get news: %w", err)
 	}
-	rows, err := queries.GetCommentsByThreadIdForUser(ctx, dbpkg.GetCommentsByThreadIdForUserParams{
+	rows, err := queries.GetCommentsByThreadIdForUser(ctx, db.GetCommentsByThreadIdForUserParams{
 		ViewerID: uid,
 		ThreadID: n.ForumthreadID,
 		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},

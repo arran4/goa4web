@@ -6,7 +6,7 @@ import (
 	"flag"
 	"fmt"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // userActivateCmd implements "user activate" to restore a deactivated user.
@@ -39,7 +39,7 @@ func (c *userActivateCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 	if c.ID == 0 {
 		u, err := queries.GetUserByUsername(ctx, sql.NullString{String: c.Username, Valid: true})
 		if err != nil {
@@ -63,7 +63,7 @@ func (c *userActivateCmd) Run() error {
 		return fmt.Errorf("select comments: %w", err)
 	}
 	for _, row := range rows {
-		if err := qtx.RestoreComment(ctx, dbpkg.RestoreCommentParams{Text: row.Text, Idcomments: row.Idcomments}); err != nil {
+		if err := qtx.RestoreComment(ctx, db.RestoreCommentParams{Text: row.Text, Idcomments: row.Idcomments}); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("restore comment: %w", err)
 		}
@@ -79,7 +79,7 @@ func (c *userActivateCmd) Run() error {
 		return fmt.Errorf("select writings: %w", err)
 	}
 	for _, w := range rowsW {
-		if err := qtx.RestoreWriting(ctx, dbpkg.RestoreWritingParams{
+		if err := qtx.RestoreWriting(ctx, db.RestoreWritingParams{
 			Title:     w.Title,
 			Writing:   w.Writing,
 			Abstract:  w.Abstract,
@@ -101,7 +101,7 @@ func (c *userActivateCmd) Run() error {
 		return fmt.Errorf("select blogs: %w", err)
 	}
 	for _, b := range rowsB {
-		if err := qtx.RestoreBlog(ctx, dbpkg.RestoreBlogParams{Blog: b.Blog, Idblogs: b.Idblogs}); err != nil {
+		if err := qtx.RestoreBlog(ctx, db.RestoreBlogParams{Blog: b.Blog, Idblogs: b.Idblogs}); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("restore blog: %w", err)
 		}
@@ -117,7 +117,7 @@ func (c *userActivateCmd) Run() error {
 		return fmt.Errorf("select imageposts: %w", err)
 	}
 	for _, img := range rowsI {
-		if err := qtx.RestoreImagepost(ctx, dbpkg.RestoreImagepostParams{Description: img.Description, Thumbnail: img.Thumbnail, Fullimage: img.Fullimage, Idimagepost: img.Idimagepost}); err != nil {
+		if err := qtx.RestoreImagepost(ctx, db.RestoreImagepostParams{Description: img.Description, Thumbnail: img.Thumbnail, Fullimage: img.Fullimage, Idimagepost: img.Idimagepost}); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("restore imagepost: %w", err)
 		}
@@ -133,7 +133,7 @@ func (c *userActivateCmd) Run() error {
 		return fmt.Errorf("select links: %w", err)
 	}
 	for _, l := range rowsL {
-		if err := qtx.RestoreLink(ctx, dbpkg.RestoreLinkParams{Title: l.Title, Url: l.Url, Description: l.Description, Idlinker: l.Idlinker}); err != nil {
+		if err := qtx.RestoreLink(ctx, db.RestoreLinkParams{Title: l.Title, Url: l.Url, Description: l.Description, Idlinker: l.Idlinker}); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("restore link: %w", err)
 		}

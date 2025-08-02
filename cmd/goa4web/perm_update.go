@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // permUpdateCmd implements "perm update".
@@ -37,8 +37,8 @@ func (c *permUpdateCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
-	if err := queries.UpdatePermission(ctx, dbpkg.UpdatePermissionParams{
+	queries := db.New(db)
+	if err := queries.UpdatePermission(ctx, db.UpdatePermissionParams{
 		IduserRoles: int32(c.ID),
 		Name:        c.Role,
 	}); err != nil {

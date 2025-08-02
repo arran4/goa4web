@@ -17,7 +17,7 @@ type NewTemplateEngine[TE TemplateEngine] interface {
 	Parse(string) (TE, error)
 }
 
-func renderTemplate[TE TemplateEngine](ctx context.Context, q *db.Queries, filename string, data any, tmpls TE, templateNew func(string) NewTemplateEngine[TE]) ([]byte, error) {
+func renderTemplate[TE TemplateEngine](ctx context.Context, q db.Querier, filename string, data any, tmpls TE, templateNew func(string) NewTemplateEngine[TE]) ([]byte, error) {
 	var buf bytes.Buffer
 	if body, err := q.SystemGetTemplateOverride(ctx, filename); err == nil && body != "" {
 		if parsed, err := templateNew("").Parse(body); err != nil {

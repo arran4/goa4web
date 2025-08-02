@@ -6,7 +6,7 @@ import (
 	"flag"
 	"fmt"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // userApproveCmd approves a pending user account.
@@ -39,7 +39,7 @@ func (c *userApproveCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 	if c.ID == 0 {
 		u, err := queries.GetUserByUsername(ctx, sql.NullString{String: c.Username, Valid: true})
 		if err != nil {
@@ -48,7 +48,7 @@ func (c *userApproveCmd) Run() error {
 		c.ID = int(u.Idusers)
 	}
 	c.rootCmd.Verbosef("approving user %d", c.ID)
-	if err := queries.CreateUserRole(ctx, dbpkg.CreateUserRoleParams{UsersIdusers: int32(c.ID), Name: "user"}); err != nil {
+	if err := queries.CreateUserRole(ctx, db.CreateUserRoleParams{UsersIdusers: int32(c.ID), Name: "user"}); err != nil {
 		return fmt.Errorf("add role: %w", err)
 	}
 	c.rootCmd.Infof("approved user %d", c.ID)

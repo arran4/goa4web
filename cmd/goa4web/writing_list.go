@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/arran4/goa4web/core/common"
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // writingListCmd implements "writing list".
@@ -39,9 +39,9 @@ func (c *writingListCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 	if c.UserID != 0 {
-		rows, err := queries.SystemListPublicWritingsByAuthor(ctx, dbpkg.SystemListPublicWritingsByAuthorParams{
+		rows, err := queries.SystemListPublicWritingsByAuthor(ctx, db.SystemListPublicWritingsByAuthorParams{
 			AuthorID: int32(c.UserID),
 			Limit:    int32(c.Limit),
 			Offset:   int32(c.Offset),
@@ -55,7 +55,7 @@ func (c *writingListCmd) Run() error {
 		return nil
 	}
 	if c.Category != 0 {
-		rows, err := queries.SystemListPublicWritingsInCategory(ctx, dbpkg.SystemListPublicWritingsInCategoryParams{
+		rows, err := queries.SystemListPublicWritingsInCategory(ctx, db.SystemListPublicWritingsInCategoryParams{
 			CategoryID: int32(c.Category),
 			Limit:      int32(c.Limit),
 			Offset:     int32(c.Offset),

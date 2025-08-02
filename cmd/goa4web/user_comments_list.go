@@ -6,7 +6,7 @@ import (
 	"flag"
 	"fmt"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // userCommentsListCmd implements "user comments list".
@@ -39,7 +39,7 @@ func (c *userCommentsListCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 	if c.ID == 0 {
 		u, err := queries.GetUserByUsername(ctx, sql.NullString{String: c.Username, Valid: true})
 		if err != nil {

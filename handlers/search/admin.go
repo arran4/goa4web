@@ -42,6 +42,7 @@ func adminSearchPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// TODO make queries and find another way of making this DRY if really required
 	count("SELECT COUNT(*) FROM searchwordlist", &data.Stats.Words)
 	count("SELECT COUNT(*) FROM comments_search", &data.Stats.Comments)
 	count("SELECT COUNT(*) FROM site_news_search", &data.Stats.News)

@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/handlers/auth"
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // userAddCmd implements the "user add" command.
@@ -59,7 +59,7 @@ func createUser(root *rootCmd, username, email, password string, admin bool) err
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 	hash, alg, err := auth.HashPassword(password)
 	if err != nil {
 		return fmt.Errorf("hash password: %w", err)
@@ -79,15 +79,15 @@ func createUser(root *rootCmd, username, email, password string, admin bool) err
 		return fmt.Errorf("last insert id: %w", err)
 	}
 	if email != "" {
-		if err := queries.InsertUserEmail(ctx, dbpkg.InsertUserEmailParams{UserID: int32(id), Email: email, VerifiedAt: sql.NullTime{Time: time.Now(), Valid: true}, LastVerificationCode: sql.NullString{}, NotificationPriority: 100}); err != nil {
+		if err := queries.InsertUserEmail(ctx, db.InsertUserEmailParams{UserID: int32(id), Email: email, VerifiedAt: sql.NullTime{Time: time.Now(), Valid: true}, LastVerificationCode: sql.NullString{}, NotificationPriority: 100}); err != nil {
 			log.Printf("insert user email: %v", err)
 		}
 	}
-	if err := queries.InsertPassword(ctx, dbpkg.InsertPasswordParams{UsersIdusers: int32(id), Passwd: hash, PasswdAlgorithm: sql.NullString{String: alg, Valid: alg != ""}}); err != nil {
+	if err := queries.InsertPassword(ctx, db.InsertPasswordParams{UsersIdusers: int32(id), Passwd: hash, PasswdAlgorithm: sql.NullString{String: alg, Valid: alg != ""}}); err != nil {
 		return fmt.Errorf("insert password: %w", err)
 	}
 	if !admin {
-		if err := queries.CreateUserRole(ctx, dbpkg.CreateUserRoleParams{
+		if err := queries.CreateUserRole(ctx, db.CreateUserRoleParams{
 			UsersIdusers: int32(id),
 			Name:         "user",
 		}); err != nil {
@@ -100,7 +100,7 @@ func createUser(root *rootCmd, username, email, password string, admin bool) err
 			}
 		} else if !errors.Is(err, sql.ErrNoRows) {
 			return fmt.Errorf("check admin: %w", err)
-		} else if err := queries.CreateUserRole(ctx, dbpkg.CreateUserRoleParams{
+		} else if err := queries.CreateUserRole(ctx, db.CreateUserRoleParams{
 			UsersIdusers: int32(id),
 			Name:         "administrator",
 		}); err != nil {

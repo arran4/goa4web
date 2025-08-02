@@ -6,13 +6,13 @@ import (
 	"encoding/json"
 	"log"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
 // Worker records bus events into the audit_log table.
-func Worker(ctx context.Context, bus *eventbus.Bus, q *dbpkg.Queries) {
+func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier) {
 	if q == nil || bus == nil {
 		return
 	}
@@ -34,7 +34,7 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q *dbpkg.Queries) {
 			}
 			details := aud.AuditRecord(evt.Data)
 			data, _ := json.Marshal(evt.Data)
-			if err := q.InsertAuditLog(ctx, dbpkg.InsertAuditLogParams{
+			if err := q.InsertAuditLog(ctx, db.InsertAuditLogParams{
 				UsersIdusers: evt.UserID,
 				Action:       named.Name(),
 				Path:         evt.Path,

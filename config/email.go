@@ -18,7 +18,7 @@ import (
 // empty and a Queries value is supplied, the database is queried for
 // administrator accounts. GetAdminEmails returns a slice of administrator
 // addresses using this logic.
-func GetAdminEmails(ctx context.Context, q *db.Queries, cfg *RuntimeConfig) []string {
+func GetAdminEmails(ctx context.Context, q db.Querier, cfg *RuntimeConfig) []string {
 	env := ""
 	if cfg != nil {
 		env = cfg.AdminEmails

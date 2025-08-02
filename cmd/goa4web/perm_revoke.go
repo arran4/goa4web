@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // permRevokeCmd implements "perm revoke".
@@ -35,7 +35,7 @@ func (c *permRevokeCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 	if err := queries.DeleteUserRole(ctx, int32(c.ID)); err != nil {
 		return fmt.Errorf("revoke: %w", err)
 	}

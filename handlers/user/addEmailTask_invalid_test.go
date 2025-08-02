@@ -16,7 +16,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 )
 
@@ -26,7 +26,7 @@ func TestAddEmailTaskInvalid(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	q := dbpkg.New(db)
+	q := db.New(db)
 
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store

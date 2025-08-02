@@ -22,7 +22,7 @@ func validateLanguageName(name string) error {
 }
 
 // ValidateDefaultLanguage verifies that the configured default language exists.
-func ValidateDefaultLanguage(ctx context.Context, q *db.Queries, name string) error {
+func ValidateDefaultLanguage(ctx context.Context, q db.Querier, name string) error {
 	if name == "" {
 		return nil
 	}
@@ -37,7 +37,7 @@ func ValidateDefaultLanguage(ctx context.Context, q *db.Queries, name string) er
 }
 
 // ResolveDefaultLanguageID converts the configured language name to its ID.
-func ResolveDefaultLanguageID(ctx context.Context, q *db.Queries, name string) int32 {
+func ResolveDefaultLanguageID(ctx context.Context, q db.Querier, name string) int32 {
 	if name == "" {
 		return 0
 	}
@@ -50,7 +50,7 @@ func ResolveDefaultLanguageID(ctx context.Context, q *db.Queries, name string) i
 
 // EnsureDefaultLanguage creates the default language when name is not empty and
 // the languages table currently has no entries.
-func EnsureDefaultLanguage(ctx context.Context, q *db.Queries, name string) error {
+func EnsureDefaultLanguage(ctx context.Context, q db.Querier, name string) error {
 	if name == "" {
 		return nil
 	}

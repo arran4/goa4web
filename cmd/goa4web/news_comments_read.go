@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strconv"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // newsCommentsReadCmd implements "news comments read".
@@ -58,9 +58,9 @@ func (c *newsCommentsReadCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 	uid := int32(c.UserID)
-	n, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCount(ctx, dbpkg.GetNewsPostByIdWithWriterIdAndThreadCommentCountParams{
+	n, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCount(ctx, db.GetNewsPostByIdWithWriterIdAndThreadCommentCountParams{
 		ViewerID: uid,
 		ID:       int32(c.NewsID),
 		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
@@ -69,7 +69,7 @@ func (c *newsCommentsReadCmd) Run() error {
 		return fmt.Errorf("get news: %w", err)
 	}
 	if c.All {
-		rows, err := queries.GetCommentsByThreadIdForUser(ctx, dbpkg.GetCommentsByThreadIdForUserParams{
+		rows, err := queries.GetCommentsByThreadIdForUser(ctx, db.GetCommentsByThreadIdForUserParams{
 			ViewerID: uid,
 			ThreadID: n.ForumthreadID,
 			UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
@@ -85,7 +85,7 @@ func (c *newsCommentsReadCmd) Run() error {
 	if c.CommentID == 0 {
 		return fmt.Errorf("comment id required")
 	}
-	cm, err := queries.GetCommentByIdForUser(ctx, dbpkg.GetCommentByIdForUserParams{
+	cm, err := queries.GetCommentByIdForUser(ctx, db.GetCommentByIdForUserParams{
 		ViewerID: uid,
 		ID:       int32(c.CommentID),
 		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},

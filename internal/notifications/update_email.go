@@ -10,7 +10,7 @@ import (
 
 // GetUpdateEmailText returns the update email text template after applying any
 // database overrides.
-func GetUpdateEmailText(ctx context.Context, q *db.Queries) string {
+func GetUpdateEmailText(ctx context.Context, q db.Querier) string {
 	tmpls := coretemplates.GetCompiledEmailTextTemplates(map[string]any{})
 	b, err := renderTemplate[*ttemplate.Template](ctx, q, EmailTextTemplateFilenameGenerator("updateEmail"), nil, tmpls, TextTemplatesNew)
 	if err != nil {

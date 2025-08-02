@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 func TestNewsSearchFiltersUnauthorized(t *testing.T) {
@@ -20,7 +20,7 @@ func TestNewsSearchFiltersUnauthorized(t *testing.T) {
 	}
 	defer sqldb.Close()
 
-	queries := dbpkg.New(sqldb)
+	queries := db.New(sqldb)
 
 	firstRows := sqlmock.NewRows([]string{"site_news_id"}).AddRow(1).AddRow(2)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT DISTINCT cs.site_news_id")).

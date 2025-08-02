@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strconv"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // writingReadCmd implements "writing read".
@@ -43,8 +43,8 @@ func (c *writingReadCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
-	row, err := queries.GetWritingForListerByID(ctx, dbpkg.GetWritingForListerByIDParams{
+	queries := db.New(db)
+	row, err := queries.GetWritingForListerByID(ctx, db.GetWritingForListerByIDParams{
 		ListerID:      0,
 		Idwriting:     int32(c.ID),
 		ListerMatchID: sql.NullInt32{Valid: false},

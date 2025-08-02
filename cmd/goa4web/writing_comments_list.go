@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strconv"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // writingCommentsListCmd implements "writing comments list".
@@ -46,13 +46,13 @@ func (c *writingCommentsListCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 	uid := int32(c.UserID)
-	w, err := queries.GetWritingForListerByID(ctx, dbpkg.GetWritingForListerByIDParams{ListerID: uid, Idwriting: int32(c.ID), ListerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0}})
+	w, err := queries.GetWritingForListerByID(ctx, db.GetWritingForListerByIDParams{ListerID: uid, Idwriting: int32(c.ID), ListerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0}})
 	if err != nil {
 		return fmt.Errorf("get writing: %w", err)
 	}
-	rows, err := queries.GetCommentsByThreadIdForUser(ctx, dbpkg.GetCommentsByThreadIdForUserParams{
+	rows, err := queries.GetCommentsByThreadIdForUser(ctx, db.GetCommentsByThreadIdForUserParams{
 		ViewerID: uid,
 		ThreadID: w.ForumthreadID,
 		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},

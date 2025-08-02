@@ -16,7 +16,7 @@ import (
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
 	imagesign "github.com/arran4/goa4web/internal/images"
 	linksign "github.com/arran4/goa4web/internal/linksign"
@@ -29,11 +29,13 @@ func handleDie(w http.ResponseWriter, message string) {
 	http.Error(w, message, http.StatusInternalServerError)
 }
 
+// TODO this should be a reciever on server to reduce the amount of data passed in and constructed inside it
+
 // CoreAdderMiddlewareWithDB populates request context with CoreData for
 // templates using the supplied database handle. The verbosity controls optional
 // logging of database pool statistics. The navigation registry provides menu
 // links for templates and allows dependency injection during tests.
-func CoreAdderMiddlewareWithDB(db *sql.DB, cfg *config.RuntimeConfig, verbosity int, emailReg *email.Registry, signer *imagesign.Signer, linkSigner *linksign.Signer, navReg *nav.Registry) func(http.Handler) http.Handler {
+func CoreAdderMiddlewareWithDB(sdb *sql.DB, cfg *config.RuntimeConfig, verbosity int, emailReg *email.Registry, signer *imagesign.Signer, linkSigner *linksign.Signer, navReg *nav.Registry) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			session, err := core.GetSession(r)
@@ -63,17 +65,17 @@ func CoreAdderMiddlewareWithDB(db *sql.DB, cfg *config.RuntimeConfig, verbosity 
 					return
 				}
 			}
-			if db == nil {
+			if sdb == nil {
 				ue := common.UserError{Err: fmt.Errorf("db not initialized"), ErrorMessage: "database unavailable"}
 				log.Printf("%s: %v", ue.ErrorMessage, ue.Err)
 				http.Error(w, ue.ErrorMessage, http.StatusInternalServerError)
 				return
 			}
 
-			queries := dbpkg.New(db)
-			sm := dbpkg.NewSessionProxy(queries)
+			queries := db.New(sdb)
+			sm := db.NewSessionProxy(queries)
 			if verbosity > 0 {
-				log.Printf("db pool stats: %+v", db.Stats())
+				log.Printf("db pool stats: %+v", sdb.Stats())
 			}
 
 			if session.ID != "" {
@@ -98,6 +100,7 @@ func CoreAdderMiddlewareWithDB(db *sql.DB, cfg *config.RuntimeConfig, verbosity 
 			}
 			cd := common.NewCoreData(r.Context(), queries, cfg,
 				common.WithImageSigner(signer),
+				common.WithCustomQueries(sdb),
 				common.WithLinkSigner(linkSigner),
 				common.WithSession(session),
 				common.WithEmailProvider(provider),

@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // writingTreeCmd implements "writing tree".
@@ -30,12 +30,12 @@ func (c *writingTreeCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 	rows, err := queries.FetchAllCategories(ctx)
 	if err != nil {
 		return fmt.Errorf("tree: %w", err)
 	}
-	children := map[int32][]*dbpkg.WritingCategory{}
+	children := map[int32][]*db.WritingCategory{}
 	for _, cat := range rows {
 		parent := cat.WritingCategoryID
 		children[parent] = append(children[parent], cat)

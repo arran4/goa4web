@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // linksDeleteCmd implements "links delete".
@@ -36,10 +36,10 @@ func (c *linksDeleteCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
-       if err := queries.AdminDeleteExternalLink(ctx, int32(c.ID)); err != nil {
-               return fmt.Errorf("delete link: %w", err)
-       }
+	queries := db.New(db)
+	if err := queries.AdminDeleteExternalLink(ctx, int32(c.ID)); err != nil {
+		return fmt.Errorf("delete link: %w", err)
+	}
 	return nil
 }
 

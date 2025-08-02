@@ -9,7 +9,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -35,7 +35,7 @@ func (RemakeBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return handlers.TemplateWithDataHandler("runTaskPage.gohtml", data)
 }
 
-func (RemakeBlogTask) BackgroundTask(ctx context.Context, q *dbpkg.Queries) (tasks.Task, error) {
+func (RemakeBlogTask) BackgroundTask(ctx context.Context, q db.Querier) (tasks.Task, error) {
 	if err := q.SystemDeleteBlogsSearch(ctx); err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func (RemakeBlogTask) BackgroundTask(ctx context.Context, q *dbpkg.Queries) (tas
 			continue
 		}
 		if err := indexText(ctx, q, cache, text, func(c context.Context, wid int64, count int32) error {
-			return q.SystemAddToBlogsSearch(c, dbpkg.SystemAddToBlogsSearchParams{
+			return q.SystemAddToBlogsSearch(c, db.SystemAddToBlogsSearchParams{
 				BlogID:                         row.Idblogs,
 				SearchwordlistIdsearchwordlist: int32(wid),
 				WordCount:                      count,

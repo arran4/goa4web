@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // emailQueueDeleteCmd implements "email queue delete".
@@ -35,7 +35,7 @@ func (c *emailQueueDeleteCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 	if err := queries.AdminDeletePendingEmail(ctx, int32(c.ID)); err != nil {
 		return fmt.Errorf("delete email: %w", err)
 	}

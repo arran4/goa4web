@@ -6,7 +6,7 @@ import (
 	"flag"
 	"fmt"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // boardCreateCmd implements "board create".
@@ -37,8 +37,8 @@ func (c *boardCreateCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
-	err = queries.CreateImageBoard(ctx, dbpkg.CreateImageBoardParams{
+	queries := db.New(db)
+	err = queries.CreateImageBoard(ctx, db.CreateImageBoardParams{
 		ImageboardIdimageboard: int32(c.Parent),
 		Title:                  sql.NullString{String: c.Name, Valid: c.Name != ""},
 		Description:            sql.NullString{String: c.Description, Valid: c.Description != ""},

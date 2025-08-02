@@ -14,7 +14,7 @@ import (
 func BloggersBloggerPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
-		Rows []*db.BloggerCountRow
+		Rows []*db.ListBloggersForListerRow
 	}
 
 	data := Data{
@@ -25,7 +25,7 @@ func BloggersBloggerPage(w http.ResponseWriter, r *http.Request) {
 	cd := data.CoreData
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
-	rows, err := queries.ListBloggers(r.Context(), db.ListBloggersParams{
+	rows, err := queries.ListBloggersForLister(r.Context(), db.ListBloggersForListerParams{
 		ListerID: cd.UserID,
 		Limit:    1000,
 		Offset:   0,

@@ -6,7 +6,7 @@ import (
 	"flag"
 	"fmt"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // faqTreeCmd implements "faq tree".
@@ -31,8 +31,8 @@ func (c *faqTreeCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
-	rows, err := queries.GetAllAnsweredFAQWithFAQCategoriesForUser(ctx, dbpkg.GetAllAnsweredFAQWithFAQCategoriesForUserParams{ViewerID: 0, UserID: sql.NullInt32{}})
+	queries := db.New(db)
+	rows, err := queries.GetAllAnsweredFAQWithFAQCategoriesForUser(ctx, db.GetAllAnsweredFAQWithFAQCategoriesForUserParams{ViewerID: 0, UserID: sql.NullInt32{}})
 	if err != nil {
 		return fmt.Errorf("tree: %w", err)
 	}

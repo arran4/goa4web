@@ -8,7 +8,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 func TestCustomFAQIndexAsk(t *testing.T) {
@@ -19,7 +19,7 @@ func TestCustomFAQIndexAsk(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer sqldb.Close()
-	q := dbpkg.New(sqldb)
+	q := db.New(sqldb)
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
 
@@ -44,7 +44,7 @@ func TestCustomFAQIndexAskDenied(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer sqldb.Close()
-	q := dbpkg.New(sqldb)
+	q := db.New(sqldb)
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
 

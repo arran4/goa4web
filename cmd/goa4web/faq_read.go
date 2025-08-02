@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // faqReadCmd implements "faq read".
@@ -42,7 +42,7 @@ func (c *faqReadCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 	rows, err := queries.GetAllFAQQuestions(ctx)
 	if err != nil {
 		return fmt.Errorf("get faq: %w", err)

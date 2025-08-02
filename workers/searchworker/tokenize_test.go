@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 func TestIsAlphanumericOrPunctuation(t *testing.T) {
@@ -116,8 +116,8 @@ func (stubResult) LastInsertId() (int64, error) { return 1, nil }
 func (stubResult) RowsAffected() (int64, error) { return 1, nil }
 
 func TestSearchWordIdsFromText(t *testing.T) {
-	db := &stubDB{}
-	q := dbpkg.New(db)
+	sdb := &stubDB{}
+	q := db.New(sdb)
 	req := httptest.NewRequest("GET", "/", nil)
 	rr := httptest.NewRecorder()
 	ids, redirect := SearchWordIdsFromText(rr, req, "Hello world Hello", q)
@@ -127,8 +127,8 @@ func TestSearchWordIdsFromText(t *testing.T) {
 	if len(ids) != 2 {
 		t.Fatalf("ids=%v", ids)
 	}
-	if db.word != "hello" && db.word != "world" {
-		t.Fatalf("word %s", db.word)
+	if sdb.word != "hello" && sdb.word != "world" {
+		t.Fatalf("word %s", sdb.word)
 	}
 	if ids[0].Count == 0 || ids[1].Count == 0 {
 		t.Fatalf("counts=%v", ids)
@@ -136,8 +136,8 @@ func TestSearchWordIdsFromText(t *testing.T) {
 }
 
 func TestSearchWordIdsFromTextError(t *testing.T) {
-	db := &stubDB{err: errors.New("bad")}
-	q := dbpkg.New(db)
+	sdb := &stubDB{err: errors.New("bad")}
+	q := db.New(sdb)
 	req := httptest.NewRequest("GET", "/", nil)
 	rr := httptest.NewRecorder()
 	ids, redirect := SearchWordIdsFromText(rr, req, "bad", q)

@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // linksListCmd implements "links list".
@@ -30,8 +30,8 @@ func (c *linksListCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
-	rows, err := queries.AdminListExternalLinks(ctx, dbpkg.AdminListExternalLinksParams{Limit: 200, Offset: 0})
+	queries := db.New(db)
+	rows, err := queries.AdminListExternalLinks(ctx, db.AdminListExternalLinksParams{Limit: 200, Offset: 0})
 	if err != nil {
 		return fmt.Errorf("list links: %w", err)
 	}

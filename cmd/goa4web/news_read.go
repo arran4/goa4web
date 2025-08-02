@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // newsReadCmd implements "news read".
@@ -44,8 +44,8 @@ func (c *newsReadCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
-	row, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCount(ctx, dbpkg.GetNewsPostByIdWithWriterIdAndThreadCommentCountParams{
+	queries := db.New(db)
+	row, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCount(ctx, db.GetNewsPostByIdWithWriterIdAndThreadCommentCountParams{
 		ViewerID: 0,
 		ID:       int32(c.ID),
 		UserID:   sql.NullInt32{},

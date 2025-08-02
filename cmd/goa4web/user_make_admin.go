@@ -7,7 +7,7 @@ import (
 	"flag"
 	"fmt"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // userMakeAdminCmd grants administrator rights to an existing user.
@@ -38,7 +38,7 @@ func (c *userMakeAdminCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 	c.rootCmd.Verbosef("granting administrator to %s", c.Username)
 	u, err := queries.GetUserByUsername(ctx, sql.NullString{String: c.Username, Valid: true})
 	if err != nil {
@@ -50,7 +50,7 @@ func (c *userMakeAdminCmd) Run() error {
 	} else if !errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("check admin: %w", err)
 	}
-	if err := queries.CreateUserRole(ctx, dbpkg.CreateUserRoleParams{
+	if err := queries.CreateUserRole(ctx, db.CreateUserRoleParams{
 		UsersIdusers: u.Idusers,
 		Name:         "administrator",
 	}); err != nil {

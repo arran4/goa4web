@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // emailQueueListCmd implements "email queue list".
@@ -33,8 +33,8 @@ func (c *emailQueueListCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
-	rows, err := queries.AdminListUnsentPendingEmails(ctx, dbpkg.AdminListUnsentPendingEmailsParams{})
+	queries := db.New(db)
+	rows, err := queries.AdminListUnsentPendingEmails(ctx, db.AdminListUnsentPendingEmailsParams{})
 	if err != nil {
 		return fmt.Errorf("list emails: %w", err)
 	}
@@ -44,7 +44,7 @@ func (c *emailQueueListCmd) Run() error {
 			ids = append(ids, e.ToUserID.Int32)
 		}
 	}
-	users := make(map[int32]*dbpkg.GetUserByIdRow)
+	users := make(map[int32]*db.GetUserByIdRow)
 	for _, id := range ids {
 		if u, err := queries.GetUserById(ctx, id); err == nil {
 			users[id] = u

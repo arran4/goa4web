@@ -15,7 +15,7 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	coreconsts "github.com/arran4/goa4web/core/consts"
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/navigation"
 	routerpkg "github.com/arran4/goa4web/internal/router"
@@ -123,7 +123,7 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	ctx := r.Context()
 
-	loadSubs := func() ([]*dbpkg.ListSubscriptionsByUserRow, map[string]bool, error) {
+	loadSubs := func() ([]*db.ListSubscriptionsByUserRow, map[string]bool, error) {
 		rows, err := queries.ListSubscriptionsByUser(ctx, uid)
 		if err != nil {
 			return nil, nil, err

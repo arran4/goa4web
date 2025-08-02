@@ -86,7 +86,7 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 }
 
 // updateLanguageSelections stores the languages selected by the user.
-func updateLanguageSelections(r *http.Request, cd *common.CoreData, queries *db.Queries, uid int32) error {
+func updateLanguageSelections(r *http.Request, cd *common.CoreData, queries db.Querier, uid int32) error {
 	// Clear existing language selections for the user.
 	if err := queries.DeleteUserLanguagesByUser(r.Context(), uid); err != nil {
 		return err
@@ -108,7 +108,7 @@ func updateLanguageSelections(r *http.Request, cd *common.CoreData, queries *db.
 }
 
 // updateDefaultLanguage sets the user's preferred language.
-func updateDefaultLanguage(r *http.Request, queries *db.Queries, uid int32) error {
+func updateDefaultLanguage(r *http.Request, queries db.Querier, uid int32) error {
 	langID, err := strconv.Atoi(r.PostFormValue("defaultLanguage"))
 	if err != nil {
 		return err

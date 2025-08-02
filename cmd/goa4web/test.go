@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/arran4/goa4web/internal/app/dbstart"
@@ -144,13 +145,18 @@ func (c *testMigrationsApplyCmd) Run() error {
 	if err != nil {
 		return err
 	}
-	db := sql.OpenDB(connector)
-	defer db.Close()
-	if err := db.Ping(); err != nil {
+	sdb := sql.OpenDB(connector)
+	defer func(sdb *sql.DB) {
+		err := sdb.Close()
+		if err != nil {
+			log.Printf("failed to close DB connection: %v", err)
+		}
+	}(sdb)
+	if err := sdb.Ping(); err != nil {
 		return err
 	}
 	c.rootCmd.Verbosef("applying migrations using %s", c.DBType)
-	if err := dbstart.Apply(context.Background(), db, os.DirFS("migrations"), true, c.DBType); err != nil {
+	if err := dbstart.Apply(context.Background(), sdb, os.DirFS("migrations"), true, c.DBType); err != nil {
 		return err
 	}
 	c.rootCmd.Infof("migrations applied successfully")
@@ -193,9 +199,14 @@ func (c *testMigrationsCleanCmd) Run() error {
 	if err != nil {
 		return err
 	}
-	db := sql.OpenDB(connector)
-	defer db.Close()
-	if err := db.Ping(); err != nil {
+	sdb := sql.OpenDB(connector)
+	defer func(sdb *sql.DB) {
+		err := sdb.Close()
+		if err != nil {
+			log.Printf("failed to close DB connection: %v", err)
+		}
+	}(sdb)
+	if err := sdb.Ping(); err != nil {
 		return err
 	}
 	ctx := context.Background()
@@ -210,11 +221,16 @@ func (c *testMigrationsCleanCmd) Run() error {
 	default:
 		return fmt.Errorf("unsupported driver %s", c.DBType)
 	}
-	rows, err := db.QueryContext(ctx, q)
+	rows, err := sdb.QueryContext(ctx, q)
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			log.Printf("failed to close DB rows: %v", err)
+		}
+	}(rows)
 	var names []string
 	for rows.Next() {
 		var n string
@@ -227,7 +243,7 @@ func (c *testMigrationsCleanCmd) Run() error {
 		return err
 	}
 	for _, n := range names {
-		if _, err := db.ExecContext(ctx, fmt.Sprintf("DROP TABLE IF EXISTS %s", n)); err != nil {
+		if _, err := sdb.ExecContext(ctx, fmt.Sprintf("DROP TABLE IF EXISTS %s", n)); err != nil {
 			return err
 		}
 	}

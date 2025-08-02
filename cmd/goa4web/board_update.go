@@ -6,7 +6,7 @@ import (
 	"flag"
 	"fmt"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // boardUpdateCmd implements "board update".
@@ -45,8 +45,8 @@ func (c *boardUpdateCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
-	err = queries.UpdateImageBoard(ctx, dbpkg.UpdateImageBoardParams{
+	queries := db.New(db)
+	err = queries.UpdateImageBoard(ctx, db.UpdateImageBoardParams{
 		Title:                  sql.NullString{String: c.Name, Valid: c.Name != ""},
 		Description:            sql.NullString{String: c.Description, Valid: c.Description != ""},
 		ImageboardIdimageboard: int32(c.Parent),

@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"math"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // userDeactivateCmd implements "user deactivate".
@@ -45,7 +45,7 @@ func (c *userDeactivateCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 	u, err := queries.GetUserByUsername(ctx, sql.NullString{String: c.Username, Valid: true})
 	if err != nil {
 		return fmt.Errorf("get user: %w", err)
@@ -61,7 +61,7 @@ func (c *userDeactivateCmd) Run() error {
 		return fmt.Errorf("archive user: %w", err)
 	}
 	newName := randomString(16)
-	if err := qtx.ScrubUser(ctx, dbpkg.ScrubUserParams{Username: sql.NullString{String: newName, Valid: true}, Idusers: u.Idusers}); err != nil {
+	if err := qtx.ScrubUser(ctx, db.ScrubUserParams{Username: sql.NullString{String: newName, Valid: true}, Idusers: u.Idusers}); err != nil {
 		tx.Rollback()
 		return fmt.Errorf("scrub user: %w", err)
 	}
@@ -71,7 +71,7 @@ func (c *userDeactivateCmd) Run() error {
 		return fmt.Errorf("list comments: %w", err)
 	}
 	for _, cm := range comments {
-		if err := qtx.ArchiveComment(ctx, dbpkg.ArchiveCommentParams{
+		if err := qtx.ArchiveComment(ctx, db.ArchiveCommentParams{
 			Idcomments:         cm.Idcomments,
 			ForumthreadID:      cm.ForumthreadID,
 			UsersIdusers:       cm.UsersIdusers,
@@ -83,7 +83,7 @@ func (c *userDeactivateCmd) Run() error {
 			return fmt.Errorf("archive comment: %w", err)
 		}
 		scrub := scrubText(cm.Text.String)
-		if err := qtx.ScrubComment(ctx, dbpkg.ScrubCommentParams{Text: sql.NullString{String: scrub, Valid: true}, Idcomments: cm.Idcomments}); err != nil {
+		if err := qtx.ScrubComment(ctx, db.ScrubCommentParams{Text: sql.NullString{String: scrub, Valid: true}, Idcomments: cm.Idcomments}); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("scrub comment: %w", err)
 		}
@@ -94,7 +94,7 @@ func (c *userDeactivateCmd) Run() error {
 		return fmt.Errorf("list writings: %w", err)
 	}
 	for _, w := range writings {
-		if err := qtx.ArchiveWriting(ctx, dbpkg.ArchiveWritingParams{
+		if err := qtx.ArchiveWriting(ctx, db.ArchiveWritingParams{
 			Idwriting:          w.Idwriting,
 			UsersIdusers:       w.UsersIdusers,
 			ForumthreadID:      w.ForumthreadID,
@@ -109,7 +109,7 @@ func (c *userDeactivateCmd) Run() error {
 			tx.Rollback()
 			return fmt.Errorf("archive writing: %w", err)
 		}
-		if err := qtx.ScrubWriting(ctx, dbpkg.ScrubWritingParams{
+		if err := qtx.ScrubWriting(ctx, db.ScrubWritingParams{
 			Title:     sql.NullString{String: scrubText(w.Title.String), Valid: w.Title.Valid},
 			Writing:   sql.NullString{String: scrubText(w.Writing.String), Valid: w.Writing.Valid},
 			Abstract:  sql.NullString{String: scrubText(w.Abstract.String), Valid: w.Abstract.Valid},
@@ -119,7 +119,7 @@ func (c *userDeactivateCmd) Run() error {
 			return fmt.Errorf("scrub writing: %w", err)
 		}
 	}
-	blogs, err := qtx.AdminGetAllBlogEntriesByUser(ctx, dbpkg.AdminGetAllBlogEntriesByUserParams{
+	blogs, err := qtx.AdminGetAllBlogEntriesByUser(ctx, db.AdminGetAllBlogEntriesByUserParams{
 		AuthorID: u.Idusers,
 		ListerID: 0,
 	})
@@ -132,7 +132,7 @@ func (c *userDeactivateCmd) Run() error {
 		if b.ForumthreadID.Valid {
 			threadID = b.ForumthreadID.Int32
 		}
-		if err := qtx.ArchiveBlog(ctx, dbpkg.ArchiveBlogParams{
+		if err := qtx.ArchiveBlog(ctx, db.ArchiveBlogParams{
 			Idblogs:            b.Idblogs,
 			ForumthreadID:      threadID,
 			UsersIdusers:       b.UsersIdusers,
@@ -143,18 +143,18 @@ func (c *userDeactivateCmd) Run() error {
 			tx.Rollback()
 			return fmt.Errorf("archive blog: %w", err)
 		}
-		if err := qtx.ScrubBlog(ctx, dbpkg.ScrubBlogParams{Blog: sql.NullString{String: scrubText(b.Blog.String), Valid: b.Blog.Valid}, Idblogs: b.Idblogs}); err != nil {
+		if err := qtx.ScrubBlog(ctx, db.ScrubBlogParams{Blog: sql.NullString{String: scrubText(b.Blog.String), Valid: b.Blog.Valid}, Idblogs: b.Idblogs}); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("scrub blog: %w", err)
 		}
 	}
-	imgs, err := qtx.GetImagePostsByUserDescending(ctx, dbpkg.GetImagePostsByUserDescendingParams{UsersIdusers: u.Idusers, Limit: math.MaxInt32, Offset: 0})
+	imgs, err := qtx.GetImagePostsByUserDescending(ctx, db.GetImagePostsByUserDescendingParams{UsersIdusers: u.Idusers, Limit: math.MaxInt32, Offset: 0})
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("list images: %w", err)
 	}
 	for _, img := range imgs {
-		if err := qtx.ArchiveImagepost(ctx, dbpkg.ArchiveImagepostParams{
+		if err := qtx.ArchiveImagepost(ctx, db.ArchiveImagepostParams{
 			Idimagepost:            img.Idimagepost,
 			ForumthreadID:          img.ForumthreadID,
 			UsersIdusers:           img.UsersIdusers,
@@ -174,13 +174,13 @@ func (c *userDeactivateCmd) Run() error {
 			return fmt.Errorf("scrub imagepost: %w", err)
 		}
 	}
-	links, err := qtx.GetLinkerItemsByUserDescending(ctx, dbpkg.GetLinkerItemsByUserDescendingParams{UsersIdusers: u.Idusers, Limit: math.MaxInt32, Offset: 0})
+	links, err := qtx.GetLinkerItemsByUserDescending(ctx, db.GetLinkerItemsByUserDescendingParams{UsersIdusers: u.Idusers, Limit: math.MaxInt32, Offset: 0})
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("list links: %w", err)
 	}
 	for _, l := range links {
-		if err := qtx.ArchiveLink(ctx, dbpkg.ArchiveLinkParams{
+		if err := qtx.ArchiveLink(ctx, db.ArchiveLinkParams{
 			Idlinker:           l.Idlinker,
 			LanguageIdlanguage: l.LanguageIdlanguage,
 			UsersIdusers:       l.UsersIdusers,
@@ -194,7 +194,7 @@ func (c *userDeactivateCmd) Run() error {
 			tx.Rollback()
 			return fmt.Errorf("archive link: %w", err)
 		}
-		if err := qtx.ScrubLink(ctx, dbpkg.ScrubLinkParams{Title: sql.NullString{String: scrubText(l.Title.String), Valid: l.Title.Valid}, Idlinker: l.Idlinker}); err != nil {
+		if err := qtx.ScrubLink(ctx, db.ScrubLinkParams{Title: sql.NullString{String: scrubText(l.Title.String), Valid: l.Title.Valid}, Idlinker: l.Idlinker}); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("scrub link: %w", err)
 		}

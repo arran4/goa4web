@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 )
 
@@ -28,7 +28,7 @@ type IndexEventData struct {
 }
 
 // Worker listens for index events and updates the search tables.
-func Worker(ctx context.Context, bus *eventbus.Bus, q *dbpkg.Queries) {
+func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier) {
 	if bus == nil || q == nil {
 		return
 	}
@@ -58,7 +58,7 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q *dbpkg.Queries) {
 	}
 }
 
-func index(ctx context.Context, q *dbpkg.Queries, data IndexEventData) error {
+func index(ctx context.Context, q db.Querier, data IndexEventData) error {
 	counts := map[string]int32{}
 	for _, w := range BreakupTextToWords(data.Text) {
 		counts[strings.ToLower(w)]++
@@ -70,19 +70,19 @@ func index(ctx context.Context, q *dbpkg.Queries, data IndexEventData) error {
 		}
 		switch data.Type {
 		case TypeComment:
-			if err := q.SystemAddToForumCommentSearch(ctx, dbpkg.SystemAddToForumCommentSearchParams{CommentID: data.ID, SearchwordlistIdsearchwordlist: int32(id), WordCount: count}); err != nil {
+			if err := q.SystemAddToForumCommentSearch(ctx, db.SystemAddToForumCommentSearchParams{CommentID: data.ID, SearchwordlistIdsearchwordlist: int32(id), WordCount: count}); err != nil {
 				return err
 			}
 		case TypeWriting:
-			if err := q.SystemAddToForumWritingSearch(ctx, dbpkg.SystemAddToForumWritingSearchParams{WritingID: data.ID, SearchwordlistIdsearchwordlist: int32(id), WordCount: count}); err != nil {
+			if err := q.SystemAddToForumWritingSearch(ctx, db.SystemAddToForumWritingSearchParams{WritingID: data.ID, SearchwordlistIdsearchwordlist: int32(id), WordCount: count}); err != nil {
 				return err
 			}
 		case TypeLinker:
-			if err := q.SystemAddToLinkerSearch(ctx, dbpkg.SystemAddToLinkerSearchParams{LinkerID: data.ID, SearchwordlistIdsearchwordlist: int32(id), WordCount: count}); err != nil {
+			if err := q.SystemAddToLinkerSearch(ctx, db.SystemAddToLinkerSearchParams{LinkerID: data.ID, SearchwordlistIdsearchwordlist: int32(id), WordCount: count}); err != nil {
 				return err
 			}
 		case TypeImage:
-			if err := q.SystemAddToImagePostSearch(ctx, dbpkg.SystemAddToImagePostSearchParams{ImagePostID: data.ID, SearchwordlistIdsearchwordlist: int32(id), WordCount: count}); err != nil {
+			if err := q.SystemAddToImagePostSearch(ctx, db.SystemAddToImagePostSearchParams{ImagePostID: data.ID, SearchwordlistIdsearchwordlist: int32(id), WordCount: count}); err != nil {
 				return err
 			}
 		}

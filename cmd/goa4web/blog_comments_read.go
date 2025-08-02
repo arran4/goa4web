@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strconv"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // blogCommentsReadCmd implements "blog comments read".
@@ -58,9 +58,9 @@ func (c *blogCommentsReadCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
+	queries := db.New(db)
 	uid := int32(c.UserID)
-	b, err := queries.GetBlogEntryForListerByID(ctx, dbpkg.GetBlogEntryForListerByIDParams{
+	b, err := queries.GetBlogEntryForListerByID(ctx, db.GetBlogEntryForListerByIDParams{
 		ListerID: uid,
 		ID:       int32(c.BlogID),
 		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
@@ -73,7 +73,7 @@ func (c *blogCommentsReadCmd) Run() error {
 		if b.ForumthreadID.Valid {
 			threadID = b.ForumthreadID.Int32
 		}
-		rows, err := queries.GetCommentsByThreadIdForUser(ctx, dbpkg.GetCommentsByThreadIdForUserParams{
+		rows, err := queries.GetCommentsByThreadIdForUser(ctx, db.GetCommentsByThreadIdForUserParams{
 			ViewerID: uid,
 			ThreadID: threadID,
 			UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
@@ -89,7 +89,7 @@ func (c *blogCommentsReadCmd) Run() error {
 	if c.CommentID == 0 {
 		return fmt.Errorf("comment id required")
 	}
-	cm, err := queries.GetCommentByIdForUser(ctx, dbpkg.GetCommentByIdForUserParams{
+	cm, err := queries.GetCommentByIdForUser(ctx, db.GetCommentByIdForUserParams{
 		ViewerID: uid,
 		ID:       int32(c.CommentID),
 		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},

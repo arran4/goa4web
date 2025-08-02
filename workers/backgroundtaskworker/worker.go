@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -13,7 +13,7 @@ import (
 // Worker listens for task events implementing tasks.BackgroundTasker.
 // The background method is executed and any returned task is published
 // back onto the bus when the work completes.
-func Worker(ctx context.Context, bus *eventbus.Bus, q *dbpkg.Queries) {
+func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier) {
 	if bus == nil || q == nil {
 		return
 	}

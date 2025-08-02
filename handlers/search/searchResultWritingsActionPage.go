@@ -75,7 +75,7 @@ func (SearchWritingsTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return handlers.TemplateWithDataHandler("resultWritingsActionPage.gohtml", data)
 }
 
-func WritingSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid int32) ([]*db.ListWritingsByIDsForListerRow, bool, bool, error) {
+func WritingSearch(w http.ResponseWriter, r *http.Request, queries db.Querier, uid int32) ([]*db.ListWritingsByIDsForListerRow, bool, bool, error) {
 	searchWords := searchutil.BreakupTextToWords(r.PostFormValue("searchwords"))
 	var writingsIds []int32
 

@@ -68,7 +68,7 @@ func SearchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "resultNewsActionPage.gohtml", data)
 }
 
-func NewsSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid int32) ([]*db.GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountRow, bool, bool, error) {
+func NewsSearch(w http.ResponseWriter, r *http.Request, queries db.Querier, uid int32) ([]*db.GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountRow, bool, bool, error) {
 	searchWords := searchutil.BreakupTextToWords(r.PostFormValue("searchwords"))
 	var newsIds []int32
 
@@ -140,7 +140,7 @@ func NewsSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid
 	return news, false, false, nil
 }
 
-func forumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request, queries *db.Queries, forumTopicId []int32, uid int32) ([]*db.GetCommentsByIdsForUserWithThreadInfoRow, bool, bool, error) {
+func forumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request, queries db.Querier, forumTopicId []int32, uid int32) ([]*db.GetCommentsByIdsForUserWithThreadInfoRow, bool, bool, error) {
 	searchWords := searchutil.BreakupTextToWords(r.PostFormValue("searchwords"))
 	var commentIds []int32
 

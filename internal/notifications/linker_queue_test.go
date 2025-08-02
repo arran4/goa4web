@@ -7,7 +7,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 func TestLinkerQueueNotifierMessages(t *testing.T) {
@@ -34,7 +34,7 @@ func TestLinkerQueueNotifierMessages(t *testing.T) {
 		WithArgs("linkerApprovedEmailSubject.gotxt").
 		WillReturnRows(sqlmock.NewRows([]string{"body"}).AddRow(""))
 
-	q := dbpkg.New(db)
+	q := db.New(db)
 	n := New(WithQueries(q), WithConfig(cfg))
 	data := map[string]any{
 		"Title":     "Example",

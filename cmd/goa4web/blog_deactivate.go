@@ -6,7 +6,7 @@ import (
 	"flag"
 	"fmt"
 
-	dbpkg "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // blogDeactivateCmd implements "blog deactivate".
@@ -36,8 +36,8 @@ func (c *blogDeactivateCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := dbpkg.New(db)
-	b, err := queries.GetBlogEntryForListerByID(ctx, dbpkg.GetBlogEntryForListerByIDParams{
+	queries := db.New(db)
+	b, err := queries.GetBlogEntryForListerByID(ctx, db.GetBlogEntryForListerByIDParams{
 		ListerID: 0,
 		ID:       int32(c.ID),
 		UserID:   sql.NullInt32{},
@@ -49,7 +49,7 @@ func (c *blogDeactivateCmd) Run() error {
 	if b.ForumthreadID.Valid {
 		threadID = b.ForumthreadID.Int32
 	}
-	if err := queries.ArchiveBlog(ctx, dbpkg.ArchiveBlogParams{
+	if err := queries.ArchiveBlog(ctx, db.ArchiveBlogParams{
 		Idblogs:            b.Idblogs,
 		ForumthreadID:      threadID,
 		UsersIdusers:       b.UsersIdusers,
@@ -59,7 +59,7 @@ func (c *blogDeactivateCmd) Run() error {
 	}); err != nil {
 		return fmt.Errorf("archive blog: %w", err)
 	}
-	if err := queries.ScrubBlog(ctx, dbpkg.ScrubBlogParams{Blog: sql.NullString{String: "", Valid: true}, Idblogs: b.Idblogs}); err != nil {
+	if err := queries.ScrubBlog(ctx, db.ScrubBlogParams{Blog: sql.NullString{String: "", Valid: true}, Idblogs: b.Idblogs}); err != nil {
 		return fmt.Errorf("scrub blog: %w", err)
 	}
 	return nil

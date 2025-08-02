@@ -8,6 +8,7 @@ type SessionProxy struct {
 	*Queries
 }
 
+// TODO coredata should provide this this hsould be injected into server & coredata as part of DI
 // NewSessionProxy returns a SessionProxy wrapping q.
 func NewSessionProxy(q *Queries) *SessionProxy {
 	return &SessionProxy{Queries: q}

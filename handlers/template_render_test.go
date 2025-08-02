@@ -91,7 +91,7 @@ func TestPageTemplatesRender(t *testing.T) {
 			CategoryBreadcrumbs []*db.WritingCategory
 			CategoryId          int32
 			WritingCategoryID   int32
-			Abstracts           []*db.GetPublicWritingsInCategoryRow
+			Abstracts           []*db.SystemListPublicWritingsInCategoryRow
 		}{&common.CoreData{}, nil, nil, 0, 0, nil}},
 		{"searchPage", struct {
 			*common.CoreData

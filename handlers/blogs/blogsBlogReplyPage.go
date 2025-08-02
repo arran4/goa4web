@@ -100,8 +100,8 @@ func (ReplyBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
-	blog, err := queries.GetBlogEntryForUserById(r.Context(), db.GetBlogEntryForUserByIdParams{
-		ViewerID: uid,
+	blog, err := queries.GetBlogEntryForListerByID(r.Context(), db.GetBlogEntryForListerByIDParams{
+		ListerID: uid,
 		ID:       int32(bid),
 		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
@@ -112,7 +112,7 @@ func (ReplyBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 			_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd)
 			return nil
 		default:
-			return fmt.Errorf("getBlogEntryForUserById fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+			return fmt.Errorf("getBlogEntryForListerByID fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
 

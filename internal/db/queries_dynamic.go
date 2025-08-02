@@ -16,15 +16,15 @@ type BloggerCountRow struct {
 
 // ListBloggers returns bloggers with the number of posts, ordered by username.
 type ListBloggersParams struct {
-	ViewerID int32
+	ListerID int32
 	Limit    int32
 	Offset   int32
 }
 
 func (q *Queries) ListBloggers(ctx context.Context, arg ListBloggersParams) ([]*BloggerCountRow, error) {
-	rows, err := q.ListBloggersForViewer(ctx, ListBloggersForViewerParams{
-		ViewerID: arg.ViewerID,
-		UserID:   sql.NullInt32{Int32: arg.ViewerID, Valid: arg.ViewerID != 0},
+	rows, err := q.ListBloggersForLister(ctx, ListBloggersForListerParams{
+		ListerID: arg.ListerID,
+		UserID:   sql.NullInt32{Int32: arg.ListerID, Valid: arg.ListerID != 0},
 		Limit:    arg.Limit,
 		Offset:   arg.Offset,
 	})
@@ -40,7 +40,7 @@ func (q *Queries) ListBloggers(ctx context.Context, arg ListBloggersParams) ([]*
 
 // SearchBloggers finds bloggers by username or email with pagination.
 type SearchBloggersParams struct {
-	ViewerID int32
+	ListerID int32
 	Query    string
 	Limit    int32
 	Offset   int32
@@ -48,10 +48,10 @@ type SearchBloggersParams struct {
 
 func (q *Queries) SearchBloggers(ctx context.Context, arg SearchBloggersParams) ([]*BloggerCountRow, error) {
 	like := "%" + arg.Query + "%"
-	rows, err := q.SearchBloggersForViewer(ctx, SearchBloggersForViewerParams{
-		ViewerID: arg.ViewerID,
+	rows, err := q.ListBloggersSearchForLister(ctx, ListBloggersSearchForListerParams{
+		ListerID: arg.ListerID,
 		Query:    like,
-		UserID:   sql.NullInt32{Int32: arg.ViewerID, Valid: arg.ViewerID != 0},
+		UserID:   sql.NullInt32{Int32: arg.ListerID, Valid: arg.ListerID != 0},
 		Limit:    arg.Limit,
 		Offset:   arg.Offset,
 	})
@@ -73,15 +73,15 @@ type WriterCountRow struct {
 
 // ListWriters returns writers with the number of writings, ordered by username.
 type ListWritersParams struct {
-	ViewerID int32
+	ListerID int32
 	Limit    int32
 	Offset   int32
 }
 
 func (q *Queries) ListWriters(ctx context.Context, arg ListWritersParams) ([]*WriterCountRow, error) {
-	rows, err := q.ListWritersForViewer(ctx, ListWritersForViewerParams{
-		ViewerID: arg.ViewerID,
-		UserID:   sql.NullInt32{Int32: arg.ViewerID, Valid: arg.ViewerID != 0},
+	rows, err := q.ListWritersForLister(ctx, ListWritersForListerParams{
+		ListerID: arg.ListerID,
+		UserID:   sql.NullInt32{Int32: arg.ListerID, Valid: arg.ListerID != 0},
 		Limit:    arg.Limit,
 		Offset:   arg.Offset,
 	})
@@ -97,7 +97,7 @@ func (q *Queries) ListWriters(ctx context.Context, arg ListWritersParams) ([]*Wr
 
 // SearchWriters finds writers by username or email with pagination.
 type SearchWritersParams struct {
-	ViewerID int32
+	ListerID int32
 	Query    string
 	Limit    int32
 	Offset   int32
@@ -105,10 +105,10 @@ type SearchWritersParams struct {
 
 func (q *Queries) SearchWriters(ctx context.Context, arg SearchWritersParams) ([]*WriterCountRow, error) {
 	like := "%" + arg.Query + "%"
-	rows, err := q.SearchWritersForViewer(ctx, SearchWritersForViewerParams{
-		ViewerID: arg.ViewerID,
+	rows, err := q.ListWritersSearchForLister(ctx, ListWritersSearchForListerParams{
+		ListerID: arg.ListerID,
 		Query:    like,
-		UserID:   sql.NullInt32{Int32: arg.ViewerID, Valid: arg.ViewerID != 0},
+		UserID:   sql.NullInt32{Int32: arg.ListerID, Valid: arg.ListerID != 0},
 		Limit:    arg.Limit,
 		Offset:   arg.Offset,
 	})

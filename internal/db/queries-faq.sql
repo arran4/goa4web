@@ -5,12 +5,7 @@ WHERE faqCategories_idfaqCategories = '0' OR answer IS NULL;
 
 -- name: GetFAQAnsweredQuestions :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
 )
 SELECT idfaq, faqCategories_idfaqCategories, language_idlanguage, users_idusers, answer, question
 FROM faq
@@ -110,12 +105,7 @@ FROM faq_categories;
 
 -- name: GetAllAnsweredFAQWithFAQCategoriesForUser :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
 )
 SELECT c.idfaqCategories, c.name, f.idfaq, f.faqCategories_idfaqCategories, f.language_idlanguage, f.users_idusers, f.answer, f.question
 FROM faq f

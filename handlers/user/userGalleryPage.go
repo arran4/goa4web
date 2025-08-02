@@ -46,10 +46,10 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 
 	offset := (page - 1) * size
 
-	rows, err := queries.ListUploadedImagesByUserForViewer(r.Context(), db.ListUploadedImagesByUserForViewerParams{
-		ViewerID:      uid,
+	rows, err := queries.ListUploadedImagesByUserForLister(r.Context(), db.ListUploadedImagesByUserForListerParams{
+		ListerID:      uid,
 		UserID:        uid,
-		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
+		ListerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 		Limit:         int32(size + 1),
 		Offset:        int32(offset),
 	})

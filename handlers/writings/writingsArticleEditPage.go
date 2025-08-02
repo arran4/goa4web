@@ -23,7 +23,7 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 		*common.CoreData
 		Languages          []*db.Language
 		SelectedLanguageId int
-		Writing            *db.GetWritingByIdForUserDescendingByPublishedDateRow
+		Writing            *db.GetWritingForListerByIDRow
 		UserId             int32
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)

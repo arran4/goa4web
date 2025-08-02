@@ -91,12 +91,7 @@ func (q *Queries) DeleteFAQCategory(ctx context.Context, arg DeleteFAQCategoryPa
 
 const getAllAnsweredFAQWithFAQCategoriesForUser = `-- name: GetAllAnsweredFAQWithFAQCategoriesForUser :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT c.idfaqCategories, c.name, f.idfaq, f.faqCategories_idfaqCategories, f.language_idlanguage, f.users_idusers, f.answer, f.question
 FROM faq f
@@ -246,12 +241,7 @@ func (q *Queries) GetAllFAQQuestions(ctx context.Context) ([]*Faq, error) {
 
 const getFAQAnsweredQuestions = `-- name: GetFAQAnsweredQuestions :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT idfaq, faqCategories_idfaqCategories, language_idlanguage, users_idusers, answer, question
 FROM faq

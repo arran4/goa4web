@@ -23,7 +23,7 @@ func adminUserWritingsPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "user not found", http.StatusNotFound)
 		return
 	}
-	rows, err := queries.AdminGetAllWritingsByUser(r.Context(), int32(id))
+	rows, err := queries.AdminGetAllWritingsByAuthor(r.Context(), int32(id))
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -32,7 +32,7 @@ func adminUserWritingsPage(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		*common.CoreData
 		User     *db.User
-		Writings []*db.AdminGetAllWritingsByUserRow
+		Writings []*db.AdminGetAllWritingsByAuthorRow
 	}{
 		CoreData: cd,
 		User:     &db.User{Idusers: user.Idusers, Username: user.Username},

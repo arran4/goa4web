@@ -11,7 +11,7 @@ WHERE idblogs = sqlc.arg(blog_id)
         AND (g.item_id = sqlc.arg(item_id) OR g.item_id IS NULL)
         AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (
-            SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+            SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
         ))
   );
 
@@ -27,7 +27,7 @@ WHERE EXISTS (
       AND (g.item_id = 0 OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (
-          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
       ))
 );
 
@@ -36,17 +36,12 @@ UPDATE blogs
 SET forumthread_id = ?
 WHERE idblogs = ?;
 
--- name: GetBlogEntriesForViewerDescending :many
+-- name: ListBlogEntriesForLister :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
-       b.users_idusers = sqlc.arg(viewer_id) AS is_owner
+       b.users_idusers = sqlc.arg(lister_id) AS is_owner
 FROM blogs b
 JOIN grants g ON g.item_id = b.idblogs
     AND g.section = 'blogs'
@@ -62,27 +57,22 @@ WHERE (
     OR b.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = sqlc.arg(viewer_id)
+        WHERE ul.users_idusers = sqlc.arg(lister_id)
           AND ul.language_idlanguage = b.language_idlanguage
     )
     OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
     )
 )
 ORDER BY b.written DESC
 LIMIT ? OFFSET ?;
 
--- name: GetBlogEntriesByAuthorForUserDescendingLanguages :many
+-- name: ListBlogEntriesByAuthorForLister :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
-       b.users_idusers = sqlc.arg(viewer_id) AS is_owner
+       b.users_idusers = sqlc.arg(lister_id) AS is_owner
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
@@ -92,11 +82,11 @@ AND (
     OR b.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = sqlc.arg(viewer_id)
+        WHERE ul.users_idusers = sqlc.arg(lister_id)
           AND ul.language_idlanguage = b.language_idlanguage
     )
     OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
     )
 )
 AND EXISTS (
@@ -112,14 +102,9 @@ AND EXISTS (
 ORDER BY b.written DESC
 LIMIT ? OFFSET ?;
 
--- name: GetBlogEntriesByIdsDescendingForUser :many
+-- name: ListBlogEntriesByIDsForLister :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written
 FROM blogs b
@@ -138,27 +123,22 @@ WHERE b.idblogs IN (sqlc.slice(blogIds))
       OR b.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          WHERE ul.users_idusers = sqlc.arg(lister_id)
             AND ul.language_idlanguage = b.language_idlanguage
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
       )
   )
 ORDER BY b.written DESC
 ;
 
--- name: GetBlogEntryForUserById :one
+-- name: GetBlogEntryForListerByID :one
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
-       b.users_idusers = sqlc.arg(viewer_id) AS is_owner
+       b.users_idusers = sqlc.arg(lister_id) AS is_owner
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
@@ -168,11 +148,11 @@ WHERE b.idblogs = sqlc.arg(id)
       OR b.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          WHERE ul.users_idusers = sqlc.arg(lister_id)
             AND ul.language_idlanguage = b.language_idlanguage
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
       )
   )
   AND EXISTS (
@@ -189,12 +169,7 @@ LIMIT 1;
 
 -- name: BlogsSearchFirst :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.blog_id
 FROM blogs_search cs
@@ -206,11 +181,11 @@ WHERE swl.word = ?
       OR b.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          WHERE ul.users_idusers = sqlc.arg(lister_id)
             AND ul.language_idlanguage = b.language_idlanguage
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
       )
   )
   AND EXISTS (
@@ -226,12 +201,7 @@ WHERE swl.word = ?
 
 -- name: BlogsSearchNext :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.blog_id
 FROM blogs_search cs
@@ -244,11 +214,11 @@ WHERE swl.word = ?
       OR b.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          WHERE ul.users_idusers = sqlc.arg(lister_id)
             AND ul.language_idlanguage = b.language_idlanguage
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
       )
   )
   AND EXISTS (
@@ -264,14 +234,9 @@ WHERE swl.word = ?
 
 
 
--- name: ListBloggersForViewer :many
+-- name: ListBloggersForLister :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT u.username, COUNT(b.idblogs) AS count
 FROM blogs b
@@ -281,11 +246,11 @@ WHERE (
     OR b.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = sqlc.arg(viewer_id)
+        WHERE ul.users_idusers = sqlc.arg(lister_id)
           AND ul.language_idlanguage = b.language_idlanguage
     )
     OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
     )
 )
 AND EXISTS (
@@ -302,14 +267,9 @@ GROUP BY u.idusers
 ORDER BY u.username
 LIMIT ? OFFSET ?;
 
--- name: SearchBloggersForViewer :many
+-- name: ListBloggersSearchForLister :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT u.username, COUNT(b.idblogs) AS count
 FROM blogs b
@@ -320,11 +280,11 @@ WHERE (LOWER(u.username) LIKE LOWER(sqlc.arg(query)) OR LOWER((SELECT email FROM
     OR b.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = sqlc.arg(viewer_id)
+        WHERE ul.users_idusers = sqlc.arg(lister_id)
           AND ul.language_idlanguage = b.language_idlanguage
     )
     OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
     )
   )
   AND EXISTS (
@@ -350,7 +310,7 @@ WHERE b.users_idusers = sqlc.arg(author_id)
       SELECT 1
       FROM user_roles ur
       JOIN roles r ON ur.role_id = r.id
-      WHERE ur.users_idusers = sqlc.arg(viewer_id)
+      WHERE ur.users_idusers = sqlc.arg(lister_id)
         AND r.is_admin = 1
   )
 ORDER BY b.written DESC;

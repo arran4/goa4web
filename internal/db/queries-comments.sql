@@ -1,11 +1,6 @@
 -- name: GetCommentByIdForUser :one
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
 )
 SELECT c.*, pu.Username,
        c.users_idusers = sqlc.arg(viewer_id) AS is_owner
@@ -51,12 +46,7 @@ WHERE c.Idcomments=?;
 
 -- name: GetCommentsByIdsForUserWithThreadInfo :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
 )
 SELECT c.*, pu.username AS posterusername,
        c.users_idusers = sqlc.arg(viewer_id) AS is_owner,
@@ -99,12 +89,7 @@ VALUES (?, ?, ?, ?, NOW() )
 
 -- name: GetCommentsByThreadIdForUser :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
 )
 SELECT c.*, pu.username AS posterusername,
        c.users_idusers = sqlc.arg(viewer_id) AS is_owner

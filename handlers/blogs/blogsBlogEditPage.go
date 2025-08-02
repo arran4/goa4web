@@ -54,7 +54,7 @@ func (EditBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 			Valid:  true,
 		},
 		UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-		ViewerID: cd.UserID,
+		ListerID: cd.UserID,
 	}); err != nil {
 		return fmt.Errorf("update blog fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
@@ -81,7 +81,7 @@ func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
 		Languages          []*db.Language
-		Blog               *db.GetBlogEntryForUserByIdRow
+		Blog               *db.GetBlogEntryForListerByIDRow
 		SelectedLanguageId int
 		Mode               string
 	}

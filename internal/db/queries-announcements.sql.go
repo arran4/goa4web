@@ -77,14 +77,9 @@ func (q *Queries) AdminPromoteAnnouncement(ctx context.Context, siteNewsID int32
 	return err
 }
 
-const getActiveAnnouncementWithNewsForViewer = `-- name: GetActiveAnnouncementWithNewsForViewer :one
+const getActiveAnnouncementWithNewsForLister = `-- name: GetActiveAnnouncementWithNewsForLister :one
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT a.id, n.idsiteNews, n.news
 FROM site_announcements a
@@ -116,25 +111,25 @@ ORDER BY a.created_at DESC
 LIMIT 1
 `
 
-type GetActiveAnnouncementWithNewsForViewerParams struct {
-	ViewerID int32
+type GetActiveAnnouncementWithNewsForListerParams struct {
+	ListerID int32
 	UserID   sql.NullInt32
 }
 
-type GetActiveAnnouncementWithNewsForViewerRow struct {
+type GetActiveAnnouncementWithNewsForListerRow struct {
 	ID         int32
 	Idsitenews int32
 	News       sql.NullString
 }
 
-func (q *Queries) GetActiveAnnouncementWithNewsForViewer(ctx context.Context, arg GetActiveAnnouncementWithNewsForViewerParams) (*GetActiveAnnouncementWithNewsForViewerRow, error) {
-	row := q.db.QueryRowContext(ctx, getActiveAnnouncementWithNewsForViewer,
-		arg.ViewerID,
-		arg.ViewerID,
-		arg.ViewerID,
+func (q *Queries) GetActiveAnnouncementWithNewsForLister(ctx context.Context, arg GetActiveAnnouncementWithNewsForListerParams) (*GetActiveAnnouncementWithNewsForListerRow, error) {
+	row := q.db.QueryRowContext(ctx, getActiveAnnouncementWithNewsForLister,
+		arg.ListerID,
+		arg.ListerID,
+		arg.ListerID,
 		arg.UserID,
 	)
-	var i GetActiveAnnouncementWithNewsForViewerRow
+	var i GetActiveAnnouncementWithNewsForListerRow
 	err := row.Scan(&i.ID, &i.Idsitenews, &i.News)
 	return &i, err
 }

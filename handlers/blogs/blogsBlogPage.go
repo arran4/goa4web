@@ -22,7 +22,7 @@ import (
 
 func BlogPage(w http.ResponseWriter, r *http.Request) {
 	type BlogRow struct {
-		*db.GetBlogEntryForUserByIdRow
+		*db.GetBlogEntryForListerByIDRow
 		EditUrl     string
 		IsReplyable bool
 	}
@@ -73,8 +73,8 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	blog, err := queries.GetBlogEntryForUserById(r.Context(), db.GetBlogEntryForUserByIdParams{
-		ViewerID: uid,
+	blog, err := queries.GetBlogEntryForListerByID(r.Context(), db.GetBlogEntryForListerByIDParams{
+		ListerID: uid,
 		ID:       int32(blogId),
 		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
@@ -93,7 +93,7 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 			}
 			return
 		default:
-			log.Printf("getBlogEntryForUserById_comments Error: %s", err)
+			log.Printf("getBlogEntryForListerByID_comments Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
@@ -111,9 +111,9 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.Blog = &BlogRow{
-		GetBlogEntryForUserByIdRow: blog,
-		EditUrl:                    editUrl,
-		IsReplyable:                true,
+		GetBlogEntryForListerByIDRow: blog,
+		EditUrl:                      editUrl,
+		IsReplyable:                  true,
 	}
 
 	if !blog.ForumthreadID.Valid {

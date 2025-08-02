@@ -101,7 +101,7 @@ type CoreData struct {
 	emailProvider lazy.Value[MailProvider]
 
 	allRoles                 lazy.Value[[]*db.Role]
-	announcement             lazy.Value[*db.GetActiveAnnouncementWithNewsForViewerRow]
+	announcement             lazy.Value[*db.GetActiveAnnouncementWithNewsForListerRow]
 	annMu                    sync.Mutex
 	bloggers                 lazy.Value[[]*db.BloggerCountRow]
 	bookmarks                lazy.Value[*db.GetBookmarksForUserRow]
@@ -128,20 +128,20 @@ type CoreData struct {
 	perms                    lazy.Value[[]*db.GetPermissionsByUserIDRow]
 	pref                     lazy.Value[*db.Preference]
 	preferredLanguageID      lazy.Value[int32]
-	publicWritings           map[string]*lazy.Value[[]*db.GetPublicWritingsInCategoryForUserRow]
+	publicWritings           map[string]*lazy.Value[[]*db.ListPublicWritingsInCategoryForListerRow]
 	subImageBoards           map[int32]*lazy.Value[[]*db.Imageboard]
 	unreadCount              lazy.Value[int64]
 	subscriptions            lazy.Value[map[string]bool]
 	user                     lazy.Value[*db.User]
 	userRoles                lazy.Value[[]string]
 	visibleWritingCategories lazy.Value[[]*db.WritingCategory]
-	writerWritings           map[int32]*lazy.Value[[]*db.GetPublicWritingsByUserForViewerRow]
+	writerWritings           map[int32]*lazy.Value[[]*db.ListPublicWritingsByUserForListerRow]
 	writers                  lazy.Value[[]*db.WriterCountRow]
 	writingCategories        lazy.Value[[]*db.WritingCategory]
 	currentWritingID         int32
-	writingRows              map[int32]*lazy.Value[*db.GetWritingByIdForUserDescendingByPublishedDateRow]
+	writingRows              map[int32]*lazy.Value[*db.GetWritingForListerByIDRow]
 	currentBlogID            int32
-	blogEntries              map[int32]*lazy.Value[*db.GetBlogEntryForUserByIdRow]
+	blogEntries              map[int32]*lazy.Value[*db.GetBlogEntryForListerByIDRow]
 
 	absoluteURLBase lazy.Value[string]
 	dbRegistry      *dbdrivers.Registry
@@ -498,7 +498,7 @@ func (cd *CoreData) CurrentTopicLoaded() *db.GetForumTopicByIdForUserRow {
 func (cd *CoreData) SetCurrentWriting(id int32) { cd.currentWritingID = id }
 
 // CurrentWriting returns the currently requested writing lazily loaded.
-func (cd *CoreData) CurrentWriting(ops ...lazy.Option[*db.GetWritingByIdForUserDescendingByPublishedDateRow]) (*db.GetWritingByIdForUserDescendingByPublishedDateRow, error) {
+func (cd *CoreData) CurrentWriting(ops ...lazy.Option[*db.GetWritingForListerByIDRow]) (*db.GetWritingForListerByIDRow, error) {
 	if cd.currentWritingID == 0 {
 		return nil, nil
 	}
@@ -506,7 +506,7 @@ func (cd *CoreData) CurrentWriting(ops ...lazy.Option[*db.GetWritingByIdForUserD
 }
 
 // CurrentWritingLoaded returns the cached current writing without database access.
-func (cd *CoreData) CurrentWritingLoaded() *db.GetWritingByIdForUserDescendingByPublishedDateRow {
+func (cd *CoreData) CurrentWritingLoaded() *db.GetWritingForListerByIDRow {
 	if cd.writingRows == nil {
 		return nil
 	}
@@ -525,7 +525,7 @@ func (cd *CoreData) CurrentWritingLoaded() *db.GetWritingByIdForUserDescendingBy
 func (cd *CoreData) SetCurrentBlog(id int32) { cd.currentBlogID = id }
 
 // CurrentBlog returns the currently requested blog entry lazily loaded.
-func (cd *CoreData) CurrentBlog(ops ...lazy.Option[*db.GetBlogEntryForUserByIdRow]) (*db.GetBlogEntryForUserByIdRow, error) {
+func (cd *CoreData) CurrentBlog(ops ...lazy.Option[*db.GetBlogEntryForListerByIDRow]) (*db.GetBlogEntryForListerByIDRow, error) {
 	if cd.currentBlogID == 0 {
 		return nil, nil
 	}
@@ -533,7 +533,7 @@ func (cd *CoreData) CurrentBlog(ops ...lazy.Option[*db.GetBlogEntryForUserByIdRo
 }
 
 // CurrentBlogLoaded returns the cached current blog entry without database access.
-func (cd *CoreData) CurrentBlogLoaded() *db.GetBlogEntryForUserByIdRow {
+func (cd *CoreData) CurrentBlogLoaded() *db.GetBlogEntryForListerByIDRow {
 	if cd.blogEntries == nil {
 		return nil
 	}
@@ -638,13 +638,13 @@ func (cd *CoreData) AllRoles() ([]*db.Role, error) {
 }
 
 // Announcement returns the active announcement row loaded lazily.
-func (cd *CoreData) Announcement() *db.GetActiveAnnouncementWithNewsForViewerRow {
-	ann, err := cd.announcement.Load(func() (*db.GetActiveAnnouncementWithNewsForViewerRow, error) {
+func (cd *CoreData) Announcement() *db.GetActiveAnnouncementWithNewsForListerRow {
+	ann, err := cd.announcement.Load(func() (*db.GetActiveAnnouncementWithNewsForListerRow, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
-		row, err := cd.queries.GetActiveAnnouncementWithNewsForViewer(cd.ctx, db.GetActiveAnnouncementWithNewsForViewerParams{
-			ViewerID: cd.UserID,
+		row, err := cd.queries.GetActiveAnnouncementWithNewsForLister(cd.ctx, db.GetActiveAnnouncementWithNewsForListerParams{
+			ListerID: cd.UserID,
 			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
 		if err != nil {
@@ -659,7 +659,7 @@ func (cd *CoreData) Announcement() *db.GetActiveAnnouncementWithNewsForViewerRow
 }
 
 // AnnouncementLoaded returns the cached active announcement without querying the database.
-func (cd *CoreData) AnnouncementLoaded() *db.GetActiveAnnouncementWithNewsForViewerRow {
+func (cd *CoreData) AnnouncementLoaded() *db.GetActiveAnnouncementWithNewsForListerRow {
 	ann, ok := cd.announcement.Peek()
 	if !ok {
 		return nil
@@ -843,8 +843,8 @@ func (cd *CoreData) VisibleWritingCategories(userID int32) ([]*db.WritingCategor
 		if cd.queries == nil {
 			return nil, nil
 		}
-		rows, err := cd.queries.FetchCategoriesForUser(cd.ctx, db.FetchCategoriesForUserParams{
-			ViewerID: cd.UserID,
+		rows, err := cd.queries.ListWritingCategoriesForLister(cd.ctx, db.ListWritingCategoriesForListerParams{
+			ListerID: cd.UserID,
 			UserID:   sql.NullInt32{Int32: userID, Valid: userID != 0},
 		})
 		if err != nil {
@@ -874,23 +874,23 @@ func (cd *CoreData) WritingCategories() ([]*db.WritingCategory, error) {
 }
 
 // PublicWritings returns public writings in a category, cached per category and offset.
-func (cd *CoreData) PublicWritings(categoryID int32, r *http.Request) ([]*db.GetPublicWritingsInCategoryForUserRow, error) {
+func (cd *CoreData) PublicWritings(categoryID int32, r *http.Request) ([]*db.ListPublicWritingsInCategoryForListerRow, error) {
 	if cd.publicWritings == nil {
-		cd.publicWritings = map[string]*lazy.Value[[]*db.GetPublicWritingsInCategoryForUserRow]{}
+		cd.publicWritings = map[string]*lazy.Value[[]*db.ListPublicWritingsInCategoryForListerRow]{}
 	}
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	key := fmt.Sprintf("%d:%d", categoryID, offset)
 	lv, ok := cd.publicWritings[key]
 	if !ok {
-		lv = &lazy.Value[[]*db.GetPublicWritingsInCategoryForUserRow]{}
+		lv = &lazy.Value[[]*db.ListPublicWritingsInCategoryForListerRow]{}
 		cd.publicWritings[key] = lv
 	}
-	return lv.Load(func() ([]*db.GetPublicWritingsInCategoryForUserRow, error) {
+	return lv.Load(func() ([]*db.ListPublicWritingsInCategoryForListerRow, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
-		rows, err := cd.queries.GetPublicWritingsInCategoryForUser(cd.ctx, db.GetPublicWritingsInCategoryForUserParams{
-			ViewerID:          cd.UserID,
+		rows, err := cd.queries.ListPublicWritingsInCategoryForLister(cd.ctx, db.ListPublicWritingsInCategoryForListerParams{
+			ListerID:          cd.UserID,
 			WritingCategoryID: categoryID,
 			UserID:            sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 			Limit:             15,
@@ -902,7 +902,7 @@ func (cd *CoreData) PublicWritings(categoryID int32, r *http.Request) ([]*db.Get
 			}
 			return nil, err
 		}
-		var res []*db.GetPublicWritingsInCategoryForUserRow
+		var res []*db.ListPublicWritingsInCategoryForListerRow
 		for _, row := range rows {
 			if cd.HasGrant("writing", "article", "see", row.Idwriting) {
 				res = append(res, row)
@@ -923,14 +923,14 @@ func (cd *CoreData) Bloggers(r *http.Request) ([]*db.BloggerCountRow, error) {
 		search := r.URL.Query().Get("search")
 		if search != "" {
 			return cd.queries.SearchBloggers(cd.ctx, db.SearchBloggersParams{
-				ViewerID: cd.UserID,
+				ListerID: cd.UserID,
 				Query:    search,
 				Limit:    int32(ps + 1),
 				Offset:   int32(offset),
 			})
 		}
 		return cd.queries.ListBloggers(cd.ctx, db.ListBloggersParams{
-			ViewerID: cd.UserID,
+			ListerID: cd.UserID,
 			Limit:    int32(ps + 1),
 			Offset:   int32(offset),
 		})
@@ -948,14 +948,14 @@ func (cd *CoreData) Writers(r *http.Request) ([]*db.WriterCountRow, error) {
 		search := r.URL.Query().Get("search")
 		if search != "" {
 			return cd.queries.SearchWriters(cd.ctx, db.SearchWritersParams{
-				ViewerID: cd.UserID,
+				ListerID: cd.UserID,
 				Query:    search,
 				Limit:    int32(ps + 1),
 				Offset:   int32(offset),
 			})
 		}
 		return cd.queries.ListWriters(cd.ctx, db.ListWritersParams{
-			ViewerID: cd.UserID,
+			ListerID: cd.UserID,
 			Limit:    int32(ps + 1),
 			Offset:   int32(offset),
 		})
@@ -993,28 +993,28 @@ func (cd *CoreData) ForumThreadByID(id int32, ops ...lazy.Option[*db.GetThreadLa
 }
 
 // WritingByID returns a single writing lazily loading it once per ID.
-func (cd *CoreData) WritingByID(id int32, ops ...lazy.Option[*db.GetWritingByIdForUserDescendingByPublishedDateRow]) (*db.GetWritingByIdForUserDescendingByPublishedDateRow, error) {
-	fetch := func(i int32) (*db.GetWritingByIdForUserDescendingByPublishedDateRow, error) {
+func (cd *CoreData) WritingByID(id int32, ops ...lazy.Option[*db.GetWritingForListerByIDRow]) (*db.GetWritingForListerByIDRow, error) {
+	fetch := func(i int32) (*db.GetWritingForListerByIDRow, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
-		return cd.queries.GetWritingByIdForUserDescendingByPublishedDate(cd.ctx, db.GetWritingByIdForUserDescendingByPublishedDateParams{
-			ViewerID:      cd.UserID,
+		return cd.queries.GetWritingForListerByID(cd.ctx, db.GetWritingForListerByIDParams{
+			ListerID:      cd.UserID,
 			Idwriting:     i,
-			ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+			ListerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
 	}
 	return lazy.Map(&cd.writingRows, &cd.mapMu, id, fetch, ops...)
 }
 
 // BlogEntryByID returns a blog entry lazily loading it once per ID.
-func (cd *CoreData) BlogEntryByID(id int32, ops ...lazy.Option[*db.GetBlogEntryForUserByIdRow]) (*db.GetBlogEntryForUserByIdRow, error) {
-	fetch := func(i int32) (*db.GetBlogEntryForUserByIdRow, error) {
+func (cd *CoreData) BlogEntryByID(id int32, ops ...lazy.Option[*db.GetBlogEntryForListerByIDRow]) (*db.GetBlogEntryForListerByIDRow, error) {
+	fetch := func(i int32) (*db.GetBlogEntryForListerByIDRow, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
-		return cd.queries.GetBlogEntryForUserById(cd.ctx, db.GetBlogEntryForUserByIdParams{
-			ViewerID: cd.UserID,
+		return cd.queries.GetBlogEntryForListerByID(cd.ctx, db.GetBlogEntryForListerByIDParams{
+			ListerID: cd.UserID,
 			ID:       i,
 			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
@@ -1117,22 +1117,22 @@ func (cd *CoreData) CurrentNewsPostLoaded() *db.GetForumThreadIdByNewsPostIdRow 
 }
 
 // WriterWritings returns public writings for the specified author respecting cd's permissions.
-func (cd *CoreData) WriterWritings(userID int32, r *http.Request) ([]*db.GetPublicWritingsByUserForViewerRow, error) {
+func (cd *CoreData) WriterWritings(userID int32, r *http.Request) ([]*db.ListPublicWritingsByUserForListerRow, error) {
 	if cd.writerWritings == nil {
-		cd.writerWritings = map[int32]*lazy.Value[[]*db.GetPublicWritingsByUserForViewerRow]{}
+		cd.writerWritings = map[int32]*lazy.Value[[]*db.ListPublicWritingsByUserForListerRow]{}
 	}
 	lv, ok := cd.writerWritings[userID]
 	if !ok {
-		lv = &lazy.Value[[]*db.GetPublicWritingsByUserForViewerRow]{}
+		lv = &lazy.Value[[]*db.ListPublicWritingsByUserForListerRow]{}
 		cd.writerWritings[userID] = lv
 	}
-	return lv.Load(func() ([]*db.GetPublicWritingsByUserForViewerRow, error) {
+	return lv.Load(func() ([]*db.ListPublicWritingsByUserForListerRow, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
 		offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-		rows, err := cd.queries.GetPublicWritingsByUserForViewer(cd.ctx, db.GetPublicWritingsByUserForViewerParams{
-			ViewerID: cd.UserID,
+		rows, err := cd.queries.ListPublicWritingsByUserForLister(cd.ctx, db.ListPublicWritingsByUserForListerParams{
+			ListerID: cd.UserID,
 			AuthorID: userID,
 			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 			Limit:    15,
@@ -1141,7 +1141,7 @@ func (cd *CoreData) WriterWritings(userID int32, r *http.Request) ([]*db.GetPubl
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
-		var list []*db.GetPublicWritingsByUserForViewerRow
+		var list []*db.ListPublicWritingsByUserForListerRow
 		for _, row := range rows {
 			if !cd.HasGrant("writing", "article", "see", row.Idwriting) {
 				continue

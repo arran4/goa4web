@@ -137,7 +137,7 @@ func adminRolePage(w http.ResponseWriter, r *http.Request) {
 						gi.Info = c.Title.String
 					}
 				case "article":
-					if w, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), db.GetWritingByIdForUserDescendingByPublishedDateParams{ViewerID: cd.UserID, Idwriting: g.ItemID.Int32, ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0}}); err == nil {
+					if w, err := queries.GetWritingForListerByID(r.Context(), db.GetWritingForListerByIDParams{ListerID: cd.UserID, Idwriting: g.ItemID.Int32, ListerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0}}); err == nil {
 						if w.Title.Valid {
 							info := w.Title.String
 							if name, ok := langMap[w.LanguageIdlanguage]; ok && name != "" {
@@ -248,8 +248,8 @@ func adminRolePage(w http.ResponseWriter, r *http.Request) {
 
 	data := struct {
 		*common.CoreData
-		Role   *db.Role
-		Users  []*db.AdminListUsersByRoleIDRow
+		Role        *db.Role
+		Users       []*db.AdminListUsersByRoleIDRow
 		GrantGroups []GrantGroup
 	}{
 		CoreData:    cd,

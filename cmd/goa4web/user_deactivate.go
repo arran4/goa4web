@@ -88,11 +88,7 @@ func (c *userDeactivateCmd) Run() error {
 			return fmt.Errorf("scrub comment: %w", err)
 		}
 	}
-	writings, err := qtx.GetAllWritingsByUser(ctx, dbpkg.GetAllWritingsByUserParams{
-		ViewerID:      u.Idusers,
-		AuthorID:      u.Idusers,
-		ViewerMatchID: sql.NullInt32{Int32: u.Idusers, Valid: true},
-	})
+	writings, err := qtx.AdminGetAllWritingsByAuthor(ctx, u.Idusers)
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("list writings: %w", err)
@@ -125,7 +121,7 @@ func (c *userDeactivateCmd) Run() error {
 	}
 	blogs, err := qtx.AdminGetAllBlogEntriesByUser(ctx, dbpkg.AdminGetAllBlogEntriesByUserParams{
 		AuthorID: u.Idusers,
-		ViewerID: 0,
+		ListerID: 0,
 	})
 	if err != nil {
 		tx.Rollback()

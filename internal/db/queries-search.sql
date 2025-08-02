@@ -87,12 +87,7 @@ ON DUPLICATE KEY UPDATE word_count=VALUES(word_count);
 
 -- name: CommentsSearchFirstNotInRestrictedTopic :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.comment_id
 FROM comments_search cs
@@ -107,11 +102,11 @@ WHERE swl.word=sqlc.arg(word)
       OR c.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          WHERE ul.users_idusers = sqlc.arg(lister_id)
             AND ul.language_idlanguage = c.language_idlanguage
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
       )
   )
   AND EXISTS (
@@ -127,12 +122,7 @@ WHERE swl.word=sqlc.arg(word)
 
 -- name: CommentsSearchNextNotInRestrictedTopic :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.comment_id
 FROM comments_search cs
@@ -148,11 +138,11 @@ WHERE swl.word=sqlc.arg(word)
       OR c.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          WHERE ul.users_idusers = sqlc.arg(lister_id)
             AND ul.language_idlanguage = c.language_idlanguage
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
       )
   )
   AND EXISTS (
@@ -168,12 +158,7 @@ WHERE swl.word=sqlc.arg(word)
 
 -- name: CommentsSearchFirstInRestrictedTopic :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.comment_id
 FROM comments_search cs
@@ -188,11 +173,11 @@ WHERE swl.word=sqlc.arg(word)
       OR c.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          WHERE ul.users_idusers = sqlc.arg(lister_id)
             AND ul.language_idlanguage = c.language_idlanguage
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
       )
   )
   AND EXISTS (
@@ -208,12 +193,7 @@ WHERE swl.word=sqlc.arg(word)
 
 -- name: CommentsSearchNextInRestrictedTopic :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.comment_id
 FROM comments_search cs
@@ -229,11 +209,11 @@ WHERE swl.word=sqlc.arg(word)
       OR c.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          WHERE ul.users_idusers = sqlc.arg(lister_id)
             AND ul.language_idlanguage = c.language_idlanguage
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
       )
   )
   AND EXISTS (
@@ -277,12 +257,7 @@ WHERE writing_id=?
 ;
 -- name: WritingSearchFirst :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.writing_id
 FROM writing_search cs
@@ -294,11 +269,11 @@ WHERE swl.word = sqlc.arg(word)
       OR w.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          WHERE ul.users_idusers = sqlc.arg(lister_id)
             AND ul.language_idlanguage = w.language_idlanguage
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
       )
   )
   AND EXISTS (
@@ -314,12 +289,7 @@ WHERE swl.word = sqlc.arg(word)
 
 -- name: WritingSearchNext :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.writing_id
 FROM writing_search cs
@@ -332,11 +302,11 @@ WHERE swl.word = sqlc.arg(word)
       OR w.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          WHERE ul.users_idusers = sqlc.arg(lister_id)
             AND ul.language_idlanguage = w.language_idlanguage
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
       )
   )
   AND EXISTS (
@@ -352,12 +322,7 @@ WHERE swl.word = sqlc.arg(word)
 
 -- name: SiteNewsSearchFirst :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.site_news_id
 FROM site_news_search cs
@@ -369,11 +334,11 @@ WHERE swl.word = sqlc.arg(word)
       OR sn.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          WHERE ul.users_idusers = sqlc.arg(lister_id)
             AND ul.language_idlanguage = sn.language_idlanguage
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
       )
   )
   AND EXISTS (
@@ -389,12 +354,7 @@ WHERE swl.word = sqlc.arg(word)
 
 -- name: SiteNewsSearchNext :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.site_news_id
 FROM site_news_search cs
@@ -407,11 +367,11 @@ WHERE swl.word = sqlc.arg(word)
       OR sn.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          WHERE ul.users_idusers = sqlc.arg(lister_id)
             AND ul.language_idlanguage = sn.language_idlanguage
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
       )
   )
   AND EXISTS (
@@ -429,12 +389,7 @@ WHERE swl.word = sqlc.arg(word)
 
 -- name: LinkerSearchFirst :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.linker_id
 FROM linker_search cs
@@ -446,11 +401,11 @@ WHERE swl.word = sqlc.arg(word)
       OR l.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          WHERE ul.users_idusers = sqlc.arg(lister_id)
             AND ul.language_idlanguage = l.language_idlanguage
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
       )
   )
   AND EXISTS (
@@ -466,12 +421,7 @@ WHERE swl.word = sqlc.arg(word)
 
 -- name: LinkerSearchNext :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.linker_id
 FROM linker_search cs
@@ -484,11 +434,11 @@ WHERE swl.word = sqlc.arg(word)
       OR l.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          WHERE ul.users_idusers = sqlc.arg(lister_id)
             AND ul.language_idlanguage = l.language_idlanguage
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
       )
   )
   AND EXISTS (

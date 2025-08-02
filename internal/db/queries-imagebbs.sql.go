@@ -126,12 +126,7 @@ func (q *Queries) GetAllBoardsByParentBoardId(ctx context.Context, imageboardIdi
 
 const getAllBoardsByParentBoardIdForUser = `-- name: GetAllBoardsByParentBoardIdForUser :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required
 FROM imageboard b
@@ -220,12 +215,7 @@ func (q *Queries) GetAllImageBoards(ctx context.Context) ([]*Imageboard, error) 
 
 const getAllImageBoardsForUser = `-- name: GetAllImageBoardsForUser :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required
 FROM imageboard b
@@ -277,12 +267,7 @@ func (q *Queries) GetAllImageBoardsForUser(ctx context.Context, arg GetAllImageB
 
 const getAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUser = `-- name: GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUser :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
 FROM imagepost i
@@ -366,12 +351,7 @@ func (q *Queries) GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCou
 
 const getAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUser = `-- name: GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUser :one
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
 FROM imagepost i
@@ -668,12 +648,7 @@ func (q *Queries) GetImagePostsByUserDescendingAll(ctx context.Context, arg GetI
 
 const getImagePostsByUserDescendingForUser = `-- name: GetImagePostsByUserDescendingForUser :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
 FROM imagepost i

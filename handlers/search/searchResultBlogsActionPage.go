@@ -87,7 +87,7 @@ func BlogSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid
 	for i, word := range searchWords {
 		if i == 0 {
 			ids, err := queries.BlogsSearchFirst(r.Context(), db.BlogsSearchFirstParams{
-				ViewerID: uid,
+				ListerID: uid,
 				Word: sql.NullString{
 					String: word,
 					Valid:  true,
@@ -102,7 +102,7 @@ func BlogSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid
 			blogIds = ids
 		} else {
 			ids, err := queries.BlogsSearchNext(r.Context(), db.BlogsSearchNextParams{
-				ViewerID: uid,
+				ListerID: uid,
 				Word: sql.NullString{
 					String: word,
 					Valid:  true,
@@ -122,8 +122,8 @@ func BlogSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid
 		}
 	}
 
-	rows, err := queries.GetBlogEntriesByIdsDescendingForUser(r.Context(), db.GetBlogEntriesByIdsDescendingForUserParams{
-		ViewerID: viewerID,
+	rows, err := queries.ListBlogEntriesByIDsForLister(r.Context(), db.ListBlogEntriesByIDsForListerParams{
+		ListerID: viewerID,
 		UserID:   sql.NullInt32{Int32: userID, Valid: userID != 0},
 		Blogids:  blogIds,
 	})

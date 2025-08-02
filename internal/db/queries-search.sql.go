@@ -162,12 +162,7 @@ func (q *Queries) AdminWordListWithCountsByPrefix(ctx context.Context, arg Admin
 
 const commentsSearchFirstInRestrictedTopic = `-- name: CommentsSearchFirstInRestrictedTopic :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT DISTINCT cs.comment_id
 FROM comments_search cs
@@ -202,7 +197,7 @@ WHERE swl.word=?
 `
 
 type CommentsSearchFirstInRestrictedTopicParams struct {
-	ViewerID int32
+	ListerID int32
 	Word     sql.NullString
 	Ftids    []int32
 	UserID   sql.NullInt32
@@ -211,7 +206,7 @@ type CommentsSearchFirstInRestrictedTopicParams struct {
 func (q *Queries) CommentsSearchFirstInRestrictedTopic(ctx context.Context, arg CommentsSearchFirstInRestrictedTopicParams) ([]int32, error) {
 	query := commentsSearchFirstInRestrictedTopic
 	var queryParams []interface{}
-	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.ListerID)
 	queryParams = append(queryParams, arg.Word)
 	if len(arg.Ftids) > 0 {
 		for _, v := range arg.Ftids {
@@ -221,8 +216,8 @@ func (q *Queries) CommentsSearchFirstInRestrictedTopic(ctx context.Context, arg 
 	} else {
 		query = strings.Replace(query, "/*SLICE:ftids*/?", "NULL", 1)
 	}
-	queryParams = append(queryParams, arg.ViewerID)
-	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.ListerID)
+	queryParams = append(queryParams, arg.ListerID)
 	queryParams = append(queryParams, arg.UserID)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
@@ -248,12 +243,7 @@ func (q *Queries) CommentsSearchFirstInRestrictedTopic(ctx context.Context, arg 
 
 const commentsSearchFirstNotInRestrictedTopic = `-- name: CommentsSearchFirstNotInRestrictedTopic :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT DISTINCT cs.comment_id
 FROM comments_search cs
@@ -288,17 +278,17 @@ WHERE swl.word=?
 `
 
 type CommentsSearchFirstNotInRestrictedTopicParams struct {
-	ViewerID int32
+	ListerID int32
 	Word     sql.NullString
 	UserID   sql.NullInt32
 }
 
 func (q *Queries) CommentsSearchFirstNotInRestrictedTopic(ctx context.Context, arg CommentsSearchFirstNotInRestrictedTopicParams) ([]int32, error) {
 	rows, err := q.db.QueryContext(ctx, commentsSearchFirstNotInRestrictedTopic,
-		arg.ViewerID,
+		arg.ListerID,
 		arg.Word,
-		arg.ViewerID,
-		arg.ViewerID,
+		arg.ListerID,
+		arg.ListerID,
 		arg.UserID,
 	)
 	if err != nil {
@@ -324,12 +314,7 @@ func (q *Queries) CommentsSearchFirstNotInRestrictedTopic(ctx context.Context, a
 
 const commentsSearchNextInRestrictedTopic = `-- name: CommentsSearchNextInRestrictedTopic :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT DISTINCT cs.comment_id
 FROM comments_search cs
@@ -365,7 +350,7 @@ WHERE swl.word=?
 `
 
 type CommentsSearchNextInRestrictedTopicParams struct {
-	ViewerID int32
+	ListerID int32
 	Word     sql.NullString
 	Ids      []int32
 	Ftids    []int32
@@ -375,7 +360,7 @@ type CommentsSearchNextInRestrictedTopicParams struct {
 func (q *Queries) CommentsSearchNextInRestrictedTopic(ctx context.Context, arg CommentsSearchNextInRestrictedTopicParams) ([]int32, error) {
 	query := commentsSearchNextInRestrictedTopic
 	var queryParams []interface{}
-	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.ListerID)
 	queryParams = append(queryParams, arg.Word)
 	if len(arg.Ids) > 0 {
 		for _, v := range arg.Ids {
@@ -393,8 +378,8 @@ func (q *Queries) CommentsSearchNextInRestrictedTopic(ctx context.Context, arg C
 	} else {
 		query = strings.Replace(query, "/*SLICE:ftids*/?", "NULL", 1)
 	}
-	queryParams = append(queryParams, arg.ViewerID)
-	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.ListerID)
+	queryParams = append(queryParams, arg.ListerID)
 	queryParams = append(queryParams, arg.UserID)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
@@ -420,12 +405,7 @@ func (q *Queries) CommentsSearchNextInRestrictedTopic(ctx context.Context, arg C
 
 const commentsSearchNextNotInRestrictedTopic = `-- name: CommentsSearchNextNotInRestrictedTopic :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT DISTINCT cs.comment_id
 FROM comments_search cs
@@ -461,7 +441,7 @@ WHERE swl.word=?
 `
 
 type CommentsSearchNextNotInRestrictedTopicParams struct {
-	ViewerID int32
+	ListerID int32
 	Word     sql.NullString
 	Ids      []int32
 	UserID   sql.NullInt32
@@ -470,7 +450,7 @@ type CommentsSearchNextNotInRestrictedTopicParams struct {
 func (q *Queries) CommentsSearchNextNotInRestrictedTopic(ctx context.Context, arg CommentsSearchNextNotInRestrictedTopicParams) ([]int32, error) {
 	query := commentsSearchNextNotInRestrictedTopic
 	var queryParams []interface{}
-	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.ListerID)
 	queryParams = append(queryParams, arg.Word)
 	if len(arg.Ids) > 0 {
 		for _, v := range arg.Ids {
@@ -480,8 +460,8 @@ func (q *Queries) CommentsSearchNextNotInRestrictedTopic(ctx context.Context, ar
 	} else {
 		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
 	}
-	queryParams = append(queryParams, arg.ViewerID)
-	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.ListerID)
+	queryParams = append(queryParams, arg.ListerID)
 	queryParams = append(queryParams, arg.UserID)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
@@ -507,12 +487,7 @@ func (q *Queries) CommentsSearchNextNotInRestrictedTopic(ctx context.Context, ar
 
 const linkerSearchFirst = `-- name: LinkerSearchFirst :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT DISTINCT cs.linker_id
 FROM linker_search cs
@@ -544,17 +519,17 @@ WHERE swl.word = ?
 `
 
 type LinkerSearchFirstParams struct {
-	ViewerID int32
+	ListerID int32
 	Word     sql.NullString
 	UserID   sql.NullInt32
 }
 
 func (q *Queries) LinkerSearchFirst(ctx context.Context, arg LinkerSearchFirstParams) ([]int32, error) {
 	rows, err := q.db.QueryContext(ctx, linkerSearchFirst,
-		arg.ViewerID,
+		arg.ListerID,
 		arg.Word,
-		arg.ViewerID,
-		arg.ViewerID,
+		arg.ListerID,
+		arg.ListerID,
 		arg.UserID,
 	)
 	if err != nil {
@@ -580,12 +555,7 @@ func (q *Queries) LinkerSearchFirst(ctx context.Context, arg LinkerSearchFirstPa
 
 const linkerSearchNext = `-- name: LinkerSearchNext :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT DISTINCT cs.linker_id
 FROM linker_search cs
@@ -618,7 +588,7 @@ WHERE swl.word = ?
 `
 
 type LinkerSearchNextParams struct {
-	ViewerID int32
+	ListerID int32
 	Word     sql.NullString
 	Ids      []int32
 	UserID   sql.NullInt32
@@ -627,7 +597,7 @@ type LinkerSearchNextParams struct {
 func (q *Queries) LinkerSearchNext(ctx context.Context, arg LinkerSearchNextParams) ([]int32, error) {
 	query := linkerSearchNext
 	var queryParams []interface{}
-	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.ListerID)
 	queryParams = append(queryParams, arg.Word)
 	if len(arg.Ids) > 0 {
 		for _, v := range arg.Ids {
@@ -637,8 +607,8 @@ func (q *Queries) LinkerSearchNext(ctx context.Context, arg LinkerSearchNextPara
 	} else {
 		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
 	}
-	queryParams = append(queryParams, arg.ViewerID)
-	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.ListerID)
+	queryParams = append(queryParams, arg.ListerID)
 	queryParams = append(queryParams, arg.UserID)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
@@ -664,12 +634,7 @@ func (q *Queries) LinkerSearchNext(ctx context.Context, arg LinkerSearchNextPara
 
 const siteNewsSearchFirst = `-- name: SiteNewsSearchFirst :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT DISTINCT cs.site_news_id
 FROM site_news_search cs
@@ -701,17 +666,17 @@ WHERE swl.word = ?
 `
 
 type SiteNewsSearchFirstParams struct {
-	ViewerID int32
+	ListerID int32
 	Word     sql.NullString
 	UserID   sql.NullInt32
 }
 
 func (q *Queries) SiteNewsSearchFirst(ctx context.Context, arg SiteNewsSearchFirstParams) ([]int32, error) {
 	rows, err := q.db.QueryContext(ctx, siteNewsSearchFirst,
-		arg.ViewerID,
+		arg.ListerID,
 		arg.Word,
-		arg.ViewerID,
-		arg.ViewerID,
+		arg.ListerID,
+		arg.ListerID,
 		arg.UserID,
 	)
 	if err != nil {
@@ -737,12 +702,7 @@ func (q *Queries) SiteNewsSearchFirst(ctx context.Context, arg SiteNewsSearchFir
 
 const siteNewsSearchNext = `-- name: SiteNewsSearchNext :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT DISTINCT cs.site_news_id
 FROM site_news_search cs
@@ -775,7 +735,7 @@ WHERE swl.word = ?
 `
 
 type SiteNewsSearchNextParams struct {
-	ViewerID int32
+	ListerID int32
 	Word     sql.NullString
 	Ids      []int32
 	UserID   sql.NullInt32
@@ -784,7 +744,7 @@ type SiteNewsSearchNextParams struct {
 func (q *Queries) SiteNewsSearchNext(ctx context.Context, arg SiteNewsSearchNextParams) ([]int32, error) {
 	query := siteNewsSearchNext
 	var queryParams []interface{}
-	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.ListerID)
 	queryParams = append(queryParams, arg.Word)
 	if len(arg.Ids) > 0 {
 		for _, v := range arg.Ids {
@@ -794,8 +754,8 @@ func (q *Queries) SiteNewsSearchNext(ctx context.Context, arg SiteNewsSearchNext
 	} else {
 		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
 	}
-	queryParams = append(queryParams, arg.ViewerID)
-	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.ListerID)
+	queryParams = append(queryParams, arg.ListerID)
 	queryParams = append(queryParams, arg.UserID)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
@@ -1025,12 +985,7 @@ func (q *Queries) WritingSearchDelete(ctx context.Context, writingID int32) erro
 
 const writingSearchFirst = `-- name: WritingSearchFirst :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT DISTINCT cs.writing_id
 FROM writing_search cs
@@ -1062,17 +1017,17 @@ WHERE swl.word = ?
 `
 
 type WritingSearchFirstParams struct {
-	ViewerID int32
+	ListerID int32
 	Word     sql.NullString
 	UserID   sql.NullInt32
 }
 
 func (q *Queries) WritingSearchFirst(ctx context.Context, arg WritingSearchFirstParams) ([]int32, error) {
 	rows, err := q.db.QueryContext(ctx, writingSearchFirst,
-		arg.ViewerID,
+		arg.ListerID,
 		arg.Word,
-		arg.ViewerID,
-		arg.ViewerID,
+		arg.ListerID,
+		arg.ListerID,
 		arg.UserID,
 	)
 	if err != nil {
@@ -1098,12 +1053,7 @@ func (q *Queries) WritingSearchFirst(ctx context.Context, arg WritingSearchFirst
 
 const writingSearchNext = `-- name: WritingSearchNext :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT DISTINCT cs.writing_id
 FROM writing_search cs
@@ -1136,7 +1086,7 @@ WHERE swl.word = ?
 `
 
 type WritingSearchNextParams struct {
-	ViewerID int32
+	ListerID int32
 	Word     sql.NullString
 	Ids      []int32
 	UserID   sql.NullInt32
@@ -1145,7 +1095,7 @@ type WritingSearchNextParams struct {
 func (q *Queries) WritingSearchNext(ctx context.Context, arg WritingSearchNextParams) ([]int32, error) {
 	query := writingSearchNext
 	var queryParams []interface{}
-	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.ListerID)
 	queryParams = append(queryParams, arg.Word)
 	if len(arg.Ids) > 0 {
 		for _, v := range arg.Ids {
@@ -1155,8 +1105,8 @@ func (q *Queries) WritingSearchNext(ctx context.Context, arg WritingSearchNextPa
 	} else {
 		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
 	}
-	queryParams = append(queryParams, arg.ViewerID)
-	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.ListerID)
+	queryParams = append(queryParams, arg.ListerID)
 	queryParams = append(queryParams, arg.UserID)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {

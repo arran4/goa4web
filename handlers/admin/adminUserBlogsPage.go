@@ -25,7 +25,7 @@ func adminUserBlogsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	rows, err := queries.AdminGetAllBlogEntriesByUser(r.Context(), db.AdminGetAllBlogEntriesByUserParams{
 		AuthorID: int32(id),
-		ViewerID: cd.UserID,
+		ListerID: cd.UserID,
 	})
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

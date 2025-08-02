@@ -26,7 +26,7 @@ func BloggersBloggerPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	rows, err := queries.ListBloggers(r.Context(), db.ListBloggersParams{
-		ViewerID: cd.UserID,
+		ListerID: cd.UserID,
 		Limit:    1000,
 		Offset:   0,
 	})

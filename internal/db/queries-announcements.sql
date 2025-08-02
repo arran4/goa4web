@@ -17,14 +17,9 @@ LIMIT 1;
 -- name: SetAnnouncementActive :exec
 UPDATE site_announcements SET active = ? WHERE id = ?;
 
--- name: GetActiveAnnouncementWithNewsForViewer :one
+-- name: GetActiveAnnouncementWithNewsForLister :one
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT a.id, n.idsiteNews, n.news
 FROM site_announcements a
@@ -32,14 +27,14 @@ JOIN site_news n ON n.idsiteNews = a.site_news_id
 WHERE a.active = 1
   AND (
       NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
       )
       OR n.language_idlanguage = 0
       OR n.language_idlanguage IS NULL
       OR n.language_idlanguage IN (
           SELECT ul.language_idlanguage
           FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          WHERE ul.users_idusers = sqlc.arg(lister_id)
       )
   )
   AND EXISTS (

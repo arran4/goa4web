@@ -17,11 +17,11 @@ func TestQueries_ListWriters(t *testing.T) {
 	q := New(db)
 
 	rows := sqlmock.NewRows([]string{"username", "count"}).AddRow("bob", 2)
-	mock.ExpectQuery(regexp.QuoteMeta(listWritersForViewer)).
+	mock.ExpectQuery(regexp.QuoteMeta(listWritersForLister)).
 		WithArgs(int32(1), int32(1), int32(1), sqlmock.AnyArg(), int32(5), int32(0)).
 		WillReturnRows(rows)
 
-	res, err := q.ListWriters(context.Background(), ListWritersParams{ViewerID: 1, Limit: 5, Offset: 0})
+	res, err := q.ListWriters(context.Background(), ListWritersParams{ListerID: 1, Limit: 5, Offset: 0})
 	if err != nil {
 		t.Fatalf("ListWriters: %v", err)
 	}
@@ -43,11 +43,11 @@ func TestQueries_SearchWriters(t *testing.T) {
 	q := New(db)
 
 	rows := sqlmock.NewRows([]string{"username", "count"}).AddRow("bob", 2)
-	mock.ExpectQuery(regexp.QuoteMeta(searchWritersForViewer)).
+	mock.ExpectQuery(regexp.QuoteMeta(listWritersSearchForLister)).
 		WithArgs(int32(1), "%bob%", "%bob%", int32(1), int32(1), sqlmock.AnyArg(), int32(5), int32(0)).
 		WillReturnRows(rows)
 
-	res, err := q.SearchWriters(context.Background(), SearchWritersParams{ViewerID: 1, Query: "bob", Limit: 5, Offset: 0})
+	res, err := q.SearchWriters(context.Background(), SearchWritersParams{ListerID: 1, Query: "bob", Limit: 5, Offset: 0})
 	if err != nil {
 		t.Fatalf("SearchWriters: %v", err)
 	}

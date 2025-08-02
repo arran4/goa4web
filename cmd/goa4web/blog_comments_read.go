@@ -60,8 +60,8 @@ func (c *blogCommentsReadCmd) Run() error {
 	ctx := context.Background()
 	queries := dbpkg.New(db)
 	uid := int32(c.UserID)
-	b, err := queries.GetBlogEntryForUserById(ctx, dbpkg.GetBlogEntryForUserByIdParams{
-		ViewerID: uid,
+	b, err := queries.GetBlogEntryForListerByID(ctx, dbpkg.GetBlogEntryForListerByIDParams{
+		ListerID: uid,
 		ID:       int32(c.BlogID),
 		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})

@@ -37,7 +37,8 @@ func (EditQuestionTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil {
 		return fmt.Errorf("faq id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return handlers.SessionFetchFail{}
@@ -49,6 +50,7 @@ func (EditQuestionTask) Action(w http.ResponseWriter, r *http.Request) any {
 		Question:                     sql.NullString{Valid: true, String: question},
 		FaqcategoriesIdfaqcategories: int32(category),
 		Idfaq:                        int32(faq),
+		ViewerID:                     cd.UserID,
 	}); err != nil {
 		return fmt.Errorf("update faq question fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

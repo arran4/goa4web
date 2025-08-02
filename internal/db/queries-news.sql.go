@@ -105,7 +105,6 @@ func (q *Queries) GetForumThreadIdByNewsPostId(ctx context.Context, idsitenews i
 }
 
 const getNewsPostByIdWithWriterIdAndThreadCommentCount = `-- name: GetNewsPostByIdWithWriterIdAndThreadCommentCount :one
-
 WITH RECURSIVE role_ids(id) AS (
     SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
     UNION

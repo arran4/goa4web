@@ -37,7 +37,7 @@ func TestNotificationsQueries(t *testing.T) {
 		t.Fatalf("mark: %v", err)
 	}
 	mock.ExpectExec("DELETE FROM notifications").WillReturnResult(sqlmock.NewResult(1, 1))
-	if err := q.PurgeReadNotifications(context.Background()); err != nil {
+	if err := q.AdminPurgeReadNotifications(context.Background()); err != nil {
 		t.Fatalf("purge: %v", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {

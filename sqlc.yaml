@@ -3,7 +3,6 @@ sql:
     - engine: "mysql"
       schema: "schema/schema.mysql.sql"
       queries:
-        - "internal/db/queries.sql"
         - "internal/db/queries-languages.sql"
         - "internal/db/queries-permissions.sql"
         - "internal/db/queries-users.sql"

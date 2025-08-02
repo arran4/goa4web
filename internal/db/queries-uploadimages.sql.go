@@ -10,6 +10,50 @@ import (
 	"database/sql"
 )
 
+const adminListUploadedImages = `-- name: AdminListUploadedImages :many
+SELECT iduploadedimage, users_idusers, path, width, height, file_size, uploaded
+FROM uploaded_images
+ORDER BY uploaded DESC
+LIMIT ? OFFSET ?
+`
+
+type AdminListUploadedImagesParams struct {
+	Limit  int32
+	Offset int32
+}
+
+// Admin
+func (q *Queries) AdminListUploadedImages(ctx context.Context, arg AdminListUploadedImagesParams) ([]*UploadedImage, error) {
+	rows, err := q.db.QueryContext(ctx, adminListUploadedImages, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*UploadedImage
+	for rows.Next() {
+		var i UploadedImage
+		if err := rows.Scan(
+			&i.Iduploadedimage,
+			&i.UsersIdusers,
+			&i.Path,
+			&i.Width,
+			&i.Height,
+			&i.FileSize,
+			&i.Uploaded,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const createUploadedImage = `-- name: CreateUploadedImage :execlastid
 INSERT INTO uploaded_images (
     users_idusers, path, width, height, file_size, uploaded
@@ -38,41 +82,47 @@ func (q *Queries) CreateUploadedImage(ctx context.Context, arg CreateUploadedIma
 	return result.LastInsertId()
 }
 
-const getUploadedImage = `-- name: GetUploadedImage :one
-SELECT iduploadedimage, users_idusers, path, width, height, file_size, uploaded FROM uploaded_images WHERE iduploadedimage = ?
-`
-
-func (q *Queries) GetUploadedImage(ctx context.Context, iduploadedimage int32) (*UploadedImage, error) {
-	row := q.db.QueryRowContext(ctx, getUploadedImage, iduploadedimage)
-	var i UploadedImage
-	err := row.Scan(
-		&i.Iduploadedimage,
-		&i.UsersIdusers,
-		&i.Path,
-		&i.Width,
-		&i.Height,
-		&i.FileSize,
-		&i.Uploaded,
-	)
-	return &i, err
-}
-
-const listUploadedImagesByUser = `-- name: ListUploadedImagesByUser :many
-SELECT iduploadedimage, users_idusers, path, width, height, file_size, uploaded
-FROM uploaded_images
-WHERE users_idusers = ?
+const listUploadedImagesByUserForViewer = `-- name: ListUploadedImagesByUserForViewer :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
+SELECT ui.iduploadedimage, ui.users_idusers, ui.path, ui.width, ui.height, ui.file_size, ui.uploaded
+FROM uploaded_images ui
+WHERE ui.users_idusers = ?
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='images'
+        AND (g.item='upload' OR g.item IS NULL)
+        AND g.action='see'
+        AND g.active=1
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
 ORDER BY uploaded DESC
 LIMIT ? OFFSET ?
 `
 
-type ListUploadedImagesByUserParams struct {
-	UsersIdusers int32
-	Limit        int32
-	Offset       int32
+type ListUploadedImagesByUserForViewerParams struct {
+	ViewerID      int32
+	UserID        int32
+	ViewerMatchID sql.NullInt32
+	Limit         int32
+	Offset        int32
 }
 
-func (q *Queries) ListUploadedImagesByUser(ctx context.Context, arg ListUploadedImagesByUserParams) ([]*UploadedImage, error) {
-	rows, err := q.db.QueryContext(ctx, listUploadedImagesByUser, arg.UsersIdusers, arg.Limit, arg.Offset)
+func (q *Queries) ListUploadedImagesByUserForViewer(ctx context.Context, arg ListUploadedImagesByUserForViewerParams) ([]*UploadedImage, error) {
+	rows, err := q.db.QueryContext(ctx, listUploadedImagesByUserForViewer,
+		arg.ViewerID,
+		arg.UserID,
+		arg.ViewerMatchID,
+		arg.Limit,
+		arg.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}

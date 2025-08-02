@@ -136,6 +136,7 @@ WITH RECURSIVE role_ids(id) AS (
 SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required
 FROM imageboard b
 WHERE b.imageboard_idimageboard = ?
+  AND b.deleted_at IS NULL
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='imagebbs'
@@ -228,7 +229,7 @@ WITH RECURSIVE role_ids(id) AS (
 )
 SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required
 FROM imageboard b
-WHERE EXISTS (
+WHERE b.deleted_at IS NULL AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='imagebbs'
       AND (g.item='board' OR g.item IS NULL)
@@ -274,69 +275,6 @@ func (q *Queries) GetAllImageBoardsForUser(ctx context.Context, arg GetAllImageB
 	return items, nil
 }
 
-const getAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCount = `-- name: GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCount :many
-SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
-FROM imagepost i
-LEFT JOIN users u ON i.users_idusers = u.idusers
-LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
-WHERE i.imageboard_idimageboard = ? AND i.approved = 1
-`
-
-type GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountRow struct {
-	Idimagepost            int32
-	ForumthreadID          int32
-	UsersIdusers           int32
-	ImageboardIdimageboard int32
-	Posted                 sql.NullTime
-	Description            sql.NullString
-	Thumbnail              sql.NullString
-	Fullimage              sql.NullString
-	FileSize               int32
-	Approved               bool
-	DeletedAt              sql.NullTime
-	LastIndex              sql.NullTime
-	Username               sql.NullString
-	Comments               sql.NullInt32
-}
-
-func (q *Queries) GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCount(ctx context.Context, imageboardIdimageboard int32) ([]*GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountRow, error) {
-	rows, err := q.db.QueryContext(ctx, getAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCount, imageboardIdimageboard)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountRow
-	for rows.Next() {
-		var i GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountRow
-		if err := rows.Scan(
-			&i.Idimagepost,
-			&i.ForumthreadID,
-			&i.UsersIdusers,
-			&i.ImageboardIdimageboard,
-			&i.Posted,
-			&i.Description,
-			&i.Thumbnail,
-			&i.Fullimage,
-			&i.FileSize,
-			&i.Approved,
-			&i.DeletedAt,
-			&i.LastIndex,
-			&i.Username,
-			&i.Comments,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUser = `-- name: GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUser :many
 WITH RECURSIVE role_ids(id) AS (
     SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
@@ -352,6 +290,7 @@ LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
 WHERE i.imageboard_idimageboard = ?
   AND i.approved = 1
+  AND i.deleted_at IS NULL
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='imagebbs'
@@ -425,53 +364,6 @@ func (q *Queries) GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCou
 	return items, nil
 }
 
-const getAllImagePostsByIdWithAuthorUsernameAndThreadCommentCount = `-- name: GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCount :one
-SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
-FROM imagepost i
-LEFT JOIN users u ON i.users_idusers = u.idusers
-LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
-WHERE i.idimagepost = ? AND i.approved = 1
-`
-
-type GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountRow struct {
-	Idimagepost            int32
-	ForumthreadID          int32
-	UsersIdusers           int32
-	ImageboardIdimageboard int32
-	Posted                 sql.NullTime
-	Description            sql.NullString
-	Thumbnail              sql.NullString
-	Fullimage              sql.NullString
-	FileSize               int32
-	Approved               bool
-	DeletedAt              sql.NullTime
-	LastIndex              sql.NullTime
-	Username               sql.NullString
-	Comments               sql.NullInt32
-}
-
-func (q *Queries) GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCount(ctx context.Context, idimagepost int32) (*GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountRow, error) {
-	row := q.db.QueryRowContext(ctx, getAllImagePostsByIdWithAuthorUsernameAndThreadCommentCount, idimagepost)
-	var i GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountRow
-	err := row.Scan(
-		&i.Idimagepost,
-		&i.ForumthreadID,
-		&i.UsersIdusers,
-		&i.ImageboardIdimageboard,
-		&i.Posted,
-		&i.Description,
-		&i.Thumbnail,
-		&i.Fullimage,
-		&i.FileSize,
-		&i.Approved,
-		&i.DeletedAt,
-		&i.LastIndex,
-		&i.Username,
-		&i.Comments,
-	)
-	return &i, err
-}
-
 const getAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUser = `-- name: GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUser :one
 WITH RECURSIVE role_ids(id) AS (
     SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
@@ -487,6 +379,7 @@ LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
 WHERE i.idimagepost = ?
   AND i.approved = 1
+  AND i.deleted_at IS NULL
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='imagebbs'
@@ -636,7 +529,7 @@ SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboa
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
-WHERE i.users_idusers = ? AND i.approved = 1
+WHERE i.users_idusers = ? AND i.approved = 1 AND i.deleted_at IS NULL
 ORDER BY i.posted DESC
 LIMIT ? OFFSET ?
 `
@@ -707,7 +600,7 @@ SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboa
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
-WHERE i.users_idusers = ?
+WHERE i.users_idusers = ? AND i.deleted_at IS NULL
 ORDER BY i.posted DESC
 LIMIT ? OFFSET ?
 `
@@ -788,6 +681,7 @@ LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
 WHERE i.users_idusers = ?
   AND i.approved = 1
+  AND i.deleted_at IS NULL
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='imagebbs'

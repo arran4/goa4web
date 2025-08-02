@@ -39,7 +39,7 @@ func (AddIPBanTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 	if ipNet != "" {
-		if err := queries.InsertBannedIp(r.Context(), db.InsertBannedIpParams{
+		if err := queries.AdminInsertBannedIp(r.Context(), db.AdminInsertBannedIpParams{
 			IpNet:     ipNet,
 			Reason:    sql.NullString{String: reason, Valid: reason != ""},
 			ExpiresAt: expires,

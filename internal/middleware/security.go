@@ -47,20 +47,20 @@ func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ip := requestIP(r)
 		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-			bans, err := cd.Queries().ListActiveBans(r.Context())
+			bans, err := cd.Queries().SystemListActiveBans(r.Context())
 			if err != nil && !errors.Is(err, sql.ErrNoRows) {
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 				return
 			}
 			addr, parseErr := netip.ParseAddr(ip)
 			if parseErr == nil {
-				for _, b := range bans {
-					if p, err := netip.ParsePrefix(b.IpNet); err == nil {
+				for _, ipnet := range bans {
+					if p, err := netip.ParsePrefix(ipnet); err == nil {
 						if p.Contains(addr) {
 							http.Error(w, "Forbidden", http.StatusForbidden)
 							return
 						}
-					} else if b.IpNet == ip {
+					} else if ipnet == ip {
 						http.Error(w, "Forbidden", http.StatusForbidden)
 						return
 					}

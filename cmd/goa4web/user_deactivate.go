@@ -123,7 +123,10 @@ func (c *userDeactivateCmd) Run() error {
 			return fmt.Errorf("scrub writing: %w", err)
 		}
 	}
-	blogs, err := qtx.GetAllBlogEntriesByUserForAdmin(ctx, u.Idusers)
+	blogs, err := qtx.AdminGetAllBlogEntriesByUser(ctx, dbpkg.AdminGetAllBlogEntriesByUserParams{
+		AuthorID: u.Idusers,
+		ViewerID: 0,
+	})
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("list blogs: %w", err)

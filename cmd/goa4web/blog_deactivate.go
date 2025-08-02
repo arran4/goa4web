@@ -38,8 +38,9 @@ func (c *blogDeactivateCmd) Run() error {
 	ctx := context.Background()
 	queries := dbpkg.New(db)
 	b, err := queries.GetBlogEntryForUserById(ctx, dbpkg.GetBlogEntryForUserByIdParams{
-		ViewerIdusers: 0,
-		ID:            int32(c.ID),
+		ViewerID: 0,
+		ID:       int32(c.ID),
+		UserID:   sql.NullInt32{},
 	})
 	if err != nil {
 		return fmt.Errorf("fetch blog: %w", err)

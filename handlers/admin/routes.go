@@ -83,6 +83,7 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navRe
 	ar.HandleFunc("/user/{id}/comment", adminUserAddCommentPage).Methods("POST")
 	ar.HandleFunc("/role/{id}", adminRolePage).Methods("GET")
 	ar.HandleFunc("/role/{id}/grant", handlers.TaskHandler(roleGrantCreateTask)).Methods("POST").MatcherFunc(roleGrantCreateTask.Matcher())
+	ar.HandleFunc("/role/{id}/grant/update", handlers.TaskHandler(roleGrantUpdateTask)).Methods("POST").MatcherFunc(roleGrantUpdateTask.Matcher())
 	ar.HandleFunc("/grant/delete", handlers.TaskHandler(roleGrantDeleteTask)).Methods("POST").MatcherFunc(roleGrantDeleteTask.Matcher())
 	ar.HandleFunc("/user/{id}/reset", adminUserResetPasswordConfirmPage).Methods("GET")
 	ar.HandleFunc("/user/{id}/reset", handlers.TaskHandler(userPasswordResetTask)).Methods("POST").MatcherFunc(userPasswordResetTask.Matcher())

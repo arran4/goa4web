@@ -7,6 +7,7 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/gorilla/mux"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -191,16 +192,70 @@ func adminRolePage(w http.ResponseWriter, r *http.Request) {
 		ginfos = append(ginfos, gi)
 	}
 
+	type GrantGroup struct {
+		Section   string
+		Item      string
+		ItemID    sql.NullInt32
+		Link      string
+		Info      string
+		Have      []string
+		Available []string
+	}
+
+	actionMap := map[string][]string{
+		"forum|topic":       {"see", "view", "reply", "post", "edit"},
+		"forum|category":    {"see", "view"},
+		"linker|category":   {"see", "view"},
+		"writings|category": {"see", "view", "post", "edit"},
+	}
+
+	groupMap := map[string]*GrantGroup{}
+	for _, gi := range ginfos {
+		key := fmt.Sprintf("%s|%s|%d", gi.Section, gi.Item.String, gi.ItemID.Int32)
+		grp, ok := groupMap[key]
+		if !ok {
+			grp = &GrantGroup{Section: gi.Section, Item: gi.Item.String, ItemID: gi.ItemID, Link: gi.Link, Info: gi.Info}
+			groupMap[key] = grp
+		}
+		grp.Have = append(grp.Have, gi.Action)
+	}
+
+	groups := make([]GrantGroup, 0, len(groupMap))
+	for _, grp := range groupMap {
+		if acts, ok := actionMap[grp.Section+"|"+grp.Item]; ok {
+			haveSet := map[string]struct{}{}
+			for _, h := range grp.Have {
+				haveSet[h] = struct{}{}
+			}
+			for _, a := range acts {
+				if _, ok := haveSet[a]; !ok {
+					grp.Available = append(grp.Available, a)
+				}
+			}
+		}
+		groups = append(groups, *grp)
+	}
+
+	sort.Slice(groups, func(i, j int) bool {
+		if groups[i].Section != groups[j].Section {
+			return groups[i].Section < groups[j].Section
+		}
+		if groups[i].Item != groups[j].Item {
+			return groups[i].Item < groups[j].Item
+		}
+		return groups[i].ItemID.Int32 < groups[j].ItemID.Int32
+	})
+
 	data := struct {
 		*common.CoreData
-		Role   *db.Role
-		Users  []*db.ListUsersByRoleIDRow
-		Grants []GrantInfo
+		Role        *db.Role
+		Users       []*db.ListUsersByRoleIDRow
+		GrantGroups []GrantGroup
 	}{
-		CoreData: cd,
-		Role:     role,
-		Users:    users,
-		Grants:   ginfos,
+		CoreData:    cd,
+		Role:        role,
+		Users:       users,
+		GrantGroups: groups,
 	}
 
 	handlers.TemplateHandler(w, r, "adminRolePage.gohtml", data)

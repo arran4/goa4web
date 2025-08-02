@@ -25,7 +25,7 @@ func adminUserProfilePage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "user not found", http.StatusNotFound)
 		return
 	}
-	emails, _ := queries.GetUserEmailsByUserID(r.Context(), int32(id))
+	emails, _ := queries.GetUserEmailsByUserIDAdmin(r.Context(), int32(id))
 	comments, _ := queries.ListAdminUserComments(r.Context(), int32(id))
 	roles, _ := queries.GetPermissionsByUserID(r.Context(), int32(id))
 	stats, _ := queries.AdminUserPostCountsByID(r.Context(), int32(id))

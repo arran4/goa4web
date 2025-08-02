@@ -15,6 +15,7 @@ type userProfileCmd struct {
 	fs       *flag.FlagSet
 	ID       int
 	Username string
+	UserID   int
 }
 
 func parseUserProfileCmd(parent *userCmd, args []string) (*userProfileCmd, error) {
@@ -22,6 +23,7 @@ func parseUserProfileCmd(parent *userCmd, args []string) (*userProfileCmd, error
 	fs, _, err := parseFlags("profile", args, func(fs *flag.FlagSet) {
 		fs.IntVar(&c.ID, "id", 0, "user id")
 		fs.StringVar(&c.Username, "username", "", "username")
+		fs.IntVar(&c.UserID, "user", 0, "viewer user id")
 	})
 	if err != nil {
 		return nil, err
@@ -52,7 +54,12 @@ func (c *userProfileCmd) Run() error {
 		return fmt.Errorf("get user: %w", err)
 	}
 	fmt.Printf("ID: %d\nUsername: %s\n", c.ID, u.Username.String)
-	emails, _ := queries.GetUserEmailsByUserID(ctx, int32(c.ID))
+	var emails []*dbpkg.UserEmail
+	if c.UserID == 0 {
+		emails, _ = queries.GetUserEmailsByUserIDAdmin(ctx, int32(c.ID))
+	} else {
+		emails, _ = queries.GetUserEmailsByUserID(ctx, dbpkg.GetUserEmailsByUserIDParams{UserID: int32(c.ID), ViewerID: int32(c.UserID)})
+	}
 	for _, e := range emails {
 		fmt.Printf("Email: %s verified:%t priority:%d\n", e.Email, e.VerifiedAt.Valid, e.NotificationPriority)
 	}

@@ -71,6 +71,7 @@ type Querier interface {
 	AdminListRolesWithUsers(ctx context.Context) ([]*AdminListRolesWithUsersRow, error)
 	// admin task
 	AdminListSentEmails(ctx context.Context, arg AdminListSentEmailsParams) ([]*AdminListSentEmailsRow, error)
+	AdminListSessions(ctx context.Context) ([]*AdminListSessionsRow, error)
 	// admin task
 	AdminListUnsentPendingEmails(ctx context.Context, arg AdminListUnsentPendingEmailsParams) ([]*AdminListUnsentPendingEmailsRow, error)
 	// Admin
@@ -164,7 +165,6 @@ type Querier interface {
 	DeletePasswordReset(ctx context.Context, id int32) error
 	// Delete all password reset entries for the given user and return the result
 	DeletePasswordResetsByUser(ctx context.Context, userID int32) (sql.Result, error)
-	DeleteSessionByID(ctx context.Context, sessionID string) error
 	DeleteSubscription(ctx context.Context, arg DeleteSubscriptionParams) error
 	DeleteSubscriptionByID(ctx context.Context, arg DeleteSubscriptionByIDParams) error
 	DeleteUserEmail(ctx context.Context, id int32) error
@@ -301,7 +301,6 @@ type Querier interface {
 	InsertPassword(ctx context.Context, arg InsertPasswordParams) error
 	InsertPendingEmail(ctx context.Context, arg InsertPendingEmailParams) error
 	InsertPreference(ctx context.Context, arg InsertPreferenceParams) error
-	InsertSession(ctx context.Context, arg InsertSessionParams) error
 	InsertSubscription(ctx context.Context, arg InsertSubscriptionParams) error
 	InsertUser(ctx context.Context, username sql.NullString) (sql.Result, error)
 	InsertUserEmail(ctx context.Context, arg InsertUserEmailParams) error
@@ -318,7 +317,6 @@ type Querier interface {
 	ListEffectiveRoleIDsByUserID(ctx context.Context, usersIdusers int32) ([]int32, error)
 	ListGrants(ctx context.Context) ([]*Grant, error)
 	ListGrantsByUserID(ctx context.Context, userID sql.NullInt32) ([]*Grant, error)
-	ListSessions(ctx context.Context) ([]*ListSessionsRow, error)
 	ListSubscribersForPattern(ctx context.Context, arg ListSubscribersForPatternParams) ([]int32, error)
 	ListSubscribersForPatterns(ctx context.Context, arg ListSubscribersForPatternsParams) ([]int32, error)
 	ListSubscriptionsByUser(ctx context.Context, usersIdusers int32) ([]*ListSubscriptionsByUserRow, error)
@@ -399,6 +397,7 @@ type Querier interface {
 	SystemDeleteImagePostSearch(ctx context.Context) error
 	// This query deletes all data from the "linker_search" table.
 	SystemDeleteLinkerSearch(ctx context.Context) error
+	SystemDeleteSessionByID(ctx context.Context, sessionID string) error
 	// This query deletes all data from the "site_news_search" table.
 	SystemDeleteSiteNewsSearch(ctx context.Context) error
 	// This query deletes all data from the "writing_search" table.
@@ -409,6 +408,7 @@ type Querier interface {
 	// System query only used internally
 	SystemInsertDeadLetter(ctx context.Context, message string) error
 	SystemInsertLoginAttempt(ctx context.Context, arg SystemInsertLoginAttemptParams) error
+	SystemInsertSession(ctx context.Context, arg SystemInsertSessionParams) error
 	SystemLatestDeadLetter(ctx context.Context) (interface{}, error)
 	SystemListDeadLetters(ctx context.Context, limit int32) ([]*DeadLetter, error)
 	SystemListUserInfo(ctx context.Context) ([]*SystemListUserInfoRow, error)

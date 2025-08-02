@@ -65,7 +65,7 @@ func TestLatestNewsRespectsPermissions(t *testing.T) {
 		"users_idusers", "news", "occurred", "comments",
 	}).AddRow("w", 1, 1, 0, 1, 1, "a", now, 0).AddRow("w", 1, 2, 0, 1, 1, "b", now, 0)
 
-	mock.ExpectQuery("SELECT u.username").WithArgs(int32(1), sql.NullInt32{Int32: 1, Valid: true}, int32(15), int32(0)).WillReturnRows(rows)
+	mock.ExpectQuery("SELECT u.username").WithArgs(int32(1), int32(1), int32(1), sql.NullInt32{Int32: 1, Valid: true}, int32(15), int32(0)).WillReturnRows(rows)
 
 	mock.ExpectQuery("SELECT 1 FROM grants g JOIN roles").WithArgs("user", "administrator").WillReturnError(sql.ErrNoRows)
 	mock.ExpectQuery("SELECT 1 FROM grants").WithArgs(int32(1), "news", sql.NullString{String: "post", Valid: true}, "see", sql.NullInt32{Int32: 1, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))

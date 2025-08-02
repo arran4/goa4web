@@ -19,7 +19,7 @@ func (n *Notifier) dlqRecordAndNotify(ctx context.Context, q dlq.DLQ, msg string
 		return nil
 	}
 	if dbq, ok := q.(db.DLQ); ok {
-		if count, err := dbq.Queries.CountDeadLetters(ctx); err == nil {
+		if count, err := dbq.Queries.SystemCountDeadLetters(ctx); err == nil {
 			if isPow10(count) {
 				data := EmailData{
 					Item: struct {

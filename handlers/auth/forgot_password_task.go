@@ -45,6 +45,12 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil {
 		return fmt.Errorf("user not found %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
+	if _, err := queries.UserHasLoginRole(r.Context(), row.Idusers); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return handlers.ErrRedirectOnSamePageHandler(errors.New("approval is pending"))
+		}
+		return fmt.Errorf("user role %w", err)
+	}
 	if row.Email == "" {
 		type Data struct {
 			*common.CoreData

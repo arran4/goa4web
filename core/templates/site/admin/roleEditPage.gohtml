@@ -1,0 +1,11 @@
+{{ template "head" $ }}
+[<a href="/admin">Admin:</a> <a href="/admin/roles">Roles</a>: <a href="/admin/role/{{.Role.ID}}/edit">(This page/Refresh)</a>]<br />
+<form method="post">
+    {{ csrfField }}
+    <input type="hidden" name="id" value="{{.Role.ID}}">
+    Name: <input name="name" value="{{.Role.Name}}"><br>
+    Can Login: <input type="checkbox" name="can_login" {{if .Role.CanLogin}}checked{{end}}><br>
+    Is Admin: <input type="checkbox" name="is_admin" {{if .Role.IsAdmin}}checked{{end}}><br>
+    <input type="submit" value="Save">
+</form>
+{{ template "tail" $ }}

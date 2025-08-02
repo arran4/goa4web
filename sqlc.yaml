@@ -3,7 +3,6 @@ sql:
     - engine: "mysql"
       schema: "schema/schema.mysql.sql"
       queries:
-        - "internal/db/queries.sql"
         - "internal/db/queries-languages.sql"
         - "internal/db/queries-permissions.sql"
         - "internal/db/queries-users.sql"
@@ -47,3 +46,4 @@ sql:
               emit_result_struct_pointers: true
               emit_enum_valid_method: true
               emit_all_enum_values: true
+              emit_interface: true

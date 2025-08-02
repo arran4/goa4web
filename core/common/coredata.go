@@ -635,7 +635,7 @@ func (cd *CoreData) AllRoles() ([]*db.Role, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
-		return cd.queries.ListRoles(cd.ctx)
+		return cd.queries.AdminListRoles(cd.ctx)
 	})
 }
 

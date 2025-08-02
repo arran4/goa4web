@@ -283,4 +283,7 @@ const (
 
 	// TaskRoleGrantDelete removes a grant from a role.
 	TaskRoleGrantDelete tasks.TaskString = "Delete grant"
+
+	// TaskRoleGrantUpdate updates grants for a role.
+	TaskRoleGrantUpdate tasks.TaskString = "Update grants"
 )

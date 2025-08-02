@@ -44,10 +44,10 @@ func (c *writingReadCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
-	row, err := queries.GetWritingByIdForUserDescendingByPublishedDate(ctx, dbpkg.GetWritingByIdForUserDescendingByPublishedDateParams{
-		ViewerID:      0,
+	row, err := queries.GetWritingForListerByID(ctx, dbpkg.GetWritingForListerByIDParams{
+		ListerID:      0,
 		Idwriting:     int32(c.ID),
-		ViewerMatchID: sql.NullInt32{Valid: false},
+		ListerMatchID: sql.NullInt32{Valid: false},
 	})
 	if err != nil {
 		return fmt.Errorf("get writing: %w", err)

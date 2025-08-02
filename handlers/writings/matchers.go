@@ -38,10 +38,10 @@ func RequireWritingAuthor(next http.Handler) http.Handler {
 		}
 		uid, _ := session.Values["UID"].(int32)
 
-		row, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), db.GetWritingByIdForUserDescendingByPublishedDateParams{
-			ViewerID:      uid,
+		row, err := queries.GetWritingForListerByID(r.Context(), db.GetWritingForListerByIDParams{
+			ListerID:      uid,
 			Idwriting:     int32(writingID),
-			ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
+			ListerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 		})
 		if err != nil {
 			log.Printf("Error: %s", err)
@@ -51,7 +51,7 @@ func RequireWritingAuthor(next http.Handler) http.Handler {
 
 		cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 		if cd != nil {
-			cd.WritingByID(int32(writingID), lazy.Set[*db.GetWritingByIdForUserDescendingByPublishedDateRow](row))
+			cd.WritingByID(int32(writingID), lazy.Set[*db.GetWritingForListerByIDRow](row))
 			cd.SetCurrentWriting(int32(writingID))
 		}
 		if cd != nil && cd.HasAdminRole() {

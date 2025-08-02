@@ -87,7 +87,7 @@ func LinkerSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, u
 	for i, word := range searchWords {
 		if i == 0 {
 			ids, err := queries.LinkerSearchFirst(r.Context(), db.LinkerSearchFirstParams{
-				ViewerID: uid,
+				ListerID: uid,
 				Word: sql.NullString{
 					String: word,
 					Valid:  true,
@@ -106,7 +106,7 @@ func LinkerSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, u
 			LinkerIds = ids
 		} else {
 			ids, err := queries.LinkerSearchNext(r.Context(), db.LinkerSearchNextParams{
-				ViewerID: uid,
+				ListerID: uid,
 				Word: sql.NullString{
 					String: word,
 					Valid:  true,

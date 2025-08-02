@@ -6,23 +6,18 @@ ORDER BY w.published DESC
 LIMIT ? OFFSET ?
 ;
 
--- name: GetPublicWritingsByUser :many
+-- name: SystemListPublicWritingsByAuthor :many
 SELECT w.*, u.username,
     (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) AS Comments
 FROM writing w
 LEFT JOIN users u ON w.users_idusers = u.idusers
-WHERE w.private = 0 AND w.users_idusers = ?
+WHERE w.private = 0 AND w.users_idusers = sqlc.arg(author_id)
 ORDER BY w.published DESC
 LIMIT ? OFFSET ?;
 
--- name: GetPublicWritingsByUserForViewer :many
+-- name: ListPublicWritingsByUserForLister :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT w.*, u.username,
     (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) AS Comments
@@ -34,11 +29,11 @@ WHERE w.private = 0 AND w.users_idusers = sqlc.arg(author_id)
     OR w.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = sqlc.arg(viewer_id)
+        WHERE ul.users_idusers = sqlc.arg(lister_id)
           AND ul.language_idlanguage = w.language_idlanguage
     )
     OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
     )
   )
   AND EXISTS (
@@ -54,24 +49,18 @@ WHERE w.private = 0 AND w.users_idusers = sqlc.arg(author_id)
 ORDER BY w.published DESC
 LIMIT ? OFFSET ?;
 
--- name: GetPublicWritingsInCategory :many
+-- name: SystemListPublicWritingsInCategory :many
 SELECT w.*, u.Username,
     (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) as Comments
 FROM writing w
-LEFT JOIN users u ON w.Users_Idusers=u.idusers
-WHERE w.private = 0 AND w.writing_category_id=?
+LEFT JOIN users u ON w.Users_Idusers = u.idusers
+WHERE w.private = 0 AND w.writing_category_id = sqlc.arg(category_id)
 ORDER BY w.published DESC
-LIMIT ? OFFSET ?
-;
+LIMIT ? OFFSET ?;
 
--- name: GetPublicWritingsInCategoryForUser :many
+-- name: ListPublicWritingsInCategoryForLister :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT w.*, u.Username,
     (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) as Comments
@@ -83,11 +72,11 @@ WHERE w.private = 0 AND w.writing_category_id = sqlc.arg(writing_category_id)
     OR w.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = sqlc.arg(viewer_id)
+        WHERE ul.users_idusers = sqlc.arg(lister_id)
           AND ul.language_idlanguage = w.language_idlanguage
     )
     OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
     )
   )
   AND EXISTS (
@@ -113,14 +102,9 @@ WHERE idwriting = ?;
 INSERT INTO writing (writing_category_id, title, abstract, writing, private, language_idlanguage, published, users_idusers)
 VALUES (?, ?, ?, ?, ?, ?, NOW(), ?);
 
--- name: GetWritingByIdForUserDescendingByPublishedDate :one
+-- name: GetWritingForListerByID :one
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT w.*, u.idusers AS WriterId, u.Username AS WriterUsername
 FROM writing w
@@ -133,20 +117,15 @@ WHERE w.idwriting = sqlc.arg(idwriting)
       AND g.action='view'
       AND g.active=1
       AND g.item_id = w.idwriting
-      AND (g.user_id = sqlc.arg(viewer_match_id) OR g.user_id IS NULL)
+      AND (g.user_id = sqlc.arg(lister_match_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY w.published DESC
 ;
 
--- name: GetWritingsByIdsForUserDescendingByPublishedDate :many
+-- name: ListWritingsByIDsForLister :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT w.*, u.idusers AS WriterId, u.username AS WriterUsername
 FROM writing w
@@ -159,7 +138,7 @@ WHERE w.idwriting IN (sqlc.slice(writing_ids))
       AND g.action='view'
       AND g.active=1
       AND g.item_id = w.idwriting
-      AND (g.user_id = sqlc.arg(viewer_match_id) OR g.user_id IS NULL)
+      AND (g.user_id = sqlc.arg(lister_match_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY w.published DESC
@@ -179,14 +158,9 @@ SELECT wc.*
 FROM writing_category wc
 ;
 
--- name: FetchCategoriesForUser :many
+-- name: ListWritingCategoriesForLister :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT wc.*
 FROM writing_category wc
@@ -206,14 +180,9 @@ WHERE EXISTS (
 UPDATE writing SET forumthread_id = ? WHERE idwriting = ?;
 
 
--- name: GetAllWritingsByUser :many
+-- name: GetAllWritingsByAuthorForLister :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT w.*, u.username,
     (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) AS Comments
@@ -227,26 +196,21 @@ WHERE w.users_idusers = sqlc.arg(author_id)
       AND g.action='view'
       AND g.active=1
       AND g.item_id = w.idwriting
-      AND (g.user_id = sqlc.arg(viewer_match_id) OR g.user_id IS NULL)
+      AND (g.user_id = sqlc.arg(lister_match_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY w.published DESC;
 
--- name: AdminGetAllWritingsByUser :many
+-- name: AdminGetAllWritingsByAuthor :many
 SELECT w.*, u.username,
     (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) AS Comments
 FROM writing w
 LEFT JOIN users u ON w.users_idusers = u.idusers
-WHERE w.users_idusers = ?
+WHERE w.users_idusers = sqlc.arg(author_id)
 ORDER BY w.published DESC;
--- name: ListWritersForViewer :many
+-- name: ListWritersForLister :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT u.username, COUNT(w.idwriting) AS count
 FROM writing w
@@ -256,11 +220,11 @@ WHERE (
     OR w.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = sqlc.arg(viewer_id)
+        WHERE ul.users_idusers = sqlc.arg(lister_id)
           AND ul.language_idlanguage = w.language_idlanguage
     )
     OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
     )
 )
 AND EXISTS (
@@ -277,14 +241,9 @@ GROUP BY u.idusers
 ORDER BY u.username
 LIMIT ? OFFSET ?;
 
--- name: SearchWritersForViewer :many
+-- name: ListWritersSearchForLister :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT u.username, COUNT(w.idwriting) AS count
 FROM writing w
@@ -295,11 +254,11 @@ WHERE (LOWER(u.username) LIKE LOWER(sqlc.arg(query)) OR LOWER((SELECT email FROM
     OR w.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = sqlc.arg(viewer_id)
+        WHERE ul.users_idusers = sqlc.arg(lister_id)
           AND ul.language_idlanguage = w.language_idlanguage
     )
     OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
     )
   )
   AND EXISTS (

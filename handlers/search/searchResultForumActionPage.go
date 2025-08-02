@@ -67,7 +67,7 @@ func ForumCommentSearchNotInRestrictedTopic(w http.ResponseWriter, r *http.Reque
 	for i, word := range searchWords {
 		if i == 0 {
 			ids, err := queries.CommentsSearchFirstNotInRestrictedTopic(r.Context(), db.CommentsSearchFirstNotInRestrictedTopicParams{
-				ViewerID: uid,
+				ListerID: uid,
 				Word: sql.NullString{
 					String: word,
 					Valid:  true,
@@ -86,7 +86,7 @@ func ForumCommentSearchNotInRestrictedTopic(w http.ResponseWriter, r *http.Reque
 			commentIds = ids
 		} else {
 			ids, err := queries.CommentsSearchNextNotInRestrictedTopic(r.Context(), db.CommentsSearchNextNotInRestrictedTopicParams{
-				ViewerID: uid,
+				ListerID: uid,
 				Word: sql.NullString{
 					String: word,
 					Valid:  true,
@@ -139,7 +139,7 @@ func ForumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request,
 	for i, word := range searchWords {
 		if i == 0 {
 			ids, err := queries.CommentsSearchFirstInRestrictedTopic(r.Context(), db.CommentsSearchFirstInRestrictedTopicParams{
-				ViewerID: uid,
+				ListerID: uid,
 				Word: sql.NullString{
 					String: word,
 					Valid:  true,
@@ -159,7 +159,7 @@ func ForumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request,
 			commentIds = ids
 		} else {
 			ids, err := queries.CommentsSearchNextInRestrictedTopic(r.Context(), db.CommentsSearchNextInRestrictedTopicParams{
-				ViewerID: uid,
+				ListerID: uid,
 				Word: sql.NullString{
 					String: word,
 					Valid:  true,

@@ -41,10 +41,10 @@ func (c *writingListCmd) Run() error {
 	ctx := context.Background()
 	queries := dbpkg.New(db)
 	if c.UserID != 0 {
-		rows, err := queries.GetPublicWritingsByUser(ctx, dbpkg.GetPublicWritingsByUserParams{
-			UsersIdusers: int32(c.UserID),
-			Limit:        int32(c.Limit),
-			Offset:       int32(c.Offset),
+		rows, err := queries.SystemListPublicWritingsByAuthor(ctx, dbpkg.SystemListPublicWritingsByAuthorParams{
+			AuthorID: int32(c.UserID),
+			Limit:    int32(c.Limit),
+			Offset:   int32(c.Offset),
 		})
 		if err != nil {
 			return fmt.Errorf("list writings: %w", err)
@@ -55,10 +55,10 @@ func (c *writingListCmd) Run() error {
 		return nil
 	}
 	if c.Category != 0 {
-		rows, err := queries.GetPublicWritingsInCategory(ctx, dbpkg.GetPublicWritingsInCategoryParams{
-			WritingCategoryID: int32(c.Category),
-			Limit:             int32(c.Limit),
-			Offset:            int32(c.Offset),
+		rows, err := queries.SystemListPublicWritingsInCategory(ctx, dbpkg.SystemListPublicWritingsInCategoryParams{
+			CategoryID: int32(c.Category),
+			Limit:      int32(c.Limit),
+			Offset:     int32(c.Offset),
 		})
 		if err != nil {
 			return fmt.Errorf("list writings: %w", err)

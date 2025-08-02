@@ -60,7 +60,7 @@ func (c *writingCommentsReadCmd) Run() error {
 	ctx := context.Background()
 	queries := dbpkg.New(db)
 	uid := int32(c.UserID)
-	w, err := queries.GetWritingByIdForUserDescendingByPublishedDate(ctx, dbpkg.GetWritingByIdForUserDescendingByPublishedDateParams{ViewerID: uid, Idwriting: int32(c.WritingID), ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0}})
+	w, err := queries.GetWritingForListerByID(ctx, dbpkg.GetWritingForListerByIDParams{ListerID: uid, Idwriting: int32(c.WritingID), ListerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0}})
 	if err != nil {
 		return fmt.Errorf("get writing: %w", err)
 	}

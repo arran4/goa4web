@@ -33,8 +33,8 @@ func RequireBlogAuthor(next http.Handler) http.Handler {
 		}
 		uid, _ := session.Values["UID"].(int32)
 
-		row, err := queries.GetBlogEntryForUserById(r.Context(), db.GetBlogEntryForUserByIdParams{
-			ViewerID: uid,
+		row, err := queries.GetBlogEntryForListerByID(r.Context(), db.GetBlogEntryForListerByIDParams{
+			ListerID: uid,
 			ID:       int32(blogID),
 			UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 		})
@@ -50,7 +50,7 @@ func RequireBlogAuthor(next http.Handler) http.Handler {
 		}
 		cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 		if cd != nil {
-			cd.BlogEntryByID(int32(blogID), lazy.Set[*db.GetBlogEntryForUserByIdRow](row))
+			cd.BlogEntryByID(int32(blogID), lazy.Set[*db.GetBlogEntryForListerByIDRow](row))
 			cd.SetCurrentBlog(int32(blogID))
 		}
 		if cd != nil && cd.HasRole("administrator") {

@@ -80,7 +80,7 @@ func (AddBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 			Valid:  true,
 		},
 		UserID:   sql.NullInt32{Int32: uid, Valid: true},
-		ViewerID: uid,
+		ListerID: uid,
 	})
 	if err != nil {
 		return fmt.Errorf("blog create fail %w", handlers.ErrRedirectOnSamePageHandler(err))

@@ -27,7 +27,7 @@ func (SearchWritingsTask) Action(w http.ResponseWriter, r *http.Request) any {
 	type Data struct {
 		*common.CoreData
 		Comments           []*db.GetCommentsByIdsForUserWithThreadInfoRow
-		Writings           []*db.GetWritingsByIdsForUserDescendingByPublishedDateRow
+		Writings           []*db.ListWritingsByIDsForListerRow
 		CommentsNoResults  bool
 		CommentsEmptyWords bool
 		NoResults          bool
@@ -75,7 +75,7 @@ func (SearchWritingsTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return handlers.TemplateWithDataHandler("resultWritingsActionPage.gohtml", data)
 }
 
-func WritingSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid int32) ([]*db.GetWritingsByIdsForUserDescendingByPublishedDateRow, bool, bool, error) {
+func WritingSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, uid int32) ([]*db.ListWritingsByIDsForListerRow, bool, bool, error) {
 	searchWords := searchutil.BreakupTextToWords(r.PostFormValue("searchwords"))
 	var writingsIds []int32
 
@@ -86,7 +86,7 @@ func WritingSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, 
 	for i, word := range searchWords {
 		if i == 0 {
 			ids, err := queries.WritingSearchFirst(r.Context(), db.WritingSearchFirstParams{
-				ViewerID: uid,
+				ListerID: uid,
 				Word: sql.NullString{
 					String: word,
 					Valid:  true,
@@ -105,7 +105,7 @@ func WritingSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, 
 			writingsIds = ids
 		} else {
 			ids, err := queries.WritingSearchNext(r.Context(), db.WritingSearchNextParams{
-				ViewerID: uid,
+				ListerID: uid,
 				Word: sql.NullString{
 					String: word,
 					Valid:  true,
@@ -129,9 +129,9 @@ func WritingSearch(w http.ResponseWriter, r *http.Request, queries *db.Queries, 
 		}
 	}
 
-	writings, err := queries.GetWritingsByIdsForUserDescendingByPublishedDate(r.Context(), db.GetWritingsByIdsForUserDescendingByPublishedDateParams{
-		ViewerID:      uid,
-		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
+	writings, err := queries.ListWritingsByIDsForLister(r.Context(), db.ListWritingsByIDsForListerParams{
+		ListerID:      uid,
+		ListerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 		WritingIds:    writingsIds,
 	})
 	if err != nil {

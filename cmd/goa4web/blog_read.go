@@ -45,8 +45,8 @@ func (c *blogReadCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
-	row, err := queries.GetBlogEntryForUserById(ctx, dbpkg.GetBlogEntryForUserByIdParams{
-		ViewerID: 0,
+	row, err := queries.GetBlogEntryForListerByID(ctx, dbpkg.GetBlogEntryForListerByIDParams{
+		ListerID: 0,
 		ID:       int32(c.ID),
 		UserID:   sql.NullInt32{},
 	})

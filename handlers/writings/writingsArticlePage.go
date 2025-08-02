@@ -36,7 +36,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 	type Data struct {
 		*common.CoreData
-		Writing             *db.GetWritingByIdForUserDescendingByPublishedDateRow
+		Writing             *db.GetWritingForListerByIDRow
 		CanEdit             bool
 		IsAuthor            bool
 		CanReply            bool
@@ -75,10 +75,10 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	data.UserId = uid
 	queries = r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
-	writing, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), db.GetWritingByIdForUserDescendingByPublishedDateParams{
-		ViewerID:      uid,
+	writing, err := queries.GetWritingForListerByID(r.Context(), db.GetWritingForListerByIDParams{
+		ListerID:      uid,
 		Idwriting:     int32(articleId),
-		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
+		ListerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err == nil {
 		if writing.Title.Valid {
@@ -96,7 +96,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 			}
 			return
 		default:
-			log.Printf("getWritingByIdForUserDescendingByPublishedDate Error: %s", err)
+			log.Printf("getWritingForListerByID Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
@@ -175,7 +175,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("getBlogEntryForUserById_comments Error: %s", err)
+			log.Printf("getBlogEntryForListerByID_comments Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
@@ -298,10 +298,10 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	uid, _ := session.Values["UID"].(int32)
 
-	post, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), db.GetWritingByIdForUserDescendingByPublishedDateParams{
-		ViewerID:      uid,
+	post, err := queries.GetWritingForListerByID(r.Context(), db.GetWritingForListerByIDParams{
+		ListerID:      uid,
 		Idwriting:     int32(aid),
-		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
+		ListerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		switch {

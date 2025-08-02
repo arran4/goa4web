@@ -16,7 +16,7 @@ func CategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		Categories          []*db.WritingCategory
 		CategoryBreadcrumbs []*db.WritingCategory
-		Abstracts           []*db.GetPublicWritingsInCategoryForUserRow
+		Abstracts           []*db.ListPublicWritingsInCategoryForListerRow
 		WritingCategoryID   int32
 	}
 

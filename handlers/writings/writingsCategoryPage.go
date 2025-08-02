@@ -23,7 +23,7 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 		CategoryBreadcrumbs []*db.WritingCategory
 		CategoryId          int32
 		WritingCategoryID   int32
-		Abstracts           []*db.GetPublicWritingsInCategoryForUserRow
+		Abstracts           []*db.ListPublicWritingsInCategoryForListerRow
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)

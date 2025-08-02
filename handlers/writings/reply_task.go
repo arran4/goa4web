@@ -80,10 +80,10 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	uid, _ := session.Values["UID"].(int32)
 
-	post, err := queries.GetWritingByIdForUserDescendingByPublishedDate(r.Context(), db.GetWritingByIdForUserDescendingByPublishedDateParams{
-		ViewerID:      uid,
+	post, err := queries.GetWritingForListerByID(r.Context(), db.GetWritingForListerByIDParams{
+		ListerID:      uid,
 		Idwriting:     int32(aid),
-		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
+		ListerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

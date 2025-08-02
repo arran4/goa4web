@@ -19,7 +19,7 @@ import (
 func WriterPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
-		Abstracts []*db.GetPublicWritingsByUserForViewerRow
+		Abstracts []*db.ListPublicWritingsByUserForListerRow
 		Username  string
 		IsOffset  bool
 	}

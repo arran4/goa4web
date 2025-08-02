@@ -47,7 +47,7 @@ func (c *blogUpdateCmd) Run() error {
 		BlogID:             int32(c.ID),
 		ItemID:             sql.NullInt32{Int32: int32(c.ID), Valid: true},
 		UserID:             sql.NullInt32{},
-		ViewerID:           0,
+		ListerID:           0,
 	})
 	if err != nil {
 		return fmt.Errorf("update blog: %w", err)

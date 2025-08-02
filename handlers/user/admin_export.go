@@ -2,7 +2,6 @@ package user
 
 import (
 	"archive/zip"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/arran4/goa4web/core/consts"
@@ -89,18 +88,14 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 		catMap[c.Idwritingcategory] = c.Title.String
 	}
 
-	writings, err := queries.GetAllWritingsByUser(r.Context(), db.GetAllWritingsByUserParams{
-		ViewerID:      int32(uid),
-		AuthorID:      int32(uid),
-		ViewerMatchID: sql.NullInt32{Int32: int32(uid), Valid: true},
-	})
+	writings, err := queries.AdminGetAllWritingsByAuthor(r.Context(), int32(uid))
 	if err != nil {
 		log.Printf("fetch writings: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 	type writingExport struct {
-		*db.GetAllWritingsByUserRow
+		*db.AdminGetAllWritingsByAuthorRow
 		Category string `json:"category"`
 	}
 	var ws []writingExport
@@ -110,7 +105,7 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 
 	blogs, err := queries.AdminGetAllBlogEntriesByUser(r.Context(), db.AdminGetAllBlogEntriesByUserParams{
 		AuthorID: int32(uid),
-		ViewerID: cd.UserID,
+		ListerID: cd.UserID,
 	})
 	if err != nil {
 		log.Printf("fetch blogs: %v", err)

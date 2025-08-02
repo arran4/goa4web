@@ -11,6 +11,55 @@ import (
 	"time"
 )
 
+const adminGetRecentAuditLogs = `-- name: AdminGetRecentAuditLogs :many
+SELECT a.id, a.users_idusers, u.username, a.action, a.path, a.details, a.data, a.created_at
+FROM audit_log a LEFT JOIN users u ON a.users_idusers = u.idusers
+ORDER BY a.id DESC LIMIT ?
+`
+
+type AdminGetRecentAuditLogsRow struct {
+	ID           int32
+	UsersIdusers int32
+	Username     sql.NullString
+	Action       string
+	Path         string
+	Details      sql.NullString
+	Data         sql.NullString
+	CreatedAt    time.Time
+}
+
+func (q *Queries) AdminGetRecentAuditLogs(ctx context.Context, limit int32) ([]*AdminGetRecentAuditLogsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminGetRecentAuditLogs, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminGetRecentAuditLogsRow
+	for rows.Next() {
+		var i AdminGetRecentAuditLogsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UsersIdusers,
+			&i.Username,
+			&i.Action,
+			&i.Path,
+			&i.Details,
+			&i.Data,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const countThreadsByBoard = `-- name: CountThreadsByBoard :one
 SELECT COUNT(DISTINCT forumthread_id)
 FROM imagepost
@@ -95,55 +144,6 @@ func (q *Queries) ForumTopicThreadCounts(ctx context.Context) ([]*ForumTopicThre
 	for rows.Next() {
 		var i ForumTopicThreadCountsRow
 		if err := rows.Scan(&i.Idforumtopic, &i.Title, &i.Count); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getRecentAuditLogs = `-- name: GetRecentAuditLogs :many
-SELECT a.id, a.users_idusers, u.username, a.action, a.path, a.details, a.data, a.created_at
-FROM audit_log a LEFT JOIN users u ON a.users_idusers = u.idusers
-ORDER BY a.id DESC LIMIT ?
-`
-
-type GetRecentAuditLogsRow struct {
-	ID           int32
-	UsersIdusers int32
-	Username     sql.NullString
-	Action       string
-	Path         string
-	Details      sql.NullString
-	Data         sql.NullString
-	CreatedAt    time.Time
-}
-
-func (q *Queries) GetRecentAuditLogs(ctx context.Context, limit int32) ([]*GetRecentAuditLogsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getRecentAuditLogs, limit)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*GetRecentAuditLogsRow
-	for rows.Next() {
-		var i GetRecentAuditLogsRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.UsersIdusers,
-			&i.Username,
-			&i.Action,
-			&i.Path,
-			&i.Details,
-			&i.Data,
-			&i.CreatedAt,
-		); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)

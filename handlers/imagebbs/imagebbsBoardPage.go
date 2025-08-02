@@ -41,6 +41,7 @@ var uploadImageTask = &UploadImageTask{TaskString: TaskUploadImage}
 
 // UploadImageTask participates in generic task handling
 var _ tasks.Task = (*UploadImageTask)(nil)
+var _ tasks.AuditableTask = (*UploadImageTask)(nil)
 
 func (UploadImageTask) IndexType() string { return searchworker.TypeImage }
 
@@ -119,6 +120,11 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	board, err := queries.GetImageBoardById(r.Context(), int32(bid))
 	if err != nil {
 		return fmt.Errorf("get image board fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	if !cd.HasGrant("imagebbs", "board", "post", int32(bid)) {
+		return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+		})
 	}
 
 	r.Body = http.MaxBytesReader(w, r.Body, int64(cd.Config.ImageMaxBytes))
@@ -205,8 +211,17 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 				evt.Data = map[string]any{}
 			}
 			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeImage, ID: int32(pid), Text: text}
+			evt.Data["ImagePostID"] = int32(pid)
+			evt.Data["BoardID"] = int32(bid)
 		}
 	}
 
 	return nil
+}
+
+func (UploadImageTask) AuditRecord(data map[string]any) string {
+	if id, ok := data["ImagePostID"].(int32); ok {
+		return fmt.Sprintf("uploaded image %d", id)
+	}
+	return "uploaded image"
 }

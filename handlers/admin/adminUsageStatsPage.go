@@ -24,12 +24,12 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
 		Errors            []string
-		ForumTopics       []*db.ForumTopicThreadCountsRow
-		ForumCategories   []*db.ForumCategoryThreadCountsRow
-		WritingCategories []*db.WritingCategoryCountsRow
+		ForumTopics       []*db.AdminForumTopicThreadCountsRow
+		ForumCategories   []*db.AdminForumCategoryThreadCountsRow
+		WritingCategories []*db.AdminWritingCategoryCountsRow
 		LinkerCategories  []*db.GetLinkerCategoryLinkCountsRow
-		Imageboards       []*db.ImageboardPostCountsRow
-		Users             []*db.UserPostCountsRow
+		Imageboards       []*db.AdminImageboardPostCountsRow
+		Users             []*db.AdminUserPostCountsRow
 		Monthly           []*db.MonthlyUsageRow
 		UserMonthly       []*db.UserMonthlyUsageRow
 		StartYear         int
@@ -71,7 +71,7 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 			log.Print("stop forum topic counts")
 			wg.Done()
 		}()
-		if rows, err := queries.ForumTopicThreadCounts(ctx); err == nil {
+		if rows, err := queries.AdminForumTopicThreadCounts(ctx); err == nil {
 			data.ForumTopics = rows
 		} else {
 			addErr("forum topic counts", err)
@@ -85,7 +85,7 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 			log.Print("stop forum category counts")
 			wg.Done()
 		}()
-		if rows, err := queries.ForumCategoryThreadCounts(ctx); err == nil {
+		if rows, err := queries.AdminForumCategoryThreadCounts(ctx); err == nil {
 			data.ForumCategories = rows
 		} else {
 			addErr("forum category counts", err)
@@ -99,7 +99,7 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 			log.Print("stop imageboard post counts")
 			wg.Done()
 		}()
-		if rows, err := queries.ImageboardPostCounts(ctx); err == nil {
+		if rows, err := queries.AdminImageboardPostCounts(ctx); err == nil {
 			data.Imageboards = rows
 		} else {
 			addErr("imageboard post counts", err)
@@ -113,7 +113,7 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 			log.Print("stop user post counts")
 			wg.Done()
 		}()
-		if rows, err := queries.UserPostCounts(ctx); err == nil {
+		if rows, err := queries.AdminUserPostCounts(ctx); err == nil {
 			data.Users = rows
 		} else {
 			addErr("user post counts", err)
@@ -127,7 +127,7 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 			log.Print("stop writing category counts")
 			wg.Done()
 		}()
-		if rows, err := queries.WritingCategoryCounts(ctx); err == nil {
+		if rows, err := queries.AdminWritingCategoryCounts(ctx); err == nil {
 			data.WritingCategories = rows
 		} else {
 			addErr("writing category counts", err)

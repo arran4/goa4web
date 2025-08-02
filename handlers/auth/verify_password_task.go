@@ -3,6 +3,7 @@ package auth
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -46,6 +47,12 @@ func (VerifyPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 	reset, err := queries.GetPasswordResetByCode(r.Context(), db.GetPasswordResetByCodeParams{VerificationCode: code, CreatedAt: expiry})
 	if err != nil || reset.ID != id {
 		return handlers.ErrRedirectOnSamePageHandler(errors.New("invalid code"))
+	}
+	if _, err := queries.UserHasLoginRole(r.Context(), reset.UserID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return handlers.ErrRedirectOnSamePageHandler(errors.New("approval is pending"))
+		}
+		return fmt.Errorf("user role %w", err)
 	}
 	if !VerifyPassword(pw, reset.Passwd, reset.PasswdAlgorithm) {
 		return handlers.ErrRedirectOnSamePageHandler(errors.New("invalid password"))

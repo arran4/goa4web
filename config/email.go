@@ -36,9 +36,9 @@ func GetAdminEmails(ctx context.Context, q *db.Queries, cfg *RuntimeConfig) []st
 		return emails
 	}
 	if q != nil {
-		rows, err := q.ListAdministratorEmails(ctx)
+		rows, err := q.AdminListAdministratorEmails(ctx)
 		if err != nil {
-			log.Printf("list admin emails: %v", err)
+			log.Printf("AdminListAdministratorEmails: %v", err)
 			return emails
 		}
 		for _, e := range rows {

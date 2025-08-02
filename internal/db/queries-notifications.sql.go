@@ -10,6 +10,16 @@ import (
 	"database/sql"
 )
 
+const adminPurgeReadNotifications = `-- name: AdminPurgeReadNotifications :exec
+DELETE FROM notifications
+WHERE read_at IS NOT NULL AND read_at < (NOW() - INTERVAL 24 HOUR)
+`
+
+func (q *Queries) AdminPurgeReadNotifications(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, adminPurgeReadNotifications)
+	return err
+}
+
 const countUnreadNotifications = `-- name: CountUnreadNotifications :one
 SELECT COUNT(*) FROM notifications
 WHERE users_idusers = ? AND read_at IS NULL
@@ -130,6 +140,94 @@ func (q *Queries) LastNotificationByMessage(ctx context.Context, arg LastNotific
 	return &i, err
 }
 
+const listUserNotifications = `-- name: ListUserNotifications :many
+SELECT id, users_idusers, link, message, created_at, read_at
+FROM notifications
+WHERE users_idusers = ?
+ORDER BY id DESC
+LIMIT ? OFFSET ?
+`
+
+type ListUserNotificationsParams struct {
+	UsersIdusers int32
+	Limit        int32
+	Offset       int32
+}
+
+func (q *Queries) ListUserNotifications(ctx context.Context, arg ListUserNotificationsParams) ([]*Notification, error) {
+	rows, err := q.db.QueryContext(ctx, listUserNotifications, arg.UsersIdusers, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Notification
+	for rows.Next() {
+		var i Notification
+		if err := rows.Scan(
+			&i.ID,
+			&i.UsersIdusers,
+			&i.Link,
+			&i.Message,
+			&i.CreatedAt,
+			&i.ReadAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUserUnreadNotifications = `-- name: ListUserUnreadNotifications :many
+SELECT id, users_idusers, link, message, created_at, read_at
+FROM notifications
+WHERE users_idusers = ? AND read_at IS NULL
+ORDER BY id DESC
+LIMIT ? OFFSET ?
+`
+
+type ListUserUnreadNotificationsParams struct {
+	UsersIdusers int32
+	Limit        int32
+	Offset       int32
+}
+
+func (q *Queries) ListUserUnreadNotifications(ctx context.Context, arg ListUserUnreadNotificationsParams) ([]*Notification, error) {
+	rows, err := q.db.QueryContext(ctx, listUserUnreadNotifications, arg.UsersIdusers, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Notification
+	for rows.Next() {
+		var i Notification
+		if err := rows.Scan(
+			&i.ID,
+			&i.UsersIdusers,
+			&i.Link,
+			&i.Message,
+			&i.CreatedAt,
+			&i.ReadAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const markNotificationRead = `-- name: MarkNotificationRead :exec
 UPDATE notifications SET read_at = NOW() WHERE id = ?
 `
@@ -145,16 +243,6 @@ UPDATE notifications SET read_at = NULL WHERE id = ?
 
 func (q *Queries) MarkNotificationUnread(ctx context.Context, id int32) error {
 	_, err := q.db.ExecContext(ctx, markNotificationUnread, id)
-	return err
-}
-
-const purgeReadNotifications = `-- name: PurgeReadNotifications :exec
-DELETE FROM notifications
-WHERE read_at IS NOT NULL AND read_at < (NOW() - INTERVAL 24 HOUR)
-`
-
-func (q *Queries) PurgeReadNotifications(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, purgeReadNotifications)
 	return err
 }
 

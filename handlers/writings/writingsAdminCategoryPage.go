@@ -26,7 +26,7 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Category not found", http.StatusNotFound)
 		return
 	}
-	writings, err := queries.GetWritingsByCategoryId(r.Context(), int32(cid))
+	writings, err := queries.AdminGetWritingsByCategoryId(r.Context(), int32(cid))
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -35,7 +35,7 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		*common.CoreData
 		Category *db.WritingCategory
-		Writings []*db.GetWritingsByCategoryIdRow
+		Writings []*db.AdminGetWritingsByCategoryIdRow
 	}{
 		CoreData: cd,
 		Category: cat,

@@ -23,6 +23,9 @@ var _ tasks.AuditableTask = (*RefreshExternalLinkTask)(nil)
 
 func (RefreshExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if cd == nil || !cd.HasRole("administrator") {
+		return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { http.Error(w, "Forbidden", http.StatusForbidden) })
+	}
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
@@ -30,7 +33,7 @@ func (RefreshExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) an
 	uid := sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0}
 	for _, idStr := range r.Form["id"] {
 		id, _ := strconv.Atoi(idStr)
-		if err := queries.ClearExternalLinkCache(r.Context(), db.ClearExternalLinkCacheParams{UpdatedBy: uid, ID: int32(id)}); err != nil {
+		if err := queries.AdminClearExternalLinkCache(r.Context(), db.AdminClearExternalLinkCacheParams{UpdatedBy: uid, ID: int32(id)}); err != nil {
 			return fmt.Errorf("clear external link cache fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		if evt := cd.Event(); evt != nil {
@@ -60,13 +63,16 @@ var _ tasks.AuditableTask = (*DeleteExternalLinkTask)(nil)
 
 func (DeleteExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if cd == nil || !cd.HasRole("administrator") {
+		return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { http.Error(w, "Forbidden", http.StatusForbidden) })
+	}
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	queries := cd.Queries()
 	for _, idStr := range r.Form["id"] {
 		id, _ := strconv.Atoi(idStr)
-		if err := queries.DeleteExternalLink(r.Context(), int32(id)); err != nil {
+		if err := queries.AdminDeleteExternalLink(r.Context(), int32(id)); err != nil {
 			return fmt.Errorf("delete external link fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		if evt := cd.Event(); evt != nil {

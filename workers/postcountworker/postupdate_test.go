@@ -16,7 +16,7 @@ func TestPostUpdate(t *testing.T) {
 	defer db.Close()
 
 	q := dbpkg.New(db)
-	mock.ExpectExec("RecalculateForumThreadByIdMetaData").
+	mock.ExpectExec("AdminRecalculateForumThreadByIdMetaData").
 		WithArgs(int32(1)).
 		WillReturnResult(sqlmock.NewResult(0, 0))
 	mock.ExpectExec("RebuildForumTopicByIdMetaColumns").

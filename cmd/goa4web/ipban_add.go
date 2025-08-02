@@ -51,7 +51,7 @@ func (c *ipBanAddCmd) Run() error {
 		}
 		expires = sql.NullTime{Time: t, Valid: true}
 	}
-	err = queries.InsertBannedIp(ctx, dbpkg.InsertBannedIpParams{
+	err = queries.AdminInsertBannedIp(ctx, dbpkg.AdminInsertBannedIpParams{
 		IpNet:     c.IP,
 		Reason:    sql.NullString{String: c.Reason, Valid: c.Reason != ""},
 		ExpiresAt: expires,

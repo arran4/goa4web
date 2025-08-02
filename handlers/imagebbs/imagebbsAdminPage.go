@@ -15,10 +15,10 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	type Data struct {
 		*common.CoreData
-		Stats []*db.ImageboardPostCountsRow
+		Stats []*db.AdminImageboardPostCountsRow
 	}
-	var stats []*db.ImageboardPostCountsRow
-	if s, err := cd.Queries().ImageboardPostCounts(r.Context()); err == nil {
+	var stats []*db.AdminImageboardPostCountsRow
+	if s, err := cd.Queries().AdminImageboardPostCounts(r.Context()); err == nil {
 		stats = s
 	} else if err != sql.ErrNoRows {
 		log.Printf("imagebbsAdminPage stats: %v", err)

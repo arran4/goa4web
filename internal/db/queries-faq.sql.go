@@ -12,11 +12,22 @@ import (
 
 const createFAQCategory = `-- name: CreateFAQCategory :exec
 INSERT INTO faq_categories (name)
-VALUES (?)
+SELECT ?
+WHERE EXISTS (
+    SELECT 1 FROM user_roles ur
+    JOIN roles r ON ur.role_id = r.id
+    WHERE ur.users_idusers = ?
+      AND r.is_admin = 1
+)
 `
 
-func (q *Queries) CreateFAQCategory(ctx context.Context, name sql.NullString) error {
-	_, err := q.db.ExecContext(ctx, createFAQCategory, name)
+type CreateFAQCategoryParams struct {
+	Name     sql.NullString
+	ViewerID int32
+}
+
+func (q *Queries) CreateFAQCategory(ctx context.Context, arg CreateFAQCategoryParams) error {
+	_, err := q.db.ExecContext(ctx, createFAQCategory, arg.Name, arg.ViewerID)
 	return err
 }
 
@@ -39,20 +50,42 @@ func (q *Queries) CreateFAQQuestion(ctx context.Context, arg CreateFAQQuestionPa
 const deleteFAQ = `-- name: DeleteFAQ :exec
 UPDATE faq SET deleted_at = NOW()
 WHERE idfaq = ?
+  AND EXISTS (
+      SELECT 1 FROM user_roles ur
+      JOIN roles r ON ur.role_id = r.id
+      WHERE ur.users_idusers = ?
+        AND r.is_admin = 1
+  )
 `
 
-func (q *Queries) DeleteFAQ(ctx context.Context, idfaq int32) error {
-	_, err := q.db.ExecContext(ctx, deleteFAQ, idfaq)
+type DeleteFAQParams struct {
+	Idfaq    int32
+	ViewerID int32
+}
+
+func (q *Queries) DeleteFAQ(ctx context.Context, arg DeleteFAQParams) error {
+	_, err := q.db.ExecContext(ctx, deleteFAQ, arg.Idfaq, arg.ViewerID)
 	return err
 }
 
 const deleteFAQCategory = `-- name: DeleteFAQCategory :exec
 UPDATE faq_categories SET deleted_at = NOW()
 WHERE idfaqCategories = ?
+  AND EXISTS (
+      SELECT 1 FROM user_roles ur
+      JOIN roles r ON ur.role_id = r.id
+      WHERE ur.users_idusers = ?
+        AND r.is_admin = 1
+  )
 `
 
-func (q *Queries) DeleteFAQCategory(ctx context.Context, idfaqcategories int32) error {
-	_, err := q.db.ExecContext(ctx, deleteFAQCategory, idfaqcategories)
+type DeleteFAQCategoryParams struct {
+	Idfaqcategories int32
+	ViewerID        int32
+}
+
+func (q *Queries) DeleteFAQCategory(ctx context.Context, arg DeleteFAQCategoryParams) error {
+	_, err := q.db.ExecContext(ctx, deleteFAQCategory, arg.Idfaqcategories, arg.ViewerID)
 	return err
 }
 
@@ -212,13 +245,54 @@ func (q *Queries) GetAllFAQQuestions(ctx context.Context) ([]*Faq, error) {
 }
 
 const getFAQAnsweredQuestions = `-- name: GetFAQAnsweredQuestions :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT idfaq, faqCategories_idfaqCategories, language_idlanguage, users_idusers, answer, question
 FROM faq
-WHERE answer IS NOT NULL AND deleted_at IS NULL
+WHERE answer IS NOT NULL
+  AND deleted_at IS NULL
+  AND (
+      language_idlanguage = 0
+      OR language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = faq.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='faq'
+        AND (g.item='question/answer' OR g.item IS NULL)
+        AND g.action='see'
+        AND g.active=1
+        AND (g.item_id = faq.idfaq OR g.item_id IS NULL)
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
 `
 
-func (q *Queries) GetFAQAnsweredQuestions(ctx context.Context) ([]*Faq, error) {
-	rows, err := q.db.QueryContext(ctx, getFAQAnsweredQuestions)
+type GetFAQAnsweredQuestionsParams struct {
+	ViewerID int32
+	UserID   sql.NullInt32
+}
+
+func (q *Queries) GetFAQAnsweredQuestions(ctx context.Context, arg GetFAQAnsweredQuestionsParams) ([]*Faq, error) {
+	rows, err := q.db.QueryContext(ctx, getFAQAnsweredQuestions,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.UserID,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -448,15 +522,22 @@ const renameFAQCategory = `-- name: RenameFAQCategory :exec
 UPDATE faq_categories
 SET name = ?
 WHERE idfaqCategories = ?
+  AND EXISTS (
+      SELECT 1 FROM user_roles ur
+      JOIN roles r ON ur.role_id = r.id
+      WHERE ur.users_idusers = ?
+        AND r.is_admin = 1
+  )
 `
 
 type RenameFAQCategoryParams struct {
 	Name            sql.NullString
 	Idfaqcategories int32
+	ViewerID        int32
 }
 
 func (q *Queries) RenameFAQCategory(ctx context.Context, arg RenameFAQCategoryParams) error {
-	_, err := q.db.ExecContext(ctx, renameFAQCategory, arg.Name, arg.Idfaqcategories)
+	_, err := q.db.ExecContext(ctx, renameFAQCategory, arg.Name, arg.Idfaqcategories, arg.ViewerID)
 	return err
 }
 
@@ -464,6 +545,12 @@ const updateFAQQuestionAnswer = `-- name: UpdateFAQQuestionAnswer :exec
 UPDATE faq
 SET answer = ?, question = ?, faqCategories_idfaqCategories = ?
 WHERE idfaq = ?
+  AND EXISTS (
+      SELECT 1 FROM user_roles ur
+      JOIN roles r ON ur.role_id = r.id
+      WHERE ur.users_idusers = ?
+        AND r.is_admin = 1
+  )
 `
 
 type UpdateFAQQuestionAnswerParams struct {
@@ -471,6 +558,7 @@ type UpdateFAQQuestionAnswerParams struct {
 	Question                     sql.NullString
 	FaqcategoriesIdfaqcategories int32
 	Idfaq                        int32
+	ViewerID                     int32
 }
 
 func (q *Queries) UpdateFAQQuestionAnswer(ctx context.Context, arg UpdateFAQQuestionAnswerParams) error {
@@ -479,6 +567,7 @@ func (q *Queries) UpdateFAQQuestionAnswer(ctx context.Context, arg UpdateFAQQues
 		arg.Question,
 		arg.FaqcategoriesIdfaqcategories,
 		arg.Idfaq,
+		arg.ViewerID,
 	)
 	return err
 }

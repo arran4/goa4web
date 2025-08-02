@@ -23,7 +23,13 @@ var _ tasks.Task = (*RenameLanguageTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*RenameLanguageTask)(nil)
 
 func (RenameLanguageTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if cd == nil || !cd.HasRole("administrator") {
+		return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+		})
+	}
+	queries := cd.Queries()
 	cid, err := strconv.Atoi(r.PostFormValue("cid"))
 	if err != nil {
 		return fmt.Errorf("cid parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))

@@ -13,14 +13,14 @@ func adminUserListPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Users"
 	queries := cd.Queries()
-	users, err := queries.AllUsers(r.Context())
+	users, err := queries.AdminAllUsers(r.Context())
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 	data := struct {
 		*common.CoreData
-		Users []*db.AllUsersRow
+		Users []*db.AdminAllUsersRow
 	}{
 		CoreData: cd,
 		Users:    users,

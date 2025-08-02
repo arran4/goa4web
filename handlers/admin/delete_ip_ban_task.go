@@ -22,15 +22,18 @@ var _ tasks.AuditableTask = (*DeleteIPBanTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*DeleteIPBanTask)(nil)
 
 func (DeleteIPBanTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if cd == nil || !cd.HasRole("administrator") {
+		return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { http.Error(w, "Forbidden", http.StatusForbidden) })
+	}
+	queries := cd.Queries()
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	var ips []string
 	for _, ip := range r.Form["ip"] {
 		ipNet := NormalizeIPNet(ip)
-		if err := queries.CancelBannedIp(r.Context(), ipNet); err != nil {
+		if err := queries.AdminCancelBannedIp(r.Context(), ipNet); err != nil {
 			return fmt.Errorf("cancel banned ip %s fail %w", ipNet, handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		if ipNet != "" {

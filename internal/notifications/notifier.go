@@ -100,9 +100,9 @@ func (n *Notifier) adminEmails(ctx context.Context) []string {
 		return emails
 	}
 	if n.Queries != nil {
-		rows, err := n.Queries.ListAdministratorEmails(ctx)
+		rows, err := n.Queries.AdminListAdministratorEmails(ctx)
 		if err != nil {
-			log.Printf("list admin emails: %v", err)
+			log.Printf("AdminListAdministratorEmails: %v", err)
 			return emails
 		}
 		for _, e := range rows {
@@ -170,7 +170,7 @@ func (n *Notifier) NotificationPurgeWorker(ctx context.Context, interval time.Du
 	for {
 		select {
 		case <-ticker.C:
-			if err := n.Queries.PurgeReadNotifications(ctx); err != nil {
+			if err := n.Queries.AdminPurgeReadNotifications(ctx); err != nil {
 				log.Printf("purge notifications: %v", err)
 			}
 		case <-ctx.Done():

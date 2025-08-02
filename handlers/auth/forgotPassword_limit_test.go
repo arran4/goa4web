@@ -27,6 +27,7 @@ func TestForgotPasswordRateLimit(t *testing.T) {
 	q := dbpkg.New(db)
 
 	mock.ExpectQuery("GetUserByUsername").WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(1, "a@test.com", "u", nil))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT 1 FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.users_idusers = ? AND r.can_login = 1 LIMIT 1")).WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"column_1"}).AddRow(1))
 	resetRows := sqlmock.NewRows([]string{"id", "user_id", "passwd", "passwd_algorithm", "verification_code", "created_at", "verified_at"}).
 		AddRow(1, 1, "hash", "alg", "code", time.Now(), nil)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, user_id, passwd")).WithArgs(int32(1), sqlmock.AnyArg()).WillReturnRows(resetRows)
@@ -58,6 +59,7 @@ func TestForgotPasswordReplaceOld(t *testing.T) {
 	q := dbpkg.New(db)
 
 	mock.ExpectQuery("GetUserByUsername").WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(1, "a@test.com", "u", nil))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT 1 FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.users_idusers = ? AND r.can_login = 1 LIMIT 1")).WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"column_1"}).AddRow(1))
 	oldRows := sqlmock.NewRows([]string{"id", "user_id", "passwd", "passwd_algorithm", "verification_code", "created_at", "verified_at"}).
 		AddRow(1, 1, "hash", "alg", "code", time.Now().Add(-25*time.Hour), nil)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, user_id, passwd")).WithArgs(int32(1), sqlmock.AnyArg()).WillReturnRows(oldRows)

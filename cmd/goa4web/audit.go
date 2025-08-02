@@ -35,7 +35,7 @@ func (c *auditCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
-	rows, err := queries.GetRecentAuditLogs(ctx, int32(c.Limit))
+	rows, err := queries.AdminGetRecentAuditLogs(ctx, int32(c.Limit))
 	if err != nil {
 		return fmt.Errorf("audit logs: %w", err)
 	}

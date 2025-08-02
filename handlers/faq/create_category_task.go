@@ -8,6 +8,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 )
@@ -24,11 +25,12 @@ func (CreateCategoryTask) Match(r *http.Request, m *mux.RouteMatch) bool {
 
 func (CreateCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 	text := r.PostFormValue("cname")
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 
-	if err := queries.CreateFAQCategory(r.Context(), sql.NullString{
-		String: text,
-		Valid:  true,
+	if err := queries.CreateFAQCategory(r.Context(), db.CreateFAQCategoryParams{
+		Name:     sql.NullString{String: text, Valid: true},
+		ViewerID: cd.UserID,
 	}); err != nil {
 		return fmt.Errorf("create category fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

@@ -33,7 +33,7 @@ func (RolePublicProfileTask) Action(w http.ResponseWriter, r *http.Request) any 
 	if enable {
 		ts = sql.NullTime{Time: time.Now(), Valid: true}
 	}
-	if err := queries.UpdateRolePublicProfileAllowed(r.Context(), db.UpdateRolePublicProfileAllowedParams{PublicProfileAllowedAt: ts, ID: int32(id)}); err != nil {
+	if err := queries.AdminUpdateRolePublicProfileAllowed(r.Context(), db.AdminUpdateRolePublicProfileAllowedParams{PublicProfileAllowedAt: ts, ID: int32(id)}); err != nil {
 		return fmt.Errorf("update role fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {

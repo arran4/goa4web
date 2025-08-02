@@ -35,7 +35,7 @@ func (c *roleUsersCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
-	rows, err := queries.ListRolesWithUsers(ctx)
+	rows, err := queries.AdminListRolesWithUsers(ctx)
 	if err != nil {
 		return fmt.Errorf("list roles with users: %w", err)
 	}

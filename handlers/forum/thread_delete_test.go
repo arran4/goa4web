@@ -16,7 +16,7 @@ func TestThreadDelete(t *testing.T) {
 	defer sqldb.Close()
 
 	q := db.New(sqldb)
-	mock.ExpectExec("DeleteForumThread").
+	mock.ExpectExec("AdminDeleteForumThread").
 		WithArgs(int32(1)).
 		WillReturnResult(sqlmock.NewResult(0, 0))
 	mock.ExpectExec("RebuildForumTopicByIdMetaColumns").

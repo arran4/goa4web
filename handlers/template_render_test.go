@@ -112,7 +112,7 @@ func TestPageTemplatesRender(t *testing.T) {
 		}{&common.CoreData{}, struct{ Categories, Topics, Threads int64 }{}}},
 		{"imagebbsAdminPage", struct {
 			*common.CoreData
-			Stats []*db.ImageboardPostCountsRow
+			Stats []*db.AdminImageboardPostCountsRow
 		}{&common.CoreData{}, nil}},
 	}
 

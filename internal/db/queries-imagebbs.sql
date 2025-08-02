@@ -9,19 +9,6 @@ SELECT *
 FROM imageboard
 WHERE imageboard_idimageboard = ?;
 
--- name: GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCount :many
-SELECT i.*, u.username, th.comments
-FROM imagepost i
-LEFT JOIN users u ON i.users_idusers = u.idusers
-LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
-WHERE i.imageboard_idimageboard = ? AND i.approved = 1;
-
--- name: GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCount :one
-SELECT i.*, u.username, th.comments
-FROM imagepost i
-LEFT JOIN users u ON i.users_idusers = u.idusers
-LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
-WHERE i.idimagepost = ? AND i.approved = 1;
 
 -- name: CreateImagePost :execlastid
 INSERT INTO imagepost (
@@ -44,7 +31,7 @@ SELECT i.*, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
-WHERE i.users_idusers = ? AND i.approved = 1
+WHERE i.users_idusers = ? AND i.approved = 1 AND i.deleted_at IS NULL
 ORDER BY i.posted DESC
 LIMIT ? OFFSET ?;
 
@@ -53,7 +40,7 @@ SELECT i.*, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
-WHERE i.users_idusers = ?
+WHERE i.users_idusers = ? AND i.deleted_at IS NULL
 ORDER BY i.posted DESC
 LIMIT ? OFFSET ?;
 
@@ -84,6 +71,7 @@ WITH RECURSIVE role_ids(id) AS (
 SELECT b.*
 FROM imageboard b
 WHERE b.imageboard_idimageboard = sqlc.arg(parent_id)
+  AND b.deleted_at IS NULL
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='imagebbs'
@@ -106,7 +94,7 @@ WITH RECURSIVE role_ids(id) AS (
 )
 SELECT b.*
 FROM imageboard b
-WHERE EXISTS (
+WHERE b.deleted_at IS NULL AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='imagebbs'
       AND (g.item='board' OR g.item IS NULL)
@@ -132,6 +120,7 @@ LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
 WHERE i.users_idusers = sqlc.arg(user_id)
   AND i.approved = 1
+  AND i.deleted_at IS NULL
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='imagebbs'
@@ -160,6 +149,7 @@ LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
 WHERE i.imageboard_idimageboard = sqlc.arg(board_id)
   AND i.approved = 1
+  AND i.deleted_at IS NULL
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='imagebbs'
@@ -186,6 +176,7 @@ LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
 WHERE i.idimagepost = sqlc.arg(id)
   AND i.approved = 1
+  AND i.deleted_at IS NULL
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='imagebbs'

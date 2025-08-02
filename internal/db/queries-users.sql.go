@@ -82,65 +82,6 @@ func (q *Queries) AdminAllUsers(ctx context.Context) ([]*AdminAllUsersRow, error
 }
 
 const adminListAdministratorEmails = `-- name: AdminListAdministratorEmails :many
-const getUserById = `-- name: GetUserById :one
-SELECT u.idusers, ue.email, u.username, u.public_profile_enabled_at
-FROM users u
-LEFT JOIN user_emails ue ON ue.id = (
-        SELECT id FROM user_emails ue2
-        WHERE ue2.user_id = u.idusers AND ue2.verified_at IS NOT NULL
-        ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1
-)
-WHERE u.idusers = ?
-`
-
-type GetUserByIdRow struct {
-	Idusers                int32
-	Email                  sql.NullString
-	Username               sql.NullString
-	PublicProfileEnabledAt sql.NullTime
-}
-
-func (q *Queries) GetUserById(ctx context.Context, idusers int32) (*GetUserByIdRow, error) {
-	row := q.db.QueryRowContext(ctx, getUserById, idusers)
-	var i GetUserByIdRow
-	err := row.Scan(
-		&i.Idusers,
-		&i.Email,
-		&i.Username,
-		&i.PublicProfileEnabledAt,
-	)
-	return &i, err
-}
-
-const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT idusers,
-       (SELECT email FROM user_emails ue WHERE ue.user_id = users.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
-       username,
-       public_profile_enabled_at
-FROM users
-WHERE username = ?
-`
-
-type GetUserByUsernameRow struct {
-	Idusers                int32
-	Email                  string
-	Username               sql.NullString
-	PublicProfileEnabledAt sql.NullTime
-}
-
-func (q *Queries) GetUserByUsername(ctx context.Context, username sql.NullString) (*GetUserByUsernameRow, error) {
-	row := q.db.QueryRowContext(ctx, getUserByUsername, username)
-	var i GetUserByUsernameRow
-	err := row.Scan(
-		&i.Idusers,
-		&i.Email,
-		&i.Username,
-		&i.PublicProfileEnabledAt,
-	)
-	return &i, err
-}
-
-const listAdministratorEmails = `-- name: ListAdministratorEmails :many
 SELECT (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email
 FROM users u
 JOIN user_roles ur ON ur.users_idusers = u.idusers

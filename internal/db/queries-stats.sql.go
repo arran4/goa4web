@@ -24,68 +24,6 @@ func (q *Queries) AdminCountThreadsByBoard(ctx context.Context, imageboardIdimag
 	return count, err
 }
 
-const adminGetRecentAuditLogs = `-- name: AdminGetRecentAuditLogs :many
-SELECT a.id, a.users_idusers, u.username, a.action, a.path, a.details, a.data, a.created_at
-FROM audit_log a LEFT JOIN users u ON a.users_idusers = u.idusers
-ORDER BY a.id DESC LIMIT ?
-`
-
-type AdminGetRecentAuditLogsRow struct {
-	ID           int32
-	UsersIdusers int32
-	Username     sql.NullString
-	Action       string
-	Path         string
-	Details      sql.NullString
-	Data         sql.NullString
-	CreatedAt    time.Time
-}
-
-func (q *Queries) AdminGetRecentAuditLogs(ctx context.Context, limit int32) ([]*AdminGetRecentAuditLogsRow, error) {
-	rows, err := q.db.QueryContext(ctx, adminGetRecentAuditLogs, limit)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*AdminGetRecentAuditLogsRow
-	for rows.Next() {
-		var i AdminGetRecentAuditLogsRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.UsersIdusers,
-			&i.Username,
-			&i.Action,
-			&i.Path,
-			&i.Details,
-			&i.Data,
-			&i.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const countThreadsByBoard = `-- name: CountThreadsByBoard :one
-SELECT COUNT(DISTINCT forumthread_id)
-FROM imagepost
-WHERE imageboard_idimageboard = ?
-`
-
-func (q *Queries) AdminCountThreadsByBoard(ctx context.Context, imageboardIdimageboard int32) (int64, error) {
-	row := q.db.QueryRowContext(ctx, adminCountThreadsByBoard, imageboardIdimageboard)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
 const adminDeleteTemplateOverride = `-- name: AdminDeleteTemplateOverride :exec
 DELETE FROM template_overrides WHERE name = ?
 `
@@ -220,54 +158,6 @@ func (q *Queries) AdminGetRecentAuditLogs(ctx context.Context, limit int32) ([]*
 }
 
 const adminImageboardPostCounts = `-- name: AdminImageboardPostCounts :many
-SELECT ib.idimageboard, ib.title, COUNT(ip.idimagepost) AS count
-FROM imageboard ib
-LEFT JOIN imagepost ip ON ip.imageboard_idimageboard = ib.idimageboard
-GROUP BY ib.idimageboard
-ORDER BY ib.title
-`
-
-type AdminImageboardPostCountsRow struct {
-	Idimageboard int32
-	Title        sql.NullString
-	Count        int64
-}
-
-func (q *Queries) AdminImageboardPostCounts(ctx context.Context) ([]*AdminImageboardPostCountsRow, error) {
-	rows, err := q.db.QueryContext(ctx, adminImageboardPostCounts)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*AdminImageboardPostCountsRow
-	for rows.Next() {
-		var i AdminImageboardPostCountsRow
-		if err := rows.Scan(&i.Idimageboard, &i.Title, &i.Count); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getTemplateOverride = `-- name: GetTemplateOverride :one
-SELECT body FROM template_overrides WHERE name = ?
-`
-
-func (q *Queries) GetTemplateOverride(ctx context.Context, name string) (string, error) {
-	row := q.db.QueryRowContext(ctx, getTemplateOverride, name)
-	var body string
-	err := row.Scan(&body)
-	return body, err
-}
-
-const imageboardPostCounts = `-- name: ImageboardPostCounts :many
 SELECT ib.idimageboard, ib.title, COUNT(ip.idimagepost) AS count
 FROM imageboard ib
 LEFT JOIN imagepost ip ON ip.imageboard_idimageboard = ib.idimageboard

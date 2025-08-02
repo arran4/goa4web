@@ -114,23 +114,6 @@ WHERE NOT EXISTS (
 )
 ORDER BY u.idusers;
 
--- name: ListUsers :many
-SELECT u.idusers,
-       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
-       u.username
-FROM users u
-ORDER BY u.idusers
-LIMIT ? OFFSET ?;
-
--- name: SearchUsers :many
-SELECT u.idusers,
-       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
-       u.username
-FROM users u
-WHERE LOWER(u.username) LIKE LOWER(sqlc.arg(pattern)) OR LOWER((SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1)) LIKE LOWER(sqlc.arg(pattern))
-ORDER BY u.idusers
-LIMIT ? OFFSET ?;
-
 -- name: ListUserIDsByRole :many
 SELECT u.idusers
 FROM users u

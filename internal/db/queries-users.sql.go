@@ -251,49 +251,6 @@ func (q *Queries) ListUserIDsByRole(ctx context.Context, name string) ([]int32, 
 	return items, nil
 }
 
-const listUsers = `-- name: ListUsers :many
-SELECT u.idusers,
-       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
-       u.username
-FROM users u
-ORDER BY u.idusers
-LIMIT ? OFFSET ?
-`
-
-type ListUsersParams struct {
-	Limit  int32
-	Offset int32
-}
-
-type ListUsersRow struct {
-	Idusers  int32
-	Email    string
-	Username sql.NullString
-}
-
-func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]*ListUsersRow, error) {
-	rows, err := q.db.QueryContext(ctx, listUsers, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*ListUsersRow
-	for rows.Next() {
-		var i ListUsersRow
-		if err := rows.Scan(&i.Idusers, &i.Email, &i.Username); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listUsersSubscribedToBlogs = `-- name: ListUsersSubscribedToBlogs :many
 SELECT idblogs, forumthread_id, t.users_idusers, t.language_idlanguage, blog, written, t.deleted_at, last_index, idusers, username, u.deleted_at, public_profile_enabled_at, idpreferences, p.language_idlanguage, p.users_idusers, emailforumupdates, page_size, auto_subscribe_replies, (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers ORDER BY ue.id LIMIT 1) AS email
 FROM blogs t, users u, preferences p
@@ -716,56 +673,6 @@ func (q *Queries) Login(ctx context.Context, username sql.NullString) (*LoginRow
 		&i.Username,
 	)
 	return &i, err
-}
-
-const searchUsers = `-- name: SearchUsers :many
-SELECT u.idusers,
-       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
-       u.username
-FROM users u
-WHERE LOWER(u.username) LIKE LOWER(?) OR LOWER((SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1)) LIKE LOWER(?)
-ORDER BY u.idusers
-LIMIT ? OFFSET ?
-`
-
-type SearchUsersParams struct {
-	Pattern string
-	Limit   int32
-	Offset  int32
-}
-
-type SearchUsersRow struct {
-	Idusers  int32
-	Email    string
-	Username sql.NullString
-}
-
-func (q *Queries) SearchUsers(ctx context.Context, arg SearchUsersParams) ([]*SearchUsersRow, error) {
-	rows, err := q.db.QueryContext(ctx, searchUsers,
-		arg.Pattern,
-		arg.Pattern,
-		arg.Limit,
-		arg.Offset,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*SearchUsersRow
-	for rows.Next() {
-		var i SearchUsersRow
-		if err := rows.Scan(&i.Idusers, &i.Email, &i.Username); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const updatePublicProfileEnabledAtByUserID = `-- name: UpdatePublicProfileEnabledAtByUserID :exec

@@ -31,8 +31,8 @@ type AdminGetAllCommentsByUserRow struct {
 	ForumtopicIdforumtopic sql.NullInt32
 }
 
-func (q *Queries) AdminGetAllCommentsByUser(ctx context.Context, usersIdusers int32) ([]*AdminGetAllCommentsByUserRow, error) {
-	rows, err := q.db.QueryContext(ctx, adminGetAllCommentsByUser, usersIdusers)
+func (q *Queries) AdminGetAllCommentsByUser(ctx context.Context, userID int32) ([]*AdminGetAllCommentsByUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminGetAllCommentsByUser, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -72,13 +72,19 @@ FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id = th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
 LEFT JOIN users u ON u.idusers = c.users_idusers
+WHERE EXISTS (
+    SELECT 1 FROM user_roles ur
+    JOIN roles r ON ur.role_id = r.id
+    WHERE ur.users_idusers = ? AND r.is_admin = 1
+)
 ORDER BY c.written DESC
 LIMIT ? OFFSET ?
 `
 
 type AdminListAllCommentsWithThreadInfoParams struct {
-	Limit  int32
-	Offset int32
+	ViewerID int32
+	Limit    int32
+	Offset   int32
 }
 
 type AdminListAllCommentsWithThreadInfoRow struct {
@@ -94,7 +100,7 @@ type AdminListAllCommentsWithThreadInfoRow struct {
 }
 
 func (q *Queries) AdminListAllCommentsWithThreadInfo(ctx context.Context, arg AdminListAllCommentsWithThreadInfoParams) ([]*AdminListAllCommentsWithThreadInfoRow, error) {
-	rows, err := q.db.QueryContext(ctx, adminListAllCommentsWithThreadInfo, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, adminListAllCommentsWithThreadInfo, arg.ViewerID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -220,7 +226,20 @@ FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
-WHERE c.idcomments = ? AND EXISTS (
+WHERE c.idcomments = ?
+  AND (
+      c.language_idlanguage = 0
+      OR c.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = c.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='forum'
       AND (g.item='topic' OR g.item IS NULL)
@@ -257,6 +276,8 @@ func (q *Queries) GetCommentByIdForUser(ctx context.Context, arg GetCommentByIdF
 		arg.ViewerID,
 		arg.ViewerID,
 		arg.ID,
+		arg.ViewerID,
+		arg.ViewerID,
 		arg.UserID,
 	)
 	var i GetCommentByIdForUserRow
@@ -273,54 +294,6 @@ func (q *Queries) GetCommentByIdForUser(ctx context.Context, arg GetCommentByIdF
 		&i.IsOwner,
 	)
 	return &i, err
-}
-
-const getCommentsByIds = `-- name: GetCommentsByIds :many
-SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, c.last_index
-FROM comments c
-WHERE c.Idcomments IN (/*SLICE:ids*/?)
-`
-
-func (q *Queries) GetCommentsByIds(ctx context.Context, ids []int32) ([]*Comment, error) {
-	query := getCommentsByIds
-	var queryParams []interface{}
-	if len(ids) > 0 {
-		for _, v := range ids {
-			queryParams = append(queryParams, v)
-		}
-		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(ids))[1:], 1)
-	} else {
-		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
-	}
-	rows, err := q.db.QueryContext(ctx, query, queryParams...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*Comment
-	for rows.Next() {
-		var i Comment
-		if err := rows.Scan(
-			&i.Idcomments,
-			&i.ForumthreadID,
-			&i.UsersIdusers,
-			&i.LanguageIdlanguage,
-			&i.Written,
-			&i.Text,
-			&i.DeletedAt,
-			&i.LastIndex,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const getCommentsByIdsForUserWithThreadInfo = `-- name: GetCommentsByIdsForUserWithThreadInfo :many
@@ -340,7 +313,20 @@ LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
 LEFT JOIN forumcategory fc ON t.forumcategory_idforumcategory = fc.idforumcategory
-WHERE c.Idcomments IN (/*SLICE:ids*/?) AND EXISTS (
+WHERE c.Idcomments IN (/*SLICE:ids*/?)
+  AND (
+      c.language_idlanguage = 0
+      OR c.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = c.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='forum'
       AND (g.item='topic' OR g.item IS NULL)
@@ -349,7 +335,7 @@ WHERE c.Idcomments IN (/*SLICE:ids*/?) AND EXISTS (
       AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
-)
+  )
 ORDER BY c.written DESC
 `
 
@@ -390,6 +376,8 @@ func (q *Queries) GetCommentsByIdsForUserWithThreadInfo(ctx context.Context, arg
 	} else {
 		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
 	}
+	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.ViewerID)
 	queryParams = append(queryParams, arg.UserID)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
@@ -444,7 +432,21 @@ FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
-WHERE c.forumthread_id=? AND c.forumthread_id!=0 AND EXISTS (
+WHERE c.forumthread_id=?
+  AND c.forumthread_id!=0
+  AND (
+      c.language_idlanguage = 0
+      OR c.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = c.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='forum'
       AND (g.item='topic' OR g.item IS NULL)
@@ -481,6 +483,8 @@ func (q *Queries) GetCommentsByThreadIdForUser(ctx context.Context, arg GetComme
 		arg.ViewerID,
 		arg.ViewerID,
 		arg.ThreadID,
+		arg.ViewerID,
+		arg.ViewerID,
 		arg.UserID,
 	)
 	if err != nil {

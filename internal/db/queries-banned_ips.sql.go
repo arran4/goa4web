@@ -10,28 +10,43 @@ import (
 	"database/sql"
 )
 
-const cancelBannedIp = `-- name: CancelBannedIp :exec
+const adminCancelBannedIp = `-- name: AdminCancelBannedIp :exec
 UPDATE banned_ips SET canceled_at = CURRENT_TIMESTAMP WHERE ip_net = ? AND canceled_at IS NULL
 `
 
-func (q *Queries) CancelBannedIp(ctx context.Context, ipNet string) error {
-	_, err := q.db.ExecContext(ctx, cancelBannedIp, ipNet)
+func (q *Queries) AdminCancelBannedIp(ctx context.Context, ipNet string) error {
+	_, err := q.db.ExecContext(ctx, adminCancelBannedIp, ipNet)
 	return err
 }
 
-const insertBannedIp = `-- name: InsertBannedIp :exec
+const adminInsertBannedIp = `-- name: AdminInsertBannedIp :exec
 INSERT INTO banned_ips (ip_net, reason, expires_at)
 VALUES (?, ?, ?)
 `
 
-type InsertBannedIpParams struct {
+type AdminInsertBannedIpParams struct {
 	IpNet     string
 	Reason    sql.NullString
 	ExpiresAt sql.NullTime
 }
 
-func (q *Queries) InsertBannedIp(ctx context.Context, arg InsertBannedIpParams) error {
-	_, err := q.db.ExecContext(ctx, insertBannedIp, arg.IpNet, arg.Reason, arg.ExpiresAt)
+func (q *Queries) AdminInsertBannedIp(ctx context.Context, arg AdminInsertBannedIpParams) error {
+	_, err := q.db.ExecContext(ctx, adminInsertBannedIp, arg.IpNet, arg.Reason, arg.ExpiresAt)
+	return err
+}
+
+const adminUpdateBannedIp = `-- name: AdminUpdateBannedIp :exec
+UPDATE banned_ips SET reason = ?, expires_at = ? WHERE id = ?
+`
+
+type AdminUpdateBannedIpParams struct {
+	Reason    sql.NullString
+	ExpiresAt sql.NullTime
+	ID        int32
+}
+
+func (q *Queries) AdminUpdateBannedIp(ctx context.Context, arg AdminUpdateBannedIpParams) error {
+	_, err := q.db.ExecContext(ctx, adminUpdateBannedIp, arg.Reason, arg.ExpiresAt, arg.ID)
 	return err
 }
 
@@ -101,19 +116,4 @@ func (q *Queries) ListBannedIps(ctx context.Context) ([]*BannedIp, error) {
 		return nil, err
 	}
 	return items, nil
-}
-
-const updateBannedIp = `-- name: UpdateBannedIp :exec
-UPDATE banned_ips SET reason = ?, expires_at = ? WHERE id = ?
-`
-
-type UpdateBannedIpParams struct {
-	Reason    sql.NullString
-	ExpiresAt sql.NullTime
-	ID        int32
-}
-
-func (q *Queries) UpdateBannedIp(ctx context.Context, arg UpdateBannedIpParams) error {
-	_, err := q.db.ExecContext(ctx, updateBannedIp, arg.Reason, arg.ExpiresAt, arg.ID)
-	return err
 }

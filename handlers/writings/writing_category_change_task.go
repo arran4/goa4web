@@ -41,7 +41,7 @@ func (WritingCategoryChangeTask) Action(w http.ResponseWriter, r *http.Request) 
 		return common.UserError{ErrorMessage: fmt.Sprintf("invalid parent category: loop %v", path)}
 	}
 
-	if err := queries.UpdateWritingCategory(r.Context(), db.UpdateWritingCategoryParams{
+	if err := queries.AdminUpdateWritingCategory(r.Context(), db.AdminUpdateWritingCategoryParams{
 		Title: sql.NullString{
 			Valid:  true,
 			String: name,

@@ -11,6 +11,170 @@ import (
 	"strings"
 )
 
+const adminGetAllWritingsByUser = `-- name: AdminGetAllWritingsByUser :many
+SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, w.last_index, u.username,
+    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) AS Comments
+FROM writing w
+LEFT JOIN users u ON w.users_idusers = u.idusers
+WHERE w.users_idusers = ?
+ORDER BY w.published DESC
+`
+
+type AdminGetAllWritingsByUserRow struct {
+	Idwriting          int32
+	UsersIdusers       int32
+	ForumthreadID      int32
+	LanguageIdlanguage int32
+	WritingCategoryID  int32
+	Title              sql.NullString
+	Published          sql.NullTime
+	Writing            sql.NullString
+	Abstract           sql.NullString
+	Private            sql.NullBool
+	DeletedAt          sql.NullTime
+	LastIndex          sql.NullTime
+	Username           sql.NullString
+	Comments           int64
+}
+
+func (q *Queries) AdminGetAllWritingsByUser(ctx context.Context, usersIdusers int32) ([]*AdminGetAllWritingsByUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminGetAllWritingsByUser, usersIdusers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminGetAllWritingsByUserRow
+	for rows.Next() {
+		var i AdminGetAllWritingsByUserRow
+		if err := rows.Scan(
+			&i.Idwriting,
+			&i.UsersIdusers,
+			&i.ForumthreadID,
+			&i.LanguageIdlanguage,
+			&i.WritingCategoryID,
+			&i.Title,
+			&i.Published,
+			&i.Writing,
+			&i.Abstract,
+			&i.Private,
+			&i.DeletedAt,
+			&i.LastIndex,
+			&i.Username,
+			&i.Comments,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminGetWritingsByCategoryId = `-- name: AdminGetWritingsByCategoryId :many
+SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, w.last_index, u.username
+FROM writing w
+LEFT JOIN users u ON w.users_idusers = u.idusers
+WHERE w.writing_category_id = ?
+ORDER BY w.published DESC
+`
+
+type AdminGetWritingsByCategoryIdRow struct {
+	Idwriting          int32
+	UsersIdusers       int32
+	ForumthreadID      int32
+	LanguageIdlanguage int32
+	WritingCategoryID  int32
+	Title              sql.NullString
+	Published          sql.NullTime
+	Writing            sql.NullString
+	Abstract           sql.NullString
+	Private            sql.NullBool
+	DeletedAt          sql.NullTime
+	LastIndex          sql.NullTime
+	Username           sql.NullString
+}
+
+func (q *Queries) AdminGetWritingsByCategoryId(ctx context.Context, writingCategoryID int32) ([]*AdminGetWritingsByCategoryIdRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminGetWritingsByCategoryId, writingCategoryID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminGetWritingsByCategoryIdRow
+	for rows.Next() {
+		var i AdminGetWritingsByCategoryIdRow
+		if err := rows.Scan(
+			&i.Idwriting,
+			&i.UsersIdusers,
+			&i.ForumthreadID,
+			&i.LanguageIdlanguage,
+			&i.WritingCategoryID,
+			&i.Title,
+			&i.Published,
+			&i.Writing,
+			&i.Abstract,
+			&i.Private,
+			&i.DeletedAt,
+			&i.LastIndex,
+			&i.Username,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminInsertWritingCategory = `-- name: AdminInsertWritingCategory :exec
+INSERT INTO writing_category (writing_category_id, title, description)
+VALUES (?, ?, ?)
+`
+
+type AdminInsertWritingCategoryParams struct {
+	WritingCategoryID int32
+	Title             sql.NullString
+	Description       sql.NullString
+}
+
+func (q *Queries) AdminInsertWritingCategory(ctx context.Context, arg AdminInsertWritingCategoryParams) error {
+	_, err := q.db.ExecContext(ctx, adminInsertWritingCategory, arg.WritingCategoryID, arg.Title, arg.Description)
+	return err
+}
+
+const adminUpdateWritingCategory = `-- name: AdminUpdateWritingCategory :exec
+UPDATE writing_category
+SET title = ?, description = ?, writing_category_id = ?
+WHERE idwritingCategory = ?
+`
+
+type AdminUpdateWritingCategoryParams struct {
+	Title             sql.NullString
+	Description       sql.NullString
+	WritingCategoryID int32
+	Idwritingcategory int32
+}
+
+func (q *Queries) AdminUpdateWritingCategory(ctx context.Context, arg AdminUpdateWritingCategoryParams) error {
+	_, err := q.db.ExecContext(ctx, adminUpdateWritingCategory,
+		arg.Title,
+		arg.Description,
+		arg.WritingCategoryID,
+		arg.Idwritingcategory,
+	)
+	return err
+}
+
 const assignWritingThisThreadId = `-- name: AssignWritingThisThreadId :exec
 UPDATE writing SET forumthread_id = ? WHERE idwriting = ?
 `
@@ -114,40 +278,6 @@ func (q *Queries) FetchCategoriesForUser(ctx context.Context, arg FetchCategorie
 	return items, nil
 }
 
-const getAllWritingCategories = `-- name: GetAllWritingCategories :many
-SELECT idwritingcategory, writing_category_id, title, description
-FROM writing_category
-WHERE writing_category_id = ?
-`
-
-func (q *Queries) GetAllWritingCategories(ctx context.Context, writingCategoryID int32) ([]*WritingCategory, error) {
-	rows, err := q.db.QueryContext(ctx, getAllWritingCategories, writingCategoryID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*WritingCategory
-	for rows.Next() {
-		var i WritingCategory
-		if err := rows.Scan(
-			&i.Idwritingcategory,
-			&i.WritingCategoryID,
-			&i.Title,
-			&i.Description,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getAllWritingsByUser = `-- name: GetAllWritingsByUser :many
 WITH RECURSIVE role_ids(id) AS (
     SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
@@ -207,70 +337,6 @@ func (q *Queries) GetAllWritingsByUser(ctx context.Context, arg GetAllWritingsBy
 	var items []*GetAllWritingsByUserRow
 	for rows.Next() {
 		var i GetAllWritingsByUserRow
-		if err := rows.Scan(
-			&i.Idwriting,
-			&i.UsersIdusers,
-			&i.ForumthreadID,
-			&i.LanguageIdlanguage,
-			&i.WritingCategoryID,
-			&i.Title,
-			&i.Published,
-			&i.Writing,
-			&i.Abstract,
-			&i.Private,
-			&i.DeletedAt,
-			&i.LastIndex,
-			&i.Username,
-			&i.Comments,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getAllWritingsByUserAdmin = `-- name: GetAllWritingsByUserAdmin :many
-SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, w.last_index, u.username,
-    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) AS Comments
-FROM writing w
-LEFT JOIN users u ON w.users_idusers = u.idusers
-WHERE w.users_idusers = ?
-ORDER BY w.published DESC
-`
-
-type GetAllWritingsByUserAdminRow struct {
-	Idwriting          int32
-	UsersIdusers       int32
-	ForumthreadID      int32
-	LanguageIdlanguage int32
-	WritingCategoryID  int32
-	Title              sql.NullString
-	Published          sql.NullTime
-	Writing            sql.NullString
-	Abstract           sql.NullString
-	Private            sql.NullBool
-	DeletedAt          sql.NullTime
-	LastIndex          sql.NullTime
-	Username           sql.NullString
-	Comments           int64
-}
-
-func (q *Queries) GetAllWritingsByUserAdmin(ctx context.Context, usersIdusers int32) ([]*GetAllWritingsByUserAdminRow, error) {
-	rows, err := q.db.QueryContext(ctx, getAllWritingsByUserAdmin, usersIdusers)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*GetAllWritingsByUserAdminRow
-	for rows.Next() {
-		var i GetAllWritingsByUserAdminRow
 		if err := rows.Scan(
 			&i.Idwriting,
 			&i.UsersIdusers,
@@ -473,6 +539,18 @@ SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.
 FROM writing w
 LEFT JOIN users u ON w.users_idusers = u.idusers
 WHERE w.private = 0 AND w.users_idusers = ?
+  AND (
+    w.language_idlanguage = 0
+    OR w.language_idlanguage IS NULL
+    OR EXISTS (
+        SELECT 1 FROM user_language ul
+        WHERE ul.users_idusers = ?
+          AND ul.language_idlanguage = w.language_idlanguage
+    )
+    OR NOT EXISTS (
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+    )
+  )
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='writing'
@@ -516,6 +594,8 @@ func (q *Queries) GetPublicWritingsByUserForViewer(ctx context.Context, arg GetP
 	rows, err := q.db.QueryContext(ctx, getPublicWritingsByUserForViewer,
 		arg.ViewerID,
 		arg.AuthorID,
+		arg.ViewerID,
+		arg.ViewerID,
 		arg.UserID,
 		arg.Limit,
 		arg.Offset,
@@ -641,6 +721,18 @@ SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.
 FROM writing w
 LEFT JOIN users u ON w.Users_Idusers=u.idusers
 WHERE w.private = 0 AND w.writing_category_id = ?
+  AND (
+    w.language_idlanguage = 0
+    OR w.language_idlanguage IS NULL
+    OR EXISTS (
+        SELECT 1 FROM user_language ul
+        WHERE ul.users_idusers = ?
+          AND ul.language_idlanguage = w.language_idlanguage
+    )
+    OR NOT EXISTS (
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+    )
+  )
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='writing'
@@ -684,6 +776,8 @@ func (q *Queries) GetPublicWritingsInCategoryForUser(ctx context.Context, arg Ge
 	rows, err := q.db.QueryContext(ctx, getPublicWritingsInCategoryForUser,
 		arg.ViewerID,
 		arg.WritingCategoryID,
+		arg.ViewerID,
+		arg.ViewerID,
 		arg.UserID,
 		arg.Limit,
 		arg.Offset,
@@ -809,67 +903,6 @@ func (q *Queries) GetWritingCategoryById(ctx context.Context, idwritingcategory 
 		&i.Description,
 	)
 	return &i, err
-}
-
-const getWritingsByCategoryId = `-- name: GetWritingsByCategoryId :many
-SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, w.last_index, u.username
-FROM writing w
-LEFT JOIN users u ON w.users_idusers = u.idusers
-WHERE w.writing_category_id = ?
-ORDER BY w.published DESC
-`
-
-type GetWritingsByCategoryIdRow struct {
-	Idwriting          int32
-	UsersIdusers       int32
-	ForumthreadID      int32
-	LanguageIdlanguage int32
-	WritingCategoryID  int32
-	Title              sql.NullString
-	Published          sql.NullTime
-	Writing            sql.NullString
-	Abstract           sql.NullString
-	Private            sql.NullBool
-	DeletedAt          sql.NullTime
-	LastIndex          sql.NullTime
-	Username           sql.NullString
-}
-
-func (q *Queries) GetWritingsByCategoryId(ctx context.Context, writingCategoryID int32) ([]*GetWritingsByCategoryIdRow, error) {
-	rows, err := q.db.QueryContext(ctx, getWritingsByCategoryId, writingCategoryID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*GetWritingsByCategoryIdRow
-	for rows.Next() {
-		var i GetWritingsByCategoryIdRow
-		if err := rows.Scan(
-			&i.Idwriting,
-			&i.UsersIdusers,
-			&i.ForumthreadID,
-			&i.LanguageIdlanguage,
-			&i.WritingCategoryID,
-			&i.Title,
-			&i.Published,
-			&i.Writing,
-			&i.Abstract,
-			&i.Private,
-			&i.DeletedAt,
-			&i.LastIndex,
-			&i.Username,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const getWritingsByIdsForUserDescendingByPublishedDate = `-- name: GetWritingsByIdsForUserDescendingByPublishedDate :many
@@ -1002,22 +1035,6 @@ func (q *Queries) InsertWriting(ctx context.Context, arg InsertWritingParams) (i
 	return result.LastInsertId()
 }
 
-const insertWritingCategory = `-- name: InsertWritingCategory :exec
-INSERT INTO writing_category (writing_category_id, title, description)
-VALUES (?, ?, ?)
-`
-
-type InsertWritingCategoryParams struct {
-	WritingCategoryID int32
-	Title             sql.NullString
-	Description       sql.NullString
-}
-
-func (q *Queries) InsertWritingCategory(ctx context.Context, arg InsertWritingCategoryParams) error {
-	_, err := q.db.ExecContext(ctx, insertWritingCategory, arg.WritingCategoryID, arg.Title, arg.Description)
-	return err
-}
-
 const listWritersForViewer = `-- name: ListWritersForViewer :many
 WITH RECURSIVE role_ids(id) AS (
     SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
@@ -1031,9 +1048,15 @@ SELECT u.username, COUNT(w.idwriting) AS count
 FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
 WHERE (
-    NOT EXISTS (SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?)
-    OR w.language_idlanguage IN (
-        SELECT ul.language_idlanguage FROM user_language ul WHERE ul.users_idusers = ?
+    w.language_idlanguage = 0
+    OR w.language_idlanguage IS NULL
+    OR EXISTS (
+        SELECT 1 FROM user_language ul
+        WHERE ul.users_idusers = ?
+          AND ul.language_idlanguage = w.language_idlanguage
+    )
+    OR NOT EXISTS (
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
     )
 )
 AND EXISTS (
@@ -1107,9 +1130,15 @@ FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
 WHERE (LOWER(u.username) LIKE LOWER(?) OR LOWER((SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1)) LIKE LOWER(?))
   AND (
-    NOT EXISTS (SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?)
-    OR w.language_idlanguage IN (
-        SELECT ul.language_idlanguage FROM user_language ul WHERE ul.users_idusers = ?
+    w.language_idlanguage = 0
+    OR w.language_idlanguage IS NULL
+    OR EXISTS (
+        SELECT 1 FROM user_language ul
+        WHERE ul.users_idusers = ?
+          AND ul.language_idlanguage = w.language_idlanguage
+    )
+    OR NOT EXISTS (
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
     )
   )
   AND EXISTS (
@@ -1204,29 +1233,6 @@ func (q *Queries) UpdateWriting(ctx context.Context, arg UpdateWritingParams) er
 		arg.Private,
 		arg.LanguageIdlanguage,
 		arg.Idwriting,
-	)
-	return err
-}
-
-const updateWritingCategory = `-- name: UpdateWritingCategory :exec
-UPDATE writing_category
-SET title = ?, description = ?, writing_category_id = ?
-WHERE idwritingCategory = ?
-`
-
-type UpdateWritingCategoryParams struct {
-	Title             sql.NullString
-	Description       sql.NullString
-	WritingCategoryID int32
-	Idwritingcategory int32
-}
-
-func (q *Queries) UpdateWritingCategory(ctx context.Context, arg UpdateWritingCategoryParams) error {
-	_, err := q.db.ExecContext(ctx, updateWritingCategory,
-		arg.Title,
-		arg.Description,
-		arg.WritingCategoryID,
-		arg.Idwritingcategory,
 	)
 	return err
 }

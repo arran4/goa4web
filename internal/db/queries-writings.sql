@@ -29,6 +29,18 @@ SELECT w.*, u.username,
 FROM writing w
 LEFT JOIN users u ON w.users_idusers = u.idusers
 WHERE w.private = 0 AND w.users_idusers = sqlc.arg(author_id)
+  AND (
+    w.language_idlanguage = 0
+    OR w.language_idlanguage IS NULL
+    OR EXISTS (
+        SELECT 1 FROM user_language ul
+        WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          AND ul.language_idlanguage = w.language_idlanguage
+    )
+    OR NOT EXISTS (
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+    )
+  )
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='writing'
@@ -66,6 +78,18 @@ SELECT w.*, u.Username,
 FROM writing w
 LEFT JOIN users u ON w.Users_Idusers=u.idusers
 WHERE w.private = 0 AND w.writing_category_id = sqlc.arg(writing_category_id)
+  AND (
+    w.language_idlanguage = 0
+    OR w.language_idlanguage IS NULL
+    OR EXISTS (
+        SELECT 1 FROM user_language ul
+        WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          AND ul.language_idlanguage = w.language_idlanguage
+    )
+    OR NOT EXISTS (
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+    )
+  )
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='writing'
@@ -141,19 +165,14 @@ WHERE w.idwriting IN (sqlc.slice(writing_ids))
 ORDER BY w.published DESC
 ;
 
--- name: InsertWritingCategory :exec
+-- name: AdminInsertWritingCategory :exec
 INSERT INTO writing_category (writing_category_id, title, description)
 VALUES (?, ?, ?);
 
--- name: UpdateWritingCategory :exec
+-- name: AdminUpdateWritingCategory :exec
 UPDATE writing_category
 SET title = ?, description = ?, writing_category_id = ?
 WHERE idwritingCategory = ?;
-
--- name: GetAllWritingCategories :many
-SELECT *
-FROM writing_category
-WHERE writing_category_id = ?;
 
 -- name: FetchAllCategories :many
 SELECT wc.*
@@ -213,7 +232,7 @@ WHERE w.users_idusers = sqlc.arg(author_id)
   )
 ORDER BY w.published DESC;
 
--- name: GetAllWritingsByUserAdmin :many
+-- name: AdminGetAllWritingsByUser :many
 SELECT w.*, u.username,
     (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) AS Comments
 FROM writing w
@@ -233,9 +252,15 @@ SELECT u.username, COUNT(w.idwriting) AS count
 FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
 WHERE (
-    NOT EXISTS (SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id))
-    OR w.language_idlanguage IN (
-        SELECT ul.language_idlanguage FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+    w.language_idlanguage = 0
+    OR w.language_idlanguage IS NULL
+    OR EXISTS (
+        SELECT 1 FROM user_language ul
+        WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          AND ul.language_idlanguage = w.language_idlanguage
+    )
+    OR NOT EXISTS (
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
     )
 )
 AND EXISTS (
@@ -266,9 +291,15 @@ FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
 WHERE (LOWER(u.username) LIKE LOWER(sqlc.arg(query)) OR LOWER((SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1)) LIKE LOWER(sqlc.arg(query)))
   AND (
-    NOT EXISTS (SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id))
-    OR w.language_idlanguage IN (
-        SELECT ul.language_idlanguage FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+    w.language_idlanguage = 0
+    OR w.language_idlanguage IS NULL
+    OR EXISTS (
+        SELECT 1 FROM user_language ul
+        WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          AND ul.language_idlanguage = w.language_idlanguage
+    )
+    OR NOT EXISTS (
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
     )
   )
   AND EXISTS (
@@ -295,7 +326,7 @@ SELECT idwriting, title, abstract, writing FROM writing WHERE deleted_at IS NULL
 -- name: GetWritingCategoryById :one
 SELECT * FROM writing_category WHERE idwritingCategory = ?;
 
--- name: GetWritingsByCategoryId :many
+-- name: AdminGetWritingsByCategoryId :many
 SELECT w.*, u.username
 FROM writing w
 LEFT JOIN users u ON w.users_idusers = u.idusers

@@ -1,6 +1,7 @@
 package user
 
 import (
+	"database/sql"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -45,10 +46,12 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 
 	offset := (page - 1) * size
 
-	rows, err := queries.ListUploadedImagesByUser(r.Context(), db.ListUploadedImagesByUserParams{
-		UsersIdusers: uid,
-		Limit:        int32(size + 1),
-		Offset:       int32(offset),
+	rows, err := queries.ListUploadedImagesByUserForViewer(r.Context(), db.ListUploadedImagesByUserForViewerParams{
+		ViewerID:      uid,
+		UserID:        uid,
+		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
+		Limit:         int32(size + 1),
+		Offset:        int32(offset),
 	})
 	if err != nil {
 		log.Printf("list images: %v", err)

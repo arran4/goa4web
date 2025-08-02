@@ -13,7 +13,20 @@ FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
-WHERE c.idcomments = sqlc.arg(id) AND EXISTS (
+WHERE c.idcomments = sqlc.arg(id)
+  AND (
+      c.language_idlanguage = 0
+      OR c.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+            AND ul.language_idlanguage = c.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+      )
+  )
+  AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='forum'
       AND (g.item='topic' OR g.item IS NULL)
@@ -35,11 +48,6 @@ SELECT c.*
 FROM comments c
 WHERE c.Idcomments=?;
 
--- name: GetCommentsByIds :many
-SELECT c.*
-FROM comments c
-WHERE c.Idcomments IN (sqlc.slice('ids'))
-;
 
 -- name: GetCommentsByIdsForUserWithThreadInfo :many
 WITH RECURSIVE role_ids(id) AS (
@@ -58,7 +66,20 @@ LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
 LEFT JOIN forumcategory fc ON t.forumcategory_idforumcategory = fc.idforumcategory
-WHERE c.Idcomments IN (sqlc.slice('ids')) AND EXISTS (
+WHERE c.Idcomments IN (sqlc.slice('ids'))
+  AND (
+      c.language_idlanguage = 0
+      OR c.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+            AND ul.language_idlanguage = c.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+      )
+  )
+  AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='forum'
       AND (g.item='topic' OR g.item IS NULL)
@@ -67,7 +88,7 @@ WHERE c.Idcomments IN (sqlc.slice('ids')) AND EXISTS (
       AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
-)
+  )
 ORDER BY c.written DESC
 ;
 
@@ -91,7 +112,21 @@ FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
-WHERE c.forumthread_id=sqlc.arg(thread_id) AND c.forumthread_id!=0 AND EXISTS (
+WHERE c.forumthread_id=sqlc.arg(thread_id)
+  AND c.forumthread_id!=0
+  AND (
+      c.language_idlanguage = 0
+      OR c.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+            AND ul.language_idlanguage = c.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+      )
+  )
+  AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='forum'
       AND (g.item='topic' OR g.item IS NULL)
@@ -108,7 +143,7 @@ ORDER BY c.written;
 SELECT c.*, th.forumtopic_idforumtopic
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id = th.idforumthread
-WHERE c.users_idusers = ?
+WHERE c.users_idusers = sqlc.arg('user_id')
 ORDER BY c.written;
 
 -- name: SetCommentLastIndex :exec
@@ -126,5 +161,10 @@ FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id = th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
 LEFT JOIN users u ON u.idusers = c.users_idusers
+WHERE EXISTS (
+    SELECT 1 FROM user_roles ur
+    JOIN roles r ON ur.role_id = r.id
+    WHERE ur.users_idusers = sqlc.arg('viewer_id') AND r.is_admin = 1
+)
 ORDER BY c.written DESC
 LIMIT ? OFFSET ?;

@@ -53,7 +53,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 	ip := strings.Split(r.RemoteAddr, ":")[0]
 	if cfg.LoginAttemptThreshold > 0 {
 		since := time.Now().Add(-time.Duration(cfg.LoginAttemptWindow) * time.Minute)
-		cnt, err := queries.CountRecentLoginAttempts(r.Context(), db.CountRecentLoginAttemptsParams{Username: username, IpAddress: ip, CreatedAt: since})
+		cnt, err := queries.SystemCountRecentLoginAttempts(r.Context(), db.SystemCountRecentLoginAttemptsParams{Username: username, IpAddress: ip, CreatedAt: since})
 		if err != nil {
 			log.Printf("count login attempts: %v", err)
 		} else if cnt >= int64(cfg.LoginAttemptThreshold) {
@@ -64,7 +64,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 	row, err := queries.Login(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			if err := queries.InsertLoginAttempt(r.Context(), db.InsertLoginAttemptParams{Username: username, IpAddress: strings.Split(r.RemoteAddr, ":")[0]}); err != nil {
+			if err := queries.SystemInsertLoginAttempt(r.Context(), db.SystemInsertLoginAttemptParams{Username: username, IpAddress: strings.Split(r.RemoteAddr, ":")[0]}); err != nil {
 				log.Printf("insert login attempt: %v", err)
 			}
 			return loginFormHandler{msg: "No such user"}
@@ -94,7 +94,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 				return handlers.TemplateWithDataHandler("passwordVerifyPage.gohtml", data)
 			}
 		} else {
-			if err := queries.InsertLoginAttempt(r.Context(), db.InsertLoginAttemptParams{Username: username, IpAddress: strings.Split(r.RemoteAddr, ":")[0]}); err != nil {
+			if err := queries.SystemInsertLoginAttempt(r.Context(), db.SystemInsertLoginAttemptParams{Username: username, IpAddress: strings.Split(r.RemoteAddr, ":")[0]}); err != nil {
 				log.Printf("insert login attempt: %v", err)
 			}
 			return loginFormHandler{msg: "Invalid password"}

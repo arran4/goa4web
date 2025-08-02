@@ -1,6 +1,6 @@
 {{ template "head" $ }}
 <table border="1">
-    <tr><th>ID</th><th>Name</th><th>Can Login</th><th>Is Admin</th><th>Public Profiles</th></tr>
+    <tr><th>ID</th><th>Name</th><th>Can Login</th><th>Is Admin</th><th>Public Profiles</th><th>Edit</th></tr>
     {{- range .Roles }}
     <tr>
         <td><a href="/admin/role/{{ .ID }}">{{ .ID }}</a></td>
@@ -22,6 +22,7 @@
                 {{ end }}
             </form>
         </td>
+        <td><a href="/admin/role/{{ .ID }}/edit">Edit</a></td>
     </tr>
     {{- end }}
 </table>

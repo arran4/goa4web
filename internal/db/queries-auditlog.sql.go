@@ -11,30 +11,7 @@ import (
 	"time"
 )
 
-const insertAuditLog = `-- name: InsertAuditLog :exec
-INSERT INTO audit_log (users_idusers, action, path, details, data) VALUES (?, ?, ?, ?, ?)
-`
-
-type InsertAuditLogParams struct {
-	UsersIdusers int32
-	Action       string
-	Path         string
-	Details      sql.NullString
-	Data         sql.NullString
-}
-
-func (q *Queries) InsertAuditLog(ctx context.Context, arg InsertAuditLogParams) error {
-	_, err := q.db.ExecContext(ctx, insertAuditLog,
-		arg.UsersIdusers,
-		arg.Action,
-		arg.Path,
-		arg.Details,
-		arg.Data,
-	)
-	return err
-}
-
-const listAuditLogs = `-- name: ListAuditLogs :many
+const adminListAuditLogs = `-- name: AdminListAuditLogs :many
 SELECT a.id, a.users_idusers, a.action, a.path, a.details, a.data, a.created_at, u.username
 FROM audit_log a
 LEFT JOIN users u ON a.users_idusers = u.idusers
@@ -43,14 +20,14 @@ ORDER BY a.id DESC
 LIMIT ? OFFSET ?
 `
 
-type ListAuditLogsParams struct {
+type AdminListAuditLogsParams struct {
 	Username sql.NullString
 	Action   string
 	Limit    int32
 	Offset   int32
 }
 
-type ListAuditLogsRow struct {
+type AdminListAuditLogsRow struct {
 	ID           int32
 	UsersIdusers int32
 	Action       string
@@ -61,8 +38,8 @@ type ListAuditLogsRow struct {
 	Username     sql.NullString
 }
 
-func (q *Queries) ListAuditLogs(ctx context.Context, arg ListAuditLogsParams) ([]*ListAuditLogsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listAuditLogs,
+func (q *Queries) AdminListAuditLogs(ctx context.Context, arg AdminListAuditLogsParams) ([]*AdminListAuditLogsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListAuditLogs,
 		arg.Username,
 		arg.Action,
 		arg.Limit,
@@ -72,9 +49,9 @@ func (q *Queries) ListAuditLogs(ctx context.Context, arg ListAuditLogsParams) ([
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*ListAuditLogsRow
+	var items []*AdminListAuditLogsRow
 	for rows.Next() {
-		var i ListAuditLogsRow
+		var i AdminListAuditLogsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.UsersIdusers,
@@ -96,4 +73,27 @@ func (q *Queries) ListAuditLogs(ctx context.Context, arg ListAuditLogsParams) ([
 		return nil, err
 	}
 	return items, nil
+}
+
+const insertAuditLog = `-- name: InsertAuditLog :exec
+INSERT INTO audit_log (users_idusers, action, path, details, data) VALUES (?, ?, ?, ?, ?)
+`
+
+type InsertAuditLogParams struct {
+	UsersIdusers int32
+	Action       string
+	Path         string
+	Details      sql.NullString
+	Data         sql.NullString
+}
+
+func (q *Queries) InsertAuditLog(ctx context.Context, arg InsertAuditLogParams) error {
+	_, err := q.db.ExecContext(ctx, insertAuditLog,
+		arg.UsersIdusers,
+		arg.Action,
+		arg.Path,
+		arg.Details,
+		arg.Data,
+	)
+	return err
 }

@@ -34,7 +34,7 @@ func (c *emailQueueListCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
-	rows, err := queries.ListUnsentPendingEmails(ctx)
+	rows, err := queries.AdminListUnsentPendingEmails(ctx, dbpkg.AdminListUnsentPendingEmailsParams{})
 	if err != nil {
 		return fmt.Errorf("list emails: %w", err)
 	}

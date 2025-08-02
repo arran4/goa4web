@@ -28,7 +28,7 @@ func adminUserProfilePage(w http.ResponseWriter, r *http.Request) {
 	emails, _ := queries.GetUserEmailsByUserID(r.Context(), int32(id))
 	comments, _ := queries.ListAdminUserComments(r.Context(), int32(id))
 	roles, _ := queries.GetPermissionsByUserID(r.Context(), int32(id))
-	stats, _ := queries.UserPostCountsByID(r.Context(), int32(id))
+	stats, _ := queries.AdminUserPostCountsByID(r.Context(), int32(id))
 	bm, _ := queries.GetBookmarksForUser(r.Context(), int32(id))
 	var bmSize int
 	if bm != nil {
@@ -45,7 +45,7 @@ func adminUserProfilePage(w http.ResponseWriter, r *http.Request) {
 		Emails       []*db.UserEmail
 		Comments     []*db.AdminUserComment
 		Roles        []*db.GetPermissionsByUserIDRow
-		Stats        *db.UserPostCountsByIDRow
+		Stats        *db.AdminUserPostCountsByIDRow
 		BookmarkSize int
 		Grants       []*db.Grant
 	}{

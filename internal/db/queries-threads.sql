@@ -1,4 +1,4 @@
--- name: RecalculateAllForumThreadMetaData :exec
+-- name: AdminRecalculateAllForumThreadMetaData :exec
 UPDATE forumthread
 SET lastaddition = (
     SELECT written
@@ -23,7 +23,7 @@ SET lastaddition = (
     LIMIT 1
 );
 
--- name: RecalculateForumThreadByIdMetaData :exec
+-- name: AdminRecalculateForumThreadByIdMetaData :exec
 UPDATE forumthread
 SET lastaddition = (
     SELECT written
@@ -61,7 +61,20 @@ SELECT th.*, lu.username AS LastPosterUsername
 FROM forumthread th
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN users lu ON lu.idusers = t.lastposter
+LEFT JOIN comments fc ON th.firstpost = fc.idcomments
 WHERE th.idforumthread=sqlc.arg(thread_id)
+  AND (
+      fc.language_idlanguage = 0
+      OR fc.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+            AND ul.language_idlanguage = fc.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+      )
+  )
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='forum'
@@ -81,18 +94,18 @@ INSERT INTO forumthread (forumtopic_idforumtopic) VALUES (?);
 -- name: GetForumTopicIdByThreadId :one
 SELECT forumtopic_idforumtopic FROM forumthread WHERE idforumthread = ?;
 
--- name: DeleteForumThread :exec
+-- name: AdminDeleteForumThread :exec
 UPDATE forumthread SET deleted_at = NOW() WHERE idforumthread = ?;
 
 
--- name: GetThreadsStartedByUser :many
+-- name: AdminGetThreadsStartedByUser :many
 SELECT th.*
 FROM forumthread th
 JOIN comments c ON th.firstpost = c.idcomments
 WHERE c.users_idusers = ?
 ORDER BY th.lastaddition DESC;
 
--- name: GetThreadsStartedByUserWithTopic :many
+-- name: AdminGetThreadsStartedByUserWithTopic :many
 SELECT th.*, t.title AS topic_title, fc.idforumcategory AS category_id, fc.title AS category_title
 FROM forumthread th
 JOIN comments c ON th.firstpost = c.idcomments

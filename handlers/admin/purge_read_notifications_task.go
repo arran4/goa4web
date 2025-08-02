@@ -20,7 +20,7 @@ var _ tasks.AuditableTask = (*PurgeReadNotificationsTask)(nil)
 
 func (PurgeReadNotificationsTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	if err := queries.PurgeReadNotifications(r.Context()); err != nil {
+	if err := queries.AdminPurgeReadNotifications(r.Context()); err != nil {
 		return fmt.Errorf("purge notifications fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {

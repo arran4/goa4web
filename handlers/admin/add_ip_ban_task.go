@@ -25,8 +25,11 @@ var _ tasks.AuditableTask = (*AddIPBanTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*AddIPBanTask)(nil)
 
 func (AddIPBanTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if cd == nil || !cd.HasRole("administrator") {
+		return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { http.Error(w, "Forbidden", http.StatusForbidden) })
+	}
+	queries := cd.Queries()
 
 	ipNet := strings.TrimSpace(r.PostFormValue("ip"))
 	ipNet = NormalizeIPNet(ipNet)
@@ -39,7 +42,7 @@ func (AddIPBanTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 	if ipNet != "" {
-		if err := queries.InsertBannedIp(r.Context(), db.InsertBannedIpParams{
+		if err := queries.AdminInsertBannedIp(r.Context(), db.AdminInsertBannedIpParams{
 			IpNet:     ipNet,
 			Reason:    sql.NullString{String: reason, Valid: reason != ""},
 			ExpiresAt: expires,

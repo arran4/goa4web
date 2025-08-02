@@ -21,7 +21,13 @@ var _ tasks.Task = (*CreateLanguageTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*CreateLanguageTask)(nil)
 
 func (CreateLanguageTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if cd == nil || !cd.HasRole("administrator") {
+		return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+		})
+	}
+	queries := cd.Queries()
 	cname := r.PostFormValue("cname")
 	res, err := queries.InsertLanguage(r.Context(), sql.NullString{String: cname, Valid: true})
 	if err != nil {

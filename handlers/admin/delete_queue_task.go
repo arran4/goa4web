@@ -28,7 +28,7 @@ func (DeleteQueueTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	for _, idStr := range r.Form["id"] {
 		id, _ := strconv.Atoi(idStr)
-		if err := queries.DeletePendingEmail(r.Context(), int32(id)); err != nil {
+		if err := queries.AdminDeletePendingEmail(r.Context(), int32(id)); err != nil {
 			return fmt.Errorf("delete email fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {

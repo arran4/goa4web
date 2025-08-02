@@ -10,12 +10,13 @@ import (
 	"database/sql"
 )
 
-const getRoleByID = `-- name: GetRoleByID :one
+const adminGetRoleByID = `-- name: AdminGetRoleByID :one
 SELECT id, name, can_login, is_admin, public_profile_allowed_at FROM roles WHERE id = ?
 `
 
-func (q *Queries) GetRoleByID(ctx context.Context, id int32) (*Role, error) {
-	row := q.db.QueryRowContext(ctx, getRoleByID, id)
+// admin task
+func (q *Queries) AdminGetRoleByID(ctx context.Context, id int32) (*Role, error) {
+	row := q.db.QueryRowContext(ctx, adminGetRoleByID, id)
 	var i Role
 	err := row.Scan(
 		&i.ID,
@@ -27,12 +28,13 @@ func (q *Queries) GetRoleByID(ctx context.Context, id int32) (*Role, error) {
 	return &i, err
 }
 
-const listGrantsByRoleID = `-- name: ListGrantsByRoleID :many
+const adminListGrantsByRoleID = `-- name: AdminListGrantsByRoleID :many
 SELECT id, created_at, updated_at, user_id, role_id, section, item, rule_type, item_id, item_rule, action, extra, active FROM grants WHERE role_id = ? ORDER BY id
 `
 
-func (q *Queries) ListGrantsByRoleID(ctx context.Context, roleID sql.NullInt32) ([]*Grant, error) {
-	rows, err := q.db.QueryContext(ctx, listGrantsByRoleID, roleID)
+// admin task
+func (q *Queries) AdminListGrantsByRoleID(ctx context.Context, roleID sql.NullInt32) ([]*Grant, error) {
+	rows, err := q.db.QueryContext(ctx, adminListGrantsByRoleID, roleID)
 	if err != nil {
 		return nil, err
 	}
@@ -68,12 +70,13 @@ func (q *Queries) ListGrantsByRoleID(ctx context.Context, roleID sql.NullInt32) 
 	return items, nil
 }
 
-const listRoles = `-- name: ListRoles :many
+const adminListRoles = `-- name: AdminListRoles :many
 SELECT id, name, can_login, is_admin, public_profile_allowed_at FROM roles ORDER BY id
 `
 
-func (q *Queries) ListRoles(ctx context.Context) ([]*Role, error) {
-	rows, err := q.db.QueryContext(ctx, listRoles)
+// admin task
+func (q *Queries) AdminListRoles(ctx context.Context) ([]*Role, error) {
+	rows, err := q.db.QueryContext(ctx, adminListRoles)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +104,7 @@ func (q *Queries) ListRoles(ctx context.Context) ([]*Role, error) {
 	return items, nil
 }
 
-const listRolesWithUsers = `-- name: ListRolesWithUsers :many
+const adminListRolesWithUsers = `-- name: AdminListRolesWithUsers :many
 SELECT r.id, r.name, GROUP_CONCAT(u.username ORDER BY u.username) AS users
 FROM roles r
 LEFT JOIN user_roles ur ON ur.role_id = r.id
@@ -110,21 +113,22 @@ GROUP BY r.id
 ORDER BY r.id
 `
 
-type ListRolesWithUsersRow struct {
+type AdminListRolesWithUsersRow struct {
 	ID    int32
 	Name  string
 	Users sql.NullString
 }
 
-func (q *Queries) ListRolesWithUsers(ctx context.Context) ([]*ListRolesWithUsersRow, error) {
-	rows, err := q.db.QueryContext(ctx, listRolesWithUsers)
+// admin task
+func (q *Queries) AdminListRolesWithUsers(ctx context.Context) ([]*AdminListRolesWithUsersRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListRolesWithUsers)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*ListRolesWithUsersRow
+	var items []*AdminListRolesWithUsersRow
 	for rows.Next() {
-		var i ListRolesWithUsersRow
+		var i AdminListRolesWithUsersRow
 		if err := rows.Scan(&i.ID, &i.Name, &i.Users); err != nil {
 			return nil, err
 		}
@@ -139,7 +143,7 @@ func (q *Queries) ListRolesWithUsers(ctx context.Context) ([]*ListRolesWithUsers
 	return items, nil
 }
 
-const listUsersByRoleID = `-- name: ListUsersByRoleID :many
+const adminListUsersByRoleID = `-- name: AdminListUsersByRoleID :many
 SELECT u.idusers, u.username, (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers ORDER BY ue.id LIMIT 1) AS email
 FROM users u
 JOIN user_roles ur ON ur.users_idusers = u.idusers
@@ -147,21 +151,22 @@ WHERE ur.role_id = ?
 ORDER BY u.username
 `
 
-type ListUsersByRoleIDRow struct {
+type AdminListUsersByRoleIDRow struct {
 	Idusers  int32
 	Username sql.NullString
 	Email    string
 }
 
-func (q *Queries) ListUsersByRoleID(ctx context.Context, roleID int32) ([]*ListUsersByRoleIDRow, error) {
-	rows, err := q.db.QueryContext(ctx, listUsersByRoleID, roleID)
+// admin task
+func (q *Queries) AdminListUsersByRoleID(ctx context.Context, roleID int32) ([]*AdminListUsersByRoleIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListUsersByRoleID, roleID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*ListUsersByRoleIDRow
+	var items []*AdminListUsersByRoleIDRow
 	for rows.Next() {
-		var i ListUsersByRoleIDRow
+		var i AdminListUsersByRoleIDRow
 		if err := rows.Scan(&i.Idusers, &i.Username, &i.Email); err != nil {
 			return nil, err
 		}
@@ -176,16 +181,17 @@ func (q *Queries) ListUsersByRoleID(ctx context.Context, roleID int32) ([]*ListU
 	return items, nil
 }
 
-const updateRolePublicProfileAllowed = `-- name: UpdateRolePublicProfileAllowed :exec
+const adminUpdateRolePublicProfileAllowed = `-- name: AdminUpdateRolePublicProfileAllowed :exec
 UPDATE roles SET public_profile_allowed_at = ? WHERE id = ?
 `
 
-type UpdateRolePublicProfileAllowedParams struct {
+type AdminUpdateRolePublicProfileAllowedParams struct {
 	PublicProfileAllowedAt sql.NullTime
 	ID                     int32
 }
 
-func (q *Queries) UpdateRolePublicProfileAllowed(ctx context.Context, arg UpdateRolePublicProfileAllowedParams) error {
-	_, err := q.db.ExecContext(ctx, updateRolePublicProfileAllowed, arg.PublicProfileAllowedAt, arg.ID)
+// admin task
+func (q *Queries) AdminUpdateRolePublicProfileAllowed(ctx context.Context, arg AdminUpdateRolePublicProfileAllowedParams) error {
+	_, err := q.db.ExecContext(ctx, adminUpdateRolePublicProfileAllowed, arg.PublicProfileAllowedAt, arg.ID)
 	return err
 }

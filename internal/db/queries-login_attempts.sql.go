@@ -10,47 +10,14 @@ import (
 	"time"
 )
 
-const countRecentLoginAttempts = `-- name: CountRecentLoginAttempts :one
-SELECT COUNT(*) FROM login_attempts
-WHERE (username = ? OR ip_address = ?) AND created_at > ?
-`
-
-type CountRecentLoginAttemptsParams struct {
-	Username  string
-	IpAddress string
-	CreatedAt time.Time
-}
-
-func (q *Queries) CountRecentLoginAttempts(ctx context.Context, arg CountRecentLoginAttemptsParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countRecentLoginAttempts, arg.Username, arg.IpAddress, arg.CreatedAt)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
-const insertLoginAttempt = `-- name: InsertLoginAttempt :exec
-INSERT INTO login_attempts (username, ip_address)
-VALUES (?, ?)
-`
-
-type InsertLoginAttemptParams struct {
-	Username  string
-	IpAddress string
-}
-
-func (q *Queries) InsertLoginAttempt(ctx context.Context, arg InsertLoginAttemptParams) error {
-	_, err := q.db.ExecContext(ctx, insertLoginAttempt, arg.Username, arg.IpAddress)
-	return err
-}
-
-const listLoginAttempts = `-- name: ListLoginAttempts :many
+const adminListLoginAttempts = `-- name: AdminListLoginAttempts :many
 SELECT id, username, ip_address, created_at
 FROM login_attempts
 ORDER BY id DESC
 `
 
-func (q *Queries) ListLoginAttempts(ctx context.Context) ([]*LoginAttempt, error) {
-	rows, err := q.db.QueryContext(ctx, listLoginAttempts)
+func (q *Queries) AdminListLoginAttempts(ctx context.Context) ([]*LoginAttempt, error) {
+	rows, err := q.db.QueryContext(ctx, adminListLoginAttempts)
 	if err != nil {
 		return nil, err
 	}
@@ -75,4 +42,37 @@ func (q *Queries) ListLoginAttempts(ctx context.Context) ([]*LoginAttempt, error
 		return nil, err
 	}
 	return items, nil
+}
+
+const systemCountRecentLoginAttempts = `-- name: SystemCountRecentLoginAttempts :one
+SELECT COUNT(*) FROM login_attempts
+WHERE (username = ? OR ip_address = ?) AND created_at > ?
+`
+
+type SystemCountRecentLoginAttemptsParams struct {
+	Username  string
+	IpAddress string
+	CreatedAt time.Time
+}
+
+func (q *Queries) SystemCountRecentLoginAttempts(ctx context.Context, arg SystemCountRecentLoginAttemptsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, systemCountRecentLoginAttempts, arg.Username, arg.IpAddress, arg.CreatedAt)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const systemInsertLoginAttempt = `-- name: SystemInsertLoginAttempt :exec
+INSERT INTO login_attempts (username, ip_address)
+VALUES (?, ?)
+`
+
+type SystemInsertLoginAttemptParams struct {
+	Username  string
+	IpAddress string
+}
+
+func (q *Queries) SystemInsertLoginAttempt(ctx context.Context, arg SystemInsertLoginAttemptParams) error {
+	_, err := q.db.ExecContext(ctx, systemInsertLoginAttempt, arg.Username, arg.IpAddress)
+	return err
 }

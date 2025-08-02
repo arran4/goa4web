@@ -114,7 +114,7 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	threads, err := queries.GetThreadsStartedByUser(r.Context(), int32(uid))
+	threads, err := queries.AdminGetThreadsStartedByUser(r.Context(), int32(uid))
 	if err != nil {
 		log.Printf("fetch threads: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

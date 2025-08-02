@@ -21,7 +21,7 @@ func AdminExternalLinksPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "External Links"
 	queries := cd.Queries()
-	rows, err := queries.ListExternalLinks(r.Context(), db.ListExternalLinksParams{Limit: 200, Offset: 0})
+	rows, err := queries.AdminListExternalLinks(r.Context(), db.AdminListExternalLinksParams{Limit: 200, Offset: 0})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("list external links: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

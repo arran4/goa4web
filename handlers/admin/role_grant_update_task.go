@@ -53,7 +53,7 @@ func (RoleGrantUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {
 			desired[a] = struct{}{}
 		}
 	}
-	grants, err := queries.ListGrantsByRoleID(r.Context(), sql.NullInt32{Int32: int32(roleID), Valid: true})
+	grants, err := queries.AdminListGrantsByRoleID(r.Context(), sql.NullInt32{Int32: int32(roleID), Valid: true})
 	if err != nil {
 		return fmt.Errorf("list grants %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

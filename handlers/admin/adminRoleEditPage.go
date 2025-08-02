@@ -20,7 +20,7 @@ func adminRoleEditFormPage(w http.ResponseWriter, r *http.Request) {
 	idStr := mux.Vars(r)["id"]
 	id, _ := strconv.Atoi(idStr)
 
-	role, err := queries.GetRoleByID(r.Context(), int32(id))
+	role, err := queries.AdminGetRoleByID(r.Context(), int32(id))
 	if err != nil {
 		http.Error(w, "role not found", http.StatusNotFound)
 		return

@@ -3,9 +3,32 @@ INSERT INTO user_emails (user_id, email, verified_at, last_verification_code, ve
 VALUES (?, ?, ?, ?, ?, ?);
 
 -- name: GetUserEmailsByUserID :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
+SELECT ue.id, ue.user_id, ue.email, ue.verified_at, ue.last_verification_code, ue.verification_expires_at, ue.notification_priority
+FROM user_emails ue
+WHERE ue.user_id = sqlc.arg(user_id)
+  AND (
+      sqlc.arg(viewer_id) = ue.user_id
+      OR EXISTS (
+          SELECT 1
+          FROM role_ids ri
+          JOIN roles r ON r.id = ri.id
+          WHERE r.is_admin = 1
+      )
+  );
+
+-- name: GetUserEmailsByUserIDAdmin :many
 SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority
 FROM user_emails
-WHERE user_id = ?;
+WHERE user_id = ?
+ORDER BY notification_priority DESC, id;
 
 -- name: ListVerifiedEmailsByUserID :many
 SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority
@@ -13,11 +36,6 @@ FROM user_emails
 WHERE user_id = ? AND verified_at IS NOT NULL
 ORDER BY notification_priority DESC, id;
 
--- name: listEmailsByUserID :many
-SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority
-FROM user_emails
-WHERE user_id = ?
-ORDER BY notification_priority DESC, id;
 
 -- name: GetUserEmailByEmail :one
 SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority
@@ -34,8 +52,6 @@ UPDATE user_emails
 SET verified_at = ?, last_verification_code = NULL, verification_expires_at = NULL
 WHERE id = ?;
 
--- name: ClearNotificationPriority :exec
-UPDATE user_emails SET notification_priority = 0 WHERE user_id = ?;
 
 -- name: SetNotificationPriority :exec
 UPDATE user_emails SET notification_priority = ? WHERE id = ?;

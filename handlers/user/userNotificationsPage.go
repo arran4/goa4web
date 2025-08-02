@@ -40,7 +40,7 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	emails, _ := queries.GetUserEmailsByUserID(r.Context(), uid)
+	emails, _ := queries.GetUserEmailsByUserID(r.Context(), db.GetUserEmailsByUserIDParams{UserID: uid, ViewerID: uid})
 	var maxPr int32
 	for _, e := range emails {
 		if e.NotificationPriority > maxPr {

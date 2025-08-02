@@ -10,53 +10,28 @@ import (
 	"database/sql"
 )
 
-const deleteSessionByID = `-- name: DeleteSessionByID :exec
-DELETE FROM sessions WHERE session_id = ?
-`
-
-func (q *Queries) DeleteSessionByID(ctx context.Context, sessionID string) error {
-	_, err := q.db.ExecContext(ctx, deleteSessionByID, sessionID)
-	return err
-}
-
-const insertSession = `-- name: InsertSession :exec
-INSERT INTO sessions (session_id, users_idusers)
-VALUES (?, ?)
-ON DUPLICATE KEY UPDATE users_idusers = VALUES(users_idusers)
-`
-
-type InsertSessionParams struct {
-	SessionID    string
-	UsersIdusers int32
-}
-
-func (q *Queries) InsertSession(ctx context.Context, arg InsertSessionParams) error {
-	_, err := q.db.ExecContext(ctx, insertSession, arg.SessionID, arg.UsersIdusers)
-	return err
-}
-
-const listSessions = `-- name: ListSessions :many
+const adminListSessions = `-- name: AdminListSessions :many
 SELECT s.session_id, s.users_idusers, u.username
 FROM sessions s
 LEFT JOIN users u ON u.idusers = s.users_idusers
 ORDER BY s.session_id
 `
 
-type ListSessionsRow struct {
+type AdminListSessionsRow struct {
 	SessionID    string
 	UsersIdusers int32
 	Username     sql.NullString
 }
 
-func (q *Queries) ListSessions(ctx context.Context) ([]*ListSessionsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listSessions)
+func (q *Queries) AdminListSessions(ctx context.Context) ([]*AdminListSessionsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListSessions)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*ListSessionsRow
+	var items []*AdminListSessionsRow
 	for rows.Next() {
-		var i ListSessionsRow
+		var i AdminListSessionsRow
 		if err := rows.Scan(&i.SessionID, &i.UsersIdusers, &i.Username); err != nil {
 			return nil, err
 		}
@@ -69,4 +44,29 @@ func (q *Queries) ListSessions(ctx context.Context) ([]*ListSessionsRow, error) 
 		return nil, err
 	}
 	return items, nil
+}
+
+const systemDeleteSessionByID = `-- name: SystemDeleteSessionByID :exec
+DELETE FROM sessions WHERE session_id = ?
+`
+
+func (q *Queries) SystemDeleteSessionByID(ctx context.Context, sessionID string) error {
+	_, err := q.db.ExecContext(ctx, systemDeleteSessionByID, sessionID)
+	return err
+}
+
+const systemInsertSession = `-- name: SystemInsertSession :exec
+INSERT INTO sessions (session_id, users_idusers)
+VALUES (?, ?)
+ON DUPLICATE KEY UPDATE users_idusers = VALUES(users_idusers)
+`
+
+type SystemInsertSessionParams struct {
+	SessionID    string
+	UsersIdusers int32
+}
+
+func (q *Queries) SystemInsertSession(ctx context.Context, arg SystemInsertSessionParams) error {
+	_, err := q.db.ExecContext(ctx, systemInsertSession, arg.SessionID, arg.UsersIdusers)
+	return err
 }

@@ -42,11 +42,9 @@ type AdminSection struct {
 
 // SessionManager defines optional hooks for storing and removing session
 // information. Implementations may persist session metadata in a database or
-// other storage.
-// SessionManager exposes methods used by CoreData to record session information.
-// Typically *db.Queries satisfies this interface.
+// other storage while exposing a storage-agnostic API to CoreData.
 type SessionManager interface {
-	InsertSession(ctx context.Context, arg db.InsertSessionParams) error
+	InsertSession(ctx context.Context, sessionID string, userID int32) error
 	DeleteSessionByID(ctx context.Context, sessionID string) error
 }
 

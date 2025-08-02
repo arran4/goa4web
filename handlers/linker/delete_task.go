@@ -16,7 +16,7 @@ import (
 // deleteTask removes a queued linker item.
 type deleteTask struct{ tasks.TaskString }
 
-var DeleteTask = &deleteTask{TaskString: TaskDelete}
+var AdminDeleteTask = &deleteTask{TaskString: TaskDelete}
 var _ tasks.Task = (*deleteTask)(nil)
 
 var (
@@ -37,7 +37,8 @@ func (deleteTask) Action(w http.ResponseWriter, r *http.Request) any {
 			}
 		}
 	}
-	if err := queries.DeleteLinkerQueuedItem(r.Context(), int32(qid)); err != nil {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if err := queries.DeleteLinkerQueuedItem(r.Context(), db.DeleteLinkerQueuedItemParams{Idlinkerqueue: int32(qid), AdminID: cd.UserID}); err != nil {
 		return fmt.Errorf("delete linker queued item fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if link != nil {

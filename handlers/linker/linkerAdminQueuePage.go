@@ -124,12 +124,14 @@ func AdminQueueUpdateActionPage(w http.ResponseWriter, r *http.Request) {
 	URL := r.URL.Query().Get("URL")
 	desc := r.URL.Query().Get("desc")
 	category, _ := strconv.Atoi(r.URL.Query().Get("category"))
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if err := queries.UpdateLinkerQueuedItem(r.Context(), db.UpdateLinkerQueuedItemParams{
 		LinkerCategoryID: int32(category),
 		Title:            sql.NullString{Valid: true, String: title},
 		Url:              sql.NullString{Valid: true, String: URL},
 		Description:      sql.NullString{Valid: true, String: desc},
 		Idlinkerqueue:    int32(qid),
+		AdminID:          cd.UserID,
 	}); err != nil {
 		log.Printf("updateLinkerQueuedItem Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

@@ -59,7 +59,7 @@ func adminLinkPage(w http.ResponseWriter, r *http.Request) {
 // editLinkTask updates an existing linker item.
 type editLinkTask struct{ tasks.TaskString }
 
-var EditLinkTask = &editLinkTask{TaskString: TaskUpdate}
+var AdminEditLinkTask = &editLinkTask{TaskString: TaskUpdate}
 
 var _ tasks.Task = (*editLinkTask)(nil)
 
@@ -84,6 +84,7 @@ func (editLinkTask) Action(w http.ResponseWriter, r *http.Request) any {
 		LinkerCategoryID:   int32(cat),
 		LanguageIdlanguage: int32(lang),
 		Idlinker:           int32(id),
+		AdminID:            cd.UserID,
 	}); err != nil {
 		return fmt.Errorf("update linker item fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

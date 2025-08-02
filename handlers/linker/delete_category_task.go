@@ -8,12 +8,13 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
 type deleteCategoryTask struct{ tasks.TaskString }
 
-var DeleteCategoryTask = &deleteCategoryTask{TaskString: TaskDeleteCategory}
+var AdminDeleteCategoryTask = &deleteCategoryTask{TaskString: TaskDeleteCategory}
 var _ tasks.Task = (*deleteCategoryTask)(nil)
 
 func (deleteCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
@@ -35,7 +36,7 @@ func (deleteCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 		http.Error(w, "Category in use", http.StatusBadRequest)
 		return nil
 	}
-	if err := queries.DeleteLinkerCategory(r.Context(), int32(cid)); err != nil {
+	if err := queries.DeleteLinkerCategory(r.Context(), db.DeleteLinkerCategoryParams{Idlinkercategory: int32(cid), AdminID: cd.UserID}); err != nil {
 		return fmt.Errorf("delete linker category fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	return nil

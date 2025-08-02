@@ -19,7 +19,7 @@ import (
 // approveTask approves a queued linker item.
 type approveTask struct{ tasks.TaskString }
 
-var ApproveTask = &approveTask{TaskString: TaskApprove}
+var AdminApproveTask = &approveTask{TaskString: TaskApprove}
 var _ tasks.Task = (*approveTask)(nil)
 
 var (
@@ -41,12 +41,15 @@ func (approveTask) IndexData(data map[string]any) []searchworker.IndexEventData 
 func (approveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
-	lid, err := queries.SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId(r.Context(), int32(qid))
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	lid, err := queries.SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId(r.Context(), db.SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueIdParams{
+		Idlinkerqueue: int32(qid),
+		AdminID:       cd.UserID,
+	})
 	if err != nil {
 		return fmt.Errorf("approve linker item fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(r.Context(), db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams{
 		ViewerID:     cd.UserID,
 		Idlinker:     int32(lid),

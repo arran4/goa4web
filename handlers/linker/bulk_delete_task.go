@@ -7,6 +7,7 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -14,7 +15,7 @@ import (
 // bulkDeleteTask removes multiple queued linker items.
 type bulkDeleteTask struct{ tasks.TaskString }
 
-var BulkDeleteTask = &bulkDeleteTask{TaskString: TaskBulkDelete}
+var AdminBulkDeleteTask = &bulkDeleteTask{TaskString: TaskBulkDelete}
 
 var (
 	_ tasks.Task                                    = (*bulkDeleteTask)(nil)
@@ -42,7 +43,8 @@ func (bulkDeleteTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	for _, q := range r.Form["qid"] {
 		id, _ := strconv.Atoi(q)
-		if err := queries.DeleteLinkerQueuedItem(r.Context(), int32(id)); err != nil {
+		cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		if err := queries.DeleteLinkerQueuedItem(r.Context(), db.DeleteLinkerQueuedItemParams{Idlinkerqueue: int32(id), AdminID: cd.UserID}); err != nil {
 			log.Printf("deleteLinkerQueuedItem Error: %s", err)
 		}
 	}

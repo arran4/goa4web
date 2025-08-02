@@ -12,14 +12,14 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-// CategoryGrantDeleteTask removes a grant from a linker category.
-type CategoryGrantDeleteTask struct{ tasks.TaskString }
+// adminCategoryGrantDeleteTask removes a grant from a linker category.
+type adminCategoryGrantDeleteTask struct{ tasks.TaskString }
 
-var categoryGrantDeleteTask = &CategoryGrantDeleteTask{TaskString: TaskCategoryGrantDelete}
+var AdminCategoryGrantDeleteTask = &adminCategoryGrantDeleteTask{TaskString: TaskCategoryGrantDelete}
 
-var _ tasks.Task = (*CategoryGrantDeleteTask)(nil)
+var _ tasks.Task = (*adminCategoryGrantDeleteTask)(nil)
 
-func (CategoryGrantDeleteTask) Action(w http.ResponseWriter, r *http.Request) any {
+func (adminCategoryGrantDeleteTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	grantID, err := strconv.Atoi(r.PostFormValue("grantid"))
 	if err != nil {

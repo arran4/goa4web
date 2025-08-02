@@ -40,7 +40,7 @@ func (EmailAssociationRequestTask) Action(w http.ResponseWriter, r *http.Request
 	if row.Email != "" {
 		return handlers.RefreshDirectHandler{TargetURL: "/login"}
 	}
-	res, err := queries.InsertAdminRequestQueue(r.Context(), db.InsertAdminRequestQueueParams{
+	res, err := queries.AdminInsertRequestQueue(r.Context(), db.AdminInsertRequestQueueParams{
 		UsersIdusers:   row.Idusers,
 		ChangeTable:    "user_emails",
 		ChangeField:    "email",

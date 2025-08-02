@@ -36,6 +36,7 @@ type Querier interface {
 	AdminForumCategoryThreadCounts(ctx context.Context) ([]*AdminForumCategoryThreadCountsRow, error)
 	AdminForumTopicThreadCounts(ctx context.Context) ([]*AdminForumTopicThreadCountsRow, error)
 	AdminGetAllCommentsByUser(ctx context.Context, userID int32) ([]*AdminGetAllCommentsByUserRow, error)
+	AdminGetAllWritingsByUser(ctx context.Context, usersIdusers int32) ([]*AdminGetAllWritingsByUserRow, error)
 	// admin task
 	AdminGetPendingEmailByID(ctx context.Context, id int32) (*AdminGetPendingEmailByIDRow, error)
 	AdminGetRecentAuditLogs(ctx context.Context, limit int32) ([]*AdminGetRecentAuditLogsRow, error)
@@ -43,8 +44,11 @@ type Querier interface {
 	AdminGetRoleByID(ctx context.Context, id int32) (*Role, error)
 	AdminGetThreadsStartedByUser(ctx context.Context, usersIdusers int32) ([]*Forumthread, error)
 	AdminGetThreadsStartedByUserWithTopic(ctx context.Context, usersIdusers int32) ([]*AdminGetThreadsStartedByUserWithTopicRow, error)
+	AdminGetWritingsByCategoryId(ctx context.Context, writingCategoryID int32) ([]*AdminGetWritingsByCategoryIdRow, error)
 	AdminImageboardPostCounts(ctx context.Context) ([]*AdminImageboardPostCountsRow, error)
 	AdminInsertBannedIp(ctx context.Context, arg AdminInsertBannedIpParams) error
+	AdminInsertRequestComment(ctx context.Context, arg AdminInsertRequestCommentParams) error
+	AdminInsertWritingCategory(ctx context.Context, arg AdminInsertWritingCategoryParams) error
 	AdminListAdministratorEmails(ctx context.Context) ([]string, error)
 	AdminListAllCommentsWithThreadInfo(ctx context.Context, arg AdminListAllCommentsWithThreadInfoParams) ([]*AdminListAllCommentsWithThreadInfoRow, error)
 	// admin task
@@ -57,6 +61,7 @@ type Querier interface {
 	AdminListGrantsByRoleID(ctx context.Context, roleID sql.NullInt32) ([]*Grant, error)
 	AdminListLoginAttempts(ctx context.Context) ([]*LoginAttempt, error)
 	AdminListPendingUsers(ctx context.Context) ([]*AdminListPendingUsersRow, error)
+	AdminListRequestComments(ctx context.Context, requestID int32) ([]*AdminRequestComment, error)
 	// admin task
 	AdminListRoles(ctx context.Context) ([]*Role, error)
 	// admin task
@@ -79,6 +84,7 @@ type Querier interface {
 	AdminUpdateBannedIp(ctx context.Context, arg AdminUpdateBannedIpParams) error
 	// admin task
 	AdminUpdateRolePublicProfileAllowed(ctx context.Context, arg AdminUpdateRolePublicProfileAllowedParams) error
+	AdminUpdateWritingCategory(ctx context.Context, arg AdminUpdateWritingCategoryParams) error
 	AdminUserPostCounts(ctx context.Context) ([]*AdminUserPostCountsRow, error)
 	AdminUserPostCountsByID(ctx context.Context, idusers int32) (*AdminUserPostCountsByIDRow, error)
 	AdminUsersByID(ctx context.Context, ids []int32) ([]*AdminUsersByIDRow, error)
@@ -215,9 +221,7 @@ type Querier interface {
 	GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails(ctx context.Context) ([]*GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetailsRow, error)
 	GetAllLinkersForIndex(ctx context.Context) ([]*GetAllLinkersForIndexRow, error)
 	GetAllSiteNewsForIndex(ctx context.Context) ([]*GetAllSiteNewsForIndexRow, error)
-	GetAllWritingCategories(ctx context.Context, writingCategoryID int32) ([]*WritingCategory, error)
 	GetAllWritingsByUser(ctx context.Context, arg GetAllWritingsByUserParams) ([]*GetAllWritingsByUserRow, error)
-	GetAllWritingsByUserAdmin(ctx context.Context, usersIdusers int32) ([]*GetAllWritingsByUserAdminRow, error)
 	GetAllWritingsForIndex(ctx context.Context) ([]*GetAllWritingsForIndexRow, error)
 	GetBlogEntriesByAuthorForUserDescendingLanguages(ctx context.Context, arg GetBlogEntriesByAuthorForUserDescendingLanguagesParams) ([]*GetBlogEntriesByAuthorForUserDescendingLanguagesRow, error)
 	GetBlogEntriesByIdsDescendingForUser(ctx context.Context, arg GetBlogEntriesByIdsDescendingForUserParams) ([]*GetBlogEntriesByIdsDescendingForUserRow, error)
@@ -299,12 +303,10 @@ type Querier interface {
 	GetUserRoles(ctx context.Context) ([]*GetUserRolesRow, error)
 	GetWritingByIdForUserDescendingByPublishedDate(ctx context.Context, arg GetWritingByIdForUserDescendingByPublishedDateParams) (*GetWritingByIdForUserDescendingByPublishedDateRow, error)
 	GetWritingCategoryById(ctx context.Context, idwritingcategory int32) (*WritingCategory, error)
-	GetWritingsByCategoryId(ctx context.Context, writingCategoryID int32) ([]*GetWritingsByCategoryIdRow, error)
 	GetWritingsByIdsForUserDescendingByPublishedDate(ctx context.Context, arg GetWritingsByIdsForUserDescendingByPublishedDateParams) ([]*GetWritingsByIdsForUserDescendingByPublishedDateRow, error)
 	ImagePostSearchFirst(ctx context.Context, word sql.NullString) ([]int32, error)
 	ImagePostSearchNext(ctx context.Context, arg ImagePostSearchNextParams) ([]int32, error)
 	IncrementEmailError(ctx context.Context, id int32) error
-	InsertAdminRequestComment(ctx context.Context, arg InsertAdminRequestCommentParams) error
 	InsertAdminRequestQueue(ctx context.Context, arg InsertAdminRequestQueueParams) (sql.Result, error)
 	InsertAdminUserComment(ctx context.Context, arg InsertAdminUserCommentParams) error
 	InsertAuditLog(ctx context.Context, arg InsertAuditLogParams) error
@@ -321,13 +323,11 @@ type Querier interface {
 	InsertUserEmail(ctx context.Context, arg InsertUserEmailParams) error
 	InsertUserLang(ctx context.Context, arg InsertUserLangParams) error
 	InsertWriting(ctx context.Context, arg InsertWritingParams) (int64, error)
-	InsertWritingCategory(ctx context.Context, arg InsertWritingCategoryParams) error
 	LastNotificationByMessage(ctx context.Context, arg LastNotificationByMessageParams) (*Notification, error)
 	LatestAdminUserComment(ctx context.Context, usersIdusers int32) (*AdminUserComment, error)
 	LinkerSearchFirst(ctx context.Context, word sql.NullString) ([]int32, error)
 	LinkerSearchNext(ctx context.Context, arg LinkerSearchNextParams) ([]int32, error)
 	ListActiveBans(ctx context.Context) ([]*BannedIp, error)
-	ListAdminRequestComments(ctx context.Context, requestID int32) ([]*AdminRequestComment, error)
 	ListAdminUserComments(ctx context.Context, usersIdusers int32) ([]*AdminUserComment, error)
 	ListArchivedAdminRequests(ctx context.Context) ([]*AdminRequestQueue, error)
 	ListBannedIps(ctx context.Context) ([]*BannedIp, error)
@@ -435,7 +435,6 @@ type Querier interface {
 	UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams) error
 	UpdateUserEmailVerification(ctx context.Context, arg UpdateUserEmailVerificationParams) error
 	UpdateWriting(ctx context.Context, arg UpdateWritingParams) error
-	UpdateWritingCategory(ctx context.Context, arg UpdateWritingCategoryParams) error
 	UserByEmail(ctx context.Context, email string) (*UserByEmailRow, error)
 	UserHasLoginRole(ctx context.Context, usersIdusers int32) (int32, error)
 	UserHasPublicProfileRole(ctx context.Context, usersIdusers int32) (int32, error)

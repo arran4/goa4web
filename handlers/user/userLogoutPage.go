@@ -33,9 +33,9 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 	delete(session.Values, "UID")
 	delete(session.Values, "LoginTime")
 	delete(session.Values, "ExpiryTime")
-	queries := cd.Queries()
+	sm := cd.SessionManager()
 	if session.ID != "" {
-		if err := queries.DeleteSessionByID(r.Context(), session.ID); err != nil {
+		if err := sm.DeleteSessionByID(r.Context(), session.ID); err != nil {
 			log.Printf("delete session: %v", err)
 		}
 	}

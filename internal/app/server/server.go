@@ -203,18 +203,18 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 			}
 
 			queries := dbpkg.New(s.DB)
-			sm := queries
+			sm := dbpkg.NewSessionProxy(queries)
 			if s.Config.DBLogVerbosity > 0 {
 				log.Printf("db pool stats: %+v", s.DB.Stats())
 			}
 
 			if session.ID != "" {
 				if uid != 0 {
-					if err := queries.InsertSession(r.Context(), dbpkg.InsertSessionParams{SessionID: session.ID, UsersIdusers: uid}); err != nil {
+					if err := sm.InsertSession(r.Context(), session.ID, uid); err != nil {
 						log.Printf("insert session: %v", err)
 					}
 				} else {
-					if err := queries.DeleteSessionByID(r.Context(), session.ID); err != nil {
+					if err := sm.DeleteSessionByID(r.Context(), session.ID); err != nil {
 						log.Printf("delete session: %v", err)
 					}
 				}

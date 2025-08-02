@@ -71,18 +71,18 @@ func CoreAdderMiddlewareWithDB(db *sql.DB, cfg *config.RuntimeConfig, verbosity 
 			}
 
 			queries := dbpkg.New(db)
-			sm := queries
+			sm := dbpkg.NewSessionProxy(queries)
 			if verbosity > 0 {
 				log.Printf("db pool stats: %+v", db.Stats())
 			}
 
 			if session.ID != "" {
 				if uid != 0 {
-					if err := queries.InsertSession(r.Context(), dbpkg.InsertSessionParams{SessionID: session.ID, UsersIdusers: uid}); err != nil {
+					if err := sm.InsertSession(r.Context(), session.ID, uid); err != nil {
 						log.Printf("insert session: %v", err)
 					}
 				} else {
-					if err := queries.DeleteSessionByID(r.Context(), session.ID); err != nil {
+					if err := sm.DeleteSessionByID(r.Context(), session.ID); err != nil {
 						log.Printf("delete session: %v", err)
 					}
 				}

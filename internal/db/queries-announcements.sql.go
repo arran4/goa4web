@@ -11,13 +11,24 @@ import (
 	"time"
 )
 
-const demoteAnnouncement = `-- name: DemoteAnnouncement :exec
+const adminDemoteAnnouncement = `-- name: AdminDemoteAnnouncement :exec
 DELETE FROM site_announcements WHERE id = ?
 `
 
 // admin task
-func (q *Queries) DemoteAnnouncement(ctx context.Context, id int32) error {
-	_, err := q.db.ExecContext(ctx, demoteAnnouncement, id)
+func (q *Queries) AdminDemoteAnnouncement(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, adminDemoteAnnouncement, id)
+	return err
+}
+
+const adminPromoteAnnouncement = `-- name: AdminPromoteAnnouncement :exec
+INSERT INTO site_announcements (site_news_id)
+VALUES (?)
+`
+
+// admin task
+func (q *Queries) AdminPromoteAnnouncement(ctx context.Context, siteNewsID int32) error {
+	_, err := q.db.ExecContext(ctx, adminPromoteAnnouncement, siteNewsID)
 	return err
 }
 
@@ -146,17 +157,6 @@ func (q *Queries) ListAnnouncementsWithNewsForAdmin(ctx context.Context) ([]*Lis
 		return nil, err
 	}
 	return items, nil
-}
-
-const promoteAnnouncement = `-- name: PromoteAnnouncement :exec
-INSERT INTO site_announcements (site_news_id)
-VALUES (?)
-`
-
-// admin task
-func (q *Queries) PromoteAnnouncement(ctx context.Context, siteNewsID int32) error {
-	_, err := q.db.ExecContext(ctx, promoteAnnouncement, siteNewsID)
-	return err
 }
 
 const setAnnouncementActive = `-- name: SetAnnouncementActive :exec

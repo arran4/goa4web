@@ -36,7 +36,7 @@ func (AnnouncementAddTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 	if ann == nil {
-		if err := queries.PromoteAnnouncement(r.Context(), int32(pid)); err != nil {
+		if err := queries.AdminPromoteAnnouncement(r.Context(), int32(pid)); err != nil {
 			return fmt.Errorf("promote announcement fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	} else if !ann.Active {

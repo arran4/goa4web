@@ -1,9 +1,9 @@
--- name: PromoteAnnouncement :exec
+-- name: AdminPromoteAnnouncement :exec
 -- admin task
 INSERT INTO site_announcements (site_news_id)
 VALUES (?);
 
--- name: DemoteAnnouncement :exec
+-- name: AdminDemoteAnnouncement :exec
 -- admin task
 DELETE FROM site_announcements WHERE id = ?;
 

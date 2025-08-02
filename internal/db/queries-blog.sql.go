@@ -12,6 +12,70 @@ import (
 	"time"
 )
 
+const adminGetAllBlogEntriesByUser = `-- name: AdminGetAllBlogEntriesByUser :many
+SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0)
+FROM blogs b
+LEFT JOIN users u ON b.users_idusers = u.idusers
+LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
+WHERE b.users_idusers = ?
+  AND EXISTS (
+      SELECT 1
+      FROM user_roles ur
+      JOIN roles r ON ur.role_id = r.id
+      WHERE ur.users_idusers = ?
+        AND r.is_admin = 1
+  )
+ORDER BY b.written DESC
+`
+
+type AdminGetAllBlogEntriesByUserParams struct {
+	AuthorID int32
+	ViewerID int32
+}
+
+type AdminGetAllBlogEntriesByUserRow struct {
+	Idblogs            int32
+	ForumthreadID      sql.NullInt32
+	UsersIdusers       int32
+	LanguageIdlanguage int32
+	Blog               sql.NullString
+	Written            time.Time
+	Username           sql.NullString
+	Comments           int32
+}
+
+func (q *Queries) AdminGetAllBlogEntriesByUser(ctx context.Context, arg AdminGetAllBlogEntriesByUserParams) ([]*AdminGetAllBlogEntriesByUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminGetAllBlogEntriesByUser, arg.AuthorID, arg.ViewerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminGetAllBlogEntriesByUserRow
+	for rows.Next() {
+		var i AdminGetAllBlogEntriesByUserRow
+		if err := rows.Scan(
+			&i.Idblogs,
+			&i.ForumthreadID,
+			&i.UsersIdusers,
+			&i.LanguageIdlanguage,
+			&i.Blog,
+			&i.Written,
+			&i.Username,
+			&i.Comments,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const assignThreadIdToBlogEntry = `-- name: AssignThreadIdToBlogEntry :exec
 UPDATE blogs
 SET forumthread_id = ?
@@ -222,58 +286,6 @@ func (q *Queries) CreateBlogEntry(ctx context.Context, arg CreateBlogEntryParams
 		return 0, err
 	}
 	return result.LastInsertId()
-}
-
-const getAllBlogEntriesByUserForAdmin = `-- name: GetAllBlogEntriesByUserForAdmin :many
-SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0)
-FROM blogs b
-LEFT JOIN users u ON b.users_idusers=u.idusers
-LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
-WHERE b.users_idusers = ?
-ORDER BY b.written DESC
-`
-
-type GetAllBlogEntriesByUserForAdminRow struct {
-	Idblogs            int32
-	ForumthreadID      sql.NullInt32
-	UsersIdusers       int32
-	LanguageIdlanguage int32
-	Blog               sql.NullString
-	Written            time.Time
-	Username           sql.NullString
-	Comments           int32
-}
-
-func (q *Queries) GetAllBlogEntriesByUserForAdmin(ctx context.Context, usersIdusers int32) ([]*GetAllBlogEntriesByUserForAdminRow, error) {
-	rows, err := q.db.QueryContext(ctx, getAllBlogEntriesByUserForAdmin, usersIdusers)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*GetAllBlogEntriesByUserForAdminRow
-	for rows.Next() {
-		var i GetAllBlogEntriesByUserForAdminRow
-		if err := rows.Scan(
-			&i.Idblogs,
-			&i.ForumthreadID,
-			&i.UsersIdusers,
-			&i.LanguageIdlanguage,
-			&i.Blog,
-			&i.Written,
-			&i.Username,
-			&i.Comments,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const getBlogEntriesByAuthorForUserDescendingLanguages = `-- name: GetBlogEntriesByAuthorForUserDescendingLanguages :many
@@ -573,18 +585,49 @@ func (q *Queries) GetBlogEntriesForViewerDescending(ctx context.Context, arg Get
 }
 
 const getBlogEntryForUserById = `-- name: GetBlogEntryForUserById :one
+WITH RECURSIVE role_ids(id) AS (
+    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT r2.id
+    FROM role_ids ri
+    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
+    JOIN roles r2 ON r2.name = g.action
+)
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
        b.users_idusers = ? AS is_owner
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
 WHERE b.idblogs = ?
+  AND (
+      b.language_idlanguage = 0
+      OR b.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = b.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section = 'blogs'
+        AND g.item = 'entry'
+        AND g.action = 'see'
+        AND g.active = 1
+        AND g.item_id = b.idblogs
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
 LIMIT 1
 `
 
 type GetBlogEntryForUserByIdParams struct {
-	ViewerIdusers int32
-	ID            int32
+	ViewerID int32
+	ID       int32
+	UserID   sql.NullInt32
 }
 
 type GetBlogEntryForUserByIdRow struct {
@@ -600,7 +643,14 @@ type GetBlogEntryForUserByIdRow struct {
 }
 
 func (q *Queries) GetBlogEntryForUserById(ctx context.Context, arg GetBlogEntryForUserByIdParams) (*GetBlogEntryForUserByIdRow, error) {
-	row := q.db.QueryRowContext(ctx, getBlogEntryForUserById, arg.ViewerIdusers, arg.ID)
+	row := q.db.QueryRowContext(ctx, getBlogEntryForUserById,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.ID,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.UserID,
+	)
 	var i GetBlogEntryForUserByIdRow
 	err := row.Scan(
 		&i.Idblogs,
@@ -818,8 +868,8 @@ const systemSetBlogLastIndex = `-- name: SystemSetBlogLastIndex :exec
 UPDATE blogs SET last_index = NOW() WHERE idblogs = ?
 `
 
-func (q *Queries) SystemSetBlogLastIndex(ctx context.Context, idblogs int32) error {
-	_, err := q.db.ExecContext(ctx, systemSetBlogLastIndex, idblogs)
+func (q *Queries) SystemSetBlogLastIndex(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, systemSetBlogLastIndex, id)
 	return err
 }
 

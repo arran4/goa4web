@@ -1016,8 +1016,9 @@ func (cd *CoreData) BlogEntryByID(id int32, ops ...lazy.Option[*db.GetBlogEntryF
 			return nil, nil
 		}
 		return cd.queries.GetBlogEntryForUserById(cd.ctx, db.GetBlogEntryForUserByIdParams{
-			ViewerIdusers: cd.UserID,
-			ID:            i,
+			ViewerID: cd.UserID,
+			ID:       i,
+			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
 	}
 	return lazy.Map(&cd.blogEntries, &cd.mapMu, id, fetch, ops...)

@@ -101,8 +101,9 @@ func (ReplyBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	blog, err := queries.GetBlogEntryForUserById(r.Context(), db.GetBlogEntryForUserByIdParams{
-		ViewerIdusers: uid,
-		ID:            int32(bid),
+		ViewerID: uid,
+		ID:       int32(bid),
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		switch {

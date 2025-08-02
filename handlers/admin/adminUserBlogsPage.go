@@ -23,7 +23,10 @@ func adminUserBlogsPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "user not found", http.StatusNotFound)
 		return
 	}
-	rows, err := queries.GetAllBlogEntriesByUserForAdmin(r.Context(), int32(id))
+	rows, err := queries.AdminGetAllBlogEntriesByUser(r.Context(), db.AdminGetAllBlogEntriesByUserParams{
+		AuthorID: int32(id),
+		ViewerID: cd.UserID,
+	})
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -32,7 +35,7 @@ func adminUserBlogsPage(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		*common.CoreData
 		User  *db.User
-		Blogs []*db.GetAllBlogEntriesByUserForAdminRow
+		Blogs []*db.AdminGetAllBlogEntriesByUserRow
 	}{
 		CoreData: cd,
 		User:     &db.User{Idusers: user.Idusers, Username: user.Username},

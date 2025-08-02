@@ -61,8 +61,9 @@ func (c *blogCommentsReadCmd) Run() error {
 	queries := dbpkg.New(db)
 	uid := int32(c.UserID)
 	b, err := queries.GetBlogEntryForUserById(ctx, dbpkg.GetBlogEntryForUserByIdParams{
-		ViewerIdusers: uid,
-		ID:            int32(c.BlogID),
+		ViewerID: uid,
+		ID:       int32(c.BlogID),
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		return fmt.Errorf("get blog: %w", err)

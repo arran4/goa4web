@@ -74,8 +74,9 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 
 	blog, err := queries.GetBlogEntryForUserById(r.Context(), db.GetBlogEntryForUserByIdParams{
-		ViewerIdusers: uid,
-		ID:            int32(blogId),
+		ViewerID: uid,
+		ID:       int32(blogId),
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err == nil {
 		if blog.Username.Valid {

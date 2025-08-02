@@ -47,10 +47,11 @@ func (c *blogCommentsListCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := dbpkg.New(db)
-	uid := int32(c.UserID)
+	viewerID := int32(c.UserID)
 	b, err := queries.GetBlogEntryForUserById(ctx, dbpkg.GetBlogEntryForUserByIdParams{
-		ViewerIdusers: uid,
-		ID:            int32(c.ID),
+		ViewerID: viewerID,
+		ID:       int32(c.ID),
+		UserID:   sql.NullInt32{Int32: viewerID, Valid: viewerID != 0},
 	})
 	if err != nil {
 		return fmt.Errorf("get blog: %w", err)
@@ -60,9 +61,9 @@ func (c *blogCommentsListCmd) Run() error {
 		threadID = b.ForumthreadID.Int32
 	}
 	rows, err := queries.GetCommentsByThreadIdForUser(ctx, dbpkg.GetCommentsByThreadIdForUserParams{
-		ViewerID: uid,
+		ViewerID: viewerID,
 		ThreadID: threadID,
-		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
+		UserID:   sql.NullInt32{Int32: viewerID, Valid: viewerID != 0},
 	})
 	if err != nil {
 		return fmt.Errorf("list comments: %w", err)

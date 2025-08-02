@@ -28,7 +28,7 @@ func (SaveTemplateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	name := r.PostFormValue("name")
 	body := r.PostFormValue("body")
 	q := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	if err := q.SetTemplateOverride(r.Context(), db.SetTemplateOverrideParams{Name: name, Body: body}); err != nil {
+	if err := q.AdminSetTemplateOverride(r.Context(), db.AdminSetTemplateOverrideParams{Name: name, Body: body}); err != nil {
 		return fmt.Errorf("db save template fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {

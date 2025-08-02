@@ -10,14 +10,14 @@ import (
 	"database/sql"
 )
 
-const getAdminRequestByID = `-- name: GetAdminRequestByID :one
+const adminGetRequestByID = `-- name: AdminGetRequestByID :one
 SELECT id, users_idusers, change_table, change_field, change_row_id, change_value, contact_options, status, created_at, acted_at
 FROM admin_request_queue
 WHERE id = ?
 `
 
-func (q *Queries) GetAdminRequestByID(ctx context.Context, id int32) (*AdminRequestQueue, error) {
-	row := q.db.QueryRowContext(ctx, getAdminRequestByID, id)
+func (q *Queries) AdminGetRequestByID(ctx context.Context, id int32) (*AdminRequestQueue, error) {
+	row := q.db.QueryRowContext(ctx, adminGetRequestByID, id)
 	var i AdminRequestQueue
 	err := row.Scan(
 		&i.ID,
@@ -34,12 +34,12 @@ func (q *Queries) GetAdminRequestByID(ctx context.Context, id int32) (*AdminRequ
 	return &i, err
 }
 
-const insertAdminRequestQueue = `-- name: InsertAdminRequestQueue :execresult
+const adminInsertRequestQueue = `-- name: AdminInsertRequestQueue :execresult
 INSERT INTO admin_request_queue (users_idusers, change_table, change_field, change_row_id, change_value, contact_options)
 VALUES (?, ?, ?, ?, ?, ?)
 `
 
-type InsertAdminRequestQueueParams struct {
+type AdminInsertRequestQueueParams struct {
 	UsersIdusers   int32
 	ChangeTable    string
 	ChangeField    string
@@ -48,8 +48,8 @@ type InsertAdminRequestQueueParams struct {
 	ContactOptions sql.NullString
 }
 
-func (q *Queries) InsertAdminRequestQueue(ctx context.Context, arg InsertAdminRequestQueueParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, insertAdminRequestQueue,
+func (q *Queries) AdminInsertRequestQueue(ctx context.Context, arg AdminInsertRequestQueueParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, adminInsertRequestQueue,
 		arg.UsersIdusers,
 		arg.ChangeTable,
 		arg.ChangeField,
@@ -59,15 +59,15 @@ func (q *Queries) InsertAdminRequestQueue(ctx context.Context, arg InsertAdminRe
 	)
 }
 
-const listArchivedAdminRequests = `-- name: ListArchivedAdminRequests :many
+const adminListArchivedRequests = `-- name: AdminListArchivedRequests :many
 SELECT id, users_idusers, change_table, change_field, change_row_id, change_value, contact_options, status, created_at, acted_at
 FROM admin_request_queue
 WHERE status <> 'pending'
 ORDER BY id DESC
 `
 
-func (q *Queries) ListArchivedAdminRequests(ctx context.Context) ([]*AdminRequestQueue, error) {
-	rows, err := q.db.QueryContext(ctx, listArchivedAdminRequests)
+func (q *Queries) AdminListArchivedRequests(ctx context.Context) ([]*AdminRequestQueue, error) {
+	rows, err := q.db.QueryContext(ctx, adminListArchivedRequests)
 	if err != nil {
 		return nil, err
 	}
@@ -100,15 +100,15 @@ func (q *Queries) ListArchivedAdminRequests(ctx context.Context) ([]*AdminReques
 	return items, nil
 }
 
-const listPendingAdminRequests = `-- name: ListPendingAdminRequests :many
+const adminListPendingRequests = `-- name: AdminListPendingRequests :many
 SELECT id, users_idusers, change_table, change_field, change_row_id, change_value, contact_options, status, created_at, acted_at
 FROM admin_request_queue
 WHERE status = 'pending'
 ORDER BY id
 `
 
-func (q *Queries) ListPendingAdminRequests(ctx context.Context) ([]*AdminRequestQueue, error) {
-	rows, err := q.db.QueryContext(ctx, listPendingAdminRequests)
+func (q *Queries) AdminListPendingRequests(ctx context.Context) ([]*AdminRequestQueue, error) {
+	rows, err := q.db.QueryContext(ctx, adminListPendingRequests)
 	if err != nil {
 		return nil, err
 	}
@@ -141,16 +141,16 @@ func (q *Queries) ListPendingAdminRequests(ctx context.Context) ([]*AdminRequest
 	return items, nil
 }
 
-const updateAdminRequestStatus = `-- name: UpdateAdminRequestStatus :exec
+const adminUpdateRequestStatus = `-- name: AdminUpdateRequestStatus :exec
 UPDATE admin_request_queue SET status = ?, acted_at = NOW() WHERE id = ?
 `
 
-type UpdateAdminRequestStatusParams struct {
+type AdminUpdateRequestStatusParams struct {
 	Status string
 	ID     int32
 }
 
-func (q *Queries) UpdateAdminRequestStatus(ctx context.Context, arg UpdateAdminRequestStatusParams) error {
-	_, err := q.db.ExecContext(ctx, updateAdminRequestStatus, arg.Status, arg.ID)
+func (q *Queries) AdminUpdateRequestStatus(ctx context.Context, arg AdminUpdateRequestStatusParams) error {
+	_, err := q.db.ExecContext(ctx, adminUpdateRequestStatus, arg.Status, arg.ID)
 	return err
 }

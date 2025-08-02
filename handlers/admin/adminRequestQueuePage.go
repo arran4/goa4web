@@ -17,7 +17,7 @@ func AdminRequestQueuePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Admin Requests"
 	queries := cd.Queries()
-	rows, err := queries.ListPendingAdminRequests(r.Context())
+	rows, err := queries.AdminListPendingRequests(r.Context())
 	if err != nil && err != sql.ErrNoRows {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -44,7 +44,7 @@ func AdminRequestArchivePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Request Archive"
 	queries := cd.Queries()
-	rows, err := queries.ListArchivedAdminRequests(r.Context())
+	rows, err := queries.AdminListArchivedRequests(r.Context())
 	if err != nil && err != sql.ErrNoRows {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -72,7 +72,7 @@ func adminRequestPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = fmt.Sprintf("Request %d", id)
 	queries := cd.Queries()
-	req, err := queries.GetAdminRequestByID(r.Context(), int32(id))
+	req, err := queries.AdminGetRequestByID(r.Context(), int32(id))
 	if err != nil {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
@@ -128,7 +128,7 @@ func handleRequestAction(w http.ResponseWriter, r *http.Request, status string) 
 	}
 	cd.PageTitle = fmt.Sprintf("Request %d", id)
 	queries := cd.Queries()
-	req, err := queries.GetAdminRequestByID(r.Context(), int32(id))
+	req, err := queries.AdminGetRequestByID(r.Context(), int32(id))
 	if err != nil {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
@@ -145,7 +145,7 @@ func handleRequestAction(w http.ResponseWriter, r *http.Request, status string) 
 
 	var auto string
 
-	if err := queries.UpdateAdminRequestStatus(r.Context(), db.UpdateAdminRequestStatusParams{Status: status, ID: int32(id)}); err != nil {
+	if err := queries.AdminUpdateRequestStatus(r.Context(), db.AdminUpdateRequestStatusParams{Status: status, ID: int32(id)}); err != nil {
 		data.Errors = append(data.Errors, err.Error())
 	} else {
 		auto = fmt.Sprintf("status changed to %s", status)

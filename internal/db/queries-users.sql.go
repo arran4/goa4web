@@ -11,12 +11,12 @@ import (
 	"strings"
 )
 
-const allUserIDs = `-- name: AllUserIDs :many
+const adminAllUserIDs = `-- name: AdminAllUserIDs :many
 SELECT idusers FROM users ORDER BY idusers
 `
 
-func (q *Queries) AllUserIDs(ctx context.Context) ([]int32, error) {
-	rows, err := q.db.QueryContext(ctx, allUserIDs)
+func (q *Queries) AdminAllUserIDs(ctx context.Context) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx, adminAllUserIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -38,34 +38,243 @@ func (q *Queries) AllUserIDs(ctx context.Context) ([]int32, error) {
 	return items, nil
 }
 
-const allUsers = `-- name: AllUsers :many
+const adminAllUsers = `-- name: AdminAllUsers :many
 SELECT u.idusers, u.username,
        (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email
 FROM users u
+JOIN user_roles ur ON ur.users_idusers = u.idusers
+JOIN roles r ON ur.role_id = r.id
+WHERE r.is_admin = 1
 `
 
-type AllUsersRow struct {
+type AdminAllUsersRow struct {
 	Idusers  int32
 	Username sql.NullString
 	Email    string
 }
 
-// This query selects all admin users from the "users" table.
 // Result:
 //
 //	idusers (int)
 //	username (string)
 //	email (string)
-func (q *Queries) AllUsers(ctx context.Context) ([]*AllUsersRow, error) {
-	rows, err := q.db.QueryContext(ctx, allUsers)
+func (q *Queries) AdminAllUsers(ctx context.Context) ([]*AdminAllUsersRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminAllUsers)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*AllUsersRow
+	var items []*AdminAllUsersRow
 	for rows.Next() {
-		var i AllUsersRow
+		var i AdminAllUsersRow
 		if err := rows.Scan(&i.Idusers, &i.Username, &i.Email); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminListAdministratorEmails = `-- name: AdminListAdministratorEmails :many
+const getUserById = `-- name: GetUserById :one
+SELECT u.idusers, ue.email, u.username, u.public_profile_enabled_at
+FROM users u
+LEFT JOIN user_emails ue ON ue.id = (
+        SELECT id FROM user_emails ue2
+        WHERE ue2.user_id = u.idusers AND ue2.verified_at IS NOT NULL
+        ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1
+)
+WHERE u.idusers = ?
+`
+
+type GetUserByIdRow struct {
+	Idusers                int32
+	Email                  sql.NullString
+	Username               sql.NullString
+	PublicProfileEnabledAt sql.NullTime
+}
+
+func (q *Queries) GetUserById(ctx context.Context, idusers int32) (*GetUserByIdRow, error) {
+	row := q.db.QueryRowContext(ctx, getUserById, idusers)
+	var i GetUserByIdRow
+	err := row.Scan(
+		&i.Idusers,
+		&i.Email,
+		&i.Username,
+		&i.PublicProfileEnabledAt,
+	)
+	return &i, err
+}
+
+const getUserByUsername = `-- name: GetUserByUsername :one
+SELECT idusers,
+       (SELECT email FROM user_emails ue WHERE ue.user_id = users.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
+       username,
+       public_profile_enabled_at
+FROM users
+WHERE username = ?
+`
+
+type GetUserByUsernameRow struct {
+	Idusers                int32
+	Email                  string
+	Username               sql.NullString
+	PublicProfileEnabledAt sql.NullTime
+}
+
+func (q *Queries) GetUserByUsername(ctx context.Context, username sql.NullString) (*GetUserByUsernameRow, error) {
+	row := q.db.QueryRowContext(ctx, getUserByUsername, username)
+	var i GetUserByUsernameRow
+	err := row.Scan(
+		&i.Idusers,
+		&i.Email,
+		&i.Username,
+		&i.PublicProfileEnabledAt,
+	)
+	return &i, err
+}
+
+const listAdministratorEmails = `-- name: ListAdministratorEmails :many
+SELECT (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email
+FROM users u
+JOIN user_roles ur ON ur.users_idusers = u.idusers
+JOIN roles r ON ur.role_id = r.id
+WHERE r.is_admin = 1
+`
+
+func (q *Queries) AdminListAdministratorEmails(ctx context.Context) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, adminListAdministratorEmails)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var email string
+		if err := rows.Scan(&email); err != nil {
+			return nil, err
+		}
+		items = append(items, email)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminListPendingUsers = `-- name: AdminListPendingUsers :many
+SELECT u.idusers, u.username,
+       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email
+FROM users u
+WHERE NOT EXISTS (
+    SELECT 1 FROM user_roles ur
+    JOIN roles r ON ur.role_id = r.id
+    WHERE ur.users_idusers = u.idusers AND (r.can_login = 1 OR r.name = 'rejected')
+)
+ORDER BY u.idusers
+`
+
+type AdminListPendingUsersRow struct {
+	Idusers  int32
+	Username sql.NullString
+	Email    string
+}
+
+func (q *Queries) AdminListPendingUsers(ctx context.Context) ([]*AdminListPendingUsersRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListPendingUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListPendingUsersRow
+	for rows.Next() {
+		var i AdminListPendingUsersRow
+		if err := rows.Scan(&i.Idusers, &i.Username, &i.Email); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminListUserIDsByRole = `-- name: AdminListUserIDsByRole :many
+SELECT u.idusers
+FROM users u
+JOIN user_roles ur ON ur.users_idusers = u.idusers
+JOIN roles r ON ur.role_id = r.id
+WHERE r.name = ?
+ORDER BY u.idusers
+`
+
+func (q *Queries) AdminListUserIDsByRole(ctx context.Context, name string) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx, adminListUserIDsByRole, name)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var idusers int32
+		if err := rows.Scan(&idusers); err != nil {
+			return nil, err
+		}
+		items = append(items, idusers)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminUsersByID = `-- name: AdminUsersByID :many
+SELECT idusers, username
+FROM users
+WHERE idusers IN (/*SLICE:ids*/?)
+`
+
+type AdminUsersByIDRow struct {
+	Idusers  int32
+	Username sql.NullString
+}
+
+func (q *Queries) AdminUsersByID(ctx context.Context, ids []int32) ([]*AdminUsersByIDRow, error) {
+	query := adminUsersByID
+	var queryParams []interface{}
+	if len(ids) > 0 {
+		for _, v := range ids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(ids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminUsersByIDRow
+	for rows.Next() {
+		var i AdminUsersByIDRow
+		if err := rows.Scan(&i.Idusers, &i.Username); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -137,108 +346,13 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username sql.NullString
 	return &i, err
 }
 
-const listAdministratorEmails = `-- name: ListAdministratorEmails :many
-SELECT (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email
-FROM users u
-JOIN user_roles ur ON ur.users_idusers = u.idusers
-JOIN roles r ON ur.role_id = r.id
-WHERE r.is_admin = 1
+const insertUser = `-- name: InsertUser :execresult
+INSERT INTO users (username)
+VALUES (?)
 `
 
-func (q *Queries) ListAdministratorEmails(ctx context.Context) ([]string, error) {
-	rows, err := q.db.QueryContext(ctx, listAdministratorEmails)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []string
-	for rows.Next() {
-		var email string
-		if err := rows.Scan(&email); err != nil {
-			return nil, err
-		}
-		items = append(items, email)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listPendingUsers = `-- name: ListPendingUsers :many
-SELECT u.idusers, u.username,
-       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email
-FROM users u
-WHERE NOT EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.users_idusers = u.idusers AND (r.can_login = 1 OR r.name = 'rejected')
-)
-ORDER BY u.idusers
-`
-
-type ListPendingUsersRow struct {
-	Idusers  int32
-	Username sql.NullString
-	Email    string
-}
-
-func (q *Queries) ListPendingUsers(ctx context.Context) ([]*ListPendingUsersRow, error) {
-	rows, err := q.db.QueryContext(ctx, listPendingUsers)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*ListPendingUsersRow
-	for rows.Next() {
-		var i ListPendingUsersRow
-		if err := rows.Scan(&i.Idusers, &i.Username, &i.Email); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listUserIDsByRole = `-- name: ListUserIDsByRole :many
-SELECT u.idusers
-FROM users u
-JOIN user_roles ur ON ur.users_idusers = u.idusers
-JOIN roles r ON ur.role_id = r.id
-WHERE r.name = ?
-ORDER BY u.idusers
-`
-
-func (q *Queries) ListUserIDsByRole(ctx context.Context, name string) ([]int32, error) {
-	rows, err := q.db.QueryContext(ctx, listUserIDsByRole, name)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []int32
-	for rows.Next() {
-		var idusers int32
-		if err := rows.Scan(&idusers); err != nil {
-			return nil, err
-		}
-		items = append(items, idusers)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) InsertUser(ctx context.Context, username sql.NullString) (sql.Result, error) {
+	return q.db.ExecContext(ctx, insertUser, username)
 }
 
 const login = `-- name: Login :one
@@ -318,76 +432,4 @@ func (q *Queries) UserByEmail(ctx context.Context, email string) (*UserByEmailRo
 	var i UserByEmailRow
 	err := row.Scan(&i.Idusers, &i.Email, &i.Username)
 	return &i, err
-}
-
-const userByUsername = `-- name: UserByUsername :one
-SELECT idusers,
-       (SELECT email FROM user_emails ue WHERE ue.user_id = users.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
-       username,
-       public_profile_enabled_at
-FROM users
-WHERE username = ?
-`
-
-type UserByUsernameRow struct {
-	Idusers                int32
-	Email                  string
-	Username               sql.NullString
-	PublicProfileEnabledAt sql.NullTime
-}
-
-func (q *Queries) UserByUsername(ctx context.Context, username sql.NullString) (*UserByUsernameRow, error) {
-	row := q.db.QueryRowContext(ctx, userByUsername, username)
-	var i UserByUsernameRow
-	err := row.Scan(
-		&i.Idusers,
-		&i.Email,
-		&i.Username,
-		&i.PublicProfileEnabledAt,
-	)
-	return &i, err
-}
-
-const usersByID = `-- name: UsersByID :many
-SELECT idusers, username
-FROM users
-WHERE idusers IN (/*SLICE:ids*/?)
-`
-
-type UsersByIDRow struct {
-	Idusers  int32
-	Username sql.NullString
-}
-
-func (q *Queries) UsersByID(ctx context.Context, ids []int32) ([]*UsersByIDRow, error) {
-	query := usersByID
-	var queryParams []interface{}
-	if len(ids) > 0 {
-		for _, v := range ids {
-			queryParams = append(queryParams, v)
-		}
-		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(ids))[1:], 1)
-	} else {
-		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
-	}
-	rows, err := q.db.QueryContext(ctx, query, queryParams...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*UsersByIDRow
-	for rows.Next() {
-		var i UsersByIDRow
-		if err := rows.Scan(&i.Idusers, &i.Username); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }

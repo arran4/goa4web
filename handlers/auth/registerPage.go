@@ -53,7 +53,7 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	queries := cd.Queries()
 
-	if _, err := queries.UserByUsername(r.Context(), sql.NullString{
+	if _, err := queries.GetUserByUsername(r.Context(), sql.NullString{
 		String: username,
 		Valid:  true,
 	}); errors.Is(err, sql.ErrNoRows) {

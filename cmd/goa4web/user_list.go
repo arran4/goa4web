@@ -47,7 +47,7 @@ func (c *userListCmd) Run() error {
 		rows, err = queries.ListUserInfo(ctx)
 	} else {
 		// fall back to basic user list when no extra columns requested
-		basic, err2 := queries.AllUsers(ctx)
+		basic, err2 := queries.AdminAllUsers(ctx)
 		if err2 != nil {
 			return fmt.Errorf("list users: %w", err2)
 		}

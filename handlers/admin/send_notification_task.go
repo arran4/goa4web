@@ -43,13 +43,13 @@ func (SendNotificationTask) Action(w http.ResponseWriter, r *http.Request) any {
 			ids = append(ids, u.Idusers)
 		}
 	} else if role != "" && role != "anonymous" {
-		rows, err := queries.ListUserIDsByRole(r.Context(), role)
+		rows, err := queries.AdminListUserIDsByRole(r.Context(), role)
 		if err != nil {
 			return fmt.Errorf("list role fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		ids = append(ids, rows...)
 	} else {
-		rows, err := queries.AllUserIDs(r.Context())
+		rows, err := queries.AdminAllUserIDs(r.Context())
 		if err != nil {
 			return fmt.Errorf("list users fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}

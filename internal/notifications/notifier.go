@@ -100,9 +100,9 @@ func (n *Notifier) adminEmails(ctx context.Context) []string {
 		return emails
 	}
 	if n.Queries != nil {
-		rows, err := n.Queries.ListAdministratorEmails(ctx)
+		rows, err := n.Queries.AdminListAdministratorEmails(ctx)
 		if err != nil {
-			log.Printf("list admin emails: %v", err)
+			log.Printf("AdminListAdministratorEmails: %v", err)
 			return emails
 		}
 		for _, e := range rows {

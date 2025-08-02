@@ -15,14 +15,14 @@ import (
 
 func adminPendingUsersPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	rows, err := queries.ListPendingUsers(r.Context())
+	rows, err := queries.AdminListPendingUsers(r.Context())
 	if err != nil && err != sql.ErrNoRows {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 	data := struct {
 		*common.CoreData
-		Rows []*db.ListPendingUsersRow
+		Rows []*db.AdminListPendingUsersRow
 	}{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Rows:     rows,

@@ -1,8 +1,9 @@
 {{ template "head" $ }}
 [<a href="/admin">Admin</a>]<br />
+{{ with .Infos }}
 <table border="1">
 <tr><th>Section</th><th>Task</th><th>Self Email</th><th>Self Internal</th><th>Direct Email</th><th>Target Email</th><th>Target Internal</th><th>Subscribed Email</th><th>Subscribed Internal</th><th>Admin Email</th><th>Admin Internal</th></tr>
-{{- range .Infos }}
+{{- range . }}
 <tr>
     <td>{{ .Section }}</td>
     <td>{{ .Task }}</td>
@@ -18,4 +19,7 @@
 </tr>
 {{- end }}
 </table>
+{{ else }}
+<p>No templates found.</p>
+{{ end }}
 {{ template "tail" $ }}

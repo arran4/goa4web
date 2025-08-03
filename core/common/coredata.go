@@ -1,6 +1,7 @@
 package common
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"errors"
@@ -144,6 +145,21 @@ type CoreData struct {
 	writingRows              map[int32]*lazy.Value[*db.GetWritingForListerByIDRow]
 	currentBlogID            int32
 	blogEntries              map[int32]*lazy.Value[*db.GetBlogEntryForListerByIDRow]
+	users                    map[int32]*lazy.Value[*db.SystemGetUserByIDRow]
+	adminRequests            map[string]*lazy.Value[[]*db.AdminRequestQueue]
+	adminRequest             map[int32]*lazy.Value[*db.AdminRequestQueue]
+	adminRequestComments     map[int32]*lazy.Value[[]*db.AdminRequestComment]
+	currentRequestID         int32
+	adminUserEmails          map[int32]*lazy.Value[[]*db.UserEmail]
+	adminUserComments        map[int32]*lazy.Value[[]*db.AdminUserComment]
+	adminUserRoles           map[int32]*lazy.Value[[]*db.GetPermissionsByUserIDRow]
+	adminUserStats           map[int32]*lazy.Value[*db.AdminUserPostCountsByIDRow]
+	adminUserBookmarkSize    map[int32]*lazy.Value[int]
+	adminUserGrants          map[int32]*lazy.Value[[]*db.Grant]
+	currentProfileUserID     int32
+	templateOverrides        map[string]*lazy.Value[string]
+	currentTemplateName      string
+	currentTemplateError     string
 
 	absoluteURLBase lazy.Value[string]
 	dbRegistry      *dbdrivers.Registry
@@ -1308,4 +1324,428 @@ func (cd *CoreData) HasContentWriterRole() bool {
 // functions. It wraps templates.GetCompiledSiteTemplates(cd.Funcs(r)).
 func (cd *CoreData) ExecuteSiteTemplate(w io.Writer, r *http.Request, name string, data any) error {
 	return templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, name, data)
+}
+
+// Admin request helpers
+
+func (cd *CoreData) adminRequestList(kind string) ([]*db.AdminRequestQueue, error) {
+	if cd.adminRequests == nil {
+		cd.adminRequests = map[string]*lazy.Value[[]*db.AdminRequestQueue]{}
+	}
+	lv, ok := cd.adminRequests[kind]
+	if !ok {
+		lv = &lazy.Value[[]*db.AdminRequestQueue]{}
+		cd.adminRequests[kind] = lv
+	}
+	return lv.Load(func() ([]*db.AdminRequestQueue, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		switch kind {
+		case "pending":
+			return cd.queries.AdminListPendingRequests(cd.ctx)
+		case "archived":
+			return cd.queries.AdminListArchivedRequests(cd.ctx)
+		default:
+			return nil, nil
+		}
+	})
+}
+
+// PendingRequests returns pending admin requests loaded on demand.
+func (cd *CoreData) PendingRequests() []*db.AdminRequestQueue {
+	rows, err := cd.adminRequestList("pending")
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		log.Printf("load pending requests: %v", err)
+		return nil
+	}
+	return rows
+}
+
+// ArchivedRequests returns archived admin requests loaded on demand.
+func (cd *CoreData) ArchivedRequests() []*db.AdminRequestQueue {
+	rows, err := cd.adminRequestList("archived")
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		log.Printf("load archived requests: %v", err)
+		return nil
+	}
+	return rows
+}
+
+// SetCurrentRequestID stores the request ID for subsequent lookups.
+func (cd *CoreData) SetCurrentRequestID(id int32) { cd.currentRequestID = id }
+
+// CurrentRequest returns the request currently being viewed.
+func (cd *CoreData) CurrentRequest() *db.AdminRequestQueue {
+	id := cd.currentRequestID
+	if id == 0 {
+		return nil
+	}
+	if cd.adminRequest == nil {
+		cd.adminRequest = map[int32]*lazy.Value[*db.AdminRequestQueue]{}
+	}
+	lv, ok := cd.adminRequest[id]
+	if !ok {
+		lv = &lazy.Value[*db.AdminRequestQueue]{}
+		cd.adminRequest[id] = lv
+	}
+	req, err := lv.Load(func() (*db.AdminRequestQueue, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		return cd.queries.AdminGetRequestByID(cd.ctx, id)
+	})
+	if err != nil {
+		log.Printf("load request %d: %v", id, err)
+		return nil
+	}
+	return req
+}
+
+// CurrentRequestUser returns the user associated with the current request.
+func (cd *CoreData) CurrentRequestUser() *db.SystemGetUserByIDRow {
+	req := cd.CurrentRequest()
+	if req == nil {
+		return nil
+	}
+	return cd.UserByID(req.UsersIdusers)
+}
+
+// CurrentRequestComments returns comments for the current request.
+func (cd *CoreData) CurrentRequestComments() []*db.AdminRequestComment {
+	id := cd.currentRequestID
+	if id == 0 {
+		return nil
+	}
+	if cd.adminRequestComments == nil {
+		cd.adminRequestComments = map[int32]*lazy.Value[[]*db.AdminRequestComment]{}
+	}
+	lv, ok := cd.adminRequestComments[id]
+	if !ok {
+		lv = &lazy.Value[[]*db.AdminRequestComment]{}
+		cd.adminRequestComments[id] = lv
+	}
+	rows, err := lv.Load(func() ([]*db.AdminRequestComment, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		comments, err := cd.queries.AdminListRequestComments(cd.ctx, id)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		return comments, nil
+	})
+	if err != nil {
+		log.Printf("load request comments: %v", err)
+		return nil
+	}
+	return rows
+}
+
+// Admin user profile helpers
+
+// SetCurrentProfileUserID records the user ID for profile lookups.
+func (cd *CoreData) SetCurrentProfileUserID(id int32) { cd.currentProfileUserID = id }
+
+// CurrentProfileUser returns the user being viewed.
+func (cd *CoreData) CurrentProfileUser() *db.SystemGetUserByIDRow {
+	return cd.UserByID(cd.currentProfileUserID)
+}
+
+// CurrentProfileEmails returns emails for the profile user.
+func (cd *CoreData) CurrentProfileEmails() []*db.UserEmail {
+	id := cd.currentProfileUserID
+	if id == 0 {
+		return nil
+	}
+	if cd.adminUserEmails == nil {
+		cd.adminUserEmails = map[int32]*lazy.Value[[]*db.UserEmail]{}
+	}
+	lv, ok := cd.adminUserEmails[id]
+	if !ok {
+		lv = &lazy.Value[[]*db.UserEmail]{}
+		cd.adminUserEmails[id] = lv
+	}
+	rows, err := lv.Load(func() ([]*db.UserEmail, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		emails, err := cd.queries.AdminListUserEmails(cd.ctx, id)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		return emails, nil
+	})
+	if err != nil {
+		log.Printf("load user emails: %v", err)
+		return nil
+	}
+	return rows
+}
+
+// CurrentProfileComments returns admin comments for the profile user.
+func (cd *CoreData) CurrentProfileComments() []*db.AdminUserComment {
+	id := cd.currentProfileUserID
+	if id == 0 {
+		return nil
+	}
+	if cd.adminUserComments == nil {
+		cd.adminUserComments = map[int32]*lazy.Value[[]*db.AdminUserComment]{}
+	}
+	lv, ok := cd.adminUserComments[id]
+	if !ok {
+		lv = &lazy.Value[[]*db.AdminUserComment]{}
+		cd.adminUserComments[id] = lv
+	}
+	rows, err := lv.Load(func() ([]*db.AdminUserComment, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		comments, err := cd.queries.ListAdminUserComments(cd.ctx, id)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		return comments, nil
+	})
+	if err != nil {
+		log.Printf("load user comments: %v", err)
+		return nil
+	}
+	return rows
+}
+
+// CurrentProfileRoles returns roles for the profile user.
+func (cd *CoreData) CurrentProfileRoles() []*db.GetPermissionsByUserIDRow {
+	id := cd.currentProfileUserID
+	if id == 0 {
+		return nil
+	}
+	if cd.adminUserRoles == nil {
+		cd.adminUserRoles = map[int32]*lazy.Value[[]*db.GetPermissionsByUserIDRow]{}
+	}
+	lv, ok := cd.adminUserRoles[id]
+	if !ok {
+		lv = &lazy.Value[[]*db.GetPermissionsByUserIDRow]{}
+		cd.adminUserRoles[id] = lv
+	}
+	rows, err := lv.Load(func() ([]*db.GetPermissionsByUserIDRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		roles, err := cd.queries.GetPermissionsByUserID(cd.ctx, id)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		return roles, nil
+	})
+	if err != nil {
+		log.Printf("load user roles: %v", err)
+		return nil
+	}
+	return rows
+}
+
+// CurrentProfileStats returns posting stats for the profile user.
+func (cd *CoreData) CurrentProfileStats() *db.AdminUserPostCountsByIDRow {
+	id := cd.currentProfileUserID
+	if id == 0 {
+		return nil
+	}
+	if cd.adminUserStats == nil {
+		cd.adminUserStats = map[int32]*lazy.Value[*db.AdminUserPostCountsByIDRow]{}
+	}
+	lv, ok := cd.adminUserStats[id]
+	if !ok {
+		lv = &lazy.Value[*db.AdminUserPostCountsByIDRow]{}
+		cd.adminUserStats[id] = lv
+	}
+	row, err := lv.Load(func() (*db.AdminUserPostCountsByIDRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		stat, err := cd.queries.AdminUserPostCountsByID(cd.ctx, id)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		return stat, nil
+	})
+	if err != nil {
+		log.Printf("load user stats: %v", err)
+		return nil
+	}
+	return row
+}
+
+// CurrentProfileBookmarkSize returns bookmark entry count for the profile user.
+func (cd *CoreData) CurrentProfileBookmarkSize() int {
+	id := cd.currentProfileUserID
+	if id == 0 {
+		return 0
+	}
+	if cd.adminUserBookmarkSize == nil {
+		cd.adminUserBookmarkSize = map[int32]*lazy.Value[int]{}
+	}
+	lv, ok := cd.adminUserBookmarkSize[id]
+	if !ok {
+		lv = &lazy.Value[int]{}
+		cd.adminUserBookmarkSize[id] = lv
+	}
+	size, err := lv.Load(func() (int, error) {
+		if cd.queries == nil {
+			return 0, nil
+		}
+		bm, err := cd.queries.GetBookmarksForUser(cd.ctx, id)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return 0, err
+		}
+		if bm == nil {
+			return 0, nil
+		}
+		list := strings.TrimSpace(bm.List.String)
+		if list == "" {
+			return 0, nil
+		}
+		return len(strings.Split(list, "\n")), nil
+	})
+	if err != nil {
+		log.Printf("load bookmark size: %v", err)
+		return 0
+	}
+	return size
+}
+
+// CurrentProfileGrants returns direct grants for the profile user.
+func (cd *CoreData) CurrentProfileGrants() []*db.Grant {
+	id := cd.currentProfileUserID
+	if id == 0 {
+		return nil
+	}
+	if cd.adminUserGrants == nil {
+		cd.adminUserGrants = map[int32]*lazy.Value[[]*db.Grant]{}
+	}
+	lv, ok := cd.adminUserGrants[id]
+	if !ok {
+		lv = &lazy.Value[[]*db.Grant]{}
+		cd.adminUserGrants[id] = lv
+	}
+	rows, err := lv.Load(func() ([]*db.Grant, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		grants, err := cd.queries.ListGrantsByUserID(cd.ctx, sql.NullInt32{Int32: id, Valid: true})
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		return grants, nil
+	})
+	if err != nil {
+		log.Printf("load user grants: %v", err)
+		return nil
+	}
+	return rows
+}
+
+// UserByID loads a user record by ID once and caches it.
+func (cd *CoreData) UserByID(id int32) *db.SystemGetUserByIDRow {
+	if id == 0 {
+		return nil
+	}
+	if cd.users == nil {
+		cd.users = map[int32]*lazy.Value[*db.SystemGetUserByIDRow]{}
+	}
+	lv, ok := cd.users[id]
+	if !ok {
+		lv = &lazy.Value[*db.SystemGetUserByIDRow]{}
+		cd.users[id] = lv
+	}
+	row, err := lv.Load(func() (*db.SystemGetUserByIDRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		r, err := cd.queries.SystemGetUserByID(cd.ctx, id)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return r, err
+	})
+	if err != nil {
+		log.Printf("load user %d: %v", id, err)
+		return nil
+	}
+	return row
+}
+
+// Email template helpers
+
+// SetCurrentTemplate records the template being edited along with an error message.
+func (cd *CoreData) SetCurrentTemplate(name, errMsg string) {
+	cd.currentTemplateName = name
+	cd.currentTemplateError = errMsg
+}
+
+// TemplateName returns the currently selected template name.
+func (cd *CoreData) TemplateName() string { return cd.currentTemplateName }
+
+// TemplateError returns the error message for template editing.
+func (cd *CoreData) TemplateError() string { return cd.currentTemplateError }
+
+// TemplateOverride returns the override body for the current template.
+func (cd *CoreData) TemplateOverride() string {
+	name := cd.currentTemplateName
+	if name == "" {
+		return ""
+	}
+	if cd.templateOverrides == nil {
+		cd.templateOverrides = map[string]*lazy.Value[string]{}
+	}
+	lv, ok := cd.templateOverrides[name]
+	if !ok {
+		lv = &lazy.Value[string]{}
+		cd.templateOverrides[name] = lv
+	}
+	body, err := lv.Load(func() (string, error) {
+		if cd.queries == nil {
+			return "", nil
+		}
+		return cd.queries.SystemGetTemplateOverride(cd.ctx, name)
+	})
+	if err != nil {
+		return ""
+	}
+	return body
+}
+
+// DefaultTemplate renders the default body for the current template.
+func (cd *CoreData) DefaultTemplate() string {
+	return defaultTemplate(cd.currentTemplateName, cd.Config)
+}
+
+func defaultTemplate(name string, cfg *config.RuntimeConfig) string {
+	var buf bytes.Buffer
+	if strings.HasSuffix(name, ".gohtml") {
+		tmpl := templates.GetCompiledEmailHtmlTemplates(map[string]any{})
+		if err := tmpl.ExecuteTemplate(&buf, name, sampleEmailData(cfg)); err == nil {
+			return buf.String()
+		}
+	} else {
+		tmpl := templates.GetCompiledEmailTextTemplates(map[string]any{})
+		if err := tmpl.ExecuteTemplate(&buf, name, sampleEmailData(cfg)); err == nil {
+			return buf.String()
+		}
+		tmpl2 := templates.GetCompiledNotificationTemplates(map[string]any{})
+		buf.Reset()
+		if err := tmpl2.ExecuteTemplate(&buf, name, sampleEmailData(cfg)); err == nil {
+			return buf.String()
+		}
+	}
+	return ""
+}
+
+func sampleEmailData(cfg *config.RuntimeConfig) map[string]any {
+	return map[string]any{
+		"URL":            "http://example.com",
+		"UnsubscribeUrl": "http://example.com/unsub",
+		"From":           cfg.EmailFrom,
+		"To":             "user@example.com",
+	}
 }

@@ -1,13 +1,12 @@
 package admin
 
 import (
-	"database/sql"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"strconv"
 
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/mux"
@@ -16,81 +15,21 @@ import (
 func AdminRequestQueuePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Admin Requests"
-	queries := cd.Queries()
-	rows, err := queries.AdminListPendingRequests(r.Context())
-	if err != nil && err != sql.ErrNoRows {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	type Row struct {
-		*db.AdminRequestQueue
-		Username string
-	}
-	data := struct {
-		*common.CoreData
-		Rows []Row
-	}{CoreData: cd}
-	for _, row := range rows {
-		user, err := queries.SystemGetUserByID(r.Context(), row.UsersIdusers)
-		if err != nil {
-			continue
-		}
-		data.Rows = append(data.Rows, Row{row, user.Username.String})
-	}
-	handlers.TemplateHandler(w, r, "requestQueuePage.gohtml", data)
+	handlers.TemplateHandler(w, r, "requestQueuePage.gohtml", cd)
 }
 
 func AdminRequestArchivePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Request Archive"
-	queries := cd.Queries()
-	rows, err := queries.AdminListArchivedRequests(r.Context())
-	if err != nil && err != sql.ErrNoRows {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	type Row struct {
-		*db.AdminRequestQueue
-		Username string
-	}
-	data := struct {
-		*common.CoreData
-		Rows []Row
-	}{CoreData: cd}
-	for _, row := range rows {
-		user, err := queries.SystemGetUserByID(r.Context(), row.UsersIdusers)
-		if err != nil {
-			continue
-		}
-		data.Rows = append(data.Rows, Row{row, user.Username.String})
-	}
-	handlers.TemplateHandler(w, r, "requestArchivePage.gohtml", data)
+	handlers.TemplateHandler(w, r, "requestArchivePage.gohtml", cd)
 }
 
 func adminRequestPage(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.SetCurrentRequestID(int32(id))
 	cd.PageTitle = fmt.Sprintf("Request %d", id)
-	queries := cd.Queries()
-	req, err := queries.AdminGetRequestByID(r.Context(), int32(id))
-	if err != nil {
-		http.Error(w, "not found", http.StatusNotFound)
-		return
-	}
-	comments, _ := queries.AdminListRequestComments(r.Context(), int32(id))
-	user, _ := queries.SystemGetUserByID(r.Context(), req.UsersIdusers)
-	data := struct {
-		*common.CoreData
-		Req      *db.AdminRequestQueue
-		User     *db.SystemGetUserByIDRow
-		Comments []*db.AdminRequestComment
-	}{
-		CoreData: cd,
-		Req:      req,
-		User:     user,
-		Comments: comments,
-	}
-	handlers.TemplateHandler(w, r, "requestPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "requestPage.gohtml", cd)
 }
 
 func adminRequestAddCommentPage(w http.ResponseWriter, r *http.Request) {

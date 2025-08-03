@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"flag"
 	"fmt"
 	"strconv"
@@ -13,16 +12,14 @@ import (
 // blogCommentsListCmd implements "blog comments list".
 type blogCommentsListCmd struct {
 	*blogCommentsCmd
-	fs     *flag.FlagSet
-	ID     int
-	UserID int
+	fs *flag.FlagSet
+	ID int
 }
 
 func parseBlogCommentsListCmd(parent *blogCommentsCmd, args []string) (*blogCommentsListCmd, error) {
 	c := &blogCommentsListCmd{blogCommentsCmd: parent}
 	c.fs = newFlagSet("list")
 	c.fs.IntVar(&c.ID, "id", 0, "blog id")
-	c.fs.IntVar(&c.UserID, "user", 0, "viewer user id")
 	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
@@ -47,12 +44,7 @@ func (c *blogCommentsListCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := db.New(conn)
-	listerID := int32(c.UserID)
-	b, err := queries.GetBlogEntryForListerByID(ctx, db.GetBlogEntryForListerByIDParams{
-		ListerID: listerID,
-		ID:       int32(c.ID),
-		UserID:   sql.NullInt32{Int32: listerID, Valid: listerID != 0},
-	})
+	b, err := queries.SystemGetBlogEntryByID(ctx, int32(c.ID))
 	if err != nil {
 		return fmt.Errorf("get blog: %w", err)
 	}
@@ -60,11 +52,7 @@ func (c *blogCommentsListCmd) Run() error {
 	if b.ForumthreadID.Valid {
 		threadID = b.ForumthreadID.Int32
 	}
-	rows, err := queries.GetCommentsByThreadIdForUser(ctx, db.GetCommentsByThreadIdForUserParams{
-		ViewerID: listerID,
-		ThreadID: threadID,
-		UserID:   sql.NullInt32{Int32: listerID, Valid: listerID != 0},
-	})
+	rows, err := queries.SystemListCommentsByThreadID(ctx, threadID)
 	if err != nil {
 		return fmt.Errorf("list comments: %w", err)
 	}

@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"flag"
 	"fmt"
 	"strconv"
@@ -16,7 +15,6 @@ type blogCommentsReadCmd struct {
 	fs        *flag.FlagSet
 	BlogID    int
 	CommentID int
-	UserID    int
 	All       bool
 }
 
@@ -25,7 +23,6 @@ func parseBlogCommentsReadCmd(parent *blogCommentsCmd, args []string) (*blogComm
 	c.fs = newFlagSet("read")
 	c.fs.IntVar(&c.BlogID, "id", 0, "blog id")
 	c.fs.IntVar(&c.CommentID, "comment", 0, "comment id")
-	c.fs.IntVar(&c.UserID, "user", 0, "viewer user id")
 	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
@@ -59,12 +56,7 @@ func (c *blogCommentsReadCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := db.New(conn)
-	uid := int32(c.UserID)
-	b, err := queries.GetBlogEntryForListerByID(ctx, db.GetBlogEntryForListerByIDParams{
-		ListerID: uid,
-		ID:       int32(c.BlogID),
-		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
+	b, err := queries.SystemGetBlogEntryByID(ctx, int32(c.BlogID))
 	if err != nil {
 		return fmt.Errorf("get blog: %w", err)
 	}
@@ -73,11 +65,7 @@ func (c *blogCommentsReadCmd) Run() error {
 		if b.ForumthreadID.Valid {
 			threadID = b.ForumthreadID.Int32
 		}
-		rows, err := queries.GetCommentsByThreadIdForUser(ctx, db.GetCommentsByThreadIdForUserParams{
-			ViewerID: uid,
-			ThreadID: threadID,
-			UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
-		})
+		rows, err := queries.SystemListCommentsByThreadID(ctx, threadID)
 		if err != nil {
 			return fmt.Errorf("get comments: %w", err)
 		}
@@ -89,11 +77,7 @@ func (c *blogCommentsReadCmd) Run() error {
 	if c.CommentID == 0 {
 		return fmt.Errorf("comment id required")
 	}
-	cm, err := queries.GetCommentByIdForUser(ctx, db.GetCommentByIdForUserParams{
-		ViewerID: uid,
-		ID:       int32(c.CommentID),
-		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
+	cm, err := queries.GetCommentById(ctx, int32(c.CommentID))
 	if err != nil {
 		return fmt.Errorf("get comment: %w", err)
 	}

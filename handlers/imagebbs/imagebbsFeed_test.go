@@ -15,7 +15,7 @@ import (
 )
 
 func TestImagebbsFeed(t *testing.T) {
-	rows := []*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow{
+	rows := []*db.ListImagePostsByBoardForListerRow{
 		{
 			Idimagepost:   1,
 			ForumthreadID: 2,

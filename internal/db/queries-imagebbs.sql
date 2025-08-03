@@ -4,10 +4,11 @@ INSERT INTO imageboard (imageboard_idimageboard, title, description, approval_re
 -- name: UpdateImageBoard :exec
 UPDATE imageboard SET title = ?, description = ?, imageboard_idimageboard = ?, approval_required = ? WHERE idimageboard = ?;
 
--- name: GetAllBoardsByParentBoardId :many
-SELECT *
-FROM imageboard
-WHERE imageboard_idimageboard = ?;
+-- name: SystemListBoardsByParentID :many
+SELECT b.*
+FROM imageboard b
+WHERE b.imageboard_idimageboard = sqlc.arg(parent_id)
+LIMIT ? OFFSET ?;
 
 
 -- name: CreateImagePost :execlastid
@@ -44,10 +45,10 @@ WHERE i.users_idusers = ? AND i.deleted_at IS NULL
 ORDER BY i.posted DESC
 LIMIT ? OFFSET ?;
 
--- name: GetAllImageBoards :many
+-- name: AdminListBoards :many
 SELECT b.*
 FROM imageboard b
-;
+LIMIT ? OFFSET ?;
 
 -- name: GetImageBoardById :one
 SELECT * FROM imageboard WHERE idimageboard = ?;
@@ -59,9 +60,9 @@ UPDATE imageboard SET deleted_at = NOW() WHERE idimageboard = ?;
 UPDATE imagepost SET approved = 1 WHERE idimagepost = ?;
 
 
--- name: GetAllBoardsByParentBoardIdForUser :many
+-- name: ListBoardsByParentIDForLister :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT b.*
 FROM imageboard b
@@ -74,13 +75,14 @@ WHERE b.imageboard_idimageboard = sqlc.arg(parent_id)
       AND g.action='see'
       AND g.active=1
       AND (g.item_id = b.idimageboard OR g.item_id IS NULL)
-      AND (g.user_id = sqlc.arg(viewer_user_id) OR g.user_id IS NULL)
+      AND (g.user_id = sqlc.arg(lister_user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
-  );
+  )
+LIMIT ? OFFSET ?;
 
--- name: GetAllImageBoardsForUser :many
+-- name: ListBoardsForLister :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT b.*
 FROM imageboard b
@@ -91,19 +93,20 @@ WHERE b.deleted_at IS NULL AND EXISTS (
       AND g.action='see'
       AND g.active=1
       AND (g.item_id = b.idimageboard OR g.item_id IS NULL)
-      AND (g.user_id = sqlc.arg(viewer_user_id) OR g.user_id IS NULL)
+      AND (g.user_id = sqlc.arg(lister_user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
-  );
+  )
+LIMIT ? OFFSET ?;
 
--- name: GetImagePostsByUserDescendingForUser :many
+-- name: ListImagePostsByPosterForLister :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT i.*, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
-WHERE i.users_idusers = sqlc.arg(user_id)
+WHERE i.users_idusers = sqlc.arg(poster_id)
   AND i.approved = 1
   AND i.deleted_at IS NULL
   AND EXISTS (
@@ -113,15 +116,15 @@ WHERE i.users_idusers = sqlc.arg(user_id)
       AND g.action='see'
       AND g.active=1
       AND (g.item_id = i.imageboard_idimageboard OR g.item_id IS NULL)
-      AND (g.user_id = sqlc.arg(viewer_user_id) OR g.user_id IS NULL)
+      AND (g.user_id = sqlc.arg(lister_user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY i.posted DESC
 LIMIT ? OFFSET ?;
 
--- name: GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUser :many
+-- name: ListImagePostsByBoardForLister :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT i.*, u.username, th.comments
 FROM imagepost i
@@ -137,13 +140,14 @@ WHERE i.imageboard_idimageboard = sqlc.arg(board_id)
       AND g.action='view'
       AND g.active=1
       AND g.item_id = i.imageboard_idimageboard
-      AND (g.user_id = sqlc.arg(viewer_user_id) OR g.user_id IS NULL)
+      AND (g.user_id = sqlc.arg(lister_user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
-  );
+  )
+LIMIT ? OFFSET ?;
 
--- name: GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUser :one
+-- name: GetImagePostByIDForLister :one
 WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT i.*, u.username, th.comments
 FROM imagepost i
@@ -159,7 +163,7 @@ WHERE i.idimagepost = sqlc.arg(id)
       AND g.action='view'
       AND g.active=1
       AND g.item_id = i.imageboard_idimageboard
-      AND (g.user_id = sqlc.arg(viewer_user_id) OR g.user_id IS NULL)
+      AND (g.user_id = sqlc.arg(lister_user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 LIMIT 1;

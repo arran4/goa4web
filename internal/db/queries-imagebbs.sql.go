@@ -10,6 +10,46 @@ import (
 	"database/sql"
 )
 
+const adminListBoards = `-- name: AdminListBoards :many
+SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required
+FROM imageboard b
+LIMIT ? OFFSET ?
+`
+
+type AdminListBoardsParams struct {
+	Limit  int32
+	Offset int32
+}
+
+func (q *Queries) AdminListBoards(ctx context.Context, arg AdminListBoardsParams) ([]*Imageboard, error) {
+	rows, err := q.db.QueryContext(ctx, adminListBoards, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Imageboard
+	for rows.Next() {
+		var i Imageboard
+		if err := rows.Scan(
+			&i.Idimageboard,
+			&i.ImageboardIdimageboard,
+			&i.Title,
+			&i.Description,
+			&i.ApprovalRequired,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const approveImagePost = `-- name: ApproveImagePost :exec
 UPDATE imagepost SET approved = 1 WHERE idimagepost = ?
 `
@@ -89,335 +129,6 @@ func (q *Queries) DeleteImageBoard(ctx context.Context, idimageboard int32) erro
 	return err
 }
 
-const getAllBoardsByParentBoardId = `-- name: GetAllBoardsByParentBoardId :many
-SELECT idimageboard, imageboard_idimageboard, title, description, approval_required
-FROM imageboard
-WHERE imageboard_idimageboard = ?
-`
-
-func (q *Queries) GetAllBoardsByParentBoardId(ctx context.Context, imageboardIdimageboard int32) ([]*Imageboard, error) {
-	rows, err := q.db.QueryContext(ctx, getAllBoardsByParentBoardId, imageboardIdimageboard)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*Imageboard
-	for rows.Next() {
-		var i Imageboard
-		if err := rows.Scan(
-			&i.Idimageboard,
-			&i.ImageboardIdimageboard,
-			&i.Title,
-			&i.Description,
-			&i.ApprovalRequired,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getAllBoardsByParentBoardIdForUser = `-- name: GetAllBoardsByParentBoardIdForUser :many
-WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-)
-SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required
-FROM imageboard b
-WHERE b.imageboard_idimageboard = ?
-  AND b.deleted_at IS NULL
-  AND EXISTS (
-    SELECT 1 FROM grants g
-    WHERE g.section='imagebbs'
-      AND (g.item='board' OR g.item IS NULL)
-      AND g.action='see'
-      AND g.active=1
-      AND (g.item_id = b.idimageboard OR g.item_id IS NULL)
-      AND (g.user_id = ? OR g.user_id IS NULL)
-      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
-  )
-`
-
-type GetAllBoardsByParentBoardIdForUserParams struct {
-	ViewerID     int32
-	ParentID     int32
-	ViewerUserID sql.NullInt32
-}
-
-func (q *Queries) GetAllBoardsByParentBoardIdForUser(ctx context.Context, arg GetAllBoardsByParentBoardIdForUserParams) ([]*Imageboard, error) {
-	rows, err := q.db.QueryContext(ctx, getAllBoardsByParentBoardIdForUser, arg.ViewerID, arg.ParentID, arg.ViewerUserID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*Imageboard
-	for rows.Next() {
-		var i Imageboard
-		if err := rows.Scan(
-			&i.Idimageboard,
-			&i.ImageboardIdimageboard,
-			&i.Title,
-			&i.Description,
-			&i.ApprovalRequired,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getAllImageBoards = `-- name: GetAllImageBoards :many
-SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required
-FROM imageboard b
-`
-
-func (q *Queries) GetAllImageBoards(ctx context.Context) ([]*Imageboard, error) {
-	rows, err := q.db.QueryContext(ctx, getAllImageBoards)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*Imageboard
-	for rows.Next() {
-		var i Imageboard
-		if err := rows.Scan(
-			&i.Idimageboard,
-			&i.ImageboardIdimageboard,
-			&i.Title,
-			&i.Description,
-			&i.ApprovalRequired,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getAllImageBoardsForUser = `-- name: GetAllImageBoardsForUser :many
-WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-)
-SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required
-FROM imageboard b
-WHERE b.deleted_at IS NULL AND EXISTS (
-    SELECT 1 FROM grants g
-    WHERE g.section='imagebbs'
-      AND (g.item='board' OR g.item IS NULL)
-      AND g.action='see'
-      AND g.active=1
-      AND (g.item_id = b.idimageboard OR g.item_id IS NULL)
-      AND (g.user_id = ? OR g.user_id IS NULL)
-      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
-  )
-`
-
-type GetAllImageBoardsForUserParams struct {
-	ViewerID     int32
-	ViewerUserID sql.NullInt32
-}
-
-func (q *Queries) GetAllImageBoardsForUser(ctx context.Context, arg GetAllImageBoardsForUserParams) ([]*Imageboard, error) {
-	rows, err := q.db.QueryContext(ctx, getAllImageBoardsForUser, arg.ViewerID, arg.ViewerUserID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*Imageboard
-	for rows.Next() {
-		var i Imageboard
-		if err := rows.Scan(
-			&i.Idimageboard,
-			&i.ImageboardIdimageboard,
-			&i.Title,
-			&i.Description,
-			&i.ApprovalRequired,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUser = `-- name: GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUser :many
-WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-)
-SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
-FROM imagepost i
-LEFT JOIN users u ON i.users_idusers = u.idusers
-LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
-WHERE i.imageboard_idimageboard = ?
-  AND i.approved = 1
-  AND i.deleted_at IS NULL
-  AND EXISTS (
-    SELECT 1 FROM grants g
-    WHERE g.section='imagebbs'
-      AND g.item='board'
-      AND g.action='view'
-      AND g.active=1
-      AND g.item_id = i.imageboard_idimageboard
-      AND (g.user_id = ? OR g.user_id IS NULL)
-      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
-  )
-`
-
-type GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserParams struct {
-	ViewerID     int32
-	BoardID      int32
-	ViewerUserID sql.NullInt32
-}
-
-type GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow struct {
-	Idimagepost            int32
-	ForumthreadID          int32
-	UsersIdusers           int32
-	ImageboardIdimageboard int32
-	Posted                 sql.NullTime
-	Description            sql.NullString
-	Thumbnail              sql.NullString
-	Fullimage              sql.NullString
-	FileSize               int32
-	Approved               bool
-	DeletedAt              sql.NullTime
-	LastIndex              sql.NullTime
-	Username               sql.NullString
-	Comments               sql.NullInt32
-}
-
-func (q *Queries) GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUser(ctx context.Context, arg GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserParams) ([]*GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow, error) {
-	rows, err := q.db.QueryContext(ctx, getAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUser, arg.ViewerID, arg.BoardID, arg.ViewerUserID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow
-	for rows.Next() {
-		var i GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow
-		if err := rows.Scan(
-			&i.Idimagepost,
-			&i.ForumthreadID,
-			&i.UsersIdusers,
-			&i.ImageboardIdimageboard,
-			&i.Posted,
-			&i.Description,
-			&i.Thumbnail,
-			&i.Fullimage,
-			&i.FileSize,
-			&i.Approved,
-			&i.DeletedAt,
-			&i.LastIndex,
-			&i.Username,
-			&i.Comments,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUser = `-- name: GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUser :one
-WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-)
-SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
-FROM imagepost i
-LEFT JOIN users u ON i.users_idusers = u.idusers
-LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
-WHERE i.idimagepost = ?
-  AND i.approved = 1
-  AND i.deleted_at IS NULL
-  AND EXISTS (
-    SELECT 1 FROM grants g
-    WHERE g.section='imagebbs'
-      AND g.item='board'
-      AND g.action='view'
-      AND g.active=1
-      AND g.item_id = i.imageboard_idimageboard
-      AND (g.user_id = ? OR g.user_id IS NULL)
-      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
-  )
-LIMIT 1
-`
-
-type GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUserParams struct {
-	ViewerID     int32
-	ID           int32
-	ViewerUserID sql.NullInt32
-}
-
-type GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUserRow struct {
-	Idimagepost            int32
-	ForumthreadID          int32
-	UsersIdusers           int32
-	ImageboardIdimageboard int32
-	Posted                 sql.NullTime
-	Description            sql.NullString
-	Thumbnail              sql.NullString
-	Fullimage              sql.NullString
-	FileSize               int32
-	Approved               bool
-	DeletedAt              sql.NullTime
-	LastIndex              sql.NullTime
-	Username               sql.NullString
-	Comments               sql.NullInt32
-}
-
-func (q *Queries) GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUser(ctx context.Context, arg GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUserParams) (*GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUserRow, error) {
-	row := q.db.QueryRowContext(ctx, getAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUser, arg.ViewerID, arg.ID, arg.ViewerUserID)
-	var i GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUserRow
-	err := row.Scan(
-		&i.Idimagepost,
-		&i.ForumthreadID,
-		&i.UsersIdusers,
-		&i.ImageboardIdimageboard,
-		&i.Posted,
-		&i.Description,
-		&i.Thumbnail,
-		&i.Fullimage,
-		&i.FileSize,
-		&i.Approved,
-		&i.DeletedAt,
-		&i.LastIndex,
-		&i.Username,
-		&i.Comments,
-	)
-	return &i, err
-}
-
 const getAllImagePostsForIndex = `-- name: GetAllImagePostsForIndex :many
 SELECT idimagepost, description FROM imagepost WHERE deleted_at IS NULL
 `
@@ -463,6 +174,75 @@ func (q *Queries) GetImageBoardById(ctx context.Context, idimageboard int32) (*I
 		&i.Title,
 		&i.Description,
 		&i.ApprovalRequired,
+	)
+	return &i, err
+}
+
+const getImagePostByIDForLister = `-- name: GetImagePostByIDForLister :one
+WITH RECURSIVE role_ids(id) AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+)
+SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
+FROM imagepost i
+LEFT JOIN users u ON i.users_idusers = u.idusers
+LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
+WHERE i.idimagepost = ?
+  AND i.approved = 1
+  AND i.deleted_at IS NULL
+  AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='imagebbs'
+      AND g.item='board'
+      AND g.action='view'
+      AND g.active=1
+      AND g.item_id = i.imageboard_idimageboard
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+LIMIT 1
+`
+
+type GetImagePostByIDForListerParams struct {
+	ListerID     int32
+	ID           int32
+	ListerUserID sql.NullInt32
+}
+
+type GetImagePostByIDForListerRow struct {
+	Idimagepost            int32
+	ForumthreadID          int32
+	UsersIdusers           int32
+	ImageboardIdimageboard int32
+	Posted                 sql.NullTime
+	Description            sql.NullString
+	Thumbnail              sql.NullString
+	Fullimage              sql.NullString
+	FileSize               int32
+	Approved               bool
+	DeletedAt              sql.NullTime
+	LastIndex              sql.NullTime
+	Username               sql.NullString
+	Comments               sql.NullInt32
+}
+
+func (q *Queries) GetImagePostByIDForLister(ctx context.Context, arg GetImagePostByIDForListerParams) (*GetImagePostByIDForListerRow, error) {
+	row := q.db.QueryRowContext(ctx, getImagePostByIDForLister, arg.ListerID, arg.ID, arg.ListerUserID)
+	var i GetImagePostByIDForListerRow
+	err := row.Scan(
+		&i.Idimagepost,
+		&i.ForumthreadID,
+		&i.UsersIdusers,
+		&i.ImageboardIdimageboard,
+		&i.Posted,
+		&i.Description,
+		&i.Thumbnail,
+		&i.Fullimage,
+		&i.FileSize,
+		&i.Approved,
+		&i.DeletedAt,
+		&i.LastIndex,
+		&i.Username,
+		&i.Comments,
 	)
 	return &i, err
 }
@@ -646,7 +426,224 @@ func (q *Queries) GetImagePostsByUserDescendingAll(ctx context.Context, arg GetI
 	return items, nil
 }
 
-const getImagePostsByUserDescendingForUser = `-- name: GetImagePostsByUserDescendingForUser :many
+const listBoardsByParentIDForLister = `-- name: ListBoardsByParentIDForLister :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+)
+SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required
+FROM imageboard b
+WHERE b.imageboard_idimageboard = ?
+  AND b.deleted_at IS NULL
+  AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='imagebbs'
+      AND (g.item='board' OR g.item IS NULL)
+      AND g.action='see'
+      AND g.active=1
+      AND (g.item_id = b.idimageboard OR g.item_id IS NULL)
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+LIMIT ? OFFSET ?
+`
+
+type ListBoardsByParentIDForListerParams struct {
+	ListerID     int32
+	ParentID     int32
+	ListerUserID sql.NullInt32
+	Limit        int32
+	Offset       int32
+}
+
+func (q *Queries) ListBoardsByParentIDForLister(ctx context.Context, arg ListBoardsByParentIDForListerParams) ([]*Imageboard, error) {
+	rows, err := q.db.QueryContext(ctx, listBoardsByParentIDForLister,
+		arg.ListerID,
+		arg.ParentID,
+		arg.ListerUserID,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Imageboard
+	for rows.Next() {
+		var i Imageboard
+		if err := rows.Scan(
+			&i.Idimageboard,
+			&i.ImageboardIdimageboard,
+			&i.Title,
+			&i.Description,
+			&i.ApprovalRequired,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listBoardsForLister = `-- name: ListBoardsForLister :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+)
+SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required
+FROM imageboard b
+WHERE b.deleted_at IS NULL AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='imagebbs'
+      AND (g.item='board' OR g.item IS NULL)
+      AND g.action='see'
+      AND g.active=1
+      AND (g.item_id = b.idimageboard OR g.item_id IS NULL)
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+LIMIT ? OFFSET ?
+`
+
+type ListBoardsForListerParams struct {
+	ListerID     int32
+	ListerUserID sql.NullInt32
+	Limit        int32
+	Offset       int32
+}
+
+func (q *Queries) ListBoardsForLister(ctx context.Context, arg ListBoardsForListerParams) ([]*Imageboard, error) {
+	rows, err := q.db.QueryContext(ctx, listBoardsForLister,
+		arg.ListerID,
+		arg.ListerUserID,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Imageboard
+	for rows.Next() {
+		var i Imageboard
+		if err := rows.Scan(
+			&i.Idimageboard,
+			&i.ImageboardIdimageboard,
+			&i.Title,
+			&i.Description,
+			&i.ApprovalRequired,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listImagePostsByBoardForLister = `-- name: ListImagePostsByBoardForLister :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+)
+SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
+FROM imagepost i
+LEFT JOIN users u ON i.users_idusers = u.idusers
+LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
+WHERE i.imageboard_idimageboard = ?
+  AND i.approved = 1
+  AND i.deleted_at IS NULL
+  AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='imagebbs'
+      AND g.item='board'
+      AND g.action='view'
+      AND g.active=1
+      AND g.item_id = i.imageboard_idimageboard
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+LIMIT ? OFFSET ?
+`
+
+type ListImagePostsByBoardForListerParams struct {
+	ListerID     int32
+	BoardID      int32
+	ListerUserID sql.NullInt32
+	Limit        int32
+	Offset       int32
+}
+
+type ListImagePostsByBoardForListerRow struct {
+	Idimagepost            int32
+	ForumthreadID          int32
+	UsersIdusers           int32
+	ImageboardIdimageboard int32
+	Posted                 sql.NullTime
+	Description            sql.NullString
+	Thumbnail              sql.NullString
+	Fullimage              sql.NullString
+	FileSize               int32
+	Approved               bool
+	DeletedAt              sql.NullTime
+	LastIndex              sql.NullTime
+	Username               sql.NullString
+	Comments               sql.NullInt32
+}
+
+func (q *Queries) ListImagePostsByBoardForLister(ctx context.Context, arg ListImagePostsByBoardForListerParams) ([]*ListImagePostsByBoardForListerRow, error) {
+	rows, err := q.db.QueryContext(ctx, listImagePostsByBoardForLister,
+		arg.ListerID,
+		arg.BoardID,
+		arg.ListerUserID,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListImagePostsByBoardForListerRow
+	for rows.Next() {
+		var i ListImagePostsByBoardForListerRow
+		if err := rows.Scan(
+			&i.Idimagepost,
+			&i.ForumthreadID,
+			&i.UsersIdusers,
+			&i.ImageboardIdimageboard,
+			&i.Posted,
+			&i.Description,
+			&i.Thumbnail,
+			&i.Fullimage,
+			&i.FileSize,
+			&i.Approved,
+			&i.DeletedAt,
+			&i.LastIndex,
+			&i.Username,
+			&i.Comments,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listImagePostsByPosterForLister = `-- name: ListImagePostsByPosterForLister :many
 WITH RECURSIVE role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
@@ -671,15 +668,15 @@ ORDER BY i.posted DESC
 LIMIT ? OFFSET ?
 `
 
-type GetImagePostsByUserDescendingForUserParams struct {
-	ViewerID     int32
-	UserID       int32
-	ViewerUserID sql.NullInt32
+type ListImagePostsByPosterForListerParams struct {
+	ListerID     int32
+	PosterID     int32
+	ListerUserID sql.NullInt32
 	Limit        int32
 	Offset       int32
 }
 
-type GetImagePostsByUserDescendingForUserRow struct {
+type ListImagePostsByPosterForListerRow struct {
 	Idimagepost            int32
 	ForumthreadID          int32
 	UsersIdusers           int32
@@ -696,11 +693,11 @@ type GetImagePostsByUserDescendingForUserRow struct {
 	Comments               sql.NullInt32
 }
 
-func (q *Queries) GetImagePostsByUserDescendingForUser(ctx context.Context, arg GetImagePostsByUserDescendingForUserParams) ([]*GetImagePostsByUserDescendingForUserRow, error) {
-	rows, err := q.db.QueryContext(ctx, getImagePostsByUserDescendingForUser,
-		arg.ViewerID,
-		arg.UserID,
-		arg.ViewerUserID,
+func (q *Queries) ListImagePostsByPosterForLister(ctx context.Context, arg ListImagePostsByPosterForListerParams) ([]*ListImagePostsByPosterForListerRow, error) {
+	rows, err := q.db.QueryContext(ctx, listImagePostsByPosterForLister,
+		arg.ListerID,
+		arg.PosterID,
+		arg.ListerUserID,
 		arg.Limit,
 		arg.Offset,
 	)
@@ -708,9 +705,9 @@ func (q *Queries) GetImagePostsByUserDescendingForUser(ctx context.Context, arg 
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetImagePostsByUserDescendingForUserRow
+	var items []*ListImagePostsByPosterForListerRow
 	for rows.Next() {
-		var i GetImagePostsByUserDescendingForUserRow
+		var i ListImagePostsByPosterForListerRow
 		if err := rows.Scan(
 			&i.Idimagepost,
 			&i.ForumthreadID,
@@ -747,6 +744,48 @@ UPDATE imagepost SET last_index = NOW() WHERE idimagepost = ?
 func (q *Queries) SetImagePostLastIndex(ctx context.Context, idimagepost int32) error {
 	_, err := q.db.ExecContext(ctx, setImagePostLastIndex, idimagepost)
 	return err
+}
+
+const systemListBoardsByParentID = `-- name: SystemListBoardsByParentID :many
+SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required
+FROM imageboard b
+WHERE b.imageboard_idimageboard = ?
+LIMIT ? OFFSET ?
+`
+
+type SystemListBoardsByParentIDParams struct {
+	ParentID int32
+	Limit    int32
+	Offset   int32
+}
+
+func (q *Queries) SystemListBoardsByParentID(ctx context.Context, arg SystemListBoardsByParentIDParams) ([]*Imageboard, error) {
+	rows, err := q.db.QueryContext(ctx, systemListBoardsByParentID, arg.ParentID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Imageboard
+	for rows.Next() {
+		var i Imageboard
+		if err := rows.Scan(
+			&i.Idimageboard,
+			&i.ImageboardIdimageboard,
+			&i.Title,
+			&i.Description,
+			&i.ApprovalRequired,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const updateImageBoard = `-- name: UpdateImageBoard :exec

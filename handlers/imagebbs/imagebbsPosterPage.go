@@ -20,7 +20,7 @@ import (
 func PosterPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
-		Posts    []*db.GetImagePostsByUserDescendingForUserRow
+		Posts    []*db.ListImagePostsByPosterForListerRow
 		Username string
 		IsOffset bool
 	}
@@ -43,15 +43,15 @@ func PosterPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := queries.GetImagePostsByUserDescendingForUser(r.Context(), db.GetImagePostsByUserDescendingForUserParams{
-		ViewerID:     cd.UserID,
-		UserID:       u.Idusers,
-		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+	rows, err := queries.ListImagePostsByPosterForLister(r.Context(), db.ListImagePostsByPosterForListerParams{
+		ListerID:     cd.UserID,
+		PosterID:     u.Idusers,
+		ListerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		Limit:        15,
 		Offset:       int32(offset),
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		log.Printf("GetImagePostsByUserDescending Error: %s", err)
+		log.Printf("ListImagePostsByPosterForLister Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

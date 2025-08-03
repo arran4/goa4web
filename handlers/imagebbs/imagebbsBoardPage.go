@@ -60,7 +60,7 @@ func BoardPage(w http.ResponseWriter, r *http.Request) {
 		Boards      []*db.Imageboard
 		IsSubBoard  bool
 		BoardNumber int
-		Posts       []*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow
+		Posts       []*db.ListImagePostsByBoardForListerRow
 	}
 
 	vars := mux.Vars(r)

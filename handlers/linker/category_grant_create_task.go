@@ -40,9 +40,9 @@ func (CategoryGrantCreateTask) Action(w http.ResponseWriter, r *http.Request) an
 	}
 	var uid sql.NullInt32
 	if username != "" {
-		u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username})
+		u, err := queries.SystemGetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username})
 		if err != nil {
-			log.Printf("GetUserByUsername: %v", err)
+			log.Printf("SystemGetUserByUsername: %v", err)
 			return fmt.Errorf("get user by username %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		uid = sql.NullInt32{Int32: u.Idusers, Valid: true}

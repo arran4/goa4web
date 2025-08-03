@@ -41,7 +41,7 @@ func (c *permGrantCmd) Run() error {
 	ctx := context.Background()
 	queries := db.New(db)
 	c.rootCmd.Verbosef("granting %s to %s", c.Role, c.User)
-	u, err := queries.GetUserByUsername(ctx, sql.NullString{String: c.User, Valid: true})
+	u, err := queries.SystemGetUserByUsername(ctx, sql.NullString{String: c.User, Valid: true})
 	if err != nil {
 		return fmt.Errorf("get user: %w", err)
 	}

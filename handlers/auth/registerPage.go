@@ -53,7 +53,7 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	queries := cd.Queries()
 
-	if _, err := queries.GetUserByUsername(r.Context(), sql.NullString{
+	if _, err := queries.SystemGetUserByUsername(r.Context(), sql.NullString{
 		String: username,
 		Valid:  true,
 	}); errors.Is(err, sql.ErrNoRows) {
@@ -64,7 +64,7 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return handlers.ErrRedirectOnSamePageHandler(errors.New("user exists"))
 	}
 
-	if _, err := queries.UserByEmail(r.Context(), email); errors.Is(err, sql.ErrNoRows) {
+	if _, err := queries.SystemGetUserByEmail(r.Context(), email); errors.Is(err, sql.ErrNoRows) {
 	} else if err != nil {
 		log.Printf("UserByUsername Error: %s", err)
 		return fmt.Errorf("user by email %w", err)

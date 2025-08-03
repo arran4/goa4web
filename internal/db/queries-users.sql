@@ -10,7 +10,7 @@ JOIN user_roles ur ON ur.users_idusers = u.idusers
 JOIN roles r ON ur.role_id = r.id
 WHERE r.is_admin = 1;
 
--- name: GetUserByUsername :one
+-- name: SystemGetUserByUsername :one
 SELECT idusers,
        (SELECT email FROM user_emails ue WHERE ue.user_id = users.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
        username,
@@ -18,7 +18,7 @@ SELECT idusers,
 FROM users
 WHERE username = ?;
 
--- name: Login :one
+-- name: SystemGetLogin :one
 SELECT u.idusers,
        (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
        p.passwd, p.passwd_algorithm, u.username
@@ -27,7 +27,7 @@ WHERE u.username = ?
 ORDER BY p.created_at DESC
 LIMIT 1;
 
--- name: GetUserById :one
+-- name: SystemGetUserByID :one
 SELECT u.idusers, ue.email, u.username, u.public_profile_enabled_at
 FROM users u
 LEFT JOIN user_emails ue ON ue.id = (
@@ -37,7 +37,7 @@ LEFT JOIN user_emails ue ON ue.id = (
 )
 WHERE u.idusers = ?;
 
--- name: UserByEmail :one
+-- name: SystemGetUserByEmail :one
 SELECT u.idusers, ue.email, u.username
 FROM users u JOIN user_emails ue ON ue.user_id = u.idusers
 WHERE ue.email = ?

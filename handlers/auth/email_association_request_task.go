@@ -33,7 +33,7 @@ func (EmailAssociationRequestTask) Action(w http.ResponseWriter, r *http.Request
 	email := r.PostFormValue("email")
 	reason := r.PostFormValue("reason")
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	row, err := queries.GetUserByUsername(r.Context(), sql.NullString{String: username, Valid: true})
+	row, err := queries.SystemGetUserByUsername(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {
 		return fmt.Errorf("user not found %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

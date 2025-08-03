@@ -134,7 +134,7 @@ func (n *Notifier) notifyAdmins(ctx context.Context, et *EmailTemplates, nt *str
 	}
 	for _, addr := range n.adminEmails(ctx) {
 		var uid *int32
-		if u, err := n.Queries.UserByEmail(ctx, addr); err == nil {
+		if u, err := n.Queries.SystemGetUserByEmail(ctx, addr); err == nil {
 			id := u.Idusers
 			uid = &id
 		} else {

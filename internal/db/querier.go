@@ -279,8 +279,6 @@ type Querier interface {
 	GetPublicWritings(ctx context.Context, arg GetPublicWritingsParams) ([]*Writing, error)
 	GetThreadLastPosterAndPerms(ctx context.Context, arg GetThreadLastPosterAndPermsParams) (*GetThreadLastPosterAndPermsRow, error)
 	GetUnreadNotifications(ctx context.Context, usersIdusers int32) ([]*Notification, error)
-	GetUserById(ctx context.Context, idusers int32) (*GetUserByIdRow, error)
-	GetUserByUsername(ctx context.Context, username sql.NullString) (*GetUserByUsernameRow, error)
 	GetUserEmailByCode(ctx context.Context, lastVerificationCode sql.NullString) (*UserEmail, error)
 	GetUserEmailByEmail(ctx context.Context, email string) (*UserEmail, error)
 	GetUserEmailByID(ctx context.Context, id int32) (*UserEmail, error)
@@ -350,7 +348,6 @@ type Querier interface {
 	ListWritersSearchForLister(ctx context.Context, arg ListWritersSearchForListerParams) ([]*ListWritersSearchForListerRow, error)
 	ListWritingCategoriesForLister(ctx context.Context, arg ListWritingCategoriesForListerParams) ([]*WritingCategory, error)
 	ListWritingsByIDsForLister(ctx context.Context, arg ListWritingsByIDsForListerParams) ([]*ListWritingsByIDsForListerRow, error)
-	Login(ctx context.Context, username sql.NullString) (*LoginRow, error)
 	MakeThread(ctx context.Context, forumtopicIdforumtopic int32) (int64, error)
 	MarkEmailSent(ctx context.Context, id int32) error
 	MarkNotificationRead(ctx context.Context, id int32) error
@@ -408,8 +405,12 @@ type Querier interface {
 	SystemGetAllBlogsForIndex(ctx context.Context) ([]*SystemGetAllBlogsForIndexRow, error)
 	// SystemGetLanguageIDByName resolves a language ID by name.
 	SystemGetLanguageIDByName(ctx context.Context, nameof sql.NullString) (int32, error)
+	SystemGetLogin(ctx context.Context, username sql.NullString) (*SystemGetLoginRow, error)
 	SystemGetSearchWordByWordLowercased(ctx context.Context, lcase string) (*Searchwordlist, error)
 	SystemGetTemplateOverride(ctx context.Context, name string) (string, error)
+	SystemGetUserByEmail(ctx context.Context, email string) (*SystemGetUserByEmailRow, error)
+	SystemGetUserByID(ctx context.Context, idusers int32) (*SystemGetUserByIDRow, error)
+	SystemGetUserByUsername(ctx context.Context, username sql.NullString) (*SystemGetUserByUsernameRow, error)
 	// System query only used internally
 	SystemInsertDeadLetter(ctx context.Context, message string) error
 	SystemInsertLoginAttempt(ctx context.Context, arg SystemInsertLoginAttemptParams) error
@@ -449,7 +450,6 @@ type Querier interface {
 	UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams) error
 	UpdateUserEmailVerification(ctx context.Context, arg UpdateUserEmailVerificationParams) error
 	UpdateWriting(ctx context.Context, arg UpdateWritingParams) error
-	UserByEmail(ctx context.Context, email string) (*UserByEmailRow, error)
 	UserHasLoginRole(ctx context.Context, usersIdusers int32) (int32, error)
 	UserHasPublicProfileRole(ctx context.Context, usersIdusers int32) (int32, error)
 	UserHasRole(ctx context.Context, arg UserHasRoleParams) (int32, error)

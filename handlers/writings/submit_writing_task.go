@@ -71,7 +71,7 @@ func (SubmitWritingTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	var author string
-	if u, err := queries.GetUserById(r.Context(), uid); err == nil {
+	if u, err := queries.SystemGetUserByID(r.Context(), uid); err == nil {
 		author = u.Username.String
 	} else {
 		return fmt.Errorf("get user fail %w", handlers.ErrRedirectOnSamePageHandler(err))

@@ -136,7 +136,7 @@ func adminUserDisableConfirmPage(w http.ResponseWriter, r *http.Request) {
 	idStr := mux.Vars(r)["id"]
 	id, _ := strconv.Atoi(idStr)
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	u, err := cd.Queries().GetUserById(r.Context(), int32(id))
+	u, err := cd.Queries().SystemGetUserByID(r.Context(), int32(id))
 	if err != nil {
 		http.Error(w, "user not found", http.StatusNotFound)
 		return
@@ -178,14 +178,14 @@ func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	idStr := mux.Vars(r)["id"]
 	uid, _ := strconv.Atoi(idStr)
-	urow, err := queries.GetUserById(r.Context(), int32(uid))
+	urow, err := queries.SystemGetUserByID(r.Context(), int32(uid))
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 	data := struct {
 		*common.CoreData
-		User *db.GetUserByIdRow
+		User *db.SystemGetUserByIDRow
 	}{
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		User:     urow,

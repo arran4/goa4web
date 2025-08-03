@@ -44,9 +44,9 @@ func (c *emailQueueListCmd) Run() error {
 			ids = append(ids, e.ToUserID.Int32)
 		}
 	}
-	users := make(map[int32]*db.GetUserByIdRow)
+	users := make(map[int32]*db.SystemGetUserByIDRow)
 	for _, id := range ids {
-		if u, err := queries.GetUserById(ctx, id); err == nil {
+		if u, err := queries.SystemGetUserByID(ctx, id); err == nil {
 			users[id] = u
 		}
 	}

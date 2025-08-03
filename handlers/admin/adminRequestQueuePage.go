@@ -31,7 +31,7 @@ func AdminRequestQueuePage(w http.ResponseWriter, r *http.Request) {
 		Rows []Row
 	}{CoreData: cd}
 	for _, row := range rows {
-		user, err := queries.GetUserById(r.Context(), row.UsersIdusers)
+		user, err := queries.SystemGetUserByID(r.Context(), row.UsersIdusers)
 		if err != nil {
 			continue
 		}
@@ -58,7 +58,7 @@ func AdminRequestArchivePage(w http.ResponseWriter, r *http.Request) {
 		Rows []Row
 	}{CoreData: cd}
 	for _, row := range rows {
-		user, err := queries.GetUserById(r.Context(), row.UsersIdusers)
+		user, err := queries.SystemGetUserByID(r.Context(), row.UsersIdusers)
 		if err != nil {
 			continue
 		}
@@ -78,11 +78,11 @@ func adminRequestPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	comments, _ := queries.AdminListRequestComments(r.Context(), int32(id))
-	user, _ := queries.GetUserById(r.Context(), req.UsersIdusers)
+	user, _ := queries.SystemGetUserByID(r.Context(), req.UsersIdusers)
 	data := struct {
 		*common.CoreData
 		Req      *db.AdminRequestQueue
-		User     *db.GetUserByIdRow
+		User     *db.SystemGetUserByIDRow
 		Comments []*db.AdminRequestComment
 	}{
 		CoreData: cd,

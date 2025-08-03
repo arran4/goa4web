@@ -40,7 +40,7 @@ func (c *userMakeAdminCmd) Run() error {
 	ctx := context.Background()
 	queries := db.New(db)
 	c.rootCmd.Verbosef("granting administrator to %s", c.Username)
-	u, err := queries.GetUserByUsername(ctx, sql.NullString{String: c.Username, Valid: true})
+	u, err := queries.SystemGetUserByUsername(ctx, sql.NullString{String: c.Username, Valid: true})
 	if err != nil {
 		return fmt.Errorf("get user: %w", err)
 	}

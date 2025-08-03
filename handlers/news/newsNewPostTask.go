@@ -108,7 +108,7 @@ func (NewPostTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("create grant: %v", err)
 	}
 
-	if u, err := queries.GetUserById(r.Context(), uid); err == nil {
+	if u, err := queries.SystemGetUserByID(r.Context(), uid); err == nil {
 		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 			if evt := cd.Event(); evt != nil {
 				if evt.Data == nil {

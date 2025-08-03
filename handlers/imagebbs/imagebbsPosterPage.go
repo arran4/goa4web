@@ -31,13 +31,13 @@ func PosterPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = fmt.Sprintf("Images by %s", username)
 	queries := cd.Queries()
-	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{String: username, Valid: true})
+	u, err := queries.SystemGetUserByUsername(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 			http.NotFound(w, r)
 		default:
-			log.Printf("GetUserByUsername Error: %s", err)
+			log.Printf("SystemGetUserByUsername Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		}
 		return

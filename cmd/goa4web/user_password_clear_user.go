@@ -44,7 +44,7 @@ func (c *userPasswordClearUserCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("get user: %w", err)
 	}
-	res, err := queries.DeletePasswordResetsByUser(ctx, user.Idusers)
+	res, err := queries.SystemDeletePasswordResetsByUser(ctx, user.Idusers)
 	if err != nil {
 		return fmt.Errorf("delete resets: %w", err)
 	}

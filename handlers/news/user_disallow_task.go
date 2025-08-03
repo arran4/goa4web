@@ -43,7 +43,7 @@ func (UserDisallowTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	if permidi, err := strconv.Atoi(permid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else if err := queries.DeleteUserRole(r.Context(), int32(permidi)); err != nil {
+	} else if err := queries.AdminDeleteUserRole(r.Context(), int32(permidi)); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
 	}
 	return handlers.TemplateWithDataHandler("runTaskPage.gohtml", data)

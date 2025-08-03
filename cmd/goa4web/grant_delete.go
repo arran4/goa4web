@@ -36,7 +36,7 @@ func (c *grantDeleteCmd) Run() error {
 	}
 	ctx := context.Background()
 	q := db.New(db)
-	if err := q.DeleteGrant(ctx, int32(c.ID)); err != nil {
+	if err := q.AdminDeleteGrant(ctx, int32(c.ID)); err != nil {
 		return fmt.Errorf("delete grant: %w", err)
 	}
 	return nil

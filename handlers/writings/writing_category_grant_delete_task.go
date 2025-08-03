@@ -25,7 +25,7 @@ func (WritingCategoryGrantDeleteTask) Action(w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		return fmt.Errorf("grant id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	if err := queries.DeleteGrant(r.Context(), int32(grantID)); err != nil {
+	if err := queries.AdminDeleteGrant(r.Context(), int32(grantID)); err != nil {
 		log.Printf("DeleteGrant: %v", err)
 		return fmt.Errorf("delete grant %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

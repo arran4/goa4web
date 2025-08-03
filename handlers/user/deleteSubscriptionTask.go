@@ -36,7 +36,7 @@ func (DeleteTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return handlers.RefreshDirectHandler{TargetURL: "/usr/subscriptions?error=missing id"}
 	}
 	id, _ := strconv.Atoi(idStr)
-	if err := queries.DeleteSubscriptionByID(r.Context(), db.DeleteSubscriptionByIDParams{UsersIdusers: uid, ID: int32(id)}); err != nil {
+	if err := queries.DeleteSubscriptionByIDForSubscriber(r.Context(), db.DeleteSubscriptionByIDForSubscriberParams{SubscriberID: uid, ID: int32(id)}); err != nil {
 		log.Printf("delete sub: %v", err)
 		return fmt.Errorf("delete subscription fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

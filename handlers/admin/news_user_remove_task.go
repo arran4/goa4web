@@ -36,7 +36,7 @@ func (NewsUserRemoveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil {
 		log.Printf("lookup role: %v", err)
 	}
-	if err := queries.DeleteUserRole(r.Context(), int32(permid)); err != nil {
+	if err := queries.AdminDeleteUserRole(r.Context(), int32(permid)); err != nil {
 		return fmt.Errorf("delete user role fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if err == nil {

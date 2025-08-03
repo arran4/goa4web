@@ -10,6 +10,25 @@ import (
 	"database/sql"
 )
 
+const adminDeleteForumCategory = `-- name: AdminDeleteForumCategory :exec
+UPDATE forumcategory SET deleted_at = NOW() WHERE idforumcategory = ?
+`
+
+func (q *Queries) AdminDeleteForumCategory(ctx context.Context, idforumcategory int32) error {
+	_, err := q.db.ExecContext(ctx, adminDeleteForumCategory, idforumcategory)
+	return err
+}
+
+const adminDeleteForumTopic = `-- name: AdminDeleteForumTopic :exec
+UPDATE forumtopic SET deleted_at = NOW() WHERE idforumtopic = ?
+`
+
+// Removes a forum topic by ID.
+func (q *Queries) AdminDeleteForumTopic(ctx context.Context, idforumtopic int32) error {
+	_, err := q.db.ExecContext(ctx, adminDeleteForumTopic, idforumtopic)
+	return err
+}
+
 const createForumCategory = `-- name: CreateForumCategory :exec
 INSERT INTO forumcategory (forumcategory_idforumcategory, title, description) VALUES (?, ?, ?)
 `
@@ -41,25 +60,6 @@ func (q *Queries) CreateForumTopic(ctx context.Context, arg CreateForumTopicPara
 		return 0, err
 	}
 	return result.LastInsertId()
-}
-
-const deleteForumCategory = `-- name: DeleteForumCategory :exec
-UPDATE forumcategory SET deleted_at = NOW() WHERE idforumcategory = ?
-`
-
-func (q *Queries) DeleteForumCategory(ctx context.Context, idforumcategory int32) error {
-	_, err := q.db.ExecContext(ctx, deleteForumCategory, idforumcategory)
-	return err
-}
-
-const deleteForumTopic = `-- name: DeleteForumTopic :exec
-UPDATE forumtopic SET deleted_at = NOW() WHERE idforumtopic = ?
-`
-
-// Removes a forum topic by ID.
-func (q *Queries) DeleteForumTopic(ctx context.Context, idforumtopic int32) error {
-	_, err := q.db.ExecContext(ctx, deleteForumTopic, idforumtopic)
-	return err
 }
 
 const findForumTopicByTitle = `-- name: FindForumTopicByTitle :one

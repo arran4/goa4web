@@ -10,6 +10,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -33,7 +34,7 @@ func (DeleteEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	ue, err := queries.GetUserEmailByID(r.Context(), int32(id))
 	if err == nil && ue.UserID == uid {
-		if err := queries.DeleteUserEmail(r.Context(), int32(id)); err != nil {
+		if err := queries.DeleteUserEmailForOwner(r.Context(), db.DeleteUserEmailForOwnerParams{ID: int32(id), OwnerID: uid}); err != nil {
 			log.Printf("delete user email: %v", err)
 			return fmt.Errorf("delete user email fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}

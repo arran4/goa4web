@@ -960,6 +960,16 @@ func (q *Queries) SystemDeleteWritingSearch(ctx context.Context) error {
 	return err
 }
 
+const systemDeleteWritingSearchByWritingID = `-- name: SystemDeleteWritingSearchByWritingID :exec
+DELETE FROM writing_search
+WHERE writing_id = ?
+`
+
+func (q *Queries) SystemDeleteWritingSearchByWritingID(ctx context.Context, writingID int32) error {
+	_, err := q.db.ExecContext(ctx, systemDeleteWritingSearchByWritingID, writingID)
+	return err
+}
+
 const systemGetSearchWordByWordLowercased = `-- name: SystemGetSearchWordByWordLowercased :one
 SELECT idsearchwordlist, word
 FROM searchwordlist
@@ -971,16 +981,6 @@ func (q *Queries) SystemGetSearchWordByWordLowercased(ctx context.Context, lcase
 	var i Searchwordlist
 	err := row.Scan(&i.Idsearchwordlist, &i.Word)
 	return &i, err
-}
-
-const writingSearchDelete = `-- name: WritingSearchDelete :exec
-DELETE FROM writing_search
-WHERE writing_id=?
-`
-
-func (q *Queries) WritingSearchDelete(ctx context.Context, writingID int32) error {
-	_, err := q.db.ExecContext(ctx, writingSearchDelete, writingID)
-	return err
 }
 
 const writingSearchFirst = `-- name: WritingSearchFirst :many

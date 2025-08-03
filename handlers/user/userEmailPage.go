@@ -103,7 +103,7 @@ func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
 		if err := queries.UpdateUserEmailVerification(r.Context(), db.UpdateUserEmailVerificationParams{VerifiedAt: sql.NullTime{Time: time.Now(), Valid: true}, ID: ue.ID}); err != nil {
 			log.Printf("update user email verification: %v", err)
 		}
-		if err := queries.DeleteUserEmailsByEmailExceptID(r.Context(), db.DeleteUserEmailsByEmailExceptIDParams{Email: ue.Email, ID: ue.ID}); err != nil {
+		if err := queries.SystemDeleteUserEmailsByEmailExceptID(r.Context(), db.SystemDeleteUserEmailsByEmailExceptIDParams{Email: ue.Email, ID: ue.ID}); err != nil {
 			log.Printf("delete user emails: %v", err)
 		}
 		http.Redirect(w, r, "/usr/email", http.StatusSeeOther)

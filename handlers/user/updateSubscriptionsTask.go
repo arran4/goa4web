@@ -51,7 +51,7 @@ func (UpdateSubscriptionsTask) Action(w http.ResponseWriter, r *http.Request) an
 					return fmt.Errorf("insert subscription fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 				}
 			} else if !want && have[hkey] {
-				if err := queries.DeleteSubscription(r.Context(), db.DeleteSubscriptionParams{UsersIdusers: uid, Pattern: opt.Pattern, Method: m}); err != nil {
+				if err := queries.DeleteSubscriptionForSubscriber(r.Context(), db.DeleteSubscriptionForSubscriberParams{SubscriberID: uid, Pattern: opt.Pattern, Method: m}); err != nil {
 					log.Printf("delete sub: %v", err)
 					return fmt.Errorf("delete subscription fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 				}

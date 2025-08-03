@@ -19,6 +19,15 @@ func (q *Queries) AdminApproveImagePost(ctx context.Context, idimagepost int32) 
 	return err
 }
 
+const adminDeleteImageBoard = `-- name: AdminDeleteImageBoard :exec
+UPDATE imageboard SET deleted_at = NOW() WHERE idimageboard = ?
+`
+
+func (q *Queries) AdminDeleteImageBoard(ctx context.Context, idimageboard int32) error {
+	_, err := q.db.ExecContext(ctx, adminDeleteImageBoard, idimageboard)
+	return err
+}
+
 const adminListBoards = `-- name: AdminListBoards :many
 SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required
 FROM imageboard b
@@ -118,15 +127,6 @@ func (q *Queries) CreateImagePost(ctx context.Context, arg CreateImagePostParams
 		return 0, err
 	}
 	return result.LastInsertId()
-}
-
-const deleteImageBoard = `-- name: DeleteImageBoard :exec
-UPDATE imageboard SET deleted_at = NOW() WHERE idimageboard = ?
-`
-
-func (q *Queries) DeleteImageBoard(ctx context.Context, idimageboard int32) error {
-	_, err := q.db.ExecContext(ctx, deleteImageBoard, idimageboard)
-	return err
 }
 
 const getAllImagePostsForIndex = `-- name: GetAllImagePostsForIndex :many

@@ -41,7 +41,7 @@ func (c *boardDeleteCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := db.New(db)
-	if err := queries.DeleteImageBoard(ctx, int32(c.ID)); err != nil {
+	if err := queries.AdminDeleteImageBoard(ctx, int32(c.ID)); err != nil {
 		return fmt.Errorf("delete board: %w", err)
 	}
 	return nil

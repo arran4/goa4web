@@ -36,7 +36,7 @@ func (c *permRevokeCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := db.New(db)
-	if err := queries.DeleteUserRole(ctx, int32(c.ID)); err != nil {
+	if err := queries.AdminDeleteUserRole(ctx, int32(c.ID)); err != nil {
 		return fmt.Errorf("revoke: %w", err)
 	}
 	return nil

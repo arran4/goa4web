@@ -30,7 +30,7 @@ JOIN roles r ON ur.role_id = r.id
 INSERT INTO user_roles (users_idusers, role_id)
 SELECT ?, r.id FROM roles r WHERE r.name = ?;
 
--- name: DeleteUserRole :exec
+-- name: AdminDeleteUserRole :exec
 -- This query deletes a permission from the "permissions" table based on the provided "permid".
 -- Parameters:
 --   ? - Permission ID to be deleted (int)
@@ -81,7 +81,7 @@ INSERT INTO grants (
     created_at, user_id, role_id, section, item, rule_type, item_id, item_rule, action, extra, active
 ) VALUES (NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, 1);
 
--- name: DeleteGrant :exec
+-- name: AdminDeleteGrant :exec
 DELETE FROM grants WHERE id = ?;
 
 -- name: ListGrants :many

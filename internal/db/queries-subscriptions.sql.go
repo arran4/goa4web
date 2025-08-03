@@ -10,33 +10,33 @@ import (
 	"strings"
 )
 
-const deleteSubscription = `-- name: DeleteSubscription :exec
+const deleteSubscriptionByIDForSubscriber = `-- name: DeleteSubscriptionByIDForSubscriber :exec
+DELETE FROM subscriptions WHERE users_idusers = ? AND id = ?
+`
+
+type DeleteSubscriptionByIDForSubscriberParams struct {
+	SubscriberID int32
+	ID           int32
+}
+
+func (q *Queries) DeleteSubscriptionByIDForSubscriber(ctx context.Context, arg DeleteSubscriptionByIDForSubscriberParams) error {
+	_, err := q.db.ExecContext(ctx, deleteSubscriptionByIDForSubscriber, arg.SubscriberID, arg.ID)
+	return err
+}
+
+const deleteSubscriptionForSubscriber = `-- name: DeleteSubscriptionForSubscriber :exec
 DELETE FROM subscriptions
 WHERE users_idusers = ? AND pattern = ? AND method = ?
 `
 
-type DeleteSubscriptionParams struct {
-	UsersIdusers int32
+type DeleteSubscriptionForSubscriberParams struct {
+	SubscriberID int32
 	Pattern      string
 	Method       string
 }
 
-func (q *Queries) DeleteSubscription(ctx context.Context, arg DeleteSubscriptionParams) error {
-	_, err := q.db.ExecContext(ctx, deleteSubscription, arg.UsersIdusers, arg.Pattern, arg.Method)
-	return err
-}
-
-const deleteSubscriptionByID = `-- name: DeleteSubscriptionByID :exec
-DELETE FROM subscriptions WHERE users_idusers = ? AND id = ?
-`
-
-type DeleteSubscriptionByIDParams struct {
-	UsersIdusers int32
-	ID           int32
-}
-
-func (q *Queries) DeleteSubscriptionByID(ctx context.Context, arg DeleteSubscriptionByIDParams) error {
-	_, err := q.db.ExecContext(ctx, deleteSubscriptionByID, arg.UsersIdusers, arg.ID)
+func (q *Queries) DeleteSubscriptionForSubscriber(ctx context.Context, arg DeleteSubscriptionForSubscriberParams) error {
+	_, err := q.db.ExecContext(ctx, deleteSubscriptionForSubscriber, arg.SubscriberID, arg.Pattern, arg.Method)
 	return err
 }
 

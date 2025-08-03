@@ -166,7 +166,7 @@ func AdminCategoryDeletePage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	if err := queries.DeleteForumCategory(r.Context(), int32(cid)); err != nil {
+	if err := queries.AdminDeleteForumCategory(r.Context(), int32(cid)); err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}

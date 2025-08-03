@@ -10,6 +10,29 @@ import (
 	"database/sql"
 )
 
+const adminDeleteGrant = `-- name: AdminDeleteGrant :exec
+DELETE FROM grants WHERE id = ?
+`
+
+func (q *Queries) AdminDeleteGrant(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, adminDeleteGrant, id)
+	return err
+}
+
+const adminDeleteUserRole = `-- name: AdminDeleteUserRole :exec
+DELETE FROM user_roles
+WHERE iduser_roles = ?
+`
+
+// This query deletes a permission from the "permissions" table based on the provided "permid".
+// Parameters:
+//
+//	? - Permission ID to be deleted (int)
+func (q *Queries) AdminDeleteUserRole(ctx context.Context, iduserRoles int32) error {
+	_, err := q.db.ExecContext(ctx, adminDeleteUserRole, iduserRoles)
+	return err
+}
+
 const createGrant = `-- name: CreateGrant :execlastid
 INSERT INTO grants (
     created_at, user_id, role_id, section, item, rule_type, item_id, item_rule, action, extra, active
@@ -63,29 +86,6 @@ type CreateUserRoleParams struct {
 //	? - Role of the permission (string)
 func (q *Queries) CreateUserRole(ctx context.Context, arg CreateUserRoleParams) error {
 	_, err := q.db.ExecContext(ctx, createUserRole, arg.UsersIdusers, arg.Name)
-	return err
-}
-
-const deleteGrant = `-- name: DeleteGrant :exec
-DELETE FROM grants WHERE id = ?
-`
-
-func (q *Queries) DeleteGrant(ctx context.Context, id int32) error {
-	_, err := q.db.ExecContext(ctx, deleteGrant, id)
-	return err
-}
-
-const deleteUserRole = `-- name: DeleteUserRole :exec
-DELETE FROM user_roles
-WHERE iduser_roles = ?
-`
-
-// This query deletes a permission from the "permissions" table based on the provided "permid".
-// Parameters:
-//
-//	? - Permission ID to be deleted (int)
-func (q *Queries) DeleteUserRole(ctx context.Context, iduserRoles int32) error {
-	_, err := q.db.ExecContext(ctx, deleteUserRole, iduserRoles)
 	return err
 }
 

@@ -129,7 +129,7 @@ WHERE idlinker = ?
     WHERE ur.users_idusers = sqlc.arg(admin_id) AND r.is_admin = 1
   );
 
--- name: AssignLinkerThisThreadId :exec
+-- name: SystemAssignLinkerThreadID :exec
 UPDATE linker SET forumthread_id = ? WHERE idlinker = ?;
 
 -- name: GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending :many

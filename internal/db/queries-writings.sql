@@ -177,7 +177,7 @@ WHERE EXISTS (
 );
 
 
--- name: AssignWritingThisThreadId :exec
+-- name: SystemAssignWritingThreadID :exec
 UPDATE writing SET forumthread_id = ? WHERE idwriting = ?;
 
 

@@ -148,7 +148,7 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		pthid = int32(pthidi)
-		if err := queries.AssignLinkerThisThreadId(r.Context(), db.AssignLinkerThisThreadIdParams{
+		if err := queries.SystemAssignLinkerThreadID(r.Context(), db.SystemAssignLinkerThreadIDParams{
 			ForumthreadID: pthid,
 			Idlinker:      int32(linkId),
 		}); err != nil {

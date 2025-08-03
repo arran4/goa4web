@@ -142,7 +142,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		pthid := int32(pthidi)
-		if err := queries.AssignWritingThisThreadId(r.Context(), db.AssignWritingThisThreadIdParams{
+		if err := queries.SystemAssignWritingThreadID(r.Context(), db.SystemAssignWritingThreadIDParams{
 			ForumthreadID: pthid,
 			Idwriting:     writing.Idwriting,
 		}); err != nil {
@@ -357,7 +357,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		pthid = int32(pthidi)
-		if err := queries.AssignWritingThisThreadId(r.Context(), db.AssignWritingThisThreadIdParams{
+		if err := queries.SystemAssignWritingThreadID(r.Context(), db.SystemAssignWritingThreadIDParams{
 			ForumthreadID: pthid,
 			Idwriting:     int32(aid),
 		}); err != nil {

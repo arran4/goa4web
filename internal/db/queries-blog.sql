@@ -31,7 +31,7 @@ WHERE EXISTS (
       ))
 );
 
--- name: AssignThreadIdToBlogEntry :exec
+-- name: SystemAssignBlogEntryThreadID :exec
 UPDATE blogs
 SET forumthread_id = ?
 WHERE idblogs = ?;

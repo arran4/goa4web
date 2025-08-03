@@ -76,22 +76,6 @@ func (q *Queries) AdminGetAllBlogEntriesByUser(ctx context.Context, arg AdminGet
 	return items, nil
 }
 
-const assignThreadIdToBlogEntry = `-- name: AssignThreadIdToBlogEntry :exec
-UPDATE blogs
-SET forumthread_id = ?
-WHERE idblogs = ?
-`
-
-type AssignThreadIdToBlogEntryParams struct {
-	ForumthreadID sql.NullInt32
-	Idblogs       int32
-}
-
-func (q *Queries) AssignThreadIdToBlogEntry(ctx context.Context, arg AssignThreadIdToBlogEntryParams) error {
-	_, err := q.db.ExecContext(ctx, assignThreadIdToBlogEntry, arg.ForumthreadID, arg.Idblogs)
-	return err
-}
-
 const blogsSearchFirst = `-- name: BlogsSearchFirst :many
 WITH RECURSIVE role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
@@ -790,6 +774,22 @@ func (q *Queries) ListBloggersSearchForLister(ctx context.Context, arg ListBlogg
 		return nil, err
 	}
 	return items, nil
+}
+
+const systemAssignBlogEntryThreadID = `-- name: SystemAssignBlogEntryThreadID :exec
+UPDATE blogs
+SET forumthread_id = ?
+WHERE idblogs = ?
+`
+
+type SystemAssignBlogEntryThreadIDParams struct {
+	ForumthreadID sql.NullInt32
+	Idblogs       int32
+}
+
+func (q *Queries) SystemAssignBlogEntryThreadID(ctx context.Context, arg SystemAssignBlogEntryThreadIDParams) error {
+	_, err := q.db.ExecContext(ctx, systemAssignBlogEntryThreadID, arg.ForumthreadID, arg.Idblogs)
+	return err
 }
 
 const systemGetAllBlogsForIndex = `-- name: SystemGetAllBlogsForIndex :many

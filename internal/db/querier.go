@@ -144,10 +144,6 @@ type Querier interface {
 	AdminWordListWithCounts(ctx context.Context, arg AdminWordListWithCountsParams) ([]*AdminWordListWithCountsRow, error)
 	AdminWordListWithCountsByPrefix(ctx context.Context, arg AdminWordListWithCountsByPrefixParams) ([]*AdminWordListWithCountsByPrefixRow, error)
 	AdminWritingCategoryCounts(ctx context.Context) ([]*AdminWritingCategoryCountsRow, error)
-	AssignLinkerThisThreadId(ctx context.Context, arg AssignLinkerThisThreadIdParams) error
-	AssignNewsThisThreadId(ctx context.Context, arg AssignNewsThisThreadIdParams) error
-	AssignThreadIdToBlogEntry(ctx context.Context, arg AssignThreadIdToBlogEntryParams) error
-	AssignWritingThisThreadId(ctx context.Context, arg AssignWritingThisThreadIdParams) error
 	BlogsSearchFirst(ctx context.Context, arg BlogsSearchFirstParams) ([]int32, error)
 	BlogsSearchNext(ctx context.Context, arg BlogsSearchNextParams) ([]int32, error)
 	CheckGrant(ctx context.Context, arg CheckGrantParams) (int32, error)
@@ -377,6 +373,10 @@ type Querier interface {
 	SystemAddToImagePostSearch(ctx context.Context, arg SystemAddToImagePostSearchParams) error
 	SystemAddToLinkerSearch(ctx context.Context, arg SystemAddToLinkerSearchParams) error
 	SystemAddToSiteNewsSearch(ctx context.Context, arg SystemAddToSiteNewsSearchParams) error
+	SystemAssignBlogEntryThreadID(ctx context.Context, arg SystemAssignBlogEntryThreadIDParams) error
+	SystemAssignLinkerThreadID(ctx context.Context, arg SystemAssignLinkerThreadIDParams) error
+	SystemAssignNewsThreadID(ctx context.Context, arg SystemAssignNewsThreadIDParams) error
+	SystemAssignWritingThreadID(ctx context.Context, arg SystemAssignWritingThreadIDParams) error
 	SystemCountDeadLetters(ctx context.Context) (int64, error)
 	// SystemCountLanguages counts all languages.
 	SystemCountLanguages(ctx context.Context) (int64, error)

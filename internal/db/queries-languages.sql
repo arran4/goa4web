@@ -1,40 +1,41 @@
--- name: RenameLanguage :exec
--- This query updates the "nameof" field in the "language" table based on the provided "cid".
+-- AdminRenameLanguage updates the language name.
 -- Parameters:
 --   ? - New name for the language (string)
 --   ? - Language ID to be updated (int)
+-- name: AdminRenameLanguage :exec
 UPDATE language
 SET nameof = ?
 WHERE idlanguage = ?;
 
--- name: DeleteLanguage :exec
--- This query deletes a record from the "language" table based on the provided "cid".
+-- AdminDeleteLanguage removes a language entry.
 -- Parameters:
 --   ? - Language ID to be deleted (int)
+-- name: AdminDeleteLanguage :exec
 DELETE FROM language
 WHERE idlanguage = ?;
 
--- name: CreateLanguage :exec
--- This query inserts a new record into the "language" table.
+-- AdminCreateLanguage adds a new language.
 -- Parameters:
 --   ? - Name of the new language (string)
+-- name: AdminCreateLanguage :exec
 INSERT INTO language (nameof)
 VALUES (?);
 
--- name: InsertLanguage :execresult
+-- AdminInsertLanguage adds a new language returning a result.
+-- name: AdminInsertLanguage :execresult
 INSERT INTO language (nameof)
 VALUES (?);
 
--- name: FetchLanguages :many
+-- SystemListLanguages lists all languages.
+-- name: SystemListLanguages :many
 SELECT *
 FROM language;
 
--- name: AllLanguages :many
-SELECT * FROM language;
-
--- name: GetLanguageIDByName :one
+-- SystemGetLanguageIDByName resolves a language ID by name.
+-- name: SystemGetLanguageIDByName :one
 SELECT idlanguage FROM language WHERE nameof = ?;
 
 
--- name: CountLanguages :one
+-- SystemCountLanguages counts all languages.
+-- name: SystemCountLanguages :one
 SELECT COUNT(*) FROM language;

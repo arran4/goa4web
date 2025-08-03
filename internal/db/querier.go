@@ -24,8 +24,16 @@ type Querier interface {
 	AdminCountThreadsByBoard(ctx context.Context, imageboardIdimageboard int32) (int64, error)
 	AdminCountWordList(ctx context.Context) (int64, error)
 	AdminCountWordListByPrefix(ctx context.Context, prefix interface{}) (int64, error)
+	// AdminCreateLanguage adds a new language.
+	// Parameters:
+	//   ? - Name of the new language (string)
+	AdminCreateLanguage(ctx context.Context, nameof sql.NullString) error
 	AdminDeleteExternalLink(ctx context.Context, id int32) error
 	AdminDeleteForumThread(ctx context.Context, idforumthread int32) error
+	// AdminDeleteLanguage removes a language entry.
+	// Parameters:
+	//   ? - Language ID to be deleted (int)
+	AdminDeleteLanguage(ctx context.Context, idlanguage int32) error
 	// admin task
 	AdminDeletePendingEmail(ctx context.Context, id int32) error
 	AdminDeleteTemplateOverride(ctx context.Context, name string) error
@@ -47,6 +55,8 @@ type Querier interface {
 	AdminGetWritingsByCategoryId(ctx context.Context, writingCategoryID int32) ([]*AdminGetWritingsByCategoryIdRow, error)
 	AdminImageboardPostCounts(ctx context.Context) ([]*AdminImageboardPostCountsRow, error)
 	AdminInsertBannedIp(ctx context.Context, arg AdminInsertBannedIpParams) error
+	// AdminInsertLanguage adds a new language returning a result.
+	AdminInsertLanguage(ctx context.Context, nameof sql.NullString) (sql.Result, error)
 	AdminInsertRequestComment(ctx context.Context, arg AdminInsertRequestCommentParams) error
 	AdminInsertRequestQueue(ctx context.Context, arg AdminInsertRequestQueueParams) (sql.Result, error)
 	AdminInsertWritingCategory(ctx context.Context, arg AdminInsertWritingCategoryParams) error
@@ -85,6 +95,11 @@ type Querier interface {
 	AdminPurgeReadNotifications(ctx context.Context) error
 	AdminRecalculateAllForumThreadMetaData(ctx context.Context) error
 	AdminRecalculateForumThreadByIdMetaData(ctx context.Context, idforumthread int32) error
+	// AdminRenameLanguage updates the language name.
+	// Parameters:
+	//   ? - New name for the language (string)
+	//   ? - Language ID to be updated (int)
+	AdminRenameLanguage(ctx context.Context, arg AdminRenameLanguageParams) error
 	AdminSetTemplateOverride(ctx context.Context, arg AdminSetTemplateOverrideParams) error
 	AdminUpdateBannedIp(ctx context.Context, arg AdminUpdateBannedIpParams) error
 	AdminUpdateRequestStatus(ctx context.Context, arg AdminUpdateRequestStatusParams) error
@@ -98,7 +113,6 @@ type Querier interface {
 	AdminWordListWithCounts(ctx context.Context, arg AdminWordListWithCountsParams) ([]*AdminWordListWithCountsRow, error)
 	AdminWordListWithCountsByPrefix(ctx context.Context, arg AdminWordListWithCountsByPrefixParams) ([]*AdminWordListWithCountsByPrefixRow, error)
 	AdminWritingCategoryCounts(ctx context.Context) ([]*AdminWritingCategoryCountsRow, error)
-	AllLanguages(ctx context.Context) ([]*Language, error)
 	ApproveImagePost(ctx context.Context, idimagepost int32) error
 	ArchiveBlog(ctx context.Context, arg ArchiveBlogParams) error
 	ArchiveComment(ctx context.Context, arg ArchiveCommentParams) error
@@ -119,7 +133,6 @@ type Querier interface {
 	CommentsSearchFirstNotInRestrictedTopic(ctx context.Context, arg CommentsSearchFirstNotInRestrictedTopicParams) ([]int32, error)
 	CommentsSearchNextInRestrictedTopic(ctx context.Context, arg CommentsSearchNextInRestrictedTopicParams) ([]int32, error)
 	CommentsSearchNextNotInRestrictedTopic(ctx context.Context, arg CommentsSearchNextNotInRestrictedTopicParams) ([]int32, error)
-	CountLanguages(ctx context.Context) (int64, error)
 	CountLinksByCategory(ctx context.Context, linkerCategoryID int32) (int64, error)
 	CountUnreadNotifications(ctx context.Context, usersIdusers int32) (int64, error)
 	CreateBlogEntry(ctx context.Context, arg CreateBlogEntryParams) (int64, error)
@@ -133,10 +146,6 @@ type Querier interface {
 	CreateGrant(ctx context.Context, arg CreateGrantParams) (int64, error)
 	CreateImageBoard(ctx context.Context, arg CreateImageBoardParams) error
 	CreateImagePost(ctx context.Context, arg CreateImagePostParams) (int64, error)
-	// This query inserts a new record into the "language" table.
-	// Parameters:
-	//   ? - Name of the new language (string)
-	CreateLanguage(ctx context.Context, nameof sql.NullString) error
 	CreateLinkerCategory(ctx context.Context, arg CreateLinkerCategoryParams) error
 	CreateLinkerItem(ctx context.Context, arg CreateLinkerItemParams) error
 	CreateLinkerQueuedItem(ctx context.Context, arg CreateLinkerQueuedItemParams) error
@@ -156,10 +165,6 @@ type Querier interface {
 	DeleteForumTopic(ctx context.Context, idforumtopic int32) error
 	DeleteGrant(ctx context.Context, id int32) error
 	DeleteImageBoard(ctx context.Context, idimageboard int32) error
-	// This query deletes a record from the "language" table based on the provided "cid".
-	// Parameters:
-	//   ? - Language ID to be deleted (int)
-	DeleteLanguage(ctx context.Context, idlanguage int32) error
 	DeleteLinkerCategory(ctx context.Context, arg DeleteLinkerCategoryParams) error
 	DeleteLinkerQueuedItem(ctx context.Context, arg DeleteLinkerQueuedItemParams) error
 	DeleteNotification(ctx context.Context, id int32) error
@@ -176,7 +181,6 @@ type Querier interface {
 	//   ? - Permission ID to be deleted (int)
 	DeleteUserRole(ctx context.Context, iduserRoles int32) error
 	FetchAllCategories(ctx context.Context) ([]*WritingCategory, error)
-	FetchLanguages(ctx context.Context) ([]*Language, error)
 	FetchPendingEmails(ctx context.Context, limit int32) ([]*FetchPendingEmailsRow, error)
 	FindForumTopicByTitle(ctx context.Context, title sql.NullString) (*Forumtopic, error)
 	GetActiveAnnouncementWithNewsForLister(ctx context.Context, arg GetActiveAnnouncementWithNewsForListerParams) (*GetActiveAnnouncementWithNewsForListerRow, error)
@@ -230,7 +234,6 @@ type Querier interface {
 	GetImagePostInfoByPath(ctx context.Context, arg GetImagePostInfoByPathParams) (*GetImagePostInfoByPathRow, error)
 	GetImagePostsByUserDescending(ctx context.Context, arg GetImagePostsByUserDescendingParams) ([]*GetImagePostsByUserDescendingRow, error)
 	GetImagePostsByUserDescendingAll(ctx context.Context, arg GetImagePostsByUserDescendingAllParams) ([]*GetImagePostsByUserDescendingAllRow, error)
-	GetLanguageIDByName(ctx context.Context, nameof sql.NullString) (int32, error)
 	GetLatestAnnouncementByNewsID(ctx context.Context, siteNewsID int32) (*SiteAnnouncement, error)
 	GetLinkerCategoriesWithCount(ctx context.Context) ([]*GetLinkerCategoriesWithCountRow, error)
 	GetLinkerCategoryById(ctx context.Context, idlinkercategory int32) (*LinkerCategory, error)
@@ -282,7 +285,6 @@ type Querier interface {
 	InsertAuditLog(ctx context.Context, arg InsertAuditLogParams) error
 	InsertEmailPreference(ctx context.Context, arg InsertEmailPreferenceParams) error
 	InsertFAQRevisionForUser(ctx context.Context, arg InsertFAQRevisionForUserParams) error
-	InsertLanguage(ctx context.Context, nameof sql.NullString) (sql.Result, error)
 	InsertNotification(ctx context.Context, arg InsertNotificationParams) error
 	InsertPassword(ctx context.Context, arg InsertPasswordParams) error
 	InsertPendingEmail(ctx context.Context, arg InsertPendingEmailParams) error
@@ -348,11 +350,6 @@ type Querier interface {
 	RecentNotifications(ctx context.Context, limit int32) ([]*Notification, error)
 	RegisterExternalLinkClick(ctx context.Context, url string) error
 	RenameFAQCategory(ctx context.Context, arg RenameFAQCategoryParams) error
-	// This query updates the "nameof" field in the "language" table based on the provided "cid".
-	// Parameters:
-	//   ? - New name for the language (string)
-	//   ? - Language ID to be updated (int)
-	RenameLanguage(ctx context.Context, arg RenameLanguageParams) error
 	RenameLinkerCategory(ctx context.Context, arg RenameLinkerCategoryParams) error
 	RestoreBlog(ctx context.Context, arg RestoreBlogParams) error
 	RestoreComment(ctx context.Context, arg RestoreCommentParams) error
@@ -384,6 +381,8 @@ type Querier interface {
 	SystemAddToLinkerSearch(ctx context.Context, arg SystemAddToLinkerSearchParams) error
 	SystemAddToSiteNewsSearch(ctx context.Context, arg SystemAddToSiteNewsSearchParams) error
 	SystemCountDeadLetters(ctx context.Context) (int64, error)
+	// SystemCountLanguages counts all languages.
+	SystemCountLanguages(ctx context.Context) (int64, error)
 	SystemCountRecentLoginAttempts(ctx context.Context, arg SystemCountRecentLoginAttemptsParams) (int64, error)
 	SystemCreateSearchWord(ctx context.Context, word string) (int64, error)
 	// This query deletes all data from the "blogs_search" table.
@@ -400,6 +399,8 @@ type Querier interface {
 	// This query deletes all data from the "writing_search" table.
 	SystemDeleteWritingSearch(ctx context.Context) error
 	SystemGetAllBlogsForIndex(ctx context.Context) ([]*SystemGetAllBlogsForIndexRow, error)
+	// SystemGetLanguageIDByName resolves a language ID by name.
+	SystemGetLanguageIDByName(ctx context.Context, nameof sql.NullString) (int32, error)
 	SystemGetSearchWordByWordLowercased(ctx context.Context, lcase string) (*Searchwordlist, error)
 	SystemGetTemplateOverride(ctx context.Context, name string) (string, error)
 	// System query only used internally
@@ -409,6 +410,8 @@ type Querier interface {
 	SystemLatestDeadLetter(ctx context.Context) (interface{}, error)
 	SystemListBoardsByParentID(ctx context.Context, arg SystemListBoardsByParentIDParams) ([]*Imageboard, error)
 	SystemListDeadLetters(ctx context.Context, limit int32) ([]*DeadLetter, error)
+	// SystemListLanguages lists all languages.
+	SystemListLanguages(ctx context.Context) ([]*Language, error)
 	SystemListPublicWritingsByAuthor(ctx context.Context, arg SystemListPublicWritingsByAuthorParams) ([]*SystemListPublicWritingsByAuthorRow, error)
 	SystemListPublicWritingsInCategory(ctx context.Context, arg SystemListPublicWritingsInCategoryParams) ([]*SystemListPublicWritingsInCategoryRow, error)
 	SystemListUserInfo(ctx context.Context) ([]*SystemListUserInfoRow, error)

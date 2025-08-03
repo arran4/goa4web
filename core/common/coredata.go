@@ -127,6 +127,7 @@ type CoreData struct {
 	linkerCategories         lazy.Value[[]*db.GetLinkerCategoryLinkCountsRow]
 	newsAnnouncements        map[int32]*lazy.Value[*db.SiteAnnouncement]
 	notifCount               lazy.Value[int32]
+	notifications            map[string]*lazy.Value[[]*db.Notification]
 	perms                    lazy.Value[[]*db.GetPermissionsByUserIDRow]
 	pref                     lazy.Value[*db.Preference]
 	preferredLanguageID      lazy.Value[int32]
@@ -134,6 +135,7 @@ type CoreData struct {
 	subImageBoards           map[int32]*lazy.Value[[]*db.Imageboard]
 	unreadCount              lazy.Value[int64]
 	subscriptions            lazy.Value[map[string]bool]
+	subscriptionRows         lazy.Value[[]*db.ListSubscriptionsByUserRow]
 	user                     lazy.Value[*db.User]
 	userRoles                lazy.Value[[]string]
 	visibleWritingCategories lazy.Value[[]*db.WritingCategory]
@@ -1254,18 +1256,55 @@ func (cd *CoreData) UnreadNotificationCount() int64 {
 	return count
 }
 
+// Notifications returns the notifications for the current user using query
+// parameters to control pagination. Results are cached per offset and filter
+// combination.
+func (cd *CoreData) Notifications(r *http.Request) ([]*db.Notification, error) {
+	if cd.notifications == nil {
+		cd.notifications = map[string]*lazy.Value[[]*db.Notification]{}
+	}
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	showAll := r.URL.Query().Get("all") == "1"
+	key := fmt.Sprintf("%t:%d", showAll, offset)
+	lv, ok := cd.notifications[key]
+	if !ok {
+		lv = &lazy.Value[[]*db.Notification]{}
+		cd.notifications[key] = lv
+	}
+	return lv.Load(func() ([]*db.Notification, error) {
+		if cd.queries == nil || cd.UserID == 0 {
+			return nil, nil
+		}
+		limit := int32(cd.Config.PageSizeDefault)
+		if showAll {
+			return cd.queries.ListNotificationsForLister(cd.ctx, db.ListNotificationsForListerParams{
+				ListerID: cd.UserID,
+				Limit:    limit,
+				Offset:   int32(offset),
+			})
+		}
+		return cd.queries.ListUnreadNotificationsForLister(cd.ctx, db.ListUnreadNotificationsForListerParams{
+			ListerID: cd.UserID,
+			Limit:    limit,
+			Offset:   int32(offset),
+		})
+	})
+}
+
 // subscriptionMap loads the current user's subscriptions once.
 func (cd *CoreData) subscriptionMap() (map[string]bool, error) {
 	return cd.subscriptions.Load(func() (map[string]bool, error) {
 		if cd.queries == nil || cd.UserID == 0 {
 			return map[string]bool{}, nil
 		}
-		rows, err := cd.queries.ListSubscriptionsByUser(cd.ctx, cd.UserID)
+		rows, err := cd.Subscriptions()
 		if err != nil {
 			return nil, err
 		}
 		m := make(map[string]bool)
 		for _, row := range rows {
+			key := row.Pattern + "|" + row.Method
+			m[key] = true
 			if row.Method == "internal" {
 				m[row.Pattern] = true
 			}
@@ -1278,6 +1317,22 @@ func (cd *CoreData) subscriptionMap() (map[string]bool, error) {
 func (cd *CoreData) Subscribed(pattern string) bool {
 	m, _ := cd.subscriptionMap()
 	return m[pattern]
+}
+
+// HasSubscription reports whether the user has subscribed to pattern with method.
+func (cd *CoreData) HasSubscription(pattern, method string) bool {
+	m, _ := cd.subscriptionMap()
+	return m[pattern+"|"+method]
+}
+
+// Subscriptions returns the current user's subscriptions.
+func (cd *CoreData) Subscriptions() ([]*db.ListSubscriptionsByUserRow, error) {
+	return cd.subscriptionRows.Load(func() ([]*db.ListSubscriptionsByUserRow, error) {
+		if cd.queries == nil || cd.UserID == 0 {
+			return nil, nil
+		}
+		return cd.queries.ListSubscriptionsByUser(cd.ctx, cd.UserID)
+	})
 }
 
 // LinkerCategoryCounts lazily loads linker category statistics.

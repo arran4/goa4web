@@ -26,7 +26,7 @@ func (PurgeSelectedNotificationsTask) Action(w http.ResponseWriter, r *http.Requ
 	}
 	for _, idStr := range r.Form["id"] {
 		id, _ := strconv.Atoi(idStr)
-		if err := queries.DeleteNotification(r.Context(), int32(id)); err != nil {
+		if err := queries.AdminDeleteNotification(r.Context(), int32(id)); err != nil {
 			return fmt.Errorf("delete notification fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {

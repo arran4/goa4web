@@ -109,7 +109,7 @@ func TestRecentNotifications(t *testing.T) {
 	q := db.New(sqldb)
 	rows := sqlmock.NewRows([]string{"id", "users_idusers", "link", "message", "created_at", "read_at"}).AddRow(1, 1, "/l", "m", time.Now(), nil)
 	mock.ExpectQuery("SELECT id, users_idusers, link, message, created_at, read_at FROM notifications ORDER BY id DESC LIMIT ?").WithArgs(int32(5)).WillReturnRows(rows)
-	if _, err := q.RecentNotifications(context.Background(), 5); err != nil {
+	if _, err := q.AdminListRecentNotifications(context.Background(), 5); err != nil {
 		t.Fatalf("recent: %v", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {

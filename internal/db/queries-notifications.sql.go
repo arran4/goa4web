@@ -10,6 +10,89 @@ import (
 	"database/sql"
 )
 
+const adminDeleteNotification = `-- name: AdminDeleteNotification :exec
+DELETE FROM notifications WHERE id = ?
+`
+
+func (q *Queries) AdminDeleteNotification(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, adminDeleteNotification, id)
+	return err
+}
+
+const adminGetNotification = `-- name: AdminGetNotification :one
+SELECT id, users_idusers, link, message, created_at, read_at
+FROM notifications
+WHERE id = ?
+`
+
+func (q *Queries) AdminGetNotification(ctx context.Context, id int32) (*Notification, error) {
+	row := q.db.QueryRowContext(ctx, adminGetNotification, id)
+	var i Notification
+	err := row.Scan(
+		&i.ID,
+		&i.UsersIdusers,
+		&i.Link,
+		&i.Message,
+		&i.CreatedAt,
+		&i.ReadAt,
+	)
+	return &i, err
+}
+
+const adminListRecentNotifications = `-- name: AdminListRecentNotifications :many
+SELECT id, users_idusers, link, message, created_at, read_at
+FROM notifications
+ORDER BY id DESC LIMIT ?
+`
+
+func (q *Queries) AdminListRecentNotifications(ctx context.Context, limit int32) ([]*Notification, error) {
+	rows, err := q.db.QueryContext(ctx, adminListRecentNotifications, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Notification
+	for rows.Next() {
+		var i Notification
+		if err := rows.Scan(
+			&i.ID,
+			&i.UsersIdusers,
+			&i.Link,
+			&i.Message,
+			&i.CreatedAt,
+			&i.ReadAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminMarkNotificationRead = `-- name: AdminMarkNotificationRead :exec
+UPDATE notifications SET read_at = NOW() WHERE id = ?
+`
+
+func (q *Queries) AdminMarkNotificationRead(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, adminMarkNotificationRead, id)
+	return err
+}
+
+const adminMarkNotificationUnread = `-- name: AdminMarkNotificationUnread :exec
+UPDATE notifications SET read_at = NULL WHERE id = ?
+`
+
+func (q *Queries) AdminMarkNotificationUnread(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, adminMarkNotificationUnread, id)
+	return err
+}
+
 const adminPurgeReadNotifications = `-- name: AdminPurgeReadNotifications :exec
 DELETE FROM notifications
 WHERE read_at IS NOT NULL AND read_at < (NOW() - INTERVAL 24 HOUR)
@@ -20,127 +103,19 @@ func (q *Queries) AdminPurgeReadNotifications(ctx context.Context) error {
 	return err
 }
 
-const countUnreadNotifications = `-- name: CountUnreadNotifications :one
+const countUnreadNotificationsForLister = `-- name: CountUnreadNotificationsForLister :one
 SELECT COUNT(*) FROM notifications
 WHERE users_idusers = ? AND read_at IS NULL
 `
 
-func (q *Queries) CountUnreadNotifications(ctx context.Context, usersIdusers int32) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countUnreadNotifications, usersIdusers)
+func (q *Queries) CountUnreadNotificationsForLister(ctx context.Context, listerID int32) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countUnreadNotificationsForLister, listerID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
-const deleteNotification = `-- name: DeleteNotification :exec
-DELETE FROM notifications WHERE id = ?
-`
-
-func (q *Queries) DeleteNotification(ctx context.Context, id int32) error {
-	_, err := q.db.ExecContext(ctx, deleteNotification, id)
-	return err
-}
-
-const getNotification = `-- name: GetNotification :one
-SELECT id, users_idusers, link, message, created_at, read_at
-FROM notifications
-WHERE id = ?
-`
-
-func (q *Queries) GetNotification(ctx context.Context, id int32) (*Notification, error) {
-	row := q.db.QueryRowContext(ctx, getNotification, id)
-	var i Notification
-	err := row.Scan(
-		&i.ID,
-		&i.UsersIdusers,
-		&i.Link,
-		&i.Message,
-		&i.CreatedAt,
-		&i.ReadAt,
-	)
-	return &i, err
-}
-
-const getUnreadNotifications = `-- name: GetUnreadNotifications :many
-SELECT id, users_idusers, link, message, created_at, read_at
-FROM notifications
-WHERE users_idusers = ? AND read_at IS NULL
-ORDER BY id DESC
-`
-
-func (q *Queries) GetUnreadNotifications(ctx context.Context, usersIdusers int32) ([]*Notification, error) {
-	rows, err := q.db.QueryContext(ctx, getUnreadNotifications, usersIdusers)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*Notification
-	for rows.Next() {
-		var i Notification
-		if err := rows.Scan(
-			&i.ID,
-			&i.UsersIdusers,
-			&i.Link,
-			&i.Message,
-			&i.CreatedAt,
-			&i.ReadAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const insertNotification = `-- name: InsertNotification :exec
-INSERT INTO notifications (users_idusers, link, message)
-VALUES (?, ?, ?)
-`
-
-type InsertNotificationParams struct {
-	UsersIdusers int32
-	Link         sql.NullString
-	Message      sql.NullString
-}
-
-func (q *Queries) InsertNotification(ctx context.Context, arg InsertNotificationParams) error {
-	_, err := q.db.ExecContext(ctx, insertNotification, arg.UsersIdusers, arg.Link, arg.Message)
-	return err
-}
-
-const lastNotificationByMessage = `-- name: LastNotificationByMessage :one
-SELECT id, users_idusers, link, message, created_at, read_at
-FROM notifications
-WHERE users_idusers = ? AND message = ?
-ORDER BY id DESC LIMIT 1
-`
-
-type LastNotificationByMessageParams struct {
-	UsersIdusers int32
-	Message      sql.NullString
-}
-
-func (q *Queries) LastNotificationByMessage(ctx context.Context, arg LastNotificationByMessageParams) (*Notification, error) {
-	row := q.db.QueryRowContext(ctx, lastNotificationByMessage, arg.UsersIdusers, arg.Message)
-	var i Notification
-	err := row.Scan(
-		&i.ID,
-		&i.UsersIdusers,
-		&i.Link,
-		&i.Message,
-		&i.CreatedAt,
-		&i.ReadAt,
-	)
-	return &i, err
-}
-
-const listUserNotifications = `-- name: ListUserNotifications :many
+const listNotificationsForLister = `-- name: ListNotificationsForLister :many
 SELECT id, users_idusers, link, message, created_at, read_at
 FROM notifications
 WHERE users_idusers = ?
@@ -148,14 +123,14 @@ ORDER BY id DESC
 LIMIT ? OFFSET ?
 `
 
-type ListUserNotificationsParams struct {
-	UsersIdusers int32
-	Limit        int32
-	Offset       int32
+type ListNotificationsForListerParams struct {
+	ListerID int32
+	Limit    int32
+	Offset   int32
 }
 
-func (q *Queries) ListUserNotifications(ctx context.Context, arg ListUserNotificationsParams) ([]*Notification, error) {
-	rows, err := q.db.QueryContext(ctx, listUserNotifications, arg.UsersIdusers, arg.Limit, arg.Offset)
+func (q *Queries) ListNotificationsForLister(ctx context.Context, arg ListNotificationsForListerParams) ([]*Notification, error) {
+	rows, err := q.db.QueryContext(ctx, listNotificationsForLister, arg.ListerID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -184,7 +159,7 @@ func (q *Queries) ListUserNotifications(ctx context.Context, arg ListUserNotific
 	return items, nil
 }
 
-const listUserUnreadNotifications = `-- name: ListUserUnreadNotifications :many
+const listUnreadNotificationsForLister = `-- name: ListUnreadNotificationsForLister :many
 SELECT id, users_idusers, link, message, created_at, read_at
 FROM notifications
 WHERE users_idusers = ? AND read_at IS NULL
@@ -192,14 +167,14 @@ ORDER BY id DESC
 LIMIT ? OFFSET ?
 `
 
-type ListUserUnreadNotificationsParams struct {
-	UsersIdusers int32
-	Limit        int32
-	Offset       int32
+type ListUnreadNotificationsForListerParams struct {
+	ListerID int32
+	Limit    int32
+	Offset   int32
 }
 
-func (q *Queries) ListUserUnreadNotifications(ctx context.Context, arg ListUserUnreadNotificationsParams) ([]*Notification, error) {
-	rows, err := q.db.QueryContext(ctx, listUserUnreadNotifications, arg.UsersIdusers, arg.Limit, arg.Offset)
+func (q *Queries) ListUnreadNotificationsForLister(ctx context.Context, arg ListUnreadNotificationsForListerParams) ([]*Notification, error) {
+	rows, err := q.db.QueryContext(ctx, listUnreadNotificationsForLister, arg.ListerID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -228,56 +203,80 @@ func (q *Queries) ListUserUnreadNotifications(ctx context.Context, arg ListUserU
 	return items, nil
 }
 
-const markNotificationRead = `-- name: MarkNotificationRead :exec
-UPDATE notifications SET read_at = NOW() WHERE id = ?
+const markNotificationReadForReader = `-- name: MarkNotificationReadForReader :exec
+UPDATE notifications SET read_at = NOW()
+WHERE id = ? AND users_idusers = ?
 `
 
-func (q *Queries) MarkNotificationRead(ctx context.Context, id int32) error {
-	_, err := q.db.ExecContext(ctx, markNotificationRead, id)
+type MarkNotificationReadForReaderParams struct {
+	ID       int32
+	ReaderID int32
+}
+
+func (q *Queries) MarkNotificationReadForReader(ctx context.Context, arg MarkNotificationReadForReaderParams) error {
+	_, err := q.db.ExecContext(ctx, markNotificationReadForReader, arg.ID, arg.ReaderID)
 	return err
 }
 
-const markNotificationUnread = `-- name: MarkNotificationUnread :exec
-UPDATE notifications SET read_at = NULL WHERE id = ?
+const markNotificationUnreadForReader = `-- name: MarkNotificationUnreadForReader :exec
+UPDATE notifications SET read_at = NULL
+WHERE id = ? AND users_idusers = ?
 `
 
-func (q *Queries) MarkNotificationUnread(ctx context.Context, id int32) error {
-	_, err := q.db.ExecContext(ctx, markNotificationUnread, id)
+type MarkNotificationUnreadForReaderParams struct {
+	ID       int32
+	ReaderID int32
+}
+
+func (q *Queries) MarkNotificationUnreadForReader(ctx context.Context, arg MarkNotificationUnreadForReaderParams) error {
+	_, err := q.db.ExecContext(ctx, markNotificationUnreadForReader, arg.ID, arg.ReaderID)
 	return err
 }
 
-const recentNotifications = `-- name: RecentNotifications :many
+const systemGetLastNotificationByMessage = `-- name: SystemGetLastNotificationByMessage :one
 SELECT id, users_idusers, link, message, created_at, read_at
 FROM notifications
-ORDER BY id DESC LIMIT ?
+WHERE users_idusers = ? AND message = ?
+ORDER BY id DESC LIMIT 1
 `
 
-func (q *Queries) RecentNotifications(ctx context.Context, limit int32) ([]*Notification, error) {
-	rows, err := q.db.QueryContext(ctx, recentNotifications, limit)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*Notification
-	for rows.Next() {
-		var i Notification
-		if err := rows.Scan(
-			&i.ID,
-			&i.UsersIdusers,
-			&i.Link,
-			&i.Message,
-			&i.CreatedAt,
-			&i.ReadAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+type SystemGetLastNotificationByMessageParams struct {
+	UserID  int32
+	Message sql.NullString
+}
+
+func (q *Queries) SystemGetLastNotificationByMessage(ctx context.Context, arg SystemGetLastNotificationByMessageParams) (*Notification, error) {
+	row := q.db.QueryRowContext(ctx, systemGetLastNotificationByMessage, arg.UserID, arg.Message)
+	var i Notification
+	err := row.Scan(
+		&i.ID,
+		&i.UsersIdusers,
+		&i.Link,
+		&i.Message,
+		&i.CreatedAt,
+		&i.ReadAt,
+	)
+	return &i, err
+}
+
+const systemInsertNotification = `-- name: SystemInsertNotification :exec
+INSERT INTO notifications (users_idusers, link, message)
+VALUES (?, ?, ?)
+`
+
+type SystemInsertNotificationParams struct {
+	UserID  int32
+	Link    sql.NullString
+	Message sql.NullString
+}
+
+// SystemInsertNotification stores an internal notification for a user.
+// Parameters:
+//
+//	UserID
+//	Link
+//	Message
+func (q *Queries) SystemInsertNotification(ctx context.Context, arg SystemInsertNotificationParams) error {
+	_, err := q.db.ExecContext(ctx, systemInsertNotification, arg.UserID, arg.Link, arg.Message)
+	return err
 }

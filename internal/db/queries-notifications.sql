@@ -1,56 +1,63 @@
--- name: InsertNotification :exec
+-- SystemInsertNotification stores an internal notification for a user.
+-- Parameters:
+--   UserID
+--   Link
+--   Message
+-- name: SystemInsertNotification :exec
 INSERT INTO notifications (users_idusers, link, message)
-VALUES (?, ?, ?);
+VALUES (sqlc.arg(user_id), sqlc.arg(link), sqlc.arg(message));
 
--- name: CountUnreadNotifications :one
+-- name: CountUnreadNotificationsForLister :one
 SELECT COUNT(*) FROM notifications
-WHERE users_idusers = ? AND read_at IS NULL;
+WHERE users_idusers = sqlc.arg(lister_id) AND read_at IS NULL;
 
--- name: GetUnreadNotifications :many
+-- name: ListNotificationsForLister :many
 SELECT id, users_idusers, link, message, created_at, read_at
 FROM notifications
-WHERE users_idusers = ? AND read_at IS NULL
-ORDER BY id DESC;
-
--- name: ListUserNotifications :many
-SELECT id, users_idusers, link, message, created_at, read_at
-FROM notifications
-WHERE users_idusers = ?
+WHERE users_idusers = sqlc.arg(lister_id)
 ORDER BY id DESC
 LIMIT ? OFFSET ?;
 
--- name: ListUserUnreadNotifications :many
+-- name: ListUnreadNotificationsForLister :many
 SELECT id, users_idusers, link, message, created_at, read_at
 FROM notifications
-WHERE users_idusers = ? AND read_at IS NULL
+WHERE users_idusers = sqlc.arg(lister_id) AND read_at IS NULL
 ORDER BY id DESC
 LIMIT ? OFFSET ?;
 
--- name: MarkNotificationRead :exec
-UPDATE notifications SET read_at = NOW() WHERE id = ?;
+-- name: MarkNotificationReadForReader :exec
+UPDATE notifications SET read_at = NOW()
+WHERE id = sqlc.arg(id) AND users_idusers = sqlc.arg(reader_id);
 
--- name: MarkNotificationUnread :exec
-UPDATE notifications SET read_at = NULL WHERE id = ?;
+-- name: AdminMarkNotificationRead :exec
+UPDATE notifications SET read_at = NOW() WHERE id = sqlc.arg(ID);
 
--- name: DeleteNotification :exec
-DELETE FROM notifications WHERE id = ?;
+-- name: MarkNotificationUnreadForReader :exec
+UPDATE notifications SET read_at = NULL
+WHERE id = sqlc.arg(id) AND users_idusers = sqlc.arg(reader_id);
 
--- name: GetNotification :one
+-- name: AdminMarkNotificationUnread :exec
+UPDATE notifications SET read_at = NULL WHERE id = sqlc.arg(ID);
+
+-- name: AdminDeleteNotification :exec
+DELETE FROM notifications WHERE id = sqlc.arg(id);
+
+-- name: AdminGetNotification :one
 SELECT id, users_idusers, link, message, created_at, read_at
 FROM notifications
-WHERE id = ?;
+WHERE id = sqlc.arg(id);
 
 -- name: AdminPurgeReadNotifications :exec
 DELETE FROM notifications
 WHERE read_at IS NOT NULL AND read_at < (NOW() - INTERVAL 24 HOUR);
 
--- name: LastNotificationByMessage :one
+-- name: SystemGetLastNotificationByMessage :one
 SELECT id, users_idusers, link, message, created_at, read_at
 FROM notifications
-WHERE users_idusers = ? AND message = ?
+WHERE users_idusers = sqlc.arg(user_id) AND message = sqlc.arg(message)
 ORDER BY id DESC LIMIT 1;
 
--- name: RecentNotifications :many
+-- name: AdminListRecentNotifications :many
 SELECT id, users_idusers, link, message, created_at, read_at
 FROM notifications
 ORDER BY id DESC LIMIT ?;

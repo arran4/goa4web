@@ -13,27 +13,27 @@ import (
 )
 
 func TestNotificationsQueries(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer db.Close()
-	q := db.New(db)
+        sqldb, mock, err := sqlmock.New()
+        if err != nil {
+                t.Fatalf("sqlmock.New: %v", err)
+        }
+        defer sqldb.Close()
+        q := db.New(sqldb)
 	mock.ExpectExec("INSERT INTO notifications").WithArgs(int32(1), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
-	if err := q.InsertNotification(context.Background(), db.InsertNotificationParams{UsersIdusers: 1, Link: sql.NullString{String: "/x", Valid: true}, Message: sql.NullString{String: "hi", Valid: true}}); err != nil {
+	if err := q.SystemInsertNotification(context.Background(), db.SystemInsertNotificationParams{UserID: 1, Link: sql.NullString{String: "/x", Valid: true}, Message: sql.NullString{String: "hi", Valid: true}}); err != nil {
 		t.Fatalf("insert: %v", err)
 	}
 	rows := sqlmock.NewRows([]string{"cnt"}).AddRow(1)
 	mock.ExpectQuery("SELECT COUNT\\(\\*\\)").WillReturnRows(rows)
-	if c, err := q.CountUnreadNotifications(context.Background(), 1); err != nil || c != 1 {
+	if c, err := q.CountUnreadNotificationsForLister(context.Background(), 1); err != nil || c != 1 {
 		t.Fatalf("count=%d err=%v", c, err)
 	}
-	mock.ExpectQuery("SELECT id, users_idusers").WillReturnRows(sqlmock.NewRows([]string{"id", "users_idusers", "link", "message", "created_at", "read_at"}).AddRow(1, 1, "/x", "hi", time.Now(), nil))
-	if _, err := q.GetUnreadNotifications(context.Background(), 1); err != nil {
-		t.Fatalf("get: %v", err)
+	mock.ExpectQuery("SELECT id, users_idusers").WithArgs(int32(1), int32(50), int32(0)).WillReturnRows(sqlmock.NewRows([]string{"id", "users_idusers", "link", "message", "created_at", "read_at"}).AddRow(1, 1, "/x", "hi", time.Now(), nil))
+	if _, err := q.ListUnreadNotificationsForLister(context.Background(), db.ListUnreadNotificationsForListerParams{ListerID: 1, Limit: 50, Offset: 0}); err != nil {
+		t.Fatalf("list: %v", err)
 	}
-	mock.ExpectExec("UPDATE notifications SET read_at").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
-	if err := q.MarkNotificationRead(context.Background(), 1); err != nil {
+	mock.ExpectExec("UPDATE notifications SET read_at").WithArgs(int32(1), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
+	if err := q.MarkNotificationReadForReader(context.Background(), db.MarkNotificationReadForReaderParams{ID: 1, ReaderID: 1}); err != nil {
 		t.Fatalf("mark: %v", err)
 	}
 	mock.ExpectExec("DELETE FROM notifications").WillReturnResult(sqlmock.NewResult(1, 1))
@@ -53,12 +53,12 @@ func (r *dummyProvider) Send(ctx context.Context, to mail.Address, rawEmailMessa
 }
 
 func TestNotifierNotifyAdmins(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer db.Close()
-	q := db.New(db)
+        sqldb, mock, err := sqlmock.New()
+        if err != nil {
+                t.Fatalf("sqlmock.New: %v", err)
+        }
+        defer sqldb.Close()
+        q := db.New(sqldb)
 	cfg := config.NewRuntimeConfig()
 	cfg.EmailEnabled = true
 	cfg.AdminNotify = true

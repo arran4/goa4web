@@ -40,16 +40,16 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	var err error
 	limit := int32(cd.Config.PageSizeDefault)
 	if showAll {
-		notifs, err = queries.ListUserNotifications(r.Context(), db.ListUserNotificationsParams{
-			UsersIdusers: uid,
-			Limit:        limit,
-			Offset:       int32(offset),
+		notifs, err = queries.ListNotificationsForLister(r.Context(), db.ListNotificationsForListerParams{
+			ListerID: uid,
+			Limit:    limit,
+			Offset:   int32(offset),
 		})
 	} else {
-		notifs, err = queries.ListUserUnreadNotifications(r.Context(), db.ListUserUnreadNotificationsParams{
-			UsersIdusers: uid,
-			Limit:        limit,
-			Offset:       int32(offset),
+		notifs, err = queries.ListUnreadNotificationsForLister(r.Context(), db.ListUnreadNotificationsForListerParams{
+			ListerID: uid,
+			Limit:    limit,
+			Offset:   int32(offset),
 		})
 	}
 	if err != nil {
@@ -98,11 +98,11 @@ func (DismissTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	id, _ := strconv.Atoi(r.FormValue("id"))
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	n, err := queries.GetUnreadNotifications(r.Context(), uid)
+	n, err := queries.ListUnreadNotificationsForLister(r.Context(), db.ListUnreadNotificationsForListerParams{ListerID: uid, Limit: 50, Offset: 0})
 	if err == nil {
 		for _, no := range n {
 			if int(no.ID) == id {
-				if err := queries.MarkNotificationRead(r.Context(), no.ID); err != nil {
+				if err := queries.MarkNotificationReadForReader(r.Context(), db.MarkNotificationReadForReaderParams{ID: no.ID, ReaderID: uid}); err != nil {
 					log.Printf("mark notification read: %v", err)
 				}
 				break
@@ -124,7 +124,7 @@ func notificationsRssPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	notifs, err := queries.GetUnreadNotifications(r.Context(), uid)
+	notifs, err := queries.ListUnreadNotificationsForLister(r.Context(), db.ListUnreadNotificationsForListerParams{ListerID: uid, Limit: 50, Offset: 0})
 	if err != nil {
 		log.Printf("notify feed: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

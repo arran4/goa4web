@@ -27,7 +27,7 @@ func (MarkReadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	for _, idStr := range r.Form["id"] {
 		id, _ := strconv.Atoi(idStr)
-		if err := queries.MarkNotificationRead(r.Context(), int32(id)); err != nil {
+		if err := queries.AdminMarkNotificationRead(r.Context(), int32(id)); err != nil {
 			return fmt.Errorf("mark read fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {

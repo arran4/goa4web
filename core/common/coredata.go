@@ -125,6 +125,7 @@ type CoreData struct {
 	latestNews               lazy.Value[[]*NewsPost]
 	latestWritings           lazy.Value[[]*db.Writing]
 	linkerCategories         lazy.Value[[]*db.GetLinkerCategoryLinkCountsRow]
+	externalLinks            map[string]*lazy.Value[*db.ExternalLink]
 	newsAnnouncements        map[int32]*lazy.Value[*db.SiteAnnouncement]
 	notifCount               lazy.Value[int32]
 	perms                    lazy.Value[[]*db.GetPermissionsByUserIDRow]
@@ -1314,6 +1315,45 @@ func (cd *CoreData) LinkerCategoryCounts() ([]*db.GetLinkerCategoryLinkCountsRow
 		}
 		return rows, nil
 	})
+}
+
+// ExternalLink lazily resolves metadata for url.
+func (cd *CoreData) ExternalLink(url string) *db.ExternalLink {
+	if cd.queries == nil {
+		return nil
+	}
+	if cd.externalLinks == nil {
+		cd.externalLinks = make(map[string]*lazy.Value[*db.ExternalLink])
+	}
+	lv, ok := cd.externalLinks[url]
+	if !ok {
+		lv = &lazy.Value[*db.ExternalLink]{}
+		cd.externalLinks[url] = lv
+	}
+	link, err := lv.Load(func() (*db.ExternalLink, error) {
+		l, err := cd.queries.GetExternalLink(cd.ctx, url)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, nil
+			}
+			return nil, err
+		}
+		return l, nil
+	})
+	if err != nil {
+		log.Printf("load external link: %v", err)
+	}
+	return link
+}
+
+// RegisterExternalLinkClick records click statistics for url.
+func (cd *CoreData) RegisterExternalLinkClick(url string) {
+	if cd.queries == nil {
+		return
+	}
+	if err := cd.queries.RegisterExternalLinkClick(cd.ctx, url); err != nil {
+		log.Printf("record external link click: %v", err)
+	}
 }
 
 // HasAdminRole reports whether the current user has the administrator role.

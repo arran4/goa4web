@@ -1,8 +1,6 @@
 package externallink
 
 import (
-	"database/sql"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -32,54 +30,17 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	link, err := cd.Queries().GetExternalLink(r.Context(), raw)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		log.Printf("get external link: %v", err)
-	}
-
-	var cardImgURL, faviconURL string
-	if link != nil {
-		if link.CardImageCache.Valid && cd.ImageSigner != nil {
-			cardImgURL = cd.ImageSigner.SignedCacheURL(link.CardImageCache.String)
-		}
-		if link.FaviconCache.Valid && cd.ImageSigner != nil {
-			faviconURL = cd.ImageSigner.SignedCacheURL(link.FaviconCache.String)
-		}
-	}
-
 	type Data struct {
-		*common.CoreData
 		URL         string
 		RedirectURL string
-		Title       string
-		Desc        string
-		CardImage   string
-		Favicon     string
 		ReloadURL   string
 	}
 	cd.PageTitle = "External Link"
 	reloadURL := fmt.Sprintf("/goto?u=%s&ts=%s&sig=%s&reload=1", url.QueryEscape(raw), ts, sig)
 	data := Data{
-		CoreData:    cd,
 		URL:         raw,
 		RedirectURL: fmt.Sprintf("/goto?u=%s&ts=%s&sig=%s&go=1", url.QueryEscape(raw), ts, sig),
 		ReloadURL:   reloadURL,
-	}
-	if link != nil {
-		if link.CardTitle.Valid {
-			data.Title = link.CardTitle.String
-		}
-		if link.CardDescription.Valid {
-			data.Desc = link.CardDescription.String
-		}
-		if cardImgURL != "" {
-			data.CardImage = cardImgURL
-		} else if link.CardImage.Valid {
-			data.CardImage = link.CardImage.String
-		}
-		if faviconURL != "" {
-			data.Favicon = faviconURL
-		}
 	}
 	if err := cd.ExecuteSiteTemplate(w, r, "externalLinkPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %v", err)

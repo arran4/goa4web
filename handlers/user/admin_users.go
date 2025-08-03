@@ -54,8 +54,8 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cqueries, ok := queries.(interface {
-		SearchUsersFiltered(context.Context, db.SearchUsersFilteredParams) ([]*db.UserFilteredRow, error)
-		ListUsersFiltered(context.Context, db.ListUsersFilteredParams) ([]*db.UserFilteredRow, error)
+		AdminSearchUsersFiltered(context.Context, db.AdminSearchUsersFilteredParams) ([]*db.UserFilteredRow, error)
+		AdminListUsersFiltered(context.Context, db.AdminListUsersFilteredParams) ([]*db.UserFilteredRow, error)
 	})
 	if !ok {
 		http.Error(w, "database not available", http.StatusInternalServerError)
@@ -69,7 +69,7 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 	var rows []*db.UserFilteredRow
 	var err error
 	if data.Search != "" {
-		rows, err = cqueries.SearchUsersFiltered(r.Context(), db.SearchUsersFilteredParams{
+		rows, err = cqueries.AdminSearchUsersFiltered(r.Context(), db.AdminSearchUsersFilteredParams{
 			Query:  data.Search,
 			Role:   data.Role,
 			Status: data.Status,
@@ -77,7 +77,7 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 			Offset: int32(offset),
 		})
 	} else {
-		rows, err = cqueries.ListUsersFiltered(r.Context(), db.ListUsersFilteredParams{
+		rows, err = cqueries.AdminListUsersFiltered(r.Context(), db.AdminListUsersFilteredParams{
 			Role:   data.Role,
 			Status: data.Status,
 			Limit:  int32(pageSize + 1),

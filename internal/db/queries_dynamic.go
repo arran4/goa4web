@@ -122,8 +122,8 @@ func (q *Queries) SearchWriters(ctx context.Context, arg SearchWritersParams) ([
 	return items, nil
 }
 
-// ListUsersFiltered returns users filtered by role and status with pagination.
-type ListUsersFilteredParams struct {
+// AdminListUsersFiltered returns users filtered by role and status with pagination.
+type AdminListUsersFilteredParams struct {
 	Role   string
 	Status string
 	Limit  int32
@@ -137,7 +137,7 @@ type UserFilteredRow struct {
 	Username sql.NullString
 }
 
-func (q *Queries) ListUsersFiltered(ctx context.Context, arg ListUsersFilteredParams) ([]*UserFilteredRow, error) {
+func (q *Queries) AdminListUsersFiltered(ctx context.Context, arg AdminListUsersFilteredParams) ([]*UserFilteredRow, error) {
 	query := "SELECT u.idusers, (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email, u.username FROM users u"
 	var args []interface{}
 	var cond []string
@@ -177,8 +177,8 @@ func (q *Queries) ListUsersFiltered(ctx context.Context, arg ListUsersFilteredPa
 	return items, rows.Err()
 }
 
-// SearchUsersFiltered finds users by username or email with role and status filters.
-type SearchUsersFilteredParams struct {
+// AdminSearchUsersFiltered finds users by username or email with role and status filters.
+type AdminSearchUsersFilteredParams struct {
 	Query  string
 	Role   string
 	Status string
@@ -186,7 +186,7 @@ type SearchUsersFilteredParams struct {
 	Offset int32
 }
 
-func (q *Queries) SearchUsersFiltered(ctx context.Context, arg SearchUsersFilteredParams) ([]*UserFilteredRow, error) {
+func (q *Queries) AdminSearchUsersFiltered(ctx context.Context, arg AdminSearchUsersFilteredParams) ([]*UserFilteredRow, error) {
 	like := "%" + arg.Query + "%"
 	query := "SELECT u.idusers, (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email, u.username FROM users u"
 	var args []interface{}

@@ -11,12 +11,6 @@ import (
 )
 
 type Querier interface {
-	AdminAllUserIDs(ctx context.Context) ([]int32, error)
-	// Result:
-	//   idusers (int)
-	//   username (string)
-	//   email (string)
-	AdminAllUsers(ctx context.Context) ([]*AdminAllUsersRow, error)
 	AdminApproveImagePost(ctx context.Context, idimagepost int32) error
 	AdminArchiveBlog(ctx context.Context, arg AdminArchiveBlogParams) error
 	AdminArchiveComment(ctx context.Context, arg AdminArchiveCommentParams) error
@@ -70,6 +64,12 @@ type Querier interface {
 	AdminInsertWritingCategory(ctx context.Context, arg AdminInsertWritingCategoryParams) error
 	AdminListAdministratorEmails(ctx context.Context) ([]string, error)
 	AdminListAllCommentsWithThreadInfo(ctx context.Context, arg AdminListAllCommentsWithThreadInfoParams) ([]*AdminListAllCommentsWithThreadInfoRow, error)
+	AdminListAllUserIDs(ctx context.Context) ([]int32, error)
+	// Result:
+	//   idusers (int)
+	//   username (string)
+	//   email (string)
+	AdminListAllUsers(ctx context.Context) ([]*AdminListAllUsersRow, error)
 	// admin task
 	AdminListAnnouncementsWithNews(ctx context.Context) ([]*AdminListAnnouncementsWithNewsRow, error)
 	AdminListArchivedRequests(ctx context.Context) ([]*AdminRequestQueue, error)
@@ -102,6 +102,7 @@ type Querier interface {
 	AdminListUploadedImages(ctx context.Context, arg AdminListUploadedImagesParams) ([]*UploadedImage, error)
 	AdminListUserEmails(ctx context.Context, userID int32) ([]*UserEmail, error)
 	AdminListUserIDsByRole(ctx context.Context, name string) ([]int32, error)
+	AdminListUsersByID(ctx context.Context, ids []int32) ([]*AdminListUsersByIDRow, error)
 	// admin task
 	AdminListUsersByRoleID(ctx context.Context, roleID int32) ([]*AdminListUsersByRoleIDRow, error)
 	AdminMarkBlogRestored(ctx context.Context, idblogs int32) error
@@ -139,7 +140,6 @@ type Querier interface {
 	AdminUpdateWritingCategory(ctx context.Context, arg AdminUpdateWritingCategoryParams) error
 	AdminUserPostCounts(ctx context.Context) ([]*AdminUserPostCountsRow, error)
 	AdminUserPostCountsByID(ctx context.Context, idusers int32) (*AdminUserPostCountsByIDRow, error)
-	AdminUsersByID(ctx context.Context, ids []int32) ([]*AdminUsersByIDRow, error)
 	// Show each search word with total usage counts across all search tables.
 	AdminWordListWithCounts(ctx context.Context, arg AdminWordListWithCountsParams) ([]*AdminWordListWithCountsRow, error)
 	AdminWordListWithCountsByPrefix(ctx context.Context, arg AdminWordListWithCountsByPrefixParams) ([]*AdminWordListWithCountsByPrefixRow, error)

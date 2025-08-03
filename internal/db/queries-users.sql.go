@@ -11,76 +11,6 @@ import (
 	"strings"
 )
 
-const adminAllUserIDs = `-- name: AdminAllUserIDs :many
-SELECT idusers FROM users ORDER BY idusers
-`
-
-func (q *Queries) AdminAllUserIDs(ctx context.Context) ([]int32, error) {
-	rows, err := q.db.QueryContext(ctx, adminAllUserIDs)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []int32
-	for rows.Next() {
-		var idusers int32
-		if err := rows.Scan(&idusers); err != nil {
-			return nil, err
-		}
-		items = append(items, idusers)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const adminAllUsers = `-- name: AdminAllUsers :many
-SELECT u.idusers, u.username,
-       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email
-FROM users u
-JOIN user_roles ur ON ur.users_idusers = u.idusers
-JOIN roles r ON ur.role_id = r.id
-WHERE r.is_admin = 1
-`
-
-type AdminAllUsersRow struct {
-	Idusers  int32
-	Username sql.NullString
-	Email    string
-}
-
-// Result:
-//
-//	idusers (int)
-//	username (string)
-//	email (string)
-func (q *Queries) AdminAllUsers(ctx context.Context) ([]*AdminAllUsersRow, error) {
-	rows, err := q.db.QueryContext(ctx, adminAllUsers)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*AdminAllUsersRow
-	for rows.Next() {
-		var i AdminAllUsersRow
-		if err := rows.Scan(&i.Idusers, &i.Username, &i.Email); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const adminListAdministratorEmails = `-- name: AdminListAdministratorEmails :many
 SELECT (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email
 FROM users u
@@ -102,6 +32,76 @@ func (q *Queries) AdminListAdministratorEmails(ctx context.Context) ([]string, e
 			return nil, err
 		}
 		items = append(items, email)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminListAllUserIDs = `-- name: AdminListAllUserIDs :many
+SELECT idusers FROM users ORDER BY idusers
+`
+
+func (q *Queries) AdminListAllUserIDs(ctx context.Context) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx, adminListAllUserIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var idusers int32
+		if err := rows.Scan(&idusers); err != nil {
+			return nil, err
+		}
+		items = append(items, idusers)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminListAllUsers = `-- name: AdminListAllUsers :many
+SELECT u.idusers, u.username,
+       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email
+FROM users u
+JOIN user_roles ur ON ur.users_idusers = u.idusers
+JOIN roles r ON ur.role_id = r.id
+WHERE r.is_admin = 1
+`
+
+type AdminListAllUsersRow struct {
+	Idusers  int32
+	Username sql.NullString
+	Email    string
+}
+
+// Result:
+//
+//	idusers (int)
+//	username (string)
+//	email (string)
+func (q *Queries) AdminListAllUsers(ctx context.Context) ([]*AdminListAllUsersRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListAllUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListAllUsersRow
+	for rows.Next() {
+		var i AdminListAllUsersRow
+		if err := rows.Scan(&i.Idusers, &i.Username, &i.Email); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -185,19 +185,19 @@ func (q *Queries) AdminListUserIDsByRole(ctx context.Context, name string) ([]in
 	return items, nil
 }
 
-const adminUsersByID = `-- name: AdminUsersByID :many
+const adminListUsersByID = `-- name: AdminListUsersByID :many
 SELECT idusers, username
 FROM users
 WHERE idusers IN (/*SLICE:ids*/?)
 `
 
-type AdminUsersByIDRow struct {
+type AdminListUsersByIDRow struct {
 	Idusers  int32
 	Username sql.NullString
 }
 
-func (q *Queries) AdminUsersByID(ctx context.Context, ids []int32) ([]*AdminUsersByIDRow, error) {
-	query := adminUsersByID
+func (q *Queries) AdminListUsersByID(ctx context.Context, ids []int32) ([]*AdminListUsersByIDRow, error) {
+	query := adminListUsersByID
 	var queryParams []interface{}
 	if len(ids) > 0 {
 		for _, v := range ids {
@@ -212,9 +212,9 @@ func (q *Queries) AdminUsersByID(ctx context.Context, ids []int32) ([]*AdminUser
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*AdminUsersByIDRow
+	var items []*AdminListUsersByIDRow
 	for rows.Next() {
-		var i AdminUsersByIDRow
+		var i AdminListUsersByIDRow
 		if err := rows.Scan(&i.Idusers, &i.Username); err != nil {
 			return nil, err
 		}

@@ -40,9 +40,9 @@ func AdminUserRolesPage(w http.ResponseWriter, r *http.Request) {
 		data.Roles = roles
 	}
 
-	users, err := queries.AdminAllUsers(r.Context())
+	users, err := queries.AdminListAllUsers(r.Context())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		log.Printf("AdminAllUsers Error: %s", err)
+		log.Printf("AdminListAllUsers Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

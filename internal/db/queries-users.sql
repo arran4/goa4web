@@ -1,4 +1,4 @@
--- name: AdminAllUsers :many
+-- name: AdminListAllUsers :many
 -- Result:
 --   idusers (int)
 --   username (string)
@@ -78,10 +78,10 @@ JOIN roles r ON ur.role_id = r.id
 WHERE r.name = ?
 ORDER BY u.idusers;
 
--- name: AdminAllUserIDs :many
+-- name: AdminListAllUserIDs :many
 SELECT idusers FROM users ORDER BY idusers;
 
--- name: AdminUsersByID :many
+-- name: AdminListUsersByID :many
 SELECT idusers, username
 FROM users
 WHERE idusers IN (sqlc.slice('ids'));

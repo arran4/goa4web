@@ -3,6 +3,7 @@ package handlers_test
 import (
 	"bytes"
 	"github.com/arran4/goa4web/handlers/forum"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -23,6 +24,7 @@ func stubFuncs() template.FuncMap {
 
 func TestPageTemplatesRender(t *testing.T) {
 	tmpl := templates.GetCompiledSiteTemplates(stubFuncs())
+	req := httptest.NewRequest("GET", "/", nil)
 
 	type adminStats struct {
 		Users        int64
@@ -71,11 +73,8 @@ func TestPageTemplatesRender(t *testing.T) {
 			Blogs    []struct{ Username string }
 		}{&common.CoreData{}, nil, false, "", []struct{ Username string }{{"test"}}}},
 		{"writingsPage", struct {
-			*common.CoreData
-			Categories        []*db.WritingCategory
 			WritingCategoryID int32
-			CategoryId        int32
-		}{&common.CoreData{}, nil, 0, 0}},
+		}{0}},
 		{"linkerCategoryPage", struct {
 			*common.CoreData
 			Offset      int
@@ -86,13 +85,10 @@ func TestPageTemplatesRender(t *testing.T) {
 			Links       []*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginatedRow
 		}{&common.CoreData{}, 0, false, 0, 0, 0, nil}},
 		{"writingsCategoryPage", struct {
-			*common.CoreData
-			Categories          []*db.WritingCategory
-			CategoryBreadcrumbs []*db.WritingCategory
-			CategoryId          int32
-			WritingCategoryID   int32
-			Abstracts           []*db.SystemListPublicWritingsInCategoryRow
-		}{&common.CoreData{}, nil, nil, 0, 0, nil}},
+			Request           *http.Request
+			CategoryId        int32
+			WritingCategoryID int32
+		}{req, 0, 0}},
 		{"searchPage", struct {
 			*common.CoreData
 			SearchWords string

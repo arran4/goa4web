@@ -1,17 +1,22 @@
 {{ define "listWritingCategories" }}
     <font size="4">{{ if $.WritingCategoryID }}Sub-{{ end }}Categories:</font><br>
     <table>
-        {{ if eq (len .Categories) 0 }}
-            <tr><td>There are no categories.</td></tr>
+        {{ $cats := cd.CurrentUserVisibleWritingCategories }}
+        {{ $found := false }}
+        {{ range $cats }}
+            {{ if eq .WritingCategoryID $.WritingCategoryID }}
+                {{ $found = true }}
+                {{ $title := .Title.String }}
+                {{ $description := .Description.String }}
+                {{ $id := .Idwritingcategory }}
+                <tr>
+                    <th><a href="/writings/category/{{ $id }}">{{ $title }}</a>{{ if cd.HasAdminRole }} [<a href="/admin/writings/categories?category={{ $id }}">Admin</a>]{{ end }}</th>
+                    <td>{{ $description }}</td>
+                </tr>
+            {{ end }}
         {{ end }}
-        {{ range .Categories }}
-            {{ $title := .Title.String }}
-            {{ $description := .Description.String }}
-            {{ $id := .Idwritingcategory }}
-            <tr>
-                <th><a href="/writings/category/{{ $id }}">{{ $title }}</a>{{ if cd.HasAdminRole }} [<a href="/admin/writings/categories?category={{ $id }}">Admin</a>]{{ end }}</th>
-                <td>{{ $description }}</td>
-            </tr>
+        {{ if not $found }}
+            <tr><td>There are no categories.</td></tr>
         {{ end }}
     </table><br>
 {{ end }}

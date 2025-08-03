@@ -1,11 +1,12 @@
 {{ define "listAbstracts" }}
     {{ if cd.HasContentWriterRole }}
-        [<a href="/writings/category/{{ .CategoryId }}/add">Write writing here.</a>]<br>
+        [<a href="/writings/category/{{ $.CategoryId }}/add">Write writing here.</a>]<br>
     {{ end }}
-    {{ if .Abstracts }}
+    {{ $abstracts := cd.SelectedCategoryPublicWritings $.CategoryId $.Request }}
+    {{ if gt (len $abstracts) 0 }}
         <font size="4">Writing abstracts:</font><br>
     {{ end }}
-    {{ range .Abstracts }}
+    {{ range $abstracts }}
         {{ $title := .Title.String | a4code2html }}
         {{ $username := .Username.String }}
         {{ $published := .Published.Time }}
@@ -21,5 +22,7 @@
                 <br>-<br><a href="/writings/article/{{ $idwriting }}">Read now</a> - {{ $comments }} comments exist.
             </td></tr>
         </table>
+    {{ else }}
+        There are no writings.
     {{ end }}
 {{ end }}

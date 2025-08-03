@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"flag"
 	"fmt"
 	"strconv"
@@ -13,16 +12,14 @@ import (
 // writingCommentsListCmd implements "writing comments list".
 type writingCommentsListCmd struct {
 	*writingCommentsCmd
-	fs     *flag.FlagSet
-	ID     int
-	UserID int
+	fs *flag.FlagSet
+	ID int
 }
 
 func parseWritingCommentsListCmd(parent *writingCommentsCmd, args []string) (*writingCommentsListCmd, error) {
 	c := &writingCommentsListCmd{writingCommentsCmd: parent}
 	c.fs = newFlagSet("list")
 	c.fs.IntVar(&c.ID, "id", 0, "writing id")
-	c.fs.IntVar(&c.UserID, "user", 0, "viewer user id")
 	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
@@ -47,16 +44,11 @@ func (c *writingCommentsListCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := db.New(conn)
-	uid := int32(c.UserID)
-	w, err := queries.GetWritingForListerByID(ctx, db.GetWritingForListerByIDParams{ListerID: uid, Idwriting: int32(c.ID), ListerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0}})
+	w, err := queries.SystemGetWritingByID(ctx, int32(c.ID))
 	if err != nil {
 		return fmt.Errorf("get writing: %w", err)
 	}
-	rows, err := queries.GetCommentsByThreadIdForUser(ctx, db.GetCommentsByThreadIdForUserParams{
-		ViewerID: uid,
-		ThreadID: w.ForumthreadID,
-		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
+	rows, err := queries.SystemListCommentsByThreadID(ctx, w.ForumthreadID)
 	if err != nil {
 		return fmt.Errorf("list comments: %w", err)
 	}

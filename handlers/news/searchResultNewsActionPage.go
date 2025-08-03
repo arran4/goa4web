@@ -150,7 +150,7 @@ func forumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request,
 
 	for i, word := range searchWords {
 		if i == 0 {
-			ids, err := queries.CommentsSearchFirstInRestrictedTopic(r.Context(), db.CommentsSearchFirstInRestrictedTopicParams{
+			ids, err := queries.ListCommentIDsBySearchWordFirstForListerInRestrictedTopic(r.Context(), db.ListCommentIDsBySearchWordFirstForListerInRestrictedTopicParams{
 				ListerID: uid,
 				Word: sql.NullString{
 					String: word,
@@ -163,14 +163,14 @@ func forumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request,
 				switch {
 				case errors.Is(err, sql.ErrNoRows):
 				default:
-					log.Printf("commentsSearchFirst Error: %s", err)
+					log.Printf("ListCommentIDsBySearchWordFirstForListerInRestrictedTopic Error: %s", err)
 					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 					return nil, false, false, err
 				}
 			}
 			commentIds = ids
 		} else {
-			ids, err := queries.CommentsSearchNextInRestrictedTopic(r.Context(), db.CommentsSearchNextInRestrictedTopicParams{
+			ids, err := queries.ListCommentIDsBySearchWordNextForListerInRestrictedTopic(r.Context(), db.ListCommentIDsBySearchWordNextForListerInRestrictedTopicParams{
 				ListerID: uid,
 				Word: sql.NullString{
 					String: word,
@@ -184,7 +184,7 @@ func forumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request,
 				switch {
 				case errors.Is(err, sql.ErrNoRows):
 				default:
-					log.Printf("commentsSearchNext Error: %s", err)
+					log.Printf("ListCommentIDsBySearchWordNextForListerInRestrictedTopic Error: %s", err)
 					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 					return nil, false, false, err
 				}

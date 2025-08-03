@@ -85,7 +85,7 @@ VALUES (?, ?, ?)
 ON DUPLICATE KEY UPDATE word_count=VALUES(word_count);
 
 
--- name: CommentsSearchFirstNotInRestrictedTopic :many
+-- name: ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopic :many
 WITH RECURSIVE role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
@@ -120,7 +120,7 @@ WHERE swl.word=sqlc.arg(word)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   );
 
--- name: CommentsSearchNextNotInRestrictedTopic :many
+-- name: ListCommentIDsBySearchWordNextForListerNotInRestrictedTopic :many
 WITH RECURSIVE role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
@@ -156,7 +156,7 @@ WHERE swl.word=sqlc.arg(word)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   );
 
--- name: CommentsSearchFirstInRestrictedTopic :many
+-- name: ListCommentIDsBySearchWordFirstForListerInRestrictedTopic :many
 WITH RECURSIVE role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
@@ -191,7 +191,7 @@ WHERE swl.word=sqlc.arg(word)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   );
 
--- name: CommentsSearchNextInRestrictedTopic :many
+-- name: ListCommentIDsBySearchWordNextForListerInRestrictedTopic :many
 WITH RECURSIVE role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )

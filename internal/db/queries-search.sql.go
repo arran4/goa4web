@@ -160,331 +160,6 @@ func (q *Queries) AdminWordListWithCountsByPrefix(ctx context.Context, arg Admin
 	return items, nil
 }
 
-const commentsSearchFirstInRestrictedTopic = `-- name: CommentsSearchFirstInRestrictedTopic :many
-WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-)
-SELECT DISTINCT cs.comment_id
-FROM comments_search cs
-LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
-LEFT JOIN comments c ON c.idcomments=cs.comment_id
-LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_id
-LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
-WHERE swl.word=?
-  AND fth.forumtopic_idforumtopic IN (/*SLICE:ftids*/?)
-  AND (
-      c.language_idlanguage = 0
-      OR c.language_idlanguage IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?
-            AND ul.language_idlanguage = c.language_idlanguage
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
-      )
-  )
-  AND EXISTS (
-      SELECT 1 FROM grants g
-      WHERE g.section='forum'
-        AND g.item='topic'
-        AND g.action='see'
-        AND g.active=1
-        AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
-        AND (g.user_id = ? OR g.user_id IS NULL)
-        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
-  )
-`
-
-type CommentsSearchFirstInRestrictedTopicParams struct {
-	ListerID int32
-	Word     sql.NullString
-	Ftids    []int32
-	UserID   sql.NullInt32
-}
-
-func (q *Queries) CommentsSearchFirstInRestrictedTopic(ctx context.Context, arg CommentsSearchFirstInRestrictedTopicParams) ([]int32, error) {
-	query := commentsSearchFirstInRestrictedTopic
-	var queryParams []interface{}
-	queryParams = append(queryParams, arg.ListerID)
-	queryParams = append(queryParams, arg.Word)
-	if len(arg.Ftids) > 0 {
-		for _, v := range arg.Ftids {
-			queryParams = append(queryParams, v)
-		}
-		query = strings.Replace(query, "/*SLICE:ftids*/?", strings.Repeat(",?", len(arg.Ftids))[1:], 1)
-	} else {
-		query = strings.Replace(query, "/*SLICE:ftids*/?", "NULL", 1)
-	}
-	queryParams = append(queryParams, arg.ListerID)
-	queryParams = append(queryParams, arg.ListerID)
-	queryParams = append(queryParams, arg.UserID)
-	rows, err := q.db.QueryContext(ctx, query, queryParams...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []int32
-	for rows.Next() {
-		var comment_id int32
-		if err := rows.Scan(&comment_id); err != nil {
-			return nil, err
-		}
-		items = append(items, comment_id)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const commentsSearchFirstNotInRestrictedTopic = `-- name: CommentsSearchFirstNotInRestrictedTopic :many
-WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-)
-SELECT DISTINCT cs.comment_id
-FROM comments_search cs
-LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
-LEFT JOIN comments c ON c.idcomments=cs.comment_id
-LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_id
-LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
-WHERE swl.word=?
-  AND ft.forumcategory_idforumcategory!=0
-  AND (
-      c.language_idlanguage = 0
-      OR c.language_idlanguage IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?
-            AND ul.language_idlanguage = c.language_idlanguage
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
-      )
-  )
-  AND EXISTS (
-      SELECT 1 FROM grants g
-      WHERE g.section='forum'
-        AND g.item='topic'
-        AND g.action='see'
-        AND g.active=1
-        AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
-        AND (g.user_id = ? OR g.user_id IS NULL)
-        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
-  )
-`
-
-type CommentsSearchFirstNotInRestrictedTopicParams struct {
-	ListerID int32
-	Word     sql.NullString
-	UserID   sql.NullInt32
-}
-
-func (q *Queries) CommentsSearchFirstNotInRestrictedTopic(ctx context.Context, arg CommentsSearchFirstNotInRestrictedTopicParams) ([]int32, error) {
-	rows, err := q.db.QueryContext(ctx, commentsSearchFirstNotInRestrictedTopic,
-		arg.ListerID,
-		arg.Word,
-		arg.ListerID,
-		arg.ListerID,
-		arg.UserID,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []int32
-	for rows.Next() {
-		var comment_id int32
-		if err := rows.Scan(&comment_id); err != nil {
-			return nil, err
-		}
-		items = append(items, comment_id)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const commentsSearchNextInRestrictedTopic = `-- name: CommentsSearchNextInRestrictedTopic :many
-WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-)
-SELECT DISTINCT cs.comment_id
-FROM comments_search cs
-LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
-LEFT JOIN comments c ON c.idcomments=cs.comment_id
-LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_id
-LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
-WHERE swl.word=?
-  AND cs.comment_id IN (/*SLICE:ids*/?)
-  AND fth.forumtopic_idforumtopic IN (/*SLICE:ftids*/?)
-  AND (
-      c.language_idlanguage = 0
-      OR c.language_idlanguage IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?
-            AND ul.language_idlanguage = c.language_idlanguage
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
-      )
-  )
-  AND EXISTS (
-      SELECT 1 FROM grants g
-      WHERE g.section='forum'
-        AND g.item='topic'
-        AND g.action='see'
-        AND g.active=1
-        AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
-        AND (g.user_id = ? OR g.user_id IS NULL)
-        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
-  )
-`
-
-type CommentsSearchNextInRestrictedTopicParams struct {
-	ListerID int32
-	Word     sql.NullString
-	Ids      []int32
-	Ftids    []int32
-	UserID   sql.NullInt32
-}
-
-func (q *Queries) CommentsSearchNextInRestrictedTopic(ctx context.Context, arg CommentsSearchNextInRestrictedTopicParams) ([]int32, error) {
-	query := commentsSearchNextInRestrictedTopic
-	var queryParams []interface{}
-	queryParams = append(queryParams, arg.ListerID)
-	queryParams = append(queryParams, arg.Word)
-	if len(arg.Ids) > 0 {
-		for _, v := range arg.Ids {
-			queryParams = append(queryParams, v)
-		}
-		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(arg.Ids))[1:], 1)
-	} else {
-		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
-	}
-	if len(arg.Ftids) > 0 {
-		for _, v := range arg.Ftids {
-			queryParams = append(queryParams, v)
-		}
-		query = strings.Replace(query, "/*SLICE:ftids*/?", strings.Repeat(",?", len(arg.Ftids))[1:], 1)
-	} else {
-		query = strings.Replace(query, "/*SLICE:ftids*/?", "NULL", 1)
-	}
-	queryParams = append(queryParams, arg.ListerID)
-	queryParams = append(queryParams, arg.ListerID)
-	queryParams = append(queryParams, arg.UserID)
-	rows, err := q.db.QueryContext(ctx, query, queryParams...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []int32
-	for rows.Next() {
-		var comment_id int32
-		if err := rows.Scan(&comment_id); err != nil {
-			return nil, err
-		}
-		items = append(items, comment_id)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const commentsSearchNextNotInRestrictedTopic = `-- name: CommentsSearchNextNotInRestrictedTopic :many
-WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-)
-SELECT DISTINCT cs.comment_id
-FROM comments_search cs
-LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
-LEFT JOIN comments c ON c.idcomments=cs.comment_id
-LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_id
-LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
-WHERE swl.word=?
-  AND cs.comment_id IN (/*SLICE:ids*/?)
-  AND ft.forumcategory_idforumcategory!=0
-  AND (
-      c.language_idlanguage = 0
-      OR c.language_idlanguage IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?
-            AND ul.language_idlanguage = c.language_idlanguage
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
-      )
-  )
-  AND EXISTS (
-      SELECT 1 FROM grants g
-      WHERE g.section='forum'
-        AND g.item='topic'
-        AND g.action='see'
-        AND g.active=1
-        AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
-        AND (g.user_id = ? OR g.user_id IS NULL)
-        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
-  )
-`
-
-type CommentsSearchNextNotInRestrictedTopicParams struct {
-	ListerID int32
-	Word     sql.NullString
-	Ids      []int32
-	UserID   sql.NullInt32
-}
-
-func (q *Queries) CommentsSearchNextNotInRestrictedTopic(ctx context.Context, arg CommentsSearchNextNotInRestrictedTopicParams) ([]int32, error) {
-	query := commentsSearchNextNotInRestrictedTopic
-	var queryParams []interface{}
-	queryParams = append(queryParams, arg.ListerID)
-	queryParams = append(queryParams, arg.Word)
-	if len(arg.Ids) > 0 {
-		for _, v := range arg.Ids {
-			queryParams = append(queryParams, v)
-		}
-		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(arg.Ids))[1:], 1)
-	} else {
-		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
-	}
-	queryParams = append(queryParams, arg.ListerID)
-	queryParams = append(queryParams, arg.ListerID)
-	queryParams = append(queryParams, arg.UserID)
-	rows, err := q.db.QueryContext(ctx, query, queryParams...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []int32
-	for rows.Next() {
-		var comment_id int32
-		if err := rows.Scan(&comment_id); err != nil {
-			return nil, err
-		}
-		items = append(items, comment_id)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const linkerSearchFirst = `-- name: LinkerSearchFirst :many
 WITH RECURSIVE role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
@@ -622,6 +297,331 @@ func (q *Queries) LinkerSearchNext(ctx context.Context, arg LinkerSearchNextPara
 			return nil, err
 		}
 		items = append(items, linker_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listCommentIDsBySearchWordFirstForListerInRestrictedTopic = `-- name: ListCommentIDsBySearchWordFirstForListerInRestrictedTopic :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+)
+SELECT DISTINCT cs.comment_id
+FROM comments_search cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+LEFT JOIN comments c ON c.idcomments=cs.comment_id
+LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_id
+LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
+WHERE swl.word=?
+  AND fth.forumtopic_idforumtopic IN (/*SLICE:ftids*/?)
+  AND (
+      c.language_idlanguage = 0
+      OR c.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = c.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='forum'
+        AND g.item='topic'
+        AND g.action='see'
+        AND g.active=1
+        AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+`
+
+type ListCommentIDsBySearchWordFirstForListerInRestrictedTopicParams struct {
+	ListerID int32
+	Word     sql.NullString
+	Ftids    []int32
+	UserID   sql.NullInt32
+}
+
+func (q *Queries) ListCommentIDsBySearchWordFirstForListerInRestrictedTopic(ctx context.Context, arg ListCommentIDsBySearchWordFirstForListerInRestrictedTopicParams) ([]int32, error) {
+	query := listCommentIDsBySearchWordFirstForListerInRestrictedTopic
+	var queryParams []interface{}
+	queryParams = append(queryParams, arg.ListerID)
+	queryParams = append(queryParams, arg.Word)
+	if len(arg.Ftids) > 0 {
+		for _, v := range arg.Ftids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:ftids*/?", strings.Repeat(",?", len(arg.Ftids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:ftids*/?", "NULL", 1)
+	}
+	queryParams = append(queryParams, arg.ListerID)
+	queryParams = append(queryParams, arg.ListerID)
+	queryParams = append(queryParams, arg.UserID)
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var comment_id int32
+		if err := rows.Scan(&comment_id); err != nil {
+			return nil, err
+		}
+		items = append(items, comment_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listCommentIDsBySearchWordFirstForListerNotInRestrictedTopic = `-- name: ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopic :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+)
+SELECT DISTINCT cs.comment_id
+FROM comments_search cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+LEFT JOIN comments c ON c.idcomments=cs.comment_id
+LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_id
+LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
+WHERE swl.word=?
+  AND ft.forumcategory_idforumcategory!=0
+  AND (
+      c.language_idlanguage = 0
+      OR c.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = c.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='forum'
+        AND g.item='topic'
+        AND g.action='see'
+        AND g.active=1
+        AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+`
+
+type ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopicParams struct {
+	ListerID int32
+	Word     sql.NullString
+	UserID   sql.NullInt32
+}
+
+func (q *Queries) ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopic(ctx context.Context, arg ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopicParams) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx, listCommentIDsBySearchWordFirstForListerNotInRestrictedTopic,
+		arg.ListerID,
+		arg.Word,
+		arg.ListerID,
+		arg.ListerID,
+		arg.UserID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var comment_id int32
+		if err := rows.Scan(&comment_id); err != nil {
+			return nil, err
+		}
+		items = append(items, comment_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listCommentIDsBySearchWordNextForListerInRestrictedTopic = `-- name: ListCommentIDsBySearchWordNextForListerInRestrictedTopic :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+)
+SELECT DISTINCT cs.comment_id
+FROM comments_search cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+LEFT JOIN comments c ON c.idcomments=cs.comment_id
+LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_id
+LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
+WHERE swl.word=?
+  AND cs.comment_id IN (/*SLICE:ids*/?)
+  AND fth.forumtopic_idforumtopic IN (/*SLICE:ftids*/?)
+  AND (
+      c.language_idlanguage = 0
+      OR c.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = c.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='forum'
+        AND g.item='topic'
+        AND g.action='see'
+        AND g.active=1
+        AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+`
+
+type ListCommentIDsBySearchWordNextForListerInRestrictedTopicParams struct {
+	ListerID int32
+	Word     sql.NullString
+	Ids      []int32
+	Ftids    []int32
+	UserID   sql.NullInt32
+}
+
+func (q *Queries) ListCommentIDsBySearchWordNextForListerInRestrictedTopic(ctx context.Context, arg ListCommentIDsBySearchWordNextForListerInRestrictedTopicParams) ([]int32, error) {
+	query := listCommentIDsBySearchWordNextForListerInRestrictedTopic
+	var queryParams []interface{}
+	queryParams = append(queryParams, arg.ListerID)
+	queryParams = append(queryParams, arg.Word)
+	if len(arg.Ids) > 0 {
+		for _, v := range arg.Ids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(arg.Ids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
+	}
+	if len(arg.Ftids) > 0 {
+		for _, v := range arg.Ftids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:ftids*/?", strings.Repeat(",?", len(arg.Ftids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:ftids*/?", "NULL", 1)
+	}
+	queryParams = append(queryParams, arg.ListerID)
+	queryParams = append(queryParams, arg.ListerID)
+	queryParams = append(queryParams, arg.UserID)
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var comment_id int32
+		if err := rows.Scan(&comment_id); err != nil {
+			return nil, err
+		}
+		items = append(items, comment_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listCommentIDsBySearchWordNextForListerNotInRestrictedTopic = `-- name: ListCommentIDsBySearchWordNextForListerNotInRestrictedTopic :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+)
+SELECT DISTINCT cs.comment_id
+FROM comments_search cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+LEFT JOIN comments c ON c.idcomments=cs.comment_id
+LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_id
+LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
+WHERE swl.word=?
+  AND cs.comment_id IN (/*SLICE:ids*/?)
+  AND ft.forumcategory_idforumcategory!=0
+  AND (
+      c.language_idlanguage = 0
+      OR c.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = c.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='forum'
+        AND g.item='topic'
+        AND g.action='see'
+        AND g.active=1
+        AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+`
+
+type ListCommentIDsBySearchWordNextForListerNotInRestrictedTopicParams struct {
+	ListerID int32
+	Word     sql.NullString
+	Ids      []int32
+	UserID   sql.NullInt32
+}
+
+func (q *Queries) ListCommentIDsBySearchWordNextForListerNotInRestrictedTopic(ctx context.Context, arg ListCommentIDsBySearchWordNextForListerNotInRestrictedTopicParams) ([]int32, error) {
+	query := listCommentIDsBySearchWordNextForListerNotInRestrictedTopic
+	var queryParams []interface{}
+	queryParams = append(queryParams, arg.ListerID)
+	queryParams = append(queryParams, arg.Word)
+	if len(arg.Ids) > 0 {
+		for _, v := range arg.Ids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(arg.Ids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
+	}
+	queryParams = append(queryParams, arg.ListerID)
+	queryParams = append(queryParams, arg.ListerID)
+	queryParams = append(queryParams, arg.UserID)
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var comment_id int32
+		if err := rows.Scan(&comment_id); err != nil {
+			return nil, err
+		}
+		items = append(items, comment_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

@@ -10,67 +10,6 @@ import (
 	"database/sql"
 )
 
-const checkGrant = `-- name: CheckGrant :one
-WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-)
-SELECT 1 FROM grants g
-WHERE g.section = ?
-  AND (g.item = ? OR g.item IS NULL)
-  AND g.action = ?
-  AND g.active = 1
-  AND (g.item_id = ? OR g.item_id IS NULL)
-  AND (g.user_id = ? OR g.user_id IS NULL)
-  AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
-LIMIT 1
-`
-
-type CheckGrantParams struct {
-	ViewerID int32
-	Section  string
-	Item     sql.NullString
-	Action   string
-	ItemID   sql.NullInt32
-	UserID   sql.NullInt32
-}
-
-func (q *Queries) CheckGrant(ctx context.Context, arg CheckGrantParams) (int32, error) {
-	row := q.db.QueryRowContext(ctx, checkGrant,
-		arg.ViewerID,
-		arg.Section,
-		arg.Item,
-		arg.Action,
-		arg.ItemID,
-		arg.UserID,
-	)
-	var column_1 int32
-	err := row.Scan(&column_1)
-	return column_1, err
-}
-
-const checkRoleGrant = `-- name: CheckRoleGrant :one
-SELECT 1
-FROM grants g
-JOIN roles r ON g.role_id = r.id
-WHERE g.section = 'role'
-  AND r.name = ?
-  AND g.action = ?
-  AND g.active = 1
-LIMIT 1
-`
-
-type CheckRoleGrantParams struct {
-	Name   string
-	Action string
-}
-
-func (q *Queries) CheckRoleGrant(ctx context.Context, arg CheckRoleGrantParams) (int32, error) {
-	row := q.db.QueryRowContext(ctx, checkRoleGrant, arg.Name, arg.Action)
-	var column_1 int32
-	err := row.Scan(&column_1)
-	return column_1, err
-}
-
 const createGrant = `-- name: CreateGrant :execlastid
 INSERT INTO grants (
     created_at, user_id, role_id, section, item, rule_type, item_id, item_rule, action, extra, active
@@ -481,6 +420,67 @@ func (q *Queries) ListUsersWithRoles(ctx context.Context) ([]*ListUsersWithRoles
 		return nil, err
 	}
 	return items, nil
+}
+
+const systemCheckGrant = `-- name: SystemCheckGrant :one
+WITH RECURSIVE role_ids(id) AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+)
+SELECT 1 FROM grants g
+WHERE g.section = ?
+  AND (g.item = ? OR g.item IS NULL)
+  AND g.action = ?
+  AND g.active = 1
+  AND (g.item_id = ? OR g.item_id IS NULL)
+  AND (g.user_id = ? OR g.user_id IS NULL)
+  AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+LIMIT 1
+`
+
+type SystemCheckGrantParams struct {
+	ViewerID int32
+	Section  string
+	Item     sql.NullString
+	Action   string
+	ItemID   sql.NullInt32
+	UserID   sql.NullInt32
+}
+
+func (q *Queries) SystemCheckGrant(ctx context.Context, arg SystemCheckGrantParams) (int32, error) {
+	row := q.db.QueryRowContext(ctx, systemCheckGrant,
+		arg.ViewerID,
+		arg.Section,
+		arg.Item,
+		arg.Action,
+		arg.ItemID,
+		arg.UserID,
+	)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
+const systemCheckRoleGrant = `-- name: SystemCheckRoleGrant :one
+SELECT 1
+FROM grants g
+JOIN roles r ON g.role_id = r.id
+WHERE g.section = 'role'
+  AND r.name = ?
+  AND g.action = ?
+  AND g.active = 1
+LIMIT 1
+`
+
+type SystemCheckRoleGrantParams struct {
+	Name   string
+	Action string
+}
+
+func (q *Queries) SystemCheckRoleGrant(ctx context.Context, arg SystemCheckRoleGrantParams) (int32, error) {
+	row := q.db.QueryRowContext(ctx, systemCheckRoleGrant, arg.Name, arg.Action)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
 }
 
 const updatePermission = `-- name: UpdatePermission :exec

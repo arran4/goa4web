@@ -318,7 +318,7 @@ func (cd *CoreData) HasRole(role string) bool {
 	}
 	if cd.queries != nil {
 		for _, r := range cd.UserRoles() {
-			if _, err := cd.queries.CheckRoleGrant(cd.ctx, db.CheckRoleGrantParams{Name: r, Action: role}); err == nil {
+			if _, err := cd.queries.SystemCheckRoleGrant(cd.ctx, db.SystemCheckRoleGrantParams{Name: r, Action: role}); err == nil {
 				return true
 			}
 		}

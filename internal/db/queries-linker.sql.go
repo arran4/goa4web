@@ -11,15 +11,26 @@ import (
 	"strings"
 )
 
-const countLinksByCategory = `-- name: CountLinksByCategory :one
+const adminCountLinksByCategory = `-- name: AdminCountLinksByCategory :one
 SELECT COUNT(*) FROM linker WHERE linker_category_id = ?
 `
 
-func (q *Queries) CountLinksByCategory(ctx context.Context, linkerCategoryID int32) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countLinksByCategory, linkerCategoryID)
+func (q *Queries) AdminCountLinksByCategory(ctx context.Context, linkerCategoryID int32) (int64, error) {
+	row := q.db.QueryRowContext(ctx, adminCountLinksByCategory, linkerCategoryID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
+}
+
+const adminDeleteLinkerCategory = `-- name: AdminDeleteLinkerCategory :exec
+DELETE FROM linker_category
+WHERE idlinkerCategory = ?
+`
+
+// AdminDeleteLinkerCategory removes a linker category.
+func (q *Queries) AdminDeleteLinkerCategory(ctx context.Context, idlinkercategory int32) error {
+	_, err := q.db.ExecContext(ctx, adminDeleteLinkerCategory, idlinkercategory)
+	return err
 }
 
 const createLinkerCategory = `-- name: CreateLinkerCategory :exec
@@ -94,26 +105,6 @@ func (q *Queries) CreateLinkerQueuedItem(ctx context.Context, arg CreateLinkerQu
 		arg.Url,
 		arg.Description,
 	)
-	return err
-}
-
-const deleteLinkerCategory = `-- name: DeleteLinkerCategory :exec
-DELETE FROM linker_category
-WHERE idlinkerCategory = ?
-  AND EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.users_idusers = ? AND r.is_admin = 1
-  )
-`
-
-type DeleteLinkerCategoryParams struct {
-	Idlinkercategory int32
-	AdminID          int32
-}
-
-func (q *Queries) DeleteLinkerCategory(ctx context.Context, arg DeleteLinkerCategoryParams) error {
-	_, err := q.db.ExecContext(ctx, deleteLinkerCategory, arg.Idlinkercategory, arg.AdminID)
 	return err
 }
 

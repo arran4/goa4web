@@ -1,11 +1,7 @@
--- name: DeleteLinkerCategory :exec
+-- AdminDeleteLinkerCategory removes a linker category.
+-- name: AdminDeleteLinkerCategory :exec
 DELETE FROM linker_category
-WHERE idlinkerCategory = ?
-  AND EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.users_idusers = sqlc.arg(admin_id) AND r.is_admin = 1
-  );
+WHERE idlinkerCategory = ?;
 
 -- name: RenameLinkerCategory :exec
 UPDATE linker_category SET title = ?, position = ?
@@ -302,7 +298,7 @@ WHERE idlinkerCategory = ?
     WHERE ur.users_idusers = sqlc.arg(admin_id) AND r.is_admin = 1
   );
 
--- name: CountLinksByCategory :one
+-- name: AdminCountLinksByCategory :one
 SELECT COUNT(*) FROM linker WHERE linker_category_id = ?;
 
 

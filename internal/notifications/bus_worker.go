@@ -271,7 +271,7 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 			filterSubs := func(m map[int32]struct{}) {
 				for id := range m {
 					for _, g := range reqs {
-						if _, err := n.Queries.CheckGrant(ctx, db.CheckGrantParams{
+						if _, err := n.Queries.SystemCheckGrant(ctx, db.SystemCheckGrantParams{
 							ViewerID: id,
 							Section:  g.Section,
 							Item:     sql.NullString{String: g.Item, Valid: g.Item != ""},

@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 )

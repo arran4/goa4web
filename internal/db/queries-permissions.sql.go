@@ -329,15 +329,9 @@ func (q *Queries) GetUserRoles(ctx context.Context) ([]*GetUserRolesRow, error) 
 }
 
 const listEffectiveRoleIDsByUserID = `-- name: ListEffectiveRoleIDsByUserID :many
-WITH RECURSIVE role_ids(id) AS (
-    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
-    UNION
-    SELECT r2.id
-    FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section = 'role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
-)
-SELECT DISTINCT id FROM role_ids
+SELECT DISTINCT ur.role_id AS id
+FROM user_roles ur
+WHERE ur.users_idusers = ?
 `
 
 func (q *Queries) ListEffectiveRoleIDsByUserID(ctx context.Context, usersIdusers int32) ([]int32, error) {

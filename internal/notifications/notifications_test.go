@@ -66,7 +66,7 @@ func TestNotifierNotifyAdmins(t *testing.T) {
 	cfg.EmailFrom = "from@example.com"
 	cfg.NotificationsEnabled = true
 
-	mock.ExpectQuery("UserByEmail").
+	mock.ExpectQuery("SystemGetUserByEmail").
 		WithArgs(sql.NullString{String: "a@test", Valid: true}).
 		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "a@test", "a"))
 	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(sql.NullInt32{Int32: 1, Valid: true}, sqlmock.AnyArg(), false).WillReturnResult(sqlmock.NewResult(1, 1))

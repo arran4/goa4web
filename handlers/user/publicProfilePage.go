@@ -18,7 +18,7 @@ func userPublicProfilePage(w http.ResponseWriter, r *http.Request) {
 	username := mux.Vars(r)["username"]
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
-	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{String: username, Valid: true})
+	u, err := queries.SystemGetUserByUsername(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {
 		http.NotFound(w, r)
 		return

@@ -70,7 +70,7 @@ func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var author string
-	if u, err := queries.GetUserById(r.Context(), uid); err == nil {
+	if u, err := queries.SystemGetUserByID(r.Context(), uid); err == nil {
 		author = u.Username.String
 	}
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {

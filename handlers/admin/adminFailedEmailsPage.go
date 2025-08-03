@@ -60,9 +60,9 @@ func AdminFailedEmailsPage(w http.ResponseWriter, r *http.Request) {
 			ids = append(ids, e.ToUserID.Int32)
 		}
 	}
-	users := make(map[int32]*db.GetUserByIdRow)
+	users := make(map[int32]*db.SystemGetUserByIDRow)
 	for _, id := range ids {
-		if u, err := queries.GetUserById(r.Context(), id); err == nil {
+		if u, err := queries.SystemGetUserByID(r.Context(), id); err == nil {
 			users[id] = u
 		}
 	}

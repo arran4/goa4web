@@ -41,7 +41,7 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 	pw := r.PostFormValue("password")
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
-	row, err := queries.GetUserByUsername(r.Context(), sql.NullString{String: username, Valid: true})
+	row, err := queries.SystemGetUserByUsername(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {
 		return fmt.Errorf("user not found %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

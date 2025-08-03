@@ -142,7 +142,7 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if trow, err := queries.GetForumTopicByIdForUser(r.Context(), db.GetForumTopicByIdForUserParams{ViewerID: uid, Idforumtopic: int32(topicId), ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0}}); err == nil {
 		topicTitle = trow.Title.String
 	}
-	if u, err := queries.GetUserById(r.Context(), uid); err == nil {
+	if u, err := queries.SystemGetUserByID(r.Context(), uid); err == nil {
 		author = u.Username.String
 	}
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {

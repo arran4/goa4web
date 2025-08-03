@@ -43,7 +43,7 @@ func (UserPasswordResetTask) Action(w http.ResponseWriter, r *http.Request) any 
 		CoreData: cd,
 		Back:     "/admin/user/" + idStr,
 	}
-	userRow, err := queries.GetUserById(r.Context(), int32(id))
+	userRow, err := queries.SystemGetUserByID(r.Context(), int32(id))
 	if err != nil {
 		data.Errors = append(data.Errors, "user not found")
 		return handlers.TemplateWithDataHandler("runTaskPage.gohtml", data)
@@ -109,7 +109,7 @@ func adminUserResetPasswordConfirmPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Reset Password"
 	queries := cd.Queries()
-	userRow, err := queries.GetUserById(r.Context(), int32(id))
+	userRow, err := queries.SystemGetUserByID(r.Context(), int32(id))
 	if err != nil {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("user not found"))
 		return

@@ -35,9 +35,9 @@ func (userAllowTask) Action(w http.ResponseWriter, r *http.Request) any {
 		if username == "" {
 			continue
 		}
-		u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username})
+		u, err := queries.SystemGetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username})
 		if err != nil {
-			log.Printf("GetUserByUsername Error: %s", err)
+			log.Printf("SystemGetUserByUsername Error: %s", err)
 			continue
 		}
 		if err := queries.CreateUserRole(r.Context(), db.CreateUserRoleParams{

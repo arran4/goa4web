@@ -433,7 +433,7 @@ func (cd *CoreData) CurrentUser() (*db.User, error) {
 		if cd.UserID == 0 || cd.queries == nil {
 			return nil, nil
 		}
-		row, err := cd.queries.GetUserById(cd.ctx, cd.UserID)
+		row, err := cd.queries.SystemGetUserByID(cd.ctx, cd.UserID)
 		if err != nil {
 			if !errors.Is(err, sql.ErrNoRows) {
 				return nil, err

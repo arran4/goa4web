@@ -42,7 +42,7 @@ func (c *userActivateCmd) Run() error {
 	ctx := context.Background()
 	queries := db.New(db)
 	if c.ID == 0 {
-		u, err := queries.GetUserByUsername(ctx, sql.NullString{String: c.Username, Valid: true})
+		u, err := queries.SystemGetUserByUsername(ctx, sql.NullString{String: c.Username, Valid: true})
 		if err != nil {
 			return fmt.Errorf("get user: %w", err)
 		}

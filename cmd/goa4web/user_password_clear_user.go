@@ -40,7 +40,7 @@ func (c *userPasswordClearUserCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := db.New(db)
-	user, err := queries.GetUserByUsername(ctx, sql.NullString{String: c.Username, Valid: true})
+	user, err := queries.SystemGetUserByUsername(ctx, sql.NullString{String: c.Username, Valid: true})
 	if err != nil {
 		return fmt.Errorf("get user: %w", err)
 	}

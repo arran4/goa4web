@@ -211,7 +211,7 @@ func (n *Notifier) notifyTargetUsers(ctx context.Context, evt eventbus.TaskEvent
 		return err
 	}
 	for _, id := range ids {
-		user, err := n.Queries.GetUserById(ctx, id)
+		user, err := n.Queries.SystemGetUserByID(ctx, id)
 		if err != nil || !user.Email.Valid || user.Email.String == "" {
 			if nmErr := notifyMissingEmail(ctx, n.Queries, id); nmErr != nil {
 				log.Printf("notify missing email: %v", nmErr)

@@ -80,8 +80,8 @@ func UsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Requ
 		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Back:     "/blogs/bloggers",
 	}
-	if u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username}); err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("GetUserByUsername: %w", err).Error())
+	if u, err := queries.SystemGetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username}); err != nil {
+		data.Errors = append(data.Errors, fmt.Errorf("SystemGetUserByUsername: %w", err).Error())
 	} else if err := queries.CreateUserRole(r.Context(), db.CreateUserRoleParams{
 		UsersIdusers: u.Idusers,
 		Name:         role,

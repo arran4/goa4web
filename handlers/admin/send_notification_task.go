@@ -36,7 +36,7 @@ func (SendNotificationTask) Action(w http.ResponseWriter, r *http.Request) any {
 			if name == "" {
 				continue
 			}
-			u, err := queries.GetUserByUsername(r.Context(), sql.NullString{String: name, Valid: true})
+			u, err := queries.SystemGetUserByUsername(r.Context(), sql.NullString{String: name, Valid: true})
 			if err != nil {
 				return fmt.Errorf("get user %s fail %w", name, handlers.ErrRedirectOnSamePageHandler(err))
 			}

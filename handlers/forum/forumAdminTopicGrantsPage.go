@@ -48,7 +48,7 @@ func AdminTopicGrantsPage(w http.ResponseWriter, r *http.Request) {
 		if g.Section == "forum" && g.Item.Valid && g.Item.String == "topic" && g.ItemID.Valid && g.ItemID.Int32 == int32(tid) {
 			gi := GrantInfo{Grant: g}
 			if g.UserID.Valid {
-				if u, err := queries.GetUserById(r.Context(), g.UserID.Int32); err == nil {
+				if u, err := queries.SystemGetUserByID(r.Context(), g.UserID.Int32); err == nil {
 					gi.Username = sql.NullString{String: u.Username.String, Valid: true}
 				}
 			}

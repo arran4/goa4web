@@ -64,7 +64,7 @@ func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request)
 				if row.IduserRoles == int32(permidi) {
 					role = row.Role
 					userID = row.UsersIdusers
-					if u, err := queries.GetUserById(r.Context(), row.UsersIdusers); err == nil && u.Username.Valid {
+					if u, err := queries.SystemGetUserByID(r.Context(), row.UsersIdusers); err == nil && u.Username.Valid {
 						uname = u.Username.String
 					}
 					break

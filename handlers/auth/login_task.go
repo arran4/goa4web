@@ -61,7 +61,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	row, err := queries.Login(r.Context(), sql.NullString{String: username, Valid: true})
+	row, err := queries.SystemGetLogin(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			if err := queries.SystemInsertLoginAttempt(r.Context(), db.SystemInsertLoginAttemptParams{Username: username, IpAddress: strings.Split(r.RemoteAddr, ":")[0]}); err != nil {

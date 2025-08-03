@@ -252,7 +252,58 @@ func (q *Queries) AdminUpdateUsernameByID(ctx context.Context, arg AdminUpdateUs
 	return err
 }
 
-const getUserById = `-- name: GetUserById :one
+const systemGetLogin = `-- name: SystemGetLogin :one
+SELECT u.idusers,
+       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
+       p.passwd, p.passwd_algorithm, u.username
+FROM users u LEFT JOIN passwords p ON p.users_idusers = u.idusers
+WHERE u.username = ?
+ORDER BY p.created_at DESC
+LIMIT 1
+`
+
+type SystemGetLoginRow struct {
+	Idusers         int32
+	Email           string
+	Passwd          sql.NullString
+	PasswdAlgorithm sql.NullString
+	Username        sql.NullString
+}
+
+func (q *Queries) SystemGetLogin(ctx context.Context, username sql.NullString) (*SystemGetLoginRow, error) {
+	row := q.db.QueryRowContext(ctx, systemGetLogin, username)
+	var i SystemGetLoginRow
+	err := row.Scan(
+		&i.Idusers,
+		&i.Email,
+		&i.Passwd,
+		&i.PasswdAlgorithm,
+		&i.Username,
+	)
+	return &i, err
+}
+
+const systemGetUserByEmail = `-- name: SystemGetUserByEmail :one
+SELECT u.idusers, ue.email, u.username
+FROM users u JOIN user_emails ue ON ue.user_id = u.idusers
+WHERE ue.email = ?
+LIMIT 1
+`
+
+type SystemGetUserByEmailRow struct {
+	Idusers  int32
+	Email    string
+	Username sql.NullString
+}
+
+func (q *Queries) SystemGetUserByEmail(ctx context.Context, email string) (*SystemGetUserByEmailRow, error) {
+	row := q.db.QueryRowContext(ctx, systemGetUserByEmail, email)
+	var i SystemGetUserByEmailRow
+	err := row.Scan(&i.Idusers, &i.Email, &i.Username)
+	return &i, err
+}
+
+const systemGetUserByID = `-- name: SystemGetUserByID :one
 SELECT u.idusers, ue.email, u.username, u.public_profile_enabled_at
 FROM users u
 LEFT JOIN user_emails ue ON ue.id = (
@@ -263,16 +314,16 @@ LEFT JOIN user_emails ue ON ue.id = (
 WHERE u.idusers = ?
 `
 
-type GetUserByIdRow struct {
+type SystemGetUserByIDRow struct {
 	Idusers                int32
 	Email                  sql.NullString
 	Username               sql.NullString
 	PublicProfileEnabledAt sql.NullTime
 }
 
-func (q *Queries) GetUserById(ctx context.Context, idusers int32) (*GetUserByIdRow, error) {
-	row := q.db.QueryRowContext(ctx, getUserById, idusers)
-	var i GetUserByIdRow
+func (q *Queries) SystemGetUserByID(ctx context.Context, idusers int32) (*SystemGetUserByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, systemGetUserByID, idusers)
+	var i SystemGetUserByIDRow
 	err := row.Scan(
 		&i.Idusers,
 		&i.Email,
@@ -282,7 +333,7 @@ func (q *Queries) GetUserById(ctx context.Context, idusers int32) (*GetUserByIdR
 	return &i, err
 }
 
-const getUserByUsername = `-- name: GetUserByUsername :one
+const systemGetUserByUsername = `-- name: SystemGetUserByUsername :one
 SELECT idusers,
        (SELECT email FROM user_emails ue WHERE ue.user_id = users.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
        username,
@@ -291,52 +342,21 @@ FROM users
 WHERE username = ?
 `
 
-type GetUserByUsernameRow struct {
+type SystemGetUserByUsernameRow struct {
 	Idusers                int32
 	Email                  string
 	Username               sql.NullString
 	PublicProfileEnabledAt sql.NullTime
 }
 
-func (q *Queries) GetUserByUsername(ctx context.Context, username sql.NullString) (*GetUserByUsernameRow, error) {
-	row := q.db.QueryRowContext(ctx, getUserByUsername, username)
-	var i GetUserByUsernameRow
+func (q *Queries) SystemGetUserByUsername(ctx context.Context, username sql.NullString) (*SystemGetUserByUsernameRow, error) {
+	row := q.db.QueryRowContext(ctx, systemGetUserByUsername, username)
+	var i SystemGetUserByUsernameRow
 	err := row.Scan(
 		&i.Idusers,
 		&i.Email,
 		&i.Username,
 		&i.PublicProfileEnabledAt,
-	)
-	return &i, err
-}
-
-const login = `-- name: Login :one
-SELECT u.idusers,
-       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
-       p.passwd, p.passwd_algorithm, u.username
-FROM users u LEFT JOIN passwords p ON p.users_idusers = u.idusers
-WHERE u.username = ?
-ORDER BY p.created_at DESC
-LIMIT 1
-`
-
-type LoginRow struct {
-	Idusers         int32
-	Email           string
-	Passwd          sql.NullString
-	PasswdAlgorithm sql.NullString
-	Username        sql.NullString
-}
-
-func (q *Queries) Login(ctx context.Context, username sql.NullString) (*LoginRow, error) {
-	row := q.db.QueryRowContext(ctx, login, username)
-	var i LoginRow
-	err := row.Scan(
-		&i.Idusers,
-		&i.Email,
-		&i.Passwd,
-		&i.PasswdAlgorithm,
-		&i.Username,
 	)
 	return &i, err
 }
@@ -376,24 +396,4 @@ type UpdateUserEmailParams struct {
 func (q *Queries) UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams) error {
 	_, err := q.db.ExecContext(ctx, updateUserEmail, arg.Email, arg.UserID)
 	return err
-}
-
-const userByEmail = `-- name: UserByEmail :one
-SELECT u.idusers, ue.email, u.username
-FROM users u JOIN user_emails ue ON ue.user_id = u.idusers
-WHERE ue.email = ?
-LIMIT 1
-`
-
-type UserByEmailRow struct {
-	Idusers  int32
-	Email    string
-	Username sql.NullString
-}
-
-func (q *Queries) UserByEmail(ctx context.Context, email string) (*UserByEmailRow, error) {
-	row := q.db.QueryRowContext(ctx, userByEmail, email)
-	var i UserByEmailRow
-	err := row.Scan(&i.Idusers, &i.Email, &i.Username)
-	return &i, err
 }

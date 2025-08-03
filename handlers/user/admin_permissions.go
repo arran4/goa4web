@@ -32,7 +32,7 @@ func adminUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := data.Queries()
 
-	if u, err := queries.GetUserById(r.Context(), int32(id)); err == nil {
+	if u, err := queries.SystemGetUserByID(r.Context(), int32(id)); err == nil {
 		data.User = &db.User{Idusers: u.Idusers, Username: u.Username}
 	} else {
 		http.Error(w, "user not found", http.StatusNotFound)

@@ -18,7 +18,7 @@ func adminUserSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(idStr)
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
-	user, err := queries.GetUserById(r.Context(), int32(id))
+	user, err := queries.SystemGetUserByID(r.Context(), int32(id))
 	if err != nil {
 		http.Error(w, "user not found", http.StatusNotFound)
 		return

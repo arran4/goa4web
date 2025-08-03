@@ -37,7 +37,7 @@ func (TestTemplateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	queries := cd.Queries()
-	urow, err := queries.GetUserById(r.Context(), cd.UserID)
+	urow, err := queries.SystemGetUserByID(r.Context(), cd.UserID)
 	if err != nil {
 		return fmt.Errorf("get user fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

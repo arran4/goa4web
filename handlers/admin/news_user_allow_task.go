@@ -30,7 +30,7 @@ func (NewsUserAllowTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	username := r.PostFormValue("username")
 	role := r.PostFormValue("role")
-	u, err := queries.GetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username})
+	u, err := queries.SystemGetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username})
 	if err != nil {
 		return fmt.Errorf("get user by username fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

@@ -45,7 +45,7 @@ func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
-	bu, err := queries.GetUserByUsername(r.Context(), sql.NullString{
+	bu, err := queries.SystemGetUserByUsername(r.Context(), sql.NullString{
 		String: username,
 		Valid:  true,
 	})
@@ -54,7 +54,7 @@ func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, sql.ErrNoRows):
 			http.NotFound(w, r)
 		default:
-			log.Printf("GetUserByUsername Error: %s", err)
+			log.Printf("SystemGetUserByUsername Error: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		}
 		return

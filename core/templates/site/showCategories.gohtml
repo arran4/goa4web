@@ -1,10 +1,10 @@
 {{ define "getAllLinkerCategories" }}
-    {{- if .Categories }}
-        Please select a category:<br>
-        <a href="/linker">All</a><br>
-        {{- range .Categories }}
-            <a href="/linker/category/{{ .Idlinkercategory }}">{{ .Title.String }}</a><br>
-        {{- end }}
-        <br>
+    Please select a category:<br>
+    <a href="/linker">All</a><br>
+    {{- range cd.LinkerCategoriesForUser }}
+        <a href="/linker/category/{{ .Idlinkercategory }}">{{ .Title.String }}</a><br>
+    {{- else }}
+        <em>No categories</em><br>
     {{- end }}
+    <br>
 {{ end }}

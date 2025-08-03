@@ -1,5 +1,7 @@
 package common
 
+// TODO: sort CoreData struct fields and related methods alphabetically.
+
 import (
 	"context"
 	"database/sql"
@@ -126,7 +128,12 @@ type CoreData struct {
 	langs                    lazy.Value[[]*db.Language]
 	latestNews               lazy.Value[[]*NewsPost]
 	latestWritings           lazy.Value[[]*db.Writing]
+	adminLinkerItemRows      map[int32]*lazy.Value[*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow]
 	linkerCategories         lazy.Value[[]*db.GetLinkerCategoryLinkCountsRow]
+	linkerCategoryLinks      map[int32]*lazy.Value[[]*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow]
+	linkerCategoryRows       map[int32]*lazy.Value[*db.LinkerCategory]
+	linkerCatsAll            lazy.Value[[]*db.LinkerCategory]
+	linkerCatsForUser        lazy.Value[[]*db.LinkerCategory]
 	externalLinks            map[string]*lazy.Value[*db.ExternalLink]
 	newsAnnouncements        map[int32]*lazy.Value[*db.SiteAnnouncement]
 	notifCount               lazy.Value[int32]
@@ -1481,6 +1488,67 @@ func (cd *CoreData) Subscriptions() ([]*db.ListSubscriptionsByUserRow, error) {
 	})
 }
 
+// AdminLinkerItemByID returns a single linker item lazily loading it once per ID.
+func (cd *CoreData) AdminLinkerItemByID(id int32, ops ...lazy.Option[*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow]) (*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow, error) {
+	fetch := func(i int32) (*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		row, err := cd.queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(cd.ctx, i)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		return row, nil
+	}
+	return lazy.Map(&cd.adminLinkerItemRows, &cd.mapMu, id, fetch, ops...)
+}
+
+// LinkerCategories returns all linker categories.
+func (cd *CoreData) LinkerCategories() ([]*db.LinkerCategory, error) {
+	return cd.linkerCatsAll.Load(func() ([]*db.LinkerCategory, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		rows, err := cd.queries.GetAllLinkerCategories(cd.ctx)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		return rows, nil
+	})
+}
+
+// LinkerCategoriesForUser returns linker categories the viewer can access.
+func (cd *CoreData) LinkerCategoriesForUser() ([]*db.LinkerCategory, error) {
+	return cd.linkerCatsForUser.Load(func() ([]*db.LinkerCategory, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		rows, err := cd.queries.GetAllLinkerCategoriesForUser(cd.ctx, db.GetAllLinkerCategoriesForUserParams{
+			ViewerID:     cd.UserID,
+			ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		})
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		return rows, nil
+	})
+}
+
+// LinkerCategoryByID returns a linker category lazily loading it once per ID.
+func (cd *CoreData) LinkerCategoryByID(id int32, ops ...lazy.Option[*db.LinkerCategory]) (*db.LinkerCategory, error) {
+	fetch := func(i int32) (*db.LinkerCategory, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		cat, err := cd.queries.GetLinkerCategoryById(cd.ctx, i)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		return cat, nil
+	}
+	return lazy.Map(&cd.linkerCategoryRows, &cd.mapMu, id, fetch, ops...)
+}
+
 // LinkerCategoryCounts lazily loads linker category statistics.
 func (cd *CoreData) LinkerCategoryCounts() ([]*db.GetLinkerCategoryLinkCountsRow, error) {
 	return cd.linkerCategories.Load(func() ([]*db.GetLinkerCategoryLinkCountsRow, error) {
@@ -1493,6 +1561,91 @@ func (cd *CoreData) LinkerCategoryCounts() ([]*db.GetLinkerCategoryLinkCountsRow
 		}
 		return rows, nil
 	})
+}
+
+// LinkerItemsForUser returns linker items for the given category and offset respecting viewer permissions.
+func (cd *CoreData) LinkerItemsForUser(catID, offset int32) ([]*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow, error) {
+	if cd.queries == nil {
+		return nil, nil
+	}
+	rows, err := cd.queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginated(cd.ctx, db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedParams{
+		ViewerID:         cd.UserID,
+		Idlinkercategory: catID,
+		ViewerUserID:     sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		Limit:            15,
+		Offset:           offset,
+	})
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, err
+	}
+	var out []*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow
+	for _, row := range rows {
+		if cd.HasGrant("linker", "link", "see", row.Idlinker) {
+			out = append(out, row)
+		}
+	}
+	return out, nil
+}
+
+// LinkerLinksByCategoryID returns the links for a category lazily loading them once per ID.
+func (cd *CoreData) LinkerLinksByCategoryID(id int32, ops ...lazy.Option[[]*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow]) ([]*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow, error) {
+	fetch := func(i int32) ([]*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		rows, err := cd.queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(cd.ctx, db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams{Idlinkercategory: i})
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		return rows, nil
+	}
+	return lazy.Map(&cd.linkerCategoryLinks, &cd.mapMu, id, fetch, ops...)
+}
+
+// SelectedAdminLinkerItem returns the linker item for the ID found in the request.
+func (cd *CoreData) SelectedAdminLinkerItem(r *http.Request, ops ...lazy.Option[*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow]) (*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow, int32, error) {
+	id, err := cd.SelectedAdminLinkerItemID(r)
+	if err != nil {
+		return nil, 0, err
+	}
+	link, err := cd.AdminLinkerItemByID(id, ops...)
+	if err != nil {
+		return nil, id, err
+	}
+	return link, id, nil
+}
+
+// SelectedAdminLinkerItemID extracts the linker item ID from URL vars, form values or query parameters.
+func (cd *CoreData) SelectedAdminLinkerItemID(r *http.Request) (int32, error) {
+	var idStr string
+	if v, ok := mux.Vars(r)["link"]; ok {
+		idStr = v
+	} else if v := r.PostFormValue("link"); v != "" {
+		idStr = v
+	} else {
+		idStr = r.URL.Query().Get("link")
+	}
+	id, err := strconv.Atoi(idStr)
+	if err != nil || id == 0 {
+		return 0, sql.ErrNoRows
+	}
+	return int32(id), nil
+}
+
+// SelectedLinkerCategory returns the linker category for the given ID.
+func (cd *CoreData) SelectedLinkerCategory(id int32, ops ...lazy.Option[*db.LinkerCategory]) (*db.LinkerCategory, error) {
+	return cd.LinkerCategoryByID(id, ops...)
+}
+
+// SelectedLinkerItemsForCurrentUser returns linker items for the given category
+// and offset for the current user and ensures the category is cached.
+func (cd *CoreData) SelectedLinkerItemsForCurrentUser(catID, offset int32) ([]*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow, error) {
+	if catID != 0 {
+		if _, err := cd.SelectedLinkerCategory(catID); err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+	}
+	return cd.LinkerItemsForUser(catID, offset)
 }
 
 // ExternalLink lazily resolves metadata for url.

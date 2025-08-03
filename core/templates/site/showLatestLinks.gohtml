@@ -1,17 +1,17 @@
 {{ define "getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingLinks" }}
     <table width="100%">
-        {{- range .Links }}
-            <tr>
-                <th bgcolor="lightgrey">{{ .CategoryTitle.String }}: <a href="{{ .Url.String }}" target="_BLANK">{{ .Title.String }}</a></th>
-            </tr>
-            <tr>
-                <td>
-                    {{ .Description.String | a4code2html }}<hr>
-                    {{ .Posterusername.String }} - Listed: {{ .Listed.Time }} - [<a href="/linker/comments/{{ .Idlinker }}">{{.Comments.Int32}} COMMENTS</a>]<br>
-                </td>
-            </tr>
-        {{- else }}
-            {{- if .HasOffset }}
+        {{ if .HasOffset }}
+            {{- range cd.SelectedLinkerItemsForCurrentUser (int32 .CatId) (int32 .Offset) }}
+                <tr>
+                    <th bgcolor="lightgrey">{{ .CategoryTitle.String }}: <a href="{{ .Url.String }}" target="_BLANK">{{ .Title.String }}</a></th>
+                </tr>
+                <tr>
+                    <td>
+                        {{ .Description.String | a4code2html }}<hr>
+                        {{ .Posterusername.String }} - Listed: {{ .Listed.Time }} - [<a href="/linker/comments/{{ .Idlinker }}">{{.Comments.Int32}} COMMENTS</a>]<br>
+                    </td>
+                </tr>
+            {{- else }}
                 {{- if .CatId }}
                     <tr>
                         <td>There are no more links under this category.</td>
@@ -21,6 +21,18 @@
                         <td>There are no more links.</td>
                     </tr>
                 {{- end }}
+            {{- end }}
+        {{ else }}
+            {{- range cd.SelectedLinkerItemsForCurrentUser (int32 .CatId) 0 }}
+                <tr>
+                    <th bgcolor="lightgrey">{{ .CategoryTitle.String }}: <a href="{{ .Url.String }}" target="_BLANK">{{ .Title.String }}</a></th>
+                </tr>
+                <tr>
+                    <td>
+                        {{ .Description.String | a4code2html }}<hr>
+                        {{ .Posterusername.String }} - Listed: {{ .Listed.Time }} - [<a href="/linker/comments/{{ .Idlinker }}">{{.Comments.Int32}} COMMENTS</a>]<br>
+                    </td>
+                </tr>
             {{- else }}
                 {{- if .CatId }}
                     <tr>
@@ -32,6 +44,6 @@
                     </tr>
                 {{- end }}
             {{- end }}
-        {{- end }}
+        {{ end }}
     </table><br>
 {{ end }}

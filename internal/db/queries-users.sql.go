@@ -11,6 +11,15 @@ import (
 	"strings"
 )
 
+const adminDeleteUserByID = `-- name: AdminDeleteUserByID :exec
+DELETE FROM users WHERE idusers = ?
+`
+
+func (q *Queries) AdminDeleteUserByID(ctx context.Context, idusers int32) error {
+	_, err := q.db.ExecContext(ctx, adminDeleteUserByID, idusers)
+	return err
+}
+
 const adminListAdministratorEmails = `-- name: AdminListAdministratorEmails :many
 SELECT (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email
 FROM users u
@@ -229,6 +238,20 @@ func (q *Queries) AdminListUsersByID(ctx context.Context, ids []int32) ([]*Admin
 	return items, nil
 }
 
+const adminUpdateUsernameByID = `-- name: AdminUpdateUsernameByID :exec
+UPDATE users SET username = ? WHERE idusers = ?
+`
+
+type AdminUpdateUsernameByIDParams struct {
+	Username sql.NullString
+	Idusers  int32
+}
+
+func (q *Queries) AdminUpdateUsernameByID(ctx context.Context, arg AdminUpdateUsernameByIDParams) error {
+	_, err := q.db.ExecContext(ctx, adminUpdateUsernameByID, arg.Username, arg.Idusers)
+	return err
+}
+
 const getUserById = `-- name: GetUserById :one
 SELECT u.idusers, ue.email, u.username, u.public_profile_enabled_at
 FROM users u
@@ -287,15 +310,6 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username sql.NullString
 	return &i, err
 }
 
-const insertUser = `-- name: InsertUser :execresult
-INSERT INTO users (username)
-VALUES (?)
-`
-
-func (q *Queries) InsertUser(ctx context.Context, username sql.NullString) (sql.Result, error) {
-	return q.db.ExecContext(ctx, insertUser, username)
-}
-
 const login = `-- name: Login :one
 SELECT u.idusers,
        (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
@@ -325,6 +339,15 @@ func (q *Queries) Login(ctx context.Context, username sql.NullString) (*LoginRow
 		&i.Username,
 	)
 	return &i, err
+}
+
+const systemInsertUser = `-- name: SystemInsertUser :execresult
+INSERT INTO users (username)
+VALUES (?)
+`
+
+func (q *Queries) SystemInsertUser(ctx context.Context, username sql.NullString) (sql.Result, error) {
+	return q.db.ExecContext(ctx, systemInsertUser, username)
 }
 
 const updatePublicProfileEnabledAtByUserID = `-- name: UpdatePublicProfileEnabledAtByUserID :exec

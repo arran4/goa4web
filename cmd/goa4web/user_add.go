@@ -64,10 +64,7 @@ func createUser(root *rootCmd, username, email, password string, admin bool) err
 	if err != nil {
 		return fmt.Errorf("hash password: %w", err)
 	}
-	res, err := queries.DB().ExecContext(ctx,
-		"INSERT INTO users (username) VALUES (?)",
-		username,
-	)
+	res, err := queries.SystemInsertUser(ctx, sql.NullString{String: username, Valid: true})
 	if err != nil {
 		if strings.Contains(err.Error(), "Duplicate entry") || strings.Contains(err.Error(), "UNIQUE constraint failed") {
 			return fmt.Errorf("user already exists")

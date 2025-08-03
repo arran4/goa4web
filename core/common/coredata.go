@@ -283,6 +283,9 @@ func NewCoreData(ctx context.Context, q db.Querier, cfg *config.RuntimeConfig, o
 // Queries returns the db.Queries instance associated with this CoreData.
 func (cd *CoreData) Queries() db.Querier { return cd.queries }
 
+// CustomQueries returns the db.CustomQueries instance associated with this CoreData.
+func (cd *CoreData) CustomQueries() db.CustomQueries { return cd.customQueries }
+
 // ImageURLMapper maps image references like "image:" or "cache:" to full URLs.
 func (cd *CoreData) ImageURLMapper(tag, val string) string {
 	if cd.a4codeMapper != nil {

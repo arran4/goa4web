@@ -6,11 +6,11 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 
@@ -91,20 +91,14 @@ func AdminForumPage(w http.ResponseWriter, r *http.Request) {
 	categoryTree := NewCategoryTree(categoryRows, topicRows)
 	data.Categories = categoryTree.CategoryChildrenLookup[0]
 
-	ctx := r.Context()
-	dber, ok := queries.(interface{ DB() db.DBTX })
-	if !ok {
+	stats, err := queries.AdminGetForumStats(r.Context())
+	if err != nil {
 		http.Error(w, "database not available", http.StatusInternalServerError)
 		return
 	}
-	count := func(q string, dest *int64) {
-		if err := dber.DB().QueryRowContext(ctx, q).Scan(dest); err != nil && err != sql.ErrNoRows {
-			log.Printf("forumAdminPage count query error: %v", err)
-		}
-	}
-	count("SELECT COUNT(*) FROM forumcategory", &data.Stats.Categories)
-	count("SELECT COUNT(*) FROM forumtopic", &data.Stats.Topics)
-	count("SELECT COUNT(*) FROM forumthread", &data.Stats.Threads)
+	data.Stats.Categories = stats.Categories
+	data.Stats.Topics = stats.Topics
+	data.Stats.Threads = stats.Threads
 
 	handlers.TemplateHandler(w, r, "forumAdminPage", data)
 }
@@ -163,21 +157,9 @@ func AdminForumRemakeForumTopicPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func countForumThreads(ctx context.Context, q db.Querier) (int64, error) {
-	var c int64
-	dber, ok := q.(interface{ DB() db.DBTX })
-	if !ok {
-		return 0, fmt.Errorf("querier missing DB method")
-	}
-	err := dber.DB().QueryRowContext(ctx, "SELECT COUNT(*) FROM forumthread").Scan(&c)
-	return c, err
+	return q.AdminCountForumThreads(ctx)
 }
 
 func countForumTopics(ctx context.Context, q db.Querier) (int64, error) {
-	var c int64
-	dber, ok := q.(interface{ DB() db.DBTX })
-	if !ok {
-		return 0, fmt.Errorf("querier missing DB method")
-	}
-	err := dber.DB().QueryRowContext(ctx, "SELECT COUNT(*) FROM forumtopic").Scan(&c)
-	return c, err
+	return q.AdminCountForumTopics(ctx)
 }

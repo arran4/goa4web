@@ -23,6 +23,8 @@ type Querier interface {
 	AdminClearExternalLinkCache(ctx context.Context, arg AdminClearExternalLinkCacheParams) error
 	// This query selects all words from the "searchwordlist" table and prints them.
 	AdminCompleteWordList(ctx context.Context) ([]sql.NullString, error)
+	AdminCountForumThreads(ctx context.Context) (int64, error)
+	AdminCountForumTopics(ctx context.Context) (int64, error)
 	AdminCountThreadsByBoard(ctx context.Context, imageboardIdimageboard int32) (int64, error)
 	AdminCountWordList(ctx context.Context) (int64, error)
 	AdminCountWordListByPrefix(ctx context.Context, prefix interface{}) (int64, error)
@@ -39,6 +41,7 @@ type Querier interface {
 	// admin task
 	AdminDeletePendingEmail(ctx context.Context, id int32) error
 	AdminDeleteTemplateOverride(ctx context.Context, name string) error
+	AdminDeleteUserByID(ctx context.Context, idusers int32) error
 	// admin task
 	AdminDemoteAnnouncement(ctx context.Context, id int32) error
 	AdminForumCategoryThreadCounts(ctx context.Context) ([]*AdminForumCategoryThreadCountsRow, error)
@@ -46,12 +49,15 @@ type Querier interface {
 	AdminGetAllBlogEntriesByUser(ctx context.Context, arg AdminGetAllBlogEntriesByUserParams) ([]*AdminGetAllBlogEntriesByUserRow, error)
 	AdminGetAllCommentsByUser(ctx context.Context, userID int32) ([]*AdminGetAllCommentsByUserRow, error)
 	AdminGetAllWritingsByAuthor(ctx context.Context, authorID int32) ([]*AdminGetAllWritingsByAuthorRow, error)
+	AdminGetDashboardStats(ctx context.Context) (*AdminGetDashboardStatsRow, error)
+	AdminGetForumStats(ctx context.Context) (*AdminGetForumStatsRow, error)
 	// admin task
 	AdminGetPendingEmailByID(ctx context.Context, id int32) (*AdminGetPendingEmailByIDRow, error)
 	AdminGetRecentAuditLogs(ctx context.Context, limit int32) ([]*AdminGetRecentAuditLogsRow, error)
 	AdminGetRequestByID(ctx context.Context, id int32) (*AdminRequestQueue, error)
 	// admin task
 	AdminGetRoleByID(ctx context.Context, id int32) (*Role, error)
+	AdminGetSearchStats(ctx context.Context) (*AdminGetSearchStatsRow, error)
 	AdminGetThreadsStartedByUser(ctx context.Context, usersIdusers int32) ([]*Forumthread, error)
 	AdminGetThreadsStartedByUserWithTopic(ctx context.Context, usersIdusers int32) ([]*AdminGetThreadsStartedByUserWithTopicRow, error)
 	AdminGetWritingsByCategoryId(ctx context.Context, writingCategoryID int32) ([]*AdminGetWritingsByCategoryIdRow, error)
@@ -136,7 +142,10 @@ type Querier interface {
 	AdminUpdateBannedIp(ctx context.Context, arg AdminUpdateBannedIpParams) error
 	AdminUpdateRequestStatus(ctx context.Context, arg AdminUpdateRequestStatusParams) error
 	// admin task
+	AdminUpdateRole(ctx context.Context, arg AdminUpdateRoleParams) error
+	// admin task
 	AdminUpdateRolePublicProfileAllowed(ctx context.Context, arg AdminUpdateRolePublicProfileAllowedParams) error
+	AdminUpdateUsernameByID(ctx context.Context, arg AdminUpdateUsernameByIDParams) error
 	AdminUpdateWritingCategory(ctx context.Context, arg AdminUpdateWritingCategoryParams) error
 	AdminUserPostCounts(ctx context.Context) ([]*AdminUserPostCountsRow, error)
 	AdminUserPostCountsByID(ctx context.Context, idusers int32) (*AdminUserPostCountsByIDRow, error)
@@ -299,13 +308,13 @@ type Querier interface {
 	InsertAdminUserComment(ctx context.Context, arg InsertAdminUserCommentParams) error
 	InsertAuditLog(ctx context.Context, arg InsertAuditLogParams) error
 	InsertEmailPreferenceForLister(ctx context.Context, arg InsertEmailPreferenceForListerParams) error
+	InsertFAQQuestionForWriter(ctx context.Context, arg InsertFAQQuestionForWriterParams) (sql.Result, error)
 	InsertFAQRevisionForUser(ctx context.Context, arg InsertFAQRevisionForUserParams) error
 	InsertNotification(ctx context.Context, arg InsertNotificationParams) error
 	InsertPassword(ctx context.Context, arg InsertPasswordParams) error
 	InsertPendingEmail(ctx context.Context, arg InsertPendingEmailParams) error
 	InsertPreferenceForLister(ctx context.Context, arg InsertPreferenceForListerParams) error
 	InsertSubscription(ctx context.Context, arg InsertSubscriptionParams) error
-	InsertUser(ctx context.Context, username sql.NullString) (sql.Result, error)
 	InsertUserEmail(ctx context.Context, arg InsertUserEmailParams) error
 	InsertUserLang(ctx context.Context, arg InsertUserLangParams) error
 	InsertWriting(ctx context.Context, arg InsertWritingParams) (int64, error)
@@ -404,6 +413,7 @@ type Querier interface {
 	SystemInsertDeadLetter(ctx context.Context, message string) error
 	SystemInsertLoginAttempt(ctx context.Context, arg SystemInsertLoginAttemptParams) error
 	SystemInsertSession(ctx context.Context, arg SystemInsertSessionParams) error
+	SystemInsertUser(ctx context.Context, username sql.NullString) (sql.Result, error)
 	SystemLatestDeadLetter(ctx context.Context) (interface{}, error)
 	SystemListBoardsByParentID(ctx context.Context, arg SystemListBoardsByParentIDParams) ([]*Imageboard, error)
 	SystemListDeadLetters(ctx context.Context, limit int32) ([]*DeadLetter, error)

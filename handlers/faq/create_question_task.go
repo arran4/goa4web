@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/arran4/goa4web/core"
@@ -32,23 +33,26 @@ func (CreateQuestionTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil {
 		return fmt.Errorf("category parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
+	if !cd.HasGrant("faq", "question", "post", 0) {
+		r.URL.RawQuery = "error=" + url.QueryEscape("Forbidden")
+		handlers.TaskErrorAcknowledgementPage(w, r)
+		return nil
+	}
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return handlers.SessionFetchFail{}
 	}
 	uid, _ := session.Values["UID"].(int32)
-
-	dbq, ok := queries.(interface{ DB() db.DBTX })
-	if !ok {
-		return fmt.Errorf("querier missing DB method")
-	}
-	res, err := dbq.DB().ExecContext(r.Context(),
-		"INSERT INTO faq (question, answer, faqCategories_idfaqCategories, users_idusers, language_idlanguage) VALUES (?, ?, ?, ?, ?)",
-		sql.NullString{String: question, Valid: true},
-		sql.NullString{String: answer, Valid: true},
-		int32(category), uid, 1,
-	)
+	res, err := queries.InsertFAQQuestionForWriter(r.Context(), db.InsertFAQQuestionForWriterParams{
+		Question:   sql.NullString{String: question, Valid: true},
+		Answer:     sql.NullString{String: answer, Valid: true},
+		CategoryID: int32(category),
+		WriterID:   uid,
+		LanguageID: 1,
+		GranteeID:  sql.NullInt32{Int32: uid, Valid: true},
+	})
 	if err != nil {
 		return fmt.Errorf("insert faq fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

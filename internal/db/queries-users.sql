@@ -43,7 +43,7 @@ FROM users u JOIN user_emails ue ON ue.user_id = u.idusers
 WHERE ue.email = ?
 LIMIT 1;
 
--- name: InsertUser :execresult
+-- name: SystemInsertUser :execresult
 INSERT INTO users (username)
 VALUES (?)
 ;
@@ -88,3 +88,9 @@ WHERE idusers IN (sqlc.slice('ids'));
 
 -- name: UpdatePublicProfileEnabledAtByUserID :exec
 UPDATE users SET public_profile_enabled_at = ? WHERE idusers = ?;
+
+-- name: AdminDeleteUserByID :exec
+DELETE FROM users WHERE idusers = ?;
+
+-- name: AdminUpdateUsernameByID :exec
+UPDATE users SET username = ? WHERE idusers = ?;

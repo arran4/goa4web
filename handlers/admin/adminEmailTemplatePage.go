@@ -1,15 +1,11 @@
 package admin
 
 import (
-	"bytes"
 	"net/http"
 	"sort"
-	"strings"
 
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -78,32 +74,11 @@ func gatherTaskTemplateInfos(reg *tasks.Registry) []taskTemplateInfo {
 	return infos
 }
 
-func defaultTemplate(name string, cfg *config.RuntimeConfig) string {
-	var buf bytes.Buffer
-	if strings.HasSuffix(name, ".gohtml") {
-		tmpl := templates.GetCompiledEmailHtmlTemplates(map[string]any{})
-		if err := tmpl.ExecuteTemplate(&buf, name, sampleEmailData(cfg)); err == nil {
-			return buf.String()
-		}
-	} else {
-		tmpl := templates.GetCompiledEmailTextTemplates(map[string]any{})
-		if err := tmpl.ExecuteTemplate(&buf, name, sampleEmailData(cfg)); err == nil {
-			return buf.String()
-		}
-		tmpl2 := templates.GetCompiledNotificationTemplates(map[string]any{})
-		buf.Reset()
-		if err := tmpl2.ExecuteTemplate(&buf, name, sampleEmailData(cfg)); err == nil {
-			return buf.String()
-		}
-	}
-	return ""
-}
-
 // AdminEmailTemplatePage provides template listing and editing.
 func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
-	name := r.URL.Query().Get("name")
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Email Templates"
+	name := r.URL.Query().Get("name")
 	if name == "" {
 		data := struct {
 			*common.CoreData
@@ -112,29 +87,6 @@ func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
 		handlers.TemplateHandler(w, r, "emailTemplateListPage.gohtml", data)
 		return
 	}
-	q := cd.Queries()
-	body, _ := q.SystemGetTemplateOverride(r.Context(), name)
-	data := struct {
-		*common.CoreData
-		Name    string
-		Body    string
-		Default string
-		Error   string
-	}{
-		CoreData: cd,
-		Name:     name,
-		Body:     body,
-		Default:  defaultTemplate(name, cd.Config),
-		Error:    r.URL.Query().Get("error"),
-	}
-	handlers.TemplateHandler(w, r, "emailTemplateEditPage.gohtml", data)
-}
-
-func sampleEmailData(cfg *config.RuntimeConfig) map[string]interface{} {
-	return map[string]interface{}{
-		"URL":            "http://example.com",
-		"UnsubscribeUrl": "http://example.com/unsub",
-		"From":           cfg.EmailFrom,
-		"To":             "user@example.com",
-	}
+	cd.SetCurrentTemplate(name, r.URL.Query().Get("error"))
+	handlers.TemplateHandler(w, r, "emailTemplateEditPage.gohtml", cd)
 }

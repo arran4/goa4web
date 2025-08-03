@@ -33,7 +33,7 @@ func adminLinkPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cats, _ := queries.GetAllLinkerCategories(r.Context())
+	cats, _ := queries.AdminListLinkerCategories(r.Context(), db.AdminListLinkerCategoriesParams{Limit: int32(cd.PageSize()), Offset: 0})
 	langs, _ := cd.Languages()
 
 	cd.PageTitle = fmt.Sprintf("Edit Link %d", id)

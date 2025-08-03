@@ -152,9 +152,9 @@ func (ReplyBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 			return fmt.Errorf("makeThread fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		pthid = int32(pthidi)
-		if err := queries.AssignThreadIdToBlogEntry(r.Context(), db.AssignThreadIdToBlogEntryParams{
-			ForumthreadID: sql.NullInt32{Int32: pthid, Valid: true},
-			Idblogs:       int32(bid),
+		if err := queries.SystemAssignBlogThreadID(r.Context(), db.SystemAssignBlogThreadIDParams{
+			ThreadID: sql.NullInt32{Int32: pthid, Valid: true},
+			BlogID:   int32(bid),
 		}); err != nil {
 			return fmt.Errorf("assignThreadIdToBlogEntry fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}

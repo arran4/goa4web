@@ -34,23 +34,24 @@ func adminSearchPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.CoreData.PageTitle = "Search Admin"
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).CustomQueries()
 	ctx := r.Context()
-	count := func(query string, dest *int64) {
-		if err := queries.DB().QueryRowContext(ctx, query).Scan(dest); err != nil && err != sql.ErrNoRows {
-			log.Printf("adminSearchPage count query error: %v", err)
+	count := func(table string, dest *int64) {
+		if c, err := queries.AdminCountTable(ctx, table); err == nil {
+			*dest = c
+		} else if err != sql.ErrNoRows {
+			log.Printf("adminSearchPage count %s error: %v", table, err)
 		}
 	}
 
-	// TODO make queries and find another way of making this DRY if really required
-	count("SELECT COUNT(*) FROM searchwordlist", &data.Stats.Words)
-	count("SELECT COUNT(*) FROM comments_search", &data.Stats.Comments)
-	count("SELECT COUNT(*) FROM site_news_search", &data.Stats.News)
-	count("SELECT COUNT(*) FROM blogs_search", &data.Stats.Blogs)
-	count("SELECT COUNT(*) FROM linker_search", &data.Stats.Linker)
-	count("SELECT COUNT(*) FROM writing_search", &data.Stats.Writing)
-	count("SELECT COUNT(*) FROM writing_search", &data.Stats.Writings)
-	count("SELECT COUNT(*) FROM imagepost_search", &data.Stats.Images)
+	count("searchwordlist", &data.Stats.Words)
+	count("comments_search", &data.Stats.Comments)
+	count("site_news_search", &data.Stats.News)
+	count("blogs_search", &data.Stats.Blogs)
+	count("linker_search", &data.Stats.Linker)
+	count("writing_search", &data.Stats.Writing)
+	count("writing_search", &data.Stats.Writings)
+	count("imagepost_search", &data.Stats.Images)
 
 	handlers.TemplateHandler(w, r, "adminSearchPage", data)
 }

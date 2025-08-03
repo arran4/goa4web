@@ -35,12 +35,12 @@ func (c *blogUpdateCmd) Run() error {
 	if c.ID == 0 {
 		return fmt.Errorf("id required")
 	}
-	db, err := c.rootCmd.DB()
+	conn, err := c.rootCmd.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(db)
+	queries := db.New(conn)
 	err = queries.UpdateBlogEntry(ctx, db.UpdateBlogEntryParams{
 		LanguageIdlanguage: int32(c.LangID),
 		Blog:               sql.NullString{String: c.Text, Valid: c.Text != ""},

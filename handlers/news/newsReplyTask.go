@@ -147,9 +147,9 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 			return fmt.Errorf("make thread fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		pthid = int32(pthidi)
-		if err := queries.AssignNewsThisThreadId(r.Context(), db.AssignNewsThisThreadIdParams{
-			ForumthreadID: pthid,
-			Idsitenews:    int32(pid),
+		if err := queries.SystemAssignNewsThreadID(r.Context(), db.SystemAssignNewsThreadIDParams{
+			ThreadID: pthid,
+			NewsID:   int32(pid),
 		}); err != nil {
 			log.Printf("Error: assign_news_to_thread: %s", err)
 			return fmt.Errorf("assign news thread fail %w", handlers.ErrRedirectOnSamePageHandler(err))

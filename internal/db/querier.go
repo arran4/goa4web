@@ -80,6 +80,7 @@ type Querier interface {
 	AdminListFailedEmails(ctx context.Context, arg AdminListFailedEmailsParams) ([]*AdminListFailedEmailsRow, error)
 	// admin task
 	AdminListGrantsByRoleID(ctx context.Context, roleID sql.NullInt32) ([]*Grant, error)
+	AdminListLinkerCategories(ctx context.Context, arg AdminListLinkerCategoriesParams) ([]*LinkerCategory, error)
 	AdminListLoginAttempts(ctx context.Context) ([]*LoginAttempt, error)
 	AdminListPendingDeactivatedBlogs(ctx context.Context, arg AdminListPendingDeactivatedBlogsParams) ([]*AdminListPendingDeactivatedBlogsRow, error)
 	AdminListPendingDeactivatedComments(ctx context.Context, arg AdminListPendingDeactivatedCommentsParams) ([]*AdminListPendingDeactivatedCommentsRow, error)
@@ -144,10 +145,6 @@ type Querier interface {
 	AdminWordListWithCounts(ctx context.Context, arg AdminWordListWithCountsParams) ([]*AdminWordListWithCountsRow, error)
 	AdminWordListWithCountsByPrefix(ctx context.Context, arg AdminWordListWithCountsByPrefixParams) ([]*AdminWordListWithCountsByPrefixRow, error)
 	AdminWritingCategoryCounts(ctx context.Context) ([]*AdminWritingCategoryCountsRow, error)
-	AssignLinkerThisThreadId(ctx context.Context, arg AssignLinkerThisThreadIdParams) error
-	AssignNewsThisThreadId(ctx context.Context, arg AssignNewsThisThreadIdParams) error
-	AssignThreadIdToBlogEntry(ctx context.Context, arg AssignThreadIdToBlogEntryParams) error
-	AssignWritingThisThreadId(ctx context.Context, arg AssignWritingThisThreadIdParams) error
 	BlogsSearchFirst(ctx context.Context, arg BlogsSearchFirstParams) ([]int32, error)
 	BlogsSearchNext(ctx context.Context, arg BlogsSearchNextParams) ([]int32, error)
 	CheckGrant(ctx context.Context, arg CheckGrantParams) (int32, error)
@@ -217,8 +214,6 @@ type Querier interface {
 	GetAllForumTopicsByCategoryIdForUserWithLastPosterName(ctx context.Context, arg GetAllForumTopicsByCategoryIdForUserWithLastPosterNameParams) ([]*GetAllForumTopicsByCategoryIdForUserWithLastPosterNameRow, error)
 	GetAllForumTopicsForUser(ctx context.Context, arg GetAllForumTopicsForUserParams) ([]*GetAllForumTopicsForUserRow, error)
 	GetAllImagePostsForIndex(ctx context.Context) ([]*GetAllImagePostsForIndexRow, error)
-	GetAllLinkerCategories(ctx context.Context) ([]*LinkerCategory, error)
-	GetAllLinkerCategoriesForUser(ctx context.Context, arg GetAllLinkerCategoriesForUserParams) ([]*LinkerCategory, error)
 	GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(ctx context.Context, arg GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams) ([]*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow, error)
 	GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUser(ctx context.Context, arg GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserParams) ([]*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserRow, error)
 	GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginated(ctx context.Context, arg GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedParams) ([]*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow, error)
@@ -332,6 +327,7 @@ type Querier interface {
 	ListGrantsByUserID(ctx context.Context, userID sql.NullInt32) ([]*Grant, error)
 	ListImagePostsByBoardForLister(ctx context.Context, arg ListImagePostsByBoardForListerParams) ([]*ListImagePostsByBoardForListerRow, error)
 	ListImagePostsByPosterForLister(ctx context.Context, arg ListImagePostsByPosterForListerParams) ([]*ListImagePostsByPosterForListerRow, error)
+	ListLinkerCategoriesForLister(ctx context.Context, arg ListLinkerCategoriesForListerParams) ([]*LinkerCategory, error)
 	ListPublicWritingsByUserForLister(ctx context.Context, arg ListPublicWritingsByUserForListerParams) ([]*ListPublicWritingsByUserForListerRow, error)
 	ListPublicWritingsInCategoryForLister(ctx context.Context, arg ListPublicWritingsInCategoryForListerParams) ([]*ListPublicWritingsInCategoryForListerRow, error)
 	ListSubscribersForPattern(ctx context.Context, arg ListSubscribersForPatternParams) ([]int32, error)
@@ -377,6 +373,10 @@ type Querier interface {
 	SystemAddToImagePostSearch(ctx context.Context, arg SystemAddToImagePostSearchParams) error
 	SystemAddToLinkerSearch(ctx context.Context, arg SystemAddToLinkerSearchParams) error
 	SystemAddToSiteNewsSearch(ctx context.Context, arg SystemAddToSiteNewsSearchParams) error
+	SystemAssignBlogThreadID(ctx context.Context, arg SystemAssignBlogThreadIDParams) error
+	SystemAssignLinkerThreadID(ctx context.Context, arg SystemAssignLinkerThreadIDParams) error
+	SystemAssignNewsThreadID(ctx context.Context, arg SystemAssignNewsThreadIDParams) error
+	SystemAssignWritingThreadID(ctx context.Context, arg SystemAssignWritingThreadIDParams) error
 	SystemCountDeadLetters(ctx context.Context) (int64, error)
 	// SystemCountLanguages counts all languages.
 	SystemCountLanguages(ctx context.Context) (int64, error)

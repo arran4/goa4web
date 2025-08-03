@@ -34,21 +34,22 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 		CoreData:      cd,
 		AdminSections: cd.Nav.AdminSections(),
 	}
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).CustomQueries()
 	ctx := r.Context()
-	count := func(query string, dest *int64) {
-		if err := queries.DB().QueryRowContext(ctx, query).Scan(dest); err != nil && err != sql.ErrNoRows {
-			log.Printf("adminPage count query error: %v", err)
+	count := func(table string, dest *int64) {
+		if c, err := queries.AdminCountTable(ctx, table); err == nil {
+			*dest = c
+		} else if err != sql.ErrNoRows {
+			log.Printf("adminPage count %s error: %v", table, err)
 		}
 	}
-	count("SELECT COUNT(*) FROM users", &data.Stats.Users)
-	count("SELECT COUNT(*) FROM language", &data.Stats.Languages)
-	// site_news renamed from siteNews in schema version 24
-	count("SELECT COUNT(*) FROM site_news", &data.Stats.News)
-	count("SELECT COUNT(*) FROM blogs", &data.Stats.Blogs)
-	count("SELECT COUNT(*) FROM forumtopic", &data.Stats.ForumTopics)
-	count("SELECT COUNT(*) FROM forumthread", &data.Stats.ForumThreads)
-	count("SELECT COUNT(*) FROM writing", &data.Stats.Writings)
+	count("users", &data.Stats.Users)
+	count("language", &data.Stats.Languages)
+	count("site_news", &data.Stats.News)
+	count("blogs", &data.Stats.Blogs)
+	count("forumtopic", &data.Stats.ForumTopics)
+	count("forumthread", &data.Stats.ForumThreads)
+	count("writing", &data.Stats.Writings)
 
 	handlers.TemplateHandler(w, r, "adminPage", data)
 }

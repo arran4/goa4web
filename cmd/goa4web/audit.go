@@ -29,12 +29,12 @@ func parseAuditCmd(parent *rootCmd, args []string) (*auditCmd, error) {
 }
 
 func (c *auditCmd) Run() error {
-	sdb, err := c.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(sdb)
+	queries := db.New(conn)
 	rows, err := queries.AdminGetRecentAuditLogs(ctx, int32(c.Limit))
 	if err != nil {
 		return fmt.Errorf("audit logs: %w", err)

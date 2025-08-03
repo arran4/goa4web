@@ -25,12 +25,12 @@ func parseLinksListCmd(parent *linksCmd, args []string) (*linksListCmd, error) {
 }
 
 func (c *linksListCmd) Run() error {
-	db, err := c.rootCmd.DB()
+	conn, err := c.rootCmd.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(db)
+	queries := db.New(conn)
 	rows, err := queries.AdminListExternalLinks(ctx, db.AdminListExternalLinksParams{Limit: 200, Offset: 0})
 	if err != nil {
 		return fmt.Errorf("list links: %w", err)

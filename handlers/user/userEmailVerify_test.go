@@ -16,7 +16,7 @@ import (
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/internal/db"
+	dbtest "github.com/arran4/goa4web/internal/db"
 )
 
 func TestUserEmailVerifyCodePage_Invalid(t *testing.T) {
@@ -25,7 +25,7 @@ func TestUserEmailVerifyCodePage_Invalid(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	q := db.New(db)
+	q := dbtest.New(db)
 	code := "abc"
 	rows := sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).
 		AddRow(1, 1, "e@example.com", nil, code, nil, 0)
@@ -60,7 +60,7 @@ func TestUserEmailVerifyCodePage_Success(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	q := db.New(db)
+	q := dbtest.New(db)
 	code := "xyz"
 	rows := sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).
 		AddRow(1, 1, "e@example.com", nil, code, nil, 0)

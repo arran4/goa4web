@@ -13,7 +13,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/internal/db"
+	dbtest "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/workers/postcountworker"
 )
@@ -86,7 +86,7 @@ func TestCollectSubscribersQuery(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	q := db.New(db)
+	q := dbtest.New(db)
 
 	patterns := []string{"post:/blog/1", "post:/blog/*"}
 	rows := sqlmock.NewRows([]string{"users_idusers"}).AddRow(1).AddRow(2)
@@ -136,7 +136,7 @@ func TestProcessEventDLQ(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	q := db.New(db)
+	q := dbtest.New(db)
 	prov := &errProvider{}
 	n := New(WithQueries(q), WithEmailProvider(prov), WithConfig(cfg))
 	dlqRec := &recordDLQ{}
@@ -165,7 +165,7 @@ func TestProcessEventSubscribeSelf(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	q := db.New(db)
+	q := dbtest.New(db)
 	n := New(WithQueries(q), WithConfig(cfg))
 
 	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/p", Task: TaskTest, UserID: 1}, nil); err != nil {
@@ -185,7 +185,7 @@ func TestProcessEventNoAutoSubscribe(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	q := db.New(db)
+	q := dbtest.New(db)
 	n := New(WithQueries(q), WithConfig(cfg))
 
 	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/p", Task: TaskTest, UserID: 1}, nil); err != nil {
@@ -207,7 +207,7 @@ func TestProcessEventAdminNotify(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	q := db.New(db)
+	q := dbtest.New(db)
 	prov := &busDummyProvider{}
 	n := New(WithQueries(q), WithEmailProvider(prov), WithConfig(cfg))
 
@@ -229,7 +229,7 @@ func TestProcessEventWritingSubscribers(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	q := db.New(db)
+	q := dbtest.New(db)
 	n := New(WithQueries(q), WithConfig(cfg))
 
 	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/writings/article/1", Task: TaskTest, UserID: 2, Data: map[string]any{"target": Target{Type: "writing", ID: 1}}}, nil); err != nil {
@@ -263,7 +263,7 @@ func TestProcessEventTargetUsers(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	q := db.New(db)
+	q := dbtest.New(db)
 	n := New(WithQueries(q), WithConfig(cfg))
 
 	for _, id := range []int32{2, 3} {
@@ -303,7 +303,7 @@ func TestBusWorker(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	q := db.New(db)
+	q := dbtest.New(db)
 
 	prov := &busDummyProvider{}
 	n := New(WithQueries(q), WithEmailProvider(prov), WithConfig(cfg))
@@ -348,7 +348,7 @@ func TestProcessEventAutoSubscribe(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	q := db.New(db)
+	q := dbtest.New(db)
 	n := New(WithQueries(q), WithConfig(cfg))
 
 	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size", "auto_subscribe_replies"}).

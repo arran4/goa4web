@@ -31,12 +31,12 @@ func parseUserPasswordClearExpiredCmd(parent *userPasswordCmd, args []string) (*
 }
 
 func (c *userPasswordClearExpiredCmd) Run() error {
-	db, err := c.rootCmd.DB()
+	conn, err := c.rootCmd.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(db)
+	queries := db.New(conn)
 	expiry := time.Now().Add(-time.Duration(c.Hours) * time.Hour)
 	res, err := queries.PurgePasswordResetsBefore(ctx, expiry)
 	if err != nil {

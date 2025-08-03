@@ -11,7 +11,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers/user"
-	"github.com/arran4/goa4web/internal/db"
+	dbtest "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -44,7 +44,7 @@ func TestProcessEventPermissionTasks(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	q := db.New(db)
+	q := dbtest.New(db)
 	n := notif.New(notif.WithQueries(q), notif.WithConfig(cfg))
 
 	var wg sync.WaitGroup

@@ -8,7 +8,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/internal/db"
+	dbtest "github.com/arran4/goa4web/internal/db"
 )
 
 func TestCanSearch(t *testing.T) {
@@ -18,7 +18,7 @@ func TestCanSearch(t *testing.T) {
 	}
 	defer db.Close()
 
-	queries := db.New(db)
+	queries := dbtest.New(db)
 	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
 
 	// No grants

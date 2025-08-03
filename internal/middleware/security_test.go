@@ -11,7 +11,7 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/internal/db"
+	dbtest "github.com/arran4/goa4web/internal/db"
 )
 
 func newCoreData(t *testing.T, cfg config.RuntimeConfig) (*common.CoreData, sqlmock.Sqlmock, func()) {
@@ -21,7 +21,7 @@ func newCoreData(t *testing.T, cfg config.RuntimeConfig) (*common.CoreData, sqlm
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	cleanup := func() { db.Close() }
-	queries := db.New(db)
+	queries := dbtest.New(db)
 	if cfg.HSTSHeaderValue == "" {
 		cfg.HSTSHeaderValue = "max-age=63072000; includeSubDomains"
 	}

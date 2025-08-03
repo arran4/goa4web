@@ -54,12 +54,12 @@ func createUser(root *rootCmd, username, email, password string, admin bool) err
 	if username == "" || password == "" {
 		return fmt.Errorf("username and password required")
 	}
-	db, err := root.DB()
+	conn, err := root.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(db)
+	queries := db.New(conn)
 	hash, alg, err := auth.HashPassword(password)
 	if err != nil {
 		return fmt.Errorf("hash password: %w", err)

@@ -35,12 +35,12 @@ func (c *userAddRoleCmd) Run() error {
 	if c.Username == "" || c.Role == "" {
 		return fmt.Errorf("username and role required")
 	}
-	db, err := c.rootCmd.DB()
+	conn, err := c.rootCmd.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(db)
+	queries := db.New(conn)
 	c.rootCmd.Verbosef("adding role %s to %s", c.Role, c.Username)
 	u, err := queries.GetUserByUsername(ctx, sql.NullString{String: c.Username, Valid: true})
 	if err != nil {

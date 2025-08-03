@@ -11,18 +11,48 @@ import (
 	"strings"
 )
 
-const assignLinkerThisThreadId = `-- name: AssignLinkerThisThreadId :exec
-UPDATE linker SET forumthread_id = ? WHERE idlinker = ?
+const adminListLinkerCategories = `-- name: AdminListLinkerCategories :many
+SELECT
+    lc.idlinkerCategory,
+    lc.position,
+    lc.title,
+    lc.sortorder
+FROM linker_category lc
+ORDER BY lc.position
+LIMIT ? OFFSET ?
 `
 
-type AssignLinkerThisThreadIdParams struct {
-	ForumthreadID int32
-	Idlinker      int32
+type AdminListLinkerCategoriesParams struct {
+	Limit  int32
+	Offset int32
 }
 
-func (q *Queries) AssignLinkerThisThreadId(ctx context.Context, arg AssignLinkerThisThreadIdParams) error {
-	_, err := q.db.ExecContext(ctx, assignLinkerThisThreadId, arg.ForumthreadID, arg.Idlinker)
-	return err
+func (q *Queries) AdminListLinkerCategories(ctx context.Context, arg AdminListLinkerCategoriesParams) ([]*LinkerCategory, error) {
+	rows, err := q.db.QueryContext(ctx, adminListLinkerCategories, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*LinkerCategory
+	for rows.Next() {
+		var i LinkerCategory
+		if err := rows.Scan(
+			&i.Idlinkercategory,
+			&i.Position,
+			&i.Title,
+			&i.Sortorder,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const countLinksByCategory = `-- name: CountLinksByCategory :one
@@ -149,106 +179,6 @@ type DeleteLinkerQueuedItemParams struct {
 func (q *Queries) DeleteLinkerQueuedItem(ctx context.Context, arg DeleteLinkerQueuedItemParams) error {
 	_, err := q.db.ExecContext(ctx, deleteLinkerQueuedItem, arg.Idlinkerqueue, arg.AdminID)
 	return err
-}
-
-const getAllLinkerCategories = `-- name: GetAllLinkerCategories :many
-SELECT
-    lc.idlinkerCategory,
-    lc.position,
-    lc.title,
-    lc.sortorder
-FROM linker_category lc
-ORDER BY lc.position
-`
-
-func (q *Queries) GetAllLinkerCategories(ctx context.Context) ([]*LinkerCategory, error) {
-	rows, err := q.db.QueryContext(ctx, getAllLinkerCategories)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*LinkerCategory
-	for rows.Next() {
-		var i LinkerCategory
-		if err := rows.Scan(
-			&i.Idlinkercategory,
-			&i.Position,
-			&i.Title,
-			&i.Sortorder,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getAllLinkerCategoriesForUser = `-- name: GetAllLinkerCategoriesForUser :many
-WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-)
-SELECT
-    lc.idlinkerCategory,
-    lc.position,
-    lc.title,
-    lc.sortorder
-FROM linker_category lc
-WHERE EXISTS (
-    SELECT 1 FROM grants g
-    WHERE g.section='linker'
-      AND (g.item='category' OR g.item IS NULL)
-      AND g.action='see'
-      AND g.active=1
-      AND (g.item_id = lc.idlinkerCategory OR g.item_id IS NULL)
-      AND (g.user_id = ? OR g.user_id IS NULL)
-      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
-)
-  AND EXISTS (
-    SELECT 1 FROM linker l
-    WHERE l.linker_category_id = lc.idlinkerCategory
-      AND l.listed IS NOT NULL
-      AND l.deleted_at IS NULL
-  )
-ORDER BY lc.position
-`
-
-type GetAllLinkerCategoriesForUserParams struct {
-	ViewerID     int32
-	ViewerUserID sql.NullInt32
-}
-
-func (q *Queries) GetAllLinkerCategoriesForUser(ctx context.Context, arg GetAllLinkerCategoriesForUserParams) ([]*LinkerCategory, error) {
-	rows, err := q.db.QueryContext(ctx, getAllLinkerCategoriesForUser, arg.ViewerID, arg.ViewerUserID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*LinkerCategory
-	for rows.Next() {
-		var i LinkerCategory
-		if err := rows.Scan(
-			&i.Idlinkercategory,
-			&i.Position,
-			&i.Title,
-			&i.Sortorder,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending = `-- name: GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending :many
@@ -1269,6 +1199,76 @@ func (q *Queries) GetLinkerItemsByUserDescendingForUser(ctx context.Context, arg
 	return items, nil
 }
 
+const listLinkerCategoriesForLister = `-- name: ListLinkerCategoriesForLister :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+)
+SELECT
+    lc.idlinkerCategory,
+    lc.position,
+    lc.title,
+    lc.sortorder
+FROM linker_category lc
+WHERE EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='linker'
+      AND (g.item='category' OR g.item IS NULL)
+      AND g.action='see'
+      AND g.active=1
+      AND (g.item_id = lc.idlinkerCategory OR g.item_id IS NULL)
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+)
+  AND EXISTS (
+    SELECT 1 FROM linker l
+    WHERE l.linker_category_id = lc.idlinkerCategory
+      AND l.listed IS NOT NULL
+      AND l.deleted_at IS NULL
+  )
+ORDER BY lc.position
+LIMIT ? OFFSET ?
+`
+
+type ListLinkerCategoriesForListerParams struct {
+	ListerID     int32
+	ListerUserID sql.NullInt32
+	Limit        int32
+	Offset       int32
+}
+
+func (q *Queries) ListLinkerCategoriesForLister(ctx context.Context, arg ListLinkerCategoriesForListerParams) ([]*LinkerCategory, error) {
+	rows, err := q.db.QueryContext(ctx, listLinkerCategoriesForLister,
+		arg.ListerID,
+		arg.ListerUserID,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*LinkerCategory
+	for rows.Next() {
+		var i LinkerCategory
+		if err := rows.Scan(
+			&i.Idlinkercategory,
+			&i.Position,
+			&i.Title,
+			&i.Sortorder,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const renameLinkerCategory = `-- name: RenameLinkerCategory :exec
 UPDATE linker_category SET title = ?, position = ?
 WHERE idlinkerCategory = ?
@@ -1327,6 +1327,22 @@ UPDATE linker SET last_index = NOW() WHERE idlinker = ?
 
 func (q *Queries) SetLinkerLastIndex(ctx context.Context, idlinker int32) error {
 	_, err := q.db.ExecContext(ctx, setLinkerLastIndex, idlinker)
+	return err
+}
+
+const systemAssignLinkerThreadID = `-- name: SystemAssignLinkerThreadID :exec
+UPDATE linker
+SET forumthread_id = ?
+WHERE idlinker = ?
+`
+
+type SystemAssignLinkerThreadIDParams struct {
+	ThreadID int32
+	LinkerID int32
+}
+
+func (q *Queries) SystemAssignLinkerThreadID(ctx context.Context, arg SystemAssignLinkerThreadIDParams) error {
+	_, err := q.db.ExecContext(ctx, systemAssignLinkerThreadID, arg.ThreadID, arg.LinkerID)
 	return err
 }
 

@@ -14,8 +14,10 @@ FROM site_news s
 LEFT JOIN users u ON s.users_idusers = u.idusers
 WHERE s.idsiteNews = ?;
 
--- name: AssignNewsThisThreadId :exec
-UPDATE site_news SET forumthread_id = ? WHERE idsiteNews = ?;
+-- name: SystemAssignNewsThreadID :exec
+UPDATE site_news
+SET forumthread_id = sqlc.arg(thread_id)
+WHERE idsiteNews = sqlc.arg(news_id);
 
 -- name: GetNewsPostByIdWithWriterIdAndThreadCommentCount :one
 WITH RECURSIVE role_ids(id) AS (

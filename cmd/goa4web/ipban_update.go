@@ -37,12 +37,12 @@ func (c *ipBanUpdateCmd) Run() error {
 	if c.ID == 0 {
 		return fmt.Errorf("id required")
 	}
-	db, err := c.rootCmd.DB()
+	conn, err := c.rootCmd.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(db)
+	queries := db.New(conn)
 	var expires sql.NullTime
 	if c.Expires != "" {
 		t, err := time.Parse("2006-01-02", c.Expires)

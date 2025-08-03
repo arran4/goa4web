@@ -18,7 +18,7 @@ import (
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/internal/db"
+	dbpkg "github.com/arran4/goa4web/internal/db"
 )
 
 func Test_preprocessBookmarks(t *testing.T) {
@@ -72,13 +72,13 @@ func Test_preprocessBookmarks(t *testing.T) {
 }
 
 func TestMinePage_NoBookmarks(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	sqldb, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer sqldb.Close()
 
-	queries := db.New(db)
+	queries := dbpkg.New(sqldb)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT Idbookmarks, list\nFROM bookmarks\nWHERE users_idusers = ?")).
 		WithArgs(int32(1)).WillReturnError(sql.ErrNoRows)
 

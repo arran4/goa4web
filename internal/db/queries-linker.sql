@@ -25,7 +25,7 @@ WHERE EXISTS (
     WHERE ur.users_idusers = sqlc.arg(admin_id) AND r.is_admin = 1
 );
 
--- name: GetAllLinkerCategories :many
+-- name: AdminListLinkerCategories :many
 SELECT
     lc.idlinkerCategory,
     lc.position,
@@ -33,11 +33,11 @@ SELECT
     lc.sortorder
 FROM linker_category lc
 ORDER BY lc.position
-;
+LIMIT ? OFFSET ?;
 
--- name: GetAllLinkerCategoriesForUser :many
+-- name: ListLinkerCategoriesForLister :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT
     lc.idlinkerCategory,
@@ -52,7 +52,7 @@ WHERE EXISTS (
       AND g.action='see'
       AND g.active=1
       AND (g.item_id = lc.idlinkerCategory OR g.item_id IS NULL)
-      AND (g.user_id = sqlc.arg(viewer_user_id) OR g.user_id IS NULL)
+      AND (g.user_id = sqlc.arg(lister_user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
   AND EXISTS (
@@ -61,7 +61,8 @@ WHERE EXISTS (
       AND l.listed IS NOT NULL
       AND l.deleted_at IS NULL
   )
-ORDER BY lc.position;
+ORDER BY lc.position
+LIMIT ? OFFSET ?;
 
 -- name: GetLinkerCategoryLinkCounts :many
 SELECT c.idlinkerCategory, c.title, c.position, COUNT(l.idlinker) as LinkCount
@@ -129,8 +130,10 @@ WHERE idlinker = ?
     WHERE ur.users_idusers = sqlc.arg(admin_id) AND r.is_admin = 1
   );
 
--- name: AssignLinkerThisThreadId :exec
-UPDATE linker SET forumthread_id = ? WHERE idlinker = ?;
+-- name: SystemAssignLinkerThreadID :exec
+UPDATE linker
+SET forumthread_id = sqlc.arg(thread_id)
+WHERE idlinker = sqlc.arg(linker_id);
 
 -- name: GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending :many
 SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linker_category_id, l.forumthread_id, l.title, l.url, l.description, l.listed, th.Comments, lc.title as Category_Title, u.Username as PosterUsername

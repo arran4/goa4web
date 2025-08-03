@@ -26,12 +26,12 @@ func parseFaqTreeCmd(parent *faqCmd, args []string) (*faqTreeCmd, error) {
 }
 
 func (c *faqTreeCmd) Run() error {
-	db, err := c.rootCmd.DB()
+	conn, err := c.rootCmd.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(db)
+	queries := db.New(conn)
 	rows, err := queries.GetAllAnsweredFAQWithFAQCategoriesForUser(ctx, db.GetAllAnsweredFAQWithFAQCategoriesForUserParams{ViewerID: 0, UserID: sql.NullInt32{}})
 	if err != nil {
 		return fmt.Errorf("tree: %w", err)

@@ -25,12 +25,12 @@ func parseLangListCmd(parent *langCmd, args []string) (*langListCmd, error) {
 }
 
 func (c *langListCmd) Run() error {
-	db, err := c.rootCmd.DB()
+	conn, err := c.rootCmd.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(db)
+	queries := db.New(conn)
 	langs, err := queries.SystemListLanguages(ctx)
 	if err != nil {
 		return fmt.Errorf("list languages: %w", err)

@@ -75,9 +75,11 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		data.Links = append(data.Links, row)
 	}
 
-	categories, err := queries.GetAllLinkerCategoriesForUser(r.Context(), db.GetAllLinkerCategoriesForUserParams{
-		ViewerID:     uid,
-		ViewerUserID: sql.NullInt32{Int32: uid, Valid: uid != 0},
+	categories, err := queries.ListLinkerCategoriesForLister(r.Context(), db.ListLinkerCategoriesForListerParams{
+		ListerID:     uid,
+		ListerUserID: sql.NullInt32{Int32: uid, Valid: uid != 0},
+		Limit:        int32(data.CoreData.PageSize()),
+		Offset:       0,
 	})
 	if err != nil {
 		switch {

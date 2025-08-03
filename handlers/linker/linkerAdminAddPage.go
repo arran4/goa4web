@@ -35,7 +35,10 @@ func AdminAddPage(w http.ResponseWriter, r *http.Request) {
 		SelectedLanguageId: int(cd.PreferredLanguageID(cd.Config.DefaultLanguage)),
 	}
 
-	categoryRows, err := queries.GetAllLinkerCategories(r.Context())
+	categoryRows, err := queries.AdminListLinkerCategories(r.Context(), db.AdminListLinkerCategoriesParams{
+		Limit:  int32(cd.PageSize()),
+		Offset: 0,
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

@@ -16,7 +16,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
+	dbtest "github.com/arran4/goa4web/internal/db"
 )
 
 func TestVerifyPasswordAction_Success(t *testing.T) {
@@ -25,7 +25,7 @@ func TestVerifyPasswordAction_Success(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	q := db.New(db)
+	q := dbtest.New(db)
 
 	pwHash, alg, _ := HashPassword("pw")
 	rows := sqlmock.NewRows([]string{"id", "user_id", "passwd", "passwd_algorithm", "verification_code", "created_at", "verified_at"}).
@@ -61,7 +61,7 @@ func TestVerifyPasswordAction_InvalidPassword(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	q := db.New(db)
+	q := dbtest.New(db)
 
 	pwHash, alg, _ := HashPassword("pw")
 	rows := sqlmock.NewRows([]string{"id", "user_id", "passwd", "passwd_algorithm", "verification_code", "created_at", "verified_at"}).

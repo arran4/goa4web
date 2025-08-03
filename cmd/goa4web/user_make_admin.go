@@ -33,12 +33,12 @@ func (c *userMakeAdminCmd) Run() error {
 	if c.Username == "" {
 		return fmt.Errorf("username required")
 	}
-	db, err := c.rootCmd.DB()
+	conn, err := c.rootCmd.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(db)
+	queries := db.New(conn)
 	c.rootCmd.Verbosef("granting administrator to %s", c.Username)
 	u, err := queries.GetUserByUsername(ctx, sql.NullString{String: c.Username, Valid: true})
 	if err != nil {

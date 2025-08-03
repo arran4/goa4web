@@ -11,7 +11,7 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/internal/db"
+	dbtest "github.com/arran4/goa4web/internal/db"
 )
 
 func TestRedirectBackPageHandlerGETAlt(t *testing.T) {
@@ -20,7 +20,7 @@ func TestRedirectBackPageHandlerGETAlt(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	q := db.New(db)
+	q := dbtest.New(db)
 
 	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
 	ctx := context.WithValue(context.Background(), consts.KeyCoreData, cd)

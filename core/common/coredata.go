@@ -263,8 +263,12 @@ func NewCoreData(ctx context.Context, q db.Querier, cfg *config.RuntimeConfig, o
 	cd := &CoreData{
 		ctx:               ctx,
 		queries:           q,
+		customQueries:     nil,
 		newsAnnouncements: map[int32]*lazy.Value[*db.SiteAnnouncement]{},
 		Config:            cfg,
+	}
+	if cq, ok := q.(db.CustomQueries); ok {
+		cd.customQueries = cq
 	}
 	for _, o := range opts {
 		o(cd)
@@ -274,6 +278,9 @@ func NewCoreData(ctx context.Context, q db.Querier, cfg *config.RuntimeConfig, o
 
 // Queries returns the db.Queries instance associated with this CoreData.
 func (cd *CoreData) Queries() db.Querier { return cd.queries }
+
+// CustomQueries returns the extended query helpers associated with this CoreData.
+func (cd *CoreData) CustomQueries() db.CustomQueries { return cd.customQueries }
 
 // ImageURLMapper maps image references like "image:" or "cache:" to full URLs.
 func (cd *CoreData) ImageURLMapper(tag, val string) string {

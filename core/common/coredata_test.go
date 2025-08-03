@@ -13,7 +13,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/internal/db"
+	dbtest "github.com/arran4/goa4web/internal/db"
 )
 
 func TestCoreDataLatestNewsLazy(t *testing.T) {
@@ -23,7 +23,7 @@ func TestCoreDataLatestNewsLazy(t *testing.T) {
 	}
 	defer db.Close()
 
-	queries := db.New(db)
+	queries := dbtest.New(db)
 	now := time.Now()
 	rows := sqlmock.NewRows([]string{
 		"writerName", "writerId", "idsitenews", "forumthread_id", "language_idlanguage",
@@ -62,7 +62,7 @@ func TestWritingCategoriesLazy(t *testing.T) {
 	}
 	defer db.Close()
 
-	queries := db.New(db)
+	queries := dbtest.New(db)
 	rows := sqlmock.NewRows([]string{"idwritingcategory", "writing_category_id", "title", "description"}).
 		AddRow(1, 0, "a", "b")
 
@@ -94,7 +94,7 @@ func TestAnnouncementForNewsCaching(t *testing.T) {
 	}
 	defer db.Close()
 
-	queries := db.New(db)
+	queries := dbtest.New(db)
 	now := time.Now()
 	annRows := sqlmock.NewRows([]string{"id", "site_news_id", "active", "created_at"}).
 		AddRow(1, 1, true, now)
@@ -123,7 +123,7 @@ func TestAnnouncementForNewsError(t *testing.T) {
 	}
 	defer db.Close()
 
-	queries := db.New(db)
+	queries := dbtest.New(db)
 
 	mock.ExpectQuery("SELECT id, site_news_id, active, created_at").WithArgs(int32(1)).WillReturnError(sql.ErrConnDone)
 
@@ -149,7 +149,7 @@ func TestPublicWritingsLazy(t *testing.T) {
 	}
 	defer db.Close()
 
-	queries := db.New(db)
+	queries := dbtest.New(db)
 	now := time.Now()
 	rows := sqlmock.NewRows([]string{"idwriting", "users_idusers", "forumthread_id", "language_idlanguage", "writing_category_id", "title", "published", "writing", "abstract", "private", "deleted_at", "last_index", "Username", "Comments"}).
 		AddRow(1, 1, 0, 1, 0, "t", now, "w", "a", false, now, now, "u", 0)
@@ -198,7 +198,7 @@ func TestCoreDataLatestWritingsLazy(t *testing.T) {
 	}
 	defer db.Close()
 
-	queries := db.New(db)
+	queries := dbtest.New(db)
 	now := time.Now()
 	rows := sqlmock.NewRows([]string{
 		"idwriting", "users_idusers", "forumthread_id", "language_idlanguage",
@@ -237,7 +237,7 @@ func TestBloggersLazy(t *testing.T) {
 	}
 	defer db.Close()
 
-	queries := db.New(db)
+	queries := dbtest.New(db)
 	rows := sqlmock.NewRows([]string{"username", "count"}).AddRow("bob", 2)
 	mock.ExpectQuery("SELECT u.username").
 		WithArgs(int32(1), int32(1), int32(1), sqlmock.AnyArg(), int32(16), int32(0)).
@@ -271,7 +271,7 @@ func TestWritersLazy(t *testing.T) {
 	}
 	defer db.Close()
 
-	queries := db.New(db)
+	queries := dbtest.New(db)
 	rows := sqlmock.NewRows([]string{"username", "count"}).AddRow("bob", 2)
 	mock.ExpectQuery("SELECT u.username").
 		WithArgs(int32(1), int32(1), int32(1), sqlmock.AnyArg(), int32(16), int32(0)).

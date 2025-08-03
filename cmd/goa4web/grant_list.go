@@ -25,12 +25,12 @@ func parseGrantListCmd(parent *grantCmd, args []string) (*grantListCmd, error) {
 }
 
 func (c *grantListCmd) Run() error {
-	db, err := c.rootCmd.DB()
+	conn, err := c.rootCmd.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	q := db.New(db)
+	q := db.New(conn)
 	rows, err := q.ListGrants(ctx)
 	if err != nil {
 		return fmt.Errorf("list grants: %w", err)

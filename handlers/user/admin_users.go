@@ -51,7 +51,8 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
+	cqueries := cd.CustomQueries()
 	if roles, err := data.AllRoles(); err == nil {
 		data.Roles = roles
 	}
@@ -60,7 +61,7 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 	var rows []*db.UserFilteredRow
 	var err error
 	if data.Search != "" {
-		rows, err = queries.SearchUsersFiltered(r.Context(), db.SearchUsersFilteredParams{
+		rows, err = cqueries.SearchUsersFiltered(r.Context(), db.SearchUsersFilteredParams{
 			Query:  data.Search,
 			Role:   data.Role,
 			Status: data.Status,
@@ -68,7 +69,7 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 			Offset: int32(offset),
 		})
 	} else {
-		rows, err = queries.ListUsersFiltered(r.Context(), db.ListUsersFilteredParams{
+		rows, err = cqueries.ListUsersFiltered(r.Context(), db.ListUsersFilteredParams{
 			Role:   data.Role,
 			Status: data.Status,
 			Limit:  int32(pageSize + 1),
@@ -159,7 +160,7 @@ func adminUserDisablePage(w http.ResponseWriter, r *http.Request) {
 	}
 	if uidi, err := strconv.Atoi(uid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else if _, err := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries().DB().ExecContext(r.Context(), "DELETE FROM users WHERE idusers = ?", uidi); err != nil {
+	} else if err := r.Context().Value(consts.KeyCoreData).(*common.CoreData).CustomQueries().AdminDeleteUser(r.Context(), int32(uidi)); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("delete user: %w", err).Error())
 	}
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
@@ -185,7 +186,9 @@ func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminUserEditSavePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
+	cqueries := cd.CustomQueries()
 	idStr := mux.Vars(r)["id"]
 	uid := r.PostFormValue("uid")
 	if uid == "" {
@@ -204,7 +207,7 @@ func adminUserEditSavePage(w http.ResponseWriter, r *http.Request) {
 	}
 	if uidi, err := strconv.Atoi(uid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else if _, err := queries.DB().ExecContext(r.Context(), "UPDATE users SET username=? WHERE idusers=?", username, uidi); err != nil {
+	} else if err := cqueries.AdminUpdateUserUsername(r.Context(), db.AdminUpdateUserUsernameParams{Username: username, UserID: int32(uidi)}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("update user: %w", err).Error())
 	} else if err := queries.UpdateUserEmail(r.Context(), db.UpdateUserEmailParams{Email: email, UserID: int32(uidi)}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("update user email: %w", err).Error())

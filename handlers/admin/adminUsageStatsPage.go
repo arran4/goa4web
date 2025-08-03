@@ -38,6 +38,7 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 	cd := data.CoreData
 	cd.PageTitle = "Usage Stats"
 	queries := cd.Queries()
+	cqueries := cd.CustomQueries()
 
 	ctx, cancel := context.WithTimeout(r.Context(), usageTimeout)
 	defer cancel()
@@ -155,7 +156,7 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 			log.Print("stop monthly usage counts")
 			wg.Done()
 		}()
-		if rows, err := queries.MonthlyUsageCounts(ctx, int32(cd.Config.StatsStartYear)); err == nil {
+		if rows, err := cqueries.MonthlyUsageCounts(ctx, int32(cd.Config.StatsStartYear)); err == nil {
 			data.Monthly = rows
 		} else {
 			addErr("monthly usage counts", err)
@@ -169,7 +170,7 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 			log.Print("stop user monthly usage counts")
 			wg.Done()
 		}()
-		if rows, err := queries.UserMonthlyUsageCounts(ctx, int32(cd.Config.StatsStartYear)); err == nil {
+		if rows, err := cqueries.UserMonthlyUsageCounts(ctx, int32(cd.Config.StatsStartYear)); err == nil {
 			data.UserMonthly = rows
 		} else {
 			addErr("user monthly usage counts", err)

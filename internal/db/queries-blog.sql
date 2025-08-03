@@ -31,10 +31,10 @@ WHERE EXISTS (
       ))
 );
 
--- name: AssignThreadIdToBlogEntry :exec
+-- name: SystemAssignBlogThreadID :exec
 UPDATE blogs
-SET forumthread_id = ?
-WHERE idblogs = ?;
+SET forumthread_id = sqlc.arg(thread_id)
+WHERE idblogs = sqlc.arg(blog_id);
 
 -- name: ListBlogEntriesForLister :many
 WITH RECURSIVE role_ids(id) AS (

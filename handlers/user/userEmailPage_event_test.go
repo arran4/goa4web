@@ -17,7 +17,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
+	dbtest "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/gorilla/sessions"
 )
@@ -28,7 +28,7 @@ func TestAddEmailTaskEventData(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	q := db.New(db)
+	q := dbtest.New(db)
 	mock.ExpectQuery("SELECT id, user_id, email").WillReturnError(sql.ErrNoRows)
 	mock.ExpectExec("INSERT INTO user_emails").WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectQuery("SELECT u.idusers").WithArgs(int32(1)).
@@ -76,7 +76,7 @@ func TestVerifyRemovesDuplicates(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	q := db.New(db)
+	q := dbtest.New(db)
 
 	store = sessions.NewCookieStore([]byte("test"))
 	core.Store = store
@@ -130,7 +130,7 @@ func TestResendVerificationEmailTaskEventData(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	q := db.New(db)
+	q := dbtest.New(db)
 	mock.ExpectQuery("SELECT id, user_id, email").WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).AddRow(1, 1, "a@example.com", nil, nil, nil, 0))
 	mock.ExpectExec("UPDATE user_emails SET").WillReturnResult(sqlmock.NewResult(1, 1))
 

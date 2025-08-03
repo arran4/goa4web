@@ -177,8 +177,10 @@ WHERE EXISTS (
 );
 
 
--- name: AssignWritingThisThreadId :exec
-UPDATE writing SET forumthread_id = ? WHERE idwriting = ?;
+-- name: SystemAssignWritingThreadID :exec
+UPDATE writing
+SET forumthread_id = sqlc.arg(thread_id)
+WHERE idwriting = sqlc.arg(writing_id);
 
 
 -- name: GetAllWritingsByAuthorForLister :many

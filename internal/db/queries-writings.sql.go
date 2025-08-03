@@ -175,20 +175,6 @@ func (q *Queries) AdminUpdateWritingCategory(ctx context.Context, arg AdminUpdat
 	return err
 }
 
-const assignWritingThisThreadId = `-- name: AssignWritingThisThreadId :exec
-UPDATE writing SET forumthread_id = ? WHERE idwriting = ?
-`
-
-type AssignWritingThisThreadIdParams struct {
-	ForumthreadID int32
-	Idwriting     int32
-}
-
-func (q *Queries) AssignWritingThisThreadId(ctx context.Context, arg AssignWritingThisThreadIdParams) error {
-	_, err := q.db.ExecContext(ctx, assignWritingThisThreadId, arg.ForumthreadID, arg.Idwriting)
-	return err
-}
-
 const getAllWritingsByAuthorForLister = `-- name: GetAllWritingsByAuthorForLister :many
 WITH RECURSIVE role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
@@ -992,6 +978,22 @@ UPDATE writing SET last_index = NOW() WHERE idwriting = ?
 
 func (q *Queries) SetWritingLastIndex(ctx context.Context, idwriting int32) error {
 	_, err := q.db.ExecContext(ctx, setWritingLastIndex, idwriting)
+	return err
+}
+
+const systemAssignWritingThreadID = `-- name: SystemAssignWritingThreadID :exec
+UPDATE writing
+SET forumthread_id = ?
+WHERE idwriting = ?
+`
+
+type SystemAssignWritingThreadIDParams struct {
+	ThreadID  int32
+	WritingID int32
+}
+
+func (q *Queries) SystemAssignWritingThreadID(ctx context.Context, arg SystemAssignWritingThreadIDParams) error {
+	_, err := q.db.ExecContext(ctx, systemAssignWritingThreadID, arg.ThreadID, arg.WritingID)
 	return err
 }
 

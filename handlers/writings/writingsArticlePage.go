@@ -142,9 +142,9 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		pthid := int32(pthidi)
-		if err := queries.AssignWritingThisThreadId(r.Context(), db.AssignWritingThisThreadIdParams{
-			ForumthreadID: pthid,
-			Idwriting:     writing.Idwriting,
+		if err := queries.SystemAssignWritingThreadID(r.Context(), db.SystemAssignWritingThreadIDParams{
+			ThreadID:  pthid,
+			WritingID: writing.Idwriting,
 		}); err != nil {
 			log.Printf("Error: assign_article_to_thread: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -357,9 +357,9 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		pthid = int32(pthidi)
-		if err := queries.AssignWritingThisThreadId(r.Context(), db.AssignWritingThisThreadIdParams{
-			ForumthreadID: pthid,
-			Idwriting:     int32(aid),
+		if err := queries.SystemAssignWritingThreadID(r.Context(), db.SystemAssignWritingThreadIDParams{
+			ThreadID:  pthid,
+			WritingID: int32(aid),
 		}); err != nil {
 			log.Printf("Error: assign_article_to_thread: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)

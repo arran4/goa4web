@@ -33,12 +33,12 @@ func (c *langAddCmd) Run() error {
 	if c.Code == "" || c.Name == "" {
 		return fmt.Errorf("code and name required")
 	}
-	db, err := c.rootCmd.DB()
+	conn, err := c.rootCmd.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(db)
+	queries := db.New(conn)
 	c.rootCmd.Verbosef("adding language %s (%s)", c.Name, c.Code)
 	if _, err := queries.AdminInsertLanguage(ctx, sql.NullString{String: c.Name, Valid: true}); err != nil {
 		return fmt.Errorf("insert language: %w", err)

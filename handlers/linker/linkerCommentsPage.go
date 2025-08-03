@@ -279,9 +279,9 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 			return fmt.Errorf("make thread fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		pthid = int32(pthidi)
-		if err := queries.AssignLinkerThisThreadId(r.Context(), db.AssignLinkerThisThreadIdParams{
-			ForumthreadID: pthid,
-			Idlinker:      int32(linkId),
+		if err := queries.SystemAssignLinkerThreadID(r.Context(), db.SystemAssignLinkerThreadIDParams{
+			ThreadID: pthid,
+			LinkerID: int32(linkId),
 		}); err != nil {
 			return fmt.Errorf("assign linker thread fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}

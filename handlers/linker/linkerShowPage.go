@@ -148,9 +148,9 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		pthid = int32(pthidi)
-		if err := queries.AssignLinkerThisThreadId(r.Context(), db.AssignLinkerThisThreadIdParams{
-			ForumthreadID: pthid,
-			Idlinker:      int32(linkId),
+		if err := queries.SystemAssignLinkerThreadID(r.Context(), db.SystemAssignLinkerThreadIDParams{
+			ThreadID: pthid,
+			LinkerID: int32(linkId),
 		}); err != nil {
 			log.Printf("Error: assignThreadIdToBlogEntry: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)

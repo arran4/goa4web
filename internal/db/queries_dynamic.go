@@ -227,6 +227,85 @@ func (q *Queries) SearchUsersFiltered(ctx context.Context, arg SearchUsersFilter
 	return items, rows.Err()
 }
 
+// InsertFAQForWriter inserts a FAQ entry for a writer and returns the new ID.
+type InsertFAQForWriterParams struct {
+	Question   sql.NullString
+	Answer     sql.NullString
+	CategoryID int32
+	WriterID   int32
+	LanguageID int32
+}
+
+func (q *Queries) InsertFAQForWriter(ctx context.Context, arg InsertFAQForWriterParams) (int64, error) {
+	res, err := q.db.ExecContext(ctx,
+		"INSERT INTO faq (question, answer, faqCategories_idfaqCategories, users_idusers, language_idlanguage) VALUES (?, ?, ?, ?, ?)",
+		arg.Question, arg.Answer, arg.CategoryID, arg.WriterID, arg.LanguageID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return res.LastInsertId()
+}
+
+// AdminCountForumCategories returns total forum categories.
+func (q *Queries) AdminCountForumCategories(ctx context.Context) (int64, error) {
+	var c int64
+	err := q.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM forumcategory").Scan(&c)
+	return c, err
+}
+
+// AdminCountForumTopics returns total forum topics.
+func (q *Queries) AdminCountForumTopics(ctx context.Context) (int64, error) {
+	var c int64
+	err := q.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM forumtopic").Scan(&c)
+	return c, err
+}
+
+// AdminCountForumThreads returns total forum threads.
+func (q *Queries) AdminCountForumThreads(ctx context.Context) (int64, error) {
+	var c int64
+	err := q.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM forumthread").Scan(&c)
+	return c, err
+}
+
+// AdminCountTable returns the count of rows in the specified table.
+func (q *Queries) AdminCountTable(ctx context.Context, table string) (int64, error) {
+	var c int64
+	query := fmt.Sprintf("SELECT COUNT(*) FROM %s", table)
+	err := q.db.QueryRowContext(ctx, query).Scan(&c)
+	return c, err
+}
+
+// AdminDeleteUser removes a user by ID.
+func (q *Queries) AdminDeleteUser(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, "DELETE FROM users WHERE idusers = ?", id)
+	return err
+}
+
+// AdminUpdateUserUsername updates a user's username.
+type AdminUpdateUserUsernameParams struct {
+	Username string
+	UserID   int32
+}
+
+func (q *Queries) AdminUpdateUserUsername(ctx context.Context, arg AdminUpdateUserUsernameParams) error {
+	_, err := q.db.ExecContext(ctx, "UPDATE users SET username=? WHERE idusers=?", arg.Username, arg.UserID)
+	return err
+}
+
+// AdminUpdateRole updates role information.
+type AdminUpdateRoleParams struct {
+	Name     string
+	CanLogin bool
+	IsAdmin  bool
+	ID       int32
+}
+
+func (q *Queries) AdminUpdateRole(ctx context.Context, arg AdminUpdateRoleParams) error {
+	_, err := q.db.ExecContext(ctx, "UPDATE roles SET name=?, can_login=?, is_admin=? WHERE id=?", arg.Name, arg.CanLogin, arg.IsAdmin, arg.ID)
+	return err
+}
+
 // MonthlyUsageRow aggregates monthly post counts across the site.
 type MonthlyUsageRow struct {
 	Year     int32

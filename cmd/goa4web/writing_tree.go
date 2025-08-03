@@ -26,12 +26,12 @@ func parseWritingTreeCmd(parent *writingCmd, args []string) (*writingTreeCmd, er
 }
 
 func (c *writingTreeCmd) Run() error {
-	db, err := c.rootCmd.DB()
+	conn, err := c.rootCmd.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(db)
+	queries := db.New(conn)
 	rows, err := queries.SystemListWritingCategories(ctx, db.SystemListWritingCategoriesParams{Limit: math.MaxInt32, Offset: 0})
 	if err != nil {
 		return fmt.Errorf("tree: %w", err)

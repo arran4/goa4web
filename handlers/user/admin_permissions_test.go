@@ -14,7 +14,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
+	dbtest "github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/middleware"
 	"github.com/arran4/goa4web/internal/notifications"
@@ -45,7 +45,7 @@ func TestPermissionUserAllowEventData(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	queries := db.New(db)
+	queries := dbtest.New(db)
 
 	mock.ExpectQuery("SELECT idusers").
 		WithArgs(sqlmock.AnyArg()).

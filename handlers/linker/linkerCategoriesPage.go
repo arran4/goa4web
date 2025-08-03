@@ -26,9 +26,11 @@ func CategoriesPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	cd := data.CoreData
-	categories, err := queries.GetAllLinkerCategoriesForUser(r.Context(), db.GetAllLinkerCategoriesForUserParams{
-		ViewerID:     cd.UserID,
-		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+	categories, err := queries.ListLinkerCategoriesForLister(r.Context(), db.ListLinkerCategoriesForListerParams{
+		ListerID:     cd.UserID,
+		ListerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		Limit:        int32(cd.PageSize()),
+		Offset:       0,
 	})
 	if err != nil {
 		switch {

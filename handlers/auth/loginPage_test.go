@@ -22,7 +22,7 @@ import (
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
+	dbtest "github.com/arran4/goa4web/internal/db"
 	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/gorilla/sessions"
 )
@@ -40,7 +40,7 @@ func TestLoginAction_NoSuchUser(t *testing.T) {
 	}
 	defer db.Close()
 
-	queries := db.New(db)
+	queries := dbtest.New(db)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers,")).WithArgs(sql.NullString{String: "bob", Valid: true}).WillReturnError(sql.ErrNoRows)
 	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO login_attempts (username, ip_address) VALUES (?, ?)")).WithArgs("bob", "1.2.3.4").WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -75,7 +75,7 @@ func TestLoginAction_InvalidPassword(t *testing.T) {
 	}
 	defer db.Close()
 
-	queries := db.New(db)
+	queries := dbtest.New(db)
 	rows := sqlmock.NewRows([]string{"idusers", "email", "passwd", "passwd_algorithm", "username"}).
 		AddRow(1, "e", "7c4f29407893c334a6cb7a87bf045c0d", "md5", "bob")
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers,")).WithArgs(sql.NullString{String: "bob", Valid: true}).WillReturnRows(rows)
@@ -141,7 +141,7 @@ func TestLoginAction_PendingResetPrompt(t *testing.T) {
 	}
 	defer db.Close()
 
-	q := db.New(db)
+	q := dbtest.New(db)
 	pwHash, alg, _ := HashPassword("newpw")
 	userRows := sqlmock.NewRows([]string{"idusers", "email", "passwd", "passwd_algorithm", "username"}).
 		AddRow(1, "e", "oldhash", "md5", "bob")
@@ -180,7 +180,7 @@ func TestSanitizeBackURL(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
 	cfg.LoginAttemptThreshold = 10
 	cfg.HTTPHostname = ""
-	cd := common.NewCoreData(req.Context(), db.New(nil), cfg)
+	cd := common.NewCoreData(req.Context(), dbtest.New(nil), cfg)
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -195,7 +195,7 @@ func TestSanitizeBackURL(t *testing.T) {
 	}
 
 	cfg.HTTPHostname = "https://example.com"
-	cd = common.NewCoreData(req.Context(), db.New(nil), cfg)
+	cd = common.NewCoreData(req.Context(), dbtest.New(nil), cfg)
 	ctx = context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	if got := cd.SanitizeBackURL(req, "https://example.com/baz"); got != "/baz" {
@@ -210,7 +210,7 @@ func TestSanitizeBackURLSigned(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
 	cfg.LoginAttemptThreshold = 10
 	signer := imagesign.NewSigner(cfg, "k")
-	cd := common.NewCoreData(req.Context(), db.New(nil), config.NewRuntimeConfig(), common.WithImageSigner(signer))
+	cd := common.NewCoreData(req.Context(), dbtest.New(nil), config.NewRuntimeConfig(), common.WithImageSigner(signer))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	ts := time.Now().Add(time.Hour).Unix()
@@ -227,7 +227,7 @@ func TestSanitizeBackURLSigned(t *testing.T) {
 func TestLoginPageInvalidBackURL(t *testing.T) {
 	db, _, _ := sqlmock.New()
 	defer db.Close()
-	q := db.New(db)
+	q := dbtest.New(db)
 
 	req := httptest.NewRequest(http.MethodGet, "/login?back=https://evil.com/x", nil)
 	req.Host = "example.com"
@@ -247,7 +247,7 @@ func TestLoginPageInvalidBackURL(t *testing.T) {
 func TestLoginPageSignedBackURL(t *testing.T) {
 	db, _, _ := sqlmock.New()
 	defer db.Close()
-	q := db.New(db)
+	q := dbtest.New(db)
 
 	cfg := config.NewRuntimeConfig()
 	cfg.LoginAttemptThreshold = 10
@@ -280,7 +280,7 @@ func TestLoginAction_ExternalBackURLIgnored(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
 
-	q := db.New(db)
+	q := dbtest.New(db)
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = "test-session"
@@ -320,7 +320,7 @@ func TestLoginAction_SignedExternalBackURL(t *testing.T) {
 	defer db.Close()
 
 	cfg := config.NewRuntimeConfig()
-	q := db.New(db)
+	q := dbtest.New(db)
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = "test-session"
@@ -368,7 +368,7 @@ func TestLoginAction_Throttle(t *testing.T) {
 	}
 	defer db.Close()
 
-	q := db.New(db)
+	q := dbtest.New(db)
 	rows := sqlmock.NewRows([]string{"count"}).AddRow(5)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM login_attempts")).
 		WithArgs("bob", "1.2.3.4", sqlmock.AnyArg()).WillReturnRows(rows)

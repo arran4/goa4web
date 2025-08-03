@@ -26,12 +26,12 @@ func parseUserRolesCmd(parent *userCmd, args []string) (*userRolesCmd, error) {
 }
 
 func (c *userRolesCmd) Run() error {
-	db, err := c.rootCmd.DB()
+	conn, err := c.rootCmd.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(db)
+	queries := db.New(conn)
 	rows, err := queries.ListUsersWithRoles(ctx)
 	if err != nil {
 		return fmt.Errorf("list users with roles: %w", err)

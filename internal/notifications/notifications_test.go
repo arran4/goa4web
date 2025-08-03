@@ -9,7 +9,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/internal/db"
+	dbtest "github.com/arran4/goa4web/internal/db"
 )
 
 func TestNotificationsQueries(t *testing.T) {
@@ -18,9 +18,9 @@ func TestNotificationsQueries(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	q := db.New(db)
+	q := dbtest.New(db)
 	mock.ExpectExec("INSERT INTO notifications").WithArgs(int32(1), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
-	if err := q.InsertNotification(context.Background(), db.InsertNotificationParams{UsersIdusers: 1, Link: sql.NullString{String: "/x", Valid: true}, Message: sql.NullString{String: "hi", Valid: true}}); err != nil {
+	if err := q.InsertNotification(context.Background(), dbtest.InsertNotificationParams{UsersIdusers: 1, Link: sql.NullString{String: "/x", Valid: true}, Message: sql.NullString{String: "hi", Valid: true}}); err != nil {
 		t.Fatalf("insert: %v", err)
 	}
 	rows := sqlmock.NewRows([]string{"cnt"}).AddRow(1)
@@ -58,7 +58,7 @@ func TestNotifierNotifyAdmins(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	q := db.New(db)
+	q := dbtest.New(db)
 	cfg := config.NewRuntimeConfig()
 	cfg.EmailEnabled = true
 	cfg.AdminNotify = true
@@ -92,7 +92,7 @@ func TestNotifierInitialization(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer db.Close()
-	q := db.New(db)
+	q := dbtest.New(db)
 	n = New(WithQueries(q), WithConfig(cfg))
 	if n.Queries != q {
 		t.Fatalf("queries not set via option")

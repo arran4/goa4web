@@ -11,20 +11,6 @@ import (
 	"strings"
 )
 
-const assignNewsThisThreadId = `-- name: AssignNewsThisThreadId :exec
-UPDATE site_news SET forumthread_id = ? WHERE idsiteNews = ?
-`
-
-type AssignNewsThisThreadIdParams struct {
-	ForumthreadID int32
-	Idsitenews    int32
-}
-
-func (q *Queries) AssignNewsThisThreadId(ctx context.Context, arg AssignNewsThisThreadIdParams) error {
-	_, err := q.db.ExecContext(ctx, assignNewsThisThreadId, arg.ForumthreadID, arg.Idsitenews)
-	return err
-}
-
 const createNewsPost = `-- name: CreateNewsPost :execlastid
 INSERT INTO site_news (news, users_idusers, occurred, language_idlanguage)
 VALUES (?, ?, NOW(), ?)
@@ -356,6 +342,22 @@ UPDATE site_news SET last_index = NOW() WHERE idsiteNews = ?
 
 func (q *Queries) SetSiteNewsLastIndex(ctx context.Context, idsitenews int32) error {
 	_, err := q.db.ExecContext(ctx, setSiteNewsLastIndex, idsitenews)
+	return err
+}
+
+const systemAssignNewsThreadID = `-- name: SystemAssignNewsThreadID :exec
+UPDATE site_news
+SET forumthread_id = ?
+WHERE idsiteNews = ?
+`
+
+type SystemAssignNewsThreadIDParams struct {
+	ThreadID int32
+	NewsID   int32
+}
+
+func (q *Queries) SystemAssignNewsThreadID(ctx context.Context, arg SystemAssignNewsThreadIDParams) error {
+	_, err := q.db.ExecContext(ctx, systemAssignNewsThreadID, arg.ThreadID, arg.NewsID)
 	return err
 }
 

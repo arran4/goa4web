@@ -121,7 +121,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 			return fmt.Errorf("make thread fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		pthid = int32(pthidi)
-		if err := queries.AssignWritingThisThreadId(r.Context(), db.AssignWritingThisThreadIdParams{ForumthreadID: pthid, Idwriting: int32(aid)}); err != nil {
+		if err := queries.SystemAssignWritingThreadID(r.Context(), db.SystemAssignWritingThreadIDParams{ThreadID: pthid, WritingID: int32(aid)}); err != nil {
 			return fmt.Errorf("assign article thread fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}

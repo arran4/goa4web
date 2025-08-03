@@ -17,5 +17,5 @@ func subscribedToTopic(cd *common.CoreData, topicID int32) bool {
 	if cd == nil || cd.UserID == 0 {
 		return false
 	}
-	return cd.Subscribed(topicSubscriptionPattern(topicID))
+	return cd.Subscribed(topicSubscriptionPattern(topicID), "internal")
 }

@@ -37,7 +37,7 @@ func (AnnouncementDeleteTask) Action(w http.ResponseWriter, r *http.Request) any
 		return nil
 	}
 	if ann != nil && ann.Active {
-		if err := queries.SetAnnouncementActive(r.Context(), db.SetAnnouncementActiveParams{Active: false, ID: ann.ID}); err != nil {
+		if err := queries.AdminSetAnnouncementActive(r.Context(), db.AdminSetAnnouncementActiveParams{Active: false, ID: ann.ID}); err != nil {
 			return fmt.Errorf("deactivate announcement fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}

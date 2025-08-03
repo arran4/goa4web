@@ -120,7 +120,7 @@ func (ReplyBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if blog.ForumthreadID.Valid {
 		pthid = blog.ForumthreadID.Int32
 	}
-	pt, err := queries.FindForumTopicByTitle(r.Context(), sql.NullString{
+	pt, err := queries.SystemGetForumTopicByTitle(r.Context(), sql.NullString{
 		String: BloggerTopicName,
 		Valid:  true,
 	})
@@ -147,7 +147,7 @@ func (ReplyBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 		ptid = pt.Idforumtopic
 	}
 	if pthid == 0 {
-		pthidi, err := queries.MakeThread(r.Context(), ptid)
+		pthidi, err := queries.SystemCreateThread(r.Context(), ptid)
 		if err != nil {
 			return fmt.Errorf("makeThread fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}

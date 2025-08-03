@@ -78,7 +78,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 		code := r.FormValue("code")
 		if err == nil && VerifyPassword(password, reset.Passwd, reset.PasswdAlgorithm) {
 			if code != "" && code == reset.VerificationCode {
-				_ = queries.MarkPasswordResetVerified(r.Context(), reset.ID)
+				_ = queries.SystemMarkPasswordResetVerified(r.Context(), reset.ID)
 				_ = queries.InsertPassword(r.Context(), db.InsertPasswordParams{UsersIdusers: reset.UserID, Passwd: reset.Passwd, PasswdAlgorithm: sql.NullString{String: reset.PasswdAlgorithm, Valid: true}})
 			} else {
 				type Data struct {
@@ -101,7 +101,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	if _, err := queries.UserHasLoginRole(r.Context(), row.Idusers); err != nil {
+	if _, err := queries.GetLoginRoleForUser(r.Context(), row.Idusers); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return loginFormHandler{msg: "approval is pending"}
 		}

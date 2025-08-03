@@ -58,7 +58,7 @@ func (RemakeNewsTask) BackgroundTask(ctx context.Context, q db.Querier) (tasks.T
 		}); err != nil {
 			return nil, err
 		}
-		if err := q.SetSiteNewsLastIndex(ctx, row.Idsitenews); err != nil {
+		if err := q.SystemSetSiteNewsLastIndex(ctx, row.Idsitenews); err != nil {
 			return nil, err
 		}
 	}

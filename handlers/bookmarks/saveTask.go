@@ -2,10 +2,8 @@ package bookmarks
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"github.com/arran4/goa4web/core/consts"
-	"log"
 	"net/http"
 
 	"github.com/arran4/goa4web/core"
@@ -24,38 +22,14 @@ var saveTask = &SaveTask{TaskString: TaskSave}
 var _ tasks.Task = (*SaveTask)(nil)
 
 func EditPage(w http.ResponseWriter, r *http.Request) {
-	type Data struct {
-		*common.CoreData
-		BookmarkContent string
-		Bid             interface{}
-	}
-
-	data := Data{
-		CoreData:        r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-		BookmarkContent: "Category: Example 1\nhttp://www.google.com.au Google\nColumn\nCategory: Example 2\nhttp://www.google.com.au Google\nhttp://www.google.com.au Google\n",
-	}
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
 	_ = session
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	bookmarks, err := cd.Bookmarks()
-	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-		default:
-			log.Printf("error getBookmarksForUser: %s", err)
-			http.Error(w, "ERROR", 500)
-			return
-		}
-	} else {
-		data.BookmarkContent = bookmarks.List.String
-		data.Bid = bookmarks.Idbookmarks
-	}
-
 	cd.PageTitle = "Edit Bookmarks"
-	handlers.TemplateHandler(w, r, "editPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "editPage.gohtml", struct{}{})
 }
 
 func (SaveTask) Action(w http.ResponseWriter, r *http.Request) any {

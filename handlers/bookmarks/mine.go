@@ -77,11 +77,6 @@ func MinePage(w http.ResponseWriter, r *http.Request) {
 		HasBookmarks bool
 	}
 
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return
-	}
-	_ = session
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "My Bookmarks"
 	bookmarks, err := cd.Bookmarks()

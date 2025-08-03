@@ -29,7 +29,7 @@ func ValidateDefaultLanguage(ctx context.Context, q db.Querier, name string) err
 	if err := validateLanguageName(name); err != nil {
 		return err
 	}
-	_, err := q.GetLanguageIDByName(ctx, sql.NullString{String: name, Valid: true})
+	_, err := q.SystemGetLanguageIDByName(ctx, sql.NullString{String: name, Valid: true})
 	if errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("unknown language %q", name)
 	}
@@ -41,7 +41,7 @@ func ResolveDefaultLanguageID(ctx context.Context, q db.Querier, name string) in
 	if name == "" {
 		return 0
 	}
-	id, err := q.GetLanguageIDByName(ctx, sql.NullString{String: name, Valid: true})
+	id, err := q.SystemGetLanguageIDByName(ctx, sql.NullString{String: name, Valid: true})
 	if err != nil {
 		return 0
 	}
@@ -54,7 +54,7 @@ func EnsureDefaultLanguage(ctx context.Context, q db.Querier, name string) error
 	if name == "" {
 		return nil
 	}
-	count, err := q.CountLanguages(ctx)
+	count, err := q.SystemCountLanguages(ctx)
 	if err != nil {
 		return err
 	}
@@ -64,6 +64,6 @@ func EnsureDefaultLanguage(ctx context.Context, q db.Querier, name string) error
 	if err := validateLanguageName(name); err != nil {
 		return err
 	}
-	_, err = q.InsertLanguage(ctx, sql.NullString{String: name, Valid: true})
+	_, err = q.AdminInsertLanguage(ctx, sql.NullString{String: name, Valid: true})
 	return err
 }

@@ -10,137 +10,114 @@ import (
 	"database/sql"
 )
 
-const allLanguages = `-- name: AllLanguages :many
-SELECT idlanguage, nameof FROM language
-`
-
-func (q *Queries) AllLanguages(ctx context.Context) ([]*Language, error) {
-	rows, err := q.db.QueryContext(ctx, allLanguages)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*Language
-	for rows.Next() {
-		var i Language
-		if err := rows.Scan(&i.Idlanguage, &i.Nameof); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const countLanguages = `-- name: CountLanguages :one
-SELECT COUNT(*) FROM language
-`
-
-func (q *Queries) CountLanguages(ctx context.Context) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countLanguages)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
-const createLanguage = `-- name: CreateLanguage :exec
+const adminCreateLanguage = `-- name: AdminCreateLanguage :exec
 INSERT INTO language (nameof)
 VALUES (?)
 `
 
-// This query inserts a new record into the "language" table.
+// AdminCreateLanguage adds a new language.
 // Parameters:
 //
 //	? - Name of the new language (string)
-func (q *Queries) CreateLanguage(ctx context.Context, nameof sql.NullString) error {
-	_, err := q.db.ExecContext(ctx, createLanguage, nameof)
+func (q *Queries) AdminCreateLanguage(ctx context.Context, nameof sql.NullString) error {
+	_, err := q.db.ExecContext(ctx, adminCreateLanguage, nameof)
 	return err
 }
 
-const deleteLanguage = `-- name: DeleteLanguage :exec
+const adminDeleteLanguage = `-- name: AdminDeleteLanguage :exec
 DELETE FROM language
 WHERE idlanguage = ?
 `
 
-// This query deletes a record from the "language" table based on the provided "cid".
+// AdminDeleteLanguage removes a language entry.
 // Parameters:
 //
 //	? - Language ID to be deleted (int)
-func (q *Queries) DeleteLanguage(ctx context.Context, idlanguage int32) error {
-	_, err := q.db.ExecContext(ctx, deleteLanguage, idlanguage)
+func (q *Queries) AdminDeleteLanguage(ctx context.Context, idlanguage int32) error {
+	_, err := q.db.ExecContext(ctx, adminDeleteLanguage, idlanguage)
 	return err
 }
 
-const fetchLanguages = `-- name: FetchLanguages :many
-SELECT idlanguage, nameof
-FROM language
-`
-
-func (q *Queries) FetchLanguages(ctx context.Context) ([]*Language, error) {
-	rows, err := q.db.QueryContext(ctx, fetchLanguages)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*Language
-	for rows.Next() {
-		var i Language
-		if err := rows.Scan(&i.Idlanguage, &i.Nameof); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getLanguageIDByName = `-- name: GetLanguageIDByName :one
-SELECT idlanguage FROM language WHERE nameof = ?
-`
-
-func (q *Queries) GetLanguageIDByName(ctx context.Context, nameof sql.NullString) (int32, error) {
-	row := q.db.QueryRowContext(ctx, getLanguageIDByName, nameof)
-	var idlanguage int32
-	err := row.Scan(&idlanguage)
-	return idlanguage, err
-}
-
-const insertLanguage = `-- name: InsertLanguage :execresult
+const adminInsertLanguage = `-- name: AdminInsertLanguage :execresult
 INSERT INTO language (nameof)
 VALUES (?)
 `
 
-func (q *Queries) InsertLanguage(ctx context.Context, nameof sql.NullString) (sql.Result, error) {
-	return q.db.ExecContext(ctx, insertLanguage, nameof)
+// AdminInsertLanguage adds a new language returning a result.
+func (q *Queries) AdminInsertLanguage(ctx context.Context, nameof sql.NullString) (sql.Result, error) {
+	return q.db.ExecContext(ctx, adminInsertLanguage, nameof)
 }
 
-const renameLanguage = `-- name: RenameLanguage :exec
+const adminRenameLanguage = `-- name: AdminRenameLanguage :exec
 UPDATE language
 SET nameof = ?
 WHERE idlanguage = ?
 `
 
-type RenameLanguageParams struct {
+type AdminRenameLanguageParams struct {
 	Nameof     sql.NullString
 	Idlanguage int32
 }
 
-// This query updates the "nameof" field in the "language" table based on the provided "cid".
+// AdminRenameLanguage updates the language name.
 // Parameters:
 //
 //	? - New name for the language (string)
 //	? - Language ID to be updated (int)
-func (q *Queries) RenameLanguage(ctx context.Context, arg RenameLanguageParams) error {
-	_, err := q.db.ExecContext(ctx, renameLanguage, arg.Nameof, arg.Idlanguage)
+func (q *Queries) AdminRenameLanguage(ctx context.Context, arg AdminRenameLanguageParams) error {
+	_, err := q.db.ExecContext(ctx, adminRenameLanguage, arg.Nameof, arg.Idlanguage)
 	return err
+}
+
+const systemCountLanguages = `-- name: SystemCountLanguages :one
+SELECT COUNT(*) FROM language
+`
+
+// SystemCountLanguages counts all languages.
+func (q *Queries) SystemCountLanguages(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, systemCountLanguages)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const systemGetLanguageIDByName = `-- name: SystemGetLanguageIDByName :one
+SELECT idlanguage FROM language WHERE nameof = ?
+`
+
+// SystemGetLanguageIDByName resolves a language ID by name.
+func (q *Queries) SystemGetLanguageIDByName(ctx context.Context, nameof sql.NullString) (int32, error) {
+	row := q.db.QueryRowContext(ctx, systemGetLanguageIDByName, nameof)
+	var idlanguage int32
+	err := row.Scan(&idlanguage)
+	return idlanguage, err
+}
+
+const systemListLanguages = `-- name: SystemListLanguages :many
+SELECT idlanguage, nameof
+FROM language
+`
+
+// SystemListLanguages lists all languages.
+func (q *Queries) SystemListLanguages(ctx context.Context) ([]*Language, error) {
+	rows, err := q.db.QueryContext(ctx, systemListLanguages)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Language
+	for rows.Next() {
+		var i Language
+		if err := rows.Scan(&i.Idlanguage, &i.Nameof); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

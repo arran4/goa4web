@@ -590,7 +590,7 @@ func (cd *CoreData) Languages() ([]*db.Language, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
-		return cd.queries.FetchLanguages(cd.ctx)
+		return cd.queries.SystemListLanguages(cd.ctx)
 	})
 }
 
@@ -600,7 +600,7 @@ func (cd *CoreData) AllLanguages() ([]*db.Language, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
-		return cd.queries.FetchLanguages(cd.ctx)
+		return cd.queries.SystemListLanguages(cd.ctx)
 	})
 }
 
@@ -616,7 +616,7 @@ func (cd *CoreData) PreferredLanguageID(siteDefault string) int32 {
 		if cd.queries == nil || siteDefault == "" {
 			return 0, nil
 		}
-		langID, err := cd.queries.GetLanguageIDByName(cd.ctx, sql.NullString{String: siteDefault, Valid: true})
+		langID, err := cd.queries.SystemGetLanguageIDByName(cd.ctx, sql.NullString{String: siteDefault, Valid: true})
 		if err != nil {
 			return 0, nil
 		}

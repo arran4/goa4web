@@ -49,7 +49,7 @@ func adminRolePage(w http.ResponseWriter, r *http.Request) {
 	for _, c := range forumCats {
 		catMap[c.Idforumcategory] = c
 	}
-	langs, _ := queries.FetchLanguages(r.Context())
+	langs, _ := queries.SystemListLanguages(r.Context())
 	langMap := map[int32]string{}
 	for _, l := range langs {
 		if l.Nameof.Valid {

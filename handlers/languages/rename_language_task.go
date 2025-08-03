@@ -35,7 +35,7 @@ func (RenameLanguageTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("cid parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	cname := r.PostFormValue("cname")
-	if err := queries.RenameLanguage(r.Context(), db.RenameLanguageParams{
+	if err := queries.AdminRenameLanguage(r.Context(), db.AdminRenameLanguageParams{
 		Nameof:     sql.NullString{Valid: true, String: cname},
 		Idlanguage: int32(cid),
 	}); err != nil {

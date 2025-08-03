@@ -14,20 +14,23 @@ All query names must begin with a prefix indicating the required role:
   required role using a `For<Role>` suffix (for example `ForLister`,
   `ForWriter`, `ForCommenter`, `ForReplier`). Parameter names should
   mirror the role and use the `<Role>ID` form (e.g. `ListerID`,
-  `WriterID`). Historic `See`/`Seer` terminology is replaced by
-  `List`/`Lister`.
+  `WriterID`). When a clearer role name exists (`Writer`, `Lister`,
+  `Commenter`, `Replier`, etc.) it should be used. Historic `See`/`Seer`
+  terminology is replaced by `List`/`Lister`.
 
 ## Lists
 
 Queries returning multiple rows must start with the `List` prefix and
-support pagination (`LIMIT`/`OFFSET`). User and admin lists must respect
-language preferences and enforce permissions within the SQL itself.
-Admin and system queries must never require a user ID.
+include pagination (`LIMIT`/`OFFSET`). User and admin lists must respect
+each user's pagination and language preferences and enforce permissions
+within the SQL itself. Admin and system queries must never require a user
+ID.
 
 ## Grants
 
 User queries should check grants both in SQL and in Go code to ensure
-authorisation rules are enforced.
+authorisation rules are enforced. Admin and system queries should not
+require a user ID and are intended for privileged operations.
 
 These rules are verified by tests and should be followed for all new
 queries.

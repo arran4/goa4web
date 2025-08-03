@@ -20,7 +20,6 @@ import (
 	"github.com/arran4/goa4web/workers/searchworker"
 
 	"github.com/arran4/goa4web/core"
-	"github.com/gorilla/mux"
 )
 
 // ReplyTask posts a reply within a thread.
@@ -85,36 +84,19 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		IsReplyable        bool
 	}
 
-	vars := mux.Vars(r)
-	bid, _ := strconv.Atoi(vars["boardno"])
-	thid, _ := strconv.Atoi(vars["thread"])
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	bid := cd.SelectedBoard()
+	thid := cd.SelectedThread()
 	cd.PageTitle = fmt.Sprintf("Thread %d/%d", bid, thid)
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return
-	}
-	var uid int32
-	uid, _ = session.Values["UID"].(int32)
 
-	queries := cd.Queries()
-	data := Data{
-		CoreData:      cd,
-		Replyable:     true,
-		BoardId:       bid,
-		ForumThreadId: thid,
-	}
+	data := Data{CoreData: cd, Replyable: true, BoardId: bid, ForumThreadId: thid}
 
 	if !data.CoreData.HasGrant("imagebbs", "board", "view", int32(bid)) {
 		_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd)
 		return
 	}
 
-	commentRows, err := queries.GetCommentsByThreadIdForUser(r.Context(), db.GetCommentsByThreadIdForUserParams{
-		ViewerID: uid,
-		ThreadID: int32(thid),
-		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
+	commentRows, err := cd.ThreadComments(int32(thid))
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -125,11 +107,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
-		ViewerID:      uid,
-		ThreadID:      int32(thid),
-		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
+	threadRow, err := cd.ForumThreadByID(int32(thid))
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -181,11 +159,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.Thread = threadRow
-	post, err := queries.GetImagePostByIDForLister(r.Context(), db.GetImagePostByIDForListerParams{
-		ListerID:     uid,
-		ID:           int32(bid),
-		ListerUserID: sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
+	post, err := cd.ImagePostByID(int32(bid))
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -214,14 +188,10 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	var uid int32
 
-	vars := mux.Vars(r)
-	bid, err := strconv.Atoi(vars["boardno"])
+	bid := cd.SelectedBoard()
 
 	uid, _ = session.Values["UID"].(int32)
 
-	if err != nil {
-		return fmt.Errorf("board id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-	}
 	if bid == 0 {
 		return fmt.Errorf("no bid %w", handlers.ErrRedirectOnSamePageHandler(errors.New("no bid")))
 	}

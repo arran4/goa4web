@@ -116,14 +116,18 @@ type CoreData struct {
 	forumTopics              map[int32]*lazy.Value[*db.GetForumTopicByIdForUserRow]
 	forumThreadRows          map[int32]*lazy.Value[*db.GetThreadLastPosterAndPermsRow]
 	forumComments            map[int32]*lazy.Value[*db.GetCommentByIdForUserRow]
+	forumThreadComments      map[int32]*lazy.Value[[]*db.GetCommentsByThreadIdForUserRow]
 	newsPosts                map[int32]*lazy.Value[*db.GetForumThreadIdByNewsPostIdRow]
 	threadComments           map[int32]*lazy.Value[[]*db.GetCommentsByThreadIdForUserRow]
 	currentThreadID          int32
 	currentTopicID           int32
 	currentCommentID         int32
 	currentNewsPostID        int32
+	currentBoardID           int32
+	currentImagePostID       int32
 	imageBoardPosts          map[int32]*lazy.Value[[]*db.ListImagePostsByBoardForListerRow]
 	imageBoards              lazy.Value[[]*db.Imageboard]
+	imagePostRows            map[int32]*lazy.Value[*db.GetImagePostByIDForListerRow]
 	languagesAll             lazy.Value[[]*db.Language]
 	langs                    lazy.Value[[]*db.Language]
 	latestNews               lazy.Value[[]*NewsPost]
@@ -279,6 +283,54 @@ func WithCustomQueries(cq db.CustomQueries) CoreOption {
 	return func(cd *CoreData) { cd.customQueries = cq }
 }
 
+// WithSelectionsFromRequest extracts integer identifiers from the request and
+// stores them on the CoreData instance. It searches path variables, query
+// parameters and finally form values.
+func WithSelectionsFromRequest(r *http.Request) CoreOption {
+	return func(cd *CoreData) {
+		setID := func(k, v string) {
+			i, err := strconv.Atoi(v)
+			if err != nil {
+				return
+			}
+			switch k {
+			case "boardno", "board":
+				cd.currentBoardID = int32(i)
+			case "thread", "replyTo":
+				cd.currentThreadID = int32(i)
+			case "topic":
+				cd.currentTopicID = int32(i)
+			case "comment":
+				cd.currentCommentID = int32(i)
+			case "news":
+				cd.currentNewsPostID = int32(i)
+			case "post":
+				cd.currentImagePostID = int32(i)
+			case "writing":
+				cd.currentWritingID = int32(i)
+			case "blog":
+				cd.currentBlogID = int32(i)
+			}
+		}
+		for k, v := range mux.Vars(r) {
+			setID(k, v)
+		}
+		q := r.URL.Query()
+		for k, v := range q {
+			if len(v) > 0 {
+				setID(k, v[0])
+			}
+		}
+		if err := r.ParseForm(); err == nil {
+			for k, v := range r.Form {
+				if len(v) > 0 {
+					setID(k, v[0])
+				}
+			}
+		}
+	}
+}
+
 // NewCoreData creates a CoreData with context and queries applied.
 func NewCoreData(ctx context.Context, q db.Querier, cfg *config.RuntimeConfig, opts ...CoreOption) *CoreData {
 	cd := &CoreData{
@@ -301,6 +353,15 @@ func (cd *CoreData) Queries() db.Querier { return cd.queries }
 
 // CustomQueries returns the db.CustomQueries instance associated with this CoreData.
 func (cd *CoreData) CustomQueries() db.CustomQueries { return cd.customQueries }
+
+// SelectedBoard returns the selected board identifier.
+func (cd *CoreData) SelectedBoard() int { return int(cd.currentBoardID) }
+
+// SelectedThread returns the selected thread identifier.
+func (cd *CoreData) SelectedThread() int { return int(cd.currentThreadID) }
+
+// SelectedImagePost returns the selected image post identifier.
+func (cd *CoreData) SelectedImagePost() int { return int(cd.currentImagePostID) }
 
 // ImageURLMapper maps image references like "image:" or "cache:" to full URLs.
 func (cd *CoreData) ImageURLMapper(tag, val string) string {
@@ -1079,6 +1140,21 @@ func (cd *CoreData) ForumThreadByID(id int32, ops ...lazy.Option[*db.GetThreadLa
 	return lazy.Map(&cd.forumThreadRows, &cd.mapMu, id, fetch, ops...)
 }
 
+// ThreadComments returns comments for the thread lazily loading once per thread ID.
+func (cd *CoreData) ThreadComments(id int32, ops ...lazy.Option[[]*db.GetCommentsByThreadIdForUserRow]) ([]*db.GetCommentsByThreadIdForUserRow, error) {
+	fetch := func(i int32) ([]*db.GetCommentsByThreadIdForUserRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		return cd.queries.GetCommentsByThreadIdForUser(cd.ctx, db.GetCommentsByThreadIdForUserParams{
+			ViewerID: cd.UserID,
+			ThreadID: i,
+			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		})
+	}
+	return lazy.Map(&cd.forumThreadComments, &cd.mapMu, id, fetch, ops...)
+}
+
 // WritingByID returns a single writing lazily loading it once per ID.
 func (cd *CoreData) WritingByID(id int32, ops ...lazy.Option[*db.GetWritingForListerByIDRow]) (*db.GetWritingForListerByIDRow, error) {
 	fetch := func(i int32) (*db.GetWritingForListerByIDRow, error) {
@@ -1381,6 +1457,21 @@ func (cd *CoreData) ImageBoardPosts(boardID int32) ([]*db.ListImagePostsByBoardF
 			Offset:       0,
 		})
 	})
+}
+
+// ImagePostByID returns an image post once per ID using caching.
+func (cd *CoreData) ImagePostByID(id int32, ops ...lazy.Option[*db.GetImagePostByIDForListerRow]) (*db.GetImagePostByIDForListerRow, error) {
+	fetch := func(i int32) (*db.GetImagePostByIDForListerRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		return cd.queries.GetImagePostByIDForLister(cd.ctx, db.GetImagePostByIDForListerParams{
+			ListerID:     cd.UserID,
+			ID:           i,
+			ListerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		})
+	}
+	return lazy.Map(&cd.imagePostRows, &cd.mapMu, id, fetch, ops...)
 }
 
 // UnreadNotificationCount returns the number of unread notifications for the

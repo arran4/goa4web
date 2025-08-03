@@ -5,12 +5,10 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"net/http"
-	"strconv"
 
 	"github.com/arran4/goa4web/handlers"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
-	"github.com/gorilla/mux"
 )
 
 // ApprovePostTask marks a post as approved.
@@ -23,9 +21,8 @@ var _ tasks.AuditableTask = (*ApprovePostTask)(nil)
 var approvePostTask = &ApprovePostTask{TaskString: TaskApprove}
 
 func (ApprovePostTask) Action(w http.ResponseWriter, r *http.Request) any {
-	vars := mux.Vars(r)
-	pid, _ := strconv.Atoi(vars["post"])
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	pid := cd.SelectedImagePost()
 	if cd == nil || !cd.HasRole("administrator") {
 		return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			http.Error(w, "Forbidden", http.StatusForbidden)

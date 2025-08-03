@@ -105,9 +105,9 @@ func CoreAdderMiddlewareWithDB(sdb *sql.DB, cfg *config.RuntimeConfig, verbosity
 				common.WithSession(session),
 				common.WithEmailProvider(provider),
 				common.WithAbsoluteURLBase(base),
-				common.WithSessionManager(sm))
+				common.WithSessionManager(sm),
+				common.WithSelectionsFromRequest(r))
 			cd.UserID = uid
-			_ = cd.UserRoles()
 
 			if navReg != nil {
 				cd.IndexItems = navReg.IndexItems()

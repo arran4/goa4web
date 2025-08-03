@@ -320,18 +320,18 @@ func (q *Queries) SystemListVerifiedEmailsByUserID(ctx context.Context, userID i
 	return items, nil
 }
 
-const updateUserEmailVerification = `-- name: UpdateUserEmailVerification :exec
+const systemMarkUserEmailVerified = `-- name: SystemMarkUserEmailVerified :exec
 UPDATE user_emails
 SET verified_at = ?, last_verification_code = NULL, verification_expires_at = NULL
 WHERE id = ?
 `
 
-type UpdateUserEmailVerificationParams struct {
+type SystemMarkUserEmailVerifiedParams struct {
 	VerifiedAt sql.NullTime
 	ID         int32
 }
 
-func (q *Queries) UpdateUserEmailVerification(ctx context.Context, arg UpdateUserEmailVerificationParams) error {
-	_, err := q.db.ExecContext(ctx, updateUserEmailVerification, arg.VerifiedAt, arg.ID)
+func (q *Queries) SystemMarkUserEmailVerified(ctx context.Context, arg SystemMarkUserEmailVerifiedParams) error {
+	_, err := q.db.ExecContext(ctx, systemMarkUserEmailVerified, arg.VerifiedAt, arg.ID)
 	return err
 }

@@ -41,7 +41,7 @@ func (EditCommentTask) Action(w http.ResponseWriter, r *http.Request) any {
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
 	text := r.PostFormValue("replytext")
 	q := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	if err := q.UpdateComment(r.Context(), db.UpdateCommentParams{Idcomments: int32(id), Text: sql.NullString{String: text, Valid: true}, LanguageIdlanguage: 0}); err != nil {
+	if err := q.AdminScrubComment(r.Context(), db.AdminScrubCommentParams{Text: sql.NullString{String: text, Valid: true}, Idcomments: int32(id)}); err != nil {
 		return fmt.Errorf("edit comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	return nil

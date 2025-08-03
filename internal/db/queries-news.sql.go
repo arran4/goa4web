@@ -378,17 +378,43 @@ func (q *Queries) SystemAssignNewsThreadID(ctx context.Context, arg SystemAssign
 	return err
 }
 
-const updateNewsPost = `-- name: UpdateNewsPost :exec
-UPDATE site_news SET news = ?, language_idlanguage = ? WHERE idsiteNews = ?
+const updateNewsPostForWriter = `-- name: UpdateNewsPostForWriter :exec
+UPDATE site_news s
+SET news = ?, language_idlanguage = ?
+WHERE s.idsiteNews = ?
+  AND s.users_idusers = ?
+  AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='news'
+      AND g.item='post'
+      AND g.action='post'
+      AND g.active=1
+      AND (g.item_id = ? OR g.item_id IS NULL)
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (
+          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+      ))
+  )
 `
 
-type UpdateNewsPostParams struct {
-	News               sql.NullString
-	LanguageIdlanguage int32
-	Idsitenews         int32
+type UpdateNewsPostForWriterParams struct {
+	News        sql.NullString
+	LanguageID  int32
+	PostID      int32
+	WriterID    int32
+	GrantPostID sql.NullInt32
+	GranteeID   sql.NullInt32
 }
 
-func (q *Queries) UpdateNewsPost(ctx context.Context, arg UpdateNewsPostParams) error {
-	_, err := q.db.ExecContext(ctx, updateNewsPost, arg.News, arg.LanguageIdlanguage, arg.Idsitenews)
+func (q *Queries) UpdateNewsPostForWriter(ctx context.Context, arg UpdateNewsPostForWriterParams) error {
+	_, err := q.db.ExecContext(ctx, updateNewsPostForWriter,
+		arg.News,
+		arg.LanguageID,
+		arg.PostID,
+		arg.WriterID,
+		arg.GrantPostID,
+		arg.GranteeID,
+		arg.WriterID,
+	)
 	return err
 }

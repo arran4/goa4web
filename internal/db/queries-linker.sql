@@ -67,14 +67,9 @@ ORDER BY c.position
 DELETE FROM linker_queue
 WHERE idlinkerQueue = ?;
 
--- name: UpdateLinkerQueuedItem :exec
+-- name: AdminUpdateLinkerQueuedItem :exec
 UPDATE linker_queue SET linker_category_id = ?, title = ?, url = ?, description = ?
-WHERE idlinkerQueue = ?
-  AND EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.users_idusers = sqlc.arg(admin_id) AND r.is_admin = 1
-  );
+WHERE idlinkerQueue = ?;
 
 -- name: CreateLinkerQueuedItemForWriter :exec
 INSERT INTO linker_queue (users_idusers, linker_category_id, title, url, description)
@@ -113,14 +108,9 @@ WHERE l.idlinkerQueue = ?
 INSERT INTO linker (users_idusers, linker_category_id, title, url, description, listed)
 VALUES (sqlc.arg(users_idusers), sqlc.arg(linker_category_id), sqlc.arg(title), sqlc.arg(url), sqlc.arg(description), NOW());
 
--- name: UpdateLinkerItem :exec
+-- name: AdminUpdateLinkerItem :exec
 UPDATE linker SET title = ?, url = ?, description = ?, linker_category_id = ?, language_idlanguage = ?
-WHERE idlinker = ?
-  AND EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.users_idusers = sqlc.arg(admin_id) AND r.is_admin = 1
-  );
+WHERE idlinker = ?;
 
 -- name: SystemAssignLinkerThreadID :exec
 UPDATE linker SET forumthread_id = ? WHERE idlinker = ?;
@@ -286,14 +276,9 @@ LEFT JOIN linker l ON l.linker_category_id = c.idlinkerCategory AND l.listed IS 
 GROUP BY c.idlinkerCategory
 ORDER BY c.sortorder;
 
--- name: UpdateLinkerCategorySortOrder :exec
+-- name: AdminUpdateLinkerCategorySortOrder :exec
 UPDATE linker_category SET sortorder = ?
-WHERE idlinkerCategory = ?
-  AND EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.users_idusers = sqlc.arg(admin_id) AND r.is_admin = 1
-  );
+WHERE idlinkerCategory = ?;
 
 -- name: AdminCountLinksByCategory :one
 SELECT COUNT(*) FROM linker WHERE linker_category_id = ?;

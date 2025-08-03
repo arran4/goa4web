@@ -79,13 +79,15 @@ func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := cd.Queries()
 
-	if err := queries.UpdateWriting(r.Context(), db.UpdateWritingParams{
-		Title:              sql.NullString{Valid: true, String: title},
-		Abstract:           sql.NullString{Valid: true, String: abstract},
-		Writing:            sql.NullString{Valid: true, String: body},
-		Private:            sql.NullBool{Valid: true, Bool: private},
-		LanguageIdlanguage: int32(languageId),
-		Idwriting:          writing.Idwriting,
+	if err := queries.UpdateWritingForWriter(r.Context(), db.UpdateWritingForWriterParams{
+		Title:      sql.NullString{Valid: true, String: title},
+		Abstract:   sql.NullString{Valid: true, String: abstract},
+		Content:    sql.NullString{Valid: true, String: body},
+		Private:    sql.NullBool{Valid: true, Bool: private},
+		LanguageID: int32(languageId),
+		WritingID:  writing.Idwriting,
+		WriterID:   cd.UserID,
+		GranteeID:  sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 	}); err != nil {
 		log.Printf("updateWriting Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

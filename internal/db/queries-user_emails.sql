@@ -42,7 +42,7 @@ SELECT id, user_id, email, verified_at, last_verification_code, verification_exp
 FROM user_emails
 WHERE id = ?;
 
--- name: UpdateUserEmailVerification :exec
+-- name: SystemMarkUserEmailVerified :exec
 UPDATE user_emails
 SET verified_at = ?, last_verification_code = NULL, verification_expires_at = NULL
 WHERE id = ?;

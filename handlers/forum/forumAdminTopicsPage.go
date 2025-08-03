@@ -62,7 +62,7 @@ func AdminTopicEditPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	if err := queries.UpdateForumTopic(r.Context(), db.UpdateForumTopicParams{
+	if err := queries.AdminUpdateForumTopic(r.Context(), db.AdminUpdateForumTopicParams{
 		Title:                        sql.NullString{String: name, Valid: true},
 		Description:                  sql.NullString{String: desc, Valid: true},
 		ForumcategoryIdforumcategory: int32(cid),

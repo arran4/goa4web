@@ -98,7 +98,7 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := queries.UpdateForumCategory(r.Context(), db.UpdateForumCategoryParams{
+	if err := queries.AdminUpdateForumCategory(r.Context(), db.AdminUpdateForumCategoryParams{
 		Title: sql.NullString{
 			Valid:  true,
 			String: name,

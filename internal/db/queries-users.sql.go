@@ -238,6 +238,20 @@ func (q *Queries) AdminListUsersByID(ctx context.Context, ids []int32) ([]*Admin
 	return items, nil
 }
 
+const adminUpdateUserEmail = `-- name: AdminUpdateUserEmail :exec
+UPDATE user_emails SET email = ? WHERE user_id = ?
+`
+
+type AdminUpdateUserEmailParams struct {
+	Email  string
+	UserID int32
+}
+
+func (q *Queries) AdminUpdateUserEmail(ctx context.Context, arg AdminUpdateUserEmailParams) error {
+	_, err := q.db.ExecContext(ctx, adminUpdateUserEmail, arg.Email, arg.UserID)
+	return err
+}
+
 const adminUpdateUsernameByID = `-- name: AdminUpdateUsernameByID :exec
 UPDATE users SET username = ? WHERE idusers = ?
 `
@@ -370,30 +384,36 @@ func (q *Queries) SystemInsertUser(ctx context.Context, username sql.NullString)
 	return q.db.ExecContext(ctx, systemInsertUser, username)
 }
 
-const updatePublicProfileEnabledAtByUserID = `-- name: UpdatePublicProfileEnabledAtByUserID :exec
-UPDATE users SET public_profile_enabled_at = ? WHERE idusers = ?
+const updatePublicProfileEnabledAtForUser = `-- name: UpdatePublicProfileEnabledAtForUser :exec
+UPDATE users u
+SET public_profile_enabled_at = ?
+WHERE u.idusers = ?
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='users'
+        AND g.item='public_profile'
+        AND g.action='post'
+        AND g.active=1
+        AND (g.item_id = u.idusers OR g.item_id IS NULL)
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (
+            SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+        ))
+  )
 `
 
-type UpdatePublicProfileEnabledAtByUserIDParams struct {
-	PublicProfileEnabledAt sql.NullTime
-	Idusers                int32
+type UpdatePublicProfileEnabledAtForUserParams struct {
+	EnabledAt sql.NullTime
+	UserID    int32
+	GranteeID sql.NullInt32
 }
 
-func (q *Queries) UpdatePublicProfileEnabledAtByUserID(ctx context.Context, arg UpdatePublicProfileEnabledAtByUserIDParams) error {
-	_, err := q.db.ExecContext(ctx, updatePublicProfileEnabledAtByUserID, arg.PublicProfileEnabledAt, arg.Idusers)
-	return err
-}
-
-const updateUserEmail = `-- name: UpdateUserEmail :exec
-UPDATE user_emails SET email = ? WHERE user_id = ?
-`
-
-type UpdateUserEmailParams struct {
-	Email  string
-	UserID int32
-}
-
-func (q *Queries) UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams) error {
-	_, err := q.db.ExecContext(ctx, updateUserEmail, arg.Email, arg.UserID)
+func (q *Queries) UpdatePublicProfileEnabledAtForUser(ctx context.Context, arg UpdatePublicProfileEnabledAtForUserParams) error {
+	_, err := q.db.ExecContext(ctx, updatePublicProfileEnabledAtForUser,
+		arg.EnabledAt,
+		arg.UserID,
+		arg.GranteeID,
+		arg.UserID,
+	)
 	return err
 }

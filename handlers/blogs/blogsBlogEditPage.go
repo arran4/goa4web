@@ -45,16 +45,16 @@ func (EditBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := cd.Queries()
 	row := cd.CurrentBlogLoaded()
 
-	if err = queries.UpdateBlogEntry(r.Context(), db.UpdateBlogEntryParams{
-		BlogID:             row.Idblogs,
-		ItemID:             sql.NullInt32{Int32: row.Idblogs, Valid: true},
-		LanguageIdlanguage: int32(languageId),
+	if err = queries.UpdateBlogEntryForWriter(r.Context(), db.UpdateBlogEntryForWriterParams{
+		EntryID:      row.Idblogs,
+		GrantEntryID: sql.NullInt32{Int32: row.Idblogs, Valid: true},
+		LanguageID:   int32(languageId),
 		Blog: sql.NullString{
 			String: text,
 			Valid:  true,
 		},
-		UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-		ListerID: cd.UserID,
+		GranteeID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		WriterID:  cd.UserID,
 	}); err != nil {
 		return fmt.Errorf("update blog fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

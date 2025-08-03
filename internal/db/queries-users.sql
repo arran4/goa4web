@@ -55,7 +55,7 @@ JOIN user_roles ur ON ur.users_idusers = u.idusers
 JOIN roles r ON ur.role_id = r.id
 WHERE r.is_admin = 1;
 
--- name: UpdateUserEmail :exec
+-- name: AdminUpdateUserEmail :exec
 UPDATE user_emails SET email = ? WHERE user_id = ?;
 
 -- name: AdminListPendingUsers :many
@@ -86,8 +86,22 @@ SELECT idusers, username
 FROM users
 WHERE idusers IN (sqlc.slice('ids'));
 
--- name: UpdatePublicProfileEnabledAtByUserID :exec
-UPDATE users SET public_profile_enabled_at = ? WHERE idusers = ?;
+-- name: UpdatePublicProfileEnabledAtForUser :exec
+UPDATE users u
+SET public_profile_enabled_at = sqlc.arg(enabled_at)
+WHERE u.idusers = sqlc.arg(user_id)
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='users'
+        AND g.item='public_profile'
+        AND g.action='post'
+        AND g.active=1
+        AND (g.item_id = u.idusers OR g.item_id IS NULL)
+        AND (g.user_id = sqlc.arg(grantee_id) OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (
+            SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(user_id)
+        ))
+  );
 
 -- name: AdminDeleteUserByID :exec
 DELETE FROM users WHERE idusers = ?;

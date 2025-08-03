@@ -89,6 +89,29 @@ func (q *Queries) AdminListBoards(ctx context.Context, arg AdminListBoardsParams
 	return items, nil
 }
 
+const adminUpdateImageBoard = `-- name: AdminUpdateImageBoard :exec
+UPDATE imageboard SET title = ?, description = ?, imageboard_idimageboard = ?, approval_required = ? WHERE idimageboard = ?
+`
+
+type AdminUpdateImageBoardParams struct {
+	Title                  sql.NullString
+	Description            sql.NullString
+	ImageboardIdimageboard int32
+	ApprovalRequired       bool
+	Idimageboard           int32
+}
+
+func (q *Queries) AdminUpdateImageBoard(ctx context.Context, arg AdminUpdateImageBoardParams) error {
+	_, err := q.db.ExecContext(ctx, adminUpdateImageBoard,
+		arg.Title,
+		arg.Description,
+		arg.ImageboardIdimageboard,
+		arg.ApprovalRequired,
+		arg.Idimageboard,
+	)
+	return err
+}
+
 const createImagePostForPoster = `-- name: CreateImagePostForPoster :execlastid
 INSERT INTO imagepost (
     imageboard_idimageboard,
@@ -763,6 +786,20 @@ func (q *Queries) SetImagePostLastIndex(ctx context.Context, idimagepost int32) 
 	return err
 }
 
+const systemAssignImagePostThreadID = `-- name: SystemAssignImagePostThreadID :exec
+UPDATE imagepost SET forumthread_id = ? WHERE idimagepost = ?
+`
+
+type SystemAssignImagePostThreadIDParams struct {
+	ForumthreadID int32
+	Idimagepost   int32
+}
+
+func (q *Queries) SystemAssignImagePostThreadID(ctx context.Context, arg SystemAssignImagePostThreadIDParams) error {
+	_, err := q.db.ExecContext(ctx, systemAssignImagePostThreadID, arg.ForumthreadID, arg.Idimagepost)
+	return err
+}
+
 const systemListBoardsByParentID = `-- name: SystemListBoardsByParentID :many
 SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required
 FROM imageboard b
@@ -803,41 +840,4 @@ func (q *Queries) SystemListBoardsByParentID(ctx context.Context, arg SystemList
 		return nil, err
 	}
 	return items, nil
-}
-
-const updateImageBoard = `-- name: UpdateImageBoard :exec
-UPDATE imageboard SET title = ?, description = ?, imageboard_idimageboard = ?, approval_required = ? WHERE idimageboard = ?
-`
-
-type UpdateImageBoardParams struct {
-	Title                  sql.NullString
-	Description            sql.NullString
-	ImageboardIdimageboard int32
-	ApprovalRequired       bool
-	Idimageboard           int32
-}
-
-func (q *Queries) UpdateImageBoard(ctx context.Context, arg UpdateImageBoardParams) error {
-	_, err := q.db.ExecContext(ctx, updateImageBoard,
-		arg.Title,
-		arg.Description,
-		arg.ImageboardIdimageboard,
-		arg.ApprovalRequired,
-		arg.Idimageboard,
-	)
-	return err
-}
-
-const updateImagePostByIdForumThreadId = `-- name: UpdateImagePostByIdForumThreadId :exec
-UPDATE imagepost SET forumthread_id = ? WHERE idimagepost = ?
-`
-
-type UpdateImagePostByIdForumThreadIdParams struct {
-	ForumthreadID int32
-	Idimagepost   int32
-}
-
-func (q *Queries) UpdateImagePostByIdForumThreadId(ctx context.Context, arg UpdateImagePostByIdForumThreadIdParams) error {
-	_, err := q.db.ExecContext(ctx, updateImagePostByIdForumThreadId, arg.ForumthreadID, arg.Idimagepost)
-	return err
 }

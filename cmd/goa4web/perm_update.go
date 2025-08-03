@@ -38,7 +38,7 @@ func (c *permUpdateCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := db.New(conn)
-	if err := queries.UpdatePermission(ctx, db.UpdatePermissionParams{
+	if err := queries.AdminUpdateUserRole(ctx, db.AdminUpdateUserRoleParams{
 		IduserRoles: int32(c.ID),
 		Name:        c.Role,
 	}); err != nil {

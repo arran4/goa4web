@@ -833,10 +833,11 @@ func (q *Queries) SystemSetBlogLastIndex(ctx context.Context, id int32) error {
 	return err
 }
 
-const updateBlogEntry = `-- name: UpdateBlogEntry :exec
-UPDATE blogs
+const updateBlogEntryForWriter = `-- name: UpdateBlogEntryForWriter :exec
+UPDATE blogs b
 SET language_idlanguage = ?, blog = ?
-WHERE idblogs = ?
+WHERE b.idblogs = ?
+  AND b.users_idusers = ?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section = 'blogs'
@@ -851,23 +852,24 @@ WHERE idblogs = ?
   )
 `
 
-type UpdateBlogEntryParams struct {
-	LanguageIdlanguage int32
-	Blog               sql.NullString
-	BlogID             int32
-	ItemID             sql.NullInt32
-	UserID             sql.NullInt32
-	ListerID           int32
+type UpdateBlogEntryForWriterParams struct {
+	LanguageID   int32
+	Blog         sql.NullString
+	EntryID      int32
+	WriterID     int32
+	GrantEntryID sql.NullInt32
+	GranteeID    sql.NullInt32
 }
 
-func (q *Queries) UpdateBlogEntry(ctx context.Context, arg UpdateBlogEntryParams) error {
-	_, err := q.db.ExecContext(ctx, updateBlogEntry,
-		arg.LanguageIdlanguage,
+func (q *Queries) UpdateBlogEntryForWriter(ctx context.Context, arg UpdateBlogEntryForWriterParams) error {
+	_, err := q.db.ExecContext(ctx, updateBlogEntryForWriter,
+		arg.LanguageID,
 		arg.Blog,
-		arg.BlogID,
-		arg.ItemID,
-		arg.UserID,
-		arg.ListerID,
+		arg.EntryID,
+		arg.WriterID,
+		arg.GrantEntryID,
+		arg.GranteeID,
+		arg.WriterID,
 	)
 	return err
 }

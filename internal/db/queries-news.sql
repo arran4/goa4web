@@ -14,8 +14,23 @@ WHERE EXISTS (
       ))
 );
 
--- name: UpdateNewsPost :exec
-UPDATE site_news SET news = ?, language_idlanguage = ? WHERE idsiteNews = ?;
+-- name: UpdateNewsPostForWriter :exec
+UPDATE site_news s
+SET news = sqlc.arg(news), language_idlanguage = sqlc.arg(language_id)
+WHERE s.idsiteNews = sqlc.arg(post_id)
+  AND s.users_idusers = sqlc.arg(writer_id)
+  AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='news'
+      AND g.item='post'
+      AND g.action='post'
+      AND g.active=1
+      AND (g.item_id = sqlc.arg(grant_post_id) OR g.item_id IS NULL)
+      AND (g.user_id = sqlc.arg(grantee_id) OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (
+          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(writer_id)
+      ))
+  );
 
 -- name: DeactivateNewsPost :exec
 UPDATE site_news SET deleted_at = NOW() WHERE idsiteNews = ?;

@@ -530,19 +530,43 @@ func (q *Queries) SetCommentLastIndex(ctx context.Context, idcomments int32) err
 	return err
 }
 
-const updateComment = `-- name: UpdateComment :exec
-UPDATE comments
+const updateCommentForCommenter = `-- name: UpdateCommentForCommenter :exec
+UPDATE comments c
 SET language_idlanguage = ?, text = ?
-WHERE idcomments = ?
+WHERE c.idcomments = ?
+  AND c.users_idusers = ?
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='forum'
+        AND (g.item='comment' OR g.item IS NULL)
+        AND g.action='post'
+        AND g.active=1
+        AND (g.item_id = ? OR g.item_id IS NULL)
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (
+            SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+        ))
+  )
 `
 
-type UpdateCommentParams struct {
-	LanguageIdlanguage int32
-	Text               sql.NullString
-	Idcomments         int32
+type UpdateCommentForCommenterParams struct {
+	LanguageID     int32
+	Text           sql.NullString
+	CommentID      int32
+	CommenterID    int32
+	GrantCommentID sql.NullInt32
+	GranteeID      sql.NullInt32
 }
 
-func (q *Queries) UpdateComment(ctx context.Context, arg UpdateCommentParams) error {
-	_, err := q.db.ExecContext(ctx, updateComment, arg.LanguageIdlanguage, arg.Text, arg.Idcomments)
+func (q *Queries) UpdateCommentForCommenter(ctx context.Context, arg UpdateCommentForCommenterParams) error {
+	_, err := q.db.ExecContext(ctx, updateCommentForCommenter,
+		arg.LanguageID,
+		arg.Text,
+		arg.CommentID,
+		arg.CommenterID,
+		arg.GrantCommentID,
+		arg.GranteeID,
+		arg.CommenterID,
+	)
 	return err
 }

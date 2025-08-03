@@ -126,7 +126,7 @@ JOIN users u ON u.idusers = ur.users_idusers
 JOIN roles r ON ur.role_id = r.id
 WHERE (sqlc.arg(username) = '' OR u.username = sqlc.arg(username));
 
--- name: UpdatePermission :exec
+-- name: AdminUpdateUserRole :exec
 UPDATE user_roles SET role_id = (SELECT id FROM roles WHERE name = ?) WHERE iduser_roles = ?;
 -- name: ListUsersWithRoles :many
 SELECT u.idusers, u.username, GROUP_CONCAT(r.name ORDER BY r.name) AS roles

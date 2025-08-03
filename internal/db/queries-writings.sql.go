@@ -1177,29 +1177,51 @@ func (q *Queries) SystemListWritingCategories(ctx context.Context, arg SystemLis
 	return items, nil
 }
 
-const updateWriting = `-- name: UpdateWriting :exec
-UPDATE writing
-SET title = ?, abstract = ?, writing = ?, private = ?, language_idlanguage = ?
-WHERE idwriting = ?
+const updateWritingForWriter = `-- name: UpdateWritingForWriter :exec
+UPDATE writing w
+SET title = ?,
+    abstract = ?,
+    writing = ?,
+    private = ?,
+    language_idlanguage = ?
+WHERE w.idwriting = ?
+  AND w.users_idusers = ?
+  AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='writing'
+      AND (g.item='article' OR g.item IS NULL)
+      AND g.action='post'
+      AND g.active=1
+      AND (g.item_id = w.idwriting OR g.item_id IS NULL)
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (
+          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+      ))
+  )
 `
 
-type UpdateWritingParams struct {
-	Title              sql.NullString
-	Abstract           sql.NullString
-	Writing            sql.NullString
-	Private            sql.NullBool
-	LanguageIdlanguage int32
-	Idwriting          int32
+type UpdateWritingForWriterParams struct {
+	Title      sql.NullString
+	Abstract   sql.NullString
+	Content    sql.NullString
+	Private    sql.NullBool
+	LanguageID int32
+	WritingID  int32
+	WriterID   int32
+	GranteeID  sql.NullInt32
 }
 
-func (q *Queries) UpdateWriting(ctx context.Context, arg UpdateWritingParams) error {
-	_, err := q.db.ExecContext(ctx, updateWriting,
+func (q *Queries) UpdateWritingForWriter(ctx context.Context, arg UpdateWritingForWriterParams) error {
+	_, err := q.db.ExecContext(ctx, updateWritingForWriter,
 		arg.Title,
 		arg.Abstract,
-		arg.Writing,
+		arg.Content,
 		arg.Private,
-		arg.LanguageIdlanguage,
-		arg.Idwriting,
+		arg.LanguageID,
+		arg.WritingID,
+		arg.WriterID,
+		arg.GranteeID,
+		arg.WriterID,
 	)
 	return err
 }

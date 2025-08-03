@@ -77,14 +77,13 @@ func (editLinkTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
 
-	if err := queries.UpdateLinkerItem(r.Context(), db.UpdateLinkerItemParams{
+	if err := queries.AdminUpdateLinkerItem(r.Context(), db.AdminUpdateLinkerItemParams{
 		Title:              sql.NullString{Valid: true, String: title},
 		Url:                sql.NullString{Valid: true, String: URL},
 		Description:        sql.NullString{Valid: true, String: desc},
 		LinkerCategoryID:   int32(cat),
 		LanguageIdlanguage: int32(lang),
 		Idlinker:           int32(id),
-		AdminID:            cd.UserID,
 	}); err != nil {
 		return fmt.Errorf("update linker item fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

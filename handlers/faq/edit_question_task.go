@@ -45,12 +45,11 @@ func (EditQuestionTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	if err := queries.UpdateFAQQuestionAnswer(r.Context(), db.UpdateFAQQuestionAnswerParams{
+	if err := queries.AdminUpdateFAQQuestionAnswer(r.Context(), db.AdminUpdateFAQQuestionAnswerParams{
 		Answer:                       sql.NullString{Valid: true, String: answer},
 		Question:                     sql.NullString{Valid: true, String: question},
 		FaqcategoriesIdfaqcategories: int32(category),
 		Idfaq:                        int32(faq),
-		ViewerID:                     cd.UserID,
 	}); err != nil {
 		return fmt.Errorf("update faq question fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

@@ -41,13 +41,13 @@ func (c *blogUpdateCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := db.New(conn)
-	err = queries.UpdateBlogEntry(ctx, db.UpdateBlogEntryParams{
-		LanguageIdlanguage: int32(c.LangID),
-		Blog:               sql.NullString{String: c.Text, Valid: c.Text != ""},
-		BlogID:             int32(c.ID),
-		ItemID:             sql.NullInt32{Int32: int32(c.ID), Valid: true},
-		UserID:             sql.NullInt32{},
-		ListerID:           0,
+	err = queries.UpdateBlogEntryForWriter(ctx, db.UpdateBlogEntryForWriterParams{
+		LanguageID:   int32(c.LangID),
+		Blog:         sql.NullString{String: c.Text, Valid: c.Text != ""},
+		EntryID:      int32(c.ID),
+		WriterID:     0,
+		GrantEntryID: sql.NullInt32{Int32: int32(c.ID), Valid: true},
+		GranteeID:    sql.NullInt32{},
 	})
 	if err != nil {
 		return fmt.Errorf("update blog: %w", err)

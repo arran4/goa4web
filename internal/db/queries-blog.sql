@@ -307,13 +307,6 @@ FROM blogs b
 LEFT JOIN users u ON b.users_idusers = u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
 WHERE b.users_idusers = sqlc.arg(author_id)
-  AND EXISTS (
-      SELECT 1
-      FROM user_roles ur
-      JOIN roles r ON ur.role_id = r.id
-      WHERE ur.users_idusers = sqlc.arg(lister_id)
-        AND r.is_admin = 1
-  )
 ORDER BY b.written DESC;
 
 -- name: SystemSetBlogLastIndex :exec

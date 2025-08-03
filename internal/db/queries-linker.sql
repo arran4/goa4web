@@ -5,12 +5,7 @@ WHERE idlinkerCategory = ?;
 
 -- name: AdminRenameLinkerCategory :exec
 UPDATE linker_category SET title = ?, position = ?
-WHERE idlinkerCategory = ?
-  AND EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.users_idusers = sqlc.arg(admin_id) AND r.is_admin = 1
-  );
+WHERE idlinkerCategory = ?;
 
 -- name: AdminCreateLinkerCategory :exec
 INSERT INTO linker_category (title, position) VALUES (sqlc.arg(title), sqlc.arg(position));
@@ -97,12 +92,7 @@ JOIN linker_category c ON l.linker_category_id = c.idlinkerCategory
 INSERT INTO linker (users_idusers, linker_category_id, language_idlanguage, title, `url`, description)
 SELECT l.users_idusers, l.linker_category_id, l.language_idlanguage, l.title, l.url, l.description
 FROM linker_queue l
-WHERE l.idlinkerQueue = ?
-  AND EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.users_idusers = sqlc.arg(admin_id) AND r.is_admin = 1
-  );
+WHERE l.idlinkerQueue = ?;
 
 -- name: AdminCreateLinkerItem :exec
 INSERT INTO linker (users_idusers, linker_category_id, title, url, description, listed)

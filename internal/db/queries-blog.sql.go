@@ -18,20 +18,8 @@ FROM blogs b
 LEFT JOIN users u ON b.users_idusers = u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
 WHERE b.users_idusers = ?
-  AND EXISTS (
-      SELECT 1
-      FROM user_roles ur
-      JOIN roles r ON ur.role_id = r.id
-      WHERE ur.users_idusers = ?
-        AND r.is_admin = 1
-  )
 ORDER BY b.written DESC
 `
-
-type AdminGetAllBlogEntriesByUserParams struct {
-	AuthorID int32
-	ListerID int32
-}
 
 type AdminGetAllBlogEntriesByUserRow struct {
 	Idblogs            int32
@@ -44,8 +32,8 @@ type AdminGetAllBlogEntriesByUserRow struct {
 	Comments           int32
 }
 
-func (q *Queries) AdminGetAllBlogEntriesByUser(ctx context.Context, arg AdminGetAllBlogEntriesByUserParams) ([]*AdminGetAllBlogEntriesByUserRow, error) {
-	rows, err := q.db.QueryContext(ctx, adminGetAllBlogEntriesByUser, arg.AuthorID, arg.ListerID)
+func (q *Queries) AdminGetAllBlogEntriesByUser(ctx context.Context, authorID int32) ([]*AdminGetAllBlogEntriesByUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminGetAllBlogEntriesByUser, authorID)
 	if err != nil {
 		return nil, err
 	}

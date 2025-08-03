@@ -170,10 +170,5 @@ FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id = th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
 LEFT JOIN users u ON u.idusers = c.users_idusers
-WHERE EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.users_idusers = sqlc.arg('viewer_id') AND r.is_admin = 1
-)
 ORDER BY c.written DESC
 LIMIT ? OFFSET ?;

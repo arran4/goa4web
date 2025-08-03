@@ -68,7 +68,7 @@ type Querier interface {
 	AdminDemoteAnnouncement(ctx context.Context, id int32) error
 	AdminForumCategoryThreadCounts(ctx context.Context) ([]*AdminForumCategoryThreadCountsRow, error)
 	AdminForumTopicThreadCounts(ctx context.Context) ([]*AdminForumTopicThreadCountsRow, error)
-	AdminGetAllBlogEntriesByUser(ctx context.Context, arg AdminGetAllBlogEntriesByUserParams) ([]*AdminGetAllBlogEntriesByUserRow, error)
+	AdminGetAllBlogEntriesByUser(ctx context.Context, authorID int32) ([]*AdminGetAllBlogEntriesByUserRow, error)
 	AdminGetAllCommentsByUser(ctx context.Context, userID int32) ([]*AdminGetAllCommentsByUserRow, error)
 	AdminGetAllWritingsByAuthor(ctx context.Context, authorID int32) ([]*AdminGetAllWritingsByAuthorRow, error)
 	AdminGetDashboardStats(ctx context.Context) (*AdminGetDashboardStatsRow, error)
@@ -89,7 +89,7 @@ type Querier interface {
 	AdminInsertBannedIp(ctx context.Context, arg AdminInsertBannedIpParams) error
 	// AdminInsertLanguage adds a new language returning a result.
 	AdminInsertLanguage(ctx context.Context, nameof sql.NullString) (sql.Result, error)
-	AdminInsertQueuedLinkFromQueue(ctx context.Context, arg AdminInsertQueuedLinkFromQueueParams) (int64, error)
+	AdminInsertQueuedLinkFromQueue(ctx context.Context, idlinkerqueue int32) (int64, error)
 	AdminInsertRequestComment(ctx context.Context, arg AdminInsertRequestCommentParams) error
 	AdminInsertRequestQueue(ctx context.Context, arg AdminInsertRequestQueueParams) (sql.Result, error)
 	AdminInsertWritingCategory(ctx context.Context, arg AdminInsertWritingCategoryParams) error

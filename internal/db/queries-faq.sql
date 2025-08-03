@@ -46,13 +46,7 @@ FROM faq;
 -- name: AdminRenameFAQCategory :exec
 UPDATE faq_categories
 SET name = ?
-WHERE idfaqCategories = ?
-  AND EXISTS (
-      SELECT 1 FROM user_roles ur
-      JOIN roles r ON ur.role_id = r.id
-      WHERE ur.users_idusers = sqlc.arg(viewer_id)
-        AND r.is_admin = 1
-  );
+WHERE idfaqCategories = ?;
 
 -- name: AdminDeleteFAQCategory :exec
 UPDATE faq_categories SET deleted_at = NOW()

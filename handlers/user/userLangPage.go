@@ -121,17 +121,17 @@ func updateDefaultLanguage(r *http.Request, queries db.Querier, uid int32) error
 	}
 
 	if errors.Is(err, sql.ErrNoRows) {
-		return queries.InsertPreference(r.Context(), db.InsertPreferenceParams{
-			LanguageIdlanguage: int32(langID),
-			UsersIdusers:       uid,
-			PageSize:           int32(cd.Config.PageSizeDefault),
+		return queries.InsertPreferenceForLister(r.Context(), db.InsertPreferenceForListerParams{
+			LanguageID: int32(langID),
+			ListerID:   uid,
+			PageSize:   int32(cd.Config.PageSizeDefault),
 		})
 	}
 
 	pref.LanguageIdlanguage = int32(langID)
-	return queries.UpdatePreference(r.Context(), db.UpdatePreferenceParams{
-		LanguageIdlanguage: pref.LanguageIdlanguage,
-		UsersIdusers:       uid,
-		PageSize:           pref.PageSize,
+	return queries.UpdatePreferenceForLister(r.Context(), db.UpdatePreferenceForListerParams{
+		LanguageID: pref.LanguageIdlanguage,
+		ListerID:   uid,
+		PageSize:   pref.PageSize,
 	})
 }

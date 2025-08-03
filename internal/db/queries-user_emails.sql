@@ -2,15 +2,15 @@
 INSERT INTO user_emails (user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority)
 VALUES (?, ?, ?, ?, ?, ?);
 
--- name: GetUserEmailsByUserID :many
+-- name: ListUserEmailsForLister :many
 WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT ue.id, ue.user_id, ue.email, ue.verified_at, ue.last_verification_code, ue.verification_expires_at, ue.notification_priority
 FROM user_emails ue
 WHERE ue.user_id = sqlc.arg(user_id)
   AND (
-      sqlc.arg(viewer_id) = ue.user_id
+      sqlc.arg(lister_id) = ue.user_id
       OR EXISTS (
           SELECT 1
           FROM role_ids ri
@@ -19,16 +19,16 @@ WHERE ue.user_id = sqlc.arg(user_id)
       )
   );
 
--- name: GetUserEmailsByUserIDAdmin :many
+-- name: AdminListUserEmails :many
 SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority
 FROM user_emails
-WHERE user_id = ?
+WHERE user_id = sqlc.arg(user_id)
 ORDER BY notification_priority DESC, id;
 
--- name: ListVerifiedEmailsByUserID :many
+-- name: SystemListVerifiedEmailsByUserID :many
 SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority
 FROM user_emails
-WHERE user_id = ? AND verified_at IS NOT NULL
+WHERE user_id = sqlc.arg(user_id) AND verified_at IS NOT NULL
 ORDER BY notification_priority DESC, id;
 
 

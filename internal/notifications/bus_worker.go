@@ -149,7 +149,7 @@ type NotificationData struct {
 func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp SelfNotificationTemplateProvider) error {
 	if et := tp.SelfEmailTemplate(); et != nil {
 		if b, ok := evt.Task.(SelfEmailBroadcaster); ok && b.SelfEmailBroadcast() {
-			emails, err := n.Queries.ListVerifiedEmailsByUserID(ctx, evt.UserID)
+			emails, err := n.Queries.SystemListVerifiedEmailsByUserID(ctx, evt.UserID)
 			if err == nil {
 				for _, e := range emails {
 					if err := n.renderAndQueueEmailFromTemplates(ctx, &evt.UserID, e.Email, et, evt.Data); err != nil {
@@ -322,7 +322,7 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 func (n *Notifier) handleAutoSubscribe(ctx context.Context, evt eventbus.TaskEvent, tp AutoSubscribeProvider) error {
 	var auto bool
 	var email bool
-	pref, err := n.Queries.GetPreferenceByUserID(ctx, evt.UserID)
+	pref, err := n.Queries.GetPreferenceForLister(ctx, evt.UserID)
 	if err != nil {
 		return fmt.Errorf("get preference by user_id: %w", err)
 	}

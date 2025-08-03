@@ -36,7 +36,7 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 	user, _ := cd.CurrentUser()
 	pref, _ := cd.Preference()
 
-	emails, _ := queries.GetUserEmailsByUserID(r.Context(), db.GetUserEmailsByUserIDParams{UserID: cd.UserID, ViewerID: cd.UserID})
+	emails, _ := queries.ListUserEmailsForLister(r.Context(), db.ListUserEmailsForListerParams{UserID: cd.UserID, ListerID: cd.UserID})
 	var verified, unverified []*db.UserEmail
 	for _, e := range emails {
 		if e.VerifiedAt.Valid {

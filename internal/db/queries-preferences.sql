@@ -1,25 +1,25 @@
--- name: UpdateEmailForumUpdatesByUserID :exec
+-- name: UpdateEmailForumUpdatesForLister :exec
 UPDATE preferences
-SET emailforumupdates = ?
-WHERE users_idusers = ?;
+SET emailforumupdates = sqlc.arg(email_forum_updates)
+WHERE users_idusers = sqlc.arg(lister_id);
 
--- name: InsertEmailPreference :exec
+-- name: InsertEmailPreferenceForLister :exec
 INSERT INTO preferences (emailforumupdates, auto_subscribe_replies, users_idusers)
-VALUES (?, ?, ?);
+VALUES (sqlc.arg(email_forum_updates), sqlc.arg(auto_subscribe_replies), sqlc.arg(lister_id));
 
--- name: UpdateAutoSubscribeRepliesByUserID :exec
+-- name: UpdateAutoSubscribeRepliesForLister :exec
 UPDATE preferences
-SET auto_subscribe_replies = ?
-WHERE users_idusers = ?;
+SET auto_subscribe_replies = sqlc.arg(auto_subscribe_replies)
+WHERE users_idusers = sqlc.arg(lister_id);
 
--- name: GetPreferenceByUserID :one
+-- name: GetPreferenceForLister :one
 SELECT idpreferences, language_idlanguage, users_idusers, emailforumupdates, page_size, auto_subscribe_replies
 FROM preferences
-WHERE users_idusers = ?;
+WHERE users_idusers = sqlc.arg(lister_id);
 
--- name: InsertPreference :exec
+-- name: InsertPreferenceForLister :exec
 INSERT INTO preferences (language_idlanguage, users_idusers, page_size)
-VALUES (?, ?, ?);
+VALUES (sqlc.arg(language_id), sqlc.arg(lister_id), sqlc.arg(page_size));
 
--- name: UpdatePreference :exec
-UPDATE preferences SET language_idlanguage = ?, page_size = ? WHERE users_idusers = ?;
+-- name: UpdatePreferenceForLister :exec
+UPDATE preferences SET language_idlanguage = sqlc.arg(language_id), page_size = sqlc.arg(page_size) WHERE users_idusers = sqlc.arg(lister_id);

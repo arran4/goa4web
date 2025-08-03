@@ -565,7 +565,7 @@ func (cd *CoreData) Preference() (*db.Preference, error) {
 		if cd.UserID == 0 || cd.queries == nil {
 			return nil, nil
 		}
-		return cd.queries.GetPreferenceByUserID(cd.ctx, cd.UserID)
+		return cd.queries.GetPreferenceForLister(cd.ctx, cd.UserID)
 	})
 }
 

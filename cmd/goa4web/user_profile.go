@@ -56,9 +56,9 @@ func (c *userProfileCmd) Run() error {
 	fmt.Printf("ID: %d\nUsername: %s\n", c.ID, u.Username.String)
 	var emails []*db.UserEmail
 	if c.UserID == 0 {
-		emails, _ = queries.GetUserEmailsByUserIDAdmin(ctx, int32(c.ID))
+		emails, _ = queries.AdminListUserEmails(ctx, int32(c.ID))
 	} else {
-		emails, _ = queries.GetUserEmailsByUserID(ctx, db.GetUserEmailsByUserIDParams{UserID: int32(c.ID), ViewerID: int32(c.UserID)})
+		emails, _ = queries.ListUserEmailsForLister(ctx, db.ListUserEmailsForListerParams{UserID: int32(c.ID), ListerID: int32(c.UserID)})
 	}
 	for _, e := range emails {
 		fmt.Printf("Email: %s verified:%t priority:%d\n", e.Email, e.VerifiedAt.Valid, e.NotificationPriority)

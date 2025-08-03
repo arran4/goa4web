@@ -11,19 +11,38 @@ import (
 	"strings"
 )
 
-const createNewsPost = `-- name: CreateNewsPost :execlastid
+const createNewsPostForWriter = `-- name: CreateNewsPostForWriter :execlastid
 INSERT INTO site_news (news, users_idusers, occurred, language_idlanguage)
-VALUES (?, ?, NOW(), ?)
+SELECT ?, ?, NOW(), ?
+WHERE EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='news'
+      AND g.item='post'
+      AND g.action='post'
+      AND g.active=1
+      AND (g.item_id = 0 OR g.item_id IS NULL)
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (
+          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+      ))
+)
 `
 
-type CreateNewsPostParams struct {
-	News               sql.NullString
-	UsersIdusers       int32
-	LanguageIdlanguage int32
+type CreateNewsPostForWriterParams struct {
+	News       sql.NullString
+	WriterID   int32
+	LanguageID int32
+	GranteeID  sql.NullInt32
 }
 
-func (q *Queries) CreateNewsPost(ctx context.Context, arg CreateNewsPostParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, createNewsPost, arg.News, arg.UsersIdusers, arg.LanguageIdlanguage)
+func (q *Queries) CreateNewsPostForWriter(ctx context.Context, arg CreateNewsPostForWriterParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, createNewsPostForWriter,
+		arg.News,
+		arg.WriterID,
+		arg.LanguageID,
+		arg.GranteeID,
+		arg.WriterID,
+	)
 	if err != nil {
 		return 0, err
 	}

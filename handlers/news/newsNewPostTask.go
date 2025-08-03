@@ -81,20 +81,18 @@ func (NewPostTask) Action(w http.ResponseWriter, r *http.Request) any {
 		handlers.TaskErrorAcknowledgementPage(w, r)
 		return nil
 	}
-	id, err := queries.CreateNewsPost(r.Context(), db.CreateNewsPostParams{
-		LanguageIdlanguage: int32(languageId),
-		News: sql.NullString{
-			String: text,
-			Valid:  true,
-		},
-		UsersIdusers: uid,
+	id, err := queries.CreateNewsPostForWriter(r.Context(), db.CreateNewsPostForWriterParams{
+		LanguageID: int32(languageId),
+		News:       sql.NullString{String: text, Valid: true},
+		WriterID:   uid,
+		GranteeID:  sql.NullInt32{Int32: uid, Valid: true},
 	})
 	if err != nil {
 		return fmt.Errorf("create news post fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	// give the author edit rights on the new post
-	if _, err := queries.CreateGrant(r.Context(), db.CreateGrantParams{
+	if _, err := queries.AdminCreateGrant(r.Context(), db.AdminCreateGrantParams{
 		UserID:   sql.NullInt32{Int32: uid, Valid: true},
 		RoleID:   sql.NullInt32{},
 		Section:  "news",

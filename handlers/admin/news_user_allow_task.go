@@ -35,7 +35,7 @@ func (NewsUserAllowTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("get user by username fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	if err := queries.CreateUserRole(r.Context(), db.CreateUserRoleParams{
+	if err := queries.SystemCreateUserRole(r.Context(), db.SystemCreateUserRoleParams{
 		UsersIdusers: u.Idusers,
 		Name:         role,
 	}); err != nil {

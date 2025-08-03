@@ -85,13 +85,12 @@ func (addTask) Action(w http.ResponseWriter, r *http.Request) any {
 	description := r.PostFormValue("description")
 	category, _ := strconv.Atoi(r.PostFormValue("category"))
 
-	if err := queries.CreateLinkerItem(r.Context(), db.CreateLinkerItemParams{
+	if err := queries.AdminCreateLinkerItem(r.Context(), db.AdminCreateLinkerItemParams{
 		UsersIdusers:     uid,
 		LinkerCategoryID: int32(category),
 		Title:            sql.NullString{Valid: true, String: title},
 		Url:              sql.NullString{Valid: true, String: url},
 		Description:      sql.NullString{Valid: true, String: description},
-		AdminID:          cd.UserID,
 	}); err != nil {
 		return fmt.Errorf("create linker item fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

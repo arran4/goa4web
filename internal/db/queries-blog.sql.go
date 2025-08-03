@@ -76,7 +76,7 @@ func (q *Queries) AdminGetAllBlogEntriesByUser(ctx context.Context, arg AdminGet
 	return items, nil
 }
 
-const createBlogEntry = `-- name: CreateBlogEntry :execlastid
+const createBlogEntryForWriter = `-- name: CreateBlogEntryForWriter :execlastid
 INSERT INTO blogs (users_idusers, language_idlanguage, blog, written)
 SELECT ?, ?, ?, CURRENT_TIMESTAMP
 WHERE EXISTS (
@@ -93,7 +93,7 @@ WHERE EXISTS (
 )
 `
 
-type CreateBlogEntryParams struct {
+type CreateBlogEntryForWriterParams struct {
 	UsersIdusers       int32
 	LanguageIdlanguage int32
 	Blog               sql.NullString
@@ -101,8 +101,8 @@ type CreateBlogEntryParams struct {
 	ListerID           int32
 }
 
-func (q *Queries) CreateBlogEntry(ctx context.Context, arg CreateBlogEntryParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, createBlogEntry,
+func (q *Queries) CreateBlogEntryForWriter(ctx context.Context, arg CreateBlogEntryForWriterParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, createBlogEntryForWriter,
 		arg.UsersIdusers,
 		arg.LanguageIdlanguage,
 		arg.Blog,

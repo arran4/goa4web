@@ -47,7 +47,7 @@ func (c *grantAddCmd) Run() error {
 	}
 	ctx := context.Background()
 	q := db.New(conn)
-	_, err = q.CreateGrant(ctx, db.CreateGrantParams{
+	_, err = q.AdminCreateGrant(ctx, db.AdminCreateGrantParams{
 		UserID:   sql.NullInt32{Int32: int32(c.User), Valid: c.User != 0},
 		RoleID:   sql.NullInt32{},
 		Section:  c.Section,

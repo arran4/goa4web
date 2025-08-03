@@ -116,12 +116,13 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok && cd != nil {
 		uid = cd.UserID
 	}
-	_, err = queries.CreateUploadedImage(r.Context(), db.CreateUploadedImageParams{
-		UsersIdusers: uid,
-		Path:         sql.NullString{String: url, Valid: true},
-		Width:        sql.NullInt32{Int32: int32(width), Valid: true},
-		Height:       sql.NullInt32{Int32: int32(height), Valid: true},
-		FileSize:     int32(size),
+	_, err = queries.CreateUploadedImageForUploader(r.Context(), db.CreateUploadedImageForUploaderParams{
+		UploaderID: uid,
+		Path:       sql.NullString{String: url, Valid: true},
+		Width:      sql.NullInt32{Int32: int32(width), Valid: true},
+		Height:     sql.NullInt32{Int32: int32(height), Valid: true},
+		FileSize:   int32(size),
+		GranteeID:  sql.NullInt32{Int32: uid, Valid: true},
 	})
 	if err != nil {
 		return fmt.Errorf("create uploaded image %w", handlers.ErrRedirectOnSamePageHandler(err))

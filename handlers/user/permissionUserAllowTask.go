@@ -54,7 +54,7 @@ func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) an
 	}
 	if u, err := queries.SystemGetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("SystemGetUserByUsername: %w", err).Error())
-	} else if err := queries.CreateUserRole(r.Context(), db.CreateUserRoleParams{
+	} else if err := queries.SystemCreateUserRole(r.Context(), db.SystemCreateUserRoleParams{
 		UsersIdusers: u.Idusers,
 		Name:         role,
 	}); err != nil {

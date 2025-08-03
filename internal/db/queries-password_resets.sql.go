@@ -11,20 +11,20 @@ import (
 	"time"
 )
 
-const createPasswordReset = `-- name: CreatePasswordReset :exec
+const createPasswordResetForUser = `-- name: CreatePasswordResetForUser :exec
 INSERT INTO pending_passwords (user_id, passwd, passwd_algorithm, verification_code)
 VALUES (?, ?, ?, ?)
 `
 
-type CreatePasswordResetParams struct {
+type CreatePasswordResetForUserParams struct {
 	UserID           int32
 	Passwd           string
 	PasswdAlgorithm  string
 	VerificationCode string
 }
 
-func (q *Queries) CreatePasswordReset(ctx context.Context, arg CreatePasswordResetParams) error {
-	_, err := q.db.ExecContext(ctx, createPasswordReset,
+func (q *Queries) CreatePasswordResetForUser(ctx context.Context, arg CreatePasswordResetForUserParams) error {
+	_, err := q.db.ExecContext(ctx, createPasswordResetForUser,
 		arg.UserID,
 		arg.Passwd,
 		arg.PasswdAlgorithm,

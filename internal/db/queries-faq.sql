@@ -58,19 +58,23 @@ WHERE idfaqCategories = ?
 UPDATE faq_categories SET deleted_at = NOW()
 WHERE idfaqCategories = ?;
 
--- name: CreateFAQCategory :exec
-INSERT INTO faq_categories (name)
-SELECT sqlc.arg(name)
-WHERE EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.users_idusers = sqlc.arg(viewer_id)
-      AND r.is_admin = 1
-);
+-- name: AdminCreateFAQCategory :exec
+INSERT INTO faq_categories (name) VALUES (sqlc.arg(name));
 
--- name: CreateFAQQuestion :exec
+-- name: CreateFAQQuestionForWriter :exec
 INSERT INTO faq (question, users_idusers, language_idlanguage)
-VALUES (?, ?, ?);
+SELECT sqlc.arg(question), sqlc.arg(writer_id), sqlc.arg(language_id)
+WHERE EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section = 'faq'
+      AND g.item = 'question'
+      AND g.action = 'post'
+      AND g.active = 1
+      AND (g.user_id = sqlc.arg(grantee_id) OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (
+          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(writer_id)
+      ))
+);
 
 -- name: InsertFAQQuestionForWriter :execresult
 INSERT INTO faq (question, answer, faqCategories_idfaqCategories, users_idusers, language_idlanguage)

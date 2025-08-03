@@ -100,7 +100,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	pt, err := queries.FindForumTopicByTitle(r.Context(), sql.NullString{String: WritingTopicName, Valid: true})
 	var ptid int32
 	if errors.Is(err, sql.ErrNoRows) {
-		ptidi, err := queries.CreateForumTopic(r.Context(), db.CreateForumTopicParams{
+		ptidi, err := queries.SystemCreateForumTopic(r.Context(), db.SystemCreateForumTopicParams{
 			ForumcategoryIdforumcategory: 0,
 			Title:                        sql.NullString{String: WritingTopicName, Valid: true},
 			Description:                  sql.NullString{String: WritingTopicDescription, Valid: true},
@@ -141,11 +141,13 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("language parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	if _, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
-		LanguageIdlanguage: int32(languageID),
-		UsersIdusers:       uid,
+	if _, err := queries.CreateCommentForCommenter(r.Context(), db.CreateCommentForCommenterParams{
+		LanguageID:         int32(languageID),
+		CommenterID:        uid,
 		ForumthreadID:      pthid,
 		Text:               sql.NullString{String: text, Valid: true},
+		GrantForumthreadID: sql.NullInt32{Int32: pthid, Valid: true},
+		GranteeID:          sql.NullInt32{Int32: uid, Valid: true},
 	}); err != nil {
 		return fmt.Errorf("create comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

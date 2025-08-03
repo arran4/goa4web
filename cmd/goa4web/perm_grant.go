@@ -53,7 +53,7 @@ func (c *permGrantCmd) Run() error {
 			return fmt.Errorf("check admin: %w", err)
 		}
 	}
-	if err := queries.CreateUserRole(ctx, db.CreateUserRoleParams{
+	if err := queries.SystemCreateUserRole(ctx, db.SystemCreateUserRoleParams{
 		UsersIdusers: u.Idusers,
 		Name:         c.Role,
 	}); err != nil {

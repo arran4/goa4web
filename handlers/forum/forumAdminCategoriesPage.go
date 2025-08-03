@@ -141,16 +141,10 @@ func AdminCategoryCreatePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := queries.CreateForumCategory(r.Context(), db.CreateForumCategoryParams{
+	if err := queries.AdminCreateForumCategory(r.Context(), db.AdminCreateForumCategoryParams{
 		ForumcategoryIdforumcategory: int32(pcid),
-		Title: sql.NullString{
-			Valid:  true,
-			String: name,
-		},
-		Description: sql.NullString{
-			Valid:  true,
-			String: desc,
-		},
+		Title:                        sql.NullString{Valid: true, String: name},
+		Description:                  sql.NullString{Valid: true, String: desc},
 	}); err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return

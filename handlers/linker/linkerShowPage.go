@@ -116,7 +116,7 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 	})
 	var ptid int32
 	if errors.Is(err, sql.ErrNoRows) {
-		ptidi, err := queries.CreateForumTopic(r.Context(), db.CreateForumTopicParams{
+		ptidi, err := queries.SystemCreateForumTopic(r.Context(), db.SystemCreateForumTopicParams{
 			ForumcategoryIdforumcategory: 0,
 			Title: sql.NullString{
 				String: LinkerTopicName,
@@ -164,14 +164,13 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 
 	endUrl := fmt.Sprintf("/linker/show/%d", linkId)
 
-	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
-		LanguageIdlanguage: int32(languageId),
-		UsersIdusers:       uid,
+	cid, err := queries.CreateCommentForCommenter(r.Context(), db.CreateCommentForCommenterParams{
+		LanguageID:         int32(languageId),
+		CommenterID:        uid,
 		ForumthreadID:      pthid,
-		Text: sql.NullString{
-			String: text,
-			Valid:  true,
-		},
+		Text:               sql.NullString{String: text, Valid: true},
+		GrantForumthreadID: sql.NullInt32{Int32: pthid, Valid: true},
+		GranteeID:          sql.NullInt32{Int32: uid, Valid: true},
 	})
 	if err != nil {
 		log.Printf("Error: createComment: %s", err)

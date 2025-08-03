@@ -50,7 +50,7 @@ func (c *userMakeAdminCmd) Run() error {
 	} else if !errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("check admin: %w", err)
 	}
-	if err := queries.CreateUserRole(ctx, db.CreateUserRoleParams{
+	if err := queries.SystemCreateUserRole(ctx, db.SystemCreateUserRoleParams{
 		UsersIdusers: u.Idusers,
 		Name:         "administrator",
 	}); err != nil {

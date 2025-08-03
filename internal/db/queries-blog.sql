@@ -15,7 +15,7 @@ WHERE idblogs = sqlc.arg(blog_id)
         ))
   );
 
--- name: CreateBlogEntry :execlastid
+-- name: CreateBlogEntryForWriter :execlastid
 INSERT INTO blogs (users_idusers, language_idlanguage, blog, written)
 SELECT sqlc.arg(users_idusers), sqlc.arg(language_idlanguage), sqlc.arg(blog), CURRENT_TIMESTAMP
 WHERE EXISTS (

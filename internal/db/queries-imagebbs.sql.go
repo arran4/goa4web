@@ -19,6 +19,27 @@ func (q *Queries) AdminApproveImagePost(ctx context.Context, idimagepost int32) 
 	return err
 }
 
+const adminCreateImageBoard = `-- name: AdminCreateImageBoard :exec
+INSERT INTO imageboard (imageboard_idimageboard, title, description, approval_required) VALUES (?, ?, ?, ?)
+`
+
+type AdminCreateImageBoardParams struct {
+	ImageboardIdimageboard int32
+	Title                  sql.NullString
+	Description            sql.NullString
+	ApprovalRequired       bool
+}
+
+func (q *Queries) AdminCreateImageBoard(ctx context.Context, arg AdminCreateImageBoardParams) error {
+	_, err := q.db.ExecContext(ctx, adminCreateImageBoard,
+		arg.ImageboardIdimageboard,
+		arg.Title,
+		arg.Description,
+		arg.ApprovalRequired,
+	)
+	return err
+}
+
 const adminDeleteImageBoard = `-- name: AdminDeleteImageBoard :exec
 UPDATE imageboard SET deleted_at = NOW() WHERE idimageboard = ?
 `
@@ -68,28 +89,7 @@ func (q *Queries) AdminListBoards(ctx context.Context, arg AdminListBoardsParams
 	return items, nil
 }
 
-const createImageBoard = `-- name: CreateImageBoard :exec
-INSERT INTO imageboard (imageboard_idimageboard, title, description, approval_required) VALUES (?, ?, ?, ?)
-`
-
-type CreateImageBoardParams struct {
-	ImageboardIdimageboard int32
-	Title                  sql.NullString
-	Description            sql.NullString
-	ApprovalRequired       bool
-}
-
-func (q *Queries) CreateImageBoard(ctx context.Context, arg CreateImageBoardParams) error {
-	_, err := q.db.ExecContext(ctx, createImageBoard,
-		arg.ImageboardIdimageboard,
-		arg.Title,
-		arg.Description,
-		arg.ApprovalRequired,
-	)
-	return err
-}
-
-const createImagePost = `-- name: CreateImagePost :execlastid
+const createImagePostForPoster = `-- name: CreateImagePostForPoster :execlastid
 INSERT INTO imagepost (
     imageboard_idimageboard,
     thumbnail,
@@ -100,28 +100,45 @@ INSERT INTO imagepost (
     approved,
     file_size
 )
-VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)
+SELECT ?, ?, ?, ?, ?, NOW(), ?, ?
+WHERE EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='imagebbs'
+      AND (g.item='board' OR g.item IS NULL)
+      AND g.action='post'
+      AND g.active=1
+      AND (g.item_id = ? OR g.item_id IS NULL)
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (
+          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+      ))
+)
 `
 
-type CreateImagePostParams struct {
-	ImageboardIdimageboard int32
-	Thumbnail              sql.NullString
-	Fullimage              sql.NullString
-	UsersIdusers           int32
-	Description            sql.NullString
-	Approved               bool
-	FileSize               int32
+type CreateImagePostForPosterParams struct {
+	ImageboardID int32
+	Thumbnail    sql.NullString
+	Fullimage    sql.NullString
+	PosterID     int32
+	Description  sql.NullString
+	Approved     bool
+	FileSize     int32
+	GrantBoardID sql.NullInt32
+	GranteeID    sql.NullInt32
 }
 
-func (q *Queries) CreateImagePost(ctx context.Context, arg CreateImagePostParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, createImagePost,
-		arg.ImageboardIdimageboard,
+func (q *Queries) CreateImagePostForPoster(ctx context.Context, arg CreateImagePostForPosterParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, createImagePostForPoster,
+		arg.ImageboardID,
 		arg.Thumbnail,
 		arg.Fullimage,
-		arg.UsersIdusers,
+		arg.PosterID,
 		arg.Description,
 		arg.Approved,
 		arg.FileSize,
+		arg.GrantBoardID,
+		arg.GranteeID,
+		arg.PosterID,
 	)
 	if err != nil {
 		return 0, err

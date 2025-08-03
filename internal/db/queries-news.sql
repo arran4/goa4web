@@ -1,6 +1,18 @@
--- name: CreateNewsPost :execlastid
+-- name: CreateNewsPostForWriter :execlastid
 INSERT INTO site_news (news, users_idusers, occurred, language_idlanguage)
-VALUES (?, ?, NOW(), ?);
+SELECT sqlc.arg(news), sqlc.arg(writer_id), NOW(), sqlc.arg(language_id)
+WHERE EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='news'
+      AND g.item='post'
+      AND g.action='post'
+      AND g.active=1
+      AND (g.item_id = 0 OR g.item_id IS NULL)
+      AND (g.user_id = sqlc.arg(grantee_id) OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (
+          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(writer_id)
+      ))
+);
 
 -- name: UpdateNewsPost :exec
 UPDATE site_news SET news = ?, language_idlanguage = ? WHERE idsiteNews = ?;

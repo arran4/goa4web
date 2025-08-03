@@ -65,7 +65,7 @@ func (CategoryGrantCreateTask) Action(w http.ResponseWriter, r *http.Request) an
 		if action == "" {
 			action = "see"
 		}
-		if _, err = queries.CreateGrant(r.Context(), db.CreateGrantParams{
+		if _, err = queries.AdminCreateGrant(r.Context(), db.AdminCreateGrantParams{
 			UserID:   uid,
 			RoleID:   rid,
 			Section:  "forum",

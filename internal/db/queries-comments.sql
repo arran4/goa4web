@@ -82,10 +82,21 @@ WHERE c.Idcomments IN (sqlc.slice('ids'))
 ORDER BY c.written DESC
 ;
 
--- name: CreateComment :execlastid
+-- name: CreateCommentForCommenter :execlastid
 INSERT INTO comments (language_idlanguage, users_idusers, forumthread_id, text, written)
-VALUES (?, ?, ?, ?, NOW() )
-;
+SELECT sqlc.arg(language_id), sqlc.arg(commenter_id), sqlc.arg(forumthread_id), sqlc.arg(text), NOW()
+WHERE EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section = 'forum'
+      AND (g.item = 'comment' OR g.item IS NULL)
+      AND g.action = 'post'
+      AND g.active = 1
+      AND (g.item_id = sqlc.arg(grant_forumthread_id) OR g.item_id IS NULL)
+      AND (g.user_id = sqlc.arg(grantee_id) OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (
+          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(commenter_id)
+      ))
+);
 
 -- name: GetCommentsByThreadIdForUser :many
 WITH RECURSIVE role_ids(id) AS (

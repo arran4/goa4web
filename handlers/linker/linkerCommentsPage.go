@@ -253,7 +253,7 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	})
 	var ptid int32
 	if errors.Is(err, sql.ErrNoRows) {
-		ptidi, err := queries.CreateForumTopic(r.Context(), db.CreateForumTopicParams{
+		ptidi, err := queries.SystemCreateForumTopic(r.Context(), db.SystemCreateForumTopicParams{
 			ForumcategoryIdforumcategory: 0,
 			Title: sql.NullString{
 				String: LinkerTopicName,
@@ -296,14 +296,13 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	endUrl := fmt.Sprintf("/linker/comments/%d", linkId)
 
-	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
-		LanguageIdlanguage: int32(languageId),
-		UsersIdusers:       uid,
+	cid, err := queries.CreateCommentForCommenter(r.Context(), db.CreateCommentForCommenterParams{
+		LanguageID:         int32(languageId),
+		CommenterID:        uid,
 		ForumthreadID:      pthid,
-		Text: sql.NullString{
-			String: text,
-			Valid:  true,
-		},
+		Text:               sql.NullString{String: text, Valid: true},
+		GrantForumthreadID: sql.NullInt32{Int32: pthid, Valid: true},
+		GranteeID:          sql.NullInt32{Int32: uid, Valid: true},
 	})
 	if err != nil {
 		return fmt.Errorf("create comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))

@@ -22,7 +22,7 @@ JOIN users u ON u.idusers = ur.users_idusers
 JOIN roles r ON ur.role_id = r.id
 ;
 
--- name: CreateUserRole :exec
+-- name: SystemCreateUserRole :exec
 -- This query inserts a new permission into the "permissions" table.
 -- Parameters:
 --   ? - User ID to be associated with the permission (int)
@@ -76,7 +76,7 @@ WHERE g.section = sqlc.arg(section)
   AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 LIMIT 1;
 
--- name: CreateGrant :execlastid
+-- name: AdminCreateGrant :execlastid
 INSERT INTO grants (
     created_at, user_id, role_id, section, item, rule_type, item_id, item_rule, action, extra, active
 ) VALUES (NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, 1);

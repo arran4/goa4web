@@ -81,12 +81,14 @@ func (SuggestTask) Action(w http.ResponseWriter, r *http.Request) any {
 	description := r.PostFormValue("description")
 	category, _ := strconv.Atoi(r.PostFormValue("category"))
 
-	if err := queries.CreateLinkerQueuedItem(r.Context(), db.CreateLinkerQueuedItemParams{
-		UsersIdusers:     uid,
+	if err := queries.CreateLinkerQueuedItemForWriter(r.Context(), db.CreateLinkerQueuedItemForWriterParams{
+		WriterID:         uid,
 		LinkerCategoryID: int32(category),
 		Title:            sql.NullString{Valid: true, String: title},
 		Url:              sql.NullString{Valid: true, String: url},
 		Description:      sql.NullString{Valid: true, String: description},
+		GrantCategoryID:  sql.NullInt32{Int32: int32(category), Valid: true},
+		GranteeID:        sql.NullInt32{Int32: uid, Valid: true},
 	}); err != nil {
 		return fmt.Errorf("create linker queued item fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

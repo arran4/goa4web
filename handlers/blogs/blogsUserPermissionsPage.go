@@ -82,7 +82,7 @@ func UsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Requ
 	}
 	if u, err := queries.SystemGetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("SystemGetUserByUsername: %w", err).Error())
-	} else if err := queries.CreateUserRole(r.Context(), db.CreateUserRoleParams{
+	} else if err := queries.SystemCreateUserRole(r.Context(), db.SystemCreateUserRoleParams{
 		UsersIdusers: u.Idusers,
 		Name:         role,
 	}); err != nil {
@@ -165,7 +165,7 @@ func UsersPermissionsBulkAllowPage(w http.ResponseWriter, r *http.Request) {
 			data.Errors = append(data.Errors, fmt.Errorf("lookup role %s: %w", id, err2).Error())
 			continue
 		}
-		if err := queries.CreateUserRole(r.Context(), db.CreateUserRoleParams{
+		if err := queries.SystemCreateUserRole(r.Context(), db.SystemCreateUserRoleParams{
 			UsersIdusers: uid,
 			Name:         role,
 		}); err != nil {

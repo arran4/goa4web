@@ -72,7 +72,7 @@ func (AddBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	id, err := queries.CreateBlogEntry(r.Context(), db.CreateBlogEntryParams{
+	id, err := queries.CreateBlogEntryForWriter(r.Context(), db.CreateBlogEntryForWriterParams{
 		UsersIdusers:       uid,
 		LanguageIdlanguage: int32(languageId),
 		Blog: sql.NullString{

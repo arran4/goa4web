@@ -30,7 +30,7 @@ func (CreateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	if err := queries.CreateBookmarks(r.Context(), db.CreateBookmarksParams{
+	if err := queries.CreateBookmarksForLister(r.Context(), db.CreateBookmarksForListerParams{
 		List: sql.NullString{
 			String: text,
 			Valid:  true,

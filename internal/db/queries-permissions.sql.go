@@ -10,6 +10,42 @@ import (
 	"database/sql"
 )
 
+const adminCreateGrant = `-- name: AdminCreateGrant :execlastid
+INSERT INTO grants (
+    created_at, user_id, role_id, section, item, rule_type, item_id, item_rule, action, extra, active
+) VALUES (NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+`
+
+type AdminCreateGrantParams struct {
+	UserID   sql.NullInt32
+	RoleID   sql.NullInt32
+	Section  string
+	Item     sql.NullString
+	RuleType string
+	ItemID   sql.NullInt32
+	ItemRule sql.NullString
+	Action   string
+	Extra    sql.NullString
+}
+
+func (q *Queries) AdminCreateGrant(ctx context.Context, arg AdminCreateGrantParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, adminCreateGrant,
+		arg.UserID,
+		arg.RoleID,
+		arg.Section,
+		arg.Item,
+		arg.RuleType,
+		arg.ItemID,
+		arg.ItemRule,
+		arg.Action,
+		arg.Extra,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
+}
+
 const adminDeleteGrant = `-- name: AdminDeleteGrant :exec
 DELETE FROM grants WHERE id = ?
 `
@@ -30,62 +66,6 @@ WHERE iduser_roles = ?
 //	? - Permission ID to be deleted (int)
 func (q *Queries) AdminDeleteUserRole(ctx context.Context, iduserRoles int32) error {
 	_, err := q.db.ExecContext(ctx, adminDeleteUserRole, iduserRoles)
-	return err
-}
-
-const createGrant = `-- name: CreateGrant :execlastid
-INSERT INTO grants (
-    created_at, user_id, role_id, section, item, rule_type, item_id, item_rule, action, extra, active
-) VALUES (NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
-`
-
-type CreateGrantParams struct {
-	UserID   sql.NullInt32
-	RoleID   sql.NullInt32
-	Section  string
-	Item     sql.NullString
-	RuleType string
-	ItemID   sql.NullInt32
-	ItemRule sql.NullString
-	Action   string
-	Extra    sql.NullString
-}
-
-func (q *Queries) CreateGrant(ctx context.Context, arg CreateGrantParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, createGrant,
-		arg.UserID,
-		arg.RoleID,
-		arg.Section,
-		arg.Item,
-		arg.RuleType,
-		arg.ItemID,
-		arg.ItemRule,
-		arg.Action,
-		arg.Extra,
-	)
-	if err != nil {
-		return 0, err
-	}
-	return result.LastInsertId()
-}
-
-const createUserRole = `-- name: CreateUserRole :exec
-INSERT INTO user_roles (users_idusers, role_id)
-SELECT ?, r.id FROM roles r WHERE r.name = ?
-`
-
-type CreateUserRoleParams struct {
-	UsersIdusers int32
-	Name         string
-}
-
-// This query inserts a new permission into the "permissions" table.
-// Parameters:
-//
-//	? - User ID to be associated with the permission (int)
-//	? - Role of the permission (string)
-func (q *Queries) CreateUserRole(ctx context.Context, arg CreateUserRoleParams) error {
-	_, err := q.db.ExecContext(ctx, createUserRole, arg.UsersIdusers, arg.Name)
 	return err
 }
 
@@ -475,6 +455,26 @@ func (q *Queries) SystemCheckRoleGrant(ctx context.Context, arg SystemCheckRoleG
 	var column_1 int32
 	err := row.Scan(&column_1)
 	return column_1, err
+}
+
+const systemCreateUserRole = `-- name: SystemCreateUserRole :exec
+INSERT INTO user_roles (users_idusers, role_id)
+SELECT ?, r.id FROM roles r WHERE r.name = ?
+`
+
+type SystemCreateUserRoleParams struct {
+	UsersIdusers int32
+	Name         string
+}
+
+// This query inserts a new permission into the "permissions" table.
+// Parameters:
+//
+//	? - User ID to be associated with the permission (int)
+//	? - Role of the permission (string)
+func (q *Queries) SystemCreateUserRole(ctx context.Context, arg SystemCreateUserRoleParams) error {
+	_, err := q.db.ExecContext(ctx, systemCreateUserRole, arg.UsersIdusers, arg.Name)
+	return err
 }
 
 const updatePermission = `-- name: UpdatePermission :exec

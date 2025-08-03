@@ -6,6 +6,7 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/arran4/goa4web/core/common"
 
@@ -64,7 +65,7 @@ func (SearchWritingsTask) Action(w http.ResponseWriter, r *http.Request) any {
 		data.CommentsEmptyWords = noResults
 	}
 
-	if writings, emptyWords, noResults, err := WritingSearch(w, r, queries, uid); err != nil {
+	if writings, emptyWords, noResults, err := WritingSearch(w, r, queries, cd, uid); err != nil {
 		return nil
 	} else {
 		data.Writings = writings
@@ -75,7 +76,7 @@ func (SearchWritingsTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return handlers.TemplateWithDataHandler("resultWritingsActionPage.gohtml", data)
 }
 
-func WritingSearch(w http.ResponseWriter, r *http.Request, queries db.Querier, uid int32) ([]*db.ListWritingsByIDsForListerRow, bool, bool, error) {
+func WritingSearch(w http.ResponseWriter, r *http.Request, queries db.Querier, cd *common.CoreData, uid int32) ([]*db.ListWritingsByIDsForListerRow, bool, bool, error) {
 	searchWords := searchutil.BreakupTextToWords(r.PostFormValue("searchwords"))
 	var writingsIds []int32
 
@@ -129,10 +130,15 @@ func WritingSearch(w http.ResponseWriter, r *http.Request, queries db.Querier, u
 		}
 	}
 
+	limit := int32(cd.Config.PageSizeDefault)
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+
 	writings, err := queries.ListWritingsByIDsForLister(r.Context(), db.ListWritingsByIDsForListerParams{
 		ListerID:      uid,
 		ListerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 		WritingIds:    writingsIds,
+		Limit:         limit,
+		Offset:        int32(offset),
 	})
 	if err != nil {
 		switch {

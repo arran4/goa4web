@@ -5,6 +5,7 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/arran4/goa4web/core/common"
 
@@ -63,7 +64,7 @@ func (SearchBlogsTask) Action(w http.ResponseWriter, r *http.Request) any {
 		data.CommentsEmptyWords = noResults
 	}
 
-	if blogs, emptyWords, noResults, err := BlogSearch(w, r, queries, uid); err != nil {
+	if blogs, emptyWords, noResults, err := BlogSearch(w, r, queries, cd, uid); err != nil {
 		return nil
 	} else {
 		data.Blogs = blogs
@@ -74,7 +75,7 @@ func (SearchBlogsTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return handlers.TemplateWithDataHandler("resultBlogsActionPage.gohtml", data)
 }
 
-func BlogSearch(w http.ResponseWriter, r *http.Request, queries db.Querier, uid int32) ([]*db.Blog, bool, bool, error) {
+func BlogSearch(w http.ResponseWriter, r *http.Request, queries db.Querier, cd *common.CoreData, uid int32) ([]*db.Blog, bool, bool, error) {
 	viewerID := uid
 	userID := uid
 	searchWords := searchutil.BreakupTextToWords(r.PostFormValue("searchwords"))
@@ -122,10 +123,15 @@ func BlogSearch(w http.ResponseWriter, r *http.Request, queries db.Querier, uid 
 		}
 	}
 
+	limit := int32(cd.Config.PageSizeDefault)
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+
 	rows, err := queries.ListBlogEntriesByIDsForLister(r.Context(), db.ListBlogEntriesByIDsForListerParams{
 		ListerID: viewerID,
 		UserID:   sql.NullInt32{Int32: userID, Valid: userID != 0},
 		Blogids:  blogIds,
+		Limit:    limit,
+		Offset:   int32(offset),
 	})
 	if err != nil {
 		log.Printf("getBlogEntriesByIdsDescending Error: %s", err)

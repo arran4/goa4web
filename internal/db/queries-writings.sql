@@ -148,6 +148,18 @@ SELECT w.*, u.idusers AS WriterId, u.username AS WriterUsername
 FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
 WHERE w.idwriting IN (sqlc.slice(writing_ids))
+  AND (
+    w.language_idlanguage = 0
+    OR w.language_idlanguage IS NULL
+    OR EXISTS (
+        SELECT 1 FROM user_language ul
+        WHERE ul.users_idusers = sqlc.arg(lister_id)
+          AND ul.language_idlanguage = w.language_idlanguage
+    )
+    OR NOT EXISTS (
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
+    )
+  )
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='writing'
@@ -159,7 +171,7 @@ WHERE w.idwriting IN (sqlc.slice(writing_ids))
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY w.published DESC
-;
+LIMIT ? OFFSET ?;
 
 -- name: AdminInsertWritingCategory :exec
 INSERT INTO writing_category (writing_category_id, title, description)

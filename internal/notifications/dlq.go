@@ -37,7 +37,7 @@ func (n *Notifier) dlqRecordAndNotify(ctx context.Context, q dlq.DLQ, msg string
 				nt, err := n.renderNotification(ctx, NotificationTemplateFilenameGenerator("dlqMultiFailure"), data)
 				if err == nil {
 					for _, addr := range n.adminEmails(ctx) {
-						u, err := n.Queries.UserByEmail(ctx, addr)
+						u, err := n.Queries.SystemGetUserByEmail(ctx, addr)
 						if err != nil {
 							continue
 						}

@@ -164,6 +164,59 @@ func (q *Queries) GetAdministratorUserRole(ctx context.Context, usersIdusers int
 	return &i, err
 }
 
+const getHasLoginRoleForUser = `-- name: GetHasLoginRoleForUser :one
+SELECT 1
+FROM user_roles ur
+JOIN roles r ON ur.role_id = r.id
+WHERE ur.users_idusers = ? AND r.can_login = 1
+LIMIT 1
+`
+
+// Check whether a user is permitted to log in.
+func (q *Queries) GetHasLoginRoleForUser(ctx context.Context, userid int32) (int32, error) {
+	row := q.db.QueryRowContext(ctx, getHasLoginRoleForUser, userid)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
+const getHasPublicProfileRoleForUser = `-- name: GetHasPublicProfileRoleForUser :one
+SELECT 1
+FROM user_roles ur
+JOIN roles r ON ur.role_id = r.id
+WHERE ur.users_idusers = ? AND r.public_profile_allowed_at IS NOT NULL
+LIMIT 1
+`
+
+// Check whether a user can enable a public profile.
+func (q *Queries) GetHasPublicProfileRoleForUser(ctx context.Context, userid int32) (int32, error) {
+	row := q.db.QueryRowContext(ctx, getHasPublicProfileRoleForUser, userid)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
+const getHasRoleForUser = `-- name: GetHasRoleForUser :one
+SELECT 1
+FROM user_roles ur
+JOIN roles r ON ur.role_id = r.id
+WHERE ur.users_idusers = ? AND r.name = ?
+LIMIT 1
+`
+
+type GetHasRoleForUserParams struct {
+	Userid int32
+	Role   string
+}
+
+// Check whether a user possesses the specified role.
+func (q *Queries) GetHasRoleForUser(ctx context.Context, arg GetHasRoleForUserParams) (int32, error) {
+	row := q.db.QueryRowContext(ctx, getHasRoleForUser, arg.Userid, arg.Role)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const getPermissionsByUserID = `-- name: GetPermissionsByUserID :many
 SELECT ur.iduser_roles, ur.users_idusers, ur.role_id, r.name
 FROM user_roles ur
@@ -495,54 +548,4 @@ type UpdatePermissionParams struct {
 func (q *Queries) UpdatePermission(ctx context.Context, arg UpdatePermissionParams) error {
 	_, err := q.db.ExecContext(ctx, updatePermission, arg.Name, arg.IduserRoles)
 	return err
-}
-
-const userHasLoginRole = `-- name: UserHasLoginRole :one
-SELECT 1
-FROM user_roles ur
-JOIN roles r ON ur.role_id = r.id
-WHERE ur.users_idusers = ? AND r.can_login = 1
-LIMIT 1
-`
-
-func (q *Queries) UserHasLoginRole(ctx context.Context, usersIdusers int32) (int32, error) {
-	row := q.db.QueryRowContext(ctx, userHasLoginRole, usersIdusers)
-	var column_1 int32
-	err := row.Scan(&column_1)
-	return column_1, err
-}
-
-const userHasPublicProfileRole = `-- name: UserHasPublicProfileRole :one
-SELECT 1
-FROM user_roles ur
-JOIN roles r ON ur.role_id = r.id
-WHERE ur.users_idusers = ? AND r.public_profile_allowed_at IS NOT NULL
-LIMIT 1
-`
-
-func (q *Queries) UserHasPublicProfileRole(ctx context.Context, usersIdusers int32) (int32, error) {
-	row := q.db.QueryRowContext(ctx, userHasPublicProfileRole, usersIdusers)
-	var column_1 int32
-	err := row.Scan(&column_1)
-	return column_1, err
-}
-
-const userHasRole = `-- name: UserHasRole :one
-SELECT 1
-FROM user_roles ur
-JOIN roles r ON ur.role_id = r.id
-WHERE ur.users_idusers = ? AND r.name = ?
-LIMIT 1
-`
-
-type UserHasRoleParams struct {
-	UsersIdusers int32
-	Name         string
-}
-
-func (q *Queries) UserHasRole(ctx context.Context, arg UserHasRoleParams) (int32, error) {
-	row := q.db.QueryRowContext(ctx, userHasRole, arg.UsersIdusers, arg.Name)
-	var column_1 int32
-	err := row.Scan(&column_1)
-	return column_1, err
 }

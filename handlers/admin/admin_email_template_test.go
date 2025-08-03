@@ -139,8 +139,8 @@ func TestNotifyAdminsEnv(t *testing.T) {
 	var q db.Querier
 	emails := []string{"a@test.com", "b@test.com"}
 	for _, e := range emails {
-		mock.ExpectQuery("UserByEmail").
-			WithArgs(sql.NullString{String: e, Valid: true}).
+		mock.ExpectQuery("SystemGetUserByEmail").
+			WithArgs(e).
 			WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, e, "u"))
 		mock.ExpectExec("INSERT INTO pending_emails").
 			WithArgs(sql.NullInt32{Int32: 1, Valid: true}, sqlmock.AnyArg(), false).

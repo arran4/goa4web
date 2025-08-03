@@ -48,7 +48,7 @@ func (VerifyPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil || reset.ID != id {
 		return handlers.ErrRedirectOnSamePageHandler(errors.New("invalid code"))
 	}
-	if _, err := queries.UserHasLoginRole(r.Context(), reset.UserID); err != nil {
+	if _, err := queries.GetHasLoginRoleForUser(r.Context(), reset.UserID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return handlers.ErrRedirectOnSamePageHandler(errors.New("approval is pending"))
 		}

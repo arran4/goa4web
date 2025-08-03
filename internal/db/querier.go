@@ -255,6 +255,12 @@ type Querier interface {
 	GetForumTopicByIdForUser(ctx context.Context, arg GetForumTopicByIdForUserParams) (*GetForumTopicByIdForUserRow, error)
 	GetForumTopicIdByThreadId(ctx context.Context, idforumthread int32) (int32, error)
 	GetForumTopicsByCategoryId(ctx context.Context, forumcategoryIdforumcategory int32) ([]*Forumtopic, error)
+	// Check whether a user is permitted to log in.
+	GetHasLoginRoleForUser(ctx context.Context, userid int32) (int32, error)
+	// Check whether a user can enable a public profile.
+	GetHasPublicProfileRoleForUser(ctx context.Context, userid int32) (int32, error)
+	// Check whether a user possesses the specified role.
+	GetHasRoleForUser(ctx context.Context, arg GetHasRoleForUserParams) (int32, error)
 	GetImageBoardById(ctx context.Context, idimageboard int32) (*Imageboard, error)
 	GetImagePostByIDForLister(ctx context.Context, arg GetImagePostByIDForListerParams) (*GetImagePostByIDForListerRow, error)
 	GetImagePostInfoByPath(ctx context.Context, arg GetImagePostInfoByPathParams) (*GetImagePostInfoByPathRow, error)
@@ -409,6 +415,9 @@ type Querier interface {
 	SystemGetLanguageIDByName(ctx context.Context, nameof sql.NullString) (int32, error)
 	SystemGetSearchWordByWordLowercased(ctx context.Context, lcase string) (*Searchwordlist, error)
 	SystemGetTemplateOverride(ctx context.Context, name string) (string, error)
+	// Fetch a user record by email for system operations.
+	// This query must not require an acting user ID.
+	SystemGetUserByEmail(ctx context.Context, email string) (*SystemGetUserByEmailRow, error)
 	// System query only used internally
 	SystemInsertDeadLetter(ctx context.Context, message string) error
 	SystemInsertLoginAttempt(ctx context.Context, arg SystemInsertLoginAttemptParams) error
@@ -448,10 +457,6 @@ type Querier interface {
 	UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams) error
 	UpdateUserEmailVerification(ctx context.Context, arg UpdateUserEmailVerificationParams) error
 	UpdateWriting(ctx context.Context, arg UpdateWritingParams) error
-	UserByEmail(ctx context.Context, email string) (*UserByEmailRow, error)
-	UserHasLoginRole(ctx context.Context, usersIdusers int32) (int32, error)
-	UserHasPublicProfileRole(ctx context.Context, usersIdusers int32) (int32, error)
-	UserHasRole(ctx context.Context, arg UserHasRoleParams) (int32, error)
 	WritingSearchDelete(ctx context.Context, writingID int32) error
 	WritingSearchFirst(ctx context.Context, arg WritingSearchFirstParams) ([]int32, error)
 	WritingSearchNext(ctx context.Context, arg WritingSearchNextParams) ([]int32, error)

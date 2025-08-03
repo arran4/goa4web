@@ -341,6 +341,29 @@ func (q *Queries) Login(ctx context.Context, username sql.NullString) (*LoginRow
 	return &i, err
 }
 
+const systemGetUserByEmail = `-- name: SystemGetUserByEmail :one
+SELECT u.idusers, ue.email, u.username
+FROM users u
+JOIN user_emails ue ON ue.user_id = u.idusers
+WHERE ue.email = ?
+LIMIT 1
+`
+
+type SystemGetUserByEmailRow struct {
+	Idusers  int32
+	Email    string
+	Username sql.NullString
+}
+
+// Fetch a user record by email for system operations.
+// This query must not require an acting user ID.
+func (q *Queries) SystemGetUserByEmail(ctx context.Context, email string) (*SystemGetUserByEmailRow, error) {
+	row := q.db.QueryRowContext(ctx, systemGetUserByEmail, email)
+	var i SystemGetUserByEmailRow
+	err := row.Scan(&i.Idusers, &i.Email, &i.Username)
+	return &i, err
+}
+
 const systemInsertUser = `-- name: SystemInsertUser :execresult
 INSERT INTO users (username)
 VALUES (?)
@@ -376,24 +399,4 @@ type UpdateUserEmailParams struct {
 func (q *Queries) UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams) error {
 	_, err := q.db.ExecContext(ctx, updateUserEmail, arg.Email, arg.UserID)
 	return err
-}
-
-const userByEmail = `-- name: UserByEmail :one
-SELECT u.idusers, ue.email, u.username
-FROM users u JOIN user_emails ue ON ue.user_id = u.idusers
-WHERE ue.email = ?
-LIMIT 1
-`
-
-type UserByEmailRow struct {
-	Idusers  int32
-	Email    string
-	Username sql.NullString
-}
-
-func (q *Queries) UserByEmail(ctx context.Context, email string) (*UserByEmailRow, error) {
-	row := q.db.QueryRowContext(ctx, userByEmail, email)
-	var i UserByEmailRow
-	err := row.Scan(&i.Idusers, &i.Email, &i.Username)
-	return &i, err
 }

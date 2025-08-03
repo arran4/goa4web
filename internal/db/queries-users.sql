@@ -37,10 +37,13 @@ LEFT JOIN user_emails ue ON ue.id = (
 )
 WHERE u.idusers = ?;
 
--- name: UserByEmail :one
+-- Fetch a user record by email for system operations.
+-- This query must not require an acting user ID.
+-- name: SystemGetUserByEmail :one
 SELECT u.idusers, ue.email, u.username
-FROM users u JOIN user_emails ue ON ue.user_id = u.idusers
-WHERE ue.email = ?
+FROM users u
+JOIN user_emails ue ON ue.user_id = u.idusers
+WHERE ue.email = sqlc.arg(email)
 LIMIT 1;
 
 -- name: SystemInsertUser :execresult

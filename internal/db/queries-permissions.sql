@@ -96,25 +96,28 @@ SELECT * FROM grants ORDER BY id;
 -- name: ListGrantsByUserID :many
 SELECT * FROM grants WHERE user_id = ? ORDER BY id;
 
--- name: UserHasRole :one
+-- Check whether a user possesses the specified role.
+-- name: GetHasRoleForUser :one
 SELECT 1
 FROM user_roles ur
 JOIN roles r ON ur.role_id = r.id
-WHERE ur.users_idusers = ? AND r.name = ?
+WHERE ur.users_idusers = sqlc.arg(UserID) AND r.name = sqlc.arg(Role)
 LIMIT 1;
 
--- name: UserHasLoginRole :one
+-- Check whether a user is permitted to log in.
+-- name: GetHasLoginRoleForUser :one
 SELECT 1
 FROM user_roles ur
 JOIN roles r ON ur.role_id = r.id
-WHERE ur.users_idusers = ? AND r.can_login = 1
+WHERE ur.users_idusers = sqlc.arg(UserID) AND r.can_login = 1
 LIMIT 1;
 
--- name: UserHasPublicProfileRole :one
+-- Check whether a user can enable a public profile.
+-- name: GetHasPublicProfileRoleForUser :one
 SELECT 1
 FROM user_roles ur
 JOIN roles r ON ur.role_id = r.id
-WHERE ur.users_idusers = ? AND r.public_profile_allowed_at IS NOT NULL
+WHERE ur.users_idusers = sqlc.arg(UserID) AND r.public_profile_allowed_at IS NOT NULL
 LIMIT 1;
 
 -- name: GetPermissionsByUserID :many

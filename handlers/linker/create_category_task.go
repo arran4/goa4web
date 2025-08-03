@@ -23,7 +23,7 @@ func (createCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	rows, _ := cd.LinkerCategoryCounts()
 	pos := len(rows) + 1
-	if err := queries.CreateLinkerCategory(r.Context(), db.CreateLinkerCategoryParams{
+	if err := queries.AdminCreateLinkerCategory(r.Context(), db.AdminCreateLinkerCategoryParams{
 		Title:    sql.NullString{Valid: true, String: title},
 		Position: int32(pos),
 	}); err != nil {

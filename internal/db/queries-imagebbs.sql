@@ -1,4 +1,4 @@
--- name: CreateImageBoard :exec
+-- name: AdminCreateImageBoard :exec
 INSERT INTO imageboard (imageboard_idimageboard, title, description, approval_required) VALUES (?, ?, ?, ?);
 
 -- name: UpdateImageBoard :exec
@@ -11,7 +11,7 @@ WHERE b.imageboard_idimageboard = sqlc.arg(parent_id)
 LIMIT ? OFFSET ?;
 
 
--- name: CreateImagePost :execlastid
+-- name: CreateImagePostForPoster :execlastid
 INSERT INTO imagepost (
     imageboard_idimageboard,
     thumbnail,
@@ -22,7 +22,19 @@ INSERT INTO imagepost (
     approved,
     file_size
 )
-VALUES (?, ?, ?, ?, ?, NOW(), ?, ?);
+SELECT sqlc.arg(imageboard_id), sqlc.arg(thumbnail), sqlc.arg(fullimage), sqlc.arg(poster_id), sqlc.arg(description), NOW(), sqlc.arg(approved), sqlc.arg(file_size)
+WHERE EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='imagebbs'
+      AND (g.item='board' OR g.item IS NULL)
+      AND g.action='post'
+      AND g.active=1
+      AND (g.item_id = sqlc.arg(grant_board_id) OR g.item_id IS NULL)
+      AND (g.user_id = sqlc.arg(grantee_id) OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (
+          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(poster_id)
+      ))
+);
 
 -- name: UpdateImagePostByIdForumThreadId :exec
 UPDATE imagepost SET forumthread_id = ? WHERE idimagepost = ?;

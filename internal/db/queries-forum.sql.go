@@ -10,6 +10,21 @@ import (
 	"database/sql"
 )
 
+const adminCreateForumCategory = `-- name: AdminCreateForumCategory :exec
+INSERT INTO forumcategory (forumcategory_idforumcategory, title, description) VALUES (?, ?, ?)
+`
+
+type AdminCreateForumCategoryParams struct {
+	ForumcategoryIdforumcategory int32
+	Title                        sql.NullString
+	Description                  sql.NullString
+}
+
+func (q *Queries) AdminCreateForumCategory(ctx context.Context, arg AdminCreateForumCategoryParams) error {
+	_, err := q.db.ExecContext(ctx, adminCreateForumCategory, arg.ForumcategoryIdforumcategory, arg.Title, arg.Description)
+	return err
+}
+
 const adminDeleteForumCategory = `-- name: AdminDeleteForumCategory :exec
 UPDATE forumcategory SET deleted_at = NOW() WHERE idforumcategory = ?
 `
@@ -27,39 +42,6 @@ UPDATE forumtopic SET deleted_at = NOW() WHERE idforumtopic = ?
 func (q *Queries) AdminDeleteForumTopic(ctx context.Context, idforumtopic int32) error {
 	_, err := q.db.ExecContext(ctx, adminDeleteForumTopic, idforumtopic)
 	return err
-}
-
-const createForumCategory = `-- name: CreateForumCategory :exec
-INSERT INTO forumcategory (forumcategory_idforumcategory, title, description) VALUES (?, ?, ?)
-`
-
-type CreateForumCategoryParams struct {
-	ForumcategoryIdforumcategory int32
-	Title                        sql.NullString
-	Description                  sql.NullString
-}
-
-func (q *Queries) CreateForumCategory(ctx context.Context, arg CreateForumCategoryParams) error {
-	_, err := q.db.ExecContext(ctx, createForumCategory, arg.ForumcategoryIdforumcategory, arg.Title, arg.Description)
-	return err
-}
-
-const createForumTopic = `-- name: CreateForumTopic :execlastid
-INSERT INTO forumtopic (forumcategory_idforumcategory, title, description) VALUES (?, ?, ?)
-`
-
-type CreateForumTopicParams struct {
-	ForumcategoryIdforumcategory int32
-	Title                        sql.NullString
-	Description                  sql.NullString
-}
-
-func (q *Queries) CreateForumTopic(ctx context.Context, arg CreateForumTopicParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, createForumTopic, arg.ForumcategoryIdforumcategory, arg.Title, arg.Description)
-	if err != nil {
-		return 0, err
-	}
-	return result.LastInsertId()
 }
 
 const findForumTopicByTitle = `-- name: FindForumTopicByTitle :one
@@ -681,6 +663,24 @@ WHERE idforumtopic = ?
 func (q *Queries) RebuildForumTopicByIdMetaColumns(ctx context.Context, idforumtopic int32) error {
 	_, err := q.db.ExecContext(ctx, rebuildForumTopicByIdMetaColumns, idforumtopic)
 	return err
+}
+
+const systemCreateForumTopic = `-- name: SystemCreateForumTopic :execlastid
+INSERT INTO forumtopic (forumcategory_idforumcategory, title, description) VALUES (?, ?, ?)
+`
+
+type SystemCreateForumTopicParams struct {
+	ForumcategoryIdforumcategory int32
+	Title                        sql.NullString
+	Description                  sql.NullString
+}
+
+func (q *Queries) SystemCreateForumTopic(ctx context.Context, arg SystemCreateForumTopicParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, systemCreateForumTopic, arg.ForumcategoryIdforumcategory, arg.Title, arg.Description)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
 }
 
 const updateForumCategory = `-- name: UpdateForumCategory :exec

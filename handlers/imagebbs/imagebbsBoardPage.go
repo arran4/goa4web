@@ -192,14 +192,16 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	approved := !board.ApprovalRequired
 
-	pid, err := queries.CreateImagePost(r.Context(), db.CreateImagePostParams{
-		ImageboardIdimageboard: int32(bid),
-		Thumbnail:              sql.NullString{Valid: true, String: relThumb},
-		Fullimage:              sql.NullString{Valid: true, String: relFull},
-		UsersIdusers:           uid,
-		Description:            sql.NullString{Valid: true, String: text},
-		Approved:               approved,
-		FileSize:               int32(size),
+	pid, err := queries.CreateImagePostForPoster(r.Context(), db.CreateImagePostForPosterParams{
+		ImageboardID: int32(bid),
+		Thumbnail:    sql.NullString{Valid: true, String: relThumb},
+		Fullimage:    sql.NullString{Valid: true, String: relFull},
+		PosterID:     uid,
+		Description:  sql.NullString{Valid: true, String: text},
+		Approved:     approved,
+		FileSize:     int32(size),
+		GrantBoardID: sql.NullInt32{Int32: int32(bid), Valid: true},
+		GranteeID:    sql.NullInt32{Int32: uid, Valid: true},
 	})
 	if err != nil {
 		return fmt.Errorf("create image post fail %w", handlers.ErrRedirectOnSamePageHandler(err))

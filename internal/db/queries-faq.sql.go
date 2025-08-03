@@ -10,6 +10,15 @@ import (
 	"database/sql"
 )
 
+const adminCreateFAQCategory = `-- name: AdminCreateFAQCategory :exec
+INSERT INTO faq_categories (name) VALUES (?)
+`
+
+func (q *Queries) AdminCreateFAQCategory(ctx context.Context, name sql.NullString) error {
+	_, err := q.db.ExecContext(ctx, adminCreateFAQCategory, name)
+	return err
+}
+
 const adminDeleteFAQ = `-- name: AdminDeleteFAQ :exec
 UPDATE faq SET deleted_at = NOW()
 WHERE idfaq = ?
@@ -30,40 +39,37 @@ func (q *Queries) AdminDeleteFAQCategory(ctx context.Context, idfaqcategories in
 	return err
 }
 
-const createFAQCategory = `-- name: CreateFAQCategory :exec
-INSERT INTO faq_categories (name)
-SELECT ?
+const createFAQQuestionForWriter = `-- name: CreateFAQQuestionForWriter :exec
+INSERT INTO faq (question, users_idusers, language_idlanguage)
+SELECT ?, ?, ?
 WHERE EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.users_idusers = ?
-      AND r.is_admin = 1
+    SELECT 1 FROM grants g
+    WHERE g.section = 'faq'
+      AND g.item = 'question'
+      AND g.action = 'post'
+      AND g.active = 1
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (
+          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+      ))
 )
 `
 
-type CreateFAQCategoryParams struct {
-	Name     sql.NullString
-	ViewerID int32
+type CreateFAQQuestionForWriterParams struct {
+	Question   sql.NullString
+	WriterID   int32
+	LanguageID int32
+	GranteeID  sql.NullInt32
 }
 
-func (q *Queries) CreateFAQCategory(ctx context.Context, arg CreateFAQCategoryParams) error {
-	_, err := q.db.ExecContext(ctx, createFAQCategory, arg.Name, arg.ViewerID)
-	return err
-}
-
-const createFAQQuestion = `-- name: CreateFAQQuestion :exec
-INSERT INTO faq (question, users_idusers, language_idlanguage)
-VALUES (?, ?, ?)
-`
-
-type CreateFAQQuestionParams struct {
-	Question           sql.NullString
-	UsersIdusers       int32
-	LanguageIdlanguage int32
-}
-
-func (q *Queries) CreateFAQQuestion(ctx context.Context, arg CreateFAQQuestionParams) error {
-	_, err := q.db.ExecContext(ctx, createFAQQuestion, arg.Question, arg.UsersIdusers, arg.LanguageIdlanguage)
+func (q *Queries) CreateFAQQuestionForWriter(ctx context.Context, arg CreateFAQQuestionForWriterParams) error {
+	_, err := q.db.ExecContext(ctx, createFAQQuestionForWriter,
+		arg.Question,
+		arg.WriterID,
+		arg.LanguageID,
+		arg.GranteeID,
+		arg.WriterID,
+	)
 	return err
 }
 

@@ -93,10 +93,10 @@ ORDER BY t.lastaddition DESC;
 SELECT f.*
 FROM forumcategory f;
 
--- name: CreateForumCategory :exec
+-- name: AdminCreateForumCategory :exec
 INSERT INTO forumcategory (forumcategory_idforumcategory, title, description) VALUES (?, ?, ?);
 
--- name: CreateForumTopic :execlastid
+-- name: SystemCreateForumTopic :execlastid
 INSERT INTO forumtopic (forumcategory_idforumcategory, title, description) VALUES (?, ?, ?);
 
 -- name: FindForumTopicByTitle :one

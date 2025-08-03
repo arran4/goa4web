@@ -65,7 +65,7 @@ func (RoleGrantUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	for a := range desired {
 		if _, ok := existing[a]; !ok {
-			if _, err := queries.CreateGrant(r.Context(), db.CreateGrantParams{
+			if _, err := queries.AdminCreateGrant(r.Context(), db.AdminCreateGrantParams{
 				RoleID:   sql.NullInt32{Int32: int32(roleID), Valid: true},
 				Section:  section,
 				Item:     sql.NullString{String: item, Valid: item != ""},

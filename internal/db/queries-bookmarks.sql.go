@@ -10,19 +10,19 @@ import (
 	"database/sql"
 )
 
-const createBookmarks = `-- name: CreateBookmarks :exec
+const createBookmarksForLister = `-- name: CreateBookmarksForLister :exec
 INSERT INTO bookmarks (users_idusers, list)
 VALUES (?, ?)
 `
 
-type CreateBookmarksParams struct {
+type CreateBookmarksForListerParams struct {
 	UsersIdusers int32
 	List         sql.NullString
 }
 
-// This query adds a new entry to the "bookmarks" table for a user.
-func (q *Queries) CreateBookmarks(ctx context.Context, arg CreateBookmarksParams) error {
-	_, err := q.db.ExecContext(ctx, createBookmarks, arg.UsersIdusers, arg.List)
+// This query adds a new entry to the "bookmarks" table for a lister.
+func (q *Queries) CreateBookmarksForLister(ctx context.Context, arg CreateBookmarksForListerParams) error {
+	_, err := q.db.ExecContext(ctx, createBookmarksForLister, arg.UsersIdusers, arg.List)
 	return err
 }
 

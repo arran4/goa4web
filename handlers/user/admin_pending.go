@@ -47,7 +47,7 @@ func adminPendingUsersApprove(w http.ResponseWriter, r *http.Request) {
 	if id == 0 {
 		data.Errors = append(data.Errors, "invalid id")
 	} else {
-		if err := queries.CreateUserRole(r.Context(), db.CreateUserRoleParams{UsersIdusers: id, Name: "user"}); err != nil {
+		if err := queries.SystemCreateUserRole(r.Context(), db.SystemCreateUserRoleParams{UsersIdusers: id, Name: "user"}); err != nil {
 			data.Errors = append(data.Errors, fmt.Errorf("add role: %w", err).Error())
 		} else {
 			data.Messages = append(data.Messages, "User approved")
@@ -75,7 +75,7 @@ func adminPendingUsersReject(w http.ResponseWriter, r *http.Request) {
 	if id == 0 {
 		data.Errors = append(data.Errors, "invalid id")
 	} else {
-		if err := queries.CreateUserRole(r.Context(), db.CreateUserRoleParams{UsersIdusers: id, Name: "rejected"}); err != nil {
+		if err := queries.SystemCreateUserRole(r.Context(), db.SystemCreateUserRoleParams{UsersIdusers: id, Name: "rejected"}); err != nil {
 			data.Errors = append(data.Errors, fmt.Errorf("add role:%w", err).Error())
 		} else {
 			data.Messages = append(data.Messages, "user rejected")

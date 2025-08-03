@@ -1,5 +1,5 @@
--- name: CreateBookmarks :exec
--- This query adds a new entry to the "bookmarks" table for a user.
+-- name: CreateBookmarksForLister :exec
+-- This query adds a new entry to the "bookmarks" table for a lister.
 INSERT INTO bookmarks (users_idusers, list)
 VALUES (?, ?);
 

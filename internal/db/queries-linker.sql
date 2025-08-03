@@ -12,14 +12,8 @@ WHERE idlinkerCategory = ?
     WHERE ur.users_idusers = sqlc.arg(admin_id) AND r.is_admin = 1
   );
 
--- name: CreateLinkerCategory :exec
-INSERT INTO linker_category (title, position)
-SELECT sqlc.arg(title), sqlc.arg(position)
-WHERE EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.users_idusers = sqlc.arg(admin_id) AND r.is_admin = 1
-);
+-- name: AdminCreateLinkerCategory :exec
+INSERT INTO linker_category (title, position) VALUES (sqlc.arg(title), sqlc.arg(position));
 
 -- name: GetAllLinkerCategories :many
 SELECT
@@ -82,8 +76,21 @@ WHERE idlinkerQueue = ?
     WHERE ur.users_idusers = sqlc.arg(admin_id) AND r.is_admin = 1
   );
 
--- name: CreateLinkerQueuedItem :exec
-INSERT INTO linker_queue (users_idusers, linker_category_id, title, url, description) VALUES (?, ?, ?, ?, ?);
+-- name: CreateLinkerQueuedItemForWriter :exec
+INSERT INTO linker_queue (users_idusers, linker_category_id, title, url, description)
+SELECT sqlc.arg(writer_id), sqlc.arg(linker_category_id), sqlc.arg(title), sqlc.arg(url), sqlc.arg(description)
+WHERE EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='linker'
+      AND (g.item='link' OR g.item IS NULL)
+      AND g.action='post'
+      AND g.active=1
+      AND (g.item_id = sqlc.arg(grant_category_id) OR g.item_id IS NULL)
+      AND (g.user_id = sqlc.arg(grantee_id) OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (
+          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(writer_id)
+      ))
+);
 
 -- name: GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails :many
 SELECT l.*, u.username, c.title as category_title, c.idlinkerCategory
@@ -102,14 +109,9 @@ WHERE l.idlinkerQueue = ?
     WHERE ur.users_idusers = sqlc.arg(admin_id) AND r.is_admin = 1
   );
 
--- name: CreateLinkerItem :exec
+-- name: AdminCreateLinkerItem :exec
 INSERT INTO linker (users_idusers, linker_category_id, title, url, description, listed)
-SELECT sqlc.arg(users_idusers), sqlc.arg(linker_category_id), sqlc.arg(title), sqlc.arg(url), sqlc.arg(description), NOW()
-WHERE EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.users_idusers = sqlc.arg(admin_id) AND r.is_admin = 1
-);
+VALUES (sqlc.arg(users_idusers), sqlc.arg(linker_category_id), sqlc.arg(title), sqlc.arg(url), sqlc.arg(description), NOW());
 
 -- name: UpdateLinkerItem :exec
 UPDATE linker SET title = ?, url = ?, description = ?, linker_category_id = ?, language_idlanguage = ?

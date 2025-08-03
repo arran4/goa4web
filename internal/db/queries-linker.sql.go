@@ -22,6 +22,44 @@ func (q *Queries) AdminCountLinksByCategory(ctx context.Context, linkerCategoryI
 	return count, err
 }
 
+const adminCreateLinkerCategory = `-- name: AdminCreateLinkerCategory :exec
+INSERT INTO linker_category (title, position) VALUES (?, ?)
+`
+
+type AdminCreateLinkerCategoryParams struct {
+	Title    sql.NullString
+	Position int32
+}
+
+func (q *Queries) AdminCreateLinkerCategory(ctx context.Context, arg AdminCreateLinkerCategoryParams) error {
+	_, err := q.db.ExecContext(ctx, adminCreateLinkerCategory, arg.Title, arg.Position)
+	return err
+}
+
+const adminCreateLinkerItem = `-- name: AdminCreateLinkerItem :exec
+INSERT INTO linker (users_idusers, linker_category_id, title, url, description, listed)
+VALUES (?, ?, ?, ?, ?, NOW())
+`
+
+type AdminCreateLinkerItemParams struct {
+	UsersIdusers     int32
+	LinkerCategoryID int32
+	Title            sql.NullString
+	Url              sql.NullString
+	Description      sql.NullString
+}
+
+func (q *Queries) AdminCreateLinkerItem(ctx context.Context, arg AdminCreateLinkerItemParams) error {
+	_, err := q.db.ExecContext(ctx, adminCreateLinkerItem,
+		arg.UsersIdusers,
+		arg.LinkerCategoryID,
+		arg.Title,
+		arg.Url,
+		arg.Description,
+	)
+	return err
+}
+
 const adminDeleteLinkerCategory = `-- name: AdminDeleteLinkerCategory :exec
 DELETE FROM linker_category
 WHERE idlinkerCategory = ?
@@ -43,77 +81,43 @@ func (q *Queries) AdminDeleteLinkerQueuedItem(ctx context.Context, idlinkerqueue
 	return err
 }
 
-const createLinkerCategory = `-- name: CreateLinkerCategory :exec
-INSERT INTO linker_category (title, position)
-SELECT ?, ?
+const createLinkerQueuedItemForWriter = `-- name: CreateLinkerQueuedItemForWriter :exec
+INSERT INTO linker_queue (users_idusers, linker_category_id, title, url, description)
+SELECT ?, ?, ?, ?, ?
 WHERE EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.users_idusers = ? AND r.is_admin = 1
+    SELECT 1 FROM grants g
+    WHERE g.section='linker'
+      AND (g.item='link' OR g.item IS NULL)
+      AND g.action='post'
+      AND g.active=1
+      AND (g.item_id = ? OR g.item_id IS NULL)
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (
+          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+      ))
 )
 `
 
-type CreateLinkerCategoryParams struct {
-	Title    sql.NullString
-	Position int32
-	AdminID  int32
-}
-
-func (q *Queries) CreateLinkerCategory(ctx context.Context, arg CreateLinkerCategoryParams) error {
-	_, err := q.db.ExecContext(ctx, createLinkerCategory, arg.Title, arg.Position, arg.AdminID)
-	return err
-}
-
-const createLinkerItem = `-- name: CreateLinkerItem :exec
-INSERT INTO linker (users_idusers, linker_category_id, title, url, description, listed)
-SELECT ?, ?, ?, ?, ?, NOW()
-WHERE EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.users_idusers = ? AND r.is_admin = 1
-)
-`
-
-type CreateLinkerItemParams struct {
-	UsersIdusers     int32
+type CreateLinkerQueuedItemForWriterParams struct {
+	WriterID         int32
 	LinkerCategoryID int32
 	Title            sql.NullString
 	Url              sql.NullString
 	Description      sql.NullString
-	AdminID          int32
+	GrantCategoryID  sql.NullInt32
+	GranteeID        sql.NullInt32
 }
 
-func (q *Queries) CreateLinkerItem(ctx context.Context, arg CreateLinkerItemParams) error {
-	_, err := q.db.ExecContext(ctx, createLinkerItem,
-		arg.UsersIdusers,
+func (q *Queries) CreateLinkerQueuedItemForWriter(ctx context.Context, arg CreateLinkerQueuedItemForWriterParams) error {
+	_, err := q.db.ExecContext(ctx, createLinkerQueuedItemForWriter,
+		arg.WriterID,
 		arg.LinkerCategoryID,
 		arg.Title,
 		arg.Url,
 		arg.Description,
-		arg.AdminID,
-	)
-	return err
-}
-
-const createLinkerQueuedItem = `-- name: CreateLinkerQueuedItem :exec
-INSERT INTO linker_queue (users_idusers, linker_category_id, title, url, description) VALUES (?, ?, ?, ?, ?)
-`
-
-type CreateLinkerQueuedItemParams struct {
-	UsersIdusers     int32
-	LinkerCategoryID int32
-	Title            sql.NullString
-	Url              sql.NullString
-	Description      sql.NullString
-}
-
-func (q *Queries) CreateLinkerQueuedItem(ctx context.Context, arg CreateLinkerQueuedItemParams) error {
-	_, err := q.db.ExecContext(ctx, createLinkerQueuedItem,
-		arg.UsersIdusers,
-		arg.LinkerCategoryID,
-		arg.Title,
-		arg.Url,
-		arg.Description,
+		arg.GrantCategoryID,
+		arg.GranteeID,
+		arg.WriterID,
 	)
 	return err
 }

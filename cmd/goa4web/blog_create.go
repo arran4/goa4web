@@ -41,7 +41,7 @@ func (c *blogCreateCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := db.New(db)
-	_, err = queries.CreateBlogEntry(ctx, db.CreateBlogEntryParams{
+	_, err = queries.CreateBlogEntryForWriter(ctx, db.CreateBlogEntryForWriterParams{
 		UsersIdusers:       int32(c.UserID),
 		LanguageIdlanguage: int32(c.LangID),
 		Blog:               sql.NullString{String: c.Text, Valid: true},

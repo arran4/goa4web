@@ -160,14 +160,13 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d", topicId, threadId)
 
-	cid, err := queries.CreateComment(r.Context(), db.CreateCommentParams{
-		LanguageIdlanguage: int32(languageId),
-		UsersIdusers:       uid,
+	cid, err := queries.CreateCommentForCommenter(r.Context(), db.CreateCommentForCommenterParams{
+		LanguageID:         int32(languageId),
+		CommenterID:        uid,
 		ForumthreadID:      int32(threadId),
-		Text: sql.NullString{
-			String: text,
-			Valid:  true,
-		},
+		Text:               sql.NullString{String: text, Valid: true},
+		GrantForumthreadID: sql.NullInt32{Int32: int32(threadId), Valid: true},
+		GranteeID:          sql.NullInt32{Int32: uid, Valid: true},
 	})
 	if err != nil {
 		log.Printf("Error: makeThread: %s", err)

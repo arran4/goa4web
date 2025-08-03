@@ -29,10 +29,16 @@ type Querier interface {
 	AdminCountThreadsByBoard(ctx context.Context, imageboardIdimageboard int32) (int64, error)
 	AdminCountWordList(ctx context.Context) (int64, error)
 	AdminCountWordListByPrefix(ctx context.Context, prefix interface{}) (int64, error)
+	AdminCreateFAQCategory(ctx context.Context, name sql.NullString) error
+	AdminCreateForumCategory(ctx context.Context, arg AdminCreateForumCategoryParams) error
+	AdminCreateGrant(ctx context.Context, arg AdminCreateGrantParams) (int64, error)
+	AdminCreateImageBoard(ctx context.Context, arg AdminCreateImageBoardParams) error
 	// AdminCreateLanguage adds a new language.
 	// Parameters:
 	//   ? - Name of the new language (string)
 	AdminCreateLanguage(ctx context.Context, nameof sql.NullString) error
+	AdminCreateLinkerCategory(ctx context.Context, arg AdminCreateLinkerCategoryParams) error
+	AdminCreateLinkerItem(ctx context.Context, arg AdminCreateLinkerItemParams) error
 	AdminDeleteExternalLink(ctx context.Context, id int32) error
 	AdminDeleteFAQ(ctx context.Context, idfaq int32) error
 	AdminDeleteFAQCategory(ctx context.Context, idfaqcategories int32) error
@@ -179,28 +185,16 @@ type Querier interface {
 	// A clearer name for the role is "User" as it is the user's own data.
 	// See specs/query_naming.md for naming conventions.
 	CountUnreadNotificationsForUser(ctx context.Context, userID int32) (int64, error)
-	CreateBlogEntry(ctx context.Context, arg CreateBlogEntryParams) (int64, error)
-	// This query adds a new entry to the "bookmarks" table for a user.
-	CreateBookmarks(ctx context.Context, arg CreateBookmarksParams) error
-	CreateComment(ctx context.Context, arg CreateCommentParams) (int64, error)
-	CreateFAQCategory(ctx context.Context, arg CreateFAQCategoryParams) error
-	CreateFAQQuestion(ctx context.Context, arg CreateFAQQuestionParams) error
-	CreateForumCategory(ctx context.Context, arg CreateForumCategoryParams) error
-	CreateForumTopic(ctx context.Context, arg CreateForumTopicParams) (int64, error)
-	CreateGrant(ctx context.Context, arg CreateGrantParams) (int64, error)
-	CreateImageBoard(ctx context.Context, arg CreateImageBoardParams) error
-	CreateImagePost(ctx context.Context, arg CreateImagePostParams) (int64, error)
-	CreateLinkerCategory(ctx context.Context, arg CreateLinkerCategoryParams) error
-	CreateLinkerItem(ctx context.Context, arg CreateLinkerItemParams) error
-	CreateLinkerQueuedItem(ctx context.Context, arg CreateLinkerQueuedItemParams) error
-	CreateNewsPost(ctx context.Context, arg CreateNewsPostParams) (int64, error)
-	CreatePasswordReset(ctx context.Context, arg CreatePasswordResetParams) error
-	CreateUploadedImage(ctx context.Context, arg CreateUploadedImageParams) (int64, error)
-	// This query inserts a new permission into the "permissions" table.
-	// Parameters:
-	//   ? - User ID to be associated with the permission (int)
-	//   ? - Role of the permission (string)
-	CreateUserRole(ctx context.Context, arg CreateUserRoleParams) error
+	CreateBlogEntryForWriter(ctx context.Context, arg CreateBlogEntryForWriterParams) (int64, error)
+	// This query adds a new entry to the "bookmarks" table for a lister.
+	CreateBookmarksForLister(ctx context.Context, arg CreateBookmarksForListerParams) error
+	CreateCommentForCommenter(ctx context.Context, arg CreateCommentForCommenterParams) (int64, error)
+	CreateFAQQuestionForWriter(ctx context.Context, arg CreateFAQQuestionForWriterParams) error
+	CreateImagePostForPoster(ctx context.Context, arg CreateImagePostForPosterParams) (int64, error)
+	CreateLinkerQueuedItemForWriter(ctx context.Context, arg CreateLinkerQueuedItemForWriterParams) error
+	CreateNewsPostForWriter(ctx context.Context, arg CreateNewsPostForWriterParams) (int64, error)
+	CreatePasswordResetForUser(ctx context.Context, arg CreatePasswordResetForUserParams) error
+	CreateUploadedImageForUploader(ctx context.Context, arg CreateUploadedImageForUploaderParams) (int64, error)
 	DeactivateNewsPost(ctx context.Context, idsitenews int32) error
 	DeleteNotificationForLister(ctx context.Context, arg DeleteNotificationForListerParams) error
 	DeleteSubscriptionByIDForSubscriber(ctx context.Context, arg DeleteSubscriptionByIDForSubscriberParams) error
@@ -390,8 +384,14 @@ type Querier interface {
 	// SystemCountLanguages counts all languages.
 	SystemCountLanguages(ctx context.Context) (int64, error)
 	SystemCountRecentLoginAttempts(ctx context.Context, arg SystemCountRecentLoginAttemptsParams) (int64, error)
+	SystemCreateForumTopic(ctx context.Context, arg SystemCreateForumTopicParams) (int64, error)
 	SystemCreateNotification(ctx context.Context, arg SystemCreateNotificationParams) error
 	SystemCreateSearchWord(ctx context.Context, word string) (int64, error)
+	// This query inserts a new permission into the "permissions" table.
+	// Parameters:
+	//   ? - User ID to be associated with the permission (int)
+	//   ? - Role of the permission (string)
+	SystemCreateUserRole(ctx context.Context, arg SystemCreateUserRoleParams) error
 	// This query deletes all data from the "blogs_search" table.
 	SystemDeleteBlogsSearch(ctx context.Context) error
 	// This query deletes all data from the "comments_search" table.

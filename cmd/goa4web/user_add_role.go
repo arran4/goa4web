@@ -52,7 +52,7 @@ func (c *userAddRoleCmd) Run() error {
 	} else if !errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("check role: %w", err)
 	}
-	if err := queries.CreateUserRole(ctx, db.CreateUserRoleParams{
+	if err := queries.SystemCreateUserRole(ctx, db.SystemCreateUserRoleParams{
 		UsersIdusers: u.Idusers,
 		Name:         c.Role,
 	}); err != nil {

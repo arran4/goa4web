@@ -46,7 +46,7 @@ func (RoleGrantCreateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if section == "" || action == "" {
 		return fmt.Errorf("missing section or action %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("")))
 	}
-	if _, err = queries.CreateGrant(r.Context(), db.CreateGrantParams{
+	if _, err = queries.AdminCreateGrant(r.Context(), db.AdminCreateGrantParams{
 		UserID:   sql.NullInt32{},
 		RoleID:   sql.NullInt32{Int32: int32(roleID), Valid: true},
 		Section:  section,

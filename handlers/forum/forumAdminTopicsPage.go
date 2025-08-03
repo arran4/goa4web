@@ -83,7 +83,7 @@ func AdminTopicCreatePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	if _, err := queries.CreateForumTopic(r.Context(), db.CreateForumTopicParams{
+	if _, err := queries.SystemCreateForumTopic(r.Context(), db.SystemCreateForumTopicParams{
 		ForumcategoryIdforumcategory: int32(pcid),
 		Title:                        sql.NullString{String: name, Valid: true},
 		Description:                  sql.NullString{String: desc, Valid: true},

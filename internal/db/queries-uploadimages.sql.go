@@ -54,27 +54,42 @@ func (q *Queries) AdminListUploadedImages(ctx context.Context, arg AdminListUplo
 	return items, nil
 }
 
-const createUploadedImage = `-- name: CreateUploadedImage :execlastid
+const createUploadedImageForUploader = `-- name: CreateUploadedImageForUploader :execlastid
 INSERT INTO uploaded_images (
     users_idusers, path, width, height, file_size, uploaded
-) VALUES (?, ?, ?, ?, ?, NOW())
+)
+SELECT ?, ?, ?, ?, ?, NOW()
+WHERE EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='images'
+      AND (g.item='upload' OR g.item IS NULL)
+      AND g.action='post'
+      AND g.active=1
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (
+          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+      ))
+)
 `
 
-type CreateUploadedImageParams struct {
-	UsersIdusers int32
-	Path         sql.NullString
-	Width        sql.NullInt32
-	Height       sql.NullInt32
-	FileSize     int32
+type CreateUploadedImageForUploaderParams struct {
+	UploaderID int32
+	Path       sql.NullString
+	Width      sql.NullInt32
+	Height     sql.NullInt32
+	FileSize   int32
+	GranteeID  sql.NullInt32
 }
 
-func (q *Queries) CreateUploadedImage(ctx context.Context, arg CreateUploadedImageParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, createUploadedImage,
-		arg.UsersIdusers,
+func (q *Queries) CreateUploadedImageForUploader(ctx context.Context, arg CreateUploadedImageForUploaderParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, createUploadedImageForUploader,
+		arg.UploaderID,
 		arg.Path,
 		arg.Width,
 		arg.Height,
 		arg.FileSize,
+		arg.GranteeID,
+		arg.UploaderID,
 	)
 	if err != nil {
 		return 0, err

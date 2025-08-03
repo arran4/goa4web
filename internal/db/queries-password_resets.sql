@@ -1,4 +1,4 @@
--- name: CreatePasswordReset :exec
+-- name: CreatePasswordResetForUser :exec
 INSERT INTO pending_passwords (user_id, passwd, passwd_algorithm, verification_code)
 VALUES (?, ?, ?, ?);
 

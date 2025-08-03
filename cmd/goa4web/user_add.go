@@ -84,7 +84,7 @@ func createUser(root *rootCmd, username, email, password string, admin bool) err
 		return fmt.Errorf("insert password: %w", err)
 	}
 	if !admin {
-		if err := queries.CreateUserRole(ctx, db.CreateUserRoleParams{
+		if err := queries.SystemCreateUserRole(ctx, db.SystemCreateUserRoleParams{
 			UsersIdusers: int32(id),
 			Name:         "user",
 		}); err != nil {
@@ -97,7 +97,7 @@ func createUser(root *rootCmd, username, email, password string, admin bool) err
 			}
 		} else if !errors.Is(err, sql.ErrNoRows) {
 			return fmt.Errorf("check admin: %w", err)
-		} else if err := queries.CreateUserRole(ctx, db.CreateUserRoleParams{
+		} else if err := queries.SystemCreateUserRole(ctx, db.SystemCreateUserRoleParams{
 			UsersIdusers: int32(id),
 			Name:         "administrator",
 		}); err != nil {

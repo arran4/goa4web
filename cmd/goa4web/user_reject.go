@@ -51,7 +51,7 @@ func (c *userRejectCmd) Run() error {
 		c.ID = int(u.Idusers)
 	}
 	c.rootCmd.Verbosef("rejecting user %d", c.ID)
-	if err := queries.CreateUserRole(ctx, db.CreateUserRoleParams{UsersIdusers: int32(c.ID), Name: "rejected"}); err != nil {
+	if err := queries.SystemCreateUserRole(ctx, db.SystemCreateUserRoleParams{UsersIdusers: int32(c.ID), Name: "rejected"}); err != nil {
 		return fmt.Errorf("add role: %w", err)
 	}
 	if c.Reason != "" {

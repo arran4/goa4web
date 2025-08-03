@@ -40,7 +40,7 @@ func (userAllowTask) Action(w http.ResponseWriter, r *http.Request) any {
 			log.Printf("SystemGetUserByUsername Error: %s", err)
 			continue
 		}
-		if err := queries.CreateUserRole(r.Context(), db.CreateUserRoleParams{
+		if err := queries.SystemCreateUserRole(r.Context(), db.SystemCreateUserRoleParams{
 			UsersIdusers: u.Idusers,
 			Name:         role,
 		}); err != nil {

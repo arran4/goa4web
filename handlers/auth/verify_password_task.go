@@ -48,7 +48,7 @@ func (VerifyPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil || reset.ID != id {
 		return handlers.ErrRedirectOnSamePageHandler(errors.New("invalid code"))
 	}
-	if _, err := queries.UserHasLoginRole(r.Context(), reset.UserID); err != nil {
+	if _, err := queries.GetLoginRoleForUser(r.Context(), reset.UserID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return handlers.ErrRedirectOnSamePageHandler(errors.New("approval is pending"))
 		}
@@ -57,7 +57,7 @@ func (VerifyPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if !VerifyPassword(pw, reset.Passwd, reset.PasswdAlgorithm) {
 		return handlers.ErrRedirectOnSamePageHandler(errors.New("invalid password"))
 	}
-	if err := queries.MarkPasswordResetVerified(r.Context(), reset.ID); err != nil {
+	if err := queries.SystemMarkPasswordResetVerified(r.Context(), reset.ID); err != nil {
 		log.Printf("mark reset verified: %v", err)
 	}
 	if err := queries.InsertPassword(r.Context(), db.InsertPasswordParams{UsersIdusers: reset.UserID, Passwd: reset.Passwd, PasswdAlgorithm: sql.NullString{String: reset.PasswdAlgorithm, Valid: true}}); err != nil {

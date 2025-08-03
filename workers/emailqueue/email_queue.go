@@ -158,14 +158,14 @@ func ProcessPendingEmail(ctx context.Context, q db.Querier, provider email.Provi
 	addr, err := ResolveQueuedEmailAddress(ctx, q, cfg, e)
 	if err != nil {
 		log.Printf("ResolveQueuedEmailAddress: %v", err)
-		if err := q.IncrementEmailError(ctx, e.ID); err != nil {
+		if err := q.SystemIncrementPendingEmailError(ctx, e.ID); err != nil {
 			log.Printf("increment email error: %v", err)
 		}
 		return false
 	}
 	if err := provider.Send(ctx, addr, []byte(e.Body)); err != nil {
 		log.Printf("send queued mail: %v", err)
-		if err := q.IncrementEmailError(ctx, e.ID); err != nil {
+		if err := q.SystemIncrementPendingEmailError(ctx, e.ID); err != nil {
 			log.Printf("increment email error: %v", err)
 			return true
 		}
@@ -181,7 +181,7 @@ func ProcessPendingEmail(ctx context.Context, q db.Querier, provider email.Provi
 		}
 		return true
 	}
-	if err := q.MarkEmailSent(ctx, e.ID); err != nil {
+	if err := q.SystemMarkPendingEmailSent(ctx, e.ID); err != nil {
 		log.Printf("mark sent: %v", err)
 	}
 	return true

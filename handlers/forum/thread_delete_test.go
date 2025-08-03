@@ -19,7 +19,7 @@ func TestThreadDelete(t *testing.T) {
 	mock.ExpectExec("AdminDeleteForumThread").
 		WithArgs(int32(1)).
 		WillReturnResult(sqlmock.NewResult(0, 0))
-	mock.ExpectExec("RebuildForumTopicByIdMetaColumns").
+	mock.ExpectExec("SystemRebuildForumTopicMetaByID").
 		WithArgs(int32(2)).
 		WillReturnResult(sqlmock.NewResult(0, 0))
 

@@ -144,6 +144,9 @@ type CoreData struct {
 	writingRows              map[int32]*lazy.Value[*db.GetWritingForListerByIDRow]
 	currentBlogID            int32
 	blogEntries              map[int32]*lazy.Value[*db.GetBlogEntryForListerByIDRow]
+	blogListOffset           int
+	blogListRows             lazy.Value[[]*db.ListBlogEntriesByAuthorForListerRow]
+	blogListUID              int32
 
 	absoluteURLBase lazy.Value[string]
 	dbRegistry      *dbdrivers.Registry
@@ -1034,6 +1037,48 @@ func (cd *CoreData) BlogEntryByID(id int32, ops ...lazy.Option[*db.GetBlogEntryF
 	}
 	return lazy.Map(&cd.blogEntries, &cd.mapMu, id, fetch, ops...)
 }
+
+// SetBlogListParams stores parameters for listing blogs.
+func (cd *CoreData) SetBlogListParams(uid int32, offset int) {
+	cd.blogListUID = uid
+	cd.blogListOffset = offset
+}
+
+// BlogList returns blog entries for the current parameters.
+func (cd *CoreData) BlogList() ([]*db.ListBlogEntriesByAuthorForListerRow, error) {
+	return cd.blogListRows.Load(func() ([]*db.ListBlogEntriesByAuthorForListerRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		rows, err := cd.queries.ListBlogEntriesByAuthorForLister(cd.ctx, db.ListBlogEntriesByAuthorForListerParams{
+			AuthorID: cd.blogListUID,
+			ListerID: cd.UserID,
+			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+			Limit:    15,
+			Offset:   int32(cd.blogListOffset),
+		})
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, nil
+			}
+			return nil, err
+		}
+		var list []*db.ListBlogEntriesByAuthorForListerRow
+		for _, row := range rows {
+			if !cd.HasGrant("blogs", "entry", "see", row.Idblogs) {
+				continue
+			}
+			list = append(list, row)
+		}
+		return list, nil
+	})
+}
+
+// BlogListUID returns the user ID parameter for the blog list.
+func (cd *CoreData) BlogListUID() int32 { return cd.blogListUID }
+
+// BlogListOffset returns the offset parameter for the blog list.
+func (cd *CoreData) BlogListOffset() int { return cd.blogListOffset }
 
 // CommentByID returns a forum comment lazily loading it once per ID.
 func (cd *CoreData) CommentByID(id int32, ops ...lazy.Option[*db.GetCommentByIdForUserRow]) (*db.GetCommentByIdForUserRow, error) {

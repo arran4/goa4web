@@ -31,6 +31,44 @@ func (q *Queries) CreateFAQCategory(ctx context.Context, arg CreateFAQCategoryPa
 	return err
 }
 
+const createFAQEntryForWriter = `-- name: CreateFAQEntryForWriter :execresult
+INSERT INTO faq (question, answer, faqCategories_idfaqCategories, users_idusers, language_idlanguage)
+SELECT ?, ?, ?, ?, ?
+WHERE EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section = 'faq'
+      AND g.item = 'question'
+      AND g.action = 'post'
+      AND g.active = 1
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (
+          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+      ))
+)
+`
+
+type CreateFAQEntryForWriterParams struct {
+	Question   sql.NullString
+	Answer     sql.NullString
+	CategoryID int32
+	WriterID   int32
+	LanguageID int32
+	UserID     sql.NullInt32
+	ViewerID   int32
+}
+
+func (q *Queries) CreateFAQEntryForWriter(ctx context.Context, arg CreateFAQEntryForWriterParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, createFAQEntryForWriter,
+		arg.Question,
+		arg.Answer,
+		arg.CategoryID,
+		arg.WriterID,
+		arg.LanguageID,
+		arg.UserID,
+		arg.ViewerID,
+	)
+}
+
 const createFAQQuestion = `-- name: CreateFAQQuestion :exec
 INSERT INTO faq (question, users_idusers, language_idlanguage)
 VALUES (?, ?, ?)

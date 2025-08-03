@@ -87,3 +87,31 @@ ORDER BY u.idusers;
 SELECT a.id, a.users_idusers, u.username, a.action, a.path, a.details, a.data, a.created_at
 FROM audit_log a LEFT JOIN users u ON a.users_idusers = u.idusers
 ORDER BY a.id DESC LIMIT ?;
+
+-- name: AdminSiteCounts :one
+SELECT
+    (SELECT COUNT(*) FROM users) AS users,
+    (SELECT COUNT(*) FROM language) AS languages,
+    (SELECT COUNT(*) FROM site_news) AS news,
+    (SELECT COUNT(*) FROM blogs) AS blogs,
+    (SELECT COUNT(*) FROM forumtopic) AS forum_topics,
+    (SELECT COUNT(*) FROM forumthread) AS forum_threads,
+    (SELECT COUNT(*) FROM writing) AS writings;
+
+-- name: AdminForumCounts :one
+SELECT
+    (SELECT COUNT(*) FROM forumcategory) AS categories,
+    (SELECT COUNT(*) FROM forumtopic) AS topics,
+    (SELECT COUNT(*) FROM forumthread) AS threads;
+
+-- name: AdminSearchIndexCounts :one
+SELECT
+    (SELECT COUNT(*) FROM searchwordlist) AS words,
+    (SELECT COUNT(*) FROM searchwordlist) AS word_list,
+    (SELECT COUNT(*) FROM comments_search) AS comments,
+    (SELECT COUNT(*) FROM site_news_search) AS news,
+    (SELECT COUNT(*) FROM blogs_search) AS blogs,
+    (SELECT COUNT(*) FROM linker_search) AS linker,
+    (SELECT COUNT(*) FROM writing_search) AS writing,
+    (SELECT COUNT(*) FROM writing_search) AS writings,
+    (SELECT COUNT(*) FROM imagepost_search) AS images;

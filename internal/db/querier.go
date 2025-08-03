@@ -39,9 +39,11 @@ type Querier interface {
 	// admin task
 	AdminDeletePendingEmail(ctx context.Context, id int32) error
 	AdminDeleteTemplateOverride(ctx context.Context, name string) error
+	AdminDeleteUser(ctx context.Context, userID int32) error
 	// admin task
 	AdminDemoteAnnouncement(ctx context.Context, id int32) error
 	AdminForumCategoryThreadCounts(ctx context.Context) ([]*AdminForumCategoryThreadCountsRow, error)
+	AdminForumCounts(ctx context.Context) (*AdminForumCountsRow, error)
 	AdminForumTopicThreadCounts(ctx context.Context) ([]*AdminForumTopicThreadCountsRow, error)
 	AdminGetAllBlogEntriesByUser(ctx context.Context, arg AdminGetAllBlogEntriesByUserParams) ([]*AdminGetAllBlogEntriesByUserRow, error)
 	AdminGetAllCommentsByUser(ctx context.Context, userID int32) ([]*AdminGetAllCommentsByUserRow, error)
@@ -132,11 +134,15 @@ type Querier interface {
 	AdminScrubLink(ctx context.Context, arg AdminScrubLinkParams) error
 	AdminScrubUser(ctx context.Context, arg AdminScrubUserParams) error
 	AdminScrubWriting(ctx context.Context, arg AdminScrubWritingParams) error
+	AdminSearchIndexCounts(ctx context.Context) (*AdminSearchIndexCountsRow, error)
 	AdminSetTemplateOverride(ctx context.Context, arg AdminSetTemplateOverrideParams) error
+	AdminSiteCounts(ctx context.Context) (*AdminSiteCountsRow, error)
 	AdminUpdateBannedIp(ctx context.Context, arg AdminUpdateBannedIpParams) error
 	AdminUpdateRequestStatus(ctx context.Context, arg AdminUpdateRequestStatusParams) error
+	AdminUpdateRole(ctx context.Context, arg AdminUpdateRoleParams) error
 	// admin task
 	AdminUpdateRolePublicProfileAllowed(ctx context.Context, arg AdminUpdateRolePublicProfileAllowedParams) error
+	AdminUpdateUserUsername(ctx context.Context, arg AdminUpdateUserUsernameParams) error
 	AdminUpdateWritingCategory(ctx context.Context, arg AdminUpdateWritingCategoryParams) error
 	AdminUserPostCounts(ctx context.Context) ([]*AdminUserPostCountsRow, error)
 	AdminUserPostCountsByID(ctx context.Context, idusers int32) (*AdminUserPostCountsByIDRow, error)
@@ -159,6 +165,7 @@ type Querier interface {
 	CreateBookmarks(ctx context.Context, arg CreateBookmarksParams) error
 	CreateComment(ctx context.Context, arg CreateCommentParams) (int64, error)
 	CreateFAQCategory(ctx context.Context, arg CreateFAQCategoryParams) error
+	CreateFAQEntryForWriter(ctx context.Context, arg CreateFAQEntryForWriterParams) (sql.Result, error)
 	CreateFAQQuestion(ctx context.Context, arg CreateFAQQuestionParams) error
 	CreateForumCategory(ctx context.Context, arg CreateForumCategoryParams) error
 	CreateForumTopic(ctx context.Context, arg CreateForumTopicParams) (int64, error)

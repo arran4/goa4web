@@ -78,6 +78,21 @@ WHERE EXISTS (
 INSERT INTO faq (question, users_idusers, language_idlanguage)
 VALUES (?, ?, ?);
 
+-- name: CreateFAQEntryForWriter :execresult
+INSERT INTO faq (question, answer, faqCategories_idfaqCategories, users_idusers, language_idlanguage)
+SELECT sqlc.arg(question), sqlc.arg(answer), sqlc.arg(category_id), sqlc.arg(writer_id), sqlc.arg(language_id)
+WHERE EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section = 'faq'
+      AND g.item = 'question'
+      AND g.action = 'post'
+      AND g.active = 1
+      AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (
+          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+      ))
+);
+
 -- name: UpdateFAQQuestionAnswer :exec
 UPDATE faq
 SET answer = ?, question = ?, faqCategories_idfaqCategories = ?

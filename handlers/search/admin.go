@@ -1,13 +1,10 @@
 package search
 
 import (
-	"database/sql"
 	"github.com/arran4/goa4web/core/consts"
-	"log"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/handlers"
 )
@@ -36,27 +33,20 @@ func adminSearchPage(w http.ResponseWriter, r *http.Request) {
 	data.CoreData.PageTitle = "Search Admin"
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	ctx := r.Context()
-	dber, ok := queries.(interface{ DB() db.DBTX })
-	if !ok {
+	counts, err := queries.AdminSearchIndexCounts(r.Context())
+	if err != nil {
 		http.Error(w, "database not available", http.StatusInternalServerError)
 		return
 	}
-	count := func(query string, dest *int64) {
-		if err := dber.DB().QueryRowContext(ctx, query).Scan(dest); err != nil && err != sql.ErrNoRows {
-			log.Printf("adminSearchPage count query error: %v", err)
-		}
-	}
-
-	// TODO make queries and find another way of making this DRY if really required
-	count("SELECT COUNT(*) FROM searchwordlist", &data.Stats.Words)
-	count("SELECT COUNT(*) FROM comments_search", &data.Stats.Comments)
-	count("SELECT COUNT(*) FROM site_news_search", &data.Stats.News)
-	count("SELECT COUNT(*) FROM blogs_search", &data.Stats.Blogs)
-	count("SELECT COUNT(*) FROM linker_search", &data.Stats.Linker)
-	count("SELECT COUNT(*) FROM writing_search", &data.Stats.Writing)
-	count("SELECT COUNT(*) FROM writing_search", &data.Stats.Writings)
-	count("SELECT COUNT(*) FROM imagepost_search", &data.Stats.Images)
+	data.Stats.Words = counts.Words
+	data.Stats.WordList = int64(counts.WordList)
+	data.Stats.Comments = counts.Comments
+	data.Stats.News = counts.News
+	data.Stats.Blogs = counts.Blogs
+	data.Stats.Linker = counts.Linker
+	data.Stats.Writing = counts.Writing
+	data.Stats.Writings = counts.Writings
+	data.Stats.Images = counts.Images
 
 	handlers.TemplateHandler(w, r, "adminSearchPage", data)
 }

@@ -71,6 +71,26 @@ func (q *Queries) AdminForumCategoryThreadCounts(ctx context.Context) ([]*AdminF
 	return items, nil
 }
 
+const adminForumCounts = `-- name: AdminForumCounts :one
+SELECT
+    (SELECT COUNT(*) FROM forumcategory) AS categories,
+    (SELECT COUNT(*) FROM forumtopic) AS topics,
+    (SELECT COUNT(*) FROM forumthread) AS threads
+`
+
+type AdminForumCountsRow struct {
+	Categories int64
+	Topics     int64
+	Threads    int64
+}
+
+func (q *Queries) AdminForumCounts(ctx context.Context) (*AdminForumCountsRow, error) {
+	row := q.db.QueryRowContext(ctx, adminForumCounts)
+	var i AdminForumCountsRow
+	err := row.Scan(&i.Categories, &i.Topics, &i.Threads)
+	return &i, err
+}
+
 const adminForumTopicThreadCounts = `-- name: AdminForumTopicThreadCounts :many
 SELECT t.idforumtopic, t.title, COUNT(th.idforumthread) AS count
 FROM forumtopic t
@@ -194,6 +214,48 @@ func (q *Queries) AdminImageboardPostCounts(ctx context.Context) ([]*AdminImageb
 	return items, nil
 }
 
+const adminSearchIndexCounts = `-- name: AdminSearchIndexCounts :one
+SELECT
+    (SELECT COUNT(*) FROM searchwordlist) AS words,
+    (SELECT COUNT(*) FROM searchwordlist) AS word_list,
+    (SELECT COUNT(*) FROM comments_search) AS comments,
+    (SELECT COUNT(*) FROM site_news_search) AS news,
+    (SELECT COUNT(*) FROM blogs_search) AS blogs,
+    (SELECT COUNT(*) FROM linker_search) AS linker,
+    (SELECT COUNT(*) FROM writing_search) AS writing,
+    (SELECT COUNT(*) FROM writing_search) AS writings,
+    (SELECT COUNT(*) FROM imagepost_search) AS images
+`
+
+type AdminSearchIndexCountsRow struct {
+	Words    int64
+	WordList int64
+	Comments int64
+	News     int64
+	Blogs    int64
+	Linker   int64
+	Writing  int64
+	Writings int64
+	Images   int64
+}
+
+func (q *Queries) AdminSearchIndexCounts(ctx context.Context) (*AdminSearchIndexCountsRow, error) {
+	row := q.db.QueryRowContext(ctx, adminSearchIndexCounts)
+	var i AdminSearchIndexCountsRow
+	err := row.Scan(
+		&i.Words,
+		&i.WordList,
+		&i.Comments,
+		&i.News,
+		&i.Blogs,
+		&i.Linker,
+		&i.Writing,
+		&i.Writings,
+		&i.Images,
+	)
+	return &i, err
+}
+
 const adminSetTemplateOverride = `-- name: AdminSetTemplateOverride :exec
 INSERT INTO template_overrides (name, body)
 VALUES (?, ?)
@@ -208,6 +270,42 @@ type AdminSetTemplateOverrideParams struct {
 func (q *Queries) AdminSetTemplateOverride(ctx context.Context, arg AdminSetTemplateOverrideParams) error {
 	_, err := q.db.ExecContext(ctx, adminSetTemplateOverride, arg.Name, arg.Body)
 	return err
+}
+
+const adminSiteCounts = `-- name: AdminSiteCounts :one
+SELECT
+    (SELECT COUNT(*) FROM users) AS users,
+    (SELECT COUNT(*) FROM language) AS languages,
+    (SELECT COUNT(*) FROM site_news) AS news,
+    (SELECT COUNT(*) FROM blogs) AS blogs,
+    (SELECT COUNT(*) FROM forumtopic) AS forum_topics,
+    (SELECT COUNT(*) FROM forumthread) AS forum_threads,
+    (SELECT COUNT(*) FROM writing) AS writings
+`
+
+type AdminSiteCountsRow struct {
+	Users        int64
+	Languages    int64
+	News         int64
+	Blogs        int64
+	ForumTopics  int64
+	ForumThreads int64
+	Writings     int64
+}
+
+func (q *Queries) AdminSiteCounts(ctx context.Context) (*AdminSiteCountsRow, error) {
+	row := q.db.QueryRowContext(ctx, adminSiteCounts)
+	var i AdminSiteCountsRow
+	err := row.Scan(
+		&i.Users,
+		&i.Languages,
+		&i.News,
+		&i.Blogs,
+		&i.ForumTopics,
+		&i.ForumThreads,
+		&i.Writings,
+	)
+	return &i, err
 }
 
 const adminUserPostCounts = `-- name: AdminUserPostCounts :many

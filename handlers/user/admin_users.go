@@ -168,12 +168,8 @@ func adminUserDisablePage(w http.ResponseWriter, r *http.Request) {
 	}
 	if uidi, err := strconv.Atoi(uid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else if dber, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries().(interface{ DB() db.DBTX }); ok {
-		if _, err := dber.DB().ExecContext(r.Context(), "DELETE FROM users WHERE idusers = ?", uidi); err != nil {
-			data.Errors = append(data.Errors, fmt.Errorf("delete user: %w", err).Error())
-		}
-	} else {
-		data.Errors = append(data.Errors, "database not available")
+	} else if err := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries().AdminDeleteUser(r.Context(), int32(uidi)); err != nil {
+		data.Errors = append(data.Errors, fmt.Errorf("delete user: %w", err).Error())
 	}
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
@@ -217,14 +213,13 @@ func adminUserEditSavePage(w http.ResponseWriter, r *http.Request) {
 	}
 	if uidi, err := strconv.Atoi(uid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else if dber, ok := queries.(interface{ DB() db.DBTX }); ok {
-		if _, err := dber.DB().ExecContext(r.Context(), "UPDATE users SET username=? WHERE idusers=?", username, uidi); err != nil {
-			data.Errors = append(data.Errors, fmt.Errorf("update user: %w", err).Error())
-		} else if err := queries.UpdateUserEmail(r.Context(), db.UpdateUserEmailParams{Email: email, UserID: int32(uidi)}); err != nil {
-			data.Errors = append(data.Errors, fmt.Errorf("update user email: %w", err).Error())
-		}
-	} else {
-		data.Errors = append(data.Errors, "database not available")
+	} else if err := queries.AdminUpdateUserUsername(r.Context(), db.AdminUpdateUserUsernameParams{
+		Username: sql.NullString{String: username, Valid: true},
+		UserID:   int32(uidi),
+	}); err != nil {
+		data.Errors = append(data.Errors, fmt.Errorf("update user: %w", err).Error())
+	} else if err := queries.UpdateUserEmail(r.Context(), db.UpdateUserEmailParams{Email: email, UserID: int32(uidi)}); err != nil {
+		data.Errors = append(data.Errors, fmt.Errorf("update user email: %w", err).Error())
 	}
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }

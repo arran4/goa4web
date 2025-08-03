@@ -88,3 +88,9 @@ WHERE idusers IN (sqlc.slice('ids'));
 
 -- name: UpdatePublicProfileEnabledAtByUserID :exec
 UPDATE users SET public_profile_enabled_at = ? WHERE idusers = ?;
+
+-- name: AdminDeleteUser :exec
+DELETE FROM users WHERE idusers = sqlc.arg(user_id);
+
+-- name: AdminUpdateUserUsername :exec
+UPDATE users SET username = sqlc.arg(username) WHERE idusers = sqlc.arg(user_id);

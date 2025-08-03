@@ -30,3 +30,6 @@ ORDER BY u.username;
 -- name: AdminListGrantsByRoleID :many
 -- admin task
 SELECT * FROM grants WHERE role_id = ? ORDER BY id;
+
+-- name: AdminUpdateRole :exec
+UPDATE roles SET name = ?, can_login = ?, is_admin = ? WHERE id = ?;

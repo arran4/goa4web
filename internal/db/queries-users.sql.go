@@ -11,6 +11,15 @@ import (
 	"strings"
 )
 
+const adminDeleteUser = `-- name: AdminDeleteUser :exec
+DELETE FROM users WHERE idusers = ?
+`
+
+func (q *Queries) AdminDeleteUser(ctx context.Context, userID int32) error {
+	_, err := q.db.ExecContext(ctx, adminDeleteUser, userID)
+	return err
+}
+
 const adminListAdministratorEmails = `-- name: AdminListAdministratorEmails :many
 SELECT (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email
 FROM users u
@@ -227,6 +236,20 @@ func (q *Queries) AdminListUsersByID(ctx context.Context, ids []int32) ([]*Admin
 		return nil, err
 	}
 	return items, nil
+}
+
+const adminUpdateUserUsername = `-- name: AdminUpdateUserUsername :exec
+UPDATE users SET username = ? WHERE idusers = ?
+`
+
+type AdminUpdateUserUsernameParams struct {
+	Username sql.NullString
+	UserID   int32
+}
+
+func (q *Queries) AdminUpdateUserUsername(ctx context.Context, arg AdminUpdateUserUsernameParams) error {
+	_, err := q.db.ExecContext(ctx, adminUpdateUserUsername, arg.Username, arg.UserID)
+	return err
 }
 
 const getUserById = `-- name: GetUserById :one

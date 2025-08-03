@@ -18,10 +18,8 @@ Each role includes the following flags:
 - **is_admin** – marks administrator roles that bypass permission checks
 - **public_profile_allowed_at** – when set, users with this role may expose a public profile
 
-Users can hold multiple roles through the `user_roles` table. Role inheritance is
-modelled via entries in the `grants` table with `section = 'role'`. For example,
-`administrator` inherits `moderator` and `content writer` which in turn inherit
-`user`.
+Users can hold multiple roles through the `user_roles` table. Roles are assigned
+explicitly without inheritance.
 
 The `user` role does not need to be explicitly assigned. Any authenticated
 account automatically gains the `user` role while the `anonymous` role applies
@@ -81,8 +79,8 @@ Each section may define additional actions, but these are the core verbs used by
 ## Permission Resolution
 
 When checking access for a user, the application resolves the user's effective
-roles using the `ListEffectiveRoleIDsByUserID` query. This query recursively
-expands role inheritance defined in `grants`.
+roles using the `ListEffectiveRoleIDsByUserID` query which returns the roles
+directly assigned to the user.
 
 A permission check searches the `grants` table for an active row matching the
 requested `section`, `item` and `action`. A grant is considered applicable if

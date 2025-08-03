@@ -77,6 +77,7 @@ type Querier interface {
 	AdminListUnsentPendingEmails(ctx context.Context, arg AdminListUnsentPendingEmailsParams) ([]*AdminListUnsentPendingEmailsRow, error)
 	// Admin
 	AdminListUploadedImages(ctx context.Context, arg AdminListUploadedImagesParams) ([]*UploadedImage, error)
+	AdminListUserEmails(ctx context.Context, userID int32) ([]*UserEmail, error)
 	AdminListUserIDsByRole(ctx context.Context, name string) ([]int32, error)
 	// admin task
 	AdminListUsersByRoleID(ctx context.Context, roleID int32) ([]*AdminListUsersByRoleIDRow, error)
@@ -253,7 +254,7 @@ type Querier interface {
 	// Lists the role names granted to a user.
 	GetPermissionsByUserID(ctx context.Context, usersIdusers int32) ([]*GetPermissionsByUserIDRow, error)
 	GetPermissionsWithUsers(ctx context.Context, arg GetPermissionsWithUsersParams) ([]*GetPermissionsWithUsersRow, error)
-	GetPreferenceByUserID(ctx context.Context, usersIdusers int32) (*Preference, error)
+	GetPreferenceForLister(ctx context.Context, listerID int32) (*Preference, error)
 	GetPublicWritings(ctx context.Context, arg GetPublicWritingsParams) ([]*Writing, error)
 	GetThreadLastPosterAndPerms(ctx context.Context, arg GetThreadLastPosterAndPermsParams) (*GetThreadLastPosterAndPermsRow, error)
 	GetUnreadNotifications(ctx context.Context, usersIdusers int32) ([]*Notification, error)
@@ -262,8 +263,6 @@ type Querier interface {
 	GetUserEmailByCode(ctx context.Context, lastVerificationCode sql.NullString) (*UserEmail, error)
 	GetUserEmailByEmail(ctx context.Context, email string) (*UserEmail, error)
 	GetUserEmailByID(ctx context.Context, id int32) (*UserEmail, error)
-	GetUserEmailsByUserID(ctx context.Context, arg GetUserEmailsByUserIDParams) ([]*UserEmail, error)
-	GetUserEmailsByUserIDAdmin(ctx context.Context, userID int32) ([]*UserEmail, error)
 	GetUserLanguages(ctx context.Context, usersIdusers int32) ([]*UserLanguage, error)
 	// This query returns the role for a user.
 	// Result:
@@ -280,13 +279,13 @@ type Querier interface {
 	IncrementEmailError(ctx context.Context, id int32) error
 	InsertAdminUserComment(ctx context.Context, arg InsertAdminUserCommentParams) error
 	InsertAuditLog(ctx context.Context, arg InsertAuditLogParams) error
-	InsertEmailPreference(ctx context.Context, arg InsertEmailPreferenceParams) error
+	InsertEmailPreferenceForLister(ctx context.Context, arg InsertEmailPreferenceForListerParams) error
 	InsertFAQRevisionForUser(ctx context.Context, arg InsertFAQRevisionForUserParams) error
 	InsertLanguage(ctx context.Context, nameof sql.NullString) (sql.Result, error)
 	InsertNotification(ctx context.Context, arg InsertNotificationParams) error
 	InsertPassword(ctx context.Context, arg InsertPasswordParams) error
 	InsertPendingEmail(ctx context.Context, arg InsertPendingEmailParams) error
-	InsertPreference(ctx context.Context, arg InsertPreferenceParams) error
+	InsertPreferenceForLister(ctx context.Context, arg InsertPreferenceForListerParams) error
 	InsertSubscription(ctx context.Context, arg InsertSubscriptionParams) error
 	InsertUser(ctx context.Context, username sql.NullString) (sql.Result, error)
 	InsertUserEmail(ctx context.Context, arg InsertUserEmailParams) error
@@ -317,10 +316,10 @@ type Querier interface {
 	ListSubscribersForPatterns(ctx context.Context, arg ListSubscribersForPatternsParams) ([]int32, error)
 	ListSubscriptionsByUser(ctx context.Context, usersIdusers int32) ([]*ListSubscriptionsByUserRow, error)
 	ListUploadedImagesByUserForLister(ctx context.Context, arg ListUploadedImagesByUserForListerParams) ([]*UploadedImage, error)
+	ListUserEmailsForLister(ctx context.Context, arg ListUserEmailsForListerParams) ([]*UserEmail, error)
 	ListUserNotifications(ctx context.Context, arg ListUserNotificationsParams) ([]*Notification, error)
 	ListUserUnreadNotifications(ctx context.Context, arg ListUserUnreadNotificationsParams) ([]*Notification, error)
 	ListUsersWithRoles(ctx context.Context) ([]*ListUsersWithRolesRow, error)
-	ListVerifiedEmailsByUserID(ctx context.Context, userID int32) ([]*UserEmail, error)
 	ListWritersForLister(ctx context.Context, arg ListWritersForListerParams) ([]*ListWritersForListerRow, error)
 	ListWritersSearchForLister(ctx context.Context, arg ListWritersSearchForListerParams) ([]*ListWritersSearchForListerRow, error)
 	ListWritingCategoriesForLister(ctx context.Context, arg ListWritingCategoriesForListerParams) ([]*WritingCategory, error)
@@ -412,14 +411,15 @@ type Querier interface {
 	SystemListPublicWritingsByAuthor(ctx context.Context, arg SystemListPublicWritingsByAuthorParams) ([]*SystemListPublicWritingsByAuthorRow, error)
 	SystemListPublicWritingsInCategory(ctx context.Context, arg SystemListPublicWritingsInCategoryParams) ([]*SystemListPublicWritingsInCategoryRow, error)
 	SystemListUserInfo(ctx context.Context) ([]*SystemListUserInfoRow, error)
+	SystemListVerifiedEmailsByUserID(ctx context.Context, userID int32) ([]*UserEmail, error)
 	SystemPurgeDeadLettersBefore(ctx context.Context, createdAt time.Time) error
 	SystemSetBlogLastIndex(ctx context.Context, id int32) error
-	UpdateAutoSubscribeRepliesByUserID(ctx context.Context, arg UpdateAutoSubscribeRepliesByUserIDParams) error
+	UpdateAutoSubscribeRepliesForLister(ctx context.Context, arg UpdateAutoSubscribeRepliesForListerParams) error
 	UpdateBlogEntry(ctx context.Context, arg UpdateBlogEntryParams) error
 	// This query updates the "list" column in the "bookmarks" table for a specific user based on their "users_idusers".
 	UpdateBookmarks(ctx context.Context, arg UpdateBookmarksParams) error
 	UpdateComment(ctx context.Context, arg UpdateCommentParams) error
-	UpdateEmailForumUpdatesByUserID(ctx context.Context, arg UpdateEmailForumUpdatesByUserIDParams) error
+	UpdateEmailForumUpdatesForLister(ctx context.Context, arg UpdateEmailForumUpdatesForListerParams) error
 	UpdateFAQQuestionAnswer(ctx context.Context, arg UpdateFAQQuestionAnswerParams) error
 	UpdateForumCategory(ctx context.Context, arg UpdateForumCategoryParams) error
 	UpdateForumTopic(ctx context.Context, arg UpdateForumTopicParams) error
@@ -430,7 +430,7 @@ type Querier interface {
 	UpdateLinkerQueuedItem(ctx context.Context, arg UpdateLinkerQueuedItemParams) error
 	UpdateNewsPost(ctx context.Context, arg UpdateNewsPostParams) error
 	UpdatePermission(ctx context.Context, arg UpdatePermissionParams) error
-	UpdatePreference(ctx context.Context, arg UpdatePreferenceParams) error
+	UpdatePreferenceForLister(ctx context.Context, arg UpdatePreferenceForListerParams) error
 	UpdatePublicProfileEnabledAtByUserID(ctx context.Context, arg UpdatePublicProfileEnabledAtByUserIDParams) error
 	UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams) error
 	UpdateUserEmailVerification(ctx context.Context, arg UpdateUserEmailVerificationParams) error

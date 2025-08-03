@@ -50,21 +50,21 @@ func (SaveEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			err = queries.InsertEmailPreference(r.Context(), db.InsertEmailPreferenceParams{
-				Emailforumupdates:    sql.NullBool{Bool: updates, Valid: true},
+			err = queries.InsertEmailPreferenceForLister(r.Context(), db.InsertEmailPreferenceForListerParams{
+				EmailForumUpdates:    sql.NullBool{Bool: updates, Valid: true},
 				AutoSubscribeReplies: auto,
-				UsersIdusers:         uid,
+				ListerID:             uid,
 			})
 		}
 	} else {
-		err = queries.UpdateEmailForumUpdatesByUserID(r.Context(), db.UpdateEmailForumUpdatesByUserIDParams{
-			Emailforumupdates: sql.NullBool{Bool: updates, Valid: true},
-			UsersIdusers:      uid,
+		err = queries.UpdateEmailForumUpdatesForLister(r.Context(), db.UpdateEmailForumUpdatesForListerParams{
+			EmailForumUpdates: sql.NullBool{Bool: updates, Valid: true},
+			ListerID:          uid,
 		})
 		if err == nil {
-			err = queries.UpdateAutoSubscribeRepliesByUserID(r.Context(), db.UpdateAutoSubscribeRepliesByUserIDParams{
+			err = queries.UpdateAutoSubscribeRepliesForLister(r.Context(), db.UpdateAutoSubscribeRepliesForListerParams{
 				AutoSubscribeReplies: auto,
-				UsersIdusers:         uid,
+				ListerID:             uid,
 			})
 		}
 	}

@@ -10,14 +10,14 @@ import (
 	"database/sql"
 )
 
-const getPreferenceByUserID = `-- name: GetPreferenceByUserID :one
+const getPreferenceForLister = `-- name: GetPreferenceForLister :one
 SELECT idpreferences, language_idlanguage, users_idusers, emailforumupdates, page_size, auto_subscribe_replies
 FROM preferences
 WHERE users_idusers = ?
 `
 
-func (q *Queries) GetPreferenceByUserID(ctx context.Context, usersIdusers int32) (*Preference, error) {
-	row := q.db.QueryRowContext(ctx, getPreferenceByUserID, usersIdusers)
+func (q *Queries) GetPreferenceForLister(ctx context.Context, listerID int32) (*Preference, error) {
+	row := q.db.QueryRowContext(ctx, getPreferenceForLister, listerID)
 	var i Preference
 	err := row.Scan(
 		&i.Idpreferences,
@@ -30,81 +30,81 @@ func (q *Queries) GetPreferenceByUserID(ctx context.Context, usersIdusers int32)
 	return &i, err
 }
 
-const insertEmailPreference = `-- name: InsertEmailPreference :exec
+const insertEmailPreferenceForLister = `-- name: InsertEmailPreferenceForLister :exec
 INSERT INTO preferences (emailforumupdates, auto_subscribe_replies, users_idusers)
 VALUES (?, ?, ?)
 `
 
-type InsertEmailPreferenceParams struct {
-	Emailforumupdates    sql.NullBool
+type InsertEmailPreferenceForListerParams struct {
+	EmailForumUpdates    sql.NullBool
 	AutoSubscribeReplies bool
-	UsersIdusers         int32
+	ListerID             int32
 }
 
-func (q *Queries) InsertEmailPreference(ctx context.Context, arg InsertEmailPreferenceParams) error {
-	_, err := q.db.ExecContext(ctx, insertEmailPreference, arg.Emailforumupdates, arg.AutoSubscribeReplies, arg.UsersIdusers)
+func (q *Queries) InsertEmailPreferenceForLister(ctx context.Context, arg InsertEmailPreferenceForListerParams) error {
+	_, err := q.db.ExecContext(ctx, insertEmailPreferenceForLister, arg.EmailForumUpdates, arg.AutoSubscribeReplies, arg.ListerID)
 	return err
 }
 
-const insertPreference = `-- name: InsertPreference :exec
+const insertPreferenceForLister = `-- name: InsertPreferenceForLister :exec
 INSERT INTO preferences (language_idlanguage, users_idusers, page_size)
 VALUES (?, ?, ?)
 `
 
-type InsertPreferenceParams struct {
-	LanguageIdlanguage int32
-	UsersIdusers       int32
-	PageSize           int32
+type InsertPreferenceForListerParams struct {
+	LanguageID int32
+	ListerID   int32
+	PageSize   int32
 }
 
-func (q *Queries) InsertPreference(ctx context.Context, arg InsertPreferenceParams) error {
-	_, err := q.db.ExecContext(ctx, insertPreference, arg.LanguageIdlanguage, arg.UsersIdusers, arg.PageSize)
+func (q *Queries) InsertPreferenceForLister(ctx context.Context, arg InsertPreferenceForListerParams) error {
+	_, err := q.db.ExecContext(ctx, insertPreferenceForLister, arg.LanguageID, arg.ListerID, arg.PageSize)
 	return err
 }
 
-const updateAutoSubscribeRepliesByUserID = `-- name: UpdateAutoSubscribeRepliesByUserID :exec
+const updateAutoSubscribeRepliesForLister = `-- name: UpdateAutoSubscribeRepliesForLister :exec
 UPDATE preferences
 SET auto_subscribe_replies = ?
 WHERE users_idusers = ?
 `
 
-type UpdateAutoSubscribeRepliesByUserIDParams struct {
+type UpdateAutoSubscribeRepliesForListerParams struct {
 	AutoSubscribeReplies bool
-	UsersIdusers         int32
+	ListerID             int32
 }
 
-func (q *Queries) UpdateAutoSubscribeRepliesByUserID(ctx context.Context, arg UpdateAutoSubscribeRepliesByUserIDParams) error {
-	_, err := q.db.ExecContext(ctx, updateAutoSubscribeRepliesByUserID, arg.AutoSubscribeReplies, arg.UsersIdusers)
+func (q *Queries) UpdateAutoSubscribeRepliesForLister(ctx context.Context, arg UpdateAutoSubscribeRepliesForListerParams) error {
+	_, err := q.db.ExecContext(ctx, updateAutoSubscribeRepliesForLister, arg.AutoSubscribeReplies, arg.ListerID)
 	return err
 }
 
-const updateEmailForumUpdatesByUserID = `-- name: UpdateEmailForumUpdatesByUserID :exec
+const updateEmailForumUpdatesForLister = `-- name: UpdateEmailForumUpdatesForLister :exec
 UPDATE preferences
 SET emailforumupdates = ?
 WHERE users_idusers = ?
 `
 
-type UpdateEmailForumUpdatesByUserIDParams struct {
-	Emailforumupdates sql.NullBool
-	UsersIdusers      int32
+type UpdateEmailForumUpdatesForListerParams struct {
+	EmailForumUpdates sql.NullBool
+	ListerID          int32
 }
 
-func (q *Queries) UpdateEmailForumUpdatesByUserID(ctx context.Context, arg UpdateEmailForumUpdatesByUserIDParams) error {
-	_, err := q.db.ExecContext(ctx, updateEmailForumUpdatesByUserID, arg.Emailforumupdates, arg.UsersIdusers)
+func (q *Queries) UpdateEmailForumUpdatesForLister(ctx context.Context, arg UpdateEmailForumUpdatesForListerParams) error {
+	_, err := q.db.ExecContext(ctx, updateEmailForumUpdatesForLister, arg.EmailForumUpdates, arg.ListerID)
 	return err
 }
 
-const updatePreference = `-- name: UpdatePreference :exec
+const updatePreferenceForLister = `-- name: UpdatePreferenceForLister :exec
 UPDATE preferences SET language_idlanguage = ?, page_size = ? WHERE users_idusers = ?
 `
 
-type UpdatePreferenceParams struct {
-	LanguageIdlanguage int32
-	PageSize           int32
-	UsersIdusers       int32
+type UpdatePreferenceForListerParams struct {
+	LanguageID int32
+	PageSize   int32
+	ListerID   int32
 }
 
-func (q *Queries) UpdatePreference(ctx context.Context, arg UpdatePreferenceParams) error {
-	_, err := q.db.ExecContext(ctx, updatePreference, arg.LanguageIdlanguage, arg.PageSize, arg.UsersIdusers)
+func (q *Queries) UpdatePreferenceForLister(ctx context.Context, arg UpdatePreferenceForListerParams) error {
+	_, err := q.db.ExecContext(ctx, updatePreferenceForLister, arg.LanguageID, arg.PageSize, arg.ListerID)
 	return err
 }

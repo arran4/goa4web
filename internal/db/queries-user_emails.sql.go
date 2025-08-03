@@ -10,6 +10,44 @@ import (
 	"database/sql"
 )
 
+const adminListUserEmails = `-- name: AdminListUserEmails :many
+SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority
+FROM user_emails
+WHERE user_id = ?
+ORDER BY notification_priority DESC, id
+`
+
+func (q *Queries) AdminListUserEmails(ctx context.Context, userID int32) ([]*UserEmail, error) {
+	rows, err := q.db.QueryContext(ctx, adminListUserEmails, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*UserEmail
+	for rows.Next() {
+		var i UserEmail
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Email,
+			&i.VerifiedAt,
+			&i.LastVerificationCode,
+			&i.VerificationExpiresAt,
+			&i.NotificationPriority,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const deleteUserEmail = `-- name: DeleteUserEmail :exec
 DELETE FROM user_emails WHERE id = ?
 `
@@ -130,98 +168,6 @@ func (q *Queries) GetUserEmailByID(ctx context.Context, id int32) (*UserEmail, e
 	return &i, err
 }
 
-const getUserEmailsByUserID = `-- name: GetUserEmailsByUserID :many
-WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-)
-SELECT ue.id, ue.user_id, ue.email, ue.verified_at, ue.last_verification_code, ue.verification_expires_at, ue.notification_priority
-FROM user_emails ue
-WHERE ue.user_id = ?
-  AND (
-      ? = ue.user_id
-      OR EXISTS (
-          SELECT 1
-          FROM role_ids ri
-          JOIN roles r ON r.id = ri.id
-          WHERE r.is_admin = 1
-      )
-  )
-`
-
-type GetUserEmailsByUserIDParams struct {
-	ViewerID int32
-	UserID   int32
-}
-
-func (q *Queries) GetUserEmailsByUserID(ctx context.Context, arg GetUserEmailsByUserIDParams) ([]*UserEmail, error) {
-	rows, err := q.db.QueryContext(ctx, getUserEmailsByUserID, arg.ViewerID, arg.UserID, arg.ViewerID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*UserEmail
-	for rows.Next() {
-		var i UserEmail
-		if err := rows.Scan(
-			&i.ID,
-			&i.UserID,
-			&i.Email,
-			&i.VerifiedAt,
-			&i.LastVerificationCode,
-			&i.VerificationExpiresAt,
-			&i.NotificationPriority,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getUserEmailsByUserIDAdmin = `-- name: GetUserEmailsByUserIDAdmin :many
-SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority
-FROM user_emails
-WHERE user_id = ?
-ORDER BY notification_priority DESC, id
-`
-
-func (q *Queries) GetUserEmailsByUserIDAdmin(ctx context.Context, userID int32) ([]*UserEmail, error) {
-	rows, err := q.db.QueryContext(ctx, getUserEmailsByUserIDAdmin, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*UserEmail
-	for rows.Next() {
-		var i UserEmail
-		if err := rows.Scan(
-			&i.ID,
-			&i.UserID,
-			&i.Email,
-			&i.VerifiedAt,
-			&i.LastVerificationCode,
-			&i.VerificationExpiresAt,
-			&i.NotificationPriority,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const insertUserEmail = `-- name: InsertUserEmail :exec
 INSERT INTO user_emails (user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority)
 VALUES (?, ?, ?, ?, ?, ?)
@@ -248,15 +194,31 @@ func (q *Queries) InsertUserEmail(ctx context.Context, arg InsertUserEmailParams
 	return err
 }
 
-const listVerifiedEmailsByUserID = `-- name: ListVerifiedEmailsByUserID :many
-SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority
-FROM user_emails
-WHERE user_id = ? AND verified_at IS NOT NULL
-ORDER BY notification_priority DESC, id
+const listUserEmailsForLister = `-- name: ListUserEmailsForLister :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+)
+SELECT ue.id, ue.user_id, ue.email, ue.verified_at, ue.last_verification_code, ue.verification_expires_at, ue.notification_priority
+FROM user_emails ue
+WHERE ue.user_id = ?
+  AND (
+      ? = ue.user_id
+      OR EXISTS (
+          SELECT 1
+          FROM role_ids ri
+          JOIN roles r ON r.id = ri.id
+          WHERE r.is_admin = 1
+      )
+  )
 `
 
-func (q *Queries) ListVerifiedEmailsByUserID(ctx context.Context, userID int32) ([]*UserEmail, error) {
-	rows, err := q.db.QueryContext(ctx, listVerifiedEmailsByUserID, userID)
+type ListUserEmailsForListerParams struct {
+	ListerID int32
+	UserID   int32
+}
+
+func (q *Queries) ListUserEmailsForLister(ctx context.Context, arg ListUserEmailsForListerParams) ([]*UserEmail, error) {
+	rows, err := q.db.QueryContext(ctx, listUserEmailsForLister, arg.ListerID, arg.UserID, arg.ListerID)
 	if err != nil {
 		return nil, err
 	}
@@ -313,6 +275,44 @@ type SetVerificationCodeParams struct {
 func (q *Queries) SetVerificationCode(ctx context.Context, arg SetVerificationCodeParams) error {
 	_, err := q.db.ExecContext(ctx, setVerificationCode, arg.LastVerificationCode, arg.VerificationExpiresAt, arg.ID)
 	return err
+}
+
+const systemListVerifiedEmailsByUserID = `-- name: SystemListVerifiedEmailsByUserID :many
+SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority
+FROM user_emails
+WHERE user_id = ? AND verified_at IS NOT NULL
+ORDER BY notification_priority DESC, id
+`
+
+func (q *Queries) SystemListVerifiedEmailsByUserID(ctx context.Context, userID int32) ([]*UserEmail, error) {
+	rows, err := q.db.QueryContext(ctx, systemListVerifiedEmailsByUserID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*UserEmail
+	for rows.Next() {
+		var i UserEmail
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Email,
+			&i.VerifiedAt,
+			&i.LastVerificationCode,
+			&i.VerificationExpiresAt,
+			&i.NotificationPriority,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const updateUserEmailVerification = `-- name: UpdateUserEmailVerification :exec

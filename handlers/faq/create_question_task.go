@@ -39,8 +39,11 @@ func (CreateQuestionTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	// TODO make a query
-	res, err := queries.DB().ExecContext(r.Context(),
+	dbq, ok := queries.(interface{ DB() db.DBTX })
+	if !ok {
+		return fmt.Errorf("querier missing DB method")
+	}
+	res, err := dbq.DB().ExecContext(r.Context(),
 		"INSERT INTO faq (question, answer, faqCategories_idfaqCategories, users_idusers, language_idlanguage) VALUES (?, ?, ?, ?, ?)",
 		sql.NullString{String: question, Valid: true},
 		sql.NullString{String: answer, Valid: true},

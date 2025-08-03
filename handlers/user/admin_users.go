@@ -1,6 +1,7 @@
 package user
 
 import (
+	"context"
 	"crypto/rand"
 	"database/sql"
 	"encoding/hex"
@@ -52,6 +53,14 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cqueries, ok := queries.(interface {
+		SearchUsersFiltered(context.Context, db.SearchUsersFilteredParams) ([]*db.UserFilteredRow, error)
+		ListUsersFiltered(context.Context, db.ListUsersFilteredParams) ([]*db.UserFilteredRow, error)
+	})
+	if !ok {
+		http.Error(w, "database not available", http.StatusInternalServerError)
+		return
+	}
 	if roles, err := data.AllRoles(); err == nil {
 		data.Roles = roles
 	}
@@ -60,7 +69,7 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 	var rows []*db.UserFilteredRow
 	var err error
 	if data.Search != "" {
-		rows, err = queries.SearchUsersFiltered(r.Context(), db.SearchUsersFilteredParams{
+		rows, err = cqueries.SearchUsersFiltered(r.Context(), db.SearchUsersFilteredParams{
 			Query:  data.Search,
 			Role:   data.Role,
 			Status: data.Status,
@@ -68,7 +77,7 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 			Offset: int32(offset),
 		})
 	} else {
-		rows, err = queries.ListUsersFiltered(r.Context(), db.ListUsersFilteredParams{
+		rows, err = cqueries.ListUsersFiltered(r.Context(), db.ListUsersFilteredParams{
 			Role:   data.Role,
 			Status: data.Status,
 			Limit:  int32(pageSize + 1),
@@ -159,8 +168,12 @@ func adminUserDisablePage(w http.ResponseWriter, r *http.Request) {
 	}
 	if uidi, err := strconv.Atoi(uid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else if _, err := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries().DB().ExecContext(r.Context(), "DELETE FROM users WHERE idusers = ?", uidi); err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("delete user: %w", err).Error())
+	} else if dber, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries().(interface{ DB() db.DBTX }); ok {
+		if _, err := dber.DB().ExecContext(r.Context(), "DELETE FROM users WHERE idusers = ?", uidi); err != nil {
+			data.Errors = append(data.Errors, fmt.Errorf("delete user: %w", err).Error())
+		}
+	} else {
+		data.Errors = append(data.Errors, "database not available")
 	}
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
@@ -204,10 +217,14 @@ func adminUserEditSavePage(w http.ResponseWriter, r *http.Request) {
 	}
 	if uidi, err := strconv.Atoi(uid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else if _, err := queries.DB().ExecContext(r.Context(), "UPDATE users SET username=? WHERE idusers=?", username, uidi); err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("update user: %w", err).Error())
-	} else if err := queries.UpdateUserEmail(r.Context(), db.UpdateUserEmailParams{Email: email, UserID: int32(uidi)}); err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("update user email: %w", err).Error())
+	} else if dber, ok := queries.(interface{ DB() db.DBTX }); ok {
+		if _, err := dber.DB().ExecContext(r.Context(), "UPDATE users SET username=? WHERE idusers=?", username, uidi); err != nil {
+			data.Errors = append(data.Errors, fmt.Errorf("update user: %w", err).Error())
+		} else if err := queries.UpdateUserEmail(r.Context(), db.UpdateUserEmailParams{Email: email, UserID: int32(uidi)}); err != nil {
+			data.Errors = append(data.Errors, fmt.Errorf("update user email: %w", err).Error())
+		}
+	} else {
+		data.Errors = append(data.Errors, "database not available")
 	}
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }

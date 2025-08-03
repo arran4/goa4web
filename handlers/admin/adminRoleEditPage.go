@@ -53,8 +53,12 @@ func adminRoleEditSavePage(w http.ResponseWriter, r *http.Request) {
 		Back   string
 	}{CoreData: cd, Back: fmt.Sprintf("/admin/role/%d", id)}
 
-	if _, err := queries.DB().ExecContext(r.Context(), "UPDATE roles SET name=?, can_login=?, is_admin=? WHERE id=?", name, canLogin, isAdmin, id); err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("update role: %w", err).Error())
+	if dber, ok := queries.(interface{ DB() db.DBTX }); ok {
+		if _, err := dber.DB().ExecContext(r.Context(), "UPDATE roles SET name=?, can_login=?, is_admin=? WHERE id=?", name, canLogin, isAdmin, id); err != nil {
+			data.Errors = append(data.Errors, fmt.Errorf("update role: %w", err).Error())
+		}
+	} else {
+		data.Errors = append(data.Errors, "database not available")
 	}
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }

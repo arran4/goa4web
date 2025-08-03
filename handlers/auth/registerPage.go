@@ -77,11 +77,7 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("hashPassword Error: %s", err)
 		return fmt.Errorf("hash password %w", err)
 	}
-	// TODO make a system query
-	result, err := queries.DB().ExecContext(r.Context(),
-		"INSERT INTO users (username) VALUES (?)",
-		username,
-	)
+	result, err := queries.InsertUser(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {
 		if strings.Contains(err.Error(), "Duplicate entry") || strings.Contains(err.Error(), "UNIQUE constraint failed") {
 			return handlers.ErrRedirectOnSamePageHandler(err)

@@ -258,6 +258,11 @@ func WithNavRegistry(r NavigationProvider) CoreOption {
 	return func(cd *CoreData) { cd.Nav = r }
 }
 
+// WithCustomQueries sets the db.CustomQueries dependency.
+func WithCustomQueries(cq db.CustomQueries) CoreOption {
+	return func(cd *CoreData) { cd.customQueries = cq }
+}
+
 // NewCoreData creates a CoreData with context and queries applied.
 func NewCoreData(ctx context.Context, q db.Querier, cfg *config.RuntimeConfig, opts ...CoreOption) *CoreData {
 	cd := &CoreData{
@@ -265,6 +270,9 @@ func NewCoreData(ctx context.Context, q db.Querier, cfg *config.RuntimeConfig, o
 		queries:           q,
 		newsAnnouncements: map[int32]*lazy.Value[*db.SiteAnnouncement]{},
 		Config:            cfg,
+	}
+	if cq, ok := q.(db.CustomQueries); ok {
+		cd.customQueries = cq
 	}
 	for _, o := range opts {
 		o(cd)

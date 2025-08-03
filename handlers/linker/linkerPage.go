@@ -45,8 +45,8 @@ func Page(w http.ResponseWriter, r *http.Request) {
 func CustomLinkerIndex(data *common.CoreData, r *http.Request) {
 	data.CustomIndexItems = []common.IndexItem{}
 	if r.URL.Path == "/linker" || strings.HasPrefix(r.URL.Path, "/linker/category/") {
-		data.RSSFeedUrl = "/linker/rss"
-		data.AtomFeedUrl = "/linker/atom"
+		data.RSSFeedURL = "/linker/rss"
+		data.AtomFeedURL = "/linker/atom"
 	}
 
 	userHasAdmin := data.HasRole("administrator") && data.AdminMode

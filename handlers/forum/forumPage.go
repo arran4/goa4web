@@ -137,11 +137,11 @@ func CustomForumIndex(data *common.CoreData, r *http.Request) {
 	categoryId := vars["category"]
 	data.CustomIndexItems = []common.IndexItem{}
 	if data.FeedsEnabled && topicId != "" && threadId == "" {
-		data.RSSFeedUrl = fmt.Sprintf("/forum/topic/%s.rss", topicId)
-		data.AtomFeedUrl = fmt.Sprintf("/forum/topic/%s.atom", topicId)
+		data.RSSFeedURL = fmt.Sprintf("/forum/topic/%s.rss", topicId)
+		data.AtomFeedURL = fmt.Sprintf("/forum/topic/%s.atom", topicId)
 		data.CustomIndexItems = append(data.CustomIndexItems,
-			common.IndexItem{Name: "Atom Feed", Link: data.AtomFeedUrl},
-			common.IndexItem{Name: "RSS Feed", Link: data.RSSFeedUrl},
+			common.IndexItem{Name: "Atom Feed", Link: data.AtomFeedURL},
+			common.IndexItem{Name: "RSS Feed", Link: data.RSSFeedURL},
 		)
 	}
 	userHasAdmin := data.HasRole("administrator") && data.AdminMode

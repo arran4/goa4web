@@ -42,8 +42,8 @@ func CustomImageBBSIndex(data *common.CoreData, r *http.Request) {
 	data.CustomIndexItems = []common.IndexItem{}
 
 	if data.FeedsEnabled {
-		data.RSSFeedUrl = "/imagebbs/rss"
-		data.AtomFeedUrl = "/imagebbs/atom"
+		data.RSSFeedURL = "/imagebbs/rss"
+		data.AtomFeedURL = "/imagebbs/atom"
 	}
 
 	userHasAdmin := data.HasRole("administrator") && data.AdminMode

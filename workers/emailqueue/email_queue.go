@@ -96,7 +96,7 @@ func hasVerificationRecord(ctx context.Context, q db.Querier, addr string) bool 
 // ResolveQueuedEmailAddress resolves the recipient for a queued email.
 // When the user record is missing or lacks a valid address the admin or direct
 // email logic is applied.
-func ResolveQueuedEmailAddress(ctx context.Context, q db.Querier, cfg *config.RuntimeConfig, e *db.FetchPendingEmailsRow) (mail.Address, error) {
+func ResolveQueuedEmailAddress(ctx context.Context, q db.Querier, cfg *config.RuntimeConfig, e *db.SystemListPendingEmailsRow) (mail.Address, error) {
 	if e.ToUserID.Valid && e.ToUserID.Int32 != 0 {
 		user, err := q.GetUserById(ctx, e.ToUserID.Int32)
 		if err == nil && user.Email.Valid && user.Email.String != "" {
@@ -146,7 +146,7 @@ func ProcessPendingEmail(ctx context.Context, q db.Querier, provider email.Provi
 		log.Println("No mail provider specified")
 		return false
 	}
-	emails, err := q.FetchPendingEmails(ctx, 1)
+	emails, err := q.SystemListPendingEmails(ctx, db.SystemListPendingEmailsParams{Limit: 1, Offset: 0})
 	if err != nil {
 		log.Printf("fetch queue: %v", err)
 		return false

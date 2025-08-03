@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 
@@ -62,7 +63,7 @@ func (WritingCategoryChangeTask) Action(w http.ResponseWriter, r *http.Request) 
 func writingCategoryWouldLoop(ctx context.Context, queries db.Querier, cid, parentID int32) ([]int32, bool, error) {
 	var parents map[int32]int32
 	if queries != nil {
-		cats, err := queries.FetchAllCategories(ctx)
+		cats, err := queries.SystemListWritingCategories(ctx, db.SystemListWritingCategoriesParams{Limit: math.MaxInt32, Offset: 0})
 		if err != nil {
 			return nil, false, err
 		}

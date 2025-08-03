@@ -2,12 +2,12 @@
 INSERT INTO pending_emails (to_user_id, body, direct_email)
 VALUES (?, ?, ?);
 
--- name: FetchPendingEmails :many
+-- name: SystemListPendingEmails :many
 SELECT id, to_user_id, body, error_count, direct_email
 FROM pending_emails
 WHERE sent_at IS NULL
 ORDER BY id
-LIMIT ?;
+LIMIT ? OFFSET ?;
 
 -- name: MarkEmailSent :exec
 UPDATE pending_emails SET sent_at = NOW() WHERE id = ?;

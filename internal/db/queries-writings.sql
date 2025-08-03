@@ -153,10 +153,11 @@ UPDATE writing_category
 SET title = ?, description = ?, writing_category_id = ?
 WHERE idwritingCategory = ?;
 
--- name: FetchAllCategories :many
+-- name: SystemListWritingCategories :many
 SELECT wc.*
 FROM writing_category wc
-;
+ORDER BY wc.idwritingcategory
+LIMIT ? OFFSET ?;
 
 -- name: ListWritingCategoriesForLister :many
 WITH RECURSIVE role_ids(id) AS (

@@ -181,8 +181,6 @@ type Querier interface {
 	// Parameters:
 	//   ? - Permission ID to be deleted (int)
 	DeleteUserRole(ctx context.Context, iduserRoles int32) error
-	FetchAllCategories(ctx context.Context) ([]*WritingCategory, error)
-	FetchPendingEmails(ctx context.Context, limit int32) ([]*FetchPendingEmailsRow, error)
 	FindForumTopicByTitle(ctx context.Context, title sql.NullString) (*Forumtopic, error)
 	GetActiveAnnouncementWithNewsForLister(ctx context.Context, arg GetActiveAnnouncementWithNewsForListerParams) (*GetActiveAnnouncementWithNewsForListerRow, error)
 	GetAdministratorUserRole(ctx context.Context, usersIdusers int32) (*UserRole, error)
@@ -411,10 +409,12 @@ type Querier interface {
 	SystemListDeadLetters(ctx context.Context, limit int32) ([]*DeadLetter, error)
 	// SystemListLanguages lists all languages.
 	SystemListLanguages(ctx context.Context) ([]*Language, error)
+	SystemListPendingEmails(ctx context.Context, arg SystemListPendingEmailsParams) ([]*SystemListPendingEmailsRow, error)
 	SystemListPublicWritingsByAuthor(ctx context.Context, arg SystemListPublicWritingsByAuthorParams) ([]*SystemListPublicWritingsByAuthorRow, error)
 	SystemListPublicWritingsInCategory(ctx context.Context, arg SystemListPublicWritingsInCategoryParams) ([]*SystemListPublicWritingsInCategoryRow, error)
 	SystemListUserInfo(ctx context.Context) ([]*SystemListUserInfoRow, error)
 	SystemListVerifiedEmailsByUserID(ctx context.Context, userID int32) ([]*UserEmail, error)
+	SystemListWritingCategories(ctx context.Context, arg SystemListWritingCategoriesParams) ([]*WritingCategory, error)
 	SystemPurgeDeadLettersBefore(ctx context.Context, createdAt time.Time) error
 	SystemSetBlogLastIndex(ctx context.Context, id int32) error
 	UpdateAutoSubscribeRepliesForLister(ctx context.Context, arg UpdateAutoSubscribeRepliesForListerParams) error

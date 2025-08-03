@@ -3,6 +3,7 @@ package writings
 import (
 	"database/sql"
 	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 
@@ -30,7 +31,7 @@ func (WritingCategoryCreateTask) Action(w http.ResponseWriter, r *http.Request) 
 	}
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	cats, err := queries.FetchAllCategories(r.Context())
+	cats, err := queries.SystemListWritingCategories(r.Context(), db.SystemListWritingCategoriesParams{Limit: math.MaxInt32, Offset: 0})
 	if err != nil {
 		return fmt.Errorf("fetch categories %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

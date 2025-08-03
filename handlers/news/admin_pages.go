@@ -20,21 +20,7 @@ import (
 func AdminNewsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "News Admin"
-
-	posts, err := cd.LatestNewsList(0, 50)
-	if err != nil {
-		log.Printf("LatestNewsList: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	data := struct {
-		*common.CoreData
-		Posts []*common.NewsPost
-	}{
-		CoreData: cd,
-		Posts:    posts,
-	}
-	handlers.TemplateHandler(w, r, "adminNewsListPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "adminNewsListPage.gohtml", cd)
 }
 
 type CommentPlus struct {

@@ -125,6 +125,8 @@ type CoreData struct {
 	currentTopicID           int32
 	currentCommentID         int32
 	currentNewsPostID        int32
+  // TODO offset is not specific to news
+	currentNewsOffset        int
 	currentBoardID           int32
 	currentImagePostID       int32
 	imageBoardPosts          map[int32]*lazy.Value[[]*db.ListImagePostsByBoardForListerRow]
@@ -133,6 +135,7 @@ type CoreData struct {
 	languagesAll             lazy.Value[[]*db.Language]
 	langs                    lazy.Value[[]*db.Language]
 	latestNews               lazy.Value[[]*NewsPost]
+	adminLatestNews          lazy.Value[[]*db.AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow]
 	latestWritings           lazy.Value[[]*db.Writing]
 	adminLinkerItemRows      map[int32]*lazy.Value[*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow]
 	linkerCategories         lazy.Value[[]*db.GetLinkerCategoryLinkCountsRow]
@@ -190,7 +193,10 @@ type CoreData struct {
 }
 
 // SetRoles preloads the current user roles.
-func (cd *CoreData) SetRoles(r []string) { cd.userRoles.Set(r) }
+func (cd *CoreData) SetRoles(r []string) { cd.userRoles.Set(r) } // TODO this should be done from the constructing middleware via options and this function removed once obsolete
+
+// SetNewsOffset records the current news listing offset.
+func (cd *CoreData) SetNewsOffset(o int) { cd.currentNewsOffset = o } // TODO this should be done from the constructing middleware via options and this function removed once obsolete
 
 // Marked returns true the first time it is called with key. Subsequent
 // calls return false. It is used to avoid re-rendering template sections
@@ -372,13 +378,13 @@ func (cd *CoreData) Queries() db.Querier { return cd.queries }
 func (cd *CoreData) CustomQueries() db.CustomQueries { return cd.customQueries }
 
 // SelectedBoard returns the selected board identifier.
-func (cd *CoreData) SelectedBoard() int { return int(cd.currentBoardID) }
+func (cd *CoreData) SelectedBoard() int { return int(cd.currentBoardID) } // TODO this shouldn't be necessary figoure out how to reduce
 
 // SelectedThread returns the selected thread identifier.
-func (cd *CoreData) SelectedThread() int { return int(cd.currentThreadID) }
+func (cd *CoreData) SelectedThread() int { return int(cd.currentThreadID) } // TODO this shouldn't be necessary figoure out how to reduce
 
 // SelectedImagePost returns the selected image post identifier.
-func (cd *CoreData) SelectedImagePost() int { return int(cd.currentImagePostID) }
+func (cd *CoreData) SelectedImagePost() int { return int(cd.currentImagePostID) } // TODO this shouldn't be necessary figoure out how to reduce
 
 // ImageURLMapper maps image references like "image:" or "cache:" to full URLs.
 func (cd *CoreData) ImageURLMapper(tag, val string) string {
@@ -894,6 +900,29 @@ func (cd *CoreData) LatestNews(r *http.Request) ([]*NewsPost, error) {
 // LatestNewsList returns recent news posts without needing an HTTP request.
 func (cd *CoreData) LatestNewsList(offset, limit int32) ([]*NewsPost, error) {
 	return cd.fetchLatestNews(offset, limit, 0)
+}
+
+// AdminLatestNewsList returns recent news posts for administrators without permission checks.
+func (cd *CoreData) AdminLatestNewsList(offset, limit int32) ([]*db.AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
+	if cd.queries == nil {
+		return nil, nil
+	}
+	rows, err := cd.queries.AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescending(cd.ctx, db.AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams{
+		Limit:  limit,
+		Offset: offset,
+	})
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, err
+	}
+	return rows, nil
+}
+
+// AdminLatestNews returns recent news posts for administrators using cd's current offset and page size.
+func (cd *CoreData) AdminLatestNews() ([]*db.AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
+	ps := cd.PageSize()
+	return cd.adminLatestNews.Load(func() ([]*db.AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
+		return cd.AdminLatestNewsList(int32(cd.currentNewsOffset), int32(ps))
+	})
 }
 
 // fetchLatestNews loads news posts from the database with permission data.

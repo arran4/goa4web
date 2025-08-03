@@ -105,7 +105,7 @@ type CoreData struct {
 	allRoles                 lazy.Value[[]*db.Role]
 	announcement             lazy.Value[*db.GetActiveAnnouncementWithNewsForListerRow]
 	annMu                    sync.Mutex
-	bloggers                 lazy.Value[[]*db.BloggerCountRow]
+	bloggers                 lazy.Value[[]*db.ListBloggersForListerRow]
 	bookmarks                lazy.Value[*db.GetBookmarksForUserRow]
 	event                    *eventbus.TaskEvent
 	forumCategories          lazy.Value[[]*db.Forumcategory]
@@ -138,7 +138,7 @@ type CoreData struct {
 	userRoles                lazy.Value[[]string]
 	visibleWritingCategories lazy.Value[[]*db.WritingCategory]
 	writerWritings           map[int32]*lazy.Value[[]*db.ListPublicWritingsByUserForListerRow]
-	writers                  lazy.Value[[]*db.WriterCountRow]
+	writers                  lazy.Value[[]*db.ListWritersForListerRow]
 	writingCategories        lazy.Value[[]*db.WritingCategory]
 	currentWritingID         int32
 	writingRows              map[int32]*lazy.Value[*db.GetWritingForListerByIDRow]
@@ -926,8 +926,8 @@ func (cd *CoreData) PublicWritings(categoryID int32, r *http.Request) ([]*db.Lis
 }
 
 // Bloggers returns bloggers ordered by username with post counts.
-func (cd *CoreData) Bloggers(r *http.Request) ([]*db.BloggerCountRow, error) {
-	return cd.bloggers.Load(func() ([]*db.BloggerCountRow, error) {
+func (cd *CoreData) Bloggers(r *http.Request) ([]*db.ListBloggersForListerRow, error) {
+	return cd.bloggers.Load(func() ([]*db.ListBloggersForListerRow, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
@@ -935,15 +935,26 @@ func (cd *CoreData) Bloggers(r *http.Request) ([]*db.BloggerCountRow, error) {
 		ps := cd.PageSize()
 		search := r.URL.Query().Get("search")
 		if search != "" {
-			return cd.customQueries.SearchBloggers(cd.ctx, db.SearchBloggersParams{
+			like := "%" + search + "%"
+			rows, err := cd.queries.ListBloggersSearchForLister(cd.ctx, db.ListBloggersSearchForListerParams{
 				ListerID: cd.UserID,
-				Query:    search,
+				Query:    like,
+				UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 				Limit:    int32(ps + 1),
 				Offset:   int32(offset),
 			})
+			if err != nil {
+				return nil, err
+			}
+			items := make([]*db.ListBloggersForListerRow, 0, len(rows))
+			for _, r := range rows {
+				items = append(items, &db.ListBloggersForListerRow{Username: r.Username, Count: r.Count})
+			}
+			return items, nil
 		}
-		return cd.customQueries.ListBloggers(cd.ctx, db.ListBloggersParams{
+		return cd.queries.ListBloggersForLister(cd.ctx, db.ListBloggersForListerParams{
 			ListerID: cd.UserID,
+			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 			Limit:    int32(ps + 1),
 			Offset:   int32(offset),
 		})
@@ -951,8 +962,8 @@ func (cd *CoreData) Bloggers(r *http.Request) ([]*db.BloggerCountRow, error) {
 }
 
 // Writers returns writers ordered by username with article counts.
-func (cd *CoreData) Writers(r *http.Request) ([]*db.WriterCountRow, error) {
-	return cd.writers.Load(func() ([]*db.WriterCountRow, error) {
+func (cd *CoreData) Writers(r *http.Request) ([]*db.ListWritersForListerRow, error) {
+	return cd.writers.Load(func() ([]*db.ListWritersForListerRow, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
@@ -960,15 +971,26 @@ func (cd *CoreData) Writers(r *http.Request) ([]*db.WriterCountRow, error) {
 		ps := cd.PageSize()
 		search := r.URL.Query().Get("search")
 		if search != "" {
-			return cd.customQueries.SearchWriters(cd.ctx, db.SearchWritersParams{
+			like := "%" + search + "%"
+			rows, err := cd.queries.ListWritersSearchForLister(cd.ctx, db.ListWritersSearchForListerParams{
 				ListerID: cd.UserID,
-				Query:    search,
+				Query:    like,
+				UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 				Limit:    int32(ps + 1),
 				Offset:   int32(offset),
 			})
+			if err != nil {
+				return nil, err
+			}
+			items := make([]*db.ListWritersForListerRow, 0, len(rows))
+			for _, r := range rows {
+				items = append(items, &db.ListWritersForListerRow{Username: r.Username, Count: r.Count})
+			}
+			return items, nil
 		}
-		return cd.customQueries.ListWriters(cd.ctx, db.ListWritersParams{
+		return cd.queries.ListWritersForLister(cd.ctx, db.ListWritersForListerParams{
 			ListerID: cd.UserID,
+			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 			Limit:    int32(ps + 1),
 			Offset:   int32(offset),
 		})

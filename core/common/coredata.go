@@ -136,6 +136,7 @@ type CoreData struct {
 	subImageBoards           map[int32]*lazy.Value[[]*db.Imageboard]
 	unreadCount              lazy.Value[int64]
 	subscriptions            lazy.Value[map[string]bool]
+	userSubscriptions        lazy.Value[[]*db.ListSubscriptionsByUserRow]
 	user                     lazy.Value[*db.User]
 	userRoles                lazy.Value[[]string]
 	visibleWritingCategories lazy.Value[[]*db.WritingCategory]
@@ -1310,24 +1311,33 @@ func (cd *CoreData) subscriptionMap() (map[string]bool, error) {
 		if cd.queries == nil || cd.UserID == 0 {
 			return map[string]bool{}, nil
 		}
-		rows, err := cd.queries.ListSubscriptionsByUser(cd.ctx, cd.UserID)
+		rows, err := cd.UserSubscriptions()
 		if err != nil {
 			return nil, err
 		}
 		m := make(map[string]bool)
 		for _, row := range rows {
-			if row.Method == "internal" {
-				m[row.Pattern] = true
-			}
+			key := row.Pattern + "|" + row.Method
+			m[key] = true
 		}
 		return m, nil
 	})
 }
 
-// Subscribed reports whether the user has a subscription matching pattern.
-func (cd *CoreData) Subscribed(pattern string) bool {
+// Subscribed reports whether the user has a subscription matching pattern and method.
+func (cd *CoreData) Subscribed(pattern, method string) bool {
 	m, _ := cd.subscriptionMap()
-	return m[pattern]
+	return m[pattern+"|"+method]
+}
+
+// UserSubscriptions returns the current user's subscriptions loaded lazily.
+func (cd *CoreData) UserSubscriptions() ([]*db.ListSubscriptionsByUserRow, error) {
+	return cd.userSubscriptions.Load(func() ([]*db.ListSubscriptionsByUserRow, error) {
+		if cd.queries == nil || cd.UserID == 0 {
+			return nil, nil
+		}
+		return cd.queries.ListSubscriptionsByUser(cd.ctx, cd.UserID)
+	})
 }
 
 // LinkerCategoryCounts lazily loads linker category statistics.

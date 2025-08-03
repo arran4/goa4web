@@ -25,8 +25,8 @@
     {{ range .Options }}
     <div>
         {{ .Name }}
-        <label><input type="checkbox" name="{{ .Path }}_internal" {{ if $.Subscribed .Pattern "internal" }}checked{{ end }}>Internal</label>
-        <label><input type="checkbox" name="{{ .Path }}_email" {{ if $.Subscribed .Pattern "email" }}checked{{ end }}>Email</label>
+        <label><input type="checkbox" name="{{ .Path }}_internal" {{ if (call $cd.HasSubscription .Pattern "internal") }}checked{{ end }}>Internal</label>
+        <label><input type="checkbox" name="{{ .Path }}_email" {{ if (call $cd.HasSubscription .Pattern "email") }}checked{{ end }}>Email</label>
     </div>
     {{ end }}
     <input type="submit" name="task" value="Update">

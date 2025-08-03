@@ -28,57 +28,10 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
+	if _, ok := core.GetSessionOrFail(w, r); !ok {
 		return
 	}
-	uid, _ := session.Values["UID"].(int32)
-	queries := cd.Queries()
-	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	showAll := r.URL.Query().Get("all") == "1"
-	var notifs []*db.Notification
-	var err error
-	limit := int32(cd.Config.PageSizeDefault)
-	if showAll {
-		notifs, err = queries.ListNotificationsForLister(r.Context(), db.ListNotificationsForListerParams{
-			ListerID: uid,
-			Limit:    limit,
-			Offset:   int32(offset),
-		})
-	} else {
-		notifs, err = queries.ListUnreadNotificationsForLister(r.Context(), db.ListUnreadNotificationsForListerParams{
-			ListerID: uid,
-			Limit:    limit,
-			Offset:   int32(offset),
-		})
-	}
-	if err != nil {
-		log.Printf("get notifications: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	emails, _ := queries.ListUserEmailsForLister(r.Context(), db.ListUserEmailsForListerParams{UserID: uid, ListerID: uid})
-	var maxPr int32
-	for _, e := range emails {
-		if e.NotificationPriority > maxPr {
-			maxPr = e.NotificationPriority
-		}
-	}
-	data := struct {
-		*common.CoreData
-		Notifications []*db.Notification
-		Emails        []*db.UserEmail
-		MaxPriority   int32
-		ShowAll       bool
-		Offset        int
-	}{
-		CoreData:      cd,
-		Notifications: notifs,
-		Emails:        emails,
-		MaxPriority:   maxPr,
-		ShowAll:       showAll,
-		Offset:        offset,
-	}
+	data := struct{ Request *http.Request }{r}
 	handlers.TemplateHandler(w, r, "notifications.gohtml", data)
 }
 

@@ -1,5 +1,6 @@
 package user
 
+// subscriptionOption defines a user subscription preference for notifications.
 // subscriptionOption describes a subscription choice presented to the user.
 type subscriptionOption struct {
 	Name    string

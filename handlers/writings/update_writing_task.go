@@ -76,7 +76,7 @@ func (UpdateWritingTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	if err := queries.WritingSearchDelete(r.Context(), writing.Idwriting); err != nil {
+	if err := queries.SystemDeleteWritingSearchByWritingID(r.Context(), writing.Idwriting); err != nil {
 		return fmt.Errorf("writing search delete fail %w", err)
 	}
 

@@ -88,7 +88,7 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 // updateLanguageSelections stores the languages selected by the user.
 func updateLanguageSelections(r *http.Request, cd *common.CoreData, queries db.Querier, uid int32) error {
 	// Clear existing language selections for the user.
-	if err := queries.DeleteUserLanguagesByUser(r.Context(), uid); err != nil {
+	if err := queries.DeleteUserLanguagesForUser(r.Context(), uid); err != nil {
 		return err
 	}
 

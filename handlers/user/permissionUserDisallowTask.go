@@ -71,7 +71,7 @@ func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request)
 				}
 			}
 		}
-		if err := queries.DeleteUserRole(r.Context(), int32(permidi)); err != nil {
+		if err := queries.AdminDeleteUserRole(r.Context(), int32(permidi)); err != nil {
 			data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
 		} else if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 			if evt := cd.Event(); evt != nil {

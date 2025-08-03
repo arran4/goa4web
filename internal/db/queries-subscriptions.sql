@@ -2,9 +2,9 @@
 INSERT INTO subscriptions (users_idusers, pattern, method)
 VALUES (?, ?, ?);
 
--- name: DeleteSubscription :exec
+-- name: DeleteSubscriptionForSubscriber :exec
 DELETE FROM subscriptions
-WHERE users_idusers = ? AND pattern = ? AND method = ?;
+WHERE users_idusers = sqlc.arg(subscriber_id) AND pattern = sqlc.arg(pattern) AND method = sqlc.arg(method);
 
 -- name: ListSubscribersForPattern :many
 SELECT users_idusers FROM subscriptions
@@ -19,5 +19,5 @@ SELECT id, pattern, method FROM subscriptions
 WHERE users_idusers = ?
 ORDER BY id;
 
--- name: DeleteSubscriptionByID :exec
-DELETE FROM subscriptions WHERE users_idusers = ? AND id = ?;
+-- name: DeleteSubscriptionByIDForSubscriber :exec
+DELETE FROM subscriptions WHERE users_idusers = sqlc.arg(subscriber_id) AND id = sqlc.arg(id);

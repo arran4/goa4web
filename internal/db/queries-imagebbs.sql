@@ -53,7 +53,7 @@ LIMIT ? OFFSET ?;
 -- name: GetImageBoardById :one
 SELECT * FROM imageboard WHERE idimageboard = ?;
 
--- name: DeleteImageBoard :exec
+-- name: AdminDeleteImageBoard :exec
 UPDATE imageboard SET deleted_at = NOW() WHERE idimageboard = ?;
 
 -- name: AdminApproveImagePost :exec

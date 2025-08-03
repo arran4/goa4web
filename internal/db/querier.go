@@ -34,18 +34,30 @@ type Querier interface {
 	//   ? - Name of the new language (string)
 	AdminCreateLanguage(ctx context.Context, nameof sql.NullString) error
 	AdminDeleteExternalLink(ctx context.Context, id int32) error
+	AdminDeleteFAQ(ctx context.Context, idfaq int32) error
+	AdminDeleteFAQCategory(ctx context.Context, idfaqcategories int32) error
+	AdminDeleteForumCategory(ctx context.Context, idforumcategory int32) error
 	AdminDeleteForumThread(ctx context.Context, idforumthread int32) error
+	// Removes a forum topic by ID.
+	AdminDeleteForumTopic(ctx context.Context, idforumtopic int32) error
+	AdminDeleteGrant(ctx context.Context, id int32) error
+	AdminDeleteImageBoard(ctx context.Context, idimageboard int32) error
 	// AdminDeleteLanguage removes a language entry.
 	// Parameters:
 	//   ? - Language ID to be deleted (int)
 	AdminDeleteLanguage(ctx context.Context, idlanguage int32) error
 	// AdminDeleteLinkerCategory removes a linker category.
 	AdminDeleteLinkerCategory(ctx context.Context, idlinkercategory int32) error
+	AdminDeleteLinkerQueuedItem(ctx context.Context, idlinkerqueue int32) error
 	AdminDeleteNotification(ctx context.Context, id int32) error
 	// admin task
 	AdminDeletePendingEmail(ctx context.Context, id int32) error
 	AdminDeleteTemplateOverride(ctx context.Context, name string) error
 	AdminDeleteUserByID(ctx context.Context, idusers int32) error
+	// This query deletes a permission from the "permissions" table based on the provided "permid".
+	// Parameters:
+	//   ? - Permission ID to be deleted (int)
+	AdminDeleteUserRole(ctx context.Context, iduserRoles int32) error
 	// admin task
 	AdminDemoteAnnouncement(ctx context.Context, id int32) error
 	AdminForumCategoryThreadCounts(ctx context.Context) ([]*AdminForumCategoryThreadCountsRow, error)
@@ -190,27 +202,11 @@ type Querier interface {
 	//   ? - Role of the permission (string)
 	CreateUserRole(ctx context.Context, arg CreateUserRoleParams) error
 	DeactivateNewsPost(ctx context.Context, idsitenews int32) error
-	DeleteFAQ(ctx context.Context, arg DeleteFAQParams) error
-	DeleteFAQCategory(ctx context.Context, arg DeleteFAQCategoryParams) error
-	DeleteForumCategory(ctx context.Context, idforumcategory int32) error
-	// Removes a forum topic by ID.
-	DeleteForumTopic(ctx context.Context, idforumtopic int32) error
-	DeleteGrant(ctx context.Context, id int32) error
-	DeleteImageBoard(ctx context.Context, idimageboard int32) error
-	DeleteLinkerQueuedItem(ctx context.Context, arg DeleteLinkerQueuedItemParams) error
 	DeleteNotificationForLister(ctx context.Context, arg DeleteNotificationForListerParams) error
-	DeletePasswordReset(ctx context.Context, id int32) error
-	// Delete all password reset entries for the given user and return the result
-	DeletePasswordResetsByUser(ctx context.Context, userID int32) (sql.Result, error)
-	DeleteSubscription(ctx context.Context, arg DeleteSubscriptionParams) error
-	DeleteSubscriptionByID(ctx context.Context, arg DeleteSubscriptionByIDParams) error
-	DeleteUserEmail(ctx context.Context, id int32) error
-	DeleteUserEmailsByEmailExceptID(ctx context.Context, arg DeleteUserEmailsByEmailExceptIDParams) error
-	DeleteUserLanguagesByUser(ctx context.Context, usersIdusers int32) error
-	// This query deletes a permission from the "permissions" table based on the provided "permid".
-	// Parameters:
-	//   ? - Permission ID to be deleted (int)
-	DeleteUserRole(ctx context.Context, iduserRoles int32) error
+	DeleteSubscriptionByIDForSubscriber(ctx context.Context, arg DeleteSubscriptionByIDForSubscriberParams) error
+	DeleteSubscriptionForSubscriber(ctx context.Context, arg DeleteSubscriptionForSubscriberParams) error
+	DeleteUserEmailForOwner(ctx context.Context, arg DeleteUserEmailForOwnerParams) error
+	DeleteUserLanguagesForUser(ctx context.Context, userID int32) error
 	FindForumTopicByTitle(ctx context.Context, title sql.NullString) (*Forumtopic, error)
 	GetActiveAnnouncementWithNewsForLister(ctx context.Context, arg GetActiveAnnouncementWithNewsForListerParams) (*GetActiveAnnouncementWithNewsForListerRow, error)
 	GetAdministratorUserRole(ctx context.Context, usersIdusers int32) (*UserRole, error)
@@ -404,11 +400,16 @@ type Querier interface {
 	SystemDeleteImagePostSearch(ctx context.Context) error
 	// This query deletes all data from the "linker_search" table.
 	SystemDeleteLinkerSearch(ctx context.Context) error
+	SystemDeletePasswordReset(ctx context.Context, id int32) error
+	// Delete all password reset entries for the given user and return the result
+	SystemDeletePasswordResetsByUser(ctx context.Context, userID int32) (sql.Result, error)
 	SystemDeleteSessionByID(ctx context.Context, sessionID string) error
 	// This query deletes all data from the "site_news_search" table.
 	SystemDeleteSiteNewsSearch(ctx context.Context) error
+	SystemDeleteUserEmailsByEmailExceptID(ctx context.Context, arg SystemDeleteUserEmailsByEmailExceptIDParams) error
 	// This query deletes all data from the "writing_search" table.
 	SystemDeleteWritingSearch(ctx context.Context) error
+	SystemDeleteWritingSearchByWritingID(ctx context.Context, writingID int32) error
 	SystemGetAllBlogsForIndex(ctx context.Context) ([]*SystemGetAllBlogsForIndexRow, error)
 	// SystemGetLanguageIDByName resolves a language ID by name.
 	SystemGetLanguageIDByName(ctx context.Context, nameof sql.NullString) (int32, error)
@@ -461,7 +462,6 @@ type Querier interface {
 	UserHasLoginRole(ctx context.Context, usersIdusers int32) (int32, error)
 	UserHasPublicProfileRole(ctx context.Context, usersIdusers int32) (int32, error)
 	UserHasRole(ctx context.Context, arg UserHasRoleParams) (int32, error)
-	WritingSearchDelete(ctx context.Context, writingID int32) error
 	WritingSearchFirst(ctx context.Context, arg WritingSearchFirstParams) ([]int32, error)
 	WritingSearchNext(ctx context.Context, arg WritingSearchNextParams) ([]int32, error)
 }

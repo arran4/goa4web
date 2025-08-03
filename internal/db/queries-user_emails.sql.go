@@ -48,26 +48,17 @@ func (q *Queries) AdminListUserEmails(ctx context.Context, userID int32) ([]*Use
 	return items, nil
 }
 
-const deleteUserEmail = `-- name: DeleteUserEmail :exec
-DELETE FROM user_emails WHERE id = ?
+const deleteUserEmailForOwner = `-- name: DeleteUserEmailForOwner :exec
+DELETE FROM user_emails WHERE id = ? AND user_id = ?
 `
 
-func (q *Queries) DeleteUserEmail(ctx context.Context, id int32) error {
-	_, err := q.db.ExecContext(ctx, deleteUserEmail, id)
-	return err
+type DeleteUserEmailForOwnerParams struct {
+	ID      int32
+	OwnerID int32
 }
 
-const deleteUserEmailsByEmailExceptID = `-- name: DeleteUserEmailsByEmailExceptID :exec
-DELETE FROM user_emails WHERE email = ? AND id != ?
-`
-
-type DeleteUserEmailsByEmailExceptIDParams struct {
-	Email string
-	ID    int32
-}
-
-func (q *Queries) DeleteUserEmailsByEmailExceptID(ctx context.Context, arg DeleteUserEmailsByEmailExceptIDParams) error {
-	_, err := q.db.ExecContext(ctx, deleteUserEmailsByEmailExceptID, arg.Email, arg.ID)
+func (q *Queries) DeleteUserEmailForOwner(ctx context.Context, arg DeleteUserEmailForOwnerParams) error {
+	_, err := q.db.ExecContext(ctx, deleteUserEmailForOwner, arg.ID, arg.OwnerID)
 	return err
 }
 
@@ -274,6 +265,20 @@ type SetVerificationCodeParams struct {
 
 func (q *Queries) SetVerificationCode(ctx context.Context, arg SetVerificationCodeParams) error {
 	_, err := q.db.ExecContext(ctx, setVerificationCode, arg.LastVerificationCode, arg.VerificationExpiresAt, arg.ID)
+	return err
+}
+
+const systemDeleteUserEmailsByEmailExceptID = `-- name: SystemDeleteUserEmailsByEmailExceptID :exec
+DELETE FROM user_emails WHERE email = ? AND id != ?
+`
+
+type SystemDeleteUserEmailsByEmailExceptIDParams struct {
+	Email string
+	ID    int32
+}
+
+func (q *Queries) SystemDeleteUserEmailsByEmailExceptID(ctx context.Context, arg SystemDeleteUserEmailsByEmailExceptIDParams) error {
+	_, err := q.db.ExecContext(ctx, systemDeleteUserEmailsByEmailExceptID, arg.Email, arg.ID)
 	return err
 }
 

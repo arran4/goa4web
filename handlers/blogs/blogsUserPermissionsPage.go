@@ -117,7 +117,7 @@ func UsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
 	} else {
 		id, username, role, err2 := roleInfoByPermID(r.Context(), queries, int32(permidi))
-		if err := queries.DeleteUserRole(r.Context(), int32(permidi)); err != nil {
+		if err := queries.AdminDeleteUserRole(r.Context(), int32(permidi)); err != nil {
 			data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
 		} else if err2 == nil {
 			if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -207,7 +207,7 @@ func UsersPermissionsBulkDisallowPage(w http.ResponseWriter, r *http.Request) {
 			data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi %s: %w", id, err).Error())
 			continue
 		}
-		if err := queries.DeleteUserRole(r.Context(), int32(permidi)); err != nil {
+		if err := queries.AdminDeleteUserRole(r.Context(), int32(permidi)); err != nil {
 			data.Errors = append(data.Errors, fmt.Errorf("permissionUserDisallow %s: %w", id, err).Error())
 		}
 	}

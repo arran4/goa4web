@@ -58,8 +58,8 @@ WHERE user_id = ? AND verified_at IS NOT NULL
 ORDER BY notification_priority DESC, id
 LIMIT 1;
 
--- name: DeleteUserEmail :exec
-DELETE FROM user_emails WHERE id = ?;
+-- name: DeleteUserEmailForOwner :exec
+DELETE FROM user_emails WHERE id = sqlc.arg(id) AND user_id = sqlc.arg(owner_id);
 
 -- name: SetVerificationCode :exec
 UPDATE user_emails SET last_verification_code = ?, verification_expires_at = ? WHERE id = ?;
@@ -72,6 +72,6 @@ WHERE last_verification_code = ?;
 -- name: GetMaxNotificationPriority :one
 SELECT COALESCE(MAX(notification_priority),0) AS maxp FROM user_emails WHERE user_id = ?;
 
--- name: DeleteUserEmailsByEmailExceptID :exec
-DELETE FROM user_emails WHERE email = ? AND id != ?;
+-- name: SystemDeleteUserEmailsByEmailExceptID :exec
+DELETE FROM user_emails WHERE email = sqlc.arg(email) AND id != sqlc.arg(id);
 

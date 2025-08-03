@@ -76,7 +76,7 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 		if time.Since(reset.CreatedAt) < 24*time.Hour {
 			return handlers.ErrRedirectOnSamePageHandler(errors.New("reset recently requested"))
 		}
-		_ = queries.DeletePasswordReset(r.Context(), reset.ID)
+		_ = queries.SystemDeletePasswordReset(r.Context(), reset.ID)
 	} else if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("get reset: %v", err)
 		return fmt.Errorf("get reset %w", err)

@@ -51,7 +51,7 @@ func (c *userRemoveRoleCmd) Run() error {
 	}
 	for _, p := range perms {
 		if p.Name == c.Role {
-			if err := queries.DeleteUserRole(ctx, p.IduserRoles); err != nil {
+			if err := queries.AdminDeleteUserRole(ctx, p.IduserRoles); err != nil {
 				return fmt.Errorf("remove role: %w", err)
 			}
 			c.rootCmd.Infof("removed role %s from %s", c.Role, c.Username)

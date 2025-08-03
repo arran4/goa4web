@@ -79,7 +79,7 @@ func (RoleGrantUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	for a, g := range existing {
 		if _, ok := desired[a]; !ok {
-			if err := queries.DeleteGrant(r.Context(), g.ID); err != nil {
+			if err := queries.AdminDeleteGrant(r.Context(), g.ID); err != nil {
 				return fmt.Errorf("delete grant %w", handlers.ErrRedirectOnSamePageHandler(err))
 			}
 		}

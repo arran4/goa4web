@@ -8,7 +8,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 )
@@ -32,10 +31,7 @@ func (RemoveQuestionTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
 
-	if err := queries.DeleteFAQ(r.Context(), db.DeleteFAQParams{
-		Idfaq:    int32(faq),
-		ViewerID: cd.UserID,
-	}); err != nil {
+	if err := queries.AdminDeleteFAQ(r.Context(), int32(faq)); err != nil {
 		return fmt.Errorf("delete faq fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 

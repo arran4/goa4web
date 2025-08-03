@@ -100,7 +100,7 @@ func CoreAdderMiddlewareWithDB(sdb *sql.DB, cfg *config.RuntimeConfig, verbosity
 			}
 			cd := common.NewCoreData(r.Context(), queries, cfg,
 				common.WithImageSigner(signer),
-				common.WithCustomQueries(sdb),
+				common.WithCustomQueries(queries),
 				common.WithLinkSigner(linkSigner),
 				common.WithSession(session),
 				common.WithEmailProvider(provider),

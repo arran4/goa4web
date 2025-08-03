@@ -92,8 +92,13 @@ func AdminForumPage(w http.ResponseWriter, r *http.Request) {
 	data.Categories = categoryTree.CategoryChildrenLookup[0]
 
 	ctx := r.Context()
+	dber, ok := queries.(interface{ DB() db.DBTX })
+	if !ok {
+		http.Error(w, "database not available", http.StatusInternalServerError)
+		return
+	}
 	count := func(q string, dest *int64) {
-		if err := queries.DB().QueryRowContext(ctx, q).Scan(dest); err != nil && err != sql.ErrNoRows {
+		if err := dber.DB().QueryRowContext(ctx, q).Scan(dest); err != nil && err != sql.ErrNoRows {
 			log.Printf("forumAdminPage count query error: %v", err)
 		}
 	}
@@ -159,14 +164,20 @@ func AdminForumRemakeForumTopicPage(w http.ResponseWriter, r *http.Request) {
 
 func countForumThreads(ctx context.Context, q db.Querier) (int64, error) {
 	var c int64
-	// TODO make query
-	err := q.DB().QueryRowContext(ctx, "SELECT COUNT(*) FROM forumthread").Scan(&c)
+	dber, ok := q.(interface{ DB() db.DBTX })
+	if !ok {
+		return 0, fmt.Errorf("querier missing DB method")
+	}
+	err := dber.DB().QueryRowContext(ctx, "SELECT COUNT(*) FROM forumthread").Scan(&c)
 	return c, err
 }
 
 func countForumTopics(ctx context.Context, q db.Querier) (int64, error) {
 	var c int64
-	// TODO make query
-	err := q.DB().QueryRowContext(ctx, "SELECT COUNT(*) FROM forumtopic").Scan(&c)
+	dber, ok := q.(interface{ DB() db.DBTX })
+	if !ok {
+		return 0, fmt.Errorf("querier missing DB method")
+	}
+	err := dber.DB().QueryRowContext(ctx, "SELECT COUNT(*) FROM forumtopic").Scan(&c)
 	return c, err
 }

@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/handlers"
 )
@@ -36,8 +37,13 @@ func adminSearchPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	ctx := r.Context()
+	dber, ok := queries.(interface{ DB() db.DBTX })
+	if !ok {
+		http.Error(w, "database not available", http.StatusInternalServerError)
+		return
+	}
 	count := func(query string, dest *int64) {
-		if err := queries.DB().QueryRowContext(ctx, query).Scan(dest); err != nil && err != sql.ErrNoRows {
+		if err := dber.DB().QueryRowContext(ctx, query).Scan(dest); err != nil && err != sql.ErrNoRows {
 			log.Printf("adminSearchPage count query error: %v", err)
 		}
 	}

@@ -29,7 +29,7 @@ func (UserDisallowTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("permid parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	id, username, role, err2 := roleInfoByPermID(r.Context(), queries, int32(permid))
-	if err := queries.DeleteUserRole(r.Context(), int32(permid)); err != nil {
+	if err := queries.AdminDeleteUserRole(r.Context(), int32(permid)); err != nil {
 		return fmt.Errorf("delete user role fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if err2 == nil {

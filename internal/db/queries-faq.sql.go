@@ -10,6 +10,26 @@ import (
 	"database/sql"
 )
 
+const adminDeleteFAQ = `-- name: AdminDeleteFAQ :exec
+UPDATE faq SET deleted_at = NOW()
+WHERE idfaq = ?
+`
+
+func (q *Queries) AdminDeleteFAQ(ctx context.Context, idfaq int32) error {
+	_, err := q.db.ExecContext(ctx, adminDeleteFAQ, idfaq)
+	return err
+}
+
+const adminDeleteFAQCategory = `-- name: AdminDeleteFAQCategory :exec
+UPDATE faq_categories SET deleted_at = NOW()
+WHERE idfaqCategories = ?
+`
+
+func (q *Queries) AdminDeleteFAQCategory(ctx context.Context, idfaqcategories int32) error {
+	_, err := q.db.ExecContext(ctx, adminDeleteFAQCategory, idfaqcategories)
+	return err
+}
+
 const createFAQCategory = `-- name: CreateFAQCategory :exec
 INSERT INTO faq_categories (name)
 SELECT ?
@@ -44,48 +64,6 @@ type CreateFAQQuestionParams struct {
 
 func (q *Queries) CreateFAQQuestion(ctx context.Context, arg CreateFAQQuestionParams) error {
 	_, err := q.db.ExecContext(ctx, createFAQQuestion, arg.Question, arg.UsersIdusers, arg.LanguageIdlanguage)
-	return err
-}
-
-const deleteFAQ = `-- name: DeleteFAQ :exec
-UPDATE faq SET deleted_at = NOW()
-WHERE idfaq = ?
-  AND EXISTS (
-      SELECT 1 FROM user_roles ur
-      JOIN roles r ON ur.role_id = r.id
-      WHERE ur.users_idusers = ?
-        AND r.is_admin = 1
-  )
-`
-
-type DeleteFAQParams struct {
-	Idfaq    int32
-	ViewerID int32
-}
-
-func (q *Queries) DeleteFAQ(ctx context.Context, arg DeleteFAQParams) error {
-	_, err := q.db.ExecContext(ctx, deleteFAQ, arg.Idfaq, arg.ViewerID)
-	return err
-}
-
-const deleteFAQCategory = `-- name: DeleteFAQCategory :exec
-UPDATE faq_categories SET deleted_at = NOW()
-WHERE idfaqCategories = ?
-  AND EXISTS (
-      SELECT 1 FROM user_roles ur
-      JOIN roles r ON ur.role_id = r.id
-      WHERE ur.users_idusers = ?
-        AND r.is_admin = 1
-  )
-`
-
-type DeleteFAQCategoryParams struct {
-	Idfaqcategories int32
-	ViewerID        int32
-}
-
-func (q *Queries) DeleteFAQCategory(ctx context.Context, arg DeleteFAQCategoryParams) error {
-	_, err := q.db.ExecContext(ctx, deleteFAQCategory, arg.Idfaqcategories, arg.ViewerID)
 	return err
 }
 

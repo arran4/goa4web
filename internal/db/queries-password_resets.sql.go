@@ -33,24 +33,6 @@ func (q *Queries) CreatePasswordReset(ctx context.Context, arg CreatePasswordRes
 	return err
 }
 
-const deletePasswordReset = `-- name: DeletePasswordReset :exec
-DELETE FROM pending_passwords WHERE id = ?
-`
-
-func (q *Queries) DeletePasswordReset(ctx context.Context, id int32) error {
-	_, err := q.db.ExecContext(ctx, deletePasswordReset, id)
-	return err
-}
-
-const deletePasswordResetsByUser = `-- name: DeletePasswordResetsByUser :execresult
-DELETE FROM pending_passwords WHERE user_id = ?
-`
-
-// Delete all password reset entries for the given user and return the result
-func (q *Queries) DeletePasswordResetsByUser(ctx context.Context, userID int32) (sql.Result, error) {
-	return q.db.ExecContext(ctx, deletePasswordResetsByUser, userID)
-}
-
 const getPasswordResetByCode = `-- name: GetPasswordResetByCode :one
 SELECT id, user_id, passwd, passwd_algorithm, verification_code, created_at, verified_at
 FROM pending_passwords
@@ -122,4 +104,22 @@ WHERE created_at < ? OR verified_at IS NOT NULL
 // Remove password reset entries that have expired or were already verified
 func (q *Queries) PurgePasswordResetsBefore(ctx context.Context, createdAt time.Time) (sql.Result, error) {
 	return q.db.ExecContext(ctx, purgePasswordResetsBefore, createdAt)
+}
+
+const systemDeletePasswordReset = `-- name: SystemDeletePasswordReset :exec
+DELETE FROM pending_passwords WHERE id = ?
+`
+
+func (q *Queries) SystemDeletePasswordReset(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, systemDeletePasswordReset, id)
+	return err
+}
+
+const systemDeletePasswordResetsByUser = `-- name: SystemDeletePasswordResetsByUser :execresult
+DELETE FROM pending_passwords WHERE user_id = ?
+`
+
+// Delete all password reset entries for the given user and return the result
+func (q *Queries) SystemDeletePasswordResetsByUser(ctx context.Context, userID int32) (sql.Result, error) {
+	return q.db.ExecContext(ctx, systemDeletePasswordResetsByUser, userID)
 }

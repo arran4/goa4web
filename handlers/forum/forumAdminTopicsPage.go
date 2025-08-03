@@ -101,7 +101,7 @@ func AdminTopicDeletePage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	if err := queries.DeleteForumTopic(r.Context(), int32(tid)); err != nil {
+	if err := queries.AdminDeleteForumTopic(r.Context(), int32(tid)); err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}

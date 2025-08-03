@@ -17,10 +17,10 @@ WHERE verification_code = ? AND verified_at IS NULL AND created_at > ?;
 -- name: MarkPasswordResetVerified :exec
 UPDATE pending_passwords SET verified_at = NOW() WHERE id = ?;
 
--- name: DeletePasswordReset :exec
+-- name: SystemDeletePasswordReset :exec
 DELETE FROM pending_passwords WHERE id = ?;
 
--- name: DeletePasswordResetsByUser :execresult
+-- name: SystemDeletePasswordResetsByUser :execresult
 -- Delete all password reset entries for the given user and return the result
 DELETE FROM pending_passwords WHERE user_id = ?;
 

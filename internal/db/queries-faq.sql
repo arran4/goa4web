@@ -54,15 +54,9 @@ WHERE idfaqCategories = ?
         AND r.is_admin = 1
   );
 
--- name: DeleteFAQCategory :exec
+-- name: AdminDeleteFAQCategory :exec
 UPDATE faq_categories SET deleted_at = NOW()
-WHERE idfaqCategories = ?
-  AND EXISTS (
-      SELECT 1 FROM user_roles ur
-      JOIN roles r ON ur.role_id = r.id
-      WHERE ur.users_idusers = sqlc.arg(viewer_id)
-        AND r.is_admin = 1
-  );
+WHERE idfaqCategories = ?;
 
 -- name: CreateFAQCategory :exec
 INSERT INTO faq_categories (name)
@@ -104,15 +98,9 @@ WHERE idfaq = ?
         AND r.is_admin = 1
   );
 
--- name: DeleteFAQ :exec
+-- name: AdminDeleteFAQ :exec
 UPDATE faq SET deleted_at = NOW()
-WHERE idfaq = ?
-  AND EXISTS (
-      SELECT 1 FROM user_roles ur
-      JOIN roles r ON ur.role_id = r.id
-      WHERE ur.users_idusers = sqlc.arg(viewer_id)
-        AND r.is_admin = 1
-  );
+WHERE idfaq = ?;
 
 -- name: GetAllFAQCategories :many
 SELECT *

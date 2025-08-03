@@ -185,10 +185,10 @@ SET threads = (
 )
 WHERE idforumtopic = ?;
 
--- name: DeleteForumCategory :exec
+-- name: AdminDeleteForumCategory :exec
 UPDATE forumcategory SET deleted_at = NOW() WHERE idforumcategory = ?;
 
--- name: DeleteForumTopic :exec
+-- name: AdminDeleteForumTopic :exec
 -- Removes a forum topic by ID.
 UPDATE forumtopic SET deleted_at = NOW() WHERE idforumtopic = ?;
 

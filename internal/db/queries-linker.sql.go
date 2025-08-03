@@ -33,6 +33,16 @@ func (q *Queries) AdminDeleteLinkerCategory(ctx context.Context, idlinkercategor
 	return err
 }
 
+const adminDeleteLinkerQueuedItem = `-- name: AdminDeleteLinkerQueuedItem :exec
+DELETE FROM linker_queue
+WHERE idlinkerQueue = ?
+`
+
+func (q *Queries) AdminDeleteLinkerQueuedItem(ctx context.Context, idlinkerqueue int32) error {
+	_, err := q.db.ExecContext(ctx, adminDeleteLinkerQueuedItem, idlinkerqueue)
+	return err
+}
+
 const createLinkerCategory = `-- name: CreateLinkerCategory :exec
 INSERT INTO linker_category (title, position)
 SELECT ?, ?
@@ -105,26 +115,6 @@ func (q *Queries) CreateLinkerQueuedItem(ctx context.Context, arg CreateLinkerQu
 		arg.Url,
 		arg.Description,
 	)
-	return err
-}
-
-const deleteLinkerQueuedItem = `-- name: DeleteLinkerQueuedItem :exec
-DELETE FROM linker_queue
-WHERE idlinkerQueue = ?
-  AND EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.users_idusers = ? AND r.is_admin = 1
-  )
-`
-
-type DeleteLinkerQueuedItemParams struct {
-	Idlinkerqueue int32
-	AdminID       int32
-}
-
-func (q *Queries) DeleteLinkerQueuedItem(ctx context.Context, arg DeleteLinkerQueuedItemParams) error {
-	_, err := q.db.ExecContext(ctx, deleteLinkerQueuedItem, arg.Idlinkerqueue, arg.AdminID)
 	return err
 }
 

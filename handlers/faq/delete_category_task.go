@@ -8,7 +8,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 )
@@ -31,10 +30,7 @@ func (DeleteCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
 
-	if err := queries.DeleteFAQCategory(r.Context(), db.DeleteFAQCategoryParams{
-		Idfaqcategories: int32(cid),
-		ViewerID:        cd.UserID,
-	}); err != nil {
+	if err := queries.AdminDeleteFAQCategory(r.Context(), int32(cid)); err != nil {
 		return fmt.Errorf("delete category fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 

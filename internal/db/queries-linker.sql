@@ -69,14 +69,9 @@ ORDER BY c.position
 
 
 
--- name: DeleteLinkerQueuedItem :exec
+-- name: AdminDeleteLinkerQueuedItem :exec
 DELETE FROM linker_queue
-WHERE idlinkerQueue = ?
-  AND EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.users_idusers = sqlc.arg(admin_id) AND r.is_admin = 1
-  );
+WHERE idlinkerQueue = ?;
 
 -- name: UpdateLinkerQueuedItem :exec
 UPDATE linker_queue SET linker_category_id = ?, title = ?, url = ?, description = ?

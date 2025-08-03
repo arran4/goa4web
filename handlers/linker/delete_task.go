@@ -37,8 +37,7 @@ func (deleteTask) Action(w http.ResponseWriter, r *http.Request) any {
 			}
 		}
 	}
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	if err := queries.DeleteLinkerQueuedItem(r.Context(), db.DeleteLinkerQueuedItemParams{Idlinkerqueue: int32(qid), AdminID: cd.UserID}); err != nil {
+	if err := queries.AdminDeleteLinkerQueuedItem(r.Context(), int32(qid)); err != nil {
 		return fmt.Errorf("delete linker queued item fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if link != nil {

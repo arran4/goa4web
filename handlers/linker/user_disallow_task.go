@@ -34,7 +34,7 @@ func (userDisallowTask) Action(w http.ResponseWriter, r *http.Request) any {
 	for _, idStr := range ids {
 		permid, _ := strconv.Atoi(idStr)
 		infoID, username, role, err2 := roleInfoByPermID(r.Context(), queries, int32(permid))
-		if err := queries.DeleteUserRole(r.Context(), int32(permid)); err != nil {
+		if err := queries.AdminDeleteUserRole(r.Context(), int32(permid)); err != nil {
 			log.Printf("permissionUserDisallow Error: %s", err)
 		} else if err2 == nil {
 			if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {

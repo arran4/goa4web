@@ -108,7 +108,7 @@ func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err := queries.WritingSearchDelete(r.Context(), writing.Idwriting); err != nil {
+	if err := queries.SystemDeleteWritingSearchByWritingID(r.Context(), writing.Idwriting); err != nil {
 		log.Printf("writingSearchDelete Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

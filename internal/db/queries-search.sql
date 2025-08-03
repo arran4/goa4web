@@ -251,10 +251,9 @@ ON DUPLICATE KEY UPDATE word_count=VALUES(word_count);
 
 
 
--- name: WritingSearchDelete :exec
+-- name: SystemDeleteWritingSearchByWritingID :exec
 DELETE FROM writing_search
-WHERE writing_id=?
-;
+WHERE writing_id = sqlc.arg(writing_id);
 -- name: WritingSearchFirst :many
 WITH RECURSIVE role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)

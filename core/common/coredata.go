@@ -115,6 +115,7 @@ type CoreData struct {
 	forumThreadRows          map[int32]*lazy.Value[*db.GetThreadLastPosterAndPermsRow]
 	forumComments            map[int32]*lazy.Value[*db.GetCommentByIdForUserRow]
 	newsPosts                map[int32]*lazy.Value[*db.GetForumThreadIdByNewsPostIdRow]
+	threadComments           map[int32]*lazy.Value[[]*db.GetCommentsByThreadIdForUserRow]
 	currentThreadID          int32
 	currentTopicID           int32
 	currentCommentID         int32
@@ -910,6 +911,11 @@ func (cd *CoreData) VisibleWritingCategories(userID int32) ([]*db.WritingCategor
 	})
 }
 
+// CurrentUserVisibleWritingCategories returns writing categories visible to the current user.
+func (cd *CoreData) CurrentUserVisibleWritingCategories() ([]*db.WritingCategory, error) {
+	return cd.VisibleWritingCategories(cd.UserID)
+}
+
 // WritingCategories returns all writing categories cached once.
 func (cd *CoreData) WritingCategories() ([]*db.WritingCategory, error) {
 	return cd.writingCategories.Load(func() ([]*db.WritingCategory, error) {
@@ -957,6 +963,11 @@ func (cd *CoreData) PublicWritings(categoryID int32, r *http.Request) ([]*db.Lis
 		}
 		return res, nil
 	})
+}
+
+// SelectedCategoryPublicWritings returns public writings for the given category.
+func (cd *CoreData) SelectedCategoryPublicWritings(categoryID int32, r *http.Request) ([]*db.ListPublicWritingsInCategoryForListerRow, error) {
+	return cd.PublicWritings(categoryID, r)
 }
 
 // Bloggers returns bloggers ordered by username with post counts.
@@ -1187,6 +1198,35 @@ func (cd *CoreData) CurrentCommentLoaded() *db.GetCommentByIdForUserRow {
 		return nil
 	}
 	return v
+}
+
+// ThreadComments returns comments for a thread lazily loading them once per thread ID.
+func (cd *CoreData) ThreadComments(threadID int32) ([]*db.GetCommentsByThreadIdForUserRow, error) {
+	if cd.threadComments == nil {
+		cd.threadComments = make(map[int32]*lazy.Value[[]*db.GetCommentsByThreadIdForUserRow])
+	}
+	lv, ok := cd.threadComments[threadID]
+	if !ok {
+		lv = &lazy.Value[[]*db.GetCommentsByThreadIdForUserRow]{}
+		cd.threadComments[threadID] = lv
+	}
+	return lv.Load(func() ([]*db.GetCommentsByThreadIdForUserRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		rows, err := cd.queries.GetCommentsByThreadIdForUser(cd.ctx, db.GetCommentsByThreadIdForUserParams{
+			ViewerID: cd.UserID,
+			ThreadID: threadID,
+			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		})
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, nil
+			}
+			return nil, err
+		}
+		return rows, nil
+	})
 }
 
 // NewsPostByID returns the news post lazily loading it once per ID.

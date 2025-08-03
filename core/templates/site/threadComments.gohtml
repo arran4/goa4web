@@ -2,7 +2,9 @@
     {{ if gt $.Offset 0 }}
         <br>Skipping {{ $.Offset }} comments.<br><br><br>
     {{ end }}
-    {{range $.Comments }}
+    {{ range $.Comments }}
         {{ template "comment" . }}
-    {{end}}
+    {{ else }}
+        No comments.
+    {{ end }}
 {{ end }}

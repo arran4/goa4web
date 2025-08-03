@@ -87,7 +87,7 @@ WHERE th.idforumthread=sqlc.arg(thread_id)
   )
 ORDER BY t.lastaddition DESC;
 
--- name: MakeThread :execlastid
+-- name: SystemCreateThread :execlastid
 INSERT INTO forumthread (forumtopic_idforumtopic) VALUES (?);
 
 

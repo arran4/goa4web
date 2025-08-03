@@ -49,7 +49,7 @@ func (SearchWritingsTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	ftbn, err := queries.FindForumTopicByTitle(r.Context(), sql.NullString{Valid: true, String: hwritings.WritingTopicName})
+	ftbn, err := queries.SystemGetForumTopicByTitle(r.Context(), sql.NullString{Valid: true, String: hwritings.WritingTopicName})
 	if err != nil {
 		log.Printf("findForumTopicByTitle Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -85,7 +85,7 @@ func WritingSearch(w http.ResponseWriter, r *http.Request, queries db.Querier, u
 
 	for i, word := range searchWords {
 		if i == 0 {
-			ids, err := queries.WritingSearchFirst(r.Context(), db.WritingSearchFirstParams{
+			ids, err := queries.ListWritingSearchFirstForLister(r.Context(), db.ListWritingSearchFirstForListerParams{
 				ListerID: uid,
 				Word: sql.NullString{
 					String: word,
@@ -104,7 +104,7 @@ func WritingSearch(w http.ResponseWriter, r *http.Request, queries db.Querier, u
 			}
 			writingsIds = ids
 		} else {
-			ids, err := queries.WritingSearchNext(r.Context(), db.WritingSearchNextParams{
+			ids, err := queries.ListWritingSearchNextForLister(r.Context(), db.ListWritingSearchNextForListerParams{
 				ListerID: uid,
 				Word: sql.NullString{
 					String: word,

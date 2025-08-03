@@ -3,7 +3,7 @@
 DELETE FROM linker_category
 WHERE idlinkerCategory = ?;
 
--- name: RenameLinkerCategory :exec
+-- name: AdminRenameLinkerCategory :exec
 UPDATE linker_category SET title = ?, position = ?
 WHERE idlinkerCategory = ?
   AND EXISTS (
@@ -93,7 +93,7 @@ FROM linker_queue l
 JOIN users u ON l.users_idusers = u.idusers
 JOIN linker_category c ON l.linker_category_id = c.idlinkerCategory
 ;
--- name: SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId :execlastid
+-- name: AdminInsertQueuedLinkFromQueue :execlastid
 INSERT INTO linker (users_idusers, linker_category_id, language_idlanguage, title, `url`, description)
 SELECT l.users_idusers, l.linker_category_id, l.language_idlanguage, l.title, l.url, l.description
 FROM linker_queue l
@@ -284,7 +284,7 @@ WHERE idlinkerCategory = ?;
 SELECT COUNT(*) FROM linker WHERE linker_category_id = ?;
 
 
--- name: SetLinkerLastIndex :exec
+-- name: SystemSetLinkerLastIndex :exec
 UPDATE linker SET last_index = NOW() WHERE idlinker = ?;
 
 

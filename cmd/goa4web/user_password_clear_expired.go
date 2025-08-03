@@ -38,7 +38,7 @@ func (c *userPasswordClearExpiredCmd) Run() error {
 	ctx := context.Background()
 	queries := db.New(conn)
 	expiry := time.Now().Add(-time.Duration(c.Hours) * time.Hour)
-	res, err := queries.PurgePasswordResetsBefore(ctx, expiry)
+	res, err := queries.SystemPurgePasswordResetsBefore(ctx, expiry)
 	if err != nil {
 		return fmt.Errorf("clear expired: %w", err)
 	}

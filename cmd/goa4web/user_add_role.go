@@ -46,7 +46,7 @@ func (c *userAddRoleCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("get user: %w", err)
 	}
-	if _, err := queries.UserHasRole(ctx, db.UserHasRoleParams{UsersIdusers: u.Idusers, Name: c.Role}); err == nil {
+	if _, err := queries.AdminGetRoleByNameForUser(ctx, db.AdminGetRoleByNameForUserParams{UsersIdusers: u.Idusers, Name: c.Role}); err == nil {
 		c.rootCmd.Verbosef("%s already has role %s", c.Username, c.Role)
 		return nil
 	} else if !errors.Is(err, sql.ErrNoRows) {

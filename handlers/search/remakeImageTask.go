@@ -58,7 +58,7 @@ func (RemakeImageTask) BackgroundTask(ctx context.Context, q db.Querier) (tasks.
 		}); err != nil {
 			return nil, err
 		}
-		if err := q.SetImagePostLastIndex(ctx, row.Idimagepost); err != nil {
+		if err := q.SystemSetImagePostLastIndex(ctx, row.Idimagepost); err != nil {
 			return nil, err
 		}
 	}

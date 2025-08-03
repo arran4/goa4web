@@ -258,15 +258,6 @@ func (q *Queries) GetPendingEmailErrorCount(ctx context.Context, id int32) (int3
 	return error_count, err
 }
 
-const incrementEmailError = `-- name: IncrementEmailError :exec
-UPDATE pending_emails SET error_count = error_count + 1 WHERE id = ?
-`
-
-func (q *Queries) IncrementEmailError(ctx context.Context, id int32) error {
-	_, err := q.db.ExecContext(ctx, incrementEmailError, id)
-	return err
-}
-
 const insertPendingEmail = `-- name: InsertPendingEmail :exec
 INSERT INTO pending_emails (to_user_id, body, direct_email)
 VALUES (?, ?, ?)
@@ -283,12 +274,12 @@ func (q *Queries) InsertPendingEmail(ctx context.Context, arg InsertPendingEmail
 	return err
 }
 
-const markEmailSent = `-- name: MarkEmailSent :exec
-UPDATE pending_emails SET sent_at = NOW() WHERE id = ?
+const systemIncrementPendingEmailError = `-- name: SystemIncrementPendingEmailError :exec
+UPDATE pending_emails SET error_count = error_count + 1 WHERE id = ?
 `
 
-func (q *Queries) MarkEmailSent(ctx context.Context, id int32) error {
-	_, err := q.db.ExecContext(ctx, markEmailSent, id)
+func (q *Queries) SystemIncrementPendingEmailError(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, systemIncrementPendingEmailError, id)
 	return err
 }
 
@@ -340,4 +331,13 @@ func (q *Queries) SystemListPendingEmails(ctx context.Context, arg SystemListPen
 		return nil, err
 	}
 	return items, nil
+}
+
+const systemMarkPendingEmailSent = `-- name: SystemMarkPendingEmailSent :exec
+UPDATE pending_emails SET sent_at = NOW() WHERE id = ?
+`
+
+func (q *Queries) SystemMarkPendingEmailSent(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, systemMarkPendingEmailSent, id)
+	return err
 }

@@ -23,7 +23,9 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if r.URL.Query().Get("go") != "" {
-		cd.RegisterExternalLinkClick(raw)
+		if err := cd.Queries().SystemRegisterExternalLinkClick(r.Context(), raw); err != nil {
+			log.Printf("record external link click: %v", err)
+		}
 		http.Redirect(w, r, raw, http.StatusTemporaryRedirect)
 		return
 	}

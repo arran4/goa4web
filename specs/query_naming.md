@@ -34,3 +34,16 @@ require a user ID and are intended for privileged operations.
 
 These rules are verified by tests and should be followed for all new
 queries.
+
+## Additional rules
+
+- Admin and system commands used by CLI tools or background workers must use
+  the `System` or `Admin` prefix and must never accept a user ID.
+- User-facing queries include the required role in the function name using a
+  `For<Role>` suffix and matching `<Role>ID` parameters. Prefer descriptive role
+  names such as `Writer`, `Lister`, `Commenter`, or `Replier`.
+- The legacy `See`/`Seer` terminology is replaced by `List`/`Lister`.
+- All list queries paginate with both `LIMIT` and `OFFSET`. User and admin lists
+  must apply the caller's pagination and language settings.
+- User queries should validate grants in SQL and again in Go code for defence in
+  depth.

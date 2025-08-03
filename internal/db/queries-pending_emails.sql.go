@@ -247,51 +247,6 @@ func (q *Queries) AdminListUnsentPendingEmails(ctx context.Context, arg AdminLis
 	return items, nil
 }
 
-const fetchPendingEmails = `-- name: FetchPendingEmails :many
-SELECT id, to_user_id, body, error_count, direct_email
-FROM pending_emails
-WHERE sent_at IS NULL
-ORDER BY id
-LIMIT ?
-`
-
-type FetchPendingEmailsRow struct {
-	ID          int32
-	ToUserID    sql.NullInt32
-	Body        string
-	ErrorCount  int32
-	DirectEmail bool
-}
-
-func (q *Queries) FetchPendingEmails(ctx context.Context, limit int32) ([]*FetchPendingEmailsRow, error) {
-	rows, err := q.db.QueryContext(ctx, fetchPendingEmails, limit)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*FetchPendingEmailsRow
-	for rows.Next() {
-		var i FetchPendingEmailsRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.ToUserID,
-			&i.Body,
-			&i.ErrorCount,
-			&i.DirectEmail,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getPendingEmailErrorCount = `-- name: GetPendingEmailErrorCount :one
 SELECT error_count FROM pending_emails WHERE id = ?
 `
@@ -335,4 +290,54 @@ UPDATE pending_emails SET sent_at = NOW() WHERE id = ?
 func (q *Queries) MarkEmailSent(ctx context.Context, id int32) error {
 	_, err := q.db.ExecContext(ctx, markEmailSent, id)
 	return err
+}
+
+const systemListPendingEmails = `-- name: SystemListPendingEmails :many
+SELECT id, to_user_id, body, error_count, direct_email
+FROM pending_emails
+WHERE sent_at IS NULL
+ORDER BY id
+LIMIT ? OFFSET ?
+`
+
+type SystemListPendingEmailsParams struct {
+	Limit  int32
+	Offset int32
+}
+
+type SystemListPendingEmailsRow struct {
+	ID          int32
+	ToUserID    sql.NullInt32
+	Body        string
+	ErrorCount  int32
+	DirectEmail bool
+}
+
+func (q *Queries) SystemListPendingEmails(ctx context.Context, arg SystemListPendingEmailsParams) ([]*SystemListPendingEmailsRow, error) {
+	rows, err := q.db.QueryContext(ctx, systemListPendingEmails, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*SystemListPendingEmailsRow
+	for rows.Next() {
+		var i SystemListPendingEmailsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ToUserID,
+			&i.Body,
+			&i.ErrorCount,
+			&i.DirectEmail,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

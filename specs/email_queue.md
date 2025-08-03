@@ -24,7 +24,7 @@ The admin interface uses the same method when previewing templates. Rows in the
 signalled. After sending a message the worker waits at least
 `EmailWorkerInterval` seconds before attempting the next delivery. The
 `ProcessPendingEmail` function fetches one queued message with
-`FetchPendingEmails(ctx, 1)`, loads the recipient address and sends the email via
+`SystemListPendingEmails(ctx, db.SystemListPendingEmailsParams{Limit: 1, Offset: 0})`, loads the recipient address and sends the email via
 the configured provider. Successful deliveries mark the row as sent. Failures
 increment `error_count`. Once the count exceeds four the message is copied to the
 DLQ (if configured) and removed from the queue.

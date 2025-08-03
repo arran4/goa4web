@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"math"
 
 	"github.com/arran4/goa4web/internal/db"
 )
@@ -31,7 +32,7 @@ func (c *writingTreeCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := db.New(db)
-	rows, err := queries.FetchAllCategories(ctx)
+	rows, err := queries.SystemListWritingCategories(ctx, db.SystemListWritingCategoriesParams{Limit: math.MaxInt32, Offset: 0})
 	if err != nil {
 		return fmt.Errorf("tree: %w", err)
 	}

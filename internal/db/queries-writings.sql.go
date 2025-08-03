@@ -189,39 +189,6 @@ func (q *Queries) AssignWritingThisThreadId(ctx context.Context, arg AssignWriti
 	return err
 }
 
-const fetchAllCategories = `-- name: FetchAllCategories :many
-SELECT wc.idwritingcategory, wc.writing_category_id, wc.title, wc.description
-FROM writing_category wc
-`
-
-func (q *Queries) FetchAllCategories(ctx context.Context) ([]*WritingCategory, error) {
-	rows, err := q.db.QueryContext(ctx, fetchAllCategories)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*WritingCategory
-	for rows.Next() {
-		var i WritingCategory
-		if err := rows.Scan(
-			&i.Idwritingcategory,
-			&i.WritingCategoryID,
-			&i.Title,
-			&i.Description,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getAllWritingsByAuthorForLister = `-- name: GetAllWritingsByAuthorForLister :many
 WITH RECURSIVE role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
@@ -1156,6 +1123,46 @@ func (q *Queries) SystemListPublicWritingsInCategory(ctx context.Context, arg Sy
 			&i.LastIndex,
 			&i.Username,
 			&i.Comments,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const systemListWritingCategories = `-- name: SystemListWritingCategories :many
+SELECT wc.idwritingcategory, wc.writing_category_id, wc.title, wc.description
+FROM writing_category wc
+ORDER BY wc.idwritingcategory
+LIMIT ? OFFSET ?
+`
+
+type SystemListWritingCategoriesParams struct {
+	Limit  int32
+	Offset int32
+}
+
+func (q *Queries) SystemListWritingCategories(ctx context.Context, arg SystemListWritingCategoriesParams) ([]*WritingCategory, error) {
+	rows, err := q.db.QueryContext(ctx, systemListWritingCategories, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*WritingCategory
+	for rows.Next() {
+		var i WritingCategory
+		if err := rows.Scan(
+			&i.Idwritingcategory,
+			&i.WritingCategoryID,
+			&i.Title,
+			&i.Description,
 		); err != nil {
 			return nil, err
 		}

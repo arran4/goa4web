@@ -35,7 +35,7 @@ func (ResendSentEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 		if err != nil {
 			return fmt.Errorf("get email fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
-		addr, err := emailqueue.ResolveQueuedEmailAddress(r.Context(), queries, cd.Config, &db.FetchPendingEmailsRow{ID: e.ID, ToUserID: e.ToUserID, Body: e.Body, ErrorCount: e.ErrorCount, DirectEmail: e.DirectEmail})
+		addr, err := emailqueue.ResolveQueuedEmailAddress(r.Context(), queries, cd.Config, &db.SystemListPendingEmailsRow{ID: e.ID, ToUserID: e.ToUserID, Body: e.Body, ErrorCount: e.ErrorCount, DirectEmail: e.DirectEmail})
 		if err != nil {
 			return fmt.Errorf("resolve address fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}

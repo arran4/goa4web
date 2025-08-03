@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"net/http"
 	"net/mail"
 	"strconv"
@@ -870,7 +871,7 @@ func (cd *CoreData) WritingCategories() ([]*db.WritingCategory, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
-		return cd.queries.FetchAllCategories(cd.ctx)
+		return cd.queries.SystemListWritingCategories(cd.ctx, db.SystemListWritingCategoriesParams{Limit: math.MaxInt32, Offset: 0})
 	})
 }
 

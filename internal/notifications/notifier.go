@@ -151,10 +151,10 @@ func (n *Notifier) notifyAdmins(ctx context.Context, et *EmailTemplates, nt *str
 				return err
 			}
 			if uid != nil {
-				if err := n.Queries.InsertNotification(ctx, db.InsertNotificationParams{
-					UsersIdusers: *uid,
-					Link:         sql.NullString{String: link, Valid: link != ""},
-					Message:      sql.NullString{String: string(msg), Valid: len(msg) > 0},
+				if err := n.Queries.SystemCreateNotification(ctx, db.SystemCreateNotificationParams{
+					RecipientID: *uid,
+					Link:        sql.NullString{String: link, Valid: link != ""},
+					Message:     sql.NullString{String: string(msg), Valid: len(msg) > 0},
 				}); err != nil {
 					return err
 				}
@@ -187,9 +187,9 @@ func (n *Notifier) NotificationPurgeWorker(ctx context.Context, interval time.Du
 
 // sendInternalNotification stores an internal notification for the user.
 func (n *Notifier) sendInternalNotification(ctx context.Context, userID int32, path, msg string) error {
-	return n.Queries.InsertNotification(ctx, db.InsertNotificationParams{
-		UsersIdusers: userID,
-		Link:         sql.NullString{String: path, Valid: path != ""},
-		Message:      sql.NullString{String: msg, Valid: msg != ""},
+	return n.Queries.SystemCreateNotification(ctx, db.SystemCreateNotificationParams{
+		RecipientID: userID,
+		Link:        sql.NullString{String: path, Valid: path != ""},
+		Message:     sql.NullString{String: msg, Valid: msg != ""},
 	})
 }

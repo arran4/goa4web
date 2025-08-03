@@ -31,7 +31,7 @@ func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("load roles: %v", err)
 	}
 	data.Roles = roles
-	items, err := queries.RecentNotifications(r.Context(), 50)
+	items, err := queries.AdminListRecentNotifications(r.Context(), 50)
 	if err != nil {
 		log.Printf("recent notifications: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

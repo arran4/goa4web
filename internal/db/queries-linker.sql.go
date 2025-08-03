@@ -86,20 +86,10 @@ INSERT INTO linker (users_idusers, linker_category_id, language_idlanguage, titl
 SELECT l.users_idusers, l.linker_category_id, l.language_idlanguage, l.title, l.url, l.description
 FROM linker_queue l
 WHERE l.idlinkerQueue = ?
-  AND EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.users_idusers = ? AND r.is_admin = 1
-  )
 `
 
-type AdminInsertQueuedLinkFromQueueParams struct {
-	Idlinkerqueue int32
-	AdminID       int32
-}
-
-func (q *Queries) AdminInsertQueuedLinkFromQueue(ctx context.Context, arg AdminInsertQueuedLinkFromQueueParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, adminInsertQueuedLinkFromQueue, arg.Idlinkerqueue, arg.AdminID)
+func (q *Queries) AdminInsertQueuedLinkFromQueue(ctx context.Context, idlinkerqueue int32) (int64, error) {
+	result, err := q.db.ExecContext(ctx, adminInsertQueuedLinkFromQueue, idlinkerqueue)
 	if err != nil {
 		return 0, err
 	}
@@ -109,27 +99,16 @@ func (q *Queries) AdminInsertQueuedLinkFromQueue(ctx context.Context, arg AdminI
 const adminRenameLinkerCategory = `-- name: AdminRenameLinkerCategory :exec
 UPDATE linker_category SET title = ?, position = ?
 WHERE idlinkerCategory = ?
-  AND EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.users_idusers = ? AND r.is_admin = 1
-  )
 `
 
 type AdminRenameLinkerCategoryParams struct {
 	Title            sql.NullString
 	Position         int32
 	Idlinkercategory int32
-	AdminID          int32
 }
 
 func (q *Queries) AdminRenameLinkerCategory(ctx context.Context, arg AdminRenameLinkerCategoryParams) error {
-	_, err := q.db.ExecContext(ctx, adminRenameLinkerCategory,
-		arg.Title,
-		arg.Position,
-		arg.Idlinkercategory,
-		arg.AdminID,
-	)
+	_, err := q.db.ExecContext(ctx, adminRenameLinkerCategory, arg.Title, arg.Position, arg.Idlinkercategory)
 	return err
 }
 

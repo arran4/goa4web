@@ -46,10 +46,7 @@ func (bulkApproveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	for _, q := range r.Form["qid"] {
 		id, _ := strconv.Atoi(q)
 		cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-		lid, err := queries.AdminInsertQueuedLinkFromQueue(r.Context(), db.AdminInsertQueuedLinkFromQueueParams{
-			Idlinkerqueue: int32(id),
-			AdminID:       cd.UserID,
-		})
+		lid, err := queries.AdminInsertQueuedLinkFromQueue(r.Context(), int32(id))
 		if err != nil {
 			log.Printf("selectInsert Error: %s", err)
 			continue

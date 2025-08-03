@@ -31,15 +31,12 @@ func (RenameCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("cid parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if err := queries.AdminRenameFAQCategory(r.Context(), db.AdminRenameFAQCategoryParams{
 		Name: sql.NullString{
 			String: text,
 			Valid:  true,
 		},
 		Idfaqcategories: int32(cid),
-		ViewerID:        cd.UserID,
 	}); err != nil {
 		return fmt.Errorf("rename faq category fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

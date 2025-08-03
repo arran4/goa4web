@@ -42,10 +42,7 @@ func (approveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	lid, err := queries.AdminInsertQueuedLinkFromQueue(r.Context(), db.AdminInsertQueuedLinkFromQueueParams{
-		Idlinkerqueue: int32(qid),
-		AdminID:       cd.UserID,
-	})
+	lid, err := queries.AdminInsertQueuedLinkFromQueue(r.Context(), int32(qid))
 	if err != nil {
 		return fmt.Errorf("approve linker item fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

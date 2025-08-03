@@ -23,10 +23,7 @@ func adminUserBlogsPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "user not found", http.StatusNotFound)
 		return
 	}
-	rows, err := queries.AdminGetAllBlogEntriesByUser(r.Context(), db.AdminGetAllBlogEntriesByUserParams{
-		AuthorID: int32(id),
-		ListerID: cd.UserID,
-	})
+	rows, err := queries.AdminGetAllBlogEntriesByUser(r.Context(), int32(id))
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

@@ -103,10 +103,7 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 		ws = append(ws, writingExport{wrow, catMap[wrow.WritingCategoryID]})
 	}
 
-	blogs, err := queries.AdminGetAllBlogEntriesByUser(r.Context(), db.AdminGetAllBlogEntriesByUserParams{
-		AuthorID: int32(uid),
-		ListerID: cd.UserID,
-	})
+	blogs, err := queries.AdminGetAllBlogEntriesByUser(r.Context(), int32(uid))
 	if err != nil {
 		log.Printf("fetch blogs: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

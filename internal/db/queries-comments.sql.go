@@ -72,19 +72,13 @@ FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id = th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
 LEFT JOIN users u ON u.idusers = c.users_idusers
-WHERE EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.users_idusers = ? AND r.is_admin = 1
-)
 ORDER BY c.written DESC
 LIMIT ? OFFSET ?
 `
 
 type AdminListAllCommentsWithThreadInfoParams struct {
-	ViewerID int32
-	Limit    int32
-	Offset   int32
+	Limit  int32
+	Offset int32
 }
 
 type AdminListAllCommentsWithThreadInfoRow struct {
@@ -100,7 +94,7 @@ type AdminListAllCommentsWithThreadInfoRow struct {
 }
 
 func (q *Queries) AdminListAllCommentsWithThreadInfo(ctx context.Context, arg AdminListAllCommentsWithThreadInfoParams) ([]*AdminListAllCommentsWithThreadInfoRow, error) {
-	rows, err := q.db.QueryContext(ctx, adminListAllCommentsWithThreadInfo, arg.ViewerID, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, adminListAllCommentsWithThreadInfo, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

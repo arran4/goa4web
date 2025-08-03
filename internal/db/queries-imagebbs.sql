@@ -1,8 +1,23 @@
--- name: CreateImageBoard :exec
-INSERT INTO imageboard (imageboard_idimageboard, title, description, approval_required) VALUES (?, ?, ?, ?);
+-- Administrative creation of a new image board.
+-- Admin commands must not require a user ID.
+-- name: AdminCreateImageBoard :exec
+INSERT INTO imageboard (imageboard_idimageboard, title, description, approval_required)
+VALUES (
+    sqlc.arg(parent_id),
+    sqlc.arg(title),
+    sqlc.arg(description),
+    sqlc.arg(approval_required)
+);
 
--- name: UpdateImageBoard :exec
-UPDATE imageboard SET title = ?, description = ?, imageboard_idimageboard = ?, approval_required = ? WHERE idimageboard = ?;
+-- Administrative update of board properties.
+-- name: AdminUpdateImageBoard :exec
+UPDATE imageboard
+SET
+    title = sqlc.arg(title),
+    description = sqlc.arg(description),
+    imageboard_idimageboard = sqlc.arg(parent_id),
+    approval_required = sqlc.arg(approval_required)
+WHERE idimageboard = sqlc.arg(board_id);
 
 -- name: SystemListBoardsByParentID :many
 SELECT b.*
@@ -11,7 +26,8 @@ WHERE b.imageboard_idimageboard = sqlc.arg(parent_id)
 LIMIT ? OFFSET ?;
 
 
--- name: CreateImagePost :execlastid
+-- Posts an image on behalf of a poster.
+-- name: CreateImagePostForPoster :execlastid
 INSERT INTO imagepost (
     imageboard_idimageboard,
     thumbnail,
@@ -22,26 +38,40 @@ INSERT INTO imagepost (
     approved,
     file_size
 )
-VALUES (?, ?, ?, ?, ?, NOW(), ?, ?);
+VALUES (
+    sqlc.arg(board_id),
+    sqlc.arg(thumbnail),
+    sqlc.arg(fullimage),
+    sqlc.arg(poster_id),
+    sqlc.arg(description),
+    NOW(),
+    sqlc.arg(approved),
+    sqlc.arg(file_size)
+);
 
--- name: UpdateImagePostByIdForumThreadId :exec
-UPDATE imagepost SET forumthread_id = ? WHERE idimagepost = ?;
+-- Administrative association of an image post to a forum thread.
+-- name: AdminSetImagePostForumThreadID :exec
+UPDATE imagepost
+SET forumthread_id = sqlc.arg(forum_thread_id)
+WHERE idimagepost = sqlc.arg(image_post_id);
 
--- name: GetImagePostsByUserDescending :many
+-- Administrative listing of approved image posts by poster.
+-- name: AdminListImagePostsByPoster :many
 SELECT i.*, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
-WHERE i.users_idusers = ? AND i.approved = 1 AND i.deleted_at IS NULL
+WHERE i.users_idusers = sqlc.arg(poster_id) AND i.approved = 1 AND i.deleted_at IS NULL
 ORDER BY i.posted DESC
 LIMIT ? OFFSET ?;
 
--- name: GetImagePostsByUserDescendingAll :many
+-- Administrative listing of all image posts by poster regardless of approval.
+-- name: AdminListAllImagePostsByPoster :many
 SELECT i.*, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
-WHERE i.users_idusers = ? AND i.deleted_at IS NULL
+WHERE i.users_idusers = sqlc.arg(poster_id) AND i.deleted_at IS NULL
 ORDER BY i.posted DESC
 LIMIT ? OFFSET ?;
 
@@ -50,14 +80,36 @@ SELECT b.*
 FROM imageboard b
 LIMIT ? OFFSET ?;
 
--- name: GetImageBoardById :one
-SELECT * FROM imageboard WHERE idimageboard = ?;
+-- Administrative fetch of a board by ID.
+-- name: AdminGetImageBoardByID :one
+SELECT * FROM imageboard WHERE idimageboard = sqlc.arg(board_id);
 
--- name: DeleteImageBoard :exec
-UPDATE imageboard SET deleted_at = NOW() WHERE idimageboard = ?;
+-- Administrative soft delete of a board.
+-- name: AdminDeleteImageBoard :exec
+UPDATE imageboard SET deleted_at = NOW() WHERE idimageboard = sqlc.arg(board_id);
 
--- name: ApproveImagePost :exec
-UPDATE imagepost SET approved = 1 WHERE idimagepost = ?;
+-- Administrative approval of an image post.
+-- name: AdminApproveImagePost :exec
+UPDATE imagepost SET approved = 1 WHERE idimagepost = sqlc.arg(image_post_id);
+
+-- name: GetImageBoardByIDForLister :one
+WITH RECURSIVE role_ids(id) AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+)
+SELECT b.*
+FROM imageboard b
+WHERE b.idimageboard = sqlc.arg(board_id)
+  AND b.deleted_at IS NULL
+  AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='imagebbs'
+      AND (g.item='board' OR g.item IS NULL)
+      AND g.action='see'
+      AND g.active=1
+      AND (g.item_id = b.idimageboard OR g.item_id IS NULL)
+      AND (g.user_id = sqlc.arg(lister_user_id) OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  );
 
 
 -- name: ListBoardsByParentIDForLister :many

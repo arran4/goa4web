@@ -57,10 +57,11 @@ func (NewBoardTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return common.UserError{ErrorMessage: fmt.Sprintf("invalid parent board: loop %v", path)}
 	}
 
-	err = queries.CreateImageBoard(r.Context(), db.CreateImageBoardParams{
-		ImageboardIdimageboard: int32(parentBoardId),
-		Title:                  sql.NullString{Valid: true, String: name},
-		Description:            sql.NullString{Valid: true, String: desc},
+	err = queries.AdminCreateImageBoard(r.Context(), db.AdminCreateImageBoardParams{
+		ParentID:         int32(parentBoardId),
+		Title:            sql.NullString{Valid: true, String: name},
+		Description:      sql.NullString{Valid: true, String: desc},
+		ApprovalRequired: false,
 	})
 	if err != nil {
 		return fmt.Errorf("create image board fail %w", handlers.ErrRedirectOnSamePageHandler(err))

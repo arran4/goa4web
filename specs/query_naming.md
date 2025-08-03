@@ -21,16 +21,24 @@ All query names must begin with a prefix indicating the required role:
 ## Lists
 
 Queries returning multiple rows must start with the `List` prefix and
-include pagination (`LIMIT`/`OFFSET`). User and admin lists must respect
-each user's pagination and language preferences and enforce permissions
-within the SQL itself. Admin and system queries must never require a user
-ID.
+include pagination (`LIMIT`/`OFFSET`). All lists **must** paginate and
+adhere to the caller's pagination settings. User-facing lists must also
+respect the user's language preferences and enforce permissions within
+the SQL itself. Admin and system lists are privileged operations and must
+not require a user ID.
 
 ## Grants
 
 User queries should check grants both in SQL and in Go code to ensure
 authorisation rules are enforced. Admin and system queries should not
 require a user ID and are intended for privileged operations.
+
+When a query operates on behalf of a user the required role must appear
+in the function name as `For<Role>` (for example `CreateImagePostForPoster`).
+Corresponding parameter names should use the same role (such as
+`PosterID`). Admin and system commands must be clearly labelled with
+their respective prefixes and must not accept a user ID. Commands used by
+CLI tools are considered system operations.
 
 These rules are verified by tests and should be followed for all new
 queries.

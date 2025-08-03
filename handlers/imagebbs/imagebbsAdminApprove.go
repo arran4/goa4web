@@ -32,7 +32,7 @@ func (ApprovePostTask) Action(w http.ResponseWriter, r *http.Request) any {
 		})
 	}
 	queries := cd.Queries()
-	if err := queries.ApproveImagePost(r.Context(), int32(pid)); err != nil {
+	if err := queries.AdminApproveImagePost(r.Context(), int32(pid)); err != nil {
 		return fmt.Errorf("approve image post fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if evt := cd.Event(); evt != nil {

@@ -17,6 +17,8 @@ type Querier interface {
 	//   username (string)
 	//   email (string)
 	AdminAllUsers(ctx context.Context) ([]*AdminAllUsersRow, error)
+	// Administrative approval of an image post.
+	AdminApproveImagePost(ctx context.Context, imagePostID int32) error
 	AdminCancelBannedIp(ctx context.Context, ipNet string) error
 	AdminClearExternalLinkCache(ctx context.Context, arg AdminClearExternalLinkCacheParams) error
 	// This query selects all words from the "searchwordlist" table and prints them.
@@ -24,12 +26,17 @@ type Querier interface {
 	AdminCountThreadsByBoard(ctx context.Context, imageboardIdimageboard int32) (int64, error)
 	AdminCountWordList(ctx context.Context) (int64, error)
 	AdminCountWordListByPrefix(ctx context.Context, prefix interface{}) (int64, error)
+	// Administrative creation of a new image board.
+	// Admin commands must not require a user ID.
+	AdminCreateImageBoard(ctx context.Context, arg AdminCreateImageBoardParams) error
 	// AdminCreateLanguage adds a new language.
 	// Parameters:
 	//   ? - Name of the new language (string)
 	AdminCreateLanguage(ctx context.Context, nameof sql.NullString) error
 	AdminDeleteExternalLink(ctx context.Context, id int32) error
 	AdminDeleteForumThread(ctx context.Context, idforumthread int32) error
+	// Administrative soft delete of a board.
+	AdminDeleteImageBoard(ctx context.Context, boardID int32) error
 	// AdminDeleteLanguage removes a language entry.
 	// Parameters:
 	//   ? - Language ID to be deleted (int)
@@ -44,6 +51,8 @@ type Querier interface {
 	AdminGetAllBlogEntriesByUser(ctx context.Context, arg AdminGetAllBlogEntriesByUserParams) ([]*AdminGetAllBlogEntriesByUserRow, error)
 	AdminGetAllCommentsByUser(ctx context.Context, userID int32) ([]*AdminGetAllCommentsByUserRow, error)
 	AdminGetAllWritingsByAuthor(ctx context.Context, authorID int32) ([]*AdminGetAllWritingsByAuthorRow, error)
+	// Administrative fetch of a board by ID.
+	AdminGetImageBoardByID(ctx context.Context, boardID int32) (*Imageboard, error)
 	// admin task
 	AdminGetPendingEmailByID(ctx context.Context, id int32) (*AdminGetPendingEmailByIDRow, error)
 	AdminGetRecentAuditLogs(ctx context.Context, limit int32) ([]*AdminGetRecentAuditLogsRow, error)
@@ -62,6 +71,8 @@ type Querier interface {
 	AdminInsertWritingCategory(ctx context.Context, arg AdminInsertWritingCategoryParams) error
 	AdminListAdministratorEmails(ctx context.Context) ([]string, error)
 	AdminListAllCommentsWithThreadInfo(ctx context.Context, arg AdminListAllCommentsWithThreadInfoParams) ([]*AdminListAllCommentsWithThreadInfoRow, error)
+	// Administrative listing of all image posts by poster regardless of approval.
+	AdminListAllImagePostsByPoster(ctx context.Context, arg AdminListAllImagePostsByPosterParams) ([]*AdminListAllImagePostsByPosterRow, error)
 	// admin task
 	AdminListAnnouncementsWithNews(ctx context.Context) ([]*AdminListAnnouncementsWithNewsRow, error)
 	AdminListArchivedRequests(ctx context.Context) ([]*AdminRequestQueue, error)
@@ -72,6 +83,8 @@ type Querier interface {
 	AdminListFailedEmails(ctx context.Context, arg AdminListFailedEmailsParams) ([]*AdminListFailedEmailsRow, error)
 	// admin task
 	AdminListGrantsByRoleID(ctx context.Context, roleID sql.NullInt32) ([]*Grant, error)
+	// Administrative listing of approved image posts by poster.
+	AdminListImagePostsByPoster(ctx context.Context, arg AdminListImagePostsByPosterParams) ([]*AdminListImagePostsByPosterRow, error)
 	AdminListLoginAttempts(ctx context.Context) ([]*LoginAttempt, error)
 	AdminListPendingRequests(ctx context.Context) ([]*AdminRequestQueue, error)
 	AdminListPendingUsers(ctx context.Context) ([]*AdminListPendingUsersRow, error)
@@ -101,8 +114,12 @@ type Querier interface {
 	//   ? - New name for the language (string)
 	//   ? - Language ID to be updated (int)
 	AdminRenameLanguage(ctx context.Context, arg AdminRenameLanguageParams) error
+	// Administrative association of an image post to a forum thread.
+	AdminSetImagePostForumThreadID(ctx context.Context, arg AdminSetImagePostForumThreadIDParams) error
 	AdminSetTemplateOverride(ctx context.Context, arg AdminSetTemplateOverrideParams) error
 	AdminUpdateBannedIp(ctx context.Context, arg AdminUpdateBannedIpParams) error
+	// Administrative update of board properties.
+	AdminUpdateImageBoard(ctx context.Context, arg AdminUpdateImageBoardParams) error
 	AdminUpdateRequestStatus(ctx context.Context, arg AdminUpdateRequestStatusParams) error
 	// admin task
 	AdminUpdateRolePublicProfileAllowed(ctx context.Context, arg AdminUpdateRolePublicProfileAllowedParams) error
@@ -114,7 +131,6 @@ type Querier interface {
 	AdminWordListWithCounts(ctx context.Context, arg AdminWordListWithCountsParams) ([]*AdminWordListWithCountsRow, error)
 	AdminWordListWithCountsByPrefix(ctx context.Context, arg AdminWordListWithCountsByPrefixParams) ([]*AdminWordListWithCountsByPrefixRow, error)
 	AdminWritingCategoryCounts(ctx context.Context) ([]*AdminWritingCategoryCountsRow, error)
-	ApproveImagePost(ctx context.Context, idimagepost int32) error
 	ArchiveBlog(ctx context.Context, arg ArchiveBlogParams) error
 	ArchiveComment(ctx context.Context, arg ArchiveCommentParams) error
 	ArchiveImagepost(ctx context.Context, arg ArchiveImagepostParams) error
@@ -145,8 +161,8 @@ type Querier interface {
 	CreateForumCategory(ctx context.Context, arg CreateForumCategoryParams) error
 	CreateForumTopic(ctx context.Context, arg CreateForumTopicParams) (int64, error)
 	CreateGrant(ctx context.Context, arg CreateGrantParams) (int64, error)
-	CreateImageBoard(ctx context.Context, arg CreateImageBoardParams) error
-	CreateImagePost(ctx context.Context, arg CreateImagePostParams) (int64, error)
+	// Posts an image on behalf of a poster.
+	CreateImagePostForPoster(ctx context.Context, arg CreateImagePostForPosterParams) (int64, error)
 	CreateLinkerCategory(ctx context.Context, arg CreateLinkerCategoryParams) error
 	CreateLinkerItem(ctx context.Context, arg CreateLinkerItemParams) error
 	CreateLinkerQueuedItem(ctx context.Context, arg CreateLinkerQueuedItemParams) error
@@ -165,7 +181,6 @@ type Querier interface {
 	// Removes a forum topic by ID.
 	DeleteForumTopic(ctx context.Context, idforumtopic int32) error
 	DeleteGrant(ctx context.Context, id int32) error
-	DeleteImageBoard(ctx context.Context, idimageboard int32) error
 	DeleteLinkerCategory(ctx context.Context, arg DeleteLinkerCategoryParams) error
 	DeleteLinkerQueuedItem(ctx context.Context, arg DeleteLinkerQueuedItemParams) error
 	DeleteNotification(ctx context.Context, id int32) error
@@ -230,11 +245,9 @@ type Querier interface {
 	GetForumTopicByIdForUser(ctx context.Context, arg GetForumTopicByIdForUserParams) (*GetForumTopicByIdForUserRow, error)
 	GetForumTopicIdByThreadId(ctx context.Context, idforumthread int32) (int32, error)
 	GetForumTopicsByCategoryId(ctx context.Context, forumcategoryIdforumcategory int32) ([]*Forumtopic, error)
-	GetImageBoardById(ctx context.Context, idimageboard int32) (*Imageboard, error)
+	GetImageBoardByIDForLister(ctx context.Context, arg GetImageBoardByIDForListerParams) (*Imageboard, error)
 	GetImagePostByIDForLister(ctx context.Context, arg GetImagePostByIDForListerParams) (*GetImagePostByIDForListerRow, error)
 	GetImagePostInfoByPath(ctx context.Context, arg GetImagePostInfoByPathParams) (*GetImagePostInfoByPathRow, error)
-	GetImagePostsByUserDescending(ctx context.Context, arg GetImagePostsByUserDescendingParams) ([]*GetImagePostsByUserDescendingRow, error)
-	GetImagePostsByUserDescendingAll(ctx context.Context, arg GetImagePostsByUserDescendingAllParams) ([]*GetImagePostsByUserDescendingAllRow, error)
 	GetLatestAnnouncementByNewsID(ctx context.Context, siteNewsID int32) (*SiteAnnouncement, error)
 	GetLinkerCategoriesWithCount(ctx context.Context) ([]*GetLinkerCategoriesWithCountRow, error)
 	GetLinkerCategoryById(ctx context.Context, idlinkercategory int32) (*LinkerCategory, error)
@@ -426,8 +439,6 @@ type Querier interface {
 	UpdateFAQQuestionAnswer(ctx context.Context, arg UpdateFAQQuestionAnswerParams) error
 	UpdateForumCategory(ctx context.Context, arg UpdateForumCategoryParams) error
 	UpdateForumTopic(ctx context.Context, arg UpdateForumTopicParams) error
-	UpdateImageBoard(ctx context.Context, arg UpdateImageBoardParams) error
-	UpdateImagePostByIdForumThreadId(ctx context.Context, arg UpdateImagePostByIdForumThreadIdParams) error
 	UpdateLinkerCategorySortOrder(ctx context.Context, arg UpdateLinkerCategorySortOrderParams) error
 	UpdateLinkerItem(ctx context.Context, arg UpdateLinkerItemParams) error
 	UpdateLinkerQueuedItem(ctx context.Context, arg UpdateLinkerQueuedItemParams) error

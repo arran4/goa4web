@@ -46,12 +46,12 @@ func (c *boardUpdateCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := db.New(db)
-	err = queries.UpdateImageBoard(ctx, db.UpdateImageBoardParams{
-		Title:                  sql.NullString{String: c.Name, Valid: c.Name != ""},
-		Description:            sql.NullString{String: c.Description, Valid: c.Description != ""},
-		ImageboardIdimageboard: int32(c.Parent),
-		ApprovalRequired:       c.ApprovalNeeded,
-		Idimageboard:           int32(c.ID),
+	err = queries.AdminUpdateImageBoard(ctx, db.AdminUpdateImageBoardParams{
+		Title:            sql.NullString{String: c.Name, Valid: c.Name != ""},
+		Description:      sql.NullString{String: c.Description, Valid: c.Description != ""},
+		ParentID:         int32(c.Parent),
+		ApprovalRequired: c.ApprovalNeeded,
+		BoardID:          int32(c.ID),
 	})
 	if err != nil {
 		return fmt.Errorf("update board: %w", err)

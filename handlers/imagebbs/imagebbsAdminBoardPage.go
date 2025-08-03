@@ -56,11 +56,12 @@ func (ModifyBoardTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return common.UserError{ErrorMessage: fmt.Sprintf("invalid parent board: loop %v", path)}
 	}
 
-	err = queries.UpdateImageBoard(r.Context(), db.UpdateImageBoardParams{
-		ImageboardIdimageboard: int32(parentBoardId),
-		Title:                  sql.NullString{Valid: true, String: name},
-		Description:            sql.NullString{Valid: true, String: desc},
-		Idimageboard:           int32(bid),
+	err = queries.AdminUpdateImageBoard(r.Context(), db.AdminUpdateImageBoardParams{
+		ParentID:         int32(parentBoardId),
+		Title:            sql.NullString{Valid: true, String: name},
+		Description:      sql.NullString{Valid: true, String: desc},
+		ApprovalRequired: false,
+		BoardID:          int32(bid),
 	})
 	if err != nil {
 		return fmt.Errorf("update image board fail %w", handlers.ErrRedirectOnSamePageHandler(err))
@@ -87,7 +88,7 @@ func AdminBoardPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	board, err := queries.GetImageBoardById(r.Context(), int32(bid))
+	board, err := queries.AdminGetImageBoardByID(r.Context(), int32(bid))
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

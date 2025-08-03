@@ -10,6 +10,145 @@ import (
 	"database/sql"
 )
 
+const adminApproveImagePost = `-- name: AdminApproveImagePost :exec
+UPDATE imagepost SET approved = 1 WHERE idimagepost = ?
+`
+
+// Administrative approval of an image post.
+func (q *Queries) AdminApproveImagePost(ctx context.Context, imagePostID int32) error {
+	_, err := q.db.ExecContext(ctx, adminApproveImagePost, imagePostID)
+	return err
+}
+
+const adminCreateImageBoard = `-- name: AdminCreateImageBoard :exec
+INSERT INTO imageboard (imageboard_idimageboard, title, description, approval_required)
+VALUES (
+    ?,
+    ?,
+    ?,
+    ?
+)
+`
+
+type AdminCreateImageBoardParams struct {
+	ParentID         int32
+	Title            sql.NullString
+	Description      sql.NullString
+	ApprovalRequired bool
+}
+
+// Administrative creation of a new image board.
+// Admin commands must not require a user ID.
+func (q *Queries) AdminCreateImageBoard(ctx context.Context, arg AdminCreateImageBoardParams) error {
+	_, err := q.db.ExecContext(ctx, adminCreateImageBoard,
+		arg.ParentID,
+		arg.Title,
+		arg.Description,
+		arg.ApprovalRequired,
+	)
+	return err
+}
+
+const adminDeleteImageBoard = `-- name: AdminDeleteImageBoard :exec
+UPDATE imageboard SET deleted_at = NOW() WHERE idimageboard = ?
+`
+
+// Administrative soft delete of a board.
+func (q *Queries) AdminDeleteImageBoard(ctx context.Context, boardID int32) error {
+	_, err := q.db.ExecContext(ctx, adminDeleteImageBoard, boardID)
+	return err
+}
+
+const adminGetImageBoardByID = `-- name: AdminGetImageBoardByID :one
+SELECT idimageboard, imageboard_idimageboard, title, description, approval_required FROM imageboard WHERE idimageboard = ?
+`
+
+// Administrative fetch of a board by ID.
+func (q *Queries) AdminGetImageBoardByID(ctx context.Context, boardID int32) (*Imageboard, error) {
+	row := q.db.QueryRowContext(ctx, adminGetImageBoardByID, boardID)
+	var i Imageboard
+	err := row.Scan(
+		&i.Idimageboard,
+		&i.ImageboardIdimageboard,
+		&i.Title,
+		&i.Description,
+		&i.ApprovalRequired,
+	)
+	return &i, err
+}
+
+const adminListAllImagePostsByPoster = `-- name: AdminListAllImagePostsByPoster :many
+SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
+FROM imagepost i
+LEFT JOIN users u ON i.users_idusers = u.idusers
+LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
+WHERE i.users_idusers = ? AND i.deleted_at IS NULL
+ORDER BY i.posted DESC
+LIMIT ? OFFSET ?
+`
+
+type AdminListAllImagePostsByPosterParams struct {
+	PosterID int32
+	Limit    int32
+	Offset   int32
+}
+
+type AdminListAllImagePostsByPosterRow struct {
+	Idimagepost            int32
+	ForumthreadID          int32
+	UsersIdusers           int32
+	ImageboardIdimageboard int32
+	Posted                 sql.NullTime
+	Description            sql.NullString
+	Thumbnail              sql.NullString
+	Fullimage              sql.NullString
+	FileSize               int32
+	Approved               bool
+	DeletedAt              sql.NullTime
+	LastIndex              sql.NullTime
+	Username               sql.NullString
+	Comments               sql.NullInt32
+}
+
+// Administrative listing of all image posts by poster regardless of approval.
+func (q *Queries) AdminListAllImagePostsByPoster(ctx context.Context, arg AdminListAllImagePostsByPosterParams) ([]*AdminListAllImagePostsByPosterRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListAllImagePostsByPoster, arg.PosterID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListAllImagePostsByPosterRow
+	for rows.Next() {
+		var i AdminListAllImagePostsByPosterRow
+		if err := rows.Scan(
+			&i.Idimagepost,
+			&i.ForumthreadID,
+			&i.UsersIdusers,
+			&i.ImageboardIdimageboard,
+			&i.Posted,
+			&i.Description,
+			&i.Thumbnail,
+			&i.Fullimage,
+			&i.FileSize,
+			&i.Approved,
+			&i.DeletedAt,
+			&i.LastIndex,
+			&i.Username,
+			&i.Comments,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const adminListBoards = `-- name: AdminListBoards :many
 SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required
 FROM imageboard b
@@ -50,37 +189,126 @@ func (q *Queries) AdminListBoards(ctx context.Context, arg AdminListBoardsParams
 	return items, nil
 }
 
-const approveImagePost = `-- name: ApproveImagePost :exec
-UPDATE imagepost SET approved = 1 WHERE idimagepost = ?
+const adminListImagePostsByPoster = `-- name: AdminListImagePostsByPoster :many
+SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
+FROM imagepost i
+LEFT JOIN users u ON i.users_idusers = u.idusers
+LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
+WHERE i.users_idusers = ? AND i.approved = 1 AND i.deleted_at IS NULL
+ORDER BY i.posted DESC
+LIMIT ? OFFSET ?
 `
 
-func (q *Queries) ApproveImagePost(ctx context.Context, idimagepost int32) error {
-	_, err := q.db.ExecContext(ctx, approveImagePost, idimagepost)
+type AdminListImagePostsByPosterParams struct {
+	PosterID int32
+	Limit    int32
+	Offset   int32
+}
+
+type AdminListImagePostsByPosterRow struct {
+	Idimagepost            int32
+	ForumthreadID          int32
+	UsersIdusers           int32
+	ImageboardIdimageboard int32
+	Posted                 sql.NullTime
+	Description            sql.NullString
+	Thumbnail              sql.NullString
+	Fullimage              sql.NullString
+	FileSize               int32
+	Approved               bool
+	DeletedAt              sql.NullTime
+	LastIndex              sql.NullTime
+	Username               sql.NullString
+	Comments               sql.NullInt32
+}
+
+// Administrative listing of approved image posts by poster.
+func (q *Queries) AdminListImagePostsByPoster(ctx context.Context, arg AdminListImagePostsByPosterParams) ([]*AdminListImagePostsByPosterRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListImagePostsByPoster, arg.PosterID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListImagePostsByPosterRow
+	for rows.Next() {
+		var i AdminListImagePostsByPosterRow
+		if err := rows.Scan(
+			&i.Idimagepost,
+			&i.ForumthreadID,
+			&i.UsersIdusers,
+			&i.ImageboardIdimageboard,
+			&i.Posted,
+			&i.Description,
+			&i.Thumbnail,
+			&i.Fullimage,
+			&i.FileSize,
+			&i.Approved,
+			&i.DeletedAt,
+			&i.LastIndex,
+			&i.Username,
+			&i.Comments,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminSetImagePostForumThreadID = `-- name: AdminSetImagePostForumThreadID :exec
+UPDATE imagepost
+SET forumthread_id = ?
+WHERE idimagepost = ?
+`
+
+type AdminSetImagePostForumThreadIDParams struct {
+	ForumThreadID int32
+	ImagePostID   int32
+}
+
+// Administrative association of an image post to a forum thread.
+func (q *Queries) AdminSetImagePostForumThreadID(ctx context.Context, arg AdminSetImagePostForumThreadIDParams) error {
+	_, err := q.db.ExecContext(ctx, adminSetImagePostForumThreadID, arg.ForumThreadID, arg.ImagePostID)
 	return err
 }
 
-const createImageBoard = `-- name: CreateImageBoard :exec
-INSERT INTO imageboard (imageboard_idimageboard, title, description, approval_required) VALUES (?, ?, ?, ?)
+const adminUpdateImageBoard = `-- name: AdminUpdateImageBoard :exec
+UPDATE imageboard
+SET
+    title = ?,
+    description = ?,
+    imageboard_idimageboard = ?,
+    approval_required = ?
+WHERE idimageboard = ?
 `
 
-type CreateImageBoardParams struct {
-	ImageboardIdimageboard int32
-	Title                  sql.NullString
-	Description            sql.NullString
-	ApprovalRequired       bool
+type AdminUpdateImageBoardParams struct {
+	Title            sql.NullString
+	Description      sql.NullString
+	ParentID         int32
+	ApprovalRequired bool
+	BoardID          int32
 }
 
-func (q *Queries) CreateImageBoard(ctx context.Context, arg CreateImageBoardParams) error {
-	_, err := q.db.ExecContext(ctx, createImageBoard,
-		arg.ImageboardIdimageboard,
+// Administrative update of board properties.
+func (q *Queries) AdminUpdateImageBoard(ctx context.Context, arg AdminUpdateImageBoardParams) error {
+	_, err := q.db.ExecContext(ctx, adminUpdateImageBoard,
 		arg.Title,
 		arg.Description,
+		arg.ParentID,
 		arg.ApprovalRequired,
+		arg.BoardID,
 	)
 	return err
 }
 
-const createImagePost = `-- name: CreateImagePost :execlastid
+const createImagePostForPoster = `-- name: CreateImagePostForPoster :execlastid
 INSERT INTO imagepost (
     imageboard_idimageboard,
     thumbnail,
@@ -91,25 +319,35 @@ INSERT INTO imagepost (
     approved,
     file_size
 )
-VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)
+VALUES (
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    NOW(),
+    ?,
+    ?
+)
 `
 
-type CreateImagePostParams struct {
-	ImageboardIdimageboard int32
-	Thumbnail              sql.NullString
-	Fullimage              sql.NullString
-	UsersIdusers           int32
-	Description            sql.NullString
-	Approved               bool
-	FileSize               int32
+type CreateImagePostForPosterParams struct {
+	BoardID     int32
+	Thumbnail   sql.NullString
+	Fullimage   sql.NullString
+	PosterID    int32
+	Description sql.NullString
+	Approved    bool
+	FileSize    int32
 }
 
-func (q *Queries) CreateImagePost(ctx context.Context, arg CreateImagePostParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, createImagePost,
-		arg.ImageboardIdimageboard,
+// Posts an image on behalf of a poster.
+func (q *Queries) CreateImagePostForPoster(ctx context.Context, arg CreateImagePostForPosterParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, createImagePostForPoster,
+		arg.BoardID,
 		arg.Thumbnail,
 		arg.Fullimage,
-		arg.UsersIdusers,
+		arg.PosterID,
 		arg.Description,
 		arg.Approved,
 		arg.FileSize,
@@ -118,15 +356,6 @@ func (q *Queries) CreateImagePost(ctx context.Context, arg CreateImagePostParams
 		return 0, err
 	}
 	return result.LastInsertId()
-}
-
-const deleteImageBoard = `-- name: DeleteImageBoard :exec
-UPDATE imageboard SET deleted_at = NOW() WHERE idimageboard = ?
-`
-
-func (q *Queries) DeleteImageBoard(ctx context.Context, idimageboard int32) error {
-	_, err := q.db.ExecContext(ctx, deleteImageBoard, idimageboard)
-	return err
 }
 
 const getAllImagePostsForIndex = `-- name: GetAllImagePostsForIndex :many
@@ -161,12 +390,34 @@ func (q *Queries) GetAllImagePostsForIndex(ctx context.Context) ([]*GetAllImageP
 	return items, nil
 }
 
-const getImageBoardById = `-- name: GetImageBoardById :one
-SELECT idimageboard, imageboard_idimageboard, title, description, approval_required FROM imageboard WHERE idimageboard = ?
+const getImageBoardByIDForLister = `-- name: GetImageBoardByIDForLister :one
+WITH RECURSIVE role_ids(id) AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+)
+SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required
+FROM imageboard b
+WHERE b.idimageboard = ?
+  AND b.deleted_at IS NULL
+  AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='imagebbs'
+      AND (g.item='board' OR g.item IS NULL)
+      AND g.action='see'
+      AND g.active=1
+      AND (g.item_id = b.idimageboard OR g.item_id IS NULL)
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
 `
 
-func (q *Queries) GetImageBoardById(ctx context.Context, idimageboard int32) (*Imageboard, error) {
-	row := q.db.QueryRowContext(ctx, getImageBoardById, idimageboard)
+type GetImageBoardByIDForListerParams struct {
+	ListerID     int32
+	BoardID      int32
+	ListerUserID sql.NullInt32
+}
+
+func (q *Queries) GetImageBoardByIDForLister(ctx context.Context, arg GetImageBoardByIDForListerParams) (*Imageboard, error) {
+	row := q.db.QueryRowContext(ctx, getImageBoardByIDForLister, arg.ListerID, arg.BoardID, arg.ListerUserID)
 	var i Imageboard
 	err := row.Scan(
 		&i.Idimageboard,
@@ -282,148 +533,6 @@ func (q *Queries) GetImagePostInfoByPath(ctx context.Context, arg GetImagePostIn
 		&i.Title,
 	)
 	return &i, err
-}
-
-const getImagePostsByUserDescending = `-- name: GetImagePostsByUserDescending :many
-SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
-FROM imagepost i
-LEFT JOIN users u ON i.users_idusers = u.idusers
-LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
-WHERE i.users_idusers = ? AND i.approved = 1 AND i.deleted_at IS NULL
-ORDER BY i.posted DESC
-LIMIT ? OFFSET ?
-`
-
-type GetImagePostsByUserDescendingParams struct {
-	UsersIdusers int32
-	Limit        int32
-	Offset       int32
-}
-
-type GetImagePostsByUserDescendingRow struct {
-	Idimagepost            int32
-	ForumthreadID          int32
-	UsersIdusers           int32
-	ImageboardIdimageboard int32
-	Posted                 sql.NullTime
-	Description            sql.NullString
-	Thumbnail              sql.NullString
-	Fullimage              sql.NullString
-	FileSize               int32
-	Approved               bool
-	DeletedAt              sql.NullTime
-	LastIndex              sql.NullTime
-	Username               sql.NullString
-	Comments               sql.NullInt32
-}
-
-func (q *Queries) GetImagePostsByUserDescending(ctx context.Context, arg GetImagePostsByUserDescendingParams) ([]*GetImagePostsByUserDescendingRow, error) {
-	rows, err := q.db.QueryContext(ctx, getImagePostsByUserDescending, arg.UsersIdusers, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*GetImagePostsByUserDescendingRow
-	for rows.Next() {
-		var i GetImagePostsByUserDescendingRow
-		if err := rows.Scan(
-			&i.Idimagepost,
-			&i.ForumthreadID,
-			&i.UsersIdusers,
-			&i.ImageboardIdimageboard,
-			&i.Posted,
-			&i.Description,
-			&i.Thumbnail,
-			&i.Fullimage,
-			&i.FileSize,
-			&i.Approved,
-			&i.DeletedAt,
-			&i.LastIndex,
-			&i.Username,
-			&i.Comments,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getImagePostsByUserDescendingAll = `-- name: GetImagePostsByUserDescendingAll :many
-SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
-FROM imagepost i
-LEFT JOIN users u ON i.users_idusers = u.idusers
-LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
-WHERE i.users_idusers = ? AND i.deleted_at IS NULL
-ORDER BY i.posted DESC
-LIMIT ? OFFSET ?
-`
-
-type GetImagePostsByUserDescendingAllParams struct {
-	UsersIdusers int32
-	Limit        int32
-	Offset       int32
-}
-
-type GetImagePostsByUserDescendingAllRow struct {
-	Idimagepost            int32
-	ForumthreadID          int32
-	UsersIdusers           int32
-	ImageboardIdimageboard int32
-	Posted                 sql.NullTime
-	Description            sql.NullString
-	Thumbnail              sql.NullString
-	Fullimage              sql.NullString
-	FileSize               int32
-	Approved               bool
-	DeletedAt              sql.NullTime
-	LastIndex              sql.NullTime
-	Username               sql.NullString
-	Comments               sql.NullInt32
-}
-
-func (q *Queries) GetImagePostsByUserDescendingAll(ctx context.Context, arg GetImagePostsByUserDescendingAllParams) ([]*GetImagePostsByUserDescendingAllRow, error) {
-	rows, err := q.db.QueryContext(ctx, getImagePostsByUserDescendingAll, arg.UsersIdusers, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*GetImagePostsByUserDescendingAllRow
-	for rows.Next() {
-		var i GetImagePostsByUserDescendingAllRow
-		if err := rows.Scan(
-			&i.Idimagepost,
-			&i.ForumthreadID,
-			&i.UsersIdusers,
-			&i.ImageboardIdimageboard,
-			&i.Posted,
-			&i.Description,
-			&i.Thumbnail,
-			&i.Fullimage,
-			&i.FileSize,
-			&i.Approved,
-			&i.DeletedAt,
-			&i.LastIndex,
-			&i.Username,
-			&i.Comments,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const listBoardsByParentIDForLister = `-- name: ListBoardsByParentIDForLister :many
@@ -786,41 +895,4 @@ func (q *Queries) SystemListBoardsByParentID(ctx context.Context, arg SystemList
 		return nil, err
 	}
 	return items, nil
-}
-
-const updateImageBoard = `-- name: UpdateImageBoard :exec
-UPDATE imageboard SET title = ?, description = ?, imageboard_idimageboard = ?, approval_required = ? WHERE idimageboard = ?
-`
-
-type UpdateImageBoardParams struct {
-	Title                  sql.NullString
-	Description            sql.NullString
-	ImageboardIdimageboard int32
-	ApprovalRequired       bool
-	Idimageboard           int32
-}
-
-func (q *Queries) UpdateImageBoard(ctx context.Context, arg UpdateImageBoardParams) error {
-	_, err := q.db.ExecContext(ctx, updateImageBoard,
-		arg.Title,
-		arg.Description,
-		arg.ImageboardIdimageboard,
-		arg.ApprovalRequired,
-		arg.Idimageboard,
-	)
-	return err
-}
-
-const updateImagePostByIdForumThreadId = `-- name: UpdateImagePostByIdForumThreadId :exec
-UPDATE imagepost SET forumthread_id = ? WHERE idimagepost = ?
-`
-
-type UpdateImagePostByIdForumThreadIdParams struct {
-	ForumthreadID int32
-	Idimagepost   int32
-}
-
-func (q *Queries) UpdateImagePostByIdForumThreadId(ctx context.Context, arg UpdateImagePostByIdForumThreadIdParams) error {
-	_, err := q.db.ExecContext(ctx, updateImagePostByIdForumThreadId, arg.ForumthreadID, arg.Idimagepost)
-	return err
 }

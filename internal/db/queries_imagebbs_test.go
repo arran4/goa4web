@@ -34,3 +34,30 @@ func TestQueries_ListBoardsByParentIDForLister(t *testing.T) {
 		t.Fatalf("expectations: %v", err)
 	}
 }
+
+func TestQueries_GetImageBoardByIDForLister(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer db.Close()
+	q := New(db)
+
+	rows := sqlmock.NewRows([]string{"idimageboard", "imageboard_idimageboard", "title", "description", "approval_required"}).
+		AddRow(2, 0, nil, nil, 0)
+	viewer := sql.NullInt32{}
+	mock.ExpectQuery(regexp.QuoteMeta(getImageBoardByIDForLister)).
+		WithArgs(int32(1), int32(2), viewer).
+		WillReturnRows(rows)
+
+	res, err := q.GetImageBoardByIDForLister(context.Background(), GetImageBoardByIDForListerParams{ListerID: 1, BoardID: 2, ListerUserID: viewer})
+	if err != nil {
+		t.Fatalf("GetImageBoardByIDForLister: %v", err)
+	}
+	if res.Idimageboard != 2 {
+		t.Fatalf("unexpected board id %d", res.Idimageboard)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}

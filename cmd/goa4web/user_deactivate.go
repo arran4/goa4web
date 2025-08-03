@@ -148,7 +148,7 @@ func (c *userDeactivateCmd) Run() error {
 			return fmt.Errorf("scrub blog: %w", err)
 		}
 	}
-	imgs, err := qtx.GetImagePostsByUserDescending(ctx, db.GetImagePostsByUserDescendingParams{UsersIdusers: u.Idusers, Limit: math.MaxInt32, Offset: 0})
+	imgs, err := qtx.AdminListImagePostsByPoster(ctx, db.AdminListImagePostsByPosterParams{PosterID: u.Idusers, Limit: math.MaxInt32, Offset: 0})
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("list images: %w", err)

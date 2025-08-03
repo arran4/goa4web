@@ -174,7 +174,7 @@ func adminRolePage(w http.ResponseWriter, r *http.Request) {
 				}
 			case "imagebbs":
 				if g.Item.String == "board" {
-					if b, err := queries.GetImageBoardById(r.Context(), g.ItemID.Int32); err == nil && b.Title.Valid {
+					if b, err := queries.AdminGetImageBoardByID(r.Context(), g.ItemID.Int32); err == nil && b.Title.Valid {
 						gi.Info = b.Title.String
 					}
 				}

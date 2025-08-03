@@ -14,12 +14,12 @@ import (
 func TestCustomFAQIndexAsk(t *testing.T) {
 	req := httptest.NewRequest("GET", "/faq", nil)
 
-	sqldb, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer sqldb.Close()
-	q := db.New(sqldb)
+	defer conn.Close()
+	q := db.New(conn)
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
 
@@ -39,12 +39,12 @@ func TestCustomFAQIndexAsk(t *testing.T) {
 func TestCustomFAQIndexAskDenied(t *testing.T) {
 	req := httptest.NewRequest("GET", "/faq", nil)
 
-	sqldb, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer sqldb.Close()
-	q := db.New(sqldb)
+	defer conn.Close()
+	q := db.New(conn)
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
 

@@ -17,13 +17,13 @@ import (
 )
 
 func TestCoreDataLatestNewsLazy(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer conn.Close()
 
-	queries := db.New(db)
+	queries := db.New(conn)
 	now := time.Now()
 	rows := sqlmock.NewRows([]string{
 		"writerName", "writerId", "idsitenews", "forumthread_id", "language_idlanguage",
@@ -56,13 +56,13 @@ func TestCoreDataLatestNewsLazy(t *testing.T) {
 }
 
 func TestWritingCategoriesLazy(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer conn.Close()
 
-	queries := db.New(db)
+	queries := db.New(conn)
 	rows := sqlmock.NewRows([]string{"idwritingcategory", "writing_category_id", "title", "description"}).
 		AddRow(1, 0, "a", "b")
 
@@ -88,13 +88,13 @@ func TestWritingCategoriesLazy(t *testing.T) {
 }
 
 func TestAnnouncementForNewsCaching(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer conn.Close()
 
-	queries := db.New(db)
+	queries := db.New(conn)
 	now := time.Now()
 	annRows := sqlmock.NewRows([]string{"id", "site_news_id", "active", "created_at"}).
 		AddRow(1, 1, true, now)
@@ -117,13 +117,13 @@ func TestAnnouncementForNewsCaching(t *testing.T) {
 }
 
 func TestAnnouncementForNewsError(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer conn.Close()
 
-	queries := db.New(db)
+	queries := db.New(conn)
 
 	mock.ExpectQuery("SELECT id, site_news_id, active, created_at").WithArgs(int32(1)).WillReturnError(sql.ErrConnDone)
 
@@ -143,13 +143,13 @@ func TestAnnouncementForNewsError(t *testing.T) {
 }
 
 func TestPublicWritingsLazy(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer conn.Close()
 
-	queries := db.New(db)
+	queries := db.New(conn)
 	now := time.Now()
 	rows := sqlmock.NewRows([]string{"idwriting", "users_idusers", "forumthread_id", "language_idlanguage", "writing_category_id", "title", "published", "writing", "abstract", "private", "deleted_at", "last_index", "Username", "Comments"}).
 		AddRow(1, 1, 0, 1, 0, "t", now, "w", "a", false, now, now, "u", 0)
@@ -192,13 +192,13 @@ func TestPublicWritingsLazy(t *testing.T) {
 }
 
 func TestCoreDataLatestWritingsLazy(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer conn.Close()
 
-	queries := db.New(db)
+	queries := db.New(conn)
 	now := time.Now()
 	rows := sqlmock.NewRows([]string{
 		"idwriting", "users_idusers", "forumthread_id", "language_idlanguage",
@@ -231,13 +231,13 @@ func TestCoreDataLatestWritingsLazy(t *testing.T) {
 
 func TestBloggersLazy(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer conn.Close()
 
-	queries := db.New(db)
+	queries := db.New(conn)
 	rows := sqlmock.NewRows([]string{"username", "count"}).AddRow("bob", 2)
 	mock.ExpectQuery("SELECT u.username").
 		WithArgs(int32(1), int32(1), int32(1), sqlmock.AnyArg(), int32(16), int32(0)).
@@ -265,13 +265,13 @@ func TestWritersLazy(t *testing.T) {
 
 	cfg := config.NewRuntimeConfig()
 
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer conn.Close()
 
-	queries := db.New(db)
+	queries := db.New(conn)
 	rows := sqlmock.NewRows([]string{"username", "count"}).AddRow("bob", 2)
 	mock.ExpectQuery("SELECT u.username").
 		WithArgs(int32(1), int32(1), int32(1), sqlmock.AnyArg(), int32(16), int32(0)).

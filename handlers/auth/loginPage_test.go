@@ -34,13 +34,13 @@ func signBackURL(key, u string, ts int64) string {
 }
 
 func TestLoginAction_NoSuchUser(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer conn.Close()
 
-	queries := db.New(db)
+	queries := db.New(conn)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers,")).WithArgs(sql.NullString{String: "bob", Valid: true}).WillReturnError(sql.ErrNoRows)
 	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO login_attempts (username, ip_address) VALUES (?, ?)")).WithArgs("bob", "1.2.3.4").WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -69,13 +69,13 @@ func TestLoginAction_NoSuchUser(t *testing.T) {
 }
 
 func TestLoginAction_InvalidPassword(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer conn.Close()
 
-	queries := db.New(db)
+	queries := db.New(conn)
 	rows := sqlmock.NewRows([]string{"idusers", "email", "passwd", "passwd_algorithm", "username"}).
 		AddRow(1, "e", "7c4f29407893c334a6cb7a87bf045c0d", "md5", "bob")
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers,")).WithArgs(sql.NullString{String: "bob", Valid: true}).WillReturnRows(rows)
@@ -135,13 +135,13 @@ func TestLoginPageHiddenFields(t *testing.T) {
 }
 
 func TestLoginAction_PendingResetPrompt(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer conn.Close()
 
-	q := db.New(db)
+	q := db.New(conn)
 	pwHash, alg, _ := HashPassword("newpw")
 	userRows := sqlmock.NewRows([]string{"idusers", "email", "passwd", "passwd_algorithm", "username"}).
 		AddRow(1, "e", "oldhash", "md5", "bob")
@@ -225,9 +225,9 @@ func TestSanitizeBackURLSigned(t *testing.T) {
 }
 
 func TestLoginPageInvalidBackURL(t *testing.T) {
-	db, _, _ := sqlmock.New()
-	defer db.Close()
-	q := db.New(db)
+	conn, _, _ := sqlmock.New()
+	defer conn.Close()
+	q := db.New(conn)
 
 	req := httptest.NewRequest(http.MethodGet, "/login?back=https://evil.com/x", nil)
 	req.Host = "example.com"
@@ -245,9 +245,9 @@ func TestLoginPageInvalidBackURL(t *testing.T) {
 }
 
 func TestLoginPageSignedBackURL(t *testing.T) {
-	db, _, _ := sqlmock.New()
-	defer db.Close()
-	q := db.New(db)
+	conn, _, _ := sqlmock.New()
+	defer conn.Close()
+	q := db.New(conn)
 
 	cfg := config.NewRuntimeConfig()
 	cfg.LoginAttemptThreshold = 10
@@ -277,10 +277,10 @@ func TestLoginPageSignedBackURL(t *testing.T) {
 }
 
 func TestLoginAction_ExternalBackURLIgnored(t *testing.T) {
-	db, mock, _ := sqlmock.New()
-	defer db.Close()
+	conn, mock, _ := sqlmock.New()
+	defer conn.Close()
 
-	q := db.New(db)
+	q := db.New(conn)
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = "test-session"
@@ -316,11 +316,11 @@ func TestLoginAction_ExternalBackURLIgnored(t *testing.T) {
 }
 
 func TestLoginAction_SignedExternalBackURL(t *testing.T) {
-	db, mock, _ := sqlmock.New()
-	defer db.Close()
+	conn, mock, _ := sqlmock.New()
+	defer conn.Close()
 
 	cfg := config.NewRuntimeConfig()
-	q := db.New(db)
+	q := db.New(conn)
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = "test-session"
@@ -362,13 +362,13 @@ func TestLoginAction_SignedExternalBackURL(t *testing.T) {
 }
 
 func TestLoginAction_Throttle(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer conn.Close()
 
-	q := db.New(db)
+	q := db.New(conn)
 	rows := sqlmock.NewRows([]string{"count"}).AddRow(5)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM login_attempts")).
 		WithArgs("bob", "1.2.3.4", sqlmock.AnyArg()).WillReturnRows(rows)

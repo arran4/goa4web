@@ -10,11 +10,11 @@ import (
 )
 
 func TestAllRolesLazy(t *testing.T) {
-	sqldb, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer sqldb.Close()
+	defer conn.Close()
 
 	rows := sqlmock.NewRows([]string{"id", "name", "can_login", "is_admin", "public_profile_allowed_at"}).
 		AddRow(int32(1), "user", true, false, nil).
@@ -22,7 +22,7 @@ func TestAllRolesLazy(t *testing.T) {
 
 	mock.ExpectQuery("SELECT id, name, can_login, is_admin, public_profile_allowed_at FROM roles ORDER BY id").WillReturnRows(rows)
 
-	cd := NewCoreData(context.Background(), db.New(sqldb), config.NewRuntimeConfig())
+	cd := NewCoreData(context.Background(), db.New(conn), config.NewRuntimeConfig())
 
 	if _, err := cd.AllRoles(); err != nil {
 		t.Fatalf("AllRoles: %v", err)

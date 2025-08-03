@@ -9,12 +9,12 @@ import (
 )
 
 func TestQueries_AdminUpdateRole(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
-	q := New(db)
+	defer conn.Close()
+	q := New(conn)
 
 	mock.ExpectExec(regexp.QuoteMeta(adminUpdateRole)).
 		WithArgs("name", true, false, int32(1)).

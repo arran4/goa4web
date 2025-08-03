@@ -23,12 +23,12 @@ import (
 )
 
 func TestAddEmailTaskEventData(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
-	q := db.New(db)
+	defer conn.Close()
+	q := db.New(conn)
 	mock.ExpectQuery("SELECT id, user_id, email").WillReturnError(sql.ErrNoRows)
 	mock.ExpectExec("INSERT INTO user_emails").WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectQuery("SELECT u.idusers").WithArgs(int32(1)).
@@ -71,12 +71,12 @@ func TestAddEmailTaskEventData(t *testing.T) {
 }
 
 func TestVerifyRemovesDuplicates(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
-	q := db.New(db)
+	defer conn.Close()
+	q := db.New(conn)
 
 	store = sessions.NewCookieStore([]byte("test"))
 	core.Store = store
@@ -125,12 +125,12 @@ func TestVerifyRemovesDuplicates(t *testing.T) {
 }
 
 func TestResendVerificationEmailTaskEventData(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
-	q := db.New(db)
+	defer conn.Close()
+	q := db.New(conn)
 	mock.ExpectQuery("SELECT id, user_id, email").WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).AddRow(1, 1, "a@example.com", nil, nil, nil, 0))
 	mock.ExpectExec("UPDATE user_emails SET").WillReturnResult(sqlmock.NewResult(1, 1))
 

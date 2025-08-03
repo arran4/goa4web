@@ -51,13 +51,13 @@ func TestTemplateFuncsCSRFToken(t *testing.T) {
 }
 
 func TestLatestNewsRespectsPermissions(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer conn.Close()
 
-	queries := db.New(db)
+	queries := db.New(conn)
 
 	now := time.Now()
 	rows := sqlmock.NewRows([]string{

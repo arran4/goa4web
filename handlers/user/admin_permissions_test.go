@@ -40,12 +40,12 @@ func TestPermissionUserTasksTemplates(t *testing.T) {
 func TestPermissionUserAllowEventData(t *testing.T) {
 	bus := eventbus.NewBus()
 
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
-	queries := db.New(db)
+	defer conn.Close()
+	queries := db.New(conn)
 
 	mock.ExpectQuery("SELECT idusers").
 		WithArgs(sqlmock.AnyArg()).

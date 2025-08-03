@@ -10,18 +10,18 @@ import (
 )
 
 func TestEnsureSchemaVersionMatch(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer conn.Close()
 
 	mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS schema_version (version INT NOT NULL)")).
 		WillReturnResult(sqlmock.NewResult(0, 0))
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT version FROM schema_version")).
 		WillReturnRows(sqlmock.NewRows([]string{"version"}).AddRow(handlers.ExpectedSchemaVersion))
 
-	if err := EnsureSchema(context.Background(), db); err != nil {
+	if err := EnsureSchema(context.Background(), conn); err != nil {
 		t.Fatalf("ensureSchema: %v", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -30,18 +30,18 @@ func TestEnsureSchemaVersionMatch(t *testing.T) {
 }
 
 func TestEnsureSchemaVersionMismatch(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer conn.Close()
 
 	mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS schema_version (version INT NOT NULL)")).
 		WillReturnResult(sqlmock.NewResult(0, 0))
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT version FROM schema_version")).
 		WillReturnRows(sqlmock.NewRows([]string{"version"}).AddRow(handlers.ExpectedSchemaVersion - 1))
 
-	err = EnsureSchema(context.Background(), db)
+	err = EnsureSchema(context.Background(), conn)
 	if err == nil {
 		t.Fatalf("expected error")
 	}

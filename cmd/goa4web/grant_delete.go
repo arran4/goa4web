@@ -30,12 +30,12 @@ func (c *grantDeleteCmd) Run() error {
 	if c.ID == 0 {
 		return fmt.Errorf("id required")
 	}
-	db, err := c.rootCmd.DB()
+	conn, err := c.rootCmd.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	q := db.New(db)
+	q := db.New(conn)
 	if err := q.DeleteGrant(ctx, int32(c.ID)); err != nil {
 		return fmt.Errorf("delete grant: %w", err)
 	}

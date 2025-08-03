@@ -45,14 +45,14 @@ func TestLinkerFeed(t *testing.T) {
 func TestLinkerApproveAddsToSearch(t *testing.T) {
 	t.Skip("event bus worker requires long wait; skipping")
 
-	sqldb, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	mock.MatchExpectationsInOrder(false)
-	defer sqldb.Close()
+	defer conn.Close()
 
-	queries := db.New(sqldb)
+	queries := db.New(conn)
 
 	mock.ExpectExec("INSERT INTO linker").
 		WithArgs(int32(1)).

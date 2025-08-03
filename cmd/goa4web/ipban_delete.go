@@ -31,12 +31,12 @@ func (c *ipBanDeleteCmd) Run() error {
 	if c.IP == "" {
 		return fmt.Errorf("ip required")
 	}
-	db, err := c.rootCmd.DB()
+	conn, err := c.rootCmd.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(db)
+	queries := db.New(conn)
 	if err := queries.AdminCancelBannedIp(ctx, c.IP); err != nil {
 		return fmt.Errorf("cancel banned ip: %w", err)
 	}

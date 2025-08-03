@@ -81,12 +81,12 @@ func TestBuildPatternsAdditional(t *testing.T) {
 
 func TestCollectSubscribersQuery(t *testing.T) {
 	ctx := context.Background()
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
-	q := db.New(db)
+	defer conn.Close()
+	q := db.New(conn)
 
 	patterns := []string{"post:/blog/1", "post:/blog/*"}
 	rows := sqlmock.NewRows([]string{"users_idusers"}).AddRow(1).AddRow(2)
@@ -131,12 +131,12 @@ func TestProcessEventDLQ(t *testing.T) {
 	cfg.NotificationsEnabled = true
 	cfg.EmailFrom = "from@example.com"
 
-	db, _, err := sqlmock.New()
+	conn, _, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
-	q := db.New(db)
+	defer conn.Close()
+	q := db.New(conn)
 	prov := &errProvider{}
 	n := New(WithQueries(q), WithEmailProvider(prov), WithConfig(cfg))
 	dlqRec := &recordDLQ{}
@@ -160,12 +160,12 @@ func TestProcessEventSubscribeSelf(t *testing.T) {
 	cfg.NotificationsEnabled = true
 	cfg.EmailFrom = "from@example.com"
 
-	db, _, err := sqlmock.New()
+	conn, _, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
-	q := db.New(db)
+	defer conn.Close()
+	q := db.New(conn)
 	n := New(WithQueries(q), WithConfig(cfg))
 
 	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/p", Task: TaskTest, UserID: 1}, nil); err != nil {
@@ -180,12 +180,12 @@ func TestProcessEventNoAutoSubscribe(t *testing.T) {
 	cfg.AdminNotify = true
 	cfg.NotificationsEnabled = true
 
-	db, _, err := sqlmock.New()
+	conn, _, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
-	q := db.New(db)
+	defer conn.Close()
+	q := db.New(conn)
 	n := New(WithQueries(q), WithConfig(cfg))
 
 	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/p", Task: TaskTest, UserID: 1}, nil); err != nil {
@@ -202,12 +202,12 @@ func TestProcessEventAdminNotify(t *testing.T) {
 	cfg.EmailFrom = "from@example.com"
 	cfg.NotificationsEnabled = true
 
-	db, _, err := sqlmock.New()
+	conn, _, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
-	q := db.New(db)
+	defer conn.Close()
+	q := db.New(conn)
 	prov := &busDummyProvider{}
 	n := New(WithQueries(q), WithEmailProvider(prov), WithConfig(cfg))
 
@@ -224,12 +224,12 @@ func TestProcessEventWritingSubscribers(t *testing.T) {
 	cfg.NotificationsEnabled = true
 	cfg.EmailFrom = "from@example.com"
 
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
-	q := db.New(db)
+	defer conn.Close()
+	q := db.New(conn)
 	n := New(WithQueries(q), WithConfig(cfg))
 
 	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/writings/article/1", Task: TaskTest, UserID: 2, Data: map[string]any{"target": Target{Type: "writing", ID: 1}}}, nil); err != nil {
@@ -258,12 +258,12 @@ func TestProcessEventTargetUsers(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
 	cfg.NotificationsEnabled = true
 
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
-	q := db.New(db)
+	defer conn.Close()
+	q := db.New(conn)
 	n := New(WithQueries(q), WithConfig(cfg))
 
 	for _, id := range []int32{2, 3} {
@@ -298,12 +298,12 @@ func TestBusWorker(t *testing.T) {
 
 	bus := eventbus.NewBus()
 
-	db, _, err := sqlmock.New()
+	conn, _, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
-	q := db.New(db)
+	defer conn.Close()
+	q := db.New(conn)
 
 	prov := &busDummyProvider{}
 	n := New(WithQueries(q), WithEmailProvider(prov), WithConfig(cfg))
@@ -343,12 +343,12 @@ func TestProcessEventAutoSubscribe(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
 	cfg.NotificationsEnabled = true
 
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
-	q := db.New(db)
+	defer conn.Close()
+	q := db.New(conn)
 	n := New(WithQueries(q), WithConfig(cfg))
 
 	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size", "auto_subscribe_replies"}).

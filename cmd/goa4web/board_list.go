@@ -29,12 +29,12 @@ func parseBoardListCmd(parent *boardCmd, args []string) (*boardListCmd, error) {
 }
 
 func (c *boardListCmd) Run() error {
-	sqldb, err := c.rootCmd.DB()
+	conn, err := c.rootCmd.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(sqldb)
+	queries := db.New(conn)
 	rows, err := queries.AdminListBoards(ctx, db.AdminListBoardsParams{Limit: int32(c.limit), Offset: int32(c.offset)})
 	if err != nil {
 		return fmt.Errorf("list boards: %w", err)

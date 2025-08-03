@@ -12,13 +12,13 @@ import (
 )
 
 func TestCanSearch(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer conn.Close()
 
-	queries := db.New(db)
+	queries := db.New(conn)
 	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
 
 	// No grants

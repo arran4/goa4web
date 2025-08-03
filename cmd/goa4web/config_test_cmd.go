@@ -97,8 +97,8 @@ func (c *configTestEmailCmd) Run() error {
 		return fmt.Errorf("email provider not configured")
 	}
 	var q db.Querier
-	if db, err := c.rootCmd.DB(); err == nil {
-		q = db.New(db)
+	if conn, err := c.rootCmd.DB(); err == nil {
+		q = db.New(conn)
 	}
 	ctx := context.Background()
 	emails := config.GetAdminEmails(ctx, q, c.rootCmd.cfg)
@@ -151,11 +151,11 @@ func parseConfigTestDBCmd(parent *configTestCmd, args []string) (*configTestDBCm
 }
 
 func (c *configTestDBCmd) Run() error {
-	db, err := c.rootCmd.DB()
+	conn, err := c.rootCmd.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
-	if err := db.Ping(); err != nil {
+	if err := conn.Ping(); err != nil {
 		return fmt.Errorf("ping: %w", err)
 	}
 	return nil
@@ -178,8 +178,8 @@ func parseConfigTestDLQCmd(parent *configTestCmd, args []string) (*configTestDLQ
 
 func (c *configTestDLQCmd) Run() error {
 	var q db.Querier
-	if db, err := c.rootCmd.DB(); err == nil {
-		q = db.New(db)
+	if conn, err := c.rootCmd.DB(); err == nil {
+		q = db.New(conn)
 	}
 	provider := c.rootCmd.dlqReg.ProviderFromConfig(c.rootCmd.cfg, q)
 	if provider == nil {

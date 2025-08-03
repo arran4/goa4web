@@ -24,12 +24,12 @@ func TestCustomNewsIndexRoles(t *testing.T) {
 		t.Errorf("admin should see add news")
 	}
 
-	db, _, err := sqlmock.New()
+	conn, _, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
-	q := db.New(db)
+	defer conn.Close()
+	q := db.New(conn)
 	ctx := req.Context()
 	cd = common.NewCoreData(ctx, q, config.NewRuntimeConfig())
 	cd.SetRoles([]string{"content writer", "administrator"})

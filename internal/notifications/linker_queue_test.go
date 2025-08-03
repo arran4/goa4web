@@ -16,11 +16,11 @@ func TestLinkerQueueNotifierMessages(t *testing.T) {
 	cfg.EmailFrom = "from@example.com"
 	ntName := NotificationTemplateFilenameGenerator("linker_approved")
 
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer conn.Close()
 	mock.ExpectQuery("SELECT body FROM template_overrides WHERE name = ?").
 		WithArgs(ntName).
 		WillReturnRows(sqlmock.NewRows([]string{"body"}).AddRow(""))
@@ -34,7 +34,7 @@ func TestLinkerQueueNotifierMessages(t *testing.T) {
 		WithArgs("linkerApprovedEmailSubject.gotxt").
 		WillReturnRows(sqlmock.NewRows([]string{"body"}).AddRow(""))
 
-	q := db.New(db)
+	q := db.New(conn)
 	n := New(WithQueries(q), WithConfig(cfg))
 	data := map[string]any{
 		"Title":     "Example",

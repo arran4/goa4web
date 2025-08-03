@@ -37,12 +37,12 @@ func (c *faqReadCmd) Run() error {
 	if c.ID == 0 {
 		return fmt.Errorf("id required")
 	}
-	db, err := c.rootCmd.DB()
+	conn, err := c.rootCmd.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(db)
+	queries := db.New(conn)
 	rows, err := queries.GetAllFAQQuestions(ctx)
 	if err != nil {
 		return fmt.Errorf("get faq: %w", err)

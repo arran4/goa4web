@@ -10,15 +10,15 @@ import (
 )
 
 func TestQueries_InsertFAQQuestionForWriter(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
-	q := New(db)
+	defer conn.Close()
+	q := New(conn)
 
 	mock.ExpectExec(regexp.QuoteMeta(insertFAQQuestionForWriter)).
-		WithArgs(sql.NullString{String: "q", Valid: true}, sql.NullString{String: "a", Valid: true}, int32(1), int32(2), int32(1), sql.NullInt32{Int32: 2, Valid: true}).
+		WithArgs(sql.NullString{String: "q", Valid: true}, sql.NullString{String: "a", Valid: true}, int32(1), int32(2), int32(1), sql.NullInt32{Int32: 2, Valid: true}, int32(2)).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	if _, err := q.InsertFAQQuestionForWriter(context.Background(), InsertFAQQuestionForWriterParams{

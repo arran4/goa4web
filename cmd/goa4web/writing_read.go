@@ -38,12 +38,12 @@ func (c *writingReadCmd) Run() error {
 	if c.ID == 0 {
 		return fmt.Errorf("id required")
 	}
-	db, err := c.rootCmd.DB()
+	conn, err := c.rootCmd.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(db)
+	queries := db.New(conn)
 	row, err := queries.GetWritingForListerByID(ctx, db.GetWritingForListerByIDParams{
 		ListerID:      0,
 		Idwriting:     int32(c.ID),

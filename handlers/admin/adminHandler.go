@@ -1,15 +1,12 @@
 package admin
 
 import (
-	"database/sql"
 	_ "embed"
-	"github.com/arran4/goa4web/core/consts"
-	"log"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 )
 
 func AdminPage(w http.ResponseWriter, r *http.Request) {
@@ -36,25 +33,18 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 		AdminSections: cd.Nav.AdminSections(),
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	ctx := r.Context()
-	dber, ok := queries.(interface{ DB() db.DBTX })
-	if !ok {
+	stats, err := queries.AdminGetDashboardStats(r.Context())
+	if err != nil {
 		http.Error(w, "database not available", http.StatusInternalServerError)
 		return
 	}
-	count := func(query string, dest *int64) {
-		if err := dber.DB().QueryRowContext(ctx, query).Scan(dest); err != nil && err != sql.ErrNoRows {
-			log.Printf("adminPage count query error: %v", err)
-		}
-	}
-	count("SELECT COUNT(*) FROM users", &data.Stats.Users)
-	count("SELECT COUNT(*) FROM language", &data.Stats.Languages)
-	// site_news renamed from siteNews in schema version 24
-	count("SELECT COUNT(*) FROM site_news", &data.Stats.News)
-	count("SELECT COUNT(*) FROM blogs", &data.Stats.Blogs)
-	count("SELECT COUNT(*) FROM forumtopic", &data.Stats.ForumTopics)
-	count("SELECT COUNT(*) FROM forumthread", &data.Stats.ForumThreads)
-	count("SELECT COUNT(*) FROM writing", &data.Stats.Writings)
+	data.Stats.Users = stats.Users
+	data.Stats.Languages = stats.Languages
+	data.Stats.News = stats.News
+	data.Stats.Blogs = stats.Blogs
+	data.Stats.ForumTopics = stats.ForumTopics
+	data.Stats.ForumThreads = stats.ForumThreads
+	data.Stats.Writings = stats.Writings
 
 	handlers.TemplateHandler(w, r, "adminPage", data)
 }

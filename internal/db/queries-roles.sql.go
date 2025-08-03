@@ -181,6 +181,28 @@ func (q *Queries) AdminListUsersByRoleID(ctx context.Context, roleID int32) ([]*
 	return items, nil
 }
 
+const adminUpdateRole = `-- name: AdminUpdateRole :exec
+UPDATE roles SET name = ?, can_login = ?, is_admin = ? WHERE id = ?
+`
+
+type AdminUpdateRoleParams struct {
+	Name     string
+	CanLogin bool
+	IsAdmin  bool
+	ID       int32
+}
+
+// admin task
+func (q *Queries) AdminUpdateRole(ctx context.Context, arg AdminUpdateRoleParams) error {
+	_, err := q.db.ExecContext(ctx, adminUpdateRole,
+		arg.Name,
+		arg.CanLogin,
+		arg.IsAdmin,
+		arg.ID,
+	)
+	return err
+}
+
 const adminUpdateRolePublicProfileAllowed = `-- name: AdminUpdateRolePublicProfileAllowed :exec
 UPDATE roles SET public_profile_allowed_at = ? WHERE id = ?
 `

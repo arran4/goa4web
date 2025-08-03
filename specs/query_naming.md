@@ -54,3 +54,11 @@ queries.
   must apply the caller's pagination and language settings.
 - User queries should validate grants in SQL and again in Go code for defence in
   depth.
+
+## Custom queries
+
+Queries that cannot be represented as static SQL should be defined on the
+`CustomQueries` interface. The generated `Queries` type must not expose the
+underlying database handle (previously available via `DB()`). If a custom
+query can be implemented as a normal query without significant runtime cost,
+prefer adding it as a standard query instead of using `CustomQueries`.

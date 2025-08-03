@@ -11,6 +11,28 @@ import (
 	"time"
 )
 
+const adminCountForumThreads = `-- name: AdminCountForumThreads :one
+SELECT COUNT(*) FROM forumthread
+`
+
+func (q *Queries) AdminCountForumThreads(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, adminCountForumThreads)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const adminCountForumTopics = `-- name: AdminCountForumTopics :one
+SELECT COUNT(*) FROM forumtopic
+`
+
+func (q *Queries) AdminCountForumTopics(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, adminCountForumTopics)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const adminCountThreadsByBoard = `-- name: AdminCountThreadsByBoard :one
 SELECT COUNT(DISTINCT forumthread_id)
 FROM imagepost
@@ -108,6 +130,62 @@ func (q *Queries) AdminForumTopicThreadCounts(ctx context.Context) ([]*AdminForu
 	return items, nil
 }
 
+const adminGetDashboardStats = `-- name: AdminGetDashboardStats :one
+SELECT
+    (SELECT COUNT(*) FROM users) AS users,
+    (SELECT COUNT(*) FROM language) AS languages,
+    (SELECT COUNT(*) FROM site_news) AS news,
+    (SELECT COUNT(*) FROM blogs) AS blogs,
+    (SELECT COUNT(*) FROM forumtopic) AS forum_topics,
+    (SELECT COUNT(*) FROM forumthread) AS forum_threads,
+    (SELECT COUNT(*) FROM writing) AS writings
+`
+
+type AdminGetDashboardStatsRow struct {
+	Users        int64
+	Languages    int64
+	News         int64
+	Blogs        int64
+	ForumTopics  int64
+	ForumThreads int64
+	Writings     int64
+}
+
+func (q *Queries) AdminGetDashboardStats(ctx context.Context) (*AdminGetDashboardStatsRow, error) {
+	row := q.db.QueryRowContext(ctx, adminGetDashboardStats)
+	var i AdminGetDashboardStatsRow
+	err := row.Scan(
+		&i.Users,
+		&i.Languages,
+		&i.News,
+		&i.Blogs,
+		&i.ForumTopics,
+		&i.ForumThreads,
+		&i.Writings,
+	)
+	return &i, err
+}
+
+const adminGetForumStats = `-- name: AdminGetForumStats :one
+SELECT
+    (SELECT COUNT(*) FROM forumcategory) AS categories,
+    (SELECT COUNT(*) FROM forumtopic) AS topics,
+    (SELECT COUNT(*) FROM forumthread) AS threads
+`
+
+type AdminGetForumStatsRow struct {
+	Categories int64
+	Topics     int64
+	Threads    int64
+}
+
+func (q *Queries) AdminGetForumStats(ctx context.Context) (*AdminGetForumStatsRow, error) {
+	row := q.db.QueryRowContext(ctx, adminGetForumStats)
+	var i AdminGetForumStatsRow
+	err := row.Scan(&i.Categories, &i.Topics, &i.Threads)
+	return &i, err
+}
+
 const adminGetRecentAuditLogs = `-- name: AdminGetRecentAuditLogs :many
 SELECT a.id, a.users_idusers, u.username, a.action, a.path, a.details, a.data, a.created_at
 FROM audit_log a LEFT JOIN users u ON a.users_idusers = u.idusers
@@ -155,6 +233,42 @@ func (q *Queries) AdminGetRecentAuditLogs(ctx context.Context, limit int32) ([]*
 		return nil, err
 	}
 	return items, nil
+}
+
+const adminGetSearchStats = `-- name: AdminGetSearchStats :one
+SELECT
+    (SELECT COUNT(*) FROM searchwordlist) AS words,
+    (SELECT COUNT(*) FROM comments_search) AS comments,
+    (SELECT COUNT(*) FROM site_news_search) AS news,
+    (SELECT COUNT(*) FROM blogs_search) AS blogs,
+    (SELECT COUNT(*) FROM linker_search) AS linker,
+    (SELECT COUNT(*) FROM writing_search) AS writings,
+    (SELECT COUNT(*) FROM imagepost_search) AS images
+`
+
+type AdminGetSearchStatsRow struct {
+	Words    int64
+	Comments int64
+	News     int64
+	Blogs    int64
+	Linker   int64
+	Writings int64
+	Images   int64
+}
+
+func (q *Queries) AdminGetSearchStats(ctx context.Context) (*AdminGetSearchStatsRow, error) {
+	row := q.db.QueryRowContext(ctx, adminGetSearchStats)
+	var i AdminGetSearchStatsRow
+	err := row.Scan(
+		&i.Words,
+		&i.Comments,
+		&i.News,
+		&i.Blogs,
+		&i.Linker,
+		&i.Writings,
+		&i.Images,
+	)
+	return &i, err
 }
 
 const adminImageboardPostCounts = `-- name: AdminImageboardPostCounts :many

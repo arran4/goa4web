@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"html/template"
 	"io"
 	"log"
 	"math"
@@ -106,7 +107,10 @@ type CoreData struct {
 	announcement             lazy.Value[*db.GetActiveAnnouncementWithNewsForListerRow]
 	annMu                    sync.Mutex
 	bloggers                 lazy.Value[[]*db.BloggerCountRow]
+	blogList                 lazy.Value[[]*db.ListBlogEntriesByAuthorForListerRow]
 	bookmarks                lazy.Value[*db.GetBookmarksForUserRow]
+	currentBloggerID         int32
+	currentBloggerUsername   string
 	event                    *eventbus.TaskEvent
 	forumCategories          lazy.Value[[]*db.Forumcategory]
 	forumThreads             map[int32]*lazy.Value[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow]
@@ -127,6 +131,7 @@ type CoreData struct {
 	linkerCategories         lazy.Value[[]*db.GetLinkerCategoryLinkCountsRow]
 	newsAnnouncements        map[int32]*lazy.Value[*db.SiteAnnouncement]
 	notifCount               lazy.Value[int32]
+	offset                   int
 	perms                    lazy.Value[[]*db.GetPermissionsByUserIDRow]
 	pref                     lazy.Value[*db.Preference]
 	preferredLanguageID      lazy.Value[int32]
@@ -886,6 +891,118 @@ func (cd *CoreData) WritingCategories() ([]*db.WritingCategory, error) {
 	})
 }
 
+// BlogCanEdit reports whether the viewer can edit the given blog row.
+func (cd *CoreData) BlogCanEdit(row *db.ListBlogEntriesByAuthorForListerRow) bool {
+	return cd.CanEditAny() || row.IsOwner
+}
+
+// BlogEntries returns blog entries for listing pages.
+func (cd *CoreData) BlogEntries() ([]*db.ListBlogEntriesByAuthorForListerRow, error) {
+	return cd.blogList.Load(func() ([]*db.ListBlogEntriesByAuthorForListerRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		uid := cd.currentBloggerID
+		if uid == 0 && cd.currentBloggerUsername != "" {
+			u, err := cd.queries.SystemGetUserByUsername(cd.ctx, sql.NullString{String: cd.currentBloggerUsername, Valid: true})
+			if err == nil {
+				uid = u.Idusers
+			} else if !errors.Is(err, sql.ErrNoRows) {
+				return nil, err
+			}
+		}
+		rows, err := cd.queries.ListBlogEntriesByAuthorForLister(cd.ctx, db.ListBlogEntriesByAuthorForListerParams{
+			AuthorID: uid,
+			ListerID: cd.UserID,
+			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+			Limit:    15,
+			Offset:   int32(cd.offset),
+		})
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		var res []*db.ListBlogEntriesByAuthorForListerRow
+		for _, row := range rows {
+			if cd.HasGrant("blogs", "entry", "see", row.Idblogs) {
+				res = append(res, row)
+			}
+		}
+		if len(res) > 0 && cd.currentBloggerUsername == "" {
+			cd.currentBloggerUsername = res[0].Username.String
+		}
+		return res, nil
+	})
+}
+
+// BlogEntryByID returns a blog entry lazily loading it once per ID.
+func (cd *CoreData) BlogEntryByID(id int32, ops ...lazy.Option[*db.GetBlogEntryForListerByIDRow]) (*db.GetBlogEntryForListerByIDRow, error) {
+	fetch := func(i int32) (*db.GetBlogEntryForListerByIDRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		return cd.queries.GetBlogEntryForListerByID(cd.ctx, db.GetBlogEntryForListerByIDParams{
+			ListerID: cd.UserID,
+			ID:       i,
+			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		})
+	}
+	return lazy.Map(&cd.blogEntries, &cd.mapMu, id, fetch, ops...)
+}
+
+// SetBlogList configures the parameters used when listing blogs.
+func (cd *CoreData) SetBlogList(uid int32, username string, offset int) {
+	cd.currentBloggerID = uid
+	cd.currentBloggerUsername = username
+	cd.offset = offset
+}
+
+// BlogListHeading returns the heading for the current blog listing.
+func (cd *CoreData) BlogListHeading() template.HTML {
+	if cd.currentBloggerUsername != "" {
+		return template.HTML(fmt.Sprintf("<font size=\"5\"><a href=\"/blogs/blogger/%s\">%s</a>'s blogs.</font><br>", cd.currentBloggerUsername, cd.currentBloggerUsername))
+	}
+	return template.HTML("<font size=\"5\"><a href=\"/blogs/bloggers\">All bloggers</a>' blogs.</font><br>")
+}
+
+// BlogListEmptyMessage returns the message shown when no blogs are available.
+func (cd *CoreData) BlogListEmptyMessage() template.HTML {
+	if cd.offset > 0 {
+		if cd.currentBloggerID != 0 || cd.currentBloggerUsername != "" {
+			return template.HTML("There are no more blogs under this user.<br>")
+		}
+		return template.HTML("There are no more blogs.<br>")
+	}
+	if cd.currentBloggerID != 0 || cd.currentBloggerUsername != "" {
+		return template.HTML("Nothing under this blog.<br>")
+	}
+	return template.HTML("There are no blogs here.<br>")
+}
+
+// Bloggers returns bloggers ordered by username with post counts.
+func (cd *CoreData) Bloggers(r *http.Request) ([]*db.BloggerCountRow, error) {
+	return cd.bloggers.Load(func() ([]*db.BloggerCountRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+		ps := cd.PageSize()
+		search := r.URL.Query().Get("search")
+		if search != "" {
+			return cd.customQueries.SearchBloggers(cd.ctx, db.SearchBloggersParams{
+				ListerID: cd.UserID,
+				Query:    search,
+				Limit:    int32(ps + 1),
+				Offset:   int32(offset),
+			})
+		}
+		return cd.customQueries.ListBloggers(cd.ctx, db.ListBloggersParams{
+			ListerID: cd.UserID,
+			Limit:    int32(ps + 1),
+			Offset:   int32(offset),
+		})
+	})
+}
+
 // PublicWritings returns public writings in a category, cached per category and offset.
 func (cd *CoreData) PublicWritings(categoryID int32, r *http.Request) ([]*db.ListPublicWritingsInCategoryForListerRow, error) {
 	if cd.publicWritings == nil {
@@ -922,31 +1039,6 @@ func (cd *CoreData) PublicWritings(categoryID int32, r *http.Request) ([]*db.Lis
 			}
 		}
 		return res, nil
-	})
-}
-
-// Bloggers returns bloggers ordered by username with post counts.
-func (cd *CoreData) Bloggers(r *http.Request) ([]*db.BloggerCountRow, error) {
-	return cd.bloggers.Load(func() ([]*db.BloggerCountRow, error) {
-		if cd.queries == nil {
-			return nil, nil
-		}
-		offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-		ps := cd.PageSize()
-		search := r.URL.Query().Get("search")
-		if search != "" {
-			return cd.customQueries.SearchBloggers(cd.ctx, db.SearchBloggersParams{
-				ListerID: cd.UserID,
-				Query:    search,
-				Limit:    int32(ps + 1),
-				Offset:   int32(offset),
-			})
-		}
-		return cd.customQueries.ListBloggers(cd.ctx, db.ListBloggersParams{
-			ListerID: cd.UserID,
-			Limit:    int32(ps + 1),
-			Offset:   int32(offset),
-		})
 	})
 }
 
@@ -1018,21 +1110,6 @@ func (cd *CoreData) WritingByID(id int32, ops ...lazy.Option[*db.GetWritingForLi
 		})
 	}
 	return lazy.Map(&cd.writingRows, &cd.mapMu, id, fetch, ops...)
-}
-
-// BlogEntryByID returns a blog entry lazily loading it once per ID.
-func (cd *CoreData) BlogEntryByID(id int32, ops ...lazy.Option[*db.GetBlogEntryForListerByIDRow]) (*db.GetBlogEntryForListerByIDRow, error) {
-	fetch := func(i int32) (*db.GetBlogEntryForListerByIDRow, error) {
-		if cd.queries == nil {
-			return nil, nil
-		}
-		return cd.queries.GetBlogEntryForListerByID(cd.ctx, db.GetBlogEntryForListerByIDParams{
-			ListerID: cd.UserID,
-			ID:       i,
-			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-		})
-	}
-	return lazy.Map(&cd.blogEntries, &cd.mapMu, id, fetch, ops...)
 }
 
 // CommentByID returns a forum comment lazily loading it once per ID.

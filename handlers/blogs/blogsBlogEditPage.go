@@ -42,10 +42,9 @@ func (EditBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	text := r.PostFormValue("text")
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := cd.Queries()
 	row := cd.CurrentBlogLoaded()
 
-	if err = queries.UpdateBlogEntryForWriter(r.Context(), db.UpdateBlogEntryForWriterParams{
+	if err := cd.Queries().UpdateBlogEntryForWriter(r.Context(), db.UpdateBlogEntryForWriterParams{
 		EntryID:      row.Idblogs,
 		GrantEntryID: sql.NullInt32{Int32: row.Idblogs, Valid: true},
 		LanguageID:   int32(languageId),
@@ -79,7 +78,6 @@ func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	type Data struct {
-		*common.CoreData
 		Languages          []*db.Language
 		Blog               *db.GetBlogEntryForListerByIDRow
 		SelectedLanguageId int
@@ -87,7 +85,6 @@ func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData:           cd,
 		SelectedLanguageId: int(cd.PreferredLanguageID(cd.Config.DefaultLanguage)),
 		Mode:               "Edit",
 	}

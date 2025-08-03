@@ -24,67 +24,16 @@ import (
 )
 
 func Page(w http.ResponseWriter, r *http.Request) {
-	type BlogRow struct {
-		*db.ListBlogEntriesByAuthorForListerRow
-		EditUrl string
-	}
-	type Data struct {
-		*common.CoreData
-		Rows     []*BlogRow
-		IsOffset bool
-		UID      string
-	}
-
-	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	buid := r.URL.Query().Get("uid")
-	userId, _ := strconv.Atoi(buid)
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
+	if _, ok := core.GetSessionOrFail(w, r); !ok {
 		return
 	}
-	uid, _ := session.Values["UID"].(int32)
-
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Blogs"
-	queries := cd.Queries()
-	rows, err := queries.ListBlogEntriesByAuthorForLister(r.Context(), db.ListBlogEntriesByAuthorForListerParams{
-		AuthorID: int32(userId),
-		ListerID: uid,
-		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
-		Limit:    15,
-		Offset:   int32(offset),
-	})
-	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-		default:
-			log.Printf("Query Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-	}
-
-	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-		IsOffset: offset != 0,
-		UID:      buid,
-	}
-
-	for _, row := range rows {
-		if !data.CoreData.HasGrant("blogs", "entry", "see", row.Idblogs) {
-			continue
-		}
-		editUrl := ""
-		if data.CoreData.CanEditAny() || row.IsOwner {
-			editUrl = fmt.Sprintf("/blogs/blog/%d/edit", row.Idblogs)
-		}
-		data.Rows = append(data.Rows, &BlogRow{
-			ListBlogEntriesByAuthorForListerRow: row,
-			EditUrl:                             editUrl,
-		})
-	}
-
-	handlers.TemplateHandler(w, r, "blogsPage", data)
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	uid, _ := strconv.Atoi(r.URL.Query().Get("uid"))
+	username := r.URL.Query().Get("user")
+	cd.SetBlogList(int32(uid), username, offset)
+	handlers.TemplateHandler(w, r, "blogsPage", struct{}{})
 }
 
 func CustomBlogIndex(data *common.CoreData, r *http.Request) {

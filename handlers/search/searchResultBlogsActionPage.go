@@ -48,7 +48,7 @@ func (SearchBlogsTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	ftbn, err := queries.FindForumTopicByTitle(r.Context(), sql.NullString{Valid: true, String: hblogs.BloggerTopicName})
+	ftbn, err := queries.SystemGetForumTopicByTitle(r.Context(), sql.NullString{Valid: true, String: hblogs.BloggerTopicName})
 	if err != nil {
 		log.Printf("findForumTopicByTitle Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

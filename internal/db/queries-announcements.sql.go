@@ -77,6 +77,20 @@ func (q *Queries) AdminPromoteAnnouncement(ctx context.Context, siteNewsID int32
 	return err
 }
 
+const adminSetAnnouncementActive = `-- name: AdminSetAnnouncementActive :exec
+UPDATE site_announcements SET active = ? WHERE id = ?
+`
+
+type AdminSetAnnouncementActiveParams struct {
+	Active bool
+	ID     int32
+}
+
+func (q *Queries) AdminSetAnnouncementActive(ctx context.Context, arg AdminSetAnnouncementActiveParams) error {
+	_, err := q.db.ExecContext(ctx, adminSetAnnouncementActive, arg.Active, arg.ID)
+	return err
+}
+
 const getActiveAnnouncementWithNewsForLister = `-- name: GetActiveAnnouncementWithNewsForLister :one
 WITH RECURSIVE role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
@@ -152,18 +166,4 @@ func (q *Queries) GetLatestAnnouncementByNewsID(ctx context.Context, siteNewsID 
 		&i.CreatedAt,
 	)
 	return &i, err
-}
-
-const setAnnouncementActive = `-- name: SetAnnouncementActive :exec
-UPDATE site_announcements SET active = ? WHERE id = ?
-`
-
-type SetAnnouncementActiveParams struct {
-	Active bool
-	ID     int32
-}
-
-func (q *Queries) SetAnnouncementActive(ctx context.Context, arg SetAnnouncementActiveParams) error {
-	_, err := q.db.ExecContext(ctx, setAnnouncementActive, arg.Active, arg.ID)
-	return err
 }

@@ -89,13 +89,13 @@ func index(ctx context.Context, q db.Querier, data IndexEventData) error {
 	}
 	switch data.Type {
 	case TypeComment:
-		return q.SetCommentLastIndex(ctx, data.ID)
+		return q.SystemSetCommentLastIndex(ctx, data.ID)
 	case TypeWriting:
-		return q.SetWritingLastIndex(ctx, data.ID)
+		return q.SystemSetWritingLastIndex(ctx, data.ID)
 	case TypeLinker:
-		return q.SetLinkerLastIndex(ctx, data.ID)
+		return q.SystemSetLinkerLastIndex(ctx, data.ID)
 	case TypeImage:
-		return q.SetImagePostLastIndex(ctx, data.ID)
+		return q.SystemSetImagePostLastIndex(ctx, data.ID)
 	}
 	return nil
 }

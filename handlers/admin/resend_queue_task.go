@@ -67,7 +67,7 @@ func (ResendQueueTask) Action(w http.ResponseWriter, r *http.Request) any {
 				return fmt.Errorf("send email fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 			}
 		}
-		if err := queries.MarkEmailSent(r.Context(), e.ID); err != nil {
+		if err := queries.SystemMarkPendingEmailSent(r.Context(), e.ID); err != nil {
 			return fmt.Errorf("mark sent fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}

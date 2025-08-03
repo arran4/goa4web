@@ -43,7 +43,7 @@ WHERE deleted_at IS NOT NULL;
 SELECT *
 FROM faq;
 
--- name: RenameFAQCategory :exec
+-- name: AdminRenameFAQCategory :exec
 UPDATE faq_categories
 SET name = ?
 WHERE idfaqCategories = ?

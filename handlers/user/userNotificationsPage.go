@@ -100,7 +100,7 @@ func (DismissTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	n, err := queries.GetNotificationForLister(r.Context(), db.GetNotificationForListerParams{ID: int32(id), ListerID: uid})
 	if err == nil && !n.ReadAt.Valid {
-		if err := queries.MarkNotificationReadForLister(r.Context(), db.MarkNotificationReadForListerParams{ID: n.ID, ListerID: uid}); err != nil {
+		if err := queries.SetNotificationReadForLister(r.Context(), db.SetNotificationReadForListerParams{ID: n.ID, ListerID: uid}); err != nil {
 			log.Printf("mark notification read: %v", err)
 		}
 	}
@@ -156,7 +156,7 @@ func userNotificationEmailActionPage(w http.ResponseWriter, r *http.Request) {
 		maxPr = v
 	}
 	if id != 0 {
-		if err := queries.SetNotificationPriority(r.Context(), db.SetNotificationPriorityParams{NotificationPriority: maxPr + 1, ID: int32(id)}); err != nil {
+		if err := queries.SetNotificationPriorityForLister(r.Context(), db.SetNotificationPriorityForListerParams{ListerID: uid, NotificationPriority: maxPr + 1, ID: int32(id)}); err != nil {
 			log.Printf("set notification priority: %v", err)
 		}
 	}

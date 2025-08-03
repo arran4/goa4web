@@ -87,25 +87,6 @@ func (q *Queries) GetPasswordResetByUser(ctx context.Context, arg GetPasswordRes
 	return &i, err
 }
 
-const markPasswordResetVerified = `-- name: MarkPasswordResetVerified :exec
-UPDATE pending_passwords SET verified_at = NOW() WHERE id = ?
-`
-
-func (q *Queries) MarkPasswordResetVerified(ctx context.Context, id int32) error {
-	_, err := q.db.ExecContext(ctx, markPasswordResetVerified, id)
-	return err
-}
-
-const purgePasswordResetsBefore = `-- name: PurgePasswordResetsBefore :execresult
-DELETE FROM pending_passwords
-WHERE created_at < ? OR verified_at IS NOT NULL
-`
-
-// Remove password reset entries that have expired or were already verified
-func (q *Queries) PurgePasswordResetsBefore(ctx context.Context, createdAt time.Time) (sql.Result, error) {
-	return q.db.ExecContext(ctx, purgePasswordResetsBefore, createdAt)
-}
-
 const systemDeletePasswordReset = `-- name: SystemDeletePasswordReset :exec
 DELETE FROM pending_passwords WHERE id = ?
 `
@@ -122,4 +103,23 @@ DELETE FROM pending_passwords WHERE user_id = ?
 // Delete all password reset entries for the given user and return the result
 func (q *Queries) SystemDeletePasswordResetsByUser(ctx context.Context, userID int32) (sql.Result, error) {
 	return q.db.ExecContext(ctx, systemDeletePasswordResetsByUser, userID)
+}
+
+const systemMarkPasswordResetVerified = `-- name: SystemMarkPasswordResetVerified :exec
+UPDATE pending_passwords SET verified_at = NOW() WHERE id = ?
+`
+
+func (q *Queries) SystemMarkPasswordResetVerified(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, systemMarkPasswordResetVerified, id)
+	return err
+}
+
+const systemPurgePasswordResetsBefore = `-- name: SystemPurgePasswordResetsBefore :execresult
+DELETE FROM pending_passwords
+WHERE created_at < ? OR verified_at IS NOT NULL
+`
+
+// Remove password reset entries that have expired or were already verified
+func (q *Queries) SystemPurgePasswordResetsBefore(ctx context.Context, createdAt time.Time) (sql.Result, error) {
+	return q.db.ExecContext(ctx, systemPurgePasswordResetsBefore, createdAt)
 }

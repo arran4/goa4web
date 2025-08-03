@@ -632,7 +632,7 @@ func (q *Queries) ListCommentIDsBySearchWordNextForListerNotInRestrictedTopic(ct
 	return items, nil
 }
 
-const siteNewsSearchFirst = `-- name: SiteNewsSearchFirst :many
+const listSiteNewsSearchFirstForLister = `-- name: ListSiteNewsSearchFirstForLister :many
 WITH RECURSIVE role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
@@ -665,14 +665,14 @@ WHERE swl.word = ?
   )
 `
 
-type SiteNewsSearchFirstParams struct {
+type ListSiteNewsSearchFirstForListerParams struct {
 	ListerID int32
 	Word     sql.NullString
 	UserID   sql.NullInt32
 }
 
-func (q *Queries) SiteNewsSearchFirst(ctx context.Context, arg SiteNewsSearchFirstParams) ([]int32, error) {
-	rows, err := q.db.QueryContext(ctx, siteNewsSearchFirst,
+func (q *Queries) ListSiteNewsSearchFirstForLister(ctx context.Context, arg ListSiteNewsSearchFirstForListerParams) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx, listSiteNewsSearchFirstForLister,
 		arg.ListerID,
 		arg.Word,
 		arg.ListerID,
@@ -700,7 +700,7 @@ func (q *Queries) SiteNewsSearchFirst(ctx context.Context, arg SiteNewsSearchFir
 	return items, nil
 }
 
-const siteNewsSearchNext = `-- name: SiteNewsSearchNext :many
+const listSiteNewsSearchNextForLister = `-- name: ListSiteNewsSearchNextForLister :many
 WITH RECURSIVE role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
@@ -734,15 +734,15 @@ WHERE swl.word = ?
   )
 `
 
-type SiteNewsSearchNextParams struct {
+type ListSiteNewsSearchNextForListerParams struct {
 	ListerID int32
 	Word     sql.NullString
 	Ids      []int32
 	UserID   sql.NullInt32
 }
 
-func (q *Queries) SiteNewsSearchNext(ctx context.Context, arg SiteNewsSearchNextParams) ([]int32, error) {
-	query := siteNewsSearchNext
+func (q *Queries) ListSiteNewsSearchNextForLister(ctx context.Context, arg ListSiteNewsSearchNextForListerParams) ([]int32, error) {
+	query := listSiteNewsSearchNextForLister
 	var queryParams []interface{}
 	queryParams = append(queryParams, arg.ListerID)
 	queryParams = append(queryParams, arg.Word)
@@ -769,6 +769,153 @@ func (q *Queries) SiteNewsSearchNext(ctx context.Context, arg SiteNewsSearchNext
 			return nil, err
 		}
 		items = append(items, site_news_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listWritingSearchFirstForLister = `-- name: ListWritingSearchFirstForLister :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+)
+SELECT DISTINCT cs.writing_id
+FROM writing_search cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearchwordlist
+JOIN writing w ON w.idwriting = cs.writing_id
+WHERE swl.word = ?
+  AND (
+      w.language_idlanguage = 0
+      OR w.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = w.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='writing'
+        AND g.item='article'
+        AND g.action='see'
+        AND g.active=1
+        AND g.item_id = w.idwriting
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+`
+
+type ListWritingSearchFirstForListerParams struct {
+	ListerID int32
+	Word     sql.NullString
+	UserID   sql.NullInt32
+}
+
+func (q *Queries) ListWritingSearchFirstForLister(ctx context.Context, arg ListWritingSearchFirstForListerParams) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx, listWritingSearchFirstForLister,
+		arg.ListerID,
+		arg.Word,
+		arg.ListerID,
+		arg.ListerID,
+		arg.UserID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var writing_id int32
+		if err := rows.Scan(&writing_id); err != nil {
+			return nil, err
+		}
+		items = append(items, writing_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listWritingSearchNextForLister = `-- name: ListWritingSearchNextForLister :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+)
+SELECT DISTINCT cs.writing_id
+FROM writing_search cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearchwordlist
+JOIN writing w ON w.idwriting = cs.writing_id
+WHERE swl.word = ?
+  AND cs.writing_id IN (/*SLICE:ids*/?)
+  AND (
+      w.language_idlanguage = 0
+      OR w.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = w.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='writing'
+        AND g.item='article'
+        AND g.action='see'
+        AND g.active=1
+        AND g.item_id = w.idwriting
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+`
+
+type ListWritingSearchNextForListerParams struct {
+	ListerID int32
+	Word     sql.NullString
+	Ids      []int32
+	UserID   sql.NullInt32
+}
+
+func (q *Queries) ListWritingSearchNextForLister(ctx context.Context, arg ListWritingSearchNextForListerParams) ([]int32, error) {
+	query := listWritingSearchNextForLister
+	var queryParams []interface{}
+	queryParams = append(queryParams, arg.ListerID)
+	queryParams = append(queryParams, arg.Word)
+	if len(arg.Ids) > 0 {
+		for _, v := range arg.Ids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(arg.Ids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
+	}
+	queryParams = append(queryParams, arg.ListerID)
+	queryParams = append(queryParams, arg.ListerID)
+	queryParams = append(queryParams, arg.UserID)
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var writing_id int32
+		if err := rows.Scan(&writing_id); err != nil {
+			return nil, err
+		}
+		items = append(items, writing_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -981,151 +1128,4 @@ func (q *Queries) SystemGetSearchWordByWordLowercased(ctx context.Context, lcase
 	var i Searchwordlist
 	err := row.Scan(&i.Idsearchwordlist, &i.Word)
 	return &i, err
-}
-
-const writingSearchFirst = `-- name: WritingSearchFirst :many
-WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-)
-SELECT DISTINCT cs.writing_id
-FROM writing_search cs
-LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearchwordlist
-JOIN writing w ON w.idwriting = cs.writing_id
-WHERE swl.word = ?
-  AND (
-      w.language_idlanguage = 0
-      OR w.language_idlanguage IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?
-            AND ul.language_idlanguage = w.language_idlanguage
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
-      )
-  )
-  AND EXISTS (
-      SELECT 1 FROM grants g
-      WHERE g.section='writing'
-        AND g.item='article'
-        AND g.action='see'
-        AND g.active=1
-        AND g.item_id = w.idwriting
-        AND (g.user_id = ? OR g.user_id IS NULL)
-        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
-  )
-`
-
-type WritingSearchFirstParams struct {
-	ListerID int32
-	Word     sql.NullString
-	UserID   sql.NullInt32
-}
-
-func (q *Queries) WritingSearchFirst(ctx context.Context, arg WritingSearchFirstParams) ([]int32, error) {
-	rows, err := q.db.QueryContext(ctx, writingSearchFirst,
-		arg.ListerID,
-		arg.Word,
-		arg.ListerID,
-		arg.ListerID,
-		arg.UserID,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []int32
-	for rows.Next() {
-		var writing_id int32
-		if err := rows.Scan(&writing_id); err != nil {
-			return nil, err
-		}
-		items = append(items, writing_id)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const writingSearchNext = `-- name: WritingSearchNext :many
-WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-)
-SELECT DISTINCT cs.writing_id
-FROM writing_search cs
-LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearchwordlist
-JOIN writing w ON w.idwriting = cs.writing_id
-WHERE swl.word = ?
-  AND cs.writing_id IN (/*SLICE:ids*/?)
-  AND (
-      w.language_idlanguage = 0
-      OR w.language_idlanguage IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?
-            AND ul.language_idlanguage = w.language_idlanguage
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
-      )
-  )
-  AND EXISTS (
-      SELECT 1 FROM grants g
-      WHERE g.section='writing'
-        AND g.item='article'
-        AND g.action='see'
-        AND g.active=1
-        AND g.item_id = w.idwriting
-        AND (g.user_id = ? OR g.user_id IS NULL)
-        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
-  )
-`
-
-type WritingSearchNextParams struct {
-	ListerID int32
-	Word     sql.NullString
-	Ids      []int32
-	UserID   sql.NullInt32
-}
-
-func (q *Queries) WritingSearchNext(ctx context.Context, arg WritingSearchNextParams) ([]int32, error) {
-	query := writingSearchNext
-	var queryParams []interface{}
-	queryParams = append(queryParams, arg.ListerID)
-	queryParams = append(queryParams, arg.Word)
-	if len(arg.Ids) > 0 {
-		for _, v := range arg.Ids {
-			queryParams = append(queryParams, v)
-		}
-		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(arg.Ids))[1:], 1)
-	} else {
-		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
-	}
-	queryParams = append(queryParams, arg.ListerID)
-	queryParams = append(queryParams, arg.ListerID)
-	queryParams = append(queryParams, arg.UserID)
-	rows, err := q.db.QueryContext(ctx, query, queryParams...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []int32
-	for rows.Next() {
-		var writing_id int32
-		if err := rows.Scan(&writing_id); err != nil {
-			return nil, err
-		}
-		items = append(items, writing_id)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }

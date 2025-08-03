@@ -103,25 +103,6 @@ func (q *Queries) AdminPurgeReadNotifications(ctx context.Context) error {
 	return err
 }
 
-const countUnreadNotificationsForUser = `-- name: CountUnreadNotificationsForUser :one
-SELECT COUNT(*) FROM notifications
-WHERE users_idusers = ? AND read_at IS NULL
-`
-
-// CountUnreadNotificationsForUser returns the number of unread notifications for a user.
-// Parameters:
-//
-//	user_id - ID of the user to count notifications for
-//
-// A clearer name for the role is "User" as it is the user's own data.
-// See specs/query_naming.md for naming conventions.
-func (q *Queries) CountUnreadNotificationsForUser(ctx context.Context, userID int32) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countUnreadNotificationsForUser, userID)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
 const deleteNotificationForLister = `-- name: DeleteNotificationForLister :exec
 DELETE FROM notifications
 WHERE id = ? AND users_idusers = ?
@@ -160,6 +141,23 @@ func (q *Queries) GetNotificationForLister(ctx context.Context, arg GetNotificat
 		&i.ReadAt,
 	)
 	return &i, err
+}
+
+const getUnreadNotificationCountForLister = `-- name: GetUnreadNotificationCountForLister :one
+SELECT COUNT(*) FROM notifications
+WHERE users_idusers = ? AND read_at IS NULL
+`
+
+// GetUnreadNotificationCountForLister returns the number of unread notifications for a
+// lister.
+// Parameters:
+//
+//	lister_id - ID of the lister to count notifications for
+func (q *Queries) GetUnreadNotificationCountForLister(ctx context.Context, listerID int32) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getUnreadNotificationCountForLister, listerID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const listNotificationsForLister = `-- name: ListNotificationsForLister :many
@@ -250,35 +248,35 @@ func (q *Queries) ListUnreadNotificationsForLister(ctx context.Context, arg List
 	return items, nil
 }
 
-const markNotificationReadForLister = `-- name: MarkNotificationReadForLister :exec
+const setNotificationReadForLister = `-- name: SetNotificationReadForLister :exec
 UPDATE notifications
 SET read_at = NOW()
 WHERE id = ? AND users_idusers = ?
 `
 
-type MarkNotificationReadForListerParams struct {
+type SetNotificationReadForListerParams struct {
 	ID       int32
 	ListerID int32
 }
 
-func (q *Queries) MarkNotificationReadForLister(ctx context.Context, arg MarkNotificationReadForListerParams) error {
-	_, err := q.db.ExecContext(ctx, markNotificationReadForLister, arg.ID, arg.ListerID)
+func (q *Queries) SetNotificationReadForLister(ctx context.Context, arg SetNotificationReadForListerParams) error {
+	_, err := q.db.ExecContext(ctx, setNotificationReadForLister, arg.ID, arg.ListerID)
 	return err
 }
 
-const markNotificationUnreadForLister = `-- name: MarkNotificationUnreadForLister :exec
+const setNotificationUnreadForLister = `-- name: SetNotificationUnreadForLister :exec
 UPDATE notifications
 SET read_at = NULL
 WHERE id = ? AND users_idusers = ?
 `
 
-type MarkNotificationUnreadForListerParams struct {
+type SetNotificationUnreadForListerParams struct {
 	ID       int32
 	ListerID int32
 }
 
-func (q *Queries) MarkNotificationUnreadForLister(ctx context.Context, arg MarkNotificationUnreadForListerParams) error {
-	_, err := q.db.ExecContext(ctx, markNotificationUnreadForLister, arg.ID, arg.ListerID)
+func (q *Queries) SetNotificationUnreadForLister(ctx context.Context, arg SetNotificationUnreadForListerParams) error {
+	_, err := q.db.ExecContext(ctx, setNotificationUnreadForLister, arg.ID, arg.ListerID)
 	return err
 }
 

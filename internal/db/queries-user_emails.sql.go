@@ -239,32 +239,43 @@ func (q *Queries) ListUserEmailsForLister(ctx context.Context, arg ListUserEmail
 	return items, nil
 }
 
-const setNotificationPriority = `-- name: SetNotificationPriority :exec
-UPDATE user_emails SET notification_priority = ? WHERE id = ?
+const setNotificationPriorityForLister = `-- name: SetNotificationPriorityForLister :exec
+UPDATE user_emails SET notification_priority = ?
+WHERE id = ? AND user_id = ?
 `
 
-type SetNotificationPriorityParams struct {
+type SetNotificationPriorityForListerParams struct {
 	NotificationPriority int32
 	ID                   int32
+	ListerID             int32
 }
 
-func (q *Queries) SetNotificationPriority(ctx context.Context, arg SetNotificationPriorityParams) error {
-	_, err := q.db.ExecContext(ctx, setNotificationPriority, arg.NotificationPriority, arg.ID)
+func (q *Queries) SetNotificationPriorityForLister(ctx context.Context, arg SetNotificationPriorityForListerParams) error {
+	_, err := q.db.ExecContext(ctx, setNotificationPriorityForLister, arg.NotificationPriority, arg.ID, arg.ListerID)
 	return err
 }
 
-const setVerificationCode = `-- name: SetVerificationCode :exec
-UPDATE user_emails SET last_verification_code = ?, verification_expires_at = ? WHERE id = ?
+const setVerificationCodeForLister = `-- name: SetVerificationCodeForLister :exec
+UPDATE user_emails
+SET last_verification_code = ?,
+    verification_expires_at = ?
+WHERE id = ? AND user_id = ?
 `
 
-type SetVerificationCodeParams struct {
+type SetVerificationCodeForListerParams struct {
 	LastVerificationCode  sql.NullString
 	VerificationExpiresAt sql.NullTime
 	ID                    int32
+	ListerID              int32
 }
 
-func (q *Queries) SetVerificationCode(ctx context.Context, arg SetVerificationCodeParams) error {
-	_, err := q.db.ExecContext(ctx, setVerificationCode, arg.LastVerificationCode, arg.VerificationExpiresAt, arg.ID)
+func (q *Queries) SetVerificationCodeForLister(ctx context.Context, arg SetVerificationCodeForListerParams) error {
+	_, err := q.db.ExecContext(ctx, setVerificationCodeForLister,
+		arg.LastVerificationCode,
+		arg.VerificationExpiresAt,
+		arg.ID,
+		arg.ListerID,
+	)
 	return err
 }
 

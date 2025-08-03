@@ -1246,7 +1246,7 @@ func (cd *CoreData) UnreadNotificationCount() int64 {
 		if cd.queries == nil || cd.UserID == 0 {
 			return 0, nil
 		}
-		return cd.queries.CountUnreadNotifications(cd.ctx, cd.UserID)
+		return cd.queries.CountUnreadNotificationsForUser(cd.ctx, cd.UserID)
 	})
 	if err != nil {
 		log.Printf("load unread notification count: %v", err)

@@ -26,7 +26,7 @@ func (MarkUnreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	for _, idStr := range r.Form["id"] {
 		id, _ := strconv.Atoi(idStr)
-		if err := queries.MarkNotificationUnread(r.Context(), int32(id)); err != nil {
+		if err := queries.AdminMarkNotificationUnread(r.Context(), int32(id)); err != nil {
 			return fmt.Errorf("mark unread fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {

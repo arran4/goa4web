@@ -56,10 +56,10 @@ func (SendNotificationTask) Action(w http.ResponseWriter, r *http.Request) any {
 		ids = append(ids, rows...)
 	}
 	for _, id := range ids {
-		err := queries.InsertNotification(r.Context(), db.InsertNotificationParams{
-			UsersIdusers: id,
-			Link:         sql.NullString{String: link, Valid: link != ""},
-			Message:      sql.NullString{String: message, Valid: message != ""},
+		err := queries.SystemCreateNotification(r.Context(), db.SystemCreateNotificationParams{
+			RecipientID: id,
+			Link:        sql.NullString{String: link, Valid: link != ""},
+			Message:     sql.NullString{String: message, Valid: message != ""},
 		})
 		if err != nil {
 			return fmt.Errorf("insert notification fail %w", handlers.ErrRedirectOnSamePageHandler(err))

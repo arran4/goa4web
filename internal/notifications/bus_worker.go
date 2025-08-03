@@ -177,10 +177,10 @@ func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp Se
 			return err
 		}
 		if len(msg) > 0 {
-			if err := n.Queries.InsertNotification(ctx, db.InsertNotificationParams{
-				UsersIdusers: evt.UserID,
-				Link:         sql.NullString{String: evt.Path, Valid: true},
-				Message:      sql.NullString{String: string(msg), Valid: true},
+			if err := n.Queries.SystemCreateNotification(ctx, db.SystemCreateNotificationParams{
+				RecipientID: evt.UserID,
+				Link:        sql.NullString{String: evt.Path, Valid: true},
+				Message:     sql.NullString{String: string(msg), Valid: true},
 			}); err != nil {
 				return err
 			}
@@ -230,10 +230,10 @@ func (n *Notifier) notifyTargetUsers(ctx context.Context, evt eventbus.TaskEvent
 				return err
 			}
 			if len(msg) > 0 {
-				if err := n.Queries.InsertNotification(ctx, db.InsertNotificationParams{
-					UsersIdusers: id,
-					Link:         sql.NullString{String: evt.Path, Valid: true},
-					Message:      sql.NullString{String: string(msg), Valid: true},
+				if err := n.Queries.SystemCreateNotification(ctx, db.SystemCreateNotificationParams{
+					RecipientID: id,
+					Link:        sql.NullString{String: evt.Path, Valid: true},
+					Message:     sql.NullString{String: string(msg), Valid: true},
 				}); err != nil {
 					return err
 				}
@@ -368,14 +368,14 @@ func notifyMissingEmail(ctx context.Context, q db.Querier, userID int32) error {
 	if q == nil || userID == 0 {
 		return nil
 	}
-	last, err := q.LastNotificationByMessage(ctx, db.LastNotificationByMessageParams{UsersIdusers: userID, Message: sql.NullString{String: "missing email address", Valid: true}})
+	last, err := q.SystemGetLastNotificationForRecipientByMessage(ctx, db.SystemGetLastNotificationForRecipientByMessageParams{RecipientID: userID, Message: sql.NullString{String: "missing email address", Valid: true}})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("last notification: %w", err)
 	}
 	if err == nil && time.Since(last.CreatedAt) < 7*24*time.Hour {
 		return nil
 	}
-	if err := q.InsertNotification(ctx, db.InsertNotificationParams{UsersIdusers: userID, Message: sql.NullString{String: "missing email address", Valid: true}}); err != nil {
+	if err := q.SystemCreateNotification(ctx, db.SystemCreateNotificationParams{RecipientID: userID, Message: sql.NullString{String: "missing email address", Valid: true}}); err != nil {
 		return fmt.Errorf("insert notification: %w", err)
 	}
 	return nil

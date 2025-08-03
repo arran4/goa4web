@@ -26,16 +26,16 @@ func (ToggleNotificationReadTask) Action(w http.ResponseWriter, r *http.Request)
 	}
 	for _, idStr := range r.Form["id"] {
 		id, _ := strconv.Atoi(idStr)
-		n, err := queries.GetNotification(r.Context(), int32(id))
+		n, err := queries.AdminGetNotification(r.Context(), int32(id))
 		if err != nil {
 			return fmt.Errorf("get notification fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		if n.ReadAt.Valid {
-			if err := queries.MarkNotificationUnread(r.Context(), int32(id)); err != nil {
+			if err := queries.AdminMarkNotificationUnread(r.Context(), int32(id)); err != nil {
 				return fmt.Errorf("mark unread fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 			}
 		} else {
-			if err := queries.MarkNotificationRead(r.Context(), int32(id)); err != nil {
+			if err := queries.AdminMarkNotificationRead(r.Context(), int32(id)); err != nil {
 				return fmt.Errorf("mark read fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 			}
 		}

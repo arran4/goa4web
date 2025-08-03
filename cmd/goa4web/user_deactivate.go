@@ -56,12 +56,12 @@ func (c *userDeactivateCmd) Run() error {
 		return fmt.Errorf("begin tx: %w", err)
 	}
 	qtx := queries.WithTx(tx)
-	if err := qtx.ArchiveUser(ctx, u.Idusers); err != nil {
+	if err := qtx.AdminArchiveUser(ctx, u.Idusers); err != nil {
 		tx.Rollback()
 		return fmt.Errorf("archive user: %w", err)
 	}
 	newName := randomString(16)
-	if err := qtx.ScrubUser(ctx, db.ScrubUserParams{Username: sql.NullString{String: newName, Valid: true}, Idusers: u.Idusers}); err != nil {
+	if err := qtx.AdminScrubUser(ctx, db.AdminScrubUserParams{Username: sql.NullString{String: newName, Valid: true}, Idusers: u.Idusers}); err != nil {
 		tx.Rollback()
 		return fmt.Errorf("scrub user: %w", err)
 	}
@@ -71,7 +71,7 @@ func (c *userDeactivateCmd) Run() error {
 		return fmt.Errorf("list comments: %w", err)
 	}
 	for _, cm := range comments {
-		if err := qtx.ArchiveComment(ctx, db.ArchiveCommentParams{
+		if err := qtx.AdminArchiveComment(ctx, db.AdminArchiveCommentParams{
 			Idcomments:         cm.Idcomments,
 			ForumthreadID:      cm.ForumthreadID,
 			UsersIdusers:       cm.UsersIdusers,
@@ -83,7 +83,7 @@ func (c *userDeactivateCmd) Run() error {
 			return fmt.Errorf("archive comment: %w", err)
 		}
 		scrub := scrubText(cm.Text.String)
-		if err := qtx.ScrubComment(ctx, db.ScrubCommentParams{Text: sql.NullString{String: scrub, Valid: true}, Idcomments: cm.Idcomments}); err != nil {
+		if err := qtx.AdminScrubComment(ctx, db.AdminScrubCommentParams{Text: sql.NullString{String: scrub, Valid: true}, Idcomments: cm.Idcomments}); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("scrub comment: %w", err)
 		}
@@ -94,7 +94,7 @@ func (c *userDeactivateCmd) Run() error {
 		return fmt.Errorf("list writings: %w", err)
 	}
 	for _, w := range writings {
-		if err := qtx.ArchiveWriting(ctx, db.ArchiveWritingParams{
+		if err := qtx.AdminArchiveWriting(ctx, db.AdminArchiveWritingParams{
 			Idwriting:          w.Idwriting,
 			UsersIdusers:       w.UsersIdusers,
 			ForumthreadID:      w.ForumthreadID,
@@ -109,7 +109,7 @@ func (c *userDeactivateCmd) Run() error {
 			tx.Rollback()
 			return fmt.Errorf("archive writing: %w", err)
 		}
-		if err := qtx.ScrubWriting(ctx, db.ScrubWritingParams{
+		if err := qtx.AdminScrubWriting(ctx, db.AdminScrubWritingParams{
 			Title:     sql.NullString{String: scrubText(w.Title.String), Valid: w.Title.Valid},
 			Writing:   sql.NullString{String: scrubText(w.Writing.String), Valid: w.Writing.Valid},
 			Abstract:  sql.NullString{String: scrubText(w.Abstract.String), Valid: w.Abstract.Valid},
@@ -132,7 +132,7 @@ func (c *userDeactivateCmd) Run() error {
 		if b.ForumthreadID.Valid {
 			threadID = b.ForumthreadID.Int32
 		}
-		if err := qtx.ArchiveBlog(ctx, db.ArchiveBlogParams{
+		if err := qtx.AdminArchiveBlog(ctx, db.AdminArchiveBlogParams{
 			Idblogs:            b.Idblogs,
 			ForumthreadID:      threadID,
 			UsersIdusers:       b.UsersIdusers,
@@ -143,7 +143,7 @@ func (c *userDeactivateCmd) Run() error {
 			tx.Rollback()
 			return fmt.Errorf("archive blog: %w", err)
 		}
-		if err := qtx.ScrubBlog(ctx, db.ScrubBlogParams{Blog: sql.NullString{String: scrubText(b.Blog.String), Valid: b.Blog.Valid}, Idblogs: b.Idblogs}); err != nil {
+		if err := qtx.AdminScrubBlog(ctx, db.AdminScrubBlogParams{Blog: sql.NullString{String: scrubText(b.Blog.String), Valid: b.Blog.Valid}, Idblogs: b.Idblogs}); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("scrub blog: %w", err)
 		}
@@ -154,7 +154,7 @@ func (c *userDeactivateCmd) Run() error {
 		return fmt.Errorf("list images: %w", err)
 	}
 	for _, img := range imgs {
-		if err := qtx.ArchiveImagepost(ctx, db.ArchiveImagepostParams{
+		if err := qtx.AdminArchiveImagepost(ctx, db.AdminArchiveImagepostParams{
 			Idimagepost:            img.Idimagepost,
 			ForumthreadID:          img.ForumthreadID,
 			UsersIdusers:           img.UsersIdusers,
@@ -169,7 +169,7 @@ func (c *userDeactivateCmd) Run() error {
 			tx.Rollback()
 			return fmt.Errorf("archive imagepost: %w", err)
 		}
-		if err := qtx.ScrubImagepost(ctx, img.Idimagepost); err != nil {
+		if err := qtx.AdminScrubImagepost(ctx, img.Idimagepost); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("scrub imagepost: %w", err)
 		}
@@ -180,7 +180,7 @@ func (c *userDeactivateCmd) Run() error {
 		return fmt.Errorf("list links: %w", err)
 	}
 	for _, l := range links {
-		if err := qtx.ArchiveLink(ctx, db.ArchiveLinkParams{
+		if err := qtx.AdminArchiveLink(ctx, db.AdminArchiveLinkParams{
 			Idlinker:           l.Idlinker,
 			LanguageIdlanguage: l.LanguageIdlanguage,
 			UsersIdusers:       l.UsersIdusers,
@@ -194,7 +194,7 @@ func (c *userDeactivateCmd) Run() error {
 			tx.Rollback()
 			return fmt.Errorf("archive link: %w", err)
 		}
-		if err := qtx.ScrubLink(ctx, db.ScrubLinkParams{Title: sql.NullString{String: scrubText(l.Title.String), Valid: l.Title.Valid}, Idlinker: l.Idlinker}); err != nil {
+		if err := qtx.AdminScrubLink(ctx, db.AdminScrubLinkParams{Title: sql.NullString{String: scrubText(l.Title.String), Valid: l.Title.Valid}, Idlinker: l.Idlinker}); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("scrub link: %w", err)
 		}

@@ -17,6 +17,14 @@ type Querier interface {
 	//   username (string)
 	//   email (string)
 	AdminAllUsers(ctx context.Context) ([]*AdminAllUsersRow, error)
+	AdminApproveImagePost(ctx context.Context, idimagepost int32) error
+	AdminArchiveBlog(ctx context.Context, arg AdminArchiveBlogParams) error
+	AdminArchiveComment(ctx context.Context, arg AdminArchiveCommentParams) error
+	AdminArchiveImagepost(ctx context.Context, arg AdminArchiveImagepostParams) error
+	AdminArchiveLink(ctx context.Context, arg AdminArchiveLinkParams) error
+	// Queries for user deactivation and restoration
+	AdminArchiveUser(ctx context.Context, idusers int32) error
+	AdminArchiveWriting(ctx context.Context, arg AdminArchiveWritingParams) error
 	AdminCancelBannedIp(ctx context.Context, ipNet string) error
 	AdminClearExternalLinkCache(ctx context.Context, arg AdminClearExternalLinkCacheParams) error
 	// This query selects all words from the "searchwordlist" table and prints them.
@@ -73,6 +81,11 @@ type Querier interface {
 	// admin task
 	AdminListGrantsByRoleID(ctx context.Context, roleID sql.NullInt32) ([]*Grant, error)
 	AdminListLoginAttempts(ctx context.Context) ([]*LoginAttempt, error)
+	AdminListPendingDeactivatedBlogs(ctx context.Context, arg AdminListPendingDeactivatedBlogsParams) ([]*AdminListPendingDeactivatedBlogsRow, error)
+	AdminListPendingDeactivatedComments(ctx context.Context, arg AdminListPendingDeactivatedCommentsParams) ([]*AdminListPendingDeactivatedCommentsRow, error)
+	AdminListPendingDeactivatedImageposts(ctx context.Context, arg AdminListPendingDeactivatedImagepostsParams) ([]*AdminListPendingDeactivatedImagepostsRow, error)
+	AdminListPendingDeactivatedLinks(ctx context.Context, arg AdminListPendingDeactivatedLinksParams) ([]*AdminListPendingDeactivatedLinksRow, error)
+	AdminListPendingDeactivatedWritings(ctx context.Context, arg AdminListPendingDeactivatedWritingsParams) ([]*AdminListPendingDeactivatedWritingsRow, error)
 	AdminListPendingRequests(ctx context.Context) ([]*AdminRequestQueue, error)
 	AdminListPendingUsers(ctx context.Context) ([]*AdminListPendingUsersRow, error)
 	AdminListRequestComments(ctx context.Context, requestID int32) ([]*AdminRequestComment, error)
@@ -91,6 +104,11 @@ type Querier interface {
 	AdminListUserIDsByRole(ctx context.Context, name string) ([]int32, error)
 	// admin task
 	AdminListUsersByRoleID(ctx context.Context, roleID int32) ([]*AdminListUsersByRoleIDRow, error)
+	AdminMarkBlogRestored(ctx context.Context, idblogs int32) error
+	AdminMarkCommentRestored(ctx context.Context, idcomments int32) error
+	AdminMarkImagepostRestored(ctx context.Context, idimagepost int32) error
+	AdminMarkLinkRestored(ctx context.Context, idlinker int32) error
+	AdminMarkWritingRestored(ctx context.Context, idwriting int32) error
 	// admin task
 	AdminPromoteAnnouncement(ctx context.Context, siteNewsID int32) error
 	AdminPurgeReadNotifications(ctx context.Context) error
@@ -101,6 +119,18 @@ type Querier interface {
 	//   ? - New name for the language (string)
 	//   ? - Language ID to be updated (int)
 	AdminRenameLanguage(ctx context.Context, arg AdminRenameLanguageParams) error
+	AdminRestoreBlog(ctx context.Context, arg AdminRestoreBlogParams) error
+	AdminRestoreComment(ctx context.Context, arg AdminRestoreCommentParams) error
+	AdminRestoreImagepost(ctx context.Context, arg AdminRestoreImagepostParams) error
+	AdminRestoreLink(ctx context.Context, arg AdminRestoreLinkParams) error
+	AdminRestoreUser(ctx context.Context, idusers int32) error
+	AdminRestoreWriting(ctx context.Context, arg AdminRestoreWritingParams) error
+	AdminScrubBlog(ctx context.Context, arg AdminScrubBlogParams) error
+	AdminScrubComment(ctx context.Context, arg AdminScrubCommentParams) error
+	AdminScrubImagepost(ctx context.Context, idimagepost int32) error
+	AdminScrubLink(ctx context.Context, arg AdminScrubLinkParams) error
+	AdminScrubUser(ctx context.Context, arg AdminScrubUserParams) error
+	AdminScrubWriting(ctx context.Context, arg AdminScrubWritingParams) error
 	AdminSetTemplateOverride(ctx context.Context, arg AdminSetTemplateOverrideParams) error
 	AdminUpdateBannedIp(ctx context.Context, arg AdminUpdateBannedIpParams) error
 	AdminUpdateRequestStatus(ctx context.Context, arg AdminUpdateRequestStatusParams) error
@@ -114,14 +144,6 @@ type Querier interface {
 	AdminWordListWithCounts(ctx context.Context, arg AdminWordListWithCountsParams) ([]*AdminWordListWithCountsRow, error)
 	AdminWordListWithCountsByPrefix(ctx context.Context, arg AdminWordListWithCountsByPrefixParams) ([]*AdminWordListWithCountsByPrefixRow, error)
 	AdminWritingCategoryCounts(ctx context.Context) ([]*AdminWritingCategoryCountsRow, error)
-	ApproveImagePost(ctx context.Context, idimagepost int32) error
-	ArchiveBlog(ctx context.Context, arg ArchiveBlogParams) error
-	ArchiveComment(ctx context.Context, arg ArchiveCommentParams) error
-	ArchiveImagepost(ctx context.Context, arg ArchiveImagepostParams) error
-	ArchiveLink(ctx context.Context, arg ArchiveLinkParams) error
-	// Queries for user deactivation and restoration
-	ArchiveUser(ctx context.Context, idusers int32) error
-	ArchiveWriting(ctx context.Context, arg ArchiveWritingParams) error
 	AssignLinkerThisThreadId(ctx context.Context, arg AssignLinkerThisThreadIdParams) error
 	AssignNewsThisThreadId(ctx context.Context, arg AssignNewsThisThreadIdParams) error
 	AssignThreadIdToBlogEntry(ctx context.Context, arg AssignThreadIdToBlogEntryParams) error
@@ -328,20 +350,10 @@ type Querier interface {
 	ListWritingsByIDsForLister(ctx context.Context, arg ListWritingsByIDsForListerParams) ([]*ListWritingsByIDsForListerRow, error)
 	Login(ctx context.Context, username sql.NullString) (*LoginRow, error)
 	MakeThread(ctx context.Context, forumtopicIdforumtopic int32) (int64, error)
-	MarkBlogRestored(ctx context.Context, idblogs int32) error
-	MarkCommentRestored(ctx context.Context, idcomments int32) error
 	MarkEmailSent(ctx context.Context, id int32) error
-	MarkImagepostRestored(ctx context.Context, idimagepost int32) error
-	MarkLinkRestored(ctx context.Context, idlinker int32) error
 	MarkNotificationRead(ctx context.Context, id int32) error
 	MarkNotificationUnread(ctx context.Context, id int32) error
 	MarkPasswordResetVerified(ctx context.Context, id int32) error
-	MarkWritingRestored(ctx context.Context, idwriting int32) error
-	PendingDeactivatedBlogs(ctx context.Context, usersIdusers int32) ([]*PendingDeactivatedBlogsRow, error)
-	PendingDeactivatedComments(ctx context.Context, usersIdusers int32) ([]*PendingDeactivatedCommentsRow, error)
-	PendingDeactivatedImageposts(ctx context.Context, usersIdusers int32) ([]*PendingDeactivatedImagepostsRow, error)
-	PendingDeactivatedLinks(ctx context.Context, usersIdusers int32) ([]*PendingDeactivatedLinksRow, error)
-	PendingDeactivatedWritings(ctx context.Context, usersIdusers int32) ([]*PendingDeactivatedWritingsRow, error)
 	// Remove password reset entries that have expired or were already verified
 	PurgePasswordResetsBefore(ctx context.Context, createdAt time.Time) (sql.Result, error)
 	RebuildAllForumTopicMetaColumns(ctx context.Context) error
@@ -350,18 +362,6 @@ type Querier interface {
 	RegisterExternalLinkClick(ctx context.Context, url string) error
 	RenameFAQCategory(ctx context.Context, arg RenameFAQCategoryParams) error
 	RenameLinkerCategory(ctx context.Context, arg RenameLinkerCategoryParams) error
-	RestoreBlog(ctx context.Context, arg RestoreBlogParams) error
-	RestoreComment(ctx context.Context, arg RestoreCommentParams) error
-	RestoreImagepost(ctx context.Context, arg RestoreImagepostParams) error
-	RestoreLink(ctx context.Context, arg RestoreLinkParams) error
-	RestoreUser(ctx context.Context, idusers int32) error
-	RestoreWriting(ctx context.Context, arg RestoreWritingParams) error
-	ScrubBlog(ctx context.Context, arg ScrubBlogParams) error
-	ScrubComment(ctx context.Context, arg ScrubCommentParams) error
-	ScrubImagepost(ctx context.Context, idimagepost int32) error
-	ScrubLink(ctx context.Context, arg ScrubLinkParams) error
-	ScrubUser(ctx context.Context, arg ScrubUserParams) error
-	ScrubWriting(ctx context.Context, arg ScrubWritingParams) error
 	SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId(ctx context.Context, arg SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueIdParams) (int64, error)
 	SetAnnouncementActive(ctx context.Context, arg SetAnnouncementActiveParams) error
 	SetCommentLastIndex(ctx context.Context, idcomments int32) error

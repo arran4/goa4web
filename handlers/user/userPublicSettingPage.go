@@ -56,7 +56,7 @@ func (PublicProfileSaveTask) Action(w http.ResponseWriter, r *http.Request) any 
 	if enable {
 		ts = sql.NullTime{Time: time.Now(), Valid: true}
 	}
-	if err := queries.UpdatePublicProfileEnabledAtByUserID(r.Context(), db.UpdatePublicProfileEnabledAtByUserIDParams{PublicProfileEnabledAt: ts, Idusers: uid}); err != nil {
+	if err := queries.UpdatePublicProfileEnabledAtForUser(r.Context(), db.UpdatePublicProfileEnabledAtForUserParams{EnabledAt: ts, UserID: uid, GranteeID: sql.NullInt32{Int32: uid, Valid: uid != 0}}); err != nil {
 		return fmt.Errorf("update public profile fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	return handlers.RefreshDirectHandler{TargetURL: "/usr/profile"}

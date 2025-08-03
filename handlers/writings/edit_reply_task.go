@@ -70,10 +70,13 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("get thread fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	if err = queries.UpdateComment(r.Context(), db.UpdateCommentParams{
-		Idcomments:         int32(commentID),
-		LanguageIdlanguage: int32(languageID),
-		Text:               sql.NullString{String: text, Valid: true},
+	if err = queries.UpdateCommentForCommenter(r.Context(), db.UpdateCommentForCommenterParams{
+		CommentID:      int32(commentID),
+		GrantCommentID: sql.NullInt32{Int32: int32(commentID), Valid: true},
+		LanguageID:     int32(languageID),
+		Text:           sql.NullString{String: text, Valid: true},
+		GranteeID:      sql.NullInt32{Int32: uid, Valid: uid != 0},
+		CommenterID:    uid,
 	}); err != nil {
 		return fmt.Errorf("update comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

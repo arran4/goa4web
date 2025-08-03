@@ -51,7 +51,7 @@ func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
 	} else {
 		infoID, username, _, err2 := roleInfoByPermID(r.Context(), queries, int32(id))
-		if err := queries.UpdatePermission(r.Context(), db.UpdatePermissionParams{
+		if err := queries.AdminUpdateUserRole(r.Context(), db.AdminUpdateUserRoleParams{
 			IduserRoles: int32(id),
 			Name:        role,
 		}); err != nil {

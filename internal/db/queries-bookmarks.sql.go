@@ -45,19 +45,37 @@ func (q *Queries) GetBookmarksForUser(ctx context.Context, usersIdusers int32) (
 	return &i, err
 }
 
-const updateBookmarks = `-- name: UpdateBookmarks :exec
-UPDATE bookmarks
+const updateBookmarksForLister = `-- name: UpdateBookmarksForLister :exec
+UPDATE bookmarks b
 SET list = ?
-WHERE users_idusers = ?
+WHERE b.users_idusers = ?
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='bookmarks'
+        AND (g.item='list' OR g.item IS NULL)
+        AND g.action='post'
+        AND g.active=1
+        AND (g.item_id = 0 OR g.item_id IS NULL)
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (
+            SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+        ))
+  )
 `
 
-type UpdateBookmarksParams struct {
-	List         sql.NullString
-	UsersIdusers int32
+type UpdateBookmarksForListerParams struct {
+	List      sql.NullString
+	ListerID  int32
+	GranteeID sql.NullInt32
 }
 
-// This query updates the "list" column in the "bookmarks" table for a specific user based on their "users_idusers".
-func (q *Queries) UpdateBookmarks(ctx context.Context, arg UpdateBookmarksParams) error {
-	_, err := q.db.ExecContext(ctx, updateBookmarks, arg.List, arg.UsersIdusers)
+// This query updates the "list" column in the "bookmarks" table for a specific lister.
+func (q *Queries) UpdateBookmarksForLister(ctx context.Context, arg UpdateBookmarksForListerParams) error {
+	_, err := q.db.ExecContext(ctx, updateBookmarksForLister,
+		arg.List,
+		arg.ListerID,
+		arg.GranteeID,
+		arg.ListerID,
+	)
 	return err
 }

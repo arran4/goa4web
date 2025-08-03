@@ -46,7 +46,7 @@ func (c *boardUpdateCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := db.New(conn)
-	err = queries.UpdateImageBoard(ctx, db.UpdateImageBoardParams{
+	err = queries.AdminUpdateImageBoard(ctx, db.AdminUpdateImageBoardParams{
 		Title:                  sql.NullString{String: c.Name, Valid: c.Name != ""},
 		Description:            sql.NullString{String: c.Description, Valid: c.Description != ""},
 		ImageboardIdimageboard: int32(c.Parent),

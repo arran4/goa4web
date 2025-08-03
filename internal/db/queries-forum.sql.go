@@ -44,6 +44,48 @@ func (q *Queries) AdminDeleteForumTopic(ctx context.Context, idforumtopic int32)
 	return err
 }
 
+const adminUpdateForumCategory = `-- name: AdminUpdateForumCategory :exec
+UPDATE forumcategory SET title = ?, description = ?, forumcategory_idforumcategory = ? WHERE idforumcategory = ?
+`
+
+type AdminUpdateForumCategoryParams struct {
+	Title                        sql.NullString
+	Description                  sql.NullString
+	ForumcategoryIdforumcategory int32
+	Idforumcategory              int32
+}
+
+func (q *Queries) AdminUpdateForumCategory(ctx context.Context, arg AdminUpdateForumCategoryParams) error {
+	_, err := q.db.ExecContext(ctx, adminUpdateForumCategory,
+		arg.Title,
+		arg.Description,
+		arg.ForumcategoryIdforumcategory,
+		arg.Idforumcategory,
+	)
+	return err
+}
+
+const adminUpdateForumTopic = `-- name: AdminUpdateForumTopic :exec
+UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ? WHERE idforumtopic = ?
+`
+
+type AdminUpdateForumTopicParams struct {
+	Title                        sql.NullString
+	Description                  sql.NullString
+	ForumcategoryIdforumcategory int32
+	Idforumtopic                 int32
+}
+
+func (q *Queries) AdminUpdateForumTopic(ctx context.Context, arg AdminUpdateForumTopicParams) error {
+	_, err := q.db.ExecContext(ctx, adminUpdateForumTopic,
+		arg.Title,
+		arg.Description,
+		arg.ForumcategoryIdforumcategory,
+		arg.Idforumtopic,
+	)
+	return err
+}
+
 const findForumTopicByTitle = `-- name: FindForumTopicByTitle :one
 SELECT idforumtopic, lastposter, forumcategory_idforumcategory, title, description, threads, comments, lastaddition
 FROM forumtopic
@@ -681,46 +723,4 @@ func (q *Queries) SystemCreateForumTopic(ctx context.Context, arg SystemCreateFo
 		return 0, err
 	}
 	return result.LastInsertId()
-}
-
-const updateForumCategory = `-- name: UpdateForumCategory :exec
-UPDATE forumcategory SET title = ?, description = ?, forumcategory_idforumcategory = ? WHERE idforumcategory = ?
-`
-
-type UpdateForumCategoryParams struct {
-	Title                        sql.NullString
-	Description                  sql.NullString
-	ForumcategoryIdforumcategory int32
-	Idforumcategory              int32
-}
-
-func (q *Queries) UpdateForumCategory(ctx context.Context, arg UpdateForumCategoryParams) error {
-	_, err := q.db.ExecContext(ctx, updateForumCategory,
-		arg.Title,
-		arg.Description,
-		arg.ForumcategoryIdforumcategory,
-		arg.Idforumcategory,
-	)
-	return err
-}
-
-const updateForumTopic = `-- name: UpdateForumTopic :exec
-UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ? WHERE idforumtopic = ?
-`
-
-type UpdateForumTopicParams struct {
-	Title                        sql.NullString
-	Description                  sql.NullString
-	ForumcategoryIdforumcategory int32
-	Idforumtopic                 int32
-}
-
-func (q *Queries) UpdateForumTopic(ctx context.Context, arg UpdateForumTopicParams) error {
-	_, err := q.db.ExecContext(ctx, updateForumTopic,
-		arg.Title,
-		arg.Description,
-		arg.ForumcategoryIdforumcategory,
-		arg.Idforumtopic,
-	)
-	return err
 }

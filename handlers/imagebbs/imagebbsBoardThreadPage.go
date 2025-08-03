@@ -276,7 +276,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 			return fmt.Errorf("make thread fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		pthid = int32(pthidi)
-		if err := queries.UpdateImagePostByIdForumThreadId(r.Context(), db.UpdateImagePostByIdForumThreadIdParams{
+		if err := queries.SystemAssignImagePostThreadID(r.Context(), db.SystemAssignImagePostThreadIDParams{
 			ForumthreadID: pthid,
 			Idimagepost:   int32(bid),
 		}); err != nil {

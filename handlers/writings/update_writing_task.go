@@ -49,13 +49,15 @@ func (UpdateWritingTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	queries := cd.Queries()
 
-	if err := queries.UpdateWriting(r.Context(), db.UpdateWritingParams{
-		Title:              sql.NullString{Valid: true, String: title},
-		Abstract:           sql.NullString{Valid: true, String: abstract},
-		Writing:            sql.NullString{Valid: true, String: body},
-		Private:            sql.NullBool{Valid: true, Bool: private},
-		LanguageIdlanguage: int32(languageID),
-		Idwriting:          writing.Idwriting,
+	if err := queries.UpdateWritingForWriter(r.Context(), db.UpdateWritingForWriterParams{
+		Title:      sql.NullString{Valid: true, String: title},
+		Abstract:   sql.NullString{Valid: true, String: abstract},
+		Content:    sql.NullString{Valid: true, String: body},
+		Private:    sql.NullBool{Valid: true, Bool: private},
+		LanguageID: int32(languageID),
+		WritingID:  writing.Idwriting,
+		WriterID:   cd.UserID,
+		GranteeID:  sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 	}); err != nil {
 		return fmt.Errorf("update writing fail %w", err)
 	}

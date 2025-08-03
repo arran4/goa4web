@@ -1,4 +1,4 @@
--- name: UpdateForumCategory :exec
+-- name: AdminUpdateForumCategory :exec
 UPDATE forumcategory SET title = ?, description = ?, forumcategory_idforumcategory = ? WHERE idforumcategory = ?;
 
 -- name: GetAllForumCategoriesWithSubcategoryCount :many
@@ -14,7 +14,7 @@ SELECT t.*
 FROM forumtopic t
 GROUP BY t.idforumtopic;
 
--- name: UpdateForumTopic :exec
+-- name: AdminUpdateForumTopic :exec
 UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ? WHERE idforumtopic = ?;
 
 -- name: GetAllForumTopicsByCategoryIdForUserWithLastPosterName :many

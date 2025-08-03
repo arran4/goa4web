@@ -67,12 +67,13 @@ func (SaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	if err := queries.UpdateBookmarks(r.Context(), db.UpdateBookmarksParams{
+	if err := queries.UpdateBookmarksForLister(r.Context(), db.UpdateBookmarksForListerParams{
 		List: sql.NullString{
 			String: text,
 			Valid:  true,
 		},
-		UsersIdusers: uid,
+		ListerID:  uid,
+		GranteeID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 	}); err != nil {
 		return fmt.Errorf("update bookmarks fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

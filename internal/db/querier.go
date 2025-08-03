@@ -166,11 +166,20 @@ type Querier interface {
 	AdminScrubWriting(ctx context.Context, arg AdminScrubWritingParams) error
 	AdminSetTemplateOverride(ctx context.Context, arg AdminSetTemplateOverrideParams) error
 	AdminUpdateBannedIp(ctx context.Context, arg AdminUpdateBannedIpParams) error
+	AdminUpdateFAQQuestionAnswer(ctx context.Context, arg AdminUpdateFAQQuestionAnswerParams) error
+	AdminUpdateForumCategory(ctx context.Context, arg AdminUpdateForumCategoryParams) error
+	AdminUpdateForumTopic(ctx context.Context, arg AdminUpdateForumTopicParams) error
+	AdminUpdateImageBoard(ctx context.Context, arg AdminUpdateImageBoardParams) error
+	AdminUpdateLinkerCategorySortOrder(ctx context.Context, arg AdminUpdateLinkerCategorySortOrderParams) error
+	AdminUpdateLinkerItem(ctx context.Context, arg AdminUpdateLinkerItemParams) error
+	AdminUpdateLinkerQueuedItem(ctx context.Context, arg AdminUpdateLinkerQueuedItemParams) error
 	AdminUpdateRequestStatus(ctx context.Context, arg AdminUpdateRequestStatusParams) error
 	// admin task
 	AdminUpdateRole(ctx context.Context, arg AdminUpdateRoleParams) error
 	// admin task
 	AdminUpdateRolePublicProfileAllowed(ctx context.Context, arg AdminUpdateRolePublicProfileAllowedParams) error
+	AdminUpdateUserEmail(ctx context.Context, arg AdminUpdateUserEmailParams) error
+	AdminUpdateUserRole(ctx context.Context, arg AdminUpdateUserRoleParams) error
 	AdminUpdateUsernameByID(ctx context.Context, arg AdminUpdateUsernameByIDParams) error
 	AdminUpdateWritingCategory(ctx context.Context, arg AdminUpdateWritingCategoryParams) error
 	AdminUserPostCounts(ctx context.Context) ([]*AdminUserPostCountsRow, error)
@@ -375,6 +384,7 @@ type Querier interface {
 	SystemAddToLinkerSearch(ctx context.Context, arg SystemAddToLinkerSearchParams) error
 	SystemAddToSiteNewsSearch(ctx context.Context, arg SystemAddToSiteNewsSearchParams) error
 	SystemAssignBlogEntryThreadID(ctx context.Context, arg SystemAssignBlogEntryThreadIDParams) error
+	SystemAssignImagePostThreadID(ctx context.Context, arg SystemAssignImagePostThreadIDParams) error
 	SystemAssignLinkerThreadID(ctx context.Context, arg SystemAssignLinkerThreadIDParams) error
 	SystemAssignNewsThreadID(ctx context.Context, arg SystemAssignNewsThreadIDParams) error
 	SystemAssignWritingThreadID(ctx context.Context, arg SystemAssignWritingThreadIDParams) error
@@ -436,29 +446,19 @@ type Querier interface {
 	SystemListUserInfo(ctx context.Context) ([]*SystemListUserInfoRow, error)
 	SystemListVerifiedEmailsByUserID(ctx context.Context, userID int32) ([]*UserEmail, error)
 	SystemListWritingCategories(ctx context.Context, arg SystemListWritingCategoriesParams) ([]*WritingCategory, error)
+	SystemMarkUserEmailVerified(ctx context.Context, arg SystemMarkUserEmailVerifiedParams) error
 	SystemPurgeDeadLettersBefore(ctx context.Context, createdAt time.Time) error
 	SystemSetBlogLastIndex(ctx context.Context, id int32) error
 	UpdateAutoSubscribeRepliesForLister(ctx context.Context, arg UpdateAutoSubscribeRepliesForListerParams) error
-	UpdateBlogEntry(ctx context.Context, arg UpdateBlogEntryParams) error
-	// This query updates the "list" column in the "bookmarks" table for a specific user based on their "users_idusers".
-	UpdateBookmarks(ctx context.Context, arg UpdateBookmarksParams) error
-	UpdateComment(ctx context.Context, arg UpdateCommentParams) error
+	UpdateBlogEntryForWriter(ctx context.Context, arg UpdateBlogEntryForWriterParams) error
+	// This query updates the "list" column in the "bookmarks" table for a specific lister.
+	UpdateBookmarksForLister(ctx context.Context, arg UpdateBookmarksForListerParams) error
+	UpdateCommentForCommenter(ctx context.Context, arg UpdateCommentForCommenterParams) error
 	UpdateEmailForumUpdatesForLister(ctx context.Context, arg UpdateEmailForumUpdatesForListerParams) error
-	UpdateFAQQuestionAnswer(ctx context.Context, arg UpdateFAQQuestionAnswerParams) error
-	UpdateForumCategory(ctx context.Context, arg UpdateForumCategoryParams) error
-	UpdateForumTopic(ctx context.Context, arg UpdateForumTopicParams) error
-	UpdateImageBoard(ctx context.Context, arg UpdateImageBoardParams) error
-	UpdateImagePostByIdForumThreadId(ctx context.Context, arg UpdateImagePostByIdForumThreadIdParams) error
-	UpdateLinkerCategorySortOrder(ctx context.Context, arg UpdateLinkerCategorySortOrderParams) error
-	UpdateLinkerItem(ctx context.Context, arg UpdateLinkerItemParams) error
-	UpdateLinkerQueuedItem(ctx context.Context, arg UpdateLinkerQueuedItemParams) error
-	UpdateNewsPost(ctx context.Context, arg UpdateNewsPostParams) error
-	UpdatePermission(ctx context.Context, arg UpdatePermissionParams) error
+	UpdateNewsPostForWriter(ctx context.Context, arg UpdateNewsPostForWriterParams) error
 	UpdatePreferenceForLister(ctx context.Context, arg UpdatePreferenceForListerParams) error
-	UpdatePublicProfileEnabledAtByUserID(ctx context.Context, arg UpdatePublicProfileEnabledAtByUserIDParams) error
-	UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams) error
-	UpdateUserEmailVerification(ctx context.Context, arg UpdateUserEmailVerificationParams) error
-	UpdateWriting(ctx context.Context, arg UpdateWritingParams) error
+	UpdatePublicProfileEnabledAtForUser(ctx context.Context, arg UpdatePublicProfileEnabledAtForUserParams) error
+	UpdateWritingForWriter(ctx context.Context, arg UpdateWritingForWriterParams) error
 	UserHasLoginRole(ctx context.Context, usersIdusers int32) (int32, error)
 	UserHasPublicProfileRole(ctx context.Context, usersIdusers int32) (int32, error)
 	UserHasRole(ctx context.Context, arg UserHasRoleParams) (int32, error)

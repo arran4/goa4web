@@ -33,10 +33,23 @@ WHERE c.idcomments = sqlc.arg(id)
 )
 LIMIT 1;
 
--- name: UpdateComment :exec
-UPDATE comments
-SET language_idlanguage = ?, text = ?
-WHERE idcomments = ?;
+-- name: UpdateCommentForCommenter :exec
+UPDATE comments c
+SET language_idlanguage = sqlc.arg(language_id), text = sqlc.arg(text)
+WHERE c.idcomments = sqlc.arg(comment_id)
+  AND c.users_idusers = sqlc.arg(commenter_id)
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='forum'
+        AND (g.item='comment' OR g.item IS NULL)
+        AND g.action='post'
+        AND g.active=1
+        AND (g.item_id = sqlc.arg(grant_comment_id) OR g.item_id IS NULL)
+        AND (g.user_id = sqlc.arg(grantee_id) OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (
+            SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(commenter_id)
+        ))
+  );
 
 -- name: GetCommentById :one
 SELECT c.*

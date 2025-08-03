@@ -216,7 +216,7 @@ func adminUserEditSavePage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		if err := queries.AdminUpdateUsernameByID(r.Context(), db.AdminUpdateUsernameByIDParams{Username: sql.NullString{String: username, Valid: username != ""}, Idusers: int32(uidi)}); err != nil {
 			data.Errors = append(data.Errors, fmt.Errorf("update user: %w", err).Error())
-		} else if err := queries.UpdateUserEmail(r.Context(), db.UpdateUserEmailParams{Email: email, UserID: int32(uidi)}); err != nil {
+		} else if err := queries.AdminUpdateUserEmail(r.Context(), db.AdminUpdateUserEmailParams{Email: email, UserID: int32(uidi)}); err != nil {
 			data.Errors = append(data.Errors, fmt.Errorf("update user email: %w", err).Error())
 		}
 	}

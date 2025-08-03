@@ -100,7 +100,7 @@ func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
 			handlers.TemplateHandler(w, r, "user/emailVerifiedPage.gohtml", struct{}{})
 			return
 		}
-		if err := queries.UpdateUserEmailVerification(r.Context(), db.UpdateUserEmailVerificationParams{VerifiedAt: sql.NullTime{Time: time.Now(), Valid: true}, ID: ue.ID}); err != nil {
+		if err := queries.SystemMarkUserEmailVerified(r.Context(), db.SystemMarkUserEmailVerifiedParams{VerifiedAt: sql.NullTime{Time: time.Now(), Valid: true}, ID: ue.ID}); err != nil {
 			log.Printf("update user email verification: %v", err)
 		}
 		if err := queries.SystemDeleteUserEmailsByEmailExceptID(r.Context(), db.SystemDeleteUserEmailsByEmailExceptIDParams{Email: ue.Email, ID: ue.ID}); err != nil {

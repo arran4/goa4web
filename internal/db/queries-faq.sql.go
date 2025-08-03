@@ -39,6 +39,29 @@ func (q *Queries) AdminDeleteFAQCategory(ctx context.Context, idfaqcategories in
 	return err
 }
 
+const adminUpdateFAQQuestionAnswer = `-- name: AdminUpdateFAQQuestionAnswer :exec
+UPDATE faq
+SET answer = ?, question = ?, faqCategories_idfaqCategories = ?
+WHERE idfaq = ?
+`
+
+type AdminUpdateFAQQuestionAnswerParams struct {
+	Answer                       sql.NullString
+	Question                     sql.NullString
+	FaqcategoriesIdfaqcategories int32
+	Idfaq                        int32
+}
+
+func (q *Queries) AdminUpdateFAQQuestionAnswer(ctx context.Context, arg AdminUpdateFAQQuestionAnswerParams) error {
+	_, err := q.db.ExecContext(ctx, adminUpdateFAQQuestionAnswer,
+		arg.Answer,
+		arg.Question,
+		arg.FaqcategoriesIdfaqcategories,
+		arg.Idfaq,
+	)
+	return err
+}
+
 const createFAQQuestionForWriter = `-- name: CreateFAQQuestionForWriter :exec
 INSERT INTO faq (question, users_idusers, language_idlanguage)
 SELECT ?, ?, ?
@@ -549,36 +572,5 @@ type RenameFAQCategoryParams struct {
 
 func (q *Queries) RenameFAQCategory(ctx context.Context, arg RenameFAQCategoryParams) error {
 	_, err := q.db.ExecContext(ctx, renameFAQCategory, arg.Name, arg.Idfaqcategories, arg.ViewerID)
-	return err
-}
-
-const updateFAQQuestionAnswer = `-- name: UpdateFAQQuestionAnswer :exec
-UPDATE faq
-SET answer = ?, question = ?, faqCategories_idfaqCategories = ?
-WHERE idfaq = ?
-  AND EXISTS (
-      SELECT 1 FROM user_roles ur
-      JOIN roles r ON ur.role_id = r.id
-      WHERE ur.users_idusers = ?
-        AND r.is_admin = 1
-  )
-`
-
-type UpdateFAQQuestionAnswerParams struct {
-	Answer                       sql.NullString
-	Question                     sql.NullString
-	FaqcategoriesIdfaqcategories int32
-	Idfaq                        int32
-	ViewerID                     int32
-}
-
-func (q *Queries) UpdateFAQQuestionAnswer(ctx context.Context, arg UpdateFAQQuestionAnswerParams) error {
-	_, err := q.db.ExecContext(ctx, updateFAQQuestionAnswer,
-		arg.Answer,
-		arg.Question,
-		arg.FaqcategoriesIdfaqcategories,
-		arg.Idfaq,
-		arg.ViewerID,
-	)
 	return err
 }

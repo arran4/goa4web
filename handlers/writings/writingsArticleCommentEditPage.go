@@ -59,10 +59,14 @@ func ArticleCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = queries.UpdateComment(r.Context(), db.UpdateCommentParams{
-		Idcomments:         int32(commentId),
-		LanguageIdlanguage: int32(languageId),
-		Text:               sql.NullString{String: text, Valid: true},
+	uid = cd.UserID
+	if err = queries.UpdateCommentForCommenter(r.Context(), db.UpdateCommentForCommenterParams{
+		CommentID:      int32(commentId),
+		GrantCommentID: sql.NullInt32{Int32: int32(commentId), Valid: true},
+		LanguageID:     int32(languageId),
+		Text:           sql.NullString{String: text, Valid: true},
+		GranteeID:      sql.NullInt32{Int32: uid, Valid: uid != 0},
+		CommenterID:    uid,
 	}); err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return

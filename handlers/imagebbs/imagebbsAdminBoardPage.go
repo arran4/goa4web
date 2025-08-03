@@ -56,7 +56,7 @@ func (ModifyBoardTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return common.UserError{ErrorMessage: fmt.Sprintf("invalid parent board: loop %v", path)}
 	}
 
-	err = queries.UpdateImageBoard(r.Context(), db.UpdateImageBoardParams{
+	err = queries.AdminUpdateImageBoard(r.Context(), db.AdminUpdateImageBoardParams{
 		ImageboardIdimageboard: int32(parentBoardId),
 		Title:                  sql.NullString{Valid: true, String: name},
 		Description:            sql.NullString{Valid: true, String: desc},

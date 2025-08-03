@@ -52,13 +52,16 @@ func (EditTask) Action(w http.ResponseWriter, r *http.Request) any {
 		handlers.TaskErrorAcknowledgementPage(w, r)
 		return nil
 	}
-	err = queries.UpdateNewsPost(r.Context(), db.UpdateNewsPostParams{
-		Idsitenews:         int32(postId),
-		LanguageIdlanguage: int32(languageId),
+	err = queries.UpdateNewsPostForWriter(r.Context(), db.UpdateNewsPostForWriterParams{
+		PostID:      int32(postId),
+		GrantPostID: sql.NullInt32{Int32: int32(postId), Valid: true},
+		LanguageID:  int32(languageId),
 		News: sql.NullString{
 			String: text,
 			Valid:  true,
 		},
+		GranteeID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		WriterID:  cd.UserID,
 	})
 	if err != nil {
 		return fmt.Errorf("update news post fail %w", handlers.ErrRedirectOnSamePageHandler(err))

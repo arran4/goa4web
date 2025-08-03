@@ -1,7 +1,7 @@
 -- name: AdminCreateImageBoard :exec
 INSERT INTO imageboard (imageboard_idimageboard, title, description, approval_required) VALUES (?, ?, ?, ?);
 
--- name: UpdateImageBoard :exec
+-- name: AdminUpdateImageBoard :exec
 UPDATE imageboard SET title = ?, description = ?, imageboard_idimageboard = ?, approval_required = ? WHERE idimageboard = ?;
 
 -- name: SystemListBoardsByParentID :many
@@ -36,7 +36,7 @@ WHERE EXISTS (
       ))
 );
 
--- name: UpdateImagePostByIdForumThreadId :exec
+-- name: SystemAssignImagePostThreadID :exec
 UPDATE imagepost SET forumthread_id = ? WHERE idimagepost = ?;
 
 -- name: GetImagePostsByUserDescending :many

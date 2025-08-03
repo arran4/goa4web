@@ -91,16 +91,10 @@ WHERE EXISTS (
       ))
 );
 
--- name: UpdateFAQQuestionAnswer :exec
+-- name: AdminUpdateFAQQuestionAnswer :exec
 UPDATE faq
 SET answer = ?, question = ?, faqCategories_idfaqCategories = ?
-WHERE idfaq = ?
-  AND EXISTS (
-      SELECT 1 FROM user_roles ur
-      JOIN roles r ON ur.role_id = r.id
-      WHERE ur.users_idusers = sqlc.arg(viewer_id)
-        AND r.is_admin = 1
-  );
+WHERE idfaq = ?;
 
 -- name: AdminDeleteFAQ :exec
 UPDATE faq SET deleted_at = NOW()

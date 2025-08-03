@@ -69,6 +69,20 @@ func (q *Queries) AdminDeleteUserRole(ctx context.Context, iduserRoles int32) er
 	return err
 }
 
+const adminUpdateUserRole = `-- name: AdminUpdateUserRole :exec
+UPDATE user_roles SET role_id = (SELECT id FROM roles WHERE name = ?) WHERE iduser_roles = ?
+`
+
+type AdminUpdateUserRoleParams struct {
+	Name        string
+	IduserRoles int32
+}
+
+func (q *Queries) AdminUpdateUserRole(ctx context.Context, arg AdminUpdateUserRoleParams) error {
+	_, err := q.db.ExecContext(ctx, adminUpdateUserRole, arg.Name, arg.IduserRoles)
+	return err
+}
+
 const getAdministratorUserRole = `-- name: GetAdministratorUserRole :one
 SELECT ur.iduser_roles, ur.users_idusers, ur.role_id
 FROM user_roles ur
@@ -474,20 +488,6 @@ type SystemCreateUserRoleParams struct {
 //	? - Role of the permission (string)
 func (q *Queries) SystemCreateUserRole(ctx context.Context, arg SystemCreateUserRoleParams) error {
 	_, err := q.db.ExecContext(ctx, systemCreateUserRole, arg.UsersIdusers, arg.Name)
-	return err
-}
-
-const updatePermission = `-- name: UpdatePermission :exec
-UPDATE user_roles SET role_id = (SELECT id FROM roles WHERE name = ?) WHERE iduser_roles = ?
-`
-
-type UpdatePermissionParams struct {
-	Name        string
-	IduserRoles int32
-}
-
-func (q *Queries) UpdatePermission(ctx context.Context, arg UpdatePermissionParams) error {
-	_, err := q.db.ExecContext(ctx, updatePermission, arg.Name, arg.IduserRoles)
 	return err
 }
 

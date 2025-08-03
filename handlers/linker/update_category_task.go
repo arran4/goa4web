@@ -31,7 +31,7 @@ func (updateCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("rename linker category fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	order, _ := strconv.Atoi(r.PostFormValue("order"))
-	if err := queries.UpdateLinkerCategorySortOrder(r.Context(), db.UpdateLinkerCategorySortOrderParams{
+	if err := queries.AdminUpdateLinkerCategorySortOrder(r.Context(), db.AdminUpdateLinkerCategorySortOrderParams{
 		Sortorder:        int32(order),
 		Idlinkercategory: int32(cid),
 	}); err != nil {

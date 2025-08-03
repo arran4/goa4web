@@ -39,12 +39,12 @@ func TestProcessEventPermissionTasks(t *testing.T) {
 	cfg.EmailFrom = "from@example.com"
 
 	bus := eventbus.NewBus()
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
-	q := db.New(db)
+	defer conn.Close()
+	q := db.New(conn)
 	n := notif.New(notif.WithQueries(q), notif.WithConfig(cfg))
 
 	var wg sync.WaitGroup

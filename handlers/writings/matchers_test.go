@@ -20,13 +20,13 @@ import (
 )
 
 func TestRequireWritingAuthorArticleVar(t *testing.T) {
-	sqldb, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer sqldb.Close()
+	defer conn.Close()
 
-	q := db.New(sqldb)
+	q := db.New(conn)
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = "test-session"

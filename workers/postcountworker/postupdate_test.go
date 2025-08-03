@@ -9,13 +9,13 @@ import (
 )
 
 func TestPostUpdate(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer conn.Close()
 
-	q := db.New(db)
+	q := db.New(conn)
 	mock.ExpectExec("AdminRecalculateForumThreadByIdMetaData").
 		WithArgs(int32(1)).
 		WillReturnResult(sqlmock.NewResult(0, 0))

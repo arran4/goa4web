@@ -51,11 +51,11 @@ func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
 	cfg.EmailProvider = "log"
 
-	sqldb, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer sqldb.Close()
+	defer conn.Close()
 	rows := sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(1, "u@example.com", "u", nil)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username, u.public_profile_enabled_at FROM users u LEFT JOIN user_emails ue ON ue.id = ( SELECT id FROM user_emails ue2 WHERE ue2.user_id = u.idusers AND ue2.verified_at IS NOT NULL ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1 ) WHERE u.idusers = ?")).
 		WithArgs(int32(1)).WillReturnRows(rows)
@@ -65,7 +65,7 @@ func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	req := httptest.NewRequest("POST", "/admin/email/template", nil)
-	q := db.New(sqldb)
+	q := db.New(conn)
 	reg := newEmailReg()
 	cd := common.NewCoreData(req.Context(), q, cfg, common.WithEmailProvider(reg.ProviderFromConfig(cfg)))
 	cd.UserID = 1
@@ -84,12 +84,12 @@ func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
 }
 
 func TestAdminListUnsentPendingEmails(t *testing.T) {
-	sqldb, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer sqldb.Close()
-	q := db.New(sqldb)
+	defer conn.Close()
+	q := db.New(conn)
 	rows := sqlmock.NewRows([]string{"id", "to_user_id", "body", "error_count", "created_at", "direct_email"}).AddRow(1, 2, "b", 0, time.Now(), false)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT pe.id, pe.to_user_id, pe.body, pe.error_count, pe.created_at, pe.direct_email FROM pending_emails pe LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers LEFT JOIN roles r ON ur.role_id = r.id WHERE pe.sent_at IS NULL   AND (? IS NULL OR p.language_idlanguage = ?)   AND (? IS NULL OR r.name = ?) ORDER BY pe.id")).WillReturnRows(rows)
 	if _, err := q.AdminListUnsentPendingEmails(context.Background(), db.AdminListUnsentPendingEmailsParams{}); err != nil {
@@ -101,12 +101,12 @@ func TestAdminListUnsentPendingEmails(t *testing.T) {
 }
 
 func TestRecentNotifications(t *testing.T) {
-	sqldb, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer sqldb.Close()
-	q := db.New(sqldb)
+	defer conn.Close()
+	q := db.New(conn)
 	rows := sqlmock.NewRows([]string{"id", "users_idusers", "link", "message", "created_at", "read_at"}).AddRow(1, 1, "/l", "m", time.Now(), nil)
 	mock.ExpectQuery("SELECT id, users_idusers, link, message, created_at, read_at FROM notifications ORDER BY id DESC LIMIT ?").WithArgs(int32(5)).WillReturnRows(rows)
 	if _, err := q.AdminListRecentNotifications(context.Background(), 5); err != nil {
@@ -131,11 +131,11 @@ func TestNotifyAdminsEnv(t *testing.T) {
 	cfg.EmailEnabled = true
 	cfg.EmailFrom = "from@example.com"
 
-	sqldb, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer sqldb.Close()
+	defer conn.Close()
 	var q db.Querier
 	emails := []string{"a@test.com", "b@test.com"}
 	for _, e := range emails {
@@ -153,12 +153,12 @@ func TestNotifyAdminsEnv(t *testing.T) {
 	origEmails := cfg.AdminEmails
 	cfg.AdminEmails = "a@test.com,b@test.com"
 	defer func() { cfg.AdminEmails = origEmails }()
-	sqldb, mock, err = sqlmock.New()
+	conn, mock, err = sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer sqldb.Close()
-	q = db.New(sqldb)
+	defer conn.Close()
+	q = db.New(conn)
 	rows := sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "a@test.com", "a")
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username FROM users u JOIN user_emails ue ON ue.user_id = u.idusers WHERE ue.email = ? LIMIT 1")).WithArgs("a@test.com").WillReturnRows(rows)
 	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(sql.NullInt32{Int32: 1, Valid: true}, sqlmock.AnyArg(), false).WillReturnResult(sqlmock.NewResult(1, 1))

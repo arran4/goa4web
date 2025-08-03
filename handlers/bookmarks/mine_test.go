@@ -72,13 +72,13 @@ func Test_preprocessBookmarks(t *testing.T) {
 }
 
 func TestMinePage_NoBookmarks(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer conn.Close()
 
-	queries := db.New(db)
+	queries := db.New(conn)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT Idbookmarks, list\nFROM bookmarks\nWHERE users_idusers = ?")).
 		WithArgs(int32(1)).WillReturnError(sql.ErrNoRows)
 

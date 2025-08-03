@@ -16,12 +16,12 @@ func TestCustomForumIndexWriteReply(t *testing.T) {
 	req := httptest.NewRequest("GET", "/forum/topic/2/thread/3", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "2", "thread": "3"})
 
-	sqldb, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer sqldb.Close()
-	q := db.New(sqldb)
+	defer conn.Close()
+	q := db.New(conn)
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
 
@@ -42,12 +42,12 @@ func TestCustomForumIndexWriteReplyDenied(t *testing.T) {
 	req := httptest.NewRequest("GET", "/forum/topic/2/thread/3", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "2", "thread": "3"})
 
-	sqldb, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer sqldb.Close()
-	q := db.New(sqldb)
+	defer conn.Close()
+	q := db.New(conn)
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
 
@@ -68,12 +68,12 @@ func TestCustomForumIndexCreateThread(t *testing.T) {
 	req := httptest.NewRequest("GET", "/forum/topic/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "2", "category": "1"})
 
-	sqldb, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer sqldb.Close()
-	q := db.New(sqldb)
+	defer conn.Close()
+	q := db.New(conn)
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
 
@@ -94,12 +94,12 @@ func TestCustomForumIndexCreateThreadDenied(t *testing.T) {
 	req := httptest.NewRequest("GET", "/forum/topic/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "2", "category": "1"})
 
-	sqldb, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer sqldb.Close()
-	q := db.New(sqldb)
+	defer conn.Close()
+	q := db.New(conn)
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
 
@@ -120,12 +120,12 @@ func TestCustomForumIndexSubscribeLink(t *testing.T) {
 	req := httptest.NewRequest("GET", "/forum/topic/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "2", "category": "1"})
 
-	sqldb, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer sqldb.Close()
-	q := db.New(sqldb)
+	defer conn.Close()
+	q := db.New(conn)
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
 	cd.UserID = 1
@@ -147,12 +147,12 @@ func TestCustomForumIndexUnsubscribeLink(t *testing.T) {
 	req := httptest.NewRequest("GET", "/forum/topic/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "2", "category": "1"})
 
-	sqldb, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer sqldb.Close()
-	q := db.New(sqldb)
+	defer conn.Close()
+	q := db.New(conn)
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
 	cd.UserID = 1

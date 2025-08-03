@@ -10,11 +10,11 @@ import (
 )
 
 func TestApply(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer conn.Close()
 
 	mfs := fstest.MapFS{
 		"0002.mysql.sql": {Data: []byte("CREATE TABLE t (id int);")},
@@ -31,7 +31,7 @@ func TestApply(t *testing.T) {
 	mock.ExpectExec("UPDATE schema_version SET version = ?").WithArgs(2).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
-	if err := Apply(context.Background(), db, mfs, false, "mysql"); err != nil {
+	if err := Apply(context.Background(), conn, mfs, false, "mysql"); err != nil {
 		t.Fatalf("apply: %v", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {

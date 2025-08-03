@@ -25,12 +25,12 @@ func parseIpBanListCmd(parent *ipBanCmd, args []string) (*ipBanListCmd, error) {
 }
 
 func (c *ipBanListCmd) Run() error {
-	db, err := c.rootCmd.DB()
+	conn, err := c.rootCmd.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(db)
+	queries := db.New(conn)
 	rows, err := queries.ListBannedIps(ctx)
 	if err != nil {
 		return fmt.Errorf("list banned ips: %w", err)

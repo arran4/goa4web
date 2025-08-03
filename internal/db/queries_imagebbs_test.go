@@ -10,12 +10,12 @@ import (
 )
 
 func TestQueries_ListBoardsByParentIDForLister(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
-	q := New(db)
+	defer conn.Close()
+	q := New(conn)
 
 	rows := sqlmock.NewRows([]string{"idimageboard", "imageboard_idimageboard", "title", "description", "approval_required"}).AddRow(1, 0, nil, nil, 0)
 	viewer := sql.NullInt32{}

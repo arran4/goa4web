@@ -28,12 +28,12 @@ func parsePermListCmd(parent *permCmd, args []string) (*permListCmd, error) {
 }
 
 func (c *permListCmd) Run() error {
-	db, err := c.rootCmd.DB()
+	conn, err := c.rootCmd.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(db)
+	queries := db.New(conn)
 	rows, err := queries.GetPermissionsWithUsers(ctx,
 		db.GetPermissionsWithUsersParams{Username: sql.NullString{String: c.User, Valid: c.User != ""}},
 	)

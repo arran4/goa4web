@@ -24,12 +24,12 @@ import (
 func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 	navReg := nav.NewRegistry()
 
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	cfg := config.NewRuntimeConfig()
-	defer db.Close()
+	defer conn.Close()
 	mock.MatchExpectationsInOrder(false)
 
 	mock.ExpectExec("INSERT INTO sessions").WithArgs("sessid", int32(1)).
@@ -41,7 +41,7 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 
 	session := &sessions.Session{ID: "sessid", Values: map[interface{}]interface{}{"UID": int32(1)}}
 	req := httptest.NewRequest("GET", "/", nil)
-	q := db.New(db)
+	q := db.New(conn)
 	cd := common.NewCoreData(req.Context(), q, cfg)
 	ctx := context.WithValue(req.Context(), core.ContextValues("session"), session)
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
@@ -55,7 +55,7 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 	reg := email.NewRegistry()
 	signer := imagesign.NewSigner(cfg, "k")
 	linkSigner := linksign.NewSigner(cfg, "k")
-	CoreAdderMiddlewareWithDB(db, cfg, 0, reg, signer, linkSigner, navReg)(handler).ServeHTTP(httptest.NewRecorder(), req)
+	CoreAdderMiddlewareWithDB(conn, cfg, 0, reg, signer, linkSigner, navReg)(handler).ServeHTTP(httptest.NewRecorder(), req)
 
 	want := []string{"anonymous", "user", "moderator"}
 	if diff := cmp.Diff(want, cdOut.UserRoles()); diff != "" {
@@ -70,12 +70,12 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
 	navReg := nav.NewRegistry()
 
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	cfg := config.NewRuntimeConfig()
-	defer db.Close()
+	defer conn.Close()
 	mock.MatchExpectationsInOrder(false)
 
 	mock.ExpectExec("DELETE FROM sessions").WithArgs("sessid").
@@ -83,7 +83,7 @@ func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
 
 	session := &sessions.Session{ID: "sessid"}
 	req := httptest.NewRequest("GET", "/", nil)
-	q := db.New(db)
+	q := db.New(conn)
 	cd := common.NewCoreData(req.Context(), q, cfg)
 	ctx := context.WithValue(req.Context(), core.ContextValues("session"), session)
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
@@ -97,7 +97,7 @@ func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
 	reg := email.NewRegistry()
 	signer := imagesign.NewSigner(cfg, "k")
 	linkSigner := linksign.NewSigner(cfg, "k")
-	CoreAdderMiddlewareWithDB(db, cfg, 0, reg, signer, linkSigner, navReg)(handler).ServeHTTP(httptest.NewRecorder(), req)
+	CoreAdderMiddlewareWithDB(conn, cfg, 0, reg, signer, linkSigner, navReg)(handler).ServeHTTP(httptest.NewRecorder(), req)
 
 	want := []string{"anonymous"}
 	if diff := cmp.Diff(want, cdOut.UserRoles()); diff != "" {

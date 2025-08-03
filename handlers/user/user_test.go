@@ -54,9 +54,9 @@ func newRequestWithSession(method, target string, values map[string]interface{})
 func TestUserEmailTestAction_NoProvider(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
 	cfg.EmailProvider = ""
-	db, mock, _ := sqlmock.New()
-	defer db.Close()
-	queries := db.New(db)
+	conn, mock, _ := sqlmock.New()
+	defer conn.Close()
+	queries := db.New(conn)
 	mock.ExpectQuery("SELECT u.idusers, ue.email, u.username").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(1, "e", "u", nil))
 	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).AddRow(1, 1, "e", nil, nil, nil, 100))
 	req := httptest.NewRequest("POST", "/email", nil)
@@ -87,9 +87,9 @@ func TestUserEmailTestAction_WithProvider(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
 	cfg.EmailProvider = "log"
 
-	db, mock, _ := sqlmock.New()
-	defer db.Close()
-	queries := db.New(db)
+	conn, mock, _ := sqlmock.New()
+	defer conn.Close()
+	queries := db.New(conn)
 	mock.ExpectQuery("SELECT u.idusers, ue.email, u.username").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(1, "e", "u", nil))
 	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).AddRow(1, 1, "e", nil, nil, nil, 100))
 	req := httptest.NewRequest("POST", "/email", nil)
@@ -109,9 +109,9 @@ func TestUserEmailTestAction_WithProvider(t *testing.T) {
 }
 
 func TestUserEmailPage_ShowError(t *testing.T) {
-	db, mock, _ := sqlmock.New()
-	defer db.Close()
-	queries := db.New(db)
+	conn, mock, _ := sqlmock.New()
+	defer conn.Close()
+	queries := db.New(conn)
 	mock.ExpectQuery("SELECT u.idusers, ue.email, u.username").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(1, "e", "u", nil))
 	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).AddRow(1, 1, "e", nil, nil, nil, 100))
 	req := httptest.NewRequest("GET", "/usr/email?error=missing", nil)
@@ -133,9 +133,9 @@ func TestUserEmailPage_ShowError(t *testing.T) {
 }
 
 func TestUserEmailPage_NoUnverified(t *testing.T) {
-	db, mock, _ := sqlmock.New()
-	defer db.Close()
-	queries := db.New(db)
+	conn, mock, _ := sqlmock.New()
+	defer conn.Close()
+	queries := db.New(conn)
 	mock.ExpectQuery("SELECT u.idusers, ue.email, u.username").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(1, "e", "u", nil))
 	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).AddRow(1, 1, "e", time.Now(), nil, nil, 100))
 
@@ -159,9 +159,9 @@ func TestUserEmailPage_NoUnverified(t *testing.T) {
 }
 
 func TestUserEmailPage_NoVerified(t *testing.T) {
-	db, mock, _ := sqlmock.New()
-	defer db.Close()
-	queries := db.New(db)
+	conn, mock, _ := sqlmock.New()
+	defer conn.Close()
+	queries := db.New(conn)
 	mock.ExpectQuery("SELECT u.idusers, ue.email, u.username").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(1, "e", "u", nil))
 	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}))
 
@@ -185,13 +185,13 @@ func TestUserEmailPage_NoVerified(t *testing.T) {
 }
 
 func TestUserLangSaveAllActionPage_NewPref(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer conn.Close()
 
-	queries := db.New(db)
+	queries := db.New(conn)
 	store = sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = sessionName
@@ -240,13 +240,13 @@ func TestUserLangSaveAllActionPage_NewPref(t *testing.T) {
 }
 
 func TestUserLangSaveLanguagesActionPage(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer conn.Close()
 
-	queries := db.New(db)
+	queries := db.New(conn)
 	store = sessions.NewCookieStore([]byte("test"))
 
 	form := url.Values{}
@@ -287,13 +287,13 @@ func TestUserLangSaveLanguagesActionPage(t *testing.T) {
 }
 
 func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer conn.Close()
 
-	queries := db.New(db)
+	queries := db.New(conn)
 	store = sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = sessionName

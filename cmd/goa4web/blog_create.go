@@ -35,12 +35,12 @@ func (c *blogCreateCmd) Run() error {
 	if c.UserID == 0 || c.LangID == 0 || c.Text == "" {
 		return fmt.Errorf("user, lang and text required")
 	}
-	db, err := c.rootCmd.DB()
+	conn, err := c.rootCmd.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(db)
+	queries := db.New(conn)
 	_, err = queries.CreateBlogEntry(ctx, db.CreateBlogEntryParams{
 		UsersIdusers:       int32(c.UserID),
 		LanguageIdlanguage: int32(c.LangID),

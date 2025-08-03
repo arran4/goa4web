@@ -15,13 +15,13 @@ import (
 )
 
 func TestWritingCategoryChangeTask(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer conn.Close()
 
-	queries := db.New(db)
+	queries := db.New(conn)
 
 	rows := sqlmock.NewRows([]string{"idwritingcategory", "writing_category_id", "title", "description"}).
 		AddRow(1, 0, "a", "")
@@ -47,13 +47,13 @@ func TestWritingCategoryChangeTask(t *testing.T) {
 }
 
 func TestWritingCategoryWouldLoop(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer conn.Close()
 
-	queries := db.New(db)
+	queries := db.New(conn)
 
 	rows := sqlmock.NewRows([]string{"idwritingcategory", "writing_category_id", "title", "description"}).
 		AddRow(1, 0, "a", "").
@@ -83,13 +83,13 @@ func TestWritingCategoryWouldLoopSelfRef(t *testing.T) {
 }
 
 func TestWritingCategoryWouldLoopHeadToTail(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer conn.Close()
 
-	queries := db.New(db)
+	queries := db.New(conn)
 
 	rows := sqlmock.NewRows([]string{"idwritingcategory", "writing_category_id", "title", "description"}).
 		AddRow(1, 0, "a", "").
@@ -111,13 +111,13 @@ func TestWritingCategoryWouldLoopHeadToTail(t *testing.T) {
 }
 
 func TestWritingCategoryWouldLoopAfterNode(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer conn.Close()
 
-	queries := db.New(db)
+	queries := db.New(conn)
 
 	rows := sqlmock.NewRows([]string{"idwritingcategory", "writing_category_id", "title", "description"}).
 		AddRow(1, 0, "a", "").
@@ -138,13 +138,13 @@ func TestWritingCategoryWouldLoopAfterNode(t *testing.T) {
 }
 
 func TestWritingCategoryChangeTaskLoop(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
+	defer conn.Close()
 
-	queries := db.New(db)
+	queries := db.New(conn)
 
 	rows := sqlmock.NewRows([]string{"idwritingcategory", "writing_category_id", "title", "description"}).
 		AddRow(1, 2, "a", "").

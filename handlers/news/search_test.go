@@ -14,13 +14,13 @@ import (
 )
 
 func TestNewsSearchFiltersUnauthorized(t *testing.T) {
-	sqldb, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer sqldb.Close()
+	defer conn.Close()
 
-	queries := db.New(sqldb)
+	queries := db.New(conn)
 
 	firstRows := sqlmock.NewRows([]string{"site_news_id"}).AddRow(1).AddRow(2)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT DISTINCT cs.site_news_id")).

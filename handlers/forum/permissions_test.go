@@ -10,13 +10,13 @@ import (
 )
 
 func TestUserCanCreateThread_Allowed(t *testing.T) {
-	sqldb, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer sqldb.Close()
+	defer conn.Close()
 
-	q := db.New(sqldb)
+	q := db.New(conn)
 	mock.ExpectQuery("SELECT 1 FROM grants").
 		WithArgs(sqlmock.AnyArg(), "forum", sqlmock.AnyArg(), "post", sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
@@ -34,13 +34,13 @@ func TestUserCanCreateThread_Allowed(t *testing.T) {
 }
 
 func TestUserCanCreateThread_Denied(t *testing.T) {
-	sqldb, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer sqldb.Close()
+	defer conn.Close()
 
-	q := db.New(sqldb)
+	q := db.New(conn)
 	mock.ExpectQuery("SELECT 1 FROM grants").
 		WithArgs(sqlmock.AnyArg(), "forum", sqlmock.AnyArg(), "post", sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnError(sql.ErrNoRows)

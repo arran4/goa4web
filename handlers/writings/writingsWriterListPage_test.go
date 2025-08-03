@@ -14,12 +14,12 @@ import (
 
 func TestWriterListPage_List(t *testing.T) {
 	t.Skip("environment not fully configured")
-	sqldb, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer sqldb.Close()
-	q := db.New(sqldb)
+	defer conn.Close()
+	q := db.New(conn)
 
 	rows := sqlmock.NewRows([]string{"username", "count"}).AddRow("bob", 2)
 	mock.ExpectQuery(".*").WillReturnRows(rows)
@@ -44,12 +44,12 @@ func TestWriterListPage_List(t *testing.T) {
 
 func TestWriterListPage_Search(t *testing.T) {
 	t.Skip("environment not fully configured")
-	sqldb, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer sqldb.Close()
-	q := db.New(sqldb)
+	defer conn.Close()
+	q := db.New(conn)
 
 	rows := sqlmock.NewRows([]string{"username", "count"}).AddRow("bob", 2)
 	mock.ExpectQuery(".*").WillReturnRows(rows)

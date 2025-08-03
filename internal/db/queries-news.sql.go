@@ -11,6 +11,66 @@ import (
 	"strings"
 )
 
+const adminListNewsPostsWithWriterUsernameAndThreadCommentCountDescending = `-- name: AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescending :many
+SELECT u.username AS writerName, u.idusers as writerId, s.idsiteNews, s.forumthread_id, s.language_idlanguage, s.users_idusers,
+s.news, s.occurred, th.comments as Comments
+FROM site_news s
+LEFT JOIN users u ON s.users_idusers = u.idusers
+LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
+ORDER BY s.occurred DESC
+LIMIT ? OFFSET ?
+`
+
+type AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams struct {
+	Limit  int32
+	Offset int32
+}
+
+type AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow struct {
+	Writername         sql.NullString
+	Writerid           sql.NullInt32
+	Idsitenews         int32
+	ForumthreadID      int32
+	LanguageIdlanguage int32
+	UsersIdusers       int32
+	News               sql.NullString
+	Occurred           sql.NullTime
+	Comments           sql.NullInt32
+}
+
+func (q *Queries) AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescending(ctx context.Context, arg AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams) ([]*AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListNewsPostsWithWriterUsernameAndThreadCommentCountDescending, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
+	for rows.Next() {
+		var i AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
+		if err := rows.Scan(
+			&i.Writername,
+			&i.Writerid,
+			&i.Idsitenews,
+			&i.ForumthreadID,
+			&i.LanguageIdlanguage,
+			&i.UsersIdusers,
+			&i.News,
+			&i.Occurred,
+			&i.Comments,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const createNewsPostForWriter = `-- name: CreateNewsPostForWriter :execlastid
 INSERT INTO site_news (news, users_idusers, occurred, language_idlanguage)
 SELECT ?, ?, NOW(), ?

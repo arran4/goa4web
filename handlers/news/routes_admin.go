@@ -8,6 +8,7 @@ import (
 // RegisterAdminRoutes attaches news admin endpoints to ar.
 func RegisterAdminRoutes(ar *mux.Router) {
 	nr := ar.PathPrefix("/news").Subrouter()
+	nr.Use(handlers.IndexMiddleware(CustomAdminNewsIndex))
 	nr.HandleFunc("", handlers.VerifyAccess(AdminNewsPage, "administrator")).Methods("GET")
 	nr.HandleFunc("/{post}", handlers.VerifyAccess(AdminNewsPostPage, "administrator")).Methods("GET")
 	nr.HandleFunc("/{post}/edit", handlers.VerifyAccess(adminNewsEditFormPage, "administrator")).Methods("GET")

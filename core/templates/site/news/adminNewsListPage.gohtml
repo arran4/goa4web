@@ -1,7 +1,7 @@
 {{ template "head" $ }}
 <table border="1">
     <tr><th>ID<th>Date<th>Writer<th>Comments<th>View</tr>
-    {{ range .Posts }}
+    {{ range cd.AdminLatestNews }}
         <tr>
             <td><a href="/admin/news/{{ .Idsitenews }}">{{ .Idsitenews }}</a></td>
             <td><a href="/admin/news/{{ .Idsitenews }}">{{ .Occurred.Time }}</a></td>
@@ -9,6 +9,8 @@
             <td><a href="/admin/news/{{ .Idsitenews }}#comments">{{ .Comments.Int32 }}</a></td>
             <td><a href="/news/news/{{ .Idsitenews }}">Public</a></td>
         </tr>
+    {{ else }}
+        <tr><td colspan="5">No news.</td></tr>
     {{ end }}
 </table>
 {{ template "tail" $ }}

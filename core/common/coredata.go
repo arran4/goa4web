@@ -118,11 +118,13 @@ type CoreData struct {
 	currentTopicID           int32
 	currentCommentID         int32
 	currentNewsPostID        int32
+	currentNewsOffset        int
 	imageBoardPosts          map[int32]*lazy.Value[[]*db.ListImagePostsByBoardForListerRow]
 	imageBoards              lazy.Value[[]*db.Imageboard]
 	languagesAll             lazy.Value[[]*db.Language]
 	langs                    lazy.Value[[]*db.Language]
 	latestNews               lazy.Value[[]*NewsPost]
+	adminLatestNews          lazy.Value[[]*db.AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow]
 	latestWritings           lazy.Value[[]*db.Writing]
 	linkerCategories         lazy.Value[[]*db.GetLinkerCategoryLinkCountsRow]
 	newsAnnouncements        map[int32]*lazy.Value[*db.SiteAnnouncement]
@@ -154,6 +156,9 @@ type CoreData struct {
 
 // SetRoles preloads the current user roles.
 func (cd *CoreData) SetRoles(r []string) { cd.userRoles.Set(r) }
+
+// SetNewsOffset records the current news listing offset.
+func (cd *CoreData) SetNewsOffset(o int) { cd.currentNewsOffset = o }
 
 // Marked returns true the first time it is called with key. Subsequent
 // calls return false. It is used to avoid re-rendering template sections
@@ -774,6 +779,29 @@ func (cd *CoreData) LatestNews(r *http.Request) ([]*NewsPost, error) {
 // LatestNewsList returns recent news posts without needing an HTTP request.
 func (cd *CoreData) LatestNewsList(offset, limit int32) ([]*NewsPost, error) {
 	return cd.fetchLatestNews(offset, limit, 0)
+}
+
+// AdminLatestNewsList returns recent news posts for administrators without permission checks.
+func (cd *CoreData) AdminLatestNewsList(offset, limit int32) ([]*db.AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
+	if cd.queries == nil {
+		return nil, nil
+	}
+	rows, err := cd.queries.AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescending(cd.ctx, db.AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams{
+		Limit:  limit,
+		Offset: offset,
+	})
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, err
+	}
+	return rows, nil
+}
+
+// AdminLatestNews returns recent news posts for administrators using cd's current offset and page size.
+func (cd *CoreData) AdminLatestNews() ([]*db.AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
+	ps := cd.PageSize()
+	return cd.adminLatestNews.Load(func() ([]*db.AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
+		return cd.AdminLatestNewsList(int32(cd.currentNewsOffset), int32(ps))
+	})
 }
 
 // fetchLatestNews loads news posts from the database with permission data.

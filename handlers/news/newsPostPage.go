@@ -18,13 +18,6 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
-type NewsPost struct {
-	ShowReply bool
-	// ShowEdit is true when the current user can modify the post. Users with
-	// the writer, moderator or administrator role are permitted to edit.
-	ShowEdit bool
-}
-
 func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	type CommentPlus struct {
 		*db.GetCommentsByThreadIdForUserRow
@@ -37,15 +30,8 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		EditSaveUrl        string
 		AdminUrl           string
 	}
-	type Post struct {
-		*db.GetNewsPostByIdWithWriterIdAndThreadCommentCountRow
-		ShowReply    bool
-		ShowEdit     bool
-		Editing      bool
-		Announcement *db.SiteAnnouncement
-	}
 	type Data struct {
-		Post               *Post
+		Post               *common.NewsPost
 		Languages          []*db.Language
 		SelectedLanguageId int32
 		Topic              *db.Forumtopic
@@ -73,23 +59,24 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	post, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCount(r.Context(), db.GetNewsPostByIdWithWriterIdAndThreadCommentCountParams{
-		ViewerID: uid,
-		ID:       int32(pid),
-		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
+	posts, err := cd.LatestNewsList(0, 50)
 	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-			if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd); err != nil {
-				log.Printf("render no access page: %v", err)
-			}
-			return
-		default:
-			log.Printf("GetNewsPostByIdWithWriterIdAndThreadCommentCountForUser Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
+		log.Printf("LatestNewsList: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	var post *common.NewsPost
+	for _, p := range posts {
+		if p.Idsitenews == int32(pid) {
+			post = p
+			break
 		}
+	}
+	if post == nil {
+		if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd); err != nil {
+			log.Printf("render no access page: %v", err)
+		}
+		return
 	}
 	if !cd.HasGrant("news", "post", "view", post.Idsitenews) {
 		if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd); err != nil {
@@ -186,17 +173,8 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.Thread = threadRow
-	ann, err := cd.NewsAnnouncement(post.Idsitenews)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		log.Printf("announcementForNews: %v", err)
-	}
-	data.Post = &Post{
-		GetNewsPostByIdWithWriterIdAndThreadCommentCountRow: post,
-		ShowReply:    cd.UserID != 0,
-		ShowEdit:     canEditNewsPost(cd, post.Idsitenews),
-		Editing:      editingId == int(post.Idsitenews),
-		Announcement: ann,
-	}
+	post.Editing = editingId == int(post.Idsitenews)
+	data.Post = post
 
 	handlers.TemplateHandler(w, r, "postPage.gohtml", data)
 }

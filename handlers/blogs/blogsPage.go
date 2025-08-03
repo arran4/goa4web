@@ -41,11 +41,11 @@ func CustomBlogIndex(data *common.CoreData, r *http.Request) {
 		if user != "" {
 			suffix = "?user=" + url.QueryEscape(user)
 		}
-		data.RSSFeedUrl = "/blogs/rss" + suffix
-		data.AtomFeedUrl = "/blogs/atom" + suffix
+		data.RSSFeedURL = "/blogs/rss" + suffix
+		data.AtomFeedURL = "/blogs/atom" + suffix
 		data.CustomIndexItems = append(data.CustomIndexItems,
-			common.IndexItem{Name: "Atom Feed", Link: data.AtomFeedUrl},
-			common.IndexItem{Name: "RSS Feed", Link: data.RSSFeedUrl},
+			common.IndexItem{Name: "Atom Feed", Link: data.AtomFeedURL},
+			common.IndexItem{Name: "RSS Feed", Link: data.RSSFeedURL},
 		)
 	}
 

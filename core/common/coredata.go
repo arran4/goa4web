@@ -77,7 +77,7 @@ type CoreData struct {
 	a4codeMapper func(tag, val string) string
 	// AdminMode indicates whether admin-only UI elements should be displayed.
 	AdminMode         bool
-	AtomFeedUrl       string
+	AtomFeedURL       string
 	AutoRefresh       string
 	Config            *config.RuntimeConfig
 	CustomIndexItems  []IndexItem
@@ -90,7 +90,7 @@ type CoreData struct {
 	NotificationCount int32
 	// PageTitle holds the title of the current page.
 	PageTitle  string
-	RSSFeedUrl string
+	RSSFeedURL string
 	TasksReg   *tasks.Registry
 	Title      string
 	UserID     int32

@@ -11,7 +11,7 @@ import (
 )
 
 func CustomNewsIndex(data *common.CoreData, r *http.Request) {
-	data.RSSFeedUrl = "/news.rss"
+	data.RSSFeedURL = "/news.rss"
 	data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 		Name: "RSS Feed",
 		Link: "/news.rss",

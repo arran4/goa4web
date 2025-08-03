@@ -886,6 +886,18 @@ SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.
 FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
 WHERE w.idwriting IN (/*SLICE:writing_ids*/?)
+  AND (
+    w.language_idlanguage = 0
+    OR w.language_idlanguage IS NULL
+    OR EXISTS (
+        SELECT 1 FROM user_language ul
+        WHERE ul.users_idusers = ?
+          AND ul.language_idlanguage = w.language_idlanguage
+    )
+    OR NOT EXISTS (
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+    )
+  )
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='writing'
@@ -897,12 +909,15 @@ WHERE w.idwriting IN (/*SLICE:writing_ids*/?)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY w.published DESC
+LIMIT ? OFFSET ?
 `
 
 type ListWritingsByIDsForListerParams struct {
 	ListerID      int32
 	WritingIds    []int32
 	ListerMatchID sql.NullInt32
+	Limit         int32
+	Offset        int32
 }
 
 type ListWritingsByIDsForListerRow struct {
@@ -934,7 +949,11 @@ func (q *Queries) ListWritingsByIDsForLister(ctx context.Context, arg ListWritin
 	} else {
 		query = strings.Replace(query, "/*SLICE:writing_ids*/?", "NULL", 1)
 	}
+	queryParams = append(queryParams, arg.ListerID)
+	queryParams = append(queryParams, arg.ListerID)
 	queryParams = append(queryParams, arg.ListerMatchID)
+	queryParams = append(queryParams, arg.Limit)
+	queryParams = append(queryParams, arg.Offset)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
 		return nil, err

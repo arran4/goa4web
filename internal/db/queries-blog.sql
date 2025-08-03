@@ -109,15 +109,6 @@ WITH RECURSIVE role_ids(id) AS (
 )
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written
 FROM blogs b
-JOIN grants g ON g.item_id = b.idblogs
-    AND g.section = 'blogs'
-    AND g.item = 'entry'
-    AND g.action = 'see'
-    AND g.active = 1
-    AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
-    AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
-LEFT JOIN users u ON b.users_idusers=u.idusers
-LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
 WHERE b.idblogs IN (sqlc.slice(blogIds))
   AND (
       b.language_idlanguage = 0
@@ -131,8 +122,18 @@ WHERE b.idblogs IN (sqlc.slice(blogIds))
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
       )
   )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section = 'blogs'
+        AND g.item = 'entry'
+        AND g.action = 'see'
+        AND g.active = 1
+        AND g.item_id = b.idblogs
+        AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
 ORDER BY b.written DESC
-;
+LIMIT ? OFFSET ?;
 
 -- name: GetBlogEntryForListerByID :one
 WITH RECURSIVE role_ids(id) AS (

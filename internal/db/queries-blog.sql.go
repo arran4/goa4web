@@ -285,15 +285,6 @@ WITH RECURSIVE role_ids(id) AS (
 )
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written
 FROM blogs b
-JOIN grants g ON g.item_id = b.idblogs
-    AND g.section = 'blogs'
-    AND g.item = 'entry'
-    AND g.action = 'see'
-    AND g.active = 1
-    AND (g.user_id = ? OR g.user_id IS NULL)
-    AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
-LEFT JOIN users u ON b.users_idusers=u.idusers
-LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
 WHERE b.idblogs IN (/*SLICE:blogids*/?)
   AND (
       b.language_idlanguage = 0
@@ -307,13 +298,26 @@ WHERE b.idblogs IN (/*SLICE:blogids*/?)
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
       )
   )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section = 'blogs'
+        AND g.item = 'entry'
+        AND g.action = 'see'
+        AND g.active = 1
+        AND g.item_id = b.idblogs
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
 ORDER BY b.written DESC
+LIMIT ? OFFSET ?
 `
 
 type ListBlogEntriesByIDsForListerParams struct {
 	ListerID int32
-	UserID   sql.NullInt32
 	Blogids  []int32
+	UserID   sql.NullInt32
+	Limit    int32
+	Offset   int32
 }
 
 type ListBlogEntriesByIDsForListerRow struct {
@@ -329,7 +333,6 @@ func (q *Queries) ListBlogEntriesByIDsForLister(ctx context.Context, arg ListBlo
 	query := listBlogEntriesByIDsForLister
 	var queryParams []interface{}
 	queryParams = append(queryParams, arg.ListerID)
-	queryParams = append(queryParams, arg.UserID)
 	if len(arg.Blogids) > 0 {
 		for _, v := range arg.Blogids {
 			queryParams = append(queryParams, v)
@@ -340,6 +343,9 @@ func (q *Queries) ListBlogEntriesByIDsForLister(ctx context.Context, arg ListBlo
 	}
 	queryParams = append(queryParams, arg.ListerID)
 	queryParams = append(queryParams, arg.ListerID)
+	queryParams = append(queryParams, arg.UserID)
+	queryParams = append(queryParams, arg.Limit)
+	queryParams = append(queryParams, arg.Offset)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
 		return nil, err

@@ -1,4 +1,4 @@
--- name: RegisterExternalLinkClick :exec
+-- name: SystemRegisterExternalLinkClick :exec
 INSERT INTO external_links (url, clicks)
 VALUES (?, 1)
 ON DUPLICATE KEY UPDATE clicks = clicks + 1;

@@ -247,7 +247,7 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	var pthid int32 = link.ForumthreadID
-	pt, err := queries.FindForumTopicByTitle(r.Context(), sql.NullString{
+	pt, err := queries.SystemGetForumTopicByTitle(r.Context(), sql.NullString{
 		String: LinkerTopicName,
 		Valid:  true,
 	})
@@ -274,7 +274,7 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		ptid = pt.Idforumtopic
 	}
 	if pthid == 0 {
-		pthidi, err := queries.MakeThread(r.Context(), ptid)
+		pthidi, err := queries.SystemCreateThread(r.Context(), ptid)
 		if err != nil {
 			return fmt.Errorf("make thread fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}

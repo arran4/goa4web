@@ -180,7 +180,7 @@ WHERE i.idimagepost = sqlc.arg(id)
   )
 LIMIT 1;
 
--- name: SetImagePostLastIndex :exec
+-- name: SystemSetImagePostLastIndex :exec
 UPDATE imagepost SET last_index = NOW() WHERE idimagepost = ?;
 
 

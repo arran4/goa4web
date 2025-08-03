@@ -146,7 +146,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var pthid int32 = post.ForumthreadID
-	pt, err := queries.FindForumTopicByTitle(r.Context(), sql.NullString{
+	pt, err := queries.SystemGetForumTopicByTitle(r.Context(), sql.NullString{
 		String: WritingTopicName,
 		Valid:  true,
 	})
@@ -177,7 +177,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		ptid = pt.Idforumtopic
 	}
 	if pthid == 0 {
-		pthidi, err := queries.MakeThread(r.Context(), ptid)
+		pthidi, err := queries.SystemCreateThread(r.Context(), ptid)
 		if err != nil {
 			log.Printf("Error: makeThread: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)

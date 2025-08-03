@@ -58,7 +58,7 @@ func (RemakeWritingTask) BackgroundTask(ctx context.Context, q db.Querier) (task
 		}); err != nil {
 			return nil, err
 		}
-		if err := q.SetWritingLastIndex(ctx, row.Idwriting); err != nil {
+		if err := q.SystemSetWritingLastIndex(ctx, row.Idwriting); err != nil {
 			return nil, err
 		}
 	}

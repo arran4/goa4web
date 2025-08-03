@@ -10,5 +10,5 @@ func ThreadDelete(ctx context.Context, q db.Querier, threadID, topicID int32) er
 	if err := q.AdminDeleteForumThread(ctx, threadID); err != nil {
 		return err
 	}
-	return q.RebuildForumTopicByIdMetaColumns(ctx, topicID)
+	return q.SystemRebuildForumTopicMetaByID(ctx, topicID)
 }

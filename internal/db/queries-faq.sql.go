@@ -39,6 +39,29 @@ func (q *Queries) AdminDeleteFAQCategory(ctx context.Context, idfaqcategories in
 	return err
 }
 
+const adminRenameFAQCategory = `-- name: AdminRenameFAQCategory :exec
+UPDATE faq_categories
+SET name = ?
+WHERE idfaqCategories = ?
+  AND EXISTS (
+      SELECT 1 FROM user_roles ur
+      JOIN roles r ON ur.role_id = r.id
+      WHERE ur.users_idusers = ?
+        AND r.is_admin = 1
+  )
+`
+
+type AdminRenameFAQCategoryParams struct {
+	Name            sql.NullString
+	Idfaqcategories int32
+	ViewerID        int32
+}
+
+func (q *Queries) AdminRenameFAQCategory(ctx context.Context, arg AdminRenameFAQCategoryParams) error {
+	_, err := q.db.ExecContext(ctx, adminRenameFAQCategory, arg.Name, arg.Idfaqcategories, arg.ViewerID)
+	return err
+}
+
 const adminUpdateFAQQuestionAnswer = `-- name: AdminUpdateFAQQuestionAnswer :exec
 UPDATE faq
 SET answer = ?, question = ?, faqCategories_idfaqCategories = ?
@@ -549,28 +572,5 @@ func (q *Queries) InsertFAQRevisionForUser(ctx context.Context, arg InsertFAQRev
 		arg.UserID,
 		arg.ViewerID,
 	)
-	return err
-}
-
-const renameFAQCategory = `-- name: RenameFAQCategory :exec
-UPDATE faq_categories
-SET name = ?
-WHERE idfaqCategories = ?
-  AND EXISTS (
-      SELECT 1 FROM user_roles ur
-      JOIN roles r ON ur.role_id = r.id
-      WHERE ur.users_idusers = ?
-        AND r.is_admin = 1
-  )
-`
-
-type RenameFAQCategoryParams struct {
-	Name            sql.NullString
-	Idfaqcategories int32
-	ViewerID        int32
-}
-
-func (q *Queries) RenameFAQCategory(ctx context.Context, arg RenameFAQCategoryParams) error {
-	_, err := q.db.ExecContext(ctx, renameFAQCategory, arg.Name, arg.Idfaqcategories, arg.ViewerID)
 	return err
 }

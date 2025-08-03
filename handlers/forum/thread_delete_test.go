@@ -9,13 +9,13 @@ import (
 )
 
 func TestThreadDelete(t *testing.T) {
-	sqldb, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer sqldb.Close()
+	defer conn.Close()
 
-	q := db.New(sqldb)
+	q := db.New(conn)
 	mock.ExpectExec("AdminDeleteForumThread").
 		WithArgs(int32(1)).
 		WillReturnResult(sqlmock.NewResult(0, 0))

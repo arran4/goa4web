@@ -53,12 +53,12 @@ func (c *writingCommentsReadCmd) Run() error {
 	if c.WritingID == 0 {
 		return fmt.Errorf("writing id required")
 	}
-	db, err := c.rootCmd.DB()
+	conn, err := c.rootCmd.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(db)
+	queries := db.New(conn)
 	uid := int32(c.UserID)
 	w, err := queries.GetWritingForListerByID(ctx, db.GetWritingForListerByIDParams{ListerID: uid, Idwriting: int32(c.WritingID), ListerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0}})
 	if err != nil {

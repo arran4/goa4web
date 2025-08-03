@@ -17,11 +17,11 @@ import (
 )
 
 func TestRequireThreadAndTopicTrue(t *testing.T) {
-	sqldb, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer sqldb.Close()
+	defer conn.Close()
 
 	mock.ExpectQuery("SELECT th.idforumthread").
 		WithArgs(int32(0), int32(2), int32(0), int32(0), sql.NullInt32{Int32: 0, Valid: false}).
@@ -44,7 +44,7 @@ func TestRequireThreadAndTopicTrue(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/forum/topic/1/thread/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "2"})
-	q := db.New(sqldb)
+	q := db.New(conn)
 	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -75,11 +75,11 @@ func TestRequireThreadAndTopicTrue(t *testing.T) {
 }
 
 func TestRequireThreadAndTopicFalse(t *testing.T) {
-	sqldb, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer sqldb.Close()
+	defer conn.Close()
 
 	mock.ExpectQuery("SELECT th.idforumthread").
 		WithArgs(int32(0), int32(2), int32(0), int32(0), sql.NullInt32{Int32: 0, Valid: false}).
@@ -95,7 +95,7 @@ func TestRequireThreadAndTopicFalse(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/forum/topic/1/thread/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "2"})
-	q := db.New(sqldb)
+	q := db.New(conn)
 	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -120,11 +120,11 @@ func TestRequireThreadAndTopicFalse(t *testing.T) {
 }
 
 func TestRequireThreadAndTopicError(t *testing.T) {
-	sqldb, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer sqldb.Close()
+	defer conn.Close()
 
 	mock.ExpectQuery("SELECT th.idforumthread").
 		WithArgs(int32(0), int32(2), int32(0), int32(0), sql.NullInt32{Int32: 0, Valid: false}).
@@ -132,7 +132,7 @@ func TestRequireThreadAndTopicError(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/forum/topic/1/thread/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "2"})
-	q := db.New(sqldb)
+	q := db.New(conn)
 	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)

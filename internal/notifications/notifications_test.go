@@ -13,12 +13,12 @@ import (
 )
 
 func TestNotificationsQueries(t *testing.T) {
-	sqldb, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer sqldb.Close()
-	q := db.New(sqldb)
+	defer conn.Close()
+	q := db.New(conn)
 	mock.ExpectExec("INSERT INTO notifications").WithArgs(int32(1), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
 	if err := q.SystemCreateNotification(context.Background(), db.SystemCreateNotificationParams{RecipientID: 1, Link: sql.NullString{String: "/x", Valid: true}, Message: sql.NullString{String: "hi", Valid: true}}); err != nil {
 		t.Fatalf("insert: %v", err)
@@ -53,12 +53,12 @@ func (r *dummyProvider) Send(ctx context.Context, to mail.Address, rawEmailMessa
 }
 
 func TestNotifierNotifyAdmins(t *testing.T) {
-	sqldb, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer sqldb.Close()
-	q := db.New(sqldb)
+	defer conn.Close()
+	q := db.New(conn)
 	cfg := config.NewRuntimeConfig()
 	cfg.EmailEnabled = true
 	cfg.AdminNotify = true
@@ -87,12 +87,12 @@ func TestNotifierInitialization(t *testing.T) {
 	if n.Queries != nil {
 		t.Fatalf("expected nil Queries")
 	}
-	sqldb, _, err := sqlmock.New()
+	conn, _, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer sqldb.Close()
-	q := db.New(sqldb)
+	defer conn.Close()
+	q := db.New(conn)
 	n = New(WithQueries(q), WithConfig(cfg))
 	if n.Queries != q {
 		t.Fatalf("queries not set via option")

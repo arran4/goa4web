@@ -32,12 +32,12 @@ func parseBoardCreateCmd(parent *boardCmd, args []string) (*boardCreateCmd, erro
 }
 
 func (c *boardCreateCmd) Run() error {
-	db, err := c.rootCmd.DB()
+	conn, err := c.rootCmd.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(db)
+	queries := db.New(conn)
 	err = queries.AdminCreateImageBoard(ctx, db.AdminCreateImageBoardParams{
 		ImageboardIdimageboard: int32(c.Parent),
 		Title:                  sql.NullString{String: c.Name, Valid: c.Name != ""},

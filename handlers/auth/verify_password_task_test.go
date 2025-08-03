@@ -20,12 +20,12 @@ import (
 )
 
 func TestVerifyPasswordAction_Success(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
-	q := db.New(db)
+	defer conn.Close()
+	q := db.New(conn)
 
 	pwHash, alg, _ := HashPassword("pw")
 	rows := sqlmock.NewRows([]string{"id", "user_id", "passwd", "passwd_algorithm", "verification_code", "created_at", "verified_at"}).
@@ -56,12 +56,12 @@ func TestVerifyPasswordAction_Success(t *testing.T) {
 }
 
 func TestVerifyPasswordAction_InvalidPassword(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
-	q := db.New(db)
+	defer conn.Close()
+	q := db.New(conn)
 
 	pwHash, alg, _ := HashPassword("pw")
 	rows := sqlmock.NewRows([]string{"id", "user_id", "passwd", "passwd_algorithm", "verification_code", "created_at", "verified_at"}).

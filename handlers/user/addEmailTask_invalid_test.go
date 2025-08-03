@@ -21,12 +21,12 @@ import (
 )
 
 func TestAddEmailTaskInvalid(t *testing.T) {
-	db, _, err := sqlmock.New()
+	conn, _, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
-	q := db.New(db)
+	defer conn.Close()
+	q := db.New(conn)
 
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store

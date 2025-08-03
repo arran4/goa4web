@@ -31,12 +31,12 @@ func (c *emailQueueResendCmd) Run() error {
 	if c.ID == 0 {
 		return fmt.Errorf("id required")
 	}
-	db, err := c.rootCmd.DB()
+	conn, err := c.rootCmd.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(db)
+	queries := db.New(conn)
 	e, err := queries.AdminGetPendingEmailByID(ctx, int32(c.ID))
 	if err != nil {
 		return fmt.Errorf("get email: %w", err)

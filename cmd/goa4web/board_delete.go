@@ -35,12 +35,12 @@ func (c *boardDeleteCmd) Run() error {
 	if c.ID == 0 {
 		return fmt.Errorf("id required")
 	}
-	db, err := c.rootCmd.DB()
+	conn, err := c.rootCmd.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(db)
+	queries := db.New(conn)
 	if err := queries.AdminDeleteImageBoard(ctx, int32(c.ID)); err != nil {
 		return fmt.Errorf("delete board: %w", err)
 	}

@@ -20,12 +20,12 @@ import (
 )
 
 func TestUserEmailVerifyCodePage_Invalid(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
-	q := db.New(db)
+	defer conn.Close()
+	q := db.New(conn)
 	code := "abc"
 	rows := sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).
 		AddRow(1, 1, "e@example.com", nil, code, nil, 0)
@@ -55,12 +55,12 @@ func TestUserEmailVerifyCodePage_Invalid(t *testing.T) {
 }
 
 func TestUserEmailVerifyCodePage_Success(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
-	q := db.New(db)
+	defer conn.Close()
+	q := db.New(conn)
 	code := "xyz"
 	rows := sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).
 		AddRow(1, 1, "e@example.com", nil, code, nil, 0)

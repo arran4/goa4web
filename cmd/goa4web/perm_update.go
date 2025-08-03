@@ -32,12 +32,12 @@ func (c *permUpdateCmd) Run() error {
 	if c.ID == 0 || c.Role == "" {
 		return fmt.Errorf("id and role required")
 	}
-	db, err := c.rootCmd.DB()
+	conn, err := c.rootCmd.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(db)
+	queries := db.New(conn)
 	if err := queries.UpdatePermission(ctx, db.UpdatePermissionParams{
 		IduserRoles: int32(c.ID),
 		Name:        c.Role,

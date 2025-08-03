@@ -16,12 +16,12 @@ import (
 
 func newCoreData(t *testing.T, cfg config.RuntimeConfig) (*common.CoreData, sqlmock.Sqlmock, func()) {
 	t.Helper()
-	db, mock, err := sqlmock.New()
+	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	cleanup := func() { db.Close() }
-	queries := db.New(db)
+	cleanup := func() { conn.Close() }
+	queries := db.New(conn)
 	if cfg.HSTSHeaderValue == "" {
 		cfg.HSTSHeaderValue = "max-age=63072000; includeSubDomains"
 	}

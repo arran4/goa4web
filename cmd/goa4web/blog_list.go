@@ -32,12 +32,12 @@ func parseBlogListCmd(parent *blogCmd, args []string) (*blogListCmd, error) {
 }
 
 func (c *blogListCmd) Run() error {
-	db, err := c.rootCmd.DB()
+	conn, err := c.rootCmd.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(db)
+	queries := db.New(conn)
 	uid := int32(c.UserID)
 	rows, err := queries.ListBlogEntriesForLister(ctx, db.ListBlogEntriesForListerParams{
 		ListerID: uid,

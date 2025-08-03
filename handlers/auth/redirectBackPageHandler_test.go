@@ -15,12 +15,12 @@ import (
 )
 
 func TestRedirectBackPageHandlerGETAlt(t *testing.T) {
-	db, _, err := sqlmock.New()
+	conn, _, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer db.Close()
-	q := db.New(db)
+	defer conn.Close()
+	q := db.New(conn)
 
 	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
 	ctx := context.WithValue(context.Background(), consts.KeyCoreData, cd)

@@ -41,12 +41,12 @@ func (c *grantAddCmd) Run() error {
 	if c.Section == "" || c.Action == "" {
 		return fmt.Errorf("section and action required")
 	}
-	db, err := c.rootCmd.DB()
+	conn, err := c.rootCmd.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	q := db.New(db)
+	q := db.New(conn)
 	_, err = q.AdminCreateGrant(ctx, db.AdminCreateGrantParams{
 		UserID:   sql.NullInt32{Int32: int32(c.User), Valid: c.User != 0},
 		RoleID:   sql.NullInt32{},

@@ -30,12 +30,12 @@ func parseNewsListCmd(parent *newsCmd, args []string) (*newsListCmd, error) {
 }
 
 func (c *newsListCmd) Run() error {
-	db, err := c.rootCmd.DB()
+	conn, err := c.rootCmd.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(db)
+	queries := db.New(conn)
 	cd := common.NewCoreData(ctx, queries, c.rootCmd.cfg)
 	posts, err := cd.LatestNewsList(int32(c.Offset), int32(c.Limit))
 	if err != nil {

@@ -11,20 +11,6 @@ import (
 	"strings"
 )
 
-const assignLinkerThisThreadId = `-- name: AssignLinkerThisThreadId :exec
-UPDATE linker SET forumthread_id = ? WHERE idlinker = ?
-`
-
-type AssignLinkerThisThreadIdParams struct {
-	ForumthreadID int32
-	Idlinker      int32
-}
-
-func (q *Queries) AssignLinkerThisThreadId(ctx context.Context, arg AssignLinkerThisThreadIdParams) error {
-	_, err := q.db.ExecContext(ctx, assignLinkerThisThreadId, arg.ForumthreadID, arg.Idlinker)
-	return err
-}
-
 const countLinksByCategory = `-- name: CountLinksByCategory :one
 SELECT COUNT(*) FROM linker WHERE linker_category_id = ?
 `
@@ -1327,6 +1313,20 @@ UPDATE linker SET last_index = NOW() WHERE idlinker = ?
 
 func (q *Queries) SetLinkerLastIndex(ctx context.Context, idlinker int32) error {
 	_, err := q.db.ExecContext(ctx, setLinkerLastIndex, idlinker)
+	return err
+}
+
+const systemAssignLinkerThreadID = `-- name: SystemAssignLinkerThreadID :exec
+UPDATE linker SET forumthread_id = ? WHERE idlinker = ?
+`
+
+type SystemAssignLinkerThreadIDParams struct {
+	ForumthreadID int32
+	Idlinker      int32
+}
+
+func (q *Queries) SystemAssignLinkerThreadID(ctx context.Context, arg SystemAssignLinkerThreadIDParams) error {
+	_, err := q.db.ExecContext(ctx, systemAssignLinkerThreadID, arg.ForumthreadID, arg.Idlinker)
 	return err
 }
 

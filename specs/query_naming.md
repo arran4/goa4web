@@ -39,6 +39,9 @@ queries.
 
 - Admin and system commands used by CLI tools or background workers must use
   the `System` or `Admin` prefix and must never accept a user ID.
+- Internal bookkeeping operations (for example assigning thread IDs) use
+  the `System` prefix with a descriptive verb, e.g.
+  `SystemAssignBlogEntryThreadID`.
 - User-facing queries include the required role in the function name using a
   `For<Role>` suffix and matching `<Role>ID` parameters. Prefer descriptive role
   names such as `Writer`, `Lister`, `Commenter`, or `Replier`.

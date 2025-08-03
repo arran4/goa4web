@@ -14,7 +14,7 @@ FROM site_news s
 LEFT JOIN users u ON s.users_idusers = u.idusers
 WHERE s.idsiteNews = ?;
 
--- name: AssignNewsThisThreadId :exec
+-- name: SystemAssignNewsThreadID :exec
 UPDATE site_news SET forumthread_id = ? WHERE idsiteNews = ?;
 
 -- name: GetNewsPostByIdWithWriterIdAndThreadCommentCount :one

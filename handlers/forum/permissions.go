@@ -9,7 +9,7 @@ import (
 
 // UserCanCreateThread reports whether uid may create a thread in the topic.
 func UserCanCreateThread(ctx context.Context, q db.Querier, topicID, uid int32) (bool, error) {
-	_, err := q.CheckGrant(ctx, db.CheckGrantParams{
+	_, err := q.SystemCheckGrant(ctx, db.SystemCheckGrantParams{
 		ViewerID: uid,
 		Section:  "forum",
 		Item:     sql.NullString{String: "topic", Valid: true},

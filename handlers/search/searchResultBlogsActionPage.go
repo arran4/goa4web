@@ -86,7 +86,7 @@ func BlogSearch(w http.ResponseWriter, r *http.Request, queries db.Querier, uid 
 
 	for i, word := range searchWords {
 		if i == 0 {
-			ids, err := queries.BlogsSearchFirst(r.Context(), db.BlogsSearchFirstParams{
+			ids, err := queries.ListBlogIDsBySearchWordFirstForLister(r.Context(), db.ListBlogIDsBySearchWordFirstForListerParams{
 				ListerID: uid,
 				Word: sql.NullString{
 					String: word,
@@ -95,13 +95,13 @@ func BlogSearch(w http.ResponseWriter, r *http.Request, queries db.Querier, uid 
 				UserID: sql.NullInt32{Int32: uid, Valid: true},
 			})
 			if err != nil {
-				log.Printf("blogsSearchFirst Error: %s", err)
+				log.Printf("ListBlogIDsBySearchWordFirstForLister Error: %s", err)
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 				return nil, false, false, err
 			}
 			blogIds = ids
 		} else {
-			ids, err := queries.BlogsSearchNext(r.Context(), db.BlogsSearchNextParams{
+			ids, err := queries.ListBlogIDsBySearchWordNextForLister(r.Context(), db.ListBlogIDsBySearchWordNextForListerParams{
 				ListerID: uid,
 				Word: sql.NullString{
 					String: word,
@@ -111,7 +111,7 @@ func BlogSearch(w http.ResponseWriter, r *http.Request, queries db.Querier, uid 
 				UserID: sql.NullInt32{Int32: uid, Valid: true},
 			})
 			if err != nil {
-				log.Printf("blogsSearchNext Error: %s", err)
+				log.Printf("ListBlogIDsBySearchWordNextForLister Error: %s", err)
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 				return nil, false, false, err
 			}

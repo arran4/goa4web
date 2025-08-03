@@ -25,6 +25,7 @@ type Querier interface {
 	AdminCompleteWordList(ctx context.Context) ([]sql.NullString, error)
 	AdminCountForumThreads(ctx context.Context) (int64, error)
 	AdminCountForumTopics(ctx context.Context) (int64, error)
+	AdminCountLinksByCategory(ctx context.Context, linkerCategoryID int32) (int64, error)
 	AdminCountThreadsByBoard(ctx context.Context, imageboardIdimageboard int32) (int64, error)
 	AdminCountWordList(ctx context.Context) (int64, error)
 	AdminCountWordListByPrefix(ctx context.Context, prefix interface{}) (int64, error)
@@ -38,6 +39,8 @@ type Querier interface {
 	// Parameters:
 	//   ? - Language ID to be deleted (int)
 	AdminDeleteLanguage(ctx context.Context, idlanguage int32) error
+	// AdminDeleteLinkerCategory removes a linker category.
+	AdminDeleteLinkerCategory(ctx context.Context, idlinkercategory int32) error
 	// admin task
 	AdminDeletePendingEmail(ctx context.Context, id int32) error
 	AdminDeleteTemplateOverride(ctx context.Context, name string) error
@@ -153,15 +156,6 @@ type Querier interface {
 	AdminWordListWithCounts(ctx context.Context, arg AdminWordListWithCountsParams) ([]*AdminWordListWithCountsRow, error)
 	AdminWordListWithCountsByPrefix(ctx context.Context, arg AdminWordListWithCountsByPrefixParams) ([]*AdminWordListWithCountsByPrefixRow, error)
 	AdminWritingCategoryCounts(ctx context.Context) ([]*AdminWritingCategoryCountsRow, error)
-	BlogsSearchFirst(ctx context.Context, arg BlogsSearchFirstParams) ([]int32, error)
-	BlogsSearchNext(ctx context.Context, arg BlogsSearchNextParams) ([]int32, error)
-	CheckGrant(ctx context.Context, arg CheckGrantParams) (int32, error)
-	CheckRoleGrant(ctx context.Context, arg CheckRoleGrantParams) (int32, error)
-	CommentsSearchFirstInRestrictedTopic(ctx context.Context, arg CommentsSearchFirstInRestrictedTopicParams) ([]int32, error)
-	CommentsSearchFirstNotInRestrictedTopic(ctx context.Context, arg CommentsSearchFirstNotInRestrictedTopicParams) ([]int32, error)
-	CommentsSearchNextInRestrictedTopic(ctx context.Context, arg CommentsSearchNextInRestrictedTopicParams) ([]int32, error)
-	CommentsSearchNextNotInRestrictedTopic(ctx context.Context, arg CommentsSearchNextNotInRestrictedTopicParams) ([]int32, error)
-	CountLinksByCategory(ctx context.Context, linkerCategoryID int32) (int64, error)
 	CountUnreadNotifications(ctx context.Context, usersIdusers int32) (int64, error)
 	CreateBlogEntry(ctx context.Context, arg CreateBlogEntryParams) (int64, error)
 	// This query adds a new entry to the "bookmarks" table for a user.
@@ -193,7 +187,6 @@ type Querier interface {
 	DeleteForumTopic(ctx context.Context, idforumtopic int32) error
 	DeleteGrant(ctx context.Context, id int32) error
 	DeleteImageBoard(ctx context.Context, idimageboard int32) error
-	DeleteLinkerCategory(ctx context.Context, arg DeleteLinkerCategoryParams) error
 	DeleteLinkerQueuedItem(ctx context.Context, arg DeleteLinkerQueuedItemParams) error
 	DeleteNotification(ctx context.Context, id int32) error
 	DeletePasswordReset(ctx context.Context, id int32) error
@@ -328,10 +321,16 @@ type Querier interface {
 	ListBlogEntriesByAuthorForLister(ctx context.Context, arg ListBlogEntriesByAuthorForListerParams) ([]*ListBlogEntriesByAuthorForListerRow, error)
 	ListBlogEntriesByIDsForLister(ctx context.Context, arg ListBlogEntriesByIDsForListerParams) ([]*ListBlogEntriesByIDsForListerRow, error)
 	ListBlogEntriesForLister(ctx context.Context, arg ListBlogEntriesForListerParams) ([]*ListBlogEntriesForListerRow, error)
+	ListBlogIDsBySearchWordFirstForLister(ctx context.Context, arg ListBlogIDsBySearchWordFirstForListerParams) ([]int32, error)
+	ListBlogIDsBySearchWordNextForLister(ctx context.Context, arg ListBlogIDsBySearchWordNextForListerParams) ([]int32, error)
 	ListBloggersForLister(ctx context.Context, arg ListBloggersForListerParams) ([]*ListBloggersForListerRow, error)
 	ListBloggersSearchForLister(ctx context.Context, arg ListBloggersSearchForListerParams) ([]*ListBloggersSearchForListerRow, error)
 	ListBoardsByParentIDForLister(ctx context.Context, arg ListBoardsByParentIDForListerParams) ([]*Imageboard, error)
 	ListBoardsForLister(ctx context.Context, arg ListBoardsForListerParams) ([]*Imageboard, error)
+	ListCommentIDsBySearchWordFirstForListerInRestrictedTopic(ctx context.Context, arg ListCommentIDsBySearchWordFirstForListerInRestrictedTopicParams) ([]int32, error)
+	ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopic(ctx context.Context, arg ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopicParams) ([]int32, error)
+	ListCommentIDsBySearchWordNextForListerInRestrictedTopic(ctx context.Context, arg ListCommentIDsBySearchWordNextForListerInRestrictedTopicParams) ([]int32, error)
+	ListCommentIDsBySearchWordNextForListerNotInRestrictedTopic(ctx context.Context, arg ListCommentIDsBySearchWordNextForListerNotInRestrictedTopicParams) ([]int32, error)
 	ListEffectiveRoleIDsByUserID(ctx context.Context, usersIdusers int32) ([]int32, error)
 	ListGrants(ctx context.Context) ([]*Grant, error)
 	ListGrantsByUserID(ctx context.Context, userID sql.NullInt32) ([]*Grant, error)
@@ -386,6 +385,8 @@ type Querier interface {
 	SystemAssignLinkerThreadID(ctx context.Context, arg SystemAssignLinkerThreadIDParams) error
 	SystemAssignNewsThreadID(ctx context.Context, arg SystemAssignNewsThreadIDParams) error
 	SystemAssignWritingThreadID(ctx context.Context, arg SystemAssignWritingThreadIDParams) error
+	SystemCheckGrant(ctx context.Context, arg SystemCheckGrantParams) (int32, error)
+	SystemCheckRoleGrant(ctx context.Context, arg SystemCheckRoleGrantParams) (int32, error)
 	SystemCountDeadLetters(ctx context.Context) (int64, error)
 	// SystemCountLanguages counts all languages.
 	SystemCountLanguages(ctx context.Context) (int64, error)

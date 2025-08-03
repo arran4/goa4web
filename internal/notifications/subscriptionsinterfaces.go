@@ -73,7 +73,7 @@ type TargetUsersNotificationProvider interface {
 
 // GrantsRequiredProvider exposes the permission context for subscription
 // notifications. Implementations return one or more GrantRequirement values
-// checked with `CheckGrant` before delivering a message.
+// checked with `SystemCheckGrant` before delivering a message.
 type GrantsRequiredProvider interface {
 	GrantsRequired(evt eventbus.TaskEvent) ([]GrantRequirement, error)
 }

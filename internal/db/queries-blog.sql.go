@@ -76,153 +76,6 @@ func (q *Queries) AdminGetAllBlogEntriesByUser(ctx context.Context, arg AdminGet
 	return items, nil
 }
 
-const blogsSearchFirst = `-- name: BlogsSearchFirst :many
-WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-)
-SELECT DISTINCT cs.blog_id
-FROM blogs_search cs
-LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearchwordlist
-JOIN blogs b ON b.idblogs = cs.blog_id
-WHERE swl.word = ?
-  AND (
-      b.language_idlanguage = 0
-      OR b.language_idlanguage IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?
-            AND ul.language_idlanguage = b.language_idlanguage
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
-      )
-  )
-  AND EXISTS (
-      SELECT 1 FROM grants g
-      WHERE g.section = 'blogs'
-        AND g.item = 'entry'
-        AND g.action = 'see'
-        AND g.active = 1
-        AND g.item_id = b.idblogs
-        AND (g.user_id = ? OR g.user_id IS NULL)
-        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
-  )
-`
-
-type BlogsSearchFirstParams struct {
-	ListerID int32
-	Word     sql.NullString
-	UserID   sql.NullInt32
-}
-
-func (q *Queries) BlogsSearchFirst(ctx context.Context, arg BlogsSearchFirstParams) ([]int32, error) {
-	rows, err := q.db.QueryContext(ctx, blogsSearchFirst,
-		arg.ListerID,
-		arg.Word,
-		arg.ListerID,
-		arg.ListerID,
-		arg.UserID,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []int32
-	for rows.Next() {
-		var blog_id int32
-		if err := rows.Scan(&blog_id); err != nil {
-			return nil, err
-		}
-		items = append(items, blog_id)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const blogsSearchNext = `-- name: BlogsSearchNext :many
-WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-)
-SELECT DISTINCT cs.blog_id
-FROM blogs_search cs
-LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearchwordlist
-JOIN blogs b ON b.idblogs = cs.blog_id
-WHERE swl.word = ?
-  AND cs.blog_id IN (/*SLICE:ids*/?)
-  AND (
-      b.language_idlanguage = 0
-      OR b.language_idlanguage IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?
-            AND ul.language_idlanguage = b.language_idlanguage
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
-      )
-  )
-  AND EXISTS (
-      SELECT 1 FROM grants g
-      WHERE g.section = 'blogs'
-        AND g.item = 'entry'
-        AND g.action = 'see'
-        AND g.active = 1
-        AND g.item_id = b.idblogs
-        AND (g.user_id = ? OR g.user_id IS NULL)
-        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
-  )
-`
-
-type BlogsSearchNextParams struct {
-	ListerID int32
-	Word     sql.NullString
-	Ids      []int32
-	UserID   sql.NullInt32
-}
-
-func (q *Queries) BlogsSearchNext(ctx context.Context, arg BlogsSearchNextParams) ([]int32, error) {
-	query := blogsSearchNext
-	var queryParams []interface{}
-	queryParams = append(queryParams, arg.ListerID)
-	queryParams = append(queryParams, arg.Word)
-	if len(arg.Ids) > 0 {
-		for _, v := range arg.Ids {
-			queryParams = append(queryParams, v)
-		}
-		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(arg.Ids))[1:], 1)
-	} else {
-		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
-	}
-	queryParams = append(queryParams, arg.ListerID)
-	queryParams = append(queryParams, arg.ListerID)
-	queryParams = append(queryParams, arg.UserID)
-	rows, err := q.db.QueryContext(ctx, query, queryParams...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []int32
-	for rows.Next() {
-		var blog_id int32
-		if err := rows.Scan(&blog_id); err != nil {
-			return nil, err
-		}
-		items = append(items, blog_id)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const createBlogEntry = `-- name: CreateBlogEntry :execlastid
 INSERT INTO blogs (users_idusers, language_idlanguage, blog, written)
 SELECT ?, ?, ?, CURRENT_TIMESTAMP
@@ -610,6 +463,153 @@ func (q *Queries) ListBlogEntriesForLister(ctx context.Context, arg ListBlogEntr
 			return nil, err
 		}
 		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listBlogIDsBySearchWordFirstForLister = `-- name: ListBlogIDsBySearchWordFirstForLister :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+)
+SELECT DISTINCT cs.blog_id
+FROM blogs_search cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearchwordlist
+JOIN blogs b ON b.idblogs = cs.blog_id
+WHERE swl.word = ?
+  AND (
+      b.language_idlanguage = 0
+      OR b.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = b.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section = 'blogs'
+        AND g.item = 'entry'
+        AND g.action = 'see'
+        AND g.active = 1
+        AND g.item_id = b.idblogs
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+`
+
+type ListBlogIDsBySearchWordFirstForListerParams struct {
+	ListerID int32
+	Word     sql.NullString
+	UserID   sql.NullInt32
+}
+
+func (q *Queries) ListBlogIDsBySearchWordFirstForLister(ctx context.Context, arg ListBlogIDsBySearchWordFirstForListerParams) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx, listBlogIDsBySearchWordFirstForLister,
+		arg.ListerID,
+		arg.Word,
+		arg.ListerID,
+		arg.ListerID,
+		arg.UserID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var blog_id int32
+		if err := rows.Scan(&blog_id); err != nil {
+			return nil, err
+		}
+		items = append(items, blog_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listBlogIDsBySearchWordNextForLister = `-- name: ListBlogIDsBySearchWordNextForLister :many
+WITH RECURSIVE role_ids(id) AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+)
+SELECT DISTINCT cs.blog_id
+FROM blogs_search cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearchwordlist
+JOIN blogs b ON b.idblogs = cs.blog_id
+WHERE swl.word = ?
+  AND cs.blog_id IN (/*SLICE:ids*/?)
+  AND (
+      b.language_idlanguage = 0
+      OR b.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = b.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section = 'blogs'
+        AND g.item = 'entry'
+        AND g.action = 'see'
+        AND g.active = 1
+        AND g.item_id = b.idblogs
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+`
+
+type ListBlogIDsBySearchWordNextForListerParams struct {
+	ListerID int32
+	Word     sql.NullString
+	Ids      []int32
+	UserID   sql.NullInt32
+}
+
+func (q *Queries) ListBlogIDsBySearchWordNextForLister(ctx context.Context, arg ListBlogIDsBySearchWordNextForListerParams) ([]int32, error) {
+	query := listBlogIDsBySearchWordNextForLister
+	var queryParams []interface{}
+	queryParams = append(queryParams, arg.ListerID)
+	queryParams = append(queryParams, arg.Word)
+	if len(arg.Ids) > 0 {
+		for _, v := range arg.Ids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(arg.Ids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
+	}
+	queryParams = append(queryParams, arg.ListerID)
+	queryParams = append(queryParams, arg.ListerID)
+	queryParams = append(queryParams, arg.UserID)
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var blog_id int32
+		if err := rows.Scan(&blog_id); err != nil {
+			return nil, err
+		}
+		items = append(items, blog_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

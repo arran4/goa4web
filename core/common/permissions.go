@@ -13,7 +13,7 @@ func (cd *CoreData) HasGrant(section, item, action string, itemID int32) bool {
 	if cd == nil || cd.queries == nil {
 		return false
 	}
-	_, err := cd.queries.CheckGrant(cd.ctx, db.CheckGrantParams{
+	_, err := cd.queries.SystemCheckGrant(cd.ctx, db.SystemCheckGrantParams{
 		ViewerID: cd.UserID,
 		Section:  section,
 		Item:     sql.NullString{String: item, Valid: item != ""},

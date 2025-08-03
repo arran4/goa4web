@@ -167,7 +167,7 @@ WHERE b.idblogs = sqlc.arg(id)
   )
 LIMIT 1;
 
--- name: BlogsSearchFirst :many
+-- name: ListBlogIDsBySearchWordFirstForLister :many
 WITH RECURSIVE role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
@@ -199,7 +199,7 @@ WHERE swl.word = ?
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   );
 
--- name: BlogsSearchNext :many
+-- name: ListBlogIDsBySearchWordNextForLister :many
 WITH RECURSIVE role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )

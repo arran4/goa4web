@@ -47,7 +47,7 @@ WHERE ur.users_idusers = ? AND r.is_admin = 1;
 
 
 
--- name: CheckRoleGrant :one
+-- name: SystemCheckRoleGrant :one
 SELECT 1
 FROM grants g
 JOIN roles r ON g.role_id = r.id
@@ -62,7 +62,7 @@ SELECT DISTINCT ur.role_id AS id
 FROM user_roles ur
 WHERE ur.users_idusers = ?;
 
--- name: CheckGrant :one
+-- name: SystemCheckGrant :one
 WITH RECURSIVE role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
 )

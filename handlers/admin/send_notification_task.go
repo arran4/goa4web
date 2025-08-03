@@ -49,7 +49,7 @@ func (SendNotificationTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 		ids = append(ids, rows...)
 	} else {
-		rows, err := queries.AdminAllUserIDs(r.Context())
+		rows, err := queries.AdminListAllUserIDs(r.Context())
 		if err != nil {
 			return fmt.Errorf("list users fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}

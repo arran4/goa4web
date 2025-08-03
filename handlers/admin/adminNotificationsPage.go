@@ -46,7 +46,7 @@ func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	data.Usernames = map[int32]string{}
-	if rows, err := queries.AdminUsersByID(r.Context(), ids); err == nil {
+	if rows, err := queries.AdminListUsersByID(r.Context(), ids); err == nil {
 		for _, r := range rows {
 			if r.Username.Valid {
 				data.Usernames[r.Idusers] = r.Username.String

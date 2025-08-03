@@ -26,6 +26,10 @@ each user's pagination and language preferences and enforce permissions
 within the SQL itself. Admin and system queries must never require a user
 ID.
 
+Admin queries are always prefixed with `Admin` and must omit any user ID
+parameters. System-level operations invoked from CLI tools or background
+workers use the `System` prefix and likewise must not depend on a user ID.
+
 ## Grants
 
 User queries should check grants both in SQL and in Go code to ensure

@@ -267,12 +267,12 @@ func (q *Queries) GetThreadLastPosterAndPerms(ctx context.Context, arg GetThread
 	return &i, err
 }
 
-const makeThread = `-- name: MakeThread :execlastid
+const systemCreateThread = `-- name: SystemCreateThread :execlastid
 INSERT INTO forumthread (forumtopic_idforumtopic) VALUES (?)
 `
 
-func (q *Queries) MakeThread(ctx context.Context, forumtopicIdforumtopic int32) (int64, error) {
-	result, err := q.db.ExecContext(ctx, makeThread, forumtopicIdforumtopic)
+func (q *Queries) SystemCreateThread(ctx context.Context, forumtopicIdforumtopic int32) (int64, error) {
+	result, err := q.db.ExecContext(ctx, systemCreateThread, forumtopicIdforumtopic)
 	if err != nil {
 		return 0, err
 	}

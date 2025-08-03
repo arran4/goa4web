@@ -99,7 +99,7 @@ INSERT INTO forumcategory (forumcategory_idforumcategory, title, description) VA
 -- name: SystemCreateForumTopic :execlastid
 INSERT INTO forumtopic (forumcategory_idforumcategory, title, description) VALUES (?, ?, ?);
 
--- name: FindForumTopicByTitle :one
+-- name: SystemGetForumTopicByTitle :one
 SELECT *
 FROM forumtopic
 WHERE title=?;
@@ -136,7 +136,7 @@ WHERE th.forumtopic_idforumtopic=sqlc.arg(topic_id)
   )
 ORDER BY th.lastaddition DESC;
 
--- name: RebuildAllForumTopicMetaColumns :exec
+-- name: AdminRebuildAllForumTopicMetaColumns :exec
 UPDATE forumtopic
 SET threads = (
     SELECT COUNT(idforumthread)
@@ -160,7 +160,7 @@ SET threads = (
     LIMIT 1
 );
 
--- name: RebuildForumTopicByIdMetaColumns :exec
+-- name: SystemRebuildForumTopicMetaByID :exec
 UPDATE forumtopic
 SET threads = (
     SELECT COUNT(idforumthread)

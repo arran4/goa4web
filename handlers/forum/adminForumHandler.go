@@ -148,7 +148,7 @@ func AdminForumRemakeForumTopicPage(w http.ResponseWriter, r *http.Request) {
 		data.Messages = append(data.Messages, fmt.Sprintf("Processing %d topics...", c))
 	}
 
-	if err := queries.RebuildAllForumTopicMetaColumns(r.Context()); err != nil {
+	if err := queries.AdminRebuildAllForumTopicMetaColumns(r.Context()); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("rebuildForumTopicByIdMetaColumns_lastaddition_lastposter: %w", err).Error())
 	} else {
 		data.Messages = append(data.Messages, "Topic metadata rebuild complete.")

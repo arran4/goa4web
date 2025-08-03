@@ -18,7 +18,7 @@ import (
 // WriterListPage shows all writers with their article counts.
 func WriterListPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		Rows                []*db.WriterCountRow
+		Rows                []*db.ListWritersForListerRow
 		Search              string
 		NextLink            string
 		PrevLink            string

@@ -355,15 +355,6 @@ func (q *Queries) GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(
 	return items, nil
 }
 
-const setSiteNewsLastIndex = `-- name: SetSiteNewsLastIndex :exec
-UPDATE site_news SET last_index = NOW() WHERE idsiteNews = ?
-`
-
-func (q *Queries) SetSiteNewsLastIndex(ctx context.Context, idsitenews int32) error {
-	_, err := q.db.ExecContext(ctx, setSiteNewsLastIndex, idsitenews)
-	return err
-}
-
 const systemAssignNewsThreadID = `-- name: SystemAssignNewsThreadID :exec
 UPDATE site_news SET forumthread_id = ? WHERE idsiteNews = ?
 `
@@ -375,6 +366,15 @@ type SystemAssignNewsThreadIDParams struct {
 
 func (q *Queries) SystemAssignNewsThreadID(ctx context.Context, arg SystemAssignNewsThreadIDParams) error {
 	_, err := q.db.ExecContext(ctx, systemAssignNewsThreadID, arg.ForumthreadID, arg.Idsitenews)
+	return err
+}
+
+const systemSetSiteNewsLastIndex = `-- name: SystemSetSiteNewsLastIndex :exec
+UPDATE site_news SET last_index = NOW() WHERE idsiteNews = ?
+`
+
+func (q *Queries) SystemSetSiteNewsLastIndex(ctx context.Context, idsitenews int32) error {
+	_, err := q.db.ExecContext(ctx, systemSetSiteNewsLastIndex, idsitenews)
 	return err
 }
 

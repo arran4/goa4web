@@ -44,6 +44,36 @@ func (q *Queries) AdminDeleteForumTopic(ctx context.Context, idforumtopic int32)
 	return err
 }
 
+const adminRebuildAllForumTopicMetaColumns = `-- name: AdminRebuildAllForumTopicMetaColumns :exec
+UPDATE forumtopic
+SET threads = (
+    SELECT COUNT(idforumthread)
+    FROM forumthread
+    WHERE forumtopic_idforumtopic = idforumtopic
+), comments = (
+    SELECT SUM(comments)
+    FROM forumthread
+    WHERE forumtopic_idforumtopic = idforumtopic
+), lastaddition = (
+    SELECT lastaddition
+    FROM forumthread
+    WHERE forumtopic_idforumtopic = idforumtopic
+    ORDER BY lastaddition DESC
+    LIMIT 1
+), lastposter = (
+    SELECT lastposter
+    FROM forumthread
+    WHERE forumtopic_idforumtopic = idforumtopic
+    ORDER BY lastaddition DESC
+    LIMIT 1
+)
+`
+
+func (q *Queries) AdminRebuildAllForumTopicMetaColumns(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, adminRebuildAllForumTopicMetaColumns)
+	return err
+}
+
 const adminUpdateForumCategory = `-- name: AdminUpdateForumCategory :exec
 UPDATE forumcategory SET title = ?, description = ?, forumcategory_idforumcategory = ? WHERE idforumcategory = ?
 `
@@ -84,28 +114,6 @@ func (q *Queries) AdminUpdateForumTopic(ctx context.Context, arg AdminUpdateForu
 		arg.Idforumtopic,
 	)
 	return err
-}
-
-const findForumTopicByTitle = `-- name: FindForumTopicByTitle :one
-SELECT idforumtopic, lastposter, forumcategory_idforumcategory, title, description, threads, comments, lastaddition
-FROM forumtopic
-WHERE title=?
-`
-
-func (q *Queries) FindForumTopicByTitle(ctx context.Context, title sql.NullString) (*Forumtopic, error) {
-	row := q.db.QueryRowContext(ctx, findForumTopicByTitle, title)
-	var i Forumtopic
-	err := row.Scan(
-		&i.Idforumtopic,
-		&i.Lastposter,
-		&i.ForumcategoryIdforumcategory,
-		&i.Title,
-		&i.Description,
-		&i.Threads,
-		&i.Comments,
-		&i.Lastaddition,
-	)
-	return &i, err
 }
 
 const getAllForumCategories = `-- name: GetAllForumCategories :many
@@ -646,37 +654,47 @@ func (q *Queries) GetForumTopicsByCategoryId(ctx context.Context, forumcategoryI
 	return items, nil
 }
 
-const rebuildAllForumTopicMetaColumns = `-- name: RebuildAllForumTopicMetaColumns :exec
-UPDATE forumtopic
-SET threads = (
-    SELECT COUNT(idforumthread)
-    FROM forumthread
-    WHERE forumtopic_idforumtopic = idforumtopic
-), comments = (
-    SELECT SUM(comments)
-    FROM forumthread
-    WHERE forumtopic_idforumtopic = idforumtopic
-), lastaddition = (
-    SELECT lastaddition
-    FROM forumthread
-    WHERE forumtopic_idforumtopic = idforumtopic
-    ORDER BY lastaddition DESC
-    LIMIT 1
-), lastposter = (
-    SELECT lastposter
-    FROM forumthread
-    WHERE forumtopic_idforumtopic = idforumtopic
-    ORDER BY lastaddition DESC
-    LIMIT 1
-)
+const systemCreateForumTopic = `-- name: SystemCreateForumTopic :execlastid
+INSERT INTO forumtopic (forumcategory_idforumcategory, title, description) VALUES (?, ?, ?)
 `
 
-func (q *Queries) RebuildAllForumTopicMetaColumns(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, rebuildAllForumTopicMetaColumns)
-	return err
+type SystemCreateForumTopicParams struct {
+	ForumcategoryIdforumcategory int32
+	Title                        sql.NullString
+	Description                  sql.NullString
 }
 
-const rebuildForumTopicByIdMetaColumns = `-- name: RebuildForumTopicByIdMetaColumns :exec
+func (q *Queries) SystemCreateForumTopic(ctx context.Context, arg SystemCreateForumTopicParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, systemCreateForumTopic, arg.ForumcategoryIdforumcategory, arg.Title, arg.Description)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
+}
+
+const systemGetForumTopicByTitle = `-- name: SystemGetForumTopicByTitle :one
+SELECT idforumtopic, lastposter, forumcategory_idforumcategory, title, description, threads, comments, lastaddition
+FROM forumtopic
+WHERE title=?
+`
+
+func (q *Queries) SystemGetForumTopicByTitle(ctx context.Context, title sql.NullString) (*Forumtopic, error) {
+	row := q.db.QueryRowContext(ctx, systemGetForumTopicByTitle, title)
+	var i Forumtopic
+	err := row.Scan(
+		&i.Idforumtopic,
+		&i.Lastposter,
+		&i.ForumcategoryIdforumcategory,
+		&i.Title,
+		&i.Description,
+		&i.Threads,
+		&i.Comments,
+		&i.Lastaddition,
+	)
+	return &i, err
+}
+
+const systemRebuildForumTopicMetaByID = `-- name: SystemRebuildForumTopicMetaByID :exec
 UPDATE forumtopic
 SET threads = (
     SELECT COUNT(idforumthread)
@@ -702,25 +720,7 @@ SET threads = (
 WHERE idforumtopic = ?
 `
 
-func (q *Queries) RebuildForumTopicByIdMetaColumns(ctx context.Context, idforumtopic int32) error {
-	_, err := q.db.ExecContext(ctx, rebuildForumTopicByIdMetaColumns, idforumtopic)
+func (q *Queries) SystemRebuildForumTopicMetaByID(ctx context.Context, idforumtopic int32) error {
+	_, err := q.db.ExecContext(ctx, systemRebuildForumTopicMetaByID, idforumtopic)
 	return err
-}
-
-const systemCreateForumTopic = `-- name: SystemCreateForumTopic :execlastid
-INSERT INTO forumtopic (forumcategory_idforumcategory, title, description) VALUES (?, ?, ?)
-`
-
-type SystemCreateForumTopicParams struct {
-	ForumcategoryIdforumcategory int32
-	Title                        sql.NullString
-	Description                  sql.NullString
-}
-
-func (q *Queries) SystemCreateForumTopic(ctx context.Context, arg SystemCreateForumTopicParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, systemCreateForumTopic, arg.ForumcategoryIdforumcategory, arg.Title, arg.Description)
-	if err != nil {
-		return 0, err
-	}
-	return result.LastInsertId()
 }

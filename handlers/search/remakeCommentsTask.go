@@ -58,7 +58,7 @@ func (RemakeCommentsTask) BackgroundTask(ctx context.Context, q db.Querier) (tas
 		}); err != nil {
 			return nil, err
 		}
-		if err := q.SetCommentLastIndex(ctx, row.Idcomments); err != nil {
+		if err := q.SystemSetCommentLastIndex(ctx, row.Idcomments); err != nil {
 			return nil, err
 		}
 	}

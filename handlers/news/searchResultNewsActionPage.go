@@ -42,7 +42,7 @@ func SearchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	ftbn, err := queries.FindForumTopicByTitle(r.Context(), sql.NullString{Valid: true, String: NewsTopicName})
+	ftbn, err := queries.SystemGetForumTopicByTitle(r.Context(), sql.NullString{Valid: true, String: NewsTopicName})
 	if err != nil {
 		log.Printf("findForumTopicByTitle Error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -78,7 +78,7 @@ func NewsSearch(w http.ResponseWriter, r *http.Request, queries db.Querier, uid 
 
 	for i, word := range searchWords {
 		if i == 0 {
-			ids, err := queries.SiteNewsSearchFirst(r.Context(), db.SiteNewsSearchFirstParams{
+			ids, err := queries.ListSiteNewsSearchFirstForLister(r.Context(), db.ListSiteNewsSearchFirstForListerParams{
 				ListerID: uid,
 				Word: sql.NullString{
 					String: word,
@@ -97,7 +97,7 @@ func NewsSearch(w http.ResponseWriter, r *http.Request, queries db.Querier, uid 
 			}
 			newsIds = ids
 		} else {
-			ids, err := queries.SiteNewsSearchNext(r.Context(), db.SiteNewsSearchNextParams{
+			ids, err := queries.ListSiteNewsSearchNextForLister(r.Context(), db.ListSiteNewsSearchNextForListerParams{
 				ListerID: uid,
 				Word: sql.NullString{
 					String: word,

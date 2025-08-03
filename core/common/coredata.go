@@ -105,11 +105,12 @@ type CoreData struct {
 	allRoles                 lazy.Value[[]*db.Role]
 	announcement             lazy.Value[*db.GetActiveAnnouncementWithNewsForListerRow]
 	annMu                    sync.Mutex
-	bloggers                 lazy.Value[[]*db.BloggerCountRow]
+	bloggers                 lazy.Value[[]*db.ListBloggersForListerRow]
 	bookmarks                lazy.Value[*db.GetBookmarksForUserRow]
 	event                    *eventbus.TaskEvent
 	forumCategories          lazy.Value[[]*db.Forumcategory]
 	forumThreads             map[int32]*lazy.Value[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow]
+	forumTopicLists          map[int32]*lazy.Value[[]*db.Forumtopic]
 	forumTopics              map[int32]*lazy.Value[*db.GetForumTopicByIdForUserRow]
 	forumThreadRows          map[int32]*lazy.Value[*db.GetThreadLastPosterAndPermsRow]
 	forumComments            map[int32]*lazy.Value[*db.GetCommentByIdForUserRow]
@@ -125,6 +126,7 @@ type CoreData struct {
 	latestNews               lazy.Value[[]*NewsPost]
 	latestWritings           lazy.Value[[]*db.Writing]
 	linkerCategories         lazy.Value[[]*db.GetLinkerCategoryLinkCountsRow]
+	externalLinks            map[string]*lazy.Value[*db.ExternalLink]
 	newsAnnouncements        map[int32]*lazy.Value[*db.SiteAnnouncement]
 	notifCount               lazy.Value[int32]
 	notifications            map[string]*lazy.Value[[]*db.Notification]
@@ -136,16 +138,20 @@ type CoreData struct {
 	unreadCount              lazy.Value[int64]
 	subscriptions            lazy.Value[map[string]bool]
 	subscriptionRows         lazy.Value[[]*db.ListSubscriptionsByUserRow]
+	userSubscriptions        lazy.Value[[]*db.ListSubscriptionsByUserRow]
 	user                     lazy.Value[*db.User]
 	userRoles                lazy.Value[[]string]
 	visibleWritingCategories lazy.Value[[]*db.WritingCategory]
 	writerWritings           map[int32]*lazy.Value[[]*db.ListPublicWritingsByUserForListerRow]
-	writers                  lazy.Value[[]*db.WriterCountRow]
+	writers                  lazy.Value[[]*db.ListWritersForListerRow]
 	writingCategories        lazy.Value[[]*db.WritingCategory]
 	currentWritingID         int32
 	writingRows              map[int32]*lazy.Value[*db.GetWritingForListerByIDRow]
 	currentBlogID            int32
 	blogEntries              map[int32]*lazy.Value[*db.GetBlogEntryForListerByIDRow]
+	blogListOffset           int
+	blogListRows             lazy.Value[[]*db.ListBlogEntriesByAuthorForListerRow]
+	blogListUID              int32
 
 	absoluteURLBase lazy.Value[string]
 	dbRegistry      *dbdrivers.Registry
@@ -742,6 +748,32 @@ func (cd *CoreData) ForumCategories() ([]*db.Forumcategory, error) {
 	})
 }
 
+// ForumTopics loads forum topics for a given category once per category.
+func (cd *CoreData) ForumTopics(categoryID int32) ([]*db.Forumtopic, error) {
+	if cd.forumTopicLists == nil {
+		cd.forumTopicLists = make(map[int32]*lazy.Value[[]*db.Forumtopic])
+	}
+	lv, ok := cd.forumTopicLists[categoryID]
+	if !ok {
+		lv = &lazy.Value[[]*db.Forumtopic]{}
+		cd.forumTopicLists[categoryID] = lv
+	}
+	return lv.Load(func() ([]*db.Forumtopic, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		if categoryID == 0 {
+			return cd.queries.GetAllForumTopics(cd.ctx)
+		}
+		return cd.queries.GetForumTopicsByCategoryId(cd.ctx, categoryID)
+	})
+}
+
+// AdminForumTopics returns all forum topics without category filtering.
+func (cd *CoreData) AdminForumTopics() ([]*db.Forumtopic, error) {
+	return cd.ForumTopics(0)
+}
+
 // ForumThreads loads the threads for a forum topic once per topic.
 func (cd *CoreData) ForumThreads(topicID int32) ([]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow, error) {
 	if cd.forumThreads == nil {
@@ -928,8 +960,8 @@ func (cd *CoreData) PublicWritings(categoryID int32, r *http.Request) ([]*db.Lis
 }
 
 // Bloggers returns bloggers ordered by username with post counts.
-func (cd *CoreData) Bloggers(r *http.Request) ([]*db.BloggerCountRow, error) {
-	return cd.bloggers.Load(func() ([]*db.BloggerCountRow, error) {
+func (cd *CoreData) Bloggers(r *http.Request) ([]*db.ListBloggersForListerRow, error) {
+	return cd.bloggers.Load(func() ([]*db.ListBloggersForListerRow, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
@@ -937,15 +969,26 @@ func (cd *CoreData) Bloggers(r *http.Request) ([]*db.BloggerCountRow, error) {
 		ps := cd.PageSize()
 		search := r.URL.Query().Get("search")
 		if search != "" {
-			return cd.customQueries.SearchBloggers(cd.ctx, db.SearchBloggersParams{
+			like := "%" + search + "%"
+			rows, err := cd.queries.ListBloggersSearchForLister(cd.ctx, db.ListBloggersSearchForListerParams{
 				ListerID: cd.UserID,
-				Query:    search,
+				Query:    like,
+				UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 				Limit:    int32(ps + 1),
 				Offset:   int32(offset),
 			})
+			if err != nil {
+				return nil, err
+			}
+			items := make([]*db.ListBloggersForListerRow, 0, len(rows))
+			for _, r := range rows {
+				items = append(items, &db.ListBloggersForListerRow{Username: r.Username, Count: r.Count})
+			}
+			return items, nil
 		}
-		return cd.customQueries.ListBloggers(cd.ctx, db.ListBloggersParams{
+		return cd.queries.ListBloggersForLister(cd.ctx, db.ListBloggersForListerParams{
 			ListerID: cd.UserID,
+			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 			Limit:    int32(ps + 1),
 			Offset:   int32(offset),
 		})
@@ -953,8 +996,8 @@ func (cd *CoreData) Bloggers(r *http.Request) ([]*db.BloggerCountRow, error) {
 }
 
 // Writers returns writers ordered by username with article counts.
-func (cd *CoreData) Writers(r *http.Request) ([]*db.WriterCountRow, error) {
-	return cd.writers.Load(func() ([]*db.WriterCountRow, error) {
+func (cd *CoreData) Writers(r *http.Request) ([]*db.ListWritersForListerRow, error) {
+	return cd.writers.Load(func() ([]*db.ListWritersForListerRow, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
@@ -962,15 +1005,26 @@ func (cd *CoreData) Writers(r *http.Request) ([]*db.WriterCountRow, error) {
 		ps := cd.PageSize()
 		search := r.URL.Query().Get("search")
 		if search != "" {
-			return cd.customQueries.SearchWriters(cd.ctx, db.SearchWritersParams{
+			like := "%" + search + "%"
+			rows, err := cd.queries.ListWritersSearchForLister(cd.ctx, db.ListWritersSearchForListerParams{
 				ListerID: cd.UserID,
-				Query:    search,
+				Query:    like,
+				UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 				Limit:    int32(ps + 1),
 				Offset:   int32(offset),
 			})
+			if err != nil {
+				return nil, err
+			}
+			items := make([]*db.ListWritersForListerRow, 0, len(rows))
+			for _, r := range rows {
+				items = append(items, &db.ListWritersForListerRow{Username: r.Username, Count: r.Count})
+			}
+			return items, nil
 		}
-		return cd.customQueries.ListWriters(cd.ctx, db.ListWritersParams{
+		return cd.queries.ListWritersForLister(cd.ctx, db.ListWritersForListerParams{
 			ListerID: cd.UserID,
+			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 			Limit:    int32(ps + 1),
 			Offset:   int32(offset),
 		})
@@ -1036,6 +1090,48 @@ func (cd *CoreData) BlogEntryByID(id int32, ops ...lazy.Option[*db.GetBlogEntryF
 	}
 	return lazy.Map(&cd.blogEntries, &cd.mapMu, id, fetch, ops...)
 }
+
+// SetBlogListParams stores parameters for listing blogs.
+func (cd *CoreData) SetBlogListParams(uid int32, offset int) {
+	cd.blogListUID = uid
+	cd.blogListOffset = offset
+}
+
+// BlogList returns blog entries for the current parameters.
+func (cd *CoreData) BlogList() ([]*db.ListBlogEntriesByAuthorForListerRow, error) {
+	return cd.blogListRows.Load(func() ([]*db.ListBlogEntriesByAuthorForListerRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		rows, err := cd.queries.ListBlogEntriesByAuthorForLister(cd.ctx, db.ListBlogEntriesByAuthorForListerParams{
+			AuthorID: cd.blogListUID,
+			ListerID: cd.UserID,
+			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+			Limit:    15,
+			Offset:   int32(cd.blogListOffset),
+		})
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, nil
+			}
+			return nil, err
+		}
+		var list []*db.ListBlogEntriesByAuthorForListerRow
+		for _, row := range rows {
+			if !cd.HasGrant("blogs", "entry", "see", row.Idblogs) {
+				continue
+			}
+			list = append(list, row)
+		}
+		return list, nil
+	})
+}
+
+// BlogListUID returns the user ID parameter for the blog list.
+func (cd *CoreData) BlogListUID() int32 { return cd.blogListUID }
+
+// BlogListOffset returns the offset parameter for the blog list.
+func (cd *CoreData) BlogListOffset() int { return cd.blogListOffset }
 
 // CommentByID returns a forum comment lazily loading it once per ID.
 func (cd *CoreData) CommentByID(id int32, ops ...lazy.Option[*db.GetCommentByIdForUserRow]) (*db.GetCommentByIdForUserRow, error) {
@@ -1248,7 +1344,7 @@ func (cd *CoreData) UnreadNotificationCount() int64 {
 		if cd.queries == nil || cd.UserID == 0 {
 			return 0, nil
 		}
-		return cd.queries.CountUnreadNotificationsForUser(cd.ctx, cd.UserID)
+		return cd.queries.GetUnreadNotificationCountForLister(cd.ctx, cd.UserID)
 	})
 	if err != nil {
 		log.Printf("load unread notification count: %v", err)
@@ -1297,7 +1393,7 @@ func (cd *CoreData) subscriptionMap() (map[string]bool, error) {
 		if cd.queries == nil || cd.UserID == 0 {
 			return map[string]bool{}, nil
 		}
-		rows, err := cd.Subscriptions()
+		rows, err := cd.UserSubscriptions()
 		if err != nil {
 			return nil, err
 		}
@@ -1313,10 +1409,20 @@ func (cd *CoreData) subscriptionMap() (map[string]bool, error) {
 	})
 }
 
-// Subscribed reports whether the user has a subscription matching pattern.
-func (cd *CoreData) Subscribed(pattern string) bool {
+// Subscribed reports whether the user has a subscription matching pattern and method.
+func (cd *CoreData) Subscribed(pattern, method string) bool {
 	m, _ := cd.subscriptionMap()
-	return m[pattern]
+	return m[pattern+"|"+method]
+}
+
+// UserSubscriptions returns the current user's subscriptions loaded lazily.
+func (cd *CoreData) UserSubscriptions() ([]*db.ListSubscriptionsByUserRow, error) {
+	return cd.userSubscriptions.Load(func() ([]*db.ListSubscriptionsByUserRow, error) {
+		if cd.queries == nil || cd.UserID == 0 {
+			return nil, nil
+		}
+		return cd.queries.ListSubscriptionsByUser(cd.ctx, cd.UserID)
+	})
 }
 
 // HasSubscription reports whether the user has subscribed to pattern with method.
@@ -1347,6 +1453,45 @@ func (cd *CoreData) LinkerCategoryCounts() ([]*db.GetLinkerCategoryLinkCountsRow
 		}
 		return rows, nil
 	})
+}
+
+// ExternalLink lazily resolves metadata for url.
+func (cd *CoreData) ExternalLink(url string) *db.ExternalLink {
+	if cd.queries == nil {
+		return nil
+	}
+	if cd.externalLinks == nil {
+		cd.externalLinks = make(map[string]*lazy.Value[*db.ExternalLink])
+	}
+	lv, ok := cd.externalLinks[url]
+	if !ok {
+		lv = &lazy.Value[*db.ExternalLink]{}
+		cd.externalLinks[url] = lv
+	}
+	link, err := lv.Load(func() (*db.ExternalLink, error) {
+		l, err := cd.queries.GetExternalLink(cd.ctx, url)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, nil
+			}
+			return nil, err
+		}
+		return l, nil
+	})
+	if err != nil {
+		log.Printf("load external link: %v", err)
+	}
+	return link
+}
+
+// RegisterExternalLinkClick records click statistics for url.
+func (cd *CoreData) RegisterExternalLinkClick(url string) {
+	if cd.queries == nil {
+		return
+	}
+	if err := cd.queries.RegisterExternalLinkClick(cd.ctx, url); err != nil {
+		log.Printf("record external link click: %v", err)
+	}
 }
 
 // HasAdminRole reports whether the current user has the administrator role.

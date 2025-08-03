@@ -21,7 +21,7 @@ import (
 func BloggerListPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
-		Rows     []*db.BloggerCountRow
+		Rows     []*db.ListBloggersForListerRow
 		Search   string
 		NextLink string
 		PrevLink string

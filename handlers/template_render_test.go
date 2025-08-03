@@ -63,13 +63,7 @@ func TestPageTemplatesRender(t *testing.T) {
 			*common.CoreData
 			Boards any
 		}{&common.CoreData{}, nil}},
-		{"blogsPage", struct {
-			*common.CoreData
-			Rows     any
-			IsOffset bool
-			UID      string
-			Blogs    []struct{ Username string }
-		}{&common.CoreData{}, nil, false, "", []struct{ Username string }{{"test"}}}},
+		{"blogsPage", &common.CoreData{}},
 		{"writingsPage", struct {
 			*common.CoreData
 			Categories        []*db.WritingCategory

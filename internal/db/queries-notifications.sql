@@ -2,14 +2,13 @@
 INSERT INTO notifications (users_idusers, link, message)
 VALUES (sqlc.arg(recipient_id), sqlc.arg(link), sqlc.arg(message));
 
--- CountUnreadNotificationsForUser returns the number of unread notifications for a user.
+-- GetUnreadNotificationCountForLister returns the number of unread notifications for a
+-- lister.
 -- Parameters:
---   user_id - ID of the user to count notifications for
--- A clearer name for the role is "User" as it is the user's own data.
--- See specs/query_naming.md for naming conventions.
--- name: CountUnreadNotificationsForUser :one
+--   lister_id - ID of the lister to count notifications for
+-- name: GetUnreadNotificationCountForLister :one
 SELECT COUNT(*) FROM notifications
-WHERE users_idusers = sqlc.arg(user_id) AND read_at IS NULL;
+WHERE users_idusers = sqlc.arg(lister_id) AND read_at IS NULL;
 
 -- name: ListNotificationsForLister :many
 SELECT id, users_idusers, link, message, created_at, read_at
@@ -25,12 +24,12 @@ WHERE users_idusers = sqlc.arg(lister_id) AND read_at IS NULL
 ORDER BY id DESC
 LIMIT ? OFFSET ?;
 
--- name: MarkNotificationReadForLister :exec
+-- name: SetNotificationReadForLister :exec
 UPDATE notifications
 SET read_at = NOW()
 WHERE id = sqlc.arg(id) AND users_idusers = sqlc.arg(lister_id);
 
--- name: MarkNotificationUnreadForLister :exec
+-- name: SetNotificationUnreadForLister :exec
 UPDATE notifications
 SET read_at = NULL
 WHERE id = sqlc.arg(id) AND users_idusers = sqlc.arg(lister_id);

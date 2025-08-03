@@ -1,11 +1,8 @@
 {{ template "head" $ }}
 <h2>Your Subscriptions</h2>
-{{ $cd := cd }}
-{{ $subs := call $cd.Subscriptions }}
-{{ if $subs }}
 <table>
 <tr><th>Pattern</th><th>Method</th><th></th></tr>
-{{ range $subs }}
+{{ range .UserSubscriptions }}
 <tr>
 <td>{{ .Pattern }}</td>
 <td>{{ .Method }}</td>
@@ -14,14 +11,13 @@
     {{ csrfField }}
     <input type="hidden" name="id" value="{{ .ID }}">
     <input type="submit" name="task" value="Delete">
-</form>
+    </form>
 </td>
 </tr>
+{{ else }}
+<tr><td colspan="3">No subscriptions</td></tr>
 {{ end }}
 </table>
-{{ else }}
-<p>No subscriptions</p>
-{{ end }}
 
 <h3>Update Subscriptions</h3>
 <form method="post" action="/usr/subscriptions/update">

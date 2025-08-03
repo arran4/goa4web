@@ -12,9 +12,6 @@ import (
 func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Subscriptions"
-	if _, ok := core.GetSessionOrFail(w, r); !ok {
-		return
-	}
 	data := struct {
 		Options []subscriptionOption
 	}{

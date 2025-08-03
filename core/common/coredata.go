@@ -110,6 +110,7 @@ type CoreData struct {
 	event                    *eventbus.TaskEvent
 	forumCategories          lazy.Value[[]*db.Forumcategory]
 	forumThreads             map[int32]*lazy.Value[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow]
+	forumTopicLists          map[int32]*lazy.Value[[]*db.Forumtopic]
 	forumTopics              map[int32]*lazy.Value[*db.GetForumTopicByIdForUserRow]
 	forumThreadRows          map[int32]*lazy.Value[*db.GetThreadLastPosterAndPermsRow]
 	forumComments            map[int32]*lazy.Value[*db.GetCommentByIdForUserRow]
@@ -738,6 +739,32 @@ func (cd *CoreData) ForumCategories() ([]*db.Forumcategory, error) {
 		}
 		return cd.queries.GetAllForumCategories(cd.ctx)
 	})
+}
+
+// ForumTopics loads forum topics for a given category once per category.
+func (cd *CoreData) ForumTopics(categoryID int32) ([]*db.Forumtopic, error) {
+	if cd.forumTopicLists == nil {
+		cd.forumTopicLists = make(map[int32]*lazy.Value[[]*db.Forumtopic])
+	}
+	lv, ok := cd.forumTopicLists[categoryID]
+	if !ok {
+		lv = &lazy.Value[[]*db.Forumtopic]{}
+		cd.forumTopicLists[categoryID] = lv
+	}
+	return lv.Load(func() ([]*db.Forumtopic, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		if categoryID == 0 {
+			return cd.queries.GetAllForumTopics(cd.ctx)
+		}
+		return cd.queries.GetForumTopicsByCategoryId(cd.ctx, categoryID)
+	})
+}
+
+// AdminForumTopics returns all forum topics without category filtering.
+func (cd *CoreData) AdminForumTopics() ([]*db.Forumtopic, error) {
+	return cd.ForumTopics(0)
 }
 
 // ForumThreads loads the threads for a forum topic once per topic.

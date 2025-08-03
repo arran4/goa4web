@@ -1,17 +1,20 @@
 {{ template "head" $ }}
-{{ range $idx, $tid := .Order }}
-    {{ $grp := index $.Groups $tid }}
-    <h2>{{ $grp.TopicTitle }}</h2>
+{{ range $topic := call cd.AdminForumTopics }}
+    <h2>{{ $topic.Title.String }}</h2>
     <table border="1">
         <tr><th>ID<th>Posts<th>Last Addition<th>View public</tr>
-        {{ range $grp.Threads }}
+        {{ range call cd.ForumThreads $topic.Idforumtopic }}
             <tr>
                 <td><a href="/admin/forum/thread/{{ .Idforumthread }}">{{ .Idforumthread }}</a></td>
                 <td>{{ .Comments.Int32 }}</td>
                 <td>{{ .Lastaddition.Time }}</td>
                 <td><a href="/forum/topic/{{ .ForumtopicIdforumtopic }}/thread/{{ .Idforumthread }}">View</a></td>
             </tr>
+        {{ else }}
+            <tr><td colspan="4">No threads</td></tr>
         {{ end }}
     </table>
+{{ else }}
+    <p>No topics</p>
 {{ end }}
 {{ template "tail" $ }}

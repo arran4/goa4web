@@ -10,6 +10,15 @@ import (
 	"database/sql"
 )
 
+const adminApproveImagePost = `-- name: AdminApproveImagePost :exec
+UPDATE imagepost SET approved = 1 WHERE idimagepost = ?
+`
+
+func (q *Queries) AdminApproveImagePost(ctx context.Context, idimagepost int32) error {
+	_, err := q.db.ExecContext(ctx, adminApproveImagePost, idimagepost)
+	return err
+}
+
 const adminListBoards = `-- name: AdminListBoards :many
 SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required
 FROM imageboard b
@@ -48,15 +57,6 @@ func (q *Queries) AdminListBoards(ctx context.Context, arg AdminListBoardsParams
 		return nil, err
 	}
 	return items, nil
-}
-
-const approveImagePost = `-- name: ApproveImagePost :exec
-UPDATE imagepost SET approved = 1 WHERE idimagepost = ?
-`
-
-func (q *Queries) ApproveImagePost(ctx context.Context, idimagepost int32) error {
-	_, err := q.db.ExecContext(ctx, approveImagePost, idimagepost)
-	return err
 }
 
 const createImageBoard = `-- name: CreateImageBoard :exec

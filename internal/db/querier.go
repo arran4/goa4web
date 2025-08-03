@@ -80,6 +80,7 @@ type Querier interface {
 	AdminGetRequestByID(ctx context.Context, id int32) (*AdminRequestQueue, error)
 	// admin task
 	AdminGetRoleByID(ctx context.Context, id int32) (*Role, error)
+	AdminGetRoleByNameForUser(ctx context.Context, arg AdminGetRoleByNameForUserParams) (int32, error)
 	AdminGetSearchStats(ctx context.Context) (*AdminGetSearchStatsRow, error)
 	AdminGetThreadsStartedByUser(ctx context.Context, usersIdusers int32) ([]*Forumthread, error)
 	AdminGetThreadsStartedByUserWithTopic(ctx context.Context, usersIdusers int32) ([]*AdminGetThreadsStartedByUserWithTopicRow, error)
@@ -88,6 +89,7 @@ type Querier interface {
 	AdminInsertBannedIp(ctx context.Context, arg AdminInsertBannedIpParams) error
 	// AdminInsertLanguage adds a new language returning a result.
 	AdminInsertLanguage(ctx context.Context, nameof sql.NullString) (sql.Result, error)
+	AdminInsertQueuedLinkFromQueue(ctx context.Context, arg AdminInsertQueuedLinkFromQueueParams) (int64, error)
 	AdminInsertRequestComment(ctx context.Context, arg AdminInsertRequestCommentParams) error
 	AdminInsertRequestQueue(ctx context.Context, arg AdminInsertRequestQueueParams) (sql.Result, error)
 	AdminInsertWritingCategory(ctx context.Context, arg AdminInsertWritingCategoryParams) error
@@ -146,13 +148,16 @@ type Querier interface {
 	// admin task
 	AdminPromoteAnnouncement(ctx context.Context, siteNewsID int32) error
 	AdminPurgeReadNotifications(ctx context.Context) error
+	AdminRebuildAllForumTopicMetaColumns(ctx context.Context) error
 	AdminRecalculateAllForumThreadMetaData(ctx context.Context) error
 	AdminRecalculateForumThreadByIdMetaData(ctx context.Context, idforumthread int32) error
+	AdminRenameFAQCategory(ctx context.Context, arg AdminRenameFAQCategoryParams) error
 	// AdminRenameLanguage updates the language name.
 	// Parameters:
 	//   ? - New name for the language (string)
 	//   ? - Language ID to be updated (int)
 	AdminRenameLanguage(ctx context.Context, arg AdminRenameLanguageParams) error
+	AdminRenameLinkerCategory(ctx context.Context, arg AdminRenameLinkerCategoryParams) error
 	AdminRestoreBlog(ctx context.Context, arg AdminRestoreBlogParams) error
 	AdminRestoreComment(ctx context.Context, arg AdminRestoreCommentParams) error
 	AdminRestoreImagepost(ctx context.Context, arg AdminRestoreImagepostParams) error
@@ -165,6 +170,7 @@ type Querier interface {
 	AdminScrubLink(ctx context.Context, arg AdminScrubLinkParams) error
 	AdminScrubUser(ctx context.Context, arg AdminScrubUserParams) error
 	AdminScrubWriting(ctx context.Context, arg AdminScrubWritingParams) error
+	AdminSetAnnouncementActive(ctx context.Context, arg AdminSetAnnouncementActiveParams) error
 	AdminSetTemplateOverride(ctx context.Context, arg AdminSetTemplateOverrideParams) error
 	AdminUpdateBannedIp(ctx context.Context, arg AdminUpdateBannedIpParams) error
 	AdminUpdateFAQQuestionAnswer(ctx context.Context, arg AdminUpdateFAQQuestionAnswerParams) error
@@ -189,12 +195,6 @@ type Querier interface {
 	AdminWordListWithCounts(ctx context.Context, arg AdminWordListWithCountsParams) ([]*AdminWordListWithCountsRow, error)
 	AdminWordListWithCountsByPrefix(ctx context.Context, arg AdminWordListWithCountsByPrefixParams) ([]*AdminWordListWithCountsByPrefixRow, error)
 	AdminWritingCategoryCounts(ctx context.Context) ([]*AdminWritingCategoryCountsRow, error)
-	// CountUnreadNotificationsForUser returns the number of unread notifications for a user.
-	// Parameters:
-	//   user_id - ID of the user to count notifications for
-	// A clearer name for the role is "User" as it is the user's own data.
-	// See specs/query_naming.md for naming conventions.
-	CountUnreadNotificationsForUser(ctx context.Context, userID int32) (int64, error)
 	CreateBlogEntryForWriter(ctx context.Context, arg CreateBlogEntryForWriterParams) (int64, error)
 	// This query adds a new entry to the "bookmarks" table for a lister.
 	CreateBookmarksForLister(ctx context.Context, arg CreateBookmarksForListerParams) error
@@ -211,7 +211,6 @@ type Querier interface {
 	DeleteSubscriptionForSubscriber(ctx context.Context, arg DeleteSubscriptionForSubscriberParams) error
 	DeleteUserEmailForOwner(ctx context.Context, arg DeleteUserEmailForOwnerParams) error
 	DeleteUserLanguagesForUser(ctx context.Context, userID int32) error
-	FindForumTopicByTitle(ctx context.Context, title sql.NullString) (*Forumtopic, error)
 	GetActiveAnnouncementWithNewsForLister(ctx context.Context, arg GetActiveAnnouncementWithNewsForListerParams) (*GetActiveAnnouncementWithNewsForListerRow, error)
 	GetAdministratorUserRole(ctx context.Context, usersIdusers int32) (*UserRole, error)
 	GetAllAnsweredFAQWithFAQCategoriesForUser(ctx context.Context, arg GetAllAnsweredFAQWithFAQCategoriesForUserParams) ([]*GetAllAnsweredFAQWithFAQCategoriesForUserRow, error)
@@ -273,6 +272,7 @@ type Querier interface {
 	GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUser(ctx context.Context, arg GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUserParams) ([]*GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUserRow, error)
 	GetLinkerItemsByUserDescending(ctx context.Context, arg GetLinkerItemsByUserDescendingParams) ([]*GetLinkerItemsByUserDescendingRow, error)
 	GetLinkerItemsByUserDescendingForUser(ctx context.Context, arg GetLinkerItemsByUserDescendingForUserParams) ([]*GetLinkerItemsByUserDescendingForUserRow, error)
+	GetLoginRoleForUser(ctx context.Context, usersIdusers int32) (int32, error)
 	GetMaxNotificationPriority(ctx context.Context, userID int32) (interface{}, error)
 	GetNewsPostByIdWithWriterIdAndThreadCommentCount(ctx context.Context, arg GetNewsPostByIdWithWriterIdAndThreadCommentCountParams) (*GetNewsPostByIdWithWriterIdAndThreadCommentCountRow, error)
 	GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCount(ctx context.Context, arg GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountParams) ([]*GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountRow, error)
@@ -286,8 +286,14 @@ type Querier interface {
 	GetPermissionsByUserID(ctx context.Context, usersIdusers int32) ([]*GetPermissionsByUserIDRow, error)
 	GetPermissionsWithUsers(ctx context.Context, arg GetPermissionsWithUsersParams) ([]*GetPermissionsWithUsersRow, error)
 	GetPreferenceForLister(ctx context.Context, listerID int32) (*Preference, error)
+	GetPublicProfileRoleForUser(ctx context.Context, usersIdusers int32) (int32, error)
 	GetPublicWritings(ctx context.Context, arg GetPublicWritingsParams) ([]*Writing, error)
 	GetThreadLastPosterAndPerms(ctx context.Context, arg GetThreadLastPosterAndPermsParams) (*GetThreadLastPosterAndPermsRow, error)
+	// GetUnreadNotificationCountForLister returns the number of unread notifications for a
+	// lister.
+	// Parameters:
+	//   lister_id - ID of the lister to count notifications for
+	GetUnreadNotificationCountForLister(ctx context.Context, listerID int32) (int64, error)
 	GetUserEmailByCode(ctx context.Context, lastVerificationCode sql.NullString) (*UserEmail, error)
 	GetUserEmailByEmail(ctx context.Context, email string) (*UserEmail, error)
 	GetUserEmailByID(ctx context.Context, id int32) (*UserEmail, error)
@@ -304,7 +310,6 @@ type Querier interface {
 	GetUserRoles(ctx context.Context) ([]*GetUserRolesRow, error)
 	GetWritingCategoryById(ctx context.Context, idwritingcategory int32) (*WritingCategory, error)
 	GetWritingForListerByID(ctx context.Context, arg GetWritingForListerByIDParams) (*GetWritingForListerByIDRow, error)
-	IncrementEmailError(ctx context.Context, id int32) error
 	InsertAdminUserComment(ctx context.Context, arg InsertAdminUserCommentParams) error
 	InsertAuditLog(ctx context.Context, arg InsertAuditLogParams) error
 	InsertEmailPreferenceForLister(ctx context.Context, arg InsertEmailPreferenceForListerParams) error
@@ -344,6 +349,8 @@ type Querier interface {
 	ListNotificationsForLister(ctx context.Context, arg ListNotificationsForListerParams) ([]*Notification, error)
 	ListPublicWritingsByUserForLister(ctx context.Context, arg ListPublicWritingsByUserForListerParams) ([]*ListPublicWritingsByUserForListerRow, error)
 	ListPublicWritingsInCategoryForLister(ctx context.Context, arg ListPublicWritingsInCategoryForListerParams) ([]*ListPublicWritingsInCategoryForListerRow, error)
+	ListSiteNewsSearchFirstForLister(ctx context.Context, arg ListSiteNewsSearchFirstForListerParams) ([]int32, error)
+	ListSiteNewsSearchNextForLister(ctx context.Context, arg ListSiteNewsSearchNextForListerParams) ([]int32, error)
 	ListSubscribersForPattern(ctx context.Context, arg ListSubscribersForPatternParams) ([]int32, error)
 	ListSubscribersForPatterns(ctx context.Context, arg ListSubscribersForPatternsParams) ([]int32, error)
 	ListSubscriptionsByUser(ctx context.Context, usersIdusers int32) ([]*ListSubscriptionsByUserRow, error)
@@ -354,30 +361,13 @@ type Querier interface {
 	ListWritersForLister(ctx context.Context, arg ListWritersForListerParams) ([]*ListWritersForListerRow, error)
 	ListWritersSearchForLister(ctx context.Context, arg ListWritersSearchForListerParams) ([]*ListWritersSearchForListerRow, error)
 	ListWritingCategoriesForLister(ctx context.Context, arg ListWritingCategoriesForListerParams) ([]*WritingCategory, error)
+	ListWritingSearchFirstForLister(ctx context.Context, arg ListWritingSearchFirstForListerParams) ([]int32, error)
+	ListWritingSearchNextForLister(ctx context.Context, arg ListWritingSearchNextForListerParams) ([]int32, error)
 	ListWritingsByIDsForLister(ctx context.Context, arg ListWritingsByIDsForListerParams) ([]*ListWritingsByIDsForListerRow, error)
-	MakeThread(ctx context.Context, forumtopicIdforumtopic int32) (int64, error)
-	MarkEmailSent(ctx context.Context, id int32) error
-	MarkNotificationReadForLister(ctx context.Context, arg MarkNotificationReadForListerParams) error
-	MarkNotificationUnreadForLister(ctx context.Context, arg MarkNotificationUnreadForListerParams) error
-	MarkPasswordResetVerified(ctx context.Context, id int32) error
-	// Remove password reset entries that have expired or were already verified
-	PurgePasswordResetsBefore(ctx context.Context, createdAt time.Time) (sql.Result, error)
-	RebuildAllForumTopicMetaColumns(ctx context.Context) error
-	RebuildForumTopicByIdMetaColumns(ctx context.Context, idforumtopic int32) error
-	RegisterExternalLinkClick(ctx context.Context, url string) error
-	RenameFAQCategory(ctx context.Context, arg RenameFAQCategoryParams) error
-	RenameLinkerCategory(ctx context.Context, arg RenameLinkerCategoryParams) error
-	SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId(ctx context.Context, arg SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueIdParams) (int64, error)
-	SetAnnouncementActive(ctx context.Context, arg SetAnnouncementActiveParams) error
-	SetCommentLastIndex(ctx context.Context, idcomments int32) error
-	SetImagePostLastIndex(ctx context.Context, idimagepost int32) error
-	SetLinkerLastIndex(ctx context.Context, idlinker int32) error
-	SetNotificationPriority(ctx context.Context, arg SetNotificationPriorityParams) error
-	SetSiteNewsLastIndex(ctx context.Context, idsitenews int32) error
-	SetVerificationCode(ctx context.Context, arg SetVerificationCodeParams) error
-	SetWritingLastIndex(ctx context.Context, idwriting int32) error
-	SiteNewsSearchFirst(ctx context.Context, arg SiteNewsSearchFirstParams) ([]int32, error)
-	SiteNewsSearchNext(ctx context.Context, arg SiteNewsSearchNextParams) ([]int32, error)
+	SetNotificationPriorityForLister(ctx context.Context, arg SetNotificationPriorityForListerParams) error
+	SetNotificationReadForLister(ctx context.Context, arg SetNotificationReadForListerParams) error
+	SetNotificationUnreadForLister(ctx context.Context, arg SetNotificationUnreadForListerParams) error
+	SetVerificationCodeForLister(ctx context.Context, arg SetVerificationCodeForListerParams) error
 	SystemAddToBlogsSearch(ctx context.Context, arg SystemAddToBlogsSearchParams) error
 	SystemAddToForumCommentSearch(ctx context.Context, arg SystemAddToForumCommentSearchParams) error
 	SystemAddToForumWritingSearch(ctx context.Context, arg SystemAddToForumWritingSearchParams) error
@@ -398,6 +388,7 @@ type Querier interface {
 	SystemCreateForumTopic(ctx context.Context, arg SystemCreateForumTopicParams) (int64, error)
 	SystemCreateNotification(ctx context.Context, arg SystemCreateNotificationParams) error
 	SystemCreateSearchWord(ctx context.Context, word string) (int64, error)
+	SystemCreateThread(ctx context.Context, forumtopicIdforumtopic int32) (int64, error)
 	// This query inserts a new permission into the "permissions" table.
 	// Parameters:
 	//   ? - User ID to be associated with the permission (int)
@@ -422,6 +413,7 @@ type Querier interface {
 	SystemDeleteWritingSearch(ctx context.Context) error
 	SystemDeleteWritingSearchByWritingID(ctx context.Context, writingID int32) error
 	SystemGetAllBlogsForIndex(ctx context.Context) ([]*SystemGetAllBlogsForIndexRow, error)
+	SystemGetForumTopicByTitle(ctx context.Context, title sql.NullString) (*Forumtopic, error)
 	// SystemGetLanguageIDByName resolves a language ID by name.
 	SystemGetLanguageIDByName(ctx context.Context, nameof sql.NullString) (int32, error)
 	SystemGetLastNotificationForRecipientByMessage(ctx context.Context, arg SystemGetLastNotificationForRecipientByMessageParams) (*Notification, error)
@@ -431,6 +423,7 @@ type Querier interface {
 	SystemGetUserByEmail(ctx context.Context, email string) (*SystemGetUserByEmailRow, error)
 	SystemGetUserByID(ctx context.Context, idusers int32) (*SystemGetUserByIDRow, error)
 	SystemGetUserByUsername(ctx context.Context, username sql.NullString) (*SystemGetUserByUsernameRow, error)
+	SystemIncrementPendingEmailError(ctx context.Context, id int32) error
 	// System query only used internally
 	SystemInsertDeadLetter(ctx context.Context, message string) error
 	SystemInsertLoginAttempt(ctx context.Context, arg SystemInsertLoginAttemptParams) error
@@ -447,9 +440,20 @@ type Querier interface {
 	SystemListUserInfo(ctx context.Context) ([]*SystemListUserInfoRow, error)
 	SystemListVerifiedEmailsByUserID(ctx context.Context, userID int32) ([]*UserEmail, error)
 	SystemListWritingCategories(ctx context.Context, arg SystemListWritingCategoriesParams) ([]*WritingCategory, error)
+	SystemMarkPasswordResetVerified(ctx context.Context, id int32) error
+	SystemMarkPendingEmailSent(ctx context.Context, id int32) error
 	SystemMarkUserEmailVerified(ctx context.Context, arg SystemMarkUserEmailVerifiedParams) error
 	SystemPurgeDeadLettersBefore(ctx context.Context, createdAt time.Time) error
+	// Remove password reset entries that have expired or were already verified
+	SystemPurgePasswordResetsBefore(ctx context.Context, createdAt time.Time) (sql.Result, error)
+	SystemRebuildForumTopicMetaByID(ctx context.Context, idforumtopic int32) error
+	SystemRegisterExternalLinkClick(ctx context.Context, url string) error
 	SystemSetBlogLastIndex(ctx context.Context, id int32) error
+	SystemSetCommentLastIndex(ctx context.Context, idcomments int32) error
+	SystemSetImagePostLastIndex(ctx context.Context, idimagepost int32) error
+	SystemSetLinkerLastIndex(ctx context.Context, idlinker int32) error
+	SystemSetSiteNewsLastIndex(ctx context.Context, idsitenews int32) error
+	SystemSetWritingLastIndex(ctx context.Context, idwriting int32) error
 	UpdateAutoSubscribeRepliesForLister(ctx context.Context, arg UpdateAutoSubscribeRepliesForListerParams) error
 	UpdateBlogEntryForWriter(ctx context.Context, arg UpdateBlogEntryForWriterParams) error
 	// This query updates the "list" column in the "bookmarks" table for a specific lister.
@@ -460,11 +464,6 @@ type Querier interface {
 	UpdatePreferenceForLister(ctx context.Context, arg UpdatePreferenceForListerParams) error
 	UpdatePublicProfileEnabledAtForUser(ctx context.Context, arg UpdatePublicProfileEnabledAtForUserParams) error
 	UpdateWritingForWriter(ctx context.Context, arg UpdateWritingForWriterParams) error
-	UserHasLoginRole(ctx context.Context, usersIdusers int32) (int32, error)
-	UserHasPublicProfileRole(ctx context.Context, usersIdusers int32) (int32, error)
-	UserHasRole(ctx context.Context, arg UserHasRoleParams) (int32, error)
-	WritingSearchFirst(ctx context.Context, arg WritingSearchFirstParams) ([]int32, error)
-	WritingSearchNext(ctx context.Context, arg WritingSearchNextParams) ([]int32, error)
 }
 
 var _ Querier = (*Queries)(nil)

@@ -15,7 +15,6 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
-	"github.com/gorilla/mux"
 )
 
 // ModifyBoardTask updates an existing board's settings.
@@ -38,11 +37,11 @@ func (ModifyBoardTask) AdminInternalNotificationTemplate() *string {
 func (ModifyBoardTask) Action(w http.ResponseWriter, r *http.Request) any {
 	name := r.PostFormValue("name")
 	desc := r.PostFormValue("desc")
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	parentBoardId, _ := strconv.Atoi(r.PostFormValue("pbid"))
-	vars := mux.Vars(r)
-	bid, _ := strconv.Atoi(vars["board"])
+	bid := cd.SelectedBoard()
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 
 	boards, err := queries.AdminListBoards(r.Context(), db.AdminListBoardsParams{Limit: 200, Offset: 0})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
@@ -78,24 +77,10 @@ func AdminBoardPage(w http.ResponseWriter, r *http.Request) {
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Edit Image Board"
-	queries := cd.Queries()
 
-	vars := mux.Vars(r)
-	bid, err := strconv.Atoi(vars["board"])
-	if err != nil {
+	bid := cd.SelectedBoard()
+	if bid == 0 {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
-		return
-	}
-
-	board, err := queries.GetImageBoardById(r.Context(), int32(bid))
-	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-			http.NotFound(w, r)
-		default:
-			log.Printf("getImageBoard error: %v", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		}
 		return
 	}
 
@@ -103,6 +88,18 @@ func AdminBoardPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("imageBoards error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	var board *db.Imageboard
+	for _, b := range boards {
+		if int(b.Idimageboard) == bid {
+			board = b
+			break
+		}
+	}
+	if board == nil {
+		http.NotFound(w, r)
 		return
 	}
 

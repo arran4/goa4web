@@ -777,15 +777,6 @@ func (q *Queries) ListImagePostsByPosterForLister(ctx context.Context, arg ListI
 	return items, nil
 }
 
-const setImagePostLastIndex = `-- name: SetImagePostLastIndex :exec
-UPDATE imagepost SET last_index = NOW() WHERE idimagepost = ?
-`
-
-func (q *Queries) SetImagePostLastIndex(ctx context.Context, idimagepost int32) error {
-	_, err := q.db.ExecContext(ctx, setImagePostLastIndex, idimagepost)
-	return err
-}
-
 const systemAssignImagePostThreadID = `-- name: SystemAssignImagePostThreadID :exec
 UPDATE imagepost SET forumthread_id = ? WHERE idimagepost = ?
 `
@@ -840,4 +831,13 @@ func (q *Queries) SystemListBoardsByParentID(ctx context.Context, arg SystemList
 		return nil, err
 	}
 	return items, nil
+}
+
+const systemSetImagePostLastIndex = `-- name: SystemSetImagePostLastIndex :exec
+UPDATE imagepost SET last_index = NOW() WHERE idimagepost = ?
+`
+
+func (q *Queries) SystemSetImagePostLastIndex(ctx context.Context, idimagepost int32) error {
+	_, err := q.db.ExecContext(ctx, systemSetImagePostLastIndex, idimagepost)
+	return err
 }

@@ -3,7 +3,6 @@ package forum
 import (
 	"database/sql"
 	"github.com/arran4/goa4web/core/consts"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -16,43 +15,10 @@ import (
 )
 
 func AdminThreadsPage(w http.ResponseWriter, r *http.Request) {
-	type Group struct {
-		TopicTitle string
-		Threads    []*db.GetAllForumThreadsWithTopicRow
-	}
-	type Data struct {
-		*common.CoreData
-		Groups map[int32]*Group
-		Order  []int32
-	}
-
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Forum Admin Threads"
-	queries := cd.Queries()
 
-	rows, err := queries.GetAllForumThreadsWithTopic(r.Context())
-	if err != nil {
-		log.Printf("GetAllForumThreadsWithTopic: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	data := Data{
-		CoreData: cd,
-		Groups:   make(map[int32]*Group),
-	}
-
-	for _, row := range rows {
-		g, ok := data.Groups[row.ForumtopicIdforumtopic]
-		if !ok {
-			g = &Group{TopicTitle: row.TopicTitle.String}
-			data.Groups[row.ForumtopicIdforumtopic] = g
-			data.Order = append(data.Order, row.ForumtopicIdforumtopic)
-		}
-		g.Threads = append(g.Threads, row)
-	}
-
-	handlers.TemplateHandler(w, r, "adminThreadsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "adminThreadsPage.gohtml", cd)
 }
 
 func AdminThreadDeletePage(w http.ResponseWriter, r *http.Request) {
@@ -61,13 +27,13 @@ func AdminThreadDeletePage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	topicID, err := queries.GetForumTopicIdByThreadId(r.Context(), int32(threadID))
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	topicID, err := cd.Queries().GetForumTopicIdByThreadId(r.Context(), int32(threadID))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	if err := ThreadDelete(r.Context(), queries, int32(threadID), topicID); err != nil {
+	if err := ThreadDelete(r.Context(), cd.Queries(), int32(threadID), topicID); err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
@@ -83,12 +49,10 @@ func AdminThreadDeleteConfirmPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Confirm forum thread delete"
 	data := struct {
-		*common.CoreData
 		Message      string
 		ConfirmLabel string
 		Back         string
 	}{
-		CoreData:     cd,
 		Message:      "Are you sure you want to delete forum thread " + strconv.Itoa(threadID) + "?",
 		ConfirmLabel: "Confirm delete",
 		Back:         "/admin/forum/thread/" + strconv.Itoa(threadID),
@@ -103,7 +67,6 @@ func AdminThreadPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := cd.Queries()
 
 	session, _ := core.GetSession(r)
 	var uid int32
@@ -111,7 +74,7 @@ func AdminThreadPage(w http.ResponseWriter, r *http.Request) {
 		uid, _ = session.Values["UID"].(int32)
 	}
 
-	threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
+	threadRow, err := cd.Queries().GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
 		ViewerID:      uid,
 		ThreadID:      int32(threadID),
 		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
@@ -123,11 +86,9 @@ func AdminThreadPage(w http.ResponseWriter, r *http.Request) {
 
 	cd.PageTitle = "Forum Admin Thread"
 	data := struct {
-		*common.CoreData
 		Thread *db.GetThreadLastPosterAndPermsRow
 	}{
-		CoreData: cd,
-		Thread:   threadRow,
+		Thread: threadRow,
 	}
 
 	handlers.TemplateHandler(w, r, "adminThreadPage.gohtml", data)

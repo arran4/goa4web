@@ -99,7 +99,7 @@ func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) any {
 	}
 	code := hex.EncodeToString(buf[:])
 	expire := time.Now().Add(24 * time.Hour)
-	if err := queries.SetVerificationCode(r.Context(), db.SetVerificationCodeParams{LastVerificationCode: sql.NullString{String: code, Valid: true}, VerificationExpiresAt: sql.NullTime{Time: expire, Valid: true}, ID: int32(id)}); err != nil {
+	if err := queries.SetVerificationCodeForLister(r.Context(), db.SetVerificationCodeForListerParams{ListerID: uid, LastVerificationCode: sql.NullString{String: code, Valid: true}, VerificationExpiresAt: sql.NullTime{Time: expire, Valid: true}, ID: int32(id)}); err != nil {
 		log.Printf("set verification code: %v", err)
 	}
 	path := "/usr/email/verify?code=" + code
@@ -139,7 +139,7 @@ func (AddEmailTask) Notify(w http.ResponseWriter, r *http.Request) {
 	case int32:
 		maxPr = v
 	}
-	if err := queries.SetNotificationPriority(r.Context(), db.SetNotificationPriorityParams{NotificationPriority: maxPr + 1, ID: int32(id)}); err != nil {
+	if err := queries.SetNotificationPriorityForLister(r.Context(), db.SetNotificationPriorityForListerParams{ListerID: uid, NotificationPriority: maxPr + 1, ID: int32(id)}); err != nil {
 		log.Printf("set notification priority: %v", err)
 	}
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)

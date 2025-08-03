@@ -2,8 +2,10 @@
     Please select used language:
     <select name="language">
         <option value="0">Multi-lingual
-        {{range $.Languages}}
+        {{range cd.Languages}}
             <option value="{{.Idlanguage}}"{{if eq .Idlanguage $.SelectedLanguageId}} selected{{end}}>{{.Nameof.String}}
+        {{else}}
+            <option disabled>No languages</option>
         {{end}}
     </select><br>
 {{ end }}

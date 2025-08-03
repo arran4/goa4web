@@ -521,12 +521,12 @@ func (q *Queries) GetCommentsByThreadIdForUser(ctx context.Context, arg GetComme
 	return items, nil
 }
 
-const setCommentLastIndex = `-- name: SetCommentLastIndex :exec
+const systemSetCommentLastIndex = `-- name: SystemSetCommentLastIndex :exec
 UPDATE comments SET last_index = NOW() WHERE idcomments = ?
 `
 
-func (q *Queries) SetCommentLastIndex(ctx context.Context, idcomments int32) error {
-	_, err := q.db.ExecContext(ctx, setCommentLastIndex, idcomments)
+func (q *Queries) SystemSetCommentLastIndex(ctx context.Context, idcomments int32) error {
+	_, err := q.db.ExecContext(ctx, systemSetCommentLastIndex, idcomments)
 	return err
 }
 

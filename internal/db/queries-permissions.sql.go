@@ -69,6 +69,26 @@ func (q *Queries) AdminDeleteUserRole(ctx context.Context, iduserRoles int32) er
 	return err
 }
 
+const adminGetRoleByNameForUser = `-- name: AdminGetRoleByNameForUser :one
+SELECT 1
+FROM user_roles ur
+JOIN roles r ON ur.role_id = r.id
+WHERE ur.users_idusers = ? AND r.name = ?
+LIMIT 1
+`
+
+type AdminGetRoleByNameForUserParams struct {
+	UsersIdusers int32
+	Name         string
+}
+
+func (q *Queries) AdminGetRoleByNameForUser(ctx context.Context, arg AdminGetRoleByNameForUserParams) (int32, error) {
+	row := q.db.QueryRowContext(ctx, adminGetRoleByNameForUser, arg.UsersIdusers, arg.Name)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const adminUpdateUserRole = `-- name: AdminUpdateUserRole :exec
 UPDATE user_roles SET role_id = (SELECT id FROM roles WHERE name = ?) WHERE iduser_roles = ?
 `
@@ -95,6 +115,21 @@ func (q *Queries) GetAdministratorUserRole(ctx context.Context, usersIdusers int
 	var i UserRole
 	err := row.Scan(&i.IduserRoles, &i.UsersIdusers, &i.RoleID)
 	return &i, err
+}
+
+const getLoginRoleForUser = `-- name: GetLoginRoleForUser :one
+SELECT 1
+FROM user_roles ur
+JOIN roles r ON ur.role_id = r.id
+WHERE ur.users_idusers = ? AND r.can_login = 1
+LIMIT 1
+`
+
+func (q *Queries) GetLoginRoleForUser(ctx context.Context, usersIdusers int32) (int32, error) {
+	row := q.db.QueryRowContext(ctx, getLoginRoleForUser, usersIdusers)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
 }
 
 const getPermissionsByUserID = `-- name: GetPermissionsByUserID :many
@@ -188,6 +223,21 @@ func (q *Queries) GetPermissionsWithUsers(ctx context.Context, arg GetPermission
 		return nil, err
 	}
 	return items, nil
+}
+
+const getPublicProfileRoleForUser = `-- name: GetPublicProfileRoleForUser :one
+SELECT 1
+FROM user_roles ur
+JOIN roles r ON ur.role_id = r.id
+WHERE ur.users_idusers = ? AND r.public_profile_allowed_at IS NOT NULL
+LIMIT 1
+`
+
+func (q *Queries) GetPublicProfileRoleForUser(ctx context.Context, usersIdusers int32) (int32, error) {
+	row := q.db.QueryRowContext(ctx, getPublicProfileRoleForUser, usersIdusers)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
 }
 
 const getUserRole = `-- name: GetUserRole :one
@@ -489,54 +539,4 @@ type SystemCreateUserRoleParams struct {
 func (q *Queries) SystemCreateUserRole(ctx context.Context, arg SystemCreateUserRoleParams) error {
 	_, err := q.db.ExecContext(ctx, systemCreateUserRole, arg.UsersIdusers, arg.Name)
 	return err
-}
-
-const userHasLoginRole = `-- name: UserHasLoginRole :one
-SELECT 1
-FROM user_roles ur
-JOIN roles r ON ur.role_id = r.id
-WHERE ur.users_idusers = ? AND r.can_login = 1
-LIMIT 1
-`
-
-func (q *Queries) UserHasLoginRole(ctx context.Context, usersIdusers int32) (int32, error) {
-	row := q.db.QueryRowContext(ctx, userHasLoginRole, usersIdusers)
-	var column_1 int32
-	err := row.Scan(&column_1)
-	return column_1, err
-}
-
-const userHasPublicProfileRole = `-- name: UserHasPublicProfileRole :one
-SELECT 1
-FROM user_roles ur
-JOIN roles r ON ur.role_id = r.id
-WHERE ur.users_idusers = ? AND r.public_profile_allowed_at IS NOT NULL
-LIMIT 1
-`
-
-func (q *Queries) UserHasPublicProfileRole(ctx context.Context, usersIdusers int32) (int32, error) {
-	row := q.db.QueryRowContext(ctx, userHasPublicProfileRole, usersIdusers)
-	var column_1 int32
-	err := row.Scan(&column_1)
-	return column_1, err
-}
-
-const userHasRole = `-- name: UserHasRole :one
-SELECT 1
-FROM user_roles ur
-JOIN roles r ON ur.role_id = r.id
-WHERE ur.users_idusers = ? AND r.name = ?
-LIMIT 1
-`
-
-type UserHasRoleParams struct {
-	UsersIdusers int32
-	Name         string
-}
-
-func (q *Queries) UserHasRole(ctx context.Context, arg UserHasRoleParams) (int32, error) {
-	row := q.db.QueryRowContext(ctx, userHasRole, arg.UsersIdusers, arg.Name)
-	var column_1 int32
-	err := row.Scan(&column_1)
-	return column_1, err
 }

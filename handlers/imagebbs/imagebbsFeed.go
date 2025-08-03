@@ -9,14 +9,12 @@ import (
 	"log"
 	"net/http"
 	"sort"
-	"strconv"
 	"time"
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/feeds"
-	"github.com/gorilla/mux"
 )
 
 func imagebbsFeed(r *http.Request, title string, boardID int, rows []*db.ListImagePostsByBoardForListerRow) *feeds.Feed {
@@ -142,10 +140,9 @@ func AtomPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func BoardRssPage(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	bid, _ := strconv.Atoi(vars["boardno"])
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	bid := cd.SelectedBoard()
+	queries := cd.Queries()
 	if !cd.HasGrant("imagebbs", "board", "see", int32(bid)) {
 		_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd)
 		return
@@ -188,10 +185,9 @@ func BoardRssPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func BoardAtomPage(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	bid, _ := strconv.Atoi(vars["boardno"])
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	bid := cd.SelectedBoard()
+	queries := cd.Queries()
 	if !cd.HasGrant("imagebbs", "board", "see", int32(bid)) {
 		_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd)
 		return

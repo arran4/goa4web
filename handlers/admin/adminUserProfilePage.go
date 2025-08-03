@@ -1,9 +1,7 @@
 package admin
 
 import (
-	"database/sql"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"strconv"
 	"strings"
@@ -11,54 +9,20 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 )
 
 func adminUserProfilePage(w http.ResponseWriter, r *http.Request) {
-	idStr := mux.Vars(r)["id"]
-	id, _ := strconv.Atoi(idStr)
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := cd.Queries()
-	user, err := queries.SystemGetUserByID(r.Context(), int32(id))
-	if err != nil {
+	user := cd.CurrentProfileUser()
+	if user == nil {
 		http.Error(w, "user not found", http.StatusNotFound)
 		return
 	}
-	emails, _ := queries.AdminListUserEmails(r.Context(), int32(id))
-	comments, _ := queries.ListAdminUserComments(r.Context(), int32(id))
-	roles, _ := queries.GetPermissionsByUserID(r.Context(), int32(id))
-	stats, _ := queries.AdminUserPostCountsByID(r.Context(), int32(id))
-	bm, _ := queries.GetBookmarksForUser(r.Context(), int32(id))
-	var bmSize int
-	if bm != nil {
-		list := strings.TrimSpace(bm.List.String)
-		if list != "" {
-			bmSize = len(strings.Split(list, "\n"))
-		}
-	}
-	grants, _ := queries.ListGrantsByUserID(r.Context(), sql.NullInt32{Int32: int32(id), Valid: true})
 	cd.PageTitle = fmt.Sprintf("User %s", user.Username.String)
-	data := struct {
-		*common.CoreData
-		User         *db.User
-		Emails       []*db.UserEmail
-		Comments     []*db.AdminUserComment
-		Roles        []*db.GetPermissionsByUserIDRow
-		Stats        *db.AdminUserPostCountsByIDRow
-		BookmarkSize int
-		Grants       []*db.Grant
-	}{
-		CoreData:     cd,
-		User:         &db.User{Idusers: user.Idusers, Username: user.Username},
-		Emails:       emails,
-		Comments:     comments,
-		Roles:        roles,
-		Stats:        stats,
-		BookmarkSize: bmSize,
-		Grants:       grants,
-	}
-	handlers.TemplateHandler(w, r, "userProfile.gohtml", data)
+	handlers.TemplateHandler(w, r, "userProfile.gohtml", cd)
 }
 
 func adminUserAddCommentPage(w http.ResponseWriter, r *http.Request) {

@@ -18,7 +18,7 @@ import (
 func userPublicProfileSettingPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Public Profile"
-	if _, err := cd.Queries().UserHasPublicProfileRole(r.Context(), cd.UserID); err != nil {
+	if _, err := cd.Queries().GetPublicProfileRoleForUser(r.Context(), cd.UserID); err != nil {
 		http.NotFound(w, r)
 		return
 	}
@@ -48,7 +48,7 @@ func (PublicProfileSaveTask) Action(w http.ResponseWriter, r *http.Request) any 
 	}
 	uid, _ := session.Values["UID"].(int32)
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	if _, err := queries.UserHasPublicProfileRole(r.Context(), uid); err != nil {
+	if _, err := queries.GetPublicProfileRoleForUser(r.Context(), uid); err != nil {
 		return common.UserError{ErrorMessage: "forbidden"}
 	}
 	enable := r.PostFormValue("enable") != ""

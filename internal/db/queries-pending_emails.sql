@@ -9,7 +9,7 @@ WHERE sent_at IS NULL
 ORDER BY id
 LIMIT ? OFFSET ?;
 
--- name: MarkEmailSent :exec
+-- name: SystemMarkPendingEmailSent :exec
 UPDATE pending_emails SET sent_at = NOW() WHERE id = ?;
 
 -- name: AdminListUnsentPendingEmails :many
@@ -34,7 +34,7 @@ WHERE id = ?;
 -- admin task
 DELETE FROM pending_emails WHERE id = ?;
 
--- name: IncrementEmailError :exec
+-- name: SystemIncrementPendingEmailError :exec
 UPDATE pending_emails SET error_count = error_count + 1 WHERE id = ?;
 
 -- name: GetPendingEmailErrorCount :one

@@ -29,7 +29,8 @@ func (UpdateSubscriptionsTask) Action(w http.ResponseWriter, r *http.Request) an
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	existing, err := queries.ListSubscriptionsByUser(r.Context(), uid)
 	if err != nil {
 		log.Printf("list subs: %v", err)

@@ -132,7 +132,7 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return nil
 	}
 
-	threadId, err := queries.MakeThread(r.Context(), int32(topicId))
+	threadId, err := queries.SystemCreateThread(r.Context(), int32(topicId))
 	if err != nil {
 		log.Printf("Error: makeThread: %s", err)
 		return fmt.Errorf("make thread %w", handlers.ErrRedirectOnSamePageHandler(err))

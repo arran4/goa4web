@@ -102,13 +102,13 @@ func (q *Queries) GetExternalLink(ctx context.Context, url string) (*ExternalLin
 	return &i, err
 }
 
-const registerExternalLinkClick = `-- name: RegisterExternalLinkClick :exec
+const systemRegisterExternalLinkClick = `-- name: SystemRegisterExternalLinkClick :exec
 INSERT INTO external_links (url, clicks)
 VALUES (?, 1)
 ON DUPLICATE KEY UPDATE clicks = clicks + 1
 `
 
-func (q *Queries) RegisterExternalLinkClick(ctx context.Context, url string) error {
-	_, err := q.db.ExecContext(ctx, registerExternalLinkClick, url)
+func (q *Queries) SystemRegisterExternalLinkClick(ctx context.Context, url string) error {
+	_, err := q.db.ExecContext(ctx, systemRegisterExternalLinkClick, url)
 	return err
 }

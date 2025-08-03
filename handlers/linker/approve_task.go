@@ -42,7 +42,7 @@ func (approveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	lid, err := queries.SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId(r.Context(), db.SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueIdParams{
+	lid, err := queries.AdminInsertQueuedLinkFromQueue(r.Context(), db.AdminInsertQueuedLinkFromQueueParams{
 		Idlinkerqueue: int32(qid),
 		AdminID:       cd.UserID,
 	})

@@ -2,13 +2,14 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"regexp"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
 )
 
-func TestQueries_ListWriters(t *testing.T) {
+func TestQueries_ListWritersForLister(t *testing.T) {
 	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -21,7 +22,7 @@ func TestQueries_ListWriters(t *testing.T) {
 		WithArgs(int32(1), int32(1), int32(1), sqlmock.AnyArg(), int32(5), int32(0)).
 		WillReturnRows(rows)
 
-	res, err := q.ListWriters(context.Background(), ListWritersParams{ListerID: 1, Limit: 5, Offset: 0})
+	res, err := q.ListWritersForLister(context.Background(), ListWritersForListerParams{ListerID: 1, UserID: sql.NullInt32{Int32: 1, Valid: true}, Limit: 5, Offset: 0})
 	if err != nil {
 		t.Fatalf("ListWriters: %v", err)
 	}
@@ -34,7 +35,7 @@ func TestQueries_ListWriters(t *testing.T) {
 	}
 }
 
-func TestQueries_SearchWriters(t *testing.T) {
+func TestQueries_ListWritersSearchForLister(t *testing.T) {
 	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -47,9 +48,9 @@ func TestQueries_SearchWriters(t *testing.T) {
 		WithArgs(int32(1), "%bob%", "%bob%", int32(1), int32(1), sqlmock.AnyArg(), int32(5), int32(0)).
 		WillReturnRows(rows)
 
-	res, err := q.SearchWriters(context.Background(), SearchWritersParams{ListerID: 1, Query: "bob", Limit: 5, Offset: 0})
+	res, err := q.ListWritersSearchForLister(context.Background(), ListWritersSearchForListerParams{ListerID: 1, Query: "%bob%", UserID: sql.NullInt32{Int32: 1, Valid: true}, Limit: 5, Offset: 0})
 	if err != nil {
-		t.Fatalf("SearchWriters: %v", err)
+		t.Fatalf("ListWritersSearchForLister: %v", err)
 	}
 	if len(res) != 1 || res[0].Username.String != "bob" || res[0].Count != 2 {
 		t.Fatalf("unexpected result %+v", res)

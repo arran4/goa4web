@@ -25,7 +25,7 @@ func TestNotificationsQueries(t *testing.T) {
 	}
 	rows := sqlmock.NewRows([]string{"cnt"}).AddRow(1)
 	mock.ExpectQuery("SELECT COUNT\\(\\*\\)").WillReturnRows(rows)
-	if c, err := q.CountUnreadNotificationsForUser(context.Background(), 1); err != nil || c != 1 {
+	if c, err := q.GetUnreadNotificationCountForLister(context.Background(), 1); err != nil || c != 1 {
 		t.Fatalf("count=%d err=%v", c, err)
 	}
 	mock.ExpectQuery("SELECT id, users_idusers").WillReturnRows(sqlmock.NewRows([]string{"id", "users_idusers", "link", "message", "created_at", "read_at"}).AddRow(1, 1, "/x", "hi", time.Now(), nil))
@@ -33,7 +33,7 @@ func TestNotificationsQueries(t *testing.T) {
 		t.Fatalf("get: %v", err)
 	}
 	mock.ExpectExec("UPDATE notifications SET read_at").WithArgs(int32(1), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
-	if err := q.MarkNotificationReadForLister(context.Background(), db.MarkNotificationReadForListerParams{ID: 1, ListerID: 1}); err != nil {
+	if err := q.SetNotificationReadForLister(context.Background(), db.SetNotificationReadForListerParams{ID: 1, ListerID: 1}); err != nil {
 		t.Fatalf("mark: %v", err)
 	}
 	mock.ExpectExec("DELETE FROM notifications").WillReturnResult(sqlmock.NewResult(1, 1))

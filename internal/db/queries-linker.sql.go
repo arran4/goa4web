@@ -81,6 +81,58 @@ func (q *Queries) AdminDeleteLinkerQueuedItem(ctx context.Context, idlinkerqueue
 	return err
 }
 
+const adminInsertQueuedLinkFromQueue = `-- name: AdminInsertQueuedLinkFromQueue :execlastid
+INSERT INTO linker (users_idusers, linker_category_id, language_idlanguage, title, ` + "`" + `url` + "`" + `, description)
+SELECT l.users_idusers, l.linker_category_id, l.language_idlanguage, l.title, l.url, l.description
+FROM linker_queue l
+WHERE l.idlinkerQueue = ?
+  AND EXISTS (
+    SELECT 1 FROM user_roles ur
+    JOIN roles r ON ur.role_id = r.id
+    WHERE ur.users_idusers = ? AND r.is_admin = 1
+  )
+`
+
+type AdminInsertQueuedLinkFromQueueParams struct {
+	Idlinkerqueue int32
+	AdminID       int32
+}
+
+func (q *Queries) AdminInsertQueuedLinkFromQueue(ctx context.Context, arg AdminInsertQueuedLinkFromQueueParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, adminInsertQueuedLinkFromQueue, arg.Idlinkerqueue, arg.AdminID)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
+}
+
+const adminRenameLinkerCategory = `-- name: AdminRenameLinkerCategory :exec
+UPDATE linker_category SET title = ?, position = ?
+WHERE idlinkerCategory = ?
+  AND EXISTS (
+    SELECT 1 FROM user_roles ur
+    JOIN roles r ON ur.role_id = r.id
+    WHERE ur.users_idusers = ? AND r.is_admin = 1
+  )
+`
+
+type AdminRenameLinkerCategoryParams struct {
+	Title            sql.NullString
+	Position         int32
+	Idlinkercategory int32
+	AdminID          int32
+}
+
+func (q *Queries) AdminRenameLinkerCategory(ctx context.Context, arg AdminRenameLinkerCategoryParams) error {
+	_, err := q.db.ExecContext(ctx, adminRenameLinkerCategory,
+		arg.Title,
+		arg.Position,
+		arg.Idlinkercategory,
+		arg.AdminID,
+	)
+	return err
+}
+
 const adminUpdateLinkerCategorySortOrder = `-- name: AdminUpdateLinkerCategorySortOrder :exec
 UPDATE linker_category SET sortorder = ?
 WHERE idlinkerCategory = ?
@@ -1305,67 +1357,6 @@ func (q *Queries) GetLinkerItemsByUserDescendingForUser(ctx context.Context, arg
 	return items, nil
 }
 
-const renameLinkerCategory = `-- name: RenameLinkerCategory :exec
-UPDATE linker_category SET title = ?, position = ?
-WHERE idlinkerCategory = ?
-  AND EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.users_idusers = ? AND r.is_admin = 1
-  )
-`
-
-type RenameLinkerCategoryParams struct {
-	Title            sql.NullString
-	Position         int32
-	Idlinkercategory int32
-	AdminID          int32
-}
-
-func (q *Queries) RenameLinkerCategory(ctx context.Context, arg RenameLinkerCategoryParams) error {
-	_, err := q.db.ExecContext(ctx, renameLinkerCategory,
-		arg.Title,
-		arg.Position,
-		arg.Idlinkercategory,
-		arg.AdminID,
-	)
-	return err
-}
-
-const selectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId = `-- name: SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId :execlastid
-INSERT INTO linker (users_idusers, linker_category_id, language_idlanguage, title, ` + "`" + `url` + "`" + `, description)
-SELECT l.users_idusers, l.linker_category_id, l.language_idlanguage, l.title, l.url, l.description
-FROM linker_queue l
-WHERE l.idlinkerQueue = ?
-  AND EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.users_idusers = ? AND r.is_admin = 1
-  )
-`
-
-type SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueIdParams struct {
-	Idlinkerqueue int32
-	AdminID       int32
-}
-
-func (q *Queries) SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId(ctx context.Context, arg SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueIdParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, selectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId, arg.Idlinkerqueue, arg.AdminID)
-	if err != nil {
-		return 0, err
-	}
-	return result.LastInsertId()
-}
-
-const setLinkerLastIndex = `-- name: SetLinkerLastIndex :exec
-UPDATE linker SET last_index = NOW() WHERE idlinker = ?
-`
-
-func (q *Queries) SetLinkerLastIndex(ctx context.Context, idlinker int32) error {
-	_, err := q.db.ExecContext(ctx, setLinkerLastIndex, idlinker)
-	return err
-}
-
 const systemAssignLinkerThreadID = `-- name: SystemAssignLinkerThreadID :exec
 UPDATE linker SET forumthread_id = ? WHERE idlinker = ?
 `
@@ -1377,5 +1368,14 @@ type SystemAssignLinkerThreadIDParams struct {
 
 func (q *Queries) SystemAssignLinkerThreadID(ctx context.Context, arg SystemAssignLinkerThreadIDParams) error {
 	_, err := q.db.ExecContext(ctx, systemAssignLinkerThreadID, arg.ForumthreadID, arg.Idlinker)
+	return err
+}
+
+const systemSetLinkerLastIndex = `-- name: SystemSetLinkerLastIndex :exec
+UPDATE linker SET last_index = NOW() WHERE idlinker = ?
+`
+
+func (q *Queries) SystemSetLinkerLastIndex(ctx context.Context, idlinker int32) error {
+	_, err := q.db.ExecContext(ctx, systemSetLinkerLastIndex, idlinker)
 	return err
 }

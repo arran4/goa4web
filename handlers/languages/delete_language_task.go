@@ -33,7 +33,7 @@ func (DeleteLanguageTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("cid parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	var name string
-	if rows, err := queries.SystemListLanguages(r.Context()); err == nil {
+	if rows, err := cd.Languages(); err == nil {
 		for _, l := range rows {
 			if l.Idlanguage == int32(cid) {
 				name = l.Nameof.String

@@ -5,23 +5,24 @@
         </tr>
         <tr>
             <td>
-                {{ if .Editing }}
+                {{ $canEdit := or (cd.CanEditAny) .IsOwner }}
+                {{ if and $canEdit (eq $.EditCommentID .Idcomments) }}
                     <font size="4">Edit:</font><br>
-                    <form method="post" action="{{.EditSaveUrl}}">
+                    <form method="post" action="/writings/article/{{$.Writing.Idwriting}}/comment/{{.Idcomments}}">
         {{ csrfField }}
-                        <textarea id="reply" name="replytext" cols="40" rows="20">{{$.Text.String}}</textarea><br>
+                        <textarea id="reply" name="replytext" cols="40" rows="20">{{.Text.String}}</textarea><br>
                         {{ template "languageCombobox" $ }}
                         <input type="submit" name="task" value="Edit Reply">
                         <input type="submit" name="task" value="Cancel">
                     </form>
                 {{ else }}
                     {{.Text.String | a4code2html}}<br>-<br>{{.Posterusername.String}}.
-                    {{if .ShowReply}}
+                    {{if $.CanReply}}
                         [<a href="?comment={{.Idcomments}}&type=full#reply">FULL REPLY</a>]
                         [<a href="?comment={{.Idcomments}}#reply">PARAGRAPH REPLY</a>]
                     {{end}}
-                    {{if .EditUrl}}[<a href="{{.EditUrl}}">EDIT</a>]{{end}}
-                    {{if .AdminUrl}}[<a href="{{.AdminUrl}}">ADMIN</a>]{{end}}
+                    {{if and $canEdit (eq $.EditCommentID 0)}}[<a href="/writings/article/{{$.Writing.Idwriting}}?editComment={{.Idcomments}}#edit">EDIT</a>]{{end}}
+                    {{if (cd.HasRole "administrator")}}[<a href="/admin/comment/{{.Idcomments}}">ADMIN</a>]{{end}}
                 {{end}}
             </td>
         </tr>

@@ -1,45 +1,36 @@
 package linker
 
 import (
-	"database/sql"
-	"errors"
 	"fmt"
 	"github.com/arran4/goa4web/core/consts"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 
 	"github.com/gorilla/mux"
 )
 
 func Page(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Links"
 	type Data struct {
-		*common.CoreData
-		Offset      int
+		Offset      int32
 		HasOffset   bool
-		CatId       int
+		CatId       int32
 		CommentOnId int
 		ReplyToId   int
-		Links       []*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow
-		Categories  []*db.LinkerCategory
 	}
 
-	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-	}
-	data.CoreData.PageTitle = "Links"
-
+	data := Data{}
 	if off, err := strconv.Atoi(r.URL.Query().Get("offset")); err == nil {
-		data.Offset = off
+		data.Offset = int32(off)
 	}
 	data.HasOffset = data.Offset != 0
 	if cid, err := strconv.Atoi(r.URL.Query().Get("category")); err == nil {
-		data.CatId = cid
+		data.CatId = int32(cid)
 	}
 	if cid, err := strconv.Atoi(r.URL.Query().Get("comment")); err == nil {
 		data.CommentOnId = cid
@@ -47,49 +38,6 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	if rid, err := strconv.Atoi(r.URL.Query().Get("reply")); err == nil {
 		data.ReplyToId = rid
 	}
-
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-
-	uid := data.CoreData.UserID
-	linkerPosts, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginated(r.Context(), db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedParams{
-		ViewerID:         uid,
-		Idlinkercategory: int32(data.CatId),
-		ViewerUserID:     sql.NullInt32{Int32: uid, Valid: uid != 0},
-		Limit:            15,
-		Offset:           int32(data.Offset),
-	})
-	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-		default:
-			log.Printf("getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-	}
-
-	for _, row := range linkerPosts {
-		if !data.CoreData.HasGrant("linker", "link", "see", row.Idlinker) {
-			continue
-		}
-		data.Links = append(data.Links, row)
-	}
-
-	categories, err := queries.GetAllLinkerCategoriesForUser(r.Context(), db.GetAllLinkerCategoriesForUserParams{
-		ViewerID:     uid,
-		ViewerUserID: sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
-	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-		default:
-			log.Printf("getAllLinkerCategories Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-	}
-
-	data.Categories = categories
 
 	handlers.TemplateHandler(w, r, "linkerPage", data)
 }

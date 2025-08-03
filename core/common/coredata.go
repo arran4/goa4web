@@ -1,6 +1,9 @@
 package common
 
+// TODO: sort CoreData struct fields and related methods alphabetically.
+
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"errors"
@@ -102,33 +105,48 @@ type CoreData struct {
 	customQueries db.CustomQueries
 	emailProvider lazy.Value[MailProvider]
 
+  // Keep this sorted
 	allRoles                 lazy.Value[[]*db.Role]
 	announcement             lazy.Value[*db.GetActiveAnnouncementWithNewsForListerRow]
 	annMu                    sync.Mutex
-	bloggers                 lazy.Value[[]*db.BloggerCountRow]
+	bloggers                 lazy.Value[[]*db.ListBloggersForListerRow]
 	bookmarks                lazy.Value[*db.GetBookmarksForUserRow]
 	event                    *eventbus.TaskEvent
 	forumCategories          lazy.Value[[]*db.Forumcategory]
 	forumThreads             map[int32]*lazy.Value[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow]
+	forumTopicLists          map[int32]*lazy.Value[[]*db.Forumtopic]
 	forumTopics              map[int32]*lazy.Value[*db.GetForumTopicByIdForUserRow]
 	forumThreadRows          map[int32]*lazy.Value[*db.GetThreadLastPosterAndPermsRow]
 	forumComments            map[int32]*lazy.Value[*db.GetCommentByIdForUserRow]
+	forumThreadComments      map[int32]*lazy.Value[[]*db.GetCommentsByThreadIdForUserRow]
 	newsPosts                map[int32]*lazy.Value[*db.GetForumThreadIdByNewsPostIdRow]
+	threadComments           map[int32]*lazy.Value[[]*db.GetCommentsByThreadIdForUserRow]
 	currentThreadID          int32
 	currentTopicID           int32
 	currentCommentID         int32
 	currentNewsPostID        int32
+  // TODO offset is not specific to news
 	currentNewsOffset        int
+	currentBoardID           int32
+	currentImagePostID       int32
 	imageBoardPosts          map[int32]*lazy.Value[[]*db.ListImagePostsByBoardForListerRow]
 	imageBoards              lazy.Value[[]*db.Imageboard]
+	imagePostRows            map[int32]*lazy.Value[*db.GetImagePostByIDForListerRow]
 	languagesAll             lazy.Value[[]*db.Language]
 	langs                    lazy.Value[[]*db.Language]
 	latestNews               lazy.Value[[]*NewsPost]
 	adminLatestNews          lazy.Value[[]*db.AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow]
 	latestWritings           lazy.Value[[]*db.Writing]
+	adminLinkerItemRows      map[int32]*lazy.Value[*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow]
 	linkerCategories         lazy.Value[[]*db.GetLinkerCategoryLinkCountsRow]
+	linkerCategoryLinks      map[int32]*lazy.Value[[]*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow]
+	linkerCategoryRows       map[int32]*lazy.Value[*db.LinkerCategory]
+	linkerCatsAll            lazy.Value[[]*db.LinkerCategory]
+	linkerCatsForUser        lazy.Value[[]*db.LinkerCategory]
+	externalLinks            map[string]*lazy.Value[*db.ExternalLink]
 	newsAnnouncements        map[int32]*lazy.Value[*db.SiteAnnouncement]
 	notifCount               lazy.Value[int32]
+	notifications            map[string]*lazy.Value[[]*db.Notification]
 	perms                    lazy.Value[[]*db.GetPermissionsByUserIDRow]
 	pref                     lazy.Value[*db.Preference]
 	preferredLanguageID      lazy.Value[int32]
@@ -136,16 +154,36 @@ type CoreData struct {
 	subImageBoards           map[int32]*lazy.Value[[]*db.Imageboard]
 	unreadCount              lazy.Value[int64]
 	subscriptions            lazy.Value[map[string]bool]
+	subscriptionRows         lazy.Value[[]*db.ListSubscriptionsByUserRow]
+	userSubscriptions        lazy.Value[[]*db.ListSubscriptionsByUserRow]
 	user                     lazy.Value[*db.User]
 	userRoles                lazy.Value[[]string]
 	visibleWritingCategories lazy.Value[[]*db.WritingCategory]
 	writerWritings           map[int32]*lazy.Value[[]*db.ListPublicWritingsByUserForListerRow]
-	writers                  lazy.Value[[]*db.WriterCountRow]
+	writers                  lazy.Value[[]*db.ListWritersForListerRow]
 	writingCategories        lazy.Value[[]*db.WritingCategory]
 	currentWritingID         int32
 	writingRows              map[int32]*lazy.Value[*db.GetWritingForListerByIDRow]
 	currentBlogID            int32
 	blogEntries              map[int32]*lazy.Value[*db.GetBlogEntryForListerByIDRow]
+	users                    map[int32]*lazy.Value[*db.SystemGetUserByIDRow]
+	adminRequests            map[string]*lazy.Value[[]*db.AdminRequestQueue]
+	adminRequest             map[int32]*lazy.Value[*db.AdminRequestQueue]
+	adminRequestComments     map[int32]*lazy.Value[[]*db.AdminRequestComment]
+	currentRequestID         int32
+	adminUserEmails          map[int32]*lazy.Value[[]*db.UserEmail]
+	adminUserComments        map[int32]*lazy.Value[[]*db.AdminUserComment]
+	adminUserRoles           map[int32]*lazy.Value[[]*db.GetPermissionsByUserIDRow]
+	adminUserStats           map[int32]*lazy.Value[*db.AdminUserPostCountsByIDRow]
+	adminUserBookmarkSize    map[int32]*lazy.Value[int]
+	adminUserGrants          map[int32]*lazy.Value[[]*db.Grant]
+	currentProfileUserID     int32
+	templateOverrides        map[string]*lazy.Value[string]
+	currentTemplateName      string
+	currentTemplateError     string
+	blogListOffset           int
+	blogListRows             lazy.Value[[]*db.ListBlogEntriesByAuthorForListerRow]
+	blogListUID              int32
 
 	absoluteURLBase lazy.Value[string]
 	dbRegistry      *dbdrivers.Registry
@@ -155,10 +193,10 @@ type CoreData struct {
 }
 
 // SetRoles preloads the current user roles.
-func (cd *CoreData) SetRoles(r []string) { cd.userRoles.Set(r) }
+func (cd *CoreData) SetRoles(r []string) { cd.userRoles.Set(r) } // TODO this should be done from the constructing middleware via options and this function removed once obsolete
 
 // SetNewsOffset records the current news listing offset.
-func (cd *CoreData) SetNewsOffset(o int) { cd.currentNewsOffset = o }
+func (cd *CoreData) SetNewsOffset(o int) { cd.currentNewsOffset = o } // TODO this should be done from the constructing middleware via options and this function removed once obsolete
 
 // Marked returns true the first time it is called with key. Subsequent
 // calls return false. It is used to avoid re-rendering template sections
@@ -268,6 +306,54 @@ func WithCustomQueries(cq db.CustomQueries) CoreOption {
 	return func(cd *CoreData) { cd.customQueries = cq }
 }
 
+// WithSelectionsFromRequest extracts integer identifiers from the request and
+// stores them on the CoreData instance. It searches path variables, query
+// parameters and finally form values.
+func WithSelectionsFromRequest(r *http.Request) CoreOption {
+	return func(cd *CoreData) {
+		setID := func(k, v string) {
+			i, err := strconv.Atoi(v)
+			if err != nil {
+				return
+			}
+			switch k {
+			case "boardno", "board":
+				cd.currentBoardID = int32(i)
+			case "thread", "replyTo":
+				cd.currentThreadID = int32(i)
+			case "topic":
+				cd.currentTopicID = int32(i)
+			case "comment":
+				cd.currentCommentID = int32(i)
+			case "news":
+				cd.currentNewsPostID = int32(i)
+			case "post":
+				cd.currentImagePostID = int32(i)
+			case "writing":
+				cd.currentWritingID = int32(i)
+			case "blog":
+				cd.currentBlogID = int32(i)
+			}
+		}
+		for k, v := range mux.Vars(r) {
+			setID(k, v)
+		}
+		q := r.URL.Query()
+		for k, v := range q {
+			if len(v) > 0 {
+				setID(k, v[0])
+			}
+		}
+		if err := r.ParseForm(); err == nil {
+			for k, v := range r.Form {
+				if len(v) > 0 {
+					setID(k, v[0])
+				}
+			}
+		}
+	}
+}
+
 // NewCoreData creates a CoreData with context and queries applied.
 func NewCoreData(ctx context.Context, q db.Querier, cfg *config.RuntimeConfig, opts ...CoreOption) *CoreData {
 	cd := &CoreData{
@@ -290,6 +376,15 @@ func (cd *CoreData) Queries() db.Querier { return cd.queries }
 
 // CustomQueries returns the db.CustomQueries instance associated with this CoreData.
 func (cd *CoreData) CustomQueries() db.CustomQueries { return cd.customQueries }
+
+// SelectedBoard returns the selected board identifier.
+func (cd *CoreData) SelectedBoard() int { return int(cd.currentBoardID) } // TODO this shouldn't be necessary figoure out how to reduce
+
+// SelectedThread returns the selected thread identifier.
+func (cd *CoreData) SelectedThread() int { return int(cd.currentThreadID) } // TODO this shouldn't be necessary figoure out how to reduce
+
+// SelectedImagePost returns the selected image post identifier.
+func (cd *CoreData) SelectedImagePost() int { return int(cd.currentImagePostID) } // TODO this shouldn't be necessary figoure out how to reduce
 
 // ImageURLMapper maps image references like "image:" or "cache:" to full URLs.
 func (cd *CoreData) ImageURLMapper(tag, val string) string {
@@ -745,6 +840,32 @@ func (cd *CoreData) ForumCategories() ([]*db.Forumcategory, error) {
 	})
 }
 
+// ForumTopics loads forum topics for a given category once per category.
+func (cd *CoreData) ForumTopics(categoryID int32) ([]*db.Forumtopic, error) {
+	if cd.forumTopicLists == nil {
+		cd.forumTopicLists = make(map[int32]*lazy.Value[[]*db.Forumtopic])
+	}
+	lv, ok := cd.forumTopicLists[categoryID]
+	if !ok {
+		lv = &lazy.Value[[]*db.Forumtopic]{}
+		cd.forumTopicLists[categoryID] = lv
+	}
+	return lv.Load(func() ([]*db.Forumtopic, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		if categoryID == 0 {
+			return cd.queries.GetAllForumTopics(cd.ctx)
+		}
+		return cd.queries.GetForumTopicsByCategoryId(cd.ctx, categoryID)
+	})
+}
+
+// AdminForumTopics returns all forum topics without category filtering.
+func (cd *CoreData) AdminForumTopics() ([]*db.Forumtopic, error) {
+	return cd.ForumTopics(0)
+}
+
 // ForumThreads loads the threads for a forum topic once per topic.
 func (cd *CoreData) ForumThreads(topicID int32) ([]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow, error) {
 	if cd.forumThreads == nil {
@@ -904,6 +1025,11 @@ func (cd *CoreData) VisibleWritingCategories(userID int32) ([]*db.WritingCategor
 	})
 }
 
+// CurrentUserVisibleWritingCategories returns writing categories visible to the current user.
+func (cd *CoreData) CurrentUserVisibleWritingCategories() ([]*db.WritingCategory, error) {
+	return cd.VisibleWritingCategories(cd.UserID)
+}
+
 // WritingCategories returns all writing categories cached once.
 func (cd *CoreData) WritingCategories() ([]*db.WritingCategory, error) {
 	return cd.writingCategories.Load(func() ([]*db.WritingCategory, error) {
@@ -953,9 +1079,14 @@ func (cd *CoreData) PublicWritings(categoryID int32, r *http.Request) ([]*db.Lis
 	})
 }
 
+// SelectedCategoryPublicWritings returns public writings for the given category.
+func (cd *CoreData) SelectedCategoryPublicWritings(categoryID int32, r *http.Request) ([]*db.ListPublicWritingsInCategoryForListerRow, error) {
+	return cd.PublicWritings(categoryID, r)
+}
+
 // Bloggers returns bloggers ordered by username with post counts.
-func (cd *CoreData) Bloggers(r *http.Request) ([]*db.BloggerCountRow, error) {
-	return cd.bloggers.Load(func() ([]*db.BloggerCountRow, error) {
+func (cd *CoreData) Bloggers(r *http.Request) ([]*db.ListBloggersForListerRow, error) {
+	return cd.bloggers.Load(func() ([]*db.ListBloggersForListerRow, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
@@ -963,15 +1094,26 @@ func (cd *CoreData) Bloggers(r *http.Request) ([]*db.BloggerCountRow, error) {
 		ps := cd.PageSize()
 		search := r.URL.Query().Get("search")
 		if search != "" {
-			return cd.customQueries.SearchBloggers(cd.ctx, db.SearchBloggersParams{
+			like := "%" + search + "%"
+			rows, err := cd.queries.ListBloggersSearchForLister(cd.ctx, db.ListBloggersSearchForListerParams{
 				ListerID: cd.UserID,
-				Query:    search,
+				Query:    like,
+				UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 				Limit:    int32(ps + 1),
 				Offset:   int32(offset),
 			})
+			if err != nil {
+				return nil, err
+			}
+			items := make([]*db.ListBloggersForListerRow, 0, len(rows))
+			for _, r := range rows {
+				items = append(items, &db.ListBloggersForListerRow{Username: r.Username, Count: r.Count})
+			}
+			return items, nil
 		}
-		return cd.customQueries.ListBloggers(cd.ctx, db.ListBloggersParams{
+		return cd.queries.ListBloggersForLister(cd.ctx, db.ListBloggersForListerParams{
 			ListerID: cd.UserID,
+			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 			Limit:    int32(ps + 1),
 			Offset:   int32(offset),
 		})
@@ -979,8 +1121,8 @@ func (cd *CoreData) Bloggers(r *http.Request) ([]*db.BloggerCountRow, error) {
 }
 
 // Writers returns writers ordered by username with article counts.
-func (cd *CoreData) Writers(r *http.Request) ([]*db.WriterCountRow, error) {
-	return cd.writers.Load(func() ([]*db.WriterCountRow, error) {
+func (cd *CoreData) Writers(r *http.Request) ([]*db.ListWritersForListerRow, error) {
+	return cd.writers.Load(func() ([]*db.ListWritersForListerRow, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
@@ -988,15 +1130,26 @@ func (cd *CoreData) Writers(r *http.Request) ([]*db.WriterCountRow, error) {
 		ps := cd.PageSize()
 		search := r.URL.Query().Get("search")
 		if search != "" {
-			return cd.customQueries.SearchWriters(cd.ctx, db.SearchWritersParams{
+			like := "%" + search + "%"
+			rows, err := cd.queries.ListWritersSearchForLister(cd.ctx, db.ListWritersSearchForListerParams{
 				ListerID: cd.UserID,
-				Query:    search,
+				Query:    like,
+				UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 				Limit:    int32(ps + 1),
 				Offset:   int32(offset),
 			})
+			if err != nil {
+				return nil, err
+			}
+			items := make([]*db.ListWritersForListerRow, 0, len(rows))
+			for _, r := range rows {
+				items = append(items, &db.ListWritersForListerRow{Username: r.Username, Count: r.Count})
+			}
+			return items, nil
 		}
-		return cd.customQueries.ListWriters(cd.ctx, db.ListWritersParams{
+		return cd.queries.ListWritersForLister(cd.ctx, db.ListWritersForListerParams{
 			ListerID: cd.UserID,
+			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 			Limit:    int32(ps + 1),
 			Offset:   int32(offset),
 		})
@@ -1033,6 +1186,21 @@ func (cd *CoreData) ForumThreadByID(id int32, ops ...lazy.Option[*db.GetThreadLa
 	return lazy.Map(&cd.forumThreadRows, &cd.mapMu, id, fetch, ops...)
 }
 
+// ThreadComments returns comments for the thread lazily loading once per thread ID.
+func (cd *CoreData) ThreadComments(id int32, ops ...lazy.Option[[]*db.GetCommentsByThreadIdForUserRow]) ([]*db.GetCommentsByThreadIdForUserRow, error) {
+	fetch := func(i int32) ([]*db.GetCommentsByThreadIdForUserRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		return cd.queries.GetCommentsByThreadIdForUser(cd.ctx, db.GetCommentsByThreadIdForUserParams{
+			ViewerID: cd.UserID,
+			ThreadID: i,
+			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		})
+	}
+	return lazy.Map(&cd.forumThreadComments, &cd.mapMu, id, fetch, ops...)
+}
+
 // WritingByID returns a single writing lazily loading it once per ID.
 func (cd *CoreData) WritingByID(id int32, ops ...lazy.Option[*db.GetWritingForListerByIDRow]) (*db.GetWritingForListerByIDRow, error) {
 	fetch := func(i int32) (*db.GetWritingForListerByIDRow, error) {
@@ -1062,6 +1230,48 @@ func (cd *CoreData) BlogEntryByID(id int32, ops ...lazy.Option[*db.GetBlogEntryF
 	}
 	return lazy.Map(&cd.blogEntries, &cd.mapMu, id, fetch, ops...)
 }
+
+// SetBlogListParams stores parameters for listing blogs.
+func (cd *CoreData) SetBlogListParams(uid int32, offset int) {
+	cd.blogListUID = uid
+	cd.blogListOffset = offset
+}
+
+// BlogList returns blog entries for the current parameters.
+func (cd *CoreData) BlogList() ([]*db.ListBlogEntriesByAuthorForListerRow, error) {
+	return cd.blogListRows.Load(func() ([]*db.ListBlogEntriesByAuthorForListerRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		rows, err := cd.queries.ListBlogEntriesByAuthorForLister(cd.ctx, db.ListBlogEntriesByAuthorForListerParams{
+			AuthorID: cd.blogListUID,
+			ListerID: cd.UserID,
+			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+			Limit:    15,
+			Offset:   int32(cd.blogListOffset),
+		})
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, nil
+			}
+			return nil, err
+		}
+		var list []*db.ListBlogEntriesByAuthorForListerRow
+		for _, row := range rows {
+			if !cd.HasGrant("blogs", "entry", "see", row.Idblogs) {
+				continue
+			}
+			list = append(list, row)
+		}
+		return list, nil
+	})
+}
+
+// BlogListUID returns the user ID parameter for the blog list.
+func (cd *CoreData) BlogListUID() int32 { return cd.blogListUID }
+
+// BlogListOffset returns the offset parameter for the blog list.
+func (cd *CoreData) BlogListOffset() int { return cd.blogListOffset }
 
 // CommentByID returns a forum comment lazily loading it once per ID.
 func (cd *CoreData) CommentByID(id int32, ops ...lazy.Option[*db.GetCommentByIdForUserRow]) (*db.GetCommentByIdForUserRow, error) {
@@ -1117,6 +1327,35 @@ func (cd *CoreData) CurrentCommentLoaded() *db.GetCommentByIdForUserRow {
 		return nil
 	}
 	return v
+}
+
+// ThreadComments returns comments for a thread lazily loading them once per thread ID.
+func (cd *CoreData) ThreadComments(threadID int32) ([]*db.GetCommentsByThreadIdForUserRow, error) {
+	if cd.threadComments == nil {
+		cd.threadComments = make(map[int32]*lazy.Value[[]*db.GetCommentsByThreadIdForUserRow])
+	}
+	lv, ok := cd.threadComments[threadID]
+	if !ok {
+		lv = &lazy.Value[[]*db.GetCommentsByThreadIdForUserRow]{}
+		cd.threadComments[threadID] = lv
+	}
+	return lv.Load(func() ([]*db.GetCommentsByThreadIdForUserRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		rows, err := cd.queries.GetCommentsByThreadIdForUser(cd.ctx, db.GetCommentsByThreadIdForUserParams{
+			ViewerID: cd.UserID,
+			ThreadID: threadID,
+			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		})
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, nil
+			}
+			return nil, err
+		}
+		return rows, nil
+	})
 }
 
 // NewsPostByID returns the news post lazily loading it once per ID.
@@ -1266,6 +1505,21 @@ func (cd *CoreData) ImageBoardPosts(boardID int32) ([]*db.ListImagePostsByBoardF
 	})
 }
 
+// ImagePostByID returns an image post once per ID using caching.
+func (cd *CoreData) ImagePostByID(id int32, ops ...lazy.Option[*db.GetImagePostByIDForListerRow]) (*db.GetImagePostByIDForListerRow, error) {
+	fetch := func(i int32) (*db.GetImagePostByIDForListerRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		return cd.queries.GetImagePostByIDForLister(cd.ctx, db.GetImagePostByIDForListerParams{
+			ListerID:     cd.UserID,
+			ID:           i,
+			ListerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		})
+	}
+	return lazy.Map(&cd.imagePostRows, &cd.mapMu, id, fetch, ops...)
+}
+
 // UnreadNotificationCount returns the number of unread notifications for the
 // current user. The value is fetched lazily on the first call and cached for
 // subsequent calls.
@@ -1274,12 +1528,47 @@ func (cd *CoreData) UnreadNotificationCount() int64 {
 		if cd.queries == nil || cd.UserID == 0 {
 			return 0, nil
 		}
-		return cd.queries.CountUnreadNotificationsForUser(cd.ctx, cd.UserID)
+		return cd.queries.GetUnreadNotificationCountForLister(cd.ctx, cd.UserID)
 	})
 	if err != nil {
 		log.Printf("load unread notification count: %v", err)
 	}
 	return count
+}
+
+// Notifications returns the notifications for the current user using query
+// parameters to control pagination. Results are cached per offset and filter
+// combination.
+func (cd *CoreData) Notifications(r *http.Request) ([]*db.Notification, error) {
+	if cd.notifications == nil {
+		cd.notifications = map[string]*lazy.Value[[]*db.Notification]{}
+	}
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	showAll := r.URL.Query().Get("all") == "1"
+	key := fmt.Sprintf("%t:%d", showAll, offset)
+	lv, ok := cd.notifications[key]
+	if !ok {
+		lv = &lazy.Value[[]*db.Notification]{}
+		cd.notifications[key] = lv
+	}
+	return lv.Load(func() ([]*db.Notification, error) {
+		if cd.queries == nil || cd.UserID == 0 {
+			return nil, nil
+		}
+		limit := int32(cd.Config.PageSizeDefault)
+		if showAll {
+			return cd.queries.ListNotificationsForLister(cd.ctx, db.ListNotificationsForListerParams{
+				ListerID: cd.UserID,
+				Limit:    limit,
+				Offset:   int32(offset),
+			})
+		}
+		return cd.queries.ListUnreadNotificationsForLister(cd.ctx, db.ListUnreadNotificationsForListerParams{
+			ListerID: cd.UserID,
+			Limit:    limit,
+			Offset:   int32(offset),
+		})
+	})
 }
 
 // subscriptionMap loads the current user's subscriptions once.
@@ -1288,12 +1577,14 @@ func (cd *CoreData) subscriptionMap() (map[string]bool, error) {
 		if cd.queries == nil || cd.UserID == 0 {
 			return map[string]bool{}, nil
 		}
-		rows, err := cd.queries.ListSubscriptionsByUser(cd.ctx, cd.UserID)
+		rows, err := cd.UserSubscriptions()
 		if err != nil {
 			return nil, err
 		}
 		m := make(map[string]bool)
 		for _, row := range rows {
+			key := row.Pattern + "|" + row.Method
+			m[key] = true
 			if row.Method == "internal" {
 				m[row.Pattern] = true
 			}
@@ -1302,10 +1593,97 @@ func (cd *CoreData) subscriptionMap() (map[string]bool, error) {
 	})
 }
 
-// Subscribed reports whether the user has a subscription matching pattern.
-func (cd *CoreData) Subscribed(pattern string) bool {
+// Subscribed reports whether the user has a subscription matching pattern and method.
+func (cd *CoreData) Subscribed(pattern, method string) bool {
 	m, _ := cd.subscriptionMap()
-	return m[pattern]
+	return m[pattern+"|"+method]
+}
+
+// UserSubscriptions returns the current user's subscriptions loaded lazily.
+func (cd *CoreData) UserSubscriptions() ([]*db.ListSubscriptionsByUserRow, error) {
+	return cd.userSubscriptions.Load(func() ([]*db.ListSubscriptionsByUserRow, error) {
+		if cd.queries == nil || cd.UserID == 0 {
+			return nil, nil
+		}
+		return cd.queries.ListSubscriptionsByUser(cd.ctx, cd.UserID)
+	})
+}
+
+// HasSubscription reports whether the user has subscribed to pattern with method.
+func (cd *CoreData) HasSubscription(pattern, method string) bool {
+	m, _ := cd.subscriptionMap()
+	return m[pattern+"|"+method]
+}
+
+// Subscriptions returns the current user's subscriptions.
+func (cd *CoreData) Subscriptions() ([]*db.ListSubscriptionsByUserRow, error) {
+	return cd.subscriptionRows.Load(func() ([]*db.ListSubscriptionsByUserRow, error) {
+		if cd.queries == nil || cd.UserID == 0 {
+			return nil, nil
+		}
+		return cd.queries.ListSubscriptionsByUser(cd.ctx, cd.UserID)
+	})
+}
+
+// AdminLinkerItemByID returns a single linker item lazily loading it once per ID.
+func (cd *CoreData) AdminLinkerItemByID(id int32, ops ...lazy.Option[*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow]) (*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow, error) {
+	fetch := func(i int32) (*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		row, err := cd.queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(cd.ctx, i)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		return row, nil
+	}
+	return lazy.Map(&cd.adminLinkerItemRows, &cd.mapMu, id, fetch, ops...)
+}
+
+// LinkerCategories returns all linker categories.
+func (cd *CoreData) LinkerCategories() ([]*db.LinkerCategory, error) {
+	return cd.linkerCatsAll.Load(func() ([]*db.LinkerCategory, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		rows, err := cd.queries.GetAllLinkerCategories(cd.ctx)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		return rows, nil
+	})
+}
+
+// LinkerCategoriesForUser returns linker categories the viewer can access.
+func (cd *CoreData) LinkerCategoriesForUser() ([]*db.LinkerCategory, error) {
+	return cd.linkerCatsForUser.Load(func() ([]*db.LinkerCategory, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		rows, err := cd.queries.GetAllLinkerCategoriesForUser(cd.ctx, db.GetAllLinkerCategoriesForUserParams{
+			ViewerID:     cd.UserID,
+			ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		})
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		return rows, nil
+	})
+}
+
+// LinkerCategoryByID returns a linker category lazily loading it once per ID.
+func (cd *CoreData) LinkerCategoryByID(id int32, ops ...lazy.Option[*db.LinkerCategory]) (*db.LinkerCategory, error) {
+	fetch := func(i int32) (*db.LinkerCategory, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		cat, err := cd.queries.GetLinkerCategoryById(cd.ctx, i)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		return cat, nil
+	}
+	return lazy.Map(&cd.linkerCategoryRows, &cd.mapMu, id, fetch, ops...)
 }
 
 // LinkerCategoryCounts lazily loads linker category statistics.
@@ -1322,6 +1700,130 @@ func (cd *CoreData) LinkerCategoryCounts() ([]*db.GetLinkerCategoryLinkCountsRow
 	})
 }
 
+// LinkerItemsForUser returns linker items for the given category and offset respecting viewer permissions.
+func (cd *CoreData) LinkerItemsForUser(catID, offset int32) ([]*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow, error) {
+	if cd.queries == nil {
+		return nil, nil
+	}
+	rows, err := cd.queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginated(cd.ctx, db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedParams{
+		ViewerID:         cd.UserID,
+		Idlinkercategory: catID,
+		ViewerUserID:     sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		Limit:            15,
+		Offset:           offset,
+	})
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, err
+	}
+	var out []*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow
+	for _, row := range rows {
+		if cd.HasGrant("linker", "link", "see", row.Idlinker) {
+			out = append(out, row)
+		}
+	}
+	return out, nil
+}
+
+// LinkerLinksByCategoryID returns the links for a category lazily loading them once per ID.
+func (cd *CoreData) LinkerLinksByCategoryID(id int32, ops ...lazy.Option[[]*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow]) ([]*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow, error) {
+	fetch := func(i int32) ([]*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		rows, err := cd.queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(cd.ctx, db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams{Idlinkercategory: i})
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		return rows, nil
+	}
+	return lazy.Map(&cd.linkerCategoryLinks, &cd.mapMu, id, fetch, ops...)
+}
+
+// SelectedAdminLinkerItem returns the linker item for the ID found in the request.
+func (cd *CoreData) SelectedAdminLinkerItem(r *http.Request, ops ...lazy.Option[*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow]) (*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow, int32, error) {
+	id, err := cd.SelectedAdminLinkerItemID(r)
+	if err != nil {
+		return nil, 0, err
+	}
+	link, err := cd.AdminLinkerItemByID(id, ops...)
+	if err != nil {
+		return nil, id, err
+	}
+	return link, id, nil
+}
+
+// SelectedAdminLinkerItemID extracts the linker item ID from URL vars, form values or query parameters.
+func (cd *CoreData) SelectedAdminLinkerItemID(r *http.Request) (int32, error) {
+	var idStr string
+	if v, ok := mux.Vars(r)["link"]; ok {
+		idStr = v
+	} else if v := r.PostFormValue("link"); v != "" {
+		idStr = v
+	} else {
+		idStr = r.URL.Query().Get("link")
+	}
+	id, err := strconv.Atoi(idStr)
+	if err != nil || id == 0 {
+		return 0, sql.ErrNoRows
+	}
+	return int32(id), nil
+}
+
+// SelectedLinkerCategory returns the linker category for the given ID.
+func (cd *CoreData) SelectedLinkerCategory(id int32, ops ...lazy.Option[*db.LinkerCategory]) (*db.LinkerCategory, error) {
+	return cd.LinkerCategoryByID(id, ops...)
+}
+
+// SelectedLinkerItemsForCurrentUser returns linker items for the given category
+// and offset for the current user and ensures the category is cached.
+func (cd *CoreData) SelectedLinkerItemsForCurrentUser(catID, offset int32) ([]*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow, error) {
+	if catID != 0 {
+		if _, err := cd.SelectedLinkerCategory(catID); err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+	}
+	return cd.LinkerItemsForUser(catID, offset)
+}
+
+// ExternalLink lazily resolves metadata for url.
+func (cd *CoreData) ExternalLink(url string) *db.ExternalLink {
+	if cd.queries == nil {
+		return nil
+	}
+	if cd.externalLinks == nil {
+		cd.externalLinks = make(map[string]*lazy.Value[*db.ExternalLink])
+	}
+	lv, ok := cd.externalLinks[url]
+	if !ok {
+		lv = &lazy.Value[*db.ExternalLink]{}
+		cd.externalLinks[url] = lv
+	}
+	link, err := lv.Load(func() (*db.ExternalLink, error) {
+		l, err := cd.queries.GetExternalLink(cd.ctx, url)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, nil
+			}
+			return nil, err
+		}
+		return l, nil
+	})
+	if err != nil {
+		log.Printf("load external link: %v", err)
+	}
+	return link
+}
+
+// RegisterExternalLinkClick records click statistics for url.
+func (cd *CoreData) RegisterExternalLinkClick(url string) {
+	if cd.queries == nil {
+		return
+	}
+	if err := cd.queries.RegisterExternalLinkClick(cd.ctx, url); err != nil {
+		log.Printf("record external link click: %v", err)
+	}
+}
+
 // HasAdminRole reports whether the current user has the administrator role.
 func (cd *CoreData) HasAdminRole() bool {
 	return cd.HasRole("administrator")
@@ -1336,4 +1838,428 @@ func (cd *CoreData) HasContentWriterRole() bool {
 // functions. It wraps templates.GetCompiledSiteTemplates(cd.Funcs(r)).
 func (cd *CoreData) ExecuteSiteTemplate(w io.Writer, r *http.Request, name string, data any) error {
 	return templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, name, data)
+}
+
+// Admin request helpers
+
+func (cd *CoreData) adminRequestList(kind string) ([]*db.AdminRequestQueue, error) {
+	if cd.adminRequests == nil {
+		cd.adminRequests = map[string]*lazy.Value[[]*db.AdminRequestQueue]{}
+	}
+	lv, ok := cd.adminRequests[kind]
+	if !ok {
+		lv = &lazy.Value[[]*db.AdminRequestQueue]{}
+		cd.adminRequests[kind] = lv
+	}
+	return lv.Load(func() ([]*db.AdminRequestQueue, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		switch kind {
+		case "pending":
+			return cd.queries.AdminListPendingRequests(cd.ctx)
+		case "archived":
+			return cd.queries.AdminListArchivedRequests(cd.ctx)
+		default:
+			return nil, nil
+		}
+	})
+}
+
+// PendingRequests returns pending admin requests loaded on demand.
+func (cd *CoreData) PendingRequests() []*db.AdminRequestQueue {
+	rows, err := cd.adminRequestList("pending")
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		log.Printf("load pending requests: %v", err)
+		return nil
+	}
+	return rows
+}
+
+// ArchivedRequests returns archived admin requests loaded on demand.
+func (cd *CoreData) ArchivedRequests() []*db.AdminRequestQueue {
+	rows, err := cd.adminRequestList("archived")
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		log.Printf("load archived requests: %v", err)
+		return nil
+	}
+	return rows
+}
+
+// SetCurrentRequestID stores the request ID for subsequent lookups.
+func (cd *CoreData) SetCurrentRequestID(id int32) { cd.currentRequestID = id }
+
+// CurrentRequest returns the request currently being viewed.
+func (cd *CoreData) CurrentRequest() *db.AdminRequestQueue {
+	id := cd.currentRequestID
+	if id == 0 {
+		return nil
+	}
+	if cd.adminRequest == nil {
+		cd.adminRequest = map[int32]*lazy.Value[*db.AdminRequestQueue]{}
+	}
+	lv, ok := cd.adminRequest[id]
+	if !ok {
+		lv = &lazy.Value[*db.AdminRequestQueue]{}
+		cd.adminRequest[id] = lv
+	}
+	req, err := lv.Load(func() (*db.AdminRequestQueue, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		return cd.queries.AdminGetRequestByID(cd.ctx, id)
+	})
+	if err != nil {
+		log.Printf("load request %d: %v", id, err)
+		return nil
+	}
+	return req
+}
+
+// CurrentRequestUser returns the user associated with the current request.
+func (cd *CoreData) CurrentRequestUser() *db.SystemGetUserByIDRow {
+	req := cd.CurrentRequest()
+	if req == nil {
+		return nil
+	}
+	return cd.UserByID(req.UsersIdusers)
+}
+
+// CurrentRequestComments returns comments for the current request.
+func (cd *CoreData) CurrentRequestComments() []*db.AdminRequestComment {
+	id := cd.currentRequestID
+	if id == 0 {
+		return nil
+	}
+	if cd.adminRequestComments == nil {
+		cd.adminRequestComments = map[int32]*lazy.Value[[]*db.AdminRequestComment]{}
+	}
+	lv, ok := cd.adminRequestComments[id]
+	if !ok {
+		lv = &lazy.Value[[]*db.AdminRequestComment]{}
+		cd.adminRequestComments[id] = lv
+	}
+	rows, err := lv.Load(func() ([]*db.AdminRequestComment, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		comments, err := cd.queries.AdminListRequestComments(cd.ctx, id)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		return comments, nil
+	})
+	if err != nil {
+		log.Printf("load request comments: %v", err)
+		return nil
+	}
+	return rows
+}
+
+// Admin user profile helpers
+
+// SetCurrentProfileUserID records the user ID for profile lookups.
+func (cd *CoreData) SetCurrentProfileUserID(id int32) { cd.currentProfileUserID = id }
+
+// CurrentProfileUser returns the user being viewed.
+func (cd *CoreData) CurrentProfileUser() *db.SystemGetUserByIDRow {
+	return cd.UserByID(cd.currentProfileUserID)
+}
+
+// CurrentProfileEmails returns emails for the profile user.
+func (cd *CoreData) CurrentProfileEmails() []*db.UserEmail {
+	id := cd.currentProfileUserID
+	if id == 0 {
+		return nil
+	}
+	if cd.adminUserEmails == nil {
+		cd.adminUserEmails = map[int32]*lazy.Value[[]*db.UserEmail]{}
+	}
+	lv, ok := cd.adminUserEmails[id]
+	if !ok {
+		lv = &lazy.Value[[]*db.UserEmail]{}
+		cd.adminUserEmails[id] = lv
+	}
+	rows, err := lv.Load(func() ([]*db.UserEmail, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		emails, err := cd.queries.AdminListUserEmails(cd.ctx, id)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		return emails, nil
+	})
+	if err != nil {
+		log.Printf("load user emails: %v", err)
+		return nil
+	}
+	return rows
+}
+
+// CurrentProfileComments returns admin comments for the profile user.
+func (cd *CoreData) CurrentProfileComments() []*db.AdminUserComment {
+	id := cd.currentProfileUserID
+	if id == 0 {
+		return nil
+	}
+	if cd.adminUserComments == nil {
+		cd.adminUserComments = map[int32]*lazy.Value[[]*db.AdminUserComment]{}
+	}
+	lv, ok := cd.adminUserComments[id]
+	if !ok {
+		lv = &lazy.Value[[]*db.AdminUserComment]{}
+		cd.adminUserComments[id] = lv
+	}
+	rows, err := lv.Load(func() ([]*db.AdminUserComment, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		comments, err := cd.queries.ListAdminUserComments(cd.ctx, id)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		return comments, nil
+	})
+	if err != nil {
+		log.Printf("load user comments: %v", err)
+		return nil
+	}
+	return rows
+}
+
+// CurrentProfileRoles returns roles for the profile user.
+func (cd *CoreData) CurrentProfileRoles() []*db.GetPermissionsByUserIDRow {
+	id := cd.currentProfileUserID
+	if id == 0 {
+		return nil
+	}
+	if cd.adminUserRoles == nil {
+		cd.adminUserRoles = map[int32]*lazy.Value[[]*db.GetPermissionsByUserIDRow]{}
+	}
+	lv, ok := cd.adminUserRoles[id]
+	if !ok {
+		lv = &lazy.Value[[]*db.GetPermissionsByUserIDRow]{}
+		cd.adminUserRoles[id] = lv
+	}
+	rows, err := lv.Load(func() ([]*db.GetPermissionsByUserIDRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		roles, err := cd.queries.GetPermissionsByUserID(cd.ctx, id)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		return roles, nil
+	})
+	if err != nil {
+		log.Printf("load user roles: %v", err)
+		return nil
+	}
+	return rows
+}
+
+// CurrentProfileStats returns posting stats for the profile user.
+func (cd *CoreData) CurrentProfileStats() *db.AdminUserPostCountsByIDRow {
+	id := cd.currentProfileUserID
+	if id == 0 {
+		return nil
+	}
+	if cd.adminUserStats == nil {
+		cd.adminUserStats = map[int32]*lazy.Value[*db.AdminUserPostCountsByIDRow]{}
+	}
+	lv, ok := cd.adminUserStats[id]
+	if !ok {
+		lv = &lazy.Value[*db.AdminUserPostCountsByIDRow]{}
+		cd.adminUserStats[id] = lv
+	}
+	row, err := lv.Load(func() (*db.AdminUserPostCountsByIDRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		stat, err := cd.queries.AdminUserPostCountsByID(cd.ctx, id)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		return stat, nil
+	})
+	if err != nil {
+		log.Printf("load user stats: %v", err)
+		return nil
+	}
+	return row
+}
+
+// CurrentProfileBookmarkSize returns bookmark entry count for the profile user.
+func (cd *CoreData) CurrentProfileBookmarkSize() int {
+	id := cd.currentProfileUserID
+	if id == 0 {
+		return 0
+	}
+	if cd.adminUserBookmarkSize == nil {
+		cd.adminUserBookmarkSize = map[int32]*lazy.Value[int]{}
+	}
+	lv, ok := cd.adminUserBookmarkSize[id]
+	if !ok {
+		lv = &lazy.Value[int]{}
+		cd.adminUserBookmarkSize[id] = lv
+	}
+	size, err := lv.Load(func() (int, error) {
+		if cd.queries == nil {
+			return 0, nil
+		}
+		bm, err := cd.queries.GetBookmarksForUser(cd.ctx, id)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return 0, err
+		}
+		if bm == nil {
+			return 0, nil
+		}
+		list := strings.TrimSpace(bm.List.String)
+		if list == "" {
+			return 0, nil
+		}
+		return len(strings.Split(list, "\n")), nil
+	})
+	if err != nil {
+		log.Printf("load bookmark size: %v", err)
+		return 0
+	}
+	return size
+}
+
+// CurrentProfileGrants returns direct grants for the profile user.
+func (cd *CoreData) CurrentProfileGrants() []*db.Grant {
+	id := cd.currentProfileUserID
+	if id == 0 {
+		return nil
+	}
+	if cd.adminUserGrants == nil {
+		cd.adminUserGrants = map[int32]*lazy.Value[[]*db.Grant]{}
+	}
+	lv, ok := cd.adminUserGrants[id]
+	if !ok {
+		lv = &lazy.Value[[]*db.Grant]{}
+		cd.adminUserGrants[id] = lv
+	}
+	rows, err := lv.Load(func() ([]*db.Grant, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		grants, err := cd.queries.ListGrantsByUserID(cd.ctx, sql.NullInt32{Int32: id, Valid: true})
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		return grants, nil
+	})
+	if err != nil {
+		log.Printf("load user grants: %v", err)
+		return nil
+	}
+	return rows
+}
+
+// UserByID loads a user record by ID once and caches it.
+func (cd *CoreData) UserByID(id int32) *db.SystemGetUserByIDRow {
+	if id == 0 {
+		return nil
+	}
+	if cd.users == nil {
+		cd.users = map[int32]*lazy.Value[*db.SystemGetUserByIDRow]{}
+	}
+	lv, ok := cd.users[id]
+	if !ok {
+		lv = &lazy.Value[*db.SystemGetUserByIDRow]{}
+		cd.users[id] = lv
+	}
+	row, err := lv.Load(func() (*db.SystemGetUserByIDRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		r, err := cd.queries.SystemGetUserByID(cd.ctx, id)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return r, err
+	})
+	if err != nil {
+		log.Printf("load user %d: %v", id, err)
+		return nil
+	}
+	return row
+}
+
+// Email template helpers
+
+// SetCurrentTemplate records the template being edited along with an error message.
+func (cd *CoreData) SetCurrentTemplate(name, errMsg string) {
+	cd.currentTemplateName = name
+	cd.currentTemplateError = errMsg
+}
+
+// TemplateName returns the currently selected template name.
+func (cd *CoreData) TemplateName() string { return cd.currentTemplateName }
+
+// TemplateError returns the error message for template editing.
+func (cd *CoreData) TemplateError() string { return cd.currentTemplateError }
+
+// TemplateOverride returns the override body for the current template.
+func (cd *CoreData) TemplateOverride() string {
+	name := cd.currentTemplateName
+	if name == "" {
+		return ""
+	}
+	if cd.templateOverrides == nil {
+		cd.templateOverrides = map[string]*lazy.Value[string]{}
+	}
+	lv, ok := cd.templateOverrides[name]
+	if !ok {
+		lv = &lazy.Value[string]{}
+		cd.templateOverrides[name] = lv
+	}
+	body, err := lv.Load(func() (string, error) {
+		if cd.queries == nil {
+			return "", nil
+		}
+		return cd.queries.SystemGetTemplateOverride(cd.ctx, name)
+	})
+	if err != nil {
+		return ""
+	}
+	return body
+}
+
+// DefaultTemplate renders the default body for the current template.
+func (cd *CoreData) DefaultTemplate() string {
+	return defaultTemplate(cd.currentTemplateName, cd.Config)
+}
+
+func defaultTemplate(name string, cfg *config.RuntimeConfig) string {
+	var buf bytes.Buffer
+	if strings.HasSuffix(name, ".gohtml") {
+		tmpl := templates.GetCompiledEmailHtmlTemplates(map[string]any{})
+		if err := tmpl.ExecuteTemplate(&buf, name, sampleEmailData(cfg)); err == nil {
+			return buf.String()
+		}
+	} else {
+		tmpl := templates.GetCompiledEmailTextTemplates(map[string]any{})
+		if err := tmpl.ExecuteTemplate(&buf, name, sampleEmailData(cfg)); err == nil {
+			return buf.String()
+		}
+		tmpl2 := templates.GetCompiledNotificationTemplates(map[string]any{})
+		buf.Reset()
+		if err := tmpl2.ExecuteTemplate(&buf, name, sampleEmailData(cfg)); err == nil {
+			return buf.String()
+		}
+	}
+	return ""
+}
+
+func sampleEmailData(cfg *config.RuntimeConfig) map[string]any {
+	return map[string]any{
+		"URL":            "http://example.com",
+		"UnsubscribeUrl": "http://example.com/unsub",
+		"From":           cfg.EmailFrom,
+		"To":             "user@example.com",
+	}
 }

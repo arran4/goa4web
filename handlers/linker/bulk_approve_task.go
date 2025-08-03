@@ -46,7 +46,7 @@ func (bulkApproveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	for _, q := range r.Form["qid"] {
 		id, _ := strconv.Atoi(q)
 		cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-		lid, err := queries.SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueId(r.Context(), db.SelectInsertLInkerQueuedItemIntoLinkerByLinkerQueueIdParams{
+		lid, err := queries.AdminInsertQueuedLinkFromQueue(r.Context(), db.AdminInsertQueuedLinkFromQueueParams{
 			Idlinkerqueue: int32(id),
 			AdminID:       cd.UserID,
 		})

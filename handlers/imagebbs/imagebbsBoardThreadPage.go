@@ -79,7 +79,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		ForumThreadId      int
 		Comments           []*CommentPlus
 		BoardId            int
-		ImagePost          *db.GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUserRow
+		ImagePost          *db.GetImagePostByIDForListerRow
 		Thread             *db.GetThreadLastPosterAndPermsRow
 		Offset             int
 		IsReplyable        bool
@@ -181,10 +181,10 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.Thread = threadRow
-	post, err := queries.GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUser(r.Context(), db.GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUserParams{
-		ViewerID:     uid,
+	post, err := queries.GetImagePostByIDForLister(r.Context(), db.GetImagePostByIDForListerParams{
+		ListerID:     uid,
 		ID:           int32(bid),
-		ViewerUserID: sql.NullInt32{Int32: uid, Valid: uid != 0},
+		ListerUserID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		switch {
@@ -228,10 +228,10 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	queries := cd.Queries()
 
-	post, err := queries.GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUser(r.Context(), db.GetAllImagePostsByIdWithAuthorUsernameAndThreadCommentCountForUserParams{
-		ViewerID:     uid,
+	post, err := queries.GetImagePostByIDForLister(r.Context(), db.GetImagePostByIDForListerParams{
+		ListerID:     uid,
 		ID:           int32(bid),
-		ViewerUserID: sql.NullInt32{Int32: uid, Valid: uid != 0},
+		ListerUserID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		switch {

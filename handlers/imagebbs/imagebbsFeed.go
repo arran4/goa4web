@@ -19,7 +19,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func imagebbsFeed(r *http.Request, title string, boardID int, rows []*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow) *feeds.Feed {
+func imagebbsFeed(r *http.Request, title string, boardID int, rows []*db.ListImagePostsByBoardForListerRow) *feeds.Feed {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	feed := &feeds.Feed{
 		Title:       title,
@@ -68,21 +68,25 @@ func imagebbsFeed(r *http.Request, title string, boardID int, rows []*db.GetAllI
 func RssPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	boards, err := queries.GetAllImageBoardsForUser(r.Context(), db.GetAllImageBoardsForUserParams{
-		ViewerID:     cd.UserID,
-		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+	boards, err := queries.ListBoardsForLister(r.Context(), db.ListBoardsForListerParams{
+		ListerID:     cd.UserID,
+		ListerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		Limit:        200,
+		Offset:       0,
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("feed query boards error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	var posts []*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow
+	var posts []*db.ListImagePostsByBoardForListerRow
 	for _, b := range boards {
-		rows, err := queries.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUser(r.Context(), db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserParams{
-			ViewerID:     cd.UserID,
+		rows, err := queries.ListImagePostsByBoardForLister(r.Context(), db.ListImagePostsByBoardForListerParams{
+			ListerID:     cd.UserID,
 			BoardID:      b.Idimageboard,
-			ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+			ListerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+			Limit:        200,
+			Offset:       0,
 		})
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			log.Printf("feed query error: %s", err)
@@ -102,21 +106,25 @@ func RssPage(w http.ResponseWriter, r *http.Request) {
 func AtomPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	boards, err := queries.GetAllImageBoardsForUser(r.Context(), db.GetAllImageBoardsForUserParams{
-		ViewerID:     cd.UserID,
-		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+	boards, err := queries.ListBoardsForLister(r.Context(), db.ListBoardsForListerParams{
+		ListerID:     cd.UserID,
+		ListerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		Limit:        200,
+		Offset:       0,
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("feed query boards error: %s", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	var posts []*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow
+	var posts []*db.ListImagePostsByBoardForListerRow
 	for _, b := range boards {
-		rows, err := queries.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUser(r.Context(), db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserParams{
-			ViewerID:     cd.UserID,
+		rows, err := queries.ListImagePostsByBoardForLister(r.Context(), db.ListImagePostsByBoardForListerParams{
+			ListerID:     cd.UserID,
 			BoardID:      b.Idimageboard,
-			ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+			ListerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+			Limit:        200,
+			Offset:       0,
 		})
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			log.Printf("feed query error: %s", err)
@@ -142,10 +150,12 @@ func BoardRssPage(w http.ResponseWriter, r *http.Request) {
 		_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd)
 		return
 	}
-	rows, err := queries.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUser(r.Context(), db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserParams{
-		ViewerID:     cd.UserID,
+	rows, err := queries.ListImagePostsByBoardForLister(r.Context(), db.ListImagePostsByBoardForListerParams{
+		ListerID:     cd.UserID,
 		BoardID:      int32(bid),
-		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		ListerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		Limit:        200,
+		Offset:       0,
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("feed query error: %s", err)
@@ -153,9 +163,11 @@ func BoardRssPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	title := fmt.Sprintf("Board %d", bid)
-	boards, err := queries.GetAllImageBoardsForUser(r.Context(), db.GetAllImageBoardsForUserParams{
-		ViewerID:     cd.UserID,
-		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+	boards, err := queries.ListBoardsForLister(r.Context(), db.ListBoardsForListerParams{
+		ListerID:     cd.UserID,
+		ListerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		Limit:        200,
+		Offset:       0,
 	})
 	if err == nil {
 		for _, b := range boards {
@@ -184,10 +196,12 @@ func BoardAtomPage(w http.ResponseWriter, r *http.Request) {
 		_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd)
 		return
 	}
-	rows, err := queries.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUser(r.Context(), db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserParams{
-		ViewerID:     cd.UserID,
+	rows, err := queries.ListImagePostsByBoardForLister(r.Context(), db.ListImagePostsByBoardForListerParams{
+		ListerID:     cd.UserID,
 		BoardID:      int32(bid),
-		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		ListerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		Limit:        200,
+		Offset:       0,
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("feed query error: %s", err)
@@ -195,9 +209,11 @@ func BoardAtomPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	title := fmt.Sprintf("Board %d", bid)
-	boards, err := queries.GetAllImageBoardsForUser(r.Context(), db.GetAllImageBoardsForUserParams{
-		ViewerID:     cd.UserID,
-		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+	boards, err := queries.ListBoardsForLister(r.Context(), db.ListBoardsForListerParams{
+		ListerID:     cd.UserID,
+		ListerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		Limit:        200,
+		Offset:       0,
 	})
 	if err == nil {
 		for _, b := range boards {

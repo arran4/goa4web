@@ -45,7 +45,7 @@ func (NewBoardTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
-	boards, err := queries.GetAllImageBoards(r.Context())
+	boards, err := queries.AdminListBoards(r.Context(), db.AdminListBoardsParams{Limit: 200, Offset: 0})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("fetch boards %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

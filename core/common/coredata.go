@@ -117,7 +117,7 @@ type CoreData struct {
 	currentTopicID           int32
 	currentCommentID         int32
 	currentNewsPostID        int32
-	imageBoardPosts          map[int32]*lazy.Value[[]*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow]
+	imageBoardPosts          map[int32]*lazy.Value[[]*db.ListImagePostsByBoardForListerRow]
 	imageBoards              lazy.Value[[]*db.Imageboard]
 	languagesAll             lazy.Value[[]*db.Language]
 	langs                    lazy.Value[[]*db.Language]
@@ -1182,10 +1182,12 @@ func (cd *CoreData) SubImageBoards(parentID int32) ([]*db.Imageboard, error) {
 		cd.subImageBoards[parentID] = lv
 	}
 	return lv.Load(func() ([]*db.Imageboard, error) {
-		return cd.queries.GetAllBoardsByParentBoardIdForUser(cd.ctx, db.GetAllBoardsByParentBoardIdForUserParams{
-			ViewerID:     cd.UserID,
+		return cd.queries.ListBoardsByParentIDForLister(cd.ctx, db.ListBoardsByParentIDForListerParams{
+			ListerID:     cd.UserID,
 			ParentID:     parentID,
-			ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+			ListerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+			Limit:        200,
+			Offset:       0,
 		})
 	})
 }
@@ -1196,28 +1198,30 @@ func (cd *CoreData) ImageBoards() ([]*db.Imageboard, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
-		return cd.queries.GetAllImageBoards(cd.ctx)
+		return cd.queries.AdminListBoards(cd.ctx, db.AdminListBoardsParams{Limit: 200, Offset: 0})
 	})
 }
 
 // ImageBoardPosts retrieves approved posts for the board lazily.
-func (cd *CoreData) ImageBoardPosts(boardID int32) ([]*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow, error) {
+func (cd *CoreData) ImageBoardPosts(boardID int32) ([]*db.ListImagePostsByBoardForListerRow, error) {
 	if cd.queries == nil {
 		return nil, nil
 	}
 	if cd.imageBoardPosts == nil {
-		cd.imageBoardPosts = make(map[int32]*lazy.Value[[]*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow])
+		cd.imageBoardPosts = make(map[int32]*lazy.Value[[]*db.ListImagePostsByBoardForListerRow])
 	}
 	lv, ok := cd.imageBoardPosts[boardID]
 	if !ok {
-		lv = &lazy.Value[[]*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow]{}
+		lv = &lazy.Value[[]*db.ListImagePostsByBoardForListerRow]{}
 		cd.imageBoardPosts[boardID] = lv
 	}
-	return lv.Load(func() ([]*db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserRow, error) {
-		return cd.queries.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUser(cd.ctx, db.GetAllImagePostsByBoardIdWithAuthorUsernameAndThreadCommentCountForUserParams{
-			ViewerID:     cd.UserID,
+	return lv.Load(func() ([]*db.ListImagePostsByBoardForListerRow, error) {
+		return cd.queries.ListImagePostsByBoardForLister(cd.ctx, db.ListImagePostsByBoardForListerParams{
+			ListerID:     cd.UserID,
 			BoardID:      boardID,
-			ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+			ListerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+			Limit:        200,
+			Offset:       0,
 		})
 	})
 }

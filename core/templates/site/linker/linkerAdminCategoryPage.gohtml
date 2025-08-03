@@ -1,6 +1,8 @@
 {{ template "head" $ }}
-<h2>Linker Category {{ .Category.Idlinkercategory }} - {{ .Category.Title.String }}</h2>
-<p>Order: {{ .Category.Position }}</p>
+{{ with cd.SelectedLinkerCategory .CategoryID }}
+<h2>Linker Category {{ .Idlinkercategory }} - {{ .Title.String }}</h2>
+<p>Order: {{ .Position }}</p>
+{{ end }}
 <h3 id="links">Links</h3>
 <table border="1">
     <tr>
@@ -9,12 +11,16 @@
         <th>URL</th>
         <th>Poster</th>
     </tr>
-    {{ range .Links }}
+    {{ range cd.LinkerLinksByCategoryID .CategoryID }}
     <tr>
         <td>{{ .Idlinker }}</td>
         <td>{{ .Title.String }}</td>
         <td><a href="{{ .Url.String }}">{{ .Url.String }}</a></td>
         <td>{{ .Posterusername.String }}</td>
+    </tr>
+    {{ else }}
+    <tr>
+        <td colspan="4">No links found.</td>
     </tr>
     {{ end }}
 </table>

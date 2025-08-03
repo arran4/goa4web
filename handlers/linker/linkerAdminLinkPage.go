@@ -12,17 +12,12 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
-	"github.com/gorilla/mux"
 )
 
 // adminLinkPage displays the edit form for a linker item.
 func adminLinkPage(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id, _ := strconv.Atoi(vars["link"])
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := cd.Queries()
-
-	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(r.Context(), int32(id))
+	link, id, err := cd.SelectedAdminLinkerItem(r)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -33,22 +28,13 @@ func adminLinkPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cats, _ := queries.GetAllLinkerCategories(r.Context())
-	langs, _ := cd.Languages()
-
 	cd.PageTitle = fmt.Sprintf("Edit Link %d", id)
 	data := struct {
-		*common.CoreData
 		Link               *db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow
-		Categories         []*db.LinkerCategory
-		Languages          []*db.Language
 		Selected           int
 		SelectedLanguageId int
 	}{
-		CoreData:           cd,
 		Link:               link,
-		Categories:         cats,
-		Languages:          langs,
 		Selected:           int(link.LinkerCategoryID),
 		SelectedLanguageId: int(link.LanguageIdlanguage),
 	}
@@ -66,15 +52,16 @@ var _ tasks.Task = (*editLinkTask)(nil)
 func (editLinkTask) Page(w http.ResponseWriter, r *http.Request) { adminLinkPage(w, r) }
 
 func (editLinkTask) Action(w http.ResponseWriter, r *http.Request) any {
-	vars := mux.Vars(r)
-	id, _ := strconv.Atoi(vars["link"])
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	id, err := cd.SelectedAdminLinkerItemID(r)
+	if err != nil {
+		return fmt.Errorf("link id not found %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
 	title := r.PostFormValue("title")
 	URL := r.PostFormValue("URL")
 	desc := r.PostFormValue("desc")
 	cat, _ := strconv.Atoi(r.PostFormValue("category"))
 	lang, _ := strconv.Atoi(r.PostFormValue("language"))
-
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
 
 	if err := queries.AdminUpdateLinkerItem(r.Context(), db.AdminUpdateLinkerItemParams{
@@ -83,7 +70,7 @@ func (editLinkTask) Action(w http.ResponseWriter, r *http.Request) any {
 		Description:        sql.NullString{Valid: true, String: desc},
 		LinkerCategoryID:   int32(cat),
 		LanguageIdlanguage: int32(lang),
-		Idlinker:           int32(id),
+		Idlinker:           id,
 	}); err != nil {
 		return fmt.Errorf("update linker item fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

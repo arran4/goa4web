@@ -64,6 +64,21 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 			}
 			return s[:l]
 		},
+		"int32": func(i any) int32 {
+			switch v := i.(type) {
+			case int:
+				return int32(v)
+			case int32:
+				return v
+			case int64:
+				return int32(v)
+			case string:
+				n, _ := strconv.Atoi(v)
+				return int32(n)
+			default:
+				return 0
+			}
+		},
 		"addmode": func(u string) string {
 			cd, _ := r.Context().Value(consts.KeyCoreData).(*CoreData)
 			if cd == nil || !cd.AdminMode {

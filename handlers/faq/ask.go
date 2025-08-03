@@ -1,7 +1,6 @@
 package faq
 
 import (
-	"database/sql"
 	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"net/http"
@@ -39,24 +38,23 @@ func (AskTask) Match(r *http.Request, m *mux.RouteMatch) bool {
 
 func (AskTask) Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Languages          []*db.Language
 		SelectedLanguageId int32
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Ask a Question"
-	data := Data{
-		CoreData:           cd,
-		SelectedLanguageId: cd.PreferredLanguageID(cd.Config.DefaultLanguage),
-	}
 
 	languageRows, err := cd.Languages()
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	data.Languages = languageRows
+
+	data := Data{
+		Languages:          languageRows,
+		SelectedLanguageId: cd.PreferredLanguageID(cd.Config.DefaultLanguage),
+	}
 
 	handlers.TemplateHandler(w, r, "askPage.gohtml", data)
 }
@@ -70,26 +68,20 @@ func (AskTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("languageId parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return handlers.SessionFetchFail{}
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if !cd.HasGrant("faq", "question", "post", 0) {
 		r.URL.RawQuery = "error=" + url.QueryEscape("Forbidden")
 		handlers.TaskErrorAcknowledgementPage(w, r)
 		return nil
 	}
 
-	if err := queries.CreateFAQQuestionForWriter(r.Context(), db.CreateFAQQuestionForWriterParams{
-		Question:   sql.NullString{String: text, Valid: true},
-		WriterID:   uid,
-		LanguageID: int32(languageId),
-		GranteeID:  sql.NullInt32{Int32: uid, Valid: true},
-	}); err != nil {
+	if err := cd.CreateFAQQuestion(text, uid, int32(languageId), uid); err != nil {
 		return fmt.Errorf("faq fetch fail: %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 

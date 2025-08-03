@@ -8,25 +8,13 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 )
 
 func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
-	type Data struct {
-		*common.CoreData
-		Rows []*db.GetFAQCategoriesWithQuestionCountRow
-	}
-
-	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-	}
-	cd := data.CoreData
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "FAQ Categories"
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-
-	rows, err := queries.GetFAQCategoriesWithQuestionCount(r.Context())
-	if err != nil {
+	if _, err := cd.FAQCategoriesWithQuestionCount(); err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
@@ -34,7 +22,5 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	data.Rows = rows
-
-	handlers.TemplateHandler(w, r, "faqAdminCategoriesPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "faqAdminCategoriesPage.gohtml", struct{}{})
 }

@@ -28,18 +28,13 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		FAQ []*CategoryFAQs
 	}
 
-	data := Data{}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	data := Data{}
 	cd.PageTitle = "FAQ"
-
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	var currentCategoryFAQs CategoryFAQs
 
-	faqRows, err := queries.GetAllAnsweredFAQWithFAQCategoriesForUser(r.Context(), db.GetAllAnsweredFAQWithFAQCategoriesForUserParams{
-		ViewerID: cd.UserID,
-		UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-	})
+	faqRows, err := cd.AllAnsweredFAQWithCategories()
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

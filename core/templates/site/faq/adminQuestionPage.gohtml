@@ -1,35 +1,14 @@
 {{ template "head" $ }}
 <h4>Unanswered Questions</h4>
-{{ template "adminQuestionTable" .UnansweredRows }}
+{{ template "adminQuestionTable" (cd.FAQUnansweredQuestions) }}
 
 <h4>FAQ Questions</h4>
 
-{{ template "adminQuestionTable" .AnsweredRows }}
+{{ template "adminQuestionTable" (cd.FAQAnsweredQuestions) }}
 
 <h4>Dismissed Questions</h4>
-{{ template "adminQuestionTable" .DismissedRows }}
+{{ template "adminQuestionTable" (cd.FAQDismissedQuestions) }}
 
 <p><a href="/admin/faq/question/0/edit">Create New Question</a></p>
-
-<table>
-<tr><th>Question</th><th>Category</th><th>Actions</th></tr>
-{{- range .Rows }}
-<tr>
-    <td>{{ .Question.String }}</td>
-    <td>{{ $cat := .FaqcategoriesIdfaqcategories }}{{ range $.Categories }}{{ if eq $cat .Idfaqcategories }}{{ .Name.String }}{{ end }}{{ end }}</td>
-    <td>
-        <a href="/admin/faq/question/{{ .Idfaq }}/edit">Edit</a> |
-        <a href="/admin/faq/revisions/{{ .Idfaq }}">History</a>
-        <form method="post" action="" style="display:inline;">
-            {{ csrfField }}
-            <input type="hidden" name="faq" value="{{ .Idfaq }}">
-            <input type="submit" name="task" value="Remove">
-        </form>
-    </td>
-</tr>
-{{- end }}
-</table>
-
-<p><a href="/admin/faq/question/create">Create New Question</a></p>
 
 {{ template "tail" $ }}

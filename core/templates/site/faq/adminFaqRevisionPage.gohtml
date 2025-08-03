@@ -9,6 +9,8 @@
   <td>{{ .Question.String }}</td>
   <td>{{ .Answer.String }}</td>
 </tr>
+{{- else }}
+<tr><td colspan="4">No Revisions</td></tr>
 {{- end }}
 </table>
 {{ template "tail" $ }}

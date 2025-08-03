@@ -6,7 +6,7 @@
                                 <th>Question Count
                                 <th>Options
                         </tr>
-                        {{- range .Rows }}
+                        {{- range cd.FAQCategoriesWithQuestionCount }}
                         <tr>
                                 <td>{{ .Idfaqcategories }}</td>
                                 <td>
@@ -22,6 +22,8 @@
                                         </form>
                                 </td>
                         </tr>
+                        {{- else }}
+                        <tr><td colspan="4">No Categories</td></tr>
                         {{- end }}
                         <tr>
                                 <td>NEW</td>

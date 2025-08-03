@@ -23,8 +23,8 @@ func AdminRevisionHistoryPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	faq, err := queries.GetFAQByID(r.Context(), int32(id))
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	faq, err := cd.FAQByID(int32(id))
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -35,18 +35,11 @@ func AdminRevisionHistoryPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	revs, _ := queries.GetFAQRevisionsForAdmin(r.Context(), int32(id))
-	type Data struct {
-		*common.CoreData
+	revs, _ := cd.FAQRevisions(int32(id))
+	data := struct {
 		Faq       *db.Faq
 		Revisions []*db.FaqRevision
-	}
-	data := Data{
-		CoreData:  r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-		Faq:       faq,
-		Revisions: revs,
-	}
-	cd := data.CoreData
+	}{faq, revs}
 	cd.PageTitle = fmt.Sprintf("FAQ %d History", id)
 	handlers.TemplateHandler(w, r, "adminFaqRevisionPage.gohtml", data)
 }

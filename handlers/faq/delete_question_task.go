@@ -28,9 +28,8 @@ func (DeleteQuestionTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("faq id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := cd.Queries()
 
-	if err := queries.AdminDeleteFAQ(r.Context(), int32(faq)); err != nil {
+	if err := cd.AdminDeleteFAQ(int32(faq)); err != nil {
 		return fmt.Errorf("delete faq fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 

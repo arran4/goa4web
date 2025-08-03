@@ -8,27 +8,12 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 )
 
 func AdminQuestionsPage(w http.ResponseWriter, r *http.Request) {
-	type Data struct {
-		*common.CoreData
-		Categories     []*db.FaqCategory
-		UnansweredRows []*db.Faq
-		AnsweredRows   []*db.Faq
-		DismissedRows  []*db.Faq
-	}
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-	}
-	cd := data.CoreData
-
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-
-	catrows, err := queries.GetAllFAQCategories(r.Context())
-	if err != nil {
+	if _, err := cd.FAQCategories(); err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
@@ -36,12 +21,9 @@ func AdminQuestionsPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	data.Categories = catrows
-
 	cd.PageTitle = "FAQ Questions"
 
-	unansweredRows, err := queries.GetFAQUnansweredQuestions(r.Context())
-	if err != nil {
+	if _, err := cd.FAQUnansweredQuestions(); err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
@@ -49,13 +31,7 @@ func AdminQuestionsPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	data.UnansweredRows = unansweredRows
-
-	answeredRows, err := queries.GetFAQAnsweredQuestions(r.Context(), db.GetFAQAnsweredQuestionsParams{
-		ViewerID: cd.UserID,
-		UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-	})
-	if err != nil {
+	if _, err := cd.FAQAnsweredQuestions(); err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
@@ -63,10 +39,7 @@ func AdminQuestionsPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	data.AnsweredRows = answeredRows
-
-	dismissedRows, err := queries.GetFAQDismissedQuestions(r.Context())
-	if err != nil {
+	if _, err := cd.FAQDismissedQuestions(); err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
@@ -74,7 +47,5 @@ func AdminQuestionsPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	data.DismissedRows = dismissedRows
-
-	handlers.TemplateHandler(w, r, "adminQuestionPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "adminQuestionPage.gohtml", struct{}{})
 }

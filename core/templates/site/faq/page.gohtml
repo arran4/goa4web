@@ -10,8 +10,12 @@
             <tr>
                 <td>A: {{ $faq.Answer | a4code2html }}</td>
             </tr>
+        {{ else }}
+            <tr><td colspan="1">No Questions</td></tr>
         {{ end }}
         </table>
+    {{ else }}
+        <p>No FAQs available</p>
     {{ end }}
     {{ template "tail" $ }}
 {{ end }}

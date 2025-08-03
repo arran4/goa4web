@@ -2,7 +2,6 @@ package languages
 
 import (
 	"database/sql"
-	_ "embed"
 	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"net/http"
@@ -19,25 +18,9 @@ func adminLanguageRedirect(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminLanguagesPage(w http.ResponseWriter, r *http.Request) {
-	type Data struct {
-		*common.CoreData
-		Rows []*db.Language
-	}
-
-	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-	}
-
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-
-	rows, err := cd.Languages()
-	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	data.Rows = rows
-
-	handlers.TemplateHandler(w, r, "languagesPage.gohtml", data)
+	cd.PageTitle = "Languages"
+	handlers.TemplateHandler(w, r, "languagesPage.gohtml", cd)
 }
 
 func adminLanguagesRenamePage(w http.ResponseWriter, r *http.Request) {

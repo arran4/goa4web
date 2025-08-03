@@ -1,23 +1,21 @@
 {{ template "head" $ }}
-{{- if .HasBookmarks }}
-    <table>
-        <tr valign="top">
-            {{- range .Columns }}
-                <td>
-                    {{- range .Categories }}
-                        <ul>
-                            <h2>{{ .Name }}</h2>
-                            {{- range .Entries }}
-                                <li><a href="{{ .Url }}" target="_blank">{{ .Name }}</a>
-                            {{- end }}
-                        </ul>
-                    {{- end }}
-                </td>
-            {{- end }}
-        </tr>
-    </table>
-{{- else }}
-    <p>No bookmarks saved. Use <a href="/bookmarks/edit">Edit</a> to add some.</p>
-{{- end }}
-    <hr><a href="/bookmarks/edit">EDIT</a><br>
+<table>
+    <tr valign="top">
+        {{- range .Columns }}
+            <td>
+                {{- range .Categories }}
+                    <ul>
+                        <h2>{{ .Name }}</h2>
+                        {{- range .Entries }}
+                            <li><a href="{{ .Url }}" target="_blank">{{ .Name }}</a></li>
+                        {{- end }}
+                    </ul>
+                {{- end }}
+            </td>
+        {{- else }}
+            <td>No bookmarks saved. Use <a href="/bookmarks/edit">Edit</a> to add some.</td>
+        {{- end }}
+    </tr>
+</table>
+<hr><a href="/bookmarks/edit">EDIT</a><br>
 {{ template "tail" $ }}

@@ -972,15 +972,6 @@ func (q *Queries) ListWritingsByIDsForLister(ctx context.Context, arg ListWritin
 	return items, nil
 }
 
-const setWritingLastIndex = `-- name: SetWritingLastIndex :exec
-UPDATE writing SET last_index = NOW() WHERE idwriting = ?
-`
-
-func (q *Queries) SetWritingLastIndex(ctx context.Context, idwriting int32) error {
-	_, err := q.db.ExecContext(ctx, setWritingLastIndex, idwriting)
-	return err
-}
-
 const systemAssignWritingThreadID = `-- name: SystemAssignWritingThreadID :exec
 UPDATE writing SET forumthread_id = ? WHERE idwriting = ?
 `
@@ -1175,6 +1166,15 @@ func (q *Queries) SystemListWritingCategories(ctx context.Context, arg SystemLis
 		return nil, err
 	}
 	return items, nil
+}
+
+const systemSetWritingLastIndex = `-- name: SystemSetWritingLastIndex :exec
+UPDATE writing SET last_index = NOW() WHERE idwriting = ?
+`
+
+func (q *Queries) SystemSetWritingLastIndex(ctx context.Context, idwriting int32) error {
+	_, err := q.db.ExecContext(ctx, systemSetWritingLastIndex, idwriting)
+	return err
 }
 
 const updateWritingForWriter = `-- name: UpdateWritingForWriter :exec

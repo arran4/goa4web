@@ -58,7 +58,7 @@ func (RemakeLinkerTask) BackgroundTask(ctx context.Context, q db.Querier) (tasks
 		}); err != nil {
 			return nil, err
 		}
-		if err := q.SetLinkerLastIndex(ctx, row.Idlinker); err != nil {
+		if err := q.SystemSetLinkerLastIndex(ctx, row.Idlinker); err != nil {
 			return nil, err
 		}
 	}

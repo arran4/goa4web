@@ -48,8 +48,9 @@ SET verified_at = ?, last_verification_code = NULL, verification_expires_at = NU
 WHERE id = ?;
 
 
--- name: SetNotificationPriority :exec
-UPDATE user_emails SET notification_priority = ? WHERE id = ?;
+-- name: SetNotificationPriorityForLister :exec
+UPDATE user_emails SET notification_priority = sqlc.arg(notification_priority)
+WHERE id = sqlc.arg(id) AND user_id = sqlc.arg(lister_id);
 
 -- name: GetNotificationEmailByUserID :one
 SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority
@@ -61,8 +62,11 @@ LIMIT 1;
 -- name: DeleteUserEmailForOwner :exec
 DELETE FROM user_emails WHERE id = sqlc.arg(id) AND user_id = sqlc.arg(owner_id);
 
--- name: SetVerificationCode :exec
-UPDATE user_emails SET last_verification_code = ?, verification_expires_at = ? WHERE id = ?;
+-- name: SetVerificationCodeForLister :exec
+UPDATE user_emails
+SET last_verification_code = sqlc.arg(last_verification_code),
+    verification_expires_at = sqlc.arg(verification_expires_at)
+WHERE id = sqlc.arg(id) AND user_id = sqlc.arg(lister_id);
 
 -- name: GetUserEmailByCode :one
 SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority

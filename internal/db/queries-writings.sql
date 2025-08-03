@@ -293,7 +293,7 @@ GROUP BY u.idusers
 ORDER BY u.username
 LIMIT ? OFFSET ?;
 
--- name: SetWritingLastIndex :exec
+-- name: SystemSetWritingLastIndex :exec
 UPDATE writing SET last_index = NOW() WHERE idwriting = ?;
 
 

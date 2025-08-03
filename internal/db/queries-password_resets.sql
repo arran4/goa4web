@@ -14,7 +14,7 @@ SELECT id, user_id, passwd, passwd_algorithm, verification_code, created_at, ver
 FROM pending_passwords
 WHERE verification_code = ? AND verified_at IS NULL AND created_at > ?;
 
--- name: MarkPasswordResetVerified :exec
+-- name: SystemMarkPasswordResetVerified :exec
 UPDATE pending_passwords SET verified_at = NOW() WHERE id = ?;
 
 -- name: SystemDeletePasswordReset :exec
@@ -24,7 +24,7 @@ DELETE FROM pending_passwords WHERE id = ?;
 -- Delete all password reset entries for the given user and return the result
 DELETE FROM pending_passwords WHERE user_id = ?;
 
--- name: PurgePasswordResetsBefore :execresult
+-- name: SystemPurgePasswordResetsBefore :execresult
 -- Remove password reset entries that have expired or were already verified
 DELETE FROM pending_passwords
 WHERE created_at < ? OR verified_at IS NOT NULL;

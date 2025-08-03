@@ -27,7 +27,7 @@ func userPublicProfilePage(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	if _, err := queries.UserHasPublicProfileRole(r.Context(), u.Idusers); err != nil {
+	if _, err := queries.GetPublicProfileRoleForUser(r.Context(), u.Idusers); err != nil {
 		http.NotFound(w, r)
 		return
 	}

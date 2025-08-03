@@ -15,7 +15,6 @@ import (
 	"net/http"
 	"path"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/arran4/goa4web/core/common"
@@ -28,7 +27,6 @@ import (
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/templates"
 	imagesign "github.com/arran4/goa4web/internal/images"
-	"github.com/gorilla/mux"
 	"golang.org/x/image/draw"
 
 	"github.com/arran4/goa4web/internal/upload"
@@ -56,28 +54,23 @@ var _ searchworker.IndexedTask = UploadImageTask{}
 
 func BoardPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Boards      []*db.Imageboard
 		IsSubBoard  bool
 		BoardNumber int
 		Posts       []*db.ListImagePostsByBoardForListerRow
 	}
 
-	vars := mux.Vars(r)
-	bid, _ := strconv.Atoi(vars["boardno"])
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	bid := cd.SelectedBoard()
 
-	data := Data{
-		CoreData:    r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-		IsSubBoard:  bid != 0,
-		BoardNumber: bid,
-	}
+	data := Data{IsSubBoard: bid != 0, BoardNumber: bid}
 
-	if !data.CoreData.HasGrant("imagebbs", "board", "view", int32(bid)) {
-		_ = templates.GetCompiledSiteTemplates(r.Context().Value(consts.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData)
+	if !cd.HasGrant("imagebbs", "board", "view", int32(bid)) {
+		_ = templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", struct{}{})
 		return
 	}
 
-	boards, err := data.CoreData.SubImageBoards(int32(bid))
+	boards, err := cd.SubImageBoards(int32(bid))
 	if err != nil {
 		log.Printf("imageboards: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -85,12 +78,12 @@ func BoardPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(boards) > 0 {
-		data.CoreData.PageTitle = fmt.Sprintf("Board %s", boards[0].Title.String)
+		cd.PageTitle = fmt.Sprintf("Board %s", boards[0].Title.String)
 	}
 
 	data.Boards = boards
 
-	posts, err := data.CoreData.ImageBoardPosts(int32(bid))
+	posts, err := cd.ImageBoardPosts(int32(bid))
 	if err != nil {
 		log.Printf("imageboard posts: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -106,8 +99,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	text := r.PostFormValue("text")
 
-	vars := mux.Vars(r)
-	bid, _ := strconv.Atoi(vars["boardno"])
+	bid := cd.SelectedBoard()
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {

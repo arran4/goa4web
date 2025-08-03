@@ -21,20 +21,20 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
-func Test_preprocessBookmarks(t *testing.T) {
+func TestParseColumns(t *testing.T) {
 	tests := []struct {
 		name      string
 		bookmarks string
-		want      []*BookmarkColumn
+		want      []*Column
 	}{
 		{
 			name:      "Test",
 			bookmarks: "Category: Search\nhttp://www.google.com.au Google\nCategory: Wikies\nhttp://en.wikipedia.org/wiki/Main_Page Wikipedia\nhttp://mathworld.wolfram.com/ Math World\nhttp://gentoo-wiki.com/Main_Page Gentoo-wiki\n",
-			want: []*BookmarkColumn{{
-				Categories: []*BookmarkCategory{
+			want: []*Column{{
+				Categories: []*Category{
 					{
 						Name: "Search",
-						Entries: []*BookmarkEntry{
+						Entries: []*Entry{
 							{
 								Url:  "http://www.google.com.au",
 								Name: "Google",
@@ -43,7 +43,7 @@ func Test_preprocessBookmarks(t *testing.T) {
 					},
 					{
 						Name: "Wikies",
-						Entries: []*BookmarkEntry{
+						Entries: []*Entry{
 							{
 								Url:  "http://en.wikipedia.org/wiki/Main_Page",
 								Name: "Wikipedia",
@@ -63,9 +63,9 @@ func Test_preprocessBookmarks(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := preprocessBookmarks(tt.bookmarks)
+			got := ParseColumns(tt.bookmarks)
 			if diff := cmp.Diff(got, tt.want); diff != "" {
-				t.Errorf("preprocessBookmarks() = diff\n%s", diff)
+				t.Errorf("ParseColumns() = diff\n%s", diff)
 			}
 		})
 	}

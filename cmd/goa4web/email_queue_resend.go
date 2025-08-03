@@ -51,7 +51,7 @@ func (c *emailQueueResendCmd) Run() error {
 			return fmt.Errorf("send email: %w", err)
 		}
 	}
-	if err := queries.MarkEmailSent(ctx, e.ID); err != nil {
+	if err := queries.SystemMarkPendingEmailSent(ctx, e.ID); err != nil {
 		return fmt.Errorf("mark sent: %w", err)
 	}
 	return nil

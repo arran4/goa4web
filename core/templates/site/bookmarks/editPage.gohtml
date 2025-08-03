@@ -1,6 +1,12 @@
 {{ template "head" $ }}
     <form method=post action="">
-        <textarea name="text" cols=60 rows=20>{{.BookmarkContent}}</textarea><br>
-        <input type=submit name="task" value="{{if .Bid}}Save{{else}}Create{{end}}">
+        <textarea name="text" cols=60 rows=20>{{with (cd).Bookmarks}}{{.List.String}}{{else}}Category: Example 1
+http://www.google.com.au Google
+Column
+Category: Example 2
+http://www.google.com.au Google
+http://www.google.com.au Google
+{{end}}</textarea><br>
+        <input type=submit name="task" value="{{if (cd).Bookmarks}}Save{{else}}Create{{end}}">
     </form>
 {{ template "tail" $ }}

@@ -14,7 +14,7 @@ WHERE site_news_id = ?
 ORDER BY created_at DESC
 LIMIT 1;
 
--- name: SetAnnouncementActive :exec
+-- name: AdminSetAnnouncementActive :exec
 UPDATE site_announcements SET active = ? WHERE id = ?;
 
 -- name: GetActiveAnnouncementWithNewsForLister :one

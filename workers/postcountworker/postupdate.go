@@ -13,7 +13,7 @@ func PostUpdate(ctx context.Context, q db.Querier, threadID, topicID int32) erro
 	if err := q.AdminRecalculateForumThreadByIdMetaData(ctx, threadID); err != nil {
 		return fmt.Errorf("recalc thread metadata: %w", err)
 	}
-	if err := q.RebuildForumTopicByIdMetaColumns(ctx, topicID); err != nil {
+	if err := q.SystemRebuildForumTopicMetaByID(ctx, topicID); err != nil {
 		return fmt.Errorf("rebuild topic metadata: %w", err)
 	}
 	return nil

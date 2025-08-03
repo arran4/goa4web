@@ -130,7 +130,7 @@ ORDER BY s.occurred DESC
 LIMIT ? OFFSET ?;
 
 
--- name: SetSiteNewsLastIndex :exec
+-- name: SystemSetSiteNewsLastIndex :exec
 UPDATE site_news SET last_index = NOW() WHERE idsiteNews = ?;
 
 

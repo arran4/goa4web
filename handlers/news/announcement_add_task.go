@@ -40,7 +40,7 @@ func (AnnouncementAddTask) Action(w http.ResponseWriter, r *http.Request) any {
 			return fmt.Errorf("promote announcement fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	} else if !ann.Active {
-		if err := queries.SetAnnouncementActive(r.Context(), db.SetAnnouncementActiveParams{Active: true, ID: ann.ID}); err != nil {
+		if err := queries.AdminSetAnnouncementActive(r.Context(), db.AdminSetAnnouncementActiveParams{Active: true, ID: ann.ID}); err != nil {
 			return fmt.Errorf("activate announcement fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}

@@ -27,23 +27,7 @@ var _ tasks.Task = (*PagingSaveTask)(nil)
 func userPagingPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Pagination"
-	pref, _ := cd.Preference()
-	size := cd.Config.PageSizeDefault
-	if pref != nil {
-		size = int(pref.PageSize)
-	}
-	data := struct {
-		*common.CoreData
-		Size int
-		Min  int
-		Max  int
-	}{
-		CoreData: cd,
-		Size:     size,
-		Min:      cd.Config.PageSizeMin,
-		Max:      cd.Config.PageSizeMax,
-	}
-	handlers.TemplateHandler(w, r, "pagingPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "pagingPage.gohtml", struct{}{})
 }
 
 func (PagingSaveTask) Action(w http.ResponseWriter, r *http.Request) any {

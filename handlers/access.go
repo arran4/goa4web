@@ -8,11 +8,16 @@ import (
 )
 
 // VerifyAccess wraps h and denies the request if the caller lacks any of
-// the provided roles.
-func VerifyAccess(h http.HandlerFunc, roles ...string) http.HandlerFunc {
+// the provided roles. err is shown on the rendered error page; if err is nil
+// a generic "Forbidden" message is displayed.
+func VerifyAccess(h http.HandlerFunc, err error, roles ...string) http.HandlerFunc {
+	if err == nil {
+		err = fmt.Errorf("Forbidden")
+	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !common.Allowed(r, roles...) {
-			RenderErrorPage(w, r, fmt.Errorf("Forbidden"))
+			w.WriteHeader(http.StatusForbidden)
+			RenderErrorPage(w, r, err)
 			return
 		}
 		h(w, r)

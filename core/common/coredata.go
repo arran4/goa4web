@@ -1693,6 +1693,9 @@ func (cd *CoreData) SetCurrentProfileUserID(id int32) { cd.currentProfileUserID 
 // SetCurrentRequestID stores the request ID for subsequent lookups.
 func (cd *CoreData) SetCurrentRequestID(id int32) { cd.currentRequestID = id }
 
+// CurrentRequestID returns the request ID currently in context.
+func (cd *CoreData) CurrentRequestID() int32 { return cd.currentRequestID }
+
 // SetCurrentTemplate records the template being edited along with an error message.
 func (cd *CoreData) SetCurrentTemplate(name, errMsg string) {
 	cd.currentTemplateName = name
@@ -2162,6 +2165,7 @@ func WithSelectionsFromRequest(r *http.Request) CoreOption {
 			"writing": &cd.currentWritingID,
 			"blog":    &cd.currentBlogID,
 			"user":    &cd.currentProfileUserID,
+			"request": &cd.currentRequestID,
 		}
 		for k, v := range mux.Vars(r) {
 			assignIDFromString(mapping, k, v)

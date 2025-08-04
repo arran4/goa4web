@@ -24,7 +24,7 @@ func TopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Forum - Edit Comment"
 	queries := cd.Queries()
-	threadRow, err := cd.CurrentThread()
+	threadRow, err := cd.SelectedThread()
 	if err != nil || threadRow == nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
@@ -68,7 +68,7 @@ func TopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 func TopicThreadCommentEditActionCancelPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Forum - Edit Comment"
-	threadRow, err := cd.CurrentThread()
+	threadRow, err := cd.SelectedThread()
 	if err != nil || threadRow == nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return

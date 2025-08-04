@@ -31,7 +31,7 @@ func (topicThreadCommentEditActionTask) Action(w http.ResponseWriter, r *http.Re
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
-	threadRow, err := cd.CurrentThread()
+	threadRow, err := cd.SelectedThread()
 	if err != nil || threadRow == nil {
 		return fmt.Errorf("thread fetch %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

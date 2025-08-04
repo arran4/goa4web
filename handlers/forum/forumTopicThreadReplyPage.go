@@ -82,7 +82,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Forum - Reply"
-	threadRow, err := cd.CurrentThread()
+	threadRow, err := cd.SelectedThread()
 	if err != nil || threadRow == nil {
 		return fmt.Errorf("thread fetch %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
@@ -147,7 +147,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 func TopicThreadReplyCancelPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Forum - Reply"
-	threadRow, err := cd.CurrentThread()
+	threadRow, err := cd.SelectedThread()
 	if err != nil || threadRow == nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return

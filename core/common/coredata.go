@@ -843,16 +843,16 @@ func (cd *CoreData) CurrentRequestUser() *db.SystemGetUserByIDRow {
 	return cd.UserByID(req.UsersIdusers)
 }
 
-// CurrentThread returns the currently requested thread lazily loaded.
-func (cd *CoreData) CurrentThread(ops ...lazy.Option[*db.GetThreadLastPosterAndPermsRow]) (*db.GetThreadLastPosterAndPermsRow, error) {
+// SelectedThread returns the currently requested thread lazily loaded.
+func (cd *CoreData) SelectedThread(ops ...lazy.Option[*db.GetThreadLastPosterAndPermsRow]) (*db.GetThreadLastPosterAndPermsRow, error) {
 	if cd.currentThreadID == 0 {
 		return nil, nil
 	}
 	return cd.ForumThreadByID(cd.currentThreadID, ops...)
 }
 
-// CurrentThreadLoaded returns the cached current thread without database access.
-func (cd *CoreData) CurrentThreadLoaded() *db.GetThreadLastPosterAndPermsRow {
+// SelectedThreadLoaded returns the cached current thread without database access.
+func (cd *CoreData) SelectedThreadLoaded() *db.GetThreadLastPosterAndPermsRow {
 	if cd.forumThreadRows == nil {
 		return nil
 	}
@@ -1196,6 +1196,14 @@ func (cd *CoreData) ImageBoardPosts(boardID int32) ([]*db.ListImagePostsByBoardF
 			Offset:       0,
 		})
 	})
+}
+
+// SelectedBoardPosts returns posts for the current board without requiring an ID.
+func (cd *CoreData) SelectedBoardPosts() ([]*db.ListImagePostsByBoardForListerRow, error) {
+	if cd.currentBoardID == 0 {
+		return nil, nil
+	}
+	return cd.ImageBoardPosts(cd.currentBoardID)
 }
 
 // ImageBoards returns all image boards cached once.
@@ -1623,16 +1631,10 @@ func (cd *CoreData) SelectedAdminLinkerItemID(r *http.Request) (int32, error) {
 	return int32(id), nil
 }
 
-// SelectedBoard returns the selected board identifier.
-func (cd *CoreData) SelectedBoard() int { return int(cd.currentBoardID) } // TODO this shouldn't be necessary figoure out how to reduce
-
 // SelectedCategoryPublicWritings returns public writings for the given category.
 func (cd *CoreData) SelectedCategoryPublicWritings(categoryID int32, r *http.Request) ([]*db.ListPublicWritingsInCategoryForListerRow, error) {
 	return cd.PublicWritings(categoryID, r)
 }
-
-// SelectedImagePost returns the selected image post identifier.
-func (cd *CoreData) SelectedImagePost() int { return int(cd.currentImagePostID) } // TODO this shouldn't be necessary figoure out how to reduce
 
 // SelectedLinkerCategory returns the linker category for the given ID.
 func (cd *CoreData) SelectedLinkerCategory(id int32, ops ...lazy.Option[*db.LinkerCategory]) (*db.LinkerCategory, error) {
@@ -1649,9 +1651,6 @@ func (cd *CoreData) SelectedLinkerItemsForCurrentUser(catID, offset int32) ([]*d
 	}
 	return cd.LinkerItemsForUser(catID, offset)
 }
-
-// SelectedThread returns the selected thread identifier.
-func (cd *CoreData) SelectedThread() int { return int(cd.currentThreadID) } // TODO this shouldn't be necessary figoure out how to reduce
 
 // Session returns the request session if available.
 func (cd *CoreData) Session() *sessions.Session { return cd.session }
@@ -1734,6 +1733,14 @@ func (cd *CoreData) SubImageBoards(parentID int32) ([]*db.Imageboard, error) {
 	})
 }
 
+// SelectedBoardSubBoards returns sub-boards for the current board without requiring an ID.
+func (cd *CoreData) SelectedBoardSubBoards() ([]*db.Imageboard, error) {
+	if cd.currentBoardID == 0 {
+		return nil, nil
+	}
+	return cd.SubImageBoards(cd.currentBoardID)
+}
+
 // Subscribed reports whether the user has a subscription matching pattern and method.
 func (cd *CoreData) Subscribed(pattern, method string) bool {
 	m, _ := cd.subscriptionMap()
@@ -1804,33 +1811,27 @@ func (cd *CoreData) TemplateOverride() string {
 	return body
 }
 
-// ThreadComments returns comments for a thread lazily loading them once per thread ID.
-func (cd *CoreData) ThreadComments(threadID int32) ([]*db.GetCommentsByThreadIdForUserRow, error) {
-	if cd.forumThreadComments == nil {
-		cd.forumThreadComments = make(map[int32]*lazy.Value[[]*db.GetCommentsByThreadIdForUserRow])
-	}
-	lv, ok := cd.forumThreadComments[threadID]
-	if !ok {
-		lv = &lazy.Value[[]*db.GetCommentsByThreadIdForUserRow]{}
-		cd.forumThreadComments[threadID] = lv
-	}
-	return lv.Load(func() ([]*db.GetCommentsByThreadIdForUserRow, error) {
+// ThreadComments returns comments for the thread lazily loading once per thread ID.
+func (cd *CoreData) ThreadComments(id int32, ops ...lazy.Option[[]*db.GetCommentsByThreadIdForUserRow]) ([]*db.GetCommentsByThreadIdForUserRow, error) {
+	fetch := func(i int32) ([]*db.GetCommentsByThreadIdForUserRow, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
-		rows, err := cd.queries.GetCommentsByThreadIdForUser(cd.ctx, db.GetCommentsByThreadIdForUserParams{
+		return cd.queries.GetCommentsByThreadIdForUser(cd.ctx, db.GetCommentsByThreadIdForUserParams{
 			ViewerID: cd.UserID,
-			ThreadID: threadID,
+			ThreadID: i,
 			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				return nil, nil
-			}
-			return nil, err
-		}
-		return rows, nil
-	})
+	}
+	return lazy.Map(&cd.forumThreadComments, &cd.mapMu, id, fetch, ops...)
+}
+
+// SelectedThreadComments returns comments for the current thread without requiring an ID.
+func (cd *CoreData) SelectedThreadComments() ([]*db.GetCommentsByThreadIdForUserRow, error) {
+	if cd.currentThreadID == 0 {
+		return nil, nil
+	}
+	return cd.ThreadComments(cd.currentThreadID)
 }
 
 // UnreadNotificationCount returns the number of unread notifications for the

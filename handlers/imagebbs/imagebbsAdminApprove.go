@@ -2,9 +2,13 @@ package imagebbs
 
 import (
 	"fmt"
+	"net/http"
+	"strconv"
+
+	"github.com/gorilla/mux"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"net/http"
 
 	"github.com/arran4/goa4web/handlers"
 	notif "github.com/arran4/goa4web/internal/notifications"
@@ -22,7 +26,8 @@ var approvePostTask = &ApprovePostTask{TaskString: TaskApprove}
 
 func (ApprovePostTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	pid := cd.SelectedImagePost()
+	vars := mux.Vars(r)
+	pid, _ := strconv.Atoi(vars["post"])
 	if cd == nil || !cd.HasRole("administrator") {
 		return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			http.Error(w, "Forbidden", http.StatusForbidden)

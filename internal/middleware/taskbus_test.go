@@ -108,6 +108,29 @@ func TestTaskEventMiddleware(t *testing.T) {
 	}
 }
 
+type countingWriter struct {
+	http.ResponseWriter
+	headerCalls int
+}
+
+func (cw *countingWriter) WriteHeader(code int) {
+	cw.headerCalls++
+	cw.ResponseWriter.WriteHeader(code)
+}
+
+func TestStatusRecorderWriteHeaderOnce(t *testing.T) {
+	cw := &countingWriter{ResponseWriter: httptest.NewRecorder()}
+	sr := &statusRecorder{ResponseWriter: cw}
+	sr.WriteHeader(http.StatusTeapot)
+	sr.WriteHeader(http.StatusInternalServerError)
+	if cw.headerCalls != 1 {
+		t.Fatalf("expected 1 WriteHeader call, got %d", cw.headerCalls)
+	}
+	if sr.status != http.StatusTeapot {
+		t.Fatalf("status=%d", sr.status)
+	}
+}
+
 func TestTaskEventQueue(t *testing.T) {
 	bus := eventbus.NewBus()
 	mw := NewTaskEventMiddleware(bus)

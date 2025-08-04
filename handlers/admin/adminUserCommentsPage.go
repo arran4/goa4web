@@ -14,7 +14,7 @@ import (
 
 // adminUserCommentsPage lists all comments posted by a user.
 func adminUserCommentsPage(w http.ResponseWriter, r *http.Request) {
-	idStr := mux.Vars(r)["id"]
+	idStr := mux.Vars(r)["user"]
 	id, _ := strconv.Atoi(idStr)
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()

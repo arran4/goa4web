@@ -30,7 +30,7 @@ var _ tasks.AuditableTask = (*UserPasswordResetTask)(nil)
 var _ notif.TargetUsersNotificationProvider = (*UserPasswordResetTask)(nil)
 
 func (UserPasswordResetTask) Action(w http.ResponseWriter, r *http.Request) any {
-	idStr := mux.Vars(r)["id"]
+	idStr := mux.Vars(r)["user"]
 	id, _ := strconv.Atoi(idStr)
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
@@ -104,7 +104,7 @@ func (UserPasswordResetTask) AuditRecord(data map[string]any) string {
 }
 
 func adminUserResetPasswordConfirmPage(w http.ResponseWriter, r *http.Request) {
-	idStr := mux.Vars(r)["id"]
+	idStr := mux.Vars(r)["user"]
 	id, _ := strconv.Atoi(idStr)
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Reset Password"

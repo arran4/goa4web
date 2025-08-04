@@ -8,9 +8,4 @@ Jump to:
     <li>{{ .Word.String }} - {{ .Count }}</li>
 {{- end }}
 </ul>
-{{ if $.PrevLink }}<a href="{{ $.PrevLink }}">Previous</a>{{ end }}
-{{ range $.PageLinks }}
-    {{ if .Active }}<strong>{{ .Num }}</strong>{{ else }}<a href="{{ .Link }}">{{ .Num }}</a>{{ end }}
-{{ end }}
-{{ if $.NextLink }}<a href="{{ $.NextLink }}">Next</a>{{ end }}
 {{ template "tail" $ }}

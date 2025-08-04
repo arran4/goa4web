@@ -42,6 +42,13 @@ type AdminSection struct {
 	Links []IndexItem
 }
 
+// PageLink represents a numbered pagination link.
+type PageLink struct {
+	Num    int
+	Link   string
+	Active bool
+}
+
 // SessionManager defines optional hooks for storing and removing session
 // information. Implementations may persist session metadata in a database or
 // other storage while exposing a storage-agnostic API to CoreData.
@@ -87,7 +94,10 @@ type CoreData struct {
 	LinkSigner        *linksign.Signer
 	mapMu             sync.Mutex
 	Nav               NavigationProvider
+	NextLink          string
 	NotificationCount int32
+	PageLinks         []PageLink
+	PrevLink          string
 	// PageTitle holds the title of the current page.
 	PageTitle  string
 	RSSFeedURL string
@@ -1796,13 +1806,13 @@ func (cd *CoreData) TemplateOverride() string {
 
 // ThreadComments returns comments for a thread lazily loading them once per thread ID.
 func (cd *CoreData) ThreadComments(threadID int32) ([]*db.GetCommentsByThreadIdForUserRow, error) {
-	if cd.threadComments == nil {
-		cd.threadComments = make(map[int32]*lazy.Value[[]*db.GetCommentsByThreadIdForUserRow])
+	if cd.forumThreadComments == nil {
+		cd.forumThreadComments = make(map[int32]*lazy.Value[[]*db.GetCommentsByThreadIdForUserRow])
 	}
-	lv, ok := cd.threadComments[threadID]
+	lv, ok := cd.forumThreadComments[threadID]
 	if !ok {
 		lv = &lazy.Value[[]*db.GetCommentsByThreadIdForUserRow]{}
-		cd.threadComments[threadID] = lv
+		cd.forumThreadComments[threadID] = lv
 	}
 	return lv.Load(func() ([]*db.GetCommentsByThreadIdForUserRow, error) {
 		if cd.queries == nil {
@@ -2107,11 +2117,6 @@ func WithCustomQueries(cq db.CustomQueries) CoreOption {
 // WithNewsOffset records the current news listing offset.
 func WithNewsOffset(o int) CoreOption {
 	return func(cd *CoreData) { cd.currentNewsOffset = o }
-}
-
-// WithUserRoles preloads the current user roles.
-func WithUserRoles(r []string) CoreOption {
-	return func(cd *CoreData) { cd.userRoles.Set(r) }
 }
 
 // assignIDFromString converts v to int32 and stores it in the mapped CoreData

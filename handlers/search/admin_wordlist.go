@@ -16,12 +16,6 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
-type PageLink struct {
-	Num    int
-	Link   string
-	Active bool
-}
-
 type WordCount struct {
 	Word  sql.NullString
 	Count int32
@@ -31,18 +25,14 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
 		Rows       []WordCount
-		NextLink   string
-		PrevLink   string
-		PageLinks  []PageLink
 		Letters    []string
 		CurrentLtr string
 	}
-
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 	}
-	data.CoreData.PageTitle = "Search Word List"
-
+	cd.PageTitle = "Search Word List"
 	letters := make([]string, len(handlers.Alphabet))
 	for i, c := range handlers.Alphabet {
 		letters[i] = strings.ToUpper(string(c))
@@ -136,15 +126,15 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 
 	for i := 1; i <= numPages; i++ {
 		vals.Set("page", strconv.Itoa(i))
-		data.PageLinks = append(data.PageLinks, PageLink{Num: i, Link: base + "?" + vals.Encode(), Active: i == page})
+		cd.PageLinks = append(cd.PageLinks, common.PageLink{Num: i, Link: base + "?" + vals.Encode(), Active: i == page})
 	}
 	if page < numPages {
 		vals.Set("page", strconv.Itoa(page+1))
-		data.NextLink = base + "?" + vals.Encode()
+		cd.NextLink = base + "?" + vals.Encode()
 	}
 	if page > 1 {
 		vals.Set("page", strconv.Itoa(page-1))
-		data.PrevLink = base + "?" + vals.Encode()
+		cd.PrevLink = base + "?" + vals.Encode()
 	}
 
 	handlers.TemplateHandler(w, r, "searchWordListPage.gohtml", data)

@@ -1,0 +1,11 @@
+{{define "pagination"}}
+    {{ if or cd.PrevLink cd.NextLink cd.PageLinks }}
+        <div class="pagination-bar">
+            {{ if cd.PrevLink }}<a href="{{ cd.PrevLink }}">Previous{{ if .PageSize }} {{ .PageSize }}{{ end }}</a>{{ end }}
+            {{ range cd.PageLinks }}
+                {{ if .Active }}<strong>{{ .Num }}</strong>{{ else }}<a href="{{ .Link }}">{{ .Num }}</a>{{ end }}
+            {{ end }}
+            {{ if cd.NextLink }}<a href="{{ cd.NextLink }}">Next{{ if .PageSize }} {{ .PageSize }}{{ end }}</a>{{ end }}
+        </div>
+    {{ end }}
+{{end}}

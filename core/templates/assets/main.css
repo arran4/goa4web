@@ -146,6 +146,17 @@ div.title {
         background-color: #FFF6E0;
 }
 
+.pagination-bar {
+        position: sticky;
+        bottom: 0;
+        background-color: #FFF6E0;
+        padding: 0.5em;
+        text-align: center;
+}
+.pagination-bar a, .pagination-bar strong {
+        margin: 0 0.25em;
+}
+
 /* spoiler text hidden until hovered */
 .spoiler {
         color: #000000;

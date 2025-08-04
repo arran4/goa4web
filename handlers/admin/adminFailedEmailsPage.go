@@ -24,8 +24,6 @@ func AdminFailedEmailsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
 		Emails   []EmailItem
-		NextLink string
-		PrevLink string
 		PageSize int
 	}
 
@@ -110,7 +108,7 @@ func AdminFailedEmailsPage(w http.ResponseWriter, r *http.Request) {
 			nextVals[k] = v
 		}
 		nextVals.Set("offset", strconv.Itoa(offset+pageSize))
-		data.NextLink = "/admin/email/failed?" + nextVals.Encode()
+		cd.NextLink = "/admin/email/failed?" + nextVals.Encode()
 	}
 	if offset > 0 {
 		prev := offset - pageSize
@@ -122,7 +120,7 @@ func AdminFailedEmailsPage(w http.ResponseWriter, r *http.Request) {
 			prevVals[k] = v
 		}
 		prevVals.Set("offset", strconv.Itoa(prev))
-		data.PrevLink = "/admin/email/failed?" + prevVals.Encode()
+		cd.PrevLink = "/admin/email/failed?" + prevVals.Encode()
 	}
 
 	handlers.TemplateHandler(w, r, "emailFailedPage.gohtml", data)

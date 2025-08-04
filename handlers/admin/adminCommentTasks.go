@@ -4,14 +4,12 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
-	"github.com/gorilla/mux"
 )
 
 // DeleteCommentTask permanently removes a comment.
@@ -22,9 +20,12 @@ var deleteCommentTask = &DeleteCommentTask{TaskString: TaskDelete}
 var _ tasks.Task = (*DeleteCommentTask)(nil)
 
 func (DeleteCommentTask) Action(w http.ResponseWriter, r *http.Request) any {
-	id, _ := strconv.Atoi(mux.Vars(r)["id"])
-	q := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	if err := q.AdminScrubComment(r.Context(), db.AdminScrubCommentParams{Text: sql.NullString{String: "", Valid: true}, Idcomments: int32(id)}); err != nil {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	c, err := cd.CurrentComment(r)
+	if err != nil || c == nil {
+		return fmt.Errorf("delete comment %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	if err := cd.Queries().AdminScrubComment(r.Context(), db.AdminScrubCommentParams{Text: sql.NullString{String: "", Valid: true}, Idcomments: c.Idcomments}); err != nil {
 		return fmt.Errorf("delete comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	return nil
@@ -38,10 +39,13 @@ var editCommentTask = &EditCommentTask{TaskString: TaskEdit}
 var _ tasks.Task = (*EditCommentTask)(nil)
 
 func (EditCommentTask) Action(w http.ResponseWriter, r *http.Request) any {
-	id, _ := strconv.Atoi(mux.Vars(r)["id"])
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	c, err := cd.CurrentComment(r)
+	if err != nil || c == nil {
+		return fmt.Errorf("edit comment %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
 	text := r.PostFormValue("replytext")
-	q := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	if err := q.AdminScrubComment(r.Context(), db.AdminScrubCommentParams{Text: sql.NullString{String: text, Valid: true}, Idcomments: int32(id)}); err != nil {
+	if err := cd.Queries().AdminScrubComment(r.Context(), db.AdminScrubCommentParams{Text: sql.NullString{String: text, Valid: true}, Idcomments: c.Idcomments}); err != nil {
 		return fmt.Errorf("edit comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	return nil
@@ -55,13 +59,12 @@ var banCommentTask = &BanCommentTask{TaskString: "Ban"}
 var _ tasks.Task = (*BanCommentTask)(nil)
 
 func (BanCommentTask) Action(w http.ResponseWriter, r *http.Request) any {
-	id, _ := strconv.Atoi(mux.Vars(r)["id"])
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	q := cd.Queries()
-	c, err := q.GetCommentById(r.Context(), int32(id))
-	if err != nil {
+	c, err := cd.CurrentComment(r)
+	if err != nil || c == nil {
 		return fmt.Errorf("fetch comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
+	q := cd.Queries()
 	if err := q.AdminArchiveComment(r.Context(), db.AdminArchiveCommentParams{
 		Idcomments:         c.Idcomments,
 		ForumthreadID:      c.ForumthreadID,

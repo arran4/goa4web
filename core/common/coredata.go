@@ -142,6 +142,7 @@ type CoreData struct {
 	currentNewsPostID        int32
 	currentProfileUserID     int32
 	currentRequestID         int32
+	currentRoleID            int32
 	currentTemplateError     string
 	currentTemplateName      string
 	currentThreadID          int32
@@ -175,6 +176,7 @@ type CoreData struct {
 	pref                     lazy.Value[*db.Preference]
 	preferredLanguageID      lazy.Value[int32]
 	publicWritings           map[string]*lazy.Value[[]*db.ListPublicWritingsInCategoryForListerRow]
+	roleRows                 map[int32]*lazy.Value[*db.Role]
 	subImageBoards           map[int32]*lazy.Value[[]*db.Imageboard]
 	subscriptionRows         lazy.Value[[]*db.ListSubscriptionsByUserRow]
 	subscriptions            lazy.Value[map[string]bool]
@@ -282,6 +284,25 @@ func (cd *CoreData) AllRoles() ([]*db.Role, error) {
 		}
 		return cd.queries.AdminListRoles(cd.ctx)
 	})
+}
+
+// RoleByID returns a role lazily loading it once per ID.
+func (cd *CoreData) RoleByID(id int32, ops ...lazy.Option[*db.Role]) (*db.Role, error) {
+	fetch := func(i int32) (*db.Role, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		return cd.queries.AdminGetRoleByID(cd.ctx, i)
+	}
+	return lazy.Map(&cd.roleRows, &cd.mapMu, id, fetch, ops...)
+}
+
+// SelectedRole returns the role referenced by the current request.
+func (cd *CoreData) SelectedRole(ops ...lazy.Option[*db.Role]) (*db.Role, error) {
+	if cd.currentRoleID == 0 {
+		return nil, nil
+	}
+	return cd.RoleByID(cd.currentRoleID, ops...)
 }
 
 // Announcement returns the active announcement row loaded lazily.
@@ -1697,6 +1718,9 @@ func (cd *CoreData) SetCurrentRequestID(id int32) { cd.currentRequestID = id }
 // CurrentRequestID returns the request ID currently in context.
 func (cd *CoreData) CurrentRequestID() int32 { return cd.currentRequestID }
 
+// SetCurrentRoleID stores the role ID for subsequent lookups.
+func (cd *CoreData) SetCurrentRoleID(id int32) { cd.currentRoleID = id }
+
 // SetCurrentTemplate records the template being edited along with an error message.
 func (cd *CoreData) SetCurrentTemplate(name, errMsg string) {
 	cd.currentTemplateName = name
@@ -1720,6 +1744,9 @@ func (cd *CoreData) SelectedThreadID() int32 { return cd.currentThreadID }
 
 // SelectedImagePostID returns the image post ID extracted from the request.
 func (cd *CoreData) SelectedImagePostID() int32 { return cd.currentImagePostID }
+
+// SelectedRoleID returns the role ID extracted from the request.
+func (cd *CoreData) SelectedRoleID() int32 { return cd.currentRoleID }
 
 // SetEvent stores evt on cd for handler access.
 func (cd *CoreData) SetEvent(evt *eventbus.TaskEvent) { cd.event = evt }
@@ -2166,8 +2193,8 @@ func WithSelectionsFromRequest(r *http.Request) CoreOption {
 			"writing": &cd.currentWritingID,
 			"blog":    &cd.currentBlogID,
 			"request": &cd.currentRequestID,
+			"role":    &cd.currentRoleID,
 			"user":    &cd.currentProfileUserID,
-			"request": &cd.currentRequestID,
 		}
 		for k, v := range mux.Vars(r) {
 			assignIDFromString(mapping, k, v)

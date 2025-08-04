@@ -4,24 +4,26 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
-	"github.com/gorilla/mux"
 )
 
 // adminCommentPage displays a single comment with nearby context.
 func adminCommentPage(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(mux.Vars(r)["id"])
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	cd.PageTitle = fmt.Sprintf("Comment %d", id)
+	c, err := cd.CurrentComment(r)
+	if err != nil || c == nil {
+		http.NotFound(w, r)
+		return
+	}
+	cd.PageTitle = fmt.Sprintf("Comment %d", c.Idcomments)
 	queries := cd.Queries()
 	rows, err := queries.GetCommentsByIdsForUserWithThreadInfo(r.Context(), db.GetCommentsByIdsForUserWithThreadInfoParams{
 		ViewerID: cd.UserID,
-		Ids:      []int32{int32(id)},
+		Ids:      []int32{c.Idcomments},
 		UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 	})
 	if err != nil || len(rows) == 0 {

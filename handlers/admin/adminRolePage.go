@@ -210,9 +210,9 @@ func adminRolePage(w http.ResponseWriter, r *http.Request) {
 		"linker|link":       {"see", "view"},
 		"images|upload":     {"see", "view", "post"},
 		"news|post":         {"see", "view", "reply", "post", "edit"},
-		"blog|category":     {"see", "view", "post", "edit"},
+		"blog|category":     {"see", "view"},
 		"blog|blog":         {"see", "view", "post", "edit"},
-		"writings|category": {"see", "view", "post", "edit"},
+		"writings|category": {"see", "view"},
 		"writings|writing":  {"see", "view", "post", "edit"},
 	}
 

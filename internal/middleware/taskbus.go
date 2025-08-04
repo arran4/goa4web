@@ -23,7 +23,8 @@ import (
 // statusRecorder captures the response status for later inspection.
 type statusRecorder struct {
 	http.ResponseWriter
-	status int
+	status      int
+	wroteHeader bool
 }
 
 // Hijack delegates to the underlying ResponseWriter when available.
@@ -113,7 +114,11 @@ func NewTaskEventMiddleware(bus *eventbus.Bus) *TaskEventMiddleware {
 }
 
 func (r *statusRecorder) WriteHeader(code int) {
+	if r.wroteHeader {
+		return
+	}
 	r.status = code
+	r.wroteHeader = true
 	r.ResponseWriter.WriteHeader(code)
 }
 

@@ -11,10 +11,11 @@ import (
 // TemplateHandler renders the template and handles any template error.
 // Example usage:
 //
-//	type Data struct{ *CoreData }
-//	TemplateHandler(w, r, "page.gohtml", Data{cd})
+//	type Data struct{ Message string }
+//	TemplateHandler(w, r, "page.gohtml", Data{"hello"})
 //
-// Template helpers are provided via data.CoreData.Funcs(r).
+// Template helpers are provided via the CoreData in the request context,
+// accessible in templates as Funcs["cd"] (*common.CoreData).
 func TemplateHandler(w http.ResponseWriter, r *http.Request, tmpl string, data any) {
 	cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if err := cd.ExecuteSiteTemplate(w, r, tmpl, data); err != nil {

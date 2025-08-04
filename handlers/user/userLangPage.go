@@ -23,7 +23,6 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type Data struct {
-		*common.CoreData
 		LanguageOptions       []LanguageOption
 		DefaultIsMultilingual bool
 	}
@@ -77,7 +76,6 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 
 	defaultIsMulti := pref == nil || pref.LanguageIdlanguage == 0
 	data := Data{
-		CoreData:              cd,
 		LanguageOptions:       opts,
 		DefaultIsMultilingual: defaultIsMulti,
 	}

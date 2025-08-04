@@ -22,16 +22,15 @@ func adminUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	id := u.Idusers
 
 	type Data struct {
-		*common.CoreData
 		User  *db.User
 		Rows  []*db.GetPermissionsByUserIDRow
 		Roles []*db.Role
 	}
 
-	data := Data{CoreData: cd, User: &db.User{Idusers: u.Idusers, Username: u.Username}}
-	queries := data.Queries()
+	data := Data{User: &db.User{Idusers: u.Idusers, Username: u.Username}}
+	queries := cd.Queries()
 
-	if roles, err := data.AllRoles(); err == nil {
+	if roles, err := cd.AllRoles(); err == nil {
 		data.Roles = roles
 	}
 

@@ -19,7 +19,6 @@ import (
 
 func userEmailPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		UserData        *db.User
 		Verified        []*db.UserEmail
 		Unverified      []*db.UserEmail
@@ -46,7 +45,6 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	data := Data{
-		CoreData:   cd,
 		UserData:   user,
 		Verified:   verified,
 		Unverified: unverified,
@@ -111,18 +109,16 @@ func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if ue.VerifiedAt.Valid {
-		handlers.TemplateHandler(w, r, "user/emailVerifiedPage.gohtml", struct{ *common.CoreData }{cd})
+		handlers.TemplateHandler(w, r, "user/emailVerifiedPage.gohtml", struct{}{})
 		return
 	}
 
 	data := struct {
-		*common.CoreData
 		Code  string
 		Email string
 	}{
-		CoreData: cd,
-		Code:     code,
-		Email:    ue.Email,
+		Code:  code,
+		Email: ue.Email,
 	}
 	handlers.TemplateHandler(w, r, "user/emailVerifyConfirmPage.gohtml", data)
 }

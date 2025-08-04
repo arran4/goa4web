@@ -237,6 +237,30 @@ func (cd *CoreData) AdminLatestNewsList(offset, limit int32) ([]*db.AdminListNew
 	return rows, nil
 }
 
+// AdminLoginAttempts returns recent login attempts for administrators.
+func (cd *CoreData) AdminLoginAttempts() ([]*db.LoginAttempt, error) {
+	if cd.queries == nil {
+		return nil, nil
+	}
+	rows, err := cd.queries.AdminListLoginAttempts(cd.ctx)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, err
+	}
+	return rows, nil
+}
+
+// AdminSessions returns active sessions for administrators.
+func (cd *CoreData) AdminSessions() ([]*db.AdminListSessionsRow, error) {
+	if cd.queries == nil {
+		return nil, nil
+	}
+	rows, err := cd.queries.AdminListSessions(cd.ctx)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, err
+	}
+	return rows, nil
+}
+
 // AdminLinkerItemByID returns a single linker item lazily loading it once per ID.
 func (cd *CoreData) AdminLinkerItemByID(id int32, ops ...lazy.Option[*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow]) (*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow, error) {
 	fetch := func(i int32) (*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow, error) {

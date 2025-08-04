@@ -21,13 +21,6 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 	log.Printf("logout request session=%s uid=%d", handlers.HashSessionID(session.ID), uid)
-	type Data struct {
-		*common.CoreData
-	}
-
-	data := Data{
-		CoreData: cd,
-	}
 
 	// session retrieved earlier
 	delete(session.Values, "UID")
@@ -48,7 +41,7 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("logout success session=%s", handlers.HashSessionID(session.ID))
 
-	data.CoreData.UserID = 0
+	cd.UserID = 0
 
-	handlers.TemplateHandler(w, r, "logoutPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "logoutPage.gohtml", struct{}{})
 }

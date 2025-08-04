@@ -15,7 +15,7 @@ import (
 // RequireNewsPostAuthor ensures the requester authored the news post referenced in the URL.
 func RequireNewsPostAuthor(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		postID, err := strconv.Atoi(mux.Vars(r)["post"])
+		postID, err := strconv.Atoi(mux.Vars(r)["news"])
 		if err != nil {
 			http.NotFound(w, r)
 			return

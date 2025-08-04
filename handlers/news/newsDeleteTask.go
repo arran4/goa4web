@@ -22,7 +22,7 @@ var _ tasks.Task = (*DeleteNewsPostTask)(nil)
 
 func (DeleteNewsPostTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	pid, err := strconv.Atoi(mux.Vars(r)["post"])
+	pid, err := strconv.Atoi(mux.Vars(r)["news"])
 	if err != nil {
 		return fmt.Errorf("post id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

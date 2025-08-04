@@ -31,6 +31,6 @@ func (CancelTask) AdminInternalNotificationTemplate() *string {
 
 func (CancelTask) Action(w http.ResponseWriter, r *http.Request) any {
 	vars := mux.Vars(r)
-	postId, _ := strconv.Atoi(vars["post"])
+	postId, _ := strconv.Atoi(vars["news"])
 	return handlers.RedirectHandler(fmt.Sprintf("/news/news/%d", postId))
 }

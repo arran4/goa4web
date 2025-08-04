@@ -101,6 +101,7 @@ type CoreData struct {
 	PageTitle  string
 	PrevLink   string
 	RSSFeedURL string
+	StartLink  string
 	TasksReg   *tasks.Registry
 	// SiteTitle holds the title of the site.
 	SiteTitle string

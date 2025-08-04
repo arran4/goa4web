@@ -1,42 +1,19 @@
 package news
 
 import (
-	"fmt"
-	"github.com/arran4/goa4web/core/common"
-	htemplate "html/template"
 	"log"
 	"net/http"
-	"sync"
 
-	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers/forum/comments"
 
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/router"
 
 	navpkg "github.com/arran4/goa4web/internal/navigation"
 )
-
-var (
-	siteTemplates     *htemplate.Template
-	loadTemplatesOnce sync.Once
-)
-
-func runTemplate(name string) http.HandlerFunc {
-	loadTemplatesOnce.Do(func() {
-		siteTemplates = templates.GetCompiledSiteTemplates((&common.CoreData{}).Funcs(nil))
-	})
-	if siteTemplates.Lookup(name) == nil {
-		panic(fmt.Sprintf("missing template %s", name))
-	}
-	return func(w http.ResponseWriter, r *http.Request) {
-		handlers.TemplateHandler(w, r, name, r.Context().Value(consts.KeyCoreData))
-	}
-}
 
 // RegisterRoutes attaches the public news endpoints to r.
 func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
@@ -44,12 +21,12 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	navReg.RegisterIndexLink("News", "/", SectionWeight)
 	navReg.RegisterAdminControlCenter("News", "News", "/admin/news", SectionWeight)
 	r.Use(handlers.IndexMiddleware(CustomNewsIndex))
-	r.HandleFunc("/", runTemplate("newsPage")).Methods("GET")
+	r.HandleFunc("/", NewsPage).Methods("GET")
 	r.HandleFunc("/", handlers.TaskDoneAutoRefreshPage).Methods("POST")
 	r.HandleFunc("/news.rss", NewsRssPage).Methods("GET")
 	nr := r.PathPrefix("/news").Subrouter()
 	nr.Use(handlers.IndexMiddleware(CustomNewsIndex))
-	nr.HandleFunc("", runTemplate("newsPage")).Methods("GET")
+	nr.HandleFunc("", NewsPage).Methods("GET")
 	nr.HandleFunc("", handlers.TaskDoneAutoRefreshPage).Methods("POST")
 	nr.HandleFunc("/news/{post}", NewsPostPage).Methods("GET")
 	nr.HandleFunc("/news/{post}", handlers.TaskHandler(replyTask)).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(replyTask.Matcher())

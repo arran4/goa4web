@@ -31,7 +31,9 @@ func RequireWritingAuthor(next http.Handler) http.Handler {
 			return
 		}
 		if !cd.HasContentWriterRole() || writing.UsersIdusers != cd.UserID {
-			http.NotFound(w, r)
+			if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd); err != nil {
+				log.Printf("render no access page: %v", err)
+			}
 			return
 		}
 		next.ServeHTTP(w, r)

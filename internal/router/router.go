@@ -31,7 +31,7 @@ func RoleCheckerMiddleware(roles ...string) func(http.Handler) http.Handler {
 				err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd)
 				if err != nil {
 					log.Printf("Template Error: %s", err)
-					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+					handlers.RenderErrorPage(w, r, err)
 				}
 				return
 			}

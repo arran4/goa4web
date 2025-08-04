@@ -3,7 +3,6 @@ package linker
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -97,21 +96,11 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 	if data.Category != "" {
 		qv.Set("category", data.Category)
 	}
-	next := qv.Encode()
-	if next != "" {
-		next = "?" + next + "&offset=%d"
-	} else {
-		next = "?offset=%d"
-	}
-	data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-		Name: fmt.Sprintf("Next %d", pageSize),
-		Link: baseURL + fmt.Sprintf(next, data.Offset+pageSize),
-	})
+	qv.Set("offset", strconv.Itoa(data.Offset+pageSize))
+	cd.NextLink = baseURL + "?" + qv.Encode()
 	if data.Offset > 0 {
-		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-			Name: fmt.Sprintf("Previous %d", pageSize),
-			Link: baseURL + fmt.Sprintf(next, data.Offset-pageSize),
-		})
+		qv.Set("offset", strconv.Itoa(data.Offset-pageSize))
+		cd.PrevLink = baseURL + "?" + qv.Encode()
 	}
 
 	handlers.TemplateHandler(w, r, "adminQueuePage.gohtml", data)

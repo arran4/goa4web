@@ -101,9 +101,11 @@ type CoreData struct {
 	PageTitle  string
 	PrevLink   string
 	RSSFeedURL string
+	StartLink  string
 	TasksReg   *tasks.Registry
-	Title      string
-	UserID     int32
+	// SiteTitle holds the title of the site.
+	SiteTitle string
+	UserID    int32
 
 	session        *sessions.Session
 	sessionManager SessionManager
@@ -114,32 +116,31 @@ type CoreData struct {
 	queries       db.Querier
 
 	// Keep this sorted
-	adminLatestNews       lazy.Value[[]*db.AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow]
-	adminLinkerItemRows   map[int32]*lazy.Value[*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow]
-	adminRequest          map[int32]*lazy.Value[*db.AdminRequestQueue]
-	adminRequestComments  map[int32]*lazy.Value[[]*db.AdminRequestComment]
-	adminRequests         map[string]*lazy.Value[[]*db.AdminRequestQueue]
-	adminUserBookmarkSize map[int32]*lazy.Value[int]
-	adminUserComments     map[int32]*lazy.Value[[]*db.AdminUserComment]
-	adminUserEmails       map[int32]*lazy.Value[[]*db.UserEmail]
-	adminUserGrants       map[int32]*lazy.Value[[]*db.Grant]
-	adminUserRoles        map[int32]*lazy.Value[[]*db.GetPermissionsByUserIDRow]
-	adminUserStats        map[int32]*lazy.Value[*db.AdminUserPostCountsByIDRow]
-	allRoles              lazy.Value[[]*db.Role]
-	annMu                 sync.Mutex
-	announcement          lazy.Value[*db.GetActiveAnnouncementWithNewsForListerRow]
-	blogEntries           map[int32]*lazy.Value[*db.GetBlogEntryForListerByIDRow]
-	bloggers              lazy.Value[[]*db.ListBloggersForListerRow]
-	blogListOffset        int
-	blogListRows          lazy.Value[[]*db.ListBlogEntriesByAuthorForListerRow]
-	blogListUID           int32
-	bookmarks             lazy.Value[*db.GetBookmarksForUserRow]
-	currentBlogID         int32
-	currentBoardID        int32
-	currentCommentID      int32
-	currentImagePostID    int32
-	// TODO offset is not specific to news
-	currentNewsOffset        int
+	adminLatestNews          lazy.Value[[]*db.AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow]
+	adminLinkerItemRows      map[int32]*lazy.Value[*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow]
+	adminRequest             map[int32]*lazy.Value[*db.AdminRequestQueue]
+	adminRequestComments     map[int32]*lazy.Value[[]*db.AdminRequestComment]
+	adminRequests            map[string]*lazy.Value[[]*db.AdminRequestQueue]
+	adminUserBookmarkSize    map[int32]*lazy.Value[int]
+	adminUserComments        map[int32]*lazy.Value[[]*db.AdminUserComment]
+	adminUserEmails          map[int32]*lazy.Value[[]*db.UserEmail]
+	adminUserGrants          map[int32]*lazy.Value[[]*db.Grant]
+	adminUserRoles           map[int32]*lazy.Value[[]*db.GetPermissionsByUserIDRow]
+	adminUserStats           map[int32]*lazy.Value[*db.AdminUserPostCountsByIDRow]
+	allRoles                 lazy.Value[[]*db.Role]
+	annMu                    sync.Mutex
+	announcement             lazy.Value[*db.GetActiveAnnouncementWithNewsForListerRow]
+	blogEntries              map[int32]*lazy.Value[*db.GetBlogEntryForListerByIDRow]
+	bloggers                 lazy.Value[[]*db.ListBloggersForListerRow]
+	blogListOffset           int
+	blogListRows             lazy.Value[[]*db.ListBlogEntriesByAuthorForListerRow]
+	blogListUID              int32
+	bookmarks                lazy.Value[*db.GetBookmarksForUserRow]
+	currentBlogID            int32
+	currentBoardID           int32
+	currentCommentID         int32
+	currentImagePostID       int32
+	currentOffset            int
 	currentNewsPostID        int32
 	currentProfileUserID     int32
 	currentRequestID         int32
@@ -217,7 +218,7 @@ func (cd *CoreData) AdminForumTopics() ([]*db.Forumtopic, error) {
 func (cd *CoreData) AdminLatestNews() ([]*db.AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
 	ps := cd.PageSize()
 	return cd.adminLatestNews.Load(func() ([]*db.AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
-		return cd.AdminLatestNewsList(int32(cd.currentNewsOffset), int32(ps))
+		return cd.AdminLatestNewsList(int32(cd.currentOffset), int32(ps))
 	})
 }
 
@@ -1707,6 +1708,15 @@ func (cd *CoreData) SetCurrentThreadAndTopic(threadID, topicID int32) {
 // SetCurrentWriting stores the requested writing ID.
 func (cd *CoreData) SetCurrentWriting(id int32) { cd.currentWritingID = id }
 
+// SelectedBoardID returns the board ID extracted from the request.
+func (cd *CoreData) SelectedBoardID() int32 { return cd.currentBoardID }
+
+// SelectedThreadID returns the thread ID extracted from the request.
+func (cd *CoreData) SelectedThreadID() int32 { return cd.currentThreadID }
+
+// SelectedImagePostID returns the image post ID extracted from the request.
+func (cd *CoreData) SelectedImagePostID() int32 { return cd.currentImagePostID }
+
 // SetEvent stores evt on cd for handler access.
 func (cd *CoreData) SetEvent(evt *eventbus.TaskEvent) { cd.event = evt }
 
@@ -1715,11 +1725,6 @@ func (cd *CoreData) SetEventTask(t tasks.Task) {
 	if cd.event != nil {
 		cd.event.Task = t
 	}
-}
-
-// SetPageTitle updates the Title field used by templates.
-func (cd *CoreData) SetPageTitle(title string) {
-	cd.Title = title
 }
 
 // SetSession stores s on cd for later retrieval.
@@ -2080,6 +2085,11 @@ func WithConfig(cfg *config.RuntimeConfig) CoreOption {
 	return func(cd *CoreData) { cd.Config = cfg }
 }
 
+// WithSiteTitle sets the site title used by templates.
+func WithSiteTitle(title string) CoreOption {
+	return func(cd *CoreData) { cd.SiteTitle = title }
+}
+
 // WithImageSigner registers the image signer and URL mapper on CoreData.
 func WithImageSigner(s *imagesign.Signer) CoreOption {
 	return func(cd *CoreData) {
@@ -2116,9 +2126,9 @@ func WithCustomQueries(cq db.CustomQueries) CoreOption {
 	return func(cd *CoreData) { cd.customQueries = cq }
 }
 
-// WithNewsOffset records the current news listing offset.
-func WithNewsOffset(o int) CoreOption {
-	return func(cd *CoreData) { cd.currentNewsOffset = o }
+// WithOffset records the current pagination offset.
+func WithOffset(o int) CoreOption {
+	return func(cd *CoreData) { cd.currentOffset = o }
 }
 
 // assignIDFromString converts v to int32 and stores it in the mapped CoreData
@@ -2151,6 +2161,7 @@ func WithSelectionsFromRequest(r *http.Request) CoreOption {
 			"post":    &cd.currentImagePostID,
 			"writing": &cd.currentWritingID,
 			"blog":    &cd.currentBlogID,
+			"user":    &cd.currentProfileUserID,
 		}
 		for k, v := range mux.Vars(r) {
 			assignIDFromString(mapping, k, v)

@@ -1,7 +1,6 @@
 package writings
 
 import (
-	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"strconv"
@@ -21,6 +20,17 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	data := Data{}
 	data.CategoryId = 0
 	data.WritingCategoryID = data.CategoryId
+
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	ps := cd.PageSize()
+	qv := r.URL.Query()
+	qv.Set("offset", strconv.Itoa(offset+ps))
+	cd.NextLink = "/writings?" + qv.Encode()
+	if offset > 0 {
+		qv.Set("offset", strconv.Itoa(offset-ps))
+		cd.PrevLink = "/writings?" + qv.Encode()
+		cd.StartLink = "/writings?offset=0"
+	}
 
 	handlers.TemplateHandler(w, r, "writingsPage", data)
 }
@@ -56,23 +66,6 @@ func CustomWritingsIndex(data *common.CoreData, r *http.Request) {
 
 	data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 		Name: "Return to list",
-		Link: fmt.Sprintf("/writings?offset=%d", 0),
+		Link: "/writings?offset=0",
 	})
-	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	if offset != 0 {
-		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-			Name: "The start",
-			Link: fmt.Sprintf("/writings?offset=%d", 0),
-		})
-	}
-	data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-		Name: "Next 10",
-		Link: fmt.Sprintf("/writings?offset=%d", offset+10),
-	})
-	if offset > 0 {
-		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-			Name: "Previous 10",
-			Link: fmt.Sprintf("/writings?offset=%d", offset-10),
-		})
-	}
 }

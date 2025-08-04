@@ -26,7 +26,7 @@ func adminUserProfilePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminUserAddCommentPage(w http.ResponseWriter, r *http.Request) {
-	idStr := mux.Vars(r)["id"]
+	idStr := mux.Vars(r)["user"]
 	id, _ := strconv.Atoi(idStr)
 	data := struct {
 		*common.CoreData

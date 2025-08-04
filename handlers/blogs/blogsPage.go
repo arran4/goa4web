@@ -30,6 +30,16 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Blogs"
 	cd.SetBlogListParams(int32(userID), offset)
+
+	ps := cd.PageSize()
+	qv := r.URL.Query()
+	qv.Set("offset", strconv.Itoa(offset+ps))
+	cd.NextLink = "/blogs?" + qv.Encode()
+	if offset > 0 {
+		qv.Set("offset", strconv.Itoa(offset-ps))
+		cd.PrevLink = "/blogs?" + qv.Encode()
+	}
+
 	handlers.TemplateHandler(w, r, "blogsPage", cd)
 }
 
@@ -64,34 +74,10 @@ func CustomBlogIndex(data *common.CoreData, r *http.Request) {
 		})
 
 	}
-	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 		Name: "List bloggers",
 		Link: "/blogs/bloggers",
 	})
-	if user == "" {
-		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-			Name: "Next 15",
-			Link: fmt.Sprintf("/blogs?offset=%d", offset+15),
-		})
-		if offset > 0 {
-			data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-				Name: "Previous 15",
-				Link: fmt.Sprintf("/blogs?offset=%d", offset-15),
-			})
-		}
-	} else {
-		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-			Name: "Next 15",
-			Link: fmt.Sprintf("/blogs?user=%s&offset=%d", url.QueryEscape(user), offset+15),
-		})
-		if offset > 0 {
-			data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-				Name: "Previous 15",
-				Link: fmt.Sprintf("/blogs?user=%s&offset=%d", url.QueryEscape(user), offset-15),
-			})
-		}
-	}
 }
 
 func RssPage(w http.ResponseWriter, r *http.Request) {

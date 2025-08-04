@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gorilla/mux"
-
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -28,14 +26,15 @@ var _ tasks.Task = (*PermissionUpdateTask)(nil)
 var _ notif.TargetUsersNotificationProvider = (*PermissionUpdateTask)(nil)
 
 func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	permid := r.PostFormValue("permid")
 	role := r.PostFormValue("role")
 
-	idStr := mux.Vars(r)["user"]
+	id := cd.CurrentProfileUserID()
 	back := "/admin/users/permissions"
-	if idStr != "" {
-		back = "/admin/user/" + idStr + "/permissions"
+	if id != 0 {
+		back = fmt.Sprintf("/admin/user/%d/permissions", id)
 	}
 	data := struct {
 		*common.CoreData
@@ -43,7 +42,7 @@ func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		Back:     back,
 	}
 

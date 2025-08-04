@@ -109,8 +109,9 @@ func CoreAdderMiddlewareWithDB(sdb *sql.DB, cfg *config.RuntimeConfig, verbosity
 				common.WithAbsoluteURLBase(base),
 				common.WithSessionManager(sm),
 				common.WithSelectionsFromRequest(r),
-				common.WithNewsOffset(offset),
-				common.WithSiteTitle("Arran's Site"))
+				common.WithOffset(offset),
+				common.WithSiteTitle("Arran's Site"),
+      )
 			cd.UserID = uid
 
 			if navReg != nil {

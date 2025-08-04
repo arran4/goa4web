@@ -2,6 +2,7 @@ package imagebbs
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -43,20 +44,20 @@ func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
 	cleaned := filepath.Clean("/" + reqPath)
 	abs := filepath.Join(base, cleaned)
 	if rel, err := filepath.Rel(base, abs); err != nil || rel == ".." || strings.HasPrefix(rel, "..") {
-		http.Error(w, "invalid path", http.StatusBadRequest)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("invalid path"))
 		return
 	}
 
 	info, err := os.Stat(abs)
 	if err != nil || !info.IsDir() {
-		http.Error(w, "not found", http.StatusNotFound)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("not found"))
 		return
 	}
 
 	f, err := os.ReadDir(abs)
 	if err != nil {
 		log.Printf("readdir: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 

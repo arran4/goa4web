@@ -29,8 +29,8 @@ func (ApprovePostTask) Action(w http.ResponseWriter, r *http.Request) any {
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
 	if cd == nil || !cd.HasRole("administrator") {
-		return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-			http.Error(w, "Forbidden", http.StatusForbidden)
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			handlers.RenderErrorPage(w, r, fmt.Errorf("Forbidden"))
 		})
 	}
 	queries := cd.Queries()

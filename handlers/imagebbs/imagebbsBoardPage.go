@@ -102,8 +102,8 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("get image board fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if !cd.HasGrant("imagebbs", "board", "post", int32(bid)) {
-		return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-			http.Error(w, "Forbidden", http.StatusForbidden)
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			handlers.RenderErrorPage(w, r, fmt.Errorf("Forbidden"))
 		})
 	}
 

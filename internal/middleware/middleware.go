@@ -109,13 +109,13 @@ func CoreAdderMiddlewareWithDB(sdb *sql.DB, cfg *config.RuntimeConfig, verbosity
 				common.WithAbsoluteURLBase(base),
 				common.WithSessionManager(sm),
 				common.WithSelectionsFromRequest(r),
-				common.WithNewsOffset(offset))
+				common.WithNewsOffset(offset),
+				common.WithSiteTitle("Arran's Site"))
 			cd.UserID = uid
 
 			if navReg != nil {
 				cd.IndexItems = navReg.IndexItems()
 			}
-			cd.Title = "Arran's Site"
 			cd.FeedsEnabled = cfg.FeedsEnabled
 			cd.AdminMode = r.URL.Query().Get("mode") == "admin"
 			if strings.HasPrefix(r.URL.Path, "/admin") && cd.HasRole("administrator") {

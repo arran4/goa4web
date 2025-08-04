@@ -6,9 +6,9 @@
     {{ if cd.Marked "head" }}
         <head>
                 {{ if cd.PageTitle }}
-                <title>{{cd.PageTitle}} - {{cd.Title}}</title>
+                <title>{{cd.PageTitle}} - {{cd.SiteTitle}}</title>
                 {{ else }}
-                <title>{{cd.Title}}</title>
+                <title>{{cd.SiteTitle}}</title>
                 {{ end }}
                 {{template "headdata"}}
                <link rel="stylesheet" href="/main.css">

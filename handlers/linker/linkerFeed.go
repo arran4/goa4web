@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/feeds"
 )
@@ -64,12 +65,12 @@ func RssPage(w http.ResponseWriter, r *http.Request) {
 	catID, _ := strconv.Atoi(r.URL.Query().Get("category"))
 	rows, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(r.Context(), db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams{Idlinkercategory: int32(catID)})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	feed := linkerFeed(r, rows)
 	if err := feed.WriteRss(w); err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 }
@@ -79,12 +80,12 @@ func AtomPage(w http.ResponseWriter, r *http.Request) {
 	catID, _ := strconv.Atoi(r.URL.Query().Get("category"))
 	rows, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(r.Context(), db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams{Idlinkercategory: int32(catID)})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	feed := linkerFeed(r, rows)
 	if err := feed.WriteAtom(w); err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 }

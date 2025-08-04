@@ -26,10 +26,18 @@ func adminRoleEditFormPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Edit Role %s", role.Name)
+
+	groups, err := buildGrantGroups(r.Context(), cd, int32(id))
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
 	data := struct {
 		*common.CoreData
-		Role *db.Role
-	}{CoreData: cd, Role: role}
+		Role        *db.Role
+		GrantGroups []GrantGroup
+	}{CoreData: cd, Role: role, GrantGroups: groups}
 	handlers.TemplateHandler(w, r, "roleEditPage.gohtml", data)
 }
 

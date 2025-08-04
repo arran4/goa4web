@@ -72,6 +72,8 @@ Permission actions describe groups of related operations. The main verbs are:
 
 Sections may introduce extra actions but these form the base vocabulary used by
 the templates and permission checks.
+The grant editor uses the mapping defined in `handlers/admin/role_grants.go`
+to list available actions for each section and item type.
 Announcements use these actions to control which news posts appear globally. Administrator pages call `AdminPromoteAnnouncement` and `AdminDemoteAnnouncement` while `GetActiveAnnouncementWithNewsForUser` retrieves the visible announcement.
 
 Each section may define additional actions, but these are the core verbs used by the system.

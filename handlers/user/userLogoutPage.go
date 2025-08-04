@@ -1,6 +1,7 @@
 package user
 
 import (
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -35,7 +36,7 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 
 	if err := session.Save(r, w); err != nil {
 		log.Printf("session.Save Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 

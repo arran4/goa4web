@@ -27,6 +27,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	wr.HandleFunc("/writer/{username}", WriterPage).Methods("GET")
 	wr.HandleFunc("/writer/{username}/", WriterPage).Methods("GET")
 	wr.HandleFunc("/writers", WriterListPage).Methods("GET")
+	// Writing routes use {writing} to identify the requested writing.
 	wr.HandleFunc("/article/{writing}", ArticlePage).Methods("GET")
 	wr.HandleFunc("/article/{writing}", handlers.TaskHandler(replyTask)).Methods("POST").MatcherFunc(replyTask.Matcher())
 	wr.Handle("/article/{writing}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(editReplyTask)))).Methods("POST").MatcherFunc(editReplyTask.Matcher())
@@ -34,7 +35,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	wr.Handle("/article/{writing}/edit", RequireWritingAuthor(http.HandlerFunc(updateWritingTask.Page))).Methods("GET").MatcherFunc(handlers.RequiredAccess("content writer", "administrator"))
 	wr.Handle("/article/{writing}/edit", RequireWritingAuthor(http.HandlerFunc(handlers.TaskHandler(updateWritingTask)))).Methods("POST").MatcherFunc(handlers.RequiredAccess("content writer", "administrator")).MatcherFunc(updateWritingTask.Matcher())
 	wr.HandleFunc("/categories", CategoriesPage).Methods("GET")
-	wr.HandleFunc("/categories", CategoriesPage).Methods("GET")
+	wr.HandleFunc("/categories/", CategoriesPage).Methods("GET")
 	wr.HandleFunc("/category/{category}", CategoryPage).Methods("GET")
 	wr.HandleFunc("/category/{category}/add", submitWritingTask.Page).Methods("GET").MatcherFunc(handlers.RequiredAccess("content writer", "administrator"))
 	wr.HandleFunc("/category/{category}/add", handlers.TaskHandler(submitWritingTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("content writer", "administrator")).MatcherFunc(submitWritingTask.Matcher())

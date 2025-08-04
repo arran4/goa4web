@@ -6,12 +6,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 )
 
 func TestPaginationTemplateWithoutPageSize(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
-	cd := &common.CoreData{}
+	cd := &common.CoreData{Config: config.NewRuntimeConfig()}
 	cd.PrevLink = "/prev"
 	tmpl := template.Must(template.New("").Funcs(cd.Funcs(r)).ParseFS(testTemplates,
 		"site/*.gohtml", "site/*/*.gohtml", "email/*.gohtml"))

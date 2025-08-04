@@ -37,10 +37,10 @@ func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) an
 	queries := cd.Queries()
 	username := r.PostFormValue("username")
 	role := r.PostFormValue("role")
-	id := cd.CurrentProfileUserID()
+	cpu := cd.CurrentProfileUser()
 	back := "/admin/users/permissions"
-	if id != 0 {
-		back = fmt.Sprintf("/admin/user/%d/permissions", id)
+	if cpu.Idusers != 0 {
+		back = fmt.Sprintf("/admin/user/%d/permissions", cpu.Idusers)
 	}
 	data := struct {
 		Errors   []string

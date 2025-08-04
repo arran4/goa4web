@@ -13,8 +13,8 @@ import (
 // adminUserLinkerPage lists linker posts created by a user.
 func adminUserLinkerPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	uid := cd.CurrentProfileUserID()
-	if uid == 0 {
+	cpu := cd.CurrentProfileUser()
+	if cpu.Idusers == 0 {
 		http.Error(w, "user not found", http.StatusNotFound)
 		return
 	}
@@ -25,7 +25,7 @@ func adminUserLinkerPage(w http.ResponseWriter, r *http.Request) {
 	}
 	queries := cd.Queries()
 	rows, err := queries.GetLinkerItemsByUserDescending(r.Context(), db.GetLinkerItemsByUserDescendingParams{
-		UsersIdusers: uid,
+		UsersIdusers: cpu.Idusers,
 		Limit:        100,
 		Offset:       0,
 	})
@@ -40,7 +40,7 @@ func adminUserLinkerPage(w http.ResponseWriter, r *http.Request) {
 		Links []*db.GetLinkerItemsByUserDescendingRow
 	}{
 		CoreData: cd,
-		User:     &db.User{Idusers: uid, Username: user.Username},
+		User:     &db.User{Idusers: cpu.Idusers, Username: user.Username},
 		Links:    rows,
 	}
 	handlers.TemplateHandler(w, r, "userLinkerPage.gohtml", data)

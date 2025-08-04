@@ -236,6 +236,7 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 				common.WithTasksRegistry(s.TasksReg),
 				common.WithDBRegistry(s.DBReg),
 				common.WithSiteTitle("Arran's Site"),
+				common.WithSelectionsFromRequest(r),
 			)
 			cd.UserID = uid
 			_ = cd.UserRoles()

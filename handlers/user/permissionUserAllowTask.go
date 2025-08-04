@@ -35,7 +35,8 @@ func (PermissionUserAllowTask) AdminInternalNotificationTemplate() *string {
 }
 
 func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	username := r.PostFormValue("username")
 	role := r.PostFormValue("role")
 	idStr := mux.Vars(r)["user"]
@@ -44,13 +45,11 @@ func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) an
 		back = "/admin/user/" + idStr + "/permissions"
 	}
 	data := struct {
-		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-		Back:     back,
+		Back: back,
 	}
 	if u, err := queries.SystemGetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("SystemGetUserByUsername: %w", err).Error())
@@ -59,17 +58,15 @@ func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) an
 		Name:         role,
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("permissionUserAllow: %w", err).Error())
-	} else if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data["Username"] = username
-			evt.Data["Permission"] = role
-			evt.Data["targetUserID"] = u.Idusers
-			evt.Data["Username"] = u.Username.String
-			evt.Data["Role"] = role
+	} else if evt := cd.Event(); evt != nil {
+		if evt.Data == nil {
+			evt.Data = map[string]any{}
 		}
+		evt.Data["Username"] = username
+		evt.Data["Permission"] = role
+		evt.Data["targetUserID"] = u.Idusers
+		evt.Data["Username"] = u.Username.String
+		evt.Data["Role"] = role
 	}
 	return handlers.TemplateWithDataHandler("runTaskPage.gohtml", data)
 }

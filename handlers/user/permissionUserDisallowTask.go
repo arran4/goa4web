@@ -35,7 +35,8 @@ func (PermissionUserDisallowTask) AdminInternalNotificationTemplate() *string {
 }
 
 func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	permid := r.PostFormValue("permid")
 	idStr := mux.Vars(r)["user"]
 	back := "/admin/users/permissions"
@@ -43,13 +44,11 @@ func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request)
 		back = "/admin/user/" + idStr + "/permissions"
 	}
 	data := struct {
-		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-		Back:     back,
+		Back: back,
 	}
 	if permidi, err := strconv.Atoi(permid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
@@ -73,16 +72,14 @@ func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request)
 		}
 		if err := queries.AdminDeleteUserRole(r.Context(), int32(permidi)); err != nil {
 			data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
-		} else if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-			if evt := cd.Event(); evt != nil {
-				if evt.Data == nil {
-					evt.Data = map[string]any{}
-				}
-				evt.Data["Username"] = uname
-				evt.Data["Permission"] = role
-				evt.Data["targetUserID"] = userID
-				evt.Data["Role"] = role
+		} else if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
 			}
+			evt.Data["Username"] = uname
+			evt.Data["Permission"] = role
+			evt.Data["targetUserID"] = userID
+			evt.Data["Role"] = role
 		} else {
 			log.Printf("lookup role: %v", err)
 		}

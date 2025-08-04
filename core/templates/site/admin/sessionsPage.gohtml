@@ -1,7 +1,7 @@
 {{ template "head" $ }}
 <table border="1">
     <tr><th>Session ID</th><th>User ID</th><th>Username</th><th>Delete</th></tr>
-    {{- range .Sessions }}
+    {{- range cd.AdminSessions }}
     <tr>
         <td>{{ .SessionID }}</td>
         <td>{{ .UsersIdusers }}</td>

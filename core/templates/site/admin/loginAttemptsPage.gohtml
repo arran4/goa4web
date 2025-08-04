@@ -1,7 +1,7 @@
 {{ template "head" $ }}
 <table border="1">
     <tr><th>Time</th><th>Username</th><th>IP</th></tr>
-    {{- range .Attempts }}
+    {{- range cd.AdminLoginAttempts }}
     <tr>
         <td>{{ .CreatedAt }}</td>
         <td>{{ .Username }}</td>

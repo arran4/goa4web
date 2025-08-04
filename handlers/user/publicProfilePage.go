@@ -33,11 +33,9 @@ func userPublicProfilePage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd.PageTitle = fmt.Sprintf("Profile for %s", u.Username.String)
 	data := struct {
-		*common.CoreData
 		User *db.User
 	}{
-		CoreData: cd,
-		User:     &db.User{Idusers: u.Idusers, Username: u.Username},
+		User: &db.User{Idusers: u.Idusers, Username: u.Username},
 	}
 	handlers.TemplateHandler(w, r, "user/publicProfile.gohtml", data)
 }

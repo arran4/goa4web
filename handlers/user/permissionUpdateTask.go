@@ -28,7 +28,8 @@ var _ tasks.Task = (*PermissionUpdateTask)(nil)
 var _ notif.TargetUsersNotificationProvider = (*PermissionUpdateTask)(nil)
 
 func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	permid := r.PostFormValue("permid")
 	role := r.PostFormValue("role")
 
@@ -38,13 +39,11 @@ func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {
 		back = "/admin/user/" + idStr + "/permissions"
 	}
 	data := struct {
-		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-		Back:     back,
+		Back: back,
 	}
 
 	if id, err := strconv.Atoi(permid); err != nil {
@@ -57,15 +56,13 @@ func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}); err != nil {
 			data.Errors = append(data.Errors, fmt.Errorf("UpdatePermission: %w", err).Error())
 		} else if err2 == nil {
-			if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-				if evt := cd.Event(); evt != nil {
-					if evt.Data == nil {
-						evt.Data = map[string]any{}
-					}
-					evt.Data["targetUserID"] = infoID
-					evt.Data["Username"] = username
-					evt.Data["Role"] = role
+			if evt := cd.Event(); evt != nil {
+				if evt.Data == nil {
+					evt.Data = map[string]any{}
 				}
+				evt.Data["targetUserID"] = infoID
+				evt.Data["Username"] = username
+				evt.Data["Role"] = role
 			}
 		} else {
 			log.Printf("lookup role: %v", err2)

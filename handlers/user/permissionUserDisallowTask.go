@@ -37,7 +37,7 @@ func (PermissionUserDisallowTask) AdminInternalNotificationTemplate() *string {
 func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	permid := r.PostFormValue("permid")
-	idStr := mux.Vars(r)["id"]
+	idStr := mux.Vars(r)["user"]
 	back := "/admin/users/permissions"
 	if idStr != "" {
 		back = "/admin/user/" + idStr + "/permissions"

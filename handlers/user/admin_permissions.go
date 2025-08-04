@@ -3,21 +3,23 @@ package user
 import (
 	"database/sql"
 	"errors"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"sort"
-	"strconv"
-
-	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 )
 
 func adminUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
-	idStr := mux.Vars(r)["id"]
-	id, _ := strconv.Atoi(idStr)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	u := cd.CurrentProfileUser()
+	if u == nil {
+		http.Error(w, "user not found", http.StatusNotFound)
+		return
+	}
+	id := u.Idusers
 
 	type Data struct {
 		*common.CoreData
@@ -26,24 +28,14 @@ func adminUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 		Roles []*db.Role
 	}
 
-	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-	}
-
+	data := Data{CoreData: cd, User: &db.User{Idusers: u.Idusers, Username: u.Username}}
 	queries := data.Queries()
-
-	if u, err := queries.SystemGetUserByID(r.Context(), int32(id)); err == nil {
-		data.User = &db.User{Idusers: u.Idusers, Username: u.Username}
-	} else {
-		http.Error(w, "user not found", http.StatusNotFound)
-		return
-	}
 
 	if roles, err := data.AllRoles(); err == nil {
 		data.Roles = roles
 	}
 
-	rows, err := queries.GetPermissionsByUserID(r.Context(), int32(id))
+	rows, err := queries.GetPermissionsByUserID(r.Context(), id)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

@@ -13,6 +13,6 @@ func AdminUsersRedirect(w http.ResponseWriter, r *http.Request) {
 
 // AdminUserLevelsRedirect redirects to the global user profile page.
 func AdminUserLevelsRedirect(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
+	id := mux.Vars(r)["user"]
 	http.Redirect(w, r, "/admin/user/"+id, http.StatusTemporaryRedirect)
 }

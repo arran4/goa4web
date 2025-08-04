@@ -11,8 +11,6 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/gorilla/mux"
-
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/handlers/auth"
@@ -123,11 +121,9 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminUserDisableConfirmPage(w http.ResponseWriter, r *http.Request) {
-	idStr := mux.Vars(r)["id"]
-	id, _ := strconv.Atoi(idStr)
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	u, err := cd.Queries().SystemGetUserByID(r.Context(), int32(id))
-	if err != nil {
+	u := cd.CurrentProfileUser()
+	if u == nil {
 		http.Error(w, "user not found", http.StatusNotFound)
 		return
 	}
@@ -146,30 +142,29 @@ func adminUserDisableConfirmPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminUserDisablePage(w http.ResponseWriter, r *http.Request) {
-	uid := mux.Vars(r)["id"]
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	id := cd.CurrentProfileUser()
 	data := struct {
 		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		Back:     "/admin/users",
 	}
-	if uidi, err := strconv.Atoi(uid); err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else if err := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries().AdminDeleteUserByID(r.Context(), int32(uidi)); err != nil {
+	if id == nil {
+		data.Errors = append(data.Errors, "invalid user id")
+	} else if err := cd.Queries().AdminDeleteUserByID(r.Context(), id.Idusers); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("delete user: %w", err).Error())
 	}
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 
 func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	idStr := mux.Vars(r)["id"]
-	uid, _ := strconv.Atoi(idStr)
-	urow, err := queries.SystemGetUserByID(r.Context(), int32(uid))
-	if err != nil {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	urow := cd.CurrentProfileUser()
+	if urow == nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -177,19 +172,17 @@ func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
 		*common.CoreData
 		User *db.SystemGetUserByIDRow
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		User:     urow,
 	}
 	handlers.TemplateHandler(w, r, "userEditPage.gohtml", data)
 }
 
 func adminUserEditSavePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	idStr := mux.Vars(r)["id"]
-	uid := r.PostFormValue("uid")
-	if uid == "" {
-		uid = idStr
-	}
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
+	uidStr := r.PostFormValue("uid")
+	uid := cd.CurrentProfileUser()
 	username := r.PostFormValue("username")
 	email := r.PostFormValue("email")
 	data := struct {
@@ -198,15 +191,23 @@ func adminUserEditSavePage(w http.ResponseWriter, r *http.Request) {
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		Back:     "/admin/users",
 	}
-	if uidi, err := strconv.Atoi(uid); err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else {
-		if err := queries.AdminUpdateUsernameByID(r.Context(), db.AdminUpdateUsernameByIDParams{Username: sql.NullString{String: username, Valid: username != ""}, Idusers: int32(uidi)}); err != nil {
+	var targetID int32
+	if uidStr != "" {
+		if uidi, err := strconv.Atoi(uidStr); err != nil {
+			data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
+		} else {
+			targetID = int32(uidi)
+		}
+	} else if uid != nil {
+		targetID = uid.Idusers
+	}
+	if targetID != 0 {
+		if err := queries.AdminUpdateUsernameByID(r.Context(), db.AdminUpdateUsernameByIDParams{Username: sql.NullString{String: username, Valid: username != ""}, Idusers: targetID}); err != nil {
 			data.Errors = append(data.Errors, fmt.Errorf("update user: %w", err).Error())
-		} else if err := queries.AdminUpdateUserEmail(r.Context(), db.AdminUpdateUserEmailParams{Email: email, UserID: int32(uidi)}); err != nil {
+		} else if err := queries.AdminUpdateUserEmail(r.Context(), db.AdminUpdateUserEmailParams{Email: email, UserID: targetID}); err != nil {
 			data.Errors = append(data.Errors, fmt.Errorf("update user email: %w", err).Error())
 		}
 	}

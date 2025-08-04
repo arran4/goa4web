@@ -114,32 +114,31 @@ type CoreData struct {
 	queries       db.Querier
 
 	// Keep this sorted
-	adminLatestNews       lazy.Value[[]*db.AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow]
-	adminLinkerItemRows   map[int32]*lazy.Value[*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow]
-	adminRequest          map[int32]*lazy.Value[*db.AdminRequestQueue]
-	adminRequestComments  map[int32]*lazy.Value[[]*db.AdminRequestComment]
-	adminRequests         map[string]*lazy.Value[[]*db.AdminRequestQueue]
-	adminUserBookmarkSize map[int32]*lazy.Value[int]
-	adminUserComments     map[int32]*lazy.Value[[]*db.AdminUserComment]
-	adminUserEmails       map[int32]*lazy.Value[[]*db.UserEmail]
-	adminUserGrants       map[int32]*lazy.Value[[]*db.Grant]
-	adminUserRoles        map[int32]*lazy.Value[[]*db.GetPermissionsByUserIDRow]
-	adminUserStats        map[int32]*lazy.Value[*db.AdminUserPostCountsByIDRow]
-	allRoles              lazy.Value[[]*db.Role]
-	annMu                 sync.Mutex
-	announcement          lazy.Value[*db.GetActiveAnnouncementWithNewsForListerRow]
-	blogEntries           map[int32]*lazy.Value[*db.GetBlogEntryForListerByIDRow]
-	bloggers              lazy.Value[[]*db.ListBloggersForListerRow]
-	blogListOffset        int
-	blogListRows          lazy.Value[[]*db.ListBlogEntriesByAuthorForListerRow]
-	blogListUID           int32
-	bookmarks             lazy.Value[*db.GetBookmarksForUserRow]
-	currentBlogID         int32
-	currentBoardID        int32
-	currentCommentID      int32
-	currentImagePostID    int32
-	// TODO offset is not specific to news
-	currentNewsOffset        int
+	adminLatestNews          lazy.Value[[]*db.AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow]
+	adminLinkerItemRows      map[int32]*lazy.Value[*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow]
+	adminRequest             map[int32]*lazy.Value[*db.AdminRequestQueue]
+	adminRequestComments     map[int32]*lazy.Value[[]*db.AdminRequestComment]
+	adminRequests            map[string]*lazy.Value[[]*db.AdminRequestQueue]
+	adminUserBookmarkSize    map[int32]*lazy.Value[int]
+	adminUserComments        map[int32]*lazy.Value[[]*db.AdminUserComment]
+	adminUserEmails          map[int32]*lazy.Value[[]*db.UserEmail]
+	adminUserGrants          map[int32]*lazy.Value[[]*db.Grant]
+	adminUserRoles           map[int32]*lazy.Value[[]*db.GetPermissionsByUserIDRow]
+	adminUserStats           map[int32]*lazy.Value[*db.AdminUserPostCountsByIDRow]
+	allRoles                 lazy.Value[[]*db.Role]
+	annMu                    sync.Mutex
+	announcement             lazy.Value[*db.GetActiveAnnouncementWithNewsForListerRow]
+	blogEntries              map[int32]*lazy.Value[*db.GetBlogEntryForListerByIDRow]
+	bloggers                 lazy.Value[[]*db.ListBloggersForListerRow]
+	blogListOffset           int
+	blogListRows             lazy.Value[[]*db.ListBlogEntriesByAuthorForListerRow]
+	blogListUID              int32
+	bookmarks                lazy.Value[*db.GetBookmarksForUserRow]
+	currentBlogID            int32
+	currentBoardID           int32
+	currentCommentID         int32
+	currentImagePostID       int32
+	currentOffset            int
 	currentNewsPostID        int32
 	currentProfileUserID     int32
 	currentRequestID         int32
@@ -217,7 +216,7 @@ func (cd *CoreData) AdminForumTopics() ([]*db.Forumtopic, error) {
 func (cd *CoreData) AdminLatestNews() ([]*db.AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
 	ps := cd.PageSize()
 	return cd.adminLatestNews.Load(func() ([]*db.AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
-		return cd.AdminLatestNewsList(int32(cd.currentNewsOffset), int32(ps))
+		return cd.AdminLatestNewsList(int32(cd.currentOffset), int32(ps))
 	})
 }
 
@@ -2115,9 +2114,9 @@ func WithCustomQueries(cq db.CustomQueries) CoreOption {
 	return func(cd *CoreData) { cd.customQueries = cq }
 }
 
-// WithNewsOffset records the current news listing offset.
-func WithNewsOffset(o int) CoreOption {
-	return func(cd *CoreData) { cd.currentNewsOffset = o }
+// WithOffset records the current pagination offset.
+func WithOffset(o int) CoreOption {
+	return func(cd *CoreData) { cd.currentOffset = o }
 }
 
 // assignIDFromString converts v to int32 and stores it in the mapped CoreData

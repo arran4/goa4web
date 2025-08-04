@@ -12,7 +12,7 @@ import (
 
 func TestPaginationTemplateWithoutPageSize(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
-	cd := &common.CoreData{Config: &config.RuntimeConfig{PageSizeDefault: 10, PageSizeMin: 1, PageSizeMax: 50}}
+	cd := &common.CoreData{Config: config.NewRuntimeConfig()}
 	cd.PrevLink = "/prev"
 	tmpl := template.Must(template.New("").Funcs(cd.Funcs(r)).ParseFS(testTemplates,
 		"site/*.gohtml", "site/*/*.gohtml", "email/*.gohtml"))

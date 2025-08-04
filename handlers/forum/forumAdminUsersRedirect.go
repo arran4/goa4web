@@ -2,8 +2,10 @@ package forum
 
 import (
 	"net/http"
+	"strconv"
 
-	"github.com/gorilla/mux"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 )
 
 // AdminUsersRedirect redirects forum user management to the global user admin page.
@@ -13,6 +15,7 @@ func AdminUsersRedirect(w http.ResponseWriter, r *http.Request) {
 
 // AdminUserLevelsRedirect redirects to the global user profile page.
 func AdminUserLevelsRedirect(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["user"]
-	http.Redirect(w, r, "/admin/user/"+id, http.StatusTemporaryRedirect)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	id := cd.CurrentProfileUserID()
+	http.Redirect(w, r, "/admin/user/"+strconv.Itoa(int(id)), http.StatusTemporaryRedirect)
 }

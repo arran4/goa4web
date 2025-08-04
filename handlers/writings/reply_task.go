@@ -73,7 +73,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := cd.Queries()
 	uid, _ := session.Values["UID"].(int32)
 
-	post, err := cd.CurrentWriting()
+	writing, err := cd.CurrentWriting()
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd); err != nil {
@@ -83,11 +83,11 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 		return fmt.Errorf("get writing fail %w", err)
 	}
-	if post == nil {
+	if writing == nil {
 		return fmt.Errorf("get writing fail %w", handlers.ErrRedirectOnSamePageHandler(sql.ErrNoRows))
 	}
 
-	pthid := post.ForumthreadID
+	pthid := writing.ForumthreadID
 	pt, err := queries.SystemGetForumTopicByTitle(r.Context(), sql.NullString{String: WritingTopicName, Valid: true})
 	var ptid int32
 	if errors.Is(err, sql.ErrNoRows) {
@@ -112,7 +112,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 			return fmt.Errorf("make thread fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		pthid = int32(pthidi)
-		if err := queries.SystemAssignWritingThreadID(r.Context(), db.SystemAssignWritingThreadIDParams{ForumthreadID: pthid, Idwriting: post.Idwriting}); err != nil {
+		if err := queries.SystemAssignWritingThreadID(r.Context(), db.SystemAssignWritingThreadIDParams{ForumthreadID: pthid, Idwriting: writing.Idwriting}); err != nil {
 			return fmt.Errorf("assign writing thread fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
@@ -122,7 +122,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data["target"] = notif.Target{Type: "writing", ID: post.Idwriting}
+			evt.Data["target"] = notif.Target{Type: "writing", ID: writing.Idwriting}
 		}
 	}
 

@@ -107,7 +107,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := cd.Queries()
 	uid, _ := session.Values["UID"].(int32)
 
-	post, err := cd.CurrentWriting()
+	writing, err := cd.CurrentWriting()
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -121,12 +121,12 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if post == nil {
+	if writing == nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	var pthid int32 = post.ForumthreadID
+	var pthid int32 = writing.ForumthreadID
 	pt, err := queries.SystemGetForumTopicByTitle(r.Context(), sql.NullString{
 		String: WritingTopicName,
 		Valid:  true,
@@ -167,7 +167,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		pthid = int32(pthidi)
 		if err := queries.SystemAssignWritingThreadID(r.Context(), db.SystemAssignWritingThreadIDParams{
 			ForumthreadID: pthid,
-			Idwriting:     post.Idwriting,
+			Idwriting:     writing.Idwriting,
 		}); err != nil {
 			log.Printf("Error: assign_writing_to_thread: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -180,7 +180,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data["target"] = notifications.Target{Type: "writing", ID: post.Idwriting}
+			evt.Data["target"] = notifications.Target{Type: "writing", ID: writing.Idwriting}
 		}
 	}
 

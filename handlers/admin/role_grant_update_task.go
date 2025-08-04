@@ -12,7 +12,6 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
-	"github.com/gorilla/mux"
 )
 
 // RoleGrantUpdateTask updates the actions for a role on a specific item.
@@ -25,9 +24,9 @@ var _ tasks.Task = (*RoleGrantUpdateTask)(nil)
 func (RoleGrantUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
-	roleID, err := strconv.Atoi(mux.Vars(r)["id"])
-	if err != nil {
-		return fmt.Errorf("role id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	roleID := cd.SelectedRoleID()
+	if roleID == 0 {
+		return fmt.Errorf("role id parse fail %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("")))
 	}
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
@@ -53,7 +52,7 @@ func (RoleGrantUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {
 			desired[a] = struct{}{}
 		}
 	}
-	grants, err := queries.AdminListGrantsByRoleID(r.Context(), sql.NullInt32{Int32: int32(roleID), Valid: true})
+	grants, err := queries.AdminListGrantsByRoleID(r.Context(), sql.NullInt32{Int32: roleID, Valid: true})
 	if err != nil {
 		return fmt.Errorf("list grants %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

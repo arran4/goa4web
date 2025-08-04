@@ -34,6 +34,7 @@ func (PermissionUserDisallowTask) AdminInternalNotificationTemplate() *string {
 
 func (PermissionUserDisallowTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
 	queries := cd.Queries()
 	permid := r.PostFormValue("permid")
 	cpu := cd.CurrentProfileUser()

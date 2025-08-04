@@ -81,6 +81,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
 	cd.PageTitle = "Forum - Reply"
 	threadRow, err := cd.SelectedThread()
 	if err != nil || threadRow == nil {

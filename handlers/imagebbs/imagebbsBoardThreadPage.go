@@ -86,6 +86,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
 	vars := mux.Vars(r)
 	bidStr := vars["board"]
 	if bidStr == "" {

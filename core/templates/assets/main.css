@@ -7,7 +7,7 @@ body {
 }
 
 #bottom {
-        flex: 1 1 auto;
+        flex: none;
 }
 
 .navbar {
@@ -47,6 +47,8 @@ body {
 
 .content {
         flex: 1;
+        display: flex;
+        flex-direction: column;
 }
 
 .site-footer {
@@ -149,6 +151,7 @@ div.title {
 .pagination-bar {
         position: sticky;
         bottom: 0;
+        margin-top: auto;
         background-color: #FFF6E0;
         padding: 0.5em;
         text-align: center;

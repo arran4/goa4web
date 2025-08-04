@@ -23,6 +23,7 @@ var _ tasks.Task = (*RoleGrantUpdateTask)(nil)
 
 func (RoleGrantUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
 	queries := cd.Queries()
 	roleID := cd.SelectedRoleID()
 	if roleID == 0 {

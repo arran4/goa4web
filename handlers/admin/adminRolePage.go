@@ -15,6 +15,7 @@ import (
 // adminRolePage shows details for a role including grants and users.
 func adminRolePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
 	queries := cd.Queries()
 
 	role, err := cd.SelectedRole()

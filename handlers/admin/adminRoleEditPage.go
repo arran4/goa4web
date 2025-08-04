@@ -13,6 +13,7 @@ import (
 // adminRoleEditFormPage shows a form to update a role.
 func adminRoleEditFormPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
 	role, err := cd.SelectedRole()
 	if err != nil || role == nil {
 		http.Error(w, "role not found", http.StatusNotFound)
@@ -38,6 +39,7 @@ func adminRoleEditFormPage(w http.ResponseWriter, r *http.Request) {
 // adminRoleEditSavePage persists role updates.
 func adminRoleEditSavePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
 	queries := cd.Queries()
 	id := cd.SelectedRoleID()
 	if err := r.ParseForm(); err != nil {

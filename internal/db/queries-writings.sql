@@ -205,6 +205,11 @@ WHERE EXISTS (
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 );
 
+-- name: SystemGetWritingByID :one
+SELECT idwriting, forumthread_id
+FROM writing
+WHERE idwriting = ?
+LIMIT 1;
 
 -- name: SystemAssignWritingThreadID :exec
 UPDATE writing SET forumthread_id = ? WHERE idwriting = ?;

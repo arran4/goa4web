@@ -37,6 +37,12 @@ UPDATE blogs
 SET forumthread_id = ?
 WHERE idblogs = ?;
 
+-- name: SystemGetBlogEntryByID :one
+SELECT idblogs, forumthread_id
+FROM blogs
+WHERE idblogs = ?
+LIMIT 1;
+
 -- name: ListBlogEntriesForLister :many
 WITH RECURSIVE role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)

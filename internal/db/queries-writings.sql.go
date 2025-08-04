@@ -1005,6 +1005,25 @@ func (q *Queries) SystemAssignWritingThreadID(ctx context.Context, arg SystemAss
 	return err
 }
 
+const systemGetWritingByID = `-- name: SystemGetWritingByID :one
+SELECT idwriting, forumthread_id
+FROM writing
+WHERE idwriting = ?
+LIMIT 1
+`
+
+type SystemGetWritingByIDRow struct {
+	Idwriting     int32
+	ForumthreadID int32
+}
+
+func (q *Queries) SystemGetWritingByID(ctx context.Context, idwriting int32) (*SystemGetWritingByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, systemGetWritingByID, idwriting)
+	var i SystemGetWritingByIDRow
+	err := row.Scan(&i.Idwriting, &i.ForumthreadID)
+	return &i, err
+}
+
 const systemListPublicWritingsByAuthor = `-- name: SystemListPublicWritingsByAuthor :many
 SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, w.last_index, u.username,
     (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) AS Comments

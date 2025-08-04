@@ -44,6 +44,13 @@ WHERE s.idsiteNews = ?;
 -- name: SystemAssignNewsThreadID :exec
 UPDATE site_news SET forumthread_id = ? WHERE idsiteNews = ?;
 
+-- name: SystemGetNewsPostByIdWithWriterIdAndThreadCommentCount :one
+SELECT s.idsiteNews, s.forumthread_id, s.users_idusers AS writer_id,
+       (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id = s.forumthread_id) AS comments
+FROM site_news s
+WHERE s.idsiteNews = ?
+LIMIT 1;
+
 -- name: GetNewsPostByIdWithWriterIdAndThreadCommentCount :one
 WITH RECURSIVE role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)

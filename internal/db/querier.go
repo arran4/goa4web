@@ -413,16 +413,19 @@ type Querier interface {
 	SystemDeleteWritingSearch(ctx context.Context) error
 	SystemDeleteWritingSearchByWritingID(ctx context.Context, writingID int32) error
 	SystemGetAllBlogsForIndex(ctx context.Context) ([]*SystemGetAllBlogsForIndexRow, error)
+	SystemGetBlogEntryByID(ctx context.Context, idblogs int32) (*SystemGetBlogEntryByIDRow, error)
 	SystemGetForumTopicByTitle(ctx context.Context, title sql.NullString) (*Forumtopic, error)
 	// SystemGetLanguageIDByName resolves a language ID by name.
 	SystemGetLanguageIDByName(ctx context.Context, nameof sql.NullString) (int32, error)
 	SystemGetLastNotificationForRecipientByMessage(ctx context.Context, arg SystemGetLastNotificationForRecipientByMessageParams) (*Notification, error)
 	SystemGetLogin(ctx context.Context, username sql.NullString) (*SystemGetLoginRow, error)
+	SystemGetNewsPostByIdWithWriterIdAndThreadCommentCount(ctx context.Context, idsitenews int32) (*SystemGetNewsPostByIdWithWriterIdAndThreadCommentCountRow, error)
 	SystemGetSearchWordByWordLowercased(ctx context.Context, lcase string) (*Searchwordlist, error)
 	SystemGetTemplateOverride(ctx context.Context, name string) (string, error)
 	SystemGetUserByEmail(ctx context.Context, email string) (*SystemGetUserByEmailRow, error)
 	SystemGetUserByID(ctx context.Context, idusers int32) (*SystemGetUserByIDRow, error)
 	SystemGetUserByUsername(ctx context.Context, username sql.NullString) (*SystemGetUserByUsernameRow, error)
+	SystemGetWritingByID(ctx context.Context, idwriting int32) (*SystemGetWritingByIDRow, error)
 	SystemIncrementPendingEmailError(ctx context.Context, id int32) error
 	// System query only used internally
 	SystemInsertDeadLetter(ctx context.Context, message string) error
@@ -431,6 +434,7 @@ type Querier interface {
 	SystemInsertUser(ctx context.Context, username sql.NullString) (sql.Result, error)
 	SystemLatestDeadLetter(ctx context.Context) (interface{}, error)
 	SystemListBoardsByParentID(ctx context.Context, arg SystemListBoardsByParentIDParams) ([]*Imageboard, error)
+	SystemListCommentsByThreadID(ctx context.Context, forumthreadID int32) ([]*SystemListCommentsByThreadIDRow, error)
 	SystemListDeadLetters(ctx context.Context, limit int32) ([]*DeadLetter, error)
 	// SystemListLanguages lists all languages.
 	SystemListLanguages(ctx context.Context) ([]*Language, error)

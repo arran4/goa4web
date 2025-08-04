@@ -429,6 +429,33 @@ func (q *Queries) SystemAssignNewsThreadID(ctx context.Context, arg SystemAssign
 	return err
 }
 
+const systemGetNewsPostByIdWithWriterIdAndThreadCommentCount = `-- name: SystemGetNewsPostByIdWithWriterIdAndThreadCommentCount :one
+SELECT s.idsiteNews, s.forumthread_id, s.users_idusers AS writer_id,
+       (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id = s.forumthread_id) AS comments
+FROM site_news s
+WHERE s.idsiteNews = ?
+LIMIT 1
+`
+
+type SystemGetNewsPostByIdWithWriterIdAndThreadCommentCountRow struct {
+	Idsitenews    int32
+	ForumthreadID int32
+	WriterID      int32
+	Comments      int64
+}
+
+func (q *Queries) SystemGetNewsPostByIdWithWriterIdAndThreadCommentCount(ctx context.Context, idsitenews int32) (*SystemGetNewsPostByIdWithWriterIdAndThreadCommentCountRow, error) {
+	row := q.db.QueryRowContext(ctx, systemGetNewsPostByIdWithWriterIdAndThreadCommentCount, idsitenews)
+	var i SystemGetNewsPostByIdWithWriterIdAndThreadCommentCountRow
+	err := row.Scan(
+		&i.Idsitenews,
+		&i.ForumthreadID,
+		&i.WriterID,
+		&i.Comments,
+	)
+	return &i, err
+}
+
 const systemSetSiteNewsLastIndex = `-- name: SystemSetSiteNewsLastIndex :exec
 UPDATE site_news SET last_index = NOW() WHERE idsiteNews = ?
 `

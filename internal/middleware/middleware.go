@@ -25,9 +25,9 @@ import (
 	"github.com/gorilla/sessions"
 )
 
-// handleDie responds with an internal server error.
-func handleDie(w http.ResponseWriter, message string) {
-	http.Error(w, message, http.StatusInternalServerError)
+// handleDie responds with an internal server error using RenderErrorPage.
+func handleDie(w http.ResponseWriter, r *http.Request, message string) {
+	handlers.RenderErrorPage(w, r, fmt.Errorf(message))
 }
 
 // TODO this should be a reciever on server to reduce the amount of data passed in and constructed inside it
@@ -69,7 +69,7 @@ func CoreAdderMiddlewareWithDB(sdb *sql.DB, cfg *config.RuntimeConfig, verbosity
 			if sdb == nil {
 				ue := common.UserError{Err: fmt.Errorf("db not initialized"), ErrorMessage: "database unavailable"}
 				log.Printf("%s: %v", ue.ErrorMessage, ue.Err)
-				http.Error(w, ue.ErrorMessage, http.StatusInternalServerError)
+				handlers.RenderErrorPage(w, r, fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err))
 				return
 			}
 
@@ -111,7 +111,7 @@ func CoreAdderMiddlewareWithDB(sdb *sql.DB, cfg *config.RuntimeConfig, verbosity
 				common.WithSelectionsFromRequest(r),
 				common.WithOffset(offset),
 				common.WithSiteTitle("Arran's Site"),
-      )
+			)
 			cd.UserID = uid
 
 			if navReg != nil {

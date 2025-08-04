@@ -158,6 +158,12 @@ ORDER BY c.written;
 -- name: SystemSetCommentLastIndex :exec
 UPDATE comments SET last_index = NOW() WHERE idcomments = ?;
 
+-- name: SystemListCommentsByThreadID :many
+SELECT c.idcomments, c.text
+FROM comments c
+WHERE c.forumthread_id = ?
+ORDER BY c.idcomments;
+
 
 -- name: GetAllCommentsForIndex :many
 SELECT idcomments, text FROM comments WHERE deleted_at IS NULL;

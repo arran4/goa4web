@@ -48,6 +48,18 @@ INSERT INTO users (username)
 VALUES (?)
 ;
 
+-- name: SystemListAllUsers :many
+SELECT u.idusers, u.username,
+       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
+       IF(r.id IS NULL, 0, 1) AS admin,
+       MIN(s.created_at) AS created_at
+FROM users u
+LEFT JOIN user_roles ur ON ur.users_idusers = u.idusers
+LEFT JOIN roles r ON ur.role_id = r.id AND r.is_admin = 1
+LEFT JOIN sessions s ON s.users_idusers = u.idusers
+GROUP BY u.idusers
+ORDER BY u.idusers;
+
 -- name: AdminListAdministratorEmails :many
 SELECT (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email
 FROM users u

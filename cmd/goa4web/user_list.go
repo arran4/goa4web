@@ -42,20 +42,7 @@ func (c *userListCmd) Run() error {
 	ctx := context.Background()
 	queries := db.New(conn)
 
-	var rows []*db.SystemListUserInfoRow
-	if c.showAdmin || c.showCreated || c.jsonOut {
-		rows, err = queries.SystemListUserInfo(ctx)
-	} else {
-		// fall back to basic user list when no extra columns requested
-		basic, err2 := queries.AdminListAllUsers(ctx)
-		if err2 != nil {
-			return fmt.Errorf("list users: %w", err2)
-		}
-		for _, u := range basic {
-			fmt.Printf("%d\t%s\t%s\n", u.Idusers, u.Username.String, u.Email)
-		}
-		return nil
-	}
+	rows, err := queries.SystemListAllUsers(ctx)
 	if err != nil {
 		return fmt.Errorf("list users: %w", err)
 	}

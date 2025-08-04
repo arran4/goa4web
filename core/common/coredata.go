@@ -1581,7 +1581,7 @@ func (cd *CoreData) RegisterExternalLinkClick(url string) {
 	if cd.queries == nil {
 		return
 	}
-	if err := cd.queries.RegisterExternalLinkClick(cd.ctx, url); err != nil {
+	if err := cd.queries.SystemRegisterExternalLinkClick(cd.ctx, url); err != nil {
 		log.Printf("record external link click: %v", err)
 	}
 }
@@ -1810,21 +1810,6 @@ func (cd *CoreData) TemplateOverride() string {
 		return ""
 	}
 	return body
-}
-
-// ThreadComments returns comments for the thread lazily loading once per thread ID.
-func (cd *CoreData) ThreadComments(id int32, ops ...lazy.Option[[]*db.GetCommentsByThreadIdForUserRow]) ([]*db.GetCommentsByThreadIdForUserRow, error) {
-	fetch := func(i int32) ([]*db.GetCommentsByThreadIdForUserRow, error) {
-		if cd.queries == nil {
-			return nil, nil
-		}
-		return cd.queries.GetCommentsByThreadIdForUser(cd.ctx, db.GetCommentsByThreadIdForUserParams{
-			ViewerID: cd.UserID,
-			ThreadID: i,
-			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-		})
-	}
-	return lazy.Map(&cd.forumThreadComments, &cd.mapMu, id, fetch, ops...)
 }
 
 // ThreadComments returns comments for a thread lazily loading them once per thread ID.

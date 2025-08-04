@@ -15,6 +15,11 @@ WHERE w.private = 0 AND w.users_idusers = sqlc.arg(author_id)
 ORDER BY w.published DESC
 LIMIT ? OFFSET ?;
 
+-- name: SystemGetWritingByID :one
+SELECT forumthread_id
+FROM writing
+WHERE idwriting = ?;
+
 -- name: ListPublicWritingsByUserForLister :many
 WITH RECURSIVE role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)

@@ -2157,6 +2157,7 @@ func WithSelectionsFromRequest(r *http.Request) CoreOption {
 			"replyTo": &cd.currentThreadID,
 			"topic":   &cd.currentTopicID,
 			"comment": &cd.currentCommentID,
+			"request": &cd.currentRequestID,
 			"news":    &cd.currentNewsPostID,
 			"post":    &cd.currentImagePostID,
 			"writing": &cd.currentWritingID,

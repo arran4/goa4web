@@ -23,6 +23,15 @@ func TestWithSelectionsFromRequest(t *testing.T) {
 		}
 	})
 
+	t.Run("request path variable", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/", nil)
+		req = mux.SetURLVars(req, map[string]string{"request": "9"})
+		cd := NewCoreData(context.Background(), nil, cfg, WithSelectionsFromRequest(req))
+		if cd.currentRequestID != 9 {
+			t.Fatalf("currentRequestID = %d; want 9", cd.currentRequestID)
+		}
+	})
+
 	t.Run("query parameter", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/?thread=2", nil)
 		cd := NewCoreData(context.Background(), nil, cfg, WithSelectionsFromRequest(req))

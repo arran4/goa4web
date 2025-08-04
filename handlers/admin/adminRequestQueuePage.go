@@ -3,13 +3,11 @@ package admin
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
-	"github.com/gorilla/mux"
 )
 
 func AdminRequestQueuePage(w http.ResponseWriter, r *http.Request) {
@@ -25,19 +23,25 @@ func AdminRequestArchivePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminRequestPage(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(mux.Vars(r)["id"])
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	cd.SetCurrentRequestID(int32(id))
-	cd.PageTitle = fmt.Sprintf("Request %d", id)
+	if req := cd.CurrentRequest(); req != nil {
+		cd.PageTitle = fmt.Sprintf("Request %d", req.ID)
+	} else {
+		cd.PageTitle = "Request"
+	}
 	handlers.TemplateHandler(w, r, "requestPage.gohtml", cd)
 }
 
 func adminRequestAddCommentPage(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(mux.Vars(r)["id"])
 	comment := r.PostFormValue("comment")
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	req := cd.CurrentRequest()
 	cd.PageTitle = "Add Comment"
 	queries := cd.Queries()
+	id := int32(0)
+	if req != nil {
+		id = req.ID
+	}
 	data := struct {
 		*common.CoreData
 		Errors   []string
@@ -49,7 +53,7 @@ func adminRequestAddCommentPage(w http.ResponseWriter, r *http.Request) {
 	}
 	if comment == "" || id == 0 {
 		data.Errors = append(data.Errors, "invalid")
-	} else if err := queries.AdminInsertRequestComment(r.Context(), db.AdminInsertRequestCommentParams{RequestID: int32(id), Comment: comment}); err != nil {
+	} else if err := queries.AdminInsertRequestComment(r.Context(), db.AdminInsertRequestCommentParams{RequestID: id, Comment: comment}); err != nil {
 		data.Errors = append(data.Errors, err.Error())
 	} else {
 		data.Messages = append(data.Messages, "comment added")
@@ -58,20 +62,20 @@ func adminRequestAddCommentPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleRequestAction(w http.ResponseWriter, r *http.Request, status string) {
-	id, _ := strconv.Atoi(mux.Vars(r)["id"])
 	comment := r.PostFormValue("comment")
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if cd == nil || !cd.HasRole("administrator") {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
-	cd.PageTitle = fmt.Sprintf("Request %d", id)
-	queries := cd.Queries()
-	req, err := queries.AdminGetRequestByID(r.Context(), int32(id))
-	if err != nil {
+	req := cd.CurrentRequest()
+	if req == nil {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
+	id := req.ID
+	cd.PageTitle = fmt.Sprintf("Request %d", id)
+	queries := cd.Queries()
 	data := struct {
 		*common.CoreData
 		Errors   []string
@@ -84,16 +88,16 @@ func handleRequestAction(w http.ResponseWriter, r *http.Request, status string) 
 
 	var auto string
 
-	if err := queries.AdminUpdateRequestStatus(r.Context(), db.AdminUpdateRequestStatusParams{Status: status, ID: int32(id)}); err != nil {
+	if err := queries.AdminUpdateRequestStatus(r.Context(), db.AdminUpdateRequestStatusParams{Status: status, ID: id}); err != nil {
 		data.Errors = append(data.Errors, err.Error())
 	} else {
 		auto = fmt.Sprintf("status changed to %s", status)
 		data.Messages = append(data.Messages, auto)
-		if err := queries.AdminInsertRequestComment(r.Context(), db.AdminInsertRequestCommentParams{RequestID: int32(id), Comment: auto}); err != nil {
+		if err := queries.AdminInsertRequestComment(r.Context(), db.AdminInsertRequestCommentParams{RequestID: id, Comment: auto}); err != nil {
 			data.Errors = append(data.Errors, err.Error())
 		}
 		if comment != "" {
-			if err := queries.AdminInsertRequestComment(r.Context(), db.AdminInsertRequestCommentParams{RequestID: int32(id), Comment: comment}); err != nil {
+			if err := queries.AdminInsertRequestComment(r.Context(), db.AdminInsertRequestCommentParams{RequestID: id, Comment: comment}); err != nil {
 				data.Errors = append(data.Errors, err.Error())
 			}
 		}
@@ -107,7 +111,7 @@ func handleRequestAction(w http.ResponseWriter, r *http.Request, status string) 
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data["RequestID"] = id
+			evt.Data["RequestID"] = int(id)
 			evt.Data["Status"] = status
 		}
 	}

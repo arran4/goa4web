@@ -2,10 +2,12 @@ package admin
 
 import (
 	"errors"
-	"github.com/arran4/goa4web/core/consts"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
@@ -19,7 +21,7 @@ func (h *Handlers) AdminReloadConfigPage(w http.ResponseWriter, r *http.Request)
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Reload Config"
 	if cd == nil || !cd.HasRole("administrator") {
-		http.Error(w, "Forbidden", http.StatusForbidden)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Forbidden"))
 		return
 	}
 

@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -34,7 +35,7 @@ func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	items, err := queries.AdminListRecentNotifications(r.Context(), 50)
 	if err != nil {
 		log.Printf("recent notifications: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	ids := make([]int32, 0, len(items))

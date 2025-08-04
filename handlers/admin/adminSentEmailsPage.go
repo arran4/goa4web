@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"net/mail"
@@ -48,7 +49,7 @@ func AdminSentEmailsPage(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		log.Printf("list sent emails: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 

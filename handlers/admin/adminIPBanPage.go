@@ -3,9 +3,11 @@ package admin
 import (
 	"database/sql"
 	"errors"
-	"github.com/arran4/goa4web/core/consts"
+	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
 
@@ -25,7 +27,7 @@ func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 	rows, err := queries.ListBannedIps(r.Context())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("list banned ips: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	data.Bans = rows

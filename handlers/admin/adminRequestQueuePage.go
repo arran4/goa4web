@@ -27,7 +27,7 @@ func adminRequestPage(w http.ResponseWriter, r *http.Request) {
 	cd.LoadSelectionsFromRequest(r)
 	id := cd.CurrentRequestID()
 	if id == 0 {
-		http.Error(w, "not found", http.StatusNotFound)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("not found"))
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Request %d", id)
@@ -69,12 +69,12 @@ func handleRequestAction(w http.ResponseWriter, r *http.Request, status string) 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.LoadSelectionsFromRequest(r)
 	if cd == nil || !cd.HasRole("administrator") {
-		http.Error(w, "Forbidden", http.StatusForbidden)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Forbidden"))
 		return
 	}
 	req := cd.CurrentRequest()
 	if req == nil {
-		http.Error(w, "not found", http.StatusNotFound)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("not found"))
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Request %d", req.ID)

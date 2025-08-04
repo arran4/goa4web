@@ -1,64 +1,36 @@
 package writings
 
 import (
-	"database/sql"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
-	"strconv"
 
 	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/internal/lazy"
-
-	"github.com/gorilla/mux"
-
-	"github.com/arran4/goa4web/core"
-	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/core/consts"
 )
 
 // RequireWritingAuthor ensures the requester authored the writing referenced in the URL.
 func RequireWritingAuthor(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		writingIDStr := vars["article"]
-		if writingIDStr == "" {
-			writingIDStr = vars["writing"]
-		}
-		writingID, err := strconv.Atoi(writingIDStr)
-		if err != nil {
-			log.Printf("RequireWritingAuthor invalid writing ID %q: %v", writingIDStr, err)
+		cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		if !ok {
 			http.NotFound(w, r)
 			return
 		}
-		queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-		session, err := core.GetSession(r)
+		writing, err := cd.CurrentWriting()
 		if err != nil {
+			log.Printf("RequireWritingAuthor load writing: %v", err)
 			http.NotFound(w, r)
 			return
 		}
-		uid, _ := session.Values["UID"].(int32)
-
-		row, err := queries.GetWritingForListerByID(r.Context(), db.GetWritingForListerByIDParams{
-			ListerID:      uid,
-			Idwriting:     int32(writingID),
-			ListerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
-		})
-		if err != nil {
-			log.Printf("Error: %s", err)
+		if writing == nil {
 			http.NotFound(w, r)
 			return
 		}
-
-		cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-		if cd != nil {
-			cd.WritingByID(int32(writingID), lazy.Set[*db.GetWritingForListerByIDRow](row))
-			cd.SetCurrentWriting(int32(writingID))
-		}
-		if cd != nil && cd.HasAdminRole() {
+		if cd.HasAdminRole() {
 			next.ServeHTTP(w, r)
 			return
 		}
-		if cd == nil || !cd.HasContentWriterRole() || row.UsersIdusers != uid {
+		if !cd.HasContentWriterRole() || writing.UsersIdusers != cd.UserID {
 			http.NotFound(w, r)
 			return
 		}

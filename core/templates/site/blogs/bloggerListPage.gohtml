@@ -3,12 +3,23 @@
         <input name="search" value="{{$.Search}}">
         <input type="submit" value="Search">
     </form>
-    {{if .Rows}}
-        <font size="5">All bloggers.</font><br>
-        {{range .Rows}}
-            Blogger: <a href="/blogs/blogger/{{.Username.String}}">{{.Username.String}}</a> has {{.Count}} blogs.<br>
+    {{if .Search}}
+        {{if .Rows}}
+            <font size="5">Search results for "{{.Search}}".</font><br>
+            {{range .Rows}}
+                Blogger: <a href="/blogs/blogger/{{.Username.String}}">{{.Username.String}}</a> has {{.Count}} blogs.<br>
+            {{end}}
+        {{else}}
+            No bloggers found for "{{.Search}}".
         {{end}}
     {{else}}
-        No bloggers here.
+        {{if .Rows}}
+            <font size="5">All bloggers.</font><br>
+            {{range .Rows}}
+                Blogger: <a href="/blogs/blogger/{{.Username.String}}">{{.Username.String}}</a> has {{.Count}} blogs.<br>
+            {{end}}
+        {{else}}
+            No bloggers here.
+        {{end}}
     {{end}}
 {{ template "tail" $ }}

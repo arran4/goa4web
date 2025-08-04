@@ -44,7 +44,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	vars := mux.Vars(r)
-	postId, _ := strconv.Atoi(vars["post"])
+	postId, _ := strconv.Atoi(vars["news"])
 	commentId, _ := strconv.Atoi(vars["comment"])
 
 	session, ok := core.GetSessionOrFail(w, r)

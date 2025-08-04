@@ -35,10 +35,10 @@ func adminRequestPage(w http.ResponseWriter, r *http.Request) {
 
 func adminRequestAddCommentPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	id := cd.CurrentRequestID()
-	if id == 0 {
-		http.Error(w, "not found", http.StatusNotFound)
-		return
+	req := cd.CurrentRequest()
+	var id int32
+	if req != nil {
+		id = req.ID
 	}
 	comment := r.PostFormValue("comment")
 	cd.PageTitle = "Add Comment"
@@ -69,18 +69,13 @@ func handleRequestAction(w http.ResponseWriter, r *http.Request, status string) 
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
-	id := cd.CurrentRequestID()
-	if id == 0 {
+	req := cd.CurrentRequest()
+	if req == nil {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
-	cd.PageTitle = fmt.Sprintf("Request %d", id)
+	cd.PageTitle = fmt.Sprintf("Request %d", req.ID)
 	queries := cd.Queries()
-	req, err := queries.AdminGetRequestByID(r.Context(), id)
-	if err != nil {
-		http.Error(w, "not found", http.StatusNotFound)
-		return
-	}
 	data := struct {
 		*common.CoreData
 		Errors   []string
@@ -93,16 +88,16 @@ func handleRequestAction(w http.ResponseWriter, r *http.Request, status string) 
 
 	var auto string
 
-	if err := queries.AdminUpdateRequestStatus(r.Context(), db.AdminUpdateRequestStatusParams{Status: status, ID: id}); err != nil {
+	if err := queries.AdminUpdateRequestStatus(r.Context(), db.AdminUpdateRequestStatusParams{Status: status, ID: req.ID}); err != nil {
 		data.Errors = append(data.Errors, err.Error())
 	} else {
 		auto = fmt.Sprintf("status changed to %s", status)
 		data.Messages = append(data.Messages, auto)
-		if err := queries.AdminInsertRequestComment(r.Context(), db.AdminInsertRequestCommentParams{RequestID: id, Comment: auto}); err != nil {
+		if err := queries.AdminInsertRequestComment(r.Context(), db.AdminInsertRequestCommentParams{RequestID: req.ID, Comment: auto}); err != nil {
 			data.Errors = append(data.Errors, err.Error())
 		}
 		if comment != "" {
-			if err := queries.AdminInsertRequestComment(r.Context(), db.AdminInsertRequestCommentParams{RequestID: id, Comment: comment}); err != nil {
+			if err := queries.AdminInsertRequestComment(r.Context(), db.AdminInsertRequestCommentParams{RequestID: req.ID, Comment: comment}); err != nil {
 				data.Errors = append(data.Errors, err.Error())
 			}
 		}
@@ -116,7 +111,7 @@ func handleRequestAction(w http.ResponseWriter, r *http.Request, status string) 
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data["RequestID"] = int(id)
+			evt.Data["RequestID"] = int(req.ID)
 			evt.Data["Status"] = status
 		}
 	}

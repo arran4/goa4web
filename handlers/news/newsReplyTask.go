@@ -81,7 +81,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	vars := mux.Vars(r)
-	pid, err := strconv.Atoi(vars["post"])
+	pid, err := strconv.Atoi(vars["news"])
 
 	if err != nil {
 		return fmt.Errorf("post id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))

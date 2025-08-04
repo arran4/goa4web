@@ -3,7 +3,7 @@
         <div class="pagination-bar">
             <div class="pagination-left">
                 {{ if cd.StartLink }}<a href="{{ cd.StartLink }}">The start</a>{{ end }}
-                {{ if cd.PrevLink }}<a href="{{ cd.PrevLink }}">Previous{{ if .PageSize }} {{ .PageSize }}{{ end }}</a>{{ end }}
+                {{ if cd.PrevLink }}<a href="{{ cd.PrevLink }}">Previous{{ if cd.PageSize }} {{ cd.PageSize }}{{ end }}</a>{{ end }}
             </div>
             <div class="pagination-center">
                 {{ range cd.PageLinks }}
@@ -11,7 +11,7 @@
                 {{ end }}
             </div>
             <div class="pagination-right">
-                {{ if cd.NextLink }}<a href="{{ cd.NextLink }}">Next{{ if .PageSize }} {{ .PageSize }}{{ end }}</a>{{ end }}
+                {{ if cd.NextLink }}<a href="{{ cd.NextLink }}">Next{{ if cd.PageSize }} {{ cd.PageSize }}{{ end }}</a>{{ end }}
             </div>
         </div>
     {{ end }}

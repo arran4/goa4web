@@ -19,7 +19,7 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
-func TestRequireWritingAuthorArticleVar(t *testing.T) {
+func TestRequireWritingAuthorWritingVar(t *testing.T) {
 	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -32,12 +32,13 @@ func TestRequireWritingAuthorArticleVar(t *testing.T) {
 	core.SessionName = "test-session"
 
 	req := httptest.NewRequest("GET", "/writings/article/2/edit", nil)
-	req = mux.SetURLVars(req, map[string]string{"article": "2"})
+	req = mux.SetURLVars(req, map[string]string{"writing": "2"})
 
 	sess, _ := store.Get(req, core.SessionName)
 	sess.Values["UID"] = int32(1)
 
-	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig(), common.WithSession(sess), common.WithUserRoles([]string{"content writer"}))
+	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig(), common.WithSession(sess), common.WithUserRoles([]string{"content writer"}), common.WithSelectionsFromRequest(req))
+	cd.UserID = 1
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 

@@ -1,9 +1,7 @@
 package writings
 
 import (
-	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gorilla/mux"
 
@@ -20,10 +18,5 @@ var cancelTask = &CancelTask{TaskString: TaskCancel}
 var _ tasks.Task = (*CancelTask)(nil)
 
 func (CancelTask) Action(w http.ResponseWriter, r *http.Request) any {
-	vars := mux.Vars(r)
-	articleID, err := strconv.Atoi(vars["article"])
-	if err != nil {
-		return fmt.Errorf("article id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-	}
-	return handlers.RedirectHandler(fmt.Sprintf("/writings/article/%d", articleID))
+	return handlers.RedirectHandler("/writings/article/" + mux.Vars(r)["writing"])
 }

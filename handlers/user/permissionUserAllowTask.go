@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gorilla/mux"
-
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -39,10 +37,10 @@ func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) an
 	queries := cd.Queries()
 	username := r.PostFormValue("username")
 	role := r.PostFormValue("role")
-	idStr := mux.Vars(r)["user"]
+	id := cd.CurrentProfileUserID()
 	back := "/admin/users/permissions"
-	if idStr != "" {
-		back = "/admin/user/" + idStr + "/permissions"
+	if id != 0 {
+		back = fmt.Sprintf("/admin/user/%d/permissions", id)
 	}
 	data := struct {
 		Errors   []string

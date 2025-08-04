@@ -52,7 +52,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		SelectedLanguageId: cd.PreferredLanguageID(cd.Config.DefaultLanguage),
 	}
 	vars := mux.Vars(r)
-	pid, _ := strconv.Atoi(vars["post"])
+	pid, _ := strconv.Atoi(vars["news"])
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return

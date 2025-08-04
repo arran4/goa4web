@@ -9,8 +9,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gorilla/mux"
-
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
@@ -26,27 +24,24 @@ func ArticleCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	text := r.PostFormValue("replytext")
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	vars := mux.Vars(r)
-	articleId, _ := strconv.Atoi(vars["article"])
-	commentId, _ := strconv.Atoi(vars["comment"])
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
+	writing, err := cd.CurrentWriting()
+	if err != nil || writing == nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	comment, err := cd.CurrentComment(r)
+	if err != nil || comment == nil {
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
-
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	comment := cd.CurrentCommentLoaded()
-	if comment == nil {
-		var err error
-		comment, err = cd.CommentByID(int32(commentId))
-		if err != nil {
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return
-		}
-	}
 
 	thread, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
 		ViewerID:      uid,
@@ -61,8 +56,8 @@ func ArticleCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 
 	uid = cd.UserID
 	if err = queries.UpdateCommentForCommenter(r.Context(), db.UpdateCommentForCommenterParams{
-		CommentID:      int32(commentId),
-		GrantCommentID: sql.NullInt32{Int32: int32(commentId), Valid: true},
+		CommentID:      comment.Idcomments,
+		GrantCommentID: sql.NullInt32{Int32: comment.Idcomments, Valid: true},
 		LanguageID:     int32(languageId),
 		Text:           sql.NullString{String: text, Valid: true},
 		GranteeID:      sql.NullInt32{Int32: uid, Valid: uid != 0},
@@ -81,12 +76,16 @@ func ArticleCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/writings/article/%d", articleId), http.StatusTemporaryRedirect)
+	http.Redirect(w, r, fmt.Sprintf("/writings/article/%d", writing.Idwriting), http.StatusTemporaryRedirect)
 }
 
 // ArticleCommentEditActionCancelPage aborts editing a comment.
 func ArticleCommentEditActionCancelPage(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	articleId, _ := strconv.Atoi(vars["article"])
-	http.Redirect(w, r, fmt.Sprintf("/writings/article/%d", articleId), http.StatusTemporaryRedirect)
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	writing, err := cd.CurrentWriting()
+	if err != nil || writing == nil {
+		http.Redirect(w, r, "/writings", http.StatusTemporaryRedirect)
+		return
+	}
+	http.Redirect(w, r, fmt.Sprintf("/writings/article/%d", writing.Idwriting), http.StatusTemporaryRedirect)
 }

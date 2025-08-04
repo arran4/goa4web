@@ -3,9 +3,6 @@ package admin
 import (
 	"fmt"
 	"net/http"
-	"strconv"
-
-	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -16,18 +13,15 @@ import (
 // adminRoleEditFormPage shows a form to update a role.
 func adminRoleEditFormPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := cd.Queries()
-	idStr := mux.Vars(r)["id"]
-	id, _ := strconv.Atoi(idStr)
-
-	role, err := queries.AdminGetRoleByID(r.Context(), int32(id))
-	if err != nil {
+	role, err := cd.SelectedRole()
+	if err != nil || role == nil {
 		http.Error(w, "role not found", http.StatusNotFound)
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Edit Role %s", role.Name)
 
-	groups, err := buildGrantGroups(r.Context(), cd, int32(id))
+	id := cd.SelectedRoleID()
+	groups, err := buildGrantGroups(r.Context(), cd, id)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -45,8 +39,7 @@ func adminRoleEditFormPage(w http.ResponseWriter, r *http.Request) {
 func adminRoleEditSavePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
-	idStr := mux.Vars(r)["id"]
-	id, _ := strconv.Atoi(idStr)
+	id := cd.SelectedRoleID()
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
@@ -65,7 +58,7 @@ func adminRoleEditSavePage(w http.ResponseWriter, r *http.Request) {
 		Name:     name,
 		CanLogin: canLogin,
 		IsAdmin:  isAdmin,
-		ID:       int32(id),
+		ID:       id,
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("update role: %w", err).Error())
 	}

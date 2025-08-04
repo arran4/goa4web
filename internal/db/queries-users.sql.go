@@ -386,41 +386,23 @@ func (q *Queries) SystemInsertUser(ctx context.Context, username sql.NullString)
 
 const systemListAllUsers = `-- name: SystemListAllUsers :many
 SELECT u.idusers, u.username,
-       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
-       IF(r.id IS NULL, 0, 1) AS admin,
-       MIN(s.created_at) AS created_at
+       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email
 FROM users u
-LEFT JOIN user_roles ur ON ur.users_idusers = u.idusers
-LEFT JOIN roles r ON ur.role_id = r.id AND r.is_admin = 1
-LEFT JOIN sessions s ON s.users_idusers = u.idusers
-GROUP BY u.idusers
 ORDER BY u.idusers
 `
 
 type SystemListAllUsersRow struct {
-	Idusers   int32
-	Username  sql.NullString
-	Email     string
-	Admin     interface{}
-	CreatedAt interface{}
+	Idusers  int32
+	Username sql.NullString
+	Email    string
 }
 
-func (q *Queries) SystemListAllUsers(ctx context.Context) ([]*SystemListAllUsersRow, error) {
-	rows, err := q.db.QueryContext(ctx, systemListAllUsers)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*SystemListAllUsersRow
-	for rows.Next() {
-		var i SystemListAllUsersRow
-		if err := rows.Scan(
-			&i.Idusers,
-			&i.Username,
-			&i.Email,
-			&i.Admin,
-			&i.CreatedAt,
-		); err != nil {
+// Result:
+//
+//	idusers (int)
+//	username (string)
+//	email (string)
+		if err := rows.Scan(&i.Idusers, &i.Username, &i.Email); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)

@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -31,7 +32,8 @@ func (c *langListCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := db.New(conn)
-	langs, err := queries.SystemListLanguages(ctx)
+	cd := common.NewCoreData(ctx, queries, nil)
+	langs, err := cd.Languages()
 	if err != nil {
 		return fmt.Errorf("list languages: %w", err)
 	}

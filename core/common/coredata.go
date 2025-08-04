@@ -97,9 +97,9 @@ type CoreData struct {
 	NextLink          string
 	NotificationCount int32
 	PageLinks         []PageLink
-	PrevLink          string
 	// PageTitle holds the title of the current page.
 	PageTitle  string
+	PrevLink   string
 	RSSFeedURL string
 	TasksReg   *tasks.Registry
 	Title      string
@@ -843,30 +843,6 @@ func (cd *CoreData) CurrentRequestUser() *db.SystemGetUserByIDRow {
 	return cd.UserByID(req.UsersIdusers)
 }
 
-// SelectedThread returns the currently requested thread lazily loaded.
-func (cd *CoreData) SelectedThread(ops ...lazy.Option[*db.GetThreadLastPosterAndPermsRow]) (*db.GetThreadLastPosterAndPermsRow, error) {
-	if cd.currentThreadID == 0 {
-		return nil, nil
-	}
-	return cd.ForumThreadByID(cd.currentThreadID, ops...)
-}
-
-// SelectedThreadLoaded returns the cached current thread without database access.
-func (cd *CoreData) SelectedThreadLoaded() *db.GetThreadLastPosterAndPermsRow {
-	if cd.forumThreadRows == nil {
-		return nil
-	}
-	lv, ok := cd.forumThreadRows[cd.currentThreadID]
-	if !ok {
-		return nil
-	}
-	v, ok := lv.Peek()
-	if !ok {
-		return nil
-	}
-	return v
-}
-
 // CurrentTopic returns the currently requested topic lazily loaded.
 func (cd *CoreData) CurrentTopic(ops ...lazy.Option[*db.GetForumTopicByIdForUserRow]) (*db.GetForumTopicByIdForUserRow, error) {
 	if cd.currentTopicID == 0 {
@@ -1196,14 +1172,6 @@ func (cd *CoreData) ImageBoardPosts(boardID int32) ([]*db.ListImagePostsByBoardF
 			Offset:       0,
 		})
 	})
-}
-
-// SelectedBoardPosts returns posts for the current board without requiring an ID.
-func (cd *CoreData) SelectedBoardPosts() ([]*db.ListImagePostsByBoardForListerRow, error) {
-	if cd.currentBoardID == 0 {
-		return nil, nil
-	}
-	return cd.ImageBoardPosts(cd.currentBoardID)
 }
 
 // ImageBoards returns all image boards cached once.
@@ -1631,6 +1599,22 @@ func (cd *CoreData) SelectedAdminLinkerItemID(r *http.Request) (int32, error) {
 	return int32(id), nil
 }
 
+// SelectedBoardPosts returns posts for the current board without requiring an ID.
+func (cd *CoreData) SelectedBoardPosts() ([]*db.ListImagePostsByBoardForListerRow, error) {
+	if cd.currentBoardID == 0 {
+		return nil, nil
+	}
+	return cd.ImageBoardPosts(cd.currentBoardID)
+}
+
+// SelectedBoardSubBoards returns sub-boards for the current board without requiring an ID.
+func (cd *CoreData) SelectedBoardSubBoards() ([]*db.Imageboard, error) {
+	if cd.currentBoardID == 0 {
+		return nil, nil
+	}
+	return cd.SubImageBoards(cd.currentBoardID)
+}
+
 // SelectedCategoryPublicWritings returns public writings for the given category.
 func (cd *CoreData) SelectedCategoryPublicWritings(categoryID int32, r *http.Request) ([]*db.ListPublicWritingsInCategoryForListerRow, error) {
 	return cd.PublicWritings(categoryID, r)
@@ -1650,6 +1634,38 @@ func (cd *CoreData) SelectedLinkerItemsForCurrentUser(catID, offset int32) ([]*d
 		}
 	}
 	return cd.LinkerItemsForUser(catID, offset)
+}
+
+// SelectedThread returns the currently requested thread lazily loaded.
+func (cd *CoreData) SelectedThread(ops ...lazy.Option[*db.GetThreadLastPosterAndPermsRow]) (*db.GetThreadLastPosterAndPermsRow, error) {
+	if cd.currentThreadID == 0 {
+		return nil, nil
+	}
+	return cd.ForumThreadByID(cd.currentThreadID, ops...)
+}
+
+// SelectedThreadComments returns comments for the current thread without requiring an ID.
+func (cd *CoreData) SelectedThreadComments() ([]*db.GetCommentsByThreadIdForUserRow, error) {
+	if cd.currentThreadID == 0 {
+		return nil, nil
+	}
+	return cd.ThreadComments(cd.currentThreadID)
+}
+
+// SelectedThreadLoaded returns the cached current thread without database access.
+func (cd *CoreData) SelectedThreadLoaded() *db.GetThreadLastPosterAndPermsRow {
+	if cd.forumThreadRows == nil {
+		return nil
+	}
+	lv, ok := cd.forumThreadRows[cd.currentThreadID]
+	if !ok {
+		return nil
+	}
+	v, ok := lv.Peek()
+	if !ok {
+		return nil
+	}
+	return v
 }
 
 // Session returns the request session if available.
@@ -1734,13 +1750,6 @@ func (cd *CoreData) SubImageBoards(parentID int32) ([]*db.Imageboard, error) {
 }
 
 // SelectedBoardSubBoards returns sub-boards for the current board without requiring an ID.
-func (cd *CoreData) SelectedBoardSubBoards() ([]*db.Imageboard, error) {
-	if cd.currentBoardID == 0 {
-		return nil, nil
-	}
-	return cd.SubImageBoards(cd.currentBoardID)
-}
-
 // Subscribed reports whether the user has a subscription matching pattern and method.
 func (cd *CoreData) Subscribed(pattern, method string) bool {
 	m, _ := cd.subscriptionMap()
@@ -1824,14 +1833,6 @@ func (cd *CoreData) ThreadComments(id int32, ops ...lazy.Option[[]*db.GetComment
 		})
 	}
 	return lazy.Map(&cd.forumThreadComments, &cd.mapMu, id, fetch, ops...)
-}
-
-// SelectedThreadComments returns comments for the current thread without requiring an ID.
-func (cd *CoreData) SelectedThreadComments() ([]*db.GetCommentsByThreadIdForUserRow, error) {
-	if cd.currentThreadID == 0 {
-		return nil, nil
-	}
-	return cd.ThreadComments(cd.currentThreadID)
 }
 
 // UnreadNotificationCount returns the number of unread notifications for the

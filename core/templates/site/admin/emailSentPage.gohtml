@@ -18,6 +18,4 @@
 <input type="submit" name="task" value="Resend">
 <input type="submit" name="task" value="Retry">
 </form>
-{{if $.PrevLink}}<a href="{{$.PrevLink}}">Previous {{$.PageSize}}</a>{{end}}
-{{if $.NextLink}}<a href="{{$.NextLink}}">Next {{$.PageSize}}</a>{{end}}
 {{ template "tail" $ }}

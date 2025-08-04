@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -98,6 +99,7 @@ func CoreAdderMiddlewareWithDB(sdb *sql.DB, cfg *config.RuntimeConfig, verbosity
 			if emailReg != nil && cfg != nil {
 				provider = emailReg.ProviderFromConfig(cfg)
 			}
+			offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 			cd := common.NewCoreData(r.Context(), queries, cfg,
 				common.WithImageSigner(signer),
 				common.WithCustomQueries(queries),
@@ -106,7 +108,8 @@ func CoreAdderMiddlewareWithDB(sdb *sql.DB, cfg *config.RuntimeConfig, verbosity
 				common.WithEmailProvider(provider),
 				common.WithAbsoluteURLBase(base),
 				common.WithSessionManager(sm),
-				common.WithSelectionsFromRequest(r))
+				common.WithSelectionsFromRequest(r),
+				common.WithNewsOffset(offset))
 			cd.UserID = uid
 
 			if navReg != nil {

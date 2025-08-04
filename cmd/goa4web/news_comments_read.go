@@ -56,12 +56,12 @@ func (c *newsCommentsReadCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := db.New(conn)
-	n, err := queries.SystemGetNewsPostByIdWithWriterIdAndThreadCommentCount(ctx, int32(c.NewsID))
+	threadID, err := queries.SystemGetNewsPostByID(ctx, int32(c.NewsID))
 	if err != nil {
 		return fmt.Errorf("get news: %w", err)
 	}
 	if c.All {
-		rows, err := queries.SystemListCommentsByThreadID(ctx, n.ForumthreadID)
+		rows, err := queries.SystemListCommentsByThreadID(ctx, threadID)
 		if err != nil {
 			return fmt.Errorf("get comments: %w", err)
 		}

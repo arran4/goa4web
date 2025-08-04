@@ -11,7 +11,6 @@ import (
 // CustomAdminNewsIndex injects pagination links for the admin news pages.
 func CustomAdminNewsIndex(cd *common.CoreData, r *http.Request) {
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	cd.SetNewsOffset(offset)
 	ps := cd.PageSize()
 	if offset != 0 {
 		cd.CustomIndexItems = append(cd.CustomIndexItems, common.IndexItem{

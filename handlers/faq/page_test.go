@@ -8,16 +8,14 @@ import (
 )
 
 func TestCustomFAQIndexRoles(t *testing.T) {
-	cd := common.NewCoreData(nil, nil, config.NewRuntimeConfig())
-	cd.SetRoles([]string{"administrator"})
+	cd := common.NewCoreData(nil, nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
 	cd.AdminMode = true
 	CustomFAQIndex(cd, nil)
 	if !common.ContainsItem(cd.CustomIndexItems, "Question Qontrols") {
 		t.Errorf("admin should see question controls")
 	}
 
-	cd = common.NewCoreData(nil, nil, config.NewRuntimeConfig())
-	cd.SetRoles([]string{"anonymous"})
+	cd = common.NewCoreData(nil, nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anonymous"}))
 	CustomFAQIndex(cd, nil)
 	if common.ContainsItem(cd.CustomIndexItems, "Question Qontrols") {
 		t.Errorf("anonymous should not see admin items")

@@ -515,6 +515,41 @@ func (q *Queries) GetCommentsByThreadIdForUser(ctx context.Context, arg GetComme
 	return items, nil
 }
 
+const systemListCommentsByThreadID = `-- name: SystemListCommentsByThreadID :many
+SELECT c.idcomments, c.text
+FROM comments c
+WHERE c.forumthread_id = ?
+ORDER BY c.idcomments
+`
+
+type SystemListCommentsByThreadIDRow struct {
+	Idcomments int32
+	Text       sql.NullString
+}
+
+func (q *Queries) SystemListCommentsByThreadID(ctx context.Context, forumthreadID int32) ([]*SystemListCommentsByThreadIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, systemListCommentsByThreadID, forumthreadID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*SystemListCommentsByThreadIDRow
+	for rows.Next() {
+		var i SystemListCommentsByThreadIDRow
+		if err := rows.Scan(&i.Idcomments, &i.Text); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const systemSetCommentLastIndex = `-- name: SystemSetCommentLastIndex :exec
 UPDATE comments SET last_index = NOW() WHERE idcomments = ?
 `

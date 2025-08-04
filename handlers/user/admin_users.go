@@ -34,8 +34,6 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 		Search   string
 		Role     string
 		Status   string
-		NextLink string
-		PrevLink string
 		PageSize int
 		Roles    []*db.Role
 		Comments map[int32]*db.AdminUserComment
@@ -113,20 +111,12 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 	if hasMore {
 		nextVals := cloneValues(params)
 		nextVals.Set("offset", strconv.Itoa(offset+pageSize))
-		data.NextLink = "/admin/users?" + nextVals.Encode()
-		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-			Name: fmt.Sprintf("Next %d", pageSize),
-			Link: data.NextLink,
-		})
+		cd.NextLink = "/admin/users?" + nextVals.Encode()
 	}
 	if offset > 0 {
 		prevVals := cloneValues(params)
 		prevVals.Set("offset", strconv.Itoa(offset-pageSize))
-		data.PrevLink = "/admin/users?" + prevVals.Encode()
-		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-			Name: fmt.Sprintf("Previous %d", pageSize),
-			Link: data.PrevLink,
-		})
+		cd.PrevLink = "/admin/users?" + prevVals.Encode()
 	}
 
 	handlers.TemplateHandler(w, r, "usersPage.gohtml", data)

@@ -29,8 +29,6 @@ func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 		Rows     []*db.AdminListAuditLogsRow
 		User     string
 		Action   string
-		NextLink string
-		PrevLink string
 		PageSize int
 	}
 
@@ -83,20 +81,12 @@ func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 	if hasMore {
 		nextVals := copyValues(params)
 		nextVals.Set("offset", strconv.Itoa(offset+data.PageSize))
-		data.NextLink = "/admin/audit?" + nextVals.Encode()
-		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-			Name: "Next " + strconv.Itoa(data.PageSize),
-			Link: data.NextLink,
-		})
+		cd.NextLink = "/admin/audit?" + nextVals.Encode()
 	}
 	if offset > 0 {
 		prevVals := copyValues(params)
 		prevVals.Set("offset", strconv.Itoa(offset-data.PageSize))
-		data.PrevLink = "/admin/audit?" + prevVals.Encode()
-		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-			Name: "Previous " + strconv.Itoa(data.PageSize),
-			Link: data.PrevLink,
-		})
+		cd.PrevLink = "/admin/audit?" + prevVals.Encode()
 	}
 
 	handlers.TemplateHandler(w, r, "auditLogPage.gohtml", data)

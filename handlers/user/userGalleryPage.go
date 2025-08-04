@@ -81,25 +81,20 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	base := "/usr/notifications/gallery"
-	var nextLink, prevLink string
 	if hasMore {
-		nextLink = base + "?p=" + strconv.Itoa(page+1)
+		cd.NextLink = base + "?p=" + strconv.Itoa(page+1)
 	}
 	if page > 1 {
-		prevLink = base + "?p=" + strconv.Itoa(page-1)
+		cd.PrevLink = base + "?p=" + strconv.Itoa(page-1)
 	}
 
 	data := struct {
 		*common.CoreData
 		Images   []galleryImage
-		NextLink string
-		PrevLink string
 		PageSize int
 	}{
 		CoreData: cd,
 		Images:   imgs,
-		NextLink: nextLink,
-		PrevLink: prevLink,
 		PageSize: size,
 	}
 

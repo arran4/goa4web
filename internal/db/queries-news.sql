@@ -44,6 +44,11 @@ WHERE s.idsiteNews = ?;
 -- name: SystemAssignNewsThreadID :exec
 UPDATE site_news SET forumthread_id = ? WHERE idsiteNews = ?;
 
+-- name: SystemGetNewsPostByID :one
+SELECT forumthread_id
+FROM site_news
+WHERE idsiteNews = ?;
+
 -- name: GetNewsPostByIdWithWriterIdAndThreadCommentCount :one
 WITH RECURSIVE role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)

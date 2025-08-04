@@ -42,6 +42,13 @@ type AdminSection struct {
 	Links []IndexItem
 }
 
+// PageLink represents a numbered pagination link.
+type PageLink struct {
+	Num    int
+	Link   string
+	Active bool
+}
+
 // SessionManager defines optional hooks for storing and removing session
 // information. Implementations may persist session metadata in a database or
 // other storage while exposing a storage-agnostic API to CoreData.
@@ -87,7 +94,10 @@ type CoreData struct {
 	LinkSigner        *linksign.Signer
 	mapMu             sync.Mutex
 	Nav               NavigationProvider
+	NextLink          string
 	NotificationCount int32
+	PageLinks         []PageLink
+	PrevLink          string
 	// PageTitle holds the title of the current page.
 	PageTitle  string
 	RSSFeedURL string
@@ -151,7 +161,6 @@ type CoreData struct {
 	imageBoards              lazy.Value[[]*db.Imageboard]
 	imagePostRows            map[int32]*lazy.Value[*db.GetImagePostByIDForListerRow]
 	langs                    lazy.Value[[]*db.Language]
-	languagesAll             lazy.Value[[]*db.Language]
 	latestNews               lazy.Value[[]*NewsPost]
 	latestWritings           lazy.Value[[]*db.Writing]
 	linkerCategories         lazy.Value[[]*db.GetLinkerCategoryLinkCountsRow]
@@ -263,16 +272,6 @@ func (cd *CoreData) adminRequestList(kind string) ([]*db.AdminRequestQueue, erro
 		default:
 			return nil, nil
 		}
-	})
-}
-
-// AllLanguages returns all languages cached once.
-func (cd *CoreData) AllLanguages() ([]*db.Language, error) {
-	return cd.languagesAll.Load(func() ([]*db.Language, error) {
-		if cd.queries == nil {
-			return nil, nil
-		}
-		return cd.queries.SystemListLanguages(cd.ctx)
 	})
 }
 
@@ -1702,16 +1701,10 @@ func (cd *CoreData) SetEventTask(t tasks.Task) {
 	}
 }
 
-// SetNewsOffset records the current news listing offset.
-func (cd *CoreData) SetNewsOffset(o int) { cd.currentNewsOffset = o } // TODO this should be done from the constructing middleware via options and this function removed once obsolete
-
 // SetPageTitle updates the Title field used by templates.
 func (cd *CoreData) SetPageTitle(title string) {
 	cd.Title = title
 }
-
-// SetRoles preloads the current user roles.
-func (cd *CoreData) SetRoles(r []string) { cd.userRoles.Set(r) } // TODO this should be done from the constructing middleware via options and this function removed once obsolete
 
 // SetSession stores s on cd for later retrieval.
 func (cd *CoreData) SetSession(s *sessions.Session) { cd.session = s }
@@ -2076,6 +2069,11 @@ func WithPreference(p *db.Preference) CoreOption {
 	return func(cd *CoreData) { cd.pref.Set(p) }
 }
 
+// WithUserRoles preloads the current user roles.
+func WithUserRoles(r []string) CoreOption {
+	return func(cd *CoreData) { cd.userRoles.Set(r) }
+}
+
 // WithConfig sets the runtime config for this CoreData.
 func WithConfig(cfg *config.RuntimeConfig) CoreOption {
 	return func(cd *CoreData) { cd.Config = cfg }
@@ -2117,48 +2115,55 @@ func WithCustomQueries(cq db.CustomQueries) CoreOption {
 	return func(cd *CoreData) { cd.customQueries = cq }
 }
 
+// WithNewsOffset records the current news listing offset.
+func WithNewsOffset(o int) CoreOption {
+	return func(cd *CoreData) { cd.currentNewsOffset = o }
+}
+
+// assignIDFromString converts v to int32 and stores it in the mapped CoreData
+// field identified by k.
+func assignIDFromString(m map[string]*int32, k, v string) {
+	dest, ok := m[k]
+	if !ok {
+		return
+	}
+	i, err := strconv.Atoi(v)
+	if err != nil {
+		return
+	}
+	*dest = int32(i)
+}
+
 // WithSelectionsFromRequest extracts integer identifiers from the request and
 // stores them on the CoreData instance. It searches path variables, query
 // parameters and finally form values.
 func WithSelectionsFromRequest(r *http.Request) CoreOption {
 	return func(cd *CoreData) {
-		setID := func(k, v string) {
-			i, err := strconv.Atoi(v)
-			if err != nil {
-				return
-			}
-			switch k {
-			case "thread", "replyTo":
-				cd.currentThreadID = int32(i)
-			case "board", "boardno":
-				cd.currentBoardID = int32(i)
-			case "post":
-				cd.currentImagePostID = int32(i)
-			case "topic":
-				cd.currentTopicID = int32(i)
-			case "comment":
-				cd.currentCommentID = int32(i)
-			case "news":
-				cd.currentNewsPostID = int32(i)
-			case "writing":
-				cd.currentWritingID = int32(i)
-			case "blog":
-				cd.currentBlogID = int32(i)
-			}
+		mapping := map[string]*int32{
+			"boardno": &cd.currentBoardID,
+			"board":   &cd.currentBoardID,
+			"thread":  &cd.currentThreadID,
+			"replyTo": &cd.currentThreadID,
+			"topic":   &cd.currentTopicID,
+			"comment": &cd.currentCommentID,
+			"news":    &cd.currentNewsPostID,
+			"post":    &cd.currentImagePostID,
+			"writing": &cd.currentWritingID,
+			"blog":    &cd.currentBlogID,
 		}
 		for k, v := range mux.Vars(r) {
-			setID(k, v)
+			assignIDFromString(mapping, k, v)
 		}
 		q := r.URL.Query()
 		for k, v := range q {
 			if len(v) > 0 {
-				setID(k, v[0])
+				assignIDFromString(mapping, k, v[0])
 			}
 		}
 		if err := r.ParseForm(); err == nil {
 			for k, v := range r.Form {
 				if len(v) > 0 {
-					setID(k, v[0])
+					assignIDFromString(mapping, k, v[0])
 				}
 			}
 		}

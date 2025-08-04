@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -225,8 +226,10 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 				base = strings.TrimRight(s.Config.HTTPHostname, "/")
 			}
 			provider := s.EmailReg.ProviderFromConfig(s.Config)
+			offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 			cd := common.NewCoreData(r.Context(), queries, s.Config,
 				common.WithImageSigner(s.ImageSigner),
+				common.WithCustomQueries(queries),
 				common.WithLinkSigner(s.LinkSigner),
 				common.WithSession(session),
 				common.WithEmailProvider(provider),
@@ -235,6 +238,8 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 				common.WithNavRegistry(s.Nav),
 				common.WithTasksRegistry(s.TasksReg),
 				common.WithDBRegistry(s.DBReg),
+				common.WithSelectionsFromRequest(r),
+				common.WithOffset(offset),
 				common.WithSiteTitle("Arran's Site"),
 			)
 			cd.UserID = uid

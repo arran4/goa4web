@@ -1,9 +1,7 @@
-package middleware
+package server
 
 import (
 	"context"
-	"github.com/arran4/goa4web/core"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -11,7 +9,9 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
 	imagesign "github.com/arran4/goa4web/internal/images"
@@ -21,7 +21,7 @@ import (
 	"github.com/gorilla/sessions"
 )
 
-func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
+func TestCoreDataMiddlewareUserRoles(t *testing.T) {
 	navReg := nav.NewRegistry()
 
 	conn, mock, err := sqlmock.New()
@@ -55,7 +55,15 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 	reg := email.NewRegistry()
 	signer := imagesign.NewSigner(cfg, "k")
 	linkSigner := linksign.NewSigner(cfg, "k")
-	CoreAdderMiddlewareWithDB(conn, cfg, 0, reg, signer, linkSigner, navReg)(handler).ServeHTTP(httptest.NewRecorder(), req)
+	srv := New(
+		WithDB(conn),
+		WithConfig(cfg),
+		WithEmailRegistry(reg),
+		WithImageSigner(signer),
+		WithLinkSigner(linkSigner),
+		WithNavRegistry(navReg),
+	)
+	srv.CoreDataMiddleware()(handler).ServeHTTP(httptest.NewRecorder(), req)
 
 	want := []string{"anonymous", "user", "moderator"}
 	if diff := cmp.Diff(want, cdOut.UserRoles()); diff != "" {
@@ -67,7 +75,7 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 	}
 }
 
-func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
+func TestCoreDataMiddlewareAnonymous(t *testing.T) {
 	navReg := nav.NewRegistry()
 
 	conn, mock, err := sqlmock.New()
@@ -97,7 +105,15 @@ func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
 	reg := email.NewRegistry()
 	signer := imagesign.NewSigner(cfg, "k")
 	linkSigner := linksign.NewSigner(cfg, "k")
-	CoreAdderMiddlewareWithDB(conn, cfg, 0, reg, signer, linkSigner, navReg)(handler).ServeHTTP(httptest.NewRecorder(), req)
+	srv := New(
+		WithDB(conn),
+		WithConfig(cfg),
+		WithEmailRegistry(reg),
+		WithImageSigner(signer),
+		WithLinkSigner(linkSigner),
+		WithNavRegistry(navReg),
+	)
+	srv.CoreDataMiddleware()(handler).ServeHTTP(httptest.NewRecorder(), req)
 
 	want := []string{"anonymous"}
 	if diff := cmp.Diff(want, cdOut.UserRoles()); diff != "" {

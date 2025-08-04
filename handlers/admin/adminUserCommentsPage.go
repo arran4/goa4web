@@ -13,13 +13,18 @@ import (
 // adminUserCommentsPage lists all comments posted by a user.
 func adminUserCommentsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	uid := cd.CurrentProfileUserID()
+	if uid == 0 {
+		http.Error(w, "user not found", http.StatusNotFound)
+		return
+	}
 	user := cd.CurrentProfileUser()
 	if user == nil {
 		http.Error(w, "user not found", http.StatusNotFound)
 		return
 	}
 	queries := cd.Queries()
-	rows, err := queries.AdminGetAllCommentsByUser(r.Context(), user.Idusers)
+	rows, err := queries.AdminGetAllCommentsByUser(r.Context(), uid)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -31,7 +36,7 @@ func adminUserCommentsPage(w http.ResponseWriter, r *http.Request) {
 		Comments []*db.AdminGetAllCommentsByUserRow
 	}{
 		CoreData: cd,
-		User:     &db.User{Idusers: user.Idusers, Username: user.Username},
+		User:     &db.User{Idusers: uid, Username: user.Username},
 		Comments: rows,
 	}
 	handlers.TemplateHandler(w, r, "userCommentsPage.gohtml", data)

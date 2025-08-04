@@ -13,13 +13,18 @@ import (
 // adminUserSubscriptionsPage lists subscription patterns of a user.
 func adminUserSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	uid := cd.CurrentProfileUserID()
+	if uid == 0 {
+		http.Error(w, "user not found", http.StatusNotFound)
+		return
+	}
 	user := cd.CurrentProfileUser()
 	if user == nil {
 		http.Error(w, "user not found", http.StatusNotFound)
 		return
 	}
 	queries := cd.Queries()
-	rows, err := queries.ListSubscriptionsByUser(r.Context(), user.Idusers)
+	rows, err := queries.ListSubscriptionsByUser(r.Context(), uid)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -31,7 +36,7 @@ func adminUserSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 		Subs []*db.ListSubscriptionsByUserRow
 	}{
 		CoreData: cd,
-		User:     &db.User{Idusers: user.Idusers, Username: user.Username},
+		User:     &db.User{Idusers: uid, Username: user.Username},
 		Subs:     rows,
 	}
 	handlers.TemplateHandler(w, r, "userSubscriptionsPage.gohtml", data)

@@ -17,6 +17,7 @@ import (
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dbdrivers"
 	"github.com/arran4/goa4web/internal/dlq"
@@ -198,7 +199,7 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 			if s.DB == nil {
 				ue := common.UserError{Err: fmt.Errorf("db not initialized"), ErrorMessage: "database unavailable"}
 				log.Printf("%s: %v", ue.ErrorMessage, ue.Err)
-				http.Error(w, ue.ErrorMessage, http.StatusInternalServerError)
+				handlers.RenderErrorPage(w, r, errors.New(ue.ErrorMessage))
 				return
 			}
 

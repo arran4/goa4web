@@ -40,7 +40,7 @@ func ShowPage(w http.ResponseWriter, r *http.Request) {
 
 	languageRows, err := cd.Languages()
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	data.Languages = languageRows
@@ -52,12 +52,12 @@ func ShowPage(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		log.Printf("getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 
 	if !cd.HasGrant("linker", "link", "view", link.Idlinker) {
-		http.Error(w, "Forbidden", http.StatusForbidden)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Forbidden"))
 		return
 	}
 
@@ -100,12 +100,12 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		log.Printf("getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 
 	if !cd.HasGrant("linker", "link", "view", link.Idlinker) {
-		http.Error(w, "Forbidden", http.StatusForbidden)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Forbidden"))
 		return
 	}
 

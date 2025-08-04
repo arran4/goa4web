@@ -11,8 +11,7 @@ import (
 func TestCustomBlogIndexRoles(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs", nil)
 
-	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
-	cd.SetRoles([]string{"administrator"})
+	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
 	cd.AdminMode = true
 	CustomBlogIndex(cd, req)
 	if !common.ContainsItem(cd.CustomIndexItems, "User Roles") {
@@ -22,8 +21,7 @@ func TestCustomBlogIndexRoles(t *testing.T) {
 		t.Errorf("admin should see write blog")
 	}
 
-	cd = common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
-	cd.SetRoles([]string{"content writer"})
+	cd = common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"content writer"}))
 	CustomBlogIndex(cd, req)
 	if common.ContainsItem(cd.CustomIndexItems, "User Roles") {
 		t.Errorf("content writer should not see user roles")
@@ -32,8 +30,7 @@ func TestCustomBlogIndexRoles(t *testing.T) {
 		t.Errorf("content writer should see write blog")
 	}
 
-	cd = common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
-	cd.SetRoles([]string{"anonymous"})
+	cd = common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anonymous"}))
 	CustomBlogIndex(cd, req)
 	if common.ContainsItem(cd.CustomIndexItems, "User Roles") || common.ContainsItem(cd.CustomIndexItems, "Write blog") {
 		t.Errorf("anonymous should not see writer/admin items")

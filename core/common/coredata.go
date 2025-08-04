@@ -171,7 +171,6 @@ type CoreData struct {
 	subscriptionRows         lazy.Value[[]*db.ListSubscriptionsByUserRow]
 	subscriptions            lazy.Value[map[string]bool]
 	templateOverrides        map[string]*lazy.Value[string]
-	threadComments           map[int32]*lazy.Value[[]*db.GetCommentsByThreadIdForUserRow]
 	unreadCount              lazy.Value[int64]
 	user                     lazy.Value[*db.User]
 	userRoles                lazy.Value[[]string]
@@ -1581,7 +1580,7 @@ func (cd *CoreData) RegisterExternalLinkClick(url string) {
 	if cd.queries == nil {
 		return
 	}
-	if err := cd.queries.RegisterExternalLinkClick(cd.ctx, url); err != nil {
+	if err := cd.queries.SystemRegisterExternalLinkClick(cd.ctx, url); err != nil {
 		log.Printf("record external link click: %v", err)
 	}
 }
@@ -1709,9 +1708,6 @@ func (cd *CoreData) SetPageTitle(title string) {
 	cd.Title = title
 }
 
-// SetRoles preloads the current user roles.
-func (cd *CoreData) SetRoles(r []string) { cd.userRoles.Set(r) } // TODO this should be done from the constructing middleware via options and this function removed once obsolete
-
 // SetSession stores s on cd for later retrieval.
 func (cd *CoreData) SetSession(s *sessions.Session) { cd.session = s }
 
@@ -1822,35 +1818,6 @@ func (cd *CoreData) ThreadComments(id int32, ops ...lazy.Option[[]*db.GetComment
 		})
 	}
 	return lazy.Map(&cd.forumThreadComments, &cd.mapMu, id, fetch, ops...)
-}
-
-// ThreadComments returns comments for a thread lazily loading them once per thread ID.
-func (cd *CoreData) ThreadComments(threadID int32) ([]*db.GetCommentsByThreadIdForUserRow, error) {
-	if cd.threadComments == nil {
-		cd.threadComments = make(map[int32]*lazy.Value[[]*db.GetCommentsByThreadIdForUserRow])
-	}
-	lv, ok := cd.threadComments[threadID]
-	if !ok {
-		lv = &lazy.Value[[]*db.GetCommentsByThreadIdForUserRow]{}
-		cd.threadComments[threadID] = lv
-	}
-	return lv.Load(func() ([]*db.GetCommentsByThreadIdForUserRow, error) {
-		if cd.queries == nil {
-			return nil, nil
-		}
-		rows, err := cd.queries.GetCommentsByThreadIdForUser(cd.ctx, db.GetCommentsByThreadIdForUserParams{
-			ViewerID: cd.UserID,
-			ThreadID: threadID,
-			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-		})
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				return nil, nil
-			}
-			return nil, err
-		}
-		return rows, nil
-	})
 }
 
 // UnreadNotificationCount returns the number of unread notifications for the
@@ -2134,48 +2101,55 @@ func WithNewsOffset(o int) CoreOption {
 	return func(cd *CoreData) { cd.currentNewsOffset = o }
 }
 
+// WithUserRoles preloads the current user roles.
+func WithUserRoles(r []string) CoreOption {
+	return func(cd *CoreData) { cd.userRoles.Set(r) }
+}
+
+// assignIDFromString converts v to int32 and stores it in the mapped CoreData
+// field identified by k.
+func assignIDFromString(m map[string]*int32, k, v string) {
+	dest, ok := m[k]
+	if !ok {
+		return
+	}
+	i, err := strconv.Atoi(v)
+	if err != nil {
+		return
+	}
+	*dest = int32(i)
+}
+
 // WithSelectionsFromRequest extracts integer identifiers from the request and
 // stores them on the CoreData instance. It searches path variables, query
 // parameters and finally form values.
 func WithSelectionsFromRequest(r *http.Request) CoreOption {
 	return func(cd *CoreData) {
-		setID := func(k, v string) {
-			i, err := strconv.Atoi(v)
-			if err != nil {
-				return
-			}
-			switch k {
-			case "boardno", "board":
-				cd.currentBoardID = int32(i)
-			case "thread", "replyTo":
-				cd.currentThreadID = int32(i)
-			case "topic":
-				cd.currentTopicID = int32(i)
-			case "comment":
-				cd.currentCommentID = int32(i)
-			case "news":
-				cd.currentNewsPostID = int32(i)
-			case "post":
-				cd.currentImagePostID = int32(i)
-			case "writing":
-				cd.currentWritingID = int32(i)
-			case "blog":
-				cd.currentBlogID = int32(i)
-			}
+		mapping := map[string]*int32{
+			"boardno": &cd.currentBoardID,
+			"board":   &cd.currentBoardID,
+			"thread":  &cd.currentThreadID,
+			"replyTo": &cd.currentThreadID,
+			"topic":   &cd.currentTopicID,
+			"comment": &cd.currentCommentID,
+			"news":    &cd.currentNewsPostID,
+			"post":    &cd.currentImagePostID,
+			"writing": &cd.currentWritingID,
+			"blog":    &cd.currentBlogID,
 		}
 		for k, v := range mux.Vars(r) {
-			setID(k, v)
+			assignIDFromString(mapping, k, v)
 		}
 		q := r.URL.Query()
 		for k, v := range q {
 			if len(v) > 0 {
-				setID(k, v[0])
+				assignIDFromString(mapping, k, v[0])
 			}
 		}
 		if err := r.ParseForm(); err == nil {
 			for k, v := range r.Form {
 				if len(v) > 0 {
-					setID(k, v[0])
+					assignIDFromString(mapping, k, v[0])
 				}
 			}
 		}

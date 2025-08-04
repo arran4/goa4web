@@ -36,9 +36,9 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	vars := mux.Vars(r)
-	articleID, err := strconv.Atoi(vars["article"])
+	writingID, err := strconv.Atoi(vars["writing"])
 	if err != nil {
-		return fmt.Errorf("article id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+		return fmt.Errorf("writing id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	commentID, err := strconv.Atoi(vars["comment"])
 	if err != nil {
@@ -90,7 +90,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	return handlers.RedirectHandler(fmt.Sprintf("/writings/article/%d", articleID))
+	return handlers.RedirectHandler(fmt.Sprintf("/writings/article/%d", writingID))
 }
 
 func (EditReplyTask) AdminEmailTemplate() *notif.EmailTemplates {

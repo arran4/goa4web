@@ -25,7 +25,7 @@ import (
 	"github.com/arran4/goa4web/core"
 )
 
-func TestArticleReplyActionPage_UsesArticleParam(t *testing.T) {
+func TestArticleReplyActionPage_UsesWritingParam(t *testing.T) {
 	dbconn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -41,7 +41,7 @@ func TestArticleReplyActionPage_UsesArticleParam(t *testing.T) {
 	form.Set("language", "1")
 	req := httptest.NewRequest("POST", "/writings/article/1", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req = mux.SetURLVars(req, map[string]string{"article": "1"})
+	req = mux.SetURLVars(req, map[string]string{"writing": "1"})
 
 	w := httptest.NewRecorder()
 	sess, _ := store.Get(req, core.SessionName)

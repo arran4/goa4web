@@ -28,7 +28,7 @@ func ArticleCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	vars := mux.Vars(r)
-	articleId, _ := strconv.Atoi(vars["article"])
+	writingID, _ := strconv.Atoi(vars["writing"])
 	commentId, _ := strconv.Atoi(vars["comment"])
 
 	session, ok := core.GetSessionOrFail(w, r)
@@ -81,12 +81,12 @@ func ArticleCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/writings/article/%d", articleId), http.StatusTemporaryRedirect)
+	http.Redirect(w, r, fmt.Sprintf("/writings/article/%d", writingID), http.StatusTemporaryRedirect)
 }
 
 // ArticleCommentEditActionCancelPage aborts editing a comment.
 func ArticleCommentEditActionCancelPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	articleId, _ := strconv.Atoi(vars["article"])
-	http.Redirect(w, r, fmt.Sprintf("/writings/article/%d", articleId), http.StatusTemporaryRedirect)
+	writingID, _ := strconv.Atoi(vars["writing"])
+	http.Redirect(w, r, fmt.Sprintf("/writings/article/%d", writingID), http.StatusTemporaryRedirect)
 }

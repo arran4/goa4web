@@ -21,9 +21,9 @@ var _ tasks.Task = (*CancelTask)(nil)
 
 func (CancelTask) Action(w http.ResponseWriter, r *http.Request) any {
 	vars := mux.Vars(r)
-	articleID, err := strconv.Atoi(vars["article"])
+	writingID, err := strconv.Atoi(vars["writing"])
 	if err != nil {
-		return fmt.Errorf("article id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+		return fmt.Errorf("writing id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	return handlers.RedirectHandler(fmt.Sprintf("/writings/article/%d", articleID))
+	return handlers.RedirectHandler(fmt.Sprintf("/writings/article/%d", writingID))
 }

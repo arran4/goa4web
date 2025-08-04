@@ -20,10 +20,7 @@ import (
 func RequireWritingAuthor(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		writingIDStr := vars["article"]
-		if writingIDStr == "" {
-			writingIDStr = vars["writing"]
-		}
+		writingIDStr := vars["writing"]
 		writingID, err := strconv.Atoi(writingIDStr)
 		if err != nil {
 			log.Printf("RequireWritingAuthor invalid writing ID %q: %v", writingIDStr, err)

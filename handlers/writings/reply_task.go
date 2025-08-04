@@ -72,9 +72,9 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	vars := mux.Vars(r)
-	aid, err := strconv.Atoi(vars["article"])
-	if err != nil || aid == 0 {
-		return fmt.Errorf("article id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	writingID, err := strconv.Atoi(vars["writing"])
+	if err != nil || writingID == 0 {
+		return fmt.Errorf("writing id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
@@ -82,7 +82,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	post, err := queries.GetWritingForListerByID(r.Context(), db.GetWritingForListerByIDParams{
 		ListerID:      uid,
-		Idwriting:     int32(aid),
+		Idwriting:     int32(writingID),
 		ListerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
@@ -121,8 +121,8 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 			return fmt.Errorf("make thread fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		pthid = int32(pthidi)
-		if err := queries.SystemAssignWritingThreadID(r.Context(), db.SystemAssignWritingThreadIDParams{ForumthreadID: pthid, Idwriting: int32(aid)}); err != nil {
-			return fmt.Errorf("assign article thread fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+		if err := queries.SystemAssignWritingThreadID(r.Context(), db.SystemAssignWritingThreadIDParams{ForumthreadID: pthid, Idwriting: int32(writingID)}); err != nil {
+			return fmt.Errorf("assign writing thread fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
 
@@ -131,7 +131,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data["target"] = notif.Target{Type: "writing", ID: int32(aid)}
+			evt.Data["target"] = notif.Target{Type: "writing", ID: int32(writingID)}
 		}
 	}
 

@@ -41,8 +41,8 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	cd.PageTitle = "Writing"
 
 	vars := mux.Vars(r)
-	articleId, _ := strconv.Atoi(vars["article"])
-	cd.SetCurrentWriting(int32(articleId))
+	writingID, _ := strconv.Atoi(vars["writing"])
+	cd.SetCurrentWriting(int32(writingID))
 	writing, err := cd.CurrentWriting()
 	if err != nil {
 		log.Printf("get writing: %v", err)
@@ -110,13 +110,12 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	aid, err := strconv.Atoi(vars["article"])
-
+	writingID, err := strconv.Atoi(vars["writing"])
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	if aid == 0 {
+	if writingID == 0 {
 		log.Printf("Error: no bid")
 		http.Redirect(w, r, "?error="+"No bid", http.StatusTemporaryRedirect)
 		return
@@ -127,7 +126,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 
 	post, err := queries.GetWritingForListerByID(r.Context(), db.GetWritingForListerByIDParams{
 		ListerID:      uid,
-		Idwriting:     int32(aid),
+		Idwriting:     int32(writingID),
 		ListerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
@@ -186,7 +185,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		pthid = int32(pthidi)
 		if err := queries.SystemAssignWritingThreadID(r.Context(), db.SystemAssignWritingThreadIDParams{
 			ForumthreadID: pthid,
-			Idwriting:     int32(aid),
+			Idwriting:     int32(writingID),
 		}); err != nil {
 			log.Printf("Error: assign_article_to_thread: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -199,7 +198,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data["target"] = notifications.Target{Type: "writing", ID: int32(aid)}
+			evt.Data["target"] = notifications.Target{Type: "writing", ID: int32(writingID)}
 		}
 	}
 

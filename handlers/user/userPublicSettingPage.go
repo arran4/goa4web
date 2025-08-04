@@ -24,11 +24,9 @@ func userPublicProfileSettingPage(w http.ResponseWriter, r *http.Request) {
 	}
 	user, _ := cd.CurrentUser()
 	data := struct {
-		*common.CoreData
 		Enabled bool
 	}{
-		CoreData: cd,
-		Enabled:  user.PublicProfileEnabledAt.Valid,
+		Enabled: user.PublicProfileEnabledAt.Valid,
 	}
 	handlers.TemplateHandler(w, r, "publicProfileSettings.gohtml", data)
 }

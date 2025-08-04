@@ -90,11 +90,9 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
-		*common.CoreData
 		Images   []galleryImage
 		PageSize int
 	}{
-		CoreData: cd,
 		Images:   imgs,
 		PageSize: size,
 	}

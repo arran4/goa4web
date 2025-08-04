@@ -14,6 +14,7 @@ import (
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/feeds"
 	"github.com/gorilla/mux"
@@ -71,21 +72,24 @@ func TopicRssPage(w http.ResponseWriter, r *http.Request) {
 		if !errors.Is(err, sql.ErrNoRows) {
 			log.Printf("GetForumTopicByIdForUser error: %s", err)
 		}
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Forum - %s Feed", topic.Title.String)
 	rows, err := cd.ForumThreads(int32(topicID))
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("feed query error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 
 	feed := TopicFeed(r, topic.Title.String, topicID, rows)
 	if err := feed.WriteRss(w); err != nil {
 		log.Printf("feed write error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 }
@@ -103,7 +107,8 @@ func TopicAtomPage(w http.ResponseWriter, r *http.Request) {
 		if !errors.Is(err, sql.ErrNoRows) {
 			log.Printf("GetForumTopicByIdForUser error: %s", err)
 		}
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 
@@ -111,14 +116,16 @@ func TopicAtomPage(w http.ResponseWriter, r *http.Request) {
 	rows, err := cd.ForumThreads(int32(topicID))
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("feed query error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 
 	feed := TopicFeed(r, topic.Title.String, topicID, rows)
 	if err := feed.WriteAtom(w); err != nil {
 		log.Printf("feed write error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 }

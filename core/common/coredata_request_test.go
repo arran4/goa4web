@@ -11,13 +11,14 @@ import (
 	"github.com/arran4/goa4web/config"
 )
 
-func TestWithSelectionsFromRequest(t *testing.T) {
+func TestLoadSelectionsFromRequest(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
 
 	t.Run("path variable", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/", nil)
 		req = mux.SetURLVars(req, map[string]string{"board": "1"})
-		cd := NewCoreData(context.Background(), nil, cfg, WithSelectionsFromRequest(req))
+		cd := NewCoreData(context.Background(), nil, cfg)
+		cd.LoadSelectionsFromRequest(req)
 		if cd.currentBoardID != 1 {
 			t.Fatalf("currentBoardID = %d; want 1", cd.currentBoardID)
 		}
@@ -26,7 +27,8 @@ func TestWithSelectionsFromRequest(t *testing.T) {
 	t.Run("request variable", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/", nil)
 		req = mux.SetURLVars(req, map[string]string{"request": "4"})
-		cd := NewCoreData(context.Background(), nil, cfg, WithSelectionsFromRequest(req))
+		cd := NewCoreData(context.Background(), nil, cfg)
+		cd.LoadSelectionsFromRequest(req)
 		if cd.currentRequestID != 4 {
 			t.Fatalf("currentRequestID = %d; want 4", cd.currentRequestID)
 		}
@@ -35,7 +37,8 @@ func TestWithSelectionsFromRequest(t *testing.T) {
 	t.Run("request path variable", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/", nil)
 		req = mux.SetURLVars(req, map[string]string{"request": "4"})
-		cd := NewCoreData(context.Background(), nil, cfg, WithSelectionsFromRequest(req))
+		cd := NewCoreData(context.Background(), nil, cfg)
+		cd.LoadSelectionsFromRequest(req)
 		if cd.CurrentRequestID() != 4 {
 			t.Fatalf("currentRequestID = %d; want 4", cd.CurrentRequestID())
 		}
@@ -43,7 +46,8 @@ func TestWithSelectionsFromRequest(t *testing.T) {
 
 	t.Run("query parameter", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/?thread=2", nil)
-		cd := NewCoreData(context.Background(), nil, cfg, WithSelectionsFromRequest(req))
+		cd := NewCoreData(context.Background(), nil, cfg)
+		cd.LoadSelectionsFromRequest(req)
 		if cd.currentThreadID != 2 {
 			t.Fatalf("currentThreadID = %d; want 2", cd.currentThreadID)
 		}
@@ -53,7 +57,8 @@ func TestWithSelectionsFromRequest(t *testing.T) {
 		body := strings.NewReader("post=3")
 		req := httptest.NewRequest("POST", "/", body)
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		cd := NewCoreData(context.Background(), nil, cfg, WithSelectionsFromRequest(req))
+		cd := NewCoreData(context.Background(), nil, cfg)
+		cd.LoadSelectionsFromRequest(req)
 		if cd.currentImagePostID != 3 {
 			t.Fatalf("currentImagePostID = %d; want 3", cd.currentImagePostID)
 		}

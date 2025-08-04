@@ -93,14 +93,14 @@ func AdminBoardPage(w http.ResponseWriter, r *http.Request) {
 	}
 	bid, _ := strconv.Atoi(bidStr)
 	if bid == 0 {
-		http.Error(w, "Bad Request", http.StatusBadRequest)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Bad Request"))
 		return
 	}
 
 	boards, err := cd.ImageBoards()
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("imageBoards error: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 

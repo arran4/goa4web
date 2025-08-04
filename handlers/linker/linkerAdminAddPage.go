@@ -50,7 +50,7 @@ func AdminAddPage(w http.ResponseWriter, r *http.Request) {
 
 	languageRows, err := data.CoreData.Languages()
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	data.Languages = languageRows

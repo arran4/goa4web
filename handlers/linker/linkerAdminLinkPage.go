@@ -23,7 +23,7 @@ func adminLinkPage(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, sql.ErrNoRows):
 			http.NotFound(w, r)
 		default:
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		}
 		return
 	}

@@ -38,7 +38,7 @@ func WriterPage(w http.ResponseWriter, r *http.Request) {
 			http.NotFound(w, r)
 		default:
 			log.Printf("SystemGetUserByUsername Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		}
 		return
 	}
@@ -46,7 +46,7 @@ func WriterPage(w http.ResponseWriter, r *http.Request) {
 	rows, err := cd.WriterWritings(u.Idusers, r)
 	if err != nil {
 		log.Printf("WriterWritings: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 

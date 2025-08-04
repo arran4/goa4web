@@ -44,7 +44,7 @@ func (EditTask) Action(w http.ResponseWriter, r *http.Request) any {
 	text := r.PostFormValue("text")
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	vars := mux.Vars(r)
-	postId, _ := strconv.Atoi(vars["post"])
+	postId, _ := strconv.Atoi(vars["news"])
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if !cd.HasGrant("news", "post", "edit", int32(postId)) {

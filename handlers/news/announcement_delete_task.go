@@ -27,7 +27,7 @@ func (AnnouncementDeleteTask) Action(w http.ResponseWriter, r *http.Request) any
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
-	pid, _ := strconv.Atoi(vars["post"])
+	pid, _ := strconv.Atoi(vars["news"])
 
 	ann, err := cd.NewsAnnouncement(int32(pid))
 	if err != nil {

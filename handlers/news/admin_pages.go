@@ -44,7 +44,7 @@ type CommentPlus struct {
 func AdminNewsPostPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
-	pid, err := strconv.Atoi(mux.Vars(r)["post"])
+	pid, err := strconv.Atoi(mux.Vars(r)["news"])
 	if err != nil {
 		http.Redirect(w, r, "/admin/news", http.StatusTemporaryRedirect)
 		return
@@ -111,7 +111,7 @@ func AdminNewsPostPage(w http.ResponseWriter, r *http.Request) {
 func adminNewsEditFormPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
-	pid, err := strconv.Atoi(mux.Vars(r)["post"])
+	pid, err := strconv.Atoi(mux.Vars(r)["news"])
 	if err != nil {
 		http.Redirect(w, r, "/admin/news", http.StatusTemporaryRedirect)
 		return
@@ -147,7 +147,7 @@ func adminNewsEditFormPage(w http.ResponseWriter, r *http.Request) {
 
 func AdminNewsDeleteConfirmPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	pid, err := strconv.Atoi(mux.Vars(r)["post"])
+	pid, err := strconv.Atoi(mux.Vars(r)["news"])
 	if err != nil {
 		http.Redirect(w, r, "/admin/news", http.StatusTemporaryRedirect)
 		return

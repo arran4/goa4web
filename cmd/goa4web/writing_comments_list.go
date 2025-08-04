@@ -44,11 +44,11 @@ func (c *writingCommentsListCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := db.New(conn)
-	w, err := queries.SystemGetWritingByID(ctx, int32(c.ID))
+	threadID, err := queries.SystemGetWritingByID(ctx, int32(c.ID))
 	if err != nil {
 		return fmt.Errorf("get writing: %w", err)
 	}
-	rows, err := queries.SystemListCommentsByThreadID(ctx, w.ForumthreadID)
+	rows, err := queries.SystemListCommentsByThreadID(ctx, threadID)
 	if err != nil {
 		return fmt.Errorf("list comments: %w", err)
 	}

@@ -402,15 +402,6 @@ type SystemListAllUsersRow struct {
 //	idusers (int)
 //	username (string)
 //	email (string)
-func (q *Queries) SystemListAllUsers(ctx context.Context) ([]*SystemListAllUsersRow, error) {
-	rows, err := q.db.QueryContext(ctx, systemListAllUsers)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*SystemListAllUsersRow
-	for rows.Next() {
-		var i SystemListAllUsersRow
 		if err := rows.Scan(&i.Idusers, &i.Username, &i.Email); err != nil {
 			return nil, err
 		}

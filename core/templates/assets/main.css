@@ -151,6 +151,19 @@ div.title {
         bottom: 0;
         background-color: #FFF6E0;
         padding: 0.5em;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+}
+.pagination-left,
+.pagination-right {
+        flex: 1;
+}
+.pagination-right {
+        text-align: right;
+}
+.pagination-center {
+        flex: 1;
         text-align: center;
 }
 .pagination-bar a, .pagination-bar strong {

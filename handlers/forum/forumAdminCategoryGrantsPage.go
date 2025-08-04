@@ -31,7 +31,8 @@ func AdminCategoryGrantsPage(w http.ResponseWriter, r *http.Request) {
 	queries := cd.Queries()
 	cid, err := strconv.Atoi(mux.Vars(r)["category"])
 	if err != nil {
-		http.Error(w, "Bad Request", http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Bad Request"))
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Forum - Category %d Grants", cid)
@@ -42,7 +43,8 @@ func AdminCategoryGrantsPage(w http.ResponseWriter, r *http.Request) {
 	grants, err := queries.ListGrants(r.Context())
 	if err != nil {
 		log.Printf("ListGrants: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	for _, g := range grants {

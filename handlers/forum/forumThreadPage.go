@@ -58,20 +58,23 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 
 	languageRows, err := cd.Languages()
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	data.Languages = languageRows
 	threadRow, err := cd.SelectedThread()
 	if err != nil || threadRow == nil {
 		log.Printf("current thread: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	topicRow, err := cd.CurrentTopic()
 	if err != nil || topicRow == nil {
 		log.Printf("current topic: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Forum - %s", topicRow.Title.String)
@@ -92,7 +95,8 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
 			log.Printf("getBlogEntryForListerByID_comments Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			w.WriteHeader(http.StatusInternalServerError)
+			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 			return
 		}
 	}
@@ -178,7 +182,8 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 		})
 		if err != nil {
 			log.Printf("getCommentByIdForUser Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			w.WriteHeader(http.StatusInternalServerError)
+			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 			return
 		}
 		switch replyType {

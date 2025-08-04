@@ -8,11 +8,7 @@
         <code>{{ .A4Code }}</code>
     </div>
     {{- end }}
-</div>
-<div>
-    {{- if $.PrevLink }}<a href="{{ $.PrevLink }}">Previous {{ $.PageSize }}</a>{{ end }}
-    {{- if $.NextLink }} <a href="{{ $.NextLink }}">Next {{ $.PageSize }}</a>{{ end }}
-</div>
+    </div>
 {{- else }}
 <p>No images uploaded.</p>
 {{- end }}

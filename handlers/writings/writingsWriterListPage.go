@@ -20,8 +20,6 @@ func WriterListPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		Rows                []*db.ListWritersForListerRow
 		Search              string
-		NextLink            string
-		PrevLink            string
 		PageSize            int
 		CategoryBreadcrumbs []*db.WritingCategory
 		CategoryId          int32
@@ -60,25 +58,17 @@ func WriterListPage(w http.ResponseWriter, r *http.Request) {
 	}
 	if hasMore {
 		if strings.Contains(base, "?") {
-			data.NextLink = fmt.Sprintf("%s&offset=%d", base, offset+pageSize)
+			cd.NextLink = fmt.Sprintf("%s&offset=%d", base, offset+pageSize)
 		} else {
-			data.NextLink = fmt.Sprintf("%s?offset=%d", base, offset+pageSize)
+			cd.NextLink = fmt.Sprintf("%s?offset=%d", base, offset+pageSize)
 		}
-		cd.CustomIndexItems = append(cd.CustomIndexItems, common.IndexItem{
-			Name: fmt.Sprintf("Next %d", pageSize),
-			Link: data.NextLink,
-		})
 	}
 	if offset > 0 {
 		if strings.Contains(base, "?") {
-			data.PrevLink = fmt.Sprintf("%s&offset=%d", base, offset-pageSize)
+			cd.PrevLink = fmt.Sprintf("%s&offset=%d", base, offset-pageSize)
 		} else {
-			data.PrevLink = fmt.Sprintf("%s?offset=%d", base, offset-pageSize)
+			cd.PrevLink = fmt.Sprintf("%s?offset=%d", base, offset-pageSize)
 		}
-		cd.CustomIndexItems = append(cd.CustomIndexItems, common.IndexItem{
-			Name: fmt.Sprintf("Previous %d", pageSize),
-			Link: data.PrevLink,
-		})
 	}
 
 	handlers.TemplateHandler(w, r, "writerListPage.gohtml", data)

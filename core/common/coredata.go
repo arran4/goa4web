@@ -2197,40 +2197,38 @@ func assignIDFromString(m map[string]*int32, k, v string) {
 	*dest = int32(i)
 }
 
-// WithSelectionsFromRequest extracts integer identifiers from the request and
+// LoadSelectionsFromRequest extracts integer identifiers from the request and
 // stores them on the CoreData instance. It searches path variables, query
 // parameters and finally form values.
-func WithSelectionsFromRequest(r *http.Request) CoreOption {
-	return func(cd *CoreData) {
-		mapping := map[string]*int32{
-			"boardno": &cd.currentBoardID,
-			"board":   &cd.currentBoardID,
-			"thread":  &cd.currentThreadID,
-			"replyTo": &cd.currentThreadID,
-			"topic":   &cd.currentTopicID,
-			"comment": &cd.currentCommentID,
-			"news":    &cd.currentNewsPostID,
-			"post":    &cd.currentImagePostID,
-			"writing": &cd.currentWritingID,
-			"blog":    &cd.currentBlogID,
-			"request": &cd.currentRequestID,
-			"role":    &cd.currentRoleID,
-			"user":    &cd.currentProfileUserID,
+func (cd *CoreData) LoadSelectionsFromRequest(r *http.Request) {
+	mapping := map[string]*int32{
+		"boardno": &cd.currentBoardID,
+		"board":   &cd.currentBoardID,
+		"thread":  &cd.currentThreadID,
+		"replyTo": &cd.currentThreadID,
+		"topic":   &cd.currentTopicID,
+		"comment": &cd.currentCommentID,
+		"news":    &cd.currentNewsPostID,
+		"post":    &cd.currentImagePostID,
+		"writing": &cd.currentWritingID,
+		"blog":    &cd.currentBlogID,
+		"request": &cd.currentRequestID,
+		"role":    &cd.currentRoleID,
+		"user":    &cd.currentProfileUserID,
+	}
+	for k, v := range mux.Vars(r) {
+		assignIDFromString(mapping, k, v)
+	}
+	q := r.URL.Query()
+	for k, v := range q {
+		if len(v) > 0 {
+			assignIDFromString(mapping, k, v[0])
 		}
-		for k, v := range mux.Vars(r) {
-			assignIDFromString(mapping, k, v)
-		}
-		q := r.URL.Query()
-		for k, v := range q {
+	}
+	if err := r.ParseForm(); err == nil {
+		for k, v := range r.Form {
 			if len(v) > 0 {
 				assignIDFromString(mapping, k, v[0])
-			}
-		}
-		if err := r.ParseForm(); err == nil {
-			for k, v := range r.Form {
-				if len(v) > 0 {
-					assignIDFromString(mapping, k, v[0])
-				}
 			}
 		}
 	}

@@ -30,6 +30,7 @@ func (topicThreadCommentEditActionTask) Action(w http.ResponseWriter, r *http.Re
 	text := r.PostFormValue("replytext")
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
 	queries := cd.Queries()
 	threadRow, err := cd.SelectedThread()
 	if err != nil || threadRow == nil {

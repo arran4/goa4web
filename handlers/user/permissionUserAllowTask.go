@@ -34,6 +34,7 @@ func (PermissionUserAllowTask) AdminInternalNotificationTemplate() *string {
 
 func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
 	queries := cd.Queries()
 	username := r.PostFormValue("username")
 	role := r.PostFormValue("role")

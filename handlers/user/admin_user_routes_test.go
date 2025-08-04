@@ -29,7 +29,8 @@ func setupRequest(t *testing.T, path string, userID int) (*http.Request, sqlmock
 	req = mux.SetURLVars(req, map[string]string{"user": strconv.Itoa(userID)})
 	cfg := config.NewRuntimeConfig()
 	q := db.New(conn)
-	cd := common.NewCoreData(req.Context(), q, cfg, common.WithSelectionsFromRequest(req))
+	cd := common.NewCoreData(req.Context(), q, cfg)
+	cd.LoadSelectionsFromRequest(req)
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	return req, mock, cd

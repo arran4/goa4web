@@ -13,8 +13,8 @@ import (
 // adminUserBlogsPage lists all blog posts authored by a user.
 func adminUserBlogsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	uid := cd.CurrentProfileUserID()
-	if uid == 0 {
+	cpu := cd.CurrentProfileUser()
+	if cpu.Idusers == 0 {
 		http.Error(w, "user not found", http.StatusNotFound)
 		return
 	}
@@ -24,7 +24,7 @@ func adminUserBlogsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	queries := cd.Queries()
-	rows, err := queries.AdminGetAllBlogEntriesByUser(r.Context(), uid)
+	rows, err := queries.AdminGetAllBlogEntriesByUser(r.Context(), cpu.Idusers)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -36,7 +36,7 @@ func adminUserBlogsPage(w http.ResponseWriter, r *http.Request) {
 		Blogs []*db.AdminGetAllBlogEntriesByUserRow
 	}{
 		CoreData: cd,
-		User:     &db.User{Idusers: uid, Username: user.Username},
+		User:     &db.User{Idusers: cpu.Idusers, Username: user.Username},
 		Blogs:    rows,
 	}
 	handlers.TemplateHandler(w, r, "userBlogsPage.gohtml", data)

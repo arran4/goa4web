@@ -31,10 +31,10 @@ func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	permid := r.PostFormValue("permid")
 	role := r.PostFormValue("role")
 
-	id := cd.CurrentProfileUserID()
+	cpu := cd.CurrentProfileUser()
 	back := "/admin/users/permissions"
-	if id != 0 {
-		back = fmt.Sprintf("/admin/user/%d/permissions", id)
+	if cpu.Idusers != 0 {
+		back = fmt.Sprintf("/admin/user/%d/permissions", cpu.Idusers)
 	}
 	data := struct {
 		Errors   []string

@@ -24,6 +24,7 @@ func AdminRequestArchivePage(w http.ResponseWriter, r *http.Request) {
 
 func adminRequestPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
 	id := cd.CurrentRequestID()
 	if id == 0 {
 		http.Error(w, "not found", http.StatusNotFound)
@@ -35,6 +36,7 @@ func adminRequestPage(w http.ResponseWriter, r *http.Request) {
 
 func adminRequestAddCommentPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
 	req := cd.CurrentRequest()
 	var id int32
 	if req != nil {
@@ -65,6 +67,7 @@ func adminRequestAddCommentPage(w http.ResponseWriter, r *http.Request) {
 func handleRequestAction(w http.ResponseWriter, r *http.Request, status string) {
 	comment := r.PostFormValue("comment")
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
 	if cd == nil || !cd.HasRole("administrator") {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return

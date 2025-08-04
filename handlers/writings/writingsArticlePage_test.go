@@ -52,7 +52,8 @@ func TestArticleReplyActionPage_UsesWritingParam(t *testing.T) {
 	}
 
 	q := db.New(dbconn)
-	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig(), common.WithSession(sess), common.WithSelectionsFromRequest(req))
+	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig(), common.WithSession(sess))
+	cd.LoadSelectionsFromRequest(req)
 	cd.UserID = 1
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)

@@ -19,6 +19,7 @@ var _ tasks.Task = (*topicThreadReplyCancelTask)(nil)
 
 func (topicThreadReplyCancelTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
 	threadRow, err := cd.SelectedThread()
 	if err != nil || threadRow == nil {
 		return fmt.Errorf("thread fetch %w", handlers.ErrRedirectOnSamePageHandler(err))

@@ -3,28 +3,24 @@ package admin
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
-	"github.com/gorilla/mux"
 )
 
 // adminUserLinkerPage lists linker posts created by a user.
 func adminUserLinkerPage(w http.ResponseWriter, r *http.Request) {
-	idStr := mux.Vars(r)["user"]
-	id, _ := strconv.Atoi(idStr)
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := cd.Queries()
-	user, err := queries.SystemGetUserByID(r.Context(), int32(id))
-	if err != nil {
+	user := cd.CurrentProfileUser()
+	if user == nil {
 		http.Error(w, "user not found", http.StatusNotFound)
 		return
 	}
+	queries := cd.Queries()
 	rows, err := queries.GetLinkerItemsByUserDescending(r.Context(), db.GetLinkerItemsByUserDescendingParams{
-		UsersIdusers: int32(id),
+		UsersIdusers: cd.CurrentProfileUserID(),
 		Limit:        100,
 		Offset:       0,
 	})

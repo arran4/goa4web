@@ -1690,6 +1690,9 @@ func (cd *CoreData) SetCurrentNewsPost(id int32) { cd.currentNewsPostID = id }
 // SetCurrentProfileUserID records the user ID for profile lookups.
 func (cd *CoreData) SetCurrentProfileUserID(id int32) { cd.currentProfileUserID = id }
 
+// CurrentProfileUserID returns the user ID for profile lookups.
+func (cd *CoreData) CurrentProfileUserID() int32 { return cd.currentProfileUserID }
+
 // SetCurrentRequestID stores the request ID for subsequent lookups.
 func (cd *CoreData) SetCurrentRequestID(id int32) { cd.currentRequestID = id }
 

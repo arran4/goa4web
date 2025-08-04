@@ -17,8 +17,6 @@ import (
 	"github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/workers/postcountworker"
 	"github.com/arran4/goa4web/workers/searchworker"
-
-	"github.com/gorilla/mux"
 )
 
 func ArticlePage(w http.ResponseWriter, r *http.Request) {
@@ -40,9 +38,6 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Writing"
 
-	vars := mux.Vars(r)
-	articleId, _ := strconv.Atoi(vars["article"])
-	cd.SetCurrentWriting(int32(articleId))
 	writing, err := cd.CurrentWriting()
 	if err != nil {
 		log.Printf("get writing: %v", err)
@@ -108,41 +103,27 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-
-	vars := mux.Vars(r)
-	aid, err := strconv.Atoi(vars["article"])
-
-	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-	if aid == 0 {
-		log.Printf("Error: no bid")
-		http.Redirect(w, r, "?error="+"No bid", http.StatusTemporaryRedirect)
-		return
-	}
-
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	uid, _ := session.Values["UID"].(int32)
 
-	post, err := queries.GetWritingForListerByID(r.Context(), db.GetWritingForListerByIDParams{
-		ListerID:      uid,
-		Idwriting:     int32(aid),
-		ListerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
+	post, err := cd.CurrentWriting()
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 			if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd); err != nil {
 				log.Printf("render no access page: %v", err)
 			}
 			return
 		default:
-			log.Printf("getArticlePost Error: %s", err)
+			log.Printf("get writing: %s", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+	}
+	if post == nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
 
 	var pthid int32 = post.ForumthreadID
@@ -186,9 +167,9 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		pthid = int32(pthidi)
 		if err := queries.SystemAssignWritingThreadID(r.Context(), db.SystemAssignWritingThreadIDParams{
 			ForumthreadID: pthid,
-			Idwriting:     int32(aid),
+			Idwriting:     post.Idwriting,
 		}); err != nil {
-			log.Printf("Error: assign_article_to_thread: %s", err)
+			log.Printf("Error: assign_writing_to_thread: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 			return
 		}
@@ -199,7 +180,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data["target"] = notifications.Target{Type: "writing", ID: int32(aid)}
+			evt.Data["target"] = notifications.Target{Type: "writing", ID: post.Idwriting}
 		}
 	}
 

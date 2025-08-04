@@ -21,7 +21,8 @@
 </ul>
 <h3>Grants</h3>
 <style>
-.pill{display:inline-block;padding:2px 6px;margin:2px;border-radius:10px;background:#e0e0e0;cursor:move;}
+.have,.available{display:flex;flex-wrap:wrap;gap:4px;}
+.pill{display:inline-block;padding:2px 6px;border-radius:10px;background:#e0e0e0;cursor:move;}
 .have .pill{background:#c8e6c9;}
 .available .pill{background:#f0f0f0;}
 .pill.moved{background:#ffecb3;}
@@ -35,10 +36,14 @@
         <td>{{ if .ItemID.Valid }}{{ .ItemID.Int32 }}{{ end }}</td>
         <td>{{ .Info }}</td>
         <td class="have">
-            {{- range .Have }}<span class="pill" draggable="true" data-default="have">{{ . }}</span>{{- end }}
+            {{- range .Have }}
+            <span class="pill" draggable="true" data-default="have">{{ . }}</span>
+            {{- end }}
         </td>
         <td class="available">
-            {{- range .Available }}<span class="pill" draggable="true" data-default="available">{{ . }}</span>{{- end }}
+            {{- range .Available }}
+            <span class="pill" draggable="true" data-default="available">{{ . }}</span>
+            {{- end }}
         </td>
         <td>
             <form method="post" action="/admin/role/{{ $.Role.ID }}/grant/update" class="commit-form">
@@ -70,7 +75,7 @@ document.querySelectorAll('tr[data-section]').forEach(function(row){
         updateBtn();
     }
     [have,avail].forEach(function(col){
-        col.addEventListener('dragstart',function(e){if(e.target.classList.contains('pill')){e.dataTransfer.setData('text',e.target.textContent);e.dataTransfer.effectAllowed='move';e.target.classList.add('dragging');}});
+        col.addEventListener('dragstart',function(e){if(e.target.classList.contains('pill')){e.dataTransfer.setData('text/plain',e.target.textContent);e.dataTransfer.effectAllowed='move';e.target.classList.add('dragging');}});
         col.addEventListener('dragend',function(e){e.target.classList.remove('dragging');});
         col.addEventListener('dragover',function(e){e.preventDefault();});
         col.addEventListener('drop',dropHandler);

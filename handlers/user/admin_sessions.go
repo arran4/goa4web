@@ -1,7 +1,6 @@
 package user
 
 import (
-	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 

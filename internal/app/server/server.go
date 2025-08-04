@@ -239,7 +239,6 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 				common.WithNavRegistry(s.Nav),
 				common.WithTasksRegistry(s.TasksReg),
 				common.WithDBRegistry(s.DBReg),
-				common.WithSelectionsFromRequest(r),
 				common.WithOffset(offset),
 				common.WithSiteTitle("Arran's Site"),
 			)

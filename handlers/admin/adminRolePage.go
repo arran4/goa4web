@@ -17,7 +17,6 @@ func adminRolePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.LoadSelectionsFromRequest(r)
 	queries := cd.Queries()
-
 	role, err := cd.SelectedRole()
 	if err != nil || role == nil {
 		http.Error(w, "role not found", http.StatusNotFound)

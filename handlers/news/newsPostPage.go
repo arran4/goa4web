@@ -62,7 +62,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	posts, err := cd.LatestNewsList(0, 50)
 	if err != nil {
 		log.Printf("LatestNewsList: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, err)
 		return
 	}
 	var post *common.NewsPost
@@ -98,7 +98,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
 			log.Printf("getBlogEntryForUserById_comments Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			handlers.RenderErrorPage(w, r, err)
 			return
 		}
 	}
@@ -121,7 +121,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	cd = r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	languageRows, err := cd.Languages()
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, err)
 		return
 	}
 	data.Languages = languageRows

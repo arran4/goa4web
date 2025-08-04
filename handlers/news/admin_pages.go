@@ -127,7 +127,7 @@ func adminNewsEditFormPage(w http.ResponseWriter, r *http.Request) {
 	}
 	langs, err := cd.Languages()
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, err)
 		return
 	}
 	cd.PageTitle = "Edit News"

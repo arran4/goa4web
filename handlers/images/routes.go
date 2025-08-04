@@ -2,6 +2,7 @@ package images
 
 import (
 	"bytes"
+	"fmt"
 	"net/http"
 	"path"
 	"path/filepath"
@@ -53,7 +54,8 @@ func verifyMiddleware(prefix string) mux.MiddlewareFunc {
 			}
 			cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 			if cd.ImageSigner == nil || !cd.ImageSigner.Verify(data, ts, sig) {
-				http.Error(w, "forbidden", http.StatusForbidden)
+				w.WriteHeader(http.StatusForbidden)
+				handlers.RenderErrorPage(w, r, fmt.Errorf("forbidden"))
 				return
 			}
 			next.ServeHTTP(w, r)

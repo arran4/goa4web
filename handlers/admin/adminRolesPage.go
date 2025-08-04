@@ -3,6 +3,7 @@ package admin
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -23,7 +24,7 @@ func AdminRolesPage(w http.ResponseWriter, r *http.Request) {
 	roles, err := cd.AllRoles()
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("list roles: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	data := Data{CoreData: cd, Roles: roles}

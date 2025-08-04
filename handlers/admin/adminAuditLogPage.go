@@ -2,12 +2,14 @@ package admin
 
 import (
 	"database/sql"
-	"github.com/arran4/goa4web/core/consts"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
@@ -61,7 +63,7 @@ func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		log.Printf("list audit logs: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 

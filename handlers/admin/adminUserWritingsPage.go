@@ -15,18 +15,18 @@ func adminUserWritingsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	uid := cd.CurrentProfileUserID()
 	if uid == 0 {
-		http.Error(w, "user not found", http.StatusNotFound)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("user not found"))
 		return
 	}
 	user := cd.CurrentProfileUser()
 	if user == nil {
-		http.Error(w, "user not found", http.StatusNotFound)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("user not found"))
 		return
 	}
 	queries := cd.Queries()
 	rows, err := queries.AdminGetAllWritingsByAuthor(r.Context(), uid)
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Writings by %s", user.Username.String)

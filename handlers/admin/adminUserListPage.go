@@ -1,8 +1,10 @@
 package admin
 
 import (
-	"github.com/arran4/goa4web/core/consts"
+	"fmt"
 	"net/http"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
@@ -15,7 +17,7 @@ func adminUserListPage(w http.ResponseWriter, r *http.Request) {
 	queries := cd.Queries()
 	users, err := queries.AdminListAllUsers(r.Context())
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	data := struct {

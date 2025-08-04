@@ -1712,9 +1712,6 @@ func (cd *CoreData) SetPageTitle(title string) {
 	cd.Title = title
 }
 
-// SetRoles preloads the current user roles.
-func (cd *CoreData) SetRoles(r []string) { cd.userRoles.Set(r) } // TODO this should be done from the constructing middleware via options and this function removed once obsolete
-
 // SetSession stores s on cd for later retrieval.
 func (cd *CoreData) SetSession(s *sessions.Session) { cd.session = s }
 
@@ -2089,6 +2086,11 @@ func WithAbsoluteURLBase(base string) CoreOption {
 // WithPreference preloads the user preference object.
 func WithPreference(p *db.Preference) CoreOption {
 	return func(cd *CoreData) { cd.pref.Set(p) }
+}
+
+// WithUserRoles preloads the current user roles.
+func WithUserRoles(r []string) CoreOption {
+	return func(cd *CoreData) { cd.userRoles.Set(r) }
 }
 
 // WithConfig sets the runtime config for this CoreData.

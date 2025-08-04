@@ -2,8 +2,10 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/arran4/goa4web/config"
@@ -14,7 +16,7 @@ import (
 func TestVerifyAccess(t *testing.T) {
 	h := VerifyAccess(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-	}, "administrator")
+	}, fmt.Errorf("administrator role required"), "administrator")
 
 	req := httptest.NewRequest("GET", "/", nil)
 	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anonymous"}))
@@ -24,6 +26,9 @@ func TestVerifyAccess(t *testing.T) {
 	h(rr, req)
 	if rr.Code != http.StatusForbidden {
 		t.Fatalf("expected %d got %d", http.StatusForbidden, rr.Code)
+	}
+	if !strings.Contains(rr.Body.String(), "administrator role required") {
+		t.Fatalf("expected body to contain error message, got %q", rr.Body.String())
 	}
 
 	cd = common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))

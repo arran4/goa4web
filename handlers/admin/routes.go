@@ -1,6 +1,8 @@
 package admin
 
 import (
+	"fmt"
+
 	"github.com/arran4/goa4web/handlers"
 	"github.com/gorilla/mux"
 
@@ -135,12 +137,12 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navRe
 	// Verify administrator access within the handlers so direct CLI calls
 	// cannot bypass the permission checks.
 	ar.HandleFunc("/reload",
-		handlers.VerifyAccess(h.AdminReloadConfigPage, "administrator")).
+		handlers.VerifyAccess(h.AdminReloadConfigPage, fmt.Errorf("administrator role required"), "administrator")).
 		Methods("POST").
 		MatcherFunc(handlers.RequiredAccess("administrator"))
 	sst := h.NewServerShutdownTask()
 	ar.HandleFunc("/shutdown",
-		handlers.VerifyAccess(handlers.TaskHandler(sst), "administrator")).
+		handlers.VerifyAccess(handlers.TaskHandler(sst), fmt.Errorf("administrator role required"), "administrator")).
 		Methods("POST").
 		MatcherFunc(handlers.RequiredAccess("administrator")).
 		MatcherFunc(sst.Matcher())

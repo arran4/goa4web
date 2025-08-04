@@ -53,6 +53,18 @@ func BloggerListPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Rows = rows
 
+	if data.Search != "" {
+		if len(rows) == 1 {
+			http.Redirect(w, r, "/blogs/blogger/"+rows[0].Username.String, http.StatusFound)
+			return
+		}
+		if len(rows) == 0 {
+			cd.PageTitle = fmt.Sprintf("No bloggers found for %q", data.Search)
+		} else {
+			cd.PageTitle = fmt.Sprintf("Bloggers matching %q", data.Search)
+		}
+	}
+
 	base := "/blogs/bloggers"
 	if data.Search != "" {
 		base += "?search=" + url.QueryEscape(data.Search)

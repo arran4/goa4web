@@ -1,4 +1,4 @@
 {{ template "head" $ }}
-    [<a href="/admin">Admin</a>]<br />
+    {{ if and cd.HasAdminRole cd.AdminMode }}[<a href="/admin">Admin</a>]<br />{{ end }}
 The requested content may not exist or you may not have permission to access it.
 {{ template "tail" $ }}

@@ -1,6 +1,7 @@
 package user
 
 import (
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -21,7 +22,7 @@ func adminLoginAttemptsPage(w http.ResponseWriter, r *http.Request) {
 	items, err := queries.AdminListLoginAttempts(r.Context())
 	if err != nil {
 		log.Printf("list login attempts: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	data.Attempts = items

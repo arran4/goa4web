@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/arran4/goa4web/core/consts"
+	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -54,7 +55,8 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 		AdminListUsersFiltered(context.Context, db.AdminListUsersFilteredParams) ([]*db.UserFilteredRow, error)
 	})
 	if !ok {
-		http.Error(w, "database not available", http.StatusInternalServerError)
+		log.Printf("adminUsersPage: database not available")
+		handlers.RenderErrorPage(w, r, fmt.Errorf("database not available"))
 		return
 	}
 	if roles, err := data.AllRoles(); err == nil {
@@ -81,7 +83,8 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		log.Printf("list users: %v", err)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 
@@ -124,7 +127,8 @@ func adminUserDisableConfirmPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	u := cd.CurrentProfileUser()
 	if u == nil {
-		http.Error(w, "user not found", http.StatusNotFound)
+		log.Printf("adminUserDisableConfirmPage: user not found")
+		handlers.RenderErrorPage(w, r, fmt.Errorf("user not found"))
 		return
 	}
 	data := struct {
@@ -165,7 +169,8 @@ func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	urow := cd.CurrentProfileUser()
 	if urow == nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		log.Printf("adminUserEditFormPage: user not found")
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	data := struct {

@@ -17,7 +17,8 @@ func adminPendingUsersPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	rows, err := queries.AdminListPendingUsers(r.Context())
 	if err != nil && err != sql.ErrNoRows {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		log.Printf("list pending users: %v", err)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	data := struct {

@@ -3,6 +3,8 @@ package user
 import (
 	"database/sql"
 	"errors"
+	"fmt"
+	"log"
 	"net/http"
 	"sort"
 
@@ -16,7 +18,8 @@ func adminUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	u := cd.CurrentProfileUser()
 	if u == nil {
-		http.Error(w, "user not found", http.StatusNotFound)
+		log.Printf("permissions page user not found")
+		handlers.RenderErrorPage(w, r, fmt.Errorf("user not found"))
 		return
 	}
 	id := u.Idusers
@@ -37,7 +40,8 @@ func adminUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := queries.GetPermissionsByUserID(r.Context(), id)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		log.Printf("get permissions: %v", err)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	sort.Slice(rows, func(i, j int) bool {

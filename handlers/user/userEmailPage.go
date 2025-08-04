@@ -2,6 +2,7 @@ package user
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -69,7 +70,8 @@ func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
 	cd.PageTitle = "Verify Email"
 	session, err := core.GetSession(r)
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		log.Printf("get session: %v", err)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)

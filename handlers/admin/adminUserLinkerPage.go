@@ -15,12 +15,12 @@ func adminUserLinkerPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cpu := cd.CurrentProfileUser()
 	if cpu.Idusers == 0 {
-		http.Error(w, "user not found", http.StatusNotFound)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("user not found"))
 		return
 	}
 	user := cd.CurrentProfileUser()
 	if user == nil {
-		http.Error(w, "user not found", http.StatusNotFound)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("user not found"))
 		return
 	}
 	queries := cd.Queries()
@@ -30,7 +30,7 @@ func adminUserLinkerPage(w http.ResponseWriter, r *http.Request) {
 		Offset:       0,
 	})
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Links by %s", user.Username.String)

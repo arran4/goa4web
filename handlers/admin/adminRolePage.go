@@ -19,7 +19,7 @@ func adminRolePage(w http.ResponseWriter, r *http.Request) {
 	queries := cd.Queries()
 	role, err := cd.SelectedRole()
 	if err != nil || role == nil {
-		http.Error(w, "role not found", http.StatusNotFound)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("role not found"))
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Role %s", role.Name)
@@ -27,13 +27,13 @@ func adminRolePage(w http.ResponseWriter, r *http.Request) {
 	id := cd.SelectedRoleID()
 	users, err := queries.AdminListUsersByRoleID(r.Context(), id)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 
 	groups, err := buildGrantGroups(r.Context(), cd, id)
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 

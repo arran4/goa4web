@@ -1,9 +1,11 @@
 package admin
 
 import (
-	"github.com/arran4/goa4web/core/consts"
+	"fmt"
 	"net/http"
 	"strconv"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
@@ -19,7 +21,7 @@ func AdminPageSizePage(w http.ResponseWriter, r *http.Request) {
 	cd.PageTitle = "Page Size"
 	if r.Method == http.MethodPost {
 		if err := r.ParseForm(); err != nil {
-			http.Error(w, "Bad Request", http.StatusBadRequest)
+			handlers.RenderErrorPage(w, r, fmt.Errorf("Bad Request"))
 			return
 		}
 		min, _ := strconv.Atoi(r.PostFormValue("min"))

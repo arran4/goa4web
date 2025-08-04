@@ -2,6 +2,7 @@ package admin
 
 import (
 	_ "embed"
+	"fmt"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
@@ -35,7 +36,7 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	stats, err := queries.AdminGetDashboardStats(r.Context())
 	if err != nil {
-		http.Error(w, "database not available", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("database not available"))
 		return
 	}
 	data.Stats.Users = stats.Users

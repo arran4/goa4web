@@ -16,7 +16,7 @@ func adminRoleEditFormPage(w http.ResponseWriter, r *http.Request) {
 	cd.LoadSelectionsFromRequest(r)
 	role, err := cd.SelectedRole()
 	if err != nil || role == nil {
-		http.Error(w, "role not found", http.StatusNotFound)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("role not found"))
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Edit Role %s", role.Name)
@@ -24,7 +24,7 @@ func adminRoleEditFormPage(w http.ResponseWriter, r *http.Request) {
 	id := cd.SelectedRoleID()
 	groups, err := buildGrantGroups(r.Context(), cd, id)
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 
@@ -43,7 +43,7 @@ func adminRoleEditSavePage(w http.ResponseWriter, r *http.Request) {
 	queries := cd.Queries()
 	id := cd.SelectedRoleID()
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, "Bad Request", http.StatusBadRequest)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Bad Request"))
 		return
 	}
 	name := r.PostFormValue("name")

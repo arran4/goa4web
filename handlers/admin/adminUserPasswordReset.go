@@ -6,9 +6,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net/http"
-	"strconv"
-
-	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -30,10 +27,12 @@ var _ tasks.AuditableTask = (*UserPasswordResetTask)(nil)
 var _ notif.TargetUsersNotificationProvider = (*UserPasswordResetTask)(nil)
 
 func (UserPasswordResetTask) Action(w http.ResponseWriter, r *http.Request) any {
-	idStr := mux.Vars(r)["user"]
-	id, _ := strconv.Atoi(idStr)
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := cd.Queries()
+	user := cd.CurrentProfileUser()
+	back := "/admin/user"
+	if user != nil {
+		back = fmt.Sprintf("/admin/user/%d", user.Idusers)
+	}
 	data := struct {
 		*common.CoreData
 		Errors   []string
@@ -41,13 +40,13 @@ func (UserPasswordResetTask) Action(w http.ResponseWriter, r *http.Request) any 
 		Back     string
 	}{
 		CoreData: cd,
-		Back:     "/admin/user/" + idStr,
+		Back:     back,
 	}
-	userRow, err := queries.SystemGetUserByID(r.Context(), int32(id))
-	if err != nil {
+	if user == nil {
 		data.Errors = append(data.Errors, "user not found")
 		return handlers.TemplateWithDataHandler("runTaskPage.gohtml", data)
 	}
+	queries := cd.Queries()
 	var buf [8]byte
 	if _, err := rand.Read(buf[:]); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("rand: %w", err).Error())
@@ -59,7 +58,7 @@ func (UserPasswordResetTask) Action(w http.ResponseWriter, r *http.Request) any 
 		data.Errors = append(data.Errors, fmt.Errorf("hashPassword: %w", err).Error())
 		return handlers.TemplateWithDataHandler("runTaskPage.gohtml", data)
 	}
-	if err := queries.InsertPassword(r.Context(), db.InsertPasswordParams{UsersIdusers: int32(id), Passwd: hash, PasswdAlgorithm: sql.NullString{String: alg, Valid: true}}); err != nil {
+	if err := queries.InsertPassword(r.Context(), db.InsertPasswordParams{UsersIdusers: user.Idusers, Passwd: hash, PasswdAlgorithm: sql.NullString{String: alg, Valid: true}}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("reset password: %w", err).Error())
 		return handlers.TemplateWithDataHandler("runTaskPage.gohtml", data)
 	}
@@ -67,8 +66,8 @@ func (UserPasswordResetTask) Action(w http.ResponseWriter, r *http.Request) any 
 		if evt.Data == nil {
 			evt.Data = map[string]any{}
 		}
-		evt.Data["targetUserID"] = int32(id)
-		evt.Data["Username"] = userRow.Username.String
+		evt.Data["targetUserID"] = user.Idusers
+		evt.Data["Username"] = user.Username.String
 		evt.Data["Password"] = newPass
 	}
 	return handlers.TemplateWithDataHandler("runTaskPage.gohtml", data)
@@ -104,13 +103,10 @@ func (UserPasswordResetTask) AuditRecord(data map[string]any) string {
 }
 
 func adminUserResetPasswordConfirmPage(w http.ResponseWriter, r *http.Request) {
-	idStr := mux.Vars(r)["user"]
-	id, _ := strconv.Atoi(idStr)
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Reset Password"
-	queries := cd.Queries()
-	userRow, err := queries.SystemGetUserByID(r.Context(), int32(id))
-	if err != nil {
+	user := cd.CurrentProfileUser()
+	if user == nil {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("user not found"))
 		return
 	}
@@ -120,8 +116,8 @@ func adminUserResetPasswordConfirmPage(w http.ResponseWriter, r *http.Request) {
 		Back string
 	}{
 		CoreData: cd,
-		User:     &db.User{Idusers: userRow.Idusers, Username: userRow.Username},
-		Back:     "/admin/user/" + idStr,
+		User:     &db.User{Idusers: user.Idusers, Username: user.Username},
+		Back:     fmt.Sprintf("/admin/user/%d", user.Idusers),
 	}
 	handlers.TemplateHandler(w, r, "userResetPasswordConfirmPage.gohtml", data)
 }

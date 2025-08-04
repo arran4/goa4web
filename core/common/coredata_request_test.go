@@ -1,4 +1,4 @@
-package common_test
+package common
 
 import (
 	"context"
@@ -9,7 +9,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core/common"
 )
 
 func TestWithSelectionsFromRequest(t *testing.T) {
@@ -18,17 +17,17 @@ func TestWithSelectionsFromRequest(t *testing.T) {
 	t.Run("path variable", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/", nil)
 		req = mux.SetURLVars(req, map[string]string{"board": "1"})
-		cd := common.NewCoreData(context.Background(), nil, cfg, common.WithSelectionsFromRequest(req))
-		if got := cd.SelectedBoard(); got != 1 {
-			t.Fatalf("SelectedBoard = %d; want 1", got)
+		cd := NewCoreData(context.Background(), nil, cfg, WithSelectionsFromRequest(req))
+		if cd.currentBoardID != 1 {
+			t.Fatalf("currentBoardID = %d; want 1", cd.currentBoardID)
 		}
 	})
 
 	t.Run("query parameter", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/?thread=2", nil)
-		cd := common.NewCoreData(context.Background(), nil, cfg, common.WithSelectionsFromRequest(req))
-		if got := cd.SelectedThread(); got != 2 {
-			t.Fatalf("SelectedThread = %d; want 2", got)
+		cd := NewCoreData(context.Background(), nil, cfg, WithSelectionsFromRequest(req))
+		if cd.currentThreadID != 2 {
+			t.Fatalf("currentThreadID = %d; want 2", cd.currentThreadID)
 		}
 	})
 
@@ -36,9 +35,9 @@ func TestWithSelectionsFromRequest(t *testing.T) {
 		body := strings.NewReader("post=3")
 		req := httptest.NewRequest("POST", "/", body)
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		cd := common.NewCoreData(context.Background(), nil, cfg, common.WithSelectionsFromRequest(req))
-		if got := cd.SelectedImagePost(); got != 3 {
-			t.Fatalf("SelectedImagePost = %d; want 3", got)
+		cd := NewCoreData(context.Background(), nil, cfg, WithSelectionsFromRequest(req))
+		if cd.currentImagePostID != 3 {
+			t.Fatalf("currentImagePostID = %d; want 3", cd.currentImagePostID)
 		}
 	})
 }

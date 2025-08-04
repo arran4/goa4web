@@ -43,7 +43,7 @@ func AdminUserRolesPage(w http.ResponseWriter, r *http.Request) {
 	users, err := queries.AdminListAllUsers(r.Context())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("AdminListAllUsers Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, err)
 		return
 	}
 	userMap := make(map[int32]*UserInfo)
@@ -54,7 +54,7 @@ func AdminUserRolesPage(w http.ResponseWriter, r *http.Request) {
 	rows, err := queries.GetUserRoles(r.Context())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("getUsersPermissions Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, err)
 		return
 	}
 	for _, row := range rows {

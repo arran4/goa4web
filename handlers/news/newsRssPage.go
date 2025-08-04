@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/feeds"
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
+	"github.com/arran4/goa4web/handlers"
 )
 
 func NewsRssPage(w http.ResponseWriter, r *http.Request) {
@@ -20,7 +21,7 @@ func NewsRssPage(w http.ResponseWriter, r *http.Request) {
 	posts, err := cd.LatestNews(r)
 	if err != nil {
 		log.Printf("latestNews: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, err)
 		return
 	}
 
@@ -59,7 +60,7 @@ func NewsRssPage(w http.ResponseWriter, r *http.Request) {
 
 	if err := feed.WriteRss(w); err != nil {
 		log.Printf("Feed write Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, err)
 		return
 	}
 }

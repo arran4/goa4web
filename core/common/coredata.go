@@ -2104,48 +2104,50 @@ func WithUserRoles(r []string) CoreOption {
 	return func(cd *CoreData) { cd.userRoles.Set(r) }
 }
 
+// assignIDFromString converts v to int32 and stores it in the mapped CoreData
+// field identified by k.
+func assignIDFromString(m map[string]*int32, k, v string) {
+	dest, ok := m[k]
+	if !ok {
+		return
+	}
+	i, err := strconv.Atoi(v)
+	if err != nil {
+		return
+	}
+	*dest = int32(i)
+}
+
 // WithSelectionsFromRequest extracts integer identifiers from the request and
 // stores them on the CoreData instance. It searches path variables, query
 // parameters and finally form values.
 func WithSelectionsFromRequest(r *http.Request) CoreOption {
 	return func(cd *CoreData) {
-		setID := func(k, v string) {
-			i, err := strconv.Atoi(v)
-			if err != nil {
-				return
-			}
-			switch k {
-			case "boardno", "board":
-				cd.currentBoardID = int32(i)
-			case "thread", "replyTo":
-				cd.currentThreadID = int32(i)
-			case "topic":
-				cd.currentTopicID = int32(i)
-			case "comment":
-				cd.currentCommentID = int32(i)
-			case "news":
-				cd.currentNewsPostID = int32(i)
-			case "post":
-				cd.currentImagePostID = int32(i)
-			case "writing":
-				cd.currentWritingID = int32(i)
-			case "blog":
-				cd.currentBlogID = int32(i)
-			}
+		mapping := map[string]*int32{
+			"boardno": &cd.currentBoardID,
+			"board":   &cd.currentBoardID,
+			"thread":  &cd.currentThreadID,
+			"replyTo": &cd.currentThreadID,
+			"topic":   &cd.currentTopicID,
+			"comment": &cd.currentCommentID,
+			"news":    &cd.currentNewsPostID,
+			"post":    &cd.currentImagePostID,
+			"writing": &cd.currentWritingID,
+			"blog":    &cd.currentBlogID,
 		}
 		for k, v := range mux.Vars(r) {
-			setID(k, v)
+			assignIDFromString(mapping, k, v)
 		}
 		q := r.URL.Query()
 		for k, v := range q {
 			if len(v) > 0 {
-				setID(k, v[0])
+				assignIDFromString(mapping, k, v[0])
 			}
 		}
 		if err := r.ParseForm(); err == nil {
 			for k, v := range r.Form {
 				if len(v) > 0 {
-					setID(k, v[0])
+					assignIDFromString(mapping, k, v[0])
 				}
 			}
 		}

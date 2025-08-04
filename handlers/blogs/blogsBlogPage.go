@@ -62,7 +62,7 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 
 	languageRows, err := data.CoreData.Languages()
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	data.Languages = languageRows
@@ -94,7 +94,7 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 			return
 		default:
 			log.Printf("getBlogEntryForListerByID_comments Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 			return
 		}
 	}
@@ -144,7 +144,7 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			if !errors.Is(err, sql.ErrNoRows) {
 				log.Printf("getCommentsByThreadIdForUser Error: %s", err)
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 				return
 			}
 		}

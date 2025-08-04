@@ -8,4 +8,5 @@
     Is Admin: <input type="checkbox" name="is_admin" {{if .Role.IsAdmin}}checked{{end}}><br>
     <input type="submit" value="Save">
 </form>
+{{ template "roleGrantsEditor.gohtml" . }}
 {{ template "tail" $ }}

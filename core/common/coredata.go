@@ -97,15 +97,13 @@ type CoreData struct {
 	NextLink          string
 	NotificationCount int32
 	PageLinks         []PageLink
-	// PageTitle holds the title of the current page.
-	PageTitle  string
-	PrevLink   string
-	RSSFeedURL string
-	StartLink  string
-	TasksReg   *tasks.Registry
-	// SiteTitle holds the title of the site.
-	SiteTitle string
-	UserID    int32
+	PageTitle         string
+	PrevLink          string
+	RSSFeedURL        string
+	StartLink         string
+	TasksReg          *tasks.Registry
+	SiteTitle         string
+	UserID            int32
 
 	session        *sessions.Session
 	sessionManager SessionManager

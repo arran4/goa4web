@@ -102,8 +102,9 @@ type CoreData struct {
 	PageTitle  string
 	RSSFeedURL string
 	TasksReg   *tasks.Registry
-	Title      string
-	UserID     int32
+	// SiteTitle holds the title of the site.
+	SiteTitle string
+	UserID    int32
 
 	session        *sessions.Session
 	sessionManager SessionManager
@@ -1691,6 +1692,15 @@ func (cd *CoreData) SetCurrentThreadAndTopic(threadID, topicID int32) {
 // SetCurrentWriting stores the requested writing ID.
 func (cd *CoreData) SetCurrentWriting(id int32) { cd.currentWritingID = id }
 
+// SelectedBoardID returns the board ID extracted from the request.
+func (cd *CoreData) SelectedBoardID() int32 { return cd.currentBoardID }
+
+// SelectedThreadID returns the thread ID extracted from the request.
+func (cd *CoreData) SelectedThreadID() int32 { return cd.currentThreadID }
+
+// SelectedImagePostID returns the image post ID extracted from the request.
+func (cd *CoreData) SelectedImagePostID() int32 { return cd.currentImagePostID }
+
 // SetEvent stores evt on cd for handler access.
 func (cd *CoreData) SetEvent(evt *eventbus.TaskEvent) { cd.event = evt }
 
@@ -1699,11 +1709,6 @@ func (cd *CoreData) SetEventTask(t tasks.Task) {
 	if cd.event != nil {
 		cd.event.Task = t
 	}
-}
-
-// SetPageTitle updates the Title field used by templates.
-func (cd *CoreData) SetPageTitle(title string) {
-	cd.Title = title
 }
 
 // SetSession stores s on cd for later retrieval.
@@ -2077,6 +2082,11 @@ func WithUserRoles(r []string) CoreOption {
 // WithConfig sets the runtime config for this CoreData.
 func WithConfig(cfg *config.RuntimeConfig) CoreOption {
 	return func(cd *CoreData) { cd.Config = cfg }
+}
+
+// WithSiteTitle sets the site title used by templates.
+func WithSiteTitle(title string) CoreOption {
+	return func(cd *CoreData) { cd.SiteTitle = title }
 }
 
 // WithImageSigner registers the image signer and URL mapper on CoreData.

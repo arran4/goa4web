@@ -8,14 +8,14 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 )
 
-// SetPageTitle prepends prefix to the global site title.
+// SetPageTitle records a page-specific title used in templates.
 func SetPageTitle(r *http.Request, prefix string) {
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok && cd != nil {
-		cd.Title = prefix + " - " + cd.Title
+		cd.PageTitle = prefix
 	}
 }
 
-// SetPageTitlef formats and prepends the prefix to the global site title.
+// SetPageTitlef formats and records a page-specific title used in templates.
 func SetPageTitlef(r *http.Request, format string, args ...any) {
 	SetPageTitle(r, fmt.Sprintf(format, args...))
 }

@@ -1703,9 +1703,6 @@ func (cd *CoreData) SetEventTask(t tasks.Task) {
 	}
 }
 
-// SetNewsOffset records the current news listing offset.
-func (cd *CoreData) SetNewsOffset(o int) { cd.currentNewsOffset = o } // TODO this should be done from the constructing middleware via options and this function removed once obsolete
-
 // SetPageTitle updates the Title field used by templates.
 func (cd *CoreData) SetPageTitle(title string) {
 	cd.Title = title
@@ -2097,6 +2094,11 @@ func WithNavRegistry(r NavigationProvider) CoreOption {
 // WithCustomQueries sets the db.CustomQueries dependency.
 func WithCustomQueries(cq db.CustomQueries) CoreOption {
 	return func(cd *CoreData) { cd.customQueries = cq }
+}
+
+// WithNewsOffset records the current news listing offset.
+func WithNewsOffset(o int) CoreOption {
+	return func(cd *CoreData) { cd.currentNewsOffset = o }
 }
 
 // WithUserRoles preloads the current user roles.

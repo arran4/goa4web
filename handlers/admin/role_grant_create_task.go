@@ -12,7 +12,6 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
-	"github.com/gorilla/mux"
 )
 
 // RoleGrantCreateTask creates a new grant for a role.
@@ -23,10 +22,11 @@ var roleGrantCreateTask = &RoleGrantCreateTask{TaskString: TaskRoleGrantCreate}
 var _ tasks.Task = (*RoleGrantCreateTask)(nil)
 
 func (RoleGrantCreateTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	roleID, err := strconv.Atoi(mux.Vars(r)["id"])
-	if err != nil {
-		return fmt.Errorf("role id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
+	roleID := cd.SelectedRoleID()
+	if roleID == 0 {
+		return fmt.Errorf("role id parse fail %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("")))
 	}
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
@@ -46,9 +46,9 @@ func (RoleGrantCreateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if section == "" || action == "" {
 		return fmt.Errorf("missing section or action %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("")))
 	}
-	if _, err = queries.AdminCreateGrant(r.Context(), db.AdminCreateGrantParams{
+	if _, err := queries.AdminCreateGrant(r.Context(), db.AdminCreateGrantParams{
 		UserID:   sql.NullInt32{},
-		RoleID:   sql.NullInt32{Int32: int32(roleID), Valid: true},
+		RoleID:   sql.NullInt32{Int32: roleID, Valid: true},
 		Section:  section,
 		Item:     sql.NullString{String: item, Valid: item != ""},
 		RuleType: "allow",

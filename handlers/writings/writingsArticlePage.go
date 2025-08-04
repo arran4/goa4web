@@ -63,7 +63,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 
 	languages, err := cd.Languages()
 	if err != nil {
-		log.Printf("SystemListLanguages error: %s", err)
+		log.Printf("languages: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

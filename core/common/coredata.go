@@ -151,7 +151,6 @@ type CoreData struct {
 	imageBoards              lazy.Value[[]*db.Imageboard]
 	imagePostRows            map[int32]*lazy.Value[*db.GetImagePostByIDForListerRow]
 	langs                    lazy.Value[[]*db.Language]
-	languagesAll             lazy.Value[[]*db.Language]
 	latestNews               lazy.Value[[]*NewsPost]
 	latestWritings           lazy.Value[[]*db.Writing]
 	linkerCategories         lazy.Value[[]*db.GetLinkerCategoryLinkCountsRow]
@@ -263,16 +262,6 @@ func (cd *CoreData) adminRequestList(kind string) ([]*db.AdminRequestQueue, erro
 		default:
 			return nil, nil
 		}
-	})
-}
-
-// AllLanguages returns all languages cached once.
-func (cd *CoreData) AllLanguages() ([]*db.Language, error) {
-	return cd.languagesAll.Load(func() ([]*db.Language, error) {
-		if cd.queries == nil {
-			return nil, nil
-		}
-		return cd.queries.SystemListLanguages(cd.ctx)
 	})
 }
 

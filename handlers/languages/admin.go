@@ -55,7 +55,8 @@ func adminLanguagesRenamePage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 func adminLanguagesDeletePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	cid := r.PostFormValue("cid")
 	data := struct {
 		*common.CoreData
@@ -63,14 +64,14 @@ func adminLanguagesDeletePage(w http.ResponseWriter, r *http.Request) {
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		Back:     "/admin/languages",
 	}
 	if cidi, err := strconv.Atoi(cid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
 	} else {
 		var name string
-		if rows, err := queries.SystemListLanguages(r.Context()); err == nil {
+		if rows, err := cd.Languages(); err == nil {
 			for _, l := range rows {
 				if l.Idlanguage == int32(cidi) {
 					name = l.Nameof.String

@@ -2044,6 +2044,11 @@ func WithPreference(p *db.Preference) CoreOption {
 	return func(cd *CoreData) { cd.pref.Set(p) }
 }
 
+// WithUserRoles preloads the current user roles.
+func WithUserRoles(r []string) CoreOption {
+	return func(cd *CoreData) { cd.userRoles.Set(r) }
+}
+
 // WithConfig sets the runtime config for this CoreData.
 func WithConfig(cfg *config.RuntimeConfig) CoreOption {
 	return func(cd *CoreData) { cd.Config = cfg }

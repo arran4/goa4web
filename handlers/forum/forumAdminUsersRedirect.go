@@ -16,6 +16,6 @@ func AdminUsersRedirect(w http.ResponseWriter, r *http.Request) {
 // AdminUserLevelsRedirect redirects to the global user profile page.
 func AdminUserLevelsRedirect(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	id := cd.CurrentProfileUserID()
-	http.Redirect(w, r, "/admin/user/"+strconv.Itoa(int(id)), http.StatusTemporaryRedirect)
+	cpu := cd.CurrentProfileUser()
+	http.Redirect(w, r, "/admin/user/"+strconv.Itoa(int(cpu.Idusers)), http.StatusTemporaryRedirect)
 }

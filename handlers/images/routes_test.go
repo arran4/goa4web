@@ -1,6 +1,7 @@
 package images
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -8,6 +9,8 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/navigation"
 )
 
@@ -57,5 +60,25 @@ func TestCacheRouteInvalidID(t *testing.T) {
 
 	if rr.Code != http.StatusNotFound {
 		t.Fatalf("want %d got %d", http.StatusNotFound, rr.Code)
+	}
+}
+
+func TestVerifyMiddlewareUnauthorized(t *testing.T) {
+	called := false
+	h := verifyMiddleware("image:")(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+	}))
+	req := httptest.NewRequest("GET", "/images/image/abcd", nil)
+	req = mux.SetURLVars(req, map[string]string{"id": "abcd"})
+	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, req.WithContext(ctx))
+
+	if called {
+		t.Fatalf("next handler was called")
+	}
+	if rr.Code != http.StatusForbidden {
+		t.Fatalf("want %d got %d", http.StatusForbidden, rr.Code)
 	}
 }

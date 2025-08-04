@@ -22,6 +22,7 @@ func TopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("replytext")
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
 	cd.PageTitle = "Forum - Edit Comment"
 	queries := cd.Queries()
 	threadRow, err := cd.SelectedThread()
@@ -67,6 +68,7 @@ func TopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 
 func TopicThreadCommentEditActionCancelPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
 	cd.PageTitle = "Forum - Edit Comment"
 	threadRow, err := cd.SelectedThread()
 	if err != nil || threadRow == nil {

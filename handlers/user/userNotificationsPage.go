@@ -76,13 +76,13 @@ func notificationsRssPage(w http.ResponseWriter, r *http.Request) {
 	notifs, err := queries.ListUnreadNotificationsForLister(r.Context(), db.ListUnreadNotificationsForListerParams{ListerID: uid, Limit: limit, Offset: 0})
 	if err != nil {
 		log.Printf("notify feed: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	feed := NotificationsFeed(r, notifs)
 	if err := feed.WriteRss(w); err != nil {
 		log.Printf("feed write: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 }

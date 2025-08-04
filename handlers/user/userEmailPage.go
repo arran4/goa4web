@@ -2,6 +2,7 @@ package user
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -19,7 +20,6 @@ import (
 
 func userEmailPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		UserData        *db.User
 		Verified        []*db.UserEmail
 		Unverified      []*db.UserEmail
@@ -46,7 +46,6 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	data := Data{
-		CoreData:   cd,
 		UserData:   user,
 		Verified:   verified,
 		Unverified: unverified,
@@ -69,7 +68,8 @@ func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
 	cd.PageTitle = "Verify Email"
 	session, err := core.GetSession(r)
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		log.Printf("get session: %v", err)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
@@ -111,18 +111,16 @@ func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if ue.VerifiedAt.Valid {
-		handlers.TemplateHandler(w, r, "user/emailVerifiedPage.gohtml", struct{ *common.CoreData }{cd})
+		handlers.TemplateHandler(w, r, "user/emailVerifiedPage.gohtml", struct{}{})
 		return
 	}
 
 	data := struct {
-		*common.CoreData
 		Code  string
 		Email string
 	}{
-		CoreData: cd,
-		Code:     code,
-		Email:    ue.Email,
+		Code:  code,
+		Email: ue.Email,
 	}
 	handlers.TemplateHandler(w, r, "user/emailVerifyConfirmPage.gohtml", data)
 }

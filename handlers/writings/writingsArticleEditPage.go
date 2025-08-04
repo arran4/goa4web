@@ -46,14 +46,14 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	writing, err := cd.CurrentWriting()
 	if err != nil || writing == nil {
 		log.Printf("current writing: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	data.Writing = writing
 
 	languageRows, err := cd.Languages()
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	data.Languages = languageRows
@@ -67,7 +67,7 @@ func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 	writing, err := cd.CurrentWriting()
 	if err != nil || writing == nil {
 		log.Printf("current writing: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 
@@ -90,7 +90,7 @@ func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 		GranteeID:  sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 	}); err != nil {
 		log.Printf("updateWriting Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 
@@ -112,7 +112,7 @@ func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 
 	if err := queries.SystemDeleteWritingSearchByWritingID(r.Context(), writing.Idwriting); err != nil {
 		log.Printf("writingSearchDelete Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 

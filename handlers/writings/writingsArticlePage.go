@@ -41,7 +41,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	writing, err := cd.CurrentWriting()
 	if err != nil {
 		log.Printf("get writing: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	if writing == nil || !cd.HasGrant("writing", "article", "view", writing.Idwriting) {
@@ -59,7 +59,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	languages, err := cd.Languages()
 	if err != nil {
 		log.Printf("languages: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 
@@ -117,12 +117,12 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 			return
 		default:
 			log.Printf("get writing: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 			return
 		}
 	}
 	if writing == nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 

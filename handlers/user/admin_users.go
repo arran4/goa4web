@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/arran4/goa4web/core/consts"
+	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -27,7 +28,6 @@ func cloneValues(v url.Values) url.Values {
 
 func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Rows     []*db.UserFilteredRow
 		Search   string
 		Role     string
@@ -39,7 +39,6 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
-		CoreData: cd,
 		Search:   r.URL.Query().Get("search"),
 		Role:     r.URL.Query().Get("role"),
 		Status:   r.URL.Query().Get("status"),
@@ -48,16 +47,17 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 	cqueries, ok := queries.(interface {
 		AdminSearchUsersFiltered(context.Context, db.AdminSearchUsersFilteredParams) ([]*db.UserFilteredRow, error)
 		AdminListUsersFiltered(context.Context, db.AdminListUsersFilteredParams) ([]*db.UserFilteredRow, error)
 	})
 	if !ok {
-		http.Error(w, "database not available", http.StatusInternalServerError)
+		log.Printf("adminUsersPage: database not available")
+		handlers.RenderErrorPage(w, r, fmt.Errorf("database not available"))
 		return
 	}
-	if roles, err := data.AllRoles(); err == nil {
+	if roles, err := cd.AllRoles(); err == nil {
 		data.Roles = roles
 	}
 
@@ -81,7 +81,8 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		log.Printf("list users: %v", err)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 
@@ -124,16 +125,15 @@ func adminUserDisableConfirmPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	u := cd.CurrentProfileUser()
 	if u == nil {
-		http.Error(w, "user not found", http.StatusNotFound)
+		log.Printf("adminUserDisableConfirmPage: user not found")
+		handlers.RenderErrorPage(w, r, fmt.Errorf("user not found"))
 		return
 	}
 	data := struct {
-		*common.CoreData
 		Message      string
 		ConfirmLabel string
 		Back         string
 	}{
-		CoreData:     cd,
 		Message:      fmt.Sprintf("Are you sure you want to disable user %s (ID %d)?", u.Username.String, u.Idusers),
 		ConfirmLabel: "Confirm disable",
 		Back:         "/admin/users",
@@ -145,13 +145,11 @@ func adminUserDisablePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	id := cd.CurrentProfileUser()
 	data := struct {
-		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: cd,
-		Back:     "/admin/users",
+		Back: "/admin/users",
 	}
 	if id == nil {
 		data.Errors = append(data.Errors, "invalid user id")
@@ -165,15 +163,14 @@ func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	urow := cd.CurrentProfileUser()
 	if urow == nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		log.Printf("adminUserEditFormPage: user not found")
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	data := struct {
-		*common.CoreData
 		User *db.SystemGetUserByIDRow
 	}{
-		CoreData: cd,
-		User:     urow,
+		User: urow,
 	}
 	handlers.TemplateHandler(w, r, "userEditPage.gohtml", data)
 }
@@ -186,13 +183,11 @@ func adminUserEditSavePage(w http.ResponseWriter, r *http.Request) {
 	username := r.PostFormValue("username")
 	email := r.PostFormValue("email")
 	data := struct {
-		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: cd,
-		Back:     "/admin/users",
+		Back: "/admin/users",
 	}
 	var targetID int32
 	if uidStr != "" {
@@ -215,17 +210,16 @@ func adminUserEditSavePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminUserResetPasswordPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	uid := r.PostFormValue("uid")
 	data := struct {
-		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 		Password string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-		Back:     "/admin/users",
+		Back: "/admin/users",
 	}
 	var buf [8]byte
 	if _, err := rand.Read(buf[:]); err != nil {

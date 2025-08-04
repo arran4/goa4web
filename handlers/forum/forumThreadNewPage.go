@@ -98,7 +98,8 @@ func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 
 	languageRows, err := cd.Languages()
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	data.Languages = languageRows
@@ -124,11 +125,13 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	allowed, err := UserCanCreateThread(r.Context(), queries, int32(topicId), uid)
 	if err != nil {
 		log.Printf("UserCanCreateThread error: %v", err)
-		http.Error(w, "forbidden", http.StatusForbidden)
+		w.WriteHeader(http.StatusForbidden)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("forbidden"))
 		return nil
 	}
 	if !allowed {
-		http.Error(w, "forbidden", http.StatusForbidden)
+		w.WriteHeader(http.StatusForbidden)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("forbidden"))
 		return nil
 	}
 

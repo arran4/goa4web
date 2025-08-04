@@ -40,7 +40,8 @@ func setupCommentTest(t *testing.T, commentID int, body url.Values) (*httptest.R
 	req = mux.SetURLVars(req, map[string]string{"comment": strconv.Itoa(commentID)})
 	cfg := config.NewRuntimeConfig()
 	q := db.New(conn)
-	cd := common.NewCoreData(req.Context(), q, cfg, common.WithSelectionsFromRequest(req))
+	cd := common.NewCoreData(req.Context(), q, cfg)
+	cd.LoadSelectionsFromRequest(req)
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	return httptest.NewRecorder(), req, conn, mock

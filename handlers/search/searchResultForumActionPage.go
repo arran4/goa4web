@@ -3,6 +3,7 @@ package search
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -32,7 +33,7 @@ func (SearchForumTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if !common.CanSearch(cd, "forum") {
-		http.Error(w, "Forbidden", http.StatusForbidden)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Forbidden"))
 		return nil
 	}
 	data := Data{
@@ -79,7 +80,7 @@ func ForumCommentSearchNotInRestrictedTopic(w http.ResponseWriter, r *http.Reque
 				case errors.Is(err, sql.ErrNoRows):
 				default:
 					log.Printf("ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopic Error: %s", err)
-					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+					handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 					return nil, false, false, err
 				}
 			}
@@ -99,7 +100,7 @@ func ForumCommentSearchNotInRestrictedTopic(w http.ResponseWriter, r *http.Reque
 				case errors.Is(err, sql.ErrNoRows):
 				default:
 					log.Printf("ListCommentIDsBySearchWordNextForListerNotInRestrictedTopic Error: %s", err)
-					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+					handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 					return nil, false, false, err
 				}
 			}
@@ -120,7 +121,7 @@ func ForumCommentSearchNotInRestrictedTopic(w http.ResponseWriter, r *http.Reque
 		case errors.Is(err, sql.ErrNoRows):
 		default:
 			log.Printf("getCommentsByIds Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 			return nil, false, false, err
 		}
 	}
@@ -152,7 +153,7 @@ func ForumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request,
 				case errors.Is(err, sql.ErrNoRows):
 				default:
 					log.Printf("ListCommentIDsBySearchWordFirstForListerInRestrictedTopic Error: %s", err)
-					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+					handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 					return nil, false, false, err
 				}
 			}
@@ -174,7 +175,7 @@ func ForumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request,
 				default:
 
 					log.Printf("ListCommentIDsBySearchWordNextForListerInRestrictedTopic Error: %s", err)
-					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+					handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 					return nil, false, false, err
 				}
 			}
@@ -195,7 +196,7 @@ func ForumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request,
 		case errors.Is(err, sql.ErrNoRows):
 		default:
 			log.Printf("getCommentsByIds Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 			return nil, false, false, err
 		}
 	}

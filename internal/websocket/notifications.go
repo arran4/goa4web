@@ -15,6 +15,7 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	coreconsts "github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/navigation"
@@ -106,18 +107,21 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	sess, err := core.GetSession(r)
 	if err != nil {
 		core.SessionError(w, r, err)
-		http.Error(w, "invalid session", http.StatusUnauthorized)
+		w.WriteHeader(http.StatusUnauthorized)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("invalid session"))
 		return
 	}
 	uid, _ := sess.Values["UID"].(int32)
 	if uid == 0 {
-		http.Error(w, "authentication required", http.StatusUnauthorized)
+		w.WriteHeader(http.StatusUnauthorized)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("authentication required"))
 		return
 	}
 
 	queries := r.Context().Value(coreconsts.KeyCoreData).(*corecommon.CoreData).Queries()
 	if queries == nil {
-		http.Error(w, "db unavailable", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("db unavailable"))
 		return
 	}
 
@@ -140,7 +144,8 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	subsRows, patterns, err := loadSubs()
 	if err != nil {
 		log.Printf("list subscriptions: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	log.Printf("subscriptions loaded: %d entries", len(subsRows))

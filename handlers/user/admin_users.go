@@ -6,14 +6,12 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"net/url"
 	"strconv"
 
-	"github.com/gorilla/mux"
-
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/handlers/auth"
 	"github.com/arran4/goa4web/internal/db"
@@ -123,10 +121,9 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminUserDisableConfirmPage(w http.ResponseWriter, r *http.Request) {
-	idStr := mux.Vars(r)["id"]
-	id, _ := strconv.Atoi(idStr)
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	u, err := cd.Queries().SystemGetUserByID(r.Context(), int32(id))
+	id := cd.CurrentProfileUserID()
+	u, err := cd.Queries().SystemGetUserByID(r.Context(), id)
 	if err != nil {
 		http.Error(w, "user not found", http.StatusNotFound)
 		return
@@ -146,29 +143,30 @@ func adminUserDisableConfirmPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminUserDisablePage(w http.ResponseWriter, r *http.Request) {
-	uid := mux.Vars(r)["id"]
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	id := cd.CurrentProfileUserID()
 	data := struct {
 		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		Back:     "/admin/users",
 	}
-	if uidi, err := strconv.Atoi(uid); err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else if err := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries().AdminDeleteUserByID(r.Context(), int32(uidi)); err != nil {
+	if id == 0 {
+		data.Errors = append(data.Errors, "invalid user id")
+	} else if err := cd.Queries().AdminDeleteUserByID(r.Context(), id); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("delete user: %w", err).Error())
 	}
 	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
 }
 
 func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	idStr := mux.Vars(r)["id"]
-	uid, _ := strconv.Atoi(idStr)
-	urow, err := queries.SystemGetUserByID(r.Context(), int32(uid))
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
+	id := cd.CurrentProfileUserID()
+	urow, err := queries.SystemGetUserByID(r.Context(), id)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -177,18 +175,19 @@ func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
 		*common.CoreData
 		User *db.SystemGetUserByIDRow
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		User:     urow,
 	}
 	handlers.TemplateHandler(w, r, "userEditPage.gohtml", data)
 }
 
 func adminUserEditSavePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	idStr := mux.Vars(r)["id"]
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
+	id := cd.CurrentProfileUserID()
 	uid := r.PostFormValue("uid")
 	if uid == "" {
-		uid = idStr
+		uid = strconv.Itoa(int(id))
 	}
 	username := r.PostFormValue("username")
 	email := r.PostFormValue("email")
@@ -198,7 +197,7 @@ func adminUserEditSavePage(w http.ResponseWriter, r *http.Request) {
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		Back:     "/admin/users",
 	}
 	if uidi, err := strconv.Atoi(uid); err != nil {

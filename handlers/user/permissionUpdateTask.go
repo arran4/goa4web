@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gorilla/mux"
-
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -28,14 +26,15 @@ var _ tasks.Task = (*PermissionUpdateTask)(nil)
 var _ notif.TargetUsersNotificationProvider = (*PermissionUpdateTask)(nil)
 
 func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	permid := r.PostFormValue("permid")
 	role := r.PostFormValue("role")
 
-	idStr := mux.Vars(r)["id"]
+	id := cd.CurrentProfileUserID()
 	back := "/admin/users/permissions"
-	if idStr != "" {
-		back = "/admin/user/" + idStr + "/permissions"
+	if id != 0 {
+		back = fmt.Sprintf("/admin/user/%d/permissions", id)
 	}
 	data := struct {
 		*common.CoreData
@@ -43,16 +42,16 @@ func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
+		CoreData: cd,
 		Back:     back,
 	}
 
-	if id, err := strconv.Atoi(permid); err != nil {
+	if idVal, err := strconv.Atoi(permid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
 	} else {
-		infoID, username, _, err2 := roleInfoByPermID(r.Context(), queries, int32(id))
+		infoID, username, _, err2 := roleInfoByPermID(r.Context(), queries, int32(idVal))
 		if err := queries.AdminUpdateUserRole(r.Context(), db.AdminUpdateUserRoleParams{
-			IduserRoles: int32(id),
+			IduserRoles: int32(idVal),
 			Name:        role,
 		}); err != nil {
 			data.Errors = append(data.Errors, fmt.Errorf("UpdatePermission: %w", err).Error())

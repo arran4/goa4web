@@ -772,6 +772,9 @@ func (cd *CoreData) CurrentProfileStats() *db.AdminUserPostCountsByIDRow {
 	return row
 }
 
+// CurrentProfileUserID returns the user ID being viewed.
+func (cd *CoreData) CurrentProfileUserID() int32 { return cd.currentProfileUserID }
+
 // CurrentProfileUser returns the user being viewed.
 func (cd *CoreData) CurrentProfileUser() *db.SystemGetUserByIDRow {
 	return cd.UserByID(cd.currentProfileUserID)

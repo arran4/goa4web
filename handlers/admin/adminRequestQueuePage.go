@@ -93,11 +93,11 @@ func handleRequestAction(w http.ResponseWriter, r *http.Request, status string) 
 	} else {
 		auto = fmt.Sprintf("status changed to %s", status)
 		data.Messages = append(data.Messages, auto)
-		if err := queries.AdminInsertRequestComment(r.Context(), db.AdminInsertRequestCommentParams{RequestID: id, Comment: auto}); err != nil {
+		if err := queries.AdminInsertRequestComment(r.Context(), db.AdminInsertRequestCommentParams{RequestID: req.ID, Comment: auto}); err != nil {
 			data.Errors = append(data.Errors, err.Error())
 		}
 		if comment != "" {
-			if err := queries.AdminInsertRequestComment(r.Context(), db.AdminInsertRequestCommentParams{RequestID: id, Comment: comment}); err != nil {
+			if err := queries.AdminInsertRequestComment(r.Context(), db.AdminInsertRequestCommentParams{RequestID: req.ID, Comment: comment}); err != nil {
 				data.Errors = append(data.Errors, err.Error())
 			}
 		}

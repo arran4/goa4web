@@ -35,8 +35,11 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
 	writing, err := cd.CurrentWriting()
-	if err != nil || writing == nil {
+	if err != nil {
 		return fmt.Errorf("load writing fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	if writing == nil {
+		return fmt.Errorf("load writing fail %w", handlers.ErrRedirectOnSamePageHandler(sql.ErrNoRows))
 	}
 	comment, err := cd.CurrentComment(r)
 	if err != nil || comment == nil {

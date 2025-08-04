@@ -171,7 +171,6 @@ type CoreData struct {
 	subscriptionRows         lazy.Value[[]*db.ListSubscriptionsByUserRow]
 	subscriptions            lazy.Value[map[string]bool]
 	templateOverrides        map[string]*lazy.Value[string]
-	threadComments           map[int32]*lazy.Value[[]*db.GetCommentsByThreadIdForUserRow]
 	unreadCount              lazy.Value[int64]
 	user                     lazy.Value[*db.User]
 	userRoles                lazy.Value[[]string]
@@ -845,16 +844,16 @@ func (cd *CoreData) CurrentRequestUser() *db.SystemGetUserByIDRow {
 	return cd.UserByID(req.UsersIdusers)
 }
 
-// CurrentThread returns the currently requested thread lazily loaded.
-func (cd *CoreData) CurrentThread(ops ...lazy.Option[*db.GetThreadLastPosterAndPermsRow]) (*db.GetThreadLastPosterAndPermsRow, error) {
+// SelectedThread returns the currently requested thread lazily loaded.
+func (cd *CoreData) SelectedThread(ops ...lazy.Option[*db.GetThreadLastPosterAndPermsRow]) (*db.GetThreadLastPosterAndPermsRow, error) {
 	if cd.currentThreadID == 0 {
 		return nil, nil
 	}
 	return cd.ForumThreadByID(cd.currentThreadID, ops...)
 }
 
-// CurrentThreadLoaded returns the cached current thread without database access.
-func (cd *CoreData) CurrentThreadLoaded() *db.GetThreadLastPosterAndPermsRow {
+// SelectedThreadLoaded returns the cached current thread without database access.
+func (cd *CoreData) SelectedThreadLoaded() *db.GetThreadLastPosterAndPermsRow {
 	if cd.forumThreadRows == nil {
 		return nil
 	}
@@ -1198,6 +1197,14 @@ func (cd *CoreData) ImageBoardPosts(boardID int32) ([]*db.ListImagePostsByBoardF
 			Offset:       0,
 		})
 	})
+}
+
+// SelectedBoardPosts returns posts for the current board without requiring an ID.
+func (cd *CoreData) SelectedBoardPosts() ([]*db.ListImagePostsByBoardForListerRow, error) {
+	if cd.currentBoardID == 0 {
+		return nil, nil
+	}
+	return cd.ImageBoardPosts(cd.currentBoardID)
 }
 
 // ImageBoards returns all image boards cached once.
@@ -1581,7 +1588,7 @@ func (cd *CoreData) RegisterExternalLinkClick(url string) {
 	if cd.queries == nil {
 		return
 	}
-	if err := cd.queries.RegisterExternalLinkClick(cd.ctx, url); err != nil {
+	if err := cd.queries.SystemRegisterExternalLinkClick(cd.ctx, url); err != nil {
 		log.Printf("record external link click: %v", err)
 	}
 }
@@ -1625,16 +1632,10 @@ func (cd *CoreData) SelectedAdminLinkerItemID(r *http.Request) (int32, error) {
 	return int32(id), nil
 }
 
-// SelectedBoard returns the selected board identifier.
-func (cd *CoreData) SelectedBoard() int { return int(cd.currentBoardID) } // TODO this shouldn't be necessary figoure out how to reduce
-
 // SelectedCategoryPublicWritings returns public writings for the given category.
 func (cd *CoreData) SelectedCategoryPublicWritings(categoryID int32, r *http.Request) ([]*db.ListPublicWritingsInCategoryForListerRow, error) {
 	return cd.PublicWritings(categoryID, r)
 }
-
-// SelectedImagePost returns the selected image post identifier.
-func (cd *CoreData) SelectedImagePost() int { return int(cd.currentImagePostID) } // TODO this shouldn't be necessary figoure out how to reduce
 
 // SelectedLinkerCategory returns the linker category for the given ID.
 func (cd *CoreData) SelectedLinkerCategory(id int32, ops ...lazy.Option[*db.LinkerCategory]) (*db.LinkerCategory, error) {
@@ -1651,9 +1652,6 @@ func (cd *CoreData) SelectedLinkerItemsForCurrentUser(catID, offset int32) ([]*d
 	}
 	return cd.LinkerItemsForUser(catID, offset)
 }
-
-// SelectedThread returns the selected thread identifier.
-func (cd *CoreData) SelectedThread() int { return int(cd.currentThreadID) } // TODO this shouldn't be necessary figoure out how to reduce
 
 // Session returns the request session if available.
 func (cd *CoreData) Session() *sessions.Session { return cd.session }
@@ -1742,6 +1740,14 @@ func (cd *CoreData) SubImageBoards(parentID int32) ([]*db.Imageboard, error) {
 	})
 }
 
+// SelectedBoardSubBoards returns sub-boards for the current board without requiring an ID.
+func (cd *CoreData) SelectedBoardSubBoards() ([]*db.Imageboard, error) {
+	if cd.currentBoardID == 0 {
+		return nil, nil
+	}
+	return cd.SubImageBoards(cd.currentBoardID)
+}
+
 // Subscribed reports whether the user has a subscription matching pattern and method.
 func (cd *CoreData) Subscribed(pattern, method string) bool {
 	m, _ := cd.subscriptionMap()
@@ -1827,33 +1833,12 @@ func (cd *CoreData) ThreadComments(id int32, ops ...lazy.Option[[]*db.GetComment
 	return lazy.Map(&cd.forumThreadComments, &cd.mapMu, id, fetch, ops...)
 }
 
-// ThreadComments returns comments for a thread lazily loading them once per thread ID.
-func (cd *CoreData) ThreadComments(threadID int32) ([]*db.GetCommentsByThreadIdForUserRow, error) {
-	if cd.threadComments == nil {
-		cd.threadComments = make(map[int32]*lazy.Value[[]*db.GetCommentsByThreadIdForUserRow])
+// SelectedThreadComments returns comments for the current thread without requiring an ID.
+func (cd *CoreData) SelectedThreadComments() ([]*db.GetCommentsByThreadIdForUserRow, error) {
+	if cd.currentThreadID == 0 {
+		return nil, nil
 	}
-	lv, ok := cd.threadComments[threadID]
-	if !ok {
-		lv = &lazy.Value[[]*db.GetCommentsByThreadIdForUserRow]{}
-		cd.threadComments[threadID] = lv
-	}
-	return lv.Load(func() ([]*db.GetCommentsByThreadIdForUserRow, error) {
-		if cd.queries == nil {
-			return nil, nil
-		}
-		rows, err := cd.queries.GetCommentsByThreadIdForUser(cd.ctx, db.GetCommentsByThreadIdForUserParams{
-			ViewerID: cd.UserID,
-			ThreadID: threadID,
-			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-		})
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				return nil, nil
-			}
-			return nil, err
-		}
-		return rows, nil
-	})
+	return cd.ThreadComments(cd.currentThreadID)
 }
 
 // UnreadNotificationCount returns the number of unread notifications for the
@@ -2143,18 +2128,18 @@ func WithSelectionsFromRequest(r *http.Request) CoreOption {
 				return
 			}
 			switch k {
-			case "boardno", "board":
-				cd.currentBoardID = int32(i)
 			case "thread", "replyTo":
 				cd.currentThreadID = int32(i)
+			case "board", "boardno":
+				cd.currentBoardID = int32(i)
+			case "post":
+				cd.currentImagePostID = int32(i)
 			case "topic":
 				cd.currentTopicID = int32(i)
 			case "comment":
 				cd.currentCommentID = int32(i)
 			case "news":
 				cd.currentNewsPostID = int32(i)
-			case "post":
-				cd.currentImagePostID = int32(i)
 			case "writing":
 				cd.currentWritingID = int32(i)
 			case "blog":

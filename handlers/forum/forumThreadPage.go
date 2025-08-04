@@ -61,7 +61,7 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data.Languages = languageRows
-	threadRow, err := cd.CurrentThread()
+	threadRow, err := cd.SelectedThread()
 	if err != nil || threadRow == nil {
 		log.Printf("current thread: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

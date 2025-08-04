@@ -4,12 +4,15 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
 
+	"github.com/gorilla/mux"
+
+	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
@@ -18,8 +21,6 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/workers/postcountworker"
 	"github.com/arran4/goa4web/workers/searchworker"
-
-	"github.com/arran4/goa4web/core"
 )
 
 // ReplyTask posts a reply within a thread.
@@ -85,8 +86,17 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	bid := cd.SelectedBoard()
-	thid := cd.SelectedThread()
+	vars := mux.Vars(r)
+	bidStr := vars["board"]
+	if bidStr == "" {
+		bidStr = vars["boardno"]
+	}
+	bid, _ := strconv.Atoi(bidStr)
+	thidStr := vars["thread"]
+	if thidStr == "" {
+		thidStr = vars["replyTo"]
+	}
+	thid, _ := strconv.Atoi(thidStr)
 	cd.PageTitle = fmt.Sprintf("Thread %d/%d", bid, thid)
 
 	data := Data{CoreData: cd, Replyable: true, BoardId: bid, ForumThreadId: thid}
@@ -96,7 +106,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	commentRows, err := cd.ThreadComments(int32(thid))
+	commentRows, err := cd.SelectedThreadComments()
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -107,7 +117,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	threadRow, err := cd.ForumThreadByID(int32(thid))
+	threadRow, err := cd.SelectedThread()
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -188,7 +198,12 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	var uid int32
 
-	bid := cd.SelectedBoard()
+	vars := mux.Vars(r)
+	bidStr := vars["board"]
+	if bidStr == "" {
+		bidStr = vars["boardno"]
+	}
+	bid, _ := strconv.Atoi(bidStr)
 
 	uid, _ = session.Values["UID"].(int32)
 

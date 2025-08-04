@@ -53,8 +53,8 @@ func TestRequireThreadAndTopicTrue(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		called = true
-		if _, err := cd.CurrentThread(); err != nil {
-			t.Errorf("CurrentThread: %v", err)
+		if _, err := cd.SelectedThread(); err != nil {
+			t.Errorf("SelectedThread: %v", err)
 		}
 		if _, err := cd.CurrentTopic(); err != nil {
 			t.Errorf("CurrentTopic: %v", err)

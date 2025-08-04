@@ -4,12 +4,15 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/gorilla/mux"
+
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
 
 	"github.com/arran4/goa4web/internal/algorithms"
 	"github.com/arran4/goa4web/internal/db"
@@ -39,7 +42,12 @@ func (ModifyBoardTask) Action(w http.ResponseWriter, r *http.Request) any {
 	desc := r.PostFormValue("desc")
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	parentBoardId, _ := strconv.Atoi(r.PostFormValue("pbid"))
-	bid := cd.SelectedBoard()
+	vars := mux.Vars(r)
+	bidStr := vars["board"]
+	if bidStr == "" {
+		bidStr = vars["boardno"]
+	}
+	bid, _ := strconv.Atoi(bidStr)
 
 	queries := cd.Queries()
 
@@ -78,7 +86,12 @@ func AdminBoardPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Edit Image Board"
 
-	bid := cd.SelectedBoard()
+	vars := mux.Vars(r)
+	bidStr := vars["board"]
+	if bidStr == "" {
+		bidStr = vars["boardno"]
+	}
+	bid, _ := strconv.Atoi(bidStr)
 	if bid == 0 {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return

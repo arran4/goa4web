@@ -3,6 +3,7 @@ package search
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -37,7 +38,7 @@ func (SearchLinkerTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if !common.CanSearch(cd, "linker") {
-		http.Error(w, "Forbidden", http.StatusForbidden)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Forbidden"))
 		return nil
 	}
 	data := Data{
@@ -53,7 +54,7 @@ func (SearchLinkerTask) Action(w http.ResponseWriter, r *http.Request) any {
 	ftbn, err := queries.SystemGetForumTopicByTitle(r.Context(), sql.NullString{Valid: true, String: hlinker.LinkerTopicName})
 	if err != nil {
 		log.Printf("findForumTopicByTitle Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return nil
 	}
 
@@ -99,7 +100,7 @@ func LinkerSearch(w http.ResponseWriter, r *http.Request, queries db.Querier, ui
 				case errors.Is(err, sql.ErrNoRows):
 				default:
 					log.Printf("LinkersSearchFirst Error: %s", err)
-					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+					handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 					return nil, false, false, err
 				}
 			}
@@ -119,7 +120,7 @@ func LinkerSearch(w http.ResponseWriter, r *http.Request, queries db.Querier, ui
 				case errors.Is(err, sql.ErrNoRows):
 				default:
 					log.Printf("LinkersSearchNext Error: %s", err)
-					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+					handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 					return nil, false, false, err
 				}
 			}
@@ -136,7 +137,7 @@ func LinkerSearch(w http.ResponseWriter, r *http.Request, queries db.Querier, ui
 		case errors.Is(err, sql.ErrNoRows):
 		default:
 			log.Printf("getLinkers Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 			return nil, false, false, err
 		}
 	}

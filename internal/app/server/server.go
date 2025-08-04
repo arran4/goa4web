@@ -235,6 +235,7 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 				common.WithNavRegistry(s.Nav),
 				common.WithTasksRegistry(s.TasksReg),
 				common.WithDBRegistry(s.DBReg),
+				common.WithSiteTitle("Arran's Site"),
 			)
 			cd.UserID = uid
 			_ = cd.UserRoles()
@@ -242,7 +243,6 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 			if s.Nav != nil {
 				cd.IndexItems = s.Nav.IndexItems()
 			}
-			cd.Title = "Arran's Site"
 			cd.FeedsEnabled = s.Config.FeedsEnabled
 			cd.AdminMode = r.URL.Query().Get("mode") == "admin"
 			if strings.HasPrefix(r.URL.Path, "/admin") && cd.HasRole("administrator") {

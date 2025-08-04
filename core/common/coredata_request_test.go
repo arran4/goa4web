@@ -18,16 +18,16 @@ func TestWithSelectionsFromRequest(t *testing.T) {
 		req := httptest.NewRequest("GET", "/", nil)
 		req = mux.SetURLVars(req, map[string]string{"board": "1"})
 		cd := NewCoreData(context.Background(), nil, cfg, WithSelectionsFromRequest(req))
-		if got := cd.currentBoardID; got != 1 {
-			t.Fatalf("currentBoardID = %d; want 1", got)
+		if cd.currentBoardID != 1 {
+			t.Fatalf("currentBoardID = %d; want 1", cd.currentBoardID)
 		}
 	})
 
 	t.Run("query parameter", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/?thread=2", nil)
 		cd := NewCoreData(context.Background(), nil, cfg, WithSelectionsFromRequest(req))
-		if got := cd.currentThreadID; got != 2 {
-			t.Fatalf("currentThreadID = %d; want 2", got)
+		if cd.currentThreadID != 2 {
+			t.Fatalf("currentThreadID = %d; want 2", cd.currentThreadID)
 		}
 	})
 
@@ -36,8 +36,8 @@ func TestWithSelectionsFromRequest(t *testing.T) {
 		req := httptest.NewRequest("POST", "/", body)
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		cd := NewCoreData(context.Background(), nil, cfg, WithSelectionsFromRequest(req))
-		if got := cd.currentImagePostID; got != 3 {
-			t.Fatalf("currentImagePostID = %d; want 3", got)
+		if cd.currentImagePostID != 3 {
+			t.Fatalf("currentImagePostID = %d; want 3", cd.currentImagePostID)
 		}
 	})
 }

@@ -150,7 +150,7 @@ func TestBlogsBlogEditPage_Unauthorized(t *testing.T) {
 }
 
 func TestGetPermissionsByUserIdAndSectionBlogsPage_Unauthorized(t *testing.T) {
-	req := httptest.NewRequest("GET", "/admin/blogs/users/roles", nil)
+	req := httptest.NewRequest("GET", "/admin/blogs", nil)
 	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anonymous"}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)

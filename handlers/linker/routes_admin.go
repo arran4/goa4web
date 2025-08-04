@@ -8,6 +8,8 @@ import (
 // RegisterAdminRoutes attaches linker admin endpoints to ar.
 func RegisterAdminRoutes(ar *mux.Router) {
 	lar := ar.PathPrefix("/linker").Subrouter()
+	lar.HandleFunc("", AdminCategoriesPage).Methods("GET")
+	lar.HandleFunc("/", AdminCategoriesPage).Methods("GET")
 	lar.HandleFunc("/categories", AdminCategoriesPage).Methods("GET")
 	lar.HandleFunc("/category/{category}", AdminCategoryPage).Methods("GET")
 	lar.HandleFunc("/categories", handlers.TaskHandler(UpdateCategoryTask)).Methods("POST").MatcherFunc(UpdateCategoryTask.Matcher())

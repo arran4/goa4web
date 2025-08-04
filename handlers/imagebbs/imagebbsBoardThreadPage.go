@@ -112,7 +112,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
 			log.Printf("getBlogEntryForListerByID_comments Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 			return
 		}
 	}
@@ -132,7 +132,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 
 	languageRows, err := data.CoreData.Languages()
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 
@@ -177,7 +177,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 			return
 		default:
 			log.Printf("getAllBoardsByParentBoardId Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 			return
 		}
 	}

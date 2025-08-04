@@ -17,6 +17,7 @@ import (
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -77,7 +78,7 @@ func RssPage(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("feed query boards error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	var posts []*db.ListImagePostsByBoardForListerRow
@@ -91,7 +92,7 @@ func RssPage(w http.ResponseWriter, r *http.Request) {
 		})
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			log.Printf("feed query error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 			return
 		}
 		posts = append(posts, rows...)
@@ -99,7 +100,7 @@ func RssPage(w http.ResponseWriter, r *http.Request) {
 	feed := imagebbsFeed(r, "ImageBBS", 0, posts)
 	if err := feed.WriteRss(w); err != nil {
 		log.Printf("feed write error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 }
@@ -115,7 +116,7 @@ func AtomPage(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("feed query boards error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	var posts []*db.ListImagePostsByBoardForListerRow
@@ -129,7 +130,7 @@ func AtomPage(w http.ResponseWriter, r *http.Request) {
 		})
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			log.Printf("feed query error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 			return
 		}
 		posts = append(posts, rows...)
@@ -137,7 +138,7 @@ func AtomPage(w http.ResponseWriter, r *http.Request) {
 	feed := imagebbsFeed(r, "ImageBBS", 0, posts)
 	if err := feed.WriteAtom(w); err != nil {
 		log.Printf("feed write error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 }
@@ -164,7 +165,7 @@ func BoardRssPage(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("feed query error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	title := fmt.Sprintf("Board %d", bid)
@@ -187,7 +188,7 @@ func BoardRssPage(w http.ResponseWriter, r *http.Request) {
 	feed := imagebbsFeed(r, title, bid, rows)
 	if err := feed.WriteRss(w); err != nil {
 		log.Printf("feed write error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 }
@@ -214,7 +215,7 @@ func BoardAtomPage(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("feed query error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	title := fmt.Sprintf("Board %d", bid)
@@ -237,7 +238,7 @@ func BoardAtomPage(w http.ResponseWriter, r *http.Request) {
 	feed := imagebbsFeed(r, title, bid, rows)
 	if err := feed.WriteAtom(w); err != nil {
 		log.Printf("feed write error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 }

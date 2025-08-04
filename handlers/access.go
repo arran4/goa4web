@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
@@ -11,7 +12,7 @@ import (
 func VerifyAccess(h http.HandlerFunc, roles ...string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !common.Allowed(r, roles...) {
-			http.Error(w, "Forbidden", http.StatusForbidden)
+			RenderErrorPage(w, r, fmt.Errorf("Forbidden"))
 			return
 		}
 		h(w, r)

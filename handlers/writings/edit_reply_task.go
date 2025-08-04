@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gorilla/mux"
-
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -34,15 +32,15 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	text := r.PostFormValue("replytext")
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	vars := mux.Vars(r)
-	articleID, err := strconv.Atoi(vars["article"])
-	if err != nil {
-		return fmt.Errorf("article id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
+	writing, err := cd.CurrentWriting()
+	if err != nil || writing == nil {
+		return fmt.Errorf("load writing fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	commentID, err := strconv.Atoi(vars["comment"])
-	if err != nil {
-		return fmt.Errorf("comment id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	comment, err := cd.CurrentComment(r)
+	if err != nil || comment == nil {
+		return fmt.Errorf("load comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	session, ok := core.GetSessionOrFail(w, r)
@@ -50,16 +48,6 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return handlers.SessionFetchFail{}
 	}
 	uid, _ := session.Values["UID"].(int32)
-
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	comment := cd.CurrentCommentLoaded()
-	if comment == nil {
-		var err error
-		comment, err = cd.CommentByID(int32(commentID))
-		if err != nil {
-			return fmt.Errorf("load comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-		}
-	}
 
 	thread, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
 		ViewerID:      uid,
@@ -71,8 +59,8 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	if err = queries.UpdateCommentForCommenter(r.Context(), db.UpdateCommentForCommenterParams{
-		CommentID:      int32(commentID),
-		GrantCommentID: sql.NullInt32{Int32: int32(commentID), Valid: true},
+		CommentID:      comment.Idcomments,
+		GrantCommentID: sql.NullInt32{Int32: comment.Idcomments, Valid: true},
 		LanguageID:     int32(languageID),
 		Text:           sql.NullString{String: text, Valid: true},
 		GranteeID:      sql.NullInt32{Int32: uid, Valid: uid != 0},
@@ -90,7 +78,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	return handlers.RedirectHandler(fmt.Sprintf("/writings/article/%d", articleID))
+	return handlers.RedirectHandler(fmt.Sprintf("/writings/article/%d", writing.Idwriting))
 }
 
 func (EditReplyTask) AdminEmailTemplate() *notif.EmailTemplates {

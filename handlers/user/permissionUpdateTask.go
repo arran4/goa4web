@@ -32,7 +32,7 @@ func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	permid := r.PostFormValue("permid")
 	role := r.PostFormValue("role")
 
-	idStr := mux.Vars(r)["id"]
+	idStr := mux.Vars(r)["user"]
 	back := "/admin/users/permissions"
 	if idStr != "" {
 		back = "/admin/user/" + idStr + "/permissions"

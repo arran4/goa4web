@@ -97,15 +97,13 @@ type CoreData struct {
 	NextLink          string
 	NotificationCount int32
 	PageLinks         []PageLink
-	// PageTitle holds the title of the current page.
-	PageTitle  string
-	PrevLink   string
-	RSSFeedURL string
-	StartLink  string
-	TasksReg   *tasks.Registry
-	// SiteTitle holds the title of the site.
-	SiteTitle string
-	UserID    int32
+	PageTitle         string
+	PrevLink          string
+	RSSFeedURL        string
+	StartLink         string
+	TasksReg          *tasks.Registry
+	SiteTitle         string
+	UserID            int32
 
 	session        *sessions.Session
 	sessionManager SessionManager
@@ -1693,6 +1691,9 @@ func (cd *CoreData) SetCurrentProfileUserID(id int32) { cd.currentProfileUserID 
 // SetCurrentRequestID stores the request ID for subsequent lookups.
 func (cd *CoreData) SetCurrentRequestID(id int32) { cd.currentRequestID = id }
 
+// CurrentRequestID returns the request ID currently in context.
+func (cd *CoreData) CurrentRequestID() int32 { return cd.currentRequestID }
+
 // SetCurrentTemplate records the template being edited along with an error message.
 func (cd *CoreData) SetCurrentTemplate(name, errMsg string) {
 	cd.currentTemplateName = name
@@ -2163,6 +2164,7 @@ func WithSelectionsFromRequest(r *http.Request) CoreOption {
 			"blog":    &cd.currentBlogID,
 			"request": &cd.currentRequestID,
 			"user":    &cd.currentProfileUserID,
+			"request": &cd.currentRequestID,
 		}
 		for k, v := range mux.Vars(r) {
 			assignIDFromString(mapping, k, v)

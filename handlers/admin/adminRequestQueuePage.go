@@ -24,11 +24,12 @@ func AdminRequestArchivePage(w http.ResponseWriter, r *http.Request) {
 
 func adminRequestPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	if req := cd.CurrentRequest(); req != nil {
-		cd.PageTitle = fmt.Sprintf("Request %d", req.ID)
-	} else {
-		cd.PageTitle = "Request"
+	id := cd.CurrentRequestID()
+	if id == 0 {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
 	}
+	cd.PageTitle = fmt.Sprintf("Request %d", id)
 	handlers.TemplateHandler(w, r, "requestPage.gohtml", cd)
 }
 
@@ -51,7 +52,7 @@ func adminRequestAddCommentPage(w http.ResponseWriter, r *http.Request) {
 		CoreData: cd,
 		Back:     fmt.Sprintf("/admin/request/%d", id),
 	}
-	if comment == "" || id == 0 {
+	if comment == "" {
 		data.Errors = append(data.Errors, "invalid")
 	} else if err := queries.AdminInsertRequestComment(r.Context(), db.AdminInsertRequestCommentParams{RequestID: id, Comment: comment}); err != nil {
 		data.Errors = append(data.Errors, err.Error())
@@ -92,11 +93,11 @@ func handleRequestAction(w http.ResponseWriter, r *http.Request, status string) 
 	} else {
 		auto = fmt.Sprintf("status changed to %s", status)
 		data.Messages = append(data.Messages, auto)
-		if err := queries.AdminInsertRequestComment(r.Context(), db.AdminInsertRequestCommentParams{RequestID: req.ID, Comment: auto}); err != nil {
+		if err := queries.AdminInsertRequestComment(r.Context(), db.AdminInsertRequestCommentParams{RequestID: id, Comment: auto}); err != nil {
 			data.Errors = append(data.Errors, err.Error())
 		}
 		if comment != "" {
-			if err := queries.AdminInsertRequestComment(r.Context(), db.AdminInsertRequestCommentParams{RequestID: req.ID, Comment: comment}); err != nil {
+			if err := queries.AdminInsertRequestComment(r.Context(), db.AdminInsertRequestCommentParams{RequestID: id, Comment: comment}); err != nil {
 				data.Errors = append(data.Errors, err.Error())
 			}
 		}

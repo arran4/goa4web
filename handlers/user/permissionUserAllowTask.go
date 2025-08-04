@@ -38,7 +38,7 @@ func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) an
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	username := r.PostFormValue("username")
 	role := r.PostFormValue("role")
-	idStr := mux.Vars(r)["id"]
+	idStr := mux.Vars(r)["user"]
 	back := "/admin/users/permissions"
 	if idStr != "" {
 		back = "/admin/user/" + idStr + "/permissions"

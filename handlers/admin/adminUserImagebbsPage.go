@@ -14,7 +14,7 @@ import (
 
 // adminUserImagebbsPage lists image board posts by a user.
 func adminUserImagebbsPage(w http.ResponseWriter, r *http.Request) {
-	idStr := mux.Vars(r)["id"]
+	idStr := mux.Vars(r)["user"]
 	id, _ := strconv.Atoi(idStr)
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()

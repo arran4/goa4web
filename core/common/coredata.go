@@ -2150,6 +2150,7 @@ func WithSelectionsFromRequest(r *http.Request) CoreOption {
 			"post":    &cd.currentImagePostID,
 			"writing": &cd.currentWritingID,
 			"blog":    &cd.currentBlogID,
+			"user":    &cd.currentProfileUserID,
 		}
 		for k, v := range mux.Vars(r) {
 			assignIDFromString(mapping, k, v)

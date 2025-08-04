@@ -20,8 +20,7 @@ import (
 
 func TestAdminReloadConfigPage_Unauthorized(t *testing.T) {
 	req := httptest.NewRequest("POST", "/admin/reload", nil)
-	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
-	cd.SetRoles([]string{"anonymous"})
+	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anonymous"}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	h := New()
@@ -43,8 +42,7 @@ func TestAdminReloadRoute_Unauthorized(t *testing.T) {
 	h.RegisterRoutes(ar, cfg, navReg)
 
 	req := httptest.NewRequest("POST", "/admin/reload", nil)
-	cd := common.NewCoreData(req.Context(), nil, cfg)
-	cd.SetRoles([]string{"anonymous"})
+	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithUserRoles([]string{"anonymous"}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -65,8 +63,7 @@ func TestAdminReloadRoute_Authorized(t *testing.T) {
 	h.RegisterRoutes(ar, cfg, navReg)
 
 	req := httptest.NewRequest("POST", "/admin/reload", nil)
-	cd := common.NewCoreData(req.Context(), nil, cfg)
-	cd.SetRoles([]string{"administrator"})
+	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithUserRoles([]string{"administrator"}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -87,8 +84,7 @@ func TestAdminShutdownRoute_Unauthorized(t *testing.T) {
 	h.RegisterRoutes(ar, cfg, navReg)
 
 	req := httptest.NewRequest("POST", "/admin/shutdown", nil)
-	cd := common.NewCoreData(req.Context(), nil, cfg)
-	cd.SetRoles([]string{"anonymous"})
+	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithUserRoles([]string{"anonymous"}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -112,8 +108,7 @@ func TestAdminShutdownRoute_Authorized(t *testing.T) {
 	form.Set("task", string(TaskServerShutdown))
 	req := httptest.NewRequest("POST", "/admin/shutdown", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	cd := common.NewCoreData(req.Context(), nil, cfg)
-	cd.SetRoles([]string{"administrator"})
+	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithUserRoles([]string{"administrator"}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -128,8 +123,7 @@ func TestAdminShutdownRoute_Authorized(t *testing.T) {
 func TestServerShutdownTask_Unauthorized(t *testing.T) {
 	req := httptest.NewRequest("POST", "/admin/shutdown", nil)
 	cfg := config.NewRuntimeConfig()
-	cd := common.NewCoreData(req.Context(), nil, cfg)
-	cd.SetRoles([]string{"anonymous"})
+	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithUserRoles([]string{"anonymous"}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	h := New()
@@ -145,8 +139,7 @@ func TestServerShutdownTask_Unauthorized(t *testing.T) {
 func TestServerShutdownMatcher_Denied(t *testing.T) {
 	req := httptest.NewRequest("POST", "/admin/shutdown", nil)
 	cfg := config.NewRuntimeConfig()
-	cd := common.NewCoreData(req.Context(), nil, cfg)
-	cd.SetRoles([]string{"anonymous"})
+	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithUserRoles([]string{"anonymous"}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	h := New()
@@ -160,8 +153,7 @@ func TestServerShutdownMatcher_Allowed(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/admin/shutdown", body)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	cfg := config.NewRuntimeConfig()
-	cd := common.NewCoreData(req.Context(), nil, cfg)
-	cd.SetRoles([]string{"administrator"})
+	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithUserRoles([]string{"administrator"}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	h := New()

@@ -818,6 +818,24 @@ func (q *Queries) SystemGetAllBlogsForIndex(ctx context.Context) ([]*SystemGetAl
 	return items, nil
 }
 
+const systemGetBlogEntryByID = `-- name: SystemGetBlogEntryByID :one
+SELECT idblogs, forumthread_id
+FROM blogs
+WHERE idblogs = ?
+`
+
+type SystemGetBlogEntryByIDRow struct {
+	Idblogs       int32
+	ForumthreadID sql.NullInt32
+}
+
+func (q *Queries) SystemGetBlogEntryByID(ctx context.Context, idblogs int32) (*SystemGetBlogEntryByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, systemGetBlogEntryByID, idblogs)
+	var i SystemGetBlogEntryByIDRow
+	err := row.Scan(&i.Idblogs, &i.ForumthreadID)
+	return &i, err
+}
+
 const systemSetBlogLastIndex = `-- name: SystemSetBlogLastIndex :exec
 UPDATE blogs SET last_index = NOW() WHERE idblogs = ?
 `

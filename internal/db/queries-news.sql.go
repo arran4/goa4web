@@ -429,6 +429,19 @@ func (q *Queries) SystemAssignNewsThreadID(ctx context.Context, arg SystemAssign
 	return err
 }
 
+const systemGetNewsPostByID = `-- name: SystemGetNewsPostByID :one
+SELECT forumthread_id
+FROM site_news
+WHERE idsiteNews = ?
+`
+
+func (q *Queries) SystemGetNewsPostByID(ctx context.Context, idsitenews int32) (int32, error) {
+	row := q.db.QueryRowContext(ctx, systemGetNewsPostByID, idsitenews)
+	var forumthread_id int32
+	err := row.Scan(&forumthread_id)
+	return forumthread_id, err
+}
+
 const systemSetSiteNewsLastIndex = `-- name: SystemSetSiteNewsLastIndex :exec
 UPDATE site_news SET last_index = NOW() WHERE idsiteNews = ?
 `

@@ -384,6 +384,38 @@ func (q *Queries) SystemInsertUser(ctx context.Context, username sql.NullString)
 	return q.db.ExecContext(ctx, systemInsertUser, username)
 }
 
+const systemListAllUsers = `-- name: SystemListAllUsers :many
+SELECT u.idusers, u.username,
+       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email
+FROM users u
+ORDER BY u.idusers
+`
+
+type SystemListAllUsersRow struct {
+	Idusers  int32
+	Username sql.NullString
+	Email    string
+}
+
+// Result:
+//
+//	idusers (int)
+//	username (string)
+//	email (string)
+		if err := rows.Scan(&i.Idusers, &i.Username, &i.Email); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updatePublicProfileEnabledAtForUser = `-- name: UpdatePublicProfileEnabledAtForUser :exec
 UPDATE users u
 SET public_profile_enabled_at = ?

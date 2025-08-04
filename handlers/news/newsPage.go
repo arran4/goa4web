@@ -8,7 +8,21 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
 )
+
+func NewsPage(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	ps := cd.PageSize()
+	cd.NextLink = fmt.Sprintf("?offset=%d", offset+ps)
+	if offset > 0 {
+		cd.PrevLink = fmt.Sprintf("?offset=%d", offset-ps)
+		cd.StartLink = "?offset=0"
+	}
+	handlers.TemplateHandler(w, r, "newsPage", cd)
+}
 
 func CustomNewsIndex(data *common.CoreData, r *http.Request) {
 	data.RSSFeedURL = "/news.rss"
@@ -37,24 +51,6 @@ func CustomNewsIndex(data *common.CoreData, r *http.Request) {
 		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "Return to list",
 			Link: fmt.Sprintf("/?offset=%d", 0),
-		})
-	}
-
-	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	if offset != 0 {
-		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-			Name: "The start",
-			Link: fmt.Sprintf("?offset=%d", 0),
-		})
-	}
-	data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-		Name: "Next 10",
-		Link: fmt.Sprintf("?offset=%d", offset+10),
-	})
-	if offset > 0 {
-		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-			Name: "Previous 10",
-			Link: fmt.Sprintf("?offset=%d", offset-10),
 		})
 	}
 }

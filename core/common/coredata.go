@@ -101,6 +101,7 @@ type CoreData struct {
 	// PageTitle holds the title of the current page.
 	PageTitle  string
 	RSSFeedURL string
+	StartLink  string
 	TasksReg   *tasks.Registry
 	Title      string
 	UserID     int32

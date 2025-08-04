@@ -19,6 +19,13 @@ import (
 
 func AdminNewsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	ps := cd.PageSize()
+	cd.NextLink = fmt.Sprintf("/admin/news?offset=%d", offset+ps)
+	if offset > 0 {
+		cd.PrevLink = fmt.Sprintf("/admin/news?offset=%d", offset-ps)
+		cd.StartLink = "/admin/news?offset=0"
+	}
 	cd.PageTitle = "News Admin"
 	handlers.TemplateHandler(w, r, "adminNewsListPage.gohtml", cd)
 }

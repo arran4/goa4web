@@ -39,6 +39,19 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		data.ReplyToId = rid
 	}
 
+	offset := int(data.Offset)
+	ps := cd.PageSize()
+	vars := mux.Vars(r)
+	categoryID := vars["category"]
+	base := "/linker"
+	if categoryID != "" {
+		base = fmt.Sprintf("/linker/category/%s", categoryID)
+	}
+	cd.NextLink = fmt.Sprintf("%s?offset=%d", base, offset+ps)
+	if offset > 0 {
+		cd.PrevLink = fmt.Sprintf("%s?offset=%d", base, offset-ps)
+	}
+
 	handlers.TemplateHandler(w, r, "linkerPage", data)
 }
 
@@ -68,34 +81,6 @@ func CustomLinkerIndex(data *common.CoreData, r *http.Request) {
 			Link: "/admin/linker/add",
 		})
 	}
-	vars := mux.Vars(r)
-	categoryId := vars["category"]
-	offset := 0
-	if off, err := strconv.Atoi(r.URL.Query().Get("offset")); err == nil {
-		offset = off
-	}
-	if categoryId == "" {
-		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-			Name: "Next 15",
-			Link: fmt.Sprintf("/linker?offset=%d", offset+15),
-		})
-		if offset > 0 {
-			data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-				Name: "Previous 15",
-				Link: fmt.Sprintf("/linker?offset=%d", offset-15),
-			})
-		}
-	} else {
-		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-			Name: "Next 15",
-			Link: fmt.Sprintf("/linker/category/%s?offset=%d", categoryId, offset+15),
-		})
-		if offset > 0 {
-			data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-				Name: "Previous 15",
-				Link: fmt.Sprintf("/linker/category/%s?offset=%d", categoryId, offset-15),
-			})
-		}
-	}
+	// Pagination links now provided via CoreData
 
 }

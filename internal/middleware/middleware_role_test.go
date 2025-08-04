@@ -42,7 +42,7 @@ func TestCoreAdderMiddlewareUserRoles(t *testing.T) {
 	session := &sessions.Session{ID: "sessid", Values: map[interface{}]interface{}{"UID": int32(1)}}
 	req := httptest.NewRequest("GET", "/", nil)
 	q := db.New(conn)
-	cd := common.NewCoreData(req.Context(), q, cfg)
+	cd := common.NewCoreData(req.Context(), q, common.WithConfig(cfg))
 	ctx := context.WithValue(req.Context(), core.ContextValues("session"), session)
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -84,7 +84,7 @@ func TestCoreAdderMiddlewareAnonymous(t *testing.T) {
 	session := &sessions.Session{ID: "sessid"}
 	req := httptest.NewRequest("GET", "/", nil)
 	q := db.New(conn)
-	cd := common.NewCoreData(req.Context(), q, cfg)
+	cd := common.NewCoreData(req.Context(), q, common.WithConfig(cfg))
 	ctx := context.WithValue(req.Context(), core.ContextValues("session"), session)
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)

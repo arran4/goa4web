@@ -39,7 +39,7 @@ func TestUserEmailVerifyCodePage_Invalid(t *testing.T) {
 
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, core.ContextValues("session"), sess)
-	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithSession(sess))
+	cd := common.NewCoreData(ctx, q, common.WithConfig(config.NewRuntimeConfig()), common.WithSession(sess))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 
 	req := httptest.NewRequest(http.MethodGet, "/usr/email/verify?code="+code, nil).WithContext(ctx)
@@ -75,7 +75,7 @@ func TestUserEmailVerifyCodePage_Success(t *testing.T) {
 
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, core.ContextValues("session"), sess)
-	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithSession(sess))
+	cd := common.NewCoreData(ctx, q, common.WithConfig(config.NewRuntimeConfig()), common.WithSession(sess))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 
 	form := url.Values{"code": {code}}

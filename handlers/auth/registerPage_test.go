@@ -26,7 +26,7 @@ func TestRegisterActionPageValidation(t *testing.T) {
 	for _, c := range cases {
 		req := httptest.NewRequest("POST", "/register", strings.NewReader(c.form.Encode()))
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
+		cd := common.NewCoreData(req.Context(), nil, common.WithConfig(config.NewRuntimeConfig()))
 		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 		req = req.WithContext(ctx)
 		rr := httptest.NewRecorder()

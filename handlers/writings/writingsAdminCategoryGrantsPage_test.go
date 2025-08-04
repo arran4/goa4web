@@ -37,7 +37,7 @@ func TestAdminCategoryGrantsPage(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/admin/writings/category/1/permissions", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
+	cd := common.NewCoreData(ctx, queries, common.WithConfig(config.NewRuntimeConfig()))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	req = mux.SetURLVars(req, map[string]string{"category": "1"})

@@ -25,7 +25,7 @@ func newCoreData(t *testing.T, cfg config.RuntimeConfig) (*common.CoreData, sqlm
 	if cfg.HSTSHeaderValue == "" {
 		cfg.HSTSHeaderValue = "max-age=63072000; includeSubDomains"
 	}
-	cd := common.NewCoreData(context.Background(), queries, &cfg)
+	cd := common.NewCoreData(context.Background(), queries, common.WithConfig(&cfg))
 	return cd, mock, cleanup
 }
 

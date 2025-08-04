@@ -19,7 +19,7 @@ func TestCanSearch(t *testing.T) {
 	defer conn.Close()
 
 	queries := db.New(conn)
-	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
+	cd := common.NewCoreData(context.Background(), queries, common.WithConfig(config.NewRuntimeConfig()))
 
 	// No grants
 	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnError(sql.ErrNoRows)

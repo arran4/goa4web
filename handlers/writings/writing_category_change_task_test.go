@@ -34,7 +34,7 @@ func TestWritingCategoryChangeTask(t *testing.T) {
 	form := url.Values{"name": {"A"}, "desc": {"B"}, "pcid": {"0"}, "cid": {"1"}}
 	req := httptest.NewRequest("POST", "/admin/writings/categories", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	cd := common.NewCoreData(req.Context(), queries, config.NewRuntimeConfig())
+	cd := common.NewCoreData(req.Context(), queries, common.WithConfig(config.NewRuntimeConfig()))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -154,7 +154,7 @@ func TestWritingCategoryChangeTaskLoop(t *testing.T) {
 	form := url.Values{"name": {"A"}, "desc": {"B"}, "pcid": {"2"}, "cid": {"1"}}
 	req := httptest.NewRequest("POST", "/admin/writings/categories", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	cd := common.NewCoreData(req.Context(), queries, config.NewRuntimeConfig())
+	cd := common.NewCoreData(req.Context(), queries, common.WithConfig(config.NewRuntimeConfig()))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 

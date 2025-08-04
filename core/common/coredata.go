@@ -171,7 +171,6 @@ type CoreData struct {
 	subscriptionRows         lazy.Value[[]*db.ListSubscriptionsByUserRow]
 	subscriptions            lazy.Value[map[string]bool]
 	templateOverrides        map[string]*lazy.Value[string]
-	threadComments           map[int32]*lazy.Value[[]*db.GetCommentsByThreadIdForUserRow]
 	unreadCount              lazy.Value[int64]
 	user                     lazy.Value[*db.User]
 	userRoles                lazy.Value[[]string]
@@ -1576,16 +1575,6 @@ func (cd *CoreData) PublicWritings(categoryID int32, r *http.Request) ([]*db.Lis
 // Queries returns the db.Queries instance associated with this CoreData.
 func (cd *CoreData) Queries() db.Querier { return cd.queries }
 
-// RegisterExternalLinkClick records click statistics for url.
-func (cd *CoreData) RegisterExternalLinkClick(url string) {
-	if cd.queries == nil {
-		return
-	}
-	if err := cd.queries.RegisterExternalLinkClick(cd.ctx, url); err != nil {
-		log.Printf("record external link click: %v", err)
-	}
-}
-
 // Role returns the first loaded role or "anonymous" when none.
 func (cd *CoreData) Role() string {
 	roles := cd.UserRoles()
@@ -1825,35 +1814,6 @@ func (cd *CoreData) ThreadComments(id int32, ops ...lazy.Option[[]*db.GetComment
 		})
 	}
 	return lazy.Map(&cd.forumThreadComments, &cd.mapMu, id, fetch, ops...)
-}
-
-// ThreadComments returns comments for a thread lazily loading them once per thread ID.
-func (cd *CoreData) ThreadComments(threadID int32) ([]*db.GetCommentsByThreadIdForUserRow, error) {
-	if cd.threadComments == nil {
-		cd.threadComments = make(map[int32]*lazy.Value[[]*db.GetCommentsByThreadIdForUserRow])
-	}
-	lv, ok := cd.threadComments[threadID]
-	if !ok {
-		lv = &lazy.Value[[]*db.GetCommentsByThreadIdForUserRow]{}
-		cd.threadComments[threadID] = lv
-	}
-	return lv.Load(func() ([]*db.GetCommentsByThreadIdForUserRow, error) {
-		if cd.queries == nil {
-			return nil, nil
-		}
-		rows, err := cd.queries.GetCommentsByThreadIdForUser(cd.ctx, db.GetCommentsByThreadIdForUserParams{
-			ViewerID: cd.UserID,
-			ThreadID: threadID,
-			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-		})
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				return nil, nil
-			}
-			return nil, err
-		}
-		return rows, nil
-	})
 }
 
 // UnreadNotificationCount returns the number of unread notifications for the
@@ -2181,12 +2141,15 @@ func WithSelectionsFromRequest(r *http.Request) CoreOption {
 }
 
 // NewCoreData creates a CoreData with context and queries applied.
-func NewCoreData(ctx context.Context, q db.Querier, cfg *config.RuntimeConfig, opts ...CoreOption) *CoreData {
+//
+// Runtime configuration may be supplied using the WithConfig option. If no
+// configuration is provided, a default runtime configuration is used.
+func NewCoreData(ctx context.Context, q db.Querier, opts ...CoreOption) *CoreData {
 	cd := &CoreData{
 		ctx:               ctx,
 		queries:           q,
 		newsAnnouncements: map[int32]*lazy.Value[*db.SiteAnnouncement]{},
-		Config:            cfg,
+		Config:            config.NewRuntimeConfig(),
 	}
 	if cq, ok := q.(db.CustomQueries); ok {
 		cd.customQueries = cq

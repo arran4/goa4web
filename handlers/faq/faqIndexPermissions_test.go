@@ -21,7 +21,7 @@ func TestCustomFAQIndexAsk(t *testing.T) {
 	defer conn.Close()
 	q := db.New(conn)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
+	cd := common.NewCoreData(ctx, q, common.WithConfig(config.NewRuntimeConfig()))
 
 	mock.ExpectQuery("SELECT 1 FROM grants").
 		WithArgs(sqlmock.AnyArg(), "faq", sqlmock.AnyArg(), "post", sqlmock.AnyArg(), sqlmock.AnyArg()).
@@ -46,7 +46,7 @@ func TestCustomFAQIndexAskDenied(t *testing.T) {
 	defer conn.Close()
 	q := db.New(conn)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
+	cd := common.NewCoreData(ctx, q, common.WithConfig(config.NewRuntimeConfig()))
 
 	mock.ExpectQuery("SELECT 1 FROM grants").
 		WithArgs(sqlmock.AnyArg(), "faq", sqlmock.AnyArg(), "post", sqlmock.AnyArg(), sqlmock.AnyArg()).

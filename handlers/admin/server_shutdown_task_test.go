@@ -19,7 +19,7 @@ func TestServerShutdownTask_EventPublished(t *testing.T) {
 	h := New(WithServer(&server.Server{Bus: bus}))
 	ch := bus.Subscribe(eventbus.TaskMessageType)
 
-	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
+	cd := common.NewCoreData(context.Background(), nil, common.WithConfig(config.NewRuntimeConfig()))
 	cd.UserID = 1
 	cd.SetRoles([]string{"administrator"})
 	ctx := context.WithValue(context.Background(), consts.KeyCoreData, cd)

@@ -36,7 +36,7 @@ func (c *newsListCmd) Run() error {
 	}
 	ctx := context.Background()
 	queries := db.New(conn)
-	cd := common.NewCoreData(ctx, queries, c.rootCmd.cfg)
+	cd := common.NewCoreData(ctx, queries, common.WithConfig(c.rootCmd.cfg))
 	posts, err := cd.LatestNewsList(int32(c.Offset), int32(c.Limit))
 	if err != nil {
 		return fmt.Errorf("list news: %w", err)

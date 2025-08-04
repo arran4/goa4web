@@ -49,7 +49,7 @@ func TestLoginAction_NoSuchUser(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.RemoteAddr = "1.2.3.4:1111"
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
+	cd := common.NewCoreData(ctx, queries, common.WithConfig(config.NewRuntimeConfig()))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -87,7 +87,7 @@ func TestLoginAction_InvalidPassword(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.RemoteAddr = "1.2.3.4:1111"
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
+	cd := common.NewCoreData(ctx, queries, common.WithConfig(config.NewRuntimeConfig()))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -108,7 +108,7 @@ func TestLoginAction_InvalidPassword(t *testing.T) {
 
 func TestLoginPageHiddenFields(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/login?code=abc&back=%2Ffoo&method=POST&data=x", nil)
-	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
+	cd := common.NewCoreData(context.Background(), nil, common.WithConfig(config.NewRuntimeConfig()))
 	cd.SetRoles([]string{"anonymous"})
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -155,7 +155,7 @@ func TestLoginAction_PendingResetPrompt(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.RemoteAddr = "1.2.3.4:1111"
 
-	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
+	cd := common.NewCoreData(req.Context(), q, common.WithConfig(config.NewRuntimeConfig()))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -180,7 +180,7 @@ func TestSanitizeBackURL(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
 	cfg.LoginAttemptThreshold = 10
 	cfg.HTTPHostname = ""
-	cd := common.NewCoreData(req.Context(), db.New(nil), cfg)
+	cd := common.NewCoreData(req.Context(), db.New(nil), common.WithConfig(cfg))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -195,7 +195,7 @@ func TestSanitizeBackURL(t *testing.T) {
 	}
 
 	cfg.HTTPHostname = "https://example.com"
-	cd = common.NewCoreData(req.Context(), db.New(nil), cfg)
+	cd = common.NewCoreData(req.Context(), db.New(nil), common.WithConfig(cfg))
 	ctx = context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	if got := cd.SanitizeBackURL(req, "https://example.com/baz"); got != "/baz" {
@@ -210,7 +210,7 @@ func TestSanitizeBackURLSigned(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
 	cfg.LoginAttemptThreshold = 10
 	signer := imagesign.NewSigner(cfg, "k")
-	cd := common.NewCoreData(req.Context(), db.New(nil), config.NewRuntimeConfig(), common.WithImageSigner(signer))
+	cd := common.NewCoreData(req.Context(), db.New(nil), common.WithConfig(config.NewRuntimeConfig()), common.WithImageSigner(signer))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	ts := time.Now().Add(time.Hour).Unix()
@@ -231,7 +231,7 @@ func TestLoginPageInvalidBackURL(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "/login?back=https://evil.com/x", nil)
 	req.Host = "example.com"
-	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
+	cd := common.NewCoreData(req.Context(), q, common.WithConfig(config.NewRuntimeConfig()))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
@@ -257,7 +257,7 @@ func TestLoginPageSignedBackURL(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/login?back="+url.QueryEscape(raw)+"&back_ts="+fmt.Sprint(ts)+"&back_sig="+sig, nil)
 	req.Host = "example.com"
 	signer := imagesign.NewSigner(cfg, "k")
-	cd := common.NewCoreData(req.Context(), q, cfg, common.WithImageSigner(signer))
+	cd := common.NewCoreData(req.Context(), q, common.WithConfig(cfg), common.WithImageSigner(signer))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
@@ -296,7 +296,7 @@ func TestLoginAction_ExternalBackURLIgnored(t *testing.T) {
 	req.RemoteAddr = "1.2.3.4:1111"
 	req.Host = "example.com"
 
-	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
+	cd := common.NewCoreData(req.Context(), q, common.WithConfig(config.NewRuntimeConfig()))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -343,7 +343,7 @@ func TestLoginAction_SignedExternalBackURL(t *testing.T) {
 	req.RemoteAddr = "1.2.3.4:1111"
 	req.Host = "example.com"
 
-	cd := common.NewCoreData(req.Context(), q, cfg, common.WithImageSigner(signer))
+	cd := common.NewCoreData(req.Context(), q, common.WithConfig(cfg), common.WithImageSigner(signer))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -381,7 +381,7 @@ func TestLoginAction_Throttle(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.RemoteAddr = "1.2.3.4:1111"
-	cd := common.NewCoreData(req.Context(), q, cfg)
+	cd := common.NewCoreData(req.Context(), q, common.WithConfig(cfg))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
@@ -402,7 +402,7 @@ func TestLoginAction_Throttle(t *testing.T) {
 func TestRedirectBackPageHandlerGET(t *testing.T) {
 	t.Skip("skip due to template environment")
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
+	cd := common.NewCoreData(req.Context(), nil, common.WithConfig(config.NewRuntimeConfig()))
 	cd.SetRoles([]string{"anonymous"})
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -422,7 +422,7 @@ func TestRedirectBackPageHandlerGET(t *testing.T) {
 func TestRedirectBackPageHandlerEmptyMethod(t *testing.T) {
 	t.Skip("skip due to template environment")
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
+	cd := common.NewCoreData(req.Context(), nil, common.WithConfig(config.NewRuntimeConfig()))
 	cd.SetRoles([]string{"anonymous"})
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -443,7 +443,7 @@ func TestRedirectBackPageHandler(t *testing.T) {
 	cases := map[string]string{"empty": "", "get": http.MethodGet}
 	for name, method := range cases {
 		t.Run(name, func(t *testing.T) {
-			cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
+			cd := common.NewCoreData(context.Background(), nil, common.WithConfig(config.NewRuntimeConfig()))
 			cd.SetRoles([]string{"anonymous"})
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
 			ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
@@ -466,7 +466,7 @@ func TestRedirectBackPageHandler(t *testing.T) {
 	}
 
 	t.Run("post", func(t *testing.T) {
-		cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
+		cd := common.NewCoreData(context.Background(), nil, common.WithConfig(config.NewRuntimeConfig()))
 		cd.SetRoles([]string{"anonymous"})
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)

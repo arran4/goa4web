@@ -37,7 +37,7 @@ func TestVerifyPasswordAction_Success(t *testing.T) {
 		WithArgs(int32(1), pwHash, sql.NullString{String: alg, Valid: true}).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
+	cd := common.NewCoreData(context.Background(), q, common.WithConfig(config.NewRuntimeConfig()))
 	ctx := context.WithValue(context.Background(), consts.KeyCoreData, cd)
 	form := url.Values{"id": {"1"}, "code": {"code"}, "password": {"pw"}}
 	req := httptest.NewRequest(http.MethodPost, "/login/verify", strings.NewReader(form.Encode()))
@@ -69,7 +69,7 @@ func TestVerifyPasswordAction_InvalidPassword(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, user_id, passwd")).WithArgs("code", sqlmock.AnyArg()).WillReturnRows(rows)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT 1 FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.users_idusers = ? AND r.can_login = 1 LIMIT 1")).WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"column_1"}).AddRow(1))
 
-	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
+	cd := common.NewCoreData(context.Background(), q, common.WithConfig(config.NewRuntimeConfig()))
 	ctx := context.WithValue(context.Background(), consts.KeyCoreData, cd)
 	form := url.Values{"id": {"1"}, "code": {"code"}, "password": {"wrong"}}
 	req := httptest.NewRequest(http.MethodPost, "/login/verify", strings.NewReader(form.Encode()))

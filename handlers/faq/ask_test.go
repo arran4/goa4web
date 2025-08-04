@@ -99,7 +99,7 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 		WithArgs(sql.NullString{String: "hi", Valid: true}, int32(1), int32(1), sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	evt := &eventbus.TaskEvent{Path: "/faq/ask", Task: tasks.TaskString(TaskAsk), UserID: 1}
-	cd := common.NewCoreData(req.Context(), q, cfg)
+	cd := common.NewCoreData(req.Context(), q, common.WithConfig(cfg))
 	cd.UserID = 1
 	cd.SetEvent(evt)
 

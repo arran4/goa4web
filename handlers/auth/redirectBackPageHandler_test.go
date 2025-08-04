@@ -22,7 +22,7 @@ func TestRedirectBackPageHandlerGETAlt(t *testing.T) {
 	defer conn.Close()
 	q := db.New(conn)
 
-	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
+	cd := common.NewCoreData(context.Background(), q, common.WithConfig(config.NewRuntimeConfig()))
 	ctx := context.WithValue(context.Background(), consts.KeyCoreData, cd)
 	req := httptest.NewRequest(http.MethodGet, "http://example.com/", nil)
 	req = req.WithContext(ctx)

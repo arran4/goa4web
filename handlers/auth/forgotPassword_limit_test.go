@@ -35,7 +35,7 @@ func TestForgotPasswordRateLimit(t *testing.T) {
 	form := url.Values{"username": {"u"}, "password": {"pw"}}
 	req := httptest.NewRequest(http.MethodPost, "/forgot", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
+	cd := common.NewCoreData(context.Background(), q, common.WithConfig(config.NewRuntimeConfig()))
 	ctx := context.WithValue(context.Background(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
@@ -69,7 +69,7 @@ func TestForgotPasswordReplaceOld(t *testing.T) {
 	form := url.Values{"username": {"u"}, "password": {"pw"}}
 	req := httptest.NewRequest(http.MethodPost, "/forgot", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
+	cd := common.NewCoreData(context.Background(), q, common.WithConfig(config.NewRuntimeConfig()))
 	ctx := context.WithValue(context.Background(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()

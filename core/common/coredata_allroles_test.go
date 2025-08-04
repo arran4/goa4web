@@ -22,7 +22,7 @@ func TestAllRolesLazy(t *testing.T) {
 
 	mock.ExpectQuery("SELECT id, name, can_login, is_admin, public_profile_allowed_at FROM roles ORDER BY id").WillReturnRows(rows)
 
-	cd := NewCoreData(context.Background(), db.New(conn), config.NewRuntimeConfig())
+	cd := NewCoreData(context.Background(), db.New(conn), WithConfig(config.NewRuntimeConfig()))
 
 	if _, err := cd.AllRoles(); err != nil {
 		t.Fatalf("AllRoles: %v", err)

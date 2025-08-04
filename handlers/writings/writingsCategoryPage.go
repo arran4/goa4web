@@ -33,7 +33,7 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 	cats, err := cd.CurrentUserVisibleWritingCategories()
 	if err != nil {
 		log.Printf("writingCategories: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Category %d", data.CategoryId)

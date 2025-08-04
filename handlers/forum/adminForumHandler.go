@@ -93,7 +93,8 @@ func AdminForumPage(w http.ResponseWriter, r *http.Request) {
 
 	stats, err := queries.AdminGetForumStats(r.Context())
 	if err != nil {
-		http.Error(w, "database not available", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("database not available"))
 		return
 	}
 	data.Stats.Categories = stats.Categories

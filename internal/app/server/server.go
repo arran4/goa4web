@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dbdrivers"
 	"github.com/arran4/goa4web/internal/dlq"
@@ -198,7 +200,7 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 			if s.DB == nil {
 				ue := common.UserError{Err: fmt.Errorf("db not initialized"), ErrorMessage: "database unavailable"}
 				log.Printf("%s: %v", ue.ErrorMessage, ue.Err)
-				http.Error(w, ue.ErrorMessage, http.StatusInternalServerError)
+				handlers.RenderErrorPage(w, r, errors.New(ue.ErrorMessage))
 				return
 			}
 
@@ -225,8 +227,10 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 				base = strings.TrimRight(s.Config.HTTPHostname, "/")
 			}
 			provider := s.EmailReg.ProviderFromConfig(s.Config)
+			offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 			cd := common.NewCoreData(r.Context(), queries, s.Config,
 				common.WithImageSigner(s.ImageSigner),
+				common.WithCustomQueries(queries),
 				common.WithLinkSigner(s.LinkSigner),
 				common.WithSession(session),
 				common.WithEmailProvider(provider),
@@ -235,6 +239,8 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 				common.WithNavRegistry(s.Nav),
 				common.WithTasksRegistry(s.TasksReg),
 				common.WithDBRegistry(s.DBReg),
+				common.WithSelectionsFromRequest(r),
+				common.WithOffset(offset),
 				common.WithSiteTitle("Arran's Site"),
 			)
 			cd.UserID = uid

@@ -18,17 +18,20 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 	queries := cd.Queries()
 	cid, err := strconv.Atoi(mux.Vars(r)["category"])
 	if err != nil {
-		http.Error(w, "Bad Request", http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Bad Request"))
 		return
 	}
 	cat, err := queries.GetForumCategoryById(r.Context(), int32(cid))
 	if err != nil {
-		http.Error(w, "Category not found", http.StatusNotFound)
+		w.WriteHeader(http.StatusNotFound)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Category not found"))
 		return
 	}
 	topics, err := queries.GetForumTopicsByCategoryId(r.Context(), int32(cid))
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Forum Category %d", cid)

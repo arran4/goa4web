@@ -76,7 +76,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 
 	languageRows, err := cd.Languages()
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	data.Languages = languageRows
@@ -95,7 +95,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 			return
 		default:
 			log.Printf("getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 			return
 		}
 	}
@@ -103,7 +103,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	if !(cd.HasGrant("linker", "link", "view", link.Idlinker) ||
 		cd.HasGrant("linker", "link", "comment", link.Idlinker) ||
 		cd.HasGrant("linker", "link", "reply", link.Idlinker)) {
-		http.Error(w, "Forbidden", http.StatusForbidden)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Forbidden"))
 		return
 	}
 
@@ -121,7 +121,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
 			log.Printf("getBlogEntryForListerByID_comments Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 			return
 		}
 	}
@@ -234,7 +234,7 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 			return nil
 		default:
 			log.Printf("getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending Error: %s", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 			return nil
 		}
 	}
@@ -242,7 +242,7 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if !(cd.HasGrant("linker", "link", "view", link.Idlinker) ||
 		cd.HasGrant("linker", "link", "comment", link.Idlinker) ||
 		cd.HasGrant("linker", "link", "reply", link.Idlinker)) {
-		http.Error(w, "Forbidden", http.StatusForbidden)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Forbidden"))
 		return nil
 	}
 

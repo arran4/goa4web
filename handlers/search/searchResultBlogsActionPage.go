@@ -2,6 +2,7 @@ package search
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -36,7 +37,7 @@ func (SearchBlogsTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if !common.CanSearch(cd, "blogs") {
-		http.Error(w, "Forbidden", http.StatusForbidden)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Forbidden"))
 		return nil
 	}
 	data := Data{
@@ -52,7 +53,7 @@ func (SearchBlogsTask) Action(w http.ResponseWriter, r *http.Request) any {
 	ftbn, err := queries.SystemGetForumTopicByTitle(r.Context(), sql.NullString{Valid: true, String: hblogs.BloggerTopicName})
 	if err != nil {
 		log.Printf("findForumTopicByTitle Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return nil
 	}
 
@@ -97,7 +98,7 @@ func BlogSearch(w http.ResponseWriter, r *http.Request, queries db.Querier, cd *
 			})
 			if err != nil {
 				log.Printf("ListBlogIDsBySearchWordFirstForLister Error: %s", err)
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 				return nil, false, false, err
 			}
 			blogIds = ids
@@ -113,7 +114,7 @@ func BlogSearch(w http.ResponseWriter, r *http.Request, queries db.Querier, cd *
 			})
 			if err != nil {
 				log.Printf("ListBlogIDsBySearchWordNextForLister Error: %s", err)
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 				return nil, false, false, err
 			}
 			blogIds = ids
@@ -135,7 +136,7 @@ func BlogSearch(w http.ResponseWriter, r *http.Request, queries db.Querier, cd *
 	})
 	if err != nil {
 		log.Printf("getBlogEntriesByIdsDescending Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return nil, false, false, err
 	}
 	blogs := make([]*db.Blog, 0, len(rows))

@@ -11,6 +11,7 @@ import (
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/gorilla/feeds"
 )
 
@@ -64,12 +65,12 @@ func RssPage(w http.ResponseWriter, r *http.Request) {
 	feed, err := feedGen(r, cd)
 	if err != nil {
 		log.Printf("FeedGen Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	if err := feed.WriteRss(w); err != nil {
 		log.Printf("Feed write Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 }
@@ -79,12 +80,12 @@ func AtomPage(w http.ResponseWriter, r *http.Request) {
 	feed, err := feedGen(r, cd)
 	if err != nil {
 		log.Printf("FeedGen Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	if err := feed.WriteAtom(w); err != nil {
 		log.Printf("Feed write Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 }

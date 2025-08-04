@@ -26,7 +26,7 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 	uid, err := strconv.Atoi(r.URL.Query().Get("uid"))
 	if err != nil {
 		log.Printf("parse uid: %v", err)
-		http.Error(w, "Bad Request", http.StatusBadRequest)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Bad Request"))
 		return
 	}
 
@@ -36,7 +36,7 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 	user, err := cd.CurrentUser()
 	if err != nil {
 		log.Printf("current user: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	if user == nil {
@@ -47,19 +47,19 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 	pref, err := cd.Preference()
 	if err != nil {
 		log.Printf("load preference: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	langs, err := queries.GetUserLanguages(r.Context(), int32(uid))
 	if err != nil {
 		log.Printf("load languages: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	perms, err := cd.Permissions()
 	if err != nil {
 		log.Printf("load permissions: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 
@@ -80,7 +80,7 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 	cats, err := cd.WritingCategories()
 	if err != nil {
 		log.Printf("fetch categories: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	catMap := make(map[int32]string)
@@ -91,7 +91,7 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 	writings, err := queries.AdminGetAllWritingsByAuthor(r.Context(), int32(uid))
 	if err != nil {
 		log.Printf("fetch writings: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	type writingExport struct {
@@ -106,19 +106,19 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 	blogs, err := queries.AdminGetAllBlogEntriesByUser(r.Context(), int32(uid))
 	if err != nil {
 		log.Printf("fetch blogs: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	threads, err := queries.AdminGetThreadsStartedByUser(r.Context(), int32(uid))
 	if err != nil {
 		log.Printf("fetch threads: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	comments, err := queries.AdminGetAllCommentsByUser(r.Context(), int32(uid))
 	if err != nil {
 		log.Printf("fetch comments: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 

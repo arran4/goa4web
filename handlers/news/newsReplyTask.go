@@ -96,7 +96,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if !cd.HasGrant("news", "post", "reply", int32(pid)) {
-		http.Error(w, "Forbidden", http.StatusForbidden)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Forbidden"))
 		return nil
 	}
 
@@ -107,7 +107,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	})
 	if err != nil {
 		log.Printf("GetNewsPostByIdWithWriterIdAndThreadCommentCountForUser Error: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, err)
 		return nil
 	}
 

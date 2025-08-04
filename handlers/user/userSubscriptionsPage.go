@@ -12,8 +12,7 @@ func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Subscriptions"
 	data := struct {
-		*common.CoreData
 		Options []subscriptionOption
-	}{cd, userSubscriptionOptions}
+	}{Options: userSubscriptionOptions}
 	handlers.TemplateHandler(w, r, "subscriptions.gohtml", data)
 }

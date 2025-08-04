@@ -18,6 +18,7 @@ import (
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/middleware"
 	"github.com/arran4/goa4web/internal/notifications"
+	"github.com/gorilla/mux"
 )
 
 func TestPermissionUserTasksTemplates(t *testing.T) {
@@ -47,7 +48,10 @@ func TestPermissionUserAllowEventData(t *testing.T) {
 	defer conn.Close()
 	queries := db.New(conn)
 
-	mock.ExpectQuery("SELECT idusers").
+	mock.ExpectQuery("FROM users").
+		WithArgs(int32(2)).
+		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(2, "bob@test", "bob", nil))
+	mock.ExpectQuery("FROM users").
 		WithArgs(sqlmock.AnyArg()).
 		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(2, "bob@test", "bob", nil))
 	mock.ExpectExec("INSERT INTO user_roles").
@@ -62,7 +66,9 @@ func TestPermissionUserAllowEventData(t *testing.T) {
 	form.Set("task", string(TaskUserAllow))
 	req := httptest.NewRequest("POST", "/admin/user/2/permissions", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req = mux.SetURLVars(req, map[string]string{"user": "2"})
 	cd := common.NewCoreData(req.Context(), queries, config.NewRuntimeConfig())
+	cd.LoadSelectionsFromRequest(req)
 	evt := &eventbus.TaskEvent{}
 	cd.SetEvent(evt)
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)

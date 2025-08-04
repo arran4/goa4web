@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -55,10 +56,10 @@ func TaskHandler(t tasks.Task) func(http.ResponseWriter, *http.Request) {
 				return
 			}
 			log.Printf("task action: %v", result)
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			RenderErrorPage(w, r, result)
 			return
 		default:
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			RenderErrorPage(w, r, fmt.Errorf(http.StatusText(http.StatusInternalServerError)))
 		}
 	}
 }

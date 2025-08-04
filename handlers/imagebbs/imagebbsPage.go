@@ -1,6 +1,7 @@
 package imagebbs
 
 import (
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -29,7 +30,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	boards, err := data.CoreData.SubImageBoards(0)
 	if err != nil {
 		log.Printf("imageboards: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 

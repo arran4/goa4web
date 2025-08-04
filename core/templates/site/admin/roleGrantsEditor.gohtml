@@ -54,10 +54,20 @@
             updateBtn();
         }
         [have,avail].forEach(function(col){
-            col.addEventListener('dragstart',function(e){if(e.target.classList.contains('pill')){e.dataTransfer.setData('text/plain',e.target.textContent);e.dataTransfer.effectAllowed='move';e.target.classList.add('dragging');}});
-            col.addEventListener('dragend',function(e){e.target.classList.remove('dragging');});
-            col.addEventListener('dragover',function(e){e.preventDefault();});
-            col.addEventListener('drop',dropHandler);
+            col.addEventListener('dragstart', function(e) {
+                if (e.target.classList.contains('pill')) {
+                    e.dataTransfer.setData('text/plain', e.target.textContent);
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.target.classList.add('dragging');
+                }
+            }, true);
+            col.addEventListener('dragend', function(e) {
+                if (e.target.classList.contains('pill')) {
+                    e.target.classList.remove('dragging');
+                }
+            }, true);
+            col.addEventListener('dragover', function(e) { e.preventDefault(); });
+            col.addEventListener('drop', dropHandler);
         });
         form.addEventListener('submit',function(){
             const acts=Array.from(have.querySelectorAll('.pill')).map(p=>p.textContent.trim());

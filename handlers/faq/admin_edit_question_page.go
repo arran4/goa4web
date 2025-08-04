@@ -20,7 +20,7 @@ func AdminEditQuestionPage(w http.ResponseWriter, r *http.Request) {
 	idStr := vars["id"]
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Bad Request", http.StatusBadRequest)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Bad Request"))
 		return
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
@@ -31,10 +31,10 @@ func AdminEditQuestionPage(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):
-				http.Error(w, "Not Found", http.StatusNotFound)
+				handlers.RenderErrorPage(w, r, fmt.Errorf("Not Found"))
 				return
 			default:
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 				return
 			}
 		}

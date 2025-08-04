@@ -237,6 +237,30 @@ func (cd *CoreData) AdminLatestNewsList(offset, limit int32) ([]*db.AdminListNew
 	return rows, nil
 }
 
+// AdminLoginAttempts returns recent login attempts for administrators.
+func (cd *CoreData) AdminLoginAttempts() ([]*db.LoginAttempt, error) {
+	if cd.queries == nil {
+		return nil, nil
+	}
+	rows, err := cd.queries.AdminListLoginAttempts(cd.ctx)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, err
+	}
+	return rows, nil
+}
+
+// AdminSessions returns active sessions for administrators.
+func (cd *CoreData) AdminSessions() ([]*db.AdminListSessionsRow, error) {
+	if cd.queries == nil {
+		return nil, nil
+	}
+	rows, err := cd.queries.AdminListSessions(cd.ctx)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, err
+	}
+	return rows, nil
+}
+
 // AdminLinkerItemByID returns a single linker item lazily loading it once per ID.
 func (cd *CoreData) AdminLinkerItemByID(id int32, ops ...lazy.Option[*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow]) (*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow, error) {
 	fetch := func(i int32) (*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow, error) {
@@ -790,9 +814,6 @@ func (cd *CoreData) CurrentProfileStats() *db.AdminUserPostCountsByIDRow {
 	}
 	return row
 }
-
-// CurrentProfileUserID returns the user ID being viewed.
-func (cd *CoreData) CurrentProfileUserID() int32 { return cd.currentProfileUserID }
 
 // CurrentProfileUser returns the user being viewed.
 func (cd *CoreData) CurrentProfileUser() *db.SystemGetUserByIDRow {
@@ -1712,9 +1733,6 @@ func (cd *CoreData) SetCurrentNewsPost(id int32) { cd.currentNewsPostID = id }
 // SetCurrentProfileUserID records the user ID for profile lookups.
 func (cd *CoreData) SetCurrentProfileUserID(id int32) { cd.currentProfileUserID = id }
 
-// CurrentProfileUserID returns the user ID for the profile currently in context.
-func (cd *CoreData) CurrentProfileUserID() int32 { return cd.currentProfileUserID }
-
 // SetCurrentRequestID stores the request ID for subsequent lookups.
 func (cd *CoreData) SetCurrentRequestID(id int32) { cd.currentRequestID = id }
 
@@ -2179,40 +2197,38 @@ func assignIDFromString(m map[string]*int32, k, v string) {
 	*dest = int32(i)
 }
 
-// WithSelectionsFromRequest extracts integer identifiers from the request and
+// LoadSelectionsFromRequest extracts integer identifiers from the request and
 // stores them on the CoreData instance. It searches path variables, query
 // parameters and finally form values.
-func WithSelectionsFromRequest(r *http.Request) CoreOption {
-	return func(cd *CoreData) {
-		mapping := map[string]*int32{
-			"boardno": &cd.currentBoardID,
-			"board":   &cd.currentBoardID,
-			"thread":  &cd.currentThreadID,
-			"replyTo": &cd.currentThreadID,
-			"topic":   &cd.currentTopicID,
-			"comment": &cd.currentCommentID,
-			"news":    &cd.currentNewsPostID,
-			"post":    &cd.currentImagePostID,
-			"writing": &cd.currentWritingID,
-			"blog":    &cd.currentBlogID,
-			"request": &cd.currentRequestID,
-			"role":    &cd.currentRoleID,
-			"user":    &cd.currentProfileUserID,
+func (cd *CoreData) LoadSelectionsFromRequest(r *http.Request) {
+	mapping := map[string]*int32{
+		"boardno": &cd.currentBoardID,
+		"board":   &cd.currentBoardID,
+		"thread":  &cd.currentThreadID,
+		"replyTo": &cd.currentThreadID,
+		"topic":   &cd.currentTopicID,
+		"comment": &cd.currentCommentID,
+		"news":    &cd.currentNewsPostID,
+		"post":    &cd.currentImagePostID,
+		"writing": &cd.currentWritingID,
+		"blog":    &cd.currentBlogID,
+		"request": &cd.currentRequestID,
+		"role":    &cd.currentRoleID,
+		"user":    &cd.currentProfileUserID,
+	}
+	for k, v := range mux.Vars(r) {
+		assignIDFromString(mapping, k, v)
+	}
+	q := r.URL.Query()
+	for k, v := range q {
+		if len(v) > 0 {
+			assignIDFromString(mapping, k, v[0])
 		}
-		for k, v := range mux.Vars(r) {
-			assignIDFromString(mapping, k, v)
-		}
-		q := r.URL.Query()
-		for k, v := range q {
+	}
+	if err := r.ParseForm(); err == nil {
+		for k, v := range r.Form {
 			if len(v) > 0 {
 				assignIDFromString(mapping, k, v[0])
-			}
-		}
-		if err := r.ParseForm(); err == nil {
-			for k, v := range r.Form {
-				if len(v) > 0 {
-					assignIDFromString(mapping, k, v[0])
-				}
 			}
 		}
 	}

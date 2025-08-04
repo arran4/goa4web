@@ -14,35 +14,34 @@ import (
 )
 
 func adminPendingUsersPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	rows, err := queries.AdminListPendingUsers(r.Context())
 	if err != nil && err != sql.ErrNoRows {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		log.Printf("list pending users: %v", err)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	data := struct {
-		*common.CoreData
 		Rows []*db.AdminListPendingUsersRow
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-		Rows:     rows,
+		Rows: rows,
 	}
 	handlers.TemplateHandler(w, r, "pendingUsersPage.gohtml", data)
 }
 
 func adminPendingUsersApprove(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	uid := r.PostFormValue("uid")
 	var id int32
 	fmt.Sscanf(uid, "%d", &id)
 	data := struct {
-		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-		Back:     "/admin/users/pending",
+		Back: "/admin/users/pending",
 	}
 	if id == 0 {
 		data.Errors = append(data.Errors, "invalid id")
@@ -58,19 +57,18 @@ func adminPendingUsersApprove(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminPendingUsersReject(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	uid := r.PostFormValue("uid")
 	reason := r.PostFormValue("reason")
 	var id int32
 	fmt.Sscanf(uid, "%d", &id)
 	data := struct {
-		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-		Back:     "/admin/users/pending",
+		Back: "/admin/users/pending",
 	}
 	if id == 0 {
 		data.Errors = append(data.Errors, "invalid id")

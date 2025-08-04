@@ -58,14 +58,15 @@ func X2c(what string) byte {
 
 func TestHandleDie(t *testing.T) {
 	rr := httptest.NewRecorder()
-	handleDie(rr, "oops")
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	handleDie(rr, req, "oops")
 	if rr.Code != http.StatusInternalServerError {
 		t.Errorf("expected status 500, got %d", rr.Code)
 	}
 	if ct := rr.Header().Get("Content-Type"); ct != "text/plain; charset=utf-8" {
 		t.Errorf("expected Content-Type text/plain; charset=utf-8, got %q", ct)
 	}
-	if body := rr.Body.String(); body != "oops\n" {
+	if body := rr.Body.String(); body != "Internal Server Error\n" {
 		t.Errorf("unexpected body: %q", body)
 	}
 }

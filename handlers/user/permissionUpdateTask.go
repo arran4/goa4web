@@ -31,19 +31,17 @@ func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	permid := r.PostFormValue("permid")
 	role := r.PostFormValue("role")
 
-	id := cd.CurrentProfileUserID()
+	cpu := cd.CurrentProfileUser()
 	back := "/admin/users/permissions"
-	if id != 0 {
-		back = fmt.Sprintf("/admin/user/%d/permissions", id)
+	if cpu.Idusers != 0 {
+		back = fmt.Sprintf("/admin/user/%d/permissions", cpu.Idusers)
 	}
 	data := struct {
-		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: cd,
-		Back:     back,
+		Back: back,
 	}
 
 	if id, err := strconv.Atoi(permid); err != nil {
@@ -56,15 +54,13 @@ func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}); err != nil {
 			data.Errors = append(data.Errors, fmt.Errorf("UpdatePermission: %w", err).Error())
 		} else if err2 == nil {
-			if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-				if evt := cd.Event(); evt != nil {
-					if evt.Data == nil {
-						evt.Data = map[string]any{}
-					}
-					evt.Data["targetUserID"] = infoID
-					evt.Data["Username"] = username
-					evt.Data["Role"] = role
+			if evt := cd.Event(); evt != nil {
+				if evt.Data == nil {
+					evt.Data = map[string]any{}
 				}
+				evt.Data["targetUserID"] = infoID
+				evt.Data["Username"] = username
+				evt.Data["Role"] = role
 			}
 		} else {
 			log.Printf("lookup role: %v", err2)

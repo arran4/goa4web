@@ -40,7 +40,8 @@ func TestAdminRequestPage_RequestFound(t *testing.T) {
 	req = mux.SetURLVars(req, map[string]string{"request": strconv.Itoa(requestID)})
 	cfg := config.NewRuntimeConfig()
 	q := db.New(conn)
-	cd := common.NewCoreData(req.Context(), q, cfg, common.WithSelectionsFromRequest(req))
+	cd := common.NewCoreData(req.Context(), q, cfg)
+	cd.LoadSelectionsFromRequest(req)
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 

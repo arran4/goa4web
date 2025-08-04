@@ -55,7 +55,8 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 	categoryRows, err := data.CoreData.ForumCategories()
 	if err != nil {
 		log.Printf("getAllForumCategories Error: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 	topicRow, err := data.CoreData.ForumTopicByID(int32(topicId))
@@ -64,7 +65,8 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 			http.NotFound(w, r)
 		} else {
 			log.Printf("showTableTopics Error: %v", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			w.WriteHeader(http.StatusInternalServerError)
+			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		}
 		return
 	}

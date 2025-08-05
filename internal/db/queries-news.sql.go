@@ -77,7 +77,7 @@ SELECT ?, ?, NOW(), ?
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='news'
-      AND g.item='post'
+      AND (g.item='post' OR g.item IS NULL)
       AND g.action='post'
       AND g.active=1
       AND (g.item_id = 0 OR g.item_id IS NULL)
@@ -180,7 +180,7 @@ LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
 WHERE s.idsiteNews = ? AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='news'
-      AND g.item='post'
+      AND (g.item='post' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
       AND (g.item_id = s.idsiteNews OR g.item_id IS NULL)
@@ -249,7 +249,7 @@ WHERE s.Idsitenews IN (/*SLICE:newsids*/?)
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='news'
-      AND g.item='post'
+      AND (g.item='post' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
       AND (g.item_id = s.idsiteNews OR g.item_id IS NULL)
@@ -459,7 +459,7 @@ WHERE s.idsiteNews = ?
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='news'
-      AND g.item='post'
+      AND (g.item='post' OR g.item IS NULL)
       AND g.action='post'
       AND g.active=1
       AND (g.item_id = ? OR g.item_id IS NULL)

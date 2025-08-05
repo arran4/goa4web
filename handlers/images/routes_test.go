@@ -55,8 +55,8 @@ func TestImageRouteInvalidID(t *testing.T) {
 
 	r.ServeHTTP(rr, req.WithContext(ctx))
 
-	if rr.Code != http.StatusNotFound {
-		t.Fatalf("want %d got %d", http.StatusNotFound, rr.Code)
+	if rr.Code != http.StatusForbidden {
+		t.Fatalf("want %d got %d", http.StatusForbidden, rr.Code)
 	}
 }
 
@@ -79,8 +79,8 @@ func TestCacheRouteInvalidID(t *testing.T) {
 
 	r.ServeHTTP(rr, req.WithContext(ctx))
 
-	if rr.Code != http.StatusNotFound {
-		t.Fatalf("want %d got %d", http.StatusNotFound, rr.Code)
+	if rr.Code != http.StatusForbidden {
+		t.Fatalf("want %d got %d", http.StatusForbidden, rr.Code)
 	}
 }
 

@@ -1,7 +1,7 @@
 {{ template "head" $ }}
     {{ template "newsPost" $.Post }}
     <hr><font size=4>Replies:</font>
-    {{ template "threadComments" $ }}
+    {{ template "threadComments" }}
     <a id="reply"></a>
     {{ if or .IsReplyable }}
         <font size=4>Reply:</font>

@@ -12,7 +12,7 @@
         <hr>
         {{ .Writing.Writing.String | a4code2html }}
         <hr>Comments:<br>
-        {{ template "threadComments" $ }}
+        {{ template "threadComments" }}
         {{ if .CanReply }}
             <hr><font size="4">Reply:</font><br>
             <form method="post">

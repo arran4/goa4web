@@ -84,7 +84,7 @@ SELECT ?, ?, ?
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'faq'
-      AND g.item = 'question'
+      AND (g.item = 'question' OR g.item IS NULL)
       AND g.action = 'post'
       AND g.active = 1
       AND (g.user_id = ? OR g.user_id IS NULL)
@@ -500,7 +500,7 @@ SELECT ?, ?, ?, ?, ?
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'faq'
-      AND g.item = 'question'
+      AND (g.item = 'question' OR g.item IS NULL)
       AND g.action = 'post'
       AND g.active = 1
       AND (g.user_id = ? OR g.user_id IS NULL)
@@ -537,7 +537,7 @@ SELECT ?, ?, ?, ?
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'faq'
-      AND g.item = 'question'
+      AND (g.item = 'question' OR g.item IS NULL)
       AND g.action = 'post'
       AND g.active = 1
       AND (g.user_id = ? OR g.user_id IS NULL)

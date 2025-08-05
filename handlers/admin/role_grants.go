@@ -15,16 +15,23 @@ import (
 // GrantActionMap defines allowed actions for each section and item combination.
 // Key format: "section|item". Keep in sync with specs/permissions.md.
 var GrantActionMap = map[string][]string{
+	"forum|":           {"search"},
 	"forum|topic":      {"see", "view", "reply", "post", "edit"},
 	"forum|thread":     {"see", "view", "reply", "post", "edit"},
 	"forum|category":   {"see", "view"},
+	"linker|":          {"search"},
 	"linker|category":  {"see", "view"},
 	"linker|link":      {"see", "view", "comment", "reply"},
+	"imagebbs|":        {"search"},
 	"imagebbs|board":   {"see", "view", "post"},
+	"news|":            {"search"},
 	"news|post":        {"see", "view", "reply", "post", "edit"},
+	"blogs|":           {"search"},
 	"blogs|entry":      {"see", "view", "post", "edit"},
+	"writing|":         {"search"},
 	"writing|category": {"see", "view"},
 	"writing|article":  {"see", "view", "post", "edit"},
+	"faq|":             {"search"},
 	"faq|category":     {"see", "view"},
 	"faq|question":     {"see", "view", "post", "edit"},
 	"search|":          {"search"},

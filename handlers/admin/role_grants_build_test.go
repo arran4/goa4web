@@ -37,15 +37,25 @@ func TestBuildGrantGroupsIncludesAvailableActionsWithoutGrants(t *testing.T) {
 	if len(groups) != len(GrantActionMap) {
 		t.Fatalf("expected %d groups, got %d", len(GrantActionMap), len(groups))
 	}
-	var found bool
+	var topicFound bool
 	for _, g := range groups {
 		if g.Section == "forum" && g.Item == "topic" && len(g.Available) == len(GrantActionMap["forum|topic"]) {
-			found = true
+			topicFound = true
 			break
 		}
 	}
-	if !found {
+	if !topicFound {
 		t.Fatalf("missing forum|topic group")
+	}
+	var searchFound bool
+	for _, g := range groups {
+		if g.Section == "forum" && g.Item == "" && len(g.Available) == len(GrantActionMap["forum|"]) {
+			searchFound = true
+			break
+		}
+	}
+	if !searchFound {
+		t.Fatalf("missing forum| search group")
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)

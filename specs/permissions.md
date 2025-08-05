@@ -72,6 +72,9 @@ Permission actions describe groups of related operations. The main verbs are:
 
 Sections may introduce extra actions but these form the base vocabulary used by
 the templates and permission checks.
+Grants with an empty `item` provide section-wide search access. For instance,
+`forum|` paired with the `search` action allows a user to search all forum
+topics.
 The grant editor uses the mapping defined in `handlers/admin/role_grants.go`
 to list available actions for each section and item type.
 Announcements use these actions to control which news posts appear globally. Administrator pages call `AdminPromoteAnnouncement` and `AdminDemoteAnnouncement` while `GetActiveAnnouncementWithNewsForUser` retrieves the visible announcement.
@@ -144,16 +147,19 @@ Many queries now filter results directly in SQL using `lister_id` together with 
 
 | `section`  | `item`     | `action`        | Meaning |
 |------------|------------|-----------------|---------|
+| `blogs`    | —          | `search`        | Search blog entries |
 | `blogs`    | `entry`    | `see`           | List blog entries |
 | `blogs`    | `entry`    | `view`          | View a blog entry |
 | `blogs`    | `entry`    | `post`          | Publish a new blog entry |
 | `blogs`    | `entry`    | `edit`          | Modify any blog entry |
+| `faq`      | —          | `search`        | Search FAQ content |
 | `faq`      | `category` | `see`           | List FAQ categories |
 | `faq`      | `category` | `view`          | View questions in a FAQ category |
 | `faq`      | `question` | `see`           | List FAQ questions |
 | `faq`      | `question` | `view`          | View a FAQ question and answer |
 | `faq`      | `question` | `post`          | Submit a new FAQ question |
 | `faq`      | `question` | `edit`          | Update an existing FAQ question |
+| `forum`    | —          | `search`        | Search forums |
 | `forum`    | `category` | `see`           | Discover forum categories |
 | `forum`    | `category` | `view`          | View topics in the category |
 | `forum`    | `thread`   | `see`           | Show a thread in listings |
@@ -166,21 +172,24 @@ Many queries now filter results directly in SQL using `lister_id` together with 
 | `forum`    | `topic`    | `reply`         | Reply in the topic's threads |
 | `forum`    | `topic`    | `post`          | Start a new thread in the topic |
 | `forum`    | `topic`    | `edit`          | Edit threads in the topic |
+| `imagebbs` | —          | `search`        | Search image boards |
 | `imagebbs` | `board`    | `see`           | List image boards |
 | `imagebbs` | `board`    | `view`          | View posts on a board |
 | `imagebbs` | `board`    | `post`          | Create a new post on the board |
+| `linker`   | —          | `search`        | Search links |
 | `linker`   | `category` | `see`           | Browse link categories |
 | `linker`   | `category` | `view`          | View links in a category |
 | `linker`   | `link`     | `see`           | Show a link in lists |
 | `linker`   | `link`     | `view`          | View link details |
 | `linker`   | `link`     | `comment`       | Comment on a link |
 | `linker`   | `link`     | `reply`         | Reply to a link comment |
+| `news`     | —          | `search`        | Search news posts |
 | `news`     | `post`     | `see`           | Show news posts in lists |
 | `news`     | `post`     | `view`          | View a news post |
 | `news`     | `post`     | `reply`         | Comment on a news post |
 | `news`     | `post`     | `post`          | Publish a news post |
 | `news`     | `post`     | `edit`          | Modify a news post |
-| `search`   | —          | `search`        | Use search within a section |
+| `writing`  | —          | `search`        | Search writing articles |
 | `writing`  | `category` | `see`           | Browse writing categories |
 | `writing`  | `category` | `view`          | View a writing category |
 | `writing`  | `article`  | `see`           | Show writing articles in lists |

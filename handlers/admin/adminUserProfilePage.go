@@ -19,7 +19,7 @@ func adminUserProfilePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("User %s", user.Username.String)
-	handlers.TemplateHandler(w, r, "userProfile.gohtml", cd)
+	handlers.TemplateHandler(w, r, "userProfile.gohtml", struct{}{})
 }
 
 func adminUserAddCommentPage(w http.ResponseWriter, r *http.Request) {

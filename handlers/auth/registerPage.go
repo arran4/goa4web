@@ -33,7 +33,7 @@ var _ tasks.Task = (*RegisterTask)(nil)
 func (RegisterTask) Page(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Register"
-	handlers.TemplateHandler(w, r, "registerPage.gohtml", cd)
+	handlers.TemplateHandler(w, r, "registerPage.gohtml", struct{}{})
 }
 
 // RegisterActionPage handles user creation from the registration form.

@@ -103,7 +103,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	data := Data{CoreData: cd, Replyable: true, BoardId: bid, ForumThreadId: thid}
 
 	if !data.CoreData.HasGrant("imagebbs", "board", "view", int32(bid)) {
-		_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd)
+		_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{})
 		return
 	}
 
@@ -174,7 +174,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd)
+			_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{})
 			return
 		default:
 			log.Printf("getAllBoardsByParentBoardId Error: %s", err)
@@ -222,7 +222,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd)
+			_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{})
 			return nil
 		default:
 			return fmt.Errorf("get image post fail %w", handlers.ErrRedirectOnSamePageHandler(err))

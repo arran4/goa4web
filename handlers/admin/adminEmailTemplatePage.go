@@ -88,5 +88,5 @@ func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cd.SetCurrentTemplate(name, r.URL.Query().Get("error"))
-	handlers.TemplateHandler(w, r, "emailTemplateEditPage.gohtml", cd)
+	handlers.TemplateHandler(w, r, "emailTemplateEditPage.gohtml", struct{}{})
 }

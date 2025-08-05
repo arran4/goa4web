@@ -1,7 +1,7 @@
 {{ define "blogsPage" }}
     {{ template "head" $ }}
     {{ $rows := "" }}
-    {{ if cd.BlogListUID }}
+    {{ if cd.CurrentProfileUserID }}
         {{ $rows = cd.BlogListForSelectedAuthor }}
     {{ else }}
         {{ $rows = cd.BlogList }}

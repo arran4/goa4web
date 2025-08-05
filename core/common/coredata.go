@@ -133,9 +133,7 @@ type CoreData struct {
 	announcement             lazy.Value[*db.GetActiveAnnouncementWithNewsForListerRow]
 	blogEntries              map[int32]*lazy.Value[*db.GetBlogEntryForListerByIDRow]
 	bloggers                 lazy.Value[[]*db.ListBloggersForListerRow]
-	blogListOffset           int
 	blogListRows             lazy.Value[[]*db.ListBlogEntriesByAuthorForListerRow]
-	blogListUID              int32
 	bookmarks                lazy.Value[*db.GetBookmarksForUserRow]
 	currentBlogID            int32
 	currentBoardID           int32
@@ -453,11 +451,11 @@ func (cd *CoreData) BlogList() ([]*db.ListBlogEntriesByAuthorForListerRow, error
 			return nil, nil
 		}
 		rows, err := cd.queries.ListBlogEntriesByAuthorForLister(cd.ctx, db.ListBlogEntriesByAuthorForListerParams{
-			AuthorID: cd.blogListUID,
+			AuthorID: cd.currentProfileUserID,
 			ListerID: cd.UserID,
 			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 			Limit:    15,
-			Offset:   int32(cd.blogListOffset),
+			Offset:   int32(cd.currentOffset),
 		})
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
@@ -475,12 +473,6 @@ func (cd *CoreData) BlogList() ([]*db.ListBlogEntriesByAuthorForListerRow, error
 		return list, nil
 	})
 }
-
-// BlogListOffset returns the offset parameter for the blog list.
-func (cd *CoreData) BlogListOffset() int { return cd.blogListOffset }
-
-// BlogListUID returns the user ID parameter for the blog list.
-func (cd *CoreData) BlogListUID() int32 { return cd.blogListUID }
 
 // Bookmarks returns the user's bookmark list loaded lazily.
 func (cd *CoreData) Bookmarks() (*db.GetBookmarksForUserRow, error) {
@@ -1721,12 +1713,6 @@ func (cd *CoreData) Session() *sessions.Session { return cd.session }
 // SessionManager returns the configured session manager, if any.
 func (cd *CoreData) SessionManager() SessionManager { return cd.sessionProxy }
 
-// SetBlogListParams stores parameters for listing blogs.
-func (cd *CoreData) SetBlogListParams(uid int32, offset int) {
-	cd.blogListUID = uid
-	cd.blogListOffset = offset
-}
-
 // SetCurrentBlog stores the requested blog entry ID.
 func (cd *CoreData) SetCurrentBlog(id int32) { cd.currentBlogID = id }
 
@@ -1736,11 +1722,17 @@ func (cd *CoreData) SetCurrentNewsPost(id int32) { cd.currentNewsPostID = id }
 // SetCurrentProfileUserID records the user ID for profile lookups.
 func (cd *CoreData) SetCurrentProfileUserID(id int32) { cd.currentProfileUserID = id }
 
+// CurrentProfileUserID returns the user ID for profile lookups.
+func (cd *CoreData) CurrentProfileUserID() int32 { return cd.currentProfileUserID }
+
 // SetCurrentRequestID stores the request ID for subsequent lookups.
 func (cd *CoreData) SetCurrentRequestID(id int32) { cd.currentRequestID = id }
 
 // CurrentRequestID returns the request ID currently in context.
 func (cd *CoreData) CurrentRequestID() int32 { return cd.currentRequestID }
+
+// Offset returns the current pagination offset.
+func (cd *CoreData) Offset() int { return cd.currentOffset }
 
 // SetCurrentRoleID stores the role ID for subsequent lookups.
 func (cd *CoreData) SetCurrentRoleID(id int32) { cd.currentRoleID = id }

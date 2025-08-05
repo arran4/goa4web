@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
+	"errors"
 	"flag"
 	"fmt"
 	"github.com/arran4/goa4web/internal/app/dbstart"
@@ -27,14 +28,16 @@ func openDB(cfg *config.RuntimeConfig, reg *dbdrivers.Registry) (*sql.DB, error)
 	var connector driver.Connector = db.NewLoggingConnector(c, cfg.DBLogVerbosity)
 	sdb := sql.OpenDB(connector)
 	if err := sdb.Ping(); err != nil {
-		// TODO better error reporting also consolidate?
-		err := sdb.Close()
-		if err != nil {
-			return nil, err
-		}
-		return nil, err
+		return nil, closeAndWrap(sdb, fmt.Errorf("ping database: %w", err))
 	}
 	return sdb, nil
+}
+
+func closeAndWrap(db *sql.DB, err error) error {
+	if cerr := db.Close(); cerr != nil {
+		return errors.Join(err, fmt.Errorf("close db: %w", cerr))
+	}
+	return err
 }
 
 // dbMigrateCmd implements "db migrate".

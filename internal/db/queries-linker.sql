@@ -224,7 +224,7 @@ WHERE l.idlinker = sqlc.arg(idlinker)
       AND g.item='link'
       AND g.action IN ('view','comment','reply')
       AND g.active=1
-      AND g.item_id = l.idlinker
+      AND (g.item_id = l.idlinker OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(viewer_user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )

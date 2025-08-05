@@ -30,6 +30,9 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
+// Ensure SessionProxy implements SessionManager.
+var _ SessionManager = (*db.SessionProxy)(nil)
+
 // IndexItem represents a navigation item linking to site sections.
 type IndexItem struct {
 	Name string
@@ -105,8 +108,8 @@ type CoreData struct {
 	SiteTitle         string
 	UserID            int32
 
-	session        *sessions.Session
-	sessionManager SessionManager
+	session      *sessions.Session
+	sessionProxy SessionManager
 
 	ctx           context.Context
 	customQueries db.CustomQueries
@@ -1716,7 +1719,7 @@ func (cd *CoreData) SelectedThreadLoaded() *db.GetThreadLastPosterAndPermsRow {
 func (cd *CoreData) Session() *sessions.Session { return cd.session }
 
 // SessionManager returns the configured session manager, if any.
-func (cd *CoreData) SessionManager() SessionManager { return cd.sessionManager }
+func (cd *CoreData) SessionManager() SessionManager { return cd.sessionProxy }
 
 // SetBlogListParams stores parameters for listing blogs.
 func (cd *CoreData) SetBlogListParams(uid int32, offset int) {
@@ -2111,7 +2114,7 @@ func WithSession(s *sessions.Session) CoreOption {
 
 // WithSessionManager sets the session manager used by CoreData.
 func WithSessionManager(sm SessionManager) CoreOption {
-	return func(cd *CoreData) { cd.sessionManager = sm }
+	return func(cd *CoreData) { cd.sessionProxy = sm }
 }
 
 // WithEvent links an event to the CoreData object.

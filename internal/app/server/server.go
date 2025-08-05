@@ -36,20 +36,21 @@ import (
 
 // Server bundles the application's configuration, router and runtime dependencies.
 type Server struct {
-	RouterReg   *router.Registry
-	Nav         *nav.Registry
-	Config      *config.RuntimeConfig
-	Router      http.Handler
-	Store       *sessions.CookieStore
-	DB          *sql.DB
-	Bus         *eventbus.Bus
-	EmailReg    *email.Registry
-	ImageSigner *imagesign.Signer
-	LinkSigner  *linksign.Signer
-	TasksReg    *tasks.Registry
-	DBReg       *dbdrivers.Registry
-	DLQReg      *dlq.Registry
-	Websocket   *websocket.Module
+	RouterReg      *router.Registry
+	Nav            *nav.Registry
+	Config         *config.RuntimeConfig
+	Router         http.Handler
+	Store          *sessions.CookieStore
+	DB             *sql.DB
+	Bus            *eventbus.Bus
+	EmailReg       *email.Registry
+	ImageSigner    *imagesign.Signer
+	LinkSigner     *linksign.Signer
+	SessionManager common.SessionManager
+	TasksReg       *tasks.Registry
+	DBReg          *dbdrivers.Registry
+	DLQReg         *dlq.Registry
+	Websocket      *websocket.Module
 
 	WorkerCancel context.CancelFunc
 
@@ -147,6 +148,11 @@ func WithLinkSigner(signer *linksign.Signer) Option {
 	return func(s *Server) { s.LinkSigner = signer }
 }
 
+// WithSessionManager sets the session manager used by the server.
+func WithSessionManager(sm common.SessionManager) Option {
+	return func(s *Server) { s.SessionManager = sm }
+}
+
 // WithDBRegistry sets the database driver registry.
 func WithDBRegistry(r *dbdrivers.Registry) Option { return func(s *Server) { s.DBReg = r } }
 
@@ -205,7 +211,10 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 			}
 
 			queries := db.New(s.DB)
-			sm := db.NewSessionProxy(queries)
+			sm := s.SessionManager
+			if sm == nil {
+				sm = db.NewSessionProxy(queries)
+			}
 			if s.Config.DBLogVerbosity > 0 {
 				log.Printf("db pool stats: %+v", s.DB.Stats())
 			}

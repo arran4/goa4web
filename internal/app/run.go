@@ -155,6 +155,7 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 		}
 	}
 	queries := db.New(o.DB)
+	sm := db.NewSessionProxy(queries)
 	if err := corelanguage.EnsureDefaultLanguage(context.Background(), queries, cfg.DefaultLanguage); err != nil {
 		return nil, fmt.Errorf("ensure default language: %w", err)
 	}
@@ -197,6 +198,7 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 		server.WithDBRegistry(o.DBReg),
 		server.WithWebsocket(wsMod),
 		server.WithTasksRegistry(o.TasksReg),
+		server.WithSessionManager(sm),
 	)
 
 	taskEventMW := middleware.NewTaskEventMiddleware(o.Bus)

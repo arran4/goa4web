@@ -142,10 +142,51 @@ Active announcements reference a news post and are only shown to listers permitt
 
 Many queries now filter results directly in SQL using `lister_id` together with the lister's effective roles. Each query matches against grants so only records the lister may access are returned. The table below lists the combinations used for each section.
 
-| `section`  | `item`     | `action`        | Meaning                                                                       |
-|------------|------------|-----------------|-------------------------------------------------------------------------------|
-| `news`     | `post`     | `see`           | User or group can see all posts (or post if item id is specified) in a list   |
-| `news`     | `post`     | `see`           | User or group can see all posts (or post if item id is specified) in a list   |
+| `section`  | `item`     | `action`        | Meaning |
+|------------|------------|-----------------|---------|
+| `blogs`    | `entry`    | `see`           | List blog entries |
+| `blogs`    | `entry`    | `view`          | View a blog entry |
+| `blogs`    | `entry`    | `post`          | Publish a new blog entry |
+| `blogs`    | `entry`    | `edit`          | Modify any blog entry |
+| `faq`      | `category` | `see`           | List FAQ categories |
+| `faq`      | `category` | `view`          | View questions in a FAQ category |
+| `faq`      | `question` | `see`           | List FAQ questions |
+| `faq`      | `question` | `view`          | View a FAQ question and answer |
+| `faq`      | `question` | `post`          | Submit a new FAQ question |
+| `faq`      | `question` | `edit`          | Update an existing FAQ question |
+| `forum`    | `category` | `see`           | Discover forum categories |
+| `forum`    | `category` | `view`          | View topics in the category |
+| `forum`    | `thread`   | `see`           | Show a thread in listings |
+| `forum`    | `thread`   | `view`          | View posts within a thread |
+| `forum`    | `thread`   | `reply`         | Reply within the thread |
+| `forum`    | `thread`   | `post`          | Add a new post in the thread |
+| `forum`    | `thread`   | `edit`          | Edit posts in the thread |
+| `forum`    | `topic`    | `see`           | Show a topic in listings |
+| `forum`    | `topic`    | `view`          | View the topic details |
+| `forum`    | `topic`    | `reply`         | Reply in the topic's threads |
+| `forum`    | `topic`    | `post`          | Start a new thread in the topic |
+| `forum`    | `topic`    | `edit`          | Edit threads in the topic |
+| `imagebbs` | `board`    | `see`           | List image boards |
+| `imagebbs` | `board`    | `view`          | View posts on a board |
+| `imagebbs` | `board`    | `post`          | Create a new post on the board |
+| `linker`   | `category` | `see`           | Browse link categories |
+| `linker`   | `category` | `view`          | View links in a category |
+| `linker`   | `link`     | `see`           | Show a link in lists |
+| `linker`   | `link`     | `view`          | View link details |
+| `linker`   | `link`     | `comment`       | Comment on a link |
+| `linker`   | `link`     | `reply`         | Reply to a link comment |
+| `news`     | `post`     | `see`           | Show news posts in lists |
+| `news`     | `post`     | `view`          | View a news post |
+| `news`     | `post`     | `reply`         | Comment on a news post |
+| `news`     | `post`     | `post`          | Publish a news post |
+| `news`     | `post`     | `edit`          | Modify a news post |
+| `search`   | —          | `search`        | Use search within a section |
+| `writing`  | `category` | `see`           | Browse writing categories |
+| `writing`  | `category` | `view`          | View a writing category |
+| `writing`  | `article`  | `see`           | Show writing articles in lists |
+| `writing`  | `article`  | `view`          | Read a writing article |
+| `writing`  | `article`  | `post`          | Publish a writing article |
+| `writing`  | `article`  | `edit`          | Edit a writing article |
 
 
 Administrator endpoints are guarded by the `AdminCheckerMiddleware` implemented

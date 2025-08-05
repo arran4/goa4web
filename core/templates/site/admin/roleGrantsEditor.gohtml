@@ -27,6 +27,7 @@
             <td>
                 <form method="post" action="/admin/role/{{ $.Role.ID }}/grant/update" class="commit-form">
                     {{ csrfField }}
+                    <input type="hidden" name="task" value="Update grants">
                     <input type="hidden" name="section" value="{{ .Section }}">
                     <input type="hidden" name="item" value="{{ .Item }}">
                     <input type="hidden" name="item_id" value="{{ if .ItemID.Valid }}{{ .ItemID.Int32 }}{{ end }}">

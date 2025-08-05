@@ -79,6 +79,9 @@ func (ReplyBlogTask) IndexData(data map[string]any) []searchworker.IndexEventDat
 var _ searchworker.IndexedTask = ReplyBlogTask{}
 
 func (ReplyBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
+
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return handlers.SessionFetchFail{}
@@ -98,7 +101,6 @@ func (ReplyBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("no bid %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("no bid")))
 	}
 
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
 
 	blog, err := queries.GetBlogEntryForListerByID(r.Context(), db.GetBlogEntryForListerByIDParams{

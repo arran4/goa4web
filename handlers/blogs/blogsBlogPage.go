@@ -40,12 +40,13 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
+
 	vars := mux.Vars(r)
 	blogId, _ := strconv.Atoi(vars["blog"])
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	common.WithOffset(offset)(cd)
+	queries := cd.Queries()
 	data := Data{
 		CoreData:    cd,
 		IsReplyable: true,

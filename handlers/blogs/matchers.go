@@ -21,13 +21,16 @@ import (
 // RequireBlogAuthor ensures the requester authored the blog entry referenced in the URL.
 func RequireBlogAuthor(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		cd.LoadSelectionsFromRequest(r)
+
 		vars := mux.Vars(r)
 		blogID, err := strconv.Atoi(vars["blog"])
 		if err != nil {
 			http.NotFound(w, r)
 			return
 		}
-		queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+		queries := cd.Queries()
 		session, err := core.GetSession(r)
 		if err != nil {
 			http.NotFound(w, r)
@@ -50,7 +53,6 @@ func RequireBlogAuthor(next http.Handler) http.Handler {
 			}
 			return
 		}
-		cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 		if cd != nil {
 			cd.BlogEntryByID(int32(blogID), lazy.Set[*db.GetBlogEntryForListerByIDRow](row))
 			cd.SetCurrentBlog(int32(blogID))

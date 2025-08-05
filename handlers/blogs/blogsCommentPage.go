@@ -43,9 +43,10 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	blogId, _ := strconv.Atoi(vars["blog"])
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	common.WithOffset(offset)(cd)
+	cd.LoadSelectionsFromRequest(r)
+	queries := cd.Queries()
+
 	data := Data{
 		CoreData:    cd,
 		IsReplyable: true,

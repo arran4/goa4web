@@ -235,6 +235,18 @@ func buildGrantGroups(ctx context.Context, cd *common.CoreData, roleID int32) ([
 		}
 	}
 
+	// Ensure all section/item pairs appear even when the role has no grants.
+	for key := range GrantActionMap {
+		parts := strings.Split(key, "|")
+		if len(parts) != 2 {
+			continue
+		}
+		gkey := fmt.Sprintf("%s|%s|0", parts[0], parts[1])
+		if _, ok := groupMap[gkey]; !ok {
+			groupMap[gkey] = &GrantGroup{Section: parts[0], Item: parts[1], ItemID: sql.NullInt32{}}
+		}
+	}
+
 	groups := make([]GrantGroup, 0, len(groupMap))
 	for _, grp := range groupMap {
 		if acts, ok := GrantActionMap[grp.Section+"|"+grp.Item]; ok {

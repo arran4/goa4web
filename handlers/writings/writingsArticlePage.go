@@ -44,6 +44,11 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
+	if writing == nil {
+		log.Printf("get writing: no writing found")
+		handlers.RenderErrorPage(w, r, fmt.Errorf("No writing found"))
+		return
+	}
 	canComment := cd.HasGrant("writing", "article", "comment", writing.Idwriting)
 	canReply := cd.HasGrant("writing", "article", "reply", writing.Idwriting)
 	if writing == nil || !(cd.HasGrant("writing", "article", "view", writing.Idwriting) || canComment || canReply) {

@@ -8,6 +8,7 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
 )
 
 // RedirectHandler shows a confirmation page before leaving the site or
@@ -19,7 +20,8 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 	ts := r.URL.Query().Get("ts")
 	sig := r.URL.Query().Get("sig")
 	if signer == nil || raw == "" || !signer.Verify(raw, ts, sig) {
-		http.Error(w, "invalid link", http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("invalid link"))
 		return
 	}
 	if r.URL.Query().Get("go") != "" {
@@ -44,6 +46,7 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := cd.ExecuteSiteTemplate(w, r, "externalLinkPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 	}
 }

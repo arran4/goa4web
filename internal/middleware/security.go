@@ -3,6 +3,7 @@ package middleware
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"net/netip"
@@ -11,6 +12,7 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
 )
 
 func normalizeIP(ip string) string {
@@ -49,7 +51,8 @@ func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 			bans, err := cd.Queries().ListActiveBans(r.Context())
 			if err != nil && !errors.Is(err, sql.ErrNoRows) {
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				w.WriteHeader(http.StatusInternalServerError)
+				handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 				return
 			}
 			addr, parseErr := netip.ParseAddr(ip)
@@ -57,11 +60,13 @@ func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 				for _, b := range bans {
 					if p, err := netip.ParsePrefix(b.IpNet); err == nil {
 						if p.Contains(addr) {
-							http.Error(w, "Forbidden", http.StatusForbidden)
+							w.WriteHeader(http.StatusForbidden)
+							handlers.RenderErrorPage(w, r, fmt.Errorf("Forbidden"))
 							return
 						}
 					} else if b.IpNet == ip {
-						http.Error(w, "Forbidden", http.StatusForbidden)
+						w.WriteHeader(http.StatusForbidden)
+						handlers.RenderErrorPage(w, r, fmt.Errorf("Forbidden"))
 						return
 					}
 				}

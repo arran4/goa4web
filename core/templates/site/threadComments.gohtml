@@ -1,6 +1,6 @@
 {{ define "threadComments" }}
-    {{ if gt $.Offset 0 }}
-        <br>Skipping {{ $.Offset }} comments.<br><br><br>
+    {{ if gt (cd.Offset) 0 }}
+        <br>Skipping {{ cd.Offset }} comments.<br><br><br>
     {{ end }}
     {{ range $.Comments }}
         {{ template "comment" . }}

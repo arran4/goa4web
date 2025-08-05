@@ -1,26 +1,29 @@
 {{ template "head" $ }}
-    {{ if .Writing }}
-        <font size="4">At {{ .Writing.Published.Time }}, By {{ .Writing.Writerusername.String }}; {{ .Writing.Title.String | a4code2html }}</font>:
-        {{ if .Writing.Private.Bool }} (Restricted access) {{ end }}
+    {{ $writing := cd.CurrentWritingLoaded }}
+    {{ if $writing }}
+        <font size="4">At {{ $writing.Published.Time }}, By {{ $writing.Writerusername.String }}; {{ $writing.Title.String | a4code2html }}</font>:
+        {{ if $writing.Private.Bool }} (Restricted access) {{ end }}
         {{ if or .CanEdit .IsAuthor }}
-            [<a href="/writings/article/{{ .Writing.Idwriting }}/edit">EDIT</a>]
-            {{ if .IsAuthor }} [<a href="/admin/writings/users/access?category={{ .Writing.WritingCategoryID }}&article={{ .Writing.Idwriting }}">APPROVED USERS</a>] {{ end }}
+            [<a href="/writings/article/{{ $writing.Idwriting }}/edit">EDIT</a>]
+            {{ if .IsAuthor }} [<a href="/admin/writings/users/access?category={{ $writing.WritingCategoryID }}&article={{ $writing.Idwriting }}">APPROVED USERS</a>] {{ end }}
         {{ end }}
         <br>
         <strong>Abstract:</strong><br>
-        {{ .Writing.Abstract.String | a4code2html }}
+        {{ $writing.Abstract.String | a4code2html }}
         <hr>
-        {{ .Writing.Writing.String | a4code2html }}
+        {{ $writing.Writing.String | a4code2html }}
         <hr>Comments:<br>
         {{ template "threadComments" $ }}
         {{ if .CanReply }}
-            <hr><font size="4">Reply:</font><br>
-            <form method="post">
+            {{ if .IsReplyable }}
+                <hr><font size="4">Reply:</font><br>
+                <form method="post">
         {{ csrfField }}
-                <textarea name="replytext" cols="40" rows="20">{{ .ReplyText }}</textarea><br>
-                {{ template "languageCombobox" $ }}
-                <input type="submit" name="task" value="Reply">
-            </form>
+                    <textarea name="replytext" cols="40" rows="20">{{ .ReplyText }}</textarea><br>
+                    {{ template "languageCombobox" }}
+                    <input type="submit" name="task" value="Reply">
+                </form>
+            {{ end }}
         {{ else }}
             Please sign-in (or sign-up) to write a reply.<br>
         {{ end }}

@@ -60,29 +60,21 @@ func (ReplyTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, erro
 }
 
 func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
-	type CommentPlus struct {
-		*db.GetCommentsByThreadIdForUserRow
-		ShowReply          bool
-		EditUrl            string
-		Editing            bool
-		Offset             int
-		Languages          []*db.Language
-		SelectedLanguageId int32
-		EditSaveUrl        string
-		AdminUrl           string
-	}
 	type Data struct {
 		*common.CoreData
-		Replyable          bool
-		Languages          []*db.Language
-		SelectedLanguageId int
-		ForumThreadId      int
-		Comments           []*CommentPlus
-		BoardId            int
-		ImagePost          *db.GetImagePostByIDForListerRow
-		Thread             *db.GetThreadLastPosterAndPermsRow
-		Offset             int
-		IsReplyable        bool
+		Replyable      bool
+		ForumThreadId  int
+		Comments       []*db.GetCommentsByThreadIdForUserRow
+		BoardId        int
+		ImagePost      *db.GetImagePostByIDForListerRow
+		Thread         *db.GetThreadLastPosterAndPermsRow
+		IsReplyable    bool
+		CanReply       bool
+		CanEditComment func(*db.GetCommentsByThreadIdForUserRow) bool
+		EditURL        func(*db.GetCommentsByThreadIdForUserRow) string
+		EditSaveURL    func(*db.GetCommentsByThreadIdForUserRow) string
+		Editing        func(*db.GetCommentsByThreadIdForUserRow) bool
+		AdminURL       func(*db.GetCommentsByThreadIdForUserRow) string
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -100,7 +92,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	thid, _ := strconv.Atoi(thidStr)
 	cd.PageTitle = fmt.Sprintf("Thread %d/%d", bid, thid)
 
-	data := Data{CoreData: cd, Replyable: true, BoardId: bid, ForumThreadId: thid}
+	data := Data{CoreData: cd, Replyable: true, BoardId: bid, ForumThreadId: thid, CanReply: cd.UserID != 0, IsReplyable: true}
 
 	if !data.CoreData.HasGrant("imagebbs", "board", "view", int32(bid)) {
 		_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd)
@@ -112,7 +104,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("getBlogEntryForListerByID_comments Error: %s", err)
+			log.Printf("thread comments: %s", err)
 			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 			return
 		}
@@ -130,43 +122,36 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	common.WithOffset(offset)(cd)
 
-	languageRows, err := data.CoreData.Languages()
-	if err != nil {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
-		return
+	commentId, _ := strconv.Atoi(r.URL.Query().Get("comment"))
+	data.Comments = commentRows
+	data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
+		return data.CoreData.CanEditAny() || cmt.IsOwner
 	}
-
-	commentIdString := r.URL.Query().Get("comment")
-	commentId, _ := strconv.Atoi(commentIdString)
-	for i, row := range commentRows {
-		editUrl := ""
-		editSaveUrl := ""
-		if data.CoreData.CanEditAny() || row.IsOwner {
-			editUrl = fmt.Sprintf("/forum/topic/%d/thread/%d?comment=%d#edit", threadRow.ForumtopicIdforumtopic, threadRow.Idforumthread, row.Idcomments)
-			editSaveUrl = fmt.Sprintf("/forum/topic/%d/thread/%d/comment/%d", threadRow.ForumtopicIdforumtopic, threadRow.Idforumthread, row.Idcomments)
-			if commentId != 0 && int32(commentId) == row.Idcomments {
-				data.IsReplyable = false
-			}
+	data.EditURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
+		if !data.CanEditComment(cmt) {
+			return ""
 		}
-
-		data.Comments = append(data.Comments, &CommentPlus{
-			GetCommentsByThreadIdForUserRow: row,
-			ShowReply:                       true,
-			EditUrl:                         editUrl,
-			EditSaveUrl:                     editSaveUrl,
-			Editing:                         commentId != 0 && int32(commentId) == row.Idcomments,
-			Offset:                          i + offset,
-			Languages:                       languageRows,
-			SelectedLanguageId:              row.LanguageIdlanguage,
-			AdminUrl: func() string {
-				if data.CoreData.HasRole("administrator") {
-					return fmt.Sprintf("/admin/comment/%d", row.Idcomments)
-				} else {
-					return ""
-				}
-			}(),
-		})
+		return fmt.Sprintf("/forum/topic/%d/thread/%d?comment=%d#edit", threadRow.ForumtopicIdforumtopic, threadRow.Idforumthread, cmt.Idcomments)
+	}
+	data.EditSaveURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
+		if !data.CanEditComment(cmt) {
+			return ""
+		}
+		return fmt.Sprintf("/forum/topic/%d/thread/%d/comment/%d", threadRow.ForumtopicIdforumtopic, threadRow.Idforumthread, cmt.Idcomments)
+	}
+	data.Editing = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
+		return data.CanEditComment(cmt) && commentId != 0 && int32(commentId) == cmt.Idcomments
+	}
+	data.AdminURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
+		if cd.HasRole("administrator") {
+			return fmt.Sprintf("/admin/comment/%d", cmt.Idcomments)
+		}
+		return ""
+	}
+	if commentId != 0 {
+		data.IsReplyable = false
 	}
 
 	data.Thread = threadRow
@@ -184,8 +169,6 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.ImagePost = post
-
-	data.Languages = languageRows
 
 	handlers.TemplateHandler(w, r, "boardThreadPage.gohtml", data)
 }

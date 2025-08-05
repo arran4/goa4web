@@ -8,7 +8,7 @@
             Abstract:<br><textarea name="abstract" cols="60" rows="10">{{ .Writing.Abstract.String }}</textarea><br>
             Writing:<br><textarea name="body" cols="60" rows="30">{{ .Writing.Writing.String }}</textarea><br>
             Private writing: <input type="checkbox" name="isitprivate" {{ if .Writing.Private.Bool }}checked{{ end }}><br>
-            {{ template "languageCombobox" $ }}
+            {{ template "languageCombobox" }}
             <input type="submit" name="task" value="Update writing">
         </form>
     {{ else }}

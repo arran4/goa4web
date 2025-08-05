@@ -46,9 +46,6 @@ func TestCommentsPageAllowsGlobalViewGrant(t *testing.T) {
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT idlanguage, nameof FROM language")).
-		WillReturnRows(sqlmock.NewRows([]string{"idlanguage", "nameof"}).AddRow(1, "en"))
-
 	linkQuery := "SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linker_category_id, l.forumthread_id, l.title, l.url, l.description, l.listed, u.username, lc.title FROM linker l JOIN users u ON l.users_idusers = u.idusers JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory WHERE l.idlinker = ? AND l.listed IS NOT NULL AND l.deleted_at IS NULL AND EXISTS ( SELECT 1 FROM grants g WHERE g.section='linker' AND g.item='link' AND g.action IN ('view','comment','reply') AND g.active=1 AND (g.item_id = l.idlinker OR g.item_id IS NULL) AND (g.user_id = ? OR g.user_id IS NULL) AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids)) ) LIMIT 1"
 	mock.ExpectQuery(regexp.QuoteMeta(linkQuery)).
 		WithArgs(int32(2), int32(1), sqlmock.AnyArg()).

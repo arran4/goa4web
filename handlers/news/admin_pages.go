@@ -30,18 +30,22 @@ func AdminNewsPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "adminNewsListPage.gohtml", cd)
 }
 
-type CommentPlus struct {
-	*db.GetCommentsByThreadIdForUserRow
-	ShowReply          bool
-	EditUrl            string
-	Editing            bool
-	Offset             int
-	Languages          []*db.Language
-	SelectedLanguageId int32
-	EditSaveUrl        string
-}
-
 func AdminNewsPostPage(w http.ResponseWriter, r *http.Request) {
+	type Data struct {
+		*common.CoreData
+		Post           *db.GetNewsPostByIdWithWriterIdAndThreadCommentCountRow
+		TopicID        int32
+		Thread         *db.GetThreadLastPosterAndPermsRow
+		Comments       []*db.GetCommentsByThreadIdForUserRow
+		CanReply       bool
+		IsReplyable    bool
+		CanEditComment func(*db.GetCommentsByThreadIdForUserRow) bool
+		EditURL        func(*db.GetCommentsByThreadIdForUserRow) string
+		EditSaveURL    func(*db.GetCommentsByThreadIdForUserRow) string
+		Editing        func(*db.GetCommentsByThreadIdForUserRow) bool
+		AdminURL       func(*db.GetCommentsByThreadIdForUserRow) string
+	}
+
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
 	pid, err := strconv.Atoi(mux.Vars(r)["news"])
@@ -63,24 +67,13 @@ func AdminNewsPostPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("GetForumTopicIdByThreadId: %v", err)
 	}
 
-	commentRows, err := queries.GetCommentsByThreadIdForUser(r.Context(), db.GetCommentsByThreadIdForUserParams{
+	comments, err := queries.GetCommentsByThreadIdForUser(r.Context(), db.GetCommentsByThreadIdForUserParams{
 		ViewerID: cd.UserID,
 		ThreadID: int32(post.ForumthreadID),
 		UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("GetCommentsByThreadIdForUser: %v", err)
-	}
-	var comments []*CommentPlus
-	for i, row := range commentRows {
-		comments = append(comments, &CommentPlus{
-			GetCommentsByThreadIdForUserRow: row,
-			ShowReply:                       false,
-			EditUrl:                         "",
-			EditSaveUrl:                     "",
-			Editing:                         false,
-			Offset:                          i,
-		})
 	}
 	threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
 		ViewerID:      cd.UserID,
@@ -92,19 +85,26 @@ func AdminNewsPostPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd.PageTitle = fmt.Sprintf("News Post %d", pid)
-	data := struct {
-		*common.CoreData
-		Post     *db.GetNewsPostByIdWithWriterIdAndThreadCommentCountRow
-		TopicID  int32
-		Thread   *db.GetThreadLastPosterAndPermsRow
-		Comments []*CommentPlus
-	}{
-		CoreData: cd,
-		Post:     post,
-		TopicID:  topicID,
-		Thread:   threadRow,
-		Comments: comments,
+	data := Data{
+		CoreData:    cd,
+		Post:        post,
+		TopicID:     topicID,
+		Thread:      threadRow,
+		Comments:    comments,
+		CanReply:    false,
+		IsReplyable: false,
 	}
+	data.CanEditComment = func(*db.GetCommentsByThreadIdForUserRow) bool { return false }
+	data.EditURL = func(*db.GetCommentsByThreadIdForUserRow) string { return "" }
+	data.EditSaveURL = func(*db.GetCommentsByThreadIdForUserRow) string { return "" }
+	data.Editing = func(*db.GetCommentsByThreadIdForUserRow) bool { return false }
+	data.AdminURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
+		if cd.HasRole("administrator") {
+			return fmt.Sprintf("/admin/comment/%d", cmt.Idcomments)
+		}
+		return ""
+	}
+
 	handlers.TemplateHandler(w, r, "adminNewsPostPage.gohtml", data)
 }
 

@@ -40,7 +40,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		cd.PrevLink = "/blogs?" + qv.Encode()
 	}
 
-	handlers.TemplateHandler(w, r, "blogsPage", cd)
+	handlers.TemplateHandler(w, r, "blogsPage", struct{}{})
 }
 
 func CustomBlogIndex(data *common.CoreData, r *http.Request) {

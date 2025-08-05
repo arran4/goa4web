@@ -152,5 +152,5 @@ func (ForgotPasswordTask) SelfEmailBroadcast() bool { return true }
 func (ForgotPasswordTask) Page(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Password Reset"
-	handlers.TemplateHandler(w, r, "forgotPasswordPage.gohtml", cd)
+	handlers.TemplateHandler(w, r, "forgotPasswordPage.gohtml", struct{}{})
 }

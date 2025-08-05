@@ -27,7 +27,7 @@ func AdminNewsPage(w http.ResponseWriter, r *http.Request) {
 		cd.StartLink = "/admin/news?offset=0"
 	}
 	cd.PageTitle = "News Admin"
-	handlers.TemplateHandler(w, r, "adminNewsListPage.gohtml", cd)
+	handlers.TemplateHandler(w, r, "adminNewsListPage.gohtml", struct{}{})
 }
 
 type CommentPlus struct {

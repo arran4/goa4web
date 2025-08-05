@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/handlers"
@@ -30,6 +32,9 @@ func (CancelTask) AdminInternalNotificationTemplate() *string {
 }
 
 func (CancelTask) Action(w http.ResponseWriter, r *http.Request) any {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
+
 	vars := mux.Vars(r)
 	blogId, _ := strconv.Atoi(vars["blog"])
 	return handlers.RedirectHandler(fmt.Sprintf("/blogs/blog/%d/comments", blogId))

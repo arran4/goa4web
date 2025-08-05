@@ -18,7 +18,7 @@ LIMIT 1;
 UPDATE site_announcements SET active = ? WHERE id = ?;
 
 -- name: GetActiveAnnouncementWithNewsForLister :one
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT a.id, n.idsiteNews, n.news

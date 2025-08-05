@@ -25,6 +25,14 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 		"csrfField": func() template.HTML { return csrf.TemplateField(r) },
 		"csrfToken": func() string { return csrf.Token(r) },
 		"version":   func() string { return goa4web.Version },
+		"dict": func(values ...any) map[string]any {
+			m := make(map[string]any)
+			for i := 0; i+1 < len(values); i += 2 {
+				k, _ := values[i].(string)
+				m[k] = values[i+1]
+			}
+			return m
+		},
 		"a4code2html": func(s string) template.HTML {
 			c := a4code2html.New(mapper)
 			c.CodeType = a4code2html.CTHTML

@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
@@ -14,42 +13,32 @@ import (
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 )
 
 func NewsPostPage(w http.ResponseWriter, r *http.Request) {
-	type CommentPlus struct {
-		*db.GetCommentsByThreadIdForUserRow
-		ShowReply          bool
-		EditUrl            string
-		Editing            bool
-		Offset             int
-		Languages          []*db.Language
-		SelectedLanguageId int
-		EditSaveUrl        string
-		AdminUrl           string
-	}
 	type Data struct {
-		Post               *common.NewsPost
-		Languages          []*db.Language
-		SelectedLanguageId int32
-		Topic              *db.Forumtopic
-		Comments           []*CommentPlus
-		Offset             int
-		IsReplying         bool
-		IsReplyable        bool
-		Thread             *db.GetThreadLastPosterAndPermsRow
-		ReplyText          string
+		Post           *common.NewsPost
+		Thread         *db.GetThreadLastPosterAndPermsRow
+		Comments       []*db.GetCommentsByThreadIdForUserRow
+		ReplyText      string
+		IsReplyable    bool
+		CanReply       bool
+		CanEditComment func(*db.GetCommentsByThreadIdForUserRow) bool
+		EditURL        func(*db.GetCommentsByThreadIdForUserRow) string
+		EditSaveURL    func(*db.GetCommentsByThreadIdForUserRow) string
+		Editing        func(*db.GetCommentsByThreadIdForUserRow) bool
+		AdminURL       func(*db.GetCommentsByThreadIdForUserRow) string
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "News"
 	queries := cd.Queries()
 	data := Data{
-		IsReplying:         r.URL.Query().Has("comment"),
-		IsReplyable:        true,
-		SelectedLanguageId: cd.PreferredLanguageID(cd.Config.DefaultLanguage),
+		IsReplyable: true,
+		CanReply:    cd.UserID != 0,
 	}
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["news"])
@@ -88,19 +77,9 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	editingId, _ := strconv.Atoi(r.URL.Query().Get("edit"))
 	replyType := r.URL.Query().Get("type")
 
-	commentRows, err := queries.GetCommentsByThreadIdForUser(r.Context(), db.GetCommentsByThreadIdForUserParams{
-		ViewerID: uid,
-		ThreadID: int32(post.ForumthreadID),
-		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
+	commentRows, err := cd.ThreadComments(post.ForumthreadID)
 	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-		default:
-			log.Printf("getBlogEntryForUserById_comments Error: %s", err)
-			handlers.RenderErrorPage(w, r, err)
-			return
-		}
+		log.Printf("thread comments: %v", err)
 	}
 
 	threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
@@ -118,63 +97,51 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	cd = r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	languageRows, err := cd.Languages()
-	if err != nil {
-		handlers.RenderErrorPage(w, r, err)
-		return
-	}
-	data.Languages = languageRows
-
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	common.WithOffset(offset)(cd)
+	editCommentId, _ := strconv.Atoi(r.URL.Query().Get("editComment"))
 
-	commentIdString := r.URL.Query().Get("comment")
-	commentId, _ := strconv.Atoi(commentIdString)
-
-	editCommentIdString := r.URL.Query().Get("editComment")
-	editCommentId, _ := strconv.Atoi(editCommentIdString)
-	for i, row := range commentRows {
-		editUrl := ""
-		editSaveUrl := ""
-		if cd.CanEditAny() || row.IsOwner {
-			editUrl = fmt.Sprintf("?editComment=%d#edit", row.Idcomments)
-			editSaveUrl = fmt.Sprintf("/news/news/%d/comment/%d", pid, row.Idcomments)
-			if commentId != 0 && int32(commentId) == row.Idcomments {
-				data.IsReplyable = false
-			}
-		}
-
-		if int32(commentId) == row.Idcomments {
-			switch replyType {
-			case "full":
-				data.ReplyText = a4code.FullQuoteOf(row.Posterusername.String, row.Text.String)
-			default:
-				data.ReplyText = a4code.QuoteOfText(row.Posterusername.String, row.Text.String)
-			}
-		}
-
-		data.Comments = append(data.Comments, &CommentPlus{
-			GetCommentsByThreadIdForUserRow: row,
-			ShowReply:                       cd.UserID != 0,
-			EditUrl:                         editUrl,
-			EditSaveUrl:                     editSaveUrl,
-			Editing:                         editCommentId != 0 && int32(editCommentId) == row.Idcomments,
-			Offset:                          i + offset,
-			Languages:                       languageRows,
-			SelectedLanguageId:              int(row.LanguageIdlanguage),
-			AdminUrl: func() string {
-				if cd.HasRole("administrator") {
-					return fmt.Sprintf("/admin/comment/%d", row.Idcomments)
-				} else {
-					return ""
-				}
-			}(),
-		})
-	}
-
+	data.Comments = commentRows
 	data.Thread = threadRow
 	post.Editing = editingId == int(post.Idsitenews)
 	data.Post = post
+
+	data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
+		return cd.CanEditAny() || cmt.IsOwner
+	}
+	data.EditURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
+		if !data.CanEditComment(cmt) {
+			return ""
+		}
+		return fmt.Sprintf("?editComment=%d#edit", cmt.Idcomments)
+	}
+	data.EditSaveURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
+		if !data.CanEditComment(cmt) {
+			return ""
+		}
+		return fmt.Sprintf("/news/news/%d/comment/%d", pid, cmt.Idcomments)
+	}
+	data.Editing = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
+		return data.CanEditComment(cmt) && editCommentId != 0 && int32(editCommentId) == cmt.Idcomments
+	}
+	data.AdminURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
+		if cd.HasRole("administrator") {
+			return fmt.Sprintf("/admin/comment/%d", cmt.Idcomments)
+		}
+		return ""
+	}
+
+	if c, err := cd.CurrentComment(r); err == nil && c != nil {
+		data.IsReplyable = false
+		switch replyType {
+		case "full":
+			data.ReplyText = a4code.FullQuoteOf(c.Username.String, c.Text.String)
+		default:
+			data.ReplyText = a4code.QuoteOfText(c.Username.String, c.Text.String)
+		}
+	} else if r.URL.Query().Has("comment") {
+		data.IsReplyable = false
+	}
 
 	handlers.TemplateHandler(w, r, "postPage.gohtml", data)
 }

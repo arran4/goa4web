@@ -37,7 +37,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Writing"
-
+	cd.LoadSelectionsFromRequest(r)
 	writing, err := cd.CurrentWriting()
 	if err != nil {
 		log.Printf("get writing: %v", err)

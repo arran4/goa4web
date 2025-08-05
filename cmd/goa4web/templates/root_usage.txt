@@ -11,7 +11,7 @@ Commands:
   blog    manage blog entries
   news    manage news posts
   faq     manage frequently asked questions
-  writing manage writings
+  writing manage writing articles
   ipban   manage IP bans
   audit   show recent audit log entries
   db      manage database

@@ -73,10 +73,10 @@ func TestWritingCategoriesLazy(t *testing.T) {
 	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
 	cd.UserID = 1
 
-	if _, err := cd.VisibleWritingCategories(cd.UserID); err != nil {
+	if _, err := cd.VisibleWritingCategories(); err != nil {
 		t.Fatalf("WritingCategories: %v", err)
 	}
-	if _, err := cd.VisibleWritingCategories(cd.UserID); err != nil {
+	if _, err := cd.VisibleWritingCategories(); err != nil {
 		t.Fatalf("WritingCategories second call: %v", err)
 	}
 
@@ -346,7 +346,7 @@ func TestBlogListForSelectedAuthorLazy(t *testing.T) {
 	ctx := context.Background()
 	cd := common.NewCoreData(ctx, queries, cfg, common.WithUserRoles([]string{"administrator"}))
 	cd.UserID = 1
-	cd.SetBlogListParams(1, 0)
+	cd.SetCurrentProfileUserID(1)
 
 	if _, err := cd.BlogListForSelectedAuthor(); err != nil {
 		t.Fatalf("BlogListForSelectedAuthor: %v", err)

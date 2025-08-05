@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"strings"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -34,5 +35,24 @@ func TestQueries_InsertFAQQuestionForWriter(t *testing.T) {
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
+	}
+}
+
+func TestFAQQueriesAllowGlobalGrants(t *testing.T) {
+	cases := []struct {
+		name  string
+		query string
+	}{
+		{"createFAQQuestionForWriter", createFAQQuestionForWriter},
+		{"insertFAQQuestionForWriter", insertFAQQuestionForWriter},
+		{"insertFAQRevisionForUser", insertFAQRevisionForUser},
+	}
+
+	itemSub := "(g.item = 'question' OR g.item IS NULL)"
+
+	for _, c := range cases {
+		if !strings.Contains(c.query, itemSub) {
+			t.Errorf("%s missing global item check", c.name)
+		}
 	}
 }

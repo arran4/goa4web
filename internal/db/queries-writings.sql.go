@@ -846,12 +846,12 @@ WHERE EXISTS (
 `
 
 type ListWritingCategoriesForListerParams struct {
-	ListerID int32
-	UserID   sql.NullInt32
+	ListerID      int32
+	ListerMatchID sql.NullInt32
 }
 
 func (q *Queries) ListWritingCategoriesForLister(ctx context.Context, arg ListWritingCategoriesForListerParams) ([]*WritingCategory, error) {
-	rows, err := q.db.QueryContext(ctx, listWritingCategoriesForLister, arg.ListerID, arg.UserID)
+	rows, err := q.db.QueryContext(ctx, listWritingCategoriesForLister, arg.ListerID, arg.ListerMatchID)
 	if err != nil {
 		return nil, err
 	}

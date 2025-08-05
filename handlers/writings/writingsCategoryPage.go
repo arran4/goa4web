@@ -30,7 +30,7 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 		WritingCategoryID: int32(categoryID),
 	}
 
-	cats, err := cd.CurrentUserVisibleWritingCategories()
+	cats, err := cd.VisibleWritingCategories()
 	if err != nil {
 		log.Printf("writingCategories: %v", err)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))

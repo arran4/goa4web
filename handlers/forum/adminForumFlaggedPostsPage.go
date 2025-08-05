@@ -10,11 +10,7 @@ import (
 
 // adminForumFlaggedPostsPage displays posts flagged for moderator review.
 func AdminForumFlaggedPostsPage(w http.ResponseWriter, r *http.Request) {
-	type Data struct {
-		*common.CoreData
-	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Forum - Flagged Posts"
-	data := Data{CoreData: cd}
-	handlers.TemplateHandler(w, r, "forumFlaggedPostsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "forumFlaggedPostsPage.gohtml", struct{}{})
 }

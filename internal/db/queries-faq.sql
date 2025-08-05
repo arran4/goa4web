@@ -61,7 +61,7 @@ SELECT sqlc.arg(question), sqlc.arg(writer_id), sqlc.arg(language_id)
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'faq'
-      AND g.item = 'question'
+      AND (g.item = 'question' OR g.item IS NULL)
       AND g.action = 'post'
       AND g.active = 1
       AND (g.user_id = sqlc.arg(grantee_id) OR g.user_id IS NULL)
@@ -76,7 +76,7 @@ SELECT sqlc.arg(question), sqlc.arg(answer), sqlc.arg(category_id), sqlc.arg(wri
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'faq'
-      AND g.item = 'question'
+      AND (g.item = 'question' OR g.item IS NULL)
       AND g.action = 'post'
       AND g.active = 1
       AND (g.user_id = sqlc.arg(grantee_id) OR g.user_id IS NULL)
@@ -147,7 +147,7 @@ SELECT sqlc.arg(faq_id), sqlc.arg(users_idusers), sqlc.arg(question), sqlc.arg(a
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'faq'
-      AND g.item = 'question'
+      AND (g.item = 'question' OR g.item IS NULL)
       AND g.action = 'post'
       AND g.active = 1
       AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)

@@ -144,7 +144,7 @@ func buildGrantGroups(ctx context.Context, cd *common.CoreData, roleID int32) ([
 						gi.Info = l.Title.String
 					}
 				}
-			case "writings":
+			case "writing":
 				switch g.Item.String {
 				case "category":
 					gi.Link = fmt.Sprintf("/admin/writings/category/%d/permissions#g%d", g.ItemID.Int32, g.ID)

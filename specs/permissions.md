@@ -8,7 +8,7 @@ Roles define high level capabilities that can be assigned to users. The standard
 
 - **anonymous** – guests who are not signed in
 - **user** – regular authenticated user
-- **content writer** – may publish blogs and writings
+- **content writer** – may publish blogs and writing articles
 - **moderator** – moderation abilities
 - **administrator** – full access
 
@@ -131,7 +131,7 @@ The migrations seed baseline rules for the `news` section:
 
 When a writer publishes a post they automatically receive an `edit` grant tied to that post, effectively granting them update rights for that item.
 
-Other content sections such as blogs and writings follow the same pattern: authors can post entries and receive item-scoped `edit` grants while administrators hold broader `edit` privileges.
+Other content sections such as blogs and writing follow the same pattern: authors can post entries and receive item-scoped `edit` grants while administrators hold broader `edit` privileges.
 FAQ and blog listings also honour lister language preferences and check grants in SQL. Queries such as `ListBlogEntriesForLister`, `ListBlogEntriesByAuthorForLister` and `GetFAQAnsweredQuestions` filter content based on `lister_id` and permitted languages.
 
 ### Announcements

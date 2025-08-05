@@ -59,7 +59,7 @@ func registerTasks(reg *tasks.Registry, ah *adminhandlers.Handlers) {
 	register("news", newshandlers.RegisterTasks())
 	register("search", searchhandlers.RegisterTasks())
 	register("user", userhandlers.RegisterTasks())
-	register("writings", writinghandlers.RegisterTasks())
+	register("writing", writinghandlers.RegisterTasks())
 }
 
 func main() {
@@ -271,7 +271,7 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("blog: %w", err)
 		}
 		return c.Run()
-	case "writing", "writings":
+	case "writing":
 		c, err := parseWritingCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("writing: %w", err)

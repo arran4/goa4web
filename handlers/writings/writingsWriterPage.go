@@ -56,7 +56,7 @@ func WriterPage(w http.ResponseWriter, r *http.Request) {
 		IsOffset: offset != 0,
 	}
 	for _, row := range rows {
-		if !data.CoreData.HasGrant("writing", "article", "see", row.Idwriting) {
+		if !data.CoreData.HasGrant(common.SectionWriting, common.ItemArticle, common.ActionSee, row.Idwriting) {
 			continue
 		}
 		data.Abstracts = append(data.Abstracts, row)

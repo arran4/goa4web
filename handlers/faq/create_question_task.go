@@ -35,7 +35,7 @@ func (CreateQuestionTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
-	if !cd.HasGrant("faq", "question", "post", 0) {
+	if !cd.HasGrant(common.SectionFAQ, common.ItemQuestion, common.ActionPost, 0) {
 		r.URL.RawQuery = "error=" + url.QueryEscape("Forbidden")
 		handlers.TaskErrorAcknowledgementPage(w, r)
 		return nil

@@ -13,39 +13,55 @@ import (
 )
 
 // GrantActionMap defines allowed actions for each section and item combination.
-// Key format: "section|item". Keep in sync with specs/permissions.md.
-var GrantActionMap = map[string][]string{
-	"forum|topic":      {"see", "view", "reply", "post", "edit"},
-	"forum|thread":     {"see", "view", "reply", "post", "edit"},
-	"forum|category":   {"see", "view"},
-	"linker|category":  {"see", "view"},
-	"linker|link":      {"see", "view", "comment", "reply"},
-	"imagebbs|board":   {"see", "view", "post"},
-	"news|post":        {"see", "view", "reply", "post", "edit"},
-	"blogs|entry":      {"see", "view", "post", "edit"},
-	"writing|category": {"see", "view"},
-	"writing|article":  {"see", "view", "post", "edit"},
-	"faq|category":     {"see", "view"},
-	"faq|question":     {"see", "view", "post", "edit"},
-	"search|":          {"search"},
+// Keep in sync with specs/permissions.md.
+var GrantActionMap = map[common.Section]map[common.Item][]common.Action{
+	common.SectionForum: {
+		common.ItemTopic:    {common.ActionSee, common.ActionView, common.ActionReply, common.ActionPost, common.ActionEdit},
+		common.ItemThread:   {common.ActionSee, common.ActionView, common.ActionReply, common.ActionPost, common.ActionEdit},
+		common.ItemCategory: {common.ActionSee, common.ActionView},
+	},
+	common.SectionLinker: {
+		common.ItemCategory: {common.ActionSee, common.ActionView},
+		common.ItemLink:     {common.ActionSee, common.ActionView, common.ActionComment, common.ActionReply},
+	},
+	common.SectionImageBBS: {
+		common.ItemBoard: {common.ActionSee, common.ActionView, common.ActionPost},
+	},
+	common.SectionNews: {
+		common.ItemPost: {common.ActionSee, common.ActionView, common.ActionReply, common.ActionPost, common.ActionEdit},
+	},
+	common.SectionBlogs: {
+		common.ItemEntry: {common.ActionSee, common.ActionView, common.ActionPost, common.ActionEdit},
+	},
+	common.SectionWriting: {
+		common.ItemCategory: {common.ActionSee, common.ActionView},
+		common.ItemArticle:  {common.ActionSee, common.ActionView, common.ActionPost, common.ActionEdit},
+	},
+	common.SectionFAQ: {
+		common.ItemCategory: {common.ActionSee, common.ActionView},
+		common.ItemQuestion: {common.ActionSee, common.ActionView, common.ActionPost, common.ActionEdit},
+	},
+	common.SectionSearch: {
+		common.ItemNone: {common.ActionSearch},
+	},
 }
 
 // GrantAction represents a single grant action and whether it's unsupported.
 type GrantAction struct {
-	Name        string
+	Name        common.Action
 	Unsupported bool
 }
 
 // GrantGroup represents grants grouped by section and item for editing.
 type GrantGroup struct {
-	Section     string
-	Item        string
+	Section     common.Section
+	Item        common.Item
 	ItemID      sql.NullInt32
 	Link        string
 	Info        string
 	Have        []GrantAction
 	Disabled    []GrantAction
-	Available   []string
+	Available   []common.Action
 	Unsupported bool
 }
 
@@ -97,10 +113,10 @@ func buildGrantGroups(ctx context.Context, cd *common.CoreData, roleID int32) ([
 	for _, g := range grants {
 		gi := GrantInfo{Grant: g}
 		if g.Item.Valid && g.ItemID.Valid {
-			switch g.Section {
-			case "forum":
-				switch g.Item.String {
-				case "topic":
+			switch common.Section(g.Section) {
+			case common.SectionForum:
+				switch common.Item(g.Item.String) {
+				case common.ItemTopic:
 					gi.Link = fmt.Sprintf("/admin/forum/topic/%d/grants#g%d", g.ItemID.Int32, g.ID)
 					if t, err := queries.GetForumTopicById(ctx, g.ItemID.Int32); err == nil {
 						if t.Title.Valid {
@@ -112,13 +128,13 @@ func buildGrantGroups(ctx context.Context, cd *common.CoreData, roleID int32) ([
 							gi.Info = info
 						}
 					}
-				case "category":
+				case common.ItemCategory:
 					gi.Link = fmt.Sprintf("/admin/forum/category/%d/grants#g%d", g.ItemID.Int32, g.ID)
 					if c, err := queries.GetForumCategoryById(ctx, g.ItemID.Int32); err == nil && c.Title.Valid {
 						path := buildCatPath(c.Idforumcategory)
 						gi.Info = path
 					}
-				case "thread":
+				case common.ItemThread:
 					if tid, err := queries.GetForumTopicIdByThreadId(ctx, g.ItemID.Int32); err == nil {
 						if t, err := queries.GetForumTopicById(ctx, tid); err == nil {
 							if t.Title.Valid {
@@ -132,26 +148,26 @@ func buildGrantGroups(ctx context.Context, cd *common.CoreData, roleID int32) ([
 						}
 					}
 				}
-			case "linker":
-				switch g.Item.String {
-				case "category":
+			case common.SectionLinker:
+				switch common.Item(g.Item.String) {
+				case common.ItemCategory:
 					gi.Link = fmt.Sprintf("/admin/linker/category/%d/grants#g%d", g.ItemID.Int32, g.ID)
 					if c, err := queries.GetLinkerCategoryById(ctx, g.ItemID.Int32); err == nil && c.Title.Valid {
 						gi.Info = c.Title.String
 					}
-				case "link":
+				case common.ItemLink:
 					if l, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(ctx, g.ItemID.Int32); err == nil && l.Title.Valid {
 						gi.Info = l.Title.String
 					}
 				}
-			case "writings":
-				switch g.Item.String {
-				case "category":
+			case common.SectionWriting:
+				switch common.Item(g.Item.String) {
+				case common.ItemCategory:
 					gi.Link = fmt.Sprintf("/admin/writings/category/%d/permissions#g%d", g.ItemID.Int32, g.ID)
 					if c, err := queries.GetWritingCategoryById(ctx, g.ItemID.Int32); err == nil && c.Title.Valid {
 						gi.Info = c.Title.String
 					}
-				case "article":
+				case common.ItemArticle:
 					if w, err := queries.GetWritingForListerByID(ctx, db.GetWritingForListerByIDParams{ListerID: cd.UserID, Idwriting: g.ItemID.Int32, ListerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0}}); err == nil {
 						if w.Title.Valid {
 							info := w.Title.String
@@ -162,9 +178,9 @@ func buildGrantGroups(ctx context.Context, cd *common.CoreData, roleID int32) ([
 						}
 					}
 				}
-			case "faq":
-				switch g.Item.String {
-				case "category":
+			case common.SectionFAQ:
+				switch common.Item(g.Item.String) {
+				case common.ItemCategory:
 					if cats, err := queries.GetAllFAQCategories(ctx); err == nil {
 						for _, c := range cats {
 							if c.Idfaqcategories == g.ItemID.Int32 {
@@ -175,7 +191,7 @@ func buildGrantGroups(ctx context.Context, cd *common.CoreData, roleID int32) ([
 							}
 						}
 					}
-				case "question", "question/answer":
+				case common.ItemQuestion, common.ItemQuestionAnswer:
 					if qrow, err := queries.GetFAQByID(ctx, g.ItemID.Int32); err == nil && qrow.Question.Valid {
 						text := qrow.Question.String
 						if len(text) > 40 {
@@ -187,14 +203,14 @@ func buildGrantGroups(ctx context.Context, cd *common.CoreData, roleID int32) ([
 						gi.Info = text
 					}
 				}
-			case "imagebbs":
-				if g.Item.String == "board" {
+			case common.SectionImageBBS:
+				if common.Item(g.Item.String) == common.ItemBoard {
 					if b, err := queries.GetImageBoardById(ctx, g.ItemID.Int32); err == nil && b.Title.Valid {
 						gi.Info = b.Title.String
 					}
 				}
 			}
-		} else if g.Section == "role" && g.Action != "" {
+		} else if common.Section(g.Section) == common.SectionRole && g.Action != "" {
 			if roles, err := cd.AllRoles(); err == nil {
 				for _, ro := range roles {
 					if ro.Name == g.Action {
@@ -212,19 +228,25 @@ func buildGrantGroups(ctx context.Context, cd *common.CoreData, roleID int32) ([
 		key := fmt.Sprintf("%s|%s|%d", gi.Section, gi.Item.String, gi.ItemID.Int32)
 		grp, ok := groupMap[key]
 		if !ok {
-			grp = &GrantGroup{Section: gi.Section, Item: gi.Item.String, ItemID: gi.ItemID, Link: gi.Link, Info: gi.Info}
-			if _, ok := GrantActionMap[gi.Section+"|"+gi.Item.String]; !ok {
+			grp = &GrantGroup{Section: common.Section(gi.Section), Item: common.Item(gi.Item.String), ItemID: gi.ItemID, Link: gi.Link, Info: gi.Info}
+			if items, ok := GrantActionMap[common.Section(gi.Section)]; !ok {
+				grp.Unsupported = true
+			} else if _, ok := items[common.Item(gi.Item.String)]; !ok {
 				grp.Unsupported = true
 			}
 			groupMap[key] = grp
 		}
-		ga := GrantAction{Name: gi.Action}
-		if acts, ok := GrantActionMap[gi.Section+"|"+gi.Item.String]; ok {
-			actSet := map[string]struct{}{}
-			for _, a := range acts {
-				actSet[a] = struct{}{}
-			}
-			if _, ok := actSet[gi.Action]; !ok {
+		ga := GrantAction{Name: common.Action(gi.Action)}
+		if items, ok := GrantActionMap[common.Section(gi.Section)]; ok {
+			if acts, ok := items[common.Item(gi.Item.String)]; ok {
+				actSet := map[common.Action]struct{}{}
+				for _, a := range acts {
+					actSet[a] = struct{}{}
+				}
+				if _, ok := actSet[common.Action(gi.Action)]; !ok {
+					ga.Unsupported = true
+				}
+			} else {
 				ga.Unsupported = true
 			}
 		} else {
@@ -238,31 +260,33 @@ func buildGrantGroups(ctx context.Context, cd *common.CoreData, roleID int32) ([
 	}
 
 	// Ensure all section/item pairs appear even when the role has no grants.
-	for key := range GrantActionMap {
-		parts := strings.Split(key, "|")
-		if len(parts) != 2 {
-			continue
-		}
-		gkey := fmt.Sprintf("%s|%s|0", parts[0], parts[1])
-		if _, ok := groupMap[gkey]; !ok {
-			groupMap[gkey] = &GrantGroup{Section: parts[0], Item: parts[1], ItemID: sql.NullInt32{}}
+	for section, items := range GrantActionMap {
+		for item := range items {
+			gkey := fmt.Sprintf("%s|%s|0", section, item)
+			if _, ok := groupMap[gkey]; !ok {
+				groupMap[gkey] = &GrantGroup{Section: section, Item: item, ItemID: sql.NullInt32{}}
+			}
 		}
 	}
 
 	groups := make([]GrantGroup, 0, len(groupMap))
 	for _, grp := range groupMap {
-		if acts, ok := GrantActionMap[grp.Section+"|"+grp.Item]; ok {
-			haveSet := map[string]struct{}{}
-			for _, h := range grp.Have {
-				haveSet[h.Name] = struct{}{}
-			}
-			for _, d := range grp.Disabled {
-				haveSet[d.Name] = struct{}{}
-			}
-			for _, a := range acts {
-				if _, ok := haveSet[a]; !ok {
-					grp.Available = append(grp.Available, a)
+		if items, ok := GrantActionMap[grp.Section]; ok {
+			if acts, ok := items[grp.Item]; ok {
+				haveSet := map[common.Action]struct{}{}
+				for _, h := range grp.Have {
+					haveSet[h.Name] = struct{}{}
 				}
+				for _, d := range grp.Disabled {
+					haveSet[d.Name] = struct{}{}
+				}
+				for _, a := range acts {
+					if _, ok := haveSet[a]; !ok {
+						grp.Available = append(grp.Available, a)
+					}
+				}
+			} else {
+				grp.Unsupported = true
 			}
 		} else {
 			grp.Unsupported = true

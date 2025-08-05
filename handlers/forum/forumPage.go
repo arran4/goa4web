@@ -172,7 +172,7 @@ func CustomForumIndex(data *common.CoreData, r *http.Request) {
 		)
 	}
 	if threadId != "" && topicId != "" {
-		if tid, err := strconv.Atoi(topicId); err == nil && data.HasGrant("forum", "topic", "reply", int32(tid)) {
+		if tid, err := strconv.Atoi(topicId); err == nil && data.HasGrant(common.SectionForum, common.ItemTopic, common.ActionReply, int32(tid)) {
 			data.CustomIndexItems = append(data.CustomIndexItems,
 				common.IndexItem{
 					Name: "Write Reply",
@@ -182,7 +182,7 @@ func CustomForumIndex(data *common.CoreData, r *http.Request) {
 		}
 	}
 	if categoryId != "" && topicId != "" {
-		if tid, err := strconv.Atoi(topicId); err == nil && data.HasGrant("forum", "topic", "post", int32(tid)) {
+		if tid, err := strconv.Atoi(topicId); err == nil && data.HasGrant(common.SectionForum, common.ItemTopic, common.ActionPost, int32(tid)) {
 			data.CustomIndexItems = append(data.CustomIndexItems,
 				common.IndexItem{
 					Name: "Create Thread",

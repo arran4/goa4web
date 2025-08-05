@@ -100,9 +100,9 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if !(cd.HasGrant("linker", "link", "view", link.Idlinker) ||
-		cd.HasGrant("linker", "link", "comment", link.Idlinker) ||
-		cd.HasGrant("linker", "link", "reply", link.Idlinker)) {
+	if !(cd.HasGrant(common.SectionLinker, common.ItemLink, common.ActionView, link.Idlinker) ||
+		cd.HasGrant(common.SectionLinker, common.ItemLink, common.ActionComment, link.Idlinker) ||
+		cd.HasGrant(common.SectionLinker, common.ItemLink, common.ActionReply, link.Idlinker)) {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
@@ -239,9 +239,9 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	if !(cd.HasGrant("linker", "link", "view", link.Idlinker) ||
-		cd.HasGrant("linker", "link", "comment", link.Idlinker) ||
-		cd.HasGrant("linker", "link", "reply", link.Idlinker)) {
+	if !(cd.HasGrant(common.SectionLinker, common.ItemLink, common.ActionView, link.Idlinker) ||
+		cd.HasGrant(common.SectionLinker, common.ItemLink, common.ActionComment, link.Idlinker) ||
+		cd.HasGrant(common.SectionLinker, common.ItemLink, common.ActionReply, link.Idlinker)) {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return nil
 	}

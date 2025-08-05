@@ -47,7 +47,7 @@ func (EditTask) Action(w http.ResponseWriter, r *http.Request) any {
 	postId, _ := strconv.Atoi(vars["news"])
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	if !cd.HasGrant("news", "post", "edit", int32(postId)) {
+	if !cd.HasGrant(common.SectionNews, common.ItemPost, common.ActionEdit, int32(postId)) {
 		r.URL.RawQuery = "error=" + url.QueryEscape("Forbidden")
 		handlers.TaskErrorAcknowledgementPage(w, r)
 		return nil

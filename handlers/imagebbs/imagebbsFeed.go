@@ -152,7 +152,7 @@ func BoardRssPage(w http.ResponseWriter, r *http.Request) {
 	}
 	bid, _ := strconv.Atoi(bidStr)
 	queries := cd.Queries()
-	if !cd.HasGrant("imagebbs", "board", "see", int32(bid)) {
+	if !cd.HasGrant(common.SectionImageBBS, common.ItemBoard, common.ActionSee, int32(bid)) {
 		_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{})
 		return
 	}
@@ -202,7 +202,7 @@ func BoardAtomPage(w http.ResponseWriter, r *http.Request) {
 	}
 	bid, _ := strconv.Atoi(bidStr)
 	queries := cd.Queries()
-	if !cd.HasGrant("imagebbs", "board", "see", int32(bid)) {
+	if !cd.HasGrant(common.SectionImageBBS, common.ItemBoard, common.ActionSee, int32(bid)) {
 		_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{})
 		return
 	}

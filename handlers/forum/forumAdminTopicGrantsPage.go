@@ -24,7 +24,7 @@ func AdminTopicGrantsPage(w http.ResponseWriter, r *http.Request) {
 		TopicID int32
 		Grants  []GrantInfo
 		Roles   []*db.Role
-		Actions []string
+		Actions []common.Action
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
@@ -35,7 +35,7 @@ func AdminTopicGrantsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Forum - Topic %d Grants", tid)
-	data := Data{CoreData: cd, TopicID: int32(tid), Actions: []string{"see", "view", "reply", "post", "edit"}}
+	data := Data{CoreData: cd, TopicID: int32(tid), Actions: []common.Action{common.ActionSee, common.ActionView, common.ActionReply, common.ActionPost, common.ActionEdit}}
 	if roles, err := cd.AllRoles(); err == nil {
 		data.Roles = roles
 	}
@@ -47,7 +47,7 @@ func AdminTopicGrantsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	for _, g := range grants {
-		if g.Section == "forum" && g.Item.Valid && g.Item.String == "topic" && g.ItemID.Valid && g.ItemID.Int32 == int32(tid) {
+		if common.Section(g.Section) == common.SectionForum && g.Item.Valid && common.Item(g.Item.String) == common.ItemTopic && g.ItemID.Valid && g.ItemID.Int32 == int32(tid) {
 			gi := GrantInfo{Grant: g}
 			if g.UserID.Valid {
 				if u, err := queries.SystemGetUserByID(r.Context(), g.UserID.Int32); err == nil {

@@ -98,7 +98,7 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if !data.CoreData.HasGrant("blogs", "entry", "view", blog.Idblogs) {
+	if !data.CoreData.HasGrant(common.SectionBlogs, common.ItemEntry, common.ActionView, blog.Idblogs) {
 		if err := templates.GetCompiledSiteTemplates(r.Context().Value(consts.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", struct{}{}); err != nil {
 			log.Printf("render no access page: %v", err)
 		}

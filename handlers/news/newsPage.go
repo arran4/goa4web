@@ -30,14 +30,14 @@ func CustomNewsIndex(data *common.CoreData, r *http.Request) {
 		Name: "RSS Feed",
 		Link: "/news.rss",
 	})
-	userHasAdmin := data.HasGrant("news", "post", "edit", 0) && data.AdminMode
+	userHasAdmin := data.HasGrant(common.SectionNews, common.ItemPost, common.ActionEdit, 0) && data.AdminMode
 	if userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "User Roles",
 			Link: "/admin/news/users/roles",
 		})
 	}
-	userHasWriter := data.HasGrant("news", "post", "post", 0)
+	userHasWriter := data.HasGrant(common.SectionNews, common.ItemPost, common.ActionPost, 0)
 	if userHasWriter || userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "Add News",

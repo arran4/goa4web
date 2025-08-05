@@ -3,7 +3,6 @@ package admin
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -38,35 +37,25 @@ func adminRoleGrantAddPage(w http.ResponseWriter, r *http.Request) {
 		Item        string
 		Sections    []string
 		Items       []string
-		Actions     []string
+		Actions     []common.Action
 		ItemOptions []ItemOption
 	}{CoreData: cd, Role: role, Section: section, Item: item}
 
 	if section == "" {
-		sectSet := map[string]struct{}{}
-		for k := range GrantActionMap {
-			parts := strings.Split(k, "|")
-			if len(parts) > 0 {
-				sectSet[parts[0]] = struct{}{}
-			}
-		}
-		for s := range sectSet {
-			data.Sections = append(data.Sections, s)
+		for s := range GrantActionMap {
+			data.Sections = append(data.Sections, string(s))
 		}
 	} else if item == "" {
-		itemSet := map[string]struct{}{}
-		for k := range GrantActionMap {
-			parts := strings.Split(k, "|")
-			if len(parts) == 2 && parts[0] == section {
-				itemSet[parts[1]] = struct{}{}
+		if items, ok := GrantActionMap[common.Section(section)]; ok {
+			for it := range items {
+				data.Items = append(data.Items, string(it))
 			}
 		}
-		for it := range itemSet {
-			data.Items = append(data.Items, it)
-		}
 	} else {
-		data.Actions = GrantActionMap[section+"|"+item]
-		if section == "forum" && item == "category" {
+		if items, ok := GrantActionMap[common.Section(section)]; ok {
+			data.Actions = items[common.Item(item)]
+		}
+		if common.Section(section) == common.SectionForum && common.Item(item) == common.ItemCategory {
 			queries := cd.Queries()
 			cats, _ := queries.GetAllForumCategories(r.Context())
 			catMap := map[int32]*db.Forumcategory{}

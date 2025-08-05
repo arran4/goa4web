@@ -24,20 +24,20 @@ func TestCanSearch(t *testing.T) {
 	// No grants
 	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnError(sql.ErrNoRows)
 	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnError(sql.ErrNoRows)
-	if common.CanSearch(cd, "news") {
+	if common.CanSearch(cd, common.SectionNews) {
 		t.Fatalf("expected false")
 	}
 
 	// Global grant only
 	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnError(sql.ErrNoRows)
 	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
-	if !common.CanSearch(cd, "news") {
+	if !common.CanSearch(cd, common.SectionNews) {
 		t.Fatalf("expected true with global grant")
 	}
 
 	// Grant present for section
 	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
-	if !common.CanSearch(cd, "news") {
+	if !common.CanSearch(cd, common.SectionNews) {
 		t.Fatalf("expected true with section grant")
 	}
 

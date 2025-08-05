@@ -56,7 +56,7 @@ func ShowPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !cd.HasGrant("linker", "link", "view", link.Idlinker) {
+	if !cd.HasGrant(common.SectionLinker, common.ItemLink, common.ActionView, link.Idlinker) {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
@@ -104,7 +104,7 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !cd.HasGrant("linker", "link", "view", link.Idlinker) {
+	if !cd.HasGrant(common.SectionLinker, common.ItemLink, common.ActionView, link.Idlinker) {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}

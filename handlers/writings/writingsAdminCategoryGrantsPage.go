@@ -25,7 +25,7 @@ func AdminCategoryGrantsPage(w http.ResponseWriter, r *http.Request) {
 		CategoryID int32
 		Grants     []GrantInfo
 		Roles      []*db.Role
-		Actions    []string
+		Actions    []common.Action
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -37,7 +37,7 @@ func AdminCategoryGrantsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := Data{CoreData: cd, CategoryID: int32(cid), Actions: []string{"see", "view", "post", "edit"}}
+	data := Data{CoreData: cd, CategoryID: int32(cid), Actions: []common.Action{common.ActionSee, common.ActionView, common.ActionPost, common.ActionEdit}}
 	if roles, err := cd.AllRoles(); err == nil {
 		data.Roles = roles
 	}
@@ -49,7 +49,7 @@ func AdminCategoryGrantsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	for _, g := range grants {
-		if g.Section == "writing" && g.Item.Valid && g.Item.String == "category" && g.ItemID.Valid && g.ItemID.Int32 == int32(cid) {
+		if common.Section(g.Section) == common.SectionWriting && g.Item.Valid && common.Item(g.Item.String) == common.ItemCategory && g.ItemID.Valid && g.ItemID.Int32 == int32(cid) {
 			gi := GrantInfo{Grant: g}
 			if g.UserID.Valid {
 				if u, err := queries.SystemGetUserByID(r.Context(), g.UserID.Int32); err == nil {

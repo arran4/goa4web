@@ -34,12 +34,16 @@ func TestBuildGrantGroupsIncludesAvailableActionsWithoutGrants(t *testing.T) {
 	if err != nil {
 		t.Fatalf("buildGrantGroups: %v", err)
 	}
-	if len(groups) != len(GrantActionMap) {
-		t.Fatalf("expected %d groups, got %d", len(GrantActionMap), len(groups))
+	expected := 0
+	for _, items := range GrantActionMap {
+		expected += len(items)
+	}
+	if len(groups) != expected {
+		t.Fatalf("expected %d groups, got %d", expected, len(groups))
 	}
 	var found bool
 	for _, g := range groups {
-		if g.Section == "forum" && g.Item == "topic" && len(g.Available) == len(GrantActionMap["forum|topic"]) {
+		if g.Section == common.SectionForum && g.Item == common.ItemTopic && len(g.Available) == len(GrantActionMap[common.SectionForum][common.ItemTopic]) {
 			found = true
 			break
 		}

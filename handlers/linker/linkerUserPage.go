@@ -59,7 +59,7 @@ func UserPage(w http.ResponseWriter, r *http.Request) {
 	data := Data{CoreData: cd, Username: username, HasOffset: offset != 0}
 	cd.PageTitle = fmt.Sprintf("Links by %s", username)
 	for _, row := range rows {
-		if !cd.HasGrant("linker", "link", "see", row.Idlinker) {
+		if !cd.HasGrant(common.SectionLinker, common.ItemLink, common.ActionSee, row.Idlinker) {
 			continue
 		}
 		data.Links = append(data.Links, row)

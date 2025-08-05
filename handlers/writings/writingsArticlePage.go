@@ -44,7 +44,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
-	if writing == nil || !cd.HasGrant("writing", "article", "view", writing.Idwriting) {
+	if writing == nil || !cd.HasGrant(common.SectionWriting, common.ItemArticle, common.ActionView, writing.Idwriting) {
 		if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{}); err != nil {
 			log.Printf("render no access page: %v", err)
 		}

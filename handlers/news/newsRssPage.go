@@ -33,7 +33,7 @@ func NewsRssPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, row := range posts {
-		if !cd.HasGrant("news", "post", "see", row.Idsitenews) {
+		if !cd.HasGrant(common.SectionNews, common.ItemPost, common.ActionSee, row.Idsitenews) {
 			continue
 		}
 		text := row.News.String

@@ -78,7 +78,7 @@ func (AskTask) Action(w http.ResponseWriter, r *http.Request) any {
 	uid, _ := session.Values["UID"].(int32)
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	if !cd.HasGrant("faq", "question", "post", 0) {
+	if !cd.HasGrant(common.SectionFAQ, common.ItemQuestion, common.ActionPost, 0) {
 		r.URL.RawQuery = "error=" + url.QueryEscape("Forbidden")
 		handlers.TaskErrorAcknowledgementPage(w, r)
 		return nil

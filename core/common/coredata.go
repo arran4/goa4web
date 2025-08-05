@@ -467,7 +467,7 @@ func (cd *CoreData) BlogList() ([]*db.ListBlogEntriesForListerRow, error) {
 		}
 		var list []*db.ListBlogEntriesForListerRow
 		for _, row := range rows {
-			if !cd.HasGrant("blogs", "entry", "see", row.Idblogs) {
+			if !cd.HasGrant(SectionBlogs, ItemEntry, ActionSee, row.Idblogs) {
 				continue
 			}
 			list = append(list, row)
@@ -497,7 +497,7 @@ func (cd *CoreData) BlogListForSelectedAuthor() ([]*db.ListBlogEntriesByAuthorFo
 		}
 		var list []*db.ListBlogEntriesByAuthorForListerRow
 		for _, row := range rows {
-			if !cd.HasGrant("blogs", "entry", "see", row.Idblogs) {
+			if !cd.HasGrant(SectionBlogs, ItemEntry, ActionSee, row.Idblogs) {
 				continue
 			}
 			list = append(list, row)
@@ -1067,20 +1067,20 @@ func (cd *CoreData) fetchLatestNews(offset, limit int32, replyID int) ([]*NewsPo
 	}
 	var posts []*NewsPost
 	for _, row := range rows {
-		if !cd.HasGrant("news", "post", "see", row.Idsitenews) {
+		if !cd.HasGrant(SectionNews, ItemPost, ActionSee, row.Idsitenews) {
 			continue
 		}
 		ann, err := cd.queries.GetLatestAnnouncementByNewsID(cd.ctx, row.Idsitenews)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
-		if !cd.HasGrant("news", "post", "see", row.Idsitenews) {
+		if !cd.HasGrant(SectionNews, ItemPost, ActionSee, row.Idsitenews) {
 			continue
 		}
 		posts = append(posts, &NewsPost{
 			GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow: row,
 			ShowReply:    cd.UserID != 0,
-			ShowEdit:     cd.HasGrant("news", "post", "edit", row.Idsitenews) && (cd.AdminMode || cd.UserID != 0),
+			ShowEdit:     cd.HasGrant(SectionNews, ItemPost, ActionEdit, row.Idsitenews) && (cd.AdminMode || cd.UserID != 0),
 			Editing:      replyID == int(row.Idsitenews),
 			Announcement: ann,
 		})
@@ -1317,7 +1317,7 @@ func (cd *CoreData) LatestWritings(opts ...LatestWritingsOption) ([]*db.Writing,
 		}
 		var writings []*db.Writing
 		for _, row := range rows {
-			if !cd.HasGrant("writing", "article", "see", row.Idwriting) {
+			if !cd.HasGrant(SectionWriting, ItemArticle, ActionSee, row.Idwriting) {
 				continue
 			}
 			writings = append(writings, row)
@@ -1403,7 +1403,7 @@ func (cd *CoreData) LinkerItemsForUser(catID, offset int32) ([]*db.GetAllLinkerI
 	}
 	var out []*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow
 	for _, row := range rows {
-		if cd.HasGrant("linker", "link", "see", row.Idlinker) {
+		if cd.HasGrant(SectionLinker, ItemLink, ActionSee, row.Idlinker) {
 			out = append(out, row)
 		}
 	}
@@ -1610,7 +1610,7 @@ func (cd *CoreData) PublicWritings(categoryID int32, r *http.Request) ([]*db.Lis
 		}
 		var res []*db.ListPublicWritingsInCategoryForListerRow
 		for _, row := range rows {
-			if cd.HasGrant("writing", "article", "see", row.Idwriting) {
+			if cd.HasGrant(SectionWriting, ItemArticle, ActionSee, row.Idwriting) {
 				res = append(res, row)
 			}
 		}
@@ -2018,7 +2018,7 @@ func (cd *CoreData) VisibleWritingCategories(userID int32) ([]*db.WritingCategor
 		}
 		var cats []*db.WritingCategory
 		for _, row := range rows {
-			if cd.HasGrant("writing", "category", "see", row.Idwritingcategory) {
+			if cd.HasGrant(SectionWriting, ItemCategory, ActionSee, row.Idwritingcategory) {
 				cats = append(cats, row)
 			}
 		}
@@ -2089,7 +2089,7 @@ func (cd *CoreData) WriterWritings(userID int32, r *http.Request) ([]*db.ListPub
 		}
 		var list []*db.ListPublicWritingsByUserForListerRow
 		for _, row := range rows {
-			if !cd.HasGrant("writing", "article", "see", row.Idwriting) {
+			if !cd.HasGrant(SectionWriting, ItemArticle, ActionSee, row.Idwriting) {
 				continue
 			}
 			list = append(list, row)

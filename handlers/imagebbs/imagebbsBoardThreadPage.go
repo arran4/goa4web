@@ -102,7 +102,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 
 	data := Data{CoreData: cd, Replyable: true, BoardId: bid, ForumThreadId: thid}
 
-	if !data.CoreData.HasGrant("imagebbs", "board", "view", int32(bid)) {
+	if !data.CoreData.HasGrant(common.SectionImageBBS, common.ItemBoard, common.ActionView, int32(bid)) {
 		_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{})
 		return
 	}

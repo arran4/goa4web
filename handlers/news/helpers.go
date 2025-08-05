@@ -9,7 +9,7 @@ func canEditNewsPost(cd *common.CoreData, postID int32) bool {
 	if cd == nil {
 		return false
 	}
-	if cd.HasGrant("news", "post", "edit", postID) && (cd.AdminMode || cd.UserID != 0) {
+	if cd.HasGrant(common.SectionNews, common.ItemPost, common.ActionEdit, postID) && (cd.AdminMode || cd.UserID != 0) {
 		return true
 	}
 	return false

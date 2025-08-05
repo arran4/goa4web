@@ -32,7 +32,7 @@ func (SearchForumTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	if !common.CanSearch(cd, "forum") {
+	if !common.CanSearch(cd, common.SectionForum) {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return nil
 	}

@@ -78,7 +78,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	if !cd.HasGrant("news", "post", "view", post.Idsitenews) {
+	if !cd.HasGrant(common.SectionNews, common.ItemPost, common.ActionView, post.Idsitenews) {
 		if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{}); err != nil {
 			log.Printf("render no access page: %v", err)
 		}

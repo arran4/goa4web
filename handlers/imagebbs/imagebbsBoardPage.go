@@ -68,7 +68,7 @@ func BoardPage(w http.ResponseWriter, r *http.Request) {
 
 	data := Data{IsSubBoard: bid != 0, BoardNumber: bid}
 
-	if !cd.HasGrant("imagebbs", "board", "view", int32(bid)) {
+	if !cd.HasGrant(common.SectionImageBBS, common.ItemBoard, common.ActionView, int32(bid)) {
 		_ = templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", struct{}{})
 		return
 	}
@@ -101,7 +101,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil {
 		return fmt.Errorf("get image board fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	if !cd.HasGrant("imagebbs", "board", "post", int32(bid)) {
+	if !cd.HasGrant(common.SectionImageBBS, common.ItemBoard, common.ActionPost, int32(bid)) {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		})

@@ -45,7 +45,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if writing == nil || !cd.HasGrant("writing", "article", "view", writing.Idwriting) {
-		if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd); err != nil {
+		if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{}); err != nil {
 			log.Printf("render no access page: %v", err)
 		}
 		return
@@ -111,7 +111,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd); err != nil {
+			if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{}); err != nil {
 				log.Printf("render no access page: %v", err)
 			}
 			return

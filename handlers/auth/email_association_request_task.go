@@ -68,7 +68,7 @@ func (EmailAssociationRequestTask) Action(w http.ResponseWriter, r *http.Request
 		}
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		handlers.TemplateHandler(w, r, "forgotPasswordRequestSentPage.gohtml", r.Context().Value(consts.KeyCoreData))
+		handlers.TemplateHandler(w, r, "forgotPasswordRequestSentPage.gohtml", struct{}{})
 	})
 }
 

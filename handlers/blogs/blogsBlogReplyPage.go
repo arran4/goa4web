@@ -109,7 +109,7 @@ func (ReplyBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 			cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-			_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd)
+			_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{})
 			return nil
 		default:
 			return fmt.Errorf("getBlogEntryForListerByID fail %w", handlers.ErrRedirectOnSamePageHandler(err))

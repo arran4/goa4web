@@ -37,7 +37,7 @@ columns are:
 | `created_at`, `updated_at` | Timestamps                                     |
 | `user_id`  | Optional user the rule targets                                 |
 | `role_id`  | Optional role the rule targets                                 |
-| `section`  | Permission area such as `forum`, `news`, `writing`, `imagebbs` or `role`   |
+| `section`  | Permission area such as `forum`, `news`, `writing`, `imagebbs`, `images` or `role`   |
 | `item`     | Optional item type (e.g. `topic`, `article`)                    |
 | `rule_type`| Type of rule, typically `allow` or `deny`                      |
 | `item_id`  | Optional item identifier                                       |
@@ -100,7 +100,7 @@ If no matching grant is found, the action is denied unless the user has the
 
 ## Additional Tables
 
-Some features store per-object defaults using role identifiers. Per-writing permissions are now represented using the `grants` table and no longer rely on a dedicated `writing_user_permissions` table. `imagebbs` boards are secured via grants in the `imagebbs` section using the `board` item type.
+Some features store per-object defaults using role identifiers. Per-writing permissions are now represented using the `grants` table and no longer rely on a dedicated `writing_user_permissions` table. `imagebbs` boards are secured via grants in the `imagebbs` section using the `board` item type. Uploaded images use the `images` section with the `upload` item.
 
 Legacy tables `topic_permissions` and `user_topic_permissions` were replaced by
 equivalent rows in the `grants` table. Forum access is now fully controlled via
@@ -178,6 +178,8 @@ Many queries now filter results directly in SQL using `lister_id` together with 
 | `imagebbs` | `board`    | `see`           | List image boards |
 | `imagebbs` | `board`    | `view`          | View posts on a board |
 | `imagebbs` | `board`    | `post`          | Create a new post on the board |
+| `images`   | `upload`   | `see`           | List uploaded images |
+| `images`   | `upload`   | `post`          | Upload an image |
 | `linker`   | —          | `search`        | Search links |
 | `linker`   | `category` | `see`           | Browse link categories |
 | `linker`   | `category` | `view`          | View links in a category |

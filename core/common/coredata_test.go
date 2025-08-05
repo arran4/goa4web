@@ -290,3 +290,72 @@ func TestWritersLazy(t *testing.T) {
 		t.Fatalf("expectations: %v", err)
 	}
 }
+
+func TestBlogListLazy(t *testing.T) {
+
+	cfg := config.NewRuntimeConfig()
+
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
+
+	queries := db.New(conn)
+	now := time.Now()
+	rows := sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_idlanguage", "blog", "written", "username", "comments", "is_owner"}).
+		AddRow(1, 0, 1, 0, "b", now, "bob", 0, true)
+	mock.ExpectQuery("SELECT b.idblogs").
+		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnRows(rows)
+
+	ctx := context.Background()
+	cd := common.NewCoreData(ctx, queries, cfg, common.WithUserRoles([]string{"administrator"}))
+	cd.UserID = 1
+
+	if _, err := cd.BlogList(); err != nil {
+		t.Fatalf("BlogList: %v", err)
+	}
+	if _, err := cd.BlogList(); err != nil {
+		t.Fatalf("BlogList second call: %v", err)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}
+
+func TestBlogListForSelectedAuthorLazy(t *testing.T) {
+
+	cfg := config.NewRuntimeConfig()
+
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
+
+	queries := db.New(conn)
+	now := time.Now()
+	rows := sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_idlanguage", "blog", "written", "username", "comments", "is_owner"}).
+		AddRow(1, 0, 1, 0, "b", now, "bob", 0, true)
+	mock.ExpectQuery("SELECT b.idblogs").
+		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnRows(rows)
+
+	ctx := context.Background()
+	cd := common.NewCoreData(ctx, queries, cfg, common.WithUserRoles([]string{"administrator"}))
+	cd.UserID = 1
+	cd.SetBlogListParams(1, 0)
+
+	if _, err := cd.BlogListForSelectedAuthor(); err != nil {
+		t.Fatalf("BlogListForSelectedAuthor: %v", err)
+	}
+	if _, err := cd.BlogListForSelectedAuthor(); err != nil {
+		t.Fatalf("BlogListForSelectedAuthor second call: %v", err)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}

@@ -134,7 +134,8 @@ type CoreData struct {
 	blogEntries              map[int32]*lazy.Value[*db.GetBlogEntryForListerByIDRow]
 	bloggers                 lazy.Value[[]*db.ListBloggersForListerRow]
 	blogListOffset           int
-	blogListRows             lazy.Value[[]*db.ListBlogEntriesByAuthorForListerRow]
+	blogListRows             lazy.Value[[]*db.ListBlogEntriesForListerRow]
+	blogListByAuthorRows     lazy.Value[[]*db.ListBlogEntriesByAuthorForListerRow]
 	blogListUID              int32
 	bookmarks                lazy.Value[*db.GetBookmarksForUserRow]
 	currentBlogID            int32
@@ -446,9 +447,38 @@ func (cd *CoreData) Bloggers(r *http.Request) ([]*db.ListBloggersForListerRow, e
 	})
 }
 
-// BlogList returns blog entries for the current parameters.
-func (cd *CoreData) BlogList() ([]*db.ListBlogEntriesByAuthorForListerRow, error) {
-	return cd.blogListRows.Load(func() ([]*db.ListBlogEntriesByAuthorForListerRow, error) {
+// BlogList returns blog entries visible to the current user.
+func (cd *CoreData) BlogList() ([]*db.ListBlogEntriesForListerRow, error) {
+	return cd.blogListRows.Load(func() ([]*db.ListBlogEntriesForListerRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		rows, err := cd.queries.ListBlogEntriesForLister(cd.ctx, db.ListBlogEntriesForListerParams{
+			ListerID: cd.UserID,
+			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+			Limit:    15,
+			Offset:   int32(cd.blogListOffset),
+		})
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, nil
+			}
+			return nil, err
+		}
+		var list []*db.ListBlogEntriesForListerRow
+		for _, row := range rows {
+			if !cd.HasGrant("blogs", "entry", "see", row.Idblogs) {
+				continue
+			}
+			list = append(list, row)
+		}
+		return list, nil
+	})
+}
+
+// BlogListForSelectedAuthor returns blog entries for the selected author.
+func (cd *CoreData) BlogListForSelectedAuthor() ([]*db.ListBlogEntriesByAuthorForListerRow, error) {
+	return cd.blogListByAuthorRows.Load(func() ([]*db.ListBlogEntriesByAuthorForListerRow, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}

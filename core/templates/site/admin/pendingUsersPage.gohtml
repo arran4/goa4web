@@ -8,12 +8,12 @@
             <td>
                 <form style="display:inline" method="post" action="/admin/users/pending/approve">
                     {{ csrfField }}<input type="hidden" name="uid" value="{{.Idusers}}">
-                    <input type="submit" value="Approve">
+                    <input type="submit" name="task" value="Approve">
                 </form>
                 <form style="display:inline" method="post" action="/admin/users/pending/reject">
                     {{ csrfField }}<input type="hidden" name="uid" value="{{.Idusers}}">
                     Reason:<input name="reason">
-                    <input type="submit" value="Reject">
+                    <input type="submit" name="task" value="Reject">
                 </form>
             </td>
         </tr>

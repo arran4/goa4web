@@ -14,6 +14,8 @@
         {{ csrfField }}
                         <input name="name" value="{{ .Title.String }}"><br>
                         <textarea name="desc" cols="30" rows="3">{{ .Description.String }}</textarea><br>
+                        <input type="hidden" name="task" value="Forum topic change">
+                    </form>
                 {{ else }}
                     <a href="/forum/topic/{{ .Idforumtopic }}">{{ .Title.String | a4code2html }}</a><br>
                     <i>{{ .Description.String | a4code2html }}</i>

@@ -1,7 +1,7 @@
 {{ template "head" $ }}
     <form method="get">
         <input name="search" value="{{$.Search}}">
-        <input type="submit" value="Search">
+        <input type="submit" name="task" value="Search">
     </form>
     {{if .Rows}}
         <font size="5">All writers.</font><br>

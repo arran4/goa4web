@@ -52,10 +52,10 @@ func TemplateWithDataHandler(tmpl string, data any) any {
 // TemplateHandler renders the template and handles any template error.
 // Example usage:
 //
-//	type Data struct{ *CoreData }
-//	TemplateHandler(w, r, "page.gohtml", Data{cd})
+//	type Data struct{ Message string }
+//	TemplateHandler(w, r, "page.gohtml", Data{"hello"})
 //
-// Template helpers are provided via data.CoreData.Funcs(r).
+// Template helpers are provided via the CoreData stored in the request context.
 func (th *templateWithDataHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	TemplateHandler(w, r, th.tmpl, th.data)
 }

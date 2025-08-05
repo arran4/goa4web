@@ -37,6 +37,10 @@ func verifyMiddleware(prefix string) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			id := mux.Vars(r)["id"]
+			if !validID(id) {
+				http.NotFound(w, r)
+				return
+			}
 			ts := r.URL.Query().Get("ts")
 			sig := r.URL.Query().Get("sig")
 			data := id

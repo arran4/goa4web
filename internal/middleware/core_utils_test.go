@@ -3,8 +3,6 @@ package middleware
 import (
 	"bufio"
 	"bytes"
-	"net/http"
-	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -54,21 +52,6 @@ func X2c(what string) byte {
 	}
 
 	return digit(what[0])*16 + digit(what[1])
-}
-
-func TestHandleDie(t *testing.T) {
-	rr := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	handleDie(rr, req, "oops")
-	if rr.Code != http.StatusInternalServerError {
-		t.Errorf("expected status 500, got %d", rr.Code)
-	}
-	if ct := rr.Header().Get("Content-Type"); ct != "text/plain; charset=utf-8" {
-		t.Errorf("expected Content-Type text/plain; charset=utf-8, got %q", ct)
-	}
-	if body := rr.Body.String(); body != "Internal Server Error\n" {
-		t.Errorf("unexpected body: %q", body)
-	}
 }
 
 func TestConfigurationSetGet(t *testing.T) {

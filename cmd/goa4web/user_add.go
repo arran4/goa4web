@@ -64,16 +64,12 @@ func createUser(root *rootCmd, username, email, password string, admin bool) err
 	if err != nil {
 		return fmt.Errorf("hash password: %w", err)
 	}
-	res, err := queries.SystemInsertUser(ctx, sql.NullString{String: username, Valid: true})
+	id, err := queries.SystemInsertUser(ctx, sql.NullString{String: username, Valid: true})
 	if err != nil {
 		if strings.Contains(err.Error(), "Duplicate entry") || strings.Contains(err.Error(), "UNIQUE constraint failed") {
 			return fmt.Errorf("user already exists")
 		}
 		return fmt.Errorf("insert user: %w", err)
-	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		return fmt.Errorf("last insert id: %w", err)
 	}
 	if email != "" {
 		if err := queries.InsertUserEmail(ctx, db.InsertUserEmailParams{UserID: int32(id), Email: email, VerifiedAt: sql.NullTime{Time: time.Now(), Valid: true}, LastVerificationCode: sql.NullString{}, NotificationPriority: 100}); err != nil {

@@ -43,10 +43,9 @@ FROM users u JOIN user_emails ue ON ue.user_id = u.idusers
 WHERE ue.email = ?
 LIMIT 1;
 
--- name: SystemInsertUser :execresult
+-- name: SystemInsertUser :execlastid
 INSERT INTO users (username)
-VALUES (?)
-;
+VALUES (?);
 
 -- name: SystemListAllUsers :many
 SELECT u.idusers, u.username,

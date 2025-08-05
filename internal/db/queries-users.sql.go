@@ -375,13 +375,17 @@ func (q *Queries) SystemGetUserByUsername(ctx context.Context, username sql.Null
 	return &i, err
 }
 
-const systemInsertUser = `-- name: SystemInsertUser :execresult
+const systemInsertUser = `-- name: SystemInsertUser :execlastid
 INSERT INTO users (username)
 VALUES (?)
 `
 
-func (q *Queries) SystemInsertUser(ctx context.Context, username sql.NullString) (sql.Result, error) {
-	return q.db.ExecContext(ctx, systemInsertUser, username)
+func (q *Queries) SystemInsertUser(ctx context.Context, username sql.NullString) (int64, error) {
+	result, err := q.db.ExecContext(ctx, systemInsertUser, username)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
 }
 
 const systemListAllUsers = `-- name: SystemListAllUsers :many

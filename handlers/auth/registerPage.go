@@ -77,7 +77,7 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("hashPassword Error: %s", err)
 		return fmt.Errorf("hash password %w", err)
 	}
-	result, err := queries.SystemInsertUser(r.Context(), sql.NullString{String: username, Valid: true})
+	id, err := queries.SystemInsertUser(r.Context(), sql.NullString{String: username, Valid: true})
 	if err != nil {
 		if strings.Contains(err.Error(), "Duplicate entry") || strings.Contains(err.Error(), "UNIQUE constraint failed") {
 			return handlers.ErrRedirectOnSamePageHandler(err)
@@ -85,18 +85,11 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("SystemInsertUser Error: %s", err)
 		return fmt.Errorf("insert user %w", err)
 	}
-
-	// TODO sqlc has a last inserted capture mode
-	lastInsertID, err := result.LastInsertId()
-	if err != nil {
-		log.Printf("LastInsertId Error: %s", err)
-		return fmt.Errorf("last insert id %w", err)
-	}
-	if err := queries.InsertUserEmail(r.Context(), db.InsertUserEmailParams{UserID: int32(lastInsertID), Email: email, VerifiedAt: sql.NullTime{}, LastVerificationCode: sql.NullString{}}); err != nil {
+	if err := queries.InsertUserEmail(r.Context(), db.InsertUserEmailParams{UserID: int32(id), Email: email, VerifiedAt: sql.NullTime{}, LastVerificationCode: sql.NullString{}}); err != nil {
 		log.Printf("InsertUserEmail Error: %s", err)
 		return fmt.Errorf("insert user email %w", err)
 	}
-	if err := queries.InsertPassword(r.Context(), db.InsertPasswordParams{UsersIdusers: int32(lastInsertID), Passwd: hash, PasswdAlgorithm: sql.NullString{String: alg, Valid: true}}); err != nil {
+	if err := queries.InsertPassword(r.Context(), db.InsertPasswordParams{UsersIdusers: int32(id), Passwd: hash, PasswdAlgorithm: sql.NullString{String: alg, Valid: true}}); err != nil {
 		log.Printf("InsertPassword Error: %s", err)
 		return fmt.Errorf("insert password %w", err)
 	}
@@ -111,7 +104,7 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	if cd.Config.LogFlags&config.LogFlagAuth != 0 {
-		log.Printf("registration success uid=%d", lastInsertID)
+		log.Printf("registration success uid=%d", id)
 	}
 
 	return loginFormHandler{msg: "approval is pending"}

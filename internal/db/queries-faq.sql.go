@@ -83,10 +83,10 @@ INSERT INTO faq (question, users_idusers, language_idlanguage)
 SELECT ?, ?, ?
 WHERE EXISTS (
     SELECT 1 FROM grants g
-    WHERE g.section = 'faq'
-      AND g.item = 'question'
-      AND g.action = 'post'
-      AND g.active = 1
+        WHERE g.section = 'faq'
+        AND (g.item = 'question' OR g.item IS NULL)
+        AND g.action = 'post'
+        AND g.active = 1
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (
           SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
@@ -499,10 +499,10 @@ INSERT INTO faq (question, answer, faqCategories_idfaqCategories, users_idusers,
 SELECT ?, ?, ?, ?, ?
 WHERE EXISTS (
     SELECT 1 FROM grants g
-    WHERE g.section = 'faq'
-      AND g.item = 'question'
-      AND g.action = 'post'
-      AND g.active = 1
+      WHERE g.section = 'faq'
+        AND (g.item = 'question' OR g.item IS NULL)
+        AND g.action = 'post'
+        AND g.active = 1
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (
           SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
@@ -536,10 +536,10 @@ INSERT INTO faq_revisions (faq_id, users_idusers, question, answer)
 SELECT ?, ?, ?, ?
 WHERE EXISTS (
     SELECT 1 FROM grants g
-    WHERE g.section = 'faq'
-      AND g.item = 'question'
-      AND g.action = 'post'
-      AND g.active = 1
+      WHERE g.section = 'faq'
+        AND (g.item = 'question' OR g.item IS NULL)
+        AND g.action = 'post'
+        AND g.active = 1
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (
           SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?

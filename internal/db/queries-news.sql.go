@@ -76,8 +76,8 @@ INSERT INTO site_news (news, users_idusers, occurred, language_idlanguage)
 SELECT ?, ?, NOW(), ?
 WHERE EXISTS (
     SELECT 1 FROM grants g
-    WHERE g.section='news'
-      AND g.item='post'
+      WHERE g.section='news'
+        AND (g.item='post' OR g.item IS NULL)
       AND g.action='post'
       AND g.active=1
       AND (g.item_id = 0 OR g.item_id IS NULL)
@@ -180,10 +180,10 @@ LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
 WHERE s.idsiteNews = ? AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='news'
-      AND g.item='post'
+      AND (g.item='post' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
-      AND g.item_id = s.idsiteNews
+      AND (g.item_id = s.idsiteNews OR g.item_id IS NULL)
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
@@ -249,10 +249,10 @@ WHERE s.Idsitenews IN (/*SLICE:newsids*/?)
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='news'
-      AND g.item='post'
+      AND (g.item='post' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
-      AND g.item_id = s.idsiteNews
+      AND (g.item_id = s.idsiteNews OR g.item_id IS NULL)
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
@@ -458,8 +458,8 @@ WHERE s.idsiteNews = ?
   AND s.users_idusers = ?
   AND EXISTS (
     SELECT 1 FROM grants g
-    WHERE g.section='news'
-      AND g.item='post'
+      WHERE g.section='news'
+        AND (g.item='post' OR g.item IS NULL)
       AND g.action='post'
       AND g.active=1
       AND (g.item_id = ? OR g.item_id IS NULL)

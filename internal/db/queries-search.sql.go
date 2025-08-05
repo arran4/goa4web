@@ -184,7 +184,7 @@ WHERE swl.word = ?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='linker'
-        AND g.item='link'
+        AND (g.item='link' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
         AND g.item_id = l.idlinker
@@ -253,7 +253,7 @@ WHERE swl.word = ?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='linker'
-        AND g.item='link'
+        AND (g.item='link' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
         AND g.item_id = l.idlinker
@@ -334,7 +334,7 @@ WHERE swl.word=?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='forum'
-        AND g.item='topic'
+        AND (g.item='topic' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
         AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
@@ -415,7 +415,7 @@ WHERE swl.word=?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='forum'
-        AND g.item='topic'
+        AND (g.item='topic' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
         AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
@@ -487,7 +487,7 @@ WHERE swl.word=?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='forum'
-        AND g.item='topic'
+        AND (g.item='topic' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
         AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
@@ -578,7 +578,7 @@ WHERE swl.word=?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='forum'
-        AND g.item='topic'
+        AND (g.item='topic' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
         AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
@@ -656,7 +656,7 @@ WHERE swl.word = ?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='news'
-        AND g.item='post'
+        AND (g.item='post' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
         AND g.item_id = sn.idsiteNews
@@ -725,7 +725,7 @@ WHERE swl.word = ?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='news'
-        AND g.item='post'
+        AND (g.item='post' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
         AND g.item_id = sn.idsiteNews
@@ -803,7 +803,7 @@ WHERE swl.word = ?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='writing'
-        AND g.item='article'
+        AND (g.item='article' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
         AND g.item_id = w.idwriting
@@ -872,7 +872,7 @@ WHERE swl.word = ?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='writing'
-        AND g.item='article'
+        AND (g.item='article' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
         AND g.item_id = w.idwriting

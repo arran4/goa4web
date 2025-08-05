@@ -135,7 +135,7 @@ WHERE w.idwriting = sqlc.arg(idwriting)
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='writing'
-      AND g.item='article'
+      AND (g.item='article' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
       AND g.item_id = w.idwriting
@@ -168,7 +168,7 @@ WHERE w.idwriting IN (sqlc.slice(writing_ids))
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='writing'
-      AND g.item='article'
+      AND (g.item='article' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
       AND g.item_id = w.idwriting
@@ -227,7 +227,7 @@ WHERE w.users_idusers = sqlc.arg(author_id)
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='writing'
-      AND g.item='article'
+      AND (g.item='article' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
       AND g.item_id = w.idwriting

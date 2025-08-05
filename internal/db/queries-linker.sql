@@ -221,7 +221,7 @@ WHERE l.idlinker = sqlc.arg(idlinker)
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='linker'
-      AND g.item='link'
+      AND (g.item='link' OR g.item IS NULL)
       AND g.action IN ('view','comment','reply')
       AND g.active=1
       AND (g.item_id = l.idlinker OR g.item_id IS NULL)
@@ -251,7 +251,7 @@ WHERE l.idlinker IN (sqlc.slice(linkerIds))
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='linker'
-      AND g.item='link'
+      AND (g.item='link' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
       AND g.item_id = l.idlinker

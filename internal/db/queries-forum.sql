@@ -79,7 +79,7 @@ WHERE t.idforumtopic = sqlc.arg(idforumtopic)
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='forum'
-      AND g.item='topic'
+      AND (g.item='topic' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
       AND g.item_id = t.idforumtopic
@@ -127,7 +127,7 @@ WHERE th.forumtopic_idforumtopic=sqlc.arg(topic_id)
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='forum'
-      AND g.item='topic'
+      AND (g.item='topic' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
       AND g.item_id = t.idforumtopic

@@ -41,10 +41,12 @@ func TestImageRouteInvalidID(t *testing.T) {
 	rr := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/images/image/abc!", nil)
 
-	r.ServeHTTP(rr, req)
+	cd := common.NewCoreData(req.Context(), nil, cfg)
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	r.ServeHTTP(rr, req.WithContext(ctx))
 
-	if rr.Code != http.StatusNotFound {
-		t.Fatalf("want %d got %d", http.StatusNotFound, rr.Code)
+	if rr.Code != http.StatusForbidden {
+		t.Fatalf("want %d got %d", http.StatusForbidden, rr.Code)
 	}
 }
 
@@ -56,10 +58,12 @@ func TestCacheRouteInvalidID(t *testing.T) {
 	rr := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/images/cache/abc!", nil)
 
-	r.ServeHTTP(rr, req)
+	cd := common.NewCoreData(req.Context(), nil, cfg)
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	r.ServeHTTP(rr, req.WithContext(ctx))
 
-	if rr.Code != http.StatusNotFound {
-		t.Fatalf("want %d got %d", http.StatusNotFound, rr.Code)
+	if rr.Code != http.StatusForbidden {
+		t.Fatalf("want %d got %d", http.StatusForbidden, rr.Code)
 	}
 }
 

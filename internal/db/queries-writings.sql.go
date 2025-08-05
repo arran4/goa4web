@@ -190,7 +190,7 @@ WHERE w.users_idusers = ?
       AND g.item='article'
       AND g.action='view'
       AND g.active=1
-      AND g.item_id = w.idwriting
+      AND (g.item_id = w.idwriting OR g.item_id IS NULL)
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -376,7 +376,7 @@ WHERE w.idwriting = ?
       AND g.item='article'
       AND g.action='view'
       AND g.active=1
-      AND g.item_id = w.idwriting
+      AND (g.item_id = w.idwriting OR g.item_id IS NULL)
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -904,7 +904,7 @@ WHERE w.idwriting IN (/*SLICE:writing_ids*/?)
       AND g.item='article'
       AND g.action='view'
       AND g.active=1
-      AND g.item_id = w.idwriting
+      AND (g.item_id = w.idwriting OR g.item_id IS NULL)
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )

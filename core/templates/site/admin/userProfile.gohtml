@@ -1,5 +1,5 @@
 {{ template "head" $ }}
-{{ $user := .CurrentProfileUser }}
+{{ $user := cd.CurrentProfileUser }}
 {{ if $user }}
 <h2>User {{ $user.Username.String }} (ID {{ $user.Idusers }})</h2>
 <p>
@@ -7,13 +7,13 @@
     <a href="/admin/user/{{ $user.Idusers }}/permissions">Permissions</a>
     {{- if $user.PublicProfileEnabledAt.Valid }} |
     <a href="/user/profile/{{ $user.Username.String }}">Public Profile</a>{{- end }}
-    {{ $stats := .CurrentProfileStats }}
+    {{ $stats := cd.CurrentProfileStats }}
     {{- if and $stats (gt $stats.Blogs 0) }} |
     <a href="/blogs/blogger/{{ $user.Username.String }}">Blogs</a>{{- end }}
     {{- if and $stats (gt $stats.Writings 0) }} |
     <a href="/writings/writer/{{ $user.Username.String }}">Writings</a>{{- end }}
 </p>
-{{ $emails := .CurrentProfileEmails }}
+{{ $emails := cd.CurrentProfileEmails }}
 {{ if $emails }}
 <table border="1">
 <tr><th>Email</th><th>Verified</th><th>Priority</th></tr>
@@ -24,7 +24,7 @@
 {{ else }}
 <p>No emails.</p>
 {{ end }}
-{{ $roles := .CurrentProfileRoles }}
+{{ $roles := cd.CurrentProfileRoles }}
 {{ if $roles }}
 <h3>Groups</h3>
 <ul>
@@ -44,12 +44,12 @@
     <li>Images: {{ $stats.Images }}</li>
     <li>Links: {{ $stats.Links }}</li>
     <li>Writings: {{ $stats.Writings }}</li>
-    <li>Bookmark entries: {{ .CurrentProfileBookmarkSize }}</li>
+    <li>Bookmark entries: {{ cd.CurrentProfileBookmarkSize }}</li>
 </ul>
 {{ else }}
 <p>No stats.</p>
 {{ end }}
-{{ $grants := .CurrentProfileGrants }}
+{{ $grants := cd.CurrentProfileGrants }}
 {{ if $grants }}
 <h3>Direct Grants</h3>
 <table border="1">
@@ -72,7 +72,7 @@
     <textarea name="comment" rows="3" cols="40"></textarea>
     <input type="submit" name="task" value="Add Comment">
 </form>
-{{ $comments := .CurrentProfileComments }}
+{{ $comments := cd.CurrentProfileComments }}
 {{ if $comments }}
 <table border="1">
     <tr><th>Date</th><th>Comment</th></tr>

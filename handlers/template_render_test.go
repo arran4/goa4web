@@ -40,7 +40,7 @@ func TestPageTemplatesRender(t *testing.T) {
 		name string
 		data any
 	}{
-		{"newsPage", struct{ *common.CoreData }{&common.CoreData{}}},
+		{"newsPage", struct{}{}},
 		{"faqPage", struct {
 			*common.CoreData
 			FAQ any
@@ -65,7 +65,7 @@ func TestPageTemplatesRender(t *testing.T) {
 			*common.CoreData
 			Boards any
 		}{&common.CoreData{}, nil}},
-		{"blogsPage", &common.CoreData{}},
+		{"blogsPage", struct{}{}},
 		{"writingsPage", struct {
 			WritingCategoryID int32
 		}{0}},

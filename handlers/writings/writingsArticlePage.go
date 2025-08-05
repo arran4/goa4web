@@ -44,7 +44,9 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
-	if writing == nil || !cd.HasGrant("writing", "article", "view", writing.Idwriting) {
+	canComment := cd.HasGrant("writing", "article", "comment", writing.Idwriting)
+	canReply := cd.HasGrant("writing", "article", "reply", writing.Idwriting)
+	if writing == nil || !(cd.HasGrant("writing", "article", "view", writing.Idwriting) || canComment || canReply) {
 		if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{}); err != nil {
 			log.Printf("render no access page: %v", err)
 		}
@@ -71,16 +73,17 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("thread comments: %v", err)
 	}
+	canDiscuss := canComment || canReply
 	data := Data{
 		Request:            r,
 		Writing:            writing,
 		Comments:           comments,
-		CanReply:           cd.UserID != 0,
+		CanReply:           canDiscuss,
 		SelectedLanguageId: int(cd.PreferredLanguageID(cd.Config.DefaultLanguage)),
 		Languages:          languages,
 		EditCommentID:      int32(editCommentId),
 		Offset:             offset,
-		IsReplyable:        editCommentId == 0,
+		IsReplyable:        canDiscuss && editCommentId == 0,
 	}
 
 	data.IsAuthor = writing.UsersIdusers == cd.UserID
@@ -123,6 +126,11 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	if writing == nil {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		return
+	}
+	if !(cd.HasGrant("writing", "article", "comment", writing.Idwriting) ||
+		cd.HasGrant("writing", "article", "reply", writing.Idwriting)) {
+		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
 

@@ -98,7 +98,8 @@ func (ReplyBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("no bid %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("no bid")))
 	}
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 
 	blog, err := queries.GetBlogEntryForListerByID(r.Context(), db.GetBlogEntryForListerByIDParams{
 		ListerID: uid,
@@ -108,12 +109,16 @@ func (ReplyBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 			_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{})
 			return nil
 		default:
 			return fmt.Errorf("getBlogEntryForListerByID fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
+	}
+
+	if !(cd.HasGrant("blogs", "entry", "comment", blog.Idblogs) ||
+		cd.HasGrant("blogs", "entry", "reply", blog.Idblogs)) {
+		return handlers.ErrRedirectOnSamePageHandler(handlers.ErrForbidden)
 	}
 
 	var pthid int32

@@ -40,10 +40,10 @@ WHERE a.active = 1
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='news'
-        AND g.item='post'
+        AND (g.item='post' OR g.item IS NULL)
         AND g.action='view'
         AND g.active=1
-        AND g.item_id = n.idsiteNews
+        AND (g.item_id = n.idsiteNews OR g.item_id IS NULL)
         AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )

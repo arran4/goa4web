@@ -1,0 +1,56 @@
+{{ template "head" $ }}
+<h2>Add Grant to {{ .Role.Name }}</h2>
+{{ if eq .Section "" }}
+<form method="get">
+    <label>Section:
+        <select name="section">
+            {{ range .Sections }}
+            <option value="{{ . }}">{{ . }}</option>
+            {{ end }}
+        </select>
+    </label>
+    <input type="submit" value="Next">
+</form>
+{{ else if eq .Item "" }}
+<form method="get">
+    <input type="hidden" name="section" value="{{ .Section }}">
+    <label>Item:
+        <select name="item">
+            {{ range .Items }}
+            <option value="{{ . }}">{{ . }}</option>
+            {{ end }}
+        </select>
+    </label>
+    <input type="submit" value="Next">
+</form>
+{{ else }}
+<form method="post" action="/admin/role/{{ .Role.ID }}/grant">
+    {{ csrfField }}
+    <input type="hidden" name="task" value="Add grant">
+    <input type="hidden" name="section" value="{{ .Section }}">
+    <input type="hidden" name="item" value="{{ .Item }}">
+    <label>Action:
+        <select name="action">
+            {{ range .Actions }}
+            <option value="{{ . }}">{{ . }}</option>
+            {{ end }}
+        </select>
+    </label>
+    {{ if .ItemOptions }}
+    <label>Item:
+        <input list="itemOptions" name="item_id">
+        <datalist id="itemOptions">
+            <option value="">All</option>
+            {{ range .ItemOptions }}
+            <option value="{{ .ID }}">{{ .Label }}</option>
+            {{ end }}
+        </datalist>
+    </label>
+    {{ else }}
+    <label>Item ID:<input type="text" name="item_id"></label>
+    {{ end }}
+    <input type="submit" value="Add">
+</form>
+{{ end }}
+<p><a href="/admin/role/{{ .Role.ID }}">Back</a></p>
+{{ template "tail" $ }}

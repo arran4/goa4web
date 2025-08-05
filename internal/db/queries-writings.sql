@@ -135,10 +135,10 @@ WHERE w.idwriting = sqlc.arg(idwriting)
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='writing'
-      AND g.item='article'
+      AND (g.item='article' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
-      AND g.item_id = w.idwriting
+      AND (g.item_id = w.idwriting OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(lister_match_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -168,10 +168,10 @@ WHERE w.idwriting IN (sqlc.slice(writing_ids))
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='writing'
-      AND g.item='article'
+      AND (g.item='article' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
-      AND g.item_id = w.idwriting
+      AND (g.item_id = w.idwriting OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(lister_match_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -227,10 +227,10 @@ WHERE w.users_idusers = sqlc.arg(author_id)
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='writing'
-      AND g.item='article'
+      AND (g.item='article' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
-      AND g.item_id = w.idwriting
+      AND (g.item_id = w.idwriting OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(lister_match_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )

@@ -49,9 +49,9 @@ WITH RECURSIVE role_ids(id) AS (
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
        b.users_idusers = sqlc.arg(lister_id) AS is_owner
 FROM blogs b
-JOIN grants g ON g.item_id = b.idblogs
+JOIN grants g ON (g.item_id = b.idblogs OR g.item_id IS NULL)
     AND g.section = 'blogs'
-    AND g.item = 'entry'
+    AND (g.item = 'entry' OR g.item IS NULL)
     AND g.action = 'see'
     AND g.active = 1
     AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
@@ -98,10 +98,10 @@ AND (
 AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'blogs'
-      AND g.item = 'entry'
+      AND (g.item = 'entry' OR g.item IS NULL)
       AND g.action = 'see'
       AND g.active = 1
-      AND g.item_id = b.idblogs
+      AND (g.item_id = b.idblogs OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
@@ -130,10 +130,10 @@ WHERE b.idblogs IN (sqlc.slice(blogIds))
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section = 'blogs'
-        AND g.item = 'entry'
+        AND (g.item = 'entry' OR g.item IS NULL)
         AND g.action = 'see'
         AND g.active = 1
-        AND g.item_id = b.idblogs
+        AND (g.item_id = b.idblogs OR g.item_id IS NULL)
         AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -165,10 +165,10 @@ WHERE b.idblogs = sqlc.arg(id)
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section = 'blogs'
-        AND g.item = 'entry'
+        AND (g.item = 'entry' OR g.item IS NULL)
         AND g.action = 'see'
         AND g.active = 1
-        AND g.item_id = b.idblogs
+        AND (g.item_id = b.idblogs OR g.item_id IS NULL)
         AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -198,10 +198,10 @@ WHERE swl.word = ?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section = 'blogs'
-        AND g.item = 'entry'
+        AND (g.item = 'entry' OR g.item IS NULL)
         AND g.action = 'see'
         AND g.active = 1
-        AND g.item_id = b.idblogs
+        AND (g.item_id = b.idblogs OR g.item_id IS NULL)
         AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   );
@@ -231,10 +231,10 @@ WHERE swl.word = ?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section = 'blogs'
-        AND g.item = 'entry'
+        AND (g.item = 'entry' OR g.item IS NULL)
         AND g.action = 'see'
         AND g.active = 1
-        AND g.item_id = b.idblogs
+        AND (g.item_id = b.idblogs OR g.item_id IS NULL)
         AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   );
@@ -263,10 +263,10 @@ WHERE (
 AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'blogs'
-      AND g.item = 'entry'
+      AND (g.item = 'entry' OR g.item IS NULL)
       AND g.action = 'see'
       AND g.active = 1
-      AND g.item_id = b.idblogs
+      AND (g.item_id = b.idblogs OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
@@ -297,10 +297,10 @@ WHERE (LOWER(u.username) LIKE LOWER(sqlc.arg(query)) OR LOWER((SELECT email FROM
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'blogs'
-      AND g.item = 'entry'
+      AND (g.item = 'entry' OR g.item IS NULL)
       AND g.action = 'see'
       AND g.active = 1
-      AND g.item_id = b.idblogs
+      AND (g.item_id = b.idblogs OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )

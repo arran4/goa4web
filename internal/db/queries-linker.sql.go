@@ -971,7 +971,7 @@ WHERE l.idlinker = ?
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='linker'
-      AND g.item='link'
+      AND (g.item='link' OR g.item IS NULL)
       AND g.action IN ('view','comment','reply')
       AND g.active=1
       AND (g.item_id = l.idlinker OR g.item_id IS NULL)
@@ -1101,10 +1101,10 @@ WHERE l.idlinker IN (/*SLICE:linkerids*/?)
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='linker'
-      AND g.item='link'
+      AND (g.item='link' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
-      AND g.item_id = l.idlinker
+      AND (g.item_id = l.idlinker OR g.item_id IS NULL)
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )

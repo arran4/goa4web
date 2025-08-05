@@ -1,6 +1,11 @@
 {{ define "blogsPage" }}
     {{ template "head" $ }}
-    {{ $rows := cd.BlogList }}
+    {{ $rows := "" }}
+    {{ if cd.BlogListUID }}
+        {{ $rows = cd.BlogListForSelectedAuthor }}
+    {{ else }}
+        {{ $rows = cd.BlogList }}
+    {{ end }}
     {{ if $rows }}
         {{ if cd.CurrentProfileUserID }}
             <font size="5"><a href="/blogs/blogger/{{ (index $rows 0).Username.String }}">{{ (index $rows 0).Username.String }}</a>'s blogs.</font><br>

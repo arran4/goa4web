@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
-	"strings"
+	"strconv"
 	"testing"
 
 	"github.com/gorilla/mux"
@@ -14,6 +14,7 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/navigation"
+	"github.com/arran4/goa4web/internal/sign"
 )
 
 func TestValidID(t *testing.T) {
@@ -42,16 +43,17 @@ func TestImageRouteInvalidID(t *testing.T) {
 	RegisterRoutes(r, cfg, navReg)
 	rr := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/images/image/abc!", nil)
-	cd := common.NewCoreData(req.Context(), nil, cfg)
-	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
-	r.ServeHTTP(rr, req.WithContext(ctx))
-
+	base := sign.Signer{Key: "k"}
+	ts, sig := base.Sign("image:abc!")
+	q := req.URL.Query()
+	q.Set("ts", strconv.FormatInt(ts, 10))
+	q.Set("sig", sig)
+	req.URL.RawQuery = q.Encode()
 	signer := imagesign.NewSigner(cfg, "k")
 	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithImageSigner(signer))
-	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
-	ref := signer.SignedRef("image:" + "abc!")
-	req.URL.RawQuery = strings.SplitN(ref, "?", 2)[1]
-	r.ServeHTTP(rr, req)
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+
+	r.ServeHTTP(rr, req.WithContext(ctx))
 
 	if rr.Code != http.StatusForbidden {
 		t.Fatalf("want %d got %d", http.StatusForbidden, rr.Code)
@@ -65,16 +67,17 @@ func TestCacheRouteInvalidID(t *testing.T) {
 	RegisterRoutes(r, cfg, navReg)
 	rr := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/images/cache/abc!", nil)
-	cd := common.NewCoreData(req.Context(), nil, cfg)
-	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
-	r.ServeHTTP(rr, req.WithContext(ctx))
-
+	base := sign.Signer{Key: "k"}
+	ts, sig := base.Sign("cache:abc!")
+	q := req.URL.Query()
+	q.Set("ts", strconv.FormatInt(ts, 10))
+	q.Set("sig", sig)
+	req.URL.RawQuery = q.Encode()
 	signer := imagesign.NewSigner(cfg, "k")
 	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithImageSigner(signer))
-	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
-	ref := signer.SignedRef("cache:" + "abc!")
-	req.URL.RawQuery = strings.SplitN(ref, "?", 2)[1]
-	r.ServeHTTP(rr, req)
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+
+	r.ServeHTTP(rr, req.WithContext(ctx))
 
 	if rr.Code != http.StatusForbidden {
 		t.Fatalf("want %d got %d", http.StatusForbidden, rr.Code)

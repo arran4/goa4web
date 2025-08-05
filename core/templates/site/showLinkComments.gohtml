@@ -14,7 +14,7 @@
         </table><br>
 
         {{ with .ForumthreadID }}
-            {{ template "threadComments" $ }}
+            {{ template "threadComments" }}
         {{ end }}
 
         {{ if $.CanReply }}

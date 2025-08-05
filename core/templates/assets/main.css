@@ -181,3 +181,43 @@ div.title {
 .spoiler:hover {
         color: #FFFFFF;
 }
+
+/* role grant editor */
+
+
+.pill {
+        display: inline-block;
+        padding: 4px 8px;
+        margin: 2px;
+        border-radius: 12px;
+        background: #e0e0e0;
+        cursor: move;
+}
+
+.have .pill {
+        background: #c8e6c9;
+}
+
+.available .pill {
+        background: #f0f0f0;
+}
+
+.pill.moved {
+        background: #ffecb3;
+}
+
+.disabled .pill {
+        background: #ffcdd2;
+}
+
+.pill.unsupported {
+        background: #d1c4e9;
+}
+
+tr.unsupported td {
+        background: #f3e5f5;
+}
+
+.hidden {
+        display: none;
+}

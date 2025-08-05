@@ -18,7 +18,7 @@ GROUP BY t.idforumtopic;
 UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ? WHERE idforumtopic = ?;
 
 -- name: GetAllForumTopicsByCategoryIdForUserWithLastPosterName :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
     UNION
     SELECT r2.id FROM role_ids ri
@@ -42,7 +42,7 @@ WHERE t.forumcategory_idforumcategory = sqlc.arg(category_id)
 ORDER BY t.lastaddition DESC;
 
 -- name: GetAllForumTopicsForUser :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
     UNION
     SELECT r2.id FROM role_ids ri
@@ -65,7 +65,7 @@ WHERE EXISTS (
 ORDER BY t.lastaddition DESC;
 
 -- name: GetForumTopicByIdForUser :one
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
     UNION
     SELECT r2.id FROM role_ids ri
@@ -110,7 +110,7 @@ FROM forumtopic
 WHERE idforumtopic = ?;
 
 -- name: GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
     UNION
     SELECT r2.id FROM role_ids ri

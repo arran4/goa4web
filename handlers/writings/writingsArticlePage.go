@@ -21,18 +21,18 @@ import (
 
 func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		Request            *http.Request
-		Writing            *db.GetWritingForListerByIDRow
-		Comments           []*db.GetCommentsByThreadIdForUserRow
-		CanEdit            bool
-		IsAuthor           bool
-		CanReply           bool
-		Languages          []*db.Language
-		SelectedLanguageId int
-		ReplyText          string
-		EditCommentID      int32
-		Offset             int
-		IsReplyable        bool
+		Request        *http.Request
+		Comments       []*db.GetCommentsByThreadIdForUserRow
+		CanEdit        bool
+		IsAuthor       bool
+		CanReply       bool
+		ReplyText      string
+		IsReplyable    bool
+		CanEditComment func(*db.GetCommentsByThreadIdForUserRow) bool
+		EditURL        func(*db.GetCommentsByThreadIdForUserRow) string
+		EditSaveURL    func(*db.GetCommentsByThreadIdForUserRow) string
+		Editing        func(*db.GetCommentsByThreadIdForUserRow) bool
+		AdminURL       func(*db.GetCommentsByThreadIdForUserRow) string
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -63,14 +63,8 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		cd.PageTitle = fmt.Sprintf("Writing %d", writing.Idwriting)
 	}
 
-	languages, err := cd.Languages()
-	if err != nil {
-		log.Printf("languages: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
-		return
-	}
-
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	common.WithOffset(offset)(cd)
 	editCommentId, _ := strconv.Atoi(r.URL.Query().Get("editComment"))
 	replyType := r.URL.Query().Get("type")
 
@@ -80,21 +74,42 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 	canDiscuss := canComment || canReply
 	data := Data{
-		Request:            r,
-		Writing:            writing,
-		Comments:           comments,
-		CanReply:           canDiscuss,
-		SelectedLanguageId: int(cd.PreferredLanguageID(cd.Config.DefaultLanguage)),
-		Languages:          languages,
-		EditCommentID:      int32(editCommentId),
-		Offset:             offset,
-		IsReplyable:        canDiscuss && editCommentId == 0,
+		Request:     r,
+		Comments:    comments,
+		CanReply:    cd.UserID != 0,
+		IsReplyable: editCommentId == 0 && r.URL.Query().Get("comment") == "",
+	}
+
+	data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
+		return cd.CanEditAny() || cmt.IsOwner
+	}
+	data.EditURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
+		if !data.CanEditComment(cmt) {
+			return ""
+		}
+		return fmt.Sprintf("?editComment=%d#edit", cmt.Idcomments)
+	}
+	data.EditSaveURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
+		if !data.CanEditComment(cmt) {
+			return ""
+		}
+		return fmt.Sprintf("/writings/article/%d/comment/%d", writing.Idwriting, cmt.Idcomments)
+	}
+	data.Editing = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
+		return data.CanEditComment(cmt) && editCommentId != 0 && int32(editCommentId) == cmt.Idcomments
+	}
+	data.AdminURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
+		if cd.HasRole("administrator") {
+			return fmt.Sprintf("/admin/comment/%d", cmt.Idcomments)
+		}
+		return ""
 	}
 
 	data.IsAuthor = writing.UsersIdusers == cd.UserID
 	data.CanEdit = (cd.HasAdminRole() && cd.AdminMode) || (cd.HasContentWriterRole() && data.IsAuthor)
 
 	if c, err := cd.CurrentComment(r); err == nil && c != nil {
+		data.IsReplyable = false
 		switch replyType {
 		case "full":
 			data.ReplyText = a4code.FullQuoteOf(c.Username.String, c.Text.String)

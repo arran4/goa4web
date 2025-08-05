@@ -53,9 +53,6 @@ func TestCommentPageLockedThreadDisablesReply(t *testing.T) {
 
 	req, _ := setupCommentRequest(t, queries, store, 1)
 
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT idlanguage, nameof FROM language")).
-		WillReturnRows(sqlmock.NewRows([]string{"idlanguage", "nameof"}).AddRow(1, "en"))
-
 	blogRows := sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_idlanguage", "blog", "written", "username", "coalesce(th.comments, 0)", "is_owner"}).
 		AddRow(1, 1, 2, 1, "hi", time.Unix(0, 0), "bob", 0, false)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT b.idblogs")).WithArgs(int32(2), int32(2), int32(1), int32(2), int32(2), sql.NullInt32{Int32: 2, Valid: true}).WillReturnRows(blogRows)
@@ -92,9 +89,6 @@ func TestCommentPageUnlockedThreadShowsReply(t *testing.T) {
 	core.SessionName = "test-session"
 
 	req, _ := setupCommentRequest(t, queries, store, 1)
-
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT idlanguage, nameof FROM language")).
-		WillReturnRows(sqlmock.NewRows([]string{"idlanguage", "nameof"}).AddRow(1, "en"))
 
 	blogRows := sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_idlanguage", "blog", "written", "username", "coalesce(th.comments, 0)", "is_owner"}).
 		AddRow(1, 1, 2, 1, "hi", time.Unix(0, 0), "bob", 0, false)

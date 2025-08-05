@@ -38,7 +38,7 @@ func (SearchWritingsTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if !common.CanSearch(cd, "writing") {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Forbidden"))
+		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return nil
 	}
 	data := Data{

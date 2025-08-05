@@ -1,7 +1,6 @@
 package admin
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -21,7 +20,7 @@ func AdminPageSizePage(w http.ResponseWriter, r *http.Request) {
 	cd.PageTitle = "Page Size"
 	if r.Method == http.MethodPost {
 		if err := r.ParseForm(); err != nil {
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Bad Request"))
+			handlers.RenderErrorPage(w, r, handlers.ErrBadRequest)
 			return
 		}
 		min, _ := strconv.Atoi(r.PostFormValue("min"))

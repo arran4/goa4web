@@ -61,12 +61,12 @@ func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 					if p, err := netip.ParsePrefix(b.IpNet); err == nil {
 						if p.Contains(addr) {
 							w.WriteHeader(http.StatusForbidden)
-							handlers.RenderErrorPage(w, r, fmt.Errorf("Forbidden"))
+							handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 							return
 						}
 					} else if b.IpNet == ip {
 						w.WriteHeader(http.StatusForbidden)
-						handlers.RenderErrorPage(w, r, fmt.Errorf("Forbidden"))
+						handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 						return
 					}
 				}

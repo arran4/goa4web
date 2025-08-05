@@ -57,7 +57,7 @@ func ShowPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !cd.HasGrant("linker", "link", "view", link.Idlinker) {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Forbidden"))
+		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
 
@@ -105,7 +105,7 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !cd.HasGrant("linker", "link", "view", link.Idlinker) {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Forbidden"))
+		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
 

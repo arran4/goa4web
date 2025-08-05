@@ -30,7 +30,7 @@ func (ApprovePostTask) Action(w http.ResponseWriter, r *http.Request) any {
 	pid, _ := strconv.Atoi(vars["post"])
 	if cd == nil || !cd.HasRole("administrator") {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Forbidden"))
+			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		})
 	}
 	queries := cd.Queries()

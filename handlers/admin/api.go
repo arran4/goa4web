@@ -2,7 +2,6 @@ package admin
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -17,18 +16,18 @@ func (h *Handlers) AdminAPIServerShutdown(w http.ResponseWriter, r *http.Request
 	const prefix = "Goa4web "
 	auth := r.Header.Get("Authorization")
 	if !strings.HasPrefix(auth, prefix) {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Unauthorized"))
+		handlers.RenderErrorPage(w, r, handlers.ErrUnauthorized)
 		return
 	}
 	parts := strings.SplitN(strings.TrimPrefix(auth, prefix), ":", 2)
 	if len(parts) != 2 {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Unauthorized"))
+		handlers.RenderErrorPage(w, r, handlers.ErrUnauthorized)
 		return
 	}
 	ts, sig := parts[0], parts[1]
 	signer := adminapi.NewSigner(AdminAPISecret)
 	if !signer.Verify(r.Method, r.URL.Path, ts, sig) {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Unauthorized"))
+		handlers.RenderErrorPage(w, r, handlers.ErrUnauthorized)
 		return
 	}
 

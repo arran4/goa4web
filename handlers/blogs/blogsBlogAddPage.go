@@ -103,7 +103,7 @@ func BlogAddPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Add Blog"
 	if !(cd.HasRole("content writer") || cd.HasRole("administrator")) {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Forbidden"))
+		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
 	type Data struct {

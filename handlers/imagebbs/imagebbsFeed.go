@@ -153,7 +153,7 @@ func BoardRssPage(w http.ResponseWriter, r *http.Request) {
 	bid, _ := strconv.Atoi(bidStr)
 	queries := cd.Queries()
 	if !cd.HasGrant("imagebbs", "board", "see", int32(bid)) {
-		_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd)
+		_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{})
 		return
 	}
 	rows, err := queries.ListImagePostsByBoardForLister(r.Context(), db.ListImagePostsByBoardForListerParams{
@@ -203,7 +203,7 @@ func BoardAtomPage(w http.ResponseWriter, r *http.Request) {
 	bid, _ := strconv.Atoi(bidStr)
 	queries := cd.Queries()
 	if !cd.HasGrant("imagebbs", "board", "see", int32(bid)) {
-		_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd)
+		_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{})
 		return
 	}
 	rows, err := queries.ListImagePostsByBoardForLister(r.Context(), db.ListImagePostsByBoardForListerParams{

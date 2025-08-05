@@ -89,7 +89,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd); err != nil {
+			if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{}); err != nil {
 				log.Printf("render no access page: %v", err)
 			}
 			return
@@ -228,7 +228,7 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd); err != nil {
+			if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{}); err != nil {
 				log.Printf("render no access page: %v", err)
 			}
 			return nil

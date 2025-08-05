@@ -18,7 +18,7 @@ func AdminThreadsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Forum Admin Threads"
 
-	handlers.TemplateHandler(w, r, "adminThreadsPage.gohtml", cd)
+	handlers.TemplateHandler(w, r, "adminThreadsPage.gohtml", struct{}{})
 }
 
 func AdminThreadDeletePage(w http.ResponseWriter, r *http.Request) {

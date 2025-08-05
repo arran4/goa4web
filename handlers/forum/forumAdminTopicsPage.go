@@ -17,7 +17,7 @@ func AdminTopicsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Forum Admin Topics"
 
-	handlers.TemplateHandler(w, r, "adminTopicsPage.gohtml", cd)
+	handlers.TemplateHandler(w, r, "adminTopicsPage.gohtml", struct{}{})
 }
 
 func AdminTopicEditPage(w http.ResponseWriter, r *http.Request) {

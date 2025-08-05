@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/gorilla/mux"
@@ -11,6 +12,7 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/navigation"
 )
 
@@ -40,10 +42,16 @@ func TestImageRouteInvalidID(t *testing.T) {
 	RegisterRoutes(r, cfg, navReg)
 	rr := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/images/image/abc!", nil)
-
 	cd := common.NewCoreData(req.Context(), nil, cfg)
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	r.ServeHTTP(rr, req.WithContext(ctx))
+
+	signer := imagesign.NewSigner(cfg, "k")
+	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithImageSigner(signer))
+	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
+	ref := signer.SignedRef("image:" + "abc!")
+	req.URL.RawQuery = strings.SplitN(ref, "?", 2)[1]
+	r.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusForbidden {
 		t.Fatalf("want %d got %d", http.StatusForbidden, rr.Code)
@@ -57,10 +65,16 @@ func TestCacheRouteInvalidID(t *testing.T) {
 	RegisterRoutes(r, cfg, navReg)
 	rr := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/images/cache/abc!", nil)
-
 	cd := common.NewCoreData(req.Context(), nil, cfg)
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	r.ServeHTTP(rr, req.WithContext(ctx))
+
+	signer := imagesign.NewSigner(cfg, "k")
+	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithImageSigner(signer))
+	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
+	ref := signer.SignedRef("cache:" + "abc!")
+	req.URL.RawQuery = strings.SplitN(ref, "?", 2)[1]
+	r.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusForbidden {
 		t.Fatalf("want %d got %d", http.StatusForbidden, rr.Code)

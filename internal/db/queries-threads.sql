@@ -81,7 +81,7 @@ WHERE th.idforumthread=sqlc.arg(thread_id)
       AND (g.item='topic' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
-      AND g.item_id = t.idforumtopic
+      AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(viewer_match_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )

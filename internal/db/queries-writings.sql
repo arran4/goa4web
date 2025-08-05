@@ -21,7 +21,7 @@ FROM writing
 WHERE idwriting = ?;
 
 -- name: ListPublicWritingsByUserForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT w.*, u.username,
@@ -64,7 +64,7 @@ ORDER BY w.published DESC
 LIMIT ? OFFSET ?;
 
 -- name: ListPublicWritingsInCategoryForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT w.*, u.Username,
@@ -125,7 +125,7 @@ INSERT INTO writing (writing_category_id, title, abstract, writing, private, lan
 VALUES (?, ?, ?, ?, ?, ?, NOW(), ?);
 
 -- name: GetWritingForListerByID :one
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT w.*, u.idusers AS WriterId, u.Username AS WriterUsername
@@ -135,10 +135,10 @@ WHERE w.idwriting = sqlc.arg(idwriting)
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='writing'
-      AND g.item='article'
+      AND (g.item='article' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
-      AND g.item_id = w.idwriting
+      AND (g.item_id = w.idwriting OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(lister_match_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -146,7 +146,7 @@ ORDER BY w.published DESC
 ;
 
 -- name: ListWritingsByIDsForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT w.*, u.idusers AS WriterId, u.username AS WriterUsername
@@ -168,10 +168,10 @@ WHERE w.idwriting IN (sqlc.slice(writing_ids))
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='writing'
-      AND g.item='article'
+      AND (g.item='article' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
-      AND g.item_id = w.idwriting
+      AND (g.item_id = w.idwriting OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(lister_match_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -194,7 +194,7 @@ ORDER BY wc.idwritingcategory
 LIMIT ? OFFSET ?;
 
 -- name: ListWritingCategoriesForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT wc.*
@@ -206,7 +206,7 @@ WHERE EXISTS (
       AND g.action='see'
       AND g.active=1
       AND (g.item_id = wc.idwritingcategory OR g.item_id IS NULL)
-      AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
+      AND (g.user_id = sqlc.arg(lister_match_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 );
 
@@ -216,7 +216,7 @@ UPDATE writing SET forumthread_id = ? WHERE idwriting = ?;
 
 
 -- name: GetAllWritingsByAuthorForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT w.*, u.username,
@@ -227,10 +227,10 @@ WHERE w.users_idusers = sqlc.arg(author_id)
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='writing'
-      AND g.item='article'
+      AND (g.item='article' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
-      AND g.item_id = w.idwriting
+      AND (g.item_id = w.idwriting OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(lister_match_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -244,7 +244,7 @@ LEFT JOIN users u ON w.users_idusers = u.idusers
 WHERE w.users_idusers = sqlc.arg(author_id)
 ORDER BY w.published DESC;
 -- name: ListWritersForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT u.username, COUNT(w.idwriting) AS count
@@ -277,7 +277,7 @@ ORDER BY u.username
 LIMIT ? OFFSET ?;
 
 -- name: ListWritersSearchForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT u.username, COUNT(w.idwriting) AS count

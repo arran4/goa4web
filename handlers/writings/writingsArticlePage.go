@@ -37,15 +37,22 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Writing"
-
+	cd.LoadSelectionsFromRequest(r)
 	writing, err := cd.CurrentWriting()
 	if err != nil {
 		log.Printf("get writing: %v", err)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
-	if writing == nil || !cd.HasGrant("writing", "article", "view", writing.Idwriting) {
-		if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd); err != nil {
+	if writing == nil {
+		log.Printf("get writing: no writing found")
+		handlers.RenderErrorPage(w, r, fmt.Errorf("No writing found"))
+		return
+	}
+	canComment := cd.HasGrant("writing", "article", "comment", writing.Idwriting)
+	canReply := cd.HasGrant("writing", "article", "reply", writing.Idwriting)
+	if writing == nil || !(cd.HasGrant("writing", "article", "view", writing.Idwriting) || canComment || canReply) {
+		if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{}); err != nil {
 			log.Printf("render no access page: %v", err)
 		}
 		return
@@ -65,6 +72,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("thread comments: %v", err)
 	}
+	canDiscuss := canComment || canReply
 	data := Data{
 		Request:     r,
 		Comments:    comments,
@@ -126,7 +134,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd); err != nil {
+			if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{}); err != nil {
 				log.Printf("render no access page: %v", err)
 			}
 			return
@@ -138,6 +146,11 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	if writing == nil {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		return
+	}
+	if !(cd.HasGrant("writing", "article", "comment", writing.Idwriting) ||
+		cd.HasGrant("writing", "article", "reply", writing.Idwriting)) {
+		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
 

@@ -77,7 +77,7 @@ SELECT ?, ?, NOW(), ?
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='news'
-      AND g.item='post'
+      AND (g.item='post' OR g.item IS NULL)
       AND g.action='post'
       AND g.active=1
       AND (g.item_id = 0 OR g.item_id IS NULL)
@@ -170,7 +170,7 @@ func (q *Queries) GetForumThreadIdByNewsPostId(ctx context.Context, idsitenews i
 }
 
 const getNewsPostByIdWithWriterIdAndThreadCommentCount = `-- name: GetNewsPostByIdWithWriterIdAndThreadCommentCount :one
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT u.username AS writerName, u.idusers as writerId, s.idsiteNews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, th.comments as Comments
@@ -180,10 +180,10 @@ LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
 WHERE s.idsiteNews = ? AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='news'
-      AND g.item='post'
+      AND (g.item='post' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
-      AND g.item_id = s.idsiteNews
+      AND (g.item_id = s.idsiteNews OR g.item_id IS NULL)
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
@@ -226,7 +226,7 @@ func (q *Queries) GetNewsPostByIdWithWriterIdAndThreadCommentCount(ctx context.C
 }
 
 const getNewsPostsByIdsForUserWithWriterIdAndThreadCommentCount = `-- name: GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCount :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT u.username AS writerName, u.idusers as writerId, s.idsiteNews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, th.comments as Comments
@@ -249,10 +249,10 @@ WHERE s.Idsitenews IN (/*SLICE:newsids*/?)
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='news'
-      AND g.item='post'
+      AND (g.item='post' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
-      AND g.item_id = s.idsiteNews
+      AND (g.item_id = s.idsiteNews OR g.item_id IS NULL)
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
@@ -325,7 +325,7 @@ func (q *Queries) GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCount(ctx 
 }
 
 const getNewsPostsWithWriterUsernameAndThreadCommentCountDescending = `-- name: GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT u.username AS writerName, u.idusers as writerId, s.idsiteNews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, th.comments as Comments
@@ -459,7 +459,7 @@ WHERE s.idsiteNews = ?
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='news'
-      AND g.item='post'
+      AND (g.item='post' OR g.item IS NULL)
       AND g.action='post'
       AND g.active=1
       AND (g.item_id = ? OR g.item_id IS NULL)

@@ -8,7 +8,7 @@ Roles define high level capabilities that can be assigned to users. The standard
 
 - **anonymous** – guests who are not signed in
 - **user** – regular authenticated user
-- **content writer** – may publish blogs and writings
+- **content writer** – may publish blogs and writing articles
 - **moderator** – moderation abilities
 - **administrator** – full access
 
@@ -72,6 +72,9 @@ Permission actions describe groups of related operations. The main verbs are:
 
 Sections may introduce extra actions but these form the base vocabulary used by
 the templates and permission checks.
+Grants with an empty `item` provide section-wide search access. For instance,
+`forum|` paired with the `search` action allows a user to search all forum
+topics.
 The grant editor uses the mapping defined in `handlers/admin/role_grants.go`
 to list available actions for each section and item type.
 Announcements use these actions to control which news posts appear globally. Administrator pages call `AdminPromoteAnnouncement` and `AdminDemoteAnnouncement` while `GetActiveAnnouncementWithNewsForUser` retrieves the visible announcement.
@@ -131,7 +134,7 @@ The migrations seed baseline rules for the `news` section:
 
 When a writer publishes a post they automatically receive an `edit` grant tied to that post, effectively granting them update rights for that item.
 
-Other content sections such as blogs and writings follow the same pattern: authors can post entries and receive item-scoped `edit` grants while administrators hold broader `edit` privileges.
+Other content sections such as blogs and writing follow the same pattern: authors can post entries and receive item-scoped `edit` grants while administrators hold broader `edit` privileges.
 FAQ and blog listings also honour lister language preferences and check grants in SQL. Queries such as `ListBlogEntriesForLister`, `ListBlogEntriesByAuthorForLister` and `GetFAQAnsweredQuestions` filter content based on `lister_id` and permitted languages.
 
 ### Announcements
@@ -142,10 +145,61 @@ Active announcements reference a news post and are only shown to listers permitt
 
 Many queries now filter results directly in SQL using `lister_id` together with the lister's effective roles. Each query matches against grants so only records the lister may access are returned. The table below lists the combinations used for each section.
 
-| `section`  | `item`     | `action`        | Meaning                                                                       |
-|------------|------------|-----------------|-------------------------------------------------------------------------------|
-| `news`     | `post`     | `see`           | User or group can see all posts (or post if item id is specified) in a list   |
-| `news`     | `post`     | `see`           | User or group can see all posts (or post if item id is specified) in a list   |
+| `section`  | `item`     | `action`        | Meaning |
+|------------|------------|-----------------|---------|
+| `blogs`    | —          | `search`        | Search blog entries |
+| `blogs`    | `entry`    | `see`           | List blog entries |
+| `blogs`    | `entry`    | `view`          | View a blog entry |
+| `blogs`    | `entry`    | `comment`       | Comment on a blog entry |
+| `blogs`    | `entry`    | `reply`         | Reply to a blog comment |
+| `blogs`    | `entry`    | `post`          | Publish a new blog entry |
+| `blogs`    | `entry`    | `edit`          | Modify any blog entry |
+| `faq`      | —          | `search`        | Search FAQ content |
+| `faq`      | `category` | `see`           | List FAQ categories |
+| `faq`      | `category` | `view`          | View questions in a FAQ category |
+| `faq`      | `question` | `see`           | List FAQ questions |
+| `faq`      | `question` | `view`          | View a FAQ question and answer |
+| `faq`      | `question` | `post`          | Submit a new FAQ question |
+| `faq`      | `question` | `edit`          | Update an existing FAQ question |
+| `forum`    | —          | `search`        | Search forums |
+| `forum`    | `category` | `see`           | Discover forum categories |
+| `forum`    | `category` | `view`          | View topics in the category |
+| `forum`    | `thread`   | `see`           | Show a thread in listings |
+| `forum`    | `thread`   | `view`          | View posts within a thread |
+| `forum`    | `thread`   | `reply`         | Reply within the thread |
+| `forum`    | `thread`   | `post`          | Add a new post in the thread |
+| `forum`    | `thread`   | `edit`          | Edit posts in the thread |
+| `forum`    | `topic`    | `see`           | Show a topic in listings |
+| `forum`    | `topic`    | `view`          | View the topic details |
+| `forum`    | `topic`    | `reply`         | Reply in the topic's threads |
+| `forum`    | `topic`    | `post`          | Start a new thread in the topic |
+| `forum`    | `topic`    | `edit`          | Edit threads in the topic |
+| `imagebbs` | —          | `search`        | Search image boards |
+| `imagebbs` | `board`    | `see`           | List image boards |
+| `imagebbs` | `board`    | `view`          | View posts on a board |
+| `imagebbs` | `board`    | `post`          | Create a new post on the board |
+| `linker`   | —          | `search`        | Search links |
+| `linker`   | `category` | `see`           | Browse link categories |
+| `linker`   | `category` | `view`          | View links in a category |
+| `linker`   | `link`     | `see`           | Show a link in lists |
+| `linker`   | `link`     | `view`          | View link details |
+| `linker`   | `link`     | `comment`       | Comment on a link |
+| `linker`   | `link`     | `reply`         | Reply to a link comment |
+| `news`     | —          | `search`        | Search news posts |
+| `news`     | `post`     | `see`           | Show news posts in lists |
+| `news`     | `post`     | `view`          | View a news post |
+| `news`     | `post`     | `reply`         | Comment on a news post |
+| `news`     | `post`     | `post`          | Publish a news post |
+| `news`     | `post`     | `edit`          | Modify a news post |
+| `writing`  | —          | `search`        | Search writing articles |
+| `writing`  | `category` | `see`           | Browse writing categories |
+| `writing`  | `category` | `view`          | View a writing category |
+| `writing`  | `article`  | `see`           | Show writing articles in lists |
+| `writing`  | `article`  | `view`          | Read a writing article |
+| `writing`  | `article`  | `comment`       | Comment on a writing article |
+| `writing`  | `article`  | `reply`         | Reply to a writing comment |
+| `writing`  | `article`  | `post`          | Publish a writing article |
+| `writing`  | `article`  | `edit`          | Edit a writing article |
 
 
 Administrator endpoints are guarded by the `AdminCheckerMiddleware` implemented

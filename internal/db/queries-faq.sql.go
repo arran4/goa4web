@@ -84,7 +84,7 @@ SELECT ?, ?, ?
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'faq'
-      AND g.item = 'question'
+      AND (g.item = 'question' OR g.item IS NULL)
       AND g.action = 'post'
       AND g.active = 1
       AND (g.user_id = ? OR g.user_id IS NULL)
@@ -113,7 +113,7 @@ func (q *Queries) CreateFAQQuestionForWriter(ctx context.Context, arg CreateFAQQ
 }
 
 const getAllAnsweredFAQWithFAQCategoriesForUser = `-- name: GetAllAnsweredFAQWithFAQCategoriesForUser :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT c.idfaqCategories, c.name, f.idfaq, f.faqCategories_idfaqCategories, f.language_idlanguage, f.users_idusers, f.answer, f.question
@@ -263,7 +263,7 @@ func (q *Queries) GetAllFAQQuestions(ctx context.Context) ([]*Faq, error) {
 }
 
 const getFAQAnsweredQuestions = `-- name: GetFAQAnsweredQuestions :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT idfaq, faqCategories_idfaqCategories, language_idlanguage, users_idusers, answer, question
@@ -500,7 +500,7 @@ SELECT ?, ?, ?, ?, ?
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'faq'
-      AND g.item = 'question'
+      AND (g.item = 'question' OR g.item IS NULL)
       AND g.action = 'post'
       AND g.active = 1
       AND (g.user_id = ? OR g.user_id IS NULL)
@@ -537,7 +537,7 @@ SELECT ?, ?, ?, ?
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'faq'
-      AND g.item = 'question'
+      AND (g.item = 'question' OR g.item IS NULL)
       AND g.action = 'post'
       AND g.active = 1
       AND (g.user_id = ? OR g.user_id IS NULL)

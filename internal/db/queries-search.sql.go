@@ -161,7 +161,7 @@ func (q *Queries) AdminWordListWithCountsByPrefix(ctx context.Context, arg Admin
 }
 
 const linkerSearchFirst = `-- name: LinkerSearchFirst :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT DISTINCT cs.linker_id
@@ -184,10 +184,10 @@ WHERE swl.word = ?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='linker'
-        AND g.item='link'
+        AND (g.item='link' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
-        AND g.item_id = l.idlinker
+        AND (g.item_id = l.idlinker OR g.item_id IS NULL)
         AND (g.user_id = ? OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -229,7 +229,7 @@ func (q *Queries) LinkerSearchFirst(ctx context.Context, arg LinkerSearchFirstPa
 }
 
 const linkerSearchNext = `-- name: LinkerSearchNext :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT DISTINCT cs.linker_id
@@ -253,10 +253,10 @@ WHERE swl.word = ?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='linker'
-        AND g.item='link'
+        AND (g.item='link' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
-        AND g.item_id = l.idlinker
+        AND (g.item_id = l.idlinker OR g.item_id IS NULL)
         AND (g.user_id = ? OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -308,7 +308,7 @@ func (q *Queries) LinkerSearchNext(ctx context.Context, arg LinkerSearchNextPara
 }
 
 const listCommentIDsBySearchWordFirstForListerInRestrictedTopic = `-- name: ListCommentIDsBySearchWordFirstForListerInRestrictedTopic :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT DISTINCT cs.comment_id
@@ -334,7 +334,7 @@ WHERE swl.word=?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='forum'
-        AND g.item='topic'
+        AND (g.item='topic' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
         AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
@@ -389,7 +389,7 @@ func (q *Queries) ListCommentIDsBySearchWordFirstForListerInRestrictedTopic(ctx 
 }
 
 const listCommentIDsBySearchWordFirstForListerNotInRestrictedTopic = `-- name: ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopic :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT DISTINCT cs.comment_id
@@ -415,7 +415,7 @@ WHERE swl.word=?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='forum'
-        AND g.item='topic'
+        AND (g.item='topic' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
         AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
@@ -460,7 +460,7 @@ func (q *Queries) ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopic(c
 }
 
 const listCommentIDsBySearchWordNextForListerInRestrictedTopic = `-- name: ListCommentIDsBySearchWordNextForListerInRestrictedTopic :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT DISTINCT cs.comment_id
@@ -487,7 +487,7 @@ WHERE swl.word=?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='forum'
-        AND g.item='topic'
+        AND (g.item='topic' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
         AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
@@ -551,7 +551,7 @@ func (q *Queries) ListCommentIDsBySearchWordNextForListerInRestrictedTopic(ctx c
 }
 
 const listCommentIDsBySearchWordNextForListerNotInRestrictedTopic = `-- name: ListCommentIDsBySearchWordNextForListerNotInRestrictedTopic :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT DISTINCT cs.comment_id
@@ -578,7 +578,7 @@ WHERE swl.word=?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='forum'
-        AND g.item='topic'
+        AND (g.item='topic' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
         AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
@@ -633,7 +633,7 @@ func (q *Queries) ListCommentIDsBySearchWordNextForListerNotInRestrictedTopic(ct
 }
 
 const listSiteNewsSearchFirstForLister = `-- name: ListSiteNewsSearchFirstForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT DISTINCT cs.site_news_id
@@ -656,10 +656,10 @@ WHERE swl.word = ?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='news'
-        AND g.item='post'
+        AND (g.item='post' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
-        AND g.item_id = sn.idsiteNews
+        AND (g.item_id = sn.idsiteNews OR g.item_id IS NULL)
         AND (g.user_id = ? OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -701,7 +701,7 @@ func (q *Queries) ListSiteNewsSearchFirstForLister(ctx context.Context, arg List
 }
 
 const listSiteNewsSearchNextForLister = `-- name: ListSiteNewsSearchNextForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT DISTINCT cs.site_news_id
@@ -725,10 +725,10 @@ WHERE swl.word = ?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='news'
-        AND g.item='post'
+        AND (g.item='post' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
-        AND g.item_id = sn.idsiteNews
+        AND (g.item_id = sn.idsiteNews OR g.item_id IS NULL)
         AND (g.user_id = ? OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -780,7 +780,7 @@ func (q *Queries) ListSiteNewsSearchNextForLister(ctx context.Context, arg ListS
 }
 
 const listWritingSearchFirstForLister = `-- name: ListWritingSearchFirstForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT DISTINCT cs.writing_id
@@ -803,10 +803,10 @@ WHERE swl.word = ?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='writing'
-        AND g.item='article'
+        AND (g.item='article' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
-        AND g.item_id = w.idwriting
+        AND (g.item_id = w.idwriting OR g.item_id IS NULL)
         AND (g.user_id = ? OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -848,7 +848,7 @@ func (q *Queries) ListWritingSearchFirstForLister(ctx context.Context, arg ListW
 }
 
 const listWritingSearchNextForLister = `-- name: ListWritingSearchNextForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT DISTINCT cs.writing_id
@@ -872,10 +872,10 @@ WHERE swl.word = ?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='writing'
-        AND g.item='article'
+        AND (g.item='article' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
-        AND g.item_id = w.idwriting
+        AND (g.item_id = w.idwriting OR g.item_id IS NULL)
         AND (g.user_id = ? OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )

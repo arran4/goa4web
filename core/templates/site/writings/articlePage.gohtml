@@ -13,7 +13,7 @@
         <hr>
         {{ $writing.Writing.String | a4code2html }}
         <hr>Comments:<br>
-        {{ template "threadComments" $ }}
+        {{ template "threadComments" }}
         {{ if .CanReply }}
             {{ if .IsReplyable }}
                 <hr><font size="4">Reply:</font><br>

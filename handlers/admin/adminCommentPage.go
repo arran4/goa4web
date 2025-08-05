@@ -52,9 +52,8 @@ func adminCommentPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	data := struct {
-		*common.CoreData
 		Comment *db.GetCommentsByIdsForUserWithThreadInfoRow
 		Context []*db.GetCommentsByThreadIdForUserRow
-	}{cd, comment, contextRows}
-	handlers.TemplateHandler(w, r, "commentPage.gohtml", data)
+	}{comment, contextRows}
+	handlers.TemplateHandler(w, r, "admin/commentPage.gohtml", data)
 }

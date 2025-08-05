@@ -26,7 +26,7 @@ func validID(s string) bool {
 	}
 	for i := 0; i < len(s); i++ {
 		c := s[i]
-		if !(c >= '0' && c <= '9' || c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z') {
+		if !(c >= '0' && c <= '9' || c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c == '_') && c != '.' && c != '-' {
 			return false
 		}
 	}
@@ -37,6 +37,11 @@ func verifyMiddleware(prefix string) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			id := mux.Vars(r)["id"]
+			if !validID(id) {
+				w.WriteHeader(http.StatusForbidden)
+				handlers.RenderErrorPage(w, r, fmt.Errorf("invalid id"))
+				return
+			}
 			ts := r.URL.Query().Get("ts")
 			sig := r.URL.Query().Get("sig")
 			data := id

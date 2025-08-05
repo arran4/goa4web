@@ -3,9 +3,9 @@ Usage:
 
 Commands:
   tree      show writing categories
-  list      list writings
-  read      read a writing
-  comments  manage comments for a writing
+  list      list writing articles
+  read      read a writing article
+  comments  manage comments for a writing article
 
 Examples:
   {{.Prog}} writing tree

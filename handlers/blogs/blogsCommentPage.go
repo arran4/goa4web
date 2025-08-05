@@ -70,7 +70,7 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			if err := templates.GetCompiledSiteTemplates(r.Context().Value(consts.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", data.CoreData); err != nil {
+			if err := templates.GetCompiledSiteTemplates(r.Context().Value(consts.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", struct{}{}); err != nil {
 				log.Printf("render no access page: %v", err)
 			}
 			return
@@ -80,6 +80,17 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
+	if !(cd.HasGrant("blogs", "entry", "view", blog.Idblogs) ||
+		cd.HasGrant("blogs", "entry", "comment", blog.Idblogs) ||
+		cd.HasGrant("blogs", "entry", "reply", blog.Idblogs)) {
+		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+		return
+	}
+	canComment := cd.HasGrant("blogs", "entry", "comment", blog.Idblogs)
+	canReply := cd.HasGrant("blogs", "entry", "reply", blog.Idblogs)
+
+	data.IsReplyable = canComment
 
 	editUrl := ""
 	if uid == blog.UsersIdusers {

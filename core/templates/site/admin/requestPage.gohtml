@@ -1,12 +1,12 @@
 {{ template "head" $ }}
-{{ $req := .CurrentRequest }}
-{{ $user := .CurrentRequestUser }}
+{{ $req := cd.CurrentRequest }}
+{{ $user := cd.CurrentRequestUser }}
 <h2>Request {{ $req.ID }} for user <a href="/admin/user/{{ $user.Idusers }}">{{ $user.Username.String }}</a></h2>
 <p>Field: {{ $req.ChangeTable }}.{{ $req.ChangeField }} row {{ $req.ChangeRowID }}</p>
 <p>Value: {{ $req.ChangeValue.String }}</p>
 <p>Contact: {{ $req.ContactOptions.String }}</p>
 <p>Status: {{ $req.Status }}</p>
-{{ $comments := .CurrentRequestComments }}
+{{ $comments := cd.CurrentRequestComments }}
 {{ if $comments }}
 <h3>Comments</h3>
 <table border="1">

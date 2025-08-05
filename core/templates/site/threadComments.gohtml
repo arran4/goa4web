@@ -2,7 +2,7 @@
     {{ if gt (cd.Offset) 0 }}
         <br>Skipping {{ cd.Offset }} comments.<br><br><br>
     {{ end }}
-    {{ range $.Comments }}
+    {{ range cd.SelectedThreadComments }}
         {{ template "comment" . }}
     {{ else }}
         No comments.

@@ -104,7 +104,7 @@ func (q *Queries) CreateBlogEntryForWriter(ctx context.Context, arg CreateBlogEn
 }
 
 const getBlogEntryForListerByID = `-- name: GetBlogEntryForListerByID :one
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
@@ -128,10 +128,10 @@ WHERE b.idblogs = ?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section = 'blogs'
-        AND g.item = 'entry'
+        AND (g.item = 'entry' OR g.item IS NULL)
         AND g.action = 'see'
         AND g.active = 1
-        AND g.item_id = b.idblogs
+        AND (g.item_id = b.idblogs OR g.item_id IS NULL)
         AND (g.user_id = ? OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -181,7 +181,7 @@ func (q *Queries) GetBlogEntryForListerByID(ctx context.Context, arg GetBlogEntr
 }
 
 const listBlogEntriesByAuthorForLister = `-- name: ListBlogEntriesByAuthorForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
@@ -205,10 +205,10 @@ AND (
 AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'blogs'
-      AND g.item = 'entry'
+      AND (g.item = 'entry' OR g.item IS NULL)
       AND g.action = 'see'
       AND g.active = 1
-      AND g.item_id = b.idblogs
+      AND (g.item_id = b.idblogs OR g.item_id IS NULL)
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
@@ -280,7 +280,7 @@ func (q *Queries) ListBlogEntriesByAuthorForLister(ctx context.Context, arg List
 }
 
 const listBlogEntriesByIDsForLister = `-- name: ListBlogEntriesByIDsForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written
@@ -301,10 +301,10 @@ WHERE b.idblogs IN (/*SLICE:blogids*/?)
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section = 'blogs'
-        AND g.item = 'entry'
+        AND (g.item = 'entry' OR g.item IS NULL)
         AND g.action = 'see'
         AND g.active = 1
-        AND g.item_id = b.idblogs
+        AND (g.item_id = b.idblogs OR g.item_id IS NULL)
         AND (g.user_id = ? OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -376,15 +376,15 @@ func (q *Queries) ListBlogEntriesByIDsForLister(ctx context.Context, arg ListBlo
 }
 
 const listBlogEntriesForLister = `-- name: ListBlogEntriesForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
        b.users_idusers = ? AS is_owner
 FROM blogs b
-JOIN grants g ON g.item_id = b.idblogs
+JOIN grants g ON (g.item_id = b.idblogs OR g.item_id IS NULL)
     AND g.section = 'blogs'
-    AND g.item = 'entry'
+    AND (g.item = 'entry' OR g.item IS NULL)
     AND g.action = 'see'
     AND g.active = 1
     AND (g.user_id = ? OR g.user_id IS NULL)
@@ -468,7 +468,7 @@ func (q *Queries) ListBlogEntriesForLister(ctx context.Context, arg ListBlogEntr
 }
 
 const listBlogIDsBySearchWordFirstForLister = `-- name: ListBlogIDsBySearchWordFirstForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT DISTINCT cs.blog_id
@@ -491,10 +491,10 @@ WHERE swl.word = ?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section = 'blogs'
-        AND g.item = 'entry'
+        AND (g.item = 'entry' OR g.item IS NULL)
         AND g.action = 'see'
         AND g.active = 1
-        AND g.item_id = b.idblogs
+        AND (g.item_id = b.idblogs OR g.item_id IS NULL)
         AND (g.user_id = ? OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -536,7 +536,7 @@ func (q *Queries) ListBlogIDsBySearchWordFirstForLister(ctx context.Context, arg
 }
 
 const listBlogIDsBySearchWordNextForLister = `-- name: ListBlogIDsBySearchWordNextForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT DISTINCT cs.blog_id
@@ -560,10 +560,10 @@ WHERE swl.word = ?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section = 'blogs'
-        AND g.item = 'entry'
+        AND (g.item = 'entry' OR g.item IS NULL)
         AND g.action = 'see'
         AND g.active = 1
-        AND g.item_id = b.idblogs
+        AND (g.item_id = b.idblogs OR g.item_id IS NULL)
         AND (g.user_id = ? OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -615,7 +615,7 @@ func (q *Queries) ListBlogIDsBySearchWordNextForLister(ctx context.Context, arg 
 }
 
 const listBloggersForLister = `-- name: ListBloggersForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT u.username, COUNT(b.idblogs) AS count
@@ -636,10 +636,10 @@ WHERE (
 AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'blogs'
-      AND g.item = 'entry'
+      AND (g.item = 'entry' OR g.item IS NULL)
       AND g.action = 'see'
       AND g.active = 1
-      AND g.item_id = b.idblogs
+      AND (g.item_id = b.idblogs OR g.item_id IS NULL)
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
@@ -691,7 +691,7 @@ func (q *Queries) ListBloggersForLister(ctx context.Context, arg ListBloggersFor
 }
 
 const listBloggersSearchForLister = `-- name: ListBloggersSearchForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT u.username, COUNT(b.idblogs) AS count
@@ -713,10 +713,10 @@ WHERE (LOWER(u.username) LIKE LOWER(?) OR LOWER((SELECT email FROM user_emails u
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'blogs'
-      AND g.item = 'entry'
+      AND (g.item = 'entry' OR g.item IS NULL)
       AND g.action = 'see'
       AND g.active = 1
-      AND g.item_id = b.idblogs
+      AND (g.item_id = b.idblogs OR g.item_id IS NULL)
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )

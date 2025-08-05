@@ -104,7 +104,7 @@ WHERE u.idusers = sqlc.arg(user_id)
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='users'
-        AND g.item='public_profile'
+        AND (g.item='public_profile' OR g.item IS NULL)
         AND g.action='post'
         AND g.active=1
         AND (g.item_id = u.idusers OR g.item_id IS NULL)

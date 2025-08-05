@@ -21,8 +21,16 @@ ORDER BY lc.position
 ;
 
 -- name: GetAllLinkerCategoriesForUser :many
-WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur
+    WHERE ur.users_idusers = sqlc.arg(viewer_id)
+),
+grants_for_viewer AS (
+    SELECT g.section, g.item, g.action, g.item_id
+    FROM grants g
+    WHERE g.active = 1
+      AND (g.user_id = sqlc.arg(viewer_user_id) OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
 SELECT
     lc.idlinkerCategory,
@@ -31,14 +39,12 @@ SELECT
     lc.sortorder
 FROM linker_category lc
 WHERE EXISTS (
-    SELECT 1 FROM grants g
-    WHERE g.section='linker'
-      AND (g.item='category' OR g.item IS NULL)
-      AND g.action='see'
-      AND g.active=1
+    SELECT 1
+    FROM grants_for_viewer g
+    WHERE g.section = 'linker'
+      AND (g.item = 'category' OR g.item IS NULL)
+      AND g.action = 'see'
       AND (g.item_id = lc.idlinkerCategory OR g.item_id IS NULL)
-      AND (g.user_id = sqlc.arg(viewer_user_id) OR g.user_id IS NULL)
-      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
   AND EXISTS (
     SELECT 1 FROM linker l
@@ -117,8 +123,16 @@ WHERE (lc.idlinkerCategory = sqlc.arg(idlinkercategory) OR sqlc.arg(idlinkercate
 ORDER BY l.listed DESC;
 
 -- name: GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUser :many
-WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur
+    WHERE ur.users_idusers = sqlc.arg(viewer_id)
+),
+grants_for_viewer AS (
+    SELECT g.section, g.item, g.action, g.item_id
+    FROM grants g
+    WHERE g.active = 1
+      AND (g.user_id = sqlc.arg(viewer_user_id) OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
 SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linker_category_id, l.forumthread_id, l.title, l.url, l.description, l.listed, th.Comments, lc.title as Category_Title, u.Username as PosterUsername
 FROM linker l
@@ -129,14 +143,12 @@ WHERE (lc.idlinkerCategory = sqlc.arg(idlinkercategory) OR sqlc.arg(idlinkercate
   AND l.listed IS NOT NULL
   AND l.deleted_at IS NULL
   AND EXISTS (
-    SELECT 1 FROM grants g
-    WHERE g.section='linker'
-      AND (g.item='link' OR g.item IS NULL)
-      AND g.action='see'
-      AND g.active=1
+    SELECT 1
+    FROM grants_for_viewer g
+    WHERE g.section = 'linker'
+      AND (g.item = 'link' OR g.item IS NULL)
+      AND g.action = 'see'
       AND (g.item_id = l.idlinker OR g.item_id IS NULL)
-      AND (g.user_id = sqlc.arg(viewer_user_id) OR g.user_id IS NULL)
-      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY l.listed DESC;
 
@@ -151,8 +163,16 @@ ORDER BY l.listed DESC
 LIMIT ? OFFSET ?;
 
 -- name: GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow :many
-WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur
+    WHERE ur.users_idusers = sqlc.arg(viewer_id)
+),
+grants_for_viewer AS (
+    SELECT g.section, g.item, g.action, g.item_id
+    FROM grants g
+    WHERE g.active = 1
+      AND (g.user_id = sqlc.arg(viewer_user_id) OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
 SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linker_category_id, l.forumthread_id, l.title, l.url, l.description, l.listed, th.Comments, lc.title as Category_Title, u.Username as PosterUsername
 FROM linker l
@@ -163,21 +183,27 @@ WHERE (lc.idlinkerCategory = sqlc.arg(idlinkercategory) OR sqlc.arg(idlinkercate
   AND l.listed IS NOT NULL
   AND l.deleted_at IS NULL
   AND EXISTS (
-    SELECT 1 FROM grants g
-    WHERE g.section='linker'
-      AND (g.item='link' OR g.item IS NULL)
-      AND g.action='see'
-      AND g.active=1
+    SELECT 1
+    FROM grants_for_viewer g
+    WHERE g.section = 'linker'
+      AND (g.item = 'link' OR g.item IS NULL)
+      AND g.action = 'see'
       AND (g.item_id = l.idlinker OR g.item_id IS NULL)
-      AND (g.user_id = sqlc.arg(viewer_user_id) OR g.user_id IS NULL)
-      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY l.listed DESC
 LIMIT ? OFFSET ?;
 
 -- name: GetLinkerItemsByUserDescendingForUser :many
-WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur
+    WHERE ur.users_idusers = sqlc.arg(viewer_id)
+),
+grants_for_viewer AS (
+    SELECT g.section, g.item, g.action, g.item_id
+    FROM grants g
+    WHERE g.active = 1
+      AND (g.user_id = sqlc.arg(viewer_user_id) OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
 SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linker_category_id, l.forumthread_id, l.title, l.url, l.description, l.listed, th.comments, lc.title as Category_Title, u.username as PosterUsername
 FROM linker l
@@ -188,14 +214,12 @@ WHERE l.users_idusers = sqlc.arg(user_id)
   AND l.listed IS NOT NULL
   AND l.deleted_at IS NULL
   AND EXISTS (
-    SELECT 1 FROM grants g
-    WHERE g.section='linker'
-      AND (g.item='link' OR g.item IS NULL)
-      AND g.action='see'
-      AND g.active=1
+    SELECT 1
+    FROM grants_for_viewer g
+    WHERE g.section = 'linker'
+      AND (g.item = 'link' OR g.item IS NULL)
+      AND g.action = 'see'
       AND (g.item_id = l.idlinker OR g.item_id IS NULL)
-      AND (g.user_id = sqlc.arg(viewer_user_id) OR g.user_id IS NULL)
-      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY l.listed DESC
 LIMIT ? OFFSET ?;
@@ -208,8 +232,16 @@ JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
 WHERE l.idlinker = ?;
 
 -- name: GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser :one
-WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur
+    WHERE ur.users_idusers = sqlc.arg(viewer_id)
+),
+grants_for_viewer AS (
+    SELECT g.section, g.item, g.action, g.item_id
+    FROM grants g
+    WHERE g.active = 1
+      AND (g.user_id = sqlc.arg(viewer_user_id) OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
 SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linker_category_id, l.forumthread_id, l.title, l.url, l.description, l.listed, u.username, lc.title
 FROM linker l
@@ -219,14 +251,12 @@ WHERE l.idlinker = sqlc.arg(idlinker)
   AND l.listed IS NOT NULL
   AND l.deleted_at IS NULL
   AND EXISTS (
-    SELECT 1 FROM grants g
-    WHERE g.section='linker'
-      AND g.item='link'
+    SELECT 1
+    FROM grants_for_viewer g
+    WHERE g.section = 'linker'
+      AND (g.item = 'link' OR g.item IS NULL)
       AND g.action IN ('view','comment','reply')
-      AND g.active=1
       AND (g.item_id = l.idlinker OR g.item_id IS NULL)
-      AND (g.user_id = sqlc.arg(viewer_user_id) OR g.user_id IS NULL)
-      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 LIMIT 1;
 
@@ -238,8 +268,16 @@ JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
 WHERE l.idlinker IN (sqlc.slice(linkerIds));
 
 -- name: GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUser :many
-WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur
+    WHERE ur.users_idusers = sqlc.arg(viewer_id)
+),
+grants_for_viewer AS (
+    SELECT g.section, g.item, g.action, g.item_id
+    FROM grants g
+    WHERE g.active = 1
+      AND (g.user_id = sqlc.arg(viewer_user_id) OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
 SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linker_category_id, l.forumthread_id, l.title, l.url, l.description, l.listed, u.username, lc.title
 FROM linker l
@@ -249,14 +287,12 @@ WHERE l.idlinker IN (sqlc.slice(linkerIds))
   AND l.listed IS NOT NULL
   AND l.deleted_at IS NULL
   AND EXISTS (
-    SELECT 1 FROM grants g
-    WHERE g.section='linker'
-      AND g.item='link'
-      AND g.action='view'
-      AND g.active=1
-      AND g.item_id = l.idlinker
-      AND (g.user_id = sqlc.arg(viewer_user_id) OR g.user_id IS NULL)
-      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+    SELECT 1
+    FROM grants_for_viewer g
+    WHERE g.section = 'linker'
+      AND (g.item = 'link' OR g.item IS NULL)
+      AND g.action = 'view'
+      AND (g.item_id = l.idlinker OR g.item_id IS NULL)
   );
 
 -- name: GetLinkerCategoriesWithCount :many
@@ -289,8 +325,16 @@ ORDER BY l.listed DESC
 LIMIT ? OFFSET ?;
 
 -- name: GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginated :many
-WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur
+    WHERE ur.users_idusers = sqlc.arg(viewer_id)
+),
+grants_for_viewer AS (
+    SELECT g.section, g.item, g.action, g.item_id
+    FROM grants g
+    WHERE g.active = 1
+      AND (g.user_id = sqlc.arg(viewer_user_id) OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
 SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linker_category_id, l.forumthread_id, l.title, l.url, l.description, l.listed, th.Comments, lc.title as Category_Title, u.Username as PosterUsername
 FROM linker l
@@ -299,14 +343,12 @@ LEFT JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
 LEFT JOIN forumthread th ON l.forumthread_id = th.idforumthread
 WHERE (lc.idlinkerCategory = sqlc.arg(idlinkercategory) OR sqlc.arg(idlinkercategory) = 0)
   AND EXISTS (
-    SELECT 1 FROM grants g
-    WHERE g.section='linker'
-      AND (g.item='link' OR g.item IS NULL)
-      AND g.action='see'
-      AND g.active=1
+    SELECT 1
+    FROM grants_for_viewer g
+    WHERE g.section = 'linker'
+      AND (g.item = 'link' OR g.item IS NULL)
+      AND g.action = 'see'
       AND (g.item_id = l.idlinker OR g.item_id IS NULL)
-      AND (g.user_id = sqlc.arg(viewer_user_id) OR g.user_id IS NULL)
-      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY l.listed DESC
 LIMIT ? OFFSET ?;

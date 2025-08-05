@@ -286,7 +286,7 @@ func (q *Queries) GetAllForumTopics(ctx context.Context) ([]*Forumtopic, error) 
 }
 
 const getAllForumTopicsByCategoryIdForUserWithLastPosterName = `-- name: GetAllForumTopicsByCategoryIdForUserWithLastPosterName :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
     UNION
     SELECT r2.id FROM role_ids ri
@@ -362,7 +362,7 @@ func (q *Queries) GetAllForumTopicsByCategoryIdForUserWithLastPosterName(ctx con
 }
 
 const getAllForumTopicsForUser = `-- name: GetAllForumTopicsForUser :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
     UNION
     SELECT r2.id FROM role_ids ri
@@ -452,7 +452,7 @@ func (q *Queries) GetForumCategoryById(ctx context.Context, idforumcategory int3
 }
 
 const getForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText = `-- name: GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
     UNION
     SELECT r2.id FROM role_ids ri
@@ -469,10 +469,10 @@ WHERE th.forumtopic_idforumtopic=?
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='forum'
-      AND g.item='topic'
+      AND (g.item='topic' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
-      AND g.item_id = t.idforumtopic
+      AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -559,7 +559,7 @@ func (q *Queries) GetForumTopicById(ctx context.Context, idforumtopic int32) (*F
 }
 
 const getForumTopicByIdForUser = `-- name: GetForumTopicByIdForUser :one
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
     UNION
     SELECT r2.id FROM role_ids ri
@@ -573,10 +573,10 @@ WHERE t.idforumtopic = ?
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='forum'
-      AND g.item='topic'
+      AND (g.item='topic' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
-      AND g.item_id = t.idforumtopic
+      AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )

@@ -20,7 +20,7 @@ func adminLanguageRedirect(w http.ResponseWriter, r *http.Request) {
 func adminLanguagesPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Languages"
-	handlers.TemplateHandler(w, r, "languagesPage.gohtml", cd)
+	handlers.TemplateHandler(w, r, "languagesPage.gohtml", struct{}{})
 }
 
 func adminLanguagesRenamePage(w http.ResponseWriter, r *http.Request) {

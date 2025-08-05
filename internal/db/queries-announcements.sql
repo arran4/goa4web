@@ -18,7 +18,7 @@ LIMIT 1;
 UPDATE site_announcements SET active = ? WHERE id = ?;
 
 -- name: GetActiveAnnouncementWithNewsForLister :one
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT a.id, n.idsiteNews, n.news
@@ -40,10 +40,10 @@ WHERE a.active = 1
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='news'
-        AND g.item='post'
+        AND (g.item='post' OR g.item IS NULL)
         AND g.action='view'
         AND g.active=1
-        AND g.item_id = n.idsiteNews
+        AND (g.item_id = n.idsiteNews OR g.item_id IS NULL)
         AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )

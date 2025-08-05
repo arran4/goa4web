@@ -219,7 +219,7 @@ func (q *Queries) GetImageBoardById(ctx context.Context, idimageboard int32) (*I
 }
 
 const getImagePostByIDForLister = `-- name: GetImagePostByIDForLister :one
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
@@ -232,10 +232,10 @@ WHERE i.idimagepost = ?
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='imagebbs'
-      AND g.item='board'
+      AND (g.item='board' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
-      AND g.item_id = i.imageboard_idimageboard
+      AND (g.item_id = i.imageboard_idimageboard OR g.item_id IS NULL)
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -467,7 +467,7 @@ func (q *Queries) GetImagePostsByUserDescendingAll(ctx context.Context, arg GetI
 }
 
 const listBoardsByParentIDForLister = `-- name: ListBoardsByParentIDForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required
@@ -531,7 +531,7 @@ func (q *Queries) ListBoardsByParentIDForLister(ctx context.Context, arg ListBoa
 }
 
 const listBoardsForLister = `-- name: ListBoardsForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required
@@ -591,7 +591,7 @@ func (q *Queries) ListBoardsForLister(ctx context.Context, arg ListBoardsForList
 }
 
 const listImagePostsByBoardForLister = `-- name: ListImagePostsByBoardForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
@@ -604,10 +604,10 @@ WHERE i.imageboard_idimageboard = ?
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='imagebbs'
-      AND g.item='board'
+      AND (g.item='board' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
-      AND g.item_id = i.imageboard_idimageboard
+      AND (g.item_id = i.imageboard_idimageboard OR g.item_id IS NULL)
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -684,7 +684,7 @@ func (q *Queries) ListImagePostsByBoardForLister(ctx context.Context, arg ListIm
 }
 
 const listImagePostsByPosterForLister = `-- name: ListImagePostsByPosterForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments

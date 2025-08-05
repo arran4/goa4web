@@ -111,7 +111,7 @@ func (c *helpCmd) showHelp(args []string) error {
 			}
 		}
 		return nil
-	case "writing", "writings":
+	case "writing":
 		cmd, err := parseWritingCmd(c.rootCmd, append(args[1:], "-h"))
 		if err != nil && err != flag.ErrHelp {
 			return fmt.Errorf("writing: %w", err)

@@ -19,5 +19,6 @@
         <li>No users</li>
     {{- end }}
 </ul>
+<p><a href="/admin/role/{{ .Role.ID }}/grant/add">Add Grant</a></p>
 {{ template "roleGrantsEditor.gohtml" . }}
 {{ template "tail" $ }}

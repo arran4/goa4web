@@ -43,15 +43,15 @@ FROM blogs
 WHERE idblogs = ?;
 
 -- name: ListBlogEntriesForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
        b.users_idusers = sqlc.arg(lister_id) AS is_owner
 FROM blogs b
-JOIN grants g ON g.item_id = b.idblogs
+JOIN grants g ON (g.item_id = b.idblogs OR g.item_id IS NULL)
     AND g.section = 'blogs'
-    AND g.item = 'entry'
+    AND (g.item = 'entry' OR g.item IS NULL)
     AND g.action = 'see'
     AND g.active = 1
     AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
@@ -74,7 +74,7 @@ ORDER BY b.written DESC
 LIMIT ? OFFSET ?;
 
 -- name: ListBlogEntriesByAuthorForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
@@ -98,10 +98,10 @@ AND (
 AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'blogs'
-      AND g.item = 'entry'
+      AND (g.item = 'entry' OR g.item IS NULL)
       AND g.action = 'see'
       AND g.active = 1
-      AND g.item_id = b.idblogs
+      AND (g.item_id = b.idblogs OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
@@ -109,7 +109,7 @@ ORDER BY b.written DESC
 LIMIT ? OFFSET ?;
 
 -- name: ListBlogEntriesByIDsForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written
@@ -130,10 +130,10 @@ WHERE b.idblogs IN (sqlc.slice(blogIds))
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section = 'blogs'
-        AND g.item = 'entry'
+        AND (g.item = 'entry' OR g.item IS NULL)
         AND g.action = 'see'
         AND g.active = 1
-        AND g.item_id = b.idblogs
+        AND (g.item_id = b.idblogs OR g.item_id IS NULL)
         AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -141,7 +141,7 @@ ORDER BY b.written DESC
 LIMIT ? OFFSET ?;
 
 -- name: GetBlogEntryForListerByID :one
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
@@ -165,17 +165,17 @@ WHERE b.idblogs = sqlc.arg(id)
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section = 'blogs'
-        AND g.item = 'entry'
+        AND (g.item = 'entry' OR g.item IS NULL)
         AND g.action = 'see'
         AND g.active = 1
-        AND g.item_id = b.idblogs
+        AND (g.item_id = b.idblogs OR g.item_id IS NULL)
         AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 LIMIT 1;
 
 -- name: ListBlogIDsBySearchWordFirstForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.blog_id
@@ -198,16 +198,16 @@ WHERE swl.word = ?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section = 'blogs'
-        AND g.item = 'entry'
+        AND (g.item = 'entry' OR g.item IS NULL)
         AND g.action = 'see'
         AND g.active = 1
-        AND g.item_id = b.idblogs
+        AND (g.item_id = b.idblogs OR g.item_id IS NULL)
         AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   );
 
 -- name: ListBlogIDsBySearchWordNextForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.blog_id
@@ -231,10 +231,10 @@ WHERE swl.word = ?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section = 'blogs'
-        AND g.item = 'entry'
+        AND (g.item = 'entry' OR g.item IS NULL)
         AND g.action = 'see'
         AND g.active = 1
-        AND g.item_id = b.idblogs
+        AND (g.item_id = b.idblogs OR g.item_id IS NULL)
         AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   );
@@ -242,7 +242,7 @@ WHERE swl.word = ?
 
 
 -- name: ListBloggersForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT u.username, COUNT(b.idblogs) AS count
@@ -263,10 +263,10 @@ WHERE (
 AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'blogs'
-      AND g.item = 'entry'
+      AND (g.item = 'entry' OR g.item IS NULL)
       AND g.action = 'see'
       AND g.active = 1
-      AND g.item_id = b.idblogs
+      AND (g.item_id = b.idblogs OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
@@ -275,7 +275,7 @@ ORDER BY u.username
 LIMIT ? OFFSET ?;
 
 -- name: ListBloggersSearchForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT u.username, COUNT(b.idblogs) AS count
@@ -297,10 +297,10 @@ WHERE (LOWER(u.username) LIKE LOWER(sqlc.arg(query)) OR LOWER((SELECT email FROM
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'blogs'
-      AND g.item = 'entry'
+      AND (g.item = 'entry' OR g.item IS NULL)
       AND g.action = 'see'
       AND g.active = 1
-      AND g.item_id = b.idblogs
+      AND (g.item_id = b.idblogs OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )

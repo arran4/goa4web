@@ -76,7 +76,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	writing, err := cd.CurrentWriting()
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", cd); err != nil {
+			if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{}); err != nil {
 				log.Printf("render no access page: %v", err)
 			}
 			return nil
@@ -85,6 +85,11 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	if writing == nil {
 		return fmt.Errorf("get writing fail %w", handlers.ErrRedirectOnSamePageHandler(sql.ErrNoRows))
+	}
+
+	if !(cd.HasGrant("writing", "article", "comment", writing.Idwriting) ||
+		cd.HasGrant("writing", "article", "reply", writing.Idwriting)) {
+		return handlers.ErrRedirectOnSamePageHandler(handlers.ErrForbidden)
 	}
 
 	pthid := writing.ForumthreadID

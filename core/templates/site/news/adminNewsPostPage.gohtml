@@ -10,6 +10,6 @@
 <p><a href="/admin/news/{{ .Post.Idsitenews }}/delete">Delete</a></p>
 <a id="comments"></a>
 {{ if .Comments }}<hr><font size=4>Comments:</font>{{ end }}
-{{ template "threadComments" $ }}
+{{ template "threadComments" }}
 <p><a href="/admin/news">Back</a></p>
 {{ template "tail" $ }}

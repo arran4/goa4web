@@ -330,7 +330,7 @@ The script adds tables for notifications and email queues, updates existing colu
 
 ### Permission section checker
 
-The `/admin/permissions/sections` page lists all distinct values found in the `permissions.section` column. It provides buttons to convert existing rows between `writing` and `writings`. These one-off tools help normalise data if older migrations used inconsistent names.
+The `/admin/permissions/sections` page lists all distinct values found in the `grants.section` column. It provides tools to convert any legacy `writings` entries to `writing` so older migrations remain consistent.
 
 The linked counts let you drill down to view all permissions for a section via `/admin/permissions/sections/view?section=<name>`.
 
@@ -411,7 +411,7 @@ used examples include:
 - `grant` – control the default permission grants applied to new users.
 - `board` – create and update image boards.
 - `blog` – inspect blog posts and their comments.
-- `writing` – access writings and comment threads.
+- `writing` – access writing articles and comment threads.
 - `news` – list news items and manage comments.
 - `faq` – administer frequently asked questions.
 - `ipban` – list or update IP bans.

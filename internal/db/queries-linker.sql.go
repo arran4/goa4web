@@ -257,8 +257,16 @@ func (q *Queries) GetAllLinkerCategories(ctx context.Context) ([]*LinkerCategory
 }
 
 const getAllLinkerCategoriesForUser = `-- name: GetAllLinkerCategoriesForUser :many
-WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur
+    WHERE ur.users_idusers = ?
+),
+grants_for_viewer AS (
+    SELECT g.section, g.item, g.action, g.item_id
+    FROM grants g
+    WHERE g.active = 1
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
 SELECT
     lc.idlinkerCategory,
@@ -267,14 +275,12 @@ SELECT
     lc.sortorder
 FROM linker_category lc
 WHERE EXISTS (
-    SELECT 1 FROM grants g
-    WHERE g.section='linker'
-      AND (g.item='category' OR g.item IS NULL)
-      AND g.action='see'
-      AND g.active=1
+    SELECT 1
+    FROM grants_for_viewer g
+    WHERE g.section = 'linker'
+      AND (g.item = 'category' OR g.item IS NULL)
+      AND g.action = 'see'
       AND (g.item_id = lc.idlinkerCategory OR g.item_id IS NULL)
-      AND (g.user_id = ? OR g.user_id IS NULL)
-      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
   AND EXISTS (
     SELECT 1 FROM linker l
@@ -386,8 +392,16 @@ func (q *Queries) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTi
 }
 
 const getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUser = `-- name: GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUser :many
-WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur
+    WHERE ur.users_idusers = ?
+),
+grants_for_viewer AS (
+    SELECT g.section, g.item, g.action, g.item_id
+    FROM grants g
+    WHERE g.active = 1
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
 SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linker_category_id, l.forumthread_id, l.title, l.url, l.description, l.listed, th.Comments, lc.title as Category_Title, u.Username as PosterUsername
 FROM linker l
@@ -398,22 +412,20 @@ WHERE (lc.idlinkerCategory = ? OR ? = 0)
   AND l.listed IS NOT NULL
   AND l.deleted_at IS NULL
   AND EXISTS (
-    SELECT 1 FROM grants g
-    WHERE g.section='linker'
-      AND (g.item='link' OR g.item IS NULL)
-      AND g.action='see'
-      AND g.active=1
+    SELECT 1
+    FROM grants_for_viewer g
+    WHERE g.section = 'linker'
+      AND (g.item = 'link' OR g.item IS NULL)
+      AND g.action = 'see'
       AND (g.item_id = l.idlinker OR g.item_id IS NULL)
-      AND (g.user_id = ? OR g.user_id IS NULL)
-      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY l.listed DESC
 `
 
 type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserParams struct {
 	ViewerID         int32
-	Idlinkercategory int32
 	ViewerUserID     sql.NullInt32
+	Idlinkercategory int32
 }
 
 type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserRow struct {
@@ -434,9 +446,9 @@ type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending
 func (q *Queries) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUser(ctx context.Context, arg GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserParams) ([]*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserRow, error) {
 	rows, err := q.db.QueryContext(ctx, getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUser,
 		arg.ViewerID,
-		arg.Idlinkercategory,
-		arg.Idlinkercategory,
 		arg.ViewerUserID,
+		arg.Idlinkercategory,
+		arg.Idlinkercategory,
 	)
 	if err != nil {
 		return nil, err
@@ -473,8 +485,16 @@ func (q *Queries) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTi
 }
 
 const getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginated = `-- name: GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginated :many
-WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur
+    WHERE ur.users_idusers = ?
+),
+grants_for_viewer AS (
+    SELECT g.section, g.item, g.action, g.item_id
+    FROM grants g
+    WHERE g.active = 1
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
 SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linker_category_id, l.forumthread_id, l.title, l.url, l.description, l.listed, th.Comments, lc.title as Category_Title, u.Username as PosterUsername
 FROM linker l
@@ -483,14 +503,12 @@ LEFT JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
 LEFT JOIN forumthread th ON l.forumthread_id = th.idforumthread
 WHERE (lc.idlinkerCategory = ? OR ? = 0)
   AND EXISTS (
-    SELECT 1 FROM grants g
-    WHERE g.section='linker'
-      AND (g.item='link' OR g.item IS NULL)
-      AND g.action='see'
-      AND g.active=1
+    SELECT 1
+    FROM grants_for_viewer g
+    WHERE g.section = 'linker'
+      AND (g.item = 'link' OR g.item IS NULL)
+      AND g.action = 'see'
       AND (g.item_id = l.idlinker OR g.item_id IS NULL)
-      AND (g.user_id = ? OR g.user_id IS NULL)
-      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY l.listed DESC
 LIMIT ? OFFSET ?
@@ -498,8 +516,8 @@ LIMIT ? OFFSET ?
 
 type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedParams struct {
 	ViewerID         int32
-	Idlinkercategory int32
 	ViewerUserID     sql.NullInt32
+	Idlinkercategory int32
 	Limit            int32
 	Offset           int32
 }
@@ -522,9 +540,9 @@ type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending
 func (q *Queries) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginated(ctx context.Context, arg GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedParams) ([]*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow, error) {
 	rows, err := q.db.QueryContext(ctx, getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginated,
 		arg.ViewerID,
-		arg.Idlinkercategory,
-		arg.Idlinkercategory,
 		arg.ViewerUserID,
+		arg.Idlinkercategory,
+		arg.Idlinkercategory,
 		arg.Limit,
 		arg.Offset,
 	)
@@ -563,8 +581,16 @@ func (q *Queries) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTi
 }
 
 const getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow = `-- name: GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow :many
-WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur
+    WHERE ur.users_idusers = ?
+),
+grants_for_viewer AS (
+    SELECT g.section, g.item, g.action, g.item_id
+    FROM grants g
+    WHERE g.active = 1
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
 SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linker_category_id, l.forumthread_id, l.title, l.url, l.description, l.listed, th.Comments, lc.title as Category_Title, u.Username as PosterUsername
 FROM linker l
@@ -575,14 +601,12 @@ WHERE (lc.idlinkerCategory = ? OR ? = 0)
   AND l.listed IS NOT NULL
   AND l.deleted_at IS NULL
   AND EXISTS (
-    SELECT 1 FROM grants g
-    WHERE g.section='linker'
-      AND (g.item='link' OR g.item IS NULL)
-      AND g.action='see'
-      AND g.active=1
+    SELECT 1
+    FROM grants_for_viewer g
+    WHERE g.section = 'linker'
+      AND (g.item = 'link' OR g.item IS NULL)
+      AND g.action = 'see'
       AND (g.item_id = l.idlinker OR g.item_id IS NULL)
-      AND (g.user_id = ? OR g.user_id IS NULL)
-      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY l.listed DESC
 LIMIT ? OFFSET ?
@@ -590,8 +614,8 @@ LIMIT ? OFFSET ?
 
 type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRowParams struct {
 	ViewerID         int32
-	Idlinkercategory int32
 	ViewerUserID     sql.NullInt32
+	Idlinkercategory int32
 	Limit            int32
 	Offset           int32
 }
@@ -614,9 +638,9 @@ type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending
 func (q *Queries) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow(ctx context.Context, arg GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRowParams) ([]*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRowRow, error) {
 	rows, err := q.db.QueryContext(ctx, getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow,
 		arg.ViewerID,
-		arg.Idlinkercategory,
-		arg.Idlinkercategory,
 		arg.ViewerUserID,
+		arg.Idlinkercategory,
+		arg.Idlinkercategory,
 		arg.Limit,
 		arg.Offset,
 	)
@@ -958,8 +982,16 @@ func (q *Queries) GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(
 }
 
 const getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser = `-- name: GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser :one
-WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur
+    WHERE ur.users_idusers = ?
+),
+grants_for_viewer AS (
+    SELECT g.section, g.item, g.action, g.item_id
+    FROM grants g
+    WHERE g.active = 1
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
 SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linker_category_id, l.forumthread_id, l.title, l.url, l.description, l.listed, u.username, lc.title
 FROM linker l
@@ -969,22 +1001,20 @@ WHERE l.idlinker = ?
   AND l.listed IS NOT NULL
   AND l.deleted_at IS NULL
   AND EXISTS (
-    SELECT 1 FROM grants g
-    WHERE g.section='linker'
-      AND g.item='link'
+    SELECT 1
+    FROM grants_for_viewer g
+    WHERE g.section = 'linker'
+      AND (g.item = 'link' OR g.item IS NULL)
       AND g.action IN ('view','comment','reply')
-      AND g.active=1
       AND (g.item_id = l.idlinker OR g.item_id IS NULL)
-      AND (g.user_id = ? OR g.user_id IS NULL)
-      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 LIMIT 1
 `
 
 type GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams struct {
 	ViewerID     int32
-	Idlinker     int32
 	ViewerUserID sql.NullInt32
+	Idlinker     int32
 }
 
 type GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow struct {
@@ -1002,7 +1032,7 @@ type GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow str
 }
 
 func (q *Queries) GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(ctx context.Context, arg GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams) (*GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow, error) {
-	row := q.db.QueryRowContext(ctx, getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser, arg.ViewerID, arg.Idlinker, arg.ViewerUserID)
+	row := q.db.QueryRowContext(ctx, getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser, arg.ViewerID, arg.ViewerUserID, arg.Idlinker)
 	var i GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow
 	err := row.Scan(
 		&i.Idlinker,
@@ -1088,8 +1118,16 @@ func (q *Queries) GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendin
 }
 
 const getLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUser = `-- name: GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUser :many
-WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur
+    WHERE ur.users_idusers = ?
+),
+grants_for_viewer AS (
+    SELECT g.section, g.item, g.action, g.item_id
+    FROM grants g
+    WHERE g.active = 1
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
 SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linker_category_id, l.forumthread_id, l.title, l.url, l.description, l.listed, u.username, lc.title
 FROM linker l
@@ -1099,21 +1137,19 @@ WHERE l.idlinker IN (/*SLICE:linkerids*/?)
   AND l.listed IS NOT NULL
   AND l.deleted_at IS NULL
   AND EXISTS (
-    SELECT 1 FROM grants g
-    WHERE g.section='linker'
-      AND g.item='link'
-      AND g.action='view'
-      AND g.active=1
-      AND g.item_id = l.idlinker
-      AND (g.user_id = ? OR g.user_id IS NULL)
-      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+    SELECT 1
+    FROM grants_for_viewer g
+    WHERE g.section = 'linker'
+      AND (g.item = 'link' OR g.item IS NULL)
+      AND g.action = 'view'
+      AND (g.item_id = l.idlinker OR g.item_id IS NULL)
   )
 `
 
 type GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUserParams struct {
 	ViewerID     int32
-	Linkerids    []int32
 	ViewerUserID sql.NullInt32
+	Linkerids    []int32
 }
 
 type GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUserRow struct {
@@ -1134,6 +1170,7 @@ func (q *Queries) GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendin
 	query := getLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUser
 	var queryParams []interface{}
 	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.ViewerUserID)
 	if len(arg.Linkerids) > 0 {
 		for _, v := range arg.Linkerids {
 			queryParams = append(queryParams, v)
@@ -1142,7 +1179,6 @@ func (q *Queries) GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendin
 	} else {
 		query = strings.Replace(query, "/*SLICE:linkerids*/?", "NULL", 1)
 	}
-	queryParams = append(queryParams, arg.ViewerUserID)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
 		return nil, err
@@ -1246,8 +1282,16 @@ func (q *Queries) GetLinkerItemsByUserDescending(ctx context.Context, arg GetLin
 }
 
 const getLinkerItemsByUserDescendingForUser = `-- name: GetLinkerItemsByUserDescendingForUser :many
-WITH RECURSIVE role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur
+    WHERE ur.users_idusers = ?
+),
+grants_for_viewer AS (
+    SELECT g.section, g.item, g.action, g.item_id
+    FROM grants g
+    WHERE g.active = 1
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
 SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linker_category_id, l.forumthread_id, l.title, l.url, l.description, l.listed, th.comments, lc.title as Category_Title, u.username as PosterUsername
 FROM linker l
@@ -1258,14 +1302,12 @@ WHERE l.users_idusers = ?
   AND l.listed IS NOT NULL
   AND l.deleted_at IS NULL
   AND EXISTS (
-    SELECT 1 FROM grants g
-    WHERE g.section='linker'
-      AND (g.item='link' OR g.item IS NULL)
-      AND g.action='see'
-      AND g.active=1
+    SELECT 1
+    FROM grants_for_viewer g
+    WHERE g.section = 'linker'
+      AND (g.item = 'link' OR g.item IS NULL)
+      AND g.action = 'see'
       AND (g.item_id = l.idlinker OR g.item_id IS NULL)
-      AND (g.user_id = ? OR g.user_id IS NULL)
-      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY l.listed DESC
 LIMIT ? OFFSET ?
@@ -1273,8 +1315,8 @@ LIMIT ? OFFSET ?
 
 type GetLinkerItemsByUserDescendingForUserParams struct {
 	ViewerID     int32
-	UserID       int32
 	ViewerUserID sql.NullInt32
+	UserID       int32
 	Limit        int32
 	Offset       int32
 }
@@ -1297,8 +1339,8 @@ type GetLinkerItemsByUserDescendingForUserRow struct {
 func (q *Queries) GetLinkerItemsByUserDescendingForUser(ctx context.Context, arg GetLinkerItemsByUserDescendingForUserParams) ([]*GetLinkerItemsByUserDescendingForUserRow, error) {
 	rows, err := q.db.QueryContext(ctx, getLinkerItemsByUserDescendingForUser,
 		arg.ViewerID,
-		arg.UserID,
 		arg.ViewerUserID,
+		arg.UserID,
 		arg.Limit,
 		arg.Offset,
 	)

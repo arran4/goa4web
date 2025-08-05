@@ -86,7 +86,7 @@ ON DUPLICATE KEY UPDATE word_count=VALUES(word_count);
 
 
 -- name: ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopic :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.comment_id
@@ -112,7 +112,7 @@ WHERE swl.word=sqlc.arg(word)
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='forum'
-        AND g.item='topic'
+        AND (g.item='topic' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
         AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
@@ -121,7 +121,7 @@ WHERE swl.word=sqlc.arg(word)
   );
 
 -- name: ListCommentIDsBySearchWordNextForListerNotInRestrictedTopic :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.comment_id
@@ -148,7 +148,7 @@ WHERE swl.word=sqlc.arg(word)
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='forum'
-        AND g.item='topic'
+        AND (g.item='topic' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
         AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
@@ -157,7 +157,7 @@ WHERE swl.word=sqlc.arg(word)
   );
 
 -- name: ListCommentIDsBySearchWordFirstForListerInRestrictedTopic :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.comment_id
@@ -183,7 +183,7 @@ WHERE swl.word=sqlc.arg(word)
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='forum'
-        AND g.item='topic'
+        AND (g.item='topic' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
         AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
@@ -192,7 +192,7 @@ WHERE swl.word=sqlc.arg(word)
   );
 
 -- name: ListCommentIDsBySearchWordNextForListerInRestrictedTopic :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.comment_id
@@ -219,7 +219,7 @@ WHERE swl.word=sqlc.arg(word)
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='forum'
-        AND g.item='topic'
+        AND (g.item='topic' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
         AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
@@ -255,7 +255,7 @@ ON DUPLICATE KEY UPDATE word_count=VALUES(word_count);
 DELETE FROM writing_search
 WHERE writing_id = sqlc.arg(writing_id);
 -- name: ListWritingSearchFirstForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.writing_id
@@ -278,16 +278,16 @@ WHERE swl.word = sqlc.arg(word)
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='writing'
-        AND g.item='article'
+        AND (g.item='article' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
-        AND g.item_id = w.idwriting
+        AND (g.item_id = w.idwriting OR g.item_id IS NULL)
         AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   );
 
 -- name: ListWritingSearchNextForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.writing_id
@@ -311,16 +311,16 @@ WHERE swl.word = sqlc.arg(word)
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='writing'
-        AND g.item='article'
+        AND (g.item='article' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
-        AND g.item_id = w.idwriting
+        AND (g.item_id = w.idwriting OR g.item_id IS NULL)
         AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   );
 
 -- name: ListSiteNewsSearchFirstForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.site_news_id
@@ -343,16 +343,16 @@ WHERE swl.word = sqlc.arg(word)
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='news'
-        AND g.item='post'
+        AND (g.item='post' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
-        AND g.item_id = sn.idsiteNews
+        AND (g.item_id = sn.idsiteNews OR g.item_id IS NULL)
         AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   );
 
 -- name: ListSiteNewsSearchNextForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.site_news_id
@@ -376,10 +376,10 @@ WHERE swl.word = sqlc.arg(word)
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='news'
-        AND g.item='post'
+        AND (g.item='post' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
-        AND g.item_id = sn.idsiteNews
+        AND (g.item_id = sn.idsiteNews OR g.item_id IS NULL)
         AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   );
@@ -387,7 +387,7 @@ WHERE swl.word = sqlc.arg(word)
 
 
 -- name: LinkerSearchFirst :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.linker_id
@@ -410,16 +410,16 @@ WHERE swl.word = sqlc.arg(word)
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='linker'
-        AND g.item='link'
+        AND (g.item='link' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
-        AND g.item_id = l.idlinker
+        AND (g.item_id = l.idlinker OR g.item_id IS NULL)
         AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   );
 
 -- name: LinkerSearchNext :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.linker_id
@@ -443,10 +443,10 @@ WHERE swl.word = sqlc.arg(word)
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='linker'
-        AND g.item='link'
+        AND (g.item='link' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
-        AND g.item_id = l.idlinker
+        AND (g.item_id = l.idlinker OR g.item_id IS NULL)
         AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   );

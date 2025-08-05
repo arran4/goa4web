@@ -62,7 +62,7 @@ SELECT ?, ?, ?, ?, ?, NOW()
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='images'
-      AND (g.item='upload' OR g.item IS NULL)
+      AND g.item='upload'
       AND g.action='post'
       AND g.active=1
       AND (g.user_id = ? OR g.user_id IS NULL)
@@ -107,7 +107,7 @@ WHERE ui.users_idusers = ?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='images'
-        AND (g.item='upload' OR g.item IS NULL)
+        AND g.item='upload'
         AND g.action='see'
         AND g.active=1
         AND (g.user_id = ? OR g.user_id IS NULL)

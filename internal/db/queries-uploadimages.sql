@@ -6,7 +6,7 @@ SELECT sqlc.arg(uploader_id), sqlc.arg(path), sqlc.arg(width), sqlc.arg(height),
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='images'
-      AND (g.item='upload' OR g.item IS NULL)
+      AND g.item='upload'
       AND g.action='post'
       AND g.active=1
       AND (g.user_id = sqlc.arg(grantee_id) OR g.user_id IS NULL)
@@ -25,7 +25,7 @@ WHERE ui.users_idusers = sqlc.arg(user_id)
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='images'
-        AND (g.item='upload' OR g.item IS NULL)
+        AND g.item='upload'
         AND g.action='see'
         AND g.active=1
         AND (g.user_id = sqlc.arg(lister_match_id) OR g.user_id IS NULL)

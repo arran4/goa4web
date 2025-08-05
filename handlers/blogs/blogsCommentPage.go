@@ -98,6 +98,17 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	if !(cd.HasGrant("blogs", "entry", "view", blog.Idblogs) ||
+		cd.HasGrant("blogs", "entry", "comment", blog.Idblogs) ||
+		cd.HasGrant("blogs", "entry", "reply", blog.Idblogs)) {
+		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+		return
+	}
+	canComment := cd.HasGrant("blogs", "entry", "comment", blog.Idblogs)
+	canReply := cd.HasGrant("blogs", "entry", "reply", blog.Idblogs)
+
+	data.IsReplyable = canComment
+
 	editUrl := ""
 	if uid == blog.UsersIdusers {
 		editUrl = fmt.Sprintf("/blogs/blog/%d/edit", blog.Idblogs)
@@ -178,7 +189,7 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 			}
 			data.Comments = append(data.Comments, &BlogComment{
 				GetCommentsByThreadIdForUserRow: row,
-				ShowReply:                       true,
+				ShowReply:                       canReply,
 				EditUrl:                         editUrl,
 				EditSaveUrl:                     editSaveUrl,
 				Editing:                         commentId != 0 && int32(commentId) == row.Idcomments,

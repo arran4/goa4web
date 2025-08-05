@@ -150,6 +150,8 @@ Many queries now filter results directly in SQL using `lister_id` together with 
 | `blogs`    | —          | `search`        | Search blog entries |
 | `blogs`    | `entry`    | `see`           | List blog entries |
 | `blogs`    | `entry`    | `view`          | View a blog entry |
+| `blogs`    | `entry`    | `comment`       | Comment on a blog entry |
+| `blogs`    | `entry`    | `reply`         | Reply to a blog comment |
 | `blogs`    | `entry`    | `post`          | Publish a new blog entry |
 | `blogs`    | `entry`    | `edit`          | Modify any blog entry |
 | `faq`      | —          | `search`        | Search FAQ content |
@@ -194,6 +196,8 @@ Many queries now filter results directly in SQL using `lister_id` together with 
 | `writing`  | `category` | `view`          | View a writing category |
 | `writing`  | `article`  | `see`           | Show writing articles in lists |
 | `writing`  | `article`  | `view`          | Read a writing article |
+| `writing`  | `article`  | `comment`       | Comment on a writing article |
+| `writing`  | `article`  | `reply`         | Reply to a writing comment |
 | `writing`  | `article`  | `post`          | Publish a writing article |
 | `writing`  | `article`  | `edit`          | Edit a writing article |
 

@@ -1,8 +1,10 @@
 {{ define "subBoards" }}
-    {{- if .Boards }}
-        <font size="4">{{ if .IsSubBoard }}Sub-{{ end }}Boards:</font><br>
+    {{ $cd := cd }}
+    {{ $boards := $cd.SelectedBoardSubBoards }}
+    {{- if $boards }}
+        <font size="4">{{ if gt ($cd.SelectedBoardID) 0 }}Sub-{{ end }}Boards:</font><br>
         <table>
-            {{- range .Boards }}
+            {{- range $boards }}
                 <tr>
                     <th><a href="/imagebbs/board/{{ .Idimageboard }}">{{ .Title.String }}</a>
                     <td>{{ .Description.String }}

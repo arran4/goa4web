@@ -53,29 +53,18 @@ func (UploadImageTask) IndexData(data map[string]any) []searchworker.IndexEventD
 var _ searchworker.IndexedTask = UploadImageTask{}
 
 func BoardPage(w http.ResponseWriter, r *http.Request) {
-	type Data struct {
-		IsSubBoard  bool
-		BoardNumber int
-	}
-
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	vars := mux.Vars(r)
-	bidStr := vars["board"]
-	if bidStr == "" {
-		bidStr = vars["boardno"]
-	}
-	bid, _ := strconv.Atoi(bidStr)
+	cd.LoadSelectionsFromRequest(r)
+	bid := cd.SelectedBoardID()
 
-	data := Data{IsSubBoard: bid != 0, BoardNumber: bid}
-
-	if !cd.HasGrant("imagebbs", "board", "view", int32(bid)) {
+	if !cd.HasGrant("imagebbs", "board", "view", bid) {
 		_ = templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", struct{}{})
 		return
 	}
 
 	cd.PageTitle = fmt.Sprintf("Board %d", bid)
 
-	handlers.TemplateHandler(w, r, "boardPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "boardPage.gohtml", struct{}{})
 }
 
 func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {

@@ -142,113 +142,11 @@ Active announcements reference a news post and are only shown to listers permitt
 
 Many queries now filter results directly in SQL using `lister_id` together with the lister's effective roles. Each query matches against grants so only records the lister may access are returned. The table below lists the combinations used for each section.
 
-| `section` | `item` | `action` | `grants.user_id` | `grants.role_id` | Applies when |
-|-----------|-------|---------|------------------|------------------|--------------|
-| `news` | `post` | `see` or `view` | `lister_id` | `NULL` | grant specific to that user |
-| `news` | `post` | `see` or `view` | `lister_id` | lister role ID | grant requiring both user and role |
-| `news` | `post` | `see` or `view` | `NULL` | lister role ID | role-based grant |
-| `news` | `post` | `see` or `view` | `NULL` | `NULL` | public grant for everyone |
-| `news` | `post` | `post` | `lister_id` | `NULL` | grant specific to that user |
-| `news` | `post` | `post` | `lister_id` | lister role ID | grant requiring both user and role |
-| `news` | `post` | `post` | `NULL` | lister role ID | role-based grant |
-| `news` | `post` | `post` | `NULL` | `NULL` | public grant for everyone |
-| `news` | `post` | `edit` | `lister_id` | `NULL` | grant specific to that user |
-| `news` | `post` | `edit` | `lister_id` | lister role ID | grant requiring both user and role |
-| `news` | `post` | `edit` | `NULL` | lister role ID | role-based grant |
-| `news` | `post` | `edit` | `NULL` | `NULL` | public grant for everyone |
-| `blogs` | `entry` | `see` | `lister_id` | `NULL` | grant specific to that user |
-| `blogs` | `entry` | `see` | `lister_id` | lister role ID | grant requiring both user and role |
-| `blogs` | `entry` | `see` | `NULL` | lister role ID | role-based grant |
-| `blogs` | `entry` | `see` | `NULL` | `NULL` | public grant for everyone |
-| `blogs` | `entry` | `post` | `lister_id` | `NULL` | grant specific to that user |
-| `blogs` | `entry` | `post` | `lister_id` | lister role ID | grant requiring both user and role |
-| `blogs` | `entry` | `post` | `NULL` | lister role ID | role-based grant |
-| `blogs` | `entry` | `post` | `NULL` | `NULL` | public grant for everyone |
-| `faq` | `question` | `post` | `lister_id` | `NULL` | grant specific to that user |
-| `faq` | `question` | `post` | `lister_id` | lister role ID | grant requiring both user and role |
-| `faq` | `question` | `post` | `NULL` | lister role ID | role-based grant |
-| `faq` | `question` | `post` | `NULL` | `NULL` | public grant for everyone |
-| `writing` | `article` | `see` or `view` | `lister_id` | `NULL` | grant specific to that user |
-| `writing` | `article` | `see` or `view` | `lister_id` | lister role ID | grant requiring both user and role |
-| `writing` | `article` | `see` or `view` | `NULL` | lister role ID | role-based grant |
-| `writing` | `article` | `see` or `view` | `NULL` | `NULL` | public grant for everyone |
-| `writing` | `article` | `post` | `lister_id` | `NULL` | grant specific to that user |
-| `writing` | `article` | `post` | `lister_id` | lister role ID | grant requiring both user and role |
-| `writing` | `article` | `post` | `NULL` | lister role ID | role-based grant |
-| `writing` | `article` | `post` | `NULL` | `NULL` | public grant for everyone |
-| `writing` | `article` | `edit` | `lister_id` | `NULL` | grant specific to that user |
-| `writing` | `article` | `edit` | `lister_id` | lister role ID | grant requiring both user and role |
-| `writing` | `article` | `edit` | `NULL` | lister role ID | role-based grant |
-| `writing` | `article` | `edit` | `NULL` | `NULL` | public grant for everyone |
-| `writing` | `category` | `see` | `lister_id` | `NULL` | grant specific to that user |
-| `writing` | `category` | `see` | `lister_id` | lister role ID | grant requiring both user and role |
-| `writing` | `category` | `see` | `NULL` | lister role ID | role-based grant |
-| `writing` | `category` | `see` | `NULL` | `NULL` | public grant for everyone |
-| `writing` | `category` | `view` | `lister_id` | `NULL` | grant specific to that user |
-| `writing` | `category` | `view` | `lister_id` | lister role ID | grant requiring both user and role |
-| `writing` | `category` | `view` | `NULL` | lister role ID | role-based grant |
-| `writing` | `category` | `view` | `NULL` | `NULL` | public grant for everyone |
-| `imagebbs` | `board` | `see` or `view` | `lister_id` | `NULL` | grant specific to that user |
-| `imagebbs` | `board` | `see` or `view` | `lister_id` | lister role ID | grant requiring both user and role |
-| `imagebbs` | `board` | `see` or `view` | `NULL` | lister role ID | role-based grant |
-| `imagebbs` | `board` | `see` or `view` | `NULL` | `NULL` | public grant for everyone |
-| `imagebbs` | `board` | `post` | `lister_id` | `NULL` | grant specific to that user |
-| `imagebbs` | `board` | `post` | `lister_id` | lister role ID | grant requiring both user and role |
-| `imagebbs` | `board` | `post` | `NULL` | lister role ID | role-based grant |
-| `imagebbs` | `board` | `post` | `NULL` | `NULL` | public grant for everyone |
-| `linker` | `category` | `see` | `lister_id` | `NULL` | grant specific to that user |
-| `linker` | `category` | `see` | `lister_id` | lister role ID | grant requiring both user and role |
-| `linker` | `category` | `see` | `NULL` | lister role ID | role-based grant |
-| `linker` | `category` | `see` | `NULL` | `NULL` | public grant for everyone |
-| `linker` | `category` | `view` | `lister_id` | `NULL` | grant specific to that user |
-| `linker` | `category` | `view` | `lister_id` | lister role ID | grant requiring both user and role |
-| `linker` | `category` | `view` | `NULL` | lister role ID | role-based grant |
-| `linker` | `category` | `view` | `NULL` | `NULL` | public grant for everyone |
-| `forum` | `category` | `see` | `lister_id` | `NULL` | grant specific to that user |
-| `forum` | `category` | `see` | `lister_id` | lister role ID | grant requiring both user and role |
-| `forum` | `category` | `see` | `NULL` | lister role ID | role-based grant |
-| `forum` | `category` | `see` | `NULL` | `NULL` | public grant for everyone |
-| `forum` | `category` | `view` | `lister_id` | `NULL` | grant specific to that user |
-| `forum` | `category` | `view` | `lister_id` | lister role ID | grant requiring both user and role |
-| `forum` | `category` | `view` | `NULL` | lister role ID | role-based grant |
-| `forum` | `category` | `view` | `NULL` | `NULL` | public grant for everyone |
-| `linker` | `link` | `see` | `lister_id` | `NULL` | grant specific to that user |
-| `linker` | `link` | `see` | `lister_id` | lister role ID | grant requiring both user and role |
-| `linker` | `link` | `see` | `NULL` | lister role ID | role-based grant |
-| `linker` | `link` | `see` | `NULL` | `NULL` | public grant for everyone |
-| `linker` | `link` | `view` | `lister_id` | `NULL` | grant specific to that user |
-| `linker` | `link` | `view` | `lister_id` | lister role ID | grant requiring both user and role |
-| `linker` | `link` | `view` | `NULL` | lister role ID | role-based grant |
-| `linker` | `link` | `view` | `NULL` | `NULL` | public grant for everyone |
-| `linker` | `link` | `comment` | `lister_id` | `NULL` | grant specific to that user |
-| `linker` | `link` | `comment` | `lister_id` | lister role ID | grant requiring both user and role |
-| `linker` | `link` | `comment` | `NULL` | lister role ID | role-based grant |
-| `linker` | `link` | `reply` | `lister_id` | `NULL` | grant specific to that user |
-| `linker` | `link` | `reply` | `lister_id` | lister role ID | grant requiring both user and role |
-| `linker` | `link` | `reply` | `NULL` | lister role ID | role-based grant |
-| `linker` | `link` | `post` | `lister_id` | `NULL` | grant specific to that user |
-| `linker` | `link` | `post` | `lister_id` | lister role ID | grant requiring both user and role |
-| `linker` | `link` | `post` | `NULL` | lister role ID | role-based grant |
-| `forum` | `topic` | `see` | `lister_id` | `NULL` | grant specific to that user |
-| `forum` | `topic` | `see` | `lister_id` | lister role ID | grant requiring both user and role |
-| `forum` | `topic` | `see` | `NULL` | lister role ID | role-based grant |
-| `forum` | `topic` | `see` | `NULL` | `NULL` | public grant for everyone |
-| `forum` | `topic` | `post` | `lister_id` | `NULL` | grant specific to that user |
-| `forum` | `topic` | `post` | `lister_id` | lister role ID | grant requiring both user and role |
-| `forum` | `topic` | `post` | `NULL` | lister role ID | role-based grant |
-| `forum` | `topic` | `post` | `NULL` | `NULL` | public grant for everyone |
-| `admin` | `page` | `view` | `lister_id` | `NULL` | access requires `administrator` role via `AdminCheckerMiddleware` |
-| `admin` | `page` | `view` | `lister_id` | lister role ID | access requires `administrator` role via `AdminCheckerMiddleware` |
-| `admin` | `page` | `view` | `NULL` | lister role ID | access requires `administrator` role via `AdminCheckerMiddleware` |
-| `admin` | `page` | `view` | `NULL` | `NULL` | access requires `administrator` role via `AdminCheckerMiddleware` |
-| `admin` | `page` | `edit` | `lister_id` | `NULL` | access requires `administrator` role via `AdminCheckerMiddleware` |
-| `admin` | `page` | `edit` | `lister_id` | lister role ID | access requires `administrator` role via `AdminCheckerMiddleware` |
-| `admin` | `page` | `edit` | `NULL` | lister role ID | access requires `administrator` role via `AdminCheckerMiddleware` |
-| `admin` | `page` | `edit` | `NULL` | `NULL` | access requires `administrator` role via `AdminCheckerMiddleware` |
-| `admin` | `page` | `admin` | `lister_id` | `NULL` | access requires `administrator` role via `AdminCheckerMiddleware` |
-| `admin` | `page` | `admin` | `lister_id` | lister role ID | access requires `administrator` role via `AdminCheckerMiddleware` |
-| `admin` | `page` | `admin` | `NULL` | lister role ID | access requires `administrator` role via `AdminCheckerMiddleware` |
-| `admin` | `page` | `admin` | `NULL` | `NULL` | access requires `administrator` role via `AdminCheckerMiddleware` |
+| `section`  | `item`     | `action`        | Meaning                                                                       |
+|------------|------------|-----------------|-------------------------------------------------------------------------------|
+| `news`     | `post`     | `see`           | User or group can see all posts (or post if item id is specified) in a list   |
+| `news`     | `post`     | `see`           | User or group can see all posts (or post if item id is specified) in a list   |
+
 
 Administrator endpoints are guarded by the `AdminCheckerMiddleware` implemented
 in `internal/router/router.go`. The middleware calls `corecommon.Allowed`, which

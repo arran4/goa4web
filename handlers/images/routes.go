@@ -33,15 +33,6 @@ func validID(s string) bool {
 	return true
 }
 
-// hasValidID matches routes whose {id} path variable is at least four
-// characters long and contains only alphanumeric characters.
-func hasValidID() mux.MatcherFunc {
-	return func(r *http.Request, m *mux.RouteMatch) bool {
-		id := mux.Vars(r)["id"]
-		return len(id) >= 4 && validID(id)
-	}
-}
-
 func verifyMiddleware(prefix string) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -73,11 +64,9 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, _ *nav.Registry) {
 		MatcherFunc(uploadImageTask.Matcher())
 	ir.HandleFunc("/pasteimg.js", handlers.PasteImageJS).Methods(http.MethodGet)
 	ir.Handle("/image/{id}", verifyMiddleware("image:")(http.HandlerFunc(serveImage))).
-		Methods(http.MethodGet).
-		MatcherFunc(hasValidID())
+		Methods(http.MethodGet)
 	ir.Handle("/cache/{id}", verifyMiddleware("cache:")(http.HandlerFunc(serveCache))).
-		Methods(http.MethodGet).
-		MatcherFunc(hasValidID())
+		Methods(http.MethodGet)
 }
 
 func serveImage(w http.ResponseWriter, r *http.Request) {

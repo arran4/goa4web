@@ -7,7 +7,7 @@
         {{ $rows = cd.BlogList }}
     {{ end }}
     {{ if $rows }}
-        {{ if cd.BlogListUID }}
+        {{ if cd.CurrentProfileUserID }}
             <font size="5"><a href="/blogs/blogger/{{ (index $rows 0).Username.String }}">{{ (index $rows 0).Username.String }}</a>'s blogs.</font><br>
         {{ else }}
             <font size="5"><a href="/blogs/bloggers">All bloggers</a>' blogs.</font><br>
@@ -24,14 +24,14 @@
                 </td>
             </tr>
         {{ else }}
-            {{ if gt (cd.BlogListOffset) 0 }}
-                {{ if cd.BlogListUID }}
+            {{ if gt (cd.Offset) 0 }}
+                {{ if cd.CurrentProfileUserID }}
                     There are no more blogs under this user.<br>
                 {{ else }}
                     There are no more blogs.<br>
                 {{ end }}
             {{ else }}
-                {{ if cd.BlogListUID }}
+                {{ if cd.CurrentProfileUserID }}
                     Nothing under this blog.<br>
                 {{ else }}
                     There are no blogs here.<br>

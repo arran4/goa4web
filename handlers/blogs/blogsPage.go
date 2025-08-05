@@ -23,14 +23,14 @@ import (
 )
 
 func Page(w http.ResponseWriter, r *http.Request) {
-	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	buid := r.URL.Query().Get("uid")
 	userID, _ := strconv.Atoi(buid)
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Blogs"
-	cd.SetBlogListParams(int32(userID), offset)
+	cd.SetCurrentProfileUserID(int32(userID))
 
+	offset := cd.Offset()
 	ps := cd.PageSize()
 	qv := r.URL.Query()
 	qv.Set("offset", strconv.Itoa(offset+ps))
@@ -40,7 +40,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		cd.PrevLink = "/blogs?" + qv.Encode()
 	}
 
-	handlers.TemplateHandler(w, r, "blogsPage", cd)
+	handlers.TemplateHandler(w, r, "blogsPage", struct{}{})
 }
 
 func CustomBlogIndex(data *common.CoreData, r *http.Request) {

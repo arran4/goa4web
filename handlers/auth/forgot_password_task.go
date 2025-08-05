@@ -110,7 +110,7 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 	cd.PageTitle = "Password Reset"
-	return handlers.TemplateWithDataHandler("forgotPasswordEmailSentPage.gohtml", cd)
+	return handlers.TemplateWithDataHandler("forgotPasswordEmailSentPage.gohtml", struct{}{})
 }
 
 func (ForgotPasswordTask) AuditRecord(data map[string]any) string {
@@ -152,5 +152,5 @@ func (ForgotPasswordTask) SelfEmailBroadcast() bool { return true }
 func (ForgotPasswordTask) Page(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Password Reset"
-	handlers.TemplateHandler(w, r, "forgotPasswordPage.gohtml", cd)
+	handlers.TemplateHandler(w, r, "forgotPasswordPage.gohtml", struct{}{})
 }

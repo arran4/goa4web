@@ -13,13 +13,13 @@ import (
 func AdminRequestQueuePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Admin Requests"
-	handlers.TemplateHandler(w, r, "requestQueuePage.gohtml", cd)
+	handlers.TemplateHandler(w, r, "requestQueuePage.gohtml", struct{}{})
 }
 
 func AdminRequestArchivePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Request Archive"
-	handlers.TemplateHandler(w, r, "requestArchivePage.gohtml", cd)
+	handlers.TemplateHandler(w, r, "requestArchivePage.gohtml", struct{}{})
 }
 
 func adminRequestPage(w http.ResponseWriter, r *http.Request) {
@@ -31,7 +31,7 @@ func adminRequestPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Request %d", id)
-	handlers.TemplateHandler(w, r, "requestPage.gohtml", cd)
+	handlers.TemplateHandler(w, r, "requestPage.gohtml", struct{}{})
 }
 
 func adminRequestAddCommentPage(w http.ResponseWriter, r *http.Request) {

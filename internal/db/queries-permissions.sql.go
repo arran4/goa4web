@@ -89,6 +89,20 @@ func (q *Queries) AdminGetRoleByNameForUser(ctx context.Context, arg AdminGetRol
 	return column_1, err
 }
 
+const adminUpdateGrantActive = `-- name: AdminUpdateGrantActive :exec
+UPDATE grants SET active = ? WHERE id = ?
+`
+
+type AdminUpdateGrantActiveParams struct {
+	Active bool
+	ID     int32
+}
+
+func (q *Queries) AdminUpdateGrantActive(ctx context.Context, arg AdminUpdateGrantActiveParams) error {
+	_, err := q.db.ExecContext(ctx, adminUpdateGrantActive, arg.Active, arg.ID)
+	return err
+}
+
 const adminUpdateUserRole = `-- name: AdminUpdateUserRole :exec
 UPDATE user_roles SET role_id = (SELECT id FROM roles WHERE name = ?) WHERE iduser_roles = ?
 `

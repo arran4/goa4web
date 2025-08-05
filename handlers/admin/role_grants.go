@@ -28,15 +28,23 @@ var GrantActionMap = map[string][]string{
 	"writings|writing":  {"see", "view", "post", "edit"},
 }
 
+// GrantAction represents a single grant action and whether it's unsupported.
+type GrantAction struct {
+	Name        string
+	Unsupported bool
+}
+
 // GrantGroup represents grants grouped by section and item for editing.
 type GrantGroup struct {
-	Section   string
-	Item      string
-	ItemID    sql.NullInt32
-	Link      string
-	Info      string
-	Have      []string
-	Available []string
+	Section     string
+	Item        string
+	ItemID      sql.NullInt32
+	Link        string
+	Info        string
+	Have        []GrantAction
+	Disabled    []GrantAction
+	Available   []string
+	Unsupported bool
 }
 
 // buildGrantGroups loads grants for a role and organises them for the grants editor.
@@ -203,9 +211,28 @@ func buildGrantGroups(ctx context.Context, cd *common.CoreData, roleID int32) ([
 		grp, ok := groupMap[key]
 		if !ok {
 			grp = &GrantGroup{Section: gi.Section, Item: gi.Item.String, ItemID: gi.ItemID, Link: gi.Link, Info: gi.Info}
+			if _, ok := GrantActionMap[gi.Section+"|"+gi.Item.String]; !ok {
+				grp.Unsupported = true
+			}
 			groupMap[key] = grp
 		}
-		grp.Have = append(grp.Have, gi.Action)
+		ga := GrantAction{Name: gi.Action}
+		if acts, ok := GrantActionMap[gi.Section+"|"+gi.Item.String]; ok {
+			actSet := map[string]struct{}{}
+			for _, a := range acts {
+				actSet[a] = struct{}{}
+			}
+			if _, ok := actSet[gi.Action]; !ok {
+				ga.Unsupported = true
+			}
+		} else {
+			ga.Unsupported = true
+		}
+		if gi.Active {
+			grp.Have = append(grp.Have, ga)
+		} else {
+			grp.Disabled = append(grp.Disabled, ga)
+		}
 	}
 
 	groups := make([]GrantGroup, 0, len(groupMap))
@@ -213,13 +240,18 @@ func buildGrantGroups(ctx context.Context, cd *common.CoreData, roleID int32) ([
 		if acts, ok := GrantActionMap[grp.Section+"|"+grp.Item]; ok {
 			haveSet := map[string]struct{}{}
 			for _, h := range grp.Have {
-				haveSet[h] = struct{}{}
+				haveSet[h.Name] = struct{}{}
+			}
+			for _, d := range grp.Disabled {
+				haveSet[d.Name] = struct{}{}
 			}
 			for _, a := range acts {
 				if _, ok := haveSet[a]; !ok {
 					grp.Available = append(grp.Available, a)
 				}
 			}
+		} else {
+			grp.Unsupported = true
 		}
 		groups = append(groups, *grp)
 	}

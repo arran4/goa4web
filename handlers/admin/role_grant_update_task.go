@@ -36,6 +36,7 @@ func (RoleGrantUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	item := r.PostFormValue("item")
 	itemIDStr := r.PostFormValue("item_id")
 	actionsStr := r.PostFormValue("actions")
+	disabledStr := r.PostFormValue("disabled_actions")
 	if section == "" {
 		return fmt.Errorf("missing section %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("")))
 	}
@@ -47,10 +48,16 @@ func (RoleGrantUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 		itemID = sql.NullInt32{Int32: int32(id), Valid: true}
 	}
-	desired := map[string]struct{}{}
+	desiredActive := map[string]struct{}{}
 	for _, a := range strings.Split(actionsStr, ",") {
 		if a != "" {
-			desired[a] = struct{}{}
+			desiredActive[a] = struct{}{}
+		}
+	}
+	desiredDisabled := map[string]struct{}{}
+	for _, a := range strings.Split(disabledStr, ",") {
+		if a != "" {
+			desiredDisabled[a] = struct{}{}
 		}
 	}
 	grants, err := queries.AdminListGrantsByRoleID(r.Context(), sql.NullInt32{Int32: roleID, Valid: true})
@@ -63,9 +70,10 @@ func (RoleGrantUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {
 			existing[g.Action] = g
 		}
 	}
-	for a := range desired {
-		if _, ok := existing[a]; !ok {
-			if _, err := queries.AdminCreateGrant(r.Context(), db.AdminCreateGrantParams{
+	for a := range desiredActive {
+		g, ok := existing[a]
+		if !ok {
+			if id, err := queries.AdminCreateGrant(r.Context(), db.AdminCreateGrantParams{
 				RoleID:   sql.NullInt32{Int32: int32(roleID), Valid: true},
 				Section:  section,
 				Item:     sql.NullString{String: item, Valid: item != ""},
@@ -74,14 +82,48 @@ func (RoleGrantUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {
 				Action:   a,
 			}); err != nil {
 				return fmt.Errorf("create grant %w", handlers.ErrRedirectOnSamePageHandler(err))
+			} else {
+				g = &db.Grant{ID: int32(id)}
+			}
+		}
+		if g != nil && !g.Active {
+			if err := queries.AdminUpdateGrantActive(r.Context(), db.AdminUpdateGrantActiveParams{Active: true, ID: g.ID}); err != nil {
+				return fmt.Errorf("activate grant %w", handlers.ErrRedirectOnSamePageHandler(err))
+			}
+		}
+	}
+	for a := range desiredDisabled {
+		g, ok := existing[a]
+		if !ok {
+			id, err := queries.AdminCreateGrant(r.Context(), db.AdminCreateGrantParams{
+				RoleID:   sql.NullInt32{Int32: int32(roleID), Valid: true},
+				Section:  section,
+				Item:     sql.NullString{String: item, Valid: item != ""},
+				RuleType: "allow",
+				ItemID:   itemID,
+				Action:   a,
+			})
+			if err != nil {
+				return fmt.Errorf("create grant %w", handlers.ErrRedirectOnSamePageHandler(err))
+			}
+			if err := queries.AdminUpdateGrantActive(r.Context(), db.AdminUpdateGrantActiveParams{Active: false, ID: int32(id)}); err != nil {
+				return fmt.Errorf("deactivate grant %w", handlers.ErrRedirectOnSamePageHandler(err))
+			}
+		} else if g.Active {
+			if err := queries.AdminUpdateGrantActive(r.Context(), db.AdminUpdateGrantActiveParams{Active: false, ID: g.ID}); err != nil {
+				return fmt.Errorf("deactivate grant %w", handlers.ErrRedirectOnSamePageHandler(err))
 			}
 		}
 	}
 	for a, g := range existing {
-		if _, ok := desired[a]; !ok {
-			if err := queries.AdminDeleteGrant(r.Context(), g.ID); err != nil {
-				return fmt.Errorf("delete grant %w", handlers.ErrRedirectOnSamePageHandler(err))
-			}
+		if _, ok := desiredActive[a]; ok {
+			continue
+		}
+		if _, ok := desiredDisabled[a]; ok {
+			continue
+		}
+		if err := queries.AdminDeleteGrant(r.Context(), g.ID); err != nil {
+			return fmt.Errorf("delete grant %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
 	return handlers.RefreshDirectHandler{TargetURL: fmt.Sprintf("/admin/role/%d", roleID)}

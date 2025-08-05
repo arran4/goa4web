@@ -26,6 +26,12 @@ func PasteImageJS(w http.ResponseWriter, r *http.Request) {
 	http.ServeContent(w, r, "pasteimg.js", time.Time{}, bytes.NewReader(templates.GetPasteImageJSData()))
 }
 
+// RoleGrantsEditorJS serves the JavaScript for the role grants editor.
+func RoleGrantsEditorJS(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/javascript")
+	http.ServeContent(w, r, "role_grants_editor.js", time.Time{}, bytes.NewReader(templates.GetRoleGrantsEditorJSData()))
+}
+
 // RedirectPermanent returns a handler that redirects to the provided path using StatusPermanentRedirect.
 func RedirectPermanent(to string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

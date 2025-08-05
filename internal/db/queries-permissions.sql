@@ -84,6 +84,9 @@ INSERT INTO grants (
 -- name: AdminDeleteGrant :exec
 DELETE FROM grants WHERE id = ?;
 
+-- name: AdminUpdateGrantActive :exec
+UPDATE grants SET active = ? WHERE id = ?;
+
 -- name: ListGrants :many
 SELECT * FROM grants ORDER BY id;
 

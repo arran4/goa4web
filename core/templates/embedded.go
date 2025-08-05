@@ -28,6 +28,8 @@ var (
 	pasteImageJSData []byte
 	//go:embed "assets/notifications.js"
 	notificationsJSData []byte
+	//go:embed "assets/role_grants_editor.js"
+	roleGrantsEditorJSData []byte
 )
 
 func init() {
@@ -83,3 +85,7 @@ func GetPasteImageJSData() []byte {
 // GetNotificationsJSData returns the JavaScript used for real-time
 // notification updates.
 func GetNotificationsJSData() []byte { return notificationsJSData }
+
+// GetRoleGrantsEditorJSData returns the JavaScript powering the
+// role grants drag-and-drop editor.
+func GetRoleGrantsEditorJSData() []byte { return roleGrantsEditorJSData }

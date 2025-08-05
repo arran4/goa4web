@@ -61,3 +61,13 @@ func GetNotificationsJSData() []byte {
 	}
 	return b
 }
+
+// GetRoleGrantsEditorJSData returns the JavaScript powering the
+// role grants drag-and-drop editor.
+func GetRoleGrantsEditorJSData() []byte {
+	b, err := os.ReadFile("core/templates/assets/role_grants_editor.js")
+	if err != nil {
+		panic(err)
+	}
+	return b
+}

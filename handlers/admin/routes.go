@@ -2,6 +2,7 @@ package admin
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/arran4/goa4web/handlers"
 	"github.com/gorilla/mux"
@@ -42,6 +43,7 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navRe
 
 	ar.HandleFunc("", AdminPage).Methods("GET")
 	ar.HandleFunc("/", AdminPage).Methods("GET")
+	ar.HandleFunc("/role-grants-editor.js", handlers.RoleGrantsEditorJS).Methods(http.MethodGet, http.MethodHead, http.MethodOptions)
 	ar.HandleFunc("/roles", AdminRolesPage).Methods("GET")
 	ar.HandleFunc("/roles", handlers.TaskHandler(rolePublicProfileTask)).Methods("POST").MatcherFunc(rolePublicProfileTask.Matcher())
 	ar.HandleFunc("/external-links", AdminExternalLinksPage).Methods("GET")

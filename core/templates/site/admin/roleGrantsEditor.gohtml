@@ -1,22 +1,21 @@
 <h3>Grants</h3>
-<style>
-    .have,.available{display:flex;flex-wrap:wrap;gap:4px;}
-    .pill{display:inline-block;padding:2px 6px;margin:2px;border-radius:10px;background:#e0e0e0;cursor:move;}
-    .have .pill{background:#c8e6c9;}
-    .available .pill{background:#f0f0f0;}
-    .pill.moved{background:#ffecb3;}
-</style>
+<button id="commit-all" class="hidden">Commit All</button>
 <table border="1">
-    <tr><th>Section</th><th>Item</th><th>Item ID</th><th>Info</th><th>Has</th><th>Can Have</th><th>Commit</th></tr>
+    <tr><th>Section</th><th>Item</th><th>Item ID</th><th>Info</th><th>Has</th><th>Disabled</th><th>Can Have</th><th>Commit</th></tr>
     {{- range .GrantGroups }}
-        <tr data-section="{{ .Section }}" data-item="{{ .Item }}" data-itemid="{{ if .ItemID.Valid }}{{ .ItemID.Int32 }}{{ end }}">
+        <tr data-section="{{ .Section }}" data-item="{{ .Item }}" data-itemid="{{ if .ItemID.Valid }}{{ .ItemID.Int32 }}{{ end }}"{{ if .Unsupported }} class="unsupported"{{ end }}>
             <td>{{ .Section }}</td>
             <td>{{ .Item }}</td>
             <td>{{ if .ItemID.Valid }}{{ .ItemID.Int32 }}{{ end }}</td>
             <td>{{ .Info }}</td>
             <td class="have">
                 {{- range .Have }}
-                    <span class="pill" draggable="true" data-default="have">{{ . }}</span>
+                    <span class="pill{{ if .Unsupported }} unsupported{{ end }}" draggable="true" data-default="have">{{ .Name }}</span>
+                {{- end }}
+            </td>
+            <td class="disabled">
+                {{- range .Disabled }}
+                    <span class="pill{{ if .Unsupported }} unsupported{{ end }}" draggable="true" data-default="disabled">{{ .Name }}</span>
                 {{- end }}
             </td>
             <td class="available">
@@ -31,47 +30,11 @@
                     <input type="hidden" name="item" value="{{ .Item }}">
                     <input type="hidden" name="item_id" value="{{ if .ItemID.Valid }}{{ .ItemID.Int32 }}{{ end }}">
                     <input type="hidden" name="actions" value="">
-                    <input type="submit" value="Commit" style="display:none;">
+                    <input type="hidden" name="disabled_actions" value="">
+                    <input type="submit" value="Commit" class="hidden">
                 </form>
             </td>
         </tr>
     {{- end }}
 </table>
-<script>
-    document.querySelectorAll('tr[data-section]').forEach(function(row){
-        const have=row.querySelector('.have');
-        const avail=row.querySelector('.available');
-        const form=row.querySelector('.commit-form');
-        const btn=form.querySelector('input[type="submit"]');
-        function updateBtn(){btn.style.display=row.querySelectorAll('.pill.moved').length>0?'inline':'none';}
-        function dropHandler(e){
-            e.preventDefault();
-            const pill=document.querySelector('.pill.dragging');
-            if(!pill||e.currentTarget===pill.parentNode)return;
-            e.currentTarget.appendChild(pill);
-            const tgt=e.currentTarget.classList.contains('have')?'have':'available';
-            if(pill.dataset.default!==tgt){pill.classList.add('moved');}else{pill.classList.remove('moved');}
-            updateBtn();
-        }
-        [have,avail].forEach(function(col){
-            col.addEventListener('dragstart', function(e) {
-                if (e.target.classList.contains('pill')) {
-                    e.dataTransfer.setData('text/plain', e.target.textContent);
-                    e.dataTransfer.effectAllowed = 'move';
-                    e.target.classList.add('dragging');
-                }
-            }, true);
-            col.addEventListener('dragend', function(e) {
-                if (e.target.classList.contains('pill')) {
-                    e.target.classList.remove('dragging');
-                }
-            }, true);
-            col.addEventListener('dragover', function(e) { e.preventDefault(); });
-            col.addEventListener('drop', dropHandler);
-        });
-        form.addEventListener('submit',function(){
-            const acts=Array.from(have.querySelectorAll('.pill')).map(p=>p.textContent.trim());
-            form.querySelector('input[name="actions"]').value=acts.join(',');
-        });
-    });
-</script>
+<script src="/admin/role-grants-editor.js"></script>

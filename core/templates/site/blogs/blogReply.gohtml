@@ -4,7 +4,7 @@
             <form method="post" action="/blogs/blog/{{$.Blog.Idblogs}}/reply">
         {{ csrfField }}
                 <textarea id="reply" name="replytext" cols="40" rows="20">{{$.Text}}</textarea><br>
-                {{ template "languageCombobox" $ }}
+                {{ template "languageCombobox" }}
                 <input type="submit" name="task" value="Reply">
             </form>
         {{end}}

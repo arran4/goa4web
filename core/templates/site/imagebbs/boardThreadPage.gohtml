@@ -17,7 +17,7 @@
             <input type="hidden" name="replyTo" value="{{ .ForumThreadId }}">
             <input type="hidden" name="ipid" value="{{ .ImagePost.Idimagepost }}">
             <textarea name="replytext" cols="40" rows="20"></textarea><br>
-            {{ template "languageCombobox" $ }}
+            {{ template "languageCombobox" }}
             <input type="submit" name="task" value="Reply">
         </form>
     {{ end }}

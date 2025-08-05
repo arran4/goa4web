@@ -1,8 +1,6 @@
 package forum
 
 import (
-	"database/sql"
-	"errors"
 	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
@@ -19,50 +17,33 @@ import (
 )
 
 func ThreadPage(w http.ResponseWriter, r *http.Request) {
-	type CommentPlus struct {
-		*db.GetCommentsByThreadIdForUserRow
-		ShowReply          bool
-		EditUrl            string
-		Editing            bool
-		Offset             int
-		Languages          []*db.Language
-		SelectedLanguageId int32
-		EditSaveUrl        string
-		AdminUrl           string
-	}
 	type Data struct {
 		*common.CoreData
 		Category            *ForumcategoryPlus
 		Topic               *ForumtopicPlus
 		Thread              *db.GetThreadLastPosterAndPermsRow
-		Comments            []*CommentPlus
-		Offset              int
+		Comments            []*db.GetCommentsByThreadIdForUserRow
 		IsReplyable         bool
 		Text                string
-		Languages           []*db.Language
-		SelectedLanguageId  int
 		CategoryBreadcrumbs []*ForumcategoryPlus
+		CanEditComment      func(*db.GetCommentsByThreadIdForUserRow) bool
+		EditURL             func(*db.GetCommentsByThreadIdForUserRow) string
+		EditSaveURL         func(*db.GetCommentsByThreadIdForUserRow) string
+		Editing             func(*db.GetCommentsByThreadIdForUserRow) bool
+		AdminURL            func(*db.GetCommentsByThreadIdForUserRow) string
+		CanReply            bool
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.LoadSelectionsFromRequest(r)
+	common.WithOffset(offset)(cd)
 	data := Data{
-		CoreData:           cd,
-		Offset:             offset,
-		IsReplyable:        true,
-		SelectedLanguageId: int(cd.PreferredLanguageID(cd.Config.DefaultLanguage)),
+		CoreData:    cd,
+		IsReplyable: true,
+		CanReply:    cd.UserID != 0,
 	}
 
-	languageRows, err := cd.Languages()
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
-		return
-	}
-	data.Languages = languageRows
 	threadRow, err := cd.SelectedThread()
 	if err != nil || threadRow == nil {
 		log.Printf("current thread: %v", err)
@@ -79,26 +60,12 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd.PageTitle = fmt.Sprintf("Forum - %s", topicRow.Title.String)
 
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
+	if _, ok := core.GetSessionOrFail(w, r); !ok {
 		return
 	}
-	uid, _ := session.Values["UID"].(int32)
-
-	commentRows, err := queries.GetCommentsByThreadIdForUser(r.Context(), db.GetCommentsByThreadIdForUserParams{
-		ViewerID: uid,
-		ThreadID: threadRow.Idforumthread,
-		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
+	commentRows, err := cd.SelectedThreadComments()
 	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-		default:
-			log.Printf("getBlogEntryForListerByID_comments Error: %s", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
-			return
-		}
+		log.Printf("thread comments: %v", err)
 	}
 
 	// threadRow and topicRow are provided by the RequireThreadAndTopic
@@ -117,36 +84,35 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 		Edit:                         false,
 	}
 
-	commentIdString := r.URL.Query().Get("comment")
-	commentId, _ := strconv.Atoi(commentIdString)
-	for i, row := range commentRows {
-		editUrl := ""
-		editSaveUrl := ""
-		if data.CoreData.CanEditAny() || row.IsOwner {
-			editUrl = fmt.Sprintf("/forum/topic/%d/thread/%d?comment=%d#edit", topicRow.Idforumtopic, threadRow.Idforumthread, row.Idcomments)
-			editSaveUrl = fmt.Sprintf("/forum/topic/%d/thread/%d/comment/%d", topicRow.Idforumtopic, threadRow.Idforumthread, row.Idcomments)
-			if commentId != 0 && int32(commentId) == row.Idcomments {
-				data.IsReplyable = false
-			}
-		}
+	commentId, _ := strconv.Atoi(r.URL.Query().Get("comment"))
+	data.Comments = commentRows
 
-		data.Comments = append(data.Comments, &CommentPlus{
-			GetCommentsByThreadIdForUserRow: row,
-			ShowReply:                       true,
-			EditUrl:                         editUrl,
-			EditSaveUrl:                     editSaveUrl,
-			Editing:                         commentId != 0 && int32(commentId) == row.Idcomments,
-			Offset:                          i + offset,
-			Languages:                       nil,
-			SelectedLanguageId:              0,
-			AdminUrl: func() string {
-				if cd.HasRole("administrator") {
-					return fmt.Sprintf("/admin/comment/%d", row.Idcomments)
-				} else {
-					return ""
-				}
-			}(),
-		})
+	data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
+		return data.CoreData.CanEditAny() || cmt.IsOwner
+	}
+	data.EditURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
+		if !data.CanEditComment(cmt) {
+			return ""
+		}
+		return fmt.Sprintf("/forum/topic/%d/thread/%d?comment=%d#edit", topicRow.Idforumtopic, threadRow.Idforumthread, cmt.Idcomments)
+	}
+	data.EditSaveURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
+		if !data.CanEditComment(cmt) {
+			return ""
+		}
+		return fmt.Sprintf("/forum/topic/%d/thread/%d/comment/%d", topicRow.Idforumtopic, threadRow.Idforumthread, cmt.Idcomments)
+	}
+	data.Editing = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
+		return data.CanEditComment(cmt) && commentId != 0 && int32(commentId) == cmt.Idcomments
+	}
+	data.AdminURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
+		if cd.HasRole("administrator") {
+			return fmt.Sprintf("/admin/comment/%d", cmt.Idcomments)
+		}
+		return ""
+	}
+	if commentId != 0 {
+		data.IsReplyable = false
 	}
 
 	data.Thread = threadRow
@@ -174,23 +140,13 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 	data.CategoryBreadcrumbs = categoryTree.CategoryRoots(int32(topicRow.ForumcategoryIdforumcategory))
 
 	replyType := r.URL.Query().Get("type")
-	if commentIdString != "" {
-		comment, err := queries.GetCommentByIdForUser(r.Context(), db.GetCommentByIdForUserParams{
-			ViewerID: uid,
-			ID:       int32(commentId),
-			UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
-		})
-		if err != nil {
-			log.Printf("getCommentByIdForUser Error: %s", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
-			return
-		}
+	if c, err := cd.CurrentComment(r); err == nil && c != nil {
+		data.IsReplyable = false
 		switch replyType {
 		case "full":
-			data.Text = a4code.FullQuoteOf(comment.Username.String, comment.Text.String)
+			data.Text = a4code.FullQuoteOf(c.Username.String, c.Text.String)
 		default:
-			data.Text = a4code.QuoteOfText(comment.Username.String, comment.Text.String)
+			data.Text = a4code.QuoteOfText(c.Username.String, c.Text.String)
 		}
 	}
 

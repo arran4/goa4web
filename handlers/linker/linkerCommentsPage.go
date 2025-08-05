@@ -4,47 +4,38 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
 
+	"github.com/gorilla/mux"
+
+	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/workers/postcountworker"
 	"github.com/arran4/goa4web/workers/searchworker"
-
-	"github.com/arran4/goa4web/core"
-	"github.com/gorilla/mux"
 )
 
 func CommentsPage(w http.ResponseWriter, r *http.Request) {
-	type CommentPlus struct {
-		*db.GetCommentsByThreadIdForUserRow
-		ShowReply          bool
-		EditUrl            string
-		Editing            bool
-		Offset             int
-		Languages          []*db.Language
-		SelectedLanguageId int32
-		EditSaveUrl        string
-		AdminUrl           string
-	}
 	type Data struct {
 		*common.CoreData
-		Link               *db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow
-		CanReply           bool
-		Languages          []*db.Language
-		Comments           []*CommentPlus
-		SelectedLanguageId int
-		IsReplyable        bool
-		Offset             int
-		Text               string
-		CanEdit            bool
-		UserId             int32
-		Thread             *db.GetThreadLastPosterAndPermsRow
+		Link           *db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow
+		CanReply       bool
+		Comments       []*db.GetCommentsByThreadIdForUserRow
+		IsReplyable    bool
+		Text           string
+		CanEdit        bool
+		UserId         int32
+		Thread         *db.GetThreadLastPosterAndPermsRow
+		CanEditComment func(*db.GetCommentsByThreadIdForUserRow) bool
+		EditURL        func(*db.GetCommentsByThreadIdForUserRow) string
+		EditSaveURL    func(*db.GetCommentsByThreadIdForUserRow) string
+		Editing        func(*db.GetCommentsByThreadIdForUserRow) bool
+		AdminURL       func(*db.GetCommentsByThreadIdForUserRow) string
 	}
 
 	offset := 0
@@ -53,12 +44,12 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	common.WithOffset(offset)(cd)
 	data := Data{
-		CoreData:           cd,
-		CanReply:           cd.UserID != 0,
-		CanEdit:            false,
-		Offset:             offset,
-		SelectedLanguageId: int(cd.PreferredLanguageID(cd.Config.DefaultLanguage)),
+		CoreData:    cd,
+		CanReply:    cd.UserID != 0,
+		CanEdit:     false,
+		IsReplyable: true,
 	}
 	vars := mux.Vars(r)
 	linkId := 0
@@ -73,13 +64,6 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	data.UserId = uid
 
 	queries = r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-
-	languageRows, err := cd.Languages()
-	if err != nil {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
-		return
-	}
-	data.Languages = languageRows
 
 	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(r.Context(), db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams{
 		ViewerID:     cd.UserID,
@@ -111,16 +95,12 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	data.CoreData.PageTitle = fmt.Sprintf("Link %d Comments", link.Idlinker)
 	data.CanEdit = cd.HasRole("administrator") || uid == link.UsersIdusers
 
-	commentRows, err := queries.GetCommentsByThreadIdForUser(r.Context(), db.GetCommentsByThreadIdForUserParams{
-		ViewerID: uid,
-		ThreadID: link.ForumthreadID,
-		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
+	commentRows, err := cd.ThreadComments(link.ForumthreadID)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("getBlogEntryForListerByID_comments Error: %s", err)
+			log.Printf("thread comments: %s", err)
 			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 			return
 		}
@@ -141,43 +121,34 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if off, err := strconv.Atoi(r.URL.Query().Get("offset")); err == nil {
-		offset = off
+	commentId, _ := strconv.Atoi(r.URL.Query().Get("comment"))
+	data.Comments = commentRows
+	data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
+		return data.CoreData.CanEditAny() || cmt.IsOwner
 	}
-
-	commentIdString := r.URL.Query().Get("comment")
-	var commentId int
-	if cid, err := strconv.Atoi(commentIdString); err == nil {
-		commentId = cid
-	}
-	for i, row := range commentRows {
-		editUrl := ""
-		editSaveUrl := ""
-		if data.CoreData.CanEditAny() || row.IsOwner {
-			editUrl = fmt.Sprintf("/linker/comments/%d?comment=%d#edit", link.Idlinker, row.Idcomments)
-			editSaveUrl = fmt.Sprintf("/linker/comments/%d/comment/%d", link.Idlinker, row.Idcomments)
-			if commentId != 0 && int32(commentId) == row.Idcomments {
-				data.IsReplyable = false
-			}
+	data.EditURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
+		if !data.CanEditComment(cmt) {
+			return ""
 		}
-
-		data.Comments = append(data.Comments, &CommentPlus{
-			GetCommentsByThreadIdForUserRow: row,
-			ShowReply:                       true,
-			EditUrl:                         editUrl,
-			EditSaveUrl:                     editSaveUrl,
-			Editing:                         commentId != 0 && int32(commentId) == row.Idcomments,
-			Offset:                          i + offset,
-			Languages:                       languageRows,
-			SelectedLanguageId:              row.LanguageIdlanguage,
-			AdminUrl: func() string {
-				if data.CoreData.HasRole("administrator") {
-					return fmt.Sprintf("/admin/comment/%d", row.Idcomments)
-				} else {
-					return ""
-				}
-			}(),
-		})
+		return fmt.Sprintf("/linker/comments/%d?comment=%d#edit", link.Idlinker, cmt.Idcomments)
+	}
+	data.EditSaveURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
+		if !data.CanEditComment(cmt) {
+			return ""
+		}
+		return fmt.Sprintf("/linker/comments/%d/comment/%d", link.Idlinker, cmt.Idcomments)
+	}
+	data.Editing = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
+		return data.CanEditComment(cmt) && commentId != 0 && int32(commentId) == cmt.Idcomments
+	}
+	data.AdminURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
+		if cd.HasRole("administrator") {
+			return fmt.Sprintf("/admin/comment/%d", cmt.Idcomments)
+		}
+		return ""
+	}
+	if commentId != 0 {
+		data.IsReplyable = false
 	}
 
 	data.Thread = threadRow

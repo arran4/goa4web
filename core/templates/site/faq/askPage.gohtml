@@ -3,7 +3,7 @@
         <form method="post" action="">
         {{ csrfField }}
             <textarea name="text" cols="60" rows="20"></textarea><br>
-            {{ template "languageCombobox" $ }}
+            {{ template "languageCombobox" }}
             <input type="submit" name="task" value="Ask">
         </form>
 {{ template "tail" $ }}

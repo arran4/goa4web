@@ -10,15 +10,13 @@ import (
 
 func Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		SearchWords string
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Search"
-	data := Data{
-		CoreData: cd,
-	}
 
-	handlers.TemplateHandler(w, r, "searchPage", data)
+	handlers.TemplateHandler(w, r, "searchPage", Data{
+		SearchWords: r.FormValue("searchwords"),
+	})
 }

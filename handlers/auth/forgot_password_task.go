@@ -53,12 +53,10 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	if row.Email == "" {
 		type Data struct {
-			*common.CoreData
 			Username    string
 			RequestTask string
 		}
 		data := Data{
-			CoreData:    r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 			Username:    row.Username.String,
 			RequestTask: string(TaskEmailAssociationRequest),
 		}

@@ -10,27 +10,21 @@ import (
 )
 
 func Page(w http.ResponseWriter, r *http.Request) {
-	type Data struct {
-		*common.CoreData
-	}
-
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-	}
-	data.CoreData.PageTitle = "Bookmarks"
+	cd.PageTitle = "Bookmarks"
 
 	if uid == 0 {
-		handlers.TemplateHandler(w, r, "infoPage.gohtml", data)
+		handlers.TemplateHandler(w, r, "infoPage.gohtml", struct{}{})
 		return
 	}
 
-	handlers.TemplateHandler(w, r, "bookmarksPage", data)
+	handlers.TemplateHandler(w, r, "bookmarksPage", struct{}{})
 }
 
 func bookmarksCustomIndex(data *common.CoreData, r *http.Request) {

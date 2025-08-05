@@ -326,5 +326,5 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	return handlers.RedirectHandler(endUrl)
+	return handlers.RefreshDirectHandler{TargetURL: endUrl}
 }

@@ -87,5 +87,5 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	return handlers.RedirectHandler(fmt.Sprintf("/linker/comments/%d", linkId))
+	return handlers.RefreshDirectHandler{TargetURL: fmt.Sprintf("/linker/comments/%d", linkId)}
 }

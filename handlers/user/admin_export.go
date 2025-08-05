@@ -27,7 +27,7 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 	uid, err := strconv.Atoi(r.URL.Query().Get("uid"))
 	if err != nil {
 		log.Printf("parse uid: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Bad Request"))
+		handlers.RenderErrorPage(w, r, handlers.ErrBadRequest)
 		return
 	}
 

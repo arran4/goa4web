@@ -13,9 +13,13 @@ import (
 	"github.com/gorilla/sessions"
 )
 
-// handleDie responds with an internal server error using RenderErrorPage.
+// handleDie responds with a plain text internal server error.
 func handleDie(w http.ResponseWriter, r *http.Request, message string) {
-	handlers.RenderErrorPage(w, r, fmt.Errorf(message))
+	// TODO: remove message parameter once callers are updated.
+	_ = message
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.WriteHeader(http.StatusInternalServerError)
+	fmt.Fprintln(w, http.StatusText(http.StatusInternalServerError))
 }
 
 // RequestLoggerMiddleware logs incoming requests along with the user and session IDs.

@@ -69,7 +69,7 @@ func handleRequestAction(w http.ResponseWriter, r *http.Request, status string) 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.LoadSelectionsFromRequest(r)
 	if cd == nil || !cd.HasRole("administrator") {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Forbidden"))
+		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
 	req := cd.CurrentRequest()

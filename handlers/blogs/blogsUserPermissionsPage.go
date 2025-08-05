@@ -21,7 +21,7 @@ func GetPermissionsByUserIdAndSectionBlogsPage(w http.ResponseWriter, r *http.Re
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Blog Permissions"
 	if !(cd.HasRole("content writer") || cd.HasRole("administrator")) {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Forbidden"))
+		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
 

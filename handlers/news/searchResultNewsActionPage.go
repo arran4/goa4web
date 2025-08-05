@@ -28,7 +28,7 @@ func SearchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if !common.CanSearch(cd, "news") {
-		handlers.RenderErrorPage(w, r, errors.New("Forbidden"))
+		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
 	data := Data{

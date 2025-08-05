@@ -32,7 +32,7 @@ func AdminCategoryGrantsPage(w http.ResponseWriter, r *http.Request) {
 	cid, err := strconv.Atoi(mux.Vars(r)["category"])
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Bad Request"))
+		handlers.RenderErrorPage(w, r, handlers.ErrBadRequest)
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Forum - Category %d Grants", cid)

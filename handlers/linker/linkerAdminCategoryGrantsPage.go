@@ -31,7 +31,7 @@ func AdminCategoryGrantsPage(w http.ResponseWriter, r *http.Request) {
 	queries := cd.Queries()
 	cid, err := strconv.Atoi(mux.Vars(r)["category"])
 	if err != nil {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Bad Request"))
+		handlers.RenderErrorPage(w, r, handlers.ErrBadRequest)
 		return
 	}
 	data := Data{CoreData: cd, CategoryID: int32(cid), Actions: []string{"see", "view"}}

@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
@@ -12,7 +11,7 @@ import (
 // a generic "Forbidden" message is displayed.
 func VerifyAccess(h http.HandlerFunc, err error, roles ...string) http.HandlerFunc {
 	if err == nil {
-		err = fmt.Errorf("Forbidden")
+		err = ErrForbidden
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !common.Allowed(r, roles...) {

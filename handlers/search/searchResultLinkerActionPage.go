@@ -38,7 +38,7 @@ func (SearchLinkerTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if !common.CanSearch(cd, "linker") {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Forbidden"))
+		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return nil
 	}
 	data := Data{

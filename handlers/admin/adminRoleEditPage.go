@@ -43,7 +43,7 @@ func adminRoleEditSavePage(w http.ResponseWriter, r *http.Request) {
 	queries := cd.Queries()
 	id := cd.SelectedRoleID()
 	if err := r.ParseForm(); err != nil {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Bad Request"))
+		handlers.RenderErrorPage(w, r, handlers.ErrBadRequest)
 		return
 	}
 	name := r.PostFormValue("name")

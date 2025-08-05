@@ -2,7 +2,6 @@ package admin
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -21,7 +20,7 @@ func (h *Handlers) AdminReloadConfigPage(w http.ResponseWriter, r *http.Request)
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Reload Config"
 	if cd == nil || !cd.HasRole("administrator") {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Forbidden"))
+		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
 

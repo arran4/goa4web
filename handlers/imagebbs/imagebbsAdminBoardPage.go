@@ -93,7 +93,7 @@ func AdminBoardPage(w http.ResponseWriter, r *http.Request) {
 	}
 	bid, _ := strconv.Atoi(bidStr)
 	if bid == 0 {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Bad Request"))
+		handlers.RenderErrorPage(w, r, handlers.ErrBadRequest)
 		return
 	}
 

@@ -16,7 +16,7 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cid, err := strconv.Atoi(mux.Vars(r)["category"])
 	if err != nil {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Bad Request"))
+		handlers.RenderErrorPage(w, r, handlers.ErrBadRequest)
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Linker Category %d", cid)

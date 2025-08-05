@@ -42,6 +42,9 @@ func TestImageRouteInvalidID(t *testing.T) {
 	RegisterRoutes(r, cfg, navReg)
 	rr := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/images/image/abc!", nil)
+	cd := common.NewCoreData(req.Context(), nil, cfg)
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	r.ServeHTTP(rr, req.WithContext(ctx))
 
 	signer := imagesign.NewSigner(cfg, "k")
 	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithImageSigner(signer))
@@ -62,6 +65,9 @@ func TestCacheRouteInvalidID(t *testing.T) {
 	RegisterRoutes(r, cfg, navReg)
 	rr := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/images/cache/abc!", nil)
+	cd := common.NewCoreData(req.Context(), nil, cfg)
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	r.ServeHTTP(rr, req.WithContext(ctx))
 
 	signer := imagesign.NewSigner(cfg, "k")
 	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithImageSigner(signer))

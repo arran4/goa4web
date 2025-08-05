@@ -8,7 +8,7 @@
             -
             [<a href="/news/news/{{ .Idsitenews }}">{{ .Comments.Int32 }} COMMENTS</a>]
             {{ if .ShowReply }}
-                [<a href="?reply={{ .Idsitenews }}#reply">REPLY</a>]
+                [<a href="/news/news/{{ .Idsitenews }}#reply">REPLY</a>]
             {{ end }}
 
             {{ if .ShowEdit }}

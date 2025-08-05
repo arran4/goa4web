@@ -32,7 +32,7 @@ func setupCommentRequest(t *testing.T, queries db.Querier, store *sessions.Cooki
 		req.AddCookie(c)
 	}
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithSession(sess))
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithSession(sess), common.WithUserRoles([]string{"administrator"}))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	return req, sess

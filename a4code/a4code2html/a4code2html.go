@@ -325,7 +325,7 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 		switch a.CodeType {
 		case CTTableOfContents, CTTagStrip, CTWordsOnly:
 		default:
-			if _, err := io.WriteString(w, "<table width=90% align=center bgcolor=lightblue><tr><th>Code: <tr><td><pre>"); err != nil {
+			if _, err := io.WriteString(w, "<table class=\"a4code-block a4code-code\"><tr><th>Code: <tr><td><pre>"); err != nil {
 				return err
 			}
 			if err := a.directOutputReader(r, w, "[/code]", "code]"); err != nil {
@@ -343,7 +343,7 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 			if err != nil && err != io.EOF {
 				return err
 			}
-			if _, err := io.WriteString(w, fmt.Sprintf("<table width=90%% align=center bgcolor=lightgreen><tr><th>Quote of %s: <tr><td>", name)); err != nil {
+			if _, err := io.WriteString(w, fmt.Sprintf("<table class=\"a4code-block a4code-quoteof\"><tr><th>Quote of %s: <tr><td>", name)); err != nil {
 				return err
 			}
 			a.stack = append(a.stack, "</table>")
@@ -352,7 +352,7 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 		switch a.CodeType {
 		case CTTableOfContents, CTTagStrip, CTWordsOnly:
 		default:
-			if _, err := io.WriteString(w, "<table width=90% align=center bgcolor=lightgreen><tr><th>Quote: <tr><td>"); err != nil {
+			if _, err := io.WriteString(w, "<table class=\"a4code-block a4code-quote\"><tr><th>Quote: <tr><td>"); err != nil {
 				return err
 			}
 			a.stack = append(a.stack, "</table>")
@@ -370,7 +370,7 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 		switch a.CodeType {
 		case CTTableOfContents, CTTagStrip, CTWordsOnly:
 		default:
-			if _, err := io.WriteString(w, "<table width=90% align=center><tr><td>"); err != nil {
+			if _, err := io.WriteString(w, "<table class=\"a4code-block a4code-indent\"><tr><td>"); err != nil {
 				return err
 			}
 			a.stack = append(a.stack, "</table>")

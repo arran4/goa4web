@@ -78,7 +78,7 @@ WHERE th.idforumthread=sqlc.arg(thread_id)
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='forum'
-      AND g.item='topic'
+      AND (g.item='topic' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
       AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)

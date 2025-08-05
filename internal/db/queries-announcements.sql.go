@@ -114,7 +114,7 @@ WHERE a.active = 1
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='news'
-        AND g.item='post'
+        AND (g.item='post' OR g.item IS NULL)
         AND g.action='view'
         AND g.active=1
         AND (g.item_id = n.idsiteNews OR g.item_id IS NULL)

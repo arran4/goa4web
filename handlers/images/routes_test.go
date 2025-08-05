@@ -53,8 +53,8 @@ func TestImageRouteInvalidID(t *testing.T) {
 	req.URL.RawQuery = strings.SplitN(ref, "?", 2)[1]
 	r.ServeHTTP(rr, req)
 
-	if rr.Code != http.StatusNotFound {
-		t.Fatalf("want %d got %d", http.StatusNotFound, rr.Code)
+	if rr.Code != http.StatusForbidden {
+		t.Fatalf("want %d got %d", http.StatusForbidden, rr.Code)
 	}
 }
 
@@ -76,8 +76,8 @@ func TestCacheRouteInvalidID(t *testing.T) {
 	req.URL.RawQuery = strings.SplitN(ref, "?", 2)[1]
 	r.ServeHTTP(rr, req)
 
-	if rr.Code != http.StatusNotFound {
-		t.Fatalf("want %d got %d", http.StatusNotFound, rr.Code)
+	if rr.Code != http.StatusForbidden {
+		t.Fatalf("want %d got %d", http.StatusForbidden, rr.Code)
 	}
 }
 

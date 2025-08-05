@@ -148,7 +148,7 @@ WHERE i.imageboard_idimageboard = sqlc.arg(board_id)
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='imagebbs'
-      AND g.item='board'
+      AND (g.item='board' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
       AND (g.item_id = i.imageboard_idimageboard OR g.item_id IS NULL)
@@ -171,7 +171,7 @@ WHERE i.idimagepost = sqlc.arg(id)
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='imagebbs'
-      AND g.item='board'
+      AND (g.item='board' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
       AND (g.item_id = i.imageboard_idimageboard OR g.item_id IS NULL)

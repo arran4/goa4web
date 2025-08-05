@@ -22,7 +22,7 @@ func TestBloggersBloggerPage(t *testing.T) {
 	q := db.New(conn)
 
 	rows := sqlmock.NewRows([]string{"username", "count"}).AddRow("bob", 2)
-	mock.ExpectQuery(regexp.QuoteMeta("WITH RECURSIVE role_ids")).
+	mock.ExpectQuery(regexp.QuoteMeta("WITH role_ids")).
 		WithArgs(int32(0), int32(0), int32(0), nil, int32(1000), int32(0)).
 		WillReturnRows(rows)
 

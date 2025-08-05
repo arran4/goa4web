@@ -190,7 +190,7 @@ func (q *Queries) GetForumTopicIdByThreadId(ctx context.Context, idforumthread i
 }
 
 const getThreadLastPosterAndPerms = `-- name: GetThreadLastPosterAndPerms :one
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
     UNION
     SELECT r2.id FROM role_ids ri

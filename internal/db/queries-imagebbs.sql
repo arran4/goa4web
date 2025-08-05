@@ -73,7 +73,7 @@ UPDATE imagepost SET approved = 1 WHERE idimagepost = ?;
 
 
 -- name: ListBoardsByParentIDForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT b.*
@@ -93,7 +93,7 @@ WHERE b.imageboard_idimageboard = sqlc.arg(parent_id)
 LIMIT ? OFFSET ?;
 
 -- name: ListBoardsForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT b.*
@@ -111,7 +111,7 @@ WHERE b.deleted_at IS NULL AND EXISTS (
 LIMIT ? OFFSET ?;
 
 -- name: ListImagePostsByPosterForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT i.*, u.username, th.comments
@@ -135,7 +135,7 @@ ORDER BY i.posted DESC
 LIMIT ? OFFSET ?;
 
 -- name: ListImagePostsByBoardForLister :many
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT i.*, u.username, th.comments
@@ -158,7 +158,7 @@ WHERE i.imageboard_idimageboard = sqlc.arg(board_id)
 LIMIT ? OFFSET ?;
 
 -- name: GetImagePostByIDForLister :one
-WITH RECURSIVE role_ids(id) AS (
+WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT i.*, u.username, th.comments

@@ -23,8 +23,9 @@ func TestGlobalItemGrantQueries(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		expected := "g.item='" + tt.item + "' OR g.item IS NULL"
-		if !strings.Contains(tt.query, expected) {
+		expectedNoSpace := "g.item='" + tt.item + "' OR g.item IS NULL"
+		expectedSpace := "g.item = '" + tt.item + "' OR g.item IS NULL"
+		if !strings.Contains(tt.query, expectedNoSpace) && !strings.Contains(tt.query, expectedSpace) {
 			t.Errorf("%s query missing global item grant clause", tt.name)
 		}
 	}

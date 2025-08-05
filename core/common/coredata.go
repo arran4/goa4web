@@ -456,7 +456,7 @@ func (cd *CoreData) BlogList() ([]*db.ListBlogEntriesForListerRow, error) {
 		rows, err := cd.queries.ListBlogEntriesForLister(cd.ctx, db.ListBlogEntriesForListerParams{
 			ListerID: cd.UserID,
 			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-			Limit:    15,
+			Limit:    int32(cd.PageSize()),
 			Offset:   int32(cd.blogListOffset),
 		})
 		if err != nil {
@@ -1293,7 +1293,7 @@ func (cd *CoreData) LatestNews(r *http.Request) ([]*NewsPost, error) {
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	replyID, _ := strconv.Atoi(r.URL.Query().Get("reply"))
 	return cd.latestNews.Load(func() ([]*NewsPost, error) {
-		return cd.fetchLatestNews(int32(offset), 15, replyID)
+		return cd.fetchLatestNews(int32(offset), int32(cd.PageSize()), replyID)
 	})
 }
 
@@ -1307,7 +1307,7 @@ func (cd *CoreData) LatestWritings(opts ...LatestWritingsOption) ([]*db.Writing,
 		if cd.queries == nil {
 			return nil, nil
 		}
-		params := db.GetPublicWritingsParams{Limit: 15}
+		params := db.GetPublicWritingsParams{Limit: int32(cd.PageSize())}
 		for _, o := range opts {
 			o(&params)
 		}
@@ -1395,7 +1395,7 @@ func (cd *CoreData) LinkerItemsForUser(catID, offset int32) ([]*db.GetAllLinkerI
 		ViewerID:         cd.UserID,
 		Idlinkercategory: catID,
 		ViewerUserID:     sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-		Limit:            15,
+		Limit:            int32(cd.PageSize()),
 		Offset:           offset,
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
@@ -1494,7 +1494,7 @@ func (cd *CoreData) Notifications(r *http.Request) ([]*db.Notification, error) {
 		if cd.queries == nil || cd.UserID == 0 {
 			return nil, nil
 		}
-		limit := int32(cd.Config.PageSizeDefault)
+		limit := int32(cd.PageSize())
 		if showAll {
 			return cd.queries.ListNotificationsForLister(cd.ctx, db.ListNotificationsForListerParams{
 				ListerID: cd.UserID,
@@ -1599,7 +1599,7 @@ func (cd *CoreData) PublicWritings(categoryID int32, r *http.Request) ([]*db.Lis
 			ListerID:          cd.UserID,
 			WritingCategoryID: categoryID,
 			UserID:            sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-			Limit:             15,
+			Limit:             int32(cd.PageSize()),
 			Offset:            int32(offset),
 		})
 		if err != nil {
@@ -2081,7 +2081,7 @@ func (cd *CoreData) WriterWritings(userID int32, r *http.Request) ([]*db.ListPub
 			ListerID: cd.UserID,
 			AuthorID: userID,
 			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-			Limit:    15,
+			Limit:    int32(cd.PageSize()),
 			Offset:   int32(offset),
 		})
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {

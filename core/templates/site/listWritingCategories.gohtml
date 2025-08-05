@@ -1,7 +1,7 @@
 {{ define "listWritingCategories" }}
     <font size="4">{{ if $.WritingCategoryID }}Sub-{{ end }}Categories:</font><br>
     <table>
-        {{ $cats := cd.CurrentUserVisibleWritingCategories }}
+        {{ $cats := cd.VisibleWritingCategories }}
         {{ $found := false }}
         {{ range $cats }}
             {{ if eq .WritingCategoryID $.WritingCategoryID }}

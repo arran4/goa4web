@@ -73,10 +73,10 @@ func TestWritingCategoriesLazy(t *testing.T) {
 	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
 	cd.UserID = 1
 
-	if _, err := cd.VisibleWritingCategories(cd.UserID); err != nil {
+	if _, err := cd.VisibleWritingCategories(); err != nil {
 		t.Fatalf("WritingCategories: %v", err)
 	}
-	if _, err := cd.VisibleWritingCategories(cd.UserID); err != nil {
+	if _, err := cd.VisibleWritingCategories(); err != nil {
 		t.Fatalf("WritingCategories second call: %v", err)
 	}
 

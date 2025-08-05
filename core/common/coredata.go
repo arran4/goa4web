@@ -932,11 +932,6 @@ func (cd *CoreData) CurrentUserLoaded() *db.User {
 	return u
 }
 
-// CurrentUserVisibleWritingCategories returns writing categories visible to the current user.
-func (cd *CoreData) CurrentUserVisibleWritingCategories() ([]*db.WritingCategory, error) {
-	return cd.VisibleWritingCategories(cd.UserID)
-}
-
 // CurrentWriting returns the currently requested writing lazily loaded.
 func (cd *CoreData) CurrentWriting(ops ...lazy.Option[*db.GetWritingForListerByIDRow]) (*db.GetWritingForListerByIDRow, error) {
 	if cd.currentWritingID == 0 {
@@ -1968,15 +1963,15 @@ func (cd *CoreData) UserSubscriptions() ([]*db.ListSubscriptionsByUserRow, error
 	})
 }
 
-// WritingCategories returns the visible writing categories for userID.
-func (cd *CoreData) VisibleWritingCategories(userID int32) ([]*db.WritingCategory, error) {
+// VisibleWritingCategories returns the writing categories visible to the current user.
+func (cd *CoreData) VisibleWritingCategories() ([]*db.WritingCategory, error) {
 	return cd.visibleWritingCategories.Load(func() ([]*db.WritingCategory, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
 		rows, err := cd.queries.ListWritingCategoriesForLister(cd.ctx, db.ListWritingCategoriesForListerParams{
-			ListerID: cd.UserID,
-			UserID:   sql.NullInt32{Int32: userID, Valid: userID != 0},
+			ListerID:      cd.UserID,
+			ListerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {

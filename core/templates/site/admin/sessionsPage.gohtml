@@ -9,7 +9,7 @@
         <td>
             <form method="POST" action="/admin/sessions/delete">
                 <input type="hidden" name="sid" value="{{ .SessionID }}">
-                <button type="submit">Delete</button>
+                <button type="submit" name="task" value="Delete">Delete</button>
             </form>
         </td>
     </tr>

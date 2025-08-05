@@ -22,7 +22,7 @@
 <form method="post" action="/admin/request/{{ $req.ID }}/comment">
     {{ csrfField }}
     <textarea name="comment" rows="3" cols="40"></textarea>
-    <input type="submit" value="Add Comment">
+    <input type="submit" name="task" value="Add Comment">
 </form>
 <a href="/admin/requests">Back</a>
 {{ template "tail" $ }}

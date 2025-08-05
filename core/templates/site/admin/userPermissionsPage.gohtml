@@ -27,7 +27,7 @@
     <select name="role">
         {{- range $.Roles }}<option value="{{.Name}}">{{.Name}}</option>{{- end }}
     </select>
-    <button type="submit">Add</button>
+    <button type="submit" name="task" value="User Allow">Add</button>
 </form>
 <template id="roleOptions">
     {{- range $.Roles }}<option value="{{.Name}}">{{.Name}}</option>{{- end }}

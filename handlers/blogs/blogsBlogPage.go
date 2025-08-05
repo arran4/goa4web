@@ -39,7 +39,6 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 		AdminURL       func(*db.GetCommentsByThreadIdForUserRow) string
 	}
 
-	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.LoadSelectionsFromRequest(r)
 

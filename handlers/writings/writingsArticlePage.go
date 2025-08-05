@@ -72,7 +72,6 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("thread comments: %v", err)
 	}
-	canDiscuss := canComment || canReply
 	data := Data{
 		Request:     r,
 		Comments:    comments,

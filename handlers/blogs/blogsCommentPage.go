@@ -39,7 +39,6 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 		AdminURL       func(*db.GetCommentsByThreadIdForUserRow) string
 	}
 
-	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	vars := mux.Vars(r)
 	blogId, _ := strconv.Atoi(vars["blog"])
 
@@ -89,7 +88,6 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	canComment := cd.HasGrant("blogs", "entry", "comment", blog.Idblogs)
-	canReply := cd.HasGrant("blogs", "entry", "reply", blog.Idblogs)
 
 	data.IsReplyable = canComment
 

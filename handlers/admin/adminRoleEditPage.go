@@ -19,7 +19,7 @@ func adminRoleEditFormPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("role not found"))
 		return
 	}
-	cd.PageTitle = fmt.Sprintf("Edit Role %s", role.Name)
+	cd.PageTitle = fmt.Sprintf("Edit Role: %s", role.Name)
 
 	id := cd.SelectedRoleID()
 	groups, err := buildGrantGroups(r.Context(), cd, id)

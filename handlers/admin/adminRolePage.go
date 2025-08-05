@@ -22,7 +22,7 @@ func adminRolePage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("role not found"))
 		return
 	}
-	cd.PageTitle = fmt.Sprintf("Role %s", role.Name)
+	cd.PageTitle = fmt.Sprintf("Role: %s", role.Name)
 
 	id := cd.SelectedRoleID()
 	users, err := queries.AdminListUsersByRoleID(r.Context(), id)

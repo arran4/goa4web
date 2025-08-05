@@ -346,7 +346,7 @@ func TestBlogListForSelectedAuthorLazy(t *testing.T) {
 	ctx := context.Background()
 	cd := common.NewCoreData(ctx, queries, cfg, common.WithUserRoles([]string{"administrator"}))
 	cd.UserID = 1
-	cd.SetBlogListParams(1, 0)
+	cd.SetCurrentProfileUserID(1)
 
 	if _, err := cd.BlogListForSelectedAuthor(); err != nil {
 		t.Fatalf("BlogListForSelectedAuthor: %v", err)

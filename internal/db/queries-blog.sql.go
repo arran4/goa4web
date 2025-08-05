@@ -128,7 +128,7 @@ WHERE b.idblogs = ?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section = 'blogs'
-        AND g.item = 'entry'
+        AND (g.item = 'entry' OR g.item IS NULL)
         AND g.action = 'see'
         AND g.active = 1
         AND (g.item_id = b.idblogs OR g.item_id IS NULL)
@@ -205,7 +205,7 @@ AND (
 AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'blogs'
-      AND g.item = 'entry'
+      AND (g.item = 'entry' OR g.item IS NULL)
       AND g.action = 'see'
       AND g.active = 1
       AND (g.item_id = b.idblogs OR g.item_id IS NULL)
@@ -301,7 +301,7 @@ WHERE b.idblogs IN (/*SLICE:blogids*/?)
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section = 'blogs'
-        AND g.item = 'entry'
+        AND (g.item = 'entry' OR g.item IS NULL)
         AND g.action = 'see'
         AND g.active = 1
         AND (g.item_id = b.idblogs OR g.item_id IS NULL)
@@ -384,7 +384,7 @@ SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.bl
 FROM blogs b
 JOIN grants g ON (g.item_id = b.idblogs OR g.item_id IS NULL)
     AND g.section = 'blogs'
-    AND g.item = 'entry'
+    AND (g.item = 'entry' OR g.item IS NULL)
     AND g.action = 'see'
     AND g.active = 1
     AND (g.user_id = ? OR g.user_id IS NULL)
@@ -491,7 +491,7 @@ WHERE swl.word = ?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section = 'blogs'
-        AND g.item = 'entry'
+        AND (g.item = 'entry' OR g.item IS NULL)
         AND g.action = 'see'
         AND g.active = 1
         AND (g.item_id = b.idblogs OR g.item_id IS NULL)
@@ -560,7 +560,7 @@ WHERE swl.word = ?
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section = 'blogs'
-        AND g.item = 'entry'
+        AND (g.item = 'entry' OR g.item IS NULL)
         AND g.action = 'see'
         AND g.active = 1
         AND (g.item_id = b.idblogs OR g.item_id IS NULL)
@@ -636,7 +636,7 @@ WHERE (
 AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'blogs'
-      AND g.item = 'entry'
+      AND (g.item = 'entry' OR g.item IS NULL)
       AND g.action = 'see'
       AND g.active = 1
       AND (g.item_id = b.idblogs OR g.item_id IS NULL)
@@ -713,7 +713,7 @@ WHERE (LOWER(u.username) LIKE LOWER(?) OR LOWER((SELECT email FROM user_emails u
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'blogs'
-      AND g.item = 'entry'
+      AND (g.item = 'entry' OR g.item IS NULL)
       AND g.action = 'see'
       AND g.active = 1
       AND (g.item_id = b.idblogs OR g.item_id IS NULL)

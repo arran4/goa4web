@@ -2,6 +2,7 @@ package csrf
 
 import (
 	"crypto/sha256"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -15,6 +16,7 @@ import (
 	"github.com/arran4/goa4web/config"
 
 	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/handlers"
 )
 
 var (
@@ -38,7 +40,8 @@ func TestCSRFLoginFlow(t *testing.T) {
 
 	handler := csrf.Protect(key[:], csrf.Secure(false), csrf.ErrorHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Logf("failure: %v", csrf.FailureReason(r))
-		http.Error(w, "fail", http.StatusForbidden)
+		w.WriteHeader(http.StatusForbidden)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("fail"))
 	})))(r)
 
 	req := csrf.PlaintextHTTPRequest(httptest.NewRequest("GET", "/login", nil))

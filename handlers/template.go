@@ -1,11 +1,12 @@
 package handlers
 
 import (
-	"github.com/arran4/goa4web/core/consts"
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 )
 
 // TemplateHandler renders the template and handles any template error.
@@ -28,7 +29,8 @@ func TemplateHandler(w http.ResponseWriter, r *http.Request, tmpl string, data a
 			BackURL: r.Referer(),
 		}
 		if err2 := cd.ExecuteSiteTemplate(w, r, "taskErrorAcknowledgementPage.gohtml", errData); err2 != nil {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			w.WriteHeader(http.StatusInternalServerError)
+			RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		}
 	}
 }

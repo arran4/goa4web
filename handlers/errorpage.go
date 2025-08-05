@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
@@ -25,7 +26,8 @@ func RenderErrorPage(w http.ResponseWriter, r *http.Request, err error) {
 	}
 	contentType := w.Header().Get("Content-Type")
 	if err := cd.ExecuteSiteTemplate(w, r, "taskErrorAcknowledgementPage.gohtml", data); err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, "Internal Server Error")
 	}
 	if contentType != "" {
 		w.Header().Set("Content-Type", contentType)

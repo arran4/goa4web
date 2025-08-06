@@ -21,7 +21,7 @@ import (
 
 // validID reports whether s consists solely of alphanumeric characters.
 func validID(s string) bool {
-	if s == "" {
+	if s == "" || s == "." || s == ".." {
 		return false
 	}
 	dotCount := 0

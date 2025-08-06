@@ -11,10 +11,11 @@ import (
 // EventKey is the map key used for post count update events.
 const EventKey = "post_count"
 
-// UpdateEventData describes which thread and topic counts to refresh.
+// UpdateEventData describes which comment, thread and topic counts to refresh.
 type UpdateEventData struct {
-	ThreadID int32
-	TopicID  int32
+	ThreadID  int32
+	TopicID   int32
+	CommentID int32
 }
 
 // Worker listens for post count events and updates the related metadata.

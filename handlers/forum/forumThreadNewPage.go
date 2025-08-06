@@ -186,7 +186,7 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{ThreadID: int32(threadId), TopicID: int32(topicId)}
+			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(cid), ThreadID: int32(threadId), TopicID: int32(topicId)}
 			evt.Data["PostURL"] = cd.AbsoluteURL(endUrl)
 		}
 	}

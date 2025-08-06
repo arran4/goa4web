@@ -366,7 +366,7 @@ func TestProcessEventAutoSubscribe(t *testing.T) {
 		Path:   "/forum/topic/7/thread/42/reply",
 		UserID: 1,
 		Data: map[string]any{
-			postcountworker.EventKey: postcountworker.UpdateEventData{ThreadID: 42, TopicID: 7},
+			postcountworker.EventKey: postcountworker.UpdateEventData{CommentID: 1, ThreadID: 42, TopicID: 7},
 		},
 	}
 

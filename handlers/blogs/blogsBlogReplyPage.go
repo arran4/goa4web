@@ -193,7 +193,7 @@ func (ReplyBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{ThreadID: pthid, TopicID: ptid}
+			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(cid), ThreadID: pthid, TopicID: ptid}
 			evt.Data["CommentURL"] = cd.AbsoluteURL(endUrl)
 			evt.Data["target"] = notif.Target{Type: "blog", ID: int32(bid)}
 		}

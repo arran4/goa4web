@@ -76,16 +76,15 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	if err = queries.UpdateCommentForCommenter(r.Context(), db.UpdateCommentForCommenterParams{
-		CommentID:      int32(commentId),
-		GrantCommentID: sql.NullInt32{Int32: int32(commentId), Valid: true},
-		LanguageID:     int32(languageId),
+	if err = queries.UpdateCommentForEditor(r.Context(), db.UpdateCommentForEditorParams{
+		LanguageID: int32(languageId),
 		Text: sql.NullString{
 			String: text,
 			Valid:  true,
 		},
-		GranteeID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
+		CommentID:   int32(commentId),
 		CommenterID: uid,
+		EditorID:    sql.NullInt32{Int32: uid, Valid: uid != 0},
 	}); err != nil {
 		return fmt.Errorf("update comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

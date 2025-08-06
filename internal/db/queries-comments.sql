@@ -33,7 +33,7 @@ WHERE c.idcomments = sqlc.arg(id)
 )
 LIMIT 1;
 
--- name: UpdateCommentForCommenter :exec
+-- name: UpdateCommentForEditor :exec
 UPDATE comments c
 SET language_idlanguage = sqlc.arg(language_id), text = sqlc.arg(text)
 WHERE c.idcomments = sqlc.arg(comment_id)
@@ -41,11 +41,11 @@ WHERE c.idcomments = sqlc.arg(comment_id)
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='forum'
-        AND (g.item='comment' OR g.item IS NULL)
-        AND g.action='post'
+        AND (g.item='thread' OR g.item IS NULL)
+        AND g.action='edit'
         AND g.active=1
-        AND (g.item_id = sqlc.arg(grant_comment_id) OR g.item_id IS NULL)
-        AND (g.user_id = sqlc.arg(grantee_id) OR g.user_id IS NULL)
+        AND (g.item_id = c.forumthread_id OR g.item_id IS NULL)
+        AND (g.user_id = sqlc.arg(editor_id) OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (
             SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(commenter_id)
         ))
@@ -101,15 +101,15 @@ SELECT sqlc.arg(language_id), sqlc.arg(commenter_id), sqlc.arg(forumthread_id), 
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'forum'
-      AND (g.item = 'comment' OR g.item IS NULL)
-      AND g.action = 'post'
+      AND (g.item = 'thread' OR g.item IS NULL)
+      AND g.action = 'reply'
       AND g.active = 1
       AND (g.item_id = sqlc.arg(grant_forumthread_id) OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(grantee_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (
           SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(commenter_id)
       ))
-);
+  );
 
 -- name: GetCommentsByThreadIdForUser :many
 WITH role_ids AS (

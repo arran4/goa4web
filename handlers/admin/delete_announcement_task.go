@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -49,11 +51,11 @@ func (DeleteAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) any
 	return nil
 }
 
-func (DeleteAnnouncementTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (DeleteAnnouncementTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("announcementEmail")
 }
 
-func (DeleteAnnouncementTask) AdminInternalNotificationTemplate() *string {
+func (DeleteAnnouncementTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("announcement")
 	return &v
 }

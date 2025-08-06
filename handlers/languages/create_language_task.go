@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -48,11 +50,11 @@ func (CreateLanguageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return nil
 }
 
-func (CreateLanguageTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (CreateLanguageTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("adminNotificationLanguageCreateEmail")
 }
 
-func (CreateLanguageTask) AdminInternalNotificationTemplate() *string {
+func (CreateLanguageTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("adminNotificationLanguageCreateEmail")
 	return &v
 }

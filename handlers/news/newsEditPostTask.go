@@ -3,10 +3,12 @@ package news
 import (
 	"database/sql"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"net/url"
 	"strconv"
+
+	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/internal/eventbus"
 
 	"github.com/gorilla/mux"
 
@@ -24,11 +26,11 @@ var editTask = &EditTask{TaskString: TaskEdit}
 var _ tasks.Task = (*EditTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*EditTask)(nil)
 
-func (EditTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (EditTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("adminNotificationNewsEditEmail")
 }
 
-func (EditTask) AdminInternalNotificationTemplate() *string {
+func (EditTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("adminNotificationNewsEditEmail")
 	return &v
 }

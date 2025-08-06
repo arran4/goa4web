@@ -100,11 +100,11 @@ func (SubmitWritingTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return handlers.RedirectHandler(fmt.Sprintf("/writings/article/%d", articleID))
 }
 
-func (SubmitWritingTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+func (SubmitWritingTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("writingEmail")
 }
 
-func (SubmitWritingTask) SubscribedInternalNotificationTemplate() *string {
+func (SubmitWritingTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	s := notif.NotificationTemplateFilenameGenerator("writing")
 	return &s
 }

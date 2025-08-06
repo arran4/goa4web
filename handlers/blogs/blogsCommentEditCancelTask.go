@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/gorilla/mux"
@@ -22,11 +24,11 @@ var cancelTask = &CancelTask{TaskString: TaskCancel}
 var _ tasks.Task = (*CancelTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*CancelTask)(nil)
 
-func (CancelTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (CancelTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("adminNotificationBlogCommentCancelEmail")
 }
 
-func (CancelTask) AdminInternalNotificationTemplate() *string {
+func (CancelTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("adminNotificationBlogCommentCancelEmail")
 	return &v
 }

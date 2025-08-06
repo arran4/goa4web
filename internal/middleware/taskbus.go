@@ -143,6 +143,9 @@ func (m *TaskEventMiddleware) Middleware(next http.Handler) http.Handler {
 		cd.SetEvent(evt)
 		sr := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
 		next.ServeHTTP(sr, r)
+		if sr.status < http.StatusBadRequest && evt.Outcome == "" {
+			evt.Outcome = eventbus.TaskOutcomeSuccess
+		}
 		if task != "" && sr.status < http.StatusBadRequest {
 			if err := m.bus.Publish(*evt); err != nil {
 				if err == eventbus.ErrBusClosed {

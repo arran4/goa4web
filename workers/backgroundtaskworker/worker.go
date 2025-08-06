@@ -34,11 +34,12 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier) {
 				}
 				if t != nil {
 					nEvt := eventbus.TaskEvent{
-						Path:   evt.Path,
-						Task:   t,
-						UserID: evt.UserID,
-						Time:   time.Now(),
-						Data:   evt.Data,
+						Path:    evt.Path,
+						Task:    t,
+						UserID:  evt.UserID,
+						Time:    time.Now(),
+						Data:    evt.Data,
+						Outcome: eventbus.TaskOutcomeSuccess,
 					}
 					if err := bus.Publish(nEvt); err != nil && err != eventbus.ErrBusClosed {
 						log.Printf("background publish: %v", err)

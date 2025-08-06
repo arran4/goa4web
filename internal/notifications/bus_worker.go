@@ -72,12 +72,16 @@ func (n *Notifier) processEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 		return nil
 	}
 
+	if evt.Outcome != eventbus.TaskOutcomeSuccess {
+		return nil
+	}
+
 	if evt.Task == nil {
 		return nil
 	}
 
 	if tp, ok := evt.Task.(AdminEmailTemplateProvider); ok {
-		if err := n.notifyAdmins(ctx, tp.AdminEmailTemplate(), tp.AdminInternalNotificationTemplate(), evt.Data, evt.Path); err != nil {
+		if err := n.notifyAdmins(ctx, tp.AdminEmailTemplate(evt), tp.AdminInternalNotificationTemplate(evt), evt.Data, evt.Path); err != nil {
 			errW := fmt.Errorf("AdminEmailTemplateProvider: %w", err)
 			if dlqErr := n.dlqRecordAndNotify(ctx, q, fmt.Sprintf("admin notify: %v", errW)); dlqErr != nil {
 				return dlqErr
@@ -147,7 +151,7 @@ type NotificationData struct {
 }
 
 func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp SelfNotificationTemplateProvider) error {
-	if et := tp.SelfEmailTemplate(); et != nil {
+	if et := tp.SelfEmailTemplate(evt); et != nil {
 		if b, ok := evt.Task.(SelfEmailBroadcaster); ok && b.SelfEmailBroadcast() {
 			emails, err := n.Queries.SystemListVerifiedEmailsByUserID(ctx, evt.UserID)
 			if err == nil {
@@ -170,7 +174,7 @@ func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp Se
 			}
 		}
 	}
-	if nt := tp.SelfInternalNotificationTemplate(); nt != nil {
+	if nt := tp.SelfInternalNotificationTemplate(evt); nt != nil {
 		data := NotificationData{TaskEvent: evt, Item: evt.Data}
 		msg, err := n.renderNotification(ctx, *nt, data)
 		if err != nil {
@@ -197,7 +201,7 @@ func (n *Notifier) notifyDirectEmail(ctx context.Context, evt eventbus.TaskEvent
 	if addr == "" {
 		return nil
 	}
-	if et := tp.DirectEmailTemplate(); et != nil {
+	if et := tp.DirectEmailTemplate(evt); et != nil {
 		if err := n.renderAndQueueEmailFromTemplates(ctx, nil, addr, et, evt.Data); err != nil {
 			return err
 		}
@@ -217,13 +221,13 @@ func (n *Notifier) notifyTargetUsers(ctx context.Context, evt eventbus.TaskEvent
 				log.Printf("notify missing email: %v", nmErr)
 			}
 		} else {
-			if et := tp.TargetEmailTemplate(); et != nil {
+			if et := tp.TargetEmailTemplate(evt); et != nil {
 				if err := n.renderAndQueueEmailFromTemplates(ctx, &id, user.Email.String, et, evt.Data); err != nil {
 					return err
 				}
 			}
 		}
-		if nt := tp.TargetInternalNotificationTemplate(); nt != nil {
+		if nt := tp.TargetInternalNotificationTemplate(evt); nt != nil {
 			data := NotificationData{TaskEvent: evt, Item: evt.Data}
 			msg, err := n.renderNotification(ctx, *nt, data)
 			if err != nil {
@@ -292,7 +296,7 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 
 	var msg []byte
 	data := NotificationData{TaskEvent: evt, Item: evt.Data}
-	if nt := tp.SubscribedInternalNotificationTemplate(); nt != nil {
+	if nt := tp.SubscribedInternalNotificationTemplate(evt); nt != nil {
 		var err error
 		msg, err = n.renderNotification(ctx, *nt, data)
 		if err != nil {
@@ -301,7 +305,7 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 		}
 	}
 
-	et := tp.SubscribedEmailTemplate()
+	et := tp.SubscribedEmailTemplate(evt)
 	for id := range emailSubs {
 		if err := n.sendSubscriberEmail(ctx, id, evt, et); err != nil {
 			return fmt.Errorf("deliver email to %d: %w", id, err)

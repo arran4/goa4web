@@ -3,6 +3,8 @@ package auth
 import (
 	"testing"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+
 	"github.com/arran4/goa4web/core/templates"
 	notif "github.com/arran4/goa4web/internal/notifications"
 )
@@ -38,15 +40,15 @@ func TestForgotPasswordTemplatesExist(t *testing.T) {
 		emailAssociationRequestTask,
 	}
 	for _, p := range admins {
-		requireEmailTemplates(t, p.AdminEmailTemplate())
-		requireNotificationTemplate(t, p.AdminInternalNotificationTemplate())
+		requireEmailTemplates(t, p.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+		requireNotificationTemplate(t, p.AdminInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
 	}
 
 	selfProviders := []notif.SelfNotificationTemplateProvider{
 		forgotPasswordTask,
 	}
 	for _, p := range selfProviders {
-		requireEmailTemplates(t, p.SelfEmailTemplate())
-		requireNotificationTemplate(t, p.SelfInternalNotificationTemplate())
+		requireEmailTemplates(t, p.SelfEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+		requireNotificationTemplate(t, p.SelfInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
 	}
 }

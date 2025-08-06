@@ -2,10 +2,11 @@ package user
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
-	"net/http"
 )
 
 // ResendVerificationEmailTask resends the verification link for an unverified user email address.
@@ -20,7 +21,7 @@ func (ResendVerificationEmailTask) Action(w http.ResponseWriter, r *http.Request
 	return addEmailTask.Resend(w, r)
 }
 
-func (ResendVerificationEmailTask) DirectEmailTemplate() *notif.EmailTemplates {
+func (ResendVerificationEmailTask) DirectEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("verifyEmail")
 }
 

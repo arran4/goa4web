@@ -6,8 +6,8 @@
 <p>Comments: {{ .Post.Comments.Int32 }}</p>
 <p><a href="/news/news/{{ .Post.Idsitenews }}">View public</a></p>
 {{ if .TopicID }}<p><a href="/forum/topic/{{ .TopicID }}/thread/{{ .Post.ForumthreadID }}">View forum thread</a></p>{{ end }}
-<p><a href="/admin/news/{{ .Post.Idsitenews }}/edit">Edit</a></p>
-<p><a href="/admin/news/{{ .Post.Idsitenews }}/delete">Delete</a></p>
+<p><a href="/admin/news/article/{{ .Post.Idsitenews }}/edit">Edit</a></p>
+<p><a href="/admin/news/article/{{ .Post.Idsitenews }}/delete">Delete</a></p>
 <a id="comments"></a>
 {{ if .Comments }}<hr><font size=4>Comments:</font>{{ end }}
 {{ template "threadComments" }}

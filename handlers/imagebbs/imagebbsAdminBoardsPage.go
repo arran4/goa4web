@@ -24,18 +24,15 @@ func AdminBoardsPage(w http.ResponseWriter, r *http.Request) {
 		Nsfw    bool
 	}
 	type Data struct {
-		*common.CoreData
 		Boards []*BoardRow
 		Tree   template.HTML
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Image Boards"
-	data := Data{
-		CoreData: cd,
-	}
+	data := Data{}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	boardRows, err := data.CoreData.ImageBoards()
+	boardRows, err := cd.ImageBoards()
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

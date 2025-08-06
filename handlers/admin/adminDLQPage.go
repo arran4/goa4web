@@ -34,7 +34,6 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Dead Letter Queue"
 	data := struct {
-		*common.CoreData
 		Errors     []*db.DeadLetter
 		FileErrors []filedlq.Record
 		FileErr    string
@@ -51,7 +50,6 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 		DBLatest   string
 		Providers  string
 	}{
-		CoreData:  cd,
 		Providers: cd.Config.DLQProvider,
 	}
 

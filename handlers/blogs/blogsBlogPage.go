@@ -25,7 +25,6 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 		IsReplyable bool
 	}
 	type Data struct {
-		*common.CoreData
 		Blog           *BlogRow
 		Comments       []*db.GetCommentsByThreadIdForUserRow
 		IsReplyable    bool
@@ -47,7 +46,6 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := cd.Queries()
 	data := Data{
-		CoreData:    cd,
 		IsReplyable: true,
 		EditUrl:     fmt.Sprintf("/blogs/blog/%d/edit", blogId),
 		CanReply:    cd.UserID != 0,
@@ -84,7 +82,7 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if !data.CoreData.HasGrant("blogs", "entry", "view", blog.Idblogs) {
+	if !cd.HasGrant("blogs", "entry", "view", blog.Idblogs) {
 		if err := templates.GetCompiledSiteTemplates(r.Context().Value(consts.KeyCoreData).(*common.CoreData).Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", struct{}{}); err != nil {
 			log.Printf("render no access page: %v", err)
 		}
@@ -135,7 +133,7 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 		data.Comments = rows
 		commentId, _ := strconv.Atoi(r.URL.Query().Get("comment"))
 		data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
-			return data.CoreData.CanEditAny() || cmt.IsOwner
+			return cd.CanEditAny() || cmt.IsOwner
 		}
 		data.EditURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
 			if !data.CanEditComment(cmt) {

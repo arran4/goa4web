@@ -21,7 +21,6 @@ import (
 
 func AdminAddPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Languages          []*db.Language
 		SelectedLanguageId int
 		Categories         []*db.LinkerCategory
@@ -31,7 +30,6 @@ func AdminAddPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Add Link"
 	data := Data{
-		CoreData:           cd,
 		SelectedLanguageId: int(cd.PreferredLanguageID(cd.Config.DefaultLanguage)),
 	}
 
@@ -48,7 +46,7 @@ func AdminAddPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Categories = categoryRows
 
-	languageRows, err := data.CoreData.Languages()
+	languageRows, err := cd.Languages()
 	if err != nil {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return

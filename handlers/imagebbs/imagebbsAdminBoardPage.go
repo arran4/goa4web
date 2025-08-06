@@ -78,7 +78,6 @@ func (ModifyBoardTask) Action(w http.ResponseWriter, r *http.Request) any {
 // AdminBoardPage shows a form to edit an existing board.
 func AdminBoardPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Board  *db.Imageboard
 		Boards []*db.Imageboard
 	}
@@ -116,7 +115,7 @@ func AdminBoardPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := Data{CoreData: cd, Board: board, Boards: boards}
+	data := Data{Board: board, Boards: boards}
 
 	handlers.TemplateHandler(w, r, "adminBoardPage.gohtml", data)
 }

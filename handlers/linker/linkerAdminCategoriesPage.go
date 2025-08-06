@@ -15,16 +15,14 @@ import (
 
 func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Categories []*db.GetLinkerCategoryLinkCountsRow
 	}
 
-	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-	}
-	data.CoreData.PageTitle = "Link Categories"
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Link Categories"
+	data := Data{}
 
-	categoryRows, err := data.LinkerCategoryCounts()
+	categoryRows, err := cd.LinkerCategoryCounts()
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

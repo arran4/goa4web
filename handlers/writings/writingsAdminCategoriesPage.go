@@ -16,17 +16,14 @@ import (
 
 func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Categories []*db.WritingCategory
 		Tree       template.HTML
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Writing Categories"
-	data := Data{
-		CoreData: cd,
-	}
+	data := Data{}
 
-	categoryRows, err := data.CoreData.WritingCategories()
+	categoryRows, err := cd.WritingCategories()
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -21,14 +19,11 @@ var _ tasks.Task = (*RemakeNewsTask)(nil)
 var _ tasks.BackgroundTasker = (*RemakeNewsTask)(nil)
 
 func (RemakeNewsTask) Action(w http.ResponseWriter, r *http.Request) any {
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := struct {
-		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: cd,
 		Messages: []string{"work queued"},
 		Back:     "/admin/search",
 	}

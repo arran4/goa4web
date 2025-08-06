@@ -82,14 +82,12 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 				_ = queries.InsertPassword(r.Context(), db.InsertPasswordParams{UsersIdusers: reset.UserID, Passwd: reset.Passwd, PasswdAlgorithm: sql.NullString{String: reset.PasswdAlgorithm, Valid: true}})
 			} else {
 				type Data struct {
-					*common.CoreData
 					ID int32
 				}
 				cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 				cd.PageTitle = "Verify Password"
 				data := Data{
-					CoreData: cd,
-					ID:       reset.ID,
+					ID: reset.ID,
 				}
 				return handlers.TemplateWithDataHandler("passwordVerifyPage.gohtml", data)
 			}

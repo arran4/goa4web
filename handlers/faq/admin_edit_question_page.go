@@ -16,6 +16,7 @@ import (
 
 // AdminEditQuestionPage displays the edit form for a single FAQ entry.
 func AdminEditQuestionPage(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
 	idStr := vars["id"]
 	id, err := strconv.Atoi(idStr)
@@ -23,7 +24,7 @@ func AdminEditQuestionPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, handlers.ErrBadRequest)
 		return
 	}
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 	var faq *db.Faq
 	if id != 0 {
 		var err error
@@ -43,16 +44,13 @@ func AdminEditQuestionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	cats, _ := queries.GetAllFAQCategories(r.Context())
 	type Data struct {
-		*common.CoreData
 		Faq        *db.Faq
 		Categories []*db.FaqCategory
 	}
 	data := Data{
-		CoreData:   r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Faq:        faq,
 		Categories: cats,
 	}
-	cd := data.CoreData
 	if id != 0 {
 		cd.PageTitle = fmt.Sprintf("Edit FAQ %d", id)
 	} else {

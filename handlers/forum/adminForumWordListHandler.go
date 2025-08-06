@@ -14,15 +14,12 @@ import (
 
 func AdminForumWordListPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Rows []sql.NullString
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Forum - Word List"
-	data := Data{
-		CoreData: cd,
-	}
+	data := Data{}
 
 	queries := cd.Queries()
 

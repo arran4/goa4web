@@ -26,7 +26,6 @@ func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 		EditUrl string
 	}
 	type Data struct {
-		*common.CoreData
 		Rows     []*BlogRow
 		IsOffset bool
 		UID      string
@@ -80,14 +79,13 @@ func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		IsOffset: offset != 0,
 		UID:      strconv.Itoa(int(buid)),
 	}
 
 	for _, row := range rows {
 		editUrl := ""
-		if data.CoreData.CanEditAny() || row.IsOwner {
+		if cd.CanEditAny() || row.IsOwner {
 			editUrl = fmt.Sprintf("/blogs/blog/%d/edit", row.Idblogs)
 		}
 		data.Rows = append(data.Rows, &BlogRow{

@@ -27,7 +27,6 @@ var _ tasks.Task = (*SearchWritingsTask)(nil)
 
 func (SearchWritingsTask) Action(w http.ResponseWriter, r *http.Request) any {
 	type Data struct {
-		*common.CoreData
 		Comments           []*db.GetCommentsByIdsForUserWithThreadInfoRow
 		Writings           []*db.ListWritingsByIDsForListerRow
 		CommentsNoResults  bool
@@ -41,9 +40,7 @@ func (SearchWritingsTask) Action(w http.ResponseWriter, r *http.Request) any {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return nil
 	}
-	data := Data{
-		CoreData: cd,
-	}
+	data := Data{}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {

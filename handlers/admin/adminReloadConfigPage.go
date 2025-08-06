@@ -25,13 +25,11 @@ func (h *Handlers) AdminReloadConfigPage(w http.ResponseWriter, r *http.Request)
 	}
 
 	data := struct {
-		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: cd,
-		Back:     "/admin",
+		Back: "/admin",
 	}
 
 	cfgMap, err := config.LoadAppConfigFile(core.OSFS{}, h.ConfigFile)

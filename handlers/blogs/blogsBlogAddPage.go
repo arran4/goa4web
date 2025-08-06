@@ -107,14 +107,12 @@ func BlogAddPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	type Data struct {
-		*common.CoreData
 		Languages          []*db.Language
 		SelectedLanguageId int
 		Mode               string
 	}
 
 	data := Data{
-		CoreData:           cd,
 		SelectedLanguageId: int(cd.PreferredLanguageID(cd.Config.DefaultLanguage)),
 		Mode:               "Add",
 	}

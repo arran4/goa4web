@@ -20,7 +20,6 @@ func AdminTopicGrantsPage(w http.ResponseWriter, r *http.Request) {
 		RoleName sql.NullString
 	}
 	type Data struct {
-		*common.CoreData
 		TopicID int32
 		Grants  []GrantInfo
 		Roles   []*db.Role
@@ -35,7 +34,7 @@ func AdminTopicGrantsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Forum - Topic %d Grants", tid)
-	data := Data{CoreData: cd, TopicID: int32(tid), Actions: []string{"see", "view", "reply", "post", "edit"}}
+	data := Data{TopicID: int32(tid), Actions: []string{"see", "view", "reply", "post", "edit"}}
 	if roles, err := cd.AllRoles(); err == nil {
 		data.Roles = roles
 	}

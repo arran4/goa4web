@@ -16,7 +16,6 @@ import (
 // AdminRolesPage lists all roles with their public profile access flag.
 func AdminRolesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Roles []*db.Role
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -27,6 +26,6 @@ func AdminRolesPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
-	data := Data{CoreData: cd, Roles: roles}
+	data := Data{Roles: roles}
 	handlers.TemplateHandler(w, r, "rolesPage.gohtml", data)
 }

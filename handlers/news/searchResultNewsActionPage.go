@@ -17,7 +17,6 @@ import (
 
 func SearchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Comments           []*db.GetCommentsByIdsForUserWithThreadInfoRow
 		News               []*db.GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountRow
 		CommentsNoResults  bool
@@ -31,10 +30,8 @@ func SearchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
-	data := Data{
-		CoreData: cd,
-	}
-	data.CoreData.PageTitle = "News Search Results"
+	data := Data{}
+	cd.PageTitle = "News Search Results"
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {

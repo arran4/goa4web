@@ -23,7 +23,6 @@ func AdminSentEmailsPage(w http.ResponseWriter, r *http.Request) {
 		Subject string
 	}
 	type Data struct {
-		*common.CoreData
 		Emails   []EmailItem
 		PageSize int
 	}
@@ -34,11 +33,10 @@ func AdminSentEmailsPage(w http.ResponseWriter, r *http.Request) {
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
 	data := Data{
-		CoreData: cd,
 		PageSize: pageSize,
 	}
 
-	queries := data.CoreData.Queries()
+	queries := cd.Queries()
 	langID, _ := strconv.Atoi(r.URL.Query().Get("lang"))
 	role := r.URL.Query().Get("role")
 	rows, err := queries.AdminListSentEmails(r.Context(), db.AdminListSentEmailsParams{

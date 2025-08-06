@@ -34,7 +34,6 @@ func (h *Handlers) AdminServerStatsPage(w http.ResponseWriter, r *http.Request) 
 	}
 
 	type Data struct {
-		*common.CoreData
 		Stats      Stats
 		Uptime     time.Duration
 		ConfigEnv  string
@@ -70,7 +69,6 @@ func (h *Handlers) AdminServerStatsPage(w http.ResponseWriter, r *http.Request) 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Server Stats"
 	data := Data{
-		CoreData: cd,
 		Stats: Stats{
 			Goroutines: runtime.NumGoroutine(),
 			Alloc:      mem.Alloc,
@@ -126,7 +124,7 @@ func (h *Handlers) AdminServerStatsPage(w http.ResponseWriter, r *http.Request) 
 	for _, t := range cd.TasksReg.Registered() {
 		data.Registries.Tasks = append(data.Registries.Tasks, t.Name())
 	}
-	if reg := data.CoreData.DBRegistry(); reg != nil {
+	if reg := cd.DBRegistry(); reg != nil {
 		data.Registries.DBDrivers = reg.Names()
 	}
 	if h.Srv != nil {

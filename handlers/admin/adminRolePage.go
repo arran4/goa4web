@@ -38,12 +38,10 @@ func adminRolePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
-		*common.CoreData
 		Role        *db.Role
 		Users       []*db.AdminListUsersByRoleIDRow
 		GrantGroups []GrantGroup
 	}{
-		CoreData:    cd,
 		Role:        role,
 		Users:       users,
 		GrantGroups: groups,

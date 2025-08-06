@@ -21,15 +21,13 @@ import (
 
 func ArticleAddPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Languages []*db.Language
 	}
-	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-	}
-	data.CoreData.PageTitle = "Add Article"
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Add Article"
+	data := Data{}
 
-	languageRows, err := data.CoreData.Languages()
+	languageRows, err := cd.Languages()
 	if err != nil {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return

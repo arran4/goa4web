@@ -20,7 +20,6 @@ import (
 
 func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Languages          []*db.Language
 		SelectedLanguageId int
 		Writing            *db.GetWritingForListerByIDRow
@@ -28,10 +27,9 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
-		CoreData:           cd,
 		SelectedLanguageId: int(cd.PreferredLanguageID(cd.Config.DefaultLanguage)),
 	}
-	data.CoreData.PageTitle = "Edit Article"
+	cd.PageTitle = "Edit Article"
 
 	// article ID is validated by the RequireWritingAuthor middleware, so we
 	// no longer need to parse it here.

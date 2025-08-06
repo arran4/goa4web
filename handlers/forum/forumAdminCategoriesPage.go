@@ -21,7 +21,6 @@ import (
 
 func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Categories []*db.GetAllForumCategoriesWithSubcategoryCountRow
 		Tree       template.HTML
 	}
@@ -29,9 +28,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	cd.PageTitle = "Forum Admin Categories"
 	queries := cd.Queries()
 
-	data := Data{
-		CoreData: cd,
-	}
+	data := Data{}
 
 	categoryRows, err := queries.GetAllForumCategoriesWithSubcategoryCount(r.Context())
 	if err != nil {

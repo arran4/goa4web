@@ -30,13 +30,11 @@ func adminUserAddCommentPage(w http.ResponseWriter, r *http.Request) {
 		back = fmt.Sprintf("/admin/user/%d", user.Idusers)
 	}
 	data := struct {
-		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: cd,
-		Back:     back,
+		Back: back,
 	}
 	comment := r.PostFormValue("comment")
 	if user == nil {

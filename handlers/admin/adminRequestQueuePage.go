@@ -46,13 +46,11 @@ func adminRequestAddCommentPage(w http.ResponseWriter, r *http.Request) {
 	cd.PageTitle = "Add Comment"
 	queries := cd.Queries()
 	data := struct {
-		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: cd,
-		Back:     fmt.Sprintf("/admin/request/%d", id),
+		Back: fmt.Sprintf("/admin/request/%d", id),
 	}
 	if comment == "" {
 		data.Errors = append(data.Errors, "invalid")
@@ -80,13 +78,11 @@ func handleRequestAction(w http.ResponseWriter, r *http.Request, status string) 
 	cd.PageTitle = fmt.Sprintf("Request %d", req.ID)
 	queries := cd.Queries()
 	data := struct {
-		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: cd,
-		Back:     "/admin/requests",
+		Back: "/admin/requests",
 	}
 
 	var auto string

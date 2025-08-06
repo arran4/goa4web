@@ -31,13 +31,11 @@ func adminUserForumPage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd.PageTitle = fmt.Sprintf("Forum threads by %s", user.Username.String)
 	data := struct {
-		*common.CoreData
 		User    *db.User
 		Threads []*db.AdminGetThreadsStartedByUserWithTopicRow
 	}{
-		CoreData: cd,
-		User:     &db.User{Idusers: cpu.Idusers, Username: user.Username},
-		Threads:  rows,
+		User:    &db.User{Idusers: cpu.Idusers, Username: user.Username},
+		Threads: rows,
 	}
 	handlers.TemplateHandler(w, r, "userForumPage.gohtml", data)
 }

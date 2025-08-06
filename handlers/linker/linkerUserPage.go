@@ -18,7 +18,6 @@ import (
 
 func UserPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Links     []*db.GetLinkerItemsByUserDescendingForUserRow
 		Username  string
 		HasOffset bool
@@ -56,7 +55,7 @@ func UserPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	data := Data{CoreData: cd, Username: username, HasOffset: offset != 0}
+	data := Data{Username: username, HasOffset: offset != 0}
 	cd.PageTitle = fmt.Sprintf("Links by %s", username)
 	for _, row := range rows {
 		if !cd.HasGrant("linker", "link", "see", row.Idlinker) {

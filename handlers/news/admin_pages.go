@@ -32,7 +32,6 @@ func AdminNewsPage(w http.ResponseWriter, r *http.Request) {
 
 func AdminNewsPostPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Post           *db.GetNewsPostByIdWithWriterIdAndThreadCommentCountRow
 		TopicID        int32
 		Thread         *db.GetThreadLastPosterAndPermsRow
@@ -86,7 +85,6 @@ func AdminNewsPostPage(w http.ResponseWriter, r *http.Request) {
 
 	cd.PageTitle = fmt.Sprintf("News Post %d", pid)
 	data := Data{
-		CoreData:    cd,
 		Post:        post,
 		TopicID:     topicID,
 		Thread:      threadRow,
@@ -132,12 +130,10 @@ func adminNewsEditFormPage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd.PageTitle = "Edit News"
 	data := struct {
-		*common.CoreData
 		Languages          []*db.Language
 		Post               *db.GetNewsPostByIdWithWriterIdAndThreadCommentCountRow
 		SelectedLanguageId int
 	}{
-		CoreData:           cd,
 		Languages:          langs,
 		Post:               post,
 		SelectedLanguageId: int(post.LanguageIdlanguage),
@@ -154,12 +150,10 @@ func AdminNewsDeleteConfirmPage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd.PageTitle = "Confirm news delete"
 	data := struct {
-		*common.CoreData
 		PostID       int
 		ConfirmLabel string
 		Back         string
 	}{
-		CoreData:     cd,
 		PostID:       pid,
 		ConfirmLabel: "Confirm delete",
 		Back:         fmt.Sprintf("/admin/news/%d", pid),

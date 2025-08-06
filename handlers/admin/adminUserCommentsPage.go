@@ -31,11 +31,9 @@ func adminUserCommentsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd.PageTitle = fmt.Sprintf("Comments by %s", user.Username.String)
 	data := struct {
-		*common.CoreData
 		User     *db.User
 		Comments []*db.AdminGetAllCommentsByUserRow
 	}{
-		CoreData: cd,
 		User:     &db.User{Idusers: cpu.Idusers, Username: user.Username},
 		Comments: rows,
 	}

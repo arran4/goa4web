@@ -20,7 +20,6 @@ import (
 func Page(w http.ResponseWriter, r *http.Request) {
 
 	type Data struct {
-		*common.CoreData
 		Categories              []*ForumcategoryPlus
 		CategoryBreadcrumbs     []*ForumcategoryPlus
 		Admin                   bool
@@ -41,8 +40,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	categoryId, _ := strconv.Atoi(vars["category"])
 
 	data := &Data{
-		CoreData: cd,
-		Admin:    cd.CanEditAny(),
+		Admin: cd.CanEditAny(),
 	}
 
 	copyDataToSubCategories := func(rootCategory *ForumcategoryPlus) *Data {
@@ -54,7 +52,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 	data.CopyDataToSubCategories = copyDataToSubCategories
 
-	categoryRows, err := data.CoreData.ForumCategories()
+	categoryRows, err := cd.ForumCategories()
 	if err != nil {
 		log.Printf("getAllForumCategories Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)

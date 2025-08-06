@@ -6,11 +6,12 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"net/url"
 	"strconv"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
@@ -123,6 +124,7 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 
 func adminUserDisableConfirmPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
 	u := cd.CurrentProfileUser()
 	if u == nil {
 		log.Printf("adminUserDisableConfirmPage: user not found")
@@ -143,6 +145,7 @@ func adminUserDisableConfirmPage(w http.ResponseWriter, r *http.Request) {
 
 func adminUserDisablePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
 	id := cd.CurrentProfileUser()
 	data := struct {
 		Errors   []string
@@ -161,6 +164,7 @@ func adminUserDisablePage(w http.ResponseWriter, r *http.Request) {
 
 func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
 	urow := cd.CurrentProfileUser()
 	if urow == nil {
 		log.Printf("adminUserEditFormPage: user not found")
@@ -177,6 +181,7 @@ func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
 
 func adminUserEditSavePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
 	queries := cd.Queries()
 	uidStr := r.PostFormValue("uid")
 	uid := cd.CurrentProfileUser()

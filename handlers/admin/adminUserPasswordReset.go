@@ -28,6 +28,7 @@ var _ notif.TargetUsersNotificationProvider = (*UserPasswordResetTask)(nil)
 
 func (UserPasswordResetTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
 	user := cd.CurrentProfileUser()
 	back := "/admin/user"
 	if user != nil {
@@ -103,6 +104,7 @@ func (UserPasswordResetTask) AuditRecord(data map[string]any) string {
 func adminUserResetPasswordConfirmPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Reset Password"
+	cd.LoadSelectionsFromRequest(r)
 	user := cd.CurrentProfileUser()
 	if user == nil {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("user not found"))

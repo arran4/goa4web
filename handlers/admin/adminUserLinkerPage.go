@@ -13,6 +13,7 @@ import (
 // adminUserLinkerPage lists linker posts created by a user.
 func adminUserLinkerPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
 	cpu := cd.CurrentProfileUser()
 	if cpu.Idusers == 0 {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("user not found"))

@@ -1,5 +1,5 @@
 {{ template "head" $ }}
-<form method="post" action="/admin/imagebbs/board/{{ .Board.Idimageboard }}">
+<form method="post" action="/admin/imagebbs/boards/board/{{ .Board.Idimageboard }}/edit">
     {{ csrfField }}
     Name: <input name="name" value="{{ .Board.Title.String }}"><br>
     Description: <textarea name="desc" cols="40" rows="5">{{ .Board.Description.String }}</textarea><br>

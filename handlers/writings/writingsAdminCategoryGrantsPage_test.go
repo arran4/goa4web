@@ -35,7 +35,7 @@ func TestAdminCategoryGrantsPage(t *testing.T) {
 		AddRow(1, nil, nil, nil, nil, "writing", "category", "allow", 1, nil, "see", nil, true)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, created_at, updated_at, user_id, role_id, section, item, rule_type, item_id, item_rule, action, extra, active FROM grants ORDER BY id")).WillReturnRows(grantsRows)
 
-	req := httptest.NewRequest("GET", "/admin/writings/category/1/permissions", nil)
+	req := httptest.NewRequest("GET", "/admin/writings/categories/category/1/grants", nil)
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)

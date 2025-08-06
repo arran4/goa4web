@@ -1,0 +1,18 @@
+{{ define "blogsAdminPage" }}
+    {{ template "head" $ }}
+    <table border="1">
+        <tr><th>ID<th>Date<th>Writer<th>Comments<th>View</tr>
+        {{ range cd.BlogList }}
+            <tr>
+                <td><a href="/admin/blogs/blog/{{ .Idblogs }}">{{ .Idblogs }}</a></td>
+                <td><a href="/admin/blogs/blog/{{ .Idblogs }}">{{ .Written }}</a></td>
+                <td>{{ if .Username.Valid }}<a href="/admin/user/{{ .UsersIdusers }}">{{ .Username.String }}</a>{{ else }}{{ .UsersIdusers }}{{ end }}</td>
+                <td><a href="/admin/blogs/blog/{{ .Idblogs }}#comments">{{ .Comments }}</a></td>
+                <td><a href="/blogs/blog/{{ .Idblogs }}">Public</a></td>
+            </tr>
+        {{ else }}
+            <tr><td colspan="5">No blogs.</td></tr>
+        {{ end }}
+    </table>
+    {{ template "tail" $ }}
+{{ end }}

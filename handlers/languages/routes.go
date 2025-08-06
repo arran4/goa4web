@@ -13,9 +13,12 @@ func RegisterAdminRoutes(ar *mux.Router, navReg *navpkg.Registry) {
 	navReg.RegisterAdminControlCenter("Languages", "Languages", "/admin/languages", SectionWeight)
 	ar.HandleFunc("/languages", adminLanguagesPage).Methods("GET")
 	ar.HandleFunc("/language", adminLanguageRedirect).Methods("GET")
-	ar.HandleFunc("/languages", handlers.TaskHandler(renameLanguageTask)).Methods("POST").MatcherFunc(renameLanguageTask.Matcher())
-	ar.HandleFunc("/languages", handlers.TaskHandler(deleteLanguageTask)).Methods("POST").MatcherFunc(deleteLanguageTask.Matcher())
-	ar.HandleFunc("/languages", handlers.TaskHandler(createLanguageTask)).Methods("POST").MatcherFunc(createLanguageTask.Matcher())
+	ar.HandleFunc("/languages/new", adminLanguageNewPage).Methods("GET")
+	ar.HandleFunc("/languages/new", handlers.TaskHandler(createLanguageTask)).Methods("POST").MatcherFunc(createLanguageTask.Matcher())
+	ar.HandleFunc("/languages/language/{language}", adminLanguagePage).Methods("GET")
+	ar.HandleFunc("/languages/language/{language}/edit", adminLanguageEditPage).Methods("GET")
+	ar.HandleFunc("/languages/language/{language}/edit", handlers.TaskHandler(renameLanguageTask)).Methods("POST").MatcherFunc(renameLanguageTask.Matcher())
+	ar.HandleFunc("/languages/language/{language}/edit", handlers.TaskHandler(deleteLanguageTask)).Methods("POST").MatcherFunc(deleteLanguageTask.Matcher())
 }
 
 // Register registers the languages router module.

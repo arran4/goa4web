@@ -1,0 +1,12 @@
+{{ template "head" $ }}
+<h1>Edit Category</h1>
+<form method="post" action="/admin/faq/categories">
+{{ csrfField }}
+<input type="hidden" name="cid" value="{{ .Category.Idfaqcategories }}">
+<input name="cname" value="{{ .Category.Name.String }}">
+<p>
+    <input type="submit" name="task" value="Rename Category">
+    <input type="submit" name="task" value="Delete Category">
+</p>
+</form>
+{{ template "tail" $ }}

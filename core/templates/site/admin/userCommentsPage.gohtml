@@ -4,12 +4,12 @@
     <tr><th>ID</th><th>Date</th><th>Topic</th><th>Thread</th><th>Excerpt</th><th>Link</th></tr>
     {{- range .Comments }}
     <tr>
-        <td>{{ .Idcomments }}</td>
+        <td><a href="/admin/comment/{{ .Idcomments }}">{{ .Idcomments }}</a></td>
         <td>{{ if .Written.Valid }}{{ .Written.Time }}{{ end }}</td>
-        <td>{{ if .ForumtopicIdforumtopic.Valid }}{{ .ForumtopicIdforumtopic.Int32 }}{{ end }}</td>
-        <td>{{ .ForumthreadID }}</td>
+        <td>{{ if .ForumtopicIdforumtopic.Valid }}<a href="/forum/topic/{{ .ForumtopicIdforumtopic.Int32 }}">{{ .ForumtopicTitle.String }}</a>{{ end }}</td>
+        <td><a href="/forum/topic/{{ .ForumtopicIdforumtopic.Int32 }}/thread/{{ .ForumthreadID }}">{{ if .ThreadTitle.Valid }}{{ left 40 .ThreadTitle.String }}{{ else }}{{ .ForumthreadID }}{{ end }}</a></td>
         <td>{{ if .Text.Valid }}{{ left 40 .Text.String }}{{ end }}</td>
-        <td><a href="/forum/topic/{{ .ForumtopicIdforumtopic.Int32 }}/thread/{{ .ForumthreadID }}#c{{ .Idcomments }}">View</a> | <a href="/admin/comment/{{ .Idcomments }}">Admin</a></td>
+        <td><a href="/forum/topic/{{ .ForumtopicIdforumtopic.Int32 }}/thread/{{ .ForumthreadID }}#c{{ .Idcomments }}">View</a></td>
     </tr>
     {{- end }}
 </table>

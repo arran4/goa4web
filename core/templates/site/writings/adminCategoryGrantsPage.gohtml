@@ -1,5 +1,5 @@
 {{ template "head" $ }}
-<h3>Category {{ .CategoryID }} Permissions</h3>
+<h3>Category {{ .CategoryID }} Grants</h3>
 <table border="1">
     <tr>
         <th>ID</th>
@@ -17,7 +17,7 @@
         </td>
         <td>{{ .Action }}</td>
         <td>
-            <form method="post" action="/admin/writings/category/{{ $.CategoryID }}/permission/delete">
+            <form method="post" action="/admin/writings/categories/category/{{ $.CategoryID }}/grant/delete">
         {{ csrfField }}
                 <input type="hidden" name="grantid" value="{{ .ID }}">
                 <input type="submit" name="task" value="Delete grant">
@@ -26,7 +26,7 @@
     </tr>
     {{- end }}
     <tr>
-        <form method="post" action="/admin/writings/category/{{ $.CategoryID }}/permission">
+        <form method="post" action="/admin/writings/categories/category/{{ $.CategoryID }}/grant">
         {{ csrfField }}
             <td>NEW</td>
             <td>

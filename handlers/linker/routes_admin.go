@@ -28,8 +28,9 @@ func RegisterAdminRoutes(ar *mux.Router) {
 	lar.HandleFunc("/users/roles", handlers.TaskHandler(UserAllowTask)).Methods("POST").MatcherFunc(UserAllowTask.Matcher())
 	lar.HandleFunc("/users/roles", handlers.TaskHandler(UserDisallowTask)).Methods("POST").MatcherFunc(UserDisallowTask.Matcher())
 
-	lar.HandleFunc("/link/{link}", adminLinkPage).Methods("GET")
-	lar.HandleFunc("/link/{link}", handlers.TaskHandler(AdminEditLinkTask)).Methods("POST").MatcherFunc(AdminEditLinkTask.Matcher())
+	lar.HandleFunc("/link/{link}", adminLinkViewPage).Methods("GET")
+	lar.HandleFunc("/link/{link}/edit", adminLinkPage).Methods("GET")
+	lar.HandleFunc("/link/{link}/edit", handlers.TaskHandler(AdminEditLinkTask)).Methods("POST").MatcherFunc(AdminEditLinkTask.Matcher())
 
 	lar.HandleFunc("/category/{category}/grants", AdminCategoryGrantsPage).Methods("GET")
 	lar.HandleFunc("/category/{category}/grant", handlers.TaskHandler(categoryGrantCreateTask)).Methods("POST").MatcherFunc(categoryGrantCreateTask.Matcher())

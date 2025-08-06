@@ -1,5 +1,6 @@
 {{ template "head" $ }}
     <table border="1">
+        {{ $cd := cd }}
         <tr>
             <th>ID
             <th>Title
@@ -11,7 +12,7 @@
             <th>Restrictions
             <th>Options?
         </tr>
-        {{ range call cd.AdminForumTopics }}
+        {{ range $cd.AdminForumTopics }}
             <tr>
                 <td>{{ .Idforumtopic }}</td>
                 <td>
@@ -20,7 +21,7 @@
                         <input name="name" value="{{ .Title.String }}">
                 </td>
                 <td><textarea name="desc">{{ .Description.String }}</textarea></td>
-                <td>{{ $fcid := .ForumcategoryIdforumcategory }} <select name="cid" value="{{ .ForumcategoryIdforumcategory }}"><option value="0">None</option>{{ range call cd.ForumCategories }}<option value="{{.Idforumcategory}}" {{if eq $fcid .Idforumcategory}}selected{{end}}>{{.Title.String}}</option>  {{ end }}</select></td>
+                <td>{{ $fcid := .ForumcategoryIdforumcategory }} <select name="cid" value="{{ .ForumcategoryIdforumcategory }}"><option value="0">None</option>{{ range $cd.ForumCategories }}<option value="{{.Idforumcategory}}" {{if eq $fcid .Idforumcategory}}selected{{end}}>{{.Title.String}}</option>  {{ end }}</select></td>
                 <td align="center">{{ .Threads.Int32 }}</td>
                 <td align="center">{{ .Comments.Int32 }}</td>
                 <td><a href="/forum/topic/{{ .Idforumtopic }}">View</a></td>
@@ -46,7 +47,7 @@
                     <input name="name" value="">
             </td>
             <td><textarea name="desc"></textarea></td>
-            <td><select name="pcid" value=""><option value="0">None</option>{{ range call cd.ForumCategories }}<option value="{{.Idforumcategory}}">{{.Title.String}}</option>{{ end }}</select></td>
+            <td><select name="pcid" value=""><option value="0">None</option>{{ range $cd.ForumCategories }}<option value="{{.Idforumcategory}}">{{.Title.String}}</option>{{ end }}</select></td>
             <td>0</td>
             <td>0</td>
             <td></td>

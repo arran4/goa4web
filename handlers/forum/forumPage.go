@@ -22,7 +22,6 @@ func Page(w http.ResponseWriter, r *http.Request) {
 
 	type Data struct {
 		Categories              []*ForumcategoryPlus
-		CategoryBreadcrumbs     []*ForumcategoryPlus
 		Admin                   bool
 		CopyDataToSubCategories func(rootCategory *ForumcategoryPlus) *Data
 		Category                *ForumcategoryPlus
@@ -31,6 +30,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Forum"
+	cd.LoadSelectionsFromRequest(r)
 	queries := cd.Queries()
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
@@ -122,7 +122,6 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	} else if cat, ok := categoryTree.CategoryLookup[int32(categoryId)]; ok && cat != nil {
 		data.Categories = []*ForumcategoryPlus{cat}
 		data.Category = cat
-		data.CategoryBreadcrumbs = categoryTree.CategoryRoots(int32(categoryId))
 		data.Back = true
 	}
 

@@ -27,8 +27,9 @@ func TestBuildGrantGroupsIncludesAvailableActionsWithoutGrants(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, created_at, updated_at, user_id, role_id, section, item, rule_type, item_id, item_rule, action, extra, active FROM grants WHERE role_id = ? ORDER BY id\n")).
 		WithArgs(sqlmock.AnyArg()).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "created_at", "updated_at", "user_id", "role_id", "section", "item", "rule_type", "item_id", "item_rule", "action", "extra", "active"}))
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT f.idforumcategory, f.forumcategory_idforumcategory, f.title, f.description\nFROM forumcategory f\n")).
-		WillReturnRows(sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "title", "description"}))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT f.idforumcategory, f.forumcategory_idforumcategory, f.language_idlanguage, f.title, f.description\nFROM forumcategory f\nWHERE (")).
+		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnRows(sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "language_idlanguage", "title", "description"}))
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT idlanguage, nameof\nFROM language\n")).
 		WillReturnRows(sqlmock.NewRows([]string{"idlanguage", "nameof"}))
 
@@ -82,8 +83,9 @@ func TestBuildGrantGroupsSkipsInvalidItemIDGrants(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, created_at, updated_at, user_id, role_id, section, item, rule_type, item_id, item_rule, action, extra, active FROM grants WHERE role_id = ? ORDER BY id\n")).
 		WithArgs(sqlmock.AnyArg()).
 		WillReturnRows(rows)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT f.idforumcategory, f.forumcategory_idforumcategory, f.title, f.description\nFROM forumcategory f\n")).
-		WillReturnRows(sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "title", "description"}))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT f.idforumcategory, f.forumcategory_idforumcategory, f.language_idlanguage, f.title, f.description\nFROM forumcategory f\nWHERE (")).
+		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnRows(sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "language_idlanguage", "title", "description"}))
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT idlanguage, nameof\nFROM language\n")).
 		WillReturnRows(sqlmock.NewRows([]string{"idlanguage", "nameof"}))
 

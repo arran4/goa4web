@@ -74,8 +74,25 @@ func buildGrantGroups(ctx context.Context, cd *common.CoreData, roleID int32) ([
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, err
 	}
+	return buildGrantGroupsFromGrants(ctx, cd, grants)
+}
 
-	forumCats, _ := queries.GetAllForumCategories(ctx)
+// buildGrantGroupsForUser loads grants for a user and organises them for the grants editor.
+func buildGrantGroupsForUser(ctx context.Context, cd *common.CoreData, userID int32) ([]GrantGroup, error) {
+	queries := cd.Queries()
+
+	grants, err := queries.ListGrantsByUserID(ctx, sql.NullInt32{Int32: userID, Valid: true})
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, err
+	}
+	return buildGrantGroupsFromGrants(ctx, cd, grants)
+}
+
+// buildGrantGroupsFromGrants organises grants for the grants editor.
+func buildGrantGroupsFromGrants(ctx context.Context, cd *common.CoreData, grants []*db.Grant) ([]GrantGroup, error) {
+	queries := cd.Queries()
+
+	forumCats, _ := queries.GetAllForumCategories(ctx, db.GetAllForumCategoriesParams{ViewerID: 0})
 	catMap := map[int32]*db.Forumcategory{}
 	for _, c := range forumCats {
 		catMap[c.Idforumcategory] = c
@@ -134,7 +151,7 @@ func buildGrantGroups(ctx context.Context, cd *common.CoreData, roleID int32) ([
 					}
 				case "category":
 					gi.Link = fmt.Sprintf("/admin/forum/category/%d/grants#g%d", g.ItemID.Int32, g.ID)
-					if c, err := queries.GetForumCategoryById(ctx, g.ItemID.Int32); err == nil && c.Title.Valid {
+					if c, err := queries.GetForumCategoryById(ctx, db.GetForumCategoryByIdParams{Idforumcategory: g.ItemID.Int32, ViewerID: 0}); err == nil && c.Title.Valid {
 						path := buildCatPath(c.Idforumcategory)
 						gi.Info = path
 					}
@@ -167,7 +184,7 @@ func buildGrantGroups(ctx context.Context, cd *common.CoreData, roleID int32) ([
 			case "writing":
 				switch g.Item.String {
 				case "category":
-					gi.Link = fmt.Sprintf("/admin/writings/category/%d/permissions#g%d", g.ItemID.Int32, g.ID)
+					gi.Link = fmt.Sprintf("/admin/writings/categories/category/%d/grants#g%d", g.ItemID.Int32, g.ID)
 					if c, err := queries.GetWritingCategoryById(ctx, g.ItemID.Int32); err == nil && c.Title.Valid {
 						gi.Info = c.Title.String
 					}

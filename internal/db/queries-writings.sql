@@ -326,3 +326,17 @@ FROM writing w
 LEFT JOIN users u ON w.users_idusers = u.idusers
 WHERE w.writing_category_id = ?
 ORDER BY w.published DESC;
+
+-- name: ListWritingcategoryPath :many
+WITH RECURSIVE category_path AS (
+    SELECT wc.idwritingcategory, wc.writing_category_id AS parent_id, wc.title, 0 AS depth
+    FROM writing_category wc
+    WHERE wc.idwritingcategory = sqlc.arg(category_id)
+    UNION ALL
+    SELECT c.idwritingcategory, c.writing_category_id, c.title, p.depth + 1
+    FROM writing_category c
+    JOIN category_path p ON p.parent_id = c.idwritingcategory
+)
+SELECT category_path.idwritingcategory, category_path.title
+FROM category_path
+ORDER BY category_path.depth DESC;

@@ -74,6 +74,23 @@ func buildGrantGroups(ctx context.Context, cd *common.CoreData, roleID int32) ([
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, err
 	}
+	return buildGrantGroupsFromGrants(ctx, cd, grants)
+}
+
+// buildGrantGroupsForUser loads grants for a user and organises them for the grants editor.
+func buildGrantGroupsForUser(ctx context.Context, cd *common.CoreData, userID int32) ([]GrantGroup, error) {
+	queries := cd.Queries()
+
+	grants, err := queries.ListGrantsByUserID(ctx, sql.NullInt32{Int32: userID, Valid: true})
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, err
+	}
+	return buildGrantGroupsFromGrants(ctx, cd, grants)
+}
+
+// buildGrantGroupsFromGrants organises grants for the grants editor.
+func buildGrantGroupsFromGrants(ctx context.Context, cd *common.CoreData, grants []*db.Grant) ([]GrantGroup, error) {
+	queries := cd.Queries()
 
 	forumCats, _ := queries.GetAllForumCategories(ctx)
 	catMap := map[int32]*db.Forumcategory{}

@@ -1,0 +1,16 @@
+{{ template "head" $ }}
+<h2>{{ .Board.Title.String }} Images</h2>
+<a href="/admin/imagebbs/board/{{ .Board.Idimageboard }}">Back to board</a><br>
+<table border="1">
+<tr><th>ID<th>Description<th>User<th>Posted<th>Preview</tr>
+{{ range .Posts }}
+<tr>
+    <td>{{ .Idimagepost }}</td>
+    <td>{{ .Description.String }}</td>
+    <td>{{ .Username.String }}</td>
+    <td>{{ .Posted.Time }}</td>
+    <td>{{ if .Thumbnail.Valid }}<a href="{{ .Fullimage.String }}"><img src="{{ .Thumbnail.String }}" alt="thumb"></a>{{ end }}</td>
+</tr>
+{{ end }}
+</table>
+{{ template "tail" $ }}

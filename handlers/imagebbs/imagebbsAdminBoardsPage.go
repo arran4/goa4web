@@ -4,78 +4,81 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
-	"html/template"
 	"log"
 	"net/http"
-	"strings"
+	"net/url"
+	"strconv"
 
 	"github.com/arran4/goa4web/core/common"
-
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 )
 
+// AdminBoardsPage shows a paginated list of image boards.
 func AdminBoardsPage(w http.ResponseWriter, r *http.Request) {
 	type BoardRow struct {
 		*db.Imageboard
 		Threads int32
-		Visible bool
-		Nsfw    bool
 	}
 	type Data struct {
 		Boards []*BoardRow
-		Tree   template.HTML
 	}
+
+	page := 1
+	if p := r.URL.Query().Get("page"); p != "" {
+		if v, err := strconv.Atoi(p); err == nil && v > 0 {
+			page = v
+		}
+	}
+	const pageSize = 20
+	start := (page - 1) * pageSize
+	end := start + pageSize
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Image Boards"
-	data := Data{}
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	boardRows, err := cd.ImageBoards()
+	queries := cd.Queries()
+
+	boards, err := cd.ImageBoards()
 	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-		default:
+		if !errors.Is(err, sql.ErrNoRows) {
 			log.Printf("getAllImageBoards Error: %s", err)
 			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 			return
 		}
 	}
-
-	children := map[int32][]*BoardRow{}
-	for _, b := range boardRows {
+	total := len(boards)
+	if start > total {
+		start = total
+	}
+	if end > total {
+		end = total
+	}
+	var data Data
+	for _, b := range boards[start:end] {
 		threads, err := queries.AdminCountThreadsByBoard(r.Context(), b.Idimageboard)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			log.Printf("countThreads error: %s", err)
 			threads = 0
 		}
-		row := &BoardRow{
-			Imageboard: b,
-			Threads:    int32(threads),
-			Visible:    true,
-			Nsfw:       false,
-		}
-		data.Boards = append(data.Boards, row)
-		children[b.ImageboardIdimageboard] = append(children[b.ImageboardIdimageboard], row)
+		data.Boards = append(data.Boards, &BoardRow{Imageboard: b, Threads: int32(threads)})
 	}
 
-	var build func(parent int32) string
-	build = func(parent int32) string {
-		var sb strings.Builder
-		if cs, ok := children[parent]; ok {
-			sb.WriteString("<ul>")
-			for _, c := range cs {
-				sb.WriteString("<li>")
-				sb.WriteString(template.HTMLEscapeString(c.Title.String))
-				sb.WriteString(build(c.Idimageboard))
-				sb.WriteString("</li>")
-			}
-			sb.WriteString("</ul>")
-		}
-		return sb.String()
+	numPages := (total + pageSize - 1) / pageSize
+	base := "/admin/imagebbs/boards"
+	vals := url.Values{}
+	for i := 1; i <= numPages; i++ {
+		vals.Set("page", strconv.Itoa(i))
+		cd.PageLinks = append(cd.PageLinks, common.PageLink{Num: i, Link: base + "?" + vals.Encode(), Active: i == page})
 	}
-	data.Tree = template.HTML(build(0))
+	if page < numPages {
+		vals.Set("page", strconv.Itoa(page+1))
+		cd.NextLink = base + "?" + vals.Encode()
+	}
+	if page > 1 {
+		vals.Set("page", strconv.Itoa(page-1))
+		cd.PrevLink = base + "?" + vals.Encode()
+	}
 
 	handlers.TemplateHandler(w, r, "adminBoardsPage.gohtml", data)
 }

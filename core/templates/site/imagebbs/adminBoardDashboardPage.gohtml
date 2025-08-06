@@ -1,0 +1,20 @@
+{{ template "head" $ }}
+<h2>{{ .Board.Title.String }}</h2>
+<a href="/admin/imagebbs/boards">Back to boards</a> |
+<a href="/admin/imagebbs/board/{{ .Board.Idimageboard }}/edit">Edit</a> |
+<a href="/admin/imagebbs/board/{{ .Board.Idimageboard }}/images">All Images</a>
+<form method="post" action="/admin/imagebbs/board/{{ .Board.Idimageboard }}/delete" style="display:inline">
+    {{ csrfField }}
+    <input type="submit" name="task" value="Delete board">
+</form>
+{{ if .Posts }}
+<h3>Recent Images</h3>
+<ul>
+    {{ range .Posts }}
+    <li>{{ if .Thumbnail.Valid }}<a href="{{ .Fullimage.String }}"><img src="{{ .Thumbnail.String }}" alt="thumb"></a>{{ else }}<a href="{{ .Fullimage.String }}">{{ .Description.String }}</a>{{ end }}</li>
+    {{ end }}
+</ul>
+{{ else }}
+<p>No recent images.</p>
+{{ end }}
+{{ template "tail" $ }}

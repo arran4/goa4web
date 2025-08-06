@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -37,7 +38,19 @@ func (NewBoardTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *s
 }
 
 func AdminNewBoardPage(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "/admin/imagebbs/boards", http.StatusTemporaryRedirect)
+	type Data struct {
+		Boards []*db.Imageboard
+	}
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "New Image Board"
+	queries := cd.Queries()
+	boards, err := queries.AdminListBoards(r.Context(), db.AdminListBoardsParams{Limit: 200, Offset: 0})
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		log.Printf("fetch boards %v", err)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		return
+	}
+	handlers.TemplateHandler(w, r, "adminNewBoardPage.gohtml", Data{Boards: boards})
 }
 
 func (NewBoardTask) Action(w http.ResponseWriter, r *http.Request) any {

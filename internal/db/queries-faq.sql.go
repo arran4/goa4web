@@ -388,6 +388,27 @@ func (q *Queries) GetFAQCategoriesWithQuestionCount(ctx context.Context) ([]*Get
 	return items, nil
 }
 
+const getFAQCategoryWithQuestionCountByID = `-- name: GetFAQCategoryWithQuestionCountByID :one
+SELECT c.idfaqcategories, c.name, COUNT(f.idfaq) AS QuestionCount
+FROM faq_categories c
+LEFT JOIN faq f ON f.faqCategories_idfaqCategories = c.idfaqCategories
+WHERE c.idfaqCategories = ?
+GROUP BY c.idfaqCategories
+`
+
+type GetFAQCategoryWithQuestionCountByIDRow struct {
+	Idfaqcategories int32
+	Name            sql.NullString
+	Questioncount   int64
+}
+
+func (q *Queries) GetFAQCategoryWithQuestionCountByID(ctx context.Context, idfaqcategories int32) (*GetFAQCategoryWithQuestionCountByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, getFAQCategoryWithQuestionCountByID, idfaqcategories)
+	var i GetFAQCategoryWithQuestionCountByIDRow
+	err := row.Scan(&i.Idfaqcategories, &i.Name, &i.Questioncount)
+	return &i, err
+}
+
 const getFAQDismissedQuestions = `-- name: GetFAQDismissedQuestions :many
 SELECT idfaq, faqCategories_idfaqCategories, language_idlanguage, users_idusers, answer, question
 FROM faq
@@ -396,6 +417,40 @@ WHERE deleted_at IS NOT NULL
 
 func (q *Queries) GetFAQDismissedQuestions(ctx context.Context) ([]*Faq, error) {
 	rows, err := q.db.QueryContext(ctx, getFAQDismissedQuestions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Faq
+	for rows.Next() {
+		var i Faq
+		if err := rows.Scan(
+			&i.Idfaq,
+			&i.FaqcategoriesIdfaqcategories,
+			&i.LanguageIdlanguage,
+			&i.UsersIdusers,
+			&i.Answer,
+			&i.Question,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getFAQQuestionsByCategory = `-- name: GetFAQQuestionsByCategory :many
+SELECT idfaq, faqcategories_idfaqcategories, language_idlanguage, users_idusers, answer, question FROM faq WHERE faqCategories_idfaqCategories = ?
+`
+
+func (q *Queries) GetFAQQuestionsByCategory(ctx context.Context, faqcategoriesIdfaqcategories int32) ([]*Faq, error) {
+	rows, err := q.db.QueryContext(ctx, getFAQQuestionsByCategory, faqcategoriesIdfaqcategories)
 	if err != nil {
 		return nil, err
 	}

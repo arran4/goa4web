@@ -30,7 +30,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	data := Data{}
 
-	categoryRows, err := queries.GetAllForumCategoriesWithSubcategoryCount(r.Context())
+	categoryRows, err := queries.GetAllForumCategoriesWithSubcategoryCount(r.Context(), db.GetAllForumCategoriesWithSubcategoryCountParams{ViewerID: cd.UserID})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -42,7 +42,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.Categories = categoryRows
-	catsAll, err := queries.GetAllForumCategories(r.Context())
+	catsAll, err := queries.GetAllForumCategories(r.Context(), db.GetAllForumCategoriesParams{ViewerID: cd.UserID})
 	if err == nil {
 		children := map[int32][]*db.Forumcategory{}
 		for _, c := range catsAll {
@@ -69,7 +69,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "forumAdminCategoriesPage.gohtml", data)
 }
 
-func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
+func AdminCategoryEditSubmit(w http.ResponseWriter, r *http.Request) {
 	name := r.PostFormValue("name")
 	desc := r.PostFormValue("desc")
 	pcid, err := strconv.Atoi(r.PostFormValue("pcid"))
@@ -77,11 +77,12 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	vars := mux.Vars(r)
 	categoryId, _ := strconv.Atoi(vars["category"])
 
-	cats, err := queries.GetAllForumCategories(r.Context())
+	cats, err := queries.GetAllForumCategories(r.Context(), db.GetAllForumCategoriesParams{ViewerID: cd.UserID})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
@@ -95,6 +96,7 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	languageID, _ := strconv.Atoi(r.PostFormValue("language"))
 	if err := queries.AdminUpdateForumCategory(r.Context(), db.AdminUpdateForumCategoryParams{
 		Title: sql.NullString{
 			Valid:  true,
@@ -106,12 +108,17 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 		},
 		Idforumcategory:              int32(categoryId),
 		ForumcategoryIdforumcategory: int32(pcid),
+		LanguageIdlanguage:           int32(languageID),
 	}); err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 
-	http.Redirect(w, r, "/admin/forum/categories", http.StatusTemporaryRedirect)
+	redirectURL := "/admin/forum/categories"
+	if strings.HasSuffix(r.URL.Path, "/edit") {
+		redirectURL = fmt.Sprintf("/admin/forum/category/%d", categoryId)
+	}
+	http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
 }
 
 func AdminCategoryCreatePage(w http.ResponseWriter, r *http.Request) {
@@ -123,8 +130,9 @@ func AdminCategoryCreatePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	cats, err := queries.GetAllForumCategories(r.Context())
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
+	cats, err := queries.GetAllForumCategories(r.Context(), db.GetAllForumCategoriesParams{ViewerID: cd.UserID})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
@@ -138,8 +146,10 @@ func AdminCategoryCreatePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	languageID, _ := strconv.Atoi(r.PostFormValue("language"))
 	if err := queries.AdminCreateForumCategory(r.Context(), db.AdminCreateForumCategoryParams{
 		ForumcategoryIdforumcategory: int32(pcid),
+		LanguageIdlanguage:           int32(languageID),
 		Title:                        sql.NullString{Valid: true, String: name},
 		Description:                  sql.NullString{Valid: true, String: desc},
 	}); err != nil {

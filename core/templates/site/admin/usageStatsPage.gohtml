@@ -27,7 +27,7 @@
     {{- range .ForumCategories }}
     <tr>
         <td><a href="/admin/forum/category/{{ .Idforumcategory }}">{{ .Idforumcategory }}</a></td>
-        <td><a href="/forum/category/{{ .Idforumcategory }}">{{ .Title.String }}</a></td>
+        <td><a href="/forum/categories/category/{{ .Idforumcategory }}">{{ .Title.String }}</a></td>
         <td>{{ .Count }}</td>
     </tr>
     {{- end }}
@@ -62,7 +62,7 @@
     <tr><th>ID</th><th>Board</th><th>Posts</th></tr>
     {{- range .Imageboards }}
     <tr>
-        <td><a href="/admin/imagebbs/board/{{ .Idimageboard }}">{{ .Idimageboard }}</a></td>
+        <td><a href="/admin/imagebbs/boards/board/{{ .Idimageboard }}">{{ .Idimageboard }}</a></td>
         <td><a href="/imagebbs/board/{{ .Idimageboard }}">{{ .Title.String }}</a></td>
         <td>{{ .Count }}</td>
     </tr>

@@ -358,3 +358,12 @@ SELECT idlinker, title, description FROM linker WHERE deleted_at IS NULL AND lis
 
 -- name: GetLinkerCategoryById :one
 SELECT * FROM linker_category WHERE idlinkerCategory = ?;
+
+-- name: ListLinkerCategoryPath :many
+WITH RECURSIVE category_path AS (
+    SELECT lc.idlinkerCategory, NULL AS parent_id, lc.title, 0 AS depth
+    FROM linker_category lc
+    WHERE lc.idlinkerCategory = sqlc.arg(category_id)
+)
+SELECT category_path.idlinkerCategory, category_path.title
+FROM category_path;

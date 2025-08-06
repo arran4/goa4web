@@ -70,7 +70,7 @@ func adminRoleGrantAddPage(w http.ResponseWriter, r *http.Request) {
 		data.RequireItemID = def.RequireItemID
 		if section == "forum" && item == "category" {
 			queries := cd.Queries()
-			cats, _ := queries.GetAllForumCategories(r.Context())
+			cats, _ := queries.GetAllForumCategories(r.Context(), db.GetAllForumCategoriesParams{ViewerID: 0})
 			catMap := map[int32]*db.Forumcategory{}
 			for _, c := range cats {
 				catMap[c.Idforumcategory] = c

@@ -153,6 +153,7 @@ type CoreData struct {
 	currentTemplateName      string
 	currentThreadID          int32
 	currentTopicID           int32
+	currentCategoryID        int32
 	currentWritingID         int32
 	event                    *eventbus.TaskEvent
 	externalLinks            map[string]*lazy.Value[*db.ExternalLink]
@@ -1092,7 +1093,7 @@ func (cd *CoreData) ForumCategories() ([]*db.Forumcategory, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
-		return cd.queries.GetAllForumCategories(cd.ctx)
+		return cd.queries.GetAllForumCategories(cd.ctx, db.GetAllForumCategoriesParams{ViewerID: cd.UserID})
 	})
 }
 
@@ -1163,9 +1164,12 @@ func (cd *CoreData) ForumTopics(categoryID int32) ([]*db.Forumtopic, error) {
 			return nil, nil
 		}
 		if categoryID == 0 {
-			return cd.queries.GetAllForumTopics(cd.ctx)
+			return cd.queries.GetAllForumTopics(cd.ctx, db.GetAllForumTopicsParams{ViewerID: cd.UserID})
 		}
-		return cd.queries.GetForumTopicsByCategoryId(cd.ctx, categoryID)
+		return cd.queries.GetForumTopicsByCategoryId(cd.ctx, db.GetForumTopicsByCategoryIdParams{
+			ViewerID:   cd.UserID,
+			CategoryID: categoryID,
+		})
 	})
 }
 
@@ -2418,21 +2422,22 @@ func assignIDFromString(m map[string]*int32, k, v string) {
 // parameters and finally form values.
 func (cd *CoreData) LoadSelectionsFromRequest(r *http.Request) {
 	mapping := map[string]*int32{
-		"boardno":     &cd.currentBoardID,
-		"board":       &cd.currentBoardID,
-		"thread":      &cd.currentThreadID,
-		"replyTo":     &cd.currentThreadID,
-		"topic":       &cd.currentTopicID,
+		"boardno":  &cd.currentBoardID,
+		"board":    &cd.currentBoardID,
+		"thread":   &cd.currentThreadID,
+		"replyTo":  &cd.currentThreadID,
+		"topic":    &cd.currentTopicID,
+		"category": &cd.currentCategoryID,
 		"comment":     &cd.currentCommentID,
 		"editComment": &cd.currentCommentID,
-		"news":        &cd.currentNewsPostID,
-		"post":        &cd.currentImagePostID,
-		"writing":     &cd.currentWritingID,
-		"blog":        &cd.currentBlogID,
+		"news":     &cd.currentNewsPostID,
+		"post":     &cd.currentImagePostID,
+		"writing":  &cd.currentWritingID,
+		"blog":     &cd.currentBlogID,
 		"link":        &cd.currentLinkID,
-		"request":     &cd.currentRequestID,
-		"role":        &cd.currentRoleID,
-		"user":        &cd.currentProfileUserID,
+		"request":  &cd.currentRequestID,
+		"role":     &cd.currentRoleID,
+		"user":     &cd.currentProfileUserID,
 	}
 	for k, v := range mux.Vars(r) {
 		assignIDFromString(mapping, k, v)

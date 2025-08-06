@@ -17,7 +17,7 @@
     </tr>
     {{ range .Topics }}
     <tr>
-        <td>{{ .Idforumtopic }}</td>
+        <td><a href="/admin/forum/topic/{{ .Idforumtopic }}">{{ .Idforumtopic }}</a></td>
         <td>{{ .Title.String }}</td>
         <td>{{ .Description.String }}</td>
         <td>{{ .Threads.Int32 }}</td>

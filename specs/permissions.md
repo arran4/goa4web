@@ -203,6 +203,9 @@ Many queries now filter results directly in SQL using `lister_id` together with 
 | `writing`  | `article`  | `post`          | Publish a writing article |
 | `writing`  | `article`  | `edit`          | Edit a writing article |
 
+Viewing comments within any section uses the `view` action on the section's
+primary item type since comments inherit their thread's grants and do not have
+a dedicated `see` permission.
 
 Administrator endpoints are guarded by the `AdminCheckerMiddleware` implemented
 in `internal/router/router.go`. The middleware calls `corecommon.Allowed`, which

@@ -99,7 +99,9 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	commentRows, err := cd.SelectedThreadComments()
+	cd.SetCurrentThreadAndTopic(int32(thid), 0)
+	cd.SetCurrentSection("imagebbs")
+	commentRows, err := cd.SelectedSectionThreadComments()
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

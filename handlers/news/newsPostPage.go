@@ -77,7 +77,8 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	editingId, _ := strconv.Atoi(r.URL.Query().Get("edit"))
 	replyType := r.URL.Query().Get("type")
 
-	commentRows, err := cd.ThreadComments(post.ForumthreadID)
+	cd.SetCurrentThreadAndTopic(post.ForumthreadID, 0)
+	commentRows, err := cd.SectionThreadComments("news", "post", post.ForumthreadID)
 	if err != nil {
 		log.Printf("thread comments: %v", err)
 	}

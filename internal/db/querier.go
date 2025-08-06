@@ -243,6 +243,9 @@ type Querier interface {
 	GetCommentById(ctx context.Context, idcomments int32) (*Comment, error)
 	GetCommentByIdForUser(ctx context.Context, arg GetCommentByIdForUserParams) (*GetCommentByIdForUserRow, error)
 	GetCommentsByIdsForUserWithThreadInfo(ctx context.Context, arg GetCommentsByIdsForUserWithThreadInfoParams) ([]*GetCommentsByIdsForUserWithThreadInfoRow, error)
+	// Viewing comments in a section-specific thread requires 'view' on the
+	// section's primary item type since comments inherit their thread's grants.
+	GetCommentsBySectionThreadIdForUser(ctx context.Context, arg GetCommentsBySectionThreadIdForUserParams) ([]*GetCommentsBySectionThreadIdForUserRow, error)
 	GetCommentsByThreadIdForUser(ctx context.Context, arg GetCommentsByThreadIdForUserParams) ([]*GetCommentsByThreadIdForUserRow, error)
 	GetExternalLink(ctx context.Context, url string) (*ExternalLink, error)
 	GetFAQAnsweredQuestions(ctx context.Context, arg GetFAQAnsweredQuestionsParams) ([]*Faq, error)

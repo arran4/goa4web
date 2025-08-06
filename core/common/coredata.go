@@ -147,6 +147,7 @@ type CoreData struct {
 	currentProfileUserID     int32
 	currentRequestID         int32
 	currentRoleID            int32
+	currentSection           string
 	currentTemplateError     string
 	currentTemplateName      string
 	currentThreadID          int32
@@ -1718,6 +1719,33 @@ func (cd *CoreData) SelectedThreadComments() ([]*db.GetCommentsByThreadIdForUser
 	return cd.ThreadComments(cd.currentThreadID)
 }
 
+// sectionItemType returns the default grant item type for a section.
+func sectionItemType(section string) string {
+	switch section {
+	case "blogs":
+		return "entry"
+	case "news":
+		return "post"
+	case "imagebbs":
+		return "board"
+	case "linker":
+		return "link"
+	case "writing":
+		return "article"
+	default:
+		return ""
+	}
+}
+
+// SelectedSectionThreadComments returns comments for the current thread using
+// the stored section with its default item type.
+func (cd *CoreData) SelectedSectionThreadComments() ([]*db.GetCommentsByThreadIdForUserRow, error) {
+	if cd.currentThreadID == 0 || cd.currentSection == "" {
+		return nil, nil
+	}
+	return cd.SectionThreadComments(cd.currentSection, sectionItemType(cd.currentSection), cd.currentThreadID)
+}
+
 // SelectedThreadLoaded returns the cached current thread without database access.
 func (cd *CoreData) SelectedThreadLoaded() *db.GetThreadLastPosterAndPermsRow {
 	if cd.forumThreadRows == nil {
@@ -1763,6 +1791,9 @@ func (cd *CoreData) Offset() int { return cd.currentOffset }
 
 // SetCurrentRoleID stores the role ID for subsequent lookups.
 func (cd *CoreData) SetCurrentRoleID(id int32) { cd.currentRoleID = id }
+
+// SetCurrentSection stores the current section name.
+func (cd *CoreData) SetCurrentSection(section string) { cd.currentSection = section }
 
 // SetCurrentTemplate records the template being edited along with an error message.
 func (cd *CoreData) SetCurrentTemplate(name, errMsg string) {
@@ -1910,6 +1941,43 @@ func (cd *CoreData) ThreadComments(id int32, ops ...lazy.Option[[]*db.GetComment
 			ThreadID: i,
 			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
+	}
+	return lazy.Map(&cd.forumThreadComments, &cd.mapMu, id, fetch, ops...)
+}
+
+// SectionThreadComments returns comments for a thread within the given section
+// and item type, lazily loading once per thread ID.
+func (cd *CoreData) SectionThreadComments(section, itemType string, id int32, ops ...lazy.Option[[]*db.GetCommentsByThreadIdForUserRow]) ([]*db.GetCommentsByThreadIdForUserRow, error) {
+	fetch := func(i int32) ([]*db.GetCommentsByThreadIdForUserRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		rows, err := cd.queries.GetCommentsBySectionThreadIdForUser(cd.ctx, db.GetCommentsBySectionThreadIdForUserParams{
+			ViewerID: cd.UserID,
+			ThreadID: i,
+			Section:  section,
+			ItemType: sql.NullString{String: itemType, Valid: itemType != ""},
+			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		})
+		if err != nil {
+			return nil, err
+		}
+		out := make([]*db.GetCommentsByThreadIdForUserRow, len(rows))
+		for idx, r := range rows {
+			out[idx] = &db.GetCommentsByThreadIdForUserRow{
+				Idcomments:         r.Idcomments,
+				ForumthreadID:      r.ForumthreadID,
+				UsersIdusers:       r.UsersIdusers,
+				LanguageIdlanguage: r.LanguageIdlanguage,
+				Written:            r.Written,
+				Text:               r.Text,
+				DeletedAt:          r.DeletedAt,
+				LastIndex:          r.LastIndex,
+				Posterusername:     r.Posterusername,
+				IsOwner:            r.IsOwner,
+			}
+		}
+		return out, nil
 	}
 	return lazy.Map(&cd.forumThreadComments, &cd.mapMu, id, fetch, ops...)
 }

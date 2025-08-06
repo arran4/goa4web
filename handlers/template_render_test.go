@@ -90,6 +90,7 @@ func TestPageTemplatesRender(t *testing.T) {
 			*common.CoreData
 			Stats struct{ Words, Comments, News, Blogs, Linker, Writing, Writings, Images int64 }
 		}{&common.CoreData{}, struct{ Words, Comments, News, Blogs, Linker, Writing, Writings, Images int64 }{}}},
+		{"blogsAdminPage", struct{ *common.CoreData }{&common.CoreData{}}},
 		{"adminPage", struct {
 			*common.CoreData
 			AdminSections []common.AdminSection

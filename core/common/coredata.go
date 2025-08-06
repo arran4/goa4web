@@ -2126,9 +2126,15 @@ func WithImageURLMapper(fn func(tag, val string) string) CoreOption {
 	return func(cd *CoreData) { cd.a4codeMapper = fn }
 }
 
-// WithSession stores the gorilla session on the CoreData object.
+// WithSession stores the gorilla session on the CoreData object and
+// initialises the UserID from the "UID" session value when present.
 func WithSession(s *sessions.Session) CoreOption {
-	return func(cd *CoreData) { cd.session = s }
+	return func(cd *CoreData) {
+		cd.session = s
+		if uid, ok := s.Values["UID"].(int32); ok {
+			cd.UserID = uid
+		}
+	}
 }
 
 // WithSessionManager sets the session manager used by CoreData.

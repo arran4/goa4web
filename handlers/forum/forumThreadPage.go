@@ -18,19 +18,17 @@ import (
 
 func ThreadPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		Category            *ForumcategoryPlus
-		Topic               *ForumtopicPlus
-		Thread              *db.GetThreadLastPosterAndPermsRow
-		Comments            []*db.GetCommentsByThreadIdForUserRow
-		IsReplyable         bool
-		Text                string
-		CategoryBreadcrumbs []*ForumcategoryPlus
-		CanEditComment      func(*db.GetCommentsByThreadIdForUserRow) bool
-		EditURL             func(*db.GetCommentsByThreadIdForUserRow) string
-		EditSaveURL         func(*db.GetCommentsByThreadIdForUserRow) string
-		Editing             func(*db.GetCommentsByThreadIdForUserRow) bool
-		AdminURL            func(*db.GetCommentsByThreadIdForUserRow) string
-		CanReply            bool
+		Topic          *ForumtopicPlus
+		Thread         *db.GetThreadLastPosterAndPermsRow
+		Comments       []*db.GetCommentsByThreadIdForUserRow
+		IsReplyable    bool
+		Text           string
+		CanEditComment func(*db.GetCommentsByThreadIdForUserRow) bool
+		EditURL        func(*db.GetCommentsByThreadIdForUserRow) string
+		EditSaveURL    func(*db.GetCommentsByThreadIdForUserRow) string
+		Editing        func(*db.GetCommentsByThreadIdForUserRow) bool
+		AdminURL       func(*db.GetCommentsByThreadIdForUserRow) string
+		CanReply       bool
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
@@ -68,19 +66,6 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 
 	// threadRow and topicRow are provided by the RequireThreadAndTopic
 	// middleware.
-
-	data.Topic = &ForumtopicPlus{
-		Idforumtopic:                 topicRow.Idforumtopic,
-		Lastposter:                   topicRow.Lastposter,
-		ForumcategoryIdforumcategory: topicRow.ForumcategoryIdforumcategory,
-		Title:                        topicRow.Title,
-		Description:                  topicRow.Description,
-		Threads:                      topicRow.Threads,
-		Comments:                     topicRow.Comments,
-		Lastaddition:                 topicRow.Lastaddition,
-		Lastposterusername:           topicRow.Lastposterusername,
-		Edit:                         false,
-	}
 
 	commentId, _ := strconv.Atoi(r.URL.Query().Get("comment"))
 	data.Comments = commentRows
@@ -126,16 +111,6 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 		Lastposterusername:           topicRow.Lastposterusername,
 		Edit:                         false,
 	}
-
-	categoryRows, err := cd.ForumCategories()
-	if err != nil {
-		log.Printf("getAllForumCategories Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-
-	categoryTree := NewCategoryTree(categoryRows, []*ForumtopicPlus{data.Topic})
-	data.CategoryBreadcrumbs = categoryTree.CategoryRoots(int32(topicRow.ForumcategoryIdforumcategory))
 
 	replyType := r.URL.Query().Get("type")
 	if c, err := cd.CurrentComment(r); err == nil && c != nil {

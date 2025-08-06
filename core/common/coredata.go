@@ -152,6 +152,7 @@ type CoreData struct {
 	currentTemplateName      string
 	currentThreadID          int32
 	currentTopicID           int32
+	currentCategoryID        int32
 	currentWritingID         int32
 	event                    *eventbus.TaskEvent
 	externalLinks            map[string]*lazy.Value[*db.ExternalLink]
@@ -2298,19 +2299,20 @@ func assignIDFromString(m map[string]*int32, k, v string) {
 // parameters and finally form values.
 func (cd *CoreData) LoadSelectionsFromRequest(r *http.Request) {
 	mapping := map[string]*int32{
-		"boardno": &cd.currentBoardID,
-		"board":   &cd.currentBoardID,
-		"thread":  &cd.currentThreadID,
-		"replyTo": &cd.currentThreadID,
-		"topic":   &cd.currentTopicID,
-		"comment": &cd.currentCommentID,
-		"news":    &cd.currentNewsPostID,
-		"post":    &cd.currentImagePostID,
-		"writing": &cd.currentWritingID,
-		"blog":    &cd.currentBlogID,
-		"request": &cd.currentRequestID,
-		"role":    &cd.currentRoleID,
-		"user":    &cd.currentProfileUserID,
+		"boardno":  &cd.currentBoardID,
+		"board":    &cd.currentBoardID,
+		"thread":   &cd.currentThreadID,
+		"replyTo":  &cd.currentThreadID,
+		"topic":    &cd.currentTopicID,
+		"category": &cd.currentCategoryID,
+		"comment":  &cd.currentCommentID,
+		"news":     &cd.currentNewsPostID,
+		"post":     &cd.currentImagePostID,
+		"writing":  &cd.currentWritingID,
+		"blog":     &cd.currentBlogID,
+		"request":  &cd.currentRequestID,
+		"role":     &cd.currentRoleID,
+		"user":     &cd.currentProfileUserID,
 	}
 	for k, v := range mux.Vars(r) {
 		assignIDFromString(mapping, k, v)

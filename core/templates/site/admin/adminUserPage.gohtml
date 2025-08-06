@@ -8,13 +8,15 @@
 
 <h4>Quick Links</h4>
 <ul>
+    <li><a href="/blogs/blogger/{{ $u.Username.String }}">View Blog</a></li>
+    <li><a href="/admin/users/export?uid={{ $u.Idusers }}">Export ZIP</a></li>
     <li><a href="/admin/user/{{ $u.Idusers }}/edit">Edit Profile</a></li>
     <li><a href="/admin/user/{{ $u.Idusers }}/permissions">Permissions</a></li>
     <li><a href="/admin/user/{{ $u.Idusers }}/reset">Reset Password</a></li>
     <li><a href="/admin/user/{{ $u.Idusers }}/disable">Disable Account</a></li>
-    <li><a href="/admin/user/{{ $u.Idusers }}/blogs">Blogs</a></li>
+    <li><a href="/admin/user/{{ $u.Idusers }}/blogs">Blog Posts</a></li>
     <li><a href="/admin/user/{{ $u.Idusers }}/writings">Writings</a></li>
-    <li><a href="/admin/user/{{ $u.Idusers }}/linker">Linker</a></li>
+    <li><a href="/admin/user/{{ $u.Idusers }}/linker">Links</a></li>
     <li><a href="/admin/user/{{ $u.Idusers }}/imagebbs">Image BBS</a></li>
     <li><a href="/admin/user/{{ $u.Idusers }}/forum">Forum</a></li>
     <li><a href="/admin/user/{{ $u.Idusers }}/comments">Comments</a></li>
@@ -22,13 +24,6 @@
     <li><a href="/admin/user/{{ $u.Idusers }}/grants">Grants</a></li>
     {{ if $u.PublicProfileEnabledAt.Valid }}
     <li><a href="/user/profile/{{ $u.Username.String }}">Public Profile</a></li>
-    {{ end }}
-    {{ $stats := cd.CurrentProfileStats }}
-    {{ if and $stats (gt $stats.Blogs 0) }}
-    <li><a href="/blogs/blogger/{{ $u.Username.String }}">Blogs Feed</a></li>
-    {{ end }}
-    {{ if and $stats (gt $stats.Writings 0) }}
-    <li><a href="/writings/writer/{{ $u.Username.String }}">Writings Feed</a></li>
     {{ end }}
 </ul>
 

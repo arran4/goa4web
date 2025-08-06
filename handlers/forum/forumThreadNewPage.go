@@ -173,13 +173,18 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("Error: makeThread: %s", err)
 		return fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
+	if cid == 0 {
+		err := handlers.ErrForbidden
+		log.Printf("Error: makeThread: %s", err)
+		return fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
 
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{ThreadID: int32(threadId), TopicID: int32(topicId)}
+			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(cid), ThreadID: int32(threadId), TopicID: int32(topicId)}
 			evt.Data["PostURL"] = cd.AbsoluteURL(endUrl)
 		}
 	}

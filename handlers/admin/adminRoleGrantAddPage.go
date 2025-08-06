@@ -39,6 +39,7 @@ func adminRoleGrantAddPage(w http.ResponseWriter, r *http.Request) {
 		Items       []string
 		Actions     []string
 		ItemOptions []ItemOption
+		RequireItemID bool
 	}{Role: role, Section: section, Item: item}
 
 	if section == "" {
@@ -64,7 +65,9 @@ func adminRoleGrantAddPage(w http.ResponseWriter, r *http.Request) {
 			data.Items = append(data.Items, it)
 		}
 	} else {
-		data.Actions = GrantActionMap[section+"|"+item]
+		def := GrantActionMap[section+"|"+item]
+		data.Actions = def.Actions
+		data.RequireItemID = def.RequireItemID
 		if section == "forum" && item == "category" {
 			queries := cd.Queries()
 			cats, _ := queries.GetAllForumCategories(r.Context())

@@ -47,6 +47,9 @@ func (RoleGrantCreateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if section == "" || action == "" {
 		return fmt.Errorf("missing section or action %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("")))
 	}
+	if def, ok := GrantActionMap[section+"|"+item]; ok && def.RequireItemID && !itemID.Valid {
+		return fmt.Errorf("missing item id %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("")))
+	}
 	if _, err := queries.AdminCreateGrant(r.Context(), db.AdminCreateGrantParams{
 		UserID:   sql.NullInt32{},
 		RoleID:   sql.NullInt32{Int32: roleID, Valid: true},

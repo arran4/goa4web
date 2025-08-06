@@ -123,13 +123,18 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("Error: CreateComment: %s", err)
 		return fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
+	if cid == 0 {
+		err := handlers.ErrForbidden
+		log.Printf("Error: CreateComment: %s", err)
+		return fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
 
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{ThreadID: threadRow.Idforumthread, TopicID: topicRow.Idforumtopic}
+			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(cid), ThreadID: threadRow.Idforumthread, TopicID: topicRow.Idforumtopic}
 			evt.Data["CommentURL"] = cd.AbsoluteURL(endUrl)
 		}
 	}

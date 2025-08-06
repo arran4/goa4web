@@ -1,0 +1,15 @@
+{{ template "head" $ }}
+<h2>User: {{ .User.Username.String }} (ID {{ .User.Idusers }})</h2>
+<h3>Roles</h3>
+<ul>
+    {{- if .Roles }}
+        {{- range .Roles }}
+        <li><a href="/admin/role/{{ .RoleID }}">{{ .Name }}</a></li>
+        {{- end }}
+    {{- else }}
+        <li>No roles</li>
+    {{- end }}
+</ul>
+<p><a href="/admin/user/{{ .User.Idusers }}/grant/add">Add Grant</a></p>
+{{ template "userGrantsEditor.gohtml" . }}
+{{ template "tail" $ }}

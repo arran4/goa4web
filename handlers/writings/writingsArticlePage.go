@@ -215,14 +215,21 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("replytext")
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
 
-	if _, err := queries.CreateCommentForCommenter(r.Context(), db.CreateCommentForCommenterParams{
+	cid, err := queries.CreateCommentForCommenter(r.Context(), db.CreateCommentForCommenterParams{
 		LanguageID:         int32(languageId),
 		CommenterID:        uid,
 		ForumthreadID:      pthid,
 		Text:               sql.NullString{String: text, Valid: true},
 		GrantForumthreadID: sql.NullInt32{Int32: pthid, Valid: true},
 		GranteeID:          sql.NullInt32{Int32: uid, Valid: true},
-	}); err != nil {
+	})
+	if err != nil {
+		log.Printf("Error: createComment: %s", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	if cid == 0 {
+		err := handlers.ErrForbidden
 		log.Printf("Error: createComment: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
@@ -241,7 +248,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: 0, Text: text}
+			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: int32(cid), Text: text}
 		}
 	}
 

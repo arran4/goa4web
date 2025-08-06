@@ -1,9 +1,10 @@
 {{ template "head" $ }}
-{{ range $topic := call cd.AdminForumTopics }}
+{{ $cd := cd }}
+{{ range $topic := $cd.AdminForumTopics }}
     <h2>{{ $topic.Title.String }}</h2>
     <table border="1">
         <tr><th>ID<th>Posts<th>Last Addition<th>View public</tr>
-        {{ range call cd.ForumThreads $topic.Idforumtopic }}
+        {{ range $cd.ForumThreads $topic.Idforumtopic }}
             <tr>
                 <td><a href="/admin/forum/thread/{{ .Idforumthread }}">{{ .Idforumthread }}</a></td>
                 <td>{{ .Comments.Int32 }}</td>

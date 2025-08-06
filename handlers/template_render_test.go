@@ -55,11 +55,10 @@ func TestPageTemplatesRender(t *testing.T) {
 		}{&common.CoreData{}, nil, nil, false, 0}},
 		{"forumPage", struct {
 			*common.CoreData
-			Categories          []*forum.ForumcategoryPlus
-			CategoryBreadcrumbs []*forum.ForumcategoryPlus
-			Category            *forum.ForumcategoryPlus
-			Admin               bool
-		}{&common.CoreData{}, nil, nil, nil, false}},
+			Categories []*forum.ForumcategoryPlus
+			Category   *forum.ForumcategoryPlus
+			Admin      bool
+		}{&common.CoreData{}, nil, nil, false}},
 		{"bookmarksPage", struct{ *common.CoreData }{&common.CoreData{}}},
 		{"imagebbsPage", struct {
 			*common.CoreData
@@ -91,6 +90,7 @@ func TestPageTemplatesRender(t *testing.T) {
 			*common.CoreData
 			Stats struct{ Words, Comments, News, Blogs, Linker, Writing, Writings, Images int64 }
 		}{&common.CoreData{}, struct{ Words, Comments, News, Blogs, Linker, Writing, Writings, Images int64 }{}}},
+		{"blogsAdminPage", struct{ *common.CoreData }{&common.CoreData{}}},
 		{"adminPage", struct {
 			*common.CoreData
 			AdminSections []common.AdminSection
@@ -104,20 +104,6 @@ func TestPageTemplatesRender(t *testing.T) {
 			*common.CoreData
 			Stats []*db.AdminImageboardPostCountsRow
 		}{&common.CoreData{}, nil}},
-		{"adminPostEditPage.gohtml", struct {
-			*common.CoreData
-			Post   *db.AdminGetImagePostRow
-			Boards []*db.Imageboard
-		}{&common.CoreData{}, &db.AdminGetImagePostRow{}, nil}},
-		{"adminPostDashboardPage.gohtml", struct {
-			*common.CoreData
-			Post *db.AdminGetImagePostRow
-		}{&common.CoreData{}, &db.AdminGetImagePostRow{}}},
-		{"adminPostCommentsPage.gohtml", struct {
-			*common.CoreData
-			Post     *db.AdminGetImagePostRow
-			Comments []*db.GetCommentsByThreadIdForUserRow
-		}{&common.CoreData{}, &db.AdminGetImagePostRow{}, nil}},
 	}
 
 	for _, p := range pages {

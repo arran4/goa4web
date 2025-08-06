@@ -1378,6 +1378,44 @@ func (q *Queries) GetLinkerItemsByUserDescendingForUser(ctx context.Context, arg
 	return items, nil
 }
 
+const listLinkerCategoryPath = `-- name: ListLinkerCategoryPath :many
+WITH RECURSIVE category_path AS (
+    SELECT lc.idlinkerCategory, NULL AS parent_id, lc.title, 0 AS depth
+    FROM linker_category lc
+    WHERE lc.idlinkerCategory = ?
+)
+SELECT category_path.idlinkerCategory, category_path.title
+FROM category_path
+`
+
+type ListLinkerCategoryPathRow struct {
+	Idlinkercategory int32
+	Title            sql.NullString
+}
+
+func (q *Queries) ListLinkerCategoryPath(ctx context.Context, categoryID int32) ([]*ListLinkerCategoryPathRow, error) {
+	rows, err := q.db.QueryContext(ctx, listLinkerCategoryPath, categoryID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListLinkerCategoryPathRow
+	for rows.Next() {
+		var i ListLinkerCategoryPathRow
+		if err := rows.Scan(&i.Idlinkercategory, &i.Title); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const systemAssignLinkerThreadID = `-- name: SystemAssignLinkerThreadID :exec
 UPDATE linker SET forumthread_id = ? WHERE idlinker = ?
 `

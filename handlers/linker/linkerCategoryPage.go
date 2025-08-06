@@ -13,6 +13,7 @@ import (
 
 func CategoryPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
 	var data struct {
 		Offset      int32
 		HasOffset   bool
@@ -41,6 +42,5 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		cd.PageTitle = fmt.Sprintf("Category %d", data.CatId)
 	}
-
 	handlers.TemplateHandler(w, r, "linkerCategoryPage", data)
 }

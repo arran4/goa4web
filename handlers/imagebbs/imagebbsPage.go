@@ -32,7 +32,7 @@ func CustomImageBBSIndex(data *common.CoreData, r *http.Request) {
 			Link: "/admin/imagebbs/boards",
 		}, common.IndexItem{
 			Name: "New Board",
-			Link: "/admin/imagebbs/board",
+			Link: "/admin/imagebbs/boards/new",
 		})
 	}
 }

@@ -87,10 +87,12 @@ CREATE TABLE IF NOT EXISTS `faq_revisions` (
 CREATE TABLE `forumcategory` (
   `idforumcategory` int(10) NOT NULL AUTO_INCREMENT,
   `forumcategory_idforumcategory` int(10) NOT NULL DEFAULT 0,
+  `language_idlanguage` int(10) NOT NULL DEFAULT 0,
   `title` tinytext DEFAULT NULL,
   `description` mediumtext DEFAULT NULL,
   PRIMARY KEY (`idforumcategory`),
-  KEY `forumcategory_FKIndex1` (`forumcategory_idforumcategory`)
+  KEY `forumcategory_FKIndex1` (`forumcategory_idforumcategory`),
+  KEY `forumcategory_FKIndex2` (`language_idlanguage`)
 );
 
 CREATE TABLE `forumthread` (
@@ -111,6 +113,7 @@ CREATE TABLE `forumtopic` (
   `idforumtopic` int(10) NOT NULL AUTO_INCREMENT,
   `lastposter` int(10) NOT NULL DEFAULT 0,
   `forumcategory_idforumcategory` int(10) NOT NULL DEFAULT 0,
+  `language_idlanguage` int(10) NOT NULL DEFAULT 0,
   `title` tinytext DEFAULT NULL,
   `description` mediumtext DEFAULT NULL,
   `threads` int(10) DEFAULT NULL,
@@ -118,7 +121,8 @@ CREATE TABLE `forumtopic` (
   `lastaddition` datetime DEFAULT NULL,
   PRIMARY KEY (`idforumtopic`),
   KEY `forumtopic_FKIndex1` (`forumcategory_idforumcategory`),
-  KEY `forumtopic_FKIndex2` (`lastposter`)
+  KEY `forumtopic_FKIndex2` (`lastposter`),
+  KEY `forumtopic_FKIndex3` (`language_idlanguage`)
 );
 
 CREATE TABLE `imageboard` (

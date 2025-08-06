@@ -1,38 +1,16 @@
 {{ template "head" $ }}
-    [<a href="/admin">Admin:</a> <a href="/admin/languages">(This page/Refresh)</a>]<br />
-        <table>
-            <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Options</th>
-            </tr>
-            {{range cd.Languages}}
-                <tr>
-                    <td>{{.Idlanguage}}</td>
-                    <td>
-                        <form method="post">
-        {{ csrfField }}
-                            <input type="hidden" name="cid" value="{{.Idlanguage}}">
-                            <input name="cname" value="{{.Nameof.String}}">
-                    </td>
-                    <td>
-                        <input type="submit" name="task" value="Rename Language">
-                        <input type="submit" name="task" value="Delete Language">
-                        </form>
-                    </td>
-                </tr>
-            {{end}}
-            <tr>
-                <td>NEW</td>
-                <td>
-                    <form method="post">
-        {{ csrfField }}
-                        <input name="cname" value="">
-                </td>
-                <td>
-                    <input type="submit" name="task" value="Create Language">
-                    </form>
-                </td>
-            </tr>
-        </table>
+[<a href="/admin">Admin:</a> <a href="/admin/languages">(This page/Refresh)</a>]<br />
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+    </tr>
+    {{range cd.Languages}}
+    <tr>
+        <td>{{.Idlanguage}}</td>
+        <td><a href="/admin/languages/language/{{.Idlanguage}}">{{.Nameof.String}}</a></td>
+    </tr>
+    {{end}}
+</table>
+<p><a href="/admin/languages/new">Create Language</a></p>
 {{ template "tail" $ }}

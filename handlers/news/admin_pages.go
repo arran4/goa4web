@@ -27,7 +27,8 @@ func AdminNewsPage(w http.ResponseWriter, r *http.Request) {
 		cd.StartLink = "/admin/news?offset=0"
 	}
 	cd.PageTitle = "News Admin"
-	handlers.TemplateHandler(w, r, "adminNewsListPage.gohtml", struct{}{})
+	data := struct{ Error string }{Error: r.URL.Query().Get("error")}
+	handlers.TemplateHandler(w, r, "adminNewsListPage.gohtml", data)
 }
 
 func AdminNewsPostPage(w http.ResponseWriter, r *http.Request) {
@@ -154,7 +155,7 @@ func AdminNewsDeleteConfirmPage(w http.ResponseWriter, r *http.Request) {
 	}{
 		PostID:       pid,
 		ConfirmLabel: "Confirm delete",
-		Back:         fmt.Sprintf("/admin/news/%d", pid),
+		Back:         fmt.Sprintf("/admin/news/article/%d", pid),
 	}
 	handlers.TemplateHandler(w, r, "adminNewsDeleteConfirmPage.gohtml", data)
 }

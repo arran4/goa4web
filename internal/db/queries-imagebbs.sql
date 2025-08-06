@@ -213,3 +213,16 @@ WHERE i.fullimage = ? OR i.thumbnail = ?
 LIMIT 1;
 
 
+-- name: ListImageboardPath :many
+WITH RECURSIVE board_path AS (
+    SELECT b.idimageboard, b.imageboard_idimageboard AS parent_id, b.title, 0 AS depth
+    FROM imageboard b
+    WHERE b.idimageboard = sqlc.arg(board_id)
+    UNION ALL
+    SELECT b2.idimageboard, b2.imageboard_idimageboard, b2.title, p.depth + 1
+    FROM imageboard b2
+    JOIN board_path p ON p.parent_id = b2.idimageboard
+)
+SELECT board_path.idimageboard, board_path.title
+FROM board_path
+ORDER BY board_path.depth DESC;

@@ -63,7 +63,6 @@ func BoardPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd.PageTitle = fmt.Sprintf("Board %d", bid)
-
 	handlers.TemplateHandler(w, r, "boardPage.gohtml", struct{}{})
 }
 

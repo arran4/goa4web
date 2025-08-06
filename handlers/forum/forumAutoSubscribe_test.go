@@ -12,6 +12,6 @@ func TestForumAutoSubscribeTasks(t *testing.T) {
 		t.Fatalf("ReplyTask should implement AutoSubscribeProvider so users get notified about thread replies")
 	}
 	if _, ok := interface{}(createThreadTask).(notif.AutoSubscribeProvider); !ok {
-		t.Fatalf("CreateThreadTask should implement AutoSubscribeProvider so thread authors follow the conversation")
+		t.Fatalf("CreateThreadTask should implement AutoSubscribeProvider so thread authors follow their threads")
 	}
 }

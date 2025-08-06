@@ -133,6 +133,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if errors.Is(err, sql.ErrNoRows) {
 		ptidi, err := queries.SystemCreateForumTopic(r.Context(), db.SystemCreateForumTopicParams{
 			ForumcategoryIdforumcategory: 0,
+			LanguageIdlanguage:           post.LanguageIdlanguage,
 			Title: sql.NullString{
 				String: NewsTopicName,
 				Valid:  true,

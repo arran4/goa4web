@@ -7,7 +7,7 @@ import (
 )
 
 // Test tasks that should auto subscribe implement the interface so
-// readers get updates when conversations continue.
+// readers get updates when threads continue.
 func TestNewsAutoSubscribeTasks(t *testing.T) {
 	// group tasks under test for easy extension
 	tests := []struct {

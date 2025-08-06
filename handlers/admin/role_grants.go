@@ -150,7 +150,7 @@ func buildGrantGroupsFromGrants(ctx context.Context, cd *common.CoreData, grants
 						}
 					}
 				case "category":
-					gi.Link = fmt.Sprintf("/admin/forum/category/%d/grants#g%d", g.ItemID.Int32, g.ID)
+					gi.Link = fmt.Sprintf("/admin/forum/categories/category/%d/grants#g%d", g.ItemID.Int32, g.ID)
 					if c, err := queries.GetForumCategoryById(ctx, db.GetForumCategoryByIdParams{Idforumcategory: g.ItemID.Int32, ViewerID: 0}); err == nil && c.Title.Valid {
 						path := buildCatPath(c.Idforumcategory)
 						gi.Info = path

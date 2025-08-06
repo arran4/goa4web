@@ -49,7 +49,7 @@ func TestAdminCategoryPageLinks(t *testing.T) {
 	mock.ExpectQuery("SELECT idforumtopic, lastposter, forumcategory_idforumcategory, language_idlanguage, title, description, threads, comments, lastaddition FROM forumtopic").
 		WillReturnRows(topicsRows)
 
-	req, rr := setupRequest(t, queries, "/admin/forum/category/1", map[string]string{"category": "1"})
+	req, rr := setupRequest(t, queries, "/admin/forum/categories/category/1", map[string]string{"category": "1"})
 
 	AdminCategoryPage(rr, req)
 
@@ -60,10 +60,10 @@ func TestAdminCategoryPageLinks(t *testing.T) {
 		t.Fatalf("status=%d", rr.Code)
 	}
 	body := rr.Body.String()
-	if !strings.Contains(body, "/admin/forum/category/1/edit") {
+	if !strings.Contains(body, "/admin/forum/categories/category/1/edit") {
 		t.Fatalf("missing edit link")
 	}
-	if !strings.Contains(body, "/admin/forum/category/1/grants") {
+	if !strings.Contains(body, "/admin/forum/categories/category/1/grants") {
 		t.Fatalf("missing grants link")
 	}
 	if !strings.Contains(body, "<a href=\"/admin/forum/topic/1\">1</a>") {
@@ -91,7 +91,7 @@ func TestAdminCategoryEditPage(t *testing.T) {
 	mock.ExpectQuery("SELECT f.idforumcategory, f.forumcategory_idforumcategory, f.language_idlanguage, f.title, f.description\nFROM forumcategory f").
 		WillReturnRows(allRows)
 
-	req, rr := setupRequest(t, queries, "/admin/forum/category/1/edit", map[string]string{"category": "1"})
+	req, rr := setupRequest(t, queries, "/admin/forum/categories/category/1/edit", map[string]string{"category": "1"})
 
 	AdminCategoryEditPage(rr, req)
 
@@ -123,7 +123,7 @@ func TestAdminCategoryGrantsPage(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, created_at, updated_at, user_id, role_id, section, item, rule_type, item_id, item_rule, action, extra, active FROM grants ORDER BY id")).
 		WillReturnRows(grantsRows)
 
-	req, rr := setupRequest(t, queries, "/admin/forum/category/1/grants", map[string]string{"category": "1"})
+	req, rr := setupRequest(t, queries, "/admin/forum/categories/category/1/grants", map[string]string{"category": "1"})
 
 	AdminCategoryGrantsPage(rr, req)
 

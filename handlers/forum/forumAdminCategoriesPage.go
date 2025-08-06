@@ -4,44 +4,63 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
+	"html/template"
 	"log"
 	"net/http"
-	"strconv"
+	"strings"
 
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
-
-	"github.com/arran4/goa4web/internal/algorithms"
-	"github.com/gorilla/mux"
-	"html/template"
-	"strings"
 )
 
+// AdminCategoriesPage displays forum categories with pagination.
 func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		Categories []*db.GetAllForumCategoriesWithSubcategoryCountRow
+		Categories []*db.AdminListForumCategoriesWithCountsRow
 		Tree       template.HTML
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Forum Admin Categories"
 	queries := cd.Queries()
 
-	data := Data{}
+	offset := cd.Offset()
+	ps := cd.PageSize()
 
-	categoryRows, err := queries.GetAllForumCategoriesWithSubcategoryCount(r.Context(), db.GetAllForumCategoriesWithSubcategoryCountParams{ViewerID: cd.UserID})
+	total, err := queries.AdminCountForumCategories(r.Context(), db.AdminCountForumCategoriesParams{ViewerID: cd.UserID})
+	if err != nil {
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		return
+	}
+
+	rows, err := queries.AdminListForumCategoriesWithCounts(r.Context(), db.AdminListForumCategoriesWithCountsParams{ViewerID: cd.UserID, Limit: int32(ps), Offset: int32(offset)})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
-			log.Printf("getAllForumCategories Error: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+			log.Printf("AdminListForumCategoriesWithCounts: %v", err)
+			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 			return
 		}
 	}
 
-	data.Categories = categoryRows
+	numPages := int((total + int64(ps) - 1) / int64(ps))
+	currentPage := offset/ps + 1
+	base := "/admin/forum/categories"
+	for i := 1; i <= numPages; i++ {
+		cd.PageLinks = append(cd.PageLinks, common.PageLink{Num: i, Link: fmt.Sprintf("%s?offset=%d", base, (i-1)*ps), Active: i == currentPage})
+	}
+	if offset+ps < int(total) {
+		cd.NextLink = fmt.Sprintf("%s?offset=%d", base, offset+ps)
+	}
+	if offset > 0 {
+		cd.PrevLink = fmt.Sprintf("%s?offset=%d", base, offset-ps)
+		cd.StartLink = base + "?offset=0"
+	}
+
+	data := Data{Categories: rows}
+
 	catsAll, err := queries.GetAllForumCategories(r.Context(), db.GetAllForumCategoriesParams{ViewerID: cd.UserID})
 	if err == nil {
 		children := map[int32][]*db.Forumcategory{}
@@ -67,109 +86,4 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handlers.TemplateHandler(w, r, "forumAdminCategoriesPage.gohtml", data)
-}
-
-func AdminCategoryEditSubmit(w http.ResponseWriter, r *http.Request) {
-	name := r.PostFormValue("name")
-	desc := r.PostFormValue("desc")
-	pcid, err := strconv.Atoi(r.PostFormValue("pcid"))
-	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := cd.Queries()
-	vars := mux.Vars(r)
-	categoryId, _ := strconv.Atoi(vars["category"])
-
-	cats, err := queries.GetAllForumCategories(r.Context(), db.GetAllForumCategoriesParams{ViewerID: cd.UserID})
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-	parents := make(map[int32]int32, len(cats))
-	for _, c := range cats {
-		parents[c.Idforumcategory] = c.ForumcategoryIdforumcategory
-	}
-	if path, loop := algorithms.WouldCreateLoop(parents, int32(categoryId), int32(pcid)); loop {
-		http.Redirect(w, r, "?error="+fmt.Sprintf("loop %v", path), http.StatusTemporaryRedirect)
-		return
-	}
-
-	languageID, _ := strconv.Atoi(r.PostFormValue("language"))
-	if err := queries.AdminUpdateForumCategory(r.Context(), db.AdminUpdateForumCategoryParams{
-		Title: sql.NullString{
-			Valid:  true,
-			String: name,
-		},
-		Description: sql.NullString{
-			Valid:  true,
-			String: desc,
-		},
-		Idforumcategory:              int32(categoryId),
-		ForumcategoryIdforumcategory: int32(pcid),
-		LanguageIdlanguage:           int32(languageID),
-	}); err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-
-	redirectURL := "/admin/forum/categories"
-	if strings.HasSuffix(r.URL.Path, "/edit") {
-		redirectURL = fmt.Sprintf("/admin/forum/category/%d", categoryId)
-	}
-	http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
-}
-
-func AdminCategoryCreatePage(w http.ResponseWriter, r *http.Request) {
-	name := r.PostFormValue("name")
-	desc := r.PostFormValue("desc")
-	pcid, err := strconv.Atoi(r.PostFormValue("pcid"))
-	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := cd.Queries()
-	cats, err := queries.GetAllForumCategories(r.Context(), db.GetAllForumCategoriesParams{ViewerID: cd.UserID})
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-	parents := make(map[int32]int32, len(cats))
-	for _, c := range cats {
-		parents[c.Idforumcategory] = c.ForumcategoryIdforumcategory
-	}
-	if path, loop := algorithms.WouldCreateLoop(parents, 0, int32(pcid)); loop {
-		http.Redirect(w, r, "?error="+fmt.Sprintf("loop %v", path), http.StatusTemporaryRedirect)
-		return
-	}
-
-	languageID, _ := strconv.Atoi(r.PostFormValue("language"))
-	if err := queries.AdminCreateForumCategory(r.Context(), db.AdminCreateForumCategoryParams{
-		ForumcategoryIdforumcategory: int32(pcid),
-		LanguageIdlanguage:           int32(languageID),
-		Title:                        sql.NullString{Valid: true, String: name},
-		Description:                  sql.NullString{Valid: true, String: desc},
-	}); err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-
-	http.Redirect(w, r, "/admin/forum/categories", http.StatusTemporaryRedirect)
-}
-
-func AdminCategoryDeletePage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	cid, err := strconv.Atoi(r.PostFormValue("cid"))
-	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-	if err := queries.AdminDeleteForumCategory(r.Context(), int32(cid)); err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-	http.Redirect(w, r, "/admin/forum/categories", http.StatusTemporaryRedirect)
 }

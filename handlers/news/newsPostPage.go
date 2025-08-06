@@ -25,7 +25,6 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		Comments       []*db.GetCommentsByThreadIdForUserRow
 		ReplyText      string
 		IsReplyable    bool
-		CanReply       bool
 		CanEditComment func(*db.GetCommentsByThreadIdForUserRow) bool
 		EditURL        func(*db.GetCommentsByThreadIdForUserRow) string
 		EditSaveURL    func(*db.GetCommentsByThreadIdForUserRow) string
@@ -35,10 +34,10 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "News"
+	cd.LoadSelectionsFromRequest(r)
 	queries := cd.Queries()
 	data := Data{
 		IsReplyable: true,
-		CanReply:    cd.UserID != 0,
 	}
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["news"])

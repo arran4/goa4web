@@ -62,14 +62,12 @@ func (ReplyTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, erro
 func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		*common.CoreData
-		Replyable      bool
 		ForumThreadId  int
 		Comments       []*db.GetCommentsByThreadIdForUserRow
 		BoardId        int
 		ImagePost      *db.GetImagePostByIDForListerRow
 		Thread         *db.GetThreadLastPosterAndPermsRow
 		IsReplyable    bool
-		CanReply       bool
 		CanEditComment func(*db.GetCommentsByThreadIdForUserRow) bool
 		EditURL        func(*db.GetCommentsByThreadIdForUserRow) string
 		EditSaveURL    func(*db.GetCommentsByThreadIdForUserRow) string
@@ -92,7 +90,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	thid, _ := strconv.Atoi(thidStr)
 	cd.PageTitle = fmt.Sprintf("Thread %d/%d", bid, thid)
 
-	data := Data{CoreData: cd, Replyable: true, BoardId: bid, ForumThreadId: thid, CanReply: cd.UserID != 0, IsReplyable: true}
+	data := Data{CoreData: cd, BoardId: bid, ForumThreadId: thid, IsReplyable: true}
 
 	if !data.CoreData.HasGrant("imagebbs", "board", "view", int32(bid)) {
 		_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{})
@@ -100,7 +98,6 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd.SetCurrentThreadAndTopic(int32(thid), 0)
-	cd.SetCurrentSection("imagebbs")
 	commentRows, err := cd.SelectedSectionThreadComments()
 	if err != nil {
 		switch {

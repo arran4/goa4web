@@ -122,7 +122,8 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 	replyType := r.URL.Query().Get("type")
 	commentId, _ := strconv.Atoi(r.URL.Query().Get("comment"))
 	if blog.ForumthreadID.Valid {
-		rows, err := cd.ThreadComments(blog.ForumthreadID.Int32)
+		cd.SetCurrentThreadAndTopic(blog.ForumthreadID.Int32, 0)
+		rows, err := cd.SectionThreadComments("blogs", "entry", blog.ForumthreadID.Int32)
 		if err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):

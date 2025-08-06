@@ -122,7 +122,8 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 			data.Blog.IsReplyable = false
 		}
 
-		rows, err := cd.ThreadComments(blog.ForumthreadID.Int32)
+		cd.SetCurrentThreadAndTopic(blog.ForumthreadID.Int32, 0)
+		rows, err := cd.SectionThreadComments("blogs", "entry", blog.ForumthreadID.Int32)
 		if err != nil {
 			if !errors.Is(err, sql.ErrNoRows) {
 				log.Printf("thread comments: %s", err)

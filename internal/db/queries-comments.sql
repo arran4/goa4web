@@ -147,6 +147,44 @@ WHERE c.forumthread_id=sqlc.arg(thread_id)
 )
 ORDER BY c.written;
 
+-- Viewing comments in a section-specific thread requires 'view' on the
+-- section's primary item type since comments inherit their thread's grants.
+-- name: GetCommentsBySectionThreadIdForUser :many
+WITH role_ids(id) AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+)
+SELECT c.*, pu.username AS posterusername,
+       c.users_idusers = sqlc.arg(viewer_id) AS is_owner
+FROM comments c
+LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
+LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
+LEFT JOIN users pu ON pu.idusers = c.users_idusers
+WHERE c.forumthread_id=sqlc.arg(thread_id)
+  AND c.forumthread_id!=0
+  AND (
+      c.language_idlanguage = 0
+      OR c.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+            AND ul.language_idlanguage = c.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+      )
+  )
+  AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section=sqlc.arg(section)
+      AND (g.item=sqlc.arg(item_type) OR g.item IS NULL)
+      AND g.action='view'
+      AND g.active=1
+      AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
+      AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+)
+ORDER BY c.written;
+
 
 -- name: AdminGetAllCommentsByUser :many
 SELECT c.*, th.forumtopic_idforumtopic

@@ -418,6 +418,109 @@ func (q *Queries) GetCommentsByIdsForUserWithThreadInfo(ctx context.Context, arg
 	return items, nil
 }
 
+const getCommentsBySectionThreadIdForUser = `-- name: GetCommentsBySectionThreadIdForUser :many
+WITH role_ids(id) AS (
+    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+)
+SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, c.last_index, pu.username AS posterusername,
+       c.users_idusers = ? AS is_owner
+FROM comments c
+LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
+LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
+LEFT JOIN users pu ON pu.idusers = c.users_idusers
+WHERE c.forumthread_id=?
+  AND c.forumthread_id!=0
+  AND (
+      c.language_idlanguage = 0
+      OR c.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = c.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section=?
+      AND (g.item=? OR g.item IS NULL)
+      AND g.action='view'
+      AND g.active=1
+      AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+)
+ORDER BY c.written
+`
+
+type GetCommentsBySectionThreadIdForUserParams struct {
+	ViewerID int32
+	ThreadID int32
+	Section  string
+	ItemType sql.NullString
+	UserID   sql.NullInt32
+}
+
+type GetCommentsBySectionThreadIdForUserRow struct {
+	Idcomments         int32
+	ForumthreadID      int32
+	UsersIdusers       int32
+	LanguageIdlanguage int32
+	Written            sql.NullTime
+	Text               sql.NullString
+	DeletedAt          sql.NullTime
+	LastIndex          sql.NullTime
+	Posterusername     sql.NullString
+	IsOwner            bool
+}
+
+// Viewing comments in a section-specific thread requires 'view' on the
+// section's primary item type since comments inherit their thread's grants.
+func (q *Queries) GetCommentsBySectionThreadIdForUser(ctx context.Context, arg GetCommentsBySectionThreadIdForUserParams) ([]*GetCommentsBySectionThreadIdForUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, getCommentsBySectionThreadIdForUser,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.ThreadID,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.Section,
+		arg.ItemType,
+		arg.UserID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetCommentsBySectionThreadIdForUserRow
+	for rows.Next() {
+		var i GetCommentsBySectionThreadIdForUserRow
+		if err := rows.Scan(
+			&i.Idcomments,
+			&i.ForumthreadID,
+			&i.UsersIdusers,
+			&i.LanguageIdlanguage,
+			&i.Written,
+			&i.Text,
+			&i.DeletedAt,
+			&i.LastIndex,
+			&i.Posterusername,
+			&i.IsOwner,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getCommentsByThreadIdForUser = `-- name: GetCommentsByThreadIdForUser :many
 WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?

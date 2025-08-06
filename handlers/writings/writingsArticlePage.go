@@ -68,7 +68,8 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	editCommentId, _ := strconv.Atoi(r.URL.Query().Get("editComment"))
 	replyType := r.URL.Query().Get("type")
 
-	comments, err := cd.ThreadComments(writing.ForumthreadID)
+	cd.SetCurrentThreadAndTopic(writing.ForumthreadID, 0)
+	comments, err := cd.SectionThreadComments("writing", "article", writing.ForumthreadID)
 	if err != nil {
 		log.Printf("thread comments: %v", err)
 	}

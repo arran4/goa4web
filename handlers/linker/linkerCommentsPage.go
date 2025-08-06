@@ -95,7 +95,8 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	data.CoreData.PageTitle = fmt.Sprintf("Link %d Comments", link.Idlinker)
 	data.CanEdit = cd.HasRole("administrator") || uid == link.UsersIdusers
 
-	commentRows, err := cd.ThreadComments(link.ForumthreadID)
+	cd.SetCurrentThreadAndTopic(link.ForumthreadID, 0)
+	commentRows, err := cd.SectionThreadComments("linker", "link", link.ForumthreadID)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

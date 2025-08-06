@@ -7,6 +7,7 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/arran4/goa4web/core/common"
@@ -21,27 +22,57 @@ import (
 
 func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		Categories []*db.GetAllForumCategoriesWithSubcategoryCountRow
+		Categories []*db.ListForumCategoriesWithCountsPaginatedForViewerRow
 		Tree       template.HTML
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Forum Admin Categories"
 	queries := cd.Queries()
 
+	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+	if page < 1 {
+		page = 1
+	}
+	pageSize := cd.PageSize()
+	offset := (page - 1) * pageSize
+
 	data := Data{}
 
-	categoryRows, err := queries.GetAllForumCategoriesWithSubcategoryCount(r.Context(), db.GetAllForumCategoriesWithSubcategoryCountParams{ViewerID: cd.UserID})
+	categoryRows, err := queries.ListForumCategoriesWithCountsPaginatedForViewer(r.Context(), db.ListForumCategoriesWithCountsPaginatedForViewerParams{
+		ViewerID: cd.UserID,
+		Limit:    int32(pageSize),
+		Offset:   int32(offset),
+	})
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		log.Printf("list categories: %v", err)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		return
+	}
+	data.Categories = categoryRows
+
+	totalCount, err := queries.CountForumCategoriesForViewer(r.Context(), db.CountForumCategoriesForViewerParams{ViewerID: cd.UserID})
 	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-		default:
-			log.Printf("getAllForumCategories Error: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return
-		}
+		log.Printf("count categories: %v", err)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		return
 	}
 
-	data.Categories = categoryRows
+	numPages := int((totalCount + int64(pageSize-1)) / int64(pageSize))
+	base := "/admin/forum/categories"
+	vals := url.Values{}
+	for i := 1; i <= numPages; i++ {
+		vals.Set("page", strconv.Itoa(i))
+		cd.PageLinks = append(cd.PageLinks, common.PageLink{Num: i, Link: base + "?" + vals.Encode(), Active: i == page})
+	}
+	if page < numPages {
+		vals.Set("page", strconv.Itoa(page+1))
+		cd.NextLink = base + "?" + vals.Encode()
+	}
+	if page > 1 {
+		vals.Set("page", strconv.Itoa(page-1))
+		cd.PrevLink = base + "?" + vals.Encode()
+	}
+
 	catsAll, err := queries.GetAllForumCategories(r.Context(), db.GetAllForumCategoriesParams{ViewerID: cd.UserID})
 	if err == nil {
 		children := map[int32][]*db.Forumcategory{}
@@ -116,12 +147,12 @@ func AdminCategoryEditSubmit(w http.ResponseWriter, r *http.Request) {
 
 	redirectURL := "/admin/forum/categories"
 	if strings.HasSuffix(r.URL.Path, "/edit") {
-		redirectURL = fmt.Sprintf("/admin/forum/category/%d", categoryId)
+		redirectURL = fmt.Sprintf("/admin/forum/categories/category/%d", categoryId)
 	}
 	http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
 }
 
-func AdminCategoryCreatePage(w http.ResponseWriter, r *http.Request) {
+func AdminCategoryCreateSubmit(w http.ResponseWriter, r *http.Request) {
 	name := r.PostFormValue("name")
 	desc := r.PostFormValue("desc")
 	pcid, err := strconv.Atoi(r.PostFormValue("pcid"))
@@ -162,7 +193,7 @@ func AdminCategoryCreatePage(w http.ResponseWriter, r *http.Request) {
 
 func AdminCategoryDeletePage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	cid, err := strconv.Atoi(r.PostFormValue("cid"))
+	cid, err := strconv.Atoi(mux.Vars(r)["category"])
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return

@@ -126,6 +126,34 @@ func (q *Queries) AdminUpdateForumTopic(ctx context.Context, arg AdminUpdateForu
 	return err
 }
 
+const countForumCategoriesForViewer = `-- name: CountForumCategoriesForViewer :one
+SELECT COUNT(*)
+FROM forumcategory c
+WHERE (
+    c.language_idlanguage = 0
+    OR c.language_idlanguage IS NULL
+    OR EXISTS (
+        SELECT 1 FROM user_language ul
+        WHERE ul.users_idusers = ?
+          AND ul.language_idlanguage = c.language_idlanguage
+    )
+    OR NOT EXISTS (
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+    )
+)
+`
+
+type CountForumCategoriesForViewerParams struct {
+	ViewerID int32
+}
+
+func (q *Queries) CountForumCategoriesForViewer(ctx context.Context, arg CountForumCategoriesForViewerParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countForumCategoriesForViewer, arg.ViewerID, arg.ViewerID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const getAllForumCategories = `-- name: GetAllForumCategories :many
 SELECT f.idforumcategory, f.forumcategory_idforumcategory, f.language_idlanguage, f.title, f.description
 FROM forumcategory f
@@ -785,6 +813,81 @@ func (q *Queries) GetForumTopicsByCategoryId(ctx context.Context, arg GetForumTo
 			&i.Threads,
 			&i.Comments,
 			&i.Lastaddition,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listForumCategoriesWithCountsPaginatedForViewer = `-- name: ListForumCategoriesWithCountsPaginatedForViewer :many
+SELECT c.idforumcategory, c.forumcategory_idforumcategory, c.language_idlanguage, c.title, c.description, COUNT(c2.idforumcategory) AS SubcategoryCount,
+       COUNT(t.idforumtopic) AS TopicCount
+FROM forumcategory c
+LEFT JOIN forumcategory c2 ON c.idforumcategory = c2.forumcategory_idforumcategory
+LEFT JOIN forumtopic t ON c.idforumcategory = t.forumcategory_idforumcategory
+WHERE (
+    c.language_idlanguage = 0
+    OR c.language_idlanguage IS NULL
+    OR EXISTS (
+        SELECT 1 FROM user_language ul
+        WHERE ul.users_idusers = ?
+          AND ul.language_idlanguage = c.language_idlanguage
+    )
+    OR NOT EXISTS (
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+    )
+)
+GROUP BY c.idforumcategory
+ORDER BY c.idforumcategory
+LIMIT ? OFFSET ?
+`
+
+type ListForumCategoriesWithCountsPaginatedForViewerParams struct {
+	ViewerID int32
+	Limit    int32
+	Offset   int32
+}
+
+type ListForumCategoriesWithCountsPaginatedForViewerRow struct {
+	Idforumcategory              int32
+	ForumcategoryIdforumcategory int32
+	LanguageIdlanguage           int32
+	Title                        sql.NullString
+	Description                  sql.NullString
+	Subcategorycount             int64
+	Topiccount                   int64
+}
+
+func (q *Queries) ListForumCategoriesWithCountsPaginatedForViewer(ctx context.Context, arg ListForumCategoriesWithCountsPaginatedForViewerParams) ([]*ListForumCategoriesWithCountsPaginatedForViewerRow, error) {
+	rows, err := q.db.QueryContext(ctx, listForumCategoriesWithCountsPaginatedForViewer,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListForumCategoriesWithCountsPaginatedForViewerRow
+	for rows.Next() {
+		var i ListForumCategoriesWithCountsPaginatedForViewerRow
+		if err := rows.Scan(
+			&i.Idforumcategory,
+			&i.ForumcategoryIdforumcategory,
+			&i.LanguageIdlanguage,
+			&i.Title,
+			&i.Description,
+			&i.Subcategorycount,
+			&i.Topiccount,
 		); err != nil {
 			return nil, err
 		}

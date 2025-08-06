@@ -80,5 +80,5 @@ func (CategoryGrantCreateTask) Action(w http.ResponseWriter, r *http.Request) an
 			return fmt.Errorf("create grant %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
-	return handlers.RefreshDirectHandler{TargetURL: fmt.Sprintf("/admin/forum/category/%d/grants", categoryID)}
+	return handlers.RefreshDirectHandler{TargetURL: fmt.Sprintf("/admin/forum/categories/category/%d/grants", categoryID)}
 }

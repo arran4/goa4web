@@ -22,13 +22,13 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, handlers.ErrBadRequest)
 		return
 	}
-	cat, err := queries.GetForumCategoryById(r.Context(), int32(cid))
+	cat, err := queries.GetForumCategoryById(r.Context(), db.GetForumCategoryByIdParams{Idforumcategory: int32(cid), ViewerID: cd.UserID})
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Category not found"))
 		return
 	}
-	cats, err := queries.GetAllForumCategories(r.Context())
+	cats, err := queries.GetAllForumCategories(r.Context(), db.GetAllForumCategoriesParams{ViewerID: cd.UserID})
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))

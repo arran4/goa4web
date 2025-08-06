@@ -26,7 +26,7 @@
     <tr><th>ID</th><th>Category</th><th>Threads</th></tr>
     {{- range .ForumCategories }}
     <tr>
-        <td><a href="/admin/forum/category/{{ .Idforumcategory }}">{{ .Idforumcategory }}</a></td>
+        <td><a href="/admin/forum/categories/category/{{ .Idforumcategory }}">{{ .Idforumcategory }}</a></td>
         <td><a href="/forum/categories/category/{{ .Idforumcategory }}">{{ .Title.String }}</a></td>
         <td>{{ .Count }}</td>
     </tr>

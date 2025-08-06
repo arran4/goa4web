@@ -1,8 +1,8 @@
 {{ template "head" $ }}
 <h2>Forum Category {{ .Category.Idforumcategory }} - {{ .Category.Title.String }}</h2>
 <p>
-    <a href="/admin/forum/category/{{ .Category.Idforumcategory }}/edit">Edit</a> |
-    <a href="/admin/forum/category/{{ .Category.Idforumcategory }}/grants">Permissions</a>
+    <a href="/admin/forum/categories/category/{{ .Category.Idforumcategory }}/edit">Edit</a> |
+    <a href="/admin/forum/categories/category/{{ .Category.Idforumcategory }}/grants">Grants</a>
 </p>
 <p>{{ .Category.Description.String }}</p>
 <h3 id="topics">Topics</h3>

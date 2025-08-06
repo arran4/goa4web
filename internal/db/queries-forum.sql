@@ -153,6 +153,44 @@ WHERE (
     )
 );
 
+-- name: ListForumCategoriesWithCountsPaginatedForViewer :many
+SELECT c.*, COUNT(c2.idforumcategory) AS SubcategoryCount,
+       COUNT(t.idforumtopic) AS TopicCount
+FROM forumcategory c
+LEFT JOIN forumcategory c2 ON c.idforumcategory = c2.forumcategory_idforumcategory
+LEFT JOIN forumtopic t ON c.idforumcategory = t.forumcategory_idforumcategory
+WHERE (
+    c.language_idlanguage = 0
+    OR c.language_idlanguage IS NULL
+    OR EXISTS (
+        SELECT 1 FROM user_language ul
+        WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          AND ul.language_idlanguage = c.language_idlanguage
+    )
+    OR NOT EXISTS (
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+    )
+)
+GROUP BY c.idforumcategory
+ORDER BY c.idforumcategory
+LIMIT ? OFFSET ?;
+
+-- name: CountForumCategoriesForViewer :one
+SELECT COUNT(*)
+FROM forumcategory c
+WHERE (
+    c.language_idlanguage = 0
+    OR c.language_idlanguage IS NULL
+    OR EXISTS (
+        SELECT 1 FROM user_language ul
+        WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          AND ul.language_idlanguage = c.language_idlanguage
+    )
+    OR NOT EXISTS (
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+    )
+);
+
 -- name: AdminCreateForumCategory :exec
 INSERT INTO forumcategory (forumcategory_idforumcategory, language_idlanguage, title, description) VALUES (?, ?, ?, ?);
 

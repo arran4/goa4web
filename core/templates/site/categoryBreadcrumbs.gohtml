@@ -2,7 +2,7 @@
     [
         <a href="/forum">Forum:</a>
         {{ range .CategoryBreadcrumbs }}
-            <a href="/forum/category/{{.Idforumcategory}}">{{if eq $.Category.Idforumcategory .Idforumcategory}}(This category/Refresh){{else}}{{.Title.String}}{{end}}</a>{{if ne $.Category.Idforumcategory .Idforumcategory}}:{{end}}
+            <a href="/forum/categories/category/{{.Idforumcategory}}">{{if eq $.Category.Idforumcategory .Idforumcategory}}(This category/Refresh){{else}}{{.Title.String}}{{end}}</a>{{if ne $.Category.Idforumcategory .Idforumcategory}}:{{end}}
         {{ end }}
     ]<br />
 {{ end }}

@@ -3,6 +3,10 @@
 <h2>Linker Category {{ .Idlinkercategory }} - {{ .Title.String }}</h2>
 <p>Order: {{ .Position }}</p>
 {{ end }}
+<p>
+    <a href="/admin/linker/categories/category/{{ .CategoryID }}/edit">Edit</a> |
+    <a href="/admin/linker/categories/category/{{ .CategoryID }}/grants">Permissions</a>
+</p>
 <h3 id="links">Links</h3>
 <table border="1">
     <tr>

@@ -9,7 +9,7 @@
         </tr>
         {{- range .Categories }}
             <tr>
-                <td><a id="lc{{ .Idlinkercategory }}" href="/admin/linker/category/{{ .Idlinkercategory }}">{{ .Idlinkercategory }}</a></td>
+                <td><a id="lc{{ .Idlinkercategory }}" href="/admin/linker/categories/category/{{ .Idlinkercategory }}">{{ .Idlinkercategory }}</a></td>
                 <td>
                     <form method="post">
         {{ csrfField }}
@@ -21,7 +21,7 @@
                 <td>
                     <input type="submit" name="task" value="Update">
                     {{ if eq .Linkcount 0 }}<input type="submit" name="task" value="Delete Category">{{ end }}<br>
-                    <a href="/admin/linker/category/{{ .Idlinkercategory }}/grants">Permissions</a>
+                    <a href="/admin/linker/categories/category/{{ .Idlinkercategory }}/grants">Permissions</a>
                     <a href="/linker/category/{{ .Idlinkercategory }}">View</a>
                     </form>
                 </td>

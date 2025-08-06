@@ -71,7 +71,7 @@ func CustomLinkerIndex(data *common.CoreData, r *http.Request) {
 		})
 		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "Category Controls",
-			Link: "/admin/linker",
+			Link: "/admin/linker/categories",
 		})
 		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "Approve links",

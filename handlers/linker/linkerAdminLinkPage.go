@@ -75,5 +75,5 @@ func (editLinkTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("update linker item fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	return handlers.RedirectHandler(fmt.Sprintf("/admin/linker/link/%d", id))
+	return handlers.RedirectHandler(fmt.Sprintf("/admin/linker/links/link/%d", id))
 }

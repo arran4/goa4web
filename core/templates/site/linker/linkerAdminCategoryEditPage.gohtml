@@ -1,0 +1,19 @@
+{{ template "head" $ }}
+{{ with .Category }}
+<h2>Edit Category {{ .Idlinkercategory }}</h2>
+<form method="post" action="/admin/linker/categories">
+{{ csrfField }}
+<input type="hidden" name="cid" value="{{ .Idlinkercategory }}">
+<label>Title: <input name="title" value="{{ .Title.String }}"></label><br>
+<label>Position: <input type="number" name="position" value="{{ .Position }}"></label><br>
+<label>Order: <input type="number" name="order" value="{{ .Sortorder }}"></label><br>
+<input type="submit" name="task" value="Update">
+</form>
+<form method="post" action="/admin/linker/categories" style="margin-top:1em;">
+{{ csrfField }}
+<input type="hidden" name="cid" value="{{ .Idlinkercategory }}">
+<input type="submit" name="task" value="Delete Category">
+</form>
+<p><a href="/admin/linker/categories/category/{{ .Idlinkercategory }}/grants">Permissions</a></p>
+{{ end }}
+{{ template "tail" $ }}

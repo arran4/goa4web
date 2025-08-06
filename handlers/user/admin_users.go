@@ -131,6 +131,10 @@ func adminUserDisableConfirmPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("user not found"))
 		return
 	}
+	back := "/admin/users"
+	if u != nil {
+		back = fmt.Sprintf("/admin/user/%d", u.Idusers)
+	}
 	data := struct {
 		Message      string
 		ConfirmLabel string
@@ -138,7 +142,7 @@ func adminUserDisableConfirmPage(w http.ResponseWriter, r *http.Request) {
 	}{
 		Message:      fmt.Sprintf("Are you sure you want to disable user %s (ID %d)?", u.Username.String, u.Idusers),
 		ConfirmLabel: "Confirm disable",
-		Back:         "/admin/users",
+		Back:         back,
 	}
 	handlers.TemplateHandler(w, r, "confirmPage.gohtml", data)
 }
@@ -147,12 +151,16 @@ func adminUserDisablePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.LoadSelectionsFromRequest(r)
 	id := cd.CurrentProfileUser()
+	back := "/admin/users"
+	if id != nil {
+		back = fmt.Sprintf("/admin/user/%d", id.Idusers)
+	}
 	data := struct {
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		Back: "/admin/users",
+		Back: back,
 	}
 	if id == nil {
 		data.Errors = append(data.Errors, "invalid user id")
@@ -187,12 +195,16 @@ func adminUserEditSavePage(w http.ResponseWriter, r *http.Request) {
 	uid := cd.CurrentProfileUser()
 	username := r.PostFormValue("username")
 	email := r.PostFormValue("email")
+	back := "/admin/users"
+	if uid != nil {
+		back = fmt.Sprintf("/admin/user/%d", uid.Idusers)
+	}
 	data := struct {
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		Back: "/admin/users",
+		Back: back,
 	}
 	var targetID int32
 	if uidStr != "" {
@@ -218,13 +230,18 @@ func adminUserResetPasswordPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
 	uid := r.PostFormValue("uid")
+	u := cd.CurrentProfileUser()
+	back := "/admin/users"
+	if u != nil {
+		back = fmt.Sprintf("/admin/user/%d", u.Idusers)
+	}
 	data := struct {
 		Errors   []string
 		Messages []string
 		Back     string
 		Password string
 	}{
-		Back: "/admin/users",
+		Back: back,
 	}
 	var buf [8]byte
 	if _, err := rand.Read(buf[:]); err != nil {

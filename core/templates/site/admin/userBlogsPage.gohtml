@@ -1,13 +1,14 @@
 {{ template "head" $ }}
 <h2>Blogs by <a href="/admin/user/{{ .User.Idusers }}">{{ .User.Username.String }}</a></h2>
 <table border="1">
-    <tr><th>ID</th><th>Date</th><th>Comments</th><th>Language</th><th>Snippet</th><th>Link</th></tr>
+    <tr><th>ID</th><th>Date</th><th>Comments</th><th>Language</th><th>Category</th><th>Snippet</th><th>Link</th></tr>
     {{- range .Blogs }}
     <tr>
         <td><a href="/admin/blogs/blog/{{ .Idblogs }}">{{ .Idblogs }}</a></td>
         <td>{{ .Written }}</td>
         <td>{{ .Comments }}</td>
         <td>{{ .LanguageIdlanguage }}</td>
+        <td>{{if .Idforumcategory.Valid}}<a href="/forum/category/{{ .Idforumcategory.Int32 }}">{{ .ForumcategoryTitle.String }}</a>{{end}}</td>
         <td>{{ left 40 (firstline (a4code2string .Blog.String)) }}</td>
         <td><a href="/blogs/blog/{{ .Idblogs }}">View</a></td>
     </tr>

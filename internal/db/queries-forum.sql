@@ -287,3 +287,17 @@ WHERE forumcategory_idforumcategory = sqlc.arg(category_id)
       )
   )
 ORDER BY lastaddition DESC;
+
+-- name: ListForumcategoryPath :many
+WITH RECURSIVE category_path AS (
+    SELECT f.idforumcategory, f.forumcategory_idforumcategory AS parent_id, f.title, 0 AS depth
+    FROM forumcategory f
+    WHERE f.idforumcategory = sqlc.arg(category_id)
+    UNION ALL
+    SELECT c.idforumcategory, c.forumcategory_idforumcategory, c.title, p.depth + 1
+    FROM forumcategory c
+    JOIN category_path p ON p.parent_id = c.idforumcategory
+)
+SELECT category_path.idforumcategory, category_path.title
+FROM category_path
+ORDER BY category_path.depth DESC;

@@ -93,6 +93,8 @@ type Querier interface {
 	AdminInsertRequestComment(ctx context.Context, arg AdminInsertRequestCommentParams) error
 	AdminInsertRequestQueue(ctx context.Context, arg AdminInsertRequestQueueParams) (sql.Result, error)
 	AdminInsertWritingCategory(ctx context.Context, arg AdminInsertWritingCategoryParams) error
+	// AdminLanguageUsageCounts returns counts of content referencing a language.
+	AdminLanguageUsageCounts(ctx context.Context, arg AdminLanguageUsageCountsParams) (*AdminLanguageUsageCountsRow, error)
 	AdminListAdministratorEmails(ctx context.Context) ([]string, error)
 	AdminListAllCommentsWithThreadInfo(ctx context.Context, arg AdminListAllCommentsWithThreadInfoParams) ([]*AdminListAllCommentsWithThreadInfoRow, error)
 	AdminListAllUserIDs(ctx context.Context) ([]int32, error)
@@ -251,7 +253,9 @@ type Querier interface {
 	GetFAQAnsweredQuestions(ctx context.Context, arg GetFAQAnsweredQuestionsParams) ([]*Faq, error)
 	GetFAQByID(ctx context.Context, idfaq int32) (*Faq, error)
 	GetFAQCategoriesWithQuestionCount(ctx context.Context) ([]*GetFAQCategoriesWithQuestionCountRow, error)
+	GetFAQCategoryWithQuestionCountByID(ctx context.Context, idfaqcategories int32) (*GetFAQCategoryWithQuestionCountByIDRow, error)
 	GetFAQDismissedQuestions(ctx context.Context) ([]*Faq, error)
+	GetFAQQuestionsByCategory(ctx context.Context, faqcategoriesIdfaqcategories int32) ([]*Faq, error)
 	GetFAQRevisionsForAdmin(ctx context.Context, faqID int32) ([]*FaqRevision, error)
 	GetFAQUnansweredQuestions(ctx context.Context) ([]*Faq, error)
 	GetForumCategoryById(ctx context.Context, arg GetForumCategoryByIdParams) (*Forumcategory, error)
@@ -346,10 +350,13 @@ type Querier interface {
 	ListCommentIDsBySearchWordNextForListerInRestrictedTopic(ctx context.Context, arg ListCommentIDsBySearchWordNextForListerInRestrictedTopicParams) ([]int32, error)
 	ListCommentIDsBySearchWordNextForListerNotInRestrictedTopic(ctx context.Context, arg ListCommentIDsBySearchWordNextForListerNotInRestrictedTopicParams) ([]int32, error)
 	ListEffectiveRoleIDsByUserID(ctx context.Context, usersIdusers int32) ([]int32, error)
+	ListForumcategoryPath(ctx context.Context, categoryID int32) ([]*ListForumcategoryPathRow, error)
 	ListGrants(ctx context.Context) ([]*Grant, error)
 	ListGrantsByUserID(ctx context.Context, userID sql.NullInt32) ([]*Grant, error)
 	ListImagePostsByBoardForLister(ctx context.Context, arg ListImagePostsByBoardForListerParams) ([]*ListImagePostsByBoardForListerRow, error)
 	ListImagePostsByPosterForLister(ctx context.Context, arg ListImagePostsByPosterForListerParams) ([]*ListImagePostsByPosterForListerRow, error)
+	ListImageboardPath(ctx context.Context, boardID int32) ([]*ListImageboardPathRow, error)
+	ListLinkerCategoryPath(ctx context.Context, categoryID int32) ([]*ListLinkerCategoryPathRow, error)
 	ListNotificationsForLister(ctx context.Context, arg ListNotificationsForListerParams) ([]*Notification, error)
 	ListPublicWritingsByUserForLister(ctx context.Context, arg ListPublicWritingsByUserForListerParams) ([]*ListPublicWritingsByUserForListerRow, error)
 	ListPublicWritingsInCategoryForLister(ctx context.Context, arg ListPublicWritingsInCategoryForListerParams) ([]*ListPublicWritingsInCategoryForListerRow, error)
@@ -367,6 +374,7 @@ type Querier interface {
 	ListWritingCategoriesForLister(ctx context.Context, arg ListWritingCategoriesForListerParams) ([]*WritingCategory, error)
 	ListWritingSearchFirstForLister(ctx context.Context, arg ListWritingSearchFirstForListerParams) ([]int32, error)
 	ListWritingSearchNextForLister(ctx context.Context, arg ListWritingSearchNextForListerParams) ([]int32, error)
+	ListWritingcategoryPath(ctx context.Context, categoryID int32) ([]*ListWritingcategoryPathRow, error)
 	ListWritingsByIDsForLister(ctx context.Context, arg ListWritingsByIDsForListerParams) ([]*ListWritingsByIDsForListerRow, error)
 	SetNotificationPriorityForLister(ctx context.Context, arg SetNotificationPriorityForListerParams) error
 	SetNotificationReadForLister(ctx context.Context, arg SetNotificationReadForListerParams) error
@@ -472,6 +480,7 @@ type Querier interface {
 	UpdateNewsPostForWriter(ctx context.Context, arg UpdateNewsPostForWriterParams) error
 	UpdatePreferenceForLister(ctx context.Context, arg UpdatePreferenceForListerParams) error
 	UpdatePublicProfileEnabledAtForUser(ctx context.Context, arg UpdatePublicProfileEnabledAtForUserParams) error
+	UpdateSubscriptionByIDForSubscriber(ctx context.Context, arg UpdateSubscriptionByIDForSubscriberParams) error
 	UpdateWritingForWriter(ctx context.Context, arg UpdateWritingForWriterParams) error
 }
 

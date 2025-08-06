@@ -799,6 +799,49 @@ func (q *Queries) GetForumTopicsByCategoryId(ctx context.Context, arg GetForumTo
 	return items, nil
 }
 
+const listForumcategoryPath = `-- name: ListForumcategoryPath :many
+WITH RECURSIVE category_path AS (
+    SELECT f.idforumcategory, f.forumcategory_idforumcategory AS parent_id, f.title, 0 AS depth
+    FROM forumcategory f
+    WHERE f.idforumcategory = ?
+    UNION ALL
+    SELECT c.idforumcategory, c.forumcategory_idforumcategory, c.title, p.depth + 1
+    FROM forumcategory c
+    JOIN category_path p ON p.parent_id = c.idforumcategory
+)
+SELECT category_path.idforumcategory, category_path.title
+FROM category_path
+ORDER BY category_path.depth DESC
+`
+
+type ListForumcategoryPathRow struct {
+	Idforumcategory int32
+	Title           sql.NullString
+}
+
+func (q *Queries) ListForumcategoryPath(ctx context.Context, categoryID int32) ([]*ListForumcategoryPathRow, error) {
+	rows, err := q.db.QueryContext(ctx, listForumcategoryPath, categoryID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListForumcategoryPathRow
+	for rows.Next() {
+		var i ListForumcategoryPathRow
+		if err := rows.Scan(&i.Idforumcategory, &i.Title); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const systemCreateForumTopic = `-- name: SystemCreateForumTopic :execlastid
 INSERT INTO forumtopic (forumcategory_idforumcategory, language_idlanguage, title, description) VALUES (?, ?, ?, ?)
 `

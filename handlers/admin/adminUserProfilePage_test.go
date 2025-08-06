@@ -29,6 +29,7 @@ func TestAdminUserProfilePage_UserFound(t *testing.T) {
 	rows := sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).
 		AddRow(userID, "u@example.com", "u", nil)
 	mock.ExpectQuery("SELECT").WillReturnRows(rows)
+	// Expect no additional queries
 
 	req := httptest.NewRequest("GET", fmt.Sprintf("/admin/user/%d", userID), nil)
 	req = mux.SetURLVars(req, map[string]string{"user": strconv.Itoa(userID)})

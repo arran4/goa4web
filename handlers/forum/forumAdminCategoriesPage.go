@@ -69,7 +69,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "forumAdminCategoriesPage.gohtml", data)
 }
 
-func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
+func AdminCategoryEditSubmit(w http.ResponseWriter, r *http.Request) {
 	name := r.PostFormValue("name")
 	desc := r.PostFormValue("desc")
 	pcid, err := strconv.Atoi(r.PostFormValue("pcid"))
@@ -111,7 +111,11 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/admin/forum/categories", http.StatusTemporaryRedirect)
+	redirectURL := "/admin/forum/categories"
+	if strings.HasSuffix(r.URL.Path, "/edit") {
+		redirectURL = fmt.Sprintf("/admin/forum/category/%d", categoryId)
+	}
+	http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
 }
 
 func AdminCategoryCreatePage(w http.ResponseWriter, r *http.Request) {

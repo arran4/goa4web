@@ -23,14 +23,7 @@
         <td>{{ .Description.String }}</td>
         <td>{{ .Threads.Int32 }}</td>
         <td>{{ .Comments.Int32 }}</td>
-        <td>
-            <a href="/admin/forum/topic/{{ .Idforumtopic }}/edit">Edit</a> |
-            <a href="/admin/forum/topic/{{ .Idforumtopic }}/grants">Grants</a>
-            <form method="post" action="/admin/forum/topic/{{ .Idforumtopic }}/delete" style="display:inline">
-                {{ csrfField }}
-                <input type="submit" name="task" value="Forum topic delete">
-            </form>
-        </td>
+        <td><a href="/admin/forum/topics/topic/{{ .Idforumtopic }}">Manage</a></td>
     </tr>
     {{ end }}
 </table>

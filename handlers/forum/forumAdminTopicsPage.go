@@ -2,6 +2,7 @@ package forum
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -16,8 +17,41 @@ import (
 func AdminTopicsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Forum Admin Topics"
+	queries := cd.Queries()
+	offset := cd.Offset()
+	ps := cd.PageSize()
+	total, err := queries.AdminCountForumTopics(r.Context())
+	if err != nil {
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		return
+	}
+	rows, err := queries.AdminListForumTopics(r.Context(), db.AdminListForumTopicsParams{Limit: int32(ps), Offset: int32(offset)})
+	if err != nil {
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		return
+	}
 
-	handlers.TemplateHandler(w, r, "adminTopicsPage.gohtml", struct{}{})
+	numPages := int((total + int64(ps) - 1) / int64(ps))
+	currentPage := offset/ps + 1
+	base := "/admin/forum/topics"
+	for i := 1; i <= numPages; i++ {
+		cd.PageLinks = append(cd.PageLinks, common.PageLink{Num: i, Link: fmt.Sprintf("%s?offset=%d", base, (i-1)*ps), Active: i == currentPage})
+	}
+	if offset+ps < int(total) {
+		cd.NextLink = fmt.Sprintf("%s?offset=%d", base, offset+ps)
+	}
+	if offset > 0 {
+		cd.PrevLink = fmt.Sprintf("%s?offset=%d", base, offset-ps)
+		cd.StartLink = base + "?offset=0"
+	}
+
+	data := struct {
+		Topics []*db.Forumtopic
+	}{
+		Topics: rows,
+	}
+
+	handlers.TemplateHandler(w, r, "adminTopicsPage.gohtml", data)
 }
 
 func AdminTopicEditPage(w http.ResponseWriter, r *http.Request) {

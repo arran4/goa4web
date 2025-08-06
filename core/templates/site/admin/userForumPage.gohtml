@@ -4,8 +4,8 @@
     <tr><th>ID</th><th>Topic</th><th>Category</th><th>Comments</th><th>Last Addition</th><th>View</th></tr>
     {{- range .Threads }}
     <tr>
-        <td><a href="/admin/forum/topic/{{ .ForumtopicIdforumtopic }}">{{ .ForumtopicIdforumtopic }}</a></td>
-        <td><a href="/admin/forum/topic/{{ .ForumtopicIdforumtopic }}/edit">{{ .TopicTitle.String }}</a></td>
+        <td><a href="/admin/forum/topics/topic/{{ .ForumtopicIdforumtopic }}">{{ .ForumtopicIdforumtopic }}</a></td>
+        <td><a href="/admin/forum/topics/topic/{{ .ForumtopicIdforumtopic }}/edit">{{ .TopicTitle.String }}</a></td>
         <td>{{ if .CategoryID.Valid }}<a href="/admin/forum/category/{{ .CategoryID.Int32 }}/grants">{{ .CategoryTitle.String }}</a>{{ end }}</td>
         <td>{{ .Comments.Int32 }}</td>
         <td>{{ .Lastaddition.Time }}</td>

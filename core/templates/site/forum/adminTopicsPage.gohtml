@@ -1,61 +1,16 @@
 {{ template "head" $ }}
-    <table border="1">
-        {{ $cd := cd }}
+<table border="1">
+    <tr><th>ID<th>Title<th>Threads<th>Posts<th>View</tr>
+    {{ range .Topics }}
         <tr>
-            <th>ID
-            <th>Title
-            <th>Description
-            <th>Category
-            <th>Threads
-            <th>Posts
-            <th>View
-            <th>Restrictions
-            <th>Options?
+            <td>{{ .Idforumtopic }}</td>
+            <td><a href="/admin/forum/topics/topic/{{ .Idforumtopic }}">{{ .Title.String }}</a></td>
+            <td>{{ .Threads.Int32 }}</td>
+            <td>{{ .Comments.Int32 }}</td>
+            <td><a href="/forum/topic/{{ .Idforumtopic }}">View</a></td>
         </tr>
-        {{ range $cd.AdminForumTopics }}
-            <tr>
-                <td>{{ .Idforumtopic }}</td>
-                <td>
-                    <form method="post" action="/admin/forum/topic/{{ .Idforumtopic }}/edit">
-        {{ csrfField }}
-                        <input name="name" value="{{ .Title.String }}">
-                </td>
-                <td><textarea name="desc">{{ .Description.String }}</textarea></td>
-                <td>{{ $fcid := .ForumcategoryIdforumcategory }} <select name="cid" value="{{ .ForumcategoryIdforumcategory }}"><option value="0">None</option>{{ range $cd.ForumCategories }}<option value="{{.Idforumcategory}}" {{if eq $fcid .Idforumcategory}}selected{{end}}>{{.Title.String}}</option>  {{ end }}</select></td>
-                <td align="center">{{ .Threads.Int32 }}</td>
-                <td align="center">{{ .Comments.Int32 }}</td>
-                <td><a href="/forum/topic/{{ .Idforumtopic }}">View</a></td>
-                <td><a href="/admin/forum/topic/{{ .Idforumtopic }}/grants">Grants</a></td>
-                <td>
-                        <input type="hidden" name="tid" value="{{ .Idforumtopic }}">
-                        <input type="submit" name="task" value="Forum topic change">
-                    </form>
-                    <form method="post" action="/admin/forum/topic/{{ .Idforumtopic }}/delete" style="display:inline">
-        {{ csrfField }}
-                        <input type="submit" name="task" value="Forum topic delete">
-                    </form>
-                </td>
-            </tr>
-        {{ else }}
-            <tr><td colspan="9">No topics</td></tr>
-        {{ end }}
-        <tr>
-            <td>New</td>
-            <td>
-                <form method="post" action="/admin/forum/topic">
-        {{ csrfField }}
-                    <input name="name" value="">
-            </td>
-            <td><textarea name="desc"></textarea></td>
-            <td><select name="pcid" value=""><option value="0">None</option>{{ range $cd.ForumCategories }}<option value="{{.Idforumcategory}}">{{.Title.String}}</option>{{ end }}</select></td>
-            <td>0</td>
-            <td>0</td>
-            <td></td>
-            <td>TBA</td>
-            <td>
-                    <input type="submit" name="task" value="Forum topic create">
-                </form>
-            </td>
-        </tr>
-    </table>
+    {{ else }}
+        <tr><td colspan="5">No topics</td></tr>
+    {{ end }}
+</table>
 {{ template "tail" $ }}

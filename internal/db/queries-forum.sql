@@ -38,6 +38,12 @@ WHERE (
 )
 GROUP BY t.idforumtopic;
 
+-- name: AdminListForumTopics :many
+SELECT t.*
+FROM forumtopic t
+ORDER BY t.idforumtopic
+LIMIT ? OFFSET ?;
+
 -- name: AdminUpdateForumTopic :exec
 UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ?, language_idlanguage = ? WHERE idforumtopic = ?;
 

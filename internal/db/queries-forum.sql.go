@@ -50,6 +50,51 @@ func (q *Queries) AdminDeleteForumTopic(ctx context.Context, idforumtopic int32)
 	return err
 }
 
+const adminListForumTopics = `-- name: AdminListForumTopics :many
+SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.language_idlanguage, t.title, t.description, t.threads, t.comments, t.lastaddition
+FROM forumtopic t
+ORDER BY t.idforumtopic
+LIMIT ? OFFSET ?
+`
+
+type AdminListForumTopicsParams struct {
+	Limit  int32
+	Offset int32
+}
+
+func (q *Queries) AdminListForumTopics(ctx context.Context, arg AdminListForumTopicsParams) ([]*Forumtopic, error) {
+	rows, err := q.db.QueryContext(ctx, adminListForumTopics, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Forumtopic
+	for rows.Next() {
+		var i Forumtopic
+		if err := rows.Scan(
+			&i.Idforumtopic,
+			&i.Lastposter,
+			&i.ForumcategoryIdforumcategory,
+			&i.LanguageIdlanguage,
+			&i.Title,
+			&i.Description,
+			&i.Threads,
+			&i.Comments,
+			&i.Lastaddition,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const adminRebuildAllForumTopicMetaColumns = `-- name: AdminRebuildAllForumTopicMetaColumns :exec
 UPDATE forumtopic
 SET threads = (

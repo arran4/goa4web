@@ -35,6 +35,7 @@ func setupCommentRequest(t *testing.T, queries db.Querier, store *sessions.Cooki
 	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithSession(sess), common.WithUserRoles([]string{"administrator"}))
 	cd.UserID = 2
 	cd.LoadSelectionsFromRequest(req)
+	cd.SetCurrentSection("blogs")
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	return req, sess
@@ -53,6 +54,13 @@ func TestCommentPageLockedThreadDisablesReply(t *testing.T) {
 	core.SessionName = "test-session"
 
 	req, _ := setupCommentRequest(t, queries, store, 1)
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT idlanguage, nameof FROM language")).
+		WillReturnRows(sqlmock.NewRows([]string{"idlanguage", "nameof"}))
+	cd := req.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if _, err := cd.Languages(); err != nil {
+		t.Fatalf("languages: %v", err)
+	}
 
 	blogRows := sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_idlanguage", "blog", "written", "username", "coalesce(th.comments, 0)", "is_owner"}).
 		AddRow(1, 1, 2, 1, "hi", time.Unix(0, 0), "bob", 0, false)
@@ -90,6 +98,13 @@ func TestCommentPageUnlockedThreadShowsReply(t *testing.T) {
 	core.SessionName = "test-session"
 
 	req, _ := setupCommentRequest(t, queries, store, 1)
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT idlanguage, nameof FROM language")).
+		WillReturnRows(sqlmock.NewRows([]string{"idlanguage", "nameof"}))
+	cd := req.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if _, err := cd.Languages(); err != nil {
+		t.Fatalf("languages: %v", err)
+	}
 
 	blogRows := sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_idlanguage", "blog", "written", "username", "coalesce(th.comments, 0)", "is_owner"}).
 		AddRow(1, 1, 2, 1, "hi", time.Unix(0, 0), "bob", 0, false)

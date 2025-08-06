@@ -142,6 +142,7 @@ type CoreData struct {
 	currentBoardID           int32
 	currentCommentID         int32
 	currentImagePostID       int32
+	currentLinkID            int32
 	currentOffset            int
 	currentNewsPostID        int32
 	currentProfileUserID     int32
@@ -182,6 +183,7 @@ type CoreData struct {
 	preferredLanguageID      lazy.Value[int32]
 	publicWritings           map[string]*lazy.Value[[]*db.ListPublicWritingsInCategoryForListerRow]
 	roleRows                 map[int32]*lazy.Value[*db.Role]
+	selectedThreadCanReply   lazy.Value[bool]
 	subImageBoards           map[int32]*lazy.Value[[]*db.Imageboard]
 	subscriptionRows         lazy.Value[[]*db.ListSubscriptionsByUserRow]
 	subscriptions            lazy.Value[map[string]bool]
@@ -1075,7 +1077,7 @@ func (cd *CoreData) fetchLatestNews(offset, limit int32, replyID int) ([]*NewsPo
 		}
 		posts = append(posts, &NewsPost{
 			GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow: row,
-			ShowReply:    cd.UserID != 0,
+			ShowReply:    cd.HasGrant("news", "post", "reply", row.Idsitenews),
 			ShowEdit:     cd.HasGrant("news", "post", "edit", row.Idsitenews) && (cd.AdminMode || cd.UserID != 0),
 			Editing:      replyID == int(row.Idsitenews),
 			Announcement: ann,
@@ -1762,6 +1764,124 @@ func (cd *CoreData) SelectedThreadLoaded() *db.GetThreadLastPosterAndPermsRow {
 	return v
 }
 
+// SelectedThreadCanReply reports whether the current user may reply to the
+// selected thread based on the loaded section and item identifiers.
+func (cd *CoreData) SelectedThreadCanReply() bool {
+	v, _ := cd.selectedThreadCanReply.Load(func() (bool, error) {
+		var allowed bool
+		switch cd.currentSection {
+		case "blogs":
+			if cd.currentBlogID != 0 {
+				allowed = cd.HasGrant("blogs", "entry", "reply", cd.currentBlogID)
+			}
+		case "news":
+			if cd.currentNewsPostID != 0 {
+				allowed = cd.HasGrant("news", "post", "reply", cd.currentNewsPostID)
+			}
+		case "writing":
+			if cd.currentWritingID != 0 {
+				allowed = cd.HasGrant("writing", "article", "reply", cd.currentWritingID)
+			}
+		case "forum":
+			if cd.currentTopicID != 0 {
+				allowed = cd.HasGrant("forum", "topic", "reply", cd.currentTopicID)
+			}
+		case "imagebbs":
+			if cd.currentBoardID != 0 {
+				allowed = cd.HasGrant("imagebbs", "board", "reply", cd.currentBoardID)
+			}
+		case "linker":
+			if cd.currentLinkID != 0 {
+				allowed = cd.HasGrant("linker", "link", "reply", cd.currentLinkID)
+			}
+		}
+		if !allowed || cd.currentThreadID == 0 {
+			return allowed, nil
+		}
+		th, err := cd.SelectedThread()
+		if err != nil || th == nil {
+			return false, nil
+		}
+		if th.Locked.Valid && th.Locked.Bool {
+			return false, nil
+		}
+		return allowed, nil
+	})
+	return v
+}
+
+// CanEditComment reports whether the current user may edit the supplied
+// comment. It allows administrators or the original author to make changes.
+func (cd *CoreData) CanEditComment(cmt *db.GetCommentsByThreadIdForUserRow) bool {
+	return cd.CanEditAny() || (cmt != nil && cmt.IsOwner)
+}
+
+// CommentEditing returns true if the given comment is currently being edited.
+func (cd *CoreData) CommentEditing(cmt *db.GetCommentsByThreadIdForUserRow) bool {
+	return cd.CanEditComment(cmt) && cd.currentCommentID != 0 && cmt != nil && cd.currentCommentID == cmt.Idcomments
+}
+
+// CommentEditURL generates the edit URL for the comment in the current
+// section. It returns an empty string if the user cannot edit the comment.
+func (cd *CoreData) CommentEditURL(cmt *db.GetCommentsByThreadIdForUserRow) string {
+	if !cd.CanEditComment(cmt) {
+		return ""
+	}
+	switch cd.currentSection {
+	case "blogs":
+		return fmt.Sprintf("/blogs/blog/%d/comments?comment=%d#edit", cd.currentBlogID, cmt.Idcomments)
+	case "news":
+		return fmt.Sprintf("?editComment=%d#edit", cmt.Idcomments)
+	case "writing":
+		return fmt.Sprintf("?editComment=%d#edit", cmt.Idcomments)
+	case "forum":
+		return fmt.Sprintf("?comment=%d#edit", cmt.Idcomments)
+	case "imagebbs":
+		return fmt.Sprintf("?comment=%d#edit", cmt.Idcomments)
+	case "linker":
+		return fmt.Sprintf("?comment=%d#edit", cmt.Idcomments)
+	default:
+		return ""
+	}
+}
+
+// CommentEditSaveURL returns the URL to post edited comment content to for the
+// current section. It returns an empty string if the user cannot edit the
+// comment.
+func (cd *CoreData) CommentEditSaveURL(cmt *db.GetCommentsByThreadIdForUserRow) string {
+	if !cd.CanEditComment(cmt) {
+		return ""
+	}
+	switch cd.currentSection {
+	case "blogs":
+		return fmt.Sprintf("/blogs/blog/%d/comment/%d", cd.currentBlogID, cmt.Idcomments)
+	case "news":
+		return fmt.Sprintf("/news/news/%d/comment/%d", cd.currentNewsPostID, cmt.Idcomments)
+	case "writing":
+		return fmt.Sprintf("/writings/article/%d/comment/%d", cd.currentWritingID, cmt.Idcomments)
+	case "forum":
+		return fmt.Sprintf("/forum/thread/%d/comment/%d", cd.currentThreadID, cmt.Idcomments)
+	case "imagebbs":
+		return fmt.Sprintf("/imagebbs/board/%d/thread/%d/comment/%d", cd.currentBoardID, cd.currentThreadID, cmt.Idcomments)
+	case "linker":
+		return fmt.Sprintf("/linker/link/%d/comment/%d", cd.currentLinkID, cmt.Idcomments)
+	default:
+		return ""
+	}
+}
+
+// CommentAdminURL returns the administration page URL for the comment if the
+// current user has the administrator role.
+func (cd *CoreData) CommentAdminURL(cmt *db.GetCommentsByThreadIdForUserRow) string {
+	if cd.HasRole("administrator") {
+		return fmt.Sprintf("/admin/comment/%d", cmt.Idcomments)
+	}
+	return ""
+}
+
+// SelectedCommentID returns the comment identifier extracted from the request.
+func (cd *CoreData) SelectedCommentID() int32 { return cd.currentCommentID }
+
 // Session returns the request session if available.
 func (cd *CoreData) Session() *sessions.Session { return cd.session }
 
@@ -2298,19 +2418,21 @@ func assignIDFromString(m map[string]*int32, k, v string) {
 // parameters and finally form values.
 func (cd *CoreData) LoadSelectionsFromRequest(r *http.Request) {
 	mapping := map[string]*int32{
-		"boardno": &cd.currentBoardID,
-		"board":   &cd.currentBoardID,
-		"thread":  &cd.currentThreadID,
-		"replyTo": &cd.currentThreadID,
-		"topic":   &cd.currentTopicID,
-		"comment": &cd.currentCommentID,
-		"news":    &cd.currentNewsPostID,
-		"post":    &cd.currentImagePostID,
-		"writing": &cd.currentWritingID,
-		"blog":    &cd.currentBlogID,
-		"request": &cd.currentRequestID,
-		"role":    &cd.currentRoleID,
-		"user":    &cd.currentProfileUserID,
+		"boardno":     &cd.currentBoardID,
+		"board":       &cd.currentBoardID,
+		"thread":      &cd.currentThreadID,
+		"replyTo":     &cd.currentThreadID,
+		"topic":       &cd.currentTopicID,
+		"comment":     &cd.currentCommentID,
+		"editComment": &cd.currentCommentID,
+		"news":        &cd.currentNewsPostID,
+		"post":        &cd.currentImagePostID,
+		"writing":     &cd.currentWritingID,
+		"blog":        &cd.currentBlogID,
+		"link":        &cd.currentLinkID,
+		"request":     &cd.currentRequestID,
+		"role":        &cd.currentRoleID,
+		"user":        &cd.currentProfileUserID,
 	}
 	for k, v := range mux.Vars(r) {
 		assignIDFromString(mapping, k, v)

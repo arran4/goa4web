@@ -22,12 +22,12 @@ import (
 func ShowPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		Link               *db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow
-		CanReply           bool
 		Languages          []*db.Language
 		SelectedLanguageId int
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	data := Data{
 		CanReply:           cd.UserID != 0,

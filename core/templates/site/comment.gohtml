@@ -1,17 +1,14 @@
 {{ define "comment" }}
-    {{ $cmt := .Comment }}
-    {{ $data := .Data }}
+    {{ $cmt := . }}
     <table width="100%">
         <tr bgcolor="lightgrey">
             <th>{{ $cmt.Written.Time }}</th>
         </tr>
         <tr>
             <td>
-                {{ $canEdit := $data.CanEditComment $cmt }}
-                {{ $editing := $data.Editing $cmt }}
-                {{ if and $canEdit $editing }}
+                {{ if cd.CommentEditing $cmt }}
                     <font size="4">Edit:</font><br>
-                    <form method="post" action="{{ $data.EditSaveURL $cmt }}">
+                    <form method="post" action="{{ cd.CommentEditSaveURL $cmt }}">
                         {{ csrfField }}
                         <textarea id="reply" name="replytext" cols="40" rows="20">{{ $cmt.Text.String }}</textarea><br>
                         {{ template "languageCombobox" }}
@@ -20,12 +17,12 @@
                     </form>
                 {{ else }}
                     {{ $cmt.Text.String | a4code2html}}<br>-<br>{{ $cmt.Posterusername.String }}.
-                    {{ if and $data.CanReply $data.IsReplyable }}
+                    {{ if cd.SelectedThreadCanReply }}
                         [<a href="?comment={{ $cmt.Idcomments }}&type=full#reply">FULL REPLY</a>]
                         [<a href="?comment={{ $cmt.Idcomments }}#reply">PARAGRAPH REPLY</a>]
                     {{ end }}
-                    {{ if and $canEdit (not $editing) }}[<a href="{{ $data.EditURL $cmt }}">EDIT</a>]{{ end }}
-                    {{ $admin := $data.AdminURL $cmt }}{{ if $admin }}[<a href="{{ $admin }}">ADMIN</a>]{{ end }}
+                    {{ if cd.CanEditComment $cmt }}[<a href="{{ cd.CommentEditURL $cmt }}">EDIT</a>]{{ end }}
+                    {{ $admin := cd.CommentAdminURL $cmt }}{{ if $admin }}[<a href="{{ $admin }}">ADMIN</a>]{{ end }}
                 {{ end }}
             </td>
         </tr>

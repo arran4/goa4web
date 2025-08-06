@@ -1,5 +1,5 @@
 {{ define "blogReply" }}
-        {{if $.IsReplyable}}
+       {{ if cd.SelectedThreadCanReply }}
             <font size="4">Reply:</font><br>
             <form method="post" action="/blogs/blog/{{$.Blog.Idblogs}}/reply">
         {{ csrfField }}
@@ -7,5 +7,5 @@
                 {{ template "languageCombobox" }}
                 <input type="submit" name="task" value="Reply">
             </form>
-        {{end}}
+       {{end}}
 {{ end }}

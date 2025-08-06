@@ -25,7 +25,6 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		Comments       []*db.GetCommentsByThreadIdForUserRow
 		CanEdit        bool
 		IsAuthor       bool
-		CanReply       bool
 		ReplyText      string
 		IsReplyable    bool
 		CanEditComment func(*db.GetCommentsByThreadIdForUserRow) bool
@@ -50,8 +49,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	canComment := cd.HasGrant("writing", "article", "comment", writing.Idwriting)
-	canReply := cd.HasGrant("writing", "article", "reply", writing.Idwriting)
-	if writing == nil || !(cd.HasGrant("writing", "article", "view", writing.Idwriting) || canComment || canReply) {
+	if writing == nil || !(cd.HasGrant("writing", "article", "view", writing.Idwriting) || canComment || cd.SelectedThreadCanReply()) {
 		if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{}); err != nil {
 			log.Printf("render no access page: %v", err)
 		}
@@ -76,8 +74,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		Request:     r,
 		Comments:    comments,
-		CanReply:    cd.UserID != 0,
-		IsReplyable: editCommentId == 0 && r.URL.Query().Get("comment") == "",
+		IsReplyable: canComment && editCommentId == 0 && r.URL.Query().Get("comment") == "",
 	}
 
 	data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {

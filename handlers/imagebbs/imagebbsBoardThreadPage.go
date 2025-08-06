@@ -74,7 +74,6 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		ImagePost      *db.GetImagePostByIDForListerRow
 		Thread         *db.GetThreadLastPosterAndPermsRow
 		IsReplyable    bool
-		CanReply       bool
 		CanEditComment func(*db.GetCommentsByThreadIdForUserRow) bool
 		EditURL        func(*db.GetCommentsByThreadIdForUserRow) string
 		EditSaveURL    func(*db.GetCommentsByThreadIdForUserRow) string
@@ -105,7 +104,6 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd.SetCurrentThreadAndTopic(int32(thid), 0)
-	cd.SetCurrentSection("imagebbs")
 	commentRows, err := cd.SelectedSectionThreadComments()
 	if err != nil {
 		switch {

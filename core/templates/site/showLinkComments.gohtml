@@ -17,7 +17,7 @@
             {{ template "threadComments" }}
         {{ end }}
 
-        {{ if $.CanReply }}
+        {{ if cd.SelectedThreadCanReply }}
             <font size="4">Reply:</font><br>
             <form method="post">
         {{ csrfField }}

@@ -17,7 +17,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	navReg.RegisterIndexLink("Forum", "/forum", SectionWeight)
 	navReg.RegisterAdminControlCenter("Forum", "Forum", "/admin/forum", SectionWeight)
 	fr := r.PathPrefix("/forum").Subrouter()
-	fr.Use(handlers.IndexMiddleware(CustomForumIndex))
+	fr.Use(handlers.IndexMiddleware(CustomForumIndex), handlers.SectionMiddleware("forum"))
 	fr.HandleFunc("/topic/{topic}.rss", TopicRssPage).Methods("GET")
 	fr.HandleFunc("/topic/{topic}.atom", TopicAtomPage).Methods("GET")
 	fr.HandleFunc("", Page).Methods("GET")

@@ -23,7 +23,6 @@ import (
 func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		Link           *db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow
-		CanReply       bool
 		Comments       []*db.GetCommentsByThreadIdForUserRow
 		IsReplyable    bool
 		Text           string
@@ -42,6 +41,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		offset = off
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	common.WithOffset(offset)(cd)
 	data := Data{
@@ -82,12 +82,15 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	canComment := cd.HasGrant("linker", "link", "comment", link.Idlinker)
 	if !(cd.HasGrant("linker", "link", "view", link.Idlinker) ||
-		cd.HasGrant("linker", "link", "comment", link.Idlinker) ||
-		cd.HasGrant("linker", "link", "reply", link.Idlinker)) {
+		canComment ||
+		cd.SelectedThreadCanReply()) {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
+
+	data.IsReplyable = canComment
 
 	data.Link = link
 	cd.PageTitle = fmt.Sprintf("Link %d Comments", link.Idlinker)

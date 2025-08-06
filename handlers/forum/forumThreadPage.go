@@ -30,7 +30,6 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 		EditSaveURL         func(*db.GetCommentsByThreadIdForUserRow) string
 		Editing             func(*db.GetCommentsByThreadIdForUserRow) bool
 		AdminURL            func(*db.GetCommentsByThreadIdForUserRow) string
-		CanReply            bool
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
@@ -39,7 +38,6 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 	common.WithOffset(offset)(cd)
 	data := Data{
 		IsReplyable: true,
-		CanReply:    cd.UserID != 0,
 	}
 
 	threadRow, err := cd.SelectedThread()

@@ -23,4 +23,10 @@ const (
 
 	// TaskApprove approves an item in moderation queues.
 	TaskApprove tasks.TaskString = "Approve"
+
+	// TaskModifyPost updates an existing image post.
+	TaskModifyPost tasks.TaskString = "Modify image post"
+
+	// TaskDeletePost removes an image post.
+	TaskDeletePost tasks.TaskString = "Delete image post"
 )

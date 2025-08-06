@@ -48,6 +48,9 @@ func (RoleGrantUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 		itemID = sql.NullInt32{Int32: int32(id), Valid: true}
 	}
+	if def, ok := GrantActionMap[section+"|"+item]; ok && def.RequireItemID && !itemID.Valid {
+		return fmt.Errorf("missing item id %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("")))
+	}
 	desiredActive := map[string]struct{}{}
 	for _, a := range strings.Split(actionsStr, ",") {
 		if a != "" {

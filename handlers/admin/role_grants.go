@@ -12,31 +12,39 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
-// GrantActionMap defines allowed actions for each section and item combination.
-// Key format: "section|item". Keep in sync with specs/permissions.md.
-var GrantActionMap = map[string][]string{
-	"forum|":              {"search"},
-	"forum|topic":         {"see", "view", "reply", "post", "edit"},
-	"forum|thread":        {"see", "view", "reply", "post", "edit"},
-	"forum|category":      {"see", "view"},
-	"linker|":             {"search"},
-	"linker|category":     {"see", "view"},
-	"linker|link":         {"see", "view", "comment", "reply"},
-	"imagebbs|":           {"search"},
-	"imagebbs|board":      {"see", "view", "post"},
-	"images|upload":       {"see", "post"},
-	"news|":               {"search"},
-	"news|post":           {"see", "view", "reply", "post", "edit"},
-	"blogs|":              {"search"},
-	"blogs|entry":         {"see", "view", "comment", "reply", "post", "edit"},
-	"writing|":            {"search"},
-	"writing|category":    {"see", "view"},
-	"writing|article":     {"see", "view", "comment", "reply", "post", "edit"},
-	"faq|":                {"search"},
-	"faq|category":        {"see", "view"},
-	"faq|question":        {"see", "view", "post", "edit"},
-	"faq|question/answer": {"see"},
-	"search|":             {"search"},
+// GrantDefinition describes the allowed actions for a grant and any additional
+// rules that apply.
+type GrantDefinition struct {
+	Actions       []string
+	RequireItemID bool // whether grants must specify an item_id
+}
+
+// GrantActionMap defines allowed actions and rules for each section and item
+// combination. Key format: "section|item". Keep in sync with
+// specs/permissions.md.
+var GrantActionMap = map[string]GrantDefinition{
+	"forum|":              {Actions: []string{"search"}},
+	"forum|topic":         {Actions: []string{"see", "view", "reply", "post", "edit"}, RequireItemID: true},
+	"forum|thread":        {Actions: []string{"see", "view", "reply", "post", "edit"}, RequireItemID: true},
+	"forum|category":      {Actions: []string{"see", "view"}, RequireItemID: true},
+	"linker|":             {Actions: []string{"search"}},
+	"linker|category":     {Actions: []string{"see", "view"}},
+	"linker|link":         {Actions: []string{"see", "view", "comment", "reply"}},
+	"imagebbs|":           {Actions: []string{"search"}},
+	"imagebbs|board":      {Actions: []string{"see", "view", "post"}},
+	"images|upload":       {Actions: []string{"see", "post"}},
+	"news|":               {Actions: []string{"search"}},
+	"news|post":           {Actions: []string{"see", "view", "reply", "post", "edit"}},
+	"blogs|":              {Actions: []string{"search"}},
+	"blogs|entry":         {Actions: []string{"see", "view", "comment", "reply", "post", "edit"}},
+	"writing|":            {Actions: []string{"search"}},
+	"writing|category":    {Actions: []string{"see", "view"}},
+	"writing|article":     {Actions: []string{"see", "view", "comment", "reply", "post", "edit"}},
+	"faq|":                {Actions: []string{"search"}},
+	"faq|category":        {Actions: []string{"see", "view"}},
+	"faq|question":        {Actions: []string{"see", "view", "post", "edit"}},
+	"faq|question/answer": {Actions: []string{"see"}},
+	"search|":             {Actions: []string{"search"}},
 }
 
 // GrantAction represents a single grant action and whether it's unsupported.
@@ -104,6 +112,9 @@ func buildGrantGroups(ctx context.Context, cd *common.CoreData, roleID int32) ([
 	}
 	var ginfos []GrantInfo
 	for _, g := range grants {
+		if def, ok := GrantActionMap[g.Section+"|"+g.Item.String]; ok && def.RequireItemID && (!g.ItemID.Valid || g.ItemID.Int32 == 0) {
+			continue
+		}
 		gi := GrantInfo{Grant: g}
 		if g.Item.Valid && g.ItemID.Valid {
 			switch g.Section {
@@ -228,9 +239,9 @@ func buildGrantGroups(ctx context.Context, cd *common.CoreData, roleID int32) ([
 			groupMap[key] = grp
 		}
 		ga := GrantAction{Name: gi.Action}
-		if acts, ok := GrantActionMap[gi.Section+"|"+gi.Item.String]; ok {
+		if def, ok := GrantActionMap[gi.Section+"|"+gi.Item.String]; ok {
 			actSet := map[string]struct{}{}
-			for _, a := range acts {
+			for _, a := range def.Actions {
 				actSet[a] = struct{}{}
 			}
 			if _, ok := actSet[gi.Action]; !ok {
@@ -247,7 +258,10 @@ func buildGrantGroups(ctx context.Context, cd *common.CoreData, roleID int32) ([
 	}
 
 	// Ensure all section/item pairs appear even when the role has no grants.
-	for key := range GrantActionMap {
+	for key, def := range GrantActionMap {
+		if def.RequireItemID {
+			continue
+		}
 		parts := strings.Split(key, "|")
 		if len(parts) != 2 {
 			continue
@@ -260,7 +274,7 @@ func buildGrantGroups(ctx context.Context, cd *common.CoreData, roleID int32) ([
 
 	groups := make([]GrantGroup, 0, len(groupMap))
 	for _, grp := range groupMap {
-		if acts, ok := GrantActionMap[grp.Section+"|"+grp.Item]; ok {
+		if def, ok := GrantActionMap[grp.Section+"|"+grp.Item]; ok {
 			haveSet := map[string]struct{}{}
 			for _, h := range grp.Have {
 				haveSet[h.Name] = struct{}{}
@@ -268,7 +282,7 @@ func buildGrantGroups(ctx context.Context, cd *common.CoreData, roleID int32) ([
 			for _, d := range grp.Disabled {
 				haveSet[d.Name] = struct{}{}
 			}
-			for _, a := range acts {
+			for _, a := range def.Actions {
 				if _, ok := haveSet[a]; !ok {
 					grp.Available = append(grp.Available, a)
 				}

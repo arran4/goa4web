@@ -74,9 +74,10 @@ Sections may introduce extra actions but these form the base vocabulary used by
 the templates and permission checks.
 Grants with an empty `item` provide section-wide search access. For instance,
 `forum|` paired with the `search` action allows a user to search all forum
-topics.
-The grant editor uses the mapping defined in `handlers/admin/role_grants.go`
-to list available actions for each section and item type.
+topics. The grant editor uses the mapping defined in `handlers/admin/role_grants.go`
+to list available actions for each section and item type. Some combinations
+require an `item_id`; for example, grants in the `forum` section targeting a
+`category`, `topic` or `thread` must specify the corresponding identifier.
 Announcements use these actions to control which news posts appear globally. Administrator pages call `AdminPromoteAnnouncement` and `AdminDemoteAnnouncement` while `GetActiveAnnouncementWithNewsForUser` retrieves the visible announcement.
 
 Each section may define additional actions, but these are the core verbs used by the system.

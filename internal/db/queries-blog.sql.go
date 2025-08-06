@@ -13,10 +13,21 @@ import (
 )
 
 const adminGetAllBlogEntriesByUser = `-- name: AdminGetAllBlogEntriesByUser :many
-SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0)
+SELECT b.idblogs,
+       b.forumthread_id,
+       b.users_idusers,
+       b.language_idlanguage,
+       b.blog,
+       b.written,
+       u.username,
+       coalesce(th.comments, 0),
+       fc.idforumcategory,
+       fc.title AS forumcategory_title
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers = u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
+LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
+LEFT JOIN forumcategory fc ON t.forumcategory_idforumcategory = fc.idforumcategory
 WHERE b.users_idusers = ?
 ORDER BY b.written DESC
 `
@@ -30,6 +41,8 @@ type AdminGetAllBlogEntriesByUserRow struct {
 	Written            time.Time
 	Username           sql.NullString
 	Comments           int32
+	Idforumcategory    sql.NullInt32
+	ForumcategoryTitle sql.NullString
 }
 
 func (q *Queries) AdminGetAllBlogEntriesByUser(ctx context.Context, authorID int32) ([]*AdminGetAllBlogEntriesByUserRow, error) {
@@ -50,6 +63,8 @@ func (q *Queries) AdminGetAllBlogEntriesByUser(ctx context.Context, authorID int
 			&i.Written,
 			&i.Username,
 			&i.Comments,
+			&i.Idforumcategory,
+			&i.ForumcategoryTitle,
 		); err != nil {
 			return nil, err
 		}

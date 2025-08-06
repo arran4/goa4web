@@ -21,3 +21,7 @@ ORDER BY id;
 
 -- name: DeleteSubscriptionByIDForSubscriber :exec
 DELETE FROM subscriptions WHERE users_idusers = sqlc.arg(subscriber_id) AND id = sqlc.arg(id);
+
+-- name: UpdateSubscriptionByIDForSubscriber :exec
+UPDATE subscriptions SET pattern = sqlc.arg(pattern), method = sqlc.arg(method)
+WHERE users_idusers = sqlc.arg(subscriber_id) AND id = sqlc.arg(id);

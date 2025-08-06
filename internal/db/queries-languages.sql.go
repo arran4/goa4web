@@ -48,6 +48,47 @@ func (q *Queries) AdminInsertLanguage(ctx context.Context, nameof sql.NullString
 	return q.db.ExecContext(ctx, adminInsertLanguage, nameof)
 }
 
+const adminLanguageUsageCounts = `-- name: AdminLanguageUsageCounts :one
+SELECT
+    (SELECT COUNT(*) FROM comments WHERE comments.language_idlanguage = ?) AS comments,
+    (SELECT COUNT(*) FROM writing WHERE writing.language_idlanguage = ?) AS writings,
+    (SELECT COUNT(*) FROM blogs WHERE blogs.language_idlanguage = ?) AS blogs,
+    (SELECT COUNT(*) FROM site_news WHERE site_news.language_idlanguage = ?) AS news,
+    (SELECT COUNT(*) FROM linker WHERE linker.language_idlanguage = ?) AS links
+`
+
+type AdminLanguageUsageCountsParams struct {
+	ID int32
+}
+
+type AdminLanguageUsageCountsRow struct {
+	Comments int64
+	Writings int64
+	Blogs    int64
+	News     int64
+	Links    int64
+}
+
+// AdminLanguageUsageCounts returns counts of content referencing a language.
+func (q *Queries) AdminLanguageUsageCounts(ctx context.Context, arg AdminLanguageUsageCountsParams) (*AdminLanguageUsageCountsRow, error) {
+	row := q.db.QueryRowContext(ctx, adminLanguageUsageCounts,
+		arg.ID,
+		arg.ID,
+		arg.ID,
+		arg.ID,
+		arg.ID,
+	)
+	var i AdminLanguageUsageCountsRow
+	err := row.Scan(
+		&i.Comments,
+		&i.Writings,
+		&i.Blogs,
+		&i.News,
+		&i.Links,
+	)
+	return &i, err
+}
+
 const adminRenameLanguage = `-- name: AdminRenameLanguage :exec
 UPDATE language
 SET nameof = ?

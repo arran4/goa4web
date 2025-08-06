@@ -93,6 +93,8 @@ type Querier interface {
 	AdminInsertRequestComment(ctx context.Context, arg AdminInsertRequestCommentParams) error
 	AdminInsertRequestQueue(ctx context.Context, arg AdminInsertRequestQueueParams) (sql.Result, error)
 	AdminInsertWritingCategory(ctx context.Context, arg AdminInsertWritingCategoryParams) error
+	// AdminLanguageUsageCounts returns counts of content referencing a language.
+	AdminLanguageUsageCounts(ctx context.Context, arg AdminLanguageUsageCountsParams) (*AdminLanguageUsageCountsRow, error)
 	AdminListAdministratorEmails(ctx context.Context) ([]string, error)
 	AdminListAllCommentsWithThreadInfo(ctx context.Context, arg AdminListAllCommentsWithThreadInfoParams) ([]*AdminListAllCommentsWithThreadInfoRow, error)
 	AdminListAllUserIDs(ctx context.Context) ([]int32, error)

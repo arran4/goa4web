@@ -14,8 +14,8 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-// adminLinkPage displays the edit form for a linker item.
-func adminLinkPage(w http.ResponseWriter, r *http.Request) {
+// AdminLinkEditPage displays the edit form for a linker item.
+func AdminLinkEditPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	link, id, err := cd.SelectedAdminLinkerItem(r)
 	if err != nil {
@@ -49,7 +49,7 @@ var AdminEditLinkTask = &editLinkTask{TaskString: TaskUpdate}
 
 var _ tasks.Task = (*editLinkTask)(nil)
 
-func (editLinkTask) Page(w http.ResponseWriter, r *http.Request) { adminLinkPage(w, r) }
+func (editLinkTask) Page(w http.ResponseWriter, r *http.Request) { AdminLinkEditPage(w, r) }
 
 func (editLinkTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -75,5 +75,5 @@ func (editLinkTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("update linker item fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	return handlers.RedirectHandler(fmt.Sprintf("/admin/linker/link/%d", id))
+	return handlers.RedirectHandler(fmt.Sprintf("/admin/linker/links/link/%d", id))
 }

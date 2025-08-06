@@ -1,0 +1,17 @@
+{{ template "head" $ }}
+{{ with cd.SelectedLinkerCategory .CategoryID }}
+<h2>Edit Linker Category {{ .Idlinkercategory }} - {{ .Title.String }}</h2>
+<form method="post" action="/admin/linker/categories">
+    {{ csrfField }}
+    <input type="hidden" name="id" value="{{ .Idlinkercategory }}">
+    <input type="text" name="title" value="{{ .Title.String }}"><br>
+    <input type="text" name="position" value="{{ .Position }}"><br>
+    <input type="submit" name="task" value="Update Category">
+    <input type="submit" name="task" value="Rename Category">
+    <input type="submit" name="task" value="Delete Category">
+</form>
+<p><a href="/admin/linker/categories/category/{{ .Idlinkercategory }}/grants">Grants</a> |
+<a href="/admin/linker/categories/category/{{ .Idlinkercategory }}/links">Links</a></p>
+{{ end }}
+{{ template "tail" $ }}
+

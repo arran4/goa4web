@@ -1,0 +1,8 @@
+{{ template "head" $ }}
+<h2>Link {{ .Link.Idlinker }} - {{ .Link.Title.String }}</h2>
+<p>{{ .Link.Description.String }}</p>
+<p><a href="/admin/linker/links/link/{{ .Link.Idlinker }}/edit">Edit</a> |
+<a href="/admin/linker/links/link/{{ .Link.Idlinker }}/grants">Grants</a> |
+<a href="/admin/linker/links/link/{{ .Link.Idlinker }}/comments">Comments</a></p>
+{{ template "tail" $ }}
+

@@ -1,0 +1,26 @@
+{{ template "head" $ }}
+{{ with cd.SelectedLinkerCategory .CategoryID }}
+<h2>Links in Category {{ .Idlinkercategory }} - {{ .Title.String }}</h2>
+{{ end }}
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <th>Title</th>
+        <th>URL</th>
+        <th>Poster</th>
+    </tr>
+    {{ range cd.LinkerLinksByCategoryID .CategoryID }}
+    <tr>
+        <td>{{ .Idlinker }}</td>
+        <td>{{ .Title.String }}</td>
+        <td><a href="{{ .Url.String }}">{{ .Url.String }}</a></td>
+        <td>{{ .Posterusername.String }}</td>
+    </tr>
+    {{ else }}
+    <tr>
+        <td colspan="4">No links found.</td>
+    </tr>
+    {{ end }}
+</table>
+{{ template "tail" $ }}
+

@@ -1,0 +1,16 @@
+{{ template "head" $ }}
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <th>Title</th>
+        <th>Description</th>
+    </tr>
+    {{- range .Links }}
+    <tr>
+        <td><a href="/admin/linker/links/link/{{ .Idlinker }}">{{ .Idlinker }}</a></td>
+        <td>{{ .Title.String }}</td>
+        <td>{{ .Description.String }}</td>
+    </tr>
+    {{- end }}
+</table>
+{{ template "tail" $ }}

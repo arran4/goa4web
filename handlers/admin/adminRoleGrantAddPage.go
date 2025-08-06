@@ -33,13 +33,14 @@ func adminRoleGrantAddPage(w http.ResponseWriter, r *http.Request) {
 
 	data := struct {
 		*common.CoreData
-		Role        *db.Role
-		Section     string
-		Item        string
-		Sections    []string
-		Items       []string
-		Actions     []string
-		ItemOptions []ItemOption
+		Role          *db.Role
+		Section       string
+		Item          string
+		Sections      []string
+		Items         []string
+		Actions       []string
+		ItemOptions   []ItemOption
+		RequireItemID bool
 	}{CoreData: cd, Role: role, Section: section, Item: item}
 
 	if section == "" {
@@ -65,7 +66,9 @@ func adminRoleGrantAddPage(w http.ResponseWriter, r *http.Request) {
 			data.Items = append(data.Items, it)
 		}
 	} else {
-		data.Actions = GrantActionMap[section+"|"+item]
+		def := GrantActionMap[section+"|"+item]
+		data.Actions = def.Actions
+		data.RequireItemID = def.RequireItemID
 		if section == "forum" && item == "category" {
 			queries := cd.Queries()
 			cats, _ := queries.GetAllForumCategories(r.Context())

@@ -22,7 +22,9 @@ func TestValidID(t *testing.T) {
 		{"abcd", true},
 		{"1234", true},
 		{"a1b2c3", true},
+		{"a.b", true},
 		{"abc!", false},
+		{".", false},
 		{"..", false},
 		{"a/bc", false},
 	}

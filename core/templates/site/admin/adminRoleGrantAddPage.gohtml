@@ -38,16 +38,16 @@
     </label>
     {{ if .ItemOptions }}
     <label>Item:
-        <input list="itemOptions" name="item_id">
+        <input list="itemOptions" name="item_id"{{ if .RequireItemID }} required{{ end }}>
         <datalist id="itemOptions">
-            <option value="">All</option>
+            {{ if not .RequireItemID }}<option value="">All</option>{{ end }}
             {{ range .ItemOptions }}
             <option value="{{ .ID }}">{{ .Label }}</option>
             {{ end }}
         </datalist>
     </label>
     {{ else }}
-    <label>Item ID:<input type="text" name="item_id"></label>
+    <label>Item ID:<input type="text" name="item_id"{{ if .RequireItemID }} required{{ end }}></label>
     {{ end }}
     <input type="submit" value="Add">
 </form>

@@ -13,7 +13,7 @@
             <tr>
                 <form method="post" action="/admin/forum/category/{{ .Idforumcategory }}">
         {{ csrfField }}
-                    <td><a id="fc{{ .Idforumcategory }}" href="/forum/categories/category/{{ .Idforumcategory }}">{{ .Idforumcategory }}</a>
+                    <td><a id="fc{{ .Idforumcategory }}" href="/admin/forum/category/{{ .Idforumcategory }}">{{ .Idforumcategory }}</a>
                     <td>{{ $fcid := .ForumcategoryIdforumcategory }} <a href="#fc{{ $fcid }}">{{ $fcid }}</a> <select name="pcid" value="{{ .ForumcategoryIdforumcategory }}"><option value="0">None</option>{{ range $.Categories }}<option value="{{.Idforumcategory}}" {{if eq $fcid .Idforumcategory}}selected{{end}}>{{.Title.String}}</option>  {{ end }}</select>
                     <td><input name="name" value="{{ .Title.String }}">
                     <td><textarea name="desc">{{ .Description.String }}</textarea>

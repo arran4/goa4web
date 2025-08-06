@@ -3,6 +3,7 @@ package blogs
 import (
 	"database/sql"
 	"fmt"
+
 	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/internal/db"
@@ -29,20 +30,20 @@ var _ notif.SubscribersNotificationTemplateProvider = (*AddBlogTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*AddBlogTask)(nil)
 var _ notif.GrantsRequiredProvider = (*AddBlogTask)(nil)
 
-func (AddBlogTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (AddBlogTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("adminNotificationBlogAddEmail")
 }
 
-func (AddBlogTask) AdminInternalNotificationTemplate() *string {
+func (AddBlogTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("adminNotificationBlogAddEmail")
 	return &v
 }
 
-func (AddBlogTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+func (AddBlogTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("blogAddEmail")
 }
 
-func (AddBlogTask) SubscribedInternalNotificationTemplate() *string {
+func (AddBlogTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	s := notif.NotificationTemplateFilenameGenerator("blog_add")
 	return &s
 }
@@ -107,14 +108,12 @@ func BlogAddPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	type Data struct {
-		*common.CoreData
 		Languages          []*db.Language
 		SelectedLanguageId int
 		Mode               string
 	}
 
 	data := Data{
-		CoreData:           cd,
 		SelectedLanguageId: int(cd.PreferredLanguageID(cd.Config.DefaultLanguage)),
 		Mode:               "Add",
 	}

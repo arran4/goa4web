@@ -20,7 +20,6 @@ import (
 // BloggerListPage shows all bloggers with their post counts.
 func BloggerListPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Rows     []*db.ListBloggersForListerRow
 		Search   string
 		PageSize int
@@ -29,7 +28,6 @@ func BloggerListPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Bloggers"
 	data := Data{
-		CoreData: cd,
 		Search:   r.URL.Query().Get("search"),
 		PageSize: cd.PageSize(),
 	}
@@ -37,7 +35,7 @@ func BloggerListPage(w http.ResponseWriter, r *http.Request) {
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
 	pageSize := cd.PageSize()
-	rows, err := data.CoreData.Bloggers(r)
+	rows, err := cd.Bloggers(r)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

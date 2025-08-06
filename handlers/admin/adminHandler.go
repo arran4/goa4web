@@ -22,7 +22,6 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type Data struct {
-		*common.CoreData
 		AdminSections []common.AdminSection
 		Stats         Stats
 	}
@@ -30,7 +29,6 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Admin"
 	data := Data{
-		CoreData:      cd,
 		AdminSections: cd.Nav.AdminSections(),
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()

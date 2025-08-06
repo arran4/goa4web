@@ -3,6 +3,8 @@ package news_test
 import (
 	"testing"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers/admin"
 	notif "github.com/arran4/goa4web/internal/notifications"
@@ -35,10 +37,10 @@ func checkNotificationTemplate(t *testing.T, name *string) {
 
 func TestNewsUserLevelTasksTemplates(t *testing.T) {
 	allow := admin.NewsUserAllowTask{TaskString: admin.TaskNewsUserAllow}
-	checkEmailTemplates(t, allow.AdminEmailTemplate())
-	checkNotificationTemplate(t, allow.AdminInternalNotificationTemplate())
+	checkEmailTemplates(t, allow.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+	checkNotificationTemplate(t, allow.AdminInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
 
 	remove := admin.NewsUserRemoveTask{TaskString: admin.TaskNewsUserRemove}
-	checkEmailTemplates(t, remove.AdminEmailTemplate())
-	checkNotificationTemplate(t, remove.AdminInternalNotificationTemplate())
+	checkEmailTemplates(t, remove.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+	checkNotificationTemplate(t, remove.AdminInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
 }

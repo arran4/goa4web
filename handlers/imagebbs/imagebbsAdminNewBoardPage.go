@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 
@@ -25,11 +27,11 @@ var newBoardTask = &NewBoardTask{TaskString: TaskNewBoard}
 var _ tasks.Task = (*NewBoardTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*NewBoardTask)(nil)
 
-func (NewBoardTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (NewBoardTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("adminNotificationImageBoardNewEmail")
 }
 
-func (NewBoardTask) AdminInternalNotificationTemplate() *string {
+func (NewBoardTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("adminNotificationImageBoardNewEmail")
 	return &v
 }

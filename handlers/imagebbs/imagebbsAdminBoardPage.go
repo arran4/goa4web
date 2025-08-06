@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/core/common"
@@ -28,11 +30,11 @@ var modifyBoardTask = &ModifyBoardTask{TaskString: TaskModifyBoard}
 var _ tasks.Task = (*ModifyBoardTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*ModifyBoardTask)(nil)
 
-func (ModifyBoardTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (ModifyBoardTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("imageBoardUpdateEmail")
 }
 
-func (ModifyBoardTask) AdminInternalNotificationTemplate() *string {
+func (ModifyBoardTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("imageBoardUpdateEmail")
 	return &v
 }
@@ -78,7 +80,6 @@ func (ModifyBoardTask) Action(w http.ResponseWriter, r *http.Request) any {
 // AdminBoardPage shows a form to edit an existing board.
 func AdminBoardPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Board  *db.Imageboard
 		Boards []*db.Imageboard
 	}
@@ -116,7 +117,7 @@ func AdminBoardPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := Data{CoreData: cd, Board: board, Boards: boards}
+	data := Data{Board: board, Boards: boards}
 
 	handlers.TemplateHandler(w, r, "adminBoardPage.gohtml", data)
 }

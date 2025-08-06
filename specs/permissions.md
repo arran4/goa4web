@@ -169,7 +169,6 @@ Many queries now filter results directly in SQL using `lister_id` together with 
 | `forum`    | `thread`   | `see`           | Show a thread in listings |
 | `forum`    | `thread`   | `view`          | View posts within a thread |
 | `forum`    | `thread`   | `reply`         | Reply within the thread |
-| `forum`    | `thread`   | `post`          | Add a new post in the thread |
 | `forum`    | `thread`   | `edit`          | Edit posts in the thread |
 | `forum`    | `topic`    | `see`           | Show a topic in listings |
 | `forum`    | `topic`    | `view`          | View the topic details |

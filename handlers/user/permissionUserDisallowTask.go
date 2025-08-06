@@ -23,11 +23,11 @@ var _ tasks.Task = (*PermissionUserDisallowTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*PermissionUserDisallowTask)(nil)
 var _ notif.TargetUsersNotificationProvider = (*PermissionUserDisallowTask)(nil)
 
-func (PermissionUserDisallowTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (PermissionUserDisallowTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("adminPermissionDisallowEmail")
 }
 
-func (PermissionUserDisallowTask) AdminInternalNotificationTemplate() *string {
+func (PermissionUserDisallowTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("adminPermissionDisallowEmail")
 	return &v
 }
@@ -96,11 +96,11 @@ func (PermissionUserDisallowTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32
 	return nil, fmt.Errorf("target user id not provided")
 }
 
-func (PermissionUserDisallowTask) TargetEmailTemplate() *notif.EmailTemplates {
+func (PermissionUserDisallowTask) TargetEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("deleteUserRoleEmail")
 }
 
-func (PermissionUserDisallowTask) TargetInternalNotificationTemplate() *string {
+func (PermissionUserDisallowTask) TargetInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("delete_user_role")
 	return &v
 }

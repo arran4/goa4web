@@ -3,6 +3,8 @@ package imagebbs
 import (
 	"testing"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+
 	"github.com/arran4/goa4web/core/templates"
 	notif "github.com/arran4/goa4web/internal/notifications"
 )
@@ -38,9 +40,9 @@ func TestImageBbsTemplatesExist(t *testing.T) {
 		modifyBoardTask,
 	}
 	for _, p := range admins {
-		checkEmailTemplates(t, p.AdminEmailTemplate())
+		checkEmailTemplates(t, p.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
 		if p != newBoardTask {
-			checkNotificationTemplate(t, p.AdminInternalNotificationTemplate())
+			checkNotificationTemplate(t, p.AdminInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
 		}
 	}
 
@@ -48,15 +50,15 @@ func TestImageBbsTemplatesExist(t *testing.T) {
 		approvePostTask,
 	}
 	for _, p := range selfProviders {
-		checkEmailTemplates(t, p.SelfEmailTemplate())
-		checkNotificationTemplate(t, p.SelfInternalNotificationTemplate())
+		checkEmailTemplates(t, p.SelfEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+		checkNotificationTemplate(t, p.SelfInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
 	}
 
 	subs := []notif.SubscribersNotificationTemplateProvider{
 		replyTask,
 	}
 	for _, p := range subs {
-		checkEmailTemplates(t, p.SubscribedEmailTemplate())
-		checkNotificationTemplate(t, p.SubscribedInternalNotificationTemplate())
+		checkEmailTemplates(t, p.SubscribedEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+		checkNotificationTemplate(t, p.SubscribedInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
 	}
 }

@@ -42,13 +42,12 @@ func (topicThreadCommentEditActionTask) Action(w http.ResponseWriter, r *http.Re
 	}
 	commentID, _ := strconv.Atoi(mux.Vars(r)["comment"])
 
-	if err = queries.UpdateCommentForCommenter(r.Context(), db.UpdateCommentForCommenterParams{
-		CommentID:      int32(commentID),
-		GrantCommentID: sql.NullInt32{Int32: int32(commentID), Valid: true},
-		LanguageID:     int32(languageID),
-		Text:           sql.NullString{String: text, Valid: true},
-		GranteeID:      sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-		CommenterID:    cd.UserID,
+	if err = queries.UpdateCommentForEditor(r.Context(), db.UpdateCommentForEditorParams{
+		LanguageID:  int32(languageID),
+		Text:        sql.NullString{String: text, Valid: true},
+		CommentID:   int32(commentID),
+		CommenterID: cd.UserID,
+		EditorID:    sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 	}); err != nil {
 		return fmt.Errorf("update comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

@@ -31,11 +31,9 @@ func adminUserWritingsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd.PageTitle = fmt.Sprintf("Writings by %s", user.Username.String)
 	data := struct {
-		*common.CoreData
 		User     *db.User
 		Writings []*db.AdminGetAllWritingsByAuthorRow
 	}{
-		CoreData: cd,
 		User:     &db.User{Idusers: cpu.Idusers, Username: user.Username},
 		Writings: rows,
 	}

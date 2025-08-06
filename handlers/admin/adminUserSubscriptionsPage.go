@@ -31,13 +31,11 @@ func adminUserSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd.PageTitle = fmt.Sprintf("Subscriptions of %s", user.Username.String)
 	data := struct {
-		*common.CoreData
 		User *db.User
 		Subs []*db.ListSubscriptionsByUserRow
 	}{
-		CoreData: cd,
-		User:     &db.User{Idusers: cpu.Idusers, Username: user.Username},
-		Subs:     rows,
+		User: &db.User{Idusers: cpu.Idusers, Username: user.Username},
+		Subs: rows,
 	}
 	handlers.TemplateHandler(w, r, "userSubscriptionsPage.gohtml", data)
 }

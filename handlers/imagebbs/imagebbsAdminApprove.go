@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/core/common"
@@ -46,11 +48,11 @@ func (ApprovePostTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return nil
 }
 
-func (ApprovePostTask) SelfEmailTemplate() *notif.EmailTemplates {
+func (ApprovePostTask) SelfEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("imagePostApprovedEmail")
 }
 
-func (ApprovePostTask) SelfInternalNotificationTemplate() *string {
+func (ApprovePostTask) SelfInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	s := notif.NotificationTemplateFilenameGenerator("image_post_approved")
 	return &s
 }

@@ -3,10 +3,11 @@ package forum
 import (
 	"database/sql"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
 
@@ -49,20 +50,20 @@ func (CreateThreadTask) IndexData(data map[string]any) []searchworker.IndexEvent
 	return nil
 }
 
-func (CreateThreadTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+func (CreateThreadTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("threadEmail")
 }
 
-func (CreateThreadTask) SubscribedInternalNotificationTemplate() *string {
+func (CreateThreadTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	s := notif.NotificationTemplateFilenameGenerator("thread")
 	return &s
 }
 
-func (CreateThreadTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (CreateThreadTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("adminNotificationForumThreadCreateEmail")
 }
 
-func (CreateThreadTask) AdminInternalNotificationTemplate() *string {
+func (CreateThreadTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("adminNotificationForumThreadCreateEmail")
 	return &v
 }
@@ -84,7 +85,6 @@ func (CreateThreadTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, strin
 
 func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Languages          []*db.Language
 		SelectedLanguageId int
 	}
@@ -92,7 +92,6 @@ func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Forum - New Thread"
 	data := Data{
-		CoreData:           cd,
 		SelectedLanguageId: int(cd.PreferredLanguageID(cd.Config.DefaultLanguage)),
 	}
 
@@ -104,7 +103,7 @@ func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	blogs.CustomBlogIndex(data.CoreData, r)
+	blogs.CustomBlogIndex(cd, r)
 
 	handlers.TemplateHandler(w, r, "threadNewPage.gohtml", data)
 }
@@ -172,6 +171,11 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 		GranteeID:          sql.NullInt32{Int32: uid, Valid: true},
 	})
 	if err != nil {
+		log.Printf("Error: makeThread: %s", err)
+		return fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	if cid == 0 {
+		err := handlers.ErrForbidden
 		log.Printf("Error: makeThread: %s", err)
 		return fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

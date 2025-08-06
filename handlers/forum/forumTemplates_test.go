@@ -3,6 +3,8 @@ package forum
 import (
 	"testing"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+
 	"github.com/arran4/goa4web/core/templates"
 	notif "github.com/arran4/goa4web/internal/notifications"
 )
@@ -38,7 +40,7 @@ func TestForumTemplatesExist(t *testing.T) {
 		replyTask,
 	}
 	for _, p := range providers {
-		checkEmailTemplates(t, p.SubscribedEmailTemplate())
-		checkNotificationTemplate(t, p.SubscribedInternalNotificationTemplate())
+		checkEmailTemplates(t, p.SubscribedEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+		checkNotificationTemplate(t, p.SubscribedInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
 	}
 }

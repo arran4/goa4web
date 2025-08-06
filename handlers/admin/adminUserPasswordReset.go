@@ -34,13 +34,11 @@ func (UserPasswordResetTask) Action(w http.ResponseWriter, r *http.Request) any 
 		back = fmt.Sprintf("/admin/user/%d", user.Idusers)
 	}
 	data := struct {
-		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: cd,
-		Back:     back,
+		Back: back,
 	}
 	if user == nil {
 		data.Errors = append(data.Errors, "user not found")
@@ -83,11 +81,11 @@ func (UserPasswordResetTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, err
 	return nil, fmt.Errorf("target user id not provided")
 }
 
-func (UserPasswordResetTask) TargetEmailTemplate() *notif.EmailTemplates {
+func (UserPasswordResetTask) TargetEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("adminPasswordResetEmail")
 }
 
-func (UserPasswordResetTask) TargetInternalNotificationTemplate() *string {
+func (UserPasswordResetTask) TargetInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("admin_password_reset")
 	return &v
 }
@@ -111,13 +109,11 @@ func adminUserResetPasswordConfirmPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data := struct {
-		*common.CoreData
 		User *db.User
 		Back string
 	}{
-		CoreData: cd,
-		User:     &db.User{Idusers: user.Idusers, Username: user.Username},
-		Back:     fmt.Sprintf("/admin/user/%d", user.Idusers),
+		User: &db.User{Idusers: user.Idusers, Username: user.Username},
+		Back: fmt.Sprintf("/admin/user/%d", user.Idusers),
 	}
 	handlers.TemplateHandler(w, r, "userResetPasswordConfirmPage.gohtml", data)
 }

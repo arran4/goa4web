@@ -4,9 +4,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"strconv"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
@@ -34,11 +35,17 @@ var (
 	_ notif.GrantsRequiredProvider                  = (*ReplyBlogTask)(nil)
 )
 
-func (ReplyBlogTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+func (ReplyBlogTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
+	if evt.Outcome != eventbus.TaskOutcomeSuccess {
+		return nil
+	}
 	return notif.NewEmailTemplates("replyEmail")
 }
 
-func (ReplyBlogTask) SubscribedInternalNotificationTemplate() *string {
+func (ReplyBlogTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
+	if evt.Outcome != eventbus.TaskOutcomeSuccess {
+		return nil
+	}
 	s := notif.NotificationTemplateFilenameGenerator("reply")
 	return &s
 }
@@ -181,6 +188,10 @@ func (ReplyBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 		GranteeID:          sql.NullInt32{Int32: uid, Valid: true},
 	})
 	if err != nil {
+		return fmt.Errorf("create comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	if cid == 0 {
+		err := handlers.ErrForbidden
 		return fmt.Errorf("create comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 

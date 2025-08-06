@@ -21,7 +21,6 @@ import (
 
 func ShowPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Link               *db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow
 		Languages          []*db.Language
 		SelectedLanguageId int
@@ -31,7 +30,7 @@ func ShowPage(w http.ResponseWriter, r *http.Request) {
 	cd.LoadSelectionsFromRequest(r)
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	data := Data{
-		CoreData:           cd,
+		CanReply:           cd.UserID != 0,
 		SelectedLanguageId: int(cd.PreferredLanguageID(cd.Config.DefaultLanguage)),
 	}
 	vars := mux.Vars(r)
@@ -172,6 +171,12 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		GranteeID:          sql.NullInt32{Int32: uid, Valid: true},
 	})
 	if err != nil {
+		log.Printf("Error: createComment: %s", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	if cid == 0 {
+		err := handlers.ErrForbidden
 		log.Printf("Error: createComment: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return

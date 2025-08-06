@@ -3,6 +3,8 @@ package search
 import (
 	"net/http"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -18,20 +20,20 @@ var _ notif.SelfNotificationTemplateProvider = (*RemakeBlogFinishedTask)(nil)
 
 func (RemakeBlogFinishedTask) Action(http.ResponseWriter, *http.Request) any { return nil }
 
-func (RemakeBlogFinishedTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (RemakeBlogFinishedTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("searchRebuildBlogEmail")
 }
 
-func (RemakeBlogFinishedTask) AdminInternalNotificationTemplate() *string {
+func (RemakeBlogFinishedTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	s := notif.NotificationTemplateFilenameGenerator("search_rebuild_blog")
 	return &s
 }
 
-func (RemakeBlogFinishedTask) SelfEmailTemplate() *notif.EmailTemplates {
+func (RemakeBlogFinishedTask) SelfEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("searchRebuildBlogEmail")
 }
 
-func (RemakeBlogFinishedTask) SelfInternalNotificationTemplate() *string {
+func (RemakeBlogFinishedTask) SelfInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	s := notif.NotificationTemplateFilenameGenerator("search_rebuild_blog")
 	return &s
 }

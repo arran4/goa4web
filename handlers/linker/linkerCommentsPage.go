@@ -22,7 +22,6 @@ import (
 
 func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Link           *db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow
 		Comments       []*db.GetCommentsByThreadIdForUserRow
 		IsReplyable    bool
@@ -46,7 +45,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	common.WithOffset(offset)(cd)
 	data := Data{
-		CoreData:    cd,
+		CanReply:    cd.UserID != 0,
 		CanEdit:     false,
 		IsReplyable: true,
 	}
@@ -94,7 +93,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	data.IsReplyable = canComment
 
 	data.Link = link
-	data.CoreData.PageTitle = fmt.Sprintf("Link %d Comments", link.Idlinker)
+	cd.PageTitle = fmt.Sprintf("Link %d Comments", link.Idlinker)
 	data.CanEdit = cd.HasRole("administrator") || uid == link.UsersIdusers
 
 	cd.SetCurrentThreadAndTopic(link.ForumthreadID, 0)
@@ -127,7 +126,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	commentId, _ := strconv.Atoi(r.URL.Query().Get("comment"))
 	data.Comments = commentRows
 	data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
-		return data.CoreData.CanEditAny() || cmt.IsOwner
+		return cd.CanEditAny() || cmt.IsOwner
 	}
 	data.EditURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
 		if !data.CanEditComment(cmt) {
@@ -279,6 +278,10 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		GranteeID:          sql.NullInt32{Int32: uid, Valid: true},
 	})
 	if err != nil {
+		return fmt.Errorf("create comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	if cid == 0 {
+		err := handlers.ErrForbidden
 		return fmt.Errorf("create comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 

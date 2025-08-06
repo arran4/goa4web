@@ -59,11 +59,11 @@ func (UserDisallowTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, error) {
 	return nil, fmt.Errorf("target user id not provided")
 }
 
-func (UserDisallowTask) TargetEmailTemplate() *notif.EmailTemplates {
+func (UserDisallowTask) TargetEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("deleteUserRoleEmail")
 }
 
-func (UserDisallowTask) TargetInternalNotificationTemplate() *string {
+func (UserDisallowTask) TargetInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("delete_user_role")
 	return &v
 }

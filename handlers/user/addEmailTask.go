@@ -145,7 +145,7 @@ func (AddEmailTask) Notify(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 }
 
-func (AddEmailTask) DirectEmailTemplate() *notif.EmailTemplates {
+func (AddEmailTask) DirectEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("verifyEmail")
 }
 

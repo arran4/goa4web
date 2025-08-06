@@ -31,13 +31,11 @@ func adminUserBlogsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd.PageTitle = fmt.Sprintf("Blogs by %s", user.Username.String)
 	data := struct {
-		*common.CoreData
 		User  *db.User
 		Blogs []*db.AdminGetAllBlogEntriesByUserRow
 	}{
-		CoreData: cd,
-		User:     &db.User{Idusers: cpu.Idusers, Username: user.Username},
-		Blogs:    rows,
+		User:  &db.User{Idusers: cpu.Idusers, Username: user.Username},
+		Blogs: rows,
 	}
 	handlers.TemplateHandler(w, r, "userBlogsPage.gohtml", data)
 }

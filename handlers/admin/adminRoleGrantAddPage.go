@@ -26,13 +26,12 @@ func adminRoleGrantAddPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("role not found"))
 		return
 	}
-	cd.PageTitle = fmt.Sprintf("Add Grant: %s", role.Name)
+	cd.PageTitle = fmt.Sprintf("Add Grant to Role: %s", role.Name)
 
 	section := r.URL.Query().Get("section")
 	item := r.URL.Query().Get("item")
 
 	data := struct {
-		*common.CoreData
 		Role          *db.Role
 		Section       string
 		Item          string
@@ -41,7 +40,7 @@ func adminRoleGrantAddPage(w http.ResponseWriter, r *http.Request) {
 		Actions       []string
 		ItemOptions   []ItemOption
 		RequireItemID bool
-	}{CoreData: cd, Role: role, Section: section, Item: item}
+	}{Role: role, Section: section, Item: item}
 
 	if section == "" {
 		sectSet := map[string]struct{}{}

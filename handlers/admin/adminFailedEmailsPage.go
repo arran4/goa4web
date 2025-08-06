@@ -23,7 +23,6 @@ func AdminFailedEmailsPage(w http.ResponseWriter, r *http.Request) {
 		Subject string
 	}
 	type Data struct {
-		*common.CoreData
 		Emails   []EmailItem
 		PageSize int
 	}
@@ -34,7 +33,6 @@ func AdminFailedEmailsPage(w http.ResponseWriter, r *http.Request) {
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
 	data := Data{
-		CoreData: cd,
 		PageSize: pageSize,
 	}
 

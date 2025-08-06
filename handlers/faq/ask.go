@@ -3,10 +3,12 @@ package faq
 import (
 	"database/sql"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"net/url"
 	"strconv"
+
+	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/internal/eventbus"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
@@ -24,11 +26,11 @@ var askTask = &AskTask{TaskString: TaskAsk}
 var _ tasks.Task = (*AskTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*AskTask)(nil)
 
-func (AskTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (AskTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("adminNotificationFaqAskEmail")
 }
 
-func (AskTask) AdminInternalNotificationTemplate() *string {
+func (AskTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("adminNotificationFaqAskEmail")
 	return &v
 }
@@ -39,7 +41,6 @@ func (AskTask) Match(r *http.Request, m *mux.RouteMatch) bool {
 
 func (AskTask) Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Languages          []*db.Language
 		SelectedLanguageId int32
 	}
@@ -47,7 +48,6 @@ func (AskTask) Page(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Ask a Question"
 	data := Data{
-		CoreData:           cd,
 		SelectedLanguageId: cd.PreferredLanguageID(cd.Config.DefaultLanguage),
 	}
 

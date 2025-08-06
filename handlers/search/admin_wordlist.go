@@ -24,15 +24,12 @@ type WordCount struct {
 
 func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Rows       []WordCount
 		Letters    []string
 		CurrentLtr string
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	data := Data{
-		CoreData: cd,
-	}
+	data := Data{}
 	cd.PageTitle = "Search Word List"
 	letters := make([]string, len(handlers.Alphabet))
 	for i, c := range handlers.Alphabet {

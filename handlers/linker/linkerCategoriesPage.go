@@ -15,18 +15,15 @@ import (
 
 func CategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Categories []*db.LinkerCategory
 	}
 
-	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-	}
-	data.CoreData.PageTitle = "Categories"
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Categories"
+	data := Data{}
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 
-	cd := data.CoreData
 	categories, err := queries.GetAllLinkerCategoriesForUser(r.Context(), db.GetAllLinkerCategoriesForUserParams{
 		ViewerID:     cd.UserID,
 		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},

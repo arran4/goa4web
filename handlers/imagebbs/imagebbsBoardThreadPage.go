@@ -46,11 +46,17 @@ func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
 
 var _ searchworker.IndexedTask = ReplyTask{}
 
-func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+func (ReplyTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
+	if evt.Outcome != eventbus.TaskOutcomeSuccess {
+		return nil
+	}
 	return notif.NewEmailTemplates("replyEmail")
 }
 
-func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
+func (ReplyTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
+	if evt.Outcome != eventbus.TaskOutcomeSuccess {
+		return nil
+	}
 	s := notif.NotificationTemplateFilenameGenerator("reply")
 	return &s
 }
@@ -61,7 +67,7 @@ func (ReplyTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, erro
 
 func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
+		Replyable      bool
 		ForumThreadId  int
 		Comments       []*db.GetCommentsByThreadIdForUserRow
 		BoardId        int
@@ -90,9 +96,9 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	thid, _ := strconv.Atoi(thidStr)
 	cd.PageTitle = fmt.Sprintf("Thread %d/%d", bid, thid)
 
-	data := Data{CoreData: cd, BoardId: bid, ForumThreadId: thid, IsReplyable: true}
+	data := Data{Replyable: true, BoardId: bid, ForumThreadId: thid, CanReply: cd.UserID != 0, IsReplyable: true}
 
-	if !data.CoreData.HasGrant("imagebbs", "board", "view", int32(bid)) {
+	if !cd.HasGrant("imagebbs", "board", "view", int32(bid)) {
 		_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{})
 		return
 	}
@@ -126,7 +132,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	commentId, _ := strconv.Atoi(r.URL.Query().Get("comment"))
 	data.Comments = commentRows
 	data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
-		return data.CoreData.CanEditAny() || cmt.IsOwner
+		return cd.CanEditAny() || cmt.IsOwner
 	}
 	data.EditURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
 		if !data.CanEditComment(cmt) {
@@ -267,6 +273,10 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		GranteeID:          sql.NullInt32{Int32: uid, Valid: true},
 	})
 	if err != nil {
+		return fmt.Errorf("create comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	if cid == 0 {
+		err := handlers.ErrForbidden
 		return fmt.Errorf("create comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 

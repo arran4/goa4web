@@ -22,7 +22,6 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 		Preview string
 	}
 	type Data struct {
-		*common.CoreData
 		Queue    []*QueueRow
 		Search   string
 		User     string
@@ -34,7 +33,6 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Approval Queue"
 	data := Data{
-		CoreData: cd,
 		Search:   r.URL.Query().Get("search"),
 		User:     r.URL.Query().Get("user"),
 		Category: r.URL.Query().Get("category"),

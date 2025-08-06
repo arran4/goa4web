@@ -49,23 +49,22 @@ func (t *ServerShutdownTask) Action(w http.ResponseWriter, r *http.Request) any 
 		})
 	}
 	data := struct {
-		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: cd,
-		Back:     "/admin",
+		Back: "/admin",
 	}
 	path := r.URL.Path
 	uid := cd.UserID
 	go func() {
 		if t.h != nil && t.h.Srv != nil && t.h.Srv.Bus != nil {
 			evt := eventbus.TaskEvent{
-				Path:   path,
-				Task:   TaskServerShutdown,
-				UserID: uid,
-				Time:   time.Now(),
+				Path:    path,
+				Task:    TaskServerShutdown,
+				UserID:  uid,
+				Time:    time.Now(),
+				Outcome: eventbus.TaskOutcomeSuccess,
 			}
 			if err := t.h.Srv.Bus.Publish(evt); err != nil {
 				log.Printf("publish shutdown event: %v", err)

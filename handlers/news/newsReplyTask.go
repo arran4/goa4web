@@ -4,10 +4,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/gorilla/mux"
 
@@ -45,20 +46,32 @@ func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
 
 var _ searchworker.IndexedTask = ReplyTask{}
 
-func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+func (ReplyTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
+	if evt.Outcome != eventbus.TaskOutcomeSuccess {
+		return nil
+	}
 	return notif.NewEmailTemplates("replyEmail")
 }
 
-func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
+func (ReplyTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
+	if evt.Outcome != eventbus.TaskOutcomeSuccess {
+		return nil
+	}
 	s := notif.NotificationTemplateFilenameGenerator("reply")
 	return &s
 }
 
-func (ReplyTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (ReplyTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
+	if evt.Outcome != eventbus.TaskOutcomeSuccess {
+		return nil
+	}
 	return notif.NewEmailTemplates("adminNotificationNewsReplyEmail")
 }
 
-func (ReplyTask) AdminInternalNotificationTemplate() *string {
+func (ReplyTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
+	if evt.Outcome != eventbus.TaskOutcomeSuccess {
+		return nil
+	}
 	v := notif.NotificationTemplateFilenameGenerator("adminNotificationNewsReplyEmail")
 	return &v
 }
@@ -166,6 +179,10 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		evt.Data = map[string]any{}
 	}
 	evt.Data["CommentURL"] = endUrl
+	evt.Data["PostURL"] = endUrl
+	if user, err := cd.CurrentUser(); err == nil && user != nil {
+		evt.Data["Username"] = user.Username.String
+	}
 
 	cid, err := queries.CreateCommentForCommenter(r.Context(), db.CreateCommentForCommenterParams{
 		LanguageID:         int32(languageId),
@@ -176,6 +193,11 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		GranteeID:          sql.NullInt32{Int32: uid, Valid: true},
 	})
 	if err != nil {
+		log.Printf("Error: createComment: %s", err)
+		return fmt.Errorf("create comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	if cid == 0 {
+		err := handlers.ErrForbidden
 		log.Printf("Error: createComment: %s", err)
 		return fmt.Errorf("create comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

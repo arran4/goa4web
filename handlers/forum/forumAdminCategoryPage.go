@@ -36,11 +36,9 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd.PageTitle = fmt.Sprintf("Forum Category %d", cid)
 	data := struct {
-		*common.CoreData
 		Category *db.Forumcategory
 		Topics   []*db.Forumtopic
 	}{
-		CoreData: cd,
 		Category: cat,
 		Topics:   topics,
 	}

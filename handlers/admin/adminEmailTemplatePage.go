@@ -7,6 +7,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -31,40 +32,41 @@ func gatherTaskTemplateInfos(reg *tasks.Registry) []taskTemplateInfo {
 	for _, e := range entries {
 		info := taskTemplateInfo{Section: e.Section, Task: e.Task.Name()}
 		t := e.Task
+		evt := eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}
 		if tp, ok := t.(notif.SelfNotificationTemplateProvider); ok {
-			if et := tp.SelfEmailTemplate(); et != nil {
+			if et := tp.SelfEmailTemplate(evt); et != nil {
 				info.SelfEmail = []string{et.Text, et.HTML, et.Subject}
 			}
-			if nt := tp.SelfInternalNotificationTemplate(); nt != nil {
+			if nt := tp.SelfInternalNotificationTemplate(evt); nt != nil {
 				info.SelfInternal = *nt
 			}
 		}
 		if tp, ok := t.(notif.DirectEmailNotificationTemplateProvider); ok {
-			if et := tp.DirectEmailTemplate(); et != nil {
+			if et := tp.DirectEmailTemplate(evt); et != nil {
 				info.DirectEmail = []string{et.Text, et.HTML, et.Subject}
 			}
 		}
 		if tp, ok := t.(notif.SubscribersNotificationTemplateProvider); ok {
-			if et := tp.SubscribedEmailTemplate(); et != nil {
+			if et := tp.SubscribedEmailTemplate(evt); et != nil {
 				info.SubEmail = []string{et.Text, et.HTML, et.Subject}
 			}
-			if nt := tp.SubscribedInternalNotificationTemplate(); nt != nil {
+			if nt := tp.SubscribedInternalNotificationTemplate(evt); nt != nil {
 				info.SubInternal = *nt
 			}
 		}
 		if tp, ok := t.(notif.AdminEmailTemplateProvider); ok {
-			if et := tp.AdminEmailTemplate(); et != nil {
+			if et := tp.AdminEmailTemplate(evt); et != nil {
 				info.AdminEmail = []string{et.Text, et.HTML, et.Subject}
 			}
-			if nt := tp.AdminInternalNotificationTemplate(); nt != nil {
+			if nt := tp.AdminInternalNotificationTemplate(evt); nt != nil {
 				info.AdminInternal = *nt
 			}
 		}
 		if tp, ok := t.(notif.TargetUsersNotificationProvider); ok {
-			if et := tp.TargetEmailTemplate(); et != nil {
+			if et := tp.TargetEmailTemplate(evt); et != nil {
 				info.TargetEmail = []string{et.Text, et.HTML, et.Subject}
 			}
-			if nt := tp.TargetInternalNotificationTemplate(); nt != nil {
+			if nt := tp.TargetInternalNotificationTemplate(evt); nt != nil {
 				info.TargetInternal = *nt
 			}
 		}

@@ -16,13 +16,12 @@ import (
 
 func AdminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Announcements []*db.AdminListAnnouncementsWithNewsRow
 		NewsID        string
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Admin Announcements"
-	data := Data{CoreData: cd}
+	data := Data{}
 	queries := cd.Queries()
 	rows, err := queries.AdminListAnnouncementsWithNews(r.Context())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {

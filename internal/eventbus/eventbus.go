@@ -28,12 +28,18 @@ type Message interface {
 
 // TaskEvent represents a task or notification that occurred in the application.
 type TaskEvent struct {
-	Path   string         // Path or URI describing the event source
-	Task   tasks.Task     // Name of the action/task performed
-	UserID int32          // ID of the user performing the action
-	Time   time.Time      // Time the event occurred
-	Data   map[string]any // Optional template data associated with the event
+	Path    string         // Path or URI describing the event source
+	Task    tasks.Task     // Name of the action/task performed
+	UserID  int32          // ID of the user performing the action
+	Time    time.Time      // Time the event occurred
+	Data    map[string]any // Optional template data associated with the event
+	Outcome string         // Outcome describes the result of the task run
 }
+
+const (
+	// TaskOutcomeSuccess indicates the task completed without error.
+	TaskOutcomeSuccess = "success"
+)
 
 // Type implements the Message interface.
 func (TaskEvent) Type() MessageType { return TaskMessageType }

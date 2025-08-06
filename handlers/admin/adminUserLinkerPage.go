@@ -35,13 +35,11 @@ func adminUserLinkerPage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd.PageTitle = fmt.Sprintf("Links by %s", user.Username.String)
 	data := struct {
-		*common.CoreData
 		User  *db.User
 		Links []*db.GetLinkerItemsByUserDescendingRow
 	}{
-		CoreData: cd,
-		User:     &db.User{Idusers: cpu.Idusers, Username: user.Username},
-		Links:    rows,
+		User:  &db.User{Idusers: cpu.Idusers, Username: user.Username},
+		Links: rows,
 	}
 	handlers.TemplateHandler(w, r, "userLinkerPage.gohtml", data)
 }

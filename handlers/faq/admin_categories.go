@@ -14,17 +14,14 @@ import (
 
 func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Rows []*db.GetFAQCategoriesWithQuestionCountRow
 	}
 
-	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-	}
-	cd := data.CoreData
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "FAQ Categories"
+	data := Data{}
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 
 	rows, err := queries.GetFAQCategoriesWithQuestionCount(r.Context())
 	if err != nil {

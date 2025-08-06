@@ -28,13 +28,11 @@ func adminLanguagesRenamePage(w http.ResponseWriter, r *http.Request) {
 	cid := r.PostFormValue("cid")
 	cname := r.PostFormValue("cname")
 	data := struct {
-		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-		Back:     "/admin/languages",
+		Back: "/admin/languages",
 	}
 	if cidi, err := strconv.Atoi(cid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
@@ -59,13 +57,11 @@ func adminLanguagesDeletePage(w http.ResponseWriter, r *http.Request) {
 	queries := cd.Queries()
 	cid := r.PostFormValue("cid")
 	data := struct {
-		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: cd,
-		Back:     "/admin/languages",
+		Back: "/admin/languages",
 	}
 	if cidi, err := strconv.Atoi(cid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
@@ -97,13 +93,11 @@ func adminLanguagesCreatePage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cname := r.PostFormValue("cname")
 	data := struct {
-		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-		Back:     "/admin/languages",
+		Back: "/admin/languages",
 	}
 	if res, err := queries.AdminInsertLanguage(r.Context(), sql.NullString{
 		String: cname,

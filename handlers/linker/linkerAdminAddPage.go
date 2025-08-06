@@ -4,10 +4,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/internal/eventbus"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
@@ -21,7 +23,6 @@ import (
 
 func AdminAddPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Languages          []*db.Language
 		SelectedLanguageId int
 		Categories         []*db.LinkerCategory
@@ -31,7 +32,6 @@ func AdminAddPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Add Link"
 	data := Data{
-		CoreData:           cd,
 		SelectedLanguageId: int(cd.PreferredLanguageID(cd.Config.DefaultLanguage)),
 	}
 
@@ -48,7 +48,7 @@ func AdminAddPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Categories = categoryRows
 
-	languageRows, err := data.CoreData.Languages()
+	languageRows, err := cd.Languages()
 	if err != nil {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
@@ -98,20 +98,20 @@ func (addTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return nil
 }
 
-func (addTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+func (addTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("linkerAddEmail")
 }
 
-func (addTask) SubscribedInternalNotificationTemplate() *string {
+func (addTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	s := notif.NotificationTemplateFilenameGenerator("linker_add")
 	return &s
 }
 
-func (addTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (addTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("adminNotificationLinkerAddEmail")
 }
 
-func (addTask) AdminInternalNotificationTemplate() *string {
+func (addTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("adminNotificationLinkerAddEmail")
 	return &v
 }

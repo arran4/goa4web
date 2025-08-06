@@ -13,7 +13,7 @@
         </tr>
         {{ range call cd.AdminForumTopics }}
             <tr>
-                <td>{{ .Idforumtopic }}</td>
+                <td><a href="/admin/forum/topic/{{ .Idforumtopic }}">{{ .Idforumtopic }}</a></td>
                 <td>
                     <form method="post" action="/admin/forum/topic/{{ .Idforumtopic }}/edit">
         {{ csrfField }}

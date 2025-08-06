@@ -1,0 +1,16 @@
+{{ template "head" $ }}
+<h4>Edit Topic {{ .Topic.Idforumtopic }}</h4>
+<form method="post" action="/admin/forum/topic/{{ .Topic.Idforumtopic }}/edit">
+{{ csrfField }}
+Title: <input name="name" value="{{ .Topic.Title.String }}"><br>
+Description:<br>
+<textarea name="desc">{{ .Topic.Description.String }}</textarea><br>
+Category: <select name="cid"><option value="0">None</option>{{ range .Categories }}<option value="{{.Idforumcategory}}" {{if eq $.Topic.ForumcategoryIdforumcategory .Idforumcategory}}selected{{end}}>{{.Title.String}}</option>{{ end }}</select><br>
+<input type="submit" name="task" value="Forum topic change">
+</form>
+<p><a href="/admin/forum/topic/{{ .Topic.Idforumtopic }}/grants">Grants</a></p>
+<form method="post" action="/admin/forum/topic/{{ .Topic.Idforumtopic }}/delete">
+{{ csrfField }}
+<input type="submit" name="task" value="Forum topic delete">
+</form>
+{{ template "tail" $ }}

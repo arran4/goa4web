@@ -69,7 +69,8 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "forumAdminCategoriesPage.gohtml", data)
 }
 
-func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
+// AdminCategoryEditPost updates a forum category.
+func AdminCategoryEditPost(w http.ResponseWriter, r *http.Request) {
 	name := r.PostFormValue("name")
 	desc := r.PostFormValue("desc")
 	pcid, err := strconv.Atoi(r.PostFormValue("pcid"))
@@ -150,9 +151,11 @@ func AdminCategoryCreatePage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/admin/forum/categories", http.StatusTemporaryRedirect)
 }
 
+// AdminCategoryDeletePage removes a forum category.
 func AdminCategoryDeletePage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	cid, err := strconv.Atoi(r.PostFormValue("cid"))
+	vars := mux.Vars(r)
+	cid, err := strconv.Atoi(vars["category"])
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return

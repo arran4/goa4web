@@ -8,7 +8,7 @@
             <tr>
                 <td>
                     {{ if and $.Admin .Edit }}
-                        <form method="post" action="/admin/forum/category/{{ .Idforumcategory }}">
+                        <form method="post" action="/admin/forum/category/{{ .Idforumcategory }}/edit">
         {{ csrfField }}
                             Title <input name="name" value="{{ .Title.String }}">: -
                             Description: <textarea name="desc" cols="30" rows="2">{{ .Description.String }}</textarea>
@@ -18,7 +18,7 @@
                             <input type="hidden" name="cid" value="{{ .Idforumcategory }}">
                             <input type="submit" name="task" value="Forum category change">
                             {{ if eq (len .Topics) 0 }}
-                            <input type="submit" name="task" formaction="/admin/forum/category/delete" value="Delete Category">
+                            <input type="submit" name="task" formaction="/admin/forum/category/{{ .Idforumcategory }}/delete" value="Delete Category">
                             {{ end }}
                         </form>
                     {{ else }}

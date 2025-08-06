@@ -11,9 +11,9 @@
         </tr>
         {{ range .Categories }}
             <tr>
-                <form method="post" action="/admin/forum/category/{{ .Idforumcategory }}">
+                <form method="post" action="/admin/forum/category/{{ .Idforumcategory }}/edit">
         {{ csrfField }}
-                    <td><a id="fc{{ .Idforumcategory }}" href="/forum/category/{{ .Idforumcategory }}">{{ .Idforumcategory }}</a>
+                    <td><a id="fc{{ .Idforumcategory }}" href="/admin/forum/category/{{ .Idforumcategory }}">{{ .Idforumcategory }}</a>
                     <td>{{ $fcid := .ForumcategoryIdforumcategory }} <a href="#fc{{ $fcid }}">{{ $fcid }}</a> <select name="pcid" value="{{ .ForumcategoryIdforumcategory }}"><option value="0">None</option>{{ range $.Categories }}<option value="{{.Idforumcategory}}" {{if eq $fcid .Idforumcategory}}selected{{end}}>{{.Title.String}}</option>  {{ end }}</select>
                     <td><input name="name" value="{{ .Title.String }}">
                     <td><textarea name="desc">{{ .Description.String }}</textarea>
@@ -23,7 +23,7 @@
                         <input type="hidden" name="cid" value="{{ .Idforumcategory }}">
                         <input type="submit" name="task" value="Forum category change">
                         {{ if eq .Topiccount 0 }}
-                        <input type="submit" name="task" formaction="/admin/forum/category/delete" value="Delete Category">
+                        <input type="submit" name="task" formaction="/admin/forum/category/{{ .Idforumcategory }}/delete" value="Delete Category">
                         {{ end }}<br>
                         <a href="/admin/forum/category/{{ .Idforumcategory }}/grants">Permissions</a>
                     </td>

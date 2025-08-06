@@ -1,0 +1,23 @@
+{{ template "head" $ }}
+<h2>Edit Category {{ .Category.Idwritingcategory }}</h2>
+<form method="post" action="/admin/writings/categories/category/{{ .Category.Idwritingcategory }}/edit">
+{{ csrfField }}
+    <input type="hidden" name="cid" value="{{ .Category.Idwritingcategory }}">
+    <table>
+        <tr>
+            <th>Parent</th>
+            <td><select name="pcid"><option value="0">None</option>{{ range .Categories }}<option value="{{ .Idwritingcategory }}" {{ if eq $.Category.WritingCategoryID .Idwritingcategory }}selected{{ end }}>{{ .Title.String }}</option>{{ end }}</select></td>
+        </tr>
+        <tr>
+            <th>Title</th>
+            <td><input name="name" value="{{ .Category.Title.String }}"></td>
+        </tr>
+        <tr>
+            <th>Description</th>
+            <td><textarea name="desc">{{ .Category.Description.String }}</textarea></td>
+        </tr>
+    </table>
+    <input type="submit" name="task" value="writing category change">
+</form>
+<p><a href="/admin/writings/categories/category/{{ .Category.Idwritingcategory }}">Back to category</a></p>
+{{ template "tail" $ }}

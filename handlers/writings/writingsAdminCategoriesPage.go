@@ -3,10 +3,12 @@ package writings
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"html/template"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/arran4/goa4web/core/common"
@@ -16,8 +18,9 @@ import (
 
 func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		Categories []*db.WritingCategory
-		Tree       template.HTML
+		Categories    []*db.WritingCategory
+		AllCategories []*db.WritingCategory
+		Tree          template.HTML
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Writing Categories"
@@ -34,7 +37,25 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	data.Categories = categoryRows
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	if offset < 0 {
+		offset = 0
+	}
+	pageSize := cd.PageSize()
+	end := offset + pageSize
+	if end > len(categoryRows) {
+		end = len(categoryRows)
+	}
+	hasMore := len(categoryRows) > end
+	base := "/admin/writings/categories"
+	if hasMore {
+		cd.NextLink = fmt.Sprintf("%s?offset=%d", base, offset+pageSize)
+	}
+	if offset > 0 {
+		cd.PrevLink = fmt.Sprintf("%s?offset=%d", base, offset-pageSize)
+	}
+	data.AllCategories = categoryRows
+	data.Categories = categoryRows[offset:end]
 	children := map[int32][]*db.WritingCategory{}
 	for _, c := range categoryRows {
 		children[c.WritingCategoryID] = append(children[c.WritingCategoryID], c)

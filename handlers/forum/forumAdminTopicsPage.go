@@ -34,10 +34,12 @@ func AdminTopicEditPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
+	languageID, _ := strconv.Atoi(r.PostFormValue("language"))
 	if err := cd.Queries().AdminUpdateForumTopic(r.Context(), db.AdminUpdateForumTopicParams{
 		Title:                        sql.NullString{String: name, Valid: true},
 		Description:                  sql.NullString{String: desc, Valid: true},
 		ForumcategoryIdforumcategory: int32(cid),
+		LanguageIdlanguage:           int32(languageID),
 		Idforumtopic:                 int32(tid),
 	}); err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -55,8 +57,10 @@ func AdminTopicCreatePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	languageID, _ := strconv.Atoi(r.PostFormValue("language"))
 	if _, err := cd.Queries().SystemCreateForumTopic(r.Context(), db.SystemCreateForumTopicParams{
 		ForumcategoryIdforumcategory: int32(pcid),
+		LanguageIdlanguage:           int32(languageID),
 		Title:                        sql.NullString{String: name, Valid: true},
 		Description:                  sql.NullString{String: desc, Valid: true},
 	}); err != nil {

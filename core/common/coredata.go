@@ -1093,7 +1093,7 @@ func (cd *CoreData) ForumCategories() ([]*db.Forumcategory, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
-		return cd.queries.GetAllForumCategories(cd.ctx)
+		return cd.queries.GetAllForumCategories(cd.ctx, db.GetAllForumCategoriesParams{ViewerID: cd.UserID})
 	})
 }
 
@@ -1164,9 +1164,12 @@ func (cd *CoreData) ForumTopics(categoryID int32) ([]*db.Forumtopic, error) {
 			return nil, nil
 		}
 		if categoryID == 0 {
-			return cd.queries.GetAllForumTopics(cd.ctx)
+			return cd.queries.GetAllForumTopics(cd.ctx, db.GetAllForumTopicsParams{ViewerID: cd.UserID})
 		}
-		return cd.queries.GetForumTopicsByCategoryId(cd.ctx, categoryID)
+		return cd.queries.GetForumTopicsByCategoryId(cd.ctx, db.GetForumTopicsByCategoryIdParams{
+			ViewerID:   cd.UserID,
+			CategoryID: categoryID,
+		})
 	})
 }
 

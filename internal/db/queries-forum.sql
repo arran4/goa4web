@@ -1,5 +1,5 @@
 -- name: AdminUpdateForumCategory :exec
-UPDATE forumcategory SET title = ?, description = ?, forumcategory_idforumcategory = ? WHERE idforumcategory = ?;
+UPDATE forumcategory SET title = ?, description = ?, forumcategory_idforumcategory = ?, language_idlanguage = ? WHERE idforumcategory = ?;
 
 -- name: GetAllForumCategoriesWithSubcategoryCount :many
 SELECT c.*, COUNT(c2.idforumcategory) as SubcategoryCount,
@@ -7,15 +7,39 @@ SELECT c.*, COUNT(c2.idforumcategory) as SubcategoryCount,
 FROM forumcategory c
 LEFT JOIN forumcategory c2 ON c.idforumcategory = c2.forumcategory_idforumcategory
 LEFT JOIN forumtopic t ON c.idforumcategory = t.forumcategory_idforumcategory
+WHERE (
+    c.language_idlanguage = 0
+    OR c.language_idlanguage IS NULL
+    OR EXISTS (
+        SELECT 1 FROM user_language ul
+        WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          AND ul.language_idlanguage = c.language_idlanguage
+    )
+    OR NOT EXISTS (
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+    )
+)
 GROUP BY c.idforumcategory;
 
 -- name: GetAllForumTopics :many
 SELECT t.*
 FROM forumtopic t
+WHERE (
+    t.language_idlanguage = 0
+    OR t.language_idlanguage IS NULL
+    OR EXISTS (
+        SELECT 1 FROM user_language ul
+        WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          AND ul.language_idlanguage = t.language_idlanguage
+    )
+    OR NOT EXISTS (
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+    )
+)
 GROUP BY t.idforumtopic;
 
 -- name: AdminUpdateForumTopic :exec
-UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ? WHERE idforumtopic = ?;
+UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ?, language_idlanguage = ? WHERE idforumtopic = ?;
 
 -- name: GetAllForumTopicsByCategoryIdForUserWithLastPosterName :many
 WITH role_ids AS (
@@ -25,6 +49,18 @@ SELECT t.*, lu.username AS LastPosterUsername
 FROM forumtopic t
 LEFT JOIN users lu ON lu.idusers = t.lastposter
 WHERE t.forumcategory_idforumcategory = sqlc.arg(category_id)
+  AND (
+      t.language_idlanguage = 0
+      OR t.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+            AND ul.language_idlanguage = t.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+      )
+  )
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='forum'
@@ -44,7 +80,19 @@ WITH role_ids AS (
 SELECT t.*, lu.username AS LastPosterUsername
 FROM forumtopic t
 LEFT JOIN users lu ON lu.idusers = t.lastposter
-WHERE EXISTS (
+WHERE (
+    t.language_idlanguage = 0
+    OR t.language_idlanguage IS NULL
+    OR EXISTS (
+        SELECT 1 FROM user_language ul
+        WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          AND ul.language_idlanguage = t.language_idlanguage
+    )
+    OR NOT EXISTS (
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+    )
+)
+  AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='forum'
       AND (g.item='topic' OR g.item IS NULL)
@@ -64,6 +112,18 @@ SELECT t.*, lu.username AS LastPosterUsername
 FROM forumtopic t
 LEFT JOIN users lu ON lu.idusers = t.lastposter
 WHERE t.idforumtopic = sqlc.arg(idforumtopic)
+  AND (
+      t.language_idlanguage = 0
+      OR t.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+            AND ul.language_idlanguage = t.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+      )
+  )
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='forum'
@@ -79,13 +139,25 @@ ORDER BY t.lastaddition DESC;
 
 -- name: GetAllForumCategories :many
 SELECT f.*
-FROM forumcategory f;
+FROM forumcategory f
+WHERE (
+    f.language_idlanguage = 0
+    OR f.language_idlanguage IS NULL
+    OR EXISTS (
+        SELECT 1 FROM user_language ul
+        WHERE ul.users_idusers = sqlc.arg(viewer_id)
+          AND ul.language_idlanguage = f.language_idlanguage
+    )
+    OR NOT EXISTS (
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+    )
+);
 
 -- name: AdminCreateForumCategory :exec
-INSERT INTO forumcategory (forumcategory_idforumcategory, title, description) VALUES (?, ?, ?);
+INSERT INTO forumcategory (forumcategory_idforumcategory, language_idlanguage, title, description) VALUES (?, ?, ?, ?);
 
 -- name: SystemCreateForumTopic :execlastid
-INSERT INTO forumtopic (forumcategory_idforumcategory, title, description) VALUES (?, ?, ?);
+INSERT INTO forumtopic (forumcategory_idforumcategory, language_idlanguage, title, description) VALUES (?, ?, ?, ?);
 
 -- name: SystemGetForumTopicByTitle :one
 SELECT *
@@ -184,10 +256,37 @@ LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
 ORDER BY t.idforumtopic, th.lastaddition DESC;
 
 -- name: GetForumCategoryById :one
-SELECT * FROM forumcategory WHERE idforumcategory = ?;
+SELECT * FROM forumcategory
+WHERE idforumcategory = sqlc.arg(idforumcategory)
+  AND (
+      language_idlanguage = 0
+      OR language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+            AND ul.language_idlanguage = language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+      )
+  );
 
 -- name: GetForumTopicsByCategoryId :many
-SELECT * FROM forumtopic WHERE forumcategory_idforumcategory = ? ORDER BY lastaddition DESC;
+SELECT * FROM forumtopic
+WHERE forumcategory_idforumcategory = sqlc.arg(category_id)
+  AND (
+      language_idlanguage = 0
+      OR language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+            AND ul.language_idlanguage = language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+      )
+  )
+ORDER BY lastaddition DESC;
 
 -- name: ListForumcategoryPath :many
 WITH RECURSIVE category_path AS (

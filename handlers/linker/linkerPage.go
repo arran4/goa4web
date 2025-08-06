@@ -15,6 +15,7 @@ import (
 
 func Page(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
 	cd.PageTitle = "Links"
 	type Data struct {
 		Offset      int32

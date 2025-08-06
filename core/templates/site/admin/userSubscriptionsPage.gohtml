@@ -1,13 +1,37 @@
 {{ template "head" $ }}
 <h2>Subscriptions of {{ .User.Username.String }}</h2>
 <table border="1">
-    <tr><th>ID</th><th>Pattern</th><th>Method</th></tr>
+    <tr><th>ID</th><th>Pattern</th><th>Method</th><th>Actions</th></tr>
     {{- range .Subs }}
     <tr>
-        <td>{{ .ID }}</td>
-        <td>{{ .Pattern }}</td>
-        <td>{{ .Method }}</td>
+        <form method="post" action="/admin/user/{{ $.User.Idusers }}/subscriptions">
+            {{ csrfField }}
+            <td><input type="hidden" name="id" value="{{ .ID }}">{{ .ID }}</td>
+            <td><input type="text" name="pattern" value="{{ .Pattern }}"></td>
+            <td>
+                <select name="method">
+                    <option value="internal" {{ if eq .Method "internal" }}selected{{ end }}>Internal</option>
+                    <option value="email" {{ if eq .Method "email" }}selected{{ end }}>Email</option>
+                </select>
+            </td>
+            <td>
+                <input type="submit" name="task" value="Update">
+                <input type="submit" name="task" value="Delete">
+            </td>
+        </form>
     </tr>
     {{- end }}
 </table>
+
+<h3>Add Subscription</h3>
+<form method="post" action="/admin/user/{{ .User.Idusers }}/subscriptions">
+    {{ csrfField }}
+    Pattern <input type="text" name="pattern">
+    Method
+    <select name="method">
+        <option value="internal">Internal</option>
+        <option value="email">Email</option>
+    </select>
+    <input type="submit" name="task" value="Add">
+</form>
 {{ template "tail" $ }}

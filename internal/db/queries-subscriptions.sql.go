@@ -167,3 +167,25 @@ func (q *Queries) ListSubscriptionsByUser(ctx context.Context, usersIdusers int3
 	}
 	return items, nil
 }
+
+const updateSubscriptionByIDForSubscriber = `-- name: UpdateSubscriptionByIDForSubscriber :exec
+UPDATE subscriptions SET pattern = ?, method = ?
+WHERE users_idusers = ? AND id = ?
+`
+
+type UpdateSubscriptionByIDForSubscriberParams struct {
+	Pattern      string
+	Method       string
+	SubscriberID int32
+	ID           int32
+}
+
+func (q *Queries) UpdateSubscriptionByIDForSubscriber(ctx context.Context, arg UpdateSubscriptionByIDForSubscriberParams) error {
+	_, err := q.db.ExecContext(ctx, updateSubscriptionByIDForSubscriber,
+		arg.Pattern,
+		arg.Method,
+		arg.SubscriberID,
+		arg.ID,
+	)
+	return err
+}

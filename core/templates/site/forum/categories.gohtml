@@ -1,7 +1,4 @@
 {{ define "getAllForumCategories" }}
-    {{ if and .Category .CategoryBreadcrumbs }}
-        {{ template "categoryBreadcrumbs" . }}
-    {{ end }}
     {{ if .Categories }}
         <table align="center" width="90%" border="1">
             {{ range .Categories }}

@@ -1,7 +1,7 @@
 {{ define "adminQuestionTable" }}
 <table>
 <tr><th>Question</th><th>Category</th><th>Actions</th></tr>
-{{- range . }}
+{{- range .Rows }}
 <tr>
     <td>{{ .Question.String }}</td>
     <td>{{ $cat := .FaqcategoriesIdfaqcategories }}{{ range $.Categories }}{{ if eq $cat .Idfaqcategories }}{{ .Name.String }}{{ end }}{{ end }}</td>

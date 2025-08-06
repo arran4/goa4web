@@ -777,6 +777,49 @@ func (q *Queries) ListImagePostsByPosterForLister(ctx context.Context, arg ListI
 	return items, nil
 }
 
+const listImageboardPath = `-- name: ListImageboardPath :many
+WITH RECURSIVE board_path AS (
+    SELECT b.idimageboard, b.imageboard_idimageboard AS parent_id, b.title, 0 AS depth
+    FROM imageboard b
+    WHERE b.idimageboard = ?
+    UNION ALL
+    SELECT b2.idimageboard, b2.imageboard_idimageboard, b2.title, p.depth + 1
+    FROM imageboard b2
+    JOIN board_path p ON p.parent_id = b2.idimageboard
+)
+SELECT board_path.idimageboard, board_path.title
+FROM board_path
+ORDER BY board_path.depth DESC
+`
+
+type ListImageboardPathRow struct {
+	Idimageboard int32
+	Title        sql.NullString
+}
+
+func (q *Queries) ListImageboardPath(ctx context.Context, boardID int32) ([]*ListImageboardPathRow, error) {
+	rows, err := q.db.QueryContext(ctx, listImageboardPath, boardID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListImageboardPathRow
+	for rows.Next() {
+		var i ListImageboardPathRow
+		if err := rows.Scan(&i.Idimageboard, &i.Title); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const systemAssignImagePostThreadID = `-- name: SystemAssignImagePostThreadID :exec
 UPDATE imagepost SET forumthread_id = ? WHERE idimagepost = ?
 `

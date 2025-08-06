@@ -1,0 +1,21 @@
+{{ template "head" $ }}
+<h2>Posts for Board {{ .Board.Idimageboard }}</h2>
+<table border="1">
+<tr><th>ID<th>User<th>Description<th>Posted<th>Comments<th>Approved</tr>
+{{ range .Posts }}
+<tr>
+<td>{{ .Idimagepost }}</td>
+<td>{{ .Username.String }}</td>
+<td>{{ .Description.String }}</td>
+<td>{{ if .Posted.Valid }}{{ .Posted.Time }}{{ end }}</td>
+<td>{{ .Comments.Int32 }}</td>
+<td>{{ if .Approved }}Yes{{ else }}No{{ end }}</td>
+</tr>
+{{ end }}
+</table>
+<div>
+{{ if .PrevPage }}<a href="?page={{ .PrevPage }}">Prev</a>{{ end }}
+{{ if and .PrevPage .NextPage }} | {{ end }}
+{{ if .NextPage }}<a href="?page={{ .NextPage }}">Next</a>{{ end }}
+</div>
+{{ template "tail" $ }}

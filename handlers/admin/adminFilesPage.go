@@ -1,4 +1,4 @@
-package imagebbs
+package admin
 
 import (
 	"database/sql"

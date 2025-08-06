@@ -13,7 +13,8 @@ import (
 
 func adminUserProfilePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	user := cd.SelectedUser()
+	cd.LoadSelectionsFromRequest(r)
+	user := cd.CurrentProfileUser()
 	if user == nil {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("user not found"))
 		return

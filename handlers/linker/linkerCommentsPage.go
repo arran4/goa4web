@@ -45,7 +45,6 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	common.WithOffset(offset)(cd)
 	data := Data{
-		CanReply:    cd.UserID != 0,
 		CanEdit:     false,
 		IsReplyable: true,
 	}

@@ -237,3 +237,36 @@ tr.unsupported td {
         background-color: lightgreen;
 }
 
+/* Breadcrumb navigation */
+.breadcrumbs {
+        font-family: tahoma, arial, helvetica, sans-serif;
+        font-size: 0.8em;
+        margin-bottom: 0.5em;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+}
+
+.breadcrumbs ol {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-wrap: nowrap;
+}
+
+.breadcrumbs li {
+        overflow: hidden;
+        text-overflow: ellipsis;
+}
+
+.breadcrumbs li + li:before {
+        content: ">";
+        padding: 0 0.25em;
+        color: #800000;
+}
+
+.breadcrumbs a {
+        text-decoration: none;
+}
+

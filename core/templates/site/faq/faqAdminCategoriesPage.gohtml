@@ -1,40 +1,17 @@
 {{ template "head" $ }}
-                <table>
-                        <tr>
-                                <th>ID
-                                <th>Name
-                                <th>Question Count
-                                <th>Options
-                        </tr>
-                        {{- range .Rows }}
-                        <tr>
-                                <td>{{ .Idfaqcategories }}</td>
-                                <td>
-                                        <form method="post">
-        {{ csrfField }}
-                                                <input type="hidden" name="cid" value="{{ .Idfaqcategories }}">
-                                                <input name="cname" value="{{ .Name.String }}">
-                                </td>
-                                <td>{{ .Questioncount }}</td>
-                                <td>
-                                        <input type="submit" name="task" value="Rename Category">
-                                        <input type="submit" name="task" value="Delete Category">
-                                        </form>
-                                </td>
-                        </tr>
-                        {{- end }}
-                        <tr>
-                                <td>NEW</td>
-                                <td>
-                                        <form method="post">
-        {{ csrfField }}
-                                                <input name="cname" value="">
-                                </td>
-                                <td></td>
-                                <td>
-                                        <input type="submit" name="task" value="Create Category">
-                                        </form>
-                                </td>
-                        </tr>
-                </table>
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Question Count</th>
+    </tr>
+    {{- range .Rows }}
+    <tr>
+        <td><a href="/admin/faq/categories/category/{{ .Idfaqcategories }}">{{ .Idfaqcategories }}</a></td>
+        <td>{{ .Name.String }}</td>
+        <td>{{ .Questioncount }}</td>
+    </tr>
+    {{- end }}
+</table>
+<p><a href="/admin/faq/categories/new">Create Category</a></p>
 {{ template "tail" $ }}

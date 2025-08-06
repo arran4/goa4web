@@ -13,13 +13,13 @@ import (
 
 func adminUserProfilePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	user := cd.CurrentProfileUser()
+	user := cd.SelectedUser()
 	if user == nil {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("user not found"))
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("User %s", user.Username.String)
-	handlers.TemplateHandler(w, r, "userProfile.gohtml", struct{}{})
+	handlers.TemplateHandler(w, r, "adminUserPage.gohtml", struct{}{})
 }
 
 func adminUserAddCommentPage(w http.ResponseWriter, r *http.Request) {

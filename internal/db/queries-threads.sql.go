@@ -190,12 +190,8 @@ func (q *Queries) GetForumTopicIdByThreadId(ctx context.Context, idforumthread i
 }
 
 const getThreadLastPosterAndPerms = `-- name: GetThreadLastPosterAndPerms :one
-WITH role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-    UNION
-    SELECT r2.id FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section='role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+WITH role_ids AS (
+    SELECT ur.role_id id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, lu.username AS LastPosterUsername
 FROM forumthread th

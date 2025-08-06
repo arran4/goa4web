@@ -113,8 +113,8 @@ func (q *Queries) CreateFAQQuestionForWriter(ctx context.Context, arg CreateFAQQ
 }
 
 const getAllAnsweredFAQWithFAQCategoriesForUser = `-- name: GetAllAnsweredFAQWithFAQCategoriesForUser :many
-WITH role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT c.idfaqCategories, c.name, f.idfaq, f.faqCategories_idfaqCategories, f.language_idlanguage, f.users_idusers, f.answer, f.question
 FROM faq f
@@ -263,8 +263,8 @@ func (q *Queries) GetAllFAQQuestions(ctx context.Context) ([]*Faq, error) {
 }
 
 const getFAQAnsweredQuestions = `-- name: GetFAQAnsweredQuestions :many
-WITH role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT idfaq, faqCategories_idfaqCategories, language_idlanguage, users_idusers, answer, question
 FROM faq

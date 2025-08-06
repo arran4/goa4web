@@ -98,8 +98,8 @@ func (q *Queries) CreateUploadedImageForUploader(ctx context.Context, arg Create
 }
 
 const listUploadedImagesByUserForLister = `-- name: ListUploadedImagesByUserForLister :many
-WITH role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT ui.iduploadedimage, ui.users_idusers, ui.path, ui.width, ui.height, ui.file_size, ui.uploaded
 FROM uploaded_images ui

@@ -12,4 +12,7 @@ func TestGetThreadLastPosterAndPerms_AllowsGlobalGrants(t *testing.T) {
 	if !strings.Contains(getThreadLastPosterAndPerms, "g.item_id = t.idforumtopic OR g.item_id IS NULL") {
 		t.Errorf("missing global item_id check")
 	}
+	if !strings.Contains(getThreadLastPosterAndPerms, "WITH role_ids") {
+		t.Errorf("missing role lookup")
+	}
 }

@@ -16,8 +16,8 @@ WHERE EXISTS (
 );
 
 -- name: ListUploadedImagesByUserForLister :many
-WITH role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT ui.iduploadedimage, ui.users_idusers, ui.path, ui.width, ui.height, ui.file_size, ui.uploaded
 FROM uploaded_images ui

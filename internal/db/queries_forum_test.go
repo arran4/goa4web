@@ -12,6 +12,8 @@ func TestForumQueriesAllowGlobalGrants(t *testing.T) {
 	}{
 		{"getForumTopicByIdForUser", getForumTopicByIdForUser},
 		{"getForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText", getForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText},
+		{"getAllForumTopicsByCategoryIdForUserWithLastPosterName", getAllForumTopicsByCategoryIdForUserWithLastPosterName},
+		{"getAllForumTopicsForUser", getAllForumTopicsForUser},
 	}
 
 	for _, c := range cases {
@@ -20,6 +22,9 @@ func TestForumQueriesAllowGlobalGrants(t *testing.T) {
 		}
 		if !strings.Contains(c.query, "g.item_id = t.idforumtopic OR g.item_id IS NULL") {
 			t.Errorf("%s missing global item_id check", c.name)
+		}
+		if !strings.Contains(c.query, "WITH role_ids") {
+			t.Errorf("%s missing role lookup", c.name)
 		}
 	}
 }

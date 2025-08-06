@@ -31,7 +31,9 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Category not found"))
 		return
 	}
-	cats, err := queries.GetAllForumCategories(r.Context(), db.GetAllForumCategoriesParams{ViewerID: cd.UserID})
+	cats, err := queries.GetAllForumCategories(r.Context(), db.GetAllForumCategoriesParams{
+		ViewerID: cd.UserID,
+	})
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))

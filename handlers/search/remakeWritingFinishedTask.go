@@ -3,6 +3,8 @@ package search
 import (
 	"net/http"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -18,20 +20,20 @@ var _ notif.SelfNotificationTemplateProvider = (*RemakeWritingFinishedTask)(nil)
 
 func (RemakeWritingFinishedTask) Action(http.ResponseWriter, *http.Request) any { return nil }
 
-func (RemakeWritingFinishedTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (RemakeWritingFinishedTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("searchRebuildWritingEmail")
 }
 
-func (RemakeWritingFinishedTask) AdminInternalNotificationTemplate() *string {
+func (RemakeWritingFinishedTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	s := notif.NotificationTemplateFilenameGenerator("search_rebuild_writing")
 	return &s
 }
 
-func (RemakeWritingFinishedTask) SelfEmailTemplate() *notif.EmailTemplates {
+func (RemakeWritingFinishedTask) SelfEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("searchRebuildWritingEmail")
 }
 
-func (RemakeWritingFinishedTask) SelfInternalNotificationTemplate() *string {
+func (RemakeWritingFinishedTask) SelfInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	s := notif.NotificationTemplateFilenameGenerator("search_rebuild_writing")
 	return &s
 }

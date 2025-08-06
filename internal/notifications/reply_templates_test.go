@@ -3,6 +3,8 @@ package notifications_test
 import (
 	"testing"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers/writings"
 )
@@ -14,7 +16,7 @@ func TestReplyTemplatesExist(t *testing.T) {
 	html := templates.GetCompiledEmailHtmlTemplates(map[string]any{})
 	text := templates.GetCompiledEmailTextTemplates(map[string]any{})
 	nt := templates.GetCompiledNotificationTemplates(map[string]any{})
-	et := task.SubscribedEmailTemplate()
+	et := task.SubscribedEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess})
 	if html.Lookup(et.HTML) == nil {
 		t.Errorf("missing html template %s", et.HTML)
 	}
@@ -24,7 +26,7 @@ func TestReplyTemplatesExist(t *testing.T) {
 	if text.Lookup(et.Subject) == nil {
 		t.Errorf("missing subject template %s", et.Subject)
 	}
-	ntName := task.SubscribedInternalNotificationTemplate()
+	ntName := task.SubscribedInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess})
 	if nt.Lookup(*ntName) == nil {
 		t.Errorf("missing notification template %s", *ntName)
 	}

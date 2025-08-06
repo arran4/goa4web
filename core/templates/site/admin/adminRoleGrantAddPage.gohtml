@@ -1,5 +1,5 @@
 {{ template "head" $ }}
-<h2>Add Grant to {{ .Role.Name }}</h2>
+<h2>Add Grant to Role {{ .Role.Name }}</h2>
 {{ if eq .Section "" }}
 <form method="get">
     <label>Section:
@@ -26,7 +26,7 @@
 {{ else }}
 <form method="post" action="/admin/role/{{ .Role.ID }}/grant">
     {{ csrfField }}
-    <input type="hidden" name="task" value="Add grant">
+    <input type="hidden" name="task" value="Create grant">
     <input type="hidden" name="section" value="{{ .Section }}">
     <input type="hidden" name="item" value="{{ .Item }}">
     <label>Action:

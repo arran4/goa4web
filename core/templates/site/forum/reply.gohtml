@@ -1,5 +1,5 @@
 {{ define "forumReply" }}
-        {{if $.IsReplyable}}
+       {{ if cd.SelectedThreadCanReply }}
             <font size="4">Reply:</font><br>
             <form method="post" action="/forum/topic/{{$.Topic.Idforumtopic}}/thread/{{$.Thread.Idforumthread}}/reply">
         {{ csrfField }}
@@ -8,5 +8,5 @@
                                 <input type="submit" name="task" value="Reply">
                                 <input type="submit" name="task" value="Cancel">
                         </form>
-                {{end}}
+               {{end}}
 {{ end }}

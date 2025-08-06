@@ -27,6 +27,7 @@ var _ notif.TargetUsersNotificationProvider = (*PermissionUpdateTask)(nil)
 
 func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
 	queries := cd.Queries()
 	permid := r.PostFormValue("permid")
 	role := r.PostFormValue("role")
@@ -93,11 +94,11 @@ func (PermissionUpdateTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, erro
 	return nil, fmt.Errorf("target user id not provided")
 }
 
-func (PermissionUpdateTask) TargetEmailTemplate() *notif.EmailTemplates {
+func (PermissionUpdateTask) TargetEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("updateUserRoleEmail")
 }
 
-func (PermissionUpdateTask) TargetInternalNotificationTemplate() *string {
+func (PermissionUpdateTask) TargetInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("update_user_role")
 	return &v
 }

@@ -3,6 +3,8 @@ package linker
 import (
 	"testing"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+
 	"github.com/arran4/goa4web/core/templates"
 	notif "github.com/arran4/goa4web/internal/notifications"
 )
@@ -34,7 +36,7 @@ func requireNotificationTemplate(t *testing.T, name *string) {
 
 func TestLinkerTemplatesExist(t *testing.T) {
 	requireEmailTemplates(t, "linkerAddEmail")
-	requireNotificationTemplate(t, AdminAddTask.SubscribedInternalNotificationTemplate())
+	requireNotificationTemplate(t, AdminAddTask.SubscribedInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
 	requireEmailTemplates(t, "adminNotificationLinkerAddEmail")
-	requireNotificationTemplate(t, AdminAddTask.AdminInternalNotificationTemplate())
+	requireNotificationTemplate(t, AdminAddTask.AdminInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
 }

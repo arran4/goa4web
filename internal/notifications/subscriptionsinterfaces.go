@@ -21,15 +21,15 @@ func NewEmailTemplates(prefix string) *EmailTemplates {
 // AdminEmailTemplateProvider indicates the notification should be sent via
 // email to administrators using the provided templates.
 type AdminEmailTemplateProvider interface {
-	AdminEmailTemplate() *EmailTemplates
-	AdminInternalNotificationTemplate() *string
+	AdminEmailTemplate(evt eventbus.TaskEvent) *EmailTemplates
+	AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string
 }
 
 // SelfNotificationTemplateProvider is used for mandatory self notifications such as password
 // resets or verifications.
 type SelfNotificationTemplateProvider interface {
-	SelfEmailTemplate() *EmailTemplates
-	SelfInternalNotificationTemplate() *string
+	SelfEmailTemplate(evt eventbus.TaskEvent) *EmailTemplates
+	SelfInternalNotificationTemplate(evt eventbus.TaskEvent) *string
 }
 
 // SelfEmailBroadcaster indicates the notification should be sent to all
@@ -44,14 +44,14 @@ type SelfEmailBroadcaster interface {
 // Internal notifications are not supported for this provider.
 type DirectEmailNotificationTemplateProvider interface {
 	DirectEmailAddress(evt eventbus.TaskEvent) (string, error)
-	DirectEmailTemplate() *EmailTemplates
+	DirectEmailTemplate(evt eventbus.TaskEvent) *EmailTemplates
 }
 
 // SubscribersNotificationTemplateProvider indicates the notification should be delivered to
 // subscribed users.
 type SubscribersNotificationTemplateProvider interface {
-	SubscribedEmailTemplate() *EmailTemplates
-	SubscribedInternalNotificationTemplate() *string
+	SubscribedEmailTemplate(evt eventbus.TaskEvent) *EmailTemplates
+	SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string
 }
 
 // AutoSubscribeProvider describes events that automatically create a
@@ -67,8 +67,8 @@ type AutoSubscribeProvider interface {
 // to the returned user IDs.
 type TargetUsersNotificationProvider interface {
 	TargetUserIDs(evt eventbus.TaskEvent) ([]int32, error)
-	TargetEmailTemplate() *EmailTemplates
-	TargetInternalNotificationTemplate() *string
+	TargetEmailTemplate(evt eventbus.TaskEvent) *EmailTemplates
+	TargetInternalNotificationTemplate(evt eventbus.TaskEvent) *string
 }
 
 // GrantsRequiredProvider exposes the permission context for subscription

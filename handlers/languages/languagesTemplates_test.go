@@ -3,6 +3,8 @@ package languages
 import (
 	"testing"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+
 	"github.com/arran4/goa4web/core/templates"
 	notif "github.com/arran4/goa4web/internal/notifications"
 )
@@ -39,7 +41,7 @@ func TestLanguageTaskTemplates(t *testing.T) {
 		createLanguageTask,
 	}
 	for _, a := range admins {
-		requireEmailTemplates(t, a.AdminEmailTemplate())
-		requireNotificationTemplate(t, a.AdminInternalNotificationTemplate())
+		requireEmailTemplates(t, a.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+		requireNotificationTemplate(t, a.AdminInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
 	}
 }

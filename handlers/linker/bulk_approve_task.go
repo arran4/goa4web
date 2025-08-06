@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
@@ -84,20 +86,20 @@ func (bulkApproveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return nil
 }
 
-func (bulkApproveTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+func (bulkApproveTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("linkerApprovedEmail")
 }
 
-func (bulkApproveTask) SubscribedInternalNotificationTemplate() *string {
+func (bulkApproveTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	s := notif.NotificationTemplateFilenameGenerator("linker_approved")
 	return &s
 }
 
-func (bulkApproveTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (bulkApproveTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("adminNotificationLinkerApprovedEmail")
 }
 
-func (bulkApproveTask) AdminInternalNotificationTemplate() *string {
+func (bulkApproveTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("adminNotificationLinkerApprovedEmail")
 	return &v
 }

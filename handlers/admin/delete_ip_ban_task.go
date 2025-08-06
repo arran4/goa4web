@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -52,11 +54,11 @@ func (DeleteIPBanTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return nil
 }
 
-func (DeleteIPBanTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (DeleteIPBanTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("adminRemoveIPBanEmail")
 }
 
-func (DeleteIPBanTask) AdminInternalNotificationTemplate() *string {
+func (DeleteIPBanTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("adminRemoveIPBanEmail")
 	return &v
 }

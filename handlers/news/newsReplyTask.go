@@ -4,10 +4,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/gorilla/mux"
 
@@ -45,20 +46,32 @@ func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
 
 var _ searchworker.IndexedTask = ReplyTask{}
 
-func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+func (ReplyTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
+	if evt.Outcome != eventbus.TaskOutcomeSuccess {
+		return nil
+	}
 	return notif.NewEmailTemplates("replyEmail")
 }
 
-func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
+func (ReplyTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
+	if evt.Outcome != eventbus.TaskOutcomeSuccess {
+		return nil
+	}
 	s := notif.NotificationTemplateFilenameGenerator("reply")
 	return &s
 }
 
-func (ReplyTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (ReplyTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
+	if evt.Outcome != eventbus.TaskOutcomeSuccess {
+		return nil
+	}
 	return notif.NewEmailTemplates("adminNotificationNewsReplyEmail")
 }
 
-func (ReplyTask) AdminInternalNotificationTemplate() *string {
+func (ReplyTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
+	if evt.Outcome != eventbus.TaskOutcomeSuccess {
+		return nil
+	}
 	v := notif.NotificationTemplateFilenameGenerator("adminNotificationNewsReplyEmail")
 	return &v
 }

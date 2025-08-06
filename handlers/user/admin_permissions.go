@@ -16,6 +16,7 @@ import (
 
 func adminUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
 	u := cd.CurrentProfileUser()
 	if u == nil {
 		log.Printf("permissions page user not found")

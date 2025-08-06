@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -15,11 +16,11 @@ var (
 	_ notif.AdminEmailTemplateProvider = (*CategoryCreateTask)(nil)
 )
 
-func (CategoryCreateTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (CategoryCreateTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("adminNotificationForumCategoryCreateEmail")
 }
 
-func (CategoryCreateTask) AdminInternalNotificationTemplate() *string {
+func (CategoryCreateTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("adminNotificationForumCategoryCreateEmail")
 	return &v
 }

@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -15,11 +16,11 @@ var (
 	_ notif.AdminEmailTemplateProvider = (*TopicDeleteTask)(nil)
 )
 
-func (TopicDeleteTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (TopicDeleteTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("adminNotificationForumTopicDeleteEmail")
 }
 
-func (TopicDeleteTask) AdminInternalNotificationTemplate() *string {
+func (TopicDeleteTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("adminNotificationForumTopicDeleteEmail")
 	return &v
 }

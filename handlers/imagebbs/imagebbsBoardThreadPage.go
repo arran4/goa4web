@@ -46,11 +46,17 @@ func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
 
 var _ searchworker.IndexedTask = ReplyTask{}
 
-func (ReplyTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+func (ReplyTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
+	if evt.Outcome != eventbus.TaskOutcomeSuccess {
+		return nil
+	}
 	return notif.NewEmailTemplates("replyEmail")
 }
 
-func (ReplyTask) SubscribedInternalNotificationTemplate() *string {
+func (ReplyTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
+	if evt.Outcome != eventbus.TaskOutcomeSuccess {
+		return nil
+	}
 	s := notif.NotificationTemplateFilenameGenerator("reply")
 	return &s
 }
@@ -68,7 +74,6 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		ImagePost      *db.GetImagePostByIDForListerRow
 		Thread         *db.GetThreadLastPosterAndPermsRow
 		IsReplyable    bool
-		CanReply       bool
 		CanEditComment func(*db.GetCommentsByThreadIdForUserRow) bool
 		EditURL        func(*db.GetCommentsByThreadIdForUserRow) string
 		EditSaveURL    func(*db.GetCommentsByThreadIdForUserRow) string
@@ -91,7 +96,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	thid, _ := strconv.Atoi(thidStr)
 	cd.PageTitle = fmt.Sprintf("Thread %d/%d", bid, thid)
 
-	data := Data{Replyable: true, BoardId: bid, ForumThreadId: thid, CanReply: cd.UserID != 0, IsReplyable: true}
+	data := Data{Replyable: true, BoardId: bid, ForumThreadId: thid, IsReplyable: true}
 
 	if !cd.HasGrant("imagebbs", "board", "view", int32(bid)) {
 		_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{})

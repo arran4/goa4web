@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -57,11 +59,11 @@ func (DeleteLanguageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return nil
 }
 
-func (DeleteLanguageTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (DeleteLanguageTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("adminNotificationLanguageDeleteEmail")
 }
 
-func (DeleteLanguageTask) AdminInternalNotificationTemplate() *string {
+func (DeleteLanguageTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("adminNotificationLanguageDeleteEmail")
 	return &v
 }

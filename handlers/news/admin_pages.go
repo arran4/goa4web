@@ -36,7 +36,6 @@ func AdminNewsPostPage(w http.ResponseWriter, r *http.Request) {
 		TopicID        int32
 		Thread         *db.GetThreadLastPosterAndPermsRow
 		Comments       []*db.GetCommentsByThreadIdForUserRow
-		CanReply       bool
 		IsReplyable    bool
 		CanEditComment func(*db.GetCommentsByThreadIdForUserRow) bool
 		EditURL        func(*db.GetCommentsByThreadIdForUserRow) string
@@ -89,7 +88,6 @@ func AdminNewsPostPage(w http.ResponseWriter, r *http.Request) {
 		TopicID:     topicID,
 		Thread:      threadRow,
 		Comments:    comments,
-		CanReply:    false,
 		IsReplyable: false,
 	}
 	data.CanEditComment = func(*db.GetCommentsByThreadIdForUserRow) bool { return false }

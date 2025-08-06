@@ -2,8 +2,8 @@
     {{ if gt (cd.Offset) 0 }}
         <br>Skipping {{ cd.Offset }} comments.<br><br><br>
     {{ end }}
-    {{ range cd.SelectedThreadComments }}
-        {{ template "comment" (dict "Data" $ "Comment" .) }}
+    {{ range cd.SelectedSectionThreadComments }}
+        {{ template "comment" . }}
     {{ else }}
         No comments.
     {{ end }}

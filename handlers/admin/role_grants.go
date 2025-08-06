@@ -25,7 +25,7 @@ type GrantDefinition struct {
 var GrantActionMap = map[string]GrantDefinition{
 	"forum|":              {Actions: []string{"search"}},
 	"forum|topic":         {Actions: []string{"see", "view", "reply", "post", "edit"}, RequireItemID: true},
-	"forum|thread":        {Actions: []string{"see", "view", "reply", "post", "edit"}, RequireItemID: true},
+	"forum|thread":        {Actions: []string{"see", "view", "reply", "edit"}, RequireItemID: true},
 	"forum|category":      {Actions: []string{"see", "view"}, RequireItemID: true},
 	"linker|":             {Actions: []string{"search"}},
 	"linker|category":     {Actions: []string{"see", "view"}},

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/notifications"
@@ -22,20 +23,20 @@ func roleInfoByPermID(ctx context.Context, q db.Querier, id int32) (int32, strin
 	return 0, "", "", sql.ErrNoRows
 }
 
-func (NewsUserAllowTask) AdminEmailTemplate() *notifications.EmailTemplates {
+func (NewsUserAllowTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notifications.EmailTemplates {
 	return notifications.NewEmailTemplates("newsPermissionEmail")
 }
 
-func (NewsUserAllowTask) AdminInternalNotificationTemplate() *string {
+func (NewsUserAllowTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notifications.NotificationTemplateFilenameGenerator("news_permission")
 	return &v
 }
 
-func (NewsUserRemoveTask) AdminEmailTemplate() *notifications.EmailTemplates {
+func (NewsUserRemoveTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notifications.EmailTemplates {
 	return notifications.NewEmailTemplates("newsPermissionEmail")
 }
 
-func (NewsUserRemoveTask) AdminInternalNotificationTemplate() *string {
+func (NewsUserRemoveTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notifications.NotificationTemplateFilenameGenerator("news_permission")
 	return &v
 }
@@ -50,11 +51,11 @@ func (NewsUserAllowTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, error) 
 	return nil, fmt.Errorf("target user id not provided")
 }
 
-func (NewsUserAllowTask) TargetEmailTemplate() *notifications.EmailTemplates {
+func (NewsUserAllowTask) TargetEmailTemplate(evt eventbus.TaskEvent) *notifications.EmailTemplates {
 	return notifications.NewEmailTemplates("setUserRoleEmail")
 }
 
-func (NewsUserAllowTask) TargetInternalNotificationTemplate() *string {
+func (NewsUserAllowTask) TargetInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notifications.NotificationTemplateFilenameGenerator("set_user_role")
 	return &v
 }
@@ -69,11 +70,11 @@ func (NewsUserRemoveTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, error)
 	return nil, fmt.Errorf("target user id not provided")
 }
 
-func (NewsUserRemoveTask) TargetEmailTemplate() *notifications.EmailTemplates {
+func (NewsUserRemoveTask) TargetEmailTemplate(evt eventbus.TaskEvent) *notifications.EmailTemplates {
 	return notifications.NewEmailTemplates("deleteUserRoleEmail")
 }
 
-func (NewsUserRemoveTask) TargetInternalNotificationTemplate() *string {
+func (NewsUserRemoveTask) TargetInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notifications.NotificationTemplateFilenameGenerator("delete_user_role")
 	return &v
 }

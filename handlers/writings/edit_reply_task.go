@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -61,13 +63,12 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("get thread fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	if err = queries.UpdateCommentForCommenter(r.Context(), db.UpdateCommentForCommenterParams{
-		CommentID:      comment.Idcomments,
-		GrantCommentID: sql.NullInt32{Int32: comment.Idcomments, Valid: true},
-		LanguageID:     int32(languageID),
-		Text:           sql.NullString{String: text, Valid: true},
-		GranteeID:      sql.NullInt32{Int32: uid, Valid: uid != 0},
-		CommenterID:    uid,
+	if err = queries.UpdateCommentForEditor(r.Context(), db.UpdateCommentForEditorParams{
+		LanguageID:  int32(languageID),
+		Text:        sql.NullString{String: text, Valid: true},
+		CommentID:   comment.Idcomments,
+		CommenterID: uid,
+		EditorID:    sql.NullInt32{Int32: uid, Valid: uid != 0},
 	}); err != nil {
 		return fmt.Errorf("update comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
@@ -84,11 +85,11 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return handlers.RedirectHandler(fmt.Sprintf("/writings/article/%d", writing.Idwriting))
 }
 
-func (EditReplyTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (EditReplyTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("adminNotificationNewsCommentEditEmail")
 }
 
-func (EditReplyTask) AdminInternalNotificationTemplate() *string {
+func (EditReplyTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("adminNotificationNewsCommentEditEmail")
 	return &v
 }

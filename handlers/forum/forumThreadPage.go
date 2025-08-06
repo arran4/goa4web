@@ -18,6 +18,7 @@ import (
 
 func ThreadPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
+		Category            *ForumcategoryPlus
 		Topic          *ForumtopicPlus
 		Thread         *db.GetThreadLastPosterAndPermsRow
 		Comments       []*db.GetCommentsByThreadIdForUserRow
@@ -37,7 +38,6 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 	common.WithOffset(offset)(cd)
 	data := Data{
 		IsReplyable: true,
-		CanReply:    cd.UserID != 0,
 	}
 
 	threadRow, err := cd.SelectedThread()

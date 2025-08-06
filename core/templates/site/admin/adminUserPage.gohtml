@@ -1,0 +1,13 @@
+{{ template "head" $ }}
+    {{- $u := cd.CurrentProfileUser }}
+    <h3>{{ $u.Username.String }} ({{ $u.Email.String }})</h3>
+    <a href="/admin/user/{{ cd.CurrentProfileUser.Idusers }}/blogs">Configure user's blogs</a>
+    <a href="/admin/user/{{ cd.CurrentProfileUser.Idusers }}/writings">Configure user's writings</a>
+    <a href="/admin/user/{{ cd.CurrentProfileUser.Idusers }}/linker">Configure user's linker</a>
+    <a href="/admin/user/{{ cd.CurrentProfileUser.Idusers }}/imagebbs">Configure user's imagebbs</a>
+    <a href="/admin/user/{{ cd.CurrentProfileUser.Idusers }}/forum">Configure user's forum</a>
+    <a href="/admin/user/{{ cd.CurrentProfileUser.Idusers }}/comments">Configure user's comments</a>
+    <a href="/admin/user/{{ cd.CurrentProfileUser.Idusers }}/subscriptions">Configure user's subscriptions</a>
+    <a href="/admin/user/{{ cd.CurrentProfileUser.Idusers }}/edit">Configure user's edit</a>
+    <a href="/admin/user/{{ cd.CurrentProfileUser.Idusers }}/grants">Configure user's grants</a>
+{{ template "tail" $ }}

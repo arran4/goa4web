@@ -27,11 +27,11 @@ func TestPermissionUserTasksTemplates(t *testing.T) {
 		&PermissionUserDisallowTask{TaskString: TaskUserDisallow},
 	}
 	for _, p := range admins {
-		et := p.AdminEmailTemplate()
+		et := p.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess})
 		if et == nil || et.Text == "" || et.HTML == "" || et.Subject == "" {
 			t.Errorf("incomplete templates for %T", p)
 		}
-		nt := p.AdminInternalNotificationTemplate()
+		nt := p.AdminInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess})
 		if nt == nil || *nt == "" {
 			t.Errorf("missing internal template for %T", p)
 		}
@@ -69,7 +69,7 @@ func TestPermissionUserAllowEventData(t *testing.T) {
 	req = mux.SetURLVars(req, map[string]string{"user": "2"})
 	cd := common.NewCoreData(req.Context(), queries, config.NewRuntimeConfig())
 	cd.LoadSelectionsFromRequest(req)
-	evt := &eventbus.TaskEvent{}
+	evt := &eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}
 	cd.SetEvent(evt)
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)

@@ -6,7 +6,7 @@
         <tr data-section="{{ .Section }}" data-item="{{ .Item }}" data-itemid="{{ if .ItemID.Valid }}{{ .ItemID.Int32 }}{{ end }}"{{ if .Unsupported }} class="unsupported"{{ end }}>
             <td>{{ .Section }}</td>
             <td>{{ .Item }}</td>
-            <td>{{ if .ItemID.Valid }}{{ .ItemID.Int32 }}{{ end }}</td>
+            <td>{{ if .ItemID.Valid }}{{ if .Link }}<a href="{{ .Link }}">{{ .ItemID.Int32 }}</a>{{ else }}{{ .ItemID.Int32 }}{{ end }}{{ end }}</td>
             <td>{{ .Info }}</td>
             <td class="have">
                 {{- range .Have }}

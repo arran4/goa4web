@@ -37,16 +37,15 @@ func TopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	commentId, _ := strconv.Atoi(mux.Vars(r)["comment"])
 
-	err = queries.UpdateCommentForCommenter(r.Context(), db.UpdateCommentForCommenterParams{
-		CommentID:      int32(commentId),
-		GrantCommentID: sql.NullInt32{Int32: int32(commentId), Valid: true},
-		LanguageID:     int32(languageId),
+	err = queries.UpdateCommentForEditor(r.Context(), db.UpdateCommentForEditorParams{
+		LanguageID: int32(languageId),
 		Text: sql.NullString{
 			String: text,
 			Valid:  true,
 		},
-		GranteeID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		CommentID:   int32(commentId),
 		CommenterID: cd.UserID,
+		EditorID:    sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 	})
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)

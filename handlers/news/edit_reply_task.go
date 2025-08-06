@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/core"
@@ -26,11 +28,11 @@ var editReplyTask = &EditReplyTask{TaskString: TaskEditReply}
 var _ tasks.Task = (*EditReplyTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*EditReplyTask)(nil)
 
-func (EditReplyTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (EditReplyTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("adminNotificationNewsCommentEditEmail")
 }
 
-func (EditReplyTask) AdminInternalNotificationTemplate() *string {
+func (EditReplyTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("adminNotificationNewsCommentEditEmail")
 	return &v
 }
@@ -72,13 +74,12 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("thread fetch fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	if err = queries.UpdateCommentForCommenter(r.Context(), db.UpdateCommentForCommenterParams{
-		CommentID:      int32(commentId),
-		GrantCommentID: sql.NullInt32{Int32: int32(commentId), Valid: true},
-		LanguageID:     int32(languageId),
-		Text:           sql.NullString{String: text, Valid: true},
-		GranteeID:      sql.NullInt32{Int32: uid, Valid: uid != 0},
-		CommenterID:    uid,
+	if err = queries.UpdateCommentForEditor(r.Context(), db.UpdateCommentForEditorParams{
+		LanguageID:  int32(languageId),
+		Text:        sql.NullString{String: text, Valid: true},
+		CommentID:   int32(commentId),
+		CommenterID: uid,
+		EditorID:    sql.NullInt32{Int32: uid, Valid: uid != 0},
 	}); err != nil {
 		return fmt.Errorf("update comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

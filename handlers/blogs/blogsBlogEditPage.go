@@ -3,7 +3,9 @@ package blogs
 import (
 	"database/sql"
 	"fmt"
+
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/internal/eventbus"
 
 	"github.com/arran4/goa4web/internal/db"
 
@@ -25,11 +27,11 @@ var editBlogTask = &EditBlogTask{TaskString: TaskEdit}
 var _ tasks.Task = (*EditBlogTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*EditBlogTask)(nil)
 
-func (EditBlogTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (EditBlogTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("adminNotificationBlogEditEmail")
 }
 
-func (EditBlogTask) AdminInternalNotificationTemplate() *string {
+func (EditBlogTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("adminNotificationBlogEditEmail")
 	return &v
 }

@@ -30,7 +30,6 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 		IsReplyable    bool
 		Text           string
 		EditUrl        string
-		CanReply       bool
 		CanEditComment func(*db.GetCommentsByThreadIdForUserRow) bool
 		EditURL        func(*db.GetCommentsByThreadIdForUserRow) string
 		EditSaveURL    func(*db.GetCommentsByThreadIdForUserRow) string
@@ -48,7 +47,6 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		IsReplyable: true,
 		EditUrl:     fmt.Sprintf("/blogs/blog/%d/edit", blogId),
-		CanReply:    cd.UserID != 0,
 	}
 
 	session, ok := core.GetSessionOrFail(w, r)
@@ -64,6 +62,9 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 	})
 	if err == nil {
 		cd.PageTitle = fmt.Sprintf("Blog %d Comments", blog.Idblogs)
+		if blog.ForumthreadID.Valid {
+			cd.SetCurrentThreadAndTopic(blog.ForumthreadID.Int32, 0)
+		}
 	}
 	if err != nil {
 		switch {
@@ -81,7 +82,7 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 
 	if !(cd.HasGrant("blogs", "entry", "view", blog.Idblogs) ||
 		cd.HasGrant("blogs", "entry", "comment", blog.Idblogs) ||
-		cd.HasGrant("blogs", "entry", "reply", blog.Idblogs)) {
+		cd.SelectedThreadCanReply()) {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
@@ -99,22 +100,14 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 		EditUrl:                      editUrl,
 	}
 
-	if !blog.ForumthreadID.Valid {
-		data.IsReplyable = false
-	} else {
-		threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
-			ViewerID:      uid,
-			ThreadID:      blog.ForumthreadID.Int32,
-			ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
-		})
-		if err != nil {
-			if err != sql.ErrNoRows {
-				log.Printf("GetThreadLastPosterAndPerms: %v", err)
-			}
-			data.IsReplyable = false
-		} else if threadRow.Locked.Valid && threadRow.Locked.Bool {
-			data.IsReplyable = false
+	threadRow, err := cd.SelectedThread()
+	if err != nil {
+		if err != sql.ErrNoRows {
+			log.Printf("GetThreadLastPosterAndPerms: %v", err)
 		}
+		data.IsReplyable = false
+	} else if threadRow != nil && threadRow.Locked.Valid && threadRow.Locked.Bool {
+		data.IsReplyable = false
 	}
 
 	replyType := r.URL.Query().Get("type")

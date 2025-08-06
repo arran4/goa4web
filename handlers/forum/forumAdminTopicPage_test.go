@@ -31,7 +31,7 @@ func TestAdminTopicPage(t *testing.T) {
 	mock.ExpectQuery("SELECT").WillReturnRows(rows)
 
 	cd := common.NewCoreData(context.Background(), db.New(conn), config.NewRuntimeConfig())
-	r := httptest.NewRequest("GET", "/admin/forum/topic/"+strconv.Itoa(topicID), nil)
+	r := httptest.NewRequest("GET", "/admin/forum/topics/topic/"+strconv.Itoa(topicID), nil)
 	r = mux.SetURLVars(r, map[string]string{"topic": strconv.Itoa(topicID)})
 	r = r.WithContext(context.WithValue(r.Context(), consts.KeyCoreData, cd))
 	w := httptest.NewRecorder()
@@ -66,7 +66,7 @@ func TestAdminTopicEditFormPage(t *testing.T) {
 	mock.ExpectQuery("SELECT").WillReturnRows(roleRows)
 
 	cd := common.NewCoreData(context.Background(), db.New(conn), config.NewRuntimeConfig())
-	r := httptest.NewRequest("GET", "/admin/forum/topic/"+strconv.Itoa(topicID)+"/edit", nil)
+	r := httptest.NewRequest("GET", "/admin/forum/topics/topic/"+strconv.Itoa(topicID)+"/edit", nil)
 	r = mux.SetURLVars(r, map[string]string{"topic": strconv.Itoa(topicID)})
 	r = r.WithContext(context.WithValue(r.Context(), consts.KeyCoreData, cd))
 	w := httptest.NewRecorder()

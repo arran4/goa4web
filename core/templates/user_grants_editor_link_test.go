@@ -30,7 +30,7 @@ func TestUserGrantsEditor_ItemIDLink(t *testing.T) {
 				Section: "forum",
 				Item:    "topic",
 				ItemID:  sql.NullInt32{Int32: 42, Valid: true},
-				Link:    "/admin/forum/topic/42",
+				Link:    "/admin/forum/topics/topic/42",
 			},
 		},
 	}
@@ -40,7 +40,7 @@ func TestUserGrantsEditor_ItemIDLink(t *testing.T) {
 		t.Fatalf("execute template: %v", err)
 	}
 	html := buf.String()
-	if !strings.Contains(html, `<a href="/admin/forum/topic/42">42</a>`) {
+	if !strings.Contains(html, `<a href="/admin/forum/topics/topic/42">42</a>`) {
 		t.Fatalf("expected link in output, got %s", html)
 	}
 }

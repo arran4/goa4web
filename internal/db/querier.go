@@ -113,6 +113,7 @@ type Querier interface {
 	AdminListExternalLinks(ctx context.Context, arg AdminListExternalLinksParams) ([]*ExternalLink, error)
 	// admin task
 	AdminListFailedEmails(ctx context.Context, arg AdminListFailedEmailsParams) ([]*AdminListFailedEmailsRow, error)
+	AdminListForumTopics(ctx context.Context, arg AdminListForumTopicsParams) ([]*Forumtopic, error)
 	// admin task
 	AdminListGrantsByRoleID(ctx context.Context, roleID sql.NullInt32) ([]*Grant, error)
 	AdminListLoginAttempts(ctx context.Context) ([]*LoginAttempt, error)

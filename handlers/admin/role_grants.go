@@ -138,7 +138,7 @@ func buildGrantGroupsFromGrants(ctx context.Context, cd *common.CoreData, grants
 			case "forum":
 				switch g.Item.String {
 				case "topic":
-					gi.Link = fmt.Sprintf("/admin/forum/topic/%d/grants#g%d", g.ItemID.Int32, g.ID)
+					gi.Link = fmt.Sprintf("/admin/forum/topics/topic/%d/grants#g%d", g.ItemID.Int32, g.ID)
 					if t, err := queries.GetForumTopicById(ctx, g.ItemID.Int32); err == nil {
 						if t.Title.Valid {
 							info := t.Title.String

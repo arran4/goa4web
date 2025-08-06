@@ -1,0 +1,16 @@
+{{ define "breadcrumbs" }}
+{{- $crumbs := cd.Breadcrumbs }}
+{{- if $crumbs }}
+<nav class="breadcrumbs" aria-label="Breadcrumb">
+    <ol>
+        {{- range $crumbs }}
+            {{- if .Link }}
+                <li><a href="{{ .Link }}">{{ .Title }}</a></li>
+            {{- else }}
+                <li>{{ .Title }}</li>
+            {{- end }}
+        {{- end }}
+    </ol>
+</nav>
+{{- end }}
+{{ end }}

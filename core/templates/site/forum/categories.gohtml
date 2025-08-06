@@ -19,7 +19,7 @@
                             {{ end }}
                         </form>
                     {{ else }}
-                        <strong><a href="/forum/category/{{ .Idforumcategory }}">{{ .Title.String }}</a></strong> - {{ .Description.String }} ({{ len .Topics }})<br>
+                        <strong><a href="/forum/categories/category/{{ .Idforumcategory }}">{{ .Title.String }}</a></strong> - {{ .Description.String }} ({{ len .Topics }})<br>
                     {{ end }}
                 </td>
             </tr>

@@ -26,8 +26,8 @@ func TestAdminTopicPage(t *testing.T) {
 	mock.MatchExpectationsInOrder(false)
 
 	topicID := 4
-	rows := sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "title", "description", "threads", "comments", "lastaddition"}).
-		AddRow(topicID, 0, 1, "t", "d", 2, 3, time.Now())
+	rows := sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_idlanguage", "title", "description", "threads", "comments", "lastaddition"}).
+		AddRow(topicID, 0, 1, 0, "t", "d", 2, 3, time.Now())
 	mock.ExpectQuery("SELECT").WillReturnRows(rows)
 
 	cd := common.NewCoreData(context.Background(), db.New(conn), config.NewRuntimeConfig())
@@ -53,12 +53,12 @@ func TestAdminTopicEditFormPage(t *testing.T) {
 	mock.MatchExpectationsInOrder(false)
 
 	topicID := 4
-	topicRows := sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "title", "description", "threads", "comments", "lastaddition"}).
-		AddRow(topicID, 0, 1, "t", "d", 2, 3, time.Now())
+	topicRows := sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_idlanguage", "title", "description", "threads", "comments", "lastaddition"}).
+		AddRow(topicID, 0, 1, 0, "t", "d", 2, 3, time.Now())
 	mock.ExpectQuery("SELECT").WillReturnRows(topicRows)
 
-	catRows := sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "title", "description"}).
-		AddRow(1, 0, "cat", "desc")
+	catRows := sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "language_idlanguage", "title", "description"}).
+		AddRow(1, 0, 0, "cat", "desc")
 	mock.ExpectQuery("SELECT").WillReturnRows(catRows)
 
 	roleRows := sqlmock.NewRows([]string{"id", "name", "can_login", "is_admin", "public_profile_allowed_at"}).

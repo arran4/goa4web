@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/mux"
@@ -38,13 +39,14 @@ func TestAdminCategoryPageLinks(t *testing.T) {
 	queries := db.New(sqlDB)
 	mock.MatchExpectationsInOrder(false)
 
-	catRows := sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "title", "description"}).
-		AddRow(1, 0, "cat", "desc")
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT idforumcategory, forumcategory_idforumcategory, title, description FROM forumcategory WHERE idforumcategory = ?")).
+	catRows := sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "language_idlanguage", "title", "description"}).
+		AddRow(1, 0, 0, "cat", "desc")
+	mock.ExpectQuery("SELECT idforumcategory, forumcategory_idforumcategory, language_idlanguage, title, description FROM forumcategory").
 		WillReturnRows(catRows)
 
-	topicsRows := sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "title", "description", "threads", "comments", "lastaddition"})
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT idforumtopic, lastposter, forumcategory_idforumcategory, title, description, threads, comments, lastaddition FROM forumtopic WHERE forumcategory_idforumcategory = ? ORDER BY lastaddition DESC")).
+	topicsRows := sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_idlanguage", "title", "description", "threads", "comments", "lastaddition"}).
+		AddRow(1, 0, 1, 0, "t", "d", 0, 0, time.Now())
+	mock.ExpectQuery("SELECT idforumtopic, lastposter, forumcategory_idforumcategory, language_idlanguage, title, description, threads, comments, lastaddition FROM forumtopic").
 		WillReturnRows(topicsRows)
 
 	req, rr := setupRequest(t, queries, "/admin/forum/category/1", map[string]string{"category": "1"})
@@ -64,6 +66,9 @@ func TestAdminCategoryPageLinks(t *testing.T) {
 	if !strings.Contains(body, "/admin/forum/category/1/grants") {
 		t.Fatalf("missing grants link")
 	}
+	if !strings.Contains(body, "<a href=\"/admin/forum/topic/1\">1</a>") {
+		t.Fatalf("missing topic link")
+	}
 }
 
 func TestAdminCategoryEditPage(t *testing.T) {
@@ -76,14 +81,14 @@ func TestAdminCategoryEditPage(t *testing.T) {
 	queries := db.New(sqlDB)
 	mock.MatchExpectationsInOrder(false)
 
-	catRows := sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "title", "description"}).
-		AddRow(1, 0, "cat", "desc")
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT idforumcategory, forumcategory_idforumcategory, title, description FROM forumcategory WHERE idforumcategory = ?")).
+	catRows := sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "language_idlanguage", "title", "description"}).
+		AddRow(1, 0, 0, "cat", "desc")
+	mock.ExpectQuery("SELECT idforumcategory, forumcategory_idforumcategory, language_idlanguage, title, description FROM forumcategory").
 		WillReturnRows(catRows)
 
-	allRows := sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "title", "description"}).
-		AddRow(1, 0, "cat", "desc")
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT f.idforumcategory, f.forumcategory_idforumcategory, f.title, f.description\nFROM forumcategory f")).
+	allRows := sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "language_idlanguage", "title", "description"}).
+		AddRow(1, 0, 0, "cat", "desc")
+	mock.ExpectQuery("SELECT f.idforumcategory, f.forumcategory_idforumcategory, f.language_idlanguage, f.title, f.description\nFROM forumcategory f").
 		WillReturnRows(allRows)
 
 	req, rr := setupRequest(t, queries, "/admin/forum/category/1/edit", map[string]string{"category": "1"})

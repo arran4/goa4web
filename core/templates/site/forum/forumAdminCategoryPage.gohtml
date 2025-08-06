@@ -6,6 +6,7 @@
 </p>
 <p>{{ .Category.Description.String }}</p>
 <h3 id="topics">Topics</h3>
+<p><a href="/admin/forum/topics">Create Topic</a></p>
 <table border="1">
     <tr>
         <th>ID</th>
@@ -17,7 +18,7 @@
     </tr>
     {{ range .Topics }}
     <tr>
-        <td>{{ .Idforumtopic }}</td>
+        <td><a href="/admin/forum/topic/{{ .Idforumtopic }}">{{ .Idforumtopic }}</a></td>
         <td>{{ .Title.String }}</td>
         <td>{{ .Description.String }}</td>
         <td>{{ .Threads.Int32 }}</td>

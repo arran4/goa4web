@@ -22,7 +22,6 @@ func RegisterAdminRoutes(ar *mux.Router) {
 	bb.HandleFunc("/images", AdminBoardListPage).Methods("GET").MatcherFunc(handlers.RequiredAccess("administrator"))
 	bb.HandleFunc("/delete", handlers.TaskHandler(deleteBoardTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(deleteBoardTask.Matcher())
 	iar.HandleFunc("/approve/{post}", handlers.TaskHandler(approvePostTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(approvePostTask.Matcher())
-	iar.HandleFunc("/files", AdminFilesPage).Methods("GET").MatcherFunc(handlers.RequiredAccess("administrator"))
 
 	uar := ar.PathPrefix("/user/{user}/imagebbs").Subrouter()
 	uar.HandleFunc("/post/{post}", AdminPostDashboardPage).Methods("GET").MatcherFunc(handlers.RequiredAccess("administrator"))

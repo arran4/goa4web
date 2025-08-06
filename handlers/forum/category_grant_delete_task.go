@@ -36,5 +36,5 @@ func (CategoryGrantDeleteTask) Action(w http.ResponseWriter, r *http.Request) an
 		log.Printf("DeleteGrant: %v", err)
 		return fmt.Errorf("delete grant %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	return handlers.RefreshDirectHandler{TargetURL: fmt.Sprintf("/admin/forum/category/%d/grants", categoryID)}
+	return handlers.RefreshDirectHandler{TargetURL: fmt.Sprintf("/admin/forum/categories/category/%d/grants", categoryID)}
 }

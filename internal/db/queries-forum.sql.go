@@ -10,6 +10,17 @@ import (
 	"database/sql"
 )
 
+const adminCountForumCategories = `-- name: AdminCountForumCategories :one
+SELECT COUNT(*) FROM forumcategory WHERE deleted_at IS NULL
+`
+
+func (q *Queries) AdminCountForumCategories(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, adminCountForumCategories)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const adminCreateForumCategory = `-- name: AdminCreateForumCategory :exec
 INSERT INTO forumcategory (forumcategory_idforumcategory, title, description) VALUES (?, ?, ?)
 `
@@ -42,6 +53,62 @@ UPDATE forumtopic SET deleted_at = NOW() WHERE idforumtopic = ?
 func (q *Queries) AdminDeleteForumTopic(ctx context.Context, idforumtopic int32) error {
 	_, err := q.db.ExecContext(ctx, adminDeleteForumTopic, idforumtopic)
 	return err
+}
+
+const adminListForumCategoriesWithSubcategoryAndTopicCounts = `-- name: AdminListForumCategoriesWithSubcategoryAndTopicCounts :many
+SELECT c.idforumcategory, c.forumcategory_idforumcategory, c.title, c.description, COUNT(c2.idforumcategory) AS SubcategoryCount,
+       COUNT(t.idforumtopic)         AS TopicCount
+FROM forumcategory c
+LEFT JOIN forumcategory c2 ON c.idforumcategory = c2.forumcategory_idforumcategory
+LEFT JOIN forumtopic t ON c.idforumcategory = t.forumcategory_idforumcategory
+WHERE c.deleted_at IS NULL
+GROUP BY c.idforumcategory
+ORDER BY c.idforumcategory
+LIMIT ? OFFSET ?
+`
+
+type AdminListForumCategoriesWithSubcategoryAndTopicCountsParams struct {
+	Limit  int32
+	Offset int32
+}
+
+type AdminListForumCategoriesWithSubcategoryAndTopicCountsRow struct {
+	Idforumcategory              int32
+	ForumcategoryIdforumcategory int32
+	Title                        sql.NullString
+	Description                  sql.NullString
+	Subcategorycount             int64
+	Topiccount                   int64
+}
+
+func (q *Queries) AdminListForumCategoriesWithSubcategoryAndTopicCounts(ctx context.Context, arg AdminListForumCategoriesWithSubcategoryAndTopicCountsParams) ([]*AdminListForumCategoriesWithSubcategoryAndTopicCountsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListForumCategoriesWithSubcategoryAndTopicCounts, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListForumCategoriesWithSubcategoryAndTopicCountsRow
+	for rows.Next() {
+		var i AdminListForumCategoriesWithSubcategoryAndTopicCountsRow
+		if err := rows.Scan(
+			&i.Idforumcategory,
+			&i.ForumcategoryIdforumcategory,
+			&i.Title,
+			&i.Description,
+			&i.Subcategorycount,
+			&i.Topiccount,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const adminRebuildAllForumTopicMetaColumns = `-- name: AdminRebuildAllForumTopicMetaColumns :exec

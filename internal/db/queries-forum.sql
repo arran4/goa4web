@@ -9,6 +9,20 @@ LEFT JOIN forumcategory c2 ON c.idforumcategory = c2.forumcategory_idforumcatego
 LEFT JOIN forumtopic t ON c.idforumcategory = t.forumcategory_idforumcategory
 GROUP BY c.idforumcategory;
 
+-- name: AdminListForumCategoriesWithSubcategoryAndTopicCounts :many
+SELECT c.*, COUNT(c2.idforumcategory) AS SubcategoryCount,
+       COUNT(t.idforumtopic)         AS TopicCount
+FROM forumcategory c
+LEFT JOIN forumcategory c2 ON c.idforumcategory = c2.forumcategory_idforumcategory
+LEFT JOIN forumtopic t ON c.idforumcategory = t.forumcategory_idforumcategory
+WHERE c.deleted_at IS NULL
+GROUP BY c.idforumcategory
+ORDER BY c.idforumcategory
+LIMIT ? OFFSET ?;
+
+-- name: AdminCountForumCategories :one
+SELECT COUNT(*) FROM forumcategory WHERE deleted_at IS NULL;
+
 -- name: GetAllForumTopics :many
 SELECT t.*
 FROM forumtopic t

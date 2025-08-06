@@ -1,0 +1,11 @@
+{{ template "head" $ }}
+<h2>Create Forum Category</h2>
+<form method="post" action="/admin/forum/categories/create">
+    {{ csrfField }}
+    Name <input name="name"><br>
+    Description <textarea name="desc"></textarea><br>
+    Parent <select name="pcid"><option value="0">None</option>{{ range .Categories }}<option value="{{ .Idforumcategory }}">{{ .Title.String }}</option>{{ end }}</select><br>
+    <input type="submit" name="task" value="Forum category create">
+</form>
+<p><a href="/admin/forum/categories">Back to categories</a></p>
+{{ template "tail" $ }}

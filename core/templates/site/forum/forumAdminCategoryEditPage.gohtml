@@ -1,0 +1,17 @@
+{{ template "head" $ }}
+<h2>Edit Forum Category {{ .Category.Idforumcategory }}</h2>
+<form method="post" action="/admin/forum/categories/category/{{ .Category.Idforumcategory }}/edit">
+    {{ csrfField }}
+    <input type="hidden" name="cid" value="{{ .Category.Idforumcategory }}">
+    Title <input name="name" value="{{ .Category.Title.String }}"><br>
+    Description:<br><textarea name="desc">{{ .Category.Description.String }}</textarea><br>
+    Parent <select name="pcid"><option value="0">None</option>{{ range .Categories }}<option value="{{ .Idforumcategory }}" {{ if eq $.Category.ForumcategoryIdforumcategory .Idforumcategory }}selected{{ end }}>{{ .Title.String }}</option>{{ end }}</select><br>
+    <input type="submit" name="task" value="Forum category change">
+</form>
+{{ if eq .TopicCount 0 }}
+<form method="post" action="/admin/forum/categories/category/{{ .Category.Idforumcategory }}/delete">
+    {{ csrfField }}
+    <input type="submit" name="task" value="Delete Category">
+</form>
+{{ end }}
+{{ template "tail" $ }}

@@ -23,6 +23,7 @@ type Querier interface {
 	AdminClearExternalLinkCache(ctx context.Context, arg AdminClearExternalLinkCacheParams) error
 	// This query selects all words from the "searchwordlist" table and prints them.
 	AdminCompleteWordList(ctx context.Context) ([]sql.NullString, error)
+	AdminCountForumCategories(ctx context.Context) (int64, error)
 	AdminCountForumThreads(ctx context.Context) (int64, error)
 	AdminCountForumTopics(ctx context.Context) (int64, error)
 	AdminCountLinksByCategory(ctx context.Context, linkerCategoryID int32) (int64, error)
@@ -109,6 +110,7 @@ type Querier interface {
 	AdminListExternalLinks(ctx context.Context, arg AdminListExternalLinksParams) ([]*ExternalLink, error)
 	// admin task
 	AdminListFailedEmails(ctx context.Context, arg AdminListFailedEmailsParams) ([]*AdminListFailedEmailsRow, error)
+	AdminListForumCategoriesWithSubcategoryAndTopicCounts(ctx context.Context, arg AdminListForumCategoriesWithSubcategoryAndTopicCountsParams) ([]*AdminListForumCategoriesWithSubcategoryAndTopicCountsRow, error)
 	// admin task
 	AdminListGrantsByRoleID(ctx context.Context, roleID sql.NullInt32) ([]*Grant, error)
 	AdminListLoginAttempts(ctx context.Context) ([]*LoginAttempt, error)

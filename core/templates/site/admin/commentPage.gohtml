@@ -1,3 +1,4 @@
+{{ define "admin/commentPage.gohtml" }}
 {{ template "head" $ }}
 <h2>Comment {{ .Comment.Idcomments }}</h2>
 <p>Topic {{ .Comment.ForumtopicTitle.String }} thread {{ .Comment.Idforumthread }}</p>
@@ -15,3 +16,4 @@
     <input type="submit" name="task" value="Ban">
 </form>
 {{ template "tail" $ }}
+{{ end }}

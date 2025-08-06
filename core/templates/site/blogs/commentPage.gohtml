@@ -1,3 +1,4 @@
+{{ define "blogs/commentPage.gohtml" }}
 {{ template "head" $ }}
         <font size="5"><a href="/blogs/blogger/{{$.Blog.Username.String}}">{{$.Blog.Username.String}}'s Blog</a>:</font><br>
         <table width="100%">
@@ -11,6 +12,7 @@
                     </td>
                 </tr>
         </table><br>
-        {{ template "threadComments" }}
-        {{ template "blogReply" $ }}
+{{ template "threadComments" }}
+{{ template "blogReply" $ }}
 {{ template "tail" $ }}
+{{ end }}

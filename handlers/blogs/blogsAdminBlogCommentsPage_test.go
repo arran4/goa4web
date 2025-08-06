@@ -1,12 +1,13 @@
-package admin
+package blogs
 
 import (
 	"context"
-	"fmt"
+	"database/sql"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/mux"
@@ -17,7 +18,7 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
-func TestAdminUserProfilePage_UserFound(t *testing.T) {
+func TestAdminBlogCommentsPage_UsesURLParam(t *testing.T) {
 	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -25,23 +26,21 @@ func TestAdminUserProfilePage_UserFound(t *testing.T) {
 	defer conn.Close()
 	mock.MatchExpectationsInOrder(false)
 
-	userID := 22
-	rows := sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).
-		AddRow(userID, "u@example.com", "u", nil)
+	blogID := 9
+	rows := sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_idlanguage", "blog", "written", "username", "comments", "is_owner"}).
+		AddRow(blogID, sql.NullInt32{Int32: 1, Valid: true}, 1, 1, "body", time.Now(), "user", 0, true)
 	mock.ExpectQuery("SELECT").WillReturnRows(rows)
+	mock.ExpectQuery("SELECT").WillReturnRows(sqlmock.NewRows([]string{"idcomments", "posterusername", "text"}))
 
-	req := httptest.NewRequest("GET", fmt.Sprintf("/admin/user/%d", userID), nil)
-	req = mux.SetURLVars(req, map[string]string{"user": strconv.Itoa(userID)})
+	req := httptest.NewRequest("GET", "/admin/blogs/blog/"+strconv.Itoa(blogID)+"/comments", nil)
+	req = mux.SetURLVars(req, map[string]string{"blog": strconv.Itoa(blogID)})
 	cfg := config.NewRuntimeConfig()
 	q := db.New(conn)
 	cd := common.NewCoreData(req.Context(), q, cfg)
-	cd.LoadSelectionsFromRequest(req)
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
-	req = req.WithContext(ctx)
-
 	rr := httptest.NewRecorder()
-	adminUserProfilePage(rr, req)
 
+	AdminBlogCommentsPage(rr, req.WithContext(ctx))
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
 	}

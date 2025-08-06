@@ -74,7 +74,7 @@ func (ModifyBoardTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil {
 		return fmt.Errorf("update image board fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	return handlers.RefreshDirectHandler{TargetURL: "/admin/imagebbs/boards"}
+	return handlers.RefreshDirectHandler{TargetURL: fmt.Sprintf("/admin/imagebbs/board/%d", bid)}
 }
 
 // AdminBoardPage shows a form to edit an existing board.

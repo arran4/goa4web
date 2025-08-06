@@ -102,6 +102,9 @@ const (
 	// TaskModifyBoard modifies the settings of an image board.
 	TaskModifyBoard tasks.TaskString = "Modify board"
 
+	// TaskDeleteBoard deletes an existing image board.
+	TaskDeleteBoard tasks.TaskString = "Delete board"
+
 	// TaskNewCategory creates a new writing category.
 	TaskNewCategory tasks.TaskString = "New Category"
 

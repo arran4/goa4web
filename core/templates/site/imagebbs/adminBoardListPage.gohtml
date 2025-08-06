@@ -1,5 +1,10 @@
 {{ template "head" $ }}
-<h2>Posts for Board {{ .Board.Idimageboard }}</h2>
+<ul>
+    <li><a href="/admin/imagebbs/board/{{ .Board.Idimageboard }}">Dashboard</a></li>
+    <li><a href="/admin/imagebbs/board/{{ .Board.Idimageboard }}/edit">Edit</a></li>
+    <li><a href="/imagebbs/board/{{ .Board.Idimageboard }}">Public View</a></li>
+</ul>
+<h2>Images for Board {{ .Board.Idimageboard }}</h2>
 <table border="1">
 <tr><th>ID<th>User<th>Description<th>Posted<th>Comments<th>Approved</tr>
 {{ range .Posts }}

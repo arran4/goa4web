@@ -18,6 +18,7 @@ import (
 func AdminBoardViewPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		Board *db.Imageboard
+		Posts []*db.ListImagePostsByBoardForListerRow
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -48,6 +49,18 @@ func AdminBoardViewPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := Data{Board: board}
+	rows, err := cd.Queries().ListImagePostsByBoardForLister(r.Context(), db.ListImagePostsByBoardForListerParams{
+		ListerID:     cd.UserID,
+		BoardID:      board.Idimageboard,
+		ListerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		Limit:        5,
+		Offset:       0,
+	})
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		handlers.RenderErrorPage(w, r, err)
+		return
+	}
+
+	data := Data{Board: board, Posts: rows}
 	handlers.TemplateHandler(w, r, "adminBoardViewPage.gohtml", data)
 }

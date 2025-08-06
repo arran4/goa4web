@@ -3,8 +3,8 @@ INSERT INTO user_emails (user_id, email, verified_at, last_verification_code, ve
 VALUES (?, ?, ?, ?, ?, ?);
 
 -- name: ListUserEmailsForLister :many
-WITH role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT ue.id, ue.user_id, ue.email, ue.verified_at, ue.last_verification_code, ue.verification_expires_at, ue.notification_priority
 FROM user_emails ue

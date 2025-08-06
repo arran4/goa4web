@@ -34,13 +34,11 @@ func (UserPasswordResetTask) Action(w http.ResponseWriter, r *http.Request) any 
 		back = fmt.Sprintf("/admin/user/%d", user.Idusers)
 	}
 	data := struct {
-		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: cd,
-		Back:     back,
+		Back: back,
 	}
 	if user == nil {
 		data.Errors = append(data.Errors, "user not found")
@@ -111,13 +109,11 @@ func adminUserResetPasswordConfirmPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data := struct {
-		*common.CoreData
 		User *db.User
 		Back string
 	}{
-		CoreData: cd,
-		User:     &db.User{Idusers: user.Idusers, Username: user.Username},
-		Back:     fmt.Sprintf("/admin/user/%d", user.Idusers),
+		User: &db.User{Idusers: user.Idusers, Username: user.Username},
+		Back: fmt.Sprintf("/admin/user/%d", user.Idusers),
 	}
 	handlers.TemplateHandler(w, r, "userResetPasswordConfirmPage.gohtml", data)
 }

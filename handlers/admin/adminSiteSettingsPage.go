@@ -80,11 +80,9 @@ func (h *Handlers) AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request)
 	}
 
 	data := struct {
-		*common.CoreData
 		ConfigFile string
 		Config     []detail
 	}{
-		CoreData:   cd,
 		ConfigFile: h.ConfigFile,
 		Config:     cfg,
 	}

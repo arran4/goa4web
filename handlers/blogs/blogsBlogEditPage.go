@@ -79,7 +79,6 @@ func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	type Data struct {
-		*common.CoreData
 		Languages          []*db.Language
 		Blog               *db.GetBlogEntryForListerByIDRow
 		SelectedLanguageId int
@@ -87,7 +86,6 @@ func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData:           cd,
 		SelectedLanguageId: int(cd.PreferredLanguageID(cd.Config.DefaultLanguage)),
 		Mode:               "Edit",
 	}

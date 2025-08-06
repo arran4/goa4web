@@ -39,7 +39,6 @@ func (AskTask) Match(r *http.Request, m *mux.RouteMatch) bool {
 
 func (AskTask) Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Languages          []*db.Language
 		SelectedLanguageId int32
 	}
@@ -47,7 +46,6 @@ func (AskTask) Page(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Ask a Question"
 	data := Data{
-		CoreData:           cd,
 		SelectedLanguageId: cd.PreferredLanguageID(cd.Config.DefaultLanguage),
 	}
 

@@ -22,7 +22,6 @@ const (
 
 func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Errors            []string
 		ForumTopics       []*db.AdminForumTopicThreadCountsRow
 		ForumCategories   []*db.AdminForumCategoryThreadCountsRow
@@ -34,9 +33,9 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 		UserMonthly       []*db.UserMonthlyUsageRow
 		StartYear         int
 	}
-	data := Data{CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData)}
-	cd := data.CoreData
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Usage Stats"
+	data := Data{}
 	queries := cd.Queries()
 
 	ctx, cancel := context.WithTimeout(r.Context(), usageTimeout)

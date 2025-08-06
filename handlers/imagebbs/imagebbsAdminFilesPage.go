@@ -33,7 +33,6 @@ func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
 		URL      string
 	}
 	type Data struct {
-		*common.CoreData
 		Path    string
 		Parent  string
 		Entries []Entry
@@ -62,8 +61,7 @@ func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-		Path:     cleaned,
+		Path: cleaned,
 	}
 	if cleaned != "/" {
 		data.Parent = filepath.Dir(cleaned)

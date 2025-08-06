@@ -35,13 +35,11 @@ func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) any {
 	username := r.PostFormValue("username")
 	role := r.PostFormValue("role")
 	data := struct {
-		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-		Back:     "/news",
+		Back: "/news",
 	}
 	if u, err := queries.SystemGetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("SystemGetUserByUsername: %w", err).Error())

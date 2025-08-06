@@ -19,7 +19,6 @@ import (
 
 func PosterPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Posts    []*db.ListImagePostsByPosterForListerRow
 		Username string
 		IsOffset bool
@@ -59,7 +58,6 @@ func PosterPage(w http.ResponseWriter, r *http.Request) {
 	filtered := rows
 
 	data := Data{
-		CoreData: cd,
 		Posts:    filtered,
 		Username: username,
 		IsOffset: offset != 0,

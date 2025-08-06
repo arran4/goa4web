@@ -35,13 +35,11 @@ func adminUserImagebbsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd.PageTitle = fmt.Sprintf("Images by %s", user.Username.String)
 	data := struct {
-		*common.CoreData
 		User  *db.User
 		Posts []*db.GetImagePostsByUserDescendingAllRow
 	}{
-		CoreData: cd,
-		User:     &db.User{Idusers: cpu.Idusers, Username: user.Username},
-		Posts:    rows,
+		User:  &db.User{Idusers: cpu.Idusers, Username: user.Username},
+		Posts: rows,
 	}
 	handlers.TemplateHandler(w, r, "userImagebbsPage.gohtml", data)
 }

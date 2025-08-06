@@ -14,17 +14,14 @@ import (
 
 func BloggersBloggerPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Rows []*db.ListBloggersForListerRow
 	}
 
-	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-	}
-	data.CoreData.PageTitle = "Bloggers"
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Bloggers"
+	data := Data{}
 
-	cd := data.CoreData
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 
 	rows, err := queries.ListBloggersForLister(r.Context(), db.ListBloggersForListerParams{
 		ListerID: cd.UserID,

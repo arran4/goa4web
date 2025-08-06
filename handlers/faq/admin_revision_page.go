@@ -16,6 +16,7 @@ import (
 
 // AdminRevisionHistoryPage shows all revisions for a FAQ entry.
 func AdminRevisionHistoryPage(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
 	idStr := vars["id"]
 	id, err := strconv.Atoi(idStr)
@@ -23,7 +24,7 @@ func AdminRevisionHistoryPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, handlers.ErrBadRequest)
 		return
 	}
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 	faq, err := queries.GetFAQByID(r.Context(), int32(id))
 	if err != nil {
 		switch {
@@ -37,16 +38,13 @@ func AdminRevisionHistoryPage(w http.ResponseWriter, r *http.Request) {
 	}
 	revs, _ := queries.GetFAQRevisionsForAdmin(r.Context(), int32(id))
 	type Data struct {
-		*common.CoreData
 		Faq       *db.Faq
 		Revisions []*db.FaqRevision
 	}
 	data := Data{
-		CoreData:  r.Context().Value(consts.KeyCoreData).(*common.CoreData),
 		Faq:       faq,
 		Revisions: revs,
 	}
-	cd := data.CoreData
 	cd.PageTitle = fmt.Sprintf("FAQ %d History", id)
 	handlers.TemplateHandler(w, r, "adminFaqRevisionPage.gohtml", data)
 }

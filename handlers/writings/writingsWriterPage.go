@@ -18,7 +18,6 @@ import (
 
 func WriterPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Abstracts []*db.ListPublicWritingsByUserForListerRow
 		Username  string
 		IsOffset  bool
@@ -51,12 +50,11 @@ func WriterPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
-		CoreData: cd,
 		Username: username,
 		IsOffset: offset != 0,
 	}
 	for _, row := range rows {
-		if !data.CoreData.HasGrant("writing", "article", "see", row.Idwriting) {
+		if !cd.HasGrant("writing", "article", "see", row.Idwriting) {
 			continue
 		}
 		data.Abstracts = append(data.Abstracts, row)

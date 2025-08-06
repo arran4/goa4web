@@ -22,14 +22,11 @@ func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 		Subject string
 	}
 	type Data struct {
-		*common.CoreData
 		Emails []EmailItem
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Email Queue"
-	data := Data{
-		CoreData: cd,
-	}
+	data := Data{}
 	queries := cd.Queries()
 	langID, _ := strconv.Atoi(r.URL.Query().Get("lang"))
 	role := r.URL.Query().Get("role")

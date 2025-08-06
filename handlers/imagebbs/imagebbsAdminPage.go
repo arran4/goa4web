@@ -14,7 +14,6 @@ import (
 func AdminPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	type Data struct {
-		*common.CoreData
 		Stats []*db.AdminImageboardPostCountsRow
 	}
 	var stats []*db.AdminImageboardPostCountsRow
@@ -24,6 +23,6 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("imagebbsAdminPage stats: %v", err)
 	}
 	cd.PageTitle = "Image Board Admin"
-	data := Data{CoreData: cd, Stats: stats}
+	data := Data{Stats: stats}
 	handlers.TemplateHandler(w, r, "imagebbsAdminPage", data)
 }

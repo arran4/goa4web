@@ -29,12 +29,10 @@ func AdminPageSizePage(w http.ResponseWriter, r *http.Request) {
 		config.UpdatePaginationConfig(cd.Config, min, max, def)
 
 		data := struct {
-			*common.CoreData
 			Errors   []string
 			Messages []string
 			Back     string
 		}{
-			CoreData: cd,
 			Back:     "/admin/page-size",
 			Messages: []string{"Pagination settings updated in memory. Update the configuration file to persist."},
 		}
@@ -43,15 +41,13 @@ func AdminPageSizePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
-		*common.CoreData
 		Min     int
 		Max     int
 		Default int
 	}{
-		CoreData: cd,
-		Min:      cd.Config.PageSizeMin,
-		Max:      cd.Config.PageSizeMax,
-		Default:  cd.Config.PageSizeDefault,
+		Min:     cd.Config.PageSizeMin,
+		Max:     cd.Config.PageSizeMax,
+		Default: cd.Config.PageSizeDefault,
 	}
 	handlers.TemplateHandler(w, r, "pageSizePage.gohtml", data)
 }

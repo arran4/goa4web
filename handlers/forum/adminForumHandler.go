@@ -25,7 +25,6 @@ func AdminForumPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type Data struct {
-		*common.CoreData
 		Categories              []*ForumcategoryPlus
 		CategoryBreadcrumbs     []*ForumcategoryPlus
 		Admin                   bool
@@ -38,8 +37,7 @@ func AdminForumPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Forum Admin"
 	data := &Data{
-		CoreData: cd,
-		Admin:    cd.CanEditAny(),
+		Admin: cd.CanEditAny(),
 	}
 
 	copyDataToSubCategories := func(rootCategory *ForumcategoryPlus) *Data {
@@ -109,13 +107,11 @@ func AdminForumRemakeForumThreadPage(w http.ResponseWriter, r *http.Request) {
 	cd.PageTitle = "Forum - Rebuild Threads"
 	queries := cd.Queries()
 	data := struct {
-		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: cd,
-		Back:     "/admin/forum",
+		Back: "/admin/forum",
 	}
 
 	if c, err := countForumThreads(r.Context(), queries); err == nil {
@@ -136,13 +132,11 @@ func AdminForumRemakeForumTopicPage(w http.ResponseWriter, r *http.Request) {
 	cd.PageTitle = "Forum - Rebuild Topics"
 	queries := cd.Queries()
 	data := struct {
-		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: cd,
-		Back:     "/admin/forum",
+		Back: "/admin/forum",
 	}
 
 	if c, err := countForumTopics(r.Context(), queries); err == nil {

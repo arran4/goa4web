@@ -18,7 +18,6 @@ import (
 
 func ThreadPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Category            *ForumcategoryPlus
 		Topic               *ForumtopicPlus
 		Thread              *db.GetThreadLastPosterAndPermsRow
@@ -39,7 +38,6 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 	cd.LoadSelectionsFromRequest(r)
 	common.WithOffset(offset)(cd)
 	data := Data{
-		CoreData:    cd,
 		IsReplyable: true,
 		CanReply:    cd.UserID != 0,
 	}
@@ -88,7 +86,7 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 	data.Comments = commentRows
 
 	data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
-		return data.CoreData.CanEditAny() || cmt.IsOwner
+		return cd.CanEditAny() || cmt.IsOwner
 	}
 	data.EditURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
 		if !data.CanEditComment(cmt) {
@@ -129,7 +127,7 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 		Edit:                         false,
 	}
 
-	categoryRows, err := data.CoreData.ForumCategories()
+	categoryRows, err := cd.ForumCategories()
 	if err != nil {
 		log.Printf("getAllForumCategories Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -150,7 +148,7 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	blogs.CustomBlogIndex(data.CoreData, r)
+	blogs.CustomBlogIndex(cd, r)
 
 	handlers.TemplateHandler(w, r, "threadPage.gohtml", data)
 }

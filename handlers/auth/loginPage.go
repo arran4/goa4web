@@ -34,16 +34,14 @@ func (h redirectBackPageHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 
 	type Data struct {
-		*common.CoreData
 		BackURL string
 		Method  string
 		Values  url.Values
 	}
 	data := Data{
-		CoreData: cd,
-		BackURL:  h.BackURL,
-		Method:   h.Method,
-		Values:   h.Values,
+		BackURL: h.BackURL,
+		Method:  h.Method,
+		Values:  h.Values,
 	}
 	if err := cd.ExecuteSiteTemplate(w, r, "redirectBackPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %s", err)
@@ -55,7 +53,6 @@ var _ http.Handler = (*redirectBackPageHandler)(nil)
 
 func renderLoginForm(w http.ResponseWriter, r *http.Request, errMsg string) {
 	type Data struct {
-		*common.CoreData
 		Error   string
 		Code    string
 		Back    string
@@ -64,17 +61,15 @@ func renderLoginForm(w http.ResponseWriter, r *http.Request, errMsg string) {
 		Method  string
 		Data    string
 	}
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	handlers.SetPageTitle(r, "Login")
 	data := Data{
-		CoreData: cd,
-		Error:    errMsg,
-		Code:     r.FormValue("code"),
-		Back:     r.Context().Value(consts.KeyCoreData).(*common.CoreData).SanitizeBackURL(r, r.FormValue("back")),
-		BackSig:  r.FormValue("back_sig"),
-		BackTS:   r.FormValue("back_ts"),
-		Method:   r.FormValue("method"),
-		Data:     r.FormValue("data"),
+		Error:   errMsg,
+		Code:    r.FormValue("code"),
+		Back:    r.Context().Value(consts.KeyCoreData).(*common.CoreData).SanitizeBackURL(r, r.FormValue("back")),
+		BackSig: r.FormValue("back_sig"),
+		BackTS:  r.FormValue("back_ts"),
+		Method:  r.FormValue("method"),
+		Data:    r.FormValue("data"),
 	}
 	handlers.TemplateHandler(w, r, "loginPage.gohtml", data)
 }

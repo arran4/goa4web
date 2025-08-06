@@ -25,18 +25,16 @@ func AdminUserRolesPage(w http.ResponseWriter, r *http.Request) {
 		Roles    []RoleInfo
 	}
 	type Data struct {
-		*common.CoreData
 		Users []UserInfo
 		Roles []*db.Role
 	}
 
-	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-	}
-	data.CoreData.PageTitle = "News Roles"
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "News Roles"
+	data := Data{}
 
-	queries := data.CoreData.Queries()
-	if roles, err := data.AllRoles(); err == nil {
+	queries := cd.Queries()
+	if roles, err := cd.AllRoles(); err == nil {
 		data.Roles = roles
 	}
 

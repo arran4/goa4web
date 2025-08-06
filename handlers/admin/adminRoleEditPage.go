@@ -29,10 +29,9 @@ func adminRoleEditFormPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
-		*common.CoreData
 		Role        *db.Role
 		GrantGroups []GrantGroup
-	}{CoreData: cd, Role: role, GrantGroups: groups}
+	}{Role: role, GrantGroups: groups}
 	handlers.TemplateHandler(w, r, "roleEditPage.gohtml", data)
 }
 
@@ -51,10 +50,9 @@ func adminRoleEditSavePage(w http.ResponseWriter, r *http.Request) {
 	isAdmin := r.PostFormValue("is_admin") != ""
 
 	data := struct {
-		*common.CoreData
 		Errors []string
 		Back   string
-	}{CoreData: cd, Back: fmt.Sprintf("/admin/role/%d", id)}
+	}{Back: fmt.Sprintf("/admin/role/%d", id)}
 
 	if err := queries.AdminUpdateRole(r.Context(), db.AdminUpdateRoleParams{
 		Name:     name,

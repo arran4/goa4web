@@ -23,16 +23,14 @@ func adminSearchPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type Data struct {
-		*common.CoreData
 		Stats Stats
 	}
 
-	data := Data{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-	}
-	data.CoreData.PageTitle = "Search Admin"
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Search Admin"
+	data := Data{}
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 	stats, err := queries.AdminGetSearchStats(r.Context())
 	if err != nil {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("database not available"))

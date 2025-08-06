@@ -17,12 +17,11 @@ import (
 
 func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Bans []*db.BannedIp
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "IP Bans"
-	data := Data{CoreData: cd}
+	data := Data{}
 	queries := cd.Queries()
 	rows, err := queries.ListBannedIps(r.Context())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {

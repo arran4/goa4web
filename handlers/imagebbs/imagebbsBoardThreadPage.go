@@ -61,7 +61,6 @@ func (ReplyTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, erro
 
 func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Replyable      bool
 		ForumThreadId  int
 		Comments       []*db.GetCommentsByThreadIdForUserRow
@@ -92,9 +91,9 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	thid, _ := strconv.Atoi(thidStr)
 	cd.PageTitle = fmt.Sprintf("Thread %d/%d", bid, thid)
 
-	data := Data{CoreData: cd, Replyable: true, BoardId: bid, ForumThreadId: thid, CanReply: cd.UserID != 0, IsReplyable: true}
+	data := Data{Replyable: true, BoardId: bid, ForumThreadId: thid, CanReply: cd.UserID != 0, IsReplyable: true}
 
-	if !data.CoreData.HasGrant("imagebbs", "board", "view", int32(bid)) {
+	if !cd.HasGrant("imagebbs", "board", "view", int32(bid)) {
 		_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{})
 		return
 	}
@@ -129,7 +128,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	commentId, _ := strconv.Atoi(r.URL.Query().Get("comment"))
 	data.Comments = commentRows
 	data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
-		return data.CoreData.CanEditAny() || cmt.IsOwner
+		return cd.CanEditAny() || cmt.IsOwner
 	}
 	data.EditURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
 		if !data.CanEditComment(cmt) {

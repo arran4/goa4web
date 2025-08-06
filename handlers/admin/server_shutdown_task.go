@@ -49,13 +49,11 @@ func (t *ServerShutdownTask) Action(w http.ResponseWriter, r *http.Request) any 
 		})
 	}
 	data := struct {
-		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: cd,
-		Back:     "/admin",
+		Back: "/admin",
 	}
 	path := r.URL.Path
 	uid := cd.UserID

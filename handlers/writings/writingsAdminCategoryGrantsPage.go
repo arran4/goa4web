@@ -21,7 +21,6 @@ func AdminCategoryGrantsPage(w http.ResponseWriter, r *http.Request) {
 		RoleName sql.NullString
 	}
 	type Data struct {
-		*common.CoreData
 		CategoryID int32
 		Grants     []GrantInfo
 		Roles      []*db.Role
@@ -37,7 +36,7 @@ func AdminCategoryGrantsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := Data{CoreData: cd, CategoryID: int32(cid), Actions: []string{"see", "view", "post", "edit"}}
+	data := Data{CategoryID: int32(cid), Actions: []string{"see", "view", "post", "edit"}}
 	if roles, err := cd.AllRoles(); err == nil {
 		data.Roles = roles
 	}

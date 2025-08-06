@@ -19,7 +19,6 @@ import (
 
 func TopicsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		CategoryBreadcrumbs     []*ForumcategoryPlus
 		Admin                   bool
 		Back                    bool
@@ -39,8 +38,7 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := &Data{
-		CoreData: cd,
-		Admin:    cd.CanEditAny(),
+		Admin: cd.CanEditAny(),
 	}
 
 	copyDataToSubCategories := func(rootCategory *ForumcategoryPlus) *Data {
@@ -52,14 +50,14 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.CopyDataToSubCategories = copyDataToSubCategories
 
-	categoryRows, err := data.CoreData.ForumCategories()
+	categoryRows, err := cd.ForumCategories()
 	if err != nil {
 		log.Printf("getAllForumCategories Error: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
-	topicRow, err := data.CoreData.ForumTopicByID(int32(topicId))
+	topicRow, err := cd.ForumTopicByID(int32(topicId))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			http.NotFound(w, r)

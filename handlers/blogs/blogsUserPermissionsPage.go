@@ -26,15 +26,13 @@ func GetPermissionsByUserIdAndSectionBlogsPage(w http.ResponseWriter, r *http.Re
 	}
 
 	type Data struct {
-		*common.CoreData
 		Rows   []*db.GetUserRolesRow
 		Filter string
 		Roles  []*db.Role
 	}
 
 	data := Data{
-		CoreData: cd,
-		Filter:   r.URL.Query().Get("role"),
+		Filter: r.URL.Query().Get("role"),
 	}
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
@@ -72,13 +70,11 @@ func UsersPermissionsPermissionUserAllowPage(w http.ResponseWriter, r *http.Requ
 	username := r.PostFormValue("username")
 	role := r.PostFormValue("role")
 	data := struct {
-		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-		Back:     "/blogs/bloggers",
+		Back: "/blogs/bloggers",
 	}
 	if u, err := queries.SystemGetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("SystemGetUserByUsername: %w", err).Error())
@@ -105,13 +101,11 @@ func UsersPermissionsDisallowPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	permid := r.PostFormValue("permid")
 	data := struct {
-		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-		Back:     "/blogs/bloggers",
+		Back: "/blogs/bloggers",
 	}
 	if permidi, err := strconv.Atoi(permid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
@@ -142,13 +136,11 @@ func UsersPermissionsBulkAllowPage(w http.ResponseWriter, r *http.Request) {
 	permids := r.PostForm["permid"]
 	role := r.PostFormValue("role")
 	data := struct {
-		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-		Back:     "/blogs/bloggers",
+		Back: "/blogs/bloggers",
 	}
 
 	for _, id := range permids {
@@ -189,13 +181,11 @@ func UsersPermissionsBulkDisallowPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	permids := r.PostForm["permid"]
 	data := struct {
-		*common.CoreData
 		Errors   []string
 		Messages []string
 		Back     string
 	}{
-		CoreData: r.Context().Value(consts.KeyCoreData).(*common.CoreData),
-		Back:     "/blogs/bloggers",
+		Back: "/blogs/bloggers",
 	}
 
 	for _, id := range permids {

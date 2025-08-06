@@ -16,7 +16,6 @@ import (
 // AdminExternalLinksPage lists cached external links.
 func AdminExternalLinksPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Links []*db.ExternalLink
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -28,6 +27,6 @@ func AdminExternalLinksPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
-	data := Data{CoreData: cd, Links: rows}
+	data := Data{Links: rows}
 	handlers.TemplateHandler(w, r, "admin/externalLinksPage.gohtml", data)
 }

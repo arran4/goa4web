@@ -84,7 +84,6 @@ func (CreateThreadTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, strin
 
 func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Languages          []*db.Language
 		SelectedLanguageId int
 	}
@@ -92,7 +91,6 @@ func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Forum - New Thread"
 	data := Data{
-		CoreData:           cd,
 		SelectedLanguageId: int(cd.PreferredLanguageID(cd.Config.DefaultLanguage)),
 	}
 
@@ -104,7 +102,7 @@ func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	blogs.CustomBlogIndex(data.CoreData, r)
+	blogs.CustomBlogIndex(cd, r)
 
 	handlers.TemplateHandler(w, r, "threadNewPage.gohtml", data)
 }

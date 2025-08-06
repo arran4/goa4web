@@ -21,11 +21,9 @@ func adminUserListPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data := struct {
-		*common.CoreData
 		Users []*db.AdminListAllUsersRow
 	}{
-		CoreData: cd,
-		Users:    users,
+		Users: users,
 	}
 	handlers.TemplateHandler(w, r, "userList.gohtml", data)
 }

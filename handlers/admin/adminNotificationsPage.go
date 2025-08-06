@@ -14,7 +14,6 @@ import (
 
 func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Notifications []*db.Notification
 		Total         int
 		Unread        int
@@ -23,11 +22,9 @@ func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Notifications"
-	data := Data{
-		CoreData: cd,
-	}
+	data := Data{}
 	queries := cd.Queries()
-	roles, err := data.AllRoles()
+	roles, err := cd.AllRoles()
 	if err != nil {
 		log.Printf("load roles: %v", err)
 	}

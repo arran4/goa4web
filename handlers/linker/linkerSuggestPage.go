@@ -20,7 +20,6 @@ import (
 
 func SuggestPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		*common.CoreData
 		Categories         []*db.LinkerCategory
 		Languages          []*db.Language
 		SelectedLanguageId int
@@ -30,11 +29,10 @@ func SuggestPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Suggest Link"
 	data := Data{
-		CoreData:           cd,
 		SelectedLanguageId: int(cd.PreferredLanguageID(cd.Config.DefaultLanguage)),
 	}
 
-	uid := data.CoreData.UserID
+	uid := cd.UserID
 	categoryRows, err := queries.GetAllLinkerCategoriesForUser(r.Context(), db.GetAllLinkerCategoriesForUserParams{
 		ViewerID:     uid,
 		ViewerUserID: sql.NullInt32{Int32: uid, Valid: uid != 0},
@@ -51,7 +49,7 @@ func SuggestPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Categories = categoryRows
 
-	languageRows, err := data.CoreData.Languages()
+	languageRows, err := cd.Languages()
 	if err != nil {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return

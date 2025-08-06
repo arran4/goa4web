@@ -32,16 +32,15 @@ func adminRoleGrantAddPage(w http.ResponseWriter, r *http.Request) {
 	item := r.URL.Query().Get("item")
 
 	data := struct {
-		*common.CoreData
-		Role          *db.Role
-		Section       string
-		Item          string
-		Sections      []string
-		Items         []string
-		Actions       []string
-		ItemOptions   []ItemOption
+		Role        *db.Role
+		Section     string
+		Item        string
+		Sections    []string
+		Items       []string
+		Actions     []string
+		ItemOptions []ItemOption
 		RequireItemID bool
-	}{CoreData: cd, Role: role, Section: section, Item: item}
+	}{Role: role, Section: section, Item: item}
 
 	if section == "" {
 		sectSet := map[string]struct{}{}

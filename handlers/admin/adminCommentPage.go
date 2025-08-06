@@ -55,5 +55,5 @@ func adminCommentPage(w http.ResponseWriter, r *http.Request) {
 		Comment *db.GetCommentsByIdsForUserWithThreadInfoRow
 		Context []*db.GetCommentsByThreadIdForUserRow
 	}{comment, contextRows}
-	handlers.TemplateHandler(w, r, "admin/commentPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "adminCommentPage.gohtml", data)
 }

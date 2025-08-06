@@ -55,11 +55,10 @@ func TestPageTemplatesRender(t *testing.T) {
 		}{&common.CoreData{}, nil, nil, false, 0}},
 		{"forumPage", struct {
 			*common.CoreData
-			Categories          []*forum.ForumcategoryPlus
-			CategoryBreadcrumbs []*forum.ForumcategoryPlus
-			Category            *forum.ForumcategoryPlus
-			Admin               bool
-		}{&common.CoreData{}, nil, nil, nil, false}},
+			Categories []*forum.ForumcategoryPlus
+			Category   *forum.ForumcategoryPlus
+			Admin      bool
+		}{&common.CoreData{}, nil, nil, false}},
 		{"bookmarksPage", struct{ *common.CoreData }{&common.CoreData{}}},
 		{"imagebbsPage", struct {
 			*common.CoreData

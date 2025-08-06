@@ -17,7 +17,7 @@
         </td>
         <td>{{ .Action }}</td>
         <td>
-            <form method="post" action="/admin/forum/category/{{ $.CategoryID }}/grant/delete">
+            <form method="post" action="/admin/forum/categories/category/{{ $.CategoryID }}/grant/delete">
         {{ csrfField }}
                 <input type="hidden" name="grantid" value="{{ .ID }}">
                 <input type="submit" name="task" value="Delete grant">
@@ -26,7 +26,7 @@
     </tr>
     {{- end }}
     <tr>
-        <form method="post" action="/admin/forum/category/{{ $.CategoryID }}/grant">
+        <form method="post" action="/admin/forum/categories/category/{{ $.CategoryID }}/grant">
         {{ csrfField }}
             <td>NEW</td>
             <td>

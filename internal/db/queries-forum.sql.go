@@ -10,6 +10,34 @@ import (
 	"database/sql"
 )
 
+const adminCountForumCategories = `-- name: AdminCountForumCategories :one
+SELECT COUNT(*)
+FROM forumcategory c
+WHERE (
+    c.language_idlanguage = 0
+    OR c.language_idlanguage IS NULL
+    OR EXISTS (
+        SELECT 1 FROM user_language ul
+        WHERE ul.users_idusers = ?
+          AND ul.language_idlanguage = c.language_idlanguage
+    )
+    OR NOT EXISTS (
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+    )
+)
+`
+
+type AdminCountForumCategoriesParams struct {
+	ViewerID int32
+}
+
+func (q *Queries) AdminCountForumCategories(ctx context.Context, arg AdminCountForumCategoriesParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, adminCountForumCategories, arg.ViewerID, arg.ViewerID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const adminCreateForumCategory = `-- name: AdminCreateForumCategory :exec
 INSERT INTO forumcategory (forumcategory_idforumcategory, language_idlanguage, title, description) VALUES (?, ?, ?, ?)
 `
@@ -48,6 +76,81 @@ UPDATE forumtopic SET deleted_at = NOW() WHERE idforumtopic = ?
 func (q *Queries) AdminDeleteForumTopic(ctx context.Context, idforumtopic int32) error {
 	_, err := q.db.ExecContext(ctx, adminDeleteForumTopic, idforumtopic)
 	return err
+}
+
+const adminListForumCategoriesWithCounts = `-- name: AdminListForumCategoriesWithCounts :many
+SELECT c.idforumcategory, c.forumcategory_idforumcategory, c.language_idlanguage, c.title, c.description, COUNT(c2.idforumcategory) AS SubcategoryCount,
+       COUNT(t.idforumtopic) AS TopicCount
+FROM forumcategory c
+LEFT JOIN forumcategory c2 ON c.idforumcategory = c2.forumcategory_idforumcategory
+LEFT JOIN forumtopic t ON c.idforumcategory = t.forumcategory_idforumcategory
+WHERE (
+    c.language_idlanguage = 0
+    OR c.language_idlanguage IS NULL
+    OR EXISTS (
+        SELECT 1 FROM user_language ul
+        WHERE ul.users_idusers = ?
+          AND ul.language_idlanguage = c.language_idlanguage
+    )
+    OR NOT EXISTS (
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+    )
+)
+GROUP BY c.idforumcategory
+ORDER BY c.idforumcategory
+LIMIT ? OFFSET ?
+`
+
+type AdminListForumCategoriesWithCountsParams struct {
+	ViewerID int32
+	Limit    int32
+	Offset   int32
+}
+
+type AdminListForumCategoriesWithCountsRow struct {
+	Idforumcategory              int32
+	ForumcategoryIdforumcategory int32
+	LanguageIdlanguage           int32
+	Title                        sql.NullString
+	Description                  sql.NullString
+	Subcategorycount             int64
+	Topiccount                   int64
+}
+
+func (q *Queries) AdminListForumCategoriesWithCounts(ctx context.Context, arg AdminListForumCategoriesWithCountsParams) ([]*AdminListForumCategoriesWithCountsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListForumCategoriesWithCounts,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListForumCategoriesWithCountsRow
+	for rows.Next() {
+		var i AdminListForumCategoriesWithCountsRow
+		if err := rows.Scan(
+			&i.Idforumcategory,
+			&i.ForumcategoryIdforumcategory,
+			&i.LanguageIdlanguage,
+			&i.Title,
+			&i.Description,
+			&i.Subcategorycount,
+			&i.Topiccount,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const adminListForumTopics = `-- name: AdminListForumTopics :many

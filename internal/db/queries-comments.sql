@@ -63,9 +63,11 @@ WITH role_ids AS (
 )
 SELECT c.*, pu.username AS posterusername,
        c.users_idusers = sqlc.arg(viewer_id) AS is_owner,
-       th.idforumthread, t.idforumtopic, t.title AS forumtopic_title, fc.idforumcategory, fc.title AS forumcategory_title
+       th.idforumthread, t.idforumtopic, t.title AS forumtopic_title,
+       fp.text AS thread_title, fc.idforumcategory, fc.title AS forumcategory_title
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
+LEFT JOIN comments fp ON th.firstpost = fp.idcomments
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
 LEFT JOIN forumcategory fc ON t.forumcategory_idforumcategory = fc.idforumcategory
@@ -187,9 +189,14 @@ ORDER BY c.written;
 
 
 -- name: AdminGetAllCommentsByUser :many
-SELECT c.*, th.forumtopic_idforumtopic
+SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage,
+       c.written, c.text, c.deleted_at, c.last_index,
+       th.forumtopic_idforumtopic, t.title AS forumtopic_title,
+       fp.text AS thread_title
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id = th.idforumthread
+LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
+LEFT JOIN comments fp ON th.firstpost = fp.idcomments
 WHERE c.users_idusers = sqlc.arg('user_id')
 ORDER BY c.written;
 

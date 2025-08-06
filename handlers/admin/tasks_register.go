@@ -22,6 +22,9 @@ func (h *Handlers) RegisterTasks() []tasks.NamedTask {
 		purgeReadNotificationsTask,
 		deleteNotificationTask,
 		sendNotificationTask,
+		addUserSubscriptionTask,
+		updateUserSubscriptionTask,
+		deleteUserSubscriptionTask,
 		addIPBanTask,
 		deleteIPBanTask,
 		acceptRequestTask,
@@ -35,6 +38,7 @@ func (h *Handlers) RegisterTasks() []tasks.NamedTask {
 		userPasswordResetTask,
 		roleGrantCreateTask,
 		roleGrantDeleteTask,
+		userGrantCreateTask,
 		h.NewServerShutdownTask(),
 	}
 }

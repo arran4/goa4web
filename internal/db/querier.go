@@ -346,10 +346,13 @@ type Querier interface {
 	ListCommentIDsBySearchWordNextForListerInRestrictedTopic(ctx context.Context, arg ListCommentIDsBySearchWordNextForListerInRestrictedTopicParams) ([]int32, error)
 	ListCommentIDsBySearchWordNextForListerNotInRestrictedTopic(ctx context.Context, arg ListCommentIDsBySearchWordNextForListerNotInRestrictedTopicParams) ([]int32, error)
 	ListEffectiveRoleIDsByUserID(ctx context.Context, usersIdusers int32) ([]int32, error)
+	ListForumcategoryPath(ctx context.Context, categoryID int32) ([]*ListForumcategoryPathRow, error)
 	ListGrants(ctx context.Context) ([]*Grant, error)
 	ListGrantsByUserID(ctx context.Context, userID sql.NullInt32) ([]*Grant, error)
 	ListImagePostsByBoardForLister(ctx context.Context, arg ListImagePostsByBoardForListerParams) ([]*ListImagePostsByBoardForListerRow, error)
 	ListImagePostsByPosterForLister(ctx context.Context, arg ListImagePostsByPosterForListerParams) ([]*ListImagePostsByPosterForListerRow, error)
+	ListImageboardPath(ctx context.Context, boardID int32) ([]*ListImageboardPathRow, error)
+	ListLinkerCategoryPath(ctx context.Context, categoryID int32) ([]*ListLinkerCategoryPathRow, error)
 	ListNotificationsForLister(ctx context.Context, arg ListNotificationsForListerParams) ([]*Notification, error)
 	ListPublicWritingsByUserForLister(ctx context.Context, arg ListPublicWritingsByUserForListerParams) ([]*ListPublicWritingsByUserForListerRow, error)
 	ListPublicWritingsInCategoryForLister(ctx context.Context, arg ListPublicWritingsInCategoryForListerParams) ([]*ListPublicWritingsInCategoryForListerRow, error)
@@ -367,6 +370,7 @@ type Querier interface {
 	ListWritingCategoriesForLister(ctx context.Context, arg ListWritingCategoriesForListerParams) ([]*WritingCategory, error)
 	ListWritingSearchFirstForLister(ctx context.Context, arg ListWritingSearchFirstForListerParams) ([]int32, error)
 	ListWritingSearchNextForLister(ctx context.Context, arg ListWritingSearchNextForListerParams) ([]int32, error)
+	ListWritingcategoryPath(ctx context.Context, categoryID int32) ([]*ListWritingcategoryPathRow, error)
 	ListWritingsByIDsForLister(ctx context.Context, arg ListWritingsByIDsForListerParams) ([]*ListWritingsByIDsForListerRow, error)
 	SetNotificationPriorityForLister(ctx context.Context, arg SetNotificationPriorityForListerParams) error
 	SetNotificationReadForLister(ctx context.Context, arg SetNotificationReadForListerParams) error
@@ -472,6 +476,7 @@ type Querier interface {
 	UpdateNewsPostForWriter(ctx context.Context, arg UpdateNewsPostForWriterParams) error
 	UpdatePreferenceForLister(ctx context.Context, arg UpdatePreferenceForListerParams) error
 	UpdatePublicProfileEnabledAtForUser(ctx context.Context, arg UpdatePublicProfileEnabledAtForUserParams) error
+	UpdateSubscriptionByIDForSubscriber(ctx context.Context, arg UpdateSubscriptionByIDForSubscriberParams) error
 	UpdateWritingForWriter(ctx context.Context, arg UpdateWritingForWriterParams) error
 }
 

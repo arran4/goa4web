@@ -1,0 +1,9 @@
+{{ template "head" $ }}
+    <p><strong>Title:</strong> {{ .Link.Title.String }}</p>
+    <p><strong>URL:</strong> <a href="{{ .Link.Url.String }}">{{ .Link.Url.String }}</a></p>
+    <p><strong>Description:</strong> {{ .Link.Description.String }}</p>
+    <p><strong>Category:</strong> {{ .Link.Title_2.String }}</p>
+    <p><strong>Poster:</strong> {{ .Link.Username.String }}</p>
+    <p><strong>Listed:</strong> {{ if .Link.Listed.Valid }}{{ .Link.Listed.Time }}{{ end }}</p>
+    <p><a href="/admin/linker/link/{{ .Link.Idlinker }}/edit">Edit</a></p>
+{{ template "tail" $ }}

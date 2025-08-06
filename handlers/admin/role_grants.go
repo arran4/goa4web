@@ -167,7 +167,7 @@ func buildGrantGroups(ctx context.Context, cd *common.CoreData, roleID int32) ([
 			case "writing":
 				switch g.Item.String {
 				case "category":
-					gi.Link = fmt.Sprintf("/admin/writings/category/%d/permissions#g%d", g.ItemID.Int32, g.ID)
+					gi.Link = fmt.Sprintf("/admin/writings/categories/category/%d/grants#g%d", g.ItemID.Int32, g.ID)
 					if c, err := queries.GetWritingCategoryById(ctx, g.ItemID.Int32); err == nil && c.Title.Valid {
 						gi.Info = c.Title.String
 					}

@@ -32,7 +32,7 @@ func TestWritingCategoryChangeTask(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	form := url.Values{"name": {"A"}, "desc": {"B"}, "pcid": {"0"}, "cid": {"1"}}
-	req := httptest.NewRequest("POST", "/admin/writings/categories", strings.NewReader(form.Encode()))
+	req := httptest.NewRequest("POST", "/admin/writings/categories/category/1/edit", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	cd := common.NewCoreData(req.Context(), queries, config.NewRuntimeConfig())
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
@@ -152,7 +152,7 @@ func TestWritingCategoryChangeTaskLoop(t *testing.T) {
 	mock.ExpectQuery("SELECT wc.idwritingcategory").WillReturnRows(rows)
 
 	form := url.Values{"name": {"A"}, "desc": {"B"}, "pcid": {"2"}, "cid": {"1"}}
-	req := httptest.NewRequest("POST", "/admin/writings/categories", strings.NewReader(form.Encode()))
+	req := httptest.NewRequest("POST", "/admin/writings/categories/category/1/edit", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	cd := common.NewCoreData(req.Context(), queries, config.NewRuntimeConfig())
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)

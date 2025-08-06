@@ -38,7 +38,7 @@
     <tr><th>ID</th><th>Category</th><th>Writings</th></tr>
     {{- range .WritingCategories }}
     <tr>
-        <td><a href="/admin/writings/category/{{ .Idwritingcategory }}">{{ .Idwritingcategory }}</a></td>
+        <td><a href="/admin/writings/categories/category/{{ .Idwritingcategory }}">{{ .Idwritingcategory }}</a></td>
         <td>{{ .Title.String }}</td>
         <td>{{ .Count }}</td>
     </tr>

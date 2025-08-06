@@ -171,5 +171,5 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	handlers.TemplateHandler(w, r, "commentPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "blogs/commentPage.gohtml", data)
 }

@@ -1,0 +1,27 @@
+{{ template "head" $ }}
+<h2>Blog {{ .Blog.Idblogs }} Admin</h2>
+<p>By {{ .Blog.Username.String }}</p>
+<div>{{ .Blog.Blog.String | a4code2html }}</div>
+<p><a href="/admin/blogs/blog/{{ .Blog.Idblogs }}/edit">Edit</a> | <a href="/admin/blogs/blog/{{ .Blog.Idblogs }}/comments">Comments</a></p>
+<h3>Grants</h3>
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <th>User / Role</th>
+        <th>Action</th>
+    </tr>
+    {{- range .Grants }}
+    <tr>
+        <td>{{ .ID }}</td>
+        <td>
+            {{- if .Username.Valid }}User: {{ .Username.String }}{{ end -}}
+            {{- if and .Username.Valid .RoleName.Valid }}<br>{{ end -}}
+            {{- if .RoleName.Valid }}Role: {{ .RoleName.String }}{{ end -}}
+        </td>
+        <td>{{ .Action }}</td>
+    </tr>
+    {{- else }}
+    <tr><td colspan="3">No grants.</td></tr>
+    {{- end }}
+</table>
+{{ template "tail" $ }}

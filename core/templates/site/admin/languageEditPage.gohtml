@@ -1,0 +1,15 @@
+{{ template "head" $ }}
+<h2>Edit Language {{ .Language.Nameof.String }}</h2>
+<form method="post">
+    {{ csrfField }}
+    <input type="hidden" name="cid" value="{{ .Language.Idlanguage }}">
+    <label>Name:<input name="cname" value="{{ .Language.Nameof.String }}"></label>
+    <input type="submit" name="task" value="Rename Language">
+</form>
+<form method="post">
+    {{ csrfField }}
+    <input type="hidden" name="cid" value="{{ .Language.Idlanguage }}">
+    <input type="submit" name="task" value="Delete Language">
+</form>
+<p><a href="/admin/languages/language/{{ .Language.Idlanguage }}">Back</a></p>
+{{ template "tail" $ }}

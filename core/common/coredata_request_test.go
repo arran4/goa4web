@@ -24,6 +24,16 @@ func TestLoadSelectionsFromRequest(t *testing.T) {
 		}
 	})
 
+	t.Run("category path variable", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/", nil)
+		req = mux.SetURLVars(req, map[string]string{"category": "5"})
+		cd := NewCoreData(context.Background(), nil, cfg)
+		cd.LoadSelectionsFromRequest(req)
+		if cd.currentCategoryID != 5 {
+			t.Fatalf("currentCategoryID = %d; want 5", cd.currentCategoryID)
+		}
+	})
+
 	t.Run("request variable", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/", nil)
 		req = mux.SetURLVars(req, map[string]string{"request": "4"})

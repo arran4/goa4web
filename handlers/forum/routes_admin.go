@@ -28,6 +28,8 @@ func RegisterAdminRoutes(ar *mux.Router) {
 	far.HandleFunc("/thread/{thread}", AdminThreadPage).Methods("GET")
 	far.HandleFunc("/thread/{thread}/delete", AdminThreadDeleteConfirmPage).Methods("GET")
 	far.HandleFunc("/thread/{thread}/delete", AdminThreadDeletePage).Methods("POST").MatcherFunc(threadDeleteTask.Matcher())
+	far.HandleFunc("/topic/{topic}", AdminTopicPage).Methods("GET")
+	far.HandleFunc("/topic/{topic}/edit", AdminTopicEditFormPage).Methods("GET")
 	far.HandleFunc("/topic/{topic}/edit", AdminTopicEditPage).Methods("POST").MatcherFunc(topicChangeTask.Matcher())
 	far.HandleFunc("/topic/{topic}/delete", AdminTopicDeletePage).Methods("POST").MatcherFunc(topicDeleteTask.Matcher())
 	far.HandleFunc("/topic/{topic}/grants", AdminTopicGrantsPage).Methods("GET")

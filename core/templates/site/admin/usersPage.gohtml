@@ -21,7 +21,6 @@
             <th>User</th>
             <th>Email</th>
             <th>Latest Comment</th>
-            <th>Options?</th>
         </tr>
         {{range $.Rows}}
             <tr>
@@ -29,23 +28,6 @@
                 <td>{{.Username.String}}</td>
                 <td>{{.Email.String}}</td>
                 <td>{{with $c := index $.Comments .Idusers}}{{ $c.CreatedAt.Format "2006-01-02" }} - {{$c.Comment}}{{end}}</td>
-                <td style="white-space:nowrap">
-                    <a style="display:inline-block;margin:0 4px" href="/blogs/blogger/{{.Username.String}}">View Blog</a>
-                    <a style="display:inline-block;margin:0 4px" href="/admin/user/{{.Idusers}}/edit">Edit</a>
-                    <a style="display:inline-block;margin:0 4px" href="/admin/user/{{.Idusers}}/blogs">Blog Posts</a>
-                    <a style="display:inline-block;margin:0 4px" href="/admin/user/{{.Idusers}}/writings">Writings</a>
-                    <a style="display:inline-block;margin:0 4px" href="/admin/user/{{.Idusers}}/linker">Links</a>
-                    <a style="display:inline-block;margin:0 4px" href="/admin/user/{{.Idusers}}/imagebbs">Images</a>
-                    <a style="display:inline-block;margin:0 4px" href="/admin/user/{{.Idusers}}/forum">Forum</a>
-                    <a style="display:inline-block;margin:0 4px" href="/admin/user/{{.Idusers}}/comments">Comments</a>
-                    <a style="display:inline-block;margin:0 4px" href="/admin/user/{{.Idusers}}/subscriptions">Subscriptions</a>
-                    <a style="display:inline-block;margin:0 4px" href="/admin/user/{{.Idusers}}/disable">Disable account</a>
-                    <a style="display:inline-block;margin:0 4px" href="/admin/user/{{.Idusers}}/reset">Reset password</a>
-                    <a style="display:inline-block;margin:0 4px" href="/user/profile/{{.Username.String}}">Profile</a>
-                    <a style="display:inline-block;margin:0 4px" href="/admin/user/{{.Idusers}}">Admin profile</a>
-                    <a style="display:inline-block;margin:0 4px" href="/admin/user/{{.Idusers}}/permissions">Permissions</a>
-                    <a style="display:inline-block;margin:0 4px" href="/admin/users/export?uid={{.Idusers}}">Export ZIP</a>
-                </td>
             </tr>
         {{end}}
     </table>

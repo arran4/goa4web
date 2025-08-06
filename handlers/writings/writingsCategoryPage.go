@@ -21,6 +21,7 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
 
 	vars := mux.Vars(r)
 	categoryID, _ := strconv.Atoi(vars["category"])

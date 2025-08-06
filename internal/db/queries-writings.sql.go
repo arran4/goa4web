@@ -878,6 +878,49 @@ func (q *Queries) ListWritingCategoriesForLister(ctx context.Context, arg ListWr
 	return items, nil
 }
 
+const listWritingcategoryPath = `-- name: ListWritingcategoryPath :many
+WITH RECURSIVE category_path AS (
+    SELECT wc.idwritingcategory, wc.writing_category_id AS parent_id, wc.title, 0 AS depth
+    FROM writing_category wc
+    WHERE wc.idwritingcategory = ?
+    UNION ALL
+    SELECT c.idwritingcategory, c.writing_category_id, c.title, p.depth + 1
+    FROM writing_category c
+    JOIN category_path p ON p.parent_id = c.idwritingcategory
+)
+SELECT category_path.idwritingcategory, category_path.title
+FROM category_path
+ORDER BY category_path.depth DESC
+`
+
+type ListWritingcategoryPathRow struct {
+	Idwritingcategory int32
+	Title             sql.NullString
+}
+
+func (q *Queries) ListWritingcategoryPath(ctx context.Context, categoryID int32) ([]*ListWritingcategoryPathRow, error) {
+	rows, err := q.db.QueryContext(ctx, listWritingcategoryPath, categoryID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListWritingcategoryPathRow
+	for rows.Next() {
+		var i ListWritingcategoryPathRow
+		if err := rows.Scan(&i.Idwritingcategory, &i.Title); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listWritingsByIDsForLister = `-- name: ListWritingsByIDsForLister :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?

@@ -160,6 +160,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, sql.ErrNoRows) {
 		ptidi, err := queries.SystemCreateForumTopic(r.Context(), db.SystemCreateForumTopicParams{
 			ForumcategoryIdforumcategory: 0,
+			LanguageIdlanguage:           writing.LanguageIdlanguage,
 			Title: sql.NullString{
 				String: WritingTopicName,
 				Valid:  true,

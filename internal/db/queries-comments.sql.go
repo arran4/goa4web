@@ -223,7 +223,7 @@ func (q *Queries) GetCommentById(ctx context.Context, idcomments int32) (*Commen
 }
 
 const getCommentByIdForUser = `-- name: GetCommentByIdForUser :one
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, c.last_index, pu.Username,
@@ -303,7 +303,7 @@ func (q *Queries) GetCommentByIdForUser(ctx context.Context, arg GetCommentByIdF
 }
 
 const getCommentsByIdsForUserWithThreadInfo = `-- name: GetCommentsByIdsForUserWithThreadInfo :many
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, c.last_index, pu.username AS posterusername,
@@ -419,7 +419,7 @@ func (q *Queries) GetCommentsByIdsForUserWithThreadInfo(ctx context.Context, arg
 }
 
 const getCommentsByThreadIdForUser = `-- name: GetCommentsByThreadIdForUser :many
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, c.last_index, pu.username AS posterusername,

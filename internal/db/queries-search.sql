@@ -86,7 +86,7 @@ ON DUPLICATE KEY UPDATE word_count=VALUES(word_count);
 
 
 -- name: ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopic :many
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.comment_id
@@ -121,7 +121,7 @@ WHERE swl.word=sqlc.arg(word)
   );
 
 -- name: ListCommentIDsBySearchWordNextForListerNotInRestrictedTopic :many
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.comment_id
@@ -157,7 +157,7 @@ WHERE swl.word=sqlc.arg(word)
   );
 
 -- name: ListCommentIDsBySearchWordFirstForListerInRestrictedTopic :many
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.comment_id
@@ -192,7 +192,7 @@ WHERE swl.word=sqlc.arg(word)
   );
 
 -- name: ListCommentIDsBySearchWordNextForListerInRestrictedTopic :many
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.comment_id
@@ -255,7 +255,7 @@ ON DUPLICATE KEY UPDATE word_count=VALUES(word_count);
 DELETE FROM writing_search
 WHERE writing_id = sqlc.arg(writing_id);
 -- name: ListWritingSearchFirstForLister :many
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.writing_id
@@ -287,7 +287,7 @@ WHERE swl.word = sqlc.arg(word)
   );
 
 -- name: ListWritingSearchNextForLister :many
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.writing_id
@@ -320,7 +320,7 @@ WHERE swl.word = sqlc.arg(word)
   );
 
 -- name: ListSiteNewsSearchFirstForLister :many
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.site_news_id
@@ -352,7 +352,7 @@ WHERE swl.word = sqlc.arg(word)
   );
 
 -- name: ListSiteNewsSearchNextForLister :many
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.site_news_id
@@ -387,7 +387,7 @@ WHERE swl.word = sqlc.arg(word)
 
 
 -- name: LinkerSearchFirst :many
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.linker_id
@@ -419,7 +419,7 @@ WHERE swl.word = sqlc.arg(word)
   );
 
 -- name: LinkerSearchNext :many
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.linker_id

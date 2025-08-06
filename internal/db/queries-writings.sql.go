@@ -176,7 +176,7 @@ func (q *Queries) AdminUpdateWritingCategory(ctx context.Context, arg AdminUpdat
 }
 
 const getAllWritingsByAuthorForLister = `-- name: GetAllWritingsByAuthorForLister :many
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, w.last_index, u.username,
@@ -363,7 +363,7 @@ func (q *Queries) GetWritingCategoryById(ctx context.Context, idwritingcategory 
 }
 
 const getWritingForListerByID = `-- name: GetWritingForListerByID :one
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, w.last_index, u.idusers AS WriterId, u.Username AS WriterUsername
@@ -460,7 +460,7 @@ func (q *Queries) InsertWriting(ctx context.Context, arg InsertWritingParams) (i
 }
 
 const listPublicWritingsByUserForLister = `-- name: ListPublicWritingsByUserForLister :many
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, w.last_index, u.username,
@@ -566,7 +566,7 @@ func (q *Queries) ListPublicWritingsByUserForLister(ctx context.Context, arg Lis
 }
 
 const listPublicWritingsInCategoryForLister = `-- name: ListPublicWritingsInCategoryForLister :many
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, w.last_index, u.Username,
@@ -672,7 +672,7 @@ func (q *Queries) ListPublicWritingsInCategoryForLister(ctx context.Context, arg
 }
 
 const listWritersForLister = `-- name: ListWritersForLister :many
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT u.username, COUNT(w.idwriting) AS count
@@ -748,7 +748,7 @@ func (q *Queries) ListWritersForLister(ctx context.Context, arg ListWritersForLi
 }
 
 const listWritersSearchForLister = `-- name: ListWritersSearchForLister :many
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT u.username, COUNT(w.idwriting) AS count
@@ -828,7 +828,7 @@ func (q *Queries) ListWritersSearchForLister(ctx context.Context, arg ListWriter
 }
 
 const listWritingCategoriesForLister = `-- name: ListWritingCategoriesForLister :many
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT wc.idwritingcategory, wc.writing_category_id, wc.title, wc.description
@@ -879,7 +879,7 @@ func (q *Queries) ListWritingCategoriesForLister(ctx context.Context, arg ListWr
 }
 
 const listWritingsByIDsForLister = `-- name: ListWritingsByIDsForLister :many
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, w.last_index, u.idusers AS WriterId, u.username AS WriterUsername

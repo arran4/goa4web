@@ -104,7 +104,7 @@ func (q *Queries) CreateBlogEntryForWriter(ctx context.Context, arg CreateBlogEn
 }
 
 const getBlogEntryForListerByID = `-- name: GetBlogEntryForListerByID :one
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
@@ -181,7 +181,7 @@ func (q *Queries) GetBlogEntryForListerByID(ctx context.Context, arg GetBlogEntr
 }
 
 const listBlogEntriesByAuthorForLister = `-- name: ListBlogEntriesByAuthorForLister :many
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
@@ -280,7 +280,7 @@ func (q *Queries) ListBlogEntriesByAuthorForLister(ctx context.Context, arg List
 }
 
 const listBlogEntriesByIDsForLister = `-- name: ListBlogEntriesByIDsForLister :many
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written
@@ -376,7 +376,7 @@ func (q *Queries) ListBlogEntriesByIDsForLister(ctx context.Context, arg ListBlo
 }
 
 const listBlogEntriesForLister = `-- name: ListBlogEntriesForLister :many
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
@@ -468,7 +468,7 @@ func (q *Queries) ListBlogEntriesForLister(ctx context.Context, arg ListBlogEntr
 }
 
 const listBlogIDsBySearchWordFirstForLister = `-- name: ListBlogIDsBySearchWordFirstForLister :many
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT DISTINCT cs.blog_id
@@ -536,7 +536,7 @@ func (q *Queries) ListBlogIDsBySearchWordFirstForLister(ctx context.Context, arg
 }
 
 const listBlogIDsBySearchWordNextForLister = `-- name: ListBlogIDsBySearchWordNextForLister :many
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT DISTINCT cs.blog_id
@@ -615,7 +615,7 @@ func (q *Queries) ListBlogIDsBySearchWordNextForLister(ctx context.Context, arg 
 }
 
 const listBloggersForLister = `-- name: ListBloggersForLister :many
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT u.username, COUNT(b.idblogs) AS count
@@ -691,7 +691,7 @@ func (q *Queries) ListBloggersForLister(ctx context.Context, arg ListBloggersFor
 }
 
 const listBloggersSearchForLister = `-- name: ListBloggersSearchForLister :many
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT u.username, COUNT(b.idblogs) AS count

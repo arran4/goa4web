@@ -219,7 +219,7 @@ func (q *Queries) GetImageBoardById(ctx context.Context, idimageboard int32) (*I
 }
 
 const getImagePostByIDForLister = `-- name: GetImagePostByIDForLister :one
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
@@ -467,7 +467,7 @@ func (q *Queries) GetImagePostsByUserDescendingAll(ctx context.Context, arg GetI
 }
 
 const listBoardsByParentIDForLister = `-- name: ListBoardsByParentIDForLister :many
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required
@@ -531,7 +531,7 @@ func (q *Queries) ListBoardsByParentIDForLister(ctx context.Context, arg ListBoa
 }
 
 const listBoardsForLister = `-- name: ListBoardsForLister :many
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required
@@ -591,7 +591,7 @@ func (q *Queries) ListBoardsForLister(ctx context.Context, arg ListBoardsForList
 }
 
 const listImagePostsByBoardForLister = `-- name: ListImagePostsByBoardForLister :many
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
@@ -684,7 +684,7 @@ func (q *Queries) ListImagePostsByBoardForLister(ctx context.Context, arg ListIm
 }
 
 const listImagePostsByPosterForLister = `-- name: ListImagePostsByPosterForLister :many
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments

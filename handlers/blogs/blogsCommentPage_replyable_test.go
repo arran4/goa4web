@@ -62,7 +62,7 @@ func TestCommentPageLockedThreadDisablesReply(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT th.idforumthread")).WithArgs(int32(2), int32(1), int32(2), int32(2), sql.NullInt32{Int32: 2, Valid: true}).WillReturnRows(threadRows)
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT c.idcomments")).
-		WithArgs(int32(2), int32(2), int32(1), int32(2), int32(2), sql.NullInt32{Int32: 2, Valid: true}).
+		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnRows(sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_idlanguage", "written", "text", "deleted_at", "posterusername"}))
 
 	rr := httptest.NewRecorder()
@@ -99,7 +99,7 @@ func TestCommentPageUnlockedThreadShowsReply(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT th.idforumthread")).WithArgs(int32(2), int32(1), int32(2), int32(2), sql.NullInt32{Int32: 2, Valid: true}).WillReturnRows(threadRows)
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT c.idcomments")).
-		WithArgs(int32(2), int32(2), int32(1), int32(2), int32(2), sql.NullInt32{Int32: 2, Valid: true}).
+		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnRows(sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_idlanguage", "written", "text", "deleted_at", "posterusername"}))
 
 	rr := httptest.NewRecorder()

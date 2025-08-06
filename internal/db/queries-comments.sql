@@ -1,5 +1,5 @@
 -- name: GetCommentByIdForUser :one
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
 )
 SELECT c.*, pu.Username,
@@ -58,7 +58,7 @@ WHERE c.Idcomments=?;
 
 
 -- name: GetCommentsByIdsForUserWithThreadInfo :many
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
 )
 SELECT c.*, pu.username AS posterusername,
@@ -112,7 +112,7 @@ WHERE EXISTS (
 );
 
 -- name: GetCommentsByThreadIdForUser :many
-WITH role_ids(id) AS (
+WITH role_ids AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
 )
 SELECT c.*, pu.username AS posterusername,

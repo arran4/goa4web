@@ -1,0 +1,17 @@
+{{ template "head" $ }}
+<h1>Questions in {{ .Category.Name.String }}</h1>
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Question</th>
+        <th>Options</th>
+    </tr>
+    {{- range .Questions }}
+    <tr>
+        <td>{{ .Idfaq }}</td>
+        <td>{{ .Question }}</td>
+        <td><a href="/admin/faq/question/{{ .Idfaq }}/edit">Edit</a></td>
+    </tr>
+    {{- end }}
+</table>
+{{ template "tail" $ }}

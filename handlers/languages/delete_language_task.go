@@ -10,6 +10,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -43,6 +44,13 @@ func (DeleteLanguageTask) Action(w http.ResponseWriter, r *http.Request) any {
 				break
 			}
 		}
+	}
+	counts, err := queries.AdminLanguageUsageCounts(r.Context(), db.AdminLanguageUsageCountsParams{ID: int32(cid)})
+	if err != nil {
+		return fmt.Errorf("language usage counts fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	if counts.Comments > 0 || counts.Writings > 0 || counts.Blogs > 0 || counts.News > 0 || counts.Links > 0 {
+		return fmt.Errorf("language has content %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("language has content")))
 	}
 	if err := queries.AdminDeleteLanguage(r.Context(), int32(cid)); err != nil {
 		return fmt.Errorf("delete language fail %w", handlers.ErrRedirectOnSamePageHandler(err))

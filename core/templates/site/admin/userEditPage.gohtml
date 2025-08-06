@@ -7,4 +7,5 @@
         Email: <input name="email" value="{{.User.Email.String}}"><br>
         <input type="submit" name="task" value="Save">
     </form>
+    <p><a href="/admin/user/{{.User.Idusers}}/reset">Reset password</a></p>
 {{ template "tail" $ }}

@@ -1,13 +1,100 @@
 {{ template "head" $ }}
-    {{- $u := cd.CurrentProfileUser }}
-    <h3>{{ $u.Username.String }} ({{ $u.Email.String }})</h3>
-    <a href="/admin/user/{{ cd.CurrentProfileUser.Idusers }}/blogs">Configure user's blogs</a>
-    <a href="/admin/user/{{ cd.CurrentProfileUser.Idusers }}/writings">Configure user's writings</a>
-    <a href="/admin/user/{{ cd.CurrentProfileUser.Idusers }}/linker">Configure user's linker</a>
-    <a href="/admin/user/{{ cd.CurrentProfileUser.Idusers }}/imagebbs">Configure user's imagebbs</a>
-    <a href="/admin/user/{{ cd.CurrentProfileUser.Idusers }}/forum">Configure user's forum</a>
-    <a href="/admin/user/{{ cd.CurrentProfileUser.Idusers }}/comments">Configure user's comments</a>
-    <a href="/admin/user/{{ cd.CurrentProfileUser.Idusers }}/subscriptions">Configure user's subscriptions</a>
-    <a href="/admin/user/{{ cd.CurrentProfileUser.Idusers }}/edit">Configure user's edit</a>
-    <a href="/admin/user/{{ cd.CurrentProfileUser.Idusers }}/grants">Configure user's grants</a>
+{{ $user := cd.CurrentProfileUser }}
+[<a href="/admin">Admin:</a> <a href="/admin/users">Users</a>: <a href="/admin/user/{{ $user.Idusers }}">(This page/Refresh)</a>]<br />
+{{ if $user }}
+<h2>User {{ $user.Username.String }} (ID {{ $user.Idusers }})</h2>
+<p>
+    <a href="/admin/user/{{ $user.Idusers }}/edit">Edit User</a>
+    <a href="/admin/user/{{ $user.Idusers }}/permissions">Permissions</a>
+    {{- if $user.PublicProfileEnabledAt.Valid }} |
+    <a href="/user/profile/{{ $user.Username.String }}">Public Profile</a>{{- end }}
+    {{ $stats := cd.CurrentProfileStats }}
+    {{- if and $stats (gt $stats.Blogs 0) }} |
+    <a href="/blogs/blogger/{{ $user.Username.String }}">Blogs</a>{{- end }}
+    {{- if and $stats (gt $stats.Writings 0) }} |
+    <a href="/writings/writer/{{ $user.Username.String }}">Writings</a>{{- end }}
+</p>
+<p>
+    <a href="/admin/user/{{ $user.Idusers }}/blogs">Configure user's blogs</a>
+    <a href="/admin/user/{{ $user.Idusers }}/writings">Configure user's writings</a>
+    <a href="/admin/user/{{ $user.Idusers }}/linker">Configure user's linker</a>
+    <a href="/admin/user/{{ $user.Idusers }}/imagebbs">Configure user's imagebbs</a>
+    <a href="/admin/user/{{ $user.Idusers }}/forum">Configure user's forum</a>
+    <a href="/admin/user/{{ $user.Idusers }}/comments">Configure user's comments</a>
+    <a href="/admin/user/{{ $user.Idusers }}/subscriptions">Configure user's subscriptions</a>
+    <a href="/admin/user/{{ $user.Idusers }}/grants">Configure user's grants</a>
+</p>
+{{ $emails := cd.CurrentProfileEmails }}
+{{ if $emails }}
+<table border="1">
+<tr><th>Email</th><th>Verified</th><th>Priority</th></tr>
+{{ range $emails }}
+<tr><td>{{ .Email }}</td><td>{{ if .VerifiedAt.Valid }}{{ .VerifiedAt.Time }}{{ else }}no{{ end }}</td><td>{{ .NotificationPriority }}</td></tr>
+{{ end }}
+</table>
+{{ else }}
+<p>No emails.</p>
+{{ end }}
+{{ $roles := cd.CurrentProfileRoles }}
+{{ if $roles }}
+<h3>Groups</h3>
+<ul>
+    {{- range $roles }}
+    <li>{{ .Name }}</li>
+    {{- end }}
+</ul>
+{{ else }}
+<p>No groups.</p>
+{{ end }}
+{{ if $stats }}
+<h3>Stats</h3>
+<ul>
+    <li>Blogs: {{ $stats.Blogs }}</li>
+    <li>News: {{ $stats.News }}</li>
+    <li>Comments: {{ $stats.Comments }}</li>
+    <li>Images: {{ $stats.Images }}</li>
+    <li>Links: {{ $stats.Links }}</li>
+    <li>Writings: {{ $stats.Writings }}</li>
+    <li>Bookmark entries: {{ cd.CurrentProfileBookmarkSize }}</li>
+</ul>
+{{ else }}
+<p>No stats.</p>
+{{ end }}
+{{ $grants := cd.CurrentProfileGrants }}
+{{ if $grants }}
+<h3>Direct Grants</h3>
+<table border="1">
+    <tr><th>Section</th><th>Item</th><th>Action</th><th>Extra</th></tr>
+    {{- range $grants }}
+    <tr>
+        <td>{{ .Section }}</td>
+        <td>{{ .Item.String }}{{ if .ItemID.Valid }} ({{ .ItemID.Int32 }}){{ end }}</td>
+        <td>{{ .Action }}</td>
+        <td>{{ .Extra.String }}</td>
+    </tr>
+    {{- end }}
+</table>
+{{ else }}
+<p>No direct grants.</p>
+{{ end }}
+<h3>Admin Comments</h3>
+<form method="post" action="/admin/user/{{ $user.Idusers }}/comment">
+    {{ csrfField }}
+    <textarea name="comment" rows="3" cols="40"></textarea>
+    <input type="submit" name="task" value="Add Comment">
+</form>
+{{ $comments := cd.CurrentProfileComments }}
+{{ if $comments }}
+<table border="1">
+    <tr><th>Date</th><th>Comment</th></tr>
+    {{- range $comments }}
+    <tr><td>{{ .CreatedAt.Format "2006-01-02 15:04" }}</td><td>{{ .Comment }}</td></tr>
+    {{- end }}
+</table>
+{{ else }}
+<p>No comments.</p>
+{{ end }}
+{{ else }}
+<p>User not found.</p>
+{{ end }}
 {{ template "tail" $ }}

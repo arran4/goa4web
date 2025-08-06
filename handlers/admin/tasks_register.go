@@ -38,6 +38,7 @@ func (h *Handlers) RegisterTasks() []tasks.NamedTask {
 		userPasswordResetTask,
 		roleGrantCreateTask,
 		roleGrantDeleteTask,
+		userGrantCreateTask,
 		h.NewServerShutdownTask(),
 	}
 }

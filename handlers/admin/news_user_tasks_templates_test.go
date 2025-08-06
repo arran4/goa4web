@@ -3,6 +3,8 @@ package admin
 import (
 	"testing"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+
 	"github.com/arran4/goa4web/core/templates"
 	notif "github.com/arran4/goa4web/internal/notifications"
 )
@@ -38,7 +40,7 @@ func TestNewsUserTasksTemplates(t *testing.T) {
 		&NewsUserRemoveTask{TaskString: TaskNewsUserRemove},
 	}
 	for _, p := range admins {
-		requireEmailTemplates(t, p.AdminEmailTemplate())
-		requireNotificationTemplate(t, p.AdminInternalNotificationTemplate())
+		requireEmailTemplates(t, p.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+		requireNotificationTemplate(t, p.AdminInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
 	}
 }

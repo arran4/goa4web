@@ -60,11 +60,11 @@ func (UserAllowTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, error) {
 	return nil, fmt.Errorf("target user id not provided")
 }
 
-func (UserAllowTask) TargetEmailTemplate() *notif.EmailTemplates {
+func (UserAllowTask) TargetEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("setUserRoleEmail")
 }
 
-func (UserAllowTask) TargetInternalNotificationTemplate() *string {
+func (UserAllowTask) TargetInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("set_user_role")
 	return &v
 }

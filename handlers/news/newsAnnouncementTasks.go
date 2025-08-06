@@ -1,6 +1,7 @@
 package news
 
 import (
+	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -8,11 +9,11 @@ import (
 var _ tasks.Task = (*AnnouncementAddTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*AnnouncementAddTask)(nil)
 
-func (AnnouncementAddTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (AnnouncementAddTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("adminNotificationNewsAddEmail")
 }
 
-func (AnnouncementAddTask) AdminInternalNotificationTemplate() *string {
+func (AnnouncementAddTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("adminNotificationNewsAddEmail")
 	return &v
 }
@@ -20,11 +21,11 @@ func (AnnouncementAddTask) AdminInternalNotificationTemplate() *string {
 var _ tasks.Task = (*AnnouncementDeleteTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*AnnouncementDeleteTask)(nil)
 
-func (AnnouncementDeleteTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (AnnouncementDeleteTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("adminNotificationNewsDeleteEmail")
 }
 
-func (AnnouncementDeleteTask) AdminInternalNotificationTemplate() *string {
+func (AnnouncementDeleteTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("adminNotificationNewsDeleteEmail")
 	return &v
 }

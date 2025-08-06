@@ -19,17 +19,21 @@ import (
 
 type allowTaskNoEmail struct{ user.PermissionUserAllowTask }
 
-func (allowTaskNoEmail) TargetEmailTemplate() *notif.EmailTemplates { return nil }
+func (allowTaskNoEmail) TargetEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates { return nil }
 
 type disallowTaskNoEmail struct {
 	user.PermissionUserDisallowTask
 }
 
-func (disallowTaskNoEmail) TargetEmailTemplate() *notif.EmailTemplates { return nil }
+func (disallowTaskNoEmail) TargetEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
+	return nil
+}
 
 type updateTaskNoEmail struct{ user.PermissionUpdateTask }
 
-func (updateTaskNoEmail) TargetEmailTemplate() *notif.EmailTemplates { return nil }
+func (updateTaskNoEmail) TargetEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
+	return nil
+}
 
 func TestProcessEventPermissionTasks(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -76,7 +80,7 @@ func TestProcessEventPermissionTasks(t *testing.T) {
 			WithArgs(int32(2), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		bus.Publish(eventbus.TaskEvent{Path: "/admin", Task: c.task, UserID: 1, Data: map[string]any{"targetUserID": int32(2), "Username": "bob"}})
+		bus.Publish(eventbus.TaskEvent{Path: "/admin", Task: c.task, UserID: 1, Data: map[string]any{"targetUserID": int32(2), "Username": "bob"}, Outcome: eventbus.TaskOutcomeSuccess})
 		time.Sleep(10 * time.Millisecond)
 	}
 	time.Sleep(200 * time.Millisecond)

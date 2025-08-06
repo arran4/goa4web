@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -120,29 +122,29 @@ func (ForgotPasswordTask) AuditRecord(data map[string]any) string {
 	return "password reset requested"
 }
 
-func (EmailAssociationRequestTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (EmailAssociationRequestTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("adminNotificationEmailAssociationRequestEmail")
 }
 
-func (EmailAssociationRequestTask) AdminInternalNotificationTemplate() *string {
+func (EmailAssociationRequestTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("adminNotificationEmailAssociationRequestEmail")
 	return &v
 }
 
-func (f ForgotPasswordTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (f ForgotPasswordTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("adminNotificationUserRequestPasswordResetEmail")
 }
 
-func (f ForgotPasswordTask) AdminInternalNotificationTemplate() *string {
+func (f ForgotPasswordTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("adminNotificationUserRequestPasswordResetEmail")
 	return &v
 }
 
-func (f ForgotPasswordTask) SelfEmailTemplate() *notif.EmailTemplates {
+func (f ForgotPasswordTask) SelfEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("passwordResetEmail")
 }
 
-func (f ForgotPasswordTask) SelfInternalNotificationTemplate() *string {
+func (f ForgotPasswordTask) SelfInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	s := notif.NotificationTemplateFilenameGenerator("password_reset")
 	return &s
 }

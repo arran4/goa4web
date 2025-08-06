@@ -3,6 +3,8 @@ package faq
 import (
 	"testing"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+
 	"github.com/arran4/goa4web/core/templates"
 	notif "github.com/arran4/goa4web/internal/notifications"
 )
@@ -34,6 +36,6 @@ func requireNotificationTemplate(t *testing.T, name *string) {
 
 func TestAskTaskTemplatesCompile(t *testing.T) {
 	var task AskTask
-	requireEmailTemplates(t, task.AdminEmailTemplate())
-	requireNotificationTemplate(t, task.AdminInternalNotificationTemplate())
+	requireEmailTemplates(t, task.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+	requireNotificationTemplate(t, task.AdminInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
 }

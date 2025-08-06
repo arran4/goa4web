@@ -3,6 +3,8 @@ package admin
 import (
 	"testing"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+
 	"github.com/arran4/goa4web/core/templates"
 	notif "github.com/arran4/goa4web/internal/notifications"
 )
@@ -28,6 +30,6 @@ func TestAdminIPBanTemplatesExist(t *testing.T) {
 		&DeleteIPBanTask{TaskString: TaskDelete},
 	}
 	for _, p := range admins {
-		checkIPBanEmailTemplates(t, p.AdminEmailTemplate())
+		checkIPBanEmailTemplates(t, p.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
 	}
 }

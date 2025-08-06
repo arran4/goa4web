@@ -4,6 +4,8 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -39,11 +41,11 @@ func (TestMailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return handlers.RefreshDirectHandler{TargetURL: "/usr/email"}
 }
 
-func (TestMailTask) SelfEmailTemplate() *notif.EmailTemplates {
+func (TestMailTask) SelfEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("testEmail")
 }
 
-func (TestMailTask) SelfInternalNotificationTemplate() *string {
+func (TestMailTask) SelfInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	s := notif.NotificationTemplateFilenameGenerator("testEmail")
 	return &s
 }

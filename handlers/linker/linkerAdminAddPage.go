@@ -4,10 +4,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/internal/eventbus"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
@@ -98,20 +100,20 @@ func (addTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return nil
 }
 
-func (addTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+func (addTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("linkerAddEmail")
 }
 
-func (addTask) SubscribedInternalNotificationTemplate() *string {
+func (addTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	s := notif.NotificationTemplateFilenameGenerator("linker_add")
 	return &s
 }
 
-func (addTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (addTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("adminNotificationLinkerAddEmail")
 }
 
-func (addTask) AdminInternalNotificationTemplate() *string {
+func (addTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("adminNotificationLinkerAddEmail")
 	return &v
 }

@@ -3,13 +3,14 @@ package notifications
 import (
 	"context"
 	"fmt"
-	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"net/mail"
 	"regexp"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
@@ -141,7 +142,7 @@ func TestProcessEventDLQ(t *testing.T) {
 	n := New(WithQueries(q), WithEmailProvider(prov), WithConfig(cfg))
 	dlqRec := &recordDLQ{}
 
-	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/p", Task: TestTask{TaskString: TaskTest}, UserID: 1}, dlqRec); err != nil {
+	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/p", Task: TestTask{TaskString: TaskTest}, UserID: 1, Outcome: eventbus.TaskOutcomeSuccess}, dlqRec); err != nil {
 		t.Fatalf("process: %v", err)
 	}
 	if dlqRec.msg != "" {
@@ -168,7 +169,7 @@ func TestProcessEventSubscribeSelf(t *testing.T) {
 	q := db.New(conn)
 	n := New(WithQueries(q), WithConfig(cfg))
 
-	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/p", Task: TaskTest, UserID: 1}, nil); err != nil {
+	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/p", Task: TaskTest, UserID: 1, Outcome: eventbus.TaskOutcomeSuccess}, nil); err != nil {
 		t.Fatalf("process: %v", err)
 	}
 }
@@ -188,7 +189,7 @@ func TestProcessEventNoAutoSubscribe(t *testing.T) {
 	q := db.New(conn)
 	n := New(WithQueries(q), WithConfig(cfg))
 
-	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/p", Task: TaskTest, UserID: 1}, nil); err != nil {
+	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/p", Task: TaskTest, UserID: 1, Outcome: eventbus.TaskOutcomeSuccess}, nil); err != nil {
 		t.Fatalf("process: %v", err)
 	}
 }
@@ -211,7 +212,7 @@ func TestProcessEventAdminNotify(t *testing.T) {
 	prov := &busDummyProvider{}
 	n := New(WithQueries(q), WithEmailProvider(prov), WithConfig(cfg))
 
-	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/admin/x", Task: TaskTest, UserID: 1}, nil); err != nil {
+	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/admin/x", Task: TaskTest, UserID: 1, Outcome: eventbus.TaskOutcomeSuccess}, nil); err != nil {
 		t.Fatalf("process: %v", err)
 	}
 }
@@ -232,7 +233,7 @@ func TestProcessEventWritingSubscribers(t *testing.T) {
 	q := db.New(conn)
 	n := New(WithQueries(q), WithConfig(cfg))
 
-	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/writings/article/1", Task: TaskTest, UserID: 2, Data: map[string]any{"target": Target{Type: "writing", ID: 1}}}, nil); err != nil {
+	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/writings/article/1", Task: TaskTest, UserID: 2, Data: map[string]any{"target": Target{Type: "writing", ID: 1}}, Outcome: eventbus.TaskOutcomeSuccess}, nil); err != nil {
 		t.Fatalf("process: %v", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -246,9 +247,9 @@ func (targetTask) Action(http.ResponseWriter, *http.Request) any { return nil }
 
 func (targetTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, error) { return []int32{2, 3}, nil }
 
-func (targetTask) TargetEmailTemplate() *EmailTemplates { return nil }
+func (targetTask) TargetEmailTemplate(evt eventbus.TaskEvent) *EmailTemplates { return nil }
 
-func (targetTask) TargetInternalNotificationTemplate() *string {
+func (targetTask) TargetInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	t := NotificationTemplateFilenameGenerator("announcement")
 	return &t
 }
@@ -278,7 +279,7 @@ func TestProcessEventTargetUsers(t *testing.T) {
 			WillReturnResult(sqlmock.NewResult(1, 1))
 	}
 
-	evt := eventbus.TaskEvent{Path: "/announce/1", Task: targetTask{TaskString: "Target"}, UserID: 1, Data: map[string]any{"Username": "bob"}}
+	evt := eventbus.TaskEvent{Path: "/announce/1", Task: targetTask{TaskString: "Target"}, UserID: 1, Data: map[string]any{"Username": "bob"}, Outcome: eventbus.TaskOutcomeSuccess}
 
 	if err := n.processEvent(ctx, evt, nil); err != nil {
 		t.Fatalf("process: %v", err)
@@ -317,7 +318,7 @@ func TestBusWorker(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	bus.Publish(eventbus.TaskEvent{Path: "/", Task: TaskTest, UserID: 1, Data: map[string]any{"Username": "bob"}})
+	bus.Publish(eventbus.TaskEvent{Path: "/", Task: TaskTest, UserID: 1, Data: map[string]any{"Username": "bob"}, Outcome: eventbus.TaskOutcomeSuccess})
 	time.Sleep(200 * time.Millisecond)
 	cancel()
 	wg.Wait()
@@ -368,6 +369,7 @@ func TestProcessEventAutoSubscribe(t *testing.T) {
 		Data: map[string]any{
 			postcountworker.EventKey: postcountworker.UpdateEventData{ThreadID: 42, TopicID: 7},
 		},
+		Outcome: eventbus.TaskOutcomeSuccess,
 	}
 
 	n.handleAutoSubscribe(ctx, evt, autoSubTask{TaskString: "AutoSub"})

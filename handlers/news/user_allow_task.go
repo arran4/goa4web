@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -21,11 +23,11 @@ var userAllowTask = &UserAllowTask{TaskString: TaskUserAllow}
 var _ tasks.Task = (*UserAllowTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*UserAllowTask)(nil)
 
-func (UserAllowTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (UserAllowTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("adminNotificationNewsUserAllowEmail")
 }
 
-func (UserAllowTask) AdminInternalNotificationTemplate() *string {
+func (UserAllowTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("adminNotificationNewsUserAllowEmail")
 	return &v
 }

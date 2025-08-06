@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -26,11 +28,11 @@ var editReplyTask = &EditReplyTask{TaskString: TaskEditReply}
 var _ tasks.Task = (*EditReplyTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*EditReplyTask)(nil)
 
-func (EditReplyTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (EditReplyTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("adminNotificationBlogCommentEditEmail")
 }
 
-func (EditReplyTask) AdminInternalNotificationTemplate() *string {
+func (EditReplyTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("adminNotificationBlogCommentEditEmail")
 	return &v
 }

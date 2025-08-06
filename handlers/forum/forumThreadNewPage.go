@@ -3,10 +3,11 @@ package forum
 import (
 	"database/sql"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
 
@@ -49,20 +50,20 @@ func (CreateThreadTask) IndexData(data map[string]any) []searchworker.IndexEvent
 	return nil
 }
 
-func (CreateThreadTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+func (CreateThreadTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("threadEmail")
 }
 
-func (CreateThreadTask) SubscribedInternalNotificationTemplate() *string {
+func (CreateThreadTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	s := notif.NotificationTemplateFilenameGenerator("thread")
 	return &s
 }
 
-func (CreateThreadTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (CreateThreadTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("adminNotificationForumThreadCreateEmail")
 }
 
-func (CreateThreadTask) AdminInternalNotificationTemplate() *string {
+func (CreateThreadTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("adminNotificationForumThreadCreateEmail")
 	return &v
 }

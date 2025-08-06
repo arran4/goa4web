@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -61,20 +63,20 @@ func (deleteTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return nil
 }
 
-func (deleteTask) SubscribedEmailTemplate() *notif.EmailTemplates {
+func (deleteTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("linkerRejectedEmail")
 }
 
-func (deleteTask) SubscribedInternalNotificationTemplate() *string {
+func (deleteTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	s := notif.NotificationTemplateFilenameGenerator("linker_rejected")
 	return &s
 }
 
-func (deleteTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (deleteTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("adminNotificationLinkerRejectedEmail")
 }
 
-func (deleteTask) AdminInternalNotificationTemplate() *string {
+func (deleteTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("adminNotificationLinkerRejectedEmail")
 	return &v
 }

@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -84,11 +86,11 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return handlers.RedirectHandler(fmt.Sprintf("/writings/article/%d", writing.Idwriting))
 }
 
-func (EditReplyTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (EditReplyTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("adminNotificationNewsCommentEditEmail")
 }
 
-func (EditReplyTask) AdminInternalNotificationTemplate() *string {
+func (EditReplyTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("adminNotificationNewsCommentEditEmail")
 	return &v
 }

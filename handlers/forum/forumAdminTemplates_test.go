@@ -3,6 +3,8 @@ package forum
 import (
 	"testing"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+
 	"github.com/arran4/goa4web/core/templates"
 	notif "github.com/arran4/goa4web/internal/notifications"
 )
@@ -32,6 +34,6 @@ func TestForumAdminTemplatesExist(t *testing.T) {
 		threadDeleteTask,
 	}
 	for _, p := range admins {
-		requireAdminEmailTemplates(t, p.AdminEmailTemplate())
+		requireAdminEmailTemplates(t, p.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
 	}
 }

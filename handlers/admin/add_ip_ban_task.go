@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/arran4/goa4web/internal/eventbus"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -65,11 +67,11 @@ func (AddIPBanTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return nil
 }
 
-func (AddIPBanTask) AdminEmailTemplate() *notif.EmailTemplates {
+func (AddIPBanTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
 	return notif.NewEmailTemplates("adminAddIPBanEmail")
 }
 
-func (AddIPBanTask) AdminInternalNotificationTemplate() *string {
+func (AddIPBanTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	v := notif.NotificationTemplateFilenameGenerator("adminAddIPBanEmail")
 	return &v
 }

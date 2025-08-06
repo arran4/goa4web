@@ -1,42 +1,17 @@
 package imagebbs
 
 import (
-	"fmt"
-	"github.com/arran4/goa4web/core/consts"
-	"log"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 )
 
 func Page(w http.ResponseWriter, r *http.Request) {
-	type Data struct {
-		*common.CoreData
-		Boards      []*db.Imageboard
-		IsSubBoard  bool
-		BoardNumber int
-	}
-
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Image Board"
-	data := Data{
-		CoreData:    cd,
-		IsSubBoard:  false,
-		BoardNumber: 0,
-	}
-
-	boards, err := data.CoreData.SubImageBoards(0)
-	if err != nil {
-		log.Printf("imageboards: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
-		return
-	}
-
-	data.Boards = boards
-
-	handlers.TemplateHandler(w, r, "imagebbsPage", data)
+	handlers.TemplateHandler(w, r, "imagebbsPage", struct{}{})
 }
 
 func CustomImageBBSIndex(data *common.CoreData, r *http.Request) {

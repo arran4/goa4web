@@ -129,7 +129,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{ThreadID: threadRow.Idforumthread, TopicID: topicRow.Idforumtopic}
+			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(cid), ThreadID: threadRow.Idforumthread, TopicID: topicRow.Idforumtopic}
 			evt.Data["CommentURL"] = cd.AbsoluteURL(endUrl)
 		}
 	}

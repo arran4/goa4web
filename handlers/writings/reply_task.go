@@ -137,14 +137,15 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("language parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	if _, err := queries.CreateCommentForCommenter(r.Context(), db.CreateCommentForCommenterParams{
+	cid, err := queries.CreateCommentForCommenter(r.Context(), db.CreateCommentForCommenterParams{
 		LanguageID:         int32(languageID),
 		CommenterID:        uid,
 		ForumthreadID:      pthid,
 		Text:               sql.NullString{String: text, Valid: true},
 		GrantForumthreadID: sql.NullInt32{Int32: pthid, Valid: true},
 		GranteeID:          sql.NullInt32{Int32: uid, Valid: true},
-	}); err != nil {
+	})
+	if err != nil {
 		return fmt.Errorf("create comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
@@ -153,8 +154,8 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{ThreadID: pthid, TopicID: ptid}
-			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: 0, Text: text}
+			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(cid), ThreadID: pthid, TopicID: ptid}
+			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: int32(cid), Text: text}
 		}
 	}
 

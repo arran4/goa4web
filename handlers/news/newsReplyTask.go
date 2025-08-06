@@ -166,6 +166,10 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		evt.Data = map[string]any{}
 	}
 	evt.Data["CommentURL"] = endUrl
+	evt.Data["PostURL"] = endUrl
+	if user, err := cd.CurrentUser(); err == nil && user != nil {
+		evt.Data["Username"] = user.Username.String
+	}
 
 	cid, err := queries.CreateCommentForCommenter(r.Context(), db.CreateCommentForCommenterParams{
 		LanguageID:         int32(languageId),

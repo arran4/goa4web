@@ -75,7 +75,7 @@ func buildGrantGroups(ctx context.Context, cd *common.CoreData, roleID int32) ([
 		return nil, err
 	}
 
-	forumCats, _ := queries.GetAllForumCategories(ctx)
+	forumCats, _ := queries.GetAllForumCategories(ctx, db.GetAllForumCategoriesParams{ViewerID: 0})
 	catMap := map[int32]*db.Forumcategory{}
 	for _, c := range forumCats {
 		catMap[c.Idforumcategory] = c
@@ -134,7 +134,7 @@ func buildGrantGroups(ctx context.Context, cd *common.CoreData, roleID int32) ([
 					}
 				case "category":
 					gi.Link = fmt.Sprintf("/admin/forum/category/%d/grants#g%d", g.ItemID.Int32, g.ID)
-					if c, err := queries.GetForumCategoryById(ctx, g.ItemID.Int32); err == nil && c.Title.Valid {
+					if c, err := queries.GetForumCategoryById(ctx, db.GetForumCategoryByIdParams{Idforumcategory: g.ItemID.Int32, ViewerID: 0}); err == nil && c.Title.Valid {
 						path := buildCatPath(c.Idforumcategory)
 						gi.Info = path
 					}

@@ -30,10 +30,10 @@ func TestRequireThreadAndTopicTrue(t *testing.T) {
 		}).AddRow(2, 0, 0, 1, sql.NullInt32{}, sql.NullTime{}, sql.NullBool{}, sql.NullString{}))
 
 	mock.ExpectQuery("SELECT t.idforumtopic").
-		WithArgs(int32(0), int32(1), sql.NullInt32{Int32: 0, Valid: false}).
+		WithArgs(int32(0), int32(1), int32(0), int32(0), sql.NullInt32{Int32: 0, Valid: false}).
 		WillReturnRows(sqlmock.NewRows([]string{
-			"idforumtopic", "lastposter", "forumcategory_idforumcategory", "title", "description", "threads", "comments", "lastaddition", "LastPosterUsername",
-		}).AddRow(1, 0, 0, sql.NullString{}, sql.NullString{}, sql.NullInt32{}, sql.NullInt32{}, sql.NullTime{}, sql.NullString{}))
+			"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_idlanguage", "title", "description", "threads", "comments", "lastaddition", "LastPosterUsername",
+		}).AddRow(1, 0, 0, 0, sql.NullString{}, sql.NullString{}, sql.NullInt32{}, sql.NullInt32{}, sql.NullTime{}, sql.NullString{}))
 
 		// handler will trigger another load
 	mock.ExpectQuery("SELECT th.idforumthread").
@@ -88,10 +88,10 @@ func TestRequireThreadAndTopicFalse(t *testing.T) {
 		}).AddRow(2, 0, 0, 3, sql.NullInt32{}, sql.NullTime{}, sql.NullBool{}, sql.NullString{}))
 
 	mock.ExpectQuery("SELECT t.idforumtopic").
-		WithArgs(int32(0), int32(3), sql.NullInt32{Int32: 0, Valid: false}).
+		WithArgs(int32(0), int32(3), int32(0), int32(0), sql.NullInt32{Int32: 0, Valid: false}).
 		WillReturnRows(sqlmock.NewRows([]string{
-			"idforumtopic", "lastposter", "forumcategory_idforumcategory", "title", "description", "threads", "comments", "lastaddition", "LastPosterUsername",
-		}).AddRow(3, 0, 0, sql.NullString{}, sql.NullString{}, sql.NullInt32{}, sql.NullInt32{}, sql.NullTime{}, sql.NullString{}))
+			"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_idlanguage", "title", "description", "threads", "comments", "lastaddition", "LastPosterUsername",
+		}).AddRow(3, 0, 0, 0, sql.NullString{}, sql.NullString{}, sql.NullInt32{}, sql.NullInt32{}, sql.NullTime{}, sql.NullString{}))
 
 	req := httptest.NewRequest("GET", "/forum/topic/1/thread/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "2"})

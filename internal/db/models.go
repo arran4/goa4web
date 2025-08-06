@@ -217,6 +217,7 @@ type FaqRevision struct {
 type Forumcategory struct {
 	Idforumcategory              int32
 	ForumcategoryIdforumcategory int32
+	LanguageIdlanguage           int32
 	Title                        sql.NullString
 	Description                  sql.NullString
 }
@@ -235,6 +236,7 @@ type Forumtopic struct {
 	Idforumtopic                 int32
 	Lastposter                   int32
 	ForumcategoryIdforumcategory int32
+	LanguageIdlanguage           int32
 	Title                        sql.NullString
 	Description                  sql.NullString
 	Threads                      sql.NullInt32

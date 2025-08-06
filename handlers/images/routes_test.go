@@ -24,6 +24,8 @@ func TestValidID(t *testing.T) {
 		{"a1b2c3", true},
 		{"abc!", false},
 		{"..", false},
+		{"hi/hi", false},
+		{"text.text", true},
 		{"a/bc", false},
 	}
 	for _, tt := range tests {

@@ -24,10 +24,15 @@ func validID(s string) bool {
 	if s == "" {
 		return false
 	}
+	dotCount := 0
 	for i := 0; i < len(s); i++ {
 		c := s[i]
-		if !(c >= '0' && c <= '9' || c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c == '_' || c == '.' || c == '-') {
-			return false
+		if !(c >= '0' && c <= '9' || c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c == '_' || c == '-') {
+			if c == '.' && dotCount == 0 {
+				dotCount++
+			} else {
+				return false
+			}
 		}
 	}
 	return true

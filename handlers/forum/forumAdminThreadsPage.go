@@ -37,13 +37,13 @@ func AdminThreadDeletePage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	http.Redirect(w, r, "/admin/forum/conversations", http.StatusTemporaryRedirect)
+	http.Redirect(w, r, "/admin/forum/threads", http.StatusTemporaryRedirect)
 }
 
 func AdminThreadDeleteConfirmPage(w http.ResponseWriter, r *http.Request) {
 	threadID, err := strconv.Atoi(mux.Vars(r)["thread"])
 	if err != nil {
-		http.Redirect(w, r, "/admin/forum/conversations?error="+err.Error(), http.StatusTemporaryRedirect)
+		http.Redirect(w, r, "/admin/forum/threads?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -63,7 +63,7 @@ func AdminThreadDeleteConfirmPage(w http.ResponseWriter, r *http.Request) {
 func AdminThreadPage(w http.ResponseWriter, r *http.Request) {
 	threadID, err := strconv.Atoi(mux.Vars(r)["thread"])
 	if err != nil {
-		http.Redirect(w, r, "/admin/forum/conversations?error="+err.Error(), http.StatusTemporaryRedirect)
+		http.Redirect(w, r, "/admin/forum/threads?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -80,7 +80,7 @@ func AdminThreadPage(w http.ResponseWriter, r *http.Request) {
 		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
-		http.Redirect(w, r, "/admin/forum/conversations?error="+err.Error(), http.StatusTemporaryRedirect)
+		http.Redirect(w, r, "/admin/forum/threads?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 

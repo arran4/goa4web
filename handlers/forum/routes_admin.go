@@ -24,7 +24,7 @@ func RegisterAdminRoutes(ar *mux.Router) {
 	far.HandleFunc("/topics", AdminTopicsPage).Methods("GET")
 	far.HandleFunc("/topics", handlers.TaskDoneAutoRefreshPage).Methods("POST")
 	far.HandleFunc("/topic", AdminTopicCreatePage).Methods("POST").MatcherFunc(topicCreateTask.Matcher())
-	far.HandleFunc("/conversations", AdminThreadsPage).Methods("GET")
+	far.HandleFunc("/threads", AdminThreadsPage).Methods("GET")
 	far.HandleFunc("/thread/{thread}", AdminThreadPage).Methods("GET")
 	far.HandleFunc("/thread/{thread}/delete", AdminThreadDeleteConfirmPage).Methods("GET")
 	far.HandleFunc("/thread/{thread}/delete", AdminThreadDeletePage).Methods("POST").MatcherFunc(threadDeleteTask.Matcher())

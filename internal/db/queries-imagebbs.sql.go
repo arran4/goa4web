@@ -49,6 +49,63 @@ func (q *Queries) AdminDeleteImageBoard(ctx context.Context, idimageboard int32)
 	return err
 }
 
+const adminDeleteImagePost = `-- name: AdminDeleteImagePost :exec
+UPDATE imagepost SET deleted_at = NOW() WHERE idimagepost = ?
+`
+
+func (q *Queries) AdminDeleteImagePost(ctx context.Context, idimagepost int32) error {
+	_, err := q.db.ExecContext(ctx, adminDeleteImagePost, idimagepost)
+	return err
+}
+
+const adminGetImagePost = `-- name: AdminGetImagePost :one
+SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
+FROM imagepost i
+LEFT JOIN users u ON i.users_idusers = u.idusers
+LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
+WHERE i.idimagepost = ?
+LIMIT 1
+`
+
+type AdminGetImagePostRow struct {
+	Idimagepost            int32
+	ForumthreadID          int32
+	UsersIdusers           int32
+	ImageboardIdimageboard int32
+	Posted                 sql.NullTime
+	Description            sql.NullString
+	Thumbnail              sql.NullString
+	Fullimage              sql.NullString
+	FileSize               int32
+	Approved               bool
+	DeletedAt              sql.NullTime
+	LastIndex              sql.NullTime
+	Username               sql.NullString
+	Comments               sql.NullInt32
+}
+
+func (q *Queries) AdminGetImagePost(ctx context.Context, idimagepost int32) (*AdminGetImagePostRow, error) {
+	row := q.db.QueryRowContext(ctx, adminGetImagePost, idimagepost)
+	var i AdminGetImagePostRow
+	err := row.Scan(
+		&i.Idimagepost,
+		&i.ForumthreadID,
+		&i.UsersIdusers,
+		&i.ImageboardIdimageboard,
+		&i.Posted,
+		&i.Description,
+		&i.Thumbnail,
+		&i.Fullimage,
+		&i.FileSize,
+		&i.Approved,
+		&i.DeletedAt,
+		&i.LastIndex,
+		&i.Username,
+		&i.Comments,
+	)
+	return &i, err
+}
+
 const adminListBoards = `-- name: AdminListBoards :many
 SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required
 FROM imageboard b
@@ -108,6 +165,29 @@ func (q *Queries) AdminUpdateImageBoard(ctx context.Context, arg AdminUpdateImag
 		arg.ImageboardIdimageboard,
 		arg.ApprovalRequired,
 		arg.Idimageboard,
+	)
+	return err
+}
+
+const adminUpdateImagePost = `-- name: AdminUpdateImagePost :exec
+UPDATE imagepost
+SET imageboard_idimageboard = ?, description = ?, approved = ?
+WHERE idimagepost = ?
+`
+
+type AdminUpdateImagePostParams struct {
+	ImageboardIdimageboard int32
+	Description            sql.NullString
+	Approved               bool
+	Idimagepost            int32
+}
+
+func (q *Queries) AdminUpdateImagePost(ctx context.Context, arg AdminUpdateImagePostParams) error {
+	_, err := q.db.ExecContext(ctx, adminUpdateImagePost,
+		arg.ImageboardIdimageboard,
+		arg.Description,
+		arg.Approved,
+		arg.Idimagepost,
 	)
 	return err
 }

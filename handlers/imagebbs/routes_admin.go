@@ -17,4 +17,11 @@ func RegisterAdminRoutes(ar *mux.Router) {
 	iar.HandleFunc("/board/{board}", handlers.TaskHandler(modifyBoardTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(modifyBoardTask.Matcher())
 	iar.HandleFunc("/approve/{post}", handlers.TaskHandler(approvePostTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(approvePostTask.Matcher())
 	iar.HandleFunc("/files", AdminFilesPage).Methods("GET").MatcherFunc(handlers.RequiredAccess("administrator"))
+
+	uar := ar.PathPrefix("/user/{user}/imagebbs").Subrouter()
+	uar.HandleFunc("/post/{post}", AdminPostDashboardPage).Methods("GET").MatcherFunc(handlers.RequiredAccess("administrator"))
+	uar.HandleFunc("/post/{post}/edit", AdminPostEditPage).Methods("GET").MatcherFunc(handlers.RequiredAccess("administrator"))
+	uar.HandleFunc("/post/{post}/edit", handlers.TaskHandler(modifyPostTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(modifyPostTask.Matcher())
+	uar.HandleFunc("/post/{post}/edit", handlers.TaskHandler(deletePostTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(deletePostTask.Matcher())
+	uar.HandleFunc("/post/{post}/comments", AdminPostCommentsPage).Methods("GET").MatcherFunc(handlers.RequiredAccess("administrator"))
 }

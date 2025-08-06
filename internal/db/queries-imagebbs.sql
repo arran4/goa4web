@@ -72,6 +72,23 @@ UPDATE imageboard SET deleted_at = NOW() WHERE idimageboard = ?;
 UPDATE imagepost SET approved = 1 WHERE idimagepost = ?;
 
 
+-- name: AdminGetImagePost :one
+SELECT i.*, u.username, th.comments
+FROM imagepost i
+LEFT JOIN users u ON i.users_idusers = u.idusers
+LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
+WHERE i.idimagepost = ?
+LIMIT 1;
+
+-- name: AdminUpdateImagePost :exec
+UPDATE imagepost
+SET imageboard_idimageboard = ?, description = ?, approved = ?
+WHERE idimagepost = ?;
+
+-- name: AdminDeleteImagePost :exec
+UPDATE imagepost SET deleted_at = NOW() WHERE idimagepost = ?;
+
+
 -- name: ListBoardsByParentIDForLister :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)

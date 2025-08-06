@@ -1,0 +1,13 @@
+{{ template "head" $ }}
+<h2>Image Post {{ .Post.Idimagepost }}</h2>
+<p><img src="{{ .Post.Fullimage }}" alt="post image"></p>
+<p>Description: {{ if .Post.Description.Valid }}{{ .Post.Description.String }}{{ end }}</p>
+<p>Board: {{ .Post.ImageboardIdimageboard }}</p>
+<p>Approved: {{ if .Post.Approved }}Yes{{ else }}No{{ end }}</p>
+<p>
+    <a href="/admin/user/{{ .Post.UsersIdusers }}/imagebbs/post/{{ .Post.Idimagepost }}/edit">Edit</a> |
+    <a href="/admin/user/{{ .Post.UsersIdusers }}/imagebbs/post/{{ .Post.Idimagepost }}/comments">Comments ({{ .Post.Comments }})</a> |
+    <a href="/imagebbs/post/{{ .Post.Idimagepost }}">View Post</a> |
+    <a href="{{ .Post.Fullimage }}">Image URL</a>
+</p>
+{{ template "tail" $ }}

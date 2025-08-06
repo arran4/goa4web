@@ -4,7 +4,7 @@
     {{ range cd.AdminLatestNews }}
         <tr>
             <td><a href="/admin/news/{{ .Idsitenews }}">{{ .Idsitenews }}</a></td>
-            <td><a href="/admin/news/{{ .Idsitenews }}">{{ .Occurred.Time }}</a></td>
+            <td>{{ .Occurred.Time }}</td>
             <td>{{ if .Writerid.Valid }}<a href="/admin/user/{{ .Writerid.Int32 }}">{{ .Writername.String }}</a>{{ else }}{{ .Writername.String }}{{ end }}</td>
             <td><a href="/admin/news/{{ .Idsitenews }}#comments">{{ .Comments.Int32 }}</a></td>
             <td><a href="/news/news/{{ .Idsitenews }}">Public</a></td>

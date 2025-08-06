@@ -1,0 +1,20 @@
+{{ template "head" $ }}
+<h2>Forum Topic {{ .Topic.Idforumtopic }} Threads</h2>
+<table border="1">
+    <tr><th>ID<th>First Post<th>Last Poster<th>Posts<th>Last Addition<th>Locked<th>View public</tr>
+    {{ range cd.ForumThreads .Topic.Idforumtopic }}
+        <tr>
+            <td><a href="/admin/forum/thread/{{ .Idforumthread }}">{{ .Idforumthread }}</a></td>
+            <td>{{ .Firstpost }}</td>
+            <td>{{ .Lastposter }}</td>
+            <td>{{ .Comments.Int32 }}</td>
+            <td>{{ .Lastaddition.Time }}</td>
+            <td>{{ .Locked.Bool }}</td>
+            <td><a href="/forum/topic/{{ .ForumtopicIdforumtopic }}/thread/{{ .Idforumthread }}">View</a></td>
+        </tr>
+    {{ else }}
+        <tr><td colspan="7">No threads</td></tr>
+    {{ end }}
+</table>
+<p><a href="/admin/forum/topic/{{ .Topic.Idforumtopic }}">Back to topic</a></p>
+{{ template "tail" $ }}

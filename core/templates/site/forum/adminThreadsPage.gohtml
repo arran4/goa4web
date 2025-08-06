@@ -1,17 +1,20 @@
 {{ template "head" $ }}
-{{ range $topic := call cd.AdminForumTopics }}
+{{ range $topic := cd.AdminForumTopics }}
     <h2>{{ $topic.Title.String }}</h2>
     <table border="1">
-        <tr><th>ID<th>Posts<th>Last Addition<th>View public</tr>
-        {{ range call cd.ForumThreads $topic.Idforumtopic }}
+        <tr><th>ID<th>First Post<th>Last Poster<th>Posts<th>Last Addition<th>Locked<th>View public</tr>
+        {{ range cd.ForumThreads $topic.Idforumtopic }}
             <tr>
                 <td><a href="/admin/forum/thread/{{ .Idforumthread }}">{{ .Idforumthread }}</a></td>
+                <td>{{ .Firstpost }}</td>
+                <td>{{ .Lastposter }}</td>
                 <td>{{ .Comments.Int32 }}</td>
                 <td>{{ .Lastaddition.Time }}</td>
+                <td>{{ .Locked.Bool }}</td>
                 <td><a href="/forum/topic/{{ .ForumtopicIdforumtopic }}/thread/{{ .Idforumthread }}">View</a></td>
             </tr>
         {{ else }}
-            <tr><td colspan="4">No threads</td></tr>
+            <tr><td colspan="7">No threads</td></tr>
         {{ end }}
     </table>
 {{ else }}

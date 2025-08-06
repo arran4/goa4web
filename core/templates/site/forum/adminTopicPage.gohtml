@@ -1,0 +1,43 @@
+{{ template "head" $ }}
+<h2>Forum Topic {{ .Topic.Idforumtopic }}</h2>
+<table border="1">
+    <tr><th>ID</th><td>{{ .Topic.Idforumtopic }}</td></tr>
+    <tr><th>Category</th><td>{{ .Topic.ForumcategoryIdforumcategory }}</td></tr>
+    <tr><th>Title</th><td>{{ .Topic.Title.String }}</td></tr>
+    <tr><th>Description</th><td>{{ .Topic.Description.String }}</td></tr>
+    <tr><th>Threads</th><td>{{ .Topic.Threads.Int32 }}</td></tr>
+    <tr><th>Comments</th><td>{{ .Topic.Comments.Int32 }}</td></tr>
+    <tr><th>Last Poster</th><td>{{ .Topic.Lastposter }}</td></tr>
+    <tr><th>Last Addition</th><td>{{ .Topic.Lastaddition.Time }}</td></tr>
+</table>
+<ul>
+    <li><a href="/forum/topic/{{ .Topic.Idforumtopic }}">Public Topic Page</a></li>
+    <li>
+        <a href="/admin/forum/topic/{{ .Topic.Idforumtopic }}/edit">Edit</a>
+        <form method="post" action="/admin/forum/topic/{{ .Topic.Idforumtopic }}/delete" style="display:inline">
+            {{ csrfField }}
+            <input type="submit" value="Delete">
+        </form>
+    </li>
+    <li><a href="/admin/forum/topic/{{ .Topic.Idforumtopic }}/grants">Permissions</a></li>
+    <li><a href="/admin/forum/topic/{{ .Topic.Idforumtopic }}/threads">Contents</a></li>
+</ul>
+<h3>Recent Threads</h3>
+<table border="1">
+    <tr><th>ID<th>First Post<th>Last Poster<th>Posts<th>Last Addition<th>Locked<th>View public</tr>
+    {{ range cd.ForumThreads .Topic.Idforumtopic }}
+        <tr>
+            <td><a href="/admin/forum/thread/{{ .Idforumthread }}">{{ .Idforumthread }}</a></td>
+            <td>{{ .Firstpost }}</td>
+            <td>{{ .Lastposter }}</td>
+            <td>{{ .Comments.Int32 }}</td>
+            <td>{{ .Lastaddition.Time }}</td>
+            <td>{{ .Locked.Bool }}</td>
+            <td><a href="/forum/topic/{{ .ForumtopicIdforumtopic }}/thread/{{ .Idforumthread }}">View</a></td>
+        </tr>
+    {{ else }}
+        <tr><td colspan="7">No threads</td></tr>
+    {{ end }}
+</table>
+<p><a href="/admin/forum/topics">Back to topics</a></p>
+{{ template "tail" $ }}

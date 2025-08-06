@@ -92,8 +92,8 @@ func (q *Queries) AdminSetAnnouncementActive(ctx context.Context, arg AdminSetAn
 }
 
 const getActiveAnnouncementWithNewsForLister = `-- name: GetActiveAnnouncementWithNewsForLister :one
-WITH role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT a.id, n.idsiteNews, n.news
 FROM site_announcements a

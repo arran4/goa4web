@@ -170,8 +170,8 @@ func (q *Queries) GetForumThreadIdByNewsPostId(ctx context.Context, idsitenews i
 }
 
 const getNewsPostByIdWithWriterIdAndThreadCommentCount = `-- name: GetNewsPostByIdWithWriterIdAndThreadCommentCount :one
-WITH role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT u.username AS writerName, u.idusers as writerId, s.idsiteNews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, th.comments as Comments
 FROM site_news s
@@ -226,8 +226,8 @@ func (q *Queries) GetNewsPostByIdWithWriterIdAndThreadCommentCount(ctx context.C
 }
 
 const getNewsPostsByIdsForUserWithWriterIdAndThreadCommentCount = `-- name: GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCount :many
-WITH role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT u.username AS writerName, u.idusers as writerId, s.idsiteNews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, th.comments as Comments
 FROM site_news s
@@ -325,8 +325,8 @@ func (q *Queries) GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCount(ctx 
 }
 
 const getNewsPostsWithWriterUsernameAndThreadCommentCountDescending = `-- name: GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending :many
-WITH role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT u.username AS writerName, u.idusers as writerId, s.idsiteNews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, th.comments as Comments
 FROM site_news s

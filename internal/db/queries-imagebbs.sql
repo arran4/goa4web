@@ -73,8 +73,8 @@ UPDATE imagepost SET approved = 1 WHERE idimagepost = ?;
 
 
 -- name: ListBoardsByParentIDForLister :many
-WITH role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT b.*
 FROM imageboard b
@@ -93,8 +93,8 @@ WHERE b.imageboard_idimageboard = sqlc.arg(parent_id)
 LIMIT ? OFFSET ?;
 
 -- name: ListBoardsForLister :many
-WITH role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT b.*
 FROM imageboard b
@@ -111,8 +111,8 @@ WHERE b.deleted_at IS NULL AND EXISTS (
 LIMIT ? OFFSET ?;
 
 -- name: ListImagePostsByPosterForLister :many
-WITH role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT i.*, u.username, th.comments
 FROM imagepost i
@@ -135,8 +135,8 @@ ORDER BY i.posted DESC
 LIMIT ? OFFSET ?;
 
 -- name: ListImagePostsByBoardForLister :many
-WITH role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT i.*, u.username, th.comments
 FROM imagepost i
@@ -158,8 +158,8 @@ WHERE i.imageboard_idimageboard = sqlc.arg(board_id)
 LIMIT ? OFFSET ?;
 
 -- name: GetImagePostByIDForLister :one
-WITH role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT i.*, u.username, th.comments
 FROM imagepost i

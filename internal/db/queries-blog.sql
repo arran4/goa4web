@@ -43,8 +43,8 @@ FROM blogs
 WHERE idblogs = ?;
 
 -- name: ListBlogEntriesForLister :many
-WITH role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
        b.users_idusers = sqlc.arg(lister_id) AS is_owner
@@ -74,8 +74,8 @@ ORDER BY b.written DESC
 LIMIT ? OFFSET ?;
 
 -- name: ListBlogEntriesByAuthorForLister :many
-WITH role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
        b.users_idusers = sqlc.arg(lister_id) AS is_owner
@@ -109,8 +109,8 @@ ORDER BY b.written DESC
 LIMIT ? OFFSET ?;
 
 -- name: ListBlogEntriesByIDsForLister :many
-WITH role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written
 FROM blogs b
@@ -141,8 +141,8 @@ ORDER BY b.written DESC
 LIMIT ? OFFSET ?;
 
 -- name: GetBlogEntryForListerByID :one
-WITH role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
        b.users_idusers = sqlc.arg(lister_id) AS is_owner
@@ -175,8 +175,8 @@ WHERE b.idblogs = sqlc.arg(id)
 LIMIT 1;
 
 -- name: ListBlogIDsBySearchWordFirstForLister :many
-WITH role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.blog_id
 FROM blogs_search cs
@@ -207,8 +207,8 @@ WHERE swl.word = ?
   );
 
 -- name: ListBlogIDsBySearchWordNextForLister :many
-WITH role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT DISTINCT cs.blog_id
 FROM blogs_search cs
@@ -242,8 +242,8 @@ WHERE swl.word = ?
 
 
 -- name: ListBloggersForLister :many
-WITH role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT u.username, COUNT(b.idblogs) AS count
 FROM blogs b
@@ -275,8 +275,8 @@ ORDER BY u.username
 LIMIT ? OFFSET ?;
 
 -- name: ListBloggersSearchForLister :many
-WITH role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT u.username, COUNT(b.idblogs) AS count
 FROM blogs b

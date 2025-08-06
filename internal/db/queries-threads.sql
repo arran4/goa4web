@@ -50,12 +50,8 @@ SET lastaddition = (
 WHERE idforumthread = ?;
 
 -- name: GetThreadLastPosterAndPerms :one
-WITH role_ids(id) AS (
-    SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
-    UNION
-    SELECT r2.id FROM role_ids ri
-    JOIN grants g ON g.role_id = ri.id AND g.section='role' AND g.active = 1
-    JOIN roles r2 ON r2.name = g.action
+WITH role_ids AS (
+    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
 )
 SELECT th.*, lu.username AS LastPosterUsername
 FROM forumthread th

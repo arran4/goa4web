@@ -21,8 +21,8 @@ FROM writing
 WHERE idwriting = ?;
 
 -- name: ListPublicWritingsByUserForLister :many
-WITH role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT w.*, u.username,
     (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) AS Comments
@@ -64,8 +64,8 @@ ORDER BY w.published DESC
 LIMIT ? OFFSET ?;
 
 -- name: ListPublicWritingsInCategoryForLister :many
-WITH role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT w.*, u.Username,
     (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) as Comments
@@ -125,8 +125,8 @@ INSERT INTO writing (writing_category_id, title, abstract, writing, private, lan
 VALUES (?, ?, ?, ?, ?, ?, NOW(), ?);
 
 -- name: GetWritingForListerByID :one
-WITH role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT w.*, u.idusers AS WriterId, u.Username AS WriterUsername
 FROM writing w
@@ -146,8 +146,8 @@ ORDER BY w.published DESC
 ;
 
 -- name: ListWritingsByIDsForLister :many
-WITH role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT w.*, u.idusers AS WriterId, u.username AS WriterUsername
 FROM writing w
@@ -194,8 +194,8 @@ ORDER BY wc.idwritingcategory
 LIMIT ? OFFSET ?;
 
 -- name: ListWritingCategoriesForLister :many
-WITH role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT wc.*
 FROM writing_category wc
@@ -216,8 +216,8 @@ UPDATE writing SET forumthread_id = ? WHERE idwriting = ?;
 
 
 -- name: GetAllWritingsByAuthorForLister :many
-WITH role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT w.*, u.username,
     (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) AS Comments
@@ -244,8 +244,8 @@ LEFT JOIN users u ON w.users_idusers = u.idusers
 WHERE w.users_idusers = sqlc.arg(author_id)
 ORDER BY w.published DESC;
 -- name: ListWritersForLister :many
-WITH role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT u.username, COUNT(w.idwriting) AS count
 FROM writing w
@@ -277,8 +277,8 @@ ORDER BY u.username
 LIMIT ? OFFSET ?;
 
 -- name: ListWritersSearchForLister :many
-WITH role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT u.username, COUNT(w.idwriting) AS count
 FROM writing w

@@ -128,7 +128,7 @@ func TestCodeSlashClose(t *testing.T) {
 	c := New()
 	c.SetInput("[code]foo[/code]")
 	got, _ := io.ReadAll(c.Process())
-	want := "<table width=90% align=center bgcolor=lightblue><tr><th>Code: <tr><td><pre>]foo</pre></table>"
+	want := "<table class=\"a4code-block a4code-code\"><tr><th>Code: <tr><td><pre>]foo</pre></table>"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)
 	}

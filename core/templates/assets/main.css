@@ -221,3 +221,19 @@ tr.unsupported td {
 .hidden {
         display: none;
 }
+
+/* A4code block styling */
+.a4code-block {
+        width: 90%;
+        margin: 0.5em auto;
+}
+
+.a4code-code {
+        background-color: lightblue;
+}
+
+.a4code-quote,
+.a4code-quoteof {
+        background-color: lightgreen;
+}
+

@@ -245,7 +245,7 @@ type Code struct{ Value string }
 func (*Code) isNode() {}
 
 func (c *Code) html(w io.Writer) {
-	io.WriteString(w, "<table width=90% align=center bgcolor=lightblue><tr><th>Code: <tr><td><pre>")
+	io.WriteString(w, "<table class=\"a4code-block a4code-code\"><tr><th>Code: <tr><td><pre>")
 	io.WriteString(w, htmlEscape(c.Value))
 	io.WriteString(w, "</pre></table>")
 }
@@ -263,7 +263,7 @@ func (*Quote) isNode()                {}
 func (q *Quote) childrenPtr() *[]Node { return &q.Children }
 
 func (q *Quote) html(w io.Writer) {
-	io.WriteString(w, "<table width=90% align=center bgcolor=lightgreen><tr><th>Quote: <tr><td>")
+	io.WriteString(w, "<table class=\"a4code-block a4code-quote\"><tr><th>Quote: <tr><td>")
 	for _, c := range q.Children {
 		c.html(w)
 	}
@@ -288,7 +288,7 @@ func (*QuoteOf) isNode()                {}
 func (q *QuoteOf) childrenPtr() *[]Node { return &q.Children }
 
 func (q *QuoteOf) html(w io.Writer) {
-	io.WriteString(w, "<table width=90% align=center bgcolor=lightgreen><tr><th>Quote of ")
+	io.WriteString(w, "<table class=\"a4code-block a4code-quoteof\"><tr><th>Quote of ")
 	io.WriteString(w, htmlEscape(q.Name))
 	io.WriteString(w, ": <tr><td>")
 	for _, c := range q.Children {
@@ -335,7 +335,7 @@ func (*Indent) isNode()                {}
 func (i *Indent) childrenPtr() *[]Node { return &i.Children }
 
 func (i *Indent) html(w io.Writer) {
-	io.WriteString(w, "<table width=90% align=center><tr><td>")
+	io.WriteString(w, "<table class=\"a4code-block a4code-indent\"><tr><td>")
 	for _, c := range i.Children {
 		c.html(w)
 	}

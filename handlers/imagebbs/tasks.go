@@ -21,6 +21,15 @@ const (
 	// TaskModifyBoard modifies the settings of an image board.
 	TaskModifyBoard tasks.TaskString = "Modify board"
 
+	// TaskDeleteBoard deletes an existing image board.
+	TaskDeleteBoard tasks.TaskString = "Delete board"
+
 	// TaskApprove approves an item in moderation queues.
 	TaskApprove tasks.TaskString = "Approve"
+
+	// TaskModifyPost updates an existing image post.
+	TaskModifyPost tasks.TaskString = "Modify image post"
+
+	// TaskDeletePost removes an image post.
+	TaskDeletePost tasks.TaskString = "Delete image post"
 )

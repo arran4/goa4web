@@ -4,11 +4,14 @@
     <tr><th>ID</th><th>Date</th><th>Board</th><th>Approved</th><th>Link</th></tr>
     {{- range .Posts }}
     <tr>
-        <td>{{ .Idimagepost }}</td>
+        <td><a href="/admin/user/{{ $.User.Idusers }}/imagebbs/post/{{ .Idimagepost }}">{{ .Idimagepost }}</a></td>
         <td>{{ .Posted }}</td>
         <td>{{ .ImageboardIdimageboard }}</td>
         <td>{{ if .Approved }}Yes{{ else }}No{{ end }}</td>
         <td>
+            <a href="/admin/user/{{ $.User.Idusers }}/imagebbs/post/{{ .Idimagepost }}">Dashboard</a> |
+            <a href="/admin/user/{{ $.User.Idusers }}/imagebbs/post/{{ .Idimagepost }}/edit">Edit</a> |
+            <a href="/admin/user/{{ $.User.Idusers }}/imagebbs/post/{{ .Idimagepost }}/comments">Comments</a> |
             <a href="/imagebbs/post/{{ .Idimagepost }}">View</a>
             {{- if not .Approved }}
             <form style="display:inline" method="post" action="/admin/imagebbs/approve/{{ .Idimagepost }}">

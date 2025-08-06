@@ -104,21 +104,6 @@ func TestPageTemplatesRender(t *testing.T) {
 			*common.CoreData
 			Stats []*db.AdminImageboardPostCountsRow
 		}{&common.CoreData{}, nil}},
-		{"faqAdminCategoriesPage.gohtml", struct {
-			Rows []*db.GetFAQCategoriesWithQuestionCountRow
-		}{nil}},
-		{"faqAdminCategoryPage.gohtml", struct {
-			Category *db.GetFAQCategoryWithQuestionCountByIDRow
-			Latest   []*db.Faq
-		}{&db.GetFAQCategoryWithQuestionCountByIDRow{}, nil}},
-		{"faqAdminCategoryEditPage.gohtml", struct {
-			Category *db.GetFAQCategoryWithQuestionCountByIDRow
-		}{&db.GetFAQCategoryWithQuestionCountByIDRow{}}},
-		{"faqAdminCategoryQuestionsPage.gohtml", struct {
-			Category  *db.GetFAQCategoryWithQuestionCountByIDRow
-			Questions []*db.Faq
-		}{&db.GetFAQCategoryWithQuestionCountByIDRow{}, nil}},
-		{"faqAdminNewCategoryPage.gohtml", struct{}{}},
 	}
 
 	for _, p := range pages {

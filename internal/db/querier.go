@@ -48,6 +48,7 @@ type Querier interface {
 	AdminDeleteForumTopic(ctx context.Context, idforumtopic int32) error
 	AdminDeleteGrant(ctx context.Context, id int32) error
 	AdminDeleteImageBoard(ctx context.Context, idimageboard int32) error
+	AdminDeleteImagePost(ctx context.Context, idimagepost int32) error
 	// AdminDeleteLanguage removes a language entry.
 	// Parameters:
 	//   ? - Language ID to be deleted (int)
@@ -73,6 +74,7 @@ type Querier interface {
 	AdminGetAllWritingsByAuthor(ctx context.Context, authorID int32) ([]*AdminGetAllWritingsByAuthorRow, error)
 	AdminGetDashboardStats(ctx context.Context) (*AdminGetDashboardStatsRow, error)
 	AdminGetForumStats(ctx context.Context) (*AdminGetForumStatsRow, error)
+	AdminGetImagePost(ctx context.Context, idimagepost int32) (*AdminGetImagePostRow, error)
 	AdminGetNotification(ctx context.Context, id int32) (*Notification, error)
 	// admin task
 	AdminGetPendingEmailByID(ctx context.Context, id int32) (*AdminGetPendingEmailByIDRow, error)
@@ -180,6 +182,7 @@ type Querier interface {
 	AdminUpdateForumTopic(ctx context.Context, arg AdminUpdateForumTopicParams) error
 	AdminUpdateGrantActive(ctx context.Context, arg AdminUpdateGrantActiveParams) error
 	AdminUpdateImageBoard(ctx context.Context, arg AdminUpdateImageBoardParams) error
+	AdminUpdateImagePost(ctx context.Context, arg AdminUpdateImagePostParams) error
 	AdminUpdateLinkerCategorySortOrder(ctx context.Context, arg AdminUpdateLinkerCategorySortOrderParams) error
 	AdminUpdateLinkerItem(ctx context.Context, arg AdminUpdateLinkerItemParams) error
 	AdminUpdateLinkerQueuedItem(ctx context.Context, arg AdminUpdateLinkerQueuedItemParams) error

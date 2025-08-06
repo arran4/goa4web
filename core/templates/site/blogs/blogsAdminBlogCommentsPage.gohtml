@@ -1,0 +1,22 @@
+{{ template "head" $ }}
+<h2>Blog {{ .Blog.Idblogs }} Comments Admin</h2>
+<p><a href="/admin/blogs/blog/{{ .Blog.Idblogs }}">Back to blog</a></p>
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <th>User</th>
+        <th>Excerpt</th>
+        <th>Admin</th>
+    </tr>
+    {{- range .Comments }}
+    <tr>
+        <td>{{ .Idcomments }}</td>
+        <td>{{ .Posterusername.String }}</td>
+        <td>{{ if .Text.Valid }}{{ .Text.String | left 80 }}{{ end }}</td>
+        <td><a href="/admin/comment/{{ .Idcomments }}">Admin</a></td>
+    </tr>
+    {{- else }}
+    <tr><td colspan="4">No comments.</td></tr>
+    {{- end }}
+</table>
+{{ template "tail" $ }}

@@ -14,7 +14,7 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
-// AdminBoardListPage lists posts for a specific board.
+// AdminBoardListPage lists images for a specific board.
 func AdminBoardListPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		Board    *db.Imageboard
@@ -81,6 +81,6 @@ func AdminBoardListPage(w http.ResponseWriter, r *http.Request) {
 	if nextPage != 0 {
 		data.NextPage = nextPage
 	}
-	cd.PageTitle = "Board Posts"
+	cd.PageTitle = "Board Images"
 	handlers.TemplateHandler(w, r, "adminBoardListPage.gohtml", data)
 }

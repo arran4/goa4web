@@ -3,8 +3,24 @@
 <p>Title: {{ .Board.Title.String }}</p>
 <p>Description: {{ .Board.Description.String }}</p>
 <ul>
-    <li><a href="/admin/imagebbs/boards/board/{{ .Board.Idimageboard }}/edit">Edit</a></li>
-    <li><a href="/admin/imagebbs/boards/board/{{ .Board.Idimageboard }}/list">List Content</a></li>
+    <li><a href="/admin/imagebbs/board/{{ .Board.Idimageboard }}/edit">Edit</a></li>
+    <li><a href="/admin/imagebbs/board/{{ .Board.Idimageboard }}/images">List Content</a></li>
     <li><a href="/imagebbs/board/{{ .Board.Idimageboard }}">Public View</a></li>
+    <li><form style="display:inline" method="post" action="/admin/imagebbs/board/{{ .Board.Idimageboard }}/delete" onsubmit="return confirm('Delete board?');">{{ csrfField }}<input type="submit" name="task" value="Delete board"></form></li>
+    <li><a href="/admin/imagebbs/boards">Back to Boards</a></li>
 </ul>
+
+<h3>Recent Posts</h3>
+<table border="1">
+<tr><th>ID<th>User<th>Description<th>Posted</tr>
+{{ range .Posts }}
+<tr>
+<td>{{ .Idimagepost }}</td>
+<td>{{ .Username.String }}</td>
+<td>{{ .Description.String }}</td>
+<td>{{ if .Posted.Valid }}{{ .Posted.Time }}{{ end }}</td>
+</tr>
+{{ end }}
+</table>
+<p><a href="/admin/imagebbs/board/{{ .Board.Idimageboard }}/images">View all</a></p>
 {{ template "tail" $ }}

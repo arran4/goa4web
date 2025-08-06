@@ -1,7 +1,8 @@
 {{ define "adminPage" }}
     {{ template "head" $ }}
-    [<a href="/admin">(This page/Refresh)</a>]<br />
-<p>Please select an option:</p>
+    <h2>Admin Dashboard</h2>
+    <p><a href="/admin">Refresh</a></p>
+<p>Select an option:</p>
 <ul>
     {{- range $s := .AdminSections }}
     <li>{{ $s.Name }}
@@ -14,7 +15,7 @@
     {{- end }}
 </ul>
 
-<p>Site statistics:</p>
+<h3>Site statistics</h3>
 <table border="1">
     <tr><th>Item</th><th>Count</th></tr>
     <tr><td>Users</td><td>{{ .Stats.Users }}</td></tr>

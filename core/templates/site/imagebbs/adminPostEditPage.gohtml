@@ -1,0 +1,27 @@
+{{ template "head" $ }}
+<h2>Edit Image Post {{ .Post.Idimagepost }}</h2>
+<form method="post" action="/admin/user/{{ .Post.UsersIdusers }}/imagebbs/post/{{ .Post.Idimagepost }}/edit">
+    {{ csrfField }}
+    <label>Board:
+        <select name="board">
+            {{ range .Boards }}
+            <option value="{{ .Idimageboard }}"{{ if eq .Idimageboard $.Post.ImageboardIdimageboard }} selected{{ end }}>{{ .Title.String }}</option>
+            {{ end }}
+        </select>
+    </label><br>
+    <label>Description:<br>
+        <textarea name="desc">{{ if .Post.Description.Valid }}{{ .Post.Description.String }}{{ end }}</textarea>
+    </label><br>
+    <label><input type="checkbox" name="approved" value="1"{{ if .Post.Approved }} checked{{ end }}> Approved</label><br>
+    <input type="submit" name="task" value="Modify image post">
+</form>
+<form method="post" action="/admin/user/{{ .Post.UsersIdusers }}/imagebbs/post/{{ .Post.Idimagepost }}/edit" style="margin-top:1em">
+    {{ csrfField }}
+    <input type="submit" name="task" value="Delete image post" onclick="return confirm('Delete this post?')">
+</form>
+<p>
+    <a href="/admin/user/{{ .Post.UsersIdusers }}/imagebbs/post/{{ .Post.Idimagepost }}">Back to dashboard</a> |
+    <a href="/admin/user/{{ .Post.UsersIdusers }}/imagebbs/post/{{ .Post.Idimagepost }}/comments">Comments ({{ .Post.Comments }})</a> |
+    <a href="/imagebbs/post/{{ .Post.Idimagepost }}">View Post</a>
+</p>
+{{ template "tail" $ }}

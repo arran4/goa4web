@@ -1,0 +1,10 @@
+{{ template "head" $ }}
+<h2>Board {{ .Board.Idimageboard }}</h2>
+<p>Title: {{ .Board.Title.String }}</p>
+<p>Description: {{ .Board.Description.String }}</p>
+<ul>
+    <li><a href="/admin/imagebbs/boards/board/{{ .Board.Idimageboard }}/edit">Edit</a></li>
+    <li><a href="/admin/imagebbs/boards/board/{{ .Board.Idimageboard }}/list">List Content</a></li>
+    <li><a href="/imagebbs/board/{{ .Board.Idimageboard }}">Public View</a></li>
+</ul>
+{{ template "tail" $ }}

@@ -158,3 +158,13 @@ WHERE EXISTS (
 
 -- name: GetFAQRevisionsForAdmin :many
 SELECT * FROM faq_revisions WHERE faq_id = ? ORDER BY id DESC;
+
+-- name: GetFAQCategoryWithQuestionCountByID :one
+SELECT c.*, COUNT(f.idfaq) AS QuestionCount
+FROM faq_categories c
+LEFT JOIN faq f ON f.faqCategories_idfaqCategories = c.idfaqCategories
+WHERE c.idfaqCategories = ?
+GROUP BY c.idfaqCategories;
+
+-- name: GetFAQQuestionsByCategory :many
+SELECT * FROM faq WHERE faqCategories_idfaqCategories = ?;

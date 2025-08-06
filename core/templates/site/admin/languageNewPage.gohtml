@@ -1,0 +1,9 @@
+{{ template "head" $ }}
+<h2>New Language</h2>
+<form method="post">
+    {{ csrfField }}
+    <label>Name:<input name="cname"></label>
+    <input type="submit" name="task" value="Create Language">
+</form>
+<p><a href="/admin/languages">Back</a></p>
+{{ template "tail" $ }}

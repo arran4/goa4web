@@ -8,8 +8,8 @@ import (
 // RegisterAdminRoutes attaches blog admin endpoints to ar.
 func RegisterAdminRoutes(ar *mux.Router) {
 	br := ar.PathPrefix("/blogs").Subrouter()
-	br.HandleFunc("", GetPermissionsByUserIdAndSectionBlogsPage).Methods("GET").MatcherFunc(handlers.RequiredAccess("administrator"))
-	br.HandleFunc("/", GetPermissionsByUserIdAndSectionBlogsPage).Methods("GET").MatcherFunc(handlers.RequiredAccess("administrator"))
+	br.HandleFunc("", AdminPage).Methods("GET").MatcherFunc(handlers.RequiredAccess("administrator"))
+	br.HandleFunc("/", AdminPage).Methods("GET").MatcherFunc(handlers.RequiredAccess("administrator"))
 	br.HandleFunc("/users/roles", GetPermissionsByUserIdAndSectionBlogsPage).Methods("GET").MatcherFunc(handlers.RequiredAccess("administrator"))
 	br.HandleFunc("/users/roles", UsersPermissionsPermissionUserAllowPage).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(userAllowTask.Matcher())
 	br.HandleFunc("/users/roles", UsersPermissionsDisallowPage).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(userDisallowTask.Matcher())

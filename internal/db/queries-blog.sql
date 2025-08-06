@@ -308,10 +308,21 @@ GROUP BY u.idusers
 ORDER BY u.username
 LIMIT ? OFFSET ?;
 -- name: AdminGetAllBlogEntriesByUser :many
-SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0)
+SELECT b.idblogs,
+       b.forumthread_id,
+       b.users_idusers,
+       b.language_idlanguage,
+       b.blog,
+       b.written,
+       u.username,
+       coalesce(th.comments, 0),
+       fc.idforumcategory,
+       fc.title AS forumcategory_title
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers = u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
+LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
+LEFT JOIN forumcategory fc ON t.forumcategory_idforumcategory = fc.idforumcategory
 WHERE b.users_idusers = sqlc.arg(author_id)
 ORDER BY b.written DESC;
 

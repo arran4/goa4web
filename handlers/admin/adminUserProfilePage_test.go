@@ -2,7 +2,6 @@ package admin
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -30,9 +29,6 @@ func TestAdminUserProfilePage_UserFound(t *testing.T) {
 	rows := sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).
 		AddRow(userID, "u@example.com", "u", nil)
 	mock.ExpectQuery("SELECT").WillReturnRows(rows)
-	for i := 0; i < 6; i++ {
-		mock.ExpectQuery("SELECT").WillReturnError(sql.ErrNoRows)
-	}
 
 	req := httptest.NewRequest("GET", fmt.Sprintf("/admin/user/%d", userID), nil)
 	req = mux.SetURLVars(req, map[string]string{"user": strconv.Itoa(userID)})

@@ -19,7 +19,6 @@ import (
 
 func TopicsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		CategoryBreadcrumbs     []*ForumcategoryPlus
 		Admin                   bool
 		Back                    bool
 		Subscribed              bool
@@ -37,6 +36,7 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 	topicId, _ := strconv.Atoi(vars["topic"])
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
 	data := &Data{
 		Admin: cd.CanEditAny(),
 	}
@@ -83,7 +83,6 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	categoryTree := NewCategoryTree(categoryRows, []*ForumtopicPlus{data.Topic})
-	data.CategoryBreadcrumbs = categoryTree.CategoryRoots(int32(topicRow.ForumcategoryIdforumcategory))
 	if category, ok := categoryTree.CategoryLookup[topicRow.ForumcategoryIdforumcategory]; ok {
 		category.Topics = []*ForumtopicPlus{
 			data.Topic,

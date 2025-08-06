@@ -228,6 +228,10 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
+	if cid == 0 {
+		http.Redirect(w, r, "?error="+"failed to create comment", http.StatusTemporaryRedirect)
+		return
+	}
 
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {

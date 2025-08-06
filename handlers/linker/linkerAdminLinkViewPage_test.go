@@ -24,7 +24,7 @@ func TestAdminLinkViewPage(t *testing.T) {
 	defer conn.Close()
 
 	queries := db.New(conn)
-	req := httptest.NewRequest("GET", "/admin/linker/link/1", nil)
+	req := httptest.NewRequest("GET", "/admin/linker/links/link/1", nil)
 	req = mux.SetURLVars(req, map[string]string{"link": "1"})
 	w := httptest.NewRecorder()
 

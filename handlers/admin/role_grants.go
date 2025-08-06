@@ -172,11 +172,12 @@ func buildGrantGroupsFromGrants(ctx context.Context, cd *common.CoreData, grants
 			case "linker":
 				switch g.Item.String {
 				case "category":
-					gi.Link = fmt.Sprintf("/admin/linker/category/%d/grants#g%d", g.ItemID.Int32, g.ID)
+					gi.Link = fmt.Sprintf("/admin/linker/categories/category/%d/grants#g%d", g.ItemID.Int32, g.ID)
 					if c, err := queries.GetLinkerCategoryById(ctx, g.ItemID.Int32); err == nil && c.Title.Valid {
 						gi.Info = c.Title.String
 					}
 				case "link":
+					gi.Link = fmt.Sprintf("/admin/linker/links/link/%d/grants#g%d", g.ItemID.Int32, g.ID)
 					if l, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(ctx, g.ItemID.Int32); err == nil && l.Title.Valid {
 						gi.Info = l.Title.String
 					}

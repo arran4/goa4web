@@ -1,0 +1,9 @@
+{{ template "head" $ }}
+<h2>Linker Admin</h2>
+<ul>
+    <li><a href="/admin/linker/categories">Categories ({{ .CategoryCount }})</a></li>
+    <li><a href="/admin/linker/links">Links ({{ .LinkCount }})</a></li>
+    <li><a href="/admin/linker/queue">Queue</a></li>
+    <li><a href="/admin/linker/add">Add link</a></li>
+</ul>
+{{ template "tail" $ }}

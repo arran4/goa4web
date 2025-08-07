@@ -41,7 +41,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	categoryId, _ := strconv.Atoi(vars["category"])
 
 	data := &Data{
-		Admin: cd.CanEditAny(),
+		Admin: cd.IsAdmin() && cd.IsAdminMode(),
 	}
 
 	copyDataToSubCategories := func(rootCategory *ForumcategoryPlus) *Data {
@@ -142,27 +142,7 @@ func CustomForumIndex(data *common.CoreData, r *http.Request) {
 			common.IndexItem{Name: "RSS Feed", Link: data.RSSFeedURL},
 		)
 	}
-	userHasAdmin := data.HasRole("administrator") && data.AdminMode
-	if userHasAdmin {
-		data.CustomIndexItems = append(data.CustomIndexItems,
-			common.IndexItem{
-				Name: "Admin",
-				Link: "/admin/forum",
-			},
-		)
-		data.CustomIndexItems = append(data.CustomIndexItems,
-			common.IndexItem{
-				Name: "Administer categories",
-				Link: "/admin/forum/categories",
-			},
-		)
-		data.CustomIndexItems = append(data.CustomIndexItems,
-			common.IndexItem{
-				Name: "Administer topics",
-				Link: "/admin/forum/topics",
-			},
-		)
-	}
+	// Administrative actions moved to the admin portal.
 	if threadId != "" && topicId != "" {
 		if tid, err := strconv.Atoi(topicId); err == nil && data.HasGrant("forum", "topic", "reply", int32(tid)) {
 			data.CustomIndexItems = append(data.CustomIndexItems,

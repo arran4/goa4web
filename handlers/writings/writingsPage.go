@@ -45,15 +45,8 @@ func CustomWritingsIndex(data *common.CoreData, r *http.Request) {
 	data.RSSFeedURL = "/writings/rss"
 	data.AtomFeedURL = "/writings/atom"
 
-	userHasAdmin := data.HasAdminRole() && data.AdminMode
-	if userHasAdmin {
-		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-			Name: "User Roles",
-			Link: "/admin/writings/users/roles",
-		})
-	}
 	userHasWriter := data.HasContentWriterRole()
-	if userHasWriter || userHasAdmin {
+	if userHasWriter {
 		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "Write writings",
 			Link: "/writings/add",

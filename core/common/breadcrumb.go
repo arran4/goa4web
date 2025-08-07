@@ -37,6 +37,9 @@ func (cd *CoreData) Breadcrumbs() []Breadcrumb {
 	if err != nil {
 		log.Printf("breadcrumbs: %v", err)
 	}
+	if cd.PageTitle != "" && len(crumbs) > 0 {
+		crumbs = crumbs[:len(crumbs)-1]
+	}
 	return crumbs
 }
 

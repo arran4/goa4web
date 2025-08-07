@@ -15,8 +15,10 @@ func FullQuoteOf(username, text string) string {
 		switch text[it] {
 		case ']':
 			bc--
+			out.WriteByte(text[it])
 		case '[':
 			bc++
+			out.WriteByte(text[it])
 		case '\\':
 			if it+1 < len(text) {
 				if text[it+1] == '[' || text[it+1] == ']' {

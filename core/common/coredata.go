@@ -1679,6 +1679,14 @@ func (cd *CoreData) PublicWritings(categoryID int32, r *http.Request) ([]*db.Lis
 // Queries returns the db.Queries instance associated with this CoreData.
 func (cd *CoreData) Queries() db.Querier { return cd.queries }
 
+// DeleteFAQCategory removes a FAQ category.
+func (cd *CoreData) DeleteFAQCategory(id int32) error {
+	if cd.queries == nil {
+		return nil
+	}
+	return cd.queries.AdminDeleteFAQCategory(cd.ctx, id)
+}
+
 // AssociateEmail creates an email association request for a user.
 func (cd *CoreData) AssociateEmail(p AssociateEmailParams) (*db.SystemGetUserByUsernameRow, int64, error) {
 	row, err := cd.queries.SystemGetUserByUsername(cd.ctx, sql.NullString{String: p.Username, Valid: true})

@@ -9,9 +9,25 @@
             {{ end }}
         {{ end }}
     </div>
-    <div class="navbar-center"><strong>
-       {{- if cd.PageTitle }}{{ cd.PageTitle }} - {{ end -}}{{ cd.SiteTitle }}
-    </strong></div>
+    <div class="navbar-center">
+        {{- $crumbs := cd.Breadcrumbs }}
+        {{- if $crumbs }}
+            <nav class="breadcrumbs" aria-label="Breadcrumb">
+                <ol>
+                    {{- range $crumbs }}
+                        {{- if .Link }}
+                            <li><a href="{{ .Link }}">{{ .Title }}</a></li>
+                        {{- else }}
+                            <li>{{ .Title }}</li>
+                        {{- end }}
+                    {{- end }}
+                </ol>
+            </nav>
+        {{- end }}
+        <strong>
+           {{- if cd.PageTitle }}<a class="page-title-link" href=".">{{ cd.PageTitle }}</a> - {{ end -}}{{ cd.SiteTitle }}
+        </strong>
+    </div>
     <div class="navbar-right user-links">
         {{ if cd.UserID }}
             {{ with $u := cd.CurrentUserLoaded }}{{ if $u }}<span class="username">{{ $u.Username.String }}</span>{{ end }}{{ end }}

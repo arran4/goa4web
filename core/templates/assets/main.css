@@ -33,6 +33,7 @@ body {
         font-weight: bold;
         font-family: tahoma, arial, helvetica, sans-serif;
         color: #800000;
+        position: relative;
 }
 
 .layout {
@@ -241,23 +242,26 @@ tr.unsupported td {
 .breadcrumbs {
         font-family: tahoma, arial, helvetica, sans-serif;
         font-size: 0.8em;
-        margin-bottom: 0.5em;
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
+        direction: rtl;
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
 }
 
 .breadcrumbs ol {
         list-style: none;
         padding: 0;
         margin: 0;
-        display: flex;
-        flex-wrap: nowrap;
+        display: inline;
+        direction: ltr;
 }
 
 .breadcrumbs li {
-        overflow: hidden;
-        text-overflow: ellipsis;
+        display: inline;
 }
 
 .breadcrumbs li + li:before {
@@ -268,5 +272,10 @@ tr.unsupported td {
 
 .breadcrumbs a {
         text-decoration: none;
+}
+
+.navbar-center .page-title-link {
+        text-decoration: none;
+        color: inherit;
 }
 

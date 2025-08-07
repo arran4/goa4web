@@ -304,10 +304,22 @@ func (cd *CoreData) adminRequestList(kind string) ([]*db.AdminRequestQueue, erro
 // AllRoles returns every defined role loaded once from the database.
 func (cd *CoreData) AllRoles() ([]*db.Role, error) {
 	return cd.allRoles.Load(func() ([]*db.Role, error) {
-		if cd.queries == nil {
-			return nil, nil
+		var roles []*db.Role
+		if cd.queries != nil {
+			var err error
+			roles, err = cd.queries.AdminListRoles(cd.ctx)
+			if err != nil {
+				return nil, err
+			}
 		}
-		return cd.queries.AdminListRoles(cd.ctx)
+		for _, r := range roles {
+			if r.Name == "anyone" {
+				return roles, nil
+			}
+		}
+		anyone := &db.Role{Name: "anyone"}
+		roles = append([]*db.Role{anyone}, roles...)
+		return roles, nil
 	})
 }
 
@@ -1644,11 +1656,11 @@ func (cd *CoreData) RegisterExternalLinkClick(url string) {
 	}
 }
 
-// Role returns the first loaded role or "anonymous" when none.
+// Role returns the first loaded role or "anyone" when none.
 func (cd *CoreData) Role() string {
 	roles := cd.UserRoles()
 	if len(roles) == 0 {
-		return "anonymous"
+		return "anyone"
 	}
 	return roles[0]
 }
@@ -2167,7 +2179,7 @@ func (cd *CoreData) UserByID(id int32) *db.SystemGetUserByIDRow {
 // UserRoles returns the user roles loaded lazily.
 func (cd *CoreData) UserRoles() []string {
 	roles, err := cd.userRoles.Load(func() ([]string, error) {
-		rs := []string{"anonymous"}
+		rs := []string{"anyone"}
 		if cd.UserID == 0 || cd.queries == nil {
 			return rs, nil
 		}

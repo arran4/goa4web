@@ -24,8 +24,15 @@ func TestAllRolesLazy(t *testing.T) {
 
 	cd := NewCoreData(context.Background(), db.New(conn), config.NewRuntimeConfig())
 
-	if _, err := cd.AllRoles(); err != nil {
+	roles, err := cd.AllRoles()
+	if err != nil {
 		t.Fatalf("AllRoles: %v", err)
+	}
+	if len(roles) != 3 {
+		t.Fatalf("expected 3 roles, got %d", len(roles))
+	}
+	if roles[0].Name != "anyone" || roles[0].ID != 0 {
+		t.Fatalf("expected anyone role first, got %+v", roles[0])
 	}
 	if _, err := cd.AllRoles(); err != nil {
 		t.Fatalf("AllRoles second call: %v", err)

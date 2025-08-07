@@ -20,7 +20,7 @@ import (
 
 func TestAdminReloadConfigPage_Unauthorized(t *testing.T) {
 	req := httptest.NewRequest("POST", "/admin/reload", nil)
-	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anonymous"}))
+	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	h := New()
@@ -42,7 +42,7 @@ func TestAdminReloadRoute_Unauthorized(t *testing.T) {
 	h.RegisterRoutes(ar, cfg, navReg)
 
 	req := httptest.NewRequest("POST", "/admin/reload", nil)
-	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithUserRoles([]string{"anonymous"}))
+	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithUserRoles([]string{"anyone"}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -84,7 +84,7 @@ func TestAdminShutdownRoute_Unauthorized(t *testing.T) {
 	h.RegisterRoutes(ar, cfg, navReg)
 
 	req := httptest.NewRequest("POST", "/admin/shutdown", nil)
-	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithUserRoles([]string{"anonymous"}))
+	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithUserRoles([]string{"anyone"}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -123,7 +123,7 @@ func TestAdminShutdownRoute_Authorized(t *testing.T) {
 func TestServerShutdownTask_Unauthorized(t *testing.T) {
 	req := httptest.NewRequest("POST", "/admin/shutdown", nil)
 	cfg := config.NewRuntimeConfig()
-	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithUserRoles([]string{"anonymous"}))
+	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithUserRoles([]string{"anyone"}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	h := New()
@@ -139,7 +139,7 @@ func TestServerShutdownTask_Unauthorized(t *testing.T) {
 func TestServerShutdownMatcher_Denied(t *testing.T) {
 	req := httptest.NewRequest("POST", "/admin/shutdown", nil)
 	cfg := config.NewRuntimeConfig()
-	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithUserRoles([]string{"anonymous"}))
+	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithUserRoles([]string{"anyone"}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	h := New()

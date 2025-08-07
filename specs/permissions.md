@@ -6,7 +6,7 @@ This document describes how Goa4Web evaluates permissions using roles and grants
 
 Roles define high level capabilities that can be assigned to users. The standard roles are:
 
-- **anonymous** – guests who are not signed in
+- **anyone** – guests who are not signed in
 - **user** – regular authenticated user
 - **content writer** – may publish blogs and writing articles
 - **moderator** – moderation abilities
@@ -22,7 +22,7 @@ Users can hold multiple roles through the `user_roles` table. Roles are assigned
 explicitly without inheritance.
 
 The `user` role does not need to be explicitly assigned. Any authenticated
-account automatically gains the `user` role while the `anonymous` role applies
+account automatically gains the `user` role while the `anyone` role applies
 to every connection regardless of login state.
 
 ## Grants Table
@@ -128,7 +128,7 @@ The migrations seed baseline rules for the `news` section:
 
 | Role | Action | Item | Description |
 |------|-------|------|-------------|
-| `anonymous` | `see`, `view` | `post` | browse published news |
+| `anyone` | `see`, `view` | `post` | browse published news |
 | `user` | `reply` | `post` | participate in discussions |
 | `content writer`, `administrator` | `post` | `post` | create new entries |
 | `content writer` | `edit` | `post` | update own news post via item-specific grant |

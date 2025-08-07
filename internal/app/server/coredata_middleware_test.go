@@ -65,7 +65,7 @@ func TestCoreDataMiddlewareUserRoles(t *testing.T) {
 	)
 	srv.CoreDataMiddleware()(handler).ServeHTTP(httptest.NewRecorder(), req)
 
-	want := []string{"anonymous", "user", "moderator"}
+	want := []string{"anyone", "user", "moderator"}
 	if diff := cmp.Diff(want, cdOut.UserRoles()); diff != "" {
 		t.Fatalf("roles mismatch (-want +got):\n%s", diff)
 	}
@@ -115,7 +115,7 @@ func TestCoreDataMiddlewareAnonymous(t *testing.T) {
 	)
 	srv.CoreDataMiddleware()(handler).ServeHTTP(httptest.NewRecorder(), req)
 
-	want := []string{"anonymous"}
+	want := []string{"anyone"}
 	if diff := cmp.Diff(want, cdOut.UserRoles()); diff != "" {
 		t.Fatalf("roles mismatch (-want +got):\n%s", diff)
 	}

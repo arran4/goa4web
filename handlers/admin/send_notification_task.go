@@ -42,7 +42,7 @@ func (SendNotificationTask) Action(w http.ResponseWriter, r *http.Request) any {
 			}
 			ids = append(ids, u.Idusers)
 		}
-	} else if role != "" && role != "anonymous" {
+	} else if role != "" && role != "anyone" {
 		rows, err := queries.AdminListUserIDsByRole(r.Context(), role)
 		if err != nil {
 			return fmt.Errorf("list role fail %w", handlers.ErrRedirectOnSamePageHandler(err))

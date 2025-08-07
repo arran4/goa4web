@@ -19,7 +19,7 @@ func TestVerifyAccess(t *testing.T) {
 	}, fmt.Errorf("administrator role required"), "administrator")
 
 	req := httptest.NewRequest("GET", "/", nil)
-	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anonymous"}))
+	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 
 	rr := httptest.NewRecorder()

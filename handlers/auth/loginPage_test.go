@@ -108,7 +108,7 @@ func TestLoginAction_InvalidPassword(t *testing.T) {
 
 func TestLoginPageHiddenFields(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/login?code=abc&back=%2Ffoo&method=POST&data=x", nil)
-	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anonymous"}))
+	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
@@ -401,7 +401,7 @@ func TestLoginAction_Throttle(t *testing.T) {
 func TestRedirectBackPageHandlerGET(t *testing.T) {
 	t.Skip("skip due to template environment")
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anonymous"}))
+	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
@@ -420,7 +420,7 @@ func TestRedirectBackPageHandlerGET(t *testing.T) {
 func TestRedirectBackPageHandlerEmptyMethod(t *testing.T) {
 	t.Skip("skip due to template environment")
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anonymous"}))
+	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
@@ -440,7 +440,7 @@ func TestRedirectBackPageHandler(t *testing.T) {
 	cases := map[string]string{"empty": "", "get": http.MethodGet}
 	for name, method := range cases {
 		t.Run(name, func(t *testing.T) {
-			cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anonymous"}))
+			cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
 			ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 			req = req.WithContext(ctx)
@@ -462,7 +462,7 @@ func TestRedirectBackPageHandler(t *testing.T) {
 	}
 
 	t.Run("post", func(t *testing.T) {
-		cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anonymous"}))
+		cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 		req = req.WithContext(ctx)

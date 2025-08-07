@@ -1,6 +1,6 @@
 -- Basic role definitions
 INSERT INTO roles (name, can_login, is_admin) VALUES
-  ('anonymous', 0, 0),
+  ('anyone', 0, 0),
   ('user', 1, 0),
   ('content writer', 1, 0),
   ('moderator', 1, 0),

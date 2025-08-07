@@ -1,13 +1,7 @@
 {{ define "privateForumPage" }}
     {{ template "head" $ }}
     <h1>Private Topics</h1>
-    <ul>
-    {{ range cd.PrivateTopics }}
-        <li>{{ .DisplayTitle }}</li>
-    {{ else }}
-        <li>No private topics</li>
-    {{ end }}
-    </ul>
+    {{ template "tableTopics" (dict "Topics" cd.PrivateTopics) }}
     <h2>Start conversation</h2>
     <form id="private-form" method="POST">
         <input type="hidden" name="task" value="{{ .CreateTask }}">

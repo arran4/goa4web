@@ -1,11 +1,10 @@
 {{ define "topicThreads" }}
-    <font size="4">Threads:</font><br>
+    <h2>Threads</h2>
     {{- range .Threads }}
         <table width="100%" border=1>
             <tr>
                 <td bgcolor="lightgrey">
-                    First poster: <font color="green">{{ .Firstpostusername.String }}</font> At <font color="green">{{ .Firstpostwritten.Time }}</font><br />
-                    Contents:
+                    First poster: <font color="green">{{ .Firstpostusername.String }}</font> At <font color="green">{{ .Firstpostwritten.Time }}</font>
                 </td>
             </tr>
             <tr>

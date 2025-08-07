@@ -59,6 +59,7 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 			}
 			return string(out)
 		},
+		"trim": strings.TrimSpace,
 		"firstline": func(s string) string {
 			return strings.Split(s, "\n")[0]
 		},

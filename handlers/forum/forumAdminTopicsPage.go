@@ -3,9 +3,11 @@ package forum
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
+	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -91,14 +93,40 @@ func AdminTopicCreatePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session, ok := core.GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
+	uid, _ := session.Values["UID"].(int32)
+	allowed, err := UserCanCreateTopic(r.Context(), cd.Queries(), int32(pcid), uid)
+	if err != nil {
+		log.Printf("UserCanCreateTopic error: %v", err)
+		w.WriteHeader(http.StatusForbidden)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("forbidden"))
+		return
+	}
+	if !allowed {
+		w.WriteHeader(http.StatusForbidden)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("forbidden"))
+		return
+	}
 	languageID, _ := strconv.Atoi(r.PostFormValue("language"))
-	if _, err := cd.Queries().SystemCreateForumTopic(r.Context(), db.SystemCreateForumTopicParams{
-		ForumcategoryIdforumcategory: int32(pcid),
-		LanguageIdlanguage:           int32(languageID),
-		Title:                        sql.NullString{String: name, Valid: true},
-		Description:                  sql.NullString{String: desc, Valid: true},
-	}); err != nil {
+	topicID, err := cd.Queries().CreateForumTopicForPoster(r.Context(), db.CreateForumTopicForPosterParams{
+		PosterID:        uid,
+		ForumcategoryID: int32(pcid),
+		LanguageID:      int32(languageID),
+		Title:           sql.NullString{String: name, Valid: true},
+		Description:     sql.NullString{String: desc, Valid: true},
+		GrantCategoryID: sql.NullInt32{Int32: int32(pcid), Valid: true},
+		GranteeID:       sql.NullInt32{Int32: uid, Valid: uid != 0},
+	})
+	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	if topicID == 0 {
+		w.WriteHeader(http.StatusForbidden)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("forbidden"))
 		return
 	}
 	http.Redirect(w, r, "/admin/forum/topics", http.StatusTemporaryRedirect)

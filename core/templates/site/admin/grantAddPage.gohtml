@@ -1,11 +1,12 @@
 {{ template "head" $ }}
 <h2>Add Grant</h2>
-{{ if or (eq .Subject "") (eq .ID 0) }}
+{{ if or (eq .Subject "") (and (ne .Subject "everyone") (eq .ID 0)) }}
 <form method="get">
     <label>Subject:
         <select name="subject">
             <option value="user"{{ if or (eq .Subject "user") (eq .Subject "") }} selected{{ end }}>User</option>
             <option value="role"{{ if eq .Subject "role" }} selected{{ end }}>Role</option>
+            <option value="everyone"{{ if eq .Subject "everyone" }} selected{{ end }}>Everyone</option>
         </select>
     </label>
     {{ if or (eq .Subject "user") (eq .Subject "") }}
@@ -17,7 +18,7 @@
             {{ end }}
         </datalist>
     </label>
-    {{ else }}
+    {{ else if eq .Subject "role" }}
     <label>Role:
         <input list="roleOptions" name="id">
         <datalist id="roleOptions">
@@ -57,7 +58,7 @@
     <input type="submit" value="Next">
 </form>
 {{ else }}
-<form method="post" action="/admin/{{ .Subject }}/{{ .ID }}/grant">
+<form method="post" action="/admin/{{ if eq .Subject "everyone" }}grant{{ else }}{{ .Subject }}/{{ .ID }}/grant{{ end }}">
     {{ csrfField }}
     <input type="hidden" name="task" value="Create grant">
     <input type="hidden" name="section" value="{{ .Section }}">

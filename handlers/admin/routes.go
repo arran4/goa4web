@@ -103,6 +103,7 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navRe
 	ar.HandleFunc("/grant/delete", handlers.TaskHandler(roleGrantDeleteTask)).Methods("POST").MatcherFunc(roleGrantDeleteTask.Matcher())
 	ar.HandleFunc("/grants", AdminGrantsPage).Methods("GET")
 	ar.HandleFunc("/grant/add", adminGrantAddPage).Methods("GET")
+	ar.HandleFunc("/grant", handlers.TaskHandler(globalGrantCreateTask)).Methods("POST").MatcherFunc(globalGrantCreateTask.Matcher())
 	ar.HandleFunc("/grant/{grant}", adminGrantPage).Methods("GET")
 	ar.HandleFunc("/grant/update", handlers.TaskHandler(grantUpdateTask)).Methods("POST").MatcherFunc(grantUpdateTask.Matcher())
 	ar.HandleFunc("/user/{user}/reset", adminUserResetPasswordConfirmPage).Methods("GET")

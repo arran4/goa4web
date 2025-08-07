@@ -43,6 +43,8 @@ func AdminGrantsPage(w http.ResponseWriter, r *http.Request) {
 				userNames[g.UserID.Int32] = u.Username.String
 				gw.UserName = u.Username.String
 			}
+		} else if !g.RoleID.Valid {
+			gw.UserName = "Everyone"
 		}
 		if g.RoleID.Valid {
 			if name, ok := roleNames[g.RoleID.Int32]; ok {
@@ -90,6 +92,8 @@ func adminGrantPage(w http.ResponseWriter, r *http.Request) {
 		if u, err := queries.SystemGetUserByID(r.Context(), g.UserID.Int32); err == nil && u.Username.Valid {
 			gw.UserName = u.Username.String
 		}
+	} else if !g.RoleID.Valid {
+		gw.UserName = "Everyone"
 	}
 	if g.RoleID.Valid {
 		if ro, err := queries.AdminGetRoleByID(r.Context(), g.RoleID.Int32); err == nil {

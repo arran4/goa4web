@@ -1,6 +1,7 @@
 package faq
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/arran4/goa4web/internal/eventbus"
@@ -38,4 +39,27 @@ func TestAskTaskTemplatesCompile(t *testing.T) {
 	var task AskTask
 	requireEmailTemplates(t, task.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
 	requireNotificationTemplate(t, task.AdminInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+}
+
+func TestAdminNotificationFaqAskEmailIncludesLink(t *testing.T) {
+	url := "http://example.com/admin/faq/questions"
+	data := notif.EmailData{URL: url, Item: map[string]any{"Question": "test?"}}
+	textTmpls := templates.GetCompiledEmailTextTemplates(map[string]any{})
+	htmlTmpls := templates.GetCompiledEmailHtmlTemplates(map[string]any{})
+
+	var sb strings.Builder
+	if err := textTmpls.ExecuteTemplate(&sb, "adminNotificationFaqAskEmail.gotxt", data); err != nil {
+		t.Fatalf("render text: %v", err)
+	}
+	if !strings.Contains(sb.String(), url) {
+		t.Errorf("text template missing url: %s", sb.String())
+	}
+
+	sb.Reset()
+	if err := htmlTmpls.ExecuteTemplate(&sb, "adminNotificationFaqAskEmail.gohtml", data); err != nil {
+		t.Fatalf("render html: %v", err)
+	}
+	if !strings.Contains(sb.String(), url) {
+		t.Errorf("html template missing url: %s", sb.String())
+	}
 }

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/eventbus"
@@ -94,10 +95,17 @@ func (AskTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	evt := cd.Event()
-	evt.Path = "/admin/faq"
+	path := "/admin/faq/questions"
+	evt.Path = path
 	if evt.Data == nil {
 		evt.Data = map[string]any{}
 	}
+	cfg := cd.Config
+	page := "http://" + r.Host + path
+	if cfg.HTTPHostname != "" {
+		page = strings.TrimRight(cfg.HTTPHostname, "/") + path
+	}
+	evt.Data["URL"] = page
 	evt.Data["Question"] = text
 
 	// The BusWorker sends notifications based on event metadata.

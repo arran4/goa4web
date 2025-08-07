@@ -1280,6 +1280,40 @@ func (cd *CoreData) Languages() ([]*db.Language, error) {
 	})
 }
 
+// DeleteLanguage removes a language when it isn't referenced by any content.
+// The provided code is expected to be the language identifier string.
+// It returns the resolved language ID and name.
+func (cd *CoreData) DeleteLanguage(code string) (int32, string, error) {
+	if cd.queries == nil {
+		return 0, "", nil
+	}
+	id, err := strconv.Atoi(code)
+	if err != nil {
+		return 0, "", err
+	}
+	var name string
+	if rows, err := cd.Languages(); err == nil {
+		for _, l := range rows {
+			if l.Idlanguage == int32(id) {
+				name = l.Nameof.String
+				break
+			}
+		}
+	}
+	counts, err := cd.queries.AdminLanguageUsageCounts(cd.ctx, db.AdminLanguageUsageCountsParams{ID: int32(id)})
+	if err != nil {
+		return int32(id), name, err
+	}
+	if counts.Comments > 0 || counts.Writings > 0 || counts.Blogs > 0 || counts.News > 0 || counts.Links > 0 {
+		return int32(id), name, fmt.Errorf("language has content")
+	}
+	if err := cd.queries.AdminDeleteLanguage(cd.ctx, int32(id)); err != nil {
+		return int32(id), name, err
+	}
+	cd.langs = lazy.Value[[]*db.Language]{}
+	return int32(id), name, nil
+}
+
 // LatestNews returns recent news posts with permission data.
 func (cd *CoreData) LatestNews(r *http.Request) ([]*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))

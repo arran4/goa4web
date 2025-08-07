@@ -5,7 +5,7 @@
     {{- range .Grants }}
     <tr>
         <td><a href="/admin/grant/{{ .Grant.ID }}">{{ .Grant.ID }}</a></td>
-        <td>{{ if .Grant.UserID.Valid }}<a href="/admin/user/{{ .Grant.UserID.Int32 }}">{{ .UserName }} ({{ .Grant.UserID.Int32 }})</a>{{ end }}</td>
+        <td>{{ if .Grant.UserID.Valid }}<a href="/admin/user/{{ .Grant.UserID.Int32 }}">{{ .UserName }} ({{ .Grant.UserID.Int32 }})</a>{{ else if not .Grant.RoleID.Valid }}{{ .UserName }}{{ end }}</td>
         <td>{{ if .Grant.RoleID.Valid }}<a href="/admin/role/{{ .Grant.RoleID.Int32 }}">{{ .RoleName }} ({{ .Grant.RoleID.Int32 }})</a>{{ end }}</td>
         <td>{{ .Grant.Section }}</td>
         <td>{{ if .ItemLink }}<a href="{{ .ItemLink }}">{{ .Grant.Item.String }}</a>{{ else }}{{ .Grant.Item.String }}{{ end }}</td>

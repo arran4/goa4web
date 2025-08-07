@@ -2,7 +2,7 @@
 <p><a href="/admin/grants">Back to grants</a></p>
 <table border="1">
     <tr><th>Field</th><th>Value</th></tr>
-    <tr><td>User</td><td>{{ if .Grant.UserID.Valid }}<a href="/admin/user/{{ .Grant.UserID.Int32 }}">{{ .Grant.UserName }} ({{ .Grant.UserID.Int32 }})</a>{{ else }}-{{ end }}</td></tr>
+    <tr><td>User</td><td>{{ if .Grant.UserID.Valid }}<a href="/admin/user/{{ .Grant.UserID.Int32 }}">{{ .Grant.UserName }} ({{ .Grant.UserID.Int32 }})</a>{{ else if not .Grant.RoleID.Valid }}{{ .Grant.UserName }}{{ else }}-{{ end }}</td></tr>
     <tr><td>Role</td><td>{{ if .Grant.RoleID.Valid }}<a href="/admin/role/{{ .Grant.RoleID.Int32 }}">{{ .Grant.RoleName }} ({{ .Grant.RoleID.Int32 }})</a>{{ else }}-{{ end }}</td></tr>
     <tr><td>Section</td><td>{{ .Grant.Section }}</td></tr>
     <tr><td>Item</td><td>{{ if .Grant.ItemLink }}<a href="{{ .Grant.ItemLink }}">{{ .Grant.Item.String }}</a>{{ else }}{{ .Grant.Item.String }}{{ end }}</td></tr>

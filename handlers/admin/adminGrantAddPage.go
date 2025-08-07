@@ -38,7 +38,7 @@ func adminGrantAddPage(w http.ResponseWriter, r *http.Request) {
 		RequireItemID bool
 	}{Subject: subject, ID: id, Section: section, Item: item}
 
-	if subject == "" || id == 0 {
+	if subject == "" || (id == 0 && subject != "everyone") {
 		users, _ := queries.ListUsersWithRoles(r.Context())
 		roles, _ := queries.AdminListRoles(r.Context())
 		data.Users = users

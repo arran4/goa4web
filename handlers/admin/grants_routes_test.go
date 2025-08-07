@@ -53,3 +53,30 @@ func TestRegisterRoutesRegistersGrantAdd(t *testing.T) {
 		t.Fatalf("grant add route not registered")
 	}
 }
+
+func TestRegisterRoutesRegistersGrantCreate(t *testing.T) {
+	h := New()
+	r := mux.NewRouter()
+	ar := r.PathPrefix("/admin").Subrouter()
+	navReg := navpkg.NewRegistry()
+	h.RegisterRoutes(ar, &config.RuntimeConfig{}, navReg)
+	var found bool
+	r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+		path, err := route.GetPathTemplate()
+		if err != nil {
+			return nil
+		}
+		if path == "/admin/grant" {
+			methods, _ := route.GetMethods()
+			for _, m := range methods {
+				if m == "POST" {
+					found = true
+				}
+			}
+		}
+		return nil
+	})
+	if !found {
+		t.Fatalf("grant create route not registered")
+	}
+}

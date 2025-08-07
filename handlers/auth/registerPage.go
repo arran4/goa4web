@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/arran4/goa4web/core/consts"
@@ -9,8 +8,6 @@ import (
 	"net/http"
 	"net/mail"
 	"strings"
-
-	"github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
@@ -51,24 +48,10 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if _, err := mail.ParseAddress(email); err != nil {
 		return handlers.ErrRedirectOnSamePageHandler(errors.New("invalid email"))
 	}
-	queries := cd.Queries()
-
-	if _, err := queries.SystemGetUserByUsername(r.Context(), sql.NullString{
-		String: username,
-		Valid:  true,
-	}); errors.Is(err, sql.ErrNoRows) {
-	} else if err != nil {
-		log.Printf("UserByUsername Error: %s", err)
-		return fmt.Errorf("user by username %w", err)
-	} else {
-		return handlers.ErrRedirectOnSamePageHandler(errors.New("user exists"))
-	}
-
-	if _, err := queries.SystemGetUserByEmail(r.Context(), email); errors.Is(err, sql.ErrNoRows) {
-	} else if err != nil {
-		log.Printf("UserByUsername Error: %s", err)
-		return fmt.Errorf("user by email %w", err)
-	} else {
+	if exists, err := cd.UserExists(username, email); err != nil {
+		log.Printf("UserExists Error: %s", err)
+		return fmt.Errorf("user exists %w", err)
+	} else if exists {
 		return handlers.ErrRedirectOnSamePageHandler(errors.New("user exists"))
 	}
 
@@ -77,21 +60,13 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("hashPassword Error: %s", err)
 		return fmt.Errorf("hash password %w", err)
 	}
-	id, err := queries.SystemInsertUser(r.Context(), sql.NullString{String: username, Valid: true})
+	id, err := cd.CreateUserWithEmail(username, email, hash, alg)
 	if err != nil {
 		if strings.Contains(err.Error(), "Duplicate entry") || strings.Contains(err.Error(), "UNIQUE constraint failed") {
 			return handlers.ErrRedirectOnSamePageHandler(err)
 		}
-		log.Printf("SystemInsertUser Error: %s", err)
-		return fmt.Errorf("insert user %w", err)
-	}
-	if err := queries.InsertUserEmail(r.Context(), db.InsertUserEmailParams{UserID: int32(id), Email: email, VerifiedAt: sql.NullTime{}, LastVerificationCode: sql.NullString{}}); err != nil {
-		log.Printf("InsertUserEmail Error: %s", err)
-		return fmt.Errorf("insert user email %w", err)
-	}
-	if err := queries.InsertPassword(r.Context(), db.InsertPasswordParams{UsersIdusers: int32(id), Passwd: hash, PasswdAlgorithm: sql.NullString{String: alg, Valid: true}}); err != nil {
-		log.Printf("InsertPassword Error: %s", err)
-		return fmt.Errorf("insert password %w", err)
+		log.Printf("CreateUserWithEmail Error: %s", err)
+		return fmt.Errorf("create user with email %w", err)
 	}
 
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {

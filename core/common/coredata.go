@@ -1646,6 +1646,58 @@ func (cd *CoreData) PublicWritings(categoryID int32, r *http.Request) ([]*db.Lis
 // Queries returns the db.Queries instance associated with this CoreData.
 func (cd *CoreData) Queries() db.Querier { return cd.queries }
 
+// DeleteFAQQuestion removes a FAQ entry by ID.
+func (cd *CoreData) DeleteFAQQuestion(id int32) error {
+	if cd.queries == nil {
+		return nil
+	}
+	return cd.queries.AdminDeleteFAQ(cd.ctx, id)
+}
+
+
+// UserExists reports whether a user already exists with the supplied username
+// or email address.
+func (cd *CoreData) UserExists(username, email string) (bool, error) {
+	if cd.queries == nil {
+		return false, nil
+	}
+	if username != "" {
+		if _, err := cd.queries.SystemGetUserByUsername(cd.ctx, sql.NullString{String: username, Valid: true}); err == nil {
+			return true, nil
+		} else if !errors.Is(err, sql.ErrNoRows) {
+			return false, fmt.Errorf("user by username: %w", err)
+		}
+	}
+	if email != "" {
+		if _, err := cd.queries.SystemGetUserByEmail(cd.ctx, email); err == nil {
+			return true, nil
+		} else if !errors.Is(err, sql.ErrNoRows) {
+			return false, fmt.Errorf("user by email: %w", err)
+		}
+	}
+	return false, nil
+}
+
+// CreateUserWithEmail inserts a user with the supplied username, email and
+// password hash/algorithm, returning the new user ID.
+func (cd *CoreData) CreateUserWithEmail(u, e, hash, alg string) (int32, error) {
+	if cd.queries == nil {
+		return 0, errors.New("no queries")
+	}
+	id, err := cd.queries.SystemInsertUser(cd.ctx, sql.NullString{String: u, Valid: u != ""})
+	if err != nil {
+		return 0, err
+	}
+	uid := int32(id)
+	if err := cd.queries.InsertUserEmail(cd.ctx, db.InsertUserEmailParams{UserID: uid, Email: e, VerifiedAt: sql.NullTime{}, LastVerificationCode: sql.NullString{}}); err != nil {
+		return 0, err
+	}
+	if err := cd.queries.InsertPassword(cd.ctx, db.InsertPasswordParams{UsersIdusers: uid, Passwd: hash, PasswdAlgorithm: sql.NullString{String: alg, Valid: alg != ""}}); err != nil {
+		return 0, err
+	}
+	return uid, nil
+}
+
 // RegisterExternalLinkClick records click statistics for url.
 func (cd *CoreData) RegisterExternalLinkClick(url string) {
 	if cd.queries == nil {

@@ -1,16 +1,12 @@
 package blogs
 
 import (
-	"database/sql"
-	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 )
 
 // AdminPage shows the blog administration index with a list of blogs.
@@ -24,5 +20,5 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 		cd.StartLink = "/admin/blogs?offset=0"
 	}
 	cd.PageTitle = "Blog Admin"
-	handlers.TemplateHandler(w, r, "blogsAdminPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "blogsAdminPage.gohtml", struct{}{})
 }

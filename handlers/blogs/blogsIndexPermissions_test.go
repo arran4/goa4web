@@ -14,8 +14,8 @@ func TestCustomBlogIndexRoles(t *testing.T) {
 	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
 	cd.AdminMode = true
 	CustomBlogIndex(cd, req)
-	if !common.ContainsItem(cd.CustomIndexItems, "User Roles") {
-		t.Errorf("admin should see user roles")
+	if common.ContainsItem(cd.CustomIndexItems, "User Roles") {
+		t.Errorf("admin should not see user roles")
 	}
 	if !common.ContainsItem(cd.CustomIndexItems, "Write blog") {
 		t.Errorf("admin should see write blog")

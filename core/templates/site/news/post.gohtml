@@ -7,16 +7,18 @@
             <td>{{ .News.String | a4code2html }}<br>-<br>{{ .Writername.String }}
             -
             [<a href="/news/news/{{ .Idsitenews }}">{{ .Comments.Int32 }} COMMENTS</a>]
-            {{ if .ShowReply }}
+            {{ if cd.ShowReplyNews .Idsitenews }}
                 [<a href="/news/news/{{ .Idsitenews }}#reply">REPLY</a>]
             {{ end }}
 
-            {{ if .ShowEdit }}
+            {{ if cd.ShowEditNews .Idsitenews .UsersIdusers }}
                 [<a href="/news/news/{{ .Idsitenews }}/edit">EDIT</a>]
             {{ end }}
-            {{ if and cd.HasAdminRole cd.AdminMode }}
+            {{ if and cd.IsAdmin cd.IsAdminMode }}[<a href="/admin/news/article/{{ .Idsitenews }}">ADMIN</a>]{{ end }}
+            {{ if and cd.IsAdmin cd.IsAdminMode }}
                 [<a href="/admin/announcements?news_id={{ .Idsitenews }}">
-                    {{ if and .Announcement (eq .Announcement.Active true) }}
+                    {{ $ann := cd.NewsAnnouncement .Idsitenews }}
+                    {{ if and $ann $ann.Active }}
                         MANAGE ANNOUNCEMENT
                     {{ else }}
                         PROMOTE TO ANNOUNCEMENT

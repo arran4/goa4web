@@ -61,9 +61,9 @@ func TestProcessSpecialCommands(t *testing.T) {
 		cmd  string
 		want string
 	}{
-		{"*", "<strong> text</strong>"},
-		{"/", "<i> text</i>"},
-		{"_", "<u> text</u>"},
+		{"*", "<strong>text</strong>"},
+		{"/", "<i>text</i>"},
+		{"_", "<u>text</u>"},
 	}
 	for _, tt := range tests {
 		c := New()
@@ -88,7 +88,7 @@ func TestA4code2htmlComplex(t *testing.T) {
 	c := New()
 	c.SetInput("[b Bold [i Italic]] plain [link http://x example]")
 	got, _ := io.ReadAll(c.Process())
-	want := "<strong> Bold <i> Italic</i></strong> plain  http://x example"
+	want := "<strong>Bold <i>Italic</i></strong> plain <a href=\"http://x\" target=\"_BLANK\"> example</a>"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)
 	}
@@ -98,7 +98,7 @@ func TestA4code2htmlUnclosed(t *testing.T) {
 	c := New()
 	c.SetInput("[b bold")
 	got, _ := io.ReadAll(c.Process())
-	want := "<strong> bold</strong>"
+	want := "<strong>bold</strong>"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)
 	}
@@ -108,7 +108,7 @@ func TestA4code2htmlBadURL(t *testing.T) {
 	c := New()
 	c.SetInput("[link javascript:alert(1) example]")
 	got, _ := io.ReadAll(c.Process())
-	want := " javascript:alert(1) example"
+	want := "javascript:alert(1) example"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)
 	}
@@ -118,7 +118,7 @@ func TestSpoiler(t *testing.T) {
 	c := New()
 	c.SetInput("[Spoiler secret]")
 	got, _ := io.ReadAll(c.Process())
-	want := "<span class=\"spoiler\"> secret</span>"
+	want := "<span class=\"spoiler\">secret</span>"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)
 	}
@@ -172,16 +172,6 @@ func TestProcessReaderStreaming(t *testing.T) {
 	}
 }
 
-func TestHrTagClosing(t *testing.T) {
-	c := New()
-	c.SetInput("[hr]\n")
-	got, _ := io.ReadAll(c.Process())
-	want := "<hr>/><br />\n"
-	if string(got) != want {
-		t.Errorf("got %q want %q", string(got), want)
-	}
-}
-
 func TestImageURLMapper(t *testing.T) {
 	mapper := func(tag, val string) string {
 		return "map:" + tag + ":" + val
@@ -192,5 +182,28 @@ func TestImageURLMapper(t *testing.T) {
 	want := "<img src=\"map:img:=image:abc\" />"
 	if string(got) != want {
 		t.Fatalf("img map got %q want %q", got, want)
+	}
+}
+func TestHrTag(t *testing.T) {
+	tests := []struct {
+		name     string
+		codeType CodeType
+		want     string
+	}{
+		{"HTML", CTHTML, "<hr /><br />\n"},
+		{"TagStrip", CTTagStrip, "\n"},
+		{"WordsOnly", CTWordsOnly, " "},
+		{"TableOfContents", CTTableOfContents, "<br />\n"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := New()
+			c.CodeType = tt.codeType
+			c.SetInput("[hr]\n")
+			got, _ := io.ReadAll(c.Process())
+			if string(got) != tt.want {
+				t.Errorf("got %q want %q", string(got), tt.want)
+			}
+		})
 	}
 }

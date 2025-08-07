@@ -52,8 +52,7 @@ Permission actions describe groups of related operations. The main verbs are:
 
 - **see** – list or otherwise discover the item
 - **view** – display the item’s full details
-- **comment** – add a comment
-- **reply** – respond in an existing thread
+- **reply** – add a comment or respond in an existing thread
 - **post** – create a new thread, blog post or article
 - **edit** – update an item; writers receive an item-specific grant so they can update their own posts
 - **edit-any** – update items created by others
@@ -130,7 +129,7 @@ The migrations seed baseline rules for the `news` section:
 | Role | Action | Item | Description |
 |------|-------|------|-------------|
 | `anonymous` | `see`, `view` | `post` | browse published news |
-| `user` | `comment`, `reply` | `post` | participate in discussions |
+| `user` | `reply` | `post` | participate in discussions |
 | `content writer`, `administrator` | `post` | `post` | create new entries |
 | `content writer` | `edit` | `post` | update own news post via item-specific grant |
 | `administrator` | `edit` | `post` | update any news post |
@@ -153,8 +152,7 @@ Many queries now filter results directly in SQL using `lister_id` together with 
 | `blogs`    | —          | `search`        | Search blog entries |
 | `blogs`    | `entry`    | `see`           | List blog entries |
 | `blogs`    | `entry`    | `view`          | View a blog entry |
-| `blogs`    | `entry`    | `comment`       | Comment on a blog entry |
-| `blogs`    | `entry`    | `reply`         | Reply to a blog comment |
+| `blogs`    | `entry`    | `reply`         | Comment on a blog entry |
 | `blogs`    | `entry`    | `post`          | Publish a new blog entry |
 | `blogs`    | `entry`    | `edit`          | Modify any blog entry |
 | `faq`      | —          | `search`        | Search FAQ content |
@@ -168,6 +166,7 @@ Many queries now filter results directly in SQL using `lister_id` together with 
 | `forum`    | —          | `search`        | Search forums |
 | `forum`    | `category` | `see`           | Discover forum categories |
 | `forum`    | `category` | `view`          | View topics in the category |
+| `forum`    | `category` | `post`          | Create a new topic in the category |
 | `forum`    | `thread`   | `see`           | Show a thread in listings |
 | `forum`    | `thread`   | `view`          | View posts within a thread |
 | `forum`    | `thread`   | `reply`         | Reply within the thread |
@@ -192,10 +191,10 @@ Many queries now filter results directly in SQL using `lister_id` together with 
 | `linker`   | —          | `search`        | Search links |
 | `linker`   | `category` | `see`           | Browse link categories |
 | `linker`   | `category` | `view`          | View links in a category |
+| `linker`   | `category` | `post`          | Submit a link to the category |
 | `linker`   | `link`     | `see`           | Show a link in lists |
 | `linker`   | `link`     | `view`          | View link details |
-| `linker`   | `link`     | `comment`       | Comment on a link |
-| `linker`   | `link`     | `reply`         | Reply to a link comment |
+| `linker`   | `link`     | `reply`         | Comment on a link |
 | `news`     | —          | `search`        | Search news posts |
 | `news`     | `post`     | `see`           | Show news posts in lists |
 | `news`     | `post`     | `view`          | View a news post |
@@ -205,10 +204,10 @@ Many queries now filter results directly in SQL using `lister_id` together with 
 | `writing`  | —          | `search`        | Search writing articles |
 | `writing`  | `category` | `see`           | Browse writing categories |
 | `writing`  | `category` | `view`          | View a writing category |
+| `writing`  | `category` | `post`          | Publish an article in the category |
 | `writing`  | `article`  | `see`           | Show writing articles in lists |
 | `writing`  | `article`  | `view`          | Read a writing article |
-| `writing`  | `article`  | `comment`       | Comment on a writing article |
-| `writing`  | `article`  | `reply`         | Reply to a writing comment |
+| `writing`  | `article`  | `reply`         | Comment on a writing article |
 | `writing`  | `article`  | `post`          | Publish a writing article |
 | `writing`  | `article`  | `edit`          | Edit a writing article |
 

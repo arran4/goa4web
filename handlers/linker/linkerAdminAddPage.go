@@ -85,6 +85,14 @@ func (addTask) Action(w http.ResponseWriter, r *http.Request) any {
 	description := r.PostFormValue("description")
 	category, _ := strconv.Atoi(r.PostFormValue("category"))
 
+	allowed, err := UserCanCreateLink(r.Context(), queries, int32(category), uid)
+	if err != nil {
+		return fmt.Errorf("UserCanCreateLink fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	if !allowed {
+		return fmt.Errorf("UserCanCreateLink deny %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("forbidden")))
+	}
+
 	if err := queries.AdminCreateLinkerItem(r.Context(), db.AdminCreateLinkerItemParams{
 		UsersIdusers:     uid,
 		LinkerCategoryID: int32(category),

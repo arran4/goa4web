@@ -175,6 +175,54 @@ func (q *Queries) AdminUpdateWritingCategory(ctx context.Context, arg AdminUpdat
 	return err
 }
 
+const createWritingForWriter = `-- name: CreateWritingForWriter :execlastid
+INSERT INTO writing (writing_category_id, title, abstract, writing, private, language_idlanguage, published, users_idusers)
+SELECT ?, ?, ?, ?, ?, ?, NOW(), ?
+WHERE EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='writing'
+      AND (g.item='category' OR g.item IS NULL)
+      AND g.action='post'
+      AND g.active=1
+      AND (g.item_id = ? OR g.item_id IS NULL)
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (
+          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+      ))
+  )
+`
+
+type CreateWritingForWriterParams struct {
+	WritingCategoryID int32
+	Title             sql.NullString
+	Abstract          sql.NullString
+	Writing           sql.NullString
+	Private           sql.NullBool
+	LanguageID        int32
+	WriterID          int32
+	GrantCategoryID   sql.NullInt32
+	GranteeID         sql.NullInt32
+}
+
+func (q *Queries) CreateWritingForWriter(ctx context.Context, arg CreateWritingForWriterParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, createWritingForWriter,
+		arg.WritingCategoryID,
+		arg.Title,
+		arg.Abstract,
+		arg.Writing,
+		arg.Private,
+		arg.LanguageID,
+		arg.WriterID,
+		arg.GrantCategoryID,
+		arg.GranteeID,
+		arg.WriterID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
+}
+
 const getAllWritingsByAuthorForLister = `-- name: GetAllWritingsByAuthorForLister :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?

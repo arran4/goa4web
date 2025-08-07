@@ -8,8 +8,6 @@
                 <a href="?mode=admin">Enable admin mode</a>
             {{ end }}
         {{ end }}
-    </div>
-    <div class="navbar-center">
         {{- $crumbs := cd.Breadcrumbs }}
         {{- if $crumbs }}
             <nav class="breadcrumbs" aria-label="Breadcrumb">
@@ -24,6 +22,8 @@
                 </ol>
             </nav>
         {{- end }}
+    </div>
+    <div class="navbar-center">
         <strong>
            {{- if cd.PageTitle }}<a class="page-title-link" href=".">{{ cd.PageTitle }}</a> - {{ end -}}{{ cd.SiteTitle }}
         </strong>

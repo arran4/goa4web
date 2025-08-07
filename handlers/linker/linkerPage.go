@@ -62,8 +62,4 @@ func CustomLinkerIndex(data *common.CoreData, r *http.Request) {
 		data.RSSFeedURL = "/linker/rss"
 		data.AtomFeedURL = "/linker/atom"
 	}
-
-	// Administrative actions moved to the admin portal.
-	// Pagination links now provided via CoreData
-
 }

@@ -6,4 +6,21 @@
     <li><a href="/admin/linker/queue">Queue</a></li>
     <li><a href="/admin/linker/add">Add link</a></li>
 </ul>
+<h3>Roles</h3>
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+    </tr>
+    {{- range .Roles }}
+    <tr>
+        <td>{{ .ID }}</td>
+        <td>{{ .Name }}</td>
+    </tr>
+    {{- else }}
+    <tr>
+        <td colspan="2">No roles</td>
+    </tr>
+    {{- end }}
+</table>
 {{ template "tail" $ }}

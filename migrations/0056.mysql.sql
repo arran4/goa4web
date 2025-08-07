@@ -1,0 +1,10 @@
+ALTER TABLE preferences ADD COLUMN timezone TINYTEXT DEFAULT NULL;
+UPDATE blogs SET written = CONVERT_TZ(written, 'Australia/Melbourne', 'UTC');
+UPDATE comments SET written = CONVERT_TZ(written, 'Australia/Melbourne', 'UTC');
+UPDATE forumthread SET lastaddition = CONVERT_TZ(lastaddition, 'Australia/Melbourne', 'UTC');
+UPDATE forumtopic SET lastaddition = CONVERT_TZ(lastaddition, 'Australia/Melbourne', 'UTC');
+UPDATE imagepost SET posted = CONVERT_TZ(posted, 'Australia/Melbourne', 'UTC');
+UPDATE linker SET listed = CONVERT_TZ(listed, 'Australia/Melbourne', 'UTC');
+UPDATE writing SET published = CONVERT_TZ(published, 'Australia/Melbourne', 'UTC');
+UPDATE news SET occurred = CONVERT_TZ(occurred, 'Australia/Melbourne', 'UTC');
+UPDATE schema_version SET version = 56 WHERE version = 55;

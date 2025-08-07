@@ -4,7 +4,7 @@
         <table>
             <tr>
                 <th><a href="{{ .ImagePost.Fullimage.String }}" target="_BLANK"><img src="{{ .ImagePost.Thumbnail.String }}"></a>
-                <td>{{ .ImagePost.Description.String }}<hr>{{ .ImagePost.Username.String }} - Posted: {{ .ImagePost.Posted.Time }}
+                <td>{{ .ImagePost.Description.String }}<hr>{{ .ImagePost.Username.String }} - Posted: {{ localTime .ImagePost.Posted.Time }}
         </table><br>
     {{ end }}
     {{ template "threadComments" }}

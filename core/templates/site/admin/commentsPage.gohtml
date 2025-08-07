@@ -5,7 +5,7 @@
 {{- range .Comments }}
 <tr>
 <td>{{ .Idcomments }}</td>
-<td>{{ if .Written.Valid }}{{ .Written.Time }}{{ end }}</td>
+<td>{{ if .Written.Valid }}{{ localTime .Written.Time }}{{ end }}</td>
 <td>{{ .ForumtopicIdforumtopic }}</td>
 <td>{{ .Idforumthread }}</td>
 <td>{{ if .Text.Valid }}{{ left 40 .Text.String }}{{ end }}</td>

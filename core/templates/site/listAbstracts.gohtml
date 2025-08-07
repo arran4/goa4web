@@ -9,7 +9,7 @@
     {{ range $abstracts }}
         {{ $title := .Title.String | a4code2html }}
         {{ $username := .Username.String }}
-        {{ $published := .Published.Time }}
+        {{ $published := localTime .Published.Time }}
         {{ $abstract := .Abstract.String | a4code2html }}
         {{ $idwriting := .Idwriting }}
         {{ $private := .Private.Bool }}

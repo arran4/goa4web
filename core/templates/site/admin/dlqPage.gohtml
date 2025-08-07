@@ -10,7 +10,7 @@ Configured providers: {{ .Providers }}<br />
 <table border="1">
 <tr><th>Time</th><th>Message</th></tr>
 {{- range .FileErrors }}
-<tr><td>{{ .Time }}</td><td>{{ .Message }}</td></tr>
+<tr><td>{{ localTime .Time }}</td><td>{{ .Message }}</td></tr>
 {{- end }}
 </table>
 {{- end }}
@@ -50,7 +50,7 @@ Configured providers: {{ .Providers }}<br />
     <td><input type="checkbox" name="id" value="{{ .ID }}"></td>
     <td>{{ .ID }}</td>
     <td>{{ .Message }}</td>
-    <td>{{ .CreatedAt }}</td>
+    <td>{{ localTime .CreatedAt }}</td>
 </tr>
 {{- end }}
 </table>

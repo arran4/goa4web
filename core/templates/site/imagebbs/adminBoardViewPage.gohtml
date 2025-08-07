@@ -18,7 +18,7 @@
 <td>{{ .Idimagepost }}</td>
 <td>{{ .Username.String }}</td>
 <td>{{ .Description.String }}</td>
-<td>{{ if .Posted.Valid }}{{ .Posted.Time }}{{ end }}</td>
+<td>{{ if .Posted.Valid }}{{ localTime .Posted.Time }}{{ end }}</td>
 </tr>
 {{ end }}
 </table>

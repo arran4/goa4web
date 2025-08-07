@@ -2,7 +2,7 @@
     {{ $cmt := . }}
     <table width="100%">
         <tr bgcolor="lightgrey">
-            <th>{{ $cmt.Written.Time }}</th>
+            <th>{{ localTime $cmt.Written.Time }}</th>
         </tr>
         <tr>
             <td>

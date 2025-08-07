@@ -1,12 +1,13 @@
 package templates_test
 
 import (
-	htemplate "html/template"
-	"io"
-	"strings"
-	"testing"
+        htemplate "html/template"
+        "io"
+        "strings"
+        "testing"
+        "time"
 
-	"github.com/arran4/goa4web/core/templates"
+        "github.com/arran4/goa4web/core/templates"
 )
 
 type emailData struct {
@@ -46,7 +47,7 @@ func sampleEmailData() emailData {
 		},
 		"ThreadID":           1,
 		"ThreadURL":          "https://example.com/thread",
-		"Time":               "time",
+                "Time":               time.Now(),
 		"Title":              map[string]interface{}{"String": "title"},
 		"TopicTitle":         "topic title",
 		"UnsubURL":           "https://example.com/unsub",

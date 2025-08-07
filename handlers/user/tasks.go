@@ -17,6 +17,8 @@ const (
 	TaskSaveSize tasks.TaskString = "Save size"
 	// TaskSavePublicProfile toggles a user's public profile setting.
 	TaskSavePublicProfile tasks.TaskString = "Save public profile"
+	// TaskSaveTimezone saves a user's timezone preference.
+	TaskSaveTimezone tasks.TaskString = "Save timezone"
 	// TaskSaveAll saves all changes in bulk.
 	TaskSaveAll tasks.TaskString = "Save all"
 	// TaskTestMail sends a test email to the current user.

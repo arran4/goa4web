@@ -61,9 +61,9 @@ func TestProcessSpecialCommands(t *testing.T) {
 		cmd  string
 		want string
 	}{
-		{"*", "<strong> text</strong>"},
-		{"/", "<i> text</i>"},
-		{"_", "<u> text</u>"},
+		{"*", "<strong>text</strong>"},
+		{"/", "<i>text</i>"},
+		{"_", "<u>text</u>"},
 	}
 	for _, tt := range tests {
 		c := New()
@@ -88,7 +88,7 @@ func TestA4code2htmlComplex(t *testing.T) {
 	c := New()
 	c.SetInput("[b Bold [i Italic]] plain [link http://x example]")
 	got, _ := io.ReadAll(c.Process())
-	want := "<strong> Bold <i> Italic</i></strong> plain  http://x example"
+	want := "<strong>Bold <i>Italic</i></strong> plain <a href=\"http://x\" target=\"_BLANK\"> example</a>"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)
 	}
@@ -98,7 +98,7 @@ func TestA4code2htmlUnclosed(t *testing.T) {
 	c := New()
 	c.SetInput("[b bold")
 	got, _ := io.ReadAll(c.Process())
-	want := "<strong> bold</strong>"
+	want := "<strong>bold</strong>"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)
 	}
@@ -108,7 +108,7 @@ func TestA4code2htmlBadURL(t *testing.T) {
 	c := New()
 	c.SetInput("[link javascript:alert(1) example]")
 	got, _ := io.ReadAll(c.Process())
-	want := " javascript:alert(1) example"
+	want := "javascript:alert(1) example"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)
 	}
@@ -118,7 +118,7 @@ func TestSpoiler(t *testing.T) {
 	c := New()
 	c.SetInput("[Spoiler secret]")
 	got, _ := io.ReadAll(c.Process())
-	want := "<span class=\"spoiler\"> secret</span>"
+	want := "<span class=\"spoiler\">secret</span>"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)
 	}
@@ -189,8 +189,18 @@ func TestImageURLMapper(t *testing.T) {
 	c := New(mapper)
 	c.SetInput("[img=image:abc]")
 	got, _ := io.ReadAll(c.Process())
-	want := "<img src=\"map:img:=image:abc\" />"
+	want := "<img class=\"a4code-image\" src=\"map:img:=image:abc\" />"
 	if string(got) != want {
 		t.Fatalf("img map got %q want %q", got, want)
+	}
+}
+
+func TestImageClass(t *testing.T) {
+	c := New()
+	c.SetInput("[img http://example.com/foo.jpg]")
+	got, _ := io.ReadAll(c.Process())
+	want := "<img class=\"a4code-image\" src=\"http://example.com/foo.jpg\" />"
+	if string(got) != want {
+		t.Fatalf("img got %q want %q", got, want)
 	}
 }

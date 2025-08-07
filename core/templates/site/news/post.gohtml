@@ -7,9 +7,6 @@
             <td>{{ .News.String | a4code2html }}<br>-<br>{{ .Writername.String }}
             -
             [<a href="/news/news/{{ .Idsitenews }}">{{ .Comments.Int32 }} COMMENTS</a>]
-            {{ if cd.ShowReplyNews .Idsitenews }}
-                [<a href="/news/news/{{ .Idsitenews }}#reply">REPLY</a>]
-            {{ end }}
 
             {{ if cd.ShowEditNews .Idsitenews .UsersIdusers }}
                 [<a href="/news/news/{{ .Idsitenews }}/edit">EDIT</a>]

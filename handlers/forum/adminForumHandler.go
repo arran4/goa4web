@@ -63,7 +63,7 @@ func AdminForumPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 
 	queries := cd.Queries()
-	rows, err := queries.GetAllForumTopicsForUser(r.Context(), db.GetAllForumTopicsForUserParams{
+	rows, err := queries.GetForumTopicsForUser(r.Context(), db.GetForumTopicsForUserParams{
 		ViewerID:      uid,
 		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})

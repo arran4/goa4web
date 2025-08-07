@@ -242,6 +242,7 @@ type Forumtopic struct {
 	Threads                      sql.NullInt32
 	Comments                     sql.NullInt32
 	Lastaddition                 sql.NullTime
+	Handler                      string
 }
 
 type Grant struct {

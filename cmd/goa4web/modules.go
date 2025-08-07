@@ -13,6 +13,7 @@ import (
 	"github.com/arran4/goa4web/handlers/languages"
 	"github.com/arran4/goa4web/handlers/linker"
 	"github.com/arran4/goa4web/handlers/news"
+	"github.com/arran4/goa4web/handlers/privateforum"
 	"github.com/arran4/goa4web/handlers/search"
 	"github.com/arran4/goa4web/handlers/user"
 	"github.com/arran4/goa4web/handlers/writings"
@@ -34,6 +35,7 @@ func registerModules(reg *router.Registry, ah *admin.Handlers) {
 	languages.Register(reg)
 	linker.Register(reg)
 	news.Register(reg)
+	privateforum.Register(reg)
 	search.Register(reg)
 	images.Register(reg)
 	externallink.Register(reg)

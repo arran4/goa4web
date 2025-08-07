@@ -32,6 +32,12 @@ func RoleGrantsEditorJS(w http.ResponseWriter, r *http.Request) {
 	http.ServeContent(w, r, "role_grants_editor.js", time.Time{}, bytes.NewReader(templates.GetRoleGrantsEditorJSData()))
 }
 
+// PrivateForumJS serves the JavaScript for the private forum pages.
+func PrivateForumJS(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/javascript")
+	http.ServeContent(w, r, "private_forum.js", time.Time{}, bytes.NewReader(templates.GetPrivateForumJSData()))
+}
+
 // RedirectPermanent returns a handler that redirects to the provided path using StatusPermanentRedirect.
 func RedirectPermanent(to string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

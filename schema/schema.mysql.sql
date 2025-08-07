@@ -119,6 +119,7 @@ CREATE TABLE `forumtopic` (
   `threads` int(10) DEFAULT NULL,
   `comments` int(10) DEFAULT NULL,
   `lastaddition` datetime DEFAULT NULL,
+  `handler` varchar(32) NOT NULL DEFAULT '',
   PRIMARY KEY (`idforumtopic`),
   KEY `forumtopic_FKIndex1` (`forumcategory_idforumcategory`),
   KEY `forumtopic_FKIndex2` (`lastposter`),

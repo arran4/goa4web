@@ -73,20 +73,44 @@ WHERE t.forumcategory_idforumcategory = sqlc.arg(category_id)
       AND (g.item='topic' OR g.item IS NULL)
       AND g.action='see'
       AND g.active=1
-      AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
+      AND ((t.handler = 'private' AND g.item_id = t.idforumtopic) OR (t.handler <> 'private' AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)))
       AND (g.user_id = sqlc.arg(viewer_match_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY t.lastaddition DESC;
 
--- name: GetAllForumTopicsForUser :many
+-- name: ListPrivateTopicParticipantsByTopicIDForUser :many
+SELECT u.idusers, u.username
+FROM grants g
+JOIN users u ON u.idusers = g.user_id
+WHERE g.section = 'forum'
+  AND g.item = 'topic'
+  AND g.action = 'view'
+  AND g.active = 1
+  AND g.user_id IS NOT NULL
+  AND g.item_id = sqlc.arg(topic_id)
+  AND EXISTS (
+      SELECT 1 FROM grants pg
+      WHERE pg.section='forum'
+        AND pg.item='topic'
+        AND pg.action='view'
+        AND pg.active=1
+        AND pg.item_id = g.item_id
+        AND pg.user_id = sqlc.arg(viewer_id)
+  );
+
+-- name: SystemSetForumTopicHandlerByID :exec
+UPDATE forumtopic SET handler = sqlc.arg(handler) WHERE idforumtopic = sqlc.arg(id);
+
+-- name: GetForumTopicsForUser :many
 WITH role_ids AS (
     SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
 )
 SELECT t.*, lu.username AS LastPosterUsername
 FROM forumtopic t
 LEFT JOIN users lu ON lu.idusers = t.lastposter
-WHERE (
+WHERE t.handler <> 'private'
+  AND (
     t.language_idlanguage = 0
     OR t.language_idlanguage IS NULL
     OR EXISTS (
@@ -136,7 +160,7 @@ WHERE t.idforumtopic = sqlc.arg(idforumtopic)
       AND (g.item='topic' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
-      AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
+      AND ((t.handler = 'private' AND g.item_id = t.idforumtopic) OR (t.handler <> 'private' AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)))
       AND (g.user_id = sqlc.arg(viewer_match_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -192,11 +216,23 @@ WHERE th.forumtopic_idforumtopic=sqlc.arg(topic_id)
       AND (g.item='topic' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
-      AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
+      AND ((t.handler = 'private' AND g.item_id = t.idforumtopic) OR (t.handler <> 'private' AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)))
       AND (g.user_id = sqlc.arg(viewer_match_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY th.lastaddition DESC;
+
+-- name: ListPrivateTopicsByUserID :many
+SELECT DISTINCT t.*
+FROM forumtopic t
+JOIN grants g ON g.item_id = t.idforumtopic
+WHERE t.handler = 'private'
+  AND g.section = 'forum'
+  AND g.item = 'topic'
+  AND g.action = 'view'
+  AND g.active = 1
+  AND g.user_id = sqlc.arg(user_id)
+ORDER BY t.lastaddition DESC;
 
 -- name: AdminRebuildAllForumTopicMetaColumns :exec
 UPDATE forumtopic

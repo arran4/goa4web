@@ -1,0 +1,23 @@
+{{ define "privateForumPage" }}
+    {{ template "head" $ }}
+    <h1>Private Topics</h1>
+    <ul>
+    {{ range cd.PrivateTopics }}
+        <li>{{ .DisplayTitle }}</li>
+    {{ else }}
+        <li>No private topics</li>
+    {{ end }}
+    </ul>
+    <h2>Start conversation</h2>
+    <form id="private-form" method="POST">
+        <input type="hidden" name="task" value="{{ .CreateTask }}">
+        <input type="text" id="participant-input" placeholder="username">
+        <button type="button" id="add-participant">Add</button>
+        <ul id="participants"></ul>
+        <input type="hidden" name="participants" id="participants-field">
+        <textarea name="body" id="message-field" placeholder="Message"></textarea>
+        <button type="submit">Create</button>
+    </form>
+    <script src="/private/private_forum.js"></script>
+    {{ template "tail" $ }}
+{{ end }}

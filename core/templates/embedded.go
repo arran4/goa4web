@@ -30,6 +30,8 @@ var (
 	notificationsJSData []byte
 	//go:embed "assets/role_grants_editor.js"
 	roleGrantsEditorJSData []byte
+	//go:embed "assets/private_forum.js"
+	privateForumJSData []byte
 )
 
 func init() {
@@ -89,3 +91,6 @@ func GetNotificationsJSData() []byte { return notificationsJSData }
 // GetRoleGrantsEditorJSData returns the JavaScript powering the
 // role grants drag-and-drop editor.
 func GetRoleGrantsEditorJSData() []byte { return roleGrantsEditorJSData }
+
+// GetPrivateForumJSData returns the JavaScript for private forum pages.
+func GetPrivateForumJSData() []byte { return privateForumJSData }

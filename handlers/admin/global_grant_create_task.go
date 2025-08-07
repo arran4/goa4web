@@ -14,7 +14,7 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-// GlobalGrantCreateTask creates a new grant that applies to everyone.
+// GlobalGrantCreateTask creates a new grant that applies to anyone.
 type GlobalGrantCreateTask struct{ tasks.TaskString }
 
 var globalGrantCreateTask = &GlobalGrantCreateTask{TaskString: TaskRoleGrantCreate}

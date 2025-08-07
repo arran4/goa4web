@@ -98,3 +98,49 @@ func TestGrantsPageLinks(t *testing.T) {
 		t.Fatalf("expected item link, got %s", html)
 	}
 }
+
+func TestGrantPageLinksAnyone(t *testing.T) {
+	tmpl := template.Must(template.New("").Funcs(template.FuncMap{
+		"csrfField": func() template.HTML { return "" },
+	}).ParseFS(grantTemplates, "site/admin/grantPage.gohtml"))
+	template.Must(tmpl.New("head").Parse(""))
+	template.Must(tmpl.New("tail").Parse(""))
+
+	g := &db.Grant{ID: 1}
+	data := struct{ Grant grantWithNames }{
+		Grant: grantWithNames{Grant: g, UserName: "Anyone"},
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, "grantPage.gohtml", data); err != nil {
+		t.Fatalf("execute template: %v", err)
+	}
+	html := buf.String()
+	if !strings.Contains(html, `<a href="/admin/grants/anyone">Anyone</a>`) {
+		t.Fatalf("expected anyone link, got %s", html)
+	}
+}
+
+func TestGrantsPageLinksAnyone(t *testing.T) {
+	tmpl := template.Must(template.New("").Funcs(template.FuncMap{
+		"csrfField": func() template.HTML { return "" },
+	}).ParseFS(grantTemplates, "site/admin/grantsPage.gohtml"))
+	template.Must(tmpl.New("head").Parse(""))
+	template.Must(tmpl.New("tail").Parse(""))
+
+	g := &db.Grant{ID: 1, Active: true}
+	data := struct{ Grants []grantWithNames }{
+		Grants: []grantWithNames{
+			{Grant: g, UserName: "Anyone"},
+		},
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, "grantsPage.gohtml", data); err != nil {
+		t.Fatalf("execute template: %v", err)
+	}
+	html := buf.String()
+	if !strings.Contains(html, `<a href="/admin/grants/anyone">Anyone</a>`) {
+		t.Fatalf("expected anyone link, got %s", html)
+	}
+}

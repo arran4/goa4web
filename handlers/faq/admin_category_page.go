@@ -18,7 +18,7 @@ import (
 // AdminCategoryPage displays information about a FAQ category including recent questions.
 func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		Category *db.GetFAQCategoryWithQuestionCountByIDRow
+		Category *db.AdminGetFAQCategoryWithQuestionCountByIDRow
 		Latest   []*db.Faq
 	}
 
@@ -32,7 +32,7 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := cd.Queries()
 
-	cat, err := queries.GetFAQCategoryWithQuestionCountByID(r.Context(), int32(id))
+	cat, err := queries.AdminGetFAQCategoryWithQuestionCountByID(r.Context(), int32(id))
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -44,7 +44,7 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	latest, err := queries.GetFAQQuestionsByCategory(r.Context(), int32(id))
+	latest, err := queries.AdminGetFAQQuestionsByCategory(r.Context(), int32(id))
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
@@ -62,7 +62,7 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 // AdminCategoryEditPage shows a form to rename or delete a FAQ category.
 func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		Category *db.GetFAQCategoryWithQuestionCountByIDRow
+		Category *db.AdminGetFAQCategoryWithQuestionCountByIDRow
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -74,7 +74,7 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := cd.Queries()
-	cat, err := queries.GetFAQCategoryWithQuestionCountByID(r.Context(), int32(id))
+	cat, err := queries.AdminGetFAQCategoryWithQuestionCountByID(r.Context(), int32(id))
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -94,7 +94,7 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 // AdminCategoryQuestionsPage lists questions for a FAQ category.
 func AdminCategoryQuestionsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		Category  *db.GetFAQCategoryWithQuestionCountByIDRow
+		Category  *db.AdminGetFAQCategoryWithQuestionCountByIDRow
 		Questions []*db.Faq
 	}
 
@@ -107,7 +107,7 @@ func AdminCategoryQuestionsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := cd.Queries()
-	cat, err := queries.GetFAQCategoryWithQuestionCountByID(r.Context(), int32(id))
+	cat, err := queries.AdminGetFAQCategoryWithQuestionCountByID(r.Context(), int32(id))
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -119,7 +119,7 @@ func AdminCategoryQuestionsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	questions, err := queries.GetFAQQuestionsByCategory(r.Context(), int32(id))
+	questions, err := queries.AdminGetFAQQuestionsByCategory(r.Context(), int32(id))
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return

@@ -1,7 +1,6 @@
 package faq
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -9,7 +8,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 )
@@ -30,14 +28,8 @@ func (RenameCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil {
 		return fmt.Errorf("cid parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	if err := queries.AdminRenameFAQCategory(r.Context(), db.AdminRenameFAQCategoryParams{
-		Name: sql.NullString{
-			String: text,
-			Valid:  true,
-		},
-		Idfaqcategories: int32(cid),
-	}); err != nil {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if err := cd.RenameFAQCategory(int32(cid), text); err != nil {
 		return fmt.Errorf("rename faq category fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 

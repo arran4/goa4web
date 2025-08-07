@@ -74,7 +74,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		Request:     r,
 		Comments:    comments,
-		IsReplyable: canComment && editCommentId == 0,
+		IsReplyable: editCommentId == 0,
 	}
 
 	data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {

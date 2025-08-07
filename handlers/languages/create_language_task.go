@@ -1,7 +1,6 @@
 package languages
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 
@@ -30,22 +29,17 @@ func (CreateLanguageTask) Action(w http.ResponseWriter, r *http.Request) any {
 			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		})
 	}
-	queries := cd.Queries()
 	cname := r.PostFormValue("cname")
-	res, err := queries.AdminInsertLanguage(r.Context(), sql.NullString{String: cname, Valid: true})
+	id, err := cd.CreateLanguage("", cname)
 	if err != nil {
 		return fmt.Errorf("create language fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	if id, err := res.LastInsertId(); err == nil {
-		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-			if evt := cd.Event(); evt != nil {
-				if evt.Data == nil {
-					evt.Data = map[string]any{}
-				}
-				evt.Data["LanguageID"] = id
-				evt.Data["LanguageName"] = cname
-			}
+	if evt := cd.Event(); evt != nil {
+		if evt.Data == nil {
+			evt.Data = map[string]any{}
 		}
+		evt.Data["LanguageID"] = id
+		evt.Data["LanguageName"] = cname
 	}
 	return nil
 }

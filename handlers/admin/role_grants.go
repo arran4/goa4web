@@ -45,7 +45,7 @@ var GrantActionMap = map[string]GrantDefinition{
 	"faq|question":        {Actions: []string{"see", "view", "post", "edit"}},
 	"faq|question/answer": {Actions: []string{"see"}},
 	"search|":             {Actions: []string{"search"}},
-	"privateforum|topic":  {Actions: []string{"see", "view", "reply", "post", "edit", "create"}, RequireItemID: true},
+	"privateforum|topic":  {Actions: []string{"see", "view", "reply", "post", "edit", "create"}},
 }
 
 // GrantAction represents a single grant action and whether it's unsupported.

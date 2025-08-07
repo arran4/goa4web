@@ -4,11 +4,12 @@ import (
 	"archive/zip"
 	"encoding/json"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
@@ -31,6 +32,7 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO evaluate why we are creating a new entity
 	cd := common.NewCoreData(r.Context(), queries, config.NewRuntimeConfig())
 	cd.UserID = int32(uid)
 

@@ -10,7 +10,7 @@
                 {{ $description := .Description.String }}
                 {{ $id := .Idwritingcategory }}
                 <tr>
-                    <th><a href="/writings/category/{{ $id }}">{{ $title }}</a>{{ if and cd.HasAdminRole cd.AdminMode }} [<a href="/admin/writings/categories/category/{{ $id }}">Admin</a>]{{ end }}</th>
+                    <th><a href="/writings/category/{{ $id }}">{{ $title }}</a>{{ if and cd.HasAdminRole cd.AdminMode }} [<a href="/admin/writings/categories/category/{{ $id }}">ADMIN</a>]{{ end }}</th>
                     <td>{{ $description }}</td>
                 </tr>
             {{ end }}

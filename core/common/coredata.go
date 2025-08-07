@@ -75,15 +75,6 @@ type NavigationProvider interface {
 
 // No package-level pagination constants as runtime config provides these values.
 
-// NewsPost describes a news entry with access metadata.
-type NewsPost struct {
-	*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
-	ShowReply    bool
-	ShowEdit     bool
-	Editing      bool
-	Announcement *db.SiteAnnouncement
-}
-
 type CoreData struct {
 	a4codeMapper func(tag, val string) string
 	// AdminMode indicates whether admin-only UI elements should be displayed.
@@ -169,7 +160,7 @@ type CoreData struct {
 	imageBoards              lazy.Value[[]*db.Imageboard]
 	imagePostRows            map[int32]*lazy.Value[*db.GetImagePostByIDForListerRow]
 	langs                    lazy.Value[[]*db.Language]
-	latestNews               lazy.Value[[]*NewsPost]
+	latestNews               lazy.Value[[]*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow]
 	latestWritings           lazy.Value[[]*db.Writing]
 	linkerCategories         lazy.Value[[]*db.GetLinkerCategoryLinkCountsRow]
 	linkerCategoryLinks      map[int32]*lazy.Value[[]*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow]
@@ -360,29 +351,6 @@ func (cd *CoreData) Announcement() *db.GetActiveAnnouncementWithNewsForListerRow
 	return ann
 }
 
-// AnnouncementForNews fetches the latest announcement for the given news post
-// only once.
-func (cd *CoreData) AnnouncementForNews(id int32) (*db.SiteAnnouncement, error) {
-	if cd.newsAnnouncements == nil {
-		cd.newsAnnouncements = map[int32]*lazy.Value[*db.SiteAnnouncement]{}
-	}
-	lv, ok := cd.newsAnnouncements[id]
-	if !ok {
-		lv = &lazy.Value[*db.SiteAnnouncement]{}
-		cd.newsAnnouncements[id] = lv
-	}
-	return lv.Load(func() (*db.SiteAnnouncement, error) {
-		if cd.queries == nil {
-			return nil, nil
-		}
-		ann, err := cd.queries.GetLatestAnnouncementByNewsID(cd.ctx, id)
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-		return ann, err
-	})
-}
-
 // AnnouncementLoaded returns the cached active announcement without querying the database.
 func (cd *CoreData) AnnouncementLoaded() *db.GetActiveAnnouncementWithNewsForListerRow {
 	ann, ok := cd.announcement.Peek()
@@ -522,9 +490,30 @@ func (cd *CoreData) Bookmarks() (*db.GetBookmarksForUserRow, error) {
 	})
 }
 
-// CanEditAny reports whether cd is in admin mode with administrator role.
-func (cd *CoreData) CanEditAny() bool {
-	return cd.HasRole("administrator") && cd.AdminMode
+// IsAdmin reports whether the current user has the administrator role.
+func (cd *CoreData) IsAdmin() bool {
+	return cd.HasRole("administrator")
+}
+
+// IsAdminMode reports whether admin-only UI elements should be displayed.
+func (cd *CoreData) IsAdminMode() bool { return cd.AdminMode }
+
+// CanEditBlog reports whether the current user may edit the specified blog
+// entry via the public interface.
+func (cd *CoreData) CanEditBlog(entryID, ownerID int32) bool {
+	return ownerID == cd.UserID && cd.HasGrant("blogs", "entry", "edit", entryID)
+}
+
+// ShowReplyNews reports whether replies are permitted on the specified news
+// post.
+func (cd *CoreData) ShowReplyNews(id int32) bool {
+	return cd.HasGrant("news", "post", "reply", id)
+}
+
+// ShowEditNews reports whether the current user may edit the supplied news
+// post via the public interface.
+func (cd *CoreData) ShowEditNews(id, ownerID int32) bool {
+	return ownerID == cd.UserID && cd.HasGrant("news", "post", "edit", id)
 }
 
 // CommentByID returns a forum comment lazily loading it once per ID.
@@ -1053,7 +1042,7 @@ func (cd *CoreData) ExternalLink(url string) *db.ExternalLink {
 }
 
 // fetchLatestNews loads news posts from the database with permission data.
-func (cd *CoreData) fetchLatestNews(offset, limit int32, replyID int) ([]*NewsPost, error) {
+func (cd *CoreData) fetchLatestNews(offset, limit int32) ([]*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
 	if cd.queries == nil {
 		return nil, nil
 	}
@@ -1066,25 +1055,12 @@ func (cd *CoreData) fetchLatestNews(offset, limit int32, replyID int) ([]*NewsPo
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, err
 	}
-	var posts []*NewsPost
+	var posts []*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
 	for _, row := range rows {
 		if !cd.HasGrant("news", "post", "see", row.Idsitenews) {
 			continue
 		}
-		ann, err := cd.queries.GetLatestAnnouncementByNewsID(cd.ctx, row.Idsitenews)
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return nil, err
-		}
-		if !cd.HasGrant("news", "post", "see", row.Idsitenews) {
-			continue
-		}
-		posts = append(posts, &NewsPost{
-			GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow: row,
-			ShowReply:    cd.HasGrant("news", "post", "reply", row.Idsitenews),
-			ShowEdit:     cd.HasGrant("news", "post", "edit", row.Idsitenews) && (cd.AdminMode || cd.UserID != 0),
-			Editing:      replyID == int(row.Idsitenews),
-			Announcement: ann,
-		})
+		posts = append(posts, row)
 	}
 	return posts, nil
 }
@@ -1293,17 +1269,16 @@ func (cd *CoreData) Languages() ([]*db.Language, error) {
 }
 
 // LatestNews returns recent news posts with permission data.
-func (cd *CoreData) LatestNews(r *http.Request) ([]*NewsPost, error) {
+func (cd *CoreData) LatestNews(r *http.Request) ([]*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	replyID, _ := strconv.Atoi(r.URL.Query().Get("reply"))
-	return cd.latestNews.Load(func() ([]*NewsPost, error) {
-		return cd.fetchLatestNews(int32(offset), int32(cd.PageSize()), replyID)
+	return cd.latestNews.Load(func() ([]*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
+		return cd.fetchLatestNews(int32(offset), int32(cd.PageSize()))
 	})
 }
 
 // LatestNewsList returns recent news posts without needing an HTTP request.
-func (cd *CoreData) LatestNewsList(offset, limit int32) ([]*NewsPost, error) {
-	return cd.fetchLatestNews(offset, limit, 0)
+func (cd *CoreData) LatestNewsList(offset, limit int32) ([]*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
+	return cd.fetchLatestNews(offset, limit)
 }
 
 func (cd *CoreData) LatestWritings(opts ...LatestWritingsOption) ([]*db.Writing, error) {
@@ -1441,10 +1416,10 @@ func (cd *CoreData) Marked(key string) bool {
 	return !marked
 }
 
-// NewsAnnouncement returns the latest announcement for the given news post. The
-// result is cached so repeated lookups for the same id hit the database only
-// once.
-func (cd *CoreData) NewsAnnouncement(id int32) (*db.SiteAnnouncement, error) {
+// newsAnnouncement returns the latest announcement for the given news post.
+// The result is cached so repeated lookups for the same id hit the database
+// only once.
+func (cd *CoreData) newsAnnouncement(id int32) (*db.SiteAnnouncement, error) {
 	cd.annMu.Lock()
 	lv, ok := cd.newsAnnouncements[id]
 	if !ok {
@@ -1466,6 +1441,21 @@ func (cd *CoreData) NewsAnnouncement(id int32) (*db.SiteAnnouncement, error) {
 		}
 		return ann, nil
 	})
+}
+
+// NewsAnnouncement returns the latest announcement for the given news post.
+// Errors are logged and result nil.
+func (cd *CoreData) NewsAnnouncement(id int32) *db.SiteAnnouncement {
+	ann, err := cd.newsAnnouncement(id)
+	if err != nil {
+		log.Printf("news announcement %d: %v", id, err)
+	}
+	return ann
+}
+
+// NewsAnnouncementWithErr is like NewsAnnouncement but returns any load error.
+func (cd *CoreData) NewsAnnouncementWithErr(id int32) (*db.SiteAnnouncement, error) {
+	return cd.newsAnnouncement(id)
 }
 
 // NewsPostByID returns the news post lazily loading it once per ID.
@@ -1836,9 +1826,10 @@ func (cd *CoreData) SelectedThreadCanReply() bool {
 }
 
 // CanEditComment reports whether the current user may edit the supplied
-// comment. It allows administrators or the original author to make changes.
+// comment. Only the original author can edit comments via the public
+// interface; administrative edits must occur through the admin portal.
 func (cd *CoreData) CanEditComment(cmt *db.GetCommentsByThreadIdForUserRow) bool {
-	return cd.CanEditAny() || (cmt != nil && cmt.IsOwner)
+	return cmt != nil && cmt.IsOwner && cd.HasGrant(cd.currentSection, "comment", "edit", cmt.Idcomments)
 }
 
 // CommentEditing returns true if the given comment is currently being edited.
@@ -1896,9 +1887,9 @@ func (cd *CoreData) CommentEditSaveURL(cmt *db.GetCommentsByThreadIdForUserRow) 
 }
 
 // CommentAdminURL returns the administration page URL for the comment if the
-// current user has the administrator role.
+// current user is an administrator in admin mode.
 func (cd *CoreData) CommentAdminURL(cmt *db.GetCommentsByThreadIdForUserRow) string {
-	if cd.HasRole("administrator") {
+	if cd.IsAdmin() && cd.IsAdminMode() {
 		return fmt.Sprintf("/admin/comment/%d", cmt.Idcomments)
 	}
 	return ""

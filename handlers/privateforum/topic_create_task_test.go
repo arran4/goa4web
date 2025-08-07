@@ -24,6 +24,9 @@ func TestPrivateTopicCreateTask_GrantsBeforeComment(t *testing.T) {
 
 	q := db.New(conn)
 
+	mock.ExpectQuery("SELECT 1 FROM grants").
+		WithArgs(int64(1), "forum", "category", "post", int64(0), int64(1)).
+		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 	mock.ExpectExec("INSERT INTO forumtopic").WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectExec("UPDATE forumtopic SET handler").WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectExec("INSERT INTO forumthread").WillReturnResult(sqlmock.NewResult(2, 1))

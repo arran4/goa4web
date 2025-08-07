@@ -78,7 +78,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
-		return cd.CanEditAny() || cmt.IsOwner
+		return cmt.IsOwner
 	}
 	data.EditURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
 		if !data.CanEditComment(cmt) {
@@ -96,14 +96,14 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		return data.CanEditComment(cmt) && editCommentId != 0 && int32(editCommentId) == cmt.Idcomments
 	}
 	data.AdminURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
-		if cd.HasRole("administrator") {
+		if cd.IsAdmin() && cd.IsAdminMode() {
 			return fmt.Sprintf("/admin/comment/%d", cmt.Idcomments)
 		}
 		return ""
 	}
 
 	data.IsAuthor = writing.UsersIdusers == cd.UserID
-	data.CanEdit = (cd.HasAdminRole() && cd.AdminMode) || (cd.HasContentWriterRole() && data.IsAuthor)
+	data.CanEdit = cd.HasContentWriterRole() && data.IsAuthor
 
 	if c, err := cd.CurrentComment(r); err == nil && c != nil {
 		data.IsReplyable = false

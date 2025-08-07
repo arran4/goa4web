@@ -20,7 +20,7 @@ import (
 
 func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		Post           *common.NewsPost
+		Post           *db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
 		Thread         *db.GetThreadLastPosterAndPermsRow
 		Comments       []*db.GetCommentsByThreadIdForUserRow
 		ReplyText      string
@@ -53,7 +53,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, err)
 		return
 	}
-	var post *common.NewsPost
+	var post *db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
 	for _, p := range posts {
 		if p.Idsitenews == int32(pid) {
 			post = p
@@ -73,7 +73,6 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	editingId, _ := strconv.Atoi(r.URL.Query().Get("edit"))
 	replyType := r.URL.Query().Get("type")
 
 	cd.SetCurrentThreadAndTopic(post.ForumthreadID, 0)
@@ -103,11 +102,10 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Comments = commentRows
 	data.Thread = threadRow
-	post.Editing = editingId == int(post.Idsitenews)
 	data.Post = post
 
 	data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
-		return cd.CanEditAny() || cmt.IsOwner
+		return cmt.IsOwner
 	}
 	data.EditURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
 		if !data.CanEditComment(cmt) {
@@ -125,7 +123,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		return data.CanEditComment(cmt) && editCommentId != 0 && int32(editCommentId) == cmt.Idcomments
 	}
 	data.AdminURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
-		if cd.HasRole("administrator") {
+		if cd.IsAdmin() && cd.IsAdminMode() {
 			return fmt.Sprintf("/admin/comment/%d", cmt.Idcomments)
 		}
 		return ""

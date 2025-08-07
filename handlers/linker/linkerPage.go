@@ -63,25 +63,7 @@ func CustomLinkerIndex(data *common.CoreData, r *http.Request) {
 		data.AtomFeedURL = "/linker/atom"
 	}
 
-	userHasAdmin := data.HasRole("administrator") && data.AdminMode
-	if userHasAdmin {
-		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-			Name: "User Roles",
-			Link: "/admin/linker/users/roles",
-		})
-		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-			Name: "Category Controls",
-			Link: "/admin/linker/categories",
-		})
-		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-			Name: "Approve links",
-			Link: "/admin/linker/queue",
-		})
-		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-			Name: "Add link",
-			Link: "/admin/linker/add",
-		})
-	}
+	// Administrative actions moved to the admin portal.
 	// Pagination links now provided via CoreData
 
 }

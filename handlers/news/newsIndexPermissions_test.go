@@ -16,8 +16,8 @@ func TestCustomNewsIndexRoles(t *testing.T) {
 	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
 	cd.AdminMode = true
 	CustomNewsIndex(cd, req)
-	if !common.ContainsItem(cd.CustomIndexItems, "User Roles") {
-		t.Errorf("admin should see user roles")
+	if common.ContainsItem(cd.CustomIndexItems, "User Roles") {
+		t.Errorf("admin should not see user roles")
 	}
 	if !common.ContainsItem(cd.CustomIndexItems, "Add News") {
 		t.Errorf("admin should see add news")

@@ -20,14 +20,9 @@ import (
 )
 
 func BlogPage(w http.ResponseWriter, r *http.Request) {
-	type BlogRow struct {
-		*db.GetBlogEntryForListerByIDRow
-		EditUrl string
-	}
 	type Data struct {
-		Blog    *BlogRow
-		Text    string
-		EditUrl string
+		Blog *db.GetBlogEntryForListerByIDRow
+		Text string
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -37,7 +32,7 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 	blogID, _ := strconv.Atoi(vars["blog"])
 
 	queries := cd.Queries()
-	data := Data{EditUrl: fmt.Sprintf("/blogs/blog/%d/edit", blogID)}
+	data := Data{}
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
@@ -77,12 +72,7 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	editUrl := ""
-	if uid == blog.UsersIdusers {
-		editUrl = fmt.Sprintf("/blogs/blog/%d/edit", blog.Idblogs)
-	}
-
-	data.Blog = &BlogRow{GetBlogEntryForListerByIDRow: blog, EditUrl: editUrl}
+	data.Blog = blog
 
 	if blog.ForumthreadID.Valid {
 		cd.SetCurrentThreadAndTopic(blog.ForumthreadID.Int32, 0)

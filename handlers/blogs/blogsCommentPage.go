@@ -20,21 +20,9 @@ import (
 )
 
 func CommentPage(w http.ResponseWriter, r *http.Request) {
-	type BlogRow struct {
-		*db.GetBlogEntryForListerByIDRow
-		EditUrl string
-	}
 	type Data struct {
-		Blog           *BlogRow
-		Comments       []*db.GetCommentsByThreadIdForUserRow
-		IsReplyable    bool
-		Text           string
-		EditUrl        string
-		CanEditComment func(*db.GetCommentsByThreadIdForUserRow) bool
-		EditURL        func(*db.GetCommentsByThreadIdForUserRow) string
-		EditSaveURL    func(*db.GetCommentsByThreadIdForUserRow) string
-		Editing        func(*db.GetCommentsByThreadIdForUserRow) bool
-		AdminURL       func(*db.GetCommentsByThreadIdForUserRow) string
+		Blog *db.GetBlogEntryForListerByIDRow
+		Text string
 	}
 
 	vars := mux.Vars(r)
@@ -44,10 +32,7 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 	cd.LoadSelectionsFromRequest(r)
 	queries := cd.Queries()
 
-	data := Data{
-		IsReplyable: true,
-		EditUrl:     fmt.Sprintf("/blogs/blog/%d/edit", blogId),
-	}
+	data := Data{}
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
@@ -64,6 +49,9 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 		cd.PageTitle = fmt.Sprintf("Blog %d Comments", blog.Idblogs)
 		if blog.ForumthreadID.Valid {
 			cd.SetCurrentThreadAndTopic(blog.ForumthreadID.Int32, 0)
+			if _, err := cd.SelectedThread(); err != nil && err != sql.ErrNoRows {
+				log.Printf("GetThreadLastPosterAndPerms: %v", err)
+			}
 		}
 	}
 	if err != nil {
@@ -86,87 +74,27 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
-	canComment := cd.HasGrant("blogs", "entry", "comment", blog.Idblogs)
 
-	data.IsReplyable = canComment
+	data.Blog = blog
 
-	editUrl := ""
-	if uid == blog.UsersIdusers {
-		editUrl = fmt.Sprintf("/blogs/blog/%d/edit", blog.Idblogs)
-	}
-
-	data.Blog = &BlogRow{
-		GetBlogEntryForListerByIDRow: blog,
-		EditUrl:                      editUrl,
-	}
-
-	threadRow, err := cd.SelectedThread()
-	if err != nil {
-		if err != sql.ErrNoRows {
-			log.Printf("GetThreadLastPosterAndPerms: %v", err)
-		}
-		data.IsReplyable = false
-	} else if threadRow != nil && threadRow.Locked.Valid && threadRow.Locked.Bool {
-		data.IsReplyable = false
+	if blog.ForumthreadID.Valid {
+		cd.SetCurrentThreadAndTopic(blog.ForumthreadID.Int32, 0)
 	}
 
 	replyType := r.URL.Query().Get("type")
 	commentId, _ := strconv.Atoi(r.URL.Query().Get("comment"))
-	if blog.ForumthreadID.Valid {
-		cd.SetCurrentThreadAndTopic(blog.ForumthreadID.Int32, 0)
-		rows, err := cd.SectionThreadComments("blogs", "entry", blog.ForumthreadID.Int32)
-		if err != nil {
-			switch {
-			case errors.Is(err, sql.ErrNoRows):
+	if commentId != 0 {
+		comment, err := queries.GetCommentByIdForUser(r.Context(), db.GetCommentByIdForUserParams{
+			ViewerID: uid,
+			ID:       int32(commentId),
+			UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
+		})
+		if err == nil {
+			switch replyType {
+			case "full":
+				data.Text = a4code.FullQuoteOf(comment.Username.String, comment.Text.String)
 			default:
-				log.Printf("thread comments: %s", err)
-				handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
-				return
-			}
-		}
-		data.Comments = rows
-
-		data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
-			return cd.CanEditAny() || cmt.IsOwner
-		}
-		data.EditURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
-			if !data.CanEditComment(cmt) {
-				return ""
-			}
-			return fmt.Sprintf("/blogs/blog/%d/comments?comment=%d#edit", blog.Idblogs, cmt.Idcomments)
-		}
-		data.EditSaveURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
-			if !data.CanEditComment(cmt) {
-				return ""
-			}
-			return fmt.Sprintf("/blogs/blog/%d/comment/%d", blog.Idblogs, cmt.Idcomments)
-		}
-		data.Editing = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
-			return data.CanEditComment(cmt) && commentId != 0 && int32(commentId) == cmt.Idcomments
-		}
-		data.AdminURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
-			if cd.HasRole("administrator") {
-				return fmt.Sprintf("/admin/comment/%d", cmt.Idcomments)
-			}
-			return ""
-		}
-		if commentId != 0 {
-			data.IsReplyable = false
-		}
-
-		if commentId != 0 {
-			comment, err := queries.GetCommentByIdForUser(r.Context(), db.GetCommentByIdForUserParams{
-				ViewerID: uid,
-				ID:       int32(commentId),
-				UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
-			})
-			if err == nil {
-				switch replyType {
-				case "full":
-					data.Text = a4code.FullQuoteOf(comment.Username.String, comment.Text.String)
-				default:
-					data.Text = a4code.QuoteOfText(comment.Username.String, comment.Text.String)
-				}
+				data.Text = a4code.QuoteOfText(comment.Username.String, comment.Text.String)
 			}
 		}
 	}

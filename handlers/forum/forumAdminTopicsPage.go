@@ -117,6 +117,8 @@ func AdminTopicCreatePage(w http.ResponseWriter, r *http.Request) {
 		LanguageID:      int32(languageID),
 		Title:           sql.NullString{String: name, Valid: true},
 		Description:     sql.NullString{String: desc, Valid: true},
+		Handler:         "",
+		Section:         "forum",
 		GrantCategoryID: sql.NullInt32{Int32: int32(pcid), Valid: true},
 		GranteeID:       sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})

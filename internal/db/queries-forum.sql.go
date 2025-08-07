@@ -276,11 +276,11 @@ func (q *Queries) AdminUpdateForumTopic(ctx context.Context, arg AdminUpdateForu
 }
 
 const createForumTopicForPoster = `-- name: CreateForumTopicForPoster :execlastid
-INSERT INTO forumtopic (forumcategory_idforumcategory, language_idlanguage, title, description)
-SELECT ?, ?, ?, ?
+INSERT INTO forumtopic (forumcategory_idforumcategory, language_idlanguage, title, description, handler)
+SELECT ?, ?, ?, ?, ?
 WHERE EXISTS (
     SELECT 1 FROM grants g
-    WHERE g.section='forum'
+    WHERE g.section=?
       AND (g.item='category' OR g.item IS NULL)
       AND g.action='post'
       AND g.active=1
@@ -297,6 +297,8 @@ type CreateForumTopicForPosterParams struct {
 	LanguageID      int32
 	Title           sql.NullString
 	Description     sql.NullString
+	Handler         string
+	Section         string
 	GrantCategoryID sql.NullInt32
 	GranteeID       sql.NullInt32
 	PosterID        int32
@@ -308,6 +310,8 @@ func (q *Queries) CreateForumTopicForPoster(ctx context.Context, arg CreateForum
 		arg.LanguageID,
 		arg.Title,
 		arg.Description,
+		arg.Handler,
+		arg.Section,
 		arg.GrantCategoryID,
 		arg.GranteeID,
 		arg.PosterID,
@@ -1172,7 +1176,7 @@ func (q *Queries) ListPrivateTopicsByUserID(ctx context.Context, userID sql.Null
 }
 
 const systemCreateForumTopic = `-- name: SystemCreateForumTopic :execlastid
-INSERT INTO forumtopic (forumcategory_idforumcategory, language_idlanguage, title, description) VALUES (?, ?, ?, ?)
+INSERT INTO forumtopic (forumcategory_idforumcategory, language_idlanguage, title, description, handler) VALUES (?, ?, ?, ?, ?)
 `
 
 type SystemCreateForumTopicParams struct {
@@ -1180,6 +1184,7 @@ type SystemCreateForumTopicParams struct {
 	LanguageIdlanguage           int32
 	Title                        sql.NullString
 	Description                  sql.NullString
+	Handler                      string
 }
 
 func (q *Queries) SystemCreateForumTopic(ctx context.Context, arg SystemCreateForumTopicParams) (int64, error) {
@@ -1188,6 +1193,7 @@ func (q *Queries) SystemCreateForumTopic(ctx context.Context, arg SystemCreateFo
 		arg.LanguageIdlanguage,
 		arg.Title,
 		arg.Description,
+		arg.Handler,
 	)
 	if err != nil {
 		return 0, err

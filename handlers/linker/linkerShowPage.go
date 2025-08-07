@@ -125,6 +125,7 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 				String: LinkerTopicName,
 				Valid:  true,
 			},
+			Handler: "linker",
 		})
 		if err != nil {
 			log.Printf("Error: createForumTopic: %s", err)

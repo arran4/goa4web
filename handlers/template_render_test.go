@@ -2,6 +2,7 @@ package handlers_test
 
 import (
 	"bytes"
+	"database/sql"
 	"github.com/arran4/goa4web/handlers/forum"
 	"net/http"
 	"net/http/httptest"
@@ -90,7 +91,15 @@ func TestPageTemplatesRender(t *testing.T) {
 			*common.CoreData
 			Stats struct{ Words, Comments, News, Blogs, Linker, Writing, Writings, Images int64 }
 		}{&common.CoreData{}, struct{ Words, Comments, News, Blogs, Linker, Writing, Writings, Images int64 }{}}},
-		{"blogsAdminPage", struct{  }{}},
+		{"blogsAdminPage", struct {
+			*common.CoreData
+			Rows []struct {
+				Username sql.NullString
+				Email    string
+				Roles    sql.NullString
+				Idusers  int32
+			}
+		}{&common.CoreData{}, nil}},
 		{"adminPage", struct {
 			*common.CoreData
 			AdminSections []common.AdminSection

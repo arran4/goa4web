@@ -169,6 +169,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 				String: WritingTopicDescription,
 				Valid:  true,
 			},
+			Handler: "writing",
 		})
 		if err != nil {
 			log.Printf("Error: createForumTopic: %s", err)

@@ -142,6 +142,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 				String: NewsTopicDescription,
 				Valid:  true,
 			},
+			Handler: "news",
 		})
 		if err != nil {
 			log.Printf("Error: createForumTopic: %s", err)

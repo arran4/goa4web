@@ -28,7 +28,6 @@ func TestPrivateTopicCreateTask_GrantsBeforeComment(t *testing.T) {
 		WithArgs(int64(1), "privateforum", "topic", "create", nil, int64(1)).
 		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 	mock.ExpectExec("INSERT INTO forumtopic").WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectExec("UPDATE forumtopic SET handler").WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectExec("INSERT INTO forumthread").WillReturnResult(sqlmock.NewResult(2, 1))
 	mock.ExpectExec("INSERT INTO grants").WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectExec("INSERT INTO grants").WillReturnResult(sqlmock.NewResult(0, 1))

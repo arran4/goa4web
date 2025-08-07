@@ -71,3 +71,12 @@ func GetRoleGrantsEditorJSData() []byte {
 	}
 	return b
 }
+
+// GetPrivateForumJSData returns the JavaScript for private forum pages.
+func GetPrivateForumJSData() []byte {
+	b, err := os.ReadFile("core/templates/assets/private_forum.js")
+	if err != nil {
+		panic(err)
+	}
+	return b
+}

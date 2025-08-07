@@ -154,7 +154,7 @@ func (q *Queries) AdminListForumCategoriesWithCounts(ctx context.Context, arg Ad
 }
 
 const adminListForumTopics = `-- name: AdminListForumTopics :many
-SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.language_idlanguage, t.title, t.description, t.threads, t.comments, t.lastaddition
+SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.language_idlanguage, t.title, t.description, t.threads, t.comments, t.lastaddition, t.handler
 FROM forumtopic t
 ORDER BY t.idforumtopic
 LIMIT ? OFFSET ?
@@ -184,6 +184,7 @@ func (q *Queries) AdminListForumTopics(ctx context.Context, arg AdminListForumTo
 			&i.Threads,
 			&i.Comments,
 			&i.Lastaddition,
+			&i.Handler,
 		); err != nil {
 			return nil, err
 		}
@@ -441,7 +442,7 @@ func (q *Queries) GetAllForumThreadsWithTopic(ctx context.Context) ([]*GetAllFor
 }
 
 const getAllForumTopics = `-- name: GetAllForumTopics :many
-SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.language_idlanguage, t.title, t.description, t.threads, t.comments, t.lastaddition
+SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.language_idlanguage, t.title, t.description, t.threads, t.comments, t.lastaddition, t.handler
 FROM forumtopic t
 WHERE (
     t.language_idlanguage = 0
@@ -481,6 +482,7 @@ func (q *Queries) GetAllForumTopics(ctx context.Context, arg GetAllForumTopicsPa
 			&i.Threads,
 			&i.Comments,
 			&i.Lastaddition,
+			&i.Handler,
 		); err != nil {
 			return nil, err
 		}
@@ -499,7 +501,7 @@ const getAllForumTopicsByCategoryIdForUserWithLastPosterName = `-- name: GetAllF
 WITH role_ids AS (
     SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.language_idlanguage, t.title, t.description, t.threads, t.comments, t.lastaddition, lu.username AS LastPosterUsername
+SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.language_idlanguage, t.title, t.description, t.threads, t.comments, t.lastaddition, t.handler, lu.username AS LastPosterUsername
 FROM forumtopic t
 LEFT JOIN users lu ON lu.idusers = t.lastposter
 WHERE t.forumcategory_idforumcategory = ?
@@ -521,7 +523,7 @@ WHERE t.forumcategory_idforumcategory = ?
       AND (g.item='topic' OR g.item IS NULL)
       AND g.action='see'
       AND g.active=1
-      AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
+      AND ((t.handler = 'private' AND g.item_id = t.idforumtopic) OR (t.handler <> 'private' AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)))
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -544,6 +546,7 @@ type GetAllForumTopicsByCategoryIdForUserWithLastPosterNameRow struct {
 	Threads                      sql.NullInt32
 	Comments                     sql.NullInt32
 	Lastaddition                 sql.NullTime
+	Handler                      string
 	Lastposterusername           sql.NullString
 }
 
@@ -572,95 +575,7 @@ func (q *Queries) GetAllForumTopicsByCategoryIdForUserWithLastPosterName(ctx con
 			&i.Threads,
 			&i.Comments,
 			&i.Lastaddition,
-			&i.Lastposterusername,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getAllForumTopicsForUser = `-- name: GetAllForumTopicsForUser :many
-WITH role_ids AS (
-    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
-)
-SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.language_idlanguage, t.title, t.description, t.threads, t.comments, t.lastaddition, lu.username AS LastPosterUsername
-FROM forumtopic t
-LEFT JOIN users lu ON lu.idusers = t.lastposter
-WHERE (
-    t.language_idlanguage = 0
-    OR t.language_idlanguage IS NULL
-    OR EXISTS (
-        SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = ?
-          AND ul.language_idlanguage = t.language_idlanguage
-    )
-    OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
-    )
-)
-  AND EXISTS (
-    SELECT 1 FROM grants g
-    WHERE g.section='forum'
-      AND (g.item='topic' OR g.item IS NULL)
-      AND g.action='see'
-      AND g.active=1
-      AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
-      AND (g.user_id = ? OR g.user_id IS NULL)
-      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
-  )
-ORDER BY t.lastaddition DESC
-`
-
-type GetAllForumTopicsForUserParams struct {
-	ViewerID      int32
-	ViewerMatchID sql.NullInt32
-}
-
-type GetAllForumTopicsForUserRow struct {
-	Idforumtopic                 int32
-	Lastposter                   int32
-	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
-	Title                        sql.NullString
-	Description                  sql.NullString
-	Threads                      sql.NullInt32
-	Comments                     sql.NullInt32
-	Lastaddition                 sql.NullTime
-	Lastposterusername           sql.NullString
-}
-
-func (q *Queries) GetAllForumTopicsForUser(ctx context.Context, arg GetAllForumTopicsForUserParams) ([]*GetAllForumTopicsForUserRow, error) {
-	rows, err := q.db.QueryContext(ctx, getAllForumTopicsForUser,
-		arg.ViewerID,
-		arg.ViewerID,
-		arg.ViewerID,
-		arg.ViewerMatchID,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*GetAllForumTopicsForUserRow
-	for rows.Next() {
-		var i GetAllForumTopicsForUserRow
-		if err := rows.Scan(
-			&i.Idforumtopic,
-			&i.Lastposter,
-			&i.ForumcategoryIdforumcategory,
-			&i.LanguageIdlanguage,
-			&i.Title,
-			&i.Description,
-			&i.Threads,
-			&i.Comments,
-			&i.Lastaddition,
+			&i.Handler,
 			&i.Lastposterusername,
 		); err != nil {
 			return nil, err
@@ -728,7 +643,7 @@ WHERE th.forumtopic_idforumtopic=?
       AND (g.item='topic' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
-      AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
+      AND ((t.handler = 'private' AND g.item_id = t.idforumtopic) OR (t.handler <> 'private' AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)))
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -793,7 +708,7 @@ func (q *Queries) GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndF
 }
 
 const getForumTopicById = `-- name: GetForumTopicById :one
-SELECT idforumtopic, lastposter, forumcategory_idforumcategory, language_idlanguage, title, description, threads, comments, lastaddition
+SELECT idforumtopic, lastposter, forumcategory_idforumcategory, language_idlanguage, title, description, threads, comments, lastaddition, handler
 FROM forumtopic
 WHERE idforumtopic = ?
 `
@@ -811,6 +726,7 @@ func (q *Queries) GetForumTopicById(ctx context.Context, idforumtopic int32) (*F
 		&i.Threads,
 		&i.Comments,
 		&i.Lastaddition,
+		&i.Handler,
 	)
 	return &i, err
 }
@@ -819,7 +735,7 @@ const getForumTopicByIdForUser = `-- name: GetForumTopicByIdForUser :one
 WITH role_ids AS (
     SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.language_idlanguage, t.title, t.description, t.threads, t.comments, t.lastaddition, lu.username AS LastPosterUsername
+SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.language_idlanguage, t.title, t.description, t.threads, t.comments, t.lastaddition, t.handler, lu.username AS LastPosterUsername
 FROM forumtopic t
 LEFT JOIN users lu ON lu.idusers = t.lastposter
 WHERE t.idforumtopic = ?
@@ -841,7 +757,7 @@ WHERE t.idforumtopic = ?
       AND (g.item='topic' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
-      AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
+      AND ((t.handler = 'private' AND g.item_id = t.idforumtopic) OR (t.handler <> 'private' AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)))
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -864,6 +780,7 @@ type GetForumTopicByIdForUserRow struct {
 	Threads                      sql.NullInt32
 	Comments                     sql.NullInt32
 	Lastaddition                 sql.NullTime
+	Handler                      string
 	Lastposterusername           sql.NullString
 }
 
@@ -886,13 +803,14 @@ func (q *Queries) GetForumTopicByIdForUser(ctx context.Context, arg GetForumTopi
 		&i.Threads,
 		&i.Comments,
 		&i.Lastaddition,
+		&i.Handler,
 		&i.Lastposterusername,
 	)
 	return &i, err
 }
 
 const getForumTopicsByCategoryId = `-- name: GetForumTopicsByCategoryId :many
-SELECT idforumtopic, lastposter, forumcategory_idforumcategory, language_idlanguage, title, description, threads, comments, lastaddition FROM forumtopic
+SELECT idforumtopic, lastposter, forumcategory_idforumcategory, language_idlanguage, title, description, threads, comments, lastaddition, handler FROM forumtopic
 WHERE forumcategory_idforumcategory = ?
   AND (
       language_idlanguage = 0
@@ -933,6 +851,99 @@ func (q *Queries) GetForumTopicsByCategoryId(ctx context.Context, arg GetForumTo
 			&i.Threads,
 			&i.Comments,
 			&i.Lastaddition,
+			&i.Handler,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getForumTopicsForUser = `-- name: GetForumTopicsForUser :many
+WITH role_ids AS (
+    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+)
+SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.language_idlanguage, t.title, t.description, t.threads, t.comments, t.lastaddition, t.handler, lu.username AS LastPosterUsername
+FROM forumtopic t
+LEFT JOIN users lu ON lu.idusers = t.lastposter
+WHERE t.handler <> 'private'
+  AND (
+    t.language_idlanguage = 0
+    OR t.language_idlanguage IS NULL
+    OR EXISTS (
+        SELECT 1 FROM user_language ul
+        WHERE ul.users_idusers = ?
+          AND ul.language_idlanguage = t.language_idlanguage
+    )
+    OR NOT EXISTS (
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+    )
+)
+  AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='forum'
+      AND (g.item='topic' OR g.item IS NULL)
+      AND g.action='see'
+      AND g.active=1
+      AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+ORDER BY t.lastaddition DESC
+`
+
+type GetForumTopicsForUserParams struct {
+	ViewerID      int32
+	ViewerMatchID sql.NullInt32
+}
+
+type GetForumTopicsForUserRow struct {
+	Idforumtopic                 int32
+	Lastposter                   int32
+	ForumcategoryIdforumcategory int32
+	LanguageIdlanguage           int32
+	Title                        sql.NullString
+	Description                  sql.NullString
+	Threads                      sql.NullInt32
+	Comments                     sql.NullInt32
+	Lastaddition                 sql.NullTime
+	Handler                      string
+	Lastposterusername           sql.NullString
+}
+
+func (q *Queries) GetForumTopicsForUser(ctx context.Context, arg GetForumTopicsForUserParams) ([]*GetForumTopicsForUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, getForumTopicsForUser,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.ViewerMatchID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetForumTopicsForUserRow
+	for rows.Next() {
+		var i GetForumTopicsForUserRow
+		if err := rows.Scan(
+			&i.Idforumtopic,
+			&i.Lastposter,
+			&i.ForumcategoryIdforumcategory,
+			&i.LanguageIdlanguage,
+			&i.Title,
+			&i.Description,
+			&i.Threads,
+			&i.Comments,
+			&i.Lastaddition,
+			&i.Handler,
+			&i.Lastposterusername,
 		); err != nil {
 			return nil, err
 		}
@@ -990,6 +1001,107 @@ func (q *Queries) ListForumcategoryPath(ctx context.Context, categoryID int32) (
 	return items, nil
 }
 
+const listPrivateTopicParticipantsByTopicIDForUser = `-- name: ListPrivateTopicParticipantsByTopicIDForUser :many
+SELECT u.idusers, u.username
+FROM grants g
+JOIN users u ON u.idusers = g.user_id
+WHERE g.section = 'forum'
+  AND g.item = 'topic'
+  AND g.action = 'view'
+  AND g.active = 1
+  AND g.user_id IS NOT NULL
+  AND g.item_id = ?
+  AND EXISTS (
+      SELECT 1 FROM grants pg
+      WHERE pg.section='forum'
+        AND pg.item='topic'
+        AND pg.action='view'
+        AND pg.active=1
+        AND pg.item_id = g.item_id
+        AND pg.user_id = ?
+  )
+`
+
+type ListPrivateTopicParticipantsByTopicIDForUserParams struct {
+	TopicID  sql.NullInt32
+	ViewerID sql.NullInt32
+}
+
+type ListPrivateTopicParticipantsByTopicIDForUserRow struct {
+	Idusers  int32
+	Username sql.NullString
+}
+
+func (q *Queries) ListPrivateTopicParticipantsByTopicIDForUser(ctx context.Context, arg ListPrivateTopicParticipantsByTopicIDForUserParams) ([]*ListPrivateTopicParticipantsByTopicIDForUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, listPrivateTopicParticipantsByTopicIDForUser, arg.TopicID, arg.ViewerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListPrivateTopicParticipantsByTopicIDForUserRow
+	for rows.Next() {
+		var i ListPrivateTopicParticipantsByTopicIDForUserRow
+		if err := rows.Scan(&i.Idusers, &i.Username); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPrivateTopicsByUserID = `-- name: ListPrivateTopicsByUserID :many
+SELECT DISTINCT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.language_idlanguage, t.title, t.description, t.threads, t.comments, t.lastaddition, t.handler
+FROM forumtopic t
+JOIN grants g ON g.item_id = t.idforumtopic
+WHERE t.handler = 'private'
+  AND g.section = 'forum'
+  AND g.item = 'topic'
+  AND g.action = 'view'
+  AND g.active = 1
+  AND g.user_id = ?
+ORDER BY t.lastaddition DESC
+`
+
+func (q *Queries) ListPrivateTopicsByUserID(ctx context.Context, userID sql.NullInt32) ([]*Forumtopic, error) {
+	rows, err := q.db.QueryContext(ctx, listPrivateTopicsByUserID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Forumtopic
+	for rows.Next() {
+		var i Forumtopic
+		if err := rows.Scan(
+			&i.Idforumtopic,
+			&i.Lastposter,
+			&i.ForumcategoryIdforumcategory,
+			&i.LanguageIdlanguage,
+			&i.Title,
+			&i.Description,
+			&i.Threads,
+			&i.Comments,
+			&i.Lastaddition,
+			&i.Handler,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const systemCreateForumTopic = `-- name: SystemCreateForumTopic :execlastid
 INSERT INTO forumtopic (forumcategory_idforumcategory, language_idlanguage, title, description) VALUES (?, ?, ?, ?)
 `
@@ -1015,7 +1127,7 @@ func (q *Queries) SystemCreateForumTopic(ctx context.Context, arg SystemCreateFo
 }
 
 const systemGetForumTopicByTitle = `-- name: SystemGetForumTopicByTitle :one
-SELECT idforumtopic, lastposter, forumcategory_idforumcategory, language_idlanguage, title, description, threads, comments, lastaddition
+SELECT idforumtopic, lastposter, forumcategory_idforumcategory, language_idlanguage, title, description, threads, comments, lastaddition, handler
 FROM forumtopic
 WHERE title=?
 `
@@ -1033,6 +1145,7 @@ func (q *Queries) SystemGetForumTopicByTitle(ctx context.Context, title sql.Null
 		&i.Threads,
 		&i.Comments,
 		&i.Lastaddition,
+		&i.Handler,
 	)
 	return &i, err
 }
@@ -1065,5 +1178,19 @@ WHERE idforumtopic = ?
 
 func (q *Queries) SystemRebuildForumTopicMetaByID(ctx context.Context, idforumtopic int32) error {
 	_, err := q.db.ExecContext(ctx, systemRebuildForumTopicMetaByID, idforumtopic)
+	return err
+}
+
+const systemSetForumTopicHandlerByID = `-- name: SystemSetForumTopicHandlerByID :exec
+UPDATE forumtopic SET handler = ? WHERE idforumtopic = ?
+`
+
+type SystemSetForumTopicHandlerByIDParams struct {
+	Handler string
+	ID      int32
+}
+
+func (q *Queries) SystemSetForumTopicHandlerByID(ctx context.Context, arg SystemSetForumTopicHandlerByIDParams) error {
+	_, err := q.db.ExecContext(ctx, systemSetForumTopicHandlerByID, arg.Handler, arg.ID)
 	return err
 }

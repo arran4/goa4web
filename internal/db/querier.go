@@ -236,7 +236,6 @@ type Querier interface {
 	GetAllForumThreadsWithTopic(ctx context.Context) ([]*GetAllForumThreadsWithTopicRow, error)
 	GetAllForumTopics(ctx context.Context, arg GetAllForumTopicsParams) ([]*Forumtopic, error)
 	GetAllForumTopicsByCategoryIdForUserWithLastPosterName(ctx context.Context, arg GetAllForumTopicsByCategoryIdForUserWithLastPosterNameParams) ([]*GetAllForumTopicsByCategoryIdForUserWithLastPosterNameRow, error)
-	GetAllForumTopicsForUser(ctx context.Context, arg GetAllForumTopicsForUserParams) ([]*GetAllForumTopicsForUserRow, error)
 	GetAllImagePostsForIndex(ctx context.Context) ([]*GetAllImagePostsForIndexRow, error)
 	GetAllLinkerCategories(ctx context.Context) ([]*LinkerCategory, error)
 	GetAllLinkerCategoriesForUser(ctx context.Context, arg GetAllLinkerCategoriesForUserParams) ([]*LinkerCategory, error)
@@ -272,6 +271,7 @@ type Querier interface {
 	GetForumTopicByIdForUser(ctx context.Context, arg GetForumTopicByIdForUserParams) (*GetForumTopicByIdForUserRow, error)
 	GetForumTopicIdByThreadId(ctx context.Context, idforumthread int32) (int32, error)
 	GetForumTopicsByCategoryId(ctx context.Context, arg GetForumTopicsByCategoryIdParams) ([]*Forumtopic, error)
+	GetForumTopicsForUser(ctx context.Context, arg GetForumTopicsForUserParams) ([]*GetForumTopicsForUserRow, error)
 	GetImageBoardById(ctx context.Context, idimageboard int32) (*Imageboard, error)
 	GetImagePostByIDForLister(ctx context.Context, arg GetImagePostByIDForListerParams) (*GetImagePostByIDForListerRow, error)
 	GetImagePostInfoByPath(ctx context.Context, arg GetImagePostInfoByPathParams) (*GetImagePostInfoByPathRow, error)
@@ -365,6 +365,8 @@ type Querier interface {
 	ListImageboardPath(ctx context.Context, boardID int32) ([]*ListImageboardPathRow, error)
 	ListLinkerCategoryPath(ctx context.Context, categoryID int32) ([]*ListLinkerCategoryPathRow, error)
 	ListNotificationsForLister(ctx context.Context, arg ListNotificationsForListerParams) ([]*Notification, error)
+	ListPrivateTopicParticipantsByTopicIDForUser(ctx context.Context, arg ListPrivateTopicParticipantsByTopicIDForUserParams) ([]*ListPrivateTopicParticipantsByTopicIDForUserRow, error)
+	ListPrivateTopicsByUserID(ctx context.Context, userID sql.NullInt32) ([]*Forumtopic, error)
 	ListPublicWritingsByUserForLister(ctx context.Context, arg ListPublicWritingsByUserForListerParams) ([]*ListPublicWritingsByUserForListerRow, error)
 	ListPublicWritingsInCategoryForLister(ctx context.Context, arg ListPublicWritingsInCategoryForListerParams) ([]*ListPublicWritingsInCategoryForListerRow, error)
 	ListSiteNewsSearchFirstForLister(ctx context.Context, arg ListSiteNewsSearchFirstForListerParams) ([]int32, error)
@@ -475,6 +477,7 @@ type Querier interface {
 	SystemRegisterExternalLinkClick(ctx context.Context, url string) error
 	SystemSetBlogLastIndex(ctx context.Context, id int32) error
 	SystemSetCommentLastIndex(ctx context.Context, idcomments int32) error
+	SystemSetForumTopicHandlerByID(ctx context.Context, arg SystemSetForumTopicHandlerByIDParams) error
 	SystemSetImagePostLastIndex(ctx context.Context, idimagepost int32) error
 	SystemSetLinkerLastIndex(ctx context.Context, idlinker int32) error
 	SystemSetSiteNewsLastIndex(ctx context.Context, idsitenews int32) error

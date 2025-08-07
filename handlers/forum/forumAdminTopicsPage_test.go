@@ -26,8 +26,8 @@ func TestAdminTopicsPage(t *testing.T) {
 	countRows := sqlmock.NewRows([]string{"count"}).AddRow(1)
 	mock.ExpectQuery(`SELECT COUNT\(`).WillReturnRows(countRows)
 
-	rows := sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_idlanguage", "title", "description", "threads", "comments", "lastaddition"}).
-		AddRow(1, 0, 0, 0, "t", "d", 0, 0, time.Now())
+	rows := sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_idlanguage", "title", "description", "threads", "comments", "lastaddition", "handler"}).
+		AddRow(1, 0, 0, 0, "t", "d", 0, 0, time.Now(), "")
 	mock.ExpectQuery("SELECT t.idforumtopic").WillReturnRows(rows)
 
 	cd := common.NewCoreData(context.Background(), db.New(conn), config.NewRuntimeConfig())

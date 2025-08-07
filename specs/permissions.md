@@ -181,6 +181,12 @@ Many queries now filter results directly in SQL using `lister_id` together with 
 | `imagebbs` | `board`    | `post`          | Create a new post on the board |
 | `images`   | `upload`   | `see`           | List uploaded images |
 | `images`   | `upload`   | `post`          | Upload an image |
+| `privateforum` | `topic` | `see`           | Show a private topic in lists |
+| `privateforum` | `topic` | `view`          | View a private topic |
+| `privateforum` | `topic` | `reply`         | Reply within a private topic |
+| `privateforum` | `topic` | `post`          | Start a private conversation |
+| `privateforum` | `topic` | `edit`          | Edit posts in a private topic |
+| `privateforum` | `topic` | `create`        | Create a private topic |
 | `linker`   | —          | `search`        | Search links |
 | `linker`   | `category` | `see`           | Browse link categories |
 | `linker`   | `category` | `view`          | View links in a category |

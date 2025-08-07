@@ -21,7 +21,7 @@
                 <input type="submit" name="task" value="Reply">
             </form>
         {{ else }}
-            {{ with cd.CurrentUserLoaded }}
+            {{ if cd.UserID }}
                 You do not have permission to write a reply.<br>
             {{ else }}
                 Please sign-in (or sign-up) to write a reply.<br>

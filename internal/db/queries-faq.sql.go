@@ -39,6 +39,215 @@ func (q *Queries) AdminDeleteFAQCategory(ctx context.Context, idfaqcategories in
 	return err
 }
 
+const adminGetFAQByID = `-- name: AdminGetFAQByID :one
+SELECT idfaq, faqcategories_idfaqcategories, language_idlanguage, users_idusers, answer, question FROM faq WHERE idfaq = ?
+`
+
+func (q *Queries) AdminGetFAQByID(ctx context.Context, idfaq int32) (*Faq, error) {
+	row := q.db.QueryRowContext(ctx, adminGetFAQByID, idfaq)
+	var i Faq
+	err := row.Scan(
+		&i.Idfaq,
+		&i.FaqcategoriesIdfaqcategories,
+		&i.LanguageIdlanguage,
+		&i.UsersIdusers,
+		&i.Answer,
+		&i.Question,
+	)
+	return &i, err
+}
+
+const adminGetFAQCategories = `-- name: AdminGetFAQCategories :many
+SELECT idfaqcategories, name
+FROM faq_categories
+`
+
+func (q *Queries) AdminGetFAQCategories(ctx context.Context) ([]*FaqCategory, error) {
+	rows, err := q.db.QueryContext(ctx, adminGetFAQCategories)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*FaqCategory
+	for rows.Next() {
+		var i FaqCategory
+		if err := rows.Scan(&i.Idfaqcategories, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminGetFAQCategoriesWithQuestionCount = `-- name: AdminGetFAQCategoriesWithQuestionCount :many
+SELECT c.idfaqcategories, c.name, COUNT(f.idfaq) AS QuestionCount
+FROM faq_categories c
+LEFT JOIN faq f ON f.faqCategories_idfaqCategories = c.idfaqCategories
+GROUP BY c.idfaqCategories
+`
+
+type AdminGetFAQCategoriesWithQuestionCountRow struct {
+	Idfaqcategories int32
+	Name            sql.NullString
+	Questioncount   int64
+}
+
+func (q *Queries) AdminGetFAQCategoriesWithQuestionCount(ctx context.Context) ([]*AdminGetFAQCategoriesWithQuestionCountRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminGetFAQCategoriesWithQuestionCount)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminGetFAQCategoriesWithQuestionCountRow
+	for rows.Next() {
+		var i AdminGetFAQCategoriesWithQuestionCountRow
+		if err := rows.Scan(&i.Idfaqcategories, &i.Name, &i.Questioncount); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminGetFAQCategoryWithQuestionCountByID = `-- name: AdminGetFAQCategoryWithQuestionCountByID :one
+SELECT c.idfaqcategories, c.name, COUNT(f.idfaq) AS QuestionCount
+FROM faq_categories c
+LEFT JOIN faq f ON f.faqCategories_idfaqCategories = c.idfaqCategories
+WHERE c.idfaqCategories = ?
+GROUP BY c.idfaqCategories
+`
+
+type AdminGetFAQCategoryWithQuestionCountByIDRow struct {
+	Idfaqcategories int32
+	Name            sql.NullString
+	Questioncount   int64
+}
+
+func (q *Queries) AdminGetFAQCategoryWithQuestionCountByID(ctx context.Context, idfaqcategories int32) (*AdminGetFAQCategoryWithQuestionCountByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, adminGetFAQCategoryWithQuestionCountByID, idfaqcategories)
+	var i AdminGetFAQCategoryWithQuestionCountByIDRow
+	err := row.Scan(&i.Idfaqcategories, &i.Name, &i.Questioncount)
+	return &i, err
+}
+
+const adminGetFAQDismissedQuestions = `-- name: AdminGetFAQDismissedQuestions :many
+SELECT idfaq, faqCategories_idfaqCategories, language_idlanguage, users_idusers, answer, question
+FROM faq
+WHERE deleted_at IS NOT NULL
+`
+
+func (q *Queries) AdminGetFAQDismissedQuestions(ctx context.Context) ([]*Faq, error) {
+	rows, err := q.db.QueryContext(ctx, adminGetFAQDismissedQuestions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Faq
+	for rows.Next() {
+		var i Faq
+		if err := rows.Scan(
+			&i.Idfaq,
+			&i.FaqcategoriesIdfaqcategories,
+			&i.LanguageIdlanguage,
+			&i.UsersIdusers,
+			&i.Answer,
+			&i.Question,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminGetFAQQuestionsByCategory = `-- name: AdminGetFAQQuestionsByCategory :many
+SELECT idfaq, faqcategories_idfaqcategories, language_idlanguage, users_idusers, answer, question FROM faq WHERE faqCategories_idfaqCategories = ?
+`
+
+func (q *Queries) AdminGetFAQQuestionsByCategory(ctx context.Context, faqcategoriesIdfaqcategories int32) ([]*Faq, error) {
+	rows, err := q.db.QueryContext(ctx, adminGetFAQQuestionsByCategory, faqcategoriesIdfaqcategories)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Faq
+	for rows.Next() {
+		var i Faq
+		if err := rows.Scan(
+			&i.Idfaq,
+			&i.FaqcategoriesIdfaqcategories,
+			&i.LanguageIdlanguage,
+			&i.UsersIdusers,
+			&i.Answer,
+			&i.Question,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminGetFAQUnansweredQuestions = `-- name: AdminGetFAQUnansweredQuestions :many
+SELECT idfaq, faqcategories_idfaqcategories, language_idlanguage, users_idusers, answer, question
+FROM faq
+WHERE faqCategories_idfaqCategories = '0' OR answer IS NULL
+`
+
+func (q *Queries) AdminGetFAQUnansweredQuestions(ctx context.Context) ([]*Faq, error) {
+	rows, err := q.db.QueryContext(ctx, adminGetFAQUnansweredQuestions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Faq
+	for rows.Next() {
+		var i Faq
+		if err := rows.Scan(
+			&i.Idfaq,
+			&i.FaqcategoriesIdfaqcategories,
+			&i.LanguageIdlanguage,
+			&i.UsersIdusers,
+			&i.Answer,
+			&i.Question,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const adminRenameFAQCategory = `-- name: AdminRenameFAQCategory :exec
 UPDATE faq_categories
 SET name = ?
@@ -199,69 +408,6 @@ func (q *Queries) GetAllAnsweredFAQWithFAQCategoriesForUser(ctx context.Context,
 	return items, nil
 }
 
-const getAllFAQCategories = `-- name: GetAllFAQCategories :many
-SELECT idfaqcategories, name
-FROM faq_categories
-`
-
-func (q *Queries) GetAllFAQCategories(ctx context.Context) ([]*FaqCategory, error) {
-	rows, err := q.db.QueryContext(ctx, getAllFAQCategories)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*FaqCategory
-	for rows.Next() {
-		var i FaqCategory
-		if err := rows.Scan(&i.Idfaqcategories, &i.Name); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getAllFAQQuestions = `-- name: GetAllFAQQuestions :many
-SELECT idfaq, faqcategories_idfaqcategories, language_idlanguage, users_idusers, answer, question
-FROM faq
-`
-
-func (q *Queries) GetAllFAQQuestions(ctx context.Context) ([]*Faq, error) {
-	rows, err := q.db.QueryContext(ctx, getAllFAQQuestions)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*Faq
-	for rows.Next() {
-		var i Faq
-		if err := rows.Scan(
-			&i.Idfaq,
-			&i.FaqcategoriesIdfaqcategories,
-			&i.LanguageIdlanguage,
-			&i.UsersIdusers,
-			&i.Answer,
-			&i.Question,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getFAQAnsweredQuestions = `-- name: GetFAQAnsweredQuestions :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
@@ -335,11 +481,51 @@ func (q *Queries) GetFAQAnsweredQuestions(ctx context.Context, arg GetFAQAnswere
 }
 
 const getFAQByID = `-- name: GetFAQByID :one
-SELECT idfaq, faqcategories_idfaqcategories, language_idlanguage, users_idusers, answer, question FROM faq WHERE idfaq = ?
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+)
+SELECT idfaq, faqCategories_idfaqCategories, language_idlanguage, users_idusers, answer, question
+FROM faq
+WHERE idfaq = ?
+  AND deleted_at IS NULL
+  AND (
+      language_idlanguage = 0
+      OR language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = faq.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='faq'
+        AND (g.item='question/answer' OR g.item IS NULL)
+        AND g.action='see'
+        AND g.active=1
+        AND (g.item_id = faq.idfaq OR g.item_id IS NULL)
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
 `
 
-func (q *Queries) GetFAQByID(ctx context.Context, idfaq int32) (*Faq, error) {
-	row := q.db.QueryRowContext(ctx, getFAQByID, idfaq)
+type GetFAQByIDParams struct {
+	ViewerID int32
+	FaqID    int32
+	UserID   sql.NullInt32
+}
+
+func (q *Queries) GetFAQByID(ctx context.Context, arg GetFAQByIDParams) (*Faq, error) {
+	row := q.db.QueryRowContext(ctx, getFAQByID,
+		arg.ViewerID,
+		arg.FaqID,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.UserID,
+	)
 	var i Faq
 	err := row.Scan(
 		&i.Idfaq,
@@ -352,105 +538,52 @@ func (q *Queries) GetFAQByID(ctx context.Context, idfaq int32) (*Faq, error) {
 	return &i, err
 }
 
-const getFAQCategoriesWithQuestionCount = `-- name: GetFAQCategoriesWithQuestionCount :many
-SELECT c.idfaqcategories, c.name, COUNT(f.idfaq) AS QuestionCount
-FROM faq_categories c
-LEFT JOIN faq f ON f.faqCategories_idfaqCategories = c.idfaqCategories
-GROUP BY c.idfaqCategories
-`
-
-type GetFAQCategoriesWithQuestionCountRow struct {
-	Idfaqcategories int32
-	Name            sql.NullString
-	Questioncount   int64
-}
-
-func (q *Queries) GetFAQCategoriesWithQuestionCount(ctx context.Context) ([]*GetFAQCategoriesWithQuestionCountRow, error) {
-	rows, err := q.db.QueryContext(ctx, getFAQCategoriesWithQuestionCount)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*GetFAQCategoriesWithQuestionCountRow
-	for rows.Next() {
-		var i GetFAQCategoriesWithQuestionCountRow
-		if err := rows.Scan(&i.Idfaqcategories, &i.Name, &i.Questioncount); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getFAQCategoryWithQuestionCountByID = `-- name: GetFAQCategoryWithQuestionCountByID :one
-SELECT c.idfaqcategories, c.name, COUNT(f.idfaq) AS QuestionCount
-FROM faq_categories c
-LEFT JOIN faq f ON f.faqCategories_idfaqCategories = c.idfaqCategories
-WHERE c.idfaqCategories = ?
-GROUP BY c.idfaqCategories
-`
-
-type GetFAQCategoryWithQuestionCountByIDRow struct {
-	Idfaqcategories int32
-	Name            sql.NullString
-	Questioncount   int64
-}
-
-func (q *Queries) GetFAQCategoryWithQuestionCountByID(ctx context.Context, idfaqcategories int32) (*GetFAQCategoryWithQuestionCountByIDRow, error) {
-	row := q.db.QueryRowContext(ctx, getFAQCategoryWithQuestionCountByID, idfaqcategories)
-	var i GetFAQCategoryWithQuestionCountByIDRow
-	err := row.Scan(&i.Idfaqcategories, &i.Name, &i.Questioncount)
-	return &i, err
-}
-
-const getFAQDismissedQuestions = `-- name: GetFAQDismissedQuestions :many
+const getFAQQuestionsByCategory = `-- name: GetFAQQuestionsByCategory :many
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+)
 SELECT idfaq, faqCategories_idfaqCategories, language_idlanguage, users_idusers, answer, question
 FROM faq
-WHERE deleted_at IS NOT NULL
+WHERE faqCategories_idfaqCategories = ?
+  AND deleted_at IS NULL
+  AND (
+      language_idlanguage = 0
+      OR language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = faq.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section='faq'
+        AND (g.item='question/answer' OR g.item IS NULL)
+        AND g.action='see'
+        AND g.active=1
+        AND (g.item_id = faq.idfaq OR g.item_id IS NULL)
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
 `
 
-func (q *Queries) GetFAQDismissedQuestions(ctx context.Context) ([]*Faq, error) {
-	rows, err := q.db.QueryContext(ctx, getFAQDismissedQuestions)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*Faq
-	for rows.Next() {
-		var i Faq
-		if err := rows.Scan(
-			&i.Idfaq,
-			&i.FaqcategoriesIdfaqcategories,
-			&i.LanguageIdlanguage,
-			&i.UsersIdusers,
-			&i.Answer,
-			&i.Question,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+type GetFAQQuestionsByCategoryParams struct {
+	ViewerID   int32
+	CategoryID int32
+	UserID     sql.NullInt32
 }
 
-const getFAQQuestionsByCategory = `-- name: GetFAQQuestionsByCategory :many
-SELECT idfaq, faqcategories_idfaqcategories, language_idlanguage, users_idusers, answer, question FROM faq WHERE faqCategories_idfaqCategories = ?
-`
-
-func (q *Queries) GetFAQQuestionsByCategory(ctx context.Context, faqcategoriesIdfaqcategories int32) ([]*Faq, error) {
-	rows, err := q.db.QueryContext(ctx, getFAQQuestionsByCategory, faqcategoriesIdfaqcategories)
+func (q *Queries) GetFAQQuestionsByCategory(ctx context.Context, arg GetFAQQuestionsByCategoryParams) ([]*Faq, error) {
+	rows, err := q.db.QueryContext(ctx, getFAQQuestionsByCategory,
+		arg.ViewerID,
+		arg.CategoryID,
+		arg.ViewerID,
+		arg.ViewerID,
+		arg.UserID,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -499,42 +632,6 @@ func (q *Queries) GetFAQRevisionsForAdmin(ctx context.Context, faqID int32) ([]*
 			&i.Question,
 			&i.Answer,
 			&i.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getFAQUnansweredQuestions = `-- name: GetFAQUnansweredQuestions :many
-SELECT idfaq, faqcategories_idfaqcategories, language_idlanguage, users_idusers, answer, question
-FROM faq
-WHERE faqCategories_idfaqCategories = '0' OR answer IS NULL
-`
-
-func (q *Queries) GetFAQUnansweredQuestions(ctx context.Context) ([]*Faq, error) {
-	rows, err := q.db.QueryContext(ctx, getFAQUnansweredQuestions)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*Faq
-	for rows.Next() {
-		var i Faq
-		if err := rows.Scan(
-			&i.Idfaq,
-			&i.FaqcategoriesIdfaqcategories,
-			&i.LanguageIdlanguage,
-			&i.UsersIdusers,
-			&i.Answer,
-			&i.Question,
 		); err != nil {
 			return nil, err
 		}
@@ -621,4 +718,39 @@ func (q *Queries) InsertFAQRevisionForUser(ctx context.Context, arg InsertFAQRev
 		arg.ViewerID,
 	)
 	return err
+}
+
+const systemGetFAQQuestions = `-- name: SystemGetFAQQuestions :many
+SELECT idfaq, faqcategories_idfaqcategories, language_idlanguage, users_idusers, answer, question
+FROM faq
+`
+
+func (q *Queries) SystemGetFAQQuestions(ctx context.Context) ([]*Faq, error) {
+	rows, err := q.db.QueryContext(ctx, systemGetFAQQuestions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Faq
+	for rows.Next() {
+		var i Faq
+		if err := rows.Scan(
+			&i.Idfaq,
+			&i.FaqcategoriesIdfaqcategories,
+			&i.LanguageIdlanguage,
+			&i.UsersIdusers,
+			&i.Answer,
+			&i.Question,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

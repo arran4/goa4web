@@ -203,7 +203,7 @@ func buildGrantGroupsFromGrants(ctx context.Context, cd *common.CoreData, grants
 			case "faq":
 				switch g.Item.String {
 				case "category":
-					if cats, err := queries.GetAllFAQCategories(ctx); err == nil {
+					if cats, err := queries.AdminGetFAQCategories(ctx); err == nil {
 						for _, c := range cats {
 							if c.Idfaqcategories == g.ItemID.Int32 {
 								if c.Name.Valid {
@@ -214,7 +214,7 @@ func buildGrantGroupsFromGrants(ctx context.Context, cd *common.CoreData, grants
 						}
 					}
 				case "question", "question/answer":
-					if qrow, err := queries.GetFAQByID(ctx, g.ItemID.Int32); err == nil && qrow.Question.Valid {
+					if qrow, err := queries.AdminGetFAQByID(ctx, g.ItemID.Int32); err == nil && qrow.Question.Valid {
 						text := qrow.Question.String
 						if len(text) > 40 {
 							text = text[:40] + "..."

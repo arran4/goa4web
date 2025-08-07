@@ -25,7 +25,7 @@ func AdminRevisionHistoryPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	queries := cd.Queries()
-	faq, err := queries.GetFAQByID(r.Context(), int32(id))
+	faq, err := queries.AdminGetFAQByID(r.Context(), int32(id))
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

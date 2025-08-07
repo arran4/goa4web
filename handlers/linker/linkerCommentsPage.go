@@ -82,15 +82,15 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	canComment := cd.HasGrant("linker", "link", "comment", link.Idlinker)
+	canReply := cd.HasGrant("linker", "link", "reply", link.Idlinker)
 	if !(cd.HasGrant("linker", "link", "view", link.Idlinker) ||
-		canComment ||
+		canReply ||
 		cd.SelectedThreadCanReply()) {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
 
-	data.IsReplyable = canComment
+	data.IsReplyable = canReply
 
 	data.Link = link
 	cd.PageTitle = fmt.Sprintf("Link %d Comments", link.Idlinker)
@@ -225,7 +225,6 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	if !(cd.HasGrant("linker", "link", "view", link.Idlinker) ||
-		cd.HasGrant("linker", "link", "comment", link.Idlinker) ||
 		cd.HasGrant("linker", "link", "reply", link.Idlinker)) {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return nil

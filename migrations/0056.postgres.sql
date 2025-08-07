@@ -1,0 +1,10 @@
+ALTER TABLE preferences ADD COLUMN timezone TEXT;
+UPDATE blogs SET written = (written AT TIME ZONE 'Australia/Melbourne') AT TIME ZONE 'UTC';
+UPDATE comments SET written = (written AT TIME ZONE 'Australia/Melbourne') AT TIME ZONE 'UTC';
+UPDATE forumthread SET lastaddition = (lastaddition AT TIME ZONE 'Australia/Melbourne') AT TIME ZONE 'UTC';
+UPDATE forumtopic SET lastaddition = (lastaddition AT TIME ZONE 'Australia/Melbourne') AT TIME ZONE 'UTC';
+UPDATE imagepost SET posted = (posted AT TIME ZONE 'Australia/Melbourne') AT TIME ZONE 'UTC';
+UPDATE linker SET listed = (listed AT TIME ZONE 'Australia/Melbourne') AT TIME ZONE 'UTC';
+UPDATE writing SET published = (published AT TIME ZONE 'Australia/Melbourne') AT TIME ZONE 'UTC';
+UPDATE news SET occurred = (occurred AT TIME ZONE 'Australia/Melbourne') AT TIME ZONE 'UTC';
+UPDATE schema_version SET version = 56 WHERE version = 55;

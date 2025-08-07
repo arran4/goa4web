@@ -263,6 +263,7 @@ CREATE TABLE `preferences` (
   `emailforumupdates` tinyint(1) DEFAULT 0,
   `page_size` int(10) NOT NULL DEFAULT 15,
   `auto_subscribe_replies` tinyint(1) NOT NULL DEFAULT 1,
+  `timezone` tinytext DEFAULT NULL,
   PRIMARY KEY (`idpreferences`),
   KEY `preferences_FKIndex1` (`users_idusers`),
   KEY `preferences_FKIndex2` (`language_idlanguage`)

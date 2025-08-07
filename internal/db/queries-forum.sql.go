@@ -275,6 +275,49 @@ func (q *Queries) AdminUpdateForumTopic(ctx context.Context, arg AdminUpdateForu
 	return err
 }
 
+const createForumTopicForPoster = `-- name: CreateForumTopicForPoster :execlastid
+INSERT INTO forumtopic (forumcategory_idforumcategory, language_idlanguage, title, description)
+SELECT ?, ?, ?, ?
+WHERE EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='forum'
+      AND (g.item='category' OR g.item IS NULL)
+      AND g.action='post'
+      AND g.active=1
+      AND (g.item_id = ? OR g.item_id IS NULL)
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (
+          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+      ))
+  )
+`
+
+type CreateForumTopicForPosterParams struct {
+	ForumcategoryID int32
+	LanguageID      int32
+	Title           sql.NullString
+	Description     sql.NullString
+	GrantCategoryID sql.NullInt32
+	GranteeID       sql.NullInt32
+	PosterID        int32
+}
+
+func (q *Queries) CreateForumTopicForPoster(ctx context.Context, arg CreateForumTopicForPosterParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, createForumTopicForPoster,
+		arg.ForumcategoryID,
+		arg.LanguageID,
+		arg.Title,
+		arg.Description,
+		arg.GrantCategoryID,
+		arg.GranteeID,
+		arg.PosterID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
+}
+
 const getAllForumCategories = `-- name: GetAllForumCategories :many
 SELECT f.idforumcategory, f.forumcategory_idforumcategory, f.language_idlanguage, f.title, f.description
 FROM forumcategory f

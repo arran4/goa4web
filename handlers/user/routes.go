@@ -30,6 +30,8 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, _ *nav.Registry) {
 	ur.HandleFunc("/email", handlers.TaskHandler(testMailTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(testMailTask.Matcher())
 	ur.HandleFunc("/paging", userPagingPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	ur.HandleFunc("/paging", handlers.TaskHandler(pagingSaveTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(pagingSaveTask.Matcher())
+	ur.HandleFunc("/timezone", userTimezonePage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	ur.HandleFunc("/timezone", handlers.TaskHandler(saveTimezoneTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(saveTimezoneTask.Matcher())
 	ur.HandleFunc("/profile", userPublicProfileSettingPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	ur.HandleFunc("/profile", handlers.TaskHandler(publicProfileSaveTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(publicProfileSaveTask.Matcher())
 	ur.HandleFunc("/notifications", userNotificationsPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())

@@ -13,13 +13,18 @@ SET auto_subscribe_replies = sqlc.arg(auto_subscribe_replies)
 WHERE users_idusers = sqlc.arg(lister_id);
 
 -- name: GetPreferenceForLister :one
-SELECT idpreferences, language_idlanguage, users_idusers, emailforumupdates, page_size, auto_subscribe_replies
+SELECT idpreferences, language_idlanguage, users_idusers, emailforumupdates, page_size, auto_subscribe_replies, timezone
 FROM preferences
 WHERE users_idusers = sqlc.arg(lister_id);
 
 -- name: InsertPreferenceForLister :exec
-INSERT INTO preferences (language_idlanguage, users_idusers, page_size)
-VALUES (sqlc.arg(language_id), sqlc.arg(lister_id), sqlc.arg(page_size));
+INSERT INTO preferences (language_idlanguage, users_idusers, page_size, timezone)
+VALUES (sqlc.arg(language_id), sqlc.arg(lister_id), sqlc.arg(page_size), sqlc.arg(timezone));
 
 -- name: UpdatePreferenceForLister :exec
-UPDATE preferences SET language_idlanguage = sqlc.arg(language_id), page_size = sqlc.arg(page_size) WHERE users_idusers = sqlc.arg(lister_id);
+UPDATE preferences SET language_idlanguage = sqlc.arg(language_id), page_size = sqlc.arg(page_size), timezone = sqlc.arg(timezone) WHERE users_idusers = sqlc.arg(lister_id);
+
+-- name: UpdateTimezoneForLister :exec
+UPDATE preferences
+SET timezone = sqlc.arg(timezone)
+WHERE users_idusers = sqlc.arg(lister_id);

@@ -93,8 +93,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("get writing fail %w", handlers.ErrRedirectOnSamePageHandler(sql.ErrNoRows))
 	}
 
-	if !(cd.HasGrant("writing", "article", "comment", writing.Idwriting) ||
-		cd.HasGrant("writing", "article", "reply", writing.Idwriting)) {
+	if !cd.HasGrant("writing", "article", "reply", writing.Idwriting) {
 		return handlers.ErrRedirectOnSamePageHandler(handlers.ErrForbidden)
 	}
 

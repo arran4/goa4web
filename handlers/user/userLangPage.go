@@ -124,6 +124,7 @@ func updateDefaultLanguage(r *http.Request, queries db.Querier, uid int32) error
 			LanguageID: int32(langID),
 			ListerID:   uid,
 			PageSize:   int32(cd.Config.PageSizeDefault),
+			Timezone:   sql.NullString{},
 		})
 	}
 
@@ -132,5 +133,6 @@ func updateDefaultLanguage(r *http.Request, queries db.Querier, uid int32) error
 		LanguageID: pref.LanguageIdlanguage,
 		ListerID:   uid,
 		PageSize:   pref.PageSize,
+		Timezone:   pref.Timezone,
 	})
 }

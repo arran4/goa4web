@@ -1,7 +1,7 @@
 {{ template "head" $ }}
     {{ $writing := cd.CurrentWritingLoaded }}
     {{ if $writing }}
-        <font size="4">At {{ $writing.Published.Time }}, By {{ $writing.Writerusername.String }}; {{ $writing.Title.String | trim | a4code2html }}:</font>
+        <font size="4">At {{ localTime $writing.Published.Time }}, By {{ $writing.Writerusername.String }}; {{ $writing.Title.String | trim | a4code2html }}:</font>
         {{ if $writing.Private.Bool }} (Restricted access) {{ end }}
         {{ if or .CanEdit .IsAuthor }}
             [<a href="/writings/article/{{ $writing.Idwriting }}/edit">EDIT</a>]

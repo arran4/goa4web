@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"log"
 	ttemplate "text/template"
+	"time"
 )
 
 var (
@@ -55,6 +56,12 @@ func GetCompiledNotificationTemplates(funcs ttemplate.FuncMap) *ttemplate.Templa
 }
 
 func GetCompiledEmailHtmlTemplates(funcs htemplate.FuncMap) *htemplate.Template {
+	if funcs == nil {
+		funcs = htemplate.FuncMap{}
+	}
+	if _, ok := funcs["localTime"]; !ok {
+		funcs["localTime"] = func(t time.Time) time.Time { return t }
+	}
 	f, err := fs.Sub(emailHtmlTemplatesFS, "email")
 	if err != nil {
 		panic(err)
@@ -63,6 +70,12 @@ func GetCompiledEmailHtmlTemplates(funcs htemplate.FuncMap) *htemplate.Template 
 }
 
 func GetCompiledEmailTextTemplates(funcs ttemplate.FuncMap) *ttemplate.Template {
+	if funcs == nil {
+		funcs = ttemplate.FuncMap{}
+	}
+	if _, ok := funcs["localTime"]; !ok {
+		funcs["localTime"] = func(t time.Time) time.Time { return t }
+	}
 	f, err := fs.Sub(emailTextTemplatesFS, "email")
 	if err != nil {
 		panic(err)

@@ -8,7 +8,7 @@
                 <td>
                     {{ .Description.String | a4code2html }}
                     <hr>
-                    {{ .Username.String }} - Listed: {{ .Listed.Time }}
+                    {{ .Username.String }} - Listed: {{ localTime .Listed.Time }}
                 </td>
             </tr>
         </table><br>

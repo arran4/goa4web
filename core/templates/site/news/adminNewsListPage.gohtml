@@ -1,11 +1,12 @@
 {{ template "head" $ }}
 {{ if .Error }}<p>{{ .Error }}</p>{{ end }}
+{{ if .CanPost }}<p><a href="/news/post">New post</a></p>{{ end }}
 <table border="1">
     <tr><th>ID<th>Date<th>Writer<th>Comments<th>View</tr>
     {{ range cd.AdminLatestNews }}
         <tr>
             <td><a href="/admin/news/article/{{ .Idsitenews }}">{{ .Idsitenews }}</a></td>
-            <td>{{ .Occurred.Time }}</td>
+            <td>{{ localTime .Occurred.Time }}</td>
             <td>{{ if .Writerid.Valid }}<a href="/admin/user/{{ .Writerid.Int32 }}">{{ .Writername.String }}</a>{{ else }}{{ .Writername.String }}{{ end }}</td>
             <td><a href="/admin/news/article/{{ .Idsitenews }}#comments">{{ .Comments.Int32 }}</a></td>
             <td><a href="/news/news/{{ .Idsitenews }}">Public</a></td>
@@ -14,4 +15,17 @@
         <tr><td colspan="5">No news.</td></tr>
     {{ end }}
 </table>
+{{ if .UserRoles }}
+<h2>News Roles</h2>
+<table border="1">
+    <tr><th>User</th><th>Email</th><th>Roles</th></tr>
+    {{ range .UserRoles }}
+    <tr>
+        <td>{{ .Username.String }}</td>
+        <td>{{ .Email }}</td>
+        <td>{{ if .Roles }}{{ range $i, $r := .Roles }}{{ if $i }}, {{ end }}{{ $r }}{{ end }}{{ else }}None{{ end }}</td>
+    </tr>
+    {{ end }}
+</table>
+{{ end }}
 {{ template "tail" $ }}

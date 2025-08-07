@@ -1,0 +1,10 @@
+ALTER TABLE preferences ADD COLUMN timezone TEXT;
+UPDATE blogs SET written = datetime(written, '-10 hours');
+UPDATE comments SET written = datetime(written, '-10 hours');
+UPDATE forumthread SET lastaddition = datetime(lastaddition, '-10 hours');
+UPDATE forumtopic SET lastaddition = datetime(lastaddition, '-10 hours');
+UPDATE imagepost SET posted = datetime(posted, '-10 hours');
+UPDATE linker SET listed = datetime(listed, '-10 hours');
+UPDATE writing SET published = datetime(published, '-10 hours');
+UPDATE news SET occurred = datetime(occurred, '-10 hours');
+UPDATE schema_version SET version = 56 WHERE version = 55;

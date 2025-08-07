@@ -48,8 +48,8 @@ func CustomWritingsIndex(data *common.CoreData, r *http.Request) {
 	userHasAdmin := data.HasAdminRole() && data.AdminMode
 	if userHasAdmin {
 		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-			Name: "User Roles",
-			Link: "/admin/writings/users/roles",
+			Name: "Writings Admin",
+			Link: "/admin/writings",
 		})
 	}
 	userHasWriter := data.HasContentWriterRole()

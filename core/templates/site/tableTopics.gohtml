@@ -11,7 +11,7 @@
             <td>
                 {{ $title := .Title.String }}
                 {{ if .DisplayTitle }}{{ $title = .DisplayTitle }}{{ end }}
-                <a href="/forum/topic/{{ .Idforumtopic }}">{{ $title | a4code2html }}</a>{{ if cd.CanEditAny }} [<a href="/admin/forum/topics/topic/{{ .Idforumtopic }}/edit">ADMIN</a>]{{ end }}<br>
+                <a href="/forum/topic/{{ .Idforumtopic }}">{{ $title | a4code2html }}</a>{{ if and cd.IsAdmin cd.IsAdminMode }} [<a href="/admin/forum/topics/topic/{{ .Idforumtopic }}/edit">ADMIN</a>]{{ end }}<br>
                 {{ with .Description.String }}<i>{{ . | a4code2html }}</i>{{ end }}
             </td>
             <td align="center">{{ localTime .Lastaddition.Time }}<br>{{ .Lastposterusername.String }}</td>

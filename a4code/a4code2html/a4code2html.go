@@ -383,10 +383,10 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 		switch a.CodeType {
 		case CTTableOfContents, CTTagStrip, CTWordsOnly:
 		default:
-			if _, err := io.WriteString(w, "<hr>"); err != nil {
+			if _, err := io.WriteString(w, "<hr />"); err != nil {
 				return err
 			}
-			a.stack = append(a.stack, "/>")
+			a.stack = append(a.stack, "")
 		}
 	default:
 		a.stack = append(a.stack, "")

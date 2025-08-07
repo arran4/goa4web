@@ -9,7 +9,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/handlers/forum"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/workers/postcountworker"
@@ -55,13 +54,9 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 	if creator != 0 && !seen {
 		uids = append(uids, creator)
 	}
-	allowed, err := forum.UserCanCreateTopic(r.Context(), queries, common.PrivateForumCategoryID, creator)
-	if err != nil {
-		return fmt.Errorf("UserCanCreateTopic fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-	}
-	if !allowed {
+	if !cd.HasGrant("privateforum", "topic", "create", 0) {
 		err := handlers.ErrForbidden
-		return fmt.Errorf("UserCanCreateTopic deny %w", handlers.ErrRedirectOnSamePageHandler(err))
+		return fmt.Errorf("create private topic deny %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	tid, err := queries.CreateForumTopicForPoster(r.Context(), db.CreateForumTopicForPosterParams{
 		PosterID:        creator,

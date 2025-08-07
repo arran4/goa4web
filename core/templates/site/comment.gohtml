@@ -14,7 +14,7 @@
                         <textarea id="reply" name="replytext" cols="40" rows="20">{{ $cmt.Text.String }}</textarea><br>
                         {{ template "languageCombobox" }}
                         <input type="submit" name="task" value="Edit Reply">
-                        <input type="submit" name="task" value="Cancel">
+                        <a href="?#comment-{{ $cmt.Idcomments }}">Cancel</a>
                     </form>
                 {{ else }}
                     {{ $cmt.Text.String | a4code2html}}<br>-<br>{{ $cmt.Posterusername.String }}.

@@ -66,6 +66,8 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 		LanguageID:      0,
 		Title:           sql.NullString{},
 		Description:     sql.NullString{},
+		Handler:         "private",
+		Section:         "privateforum",
 		GrantCategoryID: sql.NullInt32{Int32: common.PrivateForumCategoryID, Valid: true},
 		GranteeID:       sql.NullInt32{Int32: creator, Valid: creator != 0},
 	})
@@ -77,9 +79,6 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 		return fmt.Errorf("create topic %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	topicID := int32(tid)
-	if err := queries.SystemSetForumTopicHandlerByID(r.Context(), db.SystemSetForumTopicHandlerByIDParams{Handler: "private", ID: topicID}); err != nil {
-		return fmt.Errorf("set handler %w", handlers.ErrRedirectOnSamePageHandler(err))
-	}
 	thid, err := queries.SystemCreateThread(r.Context(), topicID)
 	if err != nil {
 		return fmt.Errorf("create thread %w", handlers.ErrRedirectOnSamePageHandler(err))

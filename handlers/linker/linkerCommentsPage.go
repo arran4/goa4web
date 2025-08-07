@@ -248,6 +248,7 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 				String: LinkerTopicDescription,
 				Valid:  true,
 			},
+			Handler: "linker",
 		})
 		if err != nil {
 			return fmt.Errorf("create forum topic fail %w", handlers.ErrRedirectOnSamePageHandler(err))

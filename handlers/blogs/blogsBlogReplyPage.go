@@ -150,6 +150,7 @@ func (ReplyBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 				String: BloggerTopicDescription,
 				Valid:  true,
 			},
+			Handler: "blogs",
 		})
 		if err != nil {
 			return fmt.Errorf("createForumTopic fail %w", handlers.ErrRedirectOnSamePageHandler(err))

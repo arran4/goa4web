@@ -225,14 +225,14 @@ WHERE (
 INSERT INTO forumcategory (forumcategory_idforumcategory, language_idlanguage, title, description) VALUES (?, ?, ?, ?);
 
 -- name: SystemCreateForumTopic :execlastid
-INSERT INTO forumtopic (forumcategory_idforumcategory, language_idlanguage, title, description) VALUES (?, ?, ?, ?);
+INSERT INTO forumtopic (forumcategory_idforumcategory, language_idlanguage, title, description, handler) VALUES (?, ?, ?, ?, ?);
 
 -- name: CreateForumTopicForPoster :execlastid
-INSERT INTO forumtopic (forumcategory_idforumcategory, language_idlanguage, title, description)
-SELECT sqlc.arg(forumcategory_id), sqlc.arg(language_id), sqlc.arg(title), sqlc.arg(description)
+INSERT INTO forumtopic (forumcategory_idforumcategory, language_idlanguage, title, description, handler)
+SELECT sqlc.arg(forumcategory_id), sqlc.arg(language_id), sqlc.arg(title), sqlc.arg(description), sqlc.arg(handler)
 WHERE EXISTS (
     SELECT 1 FROM grants g
-    WHERE g.section='forum'
+    WHERE g.section=sqlc.arg(section)
       AND (g.item='category' OR g.item IS NULL)
       AND g.action='post'
       AND g.active=1

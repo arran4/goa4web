@@ -44,7 +44,7 @@ func TestNewsReplyTaskEventData(t *testing.T) {
 	mock.ExpectQuery("SELECT idforumtopic").
 		WithArgs(sqlmock.AnyArg()).
 		WillReturnRows(sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_idlanguage", "title", "description", "threads", "comments", "lastaddition", "handler"}).
-			AddRow(4, int32(0), 0, 0, NewsTopicName, "", 0, 0, sql.NullTime{}, ""))
+			AddRow(4, int32(0), 0, 0, NewsTopicName, "", 0, 0, sql.NullTime{}, "news"))
 
 	mock.ExpectQuery("SELECT u.idusers").
 		WithArgs(uid).

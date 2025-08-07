@@ -235,6 +235,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 				String: ImageBBSTopicDescription,
 				Valid:  true,
 			},
+			Handler: "imagebbs",
 		})
 		if err != nil {
 			return fmt.Errorf("create forum topic fail %w", handlers.ErrRedirectOnSamePageHandler(err))

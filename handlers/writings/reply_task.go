@@ -106,6 +106,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 			LanguageIdlanguage:           writing.LanguageIdlanguage,
 			Title:                        sql.NullString{String: WritingTopicName, Valid: true},
 			Description:                  sql.NullString{String: WritingTopicDescription, Valid: true},
+			Handler:                      "writing",
 		})
 		if err != nil {
 			return fmt.Errorf("create forum topic fail %w", handlers.ErrRedirectOnSamePageHandler(err))

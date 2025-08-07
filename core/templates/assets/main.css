@@ -23,6 +23,11 @@ body {
         flex: 1;
 }
 
+.navbar-left {
+        display: flex;
+        align-items: center;
+}
+
 .navbar-right {
         text-align: right;
 }
@@ -246,10 +251,9 @@ tr.unsupported td {
         white-space: nowrap;
         text-overflow: ellipsis;
         direction: rtl;
-        position: absolute;
-        left: 0;
-        top: 50%;
-        transform: translateY(-50%);
+        text-align: right;
+        flex: 1;
+        margin-left: 0.5em;
 }
 
 .breadcrumbs ol {

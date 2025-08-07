@@ -1,21 +1,17 @@
 package auth
 
 import (
-	"crypto/rand"
 	"database/sql"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/arran4/goa4web/internal/eventbus"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -69,28 +65,15 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 		})
 	}
 
-	if reset, err := queries.GetPasswordResetByUser(r.Context(), db.GetPasswordResetByUserParams{
-		UserID:    row.Idusers,
-		CreatedAt: time.Now().Add(-time.Duration(cd.Config.PasswordResetExpiryHours) * time.Hour),
-	}); err == nil {
-		if time.Since(reset.CreatedAt) < 24*time.Hour {
-			return handlers.ErrRedirectOnSamePageHandler(errors.New("reset recently requested"))
-		}
-		_ = queries.SystemDeletePasswordReset(r.Context(), reset.ID)
-	} else if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		log.Printf("get reset: %v", err)
-		return fmt.Errorf("get reset %w", err)
-	}
 	hash, alg, err := HashPassword(pw)
 	if err != nil {
 		return fmt.Errorf("hash error %w", err)
 	}
-	var buf [8]byte
-	if _, err := rand.Read(buf[:]); err != nil {
-		return fmt.Errorf("rand %w", err)
-	}
-	code := hex.EncodeToString(buf[:])
-	if err := queries.CreatePasswordResetForUser(r.Context(), db.CreatePasswordResetForUserParams{UserID: row.Idusers, Passwd: hash, PasswdAlgorithm: alg, VerificationCode: code}); err != nil {
+	code, err := cd.CreatePasswordReset(row.Email, hash, alg)
+	if err != nil {
+		if errors.Is(err, common.ErrPasswordResetRecentlyRequested) {
+			return handlers.ErrRedirectOnSamePageHandler(err)
+		}
 		log.Printf("create reset: %v", err)
 		return fmt.Errorf("create reset %w", err)
 	}

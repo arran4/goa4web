@@ -1,0 +1,27 @@
+{{ template "head" $ }}
+<p><a href="/admin/grants">Back to grants</a></p>
+<table border="1">
+    <tr><th>Field</th><th>Value</th></tr>
+    <tr><td>User</td><td>{{ if .Grant.UserID.Valid }}{{ .Grant.UserName }} ({{ .Grant.UserID.Int32 }}){{ else }}-{{ end }}</td></tr>
+    <tr><td>Role</td><td>{{ if .Grant.RoleID.Valid }}{{ .Grant.RoleName }} ({{ .Grant.RoleID.Int32 }}){{ else }}-{{ end }}</td></tr>
+    <tr><td>Section</td><td>{{ .Grant.Section }}</td></tr>
+    <tr><td>Item</td><td>{{ .Grant.Item.String }}</td></tr>
+    <tr><td>Item ID</td><td>{{ if .Grant.ItemID.Valid }}{{ .Grant.ItemID.Int32 }}{{ else }}-{{ end }}</td></tr>
+    <tr><td>Action</td><td>{{ .Grant.Action }}</td></tr>
+    <tr><td>Active</td><td>{{ if .Grant.Active }}yes{{ else }}no{{ end }}</td></tr>
+</table>
+<h3>Edit</h3>
+<form method="post" action="/admin/grant/update">
+    {{ csrfField }}
+    <input type="hidden" name="task" value="Update grant">
+    <input type="hidden" name="grantid" value="{{ .Grant.ID }}">
+    <label>Active: <input type="checkbox" name="active" value="1" {{ if .Grant.Active }}checked{{ end }}></label>
+    <input type="submit" value="Save">
+</form>
+<form method="post" action="/admin/grant/delete" onsubmit="return confirm('Delete grant?');">
+    {{ csrfField }}
+    <input type="hidden" name="task" value="Delete grant">
+    <input type="hidden" name="grantid" value="{{ .Grant.ID }}">
+    <input type="submit" value="Delete">
+</form>
+{{ template "tail" $ }}

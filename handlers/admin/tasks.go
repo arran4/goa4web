@@ -289,4 +289,7 @@ const (
 
 	// TaskRoleGrantUpdate updates grants for a role.
 	TaskRoleGrantUpdate tasks.TaskString = "Update grants"
+
+	// TaskGrantUpdateActive updates a grant's active state.
+	TaskGrantUpdateActive tasks.TaskString = "Update grant"
 )

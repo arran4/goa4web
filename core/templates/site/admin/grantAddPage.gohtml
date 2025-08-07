@@ -1,0 +1,89 @@
+{{ template "head" $ }}
+<h2>Add Grant</h2>
+{{ if or (eq .Subject "") (eq .ID 0) }}
+<form method="get">
+    <label>Subject:
+        <select name="subject">
+            <option value="user"{{ if or (eq .Subject "user") (eq .Subject "") }} selected{{ end }}>User</option>
+            <option value="role"{{ if eq .Subject "role" }} selected{{ end }}>Role</option>
+        </select>
+    </label>
+    {{ if or (eq .Subject "user") (eq .Subject "") }}
+    <label>User:
+        <input list="userOptions" name="id">
+        <datalist id="userOptions">
+            {{ range .Users }}
+            {{ if .Username.Valid }}<option value="{{ .Idusers }}">{{ .Username.String }}</option>{{ end }}
+            {{ end }}
+        </datalist>
+    </label>
+    {{ else }}
+    <label>Role:
+        <input list="roleOptions" name="id">
+        <datalist id="roleOptions">
+            {{ range .Roles }}
+            <option value="{{ .ID }}">{{ .Name }}</option>
+            {{ end }}
+        </datalist>
+    </label>
+    {{ end }}
+    <input type="submit" value="Next">
+</form>
+{{ else if eq .Section "" }}
+<form method="get">
+    <input type="hidden" name="subject" value="{{ .Subject }}">
+    <input type="hidden" name="id" value="{{ .ID }}">
+    <label>Section:
+        <select name="section">
+            {{ range .Sections }}
+            <option value="{{ . }}">{{ . }}</option>
+            {{ end }}
+        </select>
+    </label>
+    <input type="submit" value="Next">
+</form>
+{{ else if eq .Item "" }}
+<form method="get">
+    <input type="hidden" name="subject" value="{{ .Subject }}">
+    <input type="hidden" name="id" value="{{ .ID }}">
+    <input type="hidden" name="section" value="{{ .Section }}">
+    <label>Item:
+        <select name="item">
+            {{ range .Items }}
+            <option value="{{ . }}">{{ . }}</option>
+            {{ end }}
+        </select>
+    </label>
+    <input type="submit" value="Next">
+</form>
+{{ else }}
+<form method="post" action="/admin/{{ .Subject }}/{{ .ID }}/grant">
+    {{ csrfField }}
+    <input type="hidden" name="task" value="Create grant">
+    <input type="hidden" name="section" value="{{ .Section }}">
+    <input type="hidden" name="item" value="{{ .Item }}">
+    <label>Action:
+        <select name="action">
+            {{ range .Actions }}
+            <option value="{{ . }}">{{ . }}</option>
+            {{ end }}
+        </select>
+    </label>
+    {{ if .ItemOptions }}
+    <label>Item:
+        <input list="itemOptions" name="item_id"{{ if .RequireItemID }} required{{ end }}>
+        <datalist id="itemOptions">
+            {{ if not .RequireItemID }}<option value="">All</option>{{ end }}
+            {{ range .ItemOptions }}
+            <option value="{{ .ID }}">{{ .Label }}</option>
+            {{ end }}
+        </datalist>
+    </label>
+    {{ else }}
+    <label>Item ID:<input type="text" name="item_id"{{ if .RequireItemID }} required{{ end }}></label>
+    {{ end }}
+    <input type="submit" value="Add">
+</form>
+{{ end }}
+<p><a href="/admin/grants">Back to grants</a></p>
+{{ template "tail" $ }}

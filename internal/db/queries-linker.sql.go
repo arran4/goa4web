@@ -1005,7 +1005,7 @@ WHERE l.idlinker = ?
     FROM grants_for_viewer g
     WHERE g.section = 'linker'
       AND (g.item = 'link' OR g.item IS NULL)
-      AND g.action IN ('view','comment','reply')
+      AND g.action IN ('view')
       AND (g.item_id = l.idlinker OR g.item_id IS NULL)
   )
 LIMIT 1

@@ -48,8 +48,8 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("No writing found"))
 		return
 	}
-	canComment := cd.HasGrant("writing", "article", "comment", writing.Idwriting)
-	if writing == nil || !(cd.HasGrant("writing", "article", "view", writing.Idwriting) || canComment || cd.SelectedThreadCanReply()) {
+	cd.SetCurrentThreadAndTopic(writing.ForumthreadID, 0)
+	if !(cd.HasGrant("writing", "article", "view", writing.Idwriting) || cd.SelectedThreadCanReply()) {
 		if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{}); err != nil {
 			log.Printf("render no access page: %v", err)
 		}
@@ -66,7 +66,6 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	editCommentId, _ := strconv.Atoi(r.URL.Query().Get("editComment"))
 	replyType := r.URL.Query().Get("type")
 
-	cd.SetCurrentThreadAndTopic(writing.ForumthreadID, 0)
 	comments, err := cd.SectionThreadComments("writing", "article", writing.ForumthreadID)
 	if err != nil {
 		log.Printf("thread comments: %v", err)
@@ -74,7 +73,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		Request:     r,
 		Comments:    comments,
-		IsReplyable: canComment && editCommentId == 0 && r.URL.Query().Get("comment") == "",
+		IsReplyable: cd.SelectedThreadCanReply() && editCommentId == 0 && r.URL.Query().Get("comment") == "",
 	}
 
 	data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
@@ -145,8 +144,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
-	if !(cd.HasGrant("writing", "article", "comment", writing.Idwriting) ||
-		cd.HasGrant("writing", "article", "reply", writing.Idwriting)) {
+	if !cd.HasGrant("writing", "article", "reply", writing.Idwriting) {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}

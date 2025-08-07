@@ -1056,8 +1056,19 @@ func (q *Queries) ListPrivateTopicParticipantsByTopicIDForUser(ctx context.Conte
 }
 
 const listPrivateTopicsByUserID = `-- name: ListPrivateTopicsByUserID :many
-SELECT DISTINCT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.language_idlanguage, t.title, t.description, t.threads, t.comments, t.lastaddition, t.handler
+SELECT t.idforumtopic,
+       t.lastposter,
+       t.forumcategory_idforumcategory,
+       t.language_idlanguage,
+       t.title,
+       t.description,
+       t.threads,
+       t.comments,
+       t.lastaddition,
+       t.handler,
+       lu.username AS LastPosterUsername
 FROM forumtopic t
+LEFT JOIN users lu ON lu.idusers = t.lastposter
 JOIN grants g ON g.item_id = t.idforumtopic
 WHERE t.handler = 'private'
   AND g.section = 'forum'
@@ -1068,15 +1079,29 @@ WHERE t.handler = 'private'
 ORDER BY t.lastaddition DESC
 `
 
-func (q *Queries) ListPrivateTopicsByUserID(ctx context.Context, userID sql.NullInt32) ([]*Forumtopic, error) {
+type ListPrivateTopicsByUserIDRow struct {
+	Idforumtopic                 int32
+	Lastposter                   int32
+	ForumcategoryIdforumcategory int32
+	LanguageIdlanguage           int32
+	Title                        sql.NullString
+	Description                  sql.NullString
+	Threads                      sql.NullInt32
+	Comments                     sql.NullInt32
+	Lastaddition                 sql.NullTime
+	Handler                      string
+	Lastposterusername           sql.NullString
+}
+
+func (q *Queries) ListPrivateTopicsByUserID(ctx context.Context, userID sql.NullInt32) ([]*ListPrivateTopicsByUserIDRow, error) {
 	rows, err := q.db.QueryContext(ctx, listPrivateTopicsByUserID, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*Forumtopic
+	var items []*ListPrivateTopicsByUserIDRow
 	for rows.Next() {
-		var i Forumtopic
+		var i ListPrivateTopicsByUserIDRow
 		if err := rows.Scan(
 			&i.Idforumtopic,
 			&i.Lastposter,
@@ -1088,6 +1113,7 @@ func (q *Queries) ListPrivateTopicsByUserID(ctx context.Context, userID sql.Null
 			&i.Comments,
 			&i.Lastaddition,
 			&i.Handler,
+			&i.Lastposterusername,
 		); err != nil {
 			return nil, err
 		}

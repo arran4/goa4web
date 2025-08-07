@@ -261,8 +261,19 @@ WHERE th.forumtopic_idforumtopic=sqlc.arg(topic_id)
 ORDER BY th.lastaddition DESC;
 
 -- name: ListPrivateTopicsByUserID :many
-SELECT DISTINCT t.*
+SELECT t.idforumtopic,
+       t.lastposter,
+       t.forumcategory_idforumcategory,
+       t.language_idlanguage,
+       t.title,
+       t.description,
+       t.threads,
+       t.comments,
+       t.lastaddition,
+       t.handler,
+       lu.username AS LastPosterUsername
 FROM forumtopic t
+LEFT JOIN users lu ON lu.idusers = t.lastposter
 JOIN grants g ON g.item_id = t.idforumtopic
 WHERE t.handler = 'private'
   AND g.section = 'forum'

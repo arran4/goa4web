@@ -42,8 +42,8 @@ var GrantActionMap = map[string]GrantDefinition{
 	"writing|article":     {Actions: []string{"see", "view", "reply", "post", "edit"}},
 	"faq|":                {Actions: []string{"search"}},
 	"faq|category":        {Actions: []string{"see", "view"}},
-	"faq|question":        {Actions: []string{"see", "view", "post", "edit"}},
-	"faq|question/answer": {Actions: []string{"see"}},
+	"faq|question":        {Actions: []string{"post"}},
+	"faq|question/answer": {Actions: []string{"see", "view"}},
 	"search|":             {Actions: []string{"search"}},
 	"privateforum|topic":  {Actions: []string{"see", "view", "reply", "post", "edit", "create"}},
 }

@@ -44,7 +44,7 @@ func AdminGrantsPage(w http.ResponseWriter, r *http.Request) {
 				gw.UserName = u.Username.String
 			}
 		} else if !g.RoleID.Valid {
-			gw.UserName = "Everyone"
+			gw.UserName = "Anyone"
 		}
 		if g.RoleID.Valid {
 			if name, ok := roleNames[g.RoleID.Int32]; ok {
@@ -55,6 +55,28 @@ func AdminGrantsPage(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		gw.ItemLink = grantItemLink(g)
+		rows = append(rows, gw)
+	}
+	data := struct{ Grants []grantWithNames }{rows}
+	handlers.TemplateHandler(w, r, "grantsPage.gohtml", data)
+}
+
+// AdminAnyoneGrantsPage lists grants applying to all users.
+func AdminAnyoneGrantsPage(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Grants: Anyone"
+	queries := cd.Queries()
+	grants, err := queries.ListGrants(r.Context())
+	if err != nil {
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		return
+	}
+	var rows []grantWithNames
+	for _, g := range grants {
+		if g.UserID.Valid || g.RoleID.Valid {
+			continue
+		}
+		gw := grantWithNames{Grant: g, UserName: "Anyone", ItemLink: grantItemLink(g)}
 		rows = append(rows, gw)
 	}
 	data := struct{ Grants []grantWithNames }{rows}
@@ -93,7 +115,7 @@ func adminGrantPage(w http.ResponseWriter, r *http.Request) {
 			gw.UserName = u.Username.String
 		}
 	} else if !g.RoleID.Valid {
-		gw.UserName = "Everyone"
+		gw.UserName = "Anyone"
 	}
 	if g.RoleID.Valid {
 		if ro, err := queries.AdminGetRoleByID(r.Context(), g.RoleID.Int32); err == nil {

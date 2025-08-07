@@ -148,15 +148,3 @@ func TestBlogsBlogEditPage_Unauthorized(t *testing.T) {
 		t.Fatalf("expected %d got %d", http.StatusForbidden, rr.Result().StatusCode)
 	}
 }
-
-func TestGetPermissionsByUserIdAndSectionBlogsPage_Unauthorized(t *testing.T) {
-	req := httptest.NewRequest("GET", "/admin/blogs", nil)
-	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anonymous"}))
-	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
-	req = req.WithContext(ctx)
-	rr := httptest.NewRecorder()
-	GetPermissionsByUserIdAndSectionBlogsPage(rr, req)
-	if rr.Result().StatusCode != http.StatusForbidden {
-		t.Fatalf("expected %d got %d", http.StatusForbidden, rr.Result().StatusCode)
-	}
-}

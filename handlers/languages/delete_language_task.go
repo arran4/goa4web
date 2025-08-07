@@ -3,14 +3,12 @@ package languages
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/arran4/goa4web/internal/eventbus"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -31,28 +29,8 @@ func (DeleteLanguageTask) Action(w http.ResponseWriter, r *http.Request) any {
 			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		})
 	}
-	queries := cd.Queries()
-	cid, err := strconv.Atoi(r.PostFormValue("cid"))
+	id, name, err := cd.DeleteLanguage(r.PostFormValue("cid"))
 	if err != nil {
-		return fmt.Errorf("cid parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-	}
-	var name string
-	if rows, err := cd.Languages(); err == nil {
-		for _, l := range rows {
-			if l.Idlanguage == int32(cid) {
-				name = l.Nameof.String
-				break
-			}
-		}
-	}
-	counts, err := queries.AdminLanguageUsageCounts(r.Context(), db.AdminLanguageUsageCountsParams{ID: int32(cid)})
-	if err != nil {
-		return fmt.Errorf("language usage counts fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-	}
-	if counts.Comments > 0 || counts.Writings > 0 || counts.Blogs > 0 || counts.News > 0 || counts.Links > 0 {
-		return fmt.Errorf("language has content %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("language has content")))
-	}
-	if err := queries.AdminDeleteLanguage(r.Context(), int32(cid)); err != nil {
 		return fmt.Errorf("delete language fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -60,7 +38,7 @@ func (DeleteLanguageTask) Action(w http.ResponseWriter, r *http.Request) any {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data["LanguageID"] = cid
+			evt.Data["LanguageID"] = id
 			evt.Data["LanguageName"] = name
 		}
 	}

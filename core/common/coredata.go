@@ -3,7 +3,9 @@ package common
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"database/sql"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -73,7 +75,20 @@ type NavigationProvider interface {
 	AdminSections() []AdminSection
 }
 
+// ErrEmailAlreadyAssociated is returned when a user already has an email set.
+var ErrEmailAlreadyAssociated = errors.New("email already associated")
+
+// AssociateEmailParams carries the data required to request an email association.
+type AssociateEmailParams struct {
+	Username string
+	Email    string
+	Reason   string
+}
+
 // No package-level pagination constants as runtime config provides these values.
+
+// ErrPasswordResetRecentlyRequested indicates a password reset was requested too recently.
+var ErrPasswordResetRecentlyRequested = errors.New("reset recently requested")
 
 type CoreData struct {
 	a4codeMapper func(tag, val string) string
@@ -120,6 +135,7 @@ type CoreData struct {
 	adminUserGrants          map[int32]*lazy.Value[[]*db.Grant]
 	adminUserRoles           map[int32]*lazy.Value[[]*db.GetPermissionsByUserIDRow]
 	adminUserStats           map[int32]*lazy.Value[*db.AdminUserPostCountsByIDRow]
+	allAnsweredFAQ           lazy.Value[[]*CategoryFAQs]
 	allRoles                 lazy.Value[[]*db.Role]
 	annMu                    sync.Mutex
 	announcement             lazy.Value[*db.GetActiveAnnouncementWithNewsForListerRow]
@@ -149,6 +165,7 @@ type CoreData struct {
 	currentWritingID         int32
 	event                    *eventbus.TaskEvent
 	externalLinks            map[string]*lazy.Value[*db.ExternalLink]
+	faqCategories            lazy.Value[[]*db.FaqCategory]
 	forumCategories          lazy.Value[[]*db.Forumcategory]
 	forumComments            map[int32]*lazy.Value[*db.GetCommentByIdForUserRow]
 	forumThreadComments      map[int32]*lazy.Value[[]*db.GetCommentsByThreadIdForUserRow]
@@ -1077,6 +1094,16 @@ func (cd *CoreData) fetchLatestNews(offset, limit int32) ([]*db.GetNewsPostsWith
 	return posts, nil
 }
 
+// FAQCategories returns FAQ categories loaded on demand.
+func (cd *CoreData) FAQCategories() ([]*db.FaqCategory, error) {
+	return cd.faqCategories.Load(func() ([]*db.FaqCategory, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		return cd.queries.AdminGetFAQCategories(cd.ctx)
+	})
+}
+
 // ForumCategories loads all forum categories once.
 func (cd *CoreData) ForumCategories() ([]*db.Forumcategory, error) {
 	return cd.forumCategories.Load(func() ([]*db.Forumcategory, error) {
@@ -1300,6 +1327,59 @@ func (cd *CoreData) RenameLanguage(oldCode, newCode string) error {
 	return nil
 }
 
+
+// DeleteLanguage removes a language when it isn't referenced by any content.
+// The provided code is expected to be the language identifier string.
+// It returns the resolved language ID and name.
+func (cd *CoreData) DeleteLanguage(code string) (int32, string, error) {
+	if cd.queries == nil {
+		return 0, "", nil
+	}
+	id, err := strconv.Atoi(code)
+	if err != nil {
+		return 0, "", err
+	}
+	var name string
+	if rows, err := cd.Languages(); err == nil {
+		for _, l := range rows {
+			if l.Idlanguage == int32(id) {
+				name = l.Nameof.String
+				break
+			}
+		}
+	}
+	counts, err := cd.queries.AdminLanguageUsageCounts(cd.ctx, db.AdminLanguageUsageCountsParams{ID: int32(id)})
+	if err != nil {
+		return int32(id), name, err
+	}
+	if counts.Comments > 0 || counts.Writings > 0 || counts.Blogs > 0 || counts.News > 0 || counts.Links > 0 {
+		return int32(id), name, fmt.Errorf("language has content")
+	}
+	if err := cd.queries.AdminDeleteLanguage(cd.ctx, int32(id)); err != nil {
+		return int32(id), name, err
+	}
+	cd.langs = lazy.Value[[]*db.Language]{}
+	return int32(id), name, nil
+}
+
+// CreateLanguage inserts a new language and returns its ID.
+//
+// Parameters:
+//
+//	code - Language code (currently unused).
+//	name - Display name of the language.
+func (cd *CoreData) CreateLanguage(code, name string) (int64, error) {
+	if cd.queries == nil {
+		return 0, nil
+	}
+	_ = code
+	res, err := cd.queries.AdminInsertLanguage(cd.ctx, sql.NullString{String: name, Valid: true})
+	if err != nil {
+		return 0, err
+	}
+	return res.LastInsertId()
+}
+
 // LatestNews returns recent news posts with permission data.
 func (cd *CoreData) LatestNews(r *http.Request) ([]*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
@@ -1395,6 +1475,14 @@ func (cd *CoreData) LinkerCategoryCounts() ([]*db.GetLinkerCategoryLinkCountsRow
 		}
 		return rows, nil
 	})
+}
+
+// CreateFAQCategory adds a new FAQ category.
+func (cd *CoreData) CreateFAQCategory(name string) error {
+	if cd.queries == nil {
+		return nil
+	}
+	return cd.queries.AdminCreateFAQCategory(cd.ctx, sql.NullString{String: name, Valid: name != ""})
 }
 
 // LinkerItemsForUser returns linker items for the given category and offset respecting viewer permissions.
@@ -1666,6 +1754,93 @@ func (cd *CoreData) PublicWritings(categoryID int32, r *http.Request) ([]*db.Lis
 // Queries returns the db.Queries instance associated with this CoreData.
 func (cd *CoreData) Queries() db.Querier { return cd.queries }
 
+// DeleteFAQCategory removes a FAQ category.
+func (cd *CoreData) DeleteFAQCategory(id int32) error {
+	if cd.queries == nil {
+		return nil
+	}
+	return cd.queries.AdminDeleteFAQCategory(cd.ctx, id)
+}
+
+// AssociateEmail creates an email association request for a user.
+func (cd *CoreData) AssociateEmail(p AssociateEmailParams) (*db.SystemGetUserByUsernameRow, int64, error) {
+	row, err := cd.queries.SystemGetUserByUsername(cd.ctx, sql.NullString{String: p.Username, Valid: true})
+	if err != nil {
+		return nil, 0, fmt.Errorf("user not found %w", err)
+	}
+	if row.Email != "" {
+		return nil, 0, ErrEmailAlreadyAssociated
+	}
+	res, err := cd.queries.AdminInsertRequestQueue(cd.ctx, db.AdminInsertRequestQueueParams{
+		UsersIdusers:   row.Idusers,
+		ChangeTable:    "user_emails",
+		ChangeField:    "email",
+		ChangeRowID:    row.Idusers,
+		ChangeValue:    sql.NullString{String: p.Email, Valid: true},
+		ContactOptions: sql.NullString{String: p.Email, Valid: true},
+	})
+	if err != nil {
+		log.Printf("insert admin request: %v", err)
+		return nil, 0, fmt.Errorf("insert admin request %w", err)
+	}
+	id, _ := res.LastInsertId()
+	_ = cd.queries.AdminInsertRequestComment(cd.ctx, db.AdminInsertRequestCommentParams{RequestID: int32(id), Comment: p.Reason})
+	_ = cd.queries.InsertAdminUserComment(cd.ctx, db.InsertAdminUserCommentParams{UsersIdusers: row.Idusers, Comment: "email association requested"})
+	return row, id, nil
+}
+
+// DeleteFAQQuestion removes a FAQ entry by ID.
+func (cd *CoreData) DeleteFAQQuestion(id int32) error {
+	if cd.queries == nil {
+		return nil
+	}
+	return cd.queries.AdminDeleteFAQ(cd.ctx, id)
+}
+
+
+// UserExists reports whether a user already exists with the supplied username
+// or email address.
+func (cd *CoreData) UserExists(username, email string) (bool, error) {
+	if cd.queries == nil {
+		return false, nil
+	}
+	if username != "" {
+		if _, err := cd.queries.SystemGetUserByUsername(cd.ctx, sql.NullString{String: username, Valid: true}); err == nil {
+			return true, nil
+		} else if !errors.Is(err, sql.ErrNoRows) {
+			return false, fmt.Errorf("user by username: %w", err)
+		}
+	}
+	if email != "" {
+		if _, err := cd.queries.SystemGetUserByEmail(cd.ctx, email); err == nil {
+			return true, nil
+		} else if !errors.Is(err, sql.ErrNoRows) {
+			return false, fmt.Errorf("user by email: %w", err)
+		}
+	}
+	return false, nil
+}
+
+// CreateUserWithEmail inserts a user with the supplied username, email and
+// password hash/algorithm, returning the new user ID.
+func (cd *CoreData) CreateUserWithEmail(u, e, hash, alg string) (int32, error) {
+	if cd.queries == nil {
+		return 0, errors.New("no queries")
+	}
+	id, err := cd.queries.SystemInsertUser(cd.ctx, sql.NullString{String: u, Valid: u != ""})
+	if err != nil {
+		return 0, err
+	}
+	uid := int32(id)
+	if err := cd.queries.InsertUserEmail(cd.ctx, db.InsertUserEmailParams{UserID: uid, Email: e, VerifiedAt: sql.NullTime{}, LastVerificationCode: sql.NullString{}}); err != nil {
+		return 0, err
+	}
+	if err := cd.queries.InsertPassword(cd.ctx, db.InsertPasswordParams{UsersIdusers: uid, Passwd: hash, PasswdAlgorithm: sql.NullString{String: alg, Valid: alg != ""}}); err != nil {
+		return 0, err
+	}
+	return uid, nil
+}
+
 // RegisterExternalLinkClick records click statistics for url.
 func (cd *CoreData) RegisterExternalLinkClick(url string) {
 	if cd.queries == nil {
@@ -1913,6 +2088,38 @@ func (cd *CoreData) CreateWritingCommentForCommenter(commenterID, threadID, arti
 
 func (cd *CoreData) CreateLinkerCommentForCommenter(commenterID, threadID, linkID, languageID int32, text string) (int64, error) {
 	return cd.CreateCommentInSectionForCommenter("linker", "link", linkID, threadID, commenterID, languageID, text)
+}
+
+// CreatePasswordReset creates a new password reset entry for the given email and returns the verification code.
+func (cd *CoreData) CreatePasswordReset(email, hash, alg string) (string, error) {
+	if cd.queries == nil {
+		return "", nil
+	}
+	row, err := cd.queries.SystemGetUserByEmail(cd.ctx, email)
+	if err != nil {
+		return "", fmt.Errorf("user by email %w", err)
+	}
+	if reset, err := cd.queries.GetPasswordResetByUser(cd.ctx, db.GetPasswordResetByUserParams{
+		UserID:    row.Idusers,
+		CreatedAt: time.Now().Add(-time.Duration(cd.Config.PasswordResetExpiryHours) * time.Hour),
+	}); err == nil {
+		if time.Since(reset.CreatedAt) < 24*time.Hour {
+			return "", ErrPasswordResetRecentlyRequested
+		}
+		_ = cd.queries.SystemDeletePasswordReset(cd.ctx, reset.ID)
+	} else if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		log.Printf("get reset: %v", err)
+		return "", fmt.Errorf("get reset %w", err)
+	}
+	var buf [8]byte
+	if _, err := rand.Read(buf[:]); err != nil {
+		return "", fmt.Errorf("rand %w", err)
+	}
+	code := hex.EncodeToString(buf[:])
+	if err := cd.queries.CreatePasswordResetForUser(cd.ctx, db.CreatePasswordResetForUserParams{UserID: row.Idusers, Passwd: hash, PasswdAlgorithm: alg, VerificationCode: code}); err != nil {
+		return "", fmt.Errorf("create reset %w", err)
+	}
+	return code, nil
 }
 
 // CanEditComment reports whether the current user may edit the supplied

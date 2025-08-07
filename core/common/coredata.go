@@ -1307,6 +1307,27 @@ func (cd *CoreData) Languages() ([]*db.Language, error) {
 	})
 }
 
+// RenameLanguage updates the language code from oldCode to newCode and clears
+// the cached language list.
+func (cd *CoreData) RenameLanguage(oldCode, newCode string) error {
+	if cd.queries == nil {
+		return fmt.Errorf("queries not set")
+	}
+	id, err := cd.queries.SystemGetLanguageIDByName(cd.ctx, sql.NullString{String: oldCode, Valid: true})
+	if err != nil {
+		return fmt.Errorf("lookup language id: %w", err)
+	}
+	if err := cd.queries.AdminRenameLanguage(cd.ctx, db.AdminRenameLanguageParams{
+		Nameof:     sql.NullString{String: newCode, Valid: true},
+		Idlanguage: id,
+	}); err != nil {
+		return fmt.Errorf("update language: %w", err)
+	}
+	cd.langs = lazy.Value[[]*db.Language]{}
+	return nil
+}
+
+
 // DeleteLanguage removes a language when it isn't referenced by any content.
 // The provided code is expected to be the language identifier string.
 // It returns the resolved language ID and name.

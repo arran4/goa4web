@@ -3,6 +3,7 @@ package privateforum
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -55,6 +56,7 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 		uids = append(uids, creator)
 	}
 	if !cd.HasGrant("privateforum", "topic", "create", 0) {
+		log.Printf("private topic create denied: user=%d", creator)
 		err := handlers.ErrForbidden
 		return fmt.Errorf("create private topic deny %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

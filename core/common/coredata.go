@@ -1280,6 +1280,24 @@ func (cd *CoreData) Languages() ([]*db.Language, error) {
 	})
 }
 
+// CreateLanguage inserts a new language and returns its ID.
+//
+// Parameters:
+//
+//	code - Language code (currently unused).
+//	name - Display name of the language.
+func (cd *CoreData) CreateLanguage(code, name string) (int64, error) {
+	if cd.queries == nil {
+		return 0, nil
+	}
+	_ = code
+	res, err := cd.queries.AdminInsertLanguage(cd.ctx, sql.NullString{String: name, Valid: true})
+	if err != nil {
+		return 0, err
+	}
+	return res.LastInsertId()
+}
+
 // LatestNews returns recent news posts with permission data.
 func (cd *CoreData) LatestNews(r *http.Request) ([]*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))

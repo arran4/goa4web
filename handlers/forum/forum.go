@@ -12,11 +12,13 @@ type ForumtopicPlus struct {
 	ForumcategoryIdforumcategory int32
 	Title                        sql.NullString
 	Description                  sql.NullString
-	Threads                      sql.NullInt32
-	Comments                     sql.NullInt32
-	Lastaddition                 sql.NullTime
-	Lastposterusername           sql.NullString
-	Edit                         bool
+	// DisplayTitle optionally overrides Title for display purposes.
+	DisplayTitle       string
+	Threads            sql.NullInt32
+	Comments           sql.NullInt32
+	Lastaddition       sql.NullTime
+	Lastposterusername sql.NullString
+	Edit               bool
 }
 
 type ForumcategoryPlus struct {

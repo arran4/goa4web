@@ -1280,6 +1280,26 @@ func (cd *CoreData) Languages() ([]*db.Language, error) {
 	})
 }
 
+// RenameLanguage updates the language code from oldCode to newCode and clears
+// the cached language list.
+func (cd *CoreData) RenameLanguage(oldCode, newCode string) error {
+	if cd.queries == nil {
+		return fmt.Errorf("queries not set")
+	}
+	id, err := cd.queries.SystemGetLanguageIDByName(cd.ctx, sql.NullString{String: oldCode, Valid: true})
+	if err != nil {
+		return fmt.Errorf("lookup language id: %w", err)
+	}
+	if err := cd.queries.AdminRenameLanguage(cd.ctx, db.AdminRenameLanguageParams{
+		Nameof:     sql.NullString{String: newCode, Valid: true},
+		Idlanguage: id,
+	}); err != nil {
+		return fmt.Errorf("update language: %w", err)
+	}
+	cd.langs = lazy.Value[[]*db.Language]{}
+	return nil
+}
+
 // LatestNews returns recent news posts with permission data.
 func (cd *CoreData) LatestNews(r *http.Request) ([]*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))

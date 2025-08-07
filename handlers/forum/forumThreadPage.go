@@ -18,7 +18,7 @@ import (
 
 func ThreadPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		Category            *ForumcategoryPlus
+		Category       *ForumcategoryPlus
 		Topic          *ForumtopicPlus
 		Thread         *db.GetThreadLastPosterAndPermsRow
 		Comments       []*db.GetCommentsByThreadIdForUserRow
@@ -68,6 +68,7 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 	// middleware.
 
 	commentId, _ := strconv.Atoi(r.URL.Query().Get("comment"))
+	quoteId, _ := strconv.Atoi(r.URL.Query().Get("quote"))
 	data.Comments = commentRows
 
 	data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
@@ -113,13 +114,14 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	replyType := r.URL.Query().Get("type")
-	if c, err := cd.CurrentComment(r); err == nil && c != nil {
-		data.IsReplyable = false
-		switch replyType {
-		case "full":
-			data.Text = a4code.FullQuoteOf(c.Username.String, c.Text.String)
-		default:
-			data.Text = a4code.QuoteOfText(c.Username.String, c.Text.String)
+	if quoteId != 0 {
+		if c, err := cd.CommentByID(int32(quoteId)); err == nil && c != nil {
+			switch replyType {
+			case "full":
+				data.Text = a4code.FullQuoteOf(c.Username.String, c.Text.String)
+			default:
+				data.Text = a4code.QuoteOfText(c.Username.String, c.Text.String)
+			}
 		}
 	}
 

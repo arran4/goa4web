@@ -138,10 +138,6 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navRe
 
 	// news admin
 	news.RegisterAdminRoutes(ar)
-	nar := ar.PathPrefix("/news").Subrouter()
-	nar.HandleFunc("/users/roles", news.AdminUserRolesPage).Methods("GET")
-	nar.HandleFunc("/users/roles", handlers.TaskHandler(newsUserAllow)).Methods("POST").MatcherFunc(newsUserAllow.Matcher())
-	nar.HandleFunc("/users/roles", handlers.TaskHandler(newsUserRemove)).Methods("POST").MatcherFunc(newsUserRemove.Matcher())
 
 	// writings admin
 	writings.RegisterAdminRoutes(ar)

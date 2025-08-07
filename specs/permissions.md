@@ -168,6 +168,7 @@ Many queries now filter results directly in SQL using `lister_id` together with 
 | `forum`    | —          | `search`        | Search forums |
 | `forum`    | `category` | `see`           | Discover forum categories |
 | `forum`    | `category` | `view`          | View topics in the category |
+| `forum`    | `category` | `post`          | Create a new topic in the category |
 | `forum`    | `thread`   | `see`           | Show a thread in listings |
 | `forum`    | `thread`   | `view`          | View posts within a thread |
 | `forum`    | `thread`   | `reply`         | Reply within the thread |
@@ -192,6 +193,7 @@ Many queries now filter results directly in SQL using `lister_id` together with 
 | `linker`   | —          | `search`        | Search links |
 | `linker`   | `category` | `see`           | Browse link categories |
 | `linker`   | `category` | `view`          | View links in a category |
+| `linker`   | `category` | `post`          | Submit a link to the category |
 | `linker`   | `link`     | `see`           | Show a link in lists |
 | `linker`   | `link`     | `view`          | View link details |
 | `linker`   | `link`     | `comment`       | Comment on a link |
@@ -205,6 +207,7 @@ Many queries now filter results directly in SQL using `lister_id` together with 
 | `writing`  | —          | `search`        | Search writing articles |
 | `writing`  | `category` | `see`           | Browse writing categories |
 | `writing`  | `category` | `view`          | View a writing category |
+| `writing`  | `category` | `post`          | Publish an article in the category |
 | `writing`  | `article`  | `see`           | Show writing articles in lists |
 | `writing`  | `article`  | `view`          | Read a writing article |
 | `writing`  | `article`  | `comment`       | Comment on a writing article |

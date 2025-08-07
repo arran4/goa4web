@@ -216,11 +216,13 @@ type Querier interface {
 	CreateBookmarksForLister(ctx context.Context, arg CreateBookmarksForListerParams) error
 	CreateCommentForCommenter(ctx context.Context, arg CreateCommentForCommenterParams) (int64, error)
 	CreateFAQQuestionForWriter(ctx context.Context, arg CreateFAQQuestionForWriterParams) error
+	CreateForumTopicForPoster(ctx context.Context, arg CreateForumTopicForPosterParams) (int64, error)
 	CreateImagePostForPoster(ctx context.Context, arg CreateImagePostForPosterParams) (int64, error)
 	CreateLinkerQueuedItemForWriter(ctx context.Context, arg CreateLinkerQueuedItemForWriterParams) error
 	CreateNewsPostForWriter(ctx context.Context, arg CreateNewsPostForWriterParams) (int64, error)
 	CreatePasswordResetForUser(ctx context.Context, arg CreatePasswordResetForUserParams) error
 	CreateUploadedImageForUploader(ctx context.Context, arg CreateUploadedImageForUploaderParams) (int64, error)
+	CreateWritingForWriter(ctx context.Context, arg CreateWritingForWriterParams) (int64, error)
 	DeactivateNewsPost(ctx context.Context, idsitenews int32) error
 	DeleteNotificationForLister(ctx context.Context, arg DeleteNotificationForListerParams) error
 	DeleteSubscriptionByIDForSubscriber(ctx context.Context, arg DeleteSubscriptionByIDForSubscriberParams) error

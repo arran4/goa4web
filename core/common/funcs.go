@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -90,6 +91,11 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 			cd, _ := r.Context().Value(consts.KeyCoreData).(*CoreData)
 			if cd == nil || !cd.AdminMode {
 				return u
+			}
+			if parsed, err := url.Parse(u); err == nil {
+				if parsed.Path == "/admin" || strings.HasPrefix(parsed.Path, "/admin/") {
+					return u
+				}
 			}
 			if strings.Contains(u, "?") {
 				return u + "&mode=admin"

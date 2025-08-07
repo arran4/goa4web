@@ -3,7 +3,6 @@ package common_test
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/consts"
 	"net/http/httptest"
@@ -33,7 +32,6 @@ func TestCoreDataLatestNewsLazy(t *testing.T) {
 	mock.ExpectQuery("SELECT u.username").WithArgs(int32(1), int32(1), int32(1), sql.NullInt32{Int32: 1, Valid: true}, int32(15), int32(0)).WillReturnRows(rows)
 	mock.ExpectQuery("SELECT 1 FROM grants g JOIN roles").WithArgs("user", "administrator").WillReturnError(sql.ErrNoRows)
 	mock.ExpectQuery("SELECT 1 FROM grants").WithArgs(int32(1), "news", sql.NullString{String: "post", Valid: true}, "see", sql.NullInt32{Int32: 1, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
-	mock.ExpectQuery("SELECT id, site_news_id, active, created_at").WithArgs(int32(1)).WillReturnError(sql.ErrNoRows)
 
 	req := httptest.NewRequest("GET", "/", nil)
 	ctx := req.Context()
@@ -85,7 +83,7 @@ func TestWritingCategoriesLazy(t *testing.T) {
 	}
 }
 
-func TestAnnouncementForNewsCaching(t *testing.T) {
+func TestNewsAnnouncementCaching(t *testing.T) {
 	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -102,11 +100,11 @@ func TestAnnouncementForNewsCaching(t *testing.T) {
 	ctx := context.Background()
 	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
 
-	if _, err := cd.AnnouncementForNews(1); err != nil {
-		t.Fatalf("AnnouncementForNews: %v", err)
+	if cd.NewsAnnouncement(1) == nil {
+		t.Fatalf("NewsAnnouncement returned nil")
 	}
-	if _, err := cd.AnnouncementForNews(1); err != nil {
-		t.Fatalf("AnnouncementForNews second: %v", err)
+	if cd.NewsAnnouncement(1) == nil {
+		t.Fatalf("NewsAnnouncement second returned nil")
 	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -114,7 +112,7 @@ func TestAnnouncementForNewsCaching(t *testing.T) {
 	}
 }
 
-func TestAnnouncementForNewsError(t *testing.T) {
+func TestNewsAnnouncementError(t *testing.T) {
 	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -128,11 +126,11 @@ func TestAnnouncementForNewsError(t *testing.T) {
 	ctx := context.Background()
 	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
 
-	if _, err := cd.AnnouncementForNews(1); !errors.Is(err, sql.ErrConnDone) {
-		t.Fatalf("AnnouncementForNews error=%v", err)
+	if cd.NewsAnnouncement(1) != nil {
+		t.Fatalf("NewsAnnouncement expected nil on error")
 	}
-	if _, err := cd.AnnouncementForNews(1); !errors.Is(err, sql.ErrConnDone) {
-		t.Fatalf("AnnouncementForNews second=%v", err)
+	if cd.NewsAnnouncement(1) != nil {
+		t.Fatalf("NewsAnnouncement second expected nil on error")
 	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {

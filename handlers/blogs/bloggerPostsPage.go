@@ -21,12 +21,8 @@ import (
 
 // BloggerPostsPage shows the posts written by a specific blogger.
 func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
-	type BlogRow struct {
-		*db.ListBlogEntriesByAuthorForListerRow
-		EditUrl string
-	}
 	type Data struct {
-		Rows     []*BlogRow
+		Rows     []*db.ListBlogEntriesByAuthorForListerRow
 		IsOffset bool
 		UID      string
 	}
@@ -79,19 +75,9 @@ func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{
+		Rows:     rows,
 		IsOffset: offset != 0,
 		UID:      strconv.Itoa(int(buid)),
-	}
-
-	for _, row := range rows {
-		editUrl := ""
-		if cd.CanEditAny() || row.IsOwner {
-			editUrl = fmt.Sprintf("/blogs/blog/%d/edit", row.Idblogs)
-		}
-		data.Rows = append(data.Rows, &BlogRow{
-			ListBlogEntriesByAuthorForListerRow: row,
-			EditUrl:                             editUrl,
-		})
 	}
 
 	handlers.TemplateHandler(w, r, "bloggerPostsPage.gohtml", data)

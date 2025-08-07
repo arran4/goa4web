@@ -88,12 +88,12 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 		cd.SetCurrentThreadAndTopic(blog.ForumthreadID.Int32, 0)
 	}
 
-	commentID, _ := strconv.Atoi(r.URL.Query().Get("comment"))
+	quoteID, _ := strconv.Atoi(r.URL.Query().Get("quote"))
 	replyType := r.URL.Query().Get("type")
-	if commentID != 0 {
+	if quoteID != 0 {
 		comment, err := queries.GetCommentByIdForUser(r.Context(), db.GetCommentByIdForUserParams{
 			ViewerID: uid,
-			ID:       int32(commentID),
+			ID:       int32(quoteID),
 			UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 		})
 		if err == nil {

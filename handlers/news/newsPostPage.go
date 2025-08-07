@@ -75,6 +75,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 
 	editingId, _ := strconv.Atoi(r.URL.Query().Get("edit"))
 	replyType := r.URL.Query().Get("type")
+	quoteId, _ := strconv.Atoi(r.URL.Query().Get("quote"))
 
 	cd.SetCurrentThreadAndTopic(post.ForumthreadID, 0)
 	commentRows, err := cd.SectionThreadComments("news", "post", post.ForumthreadID)
@@ -131,16 +132,18 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		return ""
 	}
 
-	if c, err := cd.CurrentComment(r); err == nil && c != nil {
+	if editCommentId != 0 {
 		data.IsReplyable = false
-		switch replyType {
-		case "full":
-			data.ReplyText = a4code.FullQuoteOf(c.Username.String, c.Text.String)
-		default:
-			data.ReplyText = a4code.QuoteOfText(c.Username.String, c.Text.String)
+	}
+	if quoteId != 0 {
+		if c, err := cd.CommentByID(int32(quoteId)); err == nil && c != nil {
+			switch replyType {
+			case "full":
+				data.ReplyText = a4code.FullQuoteOf(c.Username.String, c.Text.String)
+			default:
+				data.ReplyText = a4code.QuoteOfText(c.Username.String, c.Text.String)
+			}
 		}
-	} else if r.URL.Query().Has("comment") {
-		data.IsReplyable = false
 	}
 
 	handlers.TemplateHandler(w, r, "postPage.gohtml", data)

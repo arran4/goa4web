@@ -75,6 +75,16 @@ type NavigationProvider interface {
 	AdminSections() []AdminSection
 }
 
+// ErrEmailAlreadyAssociated is returned when a user already has an email set.
+var ErrEmailAlreadyAssociated = errors.New("email already associated")
+
+// AssociateEmailParams carries the data required to request an email association.
+type AssociateEmailParams struct {
+	Username string
+	Email    string
+	Reason   string
+}
+
 // No package-level pagination constants as runtime config provides these values.
 
 // ErrPasswordResetRecentlyRequested indicates a password reset was requested too recently.
@@ -1668,6 +1678,33 @@ func (cd *CoreData) PublicWritings(categoryID int32, r *http.Request) ([]*db.Lis
 
 // Queries returns the db.Queries instance associated with this CoreData.
 func (cd *CoreData) Queries() db.Querier { return cd.queries }
+
+// AssociateEmail creates an email association request for a user.
+func (cd *CoreData) AssociateEmail(p AssociateEmailParams) (*db.SystemGetUserByUsernameRow, int64, error) {
+	row, err := cd.queries.SystemGetUserByUsername(cd.ctx, sql.NullString{String: p.Username, Valid: true})
+	if err != nil {
+		return nil, 0, fmt.Errorf("user not found %w", err)
+	}
+	if row.Email != "" {
+		return nil, 0, ErrEmailAlreadyAssociated
+	}
+	res, err := cd.queries.AdminInsertRequestQueue(cd.ctx, db.AdminInsertRequestQueueParams{
+		UsersIdusers:   row.Idusers,
+		ChangeTable:    "user_emails",
+		ChangeField:    "email",
+		ChangeRowID:    row.Idusers,
+		ChangeValue:    sql.NullString{String: p.Email, Valid: true},
+		ContactOptions: sql.NullString{String: p.Email, Valid: true},
+	})
+	if err != nil {
+		log.Printf("insert admin request: %v", err)
+		return nil, 0, fmt.Errorf("insert admin request %w", err)
+	}
+	id, _ := res.LastInsertId()
+	_ = cd.queries.AdminInsertRequestComment(cd.ctx, db.AdminInsertRequestCommentParams{RequestID: int32(id), Comment: p.Reason})
+	_ = cd.queries.InsertAdminUserComment(cd.ctx, db.InsertAdminUserCommentParams{UsersIdusers: row.Idusers, Comment: "email association requested"})
+	return row, id, nil
+}
 
 // DeleteFAQQuestion removes a FAQ entry by ID.
 func (cd *CoreData) DeleteFAQQuestion(id int32) error {

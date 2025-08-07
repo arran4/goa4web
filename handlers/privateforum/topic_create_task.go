@@ -55,10 +55,10 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 	if creator != 0 && !seen {
 		uids = append(uids, creator)
 	}
-	if !cd.HasGrant("privateforum", "topic", "post", 0) {
+	if !cd.HasGrant("privateforum", "topic", "create", 0) {
 		log.Printf("private topic create denied: user=%d", creator)
 		err := handlers.ErrForbidden
-		return fmt.Errorf("UserCanCreateTopic deny %w", handlers.ErrRedirectOnSamePageHandler(err))
+		return fmt.Errorf("create private topic deny %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	tid, err := queries.CreateForumTopicForPoster(r.Context(), db.CreateForumTopicForPosterParams{
 		PosterID:        creator,

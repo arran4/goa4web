@@ -519,6 +519,21 @@ func (cd *CoreData) Bookmarks() (*db.GetBookmarksForUserRow, error) {
 	})
 }
 
+// CreateBookmark inserts a bookmark list for the current user.
+//
+// It wraps the CreateBookmarksForLister query and updates the cached
+// bookmarks value on success.
+func (cd *CoreData) CreateBookmark(params db.CreateBookmarksForListerParams) error {
+	if cd.queries == nil {
+		return nil
+	}
+	if err := cd.queries.CreateBookmarksForLister(cd.ctx, params); err != nil {
+		return err
+	}
+	cd.bookmarks.Set(&db.GetBookmarksForUserRow{List: params.List})
+	return nil
+}
+
 // SaveBookmark persists the user's bookmark list and updates the cache.
 func (cd *CoreData) SaveBookmark(p db.UpdateBookmarksForListerParams) error {
 	if cd.queries == nil {

@@ -243,6 +243,10 @@ tr.unsupported td {
         background-color: lightgreen;
 }
 
+.a4code-image {
+        border: 1px solid black;
+}
+
 /* Breadcrumb navigation */
 .breadcrumbs {
         font-family: tahoma, arial, helvetica, sans-serif;

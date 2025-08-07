@@ -179,11 +179,22 @@ func TestImageURLMapper(t *testing.T) {
 	c := New(mapper)
 	c.SetInput("[img=image:abc]")
 	got, _ := io.ReadAll(c.Process())
-	want := "<img src=\"map:img:=image:abc\" />"
+	want := "<img class=\"a4code-image\" src=\"map:img:=image:abc\" />"
 	if string(got) != want {
 		t.Fatalf("img map got %q want %q", got, want)
 	}
 }
+
+func TestImageClass(t *testing.T) {
+	c := New()
+	c.SetInput("[img http://example.com/foo.jpg]")
+	got, _ := io.ReadAll(c.Process())
+	want := "<img class=\"a4code-image\" src=\"http://example.com/foo.jpg\" />"
+	if string(got) != want {
+		t.Fatalf("img got %q want %q", got, want)
+	}
+}
+
 func TestHrTag(t *testing.T) {
 	tests := []struct {
 		name     string

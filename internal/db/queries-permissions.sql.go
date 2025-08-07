@@ -535,6 +535,42 @@ func (q *Queries) SystemCheckRoleGrant(ctx context.Context, arg SystemCheckRoleG
 	return column_1, err
 }
 
+const systemCreateGrant = `-- name: SystemCreateGrant :execlastid
+INSERT INTO grants (
+    created_at, user_id, role_id, section, item, rule_type, item_id, item_rule, action, extra, active
+) VALUES (NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+`
+
+type SystemCreateGrantParams struct {
+	UserID   sql.NullInt32
+	RoleID   sql.NullInt32
+	Section  string
+	Item     sql.NullString
+	RuleType string
+	ItemID   sql.NullInt32
+	ItemRule sql.NullString
+	Action   string
+	Extra    sql.NullString
+}
+
+func (q *Queries) SystemCreateGrant(ctx context.Context, arg SystemCreateGrantParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, systemCreateGrant,
+		arg.UserID,
+		arg.RoleID,
+		arg.Section,
+		arg.Item,
+		arg.RuleType,
+		arg.ItemID,
+		arg.ItemRule,
+		arg.Action,
+		arg.Extra,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
+}
+
 const systemCreateUserRole = `-- name: SystemCreateUserRole :exec
 INSERT INTO user_roles (users_idusers, role_id)
 SELECT ?, r.id FROM roles r WHERE r.name = ?

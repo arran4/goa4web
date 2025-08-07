@@ -18,6 +18,7 @@ type grantWithNames struct {
 	*db.Grant
 	UserName string
 	RoleName string
+	ItemLink string
 }
 
 // AdminGrantsPage lists all grants.
@@ -51,6 +52,7 @@ func AdminGrantsPage(w http.ResponseWriter, r *http.Request) {
 				gw.RoleName = ro.Name
 			}
 		}
+		gw.ItemLink = grantItemLink(g)
 		rows = append(rows, gw)
 	}
 	data := struct{ Grants []grantWithNames }{rows}
@@ -94,7 +96,36 @@ func adminGrantPage(w http.ResponseWriter, r *http.Request) {
 			gw.RoleName = ro.Name
 		}
 	}
+	gw.ItemLink = grantItemLink(g)
 	cd.PageTitle = fmt.Sprintf("Grant %d", g.ID)
 	data := struct{ Grant grantWithNames }{gw}
 	handlers.TemplateHandler(w, r, "grantPage.gohtml", data)
+}
+
+// grantItemLink returns the admin page URL for a grant's item, or "" if none.
+func grantItemLink(g *db.Grant) string {
+	if !g.ItemID.Valid || g.ItemID.Int32 == 0 {
+		return ""
+	}
+	switch g.Section {
+	case "forum":
+		switch g.Item.String {
+		case "topic":
+			return fmt.Sprintf("/admin/forum/topics/topic/%d", g.ItemID.Int32)
+		case "category":
+			return fmt.Sprintf("/admin/forum/categories/category/%d", g.ItemID.Int32)
+		}
+	case "linker":
+		switch g.Item.String {
+		case "category":
+			return fmt.Sprintf("/admin/linker/categories/category/%d", g.ItemID.Int32)
+		case "link":
+			return fmt.Sprintf("/admin/linker/links/link/%d", g.ItemID.Int32)
+		}
+	case "writing":
+		if g.Item.String == "category" {
+			return fmt.Sprintf("/admin/writings/categories/category/%d", g.ItemID.Int32)
+		}
+	}
+	return ""
 }

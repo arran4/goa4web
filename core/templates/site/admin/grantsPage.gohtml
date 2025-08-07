@@ -5,11 +5,11 @@
     {{- range .Grants }}
     <tr>
         <td><a href="/admin/grant/{{ .Grant.ID }}">{{ .Grant.ID }}</a></td>
-        <td>{{ if .Grant.UserID.Valid }}{{ .UserName }} ({{ .Grant.UserID.Int32 }}){{ end }}</td>
-        <td>{{ if .Grant.RoleID.Valid }}{{ .RoleName }} ({{ .Grant.RoleID.Int32 }}){{ end }}</td>
+        <td>{{ if .Grant.UserID.Valid }}<a href="/admin/user/{{ .Grant.UserID.Int32 }}">{{ .UserName }} ({{ .Grant.UserID.Int32 }})</a>{{ end }}</td>
+        <td>{{ if .Grant.RoleID.Valid }}<a href="/admin/role/{{ .Grant.RoleID.Int32 }}">{{ .RoleName }} ({{ .Grant.RoleID.Int32 }})</a>{{ end }}</td>
         <td>{{ .Grant.Section }}</td>
-        <td>{{ .Grant.Item.String }}</td>
-        <td>{{ if .Grant.ItemID.Valid }}{{ .Grant.ItemID.Int32 }}{{ end }}</td>
+        <td>{{ if .ItemLink }}<a href="{{ .ItemLink }}">{{ .Grant.Item.String }}</a>{{ else }}{{ .Grant.Item.String }}{{ end }}</td>
+        <td>{{ if .Grant.ItemID.Valid }}{{ if .ItemLink }}<a href="{{ .ItemLink }}">{{ .Grant.ItemID.Int32 }}</a>{{ else }}{{ .Grant.ItemID.Int32 }}{{ end }}{{ end }}</td>
         <td>{{ .Grant.Action }}</td>
         <td>{{ if .Grant.Active }}yes{{ else }}no{{ end }}</td>
         <td><a href="/admin/grant/{{ .Grant.ID }}">Edit</a></td>

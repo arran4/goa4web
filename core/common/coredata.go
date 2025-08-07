@@ -519,6 +519,19 @@ func (cd *CoreData) Bookmarks() (*db.GetBookmarksForUserRow, error) {
 	})
 }
 
+// SaveBookmark persists the user's bookmark list and updates the cache.
+func (cd *CoreData) SaveBookmark(p db.UpdateBookmarksForListerParams) error {
+	if cd.queries == nil {
+		return nil
+	}
+	if err := cd.queries.UpdateBookmarksForLister(cd.ctx, p); err != nil {
+		return err
+	}
+	cd.bookmarks = lazy.Value[*db.GetBookmarksForUserRow]{}
+	cd.bookmarks.Set(&db.GetBookmarksForUserRow{List: p.List})
+	return nil
+}
+
 // IsAdmin reports whether the current user has the administrator role.
 func (cd *CoreData) IsAdmin() bool {
 	return cd.HasRole("administrator")

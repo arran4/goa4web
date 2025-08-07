@@ -135,6 +135,7 @@ type CoreData struct {
 	adminUserGrants          map[int32]*lazy.Value[[]*db.Grant]
 	adminUserRoles           map[int32]*lazy.Value[[]*db.GetPermissionsByUserIDRow]
 	adminUserStats           map[int32]*lazy.Value[*db.AdminUserPostCountsByIDRow]
+	allAnsweredFAQ           lazy.Value[[]*CategoryFAQs]
 	allRoles                 lazy.Value[[]*db.Role]
 	annMu                    sync.Mutex
 	announcement             lazy.Value[*db.GetActiveAnnouncementWithNewsForListerRow]

@@ -19,12 +19,6 @@ const (
 	// TaskUpdateWriting updates an existing writing.
 	TaskUpdateWriting = "Update writing"
 
-	// TaskUserAllow grants a user a role.
-	TaskUserAllow = "User Allow"
-
-	// TaskUserDisallow removes a user's role.
-	TaskUserDisallow = "User Disallow"
-
 	// TaskWritingCategoryChange changes a writing category name.
 	TaskWritingCategoryChange = "writing category change"
 

@@ -11,13 +11,12 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 )
 
-func AdminUserRolesPage(w http.ResponseWriter, r *http.Request) {
+// AdminPage renders the writings administration page.
+func AdminPage(w http.ResponseWriter, r *http.Request) {
 	type RoleInfo struct {
-		PermID int32
-		Name   string
+		Name string
 	}
 	type UserInfo struct {
 		ID       int32
@@ -27,18 +26,13 @@ func AdminUserRolesPage(w http.ResponseWriter, r *http.Request) {
 	}
 	type Data struct {
 		Users []UserInfo
-		Roles []*db.Role
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	cd.PageTitle = "Writing Roles"
+	cd.PageTitle = "Writings Admin"
 	data := Data{}
 
 	queries := cd.Queries()
-	if roles, err := cd.AllRoles(); err == nil {
-		data.Roles = roles
-	}
-
 	users, err := queries.AdminListAllUsers(r.Context())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("AdminListAllUsers Error: %s", err)
@@ -62,7 +56,7 @@ func AdminUserRolesPage(w http.ResponseWriter, r *http.Request) {
 			u = &UserInfo{ID: row.UsersIdusers, Username: row.Username, Email: row.Email}
 			userMap[row.UsersIdusers] = u
 		}
-		u.Roles = append(u.Roles, RoleInfo{PermID: row.IduserRoles, Name: row.Role})
+		u.Roles = append(u.Roles, RoleInfo{Name: row.Role})
 	}
 
 	for _, u := range userMap {
@@ -72,5 +66,5 @@ func AdminUserRolesPage(w http.ResponseWriter, r *http.Request) {
 		return data.Users[i].Username.String < data.Users[j].Username.String
 	})
 
-	handlers.TemplateHandler(w, r, "adminUserRolesPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "writingsAdminPage.gohtml", data)
 }

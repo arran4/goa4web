@@ -9,8 +9,8 @@ import (
 // RegisterAdminRoutes attaches writings admin endpoints to ar.
 func RegisterAdminRoutes(ar *mux.Router) {
 	war := ar.PathPrefix("/writings").Subrouter()
-	war.HandleFunc("", AdminPage).Methods("GET")
-	war.HandleFunc("/", AdminPage).Methods("GET")
+	war.HandleFunc("", AdminWritingsPage).Methods("GET")
+	war.HandleFunc("/", AdminWritingsPage).Methods("GET")
 	war.HandleFunc("/categories", AdminCategoriesPage).Methods("GET")
 	war.HandleFunc("/categories", handlers.TaskHandler(writingCategoryCreateTask)).Methods("POST").MatcherFunc(writingCategoryCreateTask.Matcher())
 	war.HandleFunc("/categories/category/{category}", AdminCategoryPage).Methods("GET")

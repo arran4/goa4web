@@ -1,0 +1,16 @@
+{{ template "head" $ }}
+{{ if .CanPost }}<p><a href="/writings/add">New writing</a></p>{{ end }}
+{{ if .UserRoles }}
+<h2>Writing Roles</h2>
+<table border="1">
+    <tr><th>User</th><th>Email</th><th>Roles</th></tr>
+    {{ range .UserRoles }}
+    <tr>
+        <td>{{ .Username.String }}</td>
+        <td>{{ .Email }}</td>
+        <td>{{ if .Roles }}{{ range $i, $r := .Roles }}{{ if $i }}, {{ end }}{{ $r }}{{ end }}{{ else }}None{{ end }}</td>
+    </tr>
+    {{ end }}
+</table>
+{{ end }}
+{{ template "tail" $ }}

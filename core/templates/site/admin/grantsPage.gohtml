@@ -1,0 +1,19 @@
+{{ template "head" $ }}
+<p><a href="/admin/grant/add">Add grant</a></p>
+<table border="1">
+    <tr><th>ID</th><th>User</th><th>Role</th><th>Section</th><th>Item</th><th>Item ID</th><th>Action</th><th>Active</th><th>Edit</th></tr>
+    {{- range .Grants }}
+    <tr>
+        <td><a href="/admin/grant/{{ .Grant.ID }}">{{ .Grant.ID }}</a></td>
+        <td>{{ if .Grant.UserID.Valid }}{{ .UserName }} ({{ .Grant.UserID.Int32 }}){{ end }}</td>
+        <td>{{ if .Grant.RoleID.Valid }}{{ .RoleName }} ({{ .Grant.RoleID.Int32 }}){{ end }}</td>
+        <td>{{ .Grant.Section }}</td>
+        <td>{{ .Grant.Item.String }}</td>
+        <td>{{ if .Grant.ItemID.Valid }}{{ .Grant.ItemID.Int32 }}{{ end }}</td>
+        <td>{{ .Grant.Action }}</td>
+        <td>{{ if .Grant.Active }}yes{{ else }}no{{ end }}</td>
+        <td><a href="/admin/grant/{{ .Grant.ID }}">Edit</a></td>
+    </tr>
+    {{- end }}
+</table>
+{{ template "tail" $ }}

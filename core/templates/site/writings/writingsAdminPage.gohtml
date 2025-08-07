@@ -1,0 +1,20 @@
+{{ template "head" $ }}
+<h1>Writings Admin</h1>
+<p><a href="/writings/add">New writing</a></p>
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <th>User</th>
+        <th>Email</th>
+        <th>Roles</th>
+    </tr>
+    {{- range .Users }}
+    <tr>
+        <td>{{ .ID }}</td>
+        <td>{{ .Username.String }}</td>
+        <td>{{ .Email }}</td>
+        <td>{{- if .Roles }}{{ range $i, $r := .Roles }}{{ if $i }}, {{ end }}{{ $r.Name }}{{ end }}{{ else }}None{{ end }}</td>
+    </tr>
+    {{- end }}
+</table>
+{{ template "tail" $ }}

@@ -132,7 +132,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	commentId, _ := strconv.Atoi(r.URL.Query().Get("comment"))
 	data.Comments = commentRows
 	data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
-		return cd.CanEditAny() || cmt.IsOwner
+		return cmt.IsOwner
 	}
 	data.EditURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
 		if !data.CanEditComment(cmt) {
@@ -150,7 +150,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		return data.CanEditComment(cmt) && commentId != 0 && int32(commentId) == cmt.Idcomments
 	}
 	data.AdminURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
-		if cd.HasRole("administrator") {
+		if cd.IsAdmin() && cd.IsAdminMode() {
 			return fmt.Sprintf("/admin/comment/%d", cmt.Idcomments)
 		}
 		return ""

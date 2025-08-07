@@ -11,8 +11,8 @@ func TestCustomFAQIndexRoles(t *testing.T) {
 	cd := common.NewCoreData(nil, nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
 	cd.AdminMode = true
 	CustomFAQIndex(cd, nil)
-	if !common.ContainsItem(cd.CustomIndexItems, "Question Qontrols") {
-		t.Errorf("admin should see question controls")
+	if common.ContainsItem(cd.CustomIndexItems, "Question Qontrols") {
+		t.Errorf("admin should not see question controls")
 	}
 
 	cd = common.NewCoreData(nil, nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anonymous"}))

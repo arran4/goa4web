@@ -3,7 +3,9 @@ package common
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"database/sql"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -74,6 +76,9 @@ type NavigationProvider interface {
 }
 
 // No package-level pagination constants as runtime config provides these values.
+
+// ErrPasswordResetRecentlyRequested indicates a password reset was requested too recently.
+var ErrPasswordResetRecentlyRequested = errors.New("reset recently requested")
 
 type CoreData struct {
 	a4codeMapper func(tag, val string) string
@@ -1963,6 +1968,38 @@ func (cd *CoreData) CreateWritingCommentForCommenter(commenterID, threadID, arti
 
 func (cd *CoreData) CreateLinkerCommentForCommenter(commenterID, threadID, linkID, languageID int32, text string) (int64, error) {
 	return cd.CreateCommentInSectionForCommenter("linker", "link", linkID, threadID, commenterID, languageID, text)
+}
+
+// CreatePasswordReset creates a new password reset entry for the given email and returns the verification code.
+func (cd *CoreData) CreatePasswordReset(email, hash, alg string) (string, error) {
+	if cd.queries == nil {
+		return "", nil
+	}
+	row, err := cd.queries.SystemGetUserByEmail(cd.ctx, email)
+	if err != nil {
+		return "", fmt.Errorf("user by email %w", err)
+	}
+	if reset, err := cd.queries.GetPasswordResetByUser(cd.ctx, db.GetPasswordResetByUserParams{
+		UserID:    row.Idusers,
+		CreatedAt: time.Now().Add(-time.Duration(cd.Config.PasswordResetExpiryHours) * time.Hour),
+	}); err == nil {
+		if time.Since(reset.CreatedAt) < 24*time.Hour {
+			return "", ErrPasswordResetRecentlyRequested
+		}
+		_ = cd.queries.SystemDeletePasswordReset(cd.ctx, reset.ID)
+	} else if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		log.Printf("get reset: %v", err)
+		return "", fmt.Errorf("get reset %w", err)
+	}
+	var buf [8]byte
+	if _, err := rand.Read(buf[:]); err != nil {
+		return "", fmt.Errorf("rand %w", err)
+	}
+	code := hex.EncodeToString(buf[:])
+	if err := cd.queries.CreatePasswordResetForUser(cd.ctx, db.CreatePasswordResetForUserParams{UserID: row.Idusers, Passwd: hash, PasswdAlgorithm: alg, VerificationCode: code}); err != nil {
+		return "", fmt.Errorf("create reset %w", err)
+	}
+	return code, nil
 }
 
 // CanEditComment reports whether the current user may edit the supplied

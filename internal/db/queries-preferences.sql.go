@@ -11,7 +11,7 @@ import (
 )
 
 const getPreferenceForLister = `-- name: GetPreferenceForLister :one
-SELECT idpreferences, language_idlanguage, users_idusers, emailforumupdates, page_size, auto_subscribe_replies
+SELECT idpreferences, language_idlanguage, users_idusers, emailforumupdates, page_size, auto_subscribe_replies, timezone
 FROM preferences
 WHERE users_idusers = ?
 `
@@ -26,6 +26,7 @@ func (q *Queries) GetPreferenceForLister(ctx context.Context, listerID int32) (*
 		&i.Emailforumupdates,
 		&i.PageSize,
 		&i.AutoSubscribeReplies,
+		&i.Timezone,
 	)
 	return &i, err
 }
@@ -47,18 +48,24 @@ func (q *Queries) InsertEmailPreferenceForLister(ctx context.Context, arg Insert
 }
 
 const insertPreferenceForLister = `-- name: InsertPreferenceForLister :exec
-INSERT INTO preferences (language_idlanguage, users_idusers, page_size)
-VALUES (?, ?, ?)
+INSERT INTO preferences (language_idlanguage, users_idusers, page_size, timezone)
+VALUES (?, ?, ?, ?)
 `
 
 type InsertPreferenceForListerParams struct {
 	LanguageID int32
 	ListerID   int32
 	PageSize   int32
+	Timezone   sql.NullString
 }
 
 func (q *Queries) InsertPreferenceForLister(ctx context.Context, arg InsertPreferenceForListerParams) error {
-	_, err := q.db.ExecContext(ctx, insertPreferenceForLister, arg.LanguageID, arg.ListerID, arg.PageSize)
+	_, err := q.db.ExecContext(ctx, insertPreferenceForLister,
+		arg.LanguageID,
+		arg.ListerID,
+		arg.PageSize,
+		arg.Timezone,
+	)
 	return err
 }
 
@@ -95,16 +102,38 @@ func (q *Queries) UpdateEmailForumUpdatesForLister(ctx context.Context, arg Upda
 }
 
 const updatePreferenceForLister = `-- name: UpdatePreferenceForLister :exec
-UPDATE preferences SET language_idlanguage = ?, page_size = ? WHERE users_idusers = ?
+UPDATE preferences SET language_idlanguage = ?, page_size = ?, timezone = ? WHERE users_idusers = ?
 `
 
 type UpdatePreferenceForListerParams struct {
 	LanguageID int32
 	PageSize   int32
+	Timezone   sql.NullString
 	ListerID   int32
 }
 
 func (q *Queries) UpdatePreferenceForLister(ctx context.Context, arg UpdatePreferenceForListerParams) error {
-	_, err := q.db.ExecContext(ctx, updatePreferenceForLister, arg.LanguageID, arg.PageSize, arg.ListerID)
+	_, err := q.db.ExecContext(ctx, updatePreferenceForLister,
+		arg.LanguageID,
+		arg.PageSize,
+		arg.Timezone,
+		arg.ListerID,
+	)
+	return err
+}
+
+const updateTimezoneForLister = `-- name: UpdateTimezoneForLister :exec
+UPDATE preferences
+SET timezone = ?
+WHERE users_idusers = ?
+`
+
+type UpdateTimezoneForListerParams struct {
+	Timezone sql.NullString
+	ListerID int32
+}
+
+func (q *Queries) UpdateTimezoneForLister(ctx context.Context, arg UpdateTimezoneForListerParams) error {
+	_, err := q.db.ExecContext(ctx, updateTimezoneForLister, arg.Timezone, arg.ListerID)
 	return err
 }

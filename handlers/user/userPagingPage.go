@@ -60,6 +60,7 @@ func (PagingSaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 			LanguageID: 0,
 			ListerID:   uid,
 			PageSize:   int32(size),
+			Timezone:   sql.NullString{},
 		})
 	} else {
 		pref.PageSize = int32(size)
@@ -67,6 +68,7 @@ func (PagingSaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 			LanguageID: pref.LanguageIdlanguage,
 			ListerID:   uid,
 			PageSize:   pref.PageSize,
+			Timezone:   pref.Timezone,
 		})
 	}
 	if err != nil {

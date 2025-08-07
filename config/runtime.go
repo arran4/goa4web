@@ -73,6 +73,9 @@ type RuntimeConfig struct {
 	FeedsEnabled    bool
 	StatsStartYear  int
 	DefaultLanguage string
+	// Timezone defines the default site timezone used when users have not
+	// specified their own.
+	Timezone string
 
 	ImageUploadProvider string
 	ImageUploadDir      string
@@ -307,6 +310,9 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 	}
 	if cfg.StatsStartYear == 0 {
 		cfg.StatsStartYear = 2005
+	}
+	if cfg.Timezone == "" {
+		cfg.Timezone = "Australia/Melbourne"
 	}
 	if cfg.ImageUploadProvider == "" {
 		cfg.ImageUploadProvider = "local"

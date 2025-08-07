@@ -18,7 +18,7 @@ import (
 
 func ThreadPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		Category            *ForumcategoryPlus
+		Category       *ForumcategoryPlus
 		Topic          *ForumtopicPlus
 		Thread         *db.GetThreadLastPosterAndPermsRow
 		Comments       []*db.GetCommentsByThreadIdForUserRow

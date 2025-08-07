@@ -14,7 +14,7 @@
                 <a href="/forum/topic/{{ .Idforumtopic }}">{{ $title | a4code2html }}</a>{{ if cd.CanEditAny }} [<a href="/admin/forum/topics/topic/{{ .Idforumtopic }}/edit">ADMIN</a>]{{ end }}<br>
                 {{ with .Description.String }}<i>{{ . | a4code2html }}</i>{{ end }}
             </td>
-            <td align="center">{{ .Lastaddition.Time }}<br>{{ .Lastposterusername.String }}</td>
+            <td align="center">{{ localTime .Lastaddition.Time }}<br>{{ .Lastposterusername.String }}</td>
             <td align="center">{{ .Threads.Int32 }}</td>
             <td align="center">{{ .Comments.Int32 }}</td>
         </tr>

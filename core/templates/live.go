@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	ttemplate "text/template"
+	"time"
 )
 
 func init() {
@@ -23,10 +24,22 @@ func GetCompiledNotificationTemplates(funcs ttemplate.FuncMap) *ttemplate.Templa
 }
 
 func GetCompiledEmailHtmlTemplates(funcs htemplate.FuncMap) *htemplate.Template {
+	if funcs == nil {
+		funcs = htemplate.FuncMap{}
+	}
+	if _, ok := funcs["localTime"]; !ok {
+		funcs["localTime"] = func(t time.Time) time.Time { return t }
+	}
 	return htemplate.Must(htemplate.New("").Funcs(funcs).ParseFS(os.DirFS("core/templates/email"), "*.gohtml"))
 }
 
 func GetCompiledEmailTextTemplates(funcs ttemplate.FuncMap) *ttemplate.Template {
+	if funcs == nil {
+		funcs = ttemplate.FuncMap{}
+	}
+	if _, ok := funcs["localTime"]; !ok {
+		funcs["localTime"] = func(t time.Time) time.Time { return t }
+	}
 	return ttemplate.Must(ttemplate.New("").Funcs(funcs).ParseFS(os.DirFS("core/templates/email"), "*.gotxt"))
 }
 

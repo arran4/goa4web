@@ -158,11 +158,9 @@ Many queries now filter results directly in SQL using `lister_id` together with 
 | `faq`      | —          | `search`        | Search FAQ content |
 | `faq`      | `category` | `see`           | List FAQ categories |
 | `faq`      | `category` | `view`          | View questions in a FAQ category |
-| `faq`      | `question` | `see`           | List FAQ questions |
-| `faq`      | `question` | `view`          | View a FAQ question and answer |
 | `faq`      | `question` | `post`          | Submit a new FAQ question |
-| `faq`      | `question` | `edit`          | Update an existing FAQ question |
 | `faq`      | `question/answer` | `see` | List answered FAQ questions |
+| `faq`      | `question/answer` | `view` | View a FAQ question and answer |
 | `forum`    | —          | `search`        | Search forums |
 | `forum`    | `category` | `see`           | Discover forum categories |
 | `forum`    | `category` | `view`          | View topics in the category |

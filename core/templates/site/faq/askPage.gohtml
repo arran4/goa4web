@@ -3,6 +3,14 @@
         <form method="post" action="">
         {{ csrfField }}
             <textarea name="text" cols="60" rows="20"></textarea><br>
+            Please select a category:
+            <select name="category">
+                {{- range (cd).FAQCategories }}
+                    <option value="{{ .Idfaqcategories }}">{{ .Name.String }}</option>
+                {{- else }}
+                    <option disabled>No categories</option>
+                {{- end }}
+            </select><br>
             {{ template "languageCombobox" }}
             <input type="submit" name="task" value="Ask">
         </form>

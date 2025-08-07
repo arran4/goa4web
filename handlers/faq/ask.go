@@ -59,6 +59,11 @@ func (AskTask) Page(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
+	if _, err := cd.FAQCategories(); err != nil {
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		return
+	}
+
 	handlers.TemplateHandler(w, r, "askPage.gohtml", data)
 }
 

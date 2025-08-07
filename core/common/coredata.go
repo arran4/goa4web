@@ -149,6 +149,7 @@ type CoreData struct {
 	currentWritingID         int32
 	event                    *eventbus.TaskEvent
 	externalLinks            map[string]*lazy.Value[*db.ExternalLink]
+	faqCategories            lazy.Value[[]*db.FaqCategory]
 	forumCategories          lazy.Value[[]*db.Forumcategory]
 	forumComments            map[int32]*lazy.Value[*db.GetCommentByIdForUserRow]
 	forumThreadComments      map[int32]*lazy.Value[[]*db.GetCommentsByThreadIdForUserRow]
@@ -1075,6 +1076,16 @@ func (cd *CoreData) fetchLatestNews(offset, limit int32) ([]*db.GetNewsPostsWith
 		posts = append(posts, row)
 	}
 	return posts, nil
+}
+
+// FAQCategories returns FAQ categories loaded on demand.
+func (cd *CoreData) FAQCategories() ([]*db.FaqCategory, error) {
+	return cd.faqCategories.Load(func() ([]*db.FaqCategory, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		return cd.queries.AdminGetFAQCategories(cd.ctx)
+	})
 }
 
 // ForumCategories loads all forum categories once.

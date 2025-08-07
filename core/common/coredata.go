@@ -1377,6 +1377,14 @@ func (cd *CoreData) LinkerCategoryCounts() ([]*db.GetLinkerCategoryLinkCountsRow
 	})
 }
 
+// CreateFAQCategory adds a new FAQ category.
+func (cd *CoreData) CreateFAQCategory(name string) error {
+	if cd.queries == nil {
+		return nil
+	}
+	return cd.queries.AdminCreateFAQCategory(cd.ctx, sql.NullString{String: name, Valid: name != ""})
+}
+
 // LinkerItemsForUser returns linker items for the given category and offset respecting viewer permissions.
 func (cd *CoreData) LinkerItemsForUser(catID, offset int32) ([]*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow, error) {
 	if cd.queries == nil {

@@ -50,7 +50,4 @@ func RegisterAdminRoutes(ar *mux.Router) {
 	lar.HandleFunc("/queue", handlers.TaskHandler(UpdateCategoryTask)).Methods("POST").MatcherFunc(UpdateCategoryTask.Matcher())
 	lar.HandleFunc("/queue", handlers.TaskHandler(AdminBulkApproveTask)).Methods("POST").MatcherFunc(AdminBulkApproveTask.Matcher())
 	lar.HandleFunc("/queue", handlers.TaskHandler(AdminBulkDeleteTask)).Methods("POST").MatcherFunc(AdminBulkDeleteTask.Matcher())
-	lar.HandleFunc("/users/roles", AdminUserRolesPage).Methods("GET")
-	lar.HandleFunc("/users/roles", handlers.TaskHandler(UserAllowTask)).Methods("POST").MatcherFunc(UserAllowTask.Matcher())
-	lar.HandleFunc("/users/roles", handlers.TaskHandler(UserDisallowTask)).Methods("POST").MatcherFunc(UserDisallowTask.Matcher())
 }

@@ -85,3 +85,29 @@ func TestFullQuoteOfEscaping(t *testing.T) {
 		t.Errorf("quote text = %q", tnode.Value)
 	}
 }
+
+func TestFullQuoteOfImage(t *testing.T) {
+	text := "[img http://example.com/foo.jpg]"
+	got := FullQuoteOf("bob", text)
+	want := "[quoteof \"bob\" [img http://example.com/foo.jpg]]\n"
+	if got != want {
+		t.Errorf("got %q want %q", got, want)
+	}
+	ast, err := ParseString(got)
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	if len(ast.Children) < 1 {
+		t.Fatalf("no nodes parsed")
+	}
+	q, ok := ast.Children[0].(*QuoteOf)
+	if !ok {
+		t.Fatalf("expected QuoteOf, got %T", ast.Children[0])
+	}
+	if len(q.Children) < 2 {
+		t.Fatalf("unexpected children %v", q.Children)
+	}
+	if _, ok := q.Children[1].(*Image); !ok {
+		t.Fatalf("expected Image node, got %T", q.Children[1])
+	}
+}

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sort"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -18,6 +19,18 @@ import (
 )
 
 func AdminNewsPage(w http.ResponseWriter, r *http.Request) {
+	type RoleInfo struct {
+		ID       int32
+		Username sql.NullString
+		Email    string
+		Roles    []string
+	}
+	type Data struct {
+		Error     string
+		CanPost   bool
+		UserRoles []RoleInfo
+	}
+
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	ps := cd.PageSize()
@@ -27,7 +40,33 @@ func AdminNewsPage(w http.ResponseWriter, r *http.Request) {
 		cd.StartLink = "/admin/news?offset=0"
 	}
 	cd.PageTitle = "News Admin"
-	data := struct{ Error string }{Error: r.URL.Query().Get("error")}
+
+	data := Data{Error: r.URL.Query().Get("error"), CanPost: cd.HasGrant("news", "post", "edit", 0) && cd.AdminMode}
+	queries := cd.Queries()
+	users, err := queries.AdminListAllUsers(r.Context())
+	if err == nil {
+		userMap := make(map[int32]*RoleInfo)
+		for _, u := range users {
+			userMap[u.Idusers] = &RoleInfo{ID: u.Idusers, Username: u.Username, Email: u.Email}
+		}
+		if rows, err := queries.GetUserRoles(r.Context()); err == nil {
+			for _, row := range rows {
+				u := userMap[row.UsersIdusers]
+				if u == nil {
+					u = &RoleInfo{ID: row.UsersIdusers, Username: row.Username, Email: row.Email}
+					userMap[row.UsersIdusers] = u
+				}
+				u.Roles = append(u.Roles, row.Role)
+			}
+		}
+		for _, u := range userMap {
+			data.UserRoles = append(data.UserRoles, *u)
+		}
+		sort.Slice(data.UserRoles, func(i, j int) bool {
+			return data.UserRoles[i].Username.String < data.UserRoles[j].Username.String
+		})
+	}
+
 	handlers.TemplateHandler(w, r, "adminNewsListPage.gohtml", data)
 }
 

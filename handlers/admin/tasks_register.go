@@ -33,8 +33,6 @@ func (h *Handlers) RegisterTasks() []tasks.NamedTask {
 		deleteCommentTask,
 		editCommentTask,
 		banCommentTask,
-		newsUserAllow,
-		newsUserRemove,
 		userPasswordResetTask,
 		roleGrantCreateTask,
 		roleGrantDeleteTask,

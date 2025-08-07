@@ -10,6 +10,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -122,7 +123,9 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	commentId, _ := strconv.Atoi(r.URL.Query().Get("comment"))
+	replyType := r.URL.Query().Get("type")
+	editCommentId, _ := strconv.Atoi(r.URL.Query().Get("comment"))
+	quoteId, _ := strconv.Atoi(r.URL.Query().Get("quote"))
 	data.Comments = commentRows
 	data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
 		return cd.CanEditAny() || cmt.IsOwner
@@ -140,7 +143,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		return fmt.Sprintf("/linker/comments/%d/comment/%d", link.Idlinker, cmt.Idcomments)
 	}
 	data.Editing = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
-		return data.CanEditComment(cmt) && commentId != 0 && int32(commentId) == cmt.Idcomments
+		return data.CanEditComment(cmt) && editCommentId != 0 && int32(editCommentId) == cmt.Idcomments
 	}
 	data.AdminURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
 		if cd.HasRole("administrator") {
@@ -148,8 +151,18 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		}
 		return ""
 	}
-	if commentId != 0 {
+	if editCommentId != 0 {
 		data.IsReplyable = false
+	}
+	if quoteId != 0 {
+		if c, err := cd.CommentByID(int32(quoteId)); err == nil && c != nil {
+			switch replyType {
+			case "full":
+				data.Text = a4code.FullQuoteOf(c.Username.String, c.Text.String)
+			default:
+				data.Text = a4code.QuoteOfText(c.Username.String, c.Text.String)
+			}
+		}
 	}
 
 	data.Thread = threadRow

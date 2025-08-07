@@ -18,8 +18,8 @@
                 {{ else }}
                     {{ $cmt.Text.String | a4code2html}}<br>-<br>{{ $cmt.Posterusername.String }}.
                     {{ if cd.SelectedThreadCanReply }}
-                        [<a href="?comment={{ $cmt.Idcomments }}&type=full#reply">FULL REPLY</a>]
-                        [<a href="?comment={{ $cmt.Idcomments }}#reply">PARAGRAPH REPLY</a>]
+                        [<a href="?quote={{ $cmt.Idcomments }}&type=full#reply">FULL REPLY</a>]
+                        [<a href="?quote={{ $cmt.Idcomments }}#reply">PARAGRAPH REPLY</a>]
                     {{ end }}
                     {{ if cd.CanEditComment $cmt }}[<a href="{{ cd.CommentEditURL $cmt }}">EDIT</a>]{{ end }}
                     {{ $admin := cd.CommentAdminURL $cmt }}{{ if $admin }}[<a href="{{ $admin }}">ADMIN</a>]{{ end }}

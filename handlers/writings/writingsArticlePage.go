@@ -65,6 +65,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	common.WithOffset(offset)(cd)
 	editCommentId, _ := strconv.Atoi(r.URL.Query().Get("editComment"))
 	replyType := r.URL.Query().Get("type")
+	quoteId, _ := strconv.Atoi(r.URL.Query().Get("quote"))
 
 	comments, err := cd.SectionThreadComments("writing", "article", writing.ForumthreadID)
 	if err != nil {
@@ -73,7 +74,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		Request:     r,
 		Comments:    comments,
-		IsReplyable: cd.SelectedThreadCanReply() && editCommentId == 0 && r.URL.Query().Get("comment") == "",
+		IsReplyable: canComment && editCommentId == 0,
 	}
 
 	data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
@@ -104,13 +105,14 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	data.IsAuthor = writing.UsersIdusers == cd.UserID
 	data.CanEdit = (cd.HasAdminRole() && cd.AdminMode) || (cd.HasContentWriterRole() && data.IsAuthor)
 
-	if c, err := cd.CurrentComment(r); err == nil && c != nil {
-		data.IsReplyable = false
-		switch replyType {
-		case "full":
-			data.ReplyText = a4code.FullQuoteOf(c.Username.String, c.Text.String)
-		default:
-			data.ReplyText = a4code.QuoteOfText(c.Username.String, c.Text.String)
+	if quoteId != 0 {
+		if c, err := cd.CommentByID(int32(quoteId)); err == nil && c != nil {
+			switch replyType {
+			case "full":
+				data.ReplyText = a4code.FullQuoteOf(c.Username.String, c.Text.String)
+			default:
+				data.ReplyText = a4code.QuoteOfText(c.Username.String, c.Text.String)
+			}
 		}
 	}
 

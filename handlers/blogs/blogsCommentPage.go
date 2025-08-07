@@ -111,7 +111,8 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	replyType := r.URL.Query().Get("type")
-	commentId, _ := strconv.Atoi(r.URL.Query().Get("comment"))
+	editCommentId, _ := strconv.Atoi(r.URL.Query().Get("comment"))
+	quoteId, _ := strconv.Atoi(r.URL.Query().Get("quote"))
 	if blog.ForumthreadID.Valid {
 		cd.SetCurrentThreadAndTopic(blog.ForumthreadID.Int32, 0)
 		rows, err := cd.SectionThreadComments("blogs", "entry", blog.ForumthreadID.Int32)
@@ -142,7 +143,7 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 			return fmt.Sprintf("/blogs/blog/%d/comment/%d", blog.Idblogs, cmt.Idcomments)
 		}
 		data.Editing = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
-			return data.CanEditComment(cmt) && commentId != 0 && int32(commentId) == cmt.Idcomments
+			return data.CanEditComment(cmt) && editCommentId != 0 && int32(editCommentId) == cmt.Idcomments
 		}
 		data.AdminURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
 			if cd.HasRole("administrator") {
@@ -150,14 +151,14 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 			}
 			return ""
 		}
-		if commentId != 0 {
+		if editCommentId != 0 {
 			data.IsReplyable = false
 		}
 
-		if commentId != 0 {
+		if quoteId != 0 {
 			comment, err := queries.GetCommentByIdForUser(r.Context(), db.GetCommentByIdForUserParams{
 				ViewerID: uid,
-				ID:       int32(commentId),
+				ID:       int32(quoteId),
 				UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 			})
 			if err == nil {

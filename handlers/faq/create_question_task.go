@@ -1,7 +1,6 @@
 package faq
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -11,7 +10,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 )
@@ -34,7 +32,6 @@ func (CreateQuestionTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("category parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := cd.Queries()
 	if !cd.HasGrant("faq", "question", "post", 0) {
 		r.URL.RawQuery = "error=" + url.QueryEscape("Forbidden")
 		handlers.TaskErrorAcknowledgementPage(w, r)
@@ -45,26 +42,15 @@ func (CreateQuestionTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return handlers.SessionFetchFail{}
 	}
 	uid, _ := session.Values["UID"].(int32)
-	res, err := queries.InsertFAQQuestionForWriter(r.Context(), db.InsertFAQQuestionForWriterParams{
-		Question:   sql.NullString{String: question, Valid: true},
-		Answer:     sql.NullString{String: answer, Valid: true},
+	if _, err := cd.CreateFAQQuestion(common.CreateFAQQuestionParams{
+		Question:   question,
+		Answer:     answer,
 		CategoryID: int32(category),
 		WriterID:   uid,
 		LanguageID: 1,
-		GranteeID:  sql.NullInt32{Int32: uid, Valid: true},
-	})
-	if err != nil {
+	}); err != nil {
 		return fmt.Errorf("insert faq fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	id, _ := res.LastInsertId()
-	_ = queries.InsertFAQRevisionForUser(r.Context(), db.InsertFAQRevisionForUserParams{
-		FaqID:        int32(id),
-		UsersIdusers: uid,
-		Question:     sql.NullString{String: question, Valid: true},
-		Answer:       sql.NullString{String: answer, Valid: true},
-		UserID:       sql.NullInt32{Int32: uid, Valid: true},
-		ViewerID:     uid,
-	})
 
 	return nil
 }

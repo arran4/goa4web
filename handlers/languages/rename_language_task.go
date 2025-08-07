@@ -1,7 +1,6 @@
 package languages
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -11,7 +10,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -32,16 +30,21 @@ func (RenameLanguageTask) Action(w http.ResponseWriter, r *http.Request) any {
 			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		})
 	}
-	queries := cd.Queries()
 	cid, err := strconv.Atoi(r.PostFormValue("cid"))
 	if err != nil {
 		return fmt.Errorf("cid parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	cname := r.PostFormValue("cname")
-	if err := queries.AdminRenameLanguage(r.Context(), db.AdminRenameLanguageParams{
-		Nameof:     sql.NullString{Valid: true, String: cname},
-		Idlanguage: int32(cid),
-	}); err != nil {
+	var oldName string
+	if rows, err := cd.Languages(); err == nil {
+		for _, l := range rows {
+			if l.Idlanguage == int32(cid) {
+				oldName = l.Nameof.String
+				break
+			}
+		}
+	}
+	if err := cd.RenameLanguage(oldName, cname); err != nil {
 		return fmt.Errorf("rename language fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {

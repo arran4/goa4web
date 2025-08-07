@@ -81,14 +81,14 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !(cd.HasGrant("blogs", "entry", "view", blog.Idblogs) ||
-		cd.HasGrant("blogs", "entry", "comment", blog.Idblogs) ||
+		cd.HasGrant("blogs", "entry", "reply", blog.Idblogs) ||
 		cd.SelectedThreadCanReply()) {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
-	canComment := cd.HasGrant("blogs", "entry", "comment", blog.Idblogs)
+	canReply := cd.HasGrant("blogs", "entry", "reply", blog.Idblogs)
 
-	data.IsReplyable = canComment
+	data.IsReplyable = canReply
 
 	editUrl := ""
 	if uid == blog.UsersIdusers {

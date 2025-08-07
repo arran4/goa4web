@@ -34,7 +34,7 @@ func AdminLinkGrantsPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, handlers.ErrBadRequest)
 		return
 	}
-	data := Data{LinkID: int32(lid), Actions: []string{"see", "view", "comment"}}
+	data := Data{LinkID: int32(lid), Actions: []string{"see", "view", "reply"}}
 	cd.PageTitle = fmt.Sprintf("Link %d Grants", lid)
 	if roles, err := cd.AllRoles(); err == nil {
 		data.Roles = roles

@@ -37,7 +37,7 @@ func AdminForumPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Forum Admin"
 	data := &Data{
-		Admin: cd.CanEditAny(),
+		Admin: cd.IsAdmin() && cd.IsAdminMode(),
 	}
 
 	copyDataToSubCategories := func(rootCategory *ForumcategoryPlus) *Data {

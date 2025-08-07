@@ -1,5 +1,6 @@
 {{ define "blogsAdminPage" }}
     {{ template "head" $ }}
+    <p><a href="/blogs/add">New Post</a></p>
     <table border="1">
         <tr><th>ID<th>Date<th>Writer<th>Comments<th>View</tr>
         {{ range cd.BlogList }}
@@ -12,6 +13,20 @@
             </tr>
         {{ else }}
             <tr><td colspan="5">No blogs.</td></tr>
+        {{ end }}
+    </table>
+    <h2>Blog Roles</h2>
+    <table border="1">
+        <tr><th>ID<th>User<th>Email<th>Role</tr>
+        {{ range .Roles }}
+            <tr>
+                <td><a href="/admin/user/{{ .UsersIdusers }}">{{ .UsersIdusers }}</a></td>
+                <td>{{ .Username.String }}</td>
+                <td>{{ .Email }}</td>
+                <td>{{ .Role }}</td>
+            </tr>
+        {{ else }}
+            <tr><td colspan="4">No roles.</td></tr>
         {{ end }}
     </table>
     {{ template "tail" $ }}

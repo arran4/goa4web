@@ -128,7 +128,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	quoteId, _ := strconv.Atoi(r.URL.Query().Get("quote"))
 	data.Comments = commentRows
 	data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
-		return cd.CanEditAny() || cmt.IsOwner
+		return cmt.IsOwner
 	}
 	data.EditURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
 		if !data.CanEditComment(cmt) {
@@ -146,7 +146,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		return data.CanEditComment(cmt) && editCommentId != 0 && int32(editCommentId) == cmt.Idcomments
 	}
 	data.AdminURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
-		if cd.HasRole("administrator") {
+		if cd.IsAdmin() && cd.IsAdminMode() {
 			return fmt.Sprintf("/admin/comment/%d", cmt.Idcomments)
 		}
 		return ""

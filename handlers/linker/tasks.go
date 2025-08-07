@@ -50,12 +50,6 @@ const (
 	// TaskBulkDelete removes multiple queued items at once.
 	TaskBulkDelete tasks.TaskString = "Bulk Delete"
 
-	// TaskUserAllow grants a user a role.
-	TaskUserAllow tasks.TaskString = "User Allow"
-
-	// TaskUserDisallow removes a user's role.
-	TaskUserDisallow tasks.TaskString = "User Disallow"
-
 	// TaskCategoryGrantCreate adds a new grant to a linker category.
 	TaskCategoryGrantCreate tasks.TaskString = "Create grant"
 

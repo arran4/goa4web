@@ -113,7 +113,9 @@ fields.
 ## Seeding
 
 The `seed.sql` file provides initial roles and establishes the role hierarchy.
-It also grants the `user` role to existing accounts lacking a role.
+It also grants the `user` role to existing accounts lacking a role. Migration
+55 ensures all roles with `can_login` receive user-level access to the private
+forum (`see`, `view`, `reply`, `post`, `edit`, `create`).
 
 ## CLI Tools
 

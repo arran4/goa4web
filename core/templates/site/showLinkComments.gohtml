@@ -8,7 +8,7 @@
                 <td>
                     {{ .Description.String | a4code2html }}
                     <hr>
-                    {{ .Username.String }} - Listed: {{ .Listed.Time }}
+                    {{ .Username.String }} - Listed: {{ localTime .Listed.Time }}
                 </td>
             </tr>
         </table><br>
@@ -23,12 +23,16 @@
         {{ csrfField }}
                 <input type="hidden" name="replyTo" value="{{ .ForumthreadID }}">
                 <input type="hidden" name="lpid" value="{{ .Idlinker }}">
-                <textarea name="replytext" cols="40" rows="20"></textarea><br>
+                <textarea name="replytext" cols="40" rows="20">{{ $.Text }}</textarea><br>
                 {{ template "languageCombobox" }}
                 <input type="submit" name="task" value="Reply">
             </form>
         {{ else }}
-            Please sign-in (or sign-up) to write a reply.<br>
+            {{ with cd.CurrentUserLoaded }}
+                You do not have permission to write a reply.<br>
+            {{ else }}
+                Please sign-in (or sign-up) to write a reply.<br>
+            {{ end }}
         {{ end }}
 
     {{ else }}

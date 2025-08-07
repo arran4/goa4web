@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/gorilla/mux"
 
@@ -1570,6 +1571,25 @@ func (cd *CoreData) PreferredLanguageID(siteDefault string) int32 {
 		log.Printf("load preferred language id: %v", err)
 	}
 	return id
+}
+
+// Location returns the time.Location used for displaying times. The user's
+// preferred timezone is used when set; otherwise the site configuration
+// timezone is applied. UTC is returned as a safe fallback.
+func (cd *CoreData) Location() *time.Location {
+	if pref, err := cd.Preference(); err == nil && pref != nil {
+		if pref.Timezone.Valid {
+			if loc, err := time.LoadLocation(pref.Timezone.String); err == nil {
+				return loc
+			}
+		}
+	}
+	if cd.Config != nil && cd.Config.Timezone != "" {
+		if loc, err := time.LoadLocation(cd.Config.Timezone); err == nil {
+			return loc
+		}
+	}
+	return time.UTC
 }
 
 // PublicWritings returns public writings in a category, cached per category and offset.

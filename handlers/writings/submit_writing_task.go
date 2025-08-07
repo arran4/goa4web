@@ -55,19 +55,32 @@ func (SubmitWritingTask) Action(w http.ResponseWriter, r *http.Request) any {
 	body := r.PostFormValue("body")
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
+	allowed, err := UserCanCreateWriting(r.Context(), queries, int32(categoryID), uid)
+	if err != nil {
+		return fmt.Errorf("UserCanCreateWriting fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	if !allowed {
+		return fmt.Errorf("UserCanCreateWriting deny %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("forbidden")))
+	}
 
-	articleID, err := queries.InsertWriting(r.Context(), db.InsertWritingParams{
-		WritingCategoryID:  int32(categoryID),
-		Title:              sql.NullString{Valid: true, String: title},
-		Abstract:           sql.NullString{Valid: true, String: abstract},
-		Writing:            sql.NullString{Valid: true, String: body},
-		Private:            sql.NullBool{Valid: true, Bool: private},
-		LanguageIdlanguage: int32(languageID),
-		UsersIdusers:       uid,
+	articleID, err := queries.CreateWritingForWriter(r.Context(), db.CreateWritingForWriterParams{
+		WriterID:          uid,
+		WritingCategoryID: int32(categoryID),
+		Title:             sql.NullString{Valid: true, String: title},
+		Abstract:          sql.NullString{Valid: true, String: abstract},
+		Writing:           sql.NullString{Valid: true, String: body},
+		Private:           sql.NullBool{Valid: true, Bool: private},
+		LanguageID:        int32(languageID),
+		GrantCategoryID:   sql.NullInt32{Int32: int32(categoryID), Valid: true},
+		GranteeID:         sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
-		return fmt.Errorf("insert writing fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+		return fmt.Errorf("create writing fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	if articleID == 0 {
+		return fmt.Errorf("create writing deny %w", handlers.ErrRedirectOnSamePageHandler(handlers.ErrForbidden))
 	}
 
 	var author string
@@ -76,25 +89,21 @@ func (SubmitWritingTask) Action(w http.ResponseWriter, r *http.Request) any {
 	} else {
 		return fmt.Errorf("get user fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data["Title"] = title
-			evt.Data["Author"] = author
-			evt.Data["target"] = notif.Target{Type: "writing", ID: int32(articleID)}
+	if evt := cd.Event(); evt != nil {
+		if evt.Data == nil {
+			evt.Data = map[string]any{}
 		}
+		evt.Data["Title"] = title
+		evt.Data["Author"] = author
+		evt.Data["target"] = notif.Target{Type: "writing", ID: int32(articleID)}
 	}
 
 	fullText := strings.Join([]string{abstract, title, body}, " ")
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeWriting, ID: int32(articleID), Text: fullText}
+	if evt := cd.Event(); evt != nil {
+		if evt.Data == nil {
+			evt.Data = map[string]any{}
 		}
+		evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeWriting, ID: int32(articleID), Text: fullText}
 	}
 
 	return handlers.RedirectHandler(fmt.Sprintf("/writings/article/%d", articleID))

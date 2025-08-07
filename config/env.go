@@ -74,6 +74,9 @@ const (
 	EnvListen = "LISTEN"
 	// EnvHostname is the base URL advertised by the HTTP server.
 	EnvHostname = "HOSTNAME"
+	// EnvTimezone sets the default site timezone used when users have not
+	// configured their own.
+	EnvTimezone = "TIMEZONE"
 	// EnvHSTSHeader sets the Strict-Transport-Security header value.
 	EnvHSTSHeader = "HSTS_HEADER"
 	// EnvSessionName sets the cookie name used for session data.

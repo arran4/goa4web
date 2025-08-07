@@ -15,7 +15,7 @@
         <td>{{ .Idwriting }}</td>
         <td>{{ .Title.String }}</td>
         <td>{{ .Username.String }}</td>
-        <td>{{ .Published.Time }}</td>
+        <td>{{ localTime .Published.Time }}</td>
         <td><a href="/writings/{{ .Idwriting }}">View</a></td>
     </tr>
     {{ end }}

@@ -15,7 +15,7 @@ const (
 
 // PrivateTopic represents a private conversation with a computed title.
 type PrivateTopic struct {
-	*db.Forumtopic
+	*db.ListPrivateTopicsByUserIDRow
 	DisplayTitle string
 }
 
@@ -48,7 +48,7 @@ func (cd *CoreData) PrivateForumTopics() ([]*PrivateTopic, error) {
 			if len(names) > 1 && t.Title.Valid && t.Title.String != "" {
 				title = fmt.Sprintf("%s (%s)", title, t.Title.String)
 			}
-			pts = append(pts, &PrivateTopic{Forumtopic: t, DisplayTitle: title})
+			pts = append(pts, &PrivateTopic{ListPrivateTopicsByUserIDRow: t, DisplayTitle: title})
 		}
 		return pts, nil
 	})

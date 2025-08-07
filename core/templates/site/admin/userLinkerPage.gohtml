@@ -5,7 +5,7 @@
     {{- range .Links }}
     <tr>
         <td><a href="/admin/linker/links/link/{{ .Idlinker }}">{{ .Idlinker }}</a></td>
-        <td>{{ if .Listed.Valid }}{{ .Listed.Time }}{{ end }}</td>
+        <td>{{ if .Listed.Valid }}{{ localTime .Listed.Time }}{{ end }}</td>
         <td>{{ if .Title.Valid }}{{ .Title.String }}{{ end }}</td>
         <td>{{ if .Url.Valid }}<a href="{{ .Url.String }}" target="_blank">{{ .Url.String }}</a>{{ end }}</td>
         <td><a href="/linker/show/{{ .Idlinker }}">View</a></td>

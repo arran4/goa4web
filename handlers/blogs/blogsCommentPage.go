@@ -69,7 +69,7 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !(cd.HasGrant("blogs", "entry", "view", blog.Idblogs) ||
-		cd.HasGrant("blogs", "entry", "comment", blog.Idblogs) ||
+		cd.HasGrant("blogs", "entry", "reply", blog.Idblogs) ||
 		cd.SelectedThreadCanReply()) {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return

@@ -352,10 +352,10 @@ func TestProcessEventAutoSubscribe(t *testing.T) {
 	q := db.New(conn)
 	n := New(WithQueries(q), WithConfig(cfg))
 
-	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size", "auto_subscribe_replies"}).
-		AddRow(1, 0, 1, nil, 0, true)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT idpreferences, language_idlanguage, users_idusers, emailforumupdates, page_size, auto_subscribe_replies FROM preferences WHERE users_idusers = ?")).
-		WithArgs(int32(1)).WillReturnRows(prefRows)
+        prefRows := sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size", "auto_subscribe_replies", "timezone"}).
+                AddRow(1, 0, 1, nil, 0, true, nil)
+        mock.ExpectQuery(regexp.QuoteMeta("SELECT idpreferences, language_idlanguage, users_idusers, emailforumupdates, page_size, auto_subscribe_replies, timezone FROM preferences WHERE users_idusers = ?")).
+                WithArgs(int32(1)).WillReturnRows(prefRows)
 
 	pattern := buildPatterns(tasks.TaskString("AutoSub"), "/forum/topic/7/thread/42")[0]
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT users_idusers FROM subscriptions WHERE pattern = ? AND method = ?")).

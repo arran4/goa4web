@@ -94,3 +94,32 @@ func TestLatestNewsRespectsPermissions(t *testing.T) {
 		t.Fatalf("expectations: %v", err)
 	}
 }
+
+func TestAddmodeSkipsAdminLinks(t *testing.T) {
+	req := httptest.NewRequest("GET", "/", nil)
+	cd := &common.CoreData{AdminMode: true}
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+
+	funcs := cd.Funcs(req)
+	addmode := funcs["addmode"].(func(string) string)
+
+	tests := []struct {
+		in   string
+		want string
+	}{
+		{"/admin", "/admin"},
+		{"/admin/tools", "/admin/tools"},
+		{"/admin/tools?flag=1", "/admin/tools?flag=1"},
+		{"http://example.com/admin", "http://example.com/admin"},
+		{"/administrator", "/administrator?mode=admin"},
+		{"/user", "/user?mode=admin"},
+		{"/user?id=1", "/user?id=1&mode=admin"},
+	}
+
+	for _, tt := range tests {
+		if got := addmode(tt.in); got != tt.want {
+			t.Errorf("addmode(%q) = %q, want %q", tt.in, got, tt.want)
+		}
+	}
+}

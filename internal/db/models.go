@@ -383,6 +383,7 @@ type Preference struct {
 	Emailforumupdates    sql.NullBool
 	PageSize             int32
 	AutoSubscribeReplies bool
+	Timezone             sql.NullString
 }
 
 type Role struct {

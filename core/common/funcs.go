@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -21,7 +22,7 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 	mapper := cd.ImageURLMapper
 	return map[string]any{
 		"cd":        func() *CoreData { return cd },
-		"now":       func() time.Time { return time.Now() },
+		"now":       func() time.Time { return time.Now().In(cd.Location()) },
 		"csrfField": func() template.HTML { return csrf.TemplateField(r) },
 		"csrfToken": func() string { return csrf.Token(r) },
 		"version":   func() string { return goa4web.Version },
@@ -59,6 +60,8 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 			}
 			return string(out)
 		},
+		"trim":      strings.TrimSpace,
+		"localTime": func(t time.Time) time.Time { return t.In(cd.Location()) },
 		"firstline": func(s string) string {
 			return strings.Split(s, "\n")[0]
 		},
@@ -88,6 +91,11 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 			cd, _ := r.Context().Value(consts.KeyCoreData).(*CoreData)
 			if cd == nil || !cd.AdminMode {
 				return u
+			}
+			if parsed, err := url.Parse(u); err == nil {
+				if parsed.Path == "/admin" || strings.HasPrefix(parsed.Path, "/admin/") {
+					return u
+				}
 			}
 			if strings.Contains(u, "?") {
 				return u + "&mode=admin"

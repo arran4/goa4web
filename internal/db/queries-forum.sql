@@ -227,6 +227,22 @@ INSERT INTO forumcategory (forumcategory_idforumcategory, language_idlanguage, t
 -- name: SystemCreateForumTopic :execlastid
 INSERT INTO forumtopic (forumcategory_idforumcategory, language_idlanguage, title, description) VALUES (?, ?, ?, ?);
 
+-- name: CreateForumTopicForPoster :execlastid
+INSERT INTO forumtopic (forumcategory_idforumcategory, language_idlanguage, title, description)
+SELECT sqlc.arg(forumcategory_id), sqlc.arg(language_id), sqlc.arg(title), sqlc.arg(description)
+WHERE EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='forum'
+      AND (g.item='category' OR g.item IS NULL)
+      AND g.action='post'
+      AND g.active=1
+      AND (g.item_id = sqlc.arg(grant_category_id) OR g.item_id IS NULL)
+      AND (g.user_id = sqlc.arg(grantee_id) OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (
+          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(poster_id)
+      ))
+  );
+
 -- name: SystemGetForumTopicByTitle :one
 SELECT *
 FROM forumtopic
@@ -261,8 +277,19 @@ WHERE th.forumtopic_idforumtopic=sqlc.arg(topic_id)
 ORDER BY th.lastaddition DESC;
 
 -- name: ListPrivateTopicsByUserID :many
-SELECT DISTINCT t.*
+SELECT t.idforumtopic,
+       t.lastposter,
+       t.forumcategory_idforumcategory,
+       t.language_idlanguage,
+       t.title,
+       t.description,
+       t.threads,
+       t.comments,
+       t.lastaddition,
+       t.handler,
+       lu.username AS LastPosterUsername
 FROM forumtopic t
+LEFT JOIN users lu ON lu.idusers = t.lastposter
 JOIN grants g ON g.item_id = t.idforumtopic
 WHERE t.handler = 'private'
   AND g.section = 'forum'

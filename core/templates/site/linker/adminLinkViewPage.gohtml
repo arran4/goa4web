@@ -4,7 +4,7 @@
     <p><strong>Description:</strong> {{ .Link.Description.String }}</p>
     <p><strong>Category:</strong> {{ .Link.Title_2.String }}</p>
     <p><strong>Poster:</strong> {{ .Link.Username.String }}</p>
-    <p><strong>Listed:</strong> {{ if .Link.Listed.Valid }}{{ .Link.Listed.Time }}{{ end }}</p>
+    <p><strong>Listed:</strong> {{ if .Link.Listed.Valid }}{{ localTime .Link.Listed.Time }}{{ end }}</p>
     <p>
         <a href="/admin/linker/links/link/{{ .Link.Idlinker }}/edit">Edit</a> |
         <a href="/admin/linker/links/link/{{ .Link.Idlinker }}/grants">Permissions</a> |

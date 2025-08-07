@@ -125,8 +125,7 @@ func (ReplyBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	if !(cd.HasGrant("blogs", "entry", "comment", blog.Idblogs) ||
-		cd.HasGrant("blogs", "entry", "reply", blog.Idblogs)) {
+	if !cd.HasGrant("blogs", "entry", "reply", blog.Idblogs) {
 		return handlers.ErrRedirectOnSamePageHandler(handlers.ErrForbidden)
 	}
 

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -23,13 +24,5 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 		cd.StartLink = "/admin/blogs?offset=0"
 	}
 	cd.PageTitle = "Blog Admin"
-	rows, err := cd.Queries().GetUserRoles(r.Context())
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
-		return
-	}
-	data := struct {
-		Roles []*db.GetUserRolesRow
-	}{Roles: rows}
 	handlers.TemplateHandler(w, r, "blogsAdminPage.gohtml", data)
 }

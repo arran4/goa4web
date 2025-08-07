@@ -135,13 +135,13 @@ func (q *Queries) AdminListAllCommentsWithThreadInfo(ctx context.Context, arg Ad
 	return items, nil
 }
 
-const createCommentForCommenter = `-- name: CreateCommentForCommenter :execlastid
+const createCommentInSectionForCommenter = `-- name: CreateCommentInSectionForCommenter :execlastid
 INSERT INTO comments (language_idlanguage, users_idusers, forumthread_id, text, written)
 SELECT ?, ?, ?, ?, NOW()
 WHERE EXISTS (
     SELECT 1 FROM grants g
-    WHERE g.section = 'forum'
-      AND (g.item = 'thread' OR g.item IS NULL)
+    WHERE g.section = ?
+      AND (g.item = ? OR g.item IS NULL)
       AND g.action = 'reply'
       AND g.active = 1
       AND (g.item_id = ? OR g.item_id IS NULL)
@@ -152,23 +152,26 @@ WHERE EXISTS (
   )
 `
 
-type CreateCommentForCommenterParams struct {
-	LanguageID         int32
-	CommenterID        int32
-	ForumthreadID      int32
-	Text               sql.NullString
-	GrantForumthreadID sql.NullInt32
-	GranteeID          sql.NullInt32
+type CreateCommentInSectionForCommenterParams struct {
+	LanguageID    int32
+	CommenterID   sql.NullInt32
+	ForumthreadID int32
+	Text          sql.NullString
+	Section       string
+	ItemType      sql.NullString
+	ItemID        sql.NullInt32
 }
 
-func (q *Queries) CreateCommentForCommenter(ctx context.Context, arg CreateCommentForCommenterParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, createCommentForCommenter,
+func (q *Queries) CreateCommentInSectionForCommenter(ctx context.Context, arg CreateCommentInSectionForCommenterParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, createCommentInSectionForCommenter,
 		arg.LanguageID,
 		arg.CommenterID,
 		arg.ForumthreadID,
 		arg.Text,
-		arg.GrantForumthreadID,
-		arg.GranteeID,
+		arg.Section,
+		arg.ItemType,
+		arg.ItemID,
+		arg.CommenterID,
 		arg.CommenterID,
 	)
 	if err != nil {

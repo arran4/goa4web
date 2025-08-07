@@ -114,14 +114,7 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 			return fmt.Errorf("create reply grant %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
-	cid, err := queries.CreateCommentForCommenter(r.Context(), db.CreateCommentForCommenterParams{
-		LanguageID:         0,
-		CommenterID:        creator,
-		ForumthreadID:      threadID,
-		Text:               sql.NullString{String: body, Valid: body != ""},
-		GrantForumthreadID: sql.NullInt32{Int32: threadID, Valid: true},
-		GranteeID:          sql.NullInt32{Int32: creator, Valid: creator != 0},
-	})
+	cid, err := cd.CreateForumCommentForCommenter(creator, threadID, topicID, 0, body)
 	if err != nil {
 		return fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

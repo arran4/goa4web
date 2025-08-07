@@ -1,7 +1,6 @@
 package forum
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -12,7 +11,6 @@ import (
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/workers/postcountworker"
 	"github.com/arran4/goa4web/workers/searchworker"
@@ -116,22 +114,13 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-
 	text := r.PostFormValue("replytext")
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
 	uid, _ := session.Values["UID"].(int32)
 
 	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)
 
-	cid, err := queries.CreateCommentForCommenter(r.Context(), db.CreateCommentForCommenterParams{
-		LanguageID:         int32(languageId),
-		CommenterID:        uid,
-		ForumthreadID:      threadRow.Idforumthread,
-		Text:               sql.NullString{String: text, Valid: true},
-		GrantForumthreadID: sql.NullInt32{Int32: threadRow.Idforumthread, Valid: true},
-		GranteeID:          sql.NullInt32{Int32: uid, Valid: true},
-	})
+	cid, err := cd.CreateForumCommentForCommenter(uid, threadRow.Idforumthread, topicRow.Idforumtopic, int32(languageId), text)
 	if err != nil {
 		log.Printf("Error: CreateComment: %s", err)
 		return fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(err))

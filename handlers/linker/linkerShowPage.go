@@ -164,14 +164,7 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 
 	endUrl := fmt.Sprintf("/linker/show/%d", linkId)
 
-	cid, err := queries.CreateCommentForCommenter(r.Context(), db.CreateCommentForCommenterParams{
-		LanguageID:         int32(languageId),
-		CommenterID:        uid,
-		ForumthreadID:      pthid,
-		Text:               sql.NullString{String: text, Valid: true},
-		GrantForumthreadID: sql.NullInt32{Int32: pthid, Valid: true},
-		GranteeID:          sql.NullInt32{Int32: uid, Valid: true},
-	})
+	cid, err := cd.CreateLinkerCommentForCommenter(uid, pthid, int32(linkId), int32(languageId), text)
 	if err != nil {
 		log.Printf("Error: createComment: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)

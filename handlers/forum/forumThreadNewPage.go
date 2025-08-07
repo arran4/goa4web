@@ -109,7 +109,8 @@ func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 }
 
 func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	vars := mux.Vars(r)
 	topicId, err := strconv.Atoi(vars["topic"])
 	if err != nil {
@@ -162,14 +163,7 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d", topicId, threadId)
 
-	cid, err := queries.CreateCommentForCommenter(r.Context(), db.CreateCommentForCommenterParams{
-		LanguageID:         int32(languageId),
-		CommenterID:        uid,
-		ForumthreadID:      int32(threadId),
-		Text:               sql.NullString{String: text, Valid: true},
-		GrantForumthreadID: sql.NullInt32{Int32: int32(threadId), Valid: true},
-		GranteeID:          sql.NullInt32{Int32: uid, Valid: true},
-	})
+	cid, err := cd.CreateForumCommentForCommenter(uid, int32(threadId), int32(topicId), int32(languageId), text)
 	if err != nil {
 		log.Printf("Error: makeThread: %s", err)
 		return fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(err))

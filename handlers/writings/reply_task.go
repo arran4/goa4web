@@ -144,14 +144,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("language parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	cid, err := queries.CreateCommentForCommenter(r.Context(), db.CreateCommentForCommenterParams{
-		LanguageID:         int32(languageID),
-		CommenterID:        uid,
-		ForumthreadID:      pthid,
-		Text:               sql.NullString{String: text, Valid: true},
-		GrantForumthreadID: sql.NullInt32{Int32: pthid, Valid: true},
-		GranteeID:          sql.NullInt32{Int32: uid, Valid: true},
-	})
+	cid, err := cd.CreateWritingCommentForCommenter(uid, pthid, writing.Idwriting, int32(languageID), text)
 	if err != nil {
 		return fmt.Errorf("create comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

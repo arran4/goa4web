@@ -266,14 +266,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	endUrl := fmt.Sprintf("/imagebbss/imagebbs/%d/comments", bid)
 
-	cid, err := queries.CreateCommentForCommenter(r.Context(), db.CreateCommentForCommenterParams{
-		LanguageID:         int32(languageId),
-		CommenterID:        uid,
-		ForumthreadID:      pthid,
-		Text:               sql.NullString{String: text, Valid: true},
-		GrantForumthreadID: sql.NullInt32{Int32: pthid, Valid: true},
-		GranteeID:          sql.NullInt32{Int32: uid, Valid: true},
-	})
+	cid, err := cd.CreateImageBBSCommentForCommenter(uid, pthid, int32(bid), int32(languageId), text)
 	if err != nil {
 		return fmt.Errorf("create comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

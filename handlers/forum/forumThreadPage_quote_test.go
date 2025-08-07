@@ -49,9 +49,9 @@ func TestThreadPageQuotePrefillsReply(t *testing.T) {
 			"idcomments", "forumthread_id", "users_idusers", "language_idlanguage", "written", "text", "deleted_at", "last_index", "username", "is_owner",
 		}).AddRow(int32(2), int32(1), int32(1), int32(1), sql.NullTime{}, sql.NullString{String: "hi", Valid: true}, sql.NullTime{}, sql.NullTime{}, sql.NullString{String: "alice", Valid: true}, false))
 
-	mock.ExpectQuery(".*").
-		WithArgs(int32(1), "forum", sql.NullString{String: "topic", Valid: true}, "reply", sql.NullInt32{Int32: 1, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}).
-		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+	mock.ExpectQuery("SELECT category_path").
+		WithArgs(int32(1)).
+		WillReturnRows(sqlmock.NewRows([]string{"idforumcategory", "title"}))
 
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
@@ -69,7 +69,7 @@ func TestThreadPageQuotePrefillsReply(t *testing.T) {
 
 	q := db.New(dbconn)
 	cfg := config.NewRuntimeConfig()
-	cd := common.NewCoreData(req.Context(), q, cfg, common.WithSession(sess), common.WithUserRoles([]string{"user"}))
+	cd := common.NewCoreData(req.Context(), q, cfg, common.WithSession(sess), common.WithUserRoles([]string{"administrator"}))
 	cd.SetCurrentSection("forum")
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)

@@ -172,16 +172,6 @@ func TestProcessReaderStreaming(t *testing.T) {
 	}
 }
 
-func TestHrTagClosing(t *testing.T) {
-	c := New()
-	c.SetInput("[hr]\n")
-	got, _ := io.ReadAll(c.Process())
-	want := "<hr>/><br />\n"
-	if string(got) != want {
-		t.Errorf("got %q want %q", string(got), want)
-	}
-}
-
 func TestImageURLMapper(t *testing.T) {
 	mapper := func(tag, val string) string {
 		return "map:" + tag + ":" + val
@@ -202,5 +192,29 @@ func TestImageClass(t *testing.T) {
 	want := "<img class=\"a4code-image\" src=\"http://example.com/foo.jpg\" />"
 	if string(got) != want {
 		t.Fatalf("img got %q want %q", got, want)
+	}
+}
+
+func TestHrTag(t *testing.T) {
+	tests := []struct {
+		name     string
+		codeType CodeType
+		want     string
+	}{
+		{"HTML", CTHTML, "<hr /><br />\n"},
+		{"TagStrip", CTTagStrip, "\n"},
+		{"WordsOnly", CTWordsOnly, " "},
+		{"TableOfContents", CTTableOfContents, "<br />\n"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := New()
+			c.CodeType = tt.codeType
+			c.SetInput("[hr]\n")
+			got, _ := io.ReadAll(c.Process())
+			if string(got) != tt.want {
+				t.Errorf("got %q want %q", string(got), tt.want)
+			}
+		})
 	}
 }

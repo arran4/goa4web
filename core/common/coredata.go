@@ -1090,6 +1090,21 @@ func (cd *CoreData) ForumThreadByID(id int32, ops ...lazy.Option[*db.GetThreadLa
 	return lazy.Map(&cd.forumThreadRows, &cd.mapMu, id, fetch, ops...)
 }
 
+// ForumThreadByIDForSection returns a single forum thread lazily loading it once per ID.
+func (cd *CoreData) ForumThreadByIDForSection(id int32, section string, ops ...lazy.Option[*db.GetThreadLastPosterAndPermsRow]) (*db.GetThreadLastPosterAndPermsRow, error) {
+	fetch := func(i int32) (*db.GetThreadLastPosterAndPermsRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		return cd.queries.GetThreadByIdForSectionForReplier(cd.ctx, db.GetThreadByIdForSectionForReplierParams{
+			ReplierID: cd.UserID,
+			ThreadID:  i,
+			Section:   section,
+		})
+	}
+	return lazy.Map(&cd.forumThreadRows, &cd.mapMu, id, fetch, ops...)
+}
+
 // ForumThreads loads the threads for a forum topic once per topic.
 func (cd *CoreData) ForumThreads(topicID int32) ([]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow, error) {
 	if cd.forumThreads == nil {
@@ -1813,12 +1828,23 @@ func (cd *CoreData) SelectedThreadCanReply() bool {
 		if !allowed || cd.currentThreadID == 0 {
 			return allowed, nil
 		}
-		th, err := cd.SelectedThread()
-		if err != nil || th == nil {
-			return false, nil
-		}
-		if th.Locked.Valid && th.Locked.Bool {
-			return false, nil
+		switch cd.currentSection {
+		case "forum":
+			th, err := cd.SelectedThread()
+			if err != nil || th == nil {
+				return false, nil
+			}
+			if th.Locked.Valid && th.Locked.Bool {
+				return false, nil
+			}
+		default:
+			th, err := cd.ForumThreadByIDForSecttion(sdaf)
+			if err != nil || th == nil {
+				return false, nil
+			}
+			if th.Locked.Valid && th.Locked.Bool {
+				return false, nil
+			}
 		}
 		return allowed, nil
 	})

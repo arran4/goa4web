@@ -232,6 +232,10 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 	if err != nil && err != io.EOF {
 		return err
 	}
+	_, err = a.readWhiteSpace(r)
+	if err != nil && err != io.EOF {
+		return err
+	}
 	switch strings.ToLower(cmd) {
 	case "*", "b", "bold":
 		switch a.CodeType {
@@ -487,3 +491,25 @@ func (c *A4code2html) Process() io.Reader {
 
 // Error returns the last processing error, if any.
 func (c *A4code2html) Error() error { return c.err }
+
+func (c *A4code2html) readWhiteSpace(r *bufio.Reader) (string, error) {
+	result := new(bytes.Buffer)
+	for {
+		ch, err := r.ReadByte()
+		if err != nil {
+			if err == io.EOF {
+				return result.String(), io.EOF
+			}
+			return result.String(), nil
+		}
+		switch ch {
+		case '\n', ' ', '\r', '\t':
+			result.WriteByte(ch)
+		default:
+			if err := r.UnreadByte(); err != nil {
+				return "", err
+			}
+			return result.String(), nil
+		}
+	}
+}

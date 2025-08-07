@@ -241,6 +241,7 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 				common.WithImageSigner(s.ImageSigner),
 				common.WithCustomQueries(queries),
 				common.WithLinkSigner(s.LinkSigner),
+				common.WithImageURLMapper(s.ImageSigner.MapURL),
 				common.WithSession(session),
 				common.WithEmailProvider(provider),
 				common.WithAbsoluteURLBase(base),

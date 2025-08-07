@@ -214,7 +214,7 @@ type Querier interface {
 	CreateBlogEntryForWriter(ctx context.Context, arg CreateBlogEntryForWriterParams) (int64, error)
 	// This query adds a new entry to the "bookmarks" table for a lister.
 	CreateBookmarksForLister(ctx context.Context, arg CreateBookmarksForListerParams) error
-	CreateCommentForCommenter(ctx context.Context, arg CreateCommentForCommenterParams) (int64, error)
+	CreateCommentInSectionForCommenter(ctx context.Context, arg CreateCommentInSectionForCommenterParams) (int64, error)
 	CreateFAQQuestionForWriter(ctx context.Context, arg CreateFAQQuestionForWriterParams) error
 	CreateForumTopicForPoster(ctx context.Context, arg CreateForumTopicForPosterParams) (int64, error)
 	CreateImagePostForPoster(ctx context.Context, arg CreateImagePostForPosterParams) (int64, error)

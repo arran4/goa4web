@@ -52,7 +52,7 @@ func TestNewsReplyTaskEventData(t *testing.T) {
 			AddRow(uid, nil, "alice", nil))
 
 	mock.ExpectExec("INSERT INTO comments").
-		WithArgs(int32(1), uid, pthid, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), uid).
+		WithArgs(int32(1), uid, pthid, sqlmock.AnyArg(), "news", sqlmock.AnyArg(), int32(pid), sqlmock.AnyArg(), uid).
 		WillReturnResult(sqlmock.NewResult(5, 1))
 
 	store := sessions.NewCookieStore([]byte("test"))

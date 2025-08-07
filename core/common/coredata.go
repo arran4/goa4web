@@ -1102,21 +1102,6 @@ func (cd *CoreData) ForumThreadByID(id int32, ops ...lazy.Option[*db.GetThreadLa
 	return lazy.Map(&cd.forumThreadRows, &cd.mapMu, id, fetch, ops...)
 }
 
-// ForumThreadByIDForSection returns a single forum thread lazily loading it once per ID.
-func (cd *CoreData) ForumThreadByIDForSection(id int32, section string, ops ...lazy.Option[*db.GetThreadLastPosterAndPermsRow]) (*db.GetThreadLastPosterAndPermsRow, error) {
-	fetch := func(i int32) (*db.GetThreadLastPosterAndPermsRow, error) {
-		if cd.queries == nil {
-			return nil, nil
-		}
-		return cd.queries.GetThreadByIdForSectionForReplier(cd.ctx, db.GetThreadByIdForSectionForReplierParams{
-			ReplierID: cd.UserID,
-			ThreadID:  i,
-			Section:   section,
-		})
-	}
-	return lazy.Map(&cd.forumThreadRows, &cd.mapMu, id, fetch, ops...)
-}
-
 // ForumThreads loads the threads for a forum topic once per topic.
 func (cd *CoreData) ForumThreads(topicID int32) ([]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow, error) {
 	if cd.forumThreads == nil {
@@ -1810,57 +1795,104 @@ func (cd *CoreData) SelectedThreadLoaded() *db.GetThreadLastPosterAndPermsRow {
 // selected thread based on the loaded section and item identifiers.
 func (cd *CoreData) SelectedThreadCanReply() bool {
 	v, _ := cd.selectedThreadCanReply.Load(func() (bool, error) {
-		var allowed bool
 		switch cd.currentSection {
 		case "blogs":
-			if cd.currentBlogID != 0 {
-				allowed = cd.HasGrant("blogs", "entry", "reply", cd.currentBlogID)
-			}
+			return cd.SelectedBlogThreadCanReply(), nil
 		case "news":
-			if cd.currentNewsPostID != 0 {
-				allowed = cd.HasGrant("news", "post", "reply", cd.currentNewsPostID)
-			}
+			return cd.SelectedNewsThreadCanReply(), nil
 		case "writing":
-			if cd.currentWritingID != 0 {
-				allowed = cd.HasGrant("writing", "article", "reply", cd.currentWritingID)
-			}
+			return cd.SelectedWritingThreadCanReply(), nil
 		case "forum":
-			if cd.currentTopicID != 0 {
-				allowed = cd.HasGrant("forum", "topic", "reply", cd.currentTopicID)
-			}
+			return cd.SelectedForumThreadCanReply(), nil
 		case "imagebbs":
-			if cd.currentBoardID != 0 {
-				allowed = cd.HasGrant("imagebbs", "board", "reply", cd.currentBoardID)
-			}
+			return cd.SelectedImageBBSThreadCanReply(), nil
 		case "linker":
-			if cd.currentLinkID != 0 {
-				allowed = cd.HasGrant("linker", "link", "reply", cd.currentLinkID)
-			}
-		}
-		if !allowed || cd.currentThreadID == 0 {
-			return allowed, nil
-		}
-		switch cd.currentSection {
-		case "forum":
-			th, err := cd.SelectedThread()
-			if err != nil || th == nil {
-				return false, nil
-			}
-			if th.Locked.Valid && th.Locked.Bool {
-				return false, nil
-			}
+			return cd.SelectedLinkerThreadCanReply(), nil
 		default:
-			th, err := cd.ForumThreadByIDForSecttion(sdaf)
-			if err != nil || th == nil {
-				return false, nil
-			}
-			if th.Locked.Valid && th.Locked.Bool {
-				return false, nil
-			}
+			return false, nil
 		}
-		return allowed, nil
 	})
 	return v
+}
+
+func (cd *CoreData) sectionThreadCanReply(section string, itemID int32) bool {
+	if section == "" || itemID == 0 || cd.currentThreadID == 0 {
+		return false
+	}
+	if !cd.HasGrant(section, sectionItemType(section), "reply", itemID) {
+		return false
+	}
+	th, err := cd.ForumThreadByID(cd.currentThreadID)
+	if err != nil || th == nil {
+		return false
+	}
+	if th.Locked.Valid && th.Locked.Bool {
+		return false
+	}
+	return true
+}
+
+func (cd *CoreData) SelectedNewsThreadCanReply() bool {
+	return cd.sectionThreadCanReply("news", cd.currentNewsPostID)
+}
+
+func (cd *CoreData) SelectedForumThreadCanReply() bool {
+	return cd.sectionThreadCanReply("forum", cd.currentTopicID)
+}
+
+func (cd *CoreData) SelectedBlogThreadCanReply() bool {
+	return cd.sectionThreadCanReply("blogs", cd.currentBlogID)
+}
+
+func (cd *CoreData) SelectedImageBBSThreadCanReply() bool {
+	return cd.sectionThreadCanReply("imagebbs", cd.currentBoardID)
+}
+
+func (cd *CoreData) SelectedWritingThreadCanReply() bool {
+	return cd.sectionThreadCanReply("writing", cd.currentWritingID)
+}
+
+func (cd *CoreData) SelectedLinkerThreadCanReply() bool {
+	return cd.sectionThreadCanReply("linker", cd.currentLinkID)
+}
+
+func (cd *CoreData) CreateCommentInSectionForCommenter(section, itemType string, itemID, threadID, commenterID, languageID int32, text string) (int64, error) {
+	if cd.queries == nil {
+		return 0, nil
+	}
+	return cd.queries.CreateCommentInSectionForCommenter(cd.ctx, db.CreateCommentInSectionForCommenterParams{
+		LanguageID:    languageID,
+		CommenterID:   sql.NullInt32{Int32: commenterID, Valid: commenterID != 0},
+		ForumthreadID: threadID,
+		Text:          sql.NullString{String: text, Valid: text != ""},
+		Section:       section,
+		ItemType:      sql.NullString{String: itemType, Valid: itemType != ""},
+		ItemID:        sql.NullInt32{Int32: itemID, Valid: itemID != 0},
+	})
+}
+
+func (cd *CoreData) CreateNewsCommentForCommenter(commenterID, threadID, postID, languageID int32, text string) (int64, error) {
+	return cd.CreateCommentInSectionForCommenter("news", "post", postID, threadID, commenterID, languageID, text)
+}
+
+func (cd *CoreData) CreateForumCommentForCommenter(commenterID, threadID, topicID, languageID int32, text string) (int64, error) {
+	return cd.CreateCommentInSectionForCommenter("forum", "topic", topicID, threadID, commenterID, languageID, text)
+}
+
+func (cd *CoreData) CreateBlogCommentForCommenter(commenterID, threadID, entryID, languageID int32, text string) (int64, error) {
+	return cd.CreateCommentInSectionForCommenter("blogs", "entry", entryID, threadID, commenterID, languageID, text)
+}
+
+func (cd *CoreData) CreateImageBBSCommentForCommenter(commenterID, threadID, boardID, languageID int32, text string) (int64, error) {
+	return cd.CreateCommentInSectionForCommenter("imagebbs", "board", boardID, threadID, commenterID, languageID, text)
+}
+
+func (cd *CoreData) CreateWritingCommentForCommenter(commenterID, threadID, articleID, languageID int32, text string) (int64, error) {
+	return cd.CreateCommentInSectionForCommenter("writing", "article", articleID, threadID, commenterID, languageID, text)
+}
+
+func (cd *CoreData) CreateLinkerCommentForCommenter(commenterID, threadID, linkID, languageID int32, text string) (int64, error) {
+	return cd.CreateCommentInSectionForCommenter("linker", "link", linkID, threadID, commenterID, languageID, text)
 }
 
 // CanEditComment reports whether the current user may edit the supplied

@@ -282,14 +282,7 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	endUrl := fmt.Sprintf("/linker/comments/%d", linkId)
 
-	cid, err := queries.CreateCommentForCommenter(r.Context(), db.CreateCommentForCommenterParams{
-		LanguageID:         int32(languageId),
-		CommenterID:        uid,
-		ForumthreadID:      pthid,
-		Text:               sql.NullString{String: text, Valid: true},
-		GrantForumthreadID: sql.NullInt32{Int32: pthid, Valid: true},
-		GranteeID:          sql.NullInt32{Int32: uid, Valid: true},
-	})
+	cid, err := cd.CreateLinkerCommentForCommenter(uid, pthid, int32(linkId), int32(languageId), text)
 	if err != nil {
 		return fmt.Errorf("create comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

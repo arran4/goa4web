@@ -19,6 +19,7 @@ func (*fakeCD) CanEditComment(*db.GetCommentsByThreadIdForUserRow) bool       { 
 func (*fakeCD) CommentEditURL(*db.GetCommentsByThreadIdForUserRow) string     { return "" }
 func (*fakeCD) CommentEditSaveURL(*db.GetCommentsByThreadIdForUserRow) string { return "" }
 func (*fakeCD) CommentAdminURL(*db.GetCommentsByThreadIdForUserRow) string    { return "" }
+func (*fakeCD) Location() *time.Location                                      { return time.UTC }
 
 func TestCommentTimestampSelfLink(t *testing.T) {
 	funcMap := template.FuncMap{
@@ -26,6 +27,7 @@ func TestCommentTimestampSelfLink(t *testing.T) {
 		"localTime":   func(t time.Time) time.Time { return t },
 		"a4code2html": func(s string) template.HTML { return template.HTML(s) },
 		"csrfField":   func() template.HTML { return "" },
+		"since":       func(time.Time, time.Time) string { return "" },
 	}
 	tmpl := template.Must(template.New("root").Funcs(funcMap).ParseFiles("site/comment.gohtml", "site/languageCombobox.gohtml"))
 	var buf bytes.Buffer
@@ -36,11 +38,12 @@ func TestCommentTimestampSelfLink(t *testing.T) {
 		Posterusername: sql.NullString{String: "alice", Valid: true},
 		IsOwner:        true,
 	}
-	if err := tmpl.ExecuteTemplate(&buf, "comment", cmt); err != nil {
+	data := map[string]any{"Comment": cmt, "Number": 1, "Prev": 0}
+	if err := tmpl.ExecuteTemplate(&buf, "comment", data); err != nil {
 		t.Fatalf("execute template: %v", err)
 	}
 	out := buf.String()
-	if !strings.Contains(out, "id=\"comment-1\" href=\"#comment-1\"") {
+	if !strings.Contains(out, "href=\"#c1\">#1</a>") {
 		t.Fatalf("missing comment self-link: %s", out)
 	}
 }

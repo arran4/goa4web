@@ -2,9 +2,15 @@
     {{ if gt (cd.Offset) 0 }}
         <br>Skipping {{ cd.Offset }} comments.<br><br><br>
     {{ end }}
-    {{ range cd.SelectedSectionThreadComments }}
-        {{ template "comment" . }}
-    {{ else }}
-        No comments.
-    {{ end }}
+    <div class="comments">
+        {{ $prev := 0 }}
+        {{ range $i, $c := cd.SelectedSectionThreadComments }}
+            {{ $num := add (add $i 1) (cd.Offset) }}
+            <hr id="c{{ $num }}">
+            {{ template "comment" (dict "Comment" $c "Number" $num "Prev" $prev) }}
+            {{ $prev = $c }}
+        {{ else }}
+            No comments.
+        {{ end }}
+    </div>
 {{ end }}

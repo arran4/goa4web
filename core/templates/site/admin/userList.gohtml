@@ -1,6 +1,6 @@
 {{ template "head" $ }}
 <ul>
-{{ range .Users }}
+{{ range cd.AdminListUsers }}
     <li><a href="/admin/user/{{ .Idusers }}">{{ .Username.String }}</a></li>
 {{ end }}
 </ul>

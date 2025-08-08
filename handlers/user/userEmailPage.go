@@ -32,11 +32,10 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Email Settings"
-	queries := cd.Queries()
 	user, _ := cd.CurrentUser()
 	pref, _ := cd.Preference()
 
-	emails, _ := queries.ListUserEmailsForLister(r.Context(), db.ListUserEmailsForListerParams{UserID: cd.UserID, ListerID: cd.UserID})
+	emails, _ := cd.UserEmails(cd.UserID)
 	var verified, unverified []*db.UserEmail
 	for _, e := range emails {
 		if e.VerifiedAt.Valid {

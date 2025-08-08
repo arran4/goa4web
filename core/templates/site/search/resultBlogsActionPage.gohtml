@@ -1,12 +1,13 @@
 {{ template "head" $ }}
+    {{- $cd := cd -}}
     Search blogs:<br>
-    {{- if .NoResults }}
+    {{- if $cd.SearchBlogsNoResults }}
         <p>Nothing found.</p>
-    {{- else if .EmptyWords }}
+    {{- else if $cd.SearchBlogsEmptyWords }}
         <p>Not enough words, words too small, or no words. Please re-enter, add more, larger, or some words.</p>
     {{- else }}
         <ul>
-        {{- range $i, $result := .Blogs }}
+        {{- range $i, $result := $cd.SearchBlogsResults }}
             <li>{{ $i }}: <a href="/blogs/blog/{{$result.Idblogs}}">{{ $result.Text.String }}</a></li>
         {{- end }}
         </ul>

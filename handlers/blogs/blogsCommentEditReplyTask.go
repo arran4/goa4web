@@ -78,16 +78,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	if err = queries.UpdateCommentForEditor(r.Context(), db.UpdateCommentForEditorParams{
-		LanguageID: int32(languageId),
-		Text: sql.NullString{
-			String: text,
-			Valid:  true,
-		},
-		CommentID:   int32(commentId),
-		CommenterID: uid,
-		EditorID:    sql.NullInt32{Int32: uid, Valid: uid != 0},
-	}); err != nil {
+	if err = cd.UpdateBlogReply(int32(commentId), uid, int32(languageId), text); err != nil {
 		return fmt.Errorf("update comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 

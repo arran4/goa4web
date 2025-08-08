@@ -47,7 +47,8 @@ func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if _, err := mail.ParseAddress(emailAddr); err != nil {
 		return handlers.RefreshDirectHandler{TargetURL: "/usr/email?error=invalid+email"}
 	}
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	if ue, err := queries.GetUserEmailByEmail(r.Context(), emailAddr); err == nil && ue.VerifiedAt.Valid {
 		return handlers.RefreshDirectHandler{TargetURL: "/usr/email?error=email+exists"}
 	}
@@ -57,12 +58,11 @@ func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	code := hex.EncodeToString(buf[:])
 	expire := time.Now().Add(24 * time.Hour)
-	if err := queries.InsertUserEmail(r.Context(), db.InsertUserEmailParams{UserID: uid, Email: emailAddr, VerifiedAt: sql.NullTime{}, LastVerificationCode: sql.NullString{String: code, Valid: true}, VerificationExpiresAt: sql.NullTime{Time: expire, Valid: true}, NotificationPriority: 0}); err != nil {
+	if err := cd.AddUserEmail(uid, emailAddr, code, expire); err != nil {
 		log.Printf("insert user email: %v", err)
 		return fmt.Errorf("insert user email fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	path := "/usr/email/verify?code=" + code
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cfg := cd.Config
 	page := "http://" + r.Host + path
 	if cfg.HTTPHostname != "" {
@@ -130,16 +130,8 @@ func (AddEmailTask) Notify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id, _ := strconv.Atoi(r.FormValue("id"))
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	val, _ := queries.GetMaxNotificationPriority(r.Context(), uid)
-	var maxPr int32
-	switch v := val.(type) {
-	case int64:
-		maxPr = int32(v)
-	case int32:
-		maxPr = v
-	}
-	if err := queries.SetNotificationPriorityForLister(r.Context(), db.SetNotificationPriorityForListerParams{ListerID: uid, NotificationPriority: maxPr + 1, ID: int32(id)}); err != nil {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if err := cd.AddEmail(uid, int32(id)); err != nil {
 		log.Printf("set notification priority: %v", err)
 	}
 	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)

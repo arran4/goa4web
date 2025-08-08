@@ -1,7 +1,6 @@
 package blogs
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -9,7 +8,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/lazy"
 	"github.com/gorilla/mux"
 )
@@ -24,18 +22,13 @@ func AdminBlogEditPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, handlers.ErrBadRequest)
 		return
 	}
-	queries := cd.Queries()
-	row, err := queries.GetBlogEntryForListerByID(r.Context(), db.GetBlogEntryForListerByIDParams{
-		ListerID: cd.UserID,
-		ID:       int32(blogID),
-		UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-	})
+	row, err := cd.EditableBlogPost(int32(blogID))
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Blog not found"))
 		return
 	}
-	cd.BlogEntryByID(int32(blogID), lazy.Set[*db.GetBlogEntryForListerByIDRow](row))
+	cd.BlogEntryByID(int32(blogID), lazy.Set(row))
 	cd.SetCurrentBlog(int32(blogID))
 	cd.PageTitle = "Admin Edit Blog"
 	if _, err := cd.Languages(); err != nil {
@@ -43,12 +36,10 @@ func AdminBlogEditPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	type Data struct {
-		Blog    *db.GetBlogEntryForListerByIDRow
 		Mode    string
 		PostURL string
 	}
 	data := Data{
-		Blog:    row,
 		Mode:    "Edit",
 		PostURL: fmt.Sprintf("/blogs/blog/%d/edit", blogID),
 	}

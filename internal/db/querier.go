@@ -31,7 +31,6 @@ type Querier interface {
 	AdminCountWordList(ctx context.Context) (int64, error)
 	AdminCountWordListByPrefix(ctx context.Context, prefix interface{}) (int64, error)
 	AdminCreateFAQCategory(ctx context.Context, name sql.NullString) error
-	AdminCreateForumCategory(ctx context.Context, arg AdminCreateForumCategoryParams) error
 	AdminCreateGrant(ctx context.Context, arg AdminCreateGrantParams) (int64, error)
 	AdminCreateImageBoard(ctx context.Context, arg AdminCreateImageBoardParams) error
 	// AdminCreateLanguage adds a new language.
@@ -191,8 +190,6 @@ type Querier interface {
 	AdminSetTemplateOverride(ctx context.Context, arg AdminSetTemplateOverrideParams) error
 	AdminUpdateBannedIp(ctx context.Context, arg AdminUpdateBannedIpParams) error
 	AdminUpdateFAQQuestionAnswer(ctx context.Context, arg AdminUpdateFAQQuestionAnswerParams) error
-	AdminUpdateForumCategory(ctx context.Context, arg AdminUpdateForumCategoryParams) error
-	AdminUpdateForumTopic(ctx context.Context, arg AdminUpdateForumTopicParams) error
 	AdminUpdateGrantActive(ctx context.Context, arg AdminUpdateGrantActiveParams) error
 	AdminUpdateImageBoard(ctx context.Context, arg AdminUpdateImageBoardParams) error
 	AdminUpdateImagePost(ctx context.Context, arg AdminUpdateImagePostParams) error
@@ -412,7 +409,6 @@ type Querier interface {
 	// SystemCountLanguages counts all languages.
 	SystemCountLanguages(ctx context.Context) (int64, error)
 	SystemCountRecentLoginAttempts(ctx context.Context, arg SystemCountRecentLoginAttemptsParams) (int64, error)
-	SystemCreateForumTopic(ctx context.Context, arg SystemCreateForumTopicParams) (int64, error)
 	SystemCreateGrant(ctx context.Context, arg SystemCreateGrantParams) (int64, error)
 	SystemCreateNotification(ctx context.Context, arg SystemCreateNotificationParams) error
 	SystemCreateSearchWord(ctx context.Context, word string) (int64, error)

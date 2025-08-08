@@ -1,5 +1,4 @@
--- name: AdminUpdateForumCategory :exec
-UPDATE forumcategory SET title = ?, description = ?, forumcategory_idforumcategory = ?, language_idlanguage = ? WHERE idforumcategory = ?;
+UPDATE forumcategory SET title = ?, description = ?, forumcategory_idforumcategory = ?, language_idlanguage = sqlc.arg(category_language_id) WHERE idforumcategory = ?;
 
 -- name: GetAllForumCategoriesWithSubcategoryCount :many
 SELECT c.*, COUNT(c2.idforumcategory) as SubcategoryCount,
@@ -82,8 +81,7 @@ FROM forumtopic t
 ORDER BY t.idforumtopic
 LIMIT ? OFFSET ?;
 
--- name: AdminUpdateForumTopic :exec
-UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ?, language_idlanguage = ? WHERE idforumtopic = ?;
+UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ?, language_idlanguage = sqlc.arg(topic_language_id) WHERE idforumtopic = ?;
 
 -- name: GetAllForumTopicsByCategoryIdForUserWithLastPosterName :many
 WITH role_ids AS (
@@ -240,15 +238,13 @@ WHERE (
     )
 );
 
--- name: AdminCreateForumCategory :exec
-INSERT INTO forumcategory (forumcategory_idforumcategory, language_idlanguage, title, description) VALUES (?, ?, ?, ?);
+INSERT INTO forumcategory (forumcategory_idforumcategory, language_idlanguage, title, description) VALUES (?, sqlc.arg(category_language_id), ?, ?);
 
--- name: SystemCreateForumTopic :execlastid
-INSERT INTO forumtopic (forumcategory_idforumcategory, language_idlanguage, title, description, handler) VALUES (?, ?, ?, ?, ?);
+INSERT INTO forumtopic (forumcategory_idforumcategory, language_idlanguage, title, description, handler) VALUES (?, sqlc.arg(topic_language_id), ?, ?, ?);
 
 -- name: CreateForumTopicForPoster :execlastid
 INSERT INTO forumtopic (forumcategory_idforumcategory, language_idlanguage, title, description, handler)
-SELECT sqlc.arg(forumcategory_id), sqlc.arg(language_id), sqlc.arg(title), sqlc.arg(description), sqlc.arg(handler)
+SELECT sqlc.arg(forumcategory_id), sqlc.arg(forum_lang), sqlc.arg(title), sqlc.arg(description), sqlc.arg(handler)
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section=sqlc.arg(section)

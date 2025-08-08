@@ -59,7 +59,7 @@ type Blog struct {
 	Idblogs            int32
 	ForumthreadID      sql.NullInt32
 	UsersIdusers       int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	Blog               sql.NullString
 	Written            time.Time
 	DeletedAt          sql.NullTime
@@ -82,7 +82,7 @@ type Comment struct {
 	Idcomments         int32
 	ForumthreadID      int32
 	UsersIdusers       int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	Written            sql.NullTime
 	Text               sql.NullString
 	DeletedAt          sql.NullTime
@@ -194,7 +194,7 @@ type ExternalLink struct {
 type Faq struct {
 	Idfaq                        int32
 	FaqcategoriesIdfaqcategories int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	UsersIdusers                 int32
 	Answer                       sql.NullString
 	Question                     sql.NullString
@@ -217,7 +217,7 @@ type FaqRevision struct {
 type Forumcategory struct {
 	Idforumcategory              int32
 	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	Title                        sql.NullString
 	Description                  sql.NullString
 }
@@ -236,7 +236,7 @@ type Forumtopic struct {
 	Idforumtopic                 int32
 	Lastposter                   int32
 	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	Title                        sql.NullString
 	Description                  sql.NullString
 	Threads                      sql.NullInt32

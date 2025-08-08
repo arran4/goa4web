@@ -116,7 +116,7 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, sql.ErrNoRows) {
 		ptidi, err := queries.SystemCreateForumTopic(r.Context(), db.SystemCreateForumTopicParams{
 			ForumcategoryIdforumcategory: 0,
-			LanguageIdlanguage:           link.LanguageIdlanguage,
+			TopicLanguageID:              sql.NullInt32{Int32: link.LanguageIdlanguage, Valid: link.LanguageIdlanguage != 0},
 			Title: sql.NullString{
 				String: LinkerTopicName,
 				Valid:  true,

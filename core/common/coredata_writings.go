@@ -153,7 +153,7 @@ func (cd *CoreData) CreateWritingReply(w *db.GetWritingForListerByIDRow, languag
 	if errors.Is(err, sql.ErrNoRows) {
 		ptidi, err := cd.queries.SystemCreateForumTopic(cd.ctx, db.SystemCreateForumTopicParams{
 			ForumcategoryIdforumcategory: 0,
-			LanguageIdlanguage:           w.LanguageIdlanguage,
+			TopicLanguageID:              sql.NullInt32{Int32: w.LanguageIdlanguage, Valid: w.LanguageIdlanguage != 0},
 			Title:                        sql.NullString{String: WritingTopicName, Valid: true},
 			Description:                  sql.NullString{String: WritingTopicDescription, Valid: true},
 			Handler:                      "writing",

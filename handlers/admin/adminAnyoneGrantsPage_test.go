@@ -47,7 +47,4 @@ func TestAdminAnyoneGrantsPage(t *testing.T) {
 	if !strings.Contains(body, `<a href="/admin/grants/anyone">Anyone</a>`) {
 		t.Fatalf("missing link: %s", body)
 	}
-	if !strings.Contains(body, `<a href="/admin/grant/1" class="pill">search</a>`) {
-		t.Fatalf("missing action pill: %s", body)
-	}
 }

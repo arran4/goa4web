@@ -1,9 +1,10 @@
 {{ template "head" $ }}
+    {{- $cd := cd -}}
     Search linker:<br>
-    {{- with .Links }}
-        {{- if $.NoResults }}
+    {{- with $cd.SearchLinkerItems }}
+        {{- if $cd.SearchLinkerNoResults }}
             <p>Nothing found.</p>
-        {{- else if $.EmptyWords }}
+        {{- else if $cd.SearchLinkerEmptyWords }}
             <p>Not enough words, words too small, or no words. Please re-enter, add more, larger, or some words.</p>
         {{- else }}
             <ul>

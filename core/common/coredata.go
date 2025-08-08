@@ -183,6 +183,18 @@ type CoreData struct {
 	privateForumTopics               lazy.Value[[]*PrivateTopic]
 	publicWritings                   map[string]*lazy.Value[[]*db.ListPublicWritingsInCategoryForListerRow]
 	roleRows                         map[int32]*lazy.Value[*db.Role]
+	searchBlogs                      []*db.Blog
+	searchBlogsEmptyWords            bool
+	searchBlogsNoResults             bool
+	searchComments                   []*db.GetCommentsByIdsForUserWithThreadInfoRow
+	searchCommentsEmptyWords         bool
+	searchCommentsNoResults          bool
+	searchLinkerEmptyWords           bool
+	searchLinkerItems                []*db.GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow
+	searchLinkerNoResults            bool
+	searchWritings                   []*db.ListWritingsByIDsForListerRow
+	searchWritingsEmptyWords         bool
+	searchWritingsNoResults          bool
 	selectedThreadCanReply           lazy.Value[bool]
 	subImageBoards                   map[int32]*lazy.Value[[]*db.Imageboard]
 	subscriptionRows                 lazy.Value[[]*db.ListSubscriptionsByUserRow]

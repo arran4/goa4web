@@ -1,20 +1,12 @@
 package search
 
 import (
-	"database/sql"
-	"errors"
-	"fmt"
-	"github.com/arran4/goa4web/core/consts"
-	"log"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/workers/searchworker"
-
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -24,179 +16,14 @@ var searchForumTask = &SearchForumTask{TaskString: TaskSearchForum}
 var _ tasks.Task = (*SearchForumTask)(nil)
 
 func (SearchForumTask) Action(w http.ResponseWriter, r *http.Request) any {
-	type Data struct {
-		Comments           []*db.GetCommentsByIdsForUserWithThreadInfoRow
-		CommentsNoResults  bool
-		CommentsEmptyWords bool
-	}
-
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if !common.CanSearch(cd, "forum") {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return nil
 	}
-	data := Data{}
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return handlers.SessionFetchFail{}
-	}
-	uid, _ := session.Values["UID"].(int32)
-
-	if comments, emptyWords, noResults, err := ForumCommentSearchNotInRestrictedTopic(w, r, queries, uid); err != nil {
+	if err := cd.SearchForum(r); err != nil {
+		handlers.RenderErrorPage(w, r, err)
 		return nil
-	} else {
-		data.Comments = comments
-		data.CommentsNoResults = emptyWords
-		data.CommentsEmptyWords = noResults
 	}
-
-	return handlers.TemplateWithDataHandler("resultForumActionPage.gohtml", data)
-}
-
-func ForumCommentSearchNotInRestrictedTopic(w http.ResponseWriter, r *http.Request, queries db.Querier, uid int32) ([]*db.GetCommentsByIdsForUserWithThreadInfoRow, bool, bool, error) {
-	searchWords := searchutil.BreakupTextToWords(r.PostFormValue("searchwords"))
-	var commentIds []int32
-
-	if len(searchWords) == 0 {
-		return nil, true, false, nil
-	}
-
-	for i, word := range searchWords {
-		if i == 0 {
-			ids, err := queries.ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopic(r.Context(), db.ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopicParams{
-				ListerID: uid,
-				Word: sql.NullString{
-					String: word,
-					Valid:  true,
-				},
-				UserID: sql.NullInt32{Int32: uid, Valid: uid != 0},
-			})
-			if err != nil {
-				switch {
-				case errors.Is(err, sql.ErrNoRows):
-				default:
-					log.Printf("ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopic Error: %s", err)
-					handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
-					return nil, false, false, err
-				}
-			}
-			commentIds = ids
-		} else {
-			ids, err := queries.ListCommentIDsBySearchWordNextForListerNotInRestrictedTopic(r.Context(), db.ListCommentIDsBySearchWordNextForListerNotInRestrictedTopicParams{
-				ListerID: uid,
-				Word: sql.NullString{
-					String: word,
-					Valid:  true,
-				},
-				Ids:    commentIds,
-				UserID: sql.NullInt32{Int32: uid, Valid: uid != 0},
-			})
-			if err != nil {
-				switch {
-				case errors.Is(err, sql.ErrNoRows):
-				default:
-					log.Printf("ListCommentIDsBySearchWordNextForListerNotInRestrictedTopic Error: %s", err)
-					handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
-					return nil, false, false, err
-				}
-			}
-			commentIds = ids
-		}
-		if len(commentIds) == 0 {
-			return nil, false, true, nil
-		}
-	}
-
-	comments, err := queries.GetCommentsByIdsForUserWithThreadInfo(r.Context(), db.GetCommentsByIdsForUserWithThreadInfoParams{
-		ViewerID: uid,
-		Ids:      commentIds,
-		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
-	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-		default:
-			log.Printf("getCommentsByIds Error: %s", err)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
-			return nil, false, false, err
-		}
-	}
-
-	return comments, false, false, nil
-}
-
-func ForumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request, queries db.Querier, forumTopicId []int32, uid int32) ([]*db.GetCommentsByIdsForUserWithThreadInfoRow, bool, bool, error) {
-	searchWords := searchutil.BreakupTextToWords(r.PostFormValue("searchwords"))
-	var commentIds []int32
-
-	if len(searchWords) == 0 {
-		return nil, true, false, nil
-	}
-
-	for i, word := range searchWords {
-		if i == 0 {
-			ids, err := queries.ListCommentIDsBySearchWordFirstForListerInRestrictedTopic(r.Context(), db.ListCommentIDsBySearchWordFirstForListerInRestrictedTopicParams{
-				ListerID: uid,
-				Word: sql.NullString{
-					String: word,
-					Valid:  true,
-				},
-				Ftids:  forumTopicId,
-				UserID: sql.NullInt32{Int32: uid, Valid: uid != 0},
-			})
-			if err != nil {
-				switch {
-				case errors.Is(err, sql.ErrNoRows):
-				default:
-					log.Printf("ListCommentIDsBySearchWordFirstForListerInRestrictedTopic Error: %s", err)
-					handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
-					return nil, false, false, err
-				}
-			}
-			commentIds = ids
-		} else {
-			ids, err := queries.ListCommentIDsBySearchWordNextForListerInRestrictedTopic(r.Context(), db.ListCommentIDsBySearchWordNextForListerInRestrictedTopicParams{
-				ListerID: uid,
-				Word: sql.NullString{
-					String: word,
-					Valid:  true,
-				},
-				Ids:    commentIds,
-				Ftids:  forumTopicId,
-				UserID: sql.NullInt32{Int32: uid, Valid: uid != 0},
-			})
-			if err != nil {
-				switch {
-				case errors.Is(err, sql.ErrNoRows):
-				default:
-
-					log.Printf("ListCommentIDsBySearchWordNextForListerInRestrictedTopic Error: %s", err)
-					handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
-					return nil, false, false, err
-				}
-			}
-			commentIds = ids
-		}
-		if len(commentIds) == 0 {
-			return nil, false, true, nil
-		}
-	}
-
-	comments, err := queries.GetCommentsByIdsForUserWithThreadInfo(r.Context(), db.GetCommentsByIdsForUserWithThreadInfoParams{
-		ViewerID: uid,
-		Ids:      commentIds,
-		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
-	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-		default:
-			log.Printf("getCommentsByIds Error: %s", err)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
-			return nil, false, false, err
-		}
-	}
-
-	return comments, false, false, nil
+	return handlers.TemplateWithDataHandler("resultForumActionPage.gohtml", struct{}{})
 }

@@ -211,6 +211,8 @@ type CoreData struct {
 	writerWritings                   map[int32]*lazy.Value[[]*db.ListPublicWritingsByUserForListerRow]
 	writingCategories                lazy.Value[[]*db.WritingCategory]
 	writingRows                      map[int32]*lazy.Value[*db.GetWritingForListerByIDRow]
+	absoluteURLBase                  lazy.Value[string]
+	dbRegistry                       *dbdrivers.Registry
 
   // marks records which template sections have been rendered to avoid
 	// duplicate output when re-rendering after an error.

@@ -56,19 +56,16 @@ func AdminForumPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session, ok := core.GetSessionOrFail(w, r)
+	_, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
-	uid, _ := session.Values["UID"].(int32)
 
 	queries := cd.Queries()
-	rows, err := queries.GetForumTopicsForUser(r.Context(), db.GetForumTopicsForUserParams{
-		ViewerID:      uid,
-		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
+
+	rows, err := cd.ForumTopics(0)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		log.Printf("showTableTopics Error: %s", err)
+		log.Printf("ForumTopics Error: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
@@ -83,6 +80,7 @@ func AdminForumPage(w http.ResponseWriter, r *http.Request) {
 			Threads:                      row.Threads,
 			Comments:                     row.Comments,
 			Lastaddition:                 row.Lastaddition,
+			Lastposterusername:           row.Lastposterusername,
 		})
 	}
 

@@ -2,7 +2,6 @@ package writings
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"math"
 	"net/http"
@@ -30,33 +29,17 @@ func (WritingCategoryChangeTask) Action(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		return fmt.Errorf("pcid parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cid, err := strconv.Atoi(r.PostFormValue("cid"))
 	if err != nil {
 		return fmt.Errorf("cid parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-
-	if path, loop, err := writingCategoryWouldLoop(r.Context(), queries, int32(cid), int32(parentID)); err != nil {
-		return fmt.Errorf("check writing category loop %w", handlers.ErrRedirectOnSamePageHandler(err))
-	} else if loop {
-		return common.UserError{ErrorMessage: fmt.Sprintf("invalid parent category: loop %v", path)}
-	}
-
-	if err := queries.AdminUpdateWritingCategory(r.Context(), db.AdminUpdateWritingCategoryParams{
-		Title: sql.NullString{
-			Valid:  true,
-			String: name,
-		},
-		Description: sql.NullString{
-			Valid:  true,
-			String: desc,
-		},
-		Idwritingcategory: int32(cid),
-		WritingCategoryID: int32(parentID),
-	}); err != nil {
+	if err := cd.ChangeWritingCategory(int32(cid), int32(parentID), name, desc); err != nil {
+		if _, ok := err.(common.UserError); ok {
+			return err
+		}
 		return fmt.Errorf("update writing category fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-
 	return nil
 }
 

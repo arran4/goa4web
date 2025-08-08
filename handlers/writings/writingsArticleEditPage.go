@@ -1,7 +1,6 @@
 package writings
 
 import (
-	"database/sql"
 	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
@@ -31,9 +30,6 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd.PageTitle = "Edit Article"
 
-	// article ID is validated by the RequireWritingAuthor middleware, so we
-	// no longer need to parse it here.
-
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -41,7 +37,7 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 	data.UserId = uid
 
-	writing, err := cd.CurrentWriting()
+	writing, err := cd.EditableArticle()
 	if err != nil || writing == nil {
 		log.Printf("current writing: %v", err)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
@@ -62,7 +58,7 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 	// RequireWritingAuthor middleware loads the writing and validates access.
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	writing, err := cd.CurrentWriting()
+	writing, err := cd.EditableArticle()
 	if err != nil || writing == nil {
 		log.Printf("current writing: %v", err)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
@@ -77,16 +73,7 @@ func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 
 	queries := cd.Queries()
 
-	if err := queries.UpdateWritingForWriter(r.Context(), db.UpdateWritingForWriterParams{
-		Title:      sql.NullString{Valid: true, String: title},
-		Abstract:   sql.NullString{Valid: true, String: abstract},
-		Content:    sql.NullString{Valid: true, String: body},
-		Private:    sql.NullBool{Valid: true, Bool: private},
-		LanguageID: int32(languageId),
-		WritingID:  writing.Idwriting,
-		WriterID:   cd.UserID,
-		GranteeID:  sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-	}); err != nil {
+	if err := cd.UpdateWriting(writing, title, abstract, body, private, int32(languageId)); err != nil {
 		log.Printf("updateWriting Error: %s", err)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return

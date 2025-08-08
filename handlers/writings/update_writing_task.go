@@ -1,7 +1,6 @@
 package writings
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -10,7 +9,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -30,7 +28,7 @@ func (UpdateWritingTask) Page(w http.ResponseWriter, r *http.Request) { ArticleE
 
 func (UpdateWritingTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	writing, err := cd.CurrentWriting()
+	writing, err := cd.Article()
 	if err != nil || writing == nil {
 		return fmt.Errorf("current writing fail %w", err)
 	}
@@ -49,16 +47,7 @@ func (UpdateWritingTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	queries := cd.Queries()
 
-	if err := queries.UpdateWritingForWriter(r.Context(), db.UpdateWritingForWriterParams{
-		Title:      sql.NullString{Valid: true, String: title},
-		Abstract:   sql.NullString{Valid: true, String: abstract},
-		Content:    sql.NullString{Valid: true, String: body},
-		Private:    sql.NullBool{Valid: true, Bool: private},
-		LanguageID: int32(languageID),
-		WritingID:  writing.Idwriting,
-		WriterID:   cd.UserID,
-		GranteeID:  sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-	}); err != nil {
+	if err := cd.UpdateWriting(writing, title, abstract, body, private, int32(languageID)); err != nil {
 		return fmt.Errorf("update writing fail %w", err)
 	}
 

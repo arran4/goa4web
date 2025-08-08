@@ -29,8 +29,7 @@ func WriterPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = fmt.Sprintf("Writer: %s", username)
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	u, err := queries.SystemGetUserByUsername(r.Context(), sql.NullString{String: username, Valid: true})
+	u, err := cd.WriterByUsername(username)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

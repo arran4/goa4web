@@ -22,7 +22,6 @@ func AdminBlogPage(w http.ResponseWriter, r *http.Request) {
 		RoleName sql.NullString
 	}
 	type Data struct {
-		Blog   *db.GetBlogEntryForListerByIDRow
 		Grants []GrantInfo
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -33,19 +32,16 @@ func AdminBlogPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, handlers.ErrBadRequest)
 		return
 	}
-	queries := cd.Queries()
-	blog, err := queries.GetBlogEntryForListerByID(r.Context(), db.GetBlogEntryForListerByIDParams{
-		ListerID: cd.UserID,
-		ID:       int32(blogID),
-		UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-	})
+	cd.SetCurrentBlog(int32(blogID))
+	blog, err := cd.BlogPost()
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Blog not found"))
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Blog %d Admin", blog.Idblogs)
-	data := Data{Blog: blog}
+	data := Data{}
+	queries := cd.Queries()
 	grants, err := queries.ListGrants(r.Context())
 	if err != nil {
 		log.Printf("ListGrants: %v", err)

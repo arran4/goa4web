@@ -180,7 +180,7 @@ func (ReplyBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	endUrl := fmt.Sprintf("/blogs/blog/%d/comments", bid)
 
-	cid, err := cd.CreateBlogCommentForCommenter(uid, pthid, int32(bid), int32(languageId), text)
+	cid, err := cd.CreateBlogReply(uid, pthid, int32(bid), int32(languageId), text)
 	if err != nil {
 		return fmt.Errorf("create comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

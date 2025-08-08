@@ -56,7 +56,7 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID, thr
 	}
 	threadID = int32(thid)
 	for _, uid := range p.ParticipantIDs {
-		for _, act := range []string{"see", "view"} {
+		for _, act := range []string{"see", "view", "post", "reply"} {
 			if _, err := cd.queries.SystemCreateGrant(cd.ctx, db.SystemCreateGrantParams{
 				UserID:   sql.NullInt32{Int32: uid, Valid: true},
 				RoleID:   sql.NullInt32{},
@@ -70,19 +70,6 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID, thr
 			}); err != nil {
 				return 0, 0, fmt.Errorf("create %s grant %w", act, err)
 			}
-		}
-		if _, err := cd.queries.SystemCreateGrant(cd.ctx, db.SystemCreateGrantParams{
-			UserID:   sql.NullInt32{Int32: uid, Valid: true},
-			RoleID:   sql.NullInt32{},
-			Section:  "forum",
-			Item:     sql.NullString{String: "thread", Valid: true},
-			RuleType: "allow",
-			ItemID:   sql.NullInt32{Int32: threadID, Valid: true},
-			ItemRule: sql.NullString{},
-			Action:   "reply",
-			Extra:    sql.NullString{},
-		}); err != nil {
-			return 0, 0, fmt.Errorf("create reply grant %w", err)
 		}
 	}
 	cid, err := cd.CreateForumCommentForCommenter(p.CreatorID, threadID, topicID, 0, p.Body)

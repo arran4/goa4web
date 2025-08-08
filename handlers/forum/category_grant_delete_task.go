@@ -22,7 +22,6 @@ var _ tasks.Task = (*CategoryGrantDeleteTask)(nil)
 
 func (CategoryGrantDeleteTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := cd.Queries()
 	vars := mux.Vars(r)
 	categoryID, err := strconv.Atoi(vars["category"])
 	if err != nil {
@@ -32,7 +31,7 @@ func (CategoryGrantDeleteTask) Action(w http.ResponseWriter, r *http.Request) an
 	if err != nil {
 		return fmt.Errorf("grant id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	if err := queries.AdminDeleteGrant(r.Context(), int32(grantID)); err != nil {
+	if err := cd.RevokeForumCategory(int32(grantID)); err != nil {
 		log.Printf("DeleteGrant: %v", err)
 		return fmt.Errorf("delete grant %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

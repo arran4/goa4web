@@ -42,10 +42,7 @@ func TestPageTemplatesRender(t *testing.T) {
 		data any
 	}{
 		{"newsPage", struct{}{}},
-		{"faqPage", struct {
-			*common.CoreData
-			FAQ any
-		}{&common.CoreData{}, nil}},
+		{"faqPage", struct{ *common.CoreData }{&common.CoreData{}}},
 		{"userPage", struct{ *common.CoreData }{&common.CoreData{}}},
 		{"linkerPage", struct {
 			*common.CoreData

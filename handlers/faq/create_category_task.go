@@ -1,7 +1,6 @@
 package faq
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 
@@ -25,9 +24,8 @@ func (CreateCategoryTask) Match(r *http.Request, m *mux.RouteMatch) bool {
 func (CreateCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 	text := r.PostFormValue("cname")
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := cd.Queries()
 
-	if err := queries.AdminCreateFAQCategory(r.Context(), sql.NullString{String: text, Valid: true}); err != nil {
+	if err := cd.CreateFAQCategory(text); err != nil {
 		return fmt.Errorf("create category fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 

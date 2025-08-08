@@ -198,6 +198,18 @@ type CoreData struct {
 	privateForumTopics               lazy.Value[[]*PrivateTopic]
 	publicWritings                   map[string]*lazy.Value[[]*db.ListPublicWritingsInCategoryForListerRow]
 	roleRows                         map[int32]*lazy.Value[*db.Role]
+	searchBlogs                      []*db.Blog
+	searchBlogsEmptyWords            bool
+	searchBlogsNoResults             bool
+	searchComments                   []*db.GetCommentsByIdsForUserWithThreadInfoRow
+	searchCommentsEmptyWords         bool
+	searchCommentsNoResults          bool
+	searchLinkerEmptyWords           bool
+	searchLinkerItems                []*db.GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow
+	searchLinkerNoResults            bool
+	searchWritings                   []*db.ListWritingsByIDsForListerRow
+	searchWritingsEmptyWords         bool
+	searchWritingsNoResults          bool
 	selectedThreadCanReply           lazy.Value[bool]
 	subImageBoards                   map[int32]*lazy.Value[[]*db.Imageboard]
 	subscriptionRows                 lazy.Value[[]*db.ListSubscriptionsByUserRow]
@@ -213,8 +225,6 @@ type CoreData struct {
 	writerWritings                   map[int32]*lazy.Value[[]*db.ListPublicWritingsByUserForListerRow]
 	writingCategories                lazy.Value[[]*db.WritingCategory]
 	writingRows                      map[int32]*lazy.Value[*db.GetWritingForListerByIDRow]
-	absoluteURLBase                  lazy.Value[string]
-	dbRegistry                       *dbdrivers.Registry
 
 	// marks records which template sections have been rendered to avoid
 	// duplicate output when re-rendering after an error.

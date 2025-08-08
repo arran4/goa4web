@@ -109,89 +109,90 @@ type CoreData struct {
 	queries       db.Querier
 
 	// Keep this sorted
-	adminLatestNews          lazy.Value[[]*db.AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow]
-	adminLinkerItemRows      map[int32]*lazy.Value[*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow]
-	adminRequest             map[int32]*lazy.Value[*db.AdminRequestQueue]
-	adminRequestComments     map[int32]*lazy.Value[[]*db.AdminRequestComment]
-	adminRequests            map[string]*lazy.Value[[]*db.AdminRequestQueue]
-	adminUserBookmarkSize    map[int32]*lazy.Value[int]
-	adminUserComments        map[int32]*lazy.Value[[]*db.AdminUserComment]
-	adminUserEmails          map[int32]*lazy.Value[[]*db.UserEmail]
-	adminUserGrants          map[int32]*lazy.Value[[]*db.Grant]
-	adminUserRoles           map[int32]*lazy.Value[[]*db.GetPermissionsByUserIDRow]
-	adminUserStats           map[int32]*lazy.Value[*db.AdminUserPostCountsByIDRow]
-	allRoles                 lazy.Value[[]*db.Role]
-	annMu                    sync.Mutex
-	announcement             lazy.Value[*db.GetActiveAnnouncementWithNewsForListerRow]
-	blogEntries              map[int32]*lazy.Value[*db.GetBlogEntryForListerByIDRow]
-	bloggers                 lazy.Value[[]*db.ListBloggersForListerRow]
-	blogListOffset           int
-	blogListRows             lazy.Value[[]*db.ListBlogEntriesForListerRow]
-	blogListByAuthorRows     lazy.Value[[]*db.ListBlogEntriesByAuthorForListerRow]
-	blogListUID              int32
-	bookmarks                lazy.Value[*db.GetBookmarksForUserRow]
-	currentBlogID            int32
-	currentBoardID           int32
-	currentCommentID         int32
-	currentImagePostID       int32
-	currentLinkID            int32
-	currentOffset            int
-	currentNewsPostID        int32
-	currentProfileUserID     int32
-	currentRequestID         int32
-	currentRoleID            int32
-	currentSection           string
-	currentTemplateError     string
-	currentTemplateName      string
-	currentThreadID          int32
-	currentTopicID           int32
-	currentCategoryID        int32
-	currentWritingID         int32
-	event                    *eventbus.TaskEvent
-	externalLinks            map[string]*lazy.Value[*db.ExternalLink]
-	forumCategories          lazy.Value[[]*db.Forumcategory]
-	forumComments            map[int32]*lazy.Value[*db.GetCommentByIdForUserRow]
-	forumThreadComments      map[int32]*lazy.Value[[]*db.GetCommentsByThreadIdForUserRow]
-	forumThreadRows          map[int32]*lazy.Value[*db.GetThreadLastPosterAndPermsRow]
-	forumThreads             map[int32]*lazy.Value[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow]
-	forumTopicLists          map[int32]*lazy.Value[[]*db.Forumtopic]
-	forumTopics              map[int32]*lazy.Value[*db.GetForumTopicByIdForUserRow]
-	imageBoardPosts          map[int32]*lazy.Value[[]*db.ListImagePostsByBoardForListerRow]
-	imageBoards              lazy.Value[[]*db.Imageboard]
-	imagePostRows            map[int32]*lazy.Value[*db.GetImagePostByIDForListerRow]
-	langs                    lazy.Value[[]*db.Language]
-	latestNews               lazy.Value[[]*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow]
-	latestWritings           lazy.Value[[]*db.Writing]
-	linkerCategories         lazy.Value[[]*db.GetLinkerCategoryLinkCountsRow]
-	linkerCategoryLinks      map[int32]*lazy.Value[[]*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow]
-	linkerCategoryRows       map[int32]*lazy.Value[*db.LinkerCategory]
-	linkerCatsAll            lazy.Value[[]*db.LinkerCategory]
-	linkerCatsForUser        lazy.Value[[]*db.LinkerCategory]
-	newsAnnouncements        map[int32]*lazy.Value[*db.SiteAnnouncement]
-	newsPosts                map[int32]*lazy.Value[*db.GetForumThreadIdByNewsPostIdRow]
-	notifCount               lazy.Value[int32]
-	notifications            map[string]*lazy.Value[[]*db.Notification]
-	perms                    lazy.Value[[]*db.GetPermissionsByUserIDRow]
-	pref                     lazy.Value[*db.Preference]
-	preferredLanguageID      lazy.Value[int32]
-	privateForumTopics       lazy.Value[[]*PrivateTopic]
-	publicWritings           map[string]*lazy.Value[[]*db.ListPublicWritingsInCategoryForListerRow]
-	roleRows                 map[int32]*lazy.Value[*db.Role]
-	selectedThreadCanReply   lazy.Value[bool]
-	subImageBoards           map[int32]*lazy.Value[[]*db.Imageboard]
-	subscriptionRows         lazy.Value[[]*db.ListSubscriptionsByUserRow]
-	subscriptions            lazy.Value[map[string]bool]
-	templateOverrides        map[string]*lazy.Value[string]
-	unreadCount              lazy.Value[int64]
-	user                     lazy.Value[*db.User]
-	userRoles                lazy.Value[[]string]
-	users                    map[int32]*lazy.Value[*db.SystemGetUserByIDRow]
-	userSubscriptions        lazy.Value[[]*db.ListSubscriptionsByUserRow]
-	visibleWritingCategories lazy.Value[[]*db.WritingCategory]
-	writers                  lazy.Value[[]*db.ListWritersForListerRow]
-	writerWritings           map[int32]*lazy.Value[[]*db.ListPublicWritingsByUserForListerRow]
-	writingCategories        lazy.Value[[]*db.WritingCategory]
-	writingRows              map[int32]*lazy.Value[*db.GetWritingForListerByIDRow]
+	adminLatestNews                  lazy.Value[[]*db.AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow]
+	adminLinkerItemRows              map[int32]*lazy.Value[*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow]
+	adminRequest                     map[int32]*lazy.Value[*db.AdminRequestQueue]
+	adminRequestComments             map[int32]*lazy.Value[[]*db.AdminRequestComment]
+	adminRequests                    map[string]*lazy.Value[[]*db.AdminRequestQueue]
+	adminUserBookmarkSize            map[int32]*lazy.Value[int]
+	adminUserComments                map[int32]*lazy.Value[[]*db.AdminUserComment]
+	adminUserEmails                  map[int32]*lazy.Value[[]*db.UserEmail]
+	adminUserGrants                  map[int32]*lazy.Value[[]*db.Grant]
+	adminUserRoles                   map[int32]*lazy.Value[[]*db.GetPermissionsByUserIDRow]
+	adminUserStats                   map[int32]*lazy.Value[*db.AdminUserPostCountsByIDRow]
+	allRoles                         lazy.Value[[]*db.Role]
+	annMu                            sync.Mutex
+	announcement                     lazy.Value[*db.GetActiveAnnouncementWithNewsForListerRow]
+	blogEntries                      map[int32]*lazy.Value[*db.GetBlogEntryForListerByIDRow]
+	bloggers                         lazy.Value[[]*db.ListBloggersForListerRow]
+	blogListOffset                   int
+	blogListRows                     lazy.Value[[]*db.ListBlogEntriesForListerRow]
+	blogListByAuthorRows             lazy.Value[[]*db.ListBlogEntriesByAuthorForListerRow]
+	blogListUID                      int32
+	bookmarks                        lazy.Value[*db.GetBookmarksForUserRow]
+	currentBlogID                    int32
+	currentBoardID                   int32
+	currentCommentID                 int32
+	currentImagePostID               int32
+	currentLinkID                    int32
+	currentOffset                    int
+	currentNewsPostID                int32
+	currentProfileUserID             int32
+	currentRequestID                 int32
+	currentRoleID                    int32
+	currentSection                   string
+	currentNotificationTemplateError string
+	currentNotificationTemplateName  string
+	currentError                     string
+	currentThreadID                  int32
+	currentTopicID                   int32
+	currentCategoryID                int32
+	currentWritingID                 int32
+	event                            *eventbus.TaskEvent
+	externalLinks                    map[string]*lazy.Value[*db.ExternalLink]
+	forumCategories                  lazy.Value[[]*db.Forumcategory]
+	forumComments                    map[int32]*lazy.Value[*db.GetCommentByIdForUserRow]
+	forumThreadComments              map[int32]*lazy.Value[[]*db.GetCommentsByThreadIdForUserRow]
+	forumThreadRows                  map[int32]*lazy.Value[*db.GetThreadLastPosterAndPermsRow]
+	forumThreads                     map[int32]*lazy.Value[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow]
+	forumTopicLists                  map[int32]*lazy.Value[[]*db.Forumtopic]
+	forumTopics                      map[int32]*lazy.Value[*db.GetForumTopicByIdForUserRow]
+	imageBoardPosts                  map[int32]*lazy.Value[[]*db.ListImagePostsByBoardForListerRow]
+	imageBoards                      lazy.Value[[]*db.Imageboard]
+	imagePostRows                    map[int32]*lazy.Value[*db.GetImagePostByIDForListerRow]
+	langs                            lazy.Value[[]*db.Language]
+	latestNews                       lazy.Value[[]*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow]
+	latestWritings                   lazy.Value[[]*db.Writing]
+	linkerCategories                 lazy.Value[[]*db.GetLinkerCategoryLinkCountsRow]
+	linkerCategoryLinks              map[int32]*lazy.Value[[]*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow]
+	linkerCategoryRows               map[int32]*lazy.Value[*db.LinkerCategory]
+	linkerCatsAll                    lazy.Value[[]*db.LinkerCategory]
+	linkerCatsForUser                lazy.Value[[]*db.LinkerCategory]
+	newsAnnouncements                map[int32]*lazy.Value[*db.SiteAnnouncement]
+	newsPosts                        map[int32]*lazy.Value[*db.GetForumThreadIdByNewsPostIdRow]
+	notifCount                       lazy.Value[int32]
+	notifications                    map[string]*lazy.Value[[]*db.Notification]
+	perms                            lazy.Value[[]*db.GetPermissionsByUserIDRow]
+	pref                             lazy.Value[*db.Preference]
+	preferredLanguageID              lazy.Value[int32]
+	privateForumTopics               lazy.Value[[]*PrivateTopic]
+	publicWritings                   map[string]*lazy.Value[[]*db.ListPublicWritingsInCategoryForListerRow]
+	roleRows                         map[int32]*lazy.Value[*db.Role]
+	selectedThreadCanReply           lazy.Value[bool]
+	subImageBoards                   map[int32]*lazy.Value[[]*db.Imageboard]
+	subscriptionRows                 lazy.Value[[]*db.ListSubscriptionsByUserRow]
+	subscriptions                    lazy.Value[map[string]bool]
+	notificationTemplateOverrides    map[string]*lazy.Value[string]
+	unreadCount                      lazy.Value[int64]
+	user                             lazy.Value[*db.User]
+	userRoles                        lazy.Value[[]string]
+	users                            map[int32]*lazy.Value[*db.SystemGetUserByIDRow]
+	userSubscriptions                lazy.Value[[]*db.ListSubscriptionsByUserRow]
+	visibleWritingCategories         lazy.Value[[]*db.WritingCategory]
+	writers                          lazy.Value[[]*db.ListWritersForListerRow]
+	writerWritings                   map[int32]*lazy.Value[[]*db.ListPublicWritingsByUserForListerRow]
+	writingCategories                lazy.Value[[]*db.WritingCategory]
+	writingRows                      map[int32]*lazy.Value[*db.GetWritingForListerByIDRow]
 
 	absoluteURLBase lazy.Value[string]
 	dbRegistry      *dbdrivers.Registry
@@ -1001,9 +1002,9 @@ func (cd *CoreData) CustomQueries() db.CustomQueries { return cd.customQueries }
 // DBRegistry returns the database driver registry associated with this request.
 func (cd *CoreData) DBRegistry() *dbdrivers.Registry { return cd.dbRegistry }
 
-// DefaultTemplate renders the default body for the current template.
-func (cd *CoreData) DefaultTemplate() string {
-	return defaultTemplate(cd.currentTemplateName, cd.Config)
+// DefaultNotificationTemplate renders the default body for the current notification template.
+func (cd *CoreData) DefaultNotificationTemplate() string {
+	return defaultNotificationTemplate(cd.currentNotificationTemplateName, cd.Config)
 }
 
 // EmailProvider returns the configured email provider.
@@ -1672,7 +1673,6 @@ func (cd *CoreData) DeleteFAQQuestion(id int32) error {
 	return cd.queries.AdminDeleteFAQ(cd.ctx, id)
 }
 
-
 // UserExists reports whether a user already exists with the supplied username
 // or email address.
 func (cd *CoreData) UserExists(username, email string) (bool, error) {
@@ -2071,11 +2071,14 @@ func (cd *CoreData) SetCurrentRoleID(id int32) { cd.currentRoleID = id }
 // SetCurrentSection stores the current section name.
 func (cd *CoreData) SetCurrentSection(section string) { cd.currentSection = section }
 
-// SetCurrentTemplate records the template being edited along with an error message.
-func (cd *CoreData) SetCurrentTemplate(name, errMsg string) {
-	cd.currentTemplateName = name
-	cd.currentTemplateError = errMsg
+// SetCurrentNotificationTemplate records the notification template being edited along with an error message.
+func (cd *CoreData) SetCurrentNotificationTemplate(name, errMsg string) {
+	cd.currentNotificationTemplateName = name
+	cd.currentNotificationTemplateError = errMsg
 }
+
+// SetCurrentError stores a generic error message for the current request.
+func (cd *CoreData) SetCurrentError(errMsg string) { cd.currentError = errMsg }
 
 // SetCurrentThreadAndTopic stores the requested thread and topic IDs.
 func (cd *CoreData) SetCurrentThreadAndTopic(threadID, topicID int32) {
@@ -2174,25 +2177,28 @@ func (cd *CoreData) Subscriptions() ([]*db.ListSubscriptionsByUserRow, error) {
 	})
 }
 
-// TemplateError returns the error message for template editing.
-func (cd *CoreData) TemplateError() string { return cd.currentTemplateError }
+// CurrentError returns a generic error message for the current request.
+func (cd *CoreData) CurrentError() string { return cd.currentError }
 
-// TemplateName returns the currently selected template name.
-func (cd *CoreData) TemplateName() string { return cd.currentTemplateName }
+// NotificationTemplateError returns the error message for notification template editing.
+func (cd *CoreData) NotificationTemplateError() string { return cd.currentNotificationTemplateError }
 
-// TemplateOverride returns the override body for the current template.
-func (cd *CoreData) TemplateOverride() string {
-	name := cd.currentTemplateName
+// NotificationTemplateName returns the currently selected notification template name.
+func (cd *CoreData) NotificationTemplateName() string { return cd.currentNotificationTemplateName }
+
+// NotificationTemplateOverride returns the override body for the current notification template.
+func (cd *CoreData) NotificationTemplateOverride() string {
+	name := cd.currentNotificationTemplateName
 	if name == "" {
 		return ""
 	}
-	if cd.templateOverrides == nil {
-		cd.templateOverrides = map[string]*lazy.Value[string]{}
+	if cd.notificationTemplateOverrides == nil {
+		cd.notificationTemplateOverrides = map[string]*lazy.Value[string]{}
 	}
-	lv, ok := cd.templateOverrides[name]
+	lv, ok := cd.notificationTemplateOverrides[name]
 	if !ok {
 		lv = &lazy.Value[string]{}
-		cd.templateOverrides[name] = lv
+		cd.notificationTemplateOverrides[name] = lv
 	}
 	body, err := lv.Load(func() (string, error) {
 		if cd.queries == nil {
@@ -2661,7 +2667,7 @@ func WithWritingsLimit(l int32) LatestWritingsOption {
 
 // Email template helpers
 
-func defaultTemplate(name string, cfg *config.RuntimeConfig) string {
+func defaultNotificationTemplate(name string, cfg *config.RuntimeConfig) string {
 	var buf bytes.Buffer
 	if strings.HasSuffix(name, ".gohtml") {
 		tmpl := templates.GetCompiledEmailHtmlTemplates(map[string]any{})

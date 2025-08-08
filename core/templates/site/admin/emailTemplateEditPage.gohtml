@@ -1,14 +1,14 @@
 {{ template "head" $ }}
-{{- if cd.TemplateError }}
-<p style="color:red;">{{ cd.TemplateError }}</p>
+{{- if cd.CurrentError }}
+<p style="color:red;">{{ cd.CurrentError }}</p>
 {{- end }}
 <form method="post">
     {{ csrfField }}
-    <input type="hidden" name="name" value="{{ cd.TemplateName }}">
-    <textarea name="body" cols="60" rows="15">{{ cd.TemplateOverride }}</textarea><br>
+    <input type="hidden" name="name" value="{{ cd.NotificationTemplateName }}">
+    <textarea name="body" cols="60" rows="15">{{ cd.NotificationTemplateOverride }}</textarea><br>
     <input type="submit" name="task" value="Update">
     <input type="submit" name="task" value="Delete">
 </form>
 <h3>Default</h3>
-<pre>{{ cd.DefaultTemplate }}</pre>
+<pre>{{ cd.DefaultNotificationTemplate }}</pre>
 {{ template "tail" $ }}

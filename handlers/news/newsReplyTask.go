@@ -1,10 +1,7 @@
 package news
 
 import (
-	"database/sql"
-	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -15,7 +12,6 @@ import (
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -95,124 +91,40 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	vars := mux.Vars(r)
 	pid, err := strconv.Atoi(vars["news"])
-
 	if err != nil {
 		return fmt.Errorf("post id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if pid == 0 {
-		log.Printf("Error: no bid")
-		return fmt.Errorf("no bid %w", handlers.ErrRedirectOnSamePageHandler(errors.New("No bid")))
+		return fmt.Errorf("no bid %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("No bid")))
 	}
 
 	uid, _ := session.Values["UID"].(int32)
-
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if !cd.HasGrant("news", "post", "reply", int32(pid)) {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return nil
 	}
 
-	post, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCount(r.Context(), db.GetNewsPostByIdWithWriterIdAndThreadCommentCountParams{
-		ViewerID: uid,
-		ID:       int32(pid),
-		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
-	if err != nil {
-		log.Printf("GetNewsPostByIdWithWriterIdAndThreadCommentCountForUser Error: %s", err)
-		handlers.RenderErrorPage(w, r, err)
-		return nil
-	}
-
-	var pthid = post.ForumthreadID
-	pt, err := queries.SystemGetForumTopicByTitle(r.Context(), sql.NullString{
-		String: NewsTopicName,
-		Valid:  true,
-	})
-	var ptid int32
-	if errors.Is(err, sql.ErrNoRows) {
-		ptidi, err := queries.SystemCreateForumTopic(r.Context(), db.SystemCreateForumTopicParams{
-			ForumcategoryIdforumcategory: 0,
-			LanguageIdlanguage:           post.LanguageIdlanguage,
-			Title: sql.NullString{
-				String: NewsTopicName,
-				Valid:  true,
-			},
-			Description: sql.NullString{
-				String: NewsTopicDescription,
-				Valid:  true,
-			},
-			Handler: "news",
-		})
-		if err != nil {
-			log.Printf("Error: createForumTopic: %s", err)
-			return fmt.Errorf("create forum topic fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-		}
-		ptid = int32(ptidi)
-	} else if err != nil {
-		log.Printf("Error: findForumTopicByTitle: %s", err)
-		return fmt.Errorf("find forum topic fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-	} else {
-		ptid = pt.Idforumtopic
-	}
-	if pthid == 0 {
-		pthidi, err := queries.SystemCreateThread(r.Context(), ptid)
-		if err != nil {
-			log.Printf("Error: makeThread: %s", err)
-			return fmt.Errorf("make thread fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-		}
-		pthid = int32(pthidi)
-		if err := queries.SystemAssignNewsThreadID(r.Context(), db.SystemAssignNewsThreadIDParams{
-			ForumthreadID: pthid,
-			Idsitenews:    int32(pid),
-		}); err != nil {
-			log.Printf("Error: assign_news_to_thread: %s", err)
-			return fmt.Errorf("assign news thread fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-		}
-	}
-
 	text := r.PostFormValue("replytext")
-	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
+	languageID, _ := strconv.Atoi(r.PostFormValue("language"))
 
-	endUrl := cd.AbsoluteURL(fmt.Sprintf("/news/news/%d", pid))
+	cid, ti, err := cd.CreateNewsReply(uid, int32(pid), int32(languageID), text)
+	if err != nil {
+		return fmt.Errorf("create comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
 
+	endURL := cd.AbsoluteURL(fmt.Sprintf("/news/news/%d", pid))
 	evt := cd.Event()
 	if evt.Data == nil {
 		evt.Data = map[string]any{}
 	}
-	evt.Data["CommentURL"] = endUrl
-	evt.Data["PostURL"] = endUrl
+	evt.Data["CommentURL"] = endURL
+	evt.Data["PostURL"] = endURL
 	if user, err := cd.CurrentUser(); err == nil && user != nil {
 		evt.Data["Username"] = user.Username.String
 	}
-
-	cid, err := cd.CreateNewsCommentForCommenter(uid, pthid, int32(pid), int32(languageId), text)
-	if err != nil {
-		log.Printf("Error: createComment: %s", err)
-		return fmt.Errorf("create comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-	}
-	if cid == 0 {
-		err := handlers.ErrForbidden
-		log.Printf("Error: createComment: %s", err)
-		return fmt.Errorf("create comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-	}
-
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(cid), ThreadID: pthid, TopicID: ptid}
-		}
-	}
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: int32(cid), Text: text}
-		}
-	}
+	evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(cid), ThreadID: ti.ThreadID, TopicID: ti.TopicID}
+	evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: int32(cid), Text: text}
 
 	return nil
 }

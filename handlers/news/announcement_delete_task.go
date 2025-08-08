@@ -1,18 +1,15 @@
 package news
 
 import (
-	"database/sql"
-	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"strconv"
 
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -24,22 +21,10 @@ var announcementDeleteTask = &AnnouncementDeleteTask{TaskString: TaskDelete}
 var _ tasks.Task = (*AnnouncementDeleteTask)(nil)
 
 func (AnnouncementDeleteTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	vars := mux.Vars(r)
-	pid, _ := strconv.Atoi(vars["news"])
-
-	ann, err := cd.NewsAnnouncementWithErr(int32(pid))
-	if err != nil {
-		if !errors.Is(err, sql.ErrNoRows) {
-			return fmt.Errorf("announcement for news fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-		}
-		return nil
-	}
-	if ann != nil && ann.Active {
-		if err := queries.AdminSetAnnouncementActive(r.Context(), db.AdminSetAnnouncementActiveParams{Active: false, ID: ann.ID}); err != nil {
-			return fmt.Errorf("deactivate announcement fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-		}
+	pid, _ := strconv.Atoi(mux.Vars(r)["news"])
+	if err := cd.DeleteAnnouncement(int32(pid)); err != nil {
+		return fmt.Errorf("delete announcement fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	return nil
 }

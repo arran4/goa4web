@@ -1,6 +1,7 @@
 {{ template "head" $ }}
-<h2>Blog {{ .Blog.Idblogs }} Comments Admin</h2>
-<p><a href="/admin/blogs/blog/{{ .Blog.Idblogs }}">Back to blog</a></p>
+{{ $blog := cd.BlogPost }}
+<h2>Blog {{ $blog.Idblogs }} Comments Admin</h2>
+<p><a href="/admin/blogs/blog/{{ $blog.Idblogs }}">Back to blog</a></p>
 <table border="1">
     <tr>
         <th>ID</th>
@@ -8,7 +9,7 @@
         <th>Excerpt</th>
         <th>Admin</th>
     </tr>
-    {{- range .Comments }}
+    {{- range cd.BlogComments }}
     <tr>
         <td>{{ .Idcomments }}</td>
         <td>{{ .Posterusername.String }}</td>

@@ -65,7 +65,7 @@ func (cd *CoreData) UpdateBlogReply(commentID, commenterID, languageID int32, te
 		return nil
 	}
 	return cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
-		LanguageID:  languageID,
+		LanguageID:  sql.NullInt32{Int32: languageID, Valid: true},
 		Text:        sql.NullString{String: text, Valid: true},
 		CommentID:   commentID,
 		CommenterID: commenterID,

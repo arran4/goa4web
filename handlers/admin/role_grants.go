@@ -194,8 +194,10 @@ func buildGrantGroupsFromGrants(ctx context.Context, cd *common.CoreData, grants
 					if w, err := queries.GetWritingForListerByID(ctx, db.GetWritingForListerByIDParams{ListerID: cd.UserID, Idwriting: g.ItemID.Int32, ListerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0}}); err == nil {
 						if w.Title.Valid {
 							info := w.Title.String
-							if name, ok := langMap[w.LanguageIdlanguage]; ok && name != "" {
-								info = fmt.Sprintf("[%s] %s", name, info)
+							if w.LanguageIdlanguage.Valid {
+								if name, ok := langMap[w.LanguageIdlanguage.Int32]; ok && name != "" {
+									info = fmt.Sprintf("[%s] %s", name, info)
+								}
 							}
 							gi.Info = info
 						}
@@ -220,8 +222,10 @@ func buildGrantGroupsFromGrants(ctx context.Context, cd *common.CoreData, grants
 						if len(text) > 40 {
 							text = text[:40] + "..."
 						}
-						if name, ok := langMap[qrow.LanguageIdlanguage]; ok && name != "" {
-							text = fmt.Sprintf("[%s] %s", name, text)
+						if qrow.LanguageIdlanguage.Valid {
+							if name, ok := langMap[qrow.LanguageIdlanguage.Int32]; ok && name != "" {
+								text = fmt.Sprintf("[%s] %s", name, text)
+							}
 						}
 						gi.Info = text
 					}

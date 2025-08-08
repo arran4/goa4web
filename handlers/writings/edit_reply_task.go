@@ -64,7 +64,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	if err = queries.UpdateCommentForEditor(r.Context(), db.UpdateCommentForEditorParams{
-		LanguageID:  int32(languageID),
+		LanguageID:  sql.NullInt32{Int32: int32(languageID), Valid: true},
 		Text:        sql.NullString{String: text, Valid: true},
 		CommentID:   comment.Idcomments,
 		CommenterID: uid,

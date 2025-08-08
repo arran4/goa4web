@@ -42,7 +42,7 @@ func (c *blogUpdateCmd) Run() error {
 	ctx := context.Background()
 	queries := db.New(conn)
 	err = queries.UpdateBlogEntryForWriter(ctx, db.UpdateBlogEntryForWriterParams{
-		LanguageID:   int32(c.LangID),
+		LanguageID:   sql.NullInt32{Int32: int32(c.LangID), Valid: true},
 		Blog:         sql.NullString{String: c.Text, Valid: c.Text != ""},
 		EntryID:      int32(c.ID),
 		WriterID:     0,

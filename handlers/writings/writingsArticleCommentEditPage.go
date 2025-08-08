@@ -56,7 +56,7 @@ func ArticleCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 
 	uid = cd.UserID
 	if err = queries.UpdateCommentForEditor(r.Context(), db.UpdateCommentForEditorParams{
-		LanguageID:  int32(languageId),
+		LanguageID:  sql.NullInt32{Int32: int32(languageId), Valid: true},
 		Text:        sql.NullString{String: text, Valid: true},
 		CommentID:   comment.Idcomments,
 		CommenterID: uid,

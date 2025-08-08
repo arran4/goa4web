@@ -27,7 +27,7 @@ func TestQueries_InsertFAQQuestionForWriter(t *testing.T) {
 		Answer:     sql.NullString{String: "a", Valid: true},
 		CategoryID: 1,
 		WriterID:   2,
-		LanguageID: 1,
+		LanguageID: sql.NullInt32{Int32: 1, Valid: true},
 		GranteeID:  sql.NullInt32{Int32: 2, Valid: true},
 	}); err != nil {
 		t.Fatalf("InsertFAQQuestionForWriter: %v", err)

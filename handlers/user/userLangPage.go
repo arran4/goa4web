@@ -59,7 +59,9 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		for _, ul := range userLangs {
-			selected[ul.LanguageIdlanguage] = true
+			if ul.LanguageIdlanguage.Valid {
+				selected[ul.LanguageIdlanguage.Int32] = true
+			}
 		}
 	}
 
@@ -69,13 +71,13 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 		if selected[l.Idlanguage] {
 			opt.IsSelected = true
 		}
-		if pref != nil && pref.LanguageIdlanguage == l.Idlanguage {
+		if pref != nil && pref.LanguageIdlanguage.Valid && pref.LanguageIdlanguage.Int32 == l.Idlanguage {
 			opt.IsDefault = true
 		}
 		opts = append(opts, opt)
 	}
 
-	defaultIsMulti := pref == nil || pref.LanguageIdlanguage == 0
+	defaultIsMulti := pref == nil || !pref.LanguageIdlanguage.Valid
 	data := Data{
 		LanguageOptions:       opts,
 		DefaultIsMultilingual: defaultIsMulti,
@@ -98,7 +100,7 @@ func updateLanguageSelections(r *http.Request, cd *common.CoreData, queries db.Q
 
 	for _, l := range langs {
 		if r.PostFormValue(fmt.Sprintf("language%d", l.Idlanguage)) != "" {
-			if err := queries.InsertUserLang(r.Context(), db.InsertUserLangParams{UsersIdusers: uid, LanguageIdlanguage: l.Idlanguage}); err != nil {
+			if err := queries.InsertUserLang(r.Context(), db.InsertUserLangParams{UsersIdusers: uid, LanguageIdlanguage: sql.NullInt32{Int32: l.Idlanguage, Valid: true}}); err != nil {
 				return err
 			}
 		}
@@ -121,14 +123,14 @@ func updateDefaultLanguage(r *http.Request, queries db.Querier, uid int32) error
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return queries.InsertPreferenceForLister(r.Context(), db.InsertPreferenceForListerParams{
-			LanguageID: int32(langID),
+			LanguageID: sql.NullInt32{Int32: int32(langID), Valid: true},
 			ListerID:   uid,
 			PageSize:   int32(cd.Config.PageSizeDefault),
 			Timezone:   sql.NullString{},
 		})
 	}
 
-	pref.LanguageIdlanguage = int32(langID)
+	pref.LanguageIdlanguage = sql.NullInt32{Int32: int32(langID), Valid: true}
 	return queries.UpdatePreferenceForLister(r.Context(), db.UpdatePreferenceForListerParams{
 		LanguageID: pref.LanguageIdlanguage,
 		ListerID:   uid,

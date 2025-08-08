@@ -306,7 +306,7 @@ WHERE EXISTS (
 type CreateFAQQuestionForWriterParams struct {
 	Question   sql.NullString
 	WriterID   int32
-	LanguageID int32
+	LanguageID sql.NullInt32
 	GranteeID  sql.NullInt32
 }
 
@@ -365,7 +365,7 @@ type GetAllAnsweredFAQWithFAQCategoriesForUserRow struct {
 	Name                         sql.NullString
 	Idfaq                        int32
 	FaqcategoriesIdfaqcategories int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	UsersIdusers                 int32
 	Answer                       sql.NullString
 	Question                     sql.NullString
@@ -667,7 +667,7 @@ type InsertFAQQuestionForWriterParams struct {
 	Answer     sql.NullString
 	CategoryID int32
 	WriterID   int32
-	LanguageID int32
+	LanguageID sql.NullInt32
 	GranteeID  sql.NullInt32
 }
 

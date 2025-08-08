@@ -153,7 +153,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if errors.Is(err, sql.ErrNoRows) {
 		ptidi, err := queries.SystemCreateForumTopic(r.Context(), db.SystemCreateForumTopicParams{
 			ForumcategoryIdforumcategory: 0,
-			LanguageIdlanguage:           0,
+			LanguageIdlanguage:           sql.NullInt32{},
 			Title: sql.NullString{
 				String: ImageBBSTopicName,
 				Valid:  true,

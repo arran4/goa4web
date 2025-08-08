@@ -174,7 +174,7 @@ func (cd *CoreData) SetUserLanguage(userID, languageID int32) error {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return cd.queries.InsertPreferenceForLister(cd.ctx, db.InsertPreferenceForListerParams{
-				LanguageID: languageID,
+				LanguageID: sql.NullInt32{Int32: languageID, Valid: true},
 				ListerID:   userID,
 				PageSize:   int32(cd.Config.PageSizeDefault),
 				Timezone:   sql.NullString{},
@@ -183,7 +183,7 @@ func (cd *CoreData) SetUserLanguage(userID, languageID int32) error {
 		return err
 	}
 	return cd.queries.UpdatePreferenceForLister(cd.ctx, db.UpdatePreferenceForListerParams{
-		LanguageID: languageID,
+		LanguageID: sql.NullInt32{Int32: languageID, Valid: true},
 		ListerID:   userID,
 		PageSize:   pref.PageSize,
 		Timezone:   pref.Timezone,
@@ -199,7 +199,7 @@ func (cd *CoreData) SetUserLanguages(userID int32, langs []int32) error {
 		return err
 	}
 	for _, l := range langs {
-		if err := cd.queries.InsertUserLang(cd.ctx, db.InsertUserLangParams{UsersIdusers: userID, LanguageIdlanguage: l}); err != nil {
+		if err := cd.queries.InsertUserLang(cd.ctx, db.InsertUserLangParams{UsersIdusers: userID, LanguageIdlanguage: sql.NullInt32{Int32: l, Valid: true}}); err != nil {
 			return err
 		}
 	}
@@ -215,7 +215,7 @@ func (cd *CoreData) SetTimezone(userID int32, tz string) error {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return cd.queries.InsertPreferenceForLister(cd.ctx, db.InsertPreferenceForListerParams{
-				LanguageID: 0,
+				LanguageID: sql.NullInt32{},
 				ListerID:   userID,
 				PageSize:   int32(cd.Config.PageSizeDefault),
 				Timezone:   sql.NullString{String: tz, Valid: tz != ""},

@@ -82,7 +82,7 @@ func AdminCategoryEditSubmit(w http.ResponseWriter, r *http.Request) {
 		Description:                  sql.NullString{Valid: true, String: desc},
 		Idforumcategory:              int32(categoryId),
 		ForumcategoryIdforumcategory: int32(pcid),
-		LanguageIdlanguage:           int32(languageID),
+		LanguageIdlanguage:           sql.NullInt32{Int32: int32(languageID), Valid: true},
 	}); err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return

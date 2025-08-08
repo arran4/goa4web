@@ -31,7 +31,7 @@ type AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow stru
 	Writerid           sql.NullInt32
 	Idsitenews         int32
 	ForumthreadID      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	UsersIdusers       int32
 	News               sql.NullString
 	Occurred           sql.NullTime
@@ -106,7 +106,7 @@ WHERE EXISTS (
 type CreateNewsPostForWriterParams struct {
 	News       sql.NullString
 	WriterID   int32
-	LanguageID int32
+	LanguageID sql.NullInt32
 	GranteeID  sql.NullInt32
 }
 
@@ -216,7 +216,7 @@ type GetNewsPostByIdWithWriterIdAndThreadCommentCountRow struct {
 	Writerid           sql.NullInt32
 	Idsitenews         int32
 	ForumthreadID      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	UsersIdusers       int32
 	News               sql.NullString
 	Occurred           sql.NullTime
@@ -285,7 +285,7 @@ type GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountRow struct {
 	Writerid           sql.NullInt32
 	Idsitenews         int32
 	ForumthreadID      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	UsersIdusers       int32
 	News               sql.NullString
 	Occurred           sql.NullTime
@@ -383,7 +383,7 @@ type GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow struct {
 	Writerid           sql.NullInt32
 	Idsitenews         int32
 	ForumthreadID      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	UsersIdusers       int32
 	News               sql.NullString
 	Occurred           sql.NullTime
@@ -487,7 +487,7 @@ WHERE s.idsiteNews = ?
 
 type UpdateNewsPostForWriterParams struct {
 	News        sql.NullString
-	LanguageID  int32
+	LanguageID  sql.NullInt32
 	PostID      int32
 	WriterID    int32
 	GrantPostID sql.NullInt32

@@ -1,6 +1,6 @@
 -- name: CreateNewsPostForWriter :execlastid
 INSERT INTO site_news (news, users_idusers, occurred, language_idlanguage)
-SELECT sqlc.arg(news), sqlc.arg(writer_id), NOW(), sqlc.arg(language_id)
+SELECT sqlc.arg(news), sqlc.arg(writer_id), NOW(), sqlc.narg(language_id)
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='news'
@@ -16,7 +16,7 @@ WHERE EXISTS (
 
 -- name: UpdateNewsPostForWriter :exec
 UPDATE site_news s
-SET news = sqlc.arg(news), language_idlanguage = sqlc.arg(language_id)
+SET news = sqlc.arg(news), language_idlanguage = sqlc.narg(language_id)
 WHERE s.idsiteNews = sqlc.arg(post_id)
   AND s.users_idusers = sqlc.arg(writer_id)
   AND EXISTS (

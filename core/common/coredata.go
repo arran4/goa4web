@@ -210,7 +210,7 @@ type CoreData struct {
 	writerWritings                   map[int32]*lazy.Value[[]*db.ListPublicWritingsByUserForListerRow]
 	writingCategories                lazy.Value[[]*db.WritingCategory]
 	writingRows                      map[int32]*lazy.Value[*db.GetWritingForListerByIDRow]
-  // marks records which template sections have been rendered to avoid
+	// marks records which template sections have been rendered to avoid
 	// duplicate output when re-rendering after an error.
 	marks map[string]struct{}
 }
@@ -1287,7 +1287,7 @@ func (cd *CoreData) DeleteLanguage(code string) (int32, string, error) {
 			}
 		}
 	}
-	counts, err := cd.queries.AdminLanguageUsageCounts(cd.ctx, db.AdminLanguageUsageCountsParams{ID: int32(id)})
+	counts, err := cd.queries.AdminLanguageUsageCounts(cd.ctx, db.AdminLanguageUsageCountsParams{ID: sql.NullInt32{Int32: int32(id), Valid: true}})
 	if err != nil {
 		return int32(id), name, err
 	}
@@ -1613,8 +1613,8 @@ func (cd *CoreData) Preference() (*db.Preference, error) {
 func (cd *CoreData) PreferredLanguageID(siteDefault string) int32 {
 	id, err := cd.preferredLanguageID.Load(func() (int32, error) {
 		if pref, err := cd.Preference(); err == nil && pref != nil {
-			if pref.LanguageIdlanguage != 0 {
-				return pref.LanguageIdlanguage, nil
+			if pref.LanguageIdlanguage.Valid {
+				return pref.LanguageIdlanguage.Int32, nil
 			}
 		}
 		if cd.queries == nil || siteDefault == "" {
@@ -1967,7 +1967,7 @@ func (cd *CoreData) CreateCommentInSectionForCommenter(section, itemType string,
 		return 0, nil
 	}
 	return cd.queries.CreateCommentInSectionForCommenter(cd.ctx, db.CreateCommentInSectionForCommenterParams{
-		LanguageID:    languageID,
+		LanguageID:    sql.NullInt32{Int32: languageID, Valid: true},
 		CommenterID:   sql.NullInt32{Int32: commenterID, Valid: commenterID != 0},
 		ForumthreadID: threadID,
 		Text:          sql.NullString{String: text, Valid: text != ""},

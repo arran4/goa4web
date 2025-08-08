@@ -44,7 +44,7 @@ INSERT INTO forumcategory (forumcategory_idforumcategory, language_idlanguage, t
 
 type AdminCreateForumCategoryParams struct {
 	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	Title                        sql.NullString
 	Description                  sql.NullString
 }
@@ -110,7 +110,7 @@ type AdminListForumCategoriesWithCountsParams struct {
 type AdminListForumCategoriesWithCountsRow struct {
 	Idforumcategory              int32
 	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	Title                        sql.NullString
 	Description                  sql.NullString
 	Subcategorycount             int64
@@ -285,7 +285,7 @@ type AdminUpdateForumCategoryParams struct {
 	Title                        sql.NullString
 	Description                  sql.NullString
 	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	Idforumcategory              int32
 }
 
@@ -308,7 +308,7 @@ type AdminUpdateForumTopicParams struct {
 	Title                        sql.NullString
 	Description                  sql.NullString
 	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	Idforumtopic                 int32
 }
 
@@ -342,7 +342,7 @@ WHERE EXISTS (
 
 type CreateForumTopicForPosterParams struct {
 	ForumcategoryID int32
-	LanguageID      int32
+	LanguageID      sql.NullInt32
 	Title           sql.NullString
 	Description     sql.NullString
 	Handler         string
@@ -448,7 +448,7 @@ type GetAllForumCategoriesWithSubcategoryCountParams struct {
 type GetAllForumCategoriesWithSubcategoryCountRow struct {
 	Idforumcategory              int32
 	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	Title                        sql.NullString
 	Description                  sql.NullString
 	Subcategorycount             int64
@@ -635,7 +635,7 @@ type GetAllForumTopicsByCategoryIdForUserWithLastPosterNameRow struct {
 	Idforumtopic                 int32
 	Lastposter                   int32
 	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	Title                        sql.NullString
 	Description                  sql.NullString
 	Threads                      sql.NullInt32
@@ -869,7 +869,7 @@ type GetForumTopicByIdForUserRow struct {
 	Idforumtopic                 int32
 	Lastposter                   int32
 	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	Title                        sql.NullString
 	Description                  sql.NullString
 	Threads                      sql.NullInt32
@@ -1003,7 +1003,7 @@ type GetForumTopicsForUserRow struct {
 	Idforumtopic                 int32
 	Lastposter                   int32
 	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	Title                        sql.NullString
 	Description                  sql.NullString
 	Threads                      sql.NullInt32
@@ -1178,7 +1178,7 @@ type ListPrivateTopicsByUserIDRow struct {
 	Idforumtopic                 int32
 	Lastposter                   int32
 	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	Title                        sql.NullString
 	Description                  sql.NullString
 	Threads                      sql.NullInt32
@@ -1229,7 +1229,7 @@ INSERT INTO forumtopic (forumcategory_idforumcategory, language_idlanguage, titl
 
 type SystemCreateForumTopicParams struct {
 	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	Title                        sql.NullString
 	Description                  sql.NullString
 	Handler                      string

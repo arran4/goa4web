@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 )
 
 const deleteUserLanguagesForUser = `-- name: DeleteUserLanguagesForUser :exec
@@ -54,7 +55,7 @@ VALUES (?, ?)
 
 type InsertUserLangParams struct {
 	UsersIdusers       int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 }
 
 func (q *Queries) InsertUserLang(ctx context.Context, arg InsertUserLangParams) error {

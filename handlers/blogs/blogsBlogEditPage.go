@@ -50,7 +50,7 @@ func (EditBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err = queries.UpdateBlogEntryForWriter(r.Context(), db.UpdateBlogEntryForWriterParams{
 		EntryID:      row.Idblogs,
 		GrantEntryID: sql.NullInt32{Int32: row.Idblogs, Valid: true},
-		LanguageID:   int32(languageId),
+		LanguageID:   sql.NullInt32{Int32: int32(languageId), Valid: true},
 		Blog: sql.NullString{
 			String: text,
 			Valid:  true,

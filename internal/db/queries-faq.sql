@@ -57,7 +57,7 @@ INSERT INTO faq_categories (name) VALUES (sqlc.arg(name));
 
 -- name: CreateFAQQuestionForWriter :exec
 INSERT INTO faq (question, users_idusers, language_idlanguage)
-SELECT sqlc.arg(question), sqlc.arg(writer_id), sqlc.arg(language_id)
+SELECT sqlc.arg(question), sqlc.arg(writer_id), sqlc.narg(language_id)
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'faq'
@@ -72,7 +72,7 @@ WHERE EXISTS (
 
 -- name: InsertFAQQuestionForWriter :execresult
 INSERT INTO faq (question, answer, faqCategories_idfaqCategories, users_idusers, language_idlanguage)
-SELECT sqlc.arg(question), sqlc.arg(answer), sqlc.arg(category_id), sqlc.arg(writer_id), sqlc.arg(language_id)
+SELECT sqlc.arg(question), sqlc.arg(answer), sqlc.arg(category_id), sqlc.arg(writer_id), sqlc.narg(language_id)
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'faq'

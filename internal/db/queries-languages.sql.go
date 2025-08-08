@@ -58,7 +58,7 @@ SELECT
 `
 
 type AdminLanguageUsageCountsParams struct {
-	ID int32
+	ID sql.NullInt32
 }
 
 type AdminLanguageUsageCountsRow struct {

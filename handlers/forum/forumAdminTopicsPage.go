@@ -75,7 +75,7 @@ func AdminTopicEditPage(w http.ResponseWriter, r *http.Request) {
 		Title:                        sql.NullString{String: name, Valid: true},
 		Description:                  sql.NullString{String: desc, Valid: true},
 		ForumcategoryIdforumcategory: int32(cid),
-		LanguageIdlanguage:           int32(languageID),
+		LanguageIdlanguage:           sql.NullInt32{Int32: int32(languageID), Valid: true},
 		Idforumtopic:                 int32(tid),
 	}); err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -114,7 +114,7 @@ func AdminTopicCreatePage(w http.ResponseWriter, r *http.Request) {
 	topicID, err := cd.Queries().CreateForumTopicForPoster(r.Context(), db.CreateForumTopicForPosterParams{
 		PosterID:        uid,
 		ForumcategoryID: int32(pcid),
-		LanguageID:      int32(languageID),
+		LanguageID:      sql.NullInt32{Int32: int32(languageID), Valid: true},
 		Title:           sql.NullString{String: name, Valid: true},
 		Description:     sql.NullString{String: desc, Valid: true},
 		Handler:         "",

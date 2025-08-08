@@ -59,7 +59,7 @@ type Blog struct {
 	Idblogs            int32
 	ForumthreadID      sql.NullInt32
 	UsersIdusers       int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	Blog               sql.NullString
 	Written            time.Time
 	DeletedAt          sql.NullTime
@@ -82,7 +82,7 @@ type Comment struct {
 	Idcomments         int32
 	ForumthreadID      int32
 	UsersIdusers       int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	Written            sql.NullTime
 	Text               sql.NullString
 	DeletedAt          sql.NullTime
@@ -99,7 +99,7 @@ type DeactivatedBlog struct {
 	Idblogs            int32
 	ForumthreadID      int32
 	UsersIdusers       int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	Blog               sql.NullString
 	Written            sql.NullTime
 	DeletedAt          sql.NullTime
@@ -110,7 +110,7 @@ type DeactivatedComment struct {
 	Idcomments         int32
 	ForumthreadID      int32
 	UsersIdusers       int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	Written            sql.NullTime
 	Text               sql.NullString
 	DeletedAt          sql.NullTime
@@ -134,7 +134,7 @@ type DeactivatedImagepost struct {
 
 type DeactivatedLinker struct {
 	Idlinker           int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	UsersIdusers       int32
 	LinkerCategoryID   int32
 	ForumthreadID      int32
@@ -160,7 +160,7 @@ type DeactivatedWriting struct {
 	Idwriting          int32
 	UsersIdusers       int32
 	ForumthreadID      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	WritingCategoryID  int32
 	Title              sql.NullString
 	Published          sql.NullTime
@@ -194,7 +194,7 @@ type ExternalLink struct {
 type Faq struct {
 	Idfaq                        int32
 	FaqcategoriesIdfaqcategories int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	UsersIdusers                 int32
 	Answer                       sql.NullString
 	Question                     sql.NullString
@@ -217,7 +217,7 @@ type FaqRevision struct {
 type Forumcategory struct {
 	Idforumcategory              int32
 	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	Title                        sql.NullString
 	Description                  sql.NullString
 }
@@ -236,7 +236,7 @@ type Forumtopic struct {
 	Idforumtopic                 int32
 	Lastposter                   int32
 	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	Title                        sql.NullString
 	Description                  sql.NullString
 	Threads                      sql.NullInt32
@@ -297,7 +297,7 @@ type Language struct {
 
 type Linker struct {
 	Idlinker           int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	UsersIdusers       int32
 	LinkerCategoryID   int32
 	ForumthreadID      int32
@@ -318,7 +318,7 @@ type LinkerCategory struct {
 
 type LinkerQueue struct {
 	Idlinkerqueue      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	UsersIdusers       int32
 	LinkerCategoryID   int32
 	Title              sql.NullString
@@ -378,7 +378,7 @@ type PendingPassword struct {
 
 type Preference struct {
 	Idpreferences        int32
-	LanguageIdlanguage   int32
+	LanguageIdlanguage   sql.NullInt32
 	UsersIdusers         int32
 	Emailforumupdates    sql.NullBool
 	PageSize             int32
@@ -424,7 +424,7 @@ type SiteAnnouncement struct {
 type SiteNews struct {
 	Idsitenews         int32
 	ForumthreadID      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	UsersIdusers       int32
 	News               sql.NullString
 	Occurred           sql.NullTime
@@ -481,7 +481,7 @@ type UserEmail struct {
 type UserLanguage struct {
 	Iduserlang         int32
 	UsersIdusers       int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 }
 
 type UserRole struct {
@@ -494,7 +494,7 @@ type Writing struct {
 	Idwriting          int32
 	UsersIdusers       int32
 	ForumthreadID      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	WritingCategoryID  int32
 	Title              sql.NullString
 	Published          sql.NullTime

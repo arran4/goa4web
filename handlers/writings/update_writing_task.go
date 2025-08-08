@@ -54,7 +54,7 @@ func (UpdateWritingTask) Action(w http.ResponseWriter, r *http.Request) any {
 		Abstract:   sql.NullString{Valid: true, String: abstract},
 		Content:    sql.NullString{Valid: true, String: body},
 		Private:    sql.NullBool{Valid: true, Bool: private},
-		LanguageID: int32(languageID),
+		LanguageID: sql.NullInt32{Int32: int32(languageID), Valid: true},
 		WritingID:  writing.Idwriting,
 		WriterID:   cd.UserID,
 		GranteeID:  sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},

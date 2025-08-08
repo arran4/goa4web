@@ -72,7 +72,7 @@ func (SubmitWritingTask) Action(w http.ResponseWriter, r *http.Request) any {
 		Abstract:          sql.NullString{Valid: true, String: abstract},
 		Writing:           sql.NullString{Valid: true, String: body},
 		Private:           sql.NullBool{Valid: true, Bool: private},
-		LanguageID:        int32(languageID),
+		LanguageID:        sql.NullInt32{Int32: int32(languageID), Valid: true},
 		GrantCategoryID:   sql.NullInt32{Int32: int32(categoryID), Valid: true},
 		GranteeID:         sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})

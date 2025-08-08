@@ -82,7 +82,7 @@ func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 		Abstract:   sql.NullString{Valid: true, String: abstract},
 		Content:    sql.NullString{Valid: true, String: body},
 		Private:    sql.NullBool{Valid: true, Bool: private},
-		LanguageID: int32(languageId),
+		LanguageID: sql.NullInt32{Int32: int32(languageId), Valid: true},
 		WritingID:  writing.Idwriting,
 		WriterID:   cd.UserID,
 		GranteeID:  sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},

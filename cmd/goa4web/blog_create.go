@@ -43,7 +43,7 @@ func (c *blogCreateCmd) Run() error {
 	queries := db.New(conn)
 	_, err = queries.CreateBlogEntryForWriter(ctx, db.CreateBlogEntryForWriterParams{
 		UsersIdusers:       int32(c.UserID),
-		LanguageIdlanguage: int32(c.LangID),
+		LanguageIdlanguage: sql.NullInt32{Int32: int32(c.LangID), Valid: true},
 		Blog:               sql.NullString{String: c.Text, Valid: true},
 		UserID:             sql.NullInt32{Int32: int32(c.UserID), Valid: true},
 		ListerID:           int32(c.UserID),

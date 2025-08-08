@@ -175,9 +175,14 @@ func adminNewsEditFormPage(w http.ResponseWriter, r *http.Request) {
 		Post               *db.GetNewsPostByIdWithWriterIdAndThreadCommentCountRow
 		SelectedLanguageId int
 	}{
-		Languages:          langs,
-		Post:               post,
-		SelectedLanguageId: int(post.LanguageIdlanguage),
+		Languages: langs,
+		Post:      post,
+		SelectedLanguageId: func() int {
+			if post.LanguageIdlanguage.Valid {
+				return int(post.LanguageIdlanguage.Int32)
+			}
+			return 0
+		}(),
 	}
 	if err := cd.ExecuteSiteTemplate(w, r, "adminNewsEditPage.gohtml", data); err != nil {
 		handlers.RenderErrorPage(w, r, err)

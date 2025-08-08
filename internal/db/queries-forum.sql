@@ -248,7 +248,7 @@ INSERT INTO forumtopic (forumcategory_idforumcategory, language_idlanguage, titl
 
 -- name: CreateForumTopicForPoster :execlastid
 INSERT INTO forumtopic (forumcategory_idforumcategory, language_idlanguage, title, description, handler)
-SELECT sqlc.arg(forumcategory_id), sqlc.arg(language_id), sqlc.arg(title), sqlc.arg(description), sqlc.arg(handler)
+SELECT sqlc.arg(forumcategory_id), sqlc.narg(language_id), sqlc.arg(title), sqlc.arg(description), sqlc.arg(handler)
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section=sqlc.arg(section)

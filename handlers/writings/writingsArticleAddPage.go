@@ -69,7 +69,7 @@ func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 		Abstract:          sql.NullString{Valid: true, String: abstract},
 		Writing:           sql.NullString{Valid: true, String: body},
 		Private:           sql.NullBool{Valid: true, Bool: private},
-		LanguageID:        int32(languageId),
+		LanguageID:        sql.NullInt32{Int32: int32(languageId), Valid: true},
 		GrantCategoryID:   sql.NullInt32{Int32: int32(categoryId), Valid: true},
 		GranteeID:         sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})

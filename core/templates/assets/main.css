@@ -291,3 +291,9 @@ tr.unsupported td {
         color: inherit;
 }
 
+/* Forum topic actions */
+.topic-actions form {
+        display: inline;
+        margin: 0;
+}
+

@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
@@ -68,7 +69,26 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	cd.PageTitle = fmt.Sprintf("Forum - %s", topicRow.Title.String)
+	displayTitle := topicRow.Title.String
+	if topicRow.Handler == "private" && cd.Queries() != nil {
+		parts, err := cd.Queries().ListPrivateTopicParticipantsByTopicIDForUser(r.Context(), db.ListPrivateTopicParticipantsByTopicIDForUserParams{
+			TopicID:  sql.NullInt32{Int32: topicRow.Idforumtopic, Valid: true},
+			ViewerID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		})
+		if err != nil {
+			log.Printf("list private participants: %v", err)
+		}
+		var names []string
+		for _, p := range parts {
+			if p.Idusers != cd.UserID {
+				names = append(names, p.Username.String)
+			}
+		}
+		if len(names) > 0 {
+			displayTitle = strings.Join(names, ", ")
+		}
+	}
+	cd.PageTitle = fmt.Sprintf("Forum - %s", displayTitle)
 	data.Topic = &ForumtopicPlus{
 		Idforumtopic:                 topicRow.Idforumtopic,
 		Lastposter:                   topicRow.Lastposter,
@@ -79,18 +99,21 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 		Comments:                     topicRow.Comments,
 		Lastaddition:                 topicRow.Lastaddition,
 		Lastposterusername:           topicRow.Lastposterusername,
+		DisplayTitle:                 displayTitle,
 		Edit:                         false,
 	}
 
-	categoryTree := NewCategoryTree(categoryRows, []*ForumtopicPlus{data.Topic})
-	if category, ok := categoryTree.CategoryLookup[topicRow.ForumcategoryIdforumcategory]; ok {
-		category.Topics = []*ForumtopicPlus{
-			data.Topic,
+	if topicRow.Handler != "private" {
+		categoryTree := NewCategoryTree(categoryRows, []*ForumtopicPlus{data.Topic})
+		if category, ok := categoryTree.CategoryLookup[topicRow.ForumcategoryIdforumcategory]; ok {
+			category.Topics = []*ForumtopicPlus{
+				data.Topic,
+			}
+			data.Categories = []*ForumcategoryPlus{
+				category,
+			}
+			data.Category = category
 		}
-		data.Categories = []*ForumcategoryPlus{
-			category,
-		}
-		data.Category = category
 	}
 
 	threadRows, err := cd.ForumThreads(int32(topicId))

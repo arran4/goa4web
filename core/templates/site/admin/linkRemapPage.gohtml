@@ -1,0 +1,11 @@
+{{ template "head" $ }}
+<h2>Link Remap</h2>
+<form method="get">
+    <button type="submit" name="generate" value="1">Generate CSV</button>
+</form>
+<form method="post">
+    {{ csrfField }}
+    <textarea name="csv" cols="80" rows="20">{{ .CSV }}</textarea><br>
+    <input type="submit" name="task" value="Update">
+</form>
+{{ template "tail" $ }}

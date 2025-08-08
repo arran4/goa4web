@@ -20,3 +20,6 @@ DELETE FROM external_links WHERE id = ?;
 
 -- name: AdminClearExternalLinkCache :exec
 UPDATE external_links SET card_image_cache = NULL, favicon_cache = NULL, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE id = ?;
+
+-- name: AdminDeleteExternalLinkByURL :exec
+DELETE FROM external_links WHERE url = ?;

@@ -1286,7 +1286,7 @@ func (cd *CoreData) DeleteLanguage(code string) (int32, string, error) {
 			}
 		}
 	}
-	counts, err := cd.queries.AdminLanguageUsageCounts(cd.ctx, db.AdminLanguageUsageCountsParams{ID: int32(id)})
+	counts, err := cd.queries.AdminLanguageUsageCounts(cd.ctx, db.AdminLanguageUsageCountsParams{LangID: sql.NullInt32{Int32: int32(id), Valid: true}})
 	if err != nil {
 		return int32(id), name, err
 	}

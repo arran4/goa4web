@@ -43,8 +43,8 @@ SELECT COUNT(*) FROM language;
 -- AdminLanguageUsageCounts returns counts of content referencing a language.
 -- name: AdminLanguageUsageCounts :one
 SELECT
-    (SELECT COUNT(*) FROM comments WHERE comments.language_idlanguage = sqlc.arg(id)) AS comments,
-    (SELECT COUNT(*) FROM writing WHERE writing.language_idlanguage = sqlc.arg(id)) AS writings,
-    (SELECT COUNT(*) FROM blogs WHERE blogs.language_idlanguage = sqlc.arg(id)) AS blogs,
-    (SELECT COUNT(*) FROM site_news WHERE site_news.language_idlanguage = sqlc.arg(id)) AS news,
-    (SELECT COUNT(*) FROM linker WHERE linker.language_idlanguage = sqlc.arg(id)) AS links;
+    (SELECT COUNT(*) FROM comments WHERE comments.language_idlanguage = sqlc.narg(lang_id)) AS comments,
+    (SELECT COUNT(*) FROM writing WHERE writing.language_idlanguage = sqlc.narg(lang_id)) AS writings,
+    (SELECT COUNT(*) FROM blogs WHERE blogs.language_idlanguage = sqlc.narg(lang_id)) AS blogs,
+    (SELECT COUNT(*) FROM site_news WHERE site_news.language_idlanguage = sqlc.narg(lang_id)) AS news,
+    (SELECT COUNT(*) FROM linker WHERE linker.language_idlanguage = sqlc.narg(lang_id)) AS links;

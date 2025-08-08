@@ -1,3 +1,10 @@
+-- Allow null language for forum categories and topics
+UPDATE forumcategory SET language_idlanguage = NULL WHERE language_idlanguage = 0;
+ALTER TABLE forumcategory MODIFY COLUMN language_idlanguage INT NULL;
+
+UPDATE forumtopic SET language_idlanguage = NULL WHERE language_idlanguage = 0;
+ALTER TABLE forumtopic MODIFY COLUMN language_idlanguage INT NULL;
+
 -- Allow FAQ categories to be nullable
 ALTER TABLE faq
     MODIFY COLUMN faqCategories_idfaqCategories INT NULL DEFAULT NULL;

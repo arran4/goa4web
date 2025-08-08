@@ -6,6 +6,9 @@ ON DUPLICATE KEY UPDATE clicks = clicks + 1;
 -- name: GetExternalLink :one
 SELECT * FROM external_links WHERE url = ? LIMIT 1;
 
+-- name: GetExternalLinkByID :one
+SELECT * FROM external_links WHERE id = ? LIMIT 1;
+
 -- name: AdminListExternalLinks :many
 SELECT * FROM external_links
 ORDER BY created_at DESC

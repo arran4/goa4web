@@ -10,7 +10,6 @@ import (
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/handlers/blogs"
 	"github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/core"
@@ -124,8 +123,6 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-
-	blogs.CustomBlogIndex(cd, r)
 
 	handlers.TemplateHandler(w, r, "threadPage.gohtml", data)
 }

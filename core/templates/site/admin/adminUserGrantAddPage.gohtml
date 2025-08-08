@@ -11,33 +11,25 @@
     </label>
     <input type="submit" value="Next">
 </form>
-{{ else if eq .Item "" }}
+{{ else }}
 <form method="get">
     <input type="hidden" name="section" value="{{ .Section }}">
     <label>Item:
         <select name="item">
             {{ range .Items }}
-            <option value="{{ . }}">{{ . }}</option>
+            <option value="{{ . }}"{{ if eq $.Item . }} selected{{ end }}>{{ . }}</option>
             {{ end }}
         </select>
     </label>
-    <input type="submit" value="Next">
+    <input type="submit" value="Change">
 </form>
-{{ else }}
 <form method="post" action="/admin/user/{{ .User.Idusers }}/grant">
     {{ csrfField }}
     <input type="hidden" name="task" value="Create grant">
     <input type="hidden" name="section" value="{{ .Section }}">
     <input type="hidden" name="item" value="{{ .Item }}">
-    <label>Action:
-        <select name="action">
-            {{ range .Actions }}
-            <option value="{{ . }}">{{ . }}</option>
-            {{ end }}
-        </select>
-    </label>
-    {{ if .ItemOptions }}
-    <label>Item:
+    <label>Item ({{ .Item }}):
+        {{ if .ItemOptions }}
         <input list="itemOptions" name="item_id"{{ if .RequireItemID }} required{{ end }}>
         <datalist id="itemOptions">
             {{ if not .RequireItemID }}<option value="">All</option>{{ end }}
@@ -45,10 +37,16 @@
             <option value="{{ .ID }}">{{ .Label }}</option>
             {{ end }}
         </datalist>
+        {{ else }}
+        <input type="text" name="item_id"{{ if .RequireItemID }} required{{ end }}>
+        {{ end }}
     </label>
-    {{ else }}
-    <label>Item ID:<input type="text" name="item_id"{{ if .RequireItemID }} required{{ end }}></label>
-    {{ end }}
+    <fieldset>
+        <legend>Actions</legend>
+        {{ range .Actions }}
+        <label><input type="checkbox" name="action" value="{{ . }}"> {{ . }}</label><br>
+        {{ end }}
+    </fieldset>
     <input type="submit" value="Add">
 </form>
 {{ end }}

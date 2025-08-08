@@ -34,7 +34,7 @@ func (UserGrantCreateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	section := r.PostFormValue("section")
 	item := r.PostFormValue("item")
-	action := r.PostFormValue("action")
+	actions := r.PostForm["action"]
 	itemIDStr := r.PostFormValue("item_id")
 	var itemID sql.NullInt32
 	if itemIDStr != "" {
@@ -44,25 +44,27 @@ func (UserGrantCreateTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 		itemID = sql.NullInt32{Int32: int32(id), Valid: true}
 	}
-	if section == "" || action == "" {
+	if section == "" || len(actions) == 0 {
 		return fmt.Errorf("missing section or action %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("")))
 	}
 	if def, ok := GrantActionMap[section+"|"+item]; ok && def.RequireItemID && !itemID.Valid {
 		return fmt.Errorf("missing item id %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("")))
 	}
-	if _, err := queries.AdminCreateGrant(r.Context(), db.AdminCreateGrantParams{
-		UserID:   sql.NullInt32{Int32: userID, Valid: true},
-		RoleID:   sql.NullInt32{},
-		Section:  section,
-		Item:     sql.NullString{String: item, Valid: item != ""},
-		RuleType: "allow",
-		ItemID:   itemID,
-		ItemRule: sql.NullString{},
-		Action:   action,
-		Extra:    sql.NullString{},
-	}); err != nil {
-		log.Printf("CreateGrant: %v", err)
-		return fmt.Errorf("create grant %w", handlers.ErrRedirectOnSamePageHandler(err))
+	for _, action := range actions {
+		if _, err := queries.AdminCreateGrant(r.Context(), db.AdminCreateGrantParams{
+			UserID:   sql.NullInt32{Int32: userID, Valid: true},
+			RoleID:   sql.NullInt32{},
+			Section:  section,
+			Item:     sql.NullString{String: item, Valid: item != ""},
+			RuleType: "allow",
+			ItemID:   itemID,
+			ItemRule: sql.NullString{},
+			Action:   action,
+			Extra:    sql.NullString{},
+		}); err != nil {
+			log.Printf("CreateGrant: %v", err)
+			return fmt.Errorf("create grant %w", handlers.ErrRedirectOnSamePageHandler(err))
+		}
 	}
 	return handlers.RefreshDirectHandler{TargetURL: fmt.Sprintf("/admin/user/%d/grants", userID)}
 }

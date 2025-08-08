@@ -75,7 +75,7 @@ func (c *userDeactivateCmd) Run() error {
 			Idcomments:         cm.Idcomments,
 			ForumthreadID:      cm.ForumthreadID,
 			UsersIdusers:       cm.UsersIdusers,
-			LanguageIdlanguage: cm.LanguageIdlanguage,
+			LanguageIdlanguage: cm.LanguageIdlanguage.Int32,
 			Written:            cm.Written,
 			Text:               cm.Text,
 		}); err != nil {
@@ -133,7 +133,7 @@ func (c *userDeactivateCmd) Run() error {
 			Idblogs:            b.Idblogs,
 			ForumthreadID:      threadID,
 			UsersIdusers:       b.UsersIdusers,
-			LanguageIdlanguage: b.LanguageIdlanguage,
+			LanguageIdlanguage: b.LanguageIdlanguage.Int32,
 			Blog:               b.Blog,
 			Written:            sql.NullTime{Time: b.Written, Valid: true},
 		}); err != nil {

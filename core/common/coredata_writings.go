@@ -63,7 +63,7 @@ func (cd *CoreData) ArticleComment(r *http.Request, ops ...lazy.Option[*db.GetCo
 func (cd *CoreData) UpdateArticleComment(commentID, languageID int32, text string) error {
 	uid := cd.UserID
 	return cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
-		LanguageID:  languageID,
+		LanguageID:  sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:        sql.NullString{String: text, Valid: true},
 		CommentID:   commentID,
 		CommenterID: uid,
@@ -131,7 +131,7 @@ func (cd *CoreData) UpdateWritingReply(commentID, languageID int32, text string)
 		return nil, err
 	}
 	if err := cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
-		LanguageID:  languageID,
+		LanguageID:  sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:        sql.NullString{String: text, Valid: true},
 		CommentID:   cmt.Idcomments,
 		CommenterID: uid,
@@ -151,12 +151,16 @@ func (cd *CoreData) CreateWritingReply(w *db.GetWritingForListerByIDRow, languag
 	pt, err := cd.queries.SystemGetForumTopicByTitle(cd.ctx, sql.NullString{String: WritingTopicName, Valid: true})
 	var ptid int32
 	if errors.Is(err, sql.ErrNoRows) {
-		ptidi, err := cd.queries.SystemCreateForumTopic(cd.ctx, db.SystemCreateForumTopicParams{
-			ForumcategoryIdforumcategory: 0,
-			TopicLanguageID:              sql.NullInt32{Int32: w.LanguageIdlanguage, Valid: w.LanguageIdlanguage != 0},
-			Title:                        sql.NullString{String: WritingTopicName, Valid: true},
-			Description:                  sql.NullString{String: WritingTopicDescription, Valid: true},
-			Handler:                      "writing",
+		ptidi, err := cd.queries.CreateForumTopicForPoster(cd.ctx, db.CreateForumTopicForPosterParams{
+			ForumcategoryID: 0,
+			ForumLang:       sql.NullInt32{Int32: w.LanguageIdlanguage, Valid: w.LanguageIdlanguage != 0},
+			Title:           sql.NullString{String: WritingTopicName, Valid: true},
+			Description:     sql.NullString{String: WritingTopicDescription, Valid: true},
+			Handler:         "writing",
+			Section:         "forum",
+			GrantCategoryID: sql.NullInt32{},
+			GranteeID:       sql.NullInt32{},
+			PosterID:        0,
 		})
 		if err != nil {
 			return 0, 0, 0, err

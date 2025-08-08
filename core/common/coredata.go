@@ -1970,7 +1970,7 @@ func (cd *CoreData) CreateCommentInSectionForCommenter(section, itemType string,
 		return 0, nil
 	}
 	return cd.queries.CreateCommentInSectionForCommenter(cd.ctx, db.CreateCommentInSectionForCommenterParams{
-		LanguageID:    languageID,
+		LanguageID:    sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		CommenterID:   sql.NullInt32{Int32: commenterID, Valid: commenterID != 0},
 		ForumthreadID: threadID,
 		Text:          sql.NullString{String: text, Valid: text != ""},

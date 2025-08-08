@@ -32,12 +32,16 @@ func (cd *CoreData) ThreadInfo(post *db.GetNewsPostByIdWithWriterIdAndThreadComm
 	}
 	pt, err := cd.queries.SystemGetForumTopicByTitle(cd.ctx, sql.NullString{String: newsTopicName, Valid: true})
 	if errors.Is(err, sql.ErrNoRows) {
-		id, err := cd.queries.SystemCreateForumTopic(cd.ctx, db.SystemCreateForumTopicParams{
-			ForumcategoryIdforumcategory: 0,
-			TopicLanguageID:              sql.NullInt32{Int32: post.LanguageIdlanguage, Valid: post.LanguageIdlanguage != 0},
-			Title:                        sql.NullString{String: newsTopicName, Valid: true},
-			Description:                  sql.NullString{String: newsTopicDescription, Valid: true},
-			Handler:                      "news",
+		id, err := cd.queries.CreateForumTopicForPoster(cd.ctx, db.CreateForumTopicForPosterParams{
+			ForumcategoryID: 0,
+			ForumLang:       sql.NullInt32{Int32: post.LanguageIdlanguage, Valid: post.LanguageIdlanguage != 0},
+			Title:           sql.NullString{String: newsTopicName, Valid: true},
+			Description:     sql.NullString{String: newsTopicDescription, Valid: true},
+			Handler:         "news",
+			Section:         "forum",
+			GrantCategoryID: sql.NullInt32{},
+			GranteeID:       sql.NullInt32{},
+			PosterID:        0,
 		})
 		if err != nil {
 			return ti, fmt.Errorf("create forum topic: %w", err)
@@ -105,7 +109,7 @@ func (cd *CoreData) UpdateNewsReply(commentID, editorID, languageID int32, text 
 		return ThreadInfo{}, fmt.Errorf("thread fetch: %w", err)
 	}
 	if err := cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
-		LanguageID:  languageID,
+		LanguageID:  sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:        sql.NullString{String: text, Valid: true},
 		CommentID:   commentID,
 		CommenterID: editorID,

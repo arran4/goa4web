@@ -93,7 +93,7 @@ func (AskTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := queries.CreateFAQQuestionForWriter(r.Context(), db.CreateFAQQuestionForWriterParams{
 		Question:   sql.NullString{String: text, Valid: true},
 		WriterID:   uid,
-		LanguageID: int32(languageId),
+		LanguageID: sql.NullInt32{Int32: int32(languageId), Valid: languageId != 0},
 		GranteeID:  sql.NullInt32{Int32: uid, Valid: true},
 	}); err != nil {
 		return fmt.Errorf("faq fetch fail: %w", handlers.ErrRedirectOnSamePageHandler(err))

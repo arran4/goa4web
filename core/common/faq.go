@@ -93,7 +93,7 @@ func (cd *CoreData) CreateFAQQuestion(p CreateFAQQuestionParams) (int64, error) 
 		Answer:     sql.NullString{String: p.Answer, Valid: p.Answer != ""},
 		CategoryID: sql.NullInt32{Int32: p.CategoryID, Valid: p.CategoryID != 0},
 		WriterID:   p.WriterID,
-		LanguageID: p.LanguageID,
+		LanguageID: sql.NullInt32{Int32: p.LanguageID, Valid: p.LanguageID != 0},
 		GranteeID:  sql.NullInt32{Int32: p.WriterID, Valid: p.WriterID != 0},
 	})
 	if err != nil {

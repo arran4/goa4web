@@ -5,7 +5,7 @@
     <label>Board:
         <select name="board">
             {{ range .Boards }}
-            <option value="{{ .Idimageboard }}"{{ if eq .Idimageboard $.Post.ImageboardIdimageboard }} selected{{ end }}>{{ .Title.String }}</option>
+            <option value="{{ .Idimageboard }}"{{ if eq .Idimageboard $.Post.ImageboardIdimageboard.Int32 }} selected{{ end }}>{{ .Title.String }}</option>
             {{ end }}
         </select>
     </label><br>

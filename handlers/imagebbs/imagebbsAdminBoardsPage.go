@@ -50,7 +50,7 @@ func AdminBoardsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data := Data{Page: page}
 	for _, b := range boards {
-		threads, err := queries.AdminCountThreadsByBoard(r.Context(), b.Idimageboard)
+		threads, err := queries.AdminCountThreadsByBoard(r.Context(), sql.NullInt32{Int32: b.Idimageboard, Valid: true})
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			log.Printf("countThreads error: %s", err)
 			threads = 0

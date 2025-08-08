@@ -210,7 +210,7 @@ type CoreData struct {
 	writerWritings                   map[int32]*lazy.Value[[]*db.ListPublicWritingsByUserForListerRow]
 	writingCategories                lazy.Value[[]*db.WritingCategory]
 	writingRows                      map[int32]*lazy.Value[*db.GetWritingForListerByIDRow]
-  // marks records which template sections have been rendered to avoid
+	// marks records which template sections have been rendered to avoid
 	// duplicate output when re-rendering after an error.
 	marks map[string]struct{}
 }
@@ -1196,7 +1196,7 @@ func (cd *CoreData) ImageBoardPosts(boardID int32) ([]*db.ListImagePostsByBoardF
 	return lv.Load(func() ([]*db.ListImagePostsByBoardForListerRow, error) {
 		return cd.queries.ListImagePostsByBoardForLister(cd.ctx, db.ListImagePostsByBoardForListerParams{
 			ListerID:     cd.UserID,
-			BoardID:      boardID,
+			BoardID:      sql.NullInt32{Int32: boardID, Valid: true},
 			ListerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 			Limit:        200,
 			Offset:       0,
@@ -2177,7 +2177,7 @@ func (cd *CoreData) SubImageBoards(parentID int32) ([]*db.Imageboard, error) {
 	return lv.Load(func() ([]*db.Imageboard, error) {
 		return cd.queries.ListBoardsByParentIDForLister(cd.ctx, db.ListBoardsByParentIDForListerParams{
 			ListerID:     cd.UserID,
-			ParentID:     parentID,
+			ParentID:     sql.NullInt32{Int32: parentID, Valid: parentID != 0},
 			ListerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 			Limit:        200,
 			Offset:       0,

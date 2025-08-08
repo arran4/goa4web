@@ -15,6 +15,7 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dbdrivers"
+	dbmysql "github.com/arran4/goa4web/internal/dbdrivers/mysql"
 )
 
 // parseS3Dir validates S3 paths in the form s3://bucket/prefix. The bucket
@@ -41,6 +42,9 @@ func InitDB(cfg *config.RuntimeConfig, reg *dbdrivers.Registry) (*sql.DB, *commo
 	conn := cfg.DBConn
 	if conn == "" {
 		return nil, &common.UserError{Err: fmt.Errorf("connection string required"), ErrorMessage: "missing connection"}
+	}
+	if cfg.DBDriver == "mysql" {
+		dbmysql.SetTimezone(cfg.DBTimezone)
 	}
 	c, err := reg.Connector(cfg.DBDriver, conn)
 	if err != nil {

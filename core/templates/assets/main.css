@@ -339,3 +339,39 @@ tr.unsupported td {
        flex: 1;
 }
 
+
+.comments {
+       display: flex;
+       flex-direction: column;
+}
+
+.comment {
+       display: flex;
+       padding: 0.5em 0;
+}
+
+.comments hr {
+       border: 0;
+       border-top: 1px solid #ccc;
+       margin: 0;
+}
+
+.author {
+       width: 220px;
+       margin-right: 1em;
+       background-color: #FFF6E0;
+       padding: 0.5em;
+}
+
+.author .meta {
+       font-size: 0.8em;
+}
+
+.author .meta div {
+       margin-bottom: 0.2em;
+}
+
+.body {
+       flex: 1;
+}
+

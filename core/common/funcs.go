@@ -2,7 +2,6 @@ package common
 
 import (
 	"fmt"
-	"github.com/arran4/goa4web"
 	"html/template"
 	"io"
 	"log"
@@ -11,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/arran4/goa4web"
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/arran4/goa4web/core/consts"

@@ -1,4 +1,7 @@
 {{ template "head" $ }}
+{{- if cd.CurrentError }}
+<p style="color:red">{{ cd.CurrentError }}</p>
+{{- end }}
 Register:<br>
 <form method="post">
         {{ csrfField }}

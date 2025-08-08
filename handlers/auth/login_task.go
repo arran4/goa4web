@@ -75,20 +75,22 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if !VerifyPassword(password, row.Passwd.String, row.PasswdAlgorithm.String) {
 		expiry := time.Now().Add(-time.Duration(cd.Config.PasswordResetExpiryHours) * time.Hour)
 		reset, err := queries.GetPasswordResetByUser(r.Context(), db.GetPasswordResetByUserParams{UserID: row.Idusers, CreatedAt: expiry})
-		code := r.FormValue("code")
 		if err == nil && VerifyPassword(password, reset.Passwd, reset.PasswdAlgorithm) {
-			if code != "" && code == reset.VerificationCode {
-				_ = queries.SystemMarkPasswordResetVerified(r.Context(), reset.ID)
-				_ = queries.InsertPassword(r.Context(), db.InsertPasswordParams{UsersIdusers: reset.UserID, Passwd: reset.Passwd, PasswdAlgorithm: sql.NullString{String: reset.PasswdAlgorithm, Valid: true}})
+			code := r.FormValue("code")
+			if code != "" {
+				if err := cd.VerifyPasswordReset(code, password); err != nil {
+					if err := queries.SystemInsertLoginAttempt(r.Context(), db.SystemInsertLoginAttemptParams{Username: username, IpAddress: strings.Split(r.RemoteAddr, ":")[0]}); err != nil {
+						log.Printf("insert login attempt: %v", err)
+					}
+					return loginFormHandler{msg: "Invalid password"}
+				}
 			} else {
 				type Data struct {
 					ID int32
 				}
 				cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 				cd.PageTitle = "Verify Password"
-				data := Data{
-					ID: reset.ID,
-				}
+				data := Data{ID: reset.ID}
 				return handlers.TemplateWithDataHandler("passwordVerifyPage.gohtml", data)
 			}
 		} else {

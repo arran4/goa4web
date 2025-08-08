@@ -3,9 +3,7 @@ package common
 import (
 	"bytes"
 	"context"
-	"crypto/rand"
 	"database/sql"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -75,20 +73,7 @@ type NavigationProvider interface {
 	AdminSections() []AdminSection
 }
 
-// ErrEmailAlreadyAssociated is returned when a user already has an email set.
-var ErrEmailAlreadyAssociated = errors.New("email already associated")
-
-// AssociateEmailParams carries the data required to request an email association.
-type AssociateEmailParams struct {
-	Username string
-	Email    string
-	Reason   string
-}
-
 // No package-level pagination constants as runtime config provides these values.
-
-// ErrPasswordResetRecentlyRequested indicates a password reset was requested too recently.
-var ErrPasswordResetRecentlyRequested = errors.New("reset recently requested")
 
 type CoreData struct {
 	a4codeMapper func(tag, val string) string
@@ -214,7 +199,7 @@ type CoreData struct {
 	writingCategories                lazy.Value[[]*db.WritingCategory]
 	writingRows                      map[int32]*lazy.Value[*db.GetWritingForListerByIDRow]
 
-	// marks records which template sections have been rendered to avoid
+        // marks records which template sections have been rendered to avoid
 	// duplicate output when re-rendering after an error.
 	marks map[string]struct{}
 }
@@ -1834,82 +1819,12 @@ func (cd *CoreData) DeleteFAQCategory(id int32) error {
 	return cd.queries.AdminDeleteFAQCategory(cd.ctx, id)
 }
 
-// AssociateEmail creates an email association request for a user.
-func (cd *CoreData) AssociateEmail(p AssociateEmailParams) (*db.SystemGetUserByUsernameRow, int64, error) {
-	row, err := cd.queries.SystemGetUserByUsername(cd.ctx, sql.NullString{String: p.Username, Valid: true})
-	if err != nil {
-		return nil, 0, fmt.Errorf("user not found %w", err)
-	}
-	if row.Email != "" {
-		return nil, 0, ErrEmailAlreadyAssociated
-	}
-	res, err := cd.queries.AdminInsertRequestQueue(cd.ctx, db.AdminInsertRequestQueueParams{
-		UsersIdusers:   row.Idusers,
-		ChangeTable:    "user_emails",
-		ChangeField:    "email",
-		ChangeRowID:    row.Idusers,
-		ChangeValue:    sql.NullString{String: p.Email, Valid: true},
-		ContactOptions: sql.NullString{String: p.Email, Valid: true},
-	})
-	if err != nil {
-		log.Printf("insert admin request: %v", err)
-		return nil, 0, fmt.Errorf("insert admin request %w", err)
-	}
-	id, _ := res.LastInsertId()
-	_ = cd.queries.AdminInsertRequestComment(cd.ctx, db.AdminInsertRequestCommentParams{RequestID: int32(id), Comment: p.Reason})
-	_ = cd.queries.InsertAdminUserComment(cd.ctx, db.InsertAdminUserCommentParams{UsersIdusers: row.Idusers, Comment: "email association requested"})
-	return row, id, nil
-}
-
 // DeleteFAQQuestion removes a FAQ entry by ID.
 func (cd *CoreData) DeleteFAQQuestion(id int32) error {
 	if cd.queries == nil {
 		return nil
 	}
 	return cd.queries.AdminDeleteFAQ(cd.ctx, id)
-}
-
-// UserExists reports whether a user already exists with the supplied username
-// or email address.
-func (cd *CoreData) UserExists(username, email string) (bool, error) {
-	if cd.queries == nil {
-		return false, nil
-	}
-	if username != "" {
-		if _, err := cd.queries.SystemGetUserByUsername(cd.ctx, sql.NullString{String: username, Valid: true}); err == nil {
-			return true, nil
-		} else if !errors.Is(err, sql.ErrNoRows) {
-			return false, fmt.Errorf("user by username: %w", err)
-		}
-	}
-	if email != "" {
-		if _, err := cd.queries.SystemGetUserByEmail(cd.ctx, email); err == nil {
-			return true, nil
-		} else if !errors.Is(err, sql.ErrNoRows) {
-			return false, fmt.Errorf("user by email: %w", err)
-		}
-	}
-	return false, nil
-}
-
-// CreateUserWithEmail inserts a user with the supplied username, email and
-// password hash/algorithm, returning the new user ID.
-func (cd *CoreData) CreateUserWithEmail(u, e, hash, alg string) (int32, error) {
-	if cd.queries == nil {
-		return 0, errors.New("no queries")
-	}
-	id, err := cd.queries.SystemInsertUser(cd.ctx, sql.NullString{String: u, Valid: u != ""})
-	if err != nil {
-		return 0, err
-	}
-	uid := int32(id)
-	if err := cd.queries.InsertUserEmail(cd.ctx, db.InsertUserEmailParams{UserID: uid, Email: e, VerifiedAt: sql.NullTime{}, LastVerificationCode: sql.NullString{}}); err != nil {
-		return 0, err
-	}
-	if err := cd.queries.InsertPassword(cd.ctx, db.InsertPasswordParams{UsersIdusers: uid, Passwd: hash, PasswdAlgorithm: sql.NullString{String: alg, Valid: alg != ""}}); err != nil {
-		return 0, err
-	}
-	return uid, nil
 }
 
 // RegisterExternalLinkClick records click statistics for url.
@@ -2159,38 +2074,6 @@ func (cd *CoreData) CreateWritingCommentForCommenter(commenterID, threadID, arti
 
 func (cd *CoreData) CreateLinkerCommentForCommenter(commenterID, threadID, linkID, languageID int32, text string) (int64, error) {
 	return cd.CreateCommentInSectionForCommenter("linker", "link", linkID, threadID, commenterID, languageID, text)
-}
-
-// CreatePasswordReset creates a new password reset entry for the given email and returns the verification code.
-func (cd *CoreData) CreatePasswordReset(email, hash, alg string) (string, error) {
-	if cd.queries == nil {
-		return "", nil
-	}
-	row, err := cd.queries.SystemGetUserByEmail(cd.ctx, email)
-	if err != nil {
-		return "", fmt.Errorf("user by email %w", err)
-	}
-	if reset, err := cd.queries.GetPasswordResetByUser(cd.ctx, db.GetPasswordResetByUserParams{
-		UserID:    row.Idusers,
-		CreatedAt: time.Now().Add(-time.Duration(cd.Config.PasswordResetExpiryHours) * time.Hour),
-	}); err == nil {
-		if time.Since(reset.CreatedAt) < 24*time.Hour {
-			return "", ErrPasswordResetRecentlyRequested
-		}
-		_ = cd.queries.SystemDeletePasswordReset(cd.ctx, reset.ID)
-	} else if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		log.Printf("get reset: %v", err)
-		return "", fmt.Errorf("get reset %w", err)
-	}
-	var buf [8]byte
-	if _, err := rand.Read(buf[:]); err != nil {
-		return "", fmt.Errorf("rand %w", err)
-	}
-	code := hex.EncodeToString(buf[:])
-	if err := cd.queries.CreatePasswordResetForUser(cd.ctx, db.CreatePasswordResetForUserParams{UserID: row.Idusers, Passwd: hash, PasswdAlgorithm: alg, VerificationCode: code}); err != nil {
-		return "", fmt.Errorf("create reset %w", err)
-	}
-	return code, nil
 }
 
 // CanEditComment reports whether the current user may edit the supplied
@@ -2517,14 +2400,6 @@ func (cd *CoreData) UnreadNotificationCount() int64 {
 		log.Printf("load unread notification count: %v", err)
 	}
 	return count
-}
-
-// UserCredentials fetches the stored password hash and algorithm for username.
-func (cd *CoreData) UserCredentials(username string) (*db.SystemGetLoginRow, error) {
-	if cd.queries == nil {
-		return nil, fmt.Errorf("no queries available")
-	}
-	return cd.queries.SystemGetLogin(cd.ctx, sql.NullString{String: username, Valid: true})
 }
 
 // UserByID loads a user record by ID once and caches it.

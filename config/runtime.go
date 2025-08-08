@@ -14,6 +14,7 @@ const DefaultPageSize = 15
 type RuntimeConfig struct {
 	DBConn            string
 	DBDriver          string
+	DBTimezone        string
 	DBLogVerbosity    int
 	EmailLogVerbosity int
 	LogFlags          int
@@ -310,6 +311,9 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 	}
 	if cfg.StatsStartYear == 0 {
 		cfg.StatsStartYear = 2005
+	}
+	if cfg.DBTimezone == "" {
+		cfg.DBTimezone = "Australia/Melbourne"
 	}
 	if cfg.Timezone == "" {
 		cfg.Timezone = "Australia/Melbourne"

@@ -5,6 +5,8 @@ const (
 	EnvDBConn = "DB_CONN"
 	// EnvDBDriver selects the database driver.
 	EnvDBDriver = "DB_DRIVER"
+	// EnvDBTimezone sets the database timezone.
+	EnvDBTimezone = "DB_TIMEZONE"
 
 	// EnvEmailProvider selects the mail sending backend.
 	EnvEmailProvider = "EMAIL_PROVIDER"

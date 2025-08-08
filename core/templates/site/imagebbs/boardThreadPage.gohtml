@@ -10,9 +10,9 @@
     {{ template "threadComments" }}
     {{ if cd.SelectedThreadCanReply }}
         <font size="4">Reply:</font><br>
-        <form method="post" action="?board={{ .BoardId }}">
+        <form method="post" action="?board={{ .BoardID }}">
         {{ csrfField }}
-            <input type="hidden" name="replyTo" value="{{ .ForumThreadId }}">
+            <input type="hidden" name="replyTo" value="{{ .ForumThreadID }}">
             <input type="hidden" name="ipid" value="{{ .ImagePost.Idimagepost }}">
             <textarea name="replytext" cols="40" rows="20"></textarea><br>
             {{ template "languageCombobox" }}

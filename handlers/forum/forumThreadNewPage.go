@@ -155,6 +155,7 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 			}
 			evt.Data["TopicTitle"] = topicTitle
 			evt.Data["Author"] = author
+			evt.Data["Username"] = author
 		}
 	}
 
@@ -179,8 +180,10 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
+			fullURL := cd.AbsoluteURL(endUrl)
 			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(cid), ThreadID: int32(threadId), TopicID: int32(topicId)}
-			evt.Data["PostURL"] = cd.AbsoluteURL(endUrl)
+			evt.Data["PostURL"] = fullURL
+			evt.Data["ThreadURL"] = fullURL
 		}
 	}
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {

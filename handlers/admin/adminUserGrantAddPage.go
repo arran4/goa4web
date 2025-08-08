@@ -47,7 +47,7 @@ func adminUserGrantAddPage(w http.ResponseWriter, r *http.Request) {
 		for s := range sectSet {
 			data.Sections = append(data.Sections, s)
 		}
-	} else if item == "" {
+	} else {
 		itemSet := map[string]struct{}{}
 		for k := range GrantActionMap {
 			parts := strings.Split(k, "|")
@@ -58,7 +58,10 @@ func adminUserGrantAddPage(w http.ResponseWriter, r *http.Request) {
 		for it := range itemSet {
 			data.Items = append(data.Items, it)
 		}
-	} else {
+		if item == "" && len(data.Items) > 0 {
+			item = data.Items[0]
+			data.Item = item
+		}
 		def := GrantActionMap[section+"|"+item]
 		data.Actions = def.Actions
 		data.RequireItemID = def.RequireItemID

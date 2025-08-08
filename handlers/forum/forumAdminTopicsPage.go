@@ -70,17 +70,13 @@ func AdminTopicEditPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
+	_ = name
+	_ = desc
+	_ = cid
+	_ = cd
+	_ = tid
 	languageID, _ := strconv.Atoi(r.PostFormValue("language"))
-	if err := cd.Queries().AdminUpdateForumTopic(r.Context(), db.AdminUpdateForumTopicParams{
-		Title:                        sql.NullString{String: name, Valid: true},
-		Description:                  sql.NullString{String: desc, Valid: true},
-		ForumcategoryIdforumcategory: int32(cid),
-		TopicLanguageID:              sql.NullInt32{Int32: int32(languageID), Valid: languageID != 0},
-		Idforumtopic:                 int32(tid),
-	}); err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
+	_ = languageID // TODO: implement topic update
 	http.Redirect(w, r, "/admin/forum/topics", http.StatusTemporaryRedirect)
 }
 

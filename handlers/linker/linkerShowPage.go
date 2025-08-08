@@ -114,9 +114,9 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 	})
 	var ptid int32
 	if errors.Is(err, sql.ErrNoRows) {
-		ptidi, err := queries.SystemCreateForumTopic(r.Context(), db.SystemCreateForumTopicParams{
-			ForumcategoryIdforumcategory: 0,
-			TopicLanguageID:              sql.NullInt32{Int32: link.LanguageIdlanguage, Valid: link.LanguageIdlanguage != 0},
+		ptidi, err := queries.CreateForumTopicForPoster(r.Context(), db.CreateForumTopicForPosterParams{
+			ForumcategoryID: 0,
+			ForumLang:       sql.NullInt32{Int32: link.LanguageIdlanguage, Valid: link.LanguageIdlanguage != 0},
 			Title: sql.NullString{
 				String: LinkerTopicName,
 				Valid:  true,
@@ -125,7 +125,11 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 				String: LinkerTopicName,
 				Valid:  true,
 			},
-			Handler: "linker",
+			Handler:         "linker",
+			Section:         "forum",
+			GrantCategoryID: sql.NullInt32{},
+			GranteeID:       sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+			PosterID:        cd.UserID,
 		})
 		if err != nil {
 			log.Printf("Error: createForumTopic: %s", err)

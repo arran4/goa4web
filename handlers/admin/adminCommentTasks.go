@@ -69,7 +69,7 @@ func (BanCommentTask) Action(w http.ResponseWriter, r *http.Request) any {
 		Idcomments:         c.Idcomments,
 		ForumthreadID:      c.ForumthreadID,
 		UsersIdusers:       c.UsersIdusers,
-		LanguageIdlanguage: c.LanguageIdlanguage,
+		LanguageIdlanguage: c.LanguageIdlanguage.Int32,
 		Written:            c.Written,
 		Text:               c.Text,
 	}); err != nil {

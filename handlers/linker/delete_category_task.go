@@ -1,6 +1,7 @@
 package linker
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -27,7 +28,7 @@ func (deleteCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 			return nil
 		}
 	}
-	count, err := queries.AdminCountLinksByCategory(r.Context(), int32(cid))
+	count, err := queries.AdminCountLinksByCategory(r.Context(), sql.NullInt32{Int32: int32(cid), Valid: cid != 0})
 	if err != nil {
 		return fmt.Errorf("count links fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

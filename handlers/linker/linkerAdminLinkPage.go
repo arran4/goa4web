@@ -35,7 +35,7 @@ func adminLinkPage(w http.ResponseWriter, r *http.Request) {
 		SelectedLanguageId int
 	}{
 		Link:               link,
-		Selected:           int(link.LinkerCategoryID),
+		Selected:           int(link.LinkerCategoryID.Int32),
 		SelectedLanguageId: int(link.LanguageIdlanguage),
 	}
 
@@ -68,7 +68,7 @@ func (editLinkTask) Action(w http.ResponseWriter, r *http.Request) any {
 		Title:              sql.NullString{Valid: true, String: title},
 		Url:                sql.NullString{Valid: true, String: URL},
 		Description:        sql.NullString{Valid: true, String: desc},
-		LinkerCategoryID:   int32(cat),
+		LinkerCategoryID:   sql.NullInt32{Int32: int32(cat), Valid: cat != 0},
 		LanguageIdlanguage: int32(lang),
 		Idlinker:           id,
 	}); err != nil {

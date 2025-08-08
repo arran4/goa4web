@@ -8,13 +8,13 @@ import (
 )
 
 // UserCanCreateLink reports whether uid may submit a link to the category.
-func UserCanCreateLink(ctx context.Context, q db.Querier, categoryID, uid int32) (bool, error) {
+func UserCanCreateLink(ctx context.Context, q db.Querier, categoryID sql.NullInt32, uid int32) (bool, error) {
 	_, err := q.SystemCheckGrant(ctx, db.SystemCheckGrantParams{
 		ViewerID: uid,
 		Section:  "linker",
 		Item:     sql.NullString{String: "category", Valid: true},
 		Action:   "post",
-		ItemID:   sql.NullInt32{Int32: categoryID, Valid: true},
+		ItemID:   categoryID,
 		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err == nil {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strconv"
 	"testing"
 	"time"
@@ -26,9 +27,9 @@ func TestAdminTopicPage(t *testing.T) {
 	mock.MatchExpectationsInOrder(false)
 
 	topicID := 4
-	rows := sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_idlanguage", "title", "description", "threads", "comments", "lastaddition", "handler"}).
-		AddRow(topicID, 0, 1, 0, "t", "d", 2, 3, time.Now(), "")
-	mock.ExpectQuery("SELECT").WillReturnRows(rows)
+	rows := sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_idlanguage", "title", "description", "threads", "comments", "lastaddition", "handler", "lastposterusername"}).
+		AddRow(topicID, 0, 1, 0, "t", "d", 2, 3, time.Now(), "", nil)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.language_idlanguage, t.title, t.description, t.threads, t.comments, t.lastaddition, t.handler, lu.username AS LastPosterUsername FROM forumtopic t")).WillReturnRows(rows)
 
 	cd := common.NewCoreData(context.Background(), db.New(conn), config.NewRuntimeConfig())
 	r := httptest.NewRequest("GET", "/admin/forum/topics/topic/"+strconv.Itoa(topicID), nil)
@@ -53,9 +54,9 @@ func TestAdminTopicEditFormPage(t *testing.T) {
 	mock.MatchExpectationsInOrder(false)
 
 	topicID := 4
-	topicRows := sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_idlanguage", "title", "description", "threads", "comments", "lastaddition", "handler"}).
-		AddRow(topicID, 0, 1, 0, "t", "d", 2, 3, time.Now(), "")
-	mock.ExpectQuery("SELECT").WillReturnRows(topicRows)
+	topicRows := sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_idlanguage", "title", "description", "threads", "comments", "lastaddition", "handler", "lastposterusername"}).
+		AddRow(topicID, 0, 1, 0, "t", "d", 2, 3, time.Now(), "", nil)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.language_idlanguage, t.title, t.description, t.threads, t.comments, t.lastaddition, t.handler, lu.username AS LastPosterUsername FROM forumtopic t")).WillReturnRows(topicRows)
 
 	catRows := sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "language_idlanguage", "title", "description"}).
 		AddRow(1, 0, 0, "cat", "desc")

@@ -1,15 +1,13 @@
 package auth
 
 import (
-	"database/sql"
+	"errors"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -32,40 +30,23 @@ func (EmailAssociationRequestTask) Action(w http.ResponseWriter, r *http.Request
 	username := r.PostFormValue("username")
 	email := r.PostFormValue("email")
 	reason := r.PostFormValue("reason")
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	row, err := queries.SystemGetUserByUsername(r.Context(), sql.NullString{String: username, Valid: true})
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	row, id, err := cd.AssociateEmail(common.AssociateEmailParams{Username: username, Email: email, Reason: reason})
 	if err != nil {
-		return fmt.Errorf("user not found %w", handlers.ErrRedirectOnSamePageHandler(err))
-	}
-	if row.Email != "" {
-		return handlers.RefreshDirectHandler{TargetURL: "/login"}
-	}
-	res, err := queries.AdminInsertRequestQueue(r.Context(), db.AdminInsertRequestQueueParams{
-		UsersIdusers:   row.Idusers,
-		ChangeTable:    "user_emails",
-		ChangeField:    "email",
-		ChangeRowID:    row.Idusers,
-		ChangeValue:    sql.NullString{String: email, Valid: true},
-		ContactOptions: sql.NullString{String: email, Valid: true},
-	})
-	if err != nil {
-		log.Printf("insert admin request: %v", err)
-		return fmt.Errorf("insert admin request %w", err)
-	}
-	id, _ := res.LastInsertId()
-	_ = queries.AdminInsertRequestComment(r.Context(), db.AdminInsertRequestCommentParams{RequestID: int32(id), Comment: reason})
-	_ = queries.InsertAdminUserComment(r.Context(), db.InsertAdminUserCommentParams{UsersIdusers: row.Idusers, Comment: "email association requested"})
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Path = fmt.Sprintf("/admin/request/%d", id)
-			evt.Data["Username"] = row.Username.String
-			evt.Data["Email"] = email
-			evt.Data["Reason"] = reason
-			evt.Data["UserURL"] = cd.AbsoluteURL(fmt.Sprintf("/admin/user/%d", row.Idusers))
+		if errors.Is(err, common.ErrEmailAlreadyAssociated) {
+			return handlers.RefreshDirectHandler{TargetURL: "/login"}
 		}
+		return fmt.Errorf("associate email %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	if evt := cd.Event(); evt != nil {
+		if evt.Data == nil {
+			evt.Data = map[string]any{}
+		}
+		evt.Path = fmt.Sprintf("/admin/request/%d", id)
+		evt.Data["Username"] = row.Username.String
+		evt.Data["Email"] = email
+		evt.Data["Reason"] = reason
+		evt.Data["UserURL"] = cd.AbsoluteURL(fmt.Sprintf("/admin/user/%d", row.Idusers))
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		handlers.TemplateHandler(w, r, "forgotPasswordRequestSentPage.gohtml", struct{}{})

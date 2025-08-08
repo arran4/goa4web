@@ -52,6 +52,31 @@ func TestCoreDataLatestNewsLazy(t *testing.T) {
 	}
 }
 
+func TestUpdateFAQQuestion(t *testing.T) {
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
+
+	queries := db.New(conn)
+	mock.ExpectExec("UPDATE faq").
+		WithArgs(sql.NullString{String: "a", Valid: true}, sql.NullString{String: "q", Valid: true}, int32(2), int32(1)).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec("INSERT INTO faq_revisions").
+		WithArgs(int32(1), int32(3), sql.NullString{String: "q", Valid: true}, sql.NullString{String: "a", Valid: true}, sql.NullInt32{Int32: 3, Valid: true}, int32(3)).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
+	if err := cd.UpdateFAQQuestion("q", "a", 2, 1, 3); err != nil {
+		t.Fatalf("UpdateFAQQuestion: %v", err)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}
+
 func TestWritingCategoriesLazy(t *testing.T) {
 	conn, mock, err := sqlmock.New()
 	if err != nil {
@@ -351,6 +376,55 @@ func TestBlogListForSelectedAuthorLazy(t *testing.T) {
 	}
 	if _, err := cd.BlogListForSelectedAuthor(); err != nil {
 		t.Fatalf("BlogListForSelectedAuthor second call: %v", err)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}
+
+func TestSelectedQuestionFromCategory(t *testing.T) {
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
+
+	queries := db.New(conn)
+	ctx := context.Background()
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
+
+	row := sqlmock.NewRows([]string{"idfaq", "faqcategories_idfaqcategories", "language_idlanguage", "users_idusers", "answer", "question"}).
+		AddRow(1, 2, 0, 0, sql.NullString{}, sql.NullString{})
+	mock.ExpectQuery("SELECT idfaq, faqcategories_idfaqcategories").WithArgs(int32(1)).WillReturnRows(row)
+	mock.ExpectExec("UPDATE faq SET deleted_at").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
+
+	if err := cd.SelectedQuestionFromCategory(1, 2); err != nil {
+		t.Fatalf("SelectedQuestionFromCategory: %v", err)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}
+
+func TestSelectedQuestionFromCategoryWrongCategory(t *testing.T) {
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
+
+	queries := db.New(conn)
+	ctx := context.Background()
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
+
+	row := sqlmock.NewRows([]string{"idfaq", "faqcategories_idfaqcategories", "language_idlanguage", "users_idusers", "answer", "question"}).
+		AddRow(1, 3, 0, 0, sql.NullString{}, sql.NullString{})
+	mock.ExpectQuery("SELECT idfaq, faqcategories_idfaqcategories").WithArgs(int32(1)).WillReturnRows(row)
+
+	if err := cd.SelectedQuestionFromCategory(1, 2); err == nil {
+		t.Fatalf("expected error")
 	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {

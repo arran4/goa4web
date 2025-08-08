@@ -6,6 +6,12 @@ body {
         flex-direction: column;
 }
 
+textarea {
+        width: 100%;
+        box-sizing: border-box;
+        overflow-y: hidden;
+}
+
 #bottom {
         flex: none;
 }
@@ -213,6 +219,10 @@ div.title {
 }
 
 .disabled .pill {
+        background: #ffcdd2;
+}
+
+.pill.inactive {
         background: #ffcdd2;
 }
 

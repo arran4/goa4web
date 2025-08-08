@@ -143,6 +143,7 @@ type Querier interface {
 	// admin task
 	AdminListSentEmails(ctx context.Context, arg AdminListSentEmailsParams) ([]*AdminListSentEmailsRow, error)
 	AdminListSessions(ctx context.Context) ([]*AdminListSessionsRow, error)
+	AdminListTopicsWithUserGrantsNoRoles(ctx context.Context, includeAdmin interface{}) ([]*AdminListTopicsWithUserGrantsNoRolesRow, error)
 	// admin task
 	AdminListUnsentPendingEmails(ctx context.Context, arg AdminListUnsentPendingEmailsParams) ([]*AdminListUnsentPendingEmailsRow, error)
 	// Admin
@@ -262,6 +263,7 @@ type Querier interface {
 	GetCommentsBySectionThreadIdForUser(ctx context.Context, arg GetCommentsBySectionThreadIdForUserParams) ([]*GetCommentsBySectionThreadIdForUserRow, error)
 	GetCommentsByThreadIdForUser(ctx context.Context, arg GetCommentsByThreadIdForUserParams) ([]*GetCommentsByThreadIdForUserRow, error)
 	GetExternalLink(ctx context.Context, url string) (*ExternalLink, error)
+	GetExternalLinkByID(ctx context.Context, id int32) (*ExternalLink, error)
 	GetFAQAnsweredQuestions(ctx context.Context, arg GetFAQAnsweredQuestionsParams) ([]*Faq, error)
 	GetFAQByID(ctx context.Context, arg GetFAQByIDParams) (*Faq, error)
 	GetFAQQuestionsByCategory(ctx context.Context, arg GetFAQQuestionsByCategoryParams) ([]*Faq, error)

@@ -1,6 +1,7 @@
 package privateforum
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
@@ -14,6 +15,12 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		CreateTask tasks.TaskString
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if !cd.HasGrant("privateforum", "topic", "see", 0) {
+		if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{}); err != nil {
+			log.Printf("render no access page: %v", err)
+		}
+		return
+	}
 	cd.PageTitle = "Private Forum"
 	data := Data{CreateTask: TaskPrivateTopicCreate}
 	handlers.TemplateHandler(w, r, "privateForumPage", data)

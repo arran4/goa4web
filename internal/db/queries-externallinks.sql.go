@@ -102,6 +102,29 @@ func (q *Queries) GetExternalLink(ctx context.Context, url string) (*ExternalLin
 	return &i, err
 }
 
+const getExternalLinkByID = `-- name: GetExternalLinkByID :one
+SELECT id, url, clicks, created_at, updated_at, updated_by, card_title, card_description, card_image, card_image_cache, favicon_cache FROM external_links WHERE id = ? LIMIT 1
+`
+
+func (q *Queries) GetExternalLinkByID(ctx context.Context, id int32) (*ExternalLink, error) {
+	row := q.db.QueryRowContext(ctx, getExternalLinkByID, id)
+	var i ExternalLink
+	err := row.Scan(
+		&i.ID,
+		&i.Url,
+		&i.Clicks,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.UpdatedBy,
+		&i.CardTitle,
+		&i.CardDescription,
+		&i.CardImage,
+		&i.CardImageCache,
+		&i.FaviconCache,
+	)
+	return &i, err
+}
+
 const systemRegisterExternalLinkClick = `-- name: SystemRegisterExternalLinkClick :exec
 INSERT INTO external_links (url, clicks)
 VALUES (?, 1)

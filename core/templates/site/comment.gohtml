@@ -2,7 +2,7 @@
     {{ $cmt := . }}
     <table width="100%">
         <tr bgcolor="lightgrey">
-            <th>{{ localTime $cmt.Written.Time }}</th>
+            <th><a id="comment-{{ $cmt.Idcomments }}" href="#comment-{{ $cmt.Idcomments }}">{{ localTime $cmt.Written.Time }}</a></th>
         </tr>
         <tr>
             <td>

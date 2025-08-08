@@ -199,6 +199,54 @@ func (q *Queries) AdminListForumTopics(ctx context.Context, arg AdminListForumTo
 	return items, nil
 }
 
+const adminListTopicsWithUserGrantsNoRoles = `-- name: AdminListTopicsWithUserGrantsNoRoles :many
+SELECT t.idforumtopic, t.title
+FROM forumtopic t
+WHERE t.handler <> 'private'
+  AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='forum' AND g.item='topic' AND g.active=1
+      AND g.item_id = t.idforumtopic
+      AND g.user_id IS NOT NULL
+      AND (? OR g.user_id <> 1)
+  )
+  AND NOT EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='forum' AND g.item='topic' AND g.active=1
+      AND g.item_id = t.idforumtopic
+      AND g.role_id IS NOT NULL
+  )
+ORDER BY t.idforumtopic
+`
+
+type AdminListTopicsWithUserGrantsNoRolesRow struct {
+	Idforumtopic int32
+	Title        sql.NullString
+}
+
+func (q *Queries) AdminListTopicsWithUserGrantsNoRoles(ctx context.Context, includeAdmin interface{}) ([]*AdminListTopicsWithUserGrantsNoRolesRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListTopicsWithUserGrantsNoRoles, includeAdmin)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListTopicsWithUserGrantsNoRolesRow
+	for rows.Next() {
+		var i AdminListTopicsWithUserGrantsNoRolesRow
+		if err := rows.Scan(&i.Idforumtopic, &i.Title); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const adminRebuildAllForumTopicMetaColumns = `-- name: AdminRebuildAllForumTopicMetaColumns :exec
 UPDATE forumtopic
 SET threads = (

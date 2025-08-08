@@ -31,6 +31,8 @@ func (cd *CoreData) Breadcrumbs() []Breadcrumb {
 		crumbs, err = cd.linkerBreadcrumbs()
 	case "imagebbs":
 		crumbs, err = cd.imageboardBreadcrumbs()
+	case "admin":
+		crumbs, err = cd.adminBreadcrumbs()
 	default:
 		return nil
 	}
@@ -182,6 +184,44 @@ func (cd *CoreData) imageboardBreadcrumbs() ([]Breadcrumb, error) {
 	}
 	if threadID != 0 {
 		crumbs = append(crumbs, Breadcrumb{Title: fmt.Sprintf("Thread %d", threadID)})
+	}
+	return crumbs, nil
+}
+
+func (cd *CoreData) adminBreadcrumbs() ([]Breadcrumb, error) {
+	crumbs := []Breadcrumb{{Title: "Admin", Link: "/admin"}}
+	switch {
+	case cd.currentProfileUserID != 0:
+		crumbs = append(crumbs, Breadcrumb{Title: "Users", Link: "/admin/user"})
+		if u := cd.CurrentProfileUser(); u != nil {
+			title := fmt.Sprintf("User %d", u.Idusers)
+			if u.Username.Valid {
+				title = fmt.Sprintf("User %s", u.Username.String)
+			}
+			crumbs = append(crumbs, Breadcrumb{Title: title})
+		} else {
+			crumbs = append(crumbs, Breadcrumb{Title: fmt.Sprintf("User %d", cd.currentProfileUserID)})
+		}
+	case cd.currentRoleID != 0:
+		crumbs = append(crumbs, Breadcrumb{Title: "Roles", Link: "/admin/roles"})
+		if r, err := cd.RoleByID(cd.currentRoleID); err == nil && r != nil {
+			title := fmt.Sprintf("Role %d", cd.currentRoleID)
+			if r.Name != "" {
+				title = fmt.Sprintf("Role %s", r.Name)
+			}
+			crumbs = append(crumbs, Breadcrumb{Title: title})
+		} else {
+			crumbs = append(crumbs, Breadcrumb{Title: fmt.Sprintf("Role %d", cd.currentRoleID)})
+		}
+	case cd.currentRequestID != 0:
+		crumbs = append(crumbs, Breadcrumb{Title: "Requests", Link: "/admin/requests"})
+		crumbs = append(crumbs, Breadcrumb{Title: fmt.Sprintf("Request %d", cd.currentRequestID)})
+	default:
+		if cd.PageTitle != "" {
+			crumbs = append(crumbs, Breadcrumb{Title: cd.PageTitle})
+		} else {
+			crumbs = append(crumbs, Breadcrumb{Title: "Admin"})
+		}
 	}
 	return crumbs, nil
 }

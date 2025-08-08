@@ -26,8 +26,10 @@ import (
 // RegisterRoutes attaches the admin endpoints to ar. The router is expected to
 // already have any required authentication middleware applied.
 func (h *Handlers) RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
+	ar.Use(handlers.SectionMiddleware("admin"))
 	navReg.RegisterAdminControlCenter("Core", "Roles", "/admin/roles", 25)
 	navReg.RegisterAdminControlCenter("Core", "Grants", "/admin/grants", 27)
+	navReg.RegisterAdminControlCenter("Core", "Grant Rules", "/admin/grants/rules", 28)
 	navReg.RegisterAdminControlCenter("Core", "External Links", "/admin/external-links", 30)
 	navReg.RegisterAdminControlCenter("Core", "Notifications", "/admin/notifications", 90)
 	navReg.RegisterAdminControlCenter("Core", "Queued Emails", "/admin/email/queue", 110)
@@ -101,6 +103,8 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navRe
 	ar.HandleFunc("/role/{role}/grant", handlers.TaskHandler(roleGrantCreateTask)).Methods("POST").MatcherFunc(roleGrantCreateTask.Matcher())
 	ar.HandleFunc("/role/{role}/grant/update", handlers.TaskHandler(roleGrantUpdateTask)).Methods("POST").MatcherFunc(roleGrantUpdateTask.Matcher())
 	ar.HandleFunc("/grant/delete", handlers.TaskHandler(roleGrantDeleteTask)).Methods("POST").MatcherFunc(roleGrantDeleteTask.Matcher())
+	ar.HandleFunc("/grants/rules", AdminGrantRulesPage).Methods("GET")
+	ar.HandleFunc("/grants/rules", handlers.TaskHandler(convertTopicToPrivateTask)).Methods("POST").MatcherFunc(convertTopicToPrivateTask.Matcher())
 	ar.HandleFunc("/grants/anyone", AdminAnyoneGrantsPage).Methods("GET")
 	ar.HandleFunc("/grants", AdminGrantsPage).Methods("GET")
 	ar.HandleFunc("/grant/add", adminGrantAddPage).Methods("GET")

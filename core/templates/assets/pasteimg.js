@@ -12,6 +12,10 @@
         el.setRangeText(text, start, end, 'end');
         return start;
     }
+    function autoSize(el){
+        el.style.height = 'auto';
+        el.style.height = el.scrollHeight + 'px';
+    }
     function handlePaste(e){
         const items = e.clipboardData && e.clipboardData.items;
         if(!items) return;
@@ -23,6 +27,7 @@
                 const id = uuidv4();
                 const placeholder = '[img uploading:'+id+']';
                 const pos = insertAtCaret(e.target, placeholder);
+                autoSize(e.target);
                 const fd = new FormData();
                 fd.append('image', file);
                 fd.append('id', id);
@@ -45,12 +50,15 @@
                         const v = e.target.value;
                         e.target.value = v.substring(0,pos) + v.substring(pos).replace(placeholder, finalText);
                         e.target.setSelectionRange(pos+finalText.length, pos+finalText.length);
+                        autoSize(e.target);
                     } else {
                         e.target.value = e.target.value.replace(placeholder, '');
+                        autoSize(e.target);
                     }
                 };
                 xhr.onerror = function(){
                     e.target.value = e.target.value.replace(placeholder, '');
+                    autoSize(e.target);
                 };
                 xhr.send(fd);
             }
@@ -59,6 +67,10 @@
     window.addEventListener('load', function(){
         document.querySelectorAll('textarea').forEach(function(t){
             t.addEventListener('paste', handlePaste);
+            autoSize(t);
+            t.addEventListener('input', function(){
+                autoSize(this);
+            });
         });
     });
 })();

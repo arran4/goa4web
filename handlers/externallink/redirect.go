@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
+	"strconv"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -16,18 +16,26 @@ import (
 func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	signer := cd.LinkSigner
-	raw := r.URL.Query().Get("u")
+	idStr := r.URL.Query().Get("id")
 	ts := r.URL.Query().Get("ts")
 	sig := r.URL.Query().Get("sig")
-	if signer == nil || raw == "" || !signer.Verify(raw, ts, sig) {
+	id64, err := strconv.ParseInt(idStr, 10, 32)
+	if signer == nil || idStr == "" || err != nil || !signer.Verify(idStr, ts, sig) {
 		w.WriteHeader(http.StatusBadRequest)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("invalid link"))
 		return
 	}
+	id := int32(id64)
+	cd.SetCurrentExternalLinkID(id)
+	link := cd.SelectedExternalLink()
+	if link == nil {
+		w.WriteHeader(http.StatusBadRequest)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("invalid link"))
+		return
+	}
+	raw := link.Url
 	if r.URL.Query().Get("go") != "" {
-		if err := cd.Queries().SystemRegisterExternalLinkClick(r.Context(), raw); err != nil {
-			log.Printf("record external link click: %v", err)
-		}
+		cd.RegisterExternalLinkClick(raw)
 		http.Redirect(w, r, raw, http.StatusTemporaryRedirect)
 		return
 	}
@@ -38,11 +46,10 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 		ReloadURL   string
 	}
 	cd.PageTitle = "External Link"
-	reloadURL := fmt.Sprintf("/goto?u=%s&ts=%s&sig=%s&reload=1", url.QueryEscape(raw), ts, sig)
 	data := Data{
 		URL:         raw,
-		RedirectURL: fmt.Sprintf("/goto?u=%s&ts=%s&sig=%s&go=1", url.QueryEscape(raw), ts, sig),
-		ReloadURL:   reloadURL,
+		RedirectURL: fmt.Sprintf("/goto?id=%s&ts=%s&sig=%s&go=1", idStr, ts, sig),
+		ReloadURL:   fmt.Sprintf("/goto?id=%s&ts=%s&sig=%s&reload=1", idStr, ts, sig),
 	}
 	if err := cd.ExecuteSiteTemplate(w, r, "externalLinkPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %v", err)

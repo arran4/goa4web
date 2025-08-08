@@ -34,14 +34,14 @@ func EditPage(w http.ResponseWriter, r *http.Request) {
 
 func (SaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return handlers.SessionFetchFail{}
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	if err := queries.UpdateBookmarksForLister(r.Context(), db.UpdateBookmarksForListerParams{
+	if err := cd.SaveBookmark(db.UpdateBookmarksForListerParams{
 		List: sql.NullString{
 			String: text,
 			Valid:  true,

@@ -1646,6 +1646,22 @@ func (cd *CoreData) PublicWritings(categoryID int32, r *http.Request) ([]*db.Lis
 // Queries returns the db.Queries instance associated with this CoreData.
 func (cd *CoreData) Queries() db.Querier { return cd.queries }
 
+// SelectedQuestionFromCategory deletes the specified FAQ question after
+// verifying it belongs to the provided category.
+func (cd *CoreData) SelectedQuestionFromCategory(questionID, categoryID int32) error {
+	if cd.queries == nil {
+		return fmt.Errorf("queries not available")
+	}
+	question, err := cd.queries.AdminGetFAQByID(cd.ctx, questionID)
+	if err != nil {
+		return err
+	}
+	if question.FaqcategoriesIdfaqcategories != categoryID {
+		return fmt.Errorf("question %d not in category %d", questionID, categoryID)
+	}
+	return cd.queries.AdminDeleteFAQ(cd.ctx, questionID)
+}
+
 // RegisterExternalLinkClick records click statistics for url.
 func (cd *CoreData) RegisterExternalLinkClick(url string) {
 	if cd.queries == nil {

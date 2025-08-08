@@ -12,7 +12,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// RemoveQuestionTask deletes a question from the FAQ list.
+// RemoveQuestionTask removes a question from a FAQ category.
 type RemoveQuestionTask struct{ tasks.TaskString }
 
 var removeQuestionTask = &RemoveQuestionTask{TaskString: TaskRemoveRemove}
@@ -24,14 +24,17 @@ func (RemoveQuestionTask) Match(req *http.Request, m *mux.RouteMatch) bool {
 }
 
 func (RemoveQuestionTask) Action(w http.ResponseWriter, r *http.Request) any {
-	faq, err := strconv.Atoi(r.PostFormValue("faq"))
+	questionID, err := strconv.Atoi(r.PostFormValue("faq"))
 	if err != nil {
 		return fmt.Errorf("faq id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
+	categoryID, err := strconv.Atoi(r.PostFormValue("cid"))
+	if err != nil {
+		return fmt.Errorf("cid parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := cd.Queries()
 
-	if err := queries.AdminDeleteFAQ(r.Context(), int32(faq)); err != nil {
+	if err := cd.SelectedQuestionFromCategory(int32(questionID), int32(categoryID)); err != nil {
 		return fmt.Errorf("delete faq fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 

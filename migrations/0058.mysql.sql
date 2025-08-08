@@ -1,3 +1,9 @@
+-- Allow FAQ categories to be nullable
+ALTER TABLE faq
+    MODIFY COLUMN faqCategories_idfaqCategories INT NULL DEFAULT NULL;
+
+UPDATE faq SET faqCategories_idfaqCategories = NULL WHERE faqCategories_idfaqCategories = 0;
+
 -- Allow NULL imageboard references
 ALTER TABLE imageboard MODIFY imageboard_idimageboard INT NULL;
 ALTER TABLE imagepost MODIFY imageboard_idimageboard INT NULL;

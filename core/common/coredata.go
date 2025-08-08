@@ -209,7 +209,7 @@ type CoreData struct {
 	writerWritings                   map[int32]*lazy.Value[[]*db.ListPublicWritingsByUserForListerRow]
 	writingCategories                lazy.Value[[]*db.WritingCategory]
 	writingRows                      map[int32]*lazy.Value[*db.GetWritingForListerByIDRow]
-  // marks records which template sections have been rendered to avoid
+	// marks records which template sections have been rendered to avoid
 	// duplicate output when re-rendering after an error.
 	marks map[string]struct{}
 }
@@ -1860,6 +1860,10 @@ func sectionItemType(section string) string {
 		return "entry"
 	case "news":
 		return "post"
+	case "forum":
+		return "topic"
+	case "privateforum":
+		return "topic"
 	case "imagebbs":
 		return "board"
 	case "linker":

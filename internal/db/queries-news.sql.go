@@ -71,6 +71,21 @@ func (q *Queries) AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDesce
 	return items, nil
 }
 
+const adminReplaceSiteNewsURL = `-- name: AdminReplaceSiteNewsURL :exec
+UPDATE site_news SET news = REPLACE(news, ?, ?) WHERE idsiteNews = ?
+`
+
+type AdminReplaceSiteNewsURLParams struct {
+	OldUrl string
+	NewUrl string
+	ID     int32
+}
+
+func (q *Queries) AdminReplaceSiteNewsURL(ctx context.Context, arg AdminReplaceSiteNewsURLParams) error {
+	_, err := q.db.ExecContext(ctx, adminReplaceSiteNewsURL, arg.OldUrl, arg.NewUrl, arg.ID)
+	return err
+}
+
 const createNewsPostForWriter = `-- name: CreateNewsPostForWriter :execlastid
 INSERT INTO site_news (news, users_idusers, occurred, language_idlanguage)
 SELECT ?, ?, NOW(), ?

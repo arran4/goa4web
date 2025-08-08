@@ -33,6 +33,15 @@ func (q *Queries) AdminDeleteExternalLink(ctx context.Context, id int32) error {
 	return err
 }
 
+const adminDeleteExternalLinkByURL = `-- name: AdminDeleteExternalLinkByURL :exec
+DELETE FROM external_links WHERE url = ?
+`
+
+func (q *Queries) AdminDeleteExternalLinkByURL(ctx context.Context, url string) error {
+	_, err := q.db.ExecContext(ctx, adminDeleteExternalLinkByURL, url)
+	return err
+}
+
 const adminListExternalLinks = `-- name: AdminListExternalLinks :many
 SELECT id, url, clicks, created_at, updated_at, updated_by, card_title, card_description, card_image, card_image_cache, favicon_cache FROM external_links
 ORDER BY created_at DESC

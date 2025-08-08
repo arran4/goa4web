@@ -41,6 +41,7 @@ type Querier interface {
 	AdminCreateLinkerCategory(ctx context.Context, arg AdminCreateLinkerCategoryParams) error
 	AdminCreateLinkerItem(ctx context.Context, arg AdminCreateLinkerItemParams) error
 	AdminDeleteExternalLink(ctx context.Context, id int32) error
+	AdminDeleteExternalLinkByURL(ctx context.Context, url string) error
 	AdminDeleteFAQ(ctx context.Context, idfaq int32) error
 	AdminDeleteFAQCategory(ctx context.Context, idfaqcategories int32) error
 	AdminDeleteForumCategory(ctx context.Context, idforumcategory int32) error
@@ -173,6 +174,7 @@ type Querier interface {
 	//   ? - Language ID to be updated (int)
 	AdminRenameLanguage(ctx context.Context, arg AdminRenameLanguageParams) error
 	AdminRenameLinkerCategory(ctx context.Context, arg AdminRenameLinkerCategoryParams) error
+	AdminReplaceSiteNewsURL(ctx context.Context, arg AdminReplaceSiteNewsURLParams) error
 	AdminRestoreBlog(ctx context.Context, arg AdminRestoreBlogParams) error
 	AdminRestoreComment(ctx context.Context, arg AdminRestoreCommentParams) error
 	AdminRestoreImagepost(ctx context.Context, arg AdminRestoreImagepostParams) error

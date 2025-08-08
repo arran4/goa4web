@@ -61,6 +61,12 @@ func (c *linksCmd) Run() error {
 			return fmt.Errorf("refresh: %w", err)
 		}
 		return cmd.Run()
+	case "remap":
+		cmd, err := parseLinksRemapCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("remap: %w", err)
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown links command %q", args[0])

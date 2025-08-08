@@ -1,0 +1,12 @@
+Usage:
+  {{.Prog}} links remap <command> [<args>]
+
+Commands:
+  extract    export link references to CSV
+  apply      apply URL remappings from CSV
+
+Examples:
+  {{.Prog}} links remap extract > links.csv
+  {{.Prog}} links remap apply -file links.csv
+
+{{template "flag_groups_section" .FlagGroups}}

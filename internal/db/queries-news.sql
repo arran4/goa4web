@@ -152,3 +152,6 @@ UPDATE site_news SET last_index = NOW() WHERE idsiteNews = ?;
 -- name: GetAllSiteNewsForIndex :many
 SELECT idsiteNews, news FROM site_news WHERE deleted_at IS NULL;
 
+-- name: AdminReplaceSiteNewsURL :exec
+UPDATE site_news SET news = REPLACE(news, sqlc.arg(old_url), sqlc.arg(new_url)) WHERE idsiteNews = sqlc.arg(id);
+

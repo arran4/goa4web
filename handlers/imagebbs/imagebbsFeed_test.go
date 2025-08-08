@@ -27,7 +27,7 @@ func TestImagebbsFeed(t *testing.T) {
 	r := httptest.NewRequest("GET", "http://example.com/imagebbs/board/1.rss", nil)
 	cd := &common.CoreData{ImageSigner: imagesign.NewSigner(&config.RuntimeConfig{}, "k")}
 	r = r.WithContext(context.WithValue(r.Context(), consts.KeyCoreData, cd))
-	feed := imagebbsFeed(r, "Test", 1, rows)
+	feed := cd.ImageBBSFeed(r, "Test", 1, rows)
 	if len(feed.Items) != 1 {
 		t.Fatalf("expected 1 item got %d", len(feed.Items))
 	}

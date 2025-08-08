@@ -1,7 +1,6 @@
 package news
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -14,7 +13,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/workers/postcountworker"
@@ -44,7 +42,6 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	text := r.PostFormValue("replytext")
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	vars := mux.Vars(r)
 	postId, _ := strconv.Atoi(vars["news"])
 	commentId, _ := strconv.Atoi(vars["comment"])
@@ -54,44 +51,17 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return handlers.SessionFetchFail{}
 	}
 	uid, _ := session.Values["UID"].(int32)
-
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	comment := cd.CurrentCommentLoaded()
-	if comment == nil {
-		var err error
-		comment, err = cd.CommentByID(int32(commentId))
-		if err != nil {
-			return fmt.Errorf("load comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-		}
-	}
-
-	thread, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
-		ViewerID:      uid,
-		ThreadID:      comment.ForumthreadID,
-		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
+	ti, err := cd.UpdateNewsReply(int32(commentId), uid, int32(languageId), text)
 	if err != nil {
-		return fmt.Errorf("thread fetch fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-	}
-
-	if err = queries.UpdateCommentForEditor(r.Context(), db.UpdateCommentForEditorParams{
-		LanguageID:  int32(languageId),
-		Text:        sql.NullString{String: text, Valid: true},
-		CommentID:   int32(commentId),
-		CommenterID: uid,
-		EditorID:    sql.NullInt32{Int32: uid, Valid: uid != 0},
-	}); err != nil {
 		return fmt.Errorf("update comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(commentId), ThreadID: thread.Idforumthread, TopicID: thread.ForumtopicIdforumtopic}
-			evt.Data["CommentURL"] = cd.AbsoluteURL(fmt.Sprintf("/news/news/%d", postId))
+	if evt := cd.Event(); evt != nil {
+		if evt.Data == nil {
+			evt.Data = map[string]any{}
 		}
+		evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(commentId), ThreadID: ti.ThreadID, TopicID: ti.TopicID}
+		evt.Data["CommentURL"] = cd.AbsoluteURL(fmt.Sprintf("/news/news/%d", postId))
 	}
 
 	return handlers.RedirectHandler(fmt.Sprintf("/news/news/%d", postId))

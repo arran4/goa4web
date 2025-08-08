@@ -10,7 +10,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 )
@@ -23,7 +22,8 @@ var categoryGrantCreateTask = &CategoryGrantCreateTask{TaskString: TaskCategoryG
 var _ tasks.Task = (*CategoryGrantCreateTask)(nil)
 
 func (CategoryGrantCreateTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	vars := mux.Vars(r)
 	categoryID, err := strconv.Atoi(vars["category"])
 	if err != nil {
@@ -65,17 +65,7 @@ func (CategoryGrantCreateTask) Action(w http.ResponseWriter, r *http.Request) an
 		if action == "" {
 			action = "see"
 		}
-		if _, err = queries.AdminCreateGrant(r.Context(), db.AdminCreateGrantParams{
-			UserID:   uid,
-			RoleID:   rid,
-			Section:  "forum",
-			Item:     sql.NullString{String: "category", Valid: true},
-			RuleType: "allow",
-			ItemID:   sql.NullInt32{Int32: int32(categoryID), Valid: true},
-			ItemRule: sql.NullString{},
-			Action:   action,
-			Extra:    sql.NullString{},
-		}); err != nil {
+		if _, err = cd.GrantForumCategory(int32(categoryID), uid, rid, action); err != nil {
 			log.Printf("CreateGrant: %v", err)
 			return fmt.Errorf("create grant %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}

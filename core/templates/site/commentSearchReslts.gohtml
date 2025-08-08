@@ -1,13 +1,14 @@
 {{ define "commentSearchResults" }}
+    {{- $cd := cd -}}
     Forum search:<br>
-    {{- if .CommentsNoResults }}
+    {{- if $cd.SearchCommentsNoResults }}
         <p>Nothing found.</p>
-    {{- else if .CommentsEmptyWords }}
+    {{- else if $cd.SearchCommentsEmptyWords }}
         <p>Not enough words, words too small, or no words. Please re-enter, add more, larger, or some words.</p>
     {{- else }}
         <ul>
-        {{- range $i, $result := .Comments }}
-            <li>{{ $i }}: <a href="/forum/categories/category/{{$result.Idforumcategory}}">{{ $result.ForumcategoryTitle.String }}</a>: <a href="/forum/topic/{{$result.Idforumtopic}}">{{ $result.ForumtopicTitle.String }}</a>: {{$result.Posterusername.String}} on {{ localTime $result.Written.Time }}: <a href="/forum/topic/{{$result.Idforumtopic}}/thread/{{$result.Idforumthread}}">{{$result.Text.String | a4code2html}}</a></li>
+        {{- range $i, $result := $cd.SearchComments }}
+            <li>{{ $i }}: <a href="/forum/categories/category/{{$result.Idforumcategory}}">{{ $result.ForumcategoryTitle.String}}</a>: <a href="/forum/topic/{{$result.Idforumtopic}}">{{ $result.ForumtopicTitle.String }}</a>: {{$result.Posterusername.String}} on {{ localTime $result.Written.Time }}: <a href="/forum/topic/{{$result.Idforumtopic}}/thread/{{$result.Idforumthread}}">{{ $result.Text.String | a4code2html}}</a></li>
         {{- end }}
         </ul>
     {{ end }}

@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/arran4/goa4web/internal/dbdrivers"
 	sqlmysql "github.com/go-sql-driver/mysql"
@@ -13,6 +14,15 @@ import (
 
 // Driver implements the dbdrivers.DBDriver interface for MySQL.
 type Driver struct{}
+
+var dbTimezone = "Australia/Melbourne"
+
+// SetTimezone sets the timezone used when connecting to the database.
+func SetTimezone(tz string) {
+	if tz != "" {
+		dbTimezone = tz
+	}
+}
 
 // Name returns the driver name.
 func (Driver) Name() string { return "mysql" }
@@ -30,6 +40,13 @@ func (Driver) OpenConnector(dsn string) (driver.Connector, error) {
 	cfg, err := sqlmysql.ParseDSN(dsn)
 	if err != nil {
 		return nil, err
+	}
+	if cfg.Loc == nil {
+		loc, err := time.LoadLocation(dbTimezone)
+		if err != nil {
+			return nil, err
+		}
+		cfg.Loc = loc
 	}
 	return sqlmysql.NewConnector(cfg)
 }

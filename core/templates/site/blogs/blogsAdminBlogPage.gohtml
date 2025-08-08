@@ -1,8 +1,9 @@
 {{ template "head" $ }}
-<h2>Blog {{ .Blog.Idblogs }} Admin</h2>
-<p>By {{ .Blog.Username.String }}</p>
-<div>{{ .Blog.Blog.String | a4code2html }}</div>
-<p><a href="/admin/blogs/blog/{{ .Blog.Idblogs }}/edit">Edit</a> | <a href="/admin/blogs/blog/{{ .Blog.Idblogs }}/comments">Comments</a></p>
+{{ $blog := cd.BlogPost }}
+<h2>Blog {{ $blog.Idblogs }} Admin</h2>
+<p>By {{ $blog.Username.String }}</p>
+<div>{{ $blog.Blog.String | a4code2html }}</div>
+<p><a href="/admin/blogs/blog/{{ $blog.Idblogs }}/edit">Edit</a> | <a href="/admin/blogs/blog/{{ $blog.Idblogs }}/comments">Comments</a></p>
 <h3>Grants</h3>
 <table border="1">
     <tr>

@@ -1,8 +1,6 @@
 package forum
 
 import (
-	"database/sql"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -12,7 +10,6 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/mux"
@@ -31,12 +28,10 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Forum"
 	cd.LoadSelectionsFromRequest(r)
-	queries := cd.Queries()
-	session, ok := core.GetSessionOrFail(w, r)
+	_, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
 	}
-	uid, _ := session.Values["UID"].(int32)
 	vars := mux.Vars(r)
 	categoryId, _ := strconv.Atoi(vars["category"])
 
@@ -60,59 +55,24 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var topicRows []*ForumtopicPlus
-	if categoryId == 0 {
-		rows, err := queries.GetForumTopicsForUser(r.Context(), db.GetForumTopicsForUserParams{
-			ViewerID:      uid,
-			ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
+	rows, err := cd.ForumTopics(int32(categoryId))
+	if err != nil {
+		log.Printf("ForumTopics Error: %s", err)
+		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	for _, row := range rows {
+		topicRows = append(topicRows, &ForumtopicPlus{
+			Idforumtopic:                 row.Idforumtopic,
+			Lastposter:                   row.Lastposter,
+			ForumcategoryIdforumcategory: row.ForumcategoryIdforumcategory,
+			Title:                        row.Title,
+			Description:                  row.Description,
+			Threads:                      row.Threads,
+			Comments:                     row.Comments,
+			Lastaddition:                 row.Lastaddition,
+			Lastposterusername:           row.Lastposterusername,
 		})
-		if err != nil {
-			switch {
-			case errors.Is(err, sql.ErrNoRows):
-			default:
-				log.Printf("showTableTopics Error: %s", err)
-				http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-				return
-			}
-		}
-		for _, row := range rows {
-			topicRows = append(topicRows, &ForumtopicPlus{
-				Idforumtopic:                 row.Idforumtopic,
-				Lastposter:                   row.Lastposter,
-				ForumcategoryIdforumcategory: row.ForumcategoryIdforumcategory,
-				Title:                        row.Title,
-				Description:                  row.Description,
-				Threads:                      row.Threads,
-				Comments:                     row.Comments,
-				Lastaddition:                 row.Lastaddition,
-			})
-		}
-	} else {
-		rows, err := queries.GetAllForumTopicsByCategoryIdForUserWithLastPosterName(r.Context(), db.GetAllForumTopicsByCategoryIdForUserWithLastPosterNameParams{
-			ViewerID:      uid,
-			CategoryID:    int32(categoryId),
-			ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
-		})
-		if err != nil {
-			switch {
-			case errors.Is(err, sql.ErrNoRows):
-			default:
-				log.Printf("showTableTopics Error: %s", err)
-				http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-				return
-			}
-		}
-		for _, row := range rows {
-			topicRows = append(topicRows, &ForumtopicPlus{
-				Idforumtopic:                 row.Idforumtopic,
-				Lastposter:                   row.Lastposter,
-				ForumcategoryIdforumcategory: row.ForumcategoryIdforumcategory,
-				Title:                        row.Title,
-				Description:                  row.Description,
-				Threads:                      row.Threads,
-				Comments:                     row.Comments,
-				Lastaddition:                 row.Lastaddition,
-			})
-		}
 	}
 
 	categoryTree := NewCategoryTree(categoryRows, topicRows)

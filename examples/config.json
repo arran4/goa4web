@@ -10,6 +10,7 @@
   "DB_CONN": "",
   "DB_DRIVER": "mysql",
   "DB_LOG_VERBOSITY": "0",
+  "DB_TIMEZONE": "Australia/Melbourne",
   "DEFAULT_LANGUAGE": "",
   "DLQ_FILE": "",
   "DLQ_PROVIDER": "",

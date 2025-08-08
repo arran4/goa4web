@@ -12,7 +12,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -24,16 +23,14 @@ var unsubscribeTopicTaskAction = &unsubscribeTopicTask{TaskString: TaskUnsubscri
 var _ tasks.Task = (*unsubscribeTopicTask)(nil)
 
 func (unsubscribeTopicTask) Action(w http.ResponseWriter, r *http.Request) any {
-	session, ok := core.GetSessionOrFail(w, r)
+	_, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return handlers.SessionFetchFail{}
 	}
-	uid, _ := session.Values["UID"].(int32)
 	vars := mux.Vars(r)
 	topicID, _ := strconv.Atoi(vars["topic"])
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	pattern := topicSubscriptionPattern(int32(topicID))
-	if err := queries.DeleteSubscriptionForSubscriber(r.Context(), db.DeleteSubscriptionForSubscriberParams{SubscriberID: uid, Pattern: pattern, Method: "internal"}); err != nil {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if err := cd.UnsubscribeTopic(int32(topicID)); err != nil {
 		log.Printf("delete subscription: %v", err)
 		return fmt.Errorf("delete subscription %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

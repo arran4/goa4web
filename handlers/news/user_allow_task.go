@@ -1,7 +1,6 @@
 package news
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 
@@ -10,7 +9,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -33,7 +31,6 @@ func (UserAllowTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *
 }
 
 func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	username := r.PostFormValue("username")
 	role := r.PostFormValue("role")
 	data := struct {
@@ -43,12 +40,8 @@ func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}{
 		Back: "/news",
 	}
-	if u, err := queries.SystemGetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username}); err != nil {
-		data.Errors = append(data.Errors, fmt.Errorf("SystemGetUserByUsername: %w", err).Error())
-	} else if err := queries.SystemCreateUserRole(r.Context(), db.SystemCreateUserRoleParams{
-		UsersIdusers: u.Idusers,
-		Name:         role,
-	}); err != nil {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if err := cd.AllowNewsUser(username, role); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("permissionUserAllow: %w", err).Error())
 	}
 

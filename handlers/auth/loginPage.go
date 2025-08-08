@@ -1,10 +1,11 @@
 package auth
 
 import (
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"net/url"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
@@ -53,7 +54,7 @@ var _ http.Handler = (*redirectBackPageHandler)(nil)
 
 func renderLoginForm(w http.ResponseWriter, r *http.Request, errMsg string) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	cd.SetTemplateError(errMsg)
+	cd.SetCurrentError(errMsg)
 	type Data struct {
 		Code    string
 		Back    string

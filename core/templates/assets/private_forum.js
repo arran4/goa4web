@@ -3,10 +3,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const addBtn = document.getElementById('add-participant');
     const list = document.getElementById('participants');
     const field = document.getElementById('participants-field');
+    const message = document.getElementById('message-field');
+    const createBtn = document.getElementById('create-button');
 
-    function updateField() {
+    function updateParticipants() {
         const names = Array.from(list.querySelectorAll('li')).map(li => li.textContent);
         field.value = names.join(',');
+        const show = names.length > 0;
+        if (message) message.style.display = show ? '' : 'none';
+        if (createBtn) createBtn.style.display = show ? '' : 'none';
     }
 
     addBtn?.addEventListener('click', (e) => {
@@ -17,10 +22,12 @@ document.addEventListener('DOMContentLoaded', () => {
         li.textContent = name;
         li.addEventListener('click', () => {
             list.removeChild(li);
-            updateField();
+            updateParticipants();
         });
         list.appendChild(li);
         input.value = '';
-        updateField();
+        updateParticipants();
     });
+
+    updateParticipants();
 });

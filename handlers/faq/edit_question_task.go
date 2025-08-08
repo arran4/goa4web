@@ -1,7 +1,6 @@
 package faq
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -11,7 +10,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 )
@@ -38,30 +36,15 @@ func (EditQuestionTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("faq id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := cd.Queries()
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return handlers.SessionFetchFail{}
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	if err := queries.AdminUpdateFAQQuestionAnswer(r.Context(), db.AdminUpdateFAQQuestionAnswerParams{
-		Answer:                       sql.NullString{Valid: true, String: answer},
-		Question:                     sql.NullString{Valid: true, String: question},
-		FaqcategoriesIdfaqcategories: int32(category),
-		Idfaq:                        int32(faq),
-	}); err != nil {
+	if err := cd.UpdateFAQQuestion(question, answer, int32(category), int32(faq), uid); err != nil {
 		return fmt.Errorf("update faq question fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-
-	_ = queries.InsertFAQRevisionForUser(r.Context(), db.InsertFAQRevisionForUserParams{
-		FaqID:        int32(faq),
-		UsersIdusers: uid,
-		Question:     sql.NullString{String: question, Valid: true},
-		Answer:       sql.NullString{String: answer, Valid: true},
-		UserID:       sql.NullInt32{Int32: uid, Valid: true},
-		ViewerID:     uid,
-	})
 
 	return nil
 }

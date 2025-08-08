@@ -143,6 +143,7 @@ type Querier interface {
 	// admin task
 	AdminListSentEmails(ctx context.Context, arg AdminListSentEmailsParams) ([]*AdminListSentEmailsRow, error)
 	AdminListSessions(ctx context.Context) ([]*AdminListSessionsRow, error)
+	AdminListTopicsWithUserGrantsNoRoles(ctx context.Context, includeAdmin interface{}) ([]*AdminListTopicsWithUserGrantsNoRolesRow, error)
 	// admin task
 	AdminListUnsentPendingEmails(ctx context.Context, arg AdminListUnsentPendingEmailsParams) ([]*AdminListUnsentPendingEmailsRow, error)
 	// Admin

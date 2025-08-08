@@ -52,8 +52,9 @@ func (h redirectBackPageHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 var _ http.Handler = (*redirectBackPageHandler)(nil)
 
 func renderLoginForm(w http.ResponseWriter, r *http.Request, errMsg string) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.SetTemplateError(errMsg)
 	type Data struct {
-		Error   string
 		Code    string
 		Back    string
 		BackSig string
@@ -63,9 +64,8 @@ func renderLoginForm(w http.ResponseWriter, r *http.Request, errMsg string) {
 	}
 	handlers.SetPageTitle(r, "Login")
 	data := Data{
-		Error:   errMsg,
 		Code:    r.FormValue("code"),
-		Back:    r.Context().Value(consts.KeyCoreData).(*common.CoreData).SanitizeBackURL(r, r.FormValue("back")),
+		Back:    cd.SanitizeBackURL(r, r.FormValue("back")),
 		BackSig: r.FormValue("back_sig"),
 		BackTS:  r.FormValue("back_ts"),
 		Method:  r.FormValue("method"),

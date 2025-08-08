@@ -56,7 +56,7 @@ CREATE TABLE `comments_search` (
 
 CREATE TABLE `faq` (
   `idfaq` int(10) NOT NULL AUTO_INCREMENT,
-  `faqCategories_idfaqCategories` int(10) NOT NULL DEFAULT 0,
+  `faqCategories_idfaqCategories` int(10) DEFAULT NULL,
   `language_idlanguage` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `answer` mediumtext DEFAULT NULL,

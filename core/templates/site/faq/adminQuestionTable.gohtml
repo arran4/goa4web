@@ -4,7 +4,7 @@
 {{- range .Rows }}
 <tr>
     <td>{{ .Question.String }}</td>
-    <td>{{ $cat := .FaqcategoriesIdfaqcategories }}{{ range $.Categories }}{{ if eq $cat .Idfaqcategories }}{{ .Name.String }}{{ end }}{{ end }}</td>
+    <td>{{ $cat := .FaqcategoriesIdfaqcategories.Int32 }}{{ range $.Categories }}{{ if eq $cat .Idfaqcategories }}{{ .Name.String }}{{ end }}{{ end }}</td>
     <td>
         <a href="/admin/faq/question/{{ .Idfaq }}/edit">Edit</a> |
         <a href="/admin/faq/revisions/{{ .Idfaq }}">History</a>

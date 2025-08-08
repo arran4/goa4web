@@ -193,7 +193,7 @@ type ExternalLink struct {
 
 type Faq struct {
 	Idfaq                        int32
-	FaqcategoriesIdfaqcategories int32
+	FaqcategoriesIdfaqcategories sql.NullInt32
 	LanguageIdlanguage           int32
 	UsersIdusers                 int32
 	Answer                       sql.NullString

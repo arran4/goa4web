@@ -111,6 +111,7 @@ func AdminTopicCreatePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	languageID, _ := strconv.Atoi(r.PostFormValue("language"))
+	// TODO make and use an admin version of this
 	topicID, err := cd.Queries().CreateForumTopicForPoster(r.Context(), db.CreateForumTopicForPosterParams{
 		PosterID:        uid,
 		ForumcategoryID: int32(pcid),

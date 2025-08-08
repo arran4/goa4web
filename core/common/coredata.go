@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"math"
 	"net/http"
 	"net/mail"
 	"strconv"
@@ -213,8 +212,6 @@ type CoreData struct {
 	writerWritings                   map[int32]*lazy.Value[[]*db.ListPublicWritingsByUserForListerRow]
 	writingCategories                lazy.Value[[]*db.WritingCategory]
 	writingRows                      map[int32]*lazy.Value[*db.GetWritingForListerByIDRow]
-	absoluteURLBase                  lazy.Value[string]
-	dbRegistry                       *dbdrivers.Registry
 
 	// marks records which template sections have been rendered to avoid
 	// duplicate output when re-rendering after an error.
@@ -2657,41 +2654,6 @@ func (cd *CoreData) Writers(r *http.Request) ([]*db.ListWritersForListerRow, err
 }
 
 // WriterWritings returns public writings for the specified author respecting cd's permissions.
-func (cd *CoreData) WriterWritings(userID int32, r *http.Request) ([]*db.ListPublicWritingsByUserForListerRow, error) {
-	if cd.writerWritings == nil {
-		cd.writerWritings = map[int32]*lazy.Value[[]*db.ListPublicWritingsByUserForListerRow]{}
-	}
-	lv, ok := cd.writerWritings[userID]
-	if !ok {
-		lv = &lazy.Value[[]*db.ListPublicWritingsByUserForListerRow]{}
-		cd.writerWritings[userID] = lv
-	}
-	return lv.Load(func() ([]*db.ListPublicWritingsByUserForListerRow, error) {
-		if cd.queries == nil {
-			return nil, nil
-		}
-		offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-		rows, err := cd.queries.ListPublicWritingsByUserForLister(cd.ctx, db.ListPublicWritingsByUserForListerParams{
-			ListerID: cd.UserID,
-			AuthorID: userID,
-			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-			Limit:    int32(cd.PageSize()),
-			Offset:   int32(offset),
-		})
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return nil, err
-		}
-		var list []*db.ListPublicWritingsByUserForListerRow
-		for _, row := range rows {
-			if !cd.HasGrant("writing", "article", "see", row.Idwriting) {
-				continue
-			}
-			list = append(list, row)
-		}
-		return list, nil
-	})
-}
-
 // WritingByID returns a single writing lazily loading it once per ID.
 func (cd *CoreData) WritingByID(id int32, ops ...lazy.Option[*db.GetWritingForListerByIDRow]) (*db.GetWritingForListerByIDRow, error) {
 	fetch := func(i int32) (*db.GetWritingForListerByIDRow, error) {
@@ -2705,16 +2667,6 @@ func (cd *CoreData) WritingByID(id int32, ops ...lazy.Option[*db.GetWritingForLi
 		})
 	}
 	return lazy.Map(&cd.writingRows, &cd.mapMu, id, fetch, ops...)
-}
-
-// WritingCategories returns all writing categories cached once.
-func (cd *CoreData) WritingCategories() ([]*db.WritingCategory, error) {
-	return cd.writingCategories.Load(func() ([]*db.WritingCategory, error) {
-		if cd.queries == nil {
-			return nil, nil
-		}
-		return cd.queries.SystemListWritingCategories(cd.ctx, db.SystemListWritingCategoriesParams{Limit: math.MaxInt32, Offset: 0})
-	})
 }
 
 // CoreOption configures a new CoreData instance.

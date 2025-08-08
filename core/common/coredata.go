@@ -2007,6 +2007,10 @@ func (cd *CoreData) SetCurrentTemplate(name, errMsg string) {
 	cd.currentTemplateError = errMsg
 }
 
+// SetTemplateError stores an error message for template rendering without changing
+// the current template name.
+func (cd *CoreData) SetTemplateError(errMsg string) { cd.currentTemplateError = errMsg }
+
 // SetCurrentThreadAndTopic stores the requested thread and topic IDs.
 func (cd *CoreData) SetCurrentThreadAndTopic(threadID, topicID int32) {
 	cd.currentThreadID = threadID
@@ -2202,6 +2206,14 @@ func (cd *CoreData) UnreadNotificationCount() int64 {
 		log.Printf("load unread notification count: %v", err)
 	}
 	return count
+}
+
+// UserCredentials fetches the stored password hash and algorithm for username.
+func (cd *CoreData) UserCredentials(username string) (*db.SystemGetLoginRow, error) {
+	if cd.queries == nil {
+		return nil, fmt.Errorf("no queries available")
+	}
+	return cd.queries.SystemGetLogin(cd.ctx, sql.NullString{String: username, Valid: true})
 }
 
 // UserByID loads a user record by ID once and caches it.

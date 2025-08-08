@@ -9,7 +9,10 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/eventbus"
+	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
+	"github.com/arran4/goa4web/workers/postcountworker"
 )
 
 // PrivateTopicCreateTask creates a new private conversation and assigns grants.
@@ -17,7 +20,10 @@ type PrivateTopicCreateTask struct{ tasks.TaskString }
 
 var privateTopicCreateTask = &PrivateTopicCreateTask{TaskString: TaskPrivateTopicCreate}
 
-var _ tasks.Task = (*PrivateTopicCreateTask)(nil)
+var (
+	_ tasks.Task                  = (*PrivateTopicCreateTask)(nil)
+	_ notif.AutoSubscribeProvider = (*PrivateTopicCreateTask)(nil)
+)
 
 // Action creates a new private topic and assigns view permissions to participants.
 func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any {
@@ -55,5 +61,21 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 	if err != nil {
 		return fmt.Errorf("create private topic %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
+	if cd.UserID != 0 {
+		if err := cd.SubscribeTopic(topicID); err != nil {
+			return fmt.Errorf("subscribe topic %w", handlers.ErrRedirectOnSamePageHandler(err))
+		}
+	}
 	return handlers.RefreshDirectHandler{TargetURL: fmt.Sprintf("/forum/topic/%d/thread/%d", topicID, threadID)}
+}
+
+// AutoSubscribePath ensures conversation creators follow replies and future threads.
+// AutoSubscribePath implements notif.AutoSubscribeProvider. When postcountworker
+// context is available it subscribes to the created thread so authors receive
+// updates on subsequent comments.
+func (PrivateTopicCreateTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, error) {
+	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
+		return string(TaskPrivateTopicCreate), fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID), nil
+	}
+	return string(TaskPrivateTopicCreate), evt.Path, nil
 }

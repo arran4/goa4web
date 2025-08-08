@@ -33,6 +33,7 @@ func TestPrivateTopicCreateTask_GrantsBeforeComment(t *testing.T) {
 	mock.ExpectExec("INSERT INTO grants").WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectExec("INSERT INTO grants").WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectExec("INSERT INTO comments").WillReturnResult(sqlmock.NewResult(3, 1))
+	mock.ExpectExec("INSERT INTO subscriptions").WillReturnResult(sqlmock.NewResult(0, 1))
 
 	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
 	cd.UserID = 1

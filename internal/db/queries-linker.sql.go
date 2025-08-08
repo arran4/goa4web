@@ -15,7 +15,7 @@ const adminCountLinksByCategory = `-- name: AdminCountLinksByCategory :one
 SELECT COUNT(*) FROM linker WHERE linker_category_id = ?
 `
 
-func (q *Queries) AdminCountLinksByCategory(ctx context.Context, linkerCategoryID int32) (int64, error) {
+func (q *Queries) AdminCountLinksByCategory(ctx context.Context, linkerCategoryID sql.NullInt32) (int64, error) {
 	row := q.db.QueryRowContext(ctx, adminCountLinksByCategory, linkerCategoryID)
 	var count int64
 	err := row.Scan(&count)
@@ -43,7 +43,7 @@ VALUES (?, ?, ?, ?, ?, NOW())
 
 type AdminCreateLinkerItemParams struct {
 	UsersIdusers     int32
-	LinkerCategoryID int32
+	LinkerCategoryID sql.NullInt32
 	Title            sql.NullString
 	Url              sql.NullString
 	Description      sql.NullString
@@ -136,7 +136,7 @@ type AdminUpdateLinkerItemParams struct {
 	Title              sql.NullString
 	Url                sql.NullString
 	Description        sql.NullString
-	LinkerCategoryID   int32
+	LinkerCategoryID   sql.NullInt32
 	LanguageIdlanguage int32
 	Idlinker           int32
 }
@@ -159,7 +159,7 @@ WHERE idlinkerQueue = ?
 `
 
 type AdminUpdateLinkerQueuedItemParams struct {
-	LinkerCategoryID int32
+	LinkerCategoryID sql.NullInt32
 	Title            sql.NullString
 	Url              sql.NullString
 	Description      sql.NullString
@@ -196,7 +196,7 @@ WHERE EXISTS (
 
 type CreateLinkerQueuedItemForWriterParams struct {
 	WriterID         int32
-	LinkerCategoryID int32
+	LinkerCategoryID sql.NullInt32
 	Title            sql.NullString
 	Url              sql.NullString
 	Description      sql.NullString
@@ -344,7 +344,7 @@ type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending
 	Idlinker           int32
 	LanguageIdlanguage int32
 	UsersIdusers       int32
-	LinkerCategoryID   int32
+	LinkerCategoryID   sql.NullInt32
 	ForumthreadID      int32
 	Title              sql.NullString
 	Url                sql.NullString
@@ -432,7 +432,7 @@ type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending
 	Idlinker           int32
 	LanguageIdlanguage int32
 	UsersIdusers       int32
-	LinkerCategoryID   int32
+	LinkerCategoryID   sql.NullInt32
 	ForumthreadID      int32
 	Title              sql.NullString
 	Url                sql.NullString
@@ -526,7 +526,7 @@ type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending
 	Idlinker           int32
 	LanguageIdlanguage int32
 	UsersIdusers       int32
-	LinkerCategoryID   int32
+	LinkerCategoryID   sql.NullInt32
 	ForumthreadID      int32
 	Title              sql.NullString
 	Url                sql.NullString
@@ -624,7 +624,7 @@ type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending
 	Idlinker           int32
 	LanguageIdlanguage int32
 	UsersIdusers       int32
-	LinkerCategoryID   int32
+	LinkerCategoryID   sql.NullInt32
 	ForumthreadID      int32
 	Title              sql.NullString
 	Url                sql.NullString
@@ -699,7 +699,7 @@ type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending
 	Idlinker           int32
 	LanguageIdlanguage int32
 	UsersIdusers       int32
-	LinkerCategoryID   int32
+	LinkerCategoryID   sql.NullInt32
 	ForumthreadID      int32
 	Title              sql.NullString
 	Url                sql.NullString
@@ -762,7 +762,7 @@ type GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetailsRow struct {
 	Idlinkerqueue      int32
 	LanguageIdlanguage int32
 	UsersIdusers       int32
-	LinkerCategoryID   int32
+	LinkerCategoryID   sql.NullInt32
 	Title              sql.NullString
 	Url                sql.NullString
 	Description        sql.NullString
@@ -952,7 +952,7 @@ type GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow struct {
 	Idlinker           int32
 	LanguageIdlanguage int32
 	UsersIdusers       int32
-	LinkerCategoryID   int32
+	LinkerCategoryID   sql.NullInt32
 	ForumthreadID      int32
 	Title              sql.NullString
 	Url                sql.NullString
@@ -1021,7 +1021,7 @@ type GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow str
 	Idlinker           int32
 	LanguageIdlanguage int32
 	UsersIdusers       int32
-	LinkerCategoryID   int32
+	LinkerCategoryID   sql.NullInt32
 	ForumthreadID      int32
 	Title              sql.NullString
 	Url                sql.NullString
@@ -1062,7 +1062,7 @@ type GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow struct {
 	Idlinker           int32
 	LanguageIdlanguage int32
 	UsersIdusers       int32
-	LinkerCategoryID   int32
+	LinkerCategoryID   sql.NullInt32
 	ForumthreadID      int32
 	Title              sql.NullString
 	Url                sql.NullString
@@ -1156,7 +1156,7 @@ type GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUserRow s
 	Idlinker           int32
 	LanguageIdlanguage int32
 	UsersIdusers       int32
-	LinkerCategoryID   int32
+	LinkerCategoryID   sql.NullInt32
 	ForumthreadID      int32
 	Title              sql.NullString
 	Url                sql.NullString
@@ -1234,7 +1234,7 @@ type GetLinkerItemsByUserDescendingRow struct {
 	Idlinker           int32
 	LanguageIdlanguage int32
 	UsersIdusers       int32
-	LinkerCategoryID   int32
+	LinkerCategoryID   sql.NullInt32
 	ForumthreadID      int32
 	Title              sql.NullString
 	Url                sql.NullString
@@ -1325,7 +1325,7 @@ type GetLinkerItemsByUserDescendingForUserRow struct {
 	Idlinker           int32
 	LanguageIdlanguage int32
 	UsersIdusers       int32
-	LinkerCategoryID   int32
+	LinkerCategoryID   sql.NullInt32
 	ForumthreadID      int32
 	Title              sql.NullString
 	Url                sql.NullString

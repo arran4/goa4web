@@ -26,7 +26,7 @@ type Querier interface {
 	AdminCountForumCategories(ctx context.Context, arg AdminCountForumCategoriesParams) (int64, error)
 	AdminCountForumThreads(ctx context.Context) (int64, error)
 	AdminCountForumTopics(ctx context.Context) (int64, error)
-	AdminCountLinksByCategory(ctx context.Context, linkerCategoryID int32) (int64, error)
+	AdminCountLinksByCategory(ctx context.Context, linkerCategoryID sql.NullInt32) (int64, error)
 	AdminCountThreadsByBoard(ctx context.Context, imageboardIdimageboard sql.NullInt32) (int64, error)
 	AdminCountWordList(ctx context.Context) (int64, error)
 	AdminCountWordListByPrefix(ctx context.Context, prefix interface{}) (int64, error)

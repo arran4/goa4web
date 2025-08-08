@@ -1,3 +1,14 @@
+ALTER TABLE linker
+    MODIFY COLUMN linker_category_id int(10) DEFAULT NULL;
+ALTER TABLE linker_queue
+    MODIFY COLUMN linker_category_id int(10) DEFAULT NULL;
+ALTER TABLE deactivated_linker
+    MODIFY COLUMN linker_category_id int DEFAULT NULL;
+
+UPDATE linker SET linker_category_id = NULL WHERE linker_category_id = 0;
+UPDATE linker_queue SET linker_category_id = NULL WHERE linker_category_id = 0;
+UPDATE deactivated_linker SET linker_category_id = NULL WHERE linker_category_id = 0;
+
 -- Allow null language for forum categories and topics
 UPDATE forumcategory SET language_idlanguage = NULL WHERE language_idlanguage = 0;
 ALTER TABLE forumcategory ALTER COLUMN language_idlanguage DROP NOT NULL;

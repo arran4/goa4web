@@ -57,8 +57,10 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 		if data.User != "" && !strings.EqualFold(q.Username.String, data.User) {
 			continue
 		}
-		if data.Category != "" && strconv.Itoa(int(q.LinkerCategoryID)) != data.Category {
-			continue
+		if data.Category != "" {
+			if !q.LinkerCategoryID.Valid || strconv.Itoa(int(q.LinkerCategoryID.Int32)) != data.Category {
+				continue
+			}
 		}
 		if data.Search != "" {
 			s := strings.ToLower(data.Search)
@@ -113,7 +115,7 @@ func AdminQueueUpdateActionPage(w http.ResponseWriter, r *http.Request) {
 	desc := r.URL.Query().Get("desc")
 	category, _ := strconv.Atoi(r.URL.Query().Get("category"))
 	if err := queries.AdminUpdateLinkerQueuedItem(r.Context(), db.AdminUpdateLinkerQueuedItemParams{
-		LinkerCategoryID: int32(category),
+		LinkerCategoryID: sql.NullInt32{Int32: int32(category), Valid: category != 0},
 		Title:            sql.NullString{Valid: true, String: title},
 		Url:              sql.NullString{Valid: true, String: URL},
 		Description:      sql.NullString{Valid: true, String: desc},

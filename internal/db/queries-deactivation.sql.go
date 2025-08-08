@@ -105,7 +105,7 @@ type AdminArchiveLinkParams struct {
 	Idlinker           int32
 	LanguageIdlanguage int32
 	UsersIdusers       int32
-	LinkerCategoryID   int32
+	LinkerCategoryID   sql.NullInt32
 	ForumthreadID      int32
 	Title              sql.NullString
 	Url                sql.NullString

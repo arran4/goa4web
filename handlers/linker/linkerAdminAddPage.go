@@ -85,7 +85,7 @@ func (addTask) Action(w http.ResponseWriter, r *http.Request) any {
 	description := r.PostFormValue("description")
 	category, _ := strconv.Atoi(r.PostFormValue("category"))
 
-	allowed, err := UserCanCreateLink(r.Context(), queries, int32(category), uid)
+	allowed, err := UserCanCreateLink(r.Context(), queries, sql.NullInt32{Int32: int32(category), Valid: category != 0}, uid)
 	if err != nil {
 		return fmt.Errorf("UserCanCreateLink fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
@@ -95,7 +95,7 @@ func (addTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	if err := queries.AdminCreateLinkerItem(r.Context(), db.AdminCreateLinkerItemParams{
 		UsersIdusers:     uid,
-		LinkerCategoryID: int32(category),
+		LinkerCategoryID: sql.NullInt32{Int32: int32(category), Valid: category != 0},
 		Title:            sql.NullString{Valid: true, String: title},
 		Url:              sql.NullString{Valid: true, String: url},
 		Description:      sql.NullString{Valid: true, String: description},

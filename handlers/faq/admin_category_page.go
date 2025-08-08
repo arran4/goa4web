@@ -44,7 +44,7 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	latest, err := queries.AdminGetFAQQuestionsByCategory(r.Context(), int32(id))
+	latest, err := queries.AdminGetFAQQuestionsByCategory(r.Context(), sql.NullInt32{Int32: int32(id), Valid: true})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
@@ -119,7 +119,7 @@ func AdminCategoryQuestionsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	questions, err := queries.AdminGetFAQQuestionsByCategory(r.Context(), int32(id))
+	questions, err := queries.AdminGetFAQQuestionsByCategory(r.Context(), sql.NullInt32{Int32: int32(id), Valid: true})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return

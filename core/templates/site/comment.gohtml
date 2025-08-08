@@ -1,31 +1,40 @@
 {{ define "comment" }}
-    {{ $cmt := . }}
-    <table width="100%">
-        <tr bgcolor="lightgrey">
-            <th><a id="comment-{{ $cmt.Idcomments }}" href="#comment-{{ $cmt.Idcomments }}">{{ localTime $cmt.Written.Time }}</a></th>
-        </tr>
-        <tr>
-            <td>
-                {{ if cd.CommentEditing $cmt }}
-                    <a id="edit"></a>
-                    <font size="4">Edit:</font><br>
-                    <form method="post" action="{{ cd.CommentEditSaveURL $cmt }}">
-                        {{ csrfField }}
-                        <textarea id="reply" name="replytext" cols="40" rows="20">{{ $cmt.Text.String }}</textarea><br>
-                        {{ template "languageCombobox" }}
-                        <input type="submit" name="task" value="Edit Reply">
-                        <a href="?#comment-{{ $cmt.Idcomments }}">Cancel</a>
-                    </form>
-                {{ else }}
-                    {{ $cmt.Text.String | a4code2html}}<br>-<br>{{ $cmt.Posterusername.String }}.
-                    {{ if cd.SelectedThreadCanReply }}
-                        [<a href="?quote={{ $cmt.Idcomments }}&type=full#reply">FULL REPLY</a>]
-                        [<a href="?quote={{ $cmt.Idcomments }}#reply">PARAGRAPH REPLY</a>]
-                    {{ end }}
-                    {{ if cd.CanEditComment $cmt }}[<a href="{{ cd.CommentEditURL $cmt }}">EDIT</a>]{{ end }}
-                    {{ $admin := cd.CommentAdminURL $cmt }}{{ if $admin }}[<a href="{{ $admin }}">ADMIN</a>]{{ end }}
+    {{ $cmt := .Comment }}
+    {{ $num := .Number }}
+    {{ $prev := .Prev }}
+    <div class="comment">
+        <aside class="author">
+            <div class="avatar"></div>
+            <div class="username">{{ $cmt.Posterusername.String }}</div>
+            <div class="meta">
+                <div class="comment-id"><a class="comment-id" href="#c{{ $num }}">#{{ $num }}</a></div>
+                <div class="date">{{ (localTime $cmt.Written.Time).Format "2006-01-02" }}</div>
+                <div class="time">{{ (localTime $cmt.Written.Time).Format "15:04 MST" }}</div>
+                <div class="day">{{ (localTime $cmt.Written.Time).Format "Monday" }}</div>
+                <div class="zone">{{ cd.Location }}</div>
+                {{ if $prev }}<div class="since">{{ since (localTime $prev.Written.Time) (localTime $cmt.Written.Time) }}</div>{{ end }}
+            </div>
+        </aside>
+        <section class="body">
+            {{ if cd.CommentEditing $cmt }}
+                <a id="edit"></a>
+                <font size="4">Edit:</font><br>
+                <form method="post" action="{{ cd.CommentEditSaveURL $cmt }}">
+                    {{ csrfField }}
+                    <textarea id="reply" name="replytext" cols="40" rows="20">{{ $cmt.Text.String }}</textarea><br>
+                    {{ template "languageCombobox" }}
+                    <input type="submit" name="task" value="Edit Reply">
+                    <a href="#c{{ $num }}">Cancel</a>
+                </form>
+            {{ else }}
+                {{ $cmt.Text.String | a4code2html}}
+                {{ if cd.SelectedThreadCanReply }}
+                    [<a href="?quote={{ $cmt.Idcomments }}&type=full#reply">FULL REPLY</a>]
+                    [<a href="?quote={{ $cmt.Idcomments }}#reply">PARAGRAPH REPLY</a>]
                 {{ end }}
-            </td>
-        </tr>
-    </table><br>
+                {{ if cd.CanEditComment $cmt }}[<a href="{{ cd.CommentEditURL $cmt }}">EDIT</a>]{{ end }}
+                {{ $admin := cd.CommentAdminURL $cmt }}{{ if $admin }}[<a href="{{ $admin }}">ADMIN</a>]{{ end }}
+            {{ end }}
+        </section>
+    </div>
 {{ end }}

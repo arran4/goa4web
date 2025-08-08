@@ -7,7 +7,7 @@ UPDATE imageboard SET title = ?, description = ?, imageboard_idimageboard = ?, a
 -- name: SystemListBoardsByParentID :many
 SELECT b.*
 FROM imageboard b
-WHERE b.imageboard_idimageboard = sqlc.arg(parent_id)
+WHERE (b.imageboard_idimageboard = sqlc.narg(parent_id) OR (b.imageboard_idimageboard IS NULL AND sqlc.narg(parent_id) IS NULL))
 LIMIT ? OFFSET ?;
 
 
@@ -95,7 +95,7 @@ WITH role_ids AS (
 )
 SELECT b.*
 FROM imageboard b
-WHERE b.imageboard_idimageboard = sqlc.arg(parent_id)
+WHERE (b.imageboard_idimageboard = sqlc.narg(parent_id) OR (b.imageboard_idimageboard IS NULL AND sqlc.narg(parent_id) IS NULL))
   AND b.deleted_at IS NULL
   AND EXISTS (
     SELECT 1 FROM grants g

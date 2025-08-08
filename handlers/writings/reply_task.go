@@ -12,7 +12,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -70,16 +69,13 @@ func (ReplyTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, erro
 }
 
 func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
+	if _, ok := core.GetSessionOrFail(w, r); !ok {
 		return handlers.SessionFetchFail{}
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := cd.Queries()
-	uid, _ := session.Values["UID"].(int32)
 
-	writing, err := cd.CurrentWriting()
+	writing, err := cd.Article()
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{}); err != nil {
@@ -97,38 +93,6 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return handlers.ErrRedirectOnSamePageHandler(handlers.ErrForbidden)
 	}
 
-	pthid := writing.ForumthreadID
-	pt, err := queries.SystemGetForumTopicByTitle(r.Context(), sql.NullString{String: WritingTopicName, Valid: true})
-	var ptid int32
-	if errors.Is(err, sql.ErrNoRows) {
-		ptidi, err := queries.SystemCreateForumTopic(r.Context(), db.SystemCreateForumTopicParams{
-			ForumcategoryIdforumcategory: 0,
-			LanguageIdlanguage:           writing.LanguageIdlanguage,
-			Title:                        sql.NullString{String: WritingTopicName, Valid: true},
-			Description:                  sql.NullString{String: WritingTopicDescription, Valid: true},
-			Handler:                      "writing",
-		})
-		if err != nil {
-			return fmt.Errorf("create forum topic fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-		}
-		ptid = int32(ptidi)
-	} else if err != nil {
-		return fmt.Errorf("find forum topic fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-	} else {
-		ptid = pt.Idforumtopic
-	}
-
-	if pthid == 0 {
-		pthidi, err := queries.SystemCreateThread(r.Context(), ptid)
-		if err != nil {
-			return fmt.Errorf("make thread fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-		}
-		pthid = int32(pthidi)
-		if err := queries.SystemAssignWritingThreadID(r.Context(), db.SystemAssignWritingThreadIDParams{ForumthreadID: pthid, Idwriting: writing.Idwriting}); err != nil {
-			return fmt.Errorf("assign writing thread fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-		}
-	}
-
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
@@ -144,7 +108,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("language parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	cid, err := cd.CreateWritingCommentForCommenter(uid, pthid, writing.Idwriting, int32(languageID), text)
+	cid, threadID, topicID, err := cd.CreateWritingReply(writing, int32(languageID), text)
 	if err != nil {
 		return fmt.Errorf("create comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
@@ -158,7 +122,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(cid), ThreadID: pthid, TopicID: ptid}
+			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(cid), ThreadID: threadID, TopicID: topicID}
 			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: int32(cid), Text: text}
 		}
 	}

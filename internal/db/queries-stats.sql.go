@@ -39,7 +39,7 @@ FROM imagepost
 WHERE imageboard_idimageboard = ?
 `
 
-func (q *Queries) AdminCountThreadsByBoard(ctx context.Context, imageboardIdimageboard int32) (int64, error) {
+func (q *Queries) AdminCountThreadsByBoard(ctx context.Context, imageboardIdimageboard sql.NullInt32) (int64, error) {
 	row := q.db.QueryRowContext(ctx, adminCountThreadsByBoard, imageboardIdimageboard)
 	var count int64
 	err := row.Scan(&count)

@@ -141,7 +141,7 @@ func (ReplyBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if errors.Is(err, sql.ErrNoRows) {
 		ptidi, err := queries.SystemCreateForumTopic(r.Context(), db.SystemCreateForumTopicParams{
 			ForumcategoryIdforumcategory: 0,
-			LanguageIdlanguage:           blog.LanguageIdlanguage,
+			TopicLanguageID:              sql.NullInt32{Int32: blog.LanguageIdlanguage, Valid: blog.LanguageIdlanguage != 0},
 			Title: sql.NullString{
 				String: BloggerTopicName,
 				Valid:  true,

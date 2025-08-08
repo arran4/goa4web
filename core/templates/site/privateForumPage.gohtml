@@ -3,15 +3,16 @@
     <h1>Private Topics</h1>
     {{ template "tableTopics" (dict "Topics" cd.PrivateTopics) }}
     {{ if cd.HasGrant "privateforum" "topic" "create" 0 }}
-        <h2>Start conversation</h2>
+        <h2>Start group discussion</h2>
+        <p>Add people to start a shared conversation.</p>
         <form id="private-form" method="POST">
             <input type="hidden" name="task" value="{{ .CreateTask }}">
             <input type="text" id="participant-input" placeholder="username">
             <button type="button" id="add-participant">Add</button>
             <ul id="participants"></ul>
             <input type="hidden" name="participants" id="participants-field">
-            <textarea name="body" id="message-field" placeholder="Message"></textarea>
-            <button type="submit">Create</button>
+            <textarea name="body" id="message-field" placeholder="Message" style="display:none"></textarea>
+            <button type="submit" id="create-button" style="display:none">Create</button>
         </form>
         <script src="/private/private_forum.js"></script>
     {{ end }}

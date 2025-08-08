@@ -53,14 +53,18 @@ func (NewBoardTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	parents := make(map[int32]int32, len(boards))
 	for _, b := range boards {
-		parents[b.Idimageboard] = b.ImageboardIdimageboard
+		if b.ImageboardIdimageboard.Valid {
+			parents[b.Idimageboard] = b.ImageboardIdimageboard.Int32
+		} else {
+			parents[b.Idimageboard] = 0
+		}
 	}
 	if path, loop := algorithms.WouldCreateLoop(parents, 0, int32(parentBoardId)); loop {
 		return common.UserError{ErrorMessage: fmt.Sprintf("invalid parent board: loop %v", path)}
 	}
 
 	err = queries.AdminCreateImageBoard(r.Context(), db.AdminCreateImageBoardParams{
-		ImageboardIdimageboard: int32(parentBoardId),
+		ImageboardIdimageboard: sql.NullInt32{Int32: int32(parentBoardId), Valid: parentBoardId != 0},
 		Title:                  sql.NullString{Valid: true, String: name},
 		Description:            sql.NullString{Valid: true, String: desc},
 	})

@@ -36,7 +36,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Writing"
 	cd.LoadSelectionsFromRequest(r)
-	writing, err := cd.CurrentWriting()
+	writing, err := cd.Article()
 	if err != nil {
 		log.Printf("get writing: %v", err)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
@@ -66,7 +66,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	replyType := r.URL.Query().Get("type")
 	quoteId, _ := strconv.Atoi(r.URL.Query().Get("quote"))
 
-	comments, err := cd.SectionThreadComments("writing", "article", writing.ForumthreadID)
+	comments, err := cd.ArticleComments()
 	if err != nil {
 		log.Printf("thread comments: %v", err)
 	}
@@ -118,15 +118,12 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
+	if _, ok := core.GetSessionOrFail(w, r); !ok {
 		return
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := cd.Queries()
-	uid, _ := session.Values["UID"].(int32)
 
-	writing, err := cd.CurrentWriting()
+	writing, err := cd.Article()
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -149,57 +146,6 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var pthid int32 = writing.ForumthreadID
-	pt, err := queries.SystemGetForumTopicByTitle(r.Context(), sql.NullString{
-		String: WritingTopicName,
-		Valid:  true,
-	})
-	var ptid int32
-	if errors.Is(err, sql.ErrNoRows) {
-		ptidi, err := queries.SystemCreateForumTopic(r.Context(), db.SystemCreateForumTopicParams{
-			ForumcategoryIdforumcategory: 0,
-			LanguageIdlanguage:           writing.LanguageIdlanguage,
-			Title: sql.NullString{
-				String: WritingTopicName,
-				Valid:  true,
-			},
-			Description: sql.NullString{
-				String: WritingTopicDescription,
-				Valid:  true,
-			},
-			Handler: "writing",
-		})
-		if err != nil {
-			log.Printf("Error: createForumTopic: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return
-		}
-		ptid = int32(ptidi)
-	} else if err != nil {
-		log.Printf("Error: findForumTopicByTitle: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	} else {
-		ptid = pt.Idforumtopic
-	}
-	if pthid == 0 {
-		pthidi, err := queries.SystemCreateThread(r.Context(), ptid)
-		if err != nil {
-			log.Printf("Error: makeThread: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return
-		}
-		pthid = int32(pthidi)
-		if err := queries.SystemAssignWritingThreadID(r.Context(), db.SystemAssignWritingThreadIDParams{
-			ForumthreadID: pthid,
-			Idwriting:     writing.Idwriting,
-		}); err != nil {
-			log.Printf("Error: assign_writing_to_thread: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return
-		}
-	}
-
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
@@ -212,7 +158,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("replytext")
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
 
-	cid, err := cd.CreateWritingCommentForCommenter(uid, pthid, writing.Idwriting, int32(languageId), text)
+	cid, threadID, topicID, err := cd.CreateWritingReply(writing, int32(languageId), text)
 	if err != nil {
 		log.Printf("Error: createComment: %s", err)
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -228,7 +174,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(cid), ThreadID: pthid, TopicID: ptid}
+			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(cid), ThreadID: threadID, TopicID: topicID}
 		}
 	}
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {

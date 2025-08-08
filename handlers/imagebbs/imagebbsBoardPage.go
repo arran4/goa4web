@@ -161,7 +161,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	approved := !board.ApprovalRequired
 
 	pid, err := queries.CreateImagePostForPoster(r.Context(), db.CreateImagePostForPosterParams{
-		ImageboardID: int32(bid),
+		ImageboardID: sql.NullInt32{Int32: int32(bid), Valid: true},
 		Thumbnail:    sql.NullString{Valid: true, String: relThumb},
 		Fullimage:    sql.NullString{Valid: true, String: relFull},
 		PosterID:     uid,

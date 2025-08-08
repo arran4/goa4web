@@ -6,7 +6,7 @@
 <textarea name="answer" cols="80" rows="15">{{ .Faq.Answer.String }}</textarea><br>
 <select name="category">
     <option value="0">Hidden</option>
-    {{$cat := .Faq.FaqcategoriesIdfaqcategories}}
+    {{$cat := .Faq.FaqcategoriesIdfaqcategories.Int32}}
     {{- range .Categories }}
     <option value="{{ .Idfaqcategories }}" {{if eq $cat .Idfaqcategories}}selected{{end}}>{{ .Name.String }}</option>
     {{- end }}

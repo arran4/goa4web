@@ -24,7 +24,7 @@ INSERT INTO imageboard (imageboard_idimageboard, title, description, approval_re
 `
 
 type AdminCreateImageBoardParams struct {
-	ImageboardIdimageboard int32
+	ImageboardIdimageboard sql.NullInt32
 	Title                  sql.NullString
 	Description            sql.NullString
 	ApprovalRequired       bool
@@ -71,7 +71,7 @@ type AdminGetImagePostRow struct {
 	Idimagepost            int32
 	ForumthreadID          int32
 	UsersIdusers           int32
-	ImageboardIdimageboard int32
+	ImageboardIdimageboard sql.NullInt32
 	Posted                 sql.NullTime
 	Description            sql.NullString
 	Thumbnail              sql.NullString
@@ -153,7 +153,7 @@ UPDATE imageboard SET title = ?, description = ?, imageboard_idimageboard = ?, a
 type AdminUpdateImageBoardParams struct {
 	Title                  sql.NullString
 	Description            sql.NullString
-	ImageboardIdimageboard int32
+	ImageboardIdimageboard sql.NullInt32
 	ApprovalRequired       bool
 	Idimageboard           int32
 }
@@ -176,7 +176,7 @@ WHERE idimagepost = ?
 `
 
 type AdminUpdateImagePostParams struct {
-	ImageboardIdimageboard int32
+	ImageboardIdimageboard sql.NullInt32
 	Description            sql.NullString
 	Approved               bool
 	Idimagepost            int32
@@ -219,7 +219,7 @@ WHERE EXISTS (
 `
 
 type CreateImagePostForPosterParams struct {
-	ImageboardID int32
+	ImageboardID sql.NullInt32
 	Thumbnail    sql.NullString
 	Fullimage    sql.NullString
 	PosterID     int32
@@ -332,7 +332,7 @@ type GetImagePostByIDForListerRow struct {
 	Idimagepost            int32
 	ForumthreadID          int32
 	UsersIdusers           int32
-	ImageboardIdimageboard int32
+	ImageboardIdimageboard sql.NullInt32
 	Posted                 sql.NullTime
 	Description            sql.NullString
 	Thumbnail              sql.NullString
@@ -383,7 +383,7 @@ type GetImagePostInfoByPathParams struct {
 
 type GetImagePostInfoByPathRow struct {
 	Idimagepost            int32
-	ImageboardIdimageboard int32
+	ImageboardIdimageboard sql.NullInt32
 	UsersIdusers           int32
 	Posted                 sql.NullTime
 	Username               sql.NullString
@@ -424,7 +424,7 @@ type GetImagePostsByUserDescendingRow struct {
 	Idimagepost            int32
 	ForumthreadID          int32
 	UsersIdusers           int32
-	ImageboardIdimageboard int32
+	ImageboardIdimageboard sql.NullInt32
 	Posted                 sql.NullTime
 	Description            sql.NullString
 	Thumbnail              sql.NullString
@@ -495,7 +495,7 @@ type GetImagePostsByUserDescendingAllRow struct {
 	Idimagepost            int32
 	ForumthreadID          int32
 	UsersIdusers           int32
-	ImageboardIdimageboard int32
+	ImageboardIdimageboard sql.NullInt32
 	Posted                 sql.NullTime
 	Description            sql.NullString
 	Thumbnail              sql.NullString
@@ -552,7 +552,7 @@ WITH role_ids AS (
 )
 SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required
 FROM imageboard b
-WHERE b.imageboard_idimageboard = ?
+WHERE (b.imageboard_idimageboard = ? OR (b.imageboard_idimageboard IS NULL AND ? IS NULL))
   AND b.deleted_at IS NULL
   AND EXISTS (
     SELECT 1 FROM grants g
@@ -569,7 +569,7 @@ LIMIT ? OFFSET ?
 
 type ListBoardsByParentIDForListerParams struct {
 	ListerID     int32
-	ParentID     int32
+	ParentID     sql.NullInt32
 	ListerUserID sql.NullInt32
 	Limit        int32
 	Offset       int32
@@ -578,6 +578,7 @@ type ListBoardsByParentIDForListerParams struct {
 func (q *Queries) ListBoardsByParentIDForLister(ctx context.Context, arg ListBoardsByParentIDForListerParams) ([]*Imageboard, error) {
 	rows, err := q.db.QueryContext(ctx, listBoardsByParentIDForLister,
 		arg.ListerID,
+		arg.ParentID,
 		arg.ParentID,
 		arg.ListerUserID,
 		arg.Limit,
@@ -696,7 +697,7 @@ LIMIT ? OFFSET ?
 
 type ListImagePostsByBoardForListerParams struct {
 	ListerID     int32
-	BoardID      int32
+	BoardID      sql.NullInt32
 	ListerUserID sql.NullInt32
 	Limit        int32
 	Offset       int32
@@ -706,7 +707,7 @@ type ListImagePostsByBoardForListerRow struct {
 	Idimagepost            int32
 	ForumthreadID          int32
 	UsersIdusers           int32
-	ImageboardIdimageboard int32
+	ImageboardIdimageboard sql.NullInt32
 	Posted                 sql.NullTime
 	Description            sql.NullString
 	Thumbnail              sql.NullString
@@ -800,7 +801,7 @@ type ListImagePostsByPosterForListerRow struct {
 	Idimagepost            int32
 	ForumthreadID          int32
 	UsersIdusers           int32
-	ImageboardIdimageboard int32
+	ImageboardIdimageboard sql.NullInt32
 	Posted                 sql.NullTime
 	Description            sql.NullString
 	Thumbnail              sql.NullString
@@ -917,18 +918,23 @@ func (q *Queries) SystemAssignImagePostThreadID(ctx context.Context, arg SystemA
 const systemListBoardsByParentID = `-- name: SystemListBoardsByParentID :many
 SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required
 FROM imageboard b
-WHERE b.imageboard_idimageboard = ?
+WHERE (b.imageboard_idimageboard = ? OR (b.imageboard_idimageboard IS NULL AND ? IS NULL))
 LIMIT ? OFFSET ?
 `
 
 type SystemListBoardsByParentIDParams struct {
-	ParentID int32
+	ParentID sql.NullInt32
 	Limit    int32
 	Offset   int32
 }
 
 func (q *Queries) SystemListBoardsByParentID(ctx context.Context, arg SystemListBoardsByParentIDParams) ([]*Imageboard, error) {
-	rows, err := q.db.QueryContext(ctx, systemListBoardsByParentID, arg.ParentID, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, systemListBoardsByParentID,
+		arg.ParentID,
+		arg.ParentID,
+		arg.Limit,
+		arg.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}

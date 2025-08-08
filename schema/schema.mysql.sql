@@ -2,7 +2,7 @@ CREATE TABLE `blogs` (
   `idblogs` int(10) NOT NULL AUTO_INCREMENT,
   `forumthread_id` int(10) DEFAULT NULL,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
-  `language_idlanguage` int(10) NOT NULL DEFAULT 0,
+  `language_idlanguage` int(10) DEFAULT NULL,
   `blog` longtext DEFAULT NULL,
   `written` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `deleted_at` datetime DEFAULT NULL,
@@ -34,7 +34,7 @@ CREATE TABLE `comments` (
   `idcomments` int(10) NOT NULL AUTO_INCREMENT,
   `forumthread_id` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
-  `language_idlanguage` int(10) NOT NULL DEFAULT 0,
+  `language_idlanguage` int(10) DEFAULT NULL,
   `written` datetime DEFAULT NULL,
   `text` longtext DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
@@ -56,8 +56,8 @@ CREATE TABLE `comments_search` (
 
 CREATE TABLE `faq` (
   `idfaq` int(10) NOT NULL AUTO_INCREMENT,
-  `faqCategories_idfaqCategories` int(10) NOT NULL DEFAULT 0,
-  `language_idlanguage` int(10) NOT NULL DEFAULT 0,
+  `faqCategories_idfaqCategories` int(10) DEFAULT NULL,
+  `language_idlanguage` int(10) DEFAULT NULL,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `answer` mediumtext DEFAULT NULL,
   `question` mediumtext DEFAULT NULL,
@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS `faq_revisions` (
 CREATE TABLE `forumcategory` (
   `idforumcategory` int(10) NOT NULL AUTO_INCREMENT,
   `forumcategory_idforumcategory` int(10) NOT NULL DEFAULT 0,
-  `language_idlanguage` int(10) NOT NULL DEFAULT 0,
+  `language_idlanguage` int(10) DEFAULT NULL,
   `title` tinytext DEFAULT NULL,
   `description` mediumtext DEFAULT NULL,
   PRIMARY KEY (`idforumcategory`),
@@ -113,7 +113,7 @@ CREATE TABLE `forumtopic` (
   `idforumtopic` int(10) NOT NULL AUTO_INCREMENT,
   `lastposter` int(10) NOT NULL DEFAULT 0,
   `forumcategory_idforumcategory` int(10) NOT NULL DEFAULT 0,
-  `language_idlanguage` int(10) NOT NULL DEFAULT 0,
+  `language_idlanguage` int(10) DEFAULT NULL,
   `title` tinytext DEFAULT NULL,
   `description` mediumtext DEFAULT NULL,
   `threads` int(10) DEFAULT NULL,
@@ -128,7 +128,7 @@ CREATE TABLE `forumtopic` (
 
 CREATE TABLE `imageboard` (
   `idimageboard` int(10) NOT NULL AUTO_INCREMENT,
-  `imageboard_idimageboard` int(10) NOT NULL DEFAULT 0,
+  `imageboard_idimageboard` int(10) DEFAULT NULL,
   `title` tinytext DEFAULT NULL,
   `description` tinytext DEFAULT NULL,
   `approval_required` tinyint(1) NOT NULL DEFAULT 0,
@@ -140,7 +140,7 @@ CREATE TABLE `imagepost` (
   `idimagepost` int(10) NOT NULL AUTO_INCREMENT,
   `forumthread_id` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
-  `imageboard_idimageboard` int(10) NOT NULL DEFAULT 0,
+  `imageboard_idimageboard` int(10) DEFAULT NULL,
   `posted` datetime DEFAULT NULL,
   `description` mediumtext DEFAULT NULL,
   `thumbnail` tinytext DEFAULT NULL,
@@ -154,6 +154,7 @@ CREATE TABLE `imagepost` (
   KEY `imagepost_FKIndex2` (`users_idusers`),
   KEY `imagepost_FKIndex3` (`forumthread_id`)
 );
+
 
 CREATE TABLE `imagepost_search` (
   `image_post_id` int(10) NOT NULL DEFAULT 0,
@@ -564,7 +565,7 @@ CREATE TABLE IF NOT EXISTS `deactivated_imageposts` (
   `idimagepost` int NOT NULL,
   `forumthread_id` int NOT NULL,
   `users_idusers` int NOT NULL,
-  `imageboard_idimageboard` int NOT NULL,
+  `imageboard_idimageboard` int DEFAULT NULL,
   `posted` datetime,
   `description` tinytext,
   `thumbnail` tinytext,

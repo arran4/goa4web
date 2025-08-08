@@ -56,7 +56,7 @@ func AdminBoardListPage(w http.ResponseWriter, r *http.Request) {
 	const limit = 50
 	rows, err := cd.Queries().ListImagePostsByBoardForLister(r.Context(), db.ListImagePostsByBoardForListerParams{
 		ListerID:     cd.UserID,
-		BoardID:      board.Idimageboard,
+		BoardID:      sql.NullInt32{Int32: board.Idimageboard, Valid: true},
 		ListerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		Limit:        limit + 1,
 		Offset:       int32((page - 1) * limit),

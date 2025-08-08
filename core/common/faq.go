@@ -74,7 +74,6 @@ func (cd *CoreData) RenameFAQCategory(id int32, name string) error {
 	})
 }
 
-
 // CreateFAQQuestionParams groups input for CreateFAQQuestion.
 type CreateFAQQuestionParams struct {
 	Question   string
@@ -92,7 +91,7 @@ func (cd *CoreData) CreateFAQQuestion(p CreateFAQQuestionParams) (int64, error) 
 	res, err := cd.queries.InsertFAQQuestionForWriter(cd.ctx, db.InsertFAQQuestionForWriterParams{
 		Question:   sql.NullString{String: p.Question, Valid: p.Question != ""},
 		Answer:     sql.NullString{String: p.Answer, Valid: p.Answer != ""},
-		CategoryID: p.CategoryID,
+		CategoryID: sql.NullInt32{Int32: p.CategoryID, Valid: p.CategoryID != 0},
 		WriterID:   p.WriterID,
 		LanguageID: p.LanguageID,
 		GranteeID:  sql.NullInt32{Int32: p.WriterID, Valid: p.WriterID != 0},
@@ -116,4 +115,3 @@ func (cd *CoreData) CreateFAQQuestion(p CreateFAQQuestionParams) (int64, error) 
 	}
 	return id, nil
 }
-

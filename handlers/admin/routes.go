@@ -26,6 +26,7 @@ import (
 // RegisterRoutes attaches the admin endpoints to ar. The router is expected to
 // already have any required authentication middleware applied.
 func (h *Handlers) RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
+	ar.Use(handlers.SectionMiddleware("admin"))
 	navReg.RegisterAdminControlCenter("Core", "Roles", "/admin/roles", 25)
 	navReg.RegisterAdminControlCenter("Core", "Grants", "/admin/grants", 27)
 	navReg.RegisterAdminControlCenter("Core", "Grant Rules", "/admin/grants/rules", 28)

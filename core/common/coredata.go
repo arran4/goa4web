@@ -102,6 +102,8 @@ type CoreData struct {
 	ImageSigner       *imagesign.Signer
 	IndexItems        []IndexItem
 	LinkSigner        *linksign.Signer
+	absoluteURLBase   lazy.Value[string]  // cached base URL for absolute links
+	dbRegistry        *dbdrivers.Registry // database driver registry
 	mapMu             sync.Mutex
 	Nav               NavigationProvider
 	NextLink          string
@@ -135,7 +137,7 @@ type CoreData struct {
 	adminUserGrants                  map[int32]*lazy.Value[[]*db.Grant]
 	adminUserRoles                   map[int32]*lazy.Value[[]*db.GetPermissionsByUserIDRow]
 	adminUserStats                   map[int32]*lazy.Value[*db.AdminUserPostCountsByIDRow]
-	allAnsweredFAQ                  lazy.Value[[]*CategoryFAQs]
+	allAnsweredFAQ                   lazy.Value[[]*CategoryFAQs]
 	allRoles                         lazy.Value[[]*db.Role]
 	annMu                            sync.Mutex
 	announcement                     lazy.Value[*db.GetActiveAnnouncementWithNewsForListerRow]
@@ -212,7 +214,7 @@ type CoreData struct {
 	writingCategories                lazy.Value[[]*db.WritingCategory]
 	writingRows                      map[int32]*lazy.Value[*db.GetWritingForListerByIDRow]
 
-  // marks records which template sections have been rendered to avoid
+	// marks records which template sections have been rendered to avoid
 	// duplicate output when re-rendering after an error.
 	marks map[string]struct{}
 }
@@ -1355,7 +1357,6 @@ func (cd *CoreData) RenameLanguage(oldCode, newCode string) error {
 	return nil
 }
 
-
 // DeleteLanguage removes a language when it isn't referenced by any content.
 // The provided code is expected to be the language identifier string.
 // It returns the resolved language ID and name.
@@ -2304,10 +2305,8 @@ func (cd *CoreData) SetCurrentNotificationTemplate(name, errMsg string) {
 	cd.currentNotificationTemplateError = errMsg
 }
 
-
 // SetCurrentError stores a generic error message for the current request.
 func (cd *CoreData) SetCurrentError(errMsg string) { cd.currentError = errMsg }
-
 
 // SetCurrentThreadAndTopic stores the requested thread and topic IDs.
 func (cd *CoreData) SetCurrentThreadAndTopic(threadID, topicID int32) {

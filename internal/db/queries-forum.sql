@@ -140,6 +140,25 @@ WHERE g.section = 'forum'
 -- name: SystemSetForumTopicHandlerByID :exec
 UPDATE forumtopic SET handler = sqlc.arg(handler) WHERE idforumtopic = sqlc.arg(id);
 
+-- name: AdminListTopicsWithUserGrantsNoRoles :many
+SELECT t.idforumtopic, t.title
+FROM forumtopic t
+WHERE t.handler <> 'private'
+  AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='forum' AND g.item='topic' AND g.active=1
+      AND g.item_id = t.idforumtopic
+      AND g.user_id IS NOT NULL
+      AND (sqlc.arg(include_admin) OR g.user_id <> 1)
+  )
+  AND NOT EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='forum' AND g.item='topic' AND g.active=1
+      AND g.item_id = t.idforumtopic
+      AND g.role_id IS NOT NULL
+  )
+ORDER BY t.idforumtopic;
+
 -- name: GetForumTopicsForUser :many
 WITH role_ids AS (
     SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)

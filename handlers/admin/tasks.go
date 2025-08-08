@@ -90,6 +90,9 @@ const (
 	// TaskForumTopicDelete removes a forum topic.
 	TaskForumTopicDelete tasks.TaskString = "Forum topic delete"
 
+	// TaskForumTopicConvertPrivate converts a forum topic to a private forum.
+	TaskForumTopicConvertPrivate tasks.TaskString = "Forum topic convert private"
+
 	// TaskForumThreadDelete removes a forum thread.
 	TaskForumThreadDelete tasks.TaskString = "Forum thread delete"
 

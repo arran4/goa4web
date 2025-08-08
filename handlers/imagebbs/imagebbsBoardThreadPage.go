@@ -66,21 +66,6 @@ func (ReplyTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, erro
 }
 
 func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
-	type Data struct {
-		Replyable      bool
-		ForumThreadId  int
-		Comments       []*db.GetCommentsByThreadIdForUserRow
-		BoardId        int
-		ImagePost      *db.GetImagePostByIDForListerRow
-		Thread         *db.GetThreadLastPosterAndPermsRow
-		IsReplyable    bool
-		CanEditComment func(*db.GetCommentsByThreadIdForUserRow) bool
-		EditURL        func(*db.GetCommentsByThreadIdForUserRow) string
-		EditSaveURL    func(*db.GetCommentsByThreadIdForUserRow) string
-		Editing        func(*db.GetCommentsByThreadIdForUserRow) bool
-		AdminURL       func(*db.GetCommentsByThreadIdForUserRow) string
-	}
-
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.LoadSelectionsFromRequest(r)
 	vars := mux.Vars(r)
@@ -96,84 +81,26 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	thid, _ := strconv.Atoi(thidStr)
 	cd.PageTitle = fmt.Sprintf("Thread %d/%d", bid, thid)
 
-	data := Data{Replyable: true, BoardId: bid, ForumThreadId: thid, IsReplyable: true}
-
 	if !cd.HasGrant("imagebbs", "board", "view", int32(bid)) {
 		_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{})
 		return
 	}
 
-	cd.SetCurrentThreadAndTopic(int32(thid), 0)
-	commentRows, err := cd.SelectedSectionThreadComments()
-	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-		default:
-			log.Printf("thread comments: %s", err)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
-			return
-		}
-	}
-
-	threadRow, err := cd.SelectedThread()
-	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-		default:
-			log.Printf("Error: getThreadByIdForUserByIdWithLastPosterUserNameAndPermissions: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-			return
-		}
-	}
-
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	common.WithOffset(offset)(cd)
 
-	commentId, _ := strconv.Atoi(r.URL.Query().Get("comment"))
-	data.Comments = commentRows
-	data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
-		return cmt.IsOwner
-	}
-	data.EditURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
-		if !data.CanEditComment(cmt) {
-			return ""
-		}
-		return fmt.Sprintf("/forum/topic/%d/thread/%d?comment=%d#edit", threadRow.ForumtopicIdforumtopic, threadRow.Idforumthread, cmt.Idcomments)
-	}
-	data.EditSaveURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
-		if !data.CanEditComment(cmt) {
-			return ""
-		}
-		return fmt.Sprintf("/forum/topic/%d/thread/%d/comment/%d", threadRow.ForumtopicIdforumtopic, threadRow.Idforumthread, cmt.Idcomments)
-	}
-	data.Editing = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
-		return data.CanEditComment(cmt) && commentId != 0 && int32(commentId) == cmt.Idcomments
-	}
-	data.AdminURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
-		if cd.IsAdmin() && cd.IsAdminMode() {
-			return fmt.Sprintf("/admin/comment/%d", cmt.Idcomments)
-		}
-		return ""
-	}
-	if commentId != 0 {
-		data.IsReplyable = false
-	}
-
-	data.Thread = threadRow
-	post, err := cd.ImagePostByID(int32(bid))
+	data, err := cd.ImageBBSThread(int32(bid), int32(thid))
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 			_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{})
 			return
 		default:
-			log.Printf("getAllBoardsByParentBoardId Error: %s", err)
+			log.Printf("get image thread fail: %s", err)
 			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 			return
 		}
 	}
-
-	data.ImagePost = post
 
 	handlers.TemplateHandler(w, r, "boardThreadPage.gohtml", data)
 }

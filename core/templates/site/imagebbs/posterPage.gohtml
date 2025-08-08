@@ -1,4 +1,15 @@
 {{ template "head" $ }}
     <font size="5">{{ .Username }}'s images.</font><br>
-    {{ template "boardPosts" $ }}
+    {{- if .Posts }}
+        <font size="4">Pictures:</font><br>
+        {{- range .Posts }}
+            <table>
+                <tr>
+                    <th><a href="{{ .Fullimage.String }}" target="_BLANK"><img src="{{ .Thumbnail.String }}"></a>
+                    <td>{{ .Description.String }}<hr>{{ .Username.String }} - Posted: {{ localTime .Posted.Time }} - [<a href="/imagebbs/board/{{ .ImageboardID }}/thread/{{ .ForumthreadID }}">{{ .Comments.Int32 }} COMMENTS</a>]
+            </table><br>
+        {{- end }}
+    {{- else }}
+        There isn't anything to see.
+    {{- end }}
 {{ template "tail" $ }}

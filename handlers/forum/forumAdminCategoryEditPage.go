@@ -19,25 +19,19 @@ import (
 // AdminCategoryEditPage displays a form to edit a forum category.
 func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := cd.Queries()
 	cid, err := strconv.Atoi(mux.Vars(r)["category"])
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		handlers.RenderErrorPage(w, r, handlers.ErrBadRequest)
 		return
 	}
-	cat, err := queries.GetForumCategoryById(r.Context(), db.GetForumCategoryByIdParams{
-		Idforumcategory: int32(cid),
-		ViewerID:        cd.UserID,
-	})
+	cat, err := cd.ForumCategory(int32(cid))
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Category not found"))
 		return
 	}
-	cats, err := queries.GetAllForumCategories(r.Context(), db.GetAllForumCategoriesParams{
-		ViewerID: cd.UserID,
-	})
+	cats, err := cd.ForumCategories()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
@@ -68,7 +62,7 @@ func AdminCategoryEditSubmit(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	categoryId, _ := strconv.Atoi(vars["category"])
 
-	cats, err := queries.GetAllForumCategories(r.Context(), db.GetAllForumCategoriesParams{ViewerID: cd.UserID})
+	cats, err := cd.ForumCategories()
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
@@ -104,13 +98,12 @@ func AdminCategoryEditSubmit(w http.ResponseWriter, r *http.Request) {
 // AdminCategoryDeletePage removes a forum category.
 func AdminCategoryDeletePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := cd.Queries()
 	cid, err := strconv.Atoi(mux.Vars(r)["category"])
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	if err := queries.AdminDeleteForumCategory(r.Context(), int32(cid)); err != nil {
+	if err := cd.Queries().AdminDeleteForumCategory(r.Context(), int32(cid)); err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}

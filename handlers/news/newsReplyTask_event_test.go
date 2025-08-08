@@ -46,14 +46,14 @@ func TestNewsReplyTaskEventData(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_idlanguage", "title", "description", "threads", "comments", "lastaddition", "handler"}).
 			AddRow(4, int32(0), 0, 0, NewsTopicName, "", 0, 0, sql.NullTime{}, "news"))
 
+	mock.ExpectExec("INSERT INTO comments").
+		WithArgs(int32(1), uid, pthid, sqlmock.AnyArg(), "news", sqlmock.AnyArg(), int32(pid), sqlmock.AnyArg(), uid).
+		WillReturnResult(sqlmock.NewResult(5, 1))
+
 	mock.ExpectQuery("SELECT u.idusers").
 		WithArgs(uid).
 		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).
 			AddRow(uid, nil, "alice", nil))
-
-	mock.ExpectExec("INSERT INTO comments").
-		WithArgs(int32(1), uid, pthid, sqlmock.AnyArg(), "news", sqlmock.AnyArg(), int32(pid), sqlmock.AnyArg(), uid).
-		WillReturnResult(sqlmock.NewResult(5, 1))
 
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store

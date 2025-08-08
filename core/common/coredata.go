@@ -3,9 +3,7 @@ package common
 import (
 	"bytes"
 	"context"
-	"crypto/rand"
 	"database/sql"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -74,20 +72,7 @@ type NavigationProvider interface {
 	AdminSections() []AdminSection
 }
 
-// ErrEmailAlreadyAssociated is returned when a user already has an email set.
-var ErrEmailAlreadyAssociated = errors.New("email already associated")
-
-// AssociateEmailParams carries the data required to request an email association.
-type AssociateEmailParams struct {
-	Username string
-	Email    string
-	Reason   string
-}
-
 // No package-level pagination constants as runtime config provides these values.
-
-// ErrPasswordResetRecentlyRequested indicates a password reset was requested too recently.
-var ErrPasswordResetRecentlyRequested = errors.New("reset recently requested")
 
 type CoreData struct {
 	a4codeMapper func(tag, val string) string
@@ -174,7 +159,7 @@ type CoreData struct {
 	forumThreadComments              map[int32]*lazy.Value[[]*db.GetCommentsByThreadIdForUserRow]
 	forumThreadRows                  map[int32]*lazy.Value[*db.GetThreadLastPosterAndPermsRow]
 	forumThreads                     map[int32]*lazy.Value[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow]
-	forumTopicLists                  map[int32]*lazy.Value[[]*db.Forumtopic]
+	forumTopicLists                  map[int32]*lazy.Value[[]*db.GetForumTopicsForUserRow]
 	forumTopics                      map[int32]*lazy.Value[*db.GetForumTopicByIdForUserRow]
 	imageBoardPosts                  map[int32]*lazy.Value[[]*db.ListImagePostsByBoardForListerRow]
 	imageBoards                      lazy.Value[[]*db.Imageboard]
@@ -197,6 +182,18 @@ type CoreData struct {
 	privateForumTopics               lazy.Value[[]*PrivateTopic]
 	publicWritings                   map[string]*lazy.Value[[]*db.ListPublicWritingsInCategoryForListerRow]
 	roleRows                         map[int32]*lazy.Value[*db.Role]
+	searchBlogs                      []*db.Blog
+	searchBlogsEmptyWords            bool
+	searchBlogsNoResults             bool
+	searchComments                   []*db.GetCommentsByIdsForUserWithThreadInfoRow
+	searchCommentsEmptyWords         bool
+	searchCommentsNoResults          bool
+	searchLinkerEmptyWords           bool
+	searchLinkerItems                []*db.GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow
+	searchLinkerNoResults            bool
+	searchWritings                   []*db.ListWritingsByIDsForListerRow
+	searchWritingsEmptyWords         bool
+	searchWritingsNoResults          bool
 	selectedThreadCanReply           lazy.Value[bool]
 	subImageBoards                   map[int32]*lazy.Value[[]*db.Imageboard]
 	subscriptionRows                 lazy.Value[[]*db.ListSubscriptionsByUserRow]
@@ -212,8 +209,7 @@ type CoreData struct {
 	writerWritings                   map[int32]*lazy.Value[[]*db.ListPublicWritingsByUserForListerRow]
 	writingCategories                lazy.Value[[]*db.WritingCategory]
 	writingRows                      map[int32]*lazy.Value[*db.GetWritingForListerByIDRow]
-
-	// marks records which template sections have been rendered to avoid
+  // marks records which template sections have been rendered to avoid
 	// duplicate output when re-rendering after an error.
 	marks map[string]struct{}
 }
@@ -229,7 +225,7 @@ func (cd *CoreData) AbsoluteURL(path string) string {
 }
 
 // AdminForumTopics returns all forum topics without category filtering.
-func (cd *CoreData) AdminForumTopics() ([]*db.Forumtopic, error) {
+func (cd *CoreData) AdminForumTopics() ([]*db.GetForumTopicsForUserRow, error) {
 	return cd.ForumTopics(0)
 }
 
@@ -1133,92 +1129,6 @@ func (cd *CoreData) FAQCategories() ([]*db.FaqCategory, error) {
 	})
 }
 
-// ForumCategories loads all forum categories once.
-func (cd *CoreData) ForumCategories() ([]*db.Forumcategory, error) {
-	return cd.forumCategories.Load(func() ([]*db.Forumcategory, error) {
-		if cd.queries == nil {
-			return nil, nil
-		}
-		return cd.queries.GetAllForumCategories(cd.ctx, db.GetAllForumCategoriesParams{ViewerID: cd.UserID})
-	})
-}
-
-// ForumThreadByID returns a single forum thread lazily loading it once per ID.
-func (cd *CoreData) ForumThreadByID(id int32, ops ...lazy.Option[*db.GetThreadLastPosterAndPermsRow]) (*db.GetThreadLastPosterAndPermsRow, error) {
-	fetch := func(i int32) (*db.GetThreadLastPosterAndPermsRow, error) {
-		if cd.queries == nil {
-			return nil, nil
-		}
-		return cd.queries.GetThreadLastPosterAndPerms(cd.ctx, db.GetThreadLastPosterAndPermsParams{
-			ViewerID:      cd.UserID,
-			ThreadID:      i,
-			ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-		})
-	}
-	return lazy.Map(&cd.forumThreadRows, &cd.mapMu, id, fetch, ops...)
-}
-
-// ForumThreads loads the threads for a forum topic once per topic.
-func (cd *CoreData) ForumThreads(topicID int32) ([]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow, error) {
-	if cd.forumThreads == nil {
-		cd.forumThreads = make(map[int32]*lazy.Value[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow])
-	}
-	lv, ok := cd.forumThreads[topicID]
-	if !ok {
-		lv = &lazy.Value[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow]{}
-		cd.forumThreads[topicID] = lv
-	}
-	return lv.Load(func() ([]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow, error) {
-		if cd.queries == nil {
-			return nil, nil
-		}
-		return cd.queries.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText(cd.ctx, db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams{
-			ViewerID:      cd.UserID,
-			TopicID:       topicID,
-			ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-		})
-	})
-}
-
-// ForumTopicByID loads a forum topic once per ID using caching.
-func (cd *CoreData) ForumTopicByID(id int32, ops ...lazy.Option[*db.GetForumTopicByIdForUserRow]) (*db.GetForumTopicByIdForUserRow, error) {
-	fetch := func(i int32) (*db.GetForumTopicByIdForUserRow, error) {
-		if cd.queries == nil {
-			return nil, nil
-		}
-		return cd.queries.GetForumTopicByIdForUser(cd.ctx, db.GetForumTopicByIdForUserParams{
-			ViewerID:      cd.UserID,
-			Idforumtopic:  i,
-			ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-		})
-	}
-	return lazy.Map(&cd.forumTopics, &cd.mapMu, id, fetch, ops...)
-}
-
-// ForumTopics loads forum topics for a given category once per category.
-func (cd *CoreData) ForumTopics(categoryID int32) ([]*db.Forumtopic, error) {
-	if cd.forumTopicLists == nil {
-		cd.forumTopicLists = make(map[int32]*lazy.Value[[]*db.Forumtopic])
-	}
-	lv, ok := cd.forumTopicLists[categoryID]
-	if !ok {
-		lv = &lazy.Value[[]*db.Forumtopic]{}
-		cd.forumTopicLists[categoryID] = lv
-	}
-	return lv.Load(func() ([]*db.Forumtopic, error) {
-		if cd.queries == nil {
-			return nil, nil
-		}
-		if categoryID == 0 {
-			return cd.queries.GetAllForumTopics(cd.ctx, db.GetAllForumTopicsParams{ViewerID: cd.UserID})
-		}
-		return cd.queries.GetForumTopicsByCategoryId(cd.ctx, db.GetForumTopicsByCategoryIdParams{
-			ViewerID:   cd.UserID,
-			CategoryID: categoryID,
-		})
-	})
-}
-
 // HasAdminRole reports whether the current user has the administrator role.
 func (cd *CoreData) HasAdminRole() bool {
 	return cd.HasRole("administrator")
@@ -1833,82 +1743,12 @@ func (cd *CoreData) DeleteFAQCategory(id int32) error {
 	return cd.queries.AdminDeleteFAQCategory(cd.ctx, id)
 }
 
-// AssociateEmail creates an email association request for a user.
-func (cd *CoreData) AssociateEmail(p AssociateEmailParams) (*db.SystemGetUserByUsernameRow, int64, error) {
-	row, err := cd.queries.SystemGetUserByUsername(cd.ctx, sql.NullString{String: p.Username, Valid: true})
-	if err != nil {
-		return nil, 0, fmt.Errorf("user not found %w", err)
-	}
-	if row.Email != "" {
-		return nil, 0, ErrEmailAlreadyAssociated
-	}
-	res, err := cd.queries.AdminInsertRequestQueue(cd.ctx, db.AdminInsertRequestQueueParams{
-		UsersIdusers:   row.Idusers,
-		ChangeTable:    "user_emails",
-		ChangeField:    "email",
-		ChangeRowID:    row.Idusers,
-		ChangeValue:    sql.NullString{String: p.Email, Valid: true},
-		ContactOptions: sql.NullString{String: p.Email, Valid: true},
-	})
-	if err != nil {
-		log.Printf("insert admin request: %v", err)
-		return nil, 0, fmt.Errorf("insert admin request %w", err)
-	}
-	id, _ := res.LastInsertId()
-	_ = cd.queries.AdminInsertRequestComment(cd.ctx, db.AdminInsertRequestCommentParams{RequestID: int32(id), Comment: p.Reason})
-	_ = cd.queries.InsertAdminUserComment(cd.ctx, db.InsertAdminUserCommentParams{UsersIdusers: row.Idusers, Comment: "email association requested"})
-	return row, id, nil
-}
-
 // DeleteFAQQuestion removes a FAQ entry by ID.
 func (cd *CoreData) DeleteFAQQuestion(id int32) error {
 	if cd.queries == nil {
 		return nil
 	}
 	return cd.queries.AdminDeleteFAQ(cd.ctx, id)
-}
-
-// UserExists reports whether a user already exists with the supplied username
-// or email address.
-func (cd *CoreData) UserExists(username, email string) (bool, error) {
-	if cd.queries == nil {
-		return false, nil
-	}
-	if username != "" {
-		if _, err := cd.queries.SystemGetUserByUsername(cd.ctx, sql.NullString{String: username, Valid: true}); err == nil {
-			return true, nil
-		} else if !errors.Is(err, sql.ErrNoRows) {
-			return false, fmt.Errorf("user by username: %w", err)
-		}
-	}
-	if email != "" {
-		if _, err := cd.queries.SystemGetUserByEmail(cd.ctx, email); err == nil {
-			return true, nil
-		} else if !errors.Is(err, sql.ErrNoRows) {
-			return false, fmt.Errorf("user by email: %w", err)
-		}
-	}
-	return false, nil
-}
-
-// CreateUserWithEmail inserts a user with the supplied username, email and
-// password hash/algorithm, returning the new user ID.
-func (cd *CoreData) CreateUserWithEmail(u, e, hash, alg string) (int32, error) {
-	if cd.queries == nil {
-		return 0, errors.New("no queries")
-	}
-	id, err := cd.queries.SystemInsertUser(cd.ctx, sql.NullString{String: u, Valid: u != ""})
-	if err != nil {
-		return 0, err
-	}
-	uid := int32(id)
-	if err := cd.queries.InsertUserEmail(cd.ctx, db.InsertUserEmailParams{UserID: uid, Email: e, VerifiedAt: sql.NullTime{}, LastVerificationCode: sql.NullString{}}); err != nil {
-		return 0, err
-	}
-	if err := cd.queries.InsertPassword(cd.ctx, db.InsertPasswordParams{UsersIdusers: uid, Passwd: hash, PasswdAlgorithm: sql.NullString{String: alg, Valid: alg != ""}}); err != nil {
-		return 0, err
-	}
-	return uid, nil
 }
 
 // RegisterExternalLinkClick records click statistics for url.
@@ -2158,38 +1998,6 @@ func (cd *CoreData) CreateWritingCommentForCommenter(commenterID, threadID, arti
 
 func (cd *CoreData) CreateLinkerCommentForCommenter(commenterID, threadID, linkID, languageID int32, text string) (int64, error) {
 	return cd.CreateCommentInSectionForCommenter("linker", "link", linkID, threadID, commenterID, languageID, text)
-}
-
-// CreatePasswordReset creates a new password reset entry for the given email and returns the verification code.
-func (cd *CoreData) CreatePasswordReset(email, hash, alg string) (string, error) {
-	if cd.queries == nil {
-		return "", nil
-	}
-	row, err := cd.queries.SystemGetUserByEmail(cd.ctx, email)
-	if err != nil {
-		return "", fmt.Errorf("user by email %w", err)
-	}
-	if reset, err := cd.queries.GetPasswordResetByUser(cd.ctx, db.GetPasswordResetByUserParams{
-		UserID:    row.Idusers,
-		CreatedAt: time.Now().Add(-time.Duration(cd.Config.PasswordResetExpiryHours) * time.Hour),
-	}); err == nil {
-		if time.Since(reset.CreatedAt) < 24*time.Hour {
-			return "", ErrPasswordResetRecentlyRequested
-		}
-		_ = cd.queries.SystemDeletePasswordReset(cd.ctx, reset.ID)
-	} else if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		log.Printf("get reset: %v", err)
-		return "", fmt.Errorf("get reset %w", err)
-	}
-	var buf [8]byte
-	if _, err := rand.Read(buf[:]); err != nil {
-		return "", fmt.Errorf("rand %w", err)
-	}
-	code := hex.EncodeToString(buf[:])
-	if err := cd.queries.CreatePasswordResetForUser(cd.ctx, db.CreatePasswordResetForUserParams{UserID: row.Idusers, Passwd: hash, PasswdAlgorithm: alg, VerificationCode: code}); err != nil {
-		return "", fmt.Errorf("create reset %w", err)
-	}
-	return code, nil
 }
 
 // CanEditComment reports whether the current user may edit the supplied
@@ -2516,14 +2324,6 @@ func (cd *CoreData) UnreadNotificationCount() int64 {
 		log.Printf("load unread notification count: %v", err)
 	}
 	return count
-}
-
-// UserCredentials fetches the stored password hash and algorithm for username.
-func (cd *CoreData) UserCredentials(username string) (*db.SystemGetLoginRow, error) {
-	if cd.queries == nil {
-		return nil, fmt.Errorf("no queries available")
-	}
-	return cd.queries.SystemGetLogin(cd.ctx, sql.NullString{String: username, Valid: true})
 }
 
 // UserByID loads a user record by ID once and caches it.

@@ -17,14 +17,13 @@ import (
 // AdminTopicPage shows information about a single forum topic.
 func AdminTopicPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := cd.Queries()
 	tid, err := strconv.Atoi(mux.Vars(r)["topic"])
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		handlers.RenderErrorPage(w, r, handlers.ErrBadRequest)
 		return
 	}
-	topic, err := queries.GetForumTopicById(r.Context(), int32(tid))
+	topic, err := cd.ForumTopicByID(int32(tid))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			w.WriteHeader(http.StatusNotFound)
@@ -37,7 +36,7 @@ func AdminTopicPage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd.PageTitle = fmt.Sprintf("Forum Topic %d", tid)
 	data := struct {
-		Topic *db.Forumtopic
+		Topic *db.GetForumTopicByIdForUserRow
 	}{
 		Topic: topic,
 	}
@@ -47,14 +46,13 @@ func AdminTopicPage(w http.ResponseWriter, r *http.Request) {
 // AdminTopicEditFormPage shows the edit form for a forum topic.
 func AdminTopicEditFormPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := cd.Queries()
 	tid, err := strconv.Atoi(mux.Vars(r)["topic"])
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		handlers.RenderErrorPage(w, r, handlers.ErrBadRequest)
 		return
 	}
-	topic, err := queries.GetForumTopicById(r.Context(), int32(tid))
+	topic, err := cd.ForumTopicByID(int32(tid))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			w.WriteHeader(http.StatusNotFound)
@@ -79,7 +77,7 @@ func AdminTopicEditFormPage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd.PageTitle = fmt.Sprintf("Edit Forum Topic %d", tid)
 	data := struct {
-		Topic       *db.Forumtopic
+		Topic       *db.GetForumTopicByIdForUserRow
 		Categories  []*db.Forumcategory
 		Roles       []*db.Role
 		Restriction interface{}

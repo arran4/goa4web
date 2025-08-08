@@ -4,27 +4,32 @@
     <p><a href="/admin">Refresh</a></p>
 <p>Select an option:</p>
 <ul>
-    {{- range $s := .AdminSections }}
-    <li>{{ $s.Name }}
-        <ul>
-            {{- range $l := $s.Links }}
-            <li><a href="{{ $l.Link }}">{{ $l.Name }}</a></li>
-            {{- end }}
-        </ul>
-    </li>
+    {{- if cd.Nav }}
+        {{- range $s := cd.Nav.AdminSections }}
+        <li>{{ $s.Name }}
+            <ul>
+                {{- range $l := $s.Links }}
+                <li><a href="{{ $l.Link }}">{{ $l.Name }}</a></li>
+                {{- end }}
+            </ul>
+        </li>
+        {{- end }}
     {{- end }}
 </ul>
 
 <h3>Site statistics</h3>
+{{ $stats := cd.AdminDashboardStats }}
+{{ if $stats }}
 <table border="1">
     <tr><th>Item</th><th>Count</th></tr>
-    <tr><td>Users</td><td>{{ .Stats.Users }}</td></tr>
-    <tr><td>Languages</td><td>{{ .Stats.Languages }}</td></tr>
-    <tr><td>News Posts</td><td>{{ .Stats.News }}</td></tr>
-    <tr><td>Blogs</td><td>{{ .Stats.Blogs }}</td></tr>
-    <tr><td>Forum Topics</td><td>{{ .Stats.ForumTopics }}</td></tr>
-    <tr><td>Forum Threads</td><td>{{ .Stats.ForumThreads }}</td></tr>
-    <tr><td>Writings</td><td>{{ .Stats.Writings }}</td></tr>
+    <tr><td>Users</td><td>{{ $stats.Users }}</td></tr>
+    <tr><td>Languages</td><td>{{ $stats.Languages }}</td></tr>
+    <tr><td>News Posts</td><td>{{ $stats.News }}</td></tr>
+    <tr><td>Blogs</td><td>{{ $stats.Blogs }}</td></tr>
+    <tr><td>Forum Topics</td><td>{{ $stats.ForumTopics }}</td></tr>
+    <tr><td>Forum Threads</td><td>{{ $stats.ForumThreads }}</td></tr>
+    <tr><td>Writings</td><td>{{ $stats.Writings }}</td></tr>
 </table>
+{{ end }}
     {{ template "tail" $ }}
 {{ end }}

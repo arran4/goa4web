@@ -1,7 +1,6 @@
 package forum
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -9,7 +8,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/workers/postcountworker"
 	"github.com/gorilla/mux"
@@ -31,7 +29,6 @@ func (topicThreadCommentEditActionTask) Action(w http.ResponseWriter, r *http.Re
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.LoadSelectionsFromRequest(r)
-	queries := cd.Queries()
 	threadRow, err := cd.SelectedThread()
 	if err != nil || threadRow == nil {
 		return fmt.Errorf("thread fetch %w", handlers.ErrRedirectOnSamePageHandler(err))
@@ -42,13 +39,7 @@ func (topicThreadCommentEditActionTask) Action(w http.ResponseWriter, r *http.Re
 	}
 	commentID, _ := strconv.Atoi(mux.Vars(r)["comment"])
 
-	if err = queries.UpdateCommentForEditor(r.Context(), db.UpdateCommentForEditorParams{
-		LanguageID:  int32(languageID),
-		Text:        sql.NullString{String: text, Valid: true},
-		CommentID:   int32(commentID),
-		CommenterID: cd.UserID,
-		EditorID:    sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-	}); err != nil {
+	if err = cd.UpdateForumComment(int32(commentID), int32(languageID), text); err != nil {
 		return fmt.Errorf("update comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 

@@ -15,26 +15,19 @@ import (
 // AdminCategoryPage shows information about a single forum category and its topics.
 func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := cd.Queries()
 	cid, err := strconv.Atoi(mux.Vars(r)["category"])
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		handlers.RenderErrorPage(w, r, handlers.ErrBadRequest)
 		return
 	}
-	cat, err := queries.GetForumCategoryById(r.Context(), db.GetForumCategoryByIdParams{
-		Idforumcategory: int32(cid),
-		ViewerID:        cd.UserID,
-	})
+	cat, err := cd.ForumCategory(int32(cid))
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Category not found"))
 		return
 	}
-	topics, err := queries.GetForumTopicsByCategoryId(r.Context(), db.GetForumTopicsByCategoryIdParams{
-		CategoryID: int32(cid),
-		ViewerID:   cd.UserID,
-	})
+	topics, err := cd.ForumTopics(int32(cid))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
@@ -43,7 +36,7 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 	cd.PageTitle = fmt.Sprintf("Forum Category %d", cid)
 	data := struct {
 		Category *db.Forumcategory
-		Topics   []*db.Forumtopic
+		Topics   []*db.GetForumTopicsForUserRow
 	}{
 		Category: cat,
 		Topics:   topics,

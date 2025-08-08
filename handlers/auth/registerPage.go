@@ -48,10 +48,10 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if _, err := mail.ParseAddress(email); err != nil {
 		return handlers.ErrRedirectOnSamePageHandler(errors.New("invalid email"))
 	}
-	if exists, err := cd.UserExists(username, email); err != nil {
+	if userExists, err := cd.UserExists(username, email); err != nil {
 		log.Printf("UserExists Error: %s", err)
 		return fmt.Errorf("user exists %w", err)
-	} else if exists {
+	} else if userExists {
 		return handlers.ErrRedirectOnSamePageHandler(errors.New("user exists"))
 	}
 

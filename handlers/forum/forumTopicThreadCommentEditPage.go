@@ -1,14 +1,12 @@
 package forum
 
 import (
-	"database/sql"
 	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"strconv"
 
 	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/workers/postcountworker"
 	"github.com/gorilla/mux"
 )
@@ -24,7 +22,6 @@ func TopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.LoadSelectionsFromRequest(r)
 	cd.PageTitle = "Forum - Edit Comment"
-	queries := cd.Queries()
 	threadRow, err := cd.SelectedThread()
 	if err != nil || threadRow == nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -37,16 +34,7 @@ func TopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	commentId, _ := strconv.Atoi(mux.Vars(r)["comment"])
 
-	err = queries.UpdateCommentForEditor(r.Context(), db.UpdateCommentForEditorParams{
-		LanguageID: int32(languageId),
-		Text: sql.NullString{
-			String: text,
-			Valid:  true,
-		},
-		CommentID:   int32(commentId),
-		CommenterID: cd.UserID,
-		EditorID:    sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-	})
+	err = cd.UpdateForumComment(int32(commentId), int32(languageId), text)
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return

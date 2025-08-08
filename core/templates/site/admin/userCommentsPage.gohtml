@@ -1,8 +1,9 @@
 {{ template "head" $ }}
-<h2>Comments by {{ .User.Username.String }}</h2>
+{{ $u := cd.CurrentProfileUser }}
+<h2>Comments by {{ $u.Username.String }}</h2>
 <table border="1">
     <tr><th>ID</th><th>Date</th><th>Topic</th><th>Thread</th><th>Excerpt</th><th>Link</th></tr>
-    {{- range .Comments }}
+    {{- range cd.AdminCommentsByUser $u.Idusers }}
     <tr>
         <td><a href="/admin/comment/{{ .Idcomments }}">{{ .Idcomments }}</a></td>
         <td>{{ if .Written.Valid }}{{ localTime .Written.Time }}{{ end }}</td>

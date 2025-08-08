@@ -1,7 +1,8 @@
 {{ define "blogReply" }}
        {{ if cd.SelectedThreadCanReply }}
+            {{ $blog := cd.BlogPost }}
             <font size="4">Reply:</font><br>
-            <form method="post" action="/blogs/blog/{{$.Blog.Idblogs}}/reply">
+            <form method="post" action="/blogs/blog/{{$blog.Idblogs}}/reply">
         {{ csrfField }}
                 <textarea id="reply" name="replytext" cols="40" rows="20">{{$.Text}}</textarea><br>
                 {{ template "languageCombobox" }}

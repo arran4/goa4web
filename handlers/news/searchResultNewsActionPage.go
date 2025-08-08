@@ -3,11 +3,11 @@ package news
 import (
 	"database/sql"
 	"errors"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/handlers"
@@ -32,7 +32,7 @@ func SearchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data := Data{}
 	cd.PageTitle = "News Search Results"
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -54,7 +54,8 @@ func SearchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 		data.CommentsEmptyWords = noResults
 	}
 
-	if news, emptyWords, noResults, err := NewsSearch(w, r, queries, uid); err != nil {
+	if news, emptyWords, noResults, err := cd.SearchNews(r, uid); err != nil {
+		handlers.RenderErrorPage(w, r, err)
 		return
 	} else {
 		data.News = news
@@ -62,79 +63,9 @@ func SearchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 		data.EmptyWords = noResults
 	}
 
-	handlers.TemplateHandler(w, r, "resultNewsActionPage.gohtml", data)
-}
-
-func NewsSearch(w http.ResponseWriter, r *http.Request, queries db.Querier, uid int32) ([]*db.GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountRow, bool, bool, error) {
-	searchWords := searchutil.BreakupTextToWords(r.PostFormValue("searchwords"))
-	var newsIds []int32
-
-	if len(searchWords) == 0 {
-		return nil, true, false, nil
+	if err := cd.ExecuteSiteTemplate(w, r, "resultNewsActionPage.gohtml", data); err != nil {
+		handlers.RenderErrorPage(w, r, err)
 	}
-
-	for i, word := range searchWords {
-		if i == 0 {
-			ids, err := queries.ListSiteNewsSearchFirstForLister(r.Context(), db.ListSiteNewsSearchFirstForListerParams{
-				ListerID: uid,
-				Word: sql.NullString{
-					String: word,
-					Valid:  true,
-				},
-				UserID: sql.NullInt32{Int32: uid, Valid: uid != 0},
-			})
-			if err != nil {
-				switch {
-				case errors.Is(err, sql.ErrNoRows):
-				default:
-					log.Printf("newsSearchFirst Error: %s", err)
-					handlers.RenderErrorPage(w, r, err)
-					return nil, false, false, err
-				}
-			}
-			newsIds = ids
-		} else {
-			ids, err := queries.ListSiteNewsSearchNextForLister(r.Context(), db.ListSiteNewsSearchNextForListerParams{
-				ListerID: uid,
-				Word: sql.NullString{
-					String: word,
-					Valid:  true,
-				},
-				Ids:    newsIds,
-				UserID: sql.NullInt32{Int32: uid, Valid: uid != 0},
-			})
-			if err != nil {
-				switch {
-				case errors.Is(err, sql.ErrNoRows):
-				default:
-					log.Printf("newsSearchNext Error: %s", err)
-					handlers.RenderErrorPage(w, r, err)
-					return nil, false, false, err
-				}
-			}
-			newsIds = ids
-		}
-		if len(newsIds) == 0 {
-			return nil, false, true, nil
-		}
-	}
-
-	news, err := queries.GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCount(r.Context(), db.GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountParams{
-		ViewerID: uid,
-		Newsids:  newsIds,
-		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
-	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-		default:
-			log.Printf("getNews Error: %s", err)
-			handlers.RenderErrorPage(w, r, err)
-			return nil, false, false, err
-		}
-	}
-
-	return news, false, false, nil
 }
 
 func forumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request, queries db.Querier, forumTopicId []int32, uid int32) ([]*db.GetCommentsByIdsForUserWithThreadInfoRow, bool, bool, error) {

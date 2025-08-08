@@ -1,12 +1,13 @@
 {{ template "head" $ }}
+    {{- $cd := cd -}}
     Search writings<br />
-    {{- if .NoResults }}
+    {{- if $cd.SearchWritingsNoResults }}
         <p>Nothing found.</p>
-    {{- else if .EmptyWords }}
+    {{- else if $cd.SearchWritingsEmptyWords }}
         <p>Not enough words, words too small, or no words. Please re-enter, add more, larger, or some words.</p>
     {{- else }}
         <ul>
-        {{- range $i, $result := .Writings }}
+        {{- range $i, $result := $cd.SearchWritingsResults }}
             <li>{{ $i }}: <a href="/writings/article/{{$result.Idwriting}}">{{ $result.Title.String }}</a></li>
         {{- end }}
         </ul>

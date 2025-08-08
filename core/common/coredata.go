@@ -1195,7 +1195,7 @@ func (cd *CoreData) ImageBoardPosts(boardID int32) ([]*db.ListImagePostsByBoardF
 	return lv.Load(func() ([]*db.ListImagePostsByBoardForListerRow, error) {
 		return cd.queries.ListImagePostsByBoardForLister(cd.ctx, db.ListImagePostsByBoardForListerParams{
 			ListerID:     cd.UserID,
-			BoardID:      boardID,
+			BoardID:      sql.NullInt32{Int32: boardID, Valid: true},
 			ListerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 			Limit:        200,
 			Offset:       0,
@@ -1702,7 +1702,7 @@ func (cd *CoreData) SelectedQuestionFromCategory(questionID, categoryID int32) e
 	if err != nil {
 		return err
 	}
-	if question.FaqcategoriesIdfaqcategories != categoryID {
+	if !question.FaqcategoriesIdfaqcategories.Valid || question.FaqcategoriesIdfaqcategories.Int32 != categoryID {
 		return fmt.Errorf("question %d not in category %d", questionID, categoryID)
 	}
 	return cd.queries.AdminDeleteFAQ(cd.ctx, questionID)
@@ -1717,7 +1717,7 @@ func (cd *CoreData) UpdateFAQQuestion(question, answer string, categoryID, faqID
 	if err := cd.queries.AdminUpdateFAQQuestionAnswer(cd.ctx, db.AdminUpdateFAQQuestionAnswerParams{
 		Answer:                       sql.NullString{String: answer, Valid: true},
 		Question:                     sql.NullString{String: question, Valid: true},
-		FaqcategoriesIdfaqcategories: categoryID,
+		FaqcategoriesIdfaqcategories: sql.NullInt32{Int32: categoryID, Valid: categoryID != 0},
 		Idfaq:                        faqID,
 	}); err != nil {
 		return err
@@ -1860,6 +1860,10 @@ func sectionItemType(section string) string {
 		return "entry"
 	case "news":
 		return "post"
+	case "forum":
+		return "topic"
+	case "privateforum":
+		return "topic"
 	case "imagebbs":
 		return "board"
 	case "linker":
@@ -2176,7 +2180,7 @@ func (cd *CoreData) SubImageBoards(parentID int32) ([]*db.Imageboard, error) {
 	return lv.Load(func() ([]*db.Imageboard, error) {
 		return cd.queries.ListBoardsByParentIDForLister(cd.ctx, db.ListBoardsByParentIDForListerParams{
 			ListerID:     cd.UserID,
-			ParentID:     parentID,
+			ParentID:     sql.NullInt32{Int32: parentID, Valid: parentID != 0},
 			ListerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 			Limit:        200,
 			Offset:       0,

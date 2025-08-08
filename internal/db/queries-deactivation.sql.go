@@ -71,7 +71,7 @@ type AdminArchiveImagepostParams struct {
 	Idimagepost            int32
 	ForumthreadID          int32
 	UsersIdusers           int32
-	ImageboardIdimageboard int32
+	ImageboardIdimageboard sql.NullInt32
 	Posted                 sql.NullTime
 	Description            sql.NullString
 	Thumbnail              sql.NullString

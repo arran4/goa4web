@@ -27,7 +27,7 @@ type Querier interface {
 	AdminCountForumThreads(ctx context.Context) (int64, error)
 	AdminCountForumTopics(ctx context.Context) (int64, error)
 	AdminCountLinksByCategory(ctx context.Context, linkerCategoryID int32) (int64, error)
-	AdminCountThreadsByBoard(ctx context.Context, imageboardIdimageboard int32) (int64, error)
+	AdminCountThreadsByBoard(ctx context.Context, imageboardIdimageboard sql.NullInt32) (int64, error)
 	AdminCountWordList(ctx context.Context) (int64, error)
 	AdminCountWordListByPrefix(ctx context.Context, prefix interface{}) (int64, error)
 	AdminCreateFAQCategory(ctx context.Context, name sql.NullString) error
@@ -79,7 +79,7 @@ type Querier interface {
 	AdminGetFAQCategoriesWithQuestionCount(ctx context.Context) ([]*AdminGetFAQCategoriesWithQuestionCountRow, error)
 	AdminGetFAQCategoryWithQuestionCountByID(ctx context.Context, idfaqcategories int32) (*AdminGetFAQCategoryWithQuestionCountByIDRow, error)
 	AdminGetFAQDismissedQuestions(ctx context.Context) ([]*Faq, error)
-	AdminGetFAQQuestionsByCategory(ctx context.Context, faqcategoriesIdfaqcategories int32) ([]*Faq, error)
+	AdminGetFAQQuestionsByCategory(ctx context.Context, faqcategoriesIdfaqcategories sql.NullInt32) ([]*Faq, error)
 	AdminGetFAQUnansweredQuestions(ctx context.Context) ([]*Faq, error)
 	AdminGetForumStats(ctx context.Context) (*AdminGetForumStatsRow, error)
 	AdminGetImagePost(ctx context.Context, idimagepost int32) (*AdminGetImagePostRow, error)

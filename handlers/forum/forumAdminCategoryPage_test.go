@@ -44,9 +44,9 @@ func TestAdminCategoryPageLinks(t *testing.T) {
 	mock.ExpectQuery("SELECT idforumcategory, forumcategory_idforumcategory, language_idlanguage, title, description FROM forumcategory").
 		WillReturnRows(catRows)
 
-	topicsRows := sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_idlanguage", "title", "description", "threads", "comments", "lastaddition", "handler"}).
-		AddRow(1, 0, 1, 0, "t", "d", 0, 0, time.Now(), "")
-	mock.ExpectQuery("SELECT idforumtopic, lastposter, forumcategory_idforumcategory, language_idlanguage, title, description, threads, comments, lastaddition, handler FROM forumtopic").
+	topicsRows := sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_idlanguage", "title", "description", "threads", "comments", "lastaddition", "handler", "LastPosterUsername"}).
+		AddRow(1, 0, 1, 0, "t", "d", 0, 0, time.Now(), "", nil)
+	mock.ExpectQuery("WITH").
 		WillReturnRows(topicsRows)
 
 	req, rr := setupRequest(t, queries, "/admin/forum/categories/category/1", map[string]string{"category": "1"})

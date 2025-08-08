@@ -1195,7 +1195,7 @@ func (cd *CoreData) ImageBoardPosts(boardID int32) ([]*db.ListImagePostsByBoardF
 	return lv.Load(func() ([]*db.ListImagePostsByBoardForListerRow, error) {
 		return cd.queries.ListImagePostsByBoardForLister(cd.ctx, db.ListImagePostsByBoardForListerParams{
 			ListerID:     cd.UserID,
-			BoardID:      boardID,
+			BoardID:      sql.NullInt32{Int32: boardID, Valid: true},
 			ListerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 			Limit:        200,
 			Offset:       0,
@@ -2180,7 +2180,7 @@ func (cd *CoreData) SubImageBoards(parentID int32) ([]*db.Imageboard, error) {
 	return lv.Load(func() ([]*db.Imageboard, error) {
 		return cd.queries.ListBoardsByParentIDForLister(cd.ctx, db.ListBoardsByParentIDForListerParams{
 			ListerID:     cd.UserID,
-			ParentID:     parentID,
+			ParentID:     sql.NullInt32{Int32: parentID, Valid: parentID != 0},
 			ListerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 			Limit:        200,
 			Offset:       0,

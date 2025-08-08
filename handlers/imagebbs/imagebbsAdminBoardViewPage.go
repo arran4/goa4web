@@ -51,7 +51,7 @@ func AdminBoardViewPage(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := cd.Queries().ListImagePostsByBoardForLister(r.Context(), db.ListImagePostsByBoardForListerParams{
 		ListerID:     cd.UserID,
-		BoardID:      board.Idimageboard,
+		BoardID:      sql.NullInt32{Int32: board.Idimageboard, Valid: true},
 		ListerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		Limit:        5,
 		Offset:       0,

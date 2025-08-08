@@ -1,6 +1,6 @@
 {{ template "head" $ }}
 <p>Are you sure you want to visit <a href="{{$.URL}}" target="_blank">{{$.URL}}</a>?</p>
-{{ $link := cd.ExternalLink $.URL }}
+{{ $link := (cd).SelectedExternalLink }}
 {{ if $link }}
     {{ if and $link.CardImageCache.Valid cd.ImageSigner }}
         <img src="{{cd.ImageSigner.SignedCacheURL $link.CardImageCache.String}}" alt="preview"><br>

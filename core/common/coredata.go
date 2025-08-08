@@ -151,6 +151,7 @@ type CoreData struct {
 	currentCommentID         int32
 	currentImagePostID       int32
 	currentLinkID            int32
+	currentExternalLinkID    int32
 	currentOffset            int
 	currentNewsPostID        int32
 	currentProfileUserID     int32
@@ -164,7 +165,7 @@ type CoreData struct {
 	currentCategoryID        int32
 	currentWritingID         int32
 	event                    *eventbus.TaskEvent
-	externalLinks            map[string]*lazy.Value[*db.ExternalLink]
+	externalLinks            map[int32]*lazy.Value[*db.ExternalLink]
 	faqCategories            lazy.Value[[]*db.FaqCategory]
 	forumCategories          lazy.Value[[]*db.Forumcategory]
 	forumComments            map[int32]*lazy.Value[*db.GetCommentByIdForUserRow]
@@ -1069,21 +1070,21 @@ func (cd *CoreData) ExecuteSiteTemplate(w io.Writer, r *http.Request, name strin
 	return templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, name, data)
 }
 
-// ExternalLink lazily resolves metadata for url.
-func (cd *CoreData) ExternalLink(url string) *db.ExternalLink {
+// ExternalLink lazily resolves metadata for id.
+func (cd *CoreData) ExternalLink(id int32) *db.ExternalLink {
 	if cd.queries == nil {
 		return nil
 	}
 	if cd.externalLinks == nil {
-		cd.externalLinks = make(map[string]*lazy.Value[*db.ExternalLink])
+		cd.externalLinks = make(map[int32]*lazy.Value[*db.ExternalLink])
 	}
-	lv, ok := cd.externalLinks[url]
+	lv, ok := cd.externalLinks[id]
 	if !ok {
 		lv = &lazy.Value[*db.ExternalLink]{}
-		cd.externalLinks[url] = lv
+		cd.externalLinks[id] = lv
 	}
 	link, err := lv.Load(func() (*db.ExternalLink, error) {
-		l, err := cd.queries.GetExternalLink(cd.ctx, url)
+		l, err := cd.queries.GetExternalLinkByID(cd.ctx, id)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				return nil, nil
@@ -2317,6 +2318,17 @@ func (cd *CoreData) SetCurrentThreadAndTopic(threadID, topicID int32) {
 
 // SetCurrentWriting stores the requested writing ID.
 func (cd *CoreData) SetCurrentWriting(id int32) { cd.currentWritingID = id }
+
+// SetCurrentExternalLinkID stores the external link ID for subsequent lookups.
+func (cd *CoreData) SetCurrentExternalLinkID(id int32) { cd.currentExternalLinkID = id }
+
+// SelectedExternalLink returns the external link for the current ID.
+func (cd *CoreData) SelectedExternalLink() *db.ExternalLink {
+	if cd.currentExternalLinkID == 0 {
+		return nil
+	}
+	return cd.ExternalLink(cd.currentExternalLinkID)
+}
 
 // SelectedBoardID returns the board ID extracted from the request.
 func (cd *CoreData) SelectedBoardID() int32 { return cd.currentBoardID }

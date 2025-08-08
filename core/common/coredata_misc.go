@@ -47,7 +47,7 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID, thr
 		return 0, 0, fmt.Errorf("create topic %w", err)
 	}
 	if tid == 0 {
-		return 0, 0, fmt.Errorf("create topic 0")
+		return 0, 0, fmt.Errorf("create topic returned 0")
 	}
 	topicID = int32(tid)
 	thid, err := cd.queries.SystemCreateThread(cd.ctx, topicID)

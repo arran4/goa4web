@@ -329,8 +329,8 @@ SELECT ?, ?, ?, ?, ?
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section=?
-      AND (g.item='category' OR g.item IS NULL)
-      AND g.action='post'
+      AND (g.item='topic' OR g.item IS NULL)
+      AND g.action='create'
       AND g.active=1
       AND (g.item_id = ? OR g.item_id IS NULL)
       AND (g.user_id = ? OR g.user_id IS NULL)

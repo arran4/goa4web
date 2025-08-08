@@ -252,8 +252,8 @@ SELECT sqlc.arg(forumcategory_id), sqlc.arg(language_id), sqlc.arg(title), sqlc.
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section=sqlc.arg(section)
-      AND (g.item='category' OR g.item IS NULL)
-      AND g.action='post'
+      AND (g.item='topic' OR g.item IS NULL)
+      AND g.action='create'
       AND g.active=1
       AND (g.item_id = sqlc.arg(grant_category_id) OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(grantee_id) OR g.user_id IS NULL)

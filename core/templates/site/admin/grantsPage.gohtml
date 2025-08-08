@@ -1,18 +1,15 @@
 {{ template "head" $ }}
 <p><a href="/admin/grant/add">Add grant</a></p>
 <table border="1">
-    <tr><th>ID</th><th>User</th><th>Role</th><th>Section</th><th>Item</th><th>Item ID</th><th>Action</th><th>Active</th><th>Edit</th></tr>
+    <tr><th>User</th><th>Role</th><th>Section</th><th>Item</th><th>Item ID</th><th>Actions</th></tr>
     {{- range .Grants }}
     <tr>
-        <td><a href="/admin/grant/{{ .Grant.ID }}">{{ .Grant.ID }}</a></td>
-<td>{{ if .Grant.UserID.Valid }}<a href="/admin/user/{{ .Grant.UserID.Int32 }}">{{ .UserName }} ({{ .Grant.UserID.Int32 }})</a>{{ else if not .Grant.RoleID.Valid }}<a href="/admin/grants/anyone">{{ .UserName }}</a>{{ end }}</td>
-        <td>{{ if .Grant.RoleID.Valid }}<a href="/admin/role/{{ .Grant.RoleID.Int32 }}">{{ .RoleName }} ({{ .Grant.RoleID.Int32 }})</a>{{ end }}</td>
+        <td>{{ if .Grant.UserID.Valid }}<a href="/admin/user/{{ .Grant.UserID.Int32 }}">{{ .UserName }} ({{ .Grant.UserID.Int32 }})</a>{{ else if not .Grant.RoleID.Valid }}<a href="/admin/grants/anyone">{{ .UserName }}</a>{{ end }}</td>
+        <td>{{ if .Grant.RoleID.Valid }}<a href="/admin/role/{{ .Grant.RoleID.Int32 }}">{{ .RoleName }} ({{ .Grant.RoleID.Int32}})</a>{{ end }}</td>
         <td>{{ .Grant.Section }}</td>
         <td>{{ if .ItemLink }}<a href="{{ .ItemLink }}">{{ .Grant.Item.String }}</a>{{ else }}{{ .Grant.Item.String }}{{ end }}</td>
         <td>{{ if .Grant.ItemID.Valid }}{{ if .ItemLink }}<a href="{{ .ItemLink }}">{{ .Grant.ItemID.Int32 }}</a>{{ else }}{{ .Grant.ItemID.Int32 }}{{ end }}{{ end }}</td>
-        <td>{{ .Grant.Action }}</td>
-        <td>{{ if .Grant.Active }}yes{{ else }}no{{ end }}</td>
-        <td><a href="/admin/grant/{{ .Grant.ID }}">Edit</a></td>
+        <td>{{- range .Actions }}<a href="/admin/grant/{{ .ID }}" class="pill{{ if not .Active }} inactive{{ end }}">{{ .Name }}</a>{{ end }}</td>
     </tr>
     {{- end }}
 </table>

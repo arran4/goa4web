@@ -128,7 +128,7 @@ CREATE TABLE `forumtopic` (
 
 CREATE TABLE `imageboard` (
   `idimageboard` int(10) NOT NULL AUTO_INCREMENT,
-  `imageboard_idimageboard` int(10) NOT NULL DEFAULT 0,
+  `imageboard_idimageboard` int(10) DEFAULT NULL,
   `title` tinytext DEFAULT NULL,
   `description` tinytext DEFAULT NULL,
   `approval_required` tinyint(1) NOT NULL DEFAULT 0,
@@ -140,7 +140,7 @@ CREATE TABLE `imagepost` (
   `idimagepost` int(10) NOT NULL AUTO_INCREMENT,
   `forumthread_id` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
-  `imageboard_idimageboard` int(10) NOT NULL DEFAULT 0,
+  `imageboard_idimageboard` int(10) DEFAULT NULL,
   `posted` datetime DEFAULT NULL,
   `description` mediumtext DEFAULT NULL,
   `thumbnail` tinytext DEFAULT NULL,
@@ -154,6 +154,7 @@ CREATE TABLE `imagepost` (
   KEY `imagepost_FKIndex2` (`users_idusers`),
   KEY `imagepost_FKIndex3` (`forumthread_id`)
 );
+
 
 CREATE TABLE `imagepost_search` (
   `image_post_id` int(10) NOT NULL DEFAULT 0,
@@ -564,7 +565,7 @@ CREATE TABLE IF NOT EXISTS `deactivated_imageposts` (
   `idimagepost` int NOT NULL,
   `forumthread_id` int NOT NULL,
   `users_idusers` int NOT NULL,
-  `imageboard_idimageboard` int NOT NULL,
+  `imageboard_idimageboard` int DEFAULT NULL,
   `posted` datetime,
   `description` tinytext,
   `thumbnail` tinytext,

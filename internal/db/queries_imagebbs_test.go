@@ -18,13 +18,13 @@ func TestQueries_ListBoardsByParentIDForLister(t *testing.T) {
 	defer conn.Close()
 	q := New(conn)
 
-	rows := sqlmock.NewRows([]string{"idimageboard", "imageboard_idimageboard", "title", "description", "approval_required"}).AddRow(1, 0, nil, nil, 0)
+	rows := sqlmock.NewRows([]string{"idimageboard", "imageboard_idimageboard", "title", "description", "approval_required"}).AddRow(1, nil, nil, nil, 0)
 	viewer := sql.NullInt32{}
 	mock.ExpectQuery(regexp.QuoteMeta(listBoardsByParentIDForLister)).
-		WithArgs(int32(1), int32(0), viewer, int32(5), int32(0)).
+		WithArgs(int32(1), sql.NullInt32{}, sql.NullInt32{}, viewer, int32(5), int32(0)).
 		WillReturnRows(rows)
 
-	res, err := q.ListBoardsByParentIDForLister(context.Background(), ListBoardsByParentIDForListerParams{ListerID: 1, ParentID: 0, ListerUserID: viewer, Limit: 5, Offset: 0})
+	res, err := q.ListBoardsByParentIDForLister(context.Background(), ListBoardsByParentIDForListerParams{ListerID: 1, ParentID: sql.NullInt32{}, ListerUserID: viewer, Limit: 5, Offset: 0})
 	if err != nil {
 		t.Fatalf("ListBoardsByParentIDForLister: %v", err)
 	}
@@ -52,10 +52,10 @@ func TestQueries_ListImagePostsByBoardForLister_GlobalGrant(t *testing.T) {
 		AddRow(1, 0, 1, 2, nil, nil, nil, nil, 0, true, nil, nil, "alice", 0)
 
 	mock.ExpectQuery(regexp.QuoteMeta(listImagePostsByBoardForLister)).
-		WithArgs(int32(1), int32(2), sql.NullInt32{Int32: 1, Valid: true}, int32(5), int32(0)).
+		WithArgs(int32(1), sql.NullInt32{Int32: 2, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}, int32(5), int32(0)).
 		WillReturnRows(rows)
 
-	res, err := q.ListImagePostsByBoardForLister(context.Background(), ListImagePostsByBoardForListerParams{ListerID: 1, BoardID: 2, ListerUserID: sql.NullInt32{Int32: 1, Valid: true}, Limit: 5, Offset: 0})
+	res, err := q.ListImagePostsByBoardForLister(context.Background(), ListImagePostsByBoardForListerParams{ListerID: 1, BoardID: sql.NullInt32{Int32: 2, Valid: true}, ListerUserID: sql.NullInt32{Int32: 1, Valid: true}, Limit: 5, Offset: 0})
 	if err != nil {
 		t.Fatalf("ListImagePostsByBoardForLister: %v", err)
 	}

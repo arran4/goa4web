@@ -1,7 +1,6 @@
 package writings
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -13,7 +12,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -56,26 +54,8 @@ func (SubmitWritingTask) Action(w http.ResponseWriter, r *http.Request) any {
 	uid, _ := session.Values["UID"].(int32)
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := cd.Queries()
-	allowed, err := UserCanCreateWriting(r.Context(), queries, int32(categoryID), uid)
-	if err != nil {
-		return fmt.Errorf("UserCanCreateWriting fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-	}
-	if !allowed {
-		return fmt.Errorf("UserCanCreateWriting deny %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("forbidden")))
-	}
 
-	articleID, err := queries.CreateWritingForWriter(r.Context(), db.CreateWritingForWriterParams{
-		WriterID:          uid,
-		WritingCategoryID: int32(categoryID),
-		Title:             sql.NullString{Valid: true, String: title},
-		Abstract:          sql.NullString{Valid: true, String: abstract},
-		Writing:           sql.NullString{Valid: true, String: body},
-		Private:           sql.NullBool{Valid: true, Bool: private},
-		LanguageID:        int32(languageID),
-		GrantCategoryID:   sql.NullInt32{Int32: int32(categoryID), Valid: true},
-		GranteeID:         sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
+	articleID, err := cd.CreateWriting(int32(categoryID), int32(languageID), title, abstract, body, private)
 	if err != nil {
 		return fmt.Errorf("create writing fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
@@ -84,6 +64,7 @@ func (SubmitWritingTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	var author string
+	queries := cd.Queries()
 	if u, err := queries.SystemGetUserByID(r.Context(), uid); err == nil {
 		author = u.Username.String
 	} else {

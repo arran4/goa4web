@@ -1,17 +1,13 @@
 package writings
 
 import (
-	"database/sql"
-	"errors"
 	"fmt"
 	"github.com/arran4/goa4web/core/consts"
-	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/workers/postcountworker"
 )
 
@@ -25,47 +21,26 @@ func ArticleCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("replytext")
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := cd.Queries()
-	writing, err := cd.CurrentWriting()
+	writing, err := cd.Article()
 	if err != nil || writing == nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	comment, err := cd.CurrentComment(r)
+	comment, err := cd.ArticleComment(r)
 	if err != nil || comment == nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
 
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
+	if _, ok := core.GetSessionOrFail(w, r); !ok {
 		return
 	}
-	uid, _ := session.Values["UID"].(int32)
 
-	thread, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
-		ViewerID:      uid,
-		ThreadID:      comment.ForumthreadID,
-		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		log.Printf("Error: getThreadLastPosterAndPerms: %s", err)
+	thread, err := cd.UpdateWritingReply(comment.Idcomments, int32(languageId), text)
+	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-
-	uid = cd.UserID
-	if err = queries.UpdateCommentForEditor(r.Context(), db.UpdateCommentForEditorParams{
-		LanguageID:  int32(languageId),
-		Text:        sql.NullString{String: text, Valid: true},
-		CommentID:   comment.Idcomments,
-		CommenterID: uid,
-		EditorID:    sql.NullInt32{Int32: uid, Valid: uid != 0},
-	}); err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
@@ -81,7 +56,7 @@ func ArticleCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 // ArticleCommentEditActionCancelPage aborts editing a comment.
 func ArticleCommentEditActionCancelPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	writing, err := cd.CurrentWriting()
+	writing, err := cd.Article()
 	if err != nil || writing == nil {
 		http.Redirect(w, r, "/writings", http.StatusTemporaryRedirect)
 		return

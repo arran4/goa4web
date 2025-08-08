@@ -122,7 +122,7 @@ CREATE TABLE `forumtopic` (
 
 CREATE TABLE `imageboard` (
   `idimageboard` int(10) NOT NULL AUTO_INCREMENT,
-  `imageboard_idimageboard` int(10) NOT NULL DEFAULT 0,
+  `imageboard_idimageboard` int(10) DEFAULT NULL,
   `title` tinytext DEFAULT NULL,
   `description` tinytext DEFAULT NULL,
   `approval_required` tinyint(1) NOT NULL DEFAULT 0,
@@ -134,7 +134,7 @@ CREATE TABLE `imagepost` (
   `idimagepost` int(10) NOT NULL AUTO_INCREMENT,
   `forumthread_idforumthread` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
-  `imageboard_idimageboard` int(10) NOT NULL DEFAULT 0,
+  `imageboard_idimageboard` int(10) DEFAULT NULL,
   `posted` datetime DEFAULT NULL,
   `description` mediumtext DEFAULT NULL,
   `thumbnail` tinytext DEFAULT NULL,

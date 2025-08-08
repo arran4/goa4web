@@ -49,7 +49,7 @@ func (c *boardUpdateCmd) Run() error {
 	err = queries.AdminUpdateImageBoard(ctx, db.AdminUpdateImageBoardParams{
 		Title:                  sql.NullString{String: c.Name, Valid: c.Name != ""},
 		Description:            sql.NullString{String: c.Description, Valid: c.Description != ""},
-		ImageboardIdimageboard: int32(c.Parent),
+		ImageboardIdimageboard: sql.NullInt32{Int32: int32(c.Parent), Valid: c.Parent != 0},
 		ApprovalRequired:       c.ApprovalNeeded,
 		Idimageboard:           int32(c.ID),
 	})

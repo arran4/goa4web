@@ -6,7 +6,7 @@
     <tr>
         <td><a href="/admin/user/{{ $.User.Idusers }}/imagebbs/post/{{ .Idimagepost }}">{{ .Idimagepost }}</a></td>
         <td>{{ .Posted }}</td>
-        <td>{{ .ImageboardIdimageboard }}</td>
+        <td>{{ .ImageboardIdimageboard.Int32 }}</td>
         <td>{{ if .Approved }}Yes{{ else }}No{{ end }}</td>
         <td>
             <a href="/admin/user/{{ $.User.Idusers }}/imagebbs/post/{{ .Idimagepost }}">Dashboard</a> |

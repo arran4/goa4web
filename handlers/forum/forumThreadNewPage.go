@@ -12,7 +12,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/handlers/blogs"
 	"github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/workers/postcountworker"
@@ -102,8 +101,6 @@ func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data.Languages = languageRows
-
-	blogs.CustomBlogIndex(cd, r)
 
 	handlers.TemplateHandler(w, r, "threadNewPage.gohtml", data)
 }

@@ -39,7 +39,7 @@ func (c *boardCreateCmd) Run() error {
 	ctx := context.Background()
 	queries := db.New(conn)
 	err = queries.AdminCreateImageBoard(ctx, db.AdminCreateImageBoardParams{
-		ImageboardIdimageboard: int32(c.Parent),
+		ImageboardIdimageboard: sql.NullInt32{Int32: int32(c.Parent), Valid: c.Parent != 0},
 		Title:                  sql.NullString{String: c.Name, Valid: c.Name != ""},
 		Description:            sql.NullString{String: c.Description, Valid: c.Description != ""},
 		ApprovalRequired:       false,

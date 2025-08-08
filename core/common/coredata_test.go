@@ -13,6 +13,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/lazy"
 )
 
 func TestCoreDataLatestNewsLazy(t *testing.T) {
@@ -425,6 +426,44 @@ func TestSelectedQuestionFromCategoryWrongCategory(t *testing.T) {
 
 	if err := cd.SelectedQuestionFromCategory(1, 2); err == nil {
 		t.Fatalf("expected error")
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}
+
+func TestSelectedThreadCanReply(t *testing.T) {
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
+
+	queries := db.New(conn)
+	ctx := context.Background()
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
+	cd.UserID = 1
+	cd.SetCurrentSection("forum")
+	threadID, topicID := int32(3), int32(2)
+	cd.SetCurrentThreadAndTopic(threadID, topicID)
+
+	if _, err := cd.ForumThreadByID(threadID, lazy.Set(&db.GetThreadLastPosterAndPermsRow{})); err != nil {
+		t.Fatalf("ForumThreadByID preload: %v", err)
+	}
+
+	mock.ExpectQuery("SELECT 1 FROM grants g JOIN roles").WithArgs("user", "administrator").WillReturnError(sql.ErrNoRows)
+	mock.ExpectQuery("SELECT 1 FROM grants").WithArgs(
+		int32(1),
+		"forum",
+		sql.NullString{String: "topic", Valid: true},
+		"reply",
+		sql.NullInt32{Int32: topicID, Valid: true},
+		sql.NullInt32{Int32: 1, Valid: true},
+	).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+
+	if !cd.SelectedThreadCanReply() {
+		t.Fatalf("SelectedThreadCanReply() = false; want true")
 	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {

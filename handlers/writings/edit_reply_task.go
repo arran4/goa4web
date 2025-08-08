@@ -2,7 +2,6 @@ package writings
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -13,7 +12,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/workers/postcountworker"
@@ -35,44 +33,26 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	text := r.PostFormValue("replytext")
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := cd.Queries()
-	writing, err := cd.CurrentWriting()
+	writing, err := cd.Article()
 	if err != nil {
 		return fmt.Errorf("load writing fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if writing == nil {
 		return fmt.Errorf("load writing fail %w", handlers.ErrRedirectOnSamePageHandler(sql.ErrNoRows))
 	}
-	comment, err := cd.CurrentComment(r)
+	comment, err := cd.ArticleComment(r)
 	if err != nil || comment == nil {
 		return fmt.Errorf("load comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
+	if _, ok := core.GetSessionOrFail(w, r); !ok {
 		return handlers.SessionFetchFail{}
 	}
-	uid, _ := session.Values["UID"].(int32)
 
-	thread, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
-		ViewerID:      uid,
-		ThreadID:      comment.ForumthreadID,
-		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return fmt.Errorf("get thread fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-	}
-
-	if err = queries.UpdateCommentForEditor(r.Context(), db.UpdateCommentForEditorParams{
-		LanguageID:  int32(languageID),
-		Text:        sql.NullString{String: text, Valid: true},
-		CommentID:   comment.Idcomments,
-		CommenterID: uid,
-		EditorID:    sql.NullInt32{Int32: uid, Valid: uid != 0},
-	}); err != nil {
+	thread, err := cd.UpdateWritingReply(comment.Idcomments, int32(languageID), text)
+	if err != nil {
 		return fmt.Errorf("update comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {

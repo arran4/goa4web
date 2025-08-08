@@ -32,7 +32,7 @@ func (ModifyPostTask) Action(w http.ResponseWriter, r *http.Request) any {
 	desc := r.PostFormValue("desc")
 	approved := r.PostFormValue("approved") == "1"
 	if err := cd.Queries().AdminUpdateImagePost(r.Context(), db.AdminUpdateImagePostParams{
-		ImageboardIdimageboard: int32(board),
+		ImageboardIdimageboard: sql.NullInt32{Int32: int32(board), Valid: board != 0},
 		Description:            sql.NullString{Valid: true, String: desc},
 		Approved:               approved,
 		Idimagepost:            int32(pid),

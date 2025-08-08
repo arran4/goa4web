@@ -2,7 +2,6 @@ package common
 
 import (
 	"fmt"
-	"github.com/arran4/goa4web"
 	"html/template"
 	"io"
 	"log"
@@ -11,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/arran4/goa4web"
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/arran4/goa4web/core/consts"
@@ -85,6 +86,26 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 				return int32(n)
 			default:
 				return 0
+			}
+		},
+		"add": func(a, b int) int { return a + b },
+		"since": func(prev, curr time.Time) string {
+			if prev.IsZero() {
+				return ""
+			}
+			diff := curr.Sub(prev)
+			if diff < 0 {
+				diff = -diff
+			}
+			switch {
+			case diff < time.Minute:
+				return fmt.Sprintf("%d seconds after last comment", int(diff.Seconds()))
+			case diff < time.Hour:
+				return fmt.Sprintf("%d minutes after last comment", int(diff.Minutes()))
+			case diff < 24*time.Hour:
+				return fmt.Sprintf("%d hours after last comment", int(diff.Hours()))
+			default:
+				return fmt.Sprintf("%d days after last comment", int(diff.Hours()/24))
 			}
 		},
 		"addmode": func(u string) string {

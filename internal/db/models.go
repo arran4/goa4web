@@ -121,7 +121,7 @@ type DeactivatedImagepost struct {
 	Idimagepost            int32
 	ForumthreadID          int32
 	UsersIdusers           int32
-	ImageboardIdimageboard int32
+	ImageboardIdimageboard sql.NullInt32
 	Posted                 sql.NullTime
 	Description            sql.NullString
 	Thumbnail              sql.NullString
@@ -263,7 +263,7 @@ type Grant struct {
 
 type Imageboard struct {
 	Idimageboard           int32
-	ImageboardIdimageboard int32
+	ImageboardIdimageboard sql.NullInt32
 	Title                  sql.NullString
 	Description            sql.NullString
 	ApprovalRequired       bool
@@ -273,7 +273,7 @@ type Imagepost struct {
 	Idimagepost            int32
 	ForumthreadID          int32
 	UsersIdusers           int32
-	ImageboardIdimageboard int32
+	ImageboardIdimageboard sql.NullInt32
 	Posted                 sql.NullTime
 	Description            sql.NullString
 	Thumbnail              sql.NullString

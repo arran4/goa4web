@@ -1,6 +1,6 @@
 {{ template "head" $ }}
-    {{- if cd.TemplateError }}
-    <p style="color:red">{{ cd.TemplateError }}</p>
+    {{- if cd.CurrentError }}
+    <p style="color:red">{{ cd.CurrentError }}</p>
     {{- end }}
     Login:<br>
     <form method="post">

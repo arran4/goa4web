@@ -52,7 +52,7 @@ func (WritingCategoryChangeTask) Action(w http.ResponseWriter, r *http.Request) 
 			String: desc,
 		},
 		Idwritingcategory: int32(cid),
-		WritingCategoryID: int32(parentID),
+		WritingCategoryID: sql.NullInt32{Int32: int32(parentID), Valid: parentID != 0},
 	}); err != nil {
 		return fmt.Errorf("update writing category fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
@@ -69,7 +69,11 @@ func writingCategoryWouldLoop(ctx context.Context, queries db.Querier, cid, pare
 		}
 		parents = make(map[int32]int32, len(cats))
 		for _, c := range cats {
-			parents[c.Idwritingcategory] = c.WritingCategoryID
+			parent := int32(0)
+			if c.WritingCategoryID.Valid {
+				parent = c.WritingCategoryID.Int32
+			}
+			parents[c.Idwritingcategory] = parent
 		}
 	} else {
 		parents = map[int32]int32{}

@@ -37,13 +37,17 @@ func (WritingCategoryCreateTask) Action(w http.ResponseWriter, r *http.Request) 
 	}
 	parents := make(map[int32]int32, len(cats))
 	for _, c := range cats {
-		parents[c.Idwritingcategory] = c.WritingCategoryID
+		parent := int32(0)
+		if c.WritingCategoryID.Valid {
+			parent = c.WritingCategoryID.Int32
+		}
+		parents[c.Idwritingcategory] = parent
 	}
 	if path, loop := algorithms.WouldCreateLoop(parents, 0, int32(pcid)); loop && len(path) > 0 {
 		return common.UserError{ErrorMessage: "invalid parent category: loop detected"}
 	}
 	if err := queries.AdminInsertWritingCategory(r.Context(), db.AdminInsertWritingCategoryParams{
-		WritingCategoryID: int32(pcid),
+		WritingCategoryID: sql.NullInt32{Int32: int32(pcid), Valid: pcid != 0},
 		Title: sql.NullString{
 			Valid:  true,
 			String: name,

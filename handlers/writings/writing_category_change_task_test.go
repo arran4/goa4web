@@ -24,11 +24,11 @@ func TestWritingCategoryChangeTask(t *testing.T) {
 	queries := db.New(conn)
 
 	rows := sqlmock.NewRows([]string{"idwritingcategory", "writing_category_id", "title", "description"}).
-		AddRow(1, 0, "a", "")
+		AddRow(1, nil, "a", "")
 	mock.ExpectQuery("SELECT wc.idwritingcategory").WillReturnRows(rows)
 
 	mock.ExpectExec("UPDATE writing_category").
-		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), int32(0), int32(1)).
+		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), int32(1)).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	form := url.Values{"name": {"A"}, "desc": {"B"}, "pcid": {"0"}, "cid": {"1"}}
@@ -56,7 +56,7 @@ func TestWritingCategoryWouldLoop(t *testing.T) {
 	queries := db.New(conn)
 
 	rows := sqlmock.NewRows([]string{"idwritingcategory", "writing_category_id", "title", "description"}).
-		AddRow(1, 0, "a", "").
+		AddRow(1, nil, "a", "").
 		AddRow(2, 1, "b", "")
 	mock.ExpectQuery("SELECT wc.idwritingcategory").WillReturnRows(rows)
 
@@ -92,7 +92,7 @@ func TestWritingCategoryWouldLoopHeadToTail(t *testing.T) {
 	queries := db.New(conn)
 
 	rows := sqlmock.NewRows([]string{"idwritingcategory", "writing_category_id", "title", "description"}).
-		AddRow(1, 0, "a", "").
+		AddRow(1, nil, "a", "").
 		AddRow(2, 1, "b", "").
 		AddRow(3, 2, "c", "").
 		AddRow(4, 3, "d", "")
@@ -120,7 +120,7 @@ func TestWritingCategoryWouldLoopAfterNode(t *testing.T) {
 	queries := db.New(conn)
 
 	rows := sqlmock.NewRows([]string{"idwritingcategory", "writing_category_id", "title", "description"}).
-		AddRow(1, 0, "a", "").
+		AddRow(1, nil, "a", "").
 		AddRow(2, 3, "b", "").
 		AddRow(3, 2, "c", "")
 	mock.ExpectQuery("SELECT wc.idwritingcategory").WillReturnRows(rows)

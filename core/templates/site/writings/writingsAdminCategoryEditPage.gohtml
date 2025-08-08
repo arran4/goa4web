@@ -6,7 +6,7 @@
     <table>
         <tr>
             <th>Parent</th>
-            <td><select name="pcid"><option value="0">None</option>{{ range .Categories }}<option value="{{ .Idwritingcategory }}" {{ if eq $.Category.WritingCategoryID .Idwritingcategory }}selected{{ end }}>{{ .Title.String }}</option>{{ end }}</select></td>
+            <td><select name="pcid"><option value="0">None</option>{{ range .Categories }}<option value="{{ .Idwritingcategory }}" {{ if eq $.Category.WritingCategoryID.Int32 .Idwritingcategory }}selected{{ end }}>{{ .Title.String }}</option>{{ end }}</select></td>
         </tr>
         <tr>
             <th>Title</th>

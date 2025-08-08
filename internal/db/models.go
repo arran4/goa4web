@@ -507,7 +507,7 @@ type Writing struct {
 
 type WritingCategory struct {
 	Idwritingcategory int32
-	WritingCategoryID int32
+	WritingCategoryID sql.NullInt32
 	Title             sql.NullString
 	Description       sql.NullString
 }

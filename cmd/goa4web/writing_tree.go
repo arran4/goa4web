@@ -38,7 +38,10 @@ func (c *writingTreeCmd) Run() error {
 	}
 	children := map[int32][]*db.WritingCategory{}
 	for _, cat := range rows {
-		parent := cat.WritingCategoryID
+		parent := int32(0)
+		if cat.WritingCategoryID.Valid {
+			parent = cat.WritingCategoryID.Int32
+		}
 		children[parent] = append(children[parent], cat)
 	}
 	var printTree func(parent int32, prefix string)

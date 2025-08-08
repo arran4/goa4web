@@ -10,7 +10,7 @@
         {{ range .Categories }}
         <tr>
             <td><a id="wc{{ .Idwritingcategory }}" href="/admin/writings/categories/category/{{ .Idwritingcategory }}">{{ .Idwritingcategory }}</a></td>
-            <td>{{ $fcid := .WritingCategoryID }} <a href="#wc{{ $fcid }}">{{ $fcid }}</a></td>
+            <td>{{ $fcid := .WritingCategoryID.Int32 }} <a href="#wc{{ $fcid }}">{{ $fcid }}</a></td>
             <td>{{ .Title.String }}</td>
             <td>{{ .Description.String }}</td>
             <td>

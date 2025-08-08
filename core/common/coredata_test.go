@@ -52,6 +52,31 @@ func TestCoreDataLatestNewsLazy(t *testing.T) {
 	}
 }
 
+func TestUpdateFAQQuestion(t *testing.T) {
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
+
+	queries := db.New(conn)
+	mock.ExpectExec("UPDATE faq").
+		WithArgs(sql.NullString{String: "a", Valid: true}, sql.NullString{String: "q", Valid: true}, int32(2), int32(1)).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec("INSERT INTO faq_revisions").
+		WithArgs(int32(1), int32(3), sql.NullString{String: "q", Valid: true}, sql.NullString{String: "a", Valid: true}, sql.NullInt32{Int32: 3, Valid: true}, int32(3)).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
+	if err := cd.UpdateFAQQuestion("q", "a", 2, 1, 3); err != nil {
+		t.Fatalf("UpdateFAQQuestion: %v", err)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}
+
 func TestWritingCategoriesLazy(t *testing.T) {
 	conn, mock, err := sqlmock.New()
 	if err != nil {

@@ -1646,6 +1646,33 @@ func (cd *CoreData) PublicWritings(categoryID int32, r *http.Request) ([]*db.Lis
 // Queries returns the db.Queries instance associated with this CoreData.
 func (cd *CoreData) Queries() db.Querier { return cd.queries }
 
+// UpdateFAQQuestion updates a FAQ question, changing its text, answer and
+// category while recording a revision for the user.
+func (cd *CoreData) UpdateFAQQuestion(question, answer string, categoryID, faqID, userID int32) error {
+	if cd.queries == nil {
+		return nil
+	}
+	if err := cd.queries.AdminUpdateFAQQuestionAnswer(cd.ctx, db.AdminUpdateFAQQuestionAnswerParams{
+		Answer:                       sql.NullString{String: answer, Valid: true},
+		Question:                     sql.NullString{String: question, Valid: true},
+		FaqcategoriesIdfaqcategories: categoryID,
+		Idfaq:                        faqID,
+	}); err != nil {
+		return err
+	}
+	if err := cd.queries.InsertFAQRevisionForUser(cd.ctx, db.InsertFAQRevisionForUserParams{
+		FaqID:        faqID,
+		UsersIdusers: userID,
+		Question:     sql.NullString{String: question, Valid: true},
+		Answer:       sql.NullString{String: answer, Valid: true},
+		UserID:       sql.NullInt32{Int32: userID, Valid: true},
+		ViewerID:     userID,
+	}); err != nil {
+		log.Printf("insert faq revision: %v", err)
+	}
+	return nil
+}
+
 // RegisterExternalLinkClick records click statistics for url.
 func (cd *CoreData) RegisterExternalLinkClick(url string) {
 	if cd.queries == nil {

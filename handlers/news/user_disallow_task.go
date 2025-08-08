@@ -32,7 +32,6 @@ func (UserDisallowTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent
 }
 
 func (UserDisallowTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	permid := r.PostFormValue("permid")
 	data := struct {
 		Errors   []string
@@ -43,7 +42,7 @@ func (UserDisallowTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	if permidi, err := strconv.Atoi(permid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())
-	} else if err := queries.AdminDeleteUserRole(r.Context(), int32(permidi)); err != nil {
+	} else if err := r.Context().Value(consts.KeyCoreData).(*common.CoreData).DisallowNewsUser(int32(permidi)); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("CreateLanguage: %w", err).Error())
 	}
 	return handlers.TemplateWithDataHandler("runTaskPage.gohtml", data)

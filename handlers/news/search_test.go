@@ -1,6 +1,7 @@
 package news
 
 import (
+	"context"
 	"database/sql"
 	"net/http/httptest"
 	"net/url"
@@ -10,6 +11,8 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -41,9 +44,8 @@ func TestNewsSearchFiltersUnauthorized(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	ctx := req.Context()
 	req = req.WithContext(ctx)
-	rr := httptest.NewRecorder()
-
-	news, emptyWords, noResults, err := NewsSearch(rr, req, queries, 1)
+	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
+	news, emptyWords, noResults, err := cd.SearchNews(req, 1)
 	if err != nil {
 		t.Fatalf("NewsSearch: %v", err)
 	}

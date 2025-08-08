@@ -1,7 +1,6 @@
 package news
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -67,7 +66,9 @@ func AdminNewsPage(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	handlers.TemplateHandler(w, r, "adminNewsListPage.gohtml", data)
+	if err := cd.ExecuteSiteTemplate(w, r, "adminNewsListPage.gohtml", data); err != nil {
+		handlers.RenderErrorPage(w, r, err)
+	}
 }
 
 func AdminNewsPostPage(w http.ResponseWriter, r *http.Request) {
@@ -141,7 +142,9 @@ func AdminNewsPostPage(w http.ResponseWriter, r *http.Request) {
 		return ""
 	}
 
-	handlers.TemplateHandler(w, r, "adminNewsPostPage.gohtml", data)
+	if err := cd.ExecuteSiteTemplate(w, r, "adminNewsPostPage.gohtml", data); err != nil {
+		handlers.RenderErrorPage(w, r, err)
+	}
 }
 
 func adminNewsEditFormPage(w http.ResponseWriter, r *http.Request) {
@@ -176,7 +179,9 @@ func adminNewsEditFormPage(w http.ResponseWriter, r *http.Request) {
 		Post:               post,
 		SelectedLanguageId: int(post.LanguageIdlanguage),
 	}
-	handlers.TemplateHandler(w, r, "adminNewsEditPage.gohtml", data)
+	if err := cd.ExecuteSiteTemplate(w, r, "adminNewsEditPage.gohtml", data); err != nil {
+		handlers.RenderErrorPage(w, r, err)
+	}
 }
 
 func AdminNewsDeleteConfirmPage(w http.ResponseWriter, r *http.Request) {
@@ -196,10 +201,7 @@ func AdminNewsDeleteConfirmPage(w http.ResponseWriter, r *http.Request) {
 		ConfirmLabel: "Confirm delete",
 		Back:         fmt.Sprintf("/admin/news/article/%d", pid),
 	}
-	handlers.TemplateHandler(w, r, "adminNewsDeleteConfirmPage.gohtml", data)
-}
-
-// NewsDelete deactivates a news post.
-func NewsDelete(ctx context.Context, q db.Querier, postID int32) error {
-	return q.DeactivateNewsPost(ctx, postID)
+	if err := cd.ExecuteSiteTemplate(w, r, "adminNewsDeleteConfirmPage.gohtml", data); err != nil {
+		handlers.RenderErrorPage(w, r, err)
+	}
 }

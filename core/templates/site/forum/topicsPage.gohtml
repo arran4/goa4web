@@ -1,7 +1,8 @@
 {{ template "head" $ }}
 
-    {{ if .Categories }}
-        {{ template "getAllForumCategories" $ }}
+    <h1>Topic: {{ .Topic.Title.String }}</h1>
+    {{ if .Category }}
+        <h2>Category: {{ .Category.Title.String }}</h2>
     {{ end }}
 
     <div>

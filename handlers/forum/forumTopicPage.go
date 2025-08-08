@@ -90,6 +90,7 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 		data.Categories = []*ForumcategoryPlus{
 			category,
 		}
+		data.Category = category
 	}
 
 	threadRows, err := cd.ForumThreads(int32(topicId))

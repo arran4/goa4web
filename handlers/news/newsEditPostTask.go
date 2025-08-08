@@ -1,7 +1,6 @@
 package news
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -14,7 +13,6 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -44,28 +42,15 @@ func (EditTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("languageId parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
 	postId, _ := strconv.Atoi(vars["news"])
-
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if !cd.HasGrant("news", "post", "edit", int32(postId)) {
 		r.URL.RawQuery = "error=" + url.QueryEscape("Forbidden")
 		handlers.TaskErrorAcknowledgementPage(w, r)
 		return nil
 	}
-	err = queries.UpdateNewsPostForWriter(r.Context(), db.UpdateNewsPostForWriterParams{
-		PostID:      int32(postId),
-		GrantPostID: sql.NullInt32{Int32: int32(postId), Valid: true},
-		LanguageID:  int32(languageId),
-		News: sql.NullString{
-			String: text,
-			Valid:  true,
-		},
-		GranteeID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-		WriterID:  cd.UserID,
-	})
-	if err != nil {
+	if err := cd.UpdateNewsPost(int32(postId), int32(languageId), cd.UserID, text); err != nil {
 		return fmt.Errorf("update news post fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 

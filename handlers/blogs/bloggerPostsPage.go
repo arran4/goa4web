@@ -4,81 +4,31 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
-
-	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/internal/db"
-
 	"log"
 	"net/http"
-	"strconv"
 
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-
-	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/mux"
 )
 
 // BloggerPostsPage shows the posts written by a specific blogger.
 func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
-	type Data struct {
-		Rows     []*db.ListBlogEntriesByAuthorForListerRow
-		IsOffset bool
-		UID      string
-	}
-
-	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	vars := mux.Vars(r)
-	username := vars["username"]
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	cd.PageTitle = fmt.Sprintf("Posts by %s", username)
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return
-	}
-	uid, _ := session.Values["UID"].(int32)
-
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-
-	bu, err := queries.SystemGetUserByUsername(r.Context(), sql.NullString{
-		String: username,
-		Valid:  true,
-	})
-	if err != nil {
+	cd.LoadSelectionsFromRequest(r)
+	username := mux.Vars(r)["username"]
+	if _, err := cd.BloggerProfile(username); err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 			http.NotFound(w, r)
 		default:
-			log.Printf("SystemGetUserByUsername Error: %s", err)
+			log.Printf("BloggerProfile: %v", err)
 			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		}
 		return
 	}
+	cd.PageTitle = fmt.Sprintf("Posts by %s", username)
 
-	buid := bu.Idusers
-
-	rows, err := queries.ListBlogEntriesByAuthorForLister(r.Context(), db.ListBlogEntriesByAuthorForListerParams{
-		AuthorID: buid,
-		ListerID: uid,
-		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
-		Limit:    15,
-		Offset:   int32(offset),
-	})
-	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-		default:
-			log.Printf("Query Error: %s", err)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
-			return
-		}
-	}
-
-	data := Data{
-		Rows:     rows,
-		IsOffset: offset != 0,
-		UID:      strconv.Itoa(int(buid)),
-	}
-
-	handlers.TemplateHandler(w, r, "bloggerPostsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "bloggerPostsPage.gohtml", struct{}{})
 }

@@ -35,6 +35,7 @@ type BoolOption struct {
 var StringOptions = []StringOption{
 	{"db-conn", EnvDBConn, "database connection string", "", nil, "db_conn.txt", func(c *RuntimeConfig) *string { return &c.DBConn }},
 	{"db-driver", EnvDBDriver, "database driver", "mysql", nil, "db_driver.txt", func(c *RuntimeConfig) *string { return &c.DBDriver }},
+	{"db-timezone", EnvDBTimezone, "database timezone", "Australia/Melbourne", nil, "", func(c *RuntimeConfig) *string { return &c.DBTimezone }},
 	{"listen", EnvListen, "server listen address", ":8080", nil, "", func(c *RuntimeConfig) *string { return &c.HTTPListen }},
 	{"hostname", EnvHostname, "server base URL", "", nil, "", func(c *RuntimeConfig) *string { return &c.HTTPHostname }},
 	{"hsts-header", EnvHSTSHeader, "Strict-Transport-Security header value", "max-age=63072000; includeSubDomains", nil, "", func(c *RuntimeConfig) *string { return &c.HSTSHeaderValue }},

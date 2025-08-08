@@ -12,7 +12,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -24,16 +23,14 @@ var subscribeTopicTaskAction = &subscribeTopicTask{TaskString: TaskSubscribeToTo
 var _ tasks.Task = (*subscribeTopicTask)(nil)
 
 func (subscribeTopicTask) Action(w http.ResponseWriter, r *http.Request) any {
-	session, ok := core.GetSessionOrFail(w, r)
+	_, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return handlers.SessionFetchFail{}
 	}
-	uid, _ := session.Values["UID"].(int32)
 	vars := mux.Vars(r)
 	topicID, _ := strconv.Atoi(vars["topic"])
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	pattern := topicSubscriptionPattern(int32(topicID))
-	if err := queries.InsertSubscription(r.Context(), db.InsertSubscriptionParams{UsersIdusers: uid, Pattern: pattern, Method: "internal"}); err != nil {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if err := cd.SubscribeTopic(int32(topicID)); err != nil {
 		log.Printf("insert subscription: %v", err)
 		return fmt.Errorf("insert subscription %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

@@ -31,7 +31,8 @@ func (EmailAssociationRequestTask) Action(w http.ResponseWriter, r *http.Request
 	email := r.PostFormValue("email")
 	reason := r.PostFormValue("reason")
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	row, id, err := cd.AssociateEmail(common.AssociateEmailParams{Username: username, Email: email, Reason: reason})
+	params := common.AssociateEmailParams{Username: username, Email: email, Reason: reason}
+	row, id, err := cd.AssociateEmail(params)
 	if err != nil {
 		if errors.Is(err, common.ErrEmailAlreadyAssociated) {
 			return handlers.RefreshDirectHandler{TargetURL: "/login"}

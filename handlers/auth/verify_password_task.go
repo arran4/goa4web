@@ -25,9 +25,9 @@ func (VerifyPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := r.ParseForm(); err != nil {
 		return handlers.RefreshDirectHandler{TargetURL: "/login"}
 	}
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	code := r.FormValue("code")
 	pw := r.FormValue("password")
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if err := cd.VerifyPasswordReset(code, pw); err != nil {
 		return handlers.ErrRedirectOnSamePageHandler(err)
 	}

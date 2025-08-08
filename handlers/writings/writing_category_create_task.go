@@ -1,17 +1,13 @@
 package writings
 
 import (
-	"database/sql"
 	"fmt"
-	"math"
 	"net/http"
 	"strconv"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/algorithms"
-	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -30,29 +26,8 @@ func (WritingCategoryCreateTask) Action(w http.ResponseWriter, r *http.Request) 
 		return fmt.Errorf("pcid parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	cats, err := queries.SystemListWritingCategories(r.Context(), db.SystemListWritingCategoriesParams{Limit: math.MaxInt32, Offset: 0})
-	if err != nil {
-		return fmt.Errorf("fetch categories %w", handlers.ErrRedirectOnSamePageHandler(err))
-	}
-	parents := make(map[int32]int32, len(cats))
-	for _, c := range cats {
-		parents[c.Idwritingcategory] = c.WritingCategoryID
-	}
-	if path, loop := algorithms.WouldCreateLoop(parents, 0, int32(pcid)); loop && len(path) > 0 {
-		return common.UserError{ErrorMessage: "invalid parent category: loop detected"}
-	}
-	if err := queries.AdminInsertWritingCategory(r.Context(), db.AdminInsertWritingCategoryParams{
-		WritingCategoryID: int32(pcid),
-		Title: sql.NullString{
-			Valid:  true,
-			String: name,
-		},
-		Description: sql.NullString{
-			Valid:  true,
-			String: desc,
-		},
-	}); err != nil {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if err := cd.CreateWritingCategory(int32(pcid), name, desc); err != nil {
 		return fmt.Errorf("create writing category fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	return nil

@@ -21,15 +21,15 @@ var deleteNewsPostTask = &DeleteNewsPostTask{TaskString: TaskDelete}
 var _ tasks.Task = (*DeleteNewsPostTask)(nil)
 
 func (DeleteNewsPostTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	pid, err := strconv.Atoi(mux.Vars(r)["news"])
 	if err != nil {
 		return fmt.Errorf("post id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	if err := NewsDelete(r.Context(), queries, int32(pid)); err != nil {
+	if err := cd.DeleteNewsPost(int32(pid)); err != nil {
 		return fmt.Errorf("delete news post fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+	if cd != nil {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}

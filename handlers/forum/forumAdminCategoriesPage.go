@@ -61,7 +61,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	data := Data{Categories: rows}
 
-	catsAll, err := queries.GetAllForumCategories(r.Context(), db.GetAllForumCategoriesParams{ViewerID: cd.UserID})
+	catsAll, err := cd.ForumCategories()
 	if err == nil {
 		children := map[int32][]*db.Forumcategory{}
 		for _, c := range catsAll {

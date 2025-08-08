@@ -1,7 +1,6 @@
 package writings
 
 import (
-	"database/sql"
 	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
@@ -51,28 +50,8 @@ func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 	body := r.PostFormValue("body")
 	uid, _ := session.Values["UID"].(int32)
 
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	allowed, err := UserCanCreateWriting(r.Context(), queries, int32(categoryId), uid)
-	if err != nil {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
-		return
-	}
-	if !allowed {
-		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
-		return
-	}
-
-	articleId, err := queries.CreateWritingForWriter(r.Context(), db.CreateWritingForWriterParams{
-		WriterID:          uid,
-		WritingCategoryID: int32(categoryId),
-		Title:             sql.NullString{Valid: true, String: title},
-		Abstract:          sql.NullString{Valid: true, String: abstract},
-		Writing:           sql.NullString{Valid: true, String: body},
-		Private:           sql.NullBool{Valid: true, Bool: private},
-		LanguageID:        int32(languageId),
-		GrantCategoryID:   sql.NullInt32{Int32: int32(categoryId), Valid: true},
-		GranteeID:         sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	articleId, err := cd.CreateWriting(int32(categoryId), int32(languageId), title, abstract, body, private)
 	if err != nil {
 		log.Printf("insertWriting Error: %s", err)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
@@ -84,6 +63,7 @@ func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var author string
+	queries := cd.Queries()
 	if u, err := queries.SystemGetUserByID(r.Context(), uid); err == nil {
 		author = u.Username.String
 	}

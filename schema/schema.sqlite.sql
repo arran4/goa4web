@@ -372,7 +372,7 @@ CREATE TABLE `writing` (
 
 CREATE TABLE `writing_category` (
   `idwritingCategory` int(10) NOT NULL AUTO_INCREMENT,
-  `writing_category_id` int(10) NOT NULL DEFAULT 0,
+  `writing_category_id` int(10) DEFAULT NULL,
   `title` tinytext DEFAULT NULL,
   `description` tinytext DEFAULT NULL,
   PRIMARY KEY (`idwritingCategory`),

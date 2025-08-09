@@ -75,7 +75,7 @@ func (AddBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	id, err := queries.CreateBlogEntryForWriter(r.Context(), db.CreateBlogEntryForWriterParams{
 		UsersIdusers:       uid,
-		LanguageIdlanguage: int32(languageId),
+		LanguageIdlanguage: sql.NullInt32{Int32: int32(languageId), Valid: languageId != 0},
 		Blog: sql.NullString{
 			String: text,
 			Valid:  true,

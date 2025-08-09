@@ -40,14 +40,12 @@ func TestAdminCategoryPageLinks(t *testing.T) {
 	mock.MatchExpectationsInOrder(false)
 
 	catRows := sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "language_idlanguage", "title", "description"}).
-		AddRow(1, 0, 0, "cat", "desc")
-	mock.ExpectQuery("SELECT idforumcategory, forumcategory_idforumcategory, language_idlanguage, title, description FROM forumcategory").
-		WillReturnRows(catRows)
+		AddRow(1, 0, nil, "cat", "desc")
+	mock.ExpectQuery("SELECT idforumcategory").WillReturnRows(catRows)
 
-	topicsRows := sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_idlanguage", "title", "description", "threads", "comments", "lastaddition", "handler"}).
-		AddRow(1, 0, 1, 0, "t", "d", 0, 0, time.Now(), "")
-	mock.ExpectQuery("SELECT idforumtopic, lastposter, forumcategory_idforumcategory, language_idlanguage, title, description, threads, comments, lastaddition, handler FROM forumtopic").
-		WillReturnRows(topicsRows)
+	topicsRows := sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_idlanguage", "title", "description", "threads", "comments", "lastaddition", "handler", "LastPosterUsername"}).
+		AddRow(1, 0, 1, nil, "t", "d", 0, 0, time.Now(), "", "")
+	mock.ExpectQuery("SELECT t.idforumtopic").WillReturnRows(topicsRows)
 
 	req, rr := setupRequest(t, queries, "/admin/forum/categories/category/1", map[string]string{"category": "1"})
 
@@ -82,14 +80,12 @@ func TestAdminCategoryEditPage(t *testing.T) {
 	mock.MatchExpectationsInOrder(false)
 
 	catRows := sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "language_idlanguage", "title", "description"}).
-		AddRow(1, 0, 0, "cat", "desc")
-	mock.ExpectQuery("SELECT idforumcategory, forumcategory_idforumcategory, language_idlanguage, title, description FROM forumcategory").
-		WillReturnRows(catRows)
+		AddRow(1, 0, nil, "cat", "desc")
+	mock.ExpectQuery("SELECT idforumcategory").WillReturnRows(catRows)
 
 	allRows := sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "language_idlanguage", "title", "description"}).
-		AddRow(1, 0, 0, "cat", "desc")
-	mock.ExpectQuery("SELECT f.idforumcategory, f.forumcategory_idforumcategory, f.language_idlanguage, f.title, f.description\nFROM forumcategory f").
-		WillReturnRows(allRows)
+		AddRow(1, 0, nil, "cat", "desc")
+	mock.ExpectQuery("SELECT f.idforumcategory").WillReturnRows(allRows)
 
 	req, rr := setupRequest(t, queries, "/admin/forum/categories/category/1/edit", map[string]string{"category": "1"})
 

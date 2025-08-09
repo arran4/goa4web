@@ -60,8 +60,7 @@ LEFT JOIN users lu ON lu.idusers = t.lastposter
 LEFT JOIN comments fc ON th.firstpost = fc.idcomments
 WHERE th.idforumthread=sqlc.arg(thread_id)
   AND (
-      fc.language_idlanguage = 0
-      OR fc.language_idlanguage IS NULL
+    fc.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(viewer_id)

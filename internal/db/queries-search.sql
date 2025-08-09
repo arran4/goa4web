@@ -98,8 +98,7 @@ LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
 WHERE swl.word=sqlc.arg(word)
   AND ft.forumcategory_idforumcategory!=0
   AND (
-      c.language_idlanguage = 0
-      OR c.language_idlanguage IS NULL
+    c.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -134,8 +133,7 @@ WHERE swl.word=sqlc.arg(word)
   AND cs.comment_id IN (sqlc.slice('ids'))
   AND ft.forumcategory_idforumcategory!=0
   AND (
-      c.language_idlanguage = 0
-      OR c.language_idlanguage IS NULL
+    c.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -169,8 +167,7 @@ LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
 WHERE swl.word=sqlc.arg(word)
   AND fth.forumtopic_idforumtopic IN (sqlc.slice('ftids'))
   AND (
-      c.language_idlanguage = 0
-      OR c.language_idlanguage IS NULL
+    c.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -205,8 +202,7 @@ WHERE swl.word=sqlc.arg(word)
   AND cs.comment_id IN (sqlc.slice('ids'))
   AND fth.forumtopic_idforumtopic IN (sqlc.slice('ftids'))
   AND (
-      c.language_idlanguage = 0
-      OR c.language_idlanguage IS NULL
+    c.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -264,8 +260,7 @@ LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearc
 JOIN writing w ON w.idwriting = cs.writing_id
 WHERE swl.word = sqlc.arg(word)
   AND (
-      w.language_idlanguage = 0
-      OR w.language_idlanguage IS NULL
+    w.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -297,8 +292,7 @@ JOIN writing w ON w.idwriting = cs.writing_id
 WHERE swl.word = sqlc.arg(word)
   AND cs.writing_id IN (sqlc.slice('ids'))
   AND (
-      w.language_idlanguage = 0
-      OR w.language_idlanguage IS NULL
+    w.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -329,8 +323,7 @@ LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearc
 JOIN site_news sn ON sn.idsiteNews = cs.site_news_id
 WHERE swl.word = sqlc.arg(word)
   AND (
-      sn.language_idlanguage = 0
-      OR sn.language_idlanguage IS NULL
+    sn.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -362,8 +355,7 @@ JOIN site_news sn ON sn.idsiteNews = cs.site_news_id
 WHERE swl.word = sqlc.arg(word)
   AND cs.site_news_id IN (sqlc.slice('ids'))
   AND (
-      sn.language_idlanguage = 0
-      OR sn.language_idlanguage IS NULL
+    sn.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -396,8 +388,7 @@ LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearc
 JOIN linker l ON l.idlinker = cs.linker_id
 WHERE swl.word = sqlc.arg(word)
   AND (
-      l.language_idlanguage = 0
-      OR l.language_idlanguage IS NULL
+    l.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -429,8 +420,7 @@ JOIN linker l ON l.idlinker = cs.linker_id
 WHERE swl.word = sqlc.arg(word)
   AND cs.linker_id IN (sqlc.slice('ids'))
   AND (
-      l.language_idlanguage = 0
-      OR l.language_idlanguage IS NULL
+    l.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(lister_id)

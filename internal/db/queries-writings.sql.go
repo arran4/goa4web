@@ -24,7 +24,7 @@ type AdminGetAllWritingsByAuthorRow struct {
 	Idwriting          int32
 	UsersIdusers       int32
 	ForumthreadID      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	WritingCategoryID  int32
 	Title              sql.NullString
 	Published          sql.NullTime
@@ -87,7 +87,7 @@ type AdminGetWritingsByCategoryIdRow struct {
 	Idwriting          int32
 	UsersIdusers       int32
 	ForumthreadID      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	WritingCategoryID  int32
 	Title              sql.NullString
 	Published          sql.NullTime
@@ -198,7 +198,7 @@ type CreateWritingForWriterParams struct {
 	Abstract          sql.NullString
 	Writing           sql.NullString
 	Private           sql.NullBool
-	LanguageID        int32
+	LanguageID        sql.NullInt32
 	WriterID          int32
 	GrantCategoryID   sql.NullInt32
 	GranteeID         sql.NullInt32
@@ -255,7 +255,7 @@ type GetAllWritingsByAuthorForListerRow struct {
 	Idwriting          int32
 	UsersIdusers       int32
 	ForumthreadID      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	WritingCategoryID  int32
 	Title              sql.NullString
 	Published          sql.NullTime
@@ -441,7 +441,7 @@ type GetWritingForListerByIDRow struct {
 	Idwriting          int32
 	UsersIdusers       int32
 	ForumthreadID      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	WritingCategoryID  int32
 	Title              sql.NullString
 	Published          sql.NullTime
@@ -487,7 +487,7 @@ type InsertWritingParams struct {
 	Abstract           sql.NullString
 	Writing            sql.NullString
 	Private            sql.NullBool
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	UsersIdusers       int32
 }
 
@@ -517,8 +517,7 @@ FROM writing w
 LEFT JOIN users u ON w.users_idusers = u.idusers
 WHERE w.private = 0 AND w.users_idusers = ?
   AND (
-    w.language_idlanguage = 0
-    OR w.language_idlanguage IS NULL
+    w.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = ?
@@ -554,7 +553,7 @@ type ListPublicWritingsByUserForListerRow struct {
 	Idwriting          int32
 	UsersIdusers       int32
 	ForumthreadID      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	WritingCategoryID  int32
 	Title              sql.NullString
 	Published          sql.NullTime
@@ -623,8 +622,7 @@ FROM writing w
 LEFT JOIN users u ON w.Users_Idusers=u.idusers
 WHERE w.private = 0 AND w.writing_category_id = ?
   AND (
-    w.language_idlanguage = 0
-    OR w.language_idlanguage IS NULL
+    w.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = ?
@@ -660,7 +658,7 @@ type ListPublicWritingsInCategoryForListerRow struct {
 	Idwriting          int32
 	UsersIdusers       int32
 	ForumthreadID      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	WritingCategoryID  int32
 	Title              sql.NullString
 	Published          sql.NullTime
@@ -727,8 +725,7 @@ SELECT u.username, COUNT(w.idwriting) AS count
 FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
 WHERE (
-    w.language_idlanguage = 0
-    OR w.language_idlanguage IS NULL
+    w.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = ?
@@ -804,8 +801,7 @@ FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
 WHERE (LOWER(u.username) LIKE LOWER(?) OR LOWER((SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1)) LIKE LOWER(?))
   AND (
-    w.language_idlanguage = 0
-    OR w.language_idlanguage IS NULL
+    w.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = ?
@@ -978,8 +974,7 @@ FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
 WHERE w.idwriting IN (/*SLICE:writing_ids*/?)
   AND (
-    w.language_idlanguage = 0
-    OR w.language_idlanguage IS NULL
+    w.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = ?
@@ -1015,7 +1010,7 @@ type ListWritingsByIDsForListerRow struct {
 	Idwriting          int32
 	UsersIdusers       int32
 	ForumthreadID      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	WritingCategoryID  int32
 	Title              sql.NullString
 	Published          sql.NullTime
@@ -1129,7 +1124,7 @@ type SystemListPublicWritingsByAuthorRow struct {
 	Idwriting          int32
 	UsersIdusers       int32
 	ForumthreadID      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	WritingCategoryID  int32
 	Title              sql.NullString
 	Published          sql.NullTime
@@ -1200,7 +1195,7 @@ type SystemListPublicWritingsInCategoryRow struct {
 	Idwriting          int32
 	UsersIdusers       int32
 	ForumthreadID      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	WritingCategoryID  int32
 	Title              sql.NullString
 	Published          sql.NullTime
@@ -1328,7 +1323,7 @@ type UpdateWritingForWriterParams struct {
 	Abstract   sql.NullString
 	Content    sql.NullString
 	Private    sql.NullBool
-	LanguageID int32
+	LanguageID sql.NullInt32
 	WritingID  int32
 	WriterID   int32
 	GranteeID  sql.NullInt32

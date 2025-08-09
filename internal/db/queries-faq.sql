@@ -12,8 +12,7 @@ FROM faq
 WHERE answer IS NOT NULL
   AND deleted_at IS NULL
   AND (
-      language_idlanguage = 0
-      OR language_idlanguage IS NULL
+    language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(viewer_id)
@@ -108,8 +107,7 @@ LEFT JOIN faq_categories c ON c.idfaqCategories = f.faqCategories_idfaqCategorie
 WHERE c.idfaqCategories <> 0
   AND f.answer IS NOT NULL
   AND (
-      f.language_idlanguage = 0
-      OR f.language_idlanguage IS NULL
+    f.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(viewer_id)
@@ -150,8 +148,7 @@ FROM faq
 WHERE idfaq = sqlc.arg(faq_id)
   AND deleted_at IS NULL
   AND (
-      language_idlanguage = 0
-      OR language_idlanguage IS NULL
+    language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(viewer_id)
@@ -209,8 +206,7 @@ FROM faq
 WHERE faqCategories_idfaqCategories = sqlc.arg(category_id)
   AND deleted_at IS NULL
   AND (
-      language_idlanguage = 0
-      OR language_idlanguage IS NULL
+    language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(viewer_id)

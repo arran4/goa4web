@@ -105,7 +105,7 @@ func (cd *CoreData) UpdateNewsReply(commentID, editorID, languageID int32, text 
 		return ThreadInfo{}, fmt.Errorf("thread fetch: %w", err)
 	}
 	if err := cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
-		LanguageID:  languageID,
+		LanguageID:  sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:        sql.NullString{String: text, Valid: true},
 		CommentID:   commentID,
 		CommenterID: editorID,
@@ -124,7 +124,7 @@ func (cd *CoreData) UpdateNewsPost(postID, languageID, userID int32, text string
 	return cd.queries.UpdateNewsPostForWriter(cd.ctx, db.UpdateNewsPostForWriterParams{
 		PostID:      postID,
 		GrantPostID: sql.NullInt32{Int32: postID, Valid: true},
-		LanguageID:  languageID,
+		LanguageID:  sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		News:        sql.NullString{String: text, Valid: true},
 		GranteeID:   sql.NullInt32{Int32: userID, Valid: userID != 0},
 		WriterID:    userID,
@@ -145,7 +145,7 @@ func (cd *CoreData) CreateNewsPost(languageID, userID int32, text string) (int64
 		return 0, nil
 	}
 	id, err := cd.queries.CreateNewsPostForWriter(cd.ctx, db.CreateNewsPostForWriterParams{
-		LanguageID: languageID,
+		LanguageID: sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		News:       sql.NullString{String: text, Valid: true},
 		WriterID:   userID,
 		GranteeID:  sql.NullInt32{Int32: userID, Valid: true},

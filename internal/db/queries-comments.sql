@@ -10,8 +10,7 @@ LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
 WHERE c.idcomments = sqlc.arg(id)
   AND (
-      c.language_idlanguage = 0
-      OR c.language_idlanguage IS NULL
+    c.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(viewer_id)
@@ -73,8 +72,7 @@ LEFT JOIN users pu ON pu.idusers = c.users_idusers
 LEFT JOIN forumcategory fc ON t.forumcategory_idforumcategory = fc.idforumcategory
 WHERE c.Idcomments IN (sqlc.slice('ids'))
   AND (
-      c.language_idlanguage = 0
-      OR c.language_idlanguage IS NULL
+    c.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(viewer_id)
@@ -126,8 +124,7 @@ LEFT JOIN users pu ON pu.idusers = c.users_idusers
 WHERE c.forumthread_id=sqlc.arg(thread_id)
   AND c.forumthread_id!=0
   AND (
-      c.language_idlanguage = 0
-      OR c.language_idlanguage IS NULL
+    c.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(viewer_id)
@@ -164,8 +161,7 @@ LEFT JOIN users pu ON pu.idusers = c.users_idusers
 WHERE c.forumthread_id=sqlc.arg(thread_id)
   AND c.forumthread_id!=0
   AND (
-      c.language_idlanguage = 0
-      OR c.language_idlanguage IS NULL
+    c.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(viewer_id)

@@ -306,7 +306,7 @@ WHERE EXISTS (
 type CreateFAQQuestionForWriterParams struct {
 	Question   sql.NullString
 	WriterID   int32
-	LanguageID int32
+	LanguageID sql.NullInt32
 	GranteeID  sql.NullInt32
 }
 
@@ -331,8 +331,7 @@ LEFT JOIN faq_categories c ON c.idfaqCategories = f.faqCategories_idfaqCategorie
 WHERE c.idfaqCategories <> 0
   AND f.answer IS NOT NULL
   AND (
-      f.language_idlanguage = 0
-      OR f.language_idlanguage IS NULL
+    f.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
@@ -365,7 +364,7 @@ type GetAllAnsweredFAQWithFAQCategoriesForUserRow struct {
 	Name                         sql.NullString
 	Idfaq                        int32
 	FaqcategoriesIdfaqcategories int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	UsersIdusers                 int32
 	Answer                       sql.NullString
 	Question                     sql.NullString
@@ -417,8 +416,7 @@ FROM faq
 WHERE answer IS NOT NULL
   AND deleted_at IS NULL
   AND (
-      language_idlanguage = 0
-      OR language_idlanguage IS NULL
+    language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
@@ -489,8 +487,7 @@ FROM faq
 WHERE idfaq = ?
   AND deleted_at IS NULL
   AND (
-      language_idlanguage = 0
-      OR language_idlanguage IS NULL
+    language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
@@ -547,8 +544,7 @@ FROM faq
 WHERE faqCategories_idfaqCategories = ?
   AND deleted_at IS NULL
   AND (
-      language_idlanguage = 0
-      OR language_idlanguage IS NULL
+    language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
@@ -667,7 +663,7 @@ type InsertFAQQuestionForWriterParams struct {
 	Answer     sql.NullString
 	CategoryID int32
 	WriterID   int32
-	LanguageID int32
+	LanguageID sql.NullInt32
 	GranteeID  sql.NullInt32
 }
 

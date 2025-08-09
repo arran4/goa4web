@@ -28,7 +28,7 @@ type AdminGetAllCommentsByUserRow struct {
 	Idcomments             int32
 	ForumthreadID          int32
 	UsersIdusers           int32
-	LanguageIdlanguage     int32
+	LanguageIdlanguage     sql.NullInt32
 	Written                sql.NullTime
 	Text                   sql.NullString
 	DeletedAt              sql.NullTime
@@ -153,7 +153,7 @@ WHERE EXISTS (
 `
 
 type CreateCommentInSectionForCommenterParams struct {
-	LanguageID    int32
+	LanguageID    sql.NullInt32
 	CommenterID   sql.NullInt32
 	ForumthreadID int32
 	Text          sql.NullString
@@ -246,8 +246,7 @@ LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
 WHERE c.idcomments = ?
   AND (
-      c.language_idlanguage = 0
-      OR c.language_idlanguage IS NULL
+    c.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
@@ -280,7 +279,7 @@ type GetCommentByIdForUserRow struct {
 	Idcomments         int32
 	ForumthreadID      int32
 	UsersIdusers       int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	Written            sql.NullTime
 	Text               sql.NullString
 	DeletedAt          sql.NullTime
@@ -330,8 +329,7 @@ LEFT JOIN users pu ON pu.idusers = c.users_idusers
 LEFT JOIN forumcategory fc ON t.forumcategory_idforumcategory = fc.idforumcategory
 WHERE c.Idcomments IN (/*SLICE:ids*/?)
   AND (
-      c.language_idlanguage = 0
-      OR c.language_idlanguage IS NULL
+    c.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
@@ -364,7 +362,7 @@ type GetCommentsByIdsForUserWithThreadInfoRow struct {
 	Idcomments         int32
 	ForumthreadID      int32
 	UsersIdusers       int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	Written            sql.NullTime
 	Text               sql.NullString
 	DeletedAt          sql.NullTime
@@ -447,8 +445,7 @@ LEFT JOIN users pu ON pu.idusers = c.users_idusers
 WHERE c.forumthread_id=?
   AND c.forumthread_id!=0
   AND (
-      c.language_idlanguage = 0
-      OR c.language_idlanguage IS NULL
+    c.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
@@ -483,7 +480,7 @@ type GetCommentsBySectionThreadIdForUserRow struct {
 	Idcomments         int32
 	ForumthreadID      int32
 	UsersIdusers       int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	Written            sql.NullTime
 	Text               sql.NullString
 	DeletedAt          sql.NullTime
@@ -550,8 +547,7 @@ LEFT JOIN users pu ON pu.idusers = c.users_idusers
 WHERE c.forumthread_id=?
   AND c.forumthread_id!=0
   AND (
-      c.language_idlanguage = 0
-      OR c.language_idlanguage IS NULL
+    c.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
@@ -584,7 +580,7 @@ type GetCommentsByThreadIdForUserRow struct {
 	Idcomments         int32
 	ForumthreadID      int32
 	UsersIdusers       int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	Written            sql.NullTime
 	Text               sql.NullString
 	DeletedAt          sql.NullTime
@@ -698,7 +694,7 @@ WHERE c.idcomments = ?
 `
 
 type UpdateCommentForEditorParams struct {
-	LanguageID  int32
+	LanguageID  sql.NullInt32
 	Text        sql.NullString
 	CommentID   int32
 	CommenterID int32

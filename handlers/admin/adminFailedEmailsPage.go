@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -40,7 +41,7 @@ func AdminFailedEmailsPage(w http.ResponseWriter, r *http.Request) {
 	langID, _ := strconv.Atoi(r.URL.Query().Get("lang"))
 	role := r.URL.Query().Get("role")
 	rows, err := queries.AdminListFailedEmails(r.Context(), db.AdminListFailedEmailsParams{
-		LanguageID: int32(langID),
+		LanguageID: sql.NullInt32{Int32: int32(langID), Valid: langID != 0},
 		RoleName:   role,
 		Limit:      int32(pageSize + 1),
 		Offset:     int32(offset),

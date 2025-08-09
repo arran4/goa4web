@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -31,7 +32,7 @@ func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 	langID, _ := strconv.Atoi(r.URL.Query().Get("lang"))
 	role := r.URL.Query().Get("role")
 	rows, err := queries.AdminListUnsentPendingEmails(r.Context(), db.AdminListUnsentPendingEmailsParams{
-		LanguageID: int32(langID),
+		LanguageID: sql.NullInt32{Int32: int32(langID), Valid: langID != 0},
 		RoleName:   role,
 	})
 	if err != nil {

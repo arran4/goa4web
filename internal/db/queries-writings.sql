@@ -30,8 +30,7 @@ FROM writing w
 LEFT JOIN users u ON w.users_idusers = u.idusers
 WHERE w.private = 0 AND w.users_idusers = sqlc.arg(author_id)
   AND (
-    w.language_idlanguage = 0
-    OR w.language_idlanguage IS NULL
+    w.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -73,8 +72,7 @@ FROM writing w
 LEFT JOIN users u ON w.Users_Idusers=u.idusers
 WHERE w.private = 0 AND w.writing_category_id = sqlc.arg(writing_category_id)
   AND (
-    w.language_idlanguage = 0
-    OR w.language_idlanguage IS NULL
+    w.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -170,8 +168,7 @@ FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
 WHERE w.idwriting IN (sqlc.slice(writing_ids))
   AND (
-    w.language_idlanguage = 0
-    OR w.language_idlanguage IS NULL
+    w.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -267,8 +264,7 @@ SELECT u.username, COUNT(w.idwriting) AS count
 FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
 WHERE (
-    w.language_idlanguage = 0
-    OR w.language_idlanguage IS NULL
+    w.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -301,8 +297,7 @@ FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
 WHERE (LOWER(u.username) LIKE LOWER(sqlc.arg(query)) OR LOWER((SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1)) LIKE LOWER(sqlc.arg(query)))
   AND (
-    w.language_idlanguage = 0
-    OR w.language_idlanguage IS NULL
+    w.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = sqlc.arg(lister_id)

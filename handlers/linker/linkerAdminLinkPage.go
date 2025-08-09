@@ -36,7 +36,7 @@ func adminLinkPage(w http.ResponseWriter, r *http.Request) {
 	}{
 		Link:               link,
 		Selected:           int(link.LinkerCategoryID),
-		SelectedLanguageId: int(link.LanguageIdlanguage),
+		SelectedLanguageId: int(link.LanguageIdlanguage.Int32),
 	}
 
 	handlers.TemplateHandler(w, r, "adminLinkPage.gohtml", data)
@@ -69,7 +69,7 @@ func (editLinkTask) Action(w http.ResponseWriter, r *http.Request) any {
 		Url:                sql.NullString{Valid: true, String: URL},
 		Description:        sql.NullString{Valid: true, String: desc},
 		LinkerCategoryID:   int32(cat),
-		LanguageIdlanguage: int32(lang),
+		LanguageIdlanguage: sql.NullInt32{Int32: int32(lang), Valid: lang != 0},
 		Idlinker:           id,
 	}); err != nil {
 		return fmt.Errorf("update linker item fail %w", handlers.ErrRedirectOnSamePageHandler(err))

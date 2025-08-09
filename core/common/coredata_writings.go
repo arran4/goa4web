@@ -63,7 +63,7 @@ func (cd *CoreData) ArticleComment(r *http.Request, ops ...lazy.Option[*db.GetCo
 func (cd *CoreData) UpdateArticleComment(commentID, languageID int32, text string) error {
 	uid := cd.UserID
 	return cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
-		LanguageID:  languageID,
+		LanguageID:  sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:        sql.NullString{String: text, Valid: true},
 		CommentID:   commentID,
 		CommenterID: uid,
@@ -131,7 +131,7 @@ func (cd *CoreData) UpdateWritingReply(commentID, languageID int32, text string)
 		return nil, err
 	}
 	if err := cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
-		LanguageID:  languageID,
+		LanguageID:  sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:        sql.NullString{String: text, Valid: true},
 		CommentID:   cmt.Idcomments,
 		CommenterID: uid,
@@ -194,7 +194,7 @@ func (cd *CoreData) UpdateWriting(w *db.GetWritingForListerByIDRow, title, abstr
 		Abstract:   sql.NullString{Valid: true, String: abstract},
 		Content:    sql.NullString{Valid: true, String: body},
 		Private:    sql.NullBool{Valid: true, Bool: private},
-		LanguageID: languageID,
+		LanguageID: sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		WritingID:  w.Idwriting,
 		WriterID:   cd.UserID,
 		GranteeID:  sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
@@ -216,7 +216,7 @@ func (cd *CoreData) CreateWriting(categoryID, languageID int32, title, abstract,
 		Abstract:          sql.NullString{Valid: true, String: abstract},
 		Writing:           sql.NullString{Valid: true, String: body},
 		Private:           sql.NullBool{Valid: true, Bool: private},
-		LanguageID:        languageID,
+		LanguageID:        sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		GrantCategoryID:   sql.NullInt32{Int32: categoryID, Valid: true},
 		GranteeID:         sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 	})

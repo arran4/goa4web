@@ -53,7 +53,7 @@ VALUES (?, ?, ?, ?)
 `
 
 type InsertPreferenceForListerParams struct {
-	LanguageID int32
+	LanguageID sql.NullInt32
 	ListerID   int32
 	PageSize   int32
 	Timezone   sql.NullString
@@ -106,7 +106,7 @@ UPDATE preferences SET language_idlanguage = ?, page_size = ?, timezone = ? WHER
 `
 
 type UpdatePreferenceForListerParams struct {
-	LanguageID int32
+	LanguageID sql.NullInt32
 	PageSize   int32
 	Timezone   sql.NullString
 	ListerID   int32

@@ -83,8 +83,7 @@ WHERE s.Idsitenews IN (sqlc.slice(newsIds))
       NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
       )
-      OR s.language_idlanguage = 0
-      OR s.language_idlanguage IS NULL
+    OR s.language_idlanguage IS NULL
       OR s.language_idlanguage IN (
           SELECT ul.language_idlanguage
           FROM user_language ul
@@ -115,7 +114,6 @@ WHERE (
     NOT EXISTS (
         SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
     )
-    OR s.language_idlanguage = 0
     OR s.language_idlanguage IS NULL
     OR s.language_idlanguage IN (
         SELECT ul.language_idlanguage FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)

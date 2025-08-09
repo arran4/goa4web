@@ -57,7 +57,7 @@ func (PagingSaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	if errors.Is(err, sql.ErrNoRows) {
 		err = queries.InsertPreferenceForLister(r.Context(), db.InsertPreferenceForListerParams{
-			LanguageID: 0,
+			LanguageID: sql.NullInt32{},
 			ListerID:   uid,
 			PageSize:   int32(size),
 			Timezone:   sql.NullString{},

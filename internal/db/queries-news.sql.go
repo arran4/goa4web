@@ -31,7 +31,7 @@ type AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow stru
 	Writerid           sql.NullInt32
 	Idsitenews         int32
 	ForumthreadID      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	UsersIdusers       int32
 	News               sql.NullString
 	Occurred           sql.NullTime
@@ -106,7 +106,7 @@ WHERE EXISTS (
 type CreateNewsPostForWriterParams struct {
 	News       sql.NullString
 	WriterID   int32
-	LanguageID int32
+	LanguageID sql.NullInt32
 	GranteeID  sql.NullInt32
 }
 
@@ -216,7 +216,7 @@ type GetNewsPostByIdWithWriterIdAndThreadCommentCountRow struct {
 	Writerid           sql.NullInt32
 	Idsitenews         int32
 	ForumthreadID      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	UsersIdusers       int32
 	News               sql.NullString
 	Occurred           sql.NullTime
@@ -253,8 +253,7 @@ WHERE s.Idsitenews IN (/*SLICE:newsids*/?)
       NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
       )
-      OR s.language_idlanguage = 0
-      OR s.language_idlanguage IS NULL
+    OR s.language_idlanguage IS NULL
       OR s.language_idlanguage IN (
           SELECT ul.language_idlanguage
           FROM user_language ul
@@ -285,7 +284,7 @@ type GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountRow struct {
 	Writerid           sql.NullInt32
 	Idsitenews         int32
 	ForumthreadID      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	UsersIdusers       int32
 	News               sql.NullString
 	Occurred           sql.NullTime
@@ -351,7 +350,6 @@ WHERE (
     NOT EXISTS (
         SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
     )
-    OR s.language_idlanguage = 0
     OR s.language_idlanguage IS NULL
     OR s.language_idlanguage IN (
         SELECT ul.language_idlanguage FROM user_language ul WHERE ul.users_idusers = ?
@@ -383,7 +381,7 @@ type GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow struct {
 	Writerid           sql.NullInt32
 	Idsitenews         int32
 	ForumthreadID      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	UsersIdusers       int32
 	News               sql.NullString
 	Occurred           sql.NullTime
@@ -487,7 +485,7 @@ WHERE s.idsiteNews = ?
 
 type UpdateNewsPostForWriterParams struct {
 	News        sql.NullString
-	LanguageID  int32
+	LanguageID  sql.NullInt32
 	PostID      int32
 	WriterID    int32
 	GrantPostID sql.NullInt32

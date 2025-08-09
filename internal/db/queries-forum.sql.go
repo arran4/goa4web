@@ -14,8 +14,7 @@ const adminCountForumCategories = `-- name: AdminCountForumCategories :one
 SELECT COUNT(*)
 FROM forumcategory c
 WHERE (
-    c.language_idlanguage = 0
-    OR c.language_idlanguage IS NULL
+    c.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = ?
@@ -44,7 +43,7 @@ INSERT INTO forumcategory (forumcategory_idforumcategory, language_idlanguage, t
 
 type AdminCreateForumCategoryParams struct {
 	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	Title                        sql.NullString
 	Description                  sql.NullString
 }
@@ -85,8 +84,7 @@ FROM forumcategory c
 LEFT JOIN forumcategory c2 ON c.idforumcategory = c2.forumcategory_idforumcategory
 LEFT JOIN forumtopic t ON c.idforumcategory = t.forumcategory_idforumcategory
 WHERE (
-    c.language_idlanguage = 0
-    OR c.language_idlanguage IS NULL
+    c.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = ?
@@ -110,7 +108,7 @@ type AdminListForumCategoriesWithCountsParams struct {
 type AdminListForumCategoriesWithCountsRow struct {
 	Idforumcategory              int32
 	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	Title                        sql.NullString
 	Description                  sql.NullString
 	Subcategorycount             int64
@@ -285,7 +283,7 @@ type AdminUpdateForumCategoryParams struct {
 	Title                        sql.NullString
 	Description                  sql.NullString
 	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	Idforumcategory              int32
 }
 
@@ -308,7 +306,7 @@ type AdminUpdateForumTopicParams struct {
 	Title                        sql.NullString
 	Description                  sql.NullString
 	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	Idforumtopic                 int32
 }
 
@@ -342,7 +340,7 @@ WHERE EXISTS (
 
 type CreateForumTopicForPosterParams struct {
 	ForumcategoryID int32
-	LanguageID      int32
+	LanguageID      sql.NullInt32
 	Title           sql.NullString
 	Description     sql.NullString
 	Handler         string
@@ -374,8 +372,7 @@ const getAllForumCategories = `-- name: GetAllForumCategories :many
 SELECT f.idforumcategory, f.forumcategory_idforumcategory, f.language_idlanguage, f.title, f.description
 FROM forumcategory f
 WHERE (
-    f.language_idlanguage = 0
-    OR f.language_idlanguage IS NULL
+    f.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = ?
@@ -427,8 +424,7 @@ FROM forumcategory c
 LEFT JOIN forumcategory c2 ON c.idforumcategory = c2.forumcategory_idforumcategory
 LEFT JOIN forumtopic t ON c.idforumcategory = t.forumcategory_idforumcategory
 WHERE (
-    c.language_idlanguage = 0
-    OR c.language_idlanguage IS NULL
+    c.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = ?
@@ -448,7 +444,7 @@ type GetAllForumCategoriesWithSubcategoryCountParams struct {
 type GetAllForumCategoriesWithSubcategoryCountRow struct {
 	Idforumcategory              int32
 	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	Title                        sql.NullString
 	Description                  sql.NullString
 	Subcategorycount             int64
@@ -540,8 +536,7 @@ const getAllForumTopics = `-- name: GetAllForumTopics :many
 SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.language_idlanguage, t.title, t.description, t.threads, t.comments, t.lastaddition, t.handler
 FROM forumtopic t
 WHERE (
-    t.language_idlanguage = 0
-    OR t.language_idlanguage IS NULL
+    t.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = ?
@@ -601,8 +596,7 @@ FROM forumtopic t
 LEFT JOIN users lu ON lu.idusers = t.lastposter
 WHERE t.forumcategory_idforumcategory = ?
   AND (
-      t.language_idlanguage = 0
-      OR t.language_idlanguage IS NULL
+    t.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
@@ -635,7 +629,7 @@ type GetAllForumTopicsByCategoryIdForUserWithLastPosterNameRow struct {
 	Idforumtopic                 int32
 	Lastposter                   int32
 	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	Title                        sql.NullString
 	Description                  sql.NullString
 	Threads                      sql.NullInt32
@@ -690,8 +684,7 @@ const getForumCategoryById = `-- name: GetForumCategoryById :one
 SELECT idforumcategory, forumcategory_idforumcategory, language_idlanguage, title, description FROM forumcategory
 WHERE idforumcategory = ?
   AND (
-      language_idlanguage = 0
-      OR language_idlanguage IS NULL
+    language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
@@ -835,8 +828,7 @@ FROM forumtopic t
 LEFT JOIN users lu ON lu.idusers = t.lastposter
 WHERE t.idforumtopic = ?
   AND (
-      t.language_idlanguage = 0
-      OR t.language_idlanguage IS NULL
+    t.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
@@ -869,7 +861,7 @@ type GetForumTopicByIdForUserRow struct {
 	Idforumtopic                 int32
 	Lastposter                   int32
 	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	Title                        sql.NullString
 	Description                  sql.NullString
 	Threads                      sql.NullInt32
@@ -908,8 +900,7 @@ const getForumTopicsByCategoryId = `-- name: GetForumTopicsByCategoryId :many
 SELECT idforumtopic, lastposter, forumcategory_idforumcategory, language_idlanguage, title, description, threads, comments, lastaddition, handler FROM forumtopic
 WHERE forumcategory_idforumcategory = ?
   AND (
-      language_idlanguage = 0
-      OR language_idlanguage IS NULL
+    language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
@@ -970,8 +961,7 @@ FROM forumtopic t
 LEFT JOIN users lu ON lu.idusers = t.lastposter
 WHERE t.handler <> 'private'
   AND (
-    t.language_idlanguage = 0
-    OR t.language_idlanguage IS NULL
+    t.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = ?
@@ -1003,7 +993,7 @@ type GetForumTopicsForUserRow struct {
 	Idforumtopic                 int32
 	Lastposter                   int32
 	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	Title                        sql.NullString
 	Description                  sql.NullString
 	Threads                      sql.NullInt32
@@ -1178,7 +1168,7 @@ type ListPrivateTopicsByUserIDRow struct {
 	Idforumtopic                 int32
 	Lastposter                   int32
 	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	Title                        sql.NullString
 	Description                  sql.NullString
 	Threads                      sql.NullInt32
@@ -1229,7 +1219,7 @@ INSERT INTO forumtopic (forumcategory_idforumcategory, language_idlanguage, titl
 
 type SystemCreateForumTopicParams struct {
 	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	Title                        sql.NullString
 	Description                  sql.NullString
 	Handler                      string

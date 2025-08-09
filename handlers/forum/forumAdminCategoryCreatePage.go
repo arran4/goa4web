@@ -59,7 +59,7 @@ func AdminCategoryCreateSubmit(w http.ResponseWriter, r *http.Request) {
 	languageID, _ := strconv.Atoi(r.PostFormValue("language"))
 	if err := queries.AdminCreateForumCategory(r.Context(), db.AdminCreateForumCategoryParams{
 		ForumcategoryIdforumcategory: int32(pcid),
-		LanguageIdlanguage:           int32(languageID),
+		LanguageIdlanguage:           sql.NullInt32{Int32: int32(languageID), Valid: languageID != 0},
 		Title:                        sql.NullString{Valid: true, String: name},
 		Description:                  sql.NullString{Valid: true, String: desc},
 	}); err != nil {

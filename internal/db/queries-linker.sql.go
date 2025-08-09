@@ -137,7 +137,7 @@ type AdminUpdateLinkerItemParams struct {
 	Url                sql.NullString
 	Description        sql.NullString
 	LinkerCategoryID   int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	Idlinker           int32
 }
 
@@ -342,7 +342,7 @@ type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending
 
 type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow struct {
 	Idlinker           int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	UsersIdusers       int32
 	LinkerCategoryID   int32
 	ForumthreadID      int32
@@ -430,7 +430,7 @@ type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending
 
 type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserRow struct {
 	Idlinker           int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	UsersIdusers       int32
 	LinkerCategoryID   int32
 	ForumthreadID      int32
@@ -524,7 +524,7 @@ type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending
 
 type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow struct {
 	Idlinker           int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	UsersIdusers       int32
 	LinkerCategoryID   int32
 	ForumthreadID      int32
@@ -622,7 +622,7 @@ type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending
 
 type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRowRow struct {
 	Idlinker           int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	UsersIdusers       int32
 	LinkerCategoryID   int32
 	ForumthreadID      int32
@@ -697,7 +697,7 @@ type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending
 
 type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginatedRow struct {
 	Idlinker           int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	UsersIdusers       int32
 	LinkerCategoryID   int32
 	ForumthreadID      int32
@@ -760,7 +760,7 @@ JOIN linker_category c ON l.linker_category_id = c.idlinkerCategory
 
 type GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetailsRow struct {
 	Idlinkerqueue      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	UsersIdusers       int32
 	LinkerCategoryID   int32
 	Title              sql.NullString
@@ -950,7 +950,7 @@ WHERE l.idlinker = ?
 
 type GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow struct {
 	Idlinker           int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	UsersIdusers       int32
 	LinkerCategoryID   int32
 	ForumthreadID      int32
@@ -1019,7 +1019,7 @@ type GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams 
 
 type GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow struct {
 	Idlinker           int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	UsersIdusers       int32
 	LinkerCategoryID   int32
 	ForumthreadID      int32
@@ -1060,7 +1060,7 @@ WHERE l.idlinker IN (/*SLICE:linkerids*/?)
 
 type GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow struct {
 	Idlinker           int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	UsersIdusers       int32
 	LinkerCategoryID   int32
 	ForumthreadID      int32
@@ -1154,7 +1154,7 @@ type GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUserParam
 
 type GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUserRow struct {
 	Idlinker           int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	UsersIdusers       int32
 	LinkerCategoryID   int32
 	ForumthreadID      int32
@@ -1232,7 +1232,7 @@ type GetLinkerItemsByUserDescendingParams struct {
 
 type GetLinkerItemsByUserDescendingRow struct {
 	Idlinker           int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	UsersIdusers       int32
 	LinkerCategoryID   int32
 	ForumthreadID      int32
@@ -1323,7 +1323,7 @@ type GetLinkerItemsByUserDescendingForUserParams struct {
 
 type GetLinkerItemsByUserDescendingForUserRow struct {
 	Idlinker           int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	UsersIdusers       int32
 	LinkerCategoryID   int32
 	ForumthreadID      int32

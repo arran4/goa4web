@@ -63,7 +63,7 @@ LIMIT ? OFFSET ?
 `
 
 type AdminListFailedEmailsParams struct {
-	LanguageID int32
+	LanguageID sql.NullInt32
 	RoleName   string
 	Limit      int32
 	Offset     int32
@@ -130,7 +130,7 @@ LIMIT ? OFFSET ?
 `
 
 type AdminListSentEmailsParams struct {
-	LanguageID int32
+	LanguageID sql.NullInt32
 	RoleName   string
 	Limit      int32
 	Offset     int32
@@ -198,7 +198,7 @@ ORDER BY pe.id
 `
 
 type AdminListUnsentPendingEmailsParams struct {
-	LanguageID int32
+	LanguageID sql.NullInt32
 	RoleName   string
 }
 

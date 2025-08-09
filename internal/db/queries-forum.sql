@@ -8,8 +8,7 @@ FROM forumcategory c
 LEFT JOIN forumcategory c2 ON c.idforumcategory = c2.forumcategory_idforumcategory
 LEFT JOIN forumtopic t ON c.idforumcategory = t.forumcategory_idforumcategory
 WHERE (
-    c.language_idlanguage = 0
-    OR c.language_idlanguage IS NULL
+    c.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = sqlc.arg(viewer_id)
@@ -25,8 +24,7 @@ GROUP BY c.idforumcategory;
 SELECT COUNT(*)
 FROM forumcategory c
 WHERE (
-    c.language_idlanguage = 0
-    OR c.language_idlanguage IS NULL
+    c.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = sqlc.arg(viewer_id)
@@ -44,8 +42,7 @@ FROM forumcategory c
 LEFT JOIN forumcategory c2 ON c.idforumcategory = c2.forumcategory_idforumcategory
 LEFT JOIN forumtopic t ON c.idforumcategory = t.forumcategory_idforumcategory
 WHERE (
-    c.language_idlanguage = 0
-    OR c.language_idlanguage IS NULL
+    c.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = sqlc.arg(viewer_id)
@@ -63,8 +60,7 @@ LIMIT ? OFFSET ?;
 SELECT t.*
 FROM forumtopic t
 WHERE (
-    t.language_idlanguage = 0
-    OR t.language_idlanguage IS NULL
+    t.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = sqlc.arg(viewer_id)
@@ -94,8 +90,7 @@ FROM forumtopic t
 LEFT JOIN users lu ON lu.idusers = t.lastposter
 WHERE t.forumcategory_idforumcategory = sqlc.arg(category_id)
   AND (
-      t.language_idlanguage = 0
-      OR t.language_idlanguage IS NULL
+    t.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(viewer_id)
@@ -168,8 +163,7 @@ FROM forumtopic t
 LEFT JOIN users lu ON lu.idusers = t.lastposter
 WHERE t.handler <> 'private'
   AND (
-    t.language_idlanguage = 0
-    OR t.language_idlanguage IS NULL
+    t.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = sqlc.arg(viewer_id)
@@ -200,8 +194,7 @@ FROM forumtopic t
 LEFT JOIN users lu ON lu.idusers = t.lastposter
 WHERE t.idforumtopic = sqlc.arg(idforumtopic)
   AND (
-      t.language_idlanguage = 0
-      OR t.language_idlanguage IS NULL
+    t.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(viewer_id)
@@ -228,8 +221,7 @@ ORDER BY t.lastaddition DESC;
 SELECT f.*
 FROM forumcategory f
 WHERE (
-    f.language_idlanguage = 0
-    OR f.language_idlanguage IS NULL
+    f.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = sqlc.arg(viewer_id)
@@ -385,8 +377,7 @@ ORDER BY t.idforumtopic, th.lastaddition DESC;
 SELECT * FROM forumcategory
 WHERE idforumcategory = sqlc.arg(idforumcategory)
   AND (
-      language_idlanguage = 0
-      OR language_idlanguage IS NULL
+    language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(viewer_id)
@@ -401,8 +392,7 @@ WHERE idforumcategory = sqlc.arg(idforumcategory)
 SELECT * FROM forumtopic
 WHERE forumcategory_idforumcategory = sqlc.arg(category_id)
   AND (
-      language_idlanguage = 0
-      OR language_idlanguage IS NULL
+    language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(viewer_id)

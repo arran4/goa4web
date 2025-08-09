@@ -59,8 +59,7 @@ JOIN grants g ON (g.item_id = b.idblogs OR g.item_id IS NULL)
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
 WHERE (
-    b.language_idlanguage = 0
-    OR b.language_idlanguage IS NULL
+    b.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -84,8 +83,7 @@ LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
 WHERE (b.users_idusers = sqlc.arg(author_id) OR sqlc.arg(author_id) = 0)
 AND (
-    b.language_idlanguage = 0
-    OR b.language_idlanguage IS NULL
+    b.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -116,8 +114,7 @@ SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.bl
 FROM blogs b
 WHERE b.idblogs IN (sqlc.slice(blogIds))
   AND (
-      b.language_idlanguage = 0
-      OR b.language_idlanguage IS NULL
+    b.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -151,8 +148,7 @@ LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
 WHERE b.idblogs = sqlc.arg(id)
   AND (
-      b.language_idlanguage = 0
-      OR b.language_idlanguage IS NULL
+    b.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -184,8 +180,7 @@ LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearc
 JOIN blogs b ON b.idblogs = cs.blog_id
 WHERE swl.word = ?
   AND (
-      b.language_idlanguage = 0
-      OR b.language_idlanguage IS NULL
+    b.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -217,8 +212,7 @@ JOIN blogs b ON b.idblogs = cs.blog_id
 WHERE swl.word = ?
   AND cs.blog_id IN (sqlc.slice('ids'))
   AND (
-      b.language_idlanguage = 0
-      OR b.language_idlanguage IS NULL
+    b.language_idlanguage IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -249,8 +243,7 @@ SELECT u.username, COUNT(b.idblogs) AS count
 FROM blogs b
 JOIN users u ON b.users_idusers = u.idusers
 WHERE (
-    b.language_idlanguage = 0
-    OR b.language_idlanguage IS NULL
+    b.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -283,8 +276,7 @@ FROM blogs b
 JOIN users u ON b.users_idusers = u.idusers
 WHERE (LOWER(u.username) LIKE LOWER(sqlc.arg(query)) OR LOWER((SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1)) LIKE LOWER(sqlc.arg(query)))
   AND (
-    b.language_idlanguage = 0
-    OR b.language_idlanguage IS NULL
+    b.language_idlanguage IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = sqlc.arg(lister_id)

@@ -11,7 +11,6 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 )
@@ -23,7 +22,8 @@ const gdprExportNote = "# Personal data export - handle according to GDPR"
 // adminUsersExportPage streams all data for a single user in a zip archive for
 // admins. The user ID is provided via the "uid" query parameter.
 func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 
 	uid, err := strconv.Atoi(r.URL.Query().Get("uid"))
 	if err != nil {
@@ -32,9 +32,9 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO evaluate why we are creating a new entity
-	cd := common.NewCoreData(r.Context(), queries, config.NewRuntimeConfig())
+	origID := cd.UserID
 	cd.UserID = int32(uid)
+	defer func() { cd.UserID = origID }()
 
 	user, err := cd.CurrentUser()
 	if err != nil {

@@ -142,7 +142,7 @@ VALUES (?, ?, ?)
 `
 
 type AdminInsertWritingCategoryParams struct {
-	WritingCategoryID int32
+	WritingCategoryID sql.NullInt32
 	Title             sql.NullString
 	Description       sql.NullString
 }
@@ -161,7 +161,7 @@ WHERE idwritingCategory = ?
 type AdminUpdateWritingCategoryParams struct {
 	Title             sql.NullString
 	Description       sql.NullString
-	WritingCategoryID int32
+	WritingCategoryID sql.NullInt32
 	Idwritingcategory int32
 }
 

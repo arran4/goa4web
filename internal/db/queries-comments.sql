@@ -124,7 +124,7 @@ LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
 WHERE c.forumthread_id=sqlc.arg(thread_id)
-  AND c.forumthread_id!=0
+  AND c.forumthread_id IS NOT NULL
   AND (
       c.language_idlanguage = 0
       OR c.language_idlanguage IS NULL
@@ -162,7 +162,7 @@ LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
 WHERE c.forumthread_id=sqlc.arg(thread_id)
-  AND c.forumthread_id!=0
+  AND c.forumthread_id IS NOT NULL
   AND (
       c.language_idlanguage = 0
       OR c.language_idlanguage IS NULL

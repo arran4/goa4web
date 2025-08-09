@@ -13,7 +13,7 @@ import (
 
 const adminGetAllWritingsByAuthor = `-- name: AdminGetAllWritingsByAuthor :many
 SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, w.last_index, u.username,
-    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) AS Comments
+    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id IS NOT NULL) AS Comments
 FROM writing w
 LEFT JOIN users u ON w.users_idusers = u.idusers
 WHERE w.users_idusers = ?
@@ -228,7 +228,7 @@ WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, w.last_index, u.username,
-    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) AS Comments
+    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id IS NOT NULL) AS Comments
 FROM writing w
 LEFT JOIN users u ON w.users_idusers = u.idusers
 WHERE w.users_idusers = ?
@@ -512,7 +512,7 @@ WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, w.last_index, u.username,
-    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) AS Comments
+    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id IS NOT NULL) AS Comments
 FROM writing w
 LEFT JOIN users u ON w.users_idusers = u.idusers
 WHERE w.private = 0 AND w.users_idusers = ?
@@ -618,7 +618,7 @@ WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, w.last_index, u.Username,
-    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) as Comments
+    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id IS NOT NULL) as Comments
 FROM writing w
 LEFT JOIN users u ON w.Users_Idusers=u.idusers
 WHERE w.private = 0 AND w.writing_category_id = ?
@@ -1111,7 +1111,7 @@ func (q *Queries) SystemGetWritingByID(ctx context.Context, idwriting int32) (in
 
 const systemListPublicWritingsByAuthor = `-- name: SystemListPublicWritingsByAuthor :many
 SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, w.last_index, u.username,
-    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) AS Comments
+    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id IS NOT NULL) AS Comments
 FROM writing w
 LEFT JOIN users u ON w.users_idusers = u.idusers
 WHERE w.private = 0 AND w.users_idusers = ?
@@ -1182,7 +1182,7 @@ func (q *Queries) SystemListPublicWritingsByAuthor(ctx context.Context, arg Syst
 
 const systemListPublicWritingsInCategory = `-- name: SystemListPublicWritingsInCategory :many
 SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_idlanguage, w.writing_category_id, w.title, w.published, w.writing, w.abstract, w.private, w.deleted_at, w.last_index, u.Username,
-    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) as Comments
+    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id IS NOT NULL) as Comments
 FROM writing w
 LEFT JOIN users u ON w.Users_Idusers = u.idusers
 WHERE w.private = 0 AND w.writing_category_id = ?

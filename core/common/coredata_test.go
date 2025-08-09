@@ -328,7 +328,7 @@ func TestBlogListLazy(t *testing.T) {
 	queries := db.New(conn)
 	now := time.Now()
 	rows := sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_idlanguage", "blog", "written", "username", "comments", "is_owner"}).
-		AddRow(1, 0, 1, 0, "b", now, "bob", 0, true)
+		AddRow(1, nil, 1, 0, "b", now, "bob", 0, true)
 	mock.ExpectQuery("SELECT b.idblogs").
 		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnRows(rows)
@@ -362,7 +362,7 @@ func TestBlogListForSelectedAuthorLazy(t *testing.T) {
 	queries := db.New(conn)
 	now := time.Now()
 	rows := sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_idlanguage", "blog", "written", "username", "comments", "is_owner"}).
-		AddRow(1, 0, 1, 0, "b", now, "bob", 0, true)
+		AddRow(1, nil, 1, 0, "b", now, "bob", 0, true)
 	mock.ExpectQuery("SELECT b.idblogs").
 		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnRows(rows)

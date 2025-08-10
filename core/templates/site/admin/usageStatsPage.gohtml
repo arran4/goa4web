@@ -83,9 +83,9 @@
 
 <h3>Monthly Usage (from {{ .StartYear }})</h3>
 <table border="1">
-    <tr><th>Year</th><th>Month</th><th>Blogs</th><th>News</th><th>Comments</th><th>Images</th><th>Links</th></tr>
+    <tr><th>Year</th><th>Month</th><th>Blogs</th><th>News</th><th>Comments</th><th>Images</th><th>Links</th><th>Writings</th></tr>
     {{- range .Monthly }}
-    <tr><td>{{ .Year }}</td><td>{{ .Month }}</td><td>{{ .Blogs }}</td><td>{{ .News }}</td><td>{{ .Comments }}</td><td>{{ .Images }}</td><td>{{ .Links }}</td></tr>
+    <tr><td>{{ .Year }}</td><td>{{ .Month }}</td><td>{{ .Blogs }}</td><td>{{ .News }}</td><td>{{ .Comments }}</td><td>{{ .Images }}</td><td>{{ .Links }}</td><td>{{ .Writings }}</td></tr>
     {{- end }}
 </table>
 

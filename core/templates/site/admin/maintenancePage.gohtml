@@ -1,14 +1,10 @@
 {{ template "head" $ }}
-<h1>Grant Config Detection Rules</h1>
-<form method="get" action="/admin/grants/rules">
-  <label><input type="checkbox" name="include_admin" value="1" {{ if .IncludeAdmin }}checked{{ end }}>Include administrator as a user</label>
-  <input type="submit" value="Refresh">
-</form>
+<h1>Once Off & Maintenance</h1>
 {{ if .Topics }}
 <ul>
   {{ range .Topics }}
   <li>{{ .Title }} (ID {{ .ID }})
-    <form method="post" action="/admin/grants/rules" style="display:inline">
+    <form method="post" action="/admin/maintenance" style="display:inline">
       <input type="hidden" name="task" value="{{ $.TaskName }}">
       <input type="hidden" name="topic_id" value="{{ .ID }}">
       <input type="submit" value="Convert to private">

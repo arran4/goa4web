@@ -192,17 +192,17 @@ type ExternalLink struct {
 }
 
 type Faq struct {
-	Idfaq                        int32
-	FaqcategoriesIdfaqcategories sql.NullInt32
-	LanguageIdlanguage           sql.NullInt32
-	UsersIdusers                 int32
-	Answer                       sql.NullString
-	Question                     sql.NullString
+	ID                 int32
+	FaqCategoryID      sql.NullInt32
+	LanguageIdlanguage sql.NullInt32
+	UsersIdusers       int32
+	Answer             sql.NullString
+	Question           sql.NullString
 }
 
 type FaqCategory struct {
-	Idfaqcategories int32
-	Name            sql.NullString
+	ID   int32
+	Name sql.NullString
 }
 
 type FaqRevision struct {

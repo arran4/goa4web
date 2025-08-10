@@ -15,7 +15,7 @@ func TestGlobalGrantsNews(t *testing.T) {
 }
 
 func TestGlobalGrantsFAQ(t *testing.T) {
-	if !strings.Contains(getFAQAnsweredQuestions, "g.item_id = faq.idfaq OR g.item_id IS NULL") {
+	if !strings.Contains(getFAQAnsweredQuestions, "g.item_id = faq.id OR g.item_id IS NULL") {
 		t.Errorf("global grant missing in GetFAQAnsweredQuestions")
 	}
 }

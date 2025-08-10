@@ -1,13 +1,13 @@
 -- name: AdminGetFAQUnansweredQuestions :many
 SELECT *
 FROM faq
-WHERE faqCategories_idfaqCategories IS NULL OR answer IS NULL;
+WHERE faq_category_id IS NULL OR answer IS NULL;
 
 -- name: GetFAQAnsweredQuestions :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
 )
-SELECT idfaq, faqCategories_idfaqCategories, language_idlanguage, users_idusers, answer, question
+SELECT faq.id, faq.faq_category_id, faq.language_idlanguage, faq.users_idusers, faq.answer, faq.question
 FROM faq
 WHERE answer IS NOT NULL
   AND deleted_at IS NULL
@@ -29,13 +29,13 @@ WHERE answer IS NOT NULL
         AND (g.item='question/answer' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
-        AND (g.item_id = faq.idfaq OR g.item_id IS NULL)
+        AND (g.item_id = faq.id OR g.item_id IS NULL)
         AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   );
 
 -- name: AdminGetFAQDismissedQuestions :many
-SELECT idfaq, faqCategories_idfaqCategories, language_idlanguage, users_idusers, answer, question
+SELECT id, faq_category_id, language_idlanguage, users_idusers, answer, question
 FROM faq
 WHERE deleted_at IS NOT NULL;
 
@@ -46,11 +46,11 @@ FROM faq;
 -- name: AdminRenameFAQCategory :exec
 UPDATE faq_categories
 SET name = ?
-WHERE idfaqCategories = ?;
+WHERE id = ?;
 
 -- name: AdminDeleteFAQCategory :exec
 UPDATE faq_categories SET deleted_at = NOW()
-WHERE idfaqCategories = ?;
+WHERE id = ?;
 
 -- name: AdminCreateFAQCategory :exec
 INSERT INTO faq_categories (name) VALUES (sqlc.arg(name));
@@ -71,7 +71,7 @@ WHERE EXISTS (
 );
 
 -- name: InsertFAQQuestionForWriter :execresult
-INSERT INTO faq (question, answer, faqCategories_idfaqCategories, users_idusers, language_idlanguage)
+INSERT INTO faq (question, answer, faq_category_id, users_idusers, language_idlanguage)
 SELECT sqlc.arg(question), sqlc.arg(answer), sqlc.arg(category_id), sqlc.arg(writer_id), sqlc.narg(language_id)
 WHERE EXISTS (
     SELECT 1 FROM grants g
@@ -87,12 +87,12 @@ WHERE EXISTS (
 
 -- name: AdminUpdateFAQQuestionAnswer :exec
 UPDATE faq
-SET answer = ?, question = ?, faqCategories_idfaqCategories = ?
-WHERE idfaq = ?;
+SET answer = ?, question = ?, faq_category_id = ?
+WHERE id = ?;
 
 -- name: AdminDeleteFAQ :exec
 UPDATE faq SET deleted_at = NOW()
-WHERE idfaq = ?;
+WHERE id = ?;
 
 -- name: AdminGetFAQCategories :many
 SELECT *
@@ -102,10 +102,10 @@ FROM faq_categories;
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
 )
-SELECT c.idfaqCategories, c.name, f.idfaq, f.faqCategories_idfaqCategories, f.language_idlanguage, f.users_idusers, f.answer, f.question
+SELECT c.id AS category_id, c.name, f.id AS faq_id, f.faq_category_id, f.language_idlanguage, f.users_idusers, f.answer, f.question
 FROM faq f
-LEFT JOIN faq_categories c ON c.idfaqCategories = f.faqCategories_idfaqCategories
-WHERE c.idfaqCategories IS NOT NULL
+LEFT JOIN faq_categories c ON c.id = f.faq_category_id
+WHERE c.id IS NOT NULL
   AND f.answer IS NOT NULL
   AND (
       f.language_idlanguage = 0
@@ -125,29 +125,29 @@ WHERE c.idfaqCategories IS NOT NULL
         AND (g.item='question/answer' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
-        AND (g.item_id = f.idfaq OR g.item_id IS NULL)
+        AND (g.item_id = f.id OR g.item_id IS NULL)
         AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
-ORDER BY c.idfaqCategories, f.idfaq;
+ORDER BY c.id, f.id;
 
 -- name: AdminGetFAQCategoriesWithQuestionCount :many
-SELECT c.*, COUNT(f.idfaq) AS QuestionCount
+SELECT c.*, COUNT(f.id) AS QuestionCount
 FROM faq_categories c
-LEFT JOIN faq f ON f.faqCategories_idfaqCategories = c.idfaqCategories
-GROUP BY c.idfaqCategories;
+LEFT JOIN faq f ON f.faq_category_id = c.id
+GROUP BY c.id;
 
 
 -- name: AdminGetFAQByID :one
-SELECT * FROM faq WHERE idfaq = ?;
+SELECT * FROM faq WHERE id = ?;
 
 -- name: GetFAQByID :one
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
 )
-SELECT idfaq, faqCategories_idfaqCategories, language_idlanguage, users_idusers, answer, question
+SELECT faq.id, faq.faq_category_id, faq.language_idlanguage, faq.users_idusers, faq.answer, faq.question
 FROM faq
-WHERE idfaq = sqlc.arg(faq_id)
+WHERE faq.id = sqlc.arg(faq_id)
   AND deleted_at IS NULL
   AND (
       language_idlanguage = 0
@@ -167,7 +167,7 @@ WHERE idfaq = sqlc.arg(faq_id)
         AND (g.item='question/answer' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
-        AND (g.item_id = faq.idfaq OR g.item_id IS NULL)
+        AND (g.item_id = faq.id OR g.item_id IS NULL)
         AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   );
@@ -191,22 +191,22 @@ WHERE EXISTS (
 SELECT * FROM faq_revisions WHERE faq_id = ? ORDER BY id DESC;
 
 -- name: AdminGetFAQCategoryWithQuestionCountByID :one
-SELECT c.*, COUNT(f.idfaq) AS QuestionCount
+SELECT c.*, COUNT(f.id) AS QuestionCount
 FROM faq_categories c
-LEFT JOIN faq f ON f.faqCategories_idfaqCategories = c.idfaqCategories
-WHERE c.idfaqCategories = ?
-GROUP BY c.idfaqCategories;
+LEFT JOIN faq f ON f.faq_category_id = c.id
+WHERE c.id = ?
+GROUP BY c.id;
 
 -- name: AdminGetFAQQuestionsByCategory :many
-SELECT * FROM faq WHERE faqCategories_idfaqCategories = ?;
+SELECT * FROM faq WHERE faq_category_id = ?;
 
 -- name: GetFAQQuestionsByCategory :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
 )
-SELECT idfaq, faqCategories_idfaqCategories, language_idlanguage, users_idusers, answer, question
+SELECT faq.id, faq.faq_category_id, faq.language_idlanguage, faq.users_idusers, faq.answer, faq.question
 FROM faq
-WHERE faqCategories_idfaqCategories = sqlc.arg(category_id)
+WHERE faq.faq_category_id = sqlc.arg(category_id)
   AND deleted_at IS NULL
   AND (
       language_idlanguage = 0
@@ -226,7 +226,7 @@ WHERE faqCategories_idfaqCategories = sqlc.arg(category_id)
         AND (g.item='question/answer' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
-        AND (g.item_id = faq.idfaq OR g.item_id IS NULL)
+        AND (g.item_id = faq.id OR g.item_id IS NULL)
         AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   );

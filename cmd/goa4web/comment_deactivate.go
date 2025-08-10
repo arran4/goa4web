@@ -47,15 +47,11 @@ func (c *commentDeactivateCmd) Run() error {
 	if deactivated {
 		return fmt.Errorf("comment already deactivated")
 	}
-	var langID int32
-	if cm.LanguageIdlanguage.Valid {
-		langID = cm.LanguageIdlanguage.Int32
-	}
 	if err := queries.AdminArchiveComment(ctx, db.AdminArchiveCommentParams{
 		Idcomments:         cm.Idcomments,
 		ForumthreadID:      cm.ForumthreadID,
 		UsersIdusers:       cm.UsersIdusers,
-		LanguageIdlanguage: langID,
+		LanguageIdlanguage: cm.LanguageIdlanguage,
 		Written:            cm.Written,
 		Text:               cm.Text,
 	}); err != nil {

@@ -66,13 +66,32 @@ func TestCommentPageLockedThreadDisablesReply(t *testing.T) {
 		AddRow(1, 1, 2, 1, "hi", time.Unix(0, 0), "bob", 0, false)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT b.idblogs")).WithArgs(int32(2), int32(2), int32(1), int32(2), int32(2), sql.NullInt32{Int32: 2, Valid: true}).WillReturnRows(blogRows)
 
-	threadRows := sqlmock.NewRows([]string{"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername"}).
+	threadRows1 := sqlmock.NewRows([]string{"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername"}).
 		AddRow(1, 1, 1, 1, 0, time.Unix(0, 0), true, "bob")
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT th.idforumthread")).WithArgs(int32(2), int32(1), int32(2), int32(2), sql.NullInt32{Int32: 2, Valid: true}).WillReturnRows(threadRows)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT th.idforumthread")).WithArgs(
+		int32(2),
+		int32(1),
+		int32(2),
+		int32(2),
+		sql.NullInt32{Int32: 2, Valid: true},
+	).WillReturnRows(threadRows1)
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT c.idcomments")).
 		WithArgs(int32(2), int32(2), int32(1), int32(2), int32(2), "blogs", sql.NullString{String: "entry", Valid: true}, sql.NullInt32{Int32: 2, Valid: true}).
 		WillReturnRows(sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_idlanguage", "written", "text", "deleted_at", "posterusername"}))
+
+	threadRows2 := sqlmock.NewRows([]string{"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked"}).
+		AddRow(1, 1, 1, 1, 0, time.Unix(0, 0), true)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT th.idforumthread")).WithArgs(
+		int32(2),
+		int32(1),
+		int32(2),
+		int32(2),
+		"blogs",
+		sql.NullString{String: "entry", Valid: true},
+		sql.NullInt32{Int32: 1, Valid: true},
+		sql.NullInt32{Int32: 2, Valid: true},
+	).WillReturnRows(threadRows2)
 
 	rr := httptest.NewRecorder()
 	CommentPage(rr, req)
@@ -110,13 +129,32 @@ func TestCommentPageUnlockedThreadShowsReply(t *testing.T) {
 		AddRow(1, 1, 2, 1, "hi", time.Unix(0, 0), "bob", 0, false)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT b.idblogs")).WithArgs(int32(2), int32(2), int32(1), int32(2), int32(2), sql.NullInt32{Int32: 2, Valid: true}).WillReturnRows(blogRows)
 
-	threadRows := sqlmock.NewRows([]string{"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername"}).
+	threadRows1 := sqlmock.NewRows([]string{"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername"}).
 		AddRow(1, 1, 1, 1, 0, time.Unix(0, 0), false, "bob")
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT th.idforumthread")).WithArgs(int32(2), int32(1), int32(2), int32(2), sql.NullInt32{Int32: 2, Valid: true}).WillReturnRows(threadRows)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT th.idforumthread")).WithArgs(
+		int32(2),
+		int32(1),
+		int32(2),
+		int32(2),
+		sql.NullInt32{Int32: 2, Valid: true},
+	).WillReturnRows(threadRows1)
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT c.idcomments")).
 		WithArgs(int32(2), int32(2), int32(1), int32(2), int32(2), "blogs", sql.NullString{String: "entry", Valid: true}, sql.NullInt32{Int32: 2, Valid: true}).
 		WillReturnRows(sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_idlanguage", "written", "text", "deleted_at", "posterusername"}))
+
+	threadRows2 := sqlmock.NewRows([]string{"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked"}).
+		AddRow(1, 1, 1, 1, 0, time.Unix(0, 0), false)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT th.idforumthread")).WithArgs(
+		int32(2),
+		int32(1),
+		int32(2),
+		int32(2),
+		"blogs",
+		sql.NullString{String: "entry", Valid: true},
+		sql.NullInt32{Int32: 1, Valid: true},
+		sql.NullInt32{Int32: 2, Valid: true},
+	).WillReturnRows(threadRows2)
 
 	rr := httptest.NewRecorder()
 	CommentPage(rr, req)

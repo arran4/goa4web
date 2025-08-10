@@ -1611,11 +1611,11 @@ func (cd *CoreData) Preference() (*db.Preference, error) {
 // otherwise it resolves the site's default language name to an ID.
 func (cd *CoreData) PreferredLanguageID(siteDefault string) int32 {
 	id, err := cd.preferredLanguageID.Load(func() (int32, error) {
-                if pref, err := cd.Preference(); err == nil && pref != nil {
-                        if pref.LanguageIdlanguage.Valid {
-                                return pref.LanguageIdlanguage.Int32, nil
-                        }
-                }
+		if pref, err := cd.Preference(); err == nil && pref != nil {
+			if pref.LanguageIdlanguage.Valid {
+				return pref.LanguageIdlanguage.Int32, nil
+			}
+		}
 		if cd.queries == nil || siteDefault == "" {
 			return 0, nil
 		}
@@ -1928,10 +1928,18 @@ func (cd *CoreData) sectionThreadCanReply(section string, itemID int32) bool {
 	if section == "" || itemID == 0 || cd.currentThreadID == 0 {
 		return false
 	}
-	if !cd.HasGrant(section, sectionItemType(section), "reply", itemID) {
+	if cd.queries == nil {
 		return false
 	}
-	th, err := cd.ForumThreadByID(cd.currentThreadID)
+	it := sectionItemType(section)
+	th, err := cd.queries.GetThreadBySectionThreadIDForReplier(cd.ctx, db.GetThreadBySectionThreadIDForReplierParams{
+		ReplierID:      cd.UserID,
+		ThreadID:       cd.currentThreadID,
+		Section:        section,
+		ItemType:       sql.NullString{String: it, Valid: it != ""},
+		ItemID:         sql.NullInt32{Int32: itemID, Valid: true},
+		ReplierMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+	})
 	if err != nil || th == nil {
 		return false
 	}

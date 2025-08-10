@@ -6,7 +6,11 @@
         <tr>
             <td>{{ .News.String | a4code2html }}<br>-<br>{{ .Writername.String }}
             -
-            [<a href="/news/news/{{ .Idsitenews }}">{{ .Comments.Int32 }} COMMENTS</a>]
+            {{ if cd.SelectedThreadID }}
+                {{ .Comments.Int32 }} COMMENTS [<a href="#bottom">BOTTOM</a>]{{ if cd.SelectedThreadCanReply }} [<a href="#reply">REPLY</a>]{{ end }}
+            {{ else }}
+                [<a href="/news/news/{{ .Idsitenews }}">{{ .Comments.Int32 }} COMMENTS</a>]
+            {{ end }}
 
             {{ if cd.ShowEditNews .Idsitenews .UsersIdusers }}
                 [<a href="/news/news/{{ .Idsitenews }}/edit">EDIT</a>]

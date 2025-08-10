@@ -5,23 +5,18 @@
 {{ end }}
     {{ if cd.Marked "head" }}
         <head>
-                {{ if cd.PageTitle }}
-                <title>{{cd.PageTitle}} - {{cd.SiteTitle}}</title>
-                {{ else }}
-                <title>{{cd.SiteTitle}}</title>
-                {{ end }}
-                {{template "headdata"}}
-               <link rel="stylesheet" href="/main.css">
-               <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-               {{ if cd.HasModule "images" }}
-               <script src="/images/pasteimg.js"></script>
-               {{ end }}
-               {{ if and (cd.HasModule "websocket") cd.Config.NotificationsEnabled }}
-               <script src="/websocket/notifications.js"></script>
-               {{ end }}
-       {{ if cd.AutoRefresh }}
-            <meta http-equiv="refresh" content="{{cd.AutoRefresh}}">
-        {{ end }}
+       {{ if cd.PageTitle }}
+       <title>{{cd.PageTitle}} - {{cd.SiteTitle}}</title>
+       {{ else }}
+       <title>{{cd.SiteTitle}}</title>
+       {{ end }}
+       {{template "headdata"}}
+       <link rel="stylesheet" href="/main.css">
+       <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+       <meta name="viewport" content="width=device-width, initial-scale=1">
+       {{ if cd.HasModule "images" }}               <script src="/images/pasteimg.js"></script>               {{ end }}
+       {{ if and (cd.HasModule "websocket") cd.Config.NotificationsEnabled }}               <script src="/websocket/notifications.js"></script>               {{ end }}
+       {{ if cd.AutoRefresh }}            <meta http-equiv="refresh" content="{{cd.AutoRefresh}}">       {{ end }}
     </head>
     {{ end }}
     {{ if cd.Marked "bodyBegin" }}
@@ -31,6 +26,7 @@
             {{template "header"}}
         {{ end }}
     {{ if cd.Marked "body-table-begin" }}
+        <input type="checkbox" id="nav-toggle" class="nav-toggle">
         <div class="layout">
             <aside class="sidebar">{{template "index" $}}</aside>
             <main class="content">

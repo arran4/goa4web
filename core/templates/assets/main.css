@@ -48,6 +48,16 @@ textarea {
         position: relative;
 }
 
+.nav-toggle {
+        display: none;
+}
+
+.hamburger {
+        display: none;
+        font-size: 1.5em;
+        cursor: pointer;
+}
+
 .layout {
         display: flex;
         flex: 1;
@@ -413,5 +423,51 @@ tr.unsupported td {
 
 .body {
        flex: 1;
+}
+
+@media (max-width: 600px) {
+       .navbar {
+               flex-direction: column;
+               align-items: flex-start;
+       }
+
+       .navbar-left,
+       .navbar-right,
+       .navbar-center {
+               width: 100%;
+               text-align: left;
+       }
+
+       .hamburger {
+               display: block;
+       }
+
+       .logout-link {
+               display: none;
+       }
+
+       .layout {
+               flex-direction: column;
+       }
+
+       .sidebar {
+               width: 100%;
+               padding-right: 0;
+               display: none;
+       }
+
+       .nav-toggle:checked ~ .layout .sidebar {
+               display: block;
+       }
+
+       .comment {
+               flex-direction: column;
+       }
+
+       .author {
+               width: 100%;
+               margin-right: 0;
+               margin-bottom: 0.5em;
+       }
 }
 

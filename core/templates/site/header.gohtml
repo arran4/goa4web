@@ -1,6 +1,7 @@
 {{define "header"}}
 <header class="navbar">
     <div class="navbar-left">
+        <label for="nav-toggle" class="hamburger" aria-label="Toggle navigation">&#9776;</label>
         {{ if cd.HasRole "administrator" }}
             {{ if cd.AdminMode }}
                 <a href="?">Disable admin mode</a>
@@ -30,8 +31,8 @@
     </div>
     <div class="navbar-right user-links">
         {{ if cd.UserID }}
-            {{ with $u := cd.CurrentUserLoaded }}{{ if $u }}<span class="username">{{ $u.Username.String }}</span>{{ end }}{{ end }}
-            <a href="/usr/logout">Logout</a>
+        {{ with $u := cd.CurrentUserLoaded }}{{ if $u }}<span class="username">{{ $u.Username.String }}</span>{{ end }}{{ end }}
+        <a href="/usr/logout" class="logout-link">Logout</a>
         {{ else }}
             <a href="/login">Login</a>
             <a href="/register">Register</a>

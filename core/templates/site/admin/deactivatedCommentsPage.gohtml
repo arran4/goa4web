@@ -1,0 +1,13 @@
+{{ template "head" $ }}
+<h2>Deactivated Comments</h2>
+<table border="1">
+<tr><th>ID</th><th>Excerpt</th><th>Link</th></tr>
+{{- range .Comments }}
+<tr>
+<td>{{ .Idcomments }}</td>
+<td>{{ if .Text.Valid }}{{ left 40 .Text.String }}{{ end }}</td>
+<td><a href="/admin/comment/{{ .Idcomments }}">View</a></td>
+</tr>
+{{- end }}
+</table>
+{{ template "tail" $ }}

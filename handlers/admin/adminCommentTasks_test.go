@@ -78,15 +78,34 @@ func TestEditCommentTask_UsesURLParam(t *testing.T) {
 	}
 }
 
-func TestBanCommentTask_UsesURLParam(t *testing.T) {
+func TestDeactivateCommentTask_UsesURLParam(t *testing.T) {
 	rr, req, conn, mock := setupCommentTest(t, 33, nil)
 	defer conn.Close()
 	rows := sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_idlanguage", "written", "text", "deleted_at", "last_index", "username", "is_owner"}).
 		AddRow(33, 2, 3, 1, time.Now(), "body", nil, nil, "user", true)
 	mock.ExpectQuery("SELECT").WillReturnRows(rows)
+	mock.ExpectQuery("SELECT").WithArgs(int32(33)).WillReturnRows(sqlmock.NewRows([]string{"is_deactivated"}).AddRow(false))
 	mock.ExpectExec("INSERT").WithArgs(int32(33), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectExec("UPDATE").WithArgs(sqlmock.AnyArg(), int32(33)).WillReturnResult(sqlmock.NewResult(0, 1))
-	if err, ok := banCommentTask.Action(rr, req).(error); ok && err != nil {
+	if err, ok := deactivateCommentTask.Action(rr, req).(error); ok && err != nil {
+		t.Fatalf("Action: %v", err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expect: %v", err)
+	}
+}
+
+func TestRestoreCommentTask_UsesURLParam(t *testing.T) {
+	rr, req, conn, mock := setupCommentTest(t, 44, nil)
+	defer conn.Close()
+	rows := sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_idlanguage", "written", "text", "deleted_at", "last_index", "username", "is_owner"}).
+		AddRow(44, 2, 3, 1, time.Now(), "", nil, nil, "user", true)
+	mock.ExpectQuery("SELECT").WillReturnRows(rows)
+	mock.ExpectQuery("SELECT").WithArgs(int32(44)).WillReturnRows(sqlmock.NewRows([]string{"is_deactivated"}).AddRow(true))
+	mock.ExpectQuery("SELECT").WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnRows(sqlmock.NewRows([]string{"idcomments", "text"}).AddRow(44, "body"))
+	mock.ExpectExec("UPDATE").WithArgs("body", int32(44)).WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec("UPDATE").WithArgs(int32(44)).WillReturnResult(sqlmock.NewResult(0, 1))
+	if err, ok := restoreCommentTask.Action(rr, req).(error); ok && err != nil {
 		t.Fatalf("Action: %v", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {

@@ -45,6 +45,13 @@ func (c *blogDeactivateCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("fetch blog: %w", err)
 	}
+	deactivated, err := queries.AdminIsBlogDeactivated(ctx, b.Idblogs)
+	if err != nil {
+		return fmt.Errorf("check deactivated: %w", err)
+	}
+	if deactivated {
+		return fmt.Errorf("blog already deactivated")
+	}
 	var threadID int32
 	if b.ForumthreadID.Valid {
 		threadID = b.ForumthreadID.Int32

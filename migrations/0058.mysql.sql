@@ -10,11 +10,11 @@ UPDATE linker_queue SET linker_category_id = NULL WHERE linker_category_id = 0;
 UPDATE deactivated_linker SET linker_category_id = NULL WHERE linker_category_id = 0;
 
 -- Allow null language for forum categories and topics
-UPDATE forumcategory SET language_idlanguage = NULL WHERE language_idlanguage = 0;
 ALTER TABLE forumcategory MODIFY COLUMN language_idlanguage INT NULL;
+UPDATE forumcategory SET language_idlanguage = NULL WHERE language_idlanguage = 0;
 
-UPDATE forumtopic SET language_idlanguage = NULL WHERE language_idlanguage = 0;
 ALTER TABLE forumtopic MODIFY COLUMN language_idlanguage INT NULL;
+UPDATE forumtopic SET language_idlanguage = NULL WHERE language_idlanguage = 0;
 
 -- Allow FAQ categories to be nullable
 ALTER TABLE faq

@@ -103,6 +103,12 @@ type Querier interface {
 	AdminInsertRequestComment(ctx context.Context, arg AdminInsertRequestCommentParams) error
 	AdminInsertRequestQueue(ctx context.Context, arg AdminInsertRequestQueueParams) (sql.Result, error)
 	AdminInsertWritingCategory(ctx context.Context, arg AdminInsertWritingCategoryParams) error
+	AdminIsBlogDeactivated(ctx context.Context, idblogs int32) (bool, error)
+	AdminIsCommentDeactivated(ctx context.Context, idcomments int32) (bool, error)
+	AdminIsImagepostDeactivated(ctx context.Context, idimagepost int32) (bool, error)
+	AdminIsLinkDeactivated(ctx context.Context, idlinker int32) (bool, error)
+	AdminIsUserDeactivated(ctx context.Context, idusers int32) (bool, error)
+	AdminIsWritingDeactivated(ctx context.Context, idwriting int32) (bool, error)
 	// AdminLanguageUsageCounts returns counts of content referencing a language.
 	AdminLanguageUsageCounts(ctx context.Context, arg AdminLanguageUsageCountsParams) (*AdminLanguageUsageCountsRow, error)
 	AdminListAdministratorEmails(ctx context.Context) ([]string, error)
@@ -118,6 +124,12 @@ type Querier interface {
 	AdminListArchivedRequests(ctx context.Context) ([]*AdminRequestQueue, error)
 	AdminListAuditLogs(ctx context.Context, arg AdminListAuditLogsParams) ([]*AdminListAuditLogsRow, error)
 	AdminListBoards(ctx context.Context, arg AdminListBoardsParams) ([]*Imageboard, error)
+	AdminListDeactivatedBlogs(ctx context.Context, arg AdminListDeactivatedBlogsParams) ([]*AdminListDeactivatedBlogsRow, error)
+	AdminListDeactivatedComments(ctx context.Context, arg AdminListDeactivatedCommentsParams) ([]*AdminListDeactivatedCommentsRow, error)
+	AdminListDeactivatedImageposts(ctx context.Context, arg AdminListDeactivatedImagepostsParams) ([]*AdminListDeactivatedImagepostsRow, error)
+	AdminListDeactivatedLinks(ctx context.Context, arg AdminListDeactivatedLinksParams) ([]*AdminListDeactivatedLinksRow, error)
+	AdminListDeactivatedUsers(ctx context.Context, arg AdminListDeactivatedUsersParams) ([]*AdminListDeactivatedUsersRow, error)
+	AdminListDeactivatedWritings(ctx context.Context, arg AdminListDeactivatedWritingsParams) ([]*AdminListDeactivatedWritingsRow, error)
 	AdminListExternalLinks(ctx context.Context, arg AdminListExternalLinksParams) ([]*ExternalLink, error)
 	// admin task
 	AdminListFailedEmails(ctx context.Context, arg AdminListFailedEmailsParams) ([]*AdminListFailedEmailsRow, error)

@@ -1,0 +1,11 @@
+{{.Prog}} comment <command>
+
+Commands:
+  deactivate   deactivate a comment
+  activate     restore a deactivated comment
+  list-deactivated  list deactivated comments
+
+Usage examples:
+  {{.Prog}} comment deactivate -id 1
+  {{.Prog}} comment activate -id 1
+  {{.Prog}} comment list-deactivated

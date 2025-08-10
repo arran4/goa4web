@@ -34,5 +34,10 @@ ALTER TABLE deactivated_blogs MODIFY COLUMN language_idlanguage INT NULL;
 UPDATE deactivated_linker SET language_idlanguage = NULL WHERE language_idlanguage = 0;
 ALTER TABLE deactivated_linker MODIFY COLUMN language_idlanguage INT NULL;
 
+UPDATE blogs SET forumthread_id = NULL WHERE forumthread_id = 0;
+
+ALTER TABLE blogs
+    MODIFY COLUMN forumthread_id int(10) DEFAULT NULL;
+
 -- Update schema version
 UPDATE schema_version SET version = 60 WHERE version = 59;

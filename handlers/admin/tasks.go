@@ -57,6 +57,12 @@ const (
 	// TaskDelete removes an existing item.
 	TaskDelete tasks.TaskString = "Delete"
 
+	// TaskDeactivate moves an item to the deactivated store.
+	TaskDeactivate tasks.TaskString = "Deactivate"
+
+	// TaskActivate restores a previously deactivated item.
+	TaskActivate tasks.TaskString = "Activate"
+
 	// TaskDeleteCategory removes a category.
 	TaskDeleteCategory tasks.TaskString = "Delete Category"
 

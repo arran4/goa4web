@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sort"
 	"sync"
 	"time"
 
@@ -194,6 +195,19 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 
 	log.Print("wait for goroutines")
 	wg.Wait()
+
+	ensureHandler := func(h string) {
+		for _, r := range data.ForumHandlers {
+			if r.Handler == h {
+				return
+			}
+		}
+		data.ForumHandlers = append(data.ForumHandlers, &db.AdminForumHandlerThreadCountsRow{Handler: h, Threads: 0, Comments: 0})
+	}
+	ensureHandler("private")
+	ensureHandler("all")
+	sort.Slice(data.ForumHandlers, func(i, j int) bool { return data.ForumHandlers[i].Handler < data.ForumHandlers[j].Handler })
+
 	log.Print("close error channel")
 	close(errCh)
 	errWG.Wait()

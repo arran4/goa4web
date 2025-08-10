@@ -1928,13 +1928,16 @@ func (cd *CoreData) SelectedThreadCanReply() bool {
 }
 
 func (cd *CoreData) sectionThreadCanReply(section string, itemID int32) bool {
-	if section == "" || itemID == 0 || cd.currentThreadID == 0 {
+	if section == "" || itemID == 0 {
 		return false
+	}
+	it := sectionItemType(section)
+	if cd.currentThreadID == 0 {
+		return cd.HasGrant(section, it, "reply", itemID)
 	}
 	if cd.queries == nil {
 		return false
 	}
-	it := sectionItemType(section)
 	th, err := cd.queries.GetThreadBySectionThreadIDForReplier(cd.ctx, db.GetThreadBySectionThreadIDForReplierParams{
 		ReplierID:      cd.UserID,
 		ThreadID:       cd.currentThreadID,

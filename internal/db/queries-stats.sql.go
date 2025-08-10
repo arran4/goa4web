@@ -56,10 +56,13 @@ func (q *Queries) AdminDeleteTemplateOverride(ctx context.Context, name string) 
 }
 
 const adminForumCategoryThreadCounts = `-- name: AdminForumCategoryThreadCounts :many
-SELECT c.idforumcategory, c.title, COUNT(th.idforumthread) AS count
+SELECT c.idforumcategory, c.title,
+       COUNT(DISTINCT th.idforumthread) AS threads,
+       COUNT(cm.idcomments) AS comments
 FROM forumcategory c
 LEFT JOIN forumtopic t ON c.idforumcategory = t.forumcategory_idforumcategory
 LEFT JOIN forumthread th ON th.forumtopic_idforumtopic = t.idforumtopic
+LEFT JOIN comments cm ON cm.forumthread_idforumthread = th.idforumthread
 GROUP BY c.idforumcategory
 ORDER BY c.title
 `
@@ -67,7 +70,8 @@ ORDER BY c.title
 type AdminForumCategoryThreadCountsRow struct {
 	Idforumcategory int32
 	Title           sql.NullString
-	Count           int64
+	Threads         int64
+	Comments        int64
 }
 
 func (q *Queries) AdminForumCategoryThreadCounts(ctx context.Context) ([]*AdminForumCategoryThreadCountsRow, error) {
@@ -79,7 +83,12 @@ func (q *Queries) AdminForumCategoryThreadCounts(ctx context.Context) ([]*AdminF
 	var items []*AdminForumCategoryThreadCountsRow
 	for rows.Next() {
 		var i AdminForumCategoryThreadCountsRow
-		if err := rows.Scan(&i.Idforumcategory, &i.Title, &i.Count); err != nil {
+		if err := rows.Scan(
+			&i.Idforumcategory,
+			&i.Title,
+			&i.Threads,
+			&i.Comments,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -94,16 +103,20 @@ func (q *Queries) AdminForumCategoryThreadCounts(ctx context.Context) ([]*AdminF
 }
 
 const adminForumHandlerThreadCounts = `-- name: AdminForumHandlerThreadCounts :many
-SELECT t.handler, COUNT(th.idforumthread) AS count
+SELECT t.handler,
+       COUNT(DISTINCT th.idforumthread) AS threads,
+       COUNT(c.idcomments) AS comments
 FROM forumtopic t
 LEFT JOIN forumthread th ON th.forumtopic_idforumtopic = t.idforumtopic
+LEFT JOIN comments c ON c.forumthread_idforumthread = th.idforumthread
 GROUP BY t.handler
 ORDER BY t.handler
 `
 
 type AdminForumHandlerThreadCountsRow struct {
-	Handler string
-	Count   int64
+	Handler  string
+	Threads  int64
+	Comments int64
 }
 
 func (q *Queries) AdminForumHandlerThreadCounts(ctx context.Context) ([]*AdminForumHandlerThreadCountsRow, error) {
@@ -115,7 +128,7 @@ func (q *Queries) AdminForumHandlerThreadCounts(ctx context.Context) ([]*AdminFo
 	var items []*AdminForumHandlerThreadCountsRow
 	for rows.Next() {
 		var i AdminForumHandlerThreadCountsRow
-		if err := rows.Scan(&i.Handler, &i.Count); err != nil {
+		if err := rows.Scan(&i.Handler, &i.Threads, &i.Comments); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -130,9 +143,12 @@ func (q *Queries) AdminForumHandlerThreadCounts(ctx context.Context) ([]*AdminFo
 }
 
 const adminForumTopicThreadCounts = `-- name: AdminForumTopicThreadCounts :many
-SELECT t.idforumtopic, t.title, t.handler, COUNT(th.idforumthread) AS count
+SELECT t.idforumtopic, t.title, t.handler,
+       COUNT(DISTINCT th.idforumthread) AS threads,
+       COUNT(c.idcomments) AS comments
 FROM forumtopic t
 LEFT JOIN forumthread th ON th.forumtopic_idforumtopic = t.idforumtopic
+LEFT JOIN comments c ON c.forumthread_idforumthread = th.idforumthread
 GROUP BY t.idforumtopic, t.title, t.handler
 ORDER BY t.title
 `
@@ -141,7 +157,8 @@ type AdminForumTopicThreadCountsRow struct {
 	Idforumtopic int32
 	Title        sql.NullString
 	Handler      string
-	Count        int64
+	Threads      int64
+	Comments     int64
 }
 
 func (q *Queries) AdminForumTopicThreadCounts(ctx context.Context) ([]*AdminForumTopicThreadCountsRow, error) {
@@ -157,7 +174,8 @@ func (q *Queries) AdminForumTopicThreadCounts(ctx context.Context) ([]*AdminForu
 			&i.Idforumtopic,
 			&i.Title,
 			&i.Handler,
-			&i.Count,
+			&i.Threads,
+			&i.Comments,
 		); err != nil {
 			return nil, err
 		}

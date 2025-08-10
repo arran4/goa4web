@@ -1,56 +1,80 @@
+-- BLOGS
+ALTER TABLE blogs
+  MODIFY COLUMN language_idlanguage INT UNSIGNED NULL,
+  ALTER COLUMN language_idlanguage DROP DEFAULT;
 UPDATE blogs SET language_idlanguage = NULL WHERE language_idlanguage = 0;
-ALTER TABLE blogs ALTER COLUMN language_idlanguage DROP NOT NULL;
-ALTER TABLE blogs ALTER COLUMN language_idlanguage DROP DEFAULT;
 
+-- COMMENTS
+ALTER TABLE comments
+  MODIFY COLUMN language_idlanguage INT UNSIGNED NULL,
+  ALTER COLUMN language_idlanguage DROP DEFAULT;
 UPDATE comments SET language_idlanguage = NULL WHERE language_idlanguage = 0;
-ALTER TABLE comments ALTER COLUMN language_idlanguage DROP NOT NULL;
-ALTER TABLE comments ALTER COLUMN language_idlanguage DROP DEFAULT;
 
+-- FAQ
+ALTER TABLE faq
+  MODIFY COLUMN language_idlanguage INT UNSIGNED NULL,
+  ALTER COLUMN language_idlanguage DROP DEFAULT;
 UPDATE faq SET language_idlanguage = NULL WHERE language_idlanguage = 0;
-ALTER TABLE faq ALTER COLUMN language_idlanguage DROP NOT NULL;
-ALTER TABLE faq ALTER COLUMN language_idlanguage DROP DEFAULT;
 
+-- LINKER
+ALTER TABLE linker
+  MODIFY COLUMN language_idlanguage INT UNSIGNED NULL,
+  ALTER COLUMN language_idlanguage DROP DEFAULT;
 UPDATE linker SET language_idlanguage = NULL WHERE language_idlanguage = 0;
-ALTER TABLE linker ALTER COLUMN language_idlanguage DROP NOT NULL;
-ALTER TABLE linker ALTER COLUMN language_idlanguage DROP DEFAULT;
 
+-- LINKER_QUEUE
+ALTER TABLE linker_queue
+  MODIFY COLUMN language_idlanguage INT UNSIGNED NULL,
+  ALTER COLUMN language_idlanguage DROP DEFAULT;
 UPDATE linker_queue SET language_idlanguage = NULL WHERE language_idlanguage = 0;
-ALTER TABLE linker_queue ALTER COLUMN language_idlanguage DROP NOT NULL;
-ALTER TABLE linker_queue ALTER COLUMN language_idlanguage DROP DEFAULT;
 
+-- PREFERENCES
+ALTER TABLE preferences
+  MODIFY COLUMN language_idlanguage INT UNSIGNED NULL,
+  ALTER COLUMN language_idlanguage DROP DEFAULT;
 UPDATE preferences SET language_idlanguage = NULL WHERE language_idlanguage = 0;
-ALTER TABLE preferences ALTER COLUMN language_idlanguage DROP NOT NULL;
-ALTER TABLE preferences ALTER COLUMN language_idlanguage DROP DEFAULT;
 
+-- SITE_NEWS
+ALTER TABLE site_news
+  MODIFY COLUMN language_idlanguage INT UNSIGNED NULL,
+  ALTER COLUMN language_idlanguage DROP DEFAULT;
 UPDATE site_news SET language_idlanguage = NULL WHERE language_idlanguage = 0;
-ALTER TABLE site_news ALTER COLUMN language_idlanguage DROP NOT NULL;
-ALTER TABLE site_news ALTER COLUMN language_idlanguage DROP DEFAULT;
 
+-- WRITING
+ALTER TABLE writing
+  MODIFY COLUMN language_idlanguage INT UNSIGNED NULL,
+  ALTER COLUMN language_idlanguage DROP DEFAULT;
 UPDATE writing SET language_idlanguage = NULL WHERE language_idlanguage = 0;
-ALTER TABLE writing ALTER COLUMN language_idlanguage DROP NOT NULL;
-ALTER TABLE writing ALTER COLUMN language_idlanguage DROP DEFAULT;
 
+-- DEACTIVATED_COMMENTS
+ALTER TABLE deactivated_comments
+  MODIFY COLUMN language_idlanguage INT UNSIGNED NULL,
+  ALTER COLUMN language_idlanguage DROP DEFAULT;
 UPDATE deactivated_comments SET language_idlanguage = NULL WHERE language_idlanguage = 0;
-ALTER TABLE deactivated_comments ALTER COLUMN language_idlanguage DROP NOT NULL;
-ALTER TABLE deactivated_comments ALTER COLUMN language_idlanguage DROP DEFAULT;
 
+-- DEACTIVATED_WRITINGS
+ALTER TABLE deactivated_writings
+  MODIFY COLUMN language_idlanguage INT UNSIGNED NULL,
+  ALTER COLUMN language_idlanguage DROP DEFAULT;
 UPDATE deactivated_writings SET language_idlanguage = NULL WHERE language_idlanguage = 0;
-ALTER TABLE deactivated_writings ALTER COLUMN language_idlanguage DROP NOT NULL;
-ALTER TABLE deactivated_writings ALTER COLUMN language_idlanguage DROP DEFAULT;
 
+-- DEACTIVATED_BLOGS
+ALTER TABLE deactivated_blogs
+  MODIFY COLUMN language_idlanguage INT UNSIGNED NULL,
+  ALTER COLUMN language_idlanguage DROP DEFAULT;
 UPDATE deactivated_blogs SET language_idlanguage = NULL WHERE language_idlanguage = 0;
-ALTER TABLE deactivated_blogs ALTER COLUMN language_idlanguage DROP NOT NULL;
-ALTER TABLE deactivated_blogs ALTER COLUMN language_idlanguage DROP DEFAULT;
 
+-- DEACTIVATED_LINKER
+ALTER TABLE deactivated_linker
+  MODIFY COLUMN language_idlanguage INT UNSIGNED NULL,
+  ALTER COLUMN language_idlanguage DROP DEFAULT;
 UPDATE deactivated_linker SET language_idlanguage = NULL WHERE language_idlanguage = 0;
-ALTER TABLE deactivated_linker ALTER COLUMN language_idlanguage DROP NOT NULL;
-ALTER TABLE deactivated_linker ALTER COLUMN language_idlanguage DROP DEFAULT;
 
+-- forumthread_id in blogs
+ALTER TABLE blogs
+  MODIFY COLUMN forumthread_id INT UNSIGNED NULL,
+  ALTER COLUMN forumthread_id DROP DEFAULT;
 UPDATE blogs SET forumthread_id = NULL WHERE forumthread_id = 0;
 
-ALTER TABLE blogs
-    ALTER COLUMN forumthread_id DROP DEFAULT,
-    ALTER COLUMN forumthread_id DROP NOT NULL;
-
--- Update schema version
+-- schema version
 UPDATE schema_version SET version = 60 WHERE version = 59;

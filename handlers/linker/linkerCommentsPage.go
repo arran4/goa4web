@@ -158,9 +158,9 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		if c, err := cd.CommentByID(int32(quoteId)); err == nil && c != nil {
 			switch replyType {
 			case "full":
-				data.Text = a4code.FullQuoteOf(c.Username.String, c.Text.String)
+				data.Text = a4code.QuoteText(c.Username.String, c.Text.String, a4code.WithFullQuote())
 			default:
-				data.Text = a4code.QuoteOfText(c.Username.String, c.Text.String)
+				data.Text = a4code.QuoteText(c.Username.String, c.Text.String)
 			}
 		}
 	}
@@ -238,8 +238,8 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	var ptid int32
 	if errors.Is(err, sql.ErrNoRows) {
 		ptidi, err := queries.CreateForumTopicForPoster(r.Context(), db.CreateForumTopicForPosterParams{
-                        ForumcategoryID: 0,
-                        ForumLang:       link.LanguageIdlanguage,
+			ForumcategoryID: 0,
+			ForumLang:       link.LanguageIdlanguage,
 			Title: sql.NullString{
 				String: LinkerTopicName,
 				Valid:  true,

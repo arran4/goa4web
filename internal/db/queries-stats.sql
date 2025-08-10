@@ -9,7 +9,7 @@ SELECT t.idforumtopic, t.title, t.handler,
        COUNT(c.idcomments) AS comments
 FROM forumtopic t
 LEFT JOIN forumthread th ON th.forumtopic_idforumtopic = t.idforumtopic
-LEFT JOIN comments c ON c.forumthread_idforumthread = th.idforumthread
+LEFT JOIN comments c ON c.forumthread_id = th.idforumthread
 GROUP BY t.idforumtopic, t.title, t.handler
 ORDER BY t.title;
 
@@ -20,7 +20,7 @@ SELECT c.idforumcategory, c.title,
 FROM forumcategory c
 LEFT JOIN forumtopic t ON c.idforumcategory = t.forumcategory_idforumcategory
 LEFT JOIN forumthread th ON th.forumtopic_idforumtopic = t.idforumtopic
-LEFT JOIN comments cm ON cm.forumthread_idforumthread = th.idforumthread
+LEFT JOIN comments cm ON cm.forumthread_id = th.idforumthread
 GROUP BY c.idforumcategory
 ORDER BY c.title;
 
@@ -30,7 +30,7 @@ SELECT t.handler,
        COUNT(c.idcomments) AS comments
 FROM forumtopic t
 LEFT JOIN forumthread th ON th.forumtopic_idforumtopic = t.idforumtopic
-LEFT JOIN comments c ON c.forumthread_idforumthread = th.idforumthread
+LEFT JOIN comments c ON c.forumthread_id = th.idforumthread
 GROUP BY t.handler
 ORDER BY t.handler;
 

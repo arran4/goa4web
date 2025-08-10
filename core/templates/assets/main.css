@@ -10,6 +10,7 @@ textarea {
         width: 100%;
         box-sizing: border-box;
         overflow-y: hidden;
+        min-height: 5em;
 }
 
 #bottom {

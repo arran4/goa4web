@@ -515,3 +515,37 @@ func TestSelectedThreadCanReplyGrantFallback(t *testing.T) {
 		t.Fatalf("expectations: %v", err)
 	}
 }
+
+func TestSelectedThreadCanReplyGrantFallbackNoThread(t *testing.T) {
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
+
+	queries := db.New(conn)
+	ctx := context.Background()
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
+	cd.UserID = 1
+	cd.SetCurrentSection("blogs")
+	blogID := int32(7)
+	cd.SetCurrentBlog(blogID)
+
+	grantRows := sqlmock.NewRows([]string{"1"}).AddRow(1)
+	mock.ExpectQuery("SELECT 1 FROM grants g").WithArgs(
+		int32(1),
+		"blogs",
+		sql.NullString{String: "entry", Valid: true},
+		"reply",
+		sql.NullInt32{Int32: blogID, Valid: true},
+		sql.NullInt32{Int32: 1, Valid: true},
+	).WillReturnRows(grantRows)
+
+	if !cd.SelectedThreadCanReply() {
+		t.Fatalf("SelectedThreadCanReply() = false; want true")
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}

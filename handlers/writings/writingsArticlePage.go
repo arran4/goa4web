@@ -107,9 +107,9 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		if c, err := cd.CommentByID(int32(quoteId)); err == nil && c != nil {
 			switch replyType {
 			case "full":
-				data.ReplyText = a4code.FullQuoteOf(c.Username.String, c.Text.String)
+				data.ReplyText = a4code.QuoteText(c.Username.String, c.Text.String, a4code.WithFullQuote())
 			default:
-				data.ReplyText = a4code.QuoteOfText(c.Username.String, c.Text.String)
+				data.ReplyText = a4code.QuoteText(c.Username.String, c.Text.String)
 			}
 		}
 	}

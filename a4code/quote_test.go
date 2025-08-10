@@ -4,8 +4,8 @@ import (
 	"testing"
 )
 
-func TestQuoteOf(t *testing.T) {
-	got := QuoteOfText("bob", "hello")
+func TestQuote(t *testing.T) {
+	got := QuoteText("bob", "hello")
 	want := "[quoteof \"bob\" hello]\n"
 	if got != want {
 		t.Errorf("got %q want %q", got, want)
@@ -33,9 +33,9 @@ func TestQuoteOf(t *testing.T) {
 	}
 }
 
-func TestFullQuoteOfParagraphs(t *testing.T) {
+func TestQuoteFullParagraphs(t *testing.T) {
 	text := "foo\n\nbar"
-	got := FullQuoteOf("bob", text)
+	got := QuoteText("bob", text, WithFullQuote())
 	want := "[quoteof \"bob\" foo]\n[quoteof \"bob\" bar]\n"
 	if got != want {
 		t.Errorf("got %q want %q", got, want)
@@ -59,9 +59,9 @@ func TestFullQuoteOfParagraphs(t *testing.T) {
 	}
 }
 
-func TestFullQuoteOfEscaping(t *testing.T) {
+func TestQuoteFullEscaping(t *testing.T) {
 	text := "see \\[bracket\\]"
-	got := FullQuoteOf("bob", text)
+	got := QuoteText("bob", text, WithFullQuote())
 	want := "[quoteof \"bob\" see [bracket]]\n"
 	if got != want {
 		t.Errorf("got %q want %q", got, want)
@@ -86,9 +86,9 @@ func TestFullQuoteOfEscaping(t *testing.T) {
 	}
 }
 
-func TestFullQuoteOfImage(t *testing.T) {
+func TestQuoteFullImage(t *testing.T) {
 	text := "[img http://example.com/foo.jpg]"
-	got := FullQuoteOf("bob", text)
+	got := QuoteText("bob", text, WithFullQuote())
 	want := "[quoteof \"bob\" [img http://example.com/foo.jpg]]\n"
 	if got != want {
 		t.Errorf("got %q want %q", got, want)
@@ -109,5 +109,13 @@ func TestFullQuoteOfImage(t *testing.T) {
 	}
 	if _, ok := q.Children[1].(*Image); !ok {
 		t.Fatalf("expected Image node, got %T", q.Children[1])
+	}
+}
+
+func TestQuoteTrim(t *testing.T) {
+	got := QuoteText("bob", " hello \n", WithTrimSpace())
+	want := "[quoteof \"bob\" hello]\n"
+	if got != want {
+		t.Errorf("got %q want %q", got, want)
 	}
 }

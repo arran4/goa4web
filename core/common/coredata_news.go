@@ -32,17 +32,17 @@ func (cd *CoreData) ThreadInfo(post *db.GetNewsPostByIdWithWriterIdAndThreadComm
 	}
 	pt, err := cd.queries.SystemGetForumTopicByTitle(cd.ctx, sql.NullString{String: newsTopicName, Valid: true})
 	if errors.Is(err, sql.ErrNoRows) {
-		id, err := cd.queries.CreateForumTopicForPoster(cd.ctx, db.CreateForumTopicForPosterParams{
-			ForumcategoryID: 0,
-			ForumLang:       sql.NullInt32{Int32: post.LanguageIdlanguage, Valid: post.LanguageIdlanguage != 0},
-			Title:           sql.NullString{String: newsTopicName, Valid: true},
-			Description:     sql.NullString{String: newsTopicDescription, Valid: true},
-			Handler:         "news",
-			Section:         "forum",
-			GrantCategoryID: sql.NullInt32{},
-			GranteeID:       sql.NullInt32{},
-			PosterID:        0,
-		})
+                id, err := cd.queries.CreateForumTopicForPoster(cd.ctx, db.CreateForumTopicForPosterParams{
+                        ForumcategoryID: 0,
+                        ForumLang:       post.LanguageIdlanguage,
+                        Title:           sql.NullString{String: newsTopicName, Valid: true},
+                        Description:     sql.NullString{String: newsTopicDescription, Valid: true},
+                        Handler:         "news",
+                        Section:         "forum",
+                        GrantCategoryID: sql.NullInt32{},
+                        GranteeID:       sql.NullInt32{},
+                        PosterID:        0,
+                })
 		if err != nil {
 			return ti, fmt.Errorf("create forum topic: %w", err)
 		}
@@ -126,12 +126,12 @@ func (cd *CoreData) UpdateNewsPost(postID, languageID, userID int32, text string
 		return nil
 	}
 	return cd.queries.UpdateNewsPostForWriter(cd.ctx, db.UpdateNewsPostForWriterParams{
-		PostID:      postID,
-		GrantPostID: sql.NullInt32{Int32: postID, Valid: true},
-		LanguageID:  languageID,
-		News:        sql.NullString{String: text, Valid: true},
-		GranteeID:   sql.NullInt32{Int32: userID, Valid: userID != 0},
-		WriterID:    userID,
+                PostID:      postID,
+                GrantPostID: sql.NullInt32{Int32: postID, Valid: true},
+                LanguageID:  sql.NullInt32{Int32: languageID, Valid: languageID != 0},
+                News:        sql.NullString{String: text, Valid: true},
+                GranteeID:   sql.NullInt32{Int32: userID, Valid: userID != 0},
+                WriterID:    userID,
 	})
 }
 
@@ -148,12 +148,12 @@ func (cd *CoreData) CreateNewsPost(languageID, userID int32, text string) (int64
 	if cd.queries == nil {
 		return 0, nil
 	}
-	id, err := cd.queries.CreateNewsPostForWriter(cd.ctx, db.CreateNewsPostForWriterParams{
-		LanguageID: languageID,
-		News:       sql.NullString{String: text, Valid: true},
-		WriterID:   userID,
-		GranteeID:  sql.NullInt32{Int32: userID, Valid: true},
-	})
+        id, err := cd.queries.CreateNewsPostForWriter(cd.ctx, db.CreateNewsPostForWriterParams{
+                LanguageID: sql.NullInt32{Int32: languageID, Valid: languageID != 0},
+                News:       sql.NullString{String: text, Valid: true},
+                WriterID:   userID,
+                GranteeID:  sql.NullInt32{Int32: userID, Valid: true},
+        })
 	if err != nil {
 		return 0, fmt.Errorf("create post: %w", err)
 	}

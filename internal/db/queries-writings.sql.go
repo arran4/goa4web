@@ -24,7 +24,7 @@ type AdminGetAllWritingsByAuthorRow struct {
 	Idwriting          int32
 	UsersIdusers       int32
 	ForumthreadID      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	WritingCategoryID  int32
 	Title              sql.NullString
 	Published          sql.NullTime
@@ -87,7 +87,7 @@ type AdminGetWritingsByCategoryIdRow struct {
 	Idwriting          int32
 	UsersIdusers       int32
 	ForumthreadID      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	WritingCategoryID  int32
 	Title              sql.NullString
 	Published          sql.NullTime
@@ -198,7 +198,7 @@ type CreateWritingForWriterParams struct {
 	Abstract          sql.NullString
 	Writing           sql.NullString
 	Private           sql.NullBool
-	LanguageID        int32
+	LanguageID        sql.NullInt32
 	WriterID          int32
 	GrantCategoryID   sql.NullInt32
 	GranteeID         sql.NullInt32
@@ -255,7 +255,7 @@ type GetAllWritingsByAuthorForListerRow struct {
 	Idwriting          int32
 	UsersIdusers       int32
 	ForumthreadID      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	WritingCategoryID  int32
 	Title              sql.NullString
 	Published          sql.NullTime
@@ -441,7 +441,7 @@ type GetWritingForListerByIDRow struct {
 	Idwriting          int32
 	UsersIdusers       int32
 	ForumthreadID      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	WritingCategoryID  int32
 	Title              sql.NullString
 	Published          sql.NullTime
@@ -487,7 +487,7 @@ type InsertWritingParams struct {
 	Abstract           sql.NullString
 	Writing            sql.NullString
 	Private            sql.NullBool
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	UsersIdusers       int32
 }
 
@@ -554,7 +554,7 @@ type ListPublicWritingsByUserForListerRow struct {
 	Idwriting          int32
 	UsersIdusers       int32
 	ForumthreadID      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	WritingCategoryID  int32
 	Title              sql.NullString
 	Published          sql.NullTime
@@ -660,7 +660,7 @@ type ListPublicWritingsInCategoryForListerRow struct {
 	Idwriting          int32
 	UsersIdusers       int32
 	ForumthreadID      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	WritingCategoryID  int32
 	Title              sql.NullString
 	Published          sql.NullTime
@@ -1015,7 +1015,7 @@ type ListWritingsByIDsForListerRow struct {
 	Idwriting          int32
 	UsersIdusers       int32
 	ForumthreadID      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	WritingCategoryID  int32
 	Title              sql.NullString
 	Published          sql.NullTime
@@ -1129,7 +1129,7 @@ type SystemListPublicWritingsByAuthorRow struct {
 	Idwriting          int32
 	UsersIdusers       int32
 	ForumthreadID      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	WritingCategoryID  int32
 	Title              sql.NullString
 	Published          sql.NullTime
@@ -1200,7 +1200,7 @@ type SystemListPublicWritingsInCategoryRow struct {
 	Idwriting          int32
 	UsersIdusers       int32
 	ForumthreadID      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	WritingCategoryID  int32
 	Title              sql.NullString
 	Published          sql.NullTime
@@ -1328,7 +1328,7 @@ type UpdateWritingForWriterParams struct {
 	Abstract   sql.NullString
 	Content    sql.NullString
 	Private    sql.NullBool
-	LanguageID int32
+	LanguageID sql.NullInt32
 	WritingID  int32
 	WriterID   int32
 	GranteeID  sql.NullInt32

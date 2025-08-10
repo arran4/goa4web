@@ -35,7 +35,7 @@ LIMIT 1;
 
 -- name: UpdateCommentForEditor :exec
 UPDATE comments c
-SET language_idlanguage = sqlc.arg(language_id), text = sqlc.arg(text)
+SET language_idlanguage = sqlc.narg(language_id), text = sqlc.arg(text)
 WHERE c.idcomments = sqlc.arg(comment_id)
   AND c.users_idusers = sqlc.arg(commenter_id)
   AND EXISTS (
@@ -99,7 +99,7 @@ ORDER BY c.written DESC
 
 -- name: CreateCommentInSectionForCommenter :execlastid
 INSERT INTO comments (language_idlanguage, users_idusers, forumthread_id, text, written)
-SELECT sqlc.arg(language_id), sqlc.narg(commenter_id), sqlc.arg(forumthread_id), sqlc.arg(text), NOW()
+SELECT sqlc.narg(language_id), sqlc.narg(commenter_id), sqlc.arg(forumthread_id), sqlc.arg(text), NOW()
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = sqlc.arg(section)

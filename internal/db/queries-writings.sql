@@ -104,7 +104,7 @@ SET title = sqlc.arg(title),
     abstract = sqlc.arg(abstract),
     writing = sqlc.arg(content),
     private = sqlc.arg(private),
-    language_idlanguage = sqlc.arg(language_id)
+    language_idlanguage = sqlc.narg(language_id)
 WHERE w.idwriting = sqlc.arg(writing_id)
   AND w.users_idusers = sqlc.arg(writer_id)
   AND EXISTS (
@@ -126,7 +126,7 @@ VALUES (?, ?, ?, ?, ?, ?, NOW(), ?);
 
 -- name: CreateWritingForWriter :execlastid
 INSERT INTO writing (writing_category_id, title, abstract, writing, private, language_idlanguage, published, users_idusers)
-SELECT sqlc.arg(writing_category_id), sqlc.arg(title), sqlc.arg(abstract), sqlc.arg(writing), sqlc.arg(private), sqlc.arg(language_id), NOW(), sqlc.arg(writer_id)
+SELECT sqlc.arg(writing_category_id), sqlc.arg(title), sqlc.arg(abstract), sqlc.arg(writing), sqlc.arg(private), sqlc.narg(language_id), NOW(), sqlc.arg(writer_id)
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='writing'

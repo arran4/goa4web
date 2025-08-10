@@ -53,7 +53,7 @@ func (c *blogDeactivateCmd) Run() error {
 		Idblogs:            b.Idblogs,
 		ForumthreadID:      threadID,
 		UsersIdusers:       b.UsersIdusers,
-		LanguageIdlanguage: b.LanguageIdlanguage.Int32,
+                LanguageIdlanguage: b.LanguageIdlanguage,
 		Blog:               b.Blog,
 		Written:            sql.NullTime{Time: b.Written, Valid: true},
 	}); err != nil {

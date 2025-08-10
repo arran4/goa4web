@@ -2,7 +2,7 @@ CREATE TABLE `blogs` (
   `idblogs` int(10) NOT NULL AUTO_INCREMENT,
   `forumthread_id` int(10) DEFAULT NULL,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
-  `language_idlanguage` int(10) NOT NULL DEFAULT 0,
+  `language_idlanguage` int(10) DEFAULT NULL,
   `blog` longtext DEFAULT NULL,
   `written` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `deleted_at` datetime DEFAULT NULL,
@@ -34,7 +34,7 @@ CREATE TABLE `comments` (
   `idcomments` int(10) NOT NULL AUTO_INCREMENT,
   `forumthread_id` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
-  `language_idlanguage` int(10) NOT NULL DEFAULT 0,
+  `language_idlanguage` int(10) DEFAULT NULL,
   `written` datetime DEFAULT NULL,
   `text` longtext DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
@@ -57,7 +57,7 @@ CREATE TABLE `comments_search` (
 CREATE TABLE `faq` (
   `idfaq` int(10) NOT NULL AUTO_INCREMENT,
   `faqCategories_idfaqCategories` int(10) DEFAULT NULL,
-  `language_idlanguage` int(10) NOT NULL DEFAULT 0,
+  `language_idlanguage` int(10) DEFAULT NULL,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `answer` mediumtext DEFAULT NULL,
   `question` mediumtext DEFAULT NULL,
@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS `faq_revisions` (
 CREATE TABLE `forumcategory` (
   `idforumcategory` int(10) NOT NULL AUTO_INCREMENT,
   `forumcategory_idforumcategory` int(10) NOT NULL DEFAULT 0,
-  `language_idlanguage` int(10) NOT NULL DEFAULT 0,
+  `language_idlanguage` int(10) DEFAULT NULL,
   `title` tinytext DEFAULT NULL,
   `description` mediumtext DEFAULT NULL,
   PRIMARY KEY (`idforumcategory`),
@@ -113,7 +113,7 @@ CREATE TABLE `forumtopic` (
   `idforumtopic` int(10) NOT NULL AUTO_INCREMENT,
   `lastposter` int(10) NOT NULL DEFAULT 0,
   `forumcategory_idforumcategory` int(10) NOT NULL DEFAULT 0,
-  `language_idlanguage` int(10) NOT NULL DEFAULT 0,
+  `language_idlanguage` int(10) DEFAULT NULL,
   `title` tinytext DEFAULT NULL,
   `description` mediumtext DEFAULT NULL,
   `threads` int(10) DEFAULT NULL,
@@ -172,7 +172,7 @@ CREATE TABLE `language` (
 
 CREATE TABLE `linker` (
   `idlinker` int(10) NOT NULL AUTO_INCREMENT,
-  `language_idlanguage` int(10) NOT NULL DEFAULT 0,
+  `language_idlanguage` int(10) DEFAULT NULL,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `linker_category_id` int(10) DEFAULT NULL,
   `forumthread_id` int(10) NOT NULL DEFAULT 0,
@@ -199,7 +199,7 @@ CREATE TABLE `linker_category` (
 
 CREATE TABLE `linker_queue` (
   `idlinkerQueue` int(10) NOT NULL AUTO_INCREMENT,
-  `language_idlanguage` int(10) NOT NULL DEFAULT 0,
+  `language_idlanguage` int(10) DEFAULT NULL,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `linker_category_id` int(10) DEFAULT NULL,
   `title` tinytext DEFAULT NULL,
@@ -258,7 +258,7 @@ CREATE TABLE `grants` (
 
 CREATE TABLE `preferences` (
   `idpreferences` int(10) NOT NULL AUTO_INCREMENT,
-  `language_idlanguage` int(10) NOT NULL DEFAULT 0,
+  `language_idlanguage` int(10) DEFAULT NULL,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `emailforumupdates` tinyint(1) DEFAULT 0,
   `page_size` int(10) NOT NULL DEFAULT 15,
@@ -287,7 +287,7 @@ CREATE TABLE `searchwordlist_has_linker` (
 CREATE TABLE `site_news` (
   `idsiteNews` int(10) NOT NULL AUTO_INCREMENT,
   `forumthread_id` int(10) NOT NULL DEFAULT 0,
-  `language_idlanguage` int(10) NOT NULL DEFAULT 0,
+  `language_idlanguage` int(10) DEFAULT NULL,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `news` longtext DEFAULT NULL,
   `occurred` datetime DEFAULT NULL,
@@ -354,7 +354,7 @@ CREATE TABLE `writing` (
   `idwriting` int(10) NOT NULL AUTO_INCREMENT,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `forumthread_id` int(10) NOT NULL DEFAULT 0,
-  `language_idlanguage` int(10) NOT NULL DEFAULT 0,
+  `language_idlanguage` int(10) DEFAULT NULL,
   `writing_category_id` int(10) NOT NULL DEFAULT 0,
   `title` tinytext DEFAULT NULL,
   `published` datetime DEFAULT NULL,
@@ -524,7 +524,7 @@ CREATE TABLE IF NOT EXISTS `deactivated_comments` (
   `idcomments` int NOT NULL,
   `forumthread_id` int NOT NULL,
   `users_idusers` int NOT NULL,
-  `language_idlanguage` int NOT NULL,
+  `language_idlanguage` int DEFAULT NULL,
   `written` datetime,
   `text` longtext,
   `deleted_at` datetime DEFAULT NULL,
@@ -536,7 +536,7 @@ CREATE TABLE IF NOT EXISTS `deactivated_writings` (
   `idwriting` int NOT NULL,
   `users_idusers` int NOT NULL,
   `forumthread_id` int NOT NULL,
-  `language_idlanguage` int NOT NULL,
+  `language_idlanguage` int DEFAULT NULL,
   `writing_category_id` int NOT NULL,
   `title` tinytext,
   `published` datetime,
@@ -552,7 +552,7 @@ CREATE TABLE IF NOT EXISTS `deactivated_blogs` (
   `idblogs` int NOT NULL,
   `forumthread_id` int NOT NULL,
   `users_idusers` int NOT NULL,
-  `language_idlanguage` int NOT NULL,
+  `language_idlanguage` int DEFAULT NULL,
   `blog` longtext,
   `written` datetime,
   `deleted_at` datetime DEFAULT NULL,
@@ -578,7 +578,7 @@ CREATE TABLE IF NOT EXISTS `deactivated_imageposts` (
 
 CREATE TABLE IF NOT EXISTS `deactivated_linker` (
   `idlinker` int NOT NULL,
-  `language_idlanguage` int NOT NULL,
+  `language_idlanguage` int DEFAULT NULL,
   `users_idusers` int NOT NULL,
   `linker_category_id` int DEFAULT NULL,
   `forumthread_id` int NOT NULL,

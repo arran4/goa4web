@@ -19,7 +19,7 @@ type AdminArchiveBlogParams struct {
 	Idblogs            int32
 	ForumthreadID      int32
 	UsersIdusers       int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	Blog               sql.NullString
 	Written            sql.NullTime
 }
@@ -45,7 +45,7 @@ type AdminArchiveCommentParams struct {
 	Idcomments         int32
 	ForumthreadID      int32
 	UsersIdusers       int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	Written            sql.NullTime
 	Text               sql.NullString
 }
@@ -103,7 +103,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
 
 type AdminArchiveLinkParams struct {
 	Idlinker           int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	UsersIdusers       int32
 	LinkerCategoryID   sql.NullInt32
 	ForumthreadID      int32
@@ -150,7 +150,7 @@ type AdminArchiveWritingParams struct {
 	Idwriting          int32
 	UsersIdusers       int32
 	ForumthreadID      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	WritingCategoryID  int32
 	Title              sql.NullString
 	Published          sql.NullTime

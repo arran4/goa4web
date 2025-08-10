@@ -11,13 +11,22 @@
 
 <h3>Threads per Forum Topic</h3>
 <table border="1">
-    <tr><th>ID</th><th>Topic</th><th>Threads</th></tr>
+    <tr><th>ID</th><th>Topic</th><th>Handler</th><th>Threads</th></tr>
     {{- range .ForumTopics }}
     <tr>
         <td><a href="/admin/forum/topics/topic/{{ .Idforumtopic }}/edit">{{ .Idforumtopic }}</a></td>
         <td><a href="/forum/topic/{{ .Idforumtopic }}">{{ .Title.String }}</a></td>
+        <td>{{ .Handler }}</td>
         <td>{{ .Count }}</td>
     </tr>
+    {{- end }}
+</table>
+
+<h3>Threads per Forum Handler</h3>
+<table border="1">
+    <tr><th>Handler</th><th>Threads</th></tr>
+    {{- range .ForumHandlers }}
+    <tr><td>{{ .Handler }}</td><td>{{ .Count }}</td></tr>
     {{- end }}
 </table>
 

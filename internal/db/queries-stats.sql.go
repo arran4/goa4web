@@ -93,17 +93,54 @@ func (q *Queries) AdminForumCategoryThreadCounts(ctx context.Context) ([]*AdminF
 	return items, nil
 }
 
-const adminForumTopicThreadCounts = `-- name: AdminForumTopicThreadCounts :many
-SELECT t.idforumtopic, t.title, COUNT(th.idforumthread) AS count
+const adminForumHandlerThreadCounts = `-- name: AdminForumHandlerThreadCounts :many
+SELECT t.handler, COUNT(th.idforumthread) AS count
 FROM forumtopic t
 LEFT JOIN forumthread th ON th.forumtopic_idforumtopic = t.idforumtopic
-GROUP BY t.idforumtopic
+GROUP BY t.handler
+ORDER BY t.handler
+`
+
+type AdminForumHandlerThreadCountsRow struct {
+	Handler string
+	Count   int64
+}
+
+func (q *Queries) AdminForumHandlerThreadCounts(ctx context.Context) ([]*AdminForumHandlerThreadCountsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminForumHandlerThreadCounts)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminForumHandlerThreadCountsRow
+	for rows.Next() {
+		var i AdminForumHandlerThreadCountsRow
+		if err := rows.Scan(&i.Handler, &i.Count); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminForumTopicThreadCounts = `-- name: AdminForumTopicThreadCounts :many
+SELECT t.idforumtopic, t.title, t.handler, COUNT(th.idforumthread) AS count
+FROM forumtopic t
+LEFT JOIN forumthread th ON th.forumtopic_idforumtopic = t.idforumtopic
+GROUP BY t.idforumtopic, t.title, t.handler
 ORDER BY t.title
 `
 
 type AdminForumTopicThreadCountsRow struct {
 	Idforumtopic int32
 	Title        sql.NullString
+	Handler      string
 	Count        int64
 }
 
@@ -116,7 +153,12 @@ func (q *Queries) AdminForumTopicThreadCounts(ctx context.Context) ([]*AdminForu
 	var items []*AdminForumTopicThreadCountsRow
 	for rows.Next() {
 		var i AdminForumTopicThreadCountsRow
-		if err := rows.Scan(&i.Idforumtopic, &i.Title, &i.Count); err != nil {
+		if err := rows.Scan(
+			&i.Idforumtopic,
+			&i.Title,
+			&i.Handler,
+			&i.Count,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)

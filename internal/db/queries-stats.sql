@@ -4,10 +4,10 @@ FROM imagepost
 WHERE imageboard_idimageboard = ?;
 
 -- name: AdminForumTopicThreadCounts :many
-SELECT t.idforumtopic, t.title, COUNT(th.idforumthread) AS count
+SELECT t.idforumtopic, t.title, t.handler, COUNT(th.idforumthread) AS count
 FROM forumtopic t
 LEFT JOIN forumthread th ON th.forumtopic_idforumtopic = t.idforumtopic
-GROUP BY t.idforumtopic
+GROUP BY t.idforumtopic, t.title, t.handler
 ORDER BY t.title;
 
 -- name: AdminForumCategoryThreadCounts :many
@@ -17,6 +17,13 @@ LEFT JOIN forumtopic t ON c.idforumcategory = t.forumcategory_idforumcategory
 LEFT JOIN forumthread th ON th.forumtopic_idforumtopic = t.idforumtopic
 GROUP BY c.idforumcategory
 ORDER BY c.title;
+
+-- name: AdminForumHandlerThreadCounts :many
+SELECT t.handler, COUNT(th.idforumthread) AS count
+FROM forumtopic t
+LEFT JOIN forumthread th ON th.forumtopic_idforumtopic = t.idforumtopic
+GROUP BY t.handler
+ORDER BY t.handler;
 
 -- name: AdminImageboardPostCounts :many
 SELECT ib.idimageboard, ib.title, COUNT(ip.idimagepost) AS count

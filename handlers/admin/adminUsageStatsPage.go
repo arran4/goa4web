@@ -24,6 +24,7 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		Errors            []string
 		ForumTopics       []*db.AdminForumTopicThreadCountsRow
+		ForumHandlers     []*db.AdminForumHandlerThreadCountsRow
 		ForumCategories   []*db.AdminForumCategoryThreadCountsRow
 		WritingCategories []*db.AdminWritingCategoryCountsRow
 		LinkerCategories  []*db.GetLinkerCategoryLinkCountsRow
@@ -74,6 +75,20 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 			data.ForumTopics = rows
 		} else {
 			addErr("forum topic counts", err)
+		}
+	}()
+
+	log.Print("start forum handler counts")
+	wg.Add(1)
+	go func() {
+		defer func() {
+			log.Print("stop forum handler counts")
+			wg.Done()
+		}()
+		if rows, err := queries.AdminForumHandlerThreadCounts(ctx); err == nil {
+			data.ForumHandlers = rows
+		} else {
+			addErr("forum handler counts", err)
 		}
 	}()
 

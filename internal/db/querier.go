@@ -69,6 +69,7 @@ type Querier interface {
 	// admin task
 	AdminDemoteAnnouncement(ctx context.Context, id int32) error
 	AdminForumCategoryThreadCounts(ctx context.Context) ([]*AdminForumCategoryThreadCountsRow, error)
+	AdminForumHandlerThreadCounts(ctx context.Context) ([]*AdminForumHandlerThreadCountsRow, error)
 	AdminForumTopicThreadCounts(ctx context.Context) ([]*AdminForumTopicThreadCountsRow, error)
 	AdminGetAllBlogEntriesByUser(ctx context.Context, authorID int32) ([]*AdminGetAllBlogEntriesByUserRow, error)
 	AdminGetAllCommentsByUser(ctx context.Context, userID int32) ([]*AdminGetAllCommentsByUserRow, error)

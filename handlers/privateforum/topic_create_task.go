@@ -66,7 +66,11 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 			return fmt.Errorf("subscribe topic %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
-	return handlers.RefreshDirectHandler{TargetURL: fmt.Sprintf("/forum/topic/%d/thread/%d", topicID, threadID)}
+	base := cd.ForumBasePath
+	if base == "" {
+		base = "/forum"
+	}
+	return handlers.RefreshDirectHandler{TargetURL: fmt.Sprintf("%s/topic/%d/thread/%d", base, topicID, threadID)}
 }
 
 // AutoSubscribePath ensures conversation creators follow replies and future threads.
@@ -75,7 +79,11 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 // updates on subsequent comments.
 func (PrivateTopicCreateTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, error) {
 	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
-		return string(TaskPrivateTopicCreate), fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID), nil
+		base := "/forum"
+		if idx := strings.Index(evt.Path, "/topic/"); idx > 0 {
+			base = evt.Path[:idx]
+		}
+		return string(TaskPrivateTopicCreate), fmt.Sprintf("%s/topic/%d/thread/%d", base, data.TopicID, data.ThreadID), nil
 	}
 	return string(TaskPrivateTopicCreate), evt.Path, nil
 }

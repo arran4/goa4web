@@ -11,24 +11,35 @@
 
 <h3>Threads per Forum Topic</h3>
 <table border="1">
-    <tr><th>ID</th><th>Topic</th><th>Threads</th></tr>
+    <tr><th>ID</th><th>Topic</th><th>Handler</th><th>Threads</th><th>Comments</th></tr>
     {{- range .ForumTopics }}
     <tr>
         <td><a href="/admin/forum/topics/topic/{{ .Idforumtopic }}/edit">{{ .Idforumtopic }}</a></td>
         <td><a href="/forum/topic/{{ .Idforumtopic }}">{{ .Title.String }}</a></td>
-        <td>{{ .Count }}</td>
+        <td>{{ .Handler }}</td>
+        <td>{{ .Threads }}</td>
+        <td>{{ .Comments }}</td>
     </tr>
+    {{- end }}
+</table>
+
+<h3>Threads per Forum Handler</h3>
+<table border="1">
+    <tr><th>Handler</th><th>Threads</th><th>Comments</th></tr>
+    {{- range .ForumHandlers }}
+    <tr><td>{{ .Handler }}</td><td>{{ .Threads }}</td><td>{{ .Comments }}</td></tr>
     {{- end }}
 </table>
 
 <h3>Threads per Forum Category</h3>
 <table border="1">
-    <tr><th>ID</th><th>Category</th><th>Threads</th></tr>
+    <tr><th>ID</th><th>Category</th><th>Threads</th><th>Comments</th></tr>
     {{- range .ForumCategories }}
     <tr>
         <td><a href="/admin/forum/categories/category/{{ .Idforumcategory }}">{{ .Idforumcategory }}</a></td>
-        <td><a href="/forum/categories/category/{{ .Idforumcategory }}">{{ .Title.String }}</a></td>
-        <td>{{ .Count }}</td>
+        <td><a href="/forum/category/{{ .Idforumcategory }}">{{ .Title.String }}</a></td>
+        <td>{{ .Threads }}</td>
+        <td>{{ .Comments }}</td>
     </tr>
     {{- end }}
 </table>
@@ -83,9 +94,9 @@
 
 <h3>Monthly Usage (from {{ .StartYear }})</h3>
 <table border="1">
-    <tr><th>Year</th><th>Month</th><th>Blogs</th><th>News</th><th>Comments</th><th>Images</th><th>Links</th></tr>
+    <tr><th>Year</th><th>Month</th><th>Blogs</th><th>News</th><th>Comments</th><th>Images</th><th>Links</th><th>Writings</th></tr>
     {{- range .Monthly }}
-    <tr><td>{{ .Year }}</td><td>{{ .Month }}</td><td>{{ .Blogs }}</td><td>{{ .News }}</td><td>{{ .Comments }}</td><td>{{ .Images }}</td><td>{{ .Links }}</td></tr>
+    <tr><td>{{ .Year }}</td><td>{{ .Month }}</td><td>{{ .Blogs }}</td><td>{{ .News }}</td><td>{{ .Comments }}</td><td>{{ .Images }}</td><td>{{ .Links }}</td><td>{{ .Writings }}</td></tr>
     {{- end }}
 </table>
 

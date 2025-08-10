@@ -25,7 +25,7 @@ func TestThreadPageQuotePrefillsReply(t *testing.T) {
 	}
 	defer dbconn.Close()
 
-	mock.ExpectQuery(".*").
+	mock.ExpectQuery("SELECT th.idforumthread").
 		WithArgs(int32(1), int32(1), int32(1), int32(1), sql.NullInt32{Int32: 1, Valid: true}).
 		WillReturnRows(sqlmock.NewRows([]string{
 			"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername",
@@ -52,6 +52,21 @@ func TestThreadPageQuotePrefillsReply(t *testing.T) {
 	mock.ExpectQuery("SELECT category_path").
 		WithArgs(int32(1)).
 		WillReturnRows(sqlmock.NewRows([]string{"idforumcategory", "title"}))
+
+	mock.ExpectQuery("SELECT th.idforumthread").
+		WithArgs(
+			int32(1),
+			int32(1),
+			int32(1),
+			int32(1),
+			"forum",
+			sql.NullString{String: "topic", Valid: true},
+			sql.NullInt32{Int32: 1, Valid: true},
+			sql.NullInt32{Int32: 1, Valid: true},
+		).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked",
+		}).AddRow(int32(1), int32(1), int32(1), int32(1), sql.NullInt32{}, sql.NullTime{}, sql.NullBool{}))
 
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store

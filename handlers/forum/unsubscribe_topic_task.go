@@ -20,6 +20,9 @@ type unsubscribeTopicTask struct{ tasks.TaskString }
 
 var unsubscribeTopicTaskAction = &unsubscribeTopicTask{TaskString: TaskUnsubscribeFromTopic}
 
+// UnsubscribeTopicTaskHandler removes a topic subscription. Exported for reuse.
+var UnsubscribeTopicTaskHandler = unsubscribeTopicTaskAction
+
 var _ tasks.Task = (*unsubscribeTopicTask)(nil)
 
 func (unsubscribeTopicTask) Action(w http.ResponseWriter, r *http.Request) any {
@@ -34,5 +37,9 @@ func (unsubscribeTopicTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("delete subscription: %v", err)
 		return fmt.Errorf("delete subscription %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	return handlers.RedirectHandler(fmt.Sprintf("/forum/topic/%d", topicID))
+	base := cd.ForumBasePath
+	if base == "" {
+		base = "/forum"
+	}
+	return handlers.RedirectHandler(fmt.Sprintf("%s/topic/%d", base, topicID))
 }

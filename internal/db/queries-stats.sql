@@ -4,19 +4,35 @@ FROM imagepost
 WHERE imageboard_idimageboard = ?;
 
 -- name: AdminForumTopicThreadCounts :many
-SELECT t.idforumtopic, t.title, COUNT(th.idforumthread) AS count
+SELECT t.idforumtopic, t.title, t.handler,
+       COUNT(DISTINCT th.idforumthread) AS threads,
+       COUNT(c.idcomments) AS comments
 FROM forumtopic t
 LEFT JOIN forumthread th ON th.forumtopic_idforumtopic = t.idforumtopic
-GROUP BY t.idforumtopic
+LEFT JOIN comments c ON c.forumthread_idforumthread = th.idforumthread
+GROUP BY t.idforumtopic, t.title, t.handler
 ORDER BY t.title;
 
 -- name: AdminForumCategoryThreadCounts :many
-SELECT c.idforumcategory, c.title, COUNT(th.idforumthread) AS count
+SELECT c.idforumcategory, c.title,
+       COUNT(DISTINCT th.idforumthread) AS threads,
+       COUNT(cm.idcomments) AS comments
 FROM forumcategory c
 LEFT JOIN forumtopic t ON c.idforumcategory = t.forumcategory_idforumcategory
 LEFT JOIN forumthread th ON th.forumtopic_idforumtopic = t.idforumtopic
+LEFT JOIN comments cm ON cm.forumthread_idforumthread = th.idforumthread
 GROUP BY c.idforumcategory
 ORDER BY c.title;
+
+-- name: AdminForumHandlerThreadCounts :many
+SELECT t.handler,
+       COUNT(DISTINCT th.idforumthread) AS threads,
+       COUNT(c.idcomments) AS comments
+FROM forumtopic t
+LEFT JOIN forumthread th ON th.forumtopic_idforumtopic = t.idforumtopic
+LEFT JOIN comments c ON c.forumthread_idforumthread = th.idforumthread
+GROUP BY t.handler
+ORDER BY t.handler;
 
 -- name: AdminImageboardPostCounts :many
 SELECT ib.idimageboard, ib.title, COUNT(ip.idimagepost) AS count

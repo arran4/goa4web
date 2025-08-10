@@ -13,7 +13,6 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/lazy"
 )
 
 func TestCoreDataLatestNewsLazy(t *testing.T) {
@@ -448,19 +447,65 @@ func TestSelectedThreadCanReply(t *testing.T) {
 	threadID, topicID := int32(3), int32(2)
 	cd.SetCurrentThreadAndTopic(threadID, topicID)
 
-	if _, err := cd.ForumThreadByID(threadID, lazy.Set(&db.GetThreadLastPosterAndPermsRow{})); err != nil {
-		t.Fatalf("ForumThreadByID preload: %v", err)
-	}
-
-	mock.ExpectQuery("SELECT 1 FROM grants g JOIN roles").WithArgs("user", "administrator").WillReturnError(sql.ErrNoRows)
-	mock.ExpectQuery("SELECT 1 FROM grants").WithArgs(
+	rows := sqlmock.NewRows([]string{
+		"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked",
+	}).AddRow(threadID, 0, 0, topicID, nil, time.Now(), nil)
+	mock.ExpectQuery("SELECT th.idforumthread").WithArgs(
+		int32(1),
+		threadID,
+		int32(1),
 		int32(1),
 		"forum",
 		sql.NullString{String: "topic", Valid: true},
-		"reply",
 		sql.NullInt32{Int32: topicID, Valid: true},
 		sql.NullInt32{Int32: 1, Valid: true},
-	).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+	).WillReturnRows(rows)
+
+	if !cd.SelectedThreadCanReply() {
+		t.Fatalf("SelectedThreadCanReply() = false; want true")
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}
+
+func TestSelectedThreadCanReplyGrantFallback(t *testing.T) {
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
+
+	queries := db.New(conn)
+	ctx := context.Background()
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
+	cd.UserID = 1
+	cd.SetCurrentSection("blogs")
+	threadID, blogID := int32(5), int32(7)
+	cd.SetCurrentThreadAndTopic(threadID, 0)
+	cd.SetCurrentBlog(blogID)
+
+	mock.ExpectQuery("SELECT th.idforumthread").WithArgs(
+		int32(1),
+		threadID,
+		int32(1),
+		int32(1),
+		"blogs",
+		sql.NullString{String: "entry", Valid: true},
+		sql.NullInt32{Int32: blogID, Valid: true},
+		sql.NullInt32{Int32: 1, Valid: true},
+	).WillReturnError(sql.ErrNoRows)
+
+	grantRows := sqlmock.NewRows([]string{"1"}).AddRow(1)
+	mock.ExpectQuery("SELECT 1 FROM grants g").WithArgs(
+		int32(1),
+		"blogs",
+		sql.NullString{String: "entry", Valid: true},
+		"reply",
+		sql.NullInt32{Int32: blogID, Valid: true},
+		sql.NullInt32{Int32: 1, Valid: true},
+	).WillReturnRows(grantRows)
 
 	if !cd.SelectedThreadCanReply() {
 		t.Fatalf("SelectedThreadCanReply() = false; want true")

@@ -28,12 +28,14 @@
                 </form>
             {{ else }}
                 {{ $cmt.Text.String | a4code2html}}
-                {{ if cd.SelectedThreadCanReply }}
-                    [<a href="?quote={{ $cmt.Idcomments }}&type=full#reply">FULL REPLY</a>]
-                    [<a href="?quote={{ $cmt.Idcomments }}#reply">PARAGRAPH REPLY</a>]
-                {{ end }}
-                {{ if cd.CanEditComment $cmt }}[<a href="{{ cd.CommentEditURL $cmt }}">EDIT</a>]{{ end }}
-                {{ $admin := cd.CommentAdminURL $cmt }}{{ if $admin }}[<a href="{{ $admin }}">ADMIN</a>]{{ end }}
+                <footer>
+                    {{ if cd.SelectedThreadCanReply }}
+                        [<a href="?quote={{ $cmt.Idcomments }}&type=full#bottom">FULL REPLY</a>]
+                        [<a href="?quote={{ $cmt.Idcomments }}#bottom">PARAGRAPH REPLY</a>]
+                    {{ end }}
+                    {{ if cd.CanEditComment $cmt }}[<a href="{{ cd.CommentEditURL $cmt }}">EDIT</a>]{{ end }}
+                    {{ $admin := cd.CommentAdminURL $cmt }}{{ if $admin }}[<a href="{{ $admin }}">ADMIN</a>]{{ end }}
+                </footer>
             {{ end }}
         </section>
     </div>

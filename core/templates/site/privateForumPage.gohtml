@@ -1,7 +1,7 @@
 {{ define "privateForumPage" }}
     {{ template "head" $ }}
     <h1>Private Topics</h1>
-    {{ template "tableTopics" (dict "Topics" cd.PrivateTopics) }}
+    {{ template "tableTopics" (dict "Topics" cd.PrivateTopics "BasePath" "/private") }}
     {{ if cd.HasGrant "privateforum" "topic" "create" 0 }}
         <h2>Start group discussion</h2>
         <p>Add people to start a shared conversation.</p>

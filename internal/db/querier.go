@@ -69,6 +69,7 @@ type Querier interface {
 	// admin task
 	AdminDemoteAnnouncement(ctx context.Context, id int32) error
 	AdminForumCategoryThreadCounts(ctx context.Context) ([]*AdminForumCategoryThreadCountsRow, error)
+	AdminForumHandlerThreadCounts(ctx context.Context) ([]*AdminForumHandlerThreadCountsRow, error)
 	AdminForumTopicThreadCounts(ctx context.Context) ([]*AdminForumTopicThreadCountsRow, error)
 	AdminGetAllBlogEntriesByUser(ctx context.Context, authorID int32) ([]*AdminGetAllBlogEntriesByUserRow, error)
 	AdminGetAllCommentsByUser(ctx context.Context, userID int32) ([]*AdminGetAllCommentsByUserRow, error)
@@ -318,6 +319,7 @@ type Querier interface {
 	GetPreferenceForLister(ctx context.Context, listerID int32) (*Preference, error)
 	GetPublicProfileRoleForUser(ctx context.Context, usersIdusers int32) (int32, error)
 	GetPublicWritings(ctx context.Context, arg GetPublicWritingsParams) ([]*Writing, error)
+	GetThreadBySectionThreadIDForReplier(ctx context.Context, arg GetThreadBySectionThreadIDForReplierParams) (*Forumthread, error)
 	GetThreadLastPosterAndPerms(ctx context.Context, arg GetThreadLastPosterAndPermsParams) (*GetThreadLastPosterAndPermsRow, error)
 	// GetUnreadNotificationCountForLister returns the number of unread notifications for a
 	// lister.

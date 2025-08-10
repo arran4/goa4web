@@ -18,6 +18,9 @@ type topicThreadCommentEditActionTask struct{ tasks.TaskString }
 
 var topicThreadCommentEditAction = &topicThreadCommentEditActionTask{TaskString: TaskEditReply}
 
+// TopicThreadCommentEditActionHandler updates a comment. Exported for reuse.
+var TopicThreadCommentEditActionHandler = topicThreadCommentEditAction
+
 var _ tasks.Task = (*topicThreadCommentEditActionTask)(nil)
 
 func (topicThreadCommentEditActionTask) Action(w http.ResponseWriter, r *http.Request) any {
@@ -52,5 +55,9 @@ func (topicThreadCommentEditActionTask) Action(w http.ResponseWriter, r *http.Re
 		}
 	}
 
-	return handlers.RedirectHandler(fmt.Sprintf("/forum/topic/%d/thread/%d#comment-%d", topicRow.Idforumtopic, threadRow.Idforumthread, commentID))
+	base := cd.ForumBasePath
+	if base == "" {
+		base = "/forum"
+	}
+	return handlers.RedirectHandler(fmt.Sprintf("%s/topic/%d/thread/%d#comment-%d", base, topicRow.Idforumtopic, threadRow.Idforumthread, commentID))
 }

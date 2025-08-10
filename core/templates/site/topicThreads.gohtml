@@ -1,4 +1,6 @@
 {{ define "topicThreads" }}
+    {{ $base := "/forum" }}
+    {{ with .BasePath }}{{ $base = . }}{{ end }}
     <h2>Threads</h2>
     <div class="thread-list">
     {{- range .Threads }}
@@ -13,7 +15,7 @@
             <div class="thread-meta">
                 Lastposter: <span class="poster-name last">{{ .Lastposterusername.String }}</span>
                 At <span class="post-time last">{{ localTime .Lastaddition.Time }}</span>
-                [<a href="/forum/topic/{{.ForumtopicIdforumtopic}}/thread/{{ .Idforumthread }}">{{ .Comments.Int32 }} comments.</a>]
+                [<a href="/{{$base}}/topic/{{.ForumtopicIdforumtopic}}/thread/{{ .Idforumthread }}">{{ .Comments.Int32 }} comments.</a>]
             </div>
         </div>
     {{- end }}

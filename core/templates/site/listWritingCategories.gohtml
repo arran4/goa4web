@@ -4,7 +4,7 @@
         {{ $cats := cd.VisibleWritingCategories }}
         {{ $found := false }}
         {{ range $cats }}
-            {{ if eq .WritingCategoryID $.WritingCategoryID }}
+            {{ if eq .WritingCategoryID.Int32 $.WritingCategoryID }}
                 {{ $found = true }}
                 {{ $title := .Title.String }}
                 {{ $description := .Description.String }}

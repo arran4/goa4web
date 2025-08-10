@@ -339,6 +339,38 @@ tr.unsupported td {
        flex: 1;
 }
 
+/* Thread list styles */
+.thread-list {
+        width: 100%;
+}
+
+.thread {
+        border: 1px solid #000;
+        margin-bottom: 1em;
+}
+
+.thread-meta {
+        padding: 0.25em;
+}
+
+.thread-header {
+        background-color: lightgrey;
+}
+
+.thread-content {
+        padding: 0.25em;
+}
+
+.poster-name.first,
+.post-time.first {
+        color: green;
+}
+
+.poster-name.last,
+.post-time.last {
+        color: blue;
+}
+
 
 .comments {
        display: flex;

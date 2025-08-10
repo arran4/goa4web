@@ -48,7 +48,7 @@ func (c *faqReadCmd) Run() error {
 		return fmt.Errorf("get faq: %w", err)
 	}
 	for _, q := range rows {
-		if int(q.Idfaq) == c.ID {
+		if int(q.ID) == c.ID {
 			fmt.Printf("Q: %s\n", q.Question.String)
 			fmt.Printf("A: %s\n", q.Answer.String)
 			return nil

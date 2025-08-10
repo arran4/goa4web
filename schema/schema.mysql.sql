@@ -55,22 +55,22 @@ CREATE TABLE `comments_search` (
 );
 
 CREATE TABLE `faq` (
-  `idfaq` int(10) NOT NULL AUTO_INCREMENT,
-  `faqCategories_idfaqCategories` int(10) DEFAULT NULL,
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `faq_category_id` int(10) DEFAULT NULL,
   `language_idlanguage` int(10) DEFAULT NULL,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `answer` mediumtext DEFAULT NULL,
   `question` mediumtext DEFAULT NULL,
-  PRIMARY KEY (`idfaq`),
+  PRIMARY KEY (`id`),
   KEY `Table_21_FKIndex1` (`users_idusers`),
   KEY `Table_21_FKIndex2` (`language_idlanguage`),
-  KEY `Table_21_FKIndex3` (`faqCategories_idfaqCategories`)
+  KEY `Table_21_FKIndex3` (`faq_category_id`)
 );
 
 CREATE TABLE `faq_categories` (
-  `idfaqCategories` int(10) NOT NULL AUTO_INCREMENT,
+  `id` int(10) NOT NULL AUTO_INCREMENT,
   `name` tinytext DEFAULT NULL,
-  PRIMARY KEY (`idfaqCategories`)
+  PRIMARY KEY (`id`)
 );
 
 CREATE TABLE IF NOT EXISTS `faq_revisions` (

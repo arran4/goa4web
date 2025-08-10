@@ -40,7 +40,7 @@ func AdminEditQuestionPage(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	} else {
-		faq = &db.Faq{Idfaq: 0}
+		faq = &db.Faq{ID: 0}
 	}
 	cats, _ := queries.AdminGetFAQCategories(r.Context())
 	type Data struct {

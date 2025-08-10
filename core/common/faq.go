@@ -44,19 +44,19 @@ func (cd *CoreData) AllAnsweredFAQ() ([]*CategoryFAQs, error) {
 			current CategoryFAQs
 		)
 		for _, row := range faqRows {
-			if current.Category == nil || current.Category.Idfaqcategories.Int32 != row.Idfaqcategories.Int32 {
-				if current.Category != nil && current.Category.Idfaqcategories.Int32 != 0 {
+			if current.Category == nil || current.Category.CategoryID.Int32 != row.CategoryID.Int32 {
+				if current.Category != nil && current.Category.CategoryID.Int32 != 0 {
 					result = append(result, &current)
 				}
 				current = CategoryFAQs{Category: row}
 			}
 			current.FAQs = append(current.FAQs, &FAQ{
-				CategoryID: int(row.Idfaqcategories.Int32),
+				CategoryID: int(row.CategoryID.Int32),
 				Question:   row.Question.String,
 				Answer:     row.Answer.String,
 			})
 		}
-		if current.Category != nil && current.Category.Idfaqcategories.Int32 != 0 {
+		if current.Category != nil && current.Category.CategoryID.Int32 != 0 {
 			result = append(result, &current)
 		}
 		return result, nil
@@ -69,8 +69,8 @@ func (cd *CoreData) RenameFAQCategory(id int32, name string) error {
 		return nil
 	}
 	return cd.queries.AdminRenameFAQCategory(cd.ctx, db.AdminRenameFAQCategoryParams{
-		Name:            sql.NullString{String: name, Valid: true},
-		Idfaqcategories: id,
+		Name: sql.NullString{String: name, Valid: true},
+		ID:   id,
 	})
 }
 

@@ -1705,7 +1705,7 @@ func (cd *CoreData) SelectedQuestionFromCategory(questionID, categoryID int32) e
 	if err != nil {
 		return err
 	}
-	if !question.FaqcategoriesIdfaqcategories.Valid || question.FaqcategoriesIdfaqcategories.Int32 != categoryID {
+	if !question.FaqCategoryID.Valid || question.FaqCategoryID.Int32 != categoryID {
 		return fmt.Errorf("question %d not in category %d", questionID, categoryID)
 	}
 	return cd.queries.AdminDeleteFAQ(cd.ctx, questionID)
@@ -1718,10 +1718,10 @@ func (cd *CoreData) UpdateFAQQuestion(question, answer string, categoryID, faqID
 		return nil
 	}
 	if err := cd.queries.AdminUpdateFAQQuestionAnswer(cd.ctx, db.AdminUpdateFAQQuestionAnswerParams{
-		Answer:                       sql.NullString{String: answer, Valid: true},
-		Question:                     sql.NullString{String: question, Valid: true},
-		FaqcategoriesIdfaqcategories: sql.NullInt32{Int32: categoryID, Valid: categoryID != 0},
-		Idfaq:                        faqID,
+		Answer:        sql.NullString{String: answer, Valid: true},
+		Question:      sql.NullString{String: question, Valid: true},
+		FaqCategoryID: sql.NullInt32{Int32: categoryID, Valid: categoryID != 0},
+		ID:            faqID,
 	}); err != nil {
 		return err
 	}

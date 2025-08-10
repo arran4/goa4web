@@ -15,7 +15,7 @@
             <div class="thread-meta">
                 Lastposter: <span class="poster-name last">{{ .Lastposterusername.String }}</span>
                 At <span class="post-time last">{{ localTime .Lastaddition.Time }}</span>
-                [<a href="/{{$base}}/topic/{{.ForumtopicIdforumtopic}}/thread/{{ .Idforumthread }}">{{ .Comments.Int32 }} comments.</a>]
+                [<a href="{{$base}}/topic/{{.ForumtopicIdforumtopic}}/thread/{{ .Idforumthread }}">{{ .Comments.Int32 }} comments.</a>]
             </div>
         </div>
     {{- end }}

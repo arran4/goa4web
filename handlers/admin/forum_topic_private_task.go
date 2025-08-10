@@ -35,5 +35,5 @@ func (ConvertTopicToPrivateTask) Action(w http.ResponseWriter, r *http.Request) 
 	}); err != nil {
 		return fmt.Errorf("update topic handler %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	return handlers.RefreshDirectHandler{TargetURL: "/admin/grants/rules"}
+	return handlers.RefreshDirectHandler{TargetURL: "/admin/maintenance"}
 }

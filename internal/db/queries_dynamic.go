@@ -122,6 +122,7 @@ type MonthlyUsageRow struct {
 	Comments int64
 	Images   int64
 	Links    int64
+	Writings int64
 }
 
 // UserMonthlyUsageRow aggregates monthly post counts for a single user.
@@ -196,6 +197,7 @@ func (q *Queries) MonthlyUsageCounts(ctx context.Context, startYear int32) ([]*M
 		{"comments", "written", func(r *MonthlyUsageRow, n int64) { r.Comments = n }},
 		{"imagepost", "posted", func(r *MonthlyUsageRow, n int64) { r.Images = n }},
 		{"linker", "listed", func(r *MonthlyUsageRow, n int64) { r.Links = n }},
+		{"writing", "published", func(r *MonthlyUsageRow, n int64) { r.Writings = n }},
 	}
 
 	data := make(map[[2]int32]*MonthlyUsageRow)

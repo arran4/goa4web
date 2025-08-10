@@ -336,8 +336,15 @@ tr.unsupported td {
        margin-bottom: 0.2em;
 }
 
-.body {
+.comment .body {
        flex: 1;
+       display: flex;
+       flex-direction: column;
+}
+
+.comment .body footer {
+       margin-top: auto;
+       padding-top: 0.5em;
 }
 
 /* Thread list styles */

@@ -101,6 +101,8 @@ type CoreData struct {
 	SiteTitle         string
 	ForumBasePath     string // ForumBasePath holds the URL prefix for forum links.
 	UserID            int32
+	// routerModules tracks enabled router modules.
+	routerModules map[string]struct{}
 
 	session      *sessions.Session
 	sessionProxy SessionManager
@@ -1929,12 +1931,20 @@ func (cd *CoreData) sectionThreadCanReply(section string, itemID int32) bool {
 	if section == "" || itemID == 0 || cd.currentThreadID == 0 {
 		return false
 	}
-	if !cd.HasGrant(section, sectionItemType(section), "reply", itemID) {
+	if cd.queries == nil {
 		return false
 	}
-	th, err := cd.ForumThreadByID(cd.currentThreadID)
+	it := sectionItemType(section)
+	th, err := cd.queries.GetThreadBySectionThreadIDForReplier(cd.ctx, db.GetThreadBySectionThreadIDForReplierParams{
+		ReplierID:      cd.UserID,
+		ThreadID:       cd.currentThreadID,
+		Section:        section,
+		ItemType:       sql.NullString{String: it, Valid: it != ""},
+		ItemID:         sql.NullInt32{Int32: itemID, Valid: true},
+		ReplierMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+	})
 	if err != nil || th == nil {
-		return false
+		return cd.HasGrant(section, it, "reply", itemID)
 	}
 	if th.Locked.Valid && th.Locked.Bool {
 		return false
@@ -2557,6 +2567,19 @@ func WithNavRegistry(r NavigationProvider) CoreOption {
 	return func(cd *CoreData) { cd.Nav = r }
 }
 
+// WithRouterModules sets the enabled router modules on CoreData.
+func WithRouterModules(mods []string) CoreOption {
+	return func(cd *CoreData) {
+		if len(mods) == 0 {
+			return
+		}
+		cd.routerModules = make(map[string]struct{}, len(mods))
+		for _, m := range mods {
+			cd.routerModules[m] = struct{}{}
+		}
+	}
+}
+
 // WithCustomQueries sets the db.CustomQueries dependency.
 func WithCustomQueries(cq db.CustomQueries) CoreOption {
 	return func(cd *CoreData) { cd.customQueries = cq }
@@ -2652,6 +2675,15 @@ func ContainsItem(items []IndexItem, name string) bool {
 		}
 	}
 	return false
+}
+
+// HasModule reports whether the named router module is enabled.
+func (cd *CoreData) HasModule(name string) bool {
+	if cd == nil || cd.routerModules == nil {
+		return false
+	}
+	_, ok := cd.routerModules[name]
+	return ok
 }
 
 // LatestWritings returns recent public writings with permission data.

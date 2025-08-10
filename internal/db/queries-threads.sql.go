@@ -189,6 +189,71 @@ func (q *Queries) GetForumTopicIdByThreadId(ctx context.Context, idforumthread i
 	return forumtopic_idforumtopic, err
 }
 
+const getThreadBySectionThreadIDForReplier = `-- name: GetThreadBySectionThreadIDForReplier :one
+WITH role_ids AS (
+    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+)
+SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked
+FROM forumthread th
+LEFT JOIN comments fc ON th.firstpost = fc.idcomments
+WHERE th.idforumthread = ?
+  AND (
+      fc.language_idlanguage = 0
+      OR fc.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = ?
+            AND ul.language_idlanguage = fc.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
+  )
+  AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section = ?
+      AND (g.item = ? OR g.item IS NULL)
+      AND g.action = 'reply'
+      AND g.active = 1
+      AND (g.item_id = ? OR g.item_id IS NULL)
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+`
+
+type GetThreadBySectionThreadIDForReplierParams struct {
+	ReplierID      int32
+	ThreadID       int32
+	Section        string
+	ItemType       sql.NullString
+	ItemID         sql.NullInt32
+	ReplierMatchID sql.NullInt32
+}
+
+func (q *Queries) GetThreadBySectionThreadIDForReplier(ctx context.Context, arg GetThreadBySectionThreadIDForReplierParams) (*Forumthread, error) {
+	row := q.db.QueryRowContext(ctx, getThreadBySectionThreadIDForReplier,
+		arg.ReplierID,
+		arg.ThreadID,
+		arg.ReplierID,
+		arg.ReplierID,
+		arg.Section,
+		arg.ItemType,
+		arg.ItemID,
+		arg.ReplierMatchID,
+	)
+	var i Forumthread
+	err := row.Scan(
+		&i.Idforumthread,
+		&i.Firstpost,
+		&i.Lastposter,
+		&i.ForumtopicIdforumtopic,
+		&i.Comments,
+		&i.Lastaddition,
+		&i.Locked,
+	)
+	return &i, err
+}
+
 const getThreadLastPosterAndPerms = `-- name: GetThreadLastPosterAndPerms :one
 WITH role_ids AS (
     SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?

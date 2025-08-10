@@ -74,6 +74,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
 
 	writing, err := cd.Article()
 	if err != nil {

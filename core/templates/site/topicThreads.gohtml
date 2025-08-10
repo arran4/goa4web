@@ -2,26 +2,22 @@
     {{ $base := "/forum" }}
     {{ with .BasePath }}{{ $base = . }}{{ end }}
     <h2>Threads</h2>
+    <div class="thread-list">
     {{- range .Threads }}
-        <table width="100%" border=1>
-            <tr>
-                <td bgcolor="lightgrey">
-                    First poster: <font color="green">{{ .Firstpostusername.String }}</font> At <font color="green">{{ localTime .Firstpostwritten.Time }}</font>
-                </td>
-            </tr>
-            <tr>
-                <td bgcolor="">
-                    {{ .Firstposttext.String | a4code2html }}<br>
-                </td>
-            </tr>
-            <tr>
-                <td bgcolor="">
-                    Lastposter: <font color="blue">{{ .Lastposterusername.String }}</font>
-                    At <font color="blue">{{ localTime .Lastaddition.Time }}</font>
-                    [<a href="{{$base}}/topic/{{.ForumtopicIdforumtopic}}/thread/{{ .Idforumthread }}">{{ .Comments.Int32 }} comments.</a>]
-                </td>
-            </tr>
-        </table>
-        <br />
+        <div class="thread">
+            <div class="thread-meta thread-header">
+                First poster: <span class="poster-name first">{{ .Firstpostusername.String }}</span>
+                At <span class="post-time first">{{ localTime .Firstpostwritten.Time }}</span>
+            </div>
+            <div class="thread-content">
+                {{ .Firstposttext.String | a4code2html }}<br>
+            </div>
+            <div class="thread-meta">
+                Lastposter: <span class="poster-name last">{{ .Lastposterusername.String }}</span>
+                At <span class="post-time last">{{ localTime .Lastaddition.Time }}</span>
+                [<a href="/{{$base}}/topic/{{.ForumtopicIdforumtopic}}/thread/{{ .Idforumthread }}">{{ .Comments.Int32 }} comments.</a>]
+            </div>
+        </div>
     {{- end }}
+    </div>
 {{ end }}

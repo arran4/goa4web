@@ -13,8 +13,12 @@
                 {{template "headdata"}}
                <link rel="stylesheet" href="/main.css">
                <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+               {{ if cd.HasModule "images" }}
                <script src="/images/pasteimg.js"></script>
+               {{ end }}
+               {{ if and (cd.HasModule "websocket") cd.Config.NotificationsEnabled }}
                <script src="/websocket/notifications.js"></script>
+               {{ end }}
        {{ if cd.AutoRefresh }}
             <meta http-equiv="refresh" content="{{cd.AutoRefresh}}">
         {{ end }}

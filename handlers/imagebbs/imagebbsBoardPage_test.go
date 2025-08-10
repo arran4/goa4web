@@ -2,6 +2,7 @@ package imagebbs
 
 import (
 	"context"
+	"database/sql"
 	"net/http/httptest"
 	"regexp"
 	"strings"
@@ -27,13 +28,13 @@ func TestBoardPageRendersSubBoards(t *testing.T) {
 	boardRows := sqlmock.NewRows([]string{"idimageboard", "imageboard_idimageboard", "title", "description", "approval_required"}).
 		AddRow(4, 3, "child", "sub", false)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT b.idimageboard, b.imageboard_idimageboard, b.title")).
-		WithArgs(int32(0), int32(3), sqlmock.AnyArg(), int32(200), int32(0)).
+		WithArgs(int32(0), sql.NullInt32{Int32: 3, Valid: true}, sql.NullInt32{Int32: 3, Valid: true}, sqlmock.AnyArg(), int32(200), int32(0)).
 		WillReturnRows(boardRows)
 
 	postRows := sqlmock.NewRows([]string{"idimagepost", "forumthread_id", "users_idusers", "imageboard_idimageboard", "posted", "description", "thumbnail", "fullimage", "file_size", "approved", "deleted_at", "last_index", "username", "comments"}).
 		AddRow(1, 1, 1, 3, time.Unix(0, 0), "desc", "/t", "/f", 10, true, nil, nil, "alice", 0)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT i.idimagepost, i.forumthread_id, i.users_idusers")).
-		WithArgs(int32(0), int32(3), sqlmock.AnyArg(), int32(200), int32(0)).
+		WithArgs(int32(0), sql.NullInt32{Int32: 3, Valid: true}, sqlmock.AnyArg(), int32(200), int32(0)).
 		WillReturnRows(postRows)
 
 	req := httptest.NewRequest("GET", "/imagebbs/board/3", nil)

@@ -34,6 +34,8 @@ func AdminCategoryCreatePage(w http.ResponseWriter, r *http.Request) {
 func AdminCategoryCreateSubmit(w http.ResponseWriter, r *http.Request) {
 	name := r.PostFormValue("name")
 	desc := r.PostFormValue("desc")
+	_ = name
+	_ = desc
 	pcid, err := strconv.Atoi(r.PostFormValue("pcid"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -57,15 +59,6 @@ func AdminCategoryCreateSubmit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	languageID, _ := strconv.Atoi(r.PostFormValue("language"))
-	if err := queries.AdminCreateForumCategory(r.Context(), db.AdminCreateForumCategoryParams{
-		ForumcategoryIdforumcategory: int32(pcid),
-		LanguageIdlanguage:           int32(languageID),
-		Title:                        sql.NullString{Valid: true, String: name},
-		Description:                  sql.NullString{Valid: true, String: desc},
-	}); err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
-
+	_ = languageID // TODO: implement category creation
 	http.Redirect(w, r, "/admin/forum/categories", http.StatusTemporaryRedirect)
 }

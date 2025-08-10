@@ -34,7 +34,7 @@ func RssPage(w http.ResponseWriter, r *http.Request) {
 	for _, b := range boards {
 		rows, err := queries.ListImagePostsByBoardForLister(r.Context(), db.ListImagePostsByBoardForListerParams{
 			ListerID:     cd.UserID,
-			BoardID:      b.Idimageboard,
+			BoardID:      sql.NullInt32{Int32: b.Idimageboard, Valid: true},
 			ListerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 			Limit:        200,
 			Offset:       0,
@@ -72,7 +72,7 @@ func AtomPage(w http.ResponseWriter, r *http.Request) {
 	for _, b := range boards {
 		rows, err := queries.ListImagePostsByBoardForLister(r.Context(), db.ListImagePostsByBoardForListerParams{
 			ListerID:     cd.UserID,
-			BoardID:      b.Idimageboard,
+			BoardID:      sql.NullInt32{Int32: b.Idimageboard, Valid: true},
 			ListerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 			Limit:        200,
 			Offset:       0,
@@ -107,7 +107,7 @@ func BoardRssPage(w http.ResponseWriter, r *http.Request) {
 	}
 	rows, err := queries.ListImagePostsByBoardForLister(r.Context(), db.ListImagePostsByBoardForListerParams{
 		ListerID:     cd.UserID,
-		BoardID:      int32(bid),
+		BoardID:      sql.NullInt32{Int32: int32(bid), Valid: true},
 		ListerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		Limit:        200,
 		Offset:       0,
@@ -157,7 +157,7 @@ func BoardAtomPage(w http.ResponseWriter, r *http.Request) {
 	}
 	rows, err := queries.ListImagePostsByBoardForLister(r.Context(), db.ListImagePostsByBoardForListerParams{
 		ListerID:     cd.UserID,
-		BoardID:      int32(bid),
+		BoardID:      sql.NullInt32{Int32: int32(bid), Valid: true},
 		ListerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		Limit:        200,
 		Offset:       0,

@@ -19,7 +19,7 @@ type AdminArchiveBlogParams struct {
 	Idblogs            int32
 	ForumthreadID      int32
 	UsersIdusers       int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	Blog               sql.NullString
 	Written            sql.NullTime
 }
@@ -45,7 +45,7 @@ type AdminArchiveCommentParams struct {
 	Idcomments         int32
 	ForumthreadID      int32
 	UsersIdusers       int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	Written            sql.NullTime
 	Text               sql.NullString
 }
@@ -71,7 +71,7 @@ type AdminArchiveImagepostParams struct {
 	Idimagepost            int32
 	ForumthreadID          int32
 	UsersIdusers           int32
-	ImageboardIdimageboard int32
+	ImageboardIdimageboard sql.NullInt32
 	Posted                 sql.NullTime
 	Description            sql.NullString
 	Thumbnail              sql.NullString
@@ -103,9 +103,9 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
 
 type AdminArchiveLinkParams struct {
 	Idlinker           int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	UsersIdusers       int32
-	LinkerCategoryID   int32
+	LinkerCategoryID   sql.NullInt32
 	ForumthreadID      int32
 	Title              sql.NullString
 	Url                sql.NullString
@@ -150,7 +150,7 @@ type AdminArchiveWritingParams struct {
 	Idwriting          int32
 	UsersIdusers       int32
 	ForumthreadID      int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	WritingCategoryID  int32
 	Title              sql.NullString
 	Published          sql.NullTime
@@ -173,6 +173,348 @@ func (q *Queries) AdminArchiveWriting(ctx context.Context, arg AdminArchiveWriti
 		arg.Private,
 	)
 	return err
+}
+
+const adminIsBlogDeactivated = `-- name: AdminIsBlogDeactivated :one
+SELECT EXISTS(
+    SELECT 1 FROM deactivated_blogs
+    WHERE idblogs = ? AND restored_at IS NULL
+) AS is_deactivated
+`
+
+func (q *Queries) AdminIsBlogDeactivated(ctx context.Context, idblogs int32) (bool, error) {
+	row := q.db.QueryRowContext(ctx, adminIsBlogDeactivated, idblogs)
+	var is_deactivated bool
+	err := row.Scan(&is_deactivated)
+	return is_deactivated, err
+}
+
+const adminIsCommentDeactivated = `-- name: AdminIsCommentDeactivated :one
+SELECT EXISTS(
+    SELECT 1 FROM deactivated_comments
+    WHERE idcomments = ? AND restored_at IS NULL
+) AS is_deactivated
+`
+
+func (q *Queries) AdminIsCommentDeactivated(ctx context.Context, idcomments int32) (bool, error) {
+	row := q.db.QueryRowContext(ctx, adminIsCommentDeactivated, idcomments)
+	var is_deactivated bool
+	err := row.Scan(&is_deactivated)
+	return is_deactivated, err
+}
+
+const adminIsImagepostDeactivated = `-- name: AdminIsImagepostDeactivated :one
+SELECT EXISTS(
+    SELECT 1 FROM deactivated_imageposts
+    WHERE idimagepost = ? AND restored_at IS NULL
+) AS is_deactivated
+`
+
+func (q *Queries) AdminIsImagepostDeactivated(ctx context.Context, idimagepost int32) (bool, error) {
+	row := q.db.QueryRowContext(ctx, adminIsImagepostDeactivated, idimagepost)
+	var is_deactivated bool
+	err := row.Scan(&is_deactivated)
+	return is_deactivated, err
+}
+
+const adminIsLinkDeactivated = `-- name: AdminIsLinkDeactivated :one
+SELECT EXISTS(
+    SELECT 1 FROM deactivated_linker
+    WHERE idlinker = ? AND restored_at IS NULL
+) AS is_deactivated
+`
+
+func (q *Queries) AdminIsLinkDeactivated(ctx context.Context, idlinker int32) (bool, error) {
+	row := q.db.QueryRowContext(ctx, adminIsLinkDeactivated, idlinker)
+	var is_deactivated bool
+	err := row.Scan(&is_deactivated)
+	return is_deactivated, err
+}
+
+const adminIsUserDeactivated = `-- name: AdminIsUserDeactivated :one
+SELECT EXISTS(
+    SELECT 1 FROM deactivated_users
+    WHERE idusers = ? AND restored_at IS NULL
+) AS is_deactivated
+`
+
+func (q *Queries) AdminIsUserDeactivated(ctx context.Context, idusers int32) (bool, error) {
+	row := q.db.QueryRowContext(ctx, adminIsUserDeactivated, idusers)
+	var is_deactivated bool
+	err := row.Scan(&is_deactivated)
+	return is_deactivated, err
+}
+
+const adminIsWritingDeactivated = `-- name: AdminIsWritingDeactivated :one
+SELECT EXISTS(
+    SELECT 1 FROM deactivated_writings
+    WHERE idwriting = ? AND restored_at IS NULL
+) AS is_deactivated
+`
+
+func (q *Queries) AdminIsWritingDeactivated(ctx context.Context, idwriting int32) (bool, error) {
+	row := q.db.QueryRowContext(ctx, adminIsWritingDeactivated, idwriting)
+	var is_deactivated bool
+	err := row.Scan(&is_deactivated)
+	return is_deactivated, err
+}
+
+const adminListDeactivatedBlogs = `-- name: AdminListDeactivatedBlogs :many
+SELECT idblogs, blog FROM deactivated_blogs
+WHERE restored_at IS NULL
+LIMIT ? OFFSET ?
+`
+
+type AdminListDeactivatedBlogsParams struct {
+	Limit  int32
+	Offset int32
+}
+
+type AdminListDeactivatedBlogsRow struct {
+	Idblogs int32
+	Blog    sql.NullString
+}
+
+func (q *Queries) AdminListDeactivatedBlogs(ctx context.Context, arg AdminListDeactivatedBlogsParams) ([]*AdminListDeactivatedBlogsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListDeactivatedBlogs, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListDeactivatedBlogsRow
+	for rows.Next() {
+		var i AdminListDeactivatedBlogsRow
+		if err := rows.Scan(&i.Idblogs, &i.Blog); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminListDeactivatedComments = `-- name: AdminListDeactivatedComments :many
+SELECT idcomments, text FROM deactivated_comments
+WHERE restored_at IS NULL
+LIMIT ? OFFSET ?
+`
+
+type AdminListDeactivatedCommentsParams struct {
+	Limit  int32
+	Offset int32
+}
+
+type AdminListDeactivatedCommentsRow struct {
+	Idcomments int32
+	Text       sql.NullString
+}
+
+func (q *Queries) AdminListDeactivatedComments(ctx context.Context, arg AdminListDeactivatedCommentsParams) ([]*AdminListDeactivatedCommentsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListDeactivatedComments, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListDeactivatedCommentsRow
+	for rows.Next() {
+		var i AdminListDeactivatedCommentsRow
+		if err := rows.Scan(&i.Idcomments, &i.Text); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminListDeactivatedImageposts = `-- name: AdminListDeactivatedImageposts :many
+SELECT idimagepost, description, thumbnail, fullimage FROM deactivated_imageposts
+WHERE restored_at IS NULL
+LIMIT ? OFFSET ?
+`
+
+type AdminListDeactivatedImagepostsParams struct {
+	Limit  int32
+	Offset int32
+}
+
+type AdminListDeactivatedImagepostsRow struct {
+	Idimagepost int32
+	Description sql.NullString
+	Thumbnail   sql.NullString
+	Fullimage   sql.NullString
+}
+
+func (q *Queries) AdminListDeactivatedImageposts(ctx context.Context, arg AdminListDeactivatedImagepostsParams) ([]*AdminListDeactivatedImagepostsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListDeactivatedImageposts, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListDeactivatedImagepostsRow
+	for rows.Next() {
+		var i AdminListDeactivatedImagepostsRow
+		if err := rows.Scan(
+			&i.Idimagepost,
+			&i.Description,
+			&i.Thumbnail,
+			&i.Fullimage,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminListDeactivatedLinks = `-- name: AdminListDeactivatedLinks :many
+SELECT idlinker, title, url, description FROM deactivated_linker
+WHERE restored_at IS NULL
+LIMIT ? OFFSET ?
+`
+
+type AdminListDeactivatedLinksParams struct {
+	Limit  int32
+	Offset int32
+}
+
+type AdminListDeactivatedLinksRow struct {
+	Idlinker    int32
+	Title       sql.NullString
+	Url         sql.NullString
+	Description sql.NullString
+}
+
+func (q *Queries) AdminListDeactivatedLinks(ctx context.Context, arg AdminListDeactivatedLinksParams) ([]*AdminListDeactivatedLinksRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListDeactivatedLinks, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListDeactivatedLinksRow
+	for rows.Next() {
+		var i AdminListDeactivatedLinksRow
+		if err := rows.Scan(
+			&i.Idlinker,
+			&i.Title,
+			&i.Url,
+			&i.Description,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminListDeactivatedUsers = `-- name: AdminListDeactivatedUsers :many
+SELECT idusers, email, username FROM deactivated_users
+WHERE restored_at IS NULL
+LIMIT ? OFFSET ?
+`
+
+type AdminListDeactivatedUsersParams struct {
+	Limit  int32
+	Offset int32
+}
+
+type AdminListDeactivatedUsersRow struct {
+	Idusers  int32
+	Email    sql.NullString
+	Username sql.NullString
+}
+
+func (q *Queries) AdminListDeactivatedUsers(ctx context.Context, arg AdminListDeactivatedUsersParams) ([]*AdminListDeactivatedUsersRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListDeactivatedUsers, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListDeactivatedUsersRow
+	for rows.Next() {
+		var i AdminListDeactivatedUsersRow
+		if err := rows.Scan(&i.Idusers, &i.Email, &i.Username); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminListDeactivatedWritings = `-- name: AdminListDeactivatedWritings :many
+SELECT idwriting, title, writing, abstract, private FROM deactivated_writings
+WHERE restored_at IS NULL
+LIMIT ? OFFSET ?
+`
+
+type AdminListDeactivatedWritingsParams struct {
+	Limit  int32
+	Offset int32
+}
+
+type AdminListDeactivatedWritingsRow struct {
+	Idwriting int32
+	Title     sql.NullString
+	Writing   sql.NullString
+	Abstract  sql.NullString
+	Private   sql.NullBool
+}
+
+func (q *Queries) AdminListDeactivatedWritings(ctx context.Context, arg AdminListDeactivatedWritingsParams) ([]*AdminListDeactivatedWritingsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListDeactivatedWritings, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListDeactivatedWritingsRow
+	for rows.Next() {
+		var i AdminListDeactivatedWritingsRow
+		if err := rows.Scan(
+			&i.Idwriting,
+			&i.Title,
+			&i.Writing,
+			&i.Abstract,
+			&i.Private,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const adminListPendingDeactivatedBlogs = `-- name: AdminListPendingDeactivatedBlogs :many

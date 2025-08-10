@@ -1,7 +1,7 @@
 -- name: AdminGetFAQUnansweredQuestions :many
 SELECT *
 FROM faq
-WHERE faqCategories_idfaqCategories = '0' OR answer IS NULL;
+WHERE faqCategories_idfaqCategories IS NULL OR answer IS NULL;
 
 -- name: GetFAQAnsweredQuestions :many
 WITH role_ids AS (
@@ -57,7 +57,7 @@ INSERT INTO faq_categories (name) VALUES (sqlc.arg(name));
 
 -- name: CreateFAQQuestionForWriter :exec
 INSERT INTO faq (question, users_idusers, language_idlanguage)
-SELECT sqlc.arg(question), sqlc.arg(writer_id), sqlc.arg(language_id)
+SELECT sqlc.arg(question), sqlc.arg(writer_id), sqlc.narg(language_id)
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'faq'
@@ -72,7 +72,7 @@ WHERE EXISTS (
 
 -- name: InsertFAQQuestionForWriter :execresult
 INSERT INTO faq (question, answer, faqCategories_idfaqCategories, users_idusers, language_idlanguage)
-SELECT sqlc.arg(question), sqlc.arg(answer), sqlc.arg(category_id), sqlc.arg(writer_id), sqlc.arg(language_id)
+SELECT sqlc.arg(question), sqlc.arg(answer), sqlc.arg(category_id), sqlc.arg(writer_id), sqlc.narg(language_id)
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'faq'
@@ -105,7 +105,7 @@ WITH role_ids AS (
 SELECT c.idfaqCategories, c.name, f.idfaq, f.faqCategories_idfaqCategories, f.language_idlanguage, f.users_idusers, f.answer, f.question
 FROM faq f
 LEFT JOIN faq_categories c ON c.idfaqCategories = f.faqCategories_idfaqCategories
-WHERE c.idfaqCategories <> 0
+WHERE c.idfaqCategories IS NOT NULL
   AND f.answer IS NOT NULL
   AND (
       f.language_idlanguage = 0

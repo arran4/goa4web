@@ -1,6 +1,7 @@
 package languages
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -46,7 +47,7 @@ func adminLanguagePage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Not Found"))
 		return
 	}
-	counts, err := cd.Queries().AdminLanguageUsageCounts(r.Context(), db.AdminLanguageUsageCountsParams{ID: int32(id)})
+	counts, err := cd.Queries().AdminLanguageUsageCounts(r.Context(), db.AdminLanguageUsageCountsParams{LangID: sql.NullInt32{Int32: int32(id), Valid: true}})
 	if err != nil {
 		handlers.RenderErrorPage(w, r, err)
 		return

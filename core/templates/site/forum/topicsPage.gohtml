@@ -1,9 +1,9 @@
 {{ template "head" $ }}
 
-    <h1>Topic: {{ .Topic.Title.String }}</h1>
     {{ if .Category }}
-        <h2>Category: {{ .Category.Title.String }}</h2>
+        <h1>Category: {{ .Category.Title.String }}</h1>
     {{ end }}
+    <h2>Topic: {{ if .Topic.DisplayTitle }}{{ .Topic.DisplayTitle }}{{ else }}{{ .Topic.Title.String }}{{ end }}</h2>
 
     <div class="topic-actions">
         <a href="/forum/topic/{{.Topic.Idforumtopic}}/thread">New Thread</a>

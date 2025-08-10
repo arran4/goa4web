@@ -38,27 +38,6 @@ func (q *Queries) AdminCountForumCategories(ctx context.Context, arg AdminCountF
 	return count, err
 }
 
-const adminCreateForumCategory = `-- name: AdminCreateForumCategory :exec
-INSERT INTO forumcategory (forumcategory_idforumcategory, language_idlanguage, title, description) VALUES (?, ?, ?, ?)
-`
-
-type AdminCreateForumCategoryParams struct {
-	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
-	Title                        sql.NullString
-	Description                  sql.NullString
-}
-
-func (q *Queries) AdminCreateForumCategory(ctx context.Context, arg AdminCreateForumCategoryParams) error {
-	_, err := q.db.ExecContext(ctx, adminCreateForumCategory,
-		arg.ForumcategoryIdforumcategory,
-		arg.LanguageIdlanguage,
-		arg.Title,
-		arg.Description,
-	)
-	return err
-}
-
 const adminDeleteForumCategory = `-- name: AdminDeleteForumCategory :exec
 UPDATE forumcategory SET deleted_at = NOW() WHERE idforumcategory = ?
 `
@@ -110,7 +89,7 @@ type AdminListForumCategoriesWithCountsParams struct {
 type AdminListForumCategoriesWithCountsRow struct {
 	Idforumcategory              int32
 	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	Title                        sql.NullString
 	Description                  sql.NullString
 	Subcategorycount             int64
@@ -277,52 +256,6 @@ func (q *Queries) AdminRebuildAllForumTopicMetaColumns(ctx context.Context) erro
 	return err
 }
 
-const adminUpdateForumCategory = `-- name: AdminUpdateForumCategory :exec
-UPDATE forumcategory SET title = ?, description = ?, forumcategory_idforumcategory = ?, language_idlanguage = ? WHERE idforumcategory = ?
-`
-
-type AdminUpdateForumCategoryParams struct {
-	Title                        sql.NullString
-	Description                  sql.NullString
-	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
-	Idforumcategory              int32
-}
-
-func (q *Queries) AdminUpdateForumCategory(ctx context.Context, arg AdminUpdateForumCategoryParams) error {
-	_, err := q.db.ExecContext(ctx, adminUpdateForumCategory,
-		arg.Title,
-		arg.Description,
-		arg.ForumcategoryIdforumcategory,
-		arg.LanguageIdlanguage,
-		arg.Idforumcategory,
-	)
-	return err
-}
-
-const adminUpdateForumTopic = `-- name: AdminUpdateForumTopic :exec
-UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ?, language_idlanguage = ? WHERE idforumtopic = ?
-`
-
-type AdminUpdateForumTopicParams struct {
-	Title                        sql.NullString
-	Description                  sql.NullString
-	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
-	Idforumtopic                 int32
-}
-
-func (q *Queries) AdminUpdateForumTopic(ctx context.Context, arg AdminUpdateForumTopicParams) error {
-	_, err := q.db.ExecContext(ctx, adminUpdateForumTopic,
-		arg.Title,
-		arg.Description,
-		arg.ForumcategoryIdforumcategory,
-		arg.LanguageIdlanguage,
-		arg.Idforumtopic,
-	)
-	return err
-}
-
 const createForumTopicForPoster = `-- name: CreateForumTopicForPoster :execlastid
 INSERT INTO forumtopic (forumcategory_idforumcategory, language_idlanguage, title, description, handler)
 SELECT ?, ?, ?, ?, ?
@@ -342,7 +275,7 @@ WHERE EXISTS (
 
 type CreateForumTopicForPosterParams struct {
 	ForumcategoryID int32
-	LanguageID      int32
+	ForumLang       sql.NullInt32
 	Title           sql.NullString
 	Description     sql.NullString
 	Handler         string
@@ -355,7 +288,7 @@ type CreateForumTopicForPosterParams struct {
 func (q *Queries) CreateForumTopicForPoster(ctx context.Context, arg CreateForumTopicForPosterParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, createForumTopicForPoster,
 		arg.ForumcategoryID,
-		arg.LanguageID,
+		arg.ForumLang,
 		arg.Title,
 		arg.Description,
 		arg.Handler,
@@ -448,7 +381,7 @@ type GetAllForumCategoriesWithSubcategoryCountParams struct {
 type GetAllForumCategoriesWithSubcategoryCountRow struct {
 	Idforumcategory              int32
 	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	Title                        sql.NullString
 	Description                  sql.NullString
 	Subcategorycount             int64
@@ -635,7 +568,7 @@ type GetAllForumTopicsByCategoryIdForUserWithLastPosterNameRow struct {
 	Idforumtopic                 int32
 	Lastposter                   int32
 	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	Title                        sql.NullString
 	Description                  sql.NullString
 	Threads                      sql.NullInt32
@@ -869,7 +802,7 @@ type GetForumTopicByIdForUserRow struct {
 	Idforumtopic                 int32
 	Lastposter                   int32
 	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	Title                        sql.NullString
 	Description                  sql.NullString
 	Threads                      sql.NullInt32
@@ -1003,7 +936,7 @@ type GetForumTopicsForUserRow struct {
 	Idforumtopic                 int32
 	Lastposter                   int32
 	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	Title                        sql.NullString
 	Description                  sql.NullString
 	Threads                      sql.NullInt32
@@ -1178,7 +1111,7 @@ type ListPrivateTopicsByUserIDRow struct {
 	Idforumtopic                 int32
 	Lastposter                   int32
 	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
+	LanguageIdlanguage           sql.NullInt32
 	Title                        sql.NullString
 	Description                  sql.NullString
 	Threads                      sql.NullInt32
@@ -1221,32 +1154,6 @@ func (q *Queries) ListPrivateTopicsByUserID(ctx context.Context, userID sql.Null
 		return nil, err
 	}
 	return items, nil
-}
-
-const systemCreateForumTopic = `-- name: SystemCreateForumTopic :execlastid
-INSERT INTO forumtopic (forumcategory_idforumcategory, language_idlanguage, title, description, handler) VALUES (?, ?, ?, ?, ?)
-`
-
-type SystemCreateForumTopicParams struct {
-	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           int32
-	Title                        sql.NullString
-	Description                  sql.NullString
-	Handler                      string
-}
-
-func (q *Queries) SystemCreateForumTopic(ctx context.Context, arg SystemCreateForumTopicParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, systemCreateForumTopic,
-		arg.ForumcategoryIdforumcategory,
-		arg.LanguageIdlanguage,
-		arg.Title,
-		arg.Description,
-		arg.Handler,
-	)
-	if err != nil {
-		return 0, err
-	}
-	return result.LastInsertId()
 }
 
 const systemGetForumTopicByTitle = `-- name: SystemGetForumTopicByTitle :one

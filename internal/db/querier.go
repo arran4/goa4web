@@ -26,12 +26,11 @@ type Querier interface {
 	AdminCountForumCategories(ctx context.Context, arg AdminCountForumCategoriesParams) (int64, error)
 	AdminCountForumThreads(ctx context.Context) (int64, error)
 	AdminCountForumTopics(ctx context.Context) (int64, error)
-	AdminCountLinksByCategory(ctx context.Context, linkerCategoryID int32) (int64, error)
-	AdminCountThreadsByBoard(ctx context.Context, imageboardIdimageboard int32) (int64, error)
+	AdminCountLinksByCategory(ctx context.Context, linkerCategoryID sql.NullInt32) (int64, error)
+	AdminCountThreadsByBoard(ctx context.Context, imageboardIdimageboard sql.NullInt32) (int64, error)
 	AdminCountWordList(ctx context.Context) (int64, error)
 	AdminCountWordListByPrefix(ctx context.Context, prefix interface{}) (int64, error)
 	AdminCreateFAQCategory(ctx context.Context, name sql.NullString) error
-	AdminCreateForumCategory(ctx context.Context, arg AdminCreateForumCategoryParams) error
 	AdminCreateGrant(ctx context.Context, arg AdminCreateGrantParams) (int64, error)
 	AdminCreateImageBoard(ctx context.Context, arg AdminCreateImageBoardParams) error
 	// AdminCreateLanguage adds a new language.
@@ -80,7 +79,7 @@ type Querier interface {
 	AdminGetFAQCategoriesWithQuestionCount(ctx context.Context) ([]*AdminGetFAQCategoriesWithQuestionCountRow, error)
 	AdminGetFAQCategoryWithQuestionCountByID(ctx context.Context, idfaqcategories int32) (*AdminGetFAQCategoryWithQuestionCountByIDRow, error)
 	AdminGetFAQDismissedQuestions(ctx context.Context) ([]*Faq, error)
-	AdminGetFAQQuestionsByCategory(ctx context.Context, faqcategoriesIdfaqcategories int32) ([]*Faq, error)
+	AdminGetFAQQuestionsByCategory(ctx context.Context, faqcategoriesIdfaqcategories sql.NullInt32) ([]*Faq, error)
 	AdminGetFAQUnansweredQuestions(ctx context.Context) ([]*Faq, error)
 	AdminGetForumStats(ctx context.Context) (*AdminGetForumStatsRow, error)
 	AdminGetImagePost(ctx context.Context, idimagepost int32) (*AdminGetImagePostRow, error)
@@ -104,6 +103,12 @@ type Querier interface {
 	AdminInsertRequestComment(ctx context.Context, arg AdminInsertRequestCommentParams) error
 	AdminInsertRequestQueue(ctx context.Context, arg AdminInsertRequestQueueParams) (sql.Result, error)
 	AdminInsertWritingCategory(ctx context.Context, arg AdminInsertWritingCategoryParams) error
+	AdminIsBlogDeactivated(ctx context.Context, idblogs int32) (bool, error)
+	AdminIsCommentDeactivated(ctx context.Context, idcomments int32) (bool, error)
+	AdminIsImagepostDeactivated(ctx context.Context, idimagepost int32) (bool, error)
+	AdminIsLinkDeactivated(ctx context.Context, idlinker int32) (bool, error)
+	AdminIsUserDeactivated(ctx context.Context, idusers int32) (bool, error)
+	AdminIsWritingDeactivated(ctx context.Context, idwriting int32) (bool, error)
 	// AdminLanguageUsageCounts returns counts of content referencing a language.
 	AdminLanguageUsageCounts(ctx context.Context, arg AdminLanguageUsageCountsParams) (*AdminLanguageUsageCountsRow, error)
 	AdminListAdministratorEmails(ctx context.Context) ([]string, error)
@@ -119,6 +124,12 @@ type Querier interface {
 	AdminListArchivedRequests(ctx context.Context) ([]*AdminRequestQueue, error)
 	AdminListAuditLogs(ctx context.Context, arg AdminListAuditLogsParams) ([]*AdminListAuditLogsRow, error)
 	AdminListBoards(ctx context.Context, arg AdminListBoardsParams) ([]*Imageboard, error)
+	AdminListDeactivatedBlogs(ctx context.Context, arg AdminListDeactivatedBlogsParams) ([]*AdminListDeactivatedBlogsRow, error)
+	AdminListDeactivatedComments(ctx context.Context, arg AdminListDeactivatedCommentsParams) ([]*AdminListDeactivatedCommentsRow, error)
+	AdminListDeactivatedImageposts(ctx context.Context, arg AdminListDeactivatedImagepostsParams) ([]*AdminListDeactivatedImagepostsRow, error)
+	AdminListDeactivatedLinks(ctx context.Context, arg AdminListDeactivatedLinksParams) ([]*AdminListDeactivatedLinksRow, error)
+	AdminListDeactivatedUsers(ctx context.Context, arg AdminListDeactivatedUsersParams) ([]*AdminListDeactivatedUsersRow, error)
+	AdminListDeactivatedWritings(ctx context.Context, arg AdminListDeactivatedWritingsParams) ([]*AdminListDeactivatedWritingsRow, error)
 	AdminListExternalLinks(ctx context.Context, arg AdminListExternalLinksParams) ([]*ExternalLink, error)
 	// admin task
 	AdminListFailedEmails(ctx context.Context, arg AdminListFailedEmailsParams) ([]*AdminListFailedEmailsRow, error)
@@ -191,8 +202,6 @@ type Querier interface {
 	AdminSetTemplateOverride(ctx context.Context, arg AdminSetTemplateOverrideParams) error
 	AdminUpdateBannedIp(ctx context.Context, arg AdminUpdateBannedIpParams) error
 	AdminUpdateFAQQuestionAnswer(ctx context.Context, arg AdminUpdateFAQQuestionAnswerParams) error
-	AdminUpdateForumCategory(ctx context.Context, arg AdminUpdateForumCategoryParams) error
-	AdminUpdateForumTopic(ctx context.Context, arg AdminUpdateForumTopicParams) error
 	AdminUpdateGrantActive(ctx context.Context, arg AdminUpdateGrantActiveParams) error
 	AdminUpdateImageBoard(ctx context.Context, arg AdminUpdateImageBoardParams) error
 	AdminUpdateImagePost(ctx context.Context, arg AdminUpdateImagePostParams) error
@@ -412,7 +421,6 @@ type Querier interface {
 	// SystemCountLanguages counts all languages.
 	SystemCountLanguages(ctx context.Context) (int64, error)
 	SystemCountRecentLoginAttempts(ctx context.Context, arg SystemCountRecentLoginAttemptsParams) (int64, error)
-	SystemCreateForumTopic(ctx context.Context, arg SystemCreateForumTopicParams) (int64, error)
 	SystemCreateGrant(ctx context.Context, arg SystemCreateGrantParams) (int64, error)
 	SystemCreateNotification(ctx context.Context, arg SystemCreateNotificationParams) error
 	SystemCreateSearchWord(ctx context.Context, word string) (int64, error)

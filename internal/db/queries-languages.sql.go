@@ -58,7 +58,7 @@ SELECT
 `
 
 type AdminLanguageUsageCountsParams struct {
-	ID int32
+	LangID sql.NullInt32
 }
 
 type AdminLanguageUsageCountsRow struct {
@@ -72,11 +72,11 @@ type AdminLanguageUsageCountsRow struct {
 // AdminLanguageUsageCounts returns counts of content referencing a language.
 func (q *Queries) AdminLanguageUsageCounts(ctx context.Context, arg AdminLanguageUsageCountsParams) (*AdminLanguageUsageCountsRow, error) {
 	row := q.db.QueryRowContext(ctx, adminLanguageUsageCounts,
-		arg.ID,
-		arg.ID,
-		arg.ID,
-		arg.ID,
-		arg.ID,
+		arg.LangID,
+		arg.LangID,
+		arg.LangID,
+		arg.LangID,
+		arg.LangID,
 	)
 	var i AdminLanguageUsageCountsRow
 	err := row.Scan(

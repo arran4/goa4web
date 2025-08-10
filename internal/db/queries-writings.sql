@@ -8,7 +8,7 @@ LIMIT ? OFFSET ?
 
 -- name: SystemListPublicWritingsByAuthor :many
 SELECT w.*, u.username,
-    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) AS Comments
+    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id IS NOT NULL) AS Comments
 FROM writing w
 LEFT JOIN users u ON w.users_idusers = u.idusers
 WHERE w.private = 0 AND w.users_idusers = sqlc.arg(author_id)
@@ -25,7 +25,7 @@ WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT w.*, u.username,
-    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) AS Comments
+    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id IS NOT NULL) AS Comments
 FROM writing w
 LEFT JOIN users u ON w.users_idusers = u.idusers
 WHERE w.private = 0 AND w.users_idusers = sqlc.arg(author_id)
@@ -56,7 +56,7 @@ LIMIT ? OFFSET ?;
 
 -- name: SystemListPublicWritingsInCategory :many
 SELECT w.*, u.Username,
-    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) as Comments
+    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id IS NOT NULL) as Comments
 FROM writing w
 LEFT JOIN users u ON w.Users_Idusers = u.idusers
 WHERE w.private = 0 AND w.writing_category_id = sqlc.arg(category_id)
@@ -68,7 +68,7 @@ WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT w.*, u.Username,
-    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) as Comments
+    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id IS NOT NULL) as Comments
 FROM writing w
 LEFT JOIN users u ON w.Users_Idusers=u.idusers
 WHERE w.private = 0 AND w.writing_category_id = sqlc.arg(writing_category_id)
@@ -104,7 +104,7 @@ SET title = sqlc.arg(title),
     abstract = sqlc.arg(abstract),
     writing = sqlc.arg(content),
     private = sqlc.arg(private),
-    language_idlanguage = sqlc.arg(language_id)
+    language_idlanguage = sqlc.narg(language_id)
 WHERE w.idwriting = sqlc.arg(writing_id)
   AND w.users_idusers = sqlc.arg(writer_id)
   AND EXISTS (
@@ -126,7 +126,7 @@ VALUES (?, ?, ?, ?, ?, ?, NOW(), ?);
 
 -- name: CreateWritingForWriter :execlastid
 INSERT INTO writing (writing_category_id, title, abstract, writing, private, language_idlanguage, published, users_idusers)
-SELECT sqlc.arg(writing_category_id), sqlc.arg(title), sqlc.arg(abstract), sqlc.arg(writing), sqlc.arg(private), sqlc.arg(language_id), NOW(), sqlc.arg(writer_id)
+SELECT sqlc.arg(writing_category_id), sqlc.arg(title), sqlc.arg(abstract), sqlc.arg(writing), sqlc.arg(private), sqlc.narg(language_id), NOW(), sqlc.arg(writer_id)
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='writing'
@@ -236,7 +236,7 @@ WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT w.*, u.username,
-    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) AS Comments
+    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id IS NOT NULL) AS Comments
 FROM writing w
 LEFT JOIN users u ON w.users_idusers = u.idusers
 WHERE w.users_idusers = sqlc.arg(author_id)
@@ -254,7 +254,7 @@ ORDER BY w.published DESC;
 
 -- name: AdminGetAllWritingsByAuthor :many
 SELECT w.*, u.username,
-    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id != 0) AS Comments
+    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id IS NOT NULL) AS Comments
 FROM writing w
 LEFT JOIN users u ON w.users_idusers = u.idusers
 WHERE w.users_idusers = sqlc.arg(author_id)

@@ -152,7 +152,7 @@ func (cd *CoreData) UpdateForumComment(commentID, languageID int32, text string)
 		return nil
 	}
 	return cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
-		LanguageID:  languageID,
+		LanguageID:  sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:        sql.NullString{String: text, Valid: true},
 		CommentID:   commentID,
 		CommenterID: cd.UserID,
@@ -166,7 +166,7 @@ func (cd *CoreData) EditForumComment(commentID, commenterID, languageID int32, t
 		return nil
 	}
 	return cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
-		LanguageID:  languageID,
+		LanguageID:  sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:        sql.NullString{String: text, Valid: true},
 		CommentID:   commentID,
 		CommenterID: commenterID,

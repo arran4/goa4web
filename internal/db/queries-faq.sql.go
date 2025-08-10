@@ -182,7 +182,7 @@ const adminGetFAQQuestionsByCategory = `-- name: AdminGetFAQQuestionsByCategory 
 SELECT idfaq, faqcategories_idfaqcategories, language_idlanguage, users_idusers, answer, question FROM faq WHERE faqCategories_idfaqCategories = ?
 `
 
-func (q *Queries) AdminGetFAQQuestionsByCategory(ctx context.Context, faqcategoriesIdfaqcategories int32) ([]*Faq, error) {
+func (q *Queries) AdminGetFAQQuestionsByCategory(ctx context.Context, faqcategoriesIdfaqcategories sql.NullInt32) ([]*Faq, error) {
 	rows, err := q.db.QueryContext(ctx, adminGetFAQQuestionsByCategory, faqcategoriesIdfaqcategories)
 	if err != nil {
 		return nil, err
@@ -215,7 +215,7 @@ func (q *Queries) AdminGetFAQQuestionsByCategory(ctx context.Context, faqcategor
 const adminGetFAQUnansweredQuestions = `-- name: AdminGetFAQUnansweredQuestions :many
 SELECT idfaq, faqcategories_idfaqcategories, language_idlanguage, users_idusers, answer, question
 FROM faq
-WHERE faqCategories_idfaqCategories = '0' OR answer IS NULL
+WHERE faqCategories_idfaqCategories IS NULL OR answer IS NULL
 `
 
 func (q *Queries) AdminGetFAQUnansweredQuestions(ctx context.Context) ([]*Faq, error) {
@@ -273,7 +273,7 @@ WHERE idfaq = ?
 type AdminUpdateFAQQuestionAnswerParams struct {
 	Answer                       sql.NullString
 	Question                     sql.NullString
-	FaqcategoriesIdfaqcategories int32
+	FaqcategoriesIdfaqcategories sql.NullInt32
 	Idfaq                        int32
 }
 
@@ -306,7 +306,7 @@ WHERE EXISTS (
 type CreateFAQQuestionForWriterParams struct {
 	Question   sql.NullString
 	WriterID   int32
-	LanguageID int32
+	LanguageID sql.NullInt32
 	GranteeID  sql.NullInt32
 }
 
@@ -328,7 +328,7 @@ WITH role_ids AS (
 SELECT c.idfaqCategories, c.name, f.idfaq, f.faqCategories_idfaqCategories, f.language_idlanguage, f.users_idusers, f.answer, f.question
 FROM faq f
 LEFT JOIN faq_categories c ON c.idfaqCategories = f.faqCategories_idfaqCategories
-WHERE c.idfaqCategories <> 0
+WHERE c.idfaqCategories IS NOT NULL
   AND f.answer IS NOT NULL
   AND (
       f.language_idlanguage = 0
@@ -364,8 +364,8 @@ type GetAllAnsweredFAQWithFAQCategoriesForUserRow struct {
 	Idfaqcategories              sql.NullInt32
 	Name                         sql.NullString
 	Idfaq                        int32
-	FaqcategoriesIdfaqcategories int32
-	LanguageIdlanguage           int32
+	FaqcategoriesIdfaqcategories sql.NullInt32
+	LanguageIdlanguage           sql.NullInt32
 	UsersIdusers                 int32
 	Answer                       sql.NullString
 	Question                     sql.NullString
@@ -572,7 +572,7 @@ WHERE faqCategories_idfaqCategories = ?
 
 type GetFAQQuestionsByCategoryParams struct {
 	ViewerID   int32
-	CategoryID int32
+	CategoryID sql.NullInt32
 	UserID     sql.NullInt32
 }
 
@@ -665,9 +665,9 @@ WHERE EXISTS (
 type InsertFAQQuestionForWriterParams struct {
 	Question   sql.NullString
 	Answer     sql.NullString
-	CategoryID int32
+	CategoryID sql.NullInt32
 	WriterID   int32
-	LanguageID int32
+	LanguageID sql.NullInt32
 	GranteeID  sql.NullInt32
 }
 

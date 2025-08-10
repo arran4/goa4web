@@ -8,10 +8,16 @@ Commands:
   delete     delete an external link
   refresh    refresh cached data for a link
   remap      extract and apply URL remappings
+  deactivate      deactivate a link
+  activate        restore a deactivated link
+  list-deactivated  list deactivated links
 
 Examples:
   {{.Prog}} links sign https://example.com
   {{.Prog}} links verify -ts 123 -sig abc https://example.com
   {{.Prog}} links remap extract > links.csv
+  {{.Prog}} links deactivate -id 1
+  {{.Prog}} links activate -id 1
+  {{.Prog}} links list-deactivated
 
 {{template "flag_groups_section" .FlagGroups}}

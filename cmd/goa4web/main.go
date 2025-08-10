@@ -309,6 +309,12 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("links: %w", err)
 		}
 		return c.Run()
+	case "comment", "comments":
+		c, err := parseCommentCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("comment: %w", err)
+		}
+		return c.Run()
 	case "audit":
 		c, err := parseAuditCmd(r, args[1:])
 		if err != nil {

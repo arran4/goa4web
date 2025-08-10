@@ -56,10 +56,14 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.AllCategories = categoryRows
 	data.Categories = categoryRows[offset:end]
-	children := map[int32][]*db.WritingCategory{}
-	for _, c := range categoryRows {
-		children[c.WritingCategoryID] = append(children[c.WritingCategoryID], c)
-	}
+        children := map[int32][]*db.WritingCategory{}
+        for _, c := range categoryRows {
+                var pid int32
+                if c.WritingCategoryID.Valid {
+                        pid = c.WritingCategoryID.Int32
+                }
+                children[pid] = append(children[pid], c)
+        }
 	var build func(parent int32) string
 	build = func(parent int32) string {
 		var sb strings.Builder

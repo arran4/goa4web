@@ -63,7 +63,7 @@ func (cd *CoreData) ArticleComment(r *http.Request, ops ...lazy.Option[*db.GetCo
 func (cd *CoreData) UpdateArticleComment(commentID, languageID int32, text string) error {
 	uid := cd.UserID
 	return cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
-		LanguageID:  languageID,
+		LanguageID:  sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:        sql.NullString{String: text, Valid: true},
 		CommentID:   commentID,
 		CommenterID: uid,
@@ -131,7 +131,7 @@ func (cd *CoreData) UpdateWritingReply(commentID, languageID int32, text string)
 		return nil, err
 	}
 	if err := cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
-		LanguageID:  languageID,
+		LanguageID:  sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:        sql.NullString{String: text, Valid: true},
 		CommentID:   cmt.Idcomments,
 		CommenterID: uid,
@@ -151,13 +151,17 @@ func (cd *CoreData) CreateWritingReply(w *db.GetWritingForListerByIDRow, languag
 	pt, err := cd.queries.SystemGetForumTopicByTitle(cd.ctx, sql.NullString{String: WritingTopicName, Valid: true})
 	var ptid int32
 	if errors.Is(err, sql.ErrNoRows) {
-		ptidi, err := cd.queries.SystemCreateForumTopic(cd.ctx, db.SystemCreateForumTopicParams{
-			ForumcategoryIdforumcategory: 0,
-			LanguageIdlanguage:           w.LanguageIdlanguage,
-			Title:                        sql.NullString{String: WritingTopicName, Valid: true},
-			Description:                  sql.NullString{String: WritingTopicDescription, Valid: true},
-			Handler:                      "writing",
-		})
+                ptidi, err := cd.queries.CreateForumTopicForPoster(cd.ctx, db.CreateForumTopicForPosterParams{
+                        ForumcategoryID: 0,
+                        ForumLang:       w.LanguageIdlanguage,
+                        Title:           sql.NullString{String: WritingTopicName, Valid: true},
+                        Description:     sql.NullString{String: WritingTopicDescription, Valid: true},
+                        Handler:         "writing",
+                        Section:         "forum",
+                        GrantCategoryID: sql.NullInt32{},
+                        GranteeID:       sql.NullInt32{},
+                        PosterID:        0,
+                })
 		if err != nil {
 			return 0, 0, 0, err
 		}
@@ -194,7 +198,7 @@ func (cd *CoreData) UpdateWriting(w *db.GetWritingForListerByIDRow, title, abstr
 		Abstract:   sql.NullString{Valid: true, String: abstract},
 		Content:    sql.NullString{Valid: true, String: body},
 		Private:    sql.NullBool{Valid: true, Bool: private},
-		LanguageID: languageID,
+                LanguageID: sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		WritingID:  w.Idwriting,
 		WriterID:   cd.UserID,
 		GranteeID:  sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
@@ -216,7 +220,7 @@ func (cd *CoreData) CreateWriting(categoryID, languageID int32, title, abstract,
 		Abstract:          sql.NullString{Valid: true, String: abstract},
 		Writing:           sql.NullString{Valid: true, String: body},
 		Private:           sql.NullBool{Valid: true, Bool: private},
-		LanguageID:        languageID,
+                LanguageID:        sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		GrantCategoryID:   sql.NullInt32{Int32: categoryID, Valid: true},
 		GranteeID:         sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 	})
@@ -274,15 +278,19 @@ func (cd *CoreData) CreateWritingCategory(parentID int32, name, desc string) err
 	if err != nil {
 		return err
 	}
-	parents := make(map[int32]int32, len(cats))
-	for _, c := range cats {
-		parents[c.Idwritingcategory] = c.WritingCategoryID
-	}
+        parents := make(map[int32]int32, len(cats))
+        for _, c := range cats {
+                var pid int32
+                if c.WritingCategoryID.Valid {
+                        pid = c.WritingCategoryID.Int32
+                }
+                parents[c.Idwritingcategory] = pid
+        }
 	if path, loop := algorithms.WouldCreateLoop(parents, 0, parentID); loop && len(path) > 0 {
 		return UserError{ErrorMessage: "invalid parent category: loop detected"}
 	}
-	return cd.queries.AdminInsertWritingCategory(cd.ctx, db.AdminInsertWritingCategoryParams{
-		WritingCategoryID: parentID,
+        return cd.queries.AdminInsertWritingCategory(cd.ctx, db.AdminInsertWritingCategoryParams{
+                WritingCategoryID: sql.NullInt32{Int32: parentID, Valid: parentID != 0},
 		Title: sql.NullString{
 			Valid:  true,
 			String: name,
@@ -303,17 +311,21 @@ func (cd *CoreData) ChangeWritingCategory(id, parentID int32, name, desc string)
 	if err != nil {
 		return err
 	}
-	parents := make(map[int32]int32, len(cats))
-	for _, c := range cats {
-		parents[c.Idwritingcategory] = c.WritingCategoryID
-	}
+        parents := make(map[int32]int32, len(cats))
+        for _, c := range cats {
+                var pid int32
+                if c.WritingCategoryID.Valid {
+                        pid = c.WritingCategoryID.Int32
+                }
+                parents[c.Idwritingcategory] = pid
+        }
 	if path, loop := algorithms.WouldCreateLoop(parents, id, parentID); loop {
 		return UserError{ErrorMessage: fmt.Sprintf("invalid parent category: loop %v", path)}
 	}
-	return cd.queries.AdminUpdateWritingCategory(cd.ctx, db.AdminUpdateWritingCategoryParams{
-		Title:             sql.NullString{Valid: true, String: name},
-		Description:       sql.NullString{Valid: true, String: desc},
-		Idwritingcategory: id,
-		WritingCategoryID: parentID,
-	})
+        return cd.queries.AdminUpdateWritingCategory(cd.ctx, db.AdminUpdateWritingCategoryParams{
+                Title:             sql.NullString{Valid: true, String: name},
+                Description:       sql.NullString{Valid: true, String: desc},
+                Idwritingcategory: id,
+                WritingCategoryID: sql.NullInt32{Int32: parentID, Valid: parentID != 0},
+        })
 }

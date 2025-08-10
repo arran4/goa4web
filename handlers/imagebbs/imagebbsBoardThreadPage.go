@@ -151,9 +151,9 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	})
 	var ptid int32
 	if errors.Is(err, sql.ErrNoRows) {
-		ptidi, err := queries.SystemCreateForumTopic(r.Context(), db.SystemCreateForumTopicParams{
-			ForumcategoryIdforumcategory: 0,
-			LanguageIdlanguage:           0,
+		ptidi, err := queries.CreateForumTopicForPoster(r.Context(), db.CreateForumTopicForPosterParams{
+			ForumcategoryID: 0,
+			ForumLang:       sql.NullInt32{},
 			Title: sql.NullString{
 				String: ImageBBSTopicName,
 				Valid:  true,
@@ -162,7 +162,11 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 				String: ImageBBSTopicDescription,
 				Valid:  true,
 			},
-			Handler: "imagebbs",
+			Handler:         "imagebbs",
+			Section:         "forum",
+			GrantCategoryID: sql.NullInt32{},
+			GranteeID:       sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+			PosterID:        cd.UserID,
 		})
 		if err != nil {
 			return fmt.Errorf("create forum topic fail %w", handlers.ErrRedirectOnSamePageHandler(err))

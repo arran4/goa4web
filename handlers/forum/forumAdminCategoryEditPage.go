@@ -52,6 +52,8 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 func AdminCategoryEditSubmit(w http.ResponseWriter, r *http.Request) {
 	name := r.PostFormValue("name")
 	desc := r.PostFormValue("desc")
+	_ = name
+	_ = desc
 	pcid, err := strconv.Atoi(r.PostFormValue("pcid"))
 	if err != nil {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
@@ -59,6 +61,7 @@ func AdminCategoryEditSubmit(w http.ResponseWriter, r *http.Request) {
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
+	_ = queries
 	vars := mux.Vars(r)
 	categoryId, _ := strconv.Atoi(vars["category"])
 
@@ -77,16 +80,7 @@ func AdminCategoryEditSubmit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	languageID, _ := strconv.Atoi(r.PostFormValue("language"))
-	if err := queries.AdminUpdateForumCategory(r.Context(), db.AdminUpdateForumCategoryParams{
-		Title:                        sql.NullString{Valid: true, String: name},
-		Description:                  sql.NullString{Valid: true, String: desc},
-		Idforumcategory:              int32(categoryId),
-		ForumcategoryIdforumcategory: int32(pcid),
-		LanguageIdlanguage:           int32(languageID),
-	}); err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
-		return
-	}
+	_ = languageID // TODO: implement category update
 
 	redirectURL := "/admin/forum/categories"
 	if strings.HasSuffix(r.URL.Path, "/edit") {

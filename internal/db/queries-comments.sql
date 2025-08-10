@@ -35,7 +35,7 @@ LIMIT 1;
 
 -- name: UpdateCommentForEditor :exec
 UPDATE comments c
-SET language_idlanguage = sqlc.arg(language_id), text = sqlc.arg(text)
+SET language_idlanguage = sqlc.narg(language_id), text = sqlc.arg(text)
 WHERE c.idcomments = sqlc.arg(comment_id)
   AND c.users_idusers = sqlc.arg(commenter_id)
   AND EXISTS (
@@ -99,7 +99,7 @@ ORDER BY c.written DESC
 
 -- name: CreateCommentInSectionForCommenter :execlastid
 INSERT INTO comments (language_idlanguage, users_idusers, forumthread_id, text, written)
-SELECT sqlc.arg(language_id), sqlc.narg(commenter_id), sqlc.arg(forumthread_id), sqlc.arg(text), NOW()
+SELECT sqlc.narg(language_id), sqlc.narg(commenter_id), sqlc.arg(forumthread_id), sqlc.arg(text), NOW()
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = sqlc.arg(section)
@@ -124,7 +124,7 @@ LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
 WHERE c.forumthread_id=sqlc.arg(thread_id)
-  AND c.forumthread_id!=0
+  AND c.forumthread_id IS NOT NULL
   AND (
       c.language_idlanguage = 0
       OR c.language_idlanguage IS NULL
@@ -162,7 +162,7 @@ LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
 WHERE c.forumthread_id=sqlc.arg(thread_id)
-  AND c.forumthread_id!=0
+  AND c.forumthread_id IS NOT NULL
   AND (
       c.language_idlanguage = 0
       OR c.language_idlanguage IS NULL

@@ -21,7 +21,7 @@ func TestUserCanCreateLink_Allowed(t *testing.T) {
 		WithArgs(sqlmock.AnyArg(), "linker", sqlmock.AnyArg(), "post", sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
-	ok, err := UserCanCreateLink(context.Background(), q, 1, 2)
+	ok, err := UserCanCreateLink(context.Background(), q, sql.NullInt32{Int32: 1, Valid: true}, 2)
 	if err != nil {
 		t.Fatalf("UserCanCreateLink: %v", err)
 	}
@@ -45,7 +45,7 @@ func TestUserCanCreateLink_Denied(t *testing.T) {
 		WithArgs(sqlmock.AnyArg(), "linker", sqlmock.AnyArg(), "post", sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnError(sql.ErrNoRows)
 
-	ok, err := UserCanCreateLink(context.Background(), q, 1, 2)
+	ok, err := UserCanCreateLink(context.Background(), q, sql.NullInt32{Int32: 1, Valid: true}, 2)
 	if err != nil {
 		t.Fatalf("UserCanCreateLink: %v", err)
 	}

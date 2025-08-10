@@ -35,7 +35,7 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID, thr
 	tid, err := cd.queries.CreateForumTopicForPoster(cd.ctx, db.CreateForumTopicForPosterParams{
 		PosterID:        p.CreatorID,
 		ForumcategoryID: PrivateForumCategoryID,
-		LanguageID:      0,
+		ForumLang:       sql.NullInt32{},
 		Title:           sql.NullString{},
 		Description:     sql.NullString{},
 		Handler:         "private",

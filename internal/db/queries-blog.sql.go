@@ -36,7 +36,7 @@ type AdminGetAllBlogEntriesByUserRow struct {
 	Idblogs            int32
 	ForumthreadID      sql.NullInt32
 	UsersIdusers       int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	Blog               sql.NullString
 	Written            time.Time
 	Username           sql.NullString
@@ -98,7 +98,7 @@ WHERE EXISTS (
 
 type CreateBlogEntryForWriterParams struct {
 	UsersIdusers       int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	Blog               sql.NullString
 	UserID             sql.NullInt32
 	ListerID           int32
@@ -163,7 +163,7 @@ type GetBlogEntryForListerByIDRow struct {
 	Idblogs            int32
 	ForumthreadID      sql.NullInt32
 	UsersIdusers       int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	Blog               sql.NullString
 	Written            time.Time
 	Username           sql.NullString
@@ -243,7 +243,7 @@ type ListBlogEntriesByAuthorForListerRow struct {
 	Idblogs            int32
 	ForumthreadID      sql.NullInt32
 	UsersIdusers       int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	Blog               sql.NullString
 	Written            time.Time
 	Username           sql.NullString
@@ -339,7 +339,7 @@ type ListBlogEntriesByIDsForListerRow struct {
 	Idblogs            int32
 	ForumthreadID      sql.NullInt32
 	UsersIdusers       int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	Blog               sql.NullString
 	Written            time.Time
 }
@@ -433,7 +433,7 @@ type ListBlogEntriesForListerRow struct {
 	Idblogs            int32
 	ForumthreadID      sql.NullInt32
 	UsersIdusers       int32
-	LanguageIdlanguage int32
+	LanguageIdlanguage sql.NullInt32
 	Blog               sql.NullString
 	Written            time.Time
 	Username           sql.NullString
@@ -880,7 +880,7 @@ WHERE b.idblogs = ?
 `
 
 type UpdateBlogEntryForWriterParams struct {
-	LanguageID   int32
+	LanguageID   sql.NullInt32
 	Blog         sql.NullString
 	EntryID      int32
 	WriterID     int32

@@ -6,11 +6,17 @@ Commands:
   list      list writing articles
   read      read a writing article
   comments  manage comments for a writing article
+  deactivate      deactivate a writing
+  activate        restore a deactivated writing
+  list-deactivated  list deactivated writings
 
 Examples:
   {{.Prog}} writing tree
   {{.Prog}} writing list
   {{.Prog}} writing read 1
   {{.Prog}} writing comments list 1
+  {{.Prog}} writing deactivate -id 1
+  {{.Prog}} writing activate -id 1
+  {{.Prog}} writing list-deactivated
 
 {{template "flag_groups_section" .FlagGroups}}

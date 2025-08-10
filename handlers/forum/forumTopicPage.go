@@ -18,7 +18,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func TopicsPage(w http.ResponseWriter, r *http.Request) {
+func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath string) {
 	type Data struct {
 		Admin                   bool
 		Back                    bool
@@ -28,6 +28,7 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 		Categories              []*ForumcategoryPlus
 		Category                *ForumcategoryPlus
 		CopyDataToSubCategories func(rootCategory *ForumcategoryPlus) *Data
+		BasePath                string
 	}
 
 	if _, ok := core.GetSessionOrFail(w, r); !ok {
@@ -38,8 +39,10 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.LoadSelectionsFromRequest(r)
+	cd.ForumBasePath = basePath
 	data := &Data{
-		Admin: cd.IsAdmin() && cd.IsAdminMode(),
+		Admin:    cd.IsAdmin() && cd.IsAdminMode(),
+		BasePath: basePath,
 	}
 
 	copyDataToSubCategories := func(rootCategory *ForumcategoryPlus) *Data {
@@ -129,4 +132,9 @@ func TopicsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handlers.TemplateHandler(w, r, "topicsPage.gohtml", data)
+}
+
+// TopicsPage serves the forum topic page at the default /forum prefix.
+func TopicsPage(w http.ResponseWriter, r *http.Request) {
+	TopicsPageWithBasePath(w, r, "/forum")
 }

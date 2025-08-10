@@ -99,6 +99,7 @@ type CoreData struct {
 	StartLink         string
 	TasksReg          *tasks.Registry
 	SiteTitle         string
+	ForumBasePath     string // ForumBasePath holds the URL prefix for forum links.
 	UserID            int32
 	// routerModules tracks enabled router modules.
 	routerModules map[string]struct{}

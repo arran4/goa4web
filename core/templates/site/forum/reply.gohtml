@@ -1,7 +1,9 @@
 {{ define "forumReply" }}
        {{ if cd.SelectedThreadCanReply }}
             <font size="4">Reply:</font><br>
-            <form method="post" action="/forum/topic/{{$.Topic.Idforumtopic}}/thread/{{$.Thread.Idforumthread}}/reply">
+            {{ $base := "/forum" }}
+            {{ with $.BasePath }}{{ $base = . }}{{ end }}
+            <form method="post" action="{{$base}}/topic/{{$.Topic.Idforumtopic}}/thread/{{$.Thread.Idforumthread}}/reply">
         {{ csrfField }}
                 <textarea id="reply" name="replytext" cols="40" rows="20">{{$.Text}}</textarea><br>
                 {{ template "languageCombobox" }}

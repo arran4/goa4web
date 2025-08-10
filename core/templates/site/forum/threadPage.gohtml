@@ -2,6 +2,8 @@
     {{ template "threadComments" }}
     {{ template "forumReply" $ }}
 
-    <a href="/forum/topic/{{.Topic.Idforumtopic}}">Back</a>
+    {{ $base := "/forum" }}
+    {{ with .BasePath }}{{ $base = . }}{{ end }}
+    <a href="{{$base}}/topic/{{.Topic.Idforumtopic}}">Back</a>
 
 {{ template "tail" $ }}

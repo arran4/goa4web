@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/arran4/goa4web/core/consts"
 
@@ -26,6 +27,9 @@ type ReplyTask struct{ tasks.TaskString }
 // auto-subscription for thread replies.
 var (
 	replyTask = &ReplyTask{TaskString: TaskReply}
+
+	// ReplyTaskHandler exposes the reply task for registration on other routes.
+	ReplyTaskHandler = replyTask
 
 	_ tasks.Task                                    = (*ReplyTask)(nil)
 	_ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
@@ -80,7 +84,11 @@ func (ReplyTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *stri
 // created for the originating forum thread when that information is available.
 func (ReplyTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, error) {
 	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
-		return string(TaskReply), fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID), nil
+		base := "/forum"
+		if idx := strings.Index(evt.Path, "/topic/"); idx > 0 {
+			base = evt.Path[:idx]
+		}
+		return string(TaskReply), fmt.Sprintf("%s/topic/%d/thread/%d", base, data.TopicID, data.ThreadID), nil
 	}
 	return string(TaskReply), evt.Path, nil
 }
@@ -118,7 +126,11 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
 	uid, _ := session.Values["UID"].(int32)
 
-	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)
+	base := cd.ForumBasePath
+	if base == "" {
+		base = "/forum"
+	}
+	endUrl := fmt.Sprintf("%s/topic/%d/thread/%d#bottom", base, topicRow.Idforumtopic, threadRow.Idforumthread)
 
 	cid, err := cd.CreateForumCommentForCommenter(uid, threadRow.Idforumthread, topicRow.Idforumtopic, int32(languageId), text)
 	if err != nil {
@@ -165,8 +177,10 @@ func TopicThreadReplyCancelPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-
-	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)
-
+	base := cd.ForumBasePath
+	if base == "" {
+		base = "/forum"
+	}
+	endUrl := fmt.Sprintf("%s/topic/%d/thread/%d#bottom", base, topicRow.Idforumtopic, threadRow.Idforumthread)
 	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
 }

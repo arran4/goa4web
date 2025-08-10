@@ -15,7 +15,7 @@ import (
 	"github.com/arran4/goa4web/core"
 )
 
-func ThreadPage(w http.ResponseWriter, r *http.Request) {
+func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath string) {
 	type Data struct {
 		Category       *ForumcategoryPlus
 		Topic          *ForumtopicPlus
@@ -29,14 +29,17 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 		Editing        func(*db.GetCommentsByThreadIdForUserRow) bool
 		AdminURL       func(*db.GetCommentsByThreadIdForUserRow) string
 		CanReply       bool
+		BasePath       string
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.LoadSelectionsFromRequest(r)
+	cd.ForumBasePath = basePath
 	common.WithOffset(offset)(cd)
 	data := Data{
 		IsReplyable: true,
+		BasePath:    basePath,
 	}
 
 	threadRow, err := cd.SelectedThread()
@@ -77,13 +80,13 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 		if !data.CanEditComment(cmt) {
 			return ""
 		}
-		return fmt.Sprintf("/forum/topic/%d/thread/%d?comment=%d#edit", topicRow.Idforumtopic, threadRow.Idforumthread, cmt.Idcomments)
+		return fmt.Sprintf("%s/topic/%d/thread/%d?comment=%d#edit", data.BasePath, topicRow.Idforumtopic, threadRow.Idforumthread, cmt.Idcomments)
 	}
 	data.EditSaveURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
 		if !data.CanEditComment(cmt) {
 			return ""
 		}
-		return fmt.Sprintf("/forum/topic/%d/thread/%d/comment/%d", topicRow.Idforumtopic, threadRow.Idforumthread, cmt.Idcomments)
+		return fmt.Sprintf("%s/topic/%d/thread/%d/comment/%d", data.BasePath, topicRow.Idforumtopic, threadRow.Idforumthread, cmt.Idcomments)
 	}
 	data.Editing = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
 		return data.CanEditComment(cmt) && commentId != 0 && int32(commentId) == cmt.Idcomments
@@ -125,4 +128,9 @@ func ThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handlers.TemplateHandler(w, r, "threadPage.gohtml", data)
+}
+
+// ThreadPage serves the forum thread page at the default /forum prefix.
+func ThreadPage(w http.ResponseWriter, r *http.Request) {
+	ThreadPageWithBasePath(w, r, "/forum")
 }

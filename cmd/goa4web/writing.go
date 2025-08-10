@@ -56,6 +56,24 @@ func (c *writingCmd) Run() error {
 			return fmt.Errorf("comments: %w", err)
 		}
 		return cmd.Run()
+	case "deactivate":
+		cmd, err := parseWritingDeactivateCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("deactivate: %w", err)
+		}
+		return cmd.Run()
+	case "activate":
+		cmd, err := parseWritingActivateCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("activate: %w", err)
+		}
+		return cmd.Run()
+	case "list-deactivated":
+		cmd, err := parseWritingListDeactivatedCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("list-deactivated: %w", err)
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown writing command %q", args[0])

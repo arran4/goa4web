@@ -50,6 +50,13 @@ func (c *userDeactivateCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("get user: %w", err)
 	}
+	deactivated, err := queries.AdminIsUserDeactivated(ctx, u.Idusers)
+	if err != nil {
+		return fmt.Errorf("check deactivated: %w", err)
+	}
+	if deactivated {
+		return fmt.Errorf("user already deactivated")
+	}
 	c.rootCmd.Verbosef("deactivating user %s", c.Username)
 	tx, err := conn.BeginTx(ctx, nil)
 	if err != nil {
@@ -71,6 +78,15 @@ func (c *userDeactivateCmd) Run() error {
 		return fmt.Errorf("list comments: %w", err)
 	}
 	for _, cm := range comments {
+		deactivated, err := qtx.AdminIsCommentDeactivated(ctx, cm.Idcomments)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("check comment deactivated: %w", err)
+		}
+		if deactivated {
+			tx.Rollback()
+			return fmt.Errorf("comment %d already deactivated", cm.Idcomments)
+		}
 		if err := qtx.AdminArchiveComment(ctx, db.AdminArchiveCommentParams{
 			Idcomments:         cm.Idcomments,
 			ForumthreadID:      cm.ForumthreadID,
@@ -94,6 +110,15 @@ func (c *userDeactivateCmd) Run() error {
 		return fmt.Errorf("list writings: %w", err)
 	}
 	for _, w := range writings {
+		deactivated, err := qtx.AdminIsWritingDeactivated(ctx, w.Idwriting)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("check writing deactivated: %w", err)
+		}
+		if deactivated {
+			tx.Rollback()
+			return fmt.Errorf("writing %d already deactivated", w.Idwriting)
+		}
 		if err := qtx.AdminArchiveWriting(ctx, db.AdminArchiveWritingParams{
 			Idwriting:          w.Idwriting,
 			UsersIdusers:       w.UsersIdusers,
@@ -125,6 +150,15 @@ func (c *userDeactivateCmd) Run() error {
 		return fmt.Errorf("list blogs: %w", err)
 	}
 	for _, b := range blogs {
+		deactivated, err := qtx.AdminIsBlogDeactivated(ctx, b.Idblogs)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("check blog deactivated: %w", err)
+		}
+		if deactivated {
+			tx.Rollback()
+			return fmt.Errorf("blog %d already deactivated", b.Idblogs)
+		}
 		var threadID int32
 		if b.ForumthreadID.Valid {
 			threadID = b.ForumthreadID.Int32
@@ -151,6 +185,15 @@ func (c *userDeactivateCmd) Run() error {
 		return fmt.Errorf("list images: %w", err)
 	}
 	for _, img := range imgs {
+		deactivated, err := qtx.AdminIsImagepostDeactivated(ctx, img.Idimagepost)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("check imagepost deactivated: %w", err)
+		}
+		if deactivated {
+			tx.Rollback()
+			return fmt.Errorf("imagepost %d already deactivated", img.Idimagepost)
+		}
 		if err := qtx.AdminArchiveImagepost(ctx, db.AdminArchiveImagepostParams{
 			Idimagepost:            img.Idimagepost,
 			ForumthreadID:          img.ForumthreadID,
@@ -177,6 +220,15 @@ func (c *userDeactivateCmd) Run() error {
 		return fmt.Errorf("list links: %w", err)
 	}
 	for _, l := range links {
+		deactivated, err := qtx.AdminIsLinkDeactivated(ctx, l.Idlinker)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("check link deactivated: %w", err)
+		}
+		if deactivated {
+			tx.Rollback()
+			return fmt.Errorf("link %d already deactivated", l.Idlinker)
+		}
 		if err := qtx.AdminArchiveLink(ctx, db.AdminArchiveLinkParams{
 			Idlinker:           l.Idlinker,
 			LanguageIdlanguage: l.LanguageIdlanguage,

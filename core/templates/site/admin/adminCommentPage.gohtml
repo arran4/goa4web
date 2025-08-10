@@ -13,7 +13,8 @@
     <textarea name="replytext" rows="3" cols="40">{{ if .Comment.Text.Valid }}{{ .Comment.Text.String }}{{ end }}</textarea><br>
     <input type="submit" name="task" value="Edit">
     <input type="submit" name="task" value="Delete">
-    <input type="submit" name="task" value="Ban">
+    <input type="submit" name="task" value="Deactivate">
+    <input type="submit" name="task" value="Activate">
 </form>
 {{ template "tail" $ }}
 {{ end }}

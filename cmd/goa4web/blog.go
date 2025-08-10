@@ -67,6 +67,18 @@ func (c *blogCmd) Run() error {
 			return fmt.Errorf("deactivate: %w", err)
 		}
 		return cmd.Run()
+	case "activate":
+		cmd, err := parseBlogActivateCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("activate: %w", err)
+		}
+		return cmd.Run()
+	case "list-deactivated":
+		cmd, err := parseBlogListDeactivatedCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("list-deactivated: %w", err)
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown blog command %q", args[0])

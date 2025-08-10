@@ -1941,7 +1941,7 @@ func (cd *CoreData) sectionThreadCanReply(section string, itemID int32) bool {
 		ReplierMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 	})
 	if err != nil || th == nil {
-		return false
+		return cd.HasGrant(section, it, "reply", itemID)
 	}
 	if th.Locked.Valid && th.Locked.Bool {
 		return false

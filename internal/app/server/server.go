@@ -237,6 +237,10 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 			}
 			provider := s.EmailReg.ProviderFromConfig(s.Config)
 			offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+			modules := []string{}
+			if s.RouterReg != nil {
+				modules = s.RouterReg.Names()
+			}
 			cd := common.NewCoreData(r.Context(), queries, s.Config,
 				common.WithImageSigner(s.ImageSigner),
 				common.WithCustomQueries(queries),
@@ -249,6 +253,7 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 				common.WithNavRegistry(s.Nav),
 				common.WithTasksRegistry(s.TasksReg),
 				common.WithDBRegistry(s.DBReg),
+				common.WithRouterModules(modules),
 				common.WithOffset(offset),
 				common.WithSiteTitle("Arran's Site"),
 			)

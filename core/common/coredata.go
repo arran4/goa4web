@@ -100,6 +100,8 @@ type CoreData struct {
 	TasksReg          *tasks.Registry
 	SiteTitle         string
 	UserID            int32
+	// routerModules tracks enabled router modules.
+	routerModules map[string]struct{}
 
 	session      *sessions.Session
 	sessionProxy SessionManager
@@ -2564,6 +2566,19 @@ func WithNavRegistry(r NavigationProvider) CoreOption {
 	return func(cd *CoreData) { cd.Nav = r }
 }
 
+// WithRouterModules sets the enabled router modules on CoreData.
+func WithRouterModules(mods []string) CoreOption {
+	return func(cd *CoreData) {
+		if len(mods) == 0 {
+			return
+		}
+		cd.routerModules = make(map[string]struct{}, len(mods))
+		for _, m := range mods {
+			cd.routerModules[m] = struct{}{}
+		}
+	}
+}
+
 // WithCustomQueries sets the db.CustomQueries dependency.
 func WithCustomQueries(cq db.CustomQueries) CoreOption {
 	return func(cd *CoreData) { cd.customQueries = cq }
@@ -2659,6 +2674,15 @@ func ContainsItem(items []IndexItem, name string) bool {
 		}
 	}
 	return false
+}
+
+// HasModule reports whether the named router module is enabled.
+func (cd *CoreData) HasModule(name string) bool {
+	if cd == nil || cd.routerModules == nil {
+		return false
+	}
+	_, ok := cd.routerModules[name]
+	return ok
 }
 
 // LatestWritings returns recent public writings with permission data.

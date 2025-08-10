@@ -5,14 +5,16 @@
     {{ end }}
     <h2>Topic: {{ if .Topic.DisplayTitle }}{{ .Topic.DisplayTitle }}{{ else }}{{ .Topic.Title.String }}{{ end }}</h2>
 
+    {{ $base := "/forum" }}
+    {{ with .BasePath }}{{ $base = . }}{{ end }}
     <div class="topic-actions">
-        <a href="/forum/topic/{{.Topic.Idforumtopic}}/thread">New Thread</a>
+        <a href="{{$base}}/topic/{{.Topic.Idforumtopic}}/thread">New Thread</a>
         {{- if and cd.IsAdmin cd.IsAdminMode }} | [<a href="/admin/forum/topics/topic/{{.Topic.Idforumtopic}}/edit">ADMIN</a>]{{ end }}
-        {{- if .Subscribed }} | <form method="post" action="/forum/topic/{{.Topic.Idforumtopic}}/unsubscribe">
+        {{- if .Subscribed }} | <form method="post" action="{{$base}}/topic/{{.Topic.Idforumtopic}}/unsubscribe">
                 <input type="hidden" name="task" value="Unsubscribe From Topic"/>
                 <input type="submit" value="Unsubscribe"/>
             </form>
-        {{- else }} | <form method="post" action="/forum/topic/{{.Topic.Idforumtopic}}/subscribe">
+        {{- else }} | <form method="post" action="{{$base}}/topic/{{.Topic.Idforumtopic}}/subscribe">
                 <input type="hidden" name="task" value="Subscribe To Topic"/>
                 <input type="submit" value="Subscribe"/>
             </form>

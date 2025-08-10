@@ -1,4 +1,6 @@
 {{ define "topicThreads" }}
+    {{ $base := "/forum" }}
+    {{ with .BasePath }}{{ $base = . }}{{ end }}
     <h2>Threads</h2>
     {{- range .Threads }}
         <table width="100%" border=1>
@@ -16,7 +18,7 @@
                 <td bgcolor="">
                     Lastposter: <font color="blue">{{ .Lastposterusername.String }}</font>
                     At <font color="blue">{{ localTime .Lastaddition.Time }}</font>
-                    [<a href="/forum/topic/{{.ForumtopicIdforumtopic}}/thread/{{ .Idforumthread }}">{{ .Comments.Int32 }} comments.</a>]
+                    [<a href="{{$base}}/topic/{{.ForumtopicIdforumtopic}}/thread/{{ .Idforumthread }}">{{ .Comments.Int32 }} comments.</a>]
                 </td>
             </tr>
         </table>

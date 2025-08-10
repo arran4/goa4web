@@ -15,6 +15,9 @@ type topicThreadReplyCancelTask struct{ tasks.TaskString }
 
 var topicThreadReplyCancel = &topicThreadReplyCancelTask{TaskString: TaskCancel}
 
+// TopicThreadReplyCancelHandler cancels replying to a thread. Exported for reuse.
+var TopicThreadReplyCancelHandler = topicThreadReplyCancel
+
 var _ tasks.Task = (*topicThreadReplyCancelTask)(nil)
 
 func (topicThreadReplyCancelTask) Action(w http.ResponseWriter, r *http.Request) any {
@@ -28,6 +31,10 @@ func (topicThreadReplyCancelTask) Action(w http.ResponseWriter, r *http.Request)
 	if err != nil || topicRow == nil {
 		return fmt.Errorf("topic fetch %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	endURL := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)
+	base := cd.ForumBasePath
+	if base == "" {
+		base = "/forum"
+	}
+	endURL := fmt.Sprintf("%s/topic/%d/thread/%d#bottom", base, topicRow.Idforumtopic, threadRow.Idforumthread)
 	return handlers.RedirectHandler(endURL)
 }

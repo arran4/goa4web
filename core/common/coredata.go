@@ -99,6 +99,7 @@ type CoreData struct {
 	StartLink         string
 	TasksReg          *tasks.Registry
 	SiteTitle         string
+	ForumBasePath     string // ForumBasePath holds the URL prefix for forum links.
 	UserID            int32
 
 	session      *sessions.Session
@@ -1611,11 +1612,11 @@ func (cd *CoreData) Preference() (*db.Preference, error) {
 // otherwise it resolves the site's default language name to an ID.
 func (cd *CoreData) PreferredLanguageID(siteDefault string) int32 {
 	id, err := cd.preferredLanguageID.Load(func() (int32, error) {
-                if pref, err := cd.Preference(); err == nil && pref != nil {
-                        if pref.LanguageIdlanguage.Valid {
-                                return pref.LanguageIdlanguage.Int32, nil
-                        }
-                }
+		if pref, err := cd.Preference(); err == nil && pref != nil {
+			if pref.LanguageIdlanguage.Valid {
+				return pref.LanguageIdlanguage.Int32, nil
+			}
+		}
 		if cd.queries == nil || siteDefault == "" {
 			return 0, nil
 		}

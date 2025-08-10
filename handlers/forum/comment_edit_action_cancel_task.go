@@ -15,6 +15,9 @@ type topicThreadCommentEditActionCancelTask struct{ tasks.TaskString }
 
 var topicThreadCommentEditActionCancel = &topicThreadCommentEditActionCancelTask{TaskString: TaskCancel}
 
+// TopicThreadCommentEditActionCancelHandler aborts editing a comment. Exported for reuse.
+var TopicThreadCommentEditActionCancelHandler = topicThreadCommentEditActionCancel
+
 var _ tasks.Task = (*topicThreadCommentEditActionCancelTask)(nil)
 
 func (topicThreadCommentEditActionCancelTask) Action(w http.ResponseWriter, r *http.Request) any {
@@ -28,6 +31,10 @@ func (topicThreadCommentEditActionCancelTask) Action(w http.ResponseWriter, r *h
 	if err != nil || topicRow == nil {
 		return fmt.Errorf("topic fetch %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	endURL := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)
+	base := cd.ForumBasePath
+	if base == "" {
+		base = "/forum"
+	}
+	endURL := fmt.Sprintf("%s/topic/%d/thread/%d#bottom", base, topicRow.Idforumtopic, threadRow.Idforumthread)
 	return handlers.RedirectHandler(endURL)
 }

@@ -23,7 +23,7 @@ func (cd *CoreData) Breadcrumbs() []Breadcrumb {
 		err    error
 	)
 	switch cd.currentSection {
-	case "forum":
+	case "forum", "privateforum":
 		crumbs, err = cd.forumBreadcrumbs()
 	case "writings":
 		crumbs, err = cd.writingBreadcrumbs()
@@ -46,7 +46,11 @@ func (cd *CoreData) Breadcrumbs() []Breadcrumb {
 }
 
 func (cd *CoreData) forumBreadcrumbs() ([]Breadcrumb, error) {
-	crumbs := []Breadcrumb{{Title: "Forum", Link: "/forum"}}
+	base := cd.ForumBasePath
+	if base == "" {
+		base = "/forum"
+	}
+	crumbs := []Breadcrumb{{Title: "Forum", Link: base}}
 	catID := cd.currentCategoryID
 	topicID := cd.currentTopicID
 	threadID := cd.currentThreadID
@@ -71,7 +75,7 @@ func (cd *CoreData) forumBreadcrumbs() ([]Breadcrumb, error) {
 			if row.Title.Valid {
 				title = row.Title.String
 			}
-			link := fmt.Sprintf("/forum/category/%d", row.Idforumcategory)
+			link := fmt.Sprintf("%s/category/%d", base, row.Idforumcategory)
 			if row.Idforumcategory == catID && topicID == 0 && threadID == 0 {
 				crumbs = append(crumbs, Breadcrumb{Title: title})
 			} else {
@@ -85,7 +89,7 @@ func (cd *CoreData) forumBreadcrumbs() ([]Breadcrumb, error) {
 			if topic.Title.Valid {
 				title = topic.Title.String
 			}
-			link := fmt.Sprintf("/forum/topic/%d", topicID)
+			link := fmt.Sprintf("%s/topic/%d", base, topicID)
 			if threadID == 0 {
 				crumbs = append(crumbs, Breadcrumb{Title: title})
 			} else {

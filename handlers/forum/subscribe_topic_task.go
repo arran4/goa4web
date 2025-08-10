@@ -20,6 +20,9 @@ type subscribeTopicTask struct{ tasks.TaskString }
 
 var subscribeTopicTaskAction = &subscribeTopicTask{TaskString: TaskSubscribeToTopic}
 
+// SubscribeTopicTaskHandler subscribes a user to a topic. Exported for reuse.
+var SubscribeTopicTaskHandler = subscribeTopicTaskAction
+
 var _ tasks.Task = (*subscribeTopicTask)(nil)
 
 func (subscribeTopicTask) Action(w http.ResponseWriter, r *http.Request) any {
@@ -34,5 +37,9 @@ func (subscribeTopicTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("insert subscription: %v", err)
 		return fmt.Errorf("insert subscription %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	return handlers.RedirectHandler(fmt.Sprintf("/forum/topic/%d", topicID))
+	base := cd.ForumBasePath
+	if base == "" {
+		base = "/forum"
+	}
+	return handlers.RedirectHandler(fmt.Sprintf("%s/topic/%d", base, topicID))
 }

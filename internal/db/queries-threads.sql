@@ -109,3 +109,34 @@ LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
 LEFT JOIN forumcategory fc ON t.forumcategory_idforumcategory = fc.idforumcategory
 WHERE c.users_idusers = ?
 ORDER BY th.lastaddition DESC;
+
+-- name: GetThreadBySectionThreadIDForReplier :one
+WITH role_ids AS (
+    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(replier_id)
+)
+SELECT th.*
+FROM forumthread th
+LEFT JOIN comments fc ON th.firstpost = fc.idcomments
+WHERE th.idforumthread = sqlc.arg(thread_id)
+  AND (
+      fc.language_idlanguage = 0
+      OR fc.language_idlanguage IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = sqlc.arg(replier_id)
+            AND ul.language_idlanguage = fc.language_idlanguage
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(replier_id)
+      )
+  )
+  AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section = sqlc.arg(section)
+      AND (g.item = sqlc.arg(item_type) OR g.item IS NULL)
+      AND g.action = 'reply'
+      AND g.active = 1
+      AND (g.item_id = sqlc.arg(item_id) OR g.item_id IS NULL)
+      AND (g.user_id = sqlc.arg(replier_match_id) OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  );

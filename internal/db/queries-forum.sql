@@ -1,4 +1,4 @@
-UPDATE forumcategory SET title = ?, description = ?, forumcategory_idforumcategory = ?, language_idlanguage = sqlc.arg(category_language_id) WHERE idforumcategory = ?;
+UPDATE forumcategory SET title = ?, description = ?, forumcategory_idforumcategory = ?, language_idlanguage = sqlc.narg(category_language_id) WHERE idforumcategory = ?;
 
 -- name: GetAllForumCategoriesWithSubcategoryCount :many
 SELECT c.*, COUNT(c2.idforumcategory) as SubcategoryCount,
@@ -81,7 +81,7 @@ FROM forumtopic t
 ORDER BY t.idforumtopic
 LIMIT ? OFFSET ?;
 
-UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ?, language_idlanguage = sqlc.arg(topic_language_id) WHERE idforumtopic = ?;
+UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ?, language_idlanguage = sqlc.narg(topic_language_id) WHERE idforumtopic = ?;
 
 -- name: GetAllForumTopicsByCategoryIdForUserWithLastPosterName :many
 WITH role_ids AS (
@@ -238,9 +238,9 @@ WHERE (
     )
 );
 
-INSERT INTO forumcategory (forumcategory_idforumcategory, language_idlanguage, title, description) VALUES (?, sqlc.arg(category_language_id), ?, ?);
+INSERT INTO forumcategory (forumcategory_idforumcategory, language_idlanguage, title, description) VALUES (?, sqlc.narg(category_language_id), ?, ?);
 
-INSERT INTO forumtopic (forumcategory_idforumcategory, language_idlanguage, title, description, handler) VALUES (?, sqlc.arg(topic_language_id), ?, ?, ?);
+INSERT INTO forumtopic (forumcategory_idforumcategory, language_idlanguage, title, description, handler) VALUES (?, sqlc.narg(topic_language_id), ?, ?, ?);
 
 -- name: CreateForumTopicForPoster :execlastid
 INSERT INTO forumtopic (forumcategory_idforumcategory, language_idlanguage, title, description, handler)

@@ -23,13 +23,13 @@ func TestWritingCategoryChangeTask(t *testing.T) {
 
 	queries := db.New(conn)
 
-	rows := sqlmock.NewRows([]string{"idwritingcategory", "writing_category_id", "title", "description"}).
-		AddRow(1, 0, "a", "")
+        rows := sqlmock.NewRows([]string{"idwritingcategory", "writing_category_id", "title", "description"}).
+                AddRow(1, nil, "a", "")
 	mock.ExpectQuery("SELECT wc.idwritingcategory").WillReturnRows(rows)
 
-	mock.ExpectExec("UPDATE writing_category").
-		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), int32(0), int32(1)).
-		WillReturnResult(sqlmock.NewResult(0, 1))
+        mock.ExpectExec("UPDATE writing_category").
+                WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), int32(1)).
+                WillReturnResult(sqlmock.NewResult(0, 1))
 
 	form := url.Values{"name": {"A"}, "desc": {"B"}, "pcid": {"0"}, "cid": {"1"}}
 	req := httptest.NewRequest("POST", "/admin/writings/categories/category/1/edit", strings.NewReader(form.Encode()))

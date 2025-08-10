@@ -1,6 +1,6 @@
 -- name: UpdateBlogEntryForWriter :exec
 UPDATE blogs b
-SET language_idlanguage = sqlc.arg(language_id), blog = sqlc.arg(blog)
+SET language_idlanguage = sqlc.narg(language_id), blog = sqlc.arg(blog)
 WHERE b.idblogs = sqlc.arg(entry_id)
   AND b.users_idusers = sqlc.arg(writer_id)
   AND EXISTS (
@@ -18,7 +18,7 @@ WHERE b.idblogs = sqlc.arg(entry_id)
 
 -- name: CreateBlogEntryForWriter :execlastid
 INSERT INTO blogs (users_idusers, language_idlanguage, blog, written)
-SELECT sqlc.arg(users_idusers), sqlc.arg(language_idlanguage), sqlc.arg(blog), CURRENT_TIMESTAMP
+SELECT sqlc.arg(users_idusers), sqlc.narg(language_idlanguage), sqlc.arg(blog), CURRENT_TIMESTAMP
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'blogs'

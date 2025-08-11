@@ -77,6 +77,9 @@ func TestForumReplyTaskEventData(t *testing.T) {
 	if _, ok := evt.Data["Username"].(string); !ok {
 		t.Fatalf("username not set: %+v", evt.Data)
 	}
+	if v, ok := evt.Data["CommentURL"].(string); !ok || v != "/forum/topic/1/thread/2#c1" {
+		t.Fatalf("comment URL: %+v", evt.Data)
+	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
 	}

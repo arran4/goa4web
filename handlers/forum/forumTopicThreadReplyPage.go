@@ -131,7 +131,11 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if base == "" {
 		base = "/forum"
 	}
-	endUrl := fmt.Sprintf("%s/topic/%d/thread/%d#bottom", base, topicRow.Idforumtopic, threadRow.Idforumthread)
+	commentNum := int32(1)
+	if threadRow.Comments.Valid {
+		commentNum = threadRow.Comments.Int32 + 1
+	}
+	endUrl := fmt.Sprintf("%s/topic/%d/thread/%d#c%d", base, topicRow.Idforumtopic, threadRow.Idforumthread, commentNum)
 
 	cid, err := cd.CreateForumCommentForCommenter(uid, threadRow.Idforumthread, topicRow.Idforumtopic, int32(languageId), text)
 	if err != nil {

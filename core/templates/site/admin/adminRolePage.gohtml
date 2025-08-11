@@ -1,7 +1,7 @@
 {{ template "head" $ }}
 <h2>Role: {{ .Role.Name }} (ID {{ .Role.ID }})</h2>
 <p><a href="/admin/role/{{ .Role.ID }}/edit">Edit Role</a></p>
-<table border="1">
+<table class="table table-bordered">
     <tr><th>Can Login</th><th>Is Admin</th><th>Public Profiles</th></tr>
     <tr>
         <td>{{ if .Role.CanLogin }}yes{{ else }}no{{ end }}</td>

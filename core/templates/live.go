@@ -93,3 +93,12 @@ func GetPrivateForumJSData() []byte {
 	}
 	return b
 }
+
+// GetTopicLabelsJSData returns the JavaScript for topic label editing.
+func GetTopicLabelsJSData() []byte {
+	b, err := os.ReadFile("core/templates/assets/topic_labels.js")
+	if err != nil {
+		panic(err)
+	}
+	return b
+}

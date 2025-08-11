@@ -21,10 +21,20 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	pr.HandleFunc("", Page).Methods(http.MethodGet)
 	pr.HandleFunc("", handlers.TaskHandler(privateTopicCreateTask)).Methods(http.MethodPost).MatcherFunc(privateTopicCreateTask.Matcher())
 	pr.HandleFunc("/private_forum.js", handlers.PrivateForumJS).Methods(http.MethodGet)
+	pr.HandleFunc("/topic_labels.js", handlers.TopicLabelsJS).Methods(http.MethodGet)
 	pr.HandleFunc("/topic/{topic}", TopicPage).Methods(http.MethodGet)
 
 	pr.HandleFunc("/topic/{topic}/subscribe", handlers.TaskHandler(forumhandlers.SubscribeTopicTaskHandler)).Methods(http.MethodPost).MatcherFunc(forumhandlers.SubscribeTopicTaskHandler.Matcher())
 	pr.HandleFunc("/topic/{topic}/unsubscribe", handlers.TaskHandler(forumhandlers.UnsubscribeTopicTaskHandler)).Methods(http.MethodPost).MatcherFunc(forumhandlers.UnsubscribeTopicTaskHandler.Matcher())
+
+	pr.HandleFunc("/topic/{topic}/labels", handlers.TaskHandler(forumhandlers.SetLabelsTaskHandler)).Methods(http.MethodPost).MatcherFunc(forumhandlers.SetLabelsTaskHandler.Matcher())
+	pr.HandleFunc("/topic/{topic}/labels", handlers.TaskHandler(forumhandlers.AddPublicLabelTaskHandler)).Methods(http.MethodPost).MatcherFunc(forumhandlers.AddPublicLabelTaskHandler.Matcher())
+	pr.HandleFunc("/topic/{topic}/labels", handlers.TaskHandler(forumhandlers.RemovePublicLabelTaskHandler)).Methods(http.MethodPost).MatcherFunc(forumhandlers.RemovePublicLabelTaskHandler.Matcher())
+	pr.HandleFunc("/topic/{topic}/labels", handlers.TaskHandler(forumhandlers.AddAuthorLabelTaskHandler)).Methods(http.MethodPost).MatcherFunc(forumhandlers.AddAuthorLabelTaskHandler.Matcher())
+	pr.HandleFunc("/topic/{topic}/labels", handlers.TaskHandler(forumhandlers.RemoveAuthorLabelTaskHandler)).Methods(http.MethodPost).MatcherFunc(forumhandlers.RemoveAuthorLabelTaskHandler.Matcher())
+	pr.HandleFunc("/topic/{topic}/labels", handlers.TaskHandler(forumhandlers.AddPrivateLabelTaskHandler)).Methods(http.MethodPost).MatcherFunc(forumhandlers.AddPrivateLabelTaskHandler.Matcher())
+	pr.HandleFunc("/topic/{topic}/labels", handlers.TaskHandler(forumhandlers.RemovePrivateLabelTaskHandler)).Methods(http.MethodPost).MatcherFunc(forumhandlers.RemovePrivateLabelTaskHandler.Matcher())
+	pr.HandleFunc("/topic/{topic}/labels", handlers.TaskHandler(forumhandlers.MarkTopicReadTaskHandler)).Methods(http.MethodPost).MatcherFunc(forumhandlers.MarkTopicReadTaskHandler.Matcher())
 
 	pr.HandleFunc("/topic/{topic}/thread", forumhandlers.CreateThreadTaskHandler.Page).Methods(http.MethodGet)
 	pr.HandleFunc("/topic/{topic}/thread", handlers.TaskHandler(forumhandlers.CreateThreadTaskHandler)).Methods(http.MethodPost).MatcherFunc(forumhandlers.CreateThreadTaskHandler.Matcher())

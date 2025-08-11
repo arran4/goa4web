@@ -1,7 +1,7 @@
 {{ template "head" $ }}
     {{ $writing := cd.CurrentWritingLoaded }}
     {{ if $writing }}
-        <font size="4">At {{ localTime $writing.Published.Time }}, By {{ $writing.Writerusername.String }}; {{ $writing.Title.String | trim | a4code2html }}:</font>
+        <span class="text-large">At {{ localTime $writing.Published.Time }}, By {{ $writing.Writerusername.String }}; {{ $writing.Title.String | trim | a4code2html }}:</span>
         {{ if $writing.Private.Bool }} (Restricted access) {{ end }}
         {{ if .CanEdit }}[<a href="/writings/article/{{ $writing.Idwriting }}/edit">EDIT</a>]{{ end }}
         {{ if and cd.IsAdmin cd.IsAdminMode }}[<a href="/admin/writings/article/{{ $writing.Idwriting }}">ADMIN</a>]{{ end }}
@@ -80,7 +80,7 @@
                 </aside>
                 <section class="body">
                     <a id="bottom"></a>
-                    <hr><font size="4">Reply:</font><br>
+                    <hr><span class="text-large">Reply:</span><br>
                     <form method="post">
                     {{ csrfField }}
                         <textarea name="replytext" cols="40" rows="20">{{ .ReplyText }}</textarea><br>

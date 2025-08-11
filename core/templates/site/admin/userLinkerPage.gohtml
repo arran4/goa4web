@@ -1,6 +1,6 @@
 {{ template "head" $ }}
 <h2>Links by {{ .User.Username.String }}</h2>
-<table border="1">
+<table class="table table-bordered">
     <tr><th>ID</th><th>Date</th><th>Title</th><th>URL</th><th>View</th></tr>
     {{- range .Links }}
     <tr>

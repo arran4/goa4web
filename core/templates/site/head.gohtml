@@ -20,7 +20,7 @@
     </head>
     {{ end }}
     {{ if cd.Marked "bodyBegin" }}
-    <body>
+    <body{{if cd.Section}} class="{{ cd.Section }}"{{end}}>
     {{ end }}
         {{ if cd.Marked "header" }}
             {{template "header"}}

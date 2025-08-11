@@ -36,6 +36,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	br.Handle("/blog/{blog}/edit", RequireBlogAuthor(http.HandlerFunc(editBlogTask.Page))).Methods("GET").MatcherFunc(handlers.RequiredAccess("content writer", "administrator"))
 	br.Handle("/blog/{blog}/edit", RequireBlogAuthor(http.HandlerFunc(handlers.TaskHandler(editBlogTask)))).Methods("POST").MatcherFunc(handlers.RequiredAccess("content writer", "administrator")).MatcherFunc(editBlogTask.Matcher())
 	br.HandleFunc("/blog/{blog}/edit", handlers.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(cancelTask.Matcher())
+	br.HandleFunc("/blog/{blog}/labels", handlers.TaskHandler(setLabelsTask)).Methods("POST").MatcherFunc(setLabelsTask.Matcher())
 
 }
 

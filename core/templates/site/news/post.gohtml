@@ -27,5 +27,11 @@
                 </a>]
             {{ end }}
         </tr>
-    </table><br>
+    </table>
+    {{ $labels := NewsLabels .Idsitenews }}
+    {{ if $labels }}
+    <div class="label-bar">
+        {{ template "topicLabels" $labels }}
+    </div>
+    {{ end }}<br>
 {{ end }}

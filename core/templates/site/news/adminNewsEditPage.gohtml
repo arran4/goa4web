@@ -4,7 +4,15 @@
     <input type="hidden" name="task" value="Edit">
     <textarea name="text" cols=40 rows=20>{{ .Post.News.String }}</textarea><br>
     {{ template "languageCombobox" }}
+    Author Labels:<br>
+    <div class="label-editor">
+    {{ range .AuthorLabels }}
+        <span class="label pill author">{{ . }}<button type="button" class="remove" data-type="author">x</button><input type="hidden" name="author" value="{{ . }}"/></span>
+    {{ end }}
+        <input type="text" class="label-input" data-type="author" placeholder="Add author label"/>
+    </div>
     <input type="submit" value="Save">
 </form>
+<script src="/forum/topic_labels.js"></script>
 <p><a href="/admin/news/article/{{ .Post.Idsitenews }}">Cancel</a></p>
 {{ template "tail" $ }}

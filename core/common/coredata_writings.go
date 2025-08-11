@@ -7,6 +7,7 @@ import (
 	"math"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/arran4/goa4web/internal/algorithms"
 	"github.com/arran4/goa4web/internal/db"
@@ -221,6 +222,8 @@ func (cd *CoreData) CreateWriting(categoryID, languageID int32, title, abstract,
 		Writing:           sql.NullString{Valid: true, String: body},
 		Private:           sql.NullBool{Valid: true, Bool: private},
 		LanguageID:        sql.NullInt32{Int32: languageID, Valid: languageID != 0},
+		Published:         sql.NullTime{Time: time.Now().UTC(), Valid: true},
+		Timezone:          sql.NullString{String: cd.Location().String(), Valid: true},
 		GrantCategoryID:   sql.NullInt32{Int32: categoryID, Valid: true},
 		GranteeID:         sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 	})

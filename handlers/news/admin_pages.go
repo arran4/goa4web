@@ -170,14 +170,17 @@ func adminNewsEditFormPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cd.PageTitle = "Edit News"
+	labels, _ := cd.NewsAuthorLabels(post.Idsitenews)
 	data := struct {
 		Languages          []*db.Language
 		Post               *db.GetNewsPostByIdWithWriterIdAndThreadCommentCountRow
 		SelectedLanguageId int
+		AuthorLabels       []string
 	}{
 		Languages:          langs,
 		Post:               post,
 		SelectedLanguageId: int(post.LanguageID.Int32),
+		AuthorLabels:       labels,
 	}
 	if err := cd.ExecuteSiteTemplate(w, r, "adminNewsEditPage.gohtml", data); err != nil {
 		handlers.RenderErrorPage(w, r, err)

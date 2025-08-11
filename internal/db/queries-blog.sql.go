@@ -84,7 +84,7 @@ func (q *Queries) AdminGetAllBlogEntriesByUser(ctx context.Context, authorID int
 
 const createBlogEntryForWriter = `-- name: CreateBlogEntryForWriter :execlastid
 INSERT INTO blogs (users_idusers, language_id, blog, written, timezone)
-SELECT ?, ?, ?, CURRENT_TIMESTAMP, ?
+SELECT ?, ?, ?, ?, ?
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'blogs'
@@ -103,6 +103,7 @@ type CreateBlogEntryForWriterParams struct {
 	UsersIdusers int32
 	LanguageID   sql.NullInt32
 	Blog         sql.NullString
+	Written      time.Time
 	Timezone     sql.NullString
 	UserID       sql.NullInt32
 	ListerID     int32
@@ -113,6 +114,7 @@ func (q *Queries) CreateBlogEntryForWriter(ctx context.Context, arg CreateBlogEn
 		arg.UsersIdusers,
 		arg.LanguageID,
 		arg.Blog,
+		arg.Written,
 		arg.Timezone,
 		arg.UserID,
 		arg.ListerID,

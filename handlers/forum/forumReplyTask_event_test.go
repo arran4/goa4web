@@ -36,7 +36,7 @@ func TestForumReplyTaskEventData(t *testing.T) {
 	threadID := int32(2)
 
 	mock.ExpectExec("INSERT INTO comments").
-		WithArgs(int32(1), uid, threadID, sqlmock.AnyArg(), sqlmock.AnyArg(), "forum", sqlmock.AnyArg(), topicID, sqlmock.AnyArg(), uid).
+		WithArgs(int32(1), uid, threadID, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), "forum", sqlmock.AnyArg(), topicID, sqlmock.AnyArg(), uid).
 		WillReturnResult(sqlmock.NewResult(5, 1))
 
 	store := sessions.NewCookieStore([]byte("test"))
@@ -76,6 +76,9 @@ func TestForumReplyTaskEventData(t *testing.T) {
 
 	if _, ok := evt.Data["Username"].(string); !ok {
 		t.Fatalf("username not set: %+v", evt.Data)
+	}
+	if v, ok := evt.Data["CommentURL"].(string); !ok || v != "/forum/topic/1/thread/2#c1" {
+		t.Fatalf("comment URL: %+v", evt.Data)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)

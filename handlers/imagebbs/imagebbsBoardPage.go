@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 
@@ -166,6 +167,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 		Fullimage:    sql.NullString{Valid: true, String: relFull},
 		PosterID:     uid,
 		Description:  sql.NullString{Valid: true, String: text},
+		Posted:       sql.NullTime{Time: time.Now().UTC(), Valid: true},
 		Timezone:     sql.NullString{String: cd.Location().String(), Valid: true},
 		Approved:     approved,
 		FileSize:     int32(size),

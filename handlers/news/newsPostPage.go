@@ -14,6 +14,7 @@ import (
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 )
@@ -30,6 +31,8 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		EditSaveURL    func(*db.GetCommentsByThreadIdForUserRow) string
 		Editing        func(*db.GetCommentsByThreadIdForUserRow) bool
 		AdminURL       func(*db.GetCommentsByThreadIdForUserRow) string
+		Labels         []templates.TopicLabel
+		BackURL        string
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -38,6 +41,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 	queries := cd.Queries()
 	data := Data{
 		IsReplyable: true,
+		BackURL:     r.URL.RequestURI(),
 	}
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["news"])
@@ -141,6 +145,17 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 			default:
 				data.ReplyText = a4code.QuoteText(c.Username.String, c.Text.String)
 			}
+		}
+	}
+
+	if als, err := cd.NewsAuthorLabels(post.Idsitenews); err == nil {
+		for _, l := range als {
+			data.Labels = append(data.Labels, templates.TopicLabel{Name: l, Type: "author"})
+		}
+	}
+	if pls, err := cd.NewsPrivateLabels(post.Idsitenews); err == nil {
+		for _, l := range pls {
+			data.Labels = append(data.Labels, templates.TopicLabel{Name: l, Type: "private"})
 		}
 	}
 

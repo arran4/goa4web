@@ -22,6 +22,10 @@
                 <br>-<br><a href="/writings/article/{{ $idwriting }}">Read now</a> - {{ $comments }} comments exist.
             </td></tr>
         </table>
+        {{ $labels := WritingLabels $idwriting }}
+        {{ if $labels }}
+        <div class="label-bar">{{ template "topicLabels" $labels }}</div>
+        {{ end }}
     {{ else }}
         There are no writings.
     {{ end }}

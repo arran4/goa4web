@@ -11,13 +11,17 @@
                     <tr>
                         <th bgcolor="lightgrey">{{ localTimeIn .Written .Timezone.String }}</th>
                     </tr>
-                    <tr>
-                        <td>
-                            {{.Blog.String | a4code2html}}<br><br>{{.Username.String}} - [<a href="/blogs/blog/{{.Idblogs}}/comments">{{.Comments}} COMMENTS</a>]{{ if cd.CanEditBlog .Idblogs .UsersIdusers }} - [<a href="/blogs/blog/{{.Idblogs}}/edit">EDIT</a>]{{ end }}{{ if and cd.IsAdmin cd.IsAdminMode }} - [<a href="/admin/blogs/blog/{{.Idblogs}}">ADMIN</a>]{{ end }}
-                        </td>
-                    </tr>
-                {{end}}
-            </table><br>
+                <tr>
+                    <td>
+                        {{.Blog.String | a4code2html}}<br><br>{{.Username.String}} - [<a href="/blogs/blog/{{.Idblogs}}/comments">{{.Comments}} COMMENTS</a>]{{ if cd.CanEditBlog .Idblogs .UsersIdusers }} - [<a href="/blogs/blog/{{.Idblogs}}/edit">EDIT</a>]{{ end }}{{ if and cd.IsAdmin cd.IsAdminMode }} - [<a href="/admin/blogs/blog/{{.Idblogs}}">ADMIN</a>]{{ end }}
+                    </td>
+                </tr>
+                {{ $labels := BlogLabels .Idblogs }}
+                {{ if $labels }}
+                <tr><td><div class="label-bar">{{ template "topicLabels" $labels }}</div></td></tr>
+                {{ end }}
+            {{end}}
+        </table><br>
         {{else}}
             {{if gt (cd.Offset) 0}}
                 {{if cd.CurrentProfileUserID}}

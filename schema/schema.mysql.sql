@@ -369,6 +369,7 @@ CREATE TABLE `writing` (
   `writing_category_id` int(10) NOT NULL DEFAULT 0,
   `title` tinytext DEFAULT NULL,
   `published` datetime DEFAULT NULL,
+  `timezone` text DEFAULT NULL,
   `writing` longtext DEFAULT NULL,
   `abstract` mediumtext DEFAULT NULL,
   `private` tinyint(1) DEFAULT NULL,
@@ -552,6 +553,7 @@ CREATE TABLE IF NOT EXISTS `deactivated_writings` (
   `writing_category_id` int NOT NULL,
   `title` tinytext,
   `published` datetime,
+  `timezone` text DEFAULT NULL,
   `writing` longtext,
   `abstract` mediumtext,
   `private` tinyint(1) DEFAULT NULL,
@@ -699,4 +701,14 @@ CREATE TABLE `content_label_status` (
   `label` tinytext NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `content_label_status_uq` (`item`(255),`item_id`,`label`(255))
+);
+
+CREATE TABLE `content_read_markers` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `item` varchar(64) NOT NULL,
+  `item_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `last_comment_id` int NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `content_read_markers_uq` (`item`,`item_id`,`user_id`)
 );

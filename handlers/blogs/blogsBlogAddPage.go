@@ -3,6 +3,7 @@ package blogs
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/arran4/goa4web/core/consts"
 
@@ -81,6 +82,7 @@ func (AddBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 			String: text,
 			Valid:  true,
 		},
+		Written:  time.Now().UTC(),
 		Timezone: sql.NullString{String: cd.Location().String(), Valid: true},
 		UserID:   sql.NullInt32{Int32: uid, Valid: true},
 		ListerID: uid,

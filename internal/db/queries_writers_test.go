@@ -74,8 +74,8 @@ func TestQueries_GetWritingForListerByID_GlobalGrant(t *testing.T) {
 	defer conn.Close()
 	q := New(conn)
 
-	rows := sqlmock.NewRows([]string{"idwriting", "users_idusers", "forumthread_id", "language_id", "writing_category_id", "title", "published", "writing", "abstract", "private", "deleted_at", "last_index", "WriterId", "WriterUsername"}).
-		AddRow(1, 1, 0, 0, 0, nil, nil, nil, nil, false, nil, nil, 1, "bob")
+	rows := sqlmock.NewRows([]string{"idwriting", "users_idusers", "forumthread_id", "language_id", "writing_category_id", "title", "published", "timezone", "writing", "abstract", "private", "deleted_at", "last_index", "WriterId", "WriterUsername"}).
+		AddRow(1, 1, 0, 0, 0, nil, nil, nil, nil, nil, false, nil, nil, 1, "bob")
 
 	mock.ExpectQuery(regexp.QuoteMeta(getWritingForListerByID)).
 		WithArgs(int32(1), int32(1), sql.NullInt32{Int32: 1, Valid: true}).

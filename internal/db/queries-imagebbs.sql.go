@@ -206,7 +206,7 @@ INSERT INTO imagepost (
     approved,
     file_size
 )
-SELECT ?, ?, ?, ?, ?, NOW(), ?, ?, ?
+SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='imagebbs'
@@ -227,6 +227,7 @@ type CreateImagePostForPosterParams struct {
 	Fullimage    sql.NullString
 	PosterID     int32
 	Description  sql.NullString
+	Posted       sql.NullTime
 	Timezone     sql.NullString
 	Approved     bool
 	FileSize     int32
@@ -241,6 +242,7 @@ func (q *Queries) CreateImagePostForPoster(ctx context.Context, arg CreateImageP
 		arg.Fullimage,
 		arg.PosterID,
 		arg.Description,
+		arg.Posted,
 		arg.Timezone,
 		arg.Approved,
 		arg.FileSize,

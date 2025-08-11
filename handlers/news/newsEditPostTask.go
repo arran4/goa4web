@@ -1,10 +1,12 @@
 package news
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/eventbus"
@@ -13,6 +15,7 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -33,6 +36,8 @@ func (EditTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *strin
 	return &v
 }
 
+func (EditTask) Page(w http.ResponseWriter, r *http.Request) { newsEditFormPage(w, r) }
+
 func (EditTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := handlers.ValidateForm(r, []string{"language", "text"}, []string{"language", "text"}); err != nil {
 		return fmt.Errorf("validation fail %w", err)
@@ -42,6 +47,17 @@ func (EditTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("languageId parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	text := r.PostFormValue("text")
+	raw := r.PostForm["author"]
+	labels := make([]string, 0, len(raw))
+	seen := map[string]struct{}{}
+	for _, l := range raw {
+		if v := strings.TrimSpace(l); v != "" {
+			if _, ok := seen[v]; !ok {
+				seen[v] = struct{}{}
+				labels = append(labels, v)
+			}
+		}
+	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
 	postId, _ := strconv.Atoi(vars["news"])
@@ -54,5 +70,50 @@ func (EditTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("update news post fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
+	if err := cd.SetNewsAuthorLabels(int32(postId), labels); err != nil {
+		return fmt.Errorf("set author labels fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+
 	return nil
+}
+
+func newsEditFormPage(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
+	pid, err := strconv.Atoi(mux.Vars(r)["news"])
+	if err != nil {
+		http.Redirect(w, r, "/news", http.StatusTemporaryRedirect)
+		return
+	}
+	post, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCount(r.Context(), db.GetNewsPostByIdWithWriterIdAndThreadCommentCountParams{
+		ViewerID: cd.UserID,
+		ID:       int32(pid),
+		UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+	})
+	if err != nil {
+		http.Redirect(w, r, "/news?error="+err.Error(), http.StatusTemporaryRedirect)
+		return
+	}
+	if !cd.HasGrant("news", "post", "edit", post.Idsitenews) {
+		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+		return
+	}
+	langs, err := cd.Languages()
+	if err != nil {
+		handlers.RenderErrorPage(w, r, err)
+		return
+	}
+	cd.PageTitle = "Edit News"
+	data := struct {
+		Languages          []*db.Language
+		Post               *db.GetNewsPostByIdWithWriterIdAndThreadCommentCountRow
+		SelectedLanguageId int
+	}{
+		Languages:          langs,
+		Post:               post,
+		SelectedLanguageId: int(post.LanguageID.Int32),
+	}
+	if err := cd.ExecuteSiteTemplate(w, r, "newsEditPage.gohtml", data); err != nil {
+		handlers.RenderErrorPage(w, r, err)
+	}
 }

@@ -23,6 +23,7 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 		SelectedLanguageId int
 		Writing            *db.GetWritingForListerByIDRow
 		UserId             int32
+		AuthorLabels       []string
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	data := Data{
@@ -44,6 +45,10 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data.Writing = writing
+
+	if als, err := cd.WritingAuthorLabels(writing.Idwriting); err == nil {
+		data.AuthorLabels = als
+	}
 
 	languageRows, err := cd.Languages()
 	if err != nil {

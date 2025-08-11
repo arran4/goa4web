@@ -99,7 +99,7 @@ ORDER BY c.written DESC
 
 -- name: CreateCommentInSectionForCommenter :execlastid
 INSERT INTO comments (language_id, users_idusers, forumthread_id, text, written, timezone)
-SELECT sqlc.narg(language_id), sqlc.narg(commenter_id), sqlc.arg(forumthread_id), sqlc.arg(text), NOW(), sqlc.arg(timezone)
+SELECT sqlc.narg(language_id), sqlc.narg(commenter_id), sqlc.arg(forumthread_id), sqlc.arg(text), sqlc.arg(written), sqlc.arg(timezone)
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = sqlc.arg(section)

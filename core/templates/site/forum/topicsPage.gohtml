@@ -20,7 +20,6 @@
         {{- end }}
     </div>
     {{ if gt (len .Labels) 0 }}
-        <h3>Labels</h3>
         {{ template "topicLabels" .Labels }}
     {{ end }}
 

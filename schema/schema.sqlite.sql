@@ -695,3 +695,12 @@ CREATE TABLE `content_label_status` (
   `label` tinytext NOT NULL,
   UNIQUE (`item`,`item_id`,`label`)
 );
+
+CREATE TABLE `content_read_markers` (
+  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `item` varchar(64) NOT NULL,
+  `item_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `last_comment_id` int NOT NULL,
+  UNIQUE (`item`,`item_id`,`user_id`)
+);

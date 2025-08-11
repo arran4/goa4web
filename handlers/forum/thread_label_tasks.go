@@ -196,6 +196,14 @@ func (MarkThreadReadTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("mark read: %v", err)
 		return fmt.Errorf("mark read %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
+	if last := r.PostFormValue("last_comment"); last != "" {
+		if cid, err := strconv.Atoi(last); err == nil {
+			if err := cd.SetThreadReadMarker(int32(threadID), int32(cid)); err != nil {
+				log.Printf("set read marker: %v", err)
+				return fmt.Errorf("set read marker %w", handlers.ErrRedirectOnSamePageHandler(err))
+			}
+		}
+	}
 
 	target := r.PostFormValue("redirect")
 	if target == "" {

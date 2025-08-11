@@ -137,13 +137,10 @@ func (cd *CoreData) PrivateLabels(item string, itemID int32) ([]string, error) {
 	return labels, nil
 }
 
-// ClearPrivateLabelStatus removes stored new/unread inversions for an item across all users.
+// ClearPrivateLabelStatus removes stored unread inversions for an item across all users.
 func (cd *CoreData) ClearPrivateLabelStatus(item string, itemID int32) error {
 	if cd.queries == nil {
 		return nil
-	}
-	if err := cd.queries.SystemClearContentPrivateLabel(cd.ctx, db.SystemClearContentPrivateLabelParams{Item: item, ItemID: itemID, Label: "new"}); err != nil {
-		return err
 	}
 	return cd.queries.SystemClearContentPrivateLabel(cd.ctx, db.SystemClearContentPrivateLabelParams{Item: item, ItemID: itemID, Label: "unread"})
 }

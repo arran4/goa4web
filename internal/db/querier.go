@@ -277,6 +277,7 @@ type Querier interface {
 	// section's primary item type since comments inherit their thread's grants.
 	GetCommentsBySectionThreadIdForUser(ctx context.Context, arg GetCommentsBySectionThreadIdForUserParams) ([]*GetCommentsBySectionThreadIdForUserRow, error)
 	GetCommentsByThreadIdForUser(ctx context.Context, arg GetCommentsByThreadIdForUserParams) ([]*GetCommentsByThreadIdForUserRow, error)
+	GetContentReadMarker(ctx context.Context, arg GetContentReadMarkerParams) (*GetContentReadMarkerRow, error)
 	GetExternalLink(ctx context.Context, url string) (*ExternalLink, error)
 	GetExternalLinkByID(ctx context.Context, id int32) (*ExternalLink, error)
 	GetFAQAnsweredQuestions(ctx context.Context, arg GetFAQAnsweredQuestionsParams) ([]*Faq, error)
@@ -522,6 +523,7 @@ type Querier interface {
 	UpdateSubscriptionByIDForSubscriber(ctx context.Context, arg UpdateSubscriptionByIDForSubscriberParams) error
 	UpdateTimezoneForLister(ctx context.Context, arg UpdateTimezoneForListerParams) error
 	UpdateWritingForWriter(ctx context.Context, arg UpdateWritingForWriterParams) error
+	UpsertContentReadMarker(ctx context.Context, arg UpsertContentReadMarkerParams) error
 }
 
 var _ Querier = (*Queries)(nil)

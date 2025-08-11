@@ -3,6 +3,7 @@ package common_test
 import (
 	"context"
 	"reflect"
+	"regexp"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -116,6 +117,28 @@ func TestPrivateLabelsDefaultAndInversion(t *testing.T) {
 	expected = []string{"unread", "foo"}
 	if !reflect.DeepEqual(labels, expected) {
 		t.Fatalf("inverted labels %+v, want %+v", labels, expected)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}
+
+func TestClearThreadPrivateLabelStatus(t *testing.T) {
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
+	q := db.New(conn)
+	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
+
+	mock.ExpectExec(regexp.QuoteMeta("DELETE FROM content_private_labels")).
+		WithArgs("thread", int32(1), "unread").
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	if err := cd.ClearThreadPrivateLabelStatus(1); err != nil {
+		t.Fatalf("ClearThreadPrivateLabelStatus: %v", err)
 	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {

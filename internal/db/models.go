@@ -120,6 +120,14 @@ type ContentPublicLabel struct {
 	Label  string
 }
 
+type ContentReadMarker struct {
+	ID            int32
+	Item          string
+	ItemID        int32
+	UserID        int32
+	LastCommentID int32
+}
+
 type DeactivatedBlog struct {
 	Idblogs       int32
 	ForumthreadID int32

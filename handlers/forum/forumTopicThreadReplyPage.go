@@ -153,6 +153,9 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := cd.SetThreadPrivateLabelStatus(threadRow.Idforumthread, false, false); err != nil {
 		log.Printf("set label status: %v", err)
 	}
+	if err := cd.SetThreadReadMarker(threadRow.Idforumthread, int32(cid)); err != nil {
+		log.Printf("set read marker: %v", err)
+	}
 
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {

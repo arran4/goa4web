@@ -14,18 +14,16 @@
         {{ $idwriting := .Idwriting }}
         {{ $private := .Private.Bool }}
         {{ $comments := .Comments }}
+        {{ $labels := WritingLabels $idwriting }}
         <table width="100%">
             <tr><th bgcolor="lightgrey">{{ $title }} By {{ $username }} on {{ $published }}
                 {{ if $private }} - <i>Warning: Privileged information.</i>{{ end }}
             </th></tr>
             <tr><td>Abstract:<br>{{ $abstract }}
                 <br>-<br><a href="/writings/article/{{ $idwriting }}">Read now</a> - {{ $comments }} comments exist.
+                {{ if $labels }}<span class="label-bar">{{ template "topicLabels" $labels }}</span>{{ end }}
             </td></tr>
         </table>
-        {{ $labels := WritingLabels $idwriting }}
-        {{ if $labels }}
-        <div class="label-bar">{{ template "topicLabels" $labels }}</div>
-        {{ end }}
     {{ else }}
         There are no writings.
     {{ end }}

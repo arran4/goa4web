@@ -123,6 +123,33 @@ func TestPrivateLabelsDefaultAndInversion(t *testing.T) {
 	}
 }
 
+func TestPrivateLabelsTopicExcludesStatus(t *testing.T) {
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
+	q := db.New(conn)
+	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
+	cd.UserID = 2
+
+	mock.ExpectQuery("SELECT .* FROM content_private_labels").
+		WithArgs("topic", int32(1), int32(2)).
+		WillReturnRows(sqlmock.NewRows([]string{"item", "item_id", "user_id", "label", "invert"}))
+
+	labels, err := cd.PrivateLabels("topic", 1)
+	if err != nil {
+		t.Fatalf("PrivateLabels topic: %v", err)
+	}
+	if len(labels) != 0 {
+		t.Fatalf("expected no labels for topic, got %+v", labels)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}
+
 func TestSetWritingPublicLabels(t *testing.T) {
 	conn, mock, err := sqlmock.New()
 	if err != nil {

@@ -108,6 +108,7 @@ func (cd *CoreData) CreateFAQQuestion(p CreateFAQQuestionParams) (int64, error) 
 		UsersIdusers: p.WriterID,
 		Question:     sql.NullString{String: p.Question, Valid: p.Question != ""},
 		Answer:       sql.NullString{String: p.Answer, Valid: p.Answer != ""},
+		Timezone:     sql.NullString{String: cd.Location().String(), Valid: true},
 		UserID:       sql.NullInt32{Int32: p.WriterID, Valid: p.WriterID != 0},
 		ViewerID:     p.WriterID,
 	}); err != nil {

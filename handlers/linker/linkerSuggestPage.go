@@ -65,7 +65,8 @@ var suggestTask = SuggestTask{TaskString: TaskSuggest}
 var _ tasks.Task = (*SuggestTask)(nil)
 
 func (SuggestTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
@@ -85,6 +86,7 @@ func (SuggestTask) Action(w http.ResponseWriter, r *http.Request) any {
 		Title:            sql.NullString{Valid: true, String: title},
 		Url:              sql.NullString{Valid: true, String: url},
 		Description:      sql.NullString{Valid: true, String: description},
+		Timezone:         sql.NullString{String: cd.Location().String(), Valid: true},
 		GrantCategoryID:  sql.NullInt32{Int32: int32(category), Valid: category != 0},
 		GranteeID:        sql.NullInt32{Int32: uid, Valid: true},
 	}); err != nil {

@@ -64,7 +64,7 @@ func TestUpdateFAQQuestion(t *testing.T) {
 		WithArgs(sql.NullString{String: "a", Valid: true}, sql.NullString{String: "q", Valid: true}, sql.NullInt32{Int32: 2, Valid: true}, int32(1)).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectExec("INSERT INTO faq_revisions").
-		WithArgs(int32(1), int32(3), sql.NullString{String: "q", Valid: true}, sql.NullString{String: "a", Valid: true}, sql.NullInt32{Int32: 3, Valid: true}, int32(3)).
+		WithArgs(int32(1), int32(3), sql.NullString{String: "q", Valid: true}, sql.NullString{String: "a", Valid: true}, sql.NullString{String: time.Local.String(), Valid: true}, sql.NullInt32{Int32: 3, Valid: true}, int32(3)).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())

@@ -10,8 +10,8 @@ UPDATE users SET username = ?, email = '', passwd = '', passwd_algorithm = '', d
 WHERE idusers = ?;
 
 -- name: AdminArchiveComment :exec
-INSERT INTO deactivated_comments (idcomments, forumthread_id, users_idusers, language_idlanguage, written, text, deleted_at)
-VALUES (?, ?, ?, ?, ?, ?, NOW());
+INSERT INTO deactivated_comments (idcomments, forumthread_id, users_idusers, language_idlanguage, written, text, timezone, deleted_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, NOW());
 
 -- name: AdminScrubComment :exec
 UPDATE comments SET text = ?, deleted_at = NOW() WHERE idcomments = ?;
@@ -68,8 +68,8 @@ WHERE restored_at IS NULL
 LIMIT ? OFFSET ?;
 
 -- name: AdminArchiveBlog :exec
-INSERT INTO deactivated_blogs (idblogs, forumthread_id, users_idusers, language_idlanguage, blog, written, deleted_at)
-VALUES (?, ?, ?, ?, ?, ?, NOW());
+INSERT INTO deactivated_blogs (idblogs, forumthread_id, users_idusers, language_idlanguage, blog, written, timezone, deleted_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, NOW());
 
 -- name: AdminScrubBlog :exec
 UPDATE blogs SET blog = ?, deleted_at = NOW() WHERE idblogs = ?;
@@ -96,8 +96,8 @@ WHERE restored_at IS NULL
 LIMIT ? OFFSET ?;
 
 -- name: AdminArchiveImagepost :exec
-INSERT INTO deactivated_imageposts (idimagepost, forumthread_id, users_idusers, imageboard_idimageboard, posted, description, thumbnail, fullimage, file_size, approved, deleted_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW());
+INSERT INTO deactivated_imageposts (idimagepost, forumthread_id, users_idusers, imageboard_idimageboard, posted, timezone, description, thumbnail, fullimage, file_size, approved, deleted_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW());
 
 -- name: AdminScrubImagepost :exec
 UPDATE imagepost SET description = '', thumbnail = '', fullimage = '', deleted_at = NOW() WHERE idimagepost = ?;
@@ -124,8 +124,8 @@ WHERE restored_at IS NULL
 LIMIT ? OFFSET ?;
 
 -- name: AdminArchiveLink :exec
-INSERT INTO deactivated_linker (idlinker, language_idlanguage, users_idusers, linker_category_id, forumthread_id, title, url, description, listed, deleted_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW());
+INSERT INTO deactivated_linker (idlinker, language_idlanguage, users_idusers, linker_category_id, forumthread_id, title, url, description, listed, timezone, deleted_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW());
 
 -- name: AdminScrubLink :exec
 UPDATE linker SET title = ?, url = '', description = '', deleted_at = NOW() WHERE idlinker = ?;

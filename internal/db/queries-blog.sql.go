@@ -19,6 +19,7 @@ SELECT b.idblogs,
        b.language_idlanguage,
        b.blog,
        b.written,
+       b.timezone,
        u.username,
        coalesce(th.comments, 0),
        fc.idforumcategory,
@@ -39,6 +40,7 @@ type AdminGetAllBlogEntriesByUserRow struct {
 	LanguageIdlanguage sql.NullInt32
 	Blog               sql.NullString
 	Written            time.Time
+	Timezone           sql.NullString
 	Username           sql.NullString
 	Comments           int32
 	Idforumcategory    sql.NullInt32
@@ -61,6 +63,7 @@ func (q *Queries) AdminGetAllBlogEntriesByUser(ctx context.Context, authorID int
 			&i.LanguageIdlanguage,
 			&i.Blog,
 			&i.Written,
+			&i.Timezone,
 			&i.Username,
 			&i.Comments,
 			&i.Idforumcategory,
@@ -80,8 +83,8 @@ func (q *Queries) AdminGetAllBlogEntriesByUser(ctx context.Context, authorID int
 }
 
 const createBlogEntryForWriter = `-- name: CreateBlogEntryForWriter :execlastid
-INSERT INTO blogs (users_idusers, language_idlanguage, blog, written)
-SELECT ?, ?, ?, CURRENT_TIMESTAMP
+INSERT INTO blogs (users_idusers, language_idlanguage, blog, written, timezone)
+SELECT ?, ?, ?, CURRENT_TIMESTAMP, ?
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'blogs'
@@ -100,6 +103,7 @@ type CreateBlogEntryForWriterParams struct {
 	UsersIdusers       int32
 	LanguageIdlanguage sql.NullInt32
 	Blog               sql.NullString
+	Timezone           sql.NullString
 	UserID             sql.NullInt32
 	ListerID           int32
 }
@@ -109,6 +113,7 @@ func (q *Queries) CreateBlogEntryForWriter(ctx context.Context, arg CreateBlogEn
 		arg.UsersIdusers,
 		arg.LanguageIdlanguage,
 		arg.Blog,
+		arg.Timezone,
 		arg.UserID,
 		arg.ListerID,
 	)
@@ -122,7 +127,7 @@ const getBlogEntryForListerByID = `-- name: GetBlogEntryForListerByID :one
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
+SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, b.timezone, u.username, coalesce(th.comments, 0),
        b.users_idusers = ? AS is_owner
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
@@ -166,6 +171,7 @@ type GetBlogEntryForListerByIDRow struct {
 	LanguageIdlanguage sql.NullInt32
 	Blog               sql.NullString
 	Written            time.Time
+	Timezone           sql.NullString
 	Username           sql.NullString
 	Comments           int32
 	IsOwner            bool
@@ -188,6 +194,7 @@ func (q *Queries) GetBlogEntryForListerByID(ctx context.Context, arg GetBlogEntr
 		&i.LanguageIdlanguage,
 		&i.Blog,
 		&i.Written,
+		&i.Timezone,
 		&i.Username,
 		&i.Comments,
 		&i.IsOwner,
@@ -199,7 +206,7 @@ const listBlogEntriesByAuthorForLister = `-- name: ListBlogEntriesByAuthorForLis
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
+SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, b.timezone, u.username, coalesce(th.comments, 0),
        b.users_idusers = ? AS is_owner
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
@@ -246,6 +253,7 @@ type ListBlogEntriesByAuthorForListerRow struct {
 	LanguageIdlanguage sql.NullInt32
 	Blog               sql.NullString
 	Written            time.Time
+	Timezone           sql.NullString
 	Username           sql.NullString
 	Comments           int32
 	IsOwner            bool
@@ -277,6 +285,7 @@ func (q *Queries) ListBlogEntriesByAuthorForLister(ctx context.Context, arg List
 			&i.LanguageIdlanguage,
 			&i.Blog,
 			&i.Written,
+			&i.Timezone,
 			&i.Username,
 			&i.Comments,
 			&i.IsOwner,
@@ -298,7 +307,7 @@ const listBlogEntriesByIDsForLister = `-- name: ListBlogEntriesByIDsForLister :m
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written
+SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, b.timezone
 FROM blogs b
 WHERE b.idblogs IN (/*SLICE:blogids*/?)
   AND (
@@ -342,6 +351,7 @@ type ListBlogEntriesByIDsForListerRow struct {
 	LanguageIdlanguage sql.NullInt32
 	Blog               sql.NullString
 	Written            time.Time
+	Timezone           sql.NullString
 }
 
 func (q *Queries) ListBlogEntriesByIDsForLister(ctx context.Context, arg ListBlogEntriesByIDsForListerParams) ([]*ListBlogEntriesByIDsForListerRow, error) {
@@ -376,6 +386,7 @@ func (q *Queries) ListBlogEntriesByIDsForLister(ctx context.Context, arg ListBlo
 			&i.LanguageIdlanguage,
 			&i.Blog,
 			&i.Written,
+			&i.Timezone,
 		); err != nil {
 			return nil, err
 		}
@@ -394,7 +405,7 @@ const listBlogEntriesForLister = `-- name: ListBlogEntriesForLister :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
+SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, b.timezone, u.username, coalesce(th.comments, 0),
        b.users_idusers = ? AS is_owner
 FROM blogs b
 JOIN grants g ON (g.item_id = b.idblogs OR g.item_id IS NULL)
@@ -436,6 +447,7 @@ type ListBlogEntriesForListerRow struct {
 	LanguageIdlanguage sql.NullInt32
 	Blog               sql.NullString
 	Written            time.Time
+	Timezone           sql.NullString
 	Username           sql.NullString
 	Comments           int32
 	IsOwner            bool
@@ -465,6 +477,7 @@ func (q *Queries) ListBlogEntriesForLister(ctx context.Context, arg ListBlogEntr
 			&i.LanguageIdlanguage,
 			&i.Blog,
 			&i.Written,
+			&i.Timezone,
 			&i.Username,
 			&i.Comments,
 			&i.IsOwner,

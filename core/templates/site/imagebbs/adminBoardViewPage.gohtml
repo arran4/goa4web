@@ -18,7 +18,7 @@
 <td><a href="/admin/user/{{ .UsersIdusers }}/imagebbs/post/{{ .Idimagepost }}">{{ .Idimagepost }}</a></td>
 <td>{{ .Username.String }}</td>
 <td>{{ .Description.String }}</td>
-<td>{{ if .Posted.Valid }}{{ localTime .Posted.Time }}{{ end }}</td>
+<td>{{ if .Posted.Valid }}{{ localTimeIn .Posted.Time .Timezone.String }}{{ end }}</td>
 <td><a href="/imagebbs/post/{{ .Idimagepost }}">View</a></td>
 </tr>
 {{ end }}

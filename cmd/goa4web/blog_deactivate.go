@@ -60,9 +60,10 @@ func (c *blogDeactivateCmd) Run() error {
 		Idblogs:            b.Idblogs,
 		ForumthreadID:      threadID,
 		UsersIdusers:       b.UsersIdusers,
-                LanguageIdlanguage: b.LanguageIdlanguage,
+		LanguageIdlanguage: b.LanguageIdlanguage,
 		Blog:               b.Blog,
 		Written:            sql.NullTime{Time: b.Written, Valid: true},
+		Timezone:           b.Timezone,
 	}); err != nil {
 		return fmt.Errorf("archive blog: %w", err)
 	}

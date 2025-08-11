@@ -62,6 +62,7 @@ type Blog struct {
 	LanguageIdlanguage sql.NullInt32
 	Blog               sql.NullString
 	Written            time.Time
+	Timezone           sql.NullString
 	DeletedAt          sql.NullTime
 	LastIndex          sql.NullTime
 }
@@ -85,6 +86,7 @@ type Comment struct {
 	LanguageIdlanguage sql.NullInt32
 	Written            sql.NullTime
 	Text               sql.NullString
+	Timezone           sql.NullString
 	DeletedAt          sql.NullTime
 	LastIndex          sql.NullTime
 }
@@ -102,6 +104,7 @@ type DeactivatedBlog struct {
 	LanguageIdlanguage sql.NullInt32
 	Blog               sql.NullString
 	Written            sql.NullTime
+	Timezone           sql.NullString
 	DeletedAt          sql.NullTime
 	RestoredAt         sql.NullTime
 }
@@ -113,6 +116,7 @@ type DeactivatedComment struct {
 	LanguageIdlanguage sql.NullInt32
 	Written            sql.NullTime
 	Text               sql.NullString
+	Timezone           sql.NullString
 	DeletedAt          sql.NullTime
 	RestoredAt         sql.NullTime
 }
@@ -123,6 +127,7 @@ type DeactivatedImagepost struct {
 	UsersIdusers           int32
 	ImageboardIdimageboard sql.NullInt32
 	Posted                 sql.NullTime
+	Timezone               sql.NullString
 	Description            sql.NullString
 	Thumbnail              sql.NullString
 	Fullimage              sql.NullString
@@ -142,6 +147,7 @@ type DeactivatedLinker struct {
 	Url                sql.NullString
 	Description        sql.NullString
 	Listed             sql.NullTime
+	Timezone           sql.NullString
 	DeletedAt          sql.NullTime
 	RestoredAt         sql.NullTime
 }
@@ -212,6 +218,7 @@ type FaqRevision struct {
 	Question     sql.NullString
 	Answer       sql.NullString
 	CreatedAt    time.Time
+	Timezone     sql.NullString
 }
 
 type Forumcategory struct {
@@ -275,6 +282,7 @@ type Imagepost struct {
 	UsersIdusers           int32
 	ImageboardIdimageboard sql.NullInt32
 	Posted                 sql.NullTime
+	Timezone               sql.NullString
 	Description            sql.NullString
 	Thumbnail              sql.NullString
 	Fullimage              sql.NullString
@@ -305,6 +313,7 @@ type Linker struct {
 	Url                sql.NullString
 	Description        sql.NullString
 	Listed             sql.NullTime
+	Timezone           sql.NullString
 	DeletedAt          sql.NullTime
 	LastIndex          sql.NullTime
 }
@@ -324,6 +333,7 @@ type LinkerQueue struct {
 	Title              sql.NullString
 	Url                sql.NullString
 	Description        sql.NullString
+	Timezone           sql.NullString
 }
 
 type LinkerSearch struct {
@@ -428,6 +438,7 @@ type SiteNews struct {
 	UsersIdusers       int32
 	News               sql.NullString
 	Occurred           sql.NullTime
+	Timezone           sql.NullString
 	LastIndex          sql.NullTime
 }
 

@@ -91,9 +91,10 @@ func (c *userDeactivateCmd) Run() error {
 			Idcomments:         cm.Idcomments,
 			ForumthreadID:      cm.ForumthreadID,
 			UsersIdusers:       cm.UsersIdusers,
-                        LanguageIdlanguage: cm.LanguageIdlanguage,
+			LanguageIdlanguage: cm.LanguageIdlanguage,
 			Written:            cm.Written,
 			Text:               cm.Text,
+			Timezone:           cm.Timezone,
 		}); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("archive comment: %w", err)
@@ -167,9 +168,10 @@ func (c *userDeactivateCmd) Run() error {
 			Idblogs:            b.Idblogs,
 			ForumthreadID:      threadID,
 			UsersIdusers:       b.UsersIdusers,
-                        LanguageIdlanguage: b.LanguageIdlanguage,
+			LanguageIdlanguage: b.LanguageIdlanguage,
 			Blog:               b.Blog,
 			Written:            sql.NullTime{Time: b.Written, Valid: true},
+			Timezone:           b.Timezone,
 		}); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("archive blog: %w", err)
@@ -200,6 +202,7 @@ func (c *userDeactivateCmd) Run() error {
 			UsersIdusers:           img.UsersIdusers,
 			ImageboardIdimageboard: img.ImageboardIdimageboard,
 			Posted:                 img.Posted,
+			Timezone:               img.Timezone,
 			Description:            img.Description,
 			Thumbnail:              img.Thumbnail,
 			Fullimage:              img.Fullimage,
@@ -239,6 +242,7 @@ func (c *userDeactivateCmd) Run() error {
 			Url:                l.Url,
 			Description:        l.Description,
 			Listed:             l.Listed,
+			Timezone:           l.Timezone,
 		}); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("archive link: %w", err)

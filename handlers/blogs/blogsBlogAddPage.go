@@ -66,7 +66,8 @@ func (AddBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("languageId parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return handlers.SessionFetchFail{}
@@ -80,6 +81,7 @@ func (AddBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 			String: text,
 			Valid:  true,
 		},
+		Timezone: sql.NullString{String: cd.Location().String(), Valid: true},
 		UserID:   sql.NullInt32{Int32: uid, Valid: true},
 		ListerID: uid,
 	})

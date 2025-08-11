@@ -17,6 +17,24 @@ textarea {
         flex: none;
 }
 
+/* Utility classes */
+.bg-muted {
+        background-color: lightgrey;
+}
+
+.text-centered {
+        text-align: center;
+}
+
+.centered-table {
+        margin-left: auto;
+        margin-right: auto;
+}
+
+.top-aligned td {
+        vertical-align: top;
+}
+
 .navbar {
         display: flex;
         justify-content: space-between;
@@ -75,8 +93,9 @@ textarea {
 }
 
 .site-footer {
-	font-size: 0.7em;
-	color: #666;
+        text-align: center;
+        font-size: 0.7em;
+        color: #666;
 }
 a {
 	background-color: transparent;
@@ -95,6 +114,11 @@ h1 {
         text-align: center;
 	color: #800000;
 	background-color: transparent;
+}
+
+.section-heading {
+        font-family: tahoma, arial, helvetica, sans-serif;
+        color: #800000;
 }
 .section-title {
         font-family: tahoma, arial, helvetica, sans-serif;
@@ -220,6 +244,13 @@ div.title {
         background-color: transparent;
 }
 
+.section-title {
+	font-size: 1.2em;
+}
+
+.page-title {
+	font-size: 1.5em;
+}
 .text-large {
         font-size: 1.2em;
 }
@@ -662,3 +693,18 @@ tr.unsupported td {
        }
 }
 
+.faq-item {
+        border: 1px solid #000;
+        margin-bottom: 1em;
+}
+
+.faq-question {
+        background-color: lightgrey;
+        padding: 0.5em;
+        margin: 0;
+        border-bottom: 1px solid #000;
+}
+
+.faq-answer {
+        padding: 0.5em;
+}

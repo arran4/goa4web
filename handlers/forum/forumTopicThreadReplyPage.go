@@ -147,11 +147,8 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("Error: CreateComment: %s", err)
 		return fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	if err := cd.ClearThreadPrivateLabelStatus(threadRow.Idforumthread); err != nil {
-		log.Printf("clear label status: %v", err)
-	}
-	if err := cd.SetThreadPrivateLabelStatus(threadRow.Idforumthread, false, false); err != nil {
-		log.Printf("set label status: %v", err)
+	if err := cd.ClearThreadUnreadForOthers(threadRow.Idforumthread); err != nil {
+		log.Printf("clear unread labels: %v", err)
 	}
 	if err := cd.SetThreadReadMarker(threadRow.Idforumthread, int32(cid)); err != nil {
 		log.Printf("set read marker: %v", err)

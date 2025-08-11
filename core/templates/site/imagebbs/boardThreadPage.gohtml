@@ -9,14 +9,39 @@
     {{ end }}
     {{ template "threadComments" }}
     {{ if cd.SelectedThreadCanReply }}
-        <font size="4">Reply:</font><br>
-        <form method="post" action="?board={{ .BoardID }}">
-        {{ csrfField }}
-            <input type="hidden" name="replyTo" value="{{ .ForumThreadID }}">
-            <input type="hidden" name="ipid" value="{{ .ImagePost.Idimagepost }}">
-            <textarea name="replytext" cols="40" rows="20"></textarea><br>
-            {{ template "languageCombobox" }}
-            <input type="submit" name="task" value="Reply">
-        </form>
+        <div class="comment">
+            <aside class="author">
+                <div class="avatar"></div>
+                {{ with $u := cd.CurrentUserLoaded }}
+                    <div class="username">{{ $u.Username.String }}</div>
+                {{ end }}
+                <div class="meta">
+                    {{ $comments := cd.SelectedSectionThreadComments }}
+                    {{ $num := add (add (len $comments) (cd.Offset)) 1 }}
+                    <div class="comment-id"><a class="comment-id" href="#bottom">#{{ $num }}</a></div>
+                    {{ $now := localTime (now) }}
+                    <div class="date">{{ $now.Format "2006-01-02" }}</div>
+                    <div class="time">{{ $now.Format "15:04 MST" }}</div>
+                    <div class="day">{{ $now.Format "Monday" }}</div>
+                    <div class="zone">{{ cd.Location }}</div>
+                    {{ if gt (len $comments) 0 }}
+                        {{ $prev := index $comments (add (len $comments) -1) }}
+                        <div class="since">{{ since (localTime $prev.Written.Time) $now }}</div>
+                    {{ end }}
+                </div>
+            </aside>
+            <section class="body">
+                <a id="bottom"></a>
+                <font size="4">Reply:</font><br>
+                <form method="post" action="?board={{ .BoardID }}">
+                {{ csrfField }}
+                    <input type="hidden" name="replyTo" value="{{ .ForumThreadID }}">
+                    <input type="hidden" name="ipid" value="{{ .ImagePost.Idimagepost }}">
+                    <textarea name="replytext" cols="40" rows="20"></textarea><br>
+                    {{ template "languageCombobox" }}
+                    <input type="submit" name="task" value="Reply">
+                </form>
+            </section>
+        </div>
     {{ end }}
 {{ template "tail" $ }}

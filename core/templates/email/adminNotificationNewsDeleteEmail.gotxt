@@ -2,5 +2,6 @@ Announcement removed by {{.Item.Username}}.
 
 View post:
 {{.Item.PostURL}}
+
 Manage notifications: {{.UnsubscribeUrl}}
 

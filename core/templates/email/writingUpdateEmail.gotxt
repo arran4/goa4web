@@ -1,4 +1,5 @@
 Writing "{{.Item.Title}}" was updated.
 View article:
 {{.Item.PostURL}}
+
 Manage notifications: {{.UnsubscribeUrl}}

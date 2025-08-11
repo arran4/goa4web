@@ -1,4 +1,5 @@
 User {{.Item.Username}} renamed language {{.Item.LanguageID}} to {{.Item.LanguageName}}.
 
+
 Manage notifications: {{.UnsubscribeUrl}}
 

@@ -3,4 +3,5 @@ Your blog post has been created successfully.
 
 View post:
 {{.Item.PostURL}}
+
 Manage notifications: {{.UnsubscribeUrl}}

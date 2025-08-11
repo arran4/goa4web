@@ -2,5 +2,6 @@ User {{.Item.Username}} added a news post.
 
 View post:
 {{.Item.PostURL}}
+
 Manage notifications: {{.UnsubscribeUrl}}
 

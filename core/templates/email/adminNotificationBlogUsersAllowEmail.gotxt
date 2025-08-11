@@ -2,5 +2,6 @@ Multiple users were granted blog permissions.
 
 Blog section:
 {{.Item.BlogURL}}
+
 Manage notifications: {{.UnsubscribeUrl}}
 

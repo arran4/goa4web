@@ -57,9 +57,6 @@ func TestMarkThreadReadTaskRefererFallback(t *testing.T) {
 }
 
 func TestSetLabelsTaskAddsInverseLabels(t *testing.T) {
-	if true {
-		t.Skip("TODO: update expectations for content labels")
-	}
 	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -101,9 +98,6 @@ func TestSetLabelsTaskAddsInverseLabels(t *testing.T) {
 }
 
 func TestSetLabelsTaskUpdatesSpecialLabels(t *testing.T) {
-	if true {
-		t.Skip("TODO: update expectations for content labels")
-	}
 	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)

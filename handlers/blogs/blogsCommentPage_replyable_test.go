@@ -62,8 +62,8 @@ func TestCommentPageLockedThreadDisablesReply(t *testing.T) {
 		t.Fatalf("languages: %v", err)
 	}
 
-	blogRows := sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_idlanguage", "blog", "written", "username", "coalesce(th.comments, 0)", "is_owner"}).
-		AddRow(1, 1, 2, 1, "hi", time.Unix(0, 0), "bob", 0, false)
+	blogRows := sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_idlanguage", "blog", "written", "timezone", "username", "coalesce(th.comments, 0)", "is_owner"}).
+		AddRow(1, 1, 2, 1, "hi", time.Unix(0, 0), time.Local.String(), "bob", 0, false)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT b.idblogs")).WithArgs(int32(2), int32(2), int32(1), int32(2), int32(2), sql.NullInt32{Int32: 2, Valid: true}).WillReturnRows(blogRows)
 
 	threadRows1 := sqlmock.NewRows([]string{"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername"}).
@@ -78,7 +78,7 @@ func TestCommentPageLockedThreadDisablesReply(t *testing.T) {
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT c.idcomments")).
 		WithArgs(int32(2), int32(2), int32(1), int32(2), int32(2), "blogs", sql.NullString{String: "entry", Valid: true}, sql.NullInt32{Int32: 2, Valid: true}).
-		WillReturnRows(sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_idlanguage", "written", "text", "deleted_at", "posterusername"}))
+		WillReturnRows(sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_idlanguage", "written", "text", "timezone", "deleted_at", "last_index", "posterusername", "is_owner"}))
 
 	threadRows2 := sqlmock.NewRows([]string{"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked"}).
 		AddRow(1, 1, 1, 1, 0, time.Unix(0, 0), true)
@@ -125,8 +125,8 @@ func TestCommentPageUnlockedThreadShowsReply(t *testing.T) {
 		t.Fatalf("languages: %v", err)
 	}
 
-	blogRows := sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_idlanguage", "blog", "written", "username", "coalesce(th.comments, 0)", "is_owner"}).
-		AddRow(1, 1, 2, 1, "hi", time.Unix(0, 0), "bob", 0, false)
+	blogRows := sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_idlanguage", "blog", "written", "timezone", "username", "coalesce(th.comments, 0)", "is_owner"}).
+		AddRow(1, 1, 2, 1, "hi", time.Unix(0, 0), time.Local.String(), "bob", 0, false)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT b.idblogs")).WithArgs(int32(2), int32(2), int32(1), int32(2), int32(2), sql.NullInt32{Int32: 2, Valid: true}).WillReturnRows(blogRows)
 
 	threadRows1 := sqlmock.NewRows([]string{"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername"}).
@@ -141,7 +141,7 @@ func TestCommentPageUnlockedThreadShowsReply(t *testing.T) {
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT c.idcomments")).
 		WithArgs(int32(2), int32(2), int32(1), int32(2), int32(2), "blogs", sql.NullString{String: "entry", Valid: true}, sql.NullInt32{Int32: 2, Valid: true}).
-		WillReturnRows(sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_idlanguage", "written", "text", "deleted_at", "posterusername"}))
+		WillReturnRows(sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_idlanguage", "written", "text", "timezone", "deleted_at", "last_index", "posterusername", "is_owner"}))
 
 	threadRows2 := sqlmock.NewRows([]string{"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked"}).
 		AddRow(1, 1, 1, 1, 0, time.Unix(0, 0), false)
@@ -188,8 +188,8 @@ func TestCommentPageNoThreadShowsReply(t *testing.T) {
 		t.Fatalf("languages: %v", err)
 	}
 
-	blogRows := sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_idlanguage", "blog", "written", "username", "coalesce(th.comments, 0)", "is_owner"}).
-		AddRow(1, nil, 2, 1, "hi", time.Unix(0, 0), "bob", 0, false)
+	blogRows := sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_idlanguage", "blog", "written", "timezone", "username", "coalesce(th.comments, 0)", "is_owner"}).
+		AddRow(1, nil, 2, 1, "hi", time.Unix(0, 0), time.Local.String(), "bob", 0, false)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT b.idblogs")).WithArgs(int32(2), int32(2), int32(1), int32(2), int32(2), sql.NullInt32{Int32: 2, Valid: true}).WillReturnRows(blogRows)
 
 	rr := httptest.NewRecorder()

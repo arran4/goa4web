@@ -48,12 +48,12 @@ func TestCommentsPageAllowsGlobalViewGrant(t *testing.T) {
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT l.idlinker")).
 		WithArgs(int32(2), sqlmock.AnyArg(), int32(1)).
-		WillReturnRows(sqlmock.NewRows([]string{"idlinker", "language_idlanguage", "users_idusers", "linker_category_id", "forumthread_id", "title", "url", "description", "listed", "username", "title_2"}).
-			AddRow(1, 1, 2, 1, 1, "t", "http://u", "d", time.Unix(0, 0), "bob", "cat"))
+		WillReturnRows(sqlmock.NewRows([]string{"idlinker", "language_idlanguage", "users_idusers", "linker_category_id", "forumthread_id", "title", "url", "description", "listed", "timezone", "username", "title"}).
+			AddRow(1, 1, 2, 1, 1, "t", "http://u", "d", time.Unix(0, 0), time.Local.String(), "bob", "cat"))
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT c.idcomments")).
 		WithArgs(int32(2), int32(2), int32(1), int32(2), int32(2), "linker", sql.NullString{String: "link", Valid: true}, sql.NullInt32{Int32: 2, Valid: true}).
-		WillReturnRows(sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_idlanguage", "written", "text", "deleted_at", "last_index", "posterusername", "is_owner"}))
+		WillReturnRows(sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_idlanguage", "written", "text", "timezone", "deleted_at", "last_index", "posterusername", "is_owner"}))
 
 	threadRows := sqlmock.NewRows([]string{"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername"}).
 		AddRow(1, 1, 1, 1, 0, time.Unix(0, 0), false, "bob")

@@ -38,8 +38,8 @@ func TestNewsReplyTaskEventData(t *testing.T) {
 
 	mock.ExpectQuery("SELECT u.username AS writerName").
 		WithArgs(uid, int32(pid), sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"writerName", "writerId", "idsiteNews", "forumthread_id", "language_idlanguage", "users_idusers", "news", "occurred", "comments"}).
-			AddRow("writer", uid, pid, pthid, 1, uid, "txt", time.Now(), 0))
+		WillReturnRows(sqlmock.NewRows([]string{"writerName", "writerId", "idsiteNews", "forumthread_id", "language_idlanguage", "users_idusers", "news", "occurred", "timezone", "comments"}).
+			AddRow("writer", uid, pid, pthid, 1, uid, "txt", time.Now(), time.Local.String(), 0))
 
 	mock.ExpectQuery("SELECT idforumtopic").
 		WithArgs(sqlmock.AnyArg()).

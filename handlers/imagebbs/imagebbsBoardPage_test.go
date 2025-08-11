@@ -31,8 +31,8 @@ func TestBoardPageRendersSubBoards(t *testing.T) {
 		WithArgs(int32(0), sql.NullInt32{Int32: 3, Valid: true}, sql.NullInt32{Int32: 3, Valid: true}, sqlmock.AnyArg(), int32(200), int32(0)).
 		WillReturnRows(boardRows)
 
-	postRows := sqlmock.NewRows([]string{"idimagepost", "forumthread_id", "users_idusers", "imageboard_idimageboard", "posted", "description", "thumbnail", "fullimage", "file_size", "approved", "deleted_at", "last_index", "username", "comments"}).
-		AddRow(1, 1, 1, 3, time.Unix(0, 0), "desc", "/t", "/f", 10, true, nil, nil, "alice", 0)
+	postRows := sqlmock.NewRows([]string{"idimagepost", "forumthread_id", "users_idusers", "imageboard_idimageboard", "posted", "timezone", "description", "thumbnail", "fullimage", "file_size", "approved", "deleted_at", "last_index", "username", "comments"}).
+		AddRow(1, 1, 1, 3, time.Unix(0, 0), time.Local.String(), "desc", "/t", "/f", 10, true, nil, nil, "alice", 0)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT i.idimagepost, i.forumthread_id, i.users_idusers")).
 		WithArgs(int32(0), sql.NullInt32{Int32: 3, Valid: true}, sqlmock.AnyArg(), int32(200), int32(0)).
 		WillReturnRows(postRows)

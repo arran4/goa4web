@@ -7,10 +7,12 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 
@@ -21,9 +23,7 @@ import (
 func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath string) {
 	type threadWithLabels struct {
 		*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow
-		PublicLabels  []string
-		AuthorLabels  []string
-		PrivateLabels []string
+		Labels []templates.TopicLabel
 	}
 
 	type Data struct {
@@ -36,9 +36,7 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		Category                *ForumcategoryPlus
 		CopyDataToSubCategories func(rootCategory *ForumcategoryPlus) *Data
 		BasePath                string
-		PublicLabels            []string
-		AuthorLabels            []string
-		PrivateLabels           []string
+		Labels                  []templates.TopicLabel
 	}
 
 	if _, ok := core.GetSessionOrFail(w, r); !ok {
@@ -138,32 +136,50 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	threads := make([]*threadWithLabels, len(threadRows))
 	for i, r := range threadRows {
 		t := &threadWithLabels{GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow: r}
+		var lbls []templates.TopicLabel
 		if pub, author, err := cd.ThreadPublicLabels(r.Idforumthread); err == nil {
-			t.PublicLabels = pub
-			t.AuthorLabels = author
+			for _, l := range pub {
+				lbls = append(lbls, templates.TopicLabel{Name: l, Type: "public"})
+			}
+			for _, l := range author {
+				lbls = append(lbls, templates.TopicLabel{Name: l, Type: "author"})
+			}
 		} else {
 			log.Printf("list public labels: %v", err)
 		}
 		if priv, err := cd.ThreadPrivateLabels(r.Idforumthread); err == nil {
-			t.PrivateLabels = priv
+			for _, l := range priv {
+				lbls = append(lbls, templates.TopicLabel{Name: l, Type: "private"})
+			}
 		} else {
 			log.Printf("list private labels: %v", err)
 		}
+		sort.Slice(lbls, func(i, j int) bool { return lbls[i].Name < lbls[j].Name })
+		t.Labels = lbls
 		threads[i] = t
 	}
 	data.Threads = threads
 
+	var labels []templates.TopicLabel
 	if pub, author, err := cd.ThreadPublicLabels(topicRow.Idforumtopic); err == nil {
-		data.PublicLabels = pub
-		data.AuthorLabels = author
+		for _, l := range pub {
+			labels = append(labels, templates.TopicLabel{Name: l, Type: "public"})
+		}
+		for _, l := range author {
+			labels = append(labels, templates.TopicLabel{Name: l, Type: "author"})
+		}
 	} else {
 		log.Printf("list public labels: %v", err)
 	}
 	if priv, err := cd.ThreadPrivateLabels(topicRow.Idforumtopic); err == nil {
-		data.PrivateLabels = priv
+		for _, l := range priv {
+			labels = append(labels, templates.TopicLabel{Name: l, Type: "private"})
+		}
 	} else {
 		log.Printf("list private labels: %v", err)
 	}
+	sort.Slice(labels, func(i, j int) bool { return labels[i].Name < labels[j].Name })
+	data.Labels = labels
 
 	if subscribedToTopic(cd, topicRow.Idforumtopic) {
 		data.Subscribed = true

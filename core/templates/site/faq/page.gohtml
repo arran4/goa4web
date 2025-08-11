@@ -5,7 +5,7 @@
         <table width="100%">
         {{ range $index, $faq := $categoryFAQs.FAQs }}
             <tr>
-                <th bgcolor="lightgrey">Q: {{ $faq.Question | a4code2html }}</th>
+                <th class="bg-muted">Q: {{ $faq.Question | a4code2html }}</th>
             </tr>
             <tr>
                 <td>A: {{ $faq.Answer | a4code2html }}</td>

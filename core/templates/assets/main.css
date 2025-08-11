@@ -17,6 +17,24 @@ textarea {
         flex: none;
 }
 
+/* Utility classes */
+.bg-muted {
+        background-color: lightgrey;
+}
+
+.text-centered {
+        text-align: center;
+}
+
+.centered-table {
+        margin-left: auto;
+        margin-right: auto;
+}
+
+.top-aligned td {
+        vertical-align: top;
+}
+
 .navbar {
         display: flex;
         justify-content: space-between;

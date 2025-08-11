@@ -60,12 +60,12 @@ LEFT JOIN users lu ON lu.idusers = t.lastposter
 LEFT JOIN comments fc ON th.firstpost = fc.idcomments
 WHERE th.idforumthread=sqlc.arg(thread_id)
   AND (
-      fc.language_idlanguage = 0
-      OR fc.language_idlanguage IS NULL
+      fc.language_id = 0
+      OR fc.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(viewer_id)
-            AND ul.language_idlanguage = fc.language_idlanguage
+            AND ul.language_id = fc.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
@@ -119,12 +119,12 @@ FROM forumthread th
 LEFT JOIN comments fc ON th.firstpost = fc.idcomments
 WHERE th.idforumthread = sqlc.arg(thread_id)
   AND (
-      fc.language_idlanguage = 0
-      OR fc.language_idlanguage IS NULL
+      fc.language_id = 0
+      OR fc.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(replier_id)
-            AND ul.language_idlanguage = fc.language_idlanguage
+            AND ul.language_id = fc.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(replier_id)

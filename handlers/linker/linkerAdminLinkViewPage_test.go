@@ -35,7 +35,7 @@ func TestAdminLinkViewPage(t *testing.T) {
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT l.idlinker")).
 		WithArgs(int32(1)).
-		WillReturnRows(sqlmock.NewRows([]string{"idlinker", "language_idlanguage", "users_idusers", "linker_category_id", "forumthread_id", "title", "url", "description", "listed", "username", "title_2"}).
+		WillReturnRows(sqlmock.NewRows([]string{"idlinker", "language_id", "users_idusers", "linker_category_id", "forumthread_id", "title", "url", "description", "listed", "username", "title_2"}).
 			AddRow(1, 1, 2, 1, 0, "t", "http://u", "d", time.Unix(0, 0), "bob", "cat"))
 
 	adminLinkViewPage(w, req)

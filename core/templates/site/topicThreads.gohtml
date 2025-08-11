@@ -17,11 +17,7 @@
                 At <span class="post-time last">{{ localTime .Lastaddition.Time }}</span>
                 [<a href="{{$base}}/topic/{{.ForumtopicIdforumtopic}}/thread/{{ .Idforumthread }}">
                     {{- .Comments.Int32 }} comments.</a>]{{" "}}
-                {{- template "topicLabels" (dict
-                    "Public" .PublicLabels
-                    "Author" .AuthorLabels
-                    "Private" .PrivateLabels
-                ) }}
+                {{- template "topicLabels" .Labels }}
             </div>
         </div>
     {{- end }}

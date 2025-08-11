@@ -17,7 +17,7 @@ WHERE answer IS NOT NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(viewer_id)
-            AND ul.language_idlanguage = faq.language_id
+            AND ul.language_id = faq.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
@@ -113,7 +113,7 @@ WHERE c.id IS NOT NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(viewer_id)
-            AND ul.language_idlanguage = f.language_id
+            AND ul.language_id = f.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
@@ -155,7 +155,7 @@ WHERE faq.id = sqlc.arg(faq_id)
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(viewer_id)
-            AND ul.language_idlanguage = faq.language_id
+            AND ul.language_id = faq.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
@@ -214,7 +214,7 @@ WHERE faq.category_id = sqlc.arg(category_id)
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(viewer_id)
-            AND ul.language_idlanguage = faq.language_id
+            AND ul.language_id = faq.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)

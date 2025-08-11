@@ -12,7 +12,7 @@ import (
 )
 
 const adminGetAllCommentsByUser = `-- name: AdminGetAllCommentsByUser :many
-SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage,
+SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_id,
        c.written, c.text, c.deleted_at, c.last_index, c.timezone,
        th.forumtopic_idforumtopic, t.title AS forumtopic_title,
        fp.text AS thread_title
@@ -28,7 +28,7 @@ type AdminGetAllCommentsByUserRow struct {
 	Idcomments             int32
 	ForumthreadID          int32
 	UsersIdusers           int32
-	LanguageIdlanguage     sql.NullInt32
+	LanguageID             sql.NullInt32
 	Written                sql.NullTime
 	Text                   sql.NullString
 	DeletedAt              sql.NullTime
@@ -52,7 +52,7 @@ func (q *Queries) AdminGetAllCommentsByUser(ctx context.Context, userID int32) (
 			&i.Idcomments,
 			&i.ForumthreadID,
 			&i.UsersIdusers,
-			&i.LanguageIdlanguage,
+			&i.LanguageID,
 			&i.Written,
 			&i.Text,
 			&i.DeletedAt,
@@ -138,7 +138,7 @@ func (q *Queries) AdminListAllCommentsWithThreadInfo(ctx context.Context, arg Ad
 }
 
 const createCommentInSectionForCommenter = `-- name: CreateCommentInSectionForCommenter :execlastid
-INSERT INTO comments (language_idlanguage, users_idusers, forumthread_id, text, written, timezone)
+INSERT INTO comments (language_id, users_idusers, forumthread_id, text, written, timezone)
 SELECT ?, ?, ?, ?, NOW(), ?
 WHERE EXISTS (
     SELECT 1 FROM grants g
@@ -217,7 +217,7 @@ func (q *Queries) GetAllCommentsForIndex(ctx context.Context) ([]*GetAllComments
 }
 
 const getCommentById = `-- name: GetCommentById :one
-SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.timezone, c.deleted_at, c.last_index
+SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_id, c.written, c.text, c.timezone, c.deleted_at, c.last_index
 FROM comments c
 WHERE c.Idcomments=?
 `
@@ -229,7 +229,7 @@ func (q *Queries) GetCommentById(ctx context.Context, idcomments int32) (*Commen
 		&i.Idcomments,
 		&i.ForumthreadID,
 		&i.UsersIdusers,
-		&i.LanguageIdlanguage,
+		&i.LanguageID,
 		&i.Written,
 		&i.Text,
 		&i.Timezone,
@@ -243,7 +243,7 @@ const getCommentByIdForUser = `-- name: GetCommentByIdForUser :one
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.timezone, c.deleted_at, c.last_index, pu.Username,
+SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_id, c.written, c.text, c.timezone, c.deleted_at, c.last_index, pu.Username,
        c.users_idusers = ? AS is_owner
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
@@ -251,12 +251,12 @@ LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
 WHERE c.idcomments = ?
   AND (
-      c.language_idlanguage = 0
-      OR c.language_idlanguage IS NULL
+      c.language_id = 0
+      OR c.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
-            AND ul.language_idlanguage = c.language_idlanguage
+            AND ul.language_id = c.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
@@ -282,17 +282,17 @@ type GetCommentByIdForUserParams struct {
 }
 
 type GetCommentByIdForUserRow struct {
-	Idcomments         int32
-	ForumthreadID      int32
-	UsersIdusers       int32
-	LanguageIdlanguage sql.NullInt32
-	Written            sql.NullTime
-	Text               sql.NullString
-	Timezone           sql.NullString
-	DeletedAt          sql.NullTime
-	LastIndex          sql.NullTime
-	Username           sql.NullString
-	IsOwner            bool
+	Idcomments    int32
+	ForumthreadID int32
+	UsersIdusers  int32
+	LanguageID    sql.NullInt32
+	Written       sql.NullTime
+	Text          sql.NullString
+	Timezone      sql.NullString
+	DeletedAt     sql.NullTime
+	LastIndex     sql.NullTime
+	Username      sql.NullString
+	IsOwner       bool
 }
 
 func (q *Queries) GetCommentByIdForUser(ctx context.Context, arg GetCommentByIdForUserParams) (*GetCommentByIdForUserRow, error) {
@@ -309,7 +309,7 @@ func (q *Queries) GetCommentByIdForUser(ctx context.Context, arg GetCommentByIdF
 		&i.Idcomments,
 		&i.ForumthreadID,
 		&i.UsersIdusers,
-		&i.LanguageIdlanguage,
+		&i.LanguageID,
 		&i.Written,
 		&i.Text,
 		&i.Timezone,
@@ -325,7 +325,7 @@ const getCommentsByIdsForUserWithThreadInfo = `-- name: GetCommentsByIdsForUserW
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.timezone, c.deleted_at, c.last_index, pu.username AS posterusername,
+SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_id, c.written, c.text, c.timezone, c.deleted_at, c.last_index, pu.username AS posterusername,
        c.users_idusers = ? AS is_owner,
        th.idforumthread, t.idforumtopic, t.title AS forumtopic_title,
        fp.text AS thread_title, fc.idforumcategory, fc.title AS forumcategory_title
@@ -337,12 +337,12 @@ LEFT JOIN users pu ON pu.idusers = c.users_idusers
 LEFT JOIN forumcategory fc ON t.forumcategory_idforumcategory = fc.idforumcategory
 WHERE c.Idcomments IN (/*SLICE:ids*/?)
   AND (
-      c.language_idlanguage = 0
-      OR c.language_idlanguage IS NULL
+      c.language_id = 0
+      OR c.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
-            AND ul.language_idlanguage = c.language_idlanguage
+            AND ul.language_id = c.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
@@ -371,7 +371,7 @@ type GetCommentsByIdsForUserWithThreadInfoRow struct {
 	Idcomments         int32
 	ForumthreadID      int32
 	UsersIdusers       int32
-	LanguageIdlanguage sql.NullInt32
+	LanguageID         sql.NullInt32
 	Written            sql.NullTime
 	Text               sql.NullString
 	Timezone           sql.NullString
@@ -415,7 +415,7 @@ func (q *Queries) GetCommentsByIdsForUserWithThreadInfo(ctx context.Context, arg
 			&i.Idcomments,
 			&i.ForumthreadID,
 			&i.UsersIdusers,
-			&i.LanguageIdlanguage,
+			&i.LanguageID,
 			&i.Written,
 			&i.Text,
 			&i.Timezone,
@@ -447,7 +447,7 @@ const getCommentsBySectionThreadIdForUser = `-- name: GetCommentsBySectionThread
 WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.timezone, c.deleted_at, c.last_index, pu.username AS posterusername,
+SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_id, c.written, c.text, c.timezone, c.deleted_at, c.last_index, pu.username AS posterusername,
        c.users_idusers = ? AS is_owner
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
@@ -456,12 +456,12 @@ LEFT JOIN users pu ON pu.idusers = c.users_idusers
 WHERE c.forumthread_id=?
   AND c.forumthread_id IS NOT NULL
   AND (
-      c.language_idlanguage = 0
-      OR c.language_idlanguage IS NULL
+      c.language_id = 0
+      OR c.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
-            AND ul.language_idlanguage = c.language_idlanguage
+            AND ul.language_id = c.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
@@ -489,17 +489,17 @@ type GetCommentsBySectionThreadIdForUserParams struct {
 }
 
 type GetCommentsBySectionThreadIdForUserRow struct {
-	Idcomments         int32
-	ForumthreadID      int32
-	UsersIdusers       int32
-	LanguageIdlanguage sql.NullInt32
-	Written            sql.NullTime
-	Text               sql.NullString
-	Timezone           sql.NullString
-	DeletedAt          sql.NullTime
-	LastIndex          sql.NullTime
-	Posterusername     sql.NullString
-	IsOwner            bool
+	Idcomments     int32
+	ForumthreadID  int32
+	UsersIdusers   int32
+	LanguageID     sql.NullInt32
+	Written        sql.NullTime
+	Text           sql.NullString
+	Timezone       sql.NullString
+	DeletedAt      sql.NullTime
+	LastIndex      sql.NullTime
+	Posterusername sql.NullString
+	IsOwner        bool
 }
 
 // Viewing comments in a section-specific thread requires 'view' on the
@@ -526,7 +526,7 @@ func (q *Queries) GetCommentsBySectionThreadIdForUser(ctx context.Context, arg G
 			&i.Idcomments,
 			&i.ForumthreadID,
 			&i.UsersIdusers,
-			&i.LanguageIdlanguage,
+			&i.LanguageID,
 			&i.Written,
 			&i.Text,
 			&i.Timezone,
@@ -552,7 +552,7 @@ const getCommentsByThreadIdForUser = `-- name: GetCommentsByThreadIdForUser :man
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.timezone, c.deleted_at, c.last_index, pu.username AS posterusername,
+SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_id, c.written, c.text, c.timezone, c.deleted_at, c.last_index, pu.username AS posterusername,
        c.users_idusers = ? AS is_owner
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
@@ -561,12 +561,12 @@ LEFT JOIN users pu ON pu.idusers = c.users_idusers
 WHERE c.forumthread_id=?
   AND c.forumthread_id IS NOT NULL
   AND (
-      c.language_idlanguage = 0
-      OR c.language_idlanguage IS NULL
+      c.language_id = 0
+      OR c.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
-            AND ul.language_idlanguage = c.language_idlanguage
+            AND ul.language_id = c.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
@@ -592,17 +592,17 @@ type GetCommentsByThreadIdForUserParams struct {
 }
 
 type GetCommentsByThreadIdForUserRow struct {
-	Idcomments         int32
-	ForumthreadID      int32
-	UsersIdusers       int32
-	LanguageIdlanguage sql.NullInt32
-	Written            sql.NullTime
-	Text               sql.NullString
-	Timezone           sql.NullString
-	DeletedAt          sql.NullTime
-	LastIndex          sql.NullTime
-	Posterusername     sql.NullString
-	IsOwner            bool
+	Idcomments     int32
+	ForumthreadID  int32
+	UsersIdusers   int32
+	LanguageID     sql.NullInt32
+	Written        sql.NullTime
+	Text           sql.NullString
+	Timezone       sql.NullString
+	DeletedAt      sql.NullTime
+	LastIndex      sql.NullTime
+	Posterusername sql.NullString
+	IsOwner        bool
 }
 
 func (q *Queries) GetCommentsByThreadIdForUser(ctx context.Context, arg GetCommentsByThreadIdForUserParams) ([]*GetCommentsByThreadIdForUserRow, error) {
@@ -625,7 +625,7 @@ func (q *Queries) GetCommentsByThreadIdForUser(ctx context.Context, arg GetComme
 			&i.Idcomments,
 			&i.ForumthreadID,
 			&i.UsersIdusers,
-			&i.LanguageIdlanguage,
+			&i.LanguageID,
 			&i.Written,
 			&i.Text,
 			&i.Timezone,
@@ -693,7 +693,7 @@ func (q *Queries) SystemSetCommentLastIndex(ctx context.Context, idcomments int3
 
 const updateCommentForEditor = `-- name: UpdateCommentForEditor :exec
 UPDATE comments c
-SET language_idlanguage = ?, text = ?
+SET language_id = ?, text = ?
 WHERE c.idcomments = ?
   AND c.users_idusers = ?
   AND EXISTS (

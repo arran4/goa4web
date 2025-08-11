@@ -34,7 +34,7 @@ func (cd *CoreData) ThreadInfo(post *db.GetNewsPostByIdWithWriterIdAndThreadComm
 	if errors.Is(err, sql.ErrNoRows) {
 		id, err := cd.queries.CreateForumTopicForPoster(cd.ctx, db.CreateForumTopicForPosterParams{
 			ForumcategoryID: 0,
-			ForumLang:       post.LanguageIdlanguage,
+			ForumLang:       post.LanguageID,
 			Title:           sql.NullString{String: newsTopicName, Valid: true},
 			Description:     sql.NullString{String: newsTopicDescription, Valid: true},
 			Handler:         "news",

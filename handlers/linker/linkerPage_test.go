@@ -58,7 +58,7 @@ func TestLinkerApproveAddsToSearch(t *testing.T) {
 		WithArgs(int32(1)).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	rows := sqlmock.NewRows([]string{"idlinker", "language_idlanguage", "users_idusers", "linkercategory_idlinkerCategory", "forumthread_idforumthread", "title", "url", "description", "listed", "username", "title_2"}).
+	rows := sqlmock.NewRows([]string{"idlinker", "language_id", "users_idusers", "linkercategory_idlinkerCategory", "forumthread_idforumthread", "title", "url", "description", "listed", "username", "title_2"}).
 		AddRow(1, 1, 1, 1, 0, "Foo", "http://foo", "Bar", time.Now(), "u", "c")
 	mock.ExpectQuery("SELECT l.idlinker").WithArgs(int32(0), int32(1), sqlmock.AnyArg()).WillReturnRows(rows)
 

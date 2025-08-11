@@ -38,7 +38,7 @@ func (RenameLanguageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	var oldName string
 	if rows, err := cd.Languages(); err == nil {
 		for _, l := range rows {
-			if l.Idlanguage == int32(cid) {
+			if l.ID == int32(cid) {
 				oldName = l.Nameof.String
 				break
 			}

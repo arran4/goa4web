@@ -34,19 +34,19 @@ func TestThreadPageQuotePrefillsReply(t *testing.T) {
 	mock.ExpectQuery(".*").
 		WithArgs(int32(1), int32(1), int32(1), int32(1), sql.NullInt32{Int32: 1, Valid: true}).
 		WillReturnRows(sqlmock.NewRows([]string{
-			"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_idlanguage", "title", "description", "threads", "comments", "lastaddition", "handler", "LastPosterUsername",
+			"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_id", "title", "description", "threads", "comments", "lastaddition", "handler", "LastPosterUsername",
 		}).AddRow(int32(1), int32(1), int32(1), int32(1), sql.NullString{String: "topic", Valid: true}, sql.NullString{}, sql.NullInt32{}, sql.NullInt32{}, sql.NullTime{}, "normal", sql.NullString{}))
 
 	mock.ExpectQuery(".*").
 		WithArgs(int32(1), int32(1), int32(1), int32(1), int32(1), sql.NullInt32{Int32: 1, Valid: true}).
 		WillReturnRows(sqlmock.NewRows([]string{
-			"idcomments", "forumthread_id", "users_idusers", "language_idlanguage", "written", "text", "timezone", "deleted_at", "last_index", "posterusername", "is_owner",
+			"idcomments", "forumthread_id", "users_idusers", "language_id", "written", "text", "timezone", "deleted_at", "last_index", "posterusername", "is_owner",
 		}))
 
 	mock.ExpectQuery(".*").
 		WithArgs(int32(1), int32(1), int32(2), int32(1), int32(1), sql.NullInt32{Int32: 1, Valid: true}).
 		WillReturnRows(sqlmock.NewRows([]string{
-			"idcomments", "forumthread_id", "users_idusers", "language_idlanguage", "written", "text", "timezone", "deleted_at", "last_index", "username", "is_owner",
+			"idcomments", "forumthread_id", "users_idusers", "language_id", "written", "text", "timezone", "deleted_at", "last_index", "username", "is_owner",
 		}).AddRow(int32(2), int32(1), int32(1), int32(1), sql.NullTime{}, sql.NullString{String: "hi", Valid: true}, sql.NullString{}, sql.NullTime{}, sql.NullTime{}, sql.NullString{String: "alice", Valid: true}, false))
 
 	mock.ExpectQuery("SELECT category_path").

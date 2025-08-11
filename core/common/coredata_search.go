@@ -348,12 +348,12 @@ func (cd *CoreData) blogSearch(r *http.Request, uid int32) ([]*db.Blog, bool, bo
 	blogs := make([]*db.Blog, 0, len(rows))
 	for _, r := range rows {
 		blogs = append(blogs, &db.Blog{
-			Idblogs:            r.Idblogs,
-			ForumthreadID:      r.ForumthreadID,
-			UsersIdusers:       r.UsersIdusers,
-			LanguageIdlanguage: r.LanguageIdlanguage,
-			Blog:               r.Blog,
-			Written:            r.Written,
+			Idblogs:       r.Idblogs,
+			ForumthreadID: r.ForumthreadID,
+			UsersIdusers:  r.UsersIdusers,
+			LanguageID:    r.LanguageID,
+			Blog:          r.Blog,
+			Written:       r.Written,
 		})
 	}
 

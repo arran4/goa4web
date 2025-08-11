@@ -36,11 +36,11 @@ func TestDeleteLanguageTask_PreventDeletion(t *testing.T) {
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 
-	langRows := sqlmock.NewRows([]string{"idlanguage", "nameof"}).AddRow(1, "en")
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT idlanguage, nameof\nFROM language")).WillReturnRows(langRows)
+	langRows := sqlmock.NewRows([]string{"id", "nameof"}).AddRow(1, "en")
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, nameof\nFROM language")).WillReturnRows(langRows)
 
 	countRows := sqlmock.NewRows([]string{"comments", "writings", "blogs", "news", "links"}).AddRow(1, 0, 0, 0, 0)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT\n    (SELECT COUNT(*) FROM comments WHERE comments.language_idlanguage = ?) AS comments,\n    (SELECT COUNT(*) FROM writing WHERE writing.language_idlanguage = ?) AS writings,\n    (SELECT COUNT(*) FROM blogs WHERE blogs.language_idlanguage = ?) AS blogs,\n    (SELECT COUNT(*) FROM site_news WHERE site_news.language_idlanguage = ?) AS news,\n    (SELECT COUNT(*) FROM linker WHERE linker.language_idlanguage = ?) AS links")).WithArgs(int32(1), int32(1), int32(1), int32(1), int32(1)).WillReturnRows(countRows)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT\n    (SELECT COUNT(*) FROM comments WHERE comments.language_id = ?) AS comments,\n    (SELECT COUNT(*) FROM writing WHERE writing.language_id = ?) AS writings,\n    (SELECT COUNT(*) FROM blogs WHERE blogs.language_id = ?) AS blogs,\n    (SELECT COUNT(*) FROM site_news WHERE site_news.language_id = ?) AS news,\n    (SELECT COUNT(*) FROM linker WHERE linker.language_id = ?) AS links")).WithArgs(int32(1), int32(1), int32(1), int32(1), int32(1)).WillReturnRows(countRows)
 
 	result := deleteLanguageTask.Action(rr, req)
 	if result == nil {

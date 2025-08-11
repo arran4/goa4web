@@ -177,7 +177,7 @@ func adminNewsEditFormPage(w http.ResponseWriter, r *http.Request) {
 	}{
 		Languages:          langs,
 		Post:               post,
-                SelectedLanguageId: int(post.LanguageIdlanguage.Int32),
+		SelectedLanguageId: int(post.LanguageID.Int32),
 	}
 	if err := cd.ExecuteSiteTemplate(w, r, "adminNewsEditPage.gohtml", data); err != nil {
 		handlers.RenderErrorPage(w, r, err)

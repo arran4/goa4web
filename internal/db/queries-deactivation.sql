@@ -10,7 +10,7 @@ UPDATE users SET username = ?, email = '', passwd = '', passwd_algorithm = '', d
 WHERE idusers = ?;
 
 -- name: AdminArchiveComment :exec
-INSERT INTO deactivated_comments (idcomments, forumthread_id, users_idusers, language_idlanguage, written, text, timezone, deleted_at)
+INSERT INTO deactivated_comments (idcomments, forumthread_id, users_idusers, language_id, written, text, timezone, deleted_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, NOW());
 
 -- name: AdminScrubComment :exec
@@ -39,7 +39,7 @@ WHERE restored_at IS NULL
 LIMIT ? OFFSET ?;
 
 -- name: AdminArchiveWriting :exec
-INSERT INTO deactivated_writings (idwriting, users_idusers, forumthread_id, language_idlanguage, writing_category_id, title, published, writing, abstract, private, deleted_at)
+INSERT INTO deactivated_writings (idwriting, users_idusers, forumthread_id, language_id, writing_category_id, title, published, writing, abstract, private, deleted_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW());
 
 -- name: AdminScrubWriting :exec
@@ -68,7 +68,7 @@ WHERE restored_at IS NULL
 LIMIT ? OFFSET ?;
 
 -- name: AdminArchiveBlog :exec
-INSERT INTO deactivated_blogs (idblogs, forumthread_id, users_idusers, language_idlanguage, blog, written, timezone, deleted_at)
+INSERT INTO deactivated_blogs (idblogs, forumthread_id, users_idusers, language_id, blog, written, timezone, deleted_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, NOW());
 
 -- name: AdminScrubBlog :exec
@@ -124,7 +124,7 @@ WHERE restored_at IS NULL
 LIMIT ? OFFSET ?;
 
 -- name: AdminArchiveLink :exec
-INSERT INTO deactivated_linker (idlinker, language_idlanguage, users_idusers, linker_category_id, forumthread_id, title, url, description, listed, timezone, deleted_at)
+INSERT INTO deactivated_linker (idlinker, language_id, users_idusers, linker_category_id, forumthread_id, title, url, description, listed, timezone, deleted_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW());
 
 -- name: AdminScrubLink :exec

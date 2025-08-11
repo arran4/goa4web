@@ -56,7 +56,7 @@ type Querier interface {
 	// AdminDeleteLanguage removes a language entry.
 	// Parameters:
 	//   ? - Language ID to be deleted (int)
-	AdminDeleteLanguage(ctx context.Context, idlanguage int32) error
+	AdminDeleteLanguage(ctx context.Context, id int32) error
 	// AdminDeleteLinkerCategory removes a linker category.
 	AdminDeleteLinkerCategory(ctx context.Context, idlinkercategory int32) error
 	AdminDeleteLinkerQueuedItem(ctx context.Context, idlinkerqueue int32) error

@@ -107,6 +107,10 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("create comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
+	if err := cd.SetPrivateLabelStatus("news", int32(pid), false, false); err != nil {
+		return fmt.Errorf("mark read %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+
 	endURL := cd.AbsoluteURL(fmt.Sprintf("/news/news/%d", pid))
 	evt := cd.Event()
 	if evt.Data == nil {

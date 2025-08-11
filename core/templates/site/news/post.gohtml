@@ -1,10 +1,7 @@
 {{ define "newsPost" }}
-    <table width="100%">
-        <tr class="bg-muted">
-            <th>{{ localTimeIn .Occurred.Time .Timezone.String }}</th>
-        </tr>
-        <tr>
-            <td>{{ .News.String | a4code2html }}<br>-<br>{{ .Writername.String }}
+    <article class="thread">
+        <header class="thread-header">{{ localTimeIn .Occurred.Time .Timezone.String }}</header>
+        <div class="thread-content">{{ .News.String | a4code2html }}<br>-<br>{{ .Writername.String }}
             -
             {{ if cd.SelectedThreadID }}
                 {{ .Comments.Int32 }} COMMENTS [<a href="#bottom">BOTTOM</a>]{{ if cd.SelectedThreadCanReply }} [<a href="#bottom">REPLY</a>]{{ end }}
@@ -27,8 +24,7 @@
                 </a>]
             {{ end }}
             {{ $labels := NewsLabels .Idsitenews }}
-            {{ if $labels }}<span class="label-list">{{ template "topicLabels" $labels }}</span>{{ end }}
-            </td>
-        </tr>
-    </table><br>
+            {{ if $labels }}<span class="label-bar">{{ template "topicLabels" $labels }}</span>{{ end }}
+        </div>
+    </article>
 {{ end }}

@@ -633,6 +633,20 @@ tr.unsupported td {
        flex: 1;
 }
 
+/* Board posts */
+.board-post-list {
+       list-style: none;
+       margin: 0;
+       padding: 0;
+}
+
+.board-post-item {
+       display: flex;
+       align-items: flex-start;
+       gap: 0.5em;
+       margin-bottom: 1em;
+}
+
 @media (max-width: 600px) {
        .navbar {
                flex-direction: column;

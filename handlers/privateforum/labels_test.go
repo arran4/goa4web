@@ -21,11 +21,11 @@ func TestPrivateLabelRoutes(t *testing.T) {
 	nav := navpkg.NewRegistry()
 	RegisterRoutes(r, config.NewRuntimeConfig(), nav)
 
-	t.Run("uses back parameter", func(t *testing.T) {
+	t.Run("uses redirect parameter", func(t *testing.T) {
 		cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
 		cd.ForumBasePath = "/private"
 
-		body := "task=" + url.QueryEscape(string(forumhandlers.TaskMarkTopicRead)) + "&back=" + url.QueryEscape("/private/topic/1/thread/2")
+		body := "task=" + url.QueryEscape(string(forumhandlers.TaskMarkTopicRead)) + "&redirect=" + url.QueryEscape("/private/topic/1/thread/2")
 		req := httptest.NewRequest(http.MethodPost, "/private/thread/1/labels", strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
@@ -40,7 +40,7 @@ func TestPrivateLabelRoutes(t *testing.T) {
 		}
 	})
 
-	t.Run("falls back without back parameter", func(t *testing.T) {
+	t.Run("falls back without redirect parameter", func(t *testing.T) {
 		cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
 		cd.ForumBasePath = "/private"
 

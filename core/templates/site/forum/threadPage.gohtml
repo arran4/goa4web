@@ -6,8 +6,14 @@
         <form method="post" action="{{$base}}/thread/{{.Thread.Idforumthread}}/labels" class="mark-read">
             {{ csrfField }}
             <input type="hidden" name="task" value="Mark Topic Read"/>
-            <input type="hidden" name="back" value="{{ .BackURL }}"/>
+            <input type="hidden" name="redirect" value="{{ .BackURL }}"/>
             <button type="submit">Mark as read</button>
+        </form>
+        <form method="post" action="{{$base}}/topic/{{.Topic.Idforumtopic}}/labels" class="mark-read">
+            {{ csrfField }}
+            <input type="hidden" name="task" value="Mark Topic Read"/>
+            <input type="hidden" name="redirect" value="{{$base}}/topic/{{.Topic.Idforumtopic}}"/>
+            <button type="submit">Mark as read and go back</button>
         </form>
     </div>
     {{ template "threadComments" }}

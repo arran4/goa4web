@@ -244,7 +244,7 @@ div.title {
 .label.pill {
         display: inline-flex;
         align-items: center;
-        padding-right: 0;
+        padding-right: 8px;
         cursor: default;
         color: #000;
 }
@@ -278,7 +278,13 @@ div.title {
         border: none;
         padding: 4px 8px;
         cursor: pointer;
+        margin-right: -8px;
         border-radius: 0 12px 12px 0;
+}
+
+.label.pill.removed {
+        text-decoration: line-through;
+        opacity: 0.5;
 }
 
 tr.unsupported td {

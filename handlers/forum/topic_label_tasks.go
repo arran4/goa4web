@@ -201,6 +201,9 @@ func (MarkTopicReadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if target == "" {
 		target = r.Header.Get("Referer")
 	}
+	if target == "" {
+		target = strings.TrimSuffix(r.URL.Path, "/labels")
+	}
 	return handlers.RefreshDirectHandler{TargetURL: target}
 }
 

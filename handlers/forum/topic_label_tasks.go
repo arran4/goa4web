@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -48,6 +49,20 @@ var (
 	SetLabelsTaskHandler          = setLabelsTask
 )
 
+// labelsRedirect determines the page to return to after processing a label task.
+// It first checks the "back" form value, then falls back to the Referer header
+// before defaulting to the topic page when neither is present.
+func labelsRedirect(r *http.Request) handlers.RefreshDirectHandler {
+	tgt := r.PostFormValue("back")
+	if tgt == "" {
+		tgt = r.Header.Get("Referer")
+	}
+	if tgt == "" {
+		tgt = strings.TrimSuffix(r.URL.Path, "/labels")
+	}
+	return handlers.RefreshDirectHandler{TargetURL: tgt}
+}
+
 var (
 	_ tasks.Task = (*AddPublicLabelTask)(nil)
 	_ tasks.Task = (*RemovePublicLabelTask)(nil)
@@ -73,7 +88,7 @@ func (AddPublicLabelTask) Action(w http.ResponseWriter, r *http.Request) any {
 			return fmt.Errorf("add public label %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
-	return handlers.RefreshDirectHandler{TargetURL: r.Header.Get("Referer")}
+	return labelsRedirect(r)
 }
 
 func (RemovePublicLabelTask) Action(w http.ResponseWriter, r *http.Request) any {
@@ -90,7 +105,7 @@ func (RemovePublicLabelTask) Action(w http.ResponseWriter, r *http.Request) any 
 			return fmt.Errorf("remove public label %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
-	return handlers.RefreshDirectHandler{TargetURL: r.Header.Get("Referer")}
+	return labelsRedirect(r)
 }
 
 func (AddPrivateLabelTask) Action(w http.ResponseWriter, r *http.Request) any {
@@ -107,7 +122,7 @@ func (AddPrivateLabelTask) Action(w http.ResponseWriter, r *http.Request) any {
 			return fmt.Errorf("add private label %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
-	return handlers.RefreshDirectHandler{TargetURL: r.Header.Get("Referer")}
+	return labelsRedirect(r)
 }
 
 func (RemovePrivateLabelTask) Action(w http.ResponseWriter, r *http.Request) any {
@@ -124,7 +139,7 @@ func (RemovePrivateLabelTask) Action(w http.ResponseWriter, r *http.Request) any
 			return fmt.Errorf("remove private label %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
-	return handlers.RefreshDirectHandler{TargetURL: r.Header.Get("Referer")}
+	return labelsRedirect(r)
 }
 
 // AddAuthorLabelTask adds an author-only label to a topic.
@@ -147,7 +162,7 @@ func (AddAuthorLabelTask) Action(w http.ResponseWriter, r *http.Request) any {
 			return fmt.Errorf("add author label %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
-	return handlers.RefreshDirectHandler{TargetURL: r.Header.Get("Referer")}
+	return labelsRedirect(r)
 }
 
 func (RemoveAuthorLabelTask) Action(w http.ResponseWriter, r *http.Request) any {
@@ -164,7 +179,7 @@ func (RemoveAuthorLabelTask) Action(w http.ResponseWriter, r *http.Request) any 
 			return fmt.Errorf("remove author label %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
-	return handlers.RefreshDirectHandler{TargetURL: r.Header.Get("Referer")}
+	return labelsRedirect(r)
 }
 
 // MarkTopicReadTask clears the special new/unread flags for a topic.
@@ -181,7 +196,8 @@ func (MarkTopicReadTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("mark read: %v", err)
 		return fmt.Errorf("mark read %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	target := r.PostFormValue("redirect")
+
+  target := r.PostFormValue("redirect")
 	if target == "" {
 		target = r.Header.Get("Referer")
 	}
@@ -200,11 +216,15 @@ func (SetLabelsTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	pub := r.PostForm["public"]
 	priv := r.PostForm["private"]
+	// Special inverse private labels: show unless stored in the database.
+	inverse := map[string]bool{"new": false, "unread": false}
 	filteredPriv := make([]string, 0, len(priv))
 	for _, l := range priv {
-		if l != "new" && l != "unread" {
-			filteredPriv = append(filteredPriv, l)
+		if _, ok := inverse[l]; ok {
+			inverse[l] = true
+			continue
 		}
+		filteredPriv = append(filteredPriv, l)
 	}
 	if err := cd.SetTopicPublicLabels(int32(topicID), pub); err != nil {
 		log.Printf("set public labels: %v", err)
@@ -214,5 +234,10 @@ func (SetLabelsTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("set private labels: %v", err)
 		return fmt.Errorf("set private labels %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	return handlers.RefreshDirectHandler{TargetURL: r.Header.Get("Referer")}
+
+  if err := cd.SetTopicPrivateLabelStatus(int32(topicID), inverse["new"], inverse["unread"]); err != nil {
+		log.Printf("set private label status: %v", err)
+		return fmt.Errorf("set private label status %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	return labelsRedirect(r)
 }

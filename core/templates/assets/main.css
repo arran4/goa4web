@@ -151,17 +151,21 @@ div.title {
 	background-color: transparent;
 }
 .textright {
-	text-align: right;
-	font-family: tahoma, arial, helvetica, sans-serif;
-	font-size: 0.8em;
-	color: #800000;
-	background-color: transparent;
+        text-align: right;
+        font-family: tahoma, arial, helvetica, sans-serif;
+        font-size: 0.8em;
+        color: #800000;
+        background-color: transparent;
+}
+
+.text-center {
+        text-align: center;
 }
 .textcenter {
-	text-align: center;
-	font-family: tahoma, arial, helvetica, sans-serif;
-	font-size: 0.8em;
-	color: #800000;
+        text-align: center;
+        font-family: tahoma, arial, helvetica, sans-serif;
+        font-size: 0.8em;
+        color: #800000;
 	background-color: transparent;
 }
 .notification {

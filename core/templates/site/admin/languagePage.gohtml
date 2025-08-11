@@ -1,5 +1,5 @@
 {{ template "head" $ }}
-[<a href="/admin">Admin:</a> <a href="/admin/languages">Languages</a> <a href="/admin/languages/language/{{ .Language.Idlanguage }}">(This page/Refresh)</a>]<br />
+[<a href="/admin">Admin:</a> <a href="/admin/languages">Languages</a> <a href="/admin/languages/language/{{ .Language.ID }}">(This page/Refresh)</a>]<br />
 <h2>{{ .Language.Nameof.String }}</h2>
 <table>
     <tr><th>Type</th><th>Count</th></tr>
@@ -9,6 +9,6 @@
     <tr><td>News</td><td>{{ .Counts.News }}</td></tr>
     <tr><td>Links</td><td>{{ .Counts.Links }}</td></tr>
 </table>
-<p><a href="/admin/languages/language/{{ .Language.Idlanguage }}/edit">Edit</a></p>
+<p><a href="/admin/languages/language/{{ .Language.ID }}/edit">Edit</a></p>
 <p><a href="/admin/languages">Back to list</a></p>
 {{ template "tail" $ }}

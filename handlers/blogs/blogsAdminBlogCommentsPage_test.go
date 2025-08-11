@@ -27,7 +27,7 @@ func TestAdminBlogCommentsPage_UsesURLParam(t *testing.T) {
 	mock.MatchExpectationsInOrder(false)
 
 	blogID := 9
-	rows := sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_idlanguage", "blog", "written", "timezone", "username", "comments", "is_owner"}).
+	rows := sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_id", "blog", "written", "timezone", "username", "comments", "is_owner"}).
 		AddRow(blogID, sql.NullInt32{Int32: 1, Valid: true}, 1, 1, "body", time.Now(), time.Local.String(), "user", 0, true)
 	mock.ExpectQuery("SELECT").WillReturnRows(rows)
 	mock.ExpectQuery("SELECT").WillReturnError(sql.ErrNoRows)

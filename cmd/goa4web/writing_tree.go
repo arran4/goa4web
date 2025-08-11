@@ -36,14 +36,14 @@ func (c *writingTreeCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("tree: %w", err)
 	}
-        children := map[int32][]*db.WritingCategory{}
-        for _, cat := range rows {
-                var parent int32
-                if cat.WritingCategoryID.Valid {
-                        parent = cat.WritingCategoryID.Int32
-                }
-                children[parent] = append(children[parent], cat)
-        }
+	children := map[int32][]*db.WritingCategory{}
+	for _, cat := range rows {
+		var parent int32
+		if cat.WritingCategoryID.Valid {
+			parent = cat.WritingCategoryID.Int32
+		}
+		children[parent] = append(children[parent], cat)
+	}
 	var printTree func(parent int32, prefix string)
 	printTree = func(parent int32, prefix string) {
 		for _, cat := range children[parent] {

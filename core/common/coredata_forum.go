@@ -115,7 +115,7 @@ func (cd *CoreData) ForumTopics(categoryID int32) ([]*db.GetForumTopicsForUserRo
 				Idforumtopic:                 r.Idforumtopic,
 				Lastposter:                   r.Lastposter,
 				ForumcategoryIdforumcategory: r.ForumcategoryIdforumcategory,
-				LanguageIdlanguage:           r.LanguageIdlanguage,
+				LanguageID:                   r.LanguageID,
 				Title:                        r.Title,
 				Description:                  r.Description,
 				Threads:                      r.Threads,

@@ -222,9 +222,9 @@ func TestUserLangSaveAllActionPage_NewPref(t *testing.T) {
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
-	rows := sqlmock.NewRows([]string{"idlanguage", "nameof"}).AddRow(1, "en").AddRow(2, "fr")
+	rows := sqlmock.NewRows([]string{"id", "nameof"}).AddRow(1, "en").AddRow(2, "fr")
 	mock.ExpectExec("DELETE FROM user_language").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT idlanguage, nameof\nFROM language")).WillReturnRows(rows)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, nameof\nFROM language")).WillReturnRows(rows)
 	mock.ExpectExec("INSERT INTO user_language").WithArgs(int32(1), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectQuery("SELECT idpreferences").WithArgs(int32(1)).WillReturnError(sql.ErrNoRows)
 	mock.ExpectExec("INSERT INTO preferences").WithArgs(int32(2), int32(1), int32(cfg.PageSizeDefault), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -271,9 +271,9 @@ func TestUserLangSaveLanguagesActionPage(t *testing.T) {
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
-	rows := sqlmock.NewRows([]string{"idlanguage", "nameof"}).AddRow(1, "en")
+	rows := sqlmock.NewRows([]string{"id", "nameof"}).AddRow(1, "en")
 	mock.ExpectExec("DELETE FROM user_language").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT idlanguage, nameof\nFROM language")).WillReturnRows(rows)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, nameof\nFROM language")).WillReturnRows(rows)
 	mock.ExpectExec("INSERT INTO user_language").WithArgs(int32(1), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
 
 	saveLanguagesTask.Action(rr, req)
@@ -322,7 +322,7 @@ func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
-	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_idlanguage", "users_idusers", "emailforumupdates", "page_size", "auto_subscribe_replies", "timezone"}).
+	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_id", "users_idusers", "emailforumupdates", "page_size", "auto_subscribe_replies", "timezone"}).
 		AddRow(1, 1, 1, nil, cfg.PageSizeDefault, true, nil)
 	mock.ExpectQuery("SELECT idpreferences").WithArgs(int32(1)).WillReturnRows(prefRows)
 	mock.ExpectExec("UPDATE preferences").WithArgs(int32(2), int32(cfg.PageSizeDefault), sqlmock.AnyArg(), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))

@@ -12,7 +12,7 @@ import (
 )
 
 const adminListNewsPostsWithWriterUsernameAndThreadCommentCountDescending = `-- name: AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescending :many
-SELECT u.username AS writerName, u.idusers as writerId, s.idsiteNews, s.forumthread_id, s.language_idlanguage, s.users_idusers,
+SELECT u.username AS writerName, u.idusers as writerId, s.idsiteNews, s.forumthread_id, s.language_id, s.users_idusers,
 s.news, s.occurred, th.comments as Comments
 FROM site_news s
 LEFT JOIN users u ON s.users_idusers = u.idusers
@@ -27,15 +27,15 @@ type AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams s
 }
 
 type AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow struct {
-	Writername         sql.NullString
-	Writerid           sql.NullInt32
-	Idsitenews         int32
-	ForumthreadID      int32
-	LanguageIdlanguage sql.NullInt32
-	UsersIdusers       int32
-	News               sql.NullString
-	Occurred           sql.NullTime
-	Comments           sql.NullInt32
+	Writername    sql.NullString
+	Writerid      sql.NullInt32
+	Idsitenews    int32
+	ForumthreadID int32
+	LanguageID    sql.NullInt32
+	UsersIdusers  int32
+	News          sql.NullString
+	Occurred      sql.NullTime
+	Comments      sql.NullInt32
 }
 
 func (q *Queries) AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescending(ctx context.Context, arg AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams) ([]*AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
@@ -52,7 +52,7 @@ func (q *Queries) AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDesce
 			&i.Writerid,
 			&i.Idsitenews,
 			&i.ForumthreadID,
-			&i.LanguageIdlanguage,
+			&i.LanguageID,
 			&i.UsersIdusers,
 			&i.News,
 			&i.Occurred,
@@ -87,7 +87,7 @@ func (q *Queries) AdminReplaceSiteNewsURL(ctx context.Context, arg AdminReplaceS
 }
 
 const createNewsPostForWriter = `-- name: CreateNewsPostForWriter :execlastid
-INSERT INTO site_news (news, users_idusers, occurred, timezone, language_idlanguage)
+INSERT INTO site_news (news, users_idusers, occurred, timezone, language_id)
 SELECT ?, ?, NOW(), ?, ?
 WHERE EXISTS (
     SELECT 1 FROM grants g
@@ -190,7 +190,7 @@ const getNewsPostByIdWithWriterIdAndThreadCommentCount = `-- name: GetNewsPostBy
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT u.username AS writerName, u.idusers as writerId, s.idsiteNews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, s.timezone, th.comments as Comments
+SELECT u.username AS writerName, u.idusers as writerId, s.idsiteNews, s.forumthread_id, s.language_id, s.users_idusers, s.news, s.occurred, s.timezone, th.comments as Comments
 FROM site_news s
 LEFT JOIN users u ON s.users_idusers = u.idusers
 LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
@@ -214,16 +214,16 @@ type GetNewsPostByIdWithWriterIdAndThreadCommentCountParams struct {
 }
 
 type GetNewsPostByIdWithWriterIdAndThreadCommentCountRow struct {
-	Writername         sql.NullString
-	Writerid           sql.NullInt32
-	Idsitenews         int32
-	ForumthreadID      int32
-	LanguageIdlanguage sql.NullInt32
-	UsersIdusers       int32
-	News               sql.NullString
-	Occurred           sql.NullTime
-	Timezone           sql.NullString
-	Comments           sql.NullInt32
+	Writername    sql.NullString
+	Writerid      sql.NullInt32
+	Idsitenews    int32
+	ForumthreadID int32
+	LanguageID    sql.NullInt32
+	UsersIdusers  int32
+	News          sql.NullString
+	Occurred      sql.NullTime
+	Timezone      sql.NullString
+	Comments      sql.NullInt32
 }
 
 func (q *Queries) GetNewsPostByIdWithWriterIdAndThreadCommentCount(ctx context.Context, arg GetNewsPostByIdWithWriterIdAndThreadCommentCountParams) (*GetNewsPostByIdWithWriterIdAndThreadCommentCountRow, error) {
@@ -234,7 +234,7 @@ func (q *Queries) GetNewsPostByIdWithWriterIdAndThreadCommentCount(ctx context.C
 		&i.Writerid,
 		&i.Idsitenews,
 		&i.ForumthreadID,
-		&i.LanguageIdlanguage,
+		&i.LanguageID,
 		&i.UsersIdusers,
 		&i.News,
 		&i.Occurred,
@@ -248,7 +248,7 @@ const getNewsPostsByIdsForUserWithWriterIdAndThreadCommentCount = `-- name: GetN
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT u.username AS writerName, u.idusers as writerId, s.idsiteNews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, s.timezone, th.comments as Comments
+SELECT u.username AS writerName, u.idusers as writerId, s.idsiteNews, s.forumthread_id, s.language_id, s.users_idusers, s.news, s.occurred, s.timezone, th.comments as Comments
 FROM site_news s
 LEFT JOIN users u ON s.users_idusers = u.idusers
 LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
@@ -257,10 +257,10 @@ WHERE s.Idsitenews IN (/*SLICE:newsids*/?)
       NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
       )
-      OR s.language_idlanguage = 0
-      OR s.language_idlanguage IS NULL
-      OR s.language_idlanguage IN (
-          SELECT ul.language_idlanguage
+      OR s.language_id = 0
+      OR s.language_id IS NULL
+      OR s.language_id IN (
+          SELECT ul.language_id
           FROM user_language ul
           WHERE ul.users_idusers = ?
       )
@@ -285,16 +285,16 @@ type GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountParams struct {
 }
 
 type GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountRow struct {
-	Writername         sql.NullString
-	Writerid           sql.NullInt32
-	Idsitenews         int32
-	ForumthreadID      int32
-	LanguageIdlanguage sql.NullInt32
-	UsersIdusers       int32
-	News               sql.NullString
-	Occurred           sql.NullTime
-	Timezone           sql.NullString
-	Comments           sql.NullInt32
+	Writername    sql.NullString
+	Writerid      sql.NullInt32
+	Idsitenews    int32
+	ForumthreadID int32
+	LanguageID    sql.NullInt32
+	UsersIdusers  int32
+	News          sql.NullString
+	Occurred      sql.NullTime
+	Timezone      sql.NullString
+	Comments      sql.NullInt32
 }
 
 func (q *Queries) GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCount(ctx context.Context, arg GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountParams) ([]*GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountRow, error) {
@@ -325,7 +325,7 @@ func (q *Queries) GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCount(ctx 
 			&i.Writerid,
 			&i.Idsitenews,
 			&i.ForumthreadID,
-			&i.LanguageIdlanguage,
+			&i.LanguageID,
 			&i.UsersIdusers,
 			&i.News,
 			&i.Occurred,
@@ -349,7 +349,7 @@ const getNewsPostsWithWriterUsernameAndThreadCommentCountDescending = `-- name: 
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT u.username AS writerName, u.idusers as writerId, s.idsiteNews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, s.timezone, th.comments as Comments
+SELECT u.username AS writerName, u.idusers as writerId, s.idsiteNews, s.forumthread_id, s.language_id, s.users_idusers, s.news, s.occurred, s.timezone, th.comments as Comments
 FROM site_news s
 LEFT JOIN users u ON s.users_idusers = u.idusers
 LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
@@ -357,10 +357,10 @@ WHERE (
     NOT EXISTS (
         SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
     )
-    OR s.language_idlanguage = 0
-    OR s.language_idlanguage IS NULL
-    OR s.language_idlanguage IN (
-        SELECT ul.language_idlanguage FROM user_language ul WHERE ul.users_idusers = ?
+    OR s.language_id = 0
+    OR s.language_id IS NULL
+    OR s.language_id IN (
+        SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?
     )
 )
   AND EXISTS (
@@ -385,16 +385,16 @@ type GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams struct 
 }
 
 type GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow struct {
-	Writername         sql.NullString
-	Writerid           sql.NullInt32
-	Idsitenews         int32
-	ForumthreadID      int32
-	LanguageIdlanguage sql.NullInt32
-	UsersIdusers       int32
-	News               sql.NullString
-	Occurred           sql.NullTime
-	Timezone           sql.NullString
-	Comments           sql.NullInt32
+	Writername    sql.NullString
+	Writerid      sql.NullInt32
+	Idsitenews    int32
+	ForumthreadID int32
+	LanguageID    sql.NullInt32
+	UsersIdusers  int32
+	News          sql.NullString
+	Occurred      sql.NullTime
+	Timezone      sql.NullString
+	Comments      sql.NullInt32
 }
 
 func (q *Queries) GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(ctx context.Context, arg GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams) ([]*GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
@@ -418,7 +418,7 @@ func (q *Queries) GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(
 			&i.Writerid,
 			&i.Idsitenews,
 			&i.ForumthreadID,
-			&i.LanguageIdlanguage,
+			&i.LanguageID,
 			&i.UsersIdusers,
 			&i.News,
 			&i.Occurred,
@@ -476,7 +476,7 @@ func (q *Queries) SystemSetSiteNewsLastIndex(ctx context.Context, idsitenews int
 
 const updateNewsPostForWriter = `-- name: UpdateNewsPostForWriter :exec
 UPDATE site_news s
-SET news = ?, language_idlanguage = ?
+SET news = ?, language_id = ?
 WHERE s.idsiteNews = ?
   AND s.users_idusers = ?
   AND EXISTS (

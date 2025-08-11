@@ -239,7 +239,7 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if errors.Is(err, sql.ErrNoRows) {
 		ptidi, err := queries.CreateForumTopicForPoster(r.Context(), db.CreateForumTopicForPosterParams{
 			ForumcategoryID: 0,
-			ForumLang:       link.LanguageIdlanguage,
+			ForumLang:       link.LanguageID,
 			Title: sql.NullString{
 				String: LinkerTopicName,
 				Valid:  true,

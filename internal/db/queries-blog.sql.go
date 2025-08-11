@@ -16,7 +16,7 @@ const adminGetAllBlogEntriesByUser = `-- name: AdminGetAllBlogEntriesByUser :man
 SELECT b.idblogs,
        b.forumthread_id,
        b.users_idusers,
-       b.language_idlanguage,
+       b.language_id,
        b.blog,
        b.written,
        b.timezone,
@@ -37,7 +37,7 @@ type AdminGetAllBlogEntriesByUserRow struct {
 	Idblogs            int32
 	ForumthreadID      sql.NullInt32
 	UsersIdusers       int32
-	LanguageIdlanguage sql.NullInt32
+	LanguageID         sql.NullInt32
 	Blog               sql.NullString
 	Written            time.Time
 	Timezone           sql.NullString
@@ -60,7 +60,7 @@ func (q *Queries) AdminGetAllBlogEntriesByUser(ctx context.Context, authorID int
 			&i.Idblogs,
 			&i.ForumthreadID,
 			&i.UsersIdusers,
-			&i.LanguageIdlanguage,
+			&i.LanguageID,
 			&i.Blog,
 			&i.Written,
 			&i.Timezone,
@@ -83,7 +83,7 @@ func (q *Queries) AdminGetAllBlogEntriesByUser(ctx context.Context, authorID int
 }
 
 const createBlogEntryForWriter = `-- name: CreateBlogEntryForWriter :execlastid
-INSERT INTO blogs (users_idusers, language_idlanguage, blog, written, timezone)
+INSERT INTO blogs (users_idusers, language_id, blog, written, timezone)
 SELECT ?, ?, ?, CURRENT_TIMESTAMP, ?
 WHERE EXISTS (
     SELECT 1 FROM grants g
@@ -100,18 +100,18 @@ WHERE EXISTS (
 `
 
 type CreateBlogEntryForWriterParams struct {
-	UsersIdusers       int32
-	LanguageIdlanguage sql.NullInt32
-	Blog               sql.NullString
-	Timezone           sql.NullString
-	UserID             sql.NullInt32
-	ListerID           int32
+	UsersIdusers int32
+	LanguageID   sql.NullInt32
+	Blog         sql.NullString
+	Timezone     sql.NullString
+	UserID       sql.NullInt32
+	ListerID     int32
 }
 
 func (q *Queries) CreateBlogEntryForWriter(ctx context.Context, arg CreateBlogEntryForWriterParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, createBlogEntryForWriter,
 		arg.UsersIdusers,
-		arg.LanguageIdlanguage,
+		arg.LanguageID,
 		arg.Blog,
 		arg.Timezone,
 		arg.UserID,
@@ -127,19 +127,19 @@ const getBlogEntryForListerByID = `-- name: GetBlogEntryForListerByID :one
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, b.timezone, u.username, coalesce(th.comments, 0),
+SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_id, b.blog, b.written, b.timezone, u.username, coalesce(th.comments, 0),
        b.users_idusers = ? AS is_owner
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
 WHERE b.idblogs = ?
   AND (
-      b.language_idlanguage = 0
-      OR b.language_idlanguage IS NULL
+      b.language_id = 0
+      OR b.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
-            AND ul.language_idlanguage = b.language_idlanguage
+            AND ul.language_id = b.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
@@ -165,16 +165,16 @@ type GetBlogEntryForListerByIDParams struct {
 }
 
 type GetBlogEntryForListerByIDRow struct {
-	Idblogs            int32
-	ForumthreadID      sql.NullInt32
-	UsersIdusers       int32
-	LanguageIdlanguage sql.NullInt32
-	Blog               sql.NullString
-	Written            time.Time
-	Timezone           sql.NullString
-	Username           sql.NullString
-	Comments           int32
-	IsOwner            bool
+	Idblogs       int32
+	ForumthreadID sql.NullInt32
+	UsersIdusers  int32
+	LanguageID    sql.NullInt32
+	Blog          sql.NullString
+	Written       time.Time
+	Timezone      sql.NullString
+	Username      sql.NullString
+	Comments      int32
+	IsOwner       bool
 }
 
 func (q *Queries) GetBlogEntryForListerByID(ctx context.Context, arg GetBlogEntryForListerByIDParams) (*GetBlogEntryForListerByIDRow, error) {
@@ -191,7 +191,7 @@ func (q *Queries) GetBlogEntryForListerByID(ctx context.Context, arg GetBlogEntr
 		&i.Idblogs,
 		&i.ForumthreadID,
 		&i.UsersIdusers,
-		&i.LanguageIdlanguage,
+		&i.LanguageID,
 		&i.Blog,
 		&i.Written,
 		&i.Timezone,
@@ -206,19 +206,19 @@ const listBlogEntriesByAuthorForLister = `-- name: ListBlogEntriesByAuthorForLis
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, b.timezone, u.username, coalesce(th.comments, 0),
+SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_id, b.blog, b.written, b.timezone, u.username, coalesce(th.comments, 0),
        b.users_idusers = ? AS is_owner
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
 WHERE (b.users_idusers = ? OR ? = 0)
 AND (
-    b.language_idlanguage = 0
-    OR b.language_idlanguage IS NULL
+    b.language_id = 0
+    OR b.language_id IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = ?
-          AND ul.language_idlanguage = b.language_idlanguage
+          AND ul.language_id = b.language_id
     )
     OR NOT EXISTS (
         SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
@@ -247,16 +247,16 @@ type ListBlogEntriesByAuthorForListerParams struct {
 }
 
 type ListBlogEntriesByAuthorForListerRow struct {
-	Idblogs            int32
-	ForumthreadID      sql.NullInt32
-	UsersIdusers       int32
-	LanguageIdlanguage sql.NullInt32
-	Blog               sql.NullString
-	Written            time.Time
-	Timezone           sql.NullString
-	Username           sql.NullString
-	Comments           int32
-	IsOwner            bool
+	Idblogs       int32
+	ForumthreadID sql.NullInt32
+	UsersIdusers  int32
+	LanguageID    sql.NullInt32
+	Blog          sql.NullString
+	Written       time.Time
+	Timezone      sql.NullString
+	Username      sql.NullString
+	Comments      int32
+	IsOwner       bool
 }
 
 func (q *Queries) ListBlogEntriesByAuthorForLister(ctx context.Context, arg ListBlogEntriesByAuthorForListerParams) ([]*ListBlogEntriesByAuthorForListerRow, error) {
@@ -282,7 +282,7 @@ func (q *Queries) ListBlogEntriesByAuthorForLister(ctx context.Context, arg List
 			&i.Idblogs,
 			&i.ForumthreadID,
 			&i.UsersIdusers,
-			&i.LanguageIdlanguage,
+			&i.LanguageID,
 			&i.Blog,
 			&i.Written,
 			&i.Timezone,
@@ -307,16 +307,16 @@ const listBlogEntriesByIDsForLister = `-- name: ListBlogEntriesByIDsForLister :m
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, b.timezone
+SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_id, b.blog, b.written, b.timezone
 FROM blogs b
 WHERE b.idblogs IN (/*SLICE:blogids*/?)
   AND (
-      b.language_idlanguage = 0
-      OR b.language_idlanguage IS NULL
+      b.language_id = 0
+      OR b.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
-            AND ul.language_idlanguage = b.language_idlanguage
+            AND ul.language_id = b.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
@@ -345,13 +345,13 @@ type ListBlogEntriesByIDsForListerParams struct {
 }
 
 type ListBlogEntriesByIDsForListerRow struct {
-	Idblogs            int32
-	ForumthreadID      sql.NullInt32
-	UsersIdusers       int32
-	LanguageIdlanguage sql.NullInt32
-	Blog               sql.NullString
-	Written            time.Time
-	Timezone           sql.NullString
+	Idblogs       int32
+	ForumthreadID sql.NullInt32
+	UsersIdusers  int32
+	LanguageID    sql.NullInt32
+	Blog          sql.NullString
+	Written       time.Time
+	Timezone      sql.NullString
 }
 
 func (q *Queries) ListBlogEntriesByIDsForLister(ctx context.Context, arg ListBlogEntriesByIDsForListerParams) ([]*ListBlogEntriesByIDsForListerRow, error) {
@@ -383,7 +383,7 @@ func (q *Queries) ListBlogEntriesByIDsForLister(ctx context.Context, arg ListBlo
 			&i.Idblogs,
 			&i.ForumthreadID,
 			&i.UsersIdusers,
-			&i.LanguageIdlanguage,
+			&i.LanguageID,
 			&i.Blog,
 			&i.Written,
 			&i.Timezone,
@@ -405,7 +405,7 @@ const listBlogEntriesForLister = `-- name: ListBlogEntriesForLister :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, b.timezone, u.username, coalesce(th.comments, 0),
+SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_id, b.blog, b.written, b.timezone, u.username, coalesce(th.comments, 0),
        b.users_idusers = ? AS is_owner
 FROM blogs b
 JOIN grants g ON (g.item_id = b.idblogs OR g.item_id IS NULL)
@@ -418,12 +418,12 @@ JOIN grants g ON (g.item_id = b.idblogs OR g.item_id IS NULL)
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
 WHERE (
-    b.language_idlanguage = 0
-    OR b.language_idlanguage IS NULL
+    b.language_id = 0
+    OR b.language_id IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = ?
-          AND ul.language_idlanguage = b.language_idlanguage
+          AND ul.language_id = b.language_id
     )
     OR NOT EXISTS (
         SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
@@ -441,16 +441,16 @@ type ListBlogEntriesForListerParams struct {
 }
 
 type ListBlogEntriesForListerRow struct {
-	Idblogs            int32
-	ForumthreadID      sql.NullInt32
-	UsersIdusers       int32
-	LanguageIdlanguage sql.NullInt32
-	Blog               sql.NullString
-	Written            time.Time
-	Timezone           sql.NullString
-	Username           sql.NullString
-	Comments           int32
-	IsOwner            bool
+	Idblogs       int32
+	ForumthreadID sql.NullInt32
+	UsersIdusers  int32
+	LanguageID    sql.NullInt32
+	Blog          sql.NullString
+	Written       time.Time
+	Timezone      sql.NullString
+	Username      sql.NullString
+	Comments      int32
+	IsOwner       bool
 }
 
 func (q *Queries) ListBlogEntriesForLister(ctx context.Context, arg ListBlogEntriesForListerParams) ([]*ListBlogEntriesForListerRow, error) {
@@ -474,7 +474,7 @@ func (q *Queries) ListBlogEntriesForLister(ctx context.Context, arg ListBlogEntr
 			&i.Idblogs,
 			&i.ForumthreadID,
 			&i.UsersIdusers,
-			&i.LanguageIdlanguage,
+			&i.LanguageID,
 			&i.Blog,
 			&i.Written,
 			&i.Timezone,
@@ -505,12 +505,12 @@ LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearc
 JOIN blogs b ON b.idblogs = cs.blog_id
 WHERE swl.word = ?
   AND (
-      b.language_idlanguage = 0
-      OR b.language_idlanguage IS NULL
+      b.language_id = 0
+      OR b.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
-            AND ul.language_idlanguage = b.language_idlanguage
+            AND ul.language_id = b.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
@@ -574,12 +574,12 @@ JOIN blogs b ON b.idblogs = cs.blog_id
 WHERE swl.word = ?
   AND cs.blog_id IN (/*SLICE:ids*/?)
   AND (
-      b.language_idlanguage = 0
-      OR b.language_idlanguage IS NULL
+      b.language_id = 0
+      OR b.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
-            AND ul.language_idlanguage = b.language_idlanguage
+            AND ul.language_id = b.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
@@ -650,12 +650,12 @@ SELECT u.username, COUNT(b.idblogs) AS count
 FROM blogs b
 JOIN users u ON b.users_idusers = u.idusers
 WHERE (
-    b.language_idlanguage = 0
-    OR b.language_idlanguage IS NULL
+    b.language_id = 0
+    OR b.language_id IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = ?
-          AND ul.language_idlanguage = b.language_idlanguage
+          AND ul.language_id = b.language_id
     )
     OR NOT EXISTS (
         SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
@@ -727,12 +727,12 @@ FROM blogs b
 JOIN users u ON b.users_idusers = u.idusers
 WHERE (LOWER(u.username) LIKE LOWER(?) OR LOWER((SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1)) LIKE LOWER(?))
   AND (
-    b.language_idlanguage = 0
-    OR b.language_idlanguage IS NULL
+    b.language_id = 0
+    OR b.language_id IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = ?
-          AND ul.language_idlanguage = b.language_idlanguage
+          AND ul.language_id = b.language_id
     )
     OR NOT EXISTS (
         SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
@@ -875,7 +875,7 @@ func (q *Queries) SystemSetBlogLastIndex(ctx context.Context, id int32) error {
 
 const updateBlogEntryForWriter = `-- name: UpdateBlogEntryForWriter :exec
 UPDATE blogs b
-SET language_idlanguage = ?, blog = ?
+SET language_id = ?, blog = ?
 WHERE b.idblogs = ?
   AND b.users_idusers = ?
   AND EXISTS (

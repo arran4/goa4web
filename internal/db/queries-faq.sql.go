@@ -40,7 +40,7 @@ func (q *Queries) AdminDeleteFAQCategory(ctx context.Context, id int32) error {
 }
 
 const adminGetFAQByID = `-- name: AdminGetFAQByID :one
-SELECT id, faq_category_id, language_idlanguage, users_idusers, answer, question FROM faq WHERE id = ?
+SELECT id, faq_category_id, language_id, users_idusers, answer, question FROM faq WHERE id = ?
 `
 
 func (q *Queries) AdminGetFAQByID(ctx context.Context, id int32) (*Faq, error) {
@@ -49,7 +49,7 @@ func (q *Queries) AdminGetFAQByID(ctx context.Context, id int32) (*Faq, error) {
 	err := row.Scan(
 		&i.ID,
 		&i.FaqCategoryID,
-		&i.LanguageIdlanguage,
+		&i.LanguageID,
 		&i.UsersIdusers,
 		&i.Answer,
 		&i.Question,
@@ -143,7 +143,7 @@ func (q *Queries) AdminGetFAQCategoryWithQuestionCountByID(ctx context.Context, 
 }
 
 const adminGetFAQDismissedQuestions = `-- name: AdminGetFAQDismissedQuestions :many
-SELECT id, faq_category_id, language_idlanguage, users_idusers, answer, question
+SELECT id, faq_category_id, language_id, users_idusers, answer, question
 FROM faq
 WHERE deleted_at IS NOT NULL
 `
@@ -160,7 +160,7 @@ func (q *Queries) AdminGetFAQDismissedQuestions(ctx context.Context) ([]*Faq, er
 		if err := rows.Scan(
 			&i.ID,
 			&i.FaqCategoryID,
-			&i.LanguageIdlanguage,
+			&i.LanguageID,
 			&i.UsersIdusers,
 			&i.Answer,
 			&i.Question,
@@ -179,7 +179,7 @@ func (q *Queries) AdminGetFAQDismissedQuestions(ctx context.Context) ([]*Faq, er
 }
 
 const adminGetFAQQuestionsByCategory = `-- name: AdminGetFAQQuestionsByCategory :many
-SELECT id, faq_category_id, language_idlanguage, users_idusers, answer, question FROM faq WHERE faq_category_id = ?
+SELECT id, faq_category_id, language_id, users_idusers, answer, question FROM faq WHERE faq_category_id = ?
 `
 
 func (q *Queries) AdminGetFAQQuestionsByCategory(ctx context.Context, faqCategoryID sql.NullInt32) ([]*Faq, error) {
@@ -194,7 +194,7 @@ func (q *Queries) AdminGetFAQQuestionsByCategory(ctx context.Context, faqCategor
 		if err := rows.Scan(
 			&i.ID,
 			&i.FaqCategoryID,
-			&i.LanguageIdlanguage,
+			&i.LanguageID,
 			&i.UsersIdusers,
 			&i.Answer,
 			&i.Question,
@@ -213,7 +213,7 @@ func (q *Queries) AdminGetFAQQuestionsByCategory(ctx context.Context, faqCategor
 }
 
 const adminGetFAQUnansweredQuestions = `-- name: AdminGetFAQUnansweredQuestions :many
-SELECT id, faq_category_id, language_idlanguage, users_idusers, answer, question
+SELECT id, faq_category_id, language_id, users_idusers, answer, question
 FROM faq
 WHERE faq_category_id IS NULL OR answer IS NULL
 `
@@ -230,7 +230,7 @@ func (q *Queries) AdminGetFAQUnansweredQuestions(ctx context.Context) ([]*Faq, e
 		if err := rows.Scan(
 			&i.ID,
 			&i.FaqCategoryID,
-			&i.LanguageIdlanguage,
+			&i.LanguageID,
 			&i.UsersIdusers,
 			&i.Answer,
 			&i.Question,
@@ -288,7 +288,7 @@ func (q *Queries) AdminUpdateFAQQuestionAnswer(ctx context.Context, arg AdminUpd
 }
 
 const createFAQQuestionForWriter = `-- name: CreateFAQQuestionForWriter :exec
-INSERT INTO faq (question, users_idusers, language_idlanguage)
+INSERT INTO faq (question, users_idusers, language_id)
 SELECT ?, ?, ?
 WHERE EXISTS (
     SELECT 1 FROM grants g
@@ -325,18 +325,18 @@ const getAllAnsweredFAQWithFAQCategoriesForUser = `-- name: GetAllAnsweredFAQWit
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT c.id AS category_id, c.name, f.id AS faq_id, f.faq_category_id, f.language_idlanguage, f.users_idusers, f.answer, f.question
+SELECT c.id AS category_id, c.name, f.id AS faq_id, f.faq_category_id, f.language_id, f.users_idusers, f.answer, f.question
 FROM faq f
 LEFT JOIN faq_categories c ON c.id = f.faq_category_id
 WHERE c.id IS NOT NULL
   AND f.answer IS NOT NULL
   AND (
-      f.language_idlanguage = 0
-      OR f.language_idlanguage IS NULL
+      f.language_id = 0
+      OR f.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
-            AND ul.language_idlanguage = f.language_idlanguage
+            AND ul.language_id = f.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
@@ -361,14 +361,14 @@ type GetAllAnsweredFAQWithFAQCategoriesForUserParams struct {
 }
 
 type GetAllAnsweredFAQWithFAQCategoriesForUserRow struct {
-	CategoryID         sql.NullInt32
-	Name               sql.NullString
-	FaqID              int32
-	FaqCategoryID      sql.NullInt32
-	LanguageIdlanguage sql.NullInt32
-	UsersIdusers       int32
-	Answer             sql.NullString
-	Question           sql.NullString
+	CategoryID    sql.NullInt32
+	Name          sql.NullString
+	FaqID         int32
+	FaqCategoryID sql.NullInt32
+	LanguageID    sql.NullInt32
+	UsersIdusers  int32
+	Answer        sql.NullString
+	Question      sql.NullString
 }
 
 func (q *Queries) GetAllAnsweredFAQWithFAQCategoriesForUser(ctx context.Context, arg GetAllAnsweredFAQWithFAQCategoriesForUserParams) ([]*GetAllAnsweredFAQWithFAQCategoriesForUserRow, error) {
@@ -390,7 +390,7 @@ func (q *Queries) GetAllAnsweredFAQWithFAQCategoriesForUser(ctx context.Context,
 			&i.Name,
 			&i.FaqID,
 			&i.FaqCategoryID,
-			&i.LanguageIdlanguage,
+			&i.LanguageID,
 			&i.UsersIdusers,
 			&i.Answer,
 			&i.Question,
@@ -412,17 +412,17 @@ const getFAQAnsweredQuestions = `-- name: GetFAQAnsweredQuestions :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT faq.id, faq.faq_category_id, faq.language_idlanguage, faq.users_idusers, faq.answer, faq.question
+SELECT faq.id, faq.faq_category_id, faq.language_id, faq.users_idusers, faq.answer, faq.question
 FROM faq
 WHERE answer IS NOT NULL
   AND deleted_at IS NULL
   AND (
-      language_idlanguage = 0
-      OR language_idlanguage IS NULL
+      language_id = 0
+      OR language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
-            AND ul.language_idlanguage = faq.language_idlanguage
+            AND ul.language_id = faq.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
@@ -462,7 +462,7 @@ func (q *Queries) GetFAQAnsweredQuestions(ctx context.Context, arg GetFAQAnswere
 		if err := rows.Scan(
 			&i.ID,
 			&i.FaqCategoryID,
-			&i.LanguageIdlanguage,
+			&i.LanguageID,
 			&i.UsersIdusers,
 			&i.Answer,
 			&i.Question,
@@ -484,17 +484,17 @@ const getFAQByID = `-- name: GetFAQByID :one
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT faq.id, faq.faq_category_id, faq.language_idlanguage, faq.users_idusers, faq.answer, faq.question
+SELECT faq.id, faq.faq_category_id, faq.language_id, faq.users_idusers, faq.answer, faq.question
 FROM faq
 WHERE faq.id = ?
   AND deleted_at IS NULL
   AND (
-      language_idlanguage = 0
-      OR language_idlanguage IS NULL
+      language_id = 0
+      OR language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
-            AND ul.language_idlanguage = faq.language_idlanguage
+            AND ul.language_id = faq.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
@@ -530,7 +530,7 @@ func (q *Queries) GetFAQByID(ctx context.Context, arg GetFAQByIDParams) (*Faq, e
 	err := row.Scan(
 		&i.ID,
 		&i.FaqCategoryID,
-		&i.LanguageIdlanguage,
+		&i.LanguageID,
 		&i.UsersIdusers,
 		&i.Answer,
 		&i.Question,
@@ -542,17 +542,17 @@ const getFAQQuestionsByCategory = `-- name: GetFAQQuestionsByCategory :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT faq.id, faq.faq_category_id, faq.language_idlanguage, faq.users_idusers, faq.answer, faq.question
+SELECT faq.id, faq.faq_category_id, faq.language_id, faq.users_idusers, faq.answer, faq.question
 FROM faq
 WHERE faq.faq_category_id = ?
   AND deleted_at IS NULL
   AND (
-      language_idlanguage = 0
-      OR language_idlanguage IS NULL
+      language_id = 0
+      OR language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
-            AND ul.language_idlanguage = faq.language_idlanguage
+            AND ul.language_id = faq.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
@@ -594,7 +594,7 @@ func (q *Queries) GetFAQQuestionsByCategory(ctx context.Context, arg GetFAQQuest
 		if err := rows.Scan(
 			&i.ID,
 			&i.FaqCategoryID,
-			&i.LanguageIdlanguage,
+			&i.LanguageID,
 			&i.UsersIdusers,
 			&i.Answer,
 			&i.Question,
@@ -648,7 +648,7 @@ func (q *Queries) GetFAQRevisionsForAdmin(ctx context.Context, faqID int32) ([]*
 }
 
 const insertFAQQuestionForWriter = `-- name: InsertFAQQuestionForWriter :execresult
-INSERT INTO faq (question, answer, faq_category_id, users_idusers, language_idlanguage)
+INSERT INTO faq (question, answer, faq_category_id, users_idusers, language_id)
 SELECT ?, ?, ?, ?, ?
 WHERE EXISTS (
     SELECT 1 FROM grants g
@@ -724,7 +724,7 @@ func (q *Queries) InsertFAQRevisionForUser(ctx context.Context, arg InsertFAQRev
 }
 
 const systemGetFAQQuestions = `-- name: SystemGetFAQQuestions :many
-SELECT id, faq_category_id, language_idlanguage, users_idusers, answer, question
+SELECT id, faq_category_id, language_id, users_idusers, answer, question
 FROM faq
 `
 
@@ -740,7 +740,7 @@ func (q *Queries) SystemGetFAQQuestions(ctx context.Context) ([]*Faq, error) {
 		if err := rows.Scan(
 			&i.ID,
 			&i.FaqCategoryID,
-			&i.LanguageIdlanguage,
+			&i.LanguageID,
 			&i.UsersIdusers,
 			&i.Answer,
 			&i.Question,

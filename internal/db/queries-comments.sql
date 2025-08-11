@@ -10,12 +10,12 @@ LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
 WHERE c.idcomments = sqlc.arg(id)
   AND (
-      c.language_idlanguage = 0
-      OR c.language_idlanguage IS NULL
+      c.language_id = 0
+      OR c.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(viewer_id)
-            AND ul.language_idlanguage = c.language_idlanguage
+            AND ul.language_id = c.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
@@ -35,7 +35,7 @@ LIMIT 1;
 
 -- name: UpdateCommentForEditor :exec
 UPDATE comments c
-SET language_idlanguage = sqlc.narg(language_id), text = sqlc.arg(text)
+SET language_id = sqlc.narg(language_id), text = sqlc.arg(text)
 WHERE c.idcomments = sqlc.arg(comment_id)
   AND c.users_idusers = sqlc.arg(commenter_id)
   AND EXISTS (
@@ -73,12 +73,12 @@ LEFT JOIN users pu ON pu.idusers = c.users_idusers
 LEFT JOIN forumcategory fc ON t.forumcategory_idforumcategory = fc.idforumcategory
 WHERE c.Idcomments IN (sqlc.slice('ids'))
   AND (
-      c.language_idlanguage = 0
-      OR c.language_idlanguage IS NULL
+      c.language_id = 0
+      OR c.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(viewer_id)
-            AND ul.language_idlanguage = c.language_idlanguage
+            AND ul.language_id = c.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
@@ -98,7 +98,7 @@ ORDER BY c.written DESC
 ;
 
 -- name: CreateCommentInSectionForCommenter :execlastid
-INSERT INTO comments (language_idlanguage, users_idusers, forumthread_id, text, written, timezone)
+INSERT INTO comments (language_id, users_idusers, forumthread_id, text, written, timezone)
 SELECT sqlc.narg(language_id), sqlc.narg(commenter_id), sqlc.arg(forumthread_id), sqlc.arg(text), NOW(), sqlc.arg(timezone)
 WHERE EXISTS (
     SELECT 1 FROM grants g
@@ -126,12 +126,12 @@ LEFT JOIN users pu ON pu.idusers = c.users_idusers
 WHERE c.forumthread_id=sqlc.arg(thread_id)
   AND c.forumthread_id IS NOT NULL
   AND (
-      c.language_idlanguage = 0
-      OR c.language_idlanguage IS NULL
+      c.language_id = 0
+      OR c.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(viewer_id)
-            AND ul.language_idlanguage = c.language_idlanguage
+            AND ul.language_id = c.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
@@ -164,12 +164,12 @@ LEFT JOIN users pu ON pu.idusers = c.users_idusers
 WHERE c.forumthread_id=sqlc.arg(thread_id)
   AND c.forumthread_id IS NOT NULL
   AND (
-      c.language_idlanguage = 0
-      OR c.language_idlanguage IS NULL
+      c.language_id = 0
+      OR c.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(viewer_id)
-            AND ul.language_idlanguage = c.language_idlanguage
+            AND ul.language_id = c.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
@@ -189,7 +189,7 @@ ORDER BY c.written;
 
 
 -- name: AdminGetAllCommentsByUser :many
-SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage,
+SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_id,
        c.written, c.text, c.deleted_at, c.last_index, c.timezone,
        th.forumtopic_idforumtopic, t.title AS forumtopic_title,
        fp.text AS thread_title

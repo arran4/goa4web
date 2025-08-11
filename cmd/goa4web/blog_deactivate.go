@@ -57,13 +57,13 @@ func (c *blogDeactivateCmd) Run() error {
 		threadID = b.ForumthreadID.Int32
 	}
 	if err := queries.AdminArchiveBlog(ctx, db.AdminArchiveBlogParams{
-		Idblogs:            b.Idblogs,
-		ForumthreadID:      threadID,
-		UsersIdusers:       b.UsersIdusers,
-		LanguageIdlanguage: b.LanguageIdlanguage,
-		Blog:               b.Blog,
-		Written:            sql.NullTime{Time: b.Written, Valid: true},
-		Timezone:           b.Timezone,
+		Idblogs:       b.Idblogs,
+		ForumthreadID: threadID,
+		UsersIdusers:  b.UsersIdusers,
+		LanguageID:    b.LanguageID,
+		Blog:          b.Blog,
+		Written:       sql.NullTime{Time: b.Written, Valid: true},
+		Timezone:      b.Timezone,
 	}); err != nil {
 		return fmt.Errorf("archive blog: %w", err)
 	}

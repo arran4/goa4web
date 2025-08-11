@@ -4,7 +4,7 @@
         <option value="0">Multi-lingual
         {{ $sel := cd.PreferredLanguageID cd.Config.DefaultLanguage }}
         {{range cd.Languages}}
-            <option value="{{.Idlanguage}}"{{if eq .Idlanguage $sel}} selected{{end}}>{{.Nameof.String}}
+            <option value="{{.ID}}"{{if eq .ID $sel}} selected{{end}}>{{.Nameof.String}}
         {{else}}
             <option disabled>No languages</option>
         {{end}}

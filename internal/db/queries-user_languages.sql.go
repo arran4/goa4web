@@ -19,7 +19,7 @@ func (q *Queries) DeleteUserLanguagesForUser(ctx context.Context, userID int32) 
 }
 
 const getUserLanguages = `-- name: GetUserLanguages :many
-SELECT iduserlang, users_idusers, language_idlanguage
+SELECT iduserlang, users_idusers, language_id
 FROM user_language
 WHERE users_idusers = ?
 `
@@ -33,7 +33,7 @@ func (q *Queries) GetUserLanguages(ctx context.Context, usersIdusers int32) ([]*
 	var items []*UserLanguage
 	for rows.Next() {
 		var i UserLanguage
-		if err := rows.Scan(&i.Iduserlang, &i.UsersIdusers, &i.LanguageIdlanguage); err != nil {
+		if err := rows.Scan(&i.Iduserlang, &i.UsersIdusers, &i.LanguageID); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -48,16 +48,16 @@ func (q *Queries) GetUserLanguages(ctx context.Context, usersIdusers int32) ([]*
 }
 
 const insertUserLang = `-- name: InsertUserLang :exec
-INSERT INTO user_language (users_idusers, language_idlanguage)
+INSERT INTO user_language (users_idusers, language_id)
 VALUES (?, ?)
 `
 
 type InsertUserLangParams struct {
-	UsersIdusers       int32
-	LanguageIdlanguage int32
+	UsersIdusers int32
+	LanguageID   int32
 }
 
 func (q *Queries) InsertUserLang(ctx context.Context, arg InsertUserLangParams) error {
-	_, err := q.db.ExecContext(ctx, insertUserLang, arg.UsersIdusers, arg.LanguageIdlanguage)
+	_, err := q.db.ExecContext(ctx, insertUserLang, arg.UsersIdusers, arg.LanguageID)
 	return err
 }

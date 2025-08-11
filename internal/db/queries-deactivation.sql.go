@@ -11,18 +11,18 @@ import (
 )
 
 const adminArchiveBlog = `-- name: AdminArchiveBlog :exec
-INSERT INTO deactivated_blogs (idblogs, forumthread_id, users_idusers, language_idlanguage, blog, written, timezone, deleted_at)
+INSERT INTO deactivated_blogs (idblogs, forumthread_id, users_idusers, language_id, blog, written, timezone, deleted_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
 `
 
 type AdminArchiveBlogParams struct {
-	Idblogs            int32
-	ForumthreadID      int32
-	UsersIdusers       int32
-	LanguageIdlanguage sql.NullInt32
-	Blog               sql.NullString
-	Written            sql.NullTime
-	Timezone           sql.NullString
+	Idblogs       int32
+	ForumthreadID int32
+	UsersIdusers  int32
+	LanguageID    sql.NullInt32
+	Blog          sql.NullString
+	Written       sql.NullTime
+	Timezone      sql.NullString
 }
 
 func (q *Queries) AdminArchiveBlog(ctx context.Context, arg AdminArchiveBlogParams) error {
@@ -30,7 +30,7 @@ func (q *Queries) AdminArchiveBlog(ctx context.Context, arg AdminArchiveBlogPara
 		arg.Idblogs,
 		arg.ForumthreadID,
 		arg.UsersIdusers,
-		arg.LanguageIdlanguage,
+		arg.LanguageID,
 		arg.Blog,
 		arg.Written,
 		arg.Timezone,
@@ -39,18 +39,18 @@ func (q *Queries) AdminArchiveBlog(ctx context.Context, arg AdminArchiveBlogPara
 }
 
 const adminArchiveComment = `-- name: AdminArchiveComment :exec
-INSERT INTO deactivated_comments (idcomments, forumthread_id, users_idusers, language_idlanguage, written, text, timezone, deleted_at)
+INSERT INTO deactivated_comments (idcomments, forumthread_id, users_idusers, language_id, written, text, timezone, deleted_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
 `
 
 type AdminArchiveCommentParams struct {
-	Idcomments         int32
-	ForumthreadID      int32
-	UsersIdusers       int32
-	LanguageIdlanguage sql.NullInt32
-	Written            sql.NullTime
-	Text               sql.NullString
-	Timezone           sql.NullString
+	Idcomments    int32
+	ForumthreadID int32
+	UsersIdusers  int32
+	LanguageID    sql.NullInt32
+	Written       sql.NullTime
+	Text          sql.NullString
+	Timezone      sql.NullString
 }
 
 func (q *Queries) AdminArchiveComment(ctx context.Context, arg AdminArchiveCommentParams) error {
@@ -58,7 +58,7 @@ func (q *Queries) AdminArchiveComment(ctx context.Context, arg AdminArchiveComme
 		arg.Idcomments,
 		arg.ForumthreadID,
 		arg.UsersIdusers,
-		arg.LanguageIdlanguage,
+		arg.LanguageID,
 		arg.Written,
 		arg.Text,
 		arg.Timezone,
@@ -103,27 +103,27 @@ func (q *Queries) AdminArchiveImagepost(ctx context.Context, arg AdminArchiveIma
 }
 
 const adminArchiveLink = `-- name: AdminArchiveLink :exec
-INSERT INTO deactivated_linker (idlinker, language_idlanguage, users_idusers, linker_category_id, forumthread_id, title, url, description, listed, timezone, deleted_at)
+INSERT INTO deactivated_linker (idlinker, language_id, users_idusers, linker_category_id, forumthread_id, title, url, description, listed, timezone, deleted_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
 `
 
 type AdminArchiveLinkParams struct {
-	Idlinker           int32
-	LanguageIdlanguage sql.NullInt32
-	UsersIdusers       int32
-	LinkerCategoryID   sql.NullInt32
-	ForumthreadID      int32
-	Title              sql.NullString
-	Url                sql.NullString
-	Description        sql.NullString
-	Listed             sql.NullTime
-	Timezone           sql.NullString
+	Idlinker         int32
+	LanguageID       sql.NullInt32
+	UsersIdusers     int32
+	LinkerCategoryID sql.NullInt32
+	ForumthreadID    int32
+	Title            sql.NullString
+	Url              sql.NullString
+	Description      sql.NullString
+	Listed           sql.NullTime
+	Timezone         sql.NullString
 }
 
 func (q *Queries) AdminArchiveLink(ctx context.Context, arg AdminArchiveLinkParams) error {
 	_, err := q.db.ExecContext(ctx, adminArchiveLink,
 		arg.Idlinker,
-		arg.LanguageIdlanguage,
+		arg.LanguageID,
 		arg.UsersIdusers,
 		arg.LinkerCategoryID,
 		arg.ForumthreadID,
@@ -150,21 +150,21 @@ func (q *Queries) AdminArchiveUser(ctx context.Context, idusers int32) error {
 }
 
 const adminArchiveWriting = `-- name: AdminArchiveWriting :exec
-INSERT INTO deactivated_writings (idwriting, users_idusers, forumthread_id, language_idlanguage, writing_category_id, title, published, writing, abstract, private, deleted_at)
+INSERT INTO deactivated_writings (idwriting, users_idusers, forumthread_id, language_id, writing_category_id, title, published, writing, abstract, private, deleted_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
 `
 
 type AdminArchiveWritingParams struct {
-	Idwriting          int32
-	UsersIdusers       int32
-	ForumthreadID      int32
-	LanguageIdlanguage sql.NullInt32
-	WritingCategoryID  int32
-	Title              sql.NullString
-	Published          sql.NullTime
-	Writing            sql.NullString
-	Abstract           sql.NullString
-	Private            sql.NullBool
+	Idwriting         int32
+	UsersIdusers      int32
+	ForumthreadID     int32
+	LanguageID        sql.NullInt32
+	WritingCategoryID int32
+	Title             sql.NullString
+	Published         sql.NullTime
+	Writing           sql.NullString
+	Abstract          sql.NullString
+	Private           sql.NullBool
 }
 
 func (q *Queries) AdminArchiveWriting(ctx context.Context, arg AdminArchiveWritingParams) error {
@@ -172,7 +172,7 @@ func (q *Queries) AdminArchiveWriting(ctx context.Context, arg AdminArchiveWriti
 		arg.Idwriting,
 		arg.UsersIdusers,
 		arg.ForumthreadID,
-		arg.LanguageIdlanguage,
+		arg.LanguageID,
 		arg.WritingCategoryID,
 		arg.Title,
 		arg.Published,

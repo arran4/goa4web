@@ -61,7 +61,7 @@ func TestLatestNewsRespectsPermissions(t *testing.T) {
 
 	now := time.Now()
 	rows := sqlmock.NewRows([]string{
-		"writerName", "writerId", "idsitenews", "forumthread_id", "language_idlanguage",
+		"writerName", "writerId", "idsitenews", "forumthread_id", "language_id",
 		"users_idusers", "news", "occurred", "timezone", "comments",
 	}).AddRow("w", 1, 1, 0, 1, 1, "a", now, time.Local.String(), 0).AddRow("w", 1, 2, 0, 1, 1, "b", now, time.Local.String(), 0)
 

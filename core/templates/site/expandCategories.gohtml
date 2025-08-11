@@ -1,7 +1,7 @@
 {{ define "expandCategories" }}
     <font size="4">Topics:</font><br>
     {{ range .Categories }}
-        <table width="90%" border="1" align="center">
+        <table width="90%" align="center" class="table table-bordered centered-table">
             <tr>
                 <td>
                     {{ if .Admin }}
@@ -33,11 +33,11 @@
                         <textarea name="desc" cols="30" rows="3">{{ .Description }}</textarea><br>
                 {{ else }}
                     <a href="?topic={{ .ID }}">{{ .Title }}</a><br>
-                    <i>{{ .Description }}</i><br>
+                    <em>{{ .Description }}</em><br>
                 {{ end }}
                 {{ if .LastReply }}
-                    <td align="center">{{ .LastReply }}<br>{{ .LastUser }}</td>
-                    <td align="center">{{ .Threads }}<br>{{ .Replies }}</td>
+                    <td class="text-centered">{{ .LastReply }}<br>{{ .LastUser }}</td>
+                    <td class="text-centered">{{ .Threads }}<br>{{ .Replies }}</td>
                 {{ else }}
                     <td>N/A</td><td>N/A</td>
                 {{ end }}

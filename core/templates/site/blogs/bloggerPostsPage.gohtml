@@ -2,19 +2,19 @@
         {{ $rows := cd.BloggerPosts }}
         {{if $rows}}
             {{if cd.CurrentProfileUserID}}
-                <font size="5"><a href="/blogs/blogger/{{(index $rows 0).Username.String}}">{{(index $rows 0).Username.String}}</a>'s blogs.</font><br>
+                <h2 class="blog-title"><a href="/blogs/blogger/{{(index $rows 0).Username.String}}">{{(index $rows 0).Username.String}}</a>'s blogs.</h2>
             {{else}}
-                <font size="5"><a href="/blogs/bloggers">All bloggers</a>' blogs.</font><br>
+                <h2 class="blog-title"><a href="/blogs/bloggers">All bloggers</a>' blogs.</h2>
             {{end}}
             <table width="100%">
                 {{range $rows}}
                     <tr>
-                        <th bgcolor="lightgrey">{{ localTimeIn .Written .Timezone.String }}</th>
+                        <th class="bg-muted">{{ localTimeIn .Written .Timezone.String }}</th>
                     </tr>
                 <tr>
                     <td>
                         {{ $labels := BlogLabels .Idblogs }}
-                        {{.Blog.String | a4code2html}}<br><br>{{.Username.String}} - [<a href="/blogs/blog/{{.Idblogs}}/comments">{{.Comments}} COMMENTS</a>]{{ if cd.CanEditBlog .Idblogs .UsersIdusers }} - [<a href="/blogs/blog/{{.Idblogs}}/edit">EDIT</a>]{{ end }}{{ if and cd.IsAdmin cd.IsAdminMode }} - [<a href="/admin/blogs/blog/{{.Idblogs}}">ADMIN</a>]{{ end }}{{ if $labels }} <span class="label-bar">{{ template "topicLabels" $labels }}</span>{{ end }}
+                        {{.Blog.String | a4code2html}}<br><br>{{.Username.String}} - [<a href="/blogs/blog/{{.Idblogs}}/comments">{{.Comments}} COMMENTS</a>]{{ if cd.CanEditBlog .Idblogs .UsersIdusers }} - [<a href="/blogs/blog/{{.Idblogs}}/edit">EDIT</a>]{{ end }}{{ if and cd.IsAdmin cd.IsAdminMode }} - [<a href="/admin/blogs/blog/{{.Idblogs}}">ADMIN</a>]{{ end }}{{ if $labels }} <span class="label-list">{{ template "topicLabels" $labels }}</span>{{ end }}
                     </td>
                 </tr>
             {{end}}

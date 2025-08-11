@@ -1,13 +1,13 @@
 {{ template "head" $ }}
         {{ $blog := cd.BlogPost }}
-        <font size="5"><a href="/blogs/blogger/{{$blog.Username.String}}">{{$blog.Username.String}}'s Blog</a>:</font><br>
+        <h2 class="blog-title"><a href="/blogs/blogger/{{$blog.Username.String}}">{{$blog.Username.String}}'s Blog</a>:</h2>
         <table width="100%">
                 <tr>
-                    <th bgcolor="lightgrey">{{ localTimeIn $blog.Written $blog.Timezone.String }}</th>
+                    <th class="bg-muted">{{ localTimeIn $blog.Written $blog.Timezone.String }}</th>
                 </tr>
                 <tr>
                     <td>
-        {{$blog.Blog.String | a4code2html}}<br><br>{{$blog.Username.String}} - [<a href="/blogs/blog/{{$blog.Idblogs}}/comments">{{$blog.Comments}} COMMENTS</a>]{{ if cd.CanEditBlog $blog.Idblogs $blog.UsersIdusers }} - [<a href="/blogs/blog/{{$blog.Idblogs}}/edit">EDIT</a>]{{ end }}{{ if and cd.IsAdmin cd.IsAdminMode }} - [<a href="/admin/blogs/blog/{{$blog.Idblogs}}">ADMIN</a>]{{ end }}{{ if .Labels }} <span class="label-bar">{{ template "topicLabels" .Labels }}</span>{{ end }}
+        {{$blog.Blog.String | a4code2html}}<br><br>{{$blog.Username.String}} - [<a href="/blogs/blog/{{$blog.Idblogs}}/comments">{{$blog.Comments}} COMMENTS</a>]{{ if cd.CanEditBlog $blog.Idblogs $blog.UsersIdusers }} - [<a href="/blogs/blog/{{$blog.Idblogs}}/edit">EDIT</a>]{{ end }}{{ if and cd.IsAdmin cd.IsAdminMode }} - [<a href="/admin/blogs/blog/{{$blog.Idblogs}}">ADMIN</a>]{{ end }}{{ if .Labels }} <span class="label-list">{{ template "topicLabels" .Labels }}</span>{{ end }}
                     </td>
                 </tr>
         </table><br>

@@ -4,7 +4,7 @@
     {{ end }}
     {{ $abstracts := cd.SelectedCategoryPublicWritings $.CategoryId $.Request }}
     {{ if gt (len $abstracts) 0 }}
-        <font size="4">Writing abstracts:</font><br>
+        <span class="section-title">Writing abstracts:</span><br>
     {{ end }}
     {{ range $abstracts }}
         {{ $title := .Title.String | a4code2html }}
@@ -16,12 +16,12 @@
         {{ $comments := .Comments }}
         {{ $labels := WritingLabels $idwriting }}
         <table width="100%">
-            <tr><th bgcolor="lightgrey">{{ $title }} By {{ $username }} on {{ $published }}
+            <tr><th class="bg-muted">{{ $title }} By {{ $username }} on {{ $published }}
                 {{ if $private }} - <i>Warning: Privileged information.</i>{{ end }}
             </th></tr>
             <tr><td>Abstract:<br>{{ $abstract }}
                 <br>-<br><a href="/writings/article/{{ $idwriting }}">Read now</a> - {{ $comments }} comments exist.
-                {{ if $labels }}<span class="label-bar">{{ template "topicLabels" $labels }}</span>{{ end }}
+                {{ if $labels }}<span class="label-list">{{ template "topicLabels" $labels }}</span>{{ end }}
             </td></tr>
         </table>
     {{ else }}

@@ -126,11 +126,16 @@ h2, h3 {
         border-collapse: collapse;
 }
 
+.underline {
+        text-decoration: underline;
+}
+
 .table-bordered,
 .table-bordered th,
 .table-bordered td {
         border: 1px solid #000;
 }
+
 .section-title {
         font-size: 1.2em;
 }

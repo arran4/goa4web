@@ -19,9 +19,9 @@
             </form>
         {{- end }}
     </div>
-    {{ if or (gt (len .PublicLabels) 0) (gt (len .AuthorLabels) 0) (gt (len .PrivateLabels) 0) }}
+    {{ if gt (len .Labels) 0 }}
         <h3>Labels</h3>
-        {{ template "topicLabels" (dict "Public" .PublicLabels "Author" .AuthorLabels "Private" .PrivateLabels) }}
+        {{ template "topicLabels" .Labels }}
     {{ end }}
 
     {{ template "topicThreads" $ }}

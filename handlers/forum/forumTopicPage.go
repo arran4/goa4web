@@ -21,9 +21,7 @@ import (
 func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath string) {
 	type threadWithLabels struct {
 		*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow
-		PublicLabels  []string
-		AuthorLabels  []string
-		PrivateLabels []string
+		Labels []Label
 	}
 
 	type Data struct {
@@ -36,9 +34,7 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		Category                *ForumcategoryPlus
 		CopyDataToSubCategories func(rootCategory *ForumcategoryPlus) *Data
 		BasePath                string
-		PublicLabels            []string
-		AuthorLabels            []string
-		PrivateLabels           []string
+		Labels                  []Label
 	}
 
 	if _, ok := core.GetSessionOrFail(w, r); !ok {
@@ -138,32 +134,38 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	threads := make([]*threadWithLabels, len(threadRows))
 	for i, r := range threadRows {
 		t := &threadWithLabels{GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow: r}
-		if pub, author, err := cd.ThreadPublicLabels(r.Idforumthread); err == nil {
-			t.PublicLabels = pub
-			t.AuthorLabels = author
+		var pub, author []string
+		if p, a, err := cd.ThreadPublicLabels(r.Idforumthread); err == nil {
+			pub = p
+			author = a
 		} else {
 			log.Printf("list public labels: %v", err)
 		}
-		if priv, err := cd.ThreadPrivateLabels(r.Idforumthread); err == nil {
-			t.PrivateLabels = priv
+		var priv []string
+		if p, err := cd.ThreadPrivateLabels(r.Idforumthread); err == nil {
+			priv = p
 		} else {
 			log.Printf("list private labels: %v", err)
 		}
+		t.Labels = mergeLabels(pub, author, priv)
 		threads[i] = t
 	}
 	data.Threads = threads
 
-	if pub, author, err := cd.ThreadPublicLabels(topicRow.Idforumtopic); err == nil {
-		data.PublicLabels = pub
-		data.AuthorLabels = author
+	var pub, author []string
+	if p, a, err := cd.ThreadPublicLabels(topicRow.Idforumtopic); err == nil {
+		pub = p
+		author = a
 	} else {
 		log.Printf("list public labels: %v", err)
 	}
-	if priv, err := cd.ThreadPrivateLabels(topicRow.Idforumtopic); err == nil {
-		data.PrivateLabels = priv
+	var priv []string
+	if p, err := cd.ThreadPrivateLabels(topicRow.Idforumtopic); err == nil {
+		priv = p
 	} else {
 		log.Printf("list private labels: %v", err)
 	}
+	data.Labels = mergeLabels(pub, author, priv)
 
 	if subscribedToTopic(cd, topicRow.Idforumtopic) {
 		data.Subscribed = true

@@ -1,25 +1,7 @@
 {{ define "topicLabels" }}
 <span class="labels">
-    {{ if .Public }}
-    <span class="labels-public">
-        {{ range .Public }}
-        <span class="label pill public" title="public label">{{ . }}</span>
-        {{ end }}
-    </span>
-    {{ end }}
-    {{ if .Author }}
-    <span class="labels-author">
-        {{ range .Author }}
-        <span class="label pill author" title="author label">{{ . }}</span>
-        {{ end }}
-    </span>
-    {{ end }}
-    {{ if .Private }}
-    <span class="labels-private">
-        {{ range .Private }}
-        <span class="label pill private" title="private label">{{ . }}</span>
-        {{ end }}
-    </span>
+    {{ range . }}
+    <span class="label pill {{ .Type }}" title="{{ .Type }} label">{{ .Text }}</span>
     {{ end }}
 </span>
 {{ end }}

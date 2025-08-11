@@ -30,9 +30,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		AdminURL       func(*db.GetCommentsByThreadIdForUserRow) string
 		CanReply       bool
 		BasePath       string
-		PublicLabels   []string
-		AuthorLabels   []string
-		PrivateLabels  []string
+		Labels         []Label
 		BackURL        string
 	}
 
@@ -120,17 +118,20 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		Edit:                         false,
 	}
 
-	if pub, author, err := cd.ThreadPublicLabels(threadRow.Idforumthread); err == nil {
-		data.PublicLabels = pub
-		data.AuthorLabels = author
+	var pub, author []string
+	if p, a, err := cd.ThreadPublicLabels(threadRow.Idforumthread); err == nil {
+		pub = p
+		author = a
 	} else {
 		log.Printf("list public labels: %v", err)
 	}
-	if priv, err := cd.ThreadPrivateLabels(threadRow.Idforumthread); err == nil {
-		data.PrivateLabels = priv
+	var priv []string
+	if p, err := cd.ThreadPrivateLabels(threadRow.Idforumthread); err == nil {
+		priv = p
 	} else {
 		log.Printf("list private labels: %v", err)
 	}
+	data.Labels = mergeLabels(pub, author, priv)
 
 	replyType := r.URL.Query().Get("type")
 	if quoteId != 0 {

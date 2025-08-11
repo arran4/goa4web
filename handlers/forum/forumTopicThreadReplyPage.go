@@ -143,10 +143,10 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("Error: CreateComment: %s", err)
 		return fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	if err := cd.ClearTopicPrivateLabelStatus(topicRow.Idforumtopic); err != nil {
+	if err := cd.ClearThreadPrivateLabelStatus(topicRow.Idforumtopic); err != nil {
 		log.Printf("clear label status: %v", err)
 	}
-	if err := cd.SetTopicPrivateLabelStatus(topicRow.Idforumtopic, false, false); err != nil {
+	if err := cd.SetThreadPrivateLabelStatus(topicRow.Idforumtopic, false, false); err != nil {
 		log.Printf("set label status: %v", err)
 	}
 

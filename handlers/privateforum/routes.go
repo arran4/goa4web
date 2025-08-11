@@ -21,7 +21,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	pr.HandleFunc("", Page).Methods(http.MethodGet)
 	pr.HandleFunc("", handlers.TaskHandler(privateTopicCreateTask)).Methods(http.MethodPost).MatcherFunc(privateTopicCreateTask.Matcher())
 	pr.HandleFunc("/private_forum.js", handlers.PrivateForumJS).Methods(http.MethodGet)
-	pr.HandleFunc("/topic_labels.js", handlers.TopicLabelsJS).Methods(http.MethodGet)
+	pr.HandleFunc("/thread_labels.js", handlers.ThreadLabelsJS).Methods(http.MethodGet)
 	pr.HandleFunc("/topic/{topic}", TopicPage).Methods(http.MethodGet)
 
 	pr.HandleFunc("/topic/{topic}/subscribe", handlers.TaskHandler(forumhandlers.SubscribeTopicTaskHandler)).Methods(http.MethodPost).MatcherFunc(forumhandlers.SubscribeTopicTaskHandler.Matcher())
@@ -34,7 +34,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	pr.HandleFunc("/thread/{thread}/labels", handlers.TaskHandler(forumhandlers.RemoveAuthorLabelTaskHandler)).Methods(http.MethodPost).MatcherFunc(forumhandlers.RemoveAuthorLabelTaskHandler.Matcher())
 	pr.HandleFunc("/thread/{thread}/labels", handlers.TaskHandler(forumhandlers.AddPrivateLabelTaskHandler)).Methods(http.MethodPost).MatcherFunc(forumhandlers.AddPrivateLabelTaskHandler.Matcher())
 	pr.HandleFunc("/thread/{thread}/labels", handlers.TaskHandler(forumhandlers.RemovePrivateLabelTaskHandler)).Methods(http.MethodPost).MatcherFunc(forumhandlers.RemovePrivateLabelTaskHandler.Matcher())
-	pr.HandleFunc("/thread/{thread}/labels", handlers.TaskHandler(forumhandlers.MarkTopicReadTaskHandler)).Methods(http.MethodPost).MatcherFunc(forumhandlers.MarkTopicReadTaskHandler.Matcher())
+	pr.HandleFunc("/thread/{thread}/labels", handlers.TaskHandler(forumhandlers.MarkThreadReadTaskHandler)).Methods(http.MethodPost).MatcherFunc(forumhandlers.MarkThreadReadTaskHandler.Matcher())
 
 	pr.HandleFunc("/topic/{topic}/thread", forumhandlers.CreateThreadTaskHandler.Page).Methods(http.MethodGet)
 	pr.HandleFunc("/topic/{topic}/thread", handlers.TaskHandler(forumhandlers.CreateThreadTaskHandler)).Methods(http.MethodPost).MatcherFunc(forumhandlers.CreateThreadTaskHandler.Matcher())

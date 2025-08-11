@@ -19,16 +19,16 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
-func TestMarkTopicReadTaskRedirect(t *testing.T) {
+func TestMarkThreadReadTaskRedirect(t *testing.T) {
 	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
 	form := url.Values{}
 	form.Set("redirect", "/private/topic/1/thread/2")
-	req := httptest.NewRequest(http.MethodPost, "/private/topic/1/labels", strings.NewReader(form.Encode()))
+	req := httptest.NewRequest(http.MethodPost, "/private/thread/1/labels", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req = mux.SetURLVars(req, map[string]string{"topic": "1"})
+	req = mux.SetURLVars(req, map[string]string{"thread": "1"})
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 
-	res := MarkTopicReadTask{}.Action(httptest.NewRecorder(), req)
+	res := MarkThreadReadTask{}.Action(httptest.NewRecorder(), req)
 	rdh, ok := res.(handlers.RefreshDirectHandler)
 	if !ok {
 		t.Fatalf("expected RefreshDirectHandler, got %T", res)
@@ -38,21 +38,21 @@ func TestMarkTopicReadTaskRedirect(t *testing.T) {
 	}
 }
 
-func TestMarkTopicReadTaskRefererFallback(t *testing.T) {
+func TestMarkThreadReadTaskRefererFallback(t *testing.T) {
 	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
-	req := httptest.NewRequest(http.MethodPost, "/private/topic/1/labels", nil)
+	req := httptest.NewRequest(http.MethodPost, "/private/thread/1/labels", nil)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("Referer", "/private/topic/1")
-	req = mux.SetURLVars(req, map[string]string{"topic": "1"})
+	req.Header.Set("Referer", "/private/thread/1")
+	req = mux.SetURLVars(req, map[string]string{"thread": "1"})
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 
-	res := MarkTopicReadTask{}.Action(httptest.NewRecorder(), req)
+	res := MarkThreadReadTask{}.Action(httptest.NewRecorder(), req)
 	rdh, ok := res.(handlers.RefreshDirectHandler)
 	if !ok {
 		t.Fatalf("expected RefreshDirectHandler, got %T", res)
 	}
-	if rdh.TargetURL != "/private/topic/1" {
-		t.Fatalf("redirect %q, want /private/topic/1", rdh.TargetURL)
+	if rdh.TargetURL != "/private/thread/1" {
+		t.Fatalf("redirect %q, want /private/thread/1", rdh.TargetURL)
 	}
 }
 
@@ -117,31 +117,31 @@ func TestSetLabelsTaskUpdatesSpecialLabels(t *testing.T) {
 
 	form := url.Values{}
 	form.Set("redirect", "/private/topic/1/thread/3")
-	form.Set("task", string(TaskMarkTopicRead))
-	req := httptest.NewRequest(http.MethodPost, "/private/topic/1/labels", strings.NewReader(form.Encode()))
+	form.Set("task", string(TaskMarkThreadRead))
+	req := httptest.NewRequest(http.MethodPost, "/private/thread/1/labels", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req = mux.SetURLVars(req, map[string]string{"topic": "1"})
+	req = mux.SetURLVars(req, map[string]string{"thread": "1"})
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 
 	// Execute the mark-as-read task, which should upsert the inverse labels.
-	_ = MarkTopicReadTask{}.Action(httptest.NewRecorder(), req)
+	_ = MarkThreadReadTask{}.Action(httptest.NewRecorder(), req)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
 	}
 }
 
-func TestMarkTopicReadTaskRedirectWithThread(t *testing.T) {
+func TestMarkThreadReadTaskRedirectWithThread(t *testing.T) {
 	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
 	form := url.Values{}
 	form.Set("redirect", "/private/topic/1/thread/3")
-	form.Set("task", string(TaskMarkTopicRead))
-	req := httptest.NewRequest(http.MethodPost, "/private/topic/1/labels", strings.NewReader(form.Encode()))
+	form.Set("task", string(TaskMarkThreadRead))
+	req := httptest.NewRequest(http.MethodPost, "/private/thread/1/labels", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
-	req = mux.SetURLVars(req, map[string]string{"topic": "1"})
+	req = mux.SetURLVars(req, map[string]string{"thread": "1"})
 
-	res := MarkTopicReadTask{}.Action(httptest.NewRecorder(), req)
+	res := MarkThreadReadTask{}.Action(httptest.NewRecorder(), req)
 	rdh, ok := res.(handlers.RefreshDirectHandler)
 	if !ok {
 		t.Fatalf("expected RefreshDirectHandler, got %T", res)

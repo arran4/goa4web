@@ -253,12 +253,12 @@ func (cd *CoreData) RevokeForumTopic(grantID int32) error {
 	return cd.queries.AdminDeleteGrant(cd.ctx, grantID)
 }
 
-// TopicPublicLabels returns public and owner labels for a topic sorted alphabetically.
-func (cd *CoreData) TopicPublicLabels(topicID int32) (public, owner []string, err error) {
+// ThreadPublicLabels returns public and owner labels for a thread sorted alphabetically.
+func (cd *CoreData) ThreadPublicLabels(threadID int32) (public, owner []string, err error) {
 	if cd.queries == nil {
 		return nil, nil, nil
 	}
-	rows, err := cd.queries.ListTopicPublicLabels(cd.ctx, topicID)
+	rows, err := cd.queries.ListTopicPublicLabels(cd.ctx, threadID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -267,7 +267,7 @@ func (cd *CoreData) TopicPublicLabels(topicID int32) (public, owner []string, er
 	}
 	ownerRows, err := cd.queries.ListContentLabelStatus(cd.ctx, db.ListContentLabelStatusParams{
 		Item:   "forumtopic",
-		ItemID: topicID,
+		ItemID: threadID,
 	})
 	if err != nil {
 		return nil, nil, err
@@ -280,58 +280,58 @@ func (cd *CoreData) TopicPublicLabels(topicID int32) (public, owner []string, er
 	return public, owner, nil
 }
 
-// AddTopicPublicLabel adds a public label to a topic.
-func (cd *CoreData) AddTopicPublicLabel(topicID int32, label string) error {
+// AddThreadPublicLabel adds a public label to a thread.
+func (cd *CoreData) AddThreadPublicLabel(threadID int32, label string) error {
 	if cd.queries == nil {
 		return nil
 	}
 	return cd.queries.AddTopicPublicLabel(cd.ctx, db.AddTopicPublicLabelParams{
-		ForumtopicIdforumtopic: topicID,
+		ForumtopicIdforumtopic: threadID,
 		Label:                  label,
 	})
 }
 
-// RemoveTopicPublicLabel removes a public label from a topic.
-func (cd *CoreData) RemoveTopicPublicLabel(topicID int32, label string) error {
+// RemoveThreadPublicLabel removes a public label from a thread.
+func (cd *CoreData) RemoveThreadPublicLabel(threadID int32, label string) error {
 	if cd.queries == nil {
 		return nil
 	}
 	return cd.queries.RemoveTopicPublicLabel(cd.ctx, db.RemoveTopicPublicLabelParams{
-		ForumtopicIdforumtopic: topicID,
+		ForumtopicIdforumtopic: threadID,
 		Label:                  label,
 	})
 }
 
-// AddTopicAuthorLabel adds an owner-only label to a topic.
-func (cd *CoreData) AddTopicAuthorLabel(topicID int32, label string) error {
+// AddThreadAuthorLabel adds an owner-only label to a thread.
+func (cd *CoreData) AddThreadAuthorLabel(threadID int32, label string) error {
 	if cd.queries == nil {
 		return nil
 	}
 	return cd.queries.AddContentLabelStatus(cd.ctx, db.AddContentLabelStatusParams{
 		Item:   "forumtopic",
-		ItemID: topicID,
+		ItemID: threadID,
 		Label:  label,
 	})
 }
 
-// RemoveTopicAuthorLabel removes an owner-only label from a topic.
-func (cd *CoreData) RemoveTopicAuthorLabel(topicID int32, label string) error {
+// RemoveThreadAuthorLabel removes an owner-only label from a thread.
+func (cd *CoreData) RemoveThreadAuthorLabel(threadID int32, label string) error {
 	if cd.queries == nil {
 		return nil
 	}
 	return cd.queries.RemoveContentLabelStatus(cd.ctx, db.RemoveContentLabelStatusParams{
 		Item:   "forumtopic",
-		ItemID: topicID,
+		ItemID: threadID,
 		Label:  label,
 	})
 }
 
-// SetTopicPublicLabels replaces all public labels on a topic with the provided list.
-func (cd *CoreData) SetTopicPublicLabels(topicID int32, labels []string) error {
+// SetThreadPublicLabels replaces all public labels on a thread with the provided list.
+func (cd *CoreData) SetThreadPublicLabels(threadID int32, labels []string) error {
 	if cd.queries == nil {
 		return nil
 	}
-	current, _, err := cd.TopicPublicLabels(topicID)
+	current, _, err := cd.ThreadPublicLabels(threadID)
 	if err != nil {
 		return err
 	}
@@ -345,14 +345,14 @@ func (cd *CoreData) SetTopicPublicLabels(topicID int32, labels []string) error {
 	}
 	for l := range want {
 		if _, ok := have[l]; !ok {
-			if err := cd.AddTopicPublicLabel(topicID, l); err != nil {
+			if err := cd.AddThreadPublicLabel(threadID, l); err != nil {
 				return err
 			}
 		}
 	}
 	for l := range have {
 		if _, ok := want[l]; !ok {
-			if err := cd.RemoveTopicPublicLabel(topicID, l); err != nil {
+			if err := cd.RemoveThreadPublicLabel(threadID, l); err != nil {
 				return err
 			}
 		}
@@ -360,14 +360,14 @@ func (cd *CoreData) SetTopicPublicLabels(topicID int32, labels []string) error {
 	return nil
 }
 
-// TopicPrivateLabels returns private labels for a topic sorted alphabetically.
+// ThreadPrivateLabels returns private labels for a thread sorted alphabetically.
 // The special "new" and "unread" labels are stored separately and prefixed to the result.
-func (cd *CoreData) TopicPrivateLabels(topicID int32) ([]string, error) {
+func (cd *CoreData) ThreadPrivateLabels(threadID int32) ([]string, error) {
 	if cd.queries == nil {
 		return nil, nil
 	}
 	rows, err := cd.queries.ListTopicPrivateLabels(cd.ctx, db.ListTopicPrivateLabelsParams{
-		ForumtopicIdforumtopic: topicID,
+		ForumtopicIdforumtopic: threadID,
 		UsersIdusers:           cd.UserID,
 	})
 	if err != nil {
@@ -407,31 +407,31 @@ func (cd *CoreData) TopicPrivateLabels(topicID int32) ([]string, error) {
 	return labels, nil
 }
 
-// ClearTopicPrivateLabelStatus removes stored new/unread inversions for a topic across all users.
-func (cd *CoreData) ClearTopicPrivateLabelStatus(topicID int32) error {
+// ClearThreadPrivateLabelStatus removes stored new/unread inversions for a thread across all users.
+func (cd *CoreData) ClearThreadPrivateLabelStatus(threadID int32) error {
 	if cd.queries == nil {
 		return nil
 	}
 	if err := cd.queries.SystemClearTopicPrivateLabel(cd.ctx, db.SystemClearTopicPrivateLabelParams{
-		ForumtopicIdforumtopic: topicID,
+		ForumtopicIdforumtopic: threadID,
 		Label:                  "new",
 	}); err != nil {
 		return err
 	}
 	return cd.queries.SystemClearTopicPrivateLabel(cd.ctx, db.SystemClearTopicPrivateLabelParams{
-		ForumtopicIdforumtopic: topicID,
+		ForumtopicIdforumtopic: threadID,
 		Label:                  "unread",
 	})
 }
 
-// SetTopicPrivateLabelStatus updates the special new/unread flags for a topic.
-func (cd *CoreData) SetTopicPrivateLabelStatus(topicID int32, newLabel, unreadLabel bool) error {
+// SetThreadPrivateLabelStatus updates the special new/unread flags for a thread.
+func (cd *CoreData) SetThreadPrivateLabelStatus(threadID int32, newLabel, unreadLabel bool) error {
 	if cd.queries == nil {
 		return nil
 	}
 	if newLabel {
 		if err := cd.queries.RemoveTopicPrivateLabel(cd.ctx, db.RemoveTopicPrivateLabelParams{
-			ForumtopicIdforumtopic: topicID,
+			ForumtopicIdforumtopic: threadID,
 			UsersIdusers:           cd.UserID,
 			Label:                  "new",
 		}); err != nil {
@@ -439,7 +439,7 @@ func (cd *CoreData) SetTopicPrivateLabelStatus(topicID int32, newLabel, unreadLa
 		}
 	} else {
 		if err := cd.queries.AddTopicPrivateLabel(cd.ctx, db.AddTopicPrivateLabelParams{
-			ForumtopicIdforumtopic: topicID,
+			ForumtopicIdforumtopic: threadID,
 			UsersIdusers:           cd.UserID,
 			Label:                  "new",
 			Invert:                 true,
@@ -449,7 +449,7 @@ func (cd *CoreData) SetTopicPrivateLabelStatus(topicID int32, newLabel, unreadLa
 	}
 	if unreadLabel {
 		if err := cd.queries.RemoveTopicPrivateLabel(cd.ctx, db.RemoveTopicPrivateLabelParams{
-			ForumtopicIdforumtopic: topicID,
+			ForumtopicIdforumtopic: threadID,
 			UsersIdusers:           cd.UserID,
 			Label:                  "unread",
 		}); err != nil {
@@ -457,7 +457,7 @@ func (cd *CoreData) SetTopicPrivateLabelStatus(topicID int32, newLabel, unreadLa
 		}
 	} else {
 		if err := cd.queries.AddTopicPrivateLabel(cd.ctx, db.AddTopicPrivateLabelParams{
-			ForumtopicIdforumtopic: topicID,
+			ForumtopicIdforumtopic: threadID,
 			UsersIdusers:           cd.UserID,
 			Label:                  "unread",
 			Invert:                 true,
@@ -468,38 +468,38 @@ func (cd *CoreData) SetTopicPrivateLabelStatus(topicID int32, newLabel, unreadLa
 	return nil
 }
 
-// AddTopicPrivateLabel adds a private label to a topic for the current user.
-func (cd *CoreData) AddTopicPrivateLabel(topicID int32, label string) error {
+// AddThreadPrivateLabel adds a private label to a thread for the current user.
+func (cd *CoreData) AddThreadPrivateLabel(threadID int32, label string) error {
 	if cd.queries == nil {
 		return nil
 	}
 	return cd.queries.AddTopicPrivateLabel(cd.ctx, db.AddTopicPrivateLabelParams{
-		ForumtopicIdforumtopic: topicID,
+		ForumtopicIdforumtopic: threadID,
 		UsersIdusers:           cd.UserID,
 		Label:                  label,
 		Invert:                 false,
 	})
 }
 
-// RemoveTopicPrivateLabel removes a private label from a topic for the current user.
-func (cd *CoreData) RemoveTopicPrivateLabel(topicID int32, label string) error {
+// RemoveThreadPrivateLabel removes a private label from a thread for the current user.
+func (cd *CoreData) RemoveThreadPrivateLabel(threadID int32, label string) error {
 	if cd.queries == nil {
 		return nil
 	}
 	return cd.queries.RemoveTopicPrivateLabel(cd.ctx, db.RemoveTopicPrivateLabelParams{
-		ForumtopicIdforumtopic: topicID,
+		ForumtopicIdforumtopic: threadID,
 		UsersIdusers:           cd.UserID,
 		Label:                  label,
 	})
 }
 
-// SetTopicPrivateLabels replaces all private labels for the current user on a topic with the provided list.
-func (cd *CoreData) SetTopicPrivateLabels(topicID int32, labels []string) error {
+// SetThreadPrivateLabels replaces all private labels for the current user on a thread with the provided list.
+func (cd *CoreData) SetThreadPrivateLabels(threadID int32, labels []string) error {
 	if cd.queries == nil {
 		return nil
 	}
 	rows, err := cd.queries.ListTopicPrivateLabels(cd.ctx, db.ListTopicPrivateLabelsParams{
-		ForumtopicIdforumtopic: topicID,
+		ForumtopicIdforumtopic: threadID,
 		UsersIdusers:           cd.UserID,
 	})
 	if err != nil {
@@ -518,14 +518,14 @@ func (cd *CoreData) SetTopicPrivateLabels(topicID int32, labels []string) error 
 	}
 	for l := range want {
 		if _, ok := have[l]; !ok {
-			if err := cd.AddTopicPrivateLabel(topicID, l); err != nil {
+			if err := cd.AddThreadPrivateLabel(threadID, l); err != nil {
 				return err
 			}
 		}
 	}
 	for l := range have {
 		if _, ok := want[l]; !ok {
-			if err := cd.RemoveTopicPrivateLabel(topicID, l); err != nil {
+			if err := cd.RemoveThreadPrivateLabel(threadID, l); err != nil {
 				return err
 			}
 		}

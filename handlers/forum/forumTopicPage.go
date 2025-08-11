@@ -138,13 +138,13 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	threads := make([]*threadWithLabels, len(threadRows))
 	for i, r := range threadRows {
 		t := &threadWithLabels{GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow: r}
-		if pub, author, err := cd.TopicPublicLabels(r.Idforumthread); err == nil {
+		if pub, author, err := cd.ThreadPublicLabels(r.Idforumthread); err == nil {
 			t.PublicLabels = pub
 			t.AuthorLabels = author
 		} else {
 			log.Printf("list public labels: %v", err)
 		}
-		if priv, err := cd.TopicPrivateLabels(r.Idforumthread); err == nil {
+		if priv, err := cd.ThreadPrivateLabels(r.Idforumthread); err == nil {
 			t.PrivateLabels = priv
 		} else {
 			log.Printf("list private labels: %v", err)
@@ -153,13 +153,13 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	}
 	data.Threads = threads
 
-	if pub, author, err := cd.TopicPublicLabels(topicRow.Idforumtopic); err == nil {
+	if pub, author, err := cd.ThreadPublicLabels(topicRow.Idforumtopic); err == nil {
 		data.PublicLabels = pub
 		data.AuthorLabels = author
 	} else {
 		log.Printf("list public labels: %v", err)
 	}
-	if priv, err := cd.TopicPrivateLabels(topicRow.Idforumtopic); err == nil {
+	if priv, err := cd.ThreadPrivateLabels(topicRow.Idforumtopic); err == nil {
 		data.PrivateLabels = priv
 	} else {
 		log.Printf("list private labels: %v", err)

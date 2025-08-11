@@ -11,7 +11,7 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
-func TestSetTopicPublicLabels(t *testing.T) {
+func TestSetThreadPublicLabels(t *testing.T) {
 	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -37,15 +37,15 @@ func TestSetTopicPublicLabels(t *testing.T) {
 		WithArgs(int32(1), "foo").
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
-	if err := cd.SetTopicPublicLabels(1, []string{"bar", "baz"}); err != nil {
-		t.Fatalf("SetTopicPublicLabels: %v", err)
+	if err := cd.SetThreadPublicLabels(1, []string{"bar", "baz"}); err != nil {
+		t.Fatalf("SetThreadPublicLabels: %v", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
 	}
 }
 
-func TestSetTopicPrivateLabels(t *testing.T) {
+func TestSetThreadPrivateLabels(t *testing.T) {
 	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -68,8 +68,8 @@ func TestSetTopicPrivateLabels(t *testing.T) {
 		WithArgs(int32(1), int32(2), "one").
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
-	if err := cd.SetTopicPrivateLabels(1, []string{"two", "three"}); err != nil {
-		t.Fatalf("SetTopicPrivateLabels: %v", err)
+	if err := cd.SetThreadPrivateLabels(1, []string{"two", "three"}); err != nil {
+		t.Fatalf("SetThreadPrivateLabels: %v", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)

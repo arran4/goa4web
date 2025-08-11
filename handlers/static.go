@@ -38,10 +38,10 @@ func PrivateForumJS(w http.ResponseWriter, r *http.Request) {
 	http.ServeContent(w, r, "private_forum.js", time.Time{}, bytes.NewReader(templates.GetPrivateForumJSData()))
 }
 
-// TopicLabelsJS serves the JavaScript for topic label editing.
-func TopicLabelsJS(w http.ResponseWriter, r *http.Request) {
+// ThreadLabelsJS serves the JavaScript for thread label editing.
+func ThreadLabelsJS(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/javascript")
-	http.ServeContent(w, r, "topic_labels.js", time.Time{}, bytes.NewReader(templates.GetTopicLabelsJSData()))
+	http.ServeContent(w, r, "thread_labels.js", time.Time{}, bytes.NewReader(templates.GetThreadLabelsJSData()))
 }
 
 // RedirectPermanent returns a handler that redirects to the provided path using StatusPermanentRedirect.

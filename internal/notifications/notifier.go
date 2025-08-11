@@ -141,7 +141,7 @@ func (n *Notifier) notifyAdmins(ctx context.Context, et *EmailTemplates, nt *str
 			log.Printf("notify admin %s: %v", addr, err)
 		}
 		if et != nil {
-			if err := n.renderAndQueueEmailFromTemplates(ctx, uid, addr, et, data); err != nil {
+			if err := n.renderAndQueueEmailFromTemplates(ctx, uid, addr, et, data, WithAdmin()); err != nil {
 				return err
 			}
 		}

@@ -6,7 +6,7 @@ const (
 
 	// ExpectedSchemaVersion defines the required database schema version.
 	// Bump this when adding a new migration.
-	ExpectedSchemaVersion = 67
+	ExpectedSchemaVersion = 68
 
 	// CSRFField is the name of the hidden field used by gorilla/csrf.
 	CSRFField = "gorilla.csrf.Token"

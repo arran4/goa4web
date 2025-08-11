@@ -699,3 +699,13 @@ CREATE TABLE `content_label_status` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `content_label_status_uq` (`item`(255),`item_id`,`label`(255))
 );
+
+CREATE TABLE `content_read_markers` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `item` varchar(64) NOT NULL,
+  `item_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `last_comment_id` int NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `content_read_markers_uq` (`item`,`item_id`,`user_id`)
+);

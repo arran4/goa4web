@@ -65,7 +65,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		children := map[int32][]*db.Forumcategory{}
 		for _, c := range catsAll {
-			children[c.ForumcategoryIdforumcategory] = append(children[c.ForumcategoryIdforumcategory], c)
+			children[c.ParentCategoryID] = append(children[c.ParentCategoryID], c)
 		}
 		var build func(parent int32) string
 		build = func(parent int32) string {
@@ -75,7 +75,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 				for _, c := range cs {
 					sb.WriteString("<li>")
 					sb.WriteString(template.HTMLEscapeString(c.Title.String))
-					sb.WriteString(build(c.Idforumcategory))
+					sb.WriteString(build(c.ID))
 					sb.WriteString("</li>")
 				}
 				sb.WriteString("</ul>")

@@ -1,20 +1,20 @@
 {{ template "head" $ }}
-<h2>Forum topic {{ .Topic.Idforumtopic }} - {{ .Topic.Title.String }}</h2>
+<h2>Forum topic {{ .Topic.ID }} - {{ .Topic.Title.String }}</h2>
 <p>{{ .Topic.Description.String }}</p>
 <table border="1">
     <tr><th>ID</th><th>Threads</th><th>Posts</th><th>Last Addition</th><th>View</th></tr>
     <tr>
-        <td>{{ .Topic.Idforumtopic }}</td>
+        <td>{{ .Topic.ID }}</td>
         <td>{{ .Topic.Threads.Int32 }}</td>
         <td>{{ .Topic.Comments.Int32 }}</td>
         <td>{{ localTime .Topic.Lastaddition.Time }}</td>
-        <td><a href="/forum/topic/{{ .Topic.Idforumtopic }}">View</a></td>
+        <td><a href="/forum/topic/{{ .Topic.ID }}">View</a></td>
     </tr>
 </table>
 <ul>
-    <li><a href="/admin/forum/topics/topic/{{ .Topic.Idforumtopic }}/edit">Edit</a></li>
-    <li><a href="/admin/forum/topics/topic/{{ .Topic.Idforumtopic }}/grants">Grants</a></li>
-    <li><a href="/forum/topic/{{ .Topic.Idforumtopic }}">Contents</a></li>
+    <li><a href="/admin/forum/topics/topic/{{ .Topic.ID }}/edit">Edit</a></li>
+    <li><a href="/admin/forum/topics/topic/{{ .Topic.ID }}/grants">Grants</a></li>
+    <li><a href="/forum/topic/{{ .Topic.ID }}">Contents</a></li>
 </ul>
 <p><a href="/admin/forum/topics">Back</a></p>
 {{ template "tail" $ }}

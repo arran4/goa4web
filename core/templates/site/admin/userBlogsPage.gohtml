@@ -8,7 +8,7 @@
         <td>{{ localTimeIn .Written .Timezone.String }}</td>
         <td>{{ .Comments }}</td>
         <td>{{ .LanguageIdlanguage }}</td>
-        <td>{{if .Idforumcategory.Valid}}<a href="/forum/category/{{ .Idforumcategory.Int32 }}">{{ .ForumcategoryTitle.String }}</a>{{end}}</td>
+        <td>{{if .ID.Valid}}<a href="/forum/category/{{ .ID.Int32 }}">{{ .ForumcategoryTitle.String }}</a>{{end}}</td>
         <td>{{ left 40 (firstline (a4code2string .Blog.String)) }}</td>
         <td><a href="/blogs/blog/{{ .Idblogs }}">View</a></td>
     </tr>

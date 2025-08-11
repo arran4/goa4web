@@ -93,10 +93,10 @@ SELECT DISTINCT cs.comment_id
 FROM comments_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 LEFT JOIN comments c ON c.idcomments=cs.comment_id
-LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_id
-LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
+LEFT JOIN forumthread fth ON fth.id=c.forumthread_id
+LEFT JOIN forumtopic ft ON ft.id=fth.topic_id
 WHERE swl.word=sqlc.arg(word)
-  AND ft.forumcategory_idforumcategory!=0
+  AND ft.category_id!=0
   AND (
       c.language_idlanguage = 0
       OR c.language_idlanguage IS NULL
@@ -115,7 +115,7 @@ WHERE swl.word=sqlc.arg(word)
         AND (g.item='topic' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
-        AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
+        AND (g.item_id = ft.id OR g.item_id IS NULL)
         AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   );
@@ -128,11 +128,11 @@ SELECT DISTINCT cs.comment_id
 FROM comments_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 LEFT JOIN comments c ON c.idcomments=cs.comment_id
-LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_id
-LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
+LEFT JOIN forumthread fth ON fth.id=c.forumthread_id
+LEFT JOIN forumtopic ft ON ft.id=fth.topic_id
 WHERE swl.word=sqlc.arg(word)
   AND cs.comment_id IN (sqlc.slice('ids'))
-  AND ft.forumcategory_idforumcategory!=0
+  AND ft.category_id!=0
   AND (
       c.language_idlanguage = 0
       OR c.language_idlanguage IS NULL
@@ -151,7 +151,7 @@ WHERE swl.word=sqlc.arg(word)
         AND (g.item='topic' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
-        AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
+        AND (g.item_id = ft.id OR g.item_id IS NULL)
         AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   );
@@ -164,10 +164,10 @@ SELECT DISTINCT cs.comment_id
 FROM comments_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 LEFT JOIN comments c ON c.idcomments=cs.comment_id
-LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_id
-LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
+LEFT JOIN forumthread fth ON fth.id=c.forumthread_id
+LEFT JOIN forumtopic ft ON ft.id=fth.topic_id
 WHERE swl.word=sqlc.arg(word)
-  AND fth.forumtopic_idforumtopic IN (sqlc.slice('ftids'))
+  AND fth.topic_id IN (sqlc.slice('ftids'))
   AND (
       c.language_idlanguage = 0
       OR c.language_idlanguage IS NULL
@@ -186,7 +186,7 @@ WHERE swl.word=sqlc.arg(word)
         AND (g.item='topic' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
-        AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
+        AND (g.item_id = ft.id OR g.item_id IS NULL)
         AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   );
@@ -199,11 +199,11 @@ SELECT DISTINCT cs.comment_id
 FROM comments_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
 LEFT JOIN comments c ON c.idcomments=cs.comment_id
-LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_id
-LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
+LEFT JOIN forumthread fth ON fth.id=c.forumthread_id
+LEFT JOIN forumtopic ft ON ft.id=fth.topic_id
 WHERE swl.word=sqlc.arg(word)
   AND cs.comment_id IN (sqlc.slice('ids'))
-  AND fth.forumtopic_idforumtopic IN (sqlc.slice('ftids'))
+  AND fth.topic_id IN (sqlc.slice('ftids'))
   AND (
       c.language_idlanguage = 0
       OR c.language_idlanguage IS NULL
@@ -222,7 +222,7 @@ WHERE swl.word=sqlc.arg(word)
         AND (g.item='topic' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
-        AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
+        AND (g.item_id = ft.id OR g.item_id IS NULL)
         AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   );

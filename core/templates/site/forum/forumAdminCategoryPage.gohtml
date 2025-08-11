@@ -1,8 +1,8 @@
 {{ template "head" $ }}
-<h2>Forum Category {{ .Category.Idforumcategory }} - {{ .Category.Title.String }}</h2>
+<h2>Forum Category {{ .Category.ID }} - {{ .Category.Title.String }}</h2>
 <p>
-    <a href="/admin/forum/categories/category/{{ .Category.Idforumcategory }}/edit">Edit</a> |
-    <a href="/admin/forum/categories/category/{{ .Category.Idforumcategory }}/grants">Grants</a>
+    <a href="/admin/forum/categories/category/{{ .Category.ID }}/edit">Edit</a> |
+    <a href="/admin/forum/categories/category/{{ .Category.ID }}/grants">Grants</a>
 </p>
 <p>{{ .Category.Description.String }}</p>
 <h3 id="topics">Topics</h3>
@@ -18,12 +18,12 @@
     </tr>
     {{ range .Topics }}
     <tr>
-        <td><a href="/admin/forum/topic/{{ .Idforumtopic }}">{{ .Idforumtopic }}</a></td>
+        <td><a href="/admin/forum/topic/{{ .ID }}">{{ .ID }}</a></td>
         <td>{{ .Title.String }}</td>
         <td>{{ .Description.String }}</td>
         <td>{{ .Threads.Int32 }}</td>
         <td>{{ .Comments.Int32 }}</td>
-        <td><a href="/admin/forum/topics/topic/{{ .Idforumtopic }}">Manage</a></td>
+        <td><a href="/admin/forum/topics/topic/{{ .ID }}">Manage</a></td>
     </tr>
     {{ end }}
 </table>

@@ -333,7 +333,7 @@ SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linker_category_id,
 FROM linker l
 LEFT JOIN users u ON l.users_idusers = u.idusers
 LEFT JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
-LEFT JOIN forumthread th ON l.forumthread_id = th.idforumthread
+LEFT JOIN forumthread th ON l.forumthread_id = th.id
 WHERE (lc.idlinkerCategory = ? OR ? = 0)
   AND l.listed IS NOT NULL
   AND l.deleted_at IS NULL
@@ -413,7 +413,7 @@ SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linker_category_id,
 FROM linker l
 LEFT JOIN users u ON l.users_idusers = u.idusers
 LEFT JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
-LEFT JOIN forumthread th ON l.forumthread_id = th.idforumthread
+LEFT JOIN forumthread th ON l.forumthread_id = th.id
 WHERE (lc.idlinkerCategory = ? OR ? = 0)
   AND l.listed IS NOT NULL
   AND l.deleted_at IS NULL
@@ -508,7 +508,7 @@ SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linker_category_id,
 FROM linker l
 LEFT JOIN users u ON l.users_idusers = u.idusers
 LEFT JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
-LEFT JOIN forumthread th ON l.forumthread_id = th.idforumthread
+LEFT JOIN forumthread th ON l.forumthread_id = th.id
 WHERE (lc.idlinkerCategory = ? OR ? = 0)
   AND EXISTS (
     SELECT 1
@@ -606,7 +606,7 @@ SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linker_category_id,
 FROM linker l
 LEFT JOIN users u ON l.users_idusers = u.idusers
 LEFT JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
-LEFT JOIN forumthread th ON l.forumthread_id = th.idforumthread
+LEFT JOIN forumthread th ON l.forumthread_id = th.id
 WHERE (lc.idlinkerCategory = ? OR ? = 0)
   AND l.listed IS NOT NULL
   AND l.deleted_at IS NULL
@@ -695,7 +695,7 @@ SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linker_category_id,
 FROM linker l
 LEFT JOIN users u ON l.users_idusers = u.idusers
 LEFT JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
-LEFT JOIN forumthread th ON l.forumthread_id = th.idforumthread
+LEFT JOIN forumthread th ON l.forumthread_id = th.id
 WHERE (lc.idlinkerCategory = ? OR ? = 0)
 ORDER BY l.listed DESC
 LIMIT ? OFFSET ?
@@ -1242,7 +1242,7 @@ SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linker_category_id,
 FROM linker l
 LEFT JOIN users u ON l.users_idusers = u.idusers
 LEFT JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
-LEFT JOIN forumthread th ON l.forumthread_id = th.idforumthread
+LEFT JOIN forumthread th ON l.forumthread_id = th.id
 WHERE l.users_idusers = ?
 ORDER BY l.listed DESC
 LIMIT ? OFFSET ?
@@ -1323,7 +1323,7 @@ SELECT l.idlinker, l.language_idlanguage, l.users_idusers, l.linker_category_id,
 FROM linker l
 LEFT JOIN users u ON l.users_idusers = u.idusers
 LEFT JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
-LEFT JOIN forumthread th ON l.forumthread_id = th.idforumthread
+LEFT JOIN forumthread th ON l.forumthread_id = th.id
 WHERE l.users_idusers = ?
   AND l.listed IS NOT NULL
   AND l.deleted_at IS NULL

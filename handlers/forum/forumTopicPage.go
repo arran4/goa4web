@@ -85,7 +85,7 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	displayTitle := topicRow.Title.String
 	if topicRow.Handler == "private" && cd.Queries() != nil {
 		parts, err := cd.Queries().ListPrivateTopicParticipantsByTopicIDForUser(r.Context(), db.ListPrivateTopicParticipantsByTopicIDForUserParams{
-			TopicID:  sql.NullInt32{Int32: topicRow.Idforumtopic, Valid: true},
+			TopicID:  sql.NullInt32{Int32: topicRow.ID, Valid: true},
 			ViewerID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
 		if err != nil {
@@ -103,22 +103,22 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	}
 	cd.PageTitle = fmt.Sprintf("Forum - %s", displayTitle)
 	data.Topic = &ForumtopicPlus{
-		Idforumtopic:                 topicRow.Idforumtopic,
-		Lastposter:                   topicRow.Lastposter,
-		ForumcategoryIdforumcategory: topicRow.ForumcategoryIdforumcategory,
-		Title:                        topicRow.Title,
-		Description:                  topicRow.Description,
-		Threads:                      topicRow.Threads,
-		Comments:                     topicRow.Comments,
-		Lastaddition:                 topicRow.Lastaddition,
-		Lastposterusername:           topicRow.Lastposterusername,
-		DisplayTitle:                 displayTitle,
-		Edit:                         false,
+		ID:                 topicRow.ID,
+		LastAuthorID:       topicRow.LastAuthorID,
+		CategoryID:         topicRow.CategoryID,
+		Title:              topicRow.Title,
+		Description:        topicRow.Description,
+		Threads:            topicRow.Threads,
+		Comments:           topicRow.Comments,
+		Lastaddition:       topicRow.Lastaddition,
+		LastAuthorUsername: topicRow.LastAuthorUsername,
+		DisplayTitle:       displayTitle,
+		Edit:               false,
 	}
 
 	if topicRow.Handler != "private" {
 		categoryTree := NewCategoryTree(categoryRows, []*ForumtopicPlus{data.Topic})
-		if category, ok := categoryTree.CategoryLookup[topicRow.ForumcategoryIdforumcategory]; ok {
+		if category, ok := categoryTree.CategoryLookup[topicRow.CategoryID]; ok {
 			category.Topics = []*ForumtopicPlus{
 				data.Topic,
 			}
@@ -138,13 +138,13 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	threads := make([]*threadWithLabels, len(threadRows))
 	for i, r := range threadRows {
 		t := &threadWithLabels{GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow: r}
-		if pub, author, err := cd.ThreadPublicLabels(r.Idforumthread); err == nil {
+		if pub, author, err := cd.ThreadPublicLabels(r.ID); err == nil {
 			t.PublicLabels = pub
 			t.AuthorLabels = author
 		} else {
 			log.Printf("list public labels: %v", err)
 		}
-		if priv, err := cd.ThreadPrivateLabels(r.Idforumthread); err == nil {
+		if priv, err := cd.ThreadPrivateLabels(r.ID); err == nil {
 			t.PrivateLabels = priv
 		} else {
 			log.Printf("list private labels: %v", err)
@@ -153,19 +153,19 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	}
 	data.Threads = threads
 
-	if pub, author, err := cd.ThreadPublicLabels(topicRow.Idforumtopic); err == nil {
+	if pub, author, err := cd.ThreadPublicLabels(topicRow.ID); err == nil {
 		data.PublicLabels = pub
 		data.AuthorLabels = author
 	} else {
 		log.Printf("list public labels: %v", err)
 	}
-	if priv, err := cd.ThreadPrivateLabels(topicRow.Idforumtopic); err == nil {
+	if priv, err := cd.ThreadPrivateLabels(topicRow.ID); err == nil {
 		data.PrivateLabels = priv
 	} else {
 		log.Printf("list private labels: %v", err)
 	}
 
-	if subscribedToTopic(cd, topicRow.Idforumtopic) {
+	if subscribedToTopic(cd, topicRow.ID) {
 		data.Subscribed = true
 	}
 

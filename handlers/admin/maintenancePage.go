@@ -37,7 +37,7 @@ func AdminMaintenancePage(w http.ResponseWriter, r *http.Request) {
 		if row.Title.Valid {
 			title = row.Title.String
 		}
-		topics = append(topics, &maintenanceTopic{ID: row.Idforumtopic, Title: title})
+		topics = append(topics, &maintenanceTopic{ID: row.ID, Title: title})
 	}
 	data := Data{Topics: topics, TaskName: string(TaskForumTopicConvertPrivate)}
 	handlers.TemplateHandler(w, r, "maintenancePage.gohtml", data)

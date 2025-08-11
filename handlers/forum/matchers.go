@@ -54,7 +54,7 @@ func RequireThreadAndTopic(next http.Handler) http.Handler {
 			return
 		}
 
-		topicRow, err := cd.ForumTopicByID(threadRow.ForumtopicIdforumtopic)
+		topicRow, err := cd.ForumTopicByID(threadRow.TopicID)
 		if err != nil {
 			if cd.Config.LogFlags&config.LogFlagAccess != 0 {
 				log.Printf("RequireThreadAndTopic topic uid=%d topic=%d thread=%d: %v", uid, topicID, threadID, err)
@@ -63,14 +63,14 @@ func RequireThreadAndTopic(next http.Handler) http.Handler {
 			return
 		}
 
-		if int(topicRow.Idforumtopic) != topicID {
+		if int(topicRow.ID) != topicID {
 			if cd.Config.LogFlags&config.LogFlagAccess != 0 {
-				log.Printf("RequireThreadAndTopic mismatch uid=%d urlTopic=%d threadTopic=%d", uid, topicID, topicRow.Idforumtopic)
+				log.Printf("RequireThreadAndTopic mismatch uid=%d urlTopic=%d threadTopic=%d", uid, topicID, topicRow.ID)
 			}
 			http.NotFound(w, r)
 			return
 		}
-		cd.SetCurrentThreadAndTopic(int32(threadID), threadRow.ForumtopicIdforumtopic)
+		cd.SetCurrentThreadAndTopic(int32(threadID), threadRow.TopicID)
 		next.ServeHTTP(w, r)
 	})
 }

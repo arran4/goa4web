@@ -11,18 +11,18 @@ import (
 )
 
 const adminDeleteForumThread = `-- name: AdminDeleteForumThread :exec
-UPDATE forumthread SET deleted_at = NOW() WHERE idforumthread = ?
+UPDATE forumthread SET deleted_at = NOW() WHERE id = ?
 `
 
-func (q *Queries) AdminDeleteForumThread(ctx context.Context, idforumthread int32) error {
-	_, err := q.db.ExecContext(ctx, adminDeleteForumThread, idforumthread)
+func (q *Queries) AdminDeleteForumThread(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, adminDeleteForumThread, id)
 	return err
 }
 
 const adminGetThreadsStartedByUser = `-- name: AdminGetThreadsStartedByUser :many
-SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked
+SELECT th.id, th.first_comment_id, th.last_author_id, th.topic_id, th.comments, th.lastaddition, th.locked
 FROM forumthread th
-JOIN comments c ON th.firstpost = c.idcomments
+JOIN comments c ON th.first_comment_id = c.idcomments
 WHERE c.users_idusers = ?
 ORDER BY th.lastaddition DESC
 `
@@ -37,10 +37,10 @@ func (q *Queries) AdminGetThreadsStartedByUser(ctx context.Context, usersIdusers
 	for rows.Next() {
 		var i Forumthread
 		if err := rows.Scan(
-			&i.Idforumthread,
-			&i.Firstpost,
-			&i.Lastposter,
-			&i.ForumtopicIdforumtopic,
+			&i.ID,
+			&i.FirstCommentID,
+			&i.LastAuthorID,
+			&i.TopicID,
 			&i.Comments,
 			&i.Lastaddition,
 			&i.Locked,
@@ -59,26 +59,26 @@ func (q *Queries) AdminGetThreadsStartedByUser(ctx context.Context, usersIdusers
 }
 
 const adminGetThreadsStartedByUserWithTopic = `-- name: AdminGetThreadsStartedByUserWithTopic :many
-SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, t.title AS topic_title, fc.idforumcategory AS category_id, fc.title AS category_title
+SELECT th.id, th.first_comment_id, th.last_author_id, th.topic_id, th.comments, th.lastaddition, th.locked, t.title AS topic_title, fc.id AS category_id, fc.title AS category_title
 FROM forumthread th
-JOIN comments c ON th.firstpost = c.idcomments
-LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
-LEFT JOIN forumcategory fc ON t.forumcategory_idforumcategory = fc.idforumcategory
+JOIN comments c ON th.first_comment_id = c.idcomments
+LEFT JOIN forumtopic t ON th.topic_id = t.id
+LEFT JOIN forumcategory fc ON t.category_id = fc.id
 WHERE c.users_idusers = ?
 ORDER BY th.lastaddition DESC
 `
 
 type AdminGetThreadsStartedByUserWithTopicRow struct {
-	Idforumthread          int32
-	Firstpost              int32
-	Lastposter             int32
-	ForumtopicIdforumtopic int32
-	Comments               sql.NullInt32
-	Lastaddition           sql.NullTime
-	Locked                 sql.NullBool
-	TopicTitle             sql.NullString
-	CategoryID             sql.NullInt32
-	CategoryTitle          sql.NullString
+	ID             int32
+	FirstCommentID int32
+	LastAuthorID   int32
+	TopicID        int32
+	Comments       sql.NullInt32
+	Lastaddition   sql.NullTime
+	Locked         sql.NullBool
+	TopicTitle     sql.NullString
+	CategoryID     sql.NullInt32
+	CategoryTitle  sql.NullString
 }
 
 func (q *Queries) AdminGetThreadsStartedByUserWithTopic(ctx context.Context, usersIdusers int32) ([]*AdminGetThreadsStartedByUserWithTopicRow, error) {
@@ -91,10 +91,10 @@ func (q *Queries) AdminGetThreadsStartedByUserWithTopic(ctx context.Context, use
 	for rows.Next() {
 		var i AdminGetThreadsStartedByUserWithTopicRow
 		if err := rows.Scan(
-			&i.Idforumthread,
-			&i.Firstpost,
-			&i.Lastposter,
-			&i.ForumtopicIdforumtopic,
+			&i.ID,
+			&i.FirstCommentID,
+			&i.LastAuthorID,
+			&i.TopicID,
 			&i.Comments,
 			&i.Lastaddition,
 			&i.Locked,
@@ -120,23 +120,23 @@ UPDATE forumthread
 SET lastaddition = (
     SELECT written
     FROM comments
-    WHERE forumthread_id = idforumthread
+    WHERE forumthread_id = id
     ORDER BY written DESC
     LIMIT 1
 ), comments = (
     SELECT COUNT(users_idusers) - 1
     FROM comments
-    WHERE forumthread_id = idforumthread
-), lastposter = (
+    WHERE forumthread_id = id
+), last_author_id = (
     SELECT users_idusers
     FROM comments
-    WHERE forumthread_id = idforumthread
+    WHERE forumthread_id = id
     ORDER BY written DESC
     LIMIT 1
-), firstpost = (
+), first_comment_id = (
     SELECT idcomments
     FROM comments
-    WHERE forumthread_id = idforumthread
+    WHERE forumthread_id = id
     LIMIT 1
 )
 `
@@ -151,52 +151,52 @@ UPDATE forumthread
 SET lastaddition = (
     SELECT written
     FROM comments
-    WHERE forumthread_id = idforumthread
+    WHERE forumthread_id = id
     ORDER BY written DESC
     LIMIT 1
 ), comments = (
     SELECT COUNT(users_idusers) - 1
     FROM comments
-    WHERE forumthread_id = idforumthread
-), lastposter = (
+    WHERE forumthread_id = id
+), last_author_id = (
     SELECT users_idusers
     FROM comments
-    WHERE forumthread_id = idforumthread
+    WHERE forumthread_id = id
     ORDER BY written DESC
     LIMIT 1
-), firstpost = (
+), first_comment_id = (
     SELECT idcomments
     FROM comments
-    WHERE forumthread_id = idforumthread
+    WHERE forumthread_id = id
     LIMIT 1
 )
-WHERE idforumthread = ?
+WHERE id = ?
 `
 
-func (q *Queries) AdminRecalculateForumThreadByIdMetaData(ctx context.Context, idforumthread int32) error {
-	_, err := q.db.ExecContext(ctx, adminRecalculateForumThreadByIdMetaData, idforumthread)
+func (q *Queries) AdminRecalculateForumThreadByIdMetaData(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, adminRecalculateForumThreadByIdMetaData, id)
 	return err
 }
 
 const getForumTopicIdByThreadId = `-- name: GetForumTopicIdByThreadId :one
-SELECT forumtopic_idforumtopic FROM forumthread WHERE idforumthread = ?
+SELECT topic_id FROM forumthread WHERE id = ?
 `
 
-func (q *Queries) GetForumTopicIdByThreadId(ctx context.Context, idforumthread int32) (int32, error) {
-	row := q.db.QueryRowContext(ctx, getForumTopicIdByThreadId, idforumthread)
-	var forumtopic_idforumtopic int32
-	err := row.Scan(&forumtopic_idforumtopic)
-	return forumtopic_idforumtopic, err
+func (q *Queries) GetForumTopicIdByThreadId(ctx context.Context, id int32) (int32, error) {
+	row := q.db.QueryRowContext(ctx, getForumTopicIdByThreadId, id)
+	var topic_id int32
+	err := row.Scan(&topic_id)
+	return topic_id, err
 }
 
 const getThreadBySectionThreadIDForReplier = `-- name: GetThreadBySectionThreadIDForReplier :one
 WITH role_ids AS (
     SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked
+SELECT th.id, th.first_comment_id, th.last_author_id, th.topic_id, th.comments, th.lastaddition, th.locked
 FROM forumthread th
-LEFT JOIN comments fc ON th.firstpost = fc.idcomments
-WHERE th.idforumthread = ?
+LEFT JOIN comments fc ON th.first_comment_id = fc.idcomments
+WHERE th.id = ?
   AND (
       fc.language_idlanguage = 0
       OR fc.language_idlanguage IS NULL
@@ -243,10 +243,10 @@ func (q *Queries) GetThreadBySectionThreadIDForReplier(ctx context.Context, arg 
 	)
 	var i Forumthread
 	err := row.Scan(
-		&i.Idforumthread,
-		&i.Firstpost,
-		&i.Lastposter,
-		&i.ForumtopicIdforumtopic,
+		&i.ID,
+		&i.FirstCommentID,
+		&i.LastAuthorID,
+		&i.TopicID,
 		&i.Comments,
 		&i.Lastaddition,
 		&i.Locked,
@@ -258,12 +258,12 @@ const getThreadLastPosterAndPerms = `-- name: GetThreadLastPosterAndPerms :one
 WITH role_ids AS (
     SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, lu.username AS LastPosterUsername
+SELECT th.id, th.first_comment_id, th.last_author_id, th.topic_id, th.comments, th.lastaddition, th.locked, lu.username AS LastAuthorUsername
 FROM forumthread th
-LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
-LEFT JOIN users lu ON lu.idusers = t.lastposter
-LEFT JOIN comments fc ON th.firstpost = fc.idcomments
-WHERE th.idforumthread=?
+LEFT JOIN forumtopic t ON th.topic_id=t.id
+LEFT JOIN users lu ON lu.idusers = t.last_author_id
+LEFT JOIN comments fc ON th.first_comment_id = fc.idcomments
+WHERE th.id=?
   AND (
       fc.language_idlanguage = 0
       OR fc.language_idlanguage IS NULL
@@ -282,7 +282,7 @@ WHERE th.idforumthread=?
       AND (g.item='topic' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
-      AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
+      AND (g.item_id = t.id OR g.item_id IS NULL)
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -296,14 +296,14 @@ type GetThreadLastPosterAndPermsParams struct {
 }
 
 type GetThreadLastPosterAndPermsRow struct {
-	Idforumthread          int32
-	Firstpost              int32
-	Lastposter             int32
-	ForumtopicIdforumtopic int32
-	Comments               sql.NullInt32
-	Lastaddition           sql.NullTime
-	Locked                 sql.NullBool
-	Lastposterusername     sql.NullString
+	ID                 int32
+	FirstCommentID     int32
+	LastAuthorID       int32
+	TopicID            int32
+	Comments           sql.NullInt32
+	Lastaddition       sql.NullTime
+	Locked             sql.NullBool
+	Lastauthorusername sql.NullString
 }
 
 func (q *Queries) GetThreadLastPosterAndPerms(ctx context.Context, arg GetThreadLastPosterAndPermsParams) (*GetThreadLastPosterAndPermsRow, error) {
@@ -316,24 +316,24 @@ func (q *Queries) GetThreadLastPosterAndPerms(ctx context.Context, arg GetThread
 	)
 	var i GetThreadLastPosterAndPermsRow
 	err := row.Scan(
-		&i.Idforumthread,
-		&i.Firstpost,
-		&i.Lastposter,
-		&i.ForumtopicIdforumtopic,
+		&i.ID,
+		&i.FirstCommentID,
+		&i.LastAuthorID,
+		&i.TopicID,
 		&i.Comments,
 		&i.Lastaddition,
 		&i.Locked,
-		&i.Lastposterusername,
+		&i.Lastauthorusername,
 	)
 	return &i, err
 }
 
 const systemCreateThread = `-- name: SystemCreateThread :execlastid
-INSERT INTO forumthread (forumtopic_idforumtopic) VALUES (?)
+INSERT INTO forumthread (topic_id) VALUES (?)
 `
 
-func (q *Queries) SystemCreateThread(ctx context.Context, forumtopicIdforumtopic int32) (int64, error) {
-	result, err := q.db.ExecContext(ctx, systemCreateThread, forumtopicIdforumtopic)
+func (q *Queries) SystemCreateThread(ctx context.Context, topicID int32) (int64, error) {
+	result, err := q.db.ExecContext(ctx, systemCreateThread, topicID)
 	if err != nil {
 		return 0, err
 	}

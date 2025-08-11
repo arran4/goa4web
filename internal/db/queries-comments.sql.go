@@ -14,29 +14,29 @@ import (
 const adminGetAllCommentsByUser = `-- name: AdminGetAllCommentsByUser :many
 SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage,
        c.written, c.text, c.deleted_at, c.last_index, c.timezone,
-       th.forumtopic_idforumtopic, t.title AS forumtopic_title,
+       th.topic_id, t.title AS forumtopic_title,
        fp.text AS thread_title
 FROM comments c
-LEFT JOIN forumthread th ON c.forumthread_id = th.idforumthread
-LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
-LEFT JOIN comments fp ON th.firstpost = fp.idcomments
+LEFT JOIN forumthread th ON c.forumthread_id = th.id
+LEFT JOIN forumtopic t ON th.topic_id = t.id
+LEFT JOIN comments fp ON th.first_comment_id = fp.idcomments
 WHERE c.users_idusers = ?
 ORDER BY c.written
 `
 
 type AdminGetAllCommentsByUserRow struct {
-	Idcomments             int32
-	ForumthreadID          int32
-	UsersIdusers           int32
-	LanguageIdlanguage     sql.NullInt32
-	Written                sql.NullTime
-	Text                   sql.NullString
-	DeletedAt              sql.NullTime
-	LastIndex              sql.NullTime
-	Timezone               sql.NullString
-	ForumtopicIdforumtopic sql.NullInt32
-	ForumtopicTitle        sql.NullString
-	ThreadTitle            sql.NullString
+	Idcomments         int32
+	ForumthreadID      int32
+	UsersIdusers       int32
+	LanguageIdlanguage sql.NullInt32
+	Written            sql.NullTime
+	Text               sql.NullString
+	DeletedAt          sql.NullTime
+	LastIndex          sql.NullTime
+	Timezone           sql.NullString
+	TopicID            sql.NullInt32
+	ForumtopicTitle    sql.NullString
+	ThreadTitle        sql.NullString
 }
 
 func (q *Queries) AdminGetAllCommentsByUser(ctx context.Context, userID int32) ([]*AdminGetAllCommentsByUserRow, error) {
@@ -58,7 +58,7 @@ func (q *Queries) AdminGetAllCommentsByUser(ctx context.Context, userID int32) (
 			&i.DeletedAt,
 			&i.LastIndex,
 			&i.Timezone,
-			&i.ForumtopicIdforumtopic,
+			&i.TopicID,
 			&i.ForumtopicTitle,
 			&i.ThreadTitle,
 		); err != nil {
@@ -77,11 +77,11 @@ func (q *Queries) AdminGetAllCommentsByUser(ctx context.Context, userID int32) (
 
 const adminListAllCommentsWithThreadInfo = `-- name: AdminListAllCommentsWithThreadInfo :many
 SELECT c.idcomments, c.written, c.text, c.deleted_at,
-       th.idforumthread, t.idforumtopic, t.title AS forumtopic_title,
+       th.id, t.id, t.title AS forumtopic_title,
        u.idusers, u.username AS posterusername
 FROM comments c
-LEFT JOIN forumthread th ON c.forumthread_id = th.idforumthread
-LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
+LEFT JOIN forumthread th ON c.forumthread_id = th.id
+LEFT JOIN forumtopic t ON th.topic_id = t.id
 LEFT JOIN users u ON u.idusers = c.users_idusers
 ORDER BY c.written DESC
 LIMIT ? OFFSET ?
@@ -97,8 +97,8 @@ type AdminListAllCommentsWithThreadInfoRow struct {
 	Written         sql.NullTime
 	Text            sql.NullString
 	DeletedAt       sql.NullTime
-	Idforumthread   sql.NullInt32
-	Idforumtopic    sql.NullInt32
+	ID              sql.NullInt32
+	ID_2            sql.NullInt32
 	ForumtopicTitle sql.NullString
 	Idusers         sql.NullInt32
 	Posterusername  sql.NullString
@@ -118,8 +118,8 @@ func (q *Queries) AdminListAllCommentsWithThreadInfo(ctx context.Context, arg Ad
 			&i.Written,
 			&i.Text,
 			&i.DeletedAt,
-			&i.Idforumthread,
-			&i.Idforumtopic,
+			&i.ID,
+			&i.ID_2,
 			&i.ForumtopicTitle,
 			&i.Idusers,
 			&i.Posterusername,
@@ -246,8 +246,8 @@ WITH role_ids AS (
 SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.timezone, c.deleted_at, c.last_index, pu.Username,
        c.users_idusers = ? AS is_owner
 FROM comments c
-LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
-LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
+LEFT JOIN forumthread th ON c.forumthread_id=th.id
+LEFT JOIN forumtopic t ON th.topic_id=t.id
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
 WHERE c.idcomments = ?
   AND (
@@ -268,7 +268,7 @@ WHERE c.idcomments = ?
       AND (g.item='topic' OR g.item IS NULL)
       AND g.action='see'
       AND g.active=1
-      AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
+      AND (g.item_id = t.id OR g.item_id IS NULL)
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
@@ -327,14 +327,14 @@ WITH role_ids AS (
 )
 SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.timezone, c.deleted_at, c.last_index, pu.username AS posterusername,
        c.users_idusers = ? AS is_owner,
-       th.idforumthread, t.idforumtopic, t.title AS forumtopic_title,
-       fp.text AS thread_title, fc.idforumcategory, fc.title AS forumcategory_title
+       th.id, t.id, t.title AS forumtopic_title,
+       fp.text AS thread_title, fc.id, fc.title AS forumcategory_title
 FROM comments c
-LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
-LEFT JOIN comments fp ON th.firstpost = fp.idcomments
-LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
+LEFT JOIN forumthread th ON c.forumthread_id=th.id
+LEFT JOIN comments fp ON th.first_comment_id = fp.idcomments
+LEFT JOIN forumtopic t ON th.topic_id=t.id
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
-LEFT JOIN forumcategory fc ON t.forumcategory_idforumcategory = fc.idforumcategory
+LEFT JOIN forumcategory fc ON t.category_id = fc.id
 WHERE c.Idcomments IN (/*SLICE:ids*/?)
   AND (
       c.language_idlanguage = 0
@@ -354,7 +354,7 @@ WHERE c.Idcomments IN (/*SLICE:ids*/?)
       AND (g.item='topic' OR g.item IS NULL)
       AND g.action='see'
       AND g.active=1
-      AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
+      AND (g.item_id = t.id OR g.item_id IS NULL)
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -379,11 +379,11 @@ type GetCommentsByIdsForUserWithThreadInfoRow struct {
 	LastIndex          sql.NullTime
 	Posterusername     sql.NullString
 	IsOwner            bool
-	Idforumthread      sql.NullInt32
-	Idforumtopic       sql.NullInt32
+	ID                 sql.NullInt32
+	ID_2               sql.NullInt32
 	ForumtopicTitle    sql.NullString
 	ThreadTitle        sql.NullString
-	Idforumcategory    sql.NullInt32
+	ID_3               sql.NullInt32
 	ForumcategoryTitle sql.NullString
 }
 
@@ -423,11 +423,11 @@ func (q *Queries) GetCommentsByIdsForUserWithThreadInfo(ctx context.Context, arg
 			&i.LastIndex,
 			&i.Posterusername,
 			&i.IsOwner,
-			&i.Idforumthread,
-			&i.Idforumtopic,
+			&i.ID,
+			&i.ID_2,
 			&i.ForumtopicTitle,
 			&i.ThreadTitle,
-			&i.Idforumcategory,
+			&i.ID_3,
 			&i.ForumcategoryTitle,
 		); err != nil {
 			return nil, err
@@ -450,8 +450,8 @@ WITH role_ids(id) AS (
 SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.timezone, c.deleted_at, c.last_index, pu.username AS posterusername,
        c.users_idusers = ? AS is_owner
 FROM comments c
-LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
-LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
+LEFT JOIN forumthread th ON c.forumthread_id=th.id
+LEFT JOIN forumtopic t ON th.topic_id=t.id
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
 WHERE c.forumthread_id=?
   AND c.forumthread_id IS NOT NULL
@@ -473,7 +473,7 @@ WHERE c.forumthread_id=?
       AND (g.item=? OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
-      AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
+      AND (g.item_id = t.id OR g.item_id IS NULL)
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
@@ -555,8 +555,8 @@ WITH role_ids AS (
 SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.timezone, c.deleted_at, c.last_index, pu.username AS posterusername,
        c.users_idusers = ? AS is_owner
 FROM comments c
-LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
-LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
+LEFT JOIN forumthread th ON c.forumthread_id=th.id
+LEFT JOIN forumtopic t ON th.topic_id=t.id
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
 WHERE c.forumthread_id=?
   AND c.forumthread_id IS NOT NULL
@@ -578,7 +578,7 @@ WHERE c.forumthread_id=?
       AND (g.item='topic' OR g.item IS NULL)
       AND g.action='see'
       AND g.active=1
-      AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
+      AND (g.item_id = t.id OR g.item_id IS NULL)
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )

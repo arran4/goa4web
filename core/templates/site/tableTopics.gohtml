@@ -13,10 +13,10 @@
             <td>
                 {{ $title := .Title.String }}
                 {{ if .DisplayTitle }}{{ $title = .DisplayTitle }}{{ end }}
-                <a href="{{$base}}/topic/{{ .Idforumtopic }}">{{ $title | a4code2html }}</a>{{ if and cd.IsAdmin cd.IsAdminMode }} [<a href="/admin/forum/topics/topic/{{ .Idforumtopic }}/edit">ADMIN</a>]{{ end }}<br>
+                <a href="{{$base}}/topic/{{ .ID }}">{{ $title | a4code2html }}</a>{{ if and cd.IsAdmin cd.IsAdminMode }} [<a href="/admin/forum/topics/topic/{{ .ID }}/edit">ADMIN</a>]{{ end }}<br>
                 {{ with .Description.String }}<i>{{ . | a4code2html }}</i>{{ end }}
             </td>
-            <td align="center">{{ localTime .Lastaddition.Time }}<br>{{ .Lastposterusername.String }}</td>
+            <td align="center">{{ localTime .Lastaddition.Time }}<br>{{ .LastAuthorUsername.String }}</td>
             <td align="center">{{ .Threads.Int32 }}</td>
             <td align="center">{{ .Comments.Int32 }}</td>
         </tr>

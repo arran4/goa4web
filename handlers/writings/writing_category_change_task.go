@@ -50,14 +50,14 @@ func writingCategoryWouldLoop(ctx context.Context, queries db.Querier, cid, pare
 		if err != nil {
 			return nil, false, err
 		}
-                parents = make(map[int32]int32, len(cats))
-                for _, c := range cats {
-                        var pid int32
-                        if c.WritingCategoryID.Valid {
-                                pid = c.WritingCategoryID.Int32
-                        }
-                        parents[c.Idwritingcategory] = pid
-                }
+		parents = make(map[int32]int32, len(cats))
+		for _, c := range cats {
+			var pid int32
+			if c.WritingCategoryID.Valid {
+				pid = c.WritingCategoryID.Int32
+			}
+			parents[c.Idwritingcategory] = pid
+		}
 	} else {
 		parents = map[int32]int32{}
 	}

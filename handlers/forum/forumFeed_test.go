@@ -17,10 +17,10 @@ import (
 func TestForumTopicFeed(t *testing.T) {
 	rows := []*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow{
 		{
-			Idforumthread:     1,
-			Firstposttext:     sql.NullString{String: "hello world", Valid: true},
-			Firstpostusername: sql.NullString{String: "bob", Valid: true},
-			Firstpostwritten:  sql.NullTime{Time: time.Unix(0, 0), Valid: true},
+			ID:                   1,
+			FirstCommentText:     sql.NullString{String: "hello world", Valid: true},
+			FirstCommentUsername: sql.NullString{String: "bob", Valid: true},
+			FirstCommentWritten:  sql.NullTime{Time: time.Unix(0, 0), Valid: true},
 		},
 	}
 	r := httptest.NewRequest("GET", "http://example.com/forum/topic/1.rss", nil)

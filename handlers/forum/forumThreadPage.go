@@ -85,13 +85,13 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		if !data.CanEditComment(cmt) {
 			return ""
 		}
-		return fmt.Sprintf("%s/topic/%d/thread/%d?comment=%d#edit", data.BasePath, topicRow.Idforumtopic, threadRow.Idforumthread, cmt.Idcomments)
+		return fmt.Sprintf("%s/topic/%d/thread/%d?comment=%d#edit", data.BasePath, topicRow.ID, threadRow.ID, cmt.Idcomments)
 	}
 	data.EditSaveURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
 		if !data.CanEditComment(cmt) {
 			return ""
 		}
-		return fmt.Sprintf("%s/topic/%d/thread/%d/comment/%d", data.BasePath, topicRow.Idforumtopic, threadRow.Idforumthread, cmt.Idcomments)
+		return fmt.Sprintf("%s/topic/%d/thread/%d/comment/%d", data.BasePath, topicRow.ID, threadRow.ID, cmt.Idcomments)
 	}
 	data.Editing = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
 		return data.CanEditComment(cmt) && commentId != 0 && int32(commentId) == cmt.Idcomments
@@ -108,25 +108,25 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 
 	data.Thread = threadRow
 	data.Topic = &ForumtopicPlus{
-		Idforumtopic:                 topicRow.Idforumtopic,
-		Lastposter:                   topicRow.Lastposter,
-		ForumcategoryIdforumcategory: topicRow.ForumcategoryIdforumcategory,
-		Title:                        topicRow.Title,
-		Description:                  topicRow.Description,
-		Threads:                      topicRow.Threads,
-		Comments:                     topicRow.Comments,
-		Lastaddition:                 topicRow.Lastaddition,
-		Lastposterusername:           topicRow.Lastposterusername,
-		Edit:                         false,
+		ID:                 topicRow.ID,
+		LastAuthorID:       topicRow.LastAuthorID,
+		CategoryID:         topicRow.CategoryID,
+		Title:              topicRow.Title,
+		Description:        topicRow.Description,
+		Threads:            topicRow.Threads,
+		Comments:           topicRow.Comments,
+		Lastaddition:       topicRow.Lastaddition,
+		LastAuthorUsername: topicRow.LastAuthorUsername,
+		Edit:               false,
 	}
 
-	if pub, author, err := cd.ThreadPublicLabels(threadRow.Idforumthread); err == nil {
+	if pub, author, err := cd.ThreadPublicLabels(threadRow.ID); err == nil {
 		data.PublicLabels = pub
 		data.AuthorLabels = author
 	} else {
 		log.Printf("list public labels: %v", err)
 	}
-	if priv, err := cd.ThreadPrivateLabels(threadRow.Idforumthread); err == nil {
+	if priv, err := cd.ThreadPrivateLabels(threadRow.ID); err == nil {
 		data.PrivateLabels = priv
 	} else {
 		log.Printf("list private labels: %v", err)

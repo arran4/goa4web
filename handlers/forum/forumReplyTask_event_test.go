@@ -52,11 +52,11 @@ func TestForumReplyTaskEventData(t *testing.T) {
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithSession(sess), common.WithEvent(evt), common.WithUserRoles([]string{"member"}))
 	cd.UserID = uid
 
-	thread := &db.GetThreadLastPosterAndPermsRow{Idforumthread: threadID, ForumtopicIdforumtopic: topicID}
+	thread := &db.GetThreadLastPosterAndPermsRow{ID: threadID, TopicID: topicID}
 	if _, err := cd.ForumThreadByID(threadID, lazy.Set(thread)); err != nil {
 		t.Fatalf("set thread: %v", err)
 	}
-	topic := &db.GetForumTopicByIdForUserRow{Idforumtopic: topicID, Title: sql.NullString{String: "t", Valid: true}}
+	topic := &db.GetForumTopicByIdForUserRow{ID: topicID, Title: sql.NullString{String: "t", Valid: true}}
 	if _, err := cd.ForumTopicByID(topicID, lazy.Set(topic)); err != nil {
 		t.Fatalf("set topic: %v", err)
 	}

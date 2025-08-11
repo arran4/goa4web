@@ -6,8 +6,8 @@
 <tr>
 <td>{{ .Idcomments }}</td>
 <td>{{ if .Written.Valid }}{{ localTimeIn .Written.Time .Timezone.String }}{{ end }}</td>
-<td>{{ .ForumtopicIdforumtopic }}</td>
-<td>{{ .Idforumthread }}</td>
+<td>{{ .ForumtopicID }}</td>
+<td>{{ .ID }}</td>
 <td>{{ if .Text.Valid }}{{ left 40 .Text.String }}{{ end }}</td>
 <td><a href="/admin/comment/{{ .Idcomments }}">View</a></td>
 </tr>

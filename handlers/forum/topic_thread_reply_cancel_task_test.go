@@ -17,8 +17,8 @@ import (
 func TestTopicThreadReplyCancel_BasePath(t *testing.T) {
 	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
 	cd.ForumBasePath = "/private"
-	thread := &db.GetThreadLastPosterAndPermsRow{Idforumthread: 2, ForumtopicIdforumtopic: 1}
-	topic := &db.GetForumTopicByIdForUserRow{Idforumtopic: 1}
+	thread := &db.GetThreadLastPosterAndPermsRow{ID: 2, TopicID: 1}
+	topic := &db.GetForumTopicByIdForUserRow{ID: 1}
 	if _, err := cd.ForumThreadByID(2, lazy.Set(thread)); err != nil {
 		t.Fatalf("set thread: %v", err)
 	}

@@ -3,16 +3,16 @@
     {{ with .BasePath }}{{ $base = . }}{{ end }}
     <div class="label-bar">
         {{ template "topicLabels" (dict "Public" .PublicLabels "Author" .AuthorLabels "Private" .PrivateLabels) }}
-        <form method="post" action="{{$base}}/thread/{{.Thread.Idforumthread}}/labels" class="mark-read">
+        <form method="post" action="{{$base}}/thread/{{.Thread.ID}}/labels" class="mark-read">
             {{ csrfField }}
             <input type="hidden" name="task" value="Mark Topic Read"/>
             <input type="hidden" name="redirect" value="{{ .BackURL }}"/>
             <button type="submit">Mark as read</button>
         </form>
-        <form method="post" action="{{$base}}/topic/{{.Topic.Idforumtopic}}/labels" class="mark-read">
+        <form method="post" action="{{$base}}/topic/{{.Topic.ID}}/labels" class="mark-read">
             {{ csrfField }}
             <input type="hidden" name="task" value="Mark Topic Read"/>
-            <input type="hidden" name="redirect" value="{{$base}}/topic/{{.Topic.Idforumtopic}}"/>
+            <input type="hidden" name="redirect" value="{{$base}}/topic/{{.Topic.ID}}"/>
             <button type="submit">Mark as read and go back</button>
         </form>
     </div>
@@ -20,7 +20,7 @@
     {{ template "forumReply" $ }}
 
     <div class="label-editor">
-        <form method="post" action="{{$base}}/thread/{{.Thread.Idforumthread}}/labels" id="label-form">
+        <form method="post" action="{{$base}}/thread/{{.Thread.ID}}/labels" id="label-form">
             {{ csrfField }}
             <input type="hidden" name="task" value="Set Labels"/>
             <input type="hidden" name="back" value="{{ .BackURL }}"/>
@@ -43,12 +43,12 @@
             </div>
             <input type="submit" value="Save Labels"/>
         </form>
-        <form method="post" action="{{$base}}/thread/{{.Thread.Idforumthread}}/labels" class="mark-read">
+        <form method="post" action="{{$base}}/thread/{{.Thread.ID}}/labels" class="mark-read">
             <input type="hidden" name="task" value="Mark Topic Read"/>
-            <input type="hidden" name="redirect" value="{{$base}}/topic/{{.Topic.Idforumtopic}}"/>
+            <input type="hidden" name="redirect" value="{{$base}}/topic/{{.Topic.ID}}"/>
             <button type="submit">Mark as read and go back</button>
         </form>
-        <form method="get" action="{{$base}}/topic/{{.Topic.Idforumtopic}}">
+        <form method="get" action="{{$base}}/topic/{{.Topic.ID}}">
             <button type="submit">Go to topic</button>
         </form>
     </div>

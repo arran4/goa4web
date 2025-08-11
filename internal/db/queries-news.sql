@@ -56,7 +56,7 @@ WITH role_ids AS (
 SELECT u.username AS writerName, u.idusers as writerId, s.idsiteNews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, s.timezone, th.comments as Comments
 FROM site_news s
 LEFT JOIN users u ON s.users_idusers = u.idusers
-LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
+LEFT JOIN forumthread th ON s.forumthread_id = th.id
 WHERE s.idsiteNews = sqlc.arg(id) AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='news'
@@ -77,7 +77,7 @@ WITH role_ids AS (
 SELECT u.username AS writerName, u.idusers as writerId, s.idsiteNews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, s.timezone, th.comments as Comments
 FROM site_news s
 LEFT JOIN users u ON s.users_idusers = u.idusers
-LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
+LEFT JOIN forumthread th ON s.forumthread_id = th.id
 WHERE s.Idsitenews IN (sqlc.slice(newsIds))
   AND (
       NOT EXISTS (
@@ -110,7 +110,7 @@ WITH role_ids AS (
 SELECT u.username AS writerName, u.idusers as writerId, s.idsiteNews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, s.timezone, th.comments as Comments
 FROM site_news s
 LEFT JOIN users u ON s.users_idusers = u.idusers
-LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
+LEFT JOIN forumthread th ON s.forumthread_id = th.id
 WHERE (
     NOT EXISTS (
         SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
@@ -140,7 +140,7 @@ SELECT u.username AS writerName, u.idusers as writerId, s.idsiteNews, s.forumthr
 s.news, s.occurred, th.comments as Comments
 FROM site_news s
 LEFT JOIN users u ON s.users_idusers = u.idusers
-LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
+LEFT JOIN forumthread th ON s.forumthread_id = th.id
 ORDER BY s.occurred DESC
 LIMIT ? OFFSET ?;
 

@@ -51,7 +51,7 @@ func AdminCategoryCreateSubmit(w http.ResponseWriter, r *http.Request) {
 	}
 	parents := make(map[int32]int32, len(cats))
 	for _, c := range cats {
-		parents[c.Idforumcategory] = c.ForumcategoryIdforumcategory
+		parents[c.ID] = c.ParentCategoryID
 	}
 	if path, loop := algorithms.WouldCreateLoop(parents, 0, int32(pcid)); loop {
 		http.Redirect(w, r, "?error="+fmt.Sprintf("loop %v", path), http.StatusTemporaryRedirect)

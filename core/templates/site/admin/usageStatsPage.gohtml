@@ -14,8 +14,8 @@
     <tr><th>ID</th><th>Topic</th><th>Handler</th><th>Threads</th><th>Comments</th></tr>
     {{- range .ForumTopics }}
     <tr>
-        <td><a href="/admin/forum/topics/topic/{{ .Idforumtopic }}/edit">{{ .Idforumtopic }}</a></td>
-        <td><a href="/forum/topic/{{ .Idforumtopic }}">{{ .Title.String }}</a></td>
+        <td><a href="/admin/forum/topics/topic/{{ .ID }}/edit">{{ .ID }}</a></td>
+        <td><a href="/forum/topic/{{ .ID }}">{{ .Title.String }}</a></td>
         <td>{{ .Handler }}</td>
         <td>{{ .Threads }}</td>
         <td>{{ .Comments }}</td>
@@ -36,8 +36,8 @@
     <tr><th>ID</th><th>Category</th><th>Threads</th><th>Comments</th></tr>
     {{- range .ForumCategories }}
     <tr>
-        <td><a href="/admin/forum/categories/category/{{ .Idforumcategory }}">{{ .Idforumcategory }}</a></td>
-        <td><a href="/forum/category/{{ .Idforumcategory }}">{{ .Title.String }}</a></td>
+        <td><a href="/admin/forum/categories/category/{{ .ID }}">{{ .ID }}</a></td>
+        <td><a href="/forum/category/{{ .ID }}">{{ .Title.String }}</a></td>
         <td>{{ .Threads }}</td>
         <td>{{ .Comments }}</td>
     </tr>

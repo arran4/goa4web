@@ -35,6 +35,6 @@ func (topicThreadCommentEditActionCancelTask) Action(w http.ResponseWriter, r *h
 	if base == "" {
 		base = "/forum"
 	}
-	endURL := fmt.Sprintf("%s/topic/%d/thread/%d#bottom", base, topicRow.Idforumtopic, threadRow.Idforumthread)
+	endURL := fmt.Sprintf("%s/topic/%d/thread/%d#bottom", base, topicRow.ID, threadRow.ID)
 	return handlers.RedirectHandler(endURL)
 }

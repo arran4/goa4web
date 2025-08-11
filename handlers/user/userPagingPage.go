@@ -56,12 +56,12 @@ func (PagingSaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	if errors.Is(err, sql.ErrNoRows) {
-                err = queries.InsertPreferenceForLister(r.Context(), db.InsertPreferenceForListerParams{
-                        LanguageID: sql.NullInt32{},
-                        ListerID:   uid,
-                        PageSize:   int32(size),
-                        Timezone:   sql.NullString{},
-                })
+		err = queries.InsertPreferenceForLister(r.Context(), db.InsertPreferenceForListerParams{
+			LanguageID: sql.NullInt32{},
+			ListerID:   uid,
+			PageSize:   int32(size),
+			Timezone:   sql.NullString{},
+		})
 	} else {
 		pref.PageSize = int32(size)
 		err = queries.UpdatePreferenceForLister(r.Context(), db.UpdatePreferenceForListerParams{

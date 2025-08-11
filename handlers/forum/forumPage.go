@@ -63,15 +63,15 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 	for _, row := range rows {
 		topicRows = append(topicRows, &ForumtopicPlus{
-			Idforumtopic:                 row.Idforumtopic,
-			Lastposter:                   row.Lastposter,
-			ForumcategoryIdforumcategory: row.ForumcategoryIdforumcategory,
-			Title:                        row.Title,
-			Description:                  row.Description,
-			Threads:                      row.Threads,
-			Comments:                     row.Comments,
-			Lastaddition:                 row.Lastaddition,
-			Lastposterusername:           row.Lastposterusername,
+			ID:                 row.ID,
+			LastAuthorID:       row.LastAuthorID,
+			CategoryID:         row.CategoryID,
+			Title:              row.Title,
+			Description:        row.Description,
+			Threads:            row.Threads,
+			Comments:           row.Comments,
+			Lastaddition:       row.Lastaddition,
+			LastAuthorUsername: row.LastAuthorUsername,
 		})
 	}
 

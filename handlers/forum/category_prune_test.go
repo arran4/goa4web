@@ -8,13 +8,13 @@ import (
 
 func TestCategoryTreePruneEmpty(t *testing.T) {
 	cats := []*db.Forumcategory{
-		{Idforumcategory: 1, ForumcategoryIdforumcategory: 0},
-		{Idforumcategory: 2, ForumcategoryIdforumcategory: 1},
-		{Idforumcategory: 3, ForumcategoryIdforumcategory: 1},
-		{Idforumcategory: 4, ForumcategoryIdforumcategory: 0},
+		{ID: 1, ParentCategoryID: 0},
+		{ID: 2, ParentCategoryID: 1},
+		{ID: 3, ParentCategoryID: 1},
+		{ID: 4, ParentCategoryID: 0},
 	}
 	topics := []*ForumtopicPlus{
-		{Idforumtopic: 10, ForumcategoryIdforumcategory: 3},
+		{ID: 10, CategoryID: 3},
 	}
 	ct := NewCategoryTree(cats, topics)
 	if _, ok := ct.CategoryLookup[4]; ok {
@@ -27,7 +27,7 @@ func TestCategoryTreePruneEmpty(t *testing.T) {
 	if !ok {
 		t.Fatalf("root category 1 missing")
 	}
-	if len(root1.Categories) != 1 || root1.Categories[0].Idforumcategory != 3 {
+	if len(root1.Categories) != 1 || root1.Categories[0].ID != 3 {
 		t.Fatalf("unexpected children for root 1: %#v", root1.Categories)
 	}
 }

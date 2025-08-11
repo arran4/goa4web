@@ -4,12 +4,12 @@
     <tr><th>ID</th><th>Topic</th><th>Category</th><th>Comments</th><th>Last Addition</th><th>View</th></tr>
     {{- range .Threads }}
     <tr>
-        <td><a href="/admin/forum/topics/topic/{{ .ForumtopicIdforumtopic }}">{{ .ForumtopicIdforumtopic }}</a></td>
-        <td><a href="/admin/forum/topics/topic/{{ .ForumtopicIdforumtopic }}/edit">{{ .TopicTitle.String }}</a></td>
+        <td><a href="/admin/forum/topics/topic/{{ .ForumtopicID }}">{{ .ForumtopicID }}</a></td>
+        <td><a href="/admin/forum/topics/topic/{{ .ForumtopicID }}/edit">{{ .TopicTitle.String }}</a></td>
         <td>{{ if .CategoryID.Valid }}<a href="/admin/forum/categories/category/{{ .CategoryID.Int32 }}/grants">{{ .CategoryTitle.String }}</a>{{ end }}</td>
         <td>{{ .Comments.Int32 }}</td>
         <td>{{ localTime .Lastaddition.Time }}</td>
-        <td><a href="/forum/topic/{{ .ForumtopicIdforumtopic }}/thread/{{ .Idforumthread }}">View</a></td>
+        <td><a href="/forum/topic/{{ .ForumtopicID }}/thread/{{ .ID }}">View</a></td>
     </tr>
     {{- end }}
 </table>

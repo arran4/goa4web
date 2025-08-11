@@ -35,7 +35,7 @@ func (cd *CoreData) PrivateForumTopics() ([]*PrivateTopic, error) {
 		var pts []*PrivateTopic
 		for _, t := range tops {
 			parts, _ := cd.queries.ListPrivateTopicParticipantsByTopicIDForUser(cd.ctx, db.ListPrivateTopicParticipantsByTopicIDForUserParams{
-				TopicID:  sql.NullInt32{Int32: t.Idforumtopic, Valid: true},
+				TopicID:  sql.NullInt32{Int32: t.ID, Valid: true},
 				ViewerID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 			})
 			var names []string

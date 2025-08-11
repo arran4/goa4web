@@ -118,7 +118,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 				evt.Data = map[string]any{}
 			}
 			evt.Data["TopicTitle"] = topicRow.Title.String
-			evt.Data["ThreadID"] = threadRow.Idforumthread
+			evt.Data["ThreadID"] = threadRow.ID
 			evt.Data["Thread"] = threadRow
 			evt.Data["Username"] = username
 		}
@@ -131,9 +131,9 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if base == "" {
 		base = "/forum"
 	}
-	endUrl := fmt.Sprintf("%s/topic/%d/thread/%d#bottom", base, topicRow.Idforumtopic, threadRow.Idforumthread)
+	endUrl := fmt.Sprintf("%s/topic/%d/thread/%d#bottom", base, topicRow.ID, threadRow.ID)
 
-	cid, err := cd.CreateForumCommentForCommenter(uid, threadRow.Idforumthread, topicRow.Idforumtopic, int32(languageId), text)
+	cid, err := cd.CreateForumCommentForCommenter(uid, threadRow.ID, topicRow.ID, int32(languageId), text)
 	if err != nil {
 		log.Printf("Error: CreateComment: %s", err)
 		return fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(err))
@@ -143,10 +143,10 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("Error: CreateComment: %s", err)
 		return fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	if err := cd.ClearThreadPrivateLabelStatus(threadRow.Idforumthread); err != nil {
+	if err := cd.ClearThreadPrivateLabelStatus(threadRow.ID); err != nil {
 		log.Printf("clear label status: %v", err)
 	}
-	if err := cd.SetThreadPrivateLabelStatus(threadRow.Idforumthread, false, false); err != nil {
+	if err := cd.SetThreadPrivateLabelStatus(threadRow.ID, false, false); err != nil {
 		log.Printf("set label status: %v", err)
 	}
 
@@ -155,7 +155,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(cid), ThreadID: threadRow.Idforumthread, TopicID: topicRow.Idforumtopic}
+			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(cid), ThreadID: threadRow.ID, TopicID: topicRow.ID}
 			evt.Data["CommentURL"] = cd.AbsoluteURL(endUrl)
 		}
 	}
@@ -188,6 +188,6 @@ func TopicThreadReplyCancelPage(w http.ResponseWriter, r *http.Request) {
 	if base == "" {
 		base = "/forum"
 	}
-	endUrl := fmt.Sprintf("%s/topic/%d/thread/%d#bottom", base, topicRow.Idforumtopic, threadRow.Idforumthread)
+	endUrl := fmt.Sprintf("%s/topic/%d/thread/%d#bottom", base, topicRow.ID, threadRow.ID)
 	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
 }

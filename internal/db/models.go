@@ -245,34 +245,34 @@ type FaqRevision struct {
 }
 
 type Forumcategory struct {
-	Idforumcategory              int32
-	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           sql.NullInt32
-	Title                        sql.NullString
-	Description                  sql.NullString
+	ID               int32
+	ParentCategoryID int32
+	LanguageID       sql.NullInt32
+	Title            sql.NullString
+	Description      sql.NullString
 }
 
 type Forumthread struct {
-	Idforumthread          int32
-	Firstpost              int32
-	Lastposter             int32
-	ForumtopicIdforumtopic int32
-	Comments               sql.NullInt32
-	Lastaddition           sql.NullTime
-	Locked                 sql.NullBool
+	ID             int32
+	FirstCommentID int32
+	LastAuthorID   int32
+	TopicID        int32
+	Comments       sql.NullInt32
+	Lastaddition   sql.NullTime
+	Locked         sql.NullBool
 }
 
 type Forumtopic struct {
-	Idforumtopic                 int32
-	Lastposter                   int32
-	ForumcategoryIdforumcategory int32
-	LanguageIdlanguage           sql.NullInt32
-	Title                        sql.NullString
-	Description                  sql.NullString
-	Threads                      sql.NullInt32
-	Comments                     sql.NullInt32
-	Lastaddition                 sql.NullTime
-	Handler                      string
+	ID           int32
+	LastAuthorID int32
+	CategoryID   int32
+	LanguageID   sql.NullInt32
+	Title        sql.NullString
+	Description  sql.NullString
+	Threads      sql.NullInt32
+	Comments     sql.NullInt32
+	Lastaddition sql.NullTime
+	Handler      string
 }
 
 type Grant struct {

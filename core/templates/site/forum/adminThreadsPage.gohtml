@@ -4,12 +4,12 @@
     <h2>{{ $topic.Title.String }}</h2>
     <table border="1">
         <tr><th>ID<th>Posts<th>Last Addition<th>View public</tr>
-        {{ range $cd.ForumThreads $topic.Idforumtopic }}
+        {{ range $cd.ForumThreads $topic.ID }}
             <tr>
-                <td><a href="/admin/forum/thread/{{ .Idforumthread }}">{{ .Idforumthread }}</a></td>
+                <td><a href="/admin/forum/thread/{{ .ID }}">{{ .ID }}</a></td>
                 <td>{{ .Comments.Int32 }}</td>
                 <td>{{ localTime .Lastaddition.Time }}</td>
-                <td><a href="/forum/topic/{{ .ForumtopicIdforumtopic }}/thread/{{ .Idforumthread }}">View</a></td>
+                <td><a href="/forum/topic/{{ .ForumtopicID }}/thread/{{ .ID }}">View</a></td>
             </tr>
         {{ else }}
             <tr><td colspan="4">No threads</td></tr>

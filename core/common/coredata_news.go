@@ -50,7 +50,7 @@ func (cd *CoreData) ThreadInfo(post *db.GetNewsPostByIdWithWriterIdAndThreadComm
 	} else if err != nil {
 		return ti, fmt.Errorf("find forum topic: %w", err)
 	} else {
-		ti.TopicID = pt.Idforumtopic
+		ti.TopicID = pt.ID
 	}
 	threadID := post.ForumthreadID
 	if threadID == 0 {
@@ -117,7 +117,7 @@ func (cd *CoreData) UpdateNewsReply(commentID, editorID, languageID int32, text 
 	}); err != nil {
 		return ThreadInfo{}, fmt.Errorf("update comment: %w", err)
 	}
-	return ThreadInfo{ThreadID: thread.Idforumthread, TopicID: thread.ForumtopicIdforumtopic}, nil
+	return ThreadInfo{ThreadID: thread.ID, TopicID: thread.TopicID}, nil
 }
 
 // UpdateNewsPost modifies an existing news post.

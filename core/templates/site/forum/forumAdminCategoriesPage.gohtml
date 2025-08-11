@@ -11,13 +11,13 @@
     </tr>
     {{ range .Categories }}
     <tr>
-        <td><a id="fc{{ .Idforumcategory }}" href="/admin/forum/categories/category/{{ .Idforumcategory }}">{{ .Idforumcategory }}</a></td>
-        <td>{{ $fcid := .ForumcategoryIdforumcategory }}<a href="#fc{{ $fcid }}">{{ $fcid }}</a></td>
+        <td><a id="fc{{ .ID }}" href="/admin/forum/categories/category/{{ .ID }}">{{ .ID }}</a></td>
+        <td>{{ $fcid := .ForumcategoryID }}<a href="#fc{{ $fcid }}">{{ $fcid }}</a></td>
         <td>{{ .Title.String }}</td>
         <td>{{ .Description.String }}</td>
         <td>{{ .Subcategorycount }}</td>
         <td>{{ .Topiccount }}</td>
-        <td><a href="/admin/forum/categories/category/{{ .Idforumcategory }}">Dashboard</a></td>
+        <td><a href="/admin/forum/categories/category/{{ .ID }}">Dashboard</a></td>
     </tr>
     {{ end }}
 </table>

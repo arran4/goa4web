@@ -5,20 +5,20 @@
             <tr>
                 <td>
                     {{ if and $.Admin .Edit }}
-                        <form method="post" action="/admin/forum/categories/category/{{ .Idforumcategory }}">
+                        <form method="post" action="/admin/forum/categories/category/{{ .ID }}">
         {{ csrfField }}
                             Title <input name="name" value="{{ .Title.String }}">: -
                             Description: <textarea name="desc" cols="30" rows="2">{{ .Description.String }}</textarea>
-                            {{ $pid := .ForumcategoryIdforumcategory }}
-                            Parent <select name="pcid" value="{{ $pid }}"><option value="0">None</option>{{ range $.Categories }}<option value="{{ .Idforumcategory }}" {{ if eq $pid .Idforumcategory }}selected{{ end }}>{{ .Title.String }}</option>{{ end }}</select>
+                            {{ $pid := .ForumcategoryID }}
+                            Parent <select name="pcid" value="{{ $pid }}"><option value="0">None</option>{{ range $.Categories }}<option value="{{ .ID }}" {{ if eq $pid .ID }}selected{{ end }}>{{ .Title.String }}</option>{{ end }}</select>
                             ({{ len .Topics }} topics)
                             <input type="submit" name="task" value="Forum category change">
                             {{ if eq (len .Topics) 0 }}
-                            <input type="submit" name="task" formaction="/admin/forum/categories/category/{{ .Idforumcategory }}/delete" value="Delete Category">
+                            <input type="submit" name="task" formaction="/admin/forum/categories/category/{{ .ID }}/delete" value="Delete Category">
                             {{ end }}
                         </form>
                     {{ else }}
-                        <strong><a href="/forum/category/{{ .Idforumcategory }}">{{ .Title.String }}</a></strong> - {{ .Description.String }} ({{ len .Topics }})<br>
+                        <strong><a href="/forum/category/{{ .ID }}">{{ .Title.String }}</a></strong> - {{ .Description.String }} ({{ len .Topics }})<br>
                     {{ end }}
                 </td>
             </tr>
@@ -27,9 +27,9 @@
                     {{ template "getAllForumCategories" (call $.CopyDataToSubCategories .) }}
                     {{ template "tableTopics" (dict "Topics" .Topics) }}
                     {{ if $.Admin }}
-                        <a href="/admin/forum/categories/create?category={{ .Idforumcategory }}">Create Category</a><br>
-                        {{ if ne .Idforumcategory 0 }}
-                            <a href="/admin/forum/topics/create?category={{ .Idforumcategory }}">Create Topic</a><br>
+                        <a href="/admin/forum/categories/create?category={{ .ID }}">Create Category</a><br>
+                        {{ if ne .ID 0 }}
+                            <a href="/admin/forum/topics/create?category={{ .ID }}">Create Topic</a><br>
                         {{ end }}
                     {{ end }}
                 </td>

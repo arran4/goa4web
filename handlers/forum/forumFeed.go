@@ -29,10 +29,10 @@ func TopicFeed(r *http.Request, title string, topicID int, rows []*db.GetForumTh
 		Created:     time.Now(),
 	}
 	for _, row := range rows {
-		if !row.Firstposttext.Valid {
+		if !row.FirstCommentText.Valid {
 			continue
 		}
-		text := row.Firstposttext.String
+		text := row.FirstCommentText.String
 		conv := a4code2html.New(cd.ImageURLMapper)
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(text)
@@ -43,17 +43,17 @@ func TopicFeed(r *http.Request, title string, topicID int, rows []*db.GetForumTh
 		}
 		item := &feeds.Item{
 			Title:   text[:i],
-			Link:    &feeds.Link{Href: fmt.Sprintf("/forum/topic/%d/thread/%d", topicID, row.Idforumthread)},
+			Link:    &feeds.Link{Href: fmt.Sprintf("/forum/topic/%d/thread/%d", topicID, row.ID)},
 			Created: time.Now(),
 			Description: fmt.Sprintf("%s\n-\n%s", string(out), func() string {
-				if row.Firstpostusername.Valid {
-					return row.Firstpostusername.String
+				if row.FirstCommentUsername.Valid {
+					return row.FirstCommentUsername.String
 				}
 				return ""
 			}()),
 		}
-		if row.Firstpostwritten.Valid {
-			item.Created = row.Firstpostwritten.Time
+		if row.FirstCommentWritten.Valid {
+			item.Created = row.FirstCommentWritten.Time
 		}
 		feed.Items = append(feed.Items, item)
 	}

@@ -114,9 +114,9 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 	})
 	var ptid int32
 	if errors.Is(err, sql.ErrNoRows) {
-                ptidi, err := queries.CreateForumTopicForPoster(r.Context(), db.CreateForumTopicForPosterParams{
-                        ForumcategoryID: 0,
-                        ForumLang:       link.LanguageIdlanguage,
+		ptidi, err := queries.CreateForumTopicForPoster(r.Context(), db.CreateForumTopicForPosterParams{
+			ForumcategoryID: 0,
+			ForumLang:       link.LanguageIdlanguage,
 			Title: sql.NullString{
 				String: LinkerTopicName,
 				Valid:  true,
@@ -142,7 +142,7 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	} else {
-		ptid = pt.Idforumtopic
+		ptid = pt.ID
 	}
 	if pthid == 0 {
 		pthidi, err := queries.SystemCreateThread(r.Context(), ptid)

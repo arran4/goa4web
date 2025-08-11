@@ -160,7 +160,7 @@ func (ReplyBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 	} else if err != nil {
 		return fmt.Errorf("findForumTopicByTitle fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	} else {
-		ptid = pt.Idforumtopic
+		ptid = pt.ID
 	}
 	if pthid == 0 {
 		pthidi, err := queries.SystemCreateThread(r.Context(), ptid)

@@ -24,7 +24,7 @@ func (cd *CoreData) ForumCategory(id int32) (*db.Forumcategory, error) {
 	if cd.queries == nil {
 		return nil, nil
 	}
-	return cd.queries.GetForumCategoryById(cd.ctx, db.GetForumCategoryByIdParams{Idforumcategory: id, ViewerID: cd.UserID})
+	return cd.queries.GetForumCategoryById(cd.ctx, db.GetForumCategoryByIdParams{ID: id, ViewerID: cd.UserID})
 }
 
 // ForumThreadByID returns a single forum thread lazily loading it once per ID.
@@ -77,7 +77,7 @@ func (cd *CoreData) ForumTopicByID(id int32, ops ...lazy.Option[*db.GetForumTopi
 		}
 		return cd.queries.GetForumTopicByIdForUser(cd.ctx, db.GetForumTopicByIdForUserParams{
 			ViewerID:      cd.UserID,
-			Idforumtopic:  i,
+			ID:            i,
 			ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
 	}
@@ -112,17 +112,17 @@ func (cd *CoreData) ForumTopics(categoryID int32) ([]*db.GetForumTopicsForUserRo
 		result := make([]*db.GetForumTopicsForUserRow, len(rows))
 		for i, r := range rows {
 			result[i] = &db.GetForumTopicsForUserRow{
-				Idforumtopic:                 r.Idforumtopic,
-				Lastposter:                   r.Lastposter,
-				ForumcategoryIdforumcategory: r.ForumcategoryIdforumcategory,
-				LanguageIdlanguage:           r.LanguageIdlanguage,
-				Title:                        r.Title,
-				Description:                  r.Description,
-				Threads:                      r.Threads,
-				Comments:                     r.Comments,
-				Lastaddition:                 r.Lastaddition,
-				Handler:                      r.Handler,
-				Lastposterusername:           r.Lastposterusername,
+				ID:                 r.ID,
+				LastAuthorID:       r.LastAuthorID,
+				CategoryID:         r.CategoryID,
+				LanguageID: r.LanguageID,
+				Title:              r.Title,
+				Description:        r.Description,
+				Threads:            r.Threads,
+				Comments:           r.Comments,
+				Lastaddition:       r.Lastaddition,
+				Handler:            r.Handler,
+				LastAuthorUsername: r.LastAuthorUsername,
 			}
 		}
 		return result, nil

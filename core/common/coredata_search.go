@@ -31,7 +31,7 @@ func (cd *CoreData) SearchLinker(r *http.Request) error {
 		return fmt.Errorf("Internal Server Error")
 	}
 
-	comments, emptyWords, noResults, err := cd.forumCommentSearchInRestrictedTopic(r, []int32{ftbn.Idforumtopic}, uid)
+	comments, emptyWords, noResults, err := cd.forumCommentSearchInRestrictedTopic(r, []int32{ftbn.ID}, uid)
 	if err != nil {
 		return err
 	}
@@ -59,7 +59,7 @@ func (cd *CoreData) SearchWritings(r *http.Request) error {
 		return fmt.Errorf("Internal Server Error")
 	}
 
-	comments, emptyWords, noResults, err := cd.forumCommentSearchInRestrictedTopic(r, []int32{ftbn.Idforumtopic}, uid)
+	comments, emptyWords, noResults, err := cd.forumCommentSearchInRestrictedTopic(r, []int32{ftbn.ID}, uid)
 	if err != nil {
 		return err
 	}
@@ -87,7 +87,7 @@ func (cd *CoreData) SearchBlogs(r *http.Request) error {
 		return fmt.Errorf("Internal Server Error")
 	}
 
-	comments, emptyWords, noResults, err := cd.forumCommentSearchInRestrictedTopic(r, []int32{ftbn.Idforumtopic}, uid)
+	comments, emptyWords, noResults, err := cd.forumCommentSearchInRestrictedTopic(r, []int32{ftbn.ID}, uid)
 	if err != nil {
 		return err
 	}

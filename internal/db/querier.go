@@ -46,10 +46,10 @@ type Querier interface {
 	AdminDeleteExternalLinkByURL(ctx context.Context, url string) error
 	AdminDeleteFAQ(ctx context.Context, id int32) error
 	AdminDeleteFAQCategory(ctx context.Context, id int32) error
-	AdminDeleteForumCategory(ctx context.Context, idforumcategory int32) error
-	AdminDeleteForumThread(ctx context.Context, idforumthread int32) error
+	AdminDeleteForumCategory(ctx context.Context, id int32) error
+	AdminDeleteForumThread(ctx context.Context, id int32) error
 	// Removes a forum topic by ID.
-	AdminDeleteForumTopic(ctx context.Context, idforumtopic int32) error
+	AdminDeleteForumTopic(ctx context.Context, id int32) error
 	AdminDeleteGrant(ctx context.Context, id int32) error
 	AdminDeleteImageBoard(ctx context.Context, idimageboard int32) error
 	AdminDeleteImagePost(ctx context.Context, idimagepost int32) error
@@ -181,7 +181,7 @@ type Querier interface {
 	AdminPurgeReadNotifications(ctx context.Context) error
 	AdminRebuildAllForumTopicMetaColumns(ctx context.Context) error
 	AdminRecalculateAllForumThreadMetaData(ctx context.Context) error
-	AdminRecalculateForumThreadByIdMetaData(ctx context.Context, idforumthread int32) error
+	AdminRecalculateForumThreadByIdMetaData(ctx context.Context, id int32) error
 	AdminRenameFAQCategory(ctx context.Context, arg AdminRenameFAQCategoryParams) error
 	// AdminRenameLanguage updates the language name.
 	// Parameters:
@@ -286,9 +286,9 @@ type Querier interface {
 	GetForumCategoryById(ctx context.Context, arg GetForumCategoryByIdParams) (*Forumcategory, error)
 	GetForumThreadIdByNewsPostId(ctx context.Context, idsitenews int32) (*GetForumThreadIdByNewsPostIdRow, error)
 	GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText(ctx context.Context, arg GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams) ([]*GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow, error)
-	GetForumTopicById(ctx context.Context, idforumtopic int32) (*Forumtopic, error)
+	GetForumTopicById(ctx context.Context, id int32) (*Forumtopic, error)
 	GetForumTopicByIdForUser(ctx context.Context, arg GetForumTopicByIdForUserParams) (*GetForumTopicByIdForUserRow, error)
-	GetForumTopicIdByThreadId(ctx context.Context, idforumthread int32) (int32, error)
+	GetForumTopicIdByThreadId(ctx context.Context, id int32) (int32, error)
 	GetForumTopicsByCategoryId(ctx context.Context, arg GetForumTopicsByCategoryIdParams) ([]*Forumtopic, error)
 	GetForumTopicsForUser(ctx context.Context, arg GetForumTopicsForUserParams) ([]*GetForumTopicsForUserRow, error)
 	GetImageBoardById(ctx context.Context, idimageboard int32) (*Imageboard, error)
@@ -437,7 +437,7 @@ type Querier interface {
 	SystemCreateGrant(ctx context.Context, arg SystemCreateGrantParams) (int64, error)
 	SystemCreateNotification(ctx context.Context, arg SystemCreateNotificationParams) error
 	SystemCreateSearchWord(ctx context.Context, word string) (int64, error)
-	SystemCreateThread(ctx context.Context, forumtopicIdforumtopic int32) (int64, error)
+	SystemCreateThread(ctx context.Context, topicID int32) (int64, error)
 	// This query inserts a new permission into the "permissions" table.
 	// Parameters:
 	//   ? - User ID to be associated with the permission (int)
@@ -501,7 +501,7 @@ type Querier interface {
 	SystemPurgeDeadLettersBefore(ctx context.Context, createdAt time.Time) error
 	// Remove password reset entries that have expired or were already verified
 	SystemPurgePasswordResetsBefore(ctx context.Context, createdAt time.Time) (sql.Result, error)
-	SystemRebuildForumTopicMetaByID(ctx context.Context, idforumtopic int32) error
+	SystemRebuildForumTopicMetaByID(ctx context.Context, id int32) error
 	SystemRegisterExternalLinkClick(ctx context.Context, url string) error
 	SystemSetBlogLastIndex(ctx context.Context, id int32) error
 	SystemSetCommentLastIndex(ctx context.Context, idcomments int32) error

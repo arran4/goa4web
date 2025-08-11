@@ -7,13 +7,13 @@
     {{ $base := "/forum" }}
     {{ with .BasePath }}{{ $base = . }}{{ end }}
     <div class="topic-actions">
-        <a href="{{$base}}/topic/{{.Topic.Idforumtopic}}/thread">New Thread</a>
-        {{- if and cd.IsAdmin cd.IsAdminMode }} | [<a href="/admin/forum/topics/topic/{{.Topic.Idforumtopic}}/edit">ADMIN</a>]{{ end }}
-        {{- if .Subscribed }} | <form method="post" action="{{$base}}/topic/{{.Topic.Idforumtopic}}/unsubscribe">
+        <a href="{{$base}}/topic/{{.Topic.ID}}/thread">New Thread</a>
+        {{- if and cd.IsAdmin cd.IsAdminMode }} | [<a href="/admin/forum/topics/topic/{{.Topic.ID}}/edit">ADMIN</a>]{{ end }}
+        {{- if .Subscribed }} | <form method="post" action="{{$base}}/topic/{{.Topic.ID}}/unsubscribe">
                 <input type="hidden" name="task" value="Unsubscribe From Topic"/>
                 <input type="submit" value="Unsubscribe"/>
             </form>
-        {{- else }} | <form method="post" action="{{$base}}/topic/{{.Topic.Idforumtopic}}/subscribe">
+        {{- else }} | <form method="post" action="{{$base}}/topic/{{.Topic.ID}}/subscribe">
                 <input type="hidden" name="task" value="Subscribe To Topic"/>
                 <input type="submit" value="Subscribe"/>
             </form>

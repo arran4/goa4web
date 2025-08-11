@@ -70,7 +70,7 @@ func adminUserGrantAddPage(w http.ResponseWriter, r *http.Request) {
 			cats, _ := queries.GetAllForumCategories(r.Context(), db.GetAllForumCategoriesParams{ViewerID: cd.UserID})
 			catMap := map[int32]*db.Forumcategory{}
 			for _, c := range cats {
-				catMap[c.Idforumcategory] = c
+				catMap[c.ID] = c
 			}
 			var buildPath func(int32) string
 			buildPath = func(id int32) string {
@@ -81,15 +81,15 @@ func adminUserGrantAddPage(w http.ResponseWriter, r *http.Request) {
 				if !ok || !c.Title.Valid {
 					return ""
 				}
-				parent := buildPath(c.ForumcategoryIdforumcategory)
+				parent := buildPath(c.ParentCategoryID)
 				if parent != "" {
 					return parent + "/" + c.Title.String
 				}
 				return c.Title.String
 			}
 			for _, c := range cats {
-				label := buildPath(c.Idforumcategory)
-				data.ItemOptions = append(data.ItemOptions, ItemOption{ID: c.Idforumcategory, Label: label})
+				label := buildPath(c.ID)
+				data.ItemOptions = append(data.ItemOptions, ItemOption{ID: c.ID, Label: label})
 			}
 		}
 	}

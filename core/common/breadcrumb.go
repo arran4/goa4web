@@ -58,12 +58,12 @@ func (cd *CoreData) forumBreadcrumbs() ([]Breadcrumb, error) {
 
 	if threadID != 0 && topicID == 0 {
 		if th, err := cd.SelectedThread(); err == nil && th != nil {
-			topicID = th.ForumtopicIdforumtopic
+			topicID = th.TopicID
 		}
 	}
 	if topicID != 0 && catID == 0 {
 		if tp, err := cd.ForumTopicByID(topicID); err == nil && tp != nil {
-			catID = tp.ForumcategoryIdforumcategory
+			catID = tp.CategoryID
 		}
 	}
 	if catID != 0 {
@@ -72,12 +72,12 @@ func (cd *CoreData) forumBreadcrumbs() ([]Breadcrumb, error) {
 			return nil, err
 		}
 		for _, row := range rows {
-			title := fmt.Sprintf("Category %d", row.Idforumcategory)
+			title := fmt.Sprintf("Category %d", row.ID)
 			if row.Title.Valid {
 				title = row.Title.String
 			}
-			link := fmt.Sprintf("%s/category/%d", base, row.Idforumcategory)
-			if row.Idforumcategory == catID && topicID == 0 && threadID == 0 {
+			link := fmt.Sprintf("%s/category/%d", base, row.ID)
+			if row.ID == catID && topicID == 0 && threadID == 0 {
 				crumbs = append(crumbs, Breadcrumb{Title: title})
 			} else {
 				crumbs = append(crumbs, Breadcrumb{Title: title, Link: link})

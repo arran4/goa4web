@@ -46,7 +46,7 @@ func SearchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if comments, emptyWords, noResults, err := forumCommentSearchInRestrictedTopic(w, r, queries, []int32{ftbn.Idforumtopic}, uid); err != nil {
+	if comments, emptyWords, noResults, err := forumCommentSearchInRestrictedTopic(w, r, queries, []int32{ftbn.ID}, uid); err != nil {
 		return
 	} else {
 		data.Comments = comments

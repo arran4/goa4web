@@ -4,33 +4,33 @@ FROM imagepost
 WHERE imageboard_idimageboard = ?;
 
 -- name: AdminForumTopicThreadCounts :many
-SELECT t.idforumtopic, t.title, t.handler,
-       COUNT(DISTINCT th.idforumthread) AS threads,
+SELECT t.id, t.title, t.handler,
+       COUNT(DISTINCT th.id) AS threads,
        COUNT(c.idcomments) AS comments
 FROM forumtopic t
-LEFT JOIN forumthread th ON th.forumtopic_idforumtopic = t.idforumtopic
-LEFT JOIN comments c ON c.forumthread_id = th.idforumthread
-GROUP BY t.idforumtopic, t.title, t.handler
+LEFT JOIN forumthread th ON th.topic_id = t.id
+LEFT JOIN comments c ON c.forumthread_id = th.id
+GROUP BY t.id, t.title, t.handler
 ORDER BY t.title;
 
 -- name: AdminForumCategoryThreadCounts :many
-SELECT c.idforumcategory, c.title,
-       COUNT(DISTINCT th.idforumthread) AS threads,
+SELECT c.id, c.title,
+       COUNT(DISTINCT th.id) AS threads,
        COUNT(cm.idcomments) AS comments
 FROM forumcategory c
-LEFT JOIN forumtopic t ON c.idforumcategory = t.forumcategory_idforumcategory
-LEFT JOIN forumthread th ON th.forumtopic_idforumtopic = t.idforumtopic
-LEFT JOIN comments cm ON cm.forumthread_id = th.idforumthread
-GROUP BY c.idforumcategory
+LEFT JOIN forumtopic t ON c.id = t.category_id
+LEFT JOIN forumthread th ON th.topic_id = t.id
+LEFT JOIN comments cm ON cm.forumthread_id = th.id
+GROUP BY c.id
 ORDER BY c.title;
 
 -- name: AdminForumHandlerThreadCounts :many
 SELECT t.handler,
-       COUNT(DISTINCT th.idforumthread) AS threads,
+       COUNT(DISTINCT th.id) AS threads,
        COUNT(c.idcomments) AS comments
 FROM forumtopic t
-LEFT JOIN forumthread th ON th.forumtopic_idforumtopic = t.idforumtopic
-LEFT JOIN comments c ON c.forumthread_id = th.idforumthread
+LEFT JOIN forumthread th ON th.topic_id = t.id
+LEFT JOIN comments c ON c.forumthread_id = th.id
 GROUP BY t.handler
 ORDER BY t.handler;
 

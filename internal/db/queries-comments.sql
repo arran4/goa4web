@@ -5,8 +5,8 @@ WITH role_ids AS (
 SELECT c.*, pu.Username,
        c.users_idusers = sqlc.arg(viewer_id) AS is_owner
 FROM comments c
-LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
-LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
+LEFT JOIN forumthread th ON c.forumthread_id=th.id
+LEFT JOIN forumtopic t ON th.topic_id=t.id
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
 WHERE c.idcomments = sqlc.arg(id)
   AND (
@@ -27,7 +27,7 @@ WHERE c.idcomments = sqlc.arg(id)
       AND (g.item='topic' OR g.item IS NULL)
       AND g.action='see'
       AND g.active=1
-      AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
+      AND (g.item_id = t.id OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
@@ -63,14 +63,14 @@ WITH role_ids AS (
 )
 SELECT c.*, pu.username AS posterusername,
        c.users_idusers = sqlc.arg(viewer_id) AS is_owner,
-       th.idforumthread, t.idforumtopic, t.title AS forumtopic_title,
-       fp.text AS thread_title, fc.idforumcategory, fc.title AS forumcategory_title
+       th.id, t.id, t.title AS forumtopic_title,
+       fp.text AS thread_title, fc.id, fc.title AS forumcategory_title
 FROM comments c
-LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
-LEFT JOIN comments fp ON th.firstpost = fp.idcomments
-LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
+LEFT JOIN forumthread th ON c.forumthread_id=th.id
+LEFT JOIN comments fp ON th.first_comment_id = fp.idcomments
+LEFT JOIN forumtopic t ON th.topic_id=t.id
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
-LEFT JOIN forumcategory fc ON t.forumcategory_idforumcategory = fc.idforumcategory
+LEFT JOIN forumcategory fc ON t.category_id = fc.id
 WHERE c.Idcomments IN (sqlc.slice('ids'))
   AND (
       c.language_idlanguage = 0
@@ -90,7 +90,7 @@ WHERE c.Idcomments IN (sqlc.slice('ids'))
       AND (g.item='topic' OR g.item IS NULL)
       AND g.action='see'
       AND g.active=1
-      AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
+      AND (g.item_id = t.id OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -120,8 +120,8 @@ WITH role_ids AS (
 SELECT c.*, pu.username AS posterusername,
        c.users_idusers = sqlc.arg(viewer_id) AS is_owner
 FROM comments c
-LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
-LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
+LEFT JOIN forumthread th ON c.forumthread_id=th.id
+LEFT JOIN forumtopic t ON th.topic_id=t.id
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
 WHERE c.forumthread_id=sqlc.arg(thread_id)
   AND c.forumthread_id IS NOT NULL
@@ -143,7 +143,7 @@ WHERE c.forumthread_id=sqlc.arg(thread_id)
       AND (g.item='topic' OR g.item IS NULL)
       AND g.action='see'
       AND g.active=1
-      AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
+      AND (g.item_id = t.id OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
@@ -158,8 +158,8 @@ WITH role_ids(id) AS (
 SELECT c.*, pu.username AS posterusername,
        c.users_idusers = sqlc.arg(viewer_id) AS is_owner
 FROM comments c
-LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
-LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
+LEFT JOIN forumthread th ON c.forumthread_id=th.id
+LEFT JOIN forumtopic t ON th.topic_id=t.id
 LEFT JOIN users pu ON pu.idusers = c.users_idusers
 WHERE c.forumthread_id=sqlc.arg(thread_id)
   AND c.forumthread_id IS NOT NULL
@@ -181,7 +181,7 @@ WHERE c.forumthread_id=sqlc.arg(thread_id)
       AND (g.item=sqlc.arg(item_type) OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
-      AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
+      AND (g.item_id = t.id OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
@@ -191,12 +191,12 @@ ORDER BY c.written;
 -- name: AdminGetAllCommentsByUser :many
 SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage,
        c.written, c.text, c.deleted_at, c.last_index, c.timezone,
-       th.forumtopic_idforumtopic, t.title AS forumtopic_title,
+       th.topic_id, t.title AS forumtopic_title,
        fp.text AS thread_title
 FROM comments c
-LEFT JOIN forumthread th ON c.forumthread_id = th.idforumthread
-LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
-LEFT JOIN comments fp ON th.firstpost = fp.idcomments
+LEFT JOIN forumthread th ON c.forumthread_id = th.id
+LEFT JOIN forumtopic t ON th.topic_id = t.id
+LEFT JOIN comments fp ON th.first_comment_id = fp.idcomments
 WHERE c.users_idusers = sqlc.arg('user_id')
 ORDER BY c.written;
 
@@ -215,11 +215,11 @@ SELECT idcomments, text FROM comments WHERE deleted_at IS NULL;
 
 -- name: AdminListAllCommentsWithThreadInfo :many
 SELECT c.idcomments, c.written, c.text, c.deleted_at,
-       th.idforumthread, t.idforumtopic, t.title AS forumtopic_title,
+       th.id, t.id, t.title AS forumtopic_title,
        u.idusers, u.username AS posterusername
 FROM comments c
-LEFT JOIN forumthread th ON c.forumthread_id = th.idforumthread
-LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
+LEFT JOIN forumthread th ON c.forumthread_id = th.id
+LEFT JOIN forumtopic t ON th.topic_id = t.id
 LEFT JOIN users u ON u.idusers = c.users_idusers
 ORDER BY c.written DESC
 LIMIT ? OFFSET ?;

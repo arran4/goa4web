@@ -96,7 +96,7 @@ func buildGrantGroupsFromGrants(ctx context.Context, cd *common.CoreData, grants
 	forumCats, _ := queries.GetAllForumCategories(ctx, db.GetAllForumCategoriesParams{ViewerID: 0})
 	catMap := map[int32]*db.Forumcategory{}
 	for _, c := range forumCats {
-		catMap[c.Idforumcategory] = c
+		catMap[c.ID] = c
 	}
 
 	langs, _ := cd.Languages()
@@ -118,7 +118,7 @@ func buildGrantGroupsFromGrants(ctx context.Context, cd *common.CoreData, grants
 				break
 			}
 			parts = append([]string{c.Title.String}, parts...)
-			cid = c.ForumcategoryIdforumcategory
+			cid = c.ParentCategoryID
 		}
 		return strings.Join(parts, "/")
 	}
@@ -143,7 +143,7 @@ func buildGrantGroupsFromGrants(ctx context.Context, cd *common.CoreData, grants
 					if t, err := queries.GetForumTopicById(ctx, g.ItemID.Int32); err == nil {
 						if t.Title.Valid {
 							info := t.Title.String
-							cat := buildCatPath(t.ForumcategoryIdforumcategory)
+							cat := buildCatPath(t.CategoryID)
 							if cat != "" {
 								info = fmt.Sprintf("%s (%s)", info, cat)
 							}
@@ -152,15 +152,15 @@ func buildGrantGroupsFromGrants(ctx context.Context, cd *common.CoreData, grants
 					}
 				case "category":
 					gi.Link = fmt.Sprintf("/admin/forum/categories/category/%d/grants#g%d", g.ItemID.Int32, g.ID)
-					if c, err := queries.GetForumCategoryById(ctx, db.GetForumCategoryByIdParams{Idforumcategory: g.ItemID.Int32, ViewerID: 0}); err == nil && c.Title.Valid {
-						path := buildCatPath(c.Idforumcategory)
+					if c, err := queries.GetForumCategoryById(ctx, db.GetForumCategoryByIdParams{ID: g.ItemID.Int32, ViewerID: 0}); err == nil && c.Title.Valid {
+						path := buildCatPath(c.ID)
 						gi.Info = path
 					}
 				case "thread":
 					if tid, err := queries.GetForumTopicIdByThreadId(ctx, g.ItemID.Int32); err == nil {
 						if t, err := queries.GetForumTopicById(ctx, tid); err == nil {
 							if t.Title.Valid {
-								cat := buildCatPath(t.ForumcategoryIdforumcategory)
+								cat := buildCatPath(t.CategoryID)
 								info := fmt.Sprintf("%s thread", t.Title.String)
 								if cat != "" {
 									info = fmt.Sprintf("%s (%s)", info, cat)

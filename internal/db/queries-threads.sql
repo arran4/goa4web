@@ -3,23 +3,23 @@ UPDATE forumthread
 SET lastaddition = (
     SELECT written
     FROM comments
-    WHERE forumthread_id = idforumthread
+    WHERE forumthread_id = id
     ORDER BY written DESC
     LIMIT 1
 ), comments = (
     SELECT COUNT(users_idusers) - 1
     FROM comments
-    WHERE forumthread_id = idforumthread
-), lastposter = (
+    WHERE forumthread_id = id
+), last_author_id = (
     SELECT users_idusers
     FROM comments
-    WHERE forumthread_id = idforumthread
+    WHERE forumthread_id = id
     ORDER BY written DESC
     LIMIT 1
-), firstpost = (
+), first_comment_id = (
     SELECT idcomments
     FROM comments
-    WHERE forumthread_id = idforumthread
+    WHERE forumthread_id = id
     LIMIT 1
 );
 
@@ -28,37 +28,37 @@ UPDATE forumthread
 SET lastaddition = (
     SELECT written
     FROM comments
-    WHERE forumthread_id = idforumthread
+    WHERE forumthread_id = id
     ORDER BY written DESC
     LIMIT 1
 ), comments = (
     SELECT COUNT(users_idusers) - 1
     FROM comments
-    WHERE forumthread_id = idforumthread
-), lastposter = (
+    WHERE forumthread_id = id
+), last_author_id = (
     SELECT users_idusers
     FROM comments
-    WHERE forumthread_id = idforumthread
+    WHERE forumthread_id = id
     ORDER BY written DESC
     LIMIT 1
-), firstpost = (
+), first_comment_id = (
     SELECT idcomments
     FROM comments
-    WHERE forumthread_id = idforumthread
+    WHERE forumthread_id = id
     LIMIT 1
 )
-WHERE idforumthread = ?;
+WHERE id = ?;
 
 -- name: GetThreadLastPosterAndPerms :one
 WITH role_ids AS (
     SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
 )
-SELECT th.*, lu.username AS LastPosterUsername
+SELECT th.*, lu.username AS LastAuthorUsername
 FROM forumthread th
-LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
-LEFT JOIN users lu ON lu.idusers = t.lastposter
-LEFT JOIN comments fc ON th.firstpost = fc.idcomments
-WHERE th.idforumthread=sqlc.arg(thread_id)
+LEFT JOIN forumtopic t ON th.topic_id=t.id
+LEFT JOIN users lu ON lu.idusers = t.last_author_id
+LEFT JOIN comments fc ON th.first_comment_id = fc.idcomments
+WHERE th.id=sqlc.arg(thread_id)
   AND (
       fc.language_idlanguage = 0
       OR fc.language_idlanguage IS NULL
@@ -77,36 +77,36 @@ WHERE th.idforumthread=sqlc.arg(thread_id)
       AND (g.item='topic' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
-      AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
+      AND (g.item_id = t.id OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(viewer_match_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY t.lastaddition DESC;
 
 -- name: SystemCreateThread :execlastid
-INSERT INTO forumthread (forumtopic_idforumtopic) VALUES (?);
+INSERT INTO forumthread (topic_id) VALUES (?);
 
 
 -- name: GetForumTopicIdByThreadId :one
-SELECT forumtopic_idforumtopic FROM forumthread WHERE idforumthread = ?;
+SELECT topic_id FROM forumthread WHERE id = ?;
 
 -- name: AdminDeleteForumThread :exec
-UPDATE forumthread SET deleted_at = NOW() WHERE idforumthread = ?;
+UPDATE forumthread SET deleted_at = NOW() WHERE id = ?;
 
 
 -- name: AdminGetThreadsStartedByUser :many
 SELECT th.*
 FROM forumthread th
-JOIN comments c ON th.firstpost = c.idcomments
+JOIN comments c ON th.first_comment_id = c.idcomments
 WHERE c.users_idusers = ?
 ORDER BY th.lastaddition DESC;
 
 -- name: AdminGetThreadsStartedByUserWithTopic :many
-SELECT th.*, t.title AS topic_title, fc.idforumcategory AS category_id, fc.title AS category_title
+SELECT th.*, t.title AS topic_title, fc.id AS category_id, fc.title AS category_title
 FROM forumthread th
-JOIN comments c ON th.firstpost = c.idcomments
-LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
-LEFT JOIN forumcategory fc ON t.forumcategory_idforumcategory = fc.idforumcategory
+JOIN comments c ON th.first_comment_id = c.idcomments
+LEFT JOIN forumtopic t ON th.topic_id = t.id
+LEFT JOIN forumcategory fc ON t.category_id = fc.id
 WHERE c.users_idusers = ?
 ORDER BY th.lastaddition DESC;
 
@@ -116,8 +116,8 @@ WITH role_ids AS (
 )
 SELECT th.*
 FROM forumthread th
-LEFT JOIN comments fc ON th.firstpost = fc.idcomments
-WHERE th.idforumthread = sqlc.arg(thread_id)
+LEFT JOIN comments fc ON th.first_comment_id = fc.idcomments
+WHERE th.id = sqlc.arg(thread_id)
   AND (
       fc.language_idlanguage = 0
       OR fc.language_idlanguage IS NULL

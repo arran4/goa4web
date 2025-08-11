@@ -51,7 +51,7 @@ func (topicThreadCommentEditActionTask) Action(w http.ResponseWriter, r *http.Re
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(commentID), ThreadID: threadRow.Idforumthread, TopicID: topicRow.Idforumtopic}
+			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(commentID), ThreadID: threadRow.ID, TopicID: topicRow.ID}
 		}
 	}
 
@@ -59,5 +59,5 @@ func (topicThreadCommentEditActionTask) Action(w http.ResponseWriter, r *http.Re
 	if base == "" {
 		base = "/forum"
 	}
-	return handlers.RedirectHandler(fmt.Sprintf("%s/topic/%d/thread/%d#comment-%d", base, topicRow.Idforumtopic, threadRow.Idforumthread, commentID))
+	return handlers.RedirectHandler(fmt.Sprintf("%s/topic/%d/thread/%d#comment-%d", base, topicRow.ID, threadRow.ID, commentID))
 }

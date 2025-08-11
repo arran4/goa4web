@@ -45,12 +45,12 @@ func TopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(commentId), ThreadID: threadRow.Idforumthread, TopicID: topicRow.Idforumtopic}
-			evt.Data["CommentURL"] = cd.AbsoluteURL(fmt.Sprintf("/forum/topic/%d/thread/%d#comment-%d", topicRow.Idforumtopic, threadRow.Idforumthread, commentId))
+			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(commentId), ThreadID: threadRow.ID, TopicID: topicRow.ID}
+			evt.Data["CommentURL"] = cd.AbsoluteURL(fmt.Sprintf("/forum/topic/%d/thread/%d#comment-%d", topicRow.ID, threadRow.ID, commentId))
 		}
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/forum/topic/%d/thread/%d#comment-%d", topicRow.Idforumtopic, threadRow.Idforumthread, commentId), http.StatusTemporaryRedirect)
+	http.Redirect(w, r, fmt.Sprintf("/forum/topic/%d/thread/%d#comment-%d", topicRow.ID, threadRow.ID, commentId), http.StatusTemporaryRedirect)
 }
 
 func TopicThreadCommentEditActionCancelPage(w http.ResponseWriter, r *http.Request) {
@@ -68,7 +68,7 @@ func TopicThreadCommentEditActionCancelPage(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)
+	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.ID, threadRow.ID)
 
 	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
 }

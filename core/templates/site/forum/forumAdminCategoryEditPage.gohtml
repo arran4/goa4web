@@ -1,13 +1,13 @@
 {{ template "head" $ }}
-<h2>Edit Forum Category {{ .Category.Idforumcategory }}</h2>
-<form method="post" action="/admin/forum/categories/category/{{ .Category.Idforumcategory }}/edit">
+<h2>Edit Forum Category {{ .Category.ID }}</h2>
+<form method="post" action="/admin/forum/categories/category/{{ .Category.ID }}/edit">
     {{ csrfField }}
-    <p>Parent <select name="pcid" value="{{ .Category.ForumcategoryIdforumcategory }}"><option value="0">None</option>{{ range .Categories }}<option value="{{ .Idforumcategory }}" {{ if eq .Idforumcategory $.Category.ForumcategoryIdforumcategory }}selected{{ end }}>{{ .Title.String }}</option>{{ end }}</select></p>
+    <p>Parent <select name="pcid" value="{{ .Category.ForumcategoryID }}"><option value="0">None</option>{{ range .Categories }}<option value="{{ .ID }}" {{ if eq .ID $.Category.ForumcategoryID }}selected{{ end }}>{{ .Title.String }}</option>{{ end }}</select></p>
     <p>Title <input name="name" value="{{ .Category.Title.String }}"></p>
     <p>Description <textarea name="desc">{{ .Category.Description.String }}</textarea></p>
     <input type="submit" name="task" value="Forum category change">
 </form>
-<form method="post" action="/admin/forum/categories/category/{{ .Category.Idforumcategory }}/delete" style="margin-top:1em">
+<form method="post" action="/admin/forum/categories/category/{{ .Category.ID }}/delete" style="margin-top:1em">
     {{ csrfField }}
     <input type="submit" name="task" value="Delete Category">
 </form>

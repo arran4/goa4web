@@ -88,45 +88,45 @@ CREATE TABLE IF NOT EXISTS `faq_revisions` (
 );
 
 CREATE TABLE `forumcategory` (
-  `idforumcategory` int(10) NOT NULL AUTO_INCREMENT,
-  `forumcategory_idforumcategory` int(10) NOT NULL DEFAULT 0,
-  `language_idlanguage` int(10) DEFAULT NULL,
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `parent_category_id` int(10) NOT NULL DEFAULT 0,
+  `language_id` int(10) DEFAULT NULL,
   `title` tinytext DEFAULT NULL,
   `description` mediumtext DEFAULT NULL,
-  PRIMARY KEY (`idforumcategory`),
-  KEY `forumcategory_FKIndex1` (`forumcategory_idforumcategory`),
-  KEY `forumcategory_FKIndex2` (`language_idlanguage`)
+  PRIMARY KEY (`id`),
+  KEY `forumcategory_FKIndex1` (`parent_category_id`),
+  KEY `forumcategory_FKIndex2` (`language_id`)
 );
 
 CREATE TABLE `forumthread` (
-  `idforumthread` int(10) NOT NULL AUTO_INCREMENT,
-  `firstpost` int(10) NOT NULL DEFAULT 0,
-  `lastposter` int(10) NOT NULL DEFAULT 0,
-  `forumtopic_idforumtopic` int(10) NOT NULL DEFAULT 0,
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `first_comment_id` int(10) NOT NULL DEFAULT 0,
+  `last_author_id` int(10) NOT NULL DEFAULT 0,
+  `topic_id` int(10) NOT NULL DEFAULT 0,
   `comments` int(10) DEFAULT NULL,
   `lastaddition` datetime DEFAULT NULL,
   `locked` tinyint(1) DEFAULT NULL,
-  PRIMARY KEY (`idforumthread`),
-  KEY `forumdiscussions_FKIndex1` (`forumtopic_idforumtopic`),
-  KEY `forumthread_FKIndex2` (`lastposter`),
-  KEY `forumthread_FKIndex3` (`firstpost`)
+  PRIMARY KEY (`id`),
+  KEY `forumdiscussions_FKIndex1` (`topic_id`),
+  KEY `forumthread_FKIndex2` (`last_author_id`),
+  KEY `forumthread_FKIndex3` (`first_comment_id`)
 );
 
 CREATE TABLE `forumtopic` (
-  `idforumtopic` int(10) NOT NULL AUTO_INCREMENT,
-  `lastposter` int(10) NOT NULL DEFAULT 0,
-  `forumcategory_idforumcategory` int(10) NOT NULL DEFAULT 0,
-  `language_idlanguage` int(10) DEFAULT NULL,
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `last_author_id` int(10) NOT NULL DEFAULT 0,
+  `category_id` int(10) NOT NULL DEFAULT 0,
+  `language_id` int(10) DEFAULT NULL,
   `title` tinytext DEFAULT NULL,
   `description` mediumtext DEFAULT NULL,
   `threads` int(10) DEFAULT NULL,
   `comments` int(10) DEFAULT NULL,
   `lastaddition` datetime DEFAULT NULL,
   `handler` varchar(32) NOT NULL DEFAULT '',
-  PRIMARY KEY (`idforumtopic`),
-  KEY `forumtopic_FKIndex1` (`forumcategory_idforumcategory`),
-  KEY `forumtopic_FKIndex2` (`lastposter`),
-  KEY `forumtopic_FKIndex3` (`language_idlanguage`)
+  PRIMARY KEY (`id`),
+  KEY `forumtopic_FKIndex1` (`category_id`),
+  KEY `forumtopic_FKIndex2` (`last_author_id`),
+  KEY `forumtopic_FKIndex3` (`language_id`)
 );
 
 CREATE TABLE `imageboard` (

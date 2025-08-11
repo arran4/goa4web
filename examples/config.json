@@ -62,6 +62,6 @@
   "SMTP_STARTTLS": "true",
   "SMTP_USER": "",
   "STATS_START_YEAR": "2005",
-  "TIMEZONE": "Australia/Melbourne",
-  "TEMPLATES_DIR": ""
+  "TEMPLATES_DIR": "",
+  "TIMEZONE": "Australia/Melbourne"
 }

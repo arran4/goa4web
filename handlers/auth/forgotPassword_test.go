@@ -40,7 +40,9 @@ func TestForgotPasswordTemplatesExist(t *testing.T) {
 		emailAssociationRequestTask,
 	}
 	for _, p := range admins {
-		requireEmailTemplates(t, p.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+		if et, _ := p.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}); et != nil {
+			requireEmailTemplates(t, et)
+		}
 		requireNotificationTemplate(t, p.AdminInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
 	}
 
@@ -48,7 +50,11 @@ func TestForgotPasswordTemplatesExist(t *testing.T) {
 		forgotPasswordTask,
 	}
 	for _, p := range selfProviders {
-		requireEmailTemplates(t, p.SelfEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+		if et, send := p.SelfEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}); send {
+			requireEmailTemplates(t, et)
+		} else {
+			t.Errorf("expected self email to be sent")
+		}
 		requireNotificationTemplate(t, p.SelfInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
 	}
 }

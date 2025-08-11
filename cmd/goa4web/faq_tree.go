@@ -38,11 +38,11 @@ func (c *faqTreeCmd) Run() error {
 	}
 	var lastCat int32 = -1
 	for _, r := range rows {
-		if r.Idfaqcategories.Valid && r.Idfaqcategories.Int32 != lastCat {
-			fmt.Printf("%d\t%s\n", r.Idfaqcategories.Int32, r.Name.String)
-			lastCat = r.Idfaqcategories.Int32
+		if r.CategoryID.Valid && r.CategoryID.Int32 != lastCat {
+			fmt.Printf("%d\t%s\n", r.CategoryID.Int32, r.Name.String)
+			lastCat = r.CategoryID.Int32
 		}
-		fmt.Printf("  %d\t%s\n", r.Idfaq, r.Question.String)
+		fmt.Printf("  %d\t%s\n", r.FaqID, r.Question.String)
 	}
 	return nil
 }

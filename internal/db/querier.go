@@ -44,8 +44,8 @@ type Querier interface {
 	AdminCreateLinkerItem(ctx context.Context, arg AdminCreateLinkerItemParams) error
 	AdminDeleteExternalLink(ctx context.Context, id int32) error
 	AdminDeleteExternalLinkByURL(ctx context.Context, url string) error
-	AdminDeleteFAQ(ctx context.Context, idfaq int32) error
-	AdminDeleteFAQCategory(ctx context.Context, idfaqcategories int32) error
+	AdminDeleteFAQ(ctx context.Context, id int32) error
+	AdminDeleteFAQCategory(ctx context.Context, id int32) error
 	AdminDeleteForumCategory(ctx context.Context, idforumcategory int32) error
 	AdminDeleteForumThread(ctx context.Context, idforumthread int32) error
 	// Removes a forum topic by ID.
@@ -78,12 +78,12 @@ type Querier interface {
 	AdminGetAllCommentsByUser(ctx context.Context, userID int32) ([]*AdminGetAllCommentsByUserRow, error)
 	AdminGetAllWritingsByAuthor(ctx context.Context, authorID int32) ([]*AdminGetAllWritingsByAuthorRow, error)
 	AdminGetDashboardStats(ctx context.Context) (*AdminGetDashboardStatsRow, error)
-	AdminGetFAQByID(ctx context.Context, idfaq int32) (*Faq, error)
+	AdminGetFAQByID(ctx context.Context, id int32) (*Faq, error)
 	AdminGetFAQCategories(ctx context.Context) ([]*FaqCategory, error)
 	AdminGetFAQCategoriesWithQuestionCount(ctx context.Context) ([]*AdminGetFAQCategoriesWithQuestionCountRow, error)
-	AdminGetFAQCategoryWithQuestionCountByID(ctx context.Context, idfaqcategories int32) (*AdminGetFAQCategoryWithQuestionCountByIDRow, error)
+	AdminGetFAQCategoryWithQuestionCountByID(ctx context.Context, id int32) (*AdminGetFAQCategoryWithQuestionCountByIDRow, error)
 	AdminGetFAQDismissedQuestions(ctx context.Context) ([]*Faq, error)
-	AdminGetFAQQuestionsByCategory(ctx context.Context, faqcategoriesIdfaqcategories sql.NullInt32) ([]*Faq, error)
+	AdminGetFAQQuestionsByCategory(ctx context.Context, faqCategoryID sql.NullInt32) ([]*Faq, error)
 	AdminGetFAQUnansweredQuestions(ctx context.Context) ([]*Faq, error)
 	AdminGetForumStats(ctx context.Context) (*AdminGetForumStatsRow, error)
 	AdminGetImagePost(ctx context.Context, idimagepost int32) (*AdminGetImagePostRow, error)

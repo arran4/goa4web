@@ -16,8 +16,8 @@ var (
 	_ notif.AdminEmailTemplateProvider = (*DeleteCategoryTask)(nil)
 )
 
-func (DeleteCategoryTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("adminNotificationForumDeleteCategoryEmail")
+func (DeleteCategoryTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("adminNotificationForumDeleteCategoryEmail"), true
 }
 
 func (DeleteCategoryTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

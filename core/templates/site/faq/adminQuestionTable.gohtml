@@ -4,13 +4,13 @@
 {{- range .Rows }}
 <tr>
     <td>{{ .Question.String }}</td>
-    <td>{{ $cat := .FaqcategoriesIdfaqcategories.Int32 }}{{ range $.Categories }}{{ if eq $cat .Idfaqcategories }}{{ .Name.String }}{{ end }}{{ end }}</td>
+    <td>{{ $cat := .FaqCategoryID.Int32 }}{{ range $.Categories }}{{ if eq $cat .ID }}{{ .Name.String }}{{ end }}{{ end }}</td>
     <td>
-        <a href="/admin/faq/question/{{ .Idfaq }}/edit">Edit</a> |
-        <a href="/admin/faq/revisions/{{ .Idfaq }}">History</a>
+        <a href="/admin/faq/question/{{ .ID }}/edit">Edit</a> |
+        <a href="/admin/faq/revisions/{{ .ID }}">History</a>
         <form method="post" action="" style="display:inline;">
             {{ csrfField }}
-            <input type="hidden" name="faq" value="{{ .Idfaq }}">
+            <input type="hidden" name="faq" value="{{ .ID }}">
             <input type="submit" name="task" value="Remove">
         </form>
     </td>

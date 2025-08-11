@@ -75,6 +75,9 @@ const (
 	// TaskTopicGrantDelete removes an existing forum topic grant.
 	TaskTopicGrantDelete tasks.TaskString = "Delete grant"
 
+	// TaskTopicGrantUpdate updates grants for a forum topic action.
+	TaskTopicGrantUpdate tasks.TaskString = "Update grants"
+
 	// TaskCategoryGrantCreate adds a new grant to a forum category.
 	TaskCategoryGrantCreate tasks.TaskString = "Create grant"
 

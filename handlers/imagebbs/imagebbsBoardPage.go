@@ -166,6 +166,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 		Fullimage:    sql.NullString{Valid: true, String: relFull},
 		PosterID:     uid,
 		Description:  sql.NullString{Valid: true, String: text},
+		Timezone:     sql.NullString{String: cd.Location().String(), Valid: true},
 		Approved:     approved,
 		FileSize:     int32(size),
 		GrantBoardID: sql.NullInt32{Int32: int32(bid), Valid: true},

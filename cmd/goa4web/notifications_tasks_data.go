@@ -31,7 +31,7 @@ func taskTemplateInfos(reg *tasks.Registry) []taskTemplateInfo {
 		t := e.Task
 		evt := eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}
 		if tp, ok := t.(notif.SelfNotificationTemplateProvider); ok {
-			if et := tp.SelfEmailTemplate(evt); et != nil {
+			if et, _ := tp.SelfEmailTemplate(evt); et != nil {
 				info.SelfEmail = []string{et.Text, et.HTML, et.Subject}
 			}
 			if nt := tp.SelfInternalNotificationTemplate(evt); nt != nil {
@@ -39,12 +39,12 @@ func taskTemplateInfos(reg *tasks.Registry) []taskTemplateInfo {
 			}
 		}
 		if tp, ok := t.(notif.DirectEmailNotificationTemplateProvider); ok {
-			if et := tp.DirectEmailTemplate(evt); et != nil {
+			if et, _ := tp.DirectEmailTemplate(evt); et != nil {
 				info.DirectEmail = []string{et.Text, et.HTML, et.Subject}
 			}
 		}
 		if tp, ok := t.(notif.SubscribersNotificationTemplateProvider); ok {
-			if et := tp.SubscribedEmailTemplate(evt); et != nil {
+			if et, _ := tp.SubscribedEmailTemplate(evt); et != nil {
 				info.SubEmail = []string{et.Text, et.HTML, et.Subject}
 			}
 			if nt := tp.SubscribedInternalNotificationTemplate(evt); nt != nil {
@@ -52,7 +52,7 @@ func taskTemplateInfos(reg *tasks.Registry) []taskTemplateInfo {
 			}
 		}
 		if tp, ok := t.(notif.AdminEmailTemplateProvider); ok {
-			if et := tp.AdminEmailTemplate(evt); et != nil {
+			if et, _ := tp.AdminEmailTemplate(evt); et != nil {
 				info.AdminEmail = []string{et.Text, et.HTML, et.Subject}
 			}
 			if nt := tp.AdminInternalNotificationTemplate(evt); nt != nil {
@@ -60,7 +60,7 @@ func taskTemplateInfos(reg *tasks.Registry) []taskTemplateInfo {
 			}
 		}
 		if tp, ok := t.(notif.TargetUsersNotificationProvider); ok {
-			if et := tp.TargetEmailTemplate(evt); et != nil {
+			if et, _ := tp.TargetEmailTemplate(evt); et != nil {
 				info.TargetEmail = []string{et.Text, et.HTML, et.Subject}
 			}
 			if nt := tp.TargetInternalNotificationTemplate(evt); nt != nil {

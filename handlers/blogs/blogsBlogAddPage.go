@@ -30,8 +30,8 @@ var _ notif.SubscribersNotificationTemplateProvider = (*AddBlogTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*AddBlogTask)(nil)
 var _ notif.GrantsRequiredProvider = (*AddBlogTask)(nil)
 
-func (AddBlogTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("adminNotificationBlogAddEmail")
+func (AddBlogTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("adminNotificationBlogAddEmail"), true
 }
 
 func (AddBlogTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
@@ -39,8 +39,8 @@ func (AddBlogTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *st
 	return &v
 }
 
-func (AddBlogTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("blogAddEmail")
+func (AddBlogTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("blogAddEmail"), true
 }
 
 func (AddBlogTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
@@ -66,7 +66,8 @@ func (AddBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("languageId parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	text := r.PostFormValue("text")
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return handlers.SessionFetchFail{}
@@ -80,6 +81,7 @@ func (AddBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 			String: text,
 			Valid:  true,
 		},
+		Timezone: sql.NullString{String: cd.Location().String(), Valid: true},
 		UserID:   sql.NullInt32{Int32: uid, Valid: true},
 		ListerID: uid,
 	})

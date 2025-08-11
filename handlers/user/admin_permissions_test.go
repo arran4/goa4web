@@ -27,7 +27,7 @@ func TestPermissionUserTasksTemplates(t *testing.T) {
 		&PermissionUserDisallowTask{TaskString: TaskUserDisallow},
 	}
 	for _, p := range admins {
-		et := p.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess})
+		et, _ := p.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess})
 		if et == nil || et.Text == "" || et.HTML == "" || et.Subject == "" {
 			t.Errorf("incomplete templates for %T", p)
 		}

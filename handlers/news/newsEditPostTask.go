@@ -24,8 +24,8 @@ var editTask = &EditTask{TaskString: TaskEdit}
 var _ tasks.Task = (*EditTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*EditTask)(nil)
 
-func (EditTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("adminNotificationNewsEditEmail")
+func (EditTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("adminNotificationNewsEditEmail"), true
 }
 
 func (EditTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

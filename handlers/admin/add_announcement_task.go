@@ -51,8 +51,8 @@ func (AddAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return nil
 }
 
-func (AddAnnouncementTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("announcementEmail")
+func (AddAnnouncementTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("announcementEmail"), true
 }
 
 func (AddAnnouncementTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

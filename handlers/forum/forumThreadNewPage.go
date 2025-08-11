@@ -53,8 +53,8 @@ func (CreateThreadTask) IndexData(data map[string]any) []searchworker.IndexEvent
 	return nil
 }
 
-func (CreateThreadTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("threadEmail")
+func (CreateThreadTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("threadEmail"), true
 }
 
 func (CreateThreadTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
@@ -62,8 +62,8 @@ func (CreateThreadTask) SubscribedInternalNotificationTemplate(evt eventbus.Task
 	return &s
 }
 
-func (CreateThreadTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("adminNotificationForumThreadCreateEmail")
+func (CreateThreadTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("adminNotificationForumThreadCreateEmail"), true
 }
 
 func (CreateThreadTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

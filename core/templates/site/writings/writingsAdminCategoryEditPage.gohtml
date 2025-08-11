@@ -1,5 +1,5 @@
 {{ template "head" $ }}
-<h2>Edit Category {{ .Category.Idwritingcategory }}</h2>
+<h2>Edit Category <a href="/admin/writings/categories/category/{{ .Category.Idwritingcategory }}">{{ .Category.Idwritingcategory }}</a></h2>
 <form method="post" action="/admin/writings/categories/category/{{ .Category.Idwritingcategory }}/edit">
 {{ csrfField }}
     <input type="hidden" name="cid" value="{{ .Category.Idwritingcategory }}">

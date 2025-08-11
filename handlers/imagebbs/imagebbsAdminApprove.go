@@ -48,8 +48,8 @@ func (ApprovePostTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return nil
 }
 
-func (ApprovePostTask) SelfEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("imagePostApprovedEmail")
+func (ApprovePostTask) SelfEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("imagePostApprovedEmail"), true
 }
 
 func (ApprovePostTask) SelfInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

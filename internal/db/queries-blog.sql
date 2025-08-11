@@ -17,8 +17,8 @@ WHERE b.idblogs = sqlc.arg(entry_id)
   );
 
 -- name: CreateBlogEntryForWriter :execlastid
-INSERT INTO blogs (users_idusers, language_idlanguage, blog, written)
-SELECT sqlc.arg(users_idusers), sqlc.narg(language_idlanguage), sqlc.arg(blog), CURRENT_TIMESTAMP
+INSERT INTO blogs (users_idusers, language_idlanguage, blog, written, timezone)
+SELECT sqlc.arg(users_idusers), sqlc.narg(language_idlanguage), sqlc.arg(blog), CURRENT_TIMESTAMP, sqlc.arg(timezone)
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'blogs'
@@ -46,7 +46,7 @@ WHERE idblogs = ?;
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
-SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
+SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, b.timezone, u.username, coalesce(th.comments, 0),
        b.users_idusers = sqlc.arg(lister_id) AS is_owner
 FROM blogs b
 JOIN grants g ON (g.item_id = b.idblogs OR g.item_id IS NULL)
@@ -77,7 +77,7 @@ LIMIT ? OFFSET ?;
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
-SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
+SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, b.timezone, u.username, coalesce(th.comments, 0),
        b.users_idusers = sqlc.arg(lister_id) AS is_owner
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
@@ -112,7 +112,7 @@ LIMIT ? OFFSET ?;
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
-SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written
+SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, b.timezone
 FROM blogs b
 WHERE b.idblogs IN (sqlc.slice(blogIds))
   AND (
@@ -144,7 +144,7 @@ LIMIT ? OFFSET ?;
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
-SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, u.username, coalesce(th.comments, 0),
+SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, b.timezone, u.username, coalesce(th.comments, 0),
        b.users_idusers = sqlc.arg(lister_id) AS is_owner
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
@@ -314,6 +314,7 @@ SELECT b.idblogs,
        b.language_idlanguage,
        b.blog,
        b.written,
+       b.timezone,
        u.username,
        coalesce(th.comments, 0),
        fc.idforumcategory,

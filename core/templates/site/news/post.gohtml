@@ -1,13 +1,13 @@
 {{ define "newsPost" }}
     <table width="100%">
         <tr bgcolor="lightgrey">
-            <th>{{ localTime .Occurred.Time }}</th>
+            <th>{{ localTimeIn .Occurred.Time .Timezone.String }}</th>
         </tr>
         <tr>
             <td>{{ .News.String | a4code2html }}<br>-<br>{{ .Writername.String }}
             -
             {{ if cd.SelectedThreadID }}
-                {{ .Comments.Int32 }} COMMENTS [<a href="#bottom">BOTTOM</a>]{{ if cd.SelectedThreadCanReply }} [<a href="#reply">REPLY</a>]{{ end }}
+                {{ .Comments.Int32 }} COMMENTS [<a href="#bottom">BOTTOM</a>]{{ if cd.SelectedThreadCanReply }} [<a href="#bottom">REPLY</a>]{{ end }}
             {{ else }}
                 [<a href="/news/news/{{ .Idsitenews }}">{{ .Comments.Int32 }} COMMENTS</a>]
             {{ end }}

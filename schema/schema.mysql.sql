@@ -5,6 +5,7 @@ CREATE TABLE `blogs` (
   `language_idlanguage` int(10) DEFAULT NULL,
   `blog` longtext DEFAULT NULL,
   `written` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `timezone` tinytext DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
   `last_index` datetime DEFAULT NULL,
   PRIMARY KEY (`idblogs`),
@@ -37,6 +38,7 @@ CREATE TABLE `comments` (
   `language_idlanguage` int(10) DEFAULT NULL,
   `written` datetime DEFAULT NULL,
   `text` longtext DEFAULT NULL,
+  `timezone` tinytext DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
   `last_index` datetime DEFAULT NULL,
   PRIMARY KEY (`idcomments`),
@@ -55,22 +57,22 @@ CREATE TABLE `comments_search` (
 );
 
 CREATE TABLE `faq` (
-  `idfaq` int(10) NOT NULL AUTO_INCREMENT,
-  `faqCategories_idfaqCategories` int(10) DEFAULT NULL,
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `faq_category_id` int(10) DEFAULT NULL,
   `language_idlanguage` int(10) DEFAULT NULL,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `answer` mediumtext DEFAULT NULL,
   `question` mediumtext DEFAULT NULL,
-  PRIMARY KEY (`idfaq`),
+  PRIMARY KEY (`id`),
   KEY `Table_21_FKIndex1` (`users_idusers`),
   KEY `Table_21_FKIndex2` (`language_idlanguage`),
-  KEY `Table_21_FKIndex3` (`faqCategories_idfaqCategories`)
+  KEY `Table_21_FKIndex3` (`faq_category_id`)
 );
 
 CREATE TABLE `faq_categories` (
-  `idfaqCategories` int(10) NOT NULL AUTO_INCREMENT,
+  `id` int(10) NOT NULL AUTO_INCREMENT,
   `name` tinytext DEFAULT NULL,
-  PRIMARY KEY (`idfaqCategories`)
+  PRIMARY KEY (`id`)
 );
 
 CREATE TABLE IF NOT EXISTS `faq_revisions` (
@@ -80,6 +82,7 @@ CREATE TABLE IF NOT EXISTS `faq_revisions` (
   `question` mediumtext,
   `answer` mediumtext,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `timezone` tinytext DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `faq_revisions_faq_idx` (`faq_id`)
 );
@@ -142,6 +145,7 @@ CREATE TABLE `imagepost` (
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `imageboard_idimageboard` int(10) DEFAULT NULL,
   `posted` datetime DEFAULT NULL,
+  `timezone` tinytext DEFAULT NULL,
   `description` mediumtext DEFAULT NULL,
   `thumbnail` tinytext DEFAULT NULL,
   `fullimage` tinytext DEFAULT NULL,
@@ -181,6 +185,7 @@ CREATE TABLE `linker` (
   `url` tinytext DEFAULT NULL,
   `description` tinytext DEFAULT NULL,
   `listed` datetime DEFAULT NULL,
+  `timezone` tinytext DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
   `last_index` datetime DEFAULT NULL,
   PRIMARY KEY (`idlinker`),
@@ -206,6 +211,7 @@ CREATE TABLE `linker_queue` (
   `title` tinytext DEFAULT NULL,
   `url` tinytext DEFAULT NULL,
   `description` mediumtext DEFAULT NULL,
+  `timezone` tinytext DEFAULT NULL,
   PRIMARY KEY (`idlinkerQueue`),
   KEY `linkerQueue_FKIndex1` (`linker_category_id`),
   KEY `linkerQueue_FKIndex2` (`users_idusers`),
@@ -292,6 +298,7 @@ CREATE TABLE `site_news` (
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `news` longtext DEFAULT NULL,
   `occurred` datetime DEFAULT NULL,
+  `timezone` tinytext DEFAULT NULL,
   `last_index` datetime DEFAULT NULL,
   PRIMARY KEY (`idsiteNews`),
   KEY `siteNews_FKIndex1` (`users_idusers`),
@@ -528,6 +535,7 @@ CREATE TABLE IF NOT EXISTS `deactivated_comments` (
   `language_idlanguage` int DEFAULT NULL,
   `written` datetime,
   `text` longtext,
+  `timezone` tinytext DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
   `restored_at` datetime DEFAULT NULL,
   PRIMARY KEY (`idcomments`)
@@ -556,6 +564,7 @@ CREATE TABLE IF NOT EXISTS `deactivated_blogs` (
   `language_idlanguage` int DEFAULT NULL,
   `blog` longtext,
   `written` datetime,
+  `timezone` tinytext DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
   `restored_at` datetime DEFAULT NULL,
   PRIMARY KEY (`idblogs`)
@@ -567,6 +576,7 @@ CREATE TABLE IF NOT EXISTS `deactivated_imageposts` (
   `users_idusers` int NOT NULL,
   `imageboard_idimageboard` int DEFAULT NULL,
   `posted` datetime,
+  `timezone` tinytext DEFAULT NULL,
   `description` tinytext,
   `thumbnail` tinytext,
   `fullimage` tinytext,
@@ -587,6 +597,7 @@ CREATE TABLE IF NOT EXISTS `deactivated_linker` (
   `url` tinytext,
   `description` tinytext,
   `listed` datetime,
+  `timezone` tinytext DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
   `restored_at` datetime DEFAULT NULL,
   PRIMARY KEY (`idlinker`)

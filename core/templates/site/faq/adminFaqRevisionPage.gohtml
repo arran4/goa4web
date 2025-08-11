@@ -1,10 +1,10 @@
 {{ template "head" $ }}
-<h4>Revision History for FAQ {{ .Faq.Idfaq }}</h4>
+<h4>Revision History for FAQ {{ .Faq.ID }}</h4>
 <table>
 <tr><th>Date</th><th>User ID</th><th>Question</th><th>Answer</th></tr>
 {{- range .Revisions }}
 <tr>
-  <td>{{ localTime .CreatedAt }}</td>
+  <td>{{ localTimeIn .CreatedAt .Timezone.String }}</td>
   <td>{{ .UsersIdusers }}</td>
   <td>{{ .Question.String }}</td>
   <td>{{ .Answer.String }}</td>

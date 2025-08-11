@@ -21,8 +21,8 @@ func (ResendVerificationEmailTask) Action(w http.ResponseWriter, r *http.Request
 	return addEmailTask.Resend(w, r)
 }
 
-func (ResendVerificationEmailTask) DirectEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("verifyEmail")
+func (ResendVerificationEmailTask) DirectEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("verifyEmail"), true
 }
 
 func (ResendVerificationEmailTask) DirectEmailAddress(evt eventbus.TaskEvent) (string, error) {

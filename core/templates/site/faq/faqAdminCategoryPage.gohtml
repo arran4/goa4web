@@ -1,13 +1,13 @@
 {{ template "head" $ }}
 <h1>{{ .Category.Name.String }}</h1>
 <p>Question count: {{ .Category.Questioncount }}</p>
-<p><a href="/admin/faq/categories/category/{{ .Category.Idfaqcategories }}/edit">Edit Category</a></p>
-<p><a href="/admin/faq/categories/category/{{ .Category.Idfaqcategories }}/questions">View Questions</a></p>
+<p><a href="/admin/faq/categories/category/{{ .Category.ID }}/edit">Edit Category</a></p>
+<p><a href="/admin/faq/categories/category/{{ .Category.ID }}/questions">View Questions</a></p>
 {{- if .Latest }}
 <h2>Latest Questions</h2>
 <ul>
     {{- range .Latest }}
-    <li>{{ .Question }}</li>
+    <li><a href="/admin/faq/question/{{ .Idfaq }}/edit">{{ .Question }}</a></li>
     {{- end }}
 </ul>
 {{- end }}

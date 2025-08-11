@@ -64,7 +64,7 @@ func TestUpdateFAQQuestion(t *testing.T) {
 		WithArgs(sql.NullString{String: "a", Valid: true}, sql.NullString{String: "q", Valid: true}, sql.NullInt32{Int32: 2, Valid: true}, int32(1)).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectExec("INSERT INTO faq_revisions").
-		WithArgs(int32(1), int32(3), sql.NullString{String: "q", Valid: true}, sql.NullString{String: "a", Valid: true}, sql.NullInt32{Int32: 3, Valid: true}, int32(3)).
+		WithArgs(int32(1), int32(3), sql.NullString{String: "q", Valid: true}, sql.NullString{String: "a", Valid: true}, sql.NullString{String: time.Local.String(), Valid: true}, sql.NullInt32{Int32: 3, Valid: true}, int32(3)).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
@@ -394,9 +394,9 @@ func TestSelectedQuestionFromCategory(t *testing.T) {
 	ctx := context.Background()
 	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
 
-	row := sqlmock.NewRows([]string{"idfaq", "faqcategories_idfaqcategories", "language_idlanguage", "users_idusers", "answer", "question"}).
+	row := sqlmock.NewRows([]string{"id", "faq_category_id", "language_idlanguage", "users_idusers", "answer", "question"}).
 		AddRow(1, 2, 0, 0, sql.NullString{}, sql.NullString{})
-	mock.ExpectQuery("SELECT idfaq, faqcategories_idfaqcategories").WithArgs(int32(1)).WillReturnRows(row)
+	mock.ExpectQuery("SELECT id, faq_category_id").WithArgs(int32(1)).WillReturnRows(row)
 	mock.ExpectExec("UPDATE faq SET deleted_at").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
 
 	if err := cd.SelectedQuestionFromCategory(1, 2); err != nil {
@@ -419,9 +419,9 @@ func TestSelectedQuestionFromCategoryWrongCategory(t *testing.T) {
 	ctx := context.Background()
 	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
 
-	row := sqlmock.NewRows([]string{"idfaq", "faqcategories_idfaqcategories", "language_idlanguage", "users_idusers", "answer", "question"}).
+	row := sqlmock.NewRows([]string{"id", "faq_category_id", "language_idlanguage", "users_idusers", "answer", "question"}).
 		AddRow(1, 3, 0, 0, sql.NullString{}, sql.NullString{})
-	mock.ExpectQuery("SELECT idfaq, faqcategories_idfaqcategories").WithArgs(int32(1)).WillReturnRows(row)
+	mock.ExpectQuery("SELECT id, faq_category_id").WithArgs(int32(1)).WillReturnRows(row)
 
 	if err := cd.SelectedQuestionFromCategory(1, 2); err == nil {
 		t.Fatalf("expected error")
@@ -496,6 +496,40 @@ func TestSelectedThreadCanReplyGrantFallback(t *testing.T) {
 		sql.NullInt32{Int32: blogID, Valid: true},
 		sql.NullInt32{Int32: 1, Valid: true},
 	).WillReturnError(sql.ErrNoRows)
+
+	grantRows := sqlmock.NewRows([]string{"1"}).AddRow(1)
+	mock.ExpectQuery("SELECT 1 FROM grants g").WithArgs(
+		int32(1),
+		"blogs",
+		sql.NullString{String: "entry", Valid: true},
+		"reply",
+		sql.NullInt32{Int32: blogID, Valid: true},
+		sql.NullInt32{Int32: 1, Valid: true},
+	).WillReturnRows(grantRows)
+
+	if !cd.SelectedThreadCanReply() {
+		t.Fatalf("SelectedThreadCanReply() = false; want true")
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}
+
+func TestSelectedThreadCanReplyGrantFallbackNoThread(t *testing.T) {
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
+
+	queries := db.New(conn)
+	ctx := context.Background()
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
+	cd.UserID = 1
+	cd.SetCurrentSection("blogs")
+	blogID := int32(7)
+	cd.SetCurrentBlog(blogID)
 
 	grantRows := sqlmock.NewRows([]string{"1"}).AddRow(1)
 	mock.ExpectQuery("SELECT 1 FROM grants g").WithArgs(

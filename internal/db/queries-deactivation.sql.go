@@ -11,8 +11,8 @@ import (
 )
 
 const adminArchiveBlog = `-- name: AdminArchiveBlog :exec
-INSERT INTO deactivated_blogs (idblogs, forumthread_id, users_idusers, language_idlanguage, blog, written, deleted_at)
-VALUES (?, ?, ?, ?, ?, ?, NOW())
+INSERT INTO deactivated_blogs (idblogs, forumthread_id, users_idusers, language_idlanguage, blog, written, timezone, deleted_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
 `
 
 type AdminArchiveBlogParams struct {
@@ -22,6 +22,7 @@ type AdminArchiveBlogParams struct {
 	LanguageIdlanguage sql.NullInt32
 	Blog               sql.NullString
 	Written            sql.NullTime
+	Timezone           sql.NullString
 }
 
 func (q *Queries) AdminArchiveBlog(ctx context.Context, arg AdminArchiveBlogParams) error {
@@ -32,13 +33,14 @@ func (q *Queries) AdminArchiveBlog(ctx context.Context, arg AdminArchiveBlogPara
 		arg.LanguageIdlanguage,
 		arg.Blog,
 		arg.Written,
+		arg.Timezone,
 	)
 	return err
 }
 
 const adminArchiveComment = `-- name: AdminArchiveComment :exec
-INSERT INTO deactivated_comments (idcomments, forumthread_id, users_idusers, language_idlanguage, written, text, deleted_at)
-VALUES (?, ?, ?, ?, ?, ?, NOW())
+INSERT INTO deactivated_comments (idcomments, forumthread_id, users_idusers, language_idlanguage, written, text, timezone, deleted_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
 `
 
 type AdminArchiveCommentParams struct {
@@ -48,6 +50,7 @@ type AdminArchiveCommentParams struct {
 	LanguageIdlanguage sql.NullInt32
 	Written            sql.NullTime
 	Text               sql.NullString
+	Timezone           sql.NullString
 }
 
 func (q *Queries) AdminArchiveComment(ctx context.Context, arg AdminArchiveCommentParams) error {
@@ -58,13 +61,14 @@ func (q *Queries) AdminArchiveComment(ctx context.Context, arg AdminArchiveComme
 		arg.LanguageIdlanguage,
 		arg.Written,
 		arg.Text,
+		arg.Timezone,
 	)
 	return err
 }
 
 const adminArchiveImagepost = `-- name: AdminArchiveImagepost :exec
-INSERT INTO deactivated_imageposts (idimagepost, forumthread_id, users_idusers, imageboard_idimageboard, posted, description, thumbnail, fullimage, file_size, approved, deleted_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+INSERT INTO deactivated_imageposts (idimagepost, forumthread_id, users_idusers, imageboard_idimageboard, posted, timezone, description, thumbnail, fullimage, file_size, approved, deleted_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
 `
 
 type AdminArchiveImagepostParams struct {
@@ -73,6 +77,7 @@ type AdminArchiveImagepostParams struct {
 	UsersIdusers           int32
 	ImageboardIdimageboard sql.NullInt32
 	Posted                 sql.NullTime
+	Timezone               sql.NullString
 	Description            sql.NullString
 	Thumbnail              sql.NullString
 	Fullimage              sql.NullString
@@ -87,6 +92,7 @@ func (q *Queries) AdminArchiveImagepost(ctx context.Context, arg AdminArchiveIma
 		arg.UsersIdusers,
 		arg.ImageboardIdimageboard,
 		arg.Posted,
+		arg.Timezone,
 		arg.Description,
 		arg.Thumbnail,
 		arg.Fullimage,
@@ -97,8 +103,8 @@ func (q *Queries) AdminArchiveImagepost(ctx context.Context, arg AdminArchiveIma
 }
 
 const adminArchiveLink = `-- name: AdminArchiveLink :exec
-INSERT INTO deactivated_linker (idlinker, language_idlanguage, users_idusers, linker_category_id, forumthread_id, title, url, description, listed, deleted_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+INSERT INTO deactivated_linker (idlinker, language_idlanguage, users_idusers, linker_category_id, forumthread_id, title, url, description, listed, timezone, deleted_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
 `
 
 type AdminArchiveLinkParams struct {
@@ -111,6 +117,7 @@ type AdminArchiveLinkParams struct {
 	Url                sql.NullString
 	Description        sql.NullString
 	Listed             sql.NullTime
+	Timezone           sql.NullString
 }
 
 func (q *Queries) AdminArchiveLink(ctx context.Context, arg AdminArchiveLinkParams) error {
@@ -124,6 +131,7 @@ func (q *Queries) AdminArchiveLink(ctx context.Context, arg AdminArchiveLinkPara
 		arg.Url,
 		arg.Description,
 		arg.Listed,
+		arg.Timezone,
 	)
 	return err
 }

@@ -766,7 +766,7 @@ func (q *Queries) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTi
 }
 
 const getAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails = `-- name: GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails :many
-SELECT l.id, l.language_id, l.submitter_id, l.category_id, l.title, l.url, l.description, l.timezone, u.username, c.title as category_title, c.id
+SELECT l.id, l.language_id, l.submitter_id, l.category_id, l.title, l.url, l.description, l.timezone, u.username, c.title as category_title, c.id AS category_id
 FROM linker_queue l
 JOIN users u ON l.submitter_id = u.idusers
 JOIN linker_category c ON l.category_id = c.id
@@ -783,7 +783,7 @@ type GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetailsRow struct {
 	Timezone      sql.NullString
 	Username      sql.NullString
 	CategoryTitle sql.NullString
-	ID_2          int32
+	CategoryID_2  int32
 }
 
 func (q *Queries) GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails(ctx context.Context) ([]*GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetailsRow, error) {
@@ -806,7 +806,7 @@ func (q *Queries) GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails(ctx co
 			&i.Timezone,
 			&i.Username,
 			&i.CategoryTitle,
-			&i.ID_2,
+			&i.CategoryID_2,
 		); err != nil {
 			return nil, err
 		}

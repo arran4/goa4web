@@ -89,7 +89,7 @@ WHERE EXISTS (
 );
 
 -- name: GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails :many
-SELECT l.*, u.username, c.title as category_title, c.id
+SELECT l.*, u.username, c.title as category_title, c.id AS category_id
 FROM linker_queue l
 JOIN users u ON l.submitter_id = u.idusers
 JOIN linker_category c ON l.category_id = c.id

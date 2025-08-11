@@ -2,6 +2,7 @@ package common_test
 
 import (
 	"context"
+	"reflect"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -71,6 +72,52 @@ func TestSetThreadPrivateLabels(t *testing.T) {
 	if err := cd.SetThreadPrivateLabels(1, []string{"two", "three"}); err != nil {
 		t.Fatalf("SetThreadPrivateLabels: %v", err)
 	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}
+
+func TestPrivateLabelsDefaultAndInversion(t *testing.T) {
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
+	q := db.New(conn)
+	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
+	cd.UserID = 2
+
+	// Default case: no stored rows should return new and unread labels.
+	mock.ExpectQuery("SELECT .* FROM content_private_labels").
+		WithArgs("thread", int32(1), int32(2)).
+		WillReturnRows(sqlmock.NewRows([]string{"item", "item_id", "user_id", "label", "invert"}))
+
+	labels, err := cd.PrivateLabels("thread", 1)
+	if err != nil {
+		t.Fatalf("PrivateLabels default: %v", err)
+	}
+	expected := []string{"new", "unread"}
+	if !reflect.DeepEqual(labels, expected) {
+		t.Fatalf("default labels %+v, want %+v", labels, expected)
+	}
+
+	// Inversion case: storing an inverted new label removes it from the result.
+	rows := sqlmock.NewRows([]string{"item", "item_id", "user_id", "label", "invert"}).
+		AddRow("thread", 1, 2, "new", true).
+		AddRow("thread", 1, 2, "foo", false)
+	mock.ExpectQuery("SELECT .* FROM content_private_labels").
+		WithArgs("thread", int32(1), int32(2)).
+		WillReturnRows(rows)
+
+	labels, err = cd.PrivateLabels("thread", 1)
+	if err != nil {
+		t.Fatalf("PrivateLabels invert: %v", err)
+	}
+	expected = []string{"unread", "foo"}
+	if !reflect.DeepEqual(labels, expected) {
+		t.Fatalf("inverted labels %+v, want %+v", labels, expected)
+	}
+
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
 	}

@@ -106,38 +106,26 @@ func (cd *CoreData) PrivateLabels(item string, itemID int32) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	var userLabels []string
+	var (
+		userLabels []string
+		inverted   = make(map[string]bool)
+	)
 	for _, r := range rows {
-		switch r.Label {
-		case "new", "unread":
-			if r.Invert {
-				continue
-			}
-		default:
-			if !r.Invert {
-				userLabels = append(userLabels, r.Label)
-			}
+		if r.Invert {
+			inverted[r.Label] = true
+			continue
 		}
+		if r.Label == "new" || r.Label == "unread" {
+			continue
+		}
+		userLabels = append(userLabels, r.Label)
 	}
 	sort.Strings(userLabels)
 	labels := make([]string, 0, len(userLabels)+2)
-	hasNew := false
-	hasUnread := false
-	for _, r := range rows {
-		if !r.Invert {
-			continue
-		}
-		switch r.Label {
-		case "new":
-			hasNew = true
-		case "unread":
-			hasUnread = true
-		}
-	}
-	if hasNew {
+	if !inverted["new"] {
 		labels = append(labels, "new")
 	}
-	if hasUnread {
+	if !inverted["unread"] {
 		labels = append(labels, "unread")
 	}
 	labels = append(labels, userLabels...)

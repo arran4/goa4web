@@ -287,6 +287,28 @@ div.title {
         opacity: 0.5;
 }
 
+.label-editor {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+}
+
+.label-editor form {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0;
+}
+
+.label-editor .public-labels,
+.label-editor .author-labels,
+.label-editor .private-labels {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+}
+
 tr.unsupported td {
         background: #f3e5f5;
 }

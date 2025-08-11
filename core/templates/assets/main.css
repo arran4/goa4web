@@ -679,3 +679,18 @@ tr.unsupported td {
        }
 }
 
+.faq-item {
+        border: 1px solid #000;
+        margin-bottom: 1em;
+}
+
+.faq-question {
+        background-color: lightgrey;
+        padding: 0.5em;
+        margin: 0;
+        border-bottom: 1px solid #000;
+}
+
+.faq-answer {
+        padding: 0.5em;
+}

@@ -1,17 +1,15 @@
 {{ define "faqPage" }}
     {{ template "head" $ }}
     {{ range $index, $categoryFAQs := (cd).AllAnsweredFAQ }}
-        <h2 class="section-heading">{{ $categoryFAQs.Category.Name.String }}</h2>
-        <table width="100%">
-        {{ range $index, $faq := $categoryFAQs.FAQs }}
-            <tr>
-                <th class="bg-muted">Q: {{ $faq.Question | a4code2html }}</th>
-            </tr>
-            <tr>
-                <td>A: {{ $faq.Answer | a4code2html }}</td>
-            </tr>
-        {{ end }}
-        </table>
+        <section class="faq-section">
+            <h2>Section: {{ $categoryFAQs.Category.Name.String }}</h2>
+            {{ range $index, $faq := $categoryFAQs.FAQs }}
+                <div class="faq-item">
+                    <h3 class="faq-question">Q: {{ $faq.Question | a4code2html }}</h3>
+                    <div class="faq-answer">A: {{ $faq.Answer | a4code2html }}</div>
+                </div>
+            {{ end }}
+        </section>
     {{ end }}
     {{ template "tail" $ }}
 {{ end }}

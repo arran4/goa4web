@@ -26,7 +26,7 @@ func TestPrivateLabelRoutes(t *testing.T) {
 		cd.ForumBasePath = "/private"
 
 		body := "task=" + url.QueryEscape(string(forumhandlers.TaskMarkTopicRead)) + "&back=" + url.QueryEscape("/private/topic/1/thread/2")
-		req := httptest.NewRequest(http.MethodPost, "/private/topic/1/labels", strings.NewReader(body))
+		req := httptest.NewRequest(http.MethodPost, "/private/thread/1/labels", strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 		rr := httptest.NewRecorder()
@@ -44,7 +44,7 @@ func TestPrivateLabelRoutes(t *testing.T) {
 		cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
 		cd.ForumBasePath = "/private"
 
-		req := httptest.NewRequest(http.MethodPost, "/private/topic/1/labels", strings.NewReader("task="+url.QueryEscape(string(forumhandlers.TaskMarkTopicRead))))
+		req := httptest.NewRequest(http.MethodPost, "/private/thread/1/labels", strings.NewReader("task="+url.QueryEscape(string(forumhandlers.TaskMarkTopicRead))))
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 		rr := httptest.NewRecorder()
@@ -53,7 +53,7 @@ func TestPrivateLabelRoutes(t *testing.T) {
 		if rr.Code != http.StatusOK {
 			t.Fatalf("expected 200 got %d", rr.Code)
 		}
-		if cd.AutoRefresh == "" || !strings.Contains(cd.AutoRefresh, "url=/private/topic/1") {
+		if cd.AutoRefresh == "" || !strings.Contains(cd.AutoRefresh, "url=/private/thread/1") {
 			t.Fatalf("auto refresh=%q", cd.AutoRefresh)
 		}
 	})

@@ -5,16 +5,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"strings"
-	"testing"
-	"github.com/DATA-DOG/go-sqlmock"
-
-	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/internal/db"
-	"github.com/gorilla/mux"
-
 	"regexp"
 	"strings"
 	"testing"
@@ -24,6 +14,8 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
+	"github.com/gorilla/mux"
 )
 
 func TestMarkTopicReadTaskRedirect(t *testing.T) {
@@ -31,7 +23,7 @@ func TestMarkTopicReadTaskRedirect(t *testing.T) {
 	form := url.Values{}
 	form.Set("redirect", "/private/topic/1")
 	form.Set("task", string(TaskMarkTopicRead))
-	req := httptest.NewRequest(http.MethodPost, "/private/topic/1/labels", strings.NewReader(form.Encode()))
+	req := httptest.NewRequest(http.MethodPost, "/private/thread/1/labels", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Referer", "/private/topic/1/thread/51")
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
@@ -46,12 +38,14 @@ func TestMarkTopicReadTaskRedirect(t *testing.T) {
 		t.Fatalf("redirect %q, want /private/topic/1/thread/3", rdh.TargetURL)
 	}
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-  }
 }
 
 func TestSetLabelsTaskUpdatesSpecialLabels(t *testing.T) {
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
 	q := db.New(conn)
 	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
 	cd.UserID = 2
@@ -65,10 +59,10 @@ func TestSetLabelsTaskUpdatesSpecialLabels(t *testing.T) {
 
 	form := url.Values{}
 	form.Set("redirect", "/private/topic/1/thread/3")
-	req := httptest.NewRequest(http.MethodPost, "/private/topic/1/labels", strings.NewReader(form.Encode()))
+	req := httptest.NewRequest(http.MethodPost, "/private/thread/1/labels", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
-	req = mux.SetURLVars(req, map[string]string{"topic": "1"})
+	req = mux.SetURLVars(req, map[string]string{"thread": "1"})
 
 	res := MarkTopicReadTask{}.Action(httptest.NewRecorder(), req)
 	rdh, ok := res.(handlers.RefreshDirectHandler)
@@ -77,8 +71,10 @@ func TestSetLabelsTaskUpdatesSpecialLabels(t *testing.T) {
 	}
 	if rdh.TargetURL != "/private/topic/1" {
 		t.Fatalf("expected redirect to /private/topic/1 got %s", rdh.TargetURL)
-
-  }
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
 }
 
 func TestMarkTopicReadTaskAddsInverseLabels(t *testing.T) {
@@ -109,9 +105,9 @@ func TestMarkTopicReadTaskAddsInverseLabels(t *testing.T) {
 
 	form := url.Values{}
 	form.Set("task", string(TaskSetLabels))
-	req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/labels", strings.NewReader(form.Encode()))
+	req := httptest.NewRequest(http.MethodPost, "/forum/thread/1/labels", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req = mux.SetURLVars(req, map[string]string{"topic": "1"})
+	req = mux.SetURLVars(req, map[string]string{"thread": "1"})
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 	rr := httptest.NewRecorder()
 

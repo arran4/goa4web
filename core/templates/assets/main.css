@@ -438,7 +438,11 @@ tr.unsupported td {
 
 .a4code-quote,
 .a4code-quoteof {
-	background-color: lightgreen;
+        background-color: lightgreen;
+}
+
+.a4code-indent > div {
+       margin-left: 2em;
 }
 
 .a4code-image {

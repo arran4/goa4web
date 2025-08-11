@@ -11,7 +11,7 @@ import (
 )
 
 const adminGetRoleByID = `-- name: AdminGetRoleByID :one
-SELECT id, name, can_login, is_admin, public_profile_allowed_at FROM roles WHERE id = ?
+SELECT id, name, can_login, is_admin, private_labels, public_profile_allowed_at FROM roles WHERE id = ?
 `
 
 // admin task
@@ -23,6 +23,7 @@ func (q *Queries) AdminGetRoleByID(ctx context.Context, id int32) (*Role, error)
 		&i.Name,
 		&i.CanLogin,
 		&i.IsAdmin,
+		&i.PrivateLabels,
 		&i.PublicProfileAllowedAt,
 	)
 	return &i, err
@@ -71,7 +72,7 @@ func (q *Queries) AdminListGrantsByRoleID(ctx context.Context, roleID sql.NullIn
 }
 
 const adminListRoles = `-- name: AdminListRoles :many
-SELECT id, name, can_login, is_admin, public_profile_allowed_at FROM roles ORDER BY id
+SELECT id, name, can_login, is_admin, private_labels, public_profile_allowed_at FROM roles ORDER BY id
 `
 
 // admin task
@@ -89,6 +90,7 @@ func (q *Queries) AdminListRoles(ctx context.Context) ([]*Role, error) {
 			&i.Name,
 			&i.CanLogin,
 			&i.IsAdmin,
+			&i.PrivateLabels,
 			&i.PublicProfileAllowedAt,
 		); err != nil {
 			return nil, err
@@ -182,14 +184,15 @@ func (q *Queries) AdminListUsersByRoleID(ctx context.Context, roleID int32) ([]*
 }
 
 const adminUpdateRole = `-- name: AdminUpdateRole :exec
-UPDATE roles SET name = ?, can_login = ?, is_admin = ? WHERE id = ?
+UPDATE roles SET name = ?, can_login = ?, is_admin = ?, private_labels = ? WHERE id = ?
 `
 
 type AdminUpdateRoleParams struct {
-	Name     string
-	CanLogin bool
-	IsAdmin  bool
-	ID       int32
+	Name          string
+	CanLogin      bool
+	IsAdmin       bool
+	PrivateLabels bool
+	ID            int32
 }
 
 // admin task
@@ -198,6 +201,7 @@ func (q *Queries) AdminUpdateRole(ctx context.Context, arg AdminUpdateRoleParams
 		arg.Name,
 		arg.CanLogin,
 		arg.IsAdmin,
+		arg.PrivateLabels,
 		arg.ID,
 	)
 	return err

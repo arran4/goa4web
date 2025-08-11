@@ -48,6 +48,7 @@ func adminRoleEditSavePage(w http.ResponseWriter, r *http.Request) {
 	name := r.PostFormValue("name")
 	canLogin := r.PostFormValue("can_login") != ""
 	isAdmin := r.PostFormValue("is_admin") != ""
+	privateLabels := r.PostFormValue("private_labels") != ""
 
 	data := struct {
 		Errors []string
@@ -55,10 +56,11 @@ func adminRoleEditSavePage(w http.ResponseWriter, r *http.Request) {
 	}{Back: fmt.Sprintf("/admin/role/%d", id)}
 
 	if err := queries.AdminUpdateRole(r.Context(), db.AdminUpdateRoleParams{
-		Name:     name,
-		CanLogin: canLogin,
-		IsAdmin:  isAdmin,
-		ID:       id,
+		Name:          name,
+		CanLogin:      canLogin,
+		IsAdmin:       isAdmin,
+		PrivateLabels: privateLabels,
+		ID:            id,
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("update role: %w", err).Error())
 	}

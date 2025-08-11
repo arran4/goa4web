@@ -17,10 +17,10 @@ func TestQueries_AdminUpdateRole(t *testing.T) {
 	q := New(conn)
 
 	mock.ExpectExec(regexp.QuoteMeta(adminUpdateRole)).
-		WithArgs("name", true, false, int32(1)).
+		WithArgs("name", true, false, true, int32(1)).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
-	if err := q.AdminUpdateRole(context.Background(), AdminUpdateRoleParams{Name: "name", CanLogin: true, IsAdmin: false, ID: 1}); err != nil {
+	if err := q.AdminUpdateRole(context.Background(), AdminUpdateRoleParams{Name: "name", CanLogin: true, IsAdmin: false, PrivateLabels: true, ID: 1}); err != nil {
 		t.Fatalf("AdminUpdateRole: %v", err)
 	}
 

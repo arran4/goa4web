@@ -22,9 +22,9 @@ func TestBuildTopicGrantGroupsIncludesAllRoles(t *testing.T) {
 	q := db.New(conn)
 	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
 
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, name, can_login, is_admin, public_profile_allowed_at FROM roles ORDER BY id\n")).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "can_login", "is_admin", "public_profile_allowed_at"}).
-			AddRow(1, "member", true, false, time.Now()))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, name, can_login, is_admin, private_labels, public_profile_allowed_at FROM roles ORDER BY id\n")).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "can_login", "is_admin", "private_labels", "public_profile_allowed_at"}).
+			AddRow(1, "member", true, false, true, time.Now()))
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, created_at, updated_at, user_id, role_id, section, item, rule_type, item_id, item_rule, action, extra, active FROM grants ORDER BY id\n")).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "created_at", "updated_at", "user_id", "role_id", "section", "item", "rule_type", "item_id", "item_rule", "action", "extra", "active"}))

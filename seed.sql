@@ -4,9 +4,13 @@ INSERT INTO roles (name, can_login, is_admin) VALUES
   ('user', 1, 0),
   ('content writer', 1, 0),
   ('moderator', 1, 0),
+  ('labeler', 1, 0),
   ('administrator', 1, 1),
   ('rejected', 0, 0)
 ON DUPLICATE KEY UPDATE name = VALUES(name), can_login = VALUES(can_login), is_admin = VALUES(is_admin);
+
+-- Ensure private label flag mirrors login capability
+UPDATE roles SET private_labels = can_login;
 
 -- Grant user role to all users without any role
 INSERT INTO user_roles (users_idusers, role_id)
@@ -39,4 +43,22 @@ INSERT INTO grants (created_at, role_id, section, action, active)
 SELECT NOW(), r_writer.id, 'role', 'user', 1
 FROM roles r_writer
 WHERE r_writer.name = 'content writer'
+ON DUPLICATE KEY UPDATE action=VALUES(action);
+
+INSERT INTO grants (created_at, role_id, section, action, active)
+SELECT NOW(), r_labeler.id, g.section, 'label', 1
+FROM roles r_labeler
+JOIN (
+    SELECT DISTINCT section FROM grants WHERE action IN ('see', 'view')
+) g
+WHERE r_labeler.name = 'labeler'
+ON DUPLICATE KEY UPDATE action=VALUES(action);
+
+-- Grant label rights to all logged-in roles with view access
+INSERT INTO grants (created_at, role_id, section, action, active)
+SELECT NOW(), g.role_id, g.section, 'label', 1
+FROM grants g
+JOIN roles r ON r.id = g.role_id
+WHERE g.action IN ('see', 'view')
+  AND r.can_login = 1
 ON DUPLICATE KEY UPDATE action=VALUES(action);

@@ -32,8 +32,8 @@ func TestAdminGrantsPageGroupsActions(t *testing.T) {
 	userRows := sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(5, nil, "bob", nil)
 	mock.ExpectQuery("SELECT u\\.idusers").WithArgs(5).WillReturnRows(userRows)
 
-	roleRows := sqlmock.NewRows([]string{"id", "name", "can_login", "is_admin", "public_profile_allowed_at"}).AddRow(7, "admin", true, false, nil)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, name, can_login, is_admin, public_profile_allowed_at FROM roles WHERE id = ?")).WithArgs(7).WillReturnRows(roleRows)
+	roleRows := sqlmock.NewRows([]string{"id", "name", "can_login", "is_admin", "private_labels", "public_profile_allowed_at"}).AddRow(7, "admin", true, false, true, nil)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, name, can_login, is_admin, private_labels, public_profile_allowed_at FROM roles WHERE id = ?")).WithArgs(7).WillReturnRows(roleRows)
 
 	req := httptest.NewRequest("GET", "/admin/grants", nil)
 	ctx := req.Context()

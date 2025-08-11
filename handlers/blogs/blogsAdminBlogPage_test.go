@@ -29,7 +29,7 @@ func TestAdminBlogPage_UsesURLParam(t *testing.T) {
 	rows := sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_id", "blog", "written", "timezone", "username", "comments", "is_owner"}).
 		AddRow(blogID, nil, 1, 1, "body", time.Now(), time.Local.String(), "user", 0, true)
 	mock.ExpectQuery("SELECT").WillReturnRows(rows)
-	mock.ExpectQuery("SELECT").WillReturnRows(sqlmock.NewRows([]string{"id", "name", "can_login", "is_admin", "public_profile_allowed_at"}))
+	mock.ExpectQuery("SELECT").WillReturnRows(sqlmock.NewRows([]string{"id", "name", "can_login", "is_admin", "private_labels", "public_profile_allowed_at"}))
 	mock.ExpectQuery("SELECT").WillReturnRows(sqlmock.NewRows([]string{"id", "created_at", "updated_at", "user_id", "role_id", "section", "item", "rule_type", "item_id", "item_rule", "action", "extra", "active"}))
 
 	req := httptest.NewRequest("GET", "/admin/blogs/blog/"+strconv.Itoa(blogID), nil)

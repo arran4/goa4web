@@ -1,6 +1,6 @@
 -- name: AdminListRoles :many
 -- admin task
-SELECT id, name, can_login, is_admin, public_profile_allowed_at FROM roles ORDER BY id;
+SELECT id, name, can_login, is_admin, private_labels, public_profile_allowed_at FROM roles ORDER BY id;
 
 -- name: AdminListRolesWithUsers :many
 -- admin task
@@ -17,7 +17,7 @@ UPDATE roles SET public_profile_allowed_at = ? WHERE id = ?;
 
 -- name: AdminGetRoleByID :one
 -- admin task
-SELECT id, name, can_login, is_admin, public_profile_allowed_at FROM roles WHERE id = ?;
+SELECT id, name, can_login, is_admin, private_labels, public_profile_allowed_at FROM roles WHERE id = ?;
 
 -- name: AdminListUsersByRoleID :many
 -- admin task
@@ -33,4 +33,4 @@ SELECT * FROM grants WHERE role_id = ? ORDER BY id;
 
 -- name: AdminUpdateRole :exec
 -- admin task
-UPDATE roles SET name = ?, can_login = ?, is_admin = ? WHERE id = ?;
+UPDATE roles SET name = ?, can_login = ?, is_admin = ?, private_labels = ? WHERE id = ?;

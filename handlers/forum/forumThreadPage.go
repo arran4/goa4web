@@ -120,13 +120,13 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		Edit:                         false,
 	}
 
-	if pub, author, err := cd.TopicPublicLabels(threadRow.Idforumthread); err == nil {
+	if pub, author, err := cd.ThreadPublicLabels(threadRow.Idforumthread); err == nil {
 		data.PublicLabels = pub
 		data.AuthorLabels = author
 	} else {
 		log.Printf("list public labels: %v", err)
 	}
-	if priv, err := cd.TopicPrivateLabels(threadRow.Idforumthread); err == nil {
+	if priv, err := cd.ThreadPrivateLabels(threadRow.Idforumthread); err == nil {
 		data.PrivateLabels = priv
 	} else {
 		log.Printf("list private labels: %v", err)

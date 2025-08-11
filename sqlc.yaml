@@ -14,6 +14,7 @@ sql:
         - "internal/db/queries-threads.sql"
         - "internal/db/queries-bookmarks.sql"
         - "internal/db/queries-forum.sql"
+        - "internal/db/queries-labels.sql"
         - "internal/db/queries-comments.sql"
         - "internal/db/queries-linker.sql"
         - "internal/db/queries-imagebbs.sql"

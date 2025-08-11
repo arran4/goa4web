@@ -668,20 +668,22 @@ CREATE TABLE IF NOT EXISTS `external_links` (
   UNIQUE KEY `external_links_url_idx` (`url`(255))
 );
 
-CREATE TABLE `forumtopic_public_labels` (
+CREATE TABLE `content_public_labels` (
   `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `forumtopic_idforumtopic` int NOT NULL,
+  `item` tinytext NOT NULL,
+  `item_id` int NOT NULL,
   `label` tinytext NOT NULL,
-  UNIQUE (`forumtopic_idforumtopic`,`label`)
+  UNIQUE (`item`,`item_id`,`label`)
 );
 
-CREATE TABLE `forumtopic_private_labels` (
+CREATE TABLE `content_private_labels` (
   `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `forumtopic_idforumtopic` int NOT NULL,
-  `users_idusers` int NOT NULL,
+  `item` tinytext NOT NULL,
+  `item_id` int NOT NULL,
+  `user_id` int NOT NULL,
   `label` tinytext NOT NULL,
   `invert` int NOT NULL DEFAULT 0,
-  UNIQUE (`forumtopic_idforumtopic`,`users_idusers`,`label`)
+  UNIQUE (`item`,`item_id`,`user_id`,`label`)
 );
 
 CREATE TABLE `content_label_status` (

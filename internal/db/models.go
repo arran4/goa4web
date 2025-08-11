@@ -104,6 +104,22 @@ type ContentLabelStatus struct {
 	Label  string
 }
 
+type ContentPrivateLabel struct {
+	ID     int32
+	Item   string
+	ItemID int32
+	UserID int32
+	Label  string
+	Invert bool
+}
+
+type ContentPublicLabel struct {
+	ID     int32
+	Item   string
+	ItemID int32
+	Label  string
+}
+
 type DeactivatedBlog struct {
 	Idblogs            int32
 	ForumthreadID      int32
@@ -257,20 +273,6 @@ type Forumtopic struct {
 	Comments                     sql.NullInt32
 	Lastaddition                 sql.NullTime
 	Handler                      string
-}
-
-type ForumtopicPrivateLabel struct {
-	ID                     int32
-	ForumtopicIdforumtopic int32
-	UsersIdusers           int32
-	Label                  string
-	Invert                 bool
-}
-
-type ForumtopicPublicLabel struct {
-	ID                     int32
-	ForumtopicIdforumtopic int32
-	Label                  string
 }
 
 type Grant struct {

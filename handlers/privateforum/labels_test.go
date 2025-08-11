@@ -44,7 +44,7 @@ func TestPrivateLabelRoutes(t *testing.T) {
 		cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
 		cd.ForumBasePath = "/private"
 
-		req := httptest.NewRequest(http.MethodPost, "/private/thread/1/labels", strings.NewReader("task="+url.QueryEscape(string(forumhandlers.TaskMarkTopicRead))))
+		req := httptest.NewRequest(http.MethodPost, "/private/thread/1/labels", strings.NewReader("task="+url.QueryEscape(string(forumhandlers.TaskMarkThreadRead))))
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 		rr := httptest.NewRecorder()

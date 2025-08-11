@@ -108,8 +108,8 @@ const (
 	// TaskRemovePrivateLabel removes a private label from a topic.
 	TaskRemovePrivateLabel tasks.TaskString = "Remove Private Label"
 
-	// TaskMarkTopicRead marks a topic as read for the current user.
-	TaskMarkTopicRead tasks.TaskString = "Mark Topic Read"
+	// TaskMarkThreadRead marks a thread as read for the current user.
+	TaskMarkThreadRead tasks.TaskString = "Mark Thread Read"
 
 	// TaskSetLabels replaces public and private labels on a topic.
 	TaskSetLabels tasks.TaskString = "Set Labels"

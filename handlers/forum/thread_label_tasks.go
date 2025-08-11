@@ -70,7 +70,7 @@ var (
 	_ tasks.Task = (*RemovePrivateLabelTask)(nil)
 	_ tasks.Task = (*AddAuthorLabelTask)(nil)
 	_ tasks.Task = (*RemoveAuthorLabelTask)(nil)
-	_ tasks.Task = (*MarkTopicReadTask)(nil)
+	_ tasks.Task = (*MarkThreadReadTask)(nil)
 	_ tasks.Task = (*SetLabelsTask)(nil)
 )
 
@@ -238,7 +238,7 @@ func (SetLabelsTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("set private labels %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	if err := cd.SetTopicPrivateLabelStatus(int32(threadID), inverse["new"], inverse["unread"]); err != nil {
+	if err := cd.SetThreadPrivateLabelStatus(int32(threadID), inverse["new"], inverse["unread"]); err != nil {
 		log.Printf("set private label status: %v", err)
 		return fmt.Errorf("set private label status %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

@@ -37,6 +37,7 @@ func RegisterAdminRoutes(ar *mux.Router) {
 	far.HandleFunc("/topics/topic/{topic}/delete", AdminTopicDeletePage).Methods("POST").MatcherFunc(topicDeleteTask.Matcher())
 	far.HandleFunc("/topics/topic/{topic}/grants", AdminTopicGrantsPage).Methods("GET")
 	far.HandleFunc("/topics/topic/{topic}/grant", handlers.TaskHandler(topicGrantCreateTask)).Methods("POST").MatcherFunc(topicGrantCreateTask.Matcher())
+	far.HandleFunc("/topics/topic/{topic}/grant/update", handlers.TaskHandler(topicGrantUpdateTask)).Methods("POST").MatcherFunc(topicGrantUpdateTask.Matcher())
 	far.HandleFunc("/topics/topic/{topic}/grant/delete", handlers.TaskHandler(topicGrantDeleteTask)).Methods("POST").MatcherFunc(topicGrantDeleteTask.Matcher())
 	far.HandleFunc("/topic/{topic}", AdminTopicPage).Methods("GET")
 	far.HandleFunc("/topic/{topic}/edit", AdminTopicEditFormPage).Methods("GET")
@@ -44,6 +45,7 @@ func RegisterAdminRoutes(ar *mux.Router) {
 	far.HandleFunc("/topic/{topic}/delete", AdminTopicDeletePage).Methods("POST").MatcherFunc(topicDeleteTask.Matcher())
 	far.HandleFunc("/topic/{topic}/grants", AdminTopicGrantsPage).Methods("GET")
 	far.HandleFunc("/topic/{topic}/grant", handlers.TaskHandler(topicGrantCreateTask)).Methods("POST").MatcherFunc(topicGrantCreateTask.Matcher())
+	far.HandleFunc("/topic/{topic}/grant/update", handlers.TaskHandler(topicGrantUpdateTask)).Methods("POST").MatcherFunc(topicGrantUpdateTask.Matcher())
 	far.HandleFunc("/topic/{topic}/grant/delete", handlers.TaskHandler(topicGrantDeleteTask)).Methods("POST").MatcherFunc(topicGrantDeleteTask.Matcher())
 
 	far.HandleFunc("/categories/category/{category}/grants", AdminCategoryGrantsPage).Methods("GET")

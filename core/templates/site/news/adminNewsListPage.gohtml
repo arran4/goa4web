@@ -1,7 +1,7 @@
 {{ template "head" $ }}
 {{ if .Error }}<p>{{ .Error }}</p>{{ end }}
 {{ if .CanPost }}<p><a href="/news/post">New post</a></p>{{ end }}
-<table border="1">
+<table class="table table-bordered">
     <tr><th>ID<th>Date<th>Writer<th>Comments<th>View</tr>
     {{ range cd.AdminLatestNews }}
         <tr>
@@ -17,7 +17,7 @@
 </table>
 {{ if .UserRoles }}
 <h2>News Roles</h2>
-<table border="1">
+<table class="table table-bordered">
     <tr><th>User</th><th>Email</th><th>Roles</th></tr>
     {{ range .UserRoles }}
     <tr>

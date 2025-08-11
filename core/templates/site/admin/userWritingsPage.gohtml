@@ -1,6 +1,6 @@
 {{ template "head" $ }}
 <h2>Writings by {{ .User.Username.String }}</h2>
-<table border="1">
+<table class="table table-bordered">
     <tr><th>ID</th><th>Title</th><th>Category</th><th>Date</th><th>Comments</th><th>Actions</th></tr>
     {{- range .Writings }}
     <tr>

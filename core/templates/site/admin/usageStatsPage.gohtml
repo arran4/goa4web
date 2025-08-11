@@ -10,7 +10,7 @@
 <h2>Usage Statistics</h2>
 
 <h3>Threads per Forum Topic</h3>
-<table border="1">
+<table class="table table-bordered">
     <tr><th>ID</th><th>Topic</th><th>Handler</th><th>Threads</th><th>Comments</th></tr>
     {{- range .ForumTopics }}
     <tr>
@@ -24,7 +24,7 @@
 </table>
 
 <h3>Threads per Forum Handler</h3>
-<table border="1">
+<table class="table table-bordered">
     <tr><th>Handler</th><th>Threads</th><th>Comments</th></tr>
     {{- range .ForumHandlers }}
     <tr><td>{{ .Handler }}</td><td>{{ .Threads }}</td><td>{{ .Comments }}</td></tr>
@@ -32,7 +32,7 @@
 </table>
 
 <h3>Threads per Forum Category</h3>
-<table border="1">
+<table class="table table-bordered">
     <tr><th>ID</th><th>Category</th><th>Threads</th><th>Comments</th></tr>
     {{- range .ForumCategories }}
     <tr>
@@ -45,7 +45,7 @@
 </table>
 
 <h3>Writings per Category</h3>
-<table border="1">
+<table class="table table-bordered">
     <tr><th>ID</th><th>Category</th><th>Writings</th></tr>
     {{- range .WritingCategories }}
     <tr>
@@ -57,7 +57,7 @@
 </table>
 
 <h3>Links per Category</h3>
-<table border="1">
+<table class="table table-bordered">
     <tr><th>ID</th><th>Category</th><th>Links</th></tr>
     {{- range .LinkerCategories }}
     <tr>
@@ -69,7 +69,7 @@
 </table>
 
 <h3>Posts per Imageboard</h3>
-<table border="1">
+<table class="table table-bordered">
     <tr><th>ID</th><th>Board</th><th>Posts</th></tr>
     {{- range .Imageboards }}
     <tr>
@@ -81,7 +81,7 @@
 </table>
 
 <h3>Posts by User</h3>
-<table border="1">
+<table class="table table-bordered">
     <tr><th>ID</th><th>User</th><th>Blogs</th><th>News</th><th>Comments</th><th>Images</th><th>Links</th><th>Writings</th></tr>
     {{- range .Users }}
     <tr>
@@ -93,7 +93,7 @@
 </table>
 
 <h3>Monthly Usage (from {{ .StartYear }})</h3>
-<table border="1">
+<table class="table table-bordered">
     <tr><th>Year</th><th>Month</th><th>Blogs</th><th>News</th><th>Comments</th><th>Images</th><th>Links</th><th>Writings</th></tr>
     {{- range .Monthly }}
     <tr><td>{{ .Year }}</td><td>{{ .Month }}</td><td>{{ .Blogs }}</td><td>{{ .News }}</td><td>{{ .Comments }}</td><td>{{ .Images }}</td><td>{{ .Links }}</td><td>{{ .Writings }}</td></tr>
@@ -101,7 +101,7 @@
 </table>
 
 <h3>Monthly Usage Per User (from {{ .StartYear }})</h3>
-<table border="1">
+<table class="table table-bordered">
     <tr><th>ID</th><th>User</th><th>Year</th><th>Month</th><th>Blogs</th><th>News</th><th>Comments</th><th>Images</th><th>Links</th><th>Writings</th></tr>
     {{- range .UserMonthly }}
     <tr>

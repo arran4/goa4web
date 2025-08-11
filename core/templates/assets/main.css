@@ -1,6 +1,6 @@
 body {
-        background-color: #FFFBF0;
-        color: #800000;
+	background-color: #FFFBF0;
+	color: #800000;
         min-height: 100vh;
         display: flex;
         flex-direction: column;
@@ -22,7 +22,7 @@ textarea {
         justify-content: space-between;
         align-items: center;
         padding: 0.5em 1em;
-        background-color: #FFF6E0;
+	background-color: #FFF6E0;
 }
 
 .navbar-left,
@@ -43,8 +43,8 @@ textarea {
         flex: 1;
         text-align: center;
         font-weight: bold;
-        font-family: tahoma, arial, helvetica, sans-serif;
-        color: #800000;
+	font-family: tahoma, arial, helvetica, sans-serif;
+	color: #800000;
         position: relative;
 }
 
@@ -54,7 +54,7 @@ textarea {
 
 .hamburger {
         display: none;
-        font-size: 1.5em;
+	font-size: 1.5em;
         cursor: pointer;
 }
 
@@ -75,8 +75,8 @@ textarea {
 }
 
 .site-footer {
-        font-size: 0.7em;
-        color: #666;
+	font-size: 0.7em;
+	color: #666;
 }
 a {
 	background-color: transparent;
@@ -91,14 +91,49 @@ a:hover {
 	color: #FF0000;
 }
 h1 {
-        font-family: tahoma, arial, helvetica, sans-serif;
+	font-family: tahoma, arial, helvetica, sans-serif;
         text-align: center;
+	color: #800000;
+	background-color: transparent;
+}
+h2, h3 {
+        font-family: tahoma, arial, helvetica, sans-serif;
         color: #800000;
         background-color: transparent;
+}
+.section-heading {
+        font-family: tahoma, arial, helvetica, sans-serif;
+        font-size: 1.2em;
+        font-weight: bold;
+        color: #800000;
+        background-color: transparent;
+}
+.blog-title {
+	font-family: tahoma, arial, helvetica, sans-serif;
+	font-size: 1.5em;
+	color: #800000;
+	background-color: transparent;
+}
+
+.blog-subtitle {
+	font-family: tahoma, arial, helvetica, sans-serif;
+	font-size: 1.2em;
+	color: #800000;
+	background-color: transparent;
+}
+
+.table {
+        border-collapse: collapse;
 }
 
 .underline {
         text-decoration: underline;
+}
+
+.table-bordered,
+.table-bordered th,
+.table-bordered td {
+        border: 1px solid #000;
 }
 
 .section-title {
@@ -174,20 +209,28 @@ div.title {
         font-family: tahoma, arial, helvetica, sans-serif;
         font-size: 0.8em;
         color: #800000;
-	background-color: transparent;
+        background-color: transparent;
 }
+
+.text-large {
+        font-size: 1.2em;
+}
+.text-xlarge {
+        font-size: 1.5em;
+}
+
 .notification {
         border: 1px solid #808000;
         padding: 0.5em;
         margin-bottom: 0.5em;
-        background-color: #FFF6E0;
+	background-color: #FFF6E0;
 }
 
 .pagination-bar {
         position: sticky;
         bottom: 0;
         margin-top: auto;
-        background-color: #FFF6E0;
+	background-color: #FFF6E0;
         padding: 0.5em;
         display: flex;
         justify-content: space-between;
@@ -210,11 +253,11 @@ div.title {
 
 /* spoiler text hidden until hovered */
 .spoiler {
-        color: #000000;
-        background-color: #000000;
+	color: #000000;
+	background-color: #000000;
 }
 .spoiler:hover {
-        color: #FFFFFF;
+	color: #FFFFFF;
 }
 
 /* role grant editor */
@@ -258,34 +301,64 @@ div.title {
         align-items: center;
         padding-right: 8px;
         cursor: default;
-        color: #fff;
+	color: #fff;
 }
 
 .label.pill.unsaved {
-        color: #000;
+	color: #000;
 }
 
 .label.pill.public {
-        background: #2e7d32;
-}
-
-.label.pill.public.unsaved {
         background: #81c784;
 }
 
-.label.pill.author {
-        background: #1565c0;
+.label.pill.public.unsaved {
+        background: #c8e6c9;
 }
 
-.label.pill.author.unsaved {
+.label.pill.author {
         background: #90caf9;
 }
 
+.label.pill.author.unsaved {
+        background: #bbdefb;
+}
+
 .label.pill.private {
-        background: #e65100;
+        background: #ffb74d;
 }
 
 .label.pill.private.unsaved {
+        background: #ffe0b2;
+}
+
+body.forum .label.pill.public,
+body.privateforum .label.pill.public {
+        background: #2e7d32;
+}
+
+body.forum .label.pill.public.unsaved,
+body.privateforum .label.pill.public.unsaved {
+        background: #81c784;
+}
+
+body.forum .label.pill.author,
+body.privateforum .label.pill.author {
+        background: #1565c0;
+}
+
+body.forum .label.pill.author.unsaved,
+body.privateforum .label.pill.author.unsaved {
+        background: #90caf9;
+}
+
+body.forum .label.pill.private,
+body.privateforum .label.pill.private {
+        background: #e65100;
+}
+
+body.forum .label.pill.private.unsaved,
+body.privateforum .label.pill.private.unsaved {
         background: #ffb74d;
 }
 
@@ -352,12 +425,12 @@ tr.unsupported td {
 }
 
 .a4code-code {
-        background-color: lightblue;
+	background-color: lightblue;
 }
 
 .a4code-quote,
 .a4code-quoteof {
-        background-color: lightgreen;
+	background-color: lightgreen;
 }
 
 .a4code-image {
@@ -366,8 +439,8 @@ tr.unsupported td {
 
 /* Breadcrumb navigation */
 .breadcrumbs {
-        font-family: tahoma, arial, helvetica, sans-serif;
-        font-size: 0.8em;
+	font-family: tahoma, arial, helvetica, sans-serif;
+	font-size: 0.8em;
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
@@ -392,7 +465,7 @@ tr.unsupported td {
 .breadcrumbs li + li:before {
         content: ">";
         padding: 0 0.25em;
-        color: #800000;
+	color: #800000;
 }
 
 .breadcrumbs a {
@@ -401,7 +474,7 @@ tr.unsupported td {
 
 .navbar-center .page-title-link {
         text-decoration: none;
-        color: inherit;
+	color: inherit;
 }
 
 /* Forum topic actions */
@@ -468,7 +541,7 @@ tr.unsupported td {
 }
 
 .thread-header {
-        background-color: lightgrey;
+	background-color: lightgrey;
 }
 
 .thread-content {
@@ -477,12 +550,12 @@ tr.unsupported td {
 
 .poster-name.first,
 .post-time.first {
-        color: green;
+	color: green;
 }
 
 .poster-name.last,
 .post-time.last {
-        color: blue;
+	color: blue;
 }
 
 

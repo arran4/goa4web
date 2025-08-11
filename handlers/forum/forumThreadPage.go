@@ -1,12 +1,14 @@
 package forum
 
 import (
+	"database/sql"
 	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/common"
@@ -61,7 +63,26 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
-	cd.PageTitle = fmt.Sprintf("Forum - %s", topicRow.Title.String)
+	displayTitle := topicRow.Title.String
+	if topicRow.Handler == "private" && cd.Queries() != nil {
+		parts, err := cd.Queries().ListPrivateTopicParticipantsByTopicIDForUser(r.Context(), db.ListPrivateTopicParticipantsByTopicIDForUserParams{
+			TopicID:  sql.NullInt32{Int32: topicRow.Idforumtopic, Valid: true},
+			ViewerID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		})
+		if err != nil {
+			log.Printf("list private participants: %v", err)
+		}
+		var names []string
+		for _, p := range parts {
+			if p.Idusers != cd.UserID {
+				names = append(names, p.Username.String)
+			}
+		}
+		if len(names) > 0 {
+			displayTitle = strings.Join(names, ", ")
+		}
+	}
+	cd.PageTitle = fmt.Sprintf("Forum - %s", displayTitle)
 
 	if _, ok := core.GetSessionOrFail(w, r); !ok {
 		return
@@ -113,6 +134,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		ForumcategoryIdforumcategory: topicRow.ForumcategoryIdforumcategory,
 		Title:                        topicRow.Title,
 		Description:                  topicRow.Description,
+		DisplayTitle:                 displayTitle,
 		Threads:                      topicRow.Threads,
 		Comments:                     topicRow.Comments,
 		Lastaddition:                 topicRow.Lastaddition,

@@ -57,9 +57,6 @@ func TestMarkThreadReadTaskRefererFallback(t *testing.T) {
 }
 
 func TestSetLabelsTaskAddsInverseLabels(t *testing.T) {
-	if true {
-		t.Skip("TODO: update expectations for content labels")
-	}
 	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -69,19 +66,19 @@ func TestSetLabelsTaskAddsInverseLabels(t *testing.T) {
 	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
 	cd.UserID = 1
 
-	mock.ExpectQuery("SELECT .* FROM content_public_labels").
+	mock.ExpectQuery("SELECT item, item_id, label\\s+FROM content_public_labels\\s+WHERE item = \\? AND item_id = \\?").
 		WithArgs("thread", int32(1)).
 		WillReturnRows(sqlmock.NewRows([]string{"item", "item_id", "label"}))
-	mock.ExpectQuery("SELECT .* FROM content_label_status").
+	mock.ExpectQuery("SELECT item, item_id, label\\s+FROM content_label_status\\s+WHERE item = \\? AND item_id = \\?").
 		WithArgs("thread", int32(1)).
 		WillReturnRows(sqlmock.NewRows([]string{"item", "item_id", "label"}))
-	mock.ExpectQuery("SELECT .* FROM content_private_labels").
+	mock.ExpectQuery("SELECT item, item_id, user_id, label, invert\\s+FROM content_private_labels\\s+WHERE item = \\? AND item_id = \\? AND user_id = \\?").
 		WithArgs("thread", int32(1), int32(1)).
 		WillReturnRows(sqlmock.NewRows([]string{"item", "item_id", "user_id", "label", "invert"}))
-	mock.ExpectExec("INSERT IGNORE INTO content_private_labels").
+	mock.ExpectExec(regexp.QuoteMeta("INSERT IGNORE INTO content_private_labels")).
 		WithArgs("thread", int32(1), int32(1), "new", true).
 		WillReturnResult(sqlmock.NewResult(0, 1))
-	mock.ExpectExec("INSERT IGNORE INTO content_private_labels").
+	mock.ExpectExec(regexp.QuoteMeta("INSERT IGNORE INTO content_private_labels")).
 		WithArgs("thread", int32(1), int32(1), "unread", true).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
@@ -101,9 +98,6 @@ func TestSetLabelsTaskAddsInverseLabels(t *testing.T) {
 }
 
 func TestSetLabelsTaskUpdatesSpecialLabels(t *testing.T) {
-	if true {
-		t.Skip("TODO: update expectations for content labels")
-	}
 	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)

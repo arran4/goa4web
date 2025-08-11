@@ -2,7 +2,19 @@
     document.addEventListener('click', function(e) {
         if (e.target.classList.contains('remove')) {
             var span = e.target.parentElement;
-            span.parentElement.removeChild(span);
+            var hidden = span.querySelector('input[type="hidden"]');
+            if (span.classList.contains('unsaved') && !span.classList.contains('removed')) {
+                span.parentElement.removeChild(span);
+                return;
+            }
+            span.classList.toggle('removed');
+            if (span.classList.contains('removed')) {
+                span.classList.add('unsaved');
+                if (hidden) { hidden.disabled = true; }
+            } else {
+                span.classList.remove('unsaved');
+                if (hidden) { hidden.disabled = false; }
+            }
         }
     });
     document.querySelectorAll('.label-input').forEach(function(input) {
@@ -20,8 +32,8 @@
                     return;
                 }
                 var span = document.createElement('span');
-                span.className = 'label ' + name;
-                span.textContent = val + ' ';
+                span.className = 'label pill ' + name + ' unsaved';
+                span.textContent = val;
                 var btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = 'remove';

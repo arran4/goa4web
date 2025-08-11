@@ -241,6 +241,64 @@ div.title {
         background: #d1c4e9;
 }
 
+.label.pill {
+        display: inline-flex;
+        align-items: center;
+        padding-right: 8px;
+        cursor: default;
+        color: #000;
+}
+
+.label.pill.public {
+        background: #c8e6c9;
+}
+
+.label.pill.public.unsaved {
+        background: #e8f5e9;
+}
+
+.label.pill.author {
+        background: #bbdefb;
+}
+
+.label.pill.author.unsaved {
+        background: #e3f2fd;
+}
+
+.label.pill.private {
+        background: #ffe0b2;
+}
+
+.label.pill.private.unsaved {
+        background: #fff3e0;
+}
+
+.label-input[data-type="public"] {
+        background: #e8f5e9;
+}
+
+.label-input[data-type="author"] {
+        background: #e3f2fd;
+}
+
+.label-input[data-type="private"] {
+        background: #fff3e0;
+}
+
+.label.pill .remove {
+        background: inherit;
+        border: none;
+        padding: 4px 8px;
+        cursor: pointer;
+        margin-right: -8px;
+        border-radius: 0 12px 12px 0;
+}
+
+.label.pill.removed {
+        text-decoration: line-through;
+        opacity: 0.5;
+}
+
 tr.unsupported td {
         background: #f3e5f5;
 }

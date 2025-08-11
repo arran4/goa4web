@@ -18,11 +18,11 @@ CREATE TABLE `blogs` (
   `idblogs` int(10) NOT NULL AUTO_INCREMENT,
   `forumthread_idforumthread` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
-  `language_idlanguage` int(10) NOT NULL DEFAULT 0,
+  `language_id` int(10) NOT NULL DEFAULT 0,
   `blog` longtext DEFAULT NULL,
   `written` DATETIME NOT NULL DEFAULT NOW(),
   PRIMARY KEY (`idblogs`),
-  KEY `blogs_FKIndex1` (`language_idlanguage`),
+  KEY `blogs_FKIndex1` (`language_id`),
   KEY `blogs_FKIndex2` (`users_idusers`),
   KEY `blogs_FKIndex3` (`forumthread_idforumthread`)
 );
@@ -47,11 +47,11 @@ CREATE TABLE `comments` (
   `idcomments` int(10) NOT NULL AUTO_INCREMENT,
   `forumthread_idforumthread` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
-  `language_idlanguage` int(10) NOT NULL DEFAULT 0,
+  `language_id` int(10) NOT NULL DEFAULT 0,
   `written` datetime DEFAULT NULL,
   `text` longtext DEFAULT NULL,
   PRIMARY KEY (`idcomments`),
-  KEY `comments_FKIndex1` (`language_idlanguage`),
+  KEY `comments_FKIndex1` (`language_id`),
   KEY `comments_FKIndex2` (`users_idusers`),
   KEY `comments_FKIndex3` (`forumthread_idforumthread`)
 );
@@ -67,13 +67,13 @@ CREATE TABLE `commentsSearch` (
 CREATE TABLE `faq` (
   `idfaq` int(10) NOT NULL AUTO_INCREMENT,
   `faqCategories_idfaqCategories` int(10) NOT NULL DEFAULT 0,
-  `language_idlanguage` int(10) NOT NULL DEFAULT 0,
+  `language_id` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `answer` mediumtext DEFAULT NULL,
   `question` mediumtext DEFAULT NULL,
   PRIMARY KEY (`idfaq`),
   KEY `Table_21_FKIndex1` (`users_idusers`),
-  KEY `Table_21_FKIndex2` (`language_idlanguage`),
+  KEY `Table_21_FKIndex2` (`language_id`),
   KEY `Table_21_FKIndex3` (`faqCategories_idfaqCategories`)
 );
 
@@ -156,14 +156,14 @@ CREATE TABLE `imagepostSearch` (
 );
 
 CREATE TABLE `language` (
-  `idlanguage` int(10) NOT NULL AUTO_INCREMENT,
+  `id` int(10) NOT NULL AUTO_INCREMENT,
   `nameof` tinytext DEFAULT NULL,
-  PRIMARY KEY (`idlanguage`)
+  PRIMARY KEY (`id`)
 );
 
 CREATE TABLE `linker` (
   `idlinker` int(10) NOT NULL AUTO_INCREMENT,
-  `language_idlanguage` int(10) NOT NULL DEFAULT 0,
+  `language_id` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `linkerCategory_idlinkerCategory` int(10) NOT NULL DEFAULT 0,
   `forumthread_idforumthread` int(10) NOT NULL DEFAULT 0,
@@ -175,7 +175,7 @@ CREATE TABLE `linker` (
   KEY `linker_FKIndex1` (`forumthread_idforumthread`),
   KEY `linker_FKIndex2` (`linkerCategory_idlinkerCategory`),
   KEY `linker_FKIndex3` (`users_idusers`),
-  KEY `linker_FKIndex4` (`language_idlanguage`)
+  KEY `linker_FKIndex4` (`language_id`)
 );
 
 CREATE TABLE `linkerCategory` (
@@ -188,7 +188,7 @@ CREATE TABLE `linkerCategory` (
 
 CREATE TABLE `linkerQueue` (
   `idlinkerQueue` int(10) NOT NULL AUTO_INCREMENT,
-  `language_idlanguage` int(10) NOT NULL DEFAULT 0,
+  `language_id` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `linkerCategory_idlinkerCategory` int(10) NOT NULL DEFAULT 0,
   `title` tinytext DEFAULT NULL,
@@ -197,7 +197,7 @@ CREATE TABLE `linkerQueue` (
   PRIMARY KEY (`idlinkerQueue`),
   KEY `linkerQueue_FKIndex1` (`linkerCategory_idlinkerCategory`),
   KEY `linkerQueue_FKIndex2` (`users_idusers`),
-  KEY `linkerQueue_FKIndex3` (`language_idlanguage`)
+  KEY `linkerQueue_FKIndex3` (`language_id`)
 );
 
 CREATE TABLE `linkerSearch` (
@@ -219,13 +219,13 @@ CREATE TABLE `permissions` (
 
 CREATE TABLE `preferences` (
   `idpreferences` int(10) NOT NULL AUTO_INCREMENT,
-  `language_idlanguage` int(10) NOT NULL DEFAULT 0,
+  `language_id` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `emailforumupdates` tinyint(1) DEFAULT 0,
   `page_size` int(10) NOT NULL DEFAULT 15,
   PRIMARY KEY (`idpreferences`),
   KEY `preferences_FKIndex1` (`users_idusers`),
-  KEY `preferences_FKIndex2` (`language_idlanguage`)
+  KEY `preferences_FKIndex2` (`language_id`)
 );
 
 CREATE TABLE `searchwordlist` (
@@ -245,13 +245,13 @@ CREATE TABLE `searchwordlist_has_linker` (
 CREATE TABLE `siteNews` (
   `idsiteNews` int(10) NOT NULL AUTO_INCREMENT,
   `forumthread_idforumthread` int(10) NOT NULL DEFAULT 0,
-  `language_idlanguage` int(10) NOT NULL DEFAULT 0,
+  `language_id` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `news` longtext DEFAULT NULL,
   `occured` datetime DEFAULT NULL,
   PRIMARY KEY (`idsiteNews`),
   KEY `siteNews_FKIndex1` (`users_idusers`),
-  KEY `siteNews_FKIndex2` (`language_idlanguage`),
+  KEY `siteNews_FKIndex2` (`language_id`),
   KEY `siteNews_FKIndex3` (`forumthread_idforumthread`)
 );
 
@@ -279,9 +279,9 @@ CREATE TABLE `topicrestrictions` (
 CREATE TABLE `userlang` (
   `iduserlang` int(10) NOT NULL AUTO_INCREMENT,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
-  `language_idlanguage` int(10) NOT NULL DEFAULT 0,
+  `language_id` int(10) NOT NULL DEFAULT 0,
   PRIMARY KEY (`iduserlang`),
-  KEY `userpref_FKIndex1` (`language_idlanguage`),
+  KEY `userpref_FKIndex1` (`language_id`),
   KEY `userpref_FKIndex2` (`users_idusers`)
 );
 
@@ -309,7 +309,7 @@ CREATE TABLE `writing` (
   `idwriting` int(10) NOT NULL AUTO_INCREMENT,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `forumthread_idforumthread` int(10) NOT NULL DEFAULT 0,
-  `language_idlanguage` int(10) NOT NULL DEFAULT 0,
+  `language_id` int(10) NOT NULL DEFAULT 0,
   `writingCategory_idwritingCategory` int(10) NOT NULL DEFAULT 0,
   `title` tinytext DEFAULT NULL,
   `published` datetime DEFAULT NULL,
@@ -318,7 +318,7 @@ CREATE TABLE `writing` (
   `private` tinyint(1) DEFAULT NULL,
   PRIMARY KEY (`idwriting`),
   KEY `writing_FKIndex1` (`writingCategory_idwritingCategory`),
-  KEY `writing_FKIndex2` (`language_idlanguage`),
+  KEY `writing_FKIndex2` (`language_id`),
   KEY `writing_FKIndex3` (`forumthread_idforumthread`),
   KEY `writing_FKIndex4` (`users_idusers`)
 );

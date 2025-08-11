@@ -3,4 +3,5 @@ Your link "{{.Item.Title}}" was rejected by {{.Item.Moderator}}.
 
 View link:
 {{.Item.LinkURL}}
+
 Manage notifications: {{.Item.UnsubURL}}

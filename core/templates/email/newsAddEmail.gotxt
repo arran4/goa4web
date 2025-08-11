@@ -3,5 +3,6 @@ Your news post has been created.
 
 View post:
 {{.Item.PostURL}}
+
 Manage notifications: {{.UnsubscribeUrl}}
 

@@ -3,5 +3,6 @@ Your blog post has been updated successfully.
 
 View post:
 {{.Item.PostURL}}
+
 Manage notifications: {{.UnsubscribeUrl}}
 

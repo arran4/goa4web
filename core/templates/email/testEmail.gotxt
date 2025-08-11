@@ -2,6 +2,7 @@ Hello,
 
 This is a test email confirming your Goa4Web configuration.
 
+
 Manage notifications: {{.UnsubscribeUrl}}
 
 {{- if .SignOff}}

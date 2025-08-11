@@ -3,5 +3,6 @@ Your news permissions have been revoked.
 
 News section:
 {{.Item.NewsURL}}
+
 Manage notifications: {{.UnsubscribeUrl}}
 

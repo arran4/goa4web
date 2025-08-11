@@ -1,2 +1,3 @@
 Moderator {{.Item.Moderator}} removed ban for {{.Item.IP}}.
+
 Manage notifications: {{.UnsubscribeUrl}}

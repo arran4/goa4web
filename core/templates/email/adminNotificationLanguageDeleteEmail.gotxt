@@ -1,4 +1,5 @@
 User {{.Item.Username}} deleted language {{.Item.LanguageName}} (ID {{.Item.LanguageID}}).
 
+
 Manage notifications: {{.UnsubscribeUrl}}
 

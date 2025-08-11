@@ -3,5 +3,6 @@ Your news post has been updated.
 
 View post:
 {{.Item.PostURL}}
+
 Manage notifications: {{.UnsubscribeUrl}}
 

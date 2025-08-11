@@ -2,5 +2,6 @@ User {{.Item.Username}} edited a blog post.
 
 View post:
 {{.Item.PostURL}}
+
 Manage notifications: {{.UnsubscribeUrl}}
 

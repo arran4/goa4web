@@ -71,16 +71,15 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		})
 		if err != nil {
 			log.Printf("list private participants: %v", err)
-		} else {
-			var names []string
-			for _, p := range parts {
-				if p.Idusers != cd.UserID {
-					names = append(names, p.Username.String)
-				}
+		}
+		var names []string
+		for _, p := range parts {
+			if p.Idusers != cd.UserID {
+				names = append(names, p.Username.String)
 			}
-			if len(names) > 0 {
-				displayTitle = strings.Join(names, ", ")
-			}
+		}
+		if len(names) > 0 {
+			displayTitle = strings.Join(names, ", ")
 		}
 	}
 	cd.PageTitle = fmt.Sprintf("Forum - %s", displayTitle)

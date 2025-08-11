@@ -6,7 +6,7 @@ Commands:
   clean   drop all tables
 
 Examples:
-  {{.Prog}} test migrations apply all -database-type sqlite3 -connection-string :memory:
-  {{.Prog}} test migrations clean -database-type sqlite3 -connection-string :memory:
+  {{.Prog}} test migrations apply all -database-type mysql -connection-string "user:pass@tcp(localhost)/a4web"
+  {{.Prog}} test migrations clean -database-type mysql -connection-string "user:pass@tcp(localhost)/a4web"
 
 {{template "flag_groups_section" .FlagGroups}}

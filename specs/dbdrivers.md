@@ -31,7 +31,7 @@ The `dbdefaults` package registers all stable drivers by calling the `Register` 
 
 ## Built-in drivers
 
-The project ships with drivers for MySQL, PostgreSQL and SQLite. Example DSNs are taken from their `Examples` methods.
+The project ships with a driver for MySQL. Example DSNs are taken from its `Examples` method.
 
 ### MySQL
 
@@ -40,18 +40,4 @@ user:pass@tcp(127.0.0.1:3306)/dbname?parseTime=true
 user:pass@unix(/var/run/mysqld/mysqld.sock)/dbname?parseTime=true
 ```
 
-### PostgreSQL
-
-```text
-postgres://user:pass@localhost/dbname?sslmode=disable
-user=foo password=bar dbname=mydb sslmode=disable
-```
-
-### SQLite
-
-```text
-file:./db.sqlite?_fk=1
-:memory:
-```
-
-These examples illustrate the connection string format expected by each driver.
+These examples illustrate the connection string format expected by the driver.

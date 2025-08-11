@@ -26,7 +26,7 @@ Optional notification emails can be sent through several providers. See the [Ema
 ## Getting Started
 
 1. Install Go 1.23 or newer and ensure `go` is available in your `PATH`.
-2. Create a database named `a4web` using your preferred server. The schema is defined in `schema/schema.mysql.sql`, `schema/schema.psql.sql`, or `schema/schema.sqlite.sql`
+2. Create a database named `a4web` using MySQL. The schema is defined in `schema/schema.mysql.sql`
    ```bash
    mysql -u a4web -p a4web < schema/schema.mysql.sql
    ```
@@ -38,9 +38,7 @@ Optional notification emails can be sent through several providers. See the [Ema
 3. Provide the database connection string and driver via flags, a config file or environment variables. Examples:
    * MySQL TCP: `user:password@tcp(127.0.0.1:3306)/a4web?parseTime=true`
    * MySQL socket: `user:password@unix(/var/run/mysqld/mysqld.sock)/a4web?parseTime=true`
-   * PostgreSQL: `postgres://user:pass@localhost/a4web?sslmode=disable`
-   * SQLite: `file:./a4web.sqlite?_fk=1`
-4. Download dependencies and build the application. Use the `sqlite` build tag for SQLite support:
+4. Download dependencies and build the application:
    ```bash
    go mod download
    go build -o goa4web ./cmd/goa4web
@@ -50,7 +48,7 @@ Optional notification emails can be sent through several providers. See the [Ema
 During development you can load templates directly from disk. Extract the embedded templates and point the server at the directory:
 ```bash
 goa4web templates extract -dir ./tmpl
-go run -tags sqlite ./cmd/goa4web --templates-dir ./tmpl
+go run ./cmd/goa4web --templates-dir ./tmpl
 ```
 The default build embeds templates and `main.css`, producing a self-contained binary.
 
@@ -107,9 +105,9 @@ Server Stats 140
 
 ## Testing
 
-Unit tests focus mainly on utility packages and template compilation. Execute all tests with the `nosqlite` tag:
+Unit tests focus mainly on utility packages and template compilation. Execute all tests:
 ```bash
-go test -tags nosqlite ./...
+go test ./...
 ```
 
 ---
@@ -139,15 +137,15 @@ go run ./cmd/goa4web config as-env-file > examples/config.env
 `examples/config.env` might contain:
 ```conf
 # examples/config.env
-DB_DRIVER=sqlite
-DB_CONN=file:./a4web.sqlite?_fk=1
+DB_DRIVER=mysql
+DB_CONN=user:password@tcp(127.0.0.1:3306)/a4web?parseTime=true
 LISTEN=:8080
 HOSTNAME=http://localhost:8080
 AUTO_MIGRATE=true
 ```
 
 Run `goa4web config options --extended` to see detailed descriptions of all
-configuration keys. When using SQLite you must compile the binary with the `sqlite` build tag.
+configuration keys.
 
 ## Email Provider Configuration
 
@@ -430,19 +428,12 @@ Build a container image from the provided `Dockerfile`:
 docker build -t goa4web .
 ```
 
-Note: Containers that use SQLite must build the binary with the `sqlite` tag,
-for example:
-
-```bash
-go build -tags sqlite ./cmd/goa4web
-```
-
 Start the container with environment variables for your database connection:
 
 ```bash
 docker run -p 8080:8080 \
-  -e DB_DRIVER=sqlite \
-  -e DB_CONN=file:/data/a4web.sqlite?_fk=1 \
+  -e DB_DRIVER=mysql \
+  -e DB_CONN=user:password@tcp(mysql:3306)/a4web?parseTime=true \
   -e AUTO_MIGRATE=true \
   -v $(pwd)/data:/data \
   goa4web

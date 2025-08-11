@@ -212,12 +212,8 @@ func (c *testMigrationsCleanCmd) Run() error {
 	ctx := context.Background()
 	var q string
 	switch c.DBType {
-	case "sqlite3":
-		q = "SELECT name FROM sqlite_master WHERE type='table'"
 	case "mysql":
 		q = "SHOW TABLES"
-	case "postgres":
-		q = "SELECT tablename FROM pg_tables WHERE schemaname='public'"
 	default:
 		return fmt.Errorf("unsupported driver %s", c.DBType)
 	}

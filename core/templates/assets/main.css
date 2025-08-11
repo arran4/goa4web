@@ -184,8 +184,16 @@ div.title {
         font-family: tahoma, arial, helvetica, sans-serif;
         font-size: 0.8em;
         color: #800000;
-	background-color: transparent;
+        background-color: transparent;
 }
+
+.text-large {
+        font-size: 1.2em;
+}
+.text-xlarge {
+        font-size: 1.5em;
+}
+
 .notification {
         border: 1px solid #808000;
         padding: 0.5em;

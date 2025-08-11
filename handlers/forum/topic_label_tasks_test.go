@@ -84,9 +84,9 @@ func TestSetLabelsTaskAddsInverseLabels(t *testing.T) {
 
 	form := url.Values{}
 	form.Set("task", string(TaskSetLabels))
-	req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/labels", strings.NewReader(form.Encode()))
+	req := httptest.NewRequest(http.MethodPost, "/forum/thread/1/labels", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req = mux.SetURLVars(req, map[string]string{"topic": "1"})
+	req = mux.SetURLVars(req, map[string]string{"thread": "1"})
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 
 	rr := httptest.NewRecorder()

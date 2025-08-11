@@ -19,12 +19,19 @@ import (
 )
 
 func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath string) {
+	type threadWithLabels struct {
+		*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow
+		PublicLabels  []string
+		AuthorLabels  []string
+		PrivateLabels []string
+	}
+
 	type Data struct {
 		Admin                   bool
 		Back                    bool
 		Subscribed              bool
 		Topic                   *ForumtopicPlus
-		Threads                 []*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow
+		Threads                 []*threadWithLabels
 		Categories              []*ForumcategoryPlus
 		Category                *ForumcategoryPlus
 		CopyDataToSubCategories func(rootCategory *ForumcategoryPlus) *Data
@@ -128,7 +135,23 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
 		return
 	}
-	data.Threads = threadRows
+	threads := make([]*threadWithLabels, len(threadRows))
+	for i, r := range threadRows {
+		t := &threadWithLabels{GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow: r}
+		if pub, author, err := cd.TopicPublicLabels(r.Idforumthread); err == nil {
+			t.PublicLabels = pub
+			t.AuthorLabels = author
+		} else {
+			log.Printf("list public labels: %v", err)
+		}
+		if priv, err := cd.TopicPrivateLabels(r.Idforumthread); err == nil {
+			t.PrivateLabels = priv
+		} else {
+			log.Printf("list private labels: %v", err)
+		}
+		threads[i] = t
+	}
+	data.Threads = threads
 
 	if pub, author, err := cd.TopicPublicLabels(topicRow.Idforumtopic); err == nil {
 		data.PublicLabels = pub

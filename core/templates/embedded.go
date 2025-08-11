@@ -33,6 +33,8 @@ var (
 	roleGrantsEditorJSData []byte
 	//go:embed "assets/private_forum.js"
 	privateForumJSData []byte
+	//go:embed "assets/topic_labels.js"
+	topicLabelsJSData []byte
 )
 
 func init() {
@@ -107,3 +109,6 @@ func GetRoleGrantsEditorJSData() []byte { return roleGrantsEditorJSData }
 
 // GetPrivateForumJSData returns the JavaScript for private forum pages.
 func GetPrivateForumJSData() []byte { return privateForumJSData }
+
+// GetTopicLabelsJSData returns the JavaScript for topic label editing.
+func GetTopicLabelsJSData() []byte { return topicLabelsJSData }

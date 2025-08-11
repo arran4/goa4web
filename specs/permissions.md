@@ -10,6 +10,7 @@ Roles define high level capabilities that can be assigned to users. The standard
 - **user** – regular authenticated user
 - **content writer** – may publish blogs and writing articles
 - **moderator** – moderation abilities
+- **labeler** – manage public/shared labels
 - **administrator** – full access
 
 Each role includes the following flags:
@@ -17,6 +18,7 @@ Each role includes the following flags:
 - **can_login** – whether accounts assigned the role are permitted to authenticate
 - **is_admin** – marks administrator roles that bypass permission checks
 - **public_profile_allowed_at** – when set, users with this role may expose a public profile
+- **private_labels** – whether the role can use private labels
 
 Users can hold multiple roles through the `user_roles` table. Roles are assigned
 explicitly without inheritance.
@@ -68,6 +70,8 @@ Permission actions describe groups of related operations. The main verbs are:
 - **search** – run a search query
 - **promote** – feature a news post as a site announcement
 - **demote** – remove a post from the announcements
+- **label** – create, edit or remove public/shared labels. Logged-in roles with
+  view access to a section receive this grant automatically.
 
 Sections may introduce extra actions but these form the base vocabulary used by
 the templates and permission checks.

@@ -6,6 +6,7 @@
     Name: <input name="name" value="{{.Role.Name}}"><br>
     Can Login: <input type="checkbox" name="can_login" {{if .Role.CanLogin}}checked{{end}}><br>
     Is Admin: <input type="checkbox" name="is_admin" {{if .Role.IsAdmin}}checked{{end}}><br>
+    Private Labels: <input type="checkbox" name="private_labels" {{if .Role.PrivateLabels}}checked{{end}}><br>
     <input type="submit" name="task" value="Save">
 </form>
 {{ template "roleGrantsEditor.gohtml" . }}

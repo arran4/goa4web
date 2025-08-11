@@ -39,7 +39,7 @@ func setupRequest(t *testing.T, path string, userID int) (*http.Request, sqlmock
 func TestAdminUserPermissionsPage_UserIDInjected(t *testing.T) {
 	req, mock, _ := setupRequest(t, "/admin/user/%d/permissions", 2)
 	mock.ExpectQuery("SELECT").WithArgs(int32(2)).WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(2, "", "u", nil))
-	mock.ExpectQuery("SELECT").WillReturnRows(sqlmock.NewRows([]string{"id", "name", "can_login", "is_admin", "public_profile_allowed_at"}))
+	mock.ExpectQuery("SELECT").WillReturnRows(sqlmock.NewRows([]string{"id", "name", "can_login", "is_admin", "private_labels", "public_profile_allowed_at"}))
 	mock.ExpectQuery("SELECT").WithArgs(int32(2)).WillReturnRows(sqlmock.NewRows([]string{"iduser_roles", "users_idusers", "role_id", "name"}))
 	rr := httptest.NewRecorder()
 	adminUserPermissionsPage(rr, req)

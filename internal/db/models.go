@@ -426,6 +426,7 @@ type Role struct {
 	Name                   string
 	CanLogin               bool
 	IsAdmin                bool
+	PrivateLabels          bool
 	PublicProfileAllowedAt sql.NullTime
 }
 

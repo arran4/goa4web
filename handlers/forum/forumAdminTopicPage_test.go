@@ -62,8 +62,8 @@ func TestAdminTopicEditFormPage(t *testing.T) {
 		AddRow(1, 0, 0, "cat", "desc")
 	mock.ExpectQuery("SELECT").WillReturnRows(catRows)
 
-	roleRows := sqlmock.NewRows([]string{"id", "name", "can_login", "is_admin", "public_profile_allowed_at"}).
-		AddRow(1, "role", true, false, nil)
+	roleRows := sqlmock.NewRows([]string{"id", "name", "can_login", "is_admin", "private_labels", "public_profile_allowed_at"}).
+		AddRow(1, "role", true, false, true, nil)
 	mock.ExpectQuery("SELECT").WillReturnRows(roleRows)
 
 	cd := common.NewCoreData(context.Background(), db.New(conn), config.NewRuntimeConfig())

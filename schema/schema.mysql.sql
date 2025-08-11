@@ -234,6 +234,7 @@ CREATE TABLE `roles` (
   `name` tinytext NOT NULL,
   `can_login` tinyint(1) NOT NULL DEFAULT 0,
   `is_admin` tinyint(1) NOT NULL DEFAULT 0,
+  `private_labels` tinyint(1) NOT NULL DEFAULT 1,
   `public_profile_allowed_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `roles_name_idx` (`name`(255))

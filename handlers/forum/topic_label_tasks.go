@@ -48,6 +48,17 @@ var (
 	SetLabelsTaskHandler          = setLabelsTask
 )
 
+var (
+	_ tasks.Task = (*AddPublicLabelTask)(nil)
+	_ tasks.Task = (*RemovePublicLabelTask)(nil)
+	_ tasks.Task = (*AddPrivateLabelTask)(nil)
+	_ tasks.Task = (*RemovePrivateLabelTask)(nil)
+	_ tasks.Task = (*AddAuthorLabelTask)(nil)
+	_ tasks.Task = (*RemoveAuthorLabelTask)(nil)
+	_ tasks.Task = (*MarkTopicReadTask)(nil)
+	_ tasks.Task = (*SetLabelsTask)(nil)
+)
+
 func (AddPublicLabelTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
@@ -163,11 +174,18 @@ func (MarkTopicReadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
 	topicID, _ := strconv.Atoi(vars["topic"])
+	if err := r.ParseForm(); err != nil {
+		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
 	if err := cd.SetTopicPrivateLabelStatus(int32(topicID), false, false); err != nil {
 		log.Printf("mark read: %v", err)
 		return fmt.Errorf("mark read %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	return handlers.RefreshDirectHandler{TargetURL: r.Header.Get("Referer")}
+	target := r.PostFormValue("redirect")
+	if target == "" {
+		target = r.Header.Get("Referer")
+	}
+	return handlers.RefreshDirectHandler{TargetURL: target}
 }
 
 // SetLabelsTask replaces public and private labels on a topic.

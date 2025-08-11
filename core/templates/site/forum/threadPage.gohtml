@@ -39,6 +39,11 @@
         </form>
     </div>
     <script src="{{$base}}/topic_labels.js"></script>
+    <form method="post" action="{{$base}}/topic/{{.Topic.Idforumtopic}}/labels" class="mark-read">
+        <input type="hidden" name="task" value="Mark Topic Read"/>
+        <input type="hidden" name="redirect" value="{{$base}}/topic/{{.Topic.Idforumtopic}}"/>
+        <button type="submit">Mark as read and go back</button>
+    </form>
     <a href="{{$base}}/topic/{{.Topic.Idforumtopic}}">Back</a>
 
 {{ template "tail" $ }}

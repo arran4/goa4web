@@ -81,6 +81,7 @@ func AdminForumPage(w http.ResponseWriter, r *http.Request) {
 			Comments:                     row.Comments,
 			Lastaddition:                 row.Lastaddition,
 			Lastposterusername:           row.Lastposterusername,
+			Labels:                       nil,
 		})
 	}
 

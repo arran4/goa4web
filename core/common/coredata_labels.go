@@ -156,23 +156,25 @@ func (cd *CoreData) PrivateLabels(item string, itemID int32) ([]string, error) {
 	}
 	sort.Strings(userLabels)
 	labels := make([]string, 0, len(userLabels)+2)
-	if !inverted["new"] {
-		labels = append(labels, "new")
-	}
-	if !inverted["unread"] {
-		labels = append(labels, "unread")
+	// Only threads, news articles, links, image board posts, blog entries,
+	// and writing articles receive default status labels.
+	switch item {
+	case "thread", "news", "link", "imagebbs", "blog", "writing":
+		if !inverted["new"] {
+			labels = append(labels, "new")
+		}
+		if !inverted["unread"] {
+			labels = append(labels, "unread")
+		}
 	}
 	labels = append(labels, userLabels...)
 	return labels, nil
 }
 
-// ClearPrivateLabelStatus removes stored new/unread inversions for an item across all users.
+// ClearPrivateLabelStatus removes stored unread inversions for an item across all users.
 func (cd *CoreData) ClearPrivateLabelStatus(item string, itemID int32) error {
 	if cd.queries == nil {
 		return nil
-	}
-	if err := cd.queries.SystemClearContentPrivateLabel(cd.ctx, db.SystemClearContentPrivateLabelParams{Item: item, ItemID: itemID, Label: "new"}); err != nil {
-		return err
 	}
 	return cd.queries.SystemClearContentPrivateLabel(cd.ctx, db.SystemClearContentPrivateLabelParams{Item: item, ItemID: itemID, Label: "unread"})
 }

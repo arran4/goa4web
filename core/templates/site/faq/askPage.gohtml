@@ -6,7 +6,7 @@
             Please select a category:
             <select name="category">
                 {{- range (cd).FAQCategories }}
-                    <option value="{{ .Idfaqcategories }}">{{ .Name.String }}</option>
+                    <option value="{{ .ID }}">{{ .Name.String }}</option>
                 {{- else }}
                     <option disabled>No categories</option>
                 {{- end }}

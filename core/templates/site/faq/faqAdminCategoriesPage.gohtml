@@ -7,7 +7,7 @@
     </tr>
     {{- range .Rows }}
     <tr>
-        <td><a href="/admin/faq/categories/category/{{ .Idfaqcategories }}">{{ .Idfaqcategories }}</a></td>
+        <td><a href="/admin/faq/categories/category/{{ .ID }}">{{ .ID }}</a></td>
         <td>{{ .Name.String }}</td>
         <td>{{ .Questioncount }}</td>
     </tr>

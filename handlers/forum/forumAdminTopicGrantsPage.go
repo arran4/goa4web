@@ -1,32 +1,26 @@
 package forum
 
 import (
-	"database/sql"
 	"fmt"
-	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
+
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
+	"github.com/gorilla/mux"
 )
 
+// AdminTopicGrantsPage displays the drag-and-drop role grants editor for a forum topic.
 func AdminTopicGrantsPage(w http.ResponseWriter, r *http.Request) {
-	type GrantInfo struct {
-		*db.Grant
-		Username sql.NullString
-		RoleName sql.NullString
-	}
 	type Data struct {
-		TopicID int32
-		Grants  []GrantInfo
-		Roles   []*db.Role
-		Actions []string
+		TopicID     int32
+		UpdateURL   string
+		GrantGroups []TopicGrantGroup
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := cd.Queries()
 	tid, err := strconv.Atoi(mux.Vars(r)["topic"])
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -34,35 +28,17 @@ func AdminTopicGrantsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Forum - Topic %d Grants", tid)
-	data := Data{TopicID: int32(tid), Actions: []string{"see", "view", "reply", "post", "edit"}}
-	if roles, err := cd.AllRoles(); err == nil {
-		data.Roles = roles
-	}
-	grants, err := queries.ListGrants(r.Context())
+	groups, err := buildTopicGrantGroups(r.Context(), cd, int32(tid))
 	if err != nil {
-		log.Printf("ListGrants: %v", err)
+		log.Printf("buildTopicGrantGroups: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
-	for _, g := range grants {
-		if g.Section == "forum" && g.Item.Valid && g.Item.String == "topic" && g.ItemID.Valid && g.ItemID.Int32 == int32(tid) {
-			gi := GrantInfo{Grant: g}
-			if g.UserID.Valid {
-				if u, err := queries.SystemGetUserByID(r.Context(), g.UserID.Int32); err == nil {
-					gi.Username = sql.NullString{String: u.Username.String, Valid: true}
-				}
-			}
-			if g.RoleID.Valid && data.Roles != nil {
-				for _, r := range data.Roles {
-					if r.ID == g.RoleID.Int32 {
-						gi.RoleName = sql.NullString{String: r.Name, Valid: true}
-						break
-					}
-				}
-			}
-			data.Grants = append(data.Grants, gi)
-		}
+	data := Data{
+		TopicID:     int32(tid),
+		UpdateURL:   strings.TrimSuffix(r.URL.Path, "/grants") + "/grant/update",
+		GrantGroups: groups,
 	}
 	handlers.TemplateHandler(w, r, "adminTopicGrantsPage.gohtml", data)
 }

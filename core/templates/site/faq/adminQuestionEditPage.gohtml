@@ -1,18 +1,18 @@
 {{ template "head" $ }}
-<h4>{{ if eq .Faq.Idfaq 0 }}Create FAQ Entry{{ else }}Edit FAQ Entry{{ end }}</h4>
+<h4>{{ if eq .Faq.ID 0 }}Create FAQ Entry{{ else }}Edit FAQ Entry{{ end }}</h4>
 <form method="post" action="/admin/faq/questions">
 {{ csrfField }}
 <textarea name="question" cols="80" rows="15">{{ .Faq.Question.String }}</textarea><br>
 <textarea name="answer" cols="80" rows="15">{{ .Faq.Answer.String }}</textarea><br>
 <select name="category">
     <option value="0">Hidden</option>
-    {{$cat := .Faq.FaqcategoriesIdfaqcategories.Int32}}
+    {{$cat := .Faq.FaqCategoryID.Int32}}
     {{- range .Categories }}
-    <option value="{{ .Idfaqcategories }}" {{if eq $cat .Idfaqcategories}}selected{{end}}>{{ .Name.String }}</option>
+    <option value="{{ .ID }}" {{if eq $cat .ID}}selected{{end}}>{{ .Name.String }}</option>
     {{- end }}
 </select><br>
-<input type="hidden" name="faq" value="{{ .Faq.Idfaq }}">
-{{ if eq .Faq.Idfaq 0 }}
+<input type="hidden" name="faq" value="{{ .Faq.ID }}">
+{{ if eq .Faq.ID 0 }}
 <input type="submit" name="task" value="Create">
 {{ else }}
 <input type="submit" name="task" value="Edit">

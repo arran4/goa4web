@@ -1,48 +1,32 @@
 {{ template "head" $ }}
 <h3>Topic {{ .TopicID }} Grants</h3>
+<button id="commit-all" class="hidden">Commit All</button>
 <table border="1">
-    <tr>
-        <th>ID</th>
-        <th>User / Role</th>
-        <th>Action</th>
-        <th>Delete?</th>
-    </tr>
-    {{- range .Grants }}
-    <tr>
-        <td>{{ .ID }}</td>
-        <td>
-            {{- if .Username.Valid }}User: {{ .Username.String }}{{ end -}}
-            {{- if and .Username.Valid .RoleName.Valid }}<br>{{ end -}}
-            {{- if .RoleName.Valid }}Role: {{ .RoleName.String }}{{ end -}}
-        </td>
+    <tr><th>Action</th><th>Has</th><th>Disabled</th><th>Can Have</th><th>Commit</th></tr>
+    {{- range .GrantGroups }}
+    <tr data-action="{{ .Action }}">
         <td>{{ .Action }}</td>
+        <td class="have">
+            {{- range .Have }}<span class="pill" draggable="true" data-default="have">{{ . }}</span>{{- end }}
+        </td>
+        <td class="disabled">
+            {{- range .Disabled }}<span class="pill" draggable="true" data-default="disabled">{{ . }}</span>{{- end }}
+        </td>
+        <td class="available">
+            {{- range .Available }}<span class="pill" draggable="true" data-default="available">{{ . }}</span>{{- end }}
+        </td>
         <td>
-            <form method="post" action="/admin/forum/topics/topic/{{ $.TopicID }}/grant/delete">
-        {{ csrfField }}
-                <input type="hidden" name="grantid" value="{{ .ID }}">
-                <input type="submit" name="task" value="Delete grant">
+            <form method="post" action="{{ $.UpdateURL }}" class="commit-form">
+                {{ csrfField }}
+                <input type="hidden" name="task" value="Update grants">
+                <input type="hidden" name="action" value="{{ .Action }}">
+                <input type="hidden" name="actions" value="">
+                <input type="hidden" name="disabled_actions" value="">
+                <input type="submit" value="Commit" class="hidden">
             </form>
         </td>
     </tr>
     {{- end }}
-    <tr>
-        <form method="post" action="/admin/forum/topics/topic/{{ $.TopicID }}/grant">
-        {{ csrfField }}
-            <td>NEW</td>
-            <td>
-                <input name="username" placeholder="username"><br>
-                <select name="role">
-                    <option value="">None</option>
-                    {{- range $.Roles }}<option value="{{ .Name }}">{{ .Name }}</option>{{- end }}
-                </select>
-            </td>
-            <td>
-                {{- range $.Actions }}
-                <label><input type="checkbox" name="action" value="{{ . }}">{{ . }}</label>
-                {{- end }}
-            </td>
-            <td><input type="submit" name="task" value="Create grant"></td>
-        </form>
-    </tr>
 </table>
+<script src="/admin/role-grants-editor.js"></script>
 {{ template "tail" $ }}

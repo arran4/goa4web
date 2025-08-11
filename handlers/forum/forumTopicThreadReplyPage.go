@@ -111,6 +111,13 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("topic fetch %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
+	uid, _ := session.Values["UID"].(int32)
+	var username string
+	if q := cd.Queries(); q != nil {
+		if u, err := q.SystemGetUserByID(r.Context(), uid); err == nil {
+			username = u.Username.String
+		}
+	}
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
@@ -119,12 +126,12 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 			evt.Data["TopicTitle"] = topicRow.Title.String
 			evt.Data["ThreadID"] = threadRow.Idforumthread
 			evt.Data["Thread"] = threadRow
+			evt.Data["Username"] = username
 		}
 	}
 
 	text := r.PostFormValue("replytext")
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
-	uid, _ := session.Values["UID"].(int32)
 
 	base := cd.ForumBasePath
 	if base == "" {

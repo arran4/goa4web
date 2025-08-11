@@ -3,11 +3,49 @@ package a4code
 import (
 	"bytes"
 	"fmt"
+	"strings"
 )
 
-// FullQuoteOf constructs markup quoting the full text from the given user.
-// Paragraphs separated by blank lines are quoted separately.
-func FullQuoteOf(username, text string) string {
+// QuoteOption configures behaviour of Quote.
+type QuoteOption func(*quoteOptions)
+
+type quoteOptions struct {
+	// Full splits the input into paragraphs and quotes each separately.
+	Full bool
+	// Trim removes leading and trailing whitespace from quoted text.
+	Trim bool
+}
+
+// WithFullQuote enables paragraph aware quoting.
+func WithFullQuote() QuoteOption { return func(o *quoteOptions) { o.Full = true } }
+
+// WithTrimSpace removes surrounding whitespace from the quoted text.
+func WithTrimSpace() QuoteOption { return func(o *quoteOptions) { o.Trim = true } }
+
+// QuoteText wraps the provided text in quote markup for the given user.
+// Behaviour can be customised through QuoteOption values.
+func QuoteText(username, text string, opts ...QuoteOption) string {
+	var o quoteOptions
+	for _, opt := range opts {
+		opt(&o)
+	}
+	if o.Full {
+		return fullQuoteOf(username, text, o.Trim)
+	}
+	return quoteOfText(username, text, o.Trim)
+}
+
+func quoteOfText(username, text string, trim bool) string {
+	if trim {
+		text = strings.TrimSpace(text)
+	}
+	return fmt.Sprintf("[quoteof \"%s\" %s]\n", username, text)
+}
+
+func fullQuoteOf(username, text string, trim bool) string {
+	if trim {
+		text = strings.TrimSpace(text)
+	}
 	var out bytes.Buffer
 	var quote bytes.Buffer
 	var it, bc, nlc int
@@ -28,7 +66,7 @@ func FullQuoteOf(username, text string) string {
 			}
 		case '\n':
 			if bc == 0 && nlc == 1 {
-				quote.WriteString(QuoteOfText(username, out.String()))
+				quote.WriteString(quoteOfText(username, out.String(), trim))
 				out.Reset()
 			}
 			nlc++
@@ -50,11 +88,6 @@ func FullQuoteOf(username, text string) string {
 		}
 		it++
 	}
-	quote.WriteString(QuoteOfText(username, out.String()))
+	quote.WriteString(quoteOfText(username, out.String(), trim))
 	return quote.String()
-}
-
-// QuoteOfText wraps the given text in a quote tag referencing the user.
-func QuoteOfText(username, text string) string {
-	return fmt.Sprintf("[quoteof \"%s\" %s]\n", username, text)
 }

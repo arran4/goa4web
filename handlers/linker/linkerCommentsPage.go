@@ -94,7 +94,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Link = link
 	cd.PageTitle = fmt.Sprintf("Link %d Comments", link.Idlinker)
-	data.CanEdit = cd.HasRole("administrator") || uid == link.UsersIdusers
+	data.CanEdit = cd.HasRole("administrator") || uid == link.AuthorID
 
 	cd.SetCurrentThreadAndTopic(link.ForumthreadID, 0)
 	commentRows, err := cd.SectionThreadComments("linker", "link", link.ForumthreadID)

@@ -114,9 +114,9 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 	})
 	var ptid int32
 	if errors.Is(err, sql.ErrNoRows) {
-                ptidi, err := queries.CreateForumTopicForPoster(r.Context(), db.CreateForumTopicForPosterParams{
-                        ForumcategoryID: 0,
-                        ForumLang:       link.LanguageIdlanguage,
+		ptidi, err := queries.CreateForumTopicForPoster(r.Context(), db.CreateForumTopicForPosterParams{
+			ForumcategoryID: 0,
+			ForumLang:       link.LanguageIdlanguage,
 			Title: sql.NullString{
 				String: LinkerTopicName,
 				Valid:  true,

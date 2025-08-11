@@ -21,21 +21,21 @@
         </tr>
         {{- range .Queue }}
             <tr>
-                <td><input type="checkbox" name="qid" value="{{ .Idlinkerqueue }}"></td>
-                <td>{{ .Idlinkerqueue }}</td>
-                <td><input name="title" form="u{{ .Idlinkerqueue }}" value="{{ .Title.String }}"></td>
-                <td><input name="URL" form="u{{ .Idlinkerqueue }}" value="{{ .URL.String }}"></td>
-                <td><textarea name="desc" form="u{{ .Idlinkerqueue }}">{{ .Description.String }}</textarea></td>
-                <td>{{ .Username.String }}</td>
-                <td><input type="hidden" name="category" form="u{{ .Idlinkerqueue }}" value="{{ .IdlinkerCategory }}">{{ .CategoryTitle.String }}</td>
-                <td>{{ .Preview }}</td>
-                <td>
-                    <form method="post" id="u{{ .Idlinkerqueue }}">
-        {{ csrfField }}
-                        <input type="hidden" name="qid" value="{{ .Idlinkerqueue }}">
-                        <input type="submit" name="task" value="Update">
-                    </form>
-                </td>
+               <td><input type="checkbox" name="qid" value="{{ .ID }}"></td>
+               <td>{{ .ID }}</td>
+               <td><input name="title" form="u{{ .ID }}" value="{{ .Title.String }}"></td>
+               <td><input name="URL" form="u{{ .ID }}" value="{{ .URL.String }}"></td>
+               <td><textarea name="desc" form="u{{ .ID }}">{{ .Description.String }}</textarea></td>
+               <td>{{ .Username.String }}</td>
+               <td><input type="hidden" name="category" form="u{{ .ID }}" value="{{ .CategoryID }}">{{ .CategoryTitle.String }}</td>
+               <td>{{ .Preview }}</td>
+               <td>
+                   <form method="post" id="u{{ .ID }}">
+       {{ csrfField }}
+                       <input type="hidden" name="qid" value="{{ .ID }}">
+                       <input type="submit" name="task" value="Update">
+                   </form>
+               </td>
             </tr>
         {{- end }}
     </table>

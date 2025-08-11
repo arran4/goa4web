@@ -236,7 +236,7 @@ func (c *userDeactivateCmd) Run() error {
 			Idlinker:           l.Idlinker,
 			LanguageIdlanguage: l.LanguageIdlanguage,
 			UsersIdusers:       l.UsersIdusers,
-			LinkerCategoryID:   l.LinkerCategoryID,
+			CategoryID:         l.CategoryID,
 			ForumthreadID:      l.ForumthreadID,
 			Title:              l.Title,
 			Url:                l.Url,

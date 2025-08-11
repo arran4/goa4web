@@ -2,7 +2,7 @@
     Please select appropriate category:
     <select name="category">
         {{- range cd.LinkerCategories }}
-            <option value="{{ .Idlinkercategory }}"{{ if eq .Idlinkercategory $.Selected }} selected{{ end }}>{{ .Title.String }}</option>
+           <option value="{{ .ID }}"{{ if eq .ID $.Selected }} selected{{ end }}>{{ .Title.String }}</option>
         {{- else }}
             <option disabled>No categories</option>
         {{- end }}

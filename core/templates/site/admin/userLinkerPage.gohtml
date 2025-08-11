@@ -4,11 +4,11 @@
     <tr><th>ID</th><th>Date</th><th>Title</th><th>URL</th><th>View</th></tr>
     {{- range .Links }}
     <tr>
-        <td><a href="/admin/linker/links/link/{{ .Idlinker }}">{{ .Idlinker }}</a></td>
+       <td><a href="/admin/linker/links/link/{{ .ID }}">{{ .ID }}</a></td>
         <td>{{ if .Listed.Valid }}{{ localTimeIn .Listed.Time .Timezone.String }}{{ end }}</td>
         <td>{{ if .Title.Valid }}{{ .Title.String }}{{ end }}</td>
         <td>{{ if .Url.Valid }}<a href="{{ .Url.String }}" target="_blank">{{ .Url.String }}</a>{{ end }}</td>
-        <td><a href="/linker/show/{{ .Idlinker }}">View</a></td>
+       <td><a href="/linker/show/{{ .ID }}">View</a></td>
     </tr>
     {{- end }}
 </table>

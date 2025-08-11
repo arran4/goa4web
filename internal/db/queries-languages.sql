@@ -47,4 +47,4 @@ SELECT
     (SELECT COUNT(*) FROM writing WHERE writing.language_idlanguage = sqlc.narg(lang_id)) AS writings,
     (SELECT COUNT(*) FROM blogs WHERE blogs.language_idlanguage = sqlc.narg(lang_id)) AS blogs,
     (SELECT COUNT(*) FROM site_news WHERE site_news.language_idlanguage = sqlc.narg(lang_id)) AS news,
-    (SELECT COUNT(*) FROM linker WHERE linker.language_idlanguage = sqlc.narg(lang_id)) AS links;
+    (SELECT COUNT(*) FROM linker WHERE linker.language_id = sqlc.narg(lang_id)) AS links;

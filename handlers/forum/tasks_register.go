@@ -16,5 +16,13 @@ func RegisterTasks() []tasks.NamedTask {
 		categoryGrantDeleteTask,
 		subscribeTopicTaskAction,
 		unsubscribeTopicTaskAction,
+		addPublicLabelTask,
+		removePublicLabelTask,
+		addAuthorLabelTask,
+		removeAuthorLabelTask,
+		addPrivateLabelTask,
+		removePrivateLabelTask,
+		markTopicReadTask,
+		setLabelsTask,
 	}
 }

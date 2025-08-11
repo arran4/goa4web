@@ -12,6 +12,7 @@
             <div class="thread-content">
                 {{ .Firstposttext.String | a4code2html }}<br>
             </div>
+            {{ template "topicLabels" (dict "Public" $.PublicLabels "Author" $.AuthorLabels "Private" $.PrivateLabels) }}
             <div class="thread-meta">
                 Lastposter: <span class="poster-name last">{{ .Lastposterusername.String }}</span>
                 At <span class="post-time last">{{ localTime .Lastaddition.Time }}</span>

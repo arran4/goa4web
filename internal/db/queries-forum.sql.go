@@ -10,6 +10,62 @@ import (
 	"database/sql"
 )
 
+const addContentLabelStatus = `-- name: AddContentLabelStatus :exec
+INSERT IGNORE INTO content_label_status (
+    item, item_id, label
+) VALUES (?, ?, ?)
+`
+
+type AddContentLabelStatusParams struct {
+	Item   string
+	ItemID int32
+	Label  string
+}
+
+func (q *Queries) AddContentLabelStatus(ctx context.Context, arg AddContentLabelStatusParams) error {
+	_, err := q.db.ExecContext(ctx, addContentLabelStatus, arg.Item, arg.ItemID, arg.Label)
+	return err
+}
+
+const addTopicPrivateLabel = `-- name: AddTopicPrivateLabel :exec
+INSERT IGNORE INTO forumtopic_private_labels (
+    forumtopic_idforumtopic, users_idusers, label, invert
+) VALUES (?, ?, ?, ?)
+`
+
+type AddTopicPrivateLabelParams struct {
+	ForumtopicIdforumtopic int32
+	UsersIdusers           int32
+	Label                  string
+	Invert                 bool
+}
+
+func (q *Queries) AddTopicPrivateLabel(ctx context.Context, arg AddTopicPrivateLabelParams) error {
+	_, err := q.db.ExecContext(ctx, addTopicPrivateLabel,
+		arg.ForumtopicIdforumtopic,
+		arg.UsersIdusers,
+		arg.Label,
+		arg.Invert,
+	)
+	return err
+}
+
+const addTopicPublicLabel = `-- name: AddTopicPublicLabel :exec
+INSERT IGNORE INTO forumtopic_public_labels (
+    forumtopic_idforumtopic, label
+) VALUES (?, ?)
+`
+
+type AddTopicPublicLabelParams struct {
+	ForumtopicIdforumtopic int32
+	Label                  string
+}
+
+func (q *Queries) AddTopicPublicLabel(ctx context.Context, arg AddTopicPublicLabelParams) error {
+	_, err := q.db.ExecContext(ctx, addTopicPublicLabel, arg.ForumtopicIdforumtopic, arg.Label)
+	return err
+}
+
 const adminCountForumCategories = `-- name: AdminCountForumCategories :one
 SELECT COUNT(*)
 FROM forumcategory c
@@ -986,6 +1042,46 @@ func (q *Queries) GetForumTopicsForUser(ctx context.Context, arg GetForumTopicsF
 	return items, nil
 }
 
+const listContentLabelStatus = `-- name: ListContentLabelStatus :many
+SELECT item, item_id, label
+FROM content_label_status
+WHERE item = ? AND item_id = ?
+`
+
+type ListContentLabelStatusParams struct {
+	Item   string
+	ItemID int32
+}
+
+type ListContentLabelStatusRow struct {
+	Item   string
+	ItemID int32
+	Label  string
+}
+
+func (q *Queries) ListContentLabelStatus(ctx context.Context, arg ListContentLabelStatusParams) ([]*ListContentLabelStatusRow, error) {
+	rows, err := q.db.QueryContext(ctx, listContentLabelStatus, arg.Item, arg.ItemID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListContentLabelStatusRow
+	for rows.Next() {
+		var i ListContentLabelStatusRow
+		if err := rows.Scan(&i.Item, &i.ItemID, &i.Label); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listForumcategoryPath = `-- name: ListForumcategoryPath :many
 WITH RECURSIVE category_path AS (
     SELECT f.idforumcategory, f.forumcategory_idforumcategory AS parent_id, f.title, 0 AS depth
@@ -1154,6 +1250,163 @@ func (q *Queries) ListPrivateTopicsByUserID(ctx context.Context, userID sql.Null
 		return nil, err
 	}
 	return items, nil
+}
+
+const listTopicPrivateLabels = `-- name: ListTopicPrivateLabels :many
+SELECT forumtopic_idforumtopic, users_idusers, label, invert
+FROM forumtopic_private_labels
+WHERE forumtopic_idforumtopic = ? AND users_idusers = ?
+`
+
+type ListTopicPrivateLabelsParams struct {
+	ForumtopicIdforumtopic int32
+	UsersIdusers           int32
+}
+
+type ListTopicPrivateLabelsRow struct {
+	ForumtopicIdforumtopic int32
+	UsersIdusers           int32
+	Label                  string
+	Invert                 bool
+}
+
+func (q *Queries) ListTopicPrivateLabels(ctx context.Context, arg ListTopicPrivateLabelsParams) ([]*ListTopicPrivateLabelsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listTopicPrivateLabels, arg.ForumtopicIdforumtopic, arg.UsersIdusers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListTopicPrivateLabelsRow
+	for rows.Next() {
+		var i ListTopicPrivateLabelsRow
+		if err := rows.Scan(
+			&i.ForumtopicIdforumtopic,
+			&i.UsersIdusers,
+			&i.Label,
+			&i.Invert,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTopicPublicLabels = `-- name: ListTopicPublicLabels :many
+SELECT forumtopic_idforumtopic, label
+FROM forumtopic_public_labels
+WHERE forumtopic_idforumtopic = ?
+`
+
+type ListTopicPublicLabelsRow struct {
+	ForumtopicIdforumtopic int32
+	Label                  string
+}
+
+func (q *Queries) ListTopicPublicLabels(ctx context.Context, forumtopicIdforumtopic int32) ([]*ListTopicPublicLabelsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listTopicPublicLabels, forumtopicIdforumtopic)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListTopicPublicLabelsRow
+	for rows.Next() {
+		var i ListTopicPublicLabelsRow
+		if err := rows.Scan(&i.ForumtopicIdforumtopic, &i.Label); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const removeContentLabelStatus = `-- name: RemoveContentLabelStatus :exec
+DELETE FROM content_label_status
+WHERE item = ? AND item_id = ? AND label = ?
+`
+
+type RemoveContentLabelStatusParams struct {
+	Item   string
+	ItemID int32
+	Label  string
+}
+
+func (q *Queries) RemoveContentLabelStatus(ctx context.Context, arg RemoveContentLabelStatusParams) error {
+	_, err := q.db.ExecContext(ctx, removeContentLabelStatus, arg.Item, arg.ItemID, arg.Label)
+	return err
+}
+
+const removeTopicPrivateLabel = `-- name: RemoveTopicPrivateLabel :exec
+DELETE FROM forumtopic_private_labels
+WHERE forumtopic_idforumtopic = ? AND users_idusers = ? AND label = ?
+`
+
+type RemoveTopicPrivateLabelParams struct {
+	ForumtopicIdforumtopic int32
+	UsersIdusers           int32
+	Label                  string
+}
+
+func (q *Queries) RemoveTopicPrivateLabel(ctx context.Context, arg RemoveTopicPrivateLabelParams) error {
+	_, err := q.db.ExecContext(ctx, removeTopicPrivateLabel, arg.ForumtopicIdforumtopic, arg.UsersIdusers, arg.Label)
+	return err
+}
+
+const removeTopicPublicLabel = `-- name: RemoveTopicPublicLabel :exec
+DELETE FROM forumtopic_public_labels
+WHERE forumtopic_idforumtopic = ? AND label = ?
+`
+
+type RemoveTopicPublicLabelParams struct {
+	ForumtopicIdforumtopic int32
+	Label                  string
+}
+
+func (q *Queries) RemoveTopicPublicLabel(ctx context.Context, arg RemoveTopicPublicLabelParams) error {
+	_, err := q.db.ExecContext(ctx, removeTopicPublicLabel, arg.ForumtopicIdforumtopic, arg.Label)
+	return err
+}
+
+const systemClearContentLabelStatus = `-- name: SystemClearContentLabelStatus :exec
+DELETE FROM content_label_status
+WHERE item = ? AND item_id = ?
+`
+
+type SystemClearContentLabelStatusParams struct {
+	Item   string
+	ItemID int32
+}
+
+func (q *Queries) SystemClearContentLabelStatus(ctx context.Context, arg SystemClearContentLabelStatusParams) error {
+	_, err := q.db.ExecContext(ctx, systemClearContentLabelStatus, arg.Item, arg.ItemID)
+	return err
+}
+
+const systemClearTopicPrivateLabel = `-- name: SystemClearTopicPrivateLabel :exec
+DELETE FROM forumtopic_private_labels
+WHERE forumtopic_idforumtopic = ? AND label = ?
+`
+
+type SystemClearTopicPrivateLabelParams struct {
+	ForumtopicIdforumtopic int32
+	Label                  string
+}
+
+func (q *Queries) SystemClearTopicPrivateLabel(ctx context.Context, arg SystemClearTopicPrivateLabelParams) error {
+	_, err := q.db.ExecContext(ctx, systemClearTopicPrivateLabel, arg.ForumtopicIdforumtopic, arg.Label)
+	return err
 }
 
 const systemGetForumTopicByTitle = `-- name: SystemGetForumTopicByTitle :one

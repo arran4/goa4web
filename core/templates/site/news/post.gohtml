@@ -1,6 +1,6 @@
 {{ define "newsPost" }}
     <table width="100%">
-        <tr bgcolor="lightgrey">
+        <tr class="bg-muted">
             <th>{{ localTimeIn .Occurred.Time .Timezone.String }}</th>
         </tr>
         <tr>
@@ -27,7 +27,7 @@
                 </a>]
             {{ end }}
             {{ $labels := NewsLabels .Idsitenews }}
-            {{ if $labels }}<span class="label-bar">{{ template "topicLabels" $labels }}</span>{{ end }}
+            {{ if $labels }}<span class="label-list">{{ template "topicLabels" $labels }}</span>{{ end }}
             </td>
         </tr>
     </table><br>

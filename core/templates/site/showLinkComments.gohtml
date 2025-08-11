@@ -13,7 +13,7 @@
             </tr>
         </table><br>
 
-        {{ with .ForumthreadID }}
+        {{ with .ThreadID }}
             {{ template "threadComments" }}
         {{ end }}
 
@@ -44,7 +44,7 @@
                     <font size="4">Reply:</font><br>
                     <form method="post">
                 {{ csrfField }}
-                        <input type="hidden" name="replyTo" value="{{ .ForumthreadID }}">
+                        <input type="hidden" name="replyTo" value="{{ .ThreadID }}">
                         <input type="hidden" name="lpid" value="{{ .ID }}">
                         <textarea name="replytext" cols="40" rows="20">{{ $.Text }}</textarea><br>
                         {{ template "languageCombobox" }}

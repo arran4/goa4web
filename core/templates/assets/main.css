@@ -91,13 +91,21 @@ a:hover {
 	color: #FF0000;
 }
 h1 {
-	font-family: tahoma, arial, helvetica, sans-serif;
-	text-align: center;
-	color: #800000;
-	background-color: transparent;
+        font-family: tahoma, arial, helvetica, sans-serif;
+        text-align: center;
+        color: #800000;
+        background-color: transparent;
+}
+.section-title {
+        font-family: tahoma, arial, helvetica, sans-serif;
+        font-size: 1.5em;
+        font-weight: normal;
+        color: #800000;
+        background-color: transparent;
+        margin: 0 0 1em 0;
 }
 div.index {
-	text-align: center;
+        text-align: center;
 }
 div.index table {
 	margin-left: auto;

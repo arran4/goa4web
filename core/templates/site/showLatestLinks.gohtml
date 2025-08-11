@@ -3,7 +3,7 @@
         {{ if .HasOffset }}
             {{- range cd.SelectedLinkerItemsForCurrentUser (int32 .CatId) (int32 .Offset) }}
                 <tr>
-                    <th bgcolor="lightgrey">{{ .CategoryTitle.String }}: <a href="{{ .Url.String }}" target="_BLANK">{{ .Title.String }}</a></th>
+                    <th class="bg-muted">{{ .CategoryTitle.String }}: <a href="{{ .Url.String }}" target="_BLANK">{{ .Title.String }}</a></th>
                 </tr>
                 <tr>
                     <td>
@@ -25,7 +25,7 @@
         {{ else }}
             {{- range cd.SelectedLinkerItemsForCurrentUser (int32 .CatId) 0 }}
                 <tr>
-                    <th bgcolor="lightgrey">{{ .CategoryTitle.String }}: <a href="{{ .Url.String }}" target="_BLANK">{{ .Title.String }}</a></th>
+                    <th class="bg-muted">{{ .CategoryTitle.String }}: <a href="{{ .Url.String }}" target="_BLANK">{{ .Title.String }}</a></th>
                 </tr>
                 <tr>
                     <td>

@@ -34,7 +34,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	pr.HandleFunc("/topic/{topic}/labels", handlers.TaskHandler(forumhandlers.RemoveAuthorLabelTaskHandler)).Methods(http.MethodPost).MatcherFunc(forumhandlers.RemoveAuthorLabelTaskHandler.Matcher())
 	pr.HandleFunc("/topic/{topic}/labels", handlers.TaskHandler(forumhandlers.AddPrivateLabelTaskHandler)).Methods(http.MethodPost).MatcherFunc(forumhandlers.AddPrivateLabelTaskHandler.Matcher())
 	pr.HandleFunc("/topic/{topic}/labels", handlers.TaskHandler(forumhandlers.RemovePrivateLabelTaskHandler)).Methods(http.MethodPost).MatcherFunc(forumhandlers.RemovePrivateLabelTaskHandler.Matcher())
-	pr.HandleFunc("/topic/{topic}/labels", handlers.TaskHandler(forumhandlers.MarkTopicReadTaskHandler)).Methods(http.MethodPost).MatcherFunc(forumhandlers.MarkTopicReadTaskHandler.Matcher())
+	pr.HandleFunc("/topic/{topic}/labels", handlers.TaskHandler(forumhandlers.MarkThreadReadTaskHandler)).Methods(http.MethodPost).MatcherFunc(forumhandlers.MarkThreadReadTaskHandler.Matcher())
 
 	pr.HandleFunc("/topic/{topic}/thread", forumhandlers.CreateThreadTaskHandler.Page).Methods(http.MethodGet)
 	pr.HandleFunc("/topic/{topic}/thread", handlers.TaskHandler(forumhandlers.CreateThreadTaskHandler)).Methods(http.MethodPost).MatcherFunc(forumhandlers.CreateThreadTaskHandler.Matcher())

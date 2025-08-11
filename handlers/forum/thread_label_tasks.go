@@ -13,10 +13,10 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// AddPublicLabelTask adds a public label to a topic.
+// AddPublicLabelTask adds a public label to a thread.
 type AddPublicLabelTask struct{ tasks.TaskString }
 
-// RemovePublicLabelTask removes a public label from a topic.
+// RemovePublicLabelTask removes a public label from a thread.
 type RemovePublicLabelTask struct{ tasks.TaskString }
 
 // AddPrivateLabelTask adds a private label for the current user.
@@ -32,7 +32,7 @@ var (
 	removePrivateLabelTask = &RemovePrivateLabelTask{TaskString: TaskRemovePrivateLabel}
 	addAuthorLabelTask     = &AddAuthorLabelTask{TaskString: TaskAddAuthorLabel}
 	removeAuthorLabelTask  = &RemoveAuthorLabelTask{TaskString: TaskRemoveAuthorLabel}
-	markTopicReadTask      = &MarkTopicReadTask{TaskString: TaskMarkTopicRead}
+	markThreadReadTask     = &MarkThreadReadTask{TaskString: TaskMarkThreadRead}
 	setLabelsTask          = &SetLabelsTask{TaskString: TaskSetLabels}
 )
 
@@ -44,20 +44,20 @@ var (
 	RemovePrivateLabelTaskHandler = removePrivateLabelTask
 	AddAuthorLabelTaskHandler     = addAuthorLabelTask
 	RemoveAuthorLabelTaskHandler  = removeAuthorLabelTask
-	MarkTopicReadTaskHandler      = markTopicReadTask
+	MarkThreadReadTaskHandler     = markThreadReadTask
 	SetLabelsTaskHandler          = setLabelsTask
 )
 
 func (AddPublicLabelTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
-	topicID, _ := strconv.Atoi(vars["topic"])
+	threadID, _ := strconv.Atoi(vars["topic"])
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	label := r.PostFormValue("label")
 	if label != "" {
-		if err := cd.AddTopicPublicLabel(int32(topicID), label); err != nil {
+		if err := cd.AddThreadPublicLabel(int32(threadID), label); err != nil {
 			log.Printf("add public label: %v", err)
 			return fmt.Errorf("add public label %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
@@ -68,13 +68,13 @@ func (AddPublicLabelTask) Action(w http.ResponseWriter, r *http.Request) any {
 func (RemovePublicLabelTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
-	topicID, _ := strconv.Atoi(vars["topic"])
+	threadID, _ := strconv.Atoi(vars["topic"])
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	label := r.PostFormValue("label")
 	if label != "" {
-		if err := cd.RemoveTopicPublicLabel(int32(topicID), label); err != nil {
+		if err := cd.RemoveThreadPublicLabel(int32(threadID), label); err != nil {
 			log.Printf("remove public label: %v", err)
 			return fmt.Errorf("remove public label %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
@@ -85,13 +85,13 @@ func (RemovePublicLabelTask) Action(w http.ResponseWriter, r *http.Request) any 
 func (AddPrivateLabelTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
-	topicID, _ := strconv.Atoi(vars["topic"])
+	threadID, _ := strconv.Atoi(vars["topic"])
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	label := r.PostFormValue("label")
 	if label != "" {
-		if err := cd.AddTopicPrivateLabel(int32(topicID), label); err != nil {
+		if err := cd.AddThreadPrivateLabel(int32(threadID), label); err != nil {
 			log.Printf("add private label: %v", err)
 			return fmt.Errorf("add private label %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
@@ -102,13 +102,13 @@ func (AddPrivateLabelTask) Action(w http.ResponseWriter, r *http.Request) any {
 func (RemovePrivateLabelTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
-	topicID, _ := strconv.Atoi(vars["topic"])
+	threadID, _ := strconv.Atoi(vars["topic"])
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	label := r.PostFormValue("label")
 	if label != "" {
-		if err := cd.RemoveTopicPrivateLabel(int32(topicID), label); err != nil {
+		if err := cd.RemoveThreadPrivateLabel(int32(threadID), label); err != nil {
 			log.Printf("remove private label: %v", err)
 			return fmt.Errorf("remove private label %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
@@ -116,22 +116,22 @@ func (RemovePrivateLabelTask) Action(w http.ResponseWriter, r *http.Request) any
 	return handlers.RefreshDirectHandler{TargetURL: r.Header.Get("Referer")}
 }
 
-// AddAuthorLabelTask adds an author-only label to a topic.
+// AddAuthorLabelTask adds an author-only label to a thread.
 type AddAuthorLabelTask struct{ tasks.TaskString }
 
-// RemoveAuthorLabelTask removes an author-only label from a topic.
+// RemoveAuthorLabelTask removes an author-only label from a thread.
 type RemoveAuthorLabelTask struct{ tasks.TaskString }
 
 func (AddAuthorLabelTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
-	topicID, _ := strconv.Atoi(vars["topic"])
+	threadID, _ := strconv.Atoi(vars["topic"])
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	label := r.PostFormValue("label")
 	if label != "" {
-		if err := cd.AddTopicAuthorLabel(int32(topicID), label); err != nil {
+		if err := cd.AddThreadAuthorLabel(int32(threadID), label); err != nil {
 			log.Printf("add author label: %v", err)
 			return fmt.Errorf("add author label %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
@@ -142,13 +142,13 @@ func (AddAuthorLabelTask) Action(w http.ResponseWriter, r *http.Request) any {
 func (RemoveAuthorLabelTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
-	topicID, _ := strconv.Atoi(vars["topic"])
+	threadID, _ := strconv.Atoi(vars["topic"])
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	label := r.PostFormValue("label")
 	if label != "" {
-		if err := cd.RemoveTopicAuthorLabel(int32(topicID), label); err != nil {
+		if err := cd.RemoveThreadAuthorLabel(int32(threadID), label); err != nil {
 			log.Printf("remove author label: %v", err)
 			return fmt.Errorf("remove author label %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
@@ -156,27 +156,27 @@ func (RemoveAuthorLabelTask) Action(w http.ResponseWriter, r *http.Request) any 
 	return handlers.RefreshDirectHandler{TargetURL: r.Header.Get("Referer")}
 }
 
-// MarkTopicReadTask clears the special new/unread flags for a topic.
-type MarkTopicReadTask struct{ tasks.TaskString }
+// MarkThreadReadTask clears the special new/unread flags for a thread.
+type MarkThreadReadTask struct{ tasks.TaskString }
 
-func (MarkTopicReadTask) Action(w http.ResponseWriter, r *http.Request) any {
+func (MarkThreadReadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
-	topicID, _ := strconv.Atoi(vars["topic"])
-	if err := cd.SetTopicPrivateLabelStatus(int32(topicID), false, false); err != nil {
+	threadID, _ := strconv.Atoi(vars["topic"])
+	if err := cd.SetThreadPrivateLabelStatus(int32(threadID), false, false); err != nil {
 		log.Printf("mark read: %v", err)
 		return fmt.Errorf("mark read %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	return handlers.RefreshDirectHandler{TargetURL: r.Header.Get("Referer")}
 }
 
-// SetLabelsTask replaces public and private labels on a topic.
+// SetLabelsTask replaces public and private labels on a thread.
 type SetLabelsTask struct{ tasks.TaskString }
 
 func (SetLabelsTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
-	topicID, _ := strconv.Atoi(vars["topic"])
+	threadID, _ := strconv.Atoi(vars["topic"])
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
@@ -188,11 +188,11 @@ func (SetLabelsTask) Action(w http.ResponseWriter, r *http.Request) any {
 			filteredPriv = append(filteredPriv, l)
 		}
 	}
-	if err := cd.SetTopicPublicLabels(int32(topicID), pub); err != nil {
+	if err := cd.SetThreadPublicLabels(int32(threadID), pub); err != nil {
 		log.Printf("set public labels: %v", err)
 		return fmt.Errorf("set public labels %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	if err := cd.SetTopicPrivateLabels(int32(topicID), filteredPriv); err != nil {
+	if err := cd.SetThreadPrivateLabels(int32(threadID), filteredPriv); err != nil {
 		log.Printf("set private labels: %v", err)
 		return fmt.Errorf("set private labels %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

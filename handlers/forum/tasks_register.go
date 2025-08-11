@@ -23,7 +23,7 @@ func RegisterTasks() []tasks.NamedTask {
 		removeAuthorLabelTask,
 		addPrivateLabelTask,
 		removePrivateLabelTask,
-		markTopicReadTask,
+		markThreadReadTask,
 		setLabelsTask,
 	}
 }

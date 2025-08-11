@@ -34,7 +34,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	fr.HandleFunc("/topic/{topic}/labels", handlers.TaskHandler(removeAuthorLabelTask)).Methods("POST").MatcherFunc(removeAuthorLabelTask.Matcher())
 	fr.HandleFunc("/topic/{topic}/labels", handlers.TaskHandler(addPrivateLabelTask)).Methods("POST").MatcherFunc(addPrivateLabelTask.Matcher())
 	fr.HandleFunc("/topic/{topic}/labels", handlers.TaskHandler(removePrivateLabelTask)).Methods("POST").MatcherFunc(removePrivateLabelTask.Matcher())
-	fr.HandleFunc("/topic/{topic}/labels", handlers.TaskHandler(markTopicReadTask)).Methods("POST").MatcherFunc(markTopicReadTask.Matcher())
+	fr.HandleFunc("/topic/{topic}/labels", handlers.TaskHandler(markThreadReadTask)).Methods("POST").MatcherFunc(markThreadReadTask.Matcher())
 	fr.HandleFunc("/topic/{topic}/thread", createThreadTask.Page).Methods("GET")
 	fr.HandleFunc("/topic/{topic}/thread", handlers.TaskHandler(createThreadTask)).Methods("POST").MatcherFunc(createThreadTask.Matcher())
 	fr.HandleFunc("/topic/{topic}/thread/cancel", ThreadNewCancelPage).Methods("GET")

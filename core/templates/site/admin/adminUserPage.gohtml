@@ -30,7 +30,7 @@
 {{ $emails := cd.CurrentProfileEmails }}
 <h4>Emails</h4>
 {{ if $emails }}
-<table border="1">
+<table class="table table-bordered">
 <tr><th>Email</th><th>Verified</th><th>Priority</th></tr>
 {{ range $emails }}
 <tr>
@@ -75,7 +75,7 @@
 {{ $grants := cd.CurrentProfileGrants }}
 <h4>Direct Grants</h4>
 {{ if $grants }}
-<table border="1">
+<table class="table table-bordered">
 <tr><th>Section</th><th>Item</th><th>Action</th><th>Extra</th></tr>
 {{ range $grants }}
 <tr>
@@ -100,7 +100,7 @@
 {{ $comments := cd.CurrentProfileComments }}
 <h4>Comments</h4>
 {{ if $comments }}
-<table border="1">
+<table class="table table-bordered">
 <tr><th>Date</th><th>Comment</th></tr>
 {{ range $comments }}
 <tr>

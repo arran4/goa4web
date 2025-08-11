@@ -1,6 +1,6 @@
 {{ template "head" $ }}
     [<a href="/admin">Admin:</a> <a href="/admin/users/pending">(This page/Refresh)</a>]<br />
-    <table border="1">
+    <table class="table table-bordered">
         <tr><th>ID</th><th>User</th><th>Email</th><th>Actions</th></tr>
         {{range .Rows}}
         <tr>

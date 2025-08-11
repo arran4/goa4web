@@ -1,6 +1,6 @@
 {{ template "head" $ }}
     {{ if .ImagePost }}
-        <font size="4">Picture:</font><br>
+        <h2>Picture:</h2>
         <table>
             <tr>
                 <th><a href="{{ .ImagePost.Fullimage.String }}" target="_BLANK"><img src="{{ .ImagePost.Thumbnail.String }}"></a>
@@ -32,7 +32,7 @@
             </aside>
             <section class="body">
                 <a id="bottom"></a>
-                <font size="4">Reply:</font><br>
+                <h2>Reply:</h2>
                 <form method="post" action="?board={{ .BoardID }}">
                 {{ csrfField }}
                     <input type="hidden" name="replyTo" value="{{ .ForumThreadID }}">

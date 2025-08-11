@@ -1,7 +1,7 @@
 {{ template "head" $ }}
-    <font size="5">{{ .Username }}'s images.</font><br>
+    <h1>{{ .Username }}'s images.</h1>
     {{- if .Posts }}
-        <font size="4">Pictures:</font><br>
+        <h2>Pictures:</h2>
         {{- range .Posts }}
             <table>
                 <tr>

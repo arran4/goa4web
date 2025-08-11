@@ -220,8 +220,8 @@ func buildGrantGroupsFromGrants(ctx context.Context, cd *common.CoreData, grants
 						if len(text) > 40 {
 							text = text[:40] + "..."
 						}
-						if qrow.LanguageIdlanguage.Valid {
-							if name, ok := langMap[qrow.LanguageIdlanguage.Int32]; ok && name != "" {
+						if qrow.LanguageID.Valid {
+							if name, ok := langMap[qrow.LanguageID.Int32]; ok && name != "" {
 								text = fmt.Sprintf("[%s] %s", name, text)
 							}
 						}

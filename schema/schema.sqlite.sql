@@ -58,19 +58,21 @@ CREATE TABLE `comments_search` (
 
 CREATE TABLE `faq` (
   `id` int(10) NOT NULL AUTO_INCREMENT,
-  `faq_category_id` int(10) DEFAULT NULL,
-  `language_idlanguage` int(10) DEFAULT NULL,
-  `users_idusers` int(10) NOT NULL DEFAULT 0,
+  `category_id` int(10) DEFAULT NULL,
+  `language_id` int(10) DEFAULT NULL,
+  `author_id` int(10) NOT NULL DEFAULT 0,
   `answer` mediumtext DEFAULT NULL,
   `question` mediumtext DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `Table_21_FKIndex1` (`users_idusers`),
-  KEY `Table_21_FKIndex2` (`language_idlanguage`),
-  KEY `Table_21_FKIndex3` (`faq_category_id`)
+  KEY `Table_21_FKIndex1` (`author_id`),
+  KEY `Table_21_FKIndex2` (`language_id`),
+  KEY `Table_21_FKIndex3` (`category_id`)
 );
 
 CREATE TABLE `faq_categories` (
   `id` int(10) NOT NULL AUTO_INCREMENT,
+  `parent_category_id` int(10) DEFAULT NULL,
+  `language_id` int(10) DEFAULT NULL,
   `name` tinytext DEFAULT NULL,
   PRIMARY KEY (`id`)
 );

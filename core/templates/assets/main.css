@@ -91,10 +91,15 @@ a:hover {
 	color: #FF0000;
 }
 h1 {
-	font-family: tahoma, arial, helvetica, sans-serif;
-	text-align: center;
-	color: #800000;
-	background-color: transparent;
+        font-family: tahoma, arial, helvetica, sans-serif;
+        text-align: center;
+        color: #800000;
+        background-color: transparent;
+}
+
+.section-heading {
+        font-family: tahoma, arial, helvetica, sans-serif;
+        color: #800000;
 }
 div.index {
 	text-align: center;

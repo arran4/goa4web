@@ -1,7 +1,7 @@
 {{ define "faqPage" }}
     {{ template "head" $ }}
     {{ range $index, $categoryFAQs := (cd).AllAnsweredFAQ }}
-        <font size="5">Section: {{ $categoryFAQs.Category.Name.String }}</font><br>
+        <h2 class="section-heading">{{ $categoryFAQs.Category.Name.String }}</h2>
         <table width="100%">
         {{ range $index, $faq := $categoryFAQs.FAQs }}
             <tr>

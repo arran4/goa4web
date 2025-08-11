@@ -1,13 +1,13 @@
 -- name: AdminGetFAQUnansweredQuestions :many
 SELECT *
 FROM faq
-WHERE faq_category_id IS NULL OR answer IS NULL;
+WHERE category_id IS NULL OR answer IS NULL;
 
 -- name: GetFAQAnsweredQuestions :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
 )
-SELECT faq.id, faq.faq_category_id, faq.language_id, faq.users_idusers, faq.answer, faq.question
+SELECT faq.id, faq.category_id, faq.language_id, faq.author_id, faq.answer, faq.question
 FROM faq
 WHERE answer IS NOT NULL
   AND deleted_at IS NULL
@@ -35,7 +35,7 @@ WHERE answer IS NOT NULL
   );
 
 -- name: AdminGetFAQDismissedQuestions :many
-SELECT id, faq_category_id, language_id, users_idusers, answer, question
+SELECT id, category_id, language_id, author_id, answer, question
 FROM faq
 WHERE deleted_at IS NOT NULL;
 
@@ -56,7 +56,7 @@ WHERE id = ?;
 INSERT INTO faq_categories (name) VALUES (sqlc.arg(name));
 
 -- name: CreateFAQQuestionForWriter :exec
-INSERT INTO faq (question, users_idusers, language_id)
+INSERT INTO faq (question, author_id, language_id)
 SELECT sqlc.arg(question), sqlc.arg(writer_id), sqlc.narg(language_id)
 WHERE EXISTS (
     SELECT 1 FROM grants g
@@ -71,7 +71,7 @@ WHERE EXISTS (
 );
 
 -- name: InsertFAQQuestionForWriter :execresult
-INSERT INTO faq (question, answer, faq_category_id, users_idusers, language_id)
+INSERT INTO faq (question, answer, category_id, author_id, language_id)
 SELECT sqlc.arg(question), sqlc.arg(answer), sqlc.arg(category_id), sqlc.arg(writer_id), sqlc.narg(language_id)
 WHERE EXISTS (
     SELECT 1 FROM grants g
@@ -87,7 +87,7 @@ WHERE EXISTS (
 
 -- name: AdminUpdateFAQQuestionAnswer :exec
 UPDATE faq
-SET answer = ?, question = ?, faq_category_id = ?
+SET answer = ?, question = ?, category_id = ?
 WHERE id = ?;
 
 -- name: AdminDeleteFAQ :exec
@@ -102,9 +102,9 @@ FROM faq_categories;
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
 )
-SELECT c.id AS category_id, c.name, f.id AS faq_id, f.faq_category_id, f.language_id, f.users_idusers, f.answer, f.question
+SELECT c.id AS category_id, c.name, f.id AS faq_id, f.category_id, f.language_id, f.author_id, f.answer, f.question
 FROM faq f
-LEFT JOIN faq_categories c ON c.id = f.faq_category_id
+LEFT JOIN faq_categories c ON c.id = f.category_id
 WHERE c.id IS NOT NULL
   AND f.answer IS NOT NULL
   AND (
@@ -134,7 +134,7 @@ ORDER BY c.id, f.id;
 -- name: AdminGetFAQCategoriesWithQuestionCount :many
 SELECT c.*, COUNT(f.id) AS QuestionCount
 FROM faq_categories c
-LEFT JOIN faq f ON f.faq_category_id = c.id
+LEFT JOIN faq f ON f.category_id = c.id
 GROUP BY c.id;
 
 
@@ -145,7 +145,7 @@ SELECT * FROM faq WHERE id = ?;
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
 )
-SELECT faq.id, faq.faq_category_id, faq.language_id, faq.users_idusers, faq.answer, faq.question
+SELECT faq.id, faq.category_id, faq.language_id, faq.author_id, faq.answer, faq.question
 FROM faq
 WHERE faq.id = sqlc.arg(faq_id)
   AND deleted_at IS NULL
@@ -193,20 +193,20 @@ SELECT * FROM faq_revisions WHERE faq_id = ? ORDER BY id DESC;
 -- name: AdminGetFAQCategoryWithQuestionCountByID :one
 SELECT c.*, COUNT(f.id) AS QuestionCount
 FROM faq_categories c
-LEFT JOIN faq f ON f.faq_category_id = c.id
+LEFT JOIN faq f ON f.category_id = c.id
 WHERE c.id = ?
 GROUP BY c.id;
 
 -- name: AdminGetFAQQuestionsByCategory :many
-SELECT * FROM faq WHERE faq_category_id = ?;
+SELECT * FROM faq WHERE category_id = ?;
 
 -- name: GetFAQQuestionsByCategory :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
 )
-SELECT faq.id, faq.faq_category_id, faq.language_id, faq.users_idusers, faq.answer, faq.question
+SELECT faq.id, faq.category_id, faq.language_id, faq.author_id, faq.answer, faq.question
 FROM faq
-WHERE faq.faq_category_id = sqlc.arg(category_id)
+WHERE faq.category_id = sqlc.arg(category_id)
   AND deleted_at IS NULL
   AND (
       language_id = 0

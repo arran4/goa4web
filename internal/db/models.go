@@ -221,17 +221,19 @@ type ExternalLink struct {
 }
 
 type Faq struct {
-	ID            int32
-	FaqCategoryID sql.NullInt32
+	ID         int32
+	CategoryID sql.NullInt32
 	LanguageID    sql.NullInt32
-	UsersIdusers  int32
-	Answer        sql.NullString
-	Question      sql.NullString
+	AuthorID   int32
+	Answer     sql.NullString
+	Question   sql.NullString
 }
 
 type FaqCategory struct {
-	ID   int32
-	Name sql.NullString
+	ID               int32
+	ParentCategoryID sql.NullInt32
+	LanguageID       sql.NullInt32
+	Name             sql.NullString
 }
 
 type FaqRevision struct {

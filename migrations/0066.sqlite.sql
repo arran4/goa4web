@@ -1,3 +1,4 @@
+ALTER TABLE faq RENAME COLUMN faq_category_id TO category_id;
 ALTER TABLE language CHANGE COLUMN idlanguage id INT NOT NULL AUTO_INCREMENT;
 ALTER TABLE blogs CHANGE COLUMN language_idlanguage language_id INT DEFAULT NULL;
 ALTER TABLE comments CHANGE COLUMN language_idlanguage language_id INT DEFAULT NULL;
@@ -19,6 +20,10 @@ ALTER TABLE language RENAME COLUMN idlanguage TO id;
 ALTER TABLE blogs RENAME COLUMN language_idlanguage TO language_id;
 ALTER TABLE comments RENAME COLUMN language_idlanguage TO language_id;
 ALTER TABLE faq RENAME COLUMN language_idlanguage TO language_id;
+ALTER TABLE faq RENAME COLUMN users_idusers TO author_id;
+
+ALTER TABLE faq_categories ADD COLUMN parent_category_id INT;
+ALTER TABLE faq_categories ADD COLUMN language_id INT;
 ALTER TABLE forumcategory RENAME COLUMN language_idlanguage TO language_id;
 ALTER TABLE forumtopic RENAME COLUMN language_idlanguage TO language_id;
 ALTER TABLE linker RENAME COLUMN language_idlanguage TO language_id;

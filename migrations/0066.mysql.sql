@@ -1,3 +1,12 @@
+ALTER TABLE faq
+    CHANGE COLUMN faq_category_id category_id INT NULL DEFAULT NULL,
+    CHANGE COLUMN language_idlanguage language_id INT NULL DEFAULT NULL,
+    CHANGE COLUMN users_idusers author_id INT NOT NULL DEFAULT 0;
+
+ALTER TABLE faq_categories
+    ADD COLUMN parent_category_id INT NULL DEFAULT NULL,
+    ADD COLUMN language_id INT NULL DEFAULT NULL;
+
 ALTER TABLE language CHANGE COLUMN idlanguage id INT NOT NULL AUTO_INCREMENT;
 ALTER TABLE blogs CHANGE COLUMN language_idlanguage language_id INT DEFAULT NULL;
 ALTER TABLE comments CHANGE COLUMN language_idlanguage language_id INT DEFAULT NULL;

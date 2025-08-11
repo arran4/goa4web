@@ -1,6 +1,6 @@
 {{ template "head" $ }}
 <p><a href="/admin/grant/add">Add grant</a></p>
-<table border="1">
+<table class="table-bordered">
     <tr><th>User</th><th>Role</th><th>Section</th><th>Item</th><th>Item ID</th><th>Actions</th></tr>
     {{- range .Grants }}
     <tr>

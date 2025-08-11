@@ -1,7 +1,7 @@
 {{ template "head" $ }}
 <h3>Topic {{ .TopicID }} Grants</h3>
 <button id="commit-all" class="hidden">Commit All</button>
-<table border="1">
+<table class="table-bordered">
     <tr><th>Action</th><th>Has</th><th>Disabled</th><th>Can Have</th><th>Commit</th></tr>
     {{- range .GrantGroups }}
     <tr data-action="{{ .Action }}">

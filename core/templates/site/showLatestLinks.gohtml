@@ -1,5 +1,5 @@
 {{ define "getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingLinks" }}
-    <table width="100%">
+    <table class="w-100">
         {{ if .HasOffset }}
             {{- range cd.SelectedLinkerItemsForCurrentUser (int32 .CatId) (int32 .Offset) }}
                 <tr>

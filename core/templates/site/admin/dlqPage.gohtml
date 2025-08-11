@@ -7,7 +7,7 @@ Configured providers: {{ .Providers }}<br />
 
 {{- if .FileErrors }}
 <h2>File DLQ</h2>
-<table border="1">
+<table class="table-bordered">
 <tr><th>Time</th><th>Message</th></tr>
 {{- range .FileErrors }}
 <tr><td>{{ localTime .Time }}</td><td>{{ .Message }}</td></tr>
@@ -28,7 +28,7 @@ Configured providers: {{ .Providers }}<br />
 
 {{- if .DirErrors }}
 <h2>Directory DLQ</h2>
-<table border="1">
+<table class="table-bordered">
 <tr><th>Name</th><th>Message</th></tr>
 {{- range .DirErrors }}
 <tr><td>{{ .Name }}</td><td>{{ .Message }}</td></tr>
@@ -43,7 +43,7 @@ Configured providers: {{ .Providers }}<br />
 <h2>Database DLQ</h2>
 <form method="post">
     {{ csrfField }}
-<table border="1">
+<table class="table-bordered">
 <tr><th>Select</th><th>ID</th><th>Message</th><th>Created</th></tr>
 {{- range .Errors }}
 <tr>

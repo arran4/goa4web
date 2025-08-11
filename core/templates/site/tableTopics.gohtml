@@ -17,9 +17,9 @@
                 {{ with .Description.String }}<i>{{ . | a4code2html }}</i>{{ end }}
                 {{- if .Labels }}<br>{{ template "topicLabels" .Labels }}{{ end }}
             </td>
-            <td align="center">{{ localTime .Lastaddition.Time }}<br>{{ .Lastposterusername.String }}</td>
-            <td align="center">{{ .Threads.Int32 }}</td>
-            <td align="center">{{ .Comments.Int32 }}</td>
+            <td class="text-center">{{ localTime .Lastaddition.Time }}<br>{{ .Lastposterusername.String }}</td>
+            <td class="text-center">{{ .Threads.Int32 }}</td>
+            <td class="text-center">{{ .Comments.Int32 }}</td>
         </tr>
         {{ else }}
         <tr><td colspan="4">No topics</td></tr>

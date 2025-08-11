@@ -5,7 +5,7 @@
     Action: <input name="action" value="{{$.Action}}">
     <input type="submit" name="task" value="Filter">
 </form>
-<table border="1">
+<table class="table-bordered">
     <tr><th>ID</th><th>User</th><th>Action</th><th>Time</th></tr>
     {{- range .Rows}}
     <tr>

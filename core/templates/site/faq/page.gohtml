@@ -2,7 +2,7 @@
     {{ template "head" $ }}
     {{ range $index, $categoryFAQs := (cd).AllAnsweredFAQ }}
         <font size="5">Section: {{ $categoryFAQs.Category.Name.String }}</font><br>
-        <table width="100%">
+        <table class="w-100">
         {{ range $index, $faq := $categoryFAQs.FAQs }}
             <tr>
                 <th bgcolor="lightgrey">Q: {{ $faq.Question | a4code2html }}</th>

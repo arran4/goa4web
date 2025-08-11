@@ -1,6 +1,6 @@
 <h3>Grants</h3>
 <button id="commit-all" class="hidden">Commit All</button>
-<table border="1">
+<table class="table-bordered">
     <tr><th>Section</th><th>Item</th><th>Item ID</th><th>Info</th><th>Has</th><th>Disabled</th><th>Can Have</th><th>Commit</th></tr>
     {{- range .GrantGroups }}
         <tr data-section="{{ .Section }}" data-item="{{ .Item }}" data-itemid="{{ if .ItemID.Valid }}{{ .ItemID.Int32 }}{{ end }}"{{ if .Unsupported }} class="unsupported"{{ end }}>

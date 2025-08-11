@@ -1,6 +1,6 @@
 {{ template "head" $ }}
 <p><a href="/admin/grants">Back to grants</a></p>
-<table border="1">
+<table class="table-bordered">
     <tr><th>Field</th><th>Value</th></tr>
 <tr><td>User</td><td>{{ if .Grant.UserID.Valid }}<a href="/admin/user/{{ .Grant.UserID.Int32 }}">{{ .Grant.UserName }} ({{ .Grant.UserID.Int32 }})</a>{{ else if not .Grant.RoleID.Valid }}<a href="/admin/grants/anyone">{{ .Grant.UserName }}</a>{{ else }}-{{ end }}</td></tr>
     <tr><td>Role</td><td>{{ if .Grant.RoleID.Valid }}<a href="/admin/role/{{ .Grant.RoleID.Int32 }}">{{ .Grant.RoleName }} ({{ .Grant.RoleID.Int32 }})</a>{{ else }}-{{ end }}</td></tr>

@@ -20,7 +20,7 @@
 <h3>Site statistics</h3>
 {{ $stats := cd.AdminDashboardStats }}
 {{ if $stats }}
-<table border="1">
+<table class="table-bordered">
     <tr><th>Item</th><th>Count</th></tr>
     <tr><td>Users</td><td>{{ $stats.Users }}</td></tr>
     <tr><td>Languages</td><td>{{ $stats.Languages }}</td></tr>

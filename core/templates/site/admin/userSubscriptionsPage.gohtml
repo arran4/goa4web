@@ -1,6 +1,6 @@
 {{ template "head" $ }}
 <h2>Subscriptions of {{ .User.Username.String }}</h2>
-<table border="1">
+<table class="table-bordered">
     <tr><th>ID</th><th>Pattern</th><th>Method</th><th>Actions</th></tr>
     {{- range .Subs }}
     <tr>

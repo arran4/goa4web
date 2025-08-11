@@ -3,7 +3,7 @@
     <div>Total: {{ .Total }} Unread: {{ .Unread }}</div>
 <form method="post">
     {{ csrfField }}
-<table border="1">
+<table class="table-bordered">
     <tr><th><label><input type="checkbox" id="select-all"> All</label>
         <button type="button" id="select-none">None</button>
         <button type="button" id="select-invert">Invert</button></th><th>ID</th><th>User</th><th>Message</th><th>Link</th><th>Read</th></tr>

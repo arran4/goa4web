@@ -1,7 +1,7 @@
 {{ define "blogsAdminPage" }}
     {{ template "head" $ }}
     <p><a href="/blogs/add">New blog post</a></p>
-    <table border="1">
+    <table class="table-bordered">
         <tr><th>ID<th>Date<th>Writer<th>Comments<th>View</tr>
         {{ range cd.BlogList }}
             <tr>
@@ -16,7 +16,7 @@
         {{ end }}
     </table>
     <p>Blog roles:</p>
-    <table border="1">
+    <table class="table-bordered">
         <tr><th>ID<th>User<th>Email<th>Role</tr>
         {{ range .Rows }}
             <tr>

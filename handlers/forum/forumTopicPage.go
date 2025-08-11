@@ -112,6 +112,7 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		Lastposterusername:           topicRow.Lastposterusername,
 		DisplayTitle:                 displayTitle,
 		Edit:                         false,
+		Labels:                       nil,
 	}
 
 	if topicRow.Handler != "private" {
@@ -161,22 +162,12 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	data.Threads = threads
 
 	var labels []templates.TopicLabel
-	if pub, author, err := cd.ThreadPublicLabels(topicRow.Idforumtopic); err == nil {
+	if pub, _, err := cd.ThreadPublicLabels(topicRow.Idforumtopic); err == nil {
 		for _, l := range pub {
 			labels = append(labels, templates.TopicLabel{Name: l, Type: "public"})
 		}
-		for _, l := range author {
-			labels = append(labels, templates.TopicLabel{Name: l, Type: "author"})
-		}
 	} else {
 		log.Printf("list public labels: %v", err)
-	}
-	if priv, err := cd.ThreadPrivateLabels(topicRow.Idforumtopic); err == nil {
-		for _, l := range priv {
-			labels = append(labels, templates.TopicLabel{Name: l, Type: "private"})
-		}
-	} else {
-		log.Printf("list private labels: %v", err)
 	}
 	sort.Slice(labels, func(i, j int) bool { return labels[i].Name < labels[j].Name })
 	data.Labels = labels

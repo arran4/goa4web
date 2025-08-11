@@ -118,6 +118,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		Lastaddition:                 topicRow.Lastaddition,
 		Lastposterusername:           topicRow.Lastposterusername,
 		Edit:                         false,
+		Labels:                       nil,
 	}
 
 	var labels []templates.TopicLabel

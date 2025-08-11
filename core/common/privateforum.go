@@ -3,8 +3,10 @@ package common
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"strings"
 
+	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -17,6 +19,7 @@ const (
 type PrivateTopic struct {
 	*db.ListPrivateTopicsByUserIDRow
 	DisplayTitle string
+	Labels       []templates.TopicLabel
 }
 
 // PrivateForumTopics returns private forum topics visible to the current user.
@@ -48,7 +51,15 @@ func (cd *CoreData) PrivateForumTopics() ([]*PrivateTopic, error) {
 			if len(names) > 1 && t.Title.Valid && t.Title.String != "" {
 				title = fmt.Sprintf("%s (%s)", title, t.Title.String)
 			}
-			pts = append(pts, &PrivateTopic{ListPrivateTopicsByUserIDRow: t, DisplayTitle: title})
+			var labels []templates.TopicLabel
+			if pub, _, err := cd.ThreadPublicLabels(t.Idforumtopic); err == nil {
+				for _, l := range pub {
+					labels = append(labels, templates.TopicLabel{Name: l, Type: "public"})
+				}
+			} else {
+				log.Printf("list public labels: %v", err)
+			}
+			pts = append(pts, &PrivateTopic{ListPrivateTopicsByUserIDRow: t, DisplayTitle: title, Labels: labels})
 		}
 		return pts, nil
 	})

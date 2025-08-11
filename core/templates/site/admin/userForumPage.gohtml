@@ -1,6 +1,6 @@
 {{ template "head" $ }}
 <h2>Forum threads by {{ .User.Username.String }}</h2>
-<table border="1">
+<table class="table table-bordered">
     <tr><th>ID</th><th>Topic</th><th>Category</th><th>Comments</th><th>Last Addition</th><th>View</th></tr>
     {{- range .Threads }}
     <tr>

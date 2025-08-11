@@ -134,6 +134,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		ForumcategoryIdforumcategory: topicRow.ForumcategoryIdforumcategory,
 		Title:                        topicRow.Title,
 		Description:                  topicRow.Description,
+		DisplayTitle:                 displayTitle,
 		Threads:                      topicRow.Threads,
 		Comments:                     topicRow.Comments,
 		Lastaddition:                 topicRow.Lastaddition,

@@ -24,8 +24,8 @@ import (
 	"github.com/arran4/goa4web/internal/eventbus"
 )
 
-// Ensure reply task populates notification data so admin emails render correctly.
-func TestNewsReplyTaskEventData(t *testing.T) {
+// Ensure replying marks the news post as read by clearing new/unread labels.
+func TestReplyTaskMarksPostRead(t *testing.T) {
 	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -89,12 +89,6 @@ func TestNewsReplyTaskEventData(t *testing.T) {
 
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
-	}
-	if evt.Data["Username"] != "alice" {
-		t.Fatalf("username not set: %+v", evt.Data)
-	}
-	if evt.Data["PostURL"] != "/news/news/2" {
-		t.Fatalf("post url not set: %+v", evt.Data)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)

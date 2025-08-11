@@ -23,7 +23,7 @@
             </aside>
             <section class="body">
                 <a id="bottom"></a>
-                <font size="4">Reply:</font><br>
+                <span class="section-title">Reply:</span><br>
                 {{ $base := "/forum" }}
                 {{ with $.BasePath }}{{ $base = . }}{{ end }}
                 <form method="post" action="{{$base}}/topic/{{$.Topic.Idforumtopic}}/thread/{{$.Thread.Idforumthread}}/reply">

@@ -47,9 +47,10 @@ Optional notification emails can be sent through several providers. See the [Ema
    ./goa4web serve
    ```
 
-During development you can load templates directly from the `core/templates` directory. Use the `live` build tag and add `sqlite` when using SQLite:
+During development you can load templates directly from disk. Extract the embedded templates and point the server at the directory:
 ```bash
-go run -tags "live,sqlite" ./cmd/goa4web
+goa4web templates extract -dir ./tmpl
+go run -tags sqlite ./cmd/goa4web --templates-dir ./tmpl
 ```
 The default build embeds templates and `main.css`, producing a self-contained binary.
 
@@ -79,8 +80,7 @@ Gorilla/csrf protects form submissions. Templates embed tokens and the middlewar
 ├── examples/            – generated configuration examples
 ├── migrations/          – database schema migrations
 ├── schema/schema.mysql.sql    – initial database schema
-├── core/templates/embedded.go  – embed templates and CSS for production builds
-├── core/templates/live.go      – load templates from disk in development
+├── core/templates/templates.go – load templates from disk or embedded data
 ├── internal/db/models.go       – sqlc generated data models
 └── internal/db/queries-*.sql   – SQL queries consumed by sqlc
 ```

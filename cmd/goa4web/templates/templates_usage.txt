@@ -1,0 +1,7 @@
+Usage:
+  {{.Prog}} templates <command> [<args>]
+
+Commands:
+  extract    copy embedded templates to a directory
+
+{{template "flag_groups_section" .FlagGroups}}

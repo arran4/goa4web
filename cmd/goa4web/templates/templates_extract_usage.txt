@@ -1,0 +1,4 @@
+Usage:
+  {{.Prog}} templates extract -dir DIR
+
+{{template "flag_groups_section" .FlagGroups}}

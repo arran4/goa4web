@@ -57,6 +57,7 @@ var StringOptions = []StringOption{
 	{"sendgrid-key", EnvSendGridKey, "SendGrid API key", "", nil, "", func(c *RuntimeConfig) *string { return &c.EmailSendGridKey }},
 	{"default-language", EnvDefaultLanguage, "default language name", "", nil, "", func(c *RuntimeConfig) *string { return &c.DefaultLanguage }},
 	{"timezone", EnvTimezone, "default site timezone", "Australia/Melbourne", nil, "", func(c *RuntimeConfig) *string { return &c.Timezone }},
+	{"templates-dir", EnvTemplatesDir, "directory to load templates from", "", nil, "", func(c *RuntimeConfig) *string { return &c.TemplatesDir }},
 	{"image-upload-dir", EnvImageUploadDir, "directory to store uploaded images when using the local provider", "", nil, "", func(c *RuntimeConfig) *string { return &c.ImageUploadDir }},
 	{"image-upload-provider", EnvImageUploadProvider, "image upload provider", "local", nil, "", func(c *RuntimeConfig) *string { return &c.ImageUploadProvider }},
 	{"image-upload-s3-url", EnvImageUploadS3URL, "S3 prefix URL for uploads", "", []string{"s3://mybucket/uploads", "s3://bucket/images"}, "", func(c *RuntimeConfig) *string { return &c.ImageUploadS3URL }},

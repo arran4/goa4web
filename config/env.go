@@ -79,6 +79,8 @@ const (
 	// EnvTimezone sets the default site timezone used when users have not
 	// configured their own.
 	EnvTimezone = "TIMEZONE"
+	// EnvTemplatesDir specifies a directory to load templates from at runtime.
+	EnvTemplatesDir = "TEMPLATES_DIR"
 	// EnvHSTSHeader sets the Strict-Transport-Security header value.
 	EnvHSTSHeader = "HSTS_HEADER"
 	// EnvSessionName sets the cookie name used for session data.

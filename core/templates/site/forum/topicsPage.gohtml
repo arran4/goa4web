@@ -4,6 +4,7 @@
         <h1>Category: {{ .Category.Title.String }}</h1>
     {{ end }}
     <h2>Topic: {{ if .Topic.DisplayTitle }}{{ .Topic.DisplayTitle }}{{ else }}{{ .Topic.Title.String }}{{ end }}</h2>
+    {{ template "topicLabels" (dict "Public" .PublicLabels "Author" .AuthorLabels "Private" .PrivateLabels) }}
 
     {{ $base := "/forum" }}
     {{ with .BasePath }}{{ $base = . }}{{ end }}

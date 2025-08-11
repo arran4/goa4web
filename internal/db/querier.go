@@ -11,6 +11,9 @@ import (
 )
 
 type Querier interface {
+	AddContentLabelStatus(ctx context.Context, arg AddContentLabelStatusParams) error
+	AddTopicPrivateLabel(ctx context.Context, arg AddTopicPrivateLabelParams) error
+	AddTopicPublicLabel(ctx context.Context, arg AddTopicPublicLabelParams) error
 	AdminApproveImagePost(ctx context.Context, idimagepost int32) error
 	AdminArchiveBlog(ctx context.Context, arg AdminArchiveBlogParams) error
 	AdminArchiveComment(ctx context.Context, arg AdminArchiveCommentParams) error
@@ -373,6 +376,7 @@ type Querier interface {
 	ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopic(ctx context.Context, arg ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopicParams) ([]int32, error)
 	ListCommentIDsBySearchWordNextForListerInRestrictedTopic(ctx context.Context, arg ListCommentIDsBySearchWordNextForListerInRestrictedTopicParams) ([]int32, error)
 	ListCommentIDsBySearchWordNextForListerNotInRestrictedTopic(ctx context.Context, arg ListCommentIDsBySearchWordNextForListerNotInRestrictedTopicParams) ([]int32, error)
+	ListContentLabelStatus(ctx context.Context, arg ListContentLabelStatusParams) ([]*ListContentLabelStatusRow, error)
 	ListEffectiveRoleIDsByUserID(ctx context.Context, usersIdusers int32) ([]int32, error)
 	ListForumcategoryPath(ctx context.Context, categoryID int32) ([]*ListForumcategoryPathRow, error)
 	ListGrants(ctx context.Context) ([]*Grant, error)
@@ -391,6 +395,8 @@ type Querier interface {
 	ListSubscribersForPattern(ctx context.Context, arg ListSubscribersForPatternParams) ([]int32, error)
 	ListSubscribersForPatterns(ctx context.Context, arg ListSubscribersForPatternsParams) ([]int32, error)
 	ListSubscriptionsByUser(ctx context.Context, usersIdusers int32) ([]*ListSubscriptionsByUserRow, error)
+	ListTopicPrivateLabels(ctx context.Context, arg ListTopicPrivateLabelsParams) ([]*ListTopicPrivateLabelsRow, error)
+	ListTopicPublicLabels(ctx context.Context, forumtopicIdforumtopic int32) ([]*ListTopicPublicLabelsRow, error)
 	ListUnreadNotificationsForLister(ctx context.Context, arg ListUnreadNotificationsForListerParams) ([]*Notification, error)
 	ListUploadedImagesByUserForLister(ctx context.Context, arg ListUploadedImagesByUserForListerParams) ([]*UploadedImage, error)
 	ListUserEmailsForLister(ctx context.Context, arg ListUserEmailsForListerParams) ([]*UserEmail, error)
@@ -402,6 +408,9 @@ type Querier interface {
 	ListWritingSearchNextForLister(ctx context.Context, arg ListWritingSearchNextForListerParams) ([]int32, error)
 	ListWritingcategoryPath(ctx context.Context, categoryID int32) ([]*ListWritingcategoryPathRow, error)
 	ListWritingsByIDsForLister(ctx context.Context, arg ListWritingsByIDsForListerParams) ([]*ListWritingsByIDsForListerRow, error)
+	RemoveContentLabelStatus(ctx context.Context, arg RemoveContentLabelStatusParams) error
+	RemoveTopicPrivateLabel(ctx context.Context, arg RemoveTopicPrivateLabelParams) error
+	RemoveTopicPublicLabel(ctx context.Context, arg RemoveTopicPublicLabelParams) error
 	SetNotificationPriorityForLister(ctx context.Context, arg SetNotificationPriorityForListerParams) error
 	SetNotificationReadForLister(ctx context.Context, arg SetNotificationReadForListerParams) error
 	SetNotificationUnreadForLister(ctx context.Context, arg SetNotificationUnreadForListerParams) error
@@ -419,6 +428,8 @@ type Querier interface {
 	SystemAssignWritingThreadID(ctx context.Context, arg SystemAssignWritingThreadIDParams) error
 	SystemCheckGrant(ctx context.Context, arg SystemCheckGrantParams) (int32, error)
 	SystemCheckRoleGrant(ctx context.Context, arg SystemCheckRoleGrantParams) (int32, error)
+	SystemClearContentLabelStatus(ctx context.Context, arg SystemClearContentLabelStatusParams) error
+	SystemClearTopicPrivateLabel(ctx context.Context, arg SystemClearTopicPrivateLabelParams) error
 	SystemCountDeadLetters(ctx context.Context) (int64, error)
 	// SystemCountLanguages counts all languages.
 	SystemCountLanguages(ctx context.Context) (int64, error)

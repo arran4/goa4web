@@ -30,6 +30,9 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		AdminURL       func(*db.GetCommentsByThreadIdForUserRow) string
 		CanReply       bool
 		BasePath       string
+		PublicLabels   []string
+		AuthorLabels   []string
+		PrivateLabels  []string
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
@@ -113,6 +116,18 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		Lastaddition:                 topicRow.Lastaddition,
 		Lastposterusername:           topicRow.Lastposterusername,
 		Edit:                         false,
+	}
+
+	if pub, author, err := cd.TopicPublicLabels(topicRow.Idforumtopic); err == nil {
+		data.PublicLabels = pub
+		data.AuthorLabels = author
+	} else {
+		log.Printf("list public labels: %v", err)
+	}
+	if priv, err := cd.TopicPrivateLabels(topicRow.Idforumtopic); err == nil {
+		data.PrivateLabels = priv
+	} else {
+		log.Printf("list private labels: %v", err)
 	}
 
 	replyType := r.URL.Query().Get("type")

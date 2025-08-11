@@ -89,4 +89,28 @@ const (
 
 	// TaskUnsubscribeFromTopic removes topic thread notifications.
 	TaskUnsubscribeFromTopic tasks.TaskString = "Unsubscribe From Topic"
+
+	// TaskAddPublicLabel adds a public label to a topic.
+	TaskAddPublicLabel tasks.TaskString = "Add Public Label"
+
+	// TaskRemovePublicLabel removes a public label from a topic.
+	TaskRemovePublicLabel tasks.TaskString = "Remove Public Label"
+
+	// TaskAddAuthorLabel adds an author-only label to a topic.
+	TaskAddAuthorLabel tasks.TaskString = "Add Author Label"
+
+	// TaskRemoveAuthorLabel removes an author-only label from a topic.
+	TaskRemoveAuthorLabel tasks.TaskString = "Remove Author Label"
+
+	// TaskAddPrivateLabel adds a private label to a topic.
+	TaskAddPrivateLabel tasks.TaskString = "Add Private Label"
+
+	// TaskRemovePrivateLabel removes a private label from a topic.
+	TaskRemovePrivateLabel tasks.TaskString = "Remove Private Label"
+
+	// TaskMarkTopicRead marks a topic as read for the current user.
+	TaskMarkTopicRead tasks.TaskString = "Mark Topic Read"
+
+	// TaskSetLabels replaces public and private labels on a topic.
+	TaskSetLabels tasks.TaskString = "Set Labels"
 )

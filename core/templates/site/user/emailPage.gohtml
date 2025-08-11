@@ -9,7 +9,7 @@
     </form>
 
     <h3>Verified Emails</h3>
-    <table border="1">
+    <table class="table table-bordered">
     {{ range .Verified }}
         <tr><td>{{ .Email }}</td><td>{{ if .VerifiedAt.Valid }}{{ localTime .VerifiedAt.Time }}{{ end }}</td><td>
             <form method="post" action="/usr/email/delete" style="display:inline">{{ csrfField }}<input type="hidden" name="id" value="{{ .ID }}"><input type="hidden" name="task" value="Delete"><input type="submit" value="Delete"></form>
@@ -22,7 +22,7 @@
 
     {{- if .Unverified }}
     <h3>Unverified Emails</h3>
-    <table border="1">
+    <table class="table table-bordered">
     {{ range .Unverified }}
         <tr><td>{{ .Email }}</td><td>
             <form method="post" action="/usr/email/delete" style="display:inline">{{ csrfField }}<input type="hidden" name="id" value="{{ .ID }}"><input type="hidden" name="task" value="Delete"><input type="submit" value="Delete"></form>

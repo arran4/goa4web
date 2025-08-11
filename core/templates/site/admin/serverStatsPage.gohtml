@@ -1,6 +1,6 @@
 {{ template "head" $ }}
 <h2>Server Runtime Statistics</h2>
-<table border="1">
+<table class="table table-bordered">
     <tr><th>Metric</th><th>Value</th></tr>
     <tr><td>Goroutines</td><td>{{ .Stats.Goroutines }}</td></tr>
     <tr><td>Alloc</td><td>{{ .Stats.Alloc }}</td></tr>

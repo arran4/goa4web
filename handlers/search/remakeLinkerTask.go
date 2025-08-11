@@ -46,14 +46,14 @@ func (RemakeLinkerTask) BackgroundTask(ctx context.Context, q db.Querier) (tasks
 		}
 		if err := indexText(ctx, q, cache, text, func(c context.Context, wid int64, count int32) error {
 			return q.SystemAddToLinkerSearch(c, db.SystemAddToLinkerSearchParams{
-				LinkerID:                       row.Idlinker,
+				LinkerID:                       row.ID,
 				SearchwordlistIdsearchwordlist: int32(wid),
 				WordCount:                      count,
 			})
 		}); err != nil {
 			return nil, err
 		}
-		if err := q.SystemSetLinkerLastIndex(ctx, row.Idlinker); err != nil {
+		if err := q.SystemSetLinkerLastIndex(ctx, row.ID); err != nil {
 			return nil, err
 		}
 	}

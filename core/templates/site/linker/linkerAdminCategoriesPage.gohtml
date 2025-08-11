@@ -9,11 +9,11 @@
         </tr>
         {{- range .Categories }}
             <tr>
-                <td><a id="lc{{ .Idlinkercategory }}" href="/admin/linker/categories/category/{{ .Idlinkercategory }}">{{ .Idlinkercategory }}</a></td>
+                <td><a id="lc{{ .ID }}" href="/admin/linker/categories/category/{{ .ID }}">{{ .ID }}</a></td>
                 <td>
                     <form method="post">
         {{ csrfField }}
-                        <input type="hidden" name="cid" value="{{ .Idlinkercategory }}">
+                        <input type="hidden" name="cid" value="{{ .ID }}">
                         <input type="number" name="position" value="{{ .Position }}" size="3">
                 </td>
                 <td><input name="title" value="{{ .Title.String }}"></td>
@@ -21,8 +21,8 @@
                 <td>
                     <input type="submit" name="task" value="Update">
                     {{ if eq .Linkcount 0 }}<input type="submit" name="task" value="Delete Category">{{ end }}<br>
-                    <a href="/admin/linker/categories/category/{{ .Idlinkercategory }}/grants">Permissions</a>
-                    <a href="/linker/category/{{ .Idlinkercategory }}">View</a>
+                    <a href="/admin/linker/categories/category/{{ .ID }}/grants">Permissions</a>
+                    <a href="/linker/category/{{ .ID }}">View</a>
                     </form>
                 </td>
             </tr>

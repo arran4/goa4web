@@ -128,14 +128,14 @@ INSERT INTO deactivated_linker (idlinker, language_id, users_idusers, linker_cat
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW());
 
 -- name: AdminScrubLink :exec
-UPDATE linker SET title = ?, url = '', description = '', deleted_at = NOW() WHERE idlinker = ?;
+UPDATE linker SET title = ?, url = '', description = '', deleted_at = NOW() WHERE id = ?;
 
 -- name: AdminListPendingDeactivatedLinks :many
 SELECT idlinker, title, url, description FROM deactivated_linker WHERE users_idusers = ? AND restored_at IS NULL
 LIMIT ? OFFSET ?;
 
 -- name: AdminRestoreLink :exec
-UPDATE linker SET title = ?, url = ?, description = ?, deleted_at = NULL WHERE idlinker = ?;
+UPDATE linker SET title = ?, url = ?, description = ?, deleted_at = NULL WHERE id = ?;
 
 -- name: AdminMarkLinkRestored :exec
 UPDATE deactivated_linker SET restored_at = NOW() WHERE idlinker = ?;

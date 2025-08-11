@@ -61,8 +61,8 @@
     <tr><th>ID</th><th>Category</th><th>Links</th></tr>
     {{- range .LinkerCategories }}
     <tr>
-        <td><a href="/admin/linker/categories/category/{{ .Idlinkercategory }}">{{ .Idlinkercategory }}</a></td>
-        <td><a href="/linker/category/{{ .Idlinkercategory }}">{{ .Title.String }}</a></td>
+        <td><a href="/admin/linker/categories/category/{{ .ID }}">{{ .ID }}</a></td>
+        <td><a href="/linker/category/{{ .ID }}">{{ .Title.String }}</a></td>
         <td>{{ .Linkcount }}</td>
     </tr>
     {{- end }}

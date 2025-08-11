@@ -38,6 +38,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
+	coretemplates "github.com/arran4/goa4web/core/templates"
 )
 
 var version = "dev"
@@ -203,6 +204,7 @@ func parseRoot(args []string) (*rootCmd, error) {
 		config.WithFileValues(fileVals),
 		config.WithGetenv(os.Getenv),
 	)
+	coretemplates.SetDir(r.cfg.TemplatesDir)
 	return r, nil
 }
 
@@ -349,6 +351,12 @@ func (r *rootCmd) Run() error {
 		c, err := parseConfigCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("config: %w", err)
+		}
+		return c.Run()
+	case "templates":
+		c, err := parseTemplatesCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("templates: %w", err)
 		}
 		return c.Run()
 	case "test":

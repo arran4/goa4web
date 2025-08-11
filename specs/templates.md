@@ -1,31 +1,20 @@
 # Template Compilation
 
-Goa4Web ships with two implementations for loading HTML, text and asset templates. The
-production build embeds everything using `//go:embed` so the binary is self-contained.
-During development the `live` build tag swaps in a version that reads directly from
-the `core/templates` directory on disk.
+Goa4Web embeds HTML, text and asset templates in the binary using `//go:embed`. At
+runtime an optional directory can be specified to override these templates. When
+the `templates-dir` configuration option is set, templates and static assets are
+loaded from that directory with `os.DirFS`. Otherwise the embedded versions are
+used.
 
-## Production mode
+`core/templates/templates.go` exposes functions such as
+`GetCompiledSiteTemplates` which parse templates from either the embedded data or
+the configured directory.
 
-`core/templates/embedded.go` is compiled when the `live` build tag is **not** present. It
-The file begins with the build constraint `//go:build !live` so it is included in regular builds.
-uses multiple `//go:embed` directives to include templates and static files:
+The CLI provides a way to extract the embedded templates for customization:
 
-- HTML templates under `site/`
-- notification templates under `notifications/`
-- email templates under `email/`
-- CSS and JavaScript from `assets/`
-
-The functions such as `GetCompiledSiteTemplates` parse these embedded files with
-`template.ParseFS` and return ready-to-use template sets.
-
-## Live development mode
-
-When built with `-tags live`, the file `core/templates/live.go` takes over.
-It begins with `//go:build live` to activate when the tag is supplied. Instead of embedding data it calls `os.ReadFile` and `template.ParseFS` against `os.DirFS` to load files from disk. This allows editing templates without rebuilding the binary.
 ```bash
-# Start the server with live templates
-go run -tags live ./cmd/goa4web
+goa4web templates extract -dir ./tmpl
 ```
 
-Both files expose the same functions so callers do not need to change between modes.
+After editing the files in `./tmpl`, start the server with
+`goa4web --templates-dir ./tmpl` to use them without rebuilding the binary.

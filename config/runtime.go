@@ -114,6 +114,9 @@ type RuntimeConfig struct {
 	// AdminAPISecretFile specifies the path to the administrator API signing key.
 	AdminAPISecretFile string
 
+	// TemplatesDir specifies a directory to load templates and assets from.
+	TemplatesDir string
+
 	// CreateDirs creates missing directories when enabled.
 	CreateDirs bool
 }

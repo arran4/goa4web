@@ -103,8 +103,8 @@ func (ForgotPasswordTask) AuditRecord(data map[string]any) string {
 	return "password reset requested"
 }
 
-func (EmailAssociationRequestTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("adminNotificationEmailAssociationRequestEmail")
+func (EmailAssociationRequestTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("adminNotificationEmailAssociationRequestEmail"), true
 }
 
 func (EmailAssociationRequestTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
@@ -112,8 +112,8 @@ func (EmailAssociationRequestTask) AdminInternalNotificationTemplate(evt eventbu
 	return &v
 }
 
-func (f ForgotPasswordTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("adminNotificationUserRequestPasswordResetEmail")
+func (f ForgotPasswordTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("adminNotificationUserRequestPasswordResetEmail"), true
 }
 
 func (f ForgotPasswordTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
@@ -121,8 +121,8 @@ func (f ForgotPasswordTask) AdminInternalNotificationTemplate(evt eventbus.TaskE
 	return &v
 }
 
-func (f ForgotPasswordTask) SelfEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("passwordResetEmail")
+func (f ForgotPasswordTask) SelfEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("passwordResetEmail"), true
 }
 
 func (f ForgotPasswordTask) SelfInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

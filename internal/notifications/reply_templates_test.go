@@ -16,7 +16,7 @@ func TestReplyTemplatesExist(t *testing.T) {
 	html := templates.GetCompiledEmailHtmlTemplates(map[string]any{})
 	text := templates.GetCompiledEmailTextTemplates(map[string]any{})
 	nt := templates.GetCompiledNotificationTemplates(map[string]any{})
-	et := task.SubscribedEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess})
+	et, _ := task.SubscribedEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess})
 	if html.Lookup(et.HTML) == nil {
 		t.Errorf("missing html template %s", et.HTML)
 	}

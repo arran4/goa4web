@@ -41,7 +41,9 @@ func TestLanguageTaskTemplates(t *testing.T) {
 		createLanguageTask,
 	}
 	for _, a := range admins {
-		requireEmailTemplates(t, a.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+		if et, _ := a.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}); et != nil {
+			requireEmailTemplates(t, et)
+		}
 		requireNotificationTemplate(t, a.AdminInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
 	}
 }

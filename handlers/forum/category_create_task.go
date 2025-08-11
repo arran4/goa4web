@@ -16,8 +16,8 @@ var (
 	_ notif.AdminEmailTemplateProvider = (*CategoryCreateTask)(nil)
 )
 
-func (CategoryCreateTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("adminNotificationForumCategoryCreateEmail")
+func (CategoryCreateTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("adminNotificationForumCategoryCreateEmail"), true
 }
 
 func (CategoryCreateTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

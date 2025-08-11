@@ -82,8 +82,8 @@ func (UserPasswordResetTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, err
 	return nil, fmt.Errorf("target user id not provided")
 }
 
-func (UserPasswordResetTask) TargetEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("adminPasswordResetEmail")
+func (UserPasswordResetTask) TargetEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("adminPasswordResetEmail"), true
 }
 
 func (UserPasswordResetTask) TargetInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

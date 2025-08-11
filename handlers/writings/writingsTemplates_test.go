@@ -41,7 +41,9 @@ func TestWritingsTemplatesExist(t *testing.T) {
 		replyTask,
 	}
 	for _, p := range providers {
-		checkEmailTemplates(t, p.SubscribedEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+		if et, _ := p.SubscribedEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}); et != nil {
+			checkEmailTemplates(t, et)
+		}
 		checkNotificationTemplate(t, p.SubscribedInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
 	}
 }

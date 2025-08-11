@@ -84,8 +84,8 @@ func (UpdateWritingTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return nil
 }
 
-func (UpdateWritingTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("writingUpdateEmail")
+func (UpdateWritingTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("writingUpdateEmail"), true
 }
 
 func (UpdateWritingTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

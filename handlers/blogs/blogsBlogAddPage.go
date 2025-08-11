@@ -30,8 +30,8 @@ var _ notif.SubscribersNotificationTemplateProvider = (*AddBlogTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*AddBlogTask)(nil)
 var _ notif.GrantsRequiredProvider = (*AddBlogTask)(nil)
 
-func (AddBlogTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("adminNotificationBlogAddEmail")
+func (AddBlogTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("adminNotificationBlogAddEmail"), true
 }
 
 func (AddBlogTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
@@ -39,8 +39,8 @@ func (AddBlogTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *st
 	return &v
 }
 
-func (AddBlogTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("blogAddEmail")
+func (AddBlogTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("blogAddEmail"), true
 }
 
 func (AddBlogTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

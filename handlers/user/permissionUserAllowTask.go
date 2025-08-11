@@ -23,8 +23,8 @@ var _ tasks.Task = (*PermissionUserAllowTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*PermissionUserAllowTask)(nil)
 var _ notif.TargetUsersNotificationProvider = (*PermissionUserAllowTask)(nil)
 
-func (PermissionUserAllowTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("adminPermissionAllowEmail")
+func (PermissionUserAllowTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("adminPermissionAllowEmail"), true
 }
 
 func (PermissionUserAllowTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
@@ -80,8 +80,8 @@ func (PermissionUserAllowTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, e
 	return nil, fmt.Errorf("target user id not provided")
 }
 
-func (PermissionUserAllowTask) TargetEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("setUserRoleEmail")
+func (PermissionUserAllowTask) TargetEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("setUserRoleEmail"), true
 }
 
 func (PermissionUserAllowTask) TargetInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

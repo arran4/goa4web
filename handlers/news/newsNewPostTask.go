@@ -28,8 +28,8 @@ var (
 	_ notif.AutoSubscribeProvider                   = (*NewPostTask)(nil)
 )
 
-func (NewPostTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("adminNotificationNewsAddEmail")
+func (NewPostTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("adminNotificationNewsAddEmail"), true
 }
 
 func (NewPostTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
@@ -37,8 +37,8 @@ func (NewPostTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *st
 	return &v
 }
 
-func (NewPostTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("newsAddEmail")
+func (NewPostTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("newsAddEmail"), true
 }
 
 func (NewPostTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

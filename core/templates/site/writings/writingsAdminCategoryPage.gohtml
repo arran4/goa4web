@@ -12,11 +12,11 @@
     </tr>
     {{ range .Writings }}
     <tr>
-        <td>{{ .Idwriting }}</td>
+        <td><a href="/admin/writings/article/{{ .Idwriting }}">{{ .Idwriting }}</a></td>
         <td>{{ .Title.String }}</td>
         <td>{{ .Username.String }}</td>
         <td>{{ localTime .Published.Time }}</td>
-        <td><a href="/writings/{{ .Idwriting }}">View</a></td>
+        <td><a href="/writings/article/{{ .Idwriting }}">View</a></td>
     </tr>
     {{ end }}
 </table>

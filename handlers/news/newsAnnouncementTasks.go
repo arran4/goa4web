@@ -9,8 +9,8 @@ import (
 var _ tasks.Task = (*AnnouncementAddTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*AnnouncementAddTask)(nil)
 
-func (AnnouncementAddTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("adminNotificationNewsAddEmail")
+func (AnnouncementAddTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("adminNotificationNewsAddEmail"), true
 }
 
 func (AnnouncementAddTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
@@ -21,8 +21,8 @@ func (AnnouncementAddTask) AdminInternalNotificationTemplate(evt eventbus.TaskEv
 var _ tasks.Task = (*AnnouncementDeleteTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*AnnouncementDeleteTask)(nil)
 
-func (AnnouncementDeleteTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("adminNotificationNewsDeleteEmail")
+func (AnnouncementDeleteTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("adminNotificationNewsDeleteEmail"), true
 }
 
 func (AnnouncementDeleteTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

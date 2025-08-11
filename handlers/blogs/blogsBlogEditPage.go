@@ -27,8 +27,8 @@ var editBlogTask = &EditBlogTask{TaskString: TaskEdit}
 var _ tasks.Task = (*EditBlogTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*EditBlogTask)(nil)
 
-func (EditBlogTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("adminNotificationBlogEditEmail")
+func (EditBlogTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("adminNotificationBlogEditEmail"), true
 }
 
 func (EditBlogTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

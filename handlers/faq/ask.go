@@ -27,8 +27,8 @@ var askTask = &AskTask{TaskString: TaskAsk}
 var _ tasks.Task = (*AskTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*AskTask)(nil)
 
-func (AskTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("adminNotificationFaqAskEmail")
+func (AskTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("adminNotificationFaqAskEmail"), true
 }
 
 func (AskTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

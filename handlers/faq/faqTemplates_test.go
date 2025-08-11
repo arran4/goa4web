@@ -37,7 +37,9 @@ func requireNotificationTemplate(t *testing.T, name *string) {
 
 func TestAskTaskTemplatesCompile(t *testing.T) {
 	var task AskTask
-	requireEmailTemplates(t, task.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+	if et, _ := task.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}); et != nil {
+		requireEmailTemplates(t, et)
+	}
 	requireNotificationTemplate(t, task.AdminInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
 }
 

@@ -40,7 +40,9 @@ func TestNewsTemplatesExist(t *testing.T) {
 		replyTask,
 	}
 	for _, p := range subs {
-		checkEmailTemplates(t, p.SubscribedEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+		if et, _ := p.SubscribedEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}); et != nil {
+			checkEmailTemplates(t, et)
+		}
 		checkNotificationTemplate(t, p.SubscribedInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
 	}
 
@@ -56,7 +58,9 @@ func TestNewsTemplatesExist(t *testing.T) {
 		announcementDeleteTask,
 	}
 	for _, p := range admins {
-		checkEmailTemplates(t, p.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+		if et, _ := p.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}); et != nil {
+			checkEmailTemplates(t, et)
+		}
 		checkNotificationTemplate(t, p.AdminInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
 	}
 }

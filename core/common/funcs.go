@@ -15,6 +15,7 @@ import (
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/core/templates"
 	"github.com/gorilla/csrf"
 )
 
@@ -137,6 +138,48 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 				return nil, fmt.Errorf("latestNews: %w", err)
 			}
 			return posts, nil
+		},
+		"NewsLabels": func(id int32) []templates.TopicLabel {
+			var labels []templates.TopicLabel
+			if als, err := cd.NewsAuthorLabels(id); err == nil {
+				for _, l := range als {
+					labels = append(labels, templates.TopicLabel{Name: l, Type: "author"})
+				}
+			}
+			if pls, err := cd.NewsPrivateLabels(id); err == nil {
+				for _, l := range pls {
+					labels = append(labels, templates.TopicLabel{Name: l, Type: "private"})
+				}
+			}
+			return labels
+		},
+		"BlogLabels": func(id int32) []templates.TopicLabel {
+			var labels []templates.TopicLabel
+			if als, err := cd.BlogAuthorLabels(id); err == nil {
+				for _, l := range als {
+					labels = append(labels, templates.TopicLabel{Name: l, Type: "author"})
+				}
+			}
+			if pls, err := cd.BlogPrivateLabels(id); err == nil {
+				for _, l := range pls {
+					labels = append(labels, templates.TopicLabel{Name: l, Type: "private"})
+				}
+			}
+			return labels
+		},
+		"WritingLabels": func(id int32) []templates.TopicLabel {
+			var labels []templates.TopicLabel
+			if als, err := cd.WritingAuthorLabels(id); err == nil {
+				for _, l := range als {
+					labels = append(labels, templates.TopicLabel{Name: l, Type: "author"})
+				}
+			}
+			if pls, err := cd.WritingPrivateLabels(id); err == nil {
+				for _, l := range pls {
+					labels = append(labels, templates.TopicLabel{Name: l, Type: "private"})
+				}
+			}
+			return labels
 		},
 	}
 }

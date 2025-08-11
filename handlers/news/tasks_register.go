@@ -13,5 +13,6 @@ func RegisterTasks() []tasks.NamedTask {
 		editTask,
 		deleteNewsPostTask,
 		newPostTask,
+		setLabelsTask,
 	}
 }

@@ -10,5 +10,6 @@ func RegisterTasks() []tasks.NamedTask {
 		replyBlogTask,
 		editReplyTask,
 		cancelTask,
+		setLabelsTask,
 	}
 }

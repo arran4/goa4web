@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/eventbus"
@@ -42,6 +43,17 @@ func (EditTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("languageId parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	text := r.PostFormValue("text")
+	raw := r.PostForm["author"]
+	labels := make([]string, 0, len(raw))
+	seen := map[string]struct{}{}
+	for _, l := range raw {
+		if v := strings.TrimSpace(l); v != "" {
+			if _, ok := seen[v]; !ok {
+				seen[v] = struct{}{}
+				labels = append(labels, v)
+			}
+		}
+	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
 	postId, _ := strconv.Atoi(vars["news"])
@@ -52,6 +64,10 @@ func (EditTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	if err := cd.UpdateNewsPost(int32(postId), int32(languageId), cd.UserID, text); err != nil {
 		return fmt.Errorf("update news post fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+
+	if err := cd.SetNewsAuthorLabels(int32(postId), labels); err != nil {
+		return fmt.Errorf("set author labels fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	return nil

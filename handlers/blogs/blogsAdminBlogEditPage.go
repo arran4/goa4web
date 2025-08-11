@@ -35,13 +35,16 @@ func AdminBlogEditPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
+	labels, _ := cd.BlogAuthorLabels(int32(blogID))
 	type Data struct {
-		Mode    string
-		PostURL string
+		Mode         string
+		PostURL      string
+		AuthorLabels []string
 	}
 	data := Data{
-		Mode:    "Edit",
-		PostURL: fmt.Sprintf("/blogs/blog/%d/edit", blogID),
+		Mode:         "Edit",
+		PostURL:      fmt.Sprintf("/blogs/blog/%d/edit", blogID),
+		AuthorLabels: labels,
 	}
 	handlers.TemplateHandler(w, r, "blogsAdminBlogEditPage.gohtml", data)
 }

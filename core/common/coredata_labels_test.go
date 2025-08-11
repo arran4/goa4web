@@ -123,7 +123,7 @@ func TestPrivateLabelsDefaultAndInversion(t *testing.T) {
 	}
 }
 
-func TestSetWritingPublicLabels(t *testing.T) {
+func TestSetWritingAuthorLabels(t *testing.T) {
 	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -133,24 +133,24 @@ func TestSetWritingPublicLabels(t *testing.T) {
 	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
 	cd.UserID = 2
 
-	rows := sqlmock.NewRows([]string{"item", "item_id", "label"}).
-		AddRow("writing", 5, "a").
-		AddRow("writing", 5, "b")
 	mock.ExpectQuery("SELECT .* FROM content_public_labels").
 		WithArgs("writing", int32(5)).
-		WillReturnRows(rows)
+		WillReturnRows(sqlmock.NewRows([]string{"item", "item_id", "label"}))
+	ownerRows := sqlmock.NewRows([]string{"item", "item_id", "label"}).
+		AddRow("writing", 5, "a").
+		AddRow("writing", 5, "b")
 	mock.ExpectQuery("SELECT .* FROM content_label_status").
 		WithArgs("writing", int32(5)).
-		WillReturnRows(sqlmock.NewRows([]string{"item", "item_id", "label"}))
-	mock.ExpectExec("INSERT IGNORE INTO content_public_labels").
+		WillReturnRows(ownerRows)
+	mock.ExpectExec("INSERT IGNORE INTO content_label_status").
 		WithArgs("writing", int32(5), "c").
 		WillReturnResult(sqlmock.NewResult(0, 1))
-	mock.ExpectExec("DELETE FROM content_public_labels").
+	mock.ExpectExec("DELETE FROM content_label_status").
 		WithArgs("writing", int32(5), "a").
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
-	if err := cd.SetWritingPublicLabels(5, []string{"b", "c"}); err != nil {
-		t.Fatalf("SetWritingPublicLabels: %v", err)
+	if err := cd.SetWritingAuthorLabels(5, []string{"b", "c"}); err != nil {
+		t.Fatalf("SetWritingAuthorLabels: %v", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)

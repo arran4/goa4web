@@ -8,9 +8,17 @@
             Abstract:<br><textarea name="abstract" cols="60" rows="10">{{ .Writing.Abstract.String }}</textarea><br>
             Writing:<br><textarea name="body" cols="60" rows="30">{{ .Writing.Writing.String }}</textarea><br>
             Private writing: <input type="checkbox" name="isitprivate" {{ if .Writing.Private.Bool }}checked{{ end }}><br>
+            Author Labels:<br>
+            <div class="label-editor">
+            {{ range .AuthorLabels }}
+                <span class="label pill author">{{ . }}<button type="button" class="remove" data-type="author">x</button><input type="hidden" name="author" value="{{ . }}"/></span>
+            {{ end }}
+                <input type="text" class="label-input" data-type="author" placeholder="Add author label"/>
+            </div>
             {{ template "languageCombobox" }}
             <input type="submit" name="task" value="Update writing">
         </form>
+        <script src="/forum/topic_labels.js"></script>
     {{ else }}
         Sorry, there is no article that you can edit here.
     {{ end }}

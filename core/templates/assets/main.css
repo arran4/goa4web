@@ -1,6 +1,6 @@
 body {
-        background-color: #FFFBF0;
-        color: #800000;
+	background-color: #FFFBF0;
+	color: #800000;
         min-height: 100vh;
         display: flex;
         flex-direction: column;
@@ -22,7 +22,7 @@ textarea {
         justify-content: space-between;
         align-items: center;
         padding: 0.5em 1em;
-        background-color: #FFF6E0;
+	background-color: #FFF6E0;
 }
 
 .navbar-left,
@@ -43,8 +43,8 @@ textarea {
         flex: 1;
         text-align: center;
         font-weight: bold;
-        font-family: tahoma, arial, helvetica, sans-serif;
-        color: #800000;
+	font-family: tahoma, arial, helvetica, sans-serif;
+	color: #800000;
         position: relative;
 }
 
@@ -54,7 +54,7 @@ textarea {
 
 .hamburger {
         display: none;
-        font-size: 1.5em;
+	font-size: 1.5em;
         cursor: pointer;
 }
 
@@ -75,8 +75,8 @@ textarea {
 }
 
 .site-footer {
-        font-size: 0.7em;
-        color: #666;
+	font-size: 0.7em;
+	color: #666;
 }
 a {
 	background-color: transparent;
@@ -91,10 +91,24 @@ a:hover {
 	color: #FF0000;
 }
 h1 {
-        font-family: tahoma, arial, helvetica, sans-serif;
+	font-family: tahoma, arial, helvetica, sans-serif;
         text-align: center;
-        color: #800000;
-        background-color: transparent;
+	color: #800000;
+	background-color: transparent;
+}
+
+.blog-title {
+	font-family: tahoma, arial, helvetica, sans-serif;
+	font-size: 1.5em;
+	color: #800000;
+	background-color: transparent;
+}
+
+.blog-subtitle {
+	font-family: tahoma, arial, helvetica, sans-serif;
+	font-size: 1.2em;
+	color: #800000;
+	background-color: transparent;
 }
 
 .section-title {
@@ -176,14 +190,14 @@ div.title {
         border: 1px solid #808000;
         padding: 0.5em;
         margin-bottom: 0.5em;
-        background-color: #FFF6E0;
+	background-color: #FFF6E0;
 }
 
 .pagination-bar {
         position: sticky;
         bottom: 0;
         margin-top: auto;
-        background-color: #FFF6E0;
+	background-color: #FFF6E0;
         padding: 0.5em;
         display: flex;
         justify-content: space-between;
@@ -206,11 +220,11 @@ div.title {
 
 /* spoiler text hidden until hovered */
 .spoiler {
-        color: #000000;
-        background-color: #000000;
+	color: #000000;
+	background-color: #000000;
 }
 .spoiler:hover {
-        color: #FFFFFF;
+	color: #FFFFFF;
 }
 
 /* role grant editor */
@@ -254,11 +268,11 @@ div.title {
         align-items: center;
         padding-right: 8px;
         cursor: default;
-        color: #fff;
+	color: #fff;
 }
 
 .label.pill.unsaved {
-        color: #000;
+	color: #000;
 }
 
 .label.pill.public {
@@ -378,12 +392,12 @@ tr.unsupported td {
 }
 
 .a4code-code {
-        background-color: lightblue;
+	background-color: lightblue;
 }
 
 .a4code-quote,
 .a4code-quoteof {
-        background-color: lightgreen;
+	background-color: lightgreen;
 }
 
 .a4code-image {
@@ -392,8 +406,8 @@ tr.unsupported td {
 
 /* Breadcrumb navigation */
 .breadcrumbs {
-        font-family: tahoma, arial, helvetica, sans-serif;
-        font-size: 0.8em;
+	font-family: tahoma, arial, helvetica, sans-serif;
+	font-size: 0.8em;
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
@@ -418,7 +432,7 @@ tr.unsupported td {
 .breadcrumbs li + li:before {
         content: ">";
         padding: 0 0.25em;
-        color: #800000;
+	color: #800000;
 }
 
 .breadcrumbs a {
@@ -427,7 +441,7 @@ tr.unsupported td {
 
 .navbar-center .page-title-link {
         text-decoration: none;
-        color: inherit;
+	color: inherit;
 }
 
 /* Forum topic actions */
@@ -494,7 +508,7 @@ tr.unsupported td {
 }
 
 .thread-header {
-        background-color: lightgrey;
+	background-color: lightgrey;
 }
 
 .thread-content {
@@ -503,12 +517,12 @@ tr.unsupported td {
 
 .poster-name.first,
 .post-time.first {
-        color: green;
+	color: green;
 }
 
 .poster-name.last,
 .post-time.last {
-        color: blue;
+	color: blue;
 }
 
 

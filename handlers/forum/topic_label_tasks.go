@@ -48,6 +48,17 @@ var (
 	SetLabelsTaskHandler          = setLabelsTask
 )
 
+var (
+	_ tasks.Task = (*AddPublicLabelTask)(nil)
+	_ tasks.Task = (*RemovePublicLabelTask)(nil)
+	_ tasks.Task = (*AddPrivateLabelTask)(nil)
+	_ tasks.Task = (*RemovePrivateLabelTask)(nil)
+	_ tasks.Task = (*AddAuthorLabelTask)(nil)
+	_ tasks.Task = (*RemoveAuthorLabelTask)(nil)
+	_ tasks.Task = (*MarkTopicReadTask)(nil)
+	_ tasks.Task = (*SetLabelsTask)(nil)
+)
+
 func (AddPublicLabelTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)

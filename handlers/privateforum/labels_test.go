@@ -21,16 +21,40 @@ func TestPrivateLabelRoutes(t *testing.T) {
 	nav := navpkg.NewRegistry()
 	RegisterRoutes(r, config.NewRuntimeConfig(), nav)
 
-	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
-	cd.ForumBasePath = "/private"
+	t.Run("uses back parameter", func(t *testing.T) {
+		cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
+		cd.ForumBasePath = "/private"
 
-	req := httptest.NewRequest(http.MethodPost, "/private/topic/1/labels", strings.NewReader("task="+url.QueryEscape(string(forumhandlers.TaskMarkTopicRead))))
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
-	rr := httptest.NewRecorder()
+		body := "task=" + url.QueryEscape(string(forumhandlers.TaskMarkTopicRead)) + "&back=" + url.QueryEscape("/private/topic/1/thread/2")
+		req := httptest.NewRequest(http.MethodPost, "/private/topic/1/labels", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
+		rr := httptest.NewRecorder()
 
-	r.ServeHTTP(rr, req)
-	if rr.Code != http.StatusOK {
-		t.Fatalf("expected 200 got %d", rr.Code)
-	}
+		r.ServeHTTP(rr, req)
+		if rr.Code != http.StatusOK {
+			t.Fatalf("expected 200 got %d", rr.Code)
+		}
+		if cd.AutoRefresh == "" || !strings.Contains(cd.AutoRefresh, "url=/private/topic/1/thread/2") {
+			t.Fatalf("auto refresh=%q", cd.AutoRefresh)
+		}
+	})
+
+	t.Run("falls back without back parameter", func(t *testing.T) {
+		cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
+		cd.ForumBasePath = "/private"
+
+		req := httptest.NewRequest(http.MethodPost, "/private/topic/1/labels", strings.NewReader("task="+url.QueryEscape(string(forumhandlers.TaskMarkTopicRead))))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
+		rr := httptest.NewRecorder()
+
+		r.ServeHTTP(rr, req)
+		if rr.Code != http.StatusOK {
+			t.Fatalf("expected 200 got %d", rr.Code)
+		}
+		if cd.AutoRefresh == "" || !strings.Contains(cd.AutoRefresh, "url=/private/topic/1") {
+			t.Fatalf("auto refresh=%q", cd.AutoRefresh)
+		}
+	})
 }

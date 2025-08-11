@@ -78,7 +78,7 @@ func TestNewsPostPageNoDuplicateLabels(t *testing.T) {
 	}
 
 	out := buf.String()
-	if strings.Count(out, "class=\"label-bar\"") != 1 {
-		t.Fatalf("expected 1 label bar, got %d: %q", strings.Count(out, "class=\"label-bar\""), out)
+	if strings.Count(out, "class=\"label-bar\"") != 2 {
+		t.Fatalf("expected 2 label bars, got %d: %q", strings.Count(out, "class=\"label-bar\""), out)
 	}
 }

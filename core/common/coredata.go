@@ -2133,6 +2133,9 @@ func (cd *CoreData) SetCurrentRoleID(id int32) { cd.currentRoleID = id }
 // SetCurrentSection stores the current section name.
 func (cd *CoreData) SetCurrentSection(section string) { cd.currentSection = section }
 
+// Section returns the current section name.
+func (cd *CoreData) Section() string { return cd.currentSection }
+
 // SetCurrentNotificationTemplate records the notification template being edited along with an error message.
 func (cd *CoreData) SetCurrentNotificationTemplate(name, errMsg string) {
 	cd.currentNotificationTemplateName = name

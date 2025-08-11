@@ -110,8 +110,12 @@ h1 {
 	color: #800000;
 	background-color: transparent;
 }
+
+.section-title {
+        font-size: 1.2em;
+}
 div.index {
-	text-align: center;
+        text-align: center;
 }
 div.index table {
 	margin-left: auto;
@@ -165,17 +169,21 @@ div.title {
 	background-color: transparent;
 }
 .textright {
-	text-align: right;
-	font-family: tahoma, arial, helvetica, sans-serif;
-	font-size: 0.8em;
-	color: #800000;
-	background-color: transparent;
+        text-align: right;
+        font-family: tahoma, arial, helvetica, sans-serif;
+        font-size: 0.8em;
+        color: #800000;
+        background-color: transparent;
+}
+
+.text-center {
+        text-align: center;
 }
 .textcenter {
-	text-align: center;
-	font-family: tahoma, arial, helvetica, sans-serif;
-	font-size: 0.8em;
-	color: #800000;
+        text-align: center;
+        font-family: tahoma, arial, helvetica, sans-serif;
+        font-size: 0.8em;
+        color: #800000;
 	background-color: transparent;
 }
 .notification {
@@ -268,26 +276,56 @@ div.title {
 }
 
 .label.pill.public {
-        background: #2e7d32;
-}
-
-.label.pill.public.unsaved {
         background: #81c784;
 }
 
-.label.pill.author {
-        background: #1565c0;
+.label.pill.public.unsaved {
+        background: #c8e6c9;
 }
 
-.label.pill.author.unsaved {
+.label.pill.author {
         background: #90caf9;
 }
 
+.label.pill.author.unsaved {
+        background: #bbdefb;
+}
+
 .label.pill.private {
-        background: #e65100;
+        background: #ffb74d;
 }
 
 .label.pill.private.unsaved {
+        background: #ffe0b2;
+}
+
+body.forum .label.pill.public,
+body.privateforum .label.pill.public {
+        background: #2e7d32;
+}
+
+body.forum .label.pill.public.unsaved,
+body.privateforum .label.pill.public.unsaved {
+        background: #81c784;
+}
+
+body.forum .label.pill.author,
+body.privateforum .label.pill.author {
+        background: #1565c0;
+}
+
+body.forum .label.pill.author.unsaved,
+body.privateforum .label.pill.author.unsaved {
+        background: #90caf9;
+}
+
+body.forum .label.pill.private,
+body.privateforum .label.pill.private {
+        background: #e65100;
+}
+
+body.forum .label.pill.private.unsaved,
+body.privateforum .label.pill.private.unsaved {
         background: #ffb74d;
 }
 

@@ -470,6 +470,44 @@ func TestSelectedThreadCanReply(t *testing.T) {
 	}
 }
 
+func TestSelectedThreadCanReplyPrivateForum(t *testing.T) {
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
+
+	queries := db.New(conn)
+	ctx := context.Background()
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
+	cd.UserID = 1
+	cd.SetCurrentSection("privateforum")
+	threadID, topicID := int32(3), int32(2)
+	cd.SetCurrentThreadAndTopic(threadID, topicID)
+
+	rows := sqlmock.NewRows([]string{
+		"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked",
+	}).AddRow(threadID, 0, 0, topicID, nil, time.Now(), nil)
+	mock.ExpectQuery("SELECT th.idforumthread").WithArgs(
+		int32(1),
+		threadID,
+		int32(1),
+		int32(1),
+		"privateforum",
+		sql.NullString{String: "topic", Valid: true},
+		sql.NullInt32{Int32: topicID, Valid: true},
+		sql.NullInt32{Int32: 1, Valid: true},
+	).WillReturnRows(rows)
+
+	if !cd.SelectedThreadCanReply() {
+		t.Fatalf("SelectedThreadCanReply() = false; want true")
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}
+
 func TestSelectedThreadCanReplyGrantFallback(t *testing.T) {
 	conn, mock, err := sqlmock.New()
 	if err != nil {

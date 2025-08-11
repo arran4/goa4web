@@ -1916,6 +1916,8 @@ func (cd *CoreData) SelectedThreadCanReply() bool {
 			return cd.SelectedWritingThreadCanReply(), nil
 		case "forum":
 			return cd.SelectedForumThreadCanReply(), nil
+		case "privateforum":
+			return cd.SelectedPrivateForumThreadCanReply(), nil
 		case "imagebbs":
 			return cd.SelectedImageBBSThreadCanReply(), nil
 		case "linker":
@@ -1961,6 +1963,10 @@ func (cd *CoreData) SelectedNewsThreadCanReply() bool {
 
 func (cd *CoreData) SelectedForumThreadCanReply() bool {
 	return cd.sectionThreadCanReply("forum", cd.currentTopicID)
+}
+
+func (cd *CoreData) SelectedPrivateForumThreadCanReply() bool {
+	return cd.sectionThreadCanReply("privateforum", cd.currentTopicID)
 }
 
 func (cd *CoreData) SelectedBlogThreadCanReply() bool {

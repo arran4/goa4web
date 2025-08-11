@@ -246,43 +246,47 @@ div.title {
         align-items: center;
         padding-right: 8px;
         cursor: default;
+        color: #fff;
+}
+
+.label.pill.unsaved {
         color: #000;
 }
 
 .label.pill.public {
-        background: #c8e6c9;
+        background: #2e7d32;
 }
 
 .label.pill.public.unsaved {
-        background: #e8f5e9;
+        background: #81c784;
 }
 
 .label.pill.author {
-        background: #bbdefb;
+        background: #1565c0;
 }
 
 .label.pill.author.unsaved {
-        background: #e3f2fd;
+        background: #90caf9;
 }
 
 .label.pill.private {
-        background: #ffe0b2;
+        background: #e65100;
 }
 
 .label.pill.private.unsaved {
-        background: #fff3e0;
+        background: #ffb74d;
 }
 
 .label-input[data-type="public"] {
-        background: #e8f5e9;
+        background: #81c784;
 }
 
 .label-input[data-type="author"] {
-        background: #e3f2fd;
+        background: #90caf9;
 }
 
 .label-input[data-type="private"] {
-        background: #fff3e0;
+        background: #ffb74d;
 }
 
 .label.pill .remove {

@@ -7,23 +7,12 @@ import (
 	"testing"
 )
 
-// dict is a helper for building maps in templates.
-func dict(values ...any) map[string]any {
-	m := make(map[string]any, len(values)/2)
-	for i := 0; i < len(values); i += 2 {
-		key, _ := values[i].(string)
-		m[key] = values[i+1]
-	}
-	return m
-}
-
 func csrfField() template.HTML { return "" }
 
 // TestThreadPageShowsDefaultPrivateLabels ensures that the thread page template
 // renders special private labels like "new" and "unread".
 func TestThreadPageShowsDefaultPrivateLabels(t *testing.T) {
 	funcMap := template.FuncMap{
-		"dict":      dict,
 		"csrfField": csrfField,
 	}
 	tmpl := template.New("test").Funcs(funcMap)
@@ -37,17 +26,15 @@ func TestThreadPageShowsDefaultPrivateLabels(t *testing.T) {
 	}
 
 	data := struct {
-		Topic         struct{ Idforumtopic int32 }
-		Thread        struct{ Idforumthread int32 }
-		PublicLabels  []string
-		AuthorLabels  []string
-		PrivateLabels []string
-		BasePath      string
-		BackURL       string
+		Topic    struct{ Idforumtopic int32 }
+		Thread   struct{ Idforumthread int32 }
+		Labels   []TopicLabel
+		BasePath string
+		BackURL  string
 	}{}
 	data.Topic.Idforumtopic = 1
 	data.Thread.Idforumthread = 3
-	data.PrivateLabels = []string{"new", "unread"}
+	data.Labels = []TopicLabel{{Name: "new", Type: "private"}, {Name: "unread", Type: "private"}}
 	data.BasePath = "/forum"
 	data.BackURL = "/forum/topic/1/thread/1"
 

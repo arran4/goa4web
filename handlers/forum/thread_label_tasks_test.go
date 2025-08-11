@@ -23,9 +23,9 @@ func TestMarkThreadReadTaskRedirect(t *testing.T) {
 	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
 	form := url.Values{}
 	form.Set("redirect", "/private/topic/1/thread/2")
-	req := httptest.NewRequest(http.MethodPost, "/private/topic/1/labels", strings.NewReader(form.Encode()))
+	req := httptest.NewRequest(http.MethodPost, "/private/topic/1/thread/1/labels", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req = mux.SetURLVars(req, map[string]string{"topic": "1"})
+	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "1"})
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 
 	res := MarkThreadReadTask{}.Action(httptest.NewRecorder(), req)
@@ -40,10 +40,10 @@ func TestMarkThreadReadTaskRedirect(t *testing.T) {
 
 func TestMarkThreadReadTaskRefererFallback(t *testing.T) {
 	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
-	req := httptest.NewRequest(http.MethodPost, "/private/topic/1/labels", nil)
+	req := httptest.NewRequest(http.MethodPost, "/private/topic/1/thread/1/labels", nil)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("Referer", "/private/topic/1")
-	req = mux.SetURLVars(req, map[string]string{"topic": "1"})
+	req.Header.Set("Referer", "/private/topic/1/thread/1")
+	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "1"})
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 
 	res := MarkThreadReadTask{}.Action(httptest.NewRecorder(), req)
@@ -51,8 +51,8 @@ func TestMarkThreadReadTaskRefererFallback(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected RefreshDirectHandler, got %T", res)
 	}
-	if rdh.TargetURL != "/private/topic/1" {
-		t.Fatalf("redirect %q, want /private/topic/1", rdh.TargetURL)
+	if rdh.TargetURL != "/private/topic/1/thread/1" {
+		t.Fatalf("redirect %q, want /private/topic/1/thread/1", rdh.TargetURL)
 	}
 }
 
@@ -70,19 +70,19 @@ func TestSetLabelsTaskAddsInverseLabels(t *testing.T) {
 	cd.UserID = 1
 
 	mock.ExpectQuery("SELECT .* FROM content_public_labels").
-		WithArgs(int32(1)).
-		WillReturnRows(sqlmock.NewRows([]string{"forumtopic_idforumtopic", "label"}))
+		WithArgs("thread", int32(1)).
+		WillReturnRows(sqlmock.NewRows([]string{"item", "item_id", "label"}))
 	mock.ExpectQuery("SELECT .* FROM content_label_status").
-		WithArgs("forumtopic", int32(1)).
+		WithArgs("thread", int32(1)).
 		WillReturnRows(sqlmock.NewRows([]string{"item", "item_id", "label"}))
 	mock.ExpectQuery("SELECT .* FROM content_private_labels").
-		WithArgs(int32(1), int32(1)).
-		WillReturnRows(sqlmock.NewRows([]string{"forumtopic_idforumtopic", "users_idusers", "label", "invert"}))
+		WithArgs("thread", int32(1), int32(1)).
+		WillReturnRows(sqlmock.NewRows([]string{"item", "item_id", "user_id", "label", "invert"}))
 	mock.ExpectExec("INSERT IGNORE INTO content_private_labels").
-		WithArgs(int32(1), int32(1), "new", true).
+		WithArgs("thread", int32(1), int32(1), "new", true).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectExec("INSERT IGNORE INTO content_private_labels").
-		WithArgs(int32(1), int32(1), "unread", true).
+		WithArgs("thread", int32(1), int32(1), "unread", true).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	form := url.Values{}
@@ -124,9 +124,9 @@ func TestSetLabelsTaskUpdatesSpecialLabels(t *testing.T) {
 	form := url.Values{}
 	form.Set("redirect", "/private/topic/1/thread/3")
 	form.Set("task", string(TaskMarkThreadRead))
-	req := httptest.NewRequest(http.MethodPost, "/private/topic/1/labels", strings.NewReader(form.Encode()))
+	req := httptest.NewRequest(http.MethodPost, "/private/topic/1/thread/1/labels", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req = mux.SetURLVars(req, map[string]string{"topic": "1"})
+	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "1"})
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 
 	// Execute the mark-as-read task, which should upsert the inverse labels.
@@ -142,10 +142,10 @@ func TestMarkThreadReadTaskRedirectWithThread(t *testing.T) {
 	form := url.Values{}
 	form.Set("redirect", "/private/topic/1/thread/3")
 	form.Set("task", string(TaskMarkThreadRead))
-	req := httptest.NewRequest(http.MethodPost, "/private/topic/1/labels", strings.NewReader(form.Encode()))
+	req := httptest.NewRequest(http.MethodPost, "/private/topic/1/thread/1/labels", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
-	req = mux.SetURLVars(req, map[string]string{"topic": "1"})
+	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "1"})
 
 	res := MarkThreadReadTask{}.Action(httptest.NewRecorder(), req)
 	rdh, ok := res.(handlers.RefreshDirectHandler)

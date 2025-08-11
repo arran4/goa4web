@@ -13,32 +13,30 @@
             <h2 class="blog-title"><a href="/blogs/bloggers">All bloggers</a>' blogs.</h2>
         {{ end }}
     {{ end }}
-    <table width="100%">
+    <section class="blog-list">
         {{ range $rows }}
-            <tr>
-                <th bgcolor="lightgrey">{{ localTimeIn .Written .Timezone.String }}</th>
-            </tr>
-            <tr>
-                <td>
+            <article class="item-block">
+                <header class="item-header">{{ localTimeIn .Written .Timezone.String }}</header>
+                <div class="item-body">
                     {{ $labels := BlogLabels .Idblogs }}
                     {{ .Blog.String | a4code2html}}<br><br>{{ .Username.String }} - [<a href="/blogs/blog/{{ .Idblogs }}/comments">{{ .Comments }} COMMENTS</a>]{{ if cd.CanEditBlog .Idblogs .UsersIdusers }} - [<a href="/blogs/blog/{{ .Idblogs }}/edit">EDIT</a>]{{ end }}{{ if and cd.IsAdmin cd.IsAdminMode }} - [<a href="/admin/blogs/blog/{{ .Idblogs }}">ADMIN</a>]{{ end }}{{ if $labels }} <span class="label-bar">{{ template "topicLabels" $labels }}</span>{{ end }}
-                </td>
-            </tr>
+                </div>
+            </article>
         {{ else }}
             {{ if gt (cd.Offset) 0 }}
                 {{ if cd.CurrentProfileUserID }}
-                    There are no more blogs under this user.<br>
+                    <div class="item-body">There are no more blogs under this user.</div>
                 {{ else }}
-                    There are no more blogs.<br>
+                    <div class="item-body">There are no more blogs.</div>
                 {{ end }}
             {{ else }}
                 {{ if cd.CurrentProfileUserID }}
-                    Nothing under this blog.<br>
+                    <div class="item-body">Nothing under this blog.</div>
                 {{ else }}
-                    There are no blogs here.<br>
+                    <div class="item-body">There are no blogs here.</div>
                 {{ end }}
             {{ end }}
         {{ end }}
-    </table><br>
+    </section><br>
     {{ template "tail" $ }}
 {{ end }}

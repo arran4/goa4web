@@ -259,10 +259,20 @@ div.title {
         margin: 0 0.25em;
 }
 
+/* generic blocks replacing table layouts */
+.item-block {
+        width: 100%;
+        margin-bottom: 1em;
+}
+.item-header {
+        background-color: lightgrey;
+        font-weight: bold;
+}
+
 /* spoiler text hidden until hovered */
 .spoiler {
-	color: #000000;
-	background-color: #000000;
+        color: #000000;
+        background-color: #000000;
 }
 .spoiler:hover {
 	color: #FFFFFF;

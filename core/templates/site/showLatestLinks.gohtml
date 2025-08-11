@@ -1,49 +1,37 @@
 {{ define "getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingLinks" }}
-    <table width="100%">
+    <section class="link-list">
         {{ if .HasOffset }}
             {{- range cd.SelectedLinkerItemsForCurrentUser (int32 .CatId) (int32 .Offset) }}
-                <tr>
-                    <th bgcolor="lightgrey">{{ .CategoryTitle.String }}: <a href="{{ .Url.String }}" target="_BLANK">{{ .Title.String }}</a></th>
-                </tr>
-                <tr>
-                    <td>
+                <article class="item-block">
+                    <header class="item-header">{{ .CategoryTitle.String }}: <a href="{{ .Url.String }}" target="_BLANK">{{ .Title.String }}</a></header>
+                    <div class="item-body">
                         {{ .Description.String | a4code2html }}<hr>
                         {{ .Posterusername.String }} - Listed: {{ localTimeIn .Listed.Time .Timezone.String }} - [<a href="/linker/comments/{{ .ID }}">{{.Comments.Int32}} COMMENTS</a>]<br>
-                    </td>
-                </tr>
+                    </div>
+                </article>
             {{- else }}
                 {{- if .CatId }}
-                    <tr>
-                        <td>There are no more links under this category.</td>
-                    </tr>
+                    <div class="item-body">There are no more links under this category.</div>
                 {{- else }}
-                    <tr>
-                        <td>There are no more links.</td>
-                    </tr>
+                    <div class="item-body">There are no more links.</div>
                 {{- end }}
             {{- end }}
         {{ else }}
             {{- range cd.SelectedLinkerItemsForCurrentUser (int32 .CatId) 0 }}
-                <tr>
-                    <th bgcolor="lightgrey">{{ .CategoryTitle.String }}: <a href="{{ .Url.String }}" target="_BLANK">{{ .Title.String }}</a></th>
-                </tr>
-                <tr>
-                    <td>
+                <article class="item-block">
+                    <header class="item-header">{{ .CategoryTitle.String }}: <a href="{{ .Url.String }}" target="_BLANK">{{ .Title.String }}</a></header>
+                    <div class="item-body">
                         {{ .Description.String | a4code2html }}<hr>
                         {{ .Posterusername.String }} - Listed: {{ localTimeIn .Listed.Time .Timezone.String }} - [<a href="/linker/comments/{{ .ID }}">{{.Comments.Int32}} COMMENTS</a>]<br>
-                    </td>
-                </tr>
+                    </div>
+                </article>
             {{- else }}
                 {{- if .CatId }}
-                    <tr>
-                        <td>Nothing under this category.</td>
-                    </tr>
+                    <div class="item-body">Nothing under this category.</div>
                 {{- else }}
-                    <tr>
-                        <td>There are no links here.</td>
-                    </tr>
+                    <div class="item-body">There are no links here.</div>
                 {{- end }}
             {{- end }}
         {{ end }}
-    </table><br>
+    </section><br>
 {{ end }}

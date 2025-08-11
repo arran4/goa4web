@@ -2,16 +2,14 @@
     {{ template "head" $ }}
     {{ range $index, $categoryFAQs := (cd).AllAnsweredFAQ }}
         <font size="5">Section: {{ $categoryFAQs.Category.Name.String }}</font><br>
-        <table width="100%">
+        <div class="faq-category">
         {{ range $index, $faq := $categoryFAQs.FAQs }}
-            <tr>
-                <th bgcolor="lightgrey">Q: {{ $faq.Question | a4code2html }}</th>
-            </tr>
-            <tr>
-                <td>A: {{ $faq.Answer | a4code2html }}</td>
-            </tr>
+            <article class="item-block">
+                <header class="item-header">Q: {{ $faq.Question | a4code2html }}</header>
+                <div class="item-body">A: {{ $faq.Answer | a4code2html }}</div>
+            </article>
         {{ end }}
-        </table>
+        </div>
     {{ end }}
     {{ template "tail" $ }}
 {{ end }}

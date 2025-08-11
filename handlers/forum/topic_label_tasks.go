@@ -182,11 +182,15 @@ func (SetLabelsTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	pub := r.PostForm["public"]
 	priv := r.PostForm["private"]
+	// Special inverse private labels: show unless stored in the database.
+	inverse := map[string]bool{"new": false, "unread": false}
 	filteredPriv := make([]string, 0, len(priv))
 	for _, l := range priv {
-		if l != "new" && l != "unread" {
-			filteredPriv = append(filteredPriv, l)
+		if _, ok := inverse[l]; ok {
+			inverse[l] = true
+			continue
 		}
+		filteredPriv = append(filteredPriv, l)
 	}
 	if err := cd.SetTopicPublicLabels(int32(topicID), pub); err != nil {
 		log.Printf("set public labels: %v", err)
@@ -195,6 +199,10 @@ func (SetLabelsTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := cd.SetTopicPrivateLabels(int32(topicID), filteredPriv); err != nil {
 		log.Printf("set private labels: %v", err)
 		return fmt.Errorf("set private labels %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	if err := cd.SetTopicPrivateLabelStatus(int32(topicID), inverse["new"], inverse["unread"]); err != nil {
+		log.Printf("set private label status: %v", err)
+		return fmt.Errorf("set private label status %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	return handlers.RefreshDirectHandler{TargetURL: r.Header.Get("Referer")}
 }

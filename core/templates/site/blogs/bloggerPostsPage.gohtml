@@ -13,13 +13,10 @@
                     </tr>
                 <tr>
                     <td>
-                        {{.Blog.String | a4code2html}}<br><br>{{.Username.String}} - [<a href="/blogs/blog/{{.Idblogs}}/comments">{{.Comments}} COMMENTS</a>]{{ if cd.CanEditBlog .Idblogs .UsersIdusers }} - [<a href="/blogs/blog/{{.Idblogs}}/edit">EDIT</a>]{{ end }}{{ if and cd.IsAdmin cd.IsAdminMode }} - [<a href="/admin/blogs/blog/{{.Idblogs}}">ADMIN</a>]{{ end }}
+                        {{ $labels := BlogLabels .Idblogs }}
+                        {{.Blog.String | a4code2html}}<br><br>{{.Username.String}} - [<a href="/blogs/blog/{{.Idblogs}}/comments">{{.Comments}} COMMENTS</a>]{{ if cd.CanEditBlog .Idblogs .UsersIdusers }} - [<a href="/blogs/blog/{{.Idblogs}}/edit">EDIT</a>]{{ end }}{{ if and cd.IsAdmin cd.IsAdminMode }} - [<a href="/admin/blogs/blog/{{.Idblogs}}">ADMIN</a>]{{ end }}{{ if $labels }} <span class="label-bar">{{ template "topicLabels" $labels }}</span>{{ end }}
                     </td>
                 </tr>
-                {{ $labels := BlogLabels .Idblogs }}
-                {{ if $labels }}
-                <tr><td><div class="label-bar">{{ template "topicLabels" $labels }}</div></td></tr>
-                {{ end }}
             {{end}}
         </table><br>
         {{else}}

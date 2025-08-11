@@ -2,7 +2,7 @@
     {{ $base := "/forum" }}
     {{ with .BasePath }}{{ $base = . }}{{ end }}
     <div class="label-bar">
-        {{ template "topicLabels" (dict "Public" .PublicLabels "Author" .AuthorLabels "Private" .PrivateLabels) }}
+        {{ template "topicLabels" .Labels }}
         <form method="post" action="{{$base}}/thread/{{.Thread.Idforumthread}}/labels" class="mark-read">
             {{ csrfField }}
             <input type="hidden" name="task" value="Mark Thread Read"/>
@@ -24,23 +24,17 @@
             {{ csrfField }}
             <input type="hidden" name="task" value="Set Labels"/>
             <input type="hidden" name="back" value="{{ .BackURL }}"/>
-            <div class="public-labels">
-                {{ range .PublicLabels }}
-                <span class="label pill public">{{ . }}<button type="button" class="remove" data-type="public">x</button><input type="hidden" name="public" value="{{ . }}"/></span>
+            {{ range .Labels }}
+                {{ if eq .Type "public" }}
+                <span class="label pill public">{{ .Name }}<button type="button" class="remove" data-type="public">x</button><input type="hidden" name="public" value="{{ .Name }}"/></span>
+                {{ else if eq .Type "private" }}
+                <span class="label pill private">{{ .Name }}<button type="button" class="remove" data-type="private">x</button><input type="hidden" name="private" value="{{ .Name }}"/></span>
+                {{ else if eq .Type "author" }}
+                <span class="label pill author">{{ .Name }}</span>
                 {{ end }}
-                <input type="text" class="label-input" data-type="public" placeholder="Add public label"/>
-            </div>
-            <div class="author-labels">
-                {{ range .AuthorLabels }}
-                <span class="label pill author">{{ . }}</span>
-                {{ end }}
-            </div>
-            <div class="private-labels">
-                {{ range .PrivateLabels }}
-                <span class="label pill private">{{ . }}<button type="button" class="remove" data-type="private">x</button><input type="hidden" name="private" value="{{ . }}"/></span>
-                {{ end }}
-                <input type="text" class="label-input" data-type="private" placeholder="Add private label"/>
-            </div>
+            {{ end }}
+            <input type="text" class="label-input" data-type="public" placeholder="Add public label"/>
+            <input type="text" class="label-input" data-type="private" placeholder="Add private label"/>
             <input type="submit" value="Save Labels"/>
         </form>
         <form method="post" action="{{$base}}/thread/{{.Thread.Idforumthread}}/labels" class="mark-read">

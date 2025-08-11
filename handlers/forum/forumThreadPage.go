@@ -5,10 +5,12 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
+	"sort"
 	"strconv"
 
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 
@@ -30,9 +32,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		AdminURL       func(*db.GetCommentsByThreadIdForUserRow) string
 		CanReply       bool
 		BasePath       string
-		PublicLabels   []string
-		AuthorLabels   []string
-		PrivateLabels  []string
+		Labels         []templates.TopicLabel
 		BackURL        string
 	}
 
@@ -120,17 +120,26 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		Edit:                         false,
 	}
 
+	var labels []templates.TopicLabel
 	if pub, author, err := cd.ThreadPublicLabels(threadRow.Idforumthread); err == nil {
-		data.PublicLabels = pub
-		data.AuthorLabels = author
+		for _, l := range pub {
+			labels = append(labels, templates.TopicLabel{Name: l, Type: "public"})
+		}
+		for _, l := range author {
+			labels = append(labels, templates.TopicLabel{Name: l, Type: "author"})
+		}
 	} else {
 		log.Printf("list public labels: %v", err)
 	}
 	if priv, err := cd.ThreadPrivateLabels(threadRow.Idforumthread); err == nil {
-		data.PrivateLabels = priv
+		for _, l := range priv {
+			labels = append(labels, templates.TopicLabel{Name: l, Type: "private"})
+		}
 	} else {
 		log.Printf("list private labels: %v", err)
 	}
+	sort.Slice(labels, func(i, j int) bool { return labels[i].Name < labels[j].Name })
+	data.Labels = labels
 
 	replyType := r.URL.Query().Get("type")
 	if quoteId != 0 {

@@ -4,7 +4,9 @@
     <div class="label-bar">
         {{ template "topicLabels" (dict "Public" .PublicLabels "Author" .AuthorLabels "Private" .PrivateLabels) }}
         <form method="post" action="{{$base}}/topic/{{.Topic.Idforumtopic}}/labels" class="mark-read">
+            {{ csrfField }}
             <input type="hidden" name="task" value="Mark Topic Read"/>
+            <input type="hidden" name="redirect" value="{{$base}}/topic/{{.Topic.Idforumtopic}}/thread/{{.Thread.Idforumthread}}"/>
             <button type="submit">Mark as read</button>
         </form>
     </div>
@@ -29,9 +31,7 @@
             </div>
             <div class="private-labels">
                 {{ range .PrivateLabels }}
-                {{ if and (ne . "new") (ne . "unread") }}
                 <span class="label private">{{ . }}<button type="button" class="remove" data-type="private">x</button><input type="hidden" name="private" value="{{ . }}"/></span>
-                {{ end }}
                 {{ end }}
                 <input type="text" class="label-input" data-type="private" placeholder="Add private label"/>
             </div>

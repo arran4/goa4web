@@ -1,10 +1,5 @@
 {{ template "head" $ }}
     {{ template "newsPost" $.Post }}
-    {{ if .Labels }}
-    <div class="label-bar">
-        {{ template "topicLabels" .Labels }}
-    </div>
-    {{ end }}
     <hr><font size=4>Replies:</font>
     {{ template "threadComments" }}
     <div class="label-editor">

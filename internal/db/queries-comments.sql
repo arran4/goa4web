@@ -98,8 +98,8 @@ ORDER BY c.written DESC
 ;
 
 -- name: CreateCommentInSectionForCommenter :execlastid
-INSERT INTO comments (language_idlanguage, users_idusers, forumthread_id, text, written)
-SELECT sqlc.narg(language_id), sqlc.narg(commenter_id), sqlc.arg(forumthread_id), sqlc.arg(text), NOW()
+INSERT INTO comments (language_idlanguage, users_idusers, forumthread_id, text, written, timezone)
+SELECT sqlc.narg(language_id), sqlc.narg(commenter_id), sqlc.arg(forumthread_id), sqlc.arg(text), NOW(), sqlc.arg(timezone)
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = sqlc.arg(section)
@@ -190,7 +190,7 @@ ORDER BY c.written;
 
 -- name: AdminGetAllCommentsByUser :many
 SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage,
-       c.written, c.text, c.deleted_at, c.last_index,
+       c.written, c.text, c.deleted_at, c.last_index, c.timezone,
        th.forumtopic_idforumtopic, t.title AS forumtopic_title,
        fp.text AS thread_title
 FROM comments c

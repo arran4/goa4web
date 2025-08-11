@@ -77,9 +77,10 @@ func (DeactivateCommentTask) Action(w http.ResponseWriter, r *http.Request) any 
 		Idcomments:         c.Idcomments,
 		ForumthreadID:      c.ForumthreadID,
 		UsersIdusers:       c.UsersIdusers,
-                LanguageIdlanguage: c.LanguageIdlanguage,
+		LanguageIdlanguage: c.LanguageIdlanguage,
 		Written:            c.Written,
 		Text:               c.Text,
+		Timezone:           c.Timezone,
 	}); err != nil {
 		return fmt.Errorf("archive comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

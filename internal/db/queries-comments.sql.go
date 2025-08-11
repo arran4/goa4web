@@ -13,7 +13,7 @@ import (
 
 const adminGetAllCommentsByUser = `-- name: AdminGetAllCommentsByUser :many
 SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage,
-       c.written, c.text, c.deleted_at, c.last_index,
+       c.written, c.text, c.deleted_at, c.last_index, c.timezone,
        th.forumtopic_idforumtopic, t.title AS forumtopic_title,
        fp.text AS thread_title
 FROM comments c
@@ -33,6 +33,7 @@ type AdminGetAllCommentsByUserRow struct {
 	Text                   sql.NullString
 	DeletedAt              sql.NullTime
 	LastIndex              sql.NullTime
+	Timezone               sql.NullString
 	ForumtopicIdforumtopic sql.NullInt32
 	ForumtopicTitle        sql.NullString
 	ThreadTitle            sql.NullString
@@ -56,6 +57,7 @@ func (q *Queries) AdminGetAllCommentsByUser(ctx context.Context, userID int32) (
 			&i.Text,
 			&i.DeletedAt,
 			&i.LastIndex,
+			&i.Timezone,
 			&i.ForumtopicIdforumtopic,
 			&i.ForumtopicTitle,
 			&i.ThreadTitle,
@@ -136,8 +138,8 @@ func (q *Queries) AdminListAllCommentsWithThreadInfo(ctx context.Context, arg Ad
 }
 
 const createCommentInSectionForCommenter = `-- name: CreateCommentInSectionForCommenter :execlastid
-INSERT INTO comments (language_idlanguage, users_idusers, forumthread_id, text, written)
-SELECT ?, ?, ?, ?, NOW()
+INSERT INTO comments (language_idlanguage, users_idusers, forumthread_id, text, written, timezone)
+SELECT ?, ?, ?, ?, NOW(), ?
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = ?
@@ -157,6 +159,7 @@ type CreateCommentInSectionForCommenterParams struct {
 	CommenterID   sql.NullInt32
 	ForumthreadID int32
 	Text          sql.NullString
+	Timezone      sql.NullString
 	Section       string
 	ItemType      sql.NullString
 	ItemID        sql.NullInt32
@@ -168,6 +171,7 @@ func (q *Queries) CreateCommentInSectionForCommenter(ctx context.Context, arg Cr
 		arg.CommenterID,
 		arg.ForumthreadID,
 		arg.Text,
+		arg.Timezone,
 		arg.Section,
 		arg.ItemType,
 		arg.ItemID,
@@ -213,7 +217,7 @@ func (q *Queries) GetAllCommentsForIndex(ctx context.Context) ([]*GetAllComments
 }
 
 const getCommentById = `-- name: GetCommentById :one
-SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, c.last_index
+SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.timezone, c.deleted_at, c.last_index
 FROM comments c
 WHERE c.Idcomments=?
 `
@@ -228,6 +232,7 @@ func (q *Queries) GetCommentById(ctx context.Context, idcomments int32) (*Commen
 		&i.LanguageIdlanguage,
 		&i.Written,
 		&i.Text,
+		&i.Timezone,
 		&i.DeletedAt,
 		&i.LastIndex,
 	)
@@ -238,7 +243,7 @@ const getCommentByIdForUser = `-- name: GetCommentByIdForUser :one
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, c.last_index, pu.Username,
+SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.timezone, c.deleted_at, c.last_index, pu.Username,
        c.users_idusers = ? AS is_owner
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
@@ -283,6 +288,7 @@ type GetCommentByIdForUserRow struct {
 	LanguageIdlanguage sql.NullInt32
 	Written            sql.NullTime
 	Text               sql.NullString
+	Timezone           sql.NullString
 	DeletedAt          sql.NullTime
 	LastIndex          sql.NullTime
 	Username           sql.NullString
@@ -306,6 +312,7 @@ func (q *Queries) GetCommentByIdForUser(ctx context.Context, arg GetCommentByIdF
 		&i.LanguageIdlanguage,
 		&i.Written,
 		&i.Text,
+		&i.Timezone,
 		&i.DeletedAt,
 		&i.LastIndex,
 		&i.Username,
@@ -318,7 +325,7 @@ const getCommentsByIdsForUserWithThreadInfo = `-- name: GetCommentsByIdsForUserW
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, c.last_index, pu.username AS posterusername,
+SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.timezone, c.deleted_at, c.last_index, pu.username AS posterusername,
        c.users_idusers = ? AS is_owner,
        th.idforumthread, t.idforumtopic, t.title AS forumtopic_title,
        fp.text AS thread_title, fc.idforumcategory, fc.title AS forumcategory_title
@@ -367,6 +374,7 @@ type GetCommentsByIdsForUserWithThreadInfoRow struct {
 	LanguageIdlanguage sql.NullInt32
 	Written            sql.NullTime
 	Text               sql.NullString
+	Timezone           sql.NullString
 	DeletedAt          sql.NullTime
 	LastIndex          sql.NullTime
 	Posterusername     sql.NullString
@@ -410,6 +418,7 @@ func (q *Queries) GetCommentsByIdsForUserWithThreadInfo(ctx context.Context, arg
 			&i.LanguageIdlanguage,
 			&i.Written,
 			&i.Text,
+			&i.Timezone,
 			&i.DeletedAt,
 			&i.LastIndex,
 			&i.Posterusername,
@@ -438,7 +447,7 @@ const getCommentsBySectionThreadIdForUser = `-- name: GetCommentsBySectionThread
 WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, c.last_index, pu.username AS posterusername,
+SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.timezone, c.deleted_at, c.last_index, pu.username AS posterusername,
        c.users_idusers = ? AS is_owner
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
@@ -486,6 +495,7 @@ type GetCommentsBySectionThreadIdForUserRow struct {
 	LanguageIdlanguage sql.NullInt32
 	Written            sql.NullTime
 	Text               sql.NullString
+	Timezone           sql.NullString
 	DeletedAt          sql.NullTime
 	LastIndex          sql.NullTime
 	Posterusername     sql.NullString
@@ -519,6 +529,7 @@ func (q *Queries) GetCommentsBySectionThreadIdForUser(ctx context.Context, arg G
 			&i.LanguageIdlanguage,
 			&i.Written,
 			&i.Text,
+			&i.Timezone,
 			&i.DeletedAt,
 			&i.LastIndex,
 			&i.Posterusername,
@@ -541,7 +552,7 @@ const getCommentsByThreadIdForUser = `-- name: GetCommentsByThreadIdForUser :man
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.deleted_at, c.last_index, pu.username AS posterusername,
+SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_idlanguage, c.written, c.text, c.timezone, c.deleted_at, c.last_index, pu.username AS posterusername,
        c.users_idusers = ? AS is_owner
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
@@ -587,6 +598,7 @@ type GetCommentsByThreadIdForUserRow struct {
 	LanguageIdlanguage sql.NullInt32
 	Written            sql.NullTime
 	Text               sql.NullString
+	Timezone           sql.NullString
 	DeletedAt          sql.NullTime
 	LastIndex          sql.NullTime
 	Posterusername     sql.NullString
@@ -616,6 +628,7 @@ func (q *Queries) GetCommentsByThreadIdForUser(ctx context.Context, arg GetComme
 			&i.LanguageIdlanguage,
 			&i.Written,
 			&i.Text,
+			&i.Timezone,
 			&i.DeletedAt,
 			&i.LastIndex,
 			&i.Posterusername,

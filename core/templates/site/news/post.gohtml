@@ -1,7 +1,7 @@
 {{ define "newsPost" }}
     <table width="100%">
         <tr bgcolor="lightgrey">
-            <th>{{ localTime .Occurred.Time }}</th>
+            <th>{{ localTimeIn .Occurred.Time .Timezone.String }}</th>
         </tr>
         <tr>
             <td>{{ .News.String | a4code2html }}<br>-<br>{{ .Writername.String }}

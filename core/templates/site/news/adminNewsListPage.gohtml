@@ -6,7 +6,7 @@
     {{ range cd.AdminLatestNews }}
         <tr>
             <td><a href="/admin/news/article/{{ .Idsitenews }}">{{ .Idsitenews }}</a></td>
-            <td>{{ localTime .Occurred.Time }}</td>
+            <td>{{ localTimeIn .Occurred.Time .Timezone.String }}</td>
             <td>{{ if .Writerid.Valid }}<a href="/admin/user/{{ .Writerid.Int32 }}">{{ .Writername.String }}</a>{{ else }}{{ .Writername.String }}{{ end }}</td>
             <td><a href="/admin/news/article/{{ .Idsitenews }}#comments">{{ .Comments.Int32 }}</a></td>
             <td><a href="/news/news/{{ .Idsitenews }}">Public</a></td>

@@ -47,7 +47,7 @@ func TestNewsReplyTaskEventData(t *testing.T) {
 			AddRow(4, int32(0), 0, 0, NewsTopicName, "", 0, 0, sql.NullTime{}, "news"))
 
 	mock.ExpectExec("INSERT INTO comments").
-		WithArgs(int32(1), uid, pthid, sqlmock.AnyArg(), "news", sqlmock.AnyArg(), int32(pid), sqlmock.AnyArg(), uid).
+		WithArgs(int32(1), uid, pthid, sqlmock.AnyArg(), sqlmock.AnyArg(), "news", sqlmock.AnyArg(), int32(pid), sqlmock.AnyArg(), uid).
 		WillReturnResult(sqlmock.NewResult(5, 1))
 
 	mock.ExpectQuery("SELECT u.idusers").

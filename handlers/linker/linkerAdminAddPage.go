@@ -99,6 +99,7 @@ func (addTask) Action(w http.ResponseWriter, r *http.Request) any {
 		Title:            sql.NullString{Valid: true, String: title},
 		Url:              sql.NullString{Valid: true, String: url},
 		Description:      sql.NullString{Valid: true, String: description},
+		Timezone:         sql.NullString{String: cd.Location().String(), Valid: true},
 	}); err != nil {
 		return fmt.Errorf("create linker item fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

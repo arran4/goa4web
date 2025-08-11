@@ -50,8 +50,8 @@ func setupCommentTest(t *testing.T, commentID int, body url.Values) (*httptest.R
 func TestDeleteCommentTask_UsesURLParam(t *testing.T) {
 	rr, req, conn, mock := setupCommentTest(t, 15, nil)
 	defer conn.Close()
-	rows := sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_idlanguage", "written", "text", "deleted_at", "last_index", "username", "is_owner"}).
-		AddRow(15, 2, 3, 1, time.Now(), "body", nil, nil, "user", true)
+	rows := sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_idlanguage", "written", "text", "timezone", "deleted_at", "last_index", "username", "is_owner"}).
+		AddRow(15, 2, 3, 1, time.Now(), "body", nil, nil, nil, "user", true)
 	mock.ExpectQuery("SELECT").WillReturnRows(rows)
 	mock.ExpectExec("UPDATE").WithArgs(sqlmock.AnyArg(), int32(15)).WillReturnResult(sqlmock.NewResult(0, 1))
 	if err, ok := deleteCommentTask.Action(rr, req).(error); ok && err != nil {
@@ -66,8 +66,8 @@ func TestEditCommentTask_UsesURLParam(t *testing.T) {
 	body := url.Values{"replytext": {"updated"}}
 	rr, req, conn, mock := setupCommentTest(t, 22, body)
 	defer conn.Close()
-	rows := sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_idlanguage", "written", "text", "deleted_at", "last_index", "username", "is_owner"}).
-		AddRow(22, 2, 3, 1, time.Now(), "body", nil, nil, "user", true)
+	rows := sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_idlanguage", "written", "text", "timezone", "deleted_at", "last_index", "username", "is_owner"}).
+		AddRow(22, 2, 3, 1, time.Now(), "body", nil, nil, nil, "user", true)
 	mock.ExpectQuery("SELECT").WillReturnRows(rows)
 	mock.ExpectExec("UPDATE").WithArgs(sqlmock.AnyArg(), int32(22)).WillReturnResult(sqlmock.NewResult(0, 1))
 	if err, ok := editCommentTask.Action(rr, req).(error); ok && err != nil {
@@ -81,11 +81,11 @@ func TestEditCommentTask_UsesURLParam(t *testing.T) {
 func TestDeactivateCommentTask_UsesURLParam(t *testing.T) {
 	rr, req, conn, mock := setupCommentTest(t, 33, nil)
 	defer conn.Close()
-	rows := sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_idlanguage", "written", "text", "deleted_at", "last_index", "username", "is_owner"}).
-		AddRow(33, 2, 3, 1, time.Now(), "body", nil, nil, "user", true)
+	rows := sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_idlanguage", "written", "text", "timezone", "deleted_at", "last_index", "username", "is_owner"}).
+		AddRow(33, 2, 3, 1, time.Now(), "body", nil, nil, nil, "user", true)
 	mock.ExpectQuery("SELECT").WillReturnRows(rows)
 	mock.ExpectQuery("SELECT").WithArgs(int32(33)).WillReturnRows(sqlmock.NewRows([]string{"is_deactivated"}).AddRow(false))
-	mock.ExpectExec("INSERT").WithArgs(int32(33), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec("INSERT").WithArgs(int32(33), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectExec("UPDATE").WithArgs(sqlmock.AnyArg(), int32(33)).WillReturnResult(sqlmock.NewResult(0, 1))
 	if err, ok := deactivateCommentTask.Action(rr, req).(error); ok && err != nil {
 		t.Fatalf("Action: %v", err)
@@ -98,8 +98,8 @@ func TestDeactivateCommentTask_UsesURLParam(t *testing.T) {
 func TestRestoreCommentTask_UsesURLParam(t *testing.T) {
 	rr, req, conn, mock := setupCommentTest(t, 44, nil)
 	defer conn.Close()
-	rows := sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_idlanguage", "written", "text", "deleted_at", "last_index", "username", "is_owner"}).
-		AddRow(44, 2, 3, 1, time.Now(), "", nil, nil, "user", true)
+	rows := sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_idlanguage", "written", "text", "timezone", "deleted_at", "last_index", "username", "is_owner"}).
+		AddRow(44, 2, 3, 1, time.Now(), "", nil, nil, nil, "user", true)
 	mock.ExpectQuery("SELECT").WillReturnRows(rows)
 	mock.ExpectQuery("SELECT").WithArgs(int32(44)).WillReturnRows(sqlmock.NewRows([]string{"is_deactivated"}).AddRow(true))
 	mock.ExpectQuery("SELECT").WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnRows(sqlmock.NewRows([]string{"idcomments", "text"}).AddRow(44, "body"))

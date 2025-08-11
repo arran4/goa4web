@@ -54,6 +54,7 @@ func (c *commentDeactivateCmd) Run() error {
 		LanguageIdlanguage: cm.LanguageIdlanguage,
 		Written:            cm.Written,
 		Text:               cm.Text,
+		Timezone:           cm.Timezone,
 	}); err != nil {
 		return fmt.Errorf("archive comment: %w", err)
 	}

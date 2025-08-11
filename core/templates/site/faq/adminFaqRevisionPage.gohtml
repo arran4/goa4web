@@ -4,7 +4,7 @@
 <tr><th>Date</th><th>User ID</th><th>Question</th><th>Answer</th></tr>
 {{- range .Revisions }}
 <tr>
-  <td>{{ localTime .CreatedAt }}</td>
+  <td>{{ localTimeIn .CreatedAt .Timezone.String }}</td>
   <td>{{ .UsersIdusers }}</td>
   <td>{{ .Question.String }}</td>
   <td>{{ .Answer.String }}</td>

@@ -1,13 +1,13 @@
 package templates_test
 
 import (
-        "embed"
-        "io/fs"
-        "path/filepath"
-        "strings"
-        "testing"
-        "text/template"
-        "time"
+	"embed"
+	"io/fs"
+	"path/filepath"
+	"strings"
+	"testing"
+	"text/template"
+	"time"
 
 	"github.com/arran4/goa4web/core/templates"
 )
@@ -23,12 +23,15 @@ func TestParseGoTxtTemplates(t *testing.T) {
 		if d.IsDir() || !strings.HasSuffix(path, ".gotxt") {
 			return nil
 		}
-                t.Run(filepath.Base(path), func(t *testing.T) {
-                        tmpl := template.New("").Funcs(template.FuncMap{"localTime": func(t time.Time) time.Time { return t }})
-                        if _, err := tmpl.ParseFS(textTemplates, path); err != nil {
-                                t.Errorf("failed to parse %s: %v", path, err)
-                        }
-                })
+		t.Run(filepath.Base(path), func(t *testing.T) {
+			tmpl := template.New("").Funcs(template.FuncMap{
+				"localTime":   func(t time.Time) time.Time { return t },
+				"localTimeIn": func(t time.Time, _ string) time.Time { return t },
+			})
+			if _, err := tmpl.ParseFS(textTemplates, path); err != nil {
+				t.Errorf("failed to parse %s: %v", path, err)
+			}
+		})
 		return nil
 	})
 	if err != nil {

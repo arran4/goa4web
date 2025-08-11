@@ -613,7 +613,7 @@ func (q *Queries) GetFAQQuestionsByCategory(ctx context.Context, arg GetFAQQuest
 }
 
 const getFAQRevisionsForAdmin = `-- name: GetFAQRevisionsForAdmin :many
-SELECT id, faq_id, users_idusers, question, answer, created_at FROM faq_revisions WHERE faq_id = ? ORDER BY id DESC
+SELECT id, faq_id, users_idusers, question, answer, created_at, timezone FROM faq_revisions WHERE faq_id = ? ORDER BY id DESC
 `
 
 func (q *Queries) GetFAQRevisionsForAdmin(ctx context.Context, faqID int32) ([]*FaqRevision, error) {
@@ -632,6 +632,7 @@ func (q *Queries) GetFAQRevisionsForAdmin(ctx context.Context, faqID int32) ([]*
 			&i.Question,
 			&i.Answer,
 			&i.CreatedAt,
+			&i.Timezone,
 		); err != nil {
 			return nil, err
 		}
@@ -684,8 +685,8 @@ func (q *Queries) InsertFAQQuestionForWriter(ctx context.Context, arg InsertFAQQ
 }
 
 const insertFAQRevisionForUser = `-- name: InsertFAQRevisionForUser :exec
-INSERT INTO faq_revisions (faq_id, users_idusers, question, answer)
-SELECT ?, ?, ?, ?
+INSERT INTO faq_revisions (faq_id, users_idusers, question, answer, timezone)
+SELECT ?, ?, ?, ?, ?
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'faq'
@@ -704,6 +705,7 @@ type InsertFAQRevisionForUserParams struct {
 	UsersIdusers int32
 	Question     sql.NullString
 	Answer       sql.NullString
+	Timezone     sql.NullString
 	UserID       sql.NullInt32
 	ViewerID     int32
 }
@@ -714,6 +716,7 @@ func (q *Queries) InsertFAQRevisionForUser(ctx context.Context, arg InsertFAQRev
 		arg.UsersIdusers,
 		arg.Question,
 		arg.Answer,
+		arg.Timezone,
 		arg.UserID,
 		arg.ViewerID,
 	)

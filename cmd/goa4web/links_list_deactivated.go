@@ -39,7 +39,7 @@ func (c *linksListDeactivatedCmd) Run() error {
 		return fmt.Errorf("list: %w", err)
 	}
 	for _, r := range rows {
-		fmt.Printf("%d\t%s\t%s\n", r.Idlinker, r.Title.String, r.Url.String)
+		fmt.Printf("%d\t%s\t%s\n", r.ID, r.Title.String, r.Url.String)
 	}
 	return nil
 }

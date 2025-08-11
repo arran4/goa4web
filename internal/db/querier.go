@@ -29,7 +29,7 @@ type Querier interface {
 	AdminCountForumCategories(ctx context.Context, arg AdminCountForumCategoriesParams) (int64, error)
 	AdminCountForumThreads(ctx context.Context) (int64, error)
 	AdminCountForumTopics(ctx context.Context) (int64, error)
-	AdminCountLinksByCategory(ctx context.Context, linkerCategoryID sql.NullInt32) (int64, error)
+	AdminCountLinksByCategory(ctx context.Context, categoryID sql.NullInt32) (int64, error)
 	AdminCountThreadsByBoard(ctx context.Context, imageboardIdimageboard sql.NullInt32) (int64, error)
 	AdminCountWordList(ctx context.Context) (int64, error)
 	AdminCountWordListByPrefix(ctx context.Context, prefix interface{}) (int64, error)
@@ -58,8 +58,8 @@ type Querier interface {
 	//   ? - Language ID to be deleted (int)
 	AdminDeleteLanguage(ctx context.Context, id int32) error
 	// AdminDeleteLinkerCategory removes a linker category.
-	AdminDeleteLinkerCategory(ctx context.Context, idlinkercategory int32) error
-	AdminDeleteLinkerQueuedItem(ctx context.Context, idlinkerqueue int32) error
+	AdminDeleteLinkerCategory(ctx context.Context, id int32) error
+	AdminDeleteLinkerQueuedItem(ctx context.Context, id int32) error
 	AdminDeleteNotification(ctx context.Context, id int32) error
 	// admin task
 	AdminDeletePendingEmail(ctx context.Context, id int32) error
@@ -103,14 +103,14 @@ type Querier interface {
 	AdminInsertBannedIp(ctx context.Context, arg AdminInsertBannedIpParams) error
 	// AdminInsertLanguage adds a new language returning a result.
 	AdminInsertLanguage(ctx context.Context, nameof sql.NullString) (sql.Result, error)
-	AdminInsertQueuedLinkFromQueue(ctx context.Context, idlinkerqueue int32) (int64, error)
+	AdminInsertQueuedLinkFromQueue(ctx context.Context, id int32) (int64, error)
 	AdminInsertRequestComment(ctx context.Context, arg AdminInsertRequestCommentParams) error
 	AdminInsertRequestQueue(ctx context.Context, arg AdminInsertRequestQueueParams) (sql.Result, error)
 	AdminInsertWritingCategory(ctx context.Context, arg AdminInsertWritingCategoryParams) error
 	AdminIsBlogDeactivated(ctx context.Context, idblogs int32) (bool, error)
 	AdminIsCommentDeactivated(ctx context.Context, idcomments int32) (bool, error)
 	AdminIsImagepostDeactivated(ctx context.Context, idimagepost int32) (bool, error)
-	AdminIsLinkDeactivated(ctx context.Context, idlinker int32) (bool, error)
+	AdminIsLinkDeactivated(ctx context.Context, id int32) (bool, error)
 	AdminIsUserDeactivated(ctx context.Context, idusers int32) (bool, error)
 	AdminIsWritingDeactivated(ctx context.Context, idwriting int32) (bool, error)
 	// AdminLanguageUsageCounts returns counts of content referencing a language.
@@ -172,7 +172,7 @@ type Querier interface {
 	AdminMarkBlogRestored(ctx context.Context, idblogs int32) error
 	AdminMarkCommentRestored(ctx context.Context, idcomments int32) error
 	AdminMarkImagepostRestored(ctx context.Context, idimagepost int32) error
-	AdminMarkLinkRestored(ctx context.Context, idlinker int32) error
+	AdminMarkLinkRestored(ctx context.Context, id int32) error
 	AdminMarkNotificationRead(ctx context.Context, id int32) error
 	AdminMarkNotificationUnread(ctx context.Context, id int32) error
 	AdminMarkWritingRestored(ctx context.Context, idwriting int32) error
@@ -298,9 +298,9 @@ type Querier interface {
 	GetImagePostsByUserDescendingAll(ctx context.Context, arg GetImagePostsByUserDescendingAllParams) ([]*GetImagePostsByUserDescendingAllRow, error)
 	GetLatestAnnouncementByNewsID(ctx context.Context, siteNewsID int32) (*SiteAnnouncement, error)
 	GetLinkerCategoriesWithCount(ctx context.Context) ([]*GetLinkerCategoriesWithCountRow, error)
-	GetLinkerCategoryById(ctx context.Context, idlinkercategory int32) (*LinkerCategory, error)
+	GetLinkerCategoryById(ctx context.Context, id int32) (*LinkerCategory, error)
 	GetLinkerCategoryLinkCounts(ctx context.Context) ([]*GetLinkerCategoryLinkCountsRow, error)
-	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(ctx context.Context, idlinker int32) (*GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow, error)
+	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(ctx context.Context, id int32) (*GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow, error)
 	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(ctx context.Context, arg GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams) (*GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow, error)
 	GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescending(ctx context.Context, linkerids []int32) ([]*GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow, error)
 	GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUser(ctx context.Context, arg GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUserParams) ([]*GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUserRow, error)
@@ -507,7 +507,7 @@ type Querier interface {
 	SystemSetCommentLastIndex(ctx context.Context, idcomments int32) error
 	SystemSetForumTopicHandlerByID(ctx context.Context, arg SystemSetForumTopicHandlerByIDParams) error
 	SystemSetImagePostLastIndex(ctx context.Context, idimagepost int32) error
-	SystemSetLinkerLastIndex(ctx context.Context, idlinker int32) error
+	SystemSetLinkerLastIndex(ctx context.Context, id int32) error
 	SystemSetSiteNewsLastIndex(ctx context.Context, idsitenews int32) error
 	SystemSetWritingLastIndex(ctx context.Context, idwriting int32) error
 	UpdateAutoSubscribeRepliesForLister(ctx context.Context, arg UpdateAutoSubscribeRepliesForListerParams) error

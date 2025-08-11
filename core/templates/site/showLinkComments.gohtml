@@ -45,7 +45,7 @@
                     <form method="post">
                 {{ csrfField }}
                         <input type="hidden" name="replyTo" value="{{ .ForumthreadID }}">
-                        <input type="hidden" name="lpid" value="{{ .Idlinker }}">
+                        <input type="hidden" name="lpid" value="{{ .ID }}">
                         <textarea name="replytext" cols="40" rows="20">{{ $.Text }}</textarea><br>
                         {{ template "languageCombobox" }}
                         <input type="submit" name="task" value="Reply">

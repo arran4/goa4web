@@ -1432,18 +1432,18 @@ func (cd *CoreData) LinkerItemsForUser(catID, offset int32) ([]*db.GetAllLinkerI
 		return nil, nil
 	}
 	rows, err := cd.queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginated(cd.ctx, db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedParams{
-		ViewerID:         cd.UserID,
-		Idlinkercategory: catID,
-		ViewerUserID:     sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-		Limit:            int32(cd.PageSize()),
-		Offset:           offset,
+		ViewerID:     cd.UserID,
+		CategoryID:   catID,
+		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		Limit:        int32(cd.PageSize()),
+		Offset:       offset,
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, err
 	}
 	var out []*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow
 	for _, row := range rows {
-		if cd.HasGrant("linker", "link", "see", row.Idlinker) {
+		if cd.HasGrant("linker", "link", "see", row.ID) {
 			out = append(out, row)
 		}
 	}
@@ -1456,7 +1456,7 @@ func (cd *CoreData) LinkerLinksByCategoryID(id int32, ops ...lazy.Option[[]*db.G
 		if cd.queries == nil {
 			return nil, nil
 		}
-		rows, err := cd.queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(cd.ctx, db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams{Idlinkercategory: i})
+		rows, err := cd.queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(cd.ctx, db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams{CategoryID: i})
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}

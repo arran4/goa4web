@@ -177,11 +177,11 @@ CREATE TABLE `language` (
 );
 
 CREATE TABLE `linker` (
-  `idlinker` int(10) NOT NULL AUTO_INCREMENT,
+  `id` int(10) NOT NULL AUTO_INCREMENT,
   `language_id` int(10) DEFAULT NULL,
-  `users_idusers` int(10) NOT NULL DEFAULT 0,
-  `linker_category_id` int(10) DEFAULT NULL,
-  `forumthread_id` int(10) NOT NULL DEFAULT 0,
+  `author_id` int(10) NOT NULL DEFAULT 0,
+  `category_id` int(10) DEFAULT NULL,
+  `thread_id` int(10) NOT NULL DEFAULT 0,
   `title` tinytext DEFAULT NULL,
   `url` tinytext DEFAULT NULL,
   `description` tinytext DEFAULT NULL,
@@ -189,33 +189,33 @@ CREATE TABLE `linker` (
   `timezone` text DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
   `last_index` datetime DEFAULT NULL,
-  PRIMARY KEY (`idlinker`),
-  KEY `linker_FKIndex1` (`forumthread_id`),
-  KEY `linker_FKIndex2` (`linker_category_id`),
-  KEY `linker_FKIndex3` (`users_idusers`),
+  PRIMARY KEY (`id`),
+  KEY `linker_FKIndex1` (`thread_id`),
+  KEY `linker_FKIndex2` (`category_id`),
+  KEY `linker_FKIndex3` (`author_id`),
   KEY `linker_FKIndex4` (`language_id`)
 );
 
 CREATE TABLE `linker_category` (
-  `idlinkerCategory` int(10) NOT NULL AUTO_INCREMENT,
+  `id` int(10) NOT NULL AUTO_INCREMENT,
   `position` int(10) NOT NULL DEFAULT 0,
   `title` tinytext DEFAULT NULL,
   `sortorder` int(10) NOT NULL DEFAULT 0,
-  PRIMARY KEY (`idlinkerCategory`)
+  PRIMARY KEY (`id`)
 );
 
 CREATE TABLE `linker_queue` (
-  `idlinkerQueue` int(10) NOT NULL AUTO_INCREMENT,
+  `id` int(10) NOT NULL AUTO_INCREMENT,
   `language_id` int(10) DEFAULT NULL,
-  `users_idusers` int(10) NOT NULL DEFAULT 0,
-  `linker_category_id` int(10) DEFAULT NULL,
+  `submitter_id` int(10) NOT NULL DEFAULT 0,
+  `category_id` int(10) DEFAULT NULL,
   `title` tinytext DEFAULT NULL,
   `url` tinytext DEFAULT NULL,
   `description` mediumtext DEFAULT NULL,
   `timezone` text DEFAULT NULL,
-  PRIMARY KEY (`idlinkerQueue`),
-  KEY `linkerQueue_FKIndex1` (`linker_category_id`),
-  KEY `linkerQueue_FKIndex2` (`users_idusers`),
+  PRIMARY KEY (`id`),
+  KEY `linkerQueue_FKIndex1` (`category_id`),
+  KEY `linkerQueue_FKIndex2` (`submitter_id`),
   KEY `linkerQueue_FKIndex3` (`language_id`)
 );
 
@@ -589,11 +589,11 @@ CREATE TABLE IF NOT EXISTS `deactivated_imageposts` (
 );
 
 CREATE TABLE IF NOT EXISTS `deactivated_linker` (
-  `idlinker` int NOT NULL,
+  `id` int NOT NULL,
   `language_id` int DEFAULT NULL,
-  `users_idusers` int NOT NULL,
-  `linker_category_id` int DEFAULT NULL,
-  `forumthread_id` int NOT NULL,
+  `author_id` int NOT NULL,
+  `category_id` int DEFAULT NULL,
+  `thread_id` int NOT NULL,
   `title` tinytext,
   `url` tinytext,
   `description` tinytext,
@@ -601,7 +601,7 @@ CREATE TABLE IF NOT EXISTS `deactivated_linker` (
   `timezone` text DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
   `restored_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`idlinker`)
+  PRIMARY KEY (`id`)
 );
 
 

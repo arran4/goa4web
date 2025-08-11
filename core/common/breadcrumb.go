@@ -150,12 +150,12 @@ func (cd *CoreData) linkerBreadcrumbs() ([]Breadcrumb, error) {
 			return nil, err
 		}
 		for _, row := range rows {
-			title := fmt.Sprintf("Category %d", row.Idlinkercategory)
+			title := fmt.Sprintf("Category %d", row.ID)
 			if row.Title.Valid {
 				title = row.Title.String
 			}
-			link := fmt.Sprintf("/linker/category/%d", row.Idlinkercategory)
-			if row.Idlinkercategory == catID {
+			link := fmt.Sprintf("/linker/category/%d", row.ID)
+			if row.ID == catID {
 				crumbs = append(crumbs, Breadcrumb{Title: title})
 			} else {
 				crumbs = append(crumbs, Breadcrumb{Title: title, Link: link})

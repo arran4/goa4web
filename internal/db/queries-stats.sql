@@ -61,7 +61,7 @@ LEFT JOIN (SELECT users_idusers AS uid, COUNT(*) AS blogs FROM blogs GROUP BY us
 LEFT JOIN (SELECT users_idusers AS uid, COUNT(*) AS news FROM site_news GROUP BY users_idusers) n ON n.uid = u.idusers
 LEFT JOIN (SELECT users_idusers AS uid, COUNT(*) AS comments FROM comments GROUP BY users_idusers) c ON c.uid = u.idusers
 LEFT JOIN (SELECT users_idusers AS uid, COUNT(*) AS images FROM imagepost GROUP BY users_idusers) i ON i.uid = u.idusers
-LEFT JOIN (SELECT users_idusers AS uid, COUNT(*) AS links FROM linker GROUP BY users_idusers) l ON l.uid = u.idusers
+LEFT JOIN (SELECT author_id AS uid, COUNT(*) AS links FROM linker GROUP BY author_id) l ON l.uid = u.idusers
 LEFT JOIN (SELECT users_idusers AS uid, COUNT(*) AS writings FROM writing GROUP BY users_idusers) w ON w.uid = u.idusers
 ORDER BY u.username;
 
@@ -71,7 +71,7 @@ SELECT
   (SELECT COUNT(*) FROM site_news n WHERE n.users_idusers = u.idusers)  AS news,
   (SELECT COUNT(*) FROM comments c WHERE c.users_idusers = u.idusers)   AS comments,
   (SELECT COUNT(*) FROM imagepost i WHERE i.users_idusers = u.idusers)  AS images,
-  (SELECT COUNT(*) FROM linker l WHERE l.users_idusers = u.idusers)     AS links,
+  (SELECT COUNT(*) FROM linker l WHERE l.author_id = u.idusers)     AS links,
   (SELECT COUNT(*) FROM writing w WHERE w.users_idusers = u.idusers)    AS writings
 FROM users u
 WHERE u.idusers = ?;

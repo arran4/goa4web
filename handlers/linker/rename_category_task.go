@@ -24,9 +24,9 @@ func (renameCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 	title := r.PostFormValue("title")
 	pos, _ := strconv.Atoi(r.PostFormValue("position"))
 	if err := queries.AdminRenameLinkerCategory(r.Context(), db.AdminRenameLinkerCategoryParams{
-		Title:            sql.NullString{Valid: true, String: title},
-		Position:         int32(pos),
-		Idlinkercategory: int32(cid),
+		Title:    sql.NullString{Valid: true, String: title},
+		Position: int32(pos),
+		ID:       int32(cid),
 	}); err != nil {
 		return fmt.Errorf("rename linker category fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

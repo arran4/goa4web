@@ -103,30 +103,30 @@ func (q *Queries) AdminArchiveImagepost(ctx context.Context, arg AdminArchiveIma
 }
 
 const adminArchiveLink = `-- name: AdminArchiveLink :exec
-INSERT INTO deactivated_linker (idlinker, language_id, users_idusers, linker_category_id, forumthread_id, title, url, description, listed, timezone, deleted_at)
+INSERT INTO deactivated_linker (id, language_id, author_id, category_id, thread_id, title, url, description, listed, timezone, deleted_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
 `
 
 type AdminArchiveLinkParams struct {
-	Idlinker         int32
-	LanguageID       sql.NullInt32
-	UsersIdusers     int32
-	LinkerCategoryID sql.NullInt32
-	ForumthreadID    int32
-	Title            sql.NullString
-	Url              sql.NullString
-	Description      sql.NullString
-	Listed           sql.NullTime
-	Timezone         sql.NullString
+	ID          int32
+	LanguageID  sql.NullInt32
+	AuthorID    int32
+	CategoryID  sql.NullInt32
+	ThreadID    int32
+	Title       sql.NullString
+	Url         sql.NullString
+	Description sql.NullString
+	Listed      sql.NullTime
+	Timezone    sql.NullString
 }
 
 func (q *Queries) AdminArchiveLink(ctx context.Context, arg AdminArchiveLinkParams) error {
 	_, err := q.db.ExecContext(ctx, adminArchiveLink,
-		arg.Idlinker,
+		arg.ID,
 		arg.LanguageID,
-		arg.UsersIdusers,
-		arg.LinkerCategoryID,
-		arg.ForumthreadID,
+		arg.AuthorID,
+		arg.CategoryID,
+		arg.ThreadID,
 		arg.Title,
 		arg.Url,
 		arg.Description,
@@ -228,12 +228,12 @@ func (q *Queries) AdminIsImagepostDeactivated(ctx context.Context, idimagepost i
 const adminIsLinkDeactivated = `-- name: AdminIsLinkDeactivated :one
 SELECT EXISTS(
     SELECT 1 FROM deactivated_linker
-    WHERE idlinker = ? AND restored_at IS NULL
+    WHERE id = ? AND restored_at IS NULL
 ) AS is_deactivated
 `
 
-func (q *Queries) AdminIsLinkDeactivated(ctx context.Context, idlinker int32) (bool, error) {
-	row := q.db.QueryRowContext(ctx, adminIsLinkDeactivated, idlinker)
+func (q *Queries) AdminIsLinkDeactivated(ctx context.Context, id int32) (bool, error) {
+	row := q.db.QueryRowContext(ctx, adminIsLinkDeactivated, id)
 	var is_deactivated bool
 	err := row.Scan(&is_deactivated)
 	return is_deactivated, err
@@ -392,7 +392,7 @@ func (q *Queries) AdminListDeactivatedImageposts(ctx context.Context, arg AdminL
 }
 
 const adminListDeactivatedLinks = `-- name: AdminListDeactivatedLinks :many
-SELECT idlinker, title, url, description FROM deactivated_linker
+SELECT id, title, url, description FROM deactivated_linker
 WHERE restored_at IS NULL
 LIMIT ? OFFSET ?
 `
@@ -403,7 +403,7 @@ type AdminListDeactivatedLinksParams struct {
 }
 
 type AdminListDeactivatedLinksRow struct {
-	Idlinker    int32
+	ID          int32
 	Title       sql.NullString
 	Url         sql.NullString
 	Description sql.NullString
@@ -419,7 +419,7 @@ func (q *Queries) AdminListDeactivatedLinks(ctx context.Context, arg AdminListDe
 	for rows.Next() {
 		var i AdminListDeactivatedLinksRow
 		if err := rows.Scan(
-			&i.Idlinker,
+			&i.ID,
 			&i.Title,
 			&i.Url,
 			&i.Description,
@@ -651,25 +651,25 @@ func (q *Queries) AdminListPendingDeactivatedImageposts(ctx context.Context, arg
 }
 
 const adminListPendingDeactivatedLinks = `-- name: AdminListPendingDeactivatedLinks :many
-SELECT idlinker, title, url, description FROM deactivated_linker WHERE users_idusers = ? AND restored_at IS NULL
+SELECT id, title, url, description FROM deactivated_linker WHERE author_id = ? AND restored_at IS NULL
 LIMIT ? OFFSET ?
 `
 
 type AdminListPendingDeactivatedLinksParams struct {
-	UsersIdusers int32
-	Limit        int32
-	Offset       int32
+	AuthorID int32
+	Limit    int32
+	Offset   int32
 }
 
 type AdminListPendingDeactivatedLinksRow struct {
-	Idlinker    int32
+	ID          int32
 	Title       sql.NullString
 	Url         sql.NullString
 	Description sql.NullString
 }
 
 func (q *Queries) AdminListPendingDeactivatedLinks(ctx context.Context, arg AdminListPendingDeactivatedLinksParams) ([]*AdminListPendingDeactivatedLinksRow, error) {
-	rows, err := q.db.QueryContext(ctx, adminListPendingDeactivatedLinks, arg.UsersIdusers, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, adminListPendingDeactivatedLinks, arg.AuthorID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -678,7 +678,7 @@ func (q *Queries) AdminListPendingDeactivatedLinks(ctx context.Context, arg Admi
 	for rows.Next() {
 		var i AdminListPendingDeactivatedLinksRow
 		if err := rows.Scan(
-			&i.Idlinker,
+			&i.ID,
 			&i.Title,
 			&i.Url,
 			&i.Description,
@@ -773,11 +773,11 @@ func (q *Queries) AdminMarkImagepostRestored(ctx context.Context, idimagepost in
 }
 
 const adminMarkLinkRestored = `-- name: AdminMarkLinkRestored :exec
-UPDATE deactivated_linker SET restored_at = NOW() WHERE idlinker = ?
+UPDATE deactivated_linker SET restored_at = NOW() WHERE id = ?
 `
 
-func (q *Queries) AdminMarkLinkRestored(ctx context.Context, idlinker int32) error {
-	_, err := q.db.ExecContext(ctx, adminMarkLinkRestored, idlinker)
+func (q *Queries) AdminMarkLinkRestored(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, adminMarkLinkRestored, id)
 	return err
 }
 
@@ -840,14 +840,14 @@ func (q *Queries) AdminRestoreImagepost(ctx context.Context, arg AdminRestoreIma
 }
 
 const adminRestoreLink = `-- name: AdminRestoreLink :exec
-UPDATE linker SET title = ?, url = ?, description = ?, deleted_at = NULL WHERE idlinker = ?
+UPDATE linker SET title = ?, url = ?, description = ?, deleted_at = NULL WHERE id = ?
 `
 
 type AdminRestoreLinkParams struct {
 	Title       sql.NullString
 	Url         sql.NullString
 	Description sql.NullString
-	Idlinker    int32
+	ID          int32
 }
 
 func (q *Queries) AdminRestoreLink(ctx context.Context, arg AdminRestoreLinkParams) error {
@@ -855,7 +855,7 @@ func (q *Queries) AdminRestoreLink(ctx context.Context, arg AdminRestoreLinkPara
 		arg.Title,
 		arg.Url,
 		arg.Description,
-		arg.Idlinker,
+		arg.ID,
 	)
 	return err
 }
@@ -932,16 +932,16 @@ func (q *Queries) AdminScrubImagepost(ctx context.Context, idimagepost int32) er
 }
 
 const adminScrubLink = `-- name: AdminScrubLink :exec
-UPDATE linker SET title = ?, url = '', description = '', deleted_at = NOW() WHERE idlinker = ?
+UPDATE linker SET title = ?, url = '', description = '', deleted_at = NOW() WHERE id = ?
 `
 
 type AdminScrubLinkParams struct {
-	Title    sql.NullString
-	Idlinker int32
+	Title sql.NullString
+	ID    int32
 }
 
 func (q *Queries) AdminScrubLink(ctx context.Context, arg AdminScrubLinkParams) error {
-	_, err := q.db.ExecContext(ctx, adminScrubLink, arg.Title, arg.Idlinker)
+	_, err := q.db.ExecContext(ctx, adminScrubLink, arg.Title, arg.ID)
 	return err
 }
 

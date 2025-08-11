@@ -1,7 +1,6 @@
 {{ template "head" $ }}
     {{ template "newsPost" $.Post }}
     <div class="label-bar">
-        {{ if .Labels }}{{ template "topicLabels" .Labels }}{{ end }}
         <form method="post" action="/news/news/{{ .Post.Idsitenews }}/labels" class="mark-read">
             {{ csrfField }}
             <input type="hidden" name="task" value="Mark Thread Read"/>

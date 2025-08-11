@@ -1,6 +1,9 @@
 package news
 
-import "github.com/arran4/goa4web/internal/tasks"
+import (
+	forumhandlers "github.com/arran4/goa4web/handlers/forum"
+	"github.com/arran4/goa4web/internal/tasks"
+)
 
 // Task constants used within the news handlers.
 const (
@@ -22,4 +25,7 @@ const (
 	TaskUserAllow = "User Allow"
 	// TaskUserDisallow removes a role from a user.
 	TaskUserDisallow = "User Disallow"
+
+	// TaskMarkRead marks a news item as read for the current user.
+	TaskMarkRead tasks.TaskString = forumhandlers.TaskMarkThreadRead
 )

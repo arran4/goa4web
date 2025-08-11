@@ -1,5 +1,20 @@
 {{ template "head" $ }}
     {{ template "newsPost" $.Post }}
+    <div class="label-bar">
+        {{ if .Labels }}{{ template "topicLabels" .Labels }}{{ end }}
+        <form method="post" action="/news/news/{{ .Post.Idsitenews }}/labels" class="mark-read">
+            {{ csrfField }}
+            <input type="hidden" name="task" value="Mark Thread Read"/>
+            <input type="hidden" name="redirect" value="{{ .BackURL }}"/>
+            <button type="submit">Mark as read</button>
+        </form>
+        <form method="post" action="/news/news/{{ .Post.Idsitenews }}/labels" class="mark-read">
+            {{ csrfField }}
+            <input type="hidden" name="task" value="Mark Thread Read"/>
+            <input type="hidden" name="redirect" value="/news"/>
+            <button type="submit">Mark as read and go back</button>
+        </form>
+    </div>
     <hr><font size=4>Replies:</font>
     {{ template "threadComments" }}
     <div class="label-editor">
@@ -16,6 +31,18 @@
             {{ end }}
             <input type="text" class="label-input" data-type="private" placeholder="Add private label"/>
             <input type="submit" value="Save Labels"/>
+        </form>
+        <form method="post" action="/news/news/{{ .Post.Idsitenews }}/labels" class="mark-read">
+            {{ csrfField }}
+            <input type="hidden" name="task" value="Mark Thread Read"/>
+            <input type="hidden" name="redirect" value="{{ .BackURL }}"/>
+            <button type="submit">Mark as read</button>
+        </form>
+        <form method="post" action="/news/news/{{ .Post.Idsitenews }}/labels" class="mark-read">
+            {{ csrfField }}
+            <input type="hidden" name="task" value="Mark Thread Read"/>
+            <input type="hidden" name="redirect" value="/news"/>
+            <button type="submit">Mark as read and go back</button>
         </form>
     </div>
     <script src="/forum/topic_labels.js"></script>

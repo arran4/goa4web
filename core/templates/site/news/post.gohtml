@@ -26,12 +26,9 @@
                     {{ end }}
                 </a>]
             {{ end }}
+            {{ $labels := NewsLabels .Idsitenews }}
+            {{ if $labels }}<span class="label-bar">{{ template "topicLabels" $labels }}</span>{{ end }}
+            </td>
         </tr>
-    </table>
-    {{ $labels := NewsLabels .Idsitenews }}
-    {{ if $labels }}
-    <div class="label-bar">
-        {{ template "topicLabels" $labels }}
-    </div>
-    {{ end }}<br>
+    </table><br>
 {{ end }}

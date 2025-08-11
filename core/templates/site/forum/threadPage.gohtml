@@ -29,9 +29,7 @@
             </div>
             <div class="private-labels">
                 {{ range .PrivateLabels }}
-                {{ if and (ne . "new") (ne . "unread") }}
                 <span class="label private">{{ . }}<button type="button" class="remove" data-type="private">x</button><input type="hidden" name="private" value="{{ . }}"/></span>
-                {{ end }}
                 {{ end }}
                 <input type="text" class="label-input" data-type="private" placeholder="Add private label"/>
             </div>

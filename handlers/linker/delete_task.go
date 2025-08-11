@@ -33,7 +33,7 @@ func (deleteTask) Action(w http.ResponseWriter, r *http.Request) any {
 	var link *db.GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetailsRow
 	if rows, err := queries.GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails(r.Context()); err == nil {
 		for _, it := range rows {
-			if it.Idlinkerqueue == int32(qid) {
+			if it.ID == int32(qid) {
 				link = it
 				break
 			}

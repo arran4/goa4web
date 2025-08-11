@@ -840,14 +840,14 @@ func (q *Queries) AdminRestoreImagepost(ctx context.Context, arg AdminRestoreIma
 }
 
 const adminRestoreLink = `-- name: AdminRestoreLink :exec
-UPDATE linker SET title = ?, url = ?, description = ?, deleted_at = NULL WHERE idlinker = ?
+UPDATE linker SET title = ?, url = ?, description = ?, deleted_at = NULL WHERE id = ?
 `
 
 type AdminRestoreLinkParams struct {
 	Title       sql.NullString
 	Url         sql.NullString
 	Description sql.NullString
-	Idlinker    int32
+	ID          int32
 }
 
 func (q *Queries) AdminRestoreLink(ctx context.Context, arg AdminRestoreLinkParams) error {
@@ -855,7 +855,7 @@ func (q *Queries) AdminRestoreLink(ctx context.Context, arg AdminRestoreLinkPara
 		arg.Title,
 		arg.Url,
 		arg.Description,
-		arg.Idlinker,
+		arg.ID,
 	)
 	return err
 }
@@ -932,16 +932,16 @@ func (q *Queries) AdminScrubImagepost(ctx context.Context, idimagepost int32) er
 }
 
 const adminScrubLink = `-- name: AdminScrubLink :exec
-UPDATE linker SET title = ?, url = '', description = '', deleted_at = NOW() WHERE idlinker = ?
+UPDATE linker SET title = ?, url = '', description = '', deleted_at = NOW() WHERE id = ?
 `
 
 type AdminScrubLinkParams struct {
-	Title    sql.NullString
-	Idlinker int32
+	Title sql.NullString
+	ID    int32
 }
 
 func (q *Queries) AdminScrubLink(ctx context.Context, arg AdminScrubLinkParams) error {
-	_, err := q.db.ExecContext(ctx, adminScrubLink, arg.Title, arg.Idlinker)
+	_, err := q.db.ExecContext(ctx, adminScrubLink, arg.Title, arg.ID)
 	return err
 }
 

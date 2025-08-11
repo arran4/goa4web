@@ -54,7 +54,7 @@ SELECT
     (SELECT COUNT(*) FROM writing WHERE writing.language_idlanguage = ?) AS writings,
     (SELECT COUNT(*) FROM blogs WHERE blogs.language_idlanguage = ?) AS blogs,
     (SELECT COUNT(*) FROM site_news WHERE site_news.language_idlanguage = ?) AS news,
-    (SELECT COUNT(*) FROM linker WHERE linker.language_idlanguage = ?) AS links
+    (SELECT COUNT(*) FROM linker WHERE linker.language_id = ?) AS links
 `
 
 type AdminLanguageUsageCountsParams struct {

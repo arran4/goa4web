@@ -23,7 +23,7 @@ func (deleteCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	rows, _ := cd.LinkerCategoryCounts()
 	for _, c := range rows {
-		if int(c.Idlinkercategory) == cid && c.Linkcount > 0 {
+		if int(c.ID) == cid && c.Linkcount > 0 {
 			handlers.RenderErrorPage(w, r, fmt.Errorf("Category in use"))
 			return nil
 		}

@@ -20,7 +20,7 @@ import (
 func TestLinkerFeed(t *testing.T) {
 	rows := []*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow{
 		{
-			Idlinker:       1,
+			ID:             1,
 			Title:          sql.NullString{String: "Example", Valid: true},
 			Url:            sql.NullString{String: "http://example.com", Valid: true},
 			Description:    sql.NullString{String: "desc", Valid: true},

@@ -103,7 +103,7 @@ WHERE swl.word=sqlc.arg(word)
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(lister_id)
-            AND ul.language_idlanguage = c.language_idlanguage
+            AND ul.language_id = c.language_idlanguage
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -139,7 +139,7 @@ WHERE swl.word=sqlc.arg(word)
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(lister_id)
-            AND ul.language_idlanguage = c.language_idlanguage
+            AND ul.language_id = c.language_idlanguage
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -174,7 +174,7 @@ WHERE swl.word=sqlc.arg(word)
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(lister_id)
-            AND ul.language_idlanguage = c.language_idlanguage
+            AND ul.language_id = c.language_idlanguage
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -210,7 +210,7 @@ WHERE swl.word=sqlc.arg(word)
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(lister_id)
-            AND ul.language_idlanguage = c.language_idlanguage
+            AND ul.language_id = c.language_idlanguage
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -269,7 +269,7 @@ WHERE swl.word = sqlc.arg(word)
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(lister_id)
-            AND ul.language_idlanguage = w.language_idlanguage
+            AND ul.language_id = w.language_idlanguage
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -302,7 +302,7 @@ WHERE swl.word = sqlc.arg(word)
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(lister_id)
-            AND ul.language_idlanguage = w.language_idlanguage
+            AND ul.language_id = w.language_idlanguage
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -334,7 +334,7 @@ WHERE swl.word = sqlc.arg(word)
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(lister_id)
-            AND ul.language_idlanguage = sn.language_idlanguage
+            AND ul.language_id = sn.language_idlanguage
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -367,7 +367,7 @@ WHERE swl.word = sqlc.arg(word)
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(lister_id)
-            AND ul.language_idlanguage = sn.language_idlanguage
+            AND ul.language_id = sn.language_idlanguage
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -393,15 +393,15 @@ WITH role_ids AS (
 SELECT DISTINCT cs.linker_id
 FROM linker_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearchwordlist
-JOIN linker l ON l.idlinker = cs.linker_id
+JOIN linker l ON l.id = cs.linker_id
 WHERE swl.word = sqlc.arg(word)
   AND (
-      l.language_idlanguage = 0
-      OR l.language_idlanguage IS NULL
+      l.language_id = 0
+      OR l.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(lister_id)
-            AND ul.language_idlanguage = l.language_idlanguage
+            AND ul.language_id = l.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -413,7 +413,7 @@ WHERE swl.word = sqlc.arg(word)
         AND (g.item='link' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
-        AND (g.item_id = l.idlinker OR g.item_id IS NULL)
+        AND (g.item_id = l.id OR g.item_id IS NULL)
         AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   );
@@ -425,16 +425,16 @@ WITH role_ids AS (
 SELECT DISTINCT cs.linker_id
 FROM linker_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearchwordlist
-JOIN linker l ON l.idlinker = cs.linker_id
+JOIN linker l ON l.id = cs.linker_id
 WHERE swl.word = sqlc.arg(word)
   AND cs.linker_id IN (sqlc.slice('ids'))
   AND (
-      l.language_idlanguage = 0
-      OR l.language_idlanguage IS NULL
+      l.language_id = 0
+      OR l.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(lister_id)
-            AND ul.language_idlanguage = l.language_idlanguage
+            AND ul.language_id = l.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -446,7 +446,7 @@ WHERE swl.word = sqlc.arg(word)
         AND (g.item='link' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
-        AND (g.item_id = l.idlinker OR g.item_id IS NULL)
+        AND (g.item_id = l.id OR g.item_id IS NULL)
         AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   );

@@ -327,36 +327,36 @@ type Language struct {
 }
 
 type Linker struct {
-	Idlinker           int32
-	LanguageIdlanguage sql.NullInt32
-	UsersIdusers       int32
-	LinkerCategoryID   sql.NullInt32
-	ForumthreadID      int32
-	Title              sql.NullString
-	Url                sql.NullString
-	Description        sql.NullString
-	Listed             sql.NullTime
-	Timezone           sql.NullString
-	DeletedAt          sql.NullTime
-	LastIndex          sql.NullTime
+	ID          int32
+	LanguageID  sql.NullInt32
+	AuthorID    int32
+	CategoryID  sql.NullInt32
+	ThreadID    int32
+	Title       sql.NullString
+	Url         sql.NullString
+	Description sql.NullString
+	Listed      sql.NullTime
+	Timezone    sql.NullString
+	DeletedAt   sql.NullTime
+	LastIndex   sql.NullTime
 }
 
 type LinkerCategory struct {
-	Idlinkercategory int32
-	Position         int32
-	Title            sql.NullString
-	Sortorder        int32
+	ID        int32
+	Position  int32
+	Title     sql.NullString
+	Sortorder int32
 }
 
 type LinkerQueue struct {
-	Idlinkerqueue      int32
-	LanguageIdlanguage sql.NullInt32
-	UsersIdusers       int32
-	LinkerCategoryID   sql.NullInt32
-	Title              sql.NullString
-	Url                sql.NullString
-	Description        sql.NullString
-	Timezone           sql.NullString
+	ID          int32
+	LanguageID  sql.NullInt32
+	SubmitterID int32
+	CategoryID  sql.NullInt32
+	Title       sql.NullString
+	Url         sql.NullString
+	Description sql.NullString
+	Timezone    sql.NullString
 }
 
 type LinkerSearch struct {

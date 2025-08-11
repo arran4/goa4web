@@ -65,7 +65,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 
 	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(r.Context(), db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams{
 		ViewerID:     cd.UserID,
-		Idlinker:     int32(linkId),
+		ID:           int32(linkId),
 		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 	})
 	if err != nil {
@@ -82,8 +82,8 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	canReply := cd.HasGrant("linker", "link", "reply", link.Idlinker)
-	if !(cd.HasGrant("linker", "link", "view", link.Idlinker) ||
+	canReply := cd.HasGrant("linker", "link", "reply", link.ID)
+	if !(cd.HasGrant("linker", "link", "view", link.ID) ||
 		canReply ||
 		cd.SelectedThreadCanReply()) {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
@@ -93,11 +93,11 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	data.IsReplyable = canReply
 
 	data.Link = link
-	cd.PageTitle = fmt.Sprintf("Link %d Comments", link.Idlinker)
-	data.CanEdit = cd.HasRole("administrator") || uid == link.UsersIdusers
+	cd.PageTitle = fmt.Sprintf("Link %d Comments", link.ID)
+	data.CanEdit = cd.HasRole("administrator") || uid == link.AuthorID
 
-	cd.SetCurrentThreadAndTopic(link.ForumthreadID, 0)
-	commentRows, err := cd.SectionThreadComments("linker", "link", link.ForumthreadID)
+	cd.SetCurrentThreadAndTopic(link.ThreadID, 0)
+	commentRows, err := cd.SectionThreadComments("linker", "link", link.ThreadID)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -110,7 +110,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 
 	threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
 		ViewerID:      uid,
-		ThreadID:      link.ForumthreadID,
+		ThreadID:      link.ThreadID,
 		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
@@ -134,13 +134,13 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		if !data.CanEditComment(cmt) {
 			return ""
 		}
-		return fmt.Sprintf("/linker/comments/%d?comment=%d#edit", link.Idlinker, cmt.Idcomments)
+		return fmt.Sprintf("/linker/comments/%d?comment=%d#edit", link.ID, cmt.Idcomments)
 	}
 	data.EditSaveURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
 		if !data.CanEditComment(cmt) {
 			return ""
 		}
-		return fmt.Sprintf("/linker/comments/%d/comment/%d", link.Idlinker, cmt.Idcomments)
+		return fmt.Sprintf("/linker/comments/%d/comment/%d", link.ID, cmt.Idcomments)
 	}
 	data.Editing = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
 		return data.CanEditComment(cmt) && editCommentId != 0 && int32(editCommentId) == cmt.Idcomments
@@ -207,7 +207,7 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(r.Context(), db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams{
 		ViewerID:     cd.UserID,
-		Idlinker:     int32(linkId),
+		ID:           int32(linkId),
 		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 	})
 	if err != nil {
@@ -224,13 +224,13 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	if !(cd.HasGrant("linker", "link", "view", link.Idlinker) ||
-		cd.HasGrant("linker", "link", "reply", link.Idlinker)) {
+	if !(cd.HasGrant("linker", "link", "view", link.ID) ||
+		cd.HasGrant("linker", "link", "reply", link.ID)) {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return nil
 	}
 
-	var pthid int32 = link.ForumthreadID
+	var pthid int32 = link.ThreadID
 	pt, err := queries.SystemGetForumTopicByTitle(r.Context(), sql.NullString{
 		String: LinkerTopicName,
 		Valid:  true,
@@ -239,7 +239,7 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if errors.Is(err, sql.ErrNoRows) {
 		ptidi, err := queries.CreateForumTopicForPoster(r.Context(), db.CreateForumTopicForPosterParams{
 			ForumcategoryID: 0,
-			ForumLang:       link.LanguageIdlanguage,
+			ForumLang:       link.LanguageID,
 			Title: sql.NullString{
 				String: LinkerTopicName,
 				Valid:  true,
@@ -270,8 +270,8 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 		pthid = int32(pthidi)
 		if err := queries.SystemAssignLinkerThreadID(r.Context(), db.SystemAssignLinkerThreadIDParams{
-			ForumthreadID: pthid,
-			Idlinker:      int32(linkId),
+			ThreadID: pthid,
+			ID:            int32(linkId),
 		}); err != nil {
 			return fmt.Errorf("assign linker thread fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}

@@ -1,9 +1,87 @@
 {{ template "head" $ }}
+    {{ $base := "/forum" }}
+    {{ with .BasePath }}{{ $base = . }}{{ end }}
+    {{ template "topicLabels" (dict "Public" .PublicLabels "Author" .AuthorLabels "Private" .PrivateLabels) }}
+    <form method="post" action="{{$base}}/topic/{{.Topic.Idforumtopic}}/labels">
+        <input type="hidden" name="task" value="Mark Topic Read"/>
+        <button type="submit">Mark as read</button>
+    </form>
     {{ template "threadComments" }}
     {{ template "forumReply" $ }}
 
-    {{ $base := "/forum" }}
-    {{ with .BasePath }}{{ $base = . }}{{ end }}
+    <div class="label-editor">
+        <h3>Labels</h3>
+        <form method="post" action="{{$base}}/topic/{{.Topic.Idforumtopic}}/labels" id="label-form">
+            {{ csrfField }}
+            <input type="hidden" name="task" value="Set Labels"/>
+            <div class="public-labels">
+                {{ range .PublicLabels }}
+                <span class="label public">{{ . }}<button type="button" class="remove" data-type="public">x</button><input type="hidden" name="public" value="{{ . }}"/></span>
+                {{ end }}
+                <input type="text" class="label-input" data-type="public" placeholder="Add public label"/>
+            </div>
+            <div class="author-labels">
+                {{ range .AuthorLabels }}
+                <span class="label author">{{ . }}</span>
+                {{ end }}
+            </div>
+            <div class="private-labels">
+                {{ range .PrivateLabels }}
+                {{ if and (ne . "new") (ne . "unread") }}
+                <span class="label private">{{ . }}<button type="button" class="remove" data-type="private">x</button><input type="hidden" name="private" value="{{ . }}"/></span>
+                {{ end }}
+                {{ end }}
+                <input type="text" class="label-input" data-type="private" placeholder="Add private label"/>
+            </div>
+            <input type="submit" value="Save Labels"/>
+        </form>
+    </div>
+    <script>
+    (function() {
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove')) {
+                var span = e.target.parentElement;
+                span.parentElement.removeChild(span);
+            }
+        });
+        document.querySelectorAll('.label-input').forEach(function(input) {
+            input.addEventListener('keydown', function(e) {
+                if (e.key === ' ') {
+                    e.preventDefault();
+                    var val = input.value.trim();
+                    if (!val) {
+                        return;
+                    }
+                    var name = input.dataset.type;
+                    var exists = Array.from(document.querySelectorAll('input[name="' + name + '"]')).some(function(n) { return n.value === val; });
+                    if (exists) {
+                        input.value = '';
+                        return;
+                    }
+                    var span = document.createElement('span');
+                    span.className = 'label ' + name;
+                    span.textContent = val + ' ';
+                    var btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'remove';
+                    btn.textContent = 'x';
+                    span.appendChild(btn);
+                    var hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.name = name;
+                    hidden.value = val;
+                    span.appendChild(hidden);
+                    input.parentElement.insertBefore(span, input);
+                    input.value = '';
+                }
+            });
+        });
+    })();
+    </script>
+    <form method="post" action="{{$base}}/topic/{{.Topic.Idforumtopic}}/labels">
+        <input type="hidden" name="task" value="Mark Topic Read"/>
+        <button type="submit">Mark as read</button>
+    </form>
     <a href="{{$base}}/topic/{{.Topic.Idforumtopic}}">Back</a>
 
 {{ template "tail" $ }}

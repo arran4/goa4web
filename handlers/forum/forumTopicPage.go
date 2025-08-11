@@ -29,6 +29,9 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		Category                *ForumcategoryPlus
 		CopyDataToSubCategories func(rootCategory *ForumcategoryPlus) *Data
 		BasePath                string
+		PublicLabels            []string
+		AuthorLabels            []string
+		PrivateLabels           []string
 	}
 
 	if _, ok := core.GetSessionOrFail(w, r); !ok {
@@ -126,6 +129,18 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		return
 	}
 	data.Threads = threadRows
+
+	if pub, author, err := cd.TopicPublicLabels(topicRow.Idforumtopic); err == nil {
+		data.PublicLabels = pub
+		data.AuthorLabels = author
+	} else {
+		log.Printf("list public labels: %v", err)
+	}
+	if priv, err := cd.TopicPrivateLabels(topicRow.Idforumtopic); err == nil {
+		data.PrivateLabels = priv
+	} else {
+		log.Printf("list private labels: %v", err)
+	}
 
 	if subscribedToTopic(cd, topicRow.Idforumtopic) {
 		data.Subscribed = true

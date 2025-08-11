@@ -8,7 +8,7 @@
                 <tr>
                     <td>
                         {{ .Description.String | a4code2html }}<hr>
-                        {{ .Posterusername.String }} - Listed: {{ localTime .Listed.Time }} - [<a href="/linker/comments/{{ .Idlinker }}">{{.Comments.Int32}} COMMENTS</a>]<br>
+                        {{ .Posterusername.String }} - Listed: {{ localTimeIn .Listed.Time .Timezone.String }} - [<a href="/linker/comments/{{ .Idlinker }}">{{.Comments.Int32}} COMMENTS</a>]<br>
                     </td>
                 </tr>
             {{- else }}
@@ -30,7 +30,7 @@
                 <tr>
                     <td>
                         {{ .Description.String | a4code2html }}<hr>
-                        {{ .Posterusername.String }} - Listed: {{ localTime .Listed.Time }} - [<a href="/linker/comments/{{ .Idlinker }}">{{.Comments.Int32}} COMMENTS</a>]<br>
+                        {{ .Posterusername.String }} - Listed: {{ localTimeIn .Listed.Time .Timezone.String }} - [<a href="/linker/comments/{{ .Idlinker }}">{{.Comments.Int32}} COMMENTS</a>]<br>
                     </td>
                 </tr>
             {{- else }}

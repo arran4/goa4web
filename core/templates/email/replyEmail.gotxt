@@ -6,6 +6,7 @@ There are now {{.Item.Thread.Comments.Int32}} comments in the discussion.
 View it here:
 {{.URL}}
 
+
 Manage notifications: {{.UnsubscribeUrl}}
 
 {{- if .SignOff}}

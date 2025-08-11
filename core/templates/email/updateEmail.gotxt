@@ -5,6 +5,7 @@ Hello,
 {{if .URL}}View details here:
 {{.URL}}
 {{end}}
+
 Manage notifications: {{.UnsubscribeUrl}}
 {{- if .SignOff}}
 {{.SignOff}}

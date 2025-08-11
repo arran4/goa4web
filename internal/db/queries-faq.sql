@@ -173,8 +173,8 @@ WHERE faq.id = sqlc.arg(faq_id)
   );
 
 -- name: InsertFAQRevisionForUser :exec
-INSERT INTO faq_revisions (faq_id, users_idusers, question, answer)
-SELECT sqlc.arg(faq_id), sqlc.arg(users_idusers), sqlc.arg(question), sqlc.arg(answer)
+INSERT INTO faq_revisions (faq_id, users_idusers, question, answer, timezone)
+SELECT sqlc.arg(faq_id), sqlc.arg(users_idusers), sqlc.arg(question), sqlc.arg(answer), sqlc.arg(timezone)
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'faq'

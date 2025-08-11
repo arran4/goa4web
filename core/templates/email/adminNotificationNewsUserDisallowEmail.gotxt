@@ -2,5 +2,6 @@ User {{.Item.Username}} had news permissions revoked.
 
 Permissions:
 {{.Item.UserPermissionsURL}}
+
 Manage notifications: {{.UnsubscribeUrl}}
 

@@ -2,5 +2,6 @@ User {{.Item.Username}} granted blog permissions.
 
 Blog section:
 {{.Item.BlogURL}}
+
 Manage notifications: {{.UnsubscribeUrl}}
 

@@ -5,6 +5,7 @@ CREATE TABLE `blogs` (
   `language_idlanguage` int(10) DEFAULT NULL,
   `blog` longtext DEFAULT NULL,
   `written` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `timezone` text,
   `deleted_at` datetime DEFAULT NULL,
   `last_index` datetime DEFAULT NULL,
   PRIMARY KEY (`idblogs`),
@@ -37,6 +38,7 @@ CREATE TABLE `comments` (
   `language_idlanguage` int(10) DEFAULT NULL,
   `written` datetime DEFAULT NULL,
   `text` longtext DEFAULT NULL,
+  `timezone` text,
   `deleted_at` datetime DEFAULT NULL,
   `last_index` datetime DEFAULT NULL,
   PRIMARY KEY (`idcomments`),
@@ -80,6 +82,7 @@ CREATE TABLE IF NOT EXISTS `faq_revisions` (
   `question` mediumtext,
   `answer` mediumtext,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `timezone` text,
   PRIMARY KEY (`id`),
   KEY `faq_revisions_faq_idx` (`faq_id`)
 );
@@ -142,6 +145,7 @@ CREATE TABLE `imagepost` (
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `imageboard_idimageboard` int(10) DEFAULT NULL,
   `posted` datetime DEFAULT NULL,
+  `timezone` text,
   `description` mediumtext DEFAULT NULL,
   `thumbnail` tinytext DEFAULT NULL,
   `fullimage` tinytext DEFAULT NULL,
@@ -180,6 +184,7 @@ CREATE TABLE `linker` (
   `url` tinytext DEFAULT NULL,
   `description` tinytext DEFAULT NULL,
   `listed` datetime DEFAULT NULL,
+  `timezone` text,
   `deleted_at` datetime DEFAULT NULL,
   `last_index` datetime DEFAULT NULL,
   PRIMARY KEY (`idlinker`),
@@ -205,6 +210,7 @@ CREATE TABLE `linker_queue` (
   `title` tinytext DEFAULT NULL,
   `url` tinytext DEFAULT NULL,
   `description` mediumtext DEFAULT NULL,
+  `timezone` text,
   PRIMARY KEY (`idlinkerQueue`),
   KEY `linkerQueue_FKIndex1` (`linker_category_id`),
   KEY `linkerQueue_FKIndex2` (`users_idusers`),
@@ -291,6 +297,7 @@ CREATE TABLE `site_news` (
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `news` longtext DEFAULT NULL,
   `occurred` datetime DEFAULT NULL,
+  `timezone` text,
   `last_index` datetime DEFAULT NULL,
   PRIMARY KEY (`idsiteNews`),
   KEY `siteNews_FKIndex1` (`users_idusers`),
@@ -527,6 +534,7 @@ CREATE TABLE IF NOT EXISTS `deactivated_comments` (
   `language_idlanguage` int DEFAULT NULL,
   `written` datetime,
   `text` longtext,
+  `timezone` text,
   `deleted_at` datetime DEFAULT NULL,
   `restored_at` datetime DEFAULT NULL,
   PRIMARY KEY (`idcomments`)
@@ -555,6 +563,7 @@ CREATE TABLE IF NOT EXISTS `deactivated_blogs` (
   `language_idlanguage` int DEFAULT NULL,
   `blog` longtext,
   `written` datetime,
+  `timezone` text,
   `deleted_at` datetime DEFAULT NULL,
   `restored_at` datetime DEFAULT NULL,
   PRIMARY KEY (`idblogs`)
@@ -566,6 +575,7 @@ CREATE TABLE IF NOT EXISTS `deactivated_imageposts` (
   `users_idusers` int NOT NULL,
   `imageboard_idimageboard` int DEFAULT NULL,
   `posted` datetime,
+  `timezone` text,
   `description` tinytext,
   `thumbnail` tinytext,
   `fullimage` tinytext,
@@ -586,6 +596,7 @@ CREATE TABLE IF NOT EXISTS `deactivated_linker` (
   `url` tinytext,
   `description` tinytext,
   `listed` datetime,
+  `timezone` text,
   `deleted_at` datetime DEFAULT NULL,
   `restored_at` datetime DEFAULT NULL,
   PRIMARY KEY (`idlinker`)
@@ -655,4 +666,28 @@ CREATE TABLE IF NOT EXISTS `external_links` (
   `favicon_cache` text,
   PRIMARY KEY (`id`),
   UNIQUE KEY `external_links_url_idx` (`url`(255))
+);
+
+CREATE TABLE `forumtopic_public_labels` (
+  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `forumtopic_idforumtopic` int NOT NULL,
+  `label` tinytext NOT NULL,
+  UNIQUE (`forumtopic_idforumtopic`,`label`)
+);
+
+CREATE TABLE `forumtopic_private_labels` (
+  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `forumtopic_idforumtopic` int NOT NULL,
+  `users_idusers` int NOT NULL,
+  `label` tinytext NOT NULL,
+  `invert` int NOT NULL DEFAULT 0,
+  UNIQUE (`forumtopic_idforumtopic`,`users_idusers`,`label`)
+);
+
+CREATE TABLE `content_label_status` (
+  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `item` tinytext NOT NULL,
+  `item_id` int NOT NULL,
+  `label` tinytext NOT NULL,
+  UNIQUE (`item`,`item_id`,`label`)
 );

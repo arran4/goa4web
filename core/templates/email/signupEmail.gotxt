@@ -6,6 +6,7 @@ Please add them to the user group to approve the account.
 Review the account here:
 {{.URL}}
 
+
 Manage notifications: {{.UnsubscribeUrl}}
 {{- if .SignOff}}
 {{.SignOff}}

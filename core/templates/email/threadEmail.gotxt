@@ -5,6 +5,7 @@ A new thread "{{.Item.TopicTitle}}" was started at {{.Item.Path}}.
 View it here:
 {{.URL}}
 
+
 Manage notifications: {{.UnsubscribeUrl}}
 {{- if .SignOff}}
 {{.SignOff}}

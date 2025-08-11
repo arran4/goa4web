@@ -63,6 +63,14 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 		},
 		"trim":      strings.TrimSpace,
 		"localTime": func(t time.Time) time.Time { return t.In(cd.Location()) },
+		"localTimeIn": func(t time.Time, zone string) time.Time {
+			if zone != "" {
+				if loc, err := time.LoadLocation(zone); err == nil {
+					return t.In(loc)
+				}
+			}
+			return t.In(cd.Location())
+		},
 		"firstline": func(s string) string {
 			return strings.Split(s, "\n")[0]
 		},

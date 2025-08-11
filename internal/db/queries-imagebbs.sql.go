@@ -59,7 +59,7 @@ func (q *Queries) AdminDeleteImagePost(ctx context.Context, idimagepost int32) e
 }
 
 const adminGetImagePost = `-- name: AdminGetImagePost :one
-SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
+SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.timezone, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
@@ -73,6 +73,7 @@ type AdminGetImagePostRow struct {
 	UsersIdusers           int32
 	ImageboardIdimageboard sql.NullInt32
 	Posted                 sql.NullTime
+	Timezone               sql.NullString
 	Description            sql.NullString
 	Thumbnail              sql.NullString
 	Fullimage              sql.NullString
@@ -93,6 +94,7 @@ func (q *Queries) AdminGetImagePost(ctx context.Context, idimagepost int32) (*Ad
 		&i.UsersIdusers,
 		&i.ImageboardIdimageboard,
 		&i.Posted,
+		&i.Timezone,
 		&i.Description,
 		&i.Thumbnail,
 		&i.Fullimage,
@@ -200,10 +202,11 @@ INSERT INTO imagepost (
     users_idusers,
     description,
     posted,
+    timezone,
     approved,
     file_size
 )
-SELECT ?, ?, ?, ?, ?, NOW(), ?, ?
+SELECT ?, ?, ?, ?, ?, NOW(), ?, ?, ?
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='imagebbs'
@@ -224,6 +227,7 @@ type CreateImagePostForPosterParams struct {
 	Fullimage    sql.NullString
 	PosterID     int32
 	Description  sql.NullString
+	Timezone     sql.NullString
 	Approved     bool
 	FileSize     int32
 	GrantBoardID sql.NullInt32
@@ -237,6 +241,7 @@ func (q *Queries) CreateImagePostForPoster(ctx context.Context, arg CreateImageP
 		arg.Fullimage,
 		arg.PosterID,
 		arg.Description,
+		arg.Timezone,
 		arg.Approved,
 		arg.FileSize,
 		arg.GrantBoardID,
@@ -302,7 +307,7 @@ const getImagePostByIDForLister = `-- name: GetImagePostByIDForLister :one
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
+SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.timezone, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
@@ -334,6 +339,7 @@ type GetImagePostByIDForListerRow struct {
 	UsersIdusers           int32
 	ImageboardIdimageboard sql.NullInt32
 	Posted                 sql.NullTime
+	Timezone               sql.NullString
 	Description            sql.NullString
 	Thumbnail              sql.NullString
 	Fullimage              sql.NullString
@@ -354,6 +360,7 @@ func (q *Queries) GetImagePostByIDForLister(ctx context.Context, arg GetImagePos
 		&i.UsersIdusers,
 		&i.ImageboardIdimageboard,
 		&i.Posted,
+		&i.Timezone,
 		&i.Description,
 		&i.Thumbnail,
 		&i.Fullimage,
@@ -405,7 +412,7 @@ func (q *Queries) GetImagePostInfoByPath(ctx context.Context, arg GetImagePostIn
 }
 
 const getImagePostsByUserDescending = `-- name: GetImagePostsByUserDescending :many
-SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
+SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.timezone, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
@@ -426,6 +433,7 @@ type GetImagePostsByUserDescendingRow struct {
 	UsersIdusers           int32
 	ImageboardIdimageboard sql.NullInt32
 	Posted                 sql.NullTime
+	Timezone               sql.NullString
 	Description            sql.NullString
 	Thumbnail              sql.NullString
 	Fullimage              sql.NullString
@@ -452,6 +460,7 @@ func (q *Queries) GetImagePostsByUserDescending(ctx context.Context, arg GetImag
 			&i.UsersIdusers,
 			&i.ImageboardIdimageboard,
 			&i.Posted,
+			&i.Timezone,
 			&i.Description,
 			&i.Thumbnail,
 			&i.Fullimage,
@@ -476,7 +485,7 @@ func (q *Queries) GetImagePostsByUserDescending(ctx context.Context, arg GetImag
 }
 
 const getImagePostsByUserDescendingAll = `-- name: GetImagePostsByUserDescendingAll :many
-SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
+SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.timezone, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
@@ -497,6 +506,7 @@ type GetImagePostsByUserDescendingAllRow struct {
 	UsersIdusers           int32
 	ImageboardIdimageboard sql.NullInt32
 	Posted                 sql.NullTime
+	Timezone               sql.NullString
 	Description            sql.NullString
 	Thumbnail              sql.NullString
 	Fullimage              sql.NullString
@@ -523,6 +533,7 @@ func (q *Queries) GetImagePostsByUserDescendingAll(ctx context.Context, arg GetI
 			&i.UsersIdusers,
 			&i.ImageboardIdimageboard,
 			&i.Posted,
+			&i.Timezone,
 			&i.Description,
 			&i.Thumbnail,
 			&i.Fullimage,
@@ -675,7 +686,7 @@ const listImagePostsByBoardForLister = `-- name: ListImagePostsByBoardForLister 
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
+SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.timezone, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
@@ -709,6 +720,7 @@ type ListImagePostsByBoardForListerRow struct {
 	UsersIdusers           int32
 	ImageboardIdimageboard sql.NullInt32
 	Posted                 sql.NullTime
+	Timezone               sql.NullString
 	Description            sql.NullString
 	Thumbnail              sql.NullString
 	Fullimage              sql.NullString
@@ -741,6 +753,7 @@ func (q *Queries) ListImagePostsByBoardForLister(ctx context.Context, arg ListIm
 			&i.UsersIdusers,
 			&i.ImageboardIdimageboard,
 			&i.Posted,
+			&i.Timezone,
 			&i.Description,
 			&i.Thumbnail,
 			&i.Fullimage,
@@ -768,7 +781,7 @@ const listImagePostsByPosterForLister = `-- name: ListImagePostsByPosterForListe
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
+SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboard, i.posted, i.timezone, i.description, i.thumbnail, i.fullimage, i.file_size, i.approved, i.deleted_at, i.last_index, u.username, th.comments
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = u.idusers
 LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
@@ -803,6 +816,7 @@ type ListImagePostsByPosterForListerRow struct {
 	UsersIdusers           int32
 	ImageboardIdimageboard sql.NullInt32
 	Posted                 sql.NullTime
+	Timezone               sql.NullString
 	Description            sql.NullString
 	Thumbnail              sql.NullString
 	Fullimage              sql.NullString
@@ -835,6 +849,7 @@ func (q *Queries) ListImagePostsByPosterForLister(ctx context.Context, arg ListI
 			&i.UsersIdusers,
 			&i.ImageboardIdimageboard,
 			&i.Posted,
+			&i.Timezone,
 			&i.Description,
 			&i.Thumbnail,
 			&i.Fullimage,

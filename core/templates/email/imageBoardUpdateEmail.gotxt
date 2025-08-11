@@ -1,2 +1,3 @@
 Image board "{{.Item.Title}}" updated.
+
 Manage notifications: {{.UnsubscribeUrl}}

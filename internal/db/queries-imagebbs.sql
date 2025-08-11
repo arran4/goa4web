@@ -19,10 +19,11 @@ INSERT INTO imagepost (
     users_idusers,
     description,
     posted,
+    timezone,
     approved,
     file_size
 )
-SELECT sqlc.arg(imageboard_id), sqlc.arg(thumbnail), sqlc.arg(fullimage), sqlc.arg(poster_id), sqlc.arg(description), NOW(), sqlc.arg(approved), sqlc.arg(file_size)
+SELECT sqlc.arg(imageboard_id), sqlc.arg(thumbnail), sqlc.arg(fullimage), sqlc.arg(poster_id), sqlc.arg(description), NOW(), sqlc.arg(timezone), sqlc.arg(approved), sqlc.arg(file_size)
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='imagebbs'

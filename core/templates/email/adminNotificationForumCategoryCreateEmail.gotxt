@@ -1,3 +1,4 @@
 User {{.Item.Username}} created a new forum category.
 
+
 Manage notifications: {{.UnsubscribeUrl}}

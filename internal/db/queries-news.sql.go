@@ -87,8 +87,8 @@ func (q *Queries) AdminReplaceSiteNewsURL(ctx context.Context, arg AdminReplaceS
 }
 
 const createNewsPostForWriter = `-- name: CreateNewsPostForWriter :execlastid
-INSERT INTO site_news (news, users_idusers, occurred, language_idlanguage)
-SELECT ?, ?, NOW(), ?
+INSERT INTO site_news (news, users_idusers, occurred, timezone, language_idlanguage)
+SELECT ?, ?, NOW(), ?, ?
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='news'
@@ -106,6 +106,7 @@ WHERE EXISTS (
 type CreateNewsPostForWriterParams struct {
 	News       sql.NullString
 	WriterID   int32
+	Timezone   sql.NullString
 	LanguageID sql.NullInt32
 	GranteeID  sql.NullInt32
 }
@@ -114,6 +115,7 @@ func (q *Queries) CreateNewsPostForWriter(ctx context.Context, arg CreateNewsPos
 	result, err := q.db.ExecContext(ctx, createNewsPostForWriter,
 		arg.News,
 		arg.WriterID,
+		arg.Timezone,
 		arg.LanguageID,
 		arg.GranteeID,
 		arg.WriterID,
@@ -188,7 +190,7 @@ const getNewsPostByIdWithWriterIdAndThreadCommentCount = `-- name: GetNewsPostBy
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT u.username AS writerName, u.idusers as writerId, s.idsiteNews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, th.comments as Comments
+SELECT u.username AS writerName, u.idusers as writerId, s.idsiteNews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, s.timezone, th.comments as Comments
 FROM site_news s
 LEFT JOIN users u ON s.users_idusers = u.idusers
 LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
@@ -220,6 +222,7 @@ type GetNewsPostByIdWithWriterIdAndThreadCommentCountRow struct {
 	UsersIdusers       int32
 	News               sql.NullString
 	Occurred           sql.NullTime
+	Timezone           sql.NullString
 	Comments           sql.NullInt32
 }
 
@@ -235,6 +238,7 @@ func (q *Queries) GetNewsPostByIdWithWriterIdAndThreadCommentCount(ctx context.C
 		&i.UsersIdusers,
 		&i.News,
 		&i.Occurred,
+		&i.Timezone,
 		&i.Comments,
 	)
 	return &i, err
@@ -244,7 +248,7 @@ const getNewsPostsByIdsForUserWithWriterIdAndThreadCommentCount = `-- name: GetN
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT u.username AS writerName, u.idusers as writerId, s.idsiteNews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, th.comments as Comments
+SELECT u.username AS writerName, u.idusers as writerId, s.idsiteNews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, s.timezone, th.comments as Comments
 FROM site_news s
 LEFT JOIN users u ON s.users_idusers = u.idusers
 LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
@@ -289,6 +293,7 @@ type GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountRow struct {
 	UsersIdusers       int32
 	News               sql.NullString
 	Occurred           sql.NullTime
+	Timezone           sql.NullString
 	Comments           sql.NullInt32
 }
 
@@ -324,6 +329,7 @@ func (q *Queries) GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCount(ctx 
 			&i.UsersIdusers,
 			&i.News,
 			&i.Occurred,
+			&i.Timezone,
 			&i.Comments,
 		); err != nil {
 			return nil, err
@@ -343,7 +349,7 @@ const getNewsPostsWithWriterUsernameAndThreadCommentCountDescending = `-- name: 
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT u.username AS writerName, u.idusers as writerId, s.idsiteNews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, th.comments as Comments
+SELECT u.username AS writerName, u.idusers as writerId, s.idsiteNews, s.forumthread_id, s.language_idlanguage, s.users_idusers, s.news, s.occurred, s.timezone, th.comments as Comments
 FROM site_news s
 LEFT JOIN users u ON s.users_idusers = u.idusers
 LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
@@ -387,6 +393,7 @@ type GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow struct {
 	UsersIdusers       int32
 	News               sql.NullString
 	Occurred           sql.NullTime
+	Timezone           sql.NullString
 	Comments           sql.NullInt32
 }
 
@@ -415,6 +422,7 @@ func (q *Queries) GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(
 			&i.UsersIdusers,
 			&i.News,
 			&i.Occurred,
+			&i.Timezone,
 			&i.Comments,
 		); err != nil {
 			return nil, err

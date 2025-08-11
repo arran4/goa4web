@@ -9,7 +9,7 @@
             <table width="100%">
                 {{range $rows}}
                     <tr>
-                        <th bgcolor="lightgrey">{{.Written}}</th>
+                        <th bgcolor="lightgrey">{{ localTimeIn .Written .Timezone.String }}</th>
                     </tr>
                     <tr>
                         <td>

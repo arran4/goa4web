@@ -13,17 +13,20 @@
             <h2 class="blog-title"><a href="/blogs/bloggers">All bloggers</a>' blogs.</h2>
         {{ end }}
     {{ end }}
-    <table width="100%">
+    <section class="blog-posts">
         {{ range $rows }}
-            <tr>
-                <th bgcolor="lightgrey">{{ localTimeIn .Written .Timezone.String }}</th>
-            </tr>
-            <tr>
-                <td>
-                    {{ $labels := BlogLabels .Idblogs }}
-                    {{ .Blog.String | a4code2html}}<br><br>{{ .Username.String }} - [<a href="/blogs/blog/{{ .Idblogs }}/comments">{{ .Comments }} COMMENTS</a>]{{ if cd.CanEditBlog .Idblogs .UsersIdusers }} - [<a href="/blogs/blog/{{ .Idblogs }}/edit">EDIT</a>]{{ end }}{{ if and cd.IsAdmin cd.IsAdminMode }} - [<a href="/admin/blogs/blog/{{ .Idblogs }}">ADMIN</a>]{{ end }}{{ if $labels }} <span class="label-bar">{{ template "topicLabels" $labels }}</span>{{ end }}
-                </td>
-            </tr>
+            <article class="blog-post">
+                <header>{{ localTimeIn .Written .Timezone.String }}</header>
+                {{ $labels := BlogLabels .Idblogs }}
+                <div class="post-body">{{ .Blog.String | a4code2html}}</div>
+                <footer class="post-meta">
+                    <span class="author">{{ .Username.String }}</span>
+                    <span class="comment-link"><a href="/blogs/blog/{{ .Idblogs }}/comments">{{ .Comments }} COMMENTS</a></span>
+                    {{ if cd.CanEditBlog .Idblogs .UsersIdusers }}<span class="edit"><a href="/blogs/blog/{{ .Idblogs }}/edit">EDIT</a></span>{{ end }}
+                    {{ if and cd.IsAdmin cd.IsAdminMode }}<span class="admin"><a href="/admin/blogs/blog/{{ .Idblogs }}">ADMIN</a></span>{{ end }}
+                    {{ if $labels }}<div class="label-bar">{{ template "topicLabels" $labels }}</div>{{ end }}
+                </footer>
+            </article>
         {{ else }}
             {{ if gt (cd.Offset) 0 }}
                 {{ if cd.CurrentProfileUserID }}
@@ -39,6 +42,6 @@
                 {{ end }}
             {{ end }}
         {{ end }}
-    </table><br>
+    </section><br>
     {{ template "tail" $ }}
 {{ end }}

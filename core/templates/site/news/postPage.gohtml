@@ -21,6 +21,7 @@
         {{ csrfField }}
             <input type="hidden" name="task" value="Set Labels"/>
             <input type="hidden" name="back" value="{{ .BackURL }}"/>
+            <div class="label-bar">
             {{ range .Labels }}
                 {{ if eq .Type "private" }}
                 <span class="label pill private">{{ .Name }}<button type="button" class="remove" data-type="private">x</button><input type="hidden" name="private" value="{{ .Name }}"/></span>
@@ -28,6 +29,7 @@
                 <span class="label pill author">{{ .Name }}</span>
                 {{ end }}
             {{ end }}
+            </div>
             <input type="text" class="label-input" data-type="private" placeholder="Add private label"/>
             <input type="submit" value="Save Labels"/>
         </form>

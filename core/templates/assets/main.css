@@ -124,10 +124,36 @@ h2, h3 {
 }
 
 .blog-subtitle {
-	font-family: tahoma, arial, helvetica, sans-serif;
-	font-size: 1.2em;
-	color: #800000;
-	background-color: transparent;
+        font-family: tahoma, arial, helvetica, sans-serif;
+        font-size: 1.2em;
+        color: #800000;
+        background-color: transparent;
+}
+
+.blog-post {
+        margin-bottom: 1em;
+}
+
+.post-body {
+        margin-top: 0.5em;
+}
+
+.post-meta {
+        font-size: 0.9em;
+        margin-top: 0.5em;
+}
+
+.post-meta span {
+        margin-right: 0.5em;
+}
+
+.label-bar {
+        display: block;
+        margin-top: 0.5em;
+}
+
+.comment-link {
+        margin-right: 0.5em;
 }
 
 .table {

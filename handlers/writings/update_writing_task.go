@@ -44,11 +44,26 @@ func (UpdateWritingTask) Action(w http.ResponseWriter, r *http.Request) any {
 	title := r.PostFormValue("title")
 	abstract := r.PostFormValue("abstract")
 	body := r.PostFormValue("body")
+	raw := r.PostForm["author"]
+	labels := make([]string, 0, len(raw))
+	seen := map[string]struct{}{}
+	for _, l := range raw {
+		if v := strings.TrimSpace(l); v != "" {
+			if _, ok := seen[v]; !ok {
+				seen[v] = struct{}{}
+				labels = append(labels, v)
+			}
+		}
+	}
 
 	queries := cd.Queries()
 
 	if err := cd.UpdateWriting(writing, title, abstract, body, private, int32(languageID)); err != nil {
 		return fmt.Errorf("update writing fail %w", err)
+	}
+
+	if err := cd.SetWritingAuthorLabels(writing.Idwriting, labels); err != nil {
+		return fmt.Errorf("set author labels fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {

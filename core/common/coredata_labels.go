@@ -63,6 +63,40 @@ func (cd *CoreData) RemoveAuthorLabel(item string, itemID int32, label string) e
 	return cd.queries.RemoveContentLabelStatus(cd.ctx, db.RemoveContentLabelStatusParams{Item: item, ItemID: itemID, Label: label})
 }
 
+// SetAuthorLabels replaces all author-only labels on an item with the provided list.
+func (cd *CoreData) SetAuthorLabels(item string, itemID int32, labels []string) error {
+	if cd.queries == nil {
+		return nil
+	}
+	_, current, err := cd.PublicLabels(item, itemID)
+	if err != nil {
+		return err
+	}
+	have := make(map[string]struct{}, len(current))
+	for _, l := range current {
+		have[l] = struct{}{}
+	}
+	want := make(map[string]struct{}, len(labels))
+	for _, l := range labels {
+		want[l] = struct{}{}
+	}
+	for l := range want {
+		if _, ok := have[l]; !ok {
+			if err := cd.AddAuthorLabel(item, itemID, l); err != nil {
+				return err
+			}
+		}
+	}
+	for l := range have {
+		if _, ok := want[l]; !ok {
+			if err := cd.RemoveAuthorLabel(item, itemID, l); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 // SetPublicLabels replaces all public labels on an item with the provided list.
 func (cd *CoreData) SetPublicLabels(item string, itemID int32, labels []string) error {
 	if cd.queries == nil {
@@ -246,6 +280,10 @@ func (cd *CoreData) RemoveThreadAuthorLabel(threadID int32, label string) error 
 	return cd.RemoveAuthorLabel("thread", threadID, label)
 }
 
+func (cd *CoreData) SetThreadAuthorLabels(threadID int32, labels []string) error {
+	return cd.SetAuthorLabels("thread", threadID, labels)
+}
+
 func (cd *CoreData) SetThreadPublicLabels(threadID int32, labels []string) error {
 	return cd.SetPublicLabels("thread", threadID, labels)
 }
@@ -276,20 +314,25 @@ func (cd *CoreData) SetThreadPrivateLabels(threadID int32, labels []string) erro
 
 // Writings
 
-func (cd *CoreData) WritingPublicLabels(writingID int32) (public, owner []string, err error) {
-	return cd.PublicLabels("writing", writingID)
+// WritingAuthorLabels returns author labels for a writing.
+func (cd *CoreData) WritingAuthorLabels(writingID int32) ([]string, error) {
+	_, owner, err := cd.PublicLabels("writing", writingID)
+	return owner, err
 }
 
-func (cd *CoreData) AddWritingPublicLabel(writingID int32, label string) error {
-	return cd.AddPublicLabel("writing", writingID, label)
+// AddWritingAuthorLabel adds an author-only label to a writing.
+func (cd *CoreData) AddWritingAuthorLabel(writingID int32, label string) error {
+	return cd.AddAuthorLabel("writing", writingID, label)
 }
 
-func (cd *CoreData) RemoveWritingPublicLabel(writingID int32, label string) error {
-	return cd.RemovePublicLabel("writing", writingID, label)
+// RemoveWritingAuthorLabel removes an author-only label from a writing.
+func (cd *CoreData) RemoveWritingAuthorLabel(writingID int32, label string) error {
+	return cd.RemoveAuthorLabel("writing", writingID, label)
 }
 
-func (cd *CoreData) SetWritingPublicLabels(writingID int32, labels []string) error {
-	return cd.SetPublicLabels("writing", writingID, labels)
+// SetWritingAuthorLabels replaces all author labels on a writing with the provided list.
+func (cd *CoreData) SetWritingAuthorLabels(writingID int32, labels []string) error {
+	return cd.SetAuthorLabels("writing", writingID, labels)
 }
 
 func (cd *CoreData) WritingPrivateLabels(writingID int32) ([]string, error) {
@@ -302,20 +345,25 @@ func (cd *CoreData) SetWritingPrivateLabels(writingID int32, labels []string) er
 
 // News
 
-func (cd *CoreData) NewsPublicLabels(newsID int32) (public, owner []string, err error) {
-	return cd.PublicLabels("news", newsID)
+// NewsAuthorLabels returns author labels for a news item.
+func (cd *CoreData) NewsAuthorLabels(newsID int32) ([]string, error) {
+	_, owner, err := cd.PublicLabels("news", newsID)
+	return owner, err
 }
 
-func (cd *CoreData) AddNewsPublicLabel(newsID int32, label string) error {
-	return cd.AddPublicLabel("news", newsID, label)
+// AddNewsAuthorLabel adds an author-only label to a news item.
+func (cd *CoreData) AddNewsAuthorLabel(newsID int32, label string) error {
+	return cd.AddAuthorLabel("news", newsID, label)
 }
 
-func (cd *CoreData) RemoveNewsPublicLabel(newsID int32, label string) error {
-	return cd.RemovePublicLabel("news", newsID, label)
+// RemoveNewsAuthorLabel removes an author-only label from a news item.
+func (cd *CoreData) RemoveNewsAuthorLabel(newsID int32, label string) error {
+	return cd.RemoveAuthorLabel("news", newsID, label)
 }
 
-func (cd *CoreData) SetNewsPublicLabels(newsID int32, labels []string) error {
-	return cd.SetPublicLabels("news", newsID, labels)
+// SetNewsAuthorLabels replaces all author labels on a news item with the provided list.
+func (cd *CoreData) SetNewsAuthorLabels(newsID int32, labels []string) error {
+	return cd.SetAuthorLabels("news", newsID, labels)
 }
 
 func (cd *CoreData) NewsPrivateLabels(newsID int32) ([]string, error) {
@@ -328,20 +376,25 @@ func (cd *CoreData) SetNewsPrivateLabels(newsID int32, labels []string) error {
 
 // Blogs
 
-func (cd *CoreData) BlogPublicLabels(blogID int32) (public, owner []string, err error) {
-	return cd.PublicLabels("blog", blogID)
+// BlogAuthorLabels returns author labels for a blog post.
+func (cd *CoreData) BlogAuthorLabels(blogID int32) ([]string, error) {
+	_, owner, err := cd.PublicLabels("blog", blogID)
+	return owner, err
 }
 
-func (cd *CoreData) AddBlogPublicLabel(blogID int32, label string) error {
-	return cd.AddPublicLabel("blog", blogID, label)
+// AddBlogAuthorLabel adds an author-only label to a blog post.
+func (cd *CoreData) AddBlogAuthorLabel(blogID int32, label string) error {
+	return cd.AddAuthorLabel("blog", blogID, label)
 }
 
-func (cd *CoreData) RemoveBlogPublicLabel(blogID int32, label string) error {
-	return cd.RemovePublicLabel("blog", blogID, label)
+// RemoveBlogAuthorLabel removes an author-only label from a blog post.
+func (cd *CoreData) RemoveBlogAuthorLabel(blogID int32, label string) error {
+	return cd.RemoveAuthorLabel("blog", blogID, label)
 }
 
-func (cd *CoreData) SetBlogPublicLabels(blogID int32, labels []string) error {
-	return cd.SetPublicLabels("blog", blogID, labels)
+// SetBlogAuthorLabels replaces all author labels on a blog post with the provided list.
+func (cd *CoreData) SetBlogAuthorLabels(blogID int32, labels []string) error {
+	return cd.SetAuthorLabels("blog", blogID, labels)
 }
 
 func (cd *CoreData) BlogPrivateLabels(blogID int32) ([]string, error) {

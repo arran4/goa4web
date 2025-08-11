@@ -11,6 +11,7 @@ import (
 
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
@@ -43,6 +44,17 @@ func (EditBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("languageId parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	text := r.PostFormValue("text")
+	raw := r.PostForm["author"]
+	labels := make([]string, 0, len(raw))
+	seen := map[string]struct{}{}
+	for _, l := range raw {
+		if v := strings.TrimSpace(l); v != "" {
+			if _, ok := seen[v]; !ok {
+				seen[v] = struct{}{}
+				labels = append(labels, v)
+			}
+		}
+	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
 	row := cd.CurrentBlogLoaded()
@@ -59,6 +71,10 @@ func (EditBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 		WriterID:  cd.UserID,
 	}); err != nil {
 		return fmt.Errorf("update blog fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+
+	if err := cd.SetBlogAuthorLabels(row.Idblogs, labels); err != nil {
+		return fmt.Errorf("set author labels fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -85,6 +101,7 @@ func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 		Blog               *db.GetBlogEntryForListerByIDRow
 		SelectedLanguageId int
 		Mode               string
+		AuthorLabels       []string
 	}
 
 	data := Data{
@@ -100,6 +117,9 @@ func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 	data.Languages = languageRows
 
 	data.Blog = cd.CurrentBlogLoaded()
+	if als, err := cd.BlogAuthorLabels(data.Blog.Idblogs); err == nil {
+		data.AuthorLabels = als
+	}
 
 	handlers.TemplateHandler(w, r, "blogEditPage.gohtml", data)
 }

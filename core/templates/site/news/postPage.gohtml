@@ -1,7 +1,29 @@
 {{ template "head" $ }}
     {{ template "newsPost" $.Post }}
+    {{ if .Labels }}
+    <div class="label-bar">
+        {{ template "topicLabels" .Labels }}
+    </div>
+    {{ end }}
     <hr><font size=4>Replies:</font>
     {{ template "threadComments" }}
+    <div class="label-editor">
+        <form method="post" action="/news/news/{{ .Post.Idsitenews }}/labels" id="label-form">
+        {{ csrfField }}
+            <input type="hidden" name="task" value="Set Labels"/>
+            <input type="hidden" name="back" value="{{ .BackURL }}"/>
+            {{ range .Labels }}
+                {{ if eq .Type "private" }}
+                <span class="label pill private">{{ .Name }}<button type="button" class="remove" data-type="private">x</button><input type="hidden" name="private" value="{{ .Name }}"/></span>
+                {{ else if eq .Type "author" }}
+                <span class="label pill author">{{ .Name }}</span>
+                {{ end }}
+            {{ end }}
+            <input type="text" class="label-input" data-type="private" placeholder="Add private label"/>
+            <input type="submit" value="Save Labels"/>
+        </form>
+    </div>
+    <script src="/forum/topic_labels.js"></script>
     {{ if cd.SelectedThreadCanReply }}
         <div class="comment">
             <aside class="author">

@@ -5,7 +5,7 @@
     </form>
     {{if .Search}}
         {{if .Rows}}
-            <font size="5">Search results for "{{.Search}}".</font><br>
+            <h2 class="font-size-5">Search results for "{{.Search}}".</h2><br>
             {{range .Rows}}
                 Blogger: <a href="/blogs/blogger/{{.Username.String}}">{{.Username.String}}</a> has {{.Count}} blogs.<br>
             {{end}}
@@ -14,7 +14,7 @@
         {{end}}
     {{else}}
         {{if .Rows}}
-            <font size="5">All bloggers.</font><br>
+            <h2 class="font-size-5">All bloggers.</h2><br>
             {{range .Rows}}
                 Blogger: <a href="/blogs/blogger/{{.Username.String}}">{{.Username.String}}</a> has {{.Count}} blogs.<br>
             {{end}}

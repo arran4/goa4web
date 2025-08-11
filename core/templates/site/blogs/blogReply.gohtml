@@ -24,7 +24,7 @@
                 </aside>
                 <section class="body">
                     <a id="bottom"></a>
-                    <font size="4">Reply:</font><br>
+                    <span class="font-size-4">Reply:</span><br>
                     <form method="post" action="/blogs/blog/{{$blog.Idblogs}}/reply">
                 {{ csrfField }}
                         <textarea id="reply" name="replytext" cols="40" rows="20">{{$.Text}}</textarea><br>

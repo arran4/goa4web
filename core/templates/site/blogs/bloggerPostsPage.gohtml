@@ -2,9 +2,9 @@
         {{ $rows := cd.BloggerPosts }}
         {{if $rows}}
             {{if cd.CurrentProfileUserID}}
-                <font size="5"><a href="/blogs/blogger/{{(index $rows 0).Username.String}}">{{(index $rows 0).Username.String}}</a>'s blogs.</font><br>
+                <h2 class="font-size-5"><a href="/blogs/blogger/{{(index $rows 0).Username.String}}">{{(index $rows 0).Username.String}}</a>'s blogs.</h2><br>
             {{else}}
-                <font size="5"><a href="/blogs/bloggers">All bloggers</a>' blogs.</font><br>
+                <h2 class="font-size-5"><a href="/blogs/bloggers">All bloggers</a>' blogs.</h2><br>
             {{end}}
             <table width="100%">
                 {{range $rows}}

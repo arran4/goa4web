@@ -4,7 +4,7 @@
         <input type="submit" name="task" value="Search">
     </form>
     {{if .Rows}}
-        <font size="5">All writers.</font><br>
+        <h2 class="font-size-5">All writers.</h2><br>
         {{range .Rows}}
             Writer: <a href="/writings/writer/{{.Username.String}}">{{.Username.String}}</a> has {{.Count}} articles.<br>
         {{end}}

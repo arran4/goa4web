@@ -1,4 +1,4 @@
 {{ template "head" $ }}
-    <font size="5">{{ .Username }}'s links.</font><br>
+    <h2 class="font-size-5">{{ .Username }}'s links.</h2><br>
     {{ template "getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingLinks" $ }}
 {{ template "tail" $ }}

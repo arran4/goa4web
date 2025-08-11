@@ -14,7 +14,7 @@
             <button type="submit">Mark as read and go back</button>
         </form>
     </div>
-    <hr><font size=4>Replies:</font>
+    <hr><span class="font-size-4">Replies:</span>
     {{ template "threadComments" }}
     <div class="label-editor">
         <form method="post" action="/news/news/{{ .Post.Idsitenews }}/labels" id="label-form">
@@ -69,7 +69,7 @@
             </aside>
             <section class="body">
                 <a id="bottom"></a>
-                <font size=4>Reply:</font><br>
+                <span class="font-size-4">Reply:</span><br>
                 <form method="post" action="?#bottom">
                 {{ csrfField }}
                     <input type="hidden" name="replyto" value="{{ .Thread.Idforumthread }}">

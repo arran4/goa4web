@@ -2,7 +2,7 @@
     {{ $cd := cd }}
     {{ $boards := $cd.SubImageBoards $cd.SelectedBoardID }}
     {{- if $boards }}
-        <font size="4">{{ if gt ($cd.SelectedBoardID) 0 }}Sub-{{ end }}Boards:</font><br>
+        <span class="font-size-4">{{ if gt ($cd.SelectedBoardID) 0 }}Sub-{{ end }}Boards:</span><br>
         <table>
             {{- range $boards }}
                 <tr>

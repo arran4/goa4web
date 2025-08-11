@@ -1916,6 +1916,8 @@ func (cd *CoreData) SelectedThreadCanReply() bool {
 			return cd.SelectedWritingThreadCanReply(), nil
 		case "forum":
 			return cd.SelectedForumThreadCanReply(), nil
+		case "privateforum":
+			return cd.SelectedForumThreadCanReply(), nil
 		case "imagebbs":
 			return cd.SelectedImageBBSThreadCanReply(), nil
 		case "linker":

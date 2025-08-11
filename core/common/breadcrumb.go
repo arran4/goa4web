@@ -3,6 +3,7 @@ package common
 import (
 	"fmt"
 	"log"
+	"strings"
 )
 
 // Breadcrumb represents a single navigation step.
@@ -217,6 +218,40 @@ func (cd *CoreData) adminBreadcrumbs() ([]Breadcrumb, error) {
 		} else {
 			crumbs = append(crumbs, Breadcrumb{Title: fmt.Sprintf("Role %d", cd.currentRoleID)})
 		}
+	case cd.currentCategoryID != 0 && strings.HasPrefix(cd.PageTitle, "Linker Category"):
+		crumbs = append(crumbs, Breadcrumb{Title: "Linker Categories", Link: "/admin/linker/categories"})
+		crumbs = append(crumbs, Breadcrumb{Title: cd.PageTitle})
+	case cd.currentCategoryID != 0 && strings.HasPrefix(cd.PageTitle, "Edit Category"):
+		crumbs = append(crumbs, Breadcrumb{Title: "Writing Categories", Link: "/admin/writings/categories"})
+		crumbs = append(crumbs, Breadcrumb{Title: fmt.Sprintf("Writing Category %d", cd.currentCategoryID), Link: fmt.Sprintf("/admin/writings/categories/category/%d", cd.currentCategoryID)})
+		crumbs = append(crumbs, Breadcrumb{Title: cd.PageTitle})
+	case cd.currentCategoryID != 0 && strings.Contains(cd.PageTitle, "Category Grants"):
+		crumbs = append(crumbs, Breadcrumb{Title: "Writing Categories", Link: "/admin/writings/categories"})
+		crumbs = append(crumbs, Breadcrumb{Title: fmt.Sprintf("Writing Category %d", cd.currentCategoryID), Link: fmt.Sprintf("/admin/writings/categories/category/%d", cd.currentCategoryID)})
+		crumbs = append(crumbs, Breadcrumb{Title: cd.PageTitle})
+	case cd.currentCategoryID != 0 && strings.HasPrefix(cd.PageTitle, "Writing Category"):
+		crumbs = append(crumbs, Breadcrumb{Title: "Writing Categories", Link: "/admin/writings/categories"})
+		crumbs = append(crumbs, Breadcrumb{Title: cd.PageTitle})
+	case strings.Contains(cd.PageTitle, "FAQ Category") && !strings.Contains(cd.PageTitle, "FAQ Categories"):
+		crumbs = append(crumbs, Breadcrumb{Title: "FAQ Categories", Link: "/admin/faq/categories"})
+		crumbs = append(crumbs, Breadcrumb{Title: cd.PageTitle})
+	case cd.currentLinkID != 0 && strings.HasPrefix(cd.PageTitle, "Link"):
+		crumbs = append(crumbs, Breadcrumb{Title: "Linker Links", Link: "/admin/linker/links"})
+		crumbs = append(crumbs, Breadcrumb{Title: cd.PageTitle})
+	case cd.currentBoardID != 0 && strings.Contains(cd.PageTitle, "Image Board"):
+		crumbs = append(crumbs, Breadcrumb{Title: "Image Boards", Link: "/admin/imagebbs/boards"})
+		title := fmt.Sprintf("Board %d", cd.currentBoardID)
+		if boards, err := cd.ImageBoards(); err == nil {
+			for _, b := range boards {
+				if b.Idimageboard == cd.currentBoardID {
+					if b.Title.Valid {
+						title = b.Title.String
+					}
+					break
+				}
+			}
+		}
+		crumbs = append(crumbs, Breadcrumb{Title: title})
 	case cd.currentRequestID != 0:
 		crumbs = append(crumbs, Breadcrumb{Title: "Requests", Link: "/admin/requests"})
 		crumbs = append(crumbs, Breadcrumb{Title: fmt.Sprintf("Request %d", cd.currentRequestID)})

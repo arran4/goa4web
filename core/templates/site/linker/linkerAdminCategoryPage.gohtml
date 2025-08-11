@@ -14,17 +14,19 @@
         <th>Title</th>
         <th>URL</th>
         <th>Poster</th>
+        <th>View</th>
     </tr>
     {{ range cd.LinkerLinksByCategoryID .CategoryID }}
     <tr>
-        <td>{{ .Idlinker }}</td>
+        <td><a href="/admin/linker/links/link/{{ .Idlinker }}">{{ .Idlinker }}</a></td>
         <td>{{ .Title.String }}</td>
         <td><a href="{{ .Url.String }}">{{ .Url.String }}</a></td>
         <td>{{ .Posterusername.String }}</td>
+        <td><a href="/linker/show/{{ .Idlinker }}">View</a></td>
     </tr>
     {{ else }}
     <tr>
-        <td colspan="4">No links found.</td>
+        <td colspan="5">No links found.</td>
     </tr>
     {{ end }}
 </table>

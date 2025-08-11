@@ -54,8 +54,8 @@ func (DeleteIPBanTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return nil
 }
 
-func (DeleteIPBanTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("adminRemoveIPBanEmail")
+func (DeleteIPBanTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("adminRemoveIPBanEmail"), true
 }
 
 func (DeleteIPBanTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

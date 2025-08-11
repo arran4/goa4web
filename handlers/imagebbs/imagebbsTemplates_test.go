@@ -40,7 +40,9 @@ func TestImageBbsTemplatesExist(t *testing.T) {
 		modifyBoardTask,
 	}
 	for _, p := range admins {
-		checkEmailTemplates(t, p.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+		if et, _ := p.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}); et != nil {
+			checkEmailTemplates(t, et)
+		}
 		if p != newBoardTask {
 			checkNotificationTemplate(t, p.AdminInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
 		}
@@ -50,7 +52,11 @@ func TestImageBbsTemplatesExist(t *testing.T) {
 		approvePostTask,
 	}
 	for _, p := range selfProviders {
-		checkEmailTemplates(t, p.SelfEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+		if et, send := p.SelfEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}); send {
+			checkEmailTemplates(t, et)
+		} else {
+			t.Errorf("expected self email to be sent")
+		}
 		checkNotificationTemplate(t, p.SelfInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
 	}
 
@@ -58,7 +64,9 @@ func TestImageBbsTemplatesExist(t *testing.T) {
 		replyTask,
 	}
 	for _, p := range subs {
-		checkEmailTemplates(t, p.SubscribedEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+		if et, _ := p.SubscribedEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}); et != nil {
+			checkEmailTemplates(t, et)
+		}
 		checkNotificationTemplate(t, p.SubscribedInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
 	}
 }

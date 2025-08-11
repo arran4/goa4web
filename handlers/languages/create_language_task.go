@@ -44,8 +44,8 @@ func (CreateLanguageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return nil
 }
 
-func (CreateLanguageTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("adminNotificationLanguageCreateEmail")
+func (CreateLanguageTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("adminNotificationLanguageCreateEmail"), true
 }
 
 func (CreateLanguageTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

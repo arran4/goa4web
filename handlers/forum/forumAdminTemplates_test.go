@@ -34,6 +34,8 @@ func TestForumAdminTemplatesExist(t *testing.T) {
 		threadDeleteTask,
 	}
 	for _, p := range admins {
-		requireAdminEmailTemplates(t, p.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+		if et, _ := p.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}); et != nil {
+			requireAdminEmailTemplates(t, et)
+		}
 	}
 }

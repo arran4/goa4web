@@ -49,11 +49,8 @@ func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
 
 var _ searchworker.IndexedTask = ReplyTask{}
 
-func (ReplyTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	if evt.Outcome != eventbus.TaskOutcomeSuccess {
-		return nil
-	}
-	return notif.NewEmailTemplates("replyEmail")
+func (ReplyTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("replyEmail"), evt.Outcome == eventbus.TaskOutcomeSuccess
 }
 
 func (ReplyTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
@@ -64,11 +61,8 @@ func (ReplyTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) 
 	return &s
 }
 
-func (ReplyTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	if evt.Outcome != eventbus.TaskOutcomeSuccess {
-		return nil
-	}
-	return notif.NewEmailTemplates("adminNotificationForumReplyEmail")
+func (ReplyTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("adminNotificationForumReplyEmail"), evt.Outcome == eventbus.TaskOutcomeSuccess
 }
 
 func (ReplyTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

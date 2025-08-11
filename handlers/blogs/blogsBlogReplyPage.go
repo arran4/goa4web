@@ -35,11 +35,8 @@ var (
 	_ notif.GrantsRequiredProvider                  = (*ReplyBlogTask)(nil)
 )
 
-func (ReplyBlogTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	if evt.Outcome != eventbus.TaskOutcomeSuccess {
-		return nil
-	}
-	return notif.NewEmailTemplates("replyEmail")
+func (ReplyBlogTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("replyEmail"), evt.Outcome == eventbus.TaskOutcomeSuccess
 }
 
 func (ReplyBlogTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

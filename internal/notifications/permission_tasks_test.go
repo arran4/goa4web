@@ -19,20 +19,22 @@ import (
 
 type allowTaskNoEmail struct{ user.PermissionUserAllowTask }
 
-func (allowTaskNoEmail) TargetEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates { return nil }
+func (allowTaskNoEmail) TargetEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return nil, false
+}
 
 type disallowTaskNoEmail struct {
 	user.PermissionUserDisallowTask
 }
 
-func (disallowTaskNoEmail) TargetEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return nil
+func (disallowTaskNoEmail) TargetEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return nil, false
 }
 
 type updateTaskNoEmail struct{ user.PermissionUpdateTask }
 
-func (updateTaskNoEmail) TargetEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return nil
+func (updateTaskNoEmail) TargetEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return nil, false
 }
 
 func TestProcessEventPermissionTasks(t *testing.T) {

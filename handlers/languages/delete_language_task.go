@@ -45,8 +45,8 @@ func (DeleteLanguageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return nil
 }
 
-func (DeleteLanguageTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("adminNotificationLanguageDeleteEmail")
+func (DeleteLanguageTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("adminNotificationLanguageDeleteEmail"), true
 }
 
 func (DeleteLanguageTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

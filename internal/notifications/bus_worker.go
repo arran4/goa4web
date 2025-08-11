@@ -81,12 +81,14 @@ func (n *Notifier) processEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 	}
 
 	if tp, ok := evt.Task.(AdminEmailTemplateProvider); ok {
-		if err := n.notifyAdmins(ctx, tp.AdminEmailTemplate(evt), tp.AdminInternalNotificationTemplate(evt), evt.Data, evt.Path); err != nil {
-			errW := fmt.Errorf("AdminEmailTemplateProvider: %w", err)
-			if dlqErr := n.dlqRecordAndNotify(ctx, q, fmt.Sprintf("admin notify: %v", errW)); dlqErr != nil {
-				return dlqErr
+		if et, send := tp.AdminEmailTemplate(evt); send {
+			if err := n.notifyAdmins(ctx, et, tp.AdminInternalNotificationTemplate(evt), evt.Data, evt.Path); err != nil {
+				errW := fmt.Errorf("AdminEmailTemplateProvider: %w", err)
+				if dlqErr := n.dlqRecordAndNotify(ctx, q, fmt.Sprintf("admin notify: %v", errW)); dlqErr != nil {
+					return dlqErr
+				}
+				return errW
 			}
-			return errW
 		}
 	}
 
@@ -151,7 +153,7 @@ type NotificationData struct {
 }
 
 func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp SelfNotificationTemplateProvider) error {
-	if et := tp.SelfEmailTemplate(evt); et != nil {
+	if et, send := tp.SelfEmailTemplate(evt); send {
 		if b, ok := evt.Task.(SelfEmailBroadcaster); ok && b.SelfEmailBroadcast() {
 			emails, err := n.Queries.SystemListVerifiedEmailsByUserID(ctx, evt.UserID)
 			if err == nil {
@@ -201,7 +203,7 @@ func (n *Notifier) notifyDirectEmail(ctx context.Context, evt eventbus.TaskEvent
 	if addr == "" {
 		return nil
 	}
-	if et := tp.DirectEmailTemplate(evt); et != nil {
+	if et, send := tp.DirectEmailTemplate(evt); send {
 		if err := n.renderAndQueueEmailFromTemplates(ctx, nil, addr, et, evt.Data); err != nil {
 			return err
 		}
@@ -221,7 +223,7 @@ func (n *Notifier) notifyTargetUsers(ctx context.Context, evt eventbus.TaskEvent
 				log.Printf("notify missing email: %v", nmErr)
 			}
 		} else {
-			if et := tp.TargetEmailTemplate(evt); et != nil {
+			if et, send := tp.TargetEmailTemplate(evt); send {
 				if err := n.renderAndQueueEmailFromTemplates(ctx, &id, user.Email.String, et, evt.Data); err != nil {
 					return err
 				}
@@ -305,10 +307,11 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 		}
 	}
 
-	et := tp.SubscribedEmailTemplate(evt)
-	for id := range emailSubs {
-		if err := n.sendSubscriberEmail(ctx, id, evt, et); err != nil {
-			return fmt.Errorf("deliver email to %d: %w", id, err)
+	if et, send := tp.SubscribedEmailTemplate(evt); send {
+		for id := range emailSubs {
+			if err := n.sendSubscriberEmail(ctx, id, evt, et); err != nil {
+				return fmt.Errorf("deliver email to %d: %w", id, err)
+			}
 		}
 	}
 

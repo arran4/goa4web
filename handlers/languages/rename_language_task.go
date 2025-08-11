@@ -59,8 +59,8 @@ func (RenameLanguageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return nil
 }
 
-func (RenameLanguageTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("adminNotificationLanguageRenameEmail")
+func (RenameLanguageTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("adminNotificationLanguageRenameEmail"), true
 }
 
 func (RenameLanguageTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

@@ -65,8 +65,8 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return handlers.RedirectHandler(fmt.Sprintf("/writings/article/%d", writing.Idwriting))
 }
 
-func (EditReplyTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("adminNotificationNewsCommentEditEmail")
+func (EditReplyTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("adminNotificationNewsCommentEditEmail"), true
 }
 
 func (EditReplyTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

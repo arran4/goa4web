@@ -27,10 +27,10 @@ func TestAdminBlogCommentsPage_UsesURLParam(t *testing.T) {
 	mock.MatchExpectationsInOrder(false)
 
 	blogID := 9
-	rows := sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_idlanguage", "blog", "written", "username", "comments", "is_owner"}).
-		AddRow(blogID, sql.NullInt32{Int32: 1, Valid: true}, 1, 1, "body", time.Now(), "user", 0, true)
+	rows := sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_idlanguage", "blog", "written", "timezone", "username", "comments", "is_owner"}).
+		AddRow(blogID, sql.NullInt32{Int32: 1, Valid: true}, 1, 1, "body", time.Now(), time.Local.String(), "user", 0, true)
 	mock.ExpectQuery("SELECT").WillReturnRows(rows)
-	mock.ExpectQuery("SELECT").WillReturnRows(sqlmock.NewRows([]string{"idcomments", "posterusername", "text"}))
+	mock.ExpectQuery("SELECT").WillReturnError(sql.ErrNoRows)
 
 	req := httptest.NewRequest("GET", "/admin/blogs/blog/"+strconv.Itoa(blogID)+"/comments", nil)
 	req = mux.SetURLVars(req, map[string]string{"blog": strconv.Itoa(blogID)})

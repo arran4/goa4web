@@ -48,8 +48,8 @@ func TestQueries_ListImagePostsByBoardForLister_GlobalGrant(t *testing.T) {
 	defer conn.Close()
 	q := New(conn)
 
-	rows := sqlmock.NewRows([]string{"idimagepost", "forumthread_id", "users_idusers", "imageboard_idimageboard", "posted", "description", "thumbnail", "fullimage", "file_size", "approved", "deleted_at", "last_index", "username", "comments"}).
-		AddRow(1, 0, 1, 2, nil, nil, nil, nil, 0, true, nil, nil, "alice", 0)
+	rows := sqlmock.NewRows([]string{"idimagepost", "forumthread_id", "users_idusers", "imageboard_idimageboard", "posted", "timezone", "description", "thumbnail", "fullimage", "file_size", "approved", "deleted_at", "last_index", "username", "comments"}).
+		AddRow(1, 0, 1, 2, nil, nil, nil, nil, nil, 0, true, nil, nil, "alice", 0)
 
 	mock.ExpectQuery(regexp.QuoteMeta(listImagePostsByBoardForLister)).
 		WithArgs(int32(1), sql.NullInt32{Int32: 2, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}, int32(5), int32(0)).

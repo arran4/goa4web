@@ -1,5 +1,5 @@
 {{ define "listWritingCategories" }}
-    <font size="4">{{ if $.WritingCategoryID }}Sub-{{ end }}Categories:</font><br>
+    <span class="section-title">{{ if $.WritingCategoryID }}Sub-{{ end }}Categories:</span><br>
     <table>
         {{ $cats := cd.VisibleWritingCategories }}
         {{ $found := false }}

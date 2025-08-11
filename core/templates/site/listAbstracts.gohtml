@@ -4,7 +4,7 @@
     {{ end }}
     {{ $abstracts := cd.SelectedCategoryPublicWritings $.CategoryId $.Request }}
     {{ if gt (len $abstracts) 0 }}
-        <font size="4">Writing abstracts:</font><br>
+        <span class="section-title">Writing abstracts:</span><br>
     {{ end }}
     {{ range $abstracts }}
         {{ $title := .Title.String | a4code2html }}

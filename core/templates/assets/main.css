@@ -244,6 +244,13 @@ div.title {
         background-color: transparent;
 }
 
+.section-title {
+	font-size: 1.2em;
+}
+
+.page-title {
+	font-size: 1.5em;
+}
 .text-large {
         font-size: 1.2em;
 }

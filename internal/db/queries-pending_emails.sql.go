@@ -56,7 +56,7 @@ LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers
 LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers
 LEFT JOIN roles r ON ur.role_id = r.id
 WHERE pe.sent_at IS NULL AND pe.error_count > 0
-  AND (? IS NULL OR p.language_idlanguage = ?)
+  AND (? IS NULL OR p.language_id = ?)
   AND (? IS NULL OR r.name = ?)
 ORDER BY pe.id
 LIMIT ? OFFSET ?
@@ -123,7 +123,7 @@ LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers
 LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers
 LEFT JOIN roles r ON ur.role_id = r.id
 WHERE pe.sent_at IS NOT NULL
-  AND (? IS NULL OR p.language_idlanguage = ?)
+  AND (? IS NULL OR p.language_id = ?)
   AND (? IS NULL OR r.name = ?)
 ORDER BY pe.sent_at DESC
 LIMIT ? OFFSET ?
@@ -192,7 +192,7 @@ LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers
 LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers
 LEFT JOIN roles r ON ur.role_id = r.id
 WHERE pe.sent_at IS NULL
-  AND (? IS NULL OR p.language_idlanguage = ?)
+  AND (? IS NULL OR p.language_id = ?)
   AND (? IS NULL OR r.name = ?)
 ORDER BY pe.id
 `

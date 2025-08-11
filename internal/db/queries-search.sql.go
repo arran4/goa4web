@@ -170,12 +170,12 @@ LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearc
 JOIN linker l ON l.idlinker = cs.linker_id
 WHERE swl.word = ?
   AND (
-      l.language_idlanguage = 0
-      OR l.language_idlanguage IS NULL
+      l.language_id = 0
+      OR l.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
-            AND ul.language_idlanguage = l.language_idlanguage
+            AND ul.language_id = l.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
@@ -239,12 +239,12 @@ JOIN linker l ON l.idlinker = cs.linker_id
 WHERE swl.word = ?
   AND cs.linker_id IN (/*SLICE:ids*/?)
   AND (
-      l.language_idlanguage = 0
-      OR l.language_idlanguage IS NULL
+      l.language_id = 0
+      OR l.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
-            AND ul.language_idlanguage = l.language_idlanguage
+            AND ul.language_id = l.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
@@ -320,12 +320,12 @@ LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
 WHERE swl.word=?
   AND fth.forumtopic_idforumtopic IN (/*SLICE:ftids*/?)
   AND (
-      c.language_idlanguage = 0
-      OR c.language_idlanguage IS NULL
+      c.language_id = 0
+      OR c.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
-            AND ul.language_idlanguage = c.language_idlanguage
+            AND ul.language_id = c.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
@@ -401,12 +401,12 @@ LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
 WHERE swl.word=?
   AND ft.forumcategory_idforumcategory!=0
   AND (
-      c.language_idlanguage = 0
-      OR c.language_idlanguage IS NULL
+      c.language_id = 0
+      OR c.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
-            AND ul.language_idlanguage = c.language_idlanguage
+            AND ul.language_id = c.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
@@ -473,12 +473,12 @@ WHERE swl.word=?
   AND cs.comment_id IN (/*SLICE:ids*/?)
   AND fth.forumtopic_idforumtopic IN (/*SLICE:ftids*/?)
   AND (
-      c.language_idlanguage = 0
-      OR c.language_idlanguage IS NULL
+      c.language_id = 0
+      OR c.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
-            AND ul.language_idlanguage = c.language_idlanguage
+            AND ul.language_id = c.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
@@ -564,12 +564,12 @@ WHERE swl.word=?
   AND cs.comment_id IN (/*SLICE:ids*/?)
   AND ft.forumcategory_idforumcategory!=0
   AND (
-      c.language_idlanguage = 0
-      OR c.language_idlanguage IS NULL
+      c.language_id = 0
+      OR c.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
-            AND ul.language_idlanguage = c.language_idlanguage
+            AND ul.language_id = c.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
@@ -642,12 +642,12 @@ LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearc
 JOIN site_news sn ON sn.idsiteNews = cs.site_news_id
 WHERE swl.word = ?
   AND (
-      sn.language_idlanguage = 0
-      OR sn.language_idlanguage IS NULL
+      sn.language_id = 0
+      OR sn.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
-            AND ul.language_idlanguage = sn.language_idlanguage
+            AND ul.language_id = sn.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
@@ -711,12 +711,12 @@ JOIN site_news sn ON sn.idsiteNews = cs.site_news_id
 WHERE swl.word = ?
   AND cs.site_news_id IN (/*SLICE:ids*/?)
   AND (
-      sn.language_idlanguage = 0
-      OR sn.language_idlanguage IS NULL
+      sn.language_id = 0
+      OR sn.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
-            AND ul.language_idlanguage = sn.language_idlanguage
+            AND ul.language_id = sn.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
@@ -789,12 +789,12 @@ LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearc
 JOIN writing w ON w.idwriting = cs.writing_id
 WHERE swl.word = ?
   AND (
-      w.language_idlanguage = 0
-      OR w.language_idlanguage IS NULL
+      w.language_id = 0
+      OR w.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
-            AND ul.language_idlanguage = w.language_idlanguage
+            AND ul.language_id = w.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
@@ -858,12 +858,12 @@ JOIN writing w ON w.idwriting = cs.writing_id
 WHERE swl.word = ?
   AND cs.writing_id IN (/*SLICE:ids*/?)
   AND (
-      w.language_idlanguage = 0
-      OR w.language_idlanguage IS NULL
+      w.language_id = 0
+      OR w.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = ?
-            AND ul.language_idlanguage = w.language_idlanguage
+            AND ul.language_id = w.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?

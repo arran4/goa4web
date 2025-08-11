@@ -30,7 +30,7 @@ func TestAdminUserGrantsPage_UserIDInjected(t *testing.T) {
 	mock.ExpectQuery("SELECT").WithArgs(int32(userID)).WillReturnRows(sqlmock.NewRows([]string{"iduser_roles", "users_idusers", "role_id", "name"}))
 	mock.ExpectQuery("SELECT").WithArgs(sqlmock.AnyArg()).WillReturnRows(sqlmock.NewRows([]string{"id", "created_at", "updated_at", "user_id", "role_id", "section", "item", "rule_type", "item_id", "item_rule", "action", "extra", "active"}))
 	mock.ExpectQuery("SELECT").WillReturnRows(sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "title", "description"}))
-	mock.ExpectQuery("SELECT").WillReturnRows(sqlmock.NewRows([]string{"idlanguage", "nameof"}))
+	mock.ExpectQuery("SELECT").WillReturnRows(sqlmock.NewRows([]string{"id", "nameof"}))
 
 	req := httptest.NewRequest("GET", fmt.Sprintf("/admin/user/%d/grants", userID), nil)
 	req = mux.SetURLVars(req, map[string]string{"user": strconv.Itoa(userID)})

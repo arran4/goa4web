@@ -37,11 +37,11 @@ func TestTopicsPage_ThreadLinks(t *testing.T) {
 
 	mock.ExpectQuery("SELECT .* FROM forumcategory").
 		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "language_idlanguage", "title", "description"}))
+		WillReturnRows(sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "language_id", "title", "description"}))
 
 	mock.ExpectQuery("SELECT t.* FROM forumtopic t").
 		WithArgs(sqlmock.AnyArg(), 1, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_idlanguage", "title", "description", "threads", "comments", "lastaddition", "handler", "lastposterusername"}).
+		WillReturnRows(sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_id", "title", "description", "threads", "comments", "lastaddition", "handler", "lastposterusername"}).
 			AddRow(1, 0, 1, 0, "Topic", "", 0, 0, time.Now(), "", ""))
 
 	mock.ExpectQuery("SELECT .* FROM forumthread").

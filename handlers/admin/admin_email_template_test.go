@@ -91,7 +91,7 @@ func TestAdminListUnsentPendingEmails(t *testing.T) {
 	defer conn.Close()
 	q := db.New(conn)
 	rows := sqlmock.NewRows([]string{"id", "to_user_id", "body", "error_count", "created_at", "direct_email"}).AddRow(1, 2, "b", 0, time.Now(), false)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT pe.id, pe.to_user_id, pe.body, pe.error_count, pe.created_at, pe.direct_email FROM pending_emails pe LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers LEFT JOIN roles r ON ur.role_id = r.id WHERE pe.sent_at IS NULL   AND (? IS NULL OR p.language_idlanguage = ?)   AND (? IS NULL OR r.name = ?) ORDER BY pe.id")).WillReturnRows(rows)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT pe.id, pe.to_user_id, pe.body, pe.error_count, pe.created_at, pe.direct_email FROM pending_emails pe LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers LEFT JOIN roles r ON ur.role_id = r.id WHERE pe.sent_at IS NULL   AND (? IS NULL OR p.language_id = ?)   AND (? IS NULL OR r.name = ?) ORDER BY pe.id")).WillReturnRows(rows)
 	if _, err := q.AdminListUnsentPendingEmails(context.Background(), db.AdminListUnsentPendingEmailsParams{}); err != nil {
 		t.Fatalf("list: %v", err)
 	}

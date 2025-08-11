@@ -20,7 +20,7 @@ LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers
 LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers
 LEFT JOIN roles r ON ur.role_id = r.id
 WHERE pe.sent_at IS NULL
-  AND (sqlc.narg(language_id) IS NULL OR p.language_idlanguage = sqlc.narg(language_id))
+  AND (sqlc.narg(language_id) IS NULL OR p.language_id = sqlc.narg(language_id))
   AND (sqlc.arg(role_name) IS NULL OR r.name = sqlc.arg(role_name))
 ORDER BY pe.id;
 
@@ -48,7 +48,7 @@ LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers
 LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers
 LEFT JOIN roles r ON ur.role_id = r.id
 WHERE pe.sent_at IS NOT NULL
-  AND (sqlc.narg(language_id) IS NULL OR p.language_idlanguage = sqlc.narg(language_id))
+  AND (sqlc.narg(language_id) IS NULL OR p.language_id = sqlc.narg(language_id))
   AND (sqlc.arg(role_name) IS NULL OR r.name = sqlc.arg(role_name))
 ORDER BY pe.sent_at DESC
 LIMIT ? OFFSET ?;
@@ -61,7 +61,7 @@ LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers
 LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers
 LEFT JOIN roles r ON ur.role_id = r.id
 WHERE pe.sent_at IS NULL AND pe.error_count > 0
-  AND (sqlc.narg(language_id) IS NULL OR p.language_idlanguage = sqlc.narg(language_id))
+  AND (sqlc.narg(language_id) IS NULL OR p.language_id = sqlc.narg(language_id))
   AND (sqlc.arg(role_name) IS NULL OR r.name = sqlc.arg(role_name))
 ORDER BY pe.id
 LIMIT ? OFFSET ?;

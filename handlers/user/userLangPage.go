@@ -55,27 +55,27 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 	selected := make(map[int32]bool)
 	if len(userLangs) == 0 {
 		for _, l := range langs {
-			selected[l.Idlanguage] = true
+			selected[l.ID] = true
 		}
 	} else {
 		for _, ul := range userLangs {
-			selected[ul.LanguageIdlanguage] = true
+			selected[ul.LanguageID] = true
 		}
 	}
 
 	var opts []LanguageOption
 	for _, l := range langs {
-		opt := LanguageOption{ID: l.Idlanguage, Name: l.Nameof.String}
-		if selected[l.Idlanguage] {
+		opt := LanguageOption{ID: l.ID, Name: l.Nameof.String}
+		if selected[l.ID] {
 			opt.IsSelected = true
 		}
-                if pref != nil && pref.LanguageIdlanguage.Valid && pref.LanguageIdlanguage.Int32 == l.Idlanguage {
-                        opt.IsDefault = true
-                }
+		if pref != nil && pref.LanguageID.Valid && pref.LanguageID.Int32 == l.ID {
+			opt.IsDefault = true
+		}
 		opts = append(opts, opt)
 	}
 
-        defaultIsMulti := pref == nil || !pref.LanguageIdlanguage.Valid
+	defaultIsMulti := pref == nil || !pref.LanguageID.Valid
 	data := Data{
 		LanguageOptions:       opts,
 		DefaultIsMultilingual: defaultIsMulti,
@@ -97,8 +97,8 @@ func updateLanguageSelections(r *http.Request, cd *common.CoreData, queries db.Q
 	}
 
 	for _, l := range langs {
-		if r.PostFormValue(fmt.Sprintf("language%d", l.Idlanguage)) != "" {
-			if err := queries.InsertUserLang(r.Context(), db.InsertUserLangParams{UsersIdusers: uid, LanguageIdlanguage: l.Idlanguage}); err != nil {
+		if r.PostFormValue(fmt.Sprintf("language%d", l.ID)) != "" {
+			if err := queries.InsertUserLang(r.Context(), db.InsertUserLangParams{UsersIdusers: uid, LanguageID: l.ID}); err != nil {
 				return err
 			}
 		}
@@ -120,17 +120,17 @@ func updateDefaultLanguage(r *http.Request, queries db.Querier, uid int32) error
 	}
 
 	if errors.Is(err, sql.ErrNoRows) {
-                return queries.InsertPreferenceForLister(r.Context(), db.InsertPreferenceForListerParams{
-                        LanguageID: sql.NullInt32{Int32: int32(langID), Valid: langID != 0},
-                        ListerID:   uid,
-                        PageSize:   int32(cd.Config.PageSizeDefault),
-                        Timezone:   sql.NullString{},
-                })
+		return queries.InsertPreferenceForLister(r.Context(), db.InsertPreferenceForListerParams{
+			LanguageID: sql.NullInt32{Int32: int32(langID), Valid: langID != 0},
+			ListerID:   uid,
+			PageSize:   int32(cd.Config.PageSizeDefault),
+			Timezone:   sql.NullString{},
+		})
 	}
 
-        pref.LanguageIdlanguage = sql.NullInt32{Int32: int32(langID), Valid: langID != 0}
+	pref.LanguageID = sql.NullInt32{Int32: int32(langID), Valid: langID != 0}
 	return queries.UpdatePreferenceForLister(r.Context(), db.UpdatePreferenceForListerParams{
-		LanguageID: pref.LanguageIdlanguage,
+		LanguageID: pref.LanguageID,
 		ListerID:   uid,
 		PageSize:   pref.PageSize,
 		Timezone:   pref.Timezone,

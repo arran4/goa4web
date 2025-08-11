@@ -1,19 +1,19 @@
 package admin
 
 import (
-        "database/sql"
-        "fmt"
-        "log"
-        "net/http"
-        "net/mail"
-        "net/url"
-        "strconv"
-        "strings"
+	"database/sql"
+	"fmt"
+	"log"
+	"net/http"
+	"net/mail"
+	"net/url"
+	"strconv"
+	"strings"
 
-        "github.com/arran4/goa4web/core/common"
-        "github.com/arran4/goa4web/core/consts"
-        "github.com/arran4/goa4web/handlers"
-        "github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // AdminFailedEmailsPage shows queued emails with errors.
@@ -40,12 +40,12 @@ func AdminFailedEmailsPage(w http.ResponseWriter, r *http.Request) {
 	queries := cd.Queries()
 	langID, _ := strconv.Atoi(r.URL.Query().Get("lang"))
 	role := r.URL.Query().Get("role")
-        rows, err := queries.AdminListFailedEmails(r.Context(), db.AdminListFailedEmailsParams{
-                LanguageID: sql.NullInt32{Int32: int32(langID), Valid: langID != 0},
-                RoleName:   role,
-                Limit:      int32(pageSize + 1),
-                Offset:     int32(offset),
-        })
+	rows, err := queries.AdminListFailedEmails(r.Context(), db.AdminListFailedEmailsParams{
+		LanguageID: sql.NullInt32{Int32: int32(langID), Valid: langID != 0},
+		RoleName:   role,
+		Limit:      int32(pageSize + 1),
+		Offset:     int32(offset),
+	})
 	if err != nil {
 		log.Printf("list failed emails: %v", err)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))

@@ -1,4 +1,4 @@
-UPDATE forumcategory SET title = ?, description = ?, forumcategory_idforumcategory = ?, language_idlanguage = sqlc.narg(category_language_id) WHERE idforumcategory = ?;
+UPDATE forumcategory SET title = ?, description = ?, forumcategory_idforumcategory = ?, language_id = sqlc.narg(category_language_id) WHERE idforumcategory = ?;
 
 -- name: GetAllForumCategoriesWithSubcategoryCount :many
 SELECT c.*, COUNT(c2.idforumcategory) as SubcategoryCount,
@@ -7,12 +7,12 @@ FROM forumcategory c
 LEFT JOIN forumcategory c2 ON c.idforumcategory = c2.forumcategory_idforumcategory
 LEFT JOIN forumtopic t ON c.idforumcategory = t.forumcategory_idforumcategory
 WHERE (
-    c.language_idlanguage = 0
-    OR c.language_idlanguage IS NULL
+    c.language_id = 0
+    OR c.language_id IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = sqlc.arg(viewer_id)
-          AND ul.language_idlanguage = c.language_idlanguage
+          AND ul.language_id = c.language_id
     )
     OR NOT EXISTS (
         SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
@@ -24,12 +24,12 @@ GROUP BY c.idforumcategory;
 SELECT COUNT(*)
 FROM forumcategory c
 WHERE (
-    c.language_idlanguage = 0
-    OR c.language_idlanguage IS NULL
+    c.language_id = 0
+    OR c.language_id IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = sqlc.arg(viewer_id)
-          AND ul.language_idlanguage = c.language_idlanguage
+          AND ul.language_id = c.language_id
     )
     OR NOT EXISTS (
         SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
@@ -43,12 +43,12 @@ FROM forumcategory c
 LEFT JOIN forumcategory c2 ON c.idforumcategory = c2.forumcategory_idforumcategory
 LEFT JOIN forumtopic t ON c.idforumcategory = t.forumcategory_idforumcategory
 WHERE (
-    c.language_idlanguage = 0
-    OR c.language_idlanguage IS NULL
+    c.language_id = 0
+    OR c.language_id IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = sqlc.arg(viewer_id)
-          AND ul.language_idlanguage = c.language_idlanguage
+          AND ul.language_id = c.language_id
     )
     OR NOT EXISTS (
         SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
@@ -62,12 +62,12 @@ LIMIT ? OFFSET ?;
 SELECT t.*
 FROM forumtopic t
 WHERE (
-    t.language_idlanguage = 0
-    OR t.language_idlanguage IS NULL
+    t.language_id = 0
+    OR t.language_id IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = sqlc.arg(viewer_id)
-          AND ul.language_idlanguage = t.language_idlanguage
+          AND ul.language_id = t.language_id
     )
     OR NOT EXISTS (
         SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
@@ -81,7 +81,7 @@ FROM forumtopic t
 ORDER BY t.idforumtopic
 LIMIT ? OFFSET ?;
 
-UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ?, language_idlanguage = sqlc.narg(topic_language_id) WHERE idforumtopic = ?;
+UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ?, language_id = sqlc.narg(topic_language_id) WHERE idforumtopic = ?;
 
 -- name: GetAllForumTopicsByCategoryIdForUserWithLastPosterName :many
 WITH role_ids AS (
@@ -92,12 +92,12 @@ FROM forumtopic t
 LEFT JOIN users lu ON lu.idusers = t.lastposter
 WHERE t.forumcategory_idforumcategory = sqlc.arg(category_id)
   AND (
-      t.language_idlanguage = 0
-      OR t.language_idlanguage IS NULL
+      t.language_id = 0
+      OR t.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(viewer_id)
-            AND ul.language_idlanguage = t.language_idlanguage
+            AND ul.language_id = t.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
@@ -166,12 +166,12 @@ FROM forumtopic t
 LEFT JOIN users lu ON lu.idusers = t.lastposter
 WHERE t.handler <> 'private'
   AND (
-    t.language_idlanguage = 0
-    OR t.language_idlanguage IS NULL
+    t.language_id = 0
+    OR t.language_id IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = sqlc.arg(viewer_id)
-          AND ul.language_idlanguage = t.language_idlanguage
+          AND ul.language_id = t.language_id
     )
     OR NOT EXISTS (
         SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
@@ -198,12 +198,12 @@ FROM forumtopic t
 LEFT JOIN users lu ON lu.idusers = t.lastposter
 WHERE t.idforumtopic = sqlc.arg(idforumtopic)
   AND (
-      t.language_idlanguage = 0
-      OR t.language_idlanguage IS NULL
+      t.language_id = 0
+      OR t.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(viewer_id)
-            AND ul.language_idlanguage = t.language_idlanguage
+            AND ul.language_id = t.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
@@ -226,24 +226,24 @@ ORDER BY t.lastaddition DESC;
 SELECT f.*
 FROM forumcategory f
 WHERE (
-    f.language_idlanguage = 0
-    OR f.language_idlanguage IS NULL
+    f.language_id = 0
+    OR f.language_id IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = sqlc.arg(viewer_id)
-          AND ul.language_idlanguage = f.language_idlanguage
+          AND ul.language_id = f.language_id
     )
     OR NOT EXISTS (
         SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
     )
 );
 
-INSERT INTO forumcategory (forumcategory_idforumcategory, language_idlanguage, title, description) VALUES (?, sqlc.narg(category_language_id), ?, ?);
+INSERT INTO forumcategory (forumcategory_idforumcategory, language_id, title, description) VALUES (?, sqlc.narg(category_language_id), ?, ?);
 
-INSERT INTO forumtopic (forumcategory_idforumcategory, language_idlanguage, title, description, handler) VALUES (?, sqlc.narg(topic_language_id), ?, ?, ?);
+INSERT INTO forumtopic (forumcategory_idforumcategory, language_id, title, description, handler) VALUES (?, sqlc.narg(topic_language_id), ?, ?, ?);
 
 -- name: CreateForumTopicForPoster :execlastid
-INSERT INTO forumtopic (forumcategory_idforumcategory, language_idlanguage, title, description, handler)
+INSERT INTO forumtopic (forumcategory_idforumcategory, language_id, title, description, handler)
 SELECT sqlc.arg(forumcategory_id), sqlc.arg(forum_lang), sqlc.arg(title), sqlc.arg(description), sqlc.arg(handler)
 WHERE EXISTS (
     SELECT 1 FROM grants g
@@ -295,7 +295,7 @@ ORDER BY th.lastaddition DESC;
 SELECT t.idforumtopic,
        t.lastposter,
        t.forumcategory_idforumcategory,
-       t.language_idlanguage,
+       t.language_id,
        t.title,
        t.description,
        t.threads,
@@ -381,12 +381,12 @@ ORDER BY t.idforumtopic, th.lastaddition DESC;
 SELECT * FROM forumcategory
 WHERE idforumcategory = sqlc.arg(idforumcategory)
   AND (
-      language_idlanguage = 0
-      OR language_idlanguage IS NULL
+      language_id = 0
+      OR language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(viewer_id)
-            AND ul.language_idlanguage = language_idlanguage
+            AND ul.language_id = language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
@@ -397,12 +397,12 @@ WHERE idforumcategory = sqlc.arg(idforumcategory)
 SELECT * FROM forumtopic
 WHERE forumcategory_idforumcategory = sqlc.arg(category_id)
   AND (
-      language_idlanguage = 0
-      OR language_idlanguage IS NULL
+      language_id = 0
+      OR language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(viewer_id)
-            AND ul.language_idlanguage = language_idlanguage
+            AND ul.language_id = language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)

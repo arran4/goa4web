@@ -88,13 +88,13 @@ func (c *userDeactivateCmd) Run() error {
 			return fmt.Errorf("comment %d already deactivated", cm.Idcomments)
 		}
 		if err := qtx.AdminArchiveComment(ctx, db.AdminArchiveCommentParams{
-			Idcomments:         cm.Idcomments,
-			ForumthreadID:      cm.ForumthreadID,
-			UsersIdusers:       cm.UsersIdusers,
-			LanguageIdlanguage: cm.LanguageIdlanguage,
-			Written:            cm.Written,
-			Text:               cm.Text,
-			Timezone:           cm.Timezone,
+			Idcomments:    cm.Idcomments,
+			ForumthreadID: cm.ForumthreadID,
+			UsersIdusers:  cm.UsersIdusers,
+			LanguageID:    cm.LanguageID,
+			Written:       cm.Written,
+			Text:          cm.Text,
+			Timezone:      cm.Timezone,
 		}); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("archive comment: %w", err)
@@ -121,16 +121,16 @@ func (c *userDeactivateCmd) Run() error {
 			return fmt.Errorf("writing %d already deactivated", w.Idwriting)
 		}
 		if err := qtx.AdminArchiveWriting(ctx, db.AdminArchiveWritingParams{
-			Idwriting:          w.Idwriting,
-			UsersIdusers:       w.UsersIdusers,
-			ForumthreadID:      w.ForumthreadID,
-			LanguageIdlanguage: w.LanguageIdlanguage,
-			WritingCategoryID:  w.WritingCategoryID,
-			Title:              w.Title,
-			Published:          w.Published,
-			Writing:            w.Writing,
-			Abstract:           w.Abstract,
-			Private:            w.Private,
+			Idwriting:         w.Idwriting,
+			UsersIdusers:      w.UsersIdusers,
+			ForumthreadID:     w.ForumthreadID,
+			LanguageID:        w.LanguageID,
+			WritingCategoryID: w.WritingCategoryID,
+			Title:             w.Title,
+			Published:         w.Published,
+			Writing:           w.Writing,
+			Abstract:          w.Abstract,
+			Private:           w.Private,
 		}); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("archive writing: %w", err)
@@ -165,13 +165,13 @@ func (c *userDeactivateCmd) Run() error {
 			threadID = b.ForumthreadID.Int32
 		}
 		if err := qtx.AdminArchiveBlog(ctx, db.AdminArchiveBlogParams{
-			Idblogs:            b.Idblogs,
-			ForumthreadID:      threadID,
-			UsersIdusers:       b.UsersIdusers,
-			LanguageIdlanguage: b.LanguageIdlanguage,
-			Blog:               b.Blog,
-			Written:            sql.NullTime{Time: b.Written, Valid: true},
-			Timezone:           b.Timezone,
+			Idblogs:       b.Idblogs,
+			ForumthreadID: threadID,
+			UsersIdusers:  b.UsersIdusers,
+			LanguageID:    b.LanguageID,
+			Blog:          b.Blog,
+			Written:       sql.NullTime{Time: b.Written, Valid: true},
+			Timezone:      b.Timezone,
 		}); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("archive blog: %w", err)
@@ -233,16 +233,16 @@ func (c *userDeactivateCmd) Run() error {
 			return fmt.Errorf("link %d already deactivated", l.Idlinker)
 		}
 		if err := qtx.AdminArchiveLink(ctx, db.AdminArchiveLinkParams{
-			Idlinker:           l.Idlinker,
-			LanguageIdlanguage: l.LanguageIdlanguage,
-			UsersIdusers:       l.UsersIdusers,
-			LinkerCategoryID:   l.LinkerCategoryID,
-			ForumthreadID:      l.ForumthreadID,
-			Title:              l.Title,
-			Url:                l.Url,
-			Description:        l.Description,
-			Listed:             l.Listed,
-			Timezone:           l.Timezone,
+			Idlinker:         l.Idlinker,
+			LanguageID:       l.LanguageID,
+			UsersIdusers:     l.UsersIdusers,
+			LinkerCategoryID: l.LinkerCategoryID,
+			ForumthreadID:    l.ForumthreadID,
+			Title:            l.Title,
+			Url:              l.Url,
+			Description:      l.Description,
+			Listed:           l.Listed,
+			Timezone:         l.Timezone,
 		}); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("archive link: %w", err)

@@ -48,16 +48,16 @@ func (c *writingDeactivateCmd) Run() error {
 		return fmt.Errorf("writing already deactivated")
 	}
 	if err := queries.AdminArchiveWriting(ctx, db.AdminArchiveWritingParams{
-		Idwriting:          w.Idwriting,
-		UsersIdusers:       w.UsersIdusers,
-		ForumthreadID:      w.ForumthreadID,
-		LanguageIdlanguage: w.LanguageIdlanguage,
-		WritingCategoryID:  w.WritingCategoryID,
-		Title:              w.Title,
-		Published:          w.Published,
-		Writing:            w.Writing,
-		Abstract:           w.Abstract,
-		Private:            w.Private,
+		Idwriting:         w.Idwriting,
+		UsersIdusers:      w.UsersIdusers,
+		ForumthreadID:     w.ForumthreadID,
+		LanguageID:        w.LanguageID,
+		WritingCategoryID: w.WritingCategoryID,
+		Title:             w.Title,
+		Published:         w.Published,
+		Writing:           w.Writing,
+		Abstract:          w.Abstract,
+		Private:           w.Private,
 	}); err != nil {
 		return fmt.Errorf("archive writing: %w", err)
 	}

@@ -1,7 +1,7 @@
 {{ define "blogs/commentPage.gohtml" }}
 {{ template "head" $ }}
             {{ $blog := cd.BlogPost }}
-            <font size="5"><a href="/blogs/blogger/{{$blog.Username.String}}">{{$blog.Username.String}}'s Blog</a>:</font><br>
+            <h2 class="blog-title"><a href="/blogs/blogger/{{$blog.Username.String}}">{{$blog.Username.String}}'s Blog</a>:</h2>
             <table width="100%">
                 <tr>
                     <th bgcolor="lightgrey">{{ localTimeIn $blog.Written $blog.Timezone.String }}</th>

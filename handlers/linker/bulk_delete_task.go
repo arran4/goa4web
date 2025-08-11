@@ -37,7 +37,7 @@ func (bulkDeleteTask) Action(w http.ResponseWriter, r *http.Request) any {
 			ids[id] = struct{}{}
 		}
 		for _, it := range rows {
-			if _, ok := ids[int(it.Idlinkerqueue)]; ok {
+			if _, ok := ids[int(it.ID)]; ok {
 				info = append(info, map[string]any{"Title": it.Title.String, "URL": it.Url.String, "Username": it.Username.String})
 			}
 		}

@@ -20,7 +20,7 @@ import (
 func TestLinkerFeed(t *testing.T) {
 	rows := []*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow{
 		{
-			Idlinker:       1,
+			ID:             1,
 			Title:          sql.NullString{String: "Example", Valid: true},
 			Url:            sql.NullString{String: "http://example.com", Valid: true},
 			Description:    sql.NullString{String: "desc", Valid: true},
@@ -58,9 +58,9 @@ func TestLinkerApproveAddsToSearch(t *testing.T) {
 		WithArgs(int32(1)).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	rows := sqlmock.NewRows([]string{"idlinker", "language_id", "users_idusers", "linkercategory_idlinkerCategory", "forumthread_idforumthread", "title", "url", "description", "listed", "username", "title_2"}).
+	rows := sqlmock.NewRows([]string{"id", "language_id", "author_id", "category_id", "thread_id", "title", "url", "description", "listed", "username", "title_2"}).
 		AddRow(1, 1, 1, 1, 0, "Foo", "http://foo", "Bar", time.Now(), "u", "c")
-	mock.ExpectQuery("SELECT l.idlinker").WithArgs(int32(0), int32(1), sqlmock.AnyArg()).WillReturnRows(rows)
+	mock.ExpectQuery("SELECT l.id").WithArgs(int32(0), int32(1), sqlmock.AnyArg()).WillReturnRows(rows)
 
 	mock.ExpectExec("INSERT IGNORE INTO searchwordlist").WithArgs("foo").WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectExec("INSERT INTO linker_search").WithArgs(int32(1), int32(1), int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))

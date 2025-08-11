@@ -6,8 +6,8 @@
     <p><strong>Poster:</strong> {{ .Link.Username.String }}</p>
     <p><strong>Listed:</strong> {{ if .Link.Listed.Valid }}{{ localTimeIn .Link.Listed.Time .Link.Timezone.String }}{{ end }}</p>
     <p>
-        <a href="/admin/linker/links/link/{{ .Link.Idlinker }}/edit">Edit</a> |
-        <a href="/admin/linker/links/link/{{ .Link.Idlinker }}/grants">Permissions</a> |
-        <a href="/admin/linker/links/link/{{ .Link.Idlinker }}/comments">Comments</a>
+        <a href="/admin/linker/links/link/{{ .Link.ID }}/edit">Edit</a> |
+        <a href="/admin/linker/links/link/{{ .Link.ID }}/grants">Permissions</a> |
+        <a href="/admin/linker/links/link/{{ .Link.ID }}/comments">Comments</a>
     </p>
 {{ template "tail" $ }}

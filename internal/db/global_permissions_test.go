@@ -36,7 +36,7 @@ func TestGlobalGrantsThreads(t *testing.T) {
 }
 
 func TestGlobalGrantsLinker(t *testing.T) {
-	if !strings.Contains(getLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUser, "g.item_id = l.idlinker OR g.item_id IS NULL") {
+	if !strings.Contains(getLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUser, "g.item_id = l.id OR g.item_id IS NULL") {
 		t.Errorf("global grant missing in GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUser")
 	}
 }

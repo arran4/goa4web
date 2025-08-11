@@ -26,9 +26,9 @@ func adminUserLinkerPage(w http.ResponseWriter, r *http.Request) {
 	}
 	queries := cd.Queries()
 	rows, err := queries.GetLinkerItemsByUserDescending(r.Context(), db.GetLinkerItemsByUserDescendingParams{
-		UsersIdusers: cpu.Idusers,
-		Limit:        100,
-		Offset:       0,
+		AuthorID: cpu.Idusers,
+		Limit:    100,
+		Offset:   0,
 	})
 	if err != nil {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))

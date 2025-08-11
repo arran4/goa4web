@@ -94,12 +94,12 @@ func (addTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	if err := queries.AdminCreateLinkerItem(r.Context(), db.AdminCreateLinkerItemParams{
-		UsersIdusers:     uid,
-		LinkerCategoryID: sql.NullInt32{Int32: int32(category), Valid: category != 0},
-		Title:            sql.NullString{Valid: true, String: title},
-		Url:              sql.NullString{Valid: true, String: url},
-		Description:      sql.NullString{Valid: true, String: description},
-		Timezone:         sql.NullString{String: cd.Location().String(), Valid: true},
+		AuthorID:    uid,
+		CategoryID:  sql.NullInt32{Int32: int32(category), Valid: category != 0},
+		Title:       sql.NullString{Valid: true, String: title},
+		Url:         sql.NullString{Valid: true, String: url},
+		Description: sql.NullString{Valid: true, String: description},
+		Timezone:    sql.NullString{String: cd.Location().String(), Valid: true},
 	}); err != nil {
 		return fmt.Errorf("create linker item fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

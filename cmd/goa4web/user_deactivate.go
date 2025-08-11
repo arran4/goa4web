@@ -217,27 +217,27 @@ func (c *userDeactivateCmd) Run() error {
 			return fmt.Errorf("scrub imagepost: %w", err)
 		}
 	}
-	links, err := qtx.GetLinkerItemsByUserDescending(ctx, db.GetLinkerItemsByUserDescendingParams{UsersIdusers: u.Idusers, Limit: math.MaxInt32, Offset: 0})
+	links, err := qtx.GetLinkerItemsByUserDescending(ctx, db.GetLinkerItemsByUserDescendingParams{AuthorID: u.Idusers, Limit: math.MaxInt32, Offset: 0})
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("list links: %w", err)
 	}
 	for _, l := range links {
-		deactivated, err := qtx.AdminIsLinkDeactivated(ctx, l.Idlinker)
+		deactivated, err := qtx.AdminIsLinkDeactivated(ctx, l.ID)
 		if err != nil {
 			tx.Rollback()
 			return fmt.Errorf("check link deactivated: %w", err)
 		}
 		if deactivated {
 			tx.Rollback()
-			return fmt.Errorf("link %d already deactivated", l.Idlinker)
+			return fmt.Errorf("link %d already deactivated", l.ID)
 		}
 		if err := qtx.AdminArchiveLink(ctx, db.AdminArchiveLinkParams{
-			Idlinker:         l.Idlinker,
+			Idlinker:         l.ID,
 			LanguageID:       l.LanguageID,
-			UsersIdusers:     l.UsersIdusers,
-			LinkerCategoryID: l.LinkerCategoryID,
-			ForumthreadID:    l.ForumthreadID,
+			UsersIdusers:     l.AuthorID,
+			LinkerCategoryID: l.CategoryID,
+			ForumthreadID:    l.ThreadID,
 			Title:            l.Title,
 			Url:              l.Url,
 			Description:      l.Description,
@@ -247,7 +247,7 @@ func (c *userDeactivateCmd) Run() error {
 			tx.Rollback()
 			return fmt.Errorf("archive link: %w", err)
 		}
-		if err := qtx.AdminScrubLink(ctx, db.AdminScrubLinkParams{Title: sql.NullString{String: scrubText(l.Title.String), Valid: l.Title.Valid}, Idlinker: l.Idlinker}); err != nil {
+		if err := qtx.AdminScrubLink(ctx, db.AdminScrubLinkParams{Title: sql.NullString{String: scrubText(l.Title.String), Valid: l.Title.Valid}, ID: l.ID}); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("scrub link: %w", err)
 		}

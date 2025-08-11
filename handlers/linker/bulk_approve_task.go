@@ -55,7 +55,7 @@ func (bulkApproveTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 		link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(r.Context(), db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams{
 			ViewerID:     cd.UserID,
-			Idlinker:     int32(lid),
+			ID:           int32(lid),
 			ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
 		if err != nil {

@@ -40,7 +40,7 @@ func (c *linksDeactivateCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("fetch link: %w", err)
 	}
-	deactivated, err := queries.AdminIsLinkDeactivated(ctx, l.Idlinker)
+	deactivated, err := queries.AdminIsLinkDeactivated(ctx, l.ID)
 	if err != nil {
 		return fmt.Errorf("check deactivated: %w", err)
 	}
@@ -48,11 +48,11 @@ func (c *linksDeactivateCmd) Run() error {
 		return fmt.Errorf("link already deactivated")
 	}
 	if err := queries.AdminArchiveLink(ctx, db.AdminArchiveLinkParams{
-		Idlinker:         l.Idlinker,
+		Idlinker:         l.ID,
 		LanguageID:       l.LanguageID,
-		UsersIdusers:     l.UsersIdusers,
-		LinkerCategoryID: l.LinkerCategoryID,
-		ForumthreadID:    l.ForumthreadID,
+		UsersIdusers:     l.AuthorID,
+		LinkerCategoryID: l.CategoryID,
+		ForumthreadID:    l.ThreadID,
 		Title:            l.Title,
 		Url:              l.Url,
 		Description:      l.Description,
@@ -60,7 +60,7 @@ func (c *linksDeactivateCmd) Run() error {
 	}); err != nil {
 		return fmt.Errorf("archive link: %w", err)
 	}
-	if err := queries.AdminScrubLink(ctx, db.AdminScrubLinkParams{Title: sql.NullString{String: "", Valid: true}, Idlinker: l.Idlinker}); err != nil {
+	if err := queries.AdminScrubLink(ctx, db.AdminScrubLinkParams{Title: sql.NullString{String: "", Valid: true}, ID: l.ID}); err != nil {
 		return fmt.Errorf("scrub link: %w", err)
 	}
 	return nil

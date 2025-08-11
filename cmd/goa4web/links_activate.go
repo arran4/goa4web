@@ -57,7 +57,7 @@ func (c *linksActivateCmd) Run() error {
 	if found == nil {
 		return fmt.Errorf("link %d not found", c.ID)
 	}
-	if err := queries.AdminRestoreLink(ctx, db.AdminRestoreLinkParams{Title: found.Title, Url: found.Url, Description: found.Description, Idlinker: found.Idlinker}); err != nil {
+	if err := queries.AdminRestoreLink(ctx, db.AdminRestoreLinkParams{Title: found.Title, Url: found.Url, Description: found.Description, ID: found.Idlinker}); err != nil {
 		return fmt.Errorf("restore link: %w", err)
 	}
 	if err := queries.AdminMarkLinkRestored(ctx, found.Idlinker); err != nil {

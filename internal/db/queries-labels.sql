@@ -30,6 +30,10 @@ WHERE item = ? AND item_id = ? AND user_id = ?;
 DELETE FROM content_private_labels
 WHERE item = ? AND item_id = ? AND label = ?;
 
+-- name: ClearUnreadContentPrivateLabelExceptUser :exec
+DELETE FROM content_private_labels
+WHERE item = ? AND item_id = ? AND label = 'unread' AND invert = true AND user_id <> ?;
+
 -- name: AddContentLabelStatus :exec
 INSERT IGNORE INTO content_label_status (
     item, item_id, label

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -93,5 +94,59 @@ func TestSetLabelsTaskAddsInverseLabels(t *testing.T) {
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
+	}
+}
+
+func TestSetLabelsTaskUpdatesSpecialLabels(t *testing.T) {
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
+
+	q := db.New(conn)
+	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
+	cd.UserID = 2
+
+	mock.ExpectExec(regexp.QuoteMeta("INSERT IGNORE INTO forumtopic_private_labels")).
+		WithArgs(int32(1), cd.UserID, "new", true).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec(regexp.QuoteMeta("INSERT IGNORE INTO forumtopic_private_labels")).
+		WithArgs(int32(1), cd.UserID, "unread", true).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	form := url.Values{}
+	form.Set("redirect", "/private/topic/1/thread/3")
+	form.Set("task", string(TaskMarkTopicRead))
+	req := httptest.NewRequest(http.MethodPost, "/private/topic/1/labels", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req = mux.SetURLVars(req, map[string]string{"topic": "1"})
+	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
+
+	// Execute the mark-as-read task, which should upsert the inverse labels.
+	_ = MarkTopicReadTask{}.Action(httptest.NewRecorder(), req)
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}
+
+func TestMarkTopicReadTaskRedirectWithThread(t *testing.T) {
+	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
+	form := url.Values{}
+	form.Set("redirect", "/private/topic/1/thread/3")
+	form.Set("task", string(TaskMarkTopicRead))
+	req := httptest.NewRequest(http.MethodPost, "/private/topic/1/labels", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
+	req = mux.SetURLVars(req, map[string]string{"topic": "1"})
+
+	res := MarkTopicReadTask{}.Action(httptest.NewRecorder(), req)
+	rdh, ok := res.(handlers.RefreshDirectHandler)
+	if !ok {
+		t.Fatalf("expected RefreshDirectHandler, got %T", res)
+	}
+	if rdh.TargetURL != "/private/topic/1/thread/3" {
+		t.Fatalf("expected redirect to /private/topic/1/thread/3 got %s", rdh.TargetURL)
 	}
 }

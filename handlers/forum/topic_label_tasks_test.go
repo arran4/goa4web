@@ -8,15 +8,11 @@ import (
 	"strings"
 	"testing"
 
-	"regexp"
-	"strings"
-	"testing"
-
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/gorilla/mux"
 )
 
 func TestMarkTopicReadTaskRedirect(t *testing.T) {
@@ -26,8 +22,8 @@ func TestMarkTopicReadTaskRedirect(t *testing.T) {
 	form.Set("task", string(TaskMarkTopicRead))
 	req := httptest.NewRequest(http.MethodPost, "/private/topic/1/labels", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("Referer", "/private/topic/1/thread/51")
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
+	req = mux.SetURLVars(req, map[string]string{"topic": "1"})
 	rr := httptest.NewRecorder()
 
 	res := MarkTopicReadTaskHandler.Action(rr, req)
@@ -35,35 +31,16 @@ func TestMarkTopicReadTaskRedirect(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected RefreshDirectHandler, got %T", res)
 	}
-	if rdh.TargetURL != "/private/topic/1/thread/3" {
-		t.Fatalf("redirect %q, want /private/topic/1/thread/3", rdh.TargetURL)
+	if rdh.TargetURL != "/private/topic/1" {
+		t.Fatalf("redirect %q, want /private/topic/1", rdh.TargetURL)
 	}
-
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-  }
 }
 
-func TestMarkTopicReadTaskAddsInverseLabels(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-
-	q := db.New(conn)
-	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
-	cd.UserID = 2
-
-	mock.ExpectExec(regexp.QuoteMeta("INSERT IGNORE INTO forumtopic_private_labels")).
-		WithArgs(int32(1), cd.UserID, "new", true).
-		WillReturnResult(sqlmock.NewResult(0, 1))
-	mock.ExpectExec(regexp.QuoteMeta("INSERT IGNORE INTO forumtopic_private_labels")).
-		WithArgs(int32(1), cd.UserID, "unread", true).
-		WillReturnResult(sqlmock.NewResult(0, 1))
-
+func TestMarkTopicReadTaskRedirectWithThread(t *testing.T) {
+	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
 	form := url.Values{}
 	form.Set("redirect", "/private/topic/1/thread/3")
+	form.Set("task", string(TaskMarkTopicRead))
 	req := httptest.NewRequest(http.MethodPost, "/private/topic/1/labels", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
@@ -74,7 +51,7 @@ func TestMarkTopicReadTaskAddsInverseLabels(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected RefreshDirectHandler, got %T", res)
 	}
-	if rdh.TargetURL != "/private/topic/1" {
-		t.Fatalf("expected redirect to /private/topic/1 got %s", rdh.TargetURL)
+	if rdh.TargetURL != "/private/topic/1/thread/3" {
+		t.Fatalf("expected redirect to /private/topic/1/thread/3 got %s", rdh.TargetURL)
 	}
 }

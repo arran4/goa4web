@@ -38,12 +38,14 @@ func TestThreadPageShowsDefaultPrivateLabels(t *testing.T) {
 
 	data := struct {
 		Topic         struct{ Idforumtopic int32 }
+		Thread        struct{ Idforumthread int32 }
 		PublicLabels  []string
 		AuthorLabels  []string
 		PrivateLabels []string
 		BasePath      string
 	}{}
 	data.Topic.Idforumtopic = 1
+	data.Thread.Idforumthread = 3
 	data.PrivateLabels = []string{"new", "unread"}
 	data.BasePath = "/forum"
 

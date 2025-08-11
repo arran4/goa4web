@@ -303,7 +303,7 @@ func TestQueries_AdminListDeactivatedLinks(t *testing.T) {
 	if err != nil {
 		t.Fatalf("AdminListDeactivatedLinks: %v", err)
 	}
-	if len(res) != 1 || res[0].Idlinker != 1 {
+	if len(res) != 1 || res[0].ID != 1 {
 		t.Fatalf("unexpected result %+v", res)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {

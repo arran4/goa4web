@@ -124,30 +124,30 @@ WHERE restored_at IS NULL
 LIMIT ? OFFSET ?;
 
 -- name: AdminArchiveLink :exec
-INSERT INTO deactivated_linker (idlinker, language_id, users_idusers, linker_category_id, forumthread_id, title, url, description, listed, timezone, deleted_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW());
+INSERT INTO deactivated_linker (id, language_id, author_id, category_id, thread_id, title, url, description, listed, timezone, deleted_at)
+VALUES (sqlc.arg(id), sqlc.arg(language_id), sqlc.arg(author_id), sqlc.arg(category_id), sqlc.arg(thread_id), sqlc.arg(title), sqlc.arg(url), sqlc.arg(description), sqlc.arg(listed), sqlc.arg(timezone), NOW());
 
 -- name: AdminScrubLink :exec
 UPDATE linker SET title = ?, url = '', description = '', deleted_at = NOW() WHERE id = ?;
 
 -- name: AdminListPendingDeactivatedLinks :many
-SELECT idlinker, title, url, description FROM deactivated_linker WHERE users_idusers = ? AND restored_at IS NULL
+SELECT id, title, url, description FROM deactivated_linker WHERE author_id = ? AND restored_at IS NULL
 LIMIT ? OFFSET ?;
 
 -- name: AdminRestoreLink :exec
 UPDATE linker SET title = ?, url = ?, description = ?, deleted_at = NULL WHERE id = ?;
 
 -- name: AdminMarkLinkRestored :exec
-UPDATE deactivated_linker SET restored_at = NOW() WHERE idlinker = ?;
+UPDATE deactivated_linker SET restored_at = NOW() WHERE id = ?;
 
 -- name: AdminIsLinkDeactivated :one
 SELECT EXISTS(
     SELECT 1 FROM deactivated_linker
-    WHERE idlinker = ? AND restored_at IS NULL
+    WHERE id = ? AND restored_at IS NULL
 ) AS is_deactivated;
 
 -- name: AdminListDeactivatedLinks :many
-SELECT idlinker, title, url, description FROM deactivated_linker
+SELECT id, title, url, description FROM deactivated_linker
 WHERE restored_at IS NULL
 LIMIT ? OFFSET ?;
 

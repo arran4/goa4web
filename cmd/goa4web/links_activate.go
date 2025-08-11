@@ -49,7 +49,7 @@ func (c *linksActivateCmd) Run() error {
 	}
 	var found *db.AdminListDeactivatedLinksRow
 	for _, r := range rows {
-		if int(r.Idlinker) == c.ID {
+		if int(r.ID) == c.ID {
 			found = r
 			break
 		}
@@ -57,10 +57,10 @@ func (c *linksActivateCmd) Run() error {
 	if found == nil {
 		return fmt.Errorf("link %d not found", c.ID)
 	}
-	if err := queries.AdminRestoreLink(ctx, db.AdminRestoreLinkParams{Title: found.Title, Url: found.Url, Description: found.Description, ID: found.Idlinker}); err != nil {
+	if err := queries.AdminRestoreLink(ctx, db.AdminRestoreLinkParams{Title: found.Title, Url: found.Url, Description: found.Description, ID: found.ID}); err != nil {
 		return fmt.Errorf("restore link: %w", err)
 	}
-	if err := queries.AdminMarkLinkRestored(ctx, found.Idlinker); err != nil {
+	if err := queries.AdminMarkLinkRestored(ctx, found.ID); err != nil {
 		return fmt.Errorf("mark restored: %w", err)
 	}
 	return nil

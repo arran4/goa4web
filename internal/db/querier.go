@@ -110,7 +110,7 @@ type Querier interface {
 	AdminIsBlogDeactivated(ctx context.Context, idblogs int32) (bool, error)
 	AdminIsCommentDeactivated(ctx context.Context, idcomments int32) (bool, error)
 	AdminIsImagepostDeactivated(ctx context.Context, idimagepost int32) (bool, error)
-	AdminIsLinkDeactivated(ctx context.Context, idlinker int32) (bool, error)
+	AdminIsLinkDeactivated(ctx context.Context, id int32) (bool, error)
 	AdminIsUserDeactivated(ctx context.Context, idusers int32) (bool, error)
 	AdminIsWritingDeactivated(ctx context.Context, idwriting int32) (bool, error)
 	// AdminLanguageUsageCounts returns counts of content referencing a language.
@@ -172,7 +172,7 @@ type Querier interface {
 	AdminMarkBlogRestored(ctx context.Context, idblogs int32) error
 	AdminMarkCommentRestored(ctx context.Context, idcomments int32) error
 	AdminMarkImagepostRestored(ctx context.Context, idimagepost int32) error
-	AdminMarkLinkRestored(ctx context.Context, idlinker int32) error
+	AdminMarkLinkRestored(ctx context.Context, id int32) error
 	AdminMarkNotificationRead(ctx context.Context, id int32) error
 	AdminMarkNotificationUnread(ctx context.Context, id int32) error
 	AdminMarkWritingRestored(ctx context.Context, idwriting int32) error

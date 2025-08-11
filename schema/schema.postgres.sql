@@ -589,11 +589,11 @@ CREATE TABLE IF NOT EXISTS `deactivated_imageposts` (
 );
 
 CREATE TABLE IF NOT EXISTS `deactivated_linker` (
-  `idlinker` int NOT NULL,
+  `id` int NOT NULL,
   `language_id` int DEFAULT NULL,
-  `users_idusers` int NOT NULL,
-  `linker_category_id` int DEFAULT NULL,
-  `forumthread_id` int NOT NULL,
+  `author_id` int NOT NULL,
+  `category_id` int DEFAULT NULL,
+  `thread_id` int NOT NULL,
   `title` tinytext,
   `url` tinytext,
   `description` tinytext,
@@ -601,7 +601,7 @@ CREATE TABLE IF NOT EXISTS `deactivated_linker` (
   `timezone` text DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
   `restored_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`idlinker`)
+  PRIMARY KEY (`id`)
 );
 
 

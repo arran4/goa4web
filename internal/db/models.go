@@ -161,18 +161,18 @@ type DeactivatedImagepost struct {
 }
 
 type DeactivatedLinker struct {
-	Idlinker         int32
-	LanguageID       sql.NullInt32
-	UsersIdusers     int32
-	LinkerCategoryID sql.NullInt32
-	ForumthreadID    int32
-	Title            sql.NullString
-	Url              sql.NullString
-	Description      sql.NullString
-	Listed           sql.NullTime
-	Timezone         sql.NullString
-	DeletedAt        sql.NullTime
-	RestoredAt       sql.NullTime
+	ID          int32
+	LanguageID  sql.NullInt32
+	AuthorID    int32
+	CategoryID  sql.NullInt32
+	ThreadID    int32
+	Title       sql.NullString
+	Url         sql.NullString
+	Description sql.NullString
+	Listed      sql.NullTime
+	Timezone    sql.NullString
+	DeletedAt   sql.NullTime
+	RestoredAt  sql.NullTime
 }
 
 type DeactivatedUser struct {

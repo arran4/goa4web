@@ -48,15 +48,16 @@ func (c *linksDeactivateCmd) Run() error {
 		return fmt.Errorf("link already deactivated")
 	}
 	if err := queries.AdminArchiveLink(ctx, db.AdminArchiveLinkParams{
-		Idlinker:         l.ID,
-		LanguageID:       l.LanguageID,
-		UsersIdusers:     l.AuthorID,
-		LinkerCategoryID: l.CategoryID,
-		ForumthreadID:    l.ThreadID,
-		Title:            l.Title,
-		Url:              l.Url,
-		Description:      l.Description,
-		Listed:           l.Listed,
+		ID:          l.ID,
+		LanguageID:  l.LanguageID,
+		AuthorID:    l.AuthorID,
+		CategoryID:  l.CategoryID,
+		ThreadID:    l.ThreadID,
+		Title:       l.Title,
+		Url:         l.Url,
+		Description: l.Description,
+		Listed:      l.Listed,
+		Timezone:    l.Timezone,
 	}); err != nil {
 		return fmt.Errorf("archive link: %w", err)
 	}

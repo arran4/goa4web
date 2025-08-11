@@ -128,17 +128,17 @@ func (c *userActivateCmd) Run() error {
 		}
 	}
 
-	rowsL, err := qtx.AdminListPendingDeactivatedLinks(ctx, db.AdminListPendingDeactivatedLinksParams{UsersIdusers: int32(c.ID), Limit: math.MaxInt32, Offset: 0})
+	rowsL, err := qtx.AdminListPendingDeactivatedLinks(ctx, db.AdminListPendingDeactivatedLinksParams{AuthorID: int32(c.ID), Limit: math.MaxInt32, Offset: 0})
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("select links: %w", err)
 	}
 	for _, l := range rowsL {
-		if err := qtx.AdminRestoreLink(ctx, db.AdminRestoreLinkParams{Title: l.Title, Url: l.Url, Description: l.Description, ID: l.Idlinker}); err != nil {
+		if err := qtx.AdminRestoreLink(ctx, db.AdminRestoreLinkParams{Title: l.Title, Url: l.Url, Description: l.Description, ID: l.ID}); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("restore link: %w", err)
 		}
-		if err := qtx.AdminMarkLinkRestored(ctx, l.Idlinker); err != nil {
+		if err := qtx.AdminMarkLinkRestored(ctx, l.ID); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("mark link restored: %w", err)
 		}

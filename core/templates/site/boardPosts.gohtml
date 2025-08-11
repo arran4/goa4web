@@ -2,7 +2,7 @@
     {{ $cd := cd }}
     {{ $posts := $cd.SelectedBoardPosts }}
     {{- if $posts }}
-        <font size="4">Pictures:</font><br>
+        <span class="section-title">Pictures:</span><br>
         {{- range $posts }}
             <table>
                 <tr>

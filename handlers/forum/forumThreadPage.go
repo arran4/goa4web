@@ -33,6 +33,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		PublicLabels   []string
 		AuthorLabels   []string
 		PrivateLabels  []string
+		BackURL        string
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
@@ -43,6 +44,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	data := Data{
 		IsReplyable: true,
 		BasePath:    basePath,
+		BackURL:     r.URL.RequestURI(),
 	}
 
 	threadRow, err := cd.SelectedThread()

@@ -197,9 +197,12 @@ func (MarkTopicReadTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("mark read %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-  target := r.PostFormValue("redirect")
+	target := r.PostFormValue("redirect")
 	if target == "" {
 		target = r.Header.Get("Referer")
+	}
+	if target == "" {
+		target = strings.TrimSuffix(r.URL.Path, "/labels")
 	}
 	return handlers.RefreshDirectHandler{TargetURL: target}
 }
@@ -235,7 +238,7 @@ func (SetLabelsTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("set private labels %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-  if err := cd.SetTopicPrivateLabelStatus(int32(topicID), inverse["new"], inverse["unread"]); err != nil {
+	if err := cd.SetTopicPrivateLabelStatus(int32(topicID), inverse["new"], inverse["unread"]); err != nil {
 		log.Printf("set private label status: %v", err)
 		return fmt.Errorf("set private label status %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

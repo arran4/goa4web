@@ -17,7 +17,9 @@ import (
 
 func CommentPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		Text string
+		Text    string
+		Labels  []templates.TopicLabel
+		BackURL string
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -49,7 +51,7 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := Data{}
+	data := Data{BackURL: r.URL.RequestURI()}
 	replyType := r.URL.Query().Get("type")
 	commentId, _ := strconv.Atoi(r.URL.Query().Get("comment"))
 	if commentId != 0 {
@@ -60,6 +62,16 @@ func CommentPage(w http.ResponseWriter, r *http.Request) {
 			default:
 				data.Text = a4code.QuoteText(comment.Username.String, comment.Text.String)
 			}
+		}
+	}
+	if als, err := cd.BlogAuthorLabels(blog.Idblogs); err == nil {
+		for _, l := range als {
+			data.Labels = append(data.Labels, templates.TopicLabel{Name: l, Type: "author"})
+		}
+	}
+	if pls, err := cd.BlogPrivateLabels(blog.Idblogs); err == nil {
+		for _, l := range pls {
+			data.Labels = append(data.Labels, templates.TopicLabel{Name: l, Type: "private"})
 		}
 	}
 

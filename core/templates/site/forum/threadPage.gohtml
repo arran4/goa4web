@@ -4,6 +4,7 @@
     <div class="label-bar">
         {{ template "topicLabels" (dict "Public" .PublicLabels "Author" .AuthorLabels "Private" .PrivateLabels) }}
         <form method="post" action="{{$base}}/topic/{{.Topic.Idforumtopic}}/labels" class="mark-read">
+            {{ csrfField }}
             <input type="hidden" name="task" value="Mark Topic Read"/>
             <button type="submit">Mark as read</button>
         </form>

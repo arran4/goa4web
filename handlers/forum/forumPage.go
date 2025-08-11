@@ -8,10 +8,10 @@ import (
 
 	"github.com/arran4/goa4web/core/consts"
 
-	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/handlers"
-
 	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/gorilla/mux"
 )
 
@@ -62,6 +62,14 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	for _, row := range rows {
+		var lbls []templates.TopicLabel
+		if pub, _, err := cd.ThreadPublicLabels(row.Idforumtopic); err == nil {
+			for _, l := range pub {
+				lbls = append(lbls, templates.TopicLabel{Name: l, Type: "public"})
+			}
+		} else {
+			log.Printf("list public labels: %v", err)
+		}
 		topicRows = append(topicRows, &ForumtopicPlus{
 			Idforumtopic:                 row.Idforumtopic,
 			Lastposter:                   row.Lastposter,
@@ -72,6 +80,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 			Comments:                     row.Comments,
 			Lastaddition:                 row.Lastaddition,
 			Lastposterusername:           row.Lastposterusername,
+			Labels:                       lbls,
 		})
 	}
 

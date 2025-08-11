@@ -122,11 +122,16 @@ func (cd *CoreData) PrivateLabels(item string, itemID int32) ([]string, error) {
 	}
 	sort.Strings(userLabels)
 	labels := make([]string, 0, len(userLabels)+2)
-	if !inverted["new"] {
-		labels = append(labels, "new")
-	}
-	if !inverted["unread"] {
-		labels = append(labels, "unread")
+	// Only threads, news articles, links, image board posts, blog entries,
+	// and writing articles receive default status labels.
+	switch item {
+	case "thread", "news", "link", "imagebbs", "blog", "writing":
+		if !inverted["new"] {
+			labels = append(labels, "new")
+		}
+		if !inverted["unread"] {
+			labels = append(labels, "unread")
+		}
 	}
 	labels = append(labels, userLabels...)
 	return labels, nil

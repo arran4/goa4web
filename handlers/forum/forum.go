@@ -2,6 +2,8 @@ package forum
 
 import (
 	"database/sql"
+
+	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/db"
 	"golang.org/x/exp/slices"
 )
@@ -19,6 +21,7 @@ type ForumtopicPlus struct {
 	Lastaddition       sql.NullTime
 	Lastposterusername sql.NullString
 	Edit               bool
+	Labels             []templates.TopicLabel
 }
 
 type ForumcategoryPlus struct {

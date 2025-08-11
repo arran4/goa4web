@@ -5,6 +5,7 @@
         {{ template "topicLabels" (dict "Public" .PublicLabels "Author" .AuthorLabels "Private" .PrivateLabels) }}
         <form method="post" action="{{$base}}/topic/{{.Topic.Idforumtopic}}/labels" class="mark-read">
             <input type="hidden" name="task" value="Mark Topic Read"/>
+            <input type="hidden" name="redirect" value="{{$base}}/topic/{{.Topic.Idforumtopic}}/thread/{{.Thread.Idforumthread}}"/>
             <button type="submit">Mark as read</button>
         </form>
     </div>

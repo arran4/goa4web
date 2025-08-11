@@ -24,11 +24,11 @@ func TestBuildUserGrantGroupsIncludesAvailableActionsWithoutGrants(t *testing.T)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, created_at, updated_at, user_id, role_id, section, item, rule_type, item_id, item_rule, action, extra, active FROM grants WHERE user_id = ? ORDER BY id\n")).
 		WithArgs(sqlmock.AnyArg()).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "created_at", "updated_at", "user_id", "role_id", "section", "item", "rule_type", "item_id", "item_rule", "action", "extra", "active"}))
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT f.idforumcategory, f.forumcategory_idforumcategory, f.language_idlanguage, f.title, f.description\nFROM forumcategory f\nWHERE (\nf.language_idlanguage = 0\nOR f.language_idlanguage IS NULL\nOR EXISTS (\nSELECT 1 FROM user_language ul\nWHERE ul.users_idusers = ?\nAND ul.language_idlanguage = f.language_idlanguage\n)\nOR NOT EXISTS (\nSELECT 1 FROM user_language ul WHERE ul.users_idusers = ?\n)\n)\n")).
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT f.idforumcategory, f.forumcategory_idforumcategory, f.language_id, f.title, f.description\nFROM forumcategory f\nWHERE (\nf.language_id = 0\nOR f.language_id IS NULL\nOR EXISTS (\nSELECT 1 FROM user_language ul\nWHERE ul.users_idusers = ?\nAND ul.language_id = f.language_id\n)\nOR NOT EXISTS (\nSELECT 1 FROM user_language ul WHERE ul.users_idusers = ?\n)\n)\n")).
 		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "language_idlanguage", "title", "description"}))
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT idlanguage, nameof\nFROM language\n")).
-		WillReturnRows(sqlmock.NewRows([]string{"idlanguage", "nameof"}))
+		WillReturnRows(sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "language_id", "title", "description"}))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, nameof\nFROM language\n")).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "nameof"}))
 
 	groups, err := buildGrantGroupsForUser(context.Background(), cd, 1)
 	if err != nil {

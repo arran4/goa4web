@@ -26,15 +26,15 @@ func (q *Queries) AdminCreateLanguage(ctx context.Context, nameof sql.NullString
 
 const adminDeleteLanguage = `-- name: AdminDeleteLanguage :exec
 DELETE FROM language
-WHERE idlanguage = ?
+WHERE id = ?
 `
 
 // AdminDeleteLanguage removes a language entry.
 // Parameters:
 //
 //	? - Language ID to be deleted (int)
-func (q *Queries) AdminDeleteLanguage(ctx context.Context, idlanguage int32) error {
-	_, err := q.db.ExecContext(ctx, adminDeleteLanguage, idlanguage)
+func (q *Queries) AdminDeleteLanguage(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, adminDeleteLanguage, id)
 	return err
 }
 
@@ -50,11 +50,11 @@ func (q *Queries) AdminInsertLanguage(ctx context.Context, nameof sql.NullString
 
 const adminLanguageUsageCounts = `-- name: AdminLanguageUsageCounts :one
 SELECT
-    (SELECT COUNT(*) FROM comments WHERE comments.language_idlanguage = ?) AS comments,
-    (SELECT COUNT(*) FROM writing WHERE writing.language_idlanguage = ?) AS writings,
-    (SELECT COUNT(*) FROM blogs WHERE blogs.language_idlanguage = ?) AS blogs,
-    (SELECT COUNT(*) FROM site_news WHERE site_news.language_idlanguage = ?) AS news,
-    (SELECT COUNT(*) FROM linker WHERE linker.language_idlanguage = ?) AS links
+    (SELECT COUNT(*) FROM comments WHERE comments.language_id = ?) AS comments,
+    (SELECT COUNT(*) FROM writing WHERE writing.language_id = ?) AS writings,
+    (SELECT COUNT(*) FROM blogs WHERE blogs.language_id = ?) AS blogs,
+    (SELECT COUNT(*) FROM site_news WHERE site_news.language_id = ?) AS news,
+    (SELECT COUNT(*) FROM linker WHERE linker.language_id = ?) AS links
 `
 
 type AdminLanguageUsageCountsParams struct {
@@ -92,12 +92,12 @@ func (q *Queries) AdminLanguageUsageCounts(ctx context.Context, arg AdminLanguag
 const adminRenameLanguage = `-- name: AdminRenameLanguage :exec
 UPDATE language
 SET nameof = ?
-WHERE idlanguage = ?
+WHERE id = ?
 `
 
 type AdminRenameLanguageParams struct {
-	Nameof     sql.NullString
-	Idlanguage int32
+	Nameof sql.NullString
+	ID     int32
 }
 
 // AdminRenameLanguage updates the language name.
@@ -106,7 +106,7 @@ type AdminRenameLanguageParams struct {
 //	? - New name for the language (string)
 //	? - Language ID to be updated (int)
 func (q *Queries) AdminRenameLanguage(ctx context.Context, arg AdminRenameLanguageParams) error {
-	_, err := q.db.ExecContext(ctx, adminRenameLanguage, arg.Nameof, arg.Idlanguage)
+	_, err := q.db.ExecContext(ctx, adminRenameLanguage, arg.Nameof, arg.ID)
 	return err
 }
 
@@ -123,19 +123,19 @@ func (q *Queries) SystemCountLanguages(ctx context.Context) (int64, error) {
 }
 
 const systemGetLanguageIDByName = `-- name: SystemGetLanguageIDByName :one
-SELECT idlanguage FROM language WHERE nameof = ?
+SELECT id FROM language WHERE nameof = ?
 `
 
 // SystemGetLanguageIDByName resolves a language ID by name.
 func (q *Queries) SystemGetLanguageIDByName(ctx context.Context, nameof sql.NullString) (int32, error) {
 	row := q.db.QueryRowContext(ctx, systemGetLanguageIDByName, nameof)
-	var idlanguage int32
-	err := row.Scan(&idlanguage)
-	return idlanguage, err
+	var id int32
+	err := row.Scan(&id)
+	return id, err
 }
 
 const systemListLanguages = `-- name: SystemListLanguages :many
-SELECT idlanguage, nameof
+SELECT id, nameof
 FROM language
 `
 
@@ -149,7 +149,7 @@ func (q *Queries) SystemListLanguages(ctx context.Context) ([]*Language, error) 
 	var items []*Language
 	for rows.Next() {
 		var i Language
-		if err := rows.Scan(&i.Idlanguage, &i.Nameof); err != nil {
+		if err := rows.Scan(&i.ID, &i.Nameof); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)

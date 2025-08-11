@@ -1260,8 +1260,8 @@ func (cd *CoreData) RenameLanguage(oldCode, newCode string) error {
 		return fmt.Errorf("lookup language id: %w", err)
 	}
 	if err := cd.queries.AdminRenameLanguage(cd.ctx, db.AdminRenameLanguageParams{
-		Nameof:     sql.NullString{String: newCode, Valid: true},
-		Idlanguage: id,
+		Nameof: sql.NullString{String: newCode, Valid: true},
+		ID:     id,
 	}); err != nil {
 		return fmt.Errorf("update language: %w", err)
 	}
@@ -1283,7 +1283,7 @@ func (cd *CoreData) DeleteLanguage(code string) (int32, string, error) {
 	var name string
 	if rows, err := cd.Languages(); err == nil {
 		for _, l := range rows {
-			if l.Idlanguage == int32(id) {
+			if l.ID == int32(id) {
 				name = l.Nameof.String
 				break
 			}
@@ -1615,8 +1615,8 @@ func (cd *CoreData) Preference() (*db.Preference, error) {
 func (cd *CoreData) PreferredLanguageID(siteDefault string) int32 {
 	id, err := cd.preferredLanguageID.Load(func() (int32, error) {
 		if pref, err := cd.Preference(); err == nil && pref != nil {
-			if pref.LanguageIdlanguage.Valid {
-				return pref.LanguageIdlanguage.Int32, nil
+			if pref.LanguageID.Valid {
+				return pref.LanguageID.Int32, nil
 			}
 		}
 		if cd.queries == nil || siteDefault == "" {
@@ -2319,16 +2319,16 @@ func (cd *CoreData) SectionThreadComments(section, itemType string, id int32, op
 		out := make([]*db.GetCommentsByThreadIdForUserRow, len(rows))
 		for idx, r := range rows {
 			out[idx] = &db.GetCommentsByThreadIdForUserRow{
-				Idcomments:         r.Idcomments,
-				ForumthreadID:      r.ForumthreadID,
-				UsersIdusers:       r.UsersIdusers,
-				LanguageIdlanguage: r.LanguageIdlanguage,
-				Written:            r.Written,
-				Text:               r.Text,
-				DeletedAt:          r.DeletedAt,
-				LastIndex:          r.LastIndex,
-				Posterusername:     r.Posterusername,
-				IsOwner:            r.IsOwner,
+				Idcomments:     r.Idcomments,
+				ForumthreadID:  r.ForumthreadID,
+				UsersIdusers:   r.UsersIdusers,
+				LanguageID:     r.LanguageID,
+				Written:        r.Written,
+				Text:           r.Text,
+				DeletedAt:      r.DeletedAt,
+				LastIndex:      r.LastIndex,
+				Posterusername: r.Posterusername,
+				IsOwner:        r.IsOwner,
 			}
 		}
 		return out, nil

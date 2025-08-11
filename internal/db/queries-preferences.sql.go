@@ -11,7 +11,7 @@ import (
 )
 
 const getPreferenceForLister = `-- name: GetPreferenceForLister :one
-SELECT idpreferences, language_idlanguage, users_idusers, emailforumupdates, page_size, auto_subscribe_replies, timezone
+SELECT idpreferences, language_id, users_idusers, emailforumupdates, page_size, auto_subscribe_replies, timezone
 FROM preferences
 WHERE users_idusers = ?
 `
@@ -21,7 +21,7 @@ func (q *Queries) GetPreferenceForLister(ctx context.Context, listerID int32) (*
 	var i Preference
 	err := row.Scan(
 		&i.Idpreferences,
-		&i.LanguageIdlanguage,
+		&i.LanguageID,
 		&i.UsersIdusers,
 		&i.Emailforumupdates,
 		&i.PageSize,
@@ -48,7 +48,7 @@ func (q *Queries) InsertEmailPreferenceForLister(ctx context.Context, arg Insert
 }
 
 const insertPreferenceForLister = `-- name: InsertPreferenceForLister :exec
-INSERT INTO preferences (language_idlanguage, users_idusers, page_size, timezone)
+INSERT INTO preferences (language_id, users_idusers, page_size, timezone)
 VALUES (?, ?, ?, ?)
 `
 
@@ -102,7 +102,7 @@ func (q *Queries) UpdateEmailForumUpdatesForLister(ctx context.Context, arg Upda
 }
 
 const updatePreferenceForLister = `-- name: UpdatePreferenceForLister :exec
-UPDATE preferences SET language_idlanguage = ?, page_size = ?, timezone = ? WHERE users_idusers = ?
+UPDATE preferences SET language_id = ?, page_size = ?, timezone = ? WHERE users_idusers = ?
 `
 
 type UpdatePreferenceForListerParams struct {

@@ -30,12 +30,12 @@ FROM writing w
 LEFT JOIN users u ON w.users_idusers = u.idusers
 WHERE w.private = 0 AND w.users_idusers = sqlc.arg(author_id)
   AND (
-    w.language_idlanguage = 0
-    OR w.language_idlanguage IS NULL
+    w.language_id = 0
+    OR w.language_id IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = sqlc.arg(lister_id)
-          AND ul.language_idlanguage = w.language_idlanguage
+          AND ul.language_id = w.language_id
     )
     OR NOT EXISTS (
         SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -73,12 +73,12 @@ FROM writing w
 LEFT JOIN users u ON w.Users_Idusers=u.idusers
 WHERE w.private = 0 AND w.writing_category_id = sqlc.arg(writing_category_id)
   AND (
-    w.language_idlanguage = 0
-    OR w.language_idlanguage IS NULL
+    w.language_id = 0
+    OR w.language_id IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = sqlc.arg(lister_id)
-          AND ul.language_idlanguage = w.language_idlanguage
+          AND ul.language_id = w.language_id
     )
     OR NOT EXISTS (
         SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -104,7 +104,7 @@ SET title = sqlc.arg(title),
     abstract = sqlc.arg(abstract),
     writing = sqlc.arg(content),
     private = sqlc.arg(private),
-    language_idlanguage = sqlc.narg(language_id)
+    language_id = sqlc.narg(language_id)
 WHERE w.idwriting = sqlc.arg(writing_id)
   AND w.users_idusers = sqlc.arg(writer_id)
   AND EXISTS (
@@ -121,11 +121,11 @@ WHERE w.idwriting = sqlc.arg(writing_id)
   );
 
 -- name: InsertWriting :execlastid
-INSERT INTO writing (writing_category_id, title, abstract, writing, private, language_idlanguage, published, users_idusers)
+INSERT INTO writing (writing_category_id, title, abstract, writing, private, language_id, published, users_idusers)
 VALUES (?, ?, ?, ?, ?, ?, NOW(), ?);
 
 -- name: CreateWritingForWriter :execlastid
-INSERT INTO writing (writing_category_id, title, abstract, writing, private, language_idlanguage, published, users_idusers)
+INSERT INTO writing (writing_category_id, title, abstract, writing, private, language_id, published, users_idusers)
 SELECT sqlc.arg(writing_category_id), sqlc.arg(title), sqlc.arg(abstract), sqlc.arg(writing), sqlc.arg(private), sqlc.narg(language_id), NOW(), sqlc.arg(writer_id)
 WHERE EXISTS (
     SELECT 1 FROM grants g
@@ -170,12 +170,12 @@ FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
 WHERE w.idwriting IN (sqlc.slice(writing_ids))
   AND (
-    w.language_idlanguage = 0
-    OR w.language_idlanguage IS NULL
+    w.language_id = 0
+    OR w.language_id IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = sqlc.arg(lister_id)
-          AND ul.language_idlanguage = w.language_idlanguage
+          AND ul.language_id = w.language_id
     )
     OR NOT EXISTS (
         SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -267,12 +267,12 @@ SELECT u.username, COUNT(w.idwriting) AS count
 FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
 WHERE (
-    w.language_idlanguage = 0
-    OR w.language_idlanguage IS NULL
+    w.language_id = 0
+    OR w.language_id IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = sqlc.arg(lister_id)
-          AND ul.language_idlanguage = w.language_idlanguage
+          AND ul.language_id = w.language_id
     )
     OR NOT EXISTS (
         SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -301,12 +301,12 @@ FROM writing w
 JOIN users u ON w.users_idusers = u.idusers
 WHERE (LOWER(u.username) LIKE LOWER(sqlc.arg(query)) OR LOWER((SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1)) LIKE LOWER(sqlc.arg(query)))
   AND (
-    w.language_idlanguage = 0
-    OR w.language_idlanguage IS NULL
+    w.language_id = 0
+    OR w.language_id IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = sqlc.arg(lister_id)
-          AND ul.language_idlanguage = w.language_idlanguage
+          AND ul.language_id = w.language_id
     )
     OR NOT EXISTS (
         SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)

@@ -37,13 +37,13 @@ func TestRenameLanguageTask_Action(t *testing.T) {
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 
-	langRows := sqlmock.NewRows([]string{"idlanguage", "nameof"}).AddRow(1, "en")
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT idlanguage, nameof\nFROM language")).WillReturnRows(langRows)
+	langRows := sqlmock.NewRows([]string{"id", "nameof"}).AddRow(1, "en")
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, nameof\nFROM language")).WillReturnRows(langRows)
 
-	idRow := sqlmock.NewRows([]string{"idlanguage"}).AddRow(1)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT idlanguage FROM language WHERE nameof = ?")).WithArgs("en").WillReturnRows(idRow)
+	idRow := sqlmock.NewRows([]string{"id"}).AddRow(1)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id FROM language WHERE nameof = ?")).WithArgs("en").WillReturnRows(idRow)
 
-	mock.ExpectExec(regexp.QuoteMeta("UPDATE language\nSET nameof = ?\nWHERE idlanguage = ?")).WithArgs("fr", int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec(regexp.QuoteMeta("UPDATE language\nSET nameof = ?\nWHERE id = ?")).WithArgs("fr", int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
 
 	result := renameLanguageTask.Action(rr, req)
 	if result != nil {

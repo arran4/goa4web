@@ -37,7 +37,7 @@ func adminLanguagePage(w http.ResponseWriter, r *http.Request) {
 	var lang *db.Language
 	if rows, err := cd.Languages(); err == nil {
 		for _, l := range rows {
-			if l.Idlanguage == int32(id) {
+			if l.ID == int32(id) {
 				lang = l
 				break
 			}
@@ -74,7 +74,7 @@ func adminLanguageEditPage(w http.ResponseWriter, r *http.Request) {
 	var lang *db.Language
 	if rows, err := cd.Languages(); err == nil {
 		for _, l := range rows {
-			if l.Idlanguage == int32(id) {
+			if l.ID == int32(id) {
 				lang = l
 				break
 			}

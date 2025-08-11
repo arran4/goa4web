@@ -1,6 +1,6 @@
 -- name: UpdateBlogEntryForWriter :exec
 UPDATE blogs b
-SET language_idlanguage = sqlc.narg(language_id), blog = sqlc.arg(blog)
+SET language_id = sqlc.narg(language_id), blog = sqlc.arg(blog)
 WHERE b.idblogs = sqlc.arg(entry_id)
   AND b.users_idusers = sqlc.arg(writer_id)
   AND EXISTS (
@@ -17,8 +17,8 @@ WHERE b.idblogs = sqlc.arg(entry_id)
   );
 
 -- name: CreateBlogEntryForWriter :execlastid
-INSERT INTO blogs (users_idusers, language_idlanguage, blog, written, timezone)
-SELECT sqlc.arg(users_idusers), sqlc.narg(language_idlanguage), sqlc.arg(blog), CURRENT_TIMESTAMP, sqlc.arg(timezone)
+INSERT INTO blogs (users_idusers, language_id, blog, written, timezone)
+SELECT sqlc.arg(users_idusers), sqlc.narg(language_id), sqlc.arg(blog), CURRENT_TIMESTAMP, sqlc.arg(timezone)
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'blogs'
@@ -46,7 +46,7 @@ WHERE idblogs = ?;
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
-SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, b.timezone, u.username, coalesce(th.comments, 0),
+SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_id, b.blog, b.written, b.timezone, u.username, coalesce(th.comments, 0),
        b.users_idusers = sqlc.arg(lister_id) AS is_owner
 FROM blogs b
 JOIN grants g ON (g.item_id = b.idblogs OR g.item_id IS NULL)
@@ -59,12 +59,12 @@ JOIN grants g ON (g.item_id = b.idblogs OR g.item_id IS NULL)
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
 WHERE (
-    b.language_idlanguage = 0
-    OR b.language_idlanguage IS NULL
+    b.language_id = 0
+    OR b.language_id IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = sqlc.arg(lister_id)
-          AND ul.language_idlanguage = b.language_idlanguage
+          AND ul.language_id = b.language_id
     )
     OR NOT EXISTS (
         SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -77,19 +77,19 @@ LIMIT ? OFFSET ?;
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
-SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, b.timezone, u.username, coalesce(th.comments, 0),
+SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_id, b.blog, b.written, b.timezone, u.username, coalesce(th.comments, 0),
        b.users_idusers = sqlc.arg(lister_id) AS is_owner
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
 WHERE (b.users_idusers = sqlc.arg(author_id) OR sqlc.arg(author_id) = 0)
 AND (
-    b.language_idlanguage = 0
-    OR b.language_idlanguage IS NULL
+    b.language_id = 0
+    OR b.language_id IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = sqlc.arg(lister_id)
-          AND ul.language_idlanguage = b.language_idlanguage
+          AND ul.language_id = b.language_id
     )
     OR NOT EXISTS (
         SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -112,16 +112,16 @@ LIMIT ? OFFSET ?;
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
-SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, b.timezone
+SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_id, b.blog, b.written, b.timezone
 FROM blogs b
 WHERE b.idblogs IN (sqlc.slice(blogIds))
   AND (
-      b.language_idlanguage = 0
-      OR b.language_idlanguage IS NULL
+      b.language_id = 0
+      OR b.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(lister_id)
-            AND ul.language_idlanguage = b.language_idlanguage
+            AND ul.language_id = b.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -144,19 +144,19 @@ LIMIT ? OFFSET ?;
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
-SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_idlanguage, b.blog, b.written, b.timezone, u.username, coalesce(th.comments, 0),
+SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_id, b.blog, b.written, b.timezone, u.username, coalesce(th.comments, 0),
        b.users_idusers = sqlc.arg(lister_id) AS is_owner
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
 WHERE b.idblogs = sqlc.arg(id)
   AND (
-      b.language_idlanguage = 0
-      OR b.language_idlanguage IS NULL
+      b.language_id = 0
+      OR b.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(lister_id)
-            AND ul.language_idlanguage = b.language_idlanguage
+            AND ul.language_id = b.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -184,12 +184,12 @@ LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearc
 JOIN blogs b ON b.idblogs = cs.blog_id
 WHERE swl.word = ?
   AND (
-      b.language_idlanguage = 0
-      OR b.language_idlanguage IS NULL
+      b.language_id = 0
+      OR b.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(lister_id)
-            AND ul.language_idlanguage = b.language_idlanguage
+            AND ul.language_id = b.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -217,12 +217,12 @@ JOIN blogs b ON b.idblogs = cs.blog_id
 WHERE swl.word = ?
   AND cs.blog_id IN (sqlc.slice('ids'))
   AND (
-      b.language_idlanguage = 0
-      OR b.language_idlanguage IS NULL
+      b.language_id = 0
+      OR b.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
           WHERE ul.users_idusers = sqlc.arg(lister_id)
-            AND ul.language_idlanguage = b.language_idlanguage
+            AND ul.language_id = b.language_id
       )
       OR NOT EXISTS (
           SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -249,12 +249,12 @@ SELECT u.username, COUNT(b.idblogs) AS count
 FROM blogs b
 JOIN users u ON b.users_idusers = u.idusers
 WHERE (
-    b.language_idlanguage = 0
-    OR b.language_idlanguage IS NULL
+    b.language_id = 0
+    OR b.language_id IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = sqlc.arg(lister_id)
-          AND ul.language_idlanguage = b.language_idlanguage
+          AND ul.language_id = b.language_id
     )
     OR NOT EXISTS (
         SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -283,12 +283,12 @@ FROM blogs b
 JOIN users u ON b.users_idusers = u.idusers
 WHERE (LOWER(u.username) LIKE LOWER(sqlc.arg(query)) OR LOWER((SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1)) LIKE LOWER(sqlc.arg(query)))
   AND (
-    b.language_idlanguage = 0
-    OR b.language_idlanguage IS NULL
+    b.language_id = 0
+    OR b.language_id IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
         WHERE ul.users_idusers = sqlc.arg(lister_id)
-          AND ul.language_idlanguage = b.language_idlanguage
+          AND ul.language_id = b.language_id
     )
     OR NOT EXISTS (
         SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
@@ -311,7 +311,7 @@ LIMIT ? OFFSET ?;
 SELECT b.idblogs,
        b.forumthread_id,
        b.users_idusers,
-       b.language_idlanguage,
+       b.language_id,
        b.blog,
        b.written,
        b.timezone,

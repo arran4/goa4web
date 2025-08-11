@@ -39,14 +39,14 @@ func TestAdminCategoryPageLinks(t *testing.T) {
 	queries := db.New(sqlDB)
 	mock.MatchExpectationsInOrder(false)
 
-	catRows := sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "language_idlanguage", "title", "description"}).
+	catRows := sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "language_id", "title", "description"}).
 		AddRow(1, 0, 0, "cat", "desc")
-	mock.ExpectQuery("SELECT idforumcategory, forumcategory_idforumcategory, language_idlanguage, title, description FROM forumcategory").
+	mock.ExpectQuery("SELECT idforumcategory, forumcategory_idforumcategory, language_id, title, description FROM forumcategory").
 		WillReturnRows(catRows)
 
-	topicsRows := sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_idlanguage", "title", "description", "threads", "comments", "lastaddition", "handler", "lastposterusername"}).
+	topicsRows := sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_id", "title", "description", "threads", "comments", "lastaddition", "handler", "lastposterusername"}).
 		AddRow(1, 0, 1, 0, "t", "d", 0, 0, time.Now(), "", nil)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.language_idlanguage, t.title, t.description, t.threads, t.comments, t.lastaddition, t.handler, lu.username AS LastPosterUsername FROM forumtopic t")).
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.language_id, t.title, t.description, t.threads, t.comments, t.lastaddition, t.handler, lu.username AS LastPosterUsername FROM forumtopic t")).
 		WillReturnRows(topicsRows)
 
 	req, rr := setupRequest(t, queries, "/admin/forum/categories/category/1", map[string]string{"category": "1"})
@@ -81,14 +81,14 @@ func TestAdminCategoryEditPage(t *testing.T) {
 	queries := db.New(sqlDB)
 	mock.MatchExpectationsInOrder(false)
 
-	catRows := sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "language_idlanguage", "title", "description"}).
+	catRows := sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "language_id", "title", "description"}).
 		AddRow(1, 0, 0, "cat", "desc")
-	mock.ExpectQuery("SELECT idforumcategory, forumcategory_idforumcategory, language_idlanguage, title, description FROM forumcategory").
+	mock.ExpectQuery("SELECT idforumcategory, forumcategory_idforumcategory, language_id, title, description FROM forumcategory").
 		WillReturnRows(catRows)
 
-	allRows := sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "language_idlanguage", "title", "description"}).
+	allRows := sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "language_id", "title", "description"}).
 		AddRow(1, 0, 0, "cat", "desc")
-	mock.ExpectQuery("SELECT f.idforumcategory, f.forumcategory_idforumcategory, f.language_idlanguage, f.title, f.description\nFROM forumcategory f").
+	mock.ExpectQuery("SELECT f.idforumcategory, f.forumcategory_idforumcategory, f.language_id, f.title, f.description\nFROM forumcategory f").
 		WillReturnRows(allRows)
 
 	req, rr := setupRequest(t, queries, "/admin/forum/categories/category/1/edit", map[string]string{"category": "1"})

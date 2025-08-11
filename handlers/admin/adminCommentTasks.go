@@ -74,13 +74,13 @@ func (DeactivateCommentTask) Action(w http.ResponseWriter, r *http.Request) any 
 		return fmt.Errorf("comment already deactivated %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("already deactivated")))
 	}
 	if err := q.AdminArchiveComment(r.Context(), db.AdminArchiveCommentParams{
-		Idcomments:         c.Idcomments,
-		ForumthreadID:      c.ForumthreadID,
-		UsersIdusers:       c.UsersIdusers,
-		LanguageIdlanguage: c.LanguageIdlanguage,
-		Written:            c.Written,
-		Text:               c.Text,
-		Timezone:           c.Timezone,
+		Idcomments:    c.Idcomments,
+		ForumthreadID: c.ForumthreadID,
+		UsersIdusers:  c.UsersIdusers,
+		LanguageID:    c.LanguageID,
+		Written:       c.Written,
+		Text:          c.Text,
+		Timezone:      c.Timezone,
 	}); err != nil {
 		return fmt.Errorf("archive comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

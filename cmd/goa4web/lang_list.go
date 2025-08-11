@@ -38,7 +38,7 @@ func (c *langListCmd) Run() error {
 		return fmt.Errorf("list languages: %w", err)
 	}
 	for _, l := range langs {
-		fmt.Printf("%d\t%s\n", l.Idlanguage, l.Nameof.String)
+		fmt.Printf("%d\t%s\n", l.ID, l.Nameof.String)
 	}
 	return nil
 }

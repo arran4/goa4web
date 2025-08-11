@@ -48,13 +48,13 @@ func (c *commentDeactivateCmd) Run() error {
 		return fmt.Errorf("comment already deactivated")
 	}
 	if err := queries.AdminArchiveComment(ctx, db.AdminArchiveCommentParams{
-		Idcomments:         cm.Idcomments,
-		ForumthreadID:      cm.ForumthreadID,
-		UsersIdusers:       cm.UsersIdusers,
-		LanguageIdlanguage: cm.LanguageIdlanguage,
-		Written:            cm.Written,
-		Text:               cm.Text,
-		Timezone:           cm.Timezone,
+		Idcomments:    cm.Idcomments,
+		ForumthreadID: cm.ForumthreadID,
+		UsersIdusers:  cm.UsersIdusers,
+		LanguageID:    cm.LanguageID,
+		Written:       cm.Written,
+		Text:          cm.Text,
+		Timezone:      cm.Timezone,
 	}); err != nil {
 		return fmt.Errorf("archive comment: %w", err)
 	}

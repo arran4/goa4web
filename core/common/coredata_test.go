@@ -25,7 +25,7 @@ func TestCoreDataLatestNewsLazy(t *testing.T) {
 	queries := db.New(conn)
 	now := time.Now()
 	rows := sqlmock.NewRows([]string{
-		"writerName", "writerId", "idsitenews", "forumthread_id", "language_idlanguage",
+		"writerName", "writerId", "idsitenews", "forumthread_id", "language_id",
 		"users_idusers", "news", "occurred", "timezone", "comments",
 	}).AddRow("w", 1, 1, 0, 1, 1, "a", now, time.Local.String(), 0)
 
@@ -173,14 +173,14 @@ func TestPublicWritingsLazy(t *testing.T) {
 
 	queries := db.New(conn)
 	now := time.Now()
-	rows := sqlmock.NewRows([]string{"idwriting", "users_idusers", "forumthread_id", "language_idlanguage", "writing_category_id", "title", "published", "writing", "abstract", "private", "deleted_at", "last_index", "Username", "Comments"}).
+	rows := sqlmock.NewRows([]string{"idwriting", "users_idusers", "forumthread_id", "language_id", "writing_category_id", "title", "published", "writing", "abstract", "private", "deleted_at", "last_index", "Username", "Comments"}).
 		AddRow(1, 1, 0, 1, 0, "t", now, "w", "a", false, now, now, "u", 0)
 
 	mock.ExpectQuery("SELECT w.idwriting").WithArgs(int32(1), int32(0), int32(1), int32(1), sql.NullInt32{Int32: 1, Valid: true}, int32(15), int32(0)).WillReturnRows(rows)
 	mock.ExpectQuery("SELECT 1 FROM grants g JOIN roles").WithArgs("user", "administrator").WillReturnError(sql.ErrNoRows)
 	mock.ExpectQuery("SELECT 1 FROM grants").WithArgs(int32(1), "writing", sql.NullString{String: "article", Valid: true}, "see", sql.NullInt32{Int32: 1, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
-	rows2 := sqlmock.NewRows([]string{"idwriting", "users_idusers", "forumthread_id", "language_idlanguage", "writing_category_id", "title", "published", "writing", "abstract", "private", "deleted_at", "last_index", "Username", "Comments"}).
+	rows2 := sqlmock.NewRows([]string{"idwriting", "users_idusers", "forumthread_id", "language_id", "writing_category_id", "title", "published", "writing", "abstract", "private", "deleted_at", "last_index", "Username", "Comments"}).
 		AddRow(2, 1, 0, 1, 1, "t2", now, "w2", "a2", false, now, now, "u", 0)
 
 	mock.ExpectQuery("SELECT w.idwriting").WithArgs(int32(1), int32(1), int32(1), int32(1), sql.NullInt32{Int32: 1, Valid: true}, int32(15), int32(0)).WillReturnRows(rows2)
@@ -222,7 +222,7 @@ func TestCoreDataLatestWritingsLazy(t *testing.T) {
 	queries := db.New(conn)
 	now := time.Now()
 	rows := sqlmock.NewRows([]string{
-		"idwriting", "users_idusers", "forumthread_id", "language_idlanguage",
+		"idwriting", "users_idusers", "forumthread_id", "language_id",
 		"writing_category_id", "title", "published", "writing", "abstract",
 		"private", "deleted_at", "last_index",
 	}).AddRow(1, 1, 0, 1, 1, "t", now, "w", "a", nil, nil, now)
@@ -327,7 +327,7 @@ func TestBlogListLazy(t *testing.T) {
 
 	queries := db.New(conn)
 	now := time.Now()
-	rows := sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_idlanguage", "blog", "written", "timezone", "username", "comments", "is_owner"}).
+	rows := sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_id", "blog", "written", "timezone", "username", "comments", "is_owner"}).
 		AddRow(1, nil, 1, 0, "b", now, time.Local.String(), "bob", 0, true)
 	mock.ExpectQuery("SELECT b.idblogs").
 		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
@@ -361,7 +361,7 @@ func TestBlogListForSelectedAuthorLazy(t *testing.T) {
 
 	queries := db.New(conn)
 	now := time.Now()
-	rows := sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_idlanguage", "blog", "written", "timezone", "username", "comments", "is_owner"}).
+	rows := sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_id", "blog", "written", "timezone", "username", "comments", "is_owner"}).
 		AddRow(1, nil, 1, 0, "b", now, time.Local.String(), "bob", 0, true)
 	mock.ExpectQuery("SELECT b.idblogs").
 		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
@@ -395,7 +395,7 @@ func TestSelectedQuestionFromCategory(t *testing.T) {
 	ctx := context.Background()
 	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
 
-	row := sqlmock.NewRows([]string{"id", "faq_category_id", "language_idlanguage", "users_idusers", "answer", "question"}).
+	row := sqlmock.NewRows([]string{"id", "faq_category_id", "language_id", "users_idusers", "answer", "question"}).
 		AddRow(1, 2, 0, 0, sql.NullString{}, sql.NullString{})
 	mock.ExpectQuery("SELECT id, faq_category_id").WithArgs(int32(1)).WillReturnRows(row)
 	mock.ExpectExec("UPDATE faq SET deleted_at").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
@@ -420,7 +420,7 @@ func TestSelectedQuestionFromCategoryWrongCategory(t *testing.T) {
 	ctx := context.Background()
 	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
 
-	row := sqlmock.NewRows([]string{"id", "faq_category_id", "language_idlanguage", "users_idusers", "answer", "question"}).
+	row := sqlmock.NewRows([]string{"id", "faq_category_id", "language_id", "users_idusers", "answer", "question"}).
 		AddRow(1, 3, 0, 0, sql.NullString{}, sql.NullString{})
 	mock.ExpectQuery("SELECT id, faq_category_id").WithArgs(int32(1)).WillReturnRows(row)
 

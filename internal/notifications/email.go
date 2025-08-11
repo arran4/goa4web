@@ -30,12 +30,12 @@ func (n *Notifier) createEmailTemplateAndQueue(ctx context.Context, userID *int3
 }
 
 // renderAndQueueEmailFromTemplates renders the provided templates and queues the result.
-func (n *Notifier) renderAndQueueEmailFromTemplates(ctx context.Context, userID *int32, emailAddr string, et *EmailTemplates, data interface{}) error {
+func (n *Notifier) renderAndQueueEmailFromTemplates(ctx context.Context, userID *int32, emailAddr string, et *EmailTemplates, data interface{}, opts ...EmailOption) error {
 	// userID == nil implies the email is direct
 	if n.Queries == nil {
 		return fmt.Errorf("no query")
 	}
-	msg, err := n.RenderEmailFromTemplates(ctx, emailAddr, et, data)
+	msg, err := n.RenderEmailFromTemplates(ctx, emailAddr, et, data, opts...)
 	if err != nil {
 		return err
 	}
@@ -53,8 +53,17 @@ type EmailData struct {
 	Item           interface{}
 }
 
+// EmailOption configures EmailData prior to rendering.
+type EmailOption func(*EmailData)
+
+// WithAdmin appends " Admin" to the subject prefix to flag administrative emails.
+func WithAdmin() EmailOption {
+	return func(d *EmailData) { d.SubjectPrefix += " Admin" }
+}
+
 // RenderEmailFromTemplates returns the rendered email message using the provided templates.
-func (n *Notifier) RenderEmailFromTemplates(ctx context.Context, emailAddr string, et *EmailTemplates, item interface{}) ([]byte, error) {
+// Options may adjust the email metadata prior to rendering.
+func (n *Notifier) RenderEmailFromTemplates(ctx context.Context, emailAddr string, et *EmailTemplates, item interface{}, opts ...EmailOption) ([]byte, error) {
 	if emailAddr == "" {
 		return nil, fmt.Errorf("no email specified")
 	}
@@ -97,8 +106,13 @@ func (n *Notifier) RenderEmailFromTemplates(ctx context.Context, emailAddr strin
 		SignOffHTML:    htemplate.HTML(htmlSignOff),
 		Item:           item,
 	}
+
+	for _, opt := range opts {
+		opt(&data)
+	}
+
 	var textBody, htmlBody string
-	subject := "[" + subjectPrefix + "] Website Update Notification"
+	subject := "[" + data.SubjectPrefix + "] Website Update Notification"
 	if et.Subject != "" {
 		bs, err := n.renderEmailSubject(ctx, et.Subject, data)
 		if err != nil {

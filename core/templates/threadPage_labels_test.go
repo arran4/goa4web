@@ -42,10 +42,12 @@ func TestThreadPageShowsDefaultPrivateLabels(t *testing.T) {
 		AuthorLabels  []string
 		PrivateLabels []string
 		BasePath      string
+		BackURL       string
 	}{}
 	data.Topic.Idforumtopic = 1
 	data.PrivateLabels = []string{"new", "unread"}
 	data.BasePath = "/forum"
+	data.BackURL = "/forum/topic/1/thread/1"
 
 	var buf bytes.Buffer
 	if err := tmpl.ExecuteTemplate(&buf, "threadPage.gohtml", data); err != nil {

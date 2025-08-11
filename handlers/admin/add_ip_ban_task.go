@@ -67,8 +67,8 @@ func (AddIPBanTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return nil
 }
 
-func (AddIPBanTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("adminAddIPBanEmail")
+func (AddIPBanTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("adminAddIPBanEmail"), true
 }
 
 func (AddIPBanTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

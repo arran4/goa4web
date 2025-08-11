@@ -41,8 +41,8 @@ func (TestMailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return handlers.RefreshDirectHandler{TargetURL: "/usr/email"}
 }
 
-func (TestMailTask) SelfEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("testEmail")
+func (TestMailTask) SelfEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("testEmail"), true
 }
 
 func (TestMailTask) SelfInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

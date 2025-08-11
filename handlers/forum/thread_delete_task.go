@@ -16,8 +16,8 @@ var (
 	_ notif.AdminEmailTemplateProvider = (*ThreadDeleteTask)(nil)
 )
 
-func (ThreadDeleteTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("adminNotificationForumThreadDeleteEmail")
+func (ThreadDeleteTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("adminNotificationForumThreadDeleteEmail"), true
 }
 
 func (ThreadDeleteTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

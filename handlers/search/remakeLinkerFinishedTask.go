@@ -20,8 +20,8 @@ var _ notif.SelfNotificationTemplateProvider = (*RemakeLinkerFinishedTask)(nil)
 
 func (RemakeLinkerFinishedTask) Action(http.ResponseWriter, *http.Request) any { return nil }
 
-func (RemakeLinkerFinishedTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("searchRebuildLinkerEmail")
+func (RemakeLinkerFinishedTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("searchRebuildLinkerEmail"), true
 }
 
 func (RemakeLinkerFinishedTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
@@ -29,8 +29,8 @@ func (RemakeLinkerFinishedTask) AdminInternalNotificationTemplate(evt eventbus.T
 	return &s
 }
 
-func (RemakeLinkerFinishedTask) SelfEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("searchRebuildLinkerEmail")
+func (RemakeLinkerFinishedTask) SelfEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("searchRebuildLinkerEmail"), true
 }
 
 func (RemakeLinkerFinishedTask) SelfInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

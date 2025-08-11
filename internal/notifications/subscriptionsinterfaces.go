@@ -21,14 +21,14 @@ func NewEmailTemplates(prefix string) *EmailTemplates {
 // AdminEmailTemplateProvider indicates the notification should be sent via
 // email to administrators using the provided templates.
 type AdminEmailTemplateProvider interface {
-	AdminEmailTemplate(evt eventbus.TaskEvent) *EmailTemplates
+	AdminEmailTemplate(evt eventbus.TaskEvent) (templates *EmailTemplates, send bool)
 	AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string
 }
 
 // SelfNotificationTemplateProvider is used for mandatory self notifications such as password
 // resets or verifications.
 type SelfNotificationTemplateProvider interface {
-	SelfEmailTemplate(evt eventbus.TaskEvent) *EmailTemplates
+	SelfEmailTemplate(evt eventbus.TaskEvent) (templates *EmailTemplates, send bool)
 	SelfInternalNotificationTemplate(evt eventbus.TaskEvent) *string
 }
 
@@ -44,13 +44,13 @@ type SelfEmailBroadcaster interface {
 // Internal notifications are not supported for this provider.
 type DirectEmailNotificationTemplateProvider interface {
 	DirectEmailAddress(evt eventbus.TaskEvent) (string, error)
-	DirectEmailTemplate(evt eventbus.TaskEvent) *EmailTemplates
+	DirectEmailTemplate(evt eventbus.TaskEvent) (templates *EmailTemplates, send bool)
 }
 
 // SubscribersNotificationTemplateProvider indicates the notification should be delivered to
 // subscribed users.
 type SubscribersNotificationTemplateProvider interface {
-	SubscribedEmailTemplate(evt eventbus.TaskEvent) *EmailTemplates
+	SubscribedEmailTemplate(evt eventbus.TaskEvent) (templates *EmailTemplates, send bool)
 	SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string
 }
 
@@ -67,7 +67,7 @@ type AutoSubscribeProvider interface {
 // to the returned user IDs.
 type TargetUsersNotificationProvider interface {
 	TargetUserIDs(evt eventbus.TaskEvent) ([]int32, error)
-	TargetEmailTemplate(evt eventbus.TaskEvent) *EmailTemplates
+	TargetEmailTemplate(evt eventbus.TaskEvent) (templates *EmailTemplates, send bool)
 	TargetInternalNotificationTemplate(evt eventbus.TaskEvent) *string
 }
 

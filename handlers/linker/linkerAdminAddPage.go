@@ -106,8 +106,8 @@ func (addTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return nil
 }
 
-func (addTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("linkerAddEmail")
+func (addTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("linkerAddEmail"), true
 }
 
 func (addTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
@@ -115,8 +115,8 @@ func (addTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *s
 	return &s
 }
 
-func (addTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("adminNotificationLinkerAddEmail")
+func (addTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("adminNotificationLinkerAddEmail"), true
 }
 
 func (addTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

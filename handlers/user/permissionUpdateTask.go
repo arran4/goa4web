@@ -94,8 +94,8 @@ func (PermissionUpdateTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, erro
 	return nil, fmt.Errorf("target user id not provided")
 }
 
-func (PermissionUpdateTask) TargetEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("updateUserRoleEmail")
+func (PermissionUpdateTask) TargetEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("updateUserRoleEmail"), true
 }
 
 func (PermissionUpdateTask) TargetInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

@@ -75,8 +75,8 @@ func (bulkDeleteTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return nil
 }
 
-func (bulkDeleteTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("linkerRejectedEmail")
+func (bulkDeleteTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("linkerRejectedEmail"), true
 }
 
 func (bulkDeleteTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
@@ -84,8 +84,8 @@ func (bulkDeleteTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEv
 	return &s
 }
 
-func (bulkDeleteTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("adminNotificationLinkerRejectedEmail")
+func (bulkDeleteTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("adminNotificationLinkerRejectedEmail"), true
 }
 
 func (bulkDeleteTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

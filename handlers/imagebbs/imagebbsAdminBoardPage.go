@@ -30,8 +30,8 @@ var modifyBoardTask = &ModifyBoardTask{TaskString: TaskModifyBoard}
 var _ tasks.Task = (*ModifyBoardTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*ModifyBoardTask)(nil)
 
-func (ModifyBoardTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("imageBoardUpdateEmail")
+func (ModifyBoardTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("imageBoardUpdateEmail"), true
 }
 
 func (ModifyBoardTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

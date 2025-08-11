@@ -86,8 +86,8 @@ func (bulkApproveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return nil
 }
 
-func (bulkApproveTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("linkerApprovedEmail")
+func (bulkApproveTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("linkerApprovedEmail"), true
 }
 
 func (bulkApproveTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
@@ -95,8 +95,8 @@ func (bulkApproveTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskE
 	return &s
 }
 
-func (bulkApproveTask) AdminEmailTemplate(evt eventbus.TaskEvent) *notif.EmailTemplates {
-	return notif.NewEmailTemplates("adminNotificationLinkerApprovedEmail")
+func (bulkApproveTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	return notif.NewEmailTemplates("adminNotificationLinkerApprovedEmail"), true
 }
 
 func (bulkApproveTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

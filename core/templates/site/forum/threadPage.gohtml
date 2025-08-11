@@ -4,7 +4,9 @@
     <div class="label-bar">
         {{ template "topicLabels" (dict "Public" .PublicLabels "Author" .AuthorLabels "Private" .PrivateLabels) }}
         <form method="post" action="{{$base}}/topic/{{.Topic.Idforumtopic}}/labels" class="mark-read">
+            {{ csrfField }}
             <input type="hidden" name="task" value="Mark Topic Read"/>
+            <input type="hidden" name="back" value="{{ .BackURL }}"/>
             <button type="submit">Mark as read</button>
         </form>
     </div>
@@ -16,6 +18,7 @@
         <form method="post" action="{{$base}}/topic/{{.Topic.Idforumtopic}}/labels" id="label-form">
             {{ csrfField }}
             <input type="hidden" name="task" value="Set Labels"/>
+            <input type="hidden" name="back" value="{{ .BackURL }}"/>
             <div class="public-labels">
                 {{ range .PublicLabels }}
                 <span class="label pill public">{{ . }}<button type="button" class="remove" data-type="public">x</button><input type="hidden" name="public" value="{{ . }}"/></span>
@@ -29,9 +32,7 @@
             </div>
             <div class="private-labels">
                 {{ range .PrivateLabels }}
-                {{ if and (ne . "new") (ne . "unread") }}
                 <span class="label pill private">{{ . }}<button type="button" class="remove" data-type="private">x</button><input type="hidden" name="private" value="{{ . }}"/></span>
-                {{ end }}
                 {{ end }}
                 <input type="text" class="label-input" data-type="private" placeholder="Add private label"/>
             </div>
@@ -39,6 +40,11 @@
         </form>
     </div>
     <script src="{{$base}}/topic_labels.js"></script>
+    <form method="post" action="{{$base}}/topic/{{.Topic.Idforumtopic}}/labels" class="mark-read">
+        <input type="hidden" name="task" value="Mark Topic Read"/>
+        <input type="hidden" name="redirect" value="{{$base}}/topic/{{.Topic.Idforumtopic}}"/>
+        <button type="submit">Mark as read and go back</button>
+    </form>
     <a href="{{$base}}/topic/{{.Topic.Idforumtopic}}">Back</a>
 
 {{ template "tail" $ }}

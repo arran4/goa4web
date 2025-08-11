@@ -1,6 +1,6 @@
 -- name: CreateNewsPostForWriter :execlastid
 INSERT INTO site_news (news, users_idusers, occurred, timezone, language_id)
-SELECT sqlc.arg(news), sqlc.arg(writer_id), NOW(), sqlc.arg(timezone), sqlc.narg(language_id)
+SELECT sqlc.arg(news), sqlc.arg(writer_id), sqlc.arg(occurred), sqlc.arg(timezone), sqlc.narg(language_id)
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='news'

@@ -55,6 +55,7 @@ func (c *writingDeactivateCmd) Run() error {
 		WritingCategoryID: w.WritingCategoryID,
 		Title:             w.Title,
 		Published:         w.Published,
+		Timezone:          w.Timezone,
 		Writing:           w.Writing,
 		Abstract:          w.Abstract,
 		Private:           w.Private,

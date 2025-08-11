@@ -39,8 +39,8 @@ WHERE restored_at IS NULL
 LIMIT ? OFFSET ?;
 
 -- name: AdminArchiveWriting :exec
-INSERT INTO deactivated_writings (idwriting, users_idusers, forumthread_id, language_id, writing_category_id, title, published, writing, abstract, private, deleted_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW());
+INSERT INTO deactivated_writings (idwriting, users_idusers, forumthread_id, language_id, writing_category_id, title, published, timezone, writing, abstract, private, deleted_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW());
 
 -- name: AdminScrubWriting :exec
 UPDATE writing SET title = ?, writing = ?, abstract = ?, deleted_at = NOW() WHERE idwriting = ?;

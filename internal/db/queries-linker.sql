@@ -102,7 +102,7 @@ WHERE l.id = ?;
 
 -- name: AdminCreateLinkerItem :exec
 INSERT INTO linker (author_id, category_id, title, url, description, listed, timezone)
-VALUES (sqlc.arg(author_id), sqlc.arg(category_id), sqlc.arg(title), sqlc.arg(url), sqlc.arg(description), NOW(), sqlc.arg(timezone));
+VALUES (sqlc.arg(author_id), sqlc.arg(category_id), sqlc.arg(title), sqlc.arg(url), sqlc.arg(description), sqlc.arg(listed), sqlc.arg(timezone));
 
 -- name: AdminUpdateLinkerItem :exec
 UPDATE linker SET title = ?, url = ?, description = ?, category_id = ?, language_id = ?

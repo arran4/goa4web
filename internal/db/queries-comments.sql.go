@@ -139,7 +139,7 @@ func (q *Queries) AdminListAllCommentsWithThreadInfo(ctx context.Context, arg Ad
 
 const createCommentInSectionForCommenter = `-- name: CreateCommentInSectionForCommenter :execlastid
 INSERT INTO comments (language_id, users_idusers, forumthread_id, text, written, timezone)
-SELECT ?, ?, ?, ?, NOW(), ?
+SELECT ?, ?, ?, ?, ?, ?
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = ?
@@ -159,6 +159,7 @@ type CreateCommentInSectionForCommenterParams struct {
 	CommenterID   sql.NullInt32
 	ForumthreadID int32
 	Text          sql.NullString
+	Written       sql.NullTime
 	Timezone      sql.NullString
 	Section       string
 	ItemType      sql.NullString
@@ -171,6 +172,7 @@ func (q *Queries) CreateCommentInSectionForCommenter(ctx context.Context, arg Cr
 		arg.CommenterID,
 		arg.ForumthreadID,
 		arg.Text,
+		arg.Written,
 		arg.Timezone,
 		arg.Section,
 		arg.ItemType,

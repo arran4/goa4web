@@ -150,8 +150,8 @@ func (q *Queries) AdminArchiveUser(ctx context.Context, idusers int32) error {
 }
 
 const adminArchiveWriting = `-- name: AdminArchiveWriting :exec
-INSERT INTO deactivated_writings (idwriting, users_idusers, forumthread_id, language_id, writing_category_id, title, published, writing, abstract, private, deleted_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+INSERT INTO deactivated_writings (idwriting, users_idusers, forumthread_id, language_id, writing_category_id, title, published, timezone, writing, abstract, private, deleted_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
 `
 
 type AdminArchiveWritingParams struct {
@@ -162,6 +162,7 @@ type AdminArchiveWritingParams struct {
 	WritingCategoryID int32
 	Title             sql.NullString
 	Published         sql.NullTime
+	Timezone          sql.NullString
 	Writing           sql.NullString
 	Abstract          sql.NullString
 	Private           sql.NullBool
@@ -176,6 +177,7 @@ func (q *Queries) AdminArchiveWriting(ctx context.Context, arg AdminArchiveWriti
 		arg.WritingCategoryID,
 		arg.Title,
 		arg.Published,
+		arg.Timezone,
 		arg.Writing,
 		arg.Abstract,
 		arg.Private,

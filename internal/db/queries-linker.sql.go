@@ -38,7 +38,7 @@ func (q *Queries) AdminCreateLinkerCategory(ctx context.Context, arg AdminCreate
 
 const adminCreateLinkerItem = `-- name: AdminCreateLinkerItem :exec
 INSERT INTO linker (author_id, category_id, title, url, description, listed, timezone)
-VALUES (?, ?, ?, ?, ?, NOW(), ?)
+VALUES (?, ?, ?, ?, ?, ?, ?)
 `
 
 type AdminCreateLinkerItemParams struct {
@@ -47,6 +47,7 @@ type AdminCreateLinkerItemParams struct {
 	Title       sql.NullString
 	Url         sql.NullString
 	Description sql.NullString
+	Listed      sql.NullTime
 	Timezone    sql.NullString
 }
 
@@ -57,6 +58,7 @@ func (q *Queries) AdminCreateLinkerItem(ctx context.Context, arg AdminCreateLink
 		arg.Title,
 		arg.Url,
 		arg.Description,
+		arg.Listed,
 		arg.Timezone,
 	)
 	return err

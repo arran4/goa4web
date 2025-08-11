@@ -115,6 +115,10 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("create comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
+	if err := cd.ClearUnreadForOthers("writing", writing.Idwriting); err != nil {
+		log.Printf("clear unread labels: %v", err)
+	}
+
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {

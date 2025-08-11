@@ -33,7 +33,7 @@
                         <textarea name="desc" cols="30" rows="3">{{ .Description }}</textarea><br>
                 {{ else }}
                     <a href="?topic={{ .ID }}">{{ .Title }}</a><br>
-                    <i>{{ .Description }}</i><br>
+                    <em>{{ .Description }}</em><br>
                 {{ end }}
                 {{ if .LastReply }}
                     <td align="center">{{ .LastReply }}<br>{{ .LastUser }}</td>

@@ -97,6 +97,10 @@ h1 {
         background-color: transparent;
 }
 
+.underline {
+        text-decoration: underline;
+}
+
 .section-title {
         font-size: 1.2em;
 }

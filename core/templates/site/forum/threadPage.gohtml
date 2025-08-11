@@ -38,6 +38,13 @@
             <input type="submit" value="Save Labels"/>
         </form>
         <form method="post" action="{{$base}}/thread/{{.Thread.Idforumthread}}/labels" class="mark-read">
+            {{ csrfField }}
+            <input type="hidden" name="task" value="Mark Thread Read"/>
+            <input type="hidden" name="redirect" value="{{ .BackURL }}"/>
+            <button type="submit">Mark as read</button>
+        </form>
+        <form method="post" action="{{$base}}/thread/{{.Thread.Idforumthread}}/labels" class="mark-read">
+            {{ csrfField }}
             <input type="hidden" name="task" value="Mark Thread Read"/>
             <input type="hidden" name="redirect" value="{{$base}}/topic/{{.Topic.Idforumtopic}}"/>
             <button type="submit">Mark as read and go back</button>

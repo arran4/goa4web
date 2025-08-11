@@ -12,11 +12,11 @@ import (
 )
 
 const adminCountLinksByCategory = `-- name: AdminCountLinksByCategory :one
-SELECT COUNT(*) FROM linker WHERE linker_category_id = ?
+SELECT COUNT(*) FROM linker WHERE category_id = ?
 `
 
-func (q *Queries) AdminCountLinksByCategory(ctx context.Context, linkerCategoryID sql.NullInt32) (int64, error) {
-	row := q.db.QueryRowContext(ctx, adminCountLinksByCategory, linkerCategoryID)
+func (q *Queries) AdminCountLinksByCategory(ctx context.Context, categoryID sql.NullInt32) (int64, error) {
+	row := q.db.QueryRowContext(ctx, adminCountLinksByCategory, categoryID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -37,23 +37,23 @@ func (q *Queries) AdminCreateLinkerCategory(ctx context.Context, arg AdminCreate
 }
 
 const adminCreateLinkerItem = `-- name: AdminCreateLinkerItem :exec
-INSERT INTO linker (users_idusers, linker_category_id, title, url, description, listed, timezone)
+INSERT INTO linker (author_id, category_id, title, url, description, listed, timezone)
 VALUES (?, ?, ?, ?, ?, NOW(), ?)
 `
 
 type AdminCreateLinkerItemParams struct {
-	UsersIdusers     int32
-	LinkerCategoryID sql.NullInt32
-	Title            sql.NullString
-	Url              sql.NullString
-	Description      sql.NullString
-	Timezone         sql.NullString
+	AuthorID    int32
+	CategoryID  sql.NullInt32
+	Title       sql.NullString
+	Url         sql.NullString
+	Description sql.NullString
+	Timezone    sql.NullString
 }
 
 func (q *Queries) AdminCreateLinkerItem(ctx context.Context, arg AdminCreateLinkerItemParams) error {
 	_, err := q.db.ExecContext(ctx, adminCreateLinkerItem,
-		arg.UsersIdusers,
-		arg.LinkerCategoryID,
+		arg.AuthorID,
+		arg.CategoryID,
 		arg.Title,
 		arg.Url,
 		arg.Description,
@@ -64,34 +64,34 @@ func (q *Queries) AdminCreateLinkerItem(ctx context.Context, arg AdminCreateLink
 
 const adminDeleteLinkerCategory = `-- name: AdminDeleteLinkerCategory :exec
 DELETE FROM linker_category
-WHERE idlinkerCategory = ?
+WHERE id = ?
 `
 
 // AdminDeleteLinkerCategory removes a linker category.
-func (q *Queries) AdminDeleteLinkerCategory(ctx context.Context, idlinkercategory int32) error {
-	_, err := q.db.ExecContext(ctx, adminDeleteLinkerCategory, idlinkercategory)
+func (q *Queries) AdminDeleteLinkerCategory(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, adminDeleteLinkerCategory, id)
 	return err
 }
 
 const adminDeleteLinkerQueuedItem = `-- name: AdminDeleteLinkerQueuedItem :exec
 DELETE FROM linker_queue
-WHERE idlinkerQueue = ?
+WHERE id = ?
 `
 
-func (q *Queries) AdminDeleteLinkerQueuedItem(ctx context.Context, idlinkerqueue int32) error {
-	_, err := q.db.ExecContext(ctx, adminDeleteLinkerQueuedItem, idlinkerqueue)
+func (q *Queries) AdminDeleteLinkerQueuedItem(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, adminDeleteLinkerQueuedItem, id)
 	return err
 }
 
 const adminInsertQueuedLinkFromQueue = `-- name: AdminInsertQueuedLinkFromQueue :execlastid
-INSERT INTO linker (users_idusers, linker_category_id, language_id, title, ` + "`" + `url` + "`" + `, description, timezone)
-SELECT l.users_idusers, l.linker_category_id, l.language_id, l.title, l.url, l.description, l.timezone
+INSERT INTO linker (author_id, category_id, language_id, title, ` + "`" + `url` + "`" + `, description, timezone)
+SELECT l.submitter_id, l.category_id, l.language_id, l.title, l.url, l.description, l.timezone
 FROM linker_queue l
-WHERE l.idlinkerQueue = ?
+WHERE l.id = ?
 `
 
-func (q *Queries) AdminInsertQueuedLinkFromQueue(ctx context.Context, idlinkerqueue int32) (int64, error) {
-	result, err := q.db.ExecContext(ctx, adminInsertQueuedLinkFromQueue, idlinkerqueue)
+func (q *Queries) AdminInsertQueuedLinkFromQueue(ctx context.Context, id int32) (int64, error) {
+	result, err := q.db.ExecContext(ctx, adminInsertQueuedLinkFromQueue, id)
 	if err != nil {
 		return 0, err
 	}
@@ -100,47 +100,47 @@ func (q *Queries) AdminInsertQueuedLinkFromQueue(ctx context.Context, idlinkerqu
 
 const adminRenameLinkerCategory = `-- name: AdminRenameLinkerCategory :exec
 UPDATE linker_category SET title = ?, position = ?
-WHERE idlinkerCategory = ?
+WHERE id = ?
 `
 
 type AdminRenameLinkerCategoryParams struct {
-	Title            sql.NullString
-	Position         int32
-	Idlinkercategory int32
+	Title    sql.NullString
+	Position int32
+	ID       int32
 }
 
 func (q *Queries) AdminRenameLinkerCategory(ctx context.Context, arg AdminRenameLinkerCategoryParams) error {
-	_, err := q.db.ExecContext(ctx, adminRenameLinkerCategory, arg.Title, arg.Position, arg.Idlinkercategory)
+	_, err := q.db.ExecContext(ctx, adminRenameLinkerCategory, arg.Title, arg.Position, arg.ID)
 	return err
 }
 
 const adminUpdateLinkerCategorySortOrder = `-- name: AdminUpdateLinkerCategorySortOrder :exec
 UPDATE linker_category SET sortorder = ?
-WHERE idlinkerCategory = ?
+WHERE id = ?
 `
 
 type AdminUpdateLinkerCategorySortOrderParams struct {
-	Sortorder        int32
-	Idlinkercategory int32
+	Sortorder int32
+	ID        int32
 }
 
 func (q *Queries) AdminUpdateLinkerCategorySortOrder(ctx context.Context, arg AdminUpdateLinkerCategorySortOrderParams) error {
-	_, err := q.db.ExecContext(ctx, adminUpdateLinkerCategorySortOrder, arg.Sortorder, arg.Idlinkercategory)
+	_, err := q.db.ExecContext(ctx, adminUpdateLinkerCategorySortOrder, arg.Sortorder, arg.ID)
 	return err
 }
 
 const adminUpdateLinkerItem = `-- name: AdminUpdateLinkerItem :exec
-UPDATE linker SET title = ?, url = ?, description = ?, linker_category_id = ?, language_id = ?
-WHERE idlinker = ?
+UPDATE linker SET title = ?, url = ?, description = ?, category_id = ?, language_id = ?
+WHERE id = ?
 `
 
 type AdminUpdateLinkerItemParams struct {
-	Title            sql.NullString
-	Url              sql.NullString
-	Description      sql.NullString
-	LinkerCategoryID sql.NullInt32
-	LanguageID       sql.NullInt32
-	Idlinker         int32
+	Title       sql.NullString
+	Url         sql.NullString
+	Description sql.NullString
+	CategoryID  sql.NullInt32
+	LanguageID  sql.NullInt32
+	ID          int32
 }
 
 func (q *Queries) AdminUpdateLinkerItem(ctx context.Context, arg AdminUpdateLinkerItemParams) error {
@@ -148,39 +148,39 @@ func (q *Queries) AdminUpdateLinkerItem(ctx context.Context, arg AdminUpdateLink
 		arg.Title,
 		arg.Url,
 		arg.Description,
-		arg.LinkerCategoryID,
+		arg.CategoryID,
 		arg.LanguageID,
-		arg.Idlinker,
+		arg.ID,
 	)
 	return err
 }
 
 const adminUpdateLinkerQueuedItem = `-- name: AdminUpdateLinkerQueuedItem :exec
-UPDATE linker_queue SET linker_category_id = ?, title = ?, url = ?, description = ?
-WHERE idlinkerQueue = ?
+UPDATE linker_queue SET category_id = ?, title = ?, url = ?, description = ?
+WHERE id = ?
 `
 
 type AdminUpdateLinkerQueuedItemParams struct {
-	LinkerCategoryID sql.NullInt32
-	Title            sql.NullString
-	Url              sql.NullString
-	Description      sql.NullString
-	Idlinkerqueue    int32
+	CategoryID  sql.NullInt32
+	Title       sql.NullString
+	Url         sql.NullString
+	Description sql.NullString
+	ID          int32
 }
 
 func (q *Queries) AdminUpdateLinkerQueuedItem(ctx context.Context, arg AdminUpdateLinkerQueuedItemParams) error {
 	_, err := q.db.ExecContext(ctx, adminUpdateLinkerQueuedItem,
-		arg.LinkerCategoryID,
+		arg.CategoryID,
 		arg.Title,
 		arg.Url,
 		arg.Description,
-		arg.Idlinkerqueue,
+		arg.ID,
 	)
 	return err
 }
 
 const createLinkerQueuedItemForWriter = `-- name: CreateLinkerQueuedItemForWriter :exec
-INSERT INTO linker_queue (users_idusers, linker_category_id, title, url, description, timezone)
+INSERT INTO linker_queue (submitter_id, category_id, title, url, description, timezone)
 SELECT ?, ?, ?, ?, ?, ?
 WHERE EXISTS (
     SELECT 1 FROM grants g
@@ -197,20 +197,20 @@ WHERE EXISTS (
 `
 
 type CreateLinkerQueuedItemForWriterParams struct {
-	WriterID         int32
-	LinkerCategoryID sql.NullInt32
-	Title            sql.NullString
-	Url              sql.NullString
-	Description      sql.NullString
-	Timezone         sql.NullString
-	GrantCategoryID  sql.NullInt32
-	GranteeID        sql.NullInt32
+	WriterID        int32
+	CategoryID      sql.NullInt32
+	Title           sql.NullString
+	Url             sql.NullString
+	Description     sql.NullString
+	Timezone        sql.NullString
+	GrantCategoryID sql.NullInt32
+	GranteeID       sql.NullInt32
 }
 
 func (q *Queries) CreateLinkerQueuedItemForWriter(ctx context.Context, arg CreateLinkerQueuedItemForWriterParams) error {
 	_, err := q.db.ExecContext(ctx, createLinkerQueuedItemForWriter,
 		arg.WriterID,
-		arg.LinkerCategoryID,
+		arg.CategoryID,
 		arg.Title,
 		arg.Url,
 		arg.Description,
@@ -224,7 +224,7 @@ func (q *Queries) CreateLinkerQueuedItemForWriter(ctx context.Context, arg Creat
 
 const getAllLinkerCategories = `-- name: GetAllLinkerCategories :many
 SELECT
-    lc.idlinkerCategory,
+    lc.id,
     lc.position,
     lc.title,
     lc.sortorder
@@ -242,7 +242,7 @@ func (q *Queries) GetAllLinkerCategories(ctx context.Context) ([]*LinkerCategory
 	for rows.Next() {
 		var i LinkerCategory
 		if err := rows.Scan(
-			&i.Idlinkercategory,
+			&i.ID,
 			&i.Position,
 			&i.Title,
 			&i.Sortorder,
@@ -273,7 +273,7 @@ grants_for_viewer AS (
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
 SELECT
-    lc.idlinkerCategory,
+    lc.id,
     lc.position,
     lc.title,
     lc.sortorder
@@ -284,11 +284,11 @@ WHERE EXISTS (
     WHERE g.section = 'linker'
       AND (g.item = 'category' OR g.item IS NULL)
       AND g.action = 'see'
-      AND (g.item_id = lc.idlinkerCategory OR g.item_id IS NULL)
+      AND (g.item_id = lc.id OR g.item_id IS NULL)
 )
   AND EXISTS (
     SELECT 1 FROM linker l
-    WHERE l.linker_category_id = lc.idlinkerCategory
+    WHERE l.category_id = lc.id
       AND l.listed IS NOT NULL
       AND l.deleted_at IS NULL
   )
@@ -310,7 +310,7 @@ func (q *Queries) GetAllLinkerCategoriesForUser(ctx context.Context, arg GetAllL
 	for rows.Next() {
 		var i LinkerCategory
 		if err := rows.Scan(
-			&i.Idlinkercategory,
+			&i.ID,
 			&i.Position,
 			&i.Title,
 			&i.Sortorder,
@@ -329,39 +329,39 @@ func (q *Queries) GetAllLinkerCategoriesForUser(ctx context.Context, arg GetAllL
 }
 
 const getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending = `-- name: GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending :many
-SELECT l.idlinker, l.language_id, l.users_idusers, l.linker_category_id, l.forumthread_id, l.title, l.url, l.description, l.listed, l.timezone, th.Comments, lc.title as Category_Title, u.Username as PosterUsername
+SELECT l.id, l.language_id, l.author_id, l.category_id, l.thread_id, l.title, l.url, l.description, l.listed, l.timezone, th.Comments, lc.title as Category_Title, u.Username as PosterUsername
 FROM linker l
-LEFT JOIN users u ON l.users_idusers = u.idusers
-LEFT JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
-LEFT JOIN forumthread th ON l.forumthread_id = th.idforumthread
-WHERE (lc.idlinkerCategory = ? OR ? = 0)
+LEFT JOIN users u ON l.author_id = u.idusers
+LEFT JOIN linker_category lc ON l.category_id = lc.id
+LEFT JOIN forumthread th ON l.thread_id = th.idforumthread
+WHERE (lc.id = ? OR ? = 0)
   AND l.listed IS NOT NULL
   AND l.deleted_at IS NULL
 ORDER BY l.listed DESC
 `
 
 type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams struct {
-	Idlinkercategory int32
+	CategoryID int32
 }
 
 type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow struct {
-	Idlinker         int32
-	LanguageID       sql.NullInt32
-	UsersIdusers     int32
-	LinkerCategoryID sql.NullInt32
-	ForumthreadID    int32
-	Title            sql.NullString
-	Url              sql.NullString
-	Description      sql.NullString
-	Listed           sql.NullTime
-	Timezone         sql.NullString
-	Comments         sql.NullInt32
-	CategoryTitle    sql.NullString
-	Posterusername   sql.NullString
+	ID             int32
+	LanguageID     sql.NullInt32
+	AuthorID       int32
+	CategoryID     sql.NullInt32
+	ThreadID       int32
+	Title          sql.NullString
+	Url            sql.NullString
+	Description    sql.NullString
+	Listed         sql.NullTime
+	Timezone       sql.NullString
+	Comments       sql.NullInt32
+	CategoryTitle  sql.NullString
+	Posterusername sql.NullString
 }
 
 func (q *Queries) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(ctx context.Context, arg GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams) ([]*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow, error) {
-	rows, err := q.db.QueryContext(ctx, getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending, arg.Idlinkercategory, arg.Idlinkercategory)
+	rows, err := q.db.QueryContext(ctx, getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending, arg.CategoryID, arg.CategoryID)
 	if err != nil {
 		return nil, err
 	}
@@ -370,11 +370,11 @@ func (q *Queries) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTi
 	for rows.Next() {
 		var i GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow
 		if err := rows.Scan(
-			&i.Idlinker,
+			&i.ID,
 			&i.LanguageID,
-			&i.UsersIdusers,
-			&i.LinkerCategoryID,
-			&i.ForumthreadID,
+			&i.AuthorID,
+			&i.CategoryID,
+			&i.ThreadID,
 			&i.Title,
 			&i.Url,
 			&i.Description,
@@ -409,12 +409,12 @@ grants_for_viewer AS (
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
-SELECT l.idlinker, l.language_id, l.users_idusers, l.linker_category_id, l.forumthread_id, l.title, l.url, l.description, l.listed, l.timezone, th.Comments, lc.title as Category_Title, u.Username as PosterUsername
+SELECT l.id, l.language_id, l.author_id, l.category_id, l.thread_id, l.title, l.url, l.description, l.listed, l.timezone, th.Comments, lc.title as Category_Title, u.Username as PosterUsername
 FROM linker l
-LEFT JOIN users u ON l.users_idusers = u.idusers
-LEFT JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
-LEFT JOIN forumthread th ON l.forumthread_id = th.idforumthread
-WHERE (lc.idlinkerCategory = ? OR ? = 0)
+LEFT JOIN users u ON l.author_id = u.idusers
+LEFT JOIN linker_category lc ON l.category_id = lc.id
+LEFT JOIN forumthread th ON l.thread_id = th.idforumthread
+WHERE (lc.id = ? OR ? = 0)
   AND l.listed IS NOT NULL
   AND l.deleted_at IS NULL
   AND EXISTS (
@@ -423,39 +423,39 @@ WHERE (lc.idlinkerCategory = ? OR ? = 0)
     WHERE g.section = 'linker'
       AND (g.item = 'link' OR g.item IS NULL)
       AND g.action = 'see'
-      AND (g.item_id = l.idlinker OR g.item_id IS NULL)
+      AND (g.item_id = l.id OR g.item_id IS NULL)
   )
 ORDER BY l.listed DESC
 `
 
 type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserParams struct {
-	ViewerID         int32
-	ViewerUserID     sql.NullInt32
-	Idlinkercategory int32
+	ViewerID     int32
+	ViewerUserID sql.NullInt32
+	CategoryID   int32
 }
 
 type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserRow struct {
-	Idlinker         int32
-	LanguageID       sql.NullInt32
-	UsersIdusers     int32
-	LinkerCategoryID sql.NullInt32
-	ForumthreadID    int32
-	Title            sql.NullString
-	Url              sql.NullString
-	Description      sql.NullString
-	Listed           sql.NullTime
-	Timezone         sql.NullString
-	Comments         sql.NullInt32
-	CategoryTitle    sql.NullString
-	Posterusername   sql.NullString
+	ID             int32
+	LanguageID     sql.NullInt32
+	AuthorID       int32
+	CategoryID     sql.NullInt32
+	ThreadID       int32
+	Title          sql.NullString
+	Url            sql.NullString
+	Description    sql.NullString
+	Listed         sql.NullTime
+	Timezone       sql.NullString
+	Comments       sql.NullInt32
+	CategoryTitle  sql.NullString
+	Posterusername sql.NullString
 }
 
 func (q *Queries) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUser(ctx context.Context, arg GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserParams) ([]*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserRow, error) {
 	rows, err := q.db.QueryContext(ctx, getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUser,
 		arg.ViewerID,
 		arg.ViewerUserID,
-		arg.Idlinkercategory,
-		arg.Idlinkercategory,
+		arg.CategoryID,
+		arg.CategoryID,
 	)
 	if err != nil {
 		return nil, err
@@ -465,11 +465,11 @@ func (q *Queries) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTi
 	for rows.Next() {
 		var i GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserRow
 		if err := rows.Scan(
-			&i.Idlinker,
+			&i.ID,
 			&i.LanguageID,
-			&i.UsersIdusers,
-			&i.LinkerCategoryID,
-			&i.ForumthreadID,
+			&i.AuthorID,
+			&i.CategoryID,
+			&i.ThreadID,
 			&i.Title,
 			&i.Url,
 			&i.Description,
@@ -504,54 +504,54 @@ grants_for_viewer AS (
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
-SELECT l.idlinker, l.language_id, l.users_idusers, l.linker_category_id, l.forumthread_id, l.title, l.url, l.description, l.listed, l.timezone, th.Comments, lc.title as Category_Title, u.Username as PosterUsername
+SELECT l.id, l.language_id, l.author_id, l.category_id, l.thread_id, l.title, l.url, l.description, l.listed, l.timezone, th.Comments, lc.title as Category_Title, u.Username as PosterUsername
 FROM linker l
-LEFT JOIN users u ON l.users_idusers = u.idusers
-LEFT JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
-LEFT JOIN forumthread th ON l.forumthread_id = th.idforumthread
-WHERE (lc.idlinkerCategory = ? OR ? = 0)
+LEFT JOIN users u ON l.author_id = u.idusers
+LEFT JOIN linker_category lc ON l.category_id = lc.id
+LEFT JOIN forumthread th ON l.thread_id = th.idforumthread
+WHERE (lc.id = ? OR ? = 0)
   AND EXISTS (
     SELECT 1
     FROM grants_for_viewer g
     WHERE g.section = 'linker'
       AND (g.item = 'link' OR g.item IS NULL)
       AND g.action = 'see'
-      AND (g.item_id = l.idlinker OR g.item_id IS NULL)
+      AND (g.item_id = l.id OR g.item_id IS NULL)
   )
 ORDER BY l.listed DESC
 LIMIT ? OFFSET ?
 `
 
 type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedParams struct {
-	ViewerID         int32
-	ViewerUserID     sql.NullInt32
-	Idlinkercategory int32
-	Limit            int32
-	Offset           int32
+	ViewerID     int32
+	ViewerUserID sql.NullInt32
+	CategoryID   int32
+	Limit        int32
+	Offset       int32
 }
 
 type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow struct {
-	Idlinker         int32
-	LanguageID       sql.NullInt32
-	UsersIdusers     int32
-	LinkerCategoryID sql.NullInt32
-	ForumthreadID    int32
-	Title            sql.NullString
-	Url              sql.NullString
-	Description      sql.NullString
-	Listed           sql.NullTime
-	Timezone         sql.NullString
-	Comments         sql.NullInt32
-	CategoryTitle    sql.NullString
-	Posterusername   sql.NullString
+	ID             int32
+	LanguageID     sql.NullInt32
+	AuthorID       int32
+	CategoryID     sql.NullInt32
+	ThreadID       int32
+	Title          sql.NullString
+	Url            sql.NullString
+	Description    sql.NullString
+	Listed         sql.NullTime
+	Timezone       sql.NullString
+	Comments       sql.NullInt32
+	CategoryTitle  sql.NullString
+	Posterusername sql.NullString
 }
 
 func (q *Queries) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginated(ctx context.Context, arg GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedParams) ([]*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow, error) {
 	rows, err := q.db.QueryContext(ctx, getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginated,
 		arg.ViewerID,
 		arg.ViewerUserID,
-		arg.Idlinkercategory,
-		arg.Idlinkercategory,
+		arg.CategoryID,
+		arg.CategoryID,
 		arg.Limit,
 		arg.Offset,
 	)
@@ -563,11 +563,11 @@ func (q *Queries) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTi
 	for rows.Next() {
 		var i GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow
 		if err := rows.Scan(
-			&i.Idlinker,
+			&i.ID,
 			&i.LanguageID,
-			&i.UsersIdusers,
-			&i.LinkerCategoryID,
-			&i.ForumthreadID,
+			&i.AuthorID,
+			&i.CategoryID,
+			&i.ThreadID,
 			&i.Title,
 			&i.Url,
 			&i.Description,
@@ -602,12 +602,12 @@ grants_for_viewer AS (
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
-SELECT l.idlinker, l.language_id, l.users_idusers, l.linker_category_id, l.forumthread_id, l.title, l.url, l.description, l.listed, l.timezone, th.Comments, lc.title as Category_Title, u.Username as PosterUsername
+SELECT l.id, l.language_id, l.author_id, l.category_id, l.thread_id, l.title, l.url, l.description, l.listed, l.timezone, th.Comments, lc.title as Category_Title, u.Username as PosterUsername
 FROM linker l
-LEFT JOIN users u ON l.users_idusers = u.idusers
-LEFT JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
-LEFT JOIN forumthread th ON l.forumthread_id = th.idforumthread
-WHERE (lc.idlinkerCategory = ? OR ? = 0)
+LEFT JOIN users u ON l.author_id = u.idusers
+LEFT JOIN linker_category lc ON l.category_id = lc.id
+LEFT JOIN forumthread th ON l.thread_id = th.idforumthread
+WHERE (lc.id = ? OR ? = 0)
   AND l.listed IS NOT NULL
   AND l.deleted_at IS NULL
   AND EXISTS (
@@ -616,42 +616,42 @@ WHERE (lc.idlinkerCategory = ? OR ? = 0)
     WHERE g.section = 'linker'
       AND (g.item = 'link' OR g.item IS NULL)
       AND g.action = 'see'
-      AND (g.item_id = l.idlinker OR g.item_id IS NULL)
+      AND (g.item_id = l.id OR g.item_id IS NULL)
   )
 ORDER BY l.listed DESC
 LIMIT ? OFFSET ?
 `
 
 type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRowParams struct {
-	ViewerID         int32
-	ViewerUserID     sql.NullInt32
-	Idlinkercategory int32
-	Limit            int32
-	Offset           int32
+	ViewerID     int32
+	ViewerUserID sql.NullInt32
+	CategoryID   int32
+	Limit        int32
+	Offset       int32
 }
 
 type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRowRow struct {
-	Idlinker         int32
-	LanguageID       sql.NullInt32
-	UsersIdusers     int32
-	LinkerCategoryID sql.NullInt32
-	ForumthreadID    int32
-	Title            sql.NullString
-	Url              sql.NullString
-	Description      sql.NullString
-	Listed           sql.NullTime
-	Timezone         sql.NullString
-	Comments         sql.NullInt32
-	CategoryTitle    sql.NullString
-	Posterusername   sql.NullString
+	ID             int32
+	LanguageID     sql.NullInt32
+	AuthorID       int32
+	CategoryID     sql.NullInt32
+	ThreadID       int32
+	Title          sql.NullString
+	Url            sql.NullString
+	Description    sql.NullString
+	Listed         sql.NullTime
+	Timezone       sql.NullString
+	Comments       sql.NullInt32
+	CategoryTitle  sql.NullString
+	Posterusername sql.NullString
 }
 
 func (q *Queries) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow(ctx context.Context, arg GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRowParams) ([]*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRowRow, error) {
 	rows, err := q.db.QueryContext(ctx, getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow,
 		arg.ViewerID,
 		arg.ViewerUserID,
-		arg.Idlinkercategory,
-		arg.Idlinkercategory,
+		arg.CategoryID,
+		arg.CategoryID,
 		arg.Limit,
 		arg.Offset,
 	)
@@ -663,11 +663,11 @@ func (q *Queries) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTi
 	for rows.Next() {
 		var i GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRowRow
 		if err := rows.Scan(
-			&i.Idlinker,
+			&i.ID,
 			&i.LanguageID,
-			&i.UsersIdusers,
-			&i.LinkerCategoryID,
-			&i.ForumthreadID,
+			&i.AuthorID,
+			&i.CategoryID,
+			&i.ThreadID,
 			&i.Title,
 			&i.Url,
 			&i.Description,
@@ -691,42 +691,42 @@ func (q *Queries) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTi
 }
 
 const getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginated = `-- name: GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginated :many
-SELECT l.idlinker, l.language_id, l.users_idusers, l.linker_category_id, l.forumthread_id, l.title, l.url, l.description, l.listed, l.timezone, th.Comments, lc.title as Category_Title, u.Username as PosterUsername
+SELECT l.id, l.language_id, l.author_id, l.category_id, l.thread_id, l.title, l.url, l.description, l.listed, l.timezone, th.Comments, lc.title as Category_Title, u.Username as PosterUsername
 FROM linker l
-LEFT JOIN users u ON l.users_idusers = u.idusers
-LEFT JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
-LEFT JOIN forumthread th ON l.forumthread_id = th.idforumthread
-WHERE (lc.idlinkerCategory = ? OR ? = 0)
+LEFT JOIN users u ON l.author_id = u.idusers
+LEFT JOIN linker_category lc ON l.category_id = lc.id
+LEFT JOIN forumthread th ON l.thread_id = th.idforumthread
+WHERE (lc.id = ? OR ? = 0)
 ORDER BY l.listed DESC
 LIMIT ? OFFSET ?
 `
 
 type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginatedParams struct {
-	Idlinkercategory int32
-	Limit            int32
-	Offset           int32
+	CategoryID int32
+	Limit      int32
+	Offset     int32
 }
 
 type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginatedRow struct {
-	Idlinker         int32
-	LanguageID       sql.NullInt32
-	UsersIdusers     int32
-	LinkerCategoryID sql.NullInt32
-	ForumthreadID    int32
-	Title            sql.NullString
-	Url              sql.NullString
-	Description      sql.NullString
-	Listed           sql.NullTime
-	Timezone         sql.NullString
-	Comments         sql.NullInt32
-	CategoryTitle    sql.NullString
-	Posterusername   sql.NullString
+	ID             int32
+	LanguageID     sql.NullInt32
+	AuthorID       int32
+	CategoryID     sql.NullInt32
+	ThreadID       int32
+	Title          sql.NullString
+	Url            sql.NullString
+	Description    sql.NullString
+	Listed         sql.NullTime
+	Timezone       sql.NullString
+	Comments       sql.NullInt32
+	CategoryTitle  sql.NullString
+	Posterusername sql.NullString
 }
 
 func (q *Queries) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginated(ctx context.Context, arg GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginatedParams) ([]*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginatedRow, error) {
 	rows, err := q.db.QueryContext(ctx, getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginated,
-		arg.Idlinkercategory,
-		arg.Idlinkercategory,
+		arg.CategoryID,
+		arg.CategoryID,
 		arg.Limit,
 		arg.Offset,
 	)
@@ -738,11 +738,11 @@ func (q *Queries) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTi
 	for rows.Next() {
 		var i GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginatedRow
 		if err := rows.Scan(
-			&i.Idlinker,
+			&i.ID,
 			&i.LanguageID,
-			&i.UsersIdusers,
-			&i.LinkerCategoryID,
-			&i.ForumthreadID,
+			&i.AuthorID,
+			&i.CategoryID,
+			&i.ThreadID,
 			&i.Title,
 			&i.Url,
 			&i.Description,
@@ -766,24 +766,24 @@ func (q *Queries) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTi
 }
 
 const getAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails = `-- name: GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails :many
-SELECT l.idlinkerqueue, l.language_id, l.users_idusers, l.linker_category_id, l.title, l.url, l.description, l.timezone, u.username, c.title as category_title, c.idlinkerCategory
+SELECT l.id, l.language_id, l.submitter_id, l.category_id, l.title, l.url, l.description, l.timezone, u.username, c.title as category_title, c.id
 FROM linker_queue l
-JOIN users u ON l.users_idusers = u.idusers
-JOIN linker_category c ON l.linker_category_id = c.idlinkerCategory
+JOIN users u ON l.submitter_id = u.idusers
+JOIN linker_category c ON l.category_id = c.id
 `
 
 type GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetailsRow struct {
-	Idlinkerqueue    int32
-	LanguageID       sql.NullInt32
-	UsersIdusers     int32
-	LinkerCategoryID sql.NullInt32
-	Title            sql.NullString
-	Url              sql.NullString
-	Description      sql.NullString
-	Timezone         sql.NullString
-	Username         sql.NullString
-	CategoryTitle    sql.NullString
-	Idlinkercategory int32
+	ID            int32
+	LanguageID    sql.NullInt32
+	SubmitterID   int32
+	CategoryID    sql.NullInt32
+	Title         sql.NullString
+	Url           sql.NullString
+	Description   sql.NullString
+	Timezone      sql.NullString
+	Username      sql.NullString
+	CategoryTitle sql.NullString
+	ID_2          int32
 }
 
 func (q *Queries) GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails(ctx context.Context) ([]*GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetailsRow, error) {
@@ -796,17 +796,17 @@ func (q *Queries) GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails(ctx co
 	for rows.Next() {
 		var i GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetailsRow
 		if err := rows.Scan(
-			&i.Idlinkerqueue,
+			&i.ID,
 			&i.LanguageID,
-			&i.UsersIdusers,
-			&i.LinkerCategoryID,
+			&i.SubmitterID,
+			&i.CategoryID,
 			&i.Title,
 			&i.Url,
 			&i.Description,
 			&i.Timezone,
 			&i.Username,
 			&i.CategoryTitle,
-			&i.Idlinkercategory,
+			&i.ID_2,
 		); err != nil {
 			return nil, err
 		}
@@ -822,11 +822,11 @@ func (q *Queries) GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails(ctx co
 }
 
 const getAllLinkersForIndex = `-- name: GetAllLinkersForIndex :many
-SELECT idlinker, title, description FROM linker WHERE deleted_at IS NULL AND listed IS NOT NULL
+SELECT id, title, description FROM linker WHERE deleted_at IS NULL AND listed IS NOT NULL
 `
 
 type GetAllLinkersForIndexRow struct {
-	Idlinker    int32
+	ID          int32
 	Title       sql.NullString
 	Description sql.NullString
 }
@@ -840,7 +840,7 @@ func (q *Queries) GetAllLinkersForIndex(ctx context.Context) ([]*GetAllLinkersFo
 	var items []*GetAllLinkersForIndexRow
 	for rows.Next() {
 		var i GetAllLinkersForIndexRow
-		if err := rows.Scan(&i.Idlinker, &i.Title, &i.Description); err != nil {
+		if err := rows.Scan(&i.ID, &i.Title, &i.Description); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -855,18 +855,18 @@ func (q *Queries) GetAllLinkersForIndex(ctx context.Context) ([]*GetAllLinkersFo
 }
 
 const getLinkerCategoriesWithCount = `-- name: GetLinkerCategoriesWithCount :many
-SELECT c.idlinkerCategory, c.title, c.sortorder, COUNT(l.idlinker) AS linkcount
+SELECT c.id, c.title, c.sortorder, COUNT(l.id) AS linkcount
 FROM linker_category c
-LEFT JOIN linker l ON l.linker_category_id = c.idlinkerCategory AND l.listed IS NOT NULL AND l.deleted_at IS NULL
-GROUP BY c.idlinkerCategory
+LEFT JOIN linker l ON l.category_id = c.id AND l.listed IS NOT NULL AND l.deleted_at IS NULL
+GROUP BY c.id
 ORDER BY c.sortorder
 `
 
 type GetLinkerCategoriesWithCountRow struct {
-	Idlinkercategory int32
-	Title            sql.NullString
-	Sortorder        int32
-	Linkcount        int64
+	ID        int32
+	Title     sql.NullString
+	Sortorder int32
+	Linkcount int64
 }
 
 func (q *Queries) GetLinkerCategoriesWithCount(ctx context.Context) ([]*GetLinkerCategoriesWithCountRow, error) {
@@ -879,7 +879,7 @@ func (q *Queries) GetLinkerCategoriesWithCount(ctx context.Context) ([]*GetLinke
 	for rows.Next() {
 		var i GetLinkerCategoriesWithCountRow
 		if err := rows.Scan(
-			&i.Idlinkercategory,
+			&i.ID,
 			&i.Title,
 			&i.Sortorder,
 			&i.Linkcount,
@@ -898,14 +898,14 @@ func (q *Queries) GetLinkerCategoriesWithCount(ctx context.Context) ([]*GetLinke
 }
 
 const getLinkerCategoryById = `-- name: GetLinkerCategoryById :one
-SELECT idlinkercategory, position, title, sortorder FROM linker_category WHERE idlinkerCategory = ?
+SELECT id, position, title, sortorder FROM linker_category WHERE id = ?
 `
 
-func (q *Queries) GetLinkerCategoryById(ctx context.Context, idlinkercategory int32) (*LinkerCategory, error) {
-	row := q.db.QueryRowContext(ctx, getLinkerCategoryById, idlinkercategory)
+func (q *Queries) GetLinkerCategoryById(ctx context.Context, id int32) (*LinkerCategory, error) {
+	row := q.db.QueryRowContext(ctx, getLinkerCategoryById, id)
 	var i LinkerCategory
 	err := row.Scan(
-		&i.Idlinkercategory,
+		&i.ID,
 		&i.Position,
 		&i.Title,
 		&i.Sortorder,
@@ -914,18 +914,18 @@ func (q *Queries) GetLinkerCategoryById(ctx context.Context, idlinkercategory in
 }
 
 const getLinkerCategoryLinkCounts = `-- name: GetLinkerCategoryLinkCounts :many
-SELECT c.idlinkerCategory, c.title, c.position, COUNT(l.idlinker) as LinkCount
+SELECT c.id, c.title, c.position, COUNT(l.id) as LinkCount
 FROM linker_category c
-LEFT JOIN linker l ON c.idlinkerCategory = l.linker_category_id AND l.listed IS NOT NULL AND l.deleted_at IS NULL
-GROUP BY c.idlinkerCategory
+LEFT JOIN linker l ON c.id = l.category_id AND l.listed IS NOT NULL AND l.deleted_at IS NULL
+GROUP BY c.id
 ORDER BY c.position
 `
 
 type GetLinkerCategoryLinkCountsRow struct {
-	Idlinkercategory int32
-	Title            sql.NullString
-	Position         int32
-	Linkcount        int64
+	ID        int32
+	Title     sql.NullString
+	Position  int32
+	Linkcount int64
 }
 
 func (q *Queries) GetLinkerCategoryLinkCounts(ctx context.Context) ([]*GetLinkerCategoryLinkCountsRow, error) {
@@ -938,7 +938,7 @@ func (q *Queries) GetLinkerCategoryLinkCounts(ctx context.Context) ([]*GetLinker
 	for rows.Next() {
 		var i GetLinkerCategoryLinkCountsRow
 		if err := rows.Scan(
-			&i.Idlinkercategory,
+			&i.ID,
 			&i.Title,
 			&i.Position,
 			&i.Linkcount,
@@ -957,37 +957,37 @@ func (q *Queries) GetLinkerCategoryLinkCounts(ctx context.Context) ([]*GetLinker
 }
 
 const getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending = `-- name: GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending :one
-SELECT l.idlinker, l.language_id, l.users_idusers, l.linker_category_id, l.forumthread_id, l.title, l.url, l.description, l.listed, l.timezone, u.username, lc.title
+SELECT l.id, l.language_id, l.author_id, l.category_id, l.thread_id, l.title, l.url, l.description, l.listed, l.timezone, u.username, lc.title
 FROM linker l
-JOIN users u ON l.users_idusers = u.idusers
-JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
-WHERE l.idlinker = ?
+JOIN users u ON l.author_id = u.idusers
+JOIN linker_category lc ON l.category_id = lc.id
+WHERE l.id = ?
 `
 
 type GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow struct {
-	Idlinker         int32
-	LanguageID       sql.NullInt32
-	UsersIdusers     int32
-	LinkerCategoryID sql.NullInt32
-	ForumthreadID    int32
-	Title            sql.NullString
-	Url              sql.NullString
-	Description      sql.NullString
-	Listed           sql.NullTime
-	Timezone         sql.NullString
-	Username         sql.NullString
-	Title_2          sql.NullString
+	ID          int32
+	LanguageID  sql.NullInt32
+	AuthorID    int32
+	CategoryID  sql.NullInt32
+	ThreadID    int32
+	Title       sql.NullString
+	Url         sql.NullString
+	Description sql.NullString
+	Listed      sql.NullTime
+	Timezone    sql.NullString
+	Username    sql.NullString
+	Title_2     sql.NullString
 }
 
-func (q *Queries) GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(ctx context.Context, idlinker int32) (*GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow, error) {
-	row := q.db.QueryRowContext(ctx, getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending, idlinker)
+func (q *Queries) GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(ctx context.Context, id int32) (*GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow, error) {
+	row := q.db.QueryRowContext(ctx, getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending, id)
 	var i GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow
 	err := row.Scan(
-		&i.Idlinker,
+		&i.ID,
 		&i.LanguageID,
-		&i.UsersIdusers,
-		&i.LinkerCategoryID,
-		&i.ForumthreadID,
+		&i.AuthorID,
+		&i.CategoryID,
+		&i.ThreadID,
 		&i.Title,
 		&i.Url,
 		&i.Description,
@@ -1011,11 +1011,11 @@ grants_for_viewer AS (
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
-SELECT l.idlinker, l.language_id, l.users_idusers, l.linker_category_id, l.forumthread_id, l.title, l.url, l.description, l.listed, l.timezone, u.username, lc.title
+SELECT l.id, l.language_id, l.author_id, l.category_id, l.thread_id, l.title, l.url, l.description, l.listed, l.timezone, u.username, lc.title
 FROM linker l
-JOIN users u ON l.users_idusers = u.idusers
-JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
-WHERE l.idlinker = ?
+JOIN users u ON l.author_id = u.idusers
+JOIN linker_category lc ON l.category_id = lc.id
+WHERE l.id = ?
   AND l.listed IS NOT NULL
   AND l.deleted_at IS NULL
   AND EXISTS (
@@ -1024,7 +1024,7 @@ WHERE l.idlinker = ?
     WHERE g.section = 'linker'
       AND (g.item = 'link' OR g.item IS NULL)
       AND g.action IN ('view')
-      AND (g.item_id = l.idlinker OR g.item_id IS NULL)
+      AND (g.item_id = l.id OR g.item_id IS NULL)
   )
 LIMIT 1
 `
@@ -1032,33 +1032,33 @@ LIMIT 1
 type GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams struct {
 	ViewerID     int32
 	ViewerUserID sql.NullInt32
-	Idlinker     int32
+	ID           int32
 }
 
 type GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow struct {
-	Idlinker         int32
-	LanguageID       sql.NullInt32
-	UsersIdusers     int32
-	LinkerCategoryID sql.NullInt32
-	ForumthreadID    int32
-	Title            sql.NullString
-	Url              sql.NullString
-	Description      sql.NullString
-	Listed           sql.NullTime
-	Timezone         sql.NullString
-	Username         sql.NullString
-	Title_2          sql.NullString
+	ID          int32
+	LanguageID  sql.NullInt32
+	AuthorID    int32
+	CategoryID  sql.NullInt32
+	ThreadID    int32
+	Title       sql.NullString
+	Url         sql.NullString
+	Description sql.NullString
+	Listed      sql.NullTime
+	Timezone    sql.NullString
+	Username    sql.NullString
+	Title_2     sql.NullString
 }
 
 func (q *Queries) GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(ctx context.Context, arg GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams) (*GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow, error) {
-	row := q.db.QueryRowContext(ctx, getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser, arg.ViewerID, arg.ViewerUserID, arg.Idlinker)
+	row := q.db.QueryRowContext(ctx, getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser, arg.ViewerID, arg.ViewerUserID, arg.ID)
 	var i GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow
 	err := row.Scan(
-		&i.Idlinker,
+		&i.ID,
 		&i.LanguageID,
-		&i.UsersIdusers,
-		&i.LinkerCategoryID,
-		&i.ForumthreadID,
+		&i.AuthorID,
+		&i.CategoryID,
+		&i.ThreadID,
 		&i.Title,
 		&i.Url,
 		&i.Description,
@@ -1071,26 +1071,26 @@ func (q *Queries) GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingF
 }
 
 const getLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescending = `-- name: GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescending :many
-SELECT l.idlinker, l.language_id, l.users_idusers, l.linker_category_id, l.forumthread_id, l.title, l.url, l.description, l.listed, l.timezone, u.username, lc.title
+SELECT l.id, l.language_id, l.author_id, l.category_id, l.thread_id, l.title, l.url, l.description, l.listed, l.timezone, u.username, lc.title
 FROM linker l
-JOIN users u ON l.users_idusers = u.idusers
-JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
-WHERE l.idlinker IN (/*SLICE:linkerids*/?)
+JOIN users u ON l.author_id = u.idusers
+JOIN linker_category lc ON l.category_id = lc.id
+WHERE l.id IN (/*SLICE:linkerids*/?)
 `
 
 type GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow struct {
-	Idlinker         int32
-	LanguageID       sql.NullInt32
-	UsersIdusers     int32
-	LinkerCategoryID sql.NullInt32
-	ForumthreadID    int32
-	Title            sql.NullString
-	Url              sql.NullString
-	Description      sql.NullString
-	Listed           sql.NullTime
-	Timezone         sql.NullString
-	Username         sql.NullString
-	Title_2          sql.NullString
+	ID          int32
+	LanguageID  sql.NullInt32
+	AuthorID    int32
+	CategoryID  sql.NullInt32
+	ThreadID    int32
+	Title       sql.NullString
+	Url         sql.NullString
+	Description sql.NullString
+	Listed      sql.NullTime
+	Timezone    sql.NullString
+	Username    sql.NullString
+	Title_2     sql.NullString
 }
 
 func (q *Queries) GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescending(ctx context.Context, linkerids []int32) ([]*GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow, error) {
@@ -1113,11 +1113,11 @@ func (q *Queries) GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendin
 	for rows.Next() {
 		var i GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow
 		if err := rows.Scan(
-			&i.Idlinker,
+			&i.ID,
 			&i.LanguageID,
-			&i.UsersIdusers,
-			&i.LinkerCategoryID,
-			&i.ForumthreadID,
+			&i.AuthorID,
+			&i.CategoryID,
+			&i.ThreadID,
 			&i.Title,
 			&i.Url,
 			&i.Description,
@@ -1151,11 +1151,11 @@ grants_for_viewer AS (
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
-SELECT l.idlinker, l.language_id, l.users_idusers, l.linker_category_id, l.forumthread_id, l.title, l.url, l.description, l.listed, l.timezone, u.username, lc.title
+SELECT l.id, l.language_id, l.author_id, l.category_id, l.thread_id, l.title, l.url, l.description, l.listed, l.timezone, u.username, lc.title
 FROM linker l
-JOIN users u ON l.users_idusers = u.idusers
-JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
-WHERE l.idlinker IN (/*SLICE:linkerids*/?)
+JOIN users u ON l.author_id = u.idusers
+JOIN linker_category lc ON l.category_id = lc.id
+WHERE l.id IN (/*SLICE:linkerids*/?)
   AND l.listed IS NOT NULL
   AND l.deleted_at IS NULL
   AND EXISTS (
@@ -1164,7 +1164,7 @@ WHERE l.idlinker IN (/*SLICE:linkerids*/?)
     WHERE g.section = 'linker'
       AND (g.item = 'link' OR g.item IS NULL)
       AND g.action = 'view'
-      AND (g.item_id = l.idlinker OR g.item_id IS NULL)
+      AND (g.item_id = l.id OR g.item_id IS NULL)
   )
 `
 
@@ -1175,18 +1175,18 @@ type GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUserParam
 }
 
 type GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUserRow struct {
-	Idlinker         int32
-	LanguageID       sql.NullInt32
-	UsersIdusers     int32
-	LinkerCategoryID sql.NullInt32
-	ForumthreadID    int32
-	Title            sql.NullString
-	Url              sql.NullString
-	Description      sql.NullString
-	Listed           sql.NullTime
-	Timezone         sql.NullString
-	Username         sql.NullString
-	Title_2          sql.NullString
+	ID          int32
+	LanguageID  sql.NullInt32
+	AuthorID    int32
+	CategoryID  sql.NullInt32
+	ThreadID    int32
+	Title       sql.NullString
+	Url         sql.NullString
+	Description sql.NullString
+	Listed      sql.NullTime
+	Timezone    sql.NullString
+	Username    sql.NullString
+	Title_2     sql.NullString
 }
 
 func (q *Queries) GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUser(ctx context.Context, arg GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUserParams) ([]*GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUserRow, error) {
@@ -1211,11 +1211,11 @@ func (q *Queries) GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendin
 	for rows.Next() {
 		var i GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUserRow
 		if err := rows.Scan(
-			&i.Idlinker,
+			&i.ID,
 			&i.LanguageID,
-			&i.UsersIdusers,
-			&i.LinkerCategoryID,
-			&i.ForumthreadID,
+			&i.AuthorID,
+			&i.CategoryID,
+			&i.ThreadID,
 			&i.Title,
 			&i.Url,
 			&i.Description,
@@ -1238,40 +1238,40 @@ func (q *Queries) GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendin
 }
 
 const getLinkerItemsByUserDescending = `-- name: GetLinkerItemsByUserDescending :many
-SELECT l.idlinker, l.language_id, l.users_idusers, l.linker_category_id, l.forumthread_id, l.title, l.url, l.description, l.listed, l.timezone, th.comments, lc.title as Category_Title, u.username as PosterUsername
+SELECT l.id, l.language_id, l.author_id, l.category_id, l.thread_id, l.title, l.url, l.description, l.listed, l.timezone, th.comments, lc.title as Category_Title, u.username as PosterUsername
 FROM linker l
-LEFT JOIN users u ON l.users_idusers = u.idusers
-LEFT JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
-LEFT JOIN forumthread th ON l.forumthread_id = th.idforumthread
-WHERE l.users_idusers = ?
+LEFT JOIN users u ON l.author_id = u.idusers
+LEFT JOIN linker_category lc ON l.category_id = lc.id
+LEFT JOIN forumthread th ON l.thread_id = th.idforumthread
+WHERE l.author_id = ?
 ORDER BY l.listed DESC
 LIMIT ? OFFSET ?
 `
 
 type GetLinkerItemsByUserDescendingParams struct {
-	UsersIdusers int32
-	Limit        int32
-	Offset       int32
+	AuthorID int32
+	Limit    int32
+	Offset   int32
 }
 
 type GetLinkerItemsByUserDescendingRow struct {
-	Idlinker         int32
-	LanguageID       sql.NullInt32
-	UsersIdusers     int32
-	LinkerCategoryID sql.NullInt32
-	ForumthreadID    int32
-	Title            sql.NullString
-	Url              sql.NullString
-	Description      sql.NullString
-	Listed           sql.NullTime
-	Timezone         sql.NullString
-	Comments         sql.NullInt32
-	CategoryTitle    sql.NullString
-	Posterusername   sql.NullString
+	ID             int32
+	LanguageID     sql.NullInt32
+	AuthorID       int32
+	CategoryID     sql.NullInt32
+	ThreadID       int32
+	Title          sql.NullString
+	Url            sql.NullString
+	Description    sql.NullString
+	Listed         sql.NullTime
+	Timezone       sql.NullString
+	Comments       sql.NullInt32
+	CategoryTitle  sql.NullString
+	Posterusername sql.NullString
 }
 
 func (q *Queries) GetLinkerItemsByUserDescending(ctx context.Context, arg GetLinkerItemsByUserDescendingParams) ([]*GetLinkerItemsByUserDescendingRow, error) {
-	rows, err := q.db.QueryContext(ctx, getLinkerItemsByUserDescending, arg.UsersIdusers, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, getLinkerItemsByUserDescending, arg.AuthorID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -1280,11 +1280,11 @@ func (q *Queries) GetLinkerItemsByUserDescending(ctx context.Context, arg GetLin
 	for rows.Next() {
 		var i GetLinkerItemsByUserDescendingRow
 		if err := rows.Scan(
-			&i.Idlinker,
+			&i.ID,
 			&i.LanguageID,
-			&i.UsersIdusers,
-			&i.LinkerCategoryID,
-			&i.ForumthreadID,
+			&i.AuthorID,
+			&i.CategoryID,
+			&i.ThreadID,
 			&i.Title,
 			&i.Url,
 			&i.Description,
@@ -1319,12 +1319,12 @@ grants_for_viewer AS (
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
-SELECT l.idlinker, l.language_id, l.users_idusers, l.linker_category_id, l.forumthread_id, l.title, l.url, l.description, l.listed, l.timezone, th.comments, lc.title as Category_Title, u.username as PosterUsername
+SELECT l.id, l.language_id, l.author_id, l.category_id, l.thread_id, l.title, l.url, l.description, l.listed, l.timezone, th.comments, lc.title as Category_Title, u.username as PosterUsername
 FROM linker l
-LEFT JOIN users u ON l.users_idusers = u.idusers
-LEFT JOIN linker_category lc ON l.linker_category_id = lc.idlinkerCategory
-LEFT JOIN forumthread th ON l.forumthread_id = th.idforumthread
-WHERE l.users_idusers = ?
+LEFT JOIN users u ON l.author_id = u.idusers
+LEFT JOIN linker_category lc ON l.category_id = lc.id
+LEFT JOIN forumthread th ON l.thread_id = th.idforumthread
+WHERE l.author_id = ?
   AND l.listed IS NOT NULL
   AND l.deleted_at IS NULL
   AND EXISTS (
@@ -1333,7 +1333,7 @@ WHERE l.users_idusers = ?
     WHERE g.section = 'linker'
       AND (g.item = 'link' OR g.item IS NULL)
       AND g.action = 'see'
-      AND (g.item_id = l.idlinker OR g.item_id IS NULL)
+      AND (g.item_id = l.id OR g.item_id IS NULL)
   )
 ORDER BY l.listed DESC
 LIMIT ? OFFSET ?
@@ -1348,19 +1348,19 @@ type GetLinkerItemsByUserDescendingForUserParams struct {
 }
 
 type GetLinkerItemsByUserDescendingForUserRow struct {
-	Idlinker         int32
-	LanguageID       sql.NullInt32
-	UsersIdusers     int32
-	LinkerCategoryID sql.NullInt32
-	ForumthreadID    int32
-	Title            sql.NullString
-	Url              sql.NullString
-	Description      sql.NullString
-	Listed           sql.NullTime
-	Timezone         sql.NullString
-	Comments         sql.NullInt32
-	CategoryTitle    sql.NullString
-	Posterusername   sql.NullString
+	ID             int32
+	LanguageID     sql.NullInt32
+	AuthorID       int32
+	CategoryID     sql.NullInt32
+	ThreadID       int32
+	Title          sql.NullString
+	Url            sql.NullString
+	Description    sql.NullString
+	Listed         sql.NullTime
+	Timezone       sql.NullString
+	Comments       sql.NullInt32
+	CategoryTitle  sql.NullString
+	Posterusername sql.NullString
 }
 
 func (q *Queries) GetLinkerItemsByUserDescendingForUser(ctx context.Context, arg GetLinkerItemsByUserDescendingForUserParams) ([]*GetLinkerItemsByUserDescendingForUserRow, error) {
@@ -1379,11 +1379,11 @@ func (q *Queries) GetLinkerItemsByUserDescendingForUser(ctx context.Context, arg
 	for rows.Next() {
 		var i GetLinkerItemsByUserDescendingForUserRow
 		if err := rows.Scan(
-			&i.Idlinker,
+			&i.ID,
 			&i.LanguageID,
-			&i.UsersIdusers,
-			&i.LinkerCategoryID,
-			&i.ForumthreadID,
+			&i.AuthorID,
+			&i.CategoryID,
+			&i.ThreadID,
 			&i.Title,
 			&i.Url,
 			&i.Description,
@@ -1408,17 +1408,17 @@ func (q *Queries) GetLinkerItemsByUserDescendingForUser(ctx context.Context, arg
 
 const listLinkerCategoryPath = `-- name: ListLinkerCategoryPath :many
 WITH RECURSIVE category_path AS (
-    SELECT lc.idlinkerCategory, NULL AS parent_id, lc.title, 0 AS depth
+    SELECT lc.id, NULL AS parent_id, lc.title, 0 AS depth
     FROM linker_category lc
-    WHERE lc.idlinkerCategory = ?
+    WHERE lc.id = ?
 )
-SELECT category_path.idlinkerCategory, category_path.title
+SELECT category_path.id, category_path.title
 FROM category_path
 `
 
 type ListLinkerCategoryPathRow struct {
-	Idlinkercategory int32
-	Title            sql.NullString
+	ID    int32
+	Title sql.NullString
 }
 
 func (q *Queries) ListLinkerCategoryPath(ctx context.Context, categoryID int32) ([]*ListLinkerCategoryPathRow, error) {
@@ -1430,7 +1430,7 @@ func (q *Queries) ListLinkerCategoryPath(ctx context.Context, categoryID int32) 
 	var items []*ListLinkerCategoryPathRow
 	for rows.Next() {
 		var i ListLinkerCategoryPathRow
-		if err := rows.Scan(&i.Idlinkercategory, &i.Title); err != nil {
+		if err := rows.Scan(&i.ID, &i.Title); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -1445,24 +1445,24 @@ func (q *Queries) ListLinkerCategoryPath(ctx context.Context, categoryID int32) 
 }
 
 const systemAssignLinkerThreadID = `-- name: SystemAssignLinkerThreadID :exec
-UPDATE linker SET forumthread_id = ? WHERE idlinker = ?
+UPDATE linker SET thread_id = ? WHERE id = ?
 `
 
 type SystemAssignLinkerThreadIDParams struct {
-	ForumthreadID int32
-	Idlinker      int32
+	ThreadID int32
+	ID       int32
 }
 
 func (q *Queries) SystemAssignLinkerThreadID(ctx context.Context, arg SystemAssignLinkerThreadIDParams) error {
-	_, err := q.db.ExecContext(ctx, systemAssignLinkerThreadID, arg.ForumthreadID, arg.Idlinker)
+	_, err := q.db.ExecContext(ctx, systemAssignLinkerThreadID, arg.ThreadID, arg.ID)
 	return err
 }
 
 const systemSetLinkerLastIndex = `-- name: SystemSetLinkerLastIndex :exec
-UPDATE linker SET last_index = NOW() WHERE idlinker = ?
+UPDATE linker SET last_index = NOW() WHERE id = ?
 `
 
-func (q *Queries) SystemSetLinkerLastIndex(ctx context.Context, idlinker int32) error {
-	_, err := q.db.ExecContext(ctx, systemSetLinkerLastIndex, idlinker)
+func (q *Queries) SystemSetLinkerLastIndex(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, systemSetLinkerLastIndex, id)
 	return err
 }

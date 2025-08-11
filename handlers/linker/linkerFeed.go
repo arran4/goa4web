@@ -37,7 +37,7 @@ func linkerFeed(r *http.Request, rows []*db.GetAllLinkerItemsByCategoryIdWitherP
 			out, _ := io.ReadAll(conv.Process())
 			desc = string(out)
 		}
-		href := fmt.Sprintf("/linker/show/%d", row.Idlinker)
+		href := fmt.Sprintf("/linker/show/%d", row.ID)
 		if row.Url.Valid && row.Url.String != "" {
 			href = row.Url.String
 		}
@@ -63,7 +63,7 @@ func linkerFeed(r *http.Request, rows []*db.GetAllLinkerItemsByCategoryIdWitherP
 func RssPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	catID, _ := strconv.Atoi(r.URL.Query().Get("category"))
-	rows, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(r.Context(), db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams{Idlinkercategory: int32(catID)})
+	rows, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(r.Context(), db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams{CategoryID: int32(catID)})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
@@ -78,7 +78,7 @@ func RssPage(w http.ResponseWriter, r *http.Request) {
 func AtomPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	catID, _ := strconv.Atoi(r.URL.Query().Get("category"))
-	rows, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(r.Context(), db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams{Idlinkercategory: int32(catID)})
+	rows, err := queries.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending(r.Context(), db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams{CategoryID: int32(catID)})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return

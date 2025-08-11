@@ -167,7 +167,7 @@ WITH role_ids AS (
 SELECT DISTINCT cs.linker_id
 FROM linker_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearchwordlist
-JOIN linker l ON l.idlinker = cs.linker_id
+JOIN linker l ON l.id = cs.linker_id
 WHERE swl.word = ?
   AND (
       l.language_id = 0
@@ -187,7 +187,7 @@ WHERE swl.word = ?
         AND (g.item='link' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
-        AND (g.item_id = l.idlinker OR g.item_id IS NULL)
+        AND (g.item_id = l.id OR g.item_id IS NULL)
         AND (g.user_id = ? OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -235,7 +235,7 @@ WITH role_ids AS (
 SELECT DISTINCT cs.linker_id
 FROM linker_search cs
 LEFT JOIN searchwordlist swl ON swl.idsearchwordlist = cs.searchwordlist_idsearchwordlist
-JOIN linker l ON l.idlinker = cs.linker_id
+JOIN linker l ON l.id = cs.linker_id
 WHERE swl.word = ?
   AND cs.linker_id IN (/*SLICE:ids*/?)
   AND (
@@ -256,7 +256,7 @@ WHERE swl.word = ?
         AND (g.item='link' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
-        AND (g.item_id = l.idlinker OR g.item_id IS NULL)
+        AND (g.item_id = l.id OR g.item_id IS NULL)
         AND (g.user_id = ? OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )

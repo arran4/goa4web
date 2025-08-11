@@ -45,7 +45,7 @@ func ShowPage(w http.ResponseWriter, r *http.Request) {
 
 	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(r.Context(), db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams{
 		ViewerID:     cd.UserID,
-		Idlinker:     int32(linkId),
+		ID:           int32(linkId),
 		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 	})
 	if err != nil {
@@ -54,7 +54,7 @@ func ShowPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !cd.HasGrant("linker", "link", "view", link.Idlinker) {
+	if !cd.HasGrant("linker", "link", "view", link.ID) {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
@@ -63,7 +63,7 @@ func ShowPage(w http.ResponseWriter, r *http.Request) {
 	if link.Title.Valid {
 		cd.PageTitle = fmt.Sprintf("Link: %s", link.Title.String)
 	} else {
-		cd.PageTitle = fmt.Sprintf("Link %d", link.Idlinker)
+		cd.PageTitle = fmt.Sprintf("Link %d", link.ID)
 	}
 
 	handlers.TemplateHandler(w, r, "showPage.gohtml", data)
@@ -93,7 +93,7 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 
 	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(r.Context(), db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams{
 		ViewerID:     cd.UserID,
-		Idlinker:     int32(linkId),
+		ID:           int32(linkId),
 		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 	})
 	if err != nil {
@@ -102,12 +102,12 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !cd.HasGrant("linker", "link", "view", link.Idlinker) {
+	if !cd.HasGrant("linker", "link", "view", link.ID) {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
 
-	var pthid int32 = link.ForumthreadID
+	var pthid int32 = link.ThreadID
 	pt, err := queries.SystemGetForumTopicByTitle(r.Context(), sql.NullString{
 		String: LinkerTopicName,
 		Valid:  true,
@@ -153,8 +153,8 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		}
 		pthid = int32(pthidi)
 		if err := queries.SystemAssignLinkerThreadID(r.Context(), db.SystemAssignLinkerThreadIDParams{
-			ForumthreadID: pthid,
-			Idlinker:      int32(linkId),
+			ThreadID: pthid,
+			ID:       int32(linkId),
 		}); err != nil {
 			log.Printf("Error: assignThreadIdToBlogEntry: %s", err)
 			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)

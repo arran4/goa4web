@@ -93,8 +93,9 @@ textarea {
 }
 
 .site-footer {
-	font-size: 0.7em;
-	color: #666;
+        text-align: center;
+        font-size: 0.7em;
+        color: #666;
 }
 a {
 	background-color: transparent;

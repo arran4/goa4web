@@ -273,6 +273,18 @@ div.title {
         background: #fff3e0;
 }
 
+.label-input[data-type="public"] {
+        background: #e8f5e9;
+}
+
+.label-input[data-type="author"] {
+        background: #e3f2fd;
+}
+
+.label-input[data-type="private"] {
+        background: #fff3e0;
+}
+
 .label.pill .remove {
         background: inherit;
         border: none;

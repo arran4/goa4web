@@ -3,21 +3,21 @@
     {{ if .Public }}
     <div class="labels-public">
         {{ range .Public }}
-        <span class="label public" title="public label">{{ . }}</span>
+        <span class="label pill public" title="public label">{{ . }}</span>
         {{ end }}
     </div>
     {{ end }}
     {{ if .Author }}
     <div class="labels-author">
         {{ range .Author }}
-        <span class="label author" title="author label">{{ . }}</span>
+        <span class="label pill author" title="author label">{{ . }}</span>
         {{ end }}
     </div>
     {{ end }}
     {{ if .Private }}
     <div class="labels-private">
         {{ range .Private }}
-        <span class="label private" title="private label">{{ . }}</span>
+        <span class="label pill private" title="private label">{{ . }}</span>
         {{ end }}
     </div>
     {{ end }}

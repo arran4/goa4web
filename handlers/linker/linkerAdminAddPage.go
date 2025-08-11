@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/eventbus"
@@ -99,6 +100,7 @@ func (addTask) Action(w http.ResponseWriter, r *http.Request) any {
 		Title:       sql.NullString{Valid: true, String: title},
 		Url:         sql.NullString{Valid: true, String: url},
 		Description: sql.NullString{Valid: true, String: description},
+		Listed:      sql.NullTime{Time: time.Now().UTC(), Valid: true},
 		Timezone:    sql.NullString{String: cd.Location().String(), Valid: true},
 	}); err != nil {
 		return fmt.Errorf("create linker item fail %w", handlers.ErrRedirectOnSamePageHandler(err))

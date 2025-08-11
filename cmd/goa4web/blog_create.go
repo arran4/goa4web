@@ -46,6 +46,7 @@ func (c *blogCreateCmd) Run() error {
 		UsersIdusers: int32(c.UserID),
 		LanguageID:   sql.NullInt32{Int32: int32(c.LangID), Valid: c.LangID != 0},
 		Blog:         sql.NullString{String: c.Text, Valid: true},
+		Written:      time.Now().UTC(),
 		Timezone:     sql.NullString{String: time.Local.String(), Valid: true},
 		UserID:       sql.NullInt32{Int32: int32(c.UserID), Valid: true},
 		ListerID:     int32(c.UserID),

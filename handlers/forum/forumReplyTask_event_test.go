@@ -36,7 +36,7 @@ func TestForumReplyTaskEventData(t *testing.T) {
 	threadID := int32(2)
 
 	mock.ExpectExec("INSERT INTO comments").
-		WithArgs(int32(1), uid, threadID, sqlmock.AnyArg(), sqlmock.AnyArg(), "forum", sqlmock.AnyArg(), topicID, sqlmock.AnyArg(), uid).
+		WithArgs(int32(1), uid, threadID, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), "forum", sqlmock.AnyArg(), topicID, sqlmock.AnyArg(), uid).
 		WillReturnResult(sqlmock.NewResult(5, 1))
 
 	store := sessions.NewCookieStore([]byte("test"))

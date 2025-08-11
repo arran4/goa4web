@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	searchutil "github.com/arran4/goa4web/workers/searchworker"
 
@@ -152,6 +153,7 @@ func (cd *CoreData) CreateNewsPost(languageID, userID int32, text string) (int64
 		LanguageID: sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		News:       sql.NullString{String: text, Valid: true},
 		WriterID:   userID,
+		Occurred:   sql.NullTime{Time: time.Now().UTC(), Valid: true},
 		GranteeID:  sql.NullInt32{Int32: userID, Valid: true},
 		Timezone:   sql.NullString{String: cd.Location().String(), Valid: true},
 	})

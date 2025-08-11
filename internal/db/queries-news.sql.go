@@ -88,7 +88,7 @@ func (q *Queries) AdminReplaceSiteNewsURL(ctx context.Context, arg AdminReplaceS
 
 const createNewsPostForWriter = `-- name: CreateNewsPostForWriter :execlastid
 INSERT INTO site_news (news, users_idusers, occurred, timezone, language_id)
-SELECT ?, ?, NOW(), ?, ?
+SELECT ?, ?, ?, ?, ?
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='news'
@@ -106,6 +106,7 @@ WHERE EXISTS (
 type CreateNewsPostForWriterParams struct {
 	News       sql.NullString
 	WriterID   int32
+	Occurred   sql.NullTime
 	Timezone   sql.NullString
 	LanguageID sql.NullInt32
 	GranteeID  sql.NullInt32
@@ -115,6 +116,7 @@ func (q *Queries) CreateNewsPostForWriter(ctx context.Context, arg CreateNewsPos
 	result, err := q.db.ExecContext(ctx, createNewsPostForWriter,
 		arg.News,
 		arg.WriterID,
+		arg.Occurred,
 		arg.Timezone,
 		arg.LanguageID,
 		arg.GranteeID,

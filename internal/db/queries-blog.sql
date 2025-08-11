@@ -18,7 +18,7 @@ WHERE b.idblogs = sqlc.arg(entry_id)
 
 -- name: CreateBlogEntryForWriter :execlastid
 INSERT INTO blogs (users_idusers, language_id, blog, written, timezone)
-SELECT sqlc.arg(users_idusers), sqlc.narg(language_id), sqlc.arg(blog), CURRENT_TIMESTAMP, sqlc.arg(timezone)
+SELECT sqlc.arg(users_idusers), sqlc.narg(language_id), sqlc.arg(blog), sqlc.arg(written), sqlc.arg(timezone)
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'blogs'

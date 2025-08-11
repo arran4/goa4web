@@ -18,19 +18,19 @@
             <input type="hidden" name="task" value="Set Labels"/>
             <div class="public-labels">
                 {{ range .PublicLabels }}
-                <span class="label public">{{ . }}<button type="button" class="remove" data-type="public">x</button><input type="hidden" name="public" value="{{ . }}"/></span>
+                <span class="label pill public">{{ . }}<button type="button" class="remove" data-type="public">x</button><input type="hidden" name="public" value="{{ . }}"/></span>
                 {{ end }}
                 <input type="text" class="label-input" data-type="public" placeholder="Add public label"/>
             </div>
             <div class="author-labels">
                 {{ range .AuthorLabels }}
-                <span class="label author">{{ . }}</span>
+                <span class="label pill author">{{ . }}</span>
                 {{ end }}
             </div>
             <div class="private-labels">
                 {{ range .PrivateLabels }}
                 {{ if and (ne . "new") (ne . "unread") }}
-                <span class="label private">{{ . }}<button type="button" class="remove" data-type="private">x</button><input type="hidden" name="private" value="{{ . }}"/></span>
+                <span class="label pill private">{{ . }}<button type="button" class="remove" data-type="private">x</button><input type="hidden" name="private" value="{{ . }}"/></span>
                 {{ end }}
                 {{ end }}
                 <input type="text" class="label-input" data-type="private" placeholder="Add private label"/>

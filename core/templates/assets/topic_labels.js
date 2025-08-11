@@ -20,8 +20,8 @@
                     return;
                 }
                 var span = document.createElement('span');
-                span.className = 'label ' + name;
-                span.textContent = val + ' ';
+                span.className = 'label pill ' + name + ' unsaved';
+                span.textContent = val;
                 var btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = 'remove';

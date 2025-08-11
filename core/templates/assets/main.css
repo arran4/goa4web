@@ -164,6 +164,15 @@ div.title {
 	color: #800000;
 	background-color: transparent;
 }
+
+.section-title {
+	font-size: 1.2em;
+}
+
+.page-title {
+	font-size: 1.5em;
+}
+
 .notification {
         border: 1px solid #808000;
         padding: 0.5em;

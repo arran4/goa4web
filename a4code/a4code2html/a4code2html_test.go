@@ -128,7 +128,37 @@ func TestCodeSlashClose(t *testing.T) {
 	c := New()
 	c.SetInput("[code]foo[/code]")
 	got, _ := io.ReadAll(c.Process())
-	want := "<table class=\"a4code-block a4code-code\"><tr><th>Code: <tr><td><pre>]foo</pre></table>"
+	want := "<pre class=\"a4code-block a4code-code\">]foo</pre>"
+	if string(got) != want {
+		t.Errorf("got %q want %q", string(got), want)
+	}
+}
+
+func TestQuoteMarkup(t *testing.T) {
+	c := New()
+	c.SetInput("[quote hi]")
+	got, _ := io.ReadAll(c.Process())
+	want := "<blockquote class=\"a4code-block a4code-quote\">hi</blockquote>"
+	if string(got) != want {
+		t.Errorf("got %q want %q", string(got), want)
+	}
+}
+
+func TestQuoteOfMarkup(t *testing.T) {
+	c := New()
+	c.SetInput("[quoteof bob hi]")
+	got, _ := io.ReadAll(c.Process())
+	want := "<blockquote class=\"a4code-block a4code-quoteof\"><div>Quote of bob:</div> hi</blockquote>"
+	if string(got) != want {
+		t.Errorf("got %q want %q", string(got), want)
+	}
+}
+
+func TestIndentMarkup(t *testing.T) {
+	c := New()
+	c.SetInput("[indent hi]")
+	got, _ := io.ReadAll(c.Process())
+	want := "<div class=\"a4code-block a4code-indent\"><div>hi</div></div>"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)
 	}

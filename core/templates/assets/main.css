@@ -50,6 +50,14 @@ textarea {
         font-weight: bold;
 }
 
+.full-width {
+        width: 100%;
+}
+
+.content-width {
+        width: 90%;
+}
+
 .navbar {
         display: flex;
         justify-content: space-between;
@@ -185,6 +193,7 @@ h2, h3 {
 
 .section-title {
         font-size: 1.2em;
+        color: #800000;
 }
 div.index {
         text-align: center;
@@ -484,7 +493,11 @@ tr.unsupported td {
 
 .a4code-quote,
 .a4code-quoteof {
-	background-color: lightgreen;
+        background-color: lightgreen;
+}
+
+.a4code-indent > div {
+       margin-left: 2em;
 }
 
 .a4code-image {
@@ -609,7 +622,58 @@ tr.unsupported td {
 
 .poster-name.last,
 .post-time.last {
-	color: blue;
+        color: blue;
+}
+
+/* Topic list styles */
+
+/*
+ * Topic list styles
+ * The list replaces a former table layout and retains the same
+ * 1px border styling around the entire block and between rows.
+ */
+.topics {
+        width: 100%;
+        border: 1px solid #000;
+}
+
+.topics-header {
+        display: flex;
+        border-bottom: 1px solid #000;
+}
+
+.topic-item {
+        display: flex;
+        border-bottom: 1px solid #000;
+}
+
+.topic-item:last-child {
+        border-bottom: 0;
+}
+
+.topic-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+}
+
+.topic-name {
+        flex: 0 0 400px;
+}
+
+.last-reply {
+        flex: 0 0 300px;
+        text-align: center;
+}
+
+.threads,
+.replies {
+        flex: 1;
+        text-align: center;
+}
+
+.topic-item.no-topics {
+        text-align: center;
 }
 
 
@@ -646,6 +710,20 @@ tr.unsupported td {
 
 .body {
        flex: 1;
+}
+
+/* Board posts */
+.board-post-list {
+       list-style: none;
+       margin: 0;
+       padding: 0;
+}
+
+.board-post-item {
+       display: flex;
+       align-items: flex-start;
+       gap: 0.5em;
+       margin-bottom: 1em;
 }
 
 @media (max-width: 600px) {
@@ -694,3 +772,18 @@ tr.unsupported td {
        }
 }
 
+.faq-item {
+        border: 1px solid #000;
+        margin-bottom: 1em;
+}
+
+.faq-question {
+        background-color: lightgrey;
+        padding: 0.5em;
+        margin: 0;
+        border-bottom: 1px solid #000;
+}
+
+.faq-answer {
+        padding: 0.5em;
+}

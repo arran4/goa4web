@@ -1,7 +1,7 @@
 {{ template "head" $ }}
         {{ $blog := cd.BlogPost }}
         <h2 class="blog-title"><a href="/blogs/blogger/{{$blog.Username.String}}">{{$blog.Username.String}}'s Blog</a>:</h2>
-        <table width="100%">
+        <table class="full-width">
                 <tr>
                     <th class="bg-muted">{{ localTimeIn $blog.Written $blog.Timezone.String }}</th>
                 </tr>

@@ -329,13 +329,13 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 		switch a.CodeType {
 		case CTTableOfContents, CTTagStrip, CTWordsOnly:
 		default:
-			if _, err := io.WriteString(w, "<table class=\"a4code-block a4code-code\"><tr><th>Code: <tr><td><pre>"); err != nil {
+			if _, err := io.WriteString(w, "<pre class=\"a4code-block a4code-code\">"); err != nil {
 				return err
 			}
 			if err := a.directOutputReader(r, w, "[/code]", "code]"); err != nil {
 				return err
 			}
-			if _, err := io.WriteString(w, "</pre></table>"); err != nil {
+			if _, err := io.WriteString(w, "</pre>"); err != nil {
 				return err
 			}
 		}
@@ -347,19 +347,19 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 			if err != nil && err != io.EOF {
 				return err
 			}
-			if _, err := io.WriteString(w, fmt.Sprintf("<table class=\"a4code-block a4code-quoteof\"><tr><th>Quote of %s: <tr><td>", name)); err != nil {
+			if _, err := io.WriteString(w, fmt.Sprintf("<blockquote class=\"a4code-block a4code-quoteof\"><div>Quote of %s:</div>", name)); err != nil {
 				return err
 			}
-			a.stack = append(a.stack, "</table>")
+			a.stack = append(a.stack, "</blockquote>")
 		}
 	case "quote", "q":
 		switch a.CodeType {
 		case CTTableOfContents, CTTagStrip, CTWordsOnly:
 		default:
-			if _, err := io.WriteString(w, "<table class=\"a4code-block a4code-quote\"><tr><th>Quote: <tr><td>"); err != nil {
+			if _, err := io.WriteString(w, "<blockquote class=\"a4code-block a4code-quote\">"); err != nil {
 				return err
 			}
-			a.stack = append(a.stack, "</table>")
+			a.stack = append(a.stack, "</blockquote>")
 		}
 	case "spoiler", "sp":
 		switch a.CodeType {
@@ -374,10 +374,10 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 		switch a.CodeType {
 		case CTTableOfContents, CTTagStrip, CTWordsOnly:
 		default:
-			if _, err := io.WriteString(w, "<table class=\"a4code-block a4code-indent\"><tr><td>"); err != nil {
+			if _, err := io.WriteString(w, "<div class=\"a4code-block a4code-indent\"><div>"); err != nil {
 				return err
 			}
-			a.stack = append(a.stack, "</table>")
+			a.stack = append(a.stack, "</div></div>")
 		}
 	case "hr":
 		switch a.CodeType {

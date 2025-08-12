@@ -2,13 +2,16 @@
     <h1>{{ .Username }}'s images.</h1>
     {{- if .Posts }}
         <h2>Pictures:</h2>
-        {{- range .Posts }}
-            <table>
-                <tr>
-                    <th><a href="{{ .Fullimage.String }}" target="_BLANK"><img src="{{ .Thumbnail.String }}"></a>
-                    <td>{{ .Description.String }}<hr>{{ .Username.String }} - Posted: {{ localTimeIn .Posted.Time .Timezone.String }} - [<a href="/imagebbs/board/{{ .ImageboardID }}/thread/{{ .ForumthreadID }}">{{ .Comments.Int32 }} COMMENTS</a>]
-            </table><br>
-        {{- end }}
+        <section class="board-posts">
+            <ul class="board-post-list">
+            {{- range .Posts }}
+                <li class="board-post-item">
+                    <a href="{{ .Fullimage.String }}" target="_BLANK"><img src="{{ .Thumbnail.String }}" alt=""></a>
+                    <div>{{ .Description.String }}<hr>{{ .Username.String }} - Posted: {{ localTimeIn .Posted.Time .Timezone.String }} - [<a href="/imagebbs/board/{{ .ImageboardID }}/thread/{{ .ForumthreadID }}">{{ .Comments.Int32 }} COMMENTS</a>]</div>
+                </li>
+            {{- end }}
+            </ul>
+        </section>
     {{- else }}
         There isn't anything to see.
     {{- end }}

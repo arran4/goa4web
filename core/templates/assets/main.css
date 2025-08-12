@@ -592,9 +592,33 @@ tr.unsupported td {
         padding: 0.25em;
 }
 
+.blog-list {
+        width: 100%;
+}
+
+.blog-post {
+        border: 1px solid #000;
+        margin-bottom: 1em;
+}
+
+.blog-post header {
+        padding: 0.25em;
+}
+
+.post-content {
+        padding: 0.25em;
+}
+
+.label-list,
+.label-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+}
+
 .poster-name.first,
 .post-time.first {
-	color: green;
+        color: green;
 }
 
 .poster-name.last,

@@ -17,7 +17,7 @@
     <hr><h2 class="section-heading">Replies:</h2>
     {{ template "threadComments" }}
     <div class="label-editor">
-        {{ if .Labels }}<span class="label-bar">{{ template "topicLabels" .Labels }}</span>{{ end }}
+        {{ if .Labels }}<section class="label-list">{{ template "topicLabels" .Labels }}</section>{{ end }}
         <form method="post" action="/news/news/{{ .Post.Idsitenews }}/labels" id="label-form">
         {{ csrfField }}
             <input type="hidden" name="task" value="Set Labels"/>

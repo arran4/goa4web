@@ -5,25 +5,27 @@
     {{ $abstracts := cd.SelectedCategoryPublicWritings $.CategoryId $.Request }}
     {{ if gt (len $abstracts) 0 }}
         <span class="section-title">Writing abstracts:</span><br>
-    {{ end }}
-    {{ range $abstracts }}
-        {{ $title := .Title.String | a4code2html }}
-        {{ $username := .Username.String }}
-        {{ $published := localTime .Published.Time }}
-        {{ $abstract := .Abstract.String | a4code2html }}
-        {{ $idwriting := .Idwriting }}
-        {{ $private := .Private.Bool }}
-        {{ $comments := .Comments }}
-        {{ $labels := WritingLabels $idwriting }}
-        <table class="full-width">
-            <tr><th class="bg-muted">{{ $title }} By {{ $username }} on {{ $published }}
-                {{ if $private }} - <i>Warning: Privileged information.</i>{{ end }}
-            </th></tr>
-            <tr><td>Abstract:<br>{{ $abstract }}
-                <br>-<br><a href="/writings/article/{{ $idwriting }}">Read now</a> - {{ $comments }} comments exist.
-                {{ if $labels }}<span class="label-list">{{ template "topicLabels" $labels }}</span>{{ end }}
-            </td></tr>
-        </table>
+        <section class="link-list">
+        {{ range $abstracts }}
+            {{ $title := .Title.String | a4code2html }}
+            {{ $username := .Username.String }}
+            {{ $published := localTime .Published.Time }}
+            {{ $abstract := .Abstract.String | a4code2html }}
+            {{ $idwriting := .Idwriting }}
+            {{ $private := .Private.Bool }}
+            {{ $comments := .Comments }}
+            {{ $labels := WritingLabels $idwriting }}
+            <article class="full-width link-item">
+                <header class="bg-muted link-header">{{ $title }} By {{ $username }} on {{ $published }}
+                    {{ if $private }} - <i>Warning: Privileged information.</i>{{ end }}
+                </header>
+                <div class="link-body">Abstract:<br>{{ $abstract }}
+                    <br>-<br><a href="/writings/article/{{ $idwriting }}">Read now</a> - {{ $comments }} comments exist.
+                    {{ if $labels }}<span class="label-list">{{ template "topicLabels" $labels }}</span>{{ end }}
+                </div>
+            </article>
+        {{ end }}
+        </section>
     {{ else }}
         There are no writings.
     {{ end }}

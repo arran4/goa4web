@@ -1,17 +1,15 @@
 {{ define "getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingComments" }}
     {{ with .Link }}
-        <table class="full-width">
-            <tr>
-                <th class="bg-muted">{{ .Title.String }}: <a href="{{ .Url.String }}" target="_BLANK">{{ .Title.String }}</a></th>
-            </tr>
-            <tr>
-                <td>
+        <section class="full-width link-list">
+            <article class="link-item">
+                <header class="bg-muted link-header">{{ .Title.String }}: <a href="{{ .Url.String }}" target="_BLANK">{{ .Title.String }}</a></header>
+                <div class="link-body">
                     {{ .Description.String | a4code2html }}
                     <hr>
                     {{ .Username.String }} - Listed: {{ localTimeIn .Listed.Time .Timezone.String }}
-                </td>
-            </tr>
-        </table><br>
+                </div>
+            </article>
+        </section>
 
         {{ with .ThreadID }}
             {{ template "threadComments" }}

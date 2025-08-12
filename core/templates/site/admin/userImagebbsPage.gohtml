@@ -5,7 +5,7 @@
     {{- range .Posts }}
     <tr>
         <td><a href="/admin/user/{{ $.User.Idusers }}/imagebbs/post/{{ .Idimagepost }}">{{ .Idimagepost }}</a></td>
-        <td>{{ localTimeIn .Posted .Timezone.String }}</td>
+        <td>{{ cd.LocalTimeIn .Posted .Timezone.String }}</td>
         <td>{{ .ImageboardIdimageboard.Int32 }}</td>
         <td>{{ if .Approved }}Yes{{ else }}No{{ end }}</td>
         <td>

@@ -3,6 +3,7 @@ package common
 import (
 	"sort"
 
+	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -360,6 +361,22 @@ func (cd *CoreData) ClearWritingUnreadForOthers(writingID int32) error {
 	return cd.ClearUnreadForOthers("writing", writingID)
 }
 
+// WritingLabels returns author and private labels for a writing.
+func (cd *CoreData) WritingLabels(writingID int32) []templates.TopicLabel {
+	var labels []templates.TopicLabel
+	if als, err := cd.WritingAuthorLabels(writingID); err == nil {
+		for _, l := range als {
+			labels = append(labels, templates.TopicLabel{Name: l, Type: "author"})
+		}
+	}
+	if pls, err := cd.WritingPrivateLabels(writingID); err == nil {
+		for _, l := range pls {
+			labels = append(labels, templates.TopicLabel{Name: l, Type: "private"})
+		}
+	}
+	return labels
+}
+
 // News
 
 // NewsAuthorLabels returns author labels for a news item.
@@ -391,6 +408,22 @@ func (cd *CoreData) SetNewsPrivateLabels(newsID int32, labels []string) error {
 	return cd.SetPrivateLabels("news", newsID, labels)
 }
 
+// NewsLabels returns author and private labels for a news item.
+func (cd *CoreData) NewsLabels(newsID int32) []templates.TopicLabel {
+	var labels []templates.TopicLabel
+	if als, err := cd.NewsAuthorLabels(newsID); err == nil {
+		for _, l := range als {
+			labels = append(labels, templates.TopicLabel{Name: l, Type: "author"})
+		}
+	}
+	if pls, err := cd.NewsPrivateLabels(newsID); err == nil {
+		for _, l := range pls {
+			labels = append(labels, templates.TopicLabel{Name: l, Type: "private"})
+		}
+	}
+	return labels
+}
+
 // Blogs
 
 // BlogAuthorLabels returns author labels for a blog post.
@@ -420,4 +453,20 @@ func (cd *CoreData) BlogPrivateLabels(blogID int32) ([]string, error) {
 
 func (cd *CoreData) SetBlogPrivateLabels(blogID int32, labels []string) error {
 	return cd.SetPrivateLabels("blog", blogID, labels)
+}
+
+// BlogLabels returns author and private labels for a blog post.
+func (cd *CoreData) BlogLabels(blogID int32) []templates.TopicLabel {
+	var labels []templates.TopicLabel
+	if als, err := cd.BlogAuthorLabels(blogID); err == nil {
+		for _, l := range als {
+			labels = append(labels, templates.TopicLabel{Name: l, Type: "author"})
+		}
+	}
+	if pls, err := cd.BlogPrivateLabels(blogID); err == nil {
+		for _, l := range pls {
+			labels = append(labels, templates.TopicLabel{Name: l, Type: "private"})
+		}
+	}
+	return labels
 }

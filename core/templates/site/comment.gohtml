@@ -8,11 +8,11 @@
             <div class="username">{{ $cmt.Posterusername.String }}</div>
             <div class="meta">
                 <div class="comment-id"><a class="comment-id" href="#c{{ $num }}">#{{ $num }}</a></div>
-                <div class="date">{{ (localTimeIn $cmt.Written.Time $cmt.Timezone.String).Format "2006-01-02" }}</div>
-                <div class="time">{{ (localTimeIn $cmt.Written.Time $cmt.Timezone.String).Format "15:04 MST" }}</div>
-                <div class="day">{{ (localTimeIn $cmt.Written.Time $cmt.Timezone.String).Format "Monday" }}</div>
+                <div class="date">{{ (cd.LocalTimeIn $cmt.Written.Time $cmt.Timezone.String).Format "2006-01-02" }}</div>
+                <div class="time">{{ (cd.LocalTimeIn $cmt.Written.Time $cmt.Timezone.String).Format "15:04 MST" }}</div>
+                <div class="day">{{ (cd.LocalTimeIn $cmt.Written.Time $cmt.Timezone.String).Format "Monday" }}</div>
                 <div class="zone">{{ if $cmt.Timezone.Valid }}{{ $cmt.Timezone.String }}{{ else }}{{ cd.Location }}{{ end }}</div>
-                {{ if $prev }}<div class="since">{{ since (localTimeIn $prev.Written.Time $prev.Timezone.String) (localTimeIn $cmt.Written.Time $cmt.Timezone.String) }}</div>{{ end }}
+                {{ if $prev }}<div class="since">{{ since (cd.LocalTimeIn $prev.Written.Time $prev.Timezone.String) (cd.LocalTimeIn $cmt.Written.Time $cmt.Timezone.String) }}</div>{{ end }}
             </div>
         </aside>
         <section class="body">

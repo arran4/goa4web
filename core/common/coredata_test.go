@@ -38,12 +38,12 @@ func TestCoreDataLatestNewsLazy(t *testing.T) {
 	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
-	req = req.WithContext(ctx)
+	_ = req.WithContext(ctx)
 
-	if _, err := cd.LatestNews(req); err != nil {
+	if _, err := cd.LatestNews(); err != nil {
 		t.Fatalf("LatestNews: %v", err)
 	}
-	if _, err := cd.LatestNews(req); err != nil {
+	if _, err := cd.LatestNews(); err != nil {
 		t.Fatalf("LatestNews second call: %v", err)
 	}
 

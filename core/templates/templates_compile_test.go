@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 //go:embed site/*.gohtml site/*/*.gohtml email/*.gohtml
@@ -17,7 +18,9 @@ var testTemplates embed.FS
 func TestCompileGoHTML(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
 	cd := &common.CoreData{}
-	template.Must(template.New("").Funcs(cd.Funcs(r)).ParseFS(testTemplates,
+	funcs := cd.Funcs(r)
+	funcs["localTime"] = func(t time.Time) time.Time { return t }
+	template.Must(template.New("").Funcs(funcs).ParseFS(testTemplates,
 		"site/*.gohtml", "site/*/*.gohtml", "email/*.gohtml"))
 }
 
@@ -32,7 +35,9 @@ func TestParseEachTemplate(t *testing.T) {
 		t.Run(filepath.Base(path), func(t *testing.T) {
 			r := httptest.NewRequest("GET", "/", nil)
 			cd := &common.CoreData{}
-			if _, err := template.New("").Funcs(cd.Funcs(r)).ParseFS(testTemplates, path); err != nil {
+			funcs := cd.Funcs(r)
+			funcs["localTime"] = func(t time.Time) time.Time { return t }
+			if _, err := template.New("").Funcs(funcs).ParseFS(testTemplates, path); err != nil {
 				t.Errorf("failed to parse %s: %v", path, err)
 			}
 		})

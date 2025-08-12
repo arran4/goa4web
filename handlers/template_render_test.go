@@ -10,6 +10,7 @@ import (
 
 	"html/template"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/db"
@@ -17,10 +18,8 @@ import (
 
 func stubFuncs() template.FuncMap {
 	req := httptest.NewRequest("GET", "/", nil)
-	cd := &common.CoreData{}
-	m := cd.Funcs(req)
-	m["LatestNews"] = func() (any, error) { return nil, nil }
-	return m
+	cd := &common.CoreData{Config: config.NewRuntimeConfig()}
+	return cd.Funcs(req)
 }
 
 func TestPageTemplatesRender(t *testing.T) {

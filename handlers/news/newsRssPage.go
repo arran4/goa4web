@@ -18,7 +18,7 @@ import (
 
 func NewsRssPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	posts, err := cd.LatestNews(r)
+	posts, err := cd.LatestNews()
 	if err != nil {
 		log.Printf("latestNews: %v", err)
 		handlers.RenderErrorPage(w, r, err)

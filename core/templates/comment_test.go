@@ -20,12 +20,12 @@ func (*fakeCD) CommentEditURL(*db.GetCommentsByThreadIdForUserRow) string     { 
 func (*fakeCD) CommentEditSaveURL(*db.GetCommentsByThreadIdForUserRow) string { return "" }
 func (*fakeCD) CommentAdminURL(*db.GetCommentsByThreadIdForUserRow) string    { return "" }
 func (*fakeCD) Location() *time.Location                                      { return time.UTC }
+func (*fakeCD) LocalTime(t time.Time) time.Time                               { return t }
+func (*fakeCD) LocalTimeIn(t time.Time, _ string) time.Time                   { return t }
 
 func TestCommentTimestampSelfLink(t *testing.T) {
 	funcMap := template.FuncMap{
 		"cd":          func() *fakeCD { return &fakeCD{} },
-		"localTime":   func(t time.Time) time.Time { return t },
-		"localTimeIn": func(t time.Time, _ string) time.Time { return t },
 		"a4code2html": func(s string) template.HTML { return template.HTML(s) },
 		"csrfField":   func() template.HTML { return "" },
 		"since":       func(time.Time, time.Time) string { return "" },

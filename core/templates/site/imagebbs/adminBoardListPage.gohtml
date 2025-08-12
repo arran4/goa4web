@@ -12,7 +12,7 @@
 <td>{{ .Idimagepost }}</td>
 <td>{{ .Username.String }}</td>
 <td>{{ .Description.String }}</td>
-<td>{{ if .Posted.Valid }}{{ localTimeIn .Posted.Time .Timezone.String }}{{ end }}</td>
+<td>{{ if .Posted.Valid }}{{ cd.LocalTimeIn .Posted.Time .Timezone.String }}{{ end }}</td>
 <td>{{ .Comments.Int32 }}</td>
 <td>{{ if .Approved }}Yes{{ else }}No{{ end }}</td>
 </tr>

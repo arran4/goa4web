@@ -6,7 +6,7 @@
         {{ range cd.BlogList }}
             <tr>
                 <td><a href="/admin/blogs/blog/{{ .Idblogs }}">{{ .Idblogs }}</a></td>
-                <td><a href="/admin/blogs/blog/{{ .Idblogs }}">{{ localTimeIn .Written .Timezone.String }}</a></td>
+                <td><a href="/admin/blogs/blog/{{ .Idblogs }}">{{ cd.LocalTimeIn .Written .Timezone.String }}</a></td>
                 <td>{{ if .Username.Valid }}<a href="/admin/user/{{ .UsersIdusers }}">{{ .Username.String }}</a>{{ else }}{{ .UsersIdusers }}{{ end }}</td>
                 <td><a href="/admin/blogs/blog/{{ .Idblogs }}#comments">{{ .Comments }}</a></td>
                 <td><a href="/blogs/blog/{{ .Idblogs }}">Public</a></td>

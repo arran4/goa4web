@@ -2,7 +2,7 @@
 <h2>News post {{ .Post.Idsitenews }}</h2>
 <p>{{ .Post.News.String | a4code2html }}</p>
 <p>Writer: {{ if .Post.Writerid.Valid }}<a href="/admin/user/{{ .Post.Writerid.Int32 }}">{{ .Post.Writername.String }}</a>{{ else }}{{ .Post.Writername.String }}{{ end }}</p>
-<p>Occurred: {{ localTimeIn .Post.Occurred.Time .Post.Timezone.String }}</p>
+<p>Occurred: {{ cd.LocalTimeIn .Post.Occurred.Time .Post.Timezone.String }}</p>
 <p>Comments: {{ .Post.Comments.Int32 }}</p>
 <p><a href="/news/news/{{ .Post.Idsitenews }}">View public</a></p>
 {{ if .TopicID }}<p><a href="/forum/topic/{{ .TopicID }}/thread/{{ .Post.ForumthreadID }}">View forum thread</a></p>{{ end }}

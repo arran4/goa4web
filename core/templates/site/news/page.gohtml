@@ -1,6 +1,6 @@
 {{ define "newsPage" }}
     {{ template "head" $ }}
-        {{ range LatestNews }}
+        {{ range cd.LatestNews }}
             {{ template "newsPost" . }}
         {{ else }}
             <p>There is no news.</p>

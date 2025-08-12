@@ -58,6 +58,23 @@ textarea {
         width: 90%;
 }
 
+.link-list {
+        width: 100%;
+        margin-bottom: 1em;
+}
+
+.link-item {
+        margin-bottom: 1em;
+}
+
+.link-header {
+        padding: 0.5em;
+}
+
+.link-body {
+        padding: 0.5em;
+}
+
 .navbar {
         display: flex;
         justify-content: space-between;

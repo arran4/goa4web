@@ -25,7 +25,7 @@ func (*fakeCD) IsAdminMode() bool                                               
 func (*fakeCD) NewsAnnouncement(int32) *db.SiteAnnouncement                          { return nil }
 func (*fakeCD) Location() *time.Location                                             { return time.UTC }
 
-func TestNewsPostPageNoDuplicateLabels(t *testing.T) {
+func TestNewsPostPageLabelBars(t *testing.T) {
 	funcMap := template.FuncMap{
 		"cd":          func() *fakeCD { return &fakeCD{} },
 		"csrfField":   func() template.HTML { return "" },
@@ -63,12 +63,66 @@ func TestNewsPostPageNoDuplicateLabels(t *testing.T) {
 	}
 
 	data := struct {
-		Post    *db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
-		Labels  []templates.TopicLabel
-		BackURL string
+		Post         *db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
+		Labels       []templates.TopicLabel
+		PublicLabels []templates.TopicLabel
+		BackURL      string
+	}{
+		Post:         post,
+		Labels:       []templates.TopicLabel{{Name: "foo", Type: "author"}},
+		PublicLabels: []templates.TopicLabel{{Name: "foo", Type: "author"}},
+		BackURL:      "/news/news/1",
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, "postPage.gohtml", data); err != nil {
+		t.Fatalf("render: %v", err)
+	}
+
+	out := buf.String()
+	if strings.Count(out, "class=\"label-bar\"") != 2 {
+		t.Fatalf("expected 2 label bars, got %d: %q", strings.Count(out, "class=\"label-bar\""), out)
+	}
+}
+
+func TestNewsPostPagePrivateLabelsOnce(t *testing.T) {
+	funcMap := template.FuncMap{
+		"cd":          func() *fakeCD { return &fakeCD{} },
+		"csrfField":   func() template.HTML { return "" },
+		"localTimeIn": func(t time.Time, _ string) time.Time { return t },
+		"localTime":   func(t time.Time) time.Time { return t },
+		"now":         func() time.Time { return time.Unix(0, 0) },
+		"a4code2html": func(s string) template.HTML { return template.HTML(s) },
+		"NewsLabels":  func(int32) []templates.TopicLabel { return nil },
+		"add":         func(a, b int) int { return a + b },
+		"since":       func(time.Time, time.Time) string { return "" },
+	}
+
+	base := filepath.Join("..", "..", "core", "templates", "site", "news")
+	tmpl := template.Must(template.New("root").Funcs(funcMap).ParseFiles(
+		filepath.Join(base, "postPage.gohtml"),
+		filepath.Join(base, "post.gohtml"),
+	))
+	tmpl = template.Must(tmpl.Parse(`{{ define "head" }}{{ end }}{{ define "tail" }}{{ end }}{{ define "threadComments" }}{{ end }}{{ define "comment" }}{{ end }}{{ define "topicLabels" }}{{ end }}{{ define "languageCombobox" }}{{ end }}`))
+
+	post := &db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow{
+		Idsitenews:   1,
+		UsersIdusers: 1,
+		News:         sql.NullString{String: "body", Valid: true},
+		Writername:   sql.NullString{String: "alice", Valid: true},
+		Occurred:     sql.NullTime{Time: time.Unix(0, 0), Valid: true},
+		Timezone:     sql.NullString{String: "UTC", Valid: true},
+		Comments:     sql.NullInt32{Int32: 0, Valid: true},
+	}
+
+	data := struct {
+		Post         *db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
+		Labels       []templates.TopicLabel
+		PublicLabels []templates.TopicLabel
+		BackURL      string
 	}{
 		Post:    post,
-		Labels:  []templates.TopicLabel{{Name: "foo", Type: "author"}},
+		Labels:  []templates.TopicLabel{{Name: "secret", Type: "private"}},
 		BackURL: "/news/news/1",
 	}
 
@@ -78,7 +132,13 @@ func TestNewsPostPageNoDuplicateLabels(t *testing.T) {
 	}
 
 	out := buf.String()
-	if strings.Count(out, "class=\"label-bar\"") != 1 {
-		t.Fatalf("expected 1 label bar, got %d: %q", strings.Count(out, "class=\"label-bar\""), out)
+	if strings.Contains(out, "label-list") {
+		t.Fatalf("expected no label list for private labels: %q", out)
+	}
+	if strings.Count(out, "label pill private") != 1 {
+		t.Fatalf("expected 1 private label pill, got %d: %q", strings.Count(out, "label pill private"), out)
+	}
+	if !strings.Contains(out, "class=\"remove\" data-type=\"private\"") {
+		t.Fatalf("expected dismiss button for private label: %q", out)
 	}
 }

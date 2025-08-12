@@ -32,6 +32,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		Editing        func(*db.GetCommentsByThreadIdForUserRow) bool
 		AdminURL       func(*db.GetCommentsByThreadIdForUserRow) string
 		Labels         []templates.TopicLabel
+		PublicLabels   []templates.TopicLabel
 		BackURL        string
 	}
 
@@ -150,7 +151,9 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 
 	if als, err := cd.NewsAuthorLabels(post.Idsitenews); err == nil {
 		for _, l := range als {
-			data.Labels = append(data.Labels, templates.TopicLabel{Name: l, Type: "author"})
+			tl := templates.TopicLabel{Name: l, Type: "author"}
+			data.Labels = append(data.Labels, tl)
+			data.PublicLabels = append(data.PublicLabels, tl)
 		}
 	}
 	if pls, err := cd.NewsPrivateLabels(post.Idsitenews); err == nil {

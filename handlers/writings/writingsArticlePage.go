@@ -184,6 +184,10 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := cd.ClearUnreadForOthers("writing", writing.Idwriting); err != nil {
+		log.Printf("clear unread labels: %v", err)
+	}
+
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {

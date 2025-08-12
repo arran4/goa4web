@@ -179,6 +179,15 @@ func (cd *CoreData) ClearPrivateLabelStatus(item string, itemID int32) error {
 	return cd.queries.SystemClearContentPrivateLabel(cd.ctx, db.SystemClearContentPrivateLabelParams{Item: item, ItemID: itemID, Label: "unread"})
 }
 
+// ClearUnreadForOthers removes the inverted unread label for an item from all
+// users except the current one.
+func (cd *CoreData) ClearUnreadForOthers(item string, itemID int32) error {
+	if cd.queries == nil {
+		return nil
+	}
+	return cd.queries.ClearUnreadContentPrivateLabelExceptUser(cd.ctx, db.ClearUnreadContentPrivateLabelExceptUserParams{Item: item, ItemID: itemID, UserID: cd.UserID})
+}
+
 // SetPrivateLabelStatus updates the special new/unread flags for an item.
 func (cd *CoreData) SetPrivateLabelStatus(item string, itemID int32, newLabel, unreadLabel bool) error {
 	if cd.queries == nil {
@@ -296,6 +305,10 @@ func (cd *CoreData) ClearThreadPrivateLabelStatus(threadID int32) error {
 	return cd.ClearPrivateLabelStatus("thread", threadID)
 }
 
+func (cd *CoreData) ClearThreadUnreadForOthers(threadID int32) error {
+	return cd.ClearUnreadForOthers("thread", threadID)
+}
+
 func (cd *CoreData) SetThreadPrivateLabelStatus(threadID int32, newLabel, unreadLabel bool) error {
 	return cd.SetPrivateLabelStatus("thread", threadID, newLabel, unreadLabel)
 }
@@ -341,6 +354,10 @@ func (cd *CoreData) WritingPrivateLabels(writingID int32) ([]string, error) {
 
 func (cd *CoreData) SetWritingPrivateLabels(writingID int32, labels []string) error {
 	return cd.SetPrivateLabels("writing", writingID, labels)
+}
+
+func (cd *CoreData) ClearWritingUnreadForOthers(writingID int32) error {
+	return cd.ClearUnreadForOthers("writing", writingID)
 }
 
 // News

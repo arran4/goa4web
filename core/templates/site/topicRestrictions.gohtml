@@ -1,42 +1,41 @@
 {{ define "topicRestrictions" }}
     <span class="section-title">Topic Restrictions:</span><br>
-    <table width="100%">
-        <tr>
-            <th>Topic
-            <th>view level
-            <th>reply level
-            <th>new thread level
-            <th>see level
-            <th>Starting roles
-            <th>read level
-            <th>Moderator Level
-            <th>Administrator level
-            <th>Options
-        </tr>
+    <div class="topic-restrictions">
+        <div class="topic-restrictions-row topic-restrictions-header">
+            <div>Topic</div>
+            <div>view level</div>
+            <div>reply level</div>
+            <div>new thread level</div>
+            <div>see level</div>
+            <div>Starting roles</div>
+            <div>read level</div>
+            <div>Moderator Level</div>
+            <div>Administrator level</div>
+            <div>Options</div>
+        </div>
         {{- range .Restrictions }}
-            <form method="post">
-        {{ csrfField }}
-                <tr>
-                    <td><input type="hidden" name="ftid" value="{{ .ForumTopicID }}">{{ .Title }}
-                    <td><input name="view" value="{{ .ViewLevel }}" size="8">
-                    <td><input name="reply" value="{{ .ReplyLevel }}" size="8">
-                    <td><input name="newthread" value="{{ .NewThreadLevel }}" size="8">
-                    <td><input name="see" value="{{ .SeeLevel }}" size="8">
-                    <td><input name="invite" value="{{ .InviteLevel }}" size="8">
-                    <td><input name="read" value="{{ .ReadLevel }}" size="8">
-                    <td><input name="mod" value="{{ .ModeratorLevel }}" size="8">
-                    <td><input name="admin" value="{{ .AdminLevel }}" size="8">
-                    <td>
-                        {{- if .HasRestriction }}
-                        <input type="submit" name="task" value="Update topic restriction">
-                        <input type="submit" name="task" value="Delete topic restriction">
-                        {{- else }}
-                        <input type="submit" name="task" value="Set topic restriction">
-                        {{- end }}
-                </tr>
-            </form>
+        <form method="post" class="topic-restrictions-row">
+            {{ csrfField }}
+            <div><input type="hidden" name="ftid" value="{{ .ForumTopicID }}">{{ .Title }}</div>
+            <div><input name="view" value="{{ .ViewLevel }}" size="8"></div>
+            <div><input name="reply" value="{{ .ReplyLevel }}" size="8"></div>
+            <div><input name="newthread" value="{{ .NewThreadLevel }}" size="8"></div>
+            <div><input name="see" value="{{ .SeeLevel }}" size="8"></div>
+            <div><input name="invite" value="{{ .InviteLevel }}" size="8"></div>
+            <div><input name="read" value="{{ .ReadLevel }}" size="8"></div>
+            <div><input name="mod" value="{{ .ModeratorLevel }}" size="8"></div>
+            <div><input name="admin" value="{{ .AdminLevel }}" size="8"></div>
+            <div>
+                {{- if .HasRestriction }}
+                <input type="submit" name="task" value="Update topic restriction">
+                <input type="submit" name="task" value="Delete topic restriction">
+                {{- else }}
+                <input type="submit" name="task" value="Set topic restriction">
+                {{- end }}
+            </div>
+        </form>
         {{- end }}
-    </table><br>
+    </div><br>
     Remember:
     <ul>
         <li>View threads

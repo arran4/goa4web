@@ -15,7 +15,7 @@
         {{ $private := .Private.Bool }}
         {{ $comments := .Comments }}
         {{ $labels := WritingLabels $idwriting }}
-        <table width="100%">
+        <table class="full-width">
             <tr><th class="bg-muted">{{ $title }} By {{ $username }} on {{ $published }}
                 {{ if $private }} - <i>Warning: Privileged information.</i>{{ end }}
             </th></tr>

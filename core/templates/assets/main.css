@@ -35,6 +35,21 @@ textarea {
         vertical-align: top;
 }
 
+.topic-restrictions {
+        width: 100%;
+}
+
+.topic-restrictions-row {
+        display: grid;
+        grid-template-columns: 2fr repeat(8, 1fr) 2fr;
+        gap: 0.5em;
+        align-items: center;
+}
+
+.topic-restrictions-header {
+        font-weight: bold;
+}
+
 .full-width {
         width: 100%;
 }

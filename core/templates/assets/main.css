@@ -335,6 +335,7 @@ div.title {
 .spoiler {
 	color: #000000;
 	background-color: #000000;
+	display: inline;
 }
 .spoiler:hover {
 	color: #FFFFFF;

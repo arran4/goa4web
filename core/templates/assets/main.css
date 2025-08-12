@@ -35,6 +35,22 @@ textarea {
         vertical-align: top;
 }
 
+.entry-list {
+        width: 100%;
+}
+
+.entry {
+        margin-bottom: 1em;
+}
+
+.entry-header {
+        font-weight: bold;
+}
+
+.entry-body {
+        /* container for entry details */
+}
+
 .navbar {
         display: flex;
         justify-content: space-between;

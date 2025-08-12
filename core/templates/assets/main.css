@@ -599,7 +599,58 @@ tr.unsupported td {
 
 .poster-name.last,
 .post-time.last {
-	color: blue;
+        color: blue;
+}
+
+/* Topic list styles */
+
+/*
+ * Topic list styles
+ * The list replaces a former table layout and retains the same
+ * 1px border styling around the entire block and between rows.
+ */
+.topics {
+        width: 100%;
+        border: 1px solid #000;
+}
+
+.topics-header {
+        display: flex;
+        border-bottom: 1px solid #000;
+}
+
+.topic-item {
+        display: flex;
+        border-bottom: 1px solid #000;
+}
+
+.topic-item:last-child {
+        border-bottom: 0;
+}
+
+.topic-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+}
+
+.topic-name {
+        flex: 0 0 400px;
+}
+
+.last-reply {
+        flex: 0 0 300px;
+        text-align: center;
+}
+
+.threads,
+.replies {
+        flex: 1;
+        text-align: center;
+}
+
+.topic-item.no-topics {
+        text-align: center;
 }
 
 

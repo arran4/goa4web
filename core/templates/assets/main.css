@@ -601,9 +601,10 @@ tr.unsupported td {
 }
 
 .comment .body {
-       flex: 1;
-       display: flex;
-       flex-direction: column;
+    /*These are breaking it*/
+       /*flex: 1;*/
+       /*display: flex;*/
+       /*flex-direction: column;*/
 }
 
 .comment .body footer {

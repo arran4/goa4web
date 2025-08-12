@@ -4,7 +4,6 @@ import (
 	"embed"
 	htemplate "html/template"
 	"io/fs"
-	"log"
 	"os"
 	"path/filepath"
 	ttemplate "text/template"
@@ -20,14 +19,7 @@ var templatesDir string
 var embeddedFS embed.FS
 
 // SetDir configures templates to be loaded from dir. When dir is empty the embedded templates are used.
-func SetDir(dir string) {
-	templatesDir = dir
-	if dir == "" {
-		log.Printf("Embedded Template Mode")
-	} else {
-		log.Printf("Live Template Mode: %s", dir)
-	}
-}
+func SetDir(dir string) { templatesDir = dir }
 
 func getFS(sub string) fs.FS {
 	if templatesDir == "" {

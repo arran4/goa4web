@@ -205,6 +205,11 @@ func parseRoot(args []string) (*rootCmd, error) {
 		config.WithGetenv(os.Getenv),
 	)
 	coretemplates.SetDir(r.cfg.TemplatesDir)
+	if r.cfg.TemplatesDir == "" {
+		r.Infof("Embedded Template Mode")
+	} else {
+		r.Infof("Live Template Mode: %s", r.cfg.TemplatesDir)
+	}
 	return r, nil
 }
 

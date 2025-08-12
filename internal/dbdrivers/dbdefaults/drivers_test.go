@@ -25,7 +25,7 @@ func TestConnectorUnknown(t *testing.T) {
 func TestRegistryNames(t *testing.T) {
 	reg := dbdrivers.NewRegistry()
 	dbdefaults.Register(reg)
-	want := []string{"mysql", "postgres"}
+	want := []string{"mysql"}
 	names := reg.Names()
 	for _, n := range want {
 		found := false

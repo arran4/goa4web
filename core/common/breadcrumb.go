@@ -54,7 +54,11 @@ func (cd *CoreData) forumBreadcrumbs() ([]Breadcrumb, error) {
 	if base == "" {
 		base = "/forum"
 	}
-	crumbs := []Breadcrumb{{Title: "Forum", Link: base}}
+	crumbTitle := "Forum"
+	if cd != nil && cd.currentSection == "privateforum" {
+		crumbTitle = "Private"
+	}
+	crumbs := []Breadcrumb{{Title: crumbTitle, Link: base}}
 	catID := cd.currentCategoryID
 	topicID := cd.currentTopicID
 	threadID := cd.currentThreadID

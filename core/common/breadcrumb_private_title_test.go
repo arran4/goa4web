@@ -45,6 +45,9 @@ func TestPrivateForumBreadcrumbUsesDisplayTitle(t *testing.T) {
 	if len(crumbs) < 2 {
 		t.Fatalf("expected >=2 crumbs, got %v", crumbs)
 	}
+	if crumbs[0].Title != "Private" {
+		t.Fatalf("unexpected root crumb title: %v", crumbs[0].Title)
+	}
 	if crumbs[1].Title != "Alice, Bob" {
 		t.Fatalf("unexpected crumb title: %v", crumbs[1].Title)
 	}

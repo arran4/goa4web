@@ -1,4 +1,32 @@
 (function() {
+    function addLabel(input) {
+        var val = input.value.trim();
+        if (!val) {
+            return;
+        }
+        var name = input.dataset.type;
+        var exists = Array.from(document.querySelectorAll('input[name="' + name + '"]')).some(function(n) { return n.value === val; });
+        if (exists) {
+            input.value = '';
+            return;
+        }
+        var span = document.createElement('span');
+        span.className = 'label pill ' + name + ' unsaved';
+        span.textContent = val;
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'remove';
+        btn.textContent = 'x';
+        span.appendChild(btn);
+        var hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = name;
+        hidden.value = val;
+        span.appendChild(hidden);
+        input.parentElement.insertBefore(span, input);
+        input.value = '';
+    }
+
     document.addEventListener('click', function(e) {
         if (e.target.classList.contains('remove')) {
             var span = e.target.parentElement;
@@ -21,32 +49,13 @@
         input.addEventListener('keydown', function(e) {
             if (e.key === ' ') {
                 e.preventDefault();
-                var val = input.value.trim();
-                if (!val) {
-                    return;
-                }
-                var name = input.dataset.type;
-                var exists = Array.from(document.querySelectorAll('input[name="' + name + '"]')).some(function(n) { return n.value === val; });
-                if (exists) {
-                    input.value = '';
-                    return;
-                }
-                var span = document.createElement('span');
-                span.className = 'label pill ' + name + ' unsaved';
-                span.textContent = val;
-                var btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'remove';
-                btn.textContent = 'x';
-                span.appendChild(btn);
-                var hidden = document.createElement('input');
-                hidden.type = 'hidden';
-                hidden.name = name;
-                hidden.value = val;
-                span.appendChild(hidden);
-                input.parentElement.insertBefore(span, input);
-                input.value = '';
+                addLabel(input);
             }
+        });
+    });
+    document.querySelectorAll('form').forEach(function(form) {
+        form.addEventListener('submit', function() {
+            form.querySelectorAll('.label-input').forEach(addLabel);
         });
     });
 })();

@@ -6,7 +6,7 @@
                     <header class="bg-muted link-header">{{ .CategoryTitle.String }}: <a href="{{ .Url.String }}" target="_BLANK">{{ .Title.String }}</a></header>
                     <div class="link-body">
                         {{ .Description.String | a4code2html }}<hr>
-                        {{ .Posterusername.String }} - Listed: {{ localTimeIn .Listed.Time .Timezone.String }} - [<a href="/linker/comments/{{ .ID }}">{{.Comments.Int32}} COMMENTS</a>]<br>
+                        {{ .Posterusername.String }} - Listed: {{ cd.LocalTimeIn .Listed.Time .Timezone.String }} - [<a href="/linker/comments/{{ .ID }}">{{.Comments.Int32}} COMMENTS</a>]<br>
                     </div>
                 </article>
             {{- else }}
@@ -22,7 +22,7 @@
                     <header class="bg-muted link-header">{{ .CategoryTitle.String }}: <a href="{{ .Url.String }}" target="_BLANK">{{ .Title.String }}</a></header>
                     <div class="link-body">
                         {{ .Description.String | a4code2html }}<hr>
-                        {{ .Posterusername.String }} - Listed: {{ localTimeIn .Listed.Time .Timezone.String }} - [<a href="/linker/comments/{{ .ID }}">{{.Comments.Int32}} COMMENTS</a>]<br>
+                        {{ .Posterusername.String }} - Listed: {{ cd.LocalTimeIn .Listed.Time .Timezone.String }} - [<a href="/linker/comments/{{ .ID }}">{{.Comments.Int32}} COMMENTS</a>]<br>
                     </div>
                 </article>
             {{- else }}

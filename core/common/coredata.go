@@ -1321,11 +1321,11 @@ func (cd *CoreData) CreateLanguage(code, name string) (int64, error) {
 	return res.LastInsertId()
 }
 
-// LatestNews returns recent news posts with permission data.
-func (cd *CoreData) LatestNews(r *http.Request) ([]*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
-	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+// LatestNews returns recent news posts with permission data using cd's current
+// pagination offset and page size.
+func (cd *CoreData) LatestNews() ([]*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
 	return cd.latestNews.Load(func() ([]*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
-		return cd.fetchLatestNews(int32(offset), int32(cd.PageSize()))
+		return cd.fetchLatestNews(int32(cd.currentOffset), int32(cd.PageSize()))
 	})
 }
 
@@ -1651,6 +1651,20 @@ func (cd *CoreData) Location() *time.Location {
 		}
 	}
 	return time.UTC
+}
+
+// LocalTime converts t to cd's configured time zone.
+func (cd *CoreData) LocalTime(t time.Time) time.Time { return t.In(cd.Location()) }
+
+// LocalTimeIn converts t to the named time zone when available, otherwise
+// falling back to cd's configured time zone.
+func (cd *CoreData) LocalTimeIn(t time.Time, zone string) time.Time {
+	if zone != "" {
+		if loc, err := time.LoadLocation(zone); err == nil {
+			return t.In(loc)
+		}
+	}
+	return t.In(cd.Location())
 }
 
 // PublicWritings returns public writings in a category, cached per category and offset.

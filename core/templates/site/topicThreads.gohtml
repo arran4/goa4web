@@ -7,14 +7,14 @@
         <div class="thread">
             <div class="thread-meta thread-header">
                 First poster: <span class="poster-name first">{{ .Firstpostusername.String }}</span>
-                At <span class="post-time first">{{ localTime .Firstpostwritten.Time }}</span>
+                At <span class="post-time first">{{ cd.LocalTime .Firstpostwritten.Time }}</span>
             </div>
             <div class="thread-content">
                 {{ .Firstposttext.String | a4code2html }}<br>
             </div>
             <div class="thread-meta">
                 Lastposter: <span class="poster-name last">{{ .Lastposterusername.String }}</span>
-                At <span class="post-time last">{{ localTime .Lastaddition.Time }}</span>
+                At <span class="post-time last">{{ cd.LocalTime .Lastaddition.Time }}</span>
                 [<a href="{{$base}}/topic/{{.ForumtopicIdforumtopic}}/thread/{{ .Idforumthread }}">
                     {{- .Comments.Int32 }} comments.</a>]{{" "}}
                 {{- template "topicLabels" .Labels }}

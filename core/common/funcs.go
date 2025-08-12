@@ -15,7 +15,6 @@ import (
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/core/templates"
 	"github.com/gorilla/csrf"
 )
 
@@ -62,16 +61,7 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 			}
 			return string(out)
 		},
-		"trim":      strings.TrimSpace,
-		"localTime": func(t time.Time) time.Time { return t.In(cd.Location()) },
-		"localTimeIn": func(t time.Time, zone string) time.Time {
-			if zone != "" {
-				if loc, err := time.LoadLocation(zone); err == nil {
-					return t.In(loc)
-				}
-			}
-			return t.In(cd.Location())
-		},
+		"trim": strings.TrimSpace,
 		"firstline": func(s string) string {
 			return strings.Split(s, "\n")[0]
 		},
@@ -131,55 +121,6 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 				return u + "&mode=admin"
 			}
 			return u + "?mode=admin"
-		},
-		"LatestNews": func() (any, error) {
-			posts, err := cd.LatestNews(r)
-			if err != nil {
-				return nil, fmt.Errorf("latestNews: %w", err)
-			}
-			return posts, nil
-		},
-		"NewsLabels": func(id int32) []templates.TopicLabel {
-			var labels []templates.TopicLabel
-			if als, err := cd.NewsAuthorLabels(id); err == nil {
-				for _, l := range als {
-					labels = append(labels, templates.TopicLabel{Name: l, Type: "author"})
-				}
-			}
-			if pls, err := cd.NewsPrivateLabels(id); err == nil {
-				for _, l := range pls {
-					labels = append(labels, templates.TopicLabel{Name: l, Type: "private"})
-				}
-			}
-			return labels
-		},
-		"BlogLabels": func(id int32) []templates.TopicLabel {
-			var labels []templates.TopicLabel
-			if als, err := cd.BlogAuthorLabels(id); err == nil {
-				for _, l := range als {
-					labels = append(labels, templates.TopicLabel{Name: l, Type: "author"})
-				}
-			}
-			if pls, err := cd.BlogPrivateLabels(id); err == nil {
-				for _, l := range pls {
-					labels = append(labels, templates.TopicLabel{Name: l, Type: "private"})
-				}
-			}
-			return labels
-		},
-		"WritingLabels": func(id int32) []templates.TopicLabel {
-			var labels []templates.TopicLabel
-			if als, err := cd.WritingAuthorLabels(id); err == nil {
-				for _, l := range als {
-					labels = append(labels, templates.TopicLabel{Name: l, Type: "author"})
-				}
-			}
-			if pls, err := cd.WritingPrivateLabels(id); err == nil {
-				for _, l := range pls {
-					labels = append(labels, templates.TopicLabel{Name: l, Type: "private"})
-				}
-			}
-			return labels
 		},
 	}
 }

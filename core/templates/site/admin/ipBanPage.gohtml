@@ -16,9 +16,9 @@
         <td><input type="checkbox" name="ip" value="{{ .IpNet }}"></td>
         <td>{{ .IpNet }}</td>
         <td>{{ .Reason.String }}</td>
-        <td>{{ localTime .CreatedAt }}</td>
-        <td>{{ if .ExpiresAt.Valid }}{{ localTime .ExpiresAt.Time }}{{ end }}</td>
-        <td>{{ if .CanceledAt.Valid }}{{ localTime .CanceledAt.Time }}{{ end }}</td>
+        <td>{{ cd.LocalTime .CreatedAt }}</td>
+        <td>{{ if .ExpiresAt.Valid }}{{ cd.LocalTime .ExpiresAt.Time }}{{ end }}</td>
+        <td>{{ if .CanceledAt.Valid }}{{ cd.LocalTime .CanceledAt.Time }}{{ end }}</td>
     </tr>
     {{- end }}
 </table>

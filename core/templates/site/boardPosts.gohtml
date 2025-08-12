@@ -8,7 +8,7 @@
             {{- range $posts }}
                 <li class="board-post-item">
                     <a href="{{ .Fullimage.String }}" target="_BLANK"><img src="{{ .Thumbnail.String }}" alt=""></a>
-                    <div>{{ .Description.String }}<hr>{{ .Username.String }} - Posted: {{ localTimeIn .Posted.Time .Timezone.String }} - [<a href="/imagebbs/board/{{ $cd.SelectedBoardID }}/thread/{{ .ForumthreadID }}">{{ .Comments.Int32 }} COMMENTS</a>]</div>
+                    <div>{{ .Description.String }}<hr>{{ .Username.String }} - Posted: {{ cd.LocalTimeIn .Posted.Time .Timezone.String }} - [<a href="/imagebbs/board/{{ $cd.SelectedBoardID }}/thread/{{ .ForumthreadID }}">{{ .Comments.Int32 }} COMMENTS</a>]</div>
                 </li>
             {{- end }}
             </ul>

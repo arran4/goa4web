@@ -24,20 +24,20 @@ func (*fakeCD) IsAdmin() bool                                                   
 func (*fakeCD) IsAdminMode() bool                                                    { return false }
 func (*fakeCD) NewsAnnouncement(int32) *db.SiteAnnouncement                          { return nil }
 func (*fakeCD) Location() *time.Location                                             { return time.UTC }
+func (*fakeCD) LocalTime(t time.Time) time.Time                                      { return t }
+func (*fakeCD) LocalTimeIn(t time.Time, _ string) time.Time                          { return t }
+func (*fakeCD) NewsLabels(int32) []templates.TopicLabel {
+	return []templates.TopicLabel{{Name: "foo", Type: "author"}}
+}
 
 func TestNewsPostPageLabelBars(t *testing.T) {
 	funcMap := template.FuncMap{
 		"cd":          func() *fakeCD { return &fakeCD{} },
 		"csrfField":   func() template.HTML { return "" },
-		"localTimeIn": func(t time.Time, _ string) time.Time { return t },
-		"localTime":   func(t time.Time) time.Time { return t },
 		"now":         func() time.Time { return time.Unix(0, 0) },
 		"a4code2html": func(s string) template.HTML { return template.HTML(s) },
-		"NewsLabels": func(int32) []templates.TopicLabel {
-			return []templates.TopicLabel{{Name: "foo", Type: "author"}}
-		},
-		"add":   func(a, b int) int { return a + b },
-		"since": func(time.Time, time.Time) string { return "" },
+		"add":         func(a, b int) int { return a + b },
+		"since":       func(time.Time, time.Time) string { return "" },
 	}
 
 	base := filepath.Join("..", "..", "core", "templates", "site", "news")
@@ -132,6 +132,10 @@ func TestNewsPostPagePrivateLabelsOnce(t *testing.T) {
 	}
 
 	out := buf.String()
+
+  if strings.Count(out, "class=\"label-bar\"") != 2 {
+		t.Fatalf("expected 2 label bars, got %d: %q", strings.Count(out, "class=\"label-bar\""), out)
+  }
 	if strings.Contains(out, "label-list") {
 		t.Fatalf("expected no label list for private labels: %q", out)
 	}

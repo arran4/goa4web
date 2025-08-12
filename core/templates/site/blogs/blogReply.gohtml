@@ -11,14 +11,14 @@
                         {{ $comments := cd.SelectedSectionThreadComments }}
                         {{ $num := add (add (len $comments) (cd.Offset)) 1 }}
                         <div class="comment-id"><a class="comment-id" href="#bottom">#{{ $num }}</a></div>
-                        {{ $now := localTime (now) }}
+                        {{ $now := cd.LocalTime (now) }}
                         <div class="date">{{ $now.Format "2006-01-02" }}</div>
                         <div class="time">{{ $now.Format "15:04 MST" }}</div>
                         <div class="day">{{ $now.Format "Monday" }}</div>
                         <div class="zone">{{ cd.Location }}</div>
                         {{ if gt (len $comments) 0 }}
                             {{ $prev := index $comments (add (len $comments) -1) }}
-                            <div class="since">{{ since (localTime $prev.Written.Time) $now }}</div>
+                            <div class="since">{{ since (cd.LocalTime $prev.Written.Time) $now }}</div>
                         {{ end }}
                     </div>
                 </aside>

@@ -7,7 +7,7 @@
         <td>{{ .Topic.Idforumtopic }}</td>
         <td>{{ .Topic.Threads.Int32 }}</td>
         <td>{{ .Topic.Comments.Int32 }}</td>
-        <td>{{ localTime .Topic.Lastaddition.Time }}</td>
+        <td>{{ cd.LocalTime .Topic.Lastaddition.Time }}</td>
         <td><a href="/forum/topic/{{ .Topic.Idforumtopic }}">View</a></td>
     </tr>
 </table>

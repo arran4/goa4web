@@ -1,6 +1,6 @@
 {{ define "newsPost" }}
     <article class="thread">
-        <header class="thread-header">{{ localTimeIn .Occurred.Time .Timezone.String }}</header>
+        <header class="thread-header">{{ cd.LocalTimeIn .Occurred.Time .Timezone.String }}</header>
         <div class="thread-content">{{ .News.String | a4code2html }}<br>-<br>{{ .Writername.String }}
             -
             {{ if cd.SelectedThreadID }}
@@ -23,7 +23,7 @@
                     {{ end }}
                 </a>]
             {{ end }}
-            {{ $labels := NewsLabels .Idsitenews }}
+            {{ $labels := cd.NewsLabels .Idsitenews }}
             {{ if $labels }}<section class="label-bar">{{ template "topicLabels" $labels }}</section>{{ end }}
         </div>
     </article>

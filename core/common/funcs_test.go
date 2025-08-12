@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"github.com/arran4/goa4web/core/consts"
 	"net/http/httptest"
-	"reflect"
 	"testing"
 	"time"
 
@@ -78,15 +77,13 @@ func TestLatestNewsRespectsPermissions(t *testing.T) {
 	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
-	req = req.WithContext(ctx)
+	_ = req.WithContext(ctx)
 
-	funcs := cd.Funcs(req)
-	latestFn := funcs["LatestNews"].(func() (any, error))
-	res, err := latestFn()
+	res, err := cd.LatestNews()
 	if err != nil {
 		t.Fatalf("LatestNews: %v", err)
 	}
-	if l := reflect.ValueOf(res).Len(); l != 1 {
+	if l := len(res); l != 1 {
 		t.Fatalf("expected 1 news post, got %d", l)
 	}
 

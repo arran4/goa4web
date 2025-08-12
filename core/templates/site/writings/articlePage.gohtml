@@ -1,7 +1,7 @@
 {{ template "head" $ }}
     {{ $writing := cd.CurrentWritingLoaded }}
     {{ if $writing }}
-        <span class="text-large">At {{ localTime $writing.Published.Time }}, By {{ $writing.Writerusername.String }}; {{ $writing.Title.String | trim | a4code2html }}:</span>
+        <span class="text-large">At {{ cd.LocalTime $writing.Published.Time }}, By {{ $writing.Writerusername.String }}; {{ $writing.Title.String | trim | a4code2html }}:</span>
         {{ if $writing.Private.Bool }} (Restricted access) {{ end }}
         {{ if .CanEdit }}[<a href="/writings/article/{{ $writing.Idwriting }}/edit">EDIT</a>]{{ end }}
         {{ if and cd.IsAdmin cd.IsAdminMode }}[<a href="/admin/writings/article/{{ $writing.Idwriting }}">ADMIN</a>]{{ end }}
@@ -67,14 +67,14 @@
                         {{ $comments := cd.SelectedSectionThreadComments }}
                         {{ $num := add (add (len $comments) (cd.Offset)) 1 }}
                         <div class="comment-id"><a class="comment-id" href="#bottom">#{{ $num }}</a></div>
-                        {{ $now := localTime (now) }}
+                        {{ $now := cd.LocalTime (now) }}
                         <div class="date">{{ $now.Format "2006-01-02" }}</div>
                         <div class="time">{{ $now.Format "15:04 MST" }}</div>
                         <div class="day">{{ $now.Format "Monday" }}</div>
                         <div class="zone">{{ cd.Location }}</div>
                         {{ if gt (len $comments) 0 }}
                             {{ $prev := index $comments (add (len $comments) -1) }}
-                            <div class="since">{{ since (localTime $prev.Written.Time) $now }}</div>
+                            <div class="since">{{ since (cd.LocalTime $prev.Written.Time) $now }}</div>
                         {{ end }}
                     </div>
                 </aside>

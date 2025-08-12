@@ -9,12 +9,12 @@
         {{ range $abstracts }}
             {{ $title := .Title.String | a4code2html }}
             {{ $username := .Username.String }}
-            {{ $published := localTime .Published.Time }}
+            {{ $published := cd.LocalTime .Published.Time }}
             {{ $abstract := .Abstract.String | a4code2html }}
             {{ $idwriting := .Idwriting }}
             {{ $private := .Private.Bool }}
             {{ $comments := .Comments }}
-            {{ $labels := WritingLabels $idwriting }}
+            {{ $labels := cd.WritingLabels $idwriting }}
             <article class="full-width link-item">
                 <header class="bg-muted link-header">{{ $title }} By {{ $username }} on {{ $published }}
                     {{ if $private }} - <i>Warning: Privileged information.</i>{{ end }}

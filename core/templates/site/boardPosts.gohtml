@@ -2,14 +2,17 @@
     {{ $cd := cd }}
     {{ $posts := $cd.SelectedBoardPosts }}
     {{- if $posts }}
-        <span class="section-title">Pictures:</span><br>
-        {{- range $posts }}
-            <table>
-                <tr>
-                    <th><a href="{{ .Fullimage.String }}" target="_BLANK"><img src="{{ .Thumbnail.String }}"></a>
-                    <td>{{ .Description.String }}<hr>{{ .Username.String }} - Posted: {{ localTimeIn .Posted.Time .Timezone.String }} - [<a href="/imagebbs/board/{{ $cd.SelectedBoardID }}/thread/{{ .ForumthreadID }}">{{ .Comments.Int32 }} COMMENTS</a>]
-            </table><br>
-        {{- end }}
+        <font size="4">Pictures:</font><br>
+        <section class="board-posts">
+            <ul class="board-post-list">
+            {{- range $posts }}
+                <li class="board-post-item">
+                    <a href="{{ .Fullimage.String }}" target="_BLANK"><img src="{{ .Thumbnail.String }}" alt=""></a>
+                    <div>{{ .Description.String }}<hr>{{ .Username.String }} - Posted: {{ localTimeIn .Posted.Time .Timezone.String }} - [<a href="/imagebbs/board/{{ $cd.SelectedBoardID }}/thread/{{ .ForumthreadID }}">{{ .Comments.Int32 }} COMMENTS</a>]</div>
+                </li>
+            {{- end }}
+            </ul>
+        </section>
     {{- else }}
         There isn't anything to see.
     {{- end }}

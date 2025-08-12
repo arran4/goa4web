@@ -68,6 +68,22 @@ func (q *Queries) AddContentPublicLabel(ctx context.Context, arg AddContentPubli
 	return err
 }
 
+const clearUnreadContentPrivateLabelExceptUser = `-- name: ClearUnreadContentPrivateLabelExceptUser :exec
+DELETE FROM content_private_labels
+WHERE item = ? AND item_id = ? AND label = 'unread' AND invert = true AND user_id <> ?
+`
+
+type ClearUnreadContentPrivateLabelExceptUserParams struct {
+	Item   string
+	ItemID int32
+	UserID int32
+}
+
+func (q *Queries) ClearUnreadContentPrivateLabelExceptUser(ctx context.Context, arg ClearUnreadContentPrivateLabelExceptUserParams) error {
+	_, err := q.db.ExecContext(ctx, clearUnreadContentPrivateLabelExceptUser, arg.Item, arg.ItemID, arg.UserID)
+	return err
+}
+
 const listContentLabelStatus = `-- name: ListContentLabelStatus :many
 SELECT item, item_id, label
 FROM content_label_status

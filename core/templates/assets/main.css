@@ -35,6 +35,14 @@ textarea {
         vertical-align: top;
 }
 
+.full-width {
+        width: 100%;
+}
+
+.content-width {
+        width: 90%;
+}
+
 .navbar {
         display: flex;
         justify-content: space-between;

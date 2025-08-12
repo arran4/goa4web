@@ -13,7 +13,7 @@
             <h2 class="blog-title"><a href="/blogs/bloggers">All bloggers</a>' blogs.</h2>
         {{ end }}
     {{ end }}
-    <table width="100%">
+    <table class="full-width">
         {{ range $rows }}
             <tr>
                 <th class="bg-muted">{{ localTimeIn .Written .Timezone.String }}</th>

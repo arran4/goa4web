@@ -2066,7 +2066,7 @@ func (cd *CoreData) CommentEditURL(cmt *db.GetCommentsByThreadIdForUserRow) stri
 		return fmt.Sprintf("?editComment=%d#edit", cmt.Idcomments)
 	case "writing":
 		return fmt.Sprintf("?editComment=%d#edit", cmt.Idcomments)
-	case "forum":
+	case "forum", "privateforum":
 		return fmt.Sprintf("?comment=%d#edit", cmt.Idcomments)
 	case "imagebbs":
 		return fmt.Sprintf("?comment=%d#edit", cmt.Idcomments)
@@ -2084,6 +2084,7 @@ func (cd *CoreData) CommentEditSaveURL(cmt *db.GetCommentsByThreadIdForUserRow) 
 	if !cd.CanEditComment(cmt) {
 		return ""
 	}
+	base := cd.ForumBasePath
 	switch cd.currentSection {
 	case "blogs":
 		return fmt.Sprintf("/blogs/blog/%d/comment/%d", cd.currentBlogID, cmt.Idcomments)
@@ -2091,8 +2092,16 @@ func (cd *CoreData) CommentEditSaveURL(cmt *db.GetCommentsByThreadIdForUserRow) 
 		return fmt.Sprintf("/news/news/%d/comment/%d", cd.currentNewsPostID, cmt.Idcomments)
 	case "writing":
 		return fmt.Sprintf("/writings/article/%d/comment/%d", cd.currentWritingID, cmt.Idcomments)
+	case "privateforum":
+		if base != "" {
+			return fmt.Sprintf("%s/topic/%d/thread/%d/comment/%d", base, cd.currentTopicID, cd.currentThreadID, cmt.Idcomments)
+		}
+		fallthrough
 	case "forum":
-		return fmt.Sprintf("/forum/thread/%d/comment/%d", cd.currentThreadID, cmt.Idcomments)
+		if base == "" {
+			base = "/forum"
+		}
+		return fmt.Sprintf("%s/topic/%d/thread/%d/comment/%d", base, cd.currentTopicID, cd.currentThreadID, cmt.Idcomments)
 	case "imagebbs":
 		return fmt.Sprintf("/imagebbs/board/%d/thread/%d/comment/%d", cd.currentBoardID, cd.currentThreadID, cmt.Idcomments)
 	case "linker":

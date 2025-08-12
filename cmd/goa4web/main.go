@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	adminhandlers "github.com/arran4/goa4web/handlers/admin"
 	authhandlers "github.com/arran4/goa4web/handlers/auth"
@@ -120,18 +119,12 @@ func (r *rootCmd) Close() {
 }
 
 func (r *rootCmd) Infof(format string, args ...any) {
-	fmt.Printf(format, args...)
-	if !strings.HasSuffix(format, "\n") {
-		fmt.Println()
-	}
+	log.Printf(format, args...)
 }
 
 func (r *rootCmd) Verbosef(format string, args ...any) {
 	if r.Verbosity > 0 {
-		fmt.Printf(format, args...)
-		if !strings.HasSuffix(format, "\n") {
-			fmt.Println()
-		}
+		log.Printf(format, args...)
 	}
 }
 

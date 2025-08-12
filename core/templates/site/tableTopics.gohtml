@@ -1,28 +1,31 @@
 {{ define "tableTopics" }}
     {{ $base := "/forum" }}
     {{ with .BasePath }}{{ $base = . }}{{ end }}
-    <table>
-        <tr>
-            <th width="400px">Topic name<br>Description
-            <th width="300px">Last reply<br>By
-            <th>Threads
-            <th>Replies
-        </tr>
+    <section class="topics">
+        <div class="topics-header">
+            <div class="topic-name">Topic name<br>Description</div>
+            <div class="last-reply">Last reply<br>By</div>
+            <div class="threads">Threads</div>
+            <div class="replies">Replies</div>
+        </div>
+        <ul class="topic-list">
         {{ range .Topics }}
-        <tr>
-            <td>
-                {{ $title := .Title.String }}
-                {{ if .DisplayTitle }}{{ $title = .DisplayTitle }}{{ end }}
-                <a href="{{$base}}/topic/{{ .Idforumtopic }}">{{ $title | a4code2html }}</a>{{ if and cd.IsAdmin cd.IsAdminMode }} [<a href="/admin/forum/topics/topic/{{ .Idforumtopic }}/edit">ADMIN</a>]{{ end }}<br>
-                {{ with .Description.String }}<em>{{ . | a4code2html }}</em>{{ end }}
-                {{- if .Labels }}<br>{{ template "topicLabels" .Labels }}{{ end }}
-            </td>
-            <td align="center">{{ localTime .Lastaddition.Time }}<br>{{ .Lastposterusername.String }}</td>
-            <td align="center">{{ .Threads.Int32 }}</td>
-            <td align="center">{{ .Comments.Int32 }}</td>
-        </tr>
+            <li class="topic-item">
+                <div class="topic-name">
+                    {{ $title := .Title.String }}
+                    {{ if .DisplayTitle }}{{ $title = .DisplayTitle }}{{ end }}
+                    <a href="{{$base}}/topic/{{ .Idforumtopic }}">{{ $title | a4code2html }}</a>{{ if and cd.IsAdmin cd.IsAdminMode }} [<a href="/admin/forum/topics/topic/{{ .Idforumtopic }}/edit">ADMIN</a>]{{ end }}<br>
+                    {{ with .Description.String }}<em>{{ . | a4code2html }}</em>{{ end }}
+                    {{- if .Labels }}<br>{{ template "topicLabels" .Labels }}{{ end }}
+                </div>
+                <div class="last-reply">{{ localTime .Lastaddition.Time }}<br>{{ .Lastposterusername.String }}</div>
+                <div class="threads">{{ .Threads.Int32 }}</div>
+                <div class="replies">{{ .Comments.Int32 }}</div>
+            </li>
         {{ else }}
-        <tr><td colspan="4">No topics</td></tr>
+            <li class="topic-item no-topics"><div class="topic-name">No topics</div></li>
         {{ end }}
-    </table>
+        </ul>
+    </section>
 {{ end }}
+

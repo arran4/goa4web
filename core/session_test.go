@@ -33,7 +33,7 @@ func TestSessionMiddlewareBadSession(t *testing.T) {
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 	h.ServeHTTP(rr, req)
-	if rr.Code != http.StatusFound {
+	if rr.Code != http.StatusSeeOther {
 		t.Fatalf("expected redirect got %d", rr.Code)
 	}
 	sc := rr.Header().Get("Set-Cookie")
@@ -53,7 +53,7 @@ func TestGetSessionOrFailBadSession(t *testing.T) {
 	if ok {
 		t.Fatalf("expected failure, got session %v", sess)
 	}
-	if rr.Code != http.StatusFound {
+	if rr.Code != http.StatusSeeOther {
 		t.Fatalf("expected redirect got %d", rr.Code)
 	}
 	sc := rr.Header().Get("Set-Cookie")

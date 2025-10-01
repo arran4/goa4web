@@ -73,7 +73,7 @@ func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 	if uid == 0 {
-		middleware.RedirectToLogin(w, r, session)
+		_ = middleware.RedirectToLogin(w, r, session)
 		return
 	}
 

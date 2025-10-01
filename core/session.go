@@ -55,7 +55,7 @@ func GetSessionOrFail(w http.ResponseWriter, r *http.Request) (*sessions.Session
 // an error occurs retrieving the session.
 func SessionErrorRedirect(w http.ResponseWriter, r *http.Request, err error) {
 	SessionError(w, r, err)
-	http.Redirect(w, r, "/login", http.StatusFound)
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
 // SessionError logs the error and clears the session cookie.

@@ -25,7 +25,7 @@ func userPage(w http.ResponseWriter, r *http.Request) {
 			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 			return
 		}
-		middleware.RedirectToLogin(w, r, session)
+		_ = middleware.RedirectToLogin(w, r, session)
 		return
 	}
 

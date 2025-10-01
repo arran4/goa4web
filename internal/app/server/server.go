@@ -199,7 +199,7 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 					delete(session.Values, "UID")
 					delete(session.Values, "LoginTime")
 					delete(session.Values, "ExpiryTime")
-					middleware.RedirectToLogin(w, r, session)
+					_ = middleware.RedirectToLogin(w, r, session)
 					return
 				}
 			}

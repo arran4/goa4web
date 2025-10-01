@@ -106,6 +106,59 @@ func TestLoginAction_InvalidPassword(t *testing.T) {
 	}
 }
 
+func TestLoginAction_InvalidPasswordPreservesBackData(t *testing.T) {
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
+
+	queries := db.New(conn)
+	rows := sqlmock.NewRows([]string{"idusers", "email", "passwd", "passwd_algorithm", "username"}).
+		AddRow(1, "e", "7c4f29407893c334a6cb7a87bf045c0d", "md5", "bob")
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers,")).WithArgs(sql.NullString{String: "bob", Valid: true}).WillReturnRows(rows)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, user_id, passwd")).WithArgs(int32(1), sqlmock.AnyArg()).WillReturnError(sql.ErrNoRows)
+	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO login_attempts (username, ip_address) VALUES (?, ?)")).WithArgs("bob", "1.2.3.4").WillReturnResult(sqlmock.NewResult(1, 1))
+
+	form := url.Values{
+		"username": {"bob"},
+		"password": {"wrong"},
+		"back":     {"/target"},
+		"method":   {http.MethodPost},
+		"data":     {"a=1&b=2"},
+	}
+	req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.RemoteAddr = "1.2.3.4:1111"
+	ctx := req.Context()
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handlers.TaskHandler(loginTask)(rr, req)
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status=%d", rr.Code)
+	}
+	body := rr.Body.String()
+	if !strings.Contains(body, "Invalid password") {
+		t.Fatalf("body=%q", body)
+	}
+	if !strings.Contains(body, "name=\"back\" value=\"/target\"") {
+		t.Fatalf("missing back field: %q", body)
+	}
+	if !strings.Contains(body, "name=\"method\" value=\"POST\"") {
+		t.Fatalf("missing method field: %q", body)
+	}
+	if !strings.Contains(body, "name=\"data\" value=\"a=1&amp;b=2\"") {
+		t.Fatalf("missing data field: %q", body)
+	}
+}
+
 func TestLoginPageHiddenFields(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/login?code=abc&back=%2Ffoo&method=POST&data=x", nil)
 	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))

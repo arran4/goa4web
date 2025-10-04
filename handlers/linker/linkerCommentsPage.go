@@ -118,7 +118,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
 			log.Printf("Error: getThreadByIdForUserByIdWithLastPosterUserNameAndPermissions: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+			http.Redirect(w, r, "?error="+err.Error(), http.StatusSeeOther)
 			return
 		}
 	}
@@ -126,6 +126,9 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	replyType := r.URL.Query().Get("type")
 	editCommentId, _ := strconv.Atoi(r.URL.Query().Get("comment"))
 	quoteId, _ := strconv.Atoi(r.URL.Query().Get("quote"))
+	if text := r.URL.Query().Get("text"); text != "" {
+		data.Text = text
+	}
 	data.Comments = commentRows
 	data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
 		return cmt.IsOwner

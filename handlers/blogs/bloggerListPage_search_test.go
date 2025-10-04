@@ -39,7 +39,7 @@ func TestBloggerListPageSearchRedirect(t *testing.T) {
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
 	}
-	if rr.Result().StatusCode != http.StatusFound {
+	if rr.Result().StatusCode != http.StatusSeeOther {
 		t.Fatalf("status=%d", rr.Result().StatusCode)
 	}
 	if loc := rr.Result().Header.Get("Location"); loc != "/blogs/blogger/arran4" {

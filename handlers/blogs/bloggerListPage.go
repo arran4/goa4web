@@ -53,7 +53,7 @@ func BloggerListPage(w http.ResponseWriter, r *http.Request) {
 
 	if data.Search != "" {
 		if len(rows) == 1 {
-			http.Redirect(w, r, "/blogs/blogger/"+rows[0].Username.String, http.StatusFound)
+			http.Redirect(w, r, "/blogs/blogger/"+rows[0].Username.String, http.StatusSeeOther)
 			return
 		}
 		if len(rows) == 0 {

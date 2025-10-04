@@ -37,7 +37,7 @@ func (NewBoardTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *s
 }
 
 func AdminNewBoardPage(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "/admin/imagebbs/boards", http.StatusTemporaryRedirect)
+	handlers.RedirectToGet(w, r, "/admin/imagebbs/boards")
 }
 
 func (NewBoardTask) Action(w http.ResponseWriter, r *http.Request) any {

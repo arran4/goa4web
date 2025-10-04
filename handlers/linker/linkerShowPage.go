@@ -79,12 +79,12 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 	linkId, err := strconv.Atoi(vars["link"])
 
 	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectToGet(w, r, "?error="+err.Error())
 		return
 	}
 	if linkId == 0 {
 		log.Printf("Error: no bid")
-		http.Redirect(w, r, "?error="+"No bid", http.StatusTemporaryRedirect)
+		handlers.RedirectToGet(w, r, "?error="+"No bid")
 		return
 	}
 
@@ -133,13 +133,13 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		})
 		if err != nil {
 			log.Printf("Error: createForumTopic: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+			handlers.RedirectToGet(w, r, "?error="+err.Error())
 			return
 		}
 		ptid = int32(ptidi)
 	} else if err != nil {
 		log.Printf("Error: findForumTopicByTitle: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectToGet(w, r, "?error="+err.Error())
 		return
 	} else {
 		ptid = pt.Idforumtopic
@@ -148,7 +148,7 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		pthidi, err := queries.SystemCreateThread(r.Context(), ptid)
 		if err != nil {
 			log.Printf("Error: makeThread: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+			handlers.RedirectToGet(w, r, "?error="+err.Error())
 			return
 		}
 		pthid = int32(pthidi)
@@ -157,7 +157,7 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 			ID:       int32(linkId),
 		}); err != nil {
 			log.Printf("Error: assignThreadIdToBlogEntry: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+			handlers.RedirectToGet(w, r, "?error="+err.Error())
 			return
 		}
 	}
@@ -171,13 +171,13 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 	cid, err := cd.CreateLinkerCommentForCommenter(uid, pthid, int32(linkId), int32(languageId), text)
 	if err != nil {
 		log.Printf("Error: createComment: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectToGet(w, r, "?error="+err.Error())
 		return
 	}
 	if cid == 0 {
 		err := handlers.ErrForbidden
 		log.Printf("Error: createComment: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectToGet(w, r, "?error="+err.Error())
 		return
 	}
 
@@ -199,5 +199,5 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
+	handlers.RedirectToGet(w, r, endUrl)
 }

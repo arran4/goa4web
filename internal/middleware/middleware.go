@@ -60,5 +60,5 @@ func RedirectToLogin(w http.ResponseWriter, r *http.Request, session *sessions.S
 			vals.Set("data", r.Form.Encode())
 		}
 	}
-	http.Redirect(w, r, "/login?"+vals.Encode(), http.StatusTemporaryRedirect)
+	handlers.RedirectToGet(w, r, "/login?"+vals.Encode())
 }

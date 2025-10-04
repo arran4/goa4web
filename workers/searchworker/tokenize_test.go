@@ -147,7 +147,7 @@ func TestSearchWordIdsFromTextError(t *testing.T) {
 	if !redirect {
 		t.Fatal("expected redirect")
 	}
-	if rr.Result().StatusCode != http.StatusTemporaryRedirect {
+	if rr.Result().StatusCode != http.StatusFound {
 		t.Fatalf("status %d", rr.Result().StatusCode)
 	}
 }

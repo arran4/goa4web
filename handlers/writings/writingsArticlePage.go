@@ -176,11 +176,11 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	cid, threadID, topicID, err := cd.CreateWritingReply(writing, int32(languageId), text)
 	if err != nil {
 		log.Printf("Error: createComment: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectToGet(w, r, "?error="+err.Error())
 		return
 	}
 	if cid == 0 {
-		http.Redirect(w, r, "?error="+"failed to create comment", http.StatusTemporaryRedirect)
+		handlers.RedirectToGet(w, r, "?error="+"failed to create comment")
 		return
 	}
 

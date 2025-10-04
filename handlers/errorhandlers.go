@@ -7,7 +7,7 @@ type errRedirectOnSamePageHandler struct {
 }
 
 func (e errRedirectOnSamePageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "?error="+e.Error(), http.StatusTemporaryRedirect)
+	RedirectToGet(w, r, "?error="+e.Error())
 }
 
 var _ http.Handler = (*errRedirectOnSamePageHandler)(nil)

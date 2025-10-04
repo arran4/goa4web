@@ -52,7 +52,7 @@ func AdminForumPage(w http.ResponseWriter, r *http.Request) {
 	categoryRows, err := cd.ForumCategories()
 	if err != nil {
 		log.Printf("getAllForumCategories Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectToGet(w, r, "?error="+err.Error())
 		return
 	}
 
@@ -66,7 +66,7 @@ func AdminForumPage(w http.ResponseWriter, r *http.Request) {
 	rows, err := cd.ForumTopics(0)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("ForumTopics Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectToGet(w, r, "?error="+err.Error())
 		return
 	}
 	var topicRows []*ForumtopicPlus

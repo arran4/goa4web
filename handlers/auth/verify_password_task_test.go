@@ -79,7 +79,7 @@ func TestVerifyPasswordAction_InvalidPassword(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handlers.TaskHandler(verifyPasswordTask)(rr, req)
 
-	if rr.Code != http.StatusTemporaryRedirect {
+	if rr.Code != http.StatusSeeOther {
 		t.Fatalf("status=%d", rr.Code)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {

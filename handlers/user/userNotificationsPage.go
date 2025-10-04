@@ -94,7 +94,7 @@ func userNotificationEmailActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 	if err := r.ParseForm(); err != nil {
-		http.Redirect(w, r, "/usr/notifications", http.StatusSeeOther)
+		handlers.RedirectToGet(w, r, "/usr/notifications")
 		return
 	}
 	idStr := r.FormValue("email_id")
@@ -113,5 +113,5 @@ func userNotificationEmailActionPage(w http.ResponseWriter, r *http.Request) {
 			log.Printf("set notification priority: %v", err)
 		}
 	}
-	http.Redirect(w, r, "/usr/notifications", http.StatusSeeOther)
+	handlers.RedirectToGet(w, r, "/usr/notifications")
 }

@@ -15,7 +15,7 @@ func InsertWords(w http.ResponseWriter, r *http.Request, words []WordCount, inse
 	for _, wc := range words {
 		if err := insertFn(r.Context(), wc.ID, wc.Count); err != nil {
 			log.Printf("Error inserting search word: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+			redirectToGet(w, r, "?error="+err.Error())
 			return true
 		}
 	}

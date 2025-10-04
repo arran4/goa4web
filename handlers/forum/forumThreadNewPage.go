@@ -217,5 +217,5 @@ func ThreadNewCancelPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	endUrl := fmt.Sprintf("%s/topic/%d", base, topicId)
-	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
+	handlers.RedirectToGet(w, r, endUrl)
 }

@@ -126,7 +126,7 @@ func (AddEmailTask) Notify(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, _ := session.Values["UID"].(int32)
 	if err := r.ParseForm(); err != nil {
-		http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
+		handlers.RedirectToGet(w, r, "/usr/email")
 		return
 	}
 	id, _ := strconv.Atoi(r.FormValue("id"))
@@ -134,7 +134,7 @@ func (AddEmailTask) Notify(w http.ResponseWriter, r *http.Request) {
 	if err := cd.AddEmail(uid, int32(id)); err != nil {
 		log.Printf("set notification priority: %v", err)
 	}
-	http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
+	handlers.RedirectToGet(w, r, "/usr/email")
 }
 
 func (AddEmailTask) DirectEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {

@@ -33,7 +33,7 @@ func TestRegisterActionPageValidation(t *testing.T) {
 		handlers.TaskHandler(registerTask)(rr, req)
 		want := http.StatusOK
 		if c.name == "invalid email" {
-			want = http.StatusTemporaryRedirect
+			want = http.StatusSeeOther
 		}
 		if rr.Result().StatusCode != want {
 			t.Errorf("%s: status=%d", c.name, rr.Result().StatusCode)

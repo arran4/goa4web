@@ -21,7 +21,7 @@ func TaskHandler(t tasks.Task) func(http.ResponseWriter, *http.Request) {
 		result := t.Action(w, r)
 		switch result := result.(type) {
 		case RedirectHandler:
-			http.Redirect(w, r, string(result), http.StatusTemporaryRedirect)
+			RedirectToGet(w, r, string(result))
 		case RefreshDirectHandler:
 			cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 			cd.AutoRefresh = result.Content()
@@ -73,5 +73,5 @@ func loginRedirect(w http.ResponseWriter, r *http.Request) {
 			vals.Set("data", r.Form.Encode())
 		}
 	}
-	http.Redirect(w, r, "/login?"+vals.Encode(), http.StatusTemporaryRedirect)
+	RedirectToGet(w, r, "/login?"+vals.Encode())
 }

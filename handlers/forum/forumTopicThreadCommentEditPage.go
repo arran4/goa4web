@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/workers/postcountworker"
 	"github.com/gorilla/mux"
 )
@@ -14,7 +15,7 @@ import (
 func TopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectToGet(w, r, "?error="+err.Error())
 		return
 	}
 	text := r.PostFormValue("replytext")
@@ -24,19 +25,19 @@ func TopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	cd.PageTitle = "Forum - Edit Comment"
 	threadRow, err := cd.SelectedThread()
 	if err != nil || threadRow == nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectToGet(w, r, "?error="+err.Error())
 		return
 	}
 	topicRow, err := cd.CurrentTopic()
 	if err != nil || topicRow == nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectToGet(w, r, "?error="+err.Error())
 		return
 	}
 	commentId, _ := strconv.Atoi(mux.Vars(r)["comment"])
 
 	err = cd.UpdateForumComment(int32(commentId), int32(languageId), text)
 	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectToGet(w, r, "?error="+err.Error())
 		return
 	}
 
@@ -50,7 +51,7 @@ func TopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/forum/topic/%d/thread/%d#comment-%d", topicRow.Idforumtopic, threadRow.Idforumthread, commentId), http.StatusTemporaryRedirect)
+	handlers.RedirectToGet(w, r, fmt.Sprintf("/forum/topic/%d/thread/%d#comment-%d", topicRow.Idforumtopic, threadRow.Idforumthread, commentId))
 }
 
 func TopicThreadCommentEditActionCancelPage(w http.ResponseWriter, r *http.Request) {
@@ -59,16 +60,16 @@ func TopicThreadCommentEditActionCancelPage(w http.ResponseWriter, r *http.Reque
 	cd.PageTitle = "Forum - Edit Comment"
 	threadRow, err := cd.SelectedThread()
 	if err != nil || threadRow == nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectToGet(w, r, "?error="+err.Error())
 		return
 	}
 	topicRow, err := cd.CurrentTopic()
 	if err != nil || topicRow == nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectToGet(w, r, "?error="+err.Error())
 		return
 	}
 
 	endUrl := fmt.Sprintf("/forum/topic/%d/thread/%d#bottom", topicRow.Idforumtopic, threadRow.Idforumthread)
 
-	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
+	handlers.RedirectToGet(w, r, endUrl)
 }

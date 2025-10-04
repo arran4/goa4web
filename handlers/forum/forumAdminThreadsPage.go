@@ -24,26 +24,26 @@ func AdminThreadsPage(w http.ResponseWriter, r *http.Request) {
 func AdminThreadDeletePage(w http.ResponseWriter, r *http.Request) {
 	threadID, err := strconv.Atoi(mux.Vars(r)["thread"])
 	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectToGet(w, r, "?error="+err.Error())
 		return
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	topicID, err := cd.Queries().GetForumTopicIdByThreadId(r.Context(), int32(threadID))
 	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectToGet(w, r, "?error="+err.Error())
 		return
 	}
 	if err := ThreadDelete(r.Context(), cd.Queries(), int32(threadID), topicID); err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectToGet(w, r, "?error="+err.Error())
 		return
 	}
-	http.Redirect(w, r, "/admin/forum/threads", http.StatusTemporaryRedirect)
+	handlers.RedirectToGet(w, r, "/admin/forum/threads")
 }
 
 func AdminThreadDeleteConfirmPage(w http.ResponseWriter, r *http.Request) {
 	threadID, err := strconv.Atoi(mux.Vars(r)["thread"])
 	if err != nil {
-		http.Redirect(w, r, "/admin/forum/threads?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectToGet(w, r, "/admin/forum/threads?error="+err.Error())
 		return
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -63,7 +63,7 @@ func AdminThreadDeleteConfirmPage(w http.ResponseWriter, r *http.Request) {
 func AdminThreadPage(w http.ResponseWriter, r *http.Request) {
 	threadID, err := strconv.Atoi(mux.Vars(r)["thread"])
 	if err != nil {
-		http.Redirect(w, r, "/admin/forum/threads?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectToGet(w, r, "/admin/forum/threads?error="+err.Error())
 		return
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -80,7 +80,7 @@ func AdminThreadPage(w http.ResponseWriter, r *http.Request) {
 		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
-		http.Redirect(w, r, "/admin/forum/threads?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectToGet(w, r, "/admin/forum/threads?error="+err.Error())
 		return
 	}
 

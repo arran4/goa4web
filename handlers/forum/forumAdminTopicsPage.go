@@ -61,13 +61,13 @@ func AdminTopicEditPage(w http.ResponseWriter, r *http.Request) {
 	desc := r.PostFormValue("desc")
 	cid, err := strconv.Atoi(r.PostFormValue("cid"))
 	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectToGet(w, r, "?error="+err.Error())
 		return
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	tid, err := strconv.Atoi(mux.Vars(r)["topic"])
 	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectToGet(w, r, "?error="+err.Error())
 		return
 	}
 	_ = name
@@ -77,7 +77,7 @@ func AdminTopicEditPage(w http.ResponseWriter, r *http.Request) {
 	_ = tid
 	languageID, _ := strconv.Atoi(r.PostFormValue("language"))
 	_ = languageID // TODO: implement topic update
-	http.Redirect(w, r, "/admin/forum/topics", http.StatusTemporaryRedirect)
+	handlers.RedirectToGet(w, r, "/admin/forum/topics")
 }
 
 func AdminTopicCreatePage(w http.ResponseWriter, r *http.Request) {
@@ -85,7 +85,7 @@ func AdminTopicCreatePage(w http.ResponseWriter, r *http.Request) {
 	desc := r.PostFormValue("desc")
 	pcid, err := strconv.Atoi(r.PostFormValue("pcid"))
 	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectToGet(w, r, "?error="+err.Error())
 		return
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -120,7 +120,7 @@ func AdminTopicCreatePage(w http.ResponseWriter, r *http.Request) {
 		GranteeID:       sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectToGet(w, r, "?error="+err.Error())
 		return
 	}
 	if topicID == 0 {
@@ -128,19 +128,19 @@ func AdminTopicCreatePage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("forbidden"))
 		return
 	}
-	http.Redirect(w, r, "/admin/forum/topics", http.StatusTemporaryRedirect)
+	handlers.RedirectToGet(w, r, "/admin/forum/topics")
 }
 
 func AdminTopicDeletePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	tid, err := strconv.Atoi(mux.Vars(r)["topic"])
 	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectToGet(w, r, "?error="+err.Error())
 		return
 	}
 	if err := cd.Queries().AdminDeleteForumTopic(r.Context(), int32(tid)); err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectToGet(w, r, "?error="+err.Error())
 		return
 	}
-	http.Redirect(w, r, "/admin/forum/topics", http.StatusTemporaryRedirect)
+	handlers.RedirectToGet(w, r, "/admin/forum/topics")
 }

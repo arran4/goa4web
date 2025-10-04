@@ -180,12 +180,12 @@ func TopicThreadReplyCancelPage(w http.ResponseWriter, r *http.Request) {
 	cd.PageTitle = "Forum - Reply"
 	threadRow, err := cd.SelectedThread()
 	if err != nil || threadRow == nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectToGet(w, r, "?error="+err.Error())
 		return
 	}
 	topicRow, err := cd.CurrentTopic()
 	if err != nil || topicRow == nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectToGet(w, r, "?error="+err.Error())
 		return
 	}
 	base := cd.ForumBasePath
@@ -193,5 +193,5 @@ func TopicThreadReplyCancelPage(w http.ResponseWriter, r *http.Request) {
 		base = "/forum"
 	}
 	endUrl := fmt.Sprintf("%s/topic/%d/thread/%d#bottom", base, topicRow.Idforumtopic, threadRow.Idforumthread)
-	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
+	handlers.RedirectToGet(w, r, endUrl)
 }

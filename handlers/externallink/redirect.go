@@ -36,7 +36,7 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 	raw := link.Url
 	if r.URL.Query().Get("go") != "" {
 		cd.RegisterExternalLinkClick(raw)
-		http.Redirect(w, r, raw, http.StatusTemporaryRedirect)
+		handlers.RedirectToGet(w, r, raw)
 		return
 	}
 

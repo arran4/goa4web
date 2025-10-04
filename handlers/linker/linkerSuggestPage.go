@@ -42,7 +42,7 @@ func SuggestPage(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
 			log.Printf("getAllForumCategories Error: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+			http.Redirect(w, r, "?error="+err.Error(), http.StatusSeeOther)
 			return
 		}
 	}

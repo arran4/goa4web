@@ -12,5 +12,5 @@ import (
 func CommentEditActionCancelPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	linkId, _ := strconv.Atoi(vars["link"])
-	http.Redirect(w, r, fmt.Sprintf("/linker/comments/%d", linkId), http.StatusTemporaryRedirect)
+	http.Redirect(w, r, fmt.Sprintf("/linker/comments/%d", linkId), http.StatusSeeOther)
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/arran4/goa4web/core/consts"
@@ -75,16 +76,23 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	text := r.PostFormValue("replytext")
+	languageValue := r.PostFormValue("language")
+	languageId, err := strconv.Atoi(languageValue)
+	if err != nil {
+		languageId = 0
+	}
+
 	vars := mux.Vars(r)
 	linkId, err := strconv.Atoi(vars["link"])
 
 	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		redirectReplyError(w, r, err.Error(), text, languageId)
 		return
 	}
 	if linkId == 0 {
 		log.Printf("Error: no bid")
-		http.Redirect(w, r, "?error="+"No bid", http.StatusTemporaryRedirect)
+		redirectReplyError(w, r, "No bid", text, languageId)
 		return
 	}
 
@@ -133,13 +141,13 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		})
 		if err != nil {
 			log.Printf("Error: createForumTopic: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+			redirectReplyError(w, r, err.Error(), text, languageId)
 			return
 		}
 		ptid = int32(ptidi)
 	} else if err != nil {
 		log.Printf("Error: findForumTopicByTitle: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		redirectReplyError(w, r, err.Error(), text, languageId)
 		return
 	} else {
 		ptid = pt.Idforumtopic
@@ -148,7 +156,7 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		pthidi, err := queries.SystemCreateThread(r.Context(), ptid)
 		if err != nil {
 			log.Printf("Error: makeThread: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+			redirectReplyError(w, r, err.Error(), text, languageId)
 			return
 		}
 		pthid = int32(pthidi)
@@ -157,13 +165,11 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 			ID:       int32(linkId),
 		}); err != nil {
 			log.Printf("Error: assignThreadIdToBlogEntry: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+			redirectReplyError(w, r, err.Error(), text, languageId)
 			return
 		}
 	}
 
-	text := r.PostFormValue("replytext")
-	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
 	uid, _ := session.Values["UID"].(int32)
 
 	endUrl := fmt.Sprintf("/linker/show/%d", linkId)
@@ -171,13 +177,13 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 	cid, err := cd.CreateLinkerCommentForCommenter(uid, pthid, int32(linkId), int32(languageId), text)
 	if err != nil {
 		log.Printf("Error: createComment: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		redirectReplyError(w, r, err.Error(), text, languageId)
 		return
 	}
 	if cid == 0 {
 		err := handlers.ErrForbidden
 		log.Printf("Error: createComment: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		redirectReplyError(w, r, err.Error(), text, languageId)
 		return
 	}
 
@@ -199,5 +205,33 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	http.Redirect(w, r, endUrl, http.StatusTemporaryRedirect)
+	http.Redirect(w, r, endUrl, http.StatusSeeOther)
+}
+
+func redirectReplyError(w http.ResponseWriter, r *http.Request, msg, text string, languageID int) {
+	vals := url.Values{}
+	for key, values := range r.URL.Query() {
+		copied := make([]string, len(values))
+		copy(copied, values)
+		vals[key] = copied
+	}
+	if msg != "" {
+		vals.Set("error", msg)
+	}
+	if text != "" {
+		vals.Set("text", text)
+	} else {
+		vals.Del("text")
+	}
+	if languageID != 0 {
+		vals.Set("language", strconv.Itoa(languageID))
+	} else {
+		vals.Del("language")
+	}
+
+	target := r.URL.Path
+	if encoded := vals.Encode(); encoded != "" {
+		target = target + "?" + encoded
+	}
+	http.Redirect(w, r, target, http.StatusSeeOther)
 }

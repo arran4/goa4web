@@ -56,7 +56,7 @@ func AdminCategoryEditSubmit(w http.ResponseWriter, r *http.Request) {
 	_ = desc
 	pcid, err := strconv.Atoi(r.PostFormValue("pcid"))
 	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectSeeOtherWithError(w, r, "", err)
 		return
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -67,7 +67,7 @@ func AdminCategoryEditSubmit(w http.ResponseWriter, r *http.Request) {
 
 	cats, err := cd.ForumCategories()
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectSeeOtherWithError(w, r, "", err)
 		return
 	}
 	parents := make(map[int32]int32, len(cats))
@@ -75,7 +75,7 @@ func AdminCategoryEditSubmit(w http.ResponseWriter, r *http.Request) {
 		parents[c.Idforumcategory] = c.ForumcategoryIdforumcategory
 	}
 	if path, loop := algorithms.WouldCreateLoop(parents, int32(categoryId), int32(pcid)); loop {
-		http.Redirect(w, r, "?error="+fmt.Sprintf("loop %v", path), http.StatusTemporaryRedirect)
+		handlers.RedirectSeeOtherWithMessage(w, r, "", fmt.Sprintf("loop %v", path))
 		return
 	}
 
@@ -86,7 +86,7 @@ func AdminCategoryEditSubmit(w http.ResponseWriter, r *http.Request) {
 	if strings.HasSuffix(r.URL.Path, "/edit") {
 		redirectURL = fmt.Sprintf("/admin/forum/categories/category/%d", categoryId)
 	}
-	http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
+	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
 }
 
 // AdminCategoryDeletePage removes a forum category.
@@ -94,12 +94,12 @@ func AdminCategoryDeletePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cid, err := strconv.Atoi(mux.Vars(r)["category"])
 	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectSeeOtherWithError(w, r, "", err)
 		return
 	}
 	if err := cd.Queries().AdminDeleteForumCategory(r.Context(), int32(cid)); err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectSeeOtherWithError(w, r, "", err)
 		return
 	}
-	http.Redirect(w, r, "/admin/forum/categories", http.StatusTemporaryRedirect)
+	http.Redirect(w, r, "/admin/forum/categories", http.StatusSeeOther)
 }

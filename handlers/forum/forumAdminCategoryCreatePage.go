@@ -38,7 +38,7 @@ func AdminCategoryCreateSubmit(w http.ResponseWriter, r *http.Request) {
 	_ = desc
 	pcid, err := strconv.Atoi(r.PostFormValue("pcid"))
 	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectSeeOtherWithError(w, r, "", err)
 		return
 	}
 
@@ -46,7 +46,7 @@ func AdminCategoryCreateSubmit(w http.ResponseWriter, r *http.Request) {
 	queries := cd.Queries()
 	cats, err := queries.GetAllForumCategories(r.Context(), db.GetAllForumCategoriesParams{ViewerID: cd.UserID})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectSeeOtherWithError(w, r, "", err)
 		return
 	}
 	parents := make(map[int32]int32, len(cats))
@@ -54,11 +54,11 @@ func AdminCategoryCreateSubmit(w http.ResponseWriter, r *http.Request) {
 		parents[c.Idforumcategory] = c.ForumcategoryIdforumcategory
 	}
 	if path, loop := algorithms.WouldCreateLoop(parents, 0, int32(pcid)); loop {
-		http.Redirect(w, r, "?error="+fmt.Sprintf("loop %v", path), http.StatusTemporaryRedirect)
+		handlers.RedirectSeeOtherWithMessage(w, r, "", fmt.Sprintf("loop %v", path))
 		return
 	}
 
 	languageID, _ := strconv.Atoi(r.PostFormValue("language"))
 	_ = languageID // TODO: implement category creation
-	http.Redirect(w, r, "/admin/forum/categories", http.StatusTemporaryRedirect)
+	http.Redirect(w, r, "/admin/forum/categories", http.StatusSeeOther)
 }

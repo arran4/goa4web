@@ -131,7 +131,7 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	threadRows, err := cd.ForumThreads(int32(topicId))
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("Error: ForumThreads: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectSeeOtherWithError(w, r, "", err)
 		return
 	}
 	threads := make([]*threadWithLabels, len(threadRows))

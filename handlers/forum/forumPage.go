@@ -51,14 +51,14 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	categoryRows, err := cd.ForumCategories()
 	if err != nil {
 		log.Printf("getAllForumCategories Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectSeeOtherWithError(w, r, "", err)
 		return
 	}
 	var topicRows []*ForumtopicPlus
 	rows, err := cd.ForumTopics(int32(categoryId))
 	if err != nil {
 		log.Printf("ForumTopics Error: %s", err)
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectSeeOtherWithError(w, r, "", err)
 		return
 	}
 	for _, row := range rows {

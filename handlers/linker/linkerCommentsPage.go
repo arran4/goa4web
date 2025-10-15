@@ -118,7 +118,8 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
 			log.Printf("Error: getThreadByIdForUserByIdWithLastPosterUserNameAndPermissions: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusSeeOther)
+			//http.Redirect(w, r, "?error="+err.Error(), http.StatusSeeOther)
+			handlers.RedirectSeeOtherWithError(w, r, "", err)
 			return
 		}
 	}

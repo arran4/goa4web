@@ -8,6 +8,7 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/workers/postcountworker"
 )
 
@@ -15,7 +16,7 @@ import (
 func ArticleCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	languageId, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectSeeOtherWithMessage(w, r, "", err.Error())
 		return
 	}
 	text := r.PostFormValue("replytext")
@@ -23,12 +24,12 @@ func ArticleCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	writing, err := cd.Article()
 	if err != nil || writing == nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectSeeOtherWithMessage(w, r, "", err.Error())
 		return
 	}
 	comment, err := cd.ArticleComment(r)
 	if err != nil || comment == nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectSeeOtherWithMessage(w, r, "", err.Error())
 		return
 	}
 
@@ -38,7 +39,7 @@ func ArticleCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 
 	thread, err := cd.UpdateWritingReply(comment.Idcomments, int32(languageId), text)
 	if err != nil {
-		http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectSeeOtherWithMessage(w, r, "", err.Error())
 		return
 	}
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
@@ -50,7 +51,7 @@ func ArticleCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/writings/article/%d", writing.Idwriting), http.StatusTemporaryRedirect)
+	http.Redirect(w, r, fmt.Sprintf("/writings/article/%d", writing.Idwriting), http.StatusSeeOther)
 }
 
 // ArticleCommentEditActionCancelPage aborts editing a comment.
@@ -58,8 +59,8 @@ func ArticleCommentEditActionCancelPage(w http.ResponseWriter, r *http.Request) 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	writing, err := cd.Article()
 	if err != nil || writing == nil {
-		http.Redirect(w, r, "/writings", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, "/writings", http.StatusSeeOther)
 		return
 	}
-	http.Redirect(w, r, fmt.Sprintf("/writings/article/%d", writing.Idwriting), http.StatusTemporaryRedirect)
+	http.Redirect(w, r, fmt.Sprintf("/writings/article/%d", writing.Idwriting), http.StatusSeeOther)
 }

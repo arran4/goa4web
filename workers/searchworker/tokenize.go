@@ -57,7 +57,7 @@ func SearchWordIdsFromText(w http.ResponseWriter, r *http.Request, text string, 
 		id, err := queries.SystemCreateSearchWord(r.Context(), strings.ToLower(word))
 		if err != nil {
 			log.Printf("Error: createSearchWord: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+			redirectSeeOtherWithError(w, r, err)
 			return nil, true
 		}
 		results = append(results, WordCount{ID: id, Count: c})

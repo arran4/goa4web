@@ -89,7 +89,7 @@ func AdminNewsPostPage(w http.ResponseWriter, r *http.Request) {
 	queries := cd.Queries()
 	pid, err := strconv.Atoi(mux.Vars(r)["news"])
 	if err != nil {
-		http.Redirect(w, r, "/admin/news", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, "/admin/news", http.StatusSeeOther)
 		return
 	}
 	post, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCount(r.Context(), db.GetNewsPostByIdWithWriterIdAndThreadCommentCountParams{
@@ -98,7 +98,7 @@ func AdminNewsPostPage(w http.ResponseWriter, r *http.Request) {
 		UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 	})
 	if err != nil {
-		http.Redirect(w, r, "/admin/news?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectSeeOtherWithError(w, r, "/admin/news", err)
 		return
 	}
 	topicID, err := queries.GetForumTopicIdByThreadId(r.Context(), post.ForumthreadID)
@@ -152,7 +152,7 @@ func adminNewsEditFormPage(w http.ResponseWriter, r *http.Request) {
 	queries := cd.Queries()
 	pid, err := strconv.Atoi(mux.Vars(r)["news"])
 	if err != nil {
-		http.Redirect(w, r, "/admin/news", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, "/admin/news", http.StatusSeeOther)
 		return
 	}
 	post, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCount(r.Context(), db.GetNewsPostByIdWithWriterIdAndThreadCommentCountParams{
@@ -161,7 +161,7 @@ func adminNewsEditFormPage(w http.ResponseWriter, r *http.Request) {
 		UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 	})
 	if err != nil {
-		http.Redirect(w, r, "/admin/news?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectSeeOtherWithError(w, r, "/admin/news", err)
 		return
 	}
 	langs, err := cd.Languages()
@@ -191,7 +191,7 @@ func AdminNewsDeleteConfirmPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	pid, err := strconv.Atoi(mux.Vars(r)["news"])
 	if err != nil {
-		http.Redirect(w, r, "/admin/news", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, "/admin/news", http.StatusSeeOther)
 		return
 	}
 	cd.PageTitle = "Confirm news delete"

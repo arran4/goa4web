@@ -82,7 +82,7 @@ func newsEditFormPage(w http.ResponseWriter, r *http.Request) {
 	queries := cd.Queries()
 	pid, err := strconv.Atoi(mux.Vars(r)["news"])
 	if err != nil {
-		http.Redirect(w, r, "/news", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, "/news", http.StatusSeeOther)
 		return
 	}
 	post, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCount(r.Context(), db.GetNewsPostByIdWithWriterIdAndThreadCommentCountParams{
@@ -91,7 +91,7 @@ func newsEditFormPage(w http.ResponseWriter, r *http.Request) {
 		UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 	})
 	if err != nil {
-		http.Redirect(w, r, "/news?error="+err.Error(), http.StatusTemporaryRedirect)
+		handlers.RedirectSeeOtherWithError(w, r, "/news", err)
 		return
 	}
 	if !cd.HasGrant("news", "post", "edit", post.Idsitenews) {

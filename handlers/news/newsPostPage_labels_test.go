@@ -133,9 +133,9 @@ func TestNewsPostPagePrivateLabelsOnce(t *testing.T) {
 
 	out := buf.String()
 
-  if strings.Count(out, "class=\"label-bar\"") != 2 {
+	if strings.Count(out, "class=\"label-bar\"") != 2 {
 		t.Fatalf("expected 2 label bars, got %d: %q", strings.Count(out, "class=\"label-bar\""), out)
-  }
+	}
 	if strings.Contains(out, "label-list") {
 		t.Fatalf("expected no label list for private labels: %q", out)
 	}

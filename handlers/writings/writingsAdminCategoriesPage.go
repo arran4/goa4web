@@ -32,7 +32,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
 			log.Printf("writingCategories Error: %s", err)
-			http.Redirect(w, r, "?error="+err.Error(), http.StatusTemporaryRedirect)
+			handlers.RedirectSeeOtherWithError(w, r, "", err)
 			return
 		}
 	}

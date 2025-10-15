@@ -43,7 +43,7 @@ func TestForgotPasswordRateLimit(t *testing.T) {
 
 	handlers.TaskHandler(forgotPasswordTask)(rr, req)
 
-	if rr.Code != http.StatusTemporaryRedirect {
+	if rr.Code != http.StatusSeeOther {
 		t.Fatalf("status=%d", rr.Code)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {

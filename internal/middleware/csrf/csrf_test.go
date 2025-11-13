@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gorilla/csrf"
+	"filippo.io/csrf/gorilla"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 
@@ -69,7 +69,7 @@ func TestCSRFLoginFlow(t *testing.T) {
 	}
 }
 
-func TestCSRFMismatchedReferer(t *testing.T) {
+func TestCSRFCrossSite(t *testing.T) {
 	store = sessions.NewCookieStore([]byte("testsecret"))
 	core.Store = store
 	core.SessionName = sessionName
@@ -83,7 +83,7 @@ func TestCSRFMismatchedReferer(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}).Methods("POST")
 
-	handler := csrf.Protect(key[:], csrf.Secure(true), csrf.TrustedOrigins([]string{"example.com"}))(r)
+	handler := csrf.Protect(key[:], csrf.Secure(true), csrf.TrustedOrigins([]string{"https://example.com"}))(r)
 
 	req := httptest.NewRequest("GET", "https://example.com/login", nil)
 	rr := httptest.NewRecorder()
@@ -95,7 +95,8 @@ func TestCSRFMismatchedReferer(t *testing.T) {
 	req2 := httptest.NewRequest("POST", "https://example.com/login", strings.NewReader(data.Encode()))
 	req2.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req2.Header.Set("Cookie", cookie)
-	req2.Header.Set("Referer", "https://bad.com/login")
+	req2.Header.Set("Origin", "https://bad.com")
+	req2.Header.Set("Sec-Fetch-Site", "cross-site")
 	rr2 := httptest.NewRecorder()
 	handler.ServeHTTP(rr2, req2)
 	if rr2.Code != http.StatusForbidden {
@@ -105,7 +106,8 @@ func TestCSRFMismatchedReferer(t *testing.T) {
 	req3 := httptest.NewRequest("POST", "https://example.com/login", strings.NewReader(data.Encode()))
 	req3.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req3.Header.Set("Cookie", cookie)
-	req3.Header.Set("Referer", "https://example.com/login")
+	req3.Header.Set("Origin", "https://example.com")
+	req3.Header.Set("Sec-Fetch-Site", "same-origin")
 	rr3 := httptest.NewRecorder()
 	handler.ServeHTTP(rr3, req3)
 	if rr3.Code != http.StatusOK {

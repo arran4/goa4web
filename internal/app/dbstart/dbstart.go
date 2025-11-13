@@ -137,7 +137,7 @@ func EnsureSchema(ctx context.Context, db *sql.DB) error {
 	}
 	if version != handlers.ExpectedSchemaVersion {
 		msg := RenderSchemaMismatch(version, handlers.ExpectedSchemaVersion)
-		return fmt.Errorf(msg)
+		return fmt.Errorf("%s", msg)
 	}
 	return nil
 }

@@ -1,5 +1,4 @@
 //go:build ses
-// +build ses
 
 package emaildefaults_test
 

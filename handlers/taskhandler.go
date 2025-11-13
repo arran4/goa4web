@@ -59,7 +59,7 @@ func TaskHandler(t tasks.Task) func(http.ResponseWriter, *http.Request) {
 			RenderErrorPage(w, r, result)
 			return
 		default:
-			RenderErrorPage(w, r, fmt.Errorf(http.StatusText(http.StatusInternalServerError)))
+			RenderErrorPage(w, r, fmt.Errorf("%s", http.StatusText(http.StatusInternalServerError)))
 		}
 	}
 }

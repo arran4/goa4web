@@ -5,12 +5,12 @@ go 1.24.0
 toolchain go1.24.9
 
 require (
+	filippo.io/csrf v0.2.1
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/arran4/gorillamuxlogic v1.1.0
 	github.com/aws/aws-sdk-go v1.55.8
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/google/go-cmp v0.7.0
-	github.com/gorilla/csrf v1.7.3
 	github.com/gorilla/feeds v1.2.0
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/sessions v1.4.0
@@ -29,6 +29,8 @@ require (
 	golang.org/x/image v0.33.0
 	golang.org/x/sys v0.38.0
 )
+
+replace github.com/gorilla/csrf => filippo.io/csrf/gorilla v0.2.1
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect

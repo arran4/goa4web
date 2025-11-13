@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/gorilla/csrf"
+	"filippo.io/csrf/gorilla"
 )
 
 // NewCSRFMiddleware returns middleware enforcing CSRF protection using the

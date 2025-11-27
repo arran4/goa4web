@@ -9,8 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/sys/unix"
-
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -51,20 +49,7 @@ func (h *Handlers) AdminServerStatsPage(w http.ResponseWriter, r *http.Request) 
 	var mem runtime.MemStats
 	runtime.ReadMemStats(&mem)
 
-	var diskFree uint64
-	if varStat := new(unix.Statfs_t); unix.Statfs("/", varStat) == nil {
-		diskFree = varStat.Bavail * uint64(varStat.Bsize)
-	}
-
-	var sysInfo unix.Sysinfo_t
-	var ramFree uint64
-	if unix.Sysinfo(&sysInfo) == nil {
-		unit := uint64(sysInfo.Unit)
-		if unit == 0 {
-			unit = 1
-		}
-		ramFree = sysInfo.Freeram * unit
-	}
+	diskFree, ramFree := getSystemStats()
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Server Stats"

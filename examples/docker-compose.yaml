@@ -4,7 +4,7 @@ services:
     image: mysql:8
     restart: always
     environment:
-      MYSQL_DATABASE: a4web
+      MYSQL_DATABASE: goa4web
       MYSQL_ROOT_PASSWORD: changeme
     volumes:
       - db-data:/var/lib/mysql
@@ -16,7 +16,7 @@ services:
     environment:
       GOA4WEB_DOCKER: "1"
       DB_DRIVER: mysql
-      DB_CONN: root:changeme@tcp(db:3306)/a4web?parseTime=true
+      DB_CONN: root:changeme@tcp(db:3306)/goa4web?parseTime=true
       AUTO_MIGRATE: "true"
       IMAGE_UPLOAD_DIR: /data/imagebbs
     volumes:

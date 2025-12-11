@@ -116,6 +116,8 @@ type RuntimeConfig struct {
 
 	// TemplatesDir specifies a directory to load templates and assets from.
 	TemplatesDir string
+	// MigrationsDir specifies a directory to load migrations from at runtime.
+	MigrationsDir string
 
 	// CreateDirs creates missing directories when enabled.
 	CreateDirs bool

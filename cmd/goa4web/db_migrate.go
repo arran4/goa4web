@@ -8,6 +8,8 @@ import (
 	"flag"
 	"fmt"
 	"github.com/arran4/goa4web/internal/app/dbstart"
+	"github.com/arran4/goa4web/migrations"
+	"io/fs"
 	"os"
 
 	"github.com/arran4/goa4web/config"
@@ -66,8 +68,14 @@ func (c *dbMigrateCmd) Run() error {
 	}
 	defer db.Close()
 	ctx := context.Background()
-	fsys := os.DirFS(c.Dir)
-	c.rootCmd.Verbosef("applying migrations from %s", c.Dir)
+	var fsys fs.FS
+	if c.Dir == "migrations" {
+		fsys = migrations.FS
+		c.rootCmd.Verbosef("applying embedded migrations")
+	} else {
+		fsys = os.DirFS(c.Dir)
+		c.rootCmd.Verbosef("applying migrations from %s", c.Dir)
+	}
 	if err := dbstart.Apply(ctx, db, fsys, c.rootCmd.Verbosity >= 0, c.rootCmd.cfg.DBDriver); err != nil {
 		return err
 	}

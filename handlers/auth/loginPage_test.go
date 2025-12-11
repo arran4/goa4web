@@ -186,6 +186,21 @@ func TestLoginPageHiddenFields(t *testing.T) {
 	}
 }
 
+func TestLoginFormHandler_ActionTarget(t *testing.T) {
+	req := httptest.NewRequest(http.MethodPost, "/register", nil)
+	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	loginFormHandler{msg: "approval is pending"}.ServeHTTP(rr, req)
+
+	body := rr.Body.String()
+	if !strings.Contains(body, "<form method=\"post\" action=\"/login\">") {
+		t.Fatalf("expected login form to post to /login: %q", body)
+	}
+}
+
 func TestLoginAction_PendingResetPrompt(t *testing.T) {
 	conn, mock, err := sqlmock.New()
 	if err != nil {

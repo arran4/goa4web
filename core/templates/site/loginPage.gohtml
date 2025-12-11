@@ -3,7 +3,7 @@
     <p style="color:red">{{ cd.CurrentError }}</p>
     {{- end }}
     Login:<br>
-    <form method="post">
+    <form method="post" action="/login">
         {{ csrfField }}
         {{- if $.Back }}
         <input type="hidden" name="back" value="{{ $.Back }}">

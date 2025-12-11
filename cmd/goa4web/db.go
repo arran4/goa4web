@@ -31,12 +31,6 @@ func (c *dbCmd) Run() error {
 		return err
 	}
 	switch args[0] {
-	case "create":
-		cmd, err := parseDbCreateCmd(c, args[1:])
-		if err != nil {
-			return fmt.Errorf("create: %w", err)
-		}
-		return cmd.Run()
 	case "migrate":
 		cmd, err := parseDbMigrateCmd(c, args[1:])
 		if err != nil {
@@ -55,10 +49,10 @@ func (c *dbCmd) Run() error {
 			return fmt.Errorf("restore: %w", err)
 		}
 		return cmd.Run()
-	case "show":
-		cmd, err := parseDbShowCmd(c, args[1:])
+	case "seed":
+		cmd, err := parseDbSeedCmd(c, args[1:])
 		if err != nil {
-			return fmt.Errorf("show: %w", err)
+			return fmt.Errorf("seed: %w", err)
 		}
 		return cmd.Run()
 	default:

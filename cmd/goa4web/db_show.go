@@ -14,6 +14,17 @@ type dbShowCmd struct {
 	target string // The file to show, e.g., "seed.sql"
 }
 
+func (c *dbShowCmd) FlagGroups() []flagGroup {
+	return nil
+}
+
+var _ usageData = (*dbShowCmd)(nil)
+
+// Usage prints command usage.
+func (c *dbShowCmd) Usage() {
+	executeUsage(c.rootCmd.fs.Output(), "db_show_usage.txt", c)
+}
+
 func parseDbShowCmd(parent *dbCmd, args []string) (*dbShowCmd, error) {
 	if len(args) != 1 {
 		return nil, fmt.Errorf("expected exactly one argument (e.g., 'seed.sql' or 'schema.mysql.sql'), but got %d", len(args))

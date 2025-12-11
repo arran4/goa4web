@@ -4,39 +4,37 @@ import (
 	"bufio"
 	"context"
 	"database/sql"
+	_ "embed"
+	"flag"
 	"fmt"
 	"io"
 	"log"
+	"os"
 	"strings"
-
-	"github.com/arran4/goa4web/database"
 )
 
-// dbCreateCmd implements "db create".
-type dbCreateCmd struct {
+//go:embed seed.sql
+var seedSql []byte
+
+// dbSeedCmd implements "db seed".
+type dbSeedCmd struct {
 	*dbCmd
+	fs   *flag.FlagSet
+	File string
 }
 
-func (c *dbCreateCmd) FlagGroups() []flagGroup {
-	return nil
-}
-
-var _ usageData = (*dbCreateCmd)(nil)
-
-// Usage prints command usage.
-func (c *dbCreateCmd) Usage() {
-	executeUsage(c.rootCmd.fs.Output(), "db_create_usage.txt", c)
-}
-
-func parseDbCreateCmd(parent *dbCmd, args []string) (*dbCreateCmd, error) {
-	c := &dbCreateCmd{dbCmd: parent}
-	if len(args) > 0 {
-		return nil, fmt.Errorf("unexpected arguments: %v", args)
+func parseDbSeedCmd(parent *dbCmd, args []string) (*dbSeedCmd, error) {
+	c := &dbSeedCmd{dbCmd: parent}
+	c.fs = newFlagSet("seed")
+	c.fs.StringVar(&c.File, "file", "", "SQL seed file")
+	if err := c.fs.Parse(args); err != nil {
+		return nil, err
 	}
+
 	return c, nil
 }
 
-func (c *dbCreateCmd) Run() error {
+func (c *dbSeedCmd) Run() error {
 	cfg := c.rootCmd.cfg
 	conn := cfg.DBConn
 	if conn == "" {
@@ -56,22 +54,17 @@ func (c *dbCreateCmd) Run() error {
 	if err := sdb.Ping(); err != nil {
 		return err
 	}
-
-	log.Println("Applying schema...")
-	if err := runStatements(sdb, strings.NewReader(string(database.SchemaMySQL))); err != nil {
-		return fmt.Errorf("failed to apply schema: %w", err)
+	var r io.Reader
+	if c.File == "" {
+		r = strings.NewReader(string(seedSql))
+	} else {
+		f, err := os.Open(c.File)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		r = f
 	}
-
-	log.Println("Applying seed data...")
-	if err := runStatements(sdb, strings.NewReader(string(database.SeedSQL))); err != nil {
-		return fmt.Errorf("failed to apply seed data: %w", err)
-	}
-
-	log.Println("Database created successfully.")
-	return nil
-}
-
-func runStatements(sdb *sql.DB, r io.Reader) error {
 	scanner := bufio.NewScanner(r)
 	var stmt strings.Builder
 	ctx := context.Background()
@@ -84,7 +77,7 @@ func runStatements(sdb *sql.DB, r io.Reader) error {
 		if strings.HasSuffix(line, ";") {
 			sqlStmt := strings.TrimSuffix(stmt.String(), ";")
 			if _, err := sdb.ExecContext(ctx, sqlStmt); err != nil {
-				return fmt.Errorf("executing statement %q: %w", sqlStmt, err)
+				return err
 			}
 			stmt.Reset()
 		} else {
@@ -96,7 +89,7 @@ func runStatements(sdb *sql.DB, r io.Reader) error {
 	}
 	if s := strings.TrimSpace(stmt.String()); s != "" {
 		if _, err := sdb.ExecContext(ctx, s); err != nil {
-			return fmt.Errorf("executing statement %q: %w", s, err)
+			return err
 		}
 	}
 	return nil

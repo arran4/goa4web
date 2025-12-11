@@ -8,7 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/arran4/goa4web/internal/app/dbstart"
-	"os"
+	"github.com/arran4/goa4web/migrations"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/db"
@@ -43,14 +43,12 @@ func closeAndWrap(db *sql.DB, err error) error {
 // dbMigrateCmd implements "db migrate".
 type dbMigrateCmd struct {
 	*dbCmd
-	fs  *flag.FlagSet
-	Dir string
+	fs *flag.FlagSet
 }
 
 func parseDbMigrateCmd(parent *dbCmd, args []string) (*dbMigrateCmd, error) {
 	c := &dbMigrateCmd{dbCmd: parent}
 	c.fs = newFlagSet("migrate")
-	c.fs.StringVar(&c.Dir, "dir", "migrations", "directory containing SQL migrations")
 	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
@@ -66,8 +64,8 @@ func (c *dbMigrateCmd) Run() error {
 	}
 	defer db.Close()
 	ctx := context.Background()
-	fsys := os.DirFS(c.Dir)
-	c.rootCmd.Verbosef("applying migrations from %s", c.Dir)
+	fsys := migrations.FS
+	c.rootCmd.Verbosef("applying embedded migrations")
 	if err := dbstart.Apply(ctx, db, fsys, c.rootCmd.Verbosity >= 0, c.rootCmd.cfg.DBDriver); err != nil {
 		return err
 	}

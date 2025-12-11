@@ -35,6 +35,10 @@ Optional notification emails can be sent through several providers. See the [Ema
    ```bash
    ./goa4web db seed
    ```
+   Alternatively, you can use the `-autoseed` flag with the `serve` command to do this automatically on startup:
+   ```bash
+   ./goa4web serve --autoseed
+   ```
 3. Provide the database connection string and driver via flags, a config file or environment variables. Examples:
    * MySQL TCP: `user:password@tcp(127.0.0.1:3306)/a4web?parseTime=true`
    * MySQL socket: `user:password@unix(/var/run/mysqld/mysqld.sock)/a4web?parseTime=true`
@@ -471,6 +475,7 @@ services:
       DB_DRIVER: mysql
       DB_CONN: root:changeme@tcp(db:3306)/goa4web?parseTime=true
       AUTO_MIGRATE: "true"
+      AUTO_SEED: "true"
       IMAGE_UPLOAD_DIR: /data/imagebbs
     volumes:
       - app-images:/data/imagebbs

@@ -152,6 +152,8 @@ const (
 
 	// EnvAutoMigrate toggles automatic database migrations on startup.
 	EnvAutoMigrate = "AUTO_MIGRATE"
+	// EnvMigrationsDir specifies a directory to load migrations from at runtime.
+	EnvMigrationsDir = "MIGRATIONS_DIR"
 
 	// EnvCreateDirs creates missing directories when enabled.
 	EnvCreateDirs = "CREATE_DIRS"

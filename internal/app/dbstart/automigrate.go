@@ -6,6 +6,7 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"github.com/arran4/goa4web/migrations"
+	"io/fs"
 	"log"
 	"os"
 	"strings"
@@ -47,7 +48,14 @@ func applyMigrations(ctx context.Context, cfg *config.RuntimeConfig, reg *dbdriv
 	if err := sdb.PingContext(ctx); err != nil {
 		return err
 	}
-	fsys := migrations.FS
+	var fsys fs.FS
+	if cfg.MigrationsDir == "" || cfg.MigrationsDir == "migrations" {
+		fsys = migrations.FS
+		log.Printf("applying embedded migrations")
+	} else {
+		fsys = os.DirFS(cfg.MigrationsDir)
+		log.Printf("applying migrations from %s", cfg.MigrationsDir)
+	}
 	return Apply(ctx, sdb, fsys, false, cfg.DBDriver)
 }
 

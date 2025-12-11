@@ -3,9 +3,11 @@
 # so no build step is required here.
 # This image contains the goa4web binary.
 FROM scratch
+# Install the application into the final image.
 ENV PATH=/usr/local/bin
 ENV AUTO_MIGRATE=false
 COPY goa4web /usr/local/bin/goa4web
 # Image uploads are stored under /data/imagebbs inside the container.
 VOLUME ["/data/imagebbs"]
 ENTRYPOINT ["/usr/local/bin/goa4web"]
+CMD ["serve"]

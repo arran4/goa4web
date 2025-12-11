@@ -58,12 +58,12 @@ func (c *dbCreateCmd) Run() error {
 	}
 
 	log.Println("Applying schema...")
-	if err := runStatements(sdb, strings.NewReader(string(database.SchemaMySQL))); err != nil {
+	if err := runStatements(c, sdb, strings.NewReader(string(database.SchemaMySQL))); err != nil {
 		return fmt.Errorf("failed to apply schema: %w", err)
 	}
 
 	log.Println("Applying seed data...")
-	if err := runStatements(sdb, strings.NewReader(string(database.SeedSQL))); err != nil {
+	if err := runStatements(c, sdb, strings.NewReader(string(database.SeedSQL))); err != nil {
 		return fmt.Errorf("failed to apply seed data: %w", err)
 	}
 
@@ -71,7 +71,11 @@ func (c *dbCreateCmd) Run() error {
 	return nil
 }
 
-func runStatements(sdb *sql.DB, r io.Reader) error {
+type logger interface {
+	Infof(format string, v ...any)
+}
+
+func runStatements(l logger, sdb *sql.DB, r io.Reader) error {
 	scanner := bufio.NewScanner(r)
 	var stmt strings.Builder
 	ctx := context.Background()
@@ -83,6 +87,7 @@ func runStatements(sdb *sql.DB, r io.Reader) error {
 		stmt.WriteString(line)
 		if strings.HasSuffix(line, ";") {
 			sqlStmt := strings.TrimSuffix(stmt.String(), ";")
+			l.Infof("executing: %s", sqlStmt)
 			if _, err := sdb.ExecContext(ctx, sqlStmt); err != nil {
 				return fmt.Errorf("executing statement %q: %w", sqlStmt, err)
 			}
@@ -95,6 +100,7 @@ func runStatements(sdb *sql.DB, r io.Reader) error {
 		return err
 	}
 	if s := strings.TrimSpace(stmt.String()); s != "" {
+		l.Infof("executing: %s", s)
 		if _, err := sdb.ExecContext(ctx, s); err != nil {
 			return fmt.Errorf("executing statement %q: %w", s, err)
 		}

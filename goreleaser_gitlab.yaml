@@ -3,6 +3,7 @@ project_name: goa4web
 builds:
   - id: goa4web
     binary: goa4web
+    main: ./cmd/goa4web
     env:
       - CGO_ENABLED=0
     goos: [linux, darwin, windows]

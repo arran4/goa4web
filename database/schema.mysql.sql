@@ -403,7 +403,9 @@ CREATE TABLE `writing_search` (
 
 -- Track schema upgrades.
 CREATE TABLE IF NOT EXISTS `schema_version` (
-  `version` int NOT NULL
+  `version` int NOT NULL,
+  `id` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`)
 );
 
 -- Store subscribed users for notifications.
@@ -714,4 +716,5 @@ CREATE TABLE `content_read_markers` (
 );
 
 -- Set the schema version to the latest migration.
-INSERT INTO `schema_version` (`version`) VALUES (69);
+INSERT INTO `schema_version` (`version`) VALUES (69)
+ON DUPLICATE KEY UPDATE version = VALUES(version);

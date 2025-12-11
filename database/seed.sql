@@ -20,33 +20,32 @@ JOIN roles r ON r.name='user'
 LEFT JOIN user_roles ur ON ur.users_idusers = u.idusers
 WHERE ur.iduser_roles IS NULL;
 
--- Role hierarchy grants
-INSERT INTO grants (created_at, role_id, section, action, active)
-SELECT NOW(), r_admin.id, 'role', 'moderator', 1
+INSERT INTO grants (created_at, role_id, section, item, rule_type, action, active)
+SELECT NOW(), r_admin.id, 'role', NULL, 'allow', 'moderator', 1
 FROM roles r_admin
 WHERE r_admin.name = 'administrator'
 ON DUPLICATE KEY UPDATE action=VALUES(action);
 
-INSERT INTO grants (created_at, role_id, section, action, active)
-SELECT NOW(), r_admin.id, 'role', 'content writer', 1
+INSERT INTO grants (created_at, role_id, section, item, rule_type, action, active)
+SELECT NOW(), r_admin.id, 'role', NULL, 'allow', 'content writer', 1
 FROM roles r_admin
 WHERE r_admin.name = 'administrator'
 ON DUPLICATE KEY UPDATE action=VALUES(action);
 
-INSERT INTO grants (created_at, role_id, section, action, active)
-SELECT NOW(), r_mod.id, 'role', 'user', 1
+INSERT INTO grants (created_at, role_id, section, item, rule_type, action, active)
+SELECT NOW(), r_mod.id, 'role', NULL, 'allow', 'user', 1
 FROM roles r_mod
 WHERE r_mod.name = 'moderator'
 ON DUPLICATE KEY UPDATE action=VALUES(action);
 
-INSERT INTO grants (created_at, role_id, section, action, active)
-SELECT NOW(), r_writer.id, 'role', 'user', 1
+INSERT INTO grants (created_at, role_id, section, item, rule_type, action, active)
+SELECT NOW(), r_writer.id, 'role', NULL, 'allow', 'user', 1
 FROM roles r_writer
 WHERE r_writer.name = 'content writer'
 ON DUPLICATE KEY UPDATE action=VALUES(action);
 
-INSERT INTO grants (created_at, role_id, section, action, active)
-SELECT NOW(), r_labeler.id, g.section, 'label', 1
+INSERT INTO grants (created_at, role_id, section, item, rule_type, action, active)
+SELECT NOW(), r_labeler.id, g.section, NULL, 'allow', 'label', 1
 FROM roles r_labeler
 JOIN (
     SELECT DISTINCT section FROM grants WHERE action IN ('see', 'view')
@@ -55,8 +54,8 @@ WHERE r_labeler.name = 'labeler'
 ON DUPLICATE KEY UPDATE action=VALUES(action);
 
 -- Grant label rights to all logged-in roles with view access
-INSERT INTO grants (created_at, role_id, section, action, active)
-SELECT NOW(), g.role_id, g.section, 'label', 1
+INSERT INTO grants (created_at, role_id, section, item, rule_type, action, active)
+SELECT NOW(), g.role_id, g.section, NULL, 'allow', 'label', 1
 FROM grants g
 JOIN roles r ON r.id = g.role_id
 WHERE g.action IN ('see', 'view')

@@ -18,12 +18,14 @@ import (
 // serveCmd starts the web server.
 type serveCmd struct {
 	*rootCmd
-	fs *flag.FlagSet
+	fs       *flag.FlagSet
+	autoseed bool
 }
 
 func parseServeCmd(parent *rootCmd, args []string) (*serveCmd, error) {
 	c := &serveCmd{rootCmd: parent}
 	c.fs = config.NewRuntimeFlagSet("serve")
+	c.fs.BoolVar(&c.autoseed, "autoseed", false, "auto seed the database from the default sql")
 	c.fs.Usage = c.Usage
 	if err := c.fs.Parse(args); err != nil {
 		return nil, err
@@ -45,6 +47,19 @@ func (c *serveCmd) Run() error {
 		config.WithFileValues(fileVals),
 		config.WithGetenv(os.Getenv),
 	)
+	if c.autoseed {
+		dbCmd, err := parseDbCmd(c.rootCmd, []string{})
+		if err != nil {
+			return err
+		}
+		dbSeedCmd, err := parseDbSeedCmd(dbCmd, []string{})
+		if err != nil {
+			return err
+		}
+		if err := dbSeedCmd.Run(); err != nil {
+			return err
+		}
+	}
 	secret, err := config.LoadOrCreateSecret(core.OSFS{}, cfg.SessionSecret, cfg.SessionSecretFile, config.EnvSessionSecret, config.EnvSessionSecretFile)
 	if err != nil {
 		return fmt.Errorf("session secret: %w", err)

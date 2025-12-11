@@ -1,14 +1,36 @@
 Usage:
   {{.Prog}} news <command> [<args>]
 
+The news command provides a set of tools for managing news posts. You can
+create, read, update, and delete news articles, as well as manage their
+comments. This command is the primary interface for all news-related
+administrative tasks.
+
 Commands:
-  list      list news posts
-  read      read a news post
-  comments  manage news comments
+  create    Create a new news post.
+  list      List all news posts.
+  read      Read the content of a specific news post.
+  update    Update the content of an existing news post.
+  delete    Delete a news post.
+  comments  Manage the comments for a news post.
 
 Examples:
+  # Create a new news post
+  {{.Prog}} news create -title "New Feature" -body "We've added a new feature!"
+
+  # List all news posts
   {{.Prog}} news list
+
+  # Read the news post with ID 1
   {{.Prog}} news read 1
+
+  # Update the news post with ID 1
+  {{.Prog}} news update -id 1 -title "Updated Feature" -body "The feature has been updated."
+
+  # Delete the news post with ID 1
+  {{.Prog}} news delete -id 1
+
+  # List all comments for the news post with ID 1
   {{.Prog}} news comments list 1
 
 {{template "flag_groups_section" .FlagGroups}}

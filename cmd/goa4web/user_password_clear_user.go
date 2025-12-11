@@ -21,7 +21,7 @@ type userPasswordClearUserCmd struct {
 func parseUserPasswordClearUserCmd(parent *userPasswordCmd, args []string) (*userPasswordClearUserCmd, error) {
 	c := &userPasswordClearUserCmd{userPasswordCmd: parent}
 	fs := flag.NewFlagSet("clear-user", flag.ContinueOnError)
-	fs.StringVar(&c.Username, "username", "", "username")
+	fs.StringVar(&c.Username, "username", "", "The username of the user whose password reset requests should be cleared.")
 	c.fs = fs
 	if err := fs.Parse(args); err != nil {
 		return nil, err

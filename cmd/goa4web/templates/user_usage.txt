@@ -1,31 +1,50 @@
 Usage:
   {{.Prog}} user <command> [<args>]
 
+The user command provides a suite of tools for managing user accounts. You can
+add, modify, and remove users, as well as manage their roles, permissions, and
+account status. This is the primary interface for all user-related
+administrative tasks.
+
 Commands:
-  add         add a user
-  add-admin   add a user with administrator rights
-  make-admin  grant administrator rights to a user
-  add-role    grant a role to a user
-  remove-role remove a role from a user
-  list-roles  list available roles
-  list        list users
-  deactivate  deactivate a user
-  activate    restore a deactivated user
-  approve     approve a pending user
-  reject      reject a pending user
-  comments    manage admin comments for a user
-  roles       list user roles
-  password    manage reset password requests
-  profile     show user profile information
+  add         Add a new user to the system. Requires a username and password.
+  add-admin   Add a new user with administrator rights. This is a convenient
+              shortcut for creating a new admin account.
+  make-admin  Grant administrator rights to an existing user.
+  add-role    Grant a specific role to a user. Roles are used to assign a
+              pre-defined set of permissions.
+  remove-role Remove a role from a user, revoking the associated permissions.
+  list-roles  List all available roles that can be assigned to users.
+  list        List all users in the system, with options for filtering and
+              sorting.
+  deactivate  Deactivate a user's account, preventing them from logging in.
+  activate    Reactivate a previously deactivated user account.
+  approve     Approve a user account that is pending approval.
+  reject      Reject a pending user account, with an optional reason.
+  comments    Manage administrative comments for a user.
+  roles       List the roles assigned to a specific user.
+  profile     Display detailed profile information for a user.
 
 Examples:
+  # Add a new user named "bob" with the password "secret"
   {{.Prog}} user add -username bob -password secret
+
+  # Deactivate the user "bob"
   {{.Prog}} user deactivate -username bob
+
+  # List all users
   {{.Prog}} user list
+
+  # Approve a user with ID 3
   {{.Prog}} user approve -id 3
-  {{.Prog}} user reject -id 3 -reason spam
+
+  # Reject a user with ID 3 and provide a reason
+  {{.Prog}} user reject -id 3 -reason "Spam account"
+
+  # List all administrative comments for user with ID 3
   {{.Prog}} user comments list -id 3
+
+  # List all roles assigned to the current user
   {{.Prog}} user roles
-  {{.Prog}} user password clear-expired
 
 {{template "flag_groups_section" .FlagGroups}}

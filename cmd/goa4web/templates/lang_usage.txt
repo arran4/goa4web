@@ -1,14 +1,27 @@
 Usage:
   {{.Prog}} lang <command> [<args>]
 
+The lang command is used to manage the languages supported by the application.
+You can add, list, update, and delete languages to provide a multilingual user
+experience.
+
 Commands:
-  list     list languages
-  add      add a language
-  update   update a language
+  list     List all available languages.
+  add      Add a new language with a specified code and name.
+  update   Update the name of an existing language.
+  delete   Delete a language from the system.
 
 Examples:
+  # List all languages
   {{.Prog}} lang list
+
+  # Add a new language with the code "en" and the name "English"
   {{.Prog}} lang add --code en --name English
+
+  # Update the name of the language with ID 1 to "New"
   {{.Prog}} lang update -id 1 -name New
+
+  # Delete the language with ID 1
+  {{.Prog}} lang delete -id 1
 
 {{template "flag_groups_section" .FlagGroups}}

@@ -1,10 +1,23 @@
 Usage:
   {{.Prog}} email <command> [<args>]
 
+The email command is used to manage email-related tasks, such as sending test
+emails, managing the email queue, and viewing the email log. This is the
+primary interface for all email-related administrative tasks.
+
 Commands:
-  queue   manage queued emails
+  send     Send a test email.
+  queue    Manage the queue of emails waiting to be sent.
+  log      View the email log.
 
 Examples:
+  # Send a test email
+  {{.Prog}} email send -to "test@example.com" -subject "Test" -body "This is a test email."
+
+  # List all emails in the queue
   {{.Prog}} email queue list
+
+  # View the email log
+  {{.Prog}} email log
 
 {{template "flag_groups_section" .FlagGroups}}

@@ -18,7 +18,7 @@ type permRevokeCmd struct {
 func parsePermRevokeCmd(parent *permCmd, args []string) (*permRevokeCmd, error) {
 	c := &permRevokeCmd{permCmd: parent}
 	c.fs = newFlagSet("revoke")
-	c.fs.IntVar(&c.ID, "id", 0, "permission id")
+	c.fs.IntVar(&c.ID, "id", 0, "The ID of the permission to revoke. You can get the ID by running 'perm list'.")
 	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}

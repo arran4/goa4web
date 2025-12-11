@@ -1,7 +1,20 @@
 Usage:
-  {{.Prog}} audit [flags]
+  {{.Prog}} audit <command> [<args>]
+
+The audit command is used to view the audit log, which records all significant
+actions performed within the application. This is an essential tool for
+monitoring user activity, troubleshooting issues, and ensuring the security of
+the platform.
+
+Commands:
+  list    List the audit log entries, with options for filtering and limiting
+          the number of results.
 
 Examples:
-  {{.Prog}} audit --limit 50
+  # List the 50 most recent audit log entries
+  {{.Prog}} audit list --limit 50
+
+  # List all audit log entries for a specific user
+  {{.Prog}} audit list --user bob
 
 {{template "flag_groups_section" .FlagGroups}}

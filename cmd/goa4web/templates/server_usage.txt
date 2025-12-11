@@ -1,11 +1,23 @@
 Usage:
   {{.Prog}} server <command> [<args>]
 
+The server command is used to manage the running application server. You can
+gracefully shut down the server and check its status. This is the primary
+interface for interacting with the live server process.
+
 Commands:
-  shutdown  gracefully stop the running server
+  shutdown  Gracefully stop the running server, with options for specifying a
+            timeout and shutdown mode.
+  status    Check the status of the running server.
 
 Examples:
+  # Gracefully shut down the server with a 5-second timeout
   {{.Prog}} server shutdown --timeout 5s
+
+  # Shut down only the REST API component of the server
   {{.Prog}} server shutdown --mode rest
+
+  # Check the status of the server
+  {{.Prog}} server status
 
 {{template "flag_groups_section" .FlagGroups}}

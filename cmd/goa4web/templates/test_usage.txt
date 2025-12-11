@@ -1,11 +1,22 @@
 Usage:
   {{.Prog}} test <command> [<args>]
 
+The test command is used to run various manual tests that are not part of the
+automated test suite. This is useful for verifying specific functionality or
+diagnosing issues in a controlled environment.
+
 Commands:
-  migrations  run migration tests
+  all         Run all available manual tests.
+  migrations  Run tests for the database migrations.
 
 Examples:
-  {{.Prog}} test migrations apply all -database-type mysql -connection-string user:pass@tcp(localhost:3306)/dbname
-  {{.Prog}} test migrations clean -database-type mysql -connection-string user:pass@tcp(localhost:3306)/dbname
+  # Run all manual tests
+  {{.Prog}} test all
+
+  # Apply all migrations to a MySQL database
+  {{.Prog}} test migrations apply all -database-type mysql -connection-string "user:pass@tcp(localhost:3306)/dbname"
+
+  # Clean the database by reverting all migrations
+  {{.Prog}} test migrations clean -database-type mysql -connection-string "user:pass@tcp(localhost:3306)/dbname"
 
 {{template "flag_groups_section" .FlagGroups}}

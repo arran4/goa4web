@@ -21,8 +21,8 @@ type permGrantCmd struct {
 func parsePermGrantCmd(parent *permCmd, args []string) (*permGrantCmd, error) {
 	c := &permGrantCmd{permCmd: parent}
 	c.fs = newFlagSet("grant")
-	c.fs.StringVar(&c.User, "user", "", "username")
-	c.fs.StringVar(&c.Role, "role", "", "permission role")
+	c.fs.StringVar(&c.User, "user", "", "The username of the user to grant the permission to.")
+	c.fs.StringVar(&c.Role, "role", "", "The name of the role to grant to the user.")
 	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}

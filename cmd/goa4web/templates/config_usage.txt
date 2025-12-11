@@ -1,26 +1,46 @@
 Usage:
   {{.Prog}} config <command> [<args>]
 
+The config command provides a suite of tools for managing the application's
+configuration. You can reload the configuration, view it in various formats,
+and test the configured services. This is the primary interface for all
+configuration-related administrative tasks.
+
 Commands:
-  reload       reload configuration from file
-  as-env       output configuration as export statements
-  as-env-file  output configuration as env file
-  as-json      output configuration as JSON
-  as-cli       output configuration as CLI flags
-  add-json     add missing options to JSON file
-  options      list available configuration options
-  test         verify configured services
-  show         display runtime configuration
-  set          update configuration file
+  reload       Reload the configuration from the configuration file.
+  as-env       Output the configuration as a series of shell export statements.
+  as-env-file  Output the configuration as an env file.
+  as-json      Output the configuration in JSON format.
+  as-cli       Output the configuration as a series of command-line flags.
+  add-json     Add missing options to a JSON configuration file.
+  options      List all available configuration options.
+  test         Test the configured services, such as the database or email server.
+  show         Display the current runtime configuration.
+  set          Update a value in the configuration file.
 
 Examples:
+  # Reload the configuration from the file
   {{.Prog}} config reload
+
+  # Display the current runtime configuration
   {{.Prog}} config show
+
+  # Set the database host to "localhost" in the configuration file
   {{.Prog}} config set -key DB_HOST -value localhost
+
+  # Output the configuration as an env file and save it to "config.env"
   {{.Prog}} config as-env-file > config.env
+
+  # Output the configuration as a series of command-line flags
   {{.Prog}} config as-cli
+
+  # Add missing options to the "cfg.json" file
   {{.Prog}} config add-json -file cfg.json
+
+  # List all available configuration options with extended details
   {{.Prog}} config options --extended
+
+  # Test the email service configuration
   {{.Prog}} config test email
 
 {{template "flag_groups_section" .FlagGroups}}

@@ -21,7 +21,7 @@ type userPasswordClearExpiredCmd struct {
 func parseUserPasswordClearExpiredCmd(parent *userPasswordCmd, args []string) (*userPasswordClearExpiredCmd, error) {
 	c := &userPasswordClearExpiredCmd{userPasswordCmd: parent, Hours: 24}
 	fs := flag.NewFlagSet("clear-expired", flag.ContinueOnError)
-	fs.IntVar(&c.Hours, "hours", 24, "expiration age in hours")
+	fs.IntVar(&c.Hours, "hours", 24, "The age in hours at which a password reset request is considered expired.")
 	c.fs = fs
 	if err := fs.Parse(args); err != nil {
 		return nil, err

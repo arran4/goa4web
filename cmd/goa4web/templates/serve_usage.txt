@@ -1,4 +1,33 @@
 Usage:
   {{.Prog}} serve [flags]
 
+The serve command starts the web server, making the application accessible to
+users. This is the primary command for running the application and is
+responsible for initializing all the necessary components, such as the database,
+session management, and routing.
+
+The server can be configured using a combination of command-line flags, a
+configuration file, and environment variables. The configuration is resolved in
+the following order of precedence:
+
+1. Command-line flags
+2. Configuration file
+3. Environment variables
+
+This allows you to override the default settings with more specific values
+without modifying the main configuration file.
+
+Examples:
+  # Start the server with the default settings
+  {{.Prog}} serve
+
+  # Start the server on a specific port
+  {{.Prog}} serve -http-listen-addr :8080
+
+  # Use a custom configuration file
+  {{.Prog}} -config /path/to/config.yaml serve
+
+  # Enable verbose logging
+  {{.Prog}} serve -verbosity 2
+
 {{template "flag_groups_section" .FlagGroups}}

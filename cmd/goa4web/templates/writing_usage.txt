@@ -1,22 +1,51 @@
 Usage:
   {{.Prog}} writing <command> [<args>]
 
+The writing command provides a set of tools for managing written content, such
+as articles and documentation. You can create, read, update, and delete
+articles, as well as manage their comments and activation status.
+
 Commands:
-  tree      show writing categories
-  list      list writing articles
-  read      read a writing article
-  comments  manage comments for a writing article
-  deactivate      deactivate a writing
-  activate        restore a deactivated writing
-  list-deactivated  list deactivated writings
+  create            Create a new writing article.
+  tree              Show the hierarchical tree of all writing categories.
+  list              List all writing articles.
+  read              Read the content of a specific writing article.
+  update            Update the content of an existing writing article.
+  delete            Delete a writing article.
+  comments          Manage the comments for a writing article.
+  deactivate        Deactivate a writing article, making it hidden from public view.
+  activate          Reactivate a previously deactivated writing article.
+  list-deactivated  List all deactivated writing articles.
 
 Examples:
+  # Create a new writing article
+  {{.Prog}} writing create -title "My First Article" -body "This is the content of my first article."
+
+  # Show the writing categories
   {{.Prog}} writing tree
+
+  # List all writing articles
   {{.Prog}} writing list
+
+  # Read the writing article with ID 1
   {{.Prog}} writing read 1
+
+  # Update the writing article with ID 1
+  {{.Prog}} writing update -id 1 -title "Updated Title" -body "Updated content."
+
+  # Delete the writing article with ID 1
+  {{.Prog}} writing delete -id 1
+
+  # List all comments for the writing article with ID 1
   {{.Prog}} writing comments list 1
+
+  # Deactivate the writing article with ID 1
   {{.Prog}} writing deactivate -id 1
+
+  # Activate the writing article with ID 1
   {{.Prog}} writing activate -id 1
+
+  # List all deactivated writing articles
   {{.Prog}} writing list-deactivated
 
 {{template "flag_groups_section" .FlagGroups}}

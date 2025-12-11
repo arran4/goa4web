@@ -441,6 +441,7 @@ type Role struct {
 
 type SchemaVersion struct {
 	Version int32
+	ID      bool
 }
 
 type Searchwordlist struct {

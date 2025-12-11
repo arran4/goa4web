@@ -1,18 +1,38 @@
 Usage:
   {{.Prog}} db <command> [<args>]
 
+The db command provides a set of tools for managing the application's database.
+You can create the database schema, run migrations, create and restore backups,
+and inspect the embedded SQL files. This is the primary interface for all
+database-related administrative tasks.
+
 Commands:
-  create     create the database schema and apply seed data
-  migrate    run database migrations
-  backup     create a database backup
-  restore    restore a database backup
-  show       show the contents of embedded SQL files
+  create     Create the database schema and apply seed data. This is used for
+             initializing a new database.
+  migrate    Run database migrations to update the schema to the latest version.
+  seed       Apply seed data to the database.
+  backup     Create a backup of the database.
+  restore    Restore a database backup from a file.
+  show       Show the contents of embedded SQL files, such as the schema or seed
+             data.
 
 Examples:
+  # Create the database schema and apply seed data
   {{.Prog}} db create
+
+  # Run database migrations
   {{.Prog}} db migrate
+
+  # Apply seed data
+  {{.Prog}} db seed
+
+  # Create a database backup and save it to "backup.sql"
   {{.Prog}} db backup -o backup.sql
+
+  # Restore a database backup from "backup.sql"
   {{.Prog}} db restore -i backup.sql
+
+  # Show the contents of the embedded "seed.sql" file
   {{.Prog}} db show seed.sql
 
 {{template "flag_groups_section" .FlagGroups}}

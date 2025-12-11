@@ -1,12 +1,31 @@
 Usage:
   {{.Prog}} faq <command> [<args>]
 
+The faq command allows you to manage the Frequently Asked Questions (FAQ)
+section of the application. You can create, read, update, and delete FAQ
+entries, as well as view the entire FAQ tree structure.
+
 Commands:
-  tree   show FAQ categories and questions
-  read   read a FAQ question
+  create  Create a new FAQ entry (question and answer).
+  read    Read the content of a specific FAQ entry.
+  update  Update an existing FAQ entry.
+  delete  Delete an FAQ entry.
+  tree    Show the hierarchical tree of all FAQ categories and questions.
 
 Examples:
+  # View the entire FAQ tree
   {{.Prog}} faq tree
+
+  # Read the FAQ entry with ID 1
   {{.Prog}} faq read 1
+
+  # Create a new FAQ entry
+  {{.Prog}} faq create -category "General" -question "What is this?" -answer "It's a website."
+
+  # Update the answer for FAQ entry with ID 1
+  {{.Prog}} faq update -id 1 -answer "This is an updated answer."
+
+  # Delete the FAQ entry with ID 1
+  {{.Prog}} faq delete -id 1
 
 {{template "flag_groups_section" .FlagGroups}}

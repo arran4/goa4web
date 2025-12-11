@@ -1,13 +1,27 @@
 Usage:
   {{.Prog}} perm <command> [<args>]
 
+The perm command is used to manage user permissions, allowing you to control
+access to various sections and features of the application. Permissions are
+granted to users or roles and can be as granular as needed to ensure proper
+security and access control.
+
 Commands:
-  grant    grant a permission
-  revoke   revoke a permission
-  list     list permissions
+  grant    Grant a permission to a user or role for a specific section.
+  revoke   Revoke a previously granted permission from a user or role.
+  list     List all permissions, with options for filtering by user or role.
 
 Examples:
-  {{.Prog}} perm grant -user bob -section forum -role read
+  # Grant the "read" permission for the "forum" section to the user "bob"
+  {{.Prog}} perm grant -user bob -section forum -permission read
+
+  # Grant the "write" permission for the "blog" section to the "editor" role
+  {{.Prog}} perm grant -role editor -section blog -permission write
+
+  # List all permissions
   {{.Prog}} perm list
+
+  # List all permissions for the user "bob"
+  {{.Prog}} perm list -user bob
 
 {{template "flag_groups_section" .FlagGroups}}

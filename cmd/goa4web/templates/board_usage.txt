@@ -1,16 +1,28 @@
 Usage:
   {{.Prog}} board <command> [<args>]
 
+The board command provides a set of tools for managing image boards. You can
+create, delete, and update boards, as well as list all available boards. This
+command is the primary interface for all image board-related administrative
+tasks.
+
 Commands:
-  list        list boards
-  create      create a board
-  delete      delete a board
-  update      update a board
+  list        List all available image boards.
+  create      Create a new image board with a specified name and description.
+  delete      Delete an existing image board.
+  update      Update the name or description of an existing image board.
 
 Examples:
+  # List all image boards
   {{.Prog}} board list
+
+  # Create a new image board named "foo" with the description "bar"
   {{.Prog}} board create -name foo -description 'bar'
+
+  # Delete the image board with ID 1
   {{.Prog}} board delete -id 1
+
+  # Update the name of the image board with ID 1 to "new"
   {{.Prog}} board update -id 1 -name new
 
 {{template "flag_groups_section" .FlagGroups}}

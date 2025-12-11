@@ -27,10 +27,10 @@ type userAddCmd struct {
 func parseUserAddCmd(parent *userCmd, args []string) (*userAddCmd, error) {
 	c := &userAddCmd{userCmd: parent}
 	fs, _, err := parseFlags("add", args, func(fs *flag.FlagSet) {
-		fs.StringVar(&c.Username, "username", "", "username")
-		fs.StringVar(&c.Email, "email", "", "email address")
-		fs.StringVar(&c.Password, "password", "", "password (leave empty to prompt)")
-		fs.BoolVar(&c.Admin, "admin", false, "grant administrator rights")
+		fs.StringVar(&c.Username, "username", "", "The username for the new user. This is a required field.")
+		fs.StringVar(&c.Email, "email", "", "The email address for the new user. This is an optional field.")
+		fs.StringVar(&c.Password, "password", "", "The password for the new user. If not provided, you will be prompted to enter it.")
+		fs.BoolVar(&c.Admin, "admin", false, "If set, the new user will be granted administrator rights.")
 	})
 	if err != nil {
 		return nil, err

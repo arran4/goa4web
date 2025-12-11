@@ -1,26 +1,48 @@
 Usage:
   {{.Prog}} [flags] <command> [<args>]
 
+This is the main entry point for the goa4web application. It provides a
+command-line interface for managing the web server and its various
+components.
+
 Commands:
-  help    show help for a command
-  serve   run the web server
-  user    manage users
-  perm    manage permissions
-  role    manage roles
-  board   manage image boards
-  blog    manage blog entries
-  news    manage news posts
-  faq     manage frequently asked questions
-  writing manage writing articles
-  ipban   manage IP bans
-  audit   show recent audit log entries
-  db      manage database
-  lang    manage languages
-  server  manage the running server
-  password manage pending password resets
-  email   manage emails
-  config  manage configuration
-  test    run manual tests
+  help    Show help for a command.
+  serve   Run the web server. This is the primary command for running the
+          application.
+  user    Manage users. This includes adding, removing, and modifying user
+          accounts.
+  perm    Manage permissions. This allows you to control what actions users
+          can perform.
+  role    Manage roles. Roles are used to group users together and assign
+          permissions to them.
+  board   Manage image boards. This includes creating, deleting, and modifying
+          image boards.
+  blog    Manage blog entries. This allows you to create, edit, and delete
+          blog posts.
+  news    Manage news posts. This is used for creating and managing news
+          articles.
+  faq     Manage frequently asked questions. This allows you to create and
+          update a list of FAQs.
+  writing Manage writing articles. This is used for managing articles and other
+          written content.
+  ipban   Manage IP bans. This allows you to block specific IP addresses from
+          accessing the application.
+  audit   Show recent audit log entries. This provides a log of all actions
+          performed in the application.
+  db      Manage the database. This includes creating, migrating, and seeding
+          the database.
+  lang    Manage languages. This allows you to add and manage different
+          languages for the application.
+  server  Manage the running server. This provides commands for interacting
+          with the live server.
+  password Manage pending password resets. This is used for managing password
+          reset requests.
+  email   Manage emails. This includes sending and managing email
+          notifications.
+  config  Manage configuration. This allows you to view and modify the
+          application's configuration.
+  test    Run manual tests. This is used for running specific tests that are
+          not part of the automated test suite.
 
 Examples:
   {{.Prog}} serve

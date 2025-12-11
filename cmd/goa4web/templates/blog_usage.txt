@@ -1,24 +1,44 @@
 Usage:
   {{.Prog}} blog <command> [<args>]
 
+The blog command provides a comprehensive set of tools for managing blog
+entries. You can create, read, update, and delete blog posts, as well as manage
+their comments and activation status. This command is the primary interface for
+all blog-related administrative tasks.
+
 Commands:
-  create      create a blog entry
-  list        list blog entries
-  read        read a blog entry
-  comments    manage blog comments
-  update      update a blog entry
-  deactivate      deactivate a blog entry
-  activate        restore a deactivated blog
-  list-deactivated  list deactivated blogs
+  create            Create a new blog entry for a specific user and language.
+  list              List all blog entries, with options for filtering by user.
+  read              Read the content of a specific blog entry.
+  comments          Manage the comments for a blog entry.
+  update            Update the text of an existing blog entry.
+  deactivate        Deactivate a blog entry, making it hidden from public view.
+  activate          Reactivate a previously deactivated blog entry.
+  list-deactivated  List all deactivated blog entries.
 
 Examples:
+  # Create a new blog entry for user with ID 1 in language 1 with the text "hi"
   {{.Prog}} blog create -user 1 -lang 1 -text 'hi'
+
+  # List all blog entries for user with ID 1
   {{.Prog}} blog list -user 1
+
+  # Read the blog entry with ID 1
   {{.Prog}} blog read 1
+
+  # List all comments for the blog entry with ID 1
   {{.Prog}} blog comments list 1
+
+  # Update the text of the blog entry with ID 1 to "changed"
   {{.Prog}} blog update -id 1 -text 'changed'
+
+  # Deactivate the blog entry with ID 1
   {{.Prog}} blog deactivate -id 1
+
+  # Activate the blog entry with ID 1
   {{.Prog}} blog activate -id 1
+
+  # List all deactivated blog entries
   {{.Prog}} blog list-deactivated
 
 {{template "flag_groups_section" .FlagGroups}}

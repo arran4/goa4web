@@ -1,15 +1,28 @@
 Usage:
   {{.Prog}} ipban <command> [<args>]
 
+The ipban command is used to manage IP-based access restrictions. You can add,
+list, update, and delete IP bans to control which IP addresses are allowed to
+access the application. This is a crucial tool for blocking malicious actors
+and ensuring the security of the platform.
+
 Commands:
-  add       add an IP ban
-  list      list banned IPs
-  delete    remove an IP ban
-  update    update an IP ban
+  add       Add a new IP ban for a specific IP address, with an optional reason.
+  list      List all currently active IP bans.
+  delete    Remove an existing IP ban.
+  update    Update the reason for an existing IP ban.
 
 Examples:
+  # Add a new IP ban for the IP address 192.168.1.1 with the reason "spam"
   {{.Prog}} ipban add -ip 192.168.1.1 -reason spam
+
+  # List all banned IPs
   {{.Prog}} ipban list
+
+  # Update the reason for the IP ban with ID 1 to "updated"
   {{.Prog}} ipban update -id 1 -reason updated
+
+  # Delete the IP ban with ID 1
+  {{.Prog}} ipban delete -id 1
 
 {{template "flag_groups_section" .FlagGroups}}

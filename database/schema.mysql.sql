@@ -712,3 +712,6 @@ CREATE TABLE `content_read_markers` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `content_read_markers_uq` (`item`,`item_id`,`user_id`)
 );
+
+-- Set the schema version to the latest migration.
+INSERT INTO `schema_version` (`version`) VALUES (69);

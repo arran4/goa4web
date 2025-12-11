@@ -424,17 +424,11 @@ used examples include:
 
 ## Docker Deployment
 
-Build a container image from the provided `Dockerfile`:
+A pre-built container image is available from the GitHub Container Registry.
+Pull the latest version with:
 
 ```bash
-docker build -t goa4web .
-```
-
-Note: Containers that use SQLite must build the binary with the `sqlite` tag,
-for example:
-
-```bash
-go build -tags sqlite ./cmd/goa4web
+docker pull ghcr.io/arran4/goa4web:latest
 ```
 
 Start the container with environment variables for your database connection:
@@ -445,7 +439,7 @@ docker run -p 8080:8080 \
   -e DB_CONN=file:/data/a4web.sqlite?_fk=1 \
   -e AUTO_MIGRATE=true \
   -v $(pwd)/data:/data \
-  goa4web
+  ghcr.io/arran4/goa4web:latest
 ```
 
 Setting `GOA4WEB_DOCKER=1` tells the application to store generated secret files
@@ -454,9 +448,45 @@ volume to keep the secrets across container restarts.
 
 ### Docker Compose
 
-An example `docker-compose.yaml` under `examples/` runs MySQL and applies migrations on startup.
+The following `docker-compose.yaml` example runs MySQL and applies migrations on startup.
+
+```yaml
+version: '3.8'
+services:
+  db:
+    image: mysql:8
+    restart: always
+    environment:
+      MYSQL_DATABASE: goa4web
+      MYSQL_ROOT_PASSWORD: changeme
+    volumes:
+      - db-data:/var/lib/mysql
+
+  app:
+    image: ghcr.io/arran4/goa4web:latest
+    ports:
+      - "8080:8080"
+    environment:
+      GOA4WEB_DOCKER: "1"
+      DB_DRIVER: mysql
+      DB_CONN: root:changeme@tcp(db:3306)/goa4web?parseTime=true
+      AUTO_MIGRATE: "true"
+      IMAGE_UPLOAD_DIR: /data/imagebbs
+    volumes:
+      - app-images:/data/imagebbs
+      - app-data:/var/lib/goa4web
+    depends_on:
+      - db
+
+volumes:
+  db-data:
+  app-data:
+  app-images:
+```
+
+Save the file as `docker-compose.yaml` and run:
 
 ```bash
-docker compose -f examples/docker-compose.yaml up
+docker compose up
 ```
 

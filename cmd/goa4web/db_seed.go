@@ -4,12 +4,17 @@ import (
 	"bufio"
 	"context"
 	"database/sql"
+	_ "embed"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strings"
 )
+
+//go:embed seed.sql
+var seedSql []byte
 
 // dbSeedCmd implements "db seed".
 type dbSeedCmd struct {
@@ -21,7 +26,7 @@ type dbSeedCmd struct {
 func parseDbSeedCmd(parent *dbCmd, args []string) (*dbSeedCmd, error) {
 	c := &dbSeedCmd{dbCmd: parent}
 	c.fs = newFlagSet("seed")
-	c.fs.StringVar(&c.File, "file", "seed.sql", "SQL seed file")
+	c.fs.StringVar(&c.File, "file", "", "SQL seed file")
 	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
@@ -49,12 +54,18 @@ func (c *dbSeedCmd) Run() error {
 	if err := sdb.Ping(); err != nil {
 		return err
 	}
-	f, err := os.Open(c.File)
-	if err != nil {
-		return err
+	var r io.Reader
+	if c.File == "" {
+		r = strings.NewReader(string(seedSql))
+	} else {
+		f, err := os.Open(c.File)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		r = f
 	}
-	defer f.Close()
-	scanner := bufio.NewScanner(f)
+	scanner := bufio.NewScanner(r)
 	var stmt strings.Builder
 	ctx := context.Background()
 	for scanner.Scan() {

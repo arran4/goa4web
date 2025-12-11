@@ -13,9 +13,9 @@ import (
 
 	"github.com/arran4/goa4web"
 
+	"filippo.io/csrf/gorilla"
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/arran4/goa4web/core/consts"
-	"filippo.io/csrf/gorilla"
 )
 
 // Funcs returns template helpers configured with cd's ImageURLMapper.

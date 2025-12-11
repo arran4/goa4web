@@ -12,3 +12,4 @@ COPY --from=build /goa4web /usr/local/bin/goa4web
 # Image uploads are stored under /data/imagebbs inside the container.
 VOLUME ["/data/imagebbs"]
 ENTRYPOINT ["/usr/local/bin/goa4web"]
+CMD ["serve"]

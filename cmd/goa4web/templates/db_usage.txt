@@ -2,15 +2,17 @@ Usage:
   {{.Prog}} db <command> [<args>]
 
 Commands:
+  create     create the database schema and apply seed data
   migrate    run database migrations
   backup     create a database backup
   restore    restore a database backup
-  seed       load seed data
+  show       show the contents of embedded SQL files
 
 Examples:
+  {{.Prog}} db create
   {{.Prog}} db migrate
   {{.Prog}} db backup -o backup.sql
   {{.Prog}} db restore -i backup.sql
-  {{.Prog}} db seed
+  {{.Prog}} db show seed.sql
 
 {{template "flag_groups_section" .FlagGroups}}

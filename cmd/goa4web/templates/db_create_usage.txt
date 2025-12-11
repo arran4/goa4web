@@ -1,0 +1,9 @@
+{{.Command}} - Creates the database schema and applies seed data.
+
+Usage:
+
+  {{.Exec}} {{.Command}}
+
+Examples:
+
+  {{.Exec}} {{.Command}}

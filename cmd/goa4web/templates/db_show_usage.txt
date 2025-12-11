@@ -1,0 +1,15 @@
+{{.Command}} - Shows the contents of embedded SQL files.
+
+Usage:
+
+  {{.Exec}} {{.Command}} <file>
+
+Arguments:
+
+  seed.sql           - Show the contents of the seed.sql file.
+  schema.mysql.sql   - Show the contents of the schema.mysql.sql file.
+
+Examples:
+
+  {{.Exec}} {{.Command}} seed.sql
+  {{.Exec}} {{.Command}} schema.mysql.sql

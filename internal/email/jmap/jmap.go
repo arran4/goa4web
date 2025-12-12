@@ -3,6 +3,7 @@ package jmap
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -23,6 +24,7 @@ type Provider struct {
 	AccountID string
 	Identity  string
 	From      string
+	client    *http.Client
 }
 
 func (j Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []byte) error {
@@ -36,7 +38,7 @@ func (j Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []b
 	}
 	req.SetBasicAuth(j.Username, j.Password)
 	req.Header.Set("Content-Type", "message/rfc822")
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := j.client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -94,7 +96,7 @@ func (j Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []b
 	}
 	req.SetBasicAuth(j.Username, j.Password)
 	req.Header.Set("Content-Type", "application/json")
-	resp, err = http.DefaultClient.Do(req)
+	resp, err = j.client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -114,8 +116,15 @@ func providerFromConfig(cfg *config.RuntimeConfig) email.Provider {
 	acc := strings.TrimSpace(cfg.EmailJMAPAccount)
 	id := strings.TrimSpace(cfg.EmailJMAPIdentity)
 
+	httpClient := http.DefaultClient
+	if cfg.EmailJMAPInsecure {
+		tr := http.DefaultTransport.(*http.Transport).Clone()
+		tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+		httpClient = &http.Client{Transport: tr}
+	}
+
 	if acc == "" || id == "" {
-		session, err := discoverSession(context.Background(), ep, cfg.EmailJMAPUser, cfg.EmailJMAPPass)
+		session, err := discoverSession(context.Background(), httpClient, ep, cfg.EmailJMAPUser, cfg.EmailJMAPPass)
 		if err != nil {
 			fmt.Printf("Email disabled: failed to discover JMAP session: %v\n", err)
 			return nil
@@ -142,6 +151,7 @@ func providerFromConfig(cfg *config.RuntimeConfig) email.Provider {
 		AccountID: acc,
 		Identity:  id,
 		From:      cfg.EmailFrom,
+		client:    httpClient,
 	}
 }
 
@@ -160,7 +170,7 @@ type sessionResponse struct {
 	DefaultIdentity map[string]string `json:"defaultIdentity"`
 }
 
-func discoverSession(ctx context.Context, endpoint, username, password string) (*sessionResponse, error) {
+func discoverSession(ctx context.Context, client *http.Client, endpoint, username, password string) (*sessionResponse, error) {
 	wellKnown, err := jmapWellKnownURL(endpoint)
 	if err != nil {
 		return nil, err
@@ -172,7 +182,7 @@ func discoverSession(ctx context.Context, endpoint, username, password string) (
 	if username != "" || password != "" {
 		req.SetBasicAuth(username, password)
 	}
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}

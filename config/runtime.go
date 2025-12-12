@@ -38,6 +38,7 @@ type RuntimeConfig struct {
 	EmailJMAPIdentity  string
 	EmailJMAPUser      string
 	EmailJMAPPass      string
+	EmailJMAPInsecure  bool
 	EmailSendGridKey   string
 	EmailSubjectPrefix string
 	// EmailSignOff defines the optional sign-off appended to emails.

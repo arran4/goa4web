@@ -38,6 +38,14 @@ type flagInfo struct {
 	DefValue string
 }
 
+func flagGroupFromFlagSet(fs *flag.FlagSet) flagGroup {
+	title := ""
+	if fs.Name() != "" {
+		title = fs.Name() + " flags"
+	}
+	return flagGroup{Title: title, Flags: flagInfos(fs)}
+}
+
 // flagGroup describes a set of related flags that belong to a command level.
 type flagGroup struct {
 	Title string
@@ -61,7 +69,8 @@ func flagInfos(fs *flag.FlagSet) []flagInfo {
 }
 
 func printFlags(fs *flag.FlagSet) {
-	if err := getTemplates().ExecuteTemplate(fs.Output(), "flag_group", flagInfos(fs)); err != nil {
+	data := []flagGroup{flagGroupFromFlagSet(fs)}
+	if err := getTemplates().ExecuteTemplate(fs.Output(), "flag_groups_section", data); err != nil {
 		fmt.Fprintf(fs.Output(), "template execute: %v\n", err)
 	}
 }

@@ -111,7 +111,6 @@ func (q *Queries) AdminGetImagePost(ctx context.Context, idimagepost int32) (*Ad
 const adminListBoards = `-- name: AdminListBoards :many
 SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required, b.deleted_at
 FROM imageboard b
-WHERE b.deleted_at IS NULL
 LIMIT ? OFFSET ?
 `
 

@@ -25,8 +25,8 @@ func TestBoardPageRendersSubBoards(t *testing.T) {
 	}
 	defer conn.Close()
 
-	boardRows := sqlmock.NewRows([]string{"idimageboard", "imageboard_idimageboard", "title", "description", "approval_required"}).
-		AddRow(4, 3, "child", "sub", false)
+	boardRows := sqlmock.NewRows([]string{"idimageboard", "imageboard_idimageboard", "title", "description", "approval_required", "deleted_at"}).
+		AddRow(4, 3, "child", "sub", false, nil)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT b.idimageboard, b.imageboard_idimageboard, b.title")).
 		WithArgs(int32(0), sql.NullInt32{Int32: 3, Valid: true}, sql.NullInt32{Int32: 3, Valid: true}, sqlmock.AnyArg(), int32(200), int32(0)).
 		WillReturnRows(boardRows)

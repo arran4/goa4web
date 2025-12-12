@@ -308,6 +308,7 @@ type Imageboard struct {
 	Title                  sql.NullString
 	Description            sql.NullString
 	ApprovalRequired       bool
+	DeletedAt              sql.NullTime
 }
 
 type Imagepost struct {

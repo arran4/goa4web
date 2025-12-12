@@ -109,7 +109,7 @@ func (q *Queries) AdminGetImagePost(ctx context.Context, idimagepost int32) (*Ad
 }
 
 const adminListBoards = `-- name: AdminListBoards :many
-SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required
+SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required, b.deleted_at
 FROM imageboard b
 LIMIT ? OFFSET ?
 `
@@ -134,6 +134,7 @@ func (q *Queries) AdminListBoards(ctx context.Context, arg AdminListBoardsParams
 			&i.Title,
 			&i.Description,
 			&i.ApprovalRequired,
+			&i.DeletedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -289,7 +290,7 @@ func (q *Queries) GetAllImagePostsForIndex(ctx context.Context) ([]*GetAllImageP
 }
 
 const getImageBoardById = `-- name: GetImageBoardById :one
-SELECT idimageboard, imageboard_idimageboard, title, description, approval_required FROM imageboard WHERE idimageboard = ?
+SELECT idimageboard, imageboard_idimageboard, title, description, approval_required, deleted_at FROM imageboard WHERE idimageboard = ?
 `
 
 func (q *Queries) GetImageBoardById(ctx context.Context, idimageboard int32) (*Imageboard, error) {
@@ -301,6 +302,7 @@ func (q *Queries) GetImageBoardById(ctx context.Context, idimageboard int32) (*I
 		&i.Title,
 		&i.Description,
 		&i.ApprovalRequired,
+		&i.DeletedAt,
 	)
 	return &i, err
 }
@@ -563,7 +565,7 @@ const listBoardsByParentIDForLister = `-- name: ListBoardsByParentIDForLister :m
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required
+SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required, b.deleted_at
 FROM imageboard b
 WHERE (b.imageboard_idimageboard = ? OR (b.imageboard_idimageboard IS NULL AND ? IS NULL))
   AND b.deleted_at IS NULL
@@ -610,6 +612,7 @@ func (q *Queries) ListBoardsByParentIDForLister(ctx context.Context, arg ListBoa
 			&i.Title,
 			&i.Description,
 			&i.ApprovalRequired,
+			&i.DeletedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -628,7 +631,7 @@ const listBoardsForLister = `-- name: ListBoardsForLister :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required
+SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required, b.deleted_at
 FROM imageboard b
 WHERE b.deleted_at IS NULL AND EXISTS (
     SELECT 1 FROM grants g
@@ -670,6 +673,7 @@ func (q *Queries) ListBoardsForLister(ctx context.Context, arg ListBoardsForList
 			&i.Title,
 			&i.Description,
 			&i.ApprovalRequired,
+			&i.DeletedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -933,7 +937,7 @@ func (q *Queries) SystemAssignImagePostThreadID(ctx context.Context, arg SystemA
 }
 
 const systemListBoardsByParentID = `-- name: SystemListBoardsByParentID :many
-SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required
+SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required, b.deleted_at
 FROM imageboard b
 WHERE (b.imageboard_idimageboard = ? OR (b.imageboard_idimageboard IS NULL AND ? IS NULL))
 LIMIT ? OFFSET ?
@@ -965,6 +969,7 @@ func (q *Queries) SystemListBoardsByParentID(ctx context.Context, arg SystemList
 			&i.Title,
 			&i.Description,
 			&i.ApprovalRequired,
+			&i.DeletedAt,
 		); err != nil {
 			return nil, err
 		}

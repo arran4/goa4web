@@ -1,0 +1,21 @@
+{{ template "head" $ }}
+    [<a href="/admin">Admin:</a> <a href="/admin/news">(This page/Refresh)</a>]<br />
+    <table class="table table-bordered">
+        <tr>
+            <th>ID</th>
+            <th>User</th>
+            <th>Email</th>
+        </tr>
+        {{range $.UserRoles}}
+            <tr>
+                <td><a href="/admin/user/{{.ID}}">{{.ID}}</a></td>
+                <td>{{.Username.String}}</td>
+                <td>
+                    {{range .Emails}}
+                        {{.}}<br />
+                    {{end}}
+                </td>
+            </tr>
+        {{end}}
+    </table>
+{{ template "tail" $ }}

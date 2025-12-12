@@ -69,7 +69,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 			}
 			return loginFormHandler{msg: "No such user"}
 		}
-		return fmt.Errorf("login query fail %w", err)
+		return fmt.Errorf("LoginTask.Action: user credentials query: %w", err)
 	}
 
 	if !VerifyPassword(password, row.Passwd.String, row.PasswdAlgorithm.String) {

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/arran4/goa4web"
 	"github.com/arran4/goa4web/internal/app/server"
 
 	"github.com/arran4/goa4web/config"
@@ -35,10 +36,6 @@ import (
 // ConfigFile stores the path to the configuration file if provided on the
 // command line. It is used by admin handlers when updating settings.
 var ConfigFile string
-
-var (
-	version = "dev"
-)
 
 func init() {
 	log.SetFlags(log.Flags() | log.Lshortfile)
@@ -124,7 +121,7 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 		op(o)
 	}
 
-	log.Printf("application version %s starting", version)
+	log.Printf("application version %s starting", goa4web.Version)
 	adminhandlers.StartTime = time.Now()
 
 	store := o.Store
@@ -210,7 +207,7 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 		middleware.SecurityHeadersMiddleware,
 	).Wrap(r)
 	if cfg.CSRFEnabled {
-		handler = csrfmw.NewCSRFMiddleware(o.SessionSecret, cfg.HTTPHostname, version)(handler)
+		handler = csrfmw.NewCSRFMiddleware(o.SessionSecret, cfg.HTTPHostname, goa4web.Version)(handler)
 	}
 
 	srv.Router = handler

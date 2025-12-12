@@ -157,8 +157,8 @@ The application supports multiple email backends. Choose one by setting `EMAIL_P
   The provider is built only when the `ses` build tag is enabled.
 - `smtp`: Standard SMTP server using `SMTP_HOST`, optional `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_AUTH`, `SMTP_STARTTLS` and `SMTP_TLS`.
 - `local`: Uses the local `sendmail` binary.
-- `jmap`: Sends mail using JMAP. Requires `JMAP_ENDPOINT`, `JMAP_USER`, `JMAP_PASS`,
-  `JMAP_ACCOUNT`, and `JMAP_IDENTITY`.
+- `jmap`: Sends mail using JMAP. Requires `JMAP_ENDPOINT`, `JMAP_USER`, and `JMAP_PASS`.
+  When `JMAP_ACCOUNT` or `JMAP_IDENTITY` are omitted they are discovered from the JMAP session.
 - `sendgrid`: Uses the SendGrid API. Requires the `sendgrid` build tag and a `SENDGRID_KEY`.
 - `log`: Writes emails to the application log.
 
@@ -226,8 +226,8 @@ You can supply settings on the command line, in a config file or via environment
 | `SMTP_STARTTLS` | `--smtp-starttls` | No | `true` | Enable or disable STARTTLS. |
 | `AWS_REGION` | `--aws-region` | No | - | AWS region for the SES provider. |
 | `JMAP_ENDPOINT` | `--jmap-endpoint` | No | - | JMAP API endpoint. |
-| `JMAP_ACCOUNT` | `--jmap-account` | No | - | JMAP account identifier. |
-| `JMAP_IDENTITY` | `--jmap-identity` | No | - | JMAP identity identifier. |
+| `JMAP_ACCOUNT` | `--jmap-account` | No | - | JMAP account identifier. Defaults to the primary mail account returned by `/.well-known/jmap` when omitted. |
+| `JMAP_IDENTITY` | `--jmap-identity` | No | - | JMAP identity identifier. Defaults to the mail identity from the JMAP session when omitted. |
 | `JMAP_USER` | `--jmap-user` | No | - | Username for the JMAP provider. |
 | `JMAP_PASS` | `--jmap-pass` | No | - | Password for the JMAP provider. |
 | `CONFIG_FILE` | `--config-file` | No | - | Path to the main configuration file. |

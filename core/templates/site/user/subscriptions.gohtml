@@ -2,7 +2,7 @@
 <h2>Your Subscriptions</h2>
 <table>
 <tr><th>Pattern</th><th>Method</th><th></th></tr>
-{{ range (call cd.UserSubscriptions) }}
+{{ range cd.UserSubscriptions }}
 <tr>
 <td>{{ .Pattern }}</td>
 <td>{{ .Method }}</td>

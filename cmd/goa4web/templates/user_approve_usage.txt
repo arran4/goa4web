@@ -1,0 +1,14 @@
+Usage:
+  {{.Prog}} user approve -username <username>
+  {{.Prog}} user approve <username>
+  {{.Prog}} user approve -id <id>
+
+Description:
+  Approve a pending user account by username or ID.
+
+Examples:
+  {{.Prog}} user approve alice
+  {{.Prog}} user approve -username alice
+  {{.Prog}} user approve -id 3
+
+{{template "flag_groups_section" .FlagGroups}}

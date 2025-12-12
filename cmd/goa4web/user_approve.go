@@ -19,14 +19,28 @@ type userApproveCmd struct {
 
 func parseUserApproveCmd(parent *userCmd, args []string) (*userApproveCmd, error) {
 	c := &userApproveCmd{userCmd: parent}
-	fs, _, err := parseFlags("approve", args, func(fs *flag.FlagSet) {
-		fs.IntVar(&c.ID, "id", 0, "user id")
-		fs.StringVar(&c.Username, "username", "", "username")
-	})
-	if err != nil {
+	c.fs = newFlagSet("approve")
+	c.fs.Usage = c.Usage
+
+	c.fs.IntVar(&c.ID, "id", 0, "user id")
+	c.fs.StringVar(&c.Username, "username", "", "username")
+
+	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	c.fs = fs
+
+	switch remaining := c.fs.Args(); len(remaining) {
+	case 0:
+	case 1:
+		if c.Username == "" {
+			c.Username = remaining[0]
+		} else {
+			return nil, fmt.Errorf("unexpected arguments: %v", remaining)
+		}
+	default:
+		return nil, fmt.Errorf("unexpected arguments: %v", remaining)
+	}
+
 	return c, nil
 }
 
@@ -54,3 +68,13 @@ func (c *userApproveCmd) Run() error {
 	c.rootCmd.Infof("approved user %d", c.ID)
 	return nil
 }
+
+func (c *userApproveCmd) Usage() {
+	executeUsage(c.fs.Output(), "user_approve_usage.txt", c)
+}
+
+func (c *userApproveCmd) FlagGroups() []flagGroup {
+	return append(c.rootCmd.FlagGroups(), flagGroup{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)})
+}
+
+var _ usageData = (*userApproveCmd)(nil)

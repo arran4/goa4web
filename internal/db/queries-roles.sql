@@ -21,7 +21,7 @@ SELECT id, name, can_login, is_admin, private_labels, public_profile_allowed_at 
 
 -- name: AdminListUsersByRoleID :many
 -- admin task
-SELECT u.idusers, u.username, (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers ORDER BY ue.id LIMIT 1) AS email
+SELECT u.idusers, u.username
 FROM users u
 JOIN user_roles ur ON ur.users_idusers = u.idusers
 WHERE ur.role_id = ?

@@ -14,20 +14,15 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers/admincommon"
 	"github.com/arran4/goa4web/internal/db"
 )
 
 func AdminNewsPage(w http.ResponseWriter, r *http.Request) {
-	type RoleInfo struct {
-		ID       int32
-		Username sql.NullString
-		Email    string
-		Roles    []string
-	}
 	type Data struct {
 		Error     string
 		CanPost   bool
-		UserRoles []RoleInfo
+		UserRoles []admincommon.UserRoleInfo
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -42,29 +37,13 @@ func AdminNewsPage(w http.ResponseWriter, r *http.Request) {
 
 	data := Data{Error: r.URL.Query().Get("error"), CanPost: cd.HasGrant("news", "post", "edit", 0) && cd.AdminMode}
 	queries := cd.Queries()
-	users, err := queries.AdminListAllUsers(r.Context())
+	userRoles, err := admincommon.LoadUserRoleInfo(r.Context(), queries, nil)
 	if err == nil {
-		userMap := make(map[int32]*RoleInfo)
-		for _, u := range users {
-			userMap[u.Idusers] = &RoleInfo{ID: u.Idusers, Username: u.Username, Email: u.Email}
-		}
-		if rows, err := queries.GetUserRoles(r.Context()); err == nil {
-			for _, row := range rows {
-				u := userMap[row.UsersIdusers]
-				if u == nil {
-					u = &RoleInfo{ID: row.UsersIdusers, Username: row.Username, Email: row.Email}
-					userMap[row.UsersIdusers] = u
-				}
-				u.Roles = append(u.Roles, row.Role)
-			}
-		}
-		for _, u := range userMap {
-			data.UserRoles = append(data.UserRoles, *u)
-		}
-		sort.Slice(data.UserRoles, func(i, j int) bool {
-			return data.UserRoles[i].Username.String < data.UserRoles[j].Username.String
-		})
+		data.UserRoles = userRoles
 	}
+	sort.Slice(data.UserRoles, func(i, j int) bool {
+		return data.UserRoles[i].Username.String < data.UserRoles[j].Username.String
+	})
 
 	if err := cd.ExecuteSiteTemplate(w, r, "adminNewsListPage.gohtml", data); err != nil {
 		handlers.RenderErrorPage(w, r, err)

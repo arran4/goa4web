@@ -12,7 +12,7 @@
     <tr>
         <td>{{ .ID }}</td>
         <td>{{ .Username.String }}</td>
-        <td>{{ .Email }}</td>
+        <td>{{ if .Email }}{{ range $i, $e := .Email }}{{ if $i }}, {{ end }}{{ $e }}{{ end }}{{ else }}None{{ end }}</td>
         <td>{{- if .Roles }}{{ range $i, $r := .Roles }}{{ if $i }}, {{ end }}{{ $r.Name }}{{ end }}{{ else }}None{{ end }}</td>
     </tr>
     {{- end }}

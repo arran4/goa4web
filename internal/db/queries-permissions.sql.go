@@ -190,8 +190,7 @@ func (q *Queries) GetPermissionsByUserID(ctx context.Context, usersIdusers int32
 }
 
 const getPermissionsWithUsers = `-- name: GetPermissionsWithUsers :many
-SELECT ur.iduser_roles, ur.users_idusers, r.name, u.username,
-       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers ORDER BY ue.id LIMIT 1) AS email
+SELECT ur.iduser_roles, ur.users_idusers, r.name, u.username
 FROM user_roles ur
 JOIN users u ON u.idusers = ur.users_idusers
 JOIN roles r ON ur.role_id = r.id
@@ -207,7 +206,6 @@ type GetPermissionsWithUsersRow struct {
 	UsersIdusers int32
 	Name         string
 	Username     sql.NullString
-	Email        string
 }
 
 func (q *Queries) GetPermissionsWithUsers(ctx context.Context, arg GetPermissionsWithUsersParams) ([]*GetPermissionsWithUsersRow, error) {
@@ -224,7 +222,6 @@ func (q *Queries) GetPermissionsWithUsers(ctx context.Context, arg GetPermission
 			&i.UsersIdusers,
 			&i.Name,
 			&i.Username,
-			&i.Email,
 		); err != nil {
 			return nil, err
 		}
@@ -275,11 +272,11 @@ func (q *Queries) GetUserRole(ctx context.Context, usersIdusers int32) (string, 
 
 const getUserRoles = `-- name: GetUserRoles :many
 SELECT ur.iduser_roles, ur.users_idusers, r.name AS role,
-       u.username,
-       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers ORDER BY ue.id LIMIT 1) AS email
+       u.username
 FROM user_roles ur
 JOIN users u ON u.idusers = ur.users_idusers
 JOIN roles r ON ur.role_id = r.id
+ORDER BY ur.users_idusers
 `
 
 type GetUserRolesRow struct {
@@ -287,7 +284,6 @@ type GetUserRolesRow struct {
 	UsersIdusers int32
 	Role         string
 	Username     sql.NullString
-	Email        string
 }
 
 // This query selects permissions information for admin users.
@@ -295,7 +291,6 @@ type GetUserRolesRow struct {
 //	iduser_roles (int)
 //	role (string)
 //	username (string)
-//	email (string)
 func (q *Queries) GetUserRoles(ctx context.Context) ([]*GetUserRolesRow, error) {
 	rows, err := q.db.QueryContext(ctx, getUserRoles)
 	if err != nil {
@@ -310,8 +305,43 @@ func (q *Queries) GetUserRoles(ctx context.Context) ([]*GetUserRolesRow, error) 
 			&i.UsersIdusers,
 			&i.Role,
 			&i.Username,
-			&i.Email,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getVerifiedUserEmails = `-- name: GetVerifiedUserEmails :many
+SELECT ue.user_id, ue.email
+FROM user_emails ue
+WHERE ue.verified_at IS NOT NULL
+ORDER BY ue.user_id, ue.notification_priority DESC, ue.id
+`
+
+type GetVerifiedUserEmailsRow struct {
+	UserID int32
+	Email  string
+}
+
+// Fetch verified (active) email addresses ordered by notification priority.
+func (q *Queries) GetVerifiedUserEmails(ctx context.Context) ([]*GetVerifiedUserEmailsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getVerifiedUserEmails)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetVerifiedUserEmailsRow
+	for rows.Next() {
+		var i GetVerifiedUserEmailsRow
+		if err := rows.Scan(&i.UserID, &i.Email); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)

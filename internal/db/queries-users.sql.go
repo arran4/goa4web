@@ -79,25 +79,23 @@ func (q *Queries) AdminListAllUserIDs(ctx context.Context) ([]int32, error) {
 }
 
 const adminListAllUsers = `-- name: AdminListAllUsers :many
-SELECT u.idusers, u.username,
-       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email
+SELECT DISTINCT u.idusers, u.username
 FROM users u
 JOIN user_roles ur ON ur.users_idusers = u.idusers
 JOIN roles r ON ur.role_id = r.id
 WHERE r.is_admin = 1
+ORDER BY u.username
 `
 
 type AdminListAllUsersRow struct {
 	Idusers  int32
 	Username sql.NullString
-	Email    string
 }
 
 // Result:
 //
 //	idusers (int)
 //	username (string)
-//	email (string)
 func (q *Queries) AdminListAllUsers(ctx context.Context) ([]*AdminListAllUsersRow, error) {
 	rows, err := q.db.QueryContext(ctx, adminListAllUsers)
 	if err != nil {
@@ -107,7 +105,7 @@ func (q *Queries) AdminListAllUsers(ctx context.Context) ([]*AdminListAllUsersRo
 	var items []*AdminListAllUsersRow
 	for rows.Next() {
 		var i AdminListAllUsersRow
-		if err := rows.Scan(&i.Idusers, &i.Username, &i.Email); err != nil {
+		if err := rows.Scan(&i.Idusers, &i.Username); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)

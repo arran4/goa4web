@@ -13,14 +13,19 @@ LIMIT 1;
 --   iduser_roles (int)
 --   role (string)
 --   username (string)
---   email (string)
 SELECT ur.iduser_roles, ur.users_idusers, r.name AS role,
-       u.username,
-       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers ORDER BY ue.id LIMIT 1) AS email
+       u.username
 FROM user_roles ur
 JOIN users u ON u.idusers = ur.users_idusers
 JOIN roles r ON ur.role_id = r.id
-;
+ORDER BY ur.users_idusers;
+
+-- Fetch verified (active) email addresses ordered by notification priority.
+-- name: GetVerifiedUserEmails :many
+SELECT ue.user_id, ue.email
+FROM user_emails ue
+WHERE ue.verified_at IS NOT NULL
+ORDER BY ue.user_id, ue.notification_priority DESC, ue.id;
 
 -- name: SystemCreateUserRole :exec
 -- This query inserts a new permission into the "permissions" table.
@@ -127,8 +132,7 @@ JOIN roles r ON ur.role_id = r.id
 WHERE ur.users_idusers = ?;
 
 -- name: GetPermissionsWithUsers :many
-SELECT ur.iduser_roles, ur.users_idusers, r.name, u.username,
-       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers ORDER BY ue.id LIMIT 1) AS email
+SELECT ur.iduser_roles, ur.users_idusers, r.name, u.username
 FROM user_roles ur
 JOIN users u ON u.idusers = ur.users_idusers
 JOIN roles r ON ur.role_id = r.id

@@ -26,11 +26,21 @@ func parseUserMakeAdminCmd(parent *userCmd, args []string) (*userMakeAdminCmd, e
 		return nil, err
 	}
 	c.fs = fs
+	args = fs.Args()
+	if c.Username == "" && len(args) > 0 {
+		c.Username = args[0]
+		args = args[1:]
+	}
+	if len(args) > 0 {
+		fs.Usage()
+		return nil, fmt.Errorf("too many arguments")
+	}
 	return c, nil
 }
 
 func (c *userMakeAdminCmd) Run() error {
 	if c.Username == "" {
+		c.fs.Usage()
 		return fmt.Errorf("username required")
 	}
 	conn, err := c.rootCmd.DB()

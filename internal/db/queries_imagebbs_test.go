@@ -18,7 +18,7 @@ func TestQueries_ListBoardsByParentIDForLister(t *testing.T) {
 	defer conn.Close()
 	q := New(conn)
 
-	rows := sqlmock.NewRows([]string{"idimageboard", "imageboard_idimageboard", "title", "description", "approval_required"}).AddRow(1, nil, nil, nil, 0)
+	rows := sqlmock.NewRows([]string{"idimageboard", "imageboard_idimageboard", "title", "description", "approval_required", "deleted_at"}).AddRow(1, nil, nil, nil, 0, nil)
 	viewer := sql.NullInt32{}
 	mock.ExpectQuery(regexp.QuoteMeta(listBoardsByParentIDForLister)).
 		WithArgs(int32(1), sql.NullInt32{}, sql.NullInt32{}, viewer, int32(5), int32(0)).

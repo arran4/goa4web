@@ -43,6 +43,13 @@ func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) an
 	if cpu.Idusers != 0 {
 		back = fmt.Sprintf("/admin/user/%d/permissions", cpu.Idusers)
 	}
+	if evt := cd.Event(); evt != nil {
+		if evt.Data == nil {
+			evt.Data = map[string]any{}
+		}
+		evt.Data["Username"] = username
+		evt.Data["Permission"] = role
+	}
 	data := struct {
 		Errors   []string
 		Messages []string
@@ -61,8 +68,6 @@ func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) an
 		if evt.Data == nil {
 			evt.Data = map[string]any{}
 		}
-		evt.Data["Username"] = username
-		evt.Data["Permission"] = role
 		evt.Data["targetUserID"] = u.Idusers
 		evt.Data["Username"] = u.Username.String
 		evt.Data["Role"] = role

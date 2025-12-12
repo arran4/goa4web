@@ -21,11 +21,13 @@ func (q *Queries) AdminDeleteUserByID(ctx context.Context, idusers int32) error 
 }
 
 const adminListAdministratorEmails = `-- name: AdminListAdministratorEmails :many
-SELECT (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email
+SELECT ue.email
 FROM users u
 JOIN user_roles ur ON ur.users_idusers = u.idusers
 JOIN roles r ON ur.role_id = r.id
+JOIN user_emails ue ON ue.user_id = u.idusers AND ue.verified_at IS NOT NULL
 WHERE r.is_admin = 1
+ORDER BY u.idusers, ue.notification_priority DESC, ue.id
 `
 
 func (q *Queries) AdminListAdministratorEmails(ctx context.Context) ([]string, error) {
@@ -120,8 +122,7 @@ func (q *Queries) AdminListAllUsers(ctx context.Context) ([]*AdminListAllUsersRo
 }
 
 const adminListPendingUsers = `-- name: AdminListPendingUsers :many
-SELECT u.idusers, u.username,
-       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email
+SELECT u.idusers, u.username
 FROM users u
 WHERE NOT EXISTS (
     SELECT 1 FROM user_roles ur
@@ -134,7 +135,6 @@ ORDER BY u.idusers
 type AdminListPendingUsersRow struct {
 	Idusers  int32
 	Username sql.NullString
-	Email    string
 }
 
 func (q *Queries) AdminListPendingUsers(ctx context.Context) ([]*AdminListPendingUsersRow, error) {
@@ -146,7 +146,7 @@ func (q *Queries) AdminListPendingUsers(ctx context.Context) ([]*AdminListPendin
 	var items []*AdminListPendingUsersRow
 	for rows.Next() {
 		var i AdminListPendingUsersRow
-		if err := rows.Scan(&i.Idusers, &i.Username, &i.Email); err != nil {
+		if err := rows.Scan(&i.Idusers, &i.Username); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -266,7 +266,6 @@ func (q *Queries) AdminUpdateUsernameByID(ctx context.Context, arg AdminUpdateUs
 
 const systemGetLogin = `-- name: SystemGetLogin :one
 SELECT u.idusers,
-       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
        p.passwd, p.passwd_algorithm, u.username
 FROM users u LEFT JOIN passwords p ON p.users_idusers = u.idusers
 WHERE u.username = ?
@@ -276,7 +275,6 @@ LIMIT 1
 
 type SystemGetLoginRow struct {
 	Idusers         int32
-	Email           string
 	Passwd          sql.NullString
 	PasswdAlgorithm sql.NullString
 	Username        sql.NullString
@@ -287,7 +285,6 @@ func (q *Queries) SystemGetLogin(ctx context.Context, username sql.NullString) (
 	var i SystemGetLoginRow
 	err := row.Scan(
 		&i.Idusers,
-		&i.Email,
 		&i.Passwd,
 		&i.PasswdAlgorithm,
 		&i.Username,
@@ -347,7 +344,6 @@ func (q *Queries) SystemGetUserByID(ctx context.Context, idusers int32) (*System
 
 const systemGetUserByUsername = `-- name: SystemGetUserByUsername :one
 SELECT idusers,
-       (SELECT email FROM user_emails ue WHERE ue.user_id = users.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
        username,
        public_profile_enabled_at
 FROM users
@@ -356,7 +352,6 @@ WHERE username = ?
 
 type SystemGetUserByUsernameRow struct {
 	Idusers                int32
-	Email                  string
 	Username               sql.NullString
 	PublicProfileEnabledAt sql.NullTime
 }
@@ -364,12 +359,7 @@ type SystemGetUserByUsernameRow struct {
 func (q *Queries) SystemGetUserByUsername(ctx context.Context, username sql.NullString) (*SystemGetUserByUsernameRow, error) {
 	row := q.db.QueryRowContext(ctx, systemGetUserByUsername, username)
 	var i SystemGetUserByUsernameRow
-	err := row.Scan(
-		&i.Idusers,
-		&i.Email,
-		&i.Username,
-		&i.PublicProfileEnabledAt,
-	)
+	err := row.Scan(&i.Idusers, &i.Username, &i.PublicProfileEnabledAt)
 	return &i, err
 }
 
@@ -388,7 +378,6 @@ func (q *Queries) SystemInsertUser(ctx context.Context, username sql.NullString)
 
 const systemListAllUsers = `-- name: SystemListAllUsers :many
 SELECT u.idusers, u.username,
-       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
        IF(r.id IS NULL, 0, 1) AS admin,
        MIN(s.created_at) AS created_at
 FROM users u
@@ -402,7 +391,6 @@ ORDER BY u.idusers
 type SystemListAllUsersRow struct {
 	Idusers   int32
 	Username  sql.NullString
-	Email     string
 	Admin     interface{}
 	CreatedAt interface{}
 }
@@ -419,7 +407,6 @@ func (q *Queries) SystemListAllUsers(ctx context.Context) ([]*SystemListAllUsers
 		if err := rows.Scan(
 			&i.Idusers,
 			&i.Username,
-			&i.Email,
 			&i.Admin,
 			&i.CreatedAt,
 		); err != nil {

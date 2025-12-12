@@ -530,7 +530,6 @@ func (q *Queries) SystemGetTemplateOverride(ctx context.Context, name string) (s
 
 const systemListUserInfo = `-- name: SystemListUserInfo :many
 SELECT u.idusers, u.username,
-       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
        IF(r.id IS NULL, 0, 1) AS admin,
        MIN(s.created_at) AS created_at
 FROM users u
@@ -544,7 +543,6 @@ ORDER BY u.idusers
 type SystemListUserInfoRow struct {
 	Idusers   int32
 	Username  sql.NullString
-	Email     string
 	Admin     interface{}
 	CreatedAt interface{}
 }
@@ -561,7 +559,6 @@ func (q *Queries) SystemListUserInfo(ctx context.Context) ([]*SystemListUserInfo
 		if err := rows.Scan(
 			&i.Idusers,
 			&i.Username,
-			&i.Email,
 			&i.Admin,
 			&i.CreatedAt,
 		); err != nil {

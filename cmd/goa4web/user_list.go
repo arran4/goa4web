@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/arran4/goa4web/internal/db"
@@ -46,14 +47,21 @@ func (c *userListCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("list users: %w", err)
 	}
+	emailRows, err := queries.GetVerifiedUserEmails(ctx)
+	if err != nil {
+		return fmt.Errorf("list user emails: %w", err)
+	}
+	emailsByUser := db.EmailsByUserID(emailRows)
 
 	if c.jsonOut {
 		out := make([]map[string]interface{}, 0, len(rows))
 		for _, u := range rows {
+			userEmails := emailsByUser[u.Idusers]
 			item := map[string]interface{}{
 				"id":       u.Idusers,
 				"username": u.Username.String,
-				"email":    u.Email,
+				"email":    db.PrimaryEmail(userEmails),
+				"emails":   userEmails,
 			}
 			if c.showAdmin || c.jsonOut {
 				item["admin"] = u.Admin
@@ -71,7 +79,8 @@ func (c *userListCmd) Run() error {
 	}
 
 	for _, u := range rows {
-		fmt.Printf("%d\t%s\t%s", u.Idusers, u.Username.String, u.Email)
+		userEmails := emailsByUser[u.Idusers]
+		fmt.Printf("%d\t%s\t%s", u.Idusers, u.Username.String, strings.Join(userEmails, ","))
 		if c.showAdmin {
 			fmt.Printf("\t%t", u.Admin)
 		}

@@ -58,9 +58,9 @@ func TestBlogsBloggerPostsPage(t *testing.T) {
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
-	userRows := sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).
-		AddRow(1, "e", "bob", nil)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT idusers, (SELECT email FROM user_emails ue WHERE ue.user_id = users.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email, username, public_profile_enabled_at\nFROM users\nWHERE username = ?")).
+	userRows := sqlmock.NewRows([]string{"idusers", "username", "public_profile_enabled_at"}).
+		AddRow(1, "bob", nil)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT idusers, username, public_profile_enabled_at\nFROM users\nWHERE username = ?")).
 		WithArgs(sqlmock.AnyArg()).
 		WillReturnRows(userRows)
 
@@ -90,10 +90,10 @@ func TestBlogsRssPageWritesRSS(t *testing.T) {
 	}
 	defer conn.Close()
 
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT idusers, (SELECT email FROM user_emails ue WHERE ue.user_id = users.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email, username, public_profile_enabled_at\nFROM users\nWHERE username = ?")).
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT idusers, username, public_profile_enabled_at\nFROM users\nWHERE username = ?")).
 		WithArgs("bob").
-		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).
-			AddRow(1, "e", "bob", nil))
+		WillReturnRows(sqlmock.NewRows([]string{"idusers", "username", "public_profile_enabled_at"}).
+			AddRow(1, "bob", nil))
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT b.idblogs")).
 		WithArgs(int32(1), int32(1), int32(1), int32(1), int32(1), int32(1), sqlmock.AnyArg(), int32(15), int32(0)).

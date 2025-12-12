@@ -39,13 +39,33 @@ func (cd *CoreData) UserCredentials(username string) (*db.SystemGetLoginRow, err
 	return cd.queries.SystemGetLogin(cd.ctx, sql.NullString{String: username, Valid: true})
 }
 
+// VerifiedEmailsForUser returns all verified email addresses ordered by notification priority.
+func (cd *CoreData) VerifiedEmailsForUser(userID int32) ([]string, error) {
+	if cd.queries == nil {
+		return nil, nil
+	}
+	rows, err := cd.queries.SystemListVerifiedEmailsByUserID(cd.ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	emails := make([]string, 0, len(rows))
+	for _, row := range rows {
+		emails = append(emails, row.Email)
+	}
+	return emails, nil
+}
+
 // AssociateEmail creates an email association request for a user.
 func (cd *CoreData) AssociateEmail(p AssociateEmailParams) (*db.SystemGetUserByUsernameRow, int64, error) {
 	row, err := cd.queries.SystemGetUserByUsername(cd.ctx, sql.NullString{String: p.Username, Valid: true})
 	if err != nil {
 		return nil, 0, fmt.Errorf("CoreData.AssociateEmail: user not found %w", err)
 	}
-	if row.Email != "" {
+	verifiedEmails, err := cd.VerifiedEmailsForUser(row.Idusers)
+	if err != nil {
+		return nil, 0, fmt.Errorf("CoreData.AssociateEmail: list verified emails %w", err)
+	}
+	if len(verifiedEmails) > 0 {
 		return nil, 0, ErrEmailAlreadyAssociated
 	}
 	res, err := cd.queries.AdminInsertRequestQueue(cd.ctx, db.AdminInsertRequestQueueParams{

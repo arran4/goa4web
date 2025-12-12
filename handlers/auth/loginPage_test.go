@@ -41,6 +41,7 @@ func TestLoginAction_NoSuchUser(t *testing.T) {
 	defer conn.Close()
 
 	queries := db.New(conn)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM login_attempts")).WithArgs("bob", "1.2.3.4", sqlmock.AnyArg()).WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers,")).WithArgs(sql.NullString{String: "bob", Valid: true}).WillReturnError(sql.ErrNoRows)
 	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO login_attempts (username, ip_address) VALUES (?, ?)")).WithArgs("bob", "1.2.3.4").WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -76,8 +77,9 @@ func TestLoginAction_InvalidPassword(t *testing.T) {
 	defer conn.Close()
 
 	queries := db.New(conn)
-	rows := sqlmock.NewRows([]string{"idusers", "email", "passwd", "passwd_algorithm", "username"}).
-		AddRow(1, "e", "7c4f29407893c334a6cb7a87bf045c0d", "md5", "bob")
+	rows := sqlmock.NewRows([]string{"idusers", "passwd", "passwd_algorithm", "username"}).
+		AddRow(1, "7c4f29407893c334a6cb7a87bf045c0d", "md5", "bob")
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM login_attempts")).WithArgs("bob", "1.2.3.4", sqlmock.AnyArg()).WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers,")).WithArgs(sql.NullString{String: "bob", Valid: true}).WillReturnRows(rows)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, user_id, passwd")).WithArgs(int32(1), sqlmock.AnyArg()).WillReturnError(sql.ErrNoRows)
 	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO login_attempts (username, ip_address) VALUES (?, ?)")).WithArgs("bob", "1.2.3.4").WillReturnResult(sqlmock.NewResult(1, 1))
@@ -114,8 +116,9 @@ func TestLoginAction_InvalidPasswordPreservesBackData(t *testing.T) {
 	defer conn.Close()
 
 	queries := db.New(conn)
-	rows := sqlmock.NewRows([]string{"idusers", "email", "passwd", "passwd_algorithm", "username"}).
-		AddRow(1, "e", "7c4f29407893c334a6cb7a87bf045c0d", "md5", "bob")
+	rows := sqlmock.NewRows([]string{"idusers", "passwd", "passwd_algorithm", "username"}).
+		AddRow(1, "7c4f29407893c334a6cb7a87bf045c0d", "md5", "bob")
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM login_attempts")).WithArgs("bob", "1.2.3.4", sqlmock.AnyArg()).WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers,")).WithArgs(sql.NullString{String: "bob", Valid: true}).WillReturnRows(rows)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, user_id, passwd")).WithArgs(int32(1), sqlmock.AnyArg()).WillReturnError(sql.ErrNoRows)
 	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO login_attempts (username, ip_address) VALUES (?, ?)")).WithArgs("bob", "1.2.3.4").WillReturnResult(sqlmock.NewResult(1, 1))
@@ -210,8 +213,9 @@ func TestLoginAction_PendingResetPrompt(t *testing.T) {
 
 	q := db.New(conn)
 	pwHash, alg, _ := HashPassword("newpw")
-	userRows := sqlmock.NewRows([]string{"idusers", "email", "passwd", "passwd_algorithm", "username"}).
-		AddRow(1, "e", "oldhash", "md5", "bob")
+	userRows := sqlmock.NewRows([]string{"idusers", "passwd", "passwd_algorithm", "username"}).
+		AddRow(1, "oldhash", "md5", "bob")
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM login_attempts")).WithArgs("bob", "1.2.3.4", sqlmock.AnyArg()).WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers,")).WithArgs(sql.NullString{String: "bob", Valid: true}).WillReturnRows(userRows)
 	resetRows := sqlmock.NewRows([]string{"id", "user_id", "passwd", "passwd_algorithm", "verification_code", "created_at", "verified_at"}).
 		AddRow(2, 1, pwHash, alg, "code", time.Now(), nil)
@@ -352,8 +356,9 @@ func TestLoginAction_ExternalBackURLIgnored(t *testing.T) {
 	core.Store = store
 	core.SessionName = "test-session"
 	pwHash, alg, _ := HashPassword("pw")
-	userRows := sqlmock.NewRows([]string{"idusers", "email", "passwd", "passwd_algorithm", "username"}).
-		AddRow(1, "e", pwHash, alg, "bob")
+	userRows := sqlmock.NewRows([]string{"idusers", "passwd", "passwd_algorithm", "username"}).
+		AddRow(1, pwHash, alg, "bob")
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM login_attempts")).WithArgs("bob", sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers,")).WithArgs(sql.NullString{String: "bob", Valid: true}).WillReturnRows(userRows)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT 1")).WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
@@ -387,6 +392,7 @@ func TestLoginAction_SignedExternalBackURL(t *testing.T) {
 	defer conn.Close()
 
 	cfg := config.NewRuntimeConfig()
+	cfg.LoginAttemptThreshold = 10
 	q := db.New(conn)
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
@@ -395,8 +401,8 @@ func TestLoginAction_SignedExternalBackURL(t *testing.T) {
 		WithArgs("bob", "1.2.3.4", sqlmock.AnyArg()).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
 	pwHash, alg, _ := HashPassword("pw")
-	userRows := sqlmock.NewRows([]string{"idusers", "email", "passwd", "passwd_algorithm", "username"}).
-		AddRow(1, "e", pwHash, alg, "bob")
+	userRows := sqlmock.NewRows([]string{"idusers", "passwd", "passwd_algorithm", "username"}).
+		AddRow(1, pwHash, alg, "bob")
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers,")).WithArgs(sql.NullString{String: "bob", Valid: true}).WillReturnRows(userRows)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT 1")).WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 

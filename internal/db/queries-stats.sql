@@ -89,7 +89,6 @@ DELETE FROM template_overrides WHERE name = ?;
 
 -- name: SystemListUserInfo :many
 SELECT u.idusers, u.username,
-       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
        IF(r.id IS NULL, 0, 1) AS admin,
        MIN(s.created_at) AS created_at
 FROM users u

@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
@@ -26,7 +27,8 @@ func TestForgotPasswordEventData(t *testing.T) {
 	}
 	defer conn.Close()
 	q := db.New(conn)
-	mock.ExpectQuery("SystemGetLogin").WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "passwd", "passwd_algorithm", "username"}).AddRow(1, "a@test.com", "", "", "u"))
+	mock.ExpectQuery("SystemGetLogin").WillReturnRows(sqlmock.NewRows([]string{"idusers", "passwd", "passwd_algorithm", "username"}).AddRow(1, "", "", "u"))
+	mock.ExpectQuery("SystemListVerifiedEmailsByUserID").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).AddRow(1, 1, "a@test.com", time.Now(), nil, nil, 0))
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT 1 FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.users_idusers = ? AND r.can_login = 1 LIMIT 1")).WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"column_1"}).AddRow(1))
 	mock.ExpectQuery("SystemGetUserByEmail").WithArgs("a@test.com").WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "a@test.com", "u"))
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, user_id, passwd")).WithArgs(int32(1), sqlmock.AnyArg()).WillReturnError(sql.ErrNoRows)

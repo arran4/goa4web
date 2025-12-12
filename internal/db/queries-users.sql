@@ -11,7 +11,6 @@ ORDER BY u.username;
 
 -- name: SystemGetUserByUsername :one
 SELECT idusers,
-       (SELECT email FROM user_emails ue WHERE ue.user_id = users.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
        username,
        public_profile_enabled_at
 FROM users
@@ -19,7 +18,6 @@ WHERE username = ?;
 
 -- name: SystemGetLogin :one
 SELECT u.idusers,
-       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
        p.passwd, p.passwd_algorithm, u.username
 FROM users u LEFT JOIN passwords p ON p.users_idusers = u.idusers
 WHERE u.username = ?
@@ -48,7 +46,6 @@ VALUES (?);
 
 -- name: SystemListAllUsers :many
 SELECT u.idusers, u.username,
-       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,
        IF(r.id IS NULL, 0, 1) AS admin,
        MIN(s.created_at) AS created_at
 FROM users u
@@ -59,18 +56,19 @@ GROUP BY u.idusers
 ORDER BY u.idusers;
 
 -- name: AdminListAdministratorEmails :many
-SELECT (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email
+SELECT ue.email
 FROM users u
 JOIN user_roles ur ON ur.users_idusers = u.idusers
 JOIN roles r ON ur.role_id = r.id
-WHERE r.is_admin = 1;
+JOIN user_emails ue ON ue.user_id = u.idusers AND ue.verified_at IS NOT NULL
+WHERE r.is_admin = 1
+ORDER BY u.idusers, ue.notification_priority DESC, ue.id;
 
 -- name: AdminUpdateUserEmail :exec
 UPDATE user_emails SET email = ? WHERE user_id = ?;
 
 -- name: AdminListPendingUsers :many
-SELECT u.idusers, u.username,
-       (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email
+SELECT u.idusers, u.username
 FROM users u
 WHERE NOT EXISTS (
     SELECT 1 FROM user_roles ur

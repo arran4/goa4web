@@ -27,8 +27,8 @@ func TestUserApproveCmd(t *testing.T) {
 			setupMocks: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery("(?s).*SystemGetUserByUsername.*").
 					WithArgs(sql.NullString{String: "alice", Valid: true}).
-					WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(
-						int32(7), "alice@example.com", sql.NullString{String: "alice", Valid: true}, sql.NullTime{},
+					WillReturnRows(sqlmock.NewRows([]string{"idusers", "username", "public_profile_enabled_at"}).AddRow(
+						int32(7), sql.NullString{String: "alice", Valid: true}, sql.NullTime{},
 					))
 				mock.ExpectExec("(?s).*SystemCreateUserRole.*").
 					WithArgs(int32(7), "user").

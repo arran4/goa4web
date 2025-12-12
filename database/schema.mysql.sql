@@ -350,7 +350,7 @@ CREATE TABLE `passwords` (
 CREATE TABLE `user_emails` (
   `id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
-  `email` tinytext NOT NULL,
+  `email` tinytext NOT NULL DEFAULT '',
   `verified_at` datetime DEFAULT NULL,
   `last_verification_code` varchar(64) DEFAULT NULL,
   `verification_expires_at` datetime DEFAULT NULL,
@@ -716,5 +716,6 @@ CREATE TABLE `content_read_markers` (
 );
 
 -- Set the schema version to the latest migration.
-INSERT INTO `schema_version` (`version`) VALUES (69)
+INSERT INTO `schema_version` (`version`) VALUES (70)
 ON DUPLICATE KEY UPDATE version = VALUES(version);
+

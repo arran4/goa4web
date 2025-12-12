@@ -5,12 +5,24 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 )
+
+type roleUser struct {
+	ID     int32
+	Email  []string
+	User   sql.NullString
+	UserID int32
+}
+
+func (ru *roleUser) EmailList() string {
+	return strings.Join(ru.Email, ", ")
+}
 
 // adminRolePage shows details for a role including grants and users.
 func adminRolePage(w http.ResponseWriter, r *http.Request) {
@@ -25,10 +37,28 @@ func adminRolePage(w http.ResponseWriter, r *http.Request) {
 	cd.PageTitle = fmt.Sprintf("Role: %s", role.Name)
 
 	id := cd.SelectedRoleID()
+	emailRows, err := queries.GetVerifiedUserEmails(r.Context())
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		return
+	}
+	emailsByUser := make(map[int32][]string)
+	for _, row := range emailRows {
+		emailsByUser[row.UserID] = append(emailsByUser[row.UserID], row.Email)
+	}
+
 	users, err := queries.AdminListUsersByRoleID(r.Context(), id)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
+	}
+	roleUsers := make([]*roleUser, 0, len(users))
+	for _, u := range users {
+		ru := &roleUser{ID: u.Idusers, User: u.Username, UserID: u.Idusers}
+		if emails, ok := emailsByUser[u.Idusers]; ok {
+			ru.Email = emails
+		}
+		roleUsers = append(roleUsers, ru)
 	}
 
 	groups, err := buildGrantGroups(r.Context(), cd, id)
@@ -39,11 +69,11 @@ func adminRolePage(w http.ResponseWriter, r *http.Request) {
 
 	data := struct {
 		Role        *db.Role
-		Users       []*db.AdminListUsersByRoleIDRow
+		Users       []*roleUser
 		GrantGroups []GrantGroup
 	}{
 		Role:        role,
-		Users:       users,
+		Users:       roleUsers,
 		GrantGroups: groups,
 	}
 

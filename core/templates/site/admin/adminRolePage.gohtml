@@ -13,7 +13,7 @@
 <ul>
     {{- if .Users }}
         {{- range .Users }}
-        <li><a href="/admin/user/{{ .Idusers }}">{{ .Username.String }}</a> ({{ .Email }})</li>
+        <li><a href="/admin/user/{{ .ID }}">{{ .User.String }}</a> ({{ if .EmailList }}{{ .EmailList }}{{ else }}No email{{ end }})</li>
         {{- end }}
     {{- else }}
         <li>No users</li>

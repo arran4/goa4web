@@ -146,7 +146,7 @@ func (q *Queries) AdminListRolesWithUsers(ctx context.Context) ([]*AdminListRole
 }
 
 const adminListUsersByRoleID = `-- name: AdminListUsersByRoleID :many
-SELECT u.idusers, u.username, (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers ORDER BY ue.id LIMIT 1) AS email
+SELECT u.idusers, u.username
 FROM users u
 JOIN user_roles ur ON ur.users_idusers = u.idusers
 WHERE ur.role_id = ?
@@ -156,7 +156,6 @@ ORDER BY u.username
 type AdminListUsersByRoleIDRow struct {
 	Idusers  int32
 	Username sql.NullString
-	Email    string
 }
 
 // admin task
@@ -169,7 +168,7 @@ func (q *Queries) AdminListUsersByRoleID(ctx context.Context, roleID int32) ([]*
 	var items []*AdminListUsersByRoleIDRow
 	for rows.Next() {
 		var i AdminListUsersByRoleIDRow
-		if err := rows.Scan(&i.Idusers, &i.Username, &i.Email); err != nil {
+		if err := rows.Scan(&i.Idusers, &i.Username); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)

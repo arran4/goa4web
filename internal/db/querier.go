@@ -121,7 +121,6 @@ type Querier interface {
 	// Result:
 	//   idusers (int)
 	//   username (string)
-	//   email (string)
 	AdminListAllUsers(ctx context.Context) ([]*AdminListAllUsersRow, error)
 	// admin task
 	AdminListAnnouncementsWithNews(ctx context.Context) ([]*AdminListAnnouncementsWithNewsRow, error)
@@ -343,8 +342,9 @@ type Querier interface {
 	//   iduser_roles (int)
 	//   role (string)
 	//   username (string)
-	//   email (string)
 	GetUserRoles(ctx context.Context) ([]*GetUserRolesRow, error)
+	// Fetch verified (active) email addresses ordered by notification priority.
+	GetVerifiedUserEmails(ctx context.Context) ([]*GetVerifiedUserEmailsRow, error)
 	GetWritingCategoryById(ctx context.Context, idwritingcategory int32) (*WritingCategory, error)
 	GetWritingForListerByID(ctx context.Context, arg GetWritingForListerByIDParams) (*GetWritingForListerByIDRow, error)
 	InsertAdminUserComment(ctx context.Context, arg InsertAdminUserCommentParams) error

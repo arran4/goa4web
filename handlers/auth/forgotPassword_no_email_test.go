@@ -24,7 +24,8 @@ func TestForgotPasswordNoEmail(t *testing.T) {
 	}
 	defer conn.Close()
 	q := db.New(conn)
-	mock.ExpectQuery("SystemGetLogin").WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "passwd", "passwd_algorithm", "username"}).AddRow(1, "", "", "", "u"))
+	mock.ExpectQuery("SystemGetLogin").WillReturnRows(sqlmock.NewRows([]string{"idusers", "passwd", "passwd_algorithm", "username"}).AddRow(1, "", "", "u"))
+	mock.ExpectQuery("SystemListVerifiedEmailsByUserID").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}))
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT 1 FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.users_idusers = ? AND r.can_login = 1 LIMIT 1")).WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"column_1"}).AddRow(1))
 
 	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
@@ -52,7 +53,8 @@ func TestEmailAssociationRequestTask(t *testing.T) {
 	}
 	defer conn.Close()
 	q := db.New(conn)
-	mock.ExpectQuery("SystemGetUserByUsername").WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(1, "", "u", nil))
+	mock.ExpectQuery("SystemGetUserByUsername").WillReturnRows(sqlmock.NewRows([]string{"idusers", "username", "public_profile_enabled_at"}).AddRow(1, "u", nil))
+	mock.ExpectQuery("SystemListVerifiedEmailsByUserID").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}))
 	mock.ExpectExec("INSERT INTO admin_request_queue").WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectExec("INSERT INTO admin_request_comments").WillReturnResult(sqlmock.NewResult(1, 1))
 

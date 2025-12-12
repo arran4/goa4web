@@ -43,13 +43,17 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil {
 		return fmt.Errorf("user not found %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
+	verifiedEmails, err := cd.VerifiedEmailsForUser(row.Idusers)
+	if err != nil {
+		return fmt.Errorf("user email list %w", err)
+	}
 	if _, err := queries.GetLoginRoleForUser(r.Context(), row.Idusers); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return handlers.ErrRedirectOnSamePageHandler(errors.New("approval is pending"))
 		}
 		return fmt.Errorf("user role %w", err)
 	}
-	if row.Email == "" {
+	if len(verifiedEmails) == 0 {
 		type Data struct {
 			Username    string
 			RequestTask string
@@ -69,7 +73,7 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil {
 		return fmt.Errorf("hash error %w", err)
 	}
-	code, err := cd.CreatePasswordReset(row.Email, hash, alg)
+	code, err := cd.CreatePasswordReset(verifiedEmails[0], hash, alg)
 	if err != nil {
 		if errors.Is(err, common.ErrPasswordResetRecentlyRequested) {
 			return handlers.ErrRedirectOnSamePageHandler(err)
@@ -77,7 +81,7 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("create reset: %v", err)
 		return fmt.Errorf("create reset %w", err)
 	}
-	if row.Email != "" {
+	if len(verifiedEmails) > 0 {
 		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 			if evt := cd.Event(); evt != nil {
 				if evt.Data == nil {
@@ -89,6 +93,7 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 				evt.Data["Code"] = code
 				evt.Data["ResetURL"] = cd.AbsoluteURL("/login?code=" + code)
 				evt.Data["UserURL"] = cd.AbsoluteURL(fmt.Sprintf("/admin/user/%d", row.Idusers))
+				evt.Data["Emails"] = verifiedEmails
 			}
 		}
 	}

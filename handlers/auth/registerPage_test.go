@@ -54,7 +54,7 @@ func TestRegisterActionRedirectsToLogin(t *testing.T) {
 	defer conn.Close()
 
 	queries := db.New(conn)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT idusers,\n       (SELECT email FROM user_emails ue WHERE ue.user_id = users.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email,\n       username,\n       public_profile_enabled_at\nFROM users\nWHERE username = ?\n")).
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT idusers,\n       username,\n       public_profile_enabled_at\nFROM users\nWHERE username = ?\n")).
 		WithArgs(sql.NullString{String: "alice", Valid: true}).
 		WillReturnError(sql.ErrNoRows)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username\nFROM users u JOIN user_emails ue ON ue.user_id = u.idusers\nWHERE ue.email = ?\nLIMIT 1\n")).

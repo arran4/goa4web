@@ -22,10 +22,31 @@ func adminPendingUsersPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
+	emailRows, err := queries.GetVerifiedUserEmails(r.Context())
+	if err != nil {
+		log.Printf("list pending user emails: %v", err)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		return
+	}
+	emailsByUser := db.EmailsByUserID(emailRows)
+	type pendingUser struct {
+		*db.AdminListPendingUsersRow
+		Emails       []string
+		PrimaryEmail string
+	}
+	pending := make([]pendingUser, 0, len(rows))
+	for _, row := range rows {
+		emails := emailsByUser[row.Idusers]
+		pending = append(pending, pendingUser{
+			AdminListPendingUsersRow: row,
+			Emails:                   emails,
+			PrimaryEmail:             db.PrimaryEmail(emails),
+		})
+	}
 	data := struct {
-		Rows []*db.AdminListPendingUsersRow
+		Rows []pendingUser
 	}{
-		Rows: rows,
+		Rows: pending,
 	}
 	handlers.TemplateHandler(w, r, "pendingUsersPage.gohtml", data)
 }

@@ -43,18 +43,18 @@ func TestQueries_AdminListAllUsers(t *testing.T) {
 	defer conn.Close()
 	q := New(conn)
 
-        rows := sqlmock.NewRows([]string{"idusers", "username"}).
-                AddRow(1, "bob")
-        mock.ExpectQuery(regexp.QuoteMeta(adminListAllUsers)).
-                WillReturnRows(rows)
+	rows := sqlmock.NewRows([]string{"idusers", "username"}).
+		AddRow(1, "bob")
+	mock.ExpectQuery(regexp.QuoteMeta(adminListAllUsers)).
+		WillReturnRows(rows)
 
-        res, err := q.AdminListAllUsers(context.Background())
-        if err != nil {
-                t.Fatalf("AdminListAllUsers: %v", err)
-        }
-        if len(res) != 1 || res[0].Idusers != 1 || res[0].Username.String != "bob" {
-                t.Fatalf("unexpected result %+v", res)
-        }
+	res, err := q.AdminListAllUsers(context.Background())
+	if err != nil {
+		t.Fatalf("AdminListAllUsers: %v", err)
+	}
+	if len(res) != 1 || res[0].Idusers != 1 || res[0].Username.String != "bob" {
+		t.Fatalf("unexpected result %+v", res)
+	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
@@ -69,8 +69,8 @@ func TestQueries_SystemListAllUsers(t *testing.T) {
 	defer conn.Close()
 	q := New(conn)
 
-	rows := sqlmock.NewRows([]string{"idusers", "username", "email", "admin", "created_at"}).
-		AddRow(1, "bob", "bob@example.com", false, time.Now())
+	rows := sqlmock.NewRows([]string{"idusers", "username", "admin", "created_at"}).
+		AddRow(1, "bob", false, time.Now())
 	mock.ExpectQuery(regexp.QuoteMeta(systemListAllUsers)).
 		WillReturnRows(rows)
 
@@ -78,7 +78,7 @@ func TestQueries_SystemListAllUsers(t *testing.T) {
 	if err != nil {
 		t.Fatalf("SystemListAllUsers: %v", err)
 	}
-	if len(res) != 1 || res[0].Idusers != 1 || res[0].Username.String != "bob" || res[0].Email != "bob@example.com" {
+	if len(res) != 1 || res[0].Idusers != 1 || res[0].Username.String != "bob" {
 		t.Fatalf("unexpected result %+v", res)
 	}
 

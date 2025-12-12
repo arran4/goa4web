@@ -1,5 +1,5 @@
 {{ template "head" $ }}
-[<a href="/admin">Admin:</a> <a href="/admin/dlq">(This page/Refresh)</a>]<br />
+<div>[<a href="/admin">Admin:</a> <a href="/admin/dlq">(This page/Refresh)</a>]</div>
 Configured providers: {{ .Providers }}<br />
 {{- if .FilePath }}File: {{ .FilePath }} ({{ .FileSize }} bytes{{- if .FileMod }}, updated {{ .FileMod }}{{- end }})<br />{{- end }}
 {{- if .DirPath }}Directory: {{ .DirPath }} ({{ .DirCount }} files{{- if .DirMod }}, updated {{ .DirMod }}{{- end }})<br />{{- end }}

@@ -1,5 +1,5 @@
 {{ template "head" $ }}
-    [<a href="/admin">Admin:</a> <a href="/admin/notifications">(This page/Refresh)</a>]<br />
+    <div>[<a href="/admin">Admin:</a> <a href="/admin/notifications">(This page/Refresh)</a>]</div>
     <div>Total: {{ .Total }} Unread: {{ .Unread }}</div>
 <form method="post">
     {{ csrfField }}

@@ -34,7 +34,7 @@ var ErrPasswordResetRecentlyRequested = errors.New("reset recently requested")
 // UserCredentials fetches the stored password hash and algorithm for username.
 func (cd *CoreData) UserCredentials(username string) (*db.SystemGetLoginRow, error) {
 	if cd.queries == nil {
-		return nil, fmt.Errorf("no queries available")
+		return nil, fmt.Errorf("CoreData.UserCredentials: no queries available")
 	}
 	return cd.queries.SystemGetLogin(cd.ctx, sql.NullString{String: username, Valid: true})
 }
@@ -43,7 +43,7 @@ func (cd *CoreData) UserCredentials(username string) (*db.SystemGetLoginRow, err
 func (cd *CoreData) AssociateEmail(p AssociateEmailParams) (*db.SystemGetUserByUsernameRow, int64, error) {
 	row, err := cd.queries.SystemGetUserByUsername(cd.ctx, sql.NullString{String: p.Username, Valid: true})
 	if err != nil {
-		return nil, 0, fmt.Errorf("user not found %w", err)
+		return nil, 0, fmt.Errorf("CoreData.AssociateEmail: user not found %w", err)
 	}
 	if row.Email != "" {
 		return nil, 0, ErrEmailAlreadyAssociated
@@ -58,7 +58,7 @@ func (cd *CoreData) AssociateEmail(p AssociateEmailParams) (*db.SystemGetUserByU
 	})
 	if err != nil {
 		log.Printf("insert admin request: %v", err)
-		return nil, 0, fmt.Errorf("insert admin request %w", err)
+		return nil, 0, fmt.Errorf("CoreData.AssociateEmail: insert admin request %w", err)
 	}
 	id, _ := res.LastInsertId()
 	_ = cd.queries.AdminInsertRequestComment(cd.ctx, db.AdminInsertRequestCommentParams{RequestID: int32(id), Comment: p.Reason})
@@ -75,14 +75,14 @@ func (cd *CoreData) UserExists(username, email string) (bool, error) {
 		if _, err := cd.queries.SystemGetUserByUsername(cd.ctx, sql.NullString{String: username, Valid: true}); err == nil {
 			return true, nil
 		} else if !errors.Is(err, sql.ErrNoRows) {
-			return false, fmt.Errorf("user by username: %w", err)
+			return false, fmt.Errorf("CoreData.UserExists: user by username: %w", err)
 		}
 	}
 	if email != "" {
 		if _, err := cd.queries.SystemGetUserByEmail(cd.ctx, email); err == nil {
 			return true, nil
 		} else if !errors.Is(err, sql.ErrNoRows) {
-			return false, fmt.Errorf("user by email: %w", err)
+			return false, fmt.Errorf("CoreData.UserExists: user by email: %w", err)
 		}
 	}
 	return false, nil
@@ -114,7 +114,7 @@ func (cd *CoreData) CreatePasswordReset(email, hash, alg string) (string, error)
 	}
 	row, err := cd.queries.SystemGetUserByEmail(cd.ctx, email)
 	if err != nil {
-		return "", fmt.Errorf("user by email %w", err)
+		return "", fmt.Errorf("CoreData.CreatePasswordReset: user by email %w", err)
 	}
 	if reset, err := cd.queries.GetPasswordResetByUser(cd.ctx, db.GetPasswordResetByUserParams{
 		UserID:    row.Idusers,
@@ -126,15 +126,15 @@ func (cd *CoreData) CreatePasswordReset(email, hash, alg string) (string, error)
 		_ = cd.queries.SystemDeletePasswordReset(cd.ctx, reset.ID)
 	} else if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("get reset: %v", err)
-		return "", fmt.Errorf("get reset %w", err)
+		return "", fmt.Errorf("CoreData.CreatePasswordReset: get reset %w", err)
 	}
 	var buf [8]byte
 	if _, err := rand.Read(buf[:]); err != nil {
-		return "", fmt.Errorf("rand %w", err)
+		return "", fmt.Errorf("CoreData.CreatePasswordReset: rand %w", err)
 	}
 	code := hex.EncodeToString(buf[:])
 	if err := cd.queries.CreatePasswordResetForUser(cd.ctx, db.CreatePasswordResetForUserParams{UserID: row.Idusers, Passwd: hash, PasswdAlgorithm: alg, VerificationCode: code}); err != nil {
-		return "", fmt.Errorf("create reset %w", err)
+		return "", fmt.Errorf("CoreData.CreatePasswordReset: create reset %w", err)
 	}
 	return code, nil
 }
@@ -150,13 +150,13 @@ func (cd *CoreData) VerifyPasswordReset(code string, newHash string) error {
 		if errors.Is(err, sql.ErrNoRows) {
 			return errors.New("invalid code")
 		}
-		return fmt.Errorf("get reset %w", err)
+		return fmt.Errorf("CoreData.VerifyPasswordReset: get reset %w", err)
 	}
 	if _, err := cd.queries.GetLoginRoleForUser(cd.ctx, reset.UserID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return errors.New("approval is pending")
 		}
-		return fmt.Errorf("user role %w", err)
+		return fmt.Errorf("CoreData.VerifyPasswordReset: user role %w", err)
 	}
 	if !verifyPassword(newHash, reset.Passwd, reset.PasswdAlgorithm) {
 		return errors.New("invalid password")

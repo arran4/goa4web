@@ -110,7 +110,7 @@ func (r *rootCmd) DB() (*sql.DB, error) {
 	}
 	dbPool, ue := dbstart.InitDB(r.cfg, r.dbReg)
 	if ue != nil {
-		return nil, fmt.Errorf("init db: %w", ue.Err)
+		return nil, fmt.Errorf("rootCmd.DB: init: %w", ue.Err)
 	}
 	r.db = dbPool
 	return r.db, nil
@@ -222,156 +222,156 @@ func (r *rootCmd) Run() error {
 	case "help", "usage":
 		c, err := parseHelpCmd(r, args[1:])
 		if err != nil {
-			return fmt.Errorf("help: %w", err)
+			return fmt.Errorf("rootCmd.Run: help: %w", err)
 		}
 		return c.Run()
 	case "serve":
 		c, err := parseServeCmd(r, args[1:])
 		if err != nil {
-			return fmt.Errorf("serve: %w", err)
+			return fmt.Errorf("rootCmd.Run: serve: %w", err)
 		}
 		return c.Run()
 	case "user":
 		c, err := parseUserCmd(r, args[1:])
 		if err != nil {
-			return fmt.Errorf("user: %w", err)
+			return fmt.Errorf("rootCmd.Run: user: %w", err)
 		}
 		return c.Run()
 	case "email":
 		c, err := parseEmailCmd(r, args[1:])
 		if err != nil {
-			return fmt.Errorf("email: %w", err)
+			return fmt.Errorf("rootCmd.Run: email: %w", err)
 		}
 		return c.Run()
 	case "db":
 		c, err := parseDbCmd(r, args[1:])
 		if err != nil {
-			return fmt.Errorf("db: %w", err)
+			return fmt.Errorf("rootCmd.Run: db: %w", err)
 		}
 		return c.Run()
 	case "perm":
 		c, err := parsePermCmd(r, args[1:])
 		if err != nil {
-			return fmt.Errorf("perm: %w", err)
+			return fmt.Errorf("rootCmd.Run: perm: %w", err)
 		}
 		return c.Run()
 	case "role":
 		c, err := parseRoleCmd(r, args[1:])
 		if err != nil {
-			return fmt.Errorf("role: %w", err)
+			return fmt.Errorf("rootCmd.Run: role: %w", err)
 		}
 		return c.Run()
 	case "grant":
 		c, err := parseGrantCmd(r, args[1:])
 		if err != nil {
-			return fmt.Errorf("grant: %w", err)
+			return fmt.Errorf("rootCmd.Run: grant: %w", err)
 		}
 		return c.Run()
 	case "board":
 		c, err := parseBoardCmd(r, args[1:])
 		if err != nil {
-			return fmt.Errorf("board: %w", err)
+			return fmt.Errorf("rootCmd.Run: board: %w", err)
 		}
 		return c.Run()
 	case "blog", "blogs":
 		c, err := parseBlogCmd(r, args[1:])
 		if err != nil {
-			return fmt.Errorf("blog: %w", err)
+			return fmt.Errorf("rootCmd.Run: blog: %w", err)
 		}
 		return c.Run()
 	case "writing":
 		c, err := parseWritingCmd(r, args[1:])
 		if err != nil {
-			return fmt.Errorf("writing: %w", err)
+			return fmt.Errorf("rootCmd.Run: writing: %w", err)
 		}
 		return c.Run()
 	case "news":
 		c, err := parseNewsCmd(r, args[1:])
 		if err != nil {
-			return fmt.Errorf("news: %w", err)
+			return fmt.Errorf("rootCmd.Run: news: %w", err)
 		}
 		return c.Run()
 	case "faq":
 		c, err := parseFaqCmd(r, args[1:])
 		if err != nil {
-			return fmt.Errorf("faq: %w", err)
+			return fmt.Errorf("rootCmd.Run: faq: %w", err)
 		}
 		return c.Run()
 	case "ipban":
 		c, err := parseIpBanCmd(r, args[1:])
 		if err != nil {
-			return fmt.Errorf("ipban: %w", err)
+			return fmt.Errorf("rootCmd.Run: ipban: %w", err)
 		}
 		return c.Run()
 	case "images":
 		c, err := parseImagesCmd(r, args[1:])
 		if err != nil {
-			return fmt.Errorf("images: %w", err)
+			return fmt.Errorf("rootCmd.Run: images: %w", err)
 		}
 		return c.Run()
 	case "links":
 		c, err := parseLinksCmd(r, args[1:])
 		if err != nil {
-			return fmt.Errorf("links: %w", err)
+			return fmt.Errorf("rootCmd.Run: links: %w", err)
 		}
 		return c.Run()
 	case "comment", "comments":
 		c, err := parseCommentCmd(r, args[1:])
 		if err != nil {
-			return fmt.Errorf("comment: %w", err)
+			return fmt.Errorf("rootCmd.Run: comment: %w", err)
 		}
 		return c.Run()
 	case "audit":
 		c, err := parseAuditCmd(r, args[1:])
 		if err != nil {
-			return fmt.Errorf("audit: %w", err)
+			return fmt.Errorf("rootCmd.Run: audit: %w", err)
 		}
 		return c.Run()
 	case "notifications":
 		c, err := parseNotificationsCmd(r, args[1:])
 		if err != nil {
-			return fmt.Errorf("notifications: %w", err)
+			return fmt.Errorf("rootCmd.Run: notifications: %w", err)
 		}
 		return c.Run()
 	case "repl":
 		c, err := parseReplCmd(r, args[1:])
 		if err != nil {
-			return fmt.Errorf("repl: %w", err)
+			return fmt.Errorf("rootCmd.Run: repl: %w", err)
 		}
 		return c.Run()
 	case "lang":
 		c, err := parseLangCmd(r, args[1:])
 		if err != nil {
-			return fmt.Errorf("lang: %w", err)
+			return fmt.Errorf("rootCmd.Run: lang: %w", err)
 		}
 		return c.Run()
 	case "server":
 		c, err := parseServerCmd(r, args[1:])
 		if err != nil {
-			return fmt.Errorf("server: %w", err)
+			return fmt.Errorf("rootCmd.Run: server: %w", err)
 		}
 		return c.Run()
 	case "config":
 		c, err := parseConfigCmd(r, args[1:])
 		if err != nil {
-			return fmt.Errorf("config: %w", err)
+			return fmt.Errorf("rootCmd.Run: config: %w", err)
 		}
 		return c.Run()
 	case "templates":
 		c, err := parseTemplatesCmd(r, args[1:])
 		if err != nil {
-			return fmt.Errorf("templates: %w", err)
+			return fmt.Errorf("rootCmd.Run: templates: %w", err)
 		}
 		return c.Run()
 	case "test":
 		c, err := parseTestCmd(r, args[1:])
 		if err != nil {
-			return fmt.Errorf("test: %w", err)
+			return fmt.Errorf("rootCmd.Run: test: %w", err)
 		}
 		return c.Run()
 	default:
 		r.fs.Usage()
-		return fmt.Errorf("unknown command %q", args[0])
+		return fmt.Errorf("rootCmd.Run: unknown command %q", args[0])
 	}
 }
 

@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/mail"
+	"net/url"
 	"strings"
 
 	"github.com/arran4/goa4web/config"
@@ -82,5 +83,5 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("registration success uid=%d", id)
 	}
 
-	return loginFormHandler{msg: "approval is pending"}
+	return handlers.RefreshDirectHandler{TargetURL: "/login?notice=" + url.QueryEscape("approval is pending")}
 }

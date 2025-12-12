@@ -33,7 +33,7 @@ var _ tasks.Task = (*LoginTask)(nil)
 
 // Page serves the username/password login form.
 func (LoginTask) Page(w http.ResponseWriter, r *http.Request) {
-	renderLoginForm(w, r, r.URL.Query().Get("error"))
+	renderLoginForm(w, r, r.URL.Query().Get("error"), r.URL.Query().Get("notice"))
 }
 
 // Action processes the submitted login form.

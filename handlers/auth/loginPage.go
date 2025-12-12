@@ -14,7 +14,7 @@ import (
 type loginFormHandler struct{ msg string }
 
 func (l loginFormHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	renderLoginForm(w, r, l.msg)
+	renderLoginForm(w, r, l.msg, "")
 }
 
 var _ http.Handler = (*loginFormHandler)(nil)
@@ -52,9 +52,10 @@ func (h redirectBackPageHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 var _ http.Handler = (*redirectBackPageHandler)(nil)
 
-func renderLoginForm(w http.ResponseWriter, r *http.Request, errMsg string) {
+func renderLoginForm(w http.ResponseWriter, r *http.Request, errMsg, noticeMsg string) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.SetCurrentError(errMsg)
+	cd.SetCurrentNotice(noticeMsg)
 	type Data struct {
 		Code    string
 		Back    string

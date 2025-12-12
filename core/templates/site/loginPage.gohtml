@@ -1,4 +1,7 @@
 {{ template "head" $ }}
+    {{- if cd.CurrentNotice }}
+    <p>{{ cd.CurrentNotice }}</p>
+    {{- end }}
     {{- if cd.CurrentError }}
     <p style="color:red">{{ cd.CurrentError }}</p>
     {{- end }}

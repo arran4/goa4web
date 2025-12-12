@@ -41,6 +41,8 @@ const (
 	EnvJMAPUser = "JMAP_USER"
 	// EnvJMAPPass is the password for the JMAP provider.
 	EnvJMAPPass = "JMAP_PASS"
+	// EnvJMAPInsecure toggles TLS certificate verification for JMAP.
+	EnvJMAPInsecure = "JMAP_INSECURE"
 
 	// EnvConfigFile is the environment variable specifying the path to the
 	// main application configuration file.

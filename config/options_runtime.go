@@ -100,6 +100,7 @@ var IntOptions = []IntOption{
 var BoolOptions = []BoolOption{
 	{"feeds-enabled", EnvFeedsEnabled, "Enable or disable RSS/Atom feeds.", true, "", func(c *RuntimeConfig) *bool { return &c.FeedsEnabled }},
 	{"smtp-starttls", EnvSMTPStartTLS, "Enable or disable STARTTLS for SMTP connections.", true, "", func(c *RuntimeConfig) *bool { return &c.EmailSMTPStartTLS }},
+	{"jmap-insecure", EnvJMAPInsecure, "Skip TLS certificate verification for JMAP.", false, "", func(c *RuntimeConfig) *bool { return &c.EmailJMAPInsecure }},
 	{"email-enabled", EnvEmailEnabled, "Enable or disable the sending of queued emails.", true, "", func(c *RuntimeConfig) *bool { return &c.EmailEnabled }},
 	{"notifications-enabled", EnvNotificationsEnabled, "Enable or disable the internal notification system.", true, "", func(c *RuntimeConfig) *bool { return &c.NotificationsEnabled }},
 	{"csrf-enabled", EnvCSRFEnabled, "Enable or disable CSRF protection.", true, "", func(c *RuntimeConfig) *bool { return &c.CSRFEnabled }},

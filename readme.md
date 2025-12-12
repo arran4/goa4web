@@ -230,6 +230,7 @@ You can supply settings on the command line, in a config file or via environment
 | `JMAP_IDENTITY` | `--jmap-identity` | No | - | JMAP identity identifier. Defaults to the mail identity from the JMAP session when omitted. |
 | `JMAP_USER` | `--jmap-user` | No | - | Username for the JMAP provider. |
 | `JMAP_PASS` | `--jmap-pass` | No | - | Password for the JMAP provider. |
+| `JMAP_INSECURE` | `--jmap-insecure` | No | false | Skip TLS certificate verification. |
 | `CONFIG_FILE` | `--config-file` | No | - | Path to the main configuration file. |
 | `EMAIL_ENABLED` | n/a | No | `true` | Toggles sending queued emails. |
 | `NOTIFICATIONS_ENABLED` | n/a | No | `true` | Toggles the internal notification system. |

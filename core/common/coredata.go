@@ -150,6 +150,7 @@ type CoreData struct {
 	currentNotificationTemplateError string
 	currentNotificationTemplateName  string
 	currentError                     string
+	currentNotice                    string
 	currentThreadID                  int32
 	currentTopicID                   int32
 	currentCategoryID                int32
@@ -2168,6 +2169,9 @@ func (cd *CoreData) SetCurrentNotificationTemplate(name, errMsg string) {
 // SetCurrentError stores a generic error message for the current request.
 func (cd *CoreData) SetCurrentError(errMsg string) { cd.currentError = errMsg }
 
+// SetCurrentNotice stores an informational message for the current request.
+func (cd *CoreData) SetCurrentNotice(notice string) { cd.currentNotice = notice }
+
 // SetCurrentThreadAndTopic stores the requested thread and topic IDs.
 func (cd *CoreData) SetCurrentThreadAndTopic(threadID, topicID int32) {
 	cd.currentThreadID = threadID
@@ -2278,6 +2282,9 @@ func (cd *CoreData) Subscriptions() ([]*db.ListSubscriptionsByUserRow, error) {
 
 // CurrentError returns a generic error message for the current request.
 func (cd *CoreData) CurrentError() string { return cd.currentError }
+
+// CurrentNotice returns the informational message for the current request.
+func (cd *CoreData) CurrentNotice() string { return cd.currentNotice }
 
 // NotificationTemplateError returns the error message for notification template editing.
 func (cd *CoreData) NotificationTemplateError() string { return cd.currentNotificationTemplateError }

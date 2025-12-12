@@ -27,5 +27,5 @@ func AdminCommentsPage(w http.ResponseWriter, r *http.Request) {
 		*common.CoreData
 		Comments []*db.AdminListAllCommentsWithThreadInfoRow
 	}{cd, rows}
-	handlers.TemplateHandler(w, r, "commentsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "admin/commentsPage.gohtml", data)
 }

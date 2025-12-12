@@ -1,5 +1,5 @@
 {{ template "head" $ }}
-[<a href="/admin">Admin:</a> <a href="/admin/languages">Languages</a> <a href="/admin/languages/language/{{ .Language.ID }}">(This page/Refresh)</a>]<br />
+<div>[<a href="/admin">Admin:</a> <a href="/admin/languages">Languages</a> <a href="/admin/languages/language/{{ .Language.ID }}">(This page/Refresh)</a>]</div>
 <h2>{{ .Language.Nameof.String }}</h2>
 <table>
     <tr><th>Type</th><th>Count</th></tr>

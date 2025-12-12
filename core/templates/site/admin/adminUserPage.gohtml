@@ -1,7 +1,7 @@
 {{ template "head" $ }}
 {{ $u := cd.CurrentProfileUser }}
 {{ if $u }}
-[<a href="/admin">Admin:</a> <a href="/admin/users">Users</a>: <a href="/admin/user/{{ $u.Idusers }}">(This page/Refresh)</a>]<br />
+<div>[<a href="/admin">Admin:</a> <a href="/admin/users">Users</a>: <a href="/admin/user/{{ $u.Idusers }}">(This page/Refresh)</a>]</div>
 
 <h2>User {{ $u.Username.String }} (ID {{ $u.Idusers }})</h2>
 <p>Email: {{ $u.Email.String }}</p>

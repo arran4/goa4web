@@ -1,5 +1,5 @@
 {{ template "head" $ }}
-[<a href="/admin">Admin:</a> <a href="/admin/search/list">Word List</a>]<br />
+<div>[<a href="/admin">Admin:</a> <a href="/admin/search/list">Word List</a>]</div>
 Jump to:
 {{ range $.Letters }} <a href="/admin/search/list?letter={{.}}">{{ . }}</a> {{ end }}<br />
 {{ if $.CurrentLtr }}Showing words starting with "{{ $.CurrentLtr }}"{{ end }}

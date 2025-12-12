@@ -5,9 +5,10 @@ INSERT INTO imageboard (imageboard_idimageboard, title, description, approval_re
 UPDATE imageboard SET title = ?, description = ?, imageboard_idimageboard = ?, approval_required = ? WHERE idimageboard = ?;
 
 -- name: SystemListBoardsByParentID :many
-SELECT b.*
+SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required, b.deleted_at
 FROM imageboard b
 WHERE (b.imageboard_idimageboard = sqlc.narg(parent_id) OR (b.imageboard_idimageboard IS NULL AND sqlc.narg(parent_id) IS NULL))
+  AND b.deleted_at IS NULL
 LIMIT ? OFFSET ?;
 
 
@@ -59,12 +60,12 @@ ORDER BY i.posted DESC
 LIMIT ? OFFSET ?;
 
 -- name: AdminListBoards :many
-SELECT b.*
+SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required, b.deleted_at
 FROM imageboard b
 LIMIT ? OFFSET ?;
 
 -- name: GetImageBoardById :one
-SELECT * FROM imageboard WHERE idimageboard = ?;
+SELECT * FROM imageboard WHERE idimageboard = ? AND deleted_at IS NULL;
 
 -- name: AdminDeleteImageBoard :exec
 UPDATE imageboard SET deleted_at = NOW() WHERE idimageboard = ?;
@@ -94,7 +95,7 @@ UPDATE imagepost SET deleted_at = NOW() WHERE idimagepost = ?;
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
-SELECT b.*
+SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required, b.deleted_at
 FROM imageboard b
 WHERE (b.imageboard_idimageboard = sqlc.narg(parent_id) OR (b.imageboard_idimageboard IS NULL AND sqlc.narg(parent_id) IS NULL))
   AND b.deleted_at IS NULL
@@ -114,7 +115,7 @@ LIMIT ? OFFSET ?;
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
-SELECT b.*
+SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required, b.deleted_at
 FROM imageboard b
 WHERE b.deleted_at IS NULL AND EXISTS (
     SELECT 1 FROM grants g

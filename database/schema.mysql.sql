@@ -137,6 +137,7 @@ CREATE TABLE `imageboard` (
   `title` tinytext DEFAULT NULL,
   `description` tinytext DEFAULT NULL,
   `approval_required` tinyint(1) NOT NULL DEFAULT 0,
+  `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`idimageboard`),
   KEY `imageboard_FKIndex1` (`imageboard_idimageboard`)
 );
@@ -716,6 +717,6 @@ CREATE TABLE `content_read_markers` (
 );
 
 -- Set the schema version to the latest migration.
-INSERT INTO `schema_version` (`version`) VALUES (70)
+INSERT INTO `schema_version` (`version`) VALUES (71)
 ON DUPLICATE KEY UPDATE version = VALUES(version);
 

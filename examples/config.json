@@ -37,6 +37,7 @@
   "JMAP_ACCOUNT": "",
   "JMAP_ENDPOINT": "",
   "JMAP_IDENTITY": "",
+  "JMAP_INSECURE": "false",
   "JMAP_PASS": "",
   "JMAP_USER": "",
   "LINK_SIGN_SECRET": "",

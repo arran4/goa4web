@@ -111,6 +111,7 @@ func (q *Queries) AdminGetImagePost(ctx context.Context, idimagepost int32) (*Ad
 const adminListBoards = `-- name: AdminListBoards :many
 SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required, b.deleted_at
 FROM imageboard b
+WHERE b.deleted_at IS NULL
 LIMIT ? OFFSET ?
 `
 
@@ -290,7 +291,7 @@ func (q *Queries) GetAllImagePostsForIndex(ctx context.Context) ([]*GetAllImageP
 }
 
 const getImageBoardById = `-- name: GetImageBoardById :one
-SELECT idimageboard, imageboard_idimageboard, title, description, approval_required, deleted_at FROM imageboard WHERE idimageboard = ?
+SELECT idimageboard, imageboard_idimageboard, title, description, approval_required, deleted_at FROM imageboard WHERE idimageboard = ? AND deleted_at IS NULL
 `
 
 func (q *Queries) GetImageBoardById(ctx context.Context, idimageboard int32) (*Imageboard, error) {
@@ -940,6 +941,7 @@ const systemListBoardsByParentID = `-- name: SystemListBoardsByParentID :many
 SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required, b.deleted_at
 FROM imageboard b
 WHERE (b.imageboard_idimageboard = ? OR (b.imageboard_idimageboard IS NULL AND ? IS NULL))
+  AND b.deleted_at IS NULL
 LIMIT ? OFFSET ?
 `
 

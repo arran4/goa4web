@@ -8,6 +8,7 @@ UPDATE imageboard SET title = ?, description = ?, imageboard_idimageboard = ?, a
 SELECT b.*
 FROM imageboard b
 WHERE (b.imageboard_idimageboard = sqlc.narg(parent_id) OR (b.imageboard_idimageboard IS NULL AND sqlc.narg(parent_id) IS NULL))
+  AND b.deleted_at IS NULL
 LIMIT ? OFFSET ?;
 
 
@@ -61,10 +62,11 @@ LIMIT ? OFFSET ?;
 -- name: AdminListBoards :many
 SELECT b.*
 FROM imageboard b
+WHERE b.deleted_at IS NULL
 LIMIT ? OFFSET ?;
 
 -- name: GetImageBoardById :one
-SELECT * FROM imageboard WHERE idimageboard = ?;
+SELECT * FROM imageboard WHERE idimageboard = ? AND deleted_at IS NULL;
 
 -- name: AdminDeleteImageBoard :exec
 UPDATE imageboard SET deleted_at = NOW() WHERE idimageboard = ?;

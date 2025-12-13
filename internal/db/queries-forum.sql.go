@@ -1033,7 +1033,7 @@ const listPrivateTopicParticipantsByTopicIDForUser = `-- name: ListPrivateTopicP
 SELECT u.idusers, u.username
 FROM grants g
 JOIN users u ON u.idusers = g.user_id
-WHERE g.section = 'forum'
+WHERE g.section = 'privateforum'
   AND g.item = 'topic'
   AND g.action = 'view'
   AND g.active = 1
@@ -1041,7 +1041,7 @@ WHERE g.section = 'forum'
   AND g.item_id = ?
   AND EXISTS (
       SELECT 1 FROM grants pg
-      WHERE pg.section='forum'
+      WHERE pg.section='privateforum'
         AND pg.item='topic'
         AND pg.action='view'
         AND pg.active=1

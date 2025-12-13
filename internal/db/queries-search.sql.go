@@ -333,7 +333,7 @@ WHERE swl.word=?
   )
   AND EXISTS (
       SELECT 1 FROM grants g
-      WHERE g.section='forum'
+      WHERE (g.section='forum' OR g.section='privateforum')
         AND (g.item='topic' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
@@ -414,7 +414,7 @@ WHERE swl.word=?
   )
   AND EXISTS (
       SELECT 1 FROM grants g
-      WHERE g.section='forum'
+      WHERE (g.section='forum' OR g.section='privateforum')
         AND (g.item='topic' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
@@ -486,7 +486,7 @@ WHERE swl.word=?
   )
   AND EXISTS (
       SELECT 1 FROM grants g
-      WHERE g.section='forum'
+      WHERE (g.section='forum' OR g.section='privateforum')
         AND (g.item='topic' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
@@ -577,7 +577,7 @@ WHERE swl.word=?
   )
   AND EXISTS (
       SELECT 1 FROM grants g
-      WHERE g.section='forum'
+      WHERE (g.section='forum' OR g.section='privateforum')
         AND (g.item='topic' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1

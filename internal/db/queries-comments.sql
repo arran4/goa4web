@@ -23,7 +23,7 @@ WHERE c.idcomments = sqlc.arg(id)
   )
   AND EXISTS (
     SELECT 1 FROM grants g
-    WHERE g.section='forum'
+    WHERE (g.section='forum' OR g.section='privateforum')
       AND (g.item='topic' OR g.item IS NULL)
       AND g.action='see'
       AND g.active=1
@@ -40,7 +40,7 @@ WHERE c.idcomments = sqlc.arg(comment_id)
   AND c.users_idusers = sqlc.arg(commenter_id)
   AND EXISTS (
       SELECT 1 FROM grants g
-      WHERE g.section='forum'
+      WHERE (g.section='forum' OR g.section='privateforum')
         AND (g.item='thread' OR g.item IS NULL)
         AND g.action='edit'
         AND g.active=1
@@ -86,7 +86,7 @@ WHERE c.Idcomments IN (sqlc.slice('ids'))
   )
   AND EXISTS (
     SELECT 1 FROM grants g
-    WHERE g.section='forum'
+    WHERE (g.section='forum' OR g.section='privateforum')
       AND (g.item='topic' OR g.item IS NULL)
       AND g.action='see'
       AND g.active=1
@@ -139,7 +139,7 @@ WHERE c.forumthread_id=sqlc.arg(thread_id)
   )
   AND EXISTS (
     SELECT 1 FROM grants g
-    WHERE g.section='forum'
+    WHERE (g.section='forum' OR g.section='privateforum')
       AND (g.item='topic' OR g.item IS NULL)
       AND g.action='see'
       AND g.active=1

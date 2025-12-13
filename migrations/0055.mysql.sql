@@ -6,21 +6,51 @@ JOIN forumcategory fc ON t.forumcategory_idforumcategory = fc.idforumcategory
 SET t.handler='private', t.forumcategory_idforumcategory = 0
 WHERE fc.title='Private discussion';
 
+-- Grant participants of existing private topics the new privateforum grants
 INSERT INTO grants (created_at, user_id, section, item, rule_type, item_id, action, active)
-SELECT NOW(), 1, 'forum', 'topic', 'allow', t.idforumtopic, 'see', 1
-FROM forumtopic t
-WHERE t.handler='private'
+SELECT NOW(), g.user_id, 'privateforum', 'topic', 'allow', g.item_id, 'see', 1
+FROM grants g
+JOIN forumtopic t ON g.item_id = t.idforumtopic
+WHERE t.handler = 'private' AND g.section = 'forum' AND g.item = 'topic' AND g.action = 'see'
   AND NOT EXISTS (
-      SELECT 1 FROM grants g WHERE g.user_id=1 AND g.section='forum' AND g.item='topic' AND g.action='see' AND g.item_id=t.idforumtopic
+    SELECT 1 FROM grants g2 WHERE g2.user_id = g.user_id AND g2.section = 'privateforum' AND g2.item = 'topic' AND g2.action = 'see' AND g2.item_id = g.item_id
   );
 
 INSERT INTO grants (created_at, user_id, section, item, rule_type, item_id, action, active)
-SELECT NOW(), 1, 'forum', 'topic', 'allow', t.idforumtopic, 'view', 1
-FROM forumtopic t
-WHERE t.handler='private'
+SELECT NOW(), g.user_id, 'privateforum', 'topic', 'allow', g.item_id, 'view', 1
+FROM grants g
+JOIN forumtopic t ON g.item_id = t.idforumtopic
+WHERE t.handler = 'private' AND g.section = 'forum' AND g.item = 'topic' AND g.action = 'view'
   AND NOT EXISTS (
-      SELECT 1 FROM grants g WHERE g.user_id=1 AND g.section='forum' AND g.item='topic' AND g.action='view' AND g.item_id=t.idforumtopic
+    SELECT 1 FROM grants g2 WHERE g2.user_id = g.user_id AND g2.section = 'privateforum' AND g2.item = 'topic' AND g2.action = 'view' AND g2.item_id = g.item_id
   );
+
+INSERT INTO grants (created_at, user_id, section, item, rule_type, item_id, action, active)
+SELECT NOW(), g.user_id, 'privateforum', 'topic', 'allow', g.item_id, 'post', 1
+FROM grants g
+JOIN forumtopic t ON g.item_id = t.idforumtopic
+WHERE t.handler = 'private' AND g.section = 'forum' AND g.item = 'topic' AND g.action = 'post'
+    AND NOT EXISTS (
+        SELECT 1 FROM grants g2 WHERE g2.user_id = g.user_id AND g2.section = 'privateforum' AND g2.item = 'topic' AND g2.action = 'post' AND g2.item_id = g.item_id
+    );
+
+INSERT INTO grants (created_at, user_id, section, item, rule_type, item_id, action, active)
+SELECT NOW(), g.user_id, 'privateforum', 'topic', 'allow', g.item_id, 'reply', 1
+FROM grants g
+JOIN forumtopic t ON g.item_id = t.idforumtopic
+WHERE t.handler = 'private' AND g.section = 'forum' AND g.item = 'topic' AND g.action = 'reply'
+    AND NOT EXISTS (
+        SELECT 1 FROM grants g2 WHERE g2.user_id = g.user_id AND g2.section = 'privateforum' AND g2.item = 'topic' AND g2.action = 'reply' AND g2.item_id = g.item_id
+    );
+
+INSERT INTO grants (created_at, user_id, section, item, rule_type, item_id, action, active)
+SELECT NOW(), g.user_id, 'privateforum', 'topic', 'allow', g.item_id, 'edit', 1
+FROM grants g
+JOIN forumtopic t ON g.item_id = t.idforumtopic
+WHERE t.handler = 'private' AND g.section = 'forum' AND g.item = 'topic'
+    AND NOT EXISTS (
+        SELECT 1 FROM grants g2 WHERE g2.user_id = g.user_id AND g2.section = 'privateforum' AND g2.item = 'topic' AND g2.action = 'edit' AND g2.item_id = g.item_id
+    );
 
 INSERT INTO grants (created_at, user_id, section, item, rule_type, action, active)
 SELECT NOW(), u.idusers, 'privateforum', 'topic', 'allow', 'see', 1

@@ -34,6 +34,7 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 	}
 	parts := strings.Split(r.PostFormValue("participants"), ",")
 	body := strings.TrimSpace(r.PostFormValue("body"))
+	title := strings.TrimSpace(r.PostFormValue("title"))
 	var uids []int32
 	for _, p := range parts {
 		p = strings.TrimSpace(p)
@@ -57,7 +58,7 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 	if creator != 0 && !seen {
 		uids = append(uids, creator)
 	}
-	topicID, threadID, err := cd.CreatePrivateTopic(common.CreatePrivateTopicParams{CreatorID: creator, ParticipantIDs: uids, Body: body})
+	topicID, threadID, err := cd.CreatePrivateTopic(common.CreatePrivateTopicParams{CreatorID: creator, ParticipantIDs: uids, Body: body, Title: title})
 	if err != nil {
 		return fmt.Errorf("create private topic %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

@@ -52,6 +52,12 @@ type PageLink struct {
 	Active bool
 }
 
+// NotFoundLink represents a contextual link on the 404 page.
+type NotFoundLink struct {
+	Text string
+	URL  string
+}
+
 // SessionManager defines optional hooks for storing and removing session
 // information. Implementations may persist session metadata in a database or
 // other storage while exposing a storage-agnostic API to CoreData.
@@ -91,6 +97,7 @@ type CoreData struct {
 	mapMu             sync.Mutex
 	Nav               NavigationProvider
 	NextLink          string
+	NotFoundLink      *NotFoundLink
 	NotificationCount int32
 	PageLinks         []PageLink
 	PageTitle         string

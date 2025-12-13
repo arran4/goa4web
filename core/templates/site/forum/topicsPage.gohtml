@@ -3,7 +3,9 @@
     {{ if .Category }}
         <h1>Category: {{ .Category.Title.String }}</h1>
     {{ end }}
-    <h2>Topic: {{ if .Topic.DisplayTitle }}{{ .Topic.DisplayTitle }}{{ else }}{{ .Topic.Title.String }}{{ end }}</h2>
+{{ $topicTitle := topicTitleOrDefault .Topic.Title.String }}
+{{ if .Topic.DisplayTitle }}{{ $topicTitle = topicTitleOrDefault .Topic.DisplayTitle }}{{ end }}
+<h2>Topic: {{ $topicTitle }}</h2>
     {{ $base := "/forum" }}
     {{ with .BasePath }}{{ $base = . }}{{ end }}
     <div class="topic-actions">

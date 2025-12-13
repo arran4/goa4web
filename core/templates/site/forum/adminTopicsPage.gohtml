@@ -4,7 +4,7 @@
     {{ range .Topics }}
         <tr>
             <td>{{ .Idforumtopic }}</td>
-            <td><a href="/admin/forum/topics/topic/{{ .Idforumtopic }}">{{ .Title.String }}</a></td>
+            <td><a href="/admin/forum/topics/topic/{{ .Idforumtopic }}">{{ topicTitleOrDefault .Title.String }}</a></td>
             <td>{{ .Threads.Int32 }}</td>
             <td>{{ .Comments.Int32 }}</td>
             <td><a href="/forum/topic/{{ .Idforumtopic }}">View</a></td>

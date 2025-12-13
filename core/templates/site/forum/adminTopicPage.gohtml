@@ -1,6 +1,6 @@
 {{ template "head" $ }}
-<h2>Forum topic {{ .Topic.Idforumtopic }} - {{ .Topic.Title.String }}</h2>
-<p>{{ .Topic.Description.String }}</p>
+<h2>Forum topic {{ .Topic.Idforumtopic }} - {{ topicTitleOrDefault .Topic.Title.String }}</h2>
+<p>{{ topicDescriptionOrDefault .Topic.Description.String }}</p>
 <table class="table table-bordered">
     <tr><th>ID</th><th>Threads</th><th>Posts</th><th>Last Addition</th><th>View</th></tr>
     <tr>

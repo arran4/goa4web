@@ -9,15 +9,15 @@
             <div class="replies">Replies</div>
         </div>
         <ul class="topic-list">
-        {{ range .Topics }}
-            <li class="topic-item">
-                <div class="topic-name">
-                    {{ $title := .Title.String }}
-                    {{ if .DisplayTitle }}{{ $title = .DisplayTitle }}{{ end }}
-                    <a href="{{$base}}/topic/{{ .Idforumtopic }}">{{ $title | a4code2html }}</a>{{ if and cd.IsAdmin cd.IsAdminMode }} [<a href="/admin/forum/topics/topic/{{ .Idforumtopic }}/edit">ADMIN</a>]{{ end }}<br>
-                    {{ with .Description.String }}<em>{{ . | a4code2html }}</em>{{ end }}
-                    {{- if .Labels }}<br>{{ template "topicLabels" .Labels }}{{ end }}
-                </div>
+    {{ range .Topics }}
+        <li class="topic-item">
+            <div class="topic-name">
+                {{ $title := topicTitleOrDefault .Title.String }}
+                {{ if .DisplayTitle }}{{ $title = topicTitleOrDefault .DisplayTitle }}{{ end }}
+                <a href="{{$base}}/topic/{{ .Idforumtopic }}">{{ $title | a4code2html }}</a>{{ if and cd.IsAdmin cd.IsAdminMode }} [<a href="/admin/forum/topics/topic/{{ .Idforumtopic }}/edit">ADMIN</a>]{{ end }}<br>
+                {{ $description := topicDescriptionOrDefault .Description.String }}<em>{{ $description | a4code2html }}</em>
+                {{- if .Labels }}<br>{{ template "topicLabels" .Labels }}{{ end }}
+            </div>
                 <div class="last-reply">{{ cd.LocalTime .Lastaddition.Time }}<br>{{ .Lastposterusername.String }}</div>
                 <div class="threads">{{ .Threads.Int32 }}</div>
                 <div class="replies">{{ .Comments.Int32 }}</div>

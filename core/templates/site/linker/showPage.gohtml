@@ -1,3 +1,18 @@
+{{ define "linkerShowPage" }}
+    <p>Link: <a href="{{ .Link.Link }}" target="_blank" rel="noopener nofollow ugc" title="Created on {{ .Link.CreatedAt }} by {{ .User.Username.String }}">[{{ .Link.ID }}] {{ .Link.Title.String }}</a></p>
+    {{ if $.IsLoggedIn }}
+        <form method="post" action="/linker/{{.Link.ID}}/edit-comment">
+            {{ $.csrfField }}
+            Comment: <textarea name="comment">{{.Link.Comment.String}}</textarea>
+            <br>
+            <input type="submit" value="Save">
+        </form>
+    {{ end }}
+    {{ if and (not $.IsLoggedIn) (.Link.Comment.String) }}
+        <p>Comment: {{.Link.Comment.String}}</p>
+    {{ end }}
+{{ end }}
+
 {{ template "head" $ }}
     {{ template "linkerShowPage" $ }}
 {{ template "tail" $ }}

@@ -107,6 +107,19 @@ func (j Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []b
 	return nil
 }
 
+func (j Provider) TestConfig(ctx context.Context) error {
+	fmt.Printf("Performing JMAP discovery for endpoint: %s\n", j.Endpoint)
+	session, err := DiscoverSession(ctx, j.client, j.Endpoint, j.Username, j.Password)
+	if err != nil {
+		return fmt.Errorf("failed to discover JMAP session: %w", err)
+	}
+	acc := SelectAccountID(session)
+	id := SelectIdentityID(session)
+	fmt.Printf("Discovered Account ID: %s\n", acc)
+	fmt.Printf("Discovered Identity ID: %s\n", id)
+	return nil
+}
+
 func providerFromConfig(cfg *config.RuntimeConfig) email.Provider {
 	ep := strings.TrimSpace(cfg.EmailJMAPEndpoint)
 	if ep == "" {

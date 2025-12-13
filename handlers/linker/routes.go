@@ -16,7 +16,7 @@ var legacyRedirectsEnabled = true
 
 // RegisterRoutes attaches the public linker endpoints to r.
 func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
-	navReg.RegisterIndexLink("Linker", "/linker", SectionWeight)
+	navReg.RegisterIndexLinkWithViewPermission("Linker", "/linker", SectionWeight, "linker", "category")
 	navReg.RegisterAdminControlCenter("Linker", "Linker", "/admin/linker", SectionWeight)
 	lr := r.PathPrefix("/linker").Subrouter()
 	lr.Use(handlers.IndexMiddleware(CustomLinkerIndex), handlers.SectionMiddleware("linker"))

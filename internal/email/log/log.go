@@ -21,6 +21,11 @@ func (p Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []b
 	return nil
 }
 
+func (p Provider) TestConfig(ctx context.Context) error {
+	log.Printf("Log provider is enabled with verbosity %d", p.Verbosity)
+	return nil
+}
+
 func providerFromConfig(cfg *config.RuntimeConfig) email.Provider {
 	return Provider{Verbosity: cfg.EmailLogVerbosity}
 }

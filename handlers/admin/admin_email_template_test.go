@@ -124,6 +124,8 @@ func (r *recordAdminMail) Send(ctx context.Context, to mail.Address, rawEmailMes
 	return nil
 }
 
+func (r *recordAdminMail) TestConfig(ctx context.Context) error { return nil }
+
 func TestNotifyAdminsEnv(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
 	cfg.AdminEmails = "a@test.com,b@test.com"

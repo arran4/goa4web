@@ -4,6 +4,7 @@ package ses
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/mail"
 
@@ -33,6 +34,15 @@ func (s Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []b
 	}
 	_, err := s.Client.SendRawEmailWithContext(ctx, input)
 	return err
+}
+
+func (s Provider) TestConfig(ctx context.Context) error {
+	_, err := s.Client.GetSendQuotaWithContext(ctx, &ses.GetSendQuotaInput{})
+	if err != nil {
+		return fmt.Errorf("failed to get send quota: %w", err)
+	}
+	fmt.Println("SES provider is configured correctly")
+	return nil
 }
 
 func providerFromConfig(cfg *config.RuntimeConfig) email.Provider {

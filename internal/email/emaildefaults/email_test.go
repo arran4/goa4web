@@ -141,6 +141,10 @@ func (errProvider) Send(context.Context, mail.Address, []byte) error {
 	return fmt.Errorf("fail")
 }
 
+func (errProvider) TestConfig(context.Context) error {
+	return fmt.Errorf("fail")
+}
+
 func TestProcessPendingEmailDLQ(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
 	cfg.EmailEnabled = true

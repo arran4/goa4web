@@ -1,0 +1,13 @@
+Usage:
+  goa4web email send -to <recipient> -subject <subject> -body <body>
+
+The send command sends a test email to the specified recipient. This is useful for verifying that your email configuration is working correctly.
+
+Arguments:
+  -to          The recipient's email address.
+  -subject     The subject of the email.
+  -body        The body of the email.
+
+Examples:
+  # Send a test email
+  goa4web email send -to "test@example.com" -subject "Test" -body "This is a test email."

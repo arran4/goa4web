@@ -1,0 +1,4 @@
+Usage:
+  goa4web email test
+
+The test command verifies the email configuration for the currently active provider. This is useful for ensuring that your email settings are correct and that the application can connect to the email server.

@@ -1,7 +1,7 @@
-//go:build !ses
-// +build !ses
+//go:build !sendgrid
+// +build !sendgrid
 
-package ses
+package sendgrid
 
 import (
 	"context"
@@ -12,12 +12,12 @@ import (
 	"github.com/arran4/goa4web/internal/email"
 )
 
-// Built indicates whether the SES provider is compiled in.
+// Built indicates whether the SendGrid provider is compiled in.
 const Built = false
 
-// Register registers a stub for the SES provider.
+// Register registers a stub for the SendGrid provider.
 func Register(r *email.Registry) {
-	r.RegisterProvider("ses", func(cfg *config.RuntimeConfig) email.Provider {
+	r.RegisterProvider("sendgrid", func(cfg *config.RuntimeConfig) email.Provider {
 		return &stub{}
 	})
 }
@@ -25,9 +25,9 @@ func Register(r *email.Registry) {
 type stub struct{}
 
 func (s *stub) Send(ctx context.Context, to mail.Address, rawEmailMessage []byte) error {
-	return errors.New("ses provider not compiled")
+	return errors.New("sendgrid provider not compiled")
 }
 
 func (s *stub) TestConfig(ctx context.Context) error {
-	return errors.New("ses provider not compiled")
+	return errors.New("sendgrid provider not compiled")
 }

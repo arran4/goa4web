@@ -260,7 +260,9 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 	_ = cd.UserRoles()
 
 	if s.Nav != nil {
-		cd.IndexItems = s.Nav.IndexItems()
+    cd.IndexItems = s.Nav.IndexItemsWithPermission(func(section, item string) bool {
+      return cd.HasGrant(section, item, "view", 0)
+    })
 	}
 	cd.FeedsEnabled = s.Config.FeedsEnabled
 	cd.AdminMode = r.URL.Query().Get("mode") == "admin"

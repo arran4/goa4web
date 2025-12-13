@@ -203,7 +203,9 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 	srv.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cd, r := srv.GetCoreData(w, r)
 		if cd == nil {
-			// GetCoreData already handled the error
+			// GetCoreData handles all error reporting and redirects internally.
+			// If it returns a nil CoreData, the response has already been sent
+			// and we must return immediately to avoid a double write.
 			return
 		}
 		if strings.HasPrefix(r.URL.Path, "/forum") {

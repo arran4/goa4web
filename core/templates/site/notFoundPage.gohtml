@@ -1,0 +1,12 @@
+{{ template "head" $ }}
+<h1>404 - Page Not Found</h1>
+{{- if $.Error }}
+<p>{{ $.Error }}</p>
+{{- end }}
+{{- if $.NotFoundLink.URL }}
+<p><a href="{{ $.NotFoundLink.URL }}">{{ $.NotFoundLink.Text }}</a></p>
+{{- end }}
+{{- if $.BackURL }}
+<p><a href="{{ $.BackURL }}">Go Back</a></p>
+{{- end }}
+{{ template "tail" $ }}

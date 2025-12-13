@@ -15,14 +15,6 @@ func RenderErrorPage(w http.ResponseWriter, r *http.Request, err error) {
 	if cd == nil {
 		cd = &common.CoreData{}
 	}
-	cd.PageTitle = "Error"
-	data := struct {
-		Error   string
-		BackURL string
-	}{
-		Error:   err.Error(),
-		BackURL: r.Referer(),
-	}
 	contentType := w.Header().Get("Content-Type")
 
 	status := http.StatusInternalServerError
@@ -41,9 +33,27 @@ func RenderErrorPage(w http.ResponseWriter, r *http.Request, err error) {
 			status = http.StatusNotFound
 		}
 	}
+
+	templateName := "taskErrorAcknowledgementPage.gohtml"
+	if status == http.StatusNotFound {
+		cd.PageTitle = "Not Found"
+		templateName = "notFoundPage.gohtml"
+	} else {
+		cd.PageTitle = "Error"
+	}
+
+	data := struct {
+		*common.CoreData
+		Error   string
+		BackURL string
+	}{
+		CoreData: cd,
+		Error:    err.Error(),
+		BackURL:  r.Referer(),
+	}
 	w.WriteHeader(status)
 
-	if err := cd.ExecuteSiteTemplate(w, r, "taskErrorAcknowledgementPage.gohtml", data); err != nil {
+	if err := cd.ExecuteSiteTemplate(w, r, templateName, data); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "Internal Server Error")
 	}

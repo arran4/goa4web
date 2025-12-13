@@ -2033,6 +2033,10 @@ func (cd *CoreData) CreateForumCommentForCommenter(commenterID, threadID, topicI
 	return cd.CreateCommentInSectionForCommenter("forum", "topic", topicID, threadID, commenterID, languageID, text)
 }
 
+func (cd *CoreData) CreatePrivateForumCommentForCommenter(commenterID, threadID, topicID, languageID int32, text string) (int64, error) {
+	return cd.CreateCommentInSectionForCommenter("privateforum", "thread", threadID, threadID, commenterID, languageID, text)
+}
+
 func (cd *CoreData) CreateBlogCommentForCommenter(commenterID, threadID, entryID, languageID int32, text string) (int64, error) {
 	return cd.CreateCommentInSectionForCommenter("blogs", "entry", entryID, threadID, commenterID, languageID, text)
 }

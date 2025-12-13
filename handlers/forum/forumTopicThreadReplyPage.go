@@ -137,7 +137,12 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	endUrl := fmt.Sprintf("%s/topic/%d/thread/%d#c%d", base, topicRow.Idforumtopic, threadRow.Idforumthread, commentNum)
 
-	cid, err := cd.CreateForumCommentForCommenter(uid, threadRow.Idforumthread, topicRow.Idforumtopic, int32(languageId), text)
+	var cid int64
+	if topicRow.Handler == "private" {
+		cid, err = cd.CreatePrivateForumCommentForCommenter(uid, threadRow.Idforumthread, topicRow.Idforumtopic, int32(languageId), text)
+	} else {
+		cid, err = cd.CreateForumCommentForCommenter(uid, threadRow.Idforumthread, topicRow.Idforumtopic, int32(languageId), text)
+	}
 	if err != nil {
 		log.Printf("Error: CreateComment: %s", err)
 		return fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(err))

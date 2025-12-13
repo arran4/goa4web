@@ -147,8 +147,10 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	var topicTitle, author string
+	var topic *db.GetForumTopicByIdForUserRow
 	if trow, err := queries.GetForumTopicByIdForUser(r.Context(), db.GetForumTopicByIdForUserParams{ViewerID: uid, Idforumtopic: int32(topicId), ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0}}); err == nil {
 		topicTitle = trow.Title.String
+		topic = trow
 	}
 	if u, err := queries.SystemGetUserByID(r.Context(), uid); err == nil {
 		author = u.Username.String
@@ -173,7 +175,27 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	endUrl := fmt.Sprintf("%s/topic/%d/thread/%d", base, topicId, threadId)
 
-	cid, err := cd.CreateForumCommentForCommenter(uid, int32(threadId), int32(topicId), int32(languageId), text)
+	var cid int64
+	if topic.Handler == "private" {
+		participants, err := queries.ListPrivateTopicParticipantsByTopicIDForUser(r.Context(), db.ListPrivateTopicParticipantsByTopicIDForUserParams{
+			TopicID:  sql.NullInt32{Int32: int32(topicId), Valid: true},
+			ViewerID: sql.NullInt32{Int32: uid, Valid: uid != 0},
+		})
+		if err != nil {
+			log.Printf("Error: ListPrivateTopicParticipantsByTopicIDForUser: %s", err)
+		}
+		for _, p := range participants {
+			if _, err := cd.GrantForumThread(int32(threadId), sql.NullInt32{Int32: p.Idusers, Valid: p.Idusers != 0}, sql.NullInt32{}, "view"); err != nil {
+				log.Printf("Error: GrantForumThread view: %s", err)
+			}
+			if _, err := cd.GrantForumThread(int32(threadId), sql.NullInt32{Int32: p.Idusers, Valid: p.Idusers != 0}, sql.NullInt32{}, "reply"); err != nil {
+				log.Printf("Error: GrantForumThread reply: %s", err)
+			}
+		}
+		cid, err = cd.CreatePrivateForumCommentForCommenter(uid, int32(threadId), int32(topicId), int32(languageId), text)
+	} else {
+		cid, err = cd.CreateForumCommentForCommenter(uid, int32(threadId), int32(topicId), int32(languageId), text)
+	}
 	if err != nil {
 		log.Printf("Error: makeThread: %s", err)
 		return fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(err))

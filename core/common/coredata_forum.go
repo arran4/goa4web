@@ -251,3 +251,32 @@ func (cd *CoreData) RevokeForumTopic(grantID int32) error {
 	}
 	return cd.queries.AdminDeleteGrant(cd.ctx, grantID)
 }
+
+// GrantForumThread creates a grant for a forum thread.
+func (cd *CoreData) GrantForumThread(threadID int32, uid, rid sql.NullInt32, action string) (int64, error) {
+	if cd.queries == nil {
+		return 0, nil
+	}
+	if action == "" {
+		action = "view"
+	}
+	return cd.queries.AdminCreateGrant(cd.ctx, db.AdminCreateGrantParams{
+		UserID:   uid,
+		RoleID:   rid,
+		Section:  "privateforum",
+		Item:     sql.NullString{String: "thread", Valid: true},
+		RuleType: "allow",
+		ItemID:   sql.NullInt32{Int32: threadID, Valid: true},
+		ItemRule: sql.NullString{},
+		Action:   action,
+		Extra:    sql.NullString{},
+	})
+}
+
+// RevokeForumThread removes a forum thread grant by ID.
+func (cd *CoreData) RevokeForumThread(grantID int32) error {
+	if cd.queries == nil {
+		return nil
+	}
+	return cd.queries.AdminDeleteGrant(cd.ctx, grantID)
+}

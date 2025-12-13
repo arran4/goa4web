@@ -37,6 +37,12 @@ func (c *emailCmd) Run() error {
 			return fmt.Errorf("queue: %w", err)
 		}
 		return cmd.Run()
+	case "send":
+		cmd, err := parseEmailSendCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("send: %w", err)
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown email command %q", args[0])

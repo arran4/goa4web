@@ -37,12 +37,6 @@ func (c *jmapCmd) Run() error {
 			return fmt.Errorf("test-config: %w", err)
 		}
 		return cmd.Run()
-	case "test-send":
-		cmd, err := parseJmapTestSendCmd(c, args[1:])
-		if err != nil {
-			return fmt.Errorf("test-send: %w", err)
-		}
-		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown jmap command %q", args[0])

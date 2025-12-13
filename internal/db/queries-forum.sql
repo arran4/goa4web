@@ -211,7 +211,7 @@ WHERE t.idforumtopic = sqlc.arg(idforumtopic)
   )
   AND EXISTS (
     SELECT 1 FROM grants g
-    WHERE g.section='forum'
+    WHERE ((t.handler = 'private' AND g.section = 'privateforum') OR (t.handler <> 'private' AND g.section = 'forum'))
       AND (g.item='topic' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
@@ -281,7 +281,7 @@ LEFT JOIN users fcu ON fcu.idusers = fc.users_idusers
 WHERE th.forumtopic_idforumtopic=sqlc.arg(topic_id)
   AND EXISTS (
     SELECT 1 FROM grants g
-    WHERE g.section='forum'
+    WHERE ((t.handler = 'private' AND g.section = 'privateforum') OR (t.handler <> 'private' AND g.section = 'forum'))
       AND (g.item='topic' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1

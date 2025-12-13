@@ -8,10 +8,12 @@ import (
 
 // link represents a navigation item for either index or admin control center.
 type link struct {
-	section string
-	name    string
-	link    string
-	weight  int
+	section     string
+	name        string
+	link        string
+	weight      int
+	viewSection string
+	viewItem    string
 }
 
 // Registry stores navigation entries for the public index and admin pages.
@@ -28,6 +30,12 @@ func (r *Registry) RegisterIndexLink(name, url string, weight int) {
 	r.index = append(r.index, link{name: name, link: url, weight: weight})
 }
 
+// RegisterIndexLinkWithViewPermission registers an entry for the site's index navigation that
+// requires view permission for the provided section and item.
+func (r *Registry) RegisterIndexLinkWithViewPermission(name, url string, weight int, section, item string) {
+	r.index = append(r.index, link{name: name, link: url, weight: weight, viewSection: section, viewItem: item})
+}
+
 // RegisterAdminControlCenter registers a link for the admin control center menu in the given section.
 func (r *Registry) RegisterAdminControlCenter(section, name, url string, weight int) {
 	r.admin = append(r.admin, link{section: section, name: name, link: url, weight: weight})
@@ -35,11 +43,22 @@ func (r *Registry) RegisterAdminControlCenter(section, name, url string, weight 
 
 // IndexItems returns navigation items sorted by weight.
 func (r *Registry) IndexItems() []common.IndexItem {
+	return r.IndexItemsWithPermission(nil)
+}
+
+// IndexItemsWithPermission returns navigation items sorted by weight, filtered by the provided
+// permission callback when present.
+func (r *Registry) IndexItemsWithPermission(canView func(section, item string) bool) []common.IndexItem {
 	entries := make([]link, len(r.index))
 	copy(entries, r.index)
 	sort.Slice(entries, func(i, j int) bool { return entries[i].weight < entries[j].weight })
 	items := make([]common.IndexItem, 0, len(entries))
 	for _, e := range entries {
+		if e.viewSection != "" {
+			if canView == nil || !canView(e.viewSection, e.viewItem) {
+				continue
+			}
+		}
 		items = append(items, common.IndexItem{Name: e.name, Link: e.link})
 	}
 	return items
@@ -94,6 +113,12 @@ func RegisterIndexLink(name, url string, weight int) {
 	defaultRegistry.RegisterIndexLink(name, url, weight)
 }
 
+// RegisterIndexLinkWithViewPermission registers an entry for the site's index navigation using the default registry that
+// requires view permission for the provided section and item.
+func RegisterIndexLinkWithViewPermission(name, url string, weight int, section, item string) {
+	defaultRegistry.RegisterIndexLinkWithViewPermission(name, url, weight, section, item)
+}
+
 // RegisterAdminControlCenter registers a link for the admin control center menu using the default registry.
 func RegisterAdminControlCenter(section, name, url string, weight int) {
 	defaultRegistry.RegisterAdminControlCenter(section, name, url, weight)
@@ -101,6 +126,12 @@ func RegisterAdminControlCenter(section, name, url string, weight int) {
 
 // IndexItems returns navigation items sorted by weight from the default registry.
 func IndexItems() []common.IndexItem { return defaultRegistry.IndexItems() }
+
+// IndexItemsWithPermission returns navigation items sorted by weight from the default registry, filtering
+// entries that require permissions using the supplied callback.
+func IndexItemsWithPermission(canView func(section, item string) bool) []common.IndexItem {
+	return defaultRegistry.IndexItemsWithPermission(canView)
+}
 
 // AdminLinks returns admin navigation items sorted by weight from the default registry.
 func AdminLinks() []common.IndexItem { return defaultRegistry.AdminLinks() }

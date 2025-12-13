@@ -14,7 +14,7 @@ import (
 
 // RegisterRoutes attaches the public image board endpoints to r.
 func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Registry) {
-	navReg.RegisterIndexLink("ImageBBS", "/imagebbs", SectionWeight)
+	navReg.RegisterIndexLinkWithViewPermission("ImageBBS", "/imagebbs", SectionWeight, "imagebbs", "board")
 	navReg.RegisterAdminControlCenter("ImageBBS", "ImageBBS", "/admin/imagebbs", SectionWeight)
 	r.HandleFunc("/imagebbs.rss", RssPage).Methods("GET")
 	ibr := r.PathPrefix("/imagebbs").Subrouter()

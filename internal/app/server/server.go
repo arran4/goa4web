@@ -261,7 +261,9 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 			_ = cd.UserRoles()
 
 			if s.Nav != nil {
-				cd.IndexItems = s.Nav.IndexItems()
+				cd.IndexItems = s.Nav.IndexItemsWithPermission(func(section, item string) bool {
+					return cd.HasGrant(section, item, "view", 0)
+				})
 			}
 			cd.FeedsEnabled = s.Config.FeedsEnabled
 			cd.AdminMode = r.URL.Query().Get("mode") == "admin"

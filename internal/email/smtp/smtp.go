@@ -124,6 +124,70 @@ func (s Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []b
 	return c.Quit()
 }
 
+func (s Provider) TestConfig(ctx context.Context) error {
+	host, port, err := net.SplitHostPort(s.Addr)
+	if err != nil {
+		return fmt.Errorf("invalid addr %q: %w", s.Addr, err)
+	}
+
+	var c *smtp.Client
+
+	switch port {
+	case "25", "587":
+		conn, err := net.Dial("tcp", s.Addr)
+		if err != nil {
+			return fmt.Errorf("smtp dial (plain): %w", err)
+		}
+		c, err = smtp.NewClient(conn, host)
+		if err != nil {
+			return fmt.Errorf("smtp client: %w", err)
+		}
+		if s.StartTLS {
+			if ok, _ := c.Extension("STARTTLS"); !ok {
+				return fmt.Errorf("smtp: server does not support STARTTLS")
+			}
+			if err = c.StartTLS(&tls.Config{ServerName: host}); err != nil {
+				return fmt.Errorf("starttls: %w", err)
+			}
+		}
+
+	case "465":
+		tlsConn, err := tls.Dial("tcp", s.Addr, &tls.Config{ServerName: host})
+		if err != nil {
+			return fmt.Errorf("smtp dial (tls): %w", err)
+		}
+		c, err = smtp.NewClient(tlsConn, host)
+		if err != nil {
+			return fmt.Errorf("smtp client (tls): %w", err)
+		}
+
+	default:
+		return fmt.Errorf("unsupported SMTP port: %s", port)
+	}
+
+	defer func() {
+		if err := c.Quit(); err != nil {
+			log.Printf("smtp.Quit: %v", err)
+		}
+	}()
+
+	if err = c.Hello("localhost"); err != nil {
+		return fmt.Errorf("smtp hello: %w", err)
+	}
+
+	if s.Auth != nil {
+		if ok, _ := c.Extension("AUTH"); !ok {
+			return fmt.Errorf("smtp: server doesn't support AUTH")
+		}
+		if err = c.Auth(s.Auth); err != nil {
+			return fmt.Errorf("smtp auth: %w", err)
+		}
+	}
+
+	fmt.Println("SMTP provider is configured correctly")
+	return c.Quit()
+}
+
 func providerFromConfig(cfg *config.RuntimeConfig) email.Provider {
 	host := cfg.EmailSMTPHost
 	port := cfg.EmailSMTPPort

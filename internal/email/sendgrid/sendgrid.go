@@ -46,6 +46,11 @@ func (s Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []b
 	return nil
 }
 
+func (s Provider) TestConfig(ctx context.Context) error {
+	fmt.Println("SendGrid provider is enabled")
+	return nil
+}
+
 func parseRawEmail(raw []byte) (string, string, string) {
 	m, err := mail.ReadMessage(bytes.NewReader(raw))
 	if err != nil {

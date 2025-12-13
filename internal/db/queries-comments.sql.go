@@ -266,7 +266,7 @@ WHERE c.idcomments = ?
   )
   AND EXISTS (
     SELECT 1 FROM grants g
-    WHERE g.section='forum'
+    WHERE (g.section='forum' OR g.section='privateforum')
       AND (g.item='topic' OR g.item IS NULL)
       AND g.action='see'
       AND g.active=1
@@ -352,7 +352,7 @@ WHERE c.Idcomments IN (/*SLICE:ids*/?)
   )
   AND EXISTS (
     SELECT 1 FROM grants g
-    WHERE g.section='forum'
+    WHERE (g.section='forum' OR g.section='privateforum')
       AND (g.item='topic' OR g.item IS NULL)
       AND g.action='see'
       AND g.active=1
@@ -576,7 +576,7 @@ WHERE c.forumthread_id=?
   )
   AND EXISTS (
     SELECT 1 FROM grants g
-    WHERE g.section='forum'
+    WHERE (g.section='forum' OR g.section='privateforum')
       AND (g.item='topic' OR g.item IS NULL)
       AND g.action='see'
       AND g.active=1
@@ -700,7 +700,7 @@ WHERE c.idcomments = ?
   AND c.users_idusers = ?
   AND EXISTS (
       SELECT 1 FROM grants g
-      WHERE g.section='forum'
+      WHERE (g.section='forum' OR g.section='privateforum')
         AND (g.item='thread' OR g.item IS NULL)
         AND g.action='edit'
         AND g.active=1

@@ -5,7 +5,7 @@
     {{- range .Threads }}
     <tr>
         <td><a href="/admin/forum/topics/topic/{{ .ForumtopicIdforumtopic }}">{{ .ForumtopicIdforumtopic }}</a></td>
-        <td><a href="/admin/forum/topics/topic/{{ .ForumtopicIdforumtopic }}/edit">{{ .TopicTitle.String }}</a></td>
+        <td><a href="/admin/forum/topics/topic/{{ .ForumtopicIdforumtopic }}/edit">{{ topicTitleOrDefault .TopicTitle.String }}</a></td>
         <td>{{ if .CategoryID.Valid }}<a href="/admin/forum/categories/category/{{ .CategoryID.Int32 }}/grants">{{ .CategoryTitle.String }}</a>{{ end }}</td>
         <td>{{ .Comments.Int32 }}</td>
         <td>{{ cd.LocalTime .Lastaddition.Time }}</td>

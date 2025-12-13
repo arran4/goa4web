@@ -18,6 +18,13 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 )
 
+const (
+	// defaultTopicTitle is used when a topic is missing a title.
+	defaultTopicTitle = "🧵 Untitled topic"
+	// defaultTopicDescription is used when a topic is missing a description.
+	defaultTopicDescription = "ℹ️ No description provided"
+)
+
 // Funcs returns template helpers configured with cd's ImageURLMapper.
 func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 	mapper := cd.ImageURLMapper
@@ -60,6 +67,18 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 				log.Printf("process markup: %v", cerr)
 			}
 			return string(out)
+		},
+		"topicTitleOrDefault": func(title string) string {
+			if trimmed := strings.TrimSpace(title); trimmed != "" {
+				return trimmed
+			}
+			return defaultTopicTitle
+		},
+		"topicDescriptionOrDefault": func(description string) string {
+			if trimmed := strings.TrimSpace(description); trimmed != "" {
+				return trimmed
+			}
+			return defaultTopicDescription
 		},
 		"trim": strings.TrimSpace,
 		"firstline": func(s string) string {

@@ -7,6 +7,7 @@ import (
 	"image"
 	"log"
 	"path"
+	"strings"
 
 	"github.com/arran4/goa4web/internal/db"
 	imagesign "github.com/arran4/goa4web/internal/images"
@@ -21,6 +22,7 @@ type CreatePrivateTopicParams struct {
 	CreatorID      int32
 	ParticipantIDs []int32
 	Body           string
+	Title          string
 }
 
 // CreatePrivateTopic creates a new private topic and assigns grants and the initial comment.
@@ -32,11 +34,21 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID, thr
 		log.Printf("private topic create denied: user=%d", p.CreatorID)
 		return 0, 0, fmt.Errorf("permission denied")
 	}
+	var usernames []string
+	for _, id := range p.ParticipantIDs {
+		if u := cd.UserByID(id); u != nil {
+			usernames = append(usernames, u.Username.String)
+		}
+	}
+	title := p.Title
+	if title == "" {
+		title = fmt.Sprintf("Private chat with %s", strings.Join(usernames, ", "))
+	}
 	tid, err := cd.queries.CreateForumTopicForPoster(cd.ctx, db.CreateForumTopicForPosterParams{
 		PosterID:        p.CreatorID,
 		ForumcategoryID: PrivateForumCategoryID,
 		ForumLang:       sql.NullInt32{},
-		Title:           sql.NullString{},
+		Title:           sql.NullString{String: title, Valid: true},
 		Description:     sql.NullString{},
 		Handler:         "private",
 		Section:         "privateforum",
@@ -60,7 +72,7 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID, thr
 			if _, err := cd.queries.SystemCreateGrant(cd.ctx, db.SystemCreateGrantParams{
 				UserID:   sql.NullInt32{Int32: uid, Valid: true},
 				RoleID:   sql.NullInt32{},
-				Section:  "forum",
+				Section:  "privateforum",
 				Item:     sql.NullString{String: "topic", Valid: true},
 				RuleType: "allow",
 				ItemID:   sql.NullInt32{Int32: topicID, Valid: true},
@@ -72,7 +84,11 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID, thr
 			}
 		}
 	}
-	cid, err := cd.CreateForumCommentForCommenter(p.CreatorID, threadID, topicID, 0, p.Body)
+	body := p.Body
+	if body == "" {
+		body = "Hi!"
+	}
+	cid, err := cd.CreateForumCommentForCommenter(p.CreatorID, threadID, topicID, 0, body)
 	if err != nil {
 		return 0, 0, fmt.Errorf("create comment %w", err)
 	}

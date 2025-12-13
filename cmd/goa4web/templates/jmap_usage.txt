@@ -1,0 +1,13 @@
+JMAP commands.
+
+Usage:
+  {{.Prog}} jmap [command]
+
+Available Commands:
+  test-config  Tests the JMAP configuration and prints discovery information.
+  test-send    Sends a test email to the specified address.
+
+Flags:
+  -h, --help   help for jmap
+
+Use "{{.Prog}} jmap [command] --help" for more information about a command.

@@ -124,16 +124,16 @@ func providerFromConfig(cfg *config.RuntimeConfig) email.Provider {
 	}
 
 	if acc == "" || id == "" {
-		session, err := discoverSession(context.Background(), httpClient, ep, cfg.EmailJMAPUser, cfg.EmailJMAPPass)
+		session, err := DiscoverSession(context.Background(), httpClient, ep, cfg.EmailJMAPUser, cfg.EmailJMAPPass)
 		if err != nil {
 			fmt.Printf("Email disabled: failed to discover JMAP session: %v\n", err)
 			return nil
 		}
 		if acc == "" {
-			acc = selectAccountID(session)
+			acc = SelectAccountID(session)
 		}
 		if id == "" {
-			id = selectIdentityID(session)
+			id = SelectIdentityID(session)
 		}
 		if ep == "" {
 			ep = session.APIURL
@@ -164,14 +164,14 @@ const mailCapabilityURN = "urn:ietf:params:jmap:mail"
 // sieveCapabilityURN identifies the JMAP sieve capability.
 const sieveCapabilityURN = "urn:ietf:params:jmap:sieve"
 
-type sessionResponse struct {
+type SessionResponse struct {
 	APIURL          string            `json:"apiUrl"`
 	PrimaryAccounts map[string]string `json:"primaryAccounts"`
 	DefaultIdentity map[string]string `json:"defaultIdentity"`
 }
 
-func discoverSession(ctx context.Context, client *http.Client, endpoint, username, password string) (*sessionResponse, error) {
-	wellKnown, err := jmapWellKnownURL(endpoint)
+func DiscoverSession(ctx context.Context, client *http.Client, endpoint, username, password string) (*SessionResponse, error) {
+	wellKnown, err := JmapWellKnownURL(endpoint)
 	if err != nil {
 		return nil, err
 	}
@@ -190,14 +190,14 @@ func discoverSession(ctx context.Context, client *http.Client, endpoint, usernam
 	if resp.StatusCode >= 300 {
 		return nil, fmt.Errorf("jmap session discovery failed: %s", resp.Status)
 	}
-	var session sessionResponse
+	var session SessionResponse
 	if err := json.NewDecoder(resp.Body).Decode(&session); err != nil {
 		return nil, err
 	}
 	return &session, nil
 }
 
-func jmapWellKnownURL(endpoint string) (string, error) {
+func JmapWellKnownURL(endpoint string) (string, error) {
 	u, err := url.Parse(endpoint)
 	if err != nil {
 		return "", err
@@ -208,7 +208,7 @@ func jmapWellKnownURL(endpoint string) (string, error) {
 	return (&url.URL{Scheme: u.Scheme, Host: u.Host, Path: "/.well-known/jmap"}).String(), nil
 }
 
-func selectAccountID(session *sessionResponse) string {
+func SelectAccountID(session *SessionResponse) string {
 	if session == nil {
 		return ""
 	}
@@ -226,7 +226,7 @@ func selectAccountID(session *sessionResponse) string {
 	return ""
 }
 
-func selectIdentityID(session *sessionResponse) string {
+func SelectIdentityID(session *SessionResponse) string {
 	if session == nil {
 		return ""
 	}

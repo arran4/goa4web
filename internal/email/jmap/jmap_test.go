@@ -23,7 +23,7 @@ func TestProviderFromConfigDiscoversSession(t *testing.T) {
 			t.Fatalf("unexpected auth: %s %s %v", user, pass, ok)
 		}
 		sawWellKnown = true
-		resp := sessionResponse{
+		resp := SessionResponse{
 			APIURL: srv.URL + "/jmap",
 			PrimaryAccounts: map[string]string{
 				mailCapabilityURN: "account-123",

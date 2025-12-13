@@ -286,11 +286,17 @@ func (r *rootCmd) Run() error {
 		}
 		return c.Run()
 	case "news":
-		c, err := parseNewsCmd(r, args[1:])
+		cmd, err := parseNewsCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("rootCmd.Run: news: %w", err)
 		}
-		return c.Run()
+		return cmd.Run()
+	case "jmap":
+		cmd, err := parseJmapCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("jmap: %w", err)
+		}
+		return cmd.Run()
 	case "faq":
 		c, err := parseFaqCmd(r, args[1:])
 		if err != nil {

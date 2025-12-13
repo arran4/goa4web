@@ -40,6 +40,7 @@ type Server struct {
 	Nav            *nav.Registry
 	Config         *config.RuntimeConfig
 	Router         http.Handler
+	NotFoundHandler http.Handler
 	Store          *sessions.CookieStore
 	DB             *sql.DB
 	Bus            *eventbus.Bus
@@ -173,106 +174,112 @@ func New(opts ...Option) *Server {
 
 // CoreDataMiddleware constructs the middleware responsible for populating
 // CoreData in the request context using the server's configured dependencies.
+func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.CoreData, *http.Request) {
+	session, err := core.GetSession(r)
+	if err != nil {
+		core.SessionErrorRedirect(w, r, err)
+		return nil, nil
+	}
+	var uid int32
+	if v, ok := session.Values["UID"].(int32); ok {
+		uid = v
+	}
+	if expi, ok := session.Values["ExpiryTime"]; ok {
+		var exp int64
+		switch t := expi.(type) {
+		case int64:
+			exp = t
+		case int:
+			exp = int64(t)
+		case float64:
+			exp = int64(t)
+		}
+		if exp != 0 && time.Now().Unix() > exp {
+			delete(session.Values, "UID")
+			delete(session.Values, "LoginTime")
+			delete(session.Values, "ExpiryTime")
+			_ = middleware.RedirectToLogin(w, r, session)
+			return nil, nil
+		}
+	}
+	if s.DB == nil {
+		ue := common.UserError{Err: fmt.Errorf("db not initialized"), ErrorMessage: "database unavailable"}
+		log.Printf("%s: %v", ue.ErrorMessage, ue.Err)
+		handlers.RenderErrorPage(w, r, errors.New(ue.ErrorMessage))
+		return nil, nil
+	}
+
+	queries := db.New(s.DB)
+	sm := s.SessionManager
+	if sm == nil {
+		sm = db.NewSessionProxy(queries)
+	}
+	if s.Config.DBLogVerbosity > 0 {
+		log.Printf("db pool stats: %+v", s.DB.Stats())
+	}
+
+	if session.ID != "" {
+		if uid != 0 {
+			if err := sm.InsertSession(r.Context(), session.ID, uid); err != nil {
+				log.Printf("insert session: %v", err)
+			}
+		} else {
+			if err := sm.DeleteSessionByID(r.Context(), session.ID); err != nil {
+				log.Printf("delete session: %v", err)
+			}
+		}
+	}
+
+	base := "http://" + r.Host
+	if s.Config.HTTPHostname != "" {
+		base = strings.TrimRight(s.Config.HTTPHostname, "/")
+	}
+	provider := s.EmailReg.ProviderFromConfig(s.Config)
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	modules := []string{}
+	if s.RouterReg != nil {
+		modules = s.RouterReg.Names()
+	}
+	cd := common.NewCoreData(r.Context(), queries, s.Config,
+		common.WithImageSigner(s.ImageSigner),
+		common.WithCustomQueries(queries),
+		common.WithLinkSigner(s.LinkSigner),
+		common.WithImageURLMapper(s.ImageSigner.MapURL),
+		common.WithSession(session),
+		common.WithEmailProvider(provider),
+		common.WithAbsoluteURLBase(base),
+		common.WithSessionManager(sm),
+		common.WithNavRegistry(s.Nav),
+		common.WithTasksRegistry(s.TasksReg),
+		common.WithDBRegistry(s.DBReg),
+		common.WithRouterModules(modules),
+		common.WithOffset(offset),
+		common.WithSiteTitle("Arran's Site"),
+	)
+	cd.UserID = uid
+	_ = cd.UserRoles()
+
+	if s.Nav != nil {
+		cd.IndexItems = s.Nav.IndexItems()
+	}
+	cd.FeedsEnabled = s.Config.FeedsEnabled
+	cd.AdminMode = r.URL.Query().Get("mode") == "admin"
+	if strings.HasPrefix(r.URL.Path, "/admin") && cd.HasRole("administrator") {
+		cd.AdminMode = true
+	}
+	if uid != 0 && s.Config.NotificationsEnabled {
+		cd.NotificationCount = int32(cd.UnreadNotificationCount())
+	}
+	ctx := context.WithValue(r.Context(), consts.KeyCoreData, cd)
+	return cd, r.WithContext(ctx)
+}
+
 func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			session, err := core.GetSession(r)
-			if err != nil {
-				core.SessionErrorRedirect(w, r, err)
-				return
+			if _, rCtx := s.GetCoreData(w, r); rCtx != nil {
+				next.ServeHTTP(w, rCtx)
 			}
-			var uid int32
-			if v, ok := session.Values["UID"].(int32); ok {
-				uid = v
-			}
-			if expi, ok := session.Values["ExpiryTime"]; ok {
-				var exp int64
-				switch t := expi.(type) {
-				case int64:
-					exp = t
-				case int:
-					exp = int64(t)
-				case float64:
-					exp = int64(t)
-				}
-				if exp != 0 && time.Now().Unix() > exp {
-					delete(session.Values, "UID")
-					delete(session.Values, "LoginTime")
-					delete(session.Values, "ExpiryTime")
-					_ = middleware.RedirectToLogin(w, r, session)
-					return
-				}
-			}
-			if s.DB == nil {
-				ue := common.UserError{Err: fmt.Errorf("db not initialized"), ErrorMessage: "database unavailable"}
-				log.Printf("%s: %v", ue.ErrorMessage, ue.Err)
-				handlers.RenderErrorPage(w, r, errors.New(ue.ErrorMessage))
-				return
-			}
-
-			queries := db.New(s.DB)
-			sm := s.SessionManager
-			if sm == nil {
-				sm = db.NewSessionProxy(queries)
-			}
-			if s.Config.DBLogVerbosity > 0 {
-				log.Printf("db pool stats: %+v", s.DB.Stats())
-			}
-
-			if session.ID != "" {
-				if uid != 0 {
-					if err := sm.InsertSession(r.Context(), session.ID, uid); err != nil {
-						log.Printf("insert session: %v", err)
-					}
-				} else {
-					if err := sm.DeleteSessionByID(r.Context(), session.ID); err != nil {
-						log.Printf("delete session: %v", err)
-					}
-				}
-			}
-
-			base := "http://" + r.Host
-			if s.Config.HTTPHostname != "" {
-				base = strings.TrimRight(s.Config.HTTPHostname, "/")
-			}
-			provider := s.EmailReg.ProviderFromConfig(s.Config)
-			offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-			modules := []string{}
-			if s.RouterReg != nil {
-				modules = s.RouterReg.Names()
-			}
-			cd := common.NewCoreData(r.Context(), queries, s.Config,
-				common.WithImageSigner(s.ImageSigner),
-				common.WithCustomQueries(queries),
-				common.WithLinkSigner(s.LinkSigner),
-				common.WithImageURLMapper(s.ImageSigner.MapURL),
-				common.WithSession(session),
-				common.WithEmailProvider(provider),
-				common.WithAbsoluteURLBase(base),
-				common.WithSessionManager(sm),
-				common.WithNavRegistry(s.Nav),
-				common.WithTasksRegistry(s.TasksReg),
-				common.WithDBRegistry(s.DBReg),
-				common.WithRouterModules(modules),
-				common.WithOffset(offset),
-				common.WithSiteTitle("Arran's Site"),
-			)
-			cd.UserID = uid
-			_ = cd.UserRoles()
-
-			if s.Nav != nil {
-				cd.IndexItems = s.Nav.IndexItems()
-			}
-			cd.FeedsEnabled = s.Config.FeedsEnabled
-			cd.AdminMode = r.URL.Query().Get("mode") == "admin"
-			if strings.HasPrefix(r.URL.Path, "/admin") && cd.HasRole("administrator") {
-				cd.AdminMode = true
-			}
-			if uid != 0 && s.Config.NotificationsEnabled {
-				cd.NotificationCount = int32(cd.UnreadNotificationCount())
-			}
-			ctx := context.WithValue(r.Context(), consts.KeyCoreData, cd)
-			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 }

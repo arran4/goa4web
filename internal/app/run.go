@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/app/server"
 
 	"github.com/arran4/goa4web/config"
@@ -197,6 +199,22 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 		server.WithTasksRegistry(o.TasksReg),
 		server.WithSessionManager(sm),
 	)
+
+	srv.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cd, r := srv.GetCoreData(w, r)
+		if cd == nil {
+			// GetCoreData already handled the error
+			return
+		}
+		if strings.HasPrefix(r.URL.Path, "/forum") {
+			cd.NotFoundLink = &common.NotFoundLink{
+				Text: "Go back to forum index",
+				URL:  "/forum",
+			}
+		}
+		handlers.RenderErrorPage(w, r, handlers.ErrNotFound)
+	})
+	r.NotFoundHandler = srv.NotFoundHandler
 
 	taskEventMW := middleware.NewTaskEventMiddleware(o.Bus)
 	handler := middleware.NewMiddlewareChain(

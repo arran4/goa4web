@@ -72,11 +72,7 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	topicRow, err := cd.ForumTopicByID(int32(topicId))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			cd.NotFoundLink = &common.NotFoundLink{
-				Text: "Go back to forum index",
-				URL:  basePath,
-			}
-			handlers.RenderErrorPage(w, r, handlers.ErrNotFound)
+			http.NotFound(w, r)
 		} else {
 			log.Printf("showTableTopics Error: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)

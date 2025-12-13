@@ -1099,9 +1099,9 @@ FROM forumtopic t
 LEFT JOIN users lu ON lu.idusers = t.lastposter
 JOIN grants g ON g.item_id = t.idforumtopic
 WHERE t.handler = 'private'
-  AND g.section = 'forum'
+  AND g.section = 'privateforum'
   AND g.item = 'topic'
-  AND g.action = 'view'
+  AND g.action = 'see'
   AND g.active = 1
   AND g.user_id = ?
 ORDER BY t.lastaddition DESC

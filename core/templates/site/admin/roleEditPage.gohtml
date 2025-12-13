@@ -9,5 +9,5 @@
     Private Labels: <input type="checkbox" name="private_labels" {{if .Role.PrivateLabels}}checked{{end}}><br>
     <input type="submit" name="task" value="Save">
 </form>
-{{ template "roleGrantsEditor.gohtml" . }}
+{{ template "admin/roleGrantsEditor.gohtml" . }}
 {{ template "tail" $ }}

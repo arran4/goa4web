@@ -15,7 +15,7 @@ import (
 
 // RegisterRoutes attaches the private forum endpoints to r.
 func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
-	navReg.RegisterIndexLink("Private", "/private", SectionWeight)
+	navReg.RegisterIndexLinkWithViewPermission("Private", "/private", SectionWeight, "privateforum", "topic")
 	pr := r.PathPrefix("/private").Subrouter()
 	pr.Use(handlers.IndexMiddleware(CustomIndex), handlers.SectionMiddleware("privateforum"), forumhandlers.BasePathMiddleware("/private"))
 	pr.HandleFunc("", Page).Methods(http.MethodGet)

@@ -44,3 +44,25 @@ func TestIndexItemsSkipEmpty(t *testing.T) {
 		t.Fatalf("unexpected admin sections %#v", secs)
 	}
 }
+
+func TestIndexItemsPermissionFilter(t *testing.T) {
+	defaultRegistry = NewRegistry()
+	t.Cleanup(func() { defaultRegistry = NewRegistry() })
+
+	RegisterIndexLinkWithViewPermission("protected", "/protected", 5, "news", "post")
+	RegisterIndexLink("public", "/public", 10)
+
+	items := IndexItemsWithPermission(func(section, item string) bool {
+		return section == "news" && item == "post"
+	})
+	if len(items) != 2 {
+		t.Fatalf("expected 2 items when permission is granted, got %d", len(items))
+	}
+
+	items = IndexItemsWithPermission(func(section, item string) bool {
+		return false
+	})
+	if len(items) != 1 || items[0].Name != "public" {
+		t.Fatalf("expected only public item when permission denied, got %#v", items)
+	}
+}

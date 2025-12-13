@@ -9,4 +9,5 @@ import (
 // Only the fields necessary for sending basic notification emails are included.
 type Provider interface {
 	Send(ctx context.Context, to mail.Address, rawEmailMessage []byte) error
+	TestConfig(ctx context.Context) error
 }

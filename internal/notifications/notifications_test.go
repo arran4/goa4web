@@ -52,6 +52,8 @@ func (r *dummyProvider) Send(ctx context.Context, to mail.Address, rawEmailMessa
 	return nil
 }
 
+func (r *dummyProvider) TestConfig(ctx context.Context) error { return nil }
+
 func TestNotifierNotifyAdmins(t *testing.T) {
 	conn, mock, err := sqlmock.New()
 	if err != nil {

@@ -34,6 +34,16 @@ func (Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []byt
 	return cmd.Run()
 }
 
+// TestConfig checks if the sendmail binary is available.
+func (Provider) TestConfig(ctx context.Context) error {
+	_, err := exec.LookPath("sendmail")
+	if err != nil {
+		return fmt.Errorf("sendmail binary not found: %w", err)
+	}
+	fmt.Println("sendmail binary found")
+	return nil
+}
+
 func providerFromConfig(*config.RuntimeConfig) email.Provider { return Provider{} }
 
 // Register registers the local provider factory.

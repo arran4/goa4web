@@ -68,7 +68,7 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID, thr
 	}
 	threadID = int32(thid)
 	for _, uid := range p.ParticipantIDs {
-		for _, act := range []string{"see", "view", "post", "reply"} {
+		for _, act := range []string{"see", "view", "post", "reply", "edit"} {
 			if _, err := cd.queries.SystemCreateGrant(cd.ctx, db.SystemCreateGrantParams{
 				UserID:   sql.NullInt32{Int32: uid, Valid: true},
 				RoleID:   sql.NullInt32{},

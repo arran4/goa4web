@@ -41,24 +41,5 @@ The permissions model is documented in specs/permissions.md. Keep this document 
 
 ## Database and Testing Notes
 
-- The `database/schema.mysql.sql` file is known to be incompatible with some newer versions of MySQL due to key length issues. Do not modify it.
 - If the database setup is blocking frontend verification, it is acceptable to skip it and note that the user may perform manual testing instead.
-- For unit tests that require a database connection, it is recommended to mock the `db.Querier` interface to avoid database dependencies. The following pattern is suggested:
-
-```go
-type Test001Querier struct {
-   db.Querier // Nil, it's for interface compliance, we overwrite methods we need.
-   OverwrittenAddContentLabelStatus func(ctx context.Context, arg AddContentLabelStatusParams) error
-   dataType1 []*ModelObjects // We store the data and manually process it as required
-}
-
-func (q *Test001Querier) AddContentLabelStatus(ctx context.Context, arg AddContentLabelStatusParams) error {
-  return q.OverwrittenAddContentLabelStatus(ctx, arg)
-}
-
-// else where
- mockQuery := &Test001Querier{
-    /// ...
-    /// ...
-}
-```
+- For unit tests that require a database connection, it is recommended to mock the `db.Querier` interface to avoid database dependencies.

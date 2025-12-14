@@ -30,6 +30,12 @@ func TestAdminBlogCommentsPage_UsesURLParam(t *testing.T) {
 	rows := sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_id", "blog", "written", "timezone", "username", "comments", "is_owner"}).
 		AddRow(blogID, sql.NullInt32{Int32: 1, Valid: true}, 1, 1, "body", time.Now(), time.Local.String(), "user", 0, true)
 	mock.ExpectQuery("SELECT").WillReturnRows(rows)
+	// Expect thread permission check for unauthenticated viewer (zeros/nulls)
+	permRows := sqlmock.NewRows([]string{"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername"}).
+		AddRow(1, 1, 1, 1, 0, time.Now(), false, sql.NullString{})
+	mock.ExpectQuery("SELECT th.idforumthread").
+		WithArgs(int32(0), int32(1), int32(0), int32(0), sql.NullInt32{Valid: false}, sql.NullInt32{Valid: false}).
+		WillReturnRows(permRows)
 	mock.ExpectQuery("SELECT").WillReturnError(sql.ErrNoRows)
 	mock.ExpectQuery("SELECT").WillReturnRows(sqlmock.NewRows([]string{}))
 

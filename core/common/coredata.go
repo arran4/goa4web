@@ -2351,13 +2351,8 @@ func (cd *CoreData) SectionThreadComments(section, itemType string, id int32, op
 		if cd.queries == nil {
 			return nil, nil
 		}
-		if _, err := cd.queries.GetThreadLastPosterAndPerms(cd.ctx, db.GetThreadLastPosterAndPermsParams{
-			ViewerID:      cd.UserID,
-			ThreadID:      i,
-			ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-		}); err != nil {
-			return nil, fmt.Errorf("getting thread permissions: %w", err)
-		}
+		// Fetch comments directly for the given section/thread. Permission and language
+		// constraints are handled at the query level of GetCommentsBySectionThreadIdForUser.
 		rows, err := cd.queries.GetCommentsBySectionThreadIdForUser(cd.ctx, db.GetCommentsBySectionThreadIdForUserParams{
 			ViewerID: cd.UserID,
 			ThreadID: i,

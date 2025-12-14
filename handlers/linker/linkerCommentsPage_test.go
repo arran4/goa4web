@@ -58,7 +58,7 @@ func TestCommentsPageAllowsGlobalViewGrant(t *testing.T) {
 	threadRows := sqlmock.NewRows([]string{"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername"}).
 		AddRow(1, 1, 1, 1, 0, time.Unix(0, 0), false, "bob")
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT th.idforumthread")).
-		WithArgs(int32(2), int32(1), int32(2), int32(2), sql.NullInt32{Int32: 2, Valid: true}).
+		WithArgs(int32(2), int32(1), int32(2), int32(2), int32(2), sql.NullInt32{Int32: 2, Valid: true}).
 		WillReturnRows(threadRows)
 
 	rr := httptest.NewRecorder()

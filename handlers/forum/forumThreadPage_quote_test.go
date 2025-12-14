@@ -26,7 +26,7 @@ func TestThreadPageQuotePrefillsReply(t *testing.T) {
 	defer dbconn.Close()
 
 	mock.ExpectQuery("SELECT th.idforumthread").
-		WithArgs(int32(1), int32(1), int32(1), int32(1), sql.NullInt32{Int32: 1, Valid: true}).
+		WithArgs(int32(1), int32(1), int32(1), int32(1), int32(1), sql.NullInt32{Int32: 1, Valid: true}).
 		WillReturnRows(sqlmock.NewRows([]string{
 			"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername",
 		}).AddRow(int32(1), int32(1), int32(1), int32(1), sql.NullInt32{}, sql.NullTime{}, sql.NullBool{}, sql.NullString{}))

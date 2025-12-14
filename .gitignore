@@ -112,3 +112,4 @@ dbbackups
 /.admin_api_secret
 /.link_sign_secret
 /*.db
+/.output.txt

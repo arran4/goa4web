@@ -23,6 +23,7 @@ type CreatePrivateTopicParams struct {
 	ParticipantIDs []int32
 	Body           string
 	Title          string
+	Description    string
 }
 
 // CreatePrivateTopic creates a new private topic and assigns grants and the initial comment.
@@ -49,7 +50,7 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID, thr
 		ForumcategoryID: PrivateForumCategoryID,
 		ForumLang:       sql.NullInt32{},
 		Title:           sql.NullString{String: title, Valid: true},
-		Description:     sql.NullString{},
+		Description:     sql.NullString{String: p.Description, Valid: true},
 		Handler:         "private",
 		Section:         "privateforum",
 		GrantCategoryID: sql.NullInt32{Int32: PrivateForumCategoryID, Valid: true},
@@ -84,11 +85,24 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID, thr
 			}
 		}
 	}
-	body := p.Body
-	if body == "" {
-		body = "Hi!"
+	for _, uid := range p.ParticipantIDs {
+		for _, act := range []string{"see", "view", "post", "reply", "edit"} {
+			if _, err := cd.queries.SystemCreateGrant(cd.ctx, db.SystemCreateGrantParams{
+				UserID:   sql.NullInt32{Int32: uid, Valid: true},
+				RoleID:   sql.NullInt32{},
+				Section:  "privateforum",
+				Item:     sql.NullString{String: "thread", Valid: true},
+				RuleType: "allow",
+				ItemID:   sql.NullInt32{Int32: threadID, Valid: true},
+				ItemRule: sql.NullString{},
+				Action:   act,
+				Extra:    sql.NullString{},
+			}); err != nil {
+				return 0, 0, fmt.Errorf("create %s grant %w", act, err)
+			}
+		}
 	}
-	cid, err := cd.CreateForumCommentForCommenter(p.CreatorID, threadID, topicID, 0, body)
+	cid, err := cd.CreateForumCommentForCommenter(p.CreatorID, threadID, topicID, 0, p.Body)
 	if err != nil {
 		return 0, 0, fmt.Errorf("create comment %w", err)
 	}

@@ -39,6 +39,8 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID, thr
 	for _, id := range p.ParticipantIDs {
 		if u := cd.UserByID(id); u != nil {
 			usernames = append(usernames, u.Username.String)
+		} else {
+			return 0, 0, fmt.Errorf("unknown user %d", id)
 		}
 	}
 	title := p.Title

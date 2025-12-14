@@ -2,6 +2,7 @@ package privateforum
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -39,7 +40,7 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 	if body == "" {
 		return fmt.Errorf("first post cannot be empty")
 	}
-	var uids []int32
+	var uids []int32 // TODO make map
 	for _, p := range parts {
 		p = strings.TrimSpace(p)
 		if p == "" {
@@ -47,7 +48,10 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 		}
 		u, err := queries.SystemGetUserByUsername(r.Context(), sql.NullString{String: p, Valid: true})
 		if err != nil {
-			continue
+			if errors.Is(err, sql.ErrNoRows) {
+				return fmt.Errorf("unknown user %w", handlers.ErrRedirectOnSamePageHandler(err))
+			}
+			return fmt.Errorf("unknown error %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		uids = append(uids, u.Idusers)
 	}

@@ -272,6 +272,9 @@ WHERE th.idforumthread=?
           WHERE ul.users_idusers = ?
             AND ul.language_id = fc.language_id
       )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
+      )
   )
   AND EXISTS (
     SELECT 1 FROM grants g
@@ -316,6 +319,7 @@ func (q *Queries) GetThreadLastPosterAndPerms(ctx context.Context, arg GetThread
 	row := q.db.QueryRowContext(ctx, getThreadLastPosterAndPerms,
 		arg.ViewerID,
 		arg.ThreadID,
+		arg.ViewerID,
 		arg.ViewerID,
 		arg.ViewerMatchID,
 		arg.ViewerMatchID,

@@ -182,14 +182,14 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 			ViewerID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 		})
 		if err != nil {
-			log.Printf("Error: ListPrivateTopicParticipantsByTopicIDForUser: %s", err)
+			return fmt.Errorf("listing private topic participants: %w", err)
 		}
 		for _, p := range participants {
-			if _, err := cd.GrantForumThread(int32(threadId), sql.NullInt32{Int32: p.Idusers, Valid: p.Idusers != 0}, sql.NullInt32{}, "view"); err != nil {
-				log.Printf("Error: GrantForumThread view: %s", err)
+			if _, err = cd.GrantForumThread(int32(threadId), sql.NullInt32{Int32: p.Idusers, Valid: p.Idusers != 0}, sql.NullInt32{}, "view"); err != nil {
+				return fmt.Errorf("granting view access: %w", err)
 			}
-			if _, err := cd.GrantForumThread(int32(threadId), sql.NullInt32{Int32: p.Idusers, Valid: p.Idusers != 0}, sql.NullInt32{}, "reply"); err != nil {
-				log.Printf("Error: GrantForumThread reply: %s", err)
+			if _, err = cd.GrantForumThread(int32(threadId), sql.NullInt32{Int32: p.Idusers, Valid: p.Idusers != 0}, sql.NullInt32{}, "reply"); err != nil {
+				return fmt.Errorf("granting reply access: %w", err)
 			}
 		}
 		cid, err = cd.CreatePrivateForumCommentForCommenter(uid, int32(threadId), int32(topicId), int32(languageId), text)

@@ -31,6 +31,7 @@ func TestAdminBlogCommentsPage_UsesURLParam(t *testing.T) {
 		AddRow(blogID, sql.NullInt32{Int32: 1, Valid: true}, 1, 1, "body", time.Now(), time.Local.String(), "user", 0, true)
 	mock.ExpectQuery("SELECT").WillReturnRows(rows)
 	mock.ExpectQuery("SELECT").WillReturnError(sql.ErrNoRows)
+	mock.ExpectQuery("SELECT").WillReturnRows(sqlmock.NewRows([]string{}))
 
 	req := httptest.NewRequest("GET", "/admin/blogs/blog/"+strconv.Itoa(blogID)+"/comments", nil)
 	req = mux.SetURLVars(req, map[string]string{"blog": strconv.Itoa(blogID)})

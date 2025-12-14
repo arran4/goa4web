@@ -95,8 +95,22 @@ func (c *privateForumCleanEmptyCmd) Run() error {
 		return fmt.Errorf("getting private forum topics: %w", err)
 	}
 
+	// Build a map of topicID -> thread count using stats query (threads should be obtained by query)
+	topicCounts, err := queries.AdminForumTopicThreadCounts(ctx)
+	if err != nil {
+		return fmt.Errorf("getting topic thread counts: %w", err)
+	}
+	threadsByTopic := make(map[int32]int64, len(topicCounts))
+	for _, tc := range topicCounts {
+		// Only consider private forum topics
+		if tc.Handler == "private" {
+			threadsByTopic[tc.Idforumtopic] = tc.Threads
+		}
+	}
+
 	for _, topic := range topics {
-		if !topic.Threads.Valid || topic.Threads.Int32 == 0 {
+		threads := threadsByTopic[topic.Idforumtopic]
+		if threads == 0 {
 			if c.verbose {
 				log.Printf("Found empty private forum topic: %s (ID: %d)", topic.Title.String, topic.Idforumtopic)
 			}
@@ -170,7 +184,8 @@ func (c *privateForumCleanEmptyThreadsCmd) Run() error {
 	}
 
 	for _, thread := range threads {
-		if !thread.Comments.Valid || thread.Comments.Int32 == 0 {
+		// Use PostCount (comments count) from query to determine emptiness
+		if !thread.PostCount.Valid || thread.PostCount.Int32 == 0 {
 			if c.verbose {
 				log.Printf("Found empty private forum thread: (ID: %d)", thread.Idforumthread)
 			}

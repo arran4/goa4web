@@ -3,12 +3,13 @@ package blogs
 import (
 	"context"
 	"database/sql"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
 	"testing"
 	"time"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/mux"
@@ -74,6 +75,7 @@ func TestCommentPageLockedThreadDisablesReply(t *testing.T) {
 		int32(2),
 		int32(2),
 		sql.NullInt32{Int32: 2, Valid: true},
+		sql.NullInt32{Int32: 2, Valid: true},
 	).WillReturnRows(threadRows1)
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT c.idcomments")).
@@ -136,6 +138,7 @@ func TestCommentPageUnlockedThreadShowsReply(t *testing.T) {
 		int32(1),
 		int32(2),
 		int32(2),
+		sql.NullInt32{Int32: 2, Valid: true},
 		sql.NullInt32{Int32: 2, Valid: true},
 	).WillReturnRows(threadRows1)
 

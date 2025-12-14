@@ -117,6 +117,8 @@ type Querier interface {
 	AdminLanguageUsageCounts(ctx context.Context, arg AdminLanguageUsageCountsParams) (*AdminLanguageUsageCountsRow, error)
 	AdminListAdministratorEmails(ctx context.Context) ([]string, error)
 	AdminListAllCommentsWithThreadInfo(ctx context.Context, arg AdminListAllCommentsWithThreadInfoParams) ([]*AdminListAllCommentsWithThreadInfoRow, error)
+	AdminListAllPrivateForumThreads(ctx context.Context) ([]*AdminListAllPrivateForumThreadsRow, error)
+	AdminListAllPrivateTopics(ctx context.Context) ([]*AdminListAllPrivateTopicsRow, error)
 	AdminListAllUserIDs(ctx context.Context) ([]int32, error)
 	// Result:
 	//   idusers (int)
@@ -140,6 +142,8 @@ type Querier interface {
 	AdminListForumTopics(ctx context.Context, arg AdminListForumTopicsParams) ([]*Forumtopic, error)
 	// admin task
 	AdminListGrantsByRoleID(ctx context.Context, roleID sql.NullInt32) ([]*Grant, error)
+	AdminListGrantsByThreadID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListGrantsByThreadIDRow, error)
+	AdminListGrantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListGrantsByTopicIDRow, error)
 	AdminListLoginAttempts(ctx context.Context) ([]*LoginAttempt, error)
 	AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescending(ctx context.Context, arg AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams) ([]*AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error)
 	AdminListPendingDeactivatedBlogs(ctx context.Context, arg AdminListPendingDeactivatedBlogsParams) ([]*AdminListPendingDeactivatedBlogsRow, error)

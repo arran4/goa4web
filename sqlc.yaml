@@ -41,6 +41,7 @@ sql:
         - "internal/db/queries-user_languages.sql"
         - "internal/db/queries-stats.sql"
         - "internal/db/queries-read_markers.sql"
+        - "internal/db/queries-private_forum.sql"
       gen:
           go:
               package: "db"

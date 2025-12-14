@@ -196,12 +196,13 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	} else {
 		cid, err = cd.CreateForumCommentForCommenter(uid, int32(threadId), int32(topicId), int32(languageId), text)
 	}
-	if err == nil && cid == 0 {
-		err = handlers.ErrForbidden
-	}
 	if err != nil {
 		log.Printf("Error: makeThread: %s", err)
 		return fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	if cid == 0 {
+		log.Printf("Error: makeThread: forbidden")
+		return fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(handlers.ErrForbidden))
 	}
 
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {

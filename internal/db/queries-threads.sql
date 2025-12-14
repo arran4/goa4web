@@ -67,9 +67,6 @@ WHERE th.idforumthread=sqlc.arg(thread_id)
           WHERE ul.users_idusers = sqlc.arg(viewer_id)
             AND ul.language_id = fc.language_id
       )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-      )
   )
   AND EXISTS (
     SELECT 1 FROM grants g

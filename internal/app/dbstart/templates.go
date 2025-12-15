@@ -2,7 +2,6 @@ package dbstart
 
 import (
 	"bytes"
-	_ "embed"
 	"log"
 	"os"
 	"path/filepath"
@@ -10,11 +9,10 @@ import (
 	"text/template"
 )
 
-var (
+const (
 	// schemaMismatchTmpl is the CLI message shown when the database schema version is unexpected.
-	//
-	//go:embed templates/schema_mismatch.txt
-	schemaMismatchTmpl string
+	schemaMismatchTmpl = `Your database uses schema version {{.Actual}} but version {{.Expected}} is required.
+Run '{{.Exe}} db migrate' and restart the server.`
 )
 
 // RenderSchemaMismatch returns the formatted schema mismatch message.

@@ -116,3 +116,14 @@ DELETE FROM users WHERE idusers = ?;
 
 -- name: AdminUpdateUsernameByID :exec
 UPDATE users SET username = ? WHERE idusers = ?;
+
+-- name: CheckUserHasGrant :one
+SELECT EXISTS(
+    SELECT 1
+    FROM grants g
+    WHERE g.user_id = ?
+    AND g.section = ?
+    AND g.item = ?
+    AND g.action = ?
+    AND g.active = 1
+);

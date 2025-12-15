@@ -11,6 +11,7 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	forumhandlers "github.com/arran4/goa4web/handlers/forum"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -56,6 +57,24 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 				return nil
 			}
 			return fmt.Errorf("unknown error %w", handlers.ErrRedirectOnSamePageHandler(err))
+		}
+		hasGrant, err := queries.CheckUserHasGrant(r.Context(), db.CheckUserHasGrantParams{
+			UserID:  sql.NullInt32{Int32: u.Idusers, Valid: true},
+			Section: "privateforum",
+			Item:    sql.NullString{String: "topic", Valid: true},
+			Action:  "see",
+		})
+		if err != nil {
+			return fmt.Errorf("checking user grant: %w", handlers.ErrRedirectOnSamePageHandler(err))
+		}
+		if !hasGrant {
+			cd.SetCurrentError(fmt.Sprintf("user %q does not have permission to access private forums", p))
+			forumhandlers.CreateTopicPageWithPostTask(w, r, TaskPrivateTopicCreate, &forumhandlers.CreateTopicPageForm{
+				Participants: participants,
+				Title:        title,
+				Description:  description,
+			})
+			return nil
 		}
 		uids = append(uids, u.Idusers)
 	}

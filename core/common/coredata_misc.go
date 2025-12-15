@@ -35,7 +35,7 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID, thr
 		log.Printf("private topic create denied: user=%d", p.CreatorID)
 		return 0, 0, fmt.Errorf("permission denied")
 	}
-	var usernames []string
+	var usernames []string // TODO this should be fed in from the caller and if it is not provided we can fill it htis way
 	for _, id := range p.ParticipantIDs {
 		if u := cd.UserByID(id); u != nil {
 			usernames = append(usernames, u.Username.String)
@@ -65,14 +65,16 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID, thr
 		return 0, 0, fmt.Errorf("create topic returned 0")
 	}
 	topicID = int32(tid)
-	thid, err := cd.queries.SystemCreateThread(cd.ctx, topicID)
-	if err != nil {
-		return 0, 0, fmt.Errorf("create thread %w", err)
+	if p.Body != "" {
+		thid, err := cd.queries.SystemCreateThread(cd.ctx, topicID)
+		if err != nil {
+			return 0, 0, fmt.Errorf("create thread %w", err)
+		}
+		threadID = int32(thid)
 	}
-	threadID = int32(thid)
 	for _, uid := range p.ParticipantIDs {
 		for _, act := range []string{"see", "view", "post", "reply", "edit"} {
-			if _, err := cd.queries.SystemCreateGrant(cd.ctx, db.SystemCreateGrantParams{
+			if _, err := cd.queries.SystemCreateGrant(cd.ctx, db.SystemCreateGrantParams{ // TODO switch to cd.GrantForumTopic
 				UserID:   sql.NullInt32{Int32: uid, Valid: true},
 				RoleID:   sql.NullInt32{},
 				Section:  "privateforum",
@@ -86,34 +88,36 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID, thr
 				return 0, 0, fmt.Errorf("create %s grant %w", act, err)
 			}
 		}
-	}
-	for _, uid := range p.ParticipantIDs {
-		for _, act := range []string{"see", "view", "post", "reply", "edit"} {
-			if _, err := cd.queries.SystemCreateGrant(cd.ctx, db.SystemCreateGrantParams{
-				UserID:   sql.NullInt32{Int32: uid, Valid: true},
-				RoleID:   sql.NullInt32{},
-				Section:  "privateforum",
-				Item:     sql.NullString{String: "thread", Valid: true},
-				RuleType: "allow",
-				ItemID:   sql.NullInt32{Int32: threadID, Valid: true},
-				ItemRule: sql.NullString{},
-				Action:   act,
-				Extra:    sql.NullString{},
-			}); err != nil {
-				return 0, 0, fmt.Errorf("create %s grant %w", act, err)
+		if threadID > 0 {
+			for _, act := range []string{"see", "view", "post", "reply", "edit"} {
+				if _, err := cd.queries.SystemCreateGrant(cd.ctx, db.SystemCreateGrantParams{ // TODO switch to cd.GrantForumThread
+					UserID:   sql.NullInt32{Int32: uid, Valid: true},
+					RoleID:   sql.NullInt32{},
+					Section:  "privateforum",
+					Item:     sql.NullString{String: "thread", Valid: true},
+					RuleType: "allow",
+					ItemID:   sql.NullInt32{Int32: threadID, Valid: true},
+					ItemRule: sql.NullString{},
+					Action:   act,
+					Extra:    sql.NullString{},
+				}); err != nil {
+					return 0, 0, fmt.Errorf("create %s grant %w", act, err)
+				}
 			}
 		}
 	}
-	cid, err := cd.CreateForumCommentForCommenter(p.CreatorID, threadID, topicID, 0, p.Body)
-	if err != nil {
-		return 0, 0, fmt.Errorf("create comment %w", err)
-	}
-	if evt := cd.Event(); evt != nil {
-		if evt.Data == nil {
-			evt.Data = map[string]any{}
+	if threadID > 0 {
+		cid, err := cd.CreateForumCommentForCommenter(p.CreatorID, threadID, topicID, 0, p.Body)
+		if err != nil {
+			return 0, 0, fmt.Errorf("create comment %w", err)
 		}
-		evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(cid), ThreadID: threadID, TopicID: topicID}
-		evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: int32(cid), Text: p.Body}
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(cid), ThreadID: threadID, TopicID: topicID}
+			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: int32(cid), Text: p.Body}
+		}
 	}
 	return topicID, threadID, nil
 }

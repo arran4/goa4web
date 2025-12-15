@@ -37,9 +37,9 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 	body := strings.TrimSpace(r.PostFormValue("body"))
 	title := strings.TrimSpace(r.PostFormValue("title"))
 	description := strings.TrimSpace(r.PostFormValue("description"))
-	if body == "" {
-		return fmt.Errorf("first post cannot be empty")
-	}
+	//if body == "" {
+	//	return fmt.Errorf("first post cannot be empty")
+	//}
 	var uids []int32 // TODO make map
 	for _, p := range parts {
 		p = strings.TrimSpace(p)
@@ -73,6 +73,11 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 	if cd.UserID != 0 {
 		if err := cd.SubscribeTopic(topicID); err != nil {
 			return fmt.Errorf("subscribe topic %w", handlers.ErrRedirectOnSamePageHandler(err))
+		}
+		if threadID > 0 {
+			if err := cd.SubscribeThread(topicID, threadID); err != nil {
+				return fmt.Errorf("subscribe topic %w", handlers.ErrRedirectOnSamePageHandler(err))
+			}
 		}
 	}
 	base := cd.ForumBasePath

@@ -178,6 +178,10 @@ func topicSubscriptionPattern(topicID int32) string {
 	return fmt.Sprintf("%s:/forum/topic/%d/*", strings.ToLower("Create Thread"), topicID)
 }
 
+func threadSubscriptionPattern(topicID int32, threadID int32) string {
+	return fmt.Sprintf("%s:/forum/topic/%d/thread/%d/*", strings.ToLower("Write Reply"), topicID, threadID)
+}
+
 // SubscribeTopic subscribes the current user to new threads in the given topic.
 func (cd *CoreData) SubscribeTopic(topicID int32) error {
 	if cd.queries == nil {
@@ -192,6 +196,22 @@ func (cd *CoreData) UnsubscribeTopic(topicID int32) error {
 		return nil
 	}
 	return cd.queries.DeleteSubscriptionForSubscriber(cd.ctx, db.DeleteSubscriptionForSubscriberParams{SubscriberID: cd.UserID, Pattern: topicSubscriptionPattern(topicID), Method: "internal"})
+}
+
+// SubscribeThread subscribes the current user to new threads in the given thread.
+func (cd *CoreData) SubscribeThread(topicID int32, threadID int32) error {
+	if cd.queries == nil {
+		return nil
+	}
+	return cd.queries.InsertSubscription(cd.ctx, db.InsertSubscriptionParams{UsersIdusers: cd.UserID, Pattern: threadSubscriptionPattern(topicID, threadID), Method: "internal"})
+}
+
+// UnsubscribeThread removes the current user's subscription to a thread.
+func (cd *CoreData) UnsubscribeThread(topicID int32, threadID int32) error {
+	if cd.queries == nil {
+		return nil
+	}
+	return cd.queries.DeleteSubscriptionForSubscriber(cd.ctx, db.DeleteSubscriptionForSubscriberParams{SubscriberID: cd.UserID, Pattern: threadSubscriptionPattern(topicID, threadID), Method: "internal"})
 }
 
 // GrantForumCategory creates a grant for a forum category.

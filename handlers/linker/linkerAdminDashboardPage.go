@@ -32,5 +32,5 @@ func AdminDashboardPage(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	handlers.TemplateHandler(w, r, "linkerAdminDashboardPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "linker/linkerAdminDashboardPage.gohtml", data)
 }

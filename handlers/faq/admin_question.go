@@ -74,5 +74,5 @@ func AdminQuestionsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.DismissedRows = dismissedRows
 
-	handlers.TemplateHandler(w, r, "adminQuestionPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "faq/adminQuestionPage.gohtml", data)
 }

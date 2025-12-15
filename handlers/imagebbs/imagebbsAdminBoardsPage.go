@@ -70,5 +70,5 @@ func AdminBoardsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.AllBoards = allBoards
 
-	handlers.TemplateHandler(w, r, "adminBoardsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "imagebbs/adminBoardsPage.gohtml", data)
 }

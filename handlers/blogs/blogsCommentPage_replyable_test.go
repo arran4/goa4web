@@ -96,7 +96,7 @@ func TestCommentPageLockedThreadDisablesReply(t *testing.T) {
 	).WillReturnRows(threadRows2)
 
 	rr := httptest.NewRecorder()
-	CommentPage(rr, req)
+	BlogsCommentPage(rr, req)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)

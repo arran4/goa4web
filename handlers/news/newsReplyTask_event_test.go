@@ -63,6 +63,8 @@ func TestNewsReplyTaskEventData(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).
 			AddRow(uid, nil, "alice", nil))
 
+	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = "test"

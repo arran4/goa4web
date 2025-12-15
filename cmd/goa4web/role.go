@@ -34,6 +34,30 @@ func (c *roleCmd) Run() error {
 		return err
 	}
 	switch c.args[0] {
+	case "load":
+		cmd, err := parseRoleLoadCmd(c, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("load: %w", err)
+		}
+		return cmd.Run()
+	case "reset":
+		cmd, err := parseRoleResetCmd(c, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("reset: %w", err)
+		}
+		return cmd.Run()
+	case "apply":
+		cmd, err := parseRoleApplyCmd(c, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("apply: %w", err)
+		}
+		return cmd.Run()
+	case "remove":
+		cmd, err := parseRoleRemoveCmd(c, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("remove: %w", err)
+		}
+		return cmd.Run()
 	case "users":
 		cmd, err := parseRoleUsersCmd(c, c.args[1:])
 		if err != nil {

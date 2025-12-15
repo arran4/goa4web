@@ -1,0 +1,7 @@
+Usage: goa4web role reset [flags]
+
+Resets a role to the state defined in its seed script.
+
+Flags:
+  -role string
+        The name of the role to reset.

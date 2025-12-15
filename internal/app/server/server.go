@@ -36,22 +36,22 @@ import (
 
 // Server bundles the application's configuration, router and runtime dependencies.
 type Server struct {
-	RouterReg      *router.Registry
-	Nav            *nav.Registry
-	Config         *config.RuntimeConfig
-	Router         http.Handler
+	RouterReg       *router.Registry
+	Nav             *nav.Registry
+	Config          *config.RuntimeConfig
+	Router          http.Handler
 	NotFoundHandler http.Handler
-	Store          *sessions.CookieStore
-	DB             *sql.DB
-	Bus            *eventbus.Bus
-	EmailReg       *email.Registry
-	ImageSigner    *imagesign.Signer
-	LinkSigner     *linksign.Signer
-	SessionManager common.SessionManager
-	TasksReg       *tasks.Registry
-	DBReg          *dbdrivers.Registry
-	DLQReg         *dlq.Registry
-	Websocket      *websocket.Module
+	Store           *sessions.CookieStore
+	DB              *sql.DB
+	Bus             *eventbus.Bus
+	EmailReg        *email.Registry
+	ImageSigner     *imagesign.Signer
+	LinkSigner      *linksign.Signer
+	SessionManager  common.SessionManager
+	TasksReg        *tasks.Registry
+	DBReg           *dbdrivers.Registry
+	DLQReg          *dlq.Registry
+	Websocket       *websocket.Module
 
 	WorkerCancel context.CancelFunc
 
@@ -260,9 +260,9 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 	_ = cd.UserRoles()
 
 	if s.Nav != nil {
-    cd.IndexItems = s.Nav.IndexItemsWithPermission(func(section, item string) bool {
-      return cd.HasGrant(section, item, "view", 0)
-    })
+		cd.IndexItems = s.Nav.IndexItemsWithPermission(func(section, item string) bool {
+			return cd.HasGrant(section, item, "view", 0)
+		})
 	}
 	cd.FeedsEnabled = s.Config.FeedsEnabled
 	cd.AdminMode = r.URL.Query().Get("mode") == "admin"

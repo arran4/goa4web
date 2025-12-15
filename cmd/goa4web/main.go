@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 
 	"errors"
@@ -102,6 +103,7 @@ type rootCmd struct {
 	dlqReg        *dlq.Registry
 	routerReg     *router.Registry
 	adminHandlers *adminhandlers.Handlers
+	ctx           context.Context
 }
 
 func (r *rootCmd) DB() (*sql.DB, error) {
@@ -142,6 +144,7 @@ func parseRoot(args []string) (*rootCmd, error) {
 		dlqReg:        dlq.NewRegistry(),
 		routerReg:     router.NewRegistry(),
 		adminHandlers: adminhandlers.New(),
+		ctx:           context.Background(),
 	}
 	registerTasks(r.tasksReg, r.adminHandlers)
 	registerModules(r.routerReg, r.adminHandlers)

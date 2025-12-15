@@ -1,6 +1,6 @@
-{{.Prog}} db create
+{{.Prog}} db setup
 
-Creates the database schema.
+Creates and seeds the database with initial data.
 
 {{- range .FlagGroups}}
 {{.Title}}

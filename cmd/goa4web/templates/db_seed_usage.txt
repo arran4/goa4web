@@ -1,6 +1,6 @@
-{{.Prog}} db create
+{{.Prog}} db seed
 
-Creates the database schema.
+Seeds the database with initial data.
 
 {{- range .FlagGroups}}
 {{.Title}}

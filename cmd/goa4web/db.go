@@ -37,6 +37,18 @@ func (c *dbCmd) Run() error {
 			return fmt.Errorf("create: %w", err)
 		}
 		return cmd.Run()
+	case "seed":
+		cmd, err := parseDbSeedCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("seed: %w", err)
+		}
+		return cmd.Run()
+	case "setup":
+		cmd, err := parseDbSetupCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("setup: %w", err)
+		}
+		return cmd.Run()
 	case "migrate":
 		cmd, err := parseDbMigrateCmd(c, args[1:])
 		if err != nil {

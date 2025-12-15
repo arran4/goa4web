@@ -40,7 +40,7 @@ func TestPageTemplatesRender(t *testing.T) {
 		name string
 		data any
 	}{
-		{"newsPage", struct{}{}},
+		{"news/page.gohtml", struct{}{}},
 		{"faqPage", struct{ *common.CoreData }{&common.CoreData{}}},
 		{"userPage", struct{ *common.CoreData }{&common.CoreData{}}},
 		{"linkerPage", struct {

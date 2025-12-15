@@ -158,7 +158,7 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err := cd.ExecuteSiteTemplate(w, r, "postPage.gohtml", data); err != nil {
+	if err := cd.ExecuteSiteTemplate(w, r, "news/postPage.gohtml", data); err != nil {
 		handlers.RenderErrorPage(w, r, err)
 	}
 }

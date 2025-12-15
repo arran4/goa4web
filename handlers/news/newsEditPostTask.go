@@ -113,7 +113,7 @@ func newsEditFormPage(w http.ResponseWriter, r *http.Request) {
 		Post:               post,
 		SelectedLanguageId: int(post.LanguageID.Int32),
 	}
-	if err := cd.ExecuteSiteTemplate(w, r, "newsEditPage.gohtml", data); err != nil {
+	if err := cd.ExecuteSiteTemplate(w, r, "news/newsEditPage.gohtml", data); err != nil {
 		handlers.RenderErrorPage(w, r, err)
 	}
 }

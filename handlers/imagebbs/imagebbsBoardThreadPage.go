@@ -134,7 +134,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{})
+			_ = cd.ExecuteSiteTemplate(w, r, "admin/noAccessPage.gohtml", struct{}{})
 			return nil
 		default:
 			return fmt.Errorf("get image post fail %w", handlers.ErrRedirectOnSamePageHandler(err))

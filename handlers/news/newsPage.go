@@ -21,7 +21,7 @@ func NewsPage(w http.ResponseWriter, r *http.Request) {
 		cd.PrevLink = fmt.Sprintf("?offset=%d", offset-ps)
 		cd.StartLink = "?offset=0"
 	}
-	if err := cd.ExecuteSiteTemplate(w, r, "newsPage", struct{}{}); err != nil {
+	if err := cd.ExecuteSiteTemplate(w, r, "news/page.gohtml", struct{}{}); err != nil {
 		handlers.RenderErrorPage(w, r, err)
 	}
 }

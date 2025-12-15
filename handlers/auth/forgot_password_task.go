@@ -29,6 +29,15 @@ var (
 	_ notif.SelfEmailBroadcaster             = (*ForgotPasswordTask)(nil)
 )
 
+// Ensure template requirements are declared for this task.
+var _ tasks.TemplatesRequired = (*ForgotPasswordTask)(nil)
+
+const (
+	templateForgotPasswordPage        = "forgotPasswordPage.gohtml"
+	templateForgotPasswordNoEmailPage = "forgotPasswordNoEmailPage.gohtml"
+	templateForgotPasswordEmailSent   = "forgotPasswordEmailSentPage.gohtml"
+)
+
 var forgotPasswordTask = &ForgotPasswordTask{TaskString: TaskUserResetPassword}
 
 func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
@@ -65,7 +74,7 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 			cd.PageTitle = "Password Reset"
-			handlers.TemplateHandler(w, r, "forgotPasswordNoEmailPage.gohtml", data)
+			handlers.TemplateHandler(w, r, templateForgotPasswordNoEmailPage, data)
 		})
 	}
 
@@ -98,7 +107,7 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 	cd.PageTitle = "Password Reset"
-	return handlers.TemplateWithDataHandler("forgotPasswordEmailSentPage.gohtml", struct{}{})
+	return handlers.TemplateWithDataHandler(templateForgotPasswordEmailSent, struct{}{})
 }
 
 func (ForgotPasswordTask) AuditRecord(data map[string]any) string {
@@ -140,5 +149,14 @@ func (ForgotPasswordTask) SelfEmailBroadcast() bool { return true }
 func (ForgotPasswordTask) Page(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Password Reset"
-	handlers.TemplateHandler(w, r, "forgotPasswordPage.gohtml", struct{}{})
+	handlers.TemplateHandler(w, r, templateForgotPasswordPage, struct{}{})
+}
+
+// TemplatesRequired declares templates used by ForgotPasswordTask.
+func (ForgotPasswordTask) TemplatesRequired() []string {
+	return []string{
+		templateForgotPasswordPage,
+		templateForgotPasswordNoEmailPage,
+		templateForgotPasswordEmailSent,
+	}
 }

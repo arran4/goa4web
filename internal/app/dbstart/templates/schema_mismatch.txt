@@ -1,2 +1,0 @@
-Your database uses schema version {{.Actual}} but version {{.Expected}} is required.
-Run '{{.Exe}} db migrate' and restart the server.

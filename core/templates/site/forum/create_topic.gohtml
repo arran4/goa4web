@@ -1,6 +1,9 @@
-{{ define "privateForumPage" }}
+{{ define "forum/create_topic.gohtml" }}
     {{ template "head" $ }}
     <h1>Private Topics</h1>
+    {{ if cd.CurrentError }}
+        <p class="error-message">{{ cd.CurrentError }}</p>
+    {{ end }}
     {{ template "tableTopics" (dict "Topics" cd.PrivateTopics "BasePath" "/private") }}
     {{ if cd.HasGrant "privateforum" "topic" "create" 0 }}
         <h2>Start group discussion</h2>
@@ -12,21 +15,17 @@
                 <input type="text" id="participant-input" placeholder="username">
                 <button type="button" id="add-participant">Add</button>
                 <ul id="participants"></ul>
-                <input type="hidden" name="participants" id="participants-field">
+                <input type="hidden" name="participants" id="participants-field" value="{{ .FormData.Participants }}">
             </div>
             <div id="topic-details" style="display:none">
                 <div class="form-group">
                     <label for="title-field">Title</label>
-                    <input type="text" name="title" id="title-field" placeholder="Title">
+                    <input type="text" name="title" id="title-field" placeholder="Title" value="{{ .FormData.Title }}">
                 </div>
                 <div class="form-group">
                     <label for="description-field">Description</label>
-                    <textarea name="description" id="description-field" placeholder="Description"></textarea>
+                    <textarea name="description" id="description-field" placeholder="Description">{{ .FormData.Description }}</textarea>
                 </div>
-{{/*                <div class="form-group">*/}}
-{{/*                    <label for="message-field">Create first post</label>*/}}
-{{/*                    <textarea name="body" id="message-field" placeholder="Create first post"></textarea>*/}}
-{{/*                </div>*/}}
                 <div class="form-actions">
                     <button type="submit" id="create-button">Create</button>
                 </div>

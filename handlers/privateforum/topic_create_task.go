@@ -10,6 +10,8 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	forumhandlers "github.com/arran4/goa4web/handlers/forum"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -33,7 +35,8 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	parts := strings.Split(r.PostFormValue("participants"), ",")
+	participants := r.PostFormValue("participants")
+	parts := strings.Split(participants, ",")
 	title := strings.TrimSpace(r.PostFormValue("title"))
 	description := strings.TrimSpace(r.PostFormValue("description"))
 	var uids []int32 // TODO make map
@@ -45,9 +48,33 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 		u, err := queries.SystemGetUserByUsername(r.Context(), sql.NullString{String: p, Valid: true})
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
-				return fmt.Errorf("unknown user %q: %w", p, handlers.ErrRedirectOnSamePageHandler(err))
+				cd.SetCurrentError(fmt.Sprintf("unknown user %q", p))
+				forumhandlers.CreateTopicPageWithPostTask(w, r, TaskPrivateTopicCreate, &forumhandlers.CreateTopicPageForm{
+					Participants: participants,
+					Title:        title,
+					Description:  description,
+				})
+				return nil
 			}
 			return fmt.Errorf("unknown error %w", handlers.ErrRedirectOnSamePageHandler(err))
+		}
+		hasGrant, err := queries.CheckUserHasGrant(r.Context(), db.CheckUserHasGrantParams{
+			UserID:  sql.NullInt32{Int32: u.Idusers, Valid: true},
+			Section: "privateforum",
+			Item:    sql.NullString{String: "topic", Valid: true},
+			Action:  "see",
+		})
+		if err != nil {
+			return fmt.Errorf("checking user grant: %w", handlers.ErrRedirectOnSamePageHandler(err))
+		}
+		if !hasGrant {
+			cd.SetCurrentError(fmt.Sprintf("user %q does not have permission to access private forums", p))
+			forumhandlers.CreateTopicPageWithPostTask(w, r, TaskPrivateTopicCreate, &forumhandlers.CreateTopicPageForm{
+				Participants: participants,
+				Title:        title,
+				Description:  description,
+			})
+			return nil
 		}
 		uids = append(uids, u.Idusers)
 	}

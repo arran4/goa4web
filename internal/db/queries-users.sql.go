@@ -264,6 +264,37 @@ func (q *Queries) AdminUpdateUsernameByID(ctx context.Context, arg AdminUpdateUs
 	return err
 }
 
+const checkUserHasGrant = `-- name: CheckUserHasGrant :one
+SELECT EXISTS(
+    SELECT 1
+    FROM grants g
+    WHERE g.user_id = ?
+    AND g.section = ?
+    AND g.item = ?
+    AND g.action = ?
+    AND g.active = 1
+)
+`
+
+type CheckUserHasGrantParams struct {
+	UserID  sql.NullInt32
+	Section string
+	Item    sql.NullString
+	Action  string
+}
+
+func (q *Queries) CheckUserHasGrant(ctx context.Context, arg CheckUserHasGrantParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, checkUserHasGrant,
+		arg.UserID,
+		arg.Section,
+		arg.Item,
+		arg.Action,
+	)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const systemGetLogin = `-- name: SystemGetLogin :one
 SELECT u.idusers,
        p.passwd, p.passwd_algorithm, u.username

@@ -34,5 +34,5 @@ func AdminBlogCommentsPage(w http.ResponseWriter, r *http.Request) {
 	if _, err := cd.BlogCommentThread(); err != nil && err != sql.ErrNoRows {
 		// ignore but log? There is no log imported; but we can ignore.
 	}
-	handlers.TemplateHandler(w, r, "blogsAdminBlogCommentsPage.gohtml", struct{}{})
+	handlers.TemplateHandler(w, r, "blogs/blogsAdminBlogCommentsPage.gohtml", struct{}{})
 }

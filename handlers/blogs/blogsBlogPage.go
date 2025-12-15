@@ -29,9 +29,7 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			if err := templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", struct{}{}); err != nil {
-				log.Printf("render no access page: %v", err)
-			}
+			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 			return
 		default:
 			log.Printf("BlogPost: %v", err)

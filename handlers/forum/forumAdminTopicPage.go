@@ -40,7 +40,7 @@ func AdminTopicPage(w http.ResponseWriter, r *http.Request) {
 	}{
 		Topic: topic,
 	}
-	handlers.TemplateHandler(w, r, "adminTopicPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "forum/adminTopicPage.gohtml", data)
 }
 
 // AdminTopicEditFormPage shows the edit form for a forum topic.

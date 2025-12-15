@@ -48,7 +48,7 @@ func AdminGrantsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	rows := groupGrants(r.Context(), queries, grants)
 	data := struct{ Grants []grantGroup }{rows}
-	handlers.TemplateHandler(w, r, "grantsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "admin/grantsPage.gohtml", data)
 }
 
 // AdminAnyoneGrantsPage lists grants applying to all users.
@@ -70,7 +70,7 @@ func AdminAnyoneGrantsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	rows := groupGrants(r.Context(), queries, filtered)
 	data := struct{ Grants []grantGroup }{rows}
-	handlers.TemplateHandler(w, r, "grantsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "admin/grantsPage.gohtml", data)
 }
 
 // adminGrantPage shows a single grant for editing.

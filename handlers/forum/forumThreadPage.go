@@ -176,7 +176,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		}
 	}
 
-	handlers.TemplateHandler(w, r, "threadPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "forum/threadPage.gohtml", data)
 }
 
 // ThreadPage serves the forum thread page at the default /forum prefix.

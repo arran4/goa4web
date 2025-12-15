@@ -79,7 +79,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	cd.PageTitle = fmt.Sprintf("Thread %d/%d", bid, thid)
 
 	if !cd.HasGrant("imagebbs", "board", "view", int32(bid)) {
-		_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{})
+		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
 
@@ -90,7 +90,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{})
+			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 			return
 		default:
 			log.Printf("get image thread fail: %s", err)

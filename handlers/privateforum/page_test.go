@@ -23,7 +23,7 @@ func TestPage_NoAccess(t *testing.T) {
 	w := httptest.NewRecorder()
 	Page(w, req)
 
-	if body := w.Body.String(); !strings.Contains(body, "may not have permission") {
+	if body := w.Body.String(); !strings.Contains(body, "Forbidden") {
 		t.Fatalf("expected no access message, got %q", body)
 	}
 }

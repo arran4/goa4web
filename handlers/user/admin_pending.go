@@ -48,7 +48,7 @@ func adminPendingUsersPage(w http.ResponseWriter, r *http.Request) {
 	}{
 		Rows: pending,
 	}
-	handlers.TemplateHandler(w, r, "pendingUsersPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "admin/pendingUsersPage.gohtml", data)
 }
 
 func adminPendingUsersApprove(w http.ResponseWriter, r *http.Request) {
@@ -74,7 +74,7 @@ func adminPendingUsersApprove(w http.ResponseWriter, r *http.Request) {
 		}
 
 	}
-	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "admin/runTaskPage.gohtml", data)
 }
 
 func adminPendingUsersReject(w http.ResponseWriter, r *http.Request) {
@@ -108,5 +108,5 @@ func adminPendingUsersReject(w http.ResponseWriter, r *http.Request) {
 		}
 
 	}
-	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "admin/runTaskPage.gohtml", data)
 }

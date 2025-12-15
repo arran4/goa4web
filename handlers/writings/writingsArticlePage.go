@@ -52,9 +52,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd.SetCurrentThreadAndTopic(writing.ForumthreadID, 0)
 	if !(cd.HasGrant("writing", "article", "view", writing.Idwriting) || cd.SelectedThreadCanReply()) {
-		if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{}); err != nil {
-			log.Printf("render no access page: %v", err)
-		}
+		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
 	if writing.Title.Valid {

@@ -59,7 +59,7 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 		data.UserPreferences.AutoSubscribeReplies = true
 	}
 
-	handlers.TemplateHandler(w, r, "emailPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "user/emailPage.gohtml", data)
 }
 
 func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {

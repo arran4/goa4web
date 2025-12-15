@@ -53,7 +53,7 @@ func AdminTopicsPage(w http.ResponseWriter, r *http.Request) {
 		Topics: rows,
 	}
 
-	handlers.TemplateHandler(w, r, "adminTopicsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "forum/adminTopicsPage.gohtml", data)
 }
 
 func AdminTopicEditPage(w http.ResponseWriter, r *http.Request) {

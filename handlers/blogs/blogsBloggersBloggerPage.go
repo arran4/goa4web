@@ -38,5 +38,5 @@ func BloggersBloggerPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Rows = rows
 
-	handlers.TemplateHandler(w, r, "bloggersBloggerPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "blogs/bloggersBloggerPage.gohtml", data)
 }

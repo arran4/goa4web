@@ -30,5 +30,5 @@ func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd.PageTitle = fmt.Sprintf("Posts by %s", username)
 
-	handlers.TemplateHandler(w, r, "bloggerPostsPage.gohtml", struct{}{})
+	handlers.TemplateHandler(w, r, "blogs/bloggerPostsPage.gohtml", struct{}{})
 }

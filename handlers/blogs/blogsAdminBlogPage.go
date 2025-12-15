@@ -70,5 +70,5 @@ func AdminBlogPage(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	handlers.TemplateHandler(w, r, "blogsAdminBlogPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "blogs/blogsAdminBlogPage.gohtml", data)
 }

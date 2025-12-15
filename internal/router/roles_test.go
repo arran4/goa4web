@@ -54,7 +54,7 @@ func TestRoleCheckerMiddlewareDenied(t *testing.T) {
 	if called {
 		t.Errorf("handler should not be called")
 	}
-	if rr.Code != http.StatusOK {
-		t.Errorf("expected template render, got status %d", rr.Code)
+	if rr.Code != http.StatusForbidden {
+		t.Errorf("expected status %d, got %d", http.StatusForbidden, rr.Code)
 	}
 }

@@ -71,9 +71,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{}); err != nil {
-				log.Printf("render no access page: %v", err)
-			}
+			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 			return
 		default:
 			log.Printf("getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending Error: %s", err)

@@ -76,9 +76,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	writing, err := cd.Article()
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{}); err != nil {
-				log.Printf("render no access page: %v", err)
-			}
+			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 			return nil
 		}
 		return fmt.Errorf("get writing fail %w", err)

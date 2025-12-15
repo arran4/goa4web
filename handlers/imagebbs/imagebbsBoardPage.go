@@ -22,7 +22,6 @@ import (
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/core/templates"
 
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
@@ -59,12 +58,12 @@ func BoardPage(w http.ResponseWriter, r *http.Request) {
 	bid := cd.SelectedBoardID()
 
 	if !cd.HasGrant("imagebbs", "board", "view", bid) {
-		_ = templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, "noAccessPage.gohtml", struct{}{})
+		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
 
 	cd.PageTitle = fmt.Sprintf("Board %d", bid)
-	handlers.TemplateHandler(w, r, "boardPage.gohtml", struct{}{})
+	handlers.TemplateHandler(w, r, "imagebbs/boardPage.gohtml", struct{}{})
 }
 
 func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {

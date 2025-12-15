@@ -68,7 +68,7 @@ func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	return handlers.TemplateWithDataHandler("runTaskPage.gohtml", data)
+	return handlers.TemplateWithDataHandler("admin/runTaskPage.gohtml", data)
 }
 
 func roleInfoByPermID(ctx context.Context, q db.Querier, id int32) (int32, string, string, error) {

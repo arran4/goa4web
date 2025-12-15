@@ -6,6 +6,7 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
 )
 
 // RequireWritingAuthor ensures the requester authored the writing referenced in the URL.
@@ -31,9 +32,7 @@ func RequireWritingAuthor(next http.Handler) http.Handler {
 			return
 		}
 		if !cd.HasContentWriterRole() || writing.UsersIdusers != cd.UserID {
-			if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{}); err != nil {
-				log.Printf("render no access page: %v", err)
-			}
+			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 			return
 		}
 		next.ServeHTTP(w, r)

@@ -66,15 +66,11 @@ func NewsPostPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if post == nil {
-		if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{}); err != nil {
-			log.Printf("render no access page: %v", err)
-		}
+		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
 	if !cd.HasGrant("news", "post", "view", post.Idsitenews) {
-		if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{}); err != nil {
-			log.Printf("render no access page: %v", err)
-		}
+		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
 

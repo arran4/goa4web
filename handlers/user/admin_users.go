@@ -119,7 +119,7 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 		cd.PrevLink = "/admin/users?" + prevVals.Encode()
 	}
 
-	handlers.TemplateHandler(w, r, "usersPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "admin/usersPage.gohtml", data)
 }
 
 func adminUserDisableConfirmPage(w http.ResponseWriter, r *http.Request) {
@@ -144,7 +144,7 @@ func adminUserDisableConfirmPage(w http.ResponseWriter, r *http.Request) {
 		ConfirmLabel: "Confirm disable",
 		Back:         back,
 	}
-	handlers.TemplateHandler(w, r, "confirmPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "admin/confirmPage.gohtml", data)
 }
 
 func adminUserDisablePage(w http.ResponseWriter, r *http.Request) {
@@ -167,7 +167,7 @@ func adminUserDisablePage(w http.ResponseWriter, r *http.Request) {
 	} else if err := cd.Queries().AdminDeleteUserByID(r.Context(), id.Idusers); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("delete user: %w", err).Error())
 	}
-	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "admin/runTaskPage.gohtml", data)
 }
 
 func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
@@ -184,7 +184,7 @@ func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
 	}{
 		User: urow,
 	}
-	handlers.TemplateHandler(w, r, "userEditPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "admin/userEditPage.gohtml", data)
 }
 
 func adminUserEditSavePage(w http.ResponseWriter, r *http.Request) {
@@ -223,7 +223,7 @@ func adminUserEditSavePage(w http.ResponseWriter, r *http.Request) {
 			data.Errors = append(data.Errors, fmt.Errorf("update user email: %w", err).Error())
 		}
 	}
-	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "admin/runTaskPage.gohtml", data)
 }
 
 func adminUserResetPasswordPage(w http.ResponseWriter, r *http.Request) {
@@ -257,5 +257,5 @@ func adminUserResetPasswordPage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		data.Password = newPass
 	}
-	handlers.TemplateHandler(w, r, "userResetPasswordPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "admin/userResetPasswordPage.gohtml", data)
 }

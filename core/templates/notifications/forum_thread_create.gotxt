@@ -1,1 +1,3 @@
-A new forum thread was created by {{.Item.Username}}.
+A new forum thread was created by {{.Item.Username}}: {{.Item.TopicTitle}}
+
+{{.Item.Body}}

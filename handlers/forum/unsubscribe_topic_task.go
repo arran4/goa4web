@@ -33,7 +33,7 @@ func (unsubscribeTopicTask) Action(w http.ResponseWriter, r *http.Request) any {
 	vars := mux.Vars(r)
 	topicID, _ := strconv.Atoi(vars["topic"])
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	if err := cd.UnsubscribeTopic(int32(topicID)); err != nil {
+	if err := cd.UnsubscribeTopic(cd.UserID, int32(topicID)); err != nil {
 		log.Printf("delete subscription: %v", err)
 		return fmt.Errorf("delete subscription %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

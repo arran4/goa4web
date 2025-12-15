@@ -34,12 +34,8 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 		return fmt.Errorf("parse form %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	parts := strings.Split(r.PostFormValue("participants"), ",")
-	body := strings.TrimSpace(r.PostFormValue("body"))
 	title := strings.TrimSpace(r.PostFormValue("title"))
 	description := strings.TrimSpace(r.PostFormValue("description"))
-	//if body == "" {
-	//	return fmt.Errorf("first post cannot be empty")
-	//}
 	var uids []int32 // TODO make map
 	for _, p := range parts {
 		p = strings.TrimSpace(p)
@@ -49,7 +45,7 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 		u, err := queries.SystemGetUserByUsername(r.Context(), sql.NullString{String: p, Valid: true})
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
-				return fmt.Errorf("unknown user %w", handlers.ErrRedirectOnSamePageHandler(err))
+				return fmt.Errorf("unknown user %q: %w", p, handlers.ErrRedirectOnSamePageHandler(err))
 			}
 			return fmt.Errorf("unknown error %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
@@ -66,25 +62,20 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 	if creator != 0 && !seen {
 		uids = append(uids, creator)
 	}
-	topicID, threadID, err := cd.CreatePrivateTopic(common.CreatePrivateTopicParams{CreatorID: creator, ParticipantIDs: uids, Body: body, Title: title, Description: description})
+	topicID, err := cd.CreatePrivateTopic(common.CreatePrivateTopicParams{CreatorID: creator, ParticipantIDs: uids, Title: title, Description: description})
 	if err != nil {
 		return fmt.Errorf("create private topic %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	if cd.UserID != 0 {
-		if err := cd.SubscribeTopic(topicID); err != nil {
-			return fmt.Errorf("subscribe topic %w", handlers.ErrRedirectOnSamePageHandler(err))
-		}
-		if threadID > 0 {
-			if err := cd.SubscribeThread(topicID, threadID); err != nil {
-				return fmt.Errorf("subscribe topic %w", handlers.ErrRedirectOnSamePageHandler(err))
-			}
+	for _, uid := range uids {
+		if err := cd.SubscribeTopic(uid, topicID); err != nil {
+			return fmt.Errorf("subscribe topic for user %d: %w", uid, handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
 	base := cd.ForumBasePath
 	if base == "" {
 		base = "/forum"
 	}
-	return handlers.RefreshDirectHandler{TargetURL: fmt.Sprintf("%s/topic/%d/thread/%d", base, topicID, threadID)}
+	return handlers.RefreshDirectHandler{TargetURL: fmt.Sprintf("%s/topic/%d", base, topicID)}
 }
 
 // AutoSubscribePath ensures conversation creators follow replies and future threads.
@@ -97,7 +88,7 @@ func (PrivateTopicCreateTask) AutoSubscribePath(evt eventbus.TaskEvent) (string,
 		if idx := strings.Index(evt.Path, "/topic/"); idx > 0 {
 			base = evt.Path[:idx]
 		}
-		return string(TaskPrivateTopicCreate), fmt.Sprintf("%s/topic/%d/thread/%d", base, data.TopicID, data.ThreadID), nil
+		return string(TaskPrivateTopicCreate), fmt.Sprintf("%s/topic/%d", base, data.TopicID), nil
 	}
 	return string(TaskPrivateTopicCreate), evt.Path, nil
 }

@@ -12,8 +12,6 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/upload"
-	"github.com/arran4/goa4web/workers/postcountworker"
-	"github.com/arran4/goa4web/workers/searchworker"
 	"golang.org/x/image/draw"
 )
 
@@ -21,57 +19,53 @@ import (
 type CreatePrivateTopicParams struct {
 	CreatorID      int32
 	ParticipantIDs []int32
-	Body           string
 	Title          string
 	Description    string
 }
 
 // CreatePrivateTopic creates a new private topic and assigns grants and the initial comment.
-func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID, threadID int32, err error) {
+func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID int32, err error) {
 	if cd == nil || cd.queries == nil {
-		return 0, 0, fmt.Errorf("no queries")
+		return 0, fmt.Errorf("no queries")
 	}
 	if !cd.HasGrant("privateforum", "topic", "create", 0) {
 		log.Printf("private topic create denied: user=%d", p.CreatorID)
-		return 0, 0, fmt.Errorf("permission denied")
+		return 0, fmt.Errorf("permission denied")
 	}
 	var usernames []string // TODO this should be fed in from the caller and if it is not provided we can fill it htis way
 	for _, id := range p.ParticipantIDs {
 		if u := cd.UserByID(id); u != nil {
 			usernames = append(usernames, u.Username.String)
 		} else {
-			return 0, 0, fmt.Errorf("unknown user %d", id)
+			return 0, fmt.Errorf("unknown user %d", id)
 		}
 	}
 	title := p.Title
+	description := p.Description
 	if title == "" {
 		title = fmt.Sprintf("Private chat with %s", strings.Join(usernames, ", "))
+		if description == "" {
+			description = title
+		}
 	}
 	tid, err := cd.queries.CreateForumTopicForPoster(cd.ctx, db.CreateForumTopicForPosterParams{
 		PosterID:        p.CreatorID,
 		ForumcategoryID: PrivateForumCategoryID,
 		ForumLang:       sql.NullInt32{},
 		Title:           sql.NullString{String: title, Valid: true},
-		Description:     sql.NullString{String: p.Description, Valid: true},
+		Description:     sql.NullString{String: description, Valid: true},
 		Handler:         "private",
 		Section:         "privateforum",
 		GrantCategoryID: sql.NullInt32{Int32: PrivateForumCategoryID, Valid: true},
 		GranteeID:       sql.NullInt32{Int32: p.CreatorID, Valid: p.CreatorID != 0},
 	})
 	if err != nil {
-		return 0, 0, fmt.Errorf("create topic %w", err)
+		return 0, fmt.Errorf("create topic %w", err)
 	}
 	if tid == 0 {
-		return 0, 0, fmt.Errorf("create topic returned 0")
+		return 0, fmt.Errorf("create topic returned 0")
 	}
 	topicID = int32(tid)
-	if p.Body != "" {
-		thid, err := cd.queries.SystemCreateThread(cd.ctx, topicID)
-		if err != nil {
-			return 0, 0, fmt.Errorf("create thread %w", err)
-		}
-		threadID = int32(thid)
-	}
 	for _, uid := range p.ParticipantIDs {
 		for _, act := range []string{"see", "view", "post", "reply", "edit"} {
 			if _, err := cd.queries.SystemCreateGrant(cd.ctx, db.SystemCreateGrantParams{ // TODO switch to cd.GrantForumTopic
@@ -85,41 +79,11 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID, thr
 				Action:   act,
 				Extra:    sql.NullString{},
 			}); err != nil {
-				return 0, 0, fmt.Errorf("create %s grant %w", act, err)
-			}
-		}
-		if threadID > 0 {
-			for _, act := range []string{"see", "view", "post", "reply", "edit"} {
-				if _, err := cd.queries.SystemCreateGrant(cd.ctx, db.SystemCreateGrantParams{ // TODO switch to cd.GrantForumThread
-					UserID:   sql.NullInt32{Int32: uid, Valid: true},
-					RoleID:   sql.NullInt32{},
-					Section:  "privateforum",
-					Item:     sql.NullString{String: "thread", Valid: true},
-					RuleType: "allow",
-					ItemID:   sql.NullInt32{Int32: threadID, Valid: true},
-					ItemRule: sql.NullString{},
-					Action:   act,
-					Extra:    sql.NullString{},
-				}); err != nil {
-					return 0, 0, fmt.Errorf("create %s grant %w", act, err)
-				}
+				return 0, fmt.Errorf("create %s grant %w", act, err)
 			}
 		}
 	}
-	if threadID > 0 {
-		cid, err := cd.CreateForumCommentForCommenter(p.CreatorID, threadID, topicID, 0, p.Body)
-		if err != nil {
-			return 0, 0, fmt.Errorf("create comment %w", err)
-		}
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(cid), ThreadID: threadID, TopicID: topicID}
-			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: int32(cid), Text: p.Body}
-		}
-	}
-	return topicID, threadID, nil
+	return topicID, nil
 }
 
 // StoreImageParams groups input for StoreImage.

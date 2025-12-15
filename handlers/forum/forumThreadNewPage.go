@@ -197,15 +197,19 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 			}
 		}
 		cid, err = cd.CreatePrivateForumCommentForCommenter(uid, int32(threadId), int32(topicId), int32(languageId), text)
+		if err != nil {
+			log.Printf("Error: create forum comment: %s", err)
+			return fmt.Errorf("creating private topic comment: %w", err)
+		}
 	} else {
 		cid, err = cd.CreateForumCommentForCommenter(uid, int32(threadId), int32(topicId), int32(languageId), text)
-	}
-	if err != nil {
-		log.Printf("Error: makeThread: %s", err)
-		return fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(err))
+		if err != nil {
+			log.Printf("Error: create forum comment: %s", err)
+			return fmt.Errorf("create forum comment %w", handlers.ErrRedirectOnSamePageHandler(err))
+		}
 	}
 	if cid == 0 {
-		log.Printf("Error: makeThread: forbidden")
+		log.Printf("Error: cid == 0 on comment create - no error")
 		return fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(handlers.ErrForbidden))
 	}
 

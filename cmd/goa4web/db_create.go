@@ -62,11 +62,6 @@ func (c *dbCreateCmd) Run() error {
 		return fmt.Errorf("failed to apply schema: %w", err)
 	}
 
-	log.Println("Applying seed data...")
-	if err := runStatements(sdb, strings.NewReader(string(database.SeedSQL))); err != nil {
-		return fmt.Errorf("failed to apply seed data: %w", err)
-	}
-
 	log.Println("Database created successfully.")
 	return nil
 }

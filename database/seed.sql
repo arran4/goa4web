@@ -2,7 +2,8 @@
 INSERT INTO roles (name, can_login, is_admin) VALUES
   ('anyone', 0, 0),
   ('user', 1, 0),
-  ('rejected', 0, 0)
+  ('rejected', 0, 0),
+  ('administrator', 1, 1)
 ON DUPLICATE KEY UPDATE name = VALUES(name), can_login = VALUES(can_login), is_admin = VALUES(is_admin);
 
 -- Ensure private label flag mirrors login capability
@@ -23,4 +24,16 @@ FROM grants g
 JOIN roles r ON r.id = g.role_id
 WHERE g.action IN ('see', 'view')
   AND r.can_login = 1
+ON DUPLICATE KEY UPDATE action=VALUES(action);
+
+INSERT INTO grants (created_at, role_id, section, item, rule_type, action, active)
+SELECT NOW(), r_admin.id, 'role', NULL, 'allow', 'moderator', 1
+FROM roles r_admin
+WHERE r_admin.name = 'administrator'
+ON DUPLICATE KEY UPDATE action=VALUES(action);
+
+INSERT INTO grants (created_at, role_id, section, item, rule_type, action, active)
+SELECT NOW(), r_admin.id, 'role', NULL, 'allow', 'content writer', 1
+FROM roles r_admin
+WHERE r_admin.name = 'administrator'
 ON DUPLICATE KEY UPDATE action=VALUES(action);

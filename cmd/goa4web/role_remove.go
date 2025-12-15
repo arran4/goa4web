@@ -27,8 +27,8 @@ func parseRoleRemoveCmd(parent *roleCmd, args []string) (*roleRemoveCmd, error) 
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}
-	if c.srcRole == "" || c.destRole == "" {
-		return nil, fmt.Errorf("source and destination roles are required")
+	if c.destRole == "" {
+		return nil, fmt.Errorf("destination role is required")
 	}
 	return c, nil
 }
@@ -43,14 +43,23 @@ func (c *roleRemoveCmd) Run() error {
 	q := db.New(sdb)
 	ctx := c.rootCmd.ctx
 
-	srcRole, err := q.GetRoleByName(ctx, c.srcRole)
-	if err != nil {
-		return fmt.Errorf("failed to get source role by name: %w", err)
-	}
-
 	destRole, err := q.GetRoleByName(ctx, c.destRole)
 	if err != nil {
 		return fmt.Errorf("failed to get destination role by name: %w", err)
+	}
+
+	if c.srcRole == "" {
+		log.Printf("Removing all grants from %q", c.destRole)
+		if err := q.DeleteGrantsByRoleID(ctx, sql.NullInt32{Int32: destRole.ID, Valid: true}); err != nil {
+			return fmt.Errorf("failed to delete grants: %w", err)
+		}
+		log.Printf("Successfully removed all grants from %q.", c.destRole)
+		return nil
+	}
+
+	srcRole, err := q.GetRoleByName(ctx, c.srcRole)
+	if err != nil {
+		return fmt.Errorf("failed to get source role by name: %w", err)
 	}
 
 	grants, err := q.GetGrantsByRoleID(ctx, sql.NullInt32{Int32: srcRole.ID, Valid: true})

@@ -6,3 +6,19 @@ Subcommands:
   apply  Applies the grants from a source role to a destination role.
   remove Removes the grants from a destination role that match a source role.
   users  Lists the users in a role.
+
+Examples:
+  # Load the "content-writer" role from its seed script
+  {{.Prog}} role load -role content-writer
+
+  # Reset the "moderator" role to its default state
+  {{.Prog}} role reset -role moderator
+
+  # Apply the permissions of the "private-forum-user" role to the "user" role
+  {{.Prog}} role apply -src private-forum-user -dest user
+
+  # Remove the permissions of the "private-forum-user" role from the "user" role
+  {{.Prog}} role remove -src private-forum-user -dest user
+
+  # Remove all grants from the "user" role
+  {{.Prog}} role remove -dest user

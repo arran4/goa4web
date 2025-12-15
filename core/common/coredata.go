@@ -555,9 +555,9 @@ func (cd *CoreData) SaveBookmark(p db.UpdateBookmarksForListerParams) error {
 	return nil
 }
 
-// IsAdmin reports whether the current user has the administrator role.
+// IsAdmin reports whether the current user has administrator privileges active.
 func (cd *CoreData) IsAdmin() bool {
-	return cd.HasRole("administrator")
+	return cd.HasAdminRole() && cd.IsAdminMode()
 }
 
 // IsAdminMode reports whether admin-only UI elements should be displayed.

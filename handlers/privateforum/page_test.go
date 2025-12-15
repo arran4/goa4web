@@ -77,6 +77,9 @@ func TestPage_SeeNoCreate(t *testing.T) {
 		OverwrittenListPrivateTopicsByUserID: func(ctx context.Context, userID sql.NullInt32) ([]*db.ListPrivateTopicsByUserIDRow, error) {
 			return []*db.ListPrivateTopicsByUserIDRow{}, nil
 		},
+		OverwrittenGetPreferenceForLister: func(ctx context.Context, listerID int32) (*db.Preference, error) {
+			return &db.Preference{Timezone: sql.NullString{String: "UTC", Valid: true}}, nil
+		},
 	}
 	cd := common.NewCoreData(context.Background(), mockQueries, config.NewRuntimeConfig())
 	cd.UserID = 1

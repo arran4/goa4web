@@ -14,6 +14,7 @@ type roleLoadCmd struct {
 	*roleCmd
 	fs   *flag.FlagSet
 	role string
+	file string
 }
 
 func parseRoleLoadCmd(parent *roleCmd, args []string) (*roleLoadCmd, error) {
@@ -21,6 +22,7 @@ func parseRoleLoadCmd(parent *roleCmd, args []string) (*roleLoadCmd, error) {
 	fs := flag.NewFlagSet("load", flag.ContinueOnError)
 	c.fs = fs
 	fs.StringVar(&c.role, "role", "", "The name of the role to load.")
+	fs.StringVar(&c.file, "file", "", "Optional path to a .sql file to load instead of the embedded role script.")
 	fs.Usage = c.Usage
 	if err := fs.Parse(args); err != nil {
 		return nil, err
@@ -38,13 +40,28 @@ func (c *roleLoadCmd) Run() error {
 	}
 	defer closeDB(sdb)
 
-	filename := fmt.Sprintf("%s.sql", c.role)
-	filepath := filepath.Join("database", "roles", filename)
-	log.Printf("Loading role from %s", filepath)
-
-	data, err := os.ReadFile(filepath)
-	if err != nil {
-		return fmt.Errorf("failed to read role file: %w", err)
+	var data []byte
+	if c.file != "" {
+		// Explicit filesystem file provided
+		p := c.file
+		if !strings.HasSuffix(strings.ToLower(p), ".sql") {
+			p = p + ".sql"
+		}
+		abs, _ := filepath.Abs(p)
+		log.Printf("Loading role %q from file %s", c.role, abs)
+		b, err := os.ReadFile(p)
+		if err != nil {
+			return fmt.Errorf("failed to read role file: %w", err)
+		}
+		data = b
+	} else {
+		// Default to embedded role
+		log.Printf("Loading role %q from embedded roles", c.role)
+		b, err := readEmbeddedRole(c.role)
+		if err != nil {
+			return fmt.Errorf("failed to read embedded role %q: %w", c.role, err)
+		}
+		data = b
 	}
 
 	if err := runStatements(sdb, strings.NewReader(string(data))); err != nil {

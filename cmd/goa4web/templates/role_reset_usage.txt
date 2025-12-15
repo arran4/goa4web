@@ -5,3 +5,5 @@ Resets a role to the state defined in its seed script.
 Flags:
   -role string
         The name of the role to reset.
+  -file string
+        Optional path to a .sql file to load instead of the embedded role script.

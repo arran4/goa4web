@@ -64,6 +64,12 @@ func (c *roleCmd) Run() error {
 			return fmt.Errorf("users: %w", err)
 		}
 		return cmd.Run()
+	case "list":
+		cmd, err := parseRoleListCmd(c, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("list: %w", err)
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown role command %q", c.args[0])

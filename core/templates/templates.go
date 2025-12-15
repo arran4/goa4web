@@ -127,3 +127,34 @@ func GetPrivateForumJSData() []byte { return readFile("assets/private_forum.js")
 
 // GetTopicLabelsJSData returns the JavaScript for topic label editing.
 func GetTopicLabelsJSData() []byte { return readFile("assets/topic_labels.js") }
+
+// ListSiteTemplateNames returns the relative paths of all site templates
+// (under the site/ directory), e.g. "news/postPage.gohtml".
+func ListSiteTemplateNames() []string {
+	var names []string
+	fsys := getFS("site")
+	_ = fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		if filepath.Ext(path) != ".gohtml" {
+			return nil
+		}
+		names = append(names, path)
+		return nil
+	})
+	return names
+}
+
+// TemplateExists reports whether a site template with the given relative path
+// exists in the current template source (embedded or templatesDir).
+func TemplateExists(name string) bool {
+	fsys := getFS("site")
+	if _, err := fs.Stat(fsys, name); err == nil {
+		return true
+	}
+	return false
+}

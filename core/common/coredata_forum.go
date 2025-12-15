@@ -183,19 +183,19 @@ func threadSubscriptionPattern(topicID int32, threadID int32) string {
 }
 
 // SubscribeTopic subscribes the current user to new threads in the given topic.
-func (cd *CoreData) SubscribeTopic(topicID int32) error {
+func (cd *CoreData) SubscribeTopic(userID, topicID int32) error {
 	if cd.queries == nil {
 		return nil
 	}
-	return cd.queries.InsertSubscription(cd.ctx, db.InsertSubscriptionParams{UsersIdusers: cd.UserID, Pattern: topicSubscriptionPattern(topicID), Method: "internal"})
+	return cd.queries.InsertSubscription(cd.ctx, db.InsertSubscriptionParams{UsersIdusers: userID, Pattern: topicSubscriptionPattern(topicID), Method: "internal"})
 }
 
 // UnsubscribeTopic removes the current user's subscription to a topic.
-func (cd *CoreData) UnsubscribeTopic(topicID int32) error {
+func (cd *CoreData) UnsubscribeTopic(userID, topicID int32) error {
 	if cd.queries == nil {
 		return nil
 	}
-	return cd.queries.DeleteSubscriptionForSubscriber(cd.ctx, db.DeleteSubscriptionForSubscriberParams{SubscriberID: cd.UserID, Pattern: topicSubscriptionPattern(topicID), Method: "internal"})
+	return cd.queries.DeleteSubscriptionForSubscriber(cd.ctx, db.DeleteSubscriptionForSubscriberParams{SubscriberID: userID, Pattern: topicSubscriptionPattern(topicID), Method: "internal"})
 }
 
 // SubscribeThread subscribes the current user to new threads in the given thread.

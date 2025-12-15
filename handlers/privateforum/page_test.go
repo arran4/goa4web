@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -44,33 +45,22 @@ func TestPage_Access(t *testing.T) {
 	}
 }
 
-type querierMock struct {
-	db.Querier
-	hasGrant func(ctx context.Context, arg db.HasGrantParams) (int32, error)
-}
-
-func (q *querierMock) HasGrant(ctx context.Context, arg db.HasGrantParams) (int32, error) {
-	return q.hasGrant(ctx, arg)
-}
-
 func TestPage_SeeNoCreate(t *testing.T) {
-	callCount := 0
-	mockQueries := &querierMock{
-		hasGrant: func(ctx context.Context, arg db.HasGrantParams) (int32, error) {
-			callCount++
-			if callCount == 1 {
-				// First call, permission granted
-				return 1, nil
-			}
-			// Second call, permission denied
-			return 0, sql.ErrNoRows
-		},
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
 	}
-	cd := common.NewCoreData(context.Background(), mockQueries, config.NewRuntimeConfig())
+	defer conn.Close()
+
+	queries := db.New(conn)
+	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
 	cd.UserID = 1
 
 	req := httptest.NewRequest(http.MethodGet, "/private", nil)
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
+
+	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnError(sql.ErrNoRows)
 
 	w := httptest.NewRecorder()
 	Page(w, req)
@@ -79,7 +69,7 @@ func TestPage_SeeNoCreate(t *testing.T) {
 	if strings.Contains(body, "Start conversation") {
 		t.Fatalf("unexpected create form, got %q", body)
 	}
-	if callCount != 2 {
-		t.Fatalf("expected 2 calls to HasGrant, got %d", callCount)
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
 	}
 }

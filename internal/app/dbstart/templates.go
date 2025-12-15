@@ -15,8 +15,6 @@ var (
 	//
 	//go:embed templates/schema_mismatch.txt
 	schemaMismatchTmpl string
-
-	schemaMismatchTemplate = template.Must(template.New("schema").Parse(schemaMismatchTmpl))
 )
 
 // RenderSchemaMismatch returns the formatted schema mismatch message.
@@ -26,7 +24,8 @@ func RenderSchemaMismatch(actual, expected int) string {
 		exe += "-admin"
 	}
 	var buf bytes.Buffer
-	if err := schemaMismatchTemplate.Execute(&buf, struct {
+	tmpl := template.Must(template.New("schema").Parse(schemaMismatchTmpl))
+	if err := tmpl.Execute(&buf, struct {
 		Actual, Expected int
 		Exe              string
 	}{actual, expected, exe}); err != nil {

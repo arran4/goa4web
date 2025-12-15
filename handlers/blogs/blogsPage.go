@@ -4,8 +4,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"io"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
@@ -59,7 +60,7 @@ func CustomBlogIndex(data *common.CoreData, r *http.Request) {
 		)
 	}
 
-	if data.HasRole("administrator") && data.AdminMode {
+	if data.IsAdmin() {
 		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "Blogs Admin",
 			Link: "/admin/blogs",

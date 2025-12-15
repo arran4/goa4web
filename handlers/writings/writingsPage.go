@@ -1,9 +1,10 @@
 package writings
 
 import (
-	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"strconv"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
@@ -45,8 +46,7 @@ func CustomWritingsIndex(data *common.CoreData, r *http.Request) {
 	data.RSSFeedURL = "/writings/rss"
 	data.AtomFeedURL = "/writings/atom"
 
-	userHasAdmin := data.HasAdminRole() && data.AdminMode
-	if userHasAdmin {
+	if data.IsAdmin() {
 		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
 			Name: "Writings Admin",
 			Link: "/admin/writings",

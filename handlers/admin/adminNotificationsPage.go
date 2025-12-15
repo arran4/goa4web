@@ -60,5 +60,5 @@ func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	data.Notifications = items
 	data.Total = len(items)
 	data.Unread = unread
-	handlers.TemplateHandler(w, r, "notificationsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "admin/notificationsPage.gohtml", data)
 }

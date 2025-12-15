@@ -34,3 +34,23 @@ SELECT * FROM grants WHERE role_id = ? ORDER BY id;
 -- name: AdminUpdateRole :exec
 -- admin task
 UPDATE roles SET name = ?, can_login = ?, is_admin = ?, private_labels = ? WHERE id = ?;
+
+-- name: GetRoleByName :one
+SELECT id, name, can_login, is_admin, private_labels, public_profile_allowed_at FROM roles WHERE name = ?;
+
+-- name: GetGrantsByRoleID :many
+SELECT * FROM grants WHERE role_id = ?;
+
+-- name: CreateGrant :exec
+INSERT INTO grants (role_id, section, item, rule_type, item_id, item_rule, action, extra, active)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+-- name: DeleteGrantsByRoleID :exec
+DELETE FROM grants WHERE role_id = ?;
+
+-- name: DeleteGrantByProperties :exec
+DELETE FROM grants
+WHERE role_id = ?
+  AND section = ?
+  AND item = ?
+  AND action = ?;

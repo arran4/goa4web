@@ -1,0 +1,9 @@
+Usage: goa4web role apply [flags]
+
+Applies the grants from a source role to a destination role.
+
+Flags:
+  -src string
+        The source role.
+  -dest string
+        The destination role.

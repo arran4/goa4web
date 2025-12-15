@@ -1,0 +1,7 @@
+Usage: goa4web role load [flags]
+
+Loads a role from a seed script.
+
+Flags:
+  -role string
+        The name of the role to load.

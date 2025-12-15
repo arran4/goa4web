@@ -1,32 +1,24 @@
-Usage:
-  {{.Prog}} role <command> [<args>]
+Usage: goa4web role <subcommand> [flags]
 
-The role command is used to manage roles, which are collections of permissions
-that can be assigned to users. Roles simplify permission management by allowing
-you to group related permissions together and assign them to users as a single
-unit.
-
-Commands:
-  add     Add a new role to the system.
-  delete  Delete an existing role.
-  list    List all available roles.
-  update  Update the permissions associated with a role.
-  users   List all users assigned to each role.
+Subcommands:
+  load   Loads a role from a seed script.
+  reset  Resets a role to the state defined in its seed script.
+  apply  Applies the grants from a source role to a destination role.
+  remove Removes the grants from a destination role that match a source role.
+  users  Lists the users in a role.
 
 Examples:
-  # Add a new role named "editor"
-  {{.Prog}} role add -name editor
+  # Load the "content-writer" role from its seed script
+  {{.Prog}} role load -role content-writer
 
-  # Delete the "editor" role
-  {{.Prog}} role delete -name editor
+  # Reset the "moderator" role to its default state
+  {{.Prog}} role reset -role moderator
 
-  # List all roles
-  {{.Prog}} role list
+  # Apply the permissions of the "private-forum-user" role to the "user" role
+  {{.Prog}} role apply -src private-forum-user -dest user
 
-  # Update the "editor" role
-  {{.Prog}} role update -name editor -add-perm "blog:write"
+  # Remove the permissions of the "private-forum-user" role from the "user" role
+  {{.Prog}} role remove -src private-forum-user -dest user
 
-  # List all users with the "editor" role
-  {{.Prog}} role users -name editor
-
-{{template "flag_groups_section" .FlagGroups}}
+  # Remove all grants from the "user" role
+  {{.Prog}} role remove -dest user

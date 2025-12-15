@@ -220,3 +220,128 @@ func (q *Queries) AdminUpdateRolePublicProfileAllowed(ctx context.Context, arg A
 	_, err := q.db.ExecContext(ctx, adminUpdateRolePublicProfileAllowed, arg.PublicProfileAllowedAt, arg.ID)
 	return err
 }
+
+const createGrant = `-- name: CreateGrant :exec
+INSERT INTO grants (role_id, section, item, rule_type, item_id, item_rule, action, extra, active)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+`
+
+type CreateGrantParams struct {
+	RoleID   sql.NullInt32
+	Section  string
+	Item     sql.NullString
+	RuleType string
+	ItemID   sql.NullInt32
+	ItemRule sql.NullString
+	Action   string
+	Extra    sql.NullString
+	Active   bool
+}
+
+func (q *Queries) CreateGrant(ctx context.Context, arg CreateGrantParams) error {
+	_, err := q.db.ExecContext(ctx, createGrant,
+		arg.RoleID,
+		arg.Section,
+		arg.Item,
+		arg.RuleType,
+		arg.ItemID,
+		arg.ItemRule,
+		arg.Action,
+		arg.Extra,
+		arg.Active,
+	)
+	return err
+}
+
+const deleteGrantByProperties = `-- name: DeleteGrantByProperties :exec
+DELETE FROM grants
+WHERE role_id = ?
+  AND section = ?
+  AND item = ?
+  AND action = ?
+`
+
+type DeleteGrantByPropertiesParams struct {
+	RoleID  sql.NullInt32
+	Section string
+	Item    sql.NullString
+	Action  string
+}
+
+func (q *Queries) DeleteGrantByProperties(ctx context.Context, arg DeleteGrantByPropertiesParams) error {
+	_, err := q.db.ExecContext(ctx, deleteGrantByProperties,
+		arg.RoleID,
+		arg.Section,
+		arg.Item,
+		arg.Action,
+	)
+	return err
+}
+
+const deleteGrantsByRoleID = `-- name: DeleteGrantsByRoleID :exec
+DELETE FROM grants WHERE role_id = ?
+`
+
+func (q *Queries) DeleteGrantsByRoleID(ctx context.Context, roleID sql.NullInt32) error {
+	_, err := q.db.ExecContext(ctx, deleteGrantsByRoleID, roleID)
+	return err
+}
+
+const getGrantsByRoleID = `-- name: GetGrantsByRoleID :many
+SELECT id, created_at, updated_at, user_id, role_id, section, item, rule_type, item_id, item_rule, action, extra, active FROM grants WHERE role_id = ?
+`
+
+func (q *Queries) GetGrantsByRoleID(ctx context.Context, roleID sql.NullInt32) ([]*Grant, error) {
+	rows, err := q.db.QueryContext(ctx, getGrantsByRoleID, roleID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Grant
+	for rows.Next() {
+		var i Grant
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.UserID,
+			&i.RoleID,
+			&i.Section,
+			&i.Item,
+			&i.RuleType,
+			&i.ItemID,
+			&i.ItemRule,
+			&i.Action,
+			&i.Extra,
+			&i.Active,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getRoleByName = `-- name: GetRoleByName :one
+SELECT id, name, can_login, is_admin, private_labels, public_profile_allowed_at FROM roles WHERE name = ?
+`
+
+func (q *Queries) GetRoleByName(ctx context.Context, name string) (*Role, error) {
+	row := q.db.QueryRowContext(ctx, getRoleByName, name)
+	var i Role
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.CanLogin,
+		&i.IsAdmin,
+		&i.PrivateLabels,
+		&i.PublicProfileAllowedAt,
+	)
+	return &i, err
+}

@@ -237,6 +237,7 @@ type Querier interface {
 	CreateCommentInSectionForCommenter(ctx context.Context, arg CreateCommentInSectionForCommenterParams) (int64, error)
 	CreateFAQQuestionForWriter(ctx context.Context, arg CreateFAQQuestionForWriterParams) error
 	CreateForumTopicForPoster(ctx context.Context, arg CreateForumTopicForPosterParams) (int64, error)
+	CreateGrant(ctx context.Context, arg CreateGrantParams) error
 	CreateImagePostForPoster(ctx context.Context, arg CreateImagePostForPosterParams) (int64, error)
 	CreateLinkerQueuedItemForWriter(ctx context.Context, arg CreateLinkerQueuedItemForWriterParams) error
 	CreateNewsPostForWriter(ctx context.Context, arg CreateNewsPostForWriterParams) (int64, error)
@@ -244,6 +245,8 @@ type Querier interface {
 	CreateUploadedImageForUploader(ctx context.Context, arg CreateUploadedImageForUploaderParams) (int64, error)
 	CreateWritingForWriter(ctx context.Context, arg CreateWritingForWriterParams) (int64, error)
 	DeactivateNewsPost(ctx context.Context, idsitenews int32) error
+	DeleteGrantByProperties(ctx context.Context, arg DeleteGrantByPropertiesParams) error
+	DeleteGrantsByRoleID(ctx context.Context, roleID sql.NullInt32) error
 	DeleteNotificationForLister(ctx context.Context, arg DeleteNotificationForListerParams) error
 	DeleteSubscriptionByIDForSubscriber(ctx context.Context, arg DeleteSubscriptionByIDForSubscriberParams) error
 	DeleteSubscriptionForSubscriber(ctx context.Context, arg DeleteSubscriptionForSubscriberParams) error
@@ -296,6 +299,7 @@ type Querier interface {
 	GetForumTopicIdByThreadId(ctx context.Context, idforumthread int32) (int32, error)
 	GetForumTopicsByCategoryId(ctx context.Context, arg GetForumTopicsByCategoryIdParams) ([]*Forumtopic, error)
 	GetForumTopicsForUser(ctx context.Context, arg GetForumTopicsForUserParams) ([]*GetForumTopicsForUserRow, error)
+	GetGrantsByRoleID(ctx context.Context, roleID sql.NullInt32) ([]*Grant, error)
 	GetImageBoardById(ctx context.Context, idimageboard int32) (*Imageboard, error)
 	GetImagePostByIDForLister(ctx context.Context, arg GetImagePostByIDForListerParams) (*GetImagePostByIDForListerRow, error)
 	GetImagePostInfoByPath(ctx context.Context, arg GetImagePostInfoByPathParams) (*GetImagePostInfoByPathRow, error)
@@ -327,6 +331,7 @@ type Querier interface {
 	GetPreferenceForLister(ctx context.Context, listerID int32) (*Preference, error)
 	GetPublicProfileRoleForUser(ctx context.Context, usersIdusers int32) (int32, error)
 	GetPublicWritings(ctx context.Context, arg GetPublicWritingsParams) ([]*Writing, error)
+	GetRoleByName(ctx context.Context, name string) (*Role, error)
 	GetThreadBySectionThreadIDForReplier(ctx context.Context, arg GetThreadBySectionThreadIDForReplierParams) (*Forumthread, error)
 	GetThreadLastPosterAndPerms(ctx context.Context, arg GetThreadLastPosterAndPermsParams) (*GetThreadLastPosterAndPermsRow, error)
 	// GetUnreadNotificationCountForLister returns the number of unread notifications for a

@@ -2,10 +2,11 @@ package user
 
 import (
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
 
@@ -32,7 +33,7 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data := struct{ Request *http.Request }{r}
-	handlers.TemplateHandler(w, r, "notifications.gohtml", data)
+	handlers.TemplateHandler(w, r, "user/notifications.gohtml", data)
 }
 
 func (DismissTask) Action(w http.ResponseWriter, r *http.Request) any {

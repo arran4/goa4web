@@ -48,7 +48,40 @@ func readFile(name string) []byte {
 }
 
 func GetCompiledSiteTemplates(funcs htemplate.FuncMap) *htemplate.Template {
-	return htemplate.Must(htemplate.New("").Funcs(funcs).ParseFS(getFS("site"), "*.gohtml", "*/*.gohtml"))
+	if funcs == nil {
+		funcs = htemplate.FuncMap{}
+	}
+
+	fsys := getFS("site")
+
+	root := htemplate.New("root").Funcs(funcs)
+
+	// Walk the sub-FS and parse every *.gohtml, naming templates by relative path.
+	err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		if filepath.Ext(path) != ".gohtml" {
+			return nil
+		}
+
+		b, err := fs.ReadFile(fsys, path)
+		if err != nil {
+			return err
+		}
+
+		// IMPORTANT: use path (the relative filename) as the template name.
+		_, err = root.New(path).Parse(string(b))
+		return err
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	return root
 }
 
 func GetCompiledNotificationTemplates(funcs ttemplate.FuncMap) *ttemplate.Template {

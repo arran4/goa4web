@@ -32,7 +32,7 @@ func adminRoleEditFormPage(w http.ResponseWriter, r *http.Request) {
 		Role        *db.Role
 		GrantGroups []GrantGroup
 	}{Role: role, GrantGroups: groups}
-	handlers.TemplateHandler(w, r, "roleEditPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "admin/roleEditPage.gohtml", data)
 }
 
 // adminRoleEditSavePage persists role updates.

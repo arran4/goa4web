@@ -259,16 +259,16 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 	cd.UserID = uid
 	_ = cd.UserRoles()
 
-	if s.Nav != nil {
-		cd.IndexItems = s.Nav.IndexItemsWithPermission(func(section, item string) bool {
-			return cd.HasGrant(section, item, "view", 0)
-		})
-	}
-	cd.FeedsEnabled = s.Config.FeedsEnabled
 	cd.AdminMode = r.URL.Query().Get("mode") == "admin"
 	if strings.HasPrefix(r.URL.Path, "/admin") && cd.HasRole("administrator") {
 		cd.AdminMode = true
 	}
+	if s.Nav != nil {
+		cd.IndexItems = s.Nav.IndexItemsWithPermission(func(section, item string) bool {
+			return cd.HasGrant(section, item, "view", 0) || cd.IsAdmin()
+		})
+	}
+	cd.FeedsEnabled = s.Config.FeedsEnabled
 	if uid != 0 && s.Config.NotificationsEnabled {
 		cd.NotificationCount = int32(cd.UnreadNotificationCount())
 	}

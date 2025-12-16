@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/db"
@@ -87,4 +88,104 @@ func (cd *CoreData) GrantPrivateForumThread(ctx context.Context, newThreadID int
 		}
 	}
 	return nil
+}
+// CreatePrivateTopicParams groups input for CreatePrivateTopic.
+type CreatePrivateTopicParams struct {
+	CreatorID      int32
+	ParticipantIDs []int32
+	Title          string
+	Description    string
+	PostBody       string
+}
+
+// CreatePrivateTopic creates a new private topic and assigns grants and the initial comment.
+func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID int32, err error) {
+	if cd == nil || cd.queries == nil {
+		return 0, fmt.Errorf("no queries")
+	}
+	if !cd.HasGrant("privateforum", "topic", "create", 0) {
+		log.Printf("private topic create denied: user=%d", p.CreatorID)
+		return 0, fmt.Errorf("permission denied")
+	}
+	var usernames []string // TODO this should be fed in from the caller and if it is not provided we can fill it htis way
+	for _, id := range p.ParticipantIDs {
+		if u := cd.UserByID(id); u != nil {
+			usernames = append(usernames, u.Username.String)
+		} else {
+			return 0, fmt.Errorf("unknown user %d", id)
+		}
+	}
+	title := p.Title
+	description := p.Description
+	if title == "" {
+		title = fmt.Sprintf("Private chat with %s", strings.Join(usernames, ", "))
+		if description == "" {
+			description = title
+		}
+	}
+	tid, err := cd.queries.CreateForumTopicForPoster(cd.ctx, db.CreateForumTopicForPosterParams{
+		PosterID:        p.CreatorID,
+		ForumcategoryID: PrivateForumCategoryID,
+		ForumLang:       sql.NullInt32{},
+		Title:           sql.NullString{String: title, Valid: true},
+		Description:     sql.NullString{String: description, Valid: true},
+		Handler:         "private",
+		Section:         "privateforum",
+		GrantCategoryID: sql.NullInt32{Int32: PrivateForumCategoryID, Valid: true},
+		GranteeID:       sql.NullInt32{Int32: p.CreatorID, Valid: p.CreatorID != 0},
+	})
+	if err != nil {
+		return 0, fmt.Errorf("create topic %w", err)
+	}
+	if tid == 0 {
+		return 0, fmt.Errorf("create topic returned 0")
+	}
+	topicID = int32(tid)
+	for _, uid := range p.ParticipantIDs {
+		for _, act := range []string{"see", "view", "post", "reply", "edit"} {
+			if _, err := cd.queries.SystemCreateGrant(cd.ctx, db.SystemCreateGrantParams{ // TODO switch to cd.GrantForumTopic
+				UserID:   sql.NullInt32{Int32: uid, Valid: true},
+				RoleID:   sql.NullInt32{},
+				Section:  "privateforum",
+				Item:     sql.NullString{String: "topic", Valid: true},
+				RuleType: "allow",
+				ItemID:   sql.NullInt32{Int32: topicID, Valid: true},
+				ItemRule: sql.NullString{},
+				Action:   act,
+				Extra:    sql.NullString{},
+			}); err != nil {
+				return 0, fmt.Errorf("create %s grant %w", act, err)
+			}
+		}
+	}
+	if p.PostBody == "" {
+		return topicID, nil
+	}
+	thid, err := cd.queries.CreateForumThreadForPoster(cd.ctx, db.CreateForumThreadForPosterParams{
+		ForumtopicID:  topicID,
+		PosterID:      p.CreatorID,
+		GrantParentID: sql.NullInt32{Int32: topicID, Valid: true},
+		GranteeID:     sql.NullInt32{Int32: p.CreatorID, Valid: true},
+	})
+	if err != nil {
+		return 0, fmt.Errorf("create thread: %w", err)
+	}
+	if thid == 0 {
+		return 0, fmt.Errorf("create thread returned 0")
+	}
+	if err := cd.GrantPrivateForumThread(cd.ctx, int32(thid), p.ParticipantIDs); err != nil {
+		return 0, fmt.Errorf("grant thread access: %w", err)
+	}
+	if _, err := cd.queries.CreateCommentInSectionForCommenter(cd.ctx, db.CreateCommentInSectionForCommenterParams{
+		CommenterID:   sql.NullInt32{Int32: p.CreatorID, Valid: true},
+		Section:       "privateforum",
+		ItemType:      sql.NullString{String: "thread", Valid: true},
+		ItemID:        sql.NullInt32{Int32: int32(thid), Valid: true},
+		ForumthreadID: int32(thid),
+		Text:          sql.NullString{String: p.PostBody, Valid: true},
+		Written:       sql.NullTime{Time: time.Now(), Valid: true},
+	}); err != nil {
+		return 0, fmt.Errorf("create comment: %w", err)
+	}
+	return topicID, nil
 }

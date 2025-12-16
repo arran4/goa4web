@@ -32,9 +32,6 @@ func TestCreatePrivateTopic(t *testing.T) {
 				Username: sql.NullString{String: "testuser", Valid: true},
 			}, nil
 		},
-		OverwrittenListPrivateTopicParticipantsByTopicIDForUser: func(ctx context.Context, arg db.ListPrivateTopicParticipantsByTopicIDForUserParams) ([]*db.ListPrivateTopicParticipantsByTopicIDForUserRow, error) {
-			return []*db.ListPrivateTopicParticipantsByTopicIDForUserRow{}, nil
-		},
 		OverwrittenCreateForumTopicForPoster: func(ctx context.Context, arg db.CreateForumTopicForPosterParams) (int64, error) {
 			return topicID, nil
 		},
@@ -61,6 +58,7 @@ func TestCreatePrivateTopic(t *testing.T) {
 		ParticipantIDs: []int32{1, 2},
 		Title:          "Test Topic",
 		Description:    "Test Description",
+		PostBody:       "Test Post Body",
 	}
 
 	actualTopicID, err := cd.CreatePrivateTopic(params)
@@ -71,4 +69,12 @@ func TestCreatePrivateTopic(t *testing.T) {
 	assert.Equal(t, int32(topicID), actualTopicID, fmt.Sprintf("expected topic ID %v, got %d", topicID, actualTopicID))
 	assert.Equal(t, 20, grantCount, "expected grant count to be 20")
 
+	grantCount = 0
+	params.PostBody = ""
+	actualTopicID, err = cd.CreatePrivateTopic(params)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	assert.Equal(t, int32(topicID), actualTopicID, fmt.Sprintf("expected topic ID %v, got %d", topicID, actualTopicID))
+	assert.Equal(t, 10, grantCount, "expected grant count to be 10")
 }

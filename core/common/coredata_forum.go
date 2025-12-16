@@ -283,7 +283,7 @@ func (cd *CoreData) GrantForumThread(threadID int32, uid, rid sql.NullInt32, act
 	return cd.queries.AdminCreateGrant(cd.ctx, db.AdminCreateGrantParams{
 		UserID:   uid,
 		RoleID:   rid,
-		Section:  "forum",
+		Section:  "privateforum",
 		Item:     sql.NullString{String: "thread", Valid: true},
 		RuleType: "allow",
 		ItemID:   sql.NullInt32{Int32: threadID, Valid: true},
@@ -291,35 +291,6 @@ func (cd *CoreData) GrantForumThread(threadID int32, uid, rid sql.NullInt32, act
 		Action:   action,
 		Extra:    sql.NullString{},
 	})
-}
-
-// GrantPrivateForumThread creates a grant for a private forum thread.
-func (cd *CoreData) GrantPrivateForumThread(threadID int32, uid, rid sql.NullInt32, actions ...string) (int64, error) {
-	if cd.queries == nil {
-		return 0, nil
-	}
-	if len(actions) == 0 {
-		actions = []string{"see", "view", "post", "reply", "edit"}
-	}
-	var lastID int64
-	for _, action := range actions {
-		id, err := cd.queries.AdminCreateGrant(cd.ctx, db.AdminCreateGrantParams{
-			UserID:   uid,
-			RoleID:   rid,
-			Section:  "privateforum",
-			Item:     sql.NullString{String: "thread", Valid: true},
-			RuleType: "allow",
-			ItemID:   sql.NullInt32{Int32: threadID, Valid: true},
-			ItemRule: sql.NullString{},
-			Action:   action,
-			Extra:    sql.NullString{},
-		})
-		if err != nil {
-			return 0, err
-		}
-		lastID = id
-	}
-	return lastID, nil
 }
 
 // RevokeForumThread removes a forum thread grant by ID.

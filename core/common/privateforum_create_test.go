@@ -2,20 +2,54 @@ package common
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCreatePrivateTopic(t *testing.T) {
-	mockDB, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	var topicID int64 = 1
+	var threadID int64 = 1
+	var commentID int64 = 1
+	var grantID int64
+	var grantCount int
+	queries := &db.QuerierProxier{
+		Querier: nil,
+		OverwrittenSystemCheckGrant: func(ctx context.Context, arg db.SystemCheckGrantParams) (int32, error) {
+			return 1, nil
+		},
+		OverwrittenGetPermissionsByUserID: func(ctx context.Context, usersIdusers int32) ([]*db.GetPermissionsByUserIDRow, error) {
+			return []*db.GetPermissionsByUserIDRow{}, nil
+		},
+		OverwrittenSystemCheckRoleGrant: func(ctx context.Context, arg db.SystemCheckRoleGrantParams) (int32, error) {
+			return 1, nil
+		},
+		OverwrittenSystemGetUserByID: func(ctx context.Context, idusers int32) (*db.SystemGetUserByIDRow, error) {
+			return &db.SystemGetUserByIDRow{
+				Username: sql.NullString{String: "testuser", Valid: true},
+			}, nil
+		},
+		OverwrittenListPrivateTopicParticipantsByTopicIDForUser: func(ctx context.Context, arg db.ListPrivateTopicParticipantsByTopicIDForUserParams) ([]*db.ListPrivateTopicParticipantsByTopicIDForUserRow, error) {
+			return []*db.ListPrivateTopicParticipantsByTopicIDForUserRow{}, nil
+		},
+		OverwrittenCreateForumTopicForPoster: func(ctx context.Context, arg db.CreateForumTopicForPosterParams) (int64, error) {
+			return topicID, nil
+		},
+		OverwrittenCreateForumThreadForPoster: func(ctx context.Context, arg db.CreateForumThreadForPosterParams) (int64, error) {
+			return threadID, nil
+		},
+		OverwrittenCreateCommentInSectionForCommenter: func(ctx context.Context, arg db.CreateCommentInSectionForCommenterParams) (int64, error) {
+			return commentID, nil
+		},
+		OverwrittenSystemCreateGrant: func(ctx context.Context, arg db.SystemCreateGrantParams) (int64, error) {
+			grantID++
+			grantCount++
+			return grantID, nil
+		},
 	}
-	defer mockDB.Close()
-
-	queries := db.New(mockDB)
 	cd := &CoreData{
 		queries: queries,
 		ctx:     context.Background(),
@@ -29,31 +63,12 @@ func TestCreatePrivateTopic(t *testing.T) {
 		Description:    "Test Description",
 	}
 
-	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
-	mock.ExpectQuery("INSERT INTO forumtopic").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
-	mock.ExpectQuery("INSERT INTO forumthread").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
-	mock.ExpectQuery("INSERT INTO comments").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
-	mock.ExpectQuery("INSERT INTO grants").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
-	mock.ExpectQuery("INSERT INTO grants").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(2))
-	mock.ExpectQuery("INSERT INTO grants").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(3))
-	mock.ExpectQuery("INSERT INTO grants").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(4))
-	mock.ExpectQuery("INSERT INTO grants").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(5))
-	mock.ExpectQuery("INSERT INTO grants").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(6))
-	mock.ExpectQuery("INSERT INTO grants").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(7))
-	mock.ExpectQuery("INSERT INTO grants").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(8))
-	mock.ExpectQuery("INSERT INTO grants").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(9))
-	mock.ExpectQuery("INSERT INTO grants").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(10))
-
-	topicID, err := cd.CreatePrivateTopic(params)
+	actualTopicID, err := cd.CreatePrivateTopic(params)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	if topicID != 1 {
-		t.Errorf("expected topic ID 1, got %d", topicID)
-	}
+	assert.Equal(t, int32(topicID), actualTopicID, fmt.Sprintf("expected topic ID %v, got %d", topicID, actualTopicID))
+	assert.Equal(t, 10, grantCount, "expected grant count to be 10")
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
-	}
 }

@@ -8,6 +8,7 @@ import (
 	"log"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/arran4/goa4web/internal/db"
 	imagesign "github.com/arran4/goa4web/internal/images"
@@ -83,39 +84,33 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID int3
 			}
 		}
 	}
-	thid, err := cd.CreateForumThreadForPoster(p.CreatorID, topicID, title, description)
+	thid, err := cd.queries.CreateForumThreadForPoster(cd.ctx, db.CreateForumThreadForPosterParams{
+		ForumtopicID:  topicID,
+		PosterID:      p.CreatorID,
+		GrantParentID: sql.NullInt32{Int32: topicID, Valid: true},
+		GranteeID:     sql.NullInt32{Int32: p.CreatorID, Valid: true},
+	})
 	if err != nil {
 		return 0, fmt.Errorf("create thread: %w", err)
 	}
-	for _, uid := range p.ParticipantIDs {
-		if _, err := cd.GrantPrivateForumThread(int32(thid), sql.NullInt32{Int32: uid, Valid: true}, sql.NullInt32{}); err != nil {
-			return 0, fmt.Errorf("grant thread access: %w", err)
-		}
+	if thid == 0 {
+		return 0, fmt.Errorf("create thread returned 0")
+	}
+	if err := cd.GrantPrivateForumThread(cd.ctx, int32(thid), p.ParticipantIDs); err != nil {
+		return 0, fmt.Errorf("grant thread access: %w", err)
+	}
+	if _, err := cd.queries.CreateCommentInSectionForCommenter(cd.ctx, db.CreateCommentInSectionForCommenterParams{
+		CommenterID:   sql.NullInt32{Int32: p.CreatorID, Valid: true},
+		Section:       "privateforum",
+		ItemType:      sql.NullString{String: "thread", Valid: true},
+		ItemID:        sql.NullInt32{Int32: int32(thid), Valid: true},
+		ForumthreadID: int32(thid),
+		Text:          sql.NullString{String: description, Valid: true},
+		Written:       sql.NullTime{Time: time.Now(), Valid: true},
+	}); err != nil {
+		return 0, fmt.Errorf("create comment: %w", err)
 	}
 	return topicID, nil
-}
-
-// CreateForumThreadForPoster creates a new thread and the initial comment.
-func (cd *CoreData) CreateForumThreadForPoster(posterID, topicID int32, title, description string) (int64, error) {
-	if cd.queries == nil {
-		return 0, nil
-	}
-	thid, err := cd.queries.CreateForumThreadForPoster(cd.ctx, db.CreateForumThreadForPosterParams{
-		PosterID:      posterID,
-		ForumtopicID:  topicID,
-		GranteeID:     sql.NullInt32{Int32: posterID, Valid: posterID != 0},
-		GrantParentID: sql.NullInt32{Int32: topicID, Valid: true},
-	})
-	if err != nil {
-		return 0, fmt.Errorf("create forum thread: %w", err)
-	}
-	if thid == 0 {
-		return 0, fmt.Errorf("create forum thread returned 0")
-	}
-	if _, err := cd.CreateForumCommentForCommenter(posterID, int32(thid), topicID, 0, description); err != nil {
-		return 0, fmt.Errorf("create forum comment: %w", err)
-	}
-	return thid, nil
 }
 
 // StoreImageParams groups input for StoreImage.

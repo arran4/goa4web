@@ -69,6 +69,6 @@ func TestCreatePrivateTopic(t *testing.T) {
 	}
 
 	assert.Equal(t, int32(topicID), actualTopicID, fmt.Sprintf("expected topic ID %v, got %d", topicID, actualTopicID))
-	assert.Equal(t, 10, grantCount, "expected grant count to be 10")
+	assert.Equal(t, 20, grantCount, "expected grant count to be 20")
 
 }

@@ -23,5 +23,5 @@ func AdminDeactivatedCommentsPage(w http.ResponseWriter, r *http.Request) {
 		*common.CoreData
 		Comments []*db.AdminListDeactivatedCommentsRow
 	}{cd, rows}
-	handlers.TemplateHandler(w, r, "admin/deactivatedCommentsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "deactivatedCommentsPage.gohtml", data)
 }

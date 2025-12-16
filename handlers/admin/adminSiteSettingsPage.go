@@ -87,5 +87,5 @@ func (h *Handlers) AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request)
 		Config:     cfg,
 	}
 
-	handlers.TemplateHandler(w, r, "admin/siteSettingsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "siteSettingsPage.gohtml", data)
 }

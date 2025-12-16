@@ -1,25 +1,11 @@
     {{ template "head" $ }}
-    {{ if .AnySearch }}
     <form method="post">
         {{ csrfField }}
         Search words: <input name="searchwords" value="{{.SearchWords}}">, (No keywords exist as of this moment.)<br>
-        {{ if .CanSearchForum }}
         <input type="submit" name="task" value="Search forum">
-        {{ end }}
-        {{ if .CanSearchNews }}
         <input type="submit" name="task" value="Search news">
-        {{ end }}
-        {{ if .CanSearchLinker }}
         <input type="submit" name="task" value="Search linker">
-        {{ end }}
-        {{ if .CanSearchBlogs }}
         <input type="submit" name="task" value="Search blogs">
-        {{ end }}
-        {{ if .CanSearchWritings }}
         <input type="submit" name="task" value="Search writings">
-        {{ end }}
     </form>
-    {{ else }}
-    <p>You do not have permission to search.</p>
-    {{ end }}
     {{ template "tail" $ }}

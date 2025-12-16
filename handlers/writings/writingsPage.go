@@ -1,40 +1,13 @@
 package writings
 
 import (
-	"net/http"
-	"strconv"
-
-	"github.com/arran4/goa4web/core/consts"
-
 	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/handlers"
+	"net/http"
 )
 
-func Page(w http.ResponseWriter, r *http.Request) {
-	type Data struct {
-		CategoryId        int32
-		WritingCategoryID int32
-	}
-
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	cd.LoadSelectionsFromRequest(r)
-	cd.PageTitle = "Writings"
-	data := Data{}
-	data.CategoryId = 0
-	data.WritingCategoryID = data.CategoryId
-
-	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	ps := cd.PageSize()
-	qv := r.URL.Query()
-	qv.Set("offset", strconv.Itoa(offset+ps))
-	cd.NextLink = "/writings?" + qv.Encode()
-	if offset > 0 {
-		qv.Set("offset", strconv.Itoa(offset-ps))
-		cd.PrevLink = "/writings?" + qv.Encode()
-		cd.StartLink = "/writings?offset=0"
-	}
-
-	handlers.TemplateHandler(w, r, "writingsPage", data)
+func WritingsPage(w http.ResponseWriter, r *http.Request) {
+	t := NewWritingsTask().(*writingsTask)
+	t.Get(w, r)
 }
 func CustomWritingsIndex(data *common.CoreData, r *http.Request) {
 	data.CustomIndexItems = []common.IndexItem{}

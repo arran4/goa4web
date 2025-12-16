@@ -15,7 +15,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	navReg.RegisterAdminControlCenter("Search", "Search", "/admin/search", SectionWeight)
 	sr := r.PathPrefix("/search").Subrouter()
 	sr.Use(handlers.IndexMiddleware(CustomIndex))
-	sr.HandleFunc("", Page).Methods("GET")
+	sr.HandleFunc("", SearchPage).Methods("GET")
 	sr.HandleFunc("", handlers.TaskHandler(searchForumTask)).Methods("POST").MatcherFunc(searchForumTask.Matcher())
 	sr.HandleFunc("", handlers.TaskHandler(searchNewsTask)).Methods("POST").MatcherFunc(searchNewsTask.Matcher())
 	sr.HandleFunc("", handlers.TaskHandler(searchLinkerTask)).Methods("POST").MatcherFunc(searchLinkerTask.Matcher())

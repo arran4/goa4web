@@ -2108,7 +2108,7 @@ func (cd *CoreData) CommentEditSaveURL(cmt *db.GetCommentsByThreadIdForUserRow) 
 		if base != "" {
 			return fmt.Sprintf("%s/topic/%d/thread/%d/comment/%d", base, cd.currentTopicID, cd.currentThreadID, cmt.Idcomments)
 		}
-		fallthrough
+		return fmt.Sprintf("/forum/topic/%d/thread/%d/comment/%d", cd.currentTopicID, cd.currentThreadID, cmt.Idcomments)
 	case "forum":
 		if base == "" {
 			base = "/forum"

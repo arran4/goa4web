@@ -44,7 +44,7 @@ func TestBoardPageRendersSubBoards(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	BoardPage(rr, req)
+	ImagebbsBoardPage(rr, req)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)

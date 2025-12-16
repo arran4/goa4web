@@ -14,7 +14,7 @@ import (
 func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, _ *nav.Registry) {
 	ur := r.PathPrefix("/usr").Subrouter()
 	ur.Use(handlers.IndexMiddleware(CustomIndex))
-	ur.HandleFunc("", userPage).Methods(http.MethodGet)
+	ur.HandleFunc("", UserPage).Methods(http.MethodGet)
 	ur.HandleFunc("/logout", userLogoutPage).Methods(http.MethodGet)
 	ur.HandleFunc("/lang", userLangPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	ur.HandleFunc("/lang", handlers.TaskHandler(saveLanguagesTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(saveLanguagesTask.Matcher())

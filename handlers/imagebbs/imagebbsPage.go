@@ -4,14 +4,11 @@ import (
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers"
 )
 
-func Page(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	cd.PageTitle = "Image Board"
-	handlers.TemplateHandler(w, r, "imagebbsPage", struct{}{})
+func ImagebbsPage(w http.ResponseWriter, r *http.Request) {
+	t := NewImagebbsTask().(*imagebbsTask)
+	t.Get(w, r)
 }
 
 func CustomImageBBSIndex(data *common.CoreData, r *http.Request) {

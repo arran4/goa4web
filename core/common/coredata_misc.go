@@ -14,7 +14,6 @@ import (
 	"golang.org/x/image/draw"
 )
 
-
 // StoreImageParams groups input for StoreImage.
 type StoreImageParams struct {
 	ID         string

@@ -89,6 +89,7 @@ func (cd *CoreData) GrantPrivateForumThread(ctx context.Context, newThreadID int
 	}
 	return nil
 }
+
 // CreatePrivateTopicParams groups input for CreatePrivateTopic.
 type CreatePrivateTopicParams struct {
 	CreatorID      int32

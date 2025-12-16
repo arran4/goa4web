@@ -2,28 +2,14 @@ package news
 
 import (
 	"fmt"
-	"net/http"
-	"strconv"
-
-	"github.com/gorilla/mux"
-
 	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers"
+	"github.com/gorilla/mux"
+	"net/http"
 )
 
-func NewsPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	ps := cd.PageSize()
-	cd.NextLink = fmt.Sprintf("?offset=%d", offset+ps)
-	if offset > 0 {
-		cd.PrevLink = fmt.Sprintf("?offset=%d", offset-ps)
-		cd.StartLink = "?offset=0"
-	}
-	if err := cd.ExecuteSiteTemplate(w, r, "news/page.gohtml", struct{}{}); err != nil {
-		handlers.RenderErrorPage(w, r, err)
-	}
+func NewsPageHandler(w http.ResponseWriter, r *http.Request) {
+	t := NewNewsTask().(*newsTask)
+	t.Get(w, r)
 }
 
 func CustomNewsIndex(data *common.CoreData, r *http.Request) {

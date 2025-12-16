@@ -91,4 +91,5 @@ func TestTopicPage_Prefix(t *testing.T) {
 	if !strings.Contains(body, `<nav class="breadcrumbs"`) || !strings.Contains(body, `href="/private">Private</a>`) {
 		t.Fatalf("expected private breadcrumb, got %q", body)
 	}
+
 }

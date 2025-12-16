@@ -52,18 +52,9 @@ func (UploadImageTask) IndexData(data map[string]any) []searchworker.IndexEventD
 
 var _ searchworker.IndexedTask = UploadImageTask{}
 
-func BoardPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	cd.LoadSelectionsFromRequest(r)
-	bid := cd.SelectedBoardID()
-
-	if !cd.HasGrant("imagebbs", "board", "view", bid) {
-		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
-		return
-	}
-
-	cd.PageTitle = fmt.Sprintf("Board %d", bid)
-	handlers.TemplateHandler(w, r, "imagebbs/boardPage.gohtml", struct{}{})
+func ImagebbsBoardPage(w http.ResponseWriter, r *http.Request) {
+	t := NewImagebbsBoardTask().(*imagebbsBoardTask)
+	t.Get(w, r)
 }
 
 func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {

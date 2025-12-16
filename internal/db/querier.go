@@ -237,6 +237,7 @@ type Querier interface {
 	CreateBookmarksForLister(ctx context.Context, arg CreateBookmarksForListerParams) error
 	CreateCommentInSectionForCommenter(ctx context.Context, arg CreateCommentInSectionForCommenterParams) (int64, error)
 	CreateFAQQuestionForWriter(ctx context.Context, arg CreateFAQQuestionForWriterParams) error
+	CreateForumThreadForPoster(ctx context.Context, arg CreateForumThreadForPosterParams) (int64, error)
 	CreateForumTopicForPoster(ctx context.Context, arg CreateForumTopicForPosterParams) (int64, error)
 	CreateGrant(ctx context.Context, arg CreateGrantParams) error
 	CreateImagePostForPoster(ctx context.Context, arg CreateImagePostForPosterParams) (int64, error)

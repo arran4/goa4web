@@ -42,15 +42,15 @@ func TestTopicPage_Prefix(t *testing.T) {
 		OverwrittenGetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText: func(ctx context.Context, arg db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams) ([]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow, error) {
 			return []*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow{
 				{
-					Idforumthread:     1,
-					Firstpost:         1,
-					Lastposter:        1,
+					Idforumthread:          1,
+					Firstpost:              1,
+					Lastposter:             1,
 					ForumtopicIdforumtopic: 1,
-					Comments:          sql.NullInt32{Int32: 0, Valid: true},
-					Lastposterusername:  sql.NullString{String: "Bob", Valid: true},
-					Lastposterid:      sql.NullInt32{Int32: 1, Valid: true},
-					Firstpostusername: sql.NullString{String: "Alice", Valid: true},
-					Firstposttext:     sql.NullString{String: "hi", Valid: true},
+					Comments:               sql.NullInt32{Int32: 0, Valid: true},
+					Lastposterusername:     sql.NullString{String: "Bob", Valid: true},
+					Lastposterid:           sql.NullInt32{Int32: 1, Valid: true},
+					Firstpostusername:      sql.NullString{String: "Alice", Valid: true},
+					Firstposttext:          sql.NullString{String: "hi", Valid: true},
 				},
 			}, nil
 		},

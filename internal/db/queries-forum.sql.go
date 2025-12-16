@@ -256,6 +256,44 @@ func (q *Queries) AdminRebuildAllForumTopicMetaColumns(ctx context.Context) erro
 	return err
 }
 
+const createForumThreadForPoster = `-- name: CreateForumThreadForPoster :execlastid
+INSERT INTO forumthread (forumtopic_idforumtopic, lastposter)
+SELECT ?, ?
+WHERE EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section='forum'
+      AND (g.item='topic' OR g.item IS NULL)
+      AND g.action='post'
+      AND g.active=1
+      AND (g.item_id = ? OR g.item_id IS NULL)
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (
+          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+      ))
+  )
+`
+
+type CreateForumThreadForPosterParams struct {
+	ForumtopicID  int32
+	PosterID      int32
+	GrantParentID sql.NullInt32
+	GranteeID     sql.NullInt32
+}
+
+func (q *Queries) CreateForumThreadForPoster(ctx context.Context, arg CreateForumThreadForPosterParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, createForumThreadForPoster,
+		arg.ForumtopicID,
+		arg.PosterID,
+		arg.GrantParentID,
+		arg.GranteeID,
+		arg.PosterID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
+}
+
 const createForumTopicForPoster = `-- name: CreateForumTopicForPoster :execlastid
 INSERT INTO forumtopic (forumcategory_idforumcategory, language_id, title, description, handler)
 SELECT ?, ?, ?, ?, ?

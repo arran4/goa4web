@@ -11,539 +11,540 @@ var _ Querier = &QuerierProxier{}
 
 type QuerierProxier struct {
 	Querier
-	OverwrittenAddContentLabelStatus func(ctx context.Context, arg AddContentLabelStatusParams) (error)
-	OverwrittenAddContentPrivateLabel func(ctx context.Context, arg AddContentPrivateLabelParams) (error)
-	OverwrittenAddContentPublicLabel func(ctx context.Context, arg AddContentPublicLabelParams) (error)
-	OverwrittenAdminApproveImagePost func(ctx context.Context, idimagepost int32) (error)
-	OverwrittenAdminArchiveBlog func(ctx context.Context, arg AdminArchiveBlogParams) (error)
-	OverwrittenAdminArchiveComment func(ctx context.Context, arg AdminArchiveCommentParams) (error)
-	OverwrittenAdminArchiveImagepost func(ctx context.Context, arg AdminArchiveImagepostParams) (error)
-	OverwrittenAdminArchiveLink func(ctx context.Context, arg AdminArchiveLinkParams) (error)
-	OverwrittenAdminArchiveUser func(ctx context.Context, idusers int32) (error)
-	OverwrittenAdminArchiveWriting func(ctx context.Context, arg AdminArchiveWritingParams) (error)
-	OverwrittenAdminCancelBannedIp func(ctx context.Context, ipNet string) (error)
-	OverwrittenAdminClearExternalLinkCache func(ctx context.Context, arg AdminClearExternalLinkCacheParams) (error)
-	OverwrittenAdminCompleteWordList func(ctx context.Context, ) ([]sql.NullString, error)
-	OverwrittenAdminCountForumCategories func(ctx context.Context, arg AdminCountForumCategoriesParams) (int64, error)
-	OverwrittenAdminCountForumThreads func(ctx context.Context, ) (int64, error)
-	OverwrittenAdminCountForumTopics func(ctx context.Context, ) (int64, error)
-	OverwrittenAdminCountLinksByCategory func(ctx context.Context, categoryID sql.NullInt32) (int64, error)
-	OverwrittenAdminCountThreadsByBoard func(ctx context.Context, imageboardIdimageboard sql.NullInt32) (int64, error)
-	OverwrittenAdminCountWordList func(ctx context.Context, ) (int64, error)
-	OverwrittenAdminCountWordListByPrefix func(ctx context.Context, prefix interface{}) (int64, error)
-	OverwrittenAdminCreateFAQCategory func(ctx context.Context, name sql.NullString) (error)
-	OverwrittenAdminCreateGrant func(ctx context.Context, arg AdminCreateGrantParams) (int64, error)
-	OverwrittenAdminCreateImageBoard func(ctx context.Context, arg AdminCreateImageBoardParams) (error)
-	OverwrittenAdminCreateLanguage func(ctx context.Context, nameof sql.NullString) (error)
-	OverwrittenAdminCreateLinkerCategory func(ctx context.Context, arg AdminCreateLinkerCategoryParams) (error)
-	OverwrittenAdminCreateLinkerItem func(ctx context.Context, arg AdminCreateLinkerItemParams) (error)
-	OverwrittenAdminDeleteExternalLink func(ctx context.Context, id int32) (error)
-	OverwrittenAdminDeleteExternalLinkByURL func(ctx context.Context, url string) (error)
-	OverwrittenAdminDeleteFAQ func(ctx context.Context, id int32) (error)
-	OverwrittenAdminDeleteFAQCategory func(ctx context.Context, id int32) (error)
-	OverwrittenAdminDeleteForumCategory func(ctx context.Context, idforumcategory int32) (error)
-	OverwrittenAdminDeleteForumThread func(ctx context.Context, idforumthread int32) (error)
-	OverwrittenAdminDeleteForumTopic func(ctx context.Context, idforumtopic int32) (error)
-	OverwrittenAdminDeleteGrant func(ctx context.Context, id int32) (error)
-	OverwrittenAdminDeleteImageBoard func(ctx context.Context, idimageboard int32) (error)
-	OverwrittenAdminDeleteImagePost func(ctx context.Context, idimagepost int32) (error)
-	OverwrittenAdminDeleteLanguage func(ctx context.Context, id int32) (error)
-	OverwrittenAdminDeleteLinkerCategory func(ctx context.Context, id int32) (error)
-	OverwrittenAdminDeleteLinkerQueuedItem func(ctx context.Context, id int32) (error)
-	OverwrittenAdminDeleteNotification func(ctx context.Context, id int32) (error)
-	OverwrittenAdminDeletePendingEmail func(ctx context.Context, id int32) (error)
-	OverwrittenAdminDeleteTemplateOverride func(ctx context.Context, name string) (error)
-	OverwrittenAdminDeleteUserByID func(ctx context.Context, idusers int32) (error)
-	OverwrittenAdminDeleteUserRole func(ctx context.Context, iduserRoles int32) (error)
-	OverwrittenAdminDemoteAnnouncement func(ctx context.Context, id int32) (error)
-	OverwrittenAdminForumCategoryThreadCounts func(ctx context.Context, ) ([]*AdminForumCategoryThreadCountsRow, error)
-	OverwrittenAdminForumHandlerThreadCounts func(ctx context.Context, ) ([]*AdminForumHandlerThreadCountsRow, error)
-	OverwrittenAdminForumTopicThreadCounts func(ctx context.Context, ) ([]*AdminForumTopicThreadCountsRow, error)
-	OverwrittenAdminGetAllBlogEntriesByUser func(ctx context.Context, authorID int32) ([]*AdminGetAllBlogEntriesByUserRow, error)
-	OverwrittenAdminGetAllCommentsByUser func(ctx context.Context, userID int32) ([]*AdminGetAllCommentsByUserRow, error)
-	OverwrittenAdminGetAllWritingsByAuthor func(ctx context.Context, authorID int32) ([]*AdminGetAllWritingsByAuthorRow, error)
-	OverwrittenAdminGetDashboardStats func(ctx context.Context, ) (*AdminGetDashboardStatsRow, error)
-	OverwrittenAdminGetFAQByID func(ctx context.Context, id int32) (*Faq, error)
-	OverwrittenAdminGetFAQCategories func(ctx context.Context, ) ([]*FaqCategory, error)
-	OverwrittenAdminGetFAQCategoriesWithQuestionCount func(ctx context.Context, ) ([]*AdminGetFAQCategoriesWithQuestionCountRow, error)
-	OverwrittenAdminGetFAQCategoryWithQuestionCountByID func(ctx context.Context, id int32) (*AdminGetFAQCategoryWithQuestionCountByIDRow, error)
-	OverwrittenAdminGetFAQDismissedQuestions func(ctx context.Context, ) ([]*Faq, error)
-	OverwrittenAdminGetFAQQuestionsByCategory func(ctx context.Context, categoryID sql.NullInt32) ([]*Faq, error)
-	OverwrittenAdminGetFAQUnansweredQuestions func(ctx context.Context, ) ([]*Faq, error)
-	OverwrittenAdminGetForumStats func(ctx context.Context, ) (*AdminGetForumStatsRow, error)
-	OverwrittenAdminGetImagePost func(ctx context.Context, idimagepost int32) (*AdminGetImagePostRow, error)
-	OverwrittenAdminGetNotification func(ctx context.Context, id int32) (*Notification, error)
-	OverwrittenAdminGetPendingEmailByID func(ctx context.Context, id int32) (*AdminGetPendingEmailByIDRow, error)
-	OverwrittenAdminGetRecentAuditLogs func(ctx context.Context, limit int32) ([]*AdminGetRecentAuditLogsRow, error)
-	OverwrittenAdminGetRequestByID func(ctx context.Context, id int32) (*AdminRequestQueue, error)
-	OverwrittenAdminGetRoleByID func(ctx context.Context, id int32) (*Role, error)
-	OverwrittenAdminGetRoleByNameForUser func(ctx context.Context, arg AdminGetRoleByNameForUserParams) (int32, error)
-	OverwrittenAdminGetSearchStats func(ctx context.Context, ) (*AdminGetSearchStatsRow, error)
-	OverwrittenAdminGetThreadsStartedByUser func(ctx context.Context, usersIdusers int32) ([]*Forumthread, error)
-	OverwrittenAdminGetThreadsStartedByUserWithTopic func(ctx context.Context, usersIdusers int32) ([]*AdminGetThreadsStartedByUserWithTopicRow, error)
-	OverwrittenAdminGetWritingsByCategoryId func(ctx context.Context, writingCategoryID int32) ([]*AdminGetWritingsByCategoryIdRow, error)
-	OverwrittenAdminImageboardPostCounts func(ctx context.Context, ) ([]*AdminImageboardPostCountsRow, error)
-	OverwrittenAdminInsertBannedIp func(ctx context.Context, arg AdminInsertBannedIpParams) (error)
-	OverwrittenAdminInsertLanguage func(ctx context.Context, nameof sql.NullString) (sql.Result, error)
-	OverwrittenAdminInsertQueuedLinkFromQueue func(ctx context.Context, id int32) (int64, error)
-	OverwrittenAdminInsertRequestComment func(ctx context.Context, arg AdminInsertRequestCommentParams) (error)
-	OverwrittenAdminInsertRequestQueue func(ctx context.Context, arg AdminInsertRequestQueueParams) (sql.Result, error)
-	OverwrittenAdminInsertWritingCategory func(ctx context.Context, arg AdminInsertWritingCategoryParams) (error)
-	OverwrittenAdminIsBlogDeactivated func(ctx context.Context, idblogs int32) (bool, error)
-	OverwrittenAdminIsCommentDeactivated func(ctx context.Context, idcomments int32) (bool, error)
-	OverwrittenAdminIsImagepostDeactivated func(ctx context.Context, idimagepost int32) (bool, error)
-	OverwrittenAdminIsLinkDeactivated func(ctx context.Context, id int32) (bool, error)
-	OverwrittenAdminIsUserDeactivated func(ctx context.Context, idusers int32) (bool, error)
-	OverwrittenAdminIsWritingDeactivated func(ctx context.Context, idwriting int32) (bool, error)
-	OverwrittenAdminLanguageUsageCounts func(ctx context.Context, arg AdminLanguageUsageCountsParams) (*AdminLanguageUsageCountsRow, error)
-	OverwrittenAdminListAdministratorEmails func(ctx context.Context, ) ([]string, error)
-	OverwrittenAdminListAllCommentsWithThreadInfo func(ctx context.Context, arg AdminListAllCommentsWithThreadInfoParams) ([]*AdminListAllCommentsWithThreadInfoRow, error)
-	OverwrittenAdminListAllPrivateForumThreads func(ctx context.Context, ) ([]*AdminListAllPrivateForumThreadsRow, error)
-	OverwrittenAdminListAllPrivateTopics func(ctx context.Context, ) ([]*AdminListAllPrivateTopicsRow, error)
-	OverwrittenAdminListAllUserIDs func(ctx context.Context, ) ([]int32, error)
-	OverwrittenAdminListAllUsers func(ctx context.Context, ) ([]*AdminListAllUsersRow, error)
-	OverwrittenAdminListAnnouncementsWithNews func(ctx context.Context, ) ([]*AdminListAnnouncementsWithNewsRow, error)
-	OverwrittenAdminListArchivedRequests func(ctx context.Context, ) ([]*AdminRequestQueue, error)
-	OverwrittenAdminListAuditLogs func(ctx context.Context, arg AdminListAuditLogsParams) ([]*AdminListAuditLogsRow, error)
-	OverwrittenAdminListBoards func(ctx context.Context, arg AdminListBoardsParams) ([]*Imageboard, error)
-	OverwrittenAdminListDeactivatedBlogs func(ctx context.Context, arg AdminListDeactivatedBlogsParams) ([]*AdminListDeactivatedBlogsRow, error)
-	OverwrittenAdminListDeactivatedComments func(ctx context.Context, arg AdminListDeactivatedCommentsParams) ([]*AdminListDeactivatedCommentsRow, error)
-	OverwrittenAdminListDeactivatedImageposts func(ctx context.Context, arg AdminListDeactivatedImagepostsParams) ([]*AdminListDeactivatedImagepostsRow, error)
-	OverwrittenAdminListDeactivatedLinks func(ctx context.Context, arg AdminListDeactivatedLinksParams) ([]*AdminListDeactivatedLinksRow, error)
-	OverwrittenAdminListDeactivatedUsers func(ctx context.Context, arg AdminListDeactivatedUsersParams) ([]*AdminListDeactivatedUsersRow, error)
-	OverwrittenAdminListDeactivatedWritings func(ctx context.Context, arg AdminListDeactivatedWritingsParams) ([]*AdminListDeactivatedWritingsRow, error)
-	OverwrittenAdminListExternalLinks func(ctx context.Context, arg AdminListExternalLinksParams) ([]*ExternalLink, error)
-	OverwrittenAdminListFailedEmails func(ctx context.Context, arg AdminListFailedEmailsParams) ([]*AdminListFailedEmailsRow, error)
-	OverwrittenAdminListForumCategoriesWithCounts func(ctx context.Context, arg AdminListForumCategoriesWithCountsParams) ([]*AdminListForumCategoriesWithCountsRow, error)
-	OverwrittenAdminListForumTopics func(ctx context.Context, arg AdminListForumTopicsParams) ([]*Forumtopic, error)
-	OverwrittenAdminListGrantsByRoleID func(ctx context.Context, roleID sql.NullInt32) ([]*Grant, error)
-	OverwrittenAdminListGrantsByThreadID func(ctx context.Context, itemID sql.NullInt32) ([]*AdminListGrantsByThreadIDRow, error)
-	OverwrittenAdminListGrantsByTopicID func(ctx context.Context, itemID sql.NullInt32) ([]*AdminListGrantsByTopicIDRow, error)
-	OverwrittenAdminListLoginAttempts func(ctx context.Context, ) ([]*LoginAttempt, error)
-	OverwrittenAdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescending func(ctx context.Context, arg AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams) ([]*AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error)
-	OverwrittenAdminListPendingDeactivatedBlogs func(ctx context.Context, arg AdminListPendingDeactivatedBlogsParams) ([]*AdminListPendingDeactivatedBlogsRow, error)
-	OverwrittenAdminListPendingDeactivatedComments func(ctx context.Context, arg AdminListPendingDeactivatedCommentsParams) ([]*AdminListPendingDeactivatedCommentsRow, error)
-	OverwrittenAdminListPendingDeactivatedImageposts func(ctx context.Context, arg AdminListPendingDeactivatedImagepostsParams) ([]*AdminListPendingDeactivatedImagepostsRow, error)
-	OverwrittenAdminListPendingDeactivatedLinks func(ctx context.Context, arg AdminListPendingDeactivatedLinksParams) ([]*AdminListPendingDeactivatedLinksRow, error)
-	OverwrittenAdminListPendingDeactivatedWritings func(ctx context.Context, arg AdminListPendingDeactivatedWritingsParams) ([]*AdminListPendingDeactivatedWritingsRow, error)
-	OverwrittenAdminListPendingRequests func(ctx context.Context, ) ([]*AdminRequestQueue, error)
-	OverwrittenAdminListPendingUsers func(ctx context.Context, ) ([]*AdminListPendingUsersRow, error)
-	OverwrittenAdminListRecentNotifications func(ctx context.Context, limit int32) ([]*Notification, error)
-	OverwrittenAdminListRequestComments func(ctx context.Context, requestID int32) ([]*AdminRequestComment, error)
-	OverwrittenAdminListRoles func(ctx context.Context, ) ([]*Role, error)
-	OverwrittenAdminListRolesWithUsers func(ctx context.Context, ) ([]*AdminListRolesWithUsersRow, error)
-	OverwrittenAdminListSentEmails func(ctx context.Context, arg AdminListSentEmailsParams) ([]*AdminListSentEmailsRow, error)
-	OverwrittenAdminListSessions func(ctx context.Context, ) ([]*AdminListSessionsRow, error)
-	OverwrittenAdminListTopicsWithUserGrantsNoRoles func(ctx context.Context, includeAdmin interface{}) ([]*AdminListTopicsWithUserGrantsNoRolesRow, error)
-	OverwrittenAdminListUnsentPendingEmails func(ctx context.Context, arg AdminListUnsentPendingEmailsParams) ([]*AdminListUnsentPendingEmailsRow, error)
-	OverwrittenAdminListUploadedImages func(ctx context.Context, arg AdminListUploadedImagesParams) ([]*UploadedImage, error)
-	OverwrittenAdminListUserEmails func(ctx context.Context, userID int32) ([]*UserEmail, error)
-	OverwrittenAdminListUserIDsByRole func(ctx context.Context, name string) ([]int32, error)
-	OverwrittenAdminListUsersByID func(ctx context.Context, ids []int32) ([]*AdminListUsersByIDRow, error)
-	OverwrittenAdminListUsersByRoleID func(ctx context.Context, roleID int32) ([]*AdminListUsersByRoleIDRow, error)
-	OverwrittenAdminMarkBlogRestored func(ctx context.Context, idblogs int32) (error)
-	OverwrittenAdminMarkCommentRestored func(ctx context.Context, idcomments int32) (error)
-	OverwrittenAdminMarkImagepostRestored func(ctx context.Context, idimagepost int32) (error)
-	OverwrittenAdminMarkLinkRestored func(ctx context.Context, id int32) (error)
-	OverwrittenAdminMarkNotificationRead func(ctx context.Context, id int32) (error)
-	OverwrittenAdminMarkNotificationUnread func(ctx context.Context, id int32) (error)
-	OverwrittenAdminMarkWritingRestored func(ctx context.Context, idwriting int32) (error)
-	OverwrittenAdminPromoteAnnouncement func(ctx context.Context, siteNewsID int32) (error)
-	OverwrittenAdminPurgeReadNotifications func(ctx context.Context, ) (error)
-	OverwrittenAdminRebuildAllForumTopicMetaColumns func(ctx context.Context, ) (error)
-	OverwrittenAdminRecalculateAllForumThreadMetaData func(ctx context.Context, ) (error)
-	OverwrittenAdminRecalculateForumThreadByIdMetaData func(ctx context.Context, idforumthread int32) (error)
-	OverwrittenAdminRenameFAQCategory func(ctx context.Context, arg AdminRenameFAQCategoryParams) (error)
-	OverwrittenAdminRenameLanguage func(ctx context.Context, arg AdminRenameLanguageParams) (error)
-	OverwrittenAdminRenameLinkerCategory func(ctx context.Context, arg AdminRenameLinkerCategoryParams) (error)
-	OverwrittenAdminReplaceSiteNewsURL func(ctx context.Context, arg AdminReplaceSiteNewsURLParams) (error)
-	OverwrittenAdminRestoreBlog func(ctx context.Context, arg AdminRestoreBlogParams) (error)
-	OverwrittenAdminRestoreComment func(ctx context.Context, arg AdminRestoreCommentParams) (error)
-	OverwrittenAdminRestoreImagepost func(ctx context.Context, arg AdminRestoreImagepostParams) (error)
-	OverwrittenAdminRestoreLink func(ctx context.Context, arg AdminRestoreLinkParams) (error)
-	OverwrittenAdminRestoreUser func(ctx context.Context, idusers int32) (error)
-	OverwrittenAdminRestoreWriting func(ctx context.Context, arg AdminRestoreWritingParams) (error)
-	OverwrittenAdminScrubBlog func(ctx context.Context, arg AdminScrubBlogParams) (error)
-	OverwrittenAdminScrubComment func(ctx context.Context, arg AdminScrubCommentParams) (error)
-	OverwrittenAdminScrubImagepost func(ctx context.Context, idimagepost int32) (error)
-	OverwrittenAdminScrubLink func(ctx context.Context, arg AdminScrubLinkParams) (error)
-	OverwrittenAdminScrubUser func(ctx context.Context, arg AdminScrubUserParams) (error)
-	OverwrittenAdminScrubWriting func(ctx context.Context, arg AdminScrubWritingParams) (error)
-	OverwrittenAdminSetAnnouncementActive func(ctx context.Context, arg AdminSetAnnouncementActiveParams) (error)
-	OverwrittenAdminSetTemplateOverride func(ctx context.Context, arg AdminSetTemplateOverrideParams) (error)
-	OverwrittenAdminUpdateBannedIp func(ctx context.Context, arg AdminUpdateBannedIpParams) (error)
-	OverwrittenAdminUpdateFAQQuestionAnswer func(ctx context.Context, arg AdminUpdateFAQQuestionAnswerParams) (error)
-	OverwrittenAdminUpdateGrantActive func(ctx context.Context, arg AdminUpdateGrantActiveParams) (error)
-	OverwrittenAdminUpdateImageBoard func(ctx context.Context, arg AdminUpdateImageBoardParams) (error)
-	OverwrittenAdminUpdateImagePost func(ctx context.Context, arg AdminUpdateImagePostParams) (error)
-	OverwrittenAdminUpdateLinkerCategorySortOrder func(ctx context.Context, arg AdminUpdateLinkerCategorySortOrderParams) (error)
-	OverwrittenAdminUpdateLinkerItem func(ctx context.Context, arg AdminUpdateLinkerItemParams) (error)
-	OverwrittenAdminUpdateLinkerQueuedItem func(ctx context.Context, arg AdminUpdateLinkerQueuedItemParams) (error)
-	OverwrittenAdminUpdateRequestStatus func(ctx context.Context, arg AdminUpdateRequestStatusParams) (error)
-	OverwrittenAdminUpdateRole func(ctx context.Context, arg AdminUpdateRoleParams) (error)
-	OverwrittenAdminUpdateRolePublicProfileAllowed func(ctx context.Context, arg AdminUpdateRolePublicProfileAllowedParams) (error)
-	OverwrittenAdminUpdateUserEmail func(ctx context.Context, arg AdminUpdateUserEmailParams) (error)
-	OverwrittenAdminUpdateUserRole func(ctx context.Context, arg AdminUpdateUserRoleParams) (error)
-	OverwrittenAdminUpdateUsernameByID func(ctx context.Context, arg AdminUpdateUsernameByIDParams) (error)
-	OverwrittenAdminUpdateWritingCategory func(ctx context.Context, arg AdminUpdateWritingCategoryParams) (error)
-	OverwrittenAdminUserPostCounts func(ctx context.Context, ) ([]*AdminUserPostCountsRow, error)
-	OverwrittenAdminUserPostCountsByID func(ctx context.Context, idusers int32) (*AdminUserPostCountsByIDRow, error)
-	OverwrittenAdminWordListWithCounts func(ctx context.Context, arg AdminWordListWithCountsParams) ([]*AdminWordListWithCountsRow, error)
-	OverwrittenAdminWordListWithCountsByPrefix func(ctx context.Context, arg AdminWordListWithCountsByPrefixParams) ([]*AdminWordListWithCountsByPrefixRow, error)
-	OverwrittenAdminWritingCategoryCounts func(ctx context.Context, ) ([]*AdminWritingCategoryCountsRow, error)
-	OverwrittenClearUnreadContentPrivateLabelExceptUser func(ctx context.Context, arg ClearUnreadContentPrivateLabelExceptUserParams) (error)
-	OverwrittenCreateBlogEntryForWriter func(ctx context.Context, arg CreateBlogEntryForWriterParams) (int64, error)
-	OverwrittenCreateBookmarksForLister func(ctx context.Context, arg CreateBookmarksForListerParams) (error)
-	OverwrittenCreateCommentInSectionForCommenter func(ctx context.Context, arg CreateCommentInSectionForCommenterParams) (int64, error)
-	OverwrittenCreateFAQQuestionForWriter func(ctx context.Context, arg CreateFAQQuestionForWriterParams) (error)
-	OverwrittenCreateForumTopicForPoster func(ctx context.Context, arg CreateForumTopicForPosterParams) (int64, error)
-	OverwrittenCreateImagePostForPoster func(ctx context.Context, arg CreateImagePostForPosterParams) (int64, error)
-	OverwrittenCreateLinkerQueuedItemForWriter func(ctx context.Context, arg CreateLinkerQueuedItemForWriterParams) (error)
-	OverwrittenCreateNewsPostForWriter func(ctx context.Context, arg CreateNewsPostForWriterParams) (int64, error)
-	OverwrittenCreatePasswordResetForUser func(ctx context.Context, arg CreatePasswordResetForUserParams) (error)
-	OverwrittenCreateUploadedImageForUploader func(ctx context.Context, arg CreateUploadedImageForUploaderParams) (int64, error)
-	OverwrittenCreateWritingForWriter func(ctx context.Context, arg CreateWritingForWriterParams) (int64, error)
-	OverwrittenDeactivateNewsPost func(ctx context.Context, idsitenews int32) (error)
-	OverwrittenDeleteNotificationForLister func(ctx context.Context, arg DeleteNotificationForListerParams) (error)
-	OverwrittenDeleteSubscriptionByIDForSubscriber func(ctx context.Context, arg DeleteSubscriptionByIDForSubscriberParams) (error)
-	OverwrittenDeleteSubscriptionForSubscriber func(ctx context.Context, arg DeleteSubscriptionForSubscriberParams) (error)
-	OverwrittenDeleteUserEmailForOwner func(ctx context.Context, arg DeleteUserEmailForOwnerParams) (error)
-	OverwrittenDeleteUserLanguagesForUser func(ctx context.Context, userID int32) (error)
-	OverwrittenGetActiveAnnouncementWithNewsForLister func(ctx context.Context, arg GetActiveAnnouncementWithNewsForListerParams) (*GetActiveAnnouncementWithNewsForListerRow, error)
-	OverwrittenGetAdministratorUserRole func(ctx context.Context, usersIdusers int32) (*UserRole, error)
-	OverwrittenGetAllAnsweredFAQWithFAQCategoriesForUser func(ctx context.Context, arg GetAllAnsweredFAQWithFAQCategoriesForUserParams) ([]*GetAllAnsweredFAQWithFAQCategoriesForUserRow, error)
-	OverwrittenGetAllCommentsForIndex func(ctx context.Context, ) ([]*GetAllCommentsForIndexRow, error)
-	OverwrittenGetAllForumCategories func(ctx context.Context, arg GetAllForumCategoriesParams) ([]*Forumcategory, error)
-	OverwrittenGetAllForumCategoriesWithSubcategoryCount func(ctx context.Context, arg GetAllForumCategoriesWithSubcategoryCountParams) ([]*GetAllForumCategoriesWithSubcategoryCountRow, error)
-	OverwrittenGetAllForumThreadsWithTopic func(ctx context.Context, ) ([]*GetAllForumThreadsWithTopicRow, error)
-	OverwrittenGetAllForumTopics func(ctx context.Context, arg GetAllForumTopicsParams) ([]*Forumtopic, error)
-	OverwrittenGetAllForumTopicsByCategoryIdForUserWithLastPosterName func(ctx context.Context, arg GetAllForumTopicsByCategoryIdForUserWithLastPosterNameParams) ([]*GetAllForumTopicsByCategoryIdForUserWithLastPosterNameRow, error)
-	OverwrittenGetAllImagePostsForIndex func(ctx context.Context, ) ([]*GetAllImagePostsForIndexRow, error)
-	OverwrittenGetAllLinkerCategories func(ctx context.Context, ) ([]*LinkerCategory, error)
-	OverwrittenGetAllLinkerCategoriesForUser func(ctx context.Context, arg GetAllLinkerCategoriesForUserParams) ([]*LinkerCategory, error)
-	OverwrittenGetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending func(ctx context.Context, arg GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams) ([]*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow, error)
-	OverwrittenGetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUser func(ctx context.Context, arg GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserParams) ([]*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserRow, error)
-	OverwrittenGetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginated func(ctx context.Context, arg GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedParams) ([]*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow, error)
+	OverwrittenAddContentLabelStatus                                                                          func(ctx context.Context, arg AddContentLabelStatusParams) error
+	OverwrittenAddContentPrivateLabel                                                                         func(ctx context.Context, arg AddContentPrivateLabelParams) error
+	OverwrittenAddContentPublicLabel                                                                          func(ctx context.Context, arg AddContentPublicLabelParams) error
+	OverwrittenAdminApproveImagePost                                                                          func(ctx context.Context, idimagepost int32) error
+	OverwrittenAdminArchiveBlog                                                                               func(ctx context.Context, arg AdminArchiveBlogParams) error
+	OverwrittenAdminArchiveComment                                                                            func(ctx context.Context, arg AdminArchiveCommentParams) error
+	OverwrittenAdminArchiveImagepost                                                                          func(ctx context.Context, arg AdminArchiveImagepostParams) error
+	OverwrittenAdminArchiveLink                                                                               func(ctx context.Context, arg AdminArchiveLinkParams) error
+	OverwrittenAdminArchiveUser                                                                               func(ctx context.Context, idusers int32) error
+	OverwrittenAdminArchiveWriting                                                                            func(ctx context.Context, arg AdminArchiveWritingParams) error
+	OverwrittenAdminCancelBannedIp                                                                            func(ctx context.Context, ipNet string) error
+	OverwrittenAdminClearExternalLinkCache                                                                    func(ctx context.Context, arg AdminClearExternalLinkCacheParams) error
+	OverwrittenAdminCompleteWordList                                                                          func(ctx context.Context) ([]sql.NullString, error)
+	OverwrittenAdminCountForumCategories                                                                      func(ctx context.Context, arg AdminCountForumCategoriesParams) (int64, error)
+	OverwrittenAdminCountForumThreads                                                                         func(ctx context.Context) (int64, error)
+	OverwrittenAdminCountForumTopics                                                                          func(ctx context.Context) (int64, error)
+	OverwrittenAdminCountLinksByCategory                                                                      func(ctx context.Context, categoryID sql.NullInt32) (int64, error)
+	OverwrittenAdminCountThreadsByBoard                                                                       func(ctx context.Context, imageboardIdimageboard sql.NullInt32) (int64, error)
+	OverwrittenAdminCountWordList                                                                             func(ctx context.Context) (int64, error)
+	OverwrittenAdminCountWordListByPrefix                                                                     func(ctx context.Context, prefix interface{}) (int64, error)
+	OverwrittenAdminCreateFAQCategory                                                                         func(ctx context.Context, name sql.NullString) error
+	OverwrittenAdminCreateGrant                                                                               func(ctx context.Context, arg AdminCreateGrantParams) (int64, error)
+	OverwrittenAdminCreateImageBoard                                                                          func(ctx context.Context, arg AdminCreateImageBoardParams) error
+	OverwrittenAdminCreateLanguage                                                                            func(ctx context.Context, nameof sql.NullString) error
+	OverwrittenAdminCreateLinkerCategory                                                                      func(ctx context.Context, arg AdminCreateLinkerCategoryParams) error
+	OverwrittenAdminCreateLinkerItem                                                                          func(ctx context.Context, arg AdminCreateLinkerItemParams) error
+	OverwrittenAdminDeleteExternalLink                                                                        func(ctx context.Context, id int32) error
+	OverwrittenAdminDeleteExternalLinkByURL                                                                   func(ctx context.Context, url string) error
+	OverwrittenAdminDeleteFAQ                                                                                 func(ctx context.Context, id int32) error
+	OverwrittenAdminDeleteFAQCategory                                                                         func(ctx context.Context, id int32) error
+	OverwrittenAdminDeleteForumCategory                                                                       func(ctx context.Context, idforumcategory int32) error
+	OverwrittenAdminDeleteForumThread                                                                         func(ctx context.Context, idforumthread int32) error
+	OverwrittenAdminDeleteForumTopic                                                                          func(ctx context.Context, idforumtopic int32) error
+	OverwrittenAdminDeleteGrant                                                                               func(ctx context.Context, id int32) error
+	OverwrittenAdminDeleteImageBoard                                                                          func(ctx context.Context, idimageboard int32) error
+	OverwrittenAdminDeleteImagePost                                                                           func(ctx context.Context, idimagepost int32) error
+	OverwrittenAdminDeleteLanguage                                                                            func(ctx context.Context, id int32) error
+	OverwrittenAdminDeleteLinkerCategory                                                                      func(ctx context.Context, id int32) error
+	OverwrittenAdminDeleteLinkerQueuedItem                                                                    func(ctx context.Context, id int32) error
+	OverwrittenAdminDeleteNotification                                                                        func(ctx context.Context, id int32) error
+	OverwrittenAdminDeletePendingEmail                                                                        func(ctx context.Context, id int32) error
+	OverwrittenAdminDeleteTemplateOverride                                                                    func(ctx context.Context, name string) error
+	OverwrittenAdminDeleteUserByID                                                                            func(ctx context.Context, idusers int32) error
+	OverwrittenAdminDeleteUserRole                                                                            func(ctx context.Context, iduserRoles int32) error
+	OverwrittenAdminDemoteAnnouncement                                                                        func(ctx context.Context, id int32) error
+	OverwrittenAdminForumCategoryThreadCounts                                                                 func(ctx context.Context) ([]*AdminForumCategoryThreadCountsRow, error)
+	OverwrittenAdminForumHandlerThreadCounts                                                                  func(ctx context.Context) ([]*AdminForumHandlerThreadCountsRow, error)
+	OverwrittenAdminForumTopicThreadCounts                                                                    func(ctx context.Context) ([]*AdminForumTopicThreadCountsRow, error)
+	OverwrittenAdminGetAllBlogEntriesByUser                                                                   func(ctx context.Context, authorID int32) ([]*AdminGetAllBlogEntriesByUserRow, error)
+	OverwrittenAdminGetAllCommentsByUser                                                                      func(ctx context.Context, userID int32) ([]*AdminGetAllCommentsByUserRow, error)
+	OverwrittenAdminGetAllWritingsByAuthor                                                                    func(ctx context.Context, authorID int32) ([]*AdminGetAllWritingsByAuthorRow, error)
+	OverwrittenAdminGetDashboardStats                                                                         func(ctx context.Context) (*AdminGetDashboardStatsRow, error)
+	OverwrittenAdminGetFAQByID                                                                                func(ctx context.Context, id int32) (*Faq, error)
+	OverwrittenAdminGetFAQCategories                                                                          func(ctx context.Context) ([]*FaqCategory, error)
+	OverwrittenAdminGetFAQCategoriesWithQuestionCount                                                         func(ctx context.Context) ([]*AdminGetFAQCategoriesWithQuestionCountRow, error)
+	OverwrittenAdminGetFAQCategoryWithQuestionCountByID                                                       func(ctx context.Context, id int32) (*AdminGetFAQCategoryWithQuestionCountByIDRow, error)
+	OverwrittenAdminGetFAQDismissedQuestions                                                                  func(ctx context.Context) ([]*Faq, error)
+	OverwrittenAdminGetFAQQuestionsByCategory                                                                 func(ctx context.Context, categoryID sql.NullInt32) ([]*Faq, error)
+	OverwrittenAdminGetFAQUnansweredQuestions                                                                 func(ctx context.Context) ([]*Faq, error)
+	OverwrittenAdminGetForumStats                                                                             func(ctx context.Context) (*AdminGetForumStatsRow, error)
+	OverwrittenAdminGetImagePost                                                                              func(ctx context.Context, idimagepost int32) (*AdminGetImagePostRow, error)
+	OverwrittenAdminGetNotification                                                                           func(ctx context.Context, id int32) (*Notification, error)
+	OverwrittenAdminGetPendingEmailByID                                                                       func(ctx context.Context, id int32) (*AdminGetPendingEmailByIDRow, error)
+	OverwrittenAdminGetRecentAuditLogs                                                                        func(ctx context.Context, limit int32) ([]*AdminGetRecentAuditLogsRow, error)
+	OverwrittenAdminGetRequestByID                                                                            func(ctx context.Context, id int32) (*AdminRequestQueue, error)
+	OverwrittenAdminGetRoleByID                                                                               func(ctx context.Context, id int32) (*Role, error)
+	OverwrittenAdminGetRoleByNameForUser                                                                      func(ctx context.Context, arg AdminGetRoleByNameForUserParams) (int32, error)
+	OverwrittenAdminGetSearchStats                                                                            func(ctx context.Context) (*AdminGetSearchStatsRow, error)
+	OverwrittenAdminGetThreadsStartedByUser                                                                   func(ctx context.Context, usersIdusers int32) ([]*Forumthread, error)
+	OverwrittenAdminGetThreadsStartedByUserWithTopic                                                          func(ctx context.Context, usersIdusers int32) ([]*AdminGetThreadsStartedByUserWithTopicRow, error)
+	OverwrittenAdminGetWritingsByCategoryId                                                                   func(ctx context.Context, writingCategoryID int32) ([]*AdminGetWritingsByCategoryIdRow, error)
+	OverwrittenAdminImageboardPostCounts                                                                      func(ctx context.Context) ([]*AdminImageboardPostCountsRow, error)
+	OverwrittenAdminInsertBannedIp                                                                            func(ctx context.Context, arg AdminInsertBannedIpParams) error
+	OverwrittenAdminInsertLanguage                                                                            func(ctx context.Context, nameof sql.NullString) (sql.Result, error)
+	OverwrittenAdminInsertQueuedLinkFromQueue                                                                 func(ctx context.Context, id int32) (int64, error)
+	OverwrittenAdminInsertRequestComment                                                                      func(ctx context.Context, arg AdminInsertRequestCommentParams) error
+	OverwrittenAdminInsertRequestQueue                                                                        func(ctx context.Context, arg AdminInsertRequestQueueParams) (sql.Result, error)
+	OverwrittenAdminInsertWritingCategory                                                                     func(ctx context.Context, arg AdminInsertWritingCategoryParams) error
+	OverwrittenAdminIsBlogDeactivated                                                                         func(ctx context.Context, idblogs int32) (bool, error)
+	OverwrittenAdminIsCommentDeactivated                                                                      func(ctx context.Context, idcomments int32) (bool, error)
+	OverwrittenAdminIsImagepostDeactivated                                                                    func(ctx context.Context, idimagepost int32) (bool, error)
+	OverwrittenAdminIsLinkDeactivated                                                                         func(ctx context.Context, id int32) (bool, error)
+	OverwrittenAdminIsUserDeactivated                                                                         func(ctx context.Context, idusers int32) (bool, error)
+	OverwrittenAdminIsWritingDeactivated                                                                      func(ctx context.Context, idwriting int32) (bool, error)
+	OverwrittenAdminLanguageUsageCounts                                                                       func(ctx context.Context, arg AdminLanguageUsageCountsParams) (*AdminLanguageUsageCountsRow, error)
+	OverwrittenAdminListAdministratorEmails                                                                   func(ctx context.Context) ([]string, error)
+	OverwrittenAdminListAllCommentsWithThreadInfo                                                             func(ctx context.Context, arg AdminListAllCommentsWithThreadInfoParams) ([]*AdminListAllCommentsWithThreadInfoRow, error)
+	OverwrittenAdminListAllPrivateForumThreads                                                                func(ctx context.Context) ([]*AdminListAllPrivateForumThreadsRow, error)
+	OverwrittenAdminListAllPrivateTopics                                                                      func(ctx context.Context) ([]*AdminListAllPrivateTopicsRow, error)
+	OverwrittenAdminListAllUserIDs                                                                            func(ctx context.Context) ([]int32, error)
+	OverwrittenAdminListAllUsers                                                                              func(ctx context.Context) ([]*AdminListAllUsersRow, error)
+	OverwrittenAdminListAnnouncementsWithNews                                                                 func(ctx context.Context) ([]*AdminListAnnouncementsWithNewsRow, error)
+	OverwrittenAdminListArchivedRequests                                                                      func(ctx context.Context) ([]*AdminRequestQueue, error)
+	OverwrittenAdminListAuditLogs                                                                             func(ctx context.Context, arg AdminListAuditLogsParams) ([]*AdminListAuditLogsRow, error)
+	OverwrittenAdminListBoards                                                                                func(ctx context.Context, arg AdminListBoardsParams) ([]*Imageboard, error)
+	OverwrittenAdminListDeactivatedBlogs                                                                      func(ctx context.Context, arg AdminListDeactivatedBlogsParams) ([]*AdminListDeactivatedBlogsRow, error)
+	OverwrittenAdminListDeactivatedComments                                                                   func(ctx context.Context, arg AdminListDeactivatedCommentsParams) ([]*AdminListDeactivatedCommentsRow, error)
+	OverwrittenAdminListDeactivatedImageposts                                                                 func(ctx context.Context, arg AdminListDeactivatedImagepostsParams) ([]*AdminListDeactivatedImagepostsRow, error)
+	OverwrittenAdminListDeactivatedLinks                                                                      func(ctx context.Context, arg AdminListDeactivatedLinksParams) ([]*AdminListDeactivatedLinksRow, error)
+	OverwrittenAdminListDeactivatedUsers                                                                      func(ctx context.Context, arg AdminListDeactivatedUsersParams) ([]*AdminListDeactivatedUsersRow, error)
+	OverwrittenAdminListDeactivatedWritings                                                                   func(ctx context.Context, arg AdminListDeactivatedWritingsParams) ([]*AdminListDeactivatedWritingsRow, error)
+	OverwrittenAdminListExternalLinks                                                                         func(ctx context.Context, arg AdminListExternalLinksParams) ([]*ExternalLink, error)
+	OverwrittenAdminListFailedEmails                                                                          func(ctx context.Context, arg AdminListFailedEmailsParams) ([]*AdminListFailedEmailsRow, error)
+	OverwrittenAdminListForumCategoriesWithCounts                                                             func(ctx context.Context, arg AdminListForumCategoriesWithCountsParams) ([]*AdminListForumCategoriesWithCountsRow, error)
+	OverwrittenAdminListForumTopics                                                                           func(ctx context.Context, arg AdminListForumTopicsParams) ([]*Forumtopic, error)
+	OverwrittenAdminListGrantsByRoleID                                                                        func(ctx context.Context, roleID sql.NullInt32) ([]*Grant, error)
+	OverwrittenAdminListGrantsByThreadID                                                                      func(ctx context.Context, itemID sql.NullInt32) ([]*AdminListGrantsByThreadIDRow, error)
+	OverwrittenAdminListGrantsByTopicID                                                                       func(ctx context.Context, itemID sql.NullInt32) ([]*AdminListGrantsByTopicIDRow, error)
+	OverwrittenAdminListLoginAttempts                                                                         func(ctx context.Context) ([]*LoginAttempt, error)
+	OverwrittenAdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescending                            func(ctx context.Context, arg AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams) ([]*AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error)
+	OverwrittenAdminListPendingDeactivatedBlogs                                                               func(ctx context.Context, arg AdminListPendingDeactivatedBlogsParams) ([]*AdminListPendingDeactivatedBlogsRow, error)
+	OverwrittenAdminListPendingDeactivatedComments                                                            func(ctx context.Context, arg AdminListPendingDeactivatedCommentsParams) ([]*AdminListPendingDeactivatedCommentsRow, error)
+	OverwrittenAdminListPendingDeactivatedImageposts                                                          func(ctx context.Context, arg AdminListPendingDeactivatedImagepostsParams) ([]*AdminListPendingDeactivatedImagepostsRow, error)
+	OverwrittenAdminListPendingDeactivatedLinks                                                               func(ctx context.Context, arg AdminListPendingDeactivatedLinksParams) ([]*AdminListPendingDeactivatedLinksRow, error)
+	OverwrittenAdminListPendingDeactivatedWritings                                                            func(ctx context.Context, arg AdminListPendingDeactivatedWritingsParams) ([]*AdminListPendingDeactivatedWritingsRow, error)
+	OverwrittenAdminListPendingRequests                                                                       func(ctx context.Context) ([]*AdminRequestQueue, error)
+	OverwrittenAdminListPendingUsers                                                                          func(ctx context.Context) ([]*AdminListPendingUsersRow, error)
+	OverwrittenAdminListRecentNotifications                                                                   func(ctx context.Context, limit int32) ([]*Notification, error)
+	OverwrittenAdminListRequestComments                                                                       func(ctx context.Context, requestID int32) ([]*AdminRequestComment, error)
+	OverwrittenAdminListRoles                                                                                 func(ctx context.Context) ([]*Role, error)
+	OverwrittenAdminListRolesWithUsers                                                                        func(ctx context.Context) ([]*AdminListRolesWithUsersRow, error)
+	OverwrittenAdminListSentEmails                                                                            func(ctx context.Context, arg AdminListSentEmailsParams) ([]*AdminListSentEmailsRow, error)
+	OverwrittenAdminListSessions                                                                              func(ctx context.Context) ([]*AdminListSessionsRow, error)
+	OverwrittenAdminListTopicsWithUserGrantsNoRoles                                                           func(ctx context.Context, includeAdmin interface{}) ([]*AdminListTopicsWithUserGrantsNoRolesRow, error)
+	OverwrittenAdminListUnsentPendingEmails                                                                   func(ctx context.Context, arg AdminListUnsentPendingEmailsParams) ([]*AdminListUnsentPendingEmailsRow, error)
+	OverwrittenAdminListUploadedImages                                                                        func(ctx context.Context, arg AdminListUploadedImagesParams) ([]*UploadedImage, error)
+	OverwrittenAdminListUserEmails                                                                            func(ctx context.Context, userID int32) ([]*UserEmail, error)
+	OverwrittenAdminListUserIDsByRole                                                                         func(ctx context.Context, name string) ([]int32, error)
+	OverwrittenAdminListUsersByID                                                                             func(ctx context.Context, ids []int32) ([]*AdminListUsersByIDRow, error)
+	OverwrittenAdminListUsersByRoleID                                                                         func(ctx context.Context, roleID int32) ([]*AdminListUsersByRoleIDRow, error)
+	OverwrittenAdminMarkBlogRestored                                                                          func(ctx context.Context, idblogs int32) error
+	OverwrittenAdminMarkCommentRestored                                                                       func(ctx context.Context, idcomments int32) error
+	OverwrittenAdminMarkImagepostRestored                                                                     func(ctx context.Context, idimagepost int32) error
+	OverwrittenAdminMarkLinkRestored                                                                          func(ctx context.Context, id int32) error
+	OverwrittenAdminMarkNotificationRead                                                                      func(ctx context.Context, id int32) error
+	OverwrittenAdminMarkNotificationUnread                                                                    func(ctx context.Context, id int32) error
+	OverwrittenAdminMarkWritingRestored                                                                       func(ctx context.Context, idwriting int32) error
+	OverwrittenAdminPromoteAnnouncement                                                                       func(ctx context.Context, siteNewsID int32) error
+	OverwrittenAdminPurgeReadNotifications                                                                    func(ctx context.Context) error
+	OverwrittenAdminRebuildAllForumTopicMetaColumns                                                           func(ctx context.Context) error
+	OverwrittenAdminRecalculateAllForumThreadMetaData                                                         func(ctx context.Context) error
+	OverwrittenAdminRecalculateForumThreadByIdMetaData                                                        func(ctx context.Context, idforumthread int32) error
+	OverwrittenAdminRenameFAQCategory                                                                         func(ctx context.Context, arg AdminRenameFAQCategoryParams) error
+	OverwrittenAdminRenameLanguage                                                                            func(ctx context.Context, arg AdminRenameLanguageParams) error
+	OverwrittenAdminRenameLinkerCategory                                                                      func(ctx context.Context, arg AdminRenameLinkerCategoryParams) error
+	OverwrittenAdminReplaceSiteNewsURL                                                                        func(ctx context.Context, arg AdminReplaceSiteNewsURLParams) error
+	OverwrittenAdminRestoreBlog                                                                               func(ctx context.Context, arg AdminRestoreBlogParams) error
+	OverwrittenAdminRestoreComment                                                                            func(ctx context.Context, arg AdminRestoreCommentParams) error
+	OverwrittenAdminRestoreImagepost                                                                          func(ctx context.Context, arg AdminRestoreImagepostParams) error
+	OverwrittenAdminRestoreLink                                                                               func(ctx context.Context, arg AdminRestoreLinkParams) error
+	OverwrittenAdminRestoreUser                                                                               func(ctx context.Context, idusers int32) error
+	OverwrittenAdminRestoreWriting                                                                            func(ctx context.Context, arg AdminRestoreWritingParams) error
+	OverwrittenAdminScrubBlog                                                                                 func(ctx context.Context, arg AdminScrubBlogParams) error
+	OverwrittenAdminScrubComment                                                                              func(ctx context.Context, arg AdminScrubCommentParams) error
+	OverwrittenAdminScrubImagepost                                                                            func(ctx context.Context, idimagepost int32) error
+	OverwrittenAdminScrubLink                                                                                 func(ctx context.Context, arg AdminScrubLinkParams) error
+	OverwrittenAdminScrubUser                                                                                 func(ctx context.Context, arg AdminScrubUserParams) error
+	OverwrittenAdminScrubWriting                                                                              func(ctx context.Context, arg AdminScrubWritingParams) error
+	OverwrittenAdminSetAnnouncementActive                                                                     func(ctx context.Context, arg AdminSetAnnouncementActiveParams) error
+	OverwrittenAdminSetTemplateOverride                                                                       func(ctx context.Context, arg AdminSetTemplateOverrideParams) error
+	OverwrittenAdminUpdateBannedIp                                                                            func(ctx context.Context, arg AdminUpdateBannedIpParams) error
+	OverwrittenAdminUpdateFAQQuestionAnswer                                                                   func(ctx context.Context, arg AdminUpdateFAQQuestionAnswerParams) error
+	OverwrittenAdminUpdateGrantActive                                                                         func(ctx context.Context, arg AdminUpdateGrantActiveParams) error
+	OverwrittenAdminUpdateImageBoard                                                                          func(ctx context.Context, arg AdminUpdateImageBoardParams) error
+	OverwrittenAdminUpdateImagePost                                                                           func(ctx context.Context, arg AdminUpdateImagePostParams) error
+	OverwrittenAdminUpdateLinkerCategorySortOrder                                                             func(ctx context.Context, arg AdminUpdateLinkerCategorySortOrderParams) error
+	OverwrittenAdminUpdateLinkerItem                                                                          func(ctx context.Context, arg AdminUpdateLinkerItemParams) error
+	OverwrittenAdminUpdateLinkerQueuedItem                                                                    func(ctx context.Context, arg AdminUpdateLinkerQueuedItemParams) error
+	OverwrittenAdminUpdateRequestStatus                                                                       func(ctx context.Context, arg AdminUpdateRequestStatusParams) error
+	OverwrittenAdminUpdateRole                                                                                func(ctx context.Context, arg AdminUpdateRoleParams) error
+	OverwrittenAdminUpdateRolePublicProfileAllowed                                                            func(ctx context.Context, arg AdminUpdateRolePublicProfileAllowedParams) error
+	OverwrittenAdminUpdateUserEmail                                                                           func(ctx context.Context, arg AdminUpdateUserEmailParams) error
+	OverwrittenAdminUpdateUserRole                                                                            func(ctx context.Context, arg AdminUpdateUserRoleParams) error
+	OverwrittenAdminUpdateUsernameByID                                                                        func(ctx context.Context, arg AdminUpdateUsernameByIDParams) error
+	OverwrittenAdminUpdateWritingCategory                                                                     func(ctx context.Context, arg AdminUpdateWritingCategoryParams) error
+	OverwrittenAdminUserPostCounts                                                                            func(ctx context.Context) ([]*AdminUserPostCountsRow, error)
+	OverwrittenAdminUserPostCountsByID                                                                        func(ctx context.Context, idusers int32) (*AdminUserPostCountsByIDRow, error)
+	OverwrittenAdminWordListWithCounts                                                                        func(ctx context.Context, arg AdminWordListWithCountsParams) ([]*AdminWordListWithCountsRow, error)
+	OverwrittenAdminWordListWithCountsByPrefix                                                                func(ctx context.Context, arg AdminWordListWithCountsByPrefixParams) ([]*AdminWordListWithCountsByPrefixRow, error)
+	OverwrittenAdminWritingCategoryCounts                                                                     func(ctx context.Context) ([]*AdminWritingCategoryCountsRow, error)
+	OverwrittenClearUnreadContentPrivateLabelExceptUser                                                       func(ctx context.Context, arg ClearUnreadContentPrivateLabelExceptUserParams) error
+	OverwrittenCreateBlogEntryForWriter                                                                       func(ctx context.Context, arg CreateBlogEntryForWriterParams) (int64, error)
+	OverwrittenCreateBookmarksForLister                                                                       func(ctx context.Context, arg CreateBookmarksForListerParams) error
+	OverwrittenCreateCommentInSectionForCommenter                                                             func(ctx context.Context, arg CreateCommentInSectionForCommenterParams) (int64, error)
+	OverwrittenCreateFAQQuestionForWriter                                                                     func(ctx context.Context, arg CreateFAQQuestionForWriterParams) error
+	OverwrittenCreateForumTopicForPoster                                                                      func(ctx context.Context, arg CreateForumTopicForPosterParams) (int64, error)
+	OverwrittenCreateForumThreadForPoster                                                                     func(ctx context.Context, arg CreateForumThreadForPosterParams) (int64, error)
+	OverwrittenCreateImagePostForPoster                                                                       func(ctx context.Context, arg CreateImagePostForPosterParams) (int64, error)
+	OverwrittenCreateLinkerQueuedItemForWriter                                                                func(ctx context.Context, arg CreateLinkerQueuedItemForWriterParams) error
+	OverwrittenCreateNewsPostForWriter                                                                        func(ctx context.Context, arg CreateNewsPostForWriterParams) (int64, error)
+	OverwrittenCreatePasswordResetForUser                                                                     func(ctx context.Context, arg CreatePasswordResetForUserParams) error
+	OverwrittenCreateUploadedImageForUploader                                                                 func(ctx context.Context, arg CreateUploadedImageForUploaderParams) (int64, error)
+	OverwrittenCreateWritingForWriter                                                                         func(ctx context.Context, arg CreateWritingForWriterParams) (int64, error)
+	OverwrittenDeactivateNewsPost                                                                             func(ctx context.Context, idsitenews int32) error
+	OverwrittenDeleteNotificationForLister                                                                    func(ctx context.Context, arg DeleteNotificationForListerParams) error
+	OverwrittenDeleteSubscriptionByIDForSubscriber                                                            func(ctx context.Context, arg DeleteSubscriptionByIDForSubscriberParams) error
+	OverwrittenDeleteSubscriptionForSubscriber                                                                func(ctx context.Context, arg DeleteSubscriptionForSubscriberParams) error
+	OverwrittenDeleteUserEmailForOwner                                                                        func(ctx context.Context, arg DeleteUserEmailForOwnerParams) error
+	OverwrittenDeleteUserLanguagesForUser                                                                     func(ctx context.Context, userID int32) error
+	OverwrittenGetActiveAnnouncementWithNewsForLister                                                         func(ctx context.Context, arg GetActiveAnnouncementWithNewsForListerParams) (*GetActiveAnnouncementWithNewsForListerRow, error)
+	OverwrittenGetAdministratorUserRole                                                                       func(ctx context.Context, usersIdusers int32) (*UserRole, error)
+	OverwrittenGetAllAnsweredFAQWithFAQCategoriesForUser                                                      func(ctx context.Context, arg GetAllAnsweredFAQWithFAQCategoriesForUserParams) ([]*GetAllAnsweredFAQWithFAQCategoriesForUserRow, error)
+	OverwrittenGetAllCommentsForIndex                                                                         func(ctx context.Context) ([]*GetAllCommentsForIndexRow, error)
+	OverwrittenGetAllForumCategories                                                                          func(ctx context.Context, arg GetAllForumCategoriesParams) ([]*Forumcategory, error)
+	OverwrittenGetAllForumCategoriesWithSubcategoryCount                                                      func(ctx context.Context, arg GetAllForumCategoriesWithSubcategoryCountParams) ([]*GetAllForumCategoriesWithSubcategoryCountRow, error)
+	OverwrittenGetAllForumThreadsWithTopic                                                                    func(ctx context.Context) ([]*GetAllForumThreadsWithTopicRow, error)
+	OverwrittenGetAllForumTopics                                                                              func(ctx context.Context, arg GetAllForumTopicsParams) ([]*Forumtopic, error)
+	OverwrittenGetAllForumTopicsByCategoryIdForUserWithLastPosterName                                         func(ctx context.Context, arg GetAllForumTopicsByCategoryIdForUserWithLastPosterNameParams) ([]*GetAllForumTopicsByCategoryIdForUserWithLastPosterNameRow, error)
+	OverwrittenGetAllImagePostsForIndex                                                                       func(ctx context.Context) ([]*GetAllImagePostsForIndexRow, error)
+	OverwrittenGetAllLinkerCategories                                                                         func(ctx context.Context) ([]*LinkerCategory, error)
+	OverwrittenGetAllLinkerCategoriesForUser                                                                  func(ctx context.Context, arg GetAllLinkerCategoriesForUserParams) ([]*LinkerCategory, error)
+	OverwrittenGetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending                    func(ctx context.Context, arg GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingParams) ([]*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow, error)
+	OverwrittenGetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUser             func(ctx context.Context, arg GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserParams) ([]*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserRow, error)
+	OverwrittenGetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginated    func(ctx context.Context, arg GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedParams) ([]*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow, error)
 	OverwrittenGetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow func(ctx context.Context, arg GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRowParams) ([]*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRowRow, error)
-	OverwrittenGetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginated func(ctx context.Context, arg GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginatedParams) ([]*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginatedRow, error)
-	OverwrittenGetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails func(ctx context.Context, ) ([]*GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetailsRow, error)
-	OverwrittenGetAllLinkersForIndex func(ctx context.Context, ) ([]*GetAllLinkersForIndexRow, error)
-	OverwrittenGetAllSiteNewsForIndex func(ctx context.Context, ) ([]*GetAllSiteNewsForIndexRow, error)
-	OverwrittenGetAllWritingsByAuthorForLister func(ctx context.Context, arg GetAllWritingsByAuthorForListerParams) ([]*GetAllWritingsByAuthorForListerRow, error)
-	OverwrittenGetAllWritingsForIndex func(ctx context.Context, ) ([]*GetAllWritingsForIndexRow, error)
-	OverwrittenGetBlogEntryForListerByID func(ctx context.Context, arg GetBlogEntryForListerByIDParams) (*GetBlogEntryForListerByIDRow, error)
-	OverwrittenGetBookmarksForUser func(ctx context.Context, usersIdusers int32) (*GetBookmarksForUserRow, error)
-	OverwrittenGetCommentById func(ctx context.Context, idcomments int32) (*Comment, error)
-	OverwrittenGetCommentByIdForUser func(ctx context.Context, arg GetCommentByIdForUserParams) (*GetCommentByIdForUserRow, error)
-	OverwrittenGetCommentsByIdsForUserWithThreadInfo func(ctx context.Context, arg GetCommentsByIdsForUserWithThreadInfoParams) ([]*GetCommentsByIdsForUserWithThreadInfoRow, error)
-	OverwrittenGetCommentsBySectionThreadIdForUser func(ctx context.Context, arg GetCommentsBySectionThreadIdForUserParams) ([]*GetCommentsBySectionThreadIdForUserRow, error)
-	OverwrittenGetCommentsByThreadIdForUser func(ctx context.Context, arg GetCommentsByThreadIdForUserParams) ([]*GetCommentsByThreadIdForUserRow, error)
-	OverwrittenGetContentReadMarker func(ctx context.Context, arg GetContentReadMarkerParams) (*GetContentReadMarkerRow, error)
-	OverwrittenGetExternalLink func(ctx context.Context, url string) (*ExternalLink, error)
-	OverwrittenGetExternalLinkByID func(ctx context.Context, id int32) (*ExternalLink, error)
-	OverwrittenGetFAQAnsweredQuestions func(ctx context.Context, arg GetFAQAnsweredQuestionsParams) ([]*Faq, error)
-	OverwrittenGetFAQByID func(ctx context.Context, arg GetFAQByIDParams) (*Faq, error)
-	OverwrittenGetFAQQuestionsByCategory func(ctx context.Context, arg GetFAQQuestionsByCategoryParams) ([]*Faq, error)
-	OverwrittenGetFAQRevisionsForAdmin func(ctx context.Context, faqID int32) ([]*FaqRevision, error)
-	OverwrittenGetForumCategoryById func(ctx context.Context, arg GetForumCategoryByIdParams) (*Forumcategory, error)
-	OverwrittenGetForumThreadIdByNewsPostId func(ctx context.Context, idsitenews int32) (*GetForumThreadIdByNewsPostIdRow, error)
-	OverwrittenGetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText func(ctx context.Context, arg GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams) ([]*GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow, error)
-	OverwrittenGetForumTopicById func(ctx context.Context, idforumtopic int32) (*Forumtopic, error)
-	OverwrittenGetForumTopicByIdForUser func(ctx context.Context, arg GetForumTopicByIdForUserParams) (*GetForumTopicByIdForUserRow, error)
-	OverwrittenGetForumTopicIdByThreadId func(ctx context.Context, idforumthread int32) (int32, error)
-	OverwrittenGetForumTopicsByCategoryId func(ctx context.Context, arg GetForumTopicsByCategoryIdParams) ([]*Forumtopic, error)
-	OverwrittenGetForumTopicsForUser func(ctx context.Context, arg GetForumTopicsForUserParams) ([]*GetForumTopicsForUserRow, error)
-	OverwrittenGetImageBoardById func(ctx context.Context, idimageboard int32) (*Imageboard, error)
-	OverwrittenGetImagePostByIDForLister func(ctx context.Context, arg GetImagePostByIDForListerParams) (*GetImagePostByIDForListerRow, error)
-	OverwrittenGetImagePostInfoByPath func(ctx context.Context, arg GetImagePostInfoByPathParams) (*GetImagePostInfoByPathRow, error)
-	OverwrittenGetImagePostsByUserDescending func(ctx context.Context, arg GetImagePostsByUserDescendingParams) ([]*GetImagePostsByUserDescendingRow, error)
-	OverwrittenGetImagePostsByUserDescendingAll func(ctx context.Context, arg GetImagePostsByUserDescendingAllParams) ([]*GetImagePostsByUserDescendingAllRow, error)
-	OverwrittenGetLatestAnnouncementByNewsID func(ctx context.Context, siteNewsID int32) (*SiteAnnouncement, error)
-	OverwrittenGetLinkerCategoriesWithCount func(ctx context.Context, ) ([]*GetLinkerCategoriesWithCountRow, error)
-	OverwrittenGetLinkerCategoryById func(ctx context.Context, id int32) (*LinkerCategory, error)
-	OverwrittenGetLinkerCategoryLinkCounts func(ctx context.Context, ) ([]*GetLinkerCategoryLinkCountsRow, error)
-	OverwrittenGetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending func(ctx context.Context, id int32) (*GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow, error)
-	OverwrittenGetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser func(ctx context.Context, arg GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams) (*GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow, error)
-	OverwrittenGetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescending func(ctx context.Context, linkerids []int32) ([]*GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow, error)
-	OverwrittenGetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUser func(ctx context.Context, arg GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUserParams) ([]*GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUserRow, error)
-	OverwrittenGetLinkerItemsByUserDescending func(ctx context.Context, arg GetLinkerItemsByUserDescendingParams) ([]*GetLinkerItemsByUserDescendingRow, error)
-	OverwrittenGetLinkerItemsByUserDescendingForUser func(ctx context.Context, arg GetLinkerItemsByUserDescendingForUserParams) ([]*GetLinkerItemsByUserDescendingForUserRow, error)
-	OverwrittenGetLoginRoleForUser func(ctx context.Context, usersIdusers int32) (int32, error)
-	OverwrittenGetMaxNotificationPriority func(ctx context.Context, userID int32) (interface{}, error)
-	OverwrittenGetNewsPostByIdWithWriterIdAndThreadCommentCount func(ctx context.Context, arg GetNewsPostByIdWithWriterIdAndThreadCommentCountParams) (*GetNewsPostByIdWithWriterIdAndThreadCommentCountRow, error)
-	OverwrittenGetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCount func(ctx context.Context, arg GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountParams) ([]*GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountRow, error)
-	OverwrittenGetNewsPostsWithWriterUsernameAndThreadCommentCountDescending func(ctx context.Context, arg GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams) ([]*GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error)
-	OverwrittenGetNotificationEmailByUserID func(ctx context.Context, userID int32) (*UserEmail, error)
-	OverwrittenGetNotificationForLister func(ctx context.Context, arg GetNotificationForListerParams) (*Notification, error)
-	OverwrittenGetPasswordResetByCode func(ctx context.Context, arg GetPasswordResetByCodeParams) (*PendingPassword, error)
-	OverwrittenGetPasswordResetByUser func(ctx context.Context, arg GetPasswordResetByUserParams) (*PendingPassword, error)
-	OverwrittenGetPendingEmailErrorCount func(ctx context.Context, id int32) (int32, error)
-	OverwrittenGetPermissionsByUserID func(ctx context.Context, usersIdusers int32) ([]*GetPermissionsByUserIDRow, error)
-	OverwrittenGetPermissionsWithUsers func(ctx context.Context, arg GetPermissionsWithUsersParams) ([]*GetPermissionsWithUsersRow, error)
-	OverwrittenGetPreferenceForLister func(ctx context.Context, listerID int32) (*Preference, error)
-	OverwrittenGetPublicProfileRoleForUser func(ctx context.Context, usersIdusers int32) (int32, error)
-	OverwrittenGetPublicWritings func(ctx context.Context, arg GetPublicWritingsParams) ([]*Writing, error)
-	OverwrittenGetThreadBySectionThreadIDForReplier func(ctx context.Context, arg GetThreadBySectionThreadIDForReplierParams) (*Forumthread, error)
-	OverwrittenGetThreadLastPosterAndPerms func(ctx context.Context, arg GetThreadLastPosterAndPermsParams) (*GetThreadLastPosterAndPermsRow, error)
-	OverwrittenGetUnreadNotificationCountForLister func(ctx context.Context, listerID int32) (int64, error)
-	OverwrittenGetUserEmailByCode func(ctx context.Context, lastVerificationCode sql.NullString) (*UserEmail, error)
-	OverwrittenGetUserEmailByEmail func(ctx context.Context, email string) (*UserEmail, error)
-	OverwrittenGetUserEmailByID func(ctx context.Context, id int32) (*UserEmail, error)
-	OverwrittenGetUserLanguages func(ctx context.Context, usersIdusers int32) ([]*UserLanguage, error)
-	OverwrittenGetUserRole func(ctx context.Context, usersIdusers int32) (string, error)
-	OverwrittenGetUserRoles func(ctx context.Context, ) ([]*GetUserRolesRow, error)
-	OverwrittenGetVerifiedUserEmails func(ctx context.Context, ) ([]*GetVerifiedUserEmailsRow, error)
-	OverwrittenGetWritingCategoryById func(ctx context.Context, idwritingcategory int32) (*WritingCategory, error)
-	OverwrittenGetWritingForListerByID func(ctx context.Context, arg GetWritingForListerByIDParams) (*GetWritingForListerByIDRow, error)
-	OverwrittenInsertAdminUserComment func(ctx context.Context, arg InsertAdminUserCommentParams) (error)
-	OverwrittenInsertAuditLog func(ctx context.Context, arg InsertAuditLogParams) (error)
-	OverwrittenInsertEmailPreferenceForLister func(ctx context.Context, arg InsertEmailPreferenceForListerParams) (error)
-	OverwrittenInsertFAQQuestionForWriter func(ctx context.Context, arg InsertFAQQuestionForWriterParams) (sql.Result, error)
-	OverwrittenInsertFAQRevisionForUser func(ctx context.Context, arg InsertFAQRevisionForUserParams) (error)
-	OverwrittenInsertPassword func(ctx context.Context, arg InsertPasswordParams) (error)
-	OverwrittenInsertPendingEmail func(ctx context.Context, arg InsertPendingEmailParams) (error)
-	OverwrittenInsertPreferenceForLister func(ctx context.Context, arg InsertPreferenceForListerParams) (error)
-	OverwrittenInsertSubscription func(ctx context.Context, arg InsertSubscriptionParams) (error)
-	OverwrittenInsertUserEmail func(ctx context.Context, arg InsertUserEmailParams) (error)
-	OverwrittenInsertUserLang func(ctx context.Context, arg InsertUserLangParams) (error)
-	OverwrittenInsertWriting func(ctx context.Context, arg InsertWritingParams) (int64, error)
-	OverwrittenLatestAdminUserComment func(ctx context.Context, usersIdusers int32) (*AdminUserComment, error)
-	OverwrittenLinkerSearchFirst func(ctx context.Context, arg LinkerSearchFirstParams) ([]int32, error)
-	OverwrittenLinkerSearchNext func(ctx context.Context, arg LinkerSearchNextParams) ([]int32, error)
-	OverwrittenListActiveBans func(ctx context.Context, ) ([]*BannedIp, error)
-	OverwrittenListAdminUserComments func(ctx context.Context, usersIdusers int32) ([]*AdminUserComment, error)
-	OverwrittenListBannedIps func(ctx context.Context, ) ([]*BannedIp, error)
-	OverwrittenListBlogEntriesByAuthorForLister func(ctx context.Context, arg ListBlogEntriesByAuthorForListerParams) ([]*ListBlogEntriesByAuthorForListerRow, error)
-	OverwrittenListBlogEntriesByIDsForLister func(ctx context.Context, arg ListBlogEntriesByIDsForListerParams) ([]*ListBlogEntriesByIDsForListerRow, error)
-	OverwrittenListBlogEntriesForLister func(ctx context.Context, arg ListBlogEntriesForListerParams) ([]*ListBlogEntriesForListerRow, error)
-	OverwrittenListBlogIDsBySearchWordFirstForLister func(ctx context.Context, arg ListBlogIDsBySearchWordFirstForListerParams) ([]int32, error)
-	OverwrittenListBlogIDsBySearchWordNextForLister func(ctx context.Context, arg ListBlogIDsBySearchWordNextForListerParams) ([]int32, error)
-	OverwrittenListBloggersForLister func(ctx context.Context, arg ListBloggersForListerParams) ([]*ListBloggersForListerRow, error)
-	OverwrittenListBloggersSearchForLister func(ctx context.Context, arg ListBloggersSearchForListerParams) ([]*ListBloggersSearchForListerRow, error)
-	OverwrittenListBoardsByParentIDForLister func(ctx context.Context, arg ListBoardsByParentIDForListerParams) ([]*Imageboard, error)
-	OverwrittenListBoardsForLister func(ctx context.Context, arg ListBoardsForListerParams) ([]*Imageboard, error)
-	OverwrittenListCommentIDsBySearchWordFirstForListerInRestrictedTopic func(ctx context.Context, arg ListCommentIDsBySearchWordFirstForListerInRestrictedTopicParams) ([]int32, error)
-	OverwrittenListCommentIDsBySearchWordFirstForListerNotInRestrictedTopic func(ctx context.Context, arg ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopicParams) ([]int32, error)
-	OverwrittenListCommentIDsBySearchWordNextForListerInRestrictedTopic func(ctx context.Context, arg ListCommentIDsBySearchWordNextForListerInRestrictedTopicParams) ([]int32, error)
-	OverwrittenListCommentIDsBySearchWordNextForListerNotInRestrictedTopic func(ctx context.Context, arg ListCommentIDsBySearchWordNextForListerNotInRestrictedTopicParams) ([]int32, error)
-	OverwrittenListContentLabelStatus func(ctx context.Context, arg ListContentLabelStatusParams) ([]*ListContentLabelStatusRow, error)
-	OverwrittenListContentPrivateLabels func(ctx context.Context, arg ListContentPrivateLabelsParams) ([]*ListContentPrivateLabelsRow, error)
-	OverwrittenListContentPublicLabels func(ctx context.Context, arg ListContentPublicLabelsParams) ([]*ListContentPublicLabelsRow, error)
-	OverwrittenListEffectiveRoleIDsByUserID func(ctx context.Context, usersIdusers int32) ([]int32, error)
-	OverwrittenListForumcategoryPath func(ctx context.Context, categoryID int32) ([]*ListForumcategoryPathRow, error)
-	OverwrittenListGrants func(ctx context.Context, ) ([]*Grant, error)
-	OverwrittenListGrantsByUserID func(ctx context.Context, userID sql.NullInt32) ([]*Grant, error)
-	OverwrittenListImagePostsByBoardForLister func(ctx context.Context, arg ListImagePostsByBoardForListerParams) ([]*ListImagePostsByBoardForListerRow, error)
-	OverwrittenListImagePostsByPosterForLister func(ctx context.Context, arg ListImagePostsByPosterForListerParams) ([]*ListImagePostsByPosterForListerRow, error)
-	OverwrittenListImageboardPath func(ctx context.Context, boardID int32) ([]*ListImageboardPathRow, error)
-	OverwrittenListLinkerCategoryPath func(ctx context.Context, categoryID int32) ([]*ListLinkerCategoryPathRow, error)
-	OverwrittenListNotificationsForLister func(ctx context.Context, arg ListNotificationsForListerParams) ([]*Notification, error)
-	OverwrittenListPrivateTopicParticipantsByTopicIDForUser func(ctx context.Context, arg ListPrivateTopicParticipantsByTopicIDForUserParams) ([]*ListPrivateTopicParticipantsByTopicIDForUserRow, error)
-	OverwrittenListPrivateTopicsByUserID func(ctx context.Context, userID sql.NullInt32) ([]*ListPrivateTopicsByUserIDRow, error)
-	OverwrittenListPublicWritingsByUserForLister func(ctx context.Context, arg ListPublicWritingsByUserForListerParams) ([]*ListPublicWritingsByUserForListerRow, error)
-	OverwrittenListPublicWritingsInCategoryForLister func(ctx context.Context, arg ListPublicWritingsInCategoryForListerParams) ([]*ListPublicWritingsInCategoryForListerRow, error)
-	OverwrittenListSiteNewsSearchFirstForLister func(ctx context.Context, arg ListSiteNewsSearchFirstForListerParams) ([]int32, error)
-	OverwrittenListSiteNewsSearchNextForLister func(ctx context.Context, arg ListSiteNewsSearchNextForListerParams) ([]int32, error)
-	OverwrittenListSubscribersForPattern func(ctx context.Context, arg ListSubscribersForPatternParams) ([]int32, error)
-	OverwrittenListSubscribersForPatterns func(ctx context.Context, arg ListSubscribersForPatternsParams) ([]int32, error)
-	OverwrittenListSubscriptionsByUser func(ctx context.Context, usersIdusers int32) ([]*ListSubscriptionsByUserRow, error)
-	OverwrittenListUnreadNotificationsForLister func(ctx context.Context, arg ListUnreadNotificationsForListerParams) ([]*Notification, error)
-	OverwrittenListUploadedImagesByUserForLister func(ctx context.Context, arg ListUploadedImagesByUserForListerParams) ([]*UploadedImage, error)
-	OverwrittenListUserEmailsForLister func(ctx context.Context, arg ListUserEmailsForListerParams) ([]*UserEmail, error)
-	OverwrittenListUsersWithRoles func(ctx context.Context, ) ([]*ListUsersWithRolesRow, error)
-	OverwrittenListWritersForLister func(ctx context.Context, arg ListWritersForListerParams) ([]*ListWritersForListerRow, error)
-	OverwrittenListWritersSearchForLister func(ctx context.Context, arg ListWritersSearchForListerParams) ([]*ListWritersSearchForListerRow, error)
-	OverwrittenListWritingCategoriesForLister func(ctx context.Context, arg ListWritingCategoriesForListerParams) ([]*WritingCategory, error)
-	OverwrittenListWritingSearchFirstForLister func(ctx context.Context, arg ListWritingSearchFirstForListerParams) ([]int32, error)
-	OverwrittenListWritingSearchNextForLister func(ctx context.Context, arg ListWritingSearchNextForListerParams) ([]int32, error)
-	OverwrittenListWritingcategoryPath func(ctx context.Context, categoryID int32) ([]*ListWritingcategoryPathRow, error)
-	OverwrittenListWritingsByIDsForLister func(ctx context.Context, arg ListWritingsByIDsForListerParams) ([]*ListWritingsByIDsForListerRow, error)
-	OverwrittenRemoveContentLabelStatus func(ctx context.Context, arg RemoveContentLabelStatusParams) (error)
-	OverwrittenRemoveContentPrivateLabel func(ctx context.Context, arg RemoveContentPrivateLabelParams) (error)
-	OverwrittenRemoveContentPublicLabel func(ctx context.Context, arg RemoveContentPublicLabelParams) (error)
-	OverwrittenSetNotificationPriorityForLister func(ctx context.Context, arg SetNotificationPriorityForListerParams) (error)
-	OverwrittenSetNotificationReadForLister func(ctx context.Context, arg SetNotificationReadForListerParams) (error)
-	OverwrittenSetNotificationUnreadForLister func(ctx context.Context, arg SetNotificationUnreadForListerParams) (error)
-	OverwrittenSetVerificationCodeForLister func(ctx context.Context, arg SetVerificationCodeForListerParams) (error)
-	OverwrittenSystemAddToBlogsSearch func(ctx context.Context, arg SystemAddToBlogsSearchParams) (error)
-	OverwrittenSystemAddToForumCommentSearch func(ctx context.Context, arg SystemAddToForumCommentSearchParams) (error)
-	OverwrittenSystemAddToForumWritingSearch func(ctx context.Context, arg SystemAddToForumWritingSearchParams) (error)
-	OverwrittenSystemAddToImagePostSearch func(ctx context.Context, arg SystemAddToImagePostSearchParams) (error)
-	OverwrittenSystemAddToLinkerSearch func(ctx context.Context, arg SystemAddToLinkerSearchParams) (error)
-	OverwrittenSystemAddToSiteNewsSearch func(ctx context.Context, arg SystemAddToSiteNewsSearchParams) (error)
-	OverwrittenSystemAssignBlogEntryThreadID func(ctx context.Context, arg SystemAssignBlogEntryThreadIDParams) (error)
-	OverwrittenSystemAssignImagePostThreadID func(ctx context.Context, arg SystemAssignImagePostThreadIDParams) (error)
-	OverwrittenSystemAssignLinkerThreadID func(ctx context.Context, arg SystemAssignLinkerThreadIDParams) (error)
-	OverwrittenSystemAssignNewsThreadID func(ctx context.Context, arg SystemAssignNewsThreadIDParams) (error)
-	OverwrittenSystemAssignWritingThreadID func(ctx context.Context, arg SystemAssignWritingThreadIDParams) (error)
-	OverwrittenSystemCheckGrant func(ctx context.Context, arg SystemCheckGrantParams) (int32, error)
-	OverwrittenSystemCheckRoleGrant func(ctx context.Context, arg SystemCheckRoleGrantParams) (int32, error)
-	OverwrittenSystemClearContentLabelStatus func(ctx context.Context, arg SystemClearContentLabelStatusParams) (error)
-	OverwrittenSystemClearContentPrivateLabel func(ctx context.Context, arg SystemClearContentPrivateLabelParams) (error)
-	OverwrittenSystemCountDeadLetters func(ctx context.Context, ) (int64, error)
-	OverwrittenSystemCountLanguages func(ctx context.Context, ) (int64, error)
-	OverwrittenSystemCountRecentLoginAttempts func(ctx context.Context, arg SystemCountRecentLoginAttemptsParams) (int64, error)
-	OverwrittenSystemCreateGrant func(ctx context.Context, arg SystemCreateGrantParams) (int64, error)
-	OverwrittenSystemCreateNotification func(ctx context.Context, arg SystemCreateNotificationParams) (error)
-	OverwrittenSystemCreateSearchWord func(ctx context.Context, word string) (int64, error)
-	OverwrittenSystemCreateThread func(ctx context.Context, forumtopicIdforumtopic int32) (int64, error)
-	OverwrittenSystemCreateUserRole func(ctx context.Context, arg SystemCreateUserRoleParams) (error)
-	OverwrittenSystemDeleteBlogsSearch func(ctx context.Context, ) (error)
-	OverwrittenSystemDeleteCommentsSearch func(ctx context.Context, ) (error)
-	OverwrittenSystemDeleteDeadLetter func(ctx context.Context, id int32) (error)
-	OverwrittenSystemDeleteImagePostSearch func(ctx context.Context, ) (error)
-	OverwrittenSystemDeleteLinkerSearch func(ctx context.Context, ) (error)
-	OverwrittenSystemDeletePasswordReset func(ctx context.Context, id int32) (error)
-	OverwrittenSystemDeletePasswordResetsByUser func(ctx context.Context, userID int32) (sql.Result, error)
-	OverwrittenSystemDeleteSessionByID func(ctx context.Context, sessionID string) (error)
-	OverwrittenSystemDeleteSiteNewsSearch func(ctx context.Context, ) (error)
-	OverwrittenSystemDeleteUserEmailsByEmailExceptID func(ctx context.Context, arg SystemDeleteUserEmailsByEmailExceptIDParams) (error)
-	OverwrittenSystemDeleteWritingSearch func(ctx context.Context, ) (error)
-	OverwrittenSystemDeleteWritingSearchByWritingID func(ctx context.Context, writingID int32) (error)
-	OverwrittenSystemGetAllBlogsForIndex func(ctx context.Context, ) ([]*SystemGetAllBlogsForIndexRow, error)
-	OverwrittenSystemGetBlogEntryByID func(ctx context.Context, idblogs int32) (*SystemGetBlogEntryByIDRow, error)
-	OverwrittenSystemGetFAQQuestions func(ctx context.Context, ) ([]*Faq, error)
-	OverwrittenSystemGetForumTopicByTitle func(ctx context.Context, title sql.NullString) (*Forumtopic, error)
-	OverwrittenSystemGetLanguageIDByName func(ctx context.Context, nameof sql.NullString) (int32, error)
-	OverwrittenSystemGetLastNotificationForRecipientByMessage func(ctx context.Context, arg SystemGetLastNotificationForRecipientByMessageParams) (*Notification, error)
-	OverwrittenSystemGetLogin func(ctx context.Context, username sql.NullString) (*SystemGetLoginRow, error)
-	OverwrittenSystemGetNewsPostByID func(ctx context.Context, idsitenews int32) (int32, error)
-	OverwrittenSystemGetSearchWordByWordLowercased func(ctx context.Context, lcase string) (*Searchwordlist, error)
-	OverwrittenSystemGetTemplateOverride func(ctx context.Context, name string) (string, error)
-	OverwrittenSystemGetUserByEmail func(ctx context.Context, email string) (*SystemGetUserByEmailRow, error)
-	OverwrittenSystemGetUserByID func(ctx context.Context, idusers int32) (*SystemGetUserByIDRow, error)
-	OverwrittenSystemGetUserByUsername func(ctx context.Context, username sql.NullString) (*SystemGetUserByUsernameRow, error)
-	OverwrittenSystemGetWritingByID func(ctx context.Context, idwriting int32) (int32, error)
-	OverwrittenSystemIncrementPendingEmailError func(ctx context.Context, id int32) (error)
-	OverwrittenSystemInsertDeadLetter func(ctx context.Context, message string) (error)
-	OverwrittenSystemInsertLoginAttempt func(ctx context.Context, arg SystemInsertLoginAttemptParams) (error)
-	OverwrittenSystemInsertSession func(ctx context.Context, arg SystemInsertSessionParams) (error)
-	OverwrittenSystemInsertUser func(ctx context.Context, username sql.NullString) (int64, error)
-	OverwrittenSystemLatestDeadLetter func(ctx context.Context, ) (interface{}, error)
-	OverwrittenSystemListAllUsers func(ctx context.Context, ) ([]*SystemListAllUsersRow, error)
-	OverwrittenSystemListBoardsByParentID func(ctx context.Context, arg SystemListBoardsByParentIDParams) ([]*Imageboard, error)
-	OverwrittenSystemListCommentsByThreadID func(ctx context.Context, forumthreadID int32) ([]*SystemListCommentsByThreadIDRow, error)
-	OverwrittenSystemListDeadLetters func(ctx context.Context, limit int32) ([]*DeadLetter, error)
-	OverwrittenSystemListLanguages func(ctx context.Context, ) ([]*Language, error)
-	OverwrittenSystemListPendingEmails func(ctx context.Context, arg SystemListPendingEmailsParams) ([]*SystemListPendingEmailsRow, error)
-	OverwrittenSystemListPublicWritingsByAuthor func(ctx context.Context, arg SystemListPublicWritingsByAuthorParams) ([]*SystemListPublicWritingsByAuthorRow, error)
-	OverwrittenSystemListPublicWritingsInCategory func(ctx context.Context, arg SystemListPublicWritingsInCategoryParams) ([]*SystemListPublicWritingsInCategoryRow, error)
-	OverwrittenSystemListUserInfo func(ctx context.Context, ) ([]*SystemListUserInfoRow, error)
-	OverwrittenSystemListVerifiedEmailsByUserID func(ctx context.Context, userID int32) ([]*UserEmail, error)
-	OverwrittenSystemListWritingCategories func(ctx context.Context, arg SystemListWritingCategoriesParams) ([]*WritingCategory, error)
-	OverwrittenSystemMarkPasswordResetVerified func(ctx context.Context, id int32) (error)
-	OverwrittenSystemMarkPendingEmailSent func(ctx context.Context, id int32) (error)
-	OverwrittenSystemMarkUserEmailVerified func(ctx context.Context, arg SystemMarkUserEmailVerifiedParams) (error)
-	OverwrittenSystemPurgeDeadLettersBefore func(ctx context.Context, createdAt time.Time) (error)
-	OverwrittenSystemPurgePasswordResetsBefore func(ctx context.Context, createdAt time.Time) (sql.Result, error)
-	OverwrittenSystemRebuildForumTopicMetaByID func(ctx context.Context, idforumtopic int32) (error)
-	OverwrittenSystemRegisterExternalLinkClick func(ctx context.Context, url string) (error)
-	OverwrittenSystemSetBlogLastIndex func(ctx context.Context, id int32) (error)
-	OverwrittenSystemSetCommentLastIndex func(ctx context.Context, idcomments int32) (error)
-	OverwrittenSystemSetForumTopicHandlerByID func(ctx context.Context, arg SystemSetForumTopicHandlerByIDParams) (error)
-	OverwrittenSystemSetImagePostLastIndex func(ctx context.Context, idimagepost int32) (error)
-	OverwrittenSystemSetLinkerLastIndex func(ctx context.Context, id int32) (error)
-	OverwrittenSystemSetSiteNewsLastIndex func(ctx context.Context, idsitenews int32) (error)
-	OverwrittenSystemSetWritingLastIndex func(ctx context.Context, idwriting int32) (error)
-	OverwrittenUpdateAutoSubscribeRepliesForLister func(ctx context.Context, arg UpdateAutoSubscribeRepliesForListerParams) (error)
-	OverwrittenUpdateBlogEntryForWriter func(ctx context.Context, arg UpdateBlogEntryForWriterParams) (error)
-	OverwrittenUpdateBookmarksForLister func(ctx context.Context, arg UpdateBookmarksForListerParams) (error)
-	OverwrittenUpdateCommentForEditor func(ctx context.Context, arg UpdateCommentForEditorParams) (error)
-	OverwrittenUpdateEmailForumUpdatesForLister func(ctx context.Context, arg UpdateEmailForumUpdatesForListerParams) (error)
-	OverwrittenUpdateNewsPostForWriter func(ctx context.Context, arg UpdateNewsPostForWriterParams) (error)
-	OverwrittenUpdatePreferenceForLister func(ctx context.Context, arg UpdatePreferenceForListerParams) (error)
-	OverwrittenUpdatePublicProfileEnabledAtForUser func(ctx context.Context, arg UpdatePublicProfileEnabledAtForUserParams) (error)
-	OverwrittenUpdateSubscriptionByIDForSubscriber func(ctx context.Context, arg UpdateSubscriptionByIDForSubscriberParams) (error)
-	OverwrittenUpdateTimezoneForLister func(ctx context.Context, arg UpdateTimezoneForListerParams) (error)
-	OverwrittenUpdateWritingForWriter func(ctx context.Context, arg UpdateWritingForWriterParams) (error)
-	OverwrittenUpsertContentReadMarker func(ctx context.Context, arg UpsertContentReadMarkerParams) (error)
+	OverwrittenGetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginated           func(ctx context.Context, arg GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginatedParams) ([]*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginatedRow, error)
+	OverwrittenGetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails                                        func(ctx context.Context) ([]*GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetailsRow, error)
+	OverwrittenGetAllLinkersForIndex                                                                          func(ctx context.Context) ([]*GetAllLinkersForIndexRow, error)
+	OverwrittenGetAllSiteNewsForIndex                                                                         func(ctx context.Context) ([]*GetAllSiteNewsForIndexRow, error)
+	OverwrittenGetAllWritingsByAuthorForLister                                                                func(ctx context.Context, arg GetAllWritingsByAuthorForListerParams) ([]*GetAllWritingsByAuthorForListerRow, error)
+	OverwrittenGetAllWritingsForIndex                                                                         func(ctx context.Context) ([]*GetAllWritingsForIndexRow, error)
+	OverwrittenGetBlogEntryForListerByID                                                                      func(ctx context.Context, arg GetBlogEntryForListerByIDParams) (*GetBlogEntryForListerByIDRow, error)
+	OverwrittenGetBookmarksForUser                                                                            func(ctx context.Context, usersIdusers int32) (*GetBookmarksForUserRow, error)
+	OverwrittenGetCommentById                                                                                 func(ctx context.Context, idcomments int32) (*Comment, error)
+	OverwrittenGetCommentByIdForUser                                                                          func(ctx context.Context, arg GetCommentByIdForUserParams) (*GetCommentByIdForUserRow, error)
+	OverwrittenGetCommentsByIdsForUserWithThreadInfo                                                          func(ctx context.Context, arg GetCommentsByIdsForUserWithThreadInfoParams) ([]*GetCommentsByIdsForUserWithThreadInfoRow, error)
+	OverwrittenGetCommentsBySectionThreadIdForUser                                                            func(ctx context.Context, arg GetCommentsBySectionThreadIdForUserParams) ([]*GetCommentsBySectionThreadIdForUserRow, error)
+	OverwrittenGetCommentsByThreadIdForUser                                                                   func(ctx context.Context, arg GetCommentsByThreadIdForUserParams) ([]*GetCommentsByThreadIdForUserRow, error)
+	OverwrittenGetContentReadMarker                                                                           func(ctx context.Context, arg GetContentReadMarkerParams) (*GetContentReadMarkerRow, error)
+	OverwrittenGetExternalLink                                                                                func(ctx context.Context, url string) (*ExternalLink, error)
+	OverwrittenGetExternalLinkByID                                                                            func(ctx context.Context, id int32) (*ExternalLink, error)
+	OverwrittenGetFAQAnsweredQuestions                                                                        func(ctx context.Context, arg GetFAQAnsweredQuestionsParams) ([]*Faq, error)
+	OverwrittenGetFAQByID                                                                                     func(ctx context.Context, arg GetFAQByIDParams) (*Faq, error)
+	OverwrittenGetFAQQuestionsByCategory                                                                      func(ctx context.Context, arg GetFAQQuestionsByCategoryParams) ([]*Faq, error)
+	OverwrittenGetFAQRevisionsForAdmin                                                                        func(ctx context.Context, faqID int32) ([]*FaqRevision, error)
+	OverwrittenGetForumCategoryById                                                                           func(ctx context.Context, arg GetForumCategoryByIdParams) (*Forumcategory, error)
+	OverwrittenGetForumThreadIdByNewsPostId                                                                   func(ctx context.Context, idsitenews int32) (*GetForumThreadIdByNewsPostIdRow, error)
+	OverwrittenGetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText                     func(ctx context.Context, arg GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams) ([]*GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow, error)
+	OverwrittenGetForumTopicById                                                                              func(ctx context.Context, idforumtopic int32) (*Forumtopic, error)
+	OverwrittenGetForumTopicByIdForUser                                                                       func(ctx context.Context, arg GetForumTopicByIdForUserParams) (*GetForumTopicByIdForUserRow, error)
+	OverwrittenGetForumTopicIdByThreadId                                                                      func(ctx context.Context, idforumthread int32) (int32, error)
+	OverwrittenGetForumTopicsByCategoryId                                                                     func(ctx context.Context, arg GetForumTopicsByCategoryIdParams) ([]*Forumtopic, error)
+	OverwrittenGetForumTopicsForUser                                                                          func(ctx context.Context, arg GetForumTopicsForUserParams) ([]*GetForumTopicsForUserRow, error)
+	OverwrittenGetImageBoardById                                                                              func(ctx context.Context, idimageboard int32) (*Imageboard, error)
+	OverwrittenGetImagePostByIDForLister                                                                      func(ctx context.Context, arg GetImagePostByIDForListerParams) (*GetImagePostByIDForListerRow, error)
+	OverwrittenGetImagePostInfoByPath                                                                         func(ctx context.Context, arg GetImagePostInfoByPathParams) (*GetImagePostInfoByPathRow, error)
+	OverwrittenGetImagePostsByUserDescending                                                                  func(ctx context.Context, arg GetImagePostsByUserDescendingParams) ([]*GetImagePostsByUserDescendingRow, error)
+	OverwrittenGetImagePostsByUserDescendingAll                                                               func(ctx context.Context, arg GetImagePostsByUserDescendingAllParams) ([]*GetImagePostsByUserDescendingAllRow, error)
+	OverwrittenGetLatestAnnouncementByNewsID                                                                  func(ctx context.Context, siteNewsID int32) (*SiteAnnouncement, error)
+	OverwrittenGetLinkerCategoriesWithCount                                                                   func(ctx context.Context) ([]*GetLinkerCategoriesWithCountRow, error)
+	OverwrittenGetLinkerCategoryById                                                                          func(ctx context.Context, id int32) (*LinkerCategory, error)
+	OverwrittenGetLinkerCategoryLinkCounts                                                                    func(ctx context.Context) ([]*GetLinkerCategoryLinkCountsRow, error)
+	OverwrittenGetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending                                  func(ctx context.Context, id int32) (*GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow, error)
+	OverwrittenGetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser                           func(ctx context.Context, arg GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams) (*GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow, error)
+	OverwrittenGetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescending                                func(ctx context.Context, linkerids []int32) ([]*GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow, error)
+	OverwrittenGetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUser                         func(ctx context.Context, arg GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUserParams) ([]*GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUserRow, error)
+	OverwrittenGetLinkerItemsByUserDescending                                                                 func(ctx context.Context, arg GetLinkerItemsByUserDescendingParams) ([]*GetLinkerItemsByUserDescendingRow, error)
+	OverwrittenGetLinkerItemsByUserDescendingForUser                                                          func(ctx context.Context, arg GetLinkerItemsByUserDescendingForUserParams) ([]*GetLinkerItemsByUserDescendingForUserRow, error)
+	OverwrittenGetLoginRoleForUser                                                                            func(ctx context.Context, usersIdusers int32) (int32, error)
+	OverwrittenGetMaxNotificationPriority                                                                     func(ctx context.Context, userID int32) (interface{}, error)
+	OverwrittenGetNewsPostByIdWithWriterIdAndThreadCommentCount                                               func(ctx context.Context, arg GetNewsPostByIdWithWriterIdAndThreadCommentCountParams) (*GetNewsPostByIdWithWriterIdAndThreadCommentCountRow, error)
+	OverwrittenGetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCount                                      func(ctx context.Context, arg GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountParams) ([]*GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountRow, error)
+	OverwrittenGetNewsPostsWithWriterUsernameAndThreadCommentCountDescending                                  func(ctx context.Context, arg GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams) ([]*GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error)
+	OverwrittenGetNotificationEmailByUserID                                                                   func(ctx context.Context, userID int32) (*UserEmail, error)
+	OverwrittenGetNotificationForLister                                                                       func(ctx context.Context, arg GetNotificationForListerParams) (*Notification, error)
+	OverwrittenGetPasswordResetByCode                                                                         func(ctx context.Context, arg GetPasswordResetByCodeParams) (*PendingPassword, error)
+	OverwrittenGetPasswordResetByUser                                                                         func(ctx context.Context, arg GetPasswordResetByUserParams) (*PendingPassword, error)
+	OverwrittenGetPendingEmailErrorCount                                                                      func(ctx context.Context, id int32) (int32, error)
+	OverwrittenGetPermissionsByUserID                                                                         func(ctx context.Context, usersIdusers int32) ([]*GetPermissionsByUserIDRow, error)
+	OverwrittenGetPermissionsWithUsers                                                                        func(ctx context.Context, arg GetPermissionsWithUsersParams) ([]*GetPermissionsWithUsersRow, error)
+	OverwrittenGetPreferenceForLister                                                                         func(ctx context.Context, listerID int32) (*Preference, error)
+	OverwrittenGetPublicProfileRoleForUser                                                                    func(ctx context.Context, usersIdusers int32) (int32, error)
+	OverwrittenGetPublicWritings                                                                              func(ctx context.Context, arg GetPublicWritingsParams) ([]*Writing, error)
+	OverwrittenGetThreadBySectionThreadIDForReplier                                                           func(ctx context.Context, arg GetThreadBySectionThreadIDForReplierParams) (*Forumthread, error)
+	OverwrittenGetThreadLastPosterAndPerms                                                                    func(ctx context.Context, arg GetThreadLastPosterAndPermsParams) (*GetThreadLastPosterAndPermsRow, error)
+	OverwrittenGetUnreadNotificationCountForLister                                                            func(ctx context.Context, listerID int32) (int64, error)
+	OverwrittenGetUserEmailByCode                                                                             func(ctx context.Context, lastVerificationCode sql.NullString) (*UserEmail, error)
+	OverwrittenGetUserEmailByEmail                                                                            func(ctx context.Context, email string) (*UserEmail, error)
+	OverwrittenGetUserEmailByID                                                                               func(ctx context.Context, id int32) (*UserEmail, error)
+	OverwrittenGetUserLanguages                                                                               func(ctx context.Context, usersIdusers int32) ([]*UserLanguage, error)
+	OverwrittenGetUserRole                                                                                    func(ctx context.Context, usersIdusers int32) (string, error)
+	OverwrittenGetUserRoles                                                                                   func(ctx context.Context) ([]*GetUserRolesRow, error)
+	OverwrittenGetVerifiedUserEmails                                                                          func(ctx context.Context) ([]*GetVerifiedUserEmailsRow, error)
+	OverwrittenGetWritingCategoryById                                                                         func(ctx context.Context, idwritingcategory int32) (*WritingCategory, error)
+	OverwrittenGetWritingForListerByID                                                                        func(ctx context.Context, arg GetWritingForListerByIDParams) (*GetWritingForListerByIDRow, error)
+	OverwrittenInsertAdminUserComment                                                                         func(ctx context.Context, arg InsertAdminUserCommentParams) error
+	OverwrittenInsertAuditLog                                                                                 func(ctx context.Context, arg InsertAuditLogParams) error
+	OverwrittenInsertEmailPreferenceForLister                                                                 func(ctx context.Context, arg InsertEmailPreferenceForListerParams) error
+	OverwrittenInsertFAQQuestionForWriter                                                                     func(ctx context.Context, arg InsertFAQQuestionForWriterParams) (sql.Result, error)
+	OverwrittenInsertFAQRevisionForUser                                                                       func(ctx context.Context, arg InsertFAQRevisionForUserParams) error
+	OverwrittenInsertPassword                                                                                 func(ctx context.Context, arg InsertPasswordParams) error
+	OverwrittenInsertPendingEmail                                                                             func(ctx context.Context, arg InsertPendingEmailParams) error
+	OverwrittenInsertPreferenceForLister                                                                      func(ctx context.Context, arg InsertPreferenceForListerParams) error
+	OverwrittenInsertSubscription                                                                             func(ctx context.Context, arg InsertSubscriptionParams) error
+	OverwrittenInsertUserEmail                                                                                func(ctx context.Context, arg InsertUserEmailParams) error
+	OverwrittenInsertUserLang                                                                                 func(ctx context.Context, arg InsertUserLangParams) error
+	OverwrittenInsertWriting                                                                                  func(ctx context.Context, arg InsertWritingParams) (int64, error)
+	OverwrittenLatestAdminUserComment                                                                         func(ctx context.Context, usersIdusers int32) (*AdminUserComment, error)
+	OverwrittenLinkerSearchFirst                                                                              func(ctx context.Context, arg LinkerSearchFirstParams) ([]int32, error)
+	OverwrittenLinkerSearchNext                                                                               func(ctx context.Context, arg LinkerSearchNextParams) ([]int32, error)
+	OverwrittenListActiveBans                                                                                 func(ctx context.Context) ([]*BannedIp, error)
+	OverwrittenListAdminUserComments                                                                          func(ctx context.Context, usersIdusers int32) ([]*AdminUserComment, error)
+	OverwrittenListBannedIps                                                                                  func(ctx context.Context) ([]*BannedIp, error)
+	OverwrittenListBlogEntriesByAuthorForLister                                                               func(ctx context.Context, arg ListBlogEntriesByAuthorForListerParams) ([]*ListBlogEntriesByAuthorForListerRow, error)
+	OverwrittenListBlogEntriesByIDsForLister                                                                  func(ctx context.Context, arg ListBlogEntriesByIDsForListerParams) ([]*ListBlogEntriesByIDsForListerRow, error)
+	OverwrittenListBlogEntriesForLister                                                                       func(ctx context.Context, arg ListBlogEntriesForListerParams) ([]*ListBlogEntriesForListerRow, error)
+	OverwrittenListBlogIDsBySearchWordFirstForLister                                                          func(ctx context.Context, arg ListBlogIDsBySearchWordFirstForListerParams) ([]int32, error)
+	OverwrittenListBlogIDsBySearchWordNextForLister                                                           func(ctx context.Context, arg ListBlogIDsBySearchWordNextForListerParams) ([]int32, error)
+	OverwrittenListBloggersForLister                                                                          func(ctx context.Context, arg ListBloggersForListerParams) ([]*ListBloggersForListerRow, error)
+	OverwrittenListBloggersSearchForLister                                                                    func(ctx context.Context, arg ListBloggersSearchForListerParams) ([]*ListBloggersSearchForListerRow, error)
+	OverwrittenListBoardsByParentIDForLister                                                                  func(ctx context.Context, arg ListBoardsByParentIDForListerParams) ([]*Imageboard, error)
+	OverwrittenListBoardsForLister                                                                            func(ctx context.Context, arg ListBoardsForListerParams) ([]*Imageboard, error)
+	OverwrittenListCommentIDsBySearchWordFirstForListerInRestrictedTopic                                      func(ctx context.Context, arg ListCommentIDsBySearchWordFirstForListerInRestrictedTopicParams) ([]int32, error)
+	OverwrittenListCommentIDsBySearchWordFirstForListerNotInRestrictedTopic                                   func(ctx context.Context, arg ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopicParams) ([]int32, error)
+	OverwrittenListCommentIDsBySearchWordNextForListerInRestrictedTopic                                       func(ctx context.Context, arg ListCommentIDsBySearchWordNextForListerInRestrictedTopicParams) ([]int32, error)
+	OverwrittenListCommentIDsBySearchWordNextForListerNotInRestrictedTopic                                    func(ctx context.Context, arg ListCommentIDsBySearchWordNextForListerNotInRestrictedTopicParams) ([]int32, error)
+	OverwrittenListContentLabelStatus                                                                         func(ctx context.Context, arg ListContentLabelStatusParams) ([]*ListContentLabelStatusRow, error)
+	OverwrittenListContentPrivateLabels                                                                       func(ctx context.Context, arg ListContentPrivateLabelsParams) ([]*ListContentPrivateLabelsRow, error)
+	OverwrittenListContentPublicLabels                                                                        func(ctx context.Context, arg ListContentPublicLabelsParams) ([]*ListContentPublicLabelsRow, error)
+	OverwrittenListEffectiveRoleIDsByUserID                                                                   func(ctx context.Context, usersIdusers int32) ([]int32, error)
+	OverwrittenListForumcategoryPath                                                                          func(ctx context.Context, categoryID int32) ([]*ListForumcategoryPathRow, error)
+	OverwrittenListGrants                                                                                     func(ctx context.Context) ([]*Grant, error)
+	OverwrittenListGrantsByUserID                                                                             func(ctx context.Context, userID sql.NullInt32) ([]*Grant, error)
+	OverwrittenListImagePostsByBoardForLister                                                                 func(ctx context.Context, arg ListImagePostsByBoardForListerParams) ([]*ListImagePostsByBoardForListerRow, error)
+	OverwrittenListImagePostsByPosterForLister                                                                func(ctx context.Context, arg ListImagePostsByPosterForListerParams) ([]*ListImagePostsByPosterForListerRow, error)
+	OverwrittenListImageboardPath                                                                             func(ctx context.Context, boardID int32) ([]*ListImageboardPathRow, error)
+	OverwrittenListLinkerCategoryPath                                                                         func(ctx context.Context, categoryID int32) ([]*ListLinkerCategoryPathRow, error)
+	OverwrittenListNotificationsForLister                                                                     func(ctx context.Context, arg ListNotificationsForListerParams) ([]*Notification, error)
+	OverwrittenListPrivateTopicParticipantsByTopicIDForUser                                                   func(ctx context.Context, arg ListPrivateTopicParticipantsByTopicIDForUserParams) ([]*ListPrivateTopicParticipantsByTopicIDForUserRow, error)
+	OverwrittenListPrivateTopicsByUserID                                                                      func(ctx context.Context, userID sql.NullInt32) ([]*ListPrivateTopicsByUserIDRow, error)
+	OverwrittenListPublicWritingsByUserForLister                                                              func(ctx context.Context, arg ListPublicWritingsByUserForListerParams) ([]*ListPublicWritingsByUserForListerRow, error)
+	OverwrittenListPublicWritingsInCategoryForLister                                                          func(ctx context.Context, arg ListPublicWritingsInCategoryForListerParams) ([]*ListPublicWritingsInCategoryForListerRow, error)
+	OverwrittenListSiteNewsSearchFirstForLister                                                               func(ctx context.Context, arg ListSiteNewsSearchFirstForListerParams) ([]int32, error)
+	OverwrittenListSiteNewsSearchNextForLister                                                                func(ctx context.Context, arg ListSiteNewsSearchNextForListerParams) ([]int32, error)
+	OverwrittenListSubscribersForPattern                                                                      func(ctx context.Context, arg ListSubscribersForPatternParams) ([]int32, error)
+	OverwrittenListSubscribersForPatterns                                                                     func(ctx context.Context, arg ListSubscribersForPatternsParams) ([]int32, error)
+	OverwrittenListSubscriptionsByUser                                                                        func(ctx context.Context, usersIdusers int32) ([]*ListSubscriptionsByUserRow, error)
+	OverwrittenListUnreadNotificationsForLister                                                               func(ctx context.Context, arg ListUnreadNotificationsForListerParams) ([]*Notification, error)
+	OverwrittenListUploadedImagesByUserForLister                                                              func(ctx context.Context, arg ListUploadedImagesByUserForListerParams) ([]*UploadedImage, error)
+	OverwrittenListUserEmailsForLister                                                                        func(ctx context.Context, arg ListUserEmailsForListerParams) ([]*UserEmail, error)
+	OverwrittenListUsersWithRoles                                                                             func(ctx context.Context) ([]*ListUsersWithRolesRow, error)
+	OverwrittenListWritersForLister                                                                           func(ctx context.Context, arg ListWritersForListerParams) ([]*ListWritersForListerRow, error)
+	OverwrittenListWritersSearchForLister                                                                     func(ctx context.Context, arg ListWritersSearchForListerParams) ([]*ListWritersSearchForListerRow, error)
+	OverwrittenListWritingCategoriesForLister                                                                 func(ctx context.Context, arg ListWritingCategoriesForListerParams) ([]*WritingCategory, error)
+	OverwrittenListWritingSearchFirstForLister                                                                func(ctx context.Context, arg ListWritingSearchFirstForListerParams) ([]int32, error)
+	OverwrittenListWritingSearchNextForLister                                                                 func(ctx context.Context, arg ListWritingSearchNextForListerParams) ([]int32, error)
+	OverwrittenListWritingcategoryPath                                                                        func(ctx context.Context, categoryID int32) ([]*ListWritingcategoryPathRow, error)
+	OverwrittenListWritingsByIDsForLister                                                                     func(ctx context.Context, arg ListWritingsByIDsForListerParams) ([]*ListWritingsByIDsForListerRow, error)
+	OverwrittenRemoveContentLabelStatus                                                                       func(ctx context.Context, arg RemoveContentLabelStatusParams) error
+	OverwrittenRemoveContentPrivateLabel                                                                      func(ctx context.Context, arg RemoveContentPrivateLabelParams) error
+	OverwrittenRemoveContentPublicLabel                                                                       func(ctx context.Context, arg RemoveContentPublicLabelParams) error
+	OverwrittenSetNotificationPriorityForLister                                                               func(ctx context.Context, arg SetNotificationPriorityForListerParams) error
+	OverwrittenSetNotificationReadForLister                                                                   func(ctx context.Context, arg SetNotificationReadForListerParams) error
+	OverwrittenSetNotificationUnreadForLister                                                                 func(ctx context.Context, arg SetNotificationUnreadForListerParams) error
+	OverwrittenSetVerificationCodeForLister                                                                   func(ctx context.Context, arg SetVerificationCodeForListerParams) error
+	OverwrittenSystemAddToBlogsSearch                                                                         func(ctx context.Context, arg SystemAddToBlogsSearchParams) error
+	OverwrittenSystemAddToForumCommentSearch                                                                  func(ctx context.Context, arg SystemAddToForumCommentSearchParams) error
+	OverwrittenSystemAddToForumWritingSearch                                                                  func(ctx context.Context, arg SystemAddToForumWritingSearchParams) error
+	OverwrittenSystemAddToImagePostSearch                                                                     func(ctx context.Context, arg SystemAddToImagePostSearchParams) error
+	OverwrittenSystemAddToLinkerSearch                                                                        func(ctx context.Context, arg SystemAddToLinkerSearchParams) error
+	OverwrittenSystemAddToSiteNewsSearch                                                                      func(ctx context.Context, arg SystemAddToSiteNewsSearchParams) error
+	OverwrittenSystemAssignBlogEntryThreadID                                                                  func(ctx context.Context, arg SystemAssignBlogEntryThreadIDParams) error
+	OverwrittenSystemAssignImagePostThreadID                                                                  func(ctx context.Context, arg SystemAssignImagePostThreadIDParams) error
+	OverwrittenSystemAssignLinkerThreadID                                                                     func(ctx context.Context, arg SystemAssignLinkerThreadIDParams) error
+	OverwrittenSystemAssignNewsThreadID                                                                       func(ctx context.Context, arg SystemAssignNewsThreadIDParams) error
+	OverwrittenSystemAssignWritingThreadID                                                                    func(ctx context.Context, arg SystemAssignWritingThreadIDParams) error
+	OverwrittenSystemCheckGrant                                                                               func(ctx context.Context, arg SystemCheckGrantParams) (int32, error)
+	OverwrittenSystemCheckRoleGrant                                                                           func(ctx context.Context, arg SystemCheckRoleGrantParams) (int32, error)
+	OverwrittenSystemClearContentLabelStatus                                                                  func(ctx context.Context, arg SystemClearContentLabelStatusParams) error
+	OverwrittenSystemClearContentPrivateLabel                                                                 func(ctx context.Context, arg SystemClearContentPrivateLabelParams) error
+	OverwrittenSystemCountDeadLetters                                                                         func(ctx context.Context) (int64, error)
+	OverwrittenSystemCountLanguages                                                                           func(ctx context.Context) (int64, error)
+	OverwrittenSystemCountRecentLoginAttempts                                                                 func(ctx context.Context, arg SystemCountRecentLoginAttemptsParams) (int64, error)
+	OverwrittenSystemCreateGrant                                                                              func(ctx context.Context, arg SystemCreateGrantParams) (int64, error)
+	OverwrittenSystemCreateNotification                                                                       func(ctx context.Context, arg SystemCreateNotificationParams) error
+	OverwrittenSystemCreateSearchWord                                                                         func(ctx context.Context, word string) (int64, error)
+	OverwrittenSystemCreateThread                                                                             func(ctx context.Context, forumtopicIdforumtopic int32) (int64, error)
+	OverwrittenSystemCreateUserRole                                                                           func(ctx context.Context, arg SystemCreateUserRoleParams) error
+	OverwrittenSystemDeleteBlogsSearch                                                                        func(ctx context.Context) error
+	OverwrittenSystemDeleteCommentsSearch                                                                     func(ctx context.Context) error
+	OverwrittenSystemDeleteDeadLetter                                                                         func(ctx context.Context, id int32) error
+	OverwrittenSystemDeleteImagePostSearch                                                                    func(ctx context.Context) error
+	OverwrittenSystemDeleteLinkerSearch                                                                       func(ctx context.Context) error
+	OverwrittenSystemDeletePasswordReset                                                                      func(ctx context.Context, id int32) error
+	OverwrittenSystemDeletePasswordResetsByUser                                                               func(ctx context.Context, userID int32) (sql.Result, error)
+	OverwrittenSystemDeleteSessionByID                                                                        func(ctx context.Context, sessionID string) error
+	OverwrittenSystemDeleteSiteNewsSearch                                                                     func(ctx context.Context) error
+	OverwrittenSystemDeleteUserEmailsByEmailExceptID                                                          func(ctx context.Context, arg SystemDeleteUserEmailsByEmailExceptIDParams) error
+	OverwrittenSystemDeleteWritingSearch                                                                      func(ctx context.Context) error
+	OverwrittenSystemDeleteWritingSearchByWritingID                                                           func(ctx context.Context, writingID int32) error
+	OverwrittenSystemGetAllBlogsForIndex                                                                      func(ctx context.Context) ([]*SystemGetAllBlogsForIndexRow, error)
+	OverwrittenSystemGetBlogEntryByID                                                                         func(ctx context.Context, idblogs int32) (*SystemGetBlogEntryByIDRow, error)
+	OverwrittenSystemGetFAQQuestions                                                                          func(ctx context.Context) ([]*Faq, error)
+	OverwrittenSystemGetForumTopicByTitle                                                                     func(ctx context.Context, title sql.NullString) (*Forumtopic, error)
+	OverwrittenSystemGetLanguageIDByName                                                                      func(ctx context.Context, nameof sql.NullString) (int32, error)
+	OverwrittenSystemGetLastNotificationForRecipientByMessage                                                 func(ctx context.Context, arg SystemGetLastNotificationForRecipientByMessageParams) (*Notification, error)
+	OverwrittenSystemGetLogin                                                                                 func(ctx context.Context, username sql.NullString) (*SystemGetLoginRow, error)
+	OverwrittenSystemGetNewsPostByID                                                                          func(ctx context.Context, idsitenews int32) (int32, error)
+	OverwrittenSystemGetSearchWordByWordLowercased                                                            func(ctx context.Context, lcase string) (*Searchwordlist, error)
+	OverwrittenSystemGetTemplateOverride                                                                      func(ctx context.Context, name string) (string, error)
+	OverwrittenSystemGetUserByEmail                                                                           func(ctx context.Context, email string) (*SystemGetUserByEmailRow, error)
+	OverwrittenSystemGetUserByID                                                                              func(ctx context.Context, idusers int32) (*SystemGetUserByIDRow, error)
+	OverwrittenSystemGetUserByUsername                                                                        func(ctx context.Context, username sql.NullString) (*SystemGetUserByUsernameRow, error)
+	OverwrittenSystemGetWritingByID                                                                           func(ctx context.Context, idwriting int32) (int32, error)
+	OverwrittenSystemIncrementPendingEmailError                                                               func(ctx context.Context, id int32) error
+	OverwrittenSystemInsertDeadLetter                                                                         func(ctx context.Context, message string) error
+	OverwrittenSystemInsertLoginAttempt                                                                       func(ctx context.Context, arg SystemInsertLoginAttemptParams) error
+	OverwrittenSystemInsertSession                                                                            func(ctx context.Context, arg SystemInsertSessionParams) error
+	OverwrittenSystemInsertUser                                                                               func(ctx context.Context, username sql.NullString) (int64, error)
+	OverwrittenSystemLatestDeadLetter                                                                         func(ctx context.Context) (interface{}, error)
+	OverwrittenSystemListAllUsers                                                                             func(ctx context.Context) ([]*SystemListAllUsersRow, error)
+	OverwrittenSystemListBoardsByParentID                                                                     func(ctx context.Context, arg SystemListBoardsByParentIDParams) ([]*Imageboard, error)
+	OverwrittenSystemListCommentsByThreadID                                                                   func(ctx context.Context, forumthreadID int32) ([]*SystemListCommentsByThreadIDRow, error)
+	OverwrittenSystemListDeadLetters                                                                          func(ctx context.Context, limit int32) ([]*DeadLetter, error)
+	OverwrittenSystemListLanguages                                                                            func(ctx context.Context) ([]*Language, error)
+	OverwrittenSystemListPendingEmails                                                                        func(ctx context.Context, arg SystemListPendingEmailsParams) ([]*SystemListPendingEmailsRow, error)
+	OverwrittenSystemListPublicWritingsByAuthor                                                               func(ctx context.Context, arg SystemListPublicWritingsByAuthorParams) ([]*SystemListPublicWritingsByAuthorRow, error)
+	OverwrittenSystemListPublicWritingsInCategory                                                             func(ctx context.Context, arg SystemListPublicWritingsInCategoryParams) ([]*SystemListPublicWritingsInCategoryRow, error)
+	OverwrittenSystemListUserInfo                                                                             func(ctx context.Context) ([]*SystemListUserInfoRow, error)
+	OverwrittenSystemListVerifiedEmailsByUserID                                                               func(ctx context.Context, userID int32) ([]*UserEmail, error)
+	OverwrittenSystemListWritingCategories                                                                    func(ctx context.Context, arg SystemListWritingCategoriesParams) ([]*WritingCategory, error)
+	OverwrittenSystemMarkPasswordResetVerified                                                                func(ctx context.Context, id int32) error
+	OverwrittenSystemMarkPendingEmailSent                                                                     func(ctx context.Context, id int32) error
+	OverwrittenSystemMarkUserEmailVerified                                                                    func(ctx context.Context, arg SystemMarkUserEmailVerifiedParams) error
+	OverwrittenSystemPurgeDeadLettersBefore                                                                   func(ctx context.Context, createdAt time.Time) error
+	OverwrittenSystemPurgePasswordResetsBefore                                                                func(ctx context.Context, createdAt time.Time) (sql.Result, error)
+	OverwrittenSystemRebuildForumTopicMetaByID                                                                func(ctx context.Context, idforumtopic int32) error
+	OverwrittenSystemRegisterExternalLinkClick                                                                func(ctx context.Context, url string) error
+	OverwrittenSystemSetBlogLastIndex                                                                         func(ctx context.Context, id int32) error
+	OverwrittenSystemSetCommentLastIndex                                                                      func(ctx context.Context, idcomments int32) error
+	OverwrittenSystemSetForumTopicHandlerByID                                                                 func(ctx context.Context, arg SystemSetForumTopicHandlerByIDParams) error
+	OverwrittenSystemSetImagePostLastIndex                                                                    func(ctx context.Context, idimagepost int32) error
+	OverwrittenSystemSetLinkerLastIndex                                                                       func(ctx context.Context, id int32) error
+	OverwrittenSystemSetSiteNewsLastIndex                                                                     func(ctx context.Context, idsitenews int32) error
+	OverwrittenSystemSetWritingLastIndex                                                                      func(ctx context.Context, idwriting int32) error
+	OverwrittenUpdateAutoSubscribeRepliesForLister                                                            func(ctx context.Context, arg UpdateAutoSubscribeRepliesForListerParams) error
+	OverwrittenUpdateBlogEntryForWriter                                                                       func(ctx context.Context, arg UpdateBlogEntryForWriterParams) error
+	OverwrittenUpdateBookmarksForLister                                                                       func(ctx context.Context, arg UpdateBookmarksForListerParams) error
+	OverwrittenUpdateCommentForEditor                                                                         func(ctx context.Context, arg UpdateCommentForEditorParams) error
+	OverwrittenUpdateEmailForumUpdatesForLister                                                               func(ctx context.Context, arg UpdateEmailForumUpdatesForListerParams) error
+	OverwrittenUpdateNewsPostForWriter                                                                        func(ctx context.Context, arg UpdateNewsPostForWriterParams) error
+	OverwrittenUpdatePreferenceForLister                                                                      func(ctx context.Context, arg UpdatePreferenceForListerParams) error
+	OverwrittenUpdatePublicProfileEnabledAtForUser                                                            func(ctx context.Context, arg UpdatePublicProfileEnabledAtForUserParams) error
+	OverwrittenUpdateSubscriptionByIDForSubscriber                                                            func(ctx context.Context, arg UpdateSubscriptionByIDForSubscriberParams) error
+	OverwrittenUpdateTimezoneForLister                                                                        func(ctx context.Context, arg UpdateTimezoneForListerParams) error
+	OverwrittenUpdateWritingForWriter                                                                         func(ctx context.Context, arg UpdateWritingForWriterParams) error
+	OverwrittenUpsertContentReadMarker                                                                        func(ctx context.Context, arg UpsertContentReadMarkerParams) error
 }
 
-func (q *QuerierProxier) AddContentLabelStatus(ctx context.Context, arg AddContentLabelStatusParams) (error) {
+func (q *QuerierProxier) AddContentLabelStatus(ctx context.Context, arg AddContentLabelStatusParams) error {
 	if q.OverwrittenAddContentLabelStatus == nil {
 		panic("AddContentLabelStatus not implemented")
 	}
 	return q.OverwrittenAddContentLabelStatus(ctx, arg)
 }
 
-func (q *QuerierProxier) AddContentPrivateLabel(ctx context.Context, arg AddContentPrivateLabelParams) (error) {
+func (q *QuerierProxier) AddContentPrivateLabel(ctx context.Context, arg AddContentPrivateLabelParams) error {
 	if q.OverwrittenAddContentPrivateLabel == nil {
 		panic("AddContentPrivateLabel not implemented")
 	}
 	return q.OverwrittenAddContentPrivateLabel(ctx, arg)
 }
 
-func (q *QuerierProxier) AddContentPublicLabel(ctx context.Context, arg AddContentPublicLabelParams) (error) {
+func (q *QuerierProxier) AddContentPublicLabel(ctx context.Context, arg AddContentPublicLabelParams) error {
 	if q.OverwrittenAddContentPublicLabel == nil {
 		panic("AddContentPublicLabel not implemented")
 	}
 	return q.OverwrittenAddContentPublicLabel(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminApproveImagePost(ctx context.Context, idimagepost int32) (error) {
+func (q *QuerierProxier) AdminApproveImagePost(ctx context.Context, idimagepost int32) error {
 	if q.OverwrittenAdminApproveImagePost == nil {
 		panic("AdminApproveImagePost not implemented")
 	}
 	return q.OverwrittenAdminApproveImagePost(ctx, idimagepost)
 }
 
-func (q *QuerierProxier) AdminArchiveBlog(ctx context.Context, arg AdminArchiveBlogParams) (error) {
+func (q *QuerierProxier) AdminArchiveBlog(ctx context.Context, arg AdminArchiveBlogParams) error {
 	if q.OverwrittenAdminArchiveBlog == nil {
 		panic("AdminArchiveBlog not implemented")
 	}
 	return q.OverwrittenAdminArchiveBlog(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminArchiveComment(ctx context.Context, arg AdminArchiveCommentParams) (error) {
+func (q *QuerierProxier) AdminArchiveComment(ctx context.Context, arg AdminArchiveCommentParams) error {
 	if q.OverwrittenAdminArchiveComment == nil {
 		panic("AdminArchiveComment not implemented")
 	}
 	return q.OverwrittenAdminArchiveComment(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminArchiveImagepost(ctx context.Context, arg AdminArchiveImagepostParams) (error) {
+func (q *QuerierProxier) AdminArchiveImagepost(ctx context.Context, arg AdminArchiveImagepostParams) error {
 	if q.OverwrittenAdminArchiveImagepost == nil {
 		panic("AdminArchiveImagepost not implemented")
 	}
 	return q.OverwrittenAdminArchiveImagepost(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminArchiveLink(ctx context.Context, arg AdminArchiveLinkParams) (error) {
+func (q *QuerierProxier) AdminArchiveLink(ctx context.Context, arg AdminArchiveLinkParams) error {
 	if q.OverwrittenAdminArchiveLink == nil {
 		panic("AdminArchiveLink not implemented")
 	}
 	return q.OverwrittenAdminArchiveLink(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminArchiveUser(ctx context.Context, idusers int32) (error) {
+func (q *QuerierProxier) AdminArchiveUser(ctx context.Context, idusers int32) error {
 	if q.OverwrittenAdminArchiveUser == nil {
 		panic("AdminArchiveUser not implemented")
 	}
 	return q.OverwrittenAdminArchiveUser(ctx, idusers)
 }
 
-func (q *QuerierProxier) AdminArchiveWriting(ctx context.Context, arg AdminArchiveWritingParams) (error) {
+func (q *QuerierProxier) AdminArchiveWriting(ctx context.Context, arg AdminArchiveWritingParams) error {
 	if q.OverwrittenAdminArchiveWriting == nil {
 		panic("AdminArchiveWriting not implemented")
 	}
 	return q.OverwrittenAdminArchiveWriting(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminCancelBannedIp(ctx context.Context, ipNet string) (error) {
+func (q *QuerierProxier) AdminCancelBannedIp(ctx context.Context, ipNet string) error {
 	if q.OverwrittenAdminCancelBannedIp == nil {
 		panic("AdminCancelBannedIp not implemented")
 	}
 	return q.OverwrittenAdminCancelBannedIp(ctx, ipNet)
 }
 
-func (q *QuerierProxier) AdminClearExternalLinkCache(ctx context.Context, arg AdminClearExternalLinkCacheParams) (error) {
+func (q *QuerierProxier) AdminClearExternalLinkCache(ctx context.Context, arg AdminClearExternalLinkCacheParams) error {
 	if q.OverwrittenAdminClearExternalLinkCache == nil {
 		panic("AdminClearExternalLinkCache not implemented")
 	}
 	return q.OverwrittenAdminClearExternalLinkCache(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminCompleteWordList(ctx context.Context, ) ([]sql.NullString, error) {
+func (q *QuerierProxier) AdminCompleteWordList(ctx context.Context) ([]sql.NullString, error) {
 	if q.OverwrittenAdminCompleteWordList == nil {
 		panic("AdminCompleteWordList not implemented")
 	}
@@ -557,14 +558,14 @@ func (q *QuerierProxier) AdminCountForumCategories(ctx context.Context, arg Admi
 	return q.OverwrittenAdminCountForumCategories(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminCountForumThreads(ctx context.Context, ) (int64, error) {
+func (q *QuerierProxier) AdminCountForumThreads(ctx context.Context) (int64, error) {
 	if q.OverwrittenAdminCountForumThreads == nil {
 		panic("AdminCountForumThreads not implemented")
 	}
 	return q.OverwrittenAdminCountForumThreads(ctx)
 }
 
-func (q *QuerierProxier) AdminCountForumTopics(ctx context.Context, ) (int64, error) {
+func (q *QuerierProxier) AdminCountForumTopics(ctx context.Context) (int64, error) {
 	if q.OverwrittenAdminCountForumTopics == nil {
 		panic("AdminCountForumTopics not implemented")
 	}
@@ -585,7 +586,7 @@ func (q *QuerierProxier) AdminCountThreadsByBoard(ctx context.Context, imageboar
 	return q.OverwrittenAdminCountThreadsByBoard(ctx, imageboardIdimageboard)
 }
 
-func (q *QuerierProxier) AdminCountWordList(ctx context.Context, ) (int64, error) {
+func (q *QuerierProxier) AdminCountWordList(ctx context.Context) (int64, error) {
 	if q.OverwrittenAdminCountWordList == nil {
 		panic("AdminCountWordList not implemented")
 	}
@@ -599,7 +600,7 @@ func (q *QuerierProxier) AdminCountWordListByPrefix(ctx context.Context, prefix 
 	return q.OverwrittenAdminCountWordListByPrefix(ctx, prefix)
 }
 
-func (q *QuerierProxier) AdminCreateFAQCategory(ctx context.Context, name sql.NullString) (error) {
+func (q *QuerierProxier) AdminCreateFAQCategory(ctx context.Context, name sql.NullString) error {
 	if q.OverwrittenAdminCreateFAQCategory == nil {
 		panic("AdminCreateFAQCategory not implemented")
 	}
@@ -613,182 +614,182 @@ func (q *QuerierProxier) AdminCreateGrant(ctx context.Context, arg AdminCreateGr
 	return q.OverwrittenAdminCreateGrant(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminCreateImageBoard(ctx context.Context, arg AdminCreateImageBoardParams) (error) {
+func (q *QuerierProxier) AdminCreateImageBoard(ctx context.Context, arg AdminCreateImageBoardParams) error {
 	if q.OverwrittenAdminCreateImageBoard == nil {
 		panic("AdminCreateImageBoard not implemented")
 	}
 	return q.OverwrittenAdminCreateImageBoard(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminCreateLanguage(ctx context.Context, nameof sql.NullString) (error) {
+func (q *QuerierProxier) AdminCreateLanguage(ctx context.Context, nameof sql.NullString) error {
 	if q.OverwrittenAdminCreateLanguage == nil {
 		panic("AdminCreateLanguage not implemented")
 	}
 	return q.OverwrittenAdminCreateLanguage(ctx, nameof)
 }
 
-func (q *QuerierProxier) AdminCreateLinkerCategory(ctx context.Context, arg AdminCreateLinkerCategoryParams) (error) {
+func (q *QuerierProxier) AdminCreateLinkerCategory(ctx context.Context, arg AdminCreateLinkerCategoryParams) error {
 	if q.OverwrittenAdminCreateLinkerCategory == nil {
 		panic("AdminCreateLinkerCategory not implemented")
 	}
 	return q.OverwrittenAdminCreateLinkerCategory(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminCreateLinkerItem(ctx context.Context, arg AdminCreateLinkerItemParams) (error) {
+func (q *QuerierProxier) AdminCreateLinkerItem(ctx context.Context, arg AdminCreateLinkerItemParams) error {
 	if q.OverwrittenAdminCreateLinkerItem == nil {
 		panic("AdminCreateLinkerItem not implemented")
 	}
 	return q.OverwrittenAdminCreateLinkerItem(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminDeleteExternalLink(ctx context.Context, id int32) (error) {
+func (q *QuerierProxier) AdminDeleteExternalLink(ctx context.Context, id int32) error {
 	if q.OverwrittenAdminDeleteExternalLink == nil {
 		panic("AdminDeleteExternalLink not implemented")
 	}
 	return q.OverwrittenAdminDeleteExternalLink(ctx, id)
 }
 
-func (q *QuerierProxier) AdminDeleteExternalLinkByURL(ctx context.Context, url string) (error) {
+func (q *QuerierProxier) AdminDeleteExternalLinkByURL(ctx context.Context, url string) error {
 	if q.OverwrittenAdminDeleteExternalLinkByURL == nil {
 		panic("AdminDeleteExternalLinkByURL not implemented")
 	}
 	return q.OverwrittenAdminDeleteExternalLinkByURL(ctx, url)
 }
 
-func (q *QuerierProxier) AdminDeleteFAQ(ctx context.Context, id int32) (error) {
+func (q *QuerierProxier) AdminDeleteFAQ(ctx context.Context, id int32) error {
 	if q.OverwrittenAdminDeleteFAQ == nil {
 		panic("AdminDeleteFAQ not implemented")
 	}
 	return q.OverwrittenAdminDeleteFAQ(ctx, id)
 }
 
-func (q *QuerierProxier) AdminDeleteFAQCategory(ctx context.Context, id int32) (error) {
+func (q *QuerierProxier) AdminDeleteFAQCategory(ctx context.Context, id int32) error {
 	if q.OverwrittenAdminDeleteFAQCategory == nil {
 		panic("AdminDeleteFAQCategory not implemented")
 	}
 	return q.OverwrittenAdminDeleteFAQCategory(ctx, id)
 }
 
-func (q *QuerierProxier) AdminDeleteForumCategory(ctx context.Context, idforumcategory int32) (error) {
+func (q *QuerierProxier) AdminDeleteForumCategory(ctx context.Context, idforumcategory int32) error {
 	if q.OverwrittenAdminDeleteForumCategory == nil {
 		panic("AdminDeleteForumCategory not implemented")
 	}
 	return q.OverwrittenAdminDeleteForumCategory(ctx, idforumcategory)
 }
 
-func (q *QuerierProxier) AdminDeleteForumThread(ctx context.Context, idforumthread int32) (error) {
+func (q *QuerierProxier) AdminDeleteForumThread(ctx context.Context, idforumthread int32) error {
 	if q.OverwrittenAdminDeleteForumThread == nil {
 		panic("AdminDeleteForumThread not implemented")
 	}
 	return q.OverwrittenAdminDeleteForumThread(ctx, idforumthread)
 }
 
-func (q *QuerierProxier) AdminDeleteForumTopic(ctx context.Context, idforumtopic int32) (error) {
+func (q *QuerierProxier) AdminDeleteForumTopic(ctx context.Context, idforumtopic int32) error {
 	if q.OverwrittenAdminDeleteForumTopic == nil {
 		panic("AdminDeleteForumTopic not implemented")
 	}
 	return q.OverwrittenAdminDeleteForumTopic(ctx, idforumtopic)
 }
 
-func (q *QuerierProxier) AdminDeleteGrant(ctx context.Context, id int32) (error) {
+func (q *QuerierProxier) AdminDeleteGrant(ctx context.Context, id int32) error {
 	if q.OverwrittenAdminDeleteGrant == nil {
 		panic("AdminDeleteGrant not implemented")
 	}
 	return q.OverwrittenAdminDeleteGrant(ctx, id)
 }
 
-func (q *QuerierProxier) AdminDeleteImageBoard(ctx context.Context, idimageboard int32) (error) {
+func (q *QuerierProxier) AdminDeleteImageBoard(ctx context.Context, idimageboard int32) error {
 	if q.OverwrittenAdminDeleteImageBoard == nil {
 		panic("AdminDeleteImageBoard not implemented")
 	}
 	return q.OverwrittenAdminDeleteImageBoard(ctx, idimageboard)
 }
 
-func (q *QuerierProxier) AdminDeleteImagePost(ctx context.Context, idimagepost int32) (error) {
+func (q *QuerierProxier) AdminDeleteImagePost(ctx context.Context, idimagepost int32) error {
 	if q.OverwrittenAdminDeleteImagePost == nil {
 		panic("AdminDeleteImagePost not implemented")
 	}
 	return q.OverwrittenAdminDeleteImagePost(ctx, idimagepost)
 }
 
-func (q *QuerierProxier) AdminDeleteLanguage(ctx context.Context, id int32) (error) {
+func (q *QuerierProxier) AdminDeleteLanguage(ctx context.Context, id int32) error {
 	if q.OverwrittenAdminDeleteLanguage == nil {
 		panic("AdminDeleteLanguage not implemented")
 	}
 	return q.OverwrittenAdminDeleteLanguage(ctx, id)
 }
 
-func (q *QuerierProxier) AdminDeleteLinkerCategory(ctx context.Context, id int32) (error) {
+func (q *QuerierProxier) AdminDeleteLinkerCategory(ctx context.Context, id int32) error {
 	if q.OverwrittenAdminDeleteLinkerCategory == nil {
 		panic("AdminDeleteLinkerCategory not implemented")
 	}
 	return q.OverwrittenAdminDeleteLinkerCategory(ctx, id)
 }
 
-func (q *QuerierProxier) AdminDeleteLinkerQueuedItem(ctx context.Context, id int32) (error) {
+func (q *QuerierProxier) AdminDeleteLinkerQueuedItem(ctx context.Context, id int32) error {
 	if q.OverwrittenAdminDeleteLinkerQueuedItem == nil {
 		panic("AdminDeleteLinkerQueuedItem not implemented")
 	}
 	return q.OverwrittenAdminDeleteLinkerQueuedItem(ctx, id)
 }
 
-func (q *QuerierProxier) AdminDeleteNotification(ctx context.Context, id int32) (error) {
+func (q *QuerierProxier) AdminDeleteNotification(ctx context.Context, id int32) error {
 	if q.OverwrittenAdminDeleteNotification == nil {
 		panic("AdminDeleteNotification not implemented")
 	}
 	return q.OverwrittenAdminDeleteNotification(ctx, id)
 }
 
-func (q *QuerierProxier) AdminDeletePendingEmail(ctx context.Context, id int32) (error) {
+func (q *QuerierProxier) AdminDeletePendingEmail(ctx context.Context, id int32) error {
 	if q.OverwrittenAdminDeletePendingEmail == nil {
 		panic("AdminDeletePendingEmail not implemented")
 	}
 	return q.OverwrittenAdminDeletePendingEmail(ctx, id)
 }
 
-func (q *QuerierProxier) AdminDeleteTemplateOverride(ctx context.Context, name string) (error) {
+func (q *QuerierProxier) AdminDeleteTemplateOverride(ctx context.Context, name string) error {
 	if q.OverwrittenAdminDeleteTemplateOverride == nil {
 		panic("AdminDeleteTemplateOverride not implemented")
 	}
 	return q.OverwrittenAdminDeleteTemplateOverride(ctx, name)
 }
 
-func (q *QuerierProxier) AdminDeleteUserByID(ctx context.Context, idusers int32) (error) {
+func (q *QuerierProxier) AdminDeleteUserByID(ctx context.Context, idusers int32) error {
 	if q.OverwrittenAdminDeleteUserByID == nil {
 		panic("AdminDeleteUserByID not implemented")
 	}
 	return q.OverwrittenAdminDeleteUserByID(ctx, idusers)
 }
 
-func (q *QuerierProxier) AdminDeleteUserRole(ctx context.Context, iduserRoles int32) (error) {
+func (q *QuerierProxier) AdminDeleteUserRole(ctx context.Context, iduserRoles int32) error {
 	if q.OverwrittenAdminDeleteUserRole == nil {
 		panic("AdminDeleteUserRole not implemented")
 	}
 	return q.OverwrittenAdminDeleteUserRole(ctx, iduserRoles)
 }
 
-func (q *QuerierProxier) AdminDemoteAnnouncement(ctx context.Context, id int32) (error) {
+func (q *QuerierProxier) AdminDemoteAnnouncement(ctx context.Context, id int32) error {
 	if q.OverwrittenAdminDemoteAnnouncement == nil {
 		panic("AdminDemoteAnnouncement not implemented")
 	}
 	return q.OverwrittenAdminDemoteAnnouncement(ctx, id)
 }
 
-func (q *QuerierProxier) AdminForumCategoryThreadCounts(ctx context.Context, ) ([]*AdminForumCategoryThreadCountsRow, error) {
+func (q *QuerierProxier) AdminForumCategoryThreadCounts(ctx context.Context) ([]*AdminForumCategoryThreadCountsRow, error) {
 	if q.OverwrittenAdminForumCategoryThreadCounts == nil {
 		panic("AdminForumCategoryThreadCounts not implemented")
 	}
 	return q.OverwrittenAdminForumCategoryThreadCounts(ctx)
 }
 
-func (q *QuerierProxier) AdminForumHandlerThreadCounts(ctx context.Context, ) ([]*AdminForumHandlerThreadCountsRow, error) {
+func (q *QuerierProxier) AdminForumHandlerThreadCounts(ctx context.Context) ([]*AdminForumHandlerThreadCountsRow, error) {
 	if q.OverwrittenAdminForumHandlerThreadCounts == nil {
 		panic("AdminForumHandlerThreadCounts not implemented")
 	}
 	return q.OverwrittenAdminForumHandlerThreadCounts(ctx)
 }
 
-func (q *QuerierProxier) AdminForumTopicThreadCounts(ctx context.Context, ) ([]*AdminForumTopicThreadCountsRow, error) {
+func (q *QuerierProxier) AdminForumTopicThreadCounts(ctx context.Context) ([]*AdminForumTopicThreadCountsRow, error) {
 	if q.OverwrittenAdminForumTopicThreadCounts == nil {
 		panic("AdminForumTopicThreadCounts not implemented")
 	}
@@ -816,7 +817,7 @@ func (q *QuerierProxier) AdminGetAllWritingsByAuthor(ctx context.Context, author
 	return q.OverwrittenAdminGetAllWritingsByAuthor(ctx, authorID)
 }
 
-func (q *QuerierProxier) AdminGetDashboardStats(ctx context.Context, ) (*AdminGetDashboardStatsRow, error) {
+func (q *QuerierProxier) AdminGetDashboardStats(ctx context.Context) (*AdminGetDashboardStatsRow, error) {
 	if q.OverwrittenAdminGetDashboardStats == nil {
 		panic("AdminGetDashboardStats not implemented")
 	}
@@ -830,14 +831,14 @@ func (q *QuerierProxier) AdminGetFAQByID(ctx context.Context, id int32) (*Faq, e
 	return q.OverwrittenAdminGetFAQByID(ctx, id)
 }
 
-func (q *QuerierProxier) AdminGetFAQCategories(ctx context.Context, ) ([]*FaqCategory, error) {
+func (q *QuerierProxier) AdminGetFAQCategories(ctx context.Context) ([]*FaqCategory, error) {
 	if q.OverwrittenAdminGetFAQCategories == nil {
 		panic("AdminGetFAQCategories not implemented")
 	}
 	return q.OverwrittenAdminGetFAQCategories(ctx)
 }
 
-func (q *QuerierProxier) AdminGetFAQCategoriesWithQuestionCount(ctx context.Context, ) ([]*AdminGetFAQCategoriesWithQuestionCountRow, error) {
+func (q *QuerierProxier) AdminGetFAQCategoriesWithQuestionCount(ctx context.Context) ([]*AdminGetFAQCategoriesWithQuestionCountRow, error) {
 	if q.OverwrittenAdminGetFAQCategoriesWithQuestionCount == nil {
 		panic("AdminGetFAQCategoriesWithQuestionCount not implemented")
 	}
@@ -851,7 +852,7 @@ func (q *QuerierProxier) AdminGetFAQCategoryWithQuestionCountByID(ctx context.Co
 	return q.OverwrittenAdminGetFAQCategoryWithQuestionCountByID(ctx, id)
 }
 
-func (q *QuerierProxier) AdminGetFAQDismissedQuestions(ctx context.Context, ) ([]*Faq, error) {
+func (q *QuerierProxier) AdminGetFAQDismissedQuestions(ctx context.Context) ([]*Faq, error) {
 	if q.OverwrittenAdminGetFAQDismissedQuestions == nil {
 		panic("AdminGetFAQDismissedQuestions not implemented")
 	}
@@ -865,14 +866,14 @@ func (q *QuerierProxier) AdminGetFAQQuestionsByCategory(ctx context.Context, cat
 	return q.OverwrittenAdminGetFAQQuestionsByCategory(ctx, categoryID)
 }
 
-func (q *QuerierProxier) AdminGetFAQUnansweredQuestions(ctx context.Context, ) ([]*Faq, error) {
+func (q *QuerierProxier) AdminGetFAQUnansweredQuestions(ctx context.Context) ([]*Faq, error) {
 	if q.OverwrittenAdminGetFAQUnansweredQuestions == nil {
 		panic("AdminGetFAQUnansweredQuestions not implemented")
 	}
 	return q.OverwrittenAdminGetFAQUnansweredQuestions(ctx)
 }
 
-func (q *QuerierProxier) AdminGetForumStats(ctx context.Context, ) (*AdminGetForumStatsRow, error) {
+func (q *QuerierProxier) AdminGetForumStats(ctx context.Context) (*AdminGetForumStatsRow, error) {
 	if q.OverwrittenAdminGetForumStats == nil {
 		panic("AdminGetForumStats not implemented")
 	}
@@ -928,7 +929,7 @@ func (q *QuerierProxier) AdminGetRoleByNameForUser(ctx context.Context, arg Admi
 	return q.OverwrittenAdminGetRoleByNameForUser(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminGetSearchStats(ctx context.Context, ) (*AdminGetSearchStatsRow, error) {
+func (q *QuerierProxier) AdminGetSearchStats(ctx context.Context) (*AdminGetSearchStatsRow, error) {
 	if q.OverwrittenAdminGetSearchStats == nil {
 		panic("AdminGetSearchStats not implemented")
 	}
@@ -956,14 +957,14 @@ func (q *QuerierProxier) AdminGetWritingsByCategoryId(ctx context.Context, writi
 	return q.OverwrittenAdminGetWritingsByCategoryId(ctx, writingCategoryID)
 }
 
-func (q *QuerierProxier) AdminImageboardPostCounts(ctx context.Context, ) ([]*AdminImageboardPostCountsRow, error) {
+func (q *QuerierProxier) AdminImageboardPostCounts(ctx context.Context) ([]*AdminImageboardPostCountsRow, error) {
 	if q.OverwrittenAdminImageboardPostCounts == nil {
 		panic("AdminImageboardPostCounts not implemented")
 	}
 	return q.OverwrittenAdminImageboardPostCounts(ctx)
 }
 
-func (q *QuerierProxier) AdminInsertBannedIp(ctx context.Context, arg AdminInsertBannedIpParams) (error) {
+func (q *QuerierProxier) AdminInsertBannedIp(ctx context.Context, arg AdminInsertBannedIpParams) error {
 	if q.OverwrittenAdminInsertBannedIp == nil {
 		panic("AdminInsertBannedIp not implemented")
 	}
@@ -984,7 +985,7 @@ func (q *QuerierProxier) AdminInsertQueuedLinkFromQueue(ctx context.Context, id 
 	return q.OverwrittenAdminInsertQueuedLinkFromQueue(ctx, id)
 }
 
-func (q *QuerierProxier) AdminInsertRequestComment(ctx context.Context, arg AdminInsertRequestCommentParams) (error) {
+func (q *QuerierProxier) AdminInsertRequestComment(ctx context.Context, arg AdminInsertRequestCommentParams) error {
 	if q.OverwrittenAdminInsertRequestComment == nil {
 		panic("AdminInsertRequestComment not implemented")
 	}
@@ -998,7 +999,7 @@ func (q *QuerierProxier) AdminInsertRequestQueue(ctx context.Context, arg AdminI
 	return q.OverwrittenAdminInsertRequestQueue(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminInsertWritingCategory(ctx context.Context, arg AdminInsertWritingCategoryParams) (error) {
+func (q *QuerierProxier) AdminInsertWritingCategory(ctx context.Context, arg AdminInsertWritingCategoryParams) error {
 	if q.OverwrittenAdminInsertWritingCategory == nil {
 		panic("AdminInsertWritingCategory not implemented")
 	}
@@ -1054,7 +1055,7 @@ func (q *QuerierProxier) AdminLanguageUsageCounts(ctx context.Context, arg Admin
 	return q.OverwrittenAdminLanguageUsageCounts(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminListAdministratorEmails(ctx context.Context, ) ([]string, error) {
+func (q *QuerierProxier) AdminListAdministratorEmails(ctx context.Context) ([]string, error) {
 	if q.OverwrittenAdminListAdministratorEmails == nil {
 		panic("AdminListAdministratorEmails not implemented")
 	}
@@ -1068,42 +1069,42 @@ func (q *QuerierProxier) AdminListAllCommentsWithThreadInfo(ctx context.Context,
 	return q.OverwrittenAdminListAllCommentsWithThreadInfo(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminListAllPrivateForumThreads(ctx context.Context, ) ([]*AdminListAllPrivateForumThreadsRow, error) {
+func (q *QuerierProxier) AdminListAllPrivateForumThreads(ctx context.Context) ([]*AdminListAllPrivateForumThreadsRow, error) {
 	if q.OverwrittenAdminListAllPrivateForumThreads == nil {
 		panic("AdminListAllPrivateForumThreads not implemented")
 	}
 	return q.OverwrittenAdminListAllPrivateForumThreads(ctx)
 }
 
-func (q *QuerierProxier) AdminListAllPrivateTopics(ctx context.Context, ) ([]*AdminListAllPrivateTopicsRow, error) {
+func (q *QuerierProxier) AdminListAllPrivateTopics(ctx context.Context) ([]*AdminListAllPrivateTopicsRow, error) {
 	if q.OverwrittenAdminListAllPrivateTopics == nil {
 		panic("AdminListAllPrivateTopics not implemented")
 	}
 	return q.OverwrittenAdminListAllPrivateTopics(ctx)
 }
 
-func (q *QuerierProxier) AdminListAllUserIDs(ctx context.Context, ) ([]int32, error) {
+func (q *QuerierProxier) AdminListAllUserIDs(ctx context.Context) ([]int32, error) {
 	if q.OverwrittenAdminListAllUserIDs == nil {
 		panic("AdminListAllUserIDs not implemented")
 	}
 	return q.OverwrittenAdminListAllUserIDs(ctx)
 }
 
-func (q *QuerierProxier) AdminListAllUsers(ctx context.Context, ) ([]*AdminListAllUsersRow, error) {
+func (q *QuerierProxier) AdminListAllUsers(ctx context.Context) ([]*AdminListAllUsersRow, error) {
 	if q.OverwrittenAdminListAllUsers == nil {
 		panic("AdminListAllUsers not implemented")
 	}
 	return q.OverwrittenAdminListAllUsers(ctx)
 }
 
-func (q *QuerierProxier) AdminListAnnouncementsWithNews(ctx context.Context, ) ([]*AdminListAnnouncementsWithNewsRow, error) {
+func (q *QuerierProxier) AdminListAnnouncementsWithNews(ctx context.Context) ([]*AdminListAnnouncementsWithNewsRow, error) {
 	if q.OverwrittenAdminListAnnouncementsWithNews == nil {
 		panic("AdminListAnnouncementsWithNews not implemented")
 	}
 	return q.OverwrittenAdminListAnnouncementsWithNews(ctx)
 }
 
-func (q *QuerierProxier) AdminListArchivedRequests(ctx context.Context, ) ([]*AdminRequestQueue, error) {
+func (q *QuerierProxier) AdminListArchivedRequests(ctx context.Context) ([]*AdminRequestQueue, error) {
 	if q.OverwrittenAdminListArchivedRequests == nil {
 		panic("AdminListArchivedRequests not implemented")
 	}
@@ -1215,7 +1216,7 @@ func (q *QuerierProxier) AdminListGrantsByTopicID(ctx context.Context, itemID sq
 	return q.OverwrittenAdminListGrantsByTopicID(ctx, itemID)
 }
 
-func (q *QuerierProxier) AdminListLoginAttempts(ctx context.Context, ) ([]*LoginAttempt, error) {
+func (q *QuerierProxier) AdminListLoginAttempts(ctx context.Context) ([]*LoginAttempt, error) {
 	if q.OverwrittenAdminListLoginAttempts == nil {
 		panic("AdminListLoginAttempts not implemented")
 	}
@@ -1264,14 +1265,14 @@ func (q *QuerierProxier) AdminListPendingDeactivatedWritings(ctx context.Context
 	return q.OverwrittenAdminListPendingDeactivatedWritings(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminListPendingRequests(ctx context.Context, ) ([]*AdminRequestQueue, error) {
+func (q *QuerierProxier) AdminListPendingRequests(ctx context.Context) ([]*AdminRequestQueue, error) {
 	if q.OverwrittenAdminListPendingRequests == nil {
 		panic("AdminListPendingRequests not implemented")
 	}
 	return q.OverwrittenAdminListPendingRequests(ctx)
 }
 
-func (q *QuerierProxier) AdminListPendingUsers(ctx context.Context, ) ([]*AdminListPendingUsersRow, error) {
+func (q *QuerierProxier) AdminListPendingUsers(ctx context.Context) ([]*AdminListPendingUsersRow, error) {
 	if q.OverwrittenAdminListPendingUsers == nil {
 		panic("AdminListPendingUsers not implemented")
 	}
@@ -1292,14 +1293,14 @@ func (q *QuerierProxier) AdminListRequestComments(ctx context.Context, requestID
 	return q.OverwrittenAdminListRequestComments(ctx, requestID)
 }
 
-func (q *QuerierProxier) AdminListRoles(ctx context.Context, ) ([]*Role, error) {
+func (q *QuerierProxier) AdminListRoles(ctx context.Context) ([]*Role, error) {
 	if q.OverwrittenAdminListRoles == nil {
 		panic("AdminListRoles not implemented")
 	}
 	return q.OverwrittenAdminListRoles(ctx)
 }
 
-func (q *QuerierProxier) AdminListRolesWithUsers(ctx context.Context, ) ([]*AdminListRolesWithUsersRow, error) {
+func (q *QuerierProxier) AdminListRolesWithUsers(ctx context.Context) ([]*AdminListRolesWithUsersRow, error) {
 	if q.OverwrittenAdminListRolesWithUsers == nil {
 		panic("AdminListRolesWithUsers not implemented")
 	}
@@ -1313,7 +1314,7 @@ func (q *QuerierProxier) AdminListSentEmails(ctx context.Context, arg AdminListS
 	return q.OverwrittenAdminListSentEmails(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminListSessions(ctx context.Context, ) ([]*AdminListSessionsRow, error) {
+func (q *QuerierProxier) AdminListSessions(ctx context.Context) ([]*AdminListSessionsRow, error) {
 	if q.OverwrittenAdminListSessions == nil {
 		panic("AdminListSessions not implemented")
 	}
@@ -1369,322 +1370,322 @@ func (q *QuerierProxier) AdminListUsersByRoleID(ctx context.Context, roleID int3
 	return q.OverwrittenAdminListUsersByRoleID(ctx, roleID)
 }
 
-func (q *QuerierProxier) AdminMarkBlogRestored(ctx context.Context, idblogs int32) (error) {
+func (q *QuerierProxier) AdminMarkBlogRestored(ctx context.Context, idblogs int32) error {
 	if q.OverwrittenAdminMarkBlogRestored == nil {
 		panic("AdminMarkBlogRestored not implemented")
 	}
 	return q.OverwrittenAdminMarkBlogRestored(ctx, idblogs)
 }
 
-func (q *QuerierProxier) AdminMarkCommentRestored(ctx context.Context, idcomments int32) (error) {
+func (q *QuerierProxier) AdminMarkCommentRestored(ctx context.Context, idcomments int32) error {
 	if q.OverwrittenAdminMarkCommentRestored == nil {
 		panic("AdminMarkCommentRestored not implemented")
 	}
 	return q.OverwrittenAdminMarkCommentRestored(ctx, idcomments)
 }
 
-func (q *QuerierProxier) AdminMarkImagepostRestored(ctx context.Context, idimagepost int32) (error) {
+func (q *QuerierProxier) AdminMarkImagepostRestored(ctx context.Context, idimagepost int32) error {
 	if q.OverwrittenAdminMarkImagepostRestored == nil {
 		panic("AdminMarkImagepostRestored not implemented")
 	}
 	return q.OverwrittenAdminMarkImagepostRestored(ctx, idimagepost)
 }
 
-func (q *QuerierProxier) AdminMarkLinkRestored(ctx context.Context, id int32) (error) {
+func (q *QuerierProxier) AdminMarkLinkRestored(ctx context.Context, id int32) error {
 	if q.OverwrittenAdminMarkLinkRestored == nil {
 		panic("AdminMarkLinkRestored not implemented")
 	}
 	return q.OverwrittenAdminMarkLinkRestored(ctx, id)
 }
 
-func (q *QuerierProxier) AdminMarkNotificationRead(ctx context.Context, id int32) (error) {
+func (q *QuerierProxier) AdminMarkNotificationRead(ctx context.Context, id int32) error {
 	if q.OverwrittenAdminMarkNotificationRead == nil {
 		panic("AdminMarkNotificationRead not implemented")
 	}
 	return q.OverwrittenAdminMarkNotificationRead(ctx, id)
 }
 
-func (q *QuerierProxier) AdminMarkNotificationUnread(ctx context.Context, id int32) (error) {
+func (q *QuerierProxier) AdminMarkNotificationUnread(ctx context.Context, id int32) error {
 	if q.OverwrittenAdminMarkNotificationUnread == nil {
 		panic("AdminMarkNotificationUnread not implemented")
 	}
 	return q.OverwrittenAdminMarkNotificationUnread(ctx, id)
 }
 
-func (q *QuerierProxier) AdminMarkWritingRestored(ctx context.Context, idwriting int32) (error) {
+func (q *QuerierProxier) AdminMarkWritingRestored(ctx context.Context, idwriting int32) error {
 	if q.OverwrittenAdminMarkWritingRestored == nil {
 		panic("AdminMarkWritingRestored not implemented")
 	}
 	return q.OverwrittenAdminMarkWritingRestored(ctx, idwriting)
 }
 
-func (q *QuerierProxier) AdminPromoteAnnouncement(ctx context.Context, siteNewsID int32) (error) {
+func (q *QuerierProxier) AdminPromoteAnnouncement(ctx context.Context, siteNewsID int32) error {
 	if q.OverwrittenAdminPromoteAnnouncement == nil {
 		panic("AdminPromoteAnnouncement not implemented")
 	}
 	return q.OverwrittenAdminPromoteAnnouncement(ctx, siteNewsID)
 }
 
-func (q *QuerierProxier) AdminPurgeReadNotifications(ctx context.Context, ) (error) {
+func (q *QuerierProxier) AdminPurgeReadNotifications(ctx context.Context) error {
 	if q.OverwrittenAdminPurgeReadNotifications == nil {
 		panic("AdminPurgeReadNotifications not implemented")
 	}
 	return q.OverwrittenAdminPurgeReadNotifications(ctx)
 }
 
-func (q *QuerierProxier) AdminRebuildAllForumTopicMetaColumns(ctx context.Context, ) (error) {
+func (q *QuerierProxier) AdminRebuildAllForumTopicMetaColumns(ctx context.Context) error {
 	if q.OverwrittenAdminRebuildAllForumTopicMetaColumns == nil {
 		panic("AdminRebuildAllForumTopicMetaColumns not implemented")
 	}
 	return q.OverwrittenAdminRebuildAllForumTopicMetaColumns(ctx)
 }
 
-func (q *QuerierProxier) AdminRecalculateAllForumThreadMetaData(ctx context.Context, ) (error) {
+func (q *QuerierProxier) AdminRecalculateAllForumThreadMetaData(ctx context.Context) error {
 	if q.OverwrittenAdminRecalculateAllForumThreadMetaData == nil {
 		panic("AdminRecalculateAllForumThreadMetaData not implemented")
 	}
 	return q.OverwrittenAdminRecalculateAllForumThreadMetaData(ctx)
 }
 
-func (q *QuerierProxier) AdminRecalculateForumThreadByIdMetaData(ctx context.Context, idforumthread int32) (error) {
+func (q *QuerierProxier) AdminRecalculateForumThreadByIdMetaData(ctx context.Context, idforumthread int32) error {
 	if q.OverwrittenAdminRecalculateForumThreadByIdMetaData == nil {
 		panic("AdminRecalculateForumThreadByIdMetaData not implemented")
 	}
 	return q.OverwrittenAdminRecalculateForumThreadByIdMetaData(ctx, idforumthread)
 }
 
-func (q *QuerierProxier) AdminRenameFAQCategory(ctx context.Context, arg AdminRenameFAQCategoryParams) (error) {
+func (q *QuerierProxier) AdminRenameFAQCategory(ctx context.Context, arg AdminRenameFAQCategoryParams) error {
 	if q.OverwrittenAdminRenameFAQCategory == nil {
 		panic("AdminRenameFAQCategory not implemented")
 	}
 	return q.OverwrittenAdminRenameFAQCategory(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminRenameLanguage(ctx context.Context, arg AdminRenameLanguageParams) (error) {
+func (q *QuerierProxier) AdminRenameLanguage(ctx context.Context, arg AdminRenameLanguageParams) error {
 	if q.OverwrittenAdminRenameLanguage == nil {
 		panic("AdminRenameLanguage not implemented")
 	}
 	return q.OverwrittenAdminRenameLanguage(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminRenameLinkerCategory(ctx context.Context, arg AdminRenameLinkerCategoryParams) (error) {
+func (q *QuerierProxier) AdminRenameLinkerCategory(ctx context.Context, arg AdminRenameLinkerCategoryParams) error {
 	if q.OverwrittenAdminRenameLinkerCategory == nil {
 		panic("AdminRenameLinkerCategory not implemented")
 	}
 	return q.OverwrittenAdminRenameLinkerCategory(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminReplaceSiteNewsURL(ctx context.Context, arg AdminReplaceSiteNewsURLParams) (error) {
+func (q *QuerierProxier) AdminReplaceSiteNewsURL(ctx context.Context, arg AdminReplaceSiteNewsURLParams) error {
 	if q.OverwrittenAdminReplaceSiteNewsURL == nil {
 		panic("AdminReplaceSiteNewsURL not implemented")
 	}
 	return q.OverwrittenAdminReplaceSiteNewsURL(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminRestoreBlog(ctx context.Context, arg AdminRestoreBlogParams) (error) {
+func (q *QuerierProxier) AdminRestoreBlog(ctx context.Context, arg AdminRestoreBlogParams) error {
 	if q.OverwrittenAdminRestoreBlog == nil {
 		panic("AdminRestoreBlog not implemented")
 	}
 	return q.OverwrittenAdminRestoreBlog(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminRestoreComment(ctx context.Context, arg AdminRestoreCommentParams) (error) {
+func (q *QuerierProxier) AdminRestoreComment(ctx context.Context, arg AdminRestoreCommentParams) error {
 	if q.OverwrittenAdminRestoreComment == nil {
 		panic("AdminRestoreComment not implemented")
 	}
 	return q.OverwrittenAdminRestoreComment(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminRestoreImagepost(ctx context.Context, arg AdminRestoreImagepostParams) (error) {
+func (q *QuerierProxier) AdminRestoreImagepost(ctx context.Context, arg AdminRestoreImagepostParams) error {
 	if q.OverwrittenAdminRestoreImagepost == nil {
 		panic("AdminRestoreImagepost not implemented")
 	}
 	return q.OverwrittenAdminRestoreImagepost(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminRestoreLink(ctx context.Context, arg AdminRestoreLinkParams) (error) {
+func (q *QuerierProxier) AdminRestoreLink(ctx context.Context, arg AdminRestoreLinkParams) error {
 	if q.OverwrittenAdminRestoreLink == nil {
 		panic("AdminRestoreLink not implemented")
 	}
 	return q.OverwrittenAdminRestoreLink(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminRestoreUser(ctx context.Context, idusers int32) (error) {
+func (q *QuerierProxier) AdminRestoreUser(ctx context.Context, idusers int32) error {
 	if q.OverwrittenAdminRestoreUser == nil {
 		panic("AdminRestoreUser not implemented")
 	}
 	return q.OverwrittenAdminRestoreUser(ctx, idusers)
 }
 
-func (q *QuerierProxier) AdminRestoreWriting(ctx context.Context, arg AdminRestoreWritingParams) (error) {
+func (q *QuerierProxier) AdminRestoreWriting(ctx context.Context, arg AdminRestoreWritingParams) error {
 	if q.OverwrittenAdminRestoreWriting == nil {
 		panic("AdminRestoreWriting not implemented")
 	}
 	return q.OverwrittenAdminRestoreWriting(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminScrubBlog(ctx context.Context, arg AdminScrubBlogParams) (error) {
+func (q *QuerierProxier) AdminScrubBlog(ctx context.Context, arg AdminScrubBlogParams) error {
 	if q.OverwrittenAdminScrubBlog == nil {
 		panic("AdminScrubBlog not implemented")
 	}
 	return q.OverwrittenAdminScrubBlog(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminScrubComment(ctx context.Context, arg AdminScrubCommentParams) (error) {
+func (q *QuerierProxier) AdminScrubComment(ctx context.Context, arg AdminScrubCommentParams) error {
 	if q.OverwrittenAdminScrubComment == nil {
 		panic("AdminScrubComment not implemented")
 	}
 	return q.OverwrittenAdminScrubComment(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminScrubImagepost(ctx context.Context, idimagepost int32) (error) {
+func (q *QuerierProxier) AdminScrubImagepost(ctx context.Context, idimagepost int32) error {
 	if q.OverwrittenAdminScrubImagepost == nil {
 		panic("AdminScrubImagepost not implemented")
 	}
 	return q.OverwrittenAdminScrubImagepost(ctx, idimagepost)
 }
 
-func (q *QuerierProxier) AdminScrubLink(ctx context.Context, arg AdminScrubLinkParams) (error) {
+func (q *QuerierProxier) AdminScrubLink(ctx context.Context, arg AdminScrubLinkParams) error {
 	if q.OverwrittenAdminScrubLink == nil {
 		panic("AdminScrubLink not implemented")
 	}
 	return q.OverwrittenAdminScrubLink(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminScrubUser(ctx context.Context, arg AdminScrubUserParams) (error) {
+func (q *QuerierProxier) AdminScrubUser(ctx context.Context, arg AdminScrubUserParams) error {
 	if q.OverwrittenAdminScrubUser == nil {
 		panic("AdminScrubUser not implemented")
 	}
 	return q.OverwrittenAdminScrubUser(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminScrubWriting(ctx context.Context, arg AdminScrubWritingParams) (error) {
+func (q *QuerierProxier) AdminScrubWriting(ctx context.Context, arg AdminScrubWritingParams) error {
 	if q.OverwrittenAdminScrubWriting == nil {
 		panic("AdminScrubWriting not implemented")
 	}
 	return q.OverwrittenAdminScrubWriting(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminSetAnnouncementActive(ctx context.Context, arg AdminSetAnnouncementActiveParams) (error) {
+func (q *QuerierProxier) AdminSetAnnouncementActive(ctx context.Context, arg AdminSetAnnouncementActiveParams) error {
 	if q.OverwrittenAdminSetAnnouncementActive == nil {
 		panic("AdminSetAnnouncementActive not implemented")
 	}
 	return q.OverwrittenAdminSetAnnouncementActive(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminSetTemplateOverride(ctx context.Context, arg AdminSetTemplateOverrideParams) (error) {
+func (q *QuerierProxier) AdminSetTemplateOverride(ctx context.Context, arg AdminSetTemplateOverrideParams) error {
 	if q.OverwrittenAdminSetTemplateOverride == nil {
 		panic("AdminSetTemplateOverride not implemented")
 	}
 	return q.OverwrittenAdminSetTemplateOverride(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminUpdateBannedIp(ctx context.Context, arg AdminUpdateBannedIpParams) (error) {
+func (q *QuerierProxier) AdminUpdateBannedIp(ctx context.Context, arg AdminUpdateBannedIpParams) error {
 	if q.OverwrittenAdminUpdateBannedIp == nil {
 		panic("AdminUpdateBannedIp not implemented")
 	}
 	return q.OverwrittenAdminUpdateBannedIp(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminUpdateFAQQuestionAnswer(ctx context.Context, arg AdminUpdateFAQQuestionAnswerParams) (error) {
+func (q *QuerierProxier) AdminUpdateFAQQuestionAnswer(ctx context.Context, arg AdminUpdateFAQQuestionAnswerParams) error {
 	if q.OverwrittenAdminUpdateFAQQuestionAnswer == nil {
 		panic("AdminUpdateFAQQuestionAnswer not implemented")
 	}
 	return q.OverwrittenAdminUpdateFAQQuestionAnswer(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminUpdateGrantActive(ctx context.Context, arg AdminUpdateGrantActiveParams) (error) {
+func (q *QuerierProxier) AdminUpdateGrantActive(ctx context.Context, arg AdminUpdateGrantActiveParams) error {
 	if q.OverwrittenAdminUpdateGrantActive == nil {
 		panic("AdminUpdateGrantActive not implemented")
 	}
 	return q.OverwrittenAdminUpdateGrantActive(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminUpdateImageBoard(ctx context.Context, arg AdminUpdateImageBoardParams) (error) {
+func (q *QuerierProxier) AdminUpdateImageBoard(ctx context.Context, arg AdminUpdateImageBoardParams) error {
 	if q.OverwrittenAdminUpdateImageBoard == nil {
 		panic("AdminUpdateImageBoard not implemented")
 	}
 	return q.OverwrittenAdminUpdateImageBoard(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminUpdateImagePost(ctx context.Context, arg AdminUpdateImagePostParams) (error) {
+func (q *QuerierProxier) AdminUpdateImagePost(ctx context.Context, arg AdminUpdateImagePostParams) error {
 	if q.OverwrittenAdminUpdateImagePost == nil {
 		panic("AdminUpdateImagePost not implemented")
 	}
 	return q.OverwrittenAdminUpdateImagePost(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminUpdateLinkerCategorySortOrder(ctx context.Context, arg AdminUpdateLinkerCategorySortOrderParams) (error) {
+func (q *QuerierProxier) AdminUpdateLinkerCategorySortOrder(ctx context.Context, arg AdminUpdateLinkerCategorySortOrderParams) error {
 	if q.OverwrittenAdminUpdateLinkerCategorySortOrder == nil {
 		panic("AdminUpdateLinkerCategorySortOrder not implemented")
 	}
 	return q.OverwrittenAdminUpdateLinkerCategorySortOrder(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminUpdateLinkerItem(ctx context.Context, arg AdminUpdateLinkerItemParams) (error) {
+func (q *QuerierProxier) AdminUpdateLinkerItem(ctx context.Context, arg AdminUpdateLinkerItemParams) error {
 	if q.OverwrittenAdminUpdateLinkerItem == nil {
 		panic("AdminUpdateLinkerItem not implemented")
 	}
 	return q.OverwrittenAdminUpdateLinkerItem(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminUpdateLinkerQueuedItem(ctx context.Context, arg AdminUpdateLinkerQueuedItemParams) (error) {
+func (q *QuerierProxier) AdminUpdateLinkerQueuedItem(ctx context.Context, arg AdminUpdateLinkerQueuedItemParams) error {
 	if q.OverwrittenAdminUpdateLinkerQueuedItem == nil {
 		panic("AdminUpdateLinkerQueuedItem not implemented")
 	}
 	return q.OverwrittenAdminUpdateLinkerQueuedItem(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminUpdateRequestStatus(ctx context.Context, arg AdminUpdateRequestStatusParams) (error) {
+func (q *QuerierProxier) AdminUpdateRequestStatus(ctx context.Context, arg AdminUpdateRequestStatusParams) error {
 	if q.OverwrittenAdminUpdateRequestStatus == nil {
 		panic("AdminUpdateRequestStatus not implemented")
 	}
 	return q.OverwrittenAdminUpdateRequestStatus(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminUpdateRole(ctx context.Context, arg AdminUpdateRoleParams) (error) {
+func (q *QuerierProxier) AdminUpdateRole(ctx context.Context, arg AdminUpdateRoleParams) error {
 	if q.OverwrittenAdminUpdateRole == nil {
 		panic("AdminUpdateRole not implemented")
 	}
 	return q.OverwrittenAdminUpdateRole(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminUpdateRolePublicProfileAllowed(ctx context.Context, arg AdminUpdateRolePublicProfileAllowedParams) (error) {
+func (q *QuerierProxier) AdminUpdateRolePublicProfileAllowed(ctx context.Context, arg AdminUpdateRolePublicProfileAllowedParams) error {
 	if q.OverwrittenAdminUpdateRolePublicProfileAllowed == nil {
 		panic("AdminUpdateRolePublicProfileAllowed not implemented")
 	}
 	return q.OverwrittenAdminUpdateRolePublicProfileAllowed(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminUpdateUserEmail(ctx context.Context, arg AdminUpdateUserEmailParams) (error) {
+func (q *QuerierProxier) AdminUpdateUserEmail(ctx context.Context, arg AdminUpdateUserEmailParams) error {
 	if q.OverwrittenAdminUpdateUserEmail == nil {
 		panic("AdminUpdateUserEmail not implemented")
 	}
 	return q.OverwrittenAdminUpdateUserEmail(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminUpdateUserRole(ctx context.Context, arg AdminUpdateUserRoleParams) (error) {
+func (q *QuerierProxier) AdminUpdateUserRole(ctx context.Context, arg AdminUpdateUserRoleParams) error {
 	if q.OverwrittenAdminUpdateUserRole == nil {
 		panic("AdminUpdateUserRole not implemented")
 	}
 	return q.OverwrittenAdminUpdateUserRole(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminUpdateUsernameByID(ctx context.Context, arg AdminUpdateUsernameByIDParams) (error) {
+func (q *QuerierProxier) AdminUpdateUsernameByID(ctx context.Context, arg AdminUpdateUsernameByIDParams) error {
 	if q.OverwrittenAdminUpdateUsernameByID == nil {
 		panic("AdminUpdateUsernameByID not implemented")
 	}
 	return q.OverwrittenAdminUpdateUsernameByID(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminUpdateWritingCategory(ctx context.Context, arg AdminUpdateWritingCategoryParams) (error) {
+func (q *QuerierProxier) AdminUpdateWritingCategory(ctx context.Context, arg AdminUpdateWritingCategoryParams) error {
 	if q.OverwrittenAdminUpdateWritingCategory == nil {
 		panic("AdminUpdateWritingCategory not implemented")
 	}
 	return q.OverwrittenAdminUpdateWritingCategory(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminUserPostCounts(ctx context.Context, ) ([]*AdminUserPostCountsRow, error) {
+func (q *QuerierProxier) AdminUserPostCounts(ctx context.Context) ([]*AdminUserPostCountsRow, error) {
 	if q.OverwrittenAdminUserPostCounts == nil {
 		panic("AdminUserPostCounts not implemented")
 	}
@@ -1712,14 +1713,14 @@ func (q *QuerierProxier) AdminWordListWithCountsByPrefix(ctx context.Context, ar
 	return q.OverwrittenAdminWordListWithCountsByPrefix(ctx, arg)
 }
 
-func (q *QuerierProxier) AdminWritingCategoryCounts(ctx context.Context, ) ([]*AdminWritingCategoryCountsRow, error) {
+func (q *QuerierProxier) AdminWritingCategoryCounts(ctx context.Context) ([]*AdminWritingCategoryCountsRow, error) {
 	if q.OverwrittenAdminWritingCategoryCounts == nil {
 		panic("AdminWritingCategoryCounts not implemented")
 	}
 	return q.OverwrittenAdminWritingCategoryCounts(ctx)
 }
 
-func (q *QuerierProxier) ClearUnreadContentPrivateLabelExceptUser(ctx context.Context, arg ClearUnreadContentPrivateLabelExceptUserParams) (error) {
+func (q *QuerierProxier) ClearUnreadContentPrivateLabelExceptUser(ctx context.Context, arg ClearUnreadContentPrivateLabelExceptUserParams) error {
 	if q.OverwrittenClearUnreadContentPrivateLabelExceptUser == nil {
 		panic("ClearUnreadContentPrivateLabelExceptUser not implemented")
 	}
@@ -1733,7 +1734,7 @@ func (q *QuerierProxier) CreateBlogEntryForWriter(ctx context.Context, arg Creat
 	return q.OverwrittenCreateBlogEntryForWriter(ctx, arg)
 }
 
-func (q *QuerierProxier) CreateBookmarksForLister(ctx context.Context, arg CreateBookmarksForListerParams) (error) {
+func (q *QuerierProxier) CreateBookmarksForLister(ctx context.Context, arg CreateBookmarksForListerParams) error {
 	if q.OverwrittenCreateBookmarksForLister == nil {
 		panic("CreateBookmarksForLister not implemented")
 	}
@@ -1747,7 +1748,7 @@ func (q *QuerierProxier) CreateCommentInSectionForCommenter(ctx context.Context,
 	return q.OverwrittenCreateCommentInSectionForCommenter(ctx, arg)
 }
 
-func (q *QuerierProxier) CreateFAQQuestionForWriter(ctx context.Context, arg CreateFAQQuestionForWriterParams) (error) {
+func (q *QuerierProxier) CreateFAQQuestionForWriter(ctx context.Context, arg CreateFAQQuestionForWriterParams) error {
 	if q.OverwrittenCreateFAQQuestionForWriter == nil {
 		panic("CreateFAQQuestionForWriter not implemented")
 	}
@@ -1761,6 +1762,13 @@ func (q *QuerierProxier) CreateForumTopicForPoster(ctx context.Context, arg Crea
 	return q.OverwrittenCreateForumTopicForPoster(ctx, arg)
 }
 
+func (q *QuerierProxier) CreateForumThreadForPoster(ctx context.Context, arg CreateForumThreadForPosterParams) (int64, error) {
+	if q.OverwrittenCreateForumThreadForPoster == nil {
+		panic("CreateForumThreadForPoster not implemented")
+	}
+	return q.OverwrittenCreateForumThreadForPoster(ctx, arg)
+}
+
 func (q *QuerierProxier) CreateImagePostForPoster(ctx context.Context, arg CreateImagePostForPosterParams) (int64, error) {
 	if q.OverwrittenCreateImagePostForPoster == nil {
 		panic("CreateImagePostForPoster not implemented")
@@ -1768,7 +1776,7 @@ func (q *QuerierProxier) CreateImagePostForPoster(ctx context.Context, arg Creat
 	return q.OverwrittenCreateImagePostForPoster(ctx, arg)
 }
 
-func (q *QuerierProxier) CreateLinkerQueuedItemForWriter(ctx context.Context, arg CreateLinkerQueuedItemForWriterParams) (error) {
+func (q *QuerierProxier) CreateLinkerQueuedItemForWriter(ctx context.Context, arg CreateLinkerQueuedItemForWriterParams) error {
 	if q.OverwrittenCreateLinkerQueuedItemForWriter == nil {
 		panic("CreateLinkerQueuedItemForWriter not implemented")
 	}
@@ -1782,7 +1790,7 @@ func (q *QuerierProxier) CreateNewsPostForWriter(ctx context.Context, arg Create
 	return q.OverwrittenCreateNewsPostForWriter(ctx, arg)
 }
 
-func (q *QuerierProxier) CreatePasswordResetForUser(ctx context.Context, arg CreatePasswordResetForUserParams) (error) {
+func (q *QuerierProxier) CreatePasswordResetForUser(ctx context.Context, arg CreatePasswordResetForUserParams) error {
 	if q.OverwrittenCreatePasswordResetForUser == nil {
 		panic("CreatePasswordResetForUser not implemented")
 	}
@@ -1803,42 +1811,42 @@ func (q *QuerierProxier) CreateWritingForWriter(ctx context.Context, arg CreateW
 	return q.OverwrittenCreateWritingForWriter(ctx, arg)
 }
 
-func (q *QuerierProxier) DeactivateNewsPost(ctx context.Context, idsitenews int32) (error) {
+func (q *QuerierProxier) DeactivateNewsPost(ctx context.Context, idsitenews int32) error {
 	if q.OverwrittenDeactivateNewsPost == nil {
 		panic("DeactivateNewsPost not implemented")
 	}
 	return q.OverwrittenDeactivateNewsPost(ctx, idsitenews)
 }
 
-func (q *QuerierProxier) DeleteNotificationForLister(ctx context.Context, arg DeleteNotificationForListerParams) (error) {
+func (q *QuerierProxier) DeleteNotificationForLister(ctx context.Context, arg DeleteNotificationForListerParams) error {
 	if q.OverwrittenDeleteNotificationForLister == nil {
 		panic("DeleteNotificationForLister not implemented")
 	}
 	return q.OverwrittenDeleteNotificationForLister(ctx, arg)
 }
 
-func (q *QuerierProxier) DeleteSubscriptionByIDForSubscriber(ctx context.Context, arg DeleteSubscriptionByIDForSubscriberParams) (error) {
+func (q *QuerierProxier) DeleteSubscriptionByIDForSubscriber(ctx context.Context, arg DeleteSubscriptionByIDForSubscriberParams) error {
 	if q.OverwrittenDeleteSubscriptionByIDForSubscriber == nil {
 		panic("DeleteSubscriptionByIDForSubscriber not implemented")
 	}
 	return q.OverwrittenDeleteSubscriptionByIDForSubscriber(ctx, arg)
 }
 
-func (q *QuerierProxier) DeleteSubscriptionForSubscriber(ctx context.Context, arg DeleteSubscriptionForSubscriberParams) (error) {
+func (q *QuerierProxier) DeleteSubscriptionForSubscriber(ctx context.Context, arg DeleteSubscriptionForSubscriberParams) error {
 	if q.OverwrittenDeleteSubscriptionForSubscriber == nil {
 		panic("DeleteSubscriptionForSubscriber not implemented")
 	}
 	return q.OverwrittenDeleteSubscriptionForSubscriber(ctx, arg)
 }
 
-func (q *QuerierProxier) DeleteUserEmailForOwner(ctx context.Context, arg DeleteUserEmailForOwnerParams) (error) {
+func (q *QuerierProxier) DeleteUserEmailForOwner(ctx context.Context, arg DeleteUserEmailForOwnerParams) error {
 	if q.OverwrittenDeleteUserEmailForOwner == nil {
 		panic("DeleteUserEmailForOwner not implemented")
 	}
 	return q.OverwrittenDeleteUserEmailForOwner(ctx, arg)
 }
 
-func (q *QuerierProxier) DeleteUserLanguagesForUser(ctx context.Context, userID int32) (error) {
+func (q *QuerierProxier) DeleteUserLanguagesForUser(ctx context.Context, userID int32) error {
 	if q.OverwrittenDeleteUserLanguagesForUser == nil {
 		panic("DeleteUserLanguagesForUser not implemented")
 	}
@@ -1866,7 +1874,7 @@ func (q *QuerierProxier) GetAllAnsweredFAQWithFAQCategoriesForUser(ctx context.C
 	return q.OverwrittenGetAllAnsweredFAQWithFAQCategoriesForUser(ctx, arg)
 }
 
-func (q *QuerierProxier) GetAllCommentsForIndex(ctx context.Context, ) ([]*GetAllCommentsForIndexRow, error) {
+func (q *QuerierProxier) GetAllCommentsForIndex(ctx context.Context) ([]*GetAllCommentsForIndexRow, error) {
 	if q.OverwrittenGetAllCommentsForIndex == nil {
 		panic("GetAllCommentsForIndex not implemented")
 	}
@@ -1887,7 +1895,7 @@ func (q *QuerierProxier) GetAllForumCategoriesWithSubcategoryCount(ctx context.C
 	return q.OverwrittenGetAllForumCategoriesWithSubcategoryCount(ctx, arg)
 }
 
-func (q *QuerierProxier) GetAllForumThreadsWithTopic(ctx context.Context, ) ([]*GetAllForumThreadsWithTopicRow, error) {
+func (q *QuerierProxier) GetAllForumThreadsWithTopic(ctx context.Context) ([]*GetAllForumThreadsWithTopicRow, error) {
 	if q.OverwrittenGetAllForumThreadsWithTopic == nil {
 		panic("GetAllForumThreadsWithTopic not implemented")
 	}
@@ -1908,14 +1916,14 @@ func (q *QuerierProxier) GetAllForumTopicsByCategoryIdForUserWithLastPosterName(
 	return q.OverwrittenGetAllForumTopicsByCategoryIdForUserWithLastPosterName(ctx, arg)
 }
 
-func (q *QuerierProxier) GetAllImagePostsForIndex(ctx context.Context, ) ([]*GetAllImagePostsForIndexRow, error) {
+func (q *QuerierProxier) GetAllImagePostsForIndex(ctx context.Context) ([]*GetAllImagePostsForIndexRow, error) {
 	if q.OverwrittenGetAllImagePostsForIndex == nil {
 		panic("GetAllImagePostsForIndex not implemented")
 	}
 	return q.OverwrittenGetAllImagePostsForIndex(ctx)
 }
 
-func (q *QuerierProxier) GetAllLinkerCategories(ctx context.Context, ) ([]*LinkerCategory, error) {
+func (q *QuerierProxier) GetAllLinkerCategories(ctx context.Context) ([]*LinkerCategory, error) {
 	if q.OverwrittenGetAllLinkerCategories == nil {
 		panic("GetAllLinkerCategories not implemented")
 	}
@@ -1964,21 +1972,21 @@ func (q *QuerierProxier) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCat
 	return q.OverwrittenGetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginated(ctx, arg)
 }
 
-func (q *QuerierProxier) GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails(ctx context.Context, ) ([]*GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetailsRow, error) {
+func (q *QuerierProxier) GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails(ctx context.Context) ([]*GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetailsRow, error) {
 	if q.OverwrittenGetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails == nil {
 		panic("GetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails not implemented")
 	}
 	return q.OverwrittenGetAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails(ctx)
 }
 
-func (q *QuerierProxier) GetAllLinkersForIndex(ctx context.Context, ) ([]*GetAllLinkersForIndexRow, error) {
+func (q *QuerierProxier) GetAllLinkersForIndex(ctx context.Context) ([]*GetAllLinkersForIndexRow, error) {
 	if q.OverwrittenGetAllLinkersForIndex == nil {
 		panic("GetAllLinkersForIndex not implemented")
 	}
 	return q.OverwrittenGetAllLinkersForIndex(ctx)
 }
 
-func (q *QuerierProxier) GetAllSiteNewsForIndex(ctx context.Context, ) ([]*GetAllSiteNewsForIndexRow, error) {
+func (q *QuerierProxier) GetAllSiteNewsForIndex(ctx context.Context) ([]*GetAllSiteNewsForIndexRow, error) {
 	if q.OverwrittenGetAllSiteNewsForIndex == nil {
 		panic("GetAllSiteNewsForIndex not implemented")
 	}
@@ -1992,7 +2000,7 @@ func (q *QuerierProxier) GetAllWritingsByAuthorForLister(ctx context.Context, ar
 	return q.OverwrittenGetAllWritingsByAuthorForLister(ctx, arg)
 }
 
-func (q *QuerierProxier) GetAllWritingsForIndex(ctx context.Context, ) ([]*GetAllWritingsForIndexRow, error) {
+func (q *QuerierProxier) GetAllWritingsForIndex(ctx context.Context) ([]*GetAllWritingsForIndexRow, error) {
 	if q.OverwrittenGetAllWritingsForIndex == nil {
 		panic("GetAllWritingsForIndex not implemented")
 	}
@@ -2195,7 +2203,7 @@ func (q *QuerierProxier) GetLatestAnnouncementByNewsID(ctx context.Context, site
 	return q.OverwrittenGetLatestAnnouncementByNewsID(ctx, siteNewsID)
 }
 
-func (q *QuerierProxier) GetLinkerCategoriesWithCount(ctx context.Context, ) ([]*GetLinkerCategoriesWithCountRow, error) {
+func (q *QuerierProxier) GetLinkerCategoriesWithCount(ctx context.Context) ([]*GetLinkerCategoriesWithCountRow, error) {
 	if q.OverwrittenGetLinkerCategoriesWithCount == nil {
 		panic("GetLinkerCategoriesWithCount not implemented")
 	}
@@ -2209,7 +2217,7 @@ func (q *QuerierProxier) GetLinkerCategoryById(ctx context.Context, id int32) (*
 	return q.OverwrittenGetLinkerCategoryById(ctx, id)
 }
 
-func (q *QuerierProxier) GetLinkerCategoryLinkCounts(ctx context.Context, ) ([]*GetLinkerCategoryLinkCountsRow, error) {
+func (q *QuerierProxier) GetLinkerCategoryLinkCounts(ctx context.Context) ([]*GetLinkerCategoryLinkCountsRow, error) {
 	if q.OverwrittenGetLinkerCategoryLinkCounts == nil {
 		panic("GetLinkerCategoryLinkCounts not implemented")
 	}
@@ -2419,14 +2427,14 @@ func (q *QuerierProxier) GetUserRole(ctx context.Context, usersIdusers int32) (s
 	return q.OverwrittenGetUserRole(ctx, usersIdusers)
 }
 
-func (q *QuerierProxier) GetUserRoles(ctx context.Context, ) ([]*GetUserRolesRow, error) {
+func (q *QuerierProxier) GetUserRoles(ctx context.Context) ([]*GetUserRolesRow, error) {
 	if q.OverwrittenGetUserRoles == nil {
 		panic("GetUserRoles not implemented")
 	}
 	return q.OverwrittenGetUserRoles(ctx)
 }
 
-func (q *QuerierProxier) GetVerifiedUserEmails(ctx context.Context, ) ([]*GetVerifiedUserEmailsRow, error) {
+func (q *QuerierProxier) GetVerifiedUserEmails(ctx context.Context) ([]*GetVerifiedUserEmailsRow, error) {
 	if q.OverwrittenGetVerifiedUserEmails == nil {
 		panic("GetVerifiedUserEmails not implemented")
 	}
@@ -2447,21 +2455,21 @@ func (q *QuerierProxier) GetWritingForListerByID(ctx context.Context, arg GetWri
 	return q.OverwrittenGetWritingForListerByID(ctx, arg)
 }
 
-func (q *QuerierProxier) InsertAdminUserComment(ctx context.Context, arg InsertAdminUserCommentParams) (error) {
+func (q *QuerierProxier) InsertAdminUserComment(ctx context.Context, arg InsertAdminUserCommentParams) error {
 	if q.OverwrittenInsertAdminUserComment == nil {
 		panic("InsertAdminUserComment not implemented")
 	}
 	return q.OverwrittenInsertAdminUserComment(ctx, arg)
 }
 
-func (q *QuerierProxier) InsertAuditLog(ctx context.Context, arg InsertAuditLogParams) (error) {
+func (q *QuerierProxier) InsertAuditLog(ctx context.Context, arg InsertAuditLogParams) error {
 	if q.OverwrittenInsertAuditLog == nil {
 		panic("InsertAuditLog not implemented")
 	}
 	return q.OverwrittenInsertAuditLog(ctx, arg)
 }
 
-func (q *QuerierProxier) InsertEmailPreferenceForLister(ctx context.Context, arg InsertEmailPreferenceForListerParams) (error) {
+func (q *QuerierProxier) InsertEmailPreferenceForLister(ctx context.Context, arg InsertEmailPreferenceForListerParams) error {
 	if q.OverwrittenInsertEmailPreferenceForLister == nil {
 		panic("InsertEmailPreferenceForLister not implemented")
 	}
@@ -2475,49 +2483,49 @@ func (q *QuerierProxier) InsertFAQQuestionForWriter(ctx context.Context, arg Ins
 	return q.OverwrittenInsertFAQQuestionForWriter(ctx, arg)
 }
 
-func (q *QuerierProxier) InsertFAQRevisionForUser(ctx context.Context, arg InsertFAQRevisionForUserParams) (error) {
+func (q *QuerierProxier) InsertFAQRevisionForUser(ctx context.Context, arg InsertFAQRevisionForUserParams) error {
 	if q.OverwrittenInsertFAQRevisionForUser == nil {
 		panic("InsertFAQRevisionForUser not implemented")
 	}
 	return q.OverwrittenInsertFAQRevisionForUser(ctx, arg)
 }
 
-func (q *QuerierProxier) InsertPassword(ctx context.Context, arg InsertPasswordParams) (error) {
+func (q *QuerierProxier) InsertPassword(ctx context.Context, arg InsertPasswordParams) error {
 	if q.OverwrittenInsertPassword == nil {
 		panic("InsertPassword not implemented")
 	}
 	return q.OverwrittenInsertPassword(ctx, arg)
 }
 
-func (q *QuerierProxier) InsertPendingEmail(ctx context.Context, arg InsertPendingEmailParams) (error) {
+func (q *QuerierProxier) InsertPendingEmail(ctx context.Context, arg InsertPendingEmailParams) error {
 	if q.OverwrittenInsertPendingEmail == nil {
 		panic("InsertPendingEmail not implemented")
 	}
 	return q.OverwrittenInsertPendingEmail(ctx, arg)
 }
 
-func (q *QuerierProxier) InsertPreferenceForLister(ctx context.Context, arg InsertPreferenceForListerParams) (error) {
+func (q *QuerierProxier) InsertPreferenceForLister(ctx context.Context, arg InsertPreferenceForListerParams) error {
 	if q.OverwrittenInsertPreferenceForLister == nil {
 		panic("InsertPreferenceForLister not implemented")
 	}
 	return q.OverwrittenInsertPreferenceForLister(ctx, arg)
 }
 
-func (q *QuerierProxier) InsertSubscription(ctx context.Context, arg InsertSubscriptionParams) (error) {
+func (q *QuerierProxier) InsertSubscription(ctx context.Context, arg InsertSubscriptionParams) error {
 	if q.OverwrittenInsertSubscription == nil {
 		panic("InsertSubscription not implemented")
 	}
 	return q.OverwrittenInsertSubscription(ctx, arg)
 }
 
-func (q *QuerierProxier) InsertUserEmail(ctx context.Context, arg InsertUserEmailParams) (error) {
+func (q *QuerierProxier) InsertUserEmail(ctx context.Context, arg InsertUserEmailParams) error {
 	if q.OverwrittenInsertUserEmail == nil {
 		panic("InsertUserEmail not implemented")
 	}
 	return q.OverwrittenInsertUserEmail(ctx, arg)
 }
 
-func (q *QuerierProxier) InsertUserLang(ctx context.Context, arg InsertUserLangParams) (error) {
+func (q *QuerierProxier) InsertUserLang(ctx context.Context, arg InsertUserLangParams) error {
 	if q.OverwrittenInsertUserLang == nil {
 		panic("InsertUserLang not implemented")
 	}
@@ -2552,7 +2560,7 @@ func (q *QuerierProxier) LinkerSearchNext(ctx context.Context, arg LinkerSearchN
 	return q.OverwrittenLinkerSearchNext(ctx, arg)
 }
 
-func (q *QuerierProxier) ListActiveBans(ctx context.Context, ) ([]*BannedIp, error) {
+func (q *QuerierProxier) ListActiveBans(ctx context.Context) ([]*BannedIp, error) {
 	if q.OverwrittenListActiveBans == nil {
 		panic("ListActiveBans not implemented")
 	}
@@ -2566,7 +2574,7 @@ func (q *QuerierProxier) ListAdminUserComments(ctx context.Context, usersIdusers
 	return q.OverwrittenListAdminUserComments(ctx, usersIdusers)
 }
 
-func (q *QuerierProxier) ListBannedIps(ctx context.Context, ) ([]*BannedIp, error) {
+func (q *QuerierProxier) ListBannedIps(ctx context.Context) ([]*BannedIp, error) {
 	if q.OverwrittenListBannedIps == nil {
 		panic("ListBannedIps not implemented")
 	}
@@ -2699,7 +2707,7 @@ func (q *QuerierProxier) ListForumcategoryPath(ctx context.Context, categoryID i
 	return q.OverwrittenListForumcategoryPath(ctx, categoryID)
 }
 
-func (q *QuerierProxier) ListGrants(ctx context.Context, ) ([]*Grant, error) {
+func (q *QuerierProxier) ListGrants(ctx context.Context) ([]*Grant, error) {
 	if q.OverwrittenListGrants == nil {
 		panic("ListGrants not implemented")
 	}
@@ -2832,7 +2840,7 @@ func (q *QuerierProxier) ListUserEmailsForLister(ctx context.Context, arg ListUs
 	return q.OverwrittenListUserEmailsForLister(ctx, arg)
 }
 
-func (q *QuerierProxier) ListUsersWithRoles(ctx context.Context, ) ([]*ListUsersWithRolesRow, error) {
+func (q *QuerierProxier) ListUsersWithRoles(ctx context.Context) ([]*ListUsersWithRolesRow, error) {
 	if q.OverwrittenListUsersWithRoles == nil {
 		panic("ListUsersWithRoles not implemented")
 	}
@@ -2888,126 +2896,126 @@ func (q *QuerierProxier) ListWritingsByIDsForLister(ctx context.Context, arg Lis
 	return q.OverwrittenListWritingsByIDsForLister(ctx, arg)
 }
 
-func (q *QuerierProxier) RemoveContentLabelStatus(ctx context.Context, arg RemoveContentLabelStatusParams) (error) {
+func (q *QuerierProxier) RemoveContentLabelStatus(ctx context.Context, arg RemoveContentLabelStatusParams) error {
 	if q.OverwrittenRemoveContentLabelStatus == nil {
 		panic("RemoveContentLabelStatus not implemented")
 	}
 	return q.OverwrittenRemoveContentLabelStatus(ctx, arg)
 }
 
-func (q *QuerierProxier) RemoveContentPrivateLabel(ctx context.Context, arg RemoveContentPrivateLabelParams) (error) {
+func (q *QuerierProxier) RemoveContentPrivateLabel(ctx context.Context, arg RemoveContentPrivateLabelParams) error {
 	if q.OverwrittenRemoveContentPrivateLabel == nil {
 		panic("RemoveContentPrivateLabel not implemented")
 	}
 	return q.OverwrittenRemoveContentPrivateLabel(ctx, arg)
 }
 
-func (q *QuerierProxier) RemoveContentPublicLabel(ctx context.Context, arg RemoveContentPublicLabelParams) (error) {
+func (q *QuerierProxier) RemoveContentPublicLabel(ctx context.Context, arg RemoveContentPublicLabelParams) error {
 	if q.OverwrittenRemoveContentPublicLabel == nil {
 		panic("RemoveContentPublicLabel not implemented")
 	}
 	return q.OverwrittenRemoveContentPublicLabel(ctx, arg)
 }
 
-func (q *QuerierProxier) SetNotificationPriorityForLister(ctx context.Context, arg SetNotificationPriorityForListerParams) (error) {
+func (q *QuerierProxier) SetNotificationPriorityForLister(ctx context.Context, arg SetNotificationPriorityForListerParams) error {
 	if q.OverwrittenSetNotificationPriorityForLister == nil {
 		panic("SetNotificationPriorityForLister not implemented")
 	}
 	return q.OverwrittenSetNotificationPriorityForLister(ctx, arg)
 }
 
-func (q *QuerierProxier) SetNotificationReadForLister(ctx context.Context, arg SetNotificationReadForListerParams) (error) {
+func (q *QuerierProxier) SetNotificationReadForLister(ctx context.Context, arg SetNotificationReadForListerParams) error {
 	if q.OverwrittenSetNotificationReadForLister == nil {
 		panic("SetNotificationReadForLister not implemented")
 	}
 	return q.OverwrittenSetNotificationReadForLister(ctx, arg)
 }
 
-func (q *QuerierProxier) SetNotificationUnreadForLister(ctx context.Context, arg SetNotificationUnreadForListerParams) (error) {
+func (q *QuerierProxier) SetNotificationUnreadForLister(ctx context.Context, arg SetNotificationUnreadForListerParams) error {
 	if q.OverwrittenSetNotificationUnreadForLister == nil {
 		panic("SetNotificationUnreadForLister not implemented")
 	}
 	return q.OverwrittenSetNotificationUnreadForLister(ctx, arg)
 }
 
-func (q *QuerierProxier) SetVerificationCodeForLister(ctx context.Context, arg SetVerificationCodeForListerParams) (error) {
+func (q *QuerierProxier) SetVerificationCodeForLister(ctx context.Context, arg SetVerificationCodeForListerParams) error {
 	if q.OverwrittenSetVerificationCodeForLister == nil {
 		panic("SetVerificationCodeForLister not implemented")
 	}
 	return q.OverwrittenSetVerificationCodeForLister(ctx, arg)
 }
 
-func (q *QuerierProxier) SystemAddToBlogsSearch(ctx context.Context, arg SystemAddToBlogsSearchParams) (error) {
+func (q *QuerierProxier) SystemAddToBlogsSearch(ctx context.Context, arg SystemAddToBlogsSearchParams) error {
 	if q.OverwrittenSystemAddToBlogsSearch == nil {
 		panic("SystemAddToBlogsSearch not implemented")
 	}
 	return q.OverwrittenSystemAddToBlogsSearch(ctx, arg)
 }
 
-func (q *QuerierProxier) SystemAddToForumCommentSearch(ctx context.Context, arg SystemAddToForumCommentSearchParams) (error) {
+func (q *QuerierProxier) SystemAddToForumCommentSearch(ctx context.Context, arg SystemAddToForumCommentSearchParams) error {
 	if q.OverwrittenSystemAddToForumCommentSearch == nil {
 		panic("SystemAddToForumCommentSearch not implemented")
 	}
 	return q.OverwrittenSystemAddToForumCommentSearch(ctx, arg)
 }
 
-func (q *QuerierProxier) SystemAddToForumWritingSearch(ctx context.Context, arg SystemAddToForumWritingSearchParams) (error) {
+func (q *QuerierProxier) SystemAddToForumWritingSearch(ctx context.Context, arg SystemAddToForumWritingSearchParams) error {
 	if q.OverwrittenSystemAddToForumWritingSearch == nil {
 		panic("SystemAddToForumWritingSearch not implemented")
 	}
 	return q.OverwrittenSystemAddToForumWritingSearch(ctx, arg)
 }
 
-func (q *QuerierProxier) SystemAddToImagePostSearch(ctx context.Context, arg SystemAddToImagePostSearchParams) (error) {
+func (q *QuerierProxier) SystemAddToImagePostSearch(ctx context.Context, arg SystemAddToImagePostSearchParams) error {
 	if q.OverwrittenSystemAddToImagePostSearch == nil {
 		panic("SystemAddToImagePostSearch not implemented")
 	}
 	return q.OverwrittenSystemAddToImagePostSearch(ctx, arg)
 }
 
-func (q *QuerierProxier) SystemAddToLinkerSearch(ctx context.Context, arg SystemAddToLinkerSearchParams) (error) {
+func (q *QuerierProxier) SystemAddToLinkerSearch(ctx context.Context, arg SystemAddToLinkerSearchParams) error {
 	if q.OverwrittenSystemAddToLinkerSearch == nil {
 		panic("SystemAddToLinkerSearch not implemented")
 	}
 	return q.OverwrittenSystemAddToLinkerSearch(ctx, arg)
 }
 
-func (q *QuerierProxier) SystemAddToSiteNewsSearch(ctx context.Context, arg SystemAddToSiteNewsSearchParams) (error) {
+func (q *QuerierProxier) SystemAddToSiteNewsSearch(ctx context.Context, arg SystemAddToSiteNewsSearchParams) error {
 	if q.OverwrittenSystemAddToSiteNewsSearch == nil {
 		panic("SystemAddToSiteNewsSearch not implemented")
 	}
 	return q.OverwrittenSystemAddToSiteNewsSearch(ctx, arg)
 }
 
-func (q *QuerierProxier) SystemAssignBlogEntryThreadID(ctx context.Context, arg SystemAssignBlogEntryThreadIDParams) (error) {
+func (q *QuerierProxier) SystemAssignBlogEntryThreadID(ctx context.Context, arg SystemAssignBlogEntryThreadIDParams) error {
 	if q.OverwrittenSystemAssignBlogEntryThreadID == nil {
 		panic("SystemAssignBlogEntryThreadID not implemented")
 	}
 	return q.OverwrittenSystemAssignBlogEntryThreadID(ctx, arg)
 }
 
-func (q *QuerierProxier) SystemAssignImagePostThreadID(ctx context.Context, arg SystemAssignImagePostThreadIDParams) (error) {
+func (q *QuerierProxier) SystemAssignImagePostThreadID(ctx context.Context, arg SystemAssignImagePostThreadIDParams) error {
 	if q.OverwrittenSystemAssignImagePostThreadID == nil {
 		panic("SystemAssignImagePostThreadID not implemented")
 	}
 	return q.OverwrittenSystemAssignImagePostThreadID(ctx, arg)
 }
 
-func (q *QuerierProxier) SystemAssignLinkerThreadID(ctx context.Context, arg SystemAssignLinkerThreadIDParams) (error) {
+func (q *QuerierProxier) SystemAssignLinkerThreadID(ctx context.Context, arg SystemAssignLinkerThreadIDParams) error {
 	if q.OverwrittenSystemAssignLinkerThreadID == nil {
 		panic("SystemAssignLinkerThreadID not implemented")
 	}
 	return q.OverwrittenSystemAssignLinkerThreadID(ctx, arg)
 }
 
-func (q *QuerierProxier) SystemAssignNewsThreadID(ctx context.Context, arg SystemAssignNewsThreadIDParams) (error) {
+func (q *QuerierProxier) SystemAssignNewsThreadID(ctx context.Context, arg SystemAssignNewsThreadIDParams) error {
 	if q.OverwrittenSystemAssignNewsThreadID == nil {
 		panic("SystemAssignNewsThreadID not implemented")
 	}
 	return q.OverwrittenSystemAssignNewsThreadID(ctx, arg)
 }
 
-func (q *QuerierProxier) SystemAssignWritingThreadID(ctx context.Context, arg SystemAssignWritingThreadIDParams) (error) {
+func (q *QuerierProxier) SystemAssignWritingThreadID(ctx context.Context, arg SystemAssignWritingThreadIDParams) error {
 	if q.OverwrittenSystemAssignWritingThreadID == nil {
 		panic("SystemAssignWritingThreadID not implemented")
 	}
@@ -3028,28 +3036,28 @@ func (q *QuerierProxier) SystemCheckRoleGrant(ctx context.Context, arg SystemChe
 	return q.OverwrittenSystemCheckRoleGrant(ctx, arg)
 }
 
-func (q *QuerierProxier) SystemClearContentLabelStatus(ctx context.Context, arg SystemClearContentLabelStatusParams) (error) {
+func (q *QuerierProxier) SystemClearContentLabelStatus(ctx context.Context, arg SystemClearContentLabelStatusParams) error {
 	if q.OverwrittenSystemClearContentLabelStatus == nil {
 		panic("SystemClearContentLabelStatus not implemented")
 	}
 	return q.OverwrittenSystemClearContentLabelStatus(ctx, arg)
 }
 
-func (q *QuerierProxier) SystemClearContentPrivateLabel(ctx context.Context, arg SystemClearContentPrivateLabelParams) (error) {
+func (q *QuerierProxier) SystemClearContentPrivateLabel(ctx context.Context, arg SystemClearContentPrivateLabelParams) error {
 	if q.OverwrittenSystemClearContentPrivateLabel == nil {
 		panic("SystemClearContentPrivateLabel not implemented")
 	}
 	return q.OverwrittenSystemClearContentPrivateLabel(ctx, arg)
 }
 
-func (q *QuerierProxier) SystemCountDeadLetters(ctx context.Context, ) (int64, error) {
+func (q *QuerierProxier) SystemCountDeadLetters(ctx context.Context) (int64, error) {
 	if q.OverwrittenSystemCountDeadLetters == nil {
 		panic("SystemCountDeadLetters not implemented")
 	}
 	return q.OverwrittenSystemCountDeadLetters(ctx)
 }
 
-func (q *QuerierProxier) SystemCountLanguages(ctx context.Context, ) (int64, error) {
+func (q *QuerierProxier) SystemCountLanguages(ctx context.Context) (int64, error) {
 	if q.OverwrittenSystemCountLanguages == nil {
 		panic("SystemCountLanguages not implemented")
 	}
@@ -3070,7 +3078,7 @@ func (q *QuerierProxier) SystemCreateGrant(ctx context.Context, arg SystemCreate
 	return q.OverwrittenSystemCreateGrant(ctx, arg)
 }
 
-func (q *QuerierProxier) SystemCreateNotification(ctx context.Context, arg SystemCreateNotificationParams) (error) {
+func (q *QuerierProxier) SystemCreateNotification(ctx context.Context, arg SystemCreateNotificationParams) error {
 	if q.OverwrittenSystemCreateNotification == nil {
 		panic("SystemCreateNotification not implemented")
 	}
@@ -3091,49 +3099,49 @@ func (q *QuerierProxier) SystemCreateThread(ctx context.Context, forumtopicIdfor
 	return q.OverwrittenSystemCreateThread(ctx, forumtopicIdforumtopic)
 }
 
-func (q *QuerierProxier) SystemCreateUserRole(ctx context.Context, arg SystemCreateUserRoleParams) (error) {
+func (q *QuerierProxier) SystemCreateUserRole(ctx context.Context, arg SystemCreateUserRoleParams) error {
 	if q.OverwrittenSystemCreateUserRole == nil {
 		panic("SystemCreateUserRole not implemented")
 	}
 	return q.OverwrittenSystemCreateUserRole(ctx, arg)
 }
 
-func (q *QuerierProxier) SystemDeleteBlogsSearch(ctx context.Context, ) (error) {
+func (q *QuerierProxier) SystemDeleteBlogsSearch(ctx context.Context) error {
 	if q.OverwrittenSystemDeleteBlogsSearch == nil {
 		panic("SystemDeleteBlogsSearch not implemented")
 	}
 	return q.OverwrittenSystemDeleteBlogsSearch(ctx)
 }
 
-func (q *QuerierProxier) SystemDeleteCommentsSearch(ctx context.Context, ) (error) {
+func (q *QuerierProxier) SystemDeleteCommentsSearch(ctx context.Context) error {
 	if q.OverwrittenSystemDeleteCommentsSearch == nil {
 		panic("SystemDeleteCommentsSearch not implemented")
 	}
 	return q.OverwrittenSystemDeleteCommentsSearch(ctx)
 }
 
-func (q *QuerierProxier) SystemDeleteDeadLetter(ctx context.Context, id int32) (error) {
+func (q *QuerierProxier) SystemDeleteDeadLetter(ctx context.Context, id int32) error {
 	if q.OverwrittenSystemDeleteDeadLetter == nil {
 		panic("SystemDeleteDeadLetter not implemented")
 	}
 	return q.OverwrittenSystemDeleteDeadLetter(ctx, id)
 }
 
-func (q *QuerierProxier) SystemDeleteImagePostSearch(ctx context.Context, ) (error) {
+func (q *QuerierProxier) SystemDeleteImagePostSearch(ctx context.Context) error {
 	if q.OverwrittenSystemDeleteImagePostSearch == nil {
 		panic("SystemDeleteImagePostSearch not implemented")
 	}
 	return q.OverwrittenSystemDeleteImagePostSearch(ctx)
 }
 
-func (q *QuerierProxier) SystemDeleteLinkerSearch(ctx context.Context, ) (error) {
+func (q *QuerierProxier) SystemDeleteLinkerSearch(ctx context.Context) error {
 	if q.OverwrittenSystemDeleteLinkerSearch == nil {
 		panic("SystemDeleteLinkerSearch not implemented")
 	}
 	return q.OverwrittenSystemDeleteLinkerSearch(ctx)
 }
 
-func (q *QuerierProxier) SystemDeletePasswordReset(ctx context.Context, id int32) (error) {
+func (q *QuerierProxier) SystemDeletePasswordReset(ctx context.Context, id int32) error {
 	if q.OverwrittenSystemDeletePasswordReset == nil {
 		panic("SystemDeletePasswordReset not implemented")
 	}
@@ -3147,42 +3155,42 @@ func (q *QuerierProxier) SystemDeletePasswordResetsByUser(ctx context.Context, u
 	return q.OverwrittenSystemDeletePasswordResetsByUser(ctx, userID)
 }
 
-func (q *QuerierProxier) SystemDeleteSessionByID(ctx context.Context, sessionID string) (error) {
+func (q *QuerierProxier) SystemDeleteSessionByID(ctx context.Context, sessionID string) error {
 	if q.OverwrittenSystemDeleteSessionByID == nil {
 		panic("SystemDeleteSessionByID not implemented")
 	}
 	return q.OverwrittenSystemDeleteSessionByID(ctx, sessionID)
 }
 
-func (q *QuerierProxier) SystemDeleteSiteNewsSearch(ctx context.Context, ) (error) {
+func (q *QuerierProxier) SystemDeleteSiteNewsSearch(ctx context.Context) error {
 	if q.OverwrittenSystemDeleteSiteNewsSearch == nil {
 		panic("SystemDeleteSiteNewsSearch not implemented")
 	}
 	return q.OverwrittenSystemDeleteSiteNewsSearch(ctx)
 }
 
-func (q *QuerierProxier) SystemDeleteUserEmailsByEmailExceptID(ctx context.Context, arg SystemDeleteUserEmailsByEmailExceptIDParams) (error) {
+func (q *QuerierProxier) SystemDeleteUserEmailsByEmailExceptID(ctx context.Context, arg SystemDeleteUserEmailsByEmailExceptIDParams) error {
 	if q.OverwrittenSystemDeleteUserEmailsByEmailExceptID == nil {
 		panic("SystemDeleteUserEmailsByEmailExceptID not implemented")
 	}
 	return q.OverwrittenSystemDeleteUserEmailsByEmailExceptID(ctx, arg)
 }
 
-func (q *QuerierProxier) SystemDeleteWritingSearch(ctx context.Context, ) (error) {
+func (q *QuerierProxier) SystemDeleteWritingSearch(ctx context.Context) error {
 	if q.OverwrittenSystemDeleteWritingSearch == nil {
 		panic("SystemDeleteWritingSearch not implemented")
 	}
 	return q.OverwrittenSystemDeleteWritingSearch(ctx)
 }
 
-func (q *QuerierProxier) SystemDeleteWritingSearchByWritingID(ctx context.Context, writingID int32) (error) {
+func (q *QuerierProxier) SystemDeleteWritingSearchByWritingID(ctx context.Context, writingID int32) error {
 	if q.OverwrittenSystemDeleteWritingSearchByWritingID == nil {
 		panic("SystemDeleteWritingSearchByWritingID not implemented")
 	}
 	return q.OverwrittenSystemDeleteWritingSearchByWritingID(ctx, writingID)
 }
 
-func (q *QuerierProxier) SystemGetAllBlogsForIndex(ctx context.Context, ) ([]*SystemGetAllBlogsForIndexRow, error) {
+func (q *QuerierProxier) SystemGetAllBlogsForIndex(ctx context.Context) ([]*SystemGetAllBlogsForIndexRow, error) {
 	if q.OverwrittenSystemGetAllBlogsForIndex == nil {
 		panic("SystemGetAllBlogsForIndex not implemented")
 	}
@@ -3196,7 +3204,7 @@ func (q *QuerierProxier) SystemGetBlogEntryByID(ctx context.Context, idblogs int
 	return q.OverwrittenSystemGetBlogEntryByID(ctx, idblogs)
 }
 
-func (q *QuerierProxier) SystemGetFAQQuestions(ctx context.Context, ) ([]*Faq, error) {
+func (q *QuerierProxier) SystemGetFAQQuestions(ctx context.Context) ([]*Faq, error) {
 	if q.OverwrittenSystemGetFAQQuestions == nil {
 		panic("SystemGetFAQQuestions not implemented")
 	}
@@ -3280,28 +3288,28 @@ func (q *QuerierProxier) SystemGetWritingByID(ctx context.Context, idwriting int
 	return q.OverwrittenSystemGetWritingByID(ctx, idwriting)
 }
 
-func (q *QuerierProxier) SystemIncrementPendingEmailError(ctx context.Context, id int32) (error) {
+func (q *QuerierProxier) SystemIncrementPendingEmailError(ctx context.Context, id int32) error {
 	if q.OverwrittenSystemIncrementPendingEmailError == nil {
 		panic("SystemIncrementPendingEmailError not implemented")
 	}
 	return q.OverwrittenSystemIncrementPendingEmailError(ctx, id)
 }
 
-func (q *QuerierProxier) SystemInsertDeadLetter(ctx context.Context, message string) (error) {
+func (q *QuerierProxier) SystemInsertDeadLetter(ctx context.Context, message string) error {
 	if q.OverwrittenSystemInsertDeadLetter == nil {
 		panic("SystemInsertDeadLetter not implemented")
 	}
 	return q.OverwrittenSystemInsertDeadLetter(ctx, message)
 }
 
-func (q *QuerierProxier) SystemInsertLoginAttempt(ctx context.Context, arg SystemInsertLoginAttemptParams) (error) {
+func (q *QuerierProxier) SystemInsertLoginAttempt(ctx context.Context, arg SystemInsertLoginAttemptParams) error {
 	if q.OverwrittenSystemInsertLoginAttempt == nil {
 		panic("SystemInsertLoginAttempt not implemented")
 	}
 	return q.OverwrittenSystemInsertLoginAttempt(ctx, arg)
 }
 
-func (q *QuerierProxier) SystemInsertSession(ctx context.Context, arg SystemInsertSessionParams) (error) {
+func (q *QuerierProxier) SystemInsertSession(ctx context.Context, arg SystemInsertSessionParams) error {
 	if q.OverwrittenSystemInsertSession == nil {
 		panic("SystemInsertSession not implemented")
 	}
@@ -3315,14 +3323,14 @@ func (q *QuerierProxier) SystemInsertUser(ctx context.Context, username sql.Null
 	return q.OverwrittenSystemInsertUser(ctx, username)
 }
 
-func (q *QuerierProxier) SystemLatestDeadLetter(ctx context.Context, ) (interface{}, error) {
+func (q *QuerierProxier) SystemLatestDeadLetter(ctx context.Context) (interface{}, error) {
 	if q.OverwrittenSystemLatestDeadLetter == nil {
 		panic("SystemLatestDeadLetter not implemented")
 	}
 	return q.OverwrittenSystemLatestDeadLetter(ctx)
 }
 
-func (q *QuerierProxier) SystemListAllUsers(ctx context.Context, ) ([]*SystemListAllUsersRow, error) {
+func (q *QuerierProxier) SystemListAllUsers(ctx context.Context) ([]*SystemListAllUsersRow, error) {
 	if q.OverwrittenSystemListAllUsers == nil {
 		panic("SystemListAllUsers not implemented")
 	}
@@ -3350,7 +3358,7 @@ func (q *QuerierProxier) SystemListDeadLetters(ctx context.Context, limit int32)
 	return q.OverwrittenSystemListDeadLetters(ctx, limit)
 }
 
-func (q *QuerierProxier) SystemListLanguages(ctx context.Context, ) ([]*Language, error) {
+func (q *QuerierProxier) SystemListLanguages(ctx context.Context) ([]*Language, error) {
 	if q.OverwrittenSystemListLanguages == nil {
 		panic("SystemListLanguages not implemented")
 	}
@@ -3378,7 +3386,7 @@ func (q *QuerierProxier) SystemListPublicWritingsInCategory(ctx context.Context,
 	return q.OverwrittenSystemListPublicWritingsInCategory(ctx, arg)
 }
 
-func (q *QuerierProxier) SystemListUserInfo(ctx context.Context, ) ([]*SystemListUserInfoRow, error) {
+func (q *QuerierProxier) SystemListUserInfo(ctx context.Context) ([]*SystemListUserInfoRow, error) {
 	if q.OverwrittenSystemListUserInfo == nil {
 		panic("SystemListUserInfo not implemented")
 	}
@@ -3399,28 +3407,28 @@ func (q *QuerierProxier) SystemListWritingCategories(ctx context.Context, arg Sy
 	return q.OverwrittenSystemListWritingCategories(ctx, arg)
 }
 
-func (q *QuerierProxier) SystemMarkPasswordResetVerified(ctx context.Context, id int32) (error) {
+func (q *QuerierProxier) SystemMarkPasswordResetVerified(ctx context.Context, id int32) error {
 	if q.OverwrittenSystemMarkPasswordResetVerified == nil {
 		panic("SystemMarkPasswordResetVerified not implemented")
 	}
 	return q.OverwrittenSystemMarkPasswordResetVerified(ctx, id)
 }
 
-func (q *QuerierProxier) SystemMarkPendingEmailSent(ctx context.Context, id int32) (error) {
+func (q *QuerierProxier) SystemMarkPendingEmailSent(ctx context.Context, id int32) error {
 	if q.OverwrittenSystemMarkPendingEmailSent == nil {
 		panic("SystemMarkPendingEmailSent not implemented")
 	}
 	return q.OverwrittenSystemMarkPendingEmailSent(ctx, id)
 }
 
-func (q *QuerierProxier) SystemMarkUserEmailVerified(ctx context.Context, arg SystemMarkUserEmailVerifiedParams) (error) {
+func (q *QuerierProxier) SystemMarkUserEmailVerified(ctx context.Context, arg SystemMarkUserEmailVerifiedParams) error {
 	if q.OverwrittenSystemMarkUserEmailVerified == nil {
 		panic("SystemMarkUserEmailVerified not implemented")
 	}
 	return q.OverwrittenSystemMarkUserEmailVerified(ctx, arg)
 }
 
-func (q *QuerierProxier) SystemPurgeDeadLettersBefore(ctx context.Context, createdAt time.Time) (error) {
+func (q *QuerierProxier) SystemPurgeDeadLettersBefore(ctx context.Context, createdAt time.Time) error {
 	if q.OverwrittenSystemPurgeDeadLettersBefore == nil {
 		panic("SystemPurgeDeadLettersBefore not implemented")
 	}
@@ -3434,147 +3442,147 @@ func (q *QuerierProxier) SystemPurgePasswordResetsBefore(ctx context.Context, cr
 	return q.OverwrittenSystemPurgePasswordResetsBefore(ctx, createdAt)
 }
 
-func (q *QuerierProxier) SystemRebuildForumTopicMetaByID(ctx context.Context, idforumtopic int32) (error) {
+func (q *QuerierProxier) SystemRebuildForumTopicMetaByID(ctx context.Context, idforumtopic int32) error {
 	if q.OverwrittenSystemRebuildForumTopicMetaByID == nil {
 		panic("SystemRebuildForumTopicMetaByID not implemented")
 	}
 	return q.OverwrittenSystemRebuildForumTopicMetaByID(ctx, idforumtopic)
 }
 
-func (q *QuerierProxier) SystemRegisterExternalLinkClick(ctx context.Context, url string) (error) {
+func (q *QuerierProxier) SystemRegisterExternalLinkClick(ctx context.Context, url string) error {
 	if q.OverwrittenSystemRegisterExternalLinkClick == nil {
 		panic("SystemRegisterExternalLinkClick not implemented")
 	}
 	return q.OverwrittenSystemRegisterExternalLinkClick(ctx, url)
 }
 
-func (q *QuerierProxier) SystemSetBlogLastIndex(ctx context.Context, id int32) (error) {
+func (q *QuerierProxier) SystemSetBlogLastIndex(ctx context.Context, id int32) error {
 	if q.OverwrittenSystemSetBlogLastIndex == nil {
 		panic("SystemSetBlogLastIndex not implemented")
 	}
 	return q.OverwrittenSystemSetBlogLastIndex(ctx, id)
 }
 
-func (q *QuerierProxier) SystemSetCommentLastIndex(ctx context.Context, idcomments int32) (error) {
+func (q *QuerierProxier) SystemSetCommentLastIndex(ctx context.Context, idcomments int32) error {
 	if q.OverwrittenSystemSetCommentLastIndex == nil {
 		panic("SystemSetCommentLastIndex not implemented")
 	}
 	return q.OverwrittenSystemSetCommentLastIndex(ctx, idcomments)
 }
 
-func (q *QuerierProxier) SystemSetForumTopicHandlerByID(ctx context.Context, arg SystemSetForumTopicHandlerByIDParams) (error) {
+func (q *QuerierProxier) SystemSetForumTopicHandlerByID(ctx context.Context, arg SystemSetForumTopicHandlerByIDParams) error {
 	if q.OverwrittenSystemSetForumTopicHandlerByID == nil {
 		panic("SystemSetForumTopicHandlerByID not implemented")
 	}
 	return q.OverwrittenSystemSetForumTopicHandlerByID(ctx, arg)
 }
 
-func (q *QuerierProxier) SystemSetImagePostLastIndex(ctx context.Context, idimagepost int32) (error) {
+func (q *QuerierProxier) SystemSetImagePostLastIndex(ctx context.Context, idimagepost int32) error {
 	if q.OverwrittenSystemSetImagePostLastIndex == nil {
 		panic("SystemSetImagePostLastIndex not implemented")
 	}
 	return q.OverwrittenSystemSetImagePostLastIndex(ctx, idimagepost)
 }
 
-func (q *QuerierProxier) SystemSetLinkerLastIndex(ctx context.Context, id int32) (error) {
+func (q *QuerierProxier) SystemSetLinkerLastIndex(ctx context.Context, id int32) error {
 	if q.OverwrittenSystemSetLinkerLastIndex == nil {
 		panic("SystemSetLinkerLastIndex not implemented")
 	}
 	return q.OverwrittenSystemSetLinkerLastIndex(ctx, id)
 }
 
-func (q *QuerierProxier) SystemSetSiteNewsLastIndex(ctx context.Context, idsitenews int32) (error) {
+func (q *QuerierProxier) SystemSetSiteNewsLastIndex(ctx context.Context, idsitenews int32) error {
 	if q.OverwrittenSystemSetSiteNewsLastIndex == nil {
 		panic("SystemSetSiteNewsLastIndex not implemented")
 	}
 	return q.OverwrittenSystemSetSiteNewsLastIndex(ctx, idsitenews)
 }
 
-func (q *QuerierProxier) SystemSetWritingLastIndex(ctx context.Context, idwriting int32) (error) {
+func (q *QuerierProxier) SystemSetWritingLastIndex(ctx context.Context, idwriting int32) error {
 	if q.OverwrittenSystemSetWritingLastIndex == nil {
 		panic("SystemSetWritingLastIndex not implemented")
 	}
 	return q.OverwrittenSystemSetWritingLastIndex(ctx, idwriting)
 }
 
-func (q *QuerierProxier) UpdateAutoSubscribeRepliesForLister(ctx context.Context, arg UpdateAutoSubscribeRepliesForListerParams) (error) {
+func (q *QuerierProxier) UpdateAutoSubscribeRepliesForLister(ctx context.Context, arg UpdateAutoSubscribeRepliesForListerParams) error {
 	if q.OverwrittenUpdateAutoSubscribeRepliesForLister == nil {
 		panic("UpdateAutoSubscribeRepliesForLister not implemented")
 	}
 	return q.OverwrittenUpdateAutoSubscribeRepliesForLister(ctx, arg)
 }
 
-func (q *QuerierProxier) UpdateBlogEntryForWriter(ctx context.Context, arg UpdateBlogEntryForWriterParams) (error) {
+func (q *QuerierProxier) UpdateBlogEntryForWriter(ctx context.Context, arg UpdateBlogEntryForWriterParams) error {
 	if q.OverwrittenUpdateBlogEntryForWriter == nil {
 		panic("UpdateBlogEntryForWriter not implemented")
 	}
 	return q.OverwrittenUpdateBlogEntryForWriter(ctx, arg)
 }
 
-func (q *QuerierProxier) UpdateBookmarksForLister(ctx context.Context, arg UpdateBookmarksForListerParams) (error) {
+func (q *QuerierProxier) UpdateBookmarksForLister(ctx context.Context, arg UpdateBookmarksForListerParams) error {
 	if q.OverwrittenUpdateBookmarksForLister == nil {
 		panic("UpdateBookmarksForLister not implemented")
 	}
 	return q.OverwrittenUpdateBookmarksForLister(ctx, arg)
 }
 
-func (q *QuerierProxier) UpdateCommentForEditor(ctx context.Context, arg UpdateCommentForEditorParams) (error) {
+func (q *QuerierProxier) UpdateCommentForEditor(ctx context.Context, arg UpdateCommentForEditorParams) error {
 	if q.OverwrittenUpdateCommentForEditor == nil {
 		panic("UpdateCommentForEditor not implemented")
 	}
 	return q.OverwrittenUpdateCommentForEditor(ctx, arg)
 }
 
-func (q *QuerierProxier) UpdateEmailForumUpdatesForLister(ctx context.Context, arg UpdateEmailForumUpdatesForListerParams) (error) {
+func (q *QuerierProxier) UpdateEmailForumUpdatesForLister(ctx context.Context, arg UpdateEmailForumUpdatesForListerParams) error {
 	if q.OverwrittenUpdateEmailForumUpdatesForLister == nil {
 		panic("UpdateEmailForumUpdatesForLister not implemented")
 	}
 	return q.OverwrittenUpdateEmailForumUpdatesForLister(ctx, arg)
 }
 
-func (q *QuerierProxier) UpdateNewsPostForWriter(ctx context.Context, arg UpdateNewsPostForWriterParams) (error) {
+func (q *QuerierProxier) UpdateNewsPostForWriter(ctx context.Context, arg UpdateNewsPostForWriterParams) error {
 	if q.OverwrittenUpdateNewsPostForWriter == nil {
 		panic("UpdateNewsPostForWriter not implemented")
 	}
 	return q.OverwrittenUpdateNewsPostForWriter(ctx, arg)
 }
 
-func (q *QuerierProxier) UpdatePreferenceForLister(ctx context.Context, arg UpdatePreferenceForListerParams) (error) {
+func (q *QuerierProxier) UpdatePreferenceForLister(ctx context.Context, arg UpdatePreferenceForListerParams) error {
 	if q.OverwrittenUpdatePreferenceForLister == nil {
 		panic("UpdatePreferenceForLister not implemented")
 	}
 	return q.OverwrittenUpdatePreferenceForLister(ctx, arg)
 }
 
-func (q *QuerierProxier) UpdatePublicProfileEnabledAtForUser(ctx context.Context, arg UpdatePublicProfileEnabledAtForUserParams) (error) {
+func (q *QuerierProxier) UpdatePublicProfileEnabledAtForUser(ctx context.Context, arg UpdatePublicProfileEnabledAtForUserParams) error {
 	if q.OverwrittenUpdatePublicProfileEnabledAtForUser == nil {
 		panic("UpdatePublicProfileEnabledAtForUser not implemented")
 	}
 	return q.OverwrittenUpdatePublicProfileEnabledAtForUser(ctx, arg)
 }
 
-func (q *QuerierProxier) UpdateSubscriptionByIDForSubscriber(ctx context.Context, arg UpdateSubscriptionByIDForSubscriberParams) (error) {
+func (q *QuerierProxier) UpdateSubscriptionByIDForSubscriber(ctx context.Context, arg UpdateSubscriptionByIDForSubscriberParams) error {
 	if q.OverwrittenUpdateSubscriptionByIDForSubscriber == nil {
 		panic("UpdateSubscriptionByIDForSubscriber not implemented")
 	}
 	return q.OverwrittenUpdateSubscriptionByIDForSubscriber(ctx, arg)
 }
 
-func (q *QuerierProxier) UpdateTimezoneForLister(ctx context.Context, arg UpdateTimezoneForListerParams) (error) {
+func (q *QuerierProxier) UpdateTimezoneForLister(ctx context.Context, arg UpdateTimezoneForListerParams) error {
 	if q.OverwrittenUpdateTimezoneForLister == nil {
 		panic("UpdateTimezoneForLister not implemented")
 	}
 	return q.OverwrittenUpdateTimezoneForLister(ctx, arg)
 }
 
-func (q *QuerierProxier) UpdateWritingForWriter(ctx context.Context, arg UpdateWritingForWriterParams) (error) {
+func (q *QuerierProxier) UpdateWritingForWriter(ctx context.Context, arg UpdateWritingForWriterParams) error {
 	if q.OverwrittenUpdateWritingForWriter == nil {
 		panic("UpdateWritingForWriter not implemented")
 	}
 	return q.OverwrittenUpdateWritingForWriter(ctx, arg)
 }
 
-func (q *QuerierProxier) UpsertContentReadMarker(ctx context.Context, arg UpsertContentReadMarkerParams) (error) {
+func (q *QuerierProxier) UpsertContentReadMarker(ctx context.Context, arg UpsertContentReadMarkerParams) error {
 	if q.OverwrittenUpsertContentReadMarker == nil {
 		panic("UpsertContentReadMarker not implemented")
 	}

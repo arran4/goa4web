@@ -83,7 +83,39 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID int3
 			}
 		}
 	}
+	thid, err := cd.CreateForumThreadForPoster(p.CreatorID, topicID, title, description)
+	if err != nil {
+		return 0, fmt.Errorf("create thread: %w", err)
+	}
+	for _, uid := range p.ParticipantIDs {
+		if _, err := cd.GrantPrivateForumThread(int32(thid), sql.NullInt32{Int32: uid, Valid: true}, sql.NullInt32{}); err != nil {
+			return 0, fmt.Errorf("grant thread access: %w", err)
+		}
+	}
 	return topicID, nil
+}
+
+// CreateForumThreadForPoster creates a new thread and the initial comment.
+func (cd *CoreData) CreateForumThreadForPoster(posterID, topicID int32, title, description string) (int64, error) {
+	if cd.queries == nil {
+		return 0, nil
+	}
+	thid, err := cd.queries.CreateForumThreadForPoster(cd.ctx, db.CreateForumThreadForPosterParams{
+		PosterID:      posterID,
+		ForumtopicID:  topicID,
+		GranteeID:     sql.NullInt32{Int32: posterID, Valid: posterID != 0},
+		GrantParentID: sql.NullInt32{Int32: topicID, Valid: true},
+	})
+	if err != nil {
+		return 0, fmt.Errorf("create forum thread: %w", err)
+	}
+	if thid == 0 {
+		return 0, fmt.Errorf("create forum thread returned 0")
+	}
+	if _, err := cd.CreateForumCommentForCommenter(posterID, int32(thid), topicID, 0, description); err != nil {
+		return 0, fmt.Errorf("create forum comment: %w", err)
+	}
+	return thid, nil
 }
 
 // StoreImageParams groups input for StoreImage.

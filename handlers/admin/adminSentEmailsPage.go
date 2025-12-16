@@ -123,5 +123,5 @@ func AdminSentEmailsPage(w http.ResponseWriter, r *http.Request) {
 		cd.PrevLink = "/admin/email/sent?" + prevVals.Encode()
 	}
 
-	handlers.TemplateHandler(w, r, "emailSentPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "admin/emailSentPage.gohtml", data)
 }

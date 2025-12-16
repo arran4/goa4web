@@ -106,5 +106,5 @@ func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
 	}
 	sort.Slice(data.Entries, func(i, j int) bool { return data.Entries[i].Name < data.Entries[j].Name })
 
-	handlers.TemplateHandler(w, r, "adminFilesPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "admin/adminFilesPage.gohtml", data)
 }

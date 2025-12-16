@@ -135,7 +135,7 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 		cd.PrevLink = base + "?" + vals.Encode()
 	}
 
-	handlers.TemplateHandler(w, r, "searchWordListPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "admin/searchWordListPage.gohtml", data)
 }
 
 // adminSearchWordListDownloadPage sends the full word list as a text file.

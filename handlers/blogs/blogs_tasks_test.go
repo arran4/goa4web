@@ -11,7 +11,6 @@ func TestBlogsTasksTemplatesRequiredExist(t *testing.T) {
 		task templatesRequired
 	}{
 		{"blogsTask", &blogsTask{}},
-		{"blogsAdminTask", &blogsAdminTask{}},
 		{"blogsCommentTask", &blogsCommentTask{}},
 	}
 	for _, task := range tasks {

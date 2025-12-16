@@ -12,12 +12,16 @@ import (
 type privateForumTask struct {
 }
 
+const (
+	CreateTopicTmpl = "forum/create_topic.gohtml"
+)
+
 func NewPrivateForumTask() tasks.Task {
 	return &privateForumTask{}
 }
 
 func (t *privateForumTask) TemplatesRequired() []string {
-	return []string{forumhandlers.CreateTopicTmpl}
+	return []string{CreateTopicTmpl}
 }
 
 func (t *privateForumTask) Action(w http.ResponseWriter, r *http.Request) any {

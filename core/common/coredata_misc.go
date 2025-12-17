@@ -100,6 +100,12 @@ func (cd *CoreData) StoreImage(p StoreImageParams) (string, error) {
 	if cd == nil || cd.queries == nil {
 		return "", fmt.Errorf("no queries")
 	}
+	if !imagesign.ValidID(p.ID) {
+		return "", fmt.Errorf("invalid id")
+	}
+	if !imagesign.AllowedExtension(p.Ext) {
+		return "", fmt.Errorf("unsupported image extension: %s", p.Ext)
+	}
 	cfg := cd.Config
 	sub1, sub2 := p.ID[:2], p.ID[2:4]
 	fname := p.ID + p.Ext

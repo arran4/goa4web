@@ -65,8 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Message folding
     const foldableContent = document.querySelectorAll('.foldable');
     foldableContent.forEach(content => {
-        const maxHeight = 4 * parseFloat(getComputedStyle(content).fontSize);
-        if (content.scrollHeight > maxHeight) {
+        if (content.scrollHeight > content.clientHeight) {
             const expandButton = document.createElement('button');
             expandButton.textContent = 'Click to expand';
             expandButton.classList.add('expand-button');

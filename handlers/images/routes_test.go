@@ -11,6 +11,7 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	intimages "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/navigation"
 )
 
@@ -22,17 +23,18 @@ func TestValidID(t *testing.T) {
 		{"abcd", true},
 		{"1234", true},
 		{"a1b2c3", true},
-		{"a.b", true},
+		{"a.b", false},
 		{"abc!", false},
 		{".", false},
 		{"..", false},
 		{"hi/hi", false},
 		{"text.text", true},
 		{"a/bc", false},
+		{"abc", false},
 	}
 	for _, tt := range tests {
-		if got := validID(tt.id); got != tt.valid {
-			t.Errorf("validID(%q) = %v want %v", tt.id, got, tt.valid)
+		if got := intimages.ValidID(tt.id); got != tt.valid {
+			t.Errorf("ValidID(%q) = %v want %v", tt.id, got, tt.valid)
 		}
 	}
 }

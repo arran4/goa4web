@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
@@ -96,7 +95,6 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	// middleware.
 
 	commentId, _ := strconv.Atoi(r.URL.Query().Get("comment"))
-	quoteId, _ := strconv.Atoi(r.URL.Query().Get("quote"))
 	data.Comments = commentRows
 
 	data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
@@ -163,18 +161,6 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	}
 	sort.Slice(labels, func(i, j int) bool { return labels[i].Name < labels[j].Name })
 	data.Labels = labels
-
-	replyType := r.URL.Query().Get("type")
-	if quoteId != 0 {
-		if c, err := cd.CommentByID(int32(quoteId)); err == nil && c != nil {
-			switch replyType {
-			case "full":
-				data.Text = a4code.QuoteText(c.Username.String, c.Text.String, a4code.WithFullQuote())
-			default:
-				data.Text = a4code.QuoteText(c.Username.String, c.Text.String)
-			}
-		}
-	}
 
 	handlers.TemplateHandler(w, r, "forum/threadPage.gohtml", data)
 }

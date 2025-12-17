@@ -90,6 +90,7 @@ var IntOptions = []IntOption{
 	{"image-max-bytes", EnvImageMaxBytes, "The maximum allowed size for uploaded images in bytes.", 0, "", func(c *RuntimeConfig) *int { return &c.ImageMaxBytes }},
 	{"image-cache-max-bytes", EnvImageCacheMaxBytes, "The maximum size of the image cache in bytes. A value of -1 means no limit.", -1, "", func(c *RuntimeConfig) *int { return &c.ImageCacheMaxBytes }},
 	{"email-worker-interval", EnvEmailWorkerInterval, "The interval in seconds between runs of the email worker.", 0, "", func(c *RuntimeConfig) *int { return &c.EmailWorkerInterval }},
+	{"email-verification-expiry-hours", EnvEmailVerificationExpiryHours, "The number of hours an email verification request is valid for.", 0, "", func(c *RuntimeConfig) *int { return &c.EmailVerificationExpiryHours }},
 	{"password-reset-expiry-hours", EnvPasswordResetExpiryHours, "The number of hours a password reset request is valid for.", 0, "", func(c *RuntimeConfig) *int { return &c.PasswordResetExpiryHours }},
 	{"login-attempt-window", EnvLoginAttemptWindow, "The window in minutes for tracking failed login attempts.", 15, "", func(c *RuntimeConfig) *int { return &c.LoginAttemptWindow }},
 	{"login-attempt-threshold", EnvLoginAttemptThreshold, "The number of failed login attempts allowed within the window before throttling.", 5, "", func(c *RuntimeConfig) *int { return &c.LoginAttemptThreshold }},

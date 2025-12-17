@@ -112,24 +112,42 @@ textarea {
 
 .hamburger {
         display: none;
-	font-size: 1.5em;
+        align-items: center;
+        gap: 0.35em;
         cursor: pointer;
+}
+
+.hamburger-icon {
+	font-size: 1.5em;
+        line-height: 1;
+}
+
+.hamburger-text {
+        font-size: 1em;
+        font-weight: 600;
 }
 
 .layout {
         display: flex;
         flex: 1;
+        padding: 0 1em 1em;
+        box-sizing: border-box;
 }
 
 .sidebar {
         width: 200px;
         padding-right: 1em;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
 }
 
 .content {
         flex: 1;
         display: flex;
         flex-direction: column;
+        gap: 1em;
 }
 
 .site-footer {
@@ -773,6 +791,7 @@ tr.unsupported td {
        .navbar {
                flex-direction: column;
                align-items: flex-start;
+               padding: 0.75em 0.75em;
        }
 
        .navbar-left,
@@ -783,7 +802,7 @@ tr.unsupported td {
        }
 
        .hamburger {
-               display: block;
+               display: inline-flex;
        }
 
        .logout-link {
@@ -792,16 +811,31 @@ tr.unsupported td {
 
        .layout {
                flex-direction: column;
+               padding: 0.5em 0.75em 1em;
        }
 
        .sidebar {
                width: 100%;
                padding-right: 0;
                display: none;
+               margin-bottom: 0.75em;
        }
 
        .nav-toggle:checked ~ .layout .sidebar {
                display: block;
+       }
+
+       .content {
+               padding: 0;
+               gap: 0.75em;
+       }
+
+       .thread,
+       .blog-post,
+       .faq-item,
+       .notification {
+               margin-left: 0;
+               margin-right: 0;
        }
 
        .comment {

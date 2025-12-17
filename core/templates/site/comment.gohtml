@@ -24,14 +24,15 @@
                     <textarea id="reply" name="replytext" cols="40" rows="20">{{ $cmt.Text.String }}</textarea><br>
                     {{ template "languageCombobox" }}
                     <input type="submit" name="task" value="Edit Reply">
-                    <a href="#c{{ $num }}">Cancel</a>
+                    <a href="?#c{{ $num }}">Cancel</a>
                 </form>
             {{ else }}
                 {{ $cmt.Text.String | a4code2html}}
                 <footer>
                     {{ if cd.SelectedThreadCanReply }}
-                        [<a href="?quote={{ $cmt.Idcomments }}&type=full#bottom">FULL REPLY</a>]
-                        [<a href="?quote={{ $cmt.Idcomments }}#bottom">PARAGRAPH REPLY</a>]
+                        [<a href="javascript:quote('full', {{ $cmt.Idcomments }})">FULL REPLY</a>]
+                        [<a href="javascript:quote('paragraph', {{ $cmt.Idcomments }})">PARAGRAPH REPLY</a>]
+                        [<a href="javascript:quote('selected')">QUOTE SELECTED</a>]
                     {{ end }}
                     {{ if cd.CanEditComment $cmt }}[<a href="{{ cd.CommentEditURL $cmt }}">EDIT</a>]{{ end }}
                     {{ $admin := cd.CommentAdminURL $cmt }}{{ if $admin }}[<a href="{{ $admin }}">ADMIN</a>]{{ end }}

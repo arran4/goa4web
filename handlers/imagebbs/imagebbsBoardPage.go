@@ -12,9 +12,7 @@ import (
 	"io"
 	"net/http"
 	"path"
-	"path/filepath"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -31,6 +29,9 @@ import (
 	"github.com/arran4/goa4web/workers/searchworker"
 	"golang.org/x/image/draw"
 )
+
+// ImagebbsUploadPrefix isolates image board uploads from other stored files.
+const ImagebbsUploadPrefix = "imagebbs"
 
 // UploadImageTask handles uploading an image to a board.
 type UploadImageTask struct{ tasks.TaskString }
@@ -105,7 +106,10 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	shaHex := fmt.Sprintf("%x", h.Sum(nil))
-	ext := strings.ToLower(filepath.Ext(header.Filename))
+	ext, err := imagesign.CleanExtension(header.Filename)
+	if err != nil {
+		return fmt.Errorf("invalid extension %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
 	sub1, sub2 := shaHex[:2], shaHex[2:4]
 	data := buf.Bytes()
 	img, _, err := image.Decode(bytes.NewReader(data))
@@ -114,7 +118,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	fname := shaHex + ext
 	if p := upload.ProviderFromConfig(cd.Config); p != nil {
-		if err := p.Write(r.Context(), path.Join(sub1, sub2, fname), data); err != nil {
+		if err := p.Write(r.Context(), path.Join(ImagebbsUploadPrefix, sub1, sub2, fname), data); err != nil {
 			return fmt.Errorf("upload write fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		src := img.Bounds()
@@ -139,7 +143,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 			return fmt.Errorf("encode thumb fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		thumbName := shaHex + "_thumb" + ext
-		if err := p.Write(r.Context(), path.Join(sub1, sub2, thumbName), buf.Bytes()); err != nil {
+		if err := p.Write(r.Context(), path.Join(ImagebbsUploadPrefix, sub1, sub2, thumbName), buf.Bytes()); err != nil {
 			return fmt.Errorf("thumb write fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}

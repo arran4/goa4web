@@ -112,8 +112,19 @@ textarea {
 
 .hamburger {
         display: none;
-	font-size: 1.5em;
+        align-items: center;
+        gap: 0.35em;
         cursor: pointer;
+}
+
+.hamburger-icon {
+	font-size: 1.5em;
+        line-height: 1;
+}
+
+.hamburger-text {
+        font-size: 1em;
+        font-weight: 600;
 }
 
 .layout {
@@ -787,7 +798,7 @@ tr.unsupported td {
        }
 
        .hamburger {
-               display: block;
+               display: inline-flex;
        }
 
        .logout-link {

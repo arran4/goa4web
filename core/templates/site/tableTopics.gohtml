@@ -2,18 +2,29 @@
     {{ $base := "/forum" }}
     {{ with .BasePath }}{{ $base = . }}{{ end }}
     <section class="topics">
+        <div class="topic-controls">
+            <input type="text" class="label-filter" placeholder="Filter by label...">
+            <div class="sort-buttons">
+                <span>Sort by:</span>
+                <button class="sort-button" data-sort="last-reply" data-order="desc">Last Reply</button>
+                <button class="sort-button" data-sort="threads" data-order="desc">Threads</button>
+                <button class="sort-button" data-sort="replies" data-order="desc">Replies</button>
+                <button class="sort-button" data-sort="name" data-order="asc">Name</button>
+            </div>
+        </div>
         <div class="topics-header">
             <div class="topic-name">Topic name<br>Description</div>
             <div class="last-reply">Last reply<br>By</div>
             <div class="threads">Threads</div>
             <div class="replies">Replies</div>
+            <div class="actions">Actions</div>
         </div>
         <ul class="topic-list">
     {{ range .Topics }}
-        <li class="topic-item">
+        {{ $title := topicTitleOrDefault .Title.String }}
+        {{ if .DisplayTitle }}{{ $title = topicTitleOrDefault .DisplayTitle }}{{ end }}
+        <li class="topic-item" data-last-reply-time="{{ .Lastaddition.Time.Unix }}" data-threads="{{ .Threads.Int32 }}" data-replies="{{ .Comments.Int32 }}" data-name="{{ $title }}">
             <div class="topic-name">
-                {{ $title := topicTitleOrDefault .Title.String }}
-                {{ if .DisplayTitle }}{{ $title = topicTitleOrDefault .DisplayTitle }}{{ end }}
                 <a href="{{$base}}/topic/{{ .Idforumtopic }}">{{ $title | a4code2html }}</a>{{ if and cd.IsAdmin cd.IsAdminMode }} [<a href="/admin/forum/topics/topic/{{ .Idforumtopic }}/edit">ADMIN</a>]{{ end }}<br>
                 {{ $description := topicDescriptionOrDefault .Description.String }}<em>{{ $description | a4code2html }}</em>
                 {{- if .Labels }}<br>{{ template "topicLabels" .Labels }}{{ end }}
@@ -21,6 +32,23 @@
                 <div class="last-reply">{{ cd.LocalTime .Lastaddition.Time }}<br>{{ .Lastposterusername.String }}</div>
                 <div class="threads">{{ .Threads.Int32 }}</div>
                 <div class="replies">{{ .Comments.Int32 }}</div>
+                <div class="actions">
+                    <form method="post" action="{{$base}}/topic/{{.Idforumtopic}}/labels" class="mark-read">
+                        {{ csrfField }}
+                        <input type="hidden" name="task" value="Mark Topic Read"/>
+                        <input type="hidden" name="redirect" value="{{ $.BackURL }}"/>
+                        <button type="submit">Mark as read</button>
+                    </form>
+                    <form method="post" action="{{$base}}/topic/{{.Idforumtopic}}/labels" class="mark-read">
+                        {{ csrfField }}
+                        <input type="hidden" name="task" value="Mark Topic Read"/>
+                        <input type="hidden" name="redirect" value="{{$base}}/category/{{.ForumcategoryIdforumcategory}}"/>
+                        <button type="submit">Mark as read and go back</button>
+                    </form>
+                    <form method="get" action="{{$base}}/topic/{{.Idforumtopic}}">
+                        <button type="submit">Go to topic</button>
+                    </form>
+                </div>
             </li>
         {{ else }}
             <li class="topic-item no-topics"><div class="topic-name">No topics</div></li>

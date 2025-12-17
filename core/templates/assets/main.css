@@ -135,6 +135,10 @@ textarea {
 .sidebar {
         width: 200px;
         padding-right: 1em;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
 }
 
 .content {

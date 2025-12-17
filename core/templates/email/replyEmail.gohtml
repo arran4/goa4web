@@ -2,7 +2,7 @@
 <html>
 <body>
 <p>Hi {{.Item.Thread.Lastposterusername.String}},</p>
-<p>A new reply was posted in "{{.Item.TopicTitle}}" (thread #{{.Item.ThreadID}}) on {{ localTime .Item.Time }}.</p>
+<p>A new reply was posted in "{{.Item.TopicTitle}}" (thread #{{.Item.ThreadID}}) on {{ formatLocalTime (localTime .Item.Time) }}.</p>
 <p>There are now {{.Item.Thread.Comments.Int32}} comments in the discussion.</p>
 <p>Read it <a href="{{.URL}}">here</a>.</p>
 <p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>

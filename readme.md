@@ -445,7 +445,9 @@ docker run -p 8080:8080 \
 
 Setting `GOA4WEB_DOCKER=1` tells the application to store generated secret files
 such as `session_secret` under `/var/lib/goa4web`. Mount this directory as a
-volume to keep the secrets across container restarts.
+volume to keep the secrets across container restarts. The container runs as the
+unprivileged `goa4web` user (UID 65532), so ensure any mounted directories such
+as `/data` or `/var/lib/goa4web` are writable by that UID on the host.
 
 ### Docker Compose
 
@@ -490,4 +492,3 @@ Save the file as `docker-compose.yaml` and run:
 ```bash
 docker compose up
 ```
-

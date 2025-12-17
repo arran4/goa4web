@@ -4,7 +4,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	forumhandlers "github.com/arran4/goa4web/handlers/forum"
 	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 )
@@ -35,5 +34,6 @@ func (t *privateForumTask) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cd.PageTitle = "Private Forum"
-	forumhandlers.CreateTopicPageWithPostTask(w, r, TaskPrivateTopicCreate, &forumhandlers.CreateTopicPageForm{})
+	// Show topics only on the main private page (no creation form)
+	handlers.TemplateHandler(w, r, "privateforum/topics_only.gohtml", nil)
 }

@@ -23,7 +23,8 @@ import (
 func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath string) {
 	type threadWithLabels struct {
 		*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow
-		Labels []templates.TopicLabel
+		Labels   []templates.TopicLabel
+		IsUnread bool
 	}
 
 	type Data struct {
@@ -151,6 +152,9 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		if priv, err := cd.ThreadPrivateLabels(r.Idforumthread); err == nil {
 			for _, l := range priv {
 				lbls = append(lbls, templates.TopicLabel{Name: l, Type: "private"})
+				if l == "unread" {
+					t.IsUnread = true
+				}
 			}
 		} else {
 			log.Printf("list private labels: %v", err)

@@ -1,0 +1,25 @@
+.folded {
+    max-height: 4em;
+    overflow: hidden;
+    position: relative;
+}
+
+.folded::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 20px;
+    background: linear-gradient(to bottom, transparent, white);
+}
+
+.expand-button {
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: blue;
+    text-decoration: underline;
+    padding: 0;
+    margin-top: 5px;
+}

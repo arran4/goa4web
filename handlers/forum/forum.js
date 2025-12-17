@@ -63,15 +63,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Message folding
+    const FOLD_THRESHOLD = 192; // px; reasonable collapsed height
     const foldableContent = document.querySelectorAll('.foldable');
     foldableContent.forEach(content => {
-        if (content.scrollHeight > content.clientHeight) {
+        const fullHeight = content.scrollHeight;
+        if (fullHeight > FOLD_THRESHOLD) {
+            content.classList.add('folded');
+
             const expandButton = document.createElement('button');
             expandButton.textContent = 'Click to expand';
             expandButton.classList.add('expand-button');
             content.parentNode.insertBefore(expandButton, content.nextSibling);
-
-            content.classList.add('folded');
 
             expandButton.addEventListener('click', () => {
                 content.classList.toggle('folded');

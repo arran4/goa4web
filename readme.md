@@ -250,6 +250,7 @@ You can supply settings on the command line, in a config file or via environment
 | `GOA4WEB_DOCKER` | n/a | No | - | Places secret files under `/var/lib/goa4web` when unset paths rely on defaults. |
 | `SENDGRID_KEY` | `--sendgrid-key` | No | - | API key for the SendGrid email provider. |
 | `EMAIL_WORKER_INTERVAL` | `--email-worker-interval` | No | `60` | Minimum seconds between queued email sends. |
+| `EMAIL_VERIFICATION_EXPIRY_HOURS` | `--email-verification-expiry-hours` | No | `24` | Hours an email verification link remains valid. |
 | `PASSWORD_RESET_EXPIRY_HOURS` | `--password-reset-expiry-hours` | No | `24` | Hours a password reset request remains valid. |
 | `LOGIN_ATTEMPT_WINDOW` | `--login-attempt-window` | No | `15` | Minutes to track failed logins for throttling. |
 | `LOGIN_ATTEMPT_THRESHOLD` | `--login-attempt-threshold` | No | `5` | Failed logins allowed within the window. |
@@ -490,4 +491,3 @@ Save the file as `docker-compose.yaml` and run:
 ```bash
 docker compose up
 ```
-

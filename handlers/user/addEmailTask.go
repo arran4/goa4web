@@ -57,7 +57,11 @@ func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("rand read: %v", err)
 	}
 	code := hex.EncodeToString(buf[:])
-	expire := time.Now().Add(24 * time.Hour)
+	expiryHours := cd.Config.EmailVerificationExpiryHours
+	if expiryHours <= 0 {
+		expiryHours = 24
+	}
+	expire := time.Now().Add(time.Duration(expiryHours) * time.Hour)
 	if err := cd.AddUserEmail(uid, emailAddr, code, expire); err != nil {
 		log.Printf("insert user email: %v", err)
 		return fmt.Errorf("insert user email fail %w", handlers.ErrRedirectOnSamePageHandler(err))
@@ -75,6 +79,7 @@ func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if user, err := cd.CurrentUser(); err == nil && user != nil {
 		evt.Data["Username"] = user.Username.String
 	}
+	evt.Data["ExpiresAt"] = expire
 	return handlers.RefreshDirectHandler{TargetURL: "/usr/email"}
 }
 
@@ -88,7 +93,8 @@ func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	id, _ := strconv.Atoi(r.FormValue("id"))
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	ue, err := queries.GetUserEmailByID(r.Context(), int32(id))
 	if err != nil || ue.UserID != uid {
 		return handlers.RefreshDirectHandler{TargetURL: "/usr/email"}
@@ -98,12 +104,15 @@ func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("rand read: %v", err)
 	}
 	code := hex.EncodeToString(buf[:])
-	expire := time.Now().Add(24 * time.Hour)
+	expiryHours := cd.Config.EmailVerificationExpiryHours
+	if expiryHours <= 0 {
+		expiryHours = 24
+	}
+	expire := time.Now().Add(time.Duration(expiryHours) * time.Hour)
 	if err := queries.SetVerificationCodeForLister(r.Context(), db.SetVerificationCodeForListerParams{ListerID: uid, LastVerificationCode: sql.NullString{String: code, Valid: true}, VerificationExpiresAt: sql.NullTime{Time: expire, Valid: true}, ID: int32(id)}); err != nil {
 		log.Printf("set verification code: %v", err)
 	}
 	path := "/usr/email/verify?code=" + code
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cfg := cd.Config
 	page := "http://" + r.Host + path
 	if cfg.HTTPHostname != "" {
@@ -116,6 +125,7 @@ func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) any {
 	if user, err := cd.CurrentUser(); err == nil && user != nil {
 		evt.Data["Username"] = user.Username.String
 	}
+	evt.Data["ExpiresAt"] = expire
 	return handlers.RefreshDirectHandler{TargetURL: "/usr/email"}
 }
 

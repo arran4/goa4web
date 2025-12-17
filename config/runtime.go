@@ -59,6 +59,8 @@ type RuntimeConfig struct {
 
 	// EmailWorkerInterval sets how often the email worker runs in seconds.
 	EmailWorkerInterval int
+	// EmailVerificationExpiryHours sets how long verification links remain valid.
+	EmailVerificationExpiryHours int
 	// PasswordResetExpiryHours sets how long password reset requests remain valid.
 	PasswordResetExpiryHours int
 	// LoginAttemptWindow defines the timeframe in minutes used when counting
@@ -344,6 +346,9 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 	}
 	if cfg.EmailWorkerInterval == 0 {
 		cfg.EmailWorkerInterval = 60
+	}
+	if cfg.EmailVerificationExpiryHours == 0 {
+		cfg.EmailVerificationExpiryHours = 24
 	}
 	if cfg.PasswordResetExpiryHours == 0 {
 		cfg.PasswordResetExpiryHours = 24

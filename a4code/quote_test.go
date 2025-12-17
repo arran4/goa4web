@@ -35,7 +35,7 @@ func TestQuote(t *testing.T) {
 
 func TestQuoteFullParagraphs(t *testing.T) {
 	text := "foo\n\nbar"
-	got := QuoteText("bob", text, WithFullQuote())
+	got := QuoteText("bob", text, WithParagraphQuote())
 	want := "[quoteof \"bob\" foo]\n[quoteof \"bob\" bar]\n"
 	if got != want {
 		t.Errorf("got %q want %q", got, want)
@@ -61,7 +61,7 @@ func TestQuoteFullParagraphs(t *testing.T) {
 
 func TestQuoteFullEscaping(t *testing.T) {
 	text := "see \\[bracket\\]"
-	got := QuoteText("bob", text, WithFullQuote())
+	got := QuoteText("bob", text, WithParagraphQuote())
 	want := "[quoteof \"bob\" see [bracket]]\n"
 	if got != want {
 		t.Errorf("got %q want %q", got, want)
@@ -88,7 +88,7 @@ func TestQuoteFullEscaping(t *testing.T) {
 
 func TestQuoteFullImage(t *testing.T) {
 	text := "[img http://example.com/foo.jpg]"
-	got := QuoteText("bob", text, WithFullQuote())
+	got := QuoteText("bob", text, WithParagraphQuote())
 	want := "[quoteof \"bob\" [img http://example.com/foo.jpg]]\n"
 	if got != want {
 		t.Errorf("got %q want %q", got, want)

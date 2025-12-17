@@ -22,14 +22,13 @@ func QuoteApi(w http.ResponseWriter, r *http.Request) {
 	replyType := r.URL.Query().Get("type")
 	var text string
 	if c, err := cd.CommentByID(int32(quoteId)); err == nil && c != nil {
-		// NOTE: a4code.WithFullQuote() performs a paragraph-by-paragraph quote, not a full quote.
 		switch replyType {
 		case "paragraph":
-			text = a4code.QuoteText(c.Username.String, c.Text.String, a4code.WithFullQuote())
+			text = a4code.QuoteText(c.Username.String, c.Text.String, a4code.WithParagraphQuote())
 		case "full":
 			text = a4code.QuoteText(c.Username.String, c.Text.String)
 		default:
-			text = a4code.QuoteText(c.Username.String, c.Text.String, a4code.WithFullQuote())
+			text = a4code.QuoteText(c.Username.String, c.Text.String, a4code.WithParagraphQuote())
 		}
 	}
 	w.Header().Set("Content-Type", "application/json")

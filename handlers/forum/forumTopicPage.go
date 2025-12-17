@@ -37,6 +37,7 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		Category                *ForumcategoryPlus
 		CopyDataToSubCategories func(rootCategory *ForumcategoryPlus) *Data
 		BasePath                string
+		BackURL                 string
 		Labels                  []templates.TopicLabel
 	}
 
@@ -52,6 +53,7 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	data := &Data{
 		Admin:    cd.IsAdmin() && cd.IsAdminMode(),
 		BasePath: basePath,
+		BackURL:  r.URL.RequestURI(),
 	}
 
 	copyDataToSubCategories := func(rootCategory *ForumcategoryPlus) *Data {

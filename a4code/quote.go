@@ -22,6 +22,10 @@ func WithParagraphQuote() QuoteOption { return func(o *quoteOptions) { o.Full = 
 // WithTrimSpace removes surrounding whitespace from the quoted text.
 func WithTrimSpace() QuoteOption { return func(o *quoteOptions) { o.Trim = true } }
 
+// WithFullQuote is a backward-compatible alias for paragraph-aware quoting.
+// Deprecated: use WithParagraphQuote instead.
+func WithFullQuote() QuoteOption { return WithParagraphQuote() }
+
 // QuoteText wraps the provided text in quote markup for the given user.
 // Behaviour can be customised through QuoteOption values.
 func QuoteText(username, text string, opts ...QuoteOption) string {

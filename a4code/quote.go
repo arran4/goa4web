@@ -91,3 +91,7 @@ func fullQuoteOf(username, text string, trim bool) string {
 	quote.WriteString(quoteOfText(username, out.String(), trim))
 	return quote.String()
 }
+
+func Substring(s string, start, end int) string {
+	return substring(s, start, end)
+}

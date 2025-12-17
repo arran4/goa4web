@@ -77,6 +77,16 @@ func TestQuoteApi(t *testing.T) {
 			expectedStatus: http.StatusOK,
 			expectedBody:   `{"text":""}`,
 		},
+		{
+			name:      "Selected Text",
+			commentID: "1",
+			replyType: "selected&start=2&end=8",
+			mockComment: &db.GetCommentByIdForUserRow{
+				Text: sql.NullString{String: "hello [b]world[/b]", Valid: true},
+			},
+			expectedStatus: http.StatusOK,
+			expectedBody:   `{"text":"llo [b]wo[/b]"}`,
+		},
 	}
 
 	for _, tt := range tests {

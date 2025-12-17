@@ -119,3 +119,49 @@ func TestQuoteTrim(t *testing.T) {
 		t.Errorf("got %q want %q", got, want)
 	}
 }
+
+func TestSubstring(t *testing.T) {
+	tests := []struct {
+		name   string
+		s      string
+		start  int
+		end    int
+		want   string
+	}{
+		{
+			name:  "Simple",
+			s:     "hello world",
+			start: 2,
+			end:   8,
+			want:  "llo wo",
+		},
+		{
+			name:  "With Bold",
+			s:     "hello [b]world[/b]",
+			start: 2,
+			end:   8,
+			want:  "llo [b]wo[/b]",
+		},
+		{
+			name:  "Partial Bold",
+			s:     "hello [b]world[/b]",
+			start: 7,
+			end:   10,
+			want:  "[b]orl[/b]",
+		},
+		{
+			name:  "Across Bold",
+			s:     "he[b]llo[/b] world",
+			start: 1,
+			end:   10,
+			want:  "e[b]llo[/b] wor",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Substring(tt.s, tt.start, tt.end); got != tt.want {
+				t.Errorf("Substring() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

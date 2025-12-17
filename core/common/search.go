@@ -12,8 +12,7 @@ func CanSearch(cd *CoreData, section string) bool {
 	return cd.HasGrant("search", "", "search", 0)
 }
 
-// CanSearch reports whether the current CoreData instance permits running a search in the given section.
-// It forwards to the package-level CanSearch helper for reuse in templates.
+// CanSearch reports whether searches are permitted for the section using cd's grants.
 func (cd *CoreData) CanSearch(section string) bool {
 	return CanSearch(cd, section)
 }

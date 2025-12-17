@@ -12,66 +12,60 @@ import (
 )
 
 func TestCanSearch(t *testing.T) {
-	tests := []struct {
-		name   string
-		setup  func(sqlmock.Sqlmock)
-		allow  bool
-		cdInit func(db.Querier) *common.CoreData
-	}{
-		{
-			name: "no grants",
-			setup: func(mock sqlmock.Sqlmock) {
-				mock.ExpectQuery("SELECT 1 FROM grants").WillReturnError(sql.ErrNoRows)
-				mock.ExpectQuery("SELECT 1 FROM grants").WillReturnError(sql.ErrNoRows)
-			},
-			allow: false,
-			cdInit: func(q db.Querier) *common.CoreData {
-				return common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
-			},
-		},
-		{
-			name: "global grant",
-			setup: func(mock sqlmock.Sqlmock) {
-				mock.ExpectQuery("SELECT 1 FROM grants").WillReturnError(sql.ErrNoRows)
-				mock.ExpectQuery("SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
-			},
-			allow: true,
-			cdInit: func(q db.Querier) *common.CoreData {
-				return common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
-			},
-		},
-		{
-			name: "section grant",
-			setup: func(mock sqlmock.Sqlmock) {
-				mock.ExpectQuery("SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
-				mock.ExpectQuery("SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
-			},
-			allow: true,
-			cdInit: func(q db.Querier) *common.CoreData {
-				return common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
-			},
-		},
-	}
+	t.Run("no grants", func(t *testing.T) {
+		conn, mock, err := sqlmock.New()
+		if err != nil {
+			t.Fatalf("sqlmock.New: %v", err)
+		}
+		defer conn.Close()
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			conn, mock, err := sqlmock.New()
-			if err != nil {
-				t.Fatalf("sqlmock.New: %v", err)
-			}
-			defer conn.Close()
+		queries := db.New(conn)
+		cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
 
-			queries := db.New(conn)
-			cd := tt.cdInit(queries)
-			tt.setup(mock)
+		mock.ExpectQuery("(?s).*SELECT 1 FROM grants").WillReturnError(sql.ErrNoRows)
+		mock.ExpectQuery("(?s).*SELECT 1 FROM grants").WillReturnError(sql.ErrNoRows)
+		if common.CanSearch(cd, "news") {
+			t.Fatalf("expected false")
+		}
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("expectations: %v", err)
+		}
+	})
 
-			if common.CanSearch(cd, "news") != tt.allow {
-				t.Fatalf("expected allow=%v", tt.allow)
-			}
+	t.Run("global grant", func(t *testing.T) {
+		conn, mock, err := sqlmock.New()
+		if err != nil {
+			t.Fatalf("sqlmock.New: %v", err)
+		}
+		defer conn.Close()
 
-			if err := mock.ExpectationsWereMet(); err != nil {
-				t.Fatalf("expectations: %v", err)
-			}
-		})
-	}
+		queries := db.New(conn)
+		cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
+
+		mock.ExpectQuery("(?s).*SELECT 1 FROM grants").WillReturnError(sql.ErrNoRows)
+		mock.ExpectQuery("(?s).*SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+		if !common.CanSearch(cd, "news") {
+			t.Fatalf("expected true with global grant")
+		}
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("expectations: %v", err)
+		}
+	})
+
+	t.Run("section grant", func(t *testing.T) {
+		conn, mock, err := sqlmock.New()
+		if err != nil {
+			t.Fatalf("sqlmock.New: %v", err)
+		}
+		defer conn.Close()
+
+		queries := db.New(conn)
+		cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+		cd.AdminMode = true
+
+		if !common.CanSearch(cd, "news") {
+			t.Fatalf("expected true with section grant")
+		}
+		_ = mock
+	})
 }

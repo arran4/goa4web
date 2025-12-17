@@ -50,6 +50,9 @@ func TestAddEmailTaskEventData(t *testing.T) {
 	ctx = context.WithValue(ctx, core.ContextValues("session"), sess)
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 
+	addEmailTask.codeGenerator = func() (string, error) { return "deadbeef", nil }
+	defer func() { addEmailTask.codeGenerator = nil }()
+
 	req := httptest.NewRequest("POST", "http://example.com/usr/email", strings.NewReader("new_email=a@example.com"))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req = req.WithContext(ctx)
@@ -61,6 +64,12 @@ func TestAddEmailTaskEventData(t *testing.T) {
 	}
 	if _, ok := evt.Data["URL"]; !ok {
 		t.Fatalf("missing URL event data: %+v", evt.Data)
+	}
+	if evt.Data["VerificationCode"] != "deadbeef" {
+		t.Fatalf("verification code not set: %+v", evt.Data)
+	}
+	if evt.Data["Token"] != "deadbeef" {
+		t.Fatalf("token not set: %+v", evt.Data)
 	}
 	if evt.Data["Username"] != "alice" {
 		t.Fatalf("username not set: %+v", evt.Data)
@@ -91,6 +100,9 @@ func TestVerifyRemovesDuplicates(t *testing.T) {
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithSession(sess), common.WithEvent(evt))
 	cd.UserID = 1
 
+	addEmailTask.codeGenerator = func() (string, error) { return "deadbeef", nil }
+	defer func() { addEmailTask.codeGenerator = nil }()
+
 	rows := sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).
 		AddRow(1, 1, "a@example.com", nil, "code", time.Now().Add(time.Hour), 0)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority\nFROM user_emails\nWHERE last_verification_code = ?")).
@@ -98,6 +110,12 @@ func TestVerifyRemovesDuplicates(t *testing.T) {
 		WillReturnRows(rows)
 	mock.ExpectExec(regexp.QuoteMeta("UPDATE user_emails\nSET verified_at = ?, last_verification_code = NULL, verification_expires_at = NULL\nWHERE id = ?")).
 		WithArgs(sqlmock.AnyArg(), int32(1)).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT COALESCE(MAX(notification_priority),0) AS maxp FROM user_emails WHERE user_id = ?")).
+		WithArgs(int32(1)).
+		WillReturnRows(sqlmock.NewRows([]string{"maxp"}).AddRow(0))
+	mock.ExpectExec(regexp.QuoteMeta("UPDATE user_emails SET notification_priority = ? WHERE id = ? AND user_id = ?")).
+		WithArgs(int32(1), int32(1), int32(1)).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectExec(regexp.QuoteMeta("DELETE FROM user_emails WHERE email = ? AND id != ?")).
 		WithArgs("a@example.com", int32(1)).
@@ -154,6 +172,9 @@ func TestResendVerificationEmailTaskEventData(t *testing.T) {
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithSession(sess), common.WithEvent(evt))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 
+	addEmailTask.codeGenerator = func() (string, error) { return "deadbeef", nil }
+	defer func() { addEmailTask.codeGenerator = nil }()
+
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 	handlers.TaskHandler(resendVerificationEmailTask)(rr, req)
@@ -166,6 +187,12 @@ func TestResendVerificationEmailTaskEventData(t *testing.T) {
 	}
 	if _, ok := evt.Data["email"]; !ok {
 		t.Fatalf("missing email event data: %+v", evt.Data)
+	}
+	if evt.Data["VerificationCode"] != "deadbeef" {
+		t.Fatalf("verification code missing: %+v", evt.Data)
+	}
+	if evt.Data["Token"] != "deadbeef" {
+		t.Fatalf("token missing: %+v", evt.Data)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)

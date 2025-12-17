@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
@@ -94,7 +95,16 @@ func AdminTopicCreatePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
-	allowed, err := UserCanCreateTopic(r.Context(), cd.Queries(), int32(pcid), uid)
+	// derive section from base path, handling private forum mapping
+	base := cd.ForumBasePath
+	if base == "" {
+		base = "/forum"
+	}
+	section := strings.TrimPrefix(base, "/")
+	if section == "private" {
+		section = "privateforum"
+	}
+	allowed, err := UserCanCreateTopic(r.Context(), cd.Queries(), section, int32(pcid), uid)
 	if err != nil {
 		log.Printf("UserCanCreateTopic error: %v", err)
 		w.WriteHeader(http.StatusForbidden)
@@ -115,7 +125,7 @@ func AdminTopicCreatePage(w http.ResponseWriter, r *http.Request) {
 		Title:           sql.NullString{String: name, Valid: true},
 		Description:     sql.NullString{String: desc, Valid: true},
 		Handler:         "",
-		Section:         "forum",
+		Section:         section,
 		GrantCategoryID: sql.NullInt32{Int32: int32(pcid), Valid: true},
 		GranteeID:       sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})

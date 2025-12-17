@@ -32,3 +32,9 @@ SELECT NOW(), r.id, 'privateforum', NULL, 'allow', 'edit', 1
 FROM roles r
 WHERE r.name = 'private forum user'
 ON DUPLICATE KEY UPDATE action=VALUES(action);
+
+INSERT INTO grants (created_at, role_id, section, item, rule_type, action, active)
+SELECT NOW(), r.id, 'privateforum', NULL, 'allow', 'create', 1
+FROM roles r
+WHERE r.name = 'private forum user'
+ON DUPLICATE KEY UPDATE action=VALUES(action);

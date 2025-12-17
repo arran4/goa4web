@@ -16,6 +16,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers/imagebbs"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -38,7 +39,7 @@ func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
 		Entries []Entry
 	}
 
-	base := cd.Config.ImageUploadDir
+	base := filepath.Join(cd.Config.ImageUploadDir, imagebbs.ImagebbsUploadPrefix)
 	reqPath := r.URL.Query().Get("path")
 	cleaned := filepath.Clean("/" + reqPath)
 	abs := filepath.Join(base, cleaned)

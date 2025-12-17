@@ -21,7 +21,7 @@ func TestUserCanCreateThread_Allowed(t *testing.T) {
 		WithArgs(sqlmock.AnyArg(), "forum", sqlmock.AnyArg(), "post", sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
-	ok, err := UserCanCreateThread(context.Background(), q, 1, 2)
+	ok, err := UserCanCreateThread(context.Background(), q, "forum", 1, 2)
 	if err != nil {
 		t.Fatalf("UserCanCreateThread: %v", err)
 	}
@@ -45,7 +45,7 @@ func TestUserCanCreateThread_Denied(t *testing.T) {
 		WithArgs(sqlmock.AnyArg(), "forum", sqlmock.AnyArg(), "post", sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnError(sql.ErrNoRows)
 
-	ok, err := UserCanCreateThread(context.Background(), q, 1, 2)
+	ok, err := UserCanCreateThread(context.Background(), q, "forum", 1, 2)
 	if err != nil {
 		t.Fatalf("UserCanCreateThread: %v", err)
 	}
@@ -69,7 +69,7 @@ func TestUserCanCreateTopic_Allowed(t *testing.T) {
 		WithArgs(sqlmock.AnyArg(), "forum", sqlmock.AnyArg(), "post", sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
-	ok, err := UserCanCreateTopic(context.Background(), q, 1, 2)
+	ok, err := UserCanCreateTopic(context.Background(), q, "forum", 1, 2)
 	if err != nil {
 		t.Fatalf("UserCanCreateTopic: %v", err)
 	}
@@ -93,7 +93,7 @@ func TestUserCanCreateTopic_Denied(t *testing.T) {
 		WithArgs(sqlmock.AnyArg(), "forum", sqlmock.AnyArg(), "post", sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnError(sql.ErrNoRows)
 
-	ok, err := UserCanCreateTopic(context.Background(), q, 1, 2)
+	ok, err := UserCanCreateTopic(context.Background(), q, "forum", 1, 2)
 	if err != nil {
 		t.Fatalf("UserCanCreateTopic: %v", err)
 	}

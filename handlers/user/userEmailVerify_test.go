@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -66,6 +67,10 @@ func TestUserEmailVerifyCodePage_Success(t *testing.T) {
 		AddRow(1, 1, "e@example.com", nil, code, nil, 0)
 	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(sql.NullString{String: code, Valid: true}).WillReturnRows(rows)
 	mock.ExpectExec("UPDATE user_emails").WithArgs(sqlmock.AnyArg(), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT COALESCE(MAX(notification_priority),0) AS maxp FROM user_emails WHERE user_id = ?")).WithArgs(int32(1)).
+		WillReturnRows(sqlmock.NewRows([]string{"maxp"}).AddRow(0))
+	mock.ExpectExec(regexp.QuoteMeta("UPDATE user_emails SET notification_priority = ? WHERE id = ? AND user_id = ?")).WithArgs(int32(1), int32(1), int32(1)).
+		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	store := sessions.NewCookieStore([]byte("test"))
 	sess := sessions.NewSession(store, "test")

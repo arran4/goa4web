@@ -58,16 +58,17 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 			}
 			return fmt.Errorf("unknown error %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
-		hasGrant, err := queries.CheckUserHasGrant(r.Context(), db.CheckUserHasGrantParams{
-			UserID:  sql.NullInt32{Int32: u.Idusers, Valid: true},
-			Section: "privateforum",
-			Item:    sql.NullString{String: "topic", Valid: true},
-			Action:  "see",
-		})
-		if err != nil {
-			return fmt.Errorf("checking user grant: %w", handlers.ErrRedirectOnSamePageHandler(err))
-		}
-		if !hasGrant {
+		if _, err := queries.SystemCheckGrant(r.Context(), db.SystemCheckGrantParams{
+			ViewerID: u.Idusers,
+			Section:  "privateforum",
+			Item:     sql.NullString{String: "topic", Valid: true},
+			Action:   "see",
+			ItemID:   sql.NullInt32{Valid: false},
+			UserID:   sql.NullInt32{Int32: u.Idusers, Valid: true},
+		}); err != nil {
+			if !errors.Is(err, sql.ErrNoRows) {
+				return fmt.Errorf("checking user grant: %w", handlers.ErrRedirectOnSamePageHandler(err))
+			}
 			cd.SetCurrentError(fmt.Sprintf("user %q does not have permission to access private forums", p))
 			forumhandlers.CreateTopicPageWithPostTask(w, r, TaskPrivateTopicCreate, &forumhandlers.CreateTopicPageForm{
 				Participants: participants,

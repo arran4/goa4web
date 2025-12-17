@@ -2,6 +2,7 @@ package templates
 
 import (
 	"embed"
+	"github.com/arran4/goa4web/core/consts"
 	htemplate "html/template"
 	"io/fs"
 	"os"
@@ -95,6 +96,14 @@ func GetCompiledEmailHtmlTemplates(funcs htemplate.FuncMap) *htemplate.Template 
 	if _, ok := funcs["localTime"]; !ok {
 		funcs["localTime"] = func(t time.Time) time.Time { return t }
 	}
+	if _, ok := funcs["formatLocalTime"]; !ok {
+		funcs["formatLocalTime"] = func(t time.Time) string {
+			if t.IsZero() {
+				return ""
+			}
+			return t.Format(consts.DisplayDateTimeFormat)
+		}
+	}
 	return htemplate.Must(htemplate.New("").Funcs(funcs).ParseFS(getFS("email"), "*.gohtml"))
 }
 
@@ -104,6 +113,14 @@ func GetCompiledEmailTextTemplates(funcs ttemplate.FuncMap) *ttemplate.Template 
 	}
 	if _, ok := funcs["localTime"]; !ok {
 		funcs["localTime"] = func(t time.Time) time.Time { return t }
+	}
+	if _, ok := funcs["formatLocalTime"]; !ok {
+		funcs["formatLocalTime"] = func(t time.Time) string {
+			if t.IsZero() {
+				return ""
+			}
+			return t.Format(consts.DisplayDateTimeFormat)
+		}
 	}
 	return ttemplate.Must(ttemplate.New("").Funcs(funcs).ParseFS(getFS("email"), "*.gotxt"))
 }

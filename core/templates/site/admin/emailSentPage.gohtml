@@ -11,7 +11,7 @@
     <td>{{ .Email }}</td>
     <td>{{ .Subject }}</td>
     <td>{{ .ErrorCount }}</td>
-    <td>{{ if .SentAt.Valid }}Sent {{ cd.LocalTime .SentAt.Time }}{{ else }}Unknown{{ end }}</td>
+    <td>{{ if .SentAt.Valid }}Sent {{ cd.FormatLocalTime .SentAt.Time }}{{ else }}Unknown{{ end }}</td>
 </tr>
 {{- end }}
 </table>

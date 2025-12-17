@@ -44,6 +44,7 @@ func TestCommentsPageAllowsGlobalViewGrant(t *testing.T) {
 	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithSession(sess), common.WithUserRoles([]string{"administrator"}))
 	cd.AdminMode = true
 	cd.UserID = 2
+	cd.AdminMode = true
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 

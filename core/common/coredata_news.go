@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"time"
 
-	searchutil "github.com/arran4/goa4web/workers/searchworker"
-
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -179,7 +177,7 @@ func (cd *CoreData) SearchNews(r *http.Request, uid int32) ([]*db.GetNewsPostsBy
 	if cd.queries == nil {
 		return nil, false, false, nil
 	}
-	searchWords := searchutil.BreakupTextToWords(r.PostFormValue("searchwords"))
+	searchWords := cd.searchWordsFromRequest(r)
 	if len(searchWords) == 0 {
 		return nil, true, false, nil
 	}

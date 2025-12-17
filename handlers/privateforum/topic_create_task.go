@@ -58,8 +58,6 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 			}
 			return fmt.Errorf("unknown error %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
-		// Use SystemCheckGrant so role-based grants are considered for the participant.
-		// We pass the participant ID as both ViewerID and UserID to test their own access.
 		if _, err := queries.SystemCheckGrant(r.Context(), db.SystemCheckGrantParams{
 			ViewerID: u.Idusers,
 			Section:  "privateforum",
@@ -71,7 +69,6 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 			if !errors.Is(err, sql.ErrNoRows) {
 				return fmt.Errorf("checking user grant: %w", handlers.ErrRedirectOnSamePageHandler(err))
 			}
-			// NoRows means no matching grant (direct or via role)
 			cd.SetCurrentError(fmt.Sprintf("user %q does not have permission to access private forums", p))
 			forumhandlers.CreateTopicPageWithPostTask(w, r, TaskPrivateTopicCreate, &forumhandlers.CreateTopicPageForm{
 				Participants: participants,

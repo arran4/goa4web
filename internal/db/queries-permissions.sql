@@ -35,6 +35,14 @@ ORDER BY ue.user_id, ue.notification_priority DESC, ue.id;
 INSERT INTO user_roles (users_idusers, role_id)
 SELECT ?, r.id FROM roles r WHERE r.name = ?;
 
+-- name: SystemCreateUserRoleByID :exec
+-- This query inserts a new permission into the "permissions" table by role ID.
+-- Parameters:
+--   ? - User ID to be associated with the permission (int)
+--   ? - Role ID (int)
+INSERT INTO user_roles (users_idusers, role_id)
+VALUES (?, ?);
+
 -- name: AdminDeleteUserRole :exec
 -- This query deletes a permission from the "permissions" table based on the provided "permid".
 -- Parameters:

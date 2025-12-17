@@ -620,3 +620,23 @@ func (q *Queries) SystemCreateUserRole(ctx context.Context, arg SystemCreateUser
 	_, err := q.db.ExecContext(ctx, systemCreateUserRole, arg.UsersIdusers, arg.Name)
 	return err
 }
+
+const systemCreateUserRoleByID = `-- name: SystemCreateUserRoleByID :exec
+INSERT INTO user_roles (users_idusers, role_id)
+VALUES (?, ?)
+`
+
+type SystemCreateUserRoleByIDParams struct {
+	UsersIdusers int32
+	RoleID       int32
+}
+
+// This query inserts a new permission into the "permissions" table by role ID.
+// Parameters:
+//
+//	? - User ID to be associated with the permission (int)
+//	? - Role ID (int)
+func (q *Queries) SystemCreateUserRoleByID(ctx context.Context, arg SystemCreateUserRoleByIDParams) error {
+	_, err := q.db.ExecContext(ctx, systemCreateUserRoleByID, arg.UsersIdusers, arg.RoleID)
+	return err
+}

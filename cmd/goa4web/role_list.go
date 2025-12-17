@@ -11,6 +11,8 @@ type roleListCmd struct {
 	fs *flag.FlagSet
 }
 
+// TODO make it clear that this is listing sql statements and that the actual role name is different (has spaces for one.) Should probably be 2 separate commands.
+
 func parseRoleListCmd(parent *roleCmd, args []string) (*roleListCmd, error) {
 	c := &roleListCmd{roleCmd: parent}
 	fs := flag.NewFlagSet("list", flag.ContinueOnError)

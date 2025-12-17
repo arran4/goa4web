@@ -456,6 +456,11 @@ type Querier interface {
 	//   ? - User ID to be associated with the permission (int)
 	//   ? - Role of the permission (string)
 	SystemCreateUserRole(ctx context.Context, arg SystemCreateUserRoleParams) error
+	// This query inserts a new permission into the "permissions" table by role ID.
+	// Parameters:
+	//   ? - User ID to be associated with the permission (int)
+	//   ? - Role ID (int)
+	SystemCreateUserRoleByID(ctx context.Context, arg SystemCreateUserRoleByIDParams) error
 	// This query deletes all data from the "blogs_search" table.
 	SystemDeleteBlogsSearch(ctx context.Context) error
 	// This query deletes all data from the "comments_search" table.

@@ -8,10 +8,13 @@ import (
 
 // HasGrant reports whether the current user is allowed the given action.
 func (cd *CoreData) HasGrant(section, item, action string, itemID int32) bool {
-	if cd.IsAdmin() {
+	if cd == nil {
+		return false
+	}
+	if cd.HasAdminRole() {
 		return true
 	}
-	if cd == nil || cd.queries == nil {
+	if cd.queries == nil {
 		return false
 	}
 	_, err := cd.queries.SystemCheckGrant(cd.ctx, db.SystemCheckGrantParams{

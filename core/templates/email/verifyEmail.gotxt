@@ -2,4 +2,6 @@ Hi {{.Item.Username}},
 Please verify your email address by visiting:
 {{.URL}}
 
+This verification link expires on {{ localTime .Item.ExpiresAt }}.
+
 If this wasn't you, you can ignore this email.

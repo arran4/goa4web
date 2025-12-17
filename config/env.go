@@ -103,6 +103,8 @@ const (
 	// EnvEmailWorkerInterval controls how often the email worker processes
 	// pending messages in seconds.
 	EnvEmailWorkerInterval = "EMAIL_WORKER_INTERVAL"
+	// EnvEmailVerificationExpiryHours sets the email verification expiry in hours.
+	EnvEmailVerificationExpiryHours = "EMAIL_VERIFICATION_EXPIRY_HOURS"
 	// EnvPasswordResetExpiryHours sets the password reset expiry in hours.
 	EnvPasswordResetExpiryHours = "PASSWORD_RESET_EXPIRY_HOURS"
 	// EnvLoginAttemptWindow defines the time window in minutes used to

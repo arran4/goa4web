@@ -10,6 +10,7 @@
 
     <h3>Verified Emails</h3>
     <table class="table table-bordered">
+        <tr><th>Email</th><th>Verified</th><th>Actions</th></tr>
     {{ range .Verified }}
         <tr><td>{{ .Email }}</td><td>{{ if .VerifiedAt.Valid }}{{ cd.LocalTime .VerifiedAt.Time }}{{ end }}</td><td>
             <form method="post" action="/usr/email/delete" style="display:inline">{{ csrfField }}<input type="hidden" name="id" value="{{ .ID }}"><input type="hidden" name="task" value="Delete"><input type="submit" value="Delete"></form>
@@ -23,8 +24,9 @@
     {{- if .Unverified }}
     <h3>Unverified Emails</h3>
     <table class="table table-bordered">
+        <tr><th>Email</th><th>Expires</th><th>Actions</th></tr>
     {{ range .Unverified }}
-        <tr><td>{{ .Email }}</td><td>
+        <tr><td>{{ .Email }}</td><td>{{ if .VerificationExpiresAt.Valid }}{{ cd.LocalTime .VerificationExpiresAt.Time }}{{ end }}</td><td>
             <form method="post" action="/usr/email/delete" style="display:inline">{{ csrfField }}<input type="hidden" name="id" value="{{ .ID }}"><input type="hidden" name="task" value="Delete"><input type="submit" value="Delete"></form>
             <form method="post" action="/usr/email/resend" style="display:inline">{{ csrfField }}<input type="hidden" name="id" value="{{ .ID }}"><input type="hidden" name="task" value="Resend"><input type="submit" value="Send verification code again"></form>
         </td></tr>

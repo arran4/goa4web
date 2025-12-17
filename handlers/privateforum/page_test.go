@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"reflect"
 	"strings"
 	"testing"
@@ -31,18 +32,8 @@ func TestPage_NoAccess(t *testing.T) {
 }
 
 func TestPage_Access(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-
-	queries := db.New(conn)
-	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
 	cd.AdminMode = true
-	cd.UserID = 1
-	cachePrivateTopics(cd, nil)
-	_ = mock
 	req := httptest.NewRequest(http.MethodGet, "/private", nil)
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 
@@ -53,7 +44,7 @@ func TestPage_Access(t *testing.T) {
 	if !strings.Contains(body, "Private Topics") {
 		t.Fatalf("expected private topics page, got %q", body)
 	}
-	if !strings.Contains(body, "<form id=\"private-form\"") {
+	if !strings.Contains(body, "topic-controls") {
 		t.Fatalf("expected create form, got %q", body)
 	}
 }
@@ -75,9 +66,9 @@ func TestPage_SeeNoCreate(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/private", nil)
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 
-	mock.ExpectQuery("(?s).*SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
-	mock.ExpectQuery("(?s).*SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
-	mock.ExpectQuery("(?s).*SELECT 1 FROM grants").WillReturnError(sql.ErrNoRows)
+	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnError(sql.ErrNoRows)
 
 	w := httptest.NewRecorder()
 	PrivateForumPage(w, req)

@@ -9,7 +9,6 @@ import (
 	"strconv"
 
 	"github.com/arran4/goa4web/internal/db"
-	searchutil "github.com/arran4/goa4web/workers/searchworker"
 )
 
 // linkerTopicName matches the hidden linker forum name.
@@ -179,7 +178,7 @@ func (cd *CoreData) SearchBlogsEmptyWords() bool {
 }
 
 func (cd *CoreData) linkerSearch(r *http.Request, uid int32) ([]*db.GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow, bool, bool, error) {
-	searchWords := searchutil.BreakupTextToWords(r.PostFormValue("searchwords"))
+	searchWords := cd.searchWordsFromRequest(r)
 	var linkerIDs []int32
 
 	if len(searchWords) == 0 {
@@ -232,7 +231,7 @@ func (cd *CoreData) linkerSearch(r *http.Request, uid int32) ([]*db.GetLinkerIte
 }
 
 func (cd *CoreData) writingSearch(r *http.Request, uid int32) ([]*db.ListWritingsByIDsForListerRow, bool, bool, error) {
-	searchWords := searchutil.BreakupTextToWords(r.PostFormValue("searchwords"))
+	searchWords := cd.searchWordsFromRequest(r)
 	var writingsIDs []int32
 
 	if len(searchWords) == 0 {
@@ -294,7 +293,7 @@ func (cd *CoreData) writingSearch(r *http.Request, uid int32) ([]*db.ListWriting
 }
 
 func (cd *CoreData) blogSearch(r *http.Request, uid int32) ([]*db.Blog, bool, bool, error) {
-	searchWords := searchutil.BreakupTextToWords(r.PostFormValue("searchwords"))
+	searchWords := cd.searchWordsFromRequest(r)
 	var blogIDs []int32
 
 	if len(searchWords) == 0 {
@@ -361,7 +360,7 @@ func (cd *CoreData) blogSearch(r *http.Request, uid int32) ([]*db.Blog, bool, bo
 }
 
 func (cd *CoreData) forumCommentSearchNotInRestrictedTopic(r *http.Request, uid int32) ([]*db.GetCommentsByIdsForUserWithThreadInfoRow, bool, bool, error) {
-	searchWords := searchutil.BreakupTextToWords(r.PostFormValue("searchwords"))
+	searchWords := cd.searchWordsFromRequest(r)
 	var commentIDs []int32
 
 	if len(searchWords) == 0 {
@@ -418,7 +417,7 @@ func (cd *CoreData) forumCommentSearchNotInRestrictedTopic(r *http.Request, uid 
 }
 
 func (cd *CoreData) forumCommentSearchInRestrictedTopic(r *http.Request, forumTopicIDs []int32, uid int32) ([]*db.GetCommentsByIdsForUserWithThreadInfoRow, bool, bool, error) {
-	searchWords := searchutil.BreakupTextToWords(r.PostFormValue("searchwords"))
+	searchWords := cd.searchWordsFromRequest(r)
 	var commentIDs []int32
 
 	if len(searchWords) == 0 {

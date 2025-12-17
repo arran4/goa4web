@@ -42,6 +42,9 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 			}
 			return m
 		},
+		"highlightSearch": func(s string) template.HTML {
+			return HighlightSearchTerms(s, cd.SearchWords())
+		},
 		"a4code2html": func(s string) template.HTML {
 			c := a4code2html.New(mapper)
 			c.CodeType = a4code2html.CTHTML

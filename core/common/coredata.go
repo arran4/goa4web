@@ -203,6 +203,7 @@ type CoreData struct {
 	searchLinkerEmptyWords           bool
 	searchLinkerItems                []*db.GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow
 	searchLinkerNoResults            bool
+	searchWords                      []string
 	searchWritings                   []*db.ListWritingsByIDsForListerRow
 	searchWritingsEmptyWords         bool
 	searchWritingsNoResults          bool

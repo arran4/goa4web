@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"reflect"
 	"strings"
 	"testing"
@@ -46,6 +47,15 @@ func TestPage_Access(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/private", nil)
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 
+	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+	topicRows := sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_id", "title", "description", "threads", "comments", "lastaddition", "handler", "LastPosterUsername"})
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT t.idforumtopic")).
+		WithArgs(sql.NullInt32{}).
+		WillReturnRows(topicRows)
+	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+
 	w := httptest.NewRecorder()
 	PrivateForumPage(w, req)
 
@@ -75,9 +85,9 @@ func TestPage_SeeNoCreate(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/private", nil)
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 
-	mock.ExpectQuery("(?s).*SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
-	mock.ExpectQuery("(?s).*SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
-	mock.ExpectQuery("(?s).*SELECT 1 FROM grants").WillReturnError(sql.ErrNoRows)
+	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnError(sql.ErrNoRows)
 
 	w := httptest.NewRecorder()
 	PrivateForumPage(w, req)

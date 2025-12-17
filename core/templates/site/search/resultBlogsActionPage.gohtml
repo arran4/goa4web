@@ -8,7 +8,7 @@
     {{- else }}
         <ul>
         {{- range $i, $result := $cd.SearchBlogsResults }}
-            <li>{{ $i }}: <a href="/blogs/blog/{{$result.Idblogs}}">{{ $result.Text.String }}</a></li>
+            <li>{{ $i }}: <a href="/blogs/blog/{{$result.Idblogs}}">{{ highlightSearch $result.Blog.String }}</a></li>
         {{- end }}
         </ul>
     {{ end }}

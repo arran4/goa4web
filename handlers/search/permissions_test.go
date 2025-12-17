@@ -19,11 +19,11 @@ func TestCanSearch(t *testing.T) {
 		}
 		defer conn.Close()
 
-		queries := db.New(conn)
-		cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
+		cd := common.NewCoreData(context.Background(), db.New(conn), config.NewRuntimeConfig())
 
-		mock.ExpectQuery("(?s).*SELECT 1 FROM grants").WillReturnError(sql.ErrNoRows)
-		mock.ExpectQuery("(?s).*SELECT 1 FROM grants").WillReturnError(sql.ErrNoRows)
+		mock.ExpectQuery("SELECT 1 FROM grants").WillReturnError(sql.ErrNoRows)
+		mock.ExpectQuery("SELECT 1 FROM grants").WillReturnError(sql.ErrNoRows)
+
 		if common.CanSearch(cd, "news") {
 			t.Fatalf("expected false")
 		}
@@ -32,18 +32,18 @@ func TestCanSearch(t *testing.T) {
 		}
 	})
 
-	t.Run("global grant", func(t *testing.T) {
+	t.Run("global grant only", func(t *testing.T) {
 		conn, mock, err := sqlmock.New()
 		if err != nil {
 			t.Fatalf("sqlmock.New: %v", err)
 		}
 		defer conn.Close()
 
-		queries := db.New(conn)
-		cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
+		cd := common.NewCoreData(context.Background(), db.New(conn), config.NewRuntimeConfig())
 
-		mock.ExpectQuery("(?s).*SELECT 1 FROM grants").WillReturnError(sql.ErrNoRows)
-		mock.ExpectQuery("(?s).*SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+		mock.ExpectQuery("SELECT 1 FROM grants").WillReturnError(sql.ErrNoRows)
+		mock.ExpectQuery("SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+
 		if !common.CanSearch(cd, "news") {
 			t.Fatalf("expected true with global grant")
 		}
@@ -53,19 +53,11 @@ func TestCanSearch(t *testing.T) {
 	})
 
 	t.Run("section grant", func(t *testing.T) {
-		conn, mock, err := sqlmock.New()
-		if err != nil {
-			t.Fatalf("sqlmock.New: %v", err)
-		}
-		defer conn.Close()
-
-		queries := db.New(conn)
-		cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+		cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
 		cd.AdminMode = true
 
 		if !common.CanSearch(cd, "news") {
 			t.Fatalf("expected true with section grant")
 		}
-		_ = mock
 	})
 }

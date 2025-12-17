@@ -24,14 +24,31 @@ import (
 
 // AddEmailTask handles user email verification requests and sends
 // notifications directly to the specified address.
-type AddEmailTask struct{ tasks.TaskString }
+type AddEmailTask struct {
+	tasks.TaskString
+	codeGenerator func() (string, error)
+}
 
 var addEmailTask = &AddEmailTask{TaskString: tasks.TaskString(TaskAdd)}
 
 var _ tasks.Task = (*AddEmailTask)(nil)
 var _ notif.DirectEmailNotificationTemplateProvider = (*AddEmailTask)(nil)
 
-func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
+func (t AddEmailTask) generateVerificationCode() string {
+	if t.codeGenerator != nil {
+		if code, err := t.codeGenerator(); err == nil {
+			return code
+		}
+	}
+	var buf [8]byte
+	if _, err := rand.Read(buf[:]); err != nil {
+		log.Printf("rand read: %v", err)
+		return ""
+	}
+	return hex.EncodeToString(buf[:])
+}
+
+func (t AddEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return handlers.SessionFetchFail{}
@@ -52,11 +69,7 @@ func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if ue, err := queries.GetUserEmailByEmail(r.Context(), emailAddr); err == nil && ue.VerifiedAt.Valid {
 		return handlers.RefreshDirectHandler{TargetURL: "/usr/email?error=email+exists"}
 	}
-	var buf [8]byte
-	if _, err := rand.Read(buf[:]); err != nil {
-		log.Printf("rand read: %v", err)
-	}
-	code := hex.EncodeToString(buf[:])
+	code := t.generateVerificationCode()
 	expiryHours := cd.Config.EmailVerificationExpiryHours
 	if expiryHours <= 0 {
 		expiryHours = 24
@@ -73,17 +86,24 @@ func (AddEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 		page = strings.TrimRight(cfg.HTTPHostname, "/") + path
 	}
 	evt := cd.Event()
-	evt.Data["page"] = page
-	evt.Data["email"] = emailAddr
-	evt.Data["URL"] = page
-	if user, err := cd.CurrentUser(); err == nil && user != nil {
-		evt.Data["Username"] = user.Username.String
+	if evt != nil {
+		if evt.Data == nil {
+			evt.Data = map[string]any{}
+		}
+		evt.Data["page"] = page
+		evt.Data["email"] = emailAddr
+		evt.Data["URL"] = page
+		evt.Data["VerificationCode"] = code
+		evt.Data["Token"] = code
+		if user, err := cd.CurrentUser(); err == nil && user != nil {
+			evt.Data["Username"] = user.Username.String
+		}
 	}
 	evt.Data["ExpiresAt"] = expire
 	return handlers.RefreshDirectHandler{TargetURL: "/usr/email"}
 }
 
-func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) any {
+func (t AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) any {
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return handlers.SessionFetchFail{}
@@ -99,17 +119,13 @@ func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) any {
 	if err != nil || ue.UserID != uid {
 		return handlers.RefreshDirectHandler{TargetURL: "/usr/email"}
 	}
-	var buf [8]byte
-	if _, err := rand.Read(buf[:]); err != nil {
-		log.Printf("rand read: %v", err)
-	}
-	code := hex.EncodeToString(buf[:])
+	code := t.generateVerificationCode()
 	expiryHours := cd.Config.EmailVerificationExpiryHours
 	if expiryHours <= 0 {
 		expiryHours = 24
 	}
 	expire := time.Now().Add(time.Duration(expiryHours) * time.Hour)
-	if err := queries.SetVerificationCodeForLister(r.Context(), db.SetVerificationCodeForListerParams{ListerID: uid, LastVerificationCode: sql.NullString{String: code, Valid: true}, VerificationExpiresAt: sql.NullTime{Time: expire, Valid: true}, ID: int32(id)}); err != nil {
+	if err := queries.SetVerificationCodeForLister(r.Context(), db.SetVerificationCodeForListerParams{ListerID: uid, LastVerificationCode: sql.NullString{String: code, Valid: code != ""}, VerificationExpiresAt: sql.NullTime{Time: expire, Valid: true}, ID: int32(id)}); err != nil {
 		log.Printf("set verification code: %v", err)
 	}
 	path := "/usr/email/verify?code=" + code
@@ -119,11 +135,18 @@ func (AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) any {
 		page = strings.TrimRight(cfg.HTTPHostname, "/") + path
 	}
 	evt := cd.Event()
-	evt.Data["page"] = page
-	evt.Data["email"] = ue.Email
-	evt.Data["URL"] = page
-	if user, err := cd.CurrentUser(); err == nil && user != nil {
-		evt.Data["Username"] = user.Username.String
+	if evt != nil {
+		if evt.Data == nil {
+			evt.Data = map[string]any{}
+		}
+		evt.Data["page"] = page
+		evt.Data["email"] = ue.Email
+		evt.Data["URL"] = page
+		evt.Data["VerificationCode"] = code
+		evt.Data["Token"] = code
+		if user, err := cd.CurrentUser(); err == nil && user != nil {
+			evt.Data["Username"] = user.Username.String
+		}
 	}
 	evt.Data["ExpiresAt"] = expire
 	return handlers.RefreshDirectHandler{TargetURL: "/usr/email"}

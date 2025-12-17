@@ -12,7 +12,7 @@ func CanSearch(cd *CoreData, section string) bool {
 	return cd.HasGrant("search", "", "search", 0)
 }
 
-// CanSearch reports whether the current user is allowed to search in the provided section.
+// CanSearch reports whether searches are permitted for the section using cd's grants.
 func (cd *CoreData) CanSearch(section string) bool {
 	return CanSearch(cd, section)
 }

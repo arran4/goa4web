@@ -8,7 +8,7 @@
     <td>{{ .Email }}</td>
     <td>{{ .Subject }}</td>
     <td>{{ .ErrorCount }}</td>
-    <td>{{ if .CreatedAt.Valid }}{{ cd.LocalTime .CreatedAt.Time }}{{ end }}</td>
+    <td>{{ if .CreatedAt.Valid }}{{ cd.FormatLocalTime .CreatedAt.Time }}{{ end }}</td>
 </tr>
 {{- end }}
 </table>

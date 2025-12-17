@@ -4,18 +4,18 @@ import (
 	"bytes"
 	"crypto/sha1"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"image"
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
 	"io"
 	"net/http"
-	"path/filepath"
-	"strings"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
+	intimages "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -55,7 +55,13 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if id == "" {
 		id = fmt.Sprintf("%x", sha1.Sum(data))
 	}
-	ext := strings.ToLower(filepath.Ext(header.Filename))
+	ext, err := intimages.CleanExtension(header.Filename)
+	if err != nil {
+		return fmt.Errorf("invalid extension %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	if !intimages.ValidID(id) {
+		return fmt.Errorf("invalid id %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("bad id")))
+	}
 	uid := cd.UserID
 	fname, err := cd.StoreImage(common.StoreImageParams{ID: id, Ext: ext, Data: data, Image: img, UploaderID: uid})
 	if err != nil {

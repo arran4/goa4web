@@ -11,3 +11,8 @@ func CanSearch(cd *CoreData, section string) bool {
 	}
 	return cd.HasGrant("search", "", "search", 0)
 }
+
+// CanSearch reports whether cd permits running a search in the given section.
+func (cd *CoreData) CanSearch(section string) bool {
+	return CanSearch(cd, section)
+}

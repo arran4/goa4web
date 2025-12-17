@@ -18,6 +18,20 @@
                 [<a href="{{$base}}/topic/{{.ForumtopicIdforumtopic}}/thread/{{ .Idforumthread }}">
                     {{- .Comments.Int32 }} comments.</a>]{{" "}}
                 {{- template "topicLabels" .Labels }}
+                {{ if .IsUnread }}
+                <form method="post" action="{{$base}}/thread/{{.Idforumthread}}/labels" class="mark-read">
+                    {{ csrfField }}
+                    <input type="hidden" name="task" value="Mark Thread Read"/>
+                    <input type="hidden" name="redirect" value="{{ $.BackURL }}"/>
+                    <button type="submit">Mark as read</button>
+                </form>
+                <form method="post" action="{{$base}}/thread/{{.Idforumthread}}/labels" class="mark-read">
+                    {{ csrfField }}
+                    <input type="hidden" name="task" value="Mark Thread Read"/>
+                    <input type="hidden" name="redirect" value="{{$base}}/topic/{{.ForumtopicIdforumtopic}}"/>
+                    <button type="submit">Mark as read and go back</button>
+                </form>
+                {{ end }}
             </div>
         </div>
     {{- end }}

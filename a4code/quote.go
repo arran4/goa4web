@@ -16,8 +16,8 @@ type quoteOptions struct {
 	Trim bool
 }
 
-// WithFullQuote enables paragraph aware quoting.
-func WithFullQuote() QuoteOption { return func(o *quoteOptions) { o.Full = true } }
+// WithParagraphQuote enables paragraph aware quoting.
+func WithParagraphQuote() QuoteOption { return func(o *quoteOptions) { o.Full = true } }
 
 // WithTrimSpace removes surrounding whitespace from the quoted text.
 func WithTrimSpace() QuoteOption { return func(o *quoteOptions) { o.Trim = true } }
@@ -90,4 +90,8 @@ func fullQuoteOf(username, text string, trim bool) string {
 	}
 	quote.WriteString(quoteOfText(username, out.String(), trim))
 	return quote.String()
+}
+
+func Substring(s string, start, end int) string {
+	return substring(s, start, end)
 }

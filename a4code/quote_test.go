@@ -35,7 +35,7 @@ func TestQuote(t *testing.T) {
 
 func TestQuoteFullParagraphs(t *testing.T) {
 	text := "foo\n\nbar"
-	got := QuoteText("bob", text, WithFullQuote())
+	got := QuoteText("bob", text, WithParagraphQuote())
 	want := "[quoteof \"bob\" foo]\n[quoteof \"bob\" bar]\n"
 	if got != want {
 		t.Errorf("got %q want %q", got, want)
@@ -61,7 +61,7 @@ func TestQuoteFullParagraphs(t *testing.T) {
 
 func TestQuoteFullEscaping(t *testing.T) {
 	text := "see \\[bracket\\]"
-	got := QuoteText("bob", text, WithFullQuote())
+	got := QuoteText("bob", text, WithParagraphQuote())
 	want := "[quoteof \"bob\" see [bracket]]\n"
 	if got != want {
 		t.Errorf("got %q want %q", got, want)
@@ -88,7 +88,7 @@ func TestQuoteFullEscaping(t *testing.T) {
 
 func TestQuoteFullImage(t *testing.T) {
 	text := "[img http://example.com/foo.jpg]"
-	got := QuoteText("bob", text, WithFullQuote())
+	got := QuoteText("bob", text, WithParagraphQuote())
 	want := "[quoteof \"bob\" [img http://example.com/foo.jpg]]\n"
 	if got != want {
 		t.Errorf("got %q want %q", got, want)
@@ -117,5 +117,51 @@ func TestQuoteTrim(t *testing.T) {
 	want := "[quoteof \"bob\" hello]\n"
 	if got != want {
 		t.Errorf("got %q want %q", got, want)
+	}
+}
+
+func TestSubstring(t *testing.T) {
+	tests := []struct {
+		name   string
+		s      string
+		start  int
+		end    int
+		want   string
+	}{
+		{
+			name:  "Simple",
+			s:     "hello world",
+			start: 2,
+			end:   8,
+			want:  "llo wo",
+		},
+		{
+			name:  "With Bold",
+			s:     "hello [b]world[/b]",
+			start: 2,
+			end:   8,
+			want:  "llo [b]wo[/b]",
+		},
+		{
+			name:  "Partial Bold",
+			s:     "hello [b]world[/b]",
+			start: 7,
+			end:   10,
+			want:  "[b]orl[/b]",
+		},
+		{
+			name:  "Across Bold",
+			s:     "he[b]llo[/b] world",
+			start: 1,
+			end:   10,
+			want:  "e[b]llo[/b] wor",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Substring(tt.s, tt.start, tt.end); got != tt.want {
+				t.Errorf("Substring() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

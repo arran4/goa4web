@@ -51,6 +51,9 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	fr.Handle("/topic/{topic}/thread/{thread}/reply", RequireThreadAndTopic(http.HandlerFunc(handlers.TaskHandler(replyTask)))).Methods("POST").MatcherFunc(replyTask.Matcher())
 	fr.Handle("/topic/{topic}/thread/{thread}/comment/{comment}", RequireThreadAndTopic(comments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(topicThreadCommentEditAction))))).Methods("POST").MatcherFunc(topicThreadCommentEditAction.Matcher())
 	fr.Handle("/topic/{topic}/thread/{thread}/comment/{comment}", RequireThreadAndTopic(comments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(topicThreadCommentEditActionCancel))))).Methods("POST").MatcherFunc(topicThreadCommentEditActionCancel.Matcher())
+
+	api := r.PathPrefix("/api/forum").Subrouter()
+	api.HandleFunc("/quote/{commentid}", QuoteApi).Methods("GET")
 }
 
 // Register registers the forum router module.

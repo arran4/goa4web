@@ -20,6 +20,7 @@
   "EMAIL_PROVIDER": "",
   "EMAIL_SIGNOFF": "",
   "EMAIL_SUBJECT_PREFIX": "goa4web",
+  "EMAIL_VERIFICATION_EXPIRY_HOURS": "24",
   "EMAIL_WORKER_INTERVAL": "60",
   "FEEDS_ENABLED": "true",
   "HOSTNAME": "http://localhost:8080",

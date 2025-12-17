@@ -11,3 +11,9 @@ func CanSearch(cd *CoreData, section string) bool {
 	}
 	return cd.HasGrant("search", "", "search", 0)
 }
+
+// CanSearch reports whether the user can search within the given section.
+// It delegates to the package-level CanSearch helper for template compatibility.
+func (cd *CoreData) CanSearch(section string) bool {
+	return CanSearch(cd, section)
+}

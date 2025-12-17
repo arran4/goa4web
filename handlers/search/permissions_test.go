@@ -12,36 +12,52 @@ import (
 )
 
 func TestCanSearch(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
+	t.Run("no grants", func(t *testing.T) {
+		conn, mock, err := sqlmock.New()
+		if err != nil {
+			t.Fatalf("sqlmock.New: %v", err)
+		}
+		defer conn.Close()
 
-	queries := db.New(conn)
-	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
+		cd := common.NewCoreData(context.Background(), db.New(conn), config.NewRuntimeConfig())
 
-	// No grants
-	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnError(sql.ErrNoRows)
-	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnError(sql.ErrNoRows)
-	if common.CanSearch(cd, "news") {
-		t.Fatalf("expected false")
-	}
+		mock.ExpectQuery("SELECT 1 FROM grants").WillReturnError(sql.ErrNoRows)
+		mock.ExpectQuery("SELECT 1 FROM grants").WillReturnError(sql.ErrNoRows)
 
-	// Global grant only
-	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnError(sql.ErrNoRows)
-	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
-	if !common.CanSearch(cd, "news") {
-		t.Fatalf("expected true with global grant")
-	}
+		if common.CanSearch(cd, "news") {
+			t.Fatalf("expected false")
+		}
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("expectations: %v", err)
+		}
+	})
 
-	// Grant present for section
-	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
-	if !common.CanSearch(cd, "news") {
-		t.Fatalf("expected true with section grant")
-	}
+	t.Run("global grant only", func(t *testing.T) {
+		conn, mock, err := sqlmock.New()
+		if err != nil {
+			t.Fatalf("sqlmock.New: %v", err)
+		}
+		defer conn.Close()
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
+		cd := common.NewCoreData(context.Background(), db.New(conn), config.NewRuntimeConfig())
+
+		mock.ExpectQuery("SELECT 1 FROM grants").WillReturnError(sql.ErrNoRows)
+		mock.ExpectQuery("SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+
+		if !common.CanSearch(cd, "news") {
+			t.Fatalf("expected true with global grant")
+		}
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("expectations: %v", err)
+		}
+	})
+
+	t.Run("section grant", func(t *testing.T) {
+		cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+		cd.AdminMode = true
+
+		if !common.CanSearch(cd, "news") {
+			t.Fatalf("expected true with section grant")
+		}
+	})
 }

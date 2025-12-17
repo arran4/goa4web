@@ -127,7 +127,7 @@ func CustomForumIndex(data *common.CoreData, r *http.Request) {
 			data.CustomIndexItems = append(data.CustomIndexItems,
 				common.IndexItem{
 					Name: "Create Thread",
-					Link: fmt.Sprintf("/forum/topic/%s/new", topicId),
+					Link: fmt.Sprintf("/forum/topic/%s/thread", topicId),
 				},
 			)
 		}

@@ -35,5 +35,11 @@ func (t *privateForumTask) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cd.PageTitle = "Private Forum"
-	forumhandlers.CreateTopicPageWithPostTask(w, r, TaskPrivateTopicCreate, &forumhandlers.CreateTopicPageForm{})
+	// Render a private-forum specific template that always shows the creation form;
+	// server-side POST handler still enforces permissions.
+	data := struct {
+		CreateTask tasks.TaskString
+		FormData   *forumhandlers.CreateTopicPageForm
+	}{CreateTask: TaskPrivateTopicCreate, FormData: &forumhandlers.CreateTopicPageForm{}}
+	handlers.TemplateHandler(w, r, "privateforum/create_topic_unconditional.gohtml", data)
 }

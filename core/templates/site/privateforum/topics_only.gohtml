@@ -1,0 +1,9 @@
+{{ define "privateforum/topics_only.gohtml" }}
+    {{ template "head" $ }}
+    <h1>Private Topics</h1>
+    {{ if cd.CurrentError }}
+        <p class="error-message">{{ cd.CurrentError }}</p>
+    {{ end }}
+    {{ template "tableTopics" (dict "Topics" cd.PrivateTopics "BasePath" "/private") }}
+    {{ template "tail" $ }}
+{{ end }}

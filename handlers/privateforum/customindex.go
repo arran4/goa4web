@@ -11,7 +11,7 @@ var CustomIndex = func(cd *common.CoreData, r *http.Request) {
 	cd.CustomIndexItems = []common.IndexItem{}
 	// Action to start a new private group discussion
 	cd.CustomIndexItems = append(cd.CustomIndexItems, common.IndexItem{
-		Name: "new group topic",
+		Name: "Start Group Discussion",
 		Link: "/private/topic/new",
 	})
 }

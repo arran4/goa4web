@@ -40,6 +40,7 @@ func TestBoardPageRendersSubBoards(t *testing.T) {
 	req = mux.SetURLVars(req, map[string]string{"board": "3"})
 	q := db.New(conn)
 	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+	cd.AdminMode = true
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 

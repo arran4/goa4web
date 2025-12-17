@@ -12,7 +12,7 @@
 <table class="table table-bordered">
 <tr><th>Date</th><th>Comment</th></tr>
 {{ range $comments }}
-<tr><td>{{ cd.LocalTime .CreatedAt }}</td><td>{{ .Comment }}</td></tr>
+<tr><td>{{ cd.FormatLocalTime .CreatedAt }}</td><td>{{ .Comment }}</td></tr>
 {{ end }}
 </table>
 {{ else }}

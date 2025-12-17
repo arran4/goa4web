@@ -12,7 +12,7 @@
         <td>{{.ID}}</td>
         <td>{{.Username.String}}</td>
         <td>{{.Action}}</td>
-        <td>{{ cd.LocalTime .CreatedAt }}</td>
+        <td>{{ cd.FormatLocalTime .CreatedAt }}</td>
     </tr>
     {{- end}}
 </table>

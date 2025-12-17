@@ -20,6 +20,7 @@ import (
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dbdrivers"
@@ -1665,6 +1666,14 @@ func (cd *CoreData) Location() *time.Location {
 // LocalTime converts t to cd's configured time zone.
 func (cd *CoreData) LocalTime(t time.Time) time.Time { return t.In(cd.Location()) }
 
+// FormatLocalTime renders t using the configured time zone and standard layout.
+func (cd *CoreData) FormatLocalTime(t time.Time) string {
+	if t.IsZero() {
+		return ""
+	}
+	return cd.LocalTime(t).Format(consts.DisplayDateTimeFormat)
+}
+
 // LocalTimeIn converts t to the named time zone when available, otherwise
 // falling back to cd's configured time zone.
 func (cd *CoreData) LocalTimeIn(t time.Time, zone string) time.Time {
@@ -1674,6 +1683,15 @@ func (cd *CoreData) LocalTimeIn(t time.Time, zone string) time.Time {
 		}
 	}
 	return t.In(cd.Location())
+}
+
+// FormatLocalTimeIn renders t using the provided zone when valid or the configured
+// time zone, applying the standard timestamp layout.
+func (cd *CoreData) FormatLocalTimeIn(t time.Time, zone string) string {
+	if t.IsZero() {
+		return ""
+	}
+	return cd.LocalTimeIn(t, zone).Format(consts.DisplayDateTimeFormat)
 }
 
 // PublicWritings returns public writings in a category, cached per category and offset.

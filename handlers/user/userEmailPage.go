@@ -102,6 +102,9 @@ func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
 		if err := queries.SystemMarkUserEmailVerified(r.Context(), db.SystemMarkUserEmailVerifiedParams{VerifiedAt: sql.NullTime{Time: time.Now(), Valid: true}, ID: ue.ID}); err != nil {
 			log.Printf("update user email verification: %v", err)
 		}
+		if err := cd.AddEmail(uid, ue.ID); err != nil {
+			log.Printf("promote verified email: %v", err)
+		}
 		if err := queries.SystemDeleteUserEmailsByEmailExceptID(r.Context(), db.SystemDeleteUserEmailsByEmailExceptIDParams{Email: ue.Email, ID: ue.ID}); err != nil {
 			log.Printf("delete user emails: %v", err)
 		}

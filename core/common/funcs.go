@@ -13,9 +13,9 @@ import (
 
 	"github.com/arran4/goa4web"
 
-	"filippo.io/csrf/gorilla"
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/arran4/goa4web/core/consts"
+	csrfmiddleware "github.com/arran4/goa4web/internal/middleware/csrf"
 )
 
 const (
@@ -31,8 +31,8 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 	return map[string]any{
 		"cd":        func() *CoreData { return cd },
 		"now":       func() time.Time { return time.Now().In(cd.Location()) },
-		"csrfField": func() template.HTML { return csrf.TemplateField(r) },
-		"csrfToken": func() string { return csrf.Token(r) },
+		"csrfField": func() template.HTML { return csrfmiddleware.TemplateField(r) },
+		"csrfToken": func() string { return csrfmiddleware.Token(r) },
 		"version":   func() string { return goa4web.Version },
 		"dict": func(values ...any) map[string]any {
 			m := make(map[string]any)

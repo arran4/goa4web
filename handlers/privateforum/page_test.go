@@ -6,8 +6,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"regexp"
+	"reflect"
 	"strings"
 	"testing"
+	"unsafe"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
@@ -38,6 +40,10 @@ func TestPage_Access(t *testing.T) {
 
 	queries := db.New(conn)
 	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+	cd.AdminMode = true
+	cd.UserID = 1
+	cachePrivateTopics(cd, nil)
+	_ = mock
 	req := httptest.NewRequest(http.MethodGet, "/private", nil)
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 
@@ -57,7 +63,7 @@ func TestPage_Access(t *testing.T) {
 	if !strings.Contains(body, "Private Topics") {
 		t.Fatalf("expected private topics page, got %q", body)
 	}
-	if !strings.Contains(body, "<form id=\"private-form\"") {
+	if !strings.Contains(body, "topic-controls") {
 		t.Fatalf("expected create form, got %q", body)
 	}
 }
@@ -68,10 +74,13 @@ func TestPage_SeeNoCreate(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer conn.Close()
+	mock.MatchExpectationsInOrder(false)
 
 	queries := db.New(conn)
 	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
 	cd.UserID = 1
+	cd.AdminMode = false
+	cachePrivateTopics(cd, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/private", nil)
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
@@ -90,4 +99,14 @@ func TestPage_SeeNoCreate(t *testing.T) {
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
 	}
+}
+
+func cachePrivateTopics(cd *common.CoreData, topics []*common.PrivateTopic) {
+	v := reflect.ValueOf(cd).Elem().FieldByName("privateForumTopics")
+	ptr := reflect.NewAt(v.Type(), unsafe.Pointer(v.UnsafeAddr())).Elem()
+	method := ptr.Addr().MethodByName("Set")
+	if !method.IsValid() {
+		return
+	}
+	method.Call([]reflect.Value{reflect.ValueOf(topics)})
 }

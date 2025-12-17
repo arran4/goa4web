@@ -94,7 +94,7 @@ func AdminTopicCreatePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
-	allowed, err := UserCanCreateTopic(r.Context(), cd.Queries(), int32(pcid), uid)
+	allowed, err := UserCanCreateTopic(r.Context(), cd.Queries(), "forum", int32(pcid), uid)
 	if err != nil {
 		log.Printf("UserCanCreateTopic error: %v", err)
 		w.WriteHeader(http.StatusForbidden)

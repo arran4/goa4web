@@ -127,7 +127,15 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	uid, _ := session.Values["UID"].(int32)
 
-	allowed, err := UserCanCreateThread(r.Context(), queries, int32(topicId), uid)
+	base := cd.ForumBasePath
+	if base == "" {
+		base = "/forum"
+	}
+	section := strings.TrimPrefix(base, "/")
+	if section == "private" {
+		section = "privateforum"
+	}
+	allowed, err := UserCanCreateThread(r.Context(), queries, section, int32(topicId), uid)
 	if err != nil {
 		log.Printf("UserCanCreateThread error: %v", err)
 		w.WriteHeader(http.StatusForbidden)
@@ -169,10 +177,6 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	text := r.PostFormValue("replytext")
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
 
-	base := cd.ForumBasePath
-	if base == "" {
-		base = "/forum"
-	}
 	endUrl := fmt.Sprintf("%s/topic/%d/thread/%d", base, topicId, threadId)
 
 	var cid int64

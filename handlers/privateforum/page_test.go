@@ -53,7 +53,7 @@ func TestPage_Access(t *testing.T) {
 	if !strings.Contains(body, "Private Topics") {
 		t.Fatalf("expected private topics page, got %q", body)
 	}
-	if !strings.Contains(body, "<form id=\"private-form\"") {
+	if !strings.Contains(body, "topic-controls") {
 		t.Fatalf("expected create form, got %q", body)
 	}
 }

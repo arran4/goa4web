@@ -79,17 +79,7 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID int3
 	for _, participant := range p.Participants {
 		uid := participant.ID
 		for _, act := range []string{"see", "view", "post", "reply", "edit"} {
-			if _, err := cd.queries.SystemCreateGrant(cd.ctx, db.SystemCreateGrantParams{ // TODO switch to cd.GrantForumTopic
-				UserID:   sql.NullInt32{Int32: uid, Valid: true},
-				RoleID:   sql.NullInt32{},
-				Section:  "privateforum",
-				Item:     sql.NullString{String: "topic", Valid: true},
-				RuleType: "allow",
-				ItemID:   sql.NullInt32{Int32: topicID, Valid: true},
-				ItemRule: sql.NullString{},
-				Action:   act,
-				Extra:    sql.NullString{},
-			}); err != nil {
+			if _, err := cd.GrantPrivateForumTopic(topicID, sql.NullInt32{Int32: uid, Valid: true}, sql.NullInt32{}, act); err != nil {
 				return 0, fmt.Errorf("create %s grant %w", act, err)
 			}
 		}

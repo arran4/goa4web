@@ -15,6 +15,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/gorilla/csrf"
 
 	"github.com/arran4/goa4web/core"
 )
@@ -175,6 +176,35 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 			}
 		}
 	}
+
+	csrfField := csrf.TemplateField(r)
+	cd.CustomIndexItems = append(cd.CustomIndexItems, common.IndexItem{
+		Name:         "Mark as read",
+		TemplateName: "mark_as_read_form",
+		TemplateData: map[string]interface{}{
+			"BasePath":  basePath,
+			"Thread":    threadRow,
+			"csrfField": csrfField,
+			"BackURL":   r.URL.RequestURI(),
+		},
+	})
+	cd.CustomIndexItems = append(cd.CustomIndexItems, common.IndexItem{
+		Name:         "Mark as read and go back",
+		TemplateName: "mark_as_read_and_go_back_form",
+		TemplateData: map[string]interface{}{
+			"BasePath":  basePath,
+			"Thread":    threadRow,
+			"Topic":     topicRow,
+			"csrfField": csrfField,
+		},
+	})
+	cd.CustomIndexItems = append(cd.CustomIndexItems, common.IndexItem{
+		Name:         "Go back (To topic)",
+		TemplateName: "go_to_topic_link",
+		TemplateData: map[string]interface{}{
+			"Link": fmt.Sprintf("%s/topic/%d", basePath, topicRow.Idforumtopic),
+		},
+	})
 
 	handlers.TemplateHandler(w, r, "forum/threadPage.gohtml", data)
 }

@@ -1,0 +1,21 @@
+{{define "mark_as_read_form"}}
+<form method="post" action="{{ .BasePath }}/thread/{{ .Thread.Idforumthread }}/labels" class="mark-read">
+    {{ .csrfField }}
+    <input type="hidden" name="task" value="Mark Thread Read">
+    <input type="hidden" name="redirect" value="{{ .BackURL }}">
+    <button type="submit">Mark as read</button>
+</form>
+{{end}}
+
+{{define "mark_as_read_and_go_back_form"}}
+<form method="post" action="{{ .BasePath }}/thread/{{ .Thread.Idforumthread }}/labels" class="mark-read">
+    {{ .csrfField }}
+    <input type="hidden" name="task" value="Mark Thread Read">
+    <input type="hidden" name="redirect" value="{{ .BasePath }}/topic/{{ .Topic.Idforumtopic }}">
+    <button type="submit">Mark as read and go back</button>
+</form>
+{{end}}
+
+{{define "go_to_topic_link"}}
+<a href="{{ .Link }}">Go back (To topic)</a>
+{{end}}

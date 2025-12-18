@@ -102,6 +102,24 @@ func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 		SelectedLanguageId: int(cd.PreferredLanguageID(cd.Config.DefaultLanguage)),
 	}
 
+	topicIdStr := mux.Vars(r)["topic"]
+	topicId, err := strconv.Atoi(topicIdStr)
+	if err != nil {
+		handlers.RenderErrorPage(w, r, fmt.Errorf("invalid topic id: %w", err))
+		return
+	}
+	basePath := "/forum"
+	if strings.HasPrefix(r.URL.Path, "/private") {
+		basePath = "/private"
+	}
+	cd.CustomIndexItems = append(cd.CustomIndexItems, common.IndexItem{
+		Name:         "Go back (To topic)",
+		TemplateName: "go_to_topic_link",
+		TemplateData: map[string]interface{}{
+			"Link": fmt.Sprintf("%s/topic/%d", basePath, topicId),
+		},
+	})
+
 	languageRows, err := cd.Languages()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

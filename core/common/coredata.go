@@ -36,8 +36,10 @@ var _ SessionManager = (*db.SessionProxy)(nil)
 
 // IndexItem represents a navigation item linking to site sections.
 type IndexItem struct {
-	Name string
-	Link string
+	Name         string
+	Link         string
+	TemplateName string
+	TemplateData any
 }
 
 // AdminSection groups admin navigation links under a section heading.
@@ -87,9 +89,9 @@ type CoreData struct {
 	AdminMode         bool
 	AtomFeedURL       string
 	AutoRefresh       string
-	Config            *config.RuntimeConfig
-	CustomIndexItems  []IndexItem
-	FeedsEnabled      bool
+	Config           *config.RuntimeConfig
+	CustomIndexItems []IndexItem
+	FeedsEnabled     bool
 	ImageSigner       *imagesign.Signer
 	IndexItems        []IndexItem
 	LinkSigner        *linksign.Signer

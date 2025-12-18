@@ -16,7 +16,7 @@ var templatesDir string
 
 // embeddedFS contains site templates, notification templates, email templates and static assets.
 //
-//go:embed site/*.gohtml site/*/*.gohtml notifications/*.gotxt email/*.gohtml email/*.gotxt assets/*
+//go:embed site/*.gohtml site/*/*.gohtml site/forum/_custom_index_actions.gohtml notifications/*.gotxt email/*.gohtml email/*.gotxt assets/*
 var embeddedFS embed.FS
 
 // SetDir configures templates to be loaded from dir. When dir is empty the embedded templates are used.

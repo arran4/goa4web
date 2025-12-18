@@ -11,7 +11,7 @@ func (cd *CoreData) HasGrant(section, item, action string, itemID int32) bool {
 	if cd == nil {
 		return false
 	}
-	if cd.HasAdminRole() {
+	if cd.IsAdmin() {
 		return true
 	}
 	if cd.queries == nil {

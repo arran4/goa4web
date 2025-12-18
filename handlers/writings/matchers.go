@@ -27,7 +27,7 @@ func RequireWritingAuthor(next http.Handler) http.Handler {
 			http.NotFound(w, r)
 			return
 		}
-		if cd.HasAdminRole() {
+		if cd.IsAdmin() {
 			next.ServeHTTP(w, r)
 			return
 		}

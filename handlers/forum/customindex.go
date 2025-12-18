@@ -27,10 +27,12 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 	items := []common.IndexItem{}
 	if cd.FeedsEnabled && topicID != "" && threadID == "" {
 		cd.RSSFeedURL = fmt.Sprintf("%s/topic/%s.rss", base, topicID)
+		cd.RSSFeedTitle = "Topic RSS Feed"
 		cd.AtomFeedURL = fmt.Sprintf("%s/topic/%s.atom", base, topicID)
+		cd.AtomFeedTitle = "Topic Atom Feed"
 		items = append(items,
-			common.IndexItem{Name: "Atom Feed", Link: cd.AtomFeedURL, Folded: true},
-			common.IndexItem{Name: "RSS Feed", Link: cd.RSSFeedURL, Folded: true},
+			common.IndexItem{Name: "Topic Atom Feed", Link: cd.AtomFeedURL, Folded: true},
+			common.IndexItem{Name: "Topic RSS Feed", Link: cd.RSSFeedURL, Folded: true},
 		)
 	}
 

@@ -4,7 +4,7 @@
         <article class="blog-post">
                 <header class="bg-muted">{{ cd.LocalTimeIn $blog.Written $blog.Timezone.String }}</header>
                 <div class="post-content">
-        {{$blog.Blog.String | a4code2html}}<br><br>{{$blog.Username.String}} - [<a href="/blogs/blog/{{$blog.Idblogs}}/comments">{{$blog.Comments}} COMMENTS</a>]{{ if cd.CanEditBlog $blog.Idblogs $blog.UsersIdusers }} - [<a href="/blogs/blog/{{$blog.Idblogs}}/edit">EDIT</a>]{{ end }}{{ if and cd.IsAdmin cd.IsAdminMode }} - [<a href="/admin/blogs/blog/{{$blog.Idblogs}}">ADMIN</a>]{{ end }}{{ if .Labels }} <section class="label-list">{{ template "topicLabels" .Labels }}</section>{{ end }}
+        {{$blog.Blog.String | a4code2html}}<br><br>{{$blog.Username.String}} - [<a href="/blogs/blog/{{$blog.Idblogs}}/comments">{{$blog.Comments}} COMMENTS</a>]{{ if .Labels }} <section class="label-list">{{ template "topicLabels" .Labels }}</section>{{ end }}
                 </div>
         </article><br>
         {{ template "threadComments" }}

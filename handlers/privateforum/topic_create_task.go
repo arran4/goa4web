@@ -39,7 +39,7 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 	parts := strings.Split(participantsInput, ",")
 	title := strings.TrimSpace(r.PostFormValue("title"))
 	description := strings.TrimSpace(r.PostFormValue("description"))
-	participantsMap := make(map[int32]common.PrivateTopicParticipant)
+	var participants []common.PrivateTopicParticipant
 	for _, p := range parts {
 		p = strings.TrimSpace(p)
 		if p == "" {
@@ -77,24 +77,25 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 			})
 			return nil
 		}
-		participantsMap[u.Idusers] = common.PrivateTopicParticipant{
+		participants = append(participants, common.PrivateTopicParticipant{
 			ID:       u.Idusers,
 			Username: u.Username.String,
-		}
+		})
 	}
 	creator := cd.UserID
-	if creator != 0 {
-		if _, ok := participantsMap[creator]; !ok {
-			username := ""
-			if u := cd.UserByID(creator); u != nil {
-				username = u.Username.String
-			}
-			participantsMap[creator] = common.PrivateTopicParticipant{ID: creator, Username: username}
+	seen := false
+	for _, participant := range participants {
+		if participant.ID == creator {
+			seen = true
+			break
 		}
 	}
-	var participants []common.PrivateTopicParticipant
-	for _, p := range participantsMap {
-		participants = append(participants, p)
+	if creator != 0 && !seen {
+		username := ""
+		if u := cd.UserByID(creator); u != nil {
+			username = u.Username.String
+		}
+		participants = append(participants, common.PrivateTopicParticipant{ID: creator, Username: username})
 	}
 	topicID, err := cd.CreatePrivateTopic(common.CreatePrivateTopicParams{
 		CreatorID:    creator,

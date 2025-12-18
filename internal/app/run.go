@@ -23,6 +23,7 @@ import (
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
+	feedsign "github.com/arran4/goa4web/internal/feedsign"
 	imagesign "github.com/arran4/goa4web/internal/images"
 	linksign "github.com/arran4/goa4web/internal/linksign"
 	"github.com/arran4/goa4web/internal/middleware"
@@ -167,6 +168,7 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 	}
 	imgSigner := imagesign.NewSigner(cfg, o.ImageSignSecret)
 	linkSigner := linksign.NewSigner(cfg, o.LinkSignSecret)
+	feedSigner := feedsign.NewSigner(cfg, o.LinkSignSecret)
 	adminhandlers.AdminAPISecret = o.APISecret
 	email.SetDefaultFromName(cfg.EmailFrom)
 
@@ -194,6 +196,7 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 		server.WithEmailRegistry(o.EmailReg),
 		server.WithImageSigner(imgSigner),
 		server.WithLinkSigner(linkSigner),
+		server.WithFeedSigner(feedSigner),
 		server.WithDBRegistry(o.DBReg),
 		server.WithWebsocket(wsMod),
 		server.WithTasksRegistry(o.TasksReg),

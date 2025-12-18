@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"net/mail"
+	"net/url"
 	"strconv"
 	"strings"
 	"sync"
@@ -25,6 +26,7 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dbdrivers"
 	"github.com/arran4/goa4web/internal/eventbus"
+	feedsign "github.com/arran4/goa4web/internal/feedsign"
 	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/lazy"
 	linksign "github.com/arran4/goa4web/internal/linksign"
@@ -88,10 +90,12 @@ type CoreData struct {
 	// AdminMode indicates whether admin-only UI elements should be displayed.
 	AdminMode         bool
 	AtomFeedURL       string
+	PublicAtomFeedURL string
 	AutoRefresh       string
 	Config            *config.RuntimeConfig
 	CustomIndexItems  []IndexItem
 	FeedsEnabled      bool
+	FeedSigner        *feedsign.Signer
 	ImageSigner       *imagesign.Signer
 	IndexItems        []IndexItem
 	LinkSigner        *linksign.Signer
@@ -106,6 +110,7 @@ type CoreData struct {
 	PageTitle         string
 	PrevLink          string
 	RSSFeedURL        string
+	PublicRSSFeedURL  string
 	StartLink         string
 	TasksReg          *tasks.Registry
 	SiteTitle         string
@@ -2631,6 +2636,13 @@ func WithLinkSigner(s *linksign.Signer) CoreOption {
 	}
 }
 
+// WithFeedSigner registers the feed signer on CoreData.
+func WithFeedSigner(s *feedsign.Signer) CoreOption {
+	return func(cd *CoreData) {
+		cd.FeedSigner = s
+	}
+}
+
 // WithTasksRegistry registers the task registry on CoreData.
 func WithTasksRegistry(r *tasks.Registry) CoreOption {
 	return func(cd *CoreData) { cd.TasksReg = r }
@@ -2763,6 +2775,32 @@ func (cd *CoreData) HasModule(name string) bool {
 	}
 	_, ok := cd.routerModules[name]
 	return ok
+}
+
+// GenerateFeedURL returns a signed feed URL if the user is logged in, otherwise the raw path.
+func (cd *CoreData) GenerateFeedURL(path string) string {
+	if cd.UserID != 0 && cd.FeedSigner != nil {
+		u := cd.CurrentUserLoaded()
+		if u == nil {
+			// Try to load it if not loaded
+			var err error
+			u, err = cd.CurrentUser()
+			if err != nil {
+				log.Printf("GenerateFeedURL: error loading current user: %v", err)
+			}
+		}
+		if u != nil {
+			parsed, err := url.Parse(path)
+			if err == nil {
+				username := ""
+				if u.Username.Valid {
+					username = u.Username.String
+				}
+				return cd.FeedSigner.SignedURL(parsed.Path, parsed.RawQuery, username)
+			}
+		}
+	}
+	return path
 }
 
 // LatestWritings returns recent public writings with permission data.

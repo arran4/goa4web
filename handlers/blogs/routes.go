@@ -17,7 +17,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	navReg.RegisterIndexLinkWithViewPermission("Blogs", "/blogs", SectionWeight, "blogs", "entry")
 	navReg.RegisterAdminControlCenter("Blogs", "Blogs", "/admin/blogs", SectionWeight)
 	br := r.PathPrefix("/blogs").Subrouter()
-	br.Use(handlers.IndexMiddleware(CustomBlogIndex), handlers.SectionMiddleware("blogs"))
+	br.Use(handlers.IndexMiddleware(BlogsMiddlewareIndex), handlers.SectionMiddleware("blogs"))
 	br.HandleFunc("/rss", RssPage).Methods("GET")
 	br.HandleFunc("/atom", AtomPage).Methods("GET")
 	br.HandleFunc("", Page).Methods("GET")

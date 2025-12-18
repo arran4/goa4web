@@ -176,6 +176,8 @@ func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	cd.CustomIndexItems = append(cd.CustomIndexItems, NewsPageSpecificItems(cd, r, post)...)
+
 	if err := cd.ExecuteSiteTemplate(w, r, NewsPostPageTmpl, data); err != nil {
 		handlers.RenderErrorPage(w, r, err)
 	}

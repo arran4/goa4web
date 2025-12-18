@@ -71,5 +71,7 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	cd.CustomIndexItems = append(cd.CustomIndexItems, BlogsPageSpecificItems(cd, r)...)
+
 	handlers.TemplateHandler(w, r, "blogPage.gohtml", data)
 }

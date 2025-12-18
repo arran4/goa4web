@@ -15,6 +15,7 @@ import (
 func RegisterRoutes(r *mux.Router, reg *Registry, cfg *config.RuntimeConfig, navReg *nav.Registry) {
 	r.HandleFunc("/main.css", handlers.MainCSS).Methods("GET")
 	r.HandleFunc("/favicon.svg", handlers.Favicon).Methods("GET")
+	r.HandleFunc("/static/site.js", handlers.SiteJS).Methods("GET")
 
 	reg.InitModules(r, cfg, navReg)
 

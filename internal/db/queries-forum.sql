@@ -238,7 +238,9 @@ WHERE (
     )
 );
 
-INSERT INTO forumcategory (forumcategory_idforumcategory, language_id, title, description) VALUES (?, sqlc.narg(category_language_id), ?, ?);
+-- name: AdminCreateForumCategory :execlastid
+INSERT INTO forumcategory (forumcategory_idforumcategory, language_id, title, description)
+VALUES (sqlc.arg(parent_id), sqlc.narg(category_language_id), sqlc.arg(title), sqlc.arg(description));
 
 INSERT INTO forumtopic (forumcategory_idforumcategory, language_id, title, description, handler) VALUES (?, sqlc.narg(topic_language_id), ?, ?, ?);
 
@@ -423,4 +425,3 @@ WITH RECURSIVE category_path AS (
 SELECT category_path.idforumcategory, category_path.title
 FROM category_path
 ORDER BY category_path.depth DESC;
-

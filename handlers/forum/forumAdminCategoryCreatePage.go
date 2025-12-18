@@ -32,13 +32,17 @@ func AdminCategoryCreatePage(w http.ResponseWriter, r *http.Request) {
 
 // AdminCategoryCreateSubmit handles creation of a new forum category.
 func AdminCategoryCreateSubmit(w http.ResponseWriter, r *http.Request) {
+	// createCategoryURL is the admin form page shown for new categories.
+	const createCategoryURL = "/admin/forum/categories/create"
+	if err := handlers.ValidateForm(r, []string{"name", "desc", "pcid", "language"}, []string{"name", "pcid"}); err != nil {
+		handlers.RedirectSeeOtherWithError(w, r, createCategoryURL, err)
+		return
+	}
 	name := r.PostFormValue("name")
 	desc := r.PostFormValue("desc")
-	_ = name
-	_ = desc
 	pcid, err := strconv.Atoi(r.PostFormValue("pcid"))
 	if err != nil {
-		handlers.RedirectSeeOtherWithError(w, r, "", err)
+		handlers.RedirectSeeOtherWithError(w, r, createCategoryURL, err)
 		return
 	}
 
@@ -46,7 +50,7 @@ func AdminCategoryCreateSubmit(w http.ResponseWriter, r *http.Request) {
 	queries := cd.Queries()
 	cats, err := queries.GetAllForumCategories(r.Context(), db.GetAllForumCategoriesParams{ViewerID: cd.UserID})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		handlers.RedirectSeeOtherWithError(w, r, "", err)
+		handlers.RedirectSeeOtherWithError(w, r, createCategoryURL, err)
 		return
 	}
 	parents := make(map[int32]int32, len(cats))
@@ -54,11 +58,23 @@ func AdminCategoryCreateSubmit(w http.ResponseWriter, r *http.Request) {
 		parents[c.Idforumcategory] = c.ForumcategoryIdforumcategory
 	}
 	if path, loop := algorithms.WouldCreateLoop(parents, 0, int32(pcid)); loop {
-		handlers.RedirectSeeOtherWithMessage(w, r, "", fmt.Sprintf("loop %v", path))
+		handlers.RedirectSeeOtherWithMessage(w, r, createCategoryURL, fmt.Sprintf("loop %v", path))
 		return
 	}
 
-	languageID, _ := strconv.Atoi(r.PostFormValue("language"))
-	_ = languageID // TODO: implement category creation
-	http.Redirect(w, r, "/admin/forum/categories", http.StatusSeeOther)
+	languageID, err := strconv.Atoi(r.PostFormValue("language"))
+	if err != nil {
+		handlers.RedirectSeeOtherWithError(w, r, createCategoryURL, err)
+		return
+	}
+	if _, err := queries.AdminCreateForumCategory(r.Context(), db.AdminCreateForumCategoryParams{
+		ParentID:           int32(pcid),
+		CategoryLanguageID: sql.NullInt32{Int32: int32(languageID), Valid: languageID != 0},
+		Title:              sql.NullString{String: name, Valid: true},
+		Description:        sql.NullString{String: desc, Valid: true},
+	}); err != nil {
+		handlers.RedirectSeeOtherWithError(w, r, createCategoryURL, err)
+		return
+	}
+	handlers.RedirectSeeOtherWithMessage(w, r, "/admin/forum/categories", "category created")
 }

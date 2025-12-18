@@ -2,7 +2,11 @@
     {{- template "indexItems" $ }}
     {{- template "userPanel" $ }}
     {{ range $i := cd.CustomIndexItems }}
-        <a href="{{ addmode $i.Link }}">{{ $i.Name }}</a><br>
+        {{ if ne $i.TemplateName "" }}
+            {{ include $i.TemplateName $i.TemplateData }}
+        {{ else }}
+            <a href="{{ addmode $i.Link }}">{{ $i.Name }}</a><br>
+        {{ end }}
     {{ end }}
     {{ if cd.HasRole "administrator" }}
         {{ if cd.AdminMode }}

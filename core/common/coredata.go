@@ -36,8 +36,10 @@ var _ SessionManager = (*db.SessionProxy)(nil)
 
 // IndexItem represents a navigation item linking to site sections.
 type IndexItem struct {
-	Name string
-	Link string
+	Name         string
+	Link         string
+	TemplateName string
+	TemplateData any
 }
 
 // AdminSection groups admin navigation links under a section heading.

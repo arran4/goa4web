@@ -525,17 +525,15 @@ tr.unsupported td {
         cursor: pointer;
         padding: 5px;
         margin-top: 10px;
-        background-color: #f0f0f0;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        text-align: center;
-        font-weight: bold;
+        text-align: left;
         font-size: 0.9em;
         user-select: none;
+        color: #808000;
+        text-decoration: underline;
 }
 
 .folded-toggle:hover {
-        background-color: #e0e0e0;
+        color: #FF0000;
 }
 
 /* A4code block styling */

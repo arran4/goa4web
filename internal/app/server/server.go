@@ -24,6 +24,7 @@ import (
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
+	feedsign "github.com/arran4/goa4web/internal/feedsign"
 	imagesign "github.com/arran4/goa4web/internal/images"
 	linksign "github.com/arran4/goa4web/internal/linksign"
 	"github.com/arran4/goa4web/internal/middleware"
@@ -45,6 +46,7 @@ type Server struct {
 	DB              *sql.DB
 	Bus             *eventbus.Bus
 	EmailReg        *email.Registry
+	FeedSigner      *feedsign.Signer
 	ImageSigner     *imagesign.Signer
 	LinkSigner      *linksign.Signer
 	SessionManager  common.SessionManager
@@ -149,6 +151,11 @@ func WithLinkSigner(signer *linksign.Signer) Option {
 	return func(s *Server) { s.LinkSigner = signer }
 }
 
+// WithFeedSigner sets the feed signer.
+func WithFeedSigner(signer *feedsign.Signer) Option {
+	return func(s *Server) { s.FeedSigner = signer }
+}
+
 // WithSessionManager sets the session manager used by the server.
 func WithSessionManager(sm common.SessionManager) Option {
 	return func(s *Server) { s.SessionManager = sm }
@@ -244,6 +251,7 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 		common.WithImageSigner(s.ImageSigner),
 		common.WithCustomQueries(queries),
 		common.WithLinkSigner(s.LinkSigner),
+		common.WithFeedSigner(s.FeedSigner),
 		common.WithImageURLMapper(s.ImageSigner.MapURL),
 		common.WithSession(session),
 		common.WithEmailProvider(provider),

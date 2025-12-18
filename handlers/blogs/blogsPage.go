@@ -48,16 +48,15 @@ func CustomBlogIndex(data *common.CoreData, r *http.Request) {
 	user := r.URL.Query().Get("user")
 	data.CustomIndexItems = []common.IndexItem{}
 	if data.FeedsEnabled {
+		path := "/blogs"
 		suffix := ""
 		if user != "" {
-			suffix = "?user=" + url.QueryEscape(user)
+			suffix = "?rss=" + url.QueryEscape(user)
 		}
-		data.RSSFeedURL = "/blogs/rss" + suffix
-		data.AtomFeedURL = "/blogs/atom" + suffix
-		data.CustomIndexItems = append(data.CustomIndexItems,
-			common.IndexItem{Name: "Atom Feed", Link: data.AtomFeedURL},
-			common.IndexItem{Name: "RSS Feed", Link: data.RSSFeedURL},
-		)
+		data.RSSFeedURL = data.GenerateFeedURL(path + "/rss" + suffix)
+		data.AtomFeedURL = data.GenerateFeedURL(path + "/atom" + suffix)
+		data.PublicRSSFeedURL = path + "/rss" + suffix
+		data.PublicAtomFeedURL = path + "/atom" + suffix
 	}
 
 	if data.IsAdmin() {
@@ -106,6 +105,21 @@ func RssPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func RssPageSigned(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+
+	u, err := handlers.VerifyFeedRequest(r, "/blogs/rss")
+	if err != nil {
+		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+		return
+	}
+
+	// Pretend to be the signed user
+	cd.UserID = u.Idusers
+
+	RssPage(w, r)
+}
+
 func AtomPage(w http.ResponseWriter, r *http.Request) {
 	username := r.URL.Query().Get("rss")
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
@@ -129,6 +143,21 @@ func AtomPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func AtomPageSigned(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+
+	u, err := handlers.VerifyFeedRequest(r, "/blogs/atom")
+	if err != nil {
+		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+		return
+	}
+
+	// Pretend to be the signed user
+	cd.UserID = u.Idusers
+
+	AtomPage(w, r)
+}
+
 func FeedGen(r *http.Request, queries db.Querier, uid int, username string) (*feeds.Feed, error) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
@@ -146,8 +175,8 @@ func FeedGen(r *http.Request, queries db.Querier, uid int, username string) (*fe
 
 	rows, err := queries.ListBlogEntriesByAuthorForLister(r.Context(), db.ListBlogEntriesByAuthorForListerParams{
 		AuthorID: int32(uid),
-		ListerID: int32(uid),
-		UserID:   sql.NullInt32{Int32: int32(uid), Valid: uid != 0},
+		ListerID: cd.UserID,
+		UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		Limit:    15,
 		Offset:   0,
 	})

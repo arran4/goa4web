@@ -30,7 +30,7 @@ func QuoteApi(w http.ResponseWriter, r *http.Request) {
 		case "selected":
 			start, _ := strconv.Atoi(r.URL.Query().Get("start"))
 			end, _ := strconv.Atoi(r.URL.Query().Get("end"))
-			text = a4code.Substring(c.Text.String, start, end)
+			text = a4code.QuoteText(c.Username.String, a4code.Substring(c.Text.String, start, end))
 		default:
 			text = a4code.QuoteText(c.Username.String, c.Text.String, a4code.WithParagraphQuote())
 		}

@@ -30,9 +30,9 @@
                 {{ $cmt.Text.String | a4code2html}}
                 <footer>
                     {{ if cd.SelectedThreadCanReply }}
-                        [<a href="javascript:quote('full', {{ $cmt.Idcomments }})">FULL REPLY</a>]
-                        [<a href="javascript:quote('paragraph', {{ $cmt.Idcomments }})">PARAGRAPH REPLY</a>]
-                        [<a href="javascript:quote('selected')">QUOTE SELECTED</a>]
+                        [<a href="#" class="quote-link" data-quote-type="full" data-comment-id="{{ $cmt.Idcomments }}">FULL REPLY</a>]
+                        [<a href="#" class="quote-link" data-quote-type="paragraph" data-comment-id="{{ $cmt.Idcomments }}">PARAGRAPH REPLY</a>]
+                        [<a href="#" class="quote-link" data-quote-type="selected" data-comment-id="{{ $cmt.Idcomments }}">QUOTE SELECTED</a>]
                     {{ end }}
                     {{ if cd.CanEditComment $cmt }}[<a href="{{ cd.CommentEditURL $cmt }}">EDIT</a>]{{ end }}
                     {{ $admin := cd.CommentAdminURL $cmt }}{{ if $admin }}[<a href="{{ $admin }}">ADMIN</a>]{{ end }}

@@ -27,7 +27,7 @@
                     <a href="?#c{{ $num }}">Cancel</a>
                 </form>
             {{ else }}
-                {{ $cmt.Text.String | a4code2html}}
+                <div id="comment-{{ $cmt.Idcomments }}">{{ $cmt.Text.String | a4code2html}}</div>
                 <footer>
                     {{ if cd.SelectedThreadCanReply }}
                         [<a href="#" class="quote-link" data-quote-type="full" data-comment-id="{{ $cmt.Idcomments }}">FULL REPLY</a>]

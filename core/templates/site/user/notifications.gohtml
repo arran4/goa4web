@@ -3,7 +3,7 @@
 {{ range cd.Notifications .Request }}
     <div class="notification" id="notif-{{ .ID }}" data-notification-id="{{ .ID }}">
         {{ if .Link.Valid }}<a href="{{ .Link.String }}">{{ end }}{{ .Message.String }}{{ if .Link.Valid }}</a>{{ end }}
-        <form method="post" action="/usr/notifications/dismiss" style="display:inline">
+        <form method="post" action="/usr/notifications/dismiss" class="inline-form">
             {{ csrfField }}
             <input type="hidden" name="id" value="{{ .ID }}">
             <input type="submit" name="task" value="Dismiss">

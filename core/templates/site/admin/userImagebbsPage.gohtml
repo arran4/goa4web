@@ -14,7 +14,7 @@
             <a href="/admin/user/{{ $.User.Idusers }}/imagebbs/post/{{ .Idimagepost }}/comments">Comments</a> |
             <a href="/imagebbs/post/{{ .Idimagepost }}">View</a>
             {{- if not .Approved }}
-            <form style="display:inline" method="post" action="/admin/imagebbs/approve/{{ .Idimagepost }}">
+            <form class="inline-form" method="post" action="/admin/imagebbs/approve/{{ .Idimagepost }}">
                 {{ csrfField }}<input type="submit" name="task" value="Approve">
             </form>
             {{- end }}

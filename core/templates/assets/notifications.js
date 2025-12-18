@@ -52,7 +52,7 @@
         } else {
             html += n.message;
         }
-        html += ' <form method="post" action="/usr/notifications/dismiss" style="display:inline">';
+        html += ' <form method="post" action="/usr/notifications/dismiss" class="inline-form">';
         html += '<input type="hidden" name="id" value="'+n.id+'">';
         html += '<input type="submit" name="task" value="Dismiss">';
         html += '</form>';

@@ -1,6 +1,6 @@
 {{ template "head" $ }}
 {{- if $.Error }}
-    <p style="color:red;">{{ $.Error }}</p>
+    <p class="text-error">{{ $.Error }}</p>
 {{- end }}
     <form method="post" action="/usr/email/add">
         {{ csrfField }}
@@ -13,8 +13,8 @@
         <tr><th>Email</th><th>Verified</th><th>Actions</th></tr>
     {{ range .Verified }}
         <tr><td>{{ .Email }}</td><td>{{ if .VerifiedAt.Valid }}{{ cd.LocalTime .VerifiedAt.Time }}{{ end }}</td><td>
-            <form method="post" action="/usr/email/delete" style="display:inline">{{ csrfField }}<input type="hidden" name="id" value="{{ .ID }}"><input type="hidden" name="task" value="Delete"><input type="submit" value="Delete"></form>
-            <form method="post" action="/usr/email/notify" style="display:inline">{{ csrfField }}<input type="hidden" name="id" value="{{ .ID }}"><input type="hidden" name="task" value="Add"><input type="submit" value="Make notification email"></form>
+            <form method="post" action="/usr/email/delete" class="inline-form">{{ csrfField }}<input type="hidden" name="id" value="{{ .ID }}"><input type="hidden" name="task" value="Delete"><input type="submit" value="Delete"></form>
+            <form method="post" action="/usr/email/notify" class="inline-form">{{ csrfField }}<input type="hidden" name="id" value="{{ .ID }}"><input type="hidden" name="task" value="Add"><input type="submit" value="Make notification email"></form>
         </td></tr>
     {{ else }}
         <tr><td colspan="3">No verified emails - you won't receive notifications.</td></tr>
@@ -27,8 +27,8 @@
         <tr><th>Email</th><th>Expires</th><th>Actions</th></tr>
     {{ range .Unverified }}
         <tr><td>{{ .Email }}</td><td>{{ if .VerificationExpiresAt.Valid }}{{ cd.LocalTime .VerificationExpiresAt.Time }}{{ end }}</td><td>
-            <form method="post" action="/usr/email/delete" style="display:inline">{{ csrfField }}<input type="hidden" name="id" value="{{ .ID }}"><input type="hidden" name="task" value="Delete"><input type="submit" value="Delete"></form>
-            <form method="post" action="/usr/email/resend" style="display:inline">{{ csrfField }}<input type="hidden" name="id" value="{{ .ID }}"><input type="hidden" name="task" value="Resend"><input type="submit" value="Send verification code again"></form>
+            <form method="post" action="/usr/email/delete" class="inline-form">{{ csrfField }}<input type="hidden" name="id" value="{{ .ID }}"><input type="hidden" name="task" value="Delete"><input type="submit" value="Delete"></form>
+            <form method="post" action="/usr/email/resend" class="inline-form">{{ csrfField }}<input type="hidden" name="id" value="{{ .ID }}"><input type="hidden" name="task" value="Resend"><input type="submit" value="Send verification code again"></form>
         </td></tr>
     {{ end }}
     </table>

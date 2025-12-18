@@ -1,5 +1,5 @@
 {{ define "mark_as_read_form" }}
-<form action="{{ .Action }}" method="post" style="display: inline;">
+<form action="{{ .Action }}" method="post" class="inline-form">
     {{ csrfField }}
     <input type="hidden" name="task" value="Mark Thread Read"/>
     <input type="hidden" name="back" value="{{ .Back }}"/>

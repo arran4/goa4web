@@ -7,7 +7,7 @@
     <p>Description <textarea name="desc">{{ .Category.Description.String }}</textarea></p>
     <input type="submit" name="task" value="Forum category change">
 </form>
-<form method="post" action="/admin/forum/categories/category/{{ .Category.Idforumcategory }}/delete" style="margin-top:1em">
+<form method="post" action="/admin/forum/categories/category/{{ .Category.Idforumcategory }}/delete" class="margin-top">
     {{ csrfField }}
     <input type="submit" name="task" value="Delete Category">
 </form>

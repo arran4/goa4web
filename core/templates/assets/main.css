@@ -885,3 +885,25 @@ tr.unsupported td {
 .faq-answer {
         padding: 0.5em;
 }
+
+/* CSP Utility Classes */
+.text-error {
+    color: red;
+}
+
+.inline-form {
+    display: inline-block;
+}
+
+.margin-top {
+    margin-top: 1em;
+}
+
+.width-4em {
+    width: 4em;
+}
+
+.inline-block-margin {
+    display: inline-block;
+    margin: 0.5em;
+}

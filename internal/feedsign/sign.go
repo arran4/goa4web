@@ -24,7 +24,7 @@ func NewSigner(cfg *config.RuntimeConfig, key string) *Signer {
 // SignedURL generates a URL for the given feed path, query params, and username.
 // path should be the base path (e.g. "/blogs/rss").
 // query should be the encoded query string (e.g. "rss=bob"), or empty.
-// The resulting URL will be "/{section}/private/{username}/{rest}?ts={ts}&sig={sig}&{query}"
+// The resulting URL will be "/{section}/u/{username}/{rest}?ts={ts}&sig={sig}&{query}"
 func (s *Signer) SignedURL(path, query, username string, exp ...time.Time) string {
 	data := fmt.Sprintf("feed:%s:%s", username, path)
 	if query != "" {
@@ -36,16 +36,16 @@ func (s *Signer) SignedURL(path, query, username string, exp ...time.Time) strin
 
 	parts := strings.Split(path, "/")
 	if len(parts) > 1 {
-		// Inject /private/{username} after the first segment (section)
+		// Inject /u/{username} after the first segment (section)
 		// parts[0] is empty for absolute paths
-		newPath := fmt.Sprintf("/%s/private/%s", parts[1], url.QueryEscape(username))
+		newPath := fmt.Sprintf("/%s/u/%s", parts[1], url.QueryEscape(username))
 		if len(parts) > 2 {
 			newPath += "/" + strings.Join(parts[2:], "/")
 		}
 		path = newPath
 	} else {
 		// Fallback for root paths
-		path = fmt.Sprintf("/private/%s%s", url.QueryEscape(username), path)
+		path = fmt.Sprintf("/u/%s%s", url.QueryEscape(username), path)
 	}
 
 	res := fmt.Sprintf("%s?ts=%d&sig=%s", path, ts, sig)

@@ -3,8 +3,6 @@
     {{ if $writing }}
         <span class="text-large">At {{ cd.LocalTime $writing.Published.Time }}, By {{ $writing.Writerusername.String }}; {{ $writing.Title.String | trim | a4code2html }}:</span>
         {{ if $writing.Private.Bool }} (Restricted access) {{ end }}
-        {{ if .CanEdit }}[<a href="/writings/article/{{ $writing.Idwriting }}/edit">EDIT</a>]{{ end }}
-        {{ if and cd.IsAdmin cd.IsAdminMode }}[<a href="/admin/writings/article/{{ $writing.Idwriting }}">ADMIN</a>]{{ end }}
         <br>
         <strong>Abstract:</strong><br>
         {{ $writing.Abstract.String | a4code2html }}
@@ -12,18 +10,6 @@
         {{ $writing.Writing.String | a4code2html }}
         <div class="label-bar">
             {{ template "topicLabels" .Labels }}
-            <form method="post" action="/writings/article/{{ $writing.Idwriting }}/labels" class="mark-read">
-            {{ csrfField }}
-                <input type="hidden" name="task" value="Mark Thread Read"/>
-                <input type="hidden" name="redirect" value="{{ .BackURL }}"/>
-                <button type="submit">Mark as read</button>
-            </form>
-            <form method="post" action="/writings/article/{{ $writing.Idwriting }}/labels" class="mark-read">
-            {{ csrfField }}
-                <input type="hidden" name="task" value="Mark Thread Read"/>
-                <input type="hidden" name="redirect" value="/writings/category/{{ $writing.WritingCategoryID }}"/>
-                <button type="submit">Mark as read and go back</button>
-            </form>
         </div>
         <hr>Comments:<br>
         {{ template "threadComments" }}
@@ -41,18 +27,6 @@
                 {{ end }}
                 <input type="text" class="label-input" data-type="private" placeholder="Add private label"/>
                 <input type="submit" value="Save Labels"/>
-            </form>
-            <form method="post" action="/writings/article/{{ $writing.Idwriting }}/labels" class="mark-read">
-            {{ csrfField }}
-                <input type="hidden" name="task" value="Mark Thread Read"/>
-                <input type="hidden" name="redirect" value="{{ .BackURL }}"/>
-                <button type="submit">Mark as read</button>
-            </form>
-            <form method="post" action="/writings/article/{{ $writing.Idwriting }}/labels" class="mark-read">
-            {{ csrfField }}
-                <input type="hidden" name="task" value="Mark Thread Read"/>
-                <input type="hidden" name="redirect" value="/writings/category/{{ $writing.WritingCategoryID }}"/>
-                <button type="submit">Mark as read and go back</button>
             </form>
         </div>
         <script src="/forum/topic_labels.js"></script>

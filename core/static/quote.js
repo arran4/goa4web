@@ -1,3 +1,14 @@
+document.addEventListener('DOMContentLoaded', function() {
+    document.body.addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('quote-link')) {
+            e.preventDefault();
+            const type = e.target.getAttribute('data-quote-type');
+            const commentId = e.target.getAttribute('data-comment-id');
+            quote(type, commentId);
+        }
+    });
+});
+
 function quote(type, commentId) {
     if (type === 'selected') {
         const selection = window.getSelection();

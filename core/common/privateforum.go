@@ -70,3 +70,21 @@ func (cd *CoreData) PrivateTopics() []*PrivateTopic {
 	pts, _ := cd.PrivateForumTopics()
 	return pts
 }
+
+// GrantPrivateForumTopic creates a grant for a private forum topic.
+func (cd *CoreData) GrantPrivateForumTopic(topicID int32, uid, rid sql.NullInt32, action string) (int64, error) {
+	if cd.queries == nil {
+		return 0, fmt.Errorf("no queries")
+	}
+	return cd.queries.SystemCreateGrant(cd.ctx, db.SystemCreateGrantParams{
+		UserID:   uid,
+		RoleID:   rid,
+		Section:  "privateforum",
+		Item:     sql.NullString{String: "topic", Valid: true},
+		RuleType: "allow",
+		ItemID:   sql.NullInt32{Int32: topicID, Valid: true},
+		ItemRule: sql.NullString{},
+		Action:   action,
+		Extra:    sql.NullString{},
+	})
+}

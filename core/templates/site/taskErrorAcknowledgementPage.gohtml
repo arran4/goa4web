@@ -1,6 +1,6 @@
 {{ template "head" $ }}
 {{- if $.Error }}
-<p style="color:red;">{{ $.Error }}</p>
+<p class="text-error">{{ $.Error }}</p>
 {{- end }}
 {{- if $.BackURL }}
 <a href="{{ $.BackURL }}">Go Back</a>

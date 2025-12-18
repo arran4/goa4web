@@ -8,7 +8,7 @@
         <td>{{ if .CanLogin }}yes{{ else }}no{{ end }}</td>
         <td>{{ if .IsAdmin }}yes{{ else }}no{{ end }}</td>
         <td>
-            <form method="post" style="display:inline">
+            <form method="post" class="inline-form">
                 {{ csrfField }}
                 <input type="hidden" name="id" value="{{ .ID }}">
                 {{ if .PublicProfileAllowedAt.Valid }}

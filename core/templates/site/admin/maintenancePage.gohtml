@@ -4,7 +4,7 @@
 <ul>
   {{ range .Topics }}
   <li>{{ .Title }} (ID {{ .ID }})
-    <form method="post" action="/admin/maintenance" style="display:inline">
+    <form method="post" action="/admin/maintenance" class="inline-form">
       <input type="hidden" name="task" value="{{ $.TaskName }}">
       <input type="hidden" name="topic_id" value="{{ .ID }}">
       <input type="submit" value="Convert to private">

@@ -3,7 +3,7 @@
     <p>{{ cd.CurrentNotice }}</p>
     {{- end }}
     {{- if cd.CurrentError }}
-    <p style="color:red">{{ cd.CurrentError }}</p>
+    <p class="text-error">{{ cd.CurrentError }}</p>
     {{- end }}
     Login:<br>
     <form method="post" action="/login">

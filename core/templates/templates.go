@@ -145,7 +145,7 @@ func GetPrivateForumJSData() []byte { return readFile("assets/private_forum.js")
 // GetTopicLabelsJSData returns the JavaScript for topic label editing.
 func GetTopicLabelsJSData() []byte { return readFile("assets/topic_labels.js") }
 
-// GetSiteJSData returns the site's main JavaScript file.
+// GetSiteJSData returns the main site JavaScript.
 func GetSiteJSData() []byte { return readFile("assets/site.js") }
 
 // ListSiteTemplateNames returns the relative paths of all site templates

@@ -3,7 +3,7 @@
 {{- if .Images }}
 <div class="gallery">
     {{- range .Images }}
-    <div class="notification" style="display:inline-block;margin:0.5em;">
+    <div class="notification" class="inline-block-margin">
         <a href="{{ .Full }}" target="_blank"><img src="{{ .Thumb }}" alt="image"></a><br>
         <code>{{ .A4Code }}</code>
     </div>

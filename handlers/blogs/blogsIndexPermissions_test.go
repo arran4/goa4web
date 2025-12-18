@@ -13,7 +13,7 @@ func TestCustomBlogIndexRoles(t *testing.T) {
 
 	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
 	cd.AdminMode = true
-	CustomBlogIndex(cd, req)
+	BlogsMiddlewareIndex(cd, req)
 	if !common.ContainsItem(cd.CustomIndexItems, "Blogs Admin") {
 		t.Errorf("admin should see blogs admin link")
 	}
@@ -22,7 +22,7 @@ func TestCustomBlogIndexRoles(t *testing.T) {
 	}
 
 	cd = common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"content writer"}))
-	CustomBlogIndex(cd, req)
+	BlogsMiddlewareIndex(cd, req)
 	if common.ContainsItem(cd.CustomIndexItems, "Blogs Admin") {
 		t.Errorf("content writer should not see blogs admin link")
 	}
@@ -31,7 +31,7 @@ func TestCustomBlogIndexRoles(t *testing.T) {
 	}
 
 	cd = common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))
-	CustomBlogIndex(cd, req)
+	BlogsMiddlewareIndex(cd, req)
 	if common.ContainsItem(cd.CustomIndexItems, "Blogs Admin") || common.ContainsItem(cd.CustomIndexItems, "Write blog") {
 		t.Errorf("anyone should not see writer/admin items")
 	}

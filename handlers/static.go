@@ -44,7 +44,7 @@ func TopicLabelsJS(w http.ResponseWriter, r *http.Request) {
 	http.ServeContent(w, r, "topic_labels.js", time.Time{}, bytes.NewReader(templates.GetTopicLabelsJSData()))
 }
 
-// SiteJS serves the main site JavaScript file.
+// SiteJS serves the main site JavaScript.
 func SiteJS(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/javascript")
 	http.ServeContent(w, r, "site.js", time.Time{}, bytes.NewReader(templates.GetSiteJSData()))

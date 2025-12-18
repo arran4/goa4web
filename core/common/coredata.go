@@ -89,7 +89,6 @@ type CoreData struct {
 	AutoRefresh       string
 	Config            *config.RuntimeConfig
 	CustomIndexItems  []IndexItem
-	PageCustomIndexItems []IndexItem
 	FeedsEnabled      bool
 	ImageSigner       *imagesign.Signer
 	IndexItems        []IndexItem

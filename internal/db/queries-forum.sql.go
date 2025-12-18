@@ -281,6 +281,34 @@ func (q *Queries) AdminRebuildAllForumTopicMetaColumns(ctx context.Context) erro
 	return err
 }
 
+const adminUpdateForumCategory = `-- name: AdminUpdateForumCategory :exec
+UPDATE forumcategory
+SET title = ?,
+    description = ?,
+    forumcategory_idforumcategory = ?,
+    language_id = ?
+WHERE idforumcategory = ?
+`
+
+type AdminUpdateForumCategoryParams struct {
+	Title           sql.NullString
+	Description     sql.NullString
+	ParentID        int32
+	LanguageID      sql.NullInt32
+	Idforumcategory int32
+}
+
+func (q *Queries) AdminUpdateForumCategory(ctx context.Context, arg AdminUpdateForumCategoryParams) error {
+	_, err := q.db.ExecContext(ctx, adminUpdateForumCategory,
+		arg.Title,
+		arg.Description,
+		arg.ParentID,
+		arg.LanguageID,
+		arg.Idforumcategory,
+	)
+	return err
+}
+
 const createForumTopicForPoster = `-- name: CreateForumTopicForPoster :execlastid
 INSERT INTO forumtopic (forumcategory_idforumcategory, language_id, title, description, handler)
 SELECT ?, ?, ?, ?, ?

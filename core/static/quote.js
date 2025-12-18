@@ -33,3 +33,22 @@ function quote(type, commentId) {
             });
     }
 }
+
+function handleQuoteClick(event) {
+    const trigger = event.target.closest('.quote-action');
+    if (!trigger) {
+        return;
+    }
+    event.preventDefault();
+    const type = trigger.dataset.quoteType;
+    const commentId = trigger.dataset.commentId;
+    if (!type || !commentId) {
+        console.error('Quote action missing data attributes');
+        return;
+    }
+    quote(type, commentId);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('click', handleQuoteClick);
+});

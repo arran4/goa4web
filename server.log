@@ -1,6 +1,0 @@
-2025/12/18 10:03:32 routes.go:49: News: Registering
-2025/12/18 10:03:32 appconfig.go:29: config file not specified
-2025/12/18 10:03:32 main.go:211: Embedded Template Mode
-2025/12/18 10:03:32 appconfig.go:29: config file not specified
-2025/12/18 10:03:32 run.go:127: application version dev starting
-2025/12/18 10:03:32 main.go:88: startup checks: missing connection: connection string required

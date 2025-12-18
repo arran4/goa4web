@@ -11,13 +11,13 @@
     <td>{{ .ChangeValue.String }}</td>
     <td>{{ .ContactOptions.String }}</td>
     <td>
-        <form style="display:inline" method="post" action="/admin/request/{{ .ID }}/accept">
+        <form class="inline-form" method="post" action="/admin/request/{{ .ID }}/accept">
             {{ csrfField }}<input type="submit" name="task" value="Accept">
         </form>
-        <form style="display:inline" method="post" action="/admin/request/{{ .ID }}/reject">
+        <form class="inline-form" method="post" action="/admin/request/{{ .ID }}/reject">
             {{ csrfField }}<input name="comment"><input type="submit" name="task" value="Reject">
         </form>
-        <form style="display:inline" method="post" action="/admin/request/{{ .ID }}/query">
+        <form class="inline-form" method="post" action="/admin/request/{{ .ID }}/query">
             {{ csrfField }}<input name="comment"><input type="submit" name="task" value="Query">
         </form>
         <a href="/admin/request/{{ .ID }}">View</a>

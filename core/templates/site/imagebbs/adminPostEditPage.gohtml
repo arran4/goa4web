@@ -15,7 +15,7 @@
     <label><input type="checkbox" name="approved" value="1"{{ if .Post.Approved }} checked{{ end }}> Approved</label><br>
     <input type="submit" name="task" value="Modify image post">
 </form>
-<form method="post" action="/admin/user/{{ .Post.UsersIdusers }}/imagebbs/post/{{ .Post.Idimagepost }}/edit" style="margin-top:1em">
+<form method="post" action="/admin/user/{{ .Post.UsersIdusers }}/imagebbs/post/{{ .Post.Idimagepost }}/edit" class="margin-top">
     {{ csrfField }}
     <input type="submit" name="task" value="Delete image post" onclick="return confirm('Delete this post?')">
 </form>

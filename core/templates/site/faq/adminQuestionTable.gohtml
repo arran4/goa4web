@@ -8,7 +8,7 @@
     <td>
         <a href="/admin/faq/question/{{ .ID }}/edit">Edit</a> |
         <a href="/admin/faq/revisions/{{ .ID }}">History</a>
-        <form method="post" action="" style="display:inline;">
+        <form method="post" action="" class="inline-form">
             {{ csrfField }}
             <input type="hidden" name="faq" value="{{ .ID }}">
             <input type="submit" name="task" value="Remove">

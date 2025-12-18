@@ -6,7 +6,7 @@
     <li><a href="/admin/imagebbs/board/{{ .Board.Idimageboard }}/edit">Edit</a></li>
     <li><a href="/admin/imagebbs/board/{{ .Board.Idimageboard }}/images">List Content</a></li>
     <li><a href="/imagebbs/board/{{ .Board.Idimageboard }}">Public View</a></li>
-    <li><form style="display:inline" method="post" action="/admin/imagebbs/board/{{ .Board.Idimageboard }}/delete" onsubmit="return confirm('Delete board?');">{{ csrfField }}<input type="submit" name="task" value="Delete board"></form></li>
+    <li><form class="inline-form" method="post" action="/admin/imagebbs/board/{{ .Board.Idimageboard }}/delete" onsubmit="return confirm('Delete board?');">{{ csrfField }}<input type="submit" name="task" value="Delete board"></form></li>
     <li><a href="/admin/imagebbs/boards">Back to Boards</a></li>
 </ul>
 

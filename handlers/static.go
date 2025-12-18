@@ -44,6 +44,12 @@ func TopicLabelsJS(w http.ResponseWriter, r *http.Request) {
 	http.ServeContent(w, r, "topic_labels.js", time.Time{}, bytes.NewReader(templates.GetTopicLabelsJSData()))
 }
 
+// SiteJS serves the main site JavaScript file.
+func SiteJS(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/javascript")
+	http.ServeContent(w, r, "site.js", time.Time{}, bytes.NewReader(templates.GetSiteJSData()))
+}
+
 // RedirectPermanent returns a handler that redirects to the provided path using StatusPermanentRedirect.
 func RedirectPermanent(to string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

@@ -127,12 +127,12 @@ func (r *rootCmd) Close() {
 }
 
 func (r *rootCmd) Infof(format string, args ...any) {
-	log.Printf(format, args...) // TODO implement 	std.output(0, 2,  like solution to give the correct position. (of coller)
+	_ = log.Output(2, fmt.Sprintf(format, args...))
 }
 
 func (r *rootCmd) Verbosef(format string, args ...any) {
 	if r.Verbosity > 0 {
-		log.Printf(format, args...)
+		_ = log.Output(2, fmt.Sprintf(format, args...))
 	}
 }
 

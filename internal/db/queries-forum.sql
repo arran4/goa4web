@@ -1,4 +1,10 @@
-UPDATE forumcategory SET title = ?, description = ?, forumcategory_idforumcategory = ?, language_id = sqlc.narg(category_language_id) WHERE idforumcategory = ?;
+-- name: AdminUpdateForumCategory :exec
+UPDATE forumcategory
+SET title = sqlc.arg(title),
+    description = sqlc.arg(description),
+    forumcategory_idforumcategory = sqlc.arg(parent_id),
+    language_id = sqlc.narg(language_id)
+WHERE idforumcategory = sqlc.arg(idforumcategory);
 
 -- name: GetAllForumCategoriesWithSubcategoryCount :many
 SELECT c.*, COUNT(c2.idforumcategory) as SubcategoryCount,
@@ -423,4 +429,3 @@ WITH RECURSIVE category_path AS (
 SELECT category_path.idforumcategory, category_path.title
 FROM category_path
 ORDER BY category_path.depth DESC;
-

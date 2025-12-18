@@ -87,6 +87,7 @@ FROM forumtopic t
 ORDER BY t.idforumtopic
 LIMIT ? OFFSET ?;
 
+-- name: AdminUpdateForumTopic :exec
 UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ?, language_id = sqlc.narg(topic_language_id) WHERE idforumtopic = ?;
 
 -- name: GetAllForumTopicsByCategoryIdForUserWithLastPosterName :many

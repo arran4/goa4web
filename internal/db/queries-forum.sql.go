@@ -309,6 +309,29 @@ func (q *Queries) AdminUpdateForumCategory(ctx context.Context, arg AdminUpdateF
 	return err
 }
 
+const adminUpdateForumTopic = `-- name: AdminUpdateForumTopic :exec
+UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ?, language_id = ? WHERE idforumtopic = ?
+`
+
+type AdminUpdateForumTopicParams struct {
+	Title                        sql.NullString
+	Description                  sql.NullString
+	ForumcategoryIdforumcategory int32
+	TopicLanguageID              sql.NullInt32
+	Idforumtopic                 int32
+}
+
+func (q *Queries) AdminUpdateForumTopic(ctx context.Context, arg AdminUpdateForumTopicParams) error {
+	_, err := q.db.ExecContext(ctx, adminUpdateForumTopic,
+		arg.Title,
+		arg.Description,
+		arg.ForumcategoryIdforumcategory,
+		arg.TopicLanguageID,
+		arg.Idforumtopic,
+	)
+	return err
+}
+
 const createForumTopicForPoster = `-- name: CreateForumTopicForPoster :execlastid
 INSERT INTO forumtopic (forumcategory_idforumcategory, language_id, title, description, handler)
 SELECT ?, ?, ?, ?, ?

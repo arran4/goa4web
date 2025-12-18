@@ -211,6 +211,7 @@ type Querier interface {
 	AdminUpdateBannedIp(ctx context.Context, arg AdminUpdateBannedIpParams) error
 	AdminUpdateFAQQuestionAnswer(ctx context.Context, arg AdminUpdateFAQQuestionAnswerParams) error
 	AdminUpdateForumCategory(ctx context.Context, arg AdminUpdateForumCategoryParams) error
+	AdminUpdateForumTopic(ctx context.Context, arg AdminUpdateForumTopicParams) error
 	AdminUpdateGrantActive(ctx context.Context, arg AdminUpdateGrantActiveParams) error
 	AdminUpdateImageBoard(ctx context.Context, arg AdminUpdateImageBoardParams) error
 	AdminUpdateImagePost(ctx context.Context, arg AdminUpdateImagePostParams) error

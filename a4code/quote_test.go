@@ -122,11 +122,11 @@ func TestQuoteTrim(t *testing.T) {
 
 func TestSubstring(t *testing.T) {
 	tests := []struct {
-		name   string
-		s      string
-		start  int
-		end    int
-		want   string
+		name  string
+		s     string
+		start int
+		end   int
+		want  string
 	}{
 		{
 			name:  "Simple",

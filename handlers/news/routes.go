@@ -24,6 +24,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	r.HandleFunc("/", NewsPageHandler).Methods("GET")
 	r.HandleFunc("/", handlers.TaskDoneAutoRefreshPage).Methods("POST")
 	r.HandleFunc("/news.rss", NewsRssPage).Methods("GET")
+	r.HandleFunc("/u/{username}/news.rss", NewsRssPage).Methods("GET")
 	nr := r.PathPrefix("/news").Subrouter()
 	nr.Use(handlers.IndexMiddleware(CustomNewsIndex), handlers.SectionMiddleware("news"))
 	nr.HandleFunc("", NewsPageHandler).Methods("GET")

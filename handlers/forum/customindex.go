@@ -69,9 +69,13 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 			})
 		}
 		if tid, err := strconv.Atoi(topicID); err == nil && cd.HasGrant("forum", "topic", "post", int32(tid)) {
+			name := "New Thread"
+			if strings.HasPrefix(r.URL.Path, "/private") {
+				name = "Create a new private thread"
+			}
 			items = append(items,
 				common.IndexItem{
-					Name: "New Thread",
+					Name: name,
 					Link: fmt.Sprintf("%s/topic/%s/thread", base, topicID),
 				},
 			)

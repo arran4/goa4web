@@ -1,9 +1,7 @@
 package privateforum
 
 import (
-	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/arran4/goa4web/core/common"
 	forumhandlers "github.com/arran4/goa4web/handlers/forum"
@@ -25,19 +23,7 @@ var CustomIndex = func(cd *common.CoreData, r *http.Request) {
 			Name: "Go back to Private Forum",
 			Link: "/private",
 		})
-		if tid, err := strconv.Atoi(topicID); err == nil { // TODO check for post permission
-			_ = tid
-			items = append(items, common.IndexItem{
-				Name: "Create a new private thread",
-				Link: fmt.Sprintf("/private/topic/%s/thread", topicID),
-			})
-		}
 	}
-	forumItems := forumhandlers.ForumCustomIndexItems(cd, r)
-	for _, item := range forumItems {
-		if item.Name != "New Thread" {
-			items = append(items, item)
-		}
-	}
+	items = append(items, forumhandlers.ForumCustomIndexItems(cd, r)...)
 	cd.CustomIndexItems = items
 }

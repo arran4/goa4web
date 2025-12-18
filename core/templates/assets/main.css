@@ -517,6 +517,27 @@ tr.unsupported td {
         display: none;
 }
 
+.folded-items.hidden {
+        display: none;
+}
+
+.folded-toggle {
+        cursor: pointer;
+        padding: 5px;
+        margin-top: 10px;
+        background-color: #f0f0f0;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        text-align: center;
+        font-weight: bold;
+        font-size: 0.9em;
+        user-select: none;
+}
+
+.folded-toggle:hover {
+        background-color: #e0e0e0;
+}
+
 /* A4code block styling */
 .a4code-block {
         width: 90%;

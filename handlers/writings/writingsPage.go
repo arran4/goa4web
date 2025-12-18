@@ -13,8 +13,8 @@ func CustomWritingsIndex(data *common.CoreData, r *http.Request) {
 	data.CustomIndexItems = []common.IndexItem{}
 
 	data.CustomIndexItems = append(data.CustomIndexItems,
-		common.IndexItem{Name: "Atom Feed", Link: "/writings/atom"},
-		common.IndexItem{Name: "RSS Feed", Link: "/writings/rss"},
+		common.IndexItem{Name: "Atom Feed", Link: "/writings/atom", Folded: true},
+		common.IndexItem{Name: "RSS Feed", Link: "/writings/rss", Folded: true},
 	)
 	data.RSSFeedURL = "/writings/rss"
 	data.AtomFeedURL = "/writings/atom"

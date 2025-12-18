@@ -29,8 +29,8 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 		cd.RSSFeedURL = fmt.Sprintf("%s/topic/%s.rss", base, topicID)
 		cd.AtomFeedURL = fmt.Sprintf("%s/topic/%s.atom", base, topicID)
 		items = append(items,
-			common.IndexItem{Name: "Atom Feed", Link: cd.AtomFeedURL},
-			common.IndexItem{Name: "RSS Feed", Link: cd.RSSFeedURL},
+			common.IndexItem{Name: "Atom Feed", Link: cd.AtomFeedURL, Folded: true},
+			common.IndexItem{Name: "RSS Feed", Link: cd.RSSFeedURL, Folded: true},
 		)
 	}
 
@@ -100,8 +100,9 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 				if subscribedToTopic(cd, int32(tid)) {
 					items = append(items,
 						common.IndexItem{
-							Name: "Unsubscribe From Topic",
-							Link: fmt.Sprintf("%s/topic/%s/unsubscribe", base, topicID),
+							Name:   "Unsubscribe From Topic",
+							Link:   fmt.Sprintf("%s/topic/%s/unsubscribe", base, topicID),
+							Folded: true,
 						},
 					)
 				} else {

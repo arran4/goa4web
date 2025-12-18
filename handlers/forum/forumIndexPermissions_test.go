@@ -38,6 +38,75 @@ func TestCustomForumIndexWriteReply(t *testing.T) {
 	}
 }
 
+func TestCustomForumIndexMarkReadLinks(t *testing.T) {
+	req := httptest.NewRequest("GET", "/forum/topic/2/thread/3", nil)
+	req = mux.SetURLVars(req, map[string]string{"topic": "2", "thread": "3"})
+
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
+	q := db.New(conn)
+	ctx := req.Context()
+	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
+	cd.UserID = 7
+
+	mock.ExpectQuery("SELECT item, item_id, user_id, label, invert\\s+FROM content_private_labels").
+		WithArgs("thread", int32(3), int32(7)).
+		WillReturnRows(sqlmock.NewRows([]string{"item", "item_id", "user_id", "label", "invert"}).
+			AddRow("thread", 3, 7, "unread", false))
+	mock.ExpectQuery("SELECT 1 FROM grants").
+		WithArgs(sqlmock.AnyArg(), "forum", sqlmock.AnyArg(), "reply", sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+
+	CustomForumIndex(cd, req.WithContext(ctx))
+
+	for _, name := range []string{"Mark as read", "Mark as read and go back", "Go to topic"} {
+		if !common.ContainsItem(cd.CustomIndexItems, name) {
+			t.Errorf("expected %s item", name)
+		}
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}
+
+func TestCustomForumIndexHidesMarkReadWhenClear(t *testing.T) {
+	req := httptest.NewRequest("GET", "/forum/topic/2/thread/3", nil)
+	req = mux.SetURLVars(req, map[string]string{"topic": "2", "thread": "3"})
+
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
+	q := db.New(conn)
+	ctx := req.Context()
+	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
+	cd.UserID = 7
+
+	mock.ExpectQuery("SELECT item, item_id, user_id, label, invert\\s+FROM content_private_labels").
+		WithArgs("thread", int32(3), int32(7)).
+		WillReturnRows(sqlmock.NewRows([]string{"item", "item_id", "user_id", "label", "invert"}).
+			AddRow("thread", 3, 7, "unread", true).
+			AddRow("thread", 3, 7, "new", true))
+	mock.ExpectQuery("SELECT 1 FROM grants").
+		WithArgs(sqlmock.AnyArg(), "forum", sqlmock.AnyArg(), "reply", sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+
+	CustomForumIndex(cd, req.WithContext(ctx))
+
+	for _, name := range []string{"Mark as read", "Mark as read and go back"} {
+		if common.ContainsItem(cd.CustomIndexItems, name) {
+			t.Errorf("unexpected %s item", name)
+		}
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}
+
 func TestCustomForumIndexWriteReplyDenied(t *testing.T) {
 	req := httptest.NewRequest("GET", "/forum/topic/2/thread/3", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "2", "thread": "3"})
@@ -82,11 +151,25 @@ func TestCustomForumIndexCreateThread(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
 	CustomForumIndex(cd, req.WithContext(ctx))
-	if !common.ContainsItem(cd.CustomIndexItems, "Create Thread") {
+	if !common.ContainsItem(cd.CustomIndexItems, "New Thread") {
 		t.Errorf("expected create thread item")
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
+	}
+}
+
+func TestCustomForumIndexAdminEditLink(t *testing.T) {
+	req := httptest.NewRequest("GET", "/forum/topic/2", nil)
+	req = mux.SetURLVars(req, map[string]string{"topic": "2", "category": "1"})
+
+	ctx := req.Context()
+	cd := common.NewCoreData(ctx, nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+	cd.AdminMode = true
+
+	CustomForumIndex(cd, req.WithContext(ctx))
+	if !common.ContainsItem(cd.CustomIndexItems, "Admin Edit Topic") {
+		t.Errorf("expected admin edit link")
 	}
 }
 
@@ -108,7 +191,7 @@ func TestCustomForumIndexCreateThreadDenied(t *testing.T) {
 		WillReturnError(sql.ErrNoRows)
 
 	CustomForumIndex(cd, req.WithContext(ctx))
-	if common.ContainsItem(cd.CustomIndexItems, "Create Thread") {
+	if common.ContainsItem(cd.CustomIndexItems, "New Thread") {
 		t.Errorf("unexpected create thread item")
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {

@@ -6,8 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"text/template"
-	"time"
 
 	"github.com/arran4/goa4web/core/templates"
 )
@@ -16,6 +14,9 @@ import (
 var textTemplates embed.FS
 
 func TestParseGoTxtTemplates(t *testing.T) {
+	emailTemplates := templates.GetCompiledEmailTextTemplates(nil)
+	notificationTemplates := templates.GetCompiledNotificationTemplates(nil)
+
 	err := fs.WalkDir(textTemplates, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -24,12 +25,19 @@ func TestParseGoTxtTemplates(t *testing.T) {
 			return nil
 		}
 		t.Run(filepath.Base(path), func(t *testing.T) {
-			tmpl := template.New("").Funcs(template.FuncMap{
-				"localTime":   func(t time.Time) time.Time { return t },
-				"localTimeIn": func(t time.Time, _ string) time.Time { return t },
-			})
-			if _, err := tmpl.ParseFS(textTemplates, path); err != nil {
-				t.Errorf("failed to parse %s: %v", path, err)
+			switch {
+			case strings.HasPrefix(path, "email/"):
+				name := strings.TrimPrefix(path, "email/")
+				if emailTemplates.Lookup(name) == nil {
+					t.Errorf("failed to parse %s", path)
+				}
+			case strings.HasPrefix(path, "notifications/"):
+				name := strings.TrimPrefix(path, "notifications/")
+				if notificationTemplates.Lookup(name) == nil {
+					t.Errorf("failed to parse %s", path)
+				}
+			default:
+				t.Fatalf("unexpected template path %s", path)
 			}
 		})
 		return nil

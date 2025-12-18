@@ -20,7 +20,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func TopicFeed(r *http.Request, title string, topicID int, rows []*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow) *feeds.Feed {
+func TopicFeed(r *http.Request, title string, topicID int, rows []*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow, basePath string) *feeds.Feed {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	feed := &feeds.Feed{
 		Title:       title,
@@ -43,7 +43,7 @@ func TopicFeed(r *http.Request, title string, topicID int, rows []*db.GetForumTh
 		}
 		item := &feeds.Item{
 			Title:   text[:i],
-			Link:    &feeds.Link{Href: fmt.Sprintf("/forum/topic/%d/thread/%d", topicID, row.Idforumthread)},
+			Link:    &feeds.Link{Href: fmt.Sprintf("%s/topic/%d/thread/%d", basePath, topicID, row.Idforumthread)},
 			Created: time.Now(),
 			Description: fmt.Sprintf("%s\n-\n%s", string(out), func() string {
 				if row.Firstpostusername.Valid {
@@ -61,46 +61,29 @@ func TopicFeed(r *http.Request, title string, topicID int, rows []*db.GetForumTh
 }
 
 func TopicRssPage(w http.ResponseWriter, r *http.Request) {
-	if _, ok := core.GetSessionOrFail(w, r); !ok {
-		return
-	}
-	vars := mux.Vars(r)
-	topicID, _ := strconv.Atoi(vars["topic"])
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	topic, err := cd.ForumTopicByID(int32(topicID))
-	if err != nil {
-		if !errors.Is(err, sql.ErrNoRows) {
-			log.Printf("GetForumTopicByIdForUser error: %s", err)
-		}
-		w.WriteHeader(http.StatusInternalServerError)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
-		return
-	}
-	cd.PageTitle = fmt.Sprintf("Forum - %s Feed", topic.Title.String)
-	rows, err := cd.ForumThreads(int32(topicID))
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		log.Printf("feed query error: %s", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
-		return
-	}
-
-	feed := TopicFeed(r, topic.Title.String, topicID, rows)
-	if err := feed.WriteRss(w); err != nil {
-		log.Printf("feed write error: %s", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
-		return
-	}
+	handleTopicFeed(w, r, "rss")
 }
 
 func TopicAtomPage(w http.ResponseWriter, r *http.Request) {
-	if _, ok := core.GetSessionOrFail(w, r); !ok {
-		return
-	}
+	handleTopicFeed(w, r, "atom")
+}
+
+func handleTopicFeed(w http.ResponseWriter, r *http.Request, feedType string) {
 	vars := mux.Vars(r)
 	topicID, _ := strconv.Atoi(vars["topic"])
+	basePath := fmt.Sprintf("/forum/topic/%d.%s", topicID, feedType)
+
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+
+	if _, ok := vars["username"]; ok {
+		user, err := handlers.VerifyFeedRequest(r, basePath)
+		if err == nil && user != nil {
+			cd.UserID = user.Idusers
+		}
+	} else if _, ok := core.GetSessionOrFail(w, r); ok {
+		// Session loaded in CoreData (via IndexMiddleware / WithSession)
+		// No op, cd.UserID already set
+	}
 
 	topic, err := cd.ForumTopicByID(int32(topicID))
 	if err != nil {
@@ -111,7 +94,6 @@ func TopicAtomPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
-
 	cd.PageTitle = fmt.Sprintf("Forum - %s Feed", topic.Title.String)
 	rows, err := cd.ForumThreads(int32(topicID))
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
@@ -121,11 +103,20 @@ func TopicAtomPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	feed := TopicFeed(r, topic.Title.String, topicID, rows)
-	if err := feed.WriteAtom(w); err != nil {
-		log.Printf("feed write error: %s", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
-		return
+	feed := TopicFeed(r, topic.Title.String, topicID, rows, "/forum")
+	if feedType == "rss" {
+		if err := feed.WriteRss(w); err != nil {
+			log.Printf("feed write error: %s", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			return
+		}
+	} else {
+		if err := feed.WriteAtom(w); err != nil {
+			log.Printf("feed write error: %s", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			return
+		}
 	}
 }

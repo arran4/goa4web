@@ -717,6 +717,6 @@ CREATE TABLE `content_read_markers` (
 );
 
 -- Set the schema version to the latest migration.
-INSERT INTO `schema_version` (`version`) VALUES (71)
+INSERT INTO `schema_version` (`version`) VALUES (72)
 ON DUPLICATE KEY UPDATE version = VALUES(version);
 

@@ -36,29 +36,14 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 
 	if threadID != "" && topicID != "" {
 		if hasThreadUnread(cd, threadID) {
-			type FormActionData struct {
-				Action string
-				Label  string
-				Back   string
-			}
 			items = append(items,
 				common.IndexItem{
-					Name:         "Mark as read",
-					TemplateName: "mark_as_read_form",
-					TemplateData: FormActionData{
-						Action: fmt.Sprintf("%s/thread/%s/labels", base, threadID),
-						Label:  "Mark as read",
-						Back:   r.URL.RequestURI(),
-					},
+					Name: "Mark as read",
+					Link: markThreadReadLink(base, threadID, r.URL.RequestURI()),
 				},
 				common.IndexItem{
-					Name:         "Mark as read and go back",
-					TemplateName: "mark_as_read_form",
-					TemplateData: FormActionData{
-						Action: fmt.Sprintf("%s/thread/%s/labels", base, threadID),
-						Label:  "Mark as read and go back",
-						Back:   fmt.Sprintf("%s/topic/%s", base, topicID),
-					},
+					Name: "Mark as read and go back",
+					Link: markThreadReadLink(base, threadID, fmt.Sprintf("%s/topic/%s", base, topicID)),
 				},
 			)
 		}

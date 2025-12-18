@@ -3,6 +3,7 @@
     {{ with .BasePath }}{{ $base = . }}{{ end }}
     <h2>Threads</h2>
     <div class="thread-controls">
+        <input type="text" class="label-filter" placeholder="Filter by label...">
         <div class="sort-buttons">
             <span>Sort by:</span>
             <button class="sort-button" data-sort="last-reply" data-order="desc">Last Reply</button>

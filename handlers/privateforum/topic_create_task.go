@@ -35,11 +35,11 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	participants := r.PostFormValue("participants")
-	parts := strings.Split(participants, ",")
+	participantsInput := r.PostFormValue("participants")
+	parts := strings.Split(participantsInput, ",")
 	title := strings.TrimSpace(r.PostFormValue("title"))
 	description := strings.TrimSpace(r.PostFormValue("description"))
-	var uids []int32 // TODO make map
+	var participants []common.PrivateTopicParticipant // TODO make map
 	for _, p := range parts {
 		p = strings.TrimSpace(p)
 		if p == "" {
@@ -50,7 +50,7 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 			if errors.Is(err, sql.ErrNoRows) {
 				cd.SetCurrentError(fmt.Sprintf("unknown user %q", p))
 				forumhandlers.CreateTopicPageWithPostTask(w, r, TaskPrivateTopicCreate, &forumhandlers.CreateTopicPageForm{
-					Participants: participants,
+					Participants: participantsInput,
 					Title:        title,
 					Description:  description,
 				})
@@ -71,32 +71,44 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 			}
 			cd.SetCurrentError(fmt.Sprintf("user %q does not have permission to access private forums", p))
 			forumhandlers.CreateTopicPageWithPostTask(w, r, TaskPrivateTopicCreate, &forumhandlers.CreateTopicPageForm{
-				Participants: participants,
+				Participants: participantsInput,
 				Title:        title,
 				Description:  description,
 			})
 			return nil
 		}
-		uids = append(uids, u.Idusers)
+		participants = append(participants, common.PrivateTopicParticipant{
+			ID:       u.Idusers,
+			Username: u.Username.String,
+		})
 	}
 	creator := cd.UserID
 	seen := false
-	for _, id := range uids {
-		if id == creator {
+	for _, participant := range participants {
+		if participant.ID == creator {
 			seen = true
 			break
 		}
 	}
 	if creator != 0 && !seen {
-		uids = append(uids, creator)
+		username := ""
+		if u := cd.UserByID(creator); u != nil {
+			username = u.Username.String
+		}
+		participants = append(participants, common.PrivateTopicParticipant{ID: creator, Username: username})
 	}
-	topicID, err := cd.CreatePrivateTopic(common.CreatePrivateTopicParams{CreatorID: creator, ParticipantIDs: uids, Title: title, Description: description})
+	topicID, err := cd.CreatePrivateTopic(common.CreatePrivateTopicParams{
+		CreatorID:    creator,
+		Participants: participants,
+		Title:        title,
+		Description:  description,
+	})
 	if err != nil {
 		return fmt.Errorf("create private topic %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	for _, uid := range uids {
-		if err := cd.SubscribeTopic(uid, topicID); err != nil {
-			return fmt.Errorf("subscribe topic for user %d: %w", uid, handlers.ErrRedirectOnSamePageHandler(err))
+	for _, participant := range participants {
+		if err := cd.SubscribeTopic(participant.ID, topicID); err != nil {
+			return fmt.Errorf("subscribe topic for user %d: %w", participant.ID, handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
 	base := cd.ForumBasePath

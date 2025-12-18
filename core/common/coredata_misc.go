@@ -17,10 +17,16 @@ import (
 
 // CreatePrivateTopicParams groups input for CreatePrivateTopic.
 type CreatePrivateTopicParams struct {
-	CreatorID      int32
-	ParticipantIDs []int32
-	Title          string
-	Description    string
+	CreatorID    int32
+	Participants []PrivateTopicParticipant
+	Title        string
+	Description  string
+}
+
+// PrivateTopicParticipant pairs a participant ID with an optional username.
+type PrivateTopicParticipant struct {
+	ID       int32
+	Username string
 }
 
 // CreatePrivateTopic creates a new private topic and assigns grants and the initial comment.
@@ -32,13 +38,17 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID int3
 		log.Printf("private topic create denied: user=%d", p.CreatorID)
 		return 0, fmt.Errorf("permission denied")
 	}
-	var usernames []string // TODO this should be fed in from the caller and if it is not provided we can fill it htis way
-	for _, id := range p.ParticipantIDs {
-		if u := cd.UserByID(id); u != nil {
-			usernames = append(usernames, u.Username.String)
-		} else {
-			return 0, fmt.Errorf("unknown user %d", id)
+	usernames := make([]string, 0, len(p.Participants))
+	for _, participant := range p.Participants {
+		name := participant.Username
+		if name == "" {
+			if u := cd.UserByID(participant.ID); u != nil {
+				name = u.Username.String
+			} else {
+				return 0, fmt.Errorf("unknown user %d", participant.ID)
+			}
 		}
+		usernames = append(usernames, name)
 	}
 	title := p.Title
 	description := p.Description
@@ -66,7 +76,8 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID int3
 		return 0, fmt.Errorf("create topic returned 0")
 	}
 	topicID = int32(tid)
-	for _, uid := range p.ParticipantIDs {
+	for _, participant := range p.Participants {
+		uid := participant.ID
 		for _, act := range []string{"see", "view", "post", "reply", "edit"} {
 			if _, err := cd.queries.SystemCreateGrant(cd.ctx, db.SystemCreateGrantParams{ // TODO switch to cd.GrantForumTopic
 				UserID:   sql.NullInt32{Int32: uid, Valid: true},

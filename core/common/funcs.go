@@ -1,6 +1,7 @@
 package common
 
 import (
+	"bytes"
 	"fmt"
 	"html/template"
 	"io"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/core/templates"
 	csrfmiddleware "github.com/arran4/goa4web/internal/middleware/csrf"
 )
 
@@ -147,6 +149,12 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 				return u + "&mode=admin"
 			}
 			return u + "?mode=admin"
+		},
+		"include": func(name string, data any) (template.HTML, error) {
+			var buf bytes.Buffer
+			t := templates.GetCompiledSiteTemplates(cd.Funcs(r))
+			err := t.ExecuteTemplate(&buf, name, data)
+			return template.HTML(buf.String()), err
 		},
 	}
 }

@@ -1,7 +1,6 @@
 package templates
 
 import (
-	"bytes"
 	"embed"
 	"github.com/arran4/goa4web/core/consts"
 	htemplate "html/template"
@@ -56,13 +55,7 @@ func GetCompiledSiteTemplates(funcs htemplate.FuncMap) *htemplate.Template {
 
 	fsys := getFS("site")
 
-	root := htemplate.New("root")
-	funcs["include"] = func(name string, data any) (htemplate.HTML, error) {
-		var buf bytes.Buffer
-		err := root.ExecuteTemplate(&buf, name, data)
-		return htemplate.HTML(buf.String()), err
-	}
-	root.Funcs(funcs)
+	root := htemplate.New("root").Funcs(funcs)
 
 	// Walk the sub-FS and parse every *.gohtml, naming templates by relative path.
 	err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {

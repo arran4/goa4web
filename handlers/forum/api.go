@@ -28,12 +28,9 @@ func QuoteApi(w http.ResponseWriter, r *http.Request) {
 		case "full":
 			text = a4code.QuoteText(c.Username.String, c.Text.String)
 		case "selected":
-			selection := r.URL.Query().Get("selection")
-			if selection != "" {
-				text = a4code.QuoteText(c.Username.String, selection)
-			} else {
-				text = a4code.QuoteText(c.Username.String, "")
-			}
+			start, _ := strconv.Atoi(r.URL.Query().Get("start"))
+			end, _ := strconv.Atoi(r.URL.Query().Get("end"))
+			text = a4code.QuoteText(c.Username.String, a4code.Substring(c.Text.String, start, end))
 		default:
 			text = a4code.QuoteText(c.Username.String, c.Text.String, a4code.WithParagraphQuote())
 		}

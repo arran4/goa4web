@@ -41,5 +41,6 @@ The permissions model is documented in specs/permissions.md. Keep this document 
 
 ## Database and Testing Notes
 
+- Roles defined in migrations must also be present in `database/seed.sql`. These two sources are strongly linked. If a role is not in the seed data (because it is optional), it should not be included in migrations.
 - If the database setup is blocking frontend verification, it is acceptable to skip it and note that the user may perform manual testing instead.
 - For unit tests that require a database connection, it is recommended to mock the `db.Querier` interface to avoid database dependencies.

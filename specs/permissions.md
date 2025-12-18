@@ -12,8 +12,6 @@ Roles define high level capabilities that can be assigned to users. The standard
 - **moderator** – moderation abilities
 - **labeler** – manage public/shared labels
 - **administrator** – full access
-- **news reader** – read-only access to news
-- **news writer** – can create and edit news posts
 
 Each role includes the following flags:
 

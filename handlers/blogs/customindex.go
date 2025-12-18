@@ -19,9 +19,16 @@ func BlogsGeneralIndexItems(cd *common.CoreData, r *http.Request) []common.Index
 			suffix = "?rss=" + url.QueryEscape(user)
 		}
 		cd.RSSFeedURL = cd.GenerateFeedURL(path + "/rss" + suffix)
+		cd.RSSFeedTitle = "Blogs RSS Feed"
 		cd.AtomFeedURL = cd.GenerateFeedURL(path + "/atom" + suffix)
+		cd.AtomFeedTitle = "Blogs Atom Feed"
 		cd.PublicRSSFeedURL = path + "/rss" + suffix
 		cd.PublicAtomFeedURL = path + "/atom" + suffix
+
+		items = append(items,
+			common.IndexItem{Name: "Blogs Atom Feed", Link: cd.AtomFeedURL, Folded: true},
+			common.IndexItem{Name: "Blogs RSS Feed", Link: cd.RSSFeedURL, Folded: true},
+		)
 	}
 
 	if cd.IsAdmin() {

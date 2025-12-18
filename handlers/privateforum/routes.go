@@ -32,6 +32,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	pr.HandleFunc("/topic/{topic}/subscribe", handlers.TaskHandler(forumhandlers.SubscribeTopicTaskHandler)).Methods(http.MethodPost).MatcherFunc(forumhandlers.SubscribeTopicTaskHandler.Matcher())
 	pr.HandleFunc("/topic/{topic}/unsubscribe", handlers.TaskHandler(forumhandlers.UnsubscribeTopicTaskHandler)).Methods(http.MethodPost).MatcherFunc(forumhandlers.UnsubscribeTopicTaskHandler.Matcher())
 
+	pr.HandleFunc("/thread/{thread}/labels", handlers.TaskHandler(forumhandlers.MarkThreadReadTaskHandler)).Methods(http.MethodGet)
 	pr.HandleFunc("/thread/{thread}/labels", handlers.TaskHandler(forumhandlers.SetLabelsTaskHandler)).Methods(http.MethodPost).MatcherFunc(forumhandlers.SetLabelsTaskHandler.Matcher())
 	pr.HandleFunc("/thread/{thread}/labels", handlers.TaskHandler(forumhandlers.AddPublicLabelTaskHandler)).Methods(http.MethodPost).MatcherFunc(forumhandlers.AddPublicLabelTaskHandler.Matcher())
 	pr.HandleFunc("/thread/{thread}/labels", handlers.TaskHandler(forumhandlers.RemovePublicLabelTaskHandler)).Methods(http.MethodPost).MatcherFunc(forumhandlers.RemovePublicLabelTaskHandler.Matcher())

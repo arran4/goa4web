@@ -33,6 +33,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	fr.HandleFunc("/topic/{topic}/subscribe", handlers.TaskHandler(subscribeTopicTaskAction)).Methods("POST").MatcherFunc(subscribeTopicTaskAction.Matcher())
 	fr.HandleFunc("/topic/{topic}/unsubscribe", handlers.TaskHandler(unsubscribeTopicTaskAction)).Methods("POST").MatcherFunc(unsubscribeTopicTaskAction.Matcher())
 	fr.HandleFunc("/topic_labels.js", handlers.TopicLabelsJS).Methods(http.MethodGet)
+	fr.HandleFunc("/thread/{thread}/labels", handlers.TaskHandler(markThreadReadTask)).Methods(http.MethodGet)
 	fr.HandleFunc("/thread/{thread}/labels", handlers.TaskHandler(setLabelsTask)).Methods("POST").MatcherFunc(setLabelsTask.Matcher())
 	fr.HandleFunc("/thread/{thread}/labels", handlers.TaskHandler(addPublicLabelTask)).Methods("POST").MatcherFunc(addPublicLabelTask.Matcher())
 	fr.HandleFunc("/thread/{thread}/labels", handlers.TaskHandler(removePublicLabelTask)).Methods("POST").MatcherFunc(removePublicLabelTask.Matcher())

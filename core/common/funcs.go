@@ -31,6 +31,10 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 	return map[string]any{
 		"cd":        func() *CoreData { return cd },
 		"now":       func() time.Time { return time.Now().In(cd.Location()) },
+		"localTime": cd.LocalTime,
+		"formatLocalTime": func(t time.Time) string {
+			return cd.FormatLocalTime(t)
+		},
 		"csrfField": func() template.HTML { return csrfmiddleware.TemplateField(r) },
 		"csrfToken": func() string { return csrfmiddleware.Token(r) },
 		"version":   func() string { return goa4web.Version },

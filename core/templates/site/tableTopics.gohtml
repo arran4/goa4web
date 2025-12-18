@@ -17,7 +17,6 @@
             <div class="last-reply">Last reply<br>By</div>
             <div class="threads">Threads</div>
             <div class="replies">Replies</div>
-            <div class="actions">Actions</div>
         </div>
         <ul class="topic-list">
     {{ range .Topics }}
@@ -32,23 +31,6 @@
                 <div class="last-reply">{{ cd.LocalTime .Lastaddition.Time }}<br>{{ .Lastposterusername.String }}</div>
                 <div class="threads">{{ .Threads.Int32 }}</div>
                 <div class="replies">{{ .Comments.Int32 }}</div>
-                <div class="actions">
-                    <form method="post" action="{{$base}}/topic/{{.Idforumtopic}}/labels" class="mark-read">
-                        {{ csrfField }}
-                        <input type="hidden" name="task" value="Mark Topic Read"/>
-                        <input type="hidden" name="redirect" value="{{ $.BackURL }}"/>
-                        <button type="submit">Mark as read</button>
-                    </form>
-                    <form method="post" action="{{$base}}/topic/{{.Idforumtopic}}/labels" class="mark-read">
-                        {{ csrfField }}
-                        <input type="hidden" name="task" value="Mark Topic Read"/>
-                        <input type="hidden" name="redirect" value="{{$base}}/category/{{.ForumcategoryIdforumcategory}}"/>
-                        <button type="submit">Mark as read and go back</button>
-                    </form>
-                    <form method="get" action="{{$base}}/topic/{{.Idforumtopic}}">
-                        <button type="submit">Go to topic</button>
-                    </form>
-                </div>
             </li>
         {{ else }}
             <li class="topic-item no-topics"><div class="topic-name">No topics</div></li>

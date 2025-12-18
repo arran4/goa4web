@@ -18,12 +18,14 @@ func NewsGeneralIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 	suffix := ""
 
 	cd.RSSFeedURL = cd.GenerateFeedURL(path + "/rss" + suffix)
+	cd.RSSFeedTitle = "News RSS Feed"
 	cd.AtomFeedURL = cd.GenerateFeedURL(path + "/atom" + suffix)
+	cd.AtomFeedTitle = "News Atom Feed"
 	cd.PublicRSSFeedURL = path + "/rss" + suffix
 	cd.PublicAtomFeedURL = path + "/atom" + suffix
 
 	items = append(items, common.IndexItem{
-		Name:   "RSS Feed",
+		Name:   "News RSS Feed",
 		Link:   "/news.rss",
 		Folded: true,
 	})

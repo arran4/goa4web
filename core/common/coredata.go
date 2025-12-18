@@ -111,6 +111,8 @@ type CoreData struct {
 	PageTitle         string
 	PrevLink          string
 	RSSFeedURL        string
+	RSSFeedTitle      string
+	AtomFeedTitle     string
 	PublicRSSFeedURL  string
 	StartLink         string
 	TasksReg          *tasks.Registry

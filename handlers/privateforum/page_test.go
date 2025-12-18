@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"net/http"
 	"net/http/httptest"
-	"regexp"
 	"reflect"
 	"strings"
 	"testing"

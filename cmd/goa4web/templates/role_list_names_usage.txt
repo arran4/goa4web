@@ -1,0 +1,5 @@
+Usage: {{.Prog}} role list names
+
+Lists the human-friendly role names defined inside the embedded seed scripts.
+
+{{template "flag_groups_section" .FlagGroups}}

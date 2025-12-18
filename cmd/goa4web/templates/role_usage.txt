@@ -6,7 +6,7 @@ Subcommands:
   apply  Applies the grants from a source role to a destination role.
   remove Removes the grants from a destination role that match a source role.
   users  Lists the users in a role.
-  list   Lists available embedded role seed scripts.
+  list   Lists embedded role identifiers or human-friendly role names.
 
 Examples:
   # Load the "content-writer" role from its seed script
@@ -27,5 +27,8 @@ Examples:
   # Remove all grants from the "user" role
   {{.Prog}} role remove -dest user
 
-  # List embedded roles available in this build
-  {{.Prog}} role list
+  # List raw SQL role identifiers available in this build
+  {{.Prog}} role list sql
+
+  # List the human-friendly role names from embedded seed scripts
+  {{.Prog}} role list names

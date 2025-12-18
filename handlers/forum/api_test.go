@@ -80,12 +80,13 @@ func TestQuoteApi(t *testing.T) {
 		{
 			name:      "Selected Text",
 			commentID: "1",
-			replyType: "selected&start=2&end=8",
+			replyType: "selected&selection=hello",
 			mockComment: &db.GetCommentByIdForUserRow{
-				Text: sql.NullString{String: "hello [b]world[/b]", Valid: true},
+				Username: sql.NullString{String: "testuser", Valid: true},
+				Text:     sql.NullString{String: "hello [b]world[/b]", Valid: true},
 			},
 			expectedStatus: http.StatusOK,
-			expectedBody:   `{"text":"[quoteof \"\" llo [b]wo[/b]]\n"}`,
+			expectedBody:   `{"text":"[quoteof \"testuser\" hello]\n"}`,
 		},
 	}
 

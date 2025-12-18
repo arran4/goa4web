@@ -19,11 +19,9 @@ document.addEventListener('DOMContentLoaded', function() {
 function quote(type, commentId) {
     if (type === 'selected') {
         const selection = window.getSelection();
-        if (selection.rangeCount > 0) {
-            const range = selection.getRangeAt(0);
-            const start = range.startOffset;
-            const end = range.endOffset;
-            fetch('/api/forum/quote/' + commentId + '?type=selected&start=' + start + '&end=' + end)
+        const text = selection.toString();
+        if (text) {
+            fetch('/api/forum/quote/' + commentId + '?type=selected&selection=' + encodeURIComponent(text))
                 .then(response => response.json())
                 .then(data => {
                     let reply = document.getElementById('reply');

@@ -63,6 +63,33 @@ func (q *Queries) AdminCreateForumCategory(ctx context.Context, arg AdminCreateF
 	return result.LastInsertId()
 }
 
+const adminCreateForumTopic = `-- name: AdminCreateForumTopic :execlastid
+INSERT INTO forumtopic (forumcategory_idforumcategory, language_id, title, description, handler)
+VALUES (?, ?, ?, ?, ?)
+`
+
+type AdminCreateForumTopicParams struct {
+	ForumcategoryID int32
+	LanguageID      sql.NullInt32
+	Title           sql.NullString
+	Description     sql.NullString
+	Handler         string
+}
+
+func (q *Queries) AdminCreateForumTopic(ctx context.Context, arg AdminCreateForumTopicParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, adminCreateForumTopic,
+		arg.ForumcategoryID,
+		arg.LanguageID,
+		arg.Title,
+		arg.Description,
+		arg.Handler,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
+}
+
 const adminDeleteForumCategory = `-- name: AdminDeleteForumCategory :exec
 UPDATE forumcategory SET deleted_at = NOW() WHERE idforumcategory = ?
 `

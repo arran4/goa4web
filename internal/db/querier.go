@@ -35,6 +35,7 @@ type Querier interface {
 	AdminCountWordListByPrefix(ctx context.Context, prefix interface{}) (int64, error)
 	AdminCreateFAQCategory(ctx context.Context, name sql.NullString) error
 	AdminCreateForumCategory(ctx context.Context, arg AdminCreateForumCategoryParams) (int64, error)
+	AdminCreateForumTopic(ctx context.Context, arg AdminCreateForumTopicParams) (int64, error)
 	AdminCreateGrant(ctx context.Context, arg AdminCreateGrantParams) (int64, error)
 	AdminCreateImageBoard(ctx context.Context, arg AdminCreateImageBoardParams) error
 	// AdminCreateLanguage adds a new language.

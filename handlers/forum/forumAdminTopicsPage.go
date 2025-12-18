@@ -123,17 +123,12 @@ func AdminTopicCreatePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	languageID, _ := strconv.Atoi(r.PostFormValue("language"))
-	// TODO make and use an admin version of this
-	topicID, err := cd.Queries().CreateForumTopicForPoster(r.Context(), db.CreateForumTopicForPosterParams{
-		PosterID:        uid,
+	topicID, err := cd.Queries().AdminCreateForumTopic(r.Context(), db.AdminCreateForumTopicParams{
 		ForumcategoryID: int32(pcid),
-		ForumLang:       sql.NullInt32{Int32: int32(languageID), Valid: languageID != 0},
+		LanguageID:      sql.NullInt32{Int32: int32(languageID), Valid: languageID != 0},
 		Title:           sql.NullString{String: name, Valid: true},
 		Description:     sql.NullString{String: desc, Valid: true},
 		Handler:         "",
-		Section:         section,
-		GrantCategoryID: sql.NullInt32{Int32: int32(pcid), Valid: true},
-		GranteeID:       sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		handlers.RedirectSeeOtherWithError(w, r, "", err)

@@ -432,3 +432,7 @@ WITH RECURSIVE category_path AS (
 SELECT category_path.idforumcategory, category_path.title
 FROM category_path
 ORDER BY category_path.depth DESC;
+
+-- name: AdminCreateForumTopic :execlastid
+INSERT INTO forumtopic (forumcategory_idforumcategory, language_id, title, description, handler)
+VALUES (sqlc.arg(forumcategory_id), sqlc.narg(language_id), sqlc.arg(title), sqlc.arg(description), sqlc.arg(handler));

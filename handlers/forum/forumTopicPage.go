@@ -182,6 +182,13 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		data.Subscribed = true
 	}
 
+	if cd.IsAdmin() && cd.IsAdminMode() {
+		cd.PageCustomIndexItems = append(cd.PageCustomIndexItems, common.IndexItem{
+			Name: "Edit Topic (Admin)",
+			Link: fmt.Sprintf("/admin/forum/topics/topic/%d/edit", topicRow.Idforumtopic),
+		})
+	}
+
 	handlers.TemplateHandler(w, r, "forum/topicsPage.gohtml", data)
 }
 

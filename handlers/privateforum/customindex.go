@@ -10,7 +10,7 @@ import (
 // CustomIndex injects private forum specific index items.
 var CustomIndex = func(cd *common.CoreData, r *http.Request) {
 	items := []common.IndexItem{{
-		Name: "Start Group Discussion",
+		Name: "Create New private topic",
 		Link: "/private/topic/new",
 	}}
 	cd.CustomIndexItems = append(items, forumhandlers.ForumCustomIndexItems(cd, r)...)

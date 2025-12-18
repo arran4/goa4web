@@ -6,7 +6,7 @@
     {{ end }}
 {{ $topicTitle := topicTitleOrDefault .Topic.Title.String }}
 {{ if .Topic.DisplayTitle }}{{ $topicTitle = topicTitleOrDefault .Topic.DisplayTitle }}{{ end }}
-<h2>Topic: {{ $topicTitle }}{{- if and cd.IsAdmin cd.IsAdminMode }} [<a href="/admin/forum/topics/topic/{{.Topic.Idforumtopic}}/edit">ADMIN</a>]{{- end }}</h2>
+<h2>Topic: {{ $topicTitle }}</h2>
     {{ if gt (len .Labels) 0 }}
         {{ template "topicLabels" .Labels }}
     {{ end }}

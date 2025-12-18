@@ -4,9 +4,6 @@
     {{ range $i := cd.CustomIndexItems }}
         <a href="{{ addmode $i.Link }}">{{ $i.Name }}</a><br>
     {{ end }}
-    {{ range $i := cd.PageCustomIndexItems }}
-        <a href="{{ addmode $i.Link }}">{{ $i.Name }}</a><br>
-    {{ end }}
     {{ if cd.HasRole "administrator" }}
         {{ if cd.AdminMode }}
             <a href="{{ addmode "/admin" }}">Admin Dashboard</a><br>

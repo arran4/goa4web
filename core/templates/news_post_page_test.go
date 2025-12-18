@@ -10,16 +10,31 @@ import (
 //go:embed site/news/postPage.gohtml
 var newsPostPageTemplate string
 
-func TestNewsPostPageMarkReadIncludesCSRF(t *testing.T) {
-	re := regexp.MustCompile(`(?s)<form[^>]*class="mark-read"[^>]*>.*?{{ csrfField }}`)
-	matches := re.FindAllString(newsPostPageTemplate, -1)
-	if len(matches) != 4 {
-		t.Fatalf("expected 4 mark-read forms with csrfField, got %d", len(matches))
+func TestNewsPostPageLabelFormIncludesCSRF(t *testing.T) {
+	re := regexp.MustCompile(`(?s)<form[^>]*id="label-form"[^>]*>.*{{ csrfField }}`)
+	if !re.MatchString(newsPostPageTemplate) {
+		t.Fatalf("label form missing csrfField")
 	}
 }
 
-func TestNewsPostPageUsesThreadMarkReadTask(t *testing.T) {
-	if c := strings.Count(newsPostPageTemplate, "Mark Thread Read"); c != 4 {
-		t.Fatalf("expected 4 Mark Thread Read tasks, got %d", c)
+func TestNewsPostPageReplyFormIncludesCSRF(t *testing.T) {
+	re := regexp.MustCompile(`(?s)<form[^>]*>.*?</form>`)
+	forms := re.FindAllString(newsPostPageTemplate, -1)
+	found := false
+	for _, f := range forms {
+		if strings.Contains(f, `name="replytext"`) && strings.Contains(f, `{{ csrfField }}`) {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("reply form missing csrfField")
+	}
+}
+
+func TestNewsPostPageDoesNotContainInlineMarkRead(t *testing.T) {
+	re := regexp.MustCompile(`class="mark-read"`)
+	if re.MatchString(newsPostPageTemplate) {
+		t.Fatalf("mark-read actions should be provided by the custom index, not inline forms")
 	}
 }

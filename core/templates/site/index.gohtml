@@ -1,13 +1,32 @@
 {{- define "index"}}
     {{- template "indexItems" $ }}
     {{- template "userPanel" $ }}
-    {{ range $i := cd.CustomIndexItems }}
-        {{ if ne $i.TemplateName "" }}
-            {{ include $i.TemplateName $i.TemplateData }}
-        {{ else }}
-            <a href="{{ addmode $i.Link }}">{{ $i.Name }}</a><br>
-        {{ end }}
-    {{ end }}
+    {{- $advanced := false }}
+    {{- range $i := cd.CustomIndexItems }}
+        {{- if not $i.Folded }}
+            {{ if ne $i.TemplateName "" }}
+                {{ include $i.TemplateName $i.TemplateData }}
+            {{ else }}
+                <a href="{{ addmode $i.Link }}">{{ $i.Name }}</a><br>
+            {{ end }}
+        {{- else }}
+            {{- $advanced = true }}
+        {{- end }}
+    {{- end }}
+    {{- if $advanced }}
+        <details>
+            <summary>Advanced / Danger Zone</summary>
+            {{- range $i := cd.CustomIndexItems }}
+                {{- if $i.Folded }}
+                    {{ if ne $i.TemplateName "" }}
+                        {{ include $i.TemplateName $i.TemplateData }}
+                    {{ else }}
+                        <a href="{{ addmode $i.Link }}">{{ $i.Name }}</a><br>
+                    {{ end }}
+                {{- end }}
+            {{- end }}
+        </details>
+    {{- end }}
     {{ if cd.HasRole "administrator" }}
         {{ if cd.AdminMode }}
             <a href="{{ addmode "/admin" }}">Admin Dashboard</a><br>

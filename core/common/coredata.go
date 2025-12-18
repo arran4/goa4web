@@ -42,6 +42,7 @@ type IndexItem struct {
 	Link         string
 	TemplateName string
 	TemplateData any
+	Folded       bool
 }
 
 // AdminSection groups admin navigation links under a section heading.

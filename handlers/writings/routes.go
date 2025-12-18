@@ -35,7 +35,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	wr.Handle("/article/{writing}/edit", RequireWritingAuthor(http.HandlerFunc(updateWritingTask.Page))).Methods("GET").MatcherFunc(handlers.RequiredAccess("content writer", "administrator"))
 	wr.Handle("/article/{writing}/edit", RequireWritingAuthor(http.HandlerFunc(handlers.TaskHandler(updateWritingTask)))).Methods("POST").MatcherFunc(handlers.RequiredAccess("content writer", "administrator")).MatcherFunc(updateWritingTask.Matcher())
 	wr.HandleFunc("/article/{writing}/labels", handlers.TaskHandler(setLabelsTask)).Methods("POST").MatcherFunc(setLabelsTask.Matcher())
-	wr.HandleFunc("/article/{writing}/labels", handlers.TaskHandler(markWritingReadTask)).Methods("POST").MatcherFunc(markWritingReadTask.Matcher())
+	wr.HandleFunc("/article/{writing}/labels", handlers.TaskHandler(markWritingReadTask)).Methods("GET", "POST").MatcherFunc(markWritingReadTask.Matcher())
 	wr.HandleFunc("/categories", CategoriesPage).Methods("GET")
 	wr.HandleFunc("/categories/", CategoriesPage).Methods("GET")
 	wr.HandleFunc("/category/{category}", CategoryPage).Methods("GET")

@@ -13,7 +13,6 @@ import (
 
 	"log"
 	"net/http"
-	"net/url"
 	"strconv"
 	"time"
 
@@ -45,39 +44,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 }
 
 func CustomBlogIndex(data *common.CoreData, r *http.Request) {
-	user := r.URL.Query().Get("user")
-	data.CustomIndexItems = []common.IndexItem{}
-	if data.FeedsEnabled {
-		suffix := ""
-		if user != "" {
-			suffix = "?user=" + url.QueryEscape(user)
-		}
-		data.RSSFeedURL = "/blogs/rss" + suffix
-		data.AtomFeedURL = "/blogs/atom" + suffix
-		data.CustomIndexItems = append(data.CustomIndexItems,
-			common.IndexItem{Name: "Atom Feed", Link: data.AtomFeedURL},
-			common.IndexItem{Name: "RSS Feed", Link: data.RSSFeedURL},
-		)
-	}
-
-	if data.IsAdmin() {
-		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-			Name: "Blogs Admin",
-			Link: "/admin/blogs",
-		})
-	}
-	userHasWriter := data.HasRole("content writer")
-	if userHasWriter {
-		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-			Name: "Write blog",
-			Link: "/blogs/add",
-		})
-
-	}
-	data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-		Name: "List bloggers",
-		Link: "/blogs/bloggers",
-	})
+	CustomBlogsIndex(data, r)
 }
 
 func RssPage(w http.ResponseWriter, r *http.Request) {

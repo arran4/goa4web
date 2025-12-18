@@ -19,7 +19,7 @@
                 <header class="bg-muted">{{ cd.LocalTimeIn .Written .Timezone.String }}</header>
                 <div class="post-content">
                     {{ $labels := cd.BlogLabels .Idblogs }}
-                    {{ .Blog.String | a4code2html}}<br><br>{{ .Username.String }} - [<a href="/blogs/blog/{{ .Idblogs }}/comments">{{ .Comments }} COMMENTS</a>]{{ if cd.CanEditBlog .Idblogs .UsersIdusers }} - [<a href="/blogs/blog/{{ .Idblogs }}/edit">EDIT</a>]{{ end }}{{ if and cd.IsAdmin cd.IsAdminMode }} - [<a href="/admin/blogs/blog/{{ .Idblogs }}">ADMIN</a>]{{ end }}{{ if $labels }} <section class="label-list">{{ template "topicLabels" $labels }}</section>{{ end }}
+                    {{ .Blog.String | a4code2html}}<br><br>{{ .Username.String }} - [<a href="/blogs/blog/{{ .Idblogs }}/comments">{{ .Comments }} COMMENTS</a>]{{ if $labels }} <section class="label-list">{{ template "topicLabels" $labels }}</section>{{ end }}
                 </div>
             </article>
         {{ else }}

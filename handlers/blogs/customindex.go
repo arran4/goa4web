@@ -24,12 +24,15 @@ func BlogsCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 
 	// Feed links
 	if cd.FeedsEnabled {
+		path := "/blogs"
 		suffix := ""
 		if user != "" {
-			suffix = "?user=" + url.QueryEscape(user)
+			suffix = "?rss=" + url.QueryEscape(user)
 		}
-		cd.RSSFeedURL = "/blogs/rss" + suffix
-		cd.AtomFeedURL = "/blogs/atom" + suffix
+		cd.RSSFeedURL = cd.GenerateFeedURL(path + "/rss" + suffix)
+		cd.AtomFeedURL = cd.GenerateFeedURL(path + "/atom" + suffix)
+		cd.PublicRSSFeedURL = path + "/rss" + suffix
+		cd.PublicAtomFeedURL = path + "/atom" + suffix
 		items = append(items,
 			common.IndexItem{Name: "Atom Feed", Link: cd.AtomFeedURL},
 			common.IndexItem{Name: "RSS Feed", Link: cd.RSSFeedURL},

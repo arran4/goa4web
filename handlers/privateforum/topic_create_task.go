@@ -39,7 +39,7 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 	parts := strings.Split(participantsInput, ",")
 	title := strings.TrimSpace(r.PostFormValue("title"))
 	description := strings.TrimSpace(r.PostFormValue("description"))
-	var participants []common.PrivateTopicParticipant // TODO make map
+	var participants []common.PrivateTopicParticipant
 	for _, p := range parts {
 		p = strings.TrimSpace(p)
 		if p == "" {

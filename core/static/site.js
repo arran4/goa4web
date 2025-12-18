@@ -5,6 +5,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const type = e.target.getAttribute('data-quote-type');
             const commentId = e.target.getAttribute('data-comment-id');
             quote(type, commentId);
+        } else if (e.target && e.target.classList.contains('folded-toggle')) {
+            e.preventDefault();
+            const targetId = e.target.getAttribute('data-target');
+            const targetElement = document.getElementById(targetId);
+            if (targetElement) {
+                targetElement.classList.toggle('hidden');
+            }
         }
     });
 });

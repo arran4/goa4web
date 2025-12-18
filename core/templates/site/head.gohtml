@@ -16,7 +16,7 @@
        <meta name="viewport" content="width=device-width, initial-scale=1">
        {{ if cd.HasModule "images" }}               <script src="/images/pasteimg.js"></script>               {{ end }}
        {{ if and (cd.HasModule "websocket") cd.Config.NotificationsEnabled }}               <script src="/websocket/notifications.js"></script>               {{ end }}
-       <script src="/static/quote.js"></script>
+       <script src="/static/site.js"></script>
        {{ if cd.AutoRefresh }}            <meta http-equiv="refresh" content="{{cd.AutoRefresh}}">       {{ end }}
     </head>
     {{ end }}

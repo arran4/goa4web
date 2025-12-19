@@ -25,6 +25,10 @@ Commands:
           articles.
   faq     Manage frequently asked questions. This allows you to create and
           update a list of FAQs.
+  forum   Manage forum topics and threads. This includes maintenance tasks for
+          the public forums.
+  private-forum Manage private forum topics and threads. This includes
+          maintenance tasks for the private forums.
   writing Manage writing articles. This is used for managing articles and other
           written content.
   ipban   Manage IP bans. This allows you to block specific IP addresses from

@@ -306,6 +306,18 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("rootCmd.Run: faq: %w", err)
 		}
 		return c.Run()
+	case "forum":
+		c, err := parseForumCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("rootCmd.Run: forum: %w", err)
+		}
+		return c.Run()
+	case "private-forum":
+		c, err := parsePrivateForumCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("rootCmd.Run: private-forum: %w", err)
+		}
+		return c.Run()
 	case "ipban":
 		c, err := parseIpBanCmd(r, args[1:])
 		if err != nil {

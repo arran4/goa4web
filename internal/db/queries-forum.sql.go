@@ -184,6 +184,62 @@ func (q *Queries) AdminListForumCategoriesWithCounts(ctx context.Context, arg Ad
 	return items, nil
 }
 
+const adminListForumTopicGrantsByTopicID = `-- name: AdminListForumTopicGrantsByTopicID :many
+SELECT
+    g.id,
+    g.section,
+    g.action,
+    r.name AS role_name,
+    u.username
+FROM
+    grants g
+LEFT JOIN
+    roles r ON g.role_id = r.id
+LEFT JOIN
+    users u ON g.user_id = u.idusers
+WHERE
+    g.section = 'forum'
+    AND (g.item = 'topic' OR g.item IS NULL)
+    AND g.item_id = ?
+`
+
+type AdminListForumTopicGrantsByTopicIDRow struct {
+	ID       int32
+	Section  string
+	Action   string
+	RoleName sql.NullString
+	Username sql.NullString
+}
+
+func (q *Queries) AdminListForumTopicGrantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListForumTopicGrantsByTopicIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListForumTopicGrantsByTopicID, itemID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListForumTopicGrantsByTopicIDRow
+	for rows.Next() {
+		var i AdminListForumTopicGrantsByTopicIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Section,
+			&i.Action,
+			&i.RoleName,
+			&i.Username,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const adminListForumTopics = `-- name: AdminListForumTopics :many
 SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.language_id, t.title, t.description, t.threads, t.comments, t.lastaddition, t.handler
 FROM forumtopic t

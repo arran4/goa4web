@@ -58,6 +58,7 @@ var StringOptions = []StringOption{
 	{"default-language", EnvDefaultLanguage, "The default language for the application.", "", nil, "", func(c *RuntimeConfig) *string { return &c.DefaultLanguage }},
 	{"timezone", EnvTimezone, "The default timezone for the application.", "Australia/Melbourne", nil, "", func(c *RuntimeConfig) *string { return &c.Timezone }},
 	{"templates-dir", EnvTemplatesDir, "The directory to load templates from. If not specified, the embedded templates will be used.", "", nil, "", func(c *RuntimeConfig) *string { return &c.TemplatesDir }},
+	{"migrations-dir", EnvMigrationsDir, "The directory to load migrations from at runtime.", "", nil, "", func(c *RuntimeConfig) *string { return &c.MigrationsDir }},
 	{"image-upload-dir", EnvImageUploadDir, "The directory to store uploaded images when using the 'local' provider.", "", nil, "", func(c *RuntimeConfig) *string { return &c.ImageUploadDir }},
 	{"image-upload-provider", EnvImageUploadProvider, "The provider to use for image uploads. Supported providers are 'local' and 's3'.", "local", nil, "", func(c *RuntimeConfig) *string { return &c.ImageUploadProvider }},
 	{"image-upload-s3-url", EnvImageUploadS3URL, "The S3 prefix URL for image uploads.", "", []string{"s3://mybucket/uploads", "s3://bucket/images"}, "", func(c *RuntimeConfig) *string { return &c.ImageUploadS3URL }},

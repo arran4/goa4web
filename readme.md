@@ -268,6 +268,7 @@ You can supply settings on the command line, in a config file or via environment
 | `DLQ_PROVIDER` | `--dlq-provider` | No | `log` | Dead letter queue provider. |
 | `DLQ_FILE` | `--dlq-file` | No | `dlq.log` | File path for the file or directory DLQ providers. |
 | `AUTO_MIGRATE` | n/a | No | `false` | Run database migrations on startup. |
+| `MIGRATIONS_DIR` | `--migrations-dir` | No | `embedded` | The directory to load migrations from at runtime. |
 | `CREATE_DIRS` | `--create-dirs` | No | `false` | Create missing directories on startup. |
 
 Paths using the `s3://` scheme must include a bucket name and may specify an optional prefix, e.g. `s3://mybucket/uploads`.

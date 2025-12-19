@@ -188,14 +188,13 @@ func (s Provider) TestConfig(ctx context.Context) error {
 	return c.Quit()
 }
 
-func providerFromConfig(cfg *config.RuntimeConfig) email.Provider {
+func providerFromConfig(cfg *config.RuntimeConfig) (email.Provider, error) {
 	host := cfg.EmailSMTPHost
 	port := cfg.EmailSMTPPort
 	user := cfg.EmailSMTPUser
 	pass := cfg.EmailSMTPPass
 	if host == "" {
-		log.Printf("Email disabled: %s not set", config.EnvSMTPHost)
-		return nil
+		return nil, fmt.Errorf("Email disabled: %s not set", config.EnvSMTPHost)
 	}
 	addr := host
 	if port != "" {
@@ -215,7 +214,7 @@ func providerFromConfig(cfg *config.RuntimeConfig) email.Provider {
 			auth = smtp.PlainAuth("", user, pass, host)
 		}
 	}
-	return Provider{Addr: addr, Auth: auth, From: cfg.EmailFrom, StartTLS: cfg.EmailSMTPStartTLS}
+	return Provider{Addr: addr, Auth: auth, From: cfg.EmailFrom, StartTLS: cfg.EmailSMTPStartTLS}, nil
 }
 
 // Register registers the SMTP provider factory.

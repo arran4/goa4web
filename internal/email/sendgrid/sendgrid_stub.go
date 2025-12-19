@@ -17,8 +17,8 @@ const Built = false
 
 // Register registers a stub for the SendGrid provider.
 func Register(r *email.Registry) {
-	r.RegisterProvider("sendgrid", func(cfg *config.RuntimeConfig) email.Provider {
-		return &stub{}
+	r.RegisterProvider("sendgrid", func(cfg *config.RuntimeConfig) (email.Provider, error) {
+		return &stub{}, nil
 	})
 }
 

@@ -4,8 +4,13 @@
     const seen = new Set();
     let conn;
 
+    let retryDelay = 1000;
+
     function connect(){
         conn = new WebSocket(url);
+        conn.onopen = () => {
+            retryDelay = 1000;
+        };
         conn.onmessage = evt => {
             try{
                 const msg = JSON.parse(evt.data);
@@ -21,7 +26,10 @@
                 console.log('ws message error', e);
             }
         };
-        conn.onclose = () => setTimeout(connect, 1000);
+        conn.onclose = () => {
+             setTimeout(connect, retryDelay);
+             retryDelay = Math.min(retryDelay * 2, 60000);
+        };
     }
 
     function updateCount(delta){

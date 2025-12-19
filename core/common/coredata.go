@@ -126,9 +126,10 @@ type CoreData struct {
 	sessionProxy SessionManager
 
 	ctx           context.Context
-	customQueries db.CustomQueries
-	emailProvider lazy.Value[MailProvider]
-	queries       db.Querier
+	customQueries      db.CustomQueries
+	emailProvider      lazy.Value[MailProvider]
+	EmailProviderError string
+	queries            db.Querier
 
 	// Keep this sorted
 	adminLatestNews                  lazy.Value[[]*db.AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow]

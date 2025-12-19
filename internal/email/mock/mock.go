@@ -69,7 +69,7 @@ func (p *Provider) Send(_ context.Context, to mail.Address, rawEmailMessage []by
 // TestConfig is a no-op for the mock provider.
 func (p *Provider) TestConfig(context.Context) error { return nil }
 
-func providerFromConfig(*config.RuntimeConfig) email.Provider { return &Provider{} }
+func providerFromConfig(*config.RuntimeConfig) (email.Provider, error) { return &Provider{}, nil }
 
 // Register registers the mock provider factory.
 func Register(r *email.Registry) { r.RegisterProvider("mock", providerFromConfig) }

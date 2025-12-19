@@ -30,6 +30,7 @@ func TestHeadTemplateIncludesModuleScripts(t *testing.T) {
 		common.WithSiteTitle("My Site"),
 		common.WithRouterModules([]string{"images", "websocket"}),
 	)
+	cd.UserID = 1
 	cd.PageTitle = "Page"
 	tmpl := template.Must(template.New("").Funcs(cd.Funcs(r)).ParseFS(testTemplates,
 		"site/*.gohtml", "site/*/*.gohtml"))

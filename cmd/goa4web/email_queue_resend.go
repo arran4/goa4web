@@ -41,7 +41,10 @@ func (c *emailQueueResendCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("get email: %w", err)
 	}
-	provider := c.rootCmd.emailReg.ProviderFromConfig(c.rootCmd.cfg)
+	provider, err := c.rootCmd.emailReg.ProviderFromConfig(c.rootCmd.cfg)
+	if err != nil {
+		return fmt.Errorf("email provider: %w", err)
+	}
 	if provider != nil {
 		addr, err := emailqueue.ResolveQueuedEmailAddress(ctx, queries, c.rootCmd.cfg, &db.SystemListPendingEmailsRow{ID: e.ID, ToUserID: e.ToUserID, Body: e.Body, ErrorCount: e.ErrorCount, DirectEmail: e.DirectEmail})
 		if err != nil {

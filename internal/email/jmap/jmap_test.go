@@ -44,7 +44,10 @@ func TestProviderFromConfigDiscoversSession(t *testing.T) {
 		EmailJMAPPass:     "pass",
 	}
 
-	p := providerFromConfig(cfg)
+	p, err := providerFromConfig(cfg)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 	if p == nil {
 		t.Fatal("expected provider, got nil")
 	}

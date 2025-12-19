@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gorilla/sessions"
@@ -59,6 +60,11 @@ type Server struct {
 
 	addr       string
 	httpServer *http.Server
+
+	cachedEmailProvider common.MailProvider
+	cachedEmailError    error
+	lastEmailConfig     *config.RuntimeConfig
+	emailMu             sync.Mutex
 }
 
 // Addr returns the address the server is listening on after Start is called.
@@ -179,6 +185,19 @@ func New(opts ...Option) *Server {
 	return s
 }
 
+func (s *Server) getEmailProvider() (common.MailProvider, error) {
+	s.emailMu.Lock()
+	defer s.emailMu.Unlock()
+	if s.lastEmailConfig == s.Config {
+		return s.cachedEmailProvider, s.cachedEmailError
+	}
+	p, err := s.EmailReg.ProviderFromConfig(s.Config)
+	s.cachedEmailProvider = p
+	s.cachedEmailError = err
+	s.lastEmailConfig = s.Config
+	return p, err
+}
+
 // CoreDataMiddleware constructs the middleware responsible for populating
 // CoreData in the request context using the server's configured dependencies.
 func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.CoreData, *http.Request) {
@@ -241,7 +260,7 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 	if s.Config.HTTPHostname != "" {
 		base = strings.TrimRight(s.Config.HTTPHostname, "/")
 	}
-	provider := s.EmailReg.ProviderFromConfig(s.Config)
+	provider, providerErr := s.getEmailProvider()
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	modules := []string{}
 	if s.RouterReg != nil {
@@ -264,6 +283,9 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 		common.WithOffset(offset),
 		common.WithSiteTitle("Arran's Site"),
 	)
+	if providerErr != nil {
+		cd.EmailProviderError = providerErr.Error()
+	}
 	cd.UserID = uid
 	_ = cd.UserRoles()
 
@@ -300,7 +322,10 @@ func (s *Server) startWorkers(ctx context.Context) {
 		return
 	}
 	workerCtx, cancel := context.WithCancel(ctx)
-	emailProvider := s.EmailReg.ProviderFromConfig(s.Config)
+	emailProvider, err := s.EmailReg.ProviderFromConfig(s.Config)
+	if err != nil {
+		log.Printf("Email provider init failed: %v", err)
+	}
 	if s.Config.EmailEnabled && s.Config.EmailProvider != "" && s.Config.EmailFrom == "" {
 		log.Printf("%s not set while EMAIL_PROVIDER=%s", config.EnvEmailFrom, s.Config.EmailProvider)
 	}

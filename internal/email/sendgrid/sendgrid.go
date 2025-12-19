@@ -85,17 +85,16 @@ func parseRawEmail(raw []byte) (string, string, string) {
 	return subject, string(b), ""
 }
 
-func providerFromConfig(key string, from string) email.Provider {
+func providerFromConfig(key string, from string) (email.Provider, error) {
 	if key == "" {
-		log.Printf("Email disabled: SENDGRID_KEY not set")
-		return nil
+		return nil, fmt.Errorf("Email disabled: SENDGRID_KEY not set")
 	}
-	return Provider{APIKey: key, From: from}
+	return Provider{APIKey: key, From: from}, nil
 }
 
 // Register registers the SendGrid provider factory.
 func Register(r *email.Registry) {
-	r.RegisterProvider("sendgrid", func(cfg *config.RuntimeConfig) email.Provider {
+	r.RegisterProvider("sendgrid", func(cfg *config.RuntimeConfig) (email.Provider, error) {
 		return providerFromConfig(cfg.EmailSendGridKey, cfg.EmailFrom)
 	})
 }

@@ -15,7 +15,7 @@
        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
        <meta name="viewport" content="width=device-width, initial-scale=1">
        {{ if cd.HasModule "images" }}               <script src="/images/pasteimg.js"></script>               {{ end }}
-       {{ if and (cd.HasModule "websocket") cd.Config.NotificationsEnabled }}               <script src="/websocket/notifications.js"></script>               {{ end }}
+       {{ if and (cd.HasModule "websocket") cd.Config.NotificationsEnabled (ne cd.UserID 0) }}               <script src="/websocket/notifications.js"></script>               {{ end }}
        <script src="/static/site.js"></script>
        {{ if cd.AutoRefresh }}            <meta http-equiv="refresh" content="{{cd.AutoRefresh}}">       {{ end }}
     </head>

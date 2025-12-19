@@ -27,8 +27,11 @@ func parseRoleListCmd(parent *roleCmd, args []string) (*roleListCmd, error) {
 
 func (c *roleListCmd) Run() error {
 	if len(c.args) == 0 {
-		c.fs.Usage()
-		return fmt.Errorf("missing list command")
+		cmd, err := parseRoleListAllCmd(c, nil)
+		if err != nil {
+			return fmt.Errorf("all: %w", err)
+		}
+		return cmd.Run()
 	}
 	if err := usageIfHelp(c.fs, c.args); err != nil {
 		return err
@@ -44,6 +47,12 @@ func (c *roleListCmd) Run() error {
 		cmd, err := parseRoleListNamesCmd(c, c.args[1:])
 		if err != nil {
 			return fmt.Errorf("names: %w", err)
+		}
+		return cmd.Run()
+	case "all":
+		cmd, err := parseRoleListAllCmd(c, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("all: %w", err)
 		}
 		return cmd.Run()
 	default:

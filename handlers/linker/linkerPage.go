@@ -14,9 +14,9 @@ func LinkerPage(w http.ResponseWriter, r *http.Request) {
 func CustomLinkerIndex(data *common.CoreData, r *http.Request) {
 	data.CustomIndexItems = []common.IndexItem{}
 	if r.URL.Path == "/linker" || strings.HasPrefix(r.URL.Path, "/linker/category/") {
-		data.RSSFeedURL = "/linker/rss"
+		data.RSSFeedURL = data.GenerateFeedURL("/linker/rss")
 		data.RSSFeedTitle = "Linker RSS Feed"
-		data.AtomFeedURL = "/linker/atom"
+		data.AtomFeedURL = data.GenerateFeedURL("/linker/atom")
 		data.AtomFeedTitle = "Linker Atom Feed"
 		data.CustomIndexItems = append(data.CustomIndexItems,
 			common.IndexItem{Name: "Linker Atom Feed", Link: data.AtomFeedURL, Folded: true},

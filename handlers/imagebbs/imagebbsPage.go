@@ -15,9 +15,9 @@ func CustomImageBBSIndex(data *common.CoreData, r *http.Request) {
 	data.CustomIndexItems = []common.IndexItem{}
 
 	if data.FeedsEnabled {
-		data.RSSFeedURL = "/imagebbs/rss"
+		data.RSSFeedURL = data.GenerateFeedURL("/imagebbs/rss")
 		data.RSSFeedTitle = "ImageBBS RSS Feed"
-		data.AtomFeedURL = "/imagebbs/atom"
+		data.AtomFeedURL = data.GenerateFeedURL("/imagebbs/atom")
 		data.AtomFeedTitle = "ImageBBS Atom Feed"
 		data.CustomIndexItems = append(data.CustomIndexItems,
 			common.IndexItem{Name: "ImageBBS Atom Feed", Link: data.AtomFeedURL, Folded: true},

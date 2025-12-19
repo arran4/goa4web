@@ -21,8 +21,8 @@ func TestSigner_SignedURL_and_Verify(t *testing.T) {
 	// Generate signed URL
 	signedURL := signer.SignedURL(path, query, username)
 
-	// Expect format: /blogs/rss/u/testuser?ts=...&sig=...&rss=bob
-	expectedPrefix := "/blogs/rss/u/testuser?"
+	// Expect format: /blogs/u/testuser/rss?ts=...&sig=...&rss=bob
+	expectedPrefix := "/blogs/u/testuser/rss?"
 	if !strings.HasPrefix(signedURL, expectedPrefix) {
 		t.Errorf("Expected URL to start with %s, got %s", expectedPrefix, signedURL)
 	}

@@ -18,7 +18,17 @@ import (
 
 func RssPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+
+	if _, ok := mux.Vars(r)["username"]; ok {
+		u, err := handlers.VerifyFeedRequest(r, "/imagebbs/rss")
+		if err != nil {
+			handlers.RenderErrorPage(w, r, err)
+			return
+		}
+		cd.UserID = u.Idusers
+	}
+
+	queries := cd.Queries()
 	boards, err := queries.ListBoardsForLister(r.Context(), db.ListBoardsForListerParams{
 		ListerID:     cd.UserID,
 		ListerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
@@ -56,7 +66,17 @@ func RssPage(w http.ResponseWriter, r *http.Request) {
 
 func AtomPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+
+	if _, ok := mux.Vars(r)["username"]; ok {
+		u, err := handlers.VerifyFeedRequest(r, "/imagebbs/atom")
+		if err != nil {
+			handlers.RenderErrorPage(w, r, err)
+			return
+		}
+		cd.UserID = u.Idusers
+	}
+
+	queries := cd.Queries()
 	boards, err := queries.ListBoardsForLister(r.Context(), db.ListBoardsForListerParams{
 		ListerID:     cd.UserID,
 		ListerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},

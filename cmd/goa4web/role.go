@@ -59,6 +59,12 @@ func (c *roleCmd) Run() error {
 			return err
 		}
 		return cmd.Run()
+	case "template":
+		cmd, err := parseRoleTemplateCmd(c, c.fs.Args()[1:])
+		if err != nil {
+			return err
+		}
+		return cmd.Run()
 	case "remove":
 		cmd, err := parseRoleRemoveCmd(c, c.fs.Args()[1:])
 		if err != nil {

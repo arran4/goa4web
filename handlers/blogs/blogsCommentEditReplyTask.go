@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -16,7 +17,6 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
-	"github.com/arran4/goa4web/workers/postcountworker"
 	"github.com/gorilla/mux"
 )
 
@@ -82,14 +82,14 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("update comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(commentId), ThreadID: thread.Idforumthread, TopicID: thread.ForumtopicIdforumtopic}
-			evt.Data["CommentURL"] = cd.AbsoluteURL(fmt.Sprintf("/blogs/blog/%d/comments", blogId))
-		}
+	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
+		ThreadID:         thread.Idforumthread,
+		TopicID:          thread.ForumtopicIdforumtopic,
+		CommentID:        int32(commentId),
+		CommentURL:       cd.AbsoluteURL(fmt.Sprintf("/blogs/blog/%d/comments", blogId)),
+		IncludePostCount: true,
+	}); err != nil {
+		log.Printf("blog comment edit side effects: %v", err)
 	}
 
 	return handlers.RedirectHandler(fmt.Sprintf("/blogs/blog/%d/comments", blogId))

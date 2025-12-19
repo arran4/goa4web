@@ -3,6 +3,7 @@
   "ADMIN_API_SECRET_FILE": ".admin_api_secret",
   "ADMIN_EMAILS": "",
   "ADMIN_NOTIFY": "true",
+  "AUTO_MIGRATE": "false",
   "AWS_REGION": "",
   "CONFIG_FILE": "",
   "CREATE_DIRS": "false",

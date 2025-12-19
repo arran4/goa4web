@@ -163,17 +163,6 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if u, err := queries.SystemGetUserByID(r.Context(), uid); err == nil {
 		author = u.Username.String
 	}
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data["TopicTitle"] = topicTitle
-			evt.Data["Author"] = author
-			evt.Data["Username"] = author
-		}
-	}
-
 	text := r.PostFormValue("replytext")
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
 
@@ -217,24 +206,20 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(handlers.ErrForbidden))
 	}
 
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			fullURL := cd.AbsoluteURL(endUrl)
-			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(cid), ThreadID: int32(threadId), TopicID: int32(topicId)}
-			evt.Data["PostURL"] = fullURL
-			evt.Data["ThreadURL"] = fullURL
-		}
-	}
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: int32(cid), Text: text}
-		}
+	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
+		ThreadID:         int32(threadId),
+		TopicID:          int32(topicId),
+		CommentID:        int32(cid),
+		TopicTitle:       topicTitle,
+		Author:           author,
+		Username:         author,
+		CommentText:      text,
+		PostURL:          cd.AbsoluteURL(endUrl),
+		ThreadURL:        cd.AbsoluteURL(endUrl),
+		IncludePostCount: true,
+		IncludeSearch:    true,
+	}); err != nil {
+		log.Printf("thread create side effects: %v", err)
 	}
 
 	return handlers.RedirectHandler(endUrl)

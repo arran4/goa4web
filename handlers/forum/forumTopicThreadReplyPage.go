@@ -112,18 +112,6 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 			username = u.Username.String
 		}
 	}
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data["TopicTitle"] = topicRow.Title.String
-			evt.Data["ThreadID"] = threadRow.Idforumthread
-			evt.Data["Thread"] = threadRow
-			evt.Data["Username"] = username
-		}
-	}
-
 	text := r.PostFormValue("replytext")
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
 
@@ -152,29 +140,21 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("Error: CreateComment: %s", err)
 		return fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	if err := cd.ClearThreadUnreadForOthers(threadRow.Idforumthread); err != nil {
-		log.Printf("clear unread labels: %v", err)
-	}
-	if err := cd.SetThreadReadMarker(threadRow.Idforumthread, int32(cid)); err != nil {
-		log.Printf("set read marker: %v", err)
-	}
-
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(cid), ThreadID: threadRow.Idforumthread, TopicID: topicRow.Idforumtopic}
-			evt.Data["CommentURL"] = cd.AbsoluteURL(endUrl)
-		}
-	}
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: int32(cid), Text: text}
-		}
+	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
+		ThreadID:             threadRow.Idforumthread,
+		TopicID:              topicRow.Idforumtopic,
+		CommentID:            int32(cid),
+		Thread:               threadRow,
+		TopicTitle:           topicRow.Title.String,
+		Username:             username,
+		CommentText:          text,
+		CommentURL:           cd.AbsoluteURL(endUrl),
+		ClearUnreadForOthers: true,
+		MarkThreadRead:       true,
+		IncludePostCount:     true,
+		IncludeSearch:        true,
+	}); err != nil {
+		log.Printf("thread reply side effects: %v", err)
 	}
 
 	return handlers.RedirectHandler(endUrl)

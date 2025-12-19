@@ -1,11 +1,9 @@
 package common_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 )
@@ -18,7 +16,8 @@ func TestCommentEditURLsPrivateForum(t *testing.T) {
 	defer conn.Close()
 
 	queries := db.New(conn)
-	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+	cd := common.NewTestCoreData(t, queries)
+	common.WithUserRoles([]string{"administrator"})(cd)
 	cd.SetCurrentSection("privateforum")
 	cd.SetCurrentThreadAndTopic(106, 30)
 	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
@@ -42,7 +41,8 @@ func TestCommentEditSaveURLPrivateForumFallback(t *testing.T) {
 	defer conn.Close()
 
 	queries := db.New(conn)
-	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+	cd := common.NewTestCoreData(t, queries)
+	common.WithUserRoles([]string{"administrator"})(cd)
 	cd.SetCurrentSection("privateforum")
 	cd.SetCurrentThreadAndTopic(106, 30)
 	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))

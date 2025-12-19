@@ -119,6 +119,8 @@ type RuntimeConfig struct {
 
 	// TemplatesDir specifies a directory to load templates and assets from.
 	TemplatesDir string
+	// AutoMigrate toggles automatic database migrations on startup.
+	AutoMigrate bool
 	// MigrationsDir specifies a directory to load migrations from at runtime.
 	MigrationsDir string
 
@@ -284,29 +286,8 @@ func NewRuntimeConfig(ops ...Option) *RuntimeConfig {
 
 // normalizeRuntimeConfig applies default values and ensures pagination limits are valid.
 func normalizeRuntimeConfig(cfg *RuntimeConfig) {
-	if cfg.HTTPListen == "" {
-		cfg.HTTPListen = ":8080"
-	}
 	if cfg.HTTPHostname == "" {
 		cfg.HTTPHostname = "http://localhost:8080"
-	}
-	if cfg.HSTSHeaderValue == "" {
-		cfg.HSTSHeaderValue = "max-age=63072000; includeSubDomains"
-	}
-	if cfg.SessionName == "" {
-		cfg.SessionName = "my-session"
-	}
-	if cfg.SessionSameSite == "" {
-		cfg.SessionSameSite = "strict"
-	}
-	if cfg.PageSizeMin == 0 {
-		cfg.PageSizeMin = 5
-	}
-	if cfg.PageSizeMax == 0 {
-		cfg.PageSizeMax = 50
-	}
-	if cfg.PageSizeDefault == 0 {
-		cfg.PageSizeDefault = DefaultPageSize
 	}
 	if cfg.PageSizeMin > cfg.PageSizeMax {
 		cfg.PageSizeMin = cfg.PageSizeMax
@@ -317,23 +298,8 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 	if cfg.PageSizeDefault > cfg.PageSizeMax {
 		cfg.PageSizeDefault = cfg.PageSizeMax
 	}
-	if cfg.StatsStartYear == 0 {
-		cfg.StatsStartYear = 2005
-	}
-	if cfg.DBTimezone == "" {
-		cfg.DBTimezone = "Australia/Melbourne"
-	}
-	if cfg.Timezone == "" {
-		cfg.Timezone = "Australia/Melbourne"
-	}
-	if cfg.ImageUploadProvider == "" {
-		cfg.ImageUploadProvider = "local"
-	}
 	if cfg.ImageUploadDir == "" {
 		cfg.ImageUploadDir = "uploads/images"
-	}
-	if cfg.ImageCacheProvider == "" {
-		cfg.ImageCacheProvider = "local"
 	}
 	if cfg.ImageCacheDir == "" {
 		cfg.ImageCacheDir = "uploads/cache"
@@ -352,12 +318,6 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 	}
 	if cfg.PasswordResetExpiryHours == 0 {
 		cfg.PasswordResetExpiryHours = 24
-	}
-	if cfg.LoginAttemptWindow == 0 {
-		cfg.LoginAttemptWindow = 15
-	}
-	if cfg.LoginAttemptThreshold == 0 {
-		cfg.LoginAttemptThreshold = 5
 	}
 }
 

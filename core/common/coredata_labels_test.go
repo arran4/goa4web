@@ -1,14 +1,12 @@
 package common_test
 
 import (
-	"context"
 	"reflect"
 	"regexp"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
 
-	"github.com/arran4/goa4web/config"
 	common "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 )
@@ -20,7 +18,7 @@ func TestSetThreadPublicLabels(t *testing.T) {
 	}
 	defer conn.Close()
 	q := db.New(conn)
-	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
+	cd := common.NewTestCoreData(t, q)
 	cd.UserID = 2
 
 	rows := sqlmock.NewRows([]string{"item", "item_id", "label"}).
@@ -54,7 +52,7 @@ func TestSetThreadPrivateLabels(t *testing.T) {
 	}
 	defer conn.Close()
 	q := db.New(conn)
-	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
+	cd := common.NewTestCoreData(t, q)
 	cd.UserID = 2
 
 	rows := sqlmock.NewRows([]string{"item", "item_id", "user_id", "label", "invert"}).
@@ -85,7 +83,7 @@ func TestPrivateLabelsDefaultAndInversion(t *testing.T) {
 	}
 	defer conn.Close()
 	q := db.New(conn)
-	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
+	cd := common.NewTestCoreData(t, q)
 	cd.UserID = 2
 
 	// Default case: no stored rows should return new and unread labels.
@@ -131,7 +129,7 @@ func TestClearThreadPrivateLabelStatus(t *testing.T) {
 	}
 	defer conn.Close()
 	q := db.New(conn)
-	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
+	cd := common.NewTestCoreData(t, q)
 
 	mock.ExpectExec(regexp.QuoteMeta("DELETE FROM content_private_labels")).
 		WithArgs("thread", int32(1), "unread").
@@ -153,7 +151,7 @@ func TestPrivateLabelsTopicExcludesStatus(t *testing.T) {
 	}
 	defer conn.Close()
 	q := db.New(conn)
-	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
+	cd := common.NewTestCoreData(t, q)
 	cd.UserID = 2
 
 	mock.ExpectQuery("SELECT .* FROM content_private_labels").
@@ -180,7 +178,7 @@ func TestSetWritingPublicLabels(t *testing.T) {
 	}
 	defer conn.Close()
 	q := db.New(conn)
-	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
+	cd := common.NewTestCoreData(t, q)
 	cd.UserID = 2
 
 	mock.ExpectQuery("SELECT .* FROM content_public_labels").

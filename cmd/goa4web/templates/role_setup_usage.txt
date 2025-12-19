@@ -1,0 +1,6 @@
+
+Usage: role setup [options]
+
+Applies a predefined role scenario.
+
+Options:

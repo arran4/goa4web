@@ -13,22 +13,24 @@ import (
 type roleRemoveCmd struct {
 	*roleCmd
 	fs       *flag.FlagSet
-	srcRole  string
-	destRole string
+	roleName string
 }
 
 func parseRoleRemoveCmd(parent *roleCmd, args []string) (*roleRemoveCmd, error) {
 	c := &roleRemoveCmd{roleCmd: parent}
 	fs := flag.NewFlagSet("remove", flag.ContinueOnError)
 	c.fs = fs
-	fs.StringVar(&c.srcRole, "src", "", "The source role.")
-	fs.StringVar(&c.destRole, "dest", "", "The destination role.")
+	fs.StringVar(&c.roleName, "name", "", "The role name to remove.")
 	fs.Usage = c.Usage
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}
-	if c.destRole == "" {
-		return nil, fmt.Errorf("destination role is required")
+	if c.roleName == "" {
+		if fs.NArg() > 0 {
+			c.roleName = fs.Arg(0)
+		} else {
+			return nil, fmt.Errorf("role name is required")
+		}
 	}
 	return c, nil
 }
@@ -40,47 +42,42 @@ func (c *roleRemoveCmd) Run() error {
 	}
 	defer closeDB(sdb)
 
-	q := db.New(sdb)
 	ctx := c.rootCmd.ctx
 
-	destRole, err := q.GetRoleByName(ctx, c.destRole)
+	// Start transaction
+	tx, err := sdb.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("failed to get destination role by name: %w", err)
+		return fmt.Errorf("begin transaction: %w", err)
 	}
+	defer tx.Rollback()
 
-	if c.srcRole == "" {
-		log.Printf("Removing all grants from %q", c.destRole)
-		if err := q.DeleteGrantsByRoleID(ctx, sql.NullInt32{Int32: destRole.ID, Valid: true}); err != nil {
-			return fmt.Errorf("failed to delete grants: %w", err)
-		}
-		log.Printf("Successfully removed all grants from %q.", c.destRole)
-		return nil
-	}
+	q := db.New(tx)
 
-	srcRole, err := q.GetRoleByName(ctx, c.srcRole)
+	role, err := q.GetRoleByName(ctx, c.roleName)
 	if err != nil {
-		return fmt.Errorf("failed to get source role by name: %w", err)
+		if err == sql.ErrNoRows {
+			return fmt.Errorf("role %q not found", c.roleName)
+		}
+		return fmt.Errorf("failed to get role by name: %w", err)
 	}
 
-	grants, err := q.GetGrantsByRoleID(ctx, sql.NullInt32{Int32: srcRole.ID, Valid: true})
+	// Delete grants first
+	if err := q.DeleteGrantsByRoleID(ctx, sql.NullInt32{Int32: role.ID, Valid: true}); err != nil {
+		return fmt.Errorf("failed to delete grants for role: %w", err)
+	}
+
+	// Delete role
+	// Assuming raw SQL as delete role query might not be in sqlc
+	_, err = tx.ExecContext(ctx, "DELETE FROM roles WHERE id = ?", role.ID)
 	if err != nil {
-		return fmt.Errorf("failed to get grants for source role: %w", err)
+		return fmt.Errorf("failed to delete role: %w", err)
 	}
 
-	log.Printf("Removing %d grants from %q that match %q", len(grants), c.destRole, c.srcRole)
-	for _, grant := range grants {
-		params := db.DeleteGrantByPropertiesParams{
-			RoleID:  sql.NullInt32{Int32: destRole.ID, Valid: true},
-			Section: grant.Section,
-			Item:    grant.Item,
-			Action:  grant.Action,
-		}
-		if err := q.DeleteGrantByProperties(ctx, params); err != nil {
-			return fmt.Errorf("failed to delete grant: %w", err)
-		}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit transaction: %w", err)
 	}
 
-	log.Printf("Successfully removed grants from %q that match %q.", c.destRole, c.srcRole)
+	log.Printf("Role %q removed.", c.roleName)
 	return nil
 }
 

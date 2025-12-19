@@ -53,12 +53,6 @@ func (c *roleCmd) Run() error {
 			return err
 		}
 		return cmd.Run()
-	case "setup":
-		cmd, err := parseRoleSetupCmd(c, c.fs.Args()[1:])
-		if err != nil {
-			return err
-		}
-		return cmd.Run()
 	case "template":
 		cmd, err := parseRoleTemplateCmd(c, c.fs.Args()[1:])
 		if err != nil {
@@ -75,7 +69,6 @@ func (c *roleCmd) Run() error {
 		c.Usage()
 		return fmt.Errorf("unknown subcommand: %s", c.fs.Arg(0))
 	}
-	return nil
 }
 
 func (c *roleCmd) Usage() {

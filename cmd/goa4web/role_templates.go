@@ -1,6 +1,6 @@
 package main
 
-type ScenarioDef struct {
+type TemplateDef struct {
 	Name        string
 	Description string
 	Roles       []RoleDef
@@ -21,7 +21,7 @@ type GrantDef struct {
 	ItemID  int32 // 0 for global/any
 }
 
-var roleScenarios = map[string]ScenarioDef{
+var roleTemplates = map[string]TemplateDef{
 	"default": {
 		Name:        "default",
 		Description: "Standard setup with guest, user, and admin roles.",

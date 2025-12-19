@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"sort"
 	"text/tabwriter"
@@ -97,13 +99,13 @@ func (c *roleTemplateListCmd) Run() error {
 	fmt.Fprintln(w, "Name\tDescription")
 
 	var names []string
-	for k := range roleScenarios {
+	for k := range roleTemplates {
 		names = append(names, k)
 	}
 	sort.Strings(names)
 
 	for _, name := range names {
-		sc := roleScenarios[name]
+		sc := roleTemplates[name]
 		fmt.Fprintf(w, "%s\t%s\n", sc.Name, sc.Description)
 	}
 	w.Flush()
@@ -143,7 +145,7 @@ func parseRoleTemplateExplainCmd(parent *roleTemplateCmd, args []string) (*roleT
 }
 
 func (c *roleTemplateExplainCmd) Run() error {
-	sc, ok := roleScenarios[c.name]
+	sc, ok := roleTemplates[c.name]
 	if !ok {
 		return fmt.Errorf("template %q not found", c.name)
 	}
@@ -204,12 +206,7 @@ func parseRoleTemplateSetupCmd(parent *roleTemplateCmd, args []string) (*roleTem
 }
 
 func (c *roleTemplateSetupCmd) Run() error {
-	// Reusing the logic from roleSetupCmd is tricky because roleSetupCmd is a struct.
-	// But we can extract the logic or just instantiate a helper.
-	// However, roleSetupCmd expects `roleCmd` parent, here we have `roleTemplateCmd`.
-	// Let's create a helper function `applyScenario` that takes db and scenario def.
-
-	sc, ok := roleScenarios[c.name]
+	sc, ok := roleTemplates[c.name]
 	if !ok {
 		return fmt.Errorf("template %q not found", c.name)
 	}
@@ -251,6 +248,98 @@ func (c *roleTemplateSetupCmd) Run() error {
 	return nil
 }
 
+// Shared helper functions for role setup logic
+
+func printRolesState(ctx context.Context, q *db.Queries, roles []RoleDef) error {
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(w, "Role\tLogin\tAdmin\tSection\tItem\tAction\tItemID")
+
+	for _, rDef := range roles {
+		role, err := q.GetRoleByName(ctx, rDef.Name)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				fmt.Fprintf(w, "%s\t-\t-\t(Not Found)\t\t\t\n", rDef.Name)
+				continue
+			}
+			return err
+		}
+
+		grants, err := q.GetGrantsByRoleID(ctx, sql.NullInt32{Int32: role.ID, Valid: true})
+		if err != nil {
+			return err
+		}
+
+		roleInfo := fmt.Sprintf("%s\t%v\t%v", role.Name, role.CanLogin, role.IsAdmin)
+
+		if len(grants) == 0 {
+			fmt.Fprintf(w, "%s\t(No Grants)\t\t\t\n", roleInfo)
+		}
+
+		for _, g := range grants {
+			item := g.Item.String
+			if !g.Item.Valid { item = "*" }
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%d\n", roleInfo, g.Section, item, g.Action, g.ItemID.Int32)
+		}
+	}
+	w.Flush()
+	return nil
+}
+
+func applyRoles(ctx context.Context, q *db.Queries, tx *sql.Tx, roles []RoleDef) error {
+	for _, rDef := range roles {
+		role, err := q.GetRoleByName(ctx, rDef.Name)
+		var roleID int32
+		if err != nil {
+			if err == sql.ErrNoRows {
+				res, err := tx.ExecContext(ctx, "INSERT INTO roles (name, can_login, is_admin, private_labels, public_profile_allowed_at) VALUES (?, ?, ?, ?, NOW())", rDef.Name, rDef.CanLogin, rDef.IsAdmin, rDef.CanLogin)
+				if err != nil {
+					return fmt.Errorf("create role %s: %w", rDef.Name, err)
+				}
+				id, err := res.LastInsertId()
+				if err != nil {
+					return fmt.Errorf("get last insert id: %w", err)
+				}
+				roleID = int32(id)
+				log.Printf("Created role %s (ID: %d)", rDef.Name, roleID)
+			} else {
+				return fmt.Errorf("get role %s: %w", rDef.Name, err)
+			}
+		} else {
+			roleID = role.ID
+			if err := q.AdminUpdateRole(ctx, db.AdminUpdateRoleParams{
+				Name:          rDef.Name,
+				CanLogin:      rDef.CanLogin,
+				IsAdmin:       rDef.IsAdmin,
+				PrivateLabels: rDef.CanLogin,
+				ID:            role.ID,
+			}); err != nil {
+				return fmt.Errorf("update role %s: %w", rDef.Name, err)
+			}
+			log.Printf("Updated role %s (ID: %d)", rDef.Name, roleID)
+		}
+
+		if err := q.DeleteGrantsByRoleID(ctx, sql.NullInt32{Int32: roleID, Valid: true}); err != nil {
+			return fmt.Errorf("delete grants for role %s: %w", rDef.Name, err)
+		}
+
+		for _, g := range rDef.Grants {
+			err := q.CreateGrant(ctx, db.CreateGrantParams{
+				RoleID:   sql.NullInt32{Int32: roleID, Valid: true},
+				Section:  g.Section,
+				Item:     sql.NullString{String: g.Item, Valid: g.Item != ""},
+				RuleType: "allow",
+				ItemID:   sql.NullInt32{Int32: g.ItemID, Valid: g.ItemID != 0},
+				Action:   g.Action,
+				Active:   true,
+			})
+			if err != nil {
+				return fmt.Errorf("create grant for %s (%s/%s/%s): %w", rDef.Name, g.Section, g.Item, g.Action, err)
+			}
+		}
+	}
+	return nil
+}
+
 func (c *roleTemplateSetupCmd) Usage() {
 	executeUsage(c.fs.Output(), "role_template_setup_usage.txt", c)
 }
@@ -284,7 +373,7 @@ func parseRoleTemplateDiffCmd(parent *roleTemplateCmd, args []string) (*roleTemp
 }
 
 func (c *roleTemplateDiffCmd) Run() error {
-	sc, ok := roleScenarios[c.name]
+	sc, ok := roleTemplates[c.name]
 	if !ok {
 		return fmt.Errorf("template %q not found", c.name)
 	}

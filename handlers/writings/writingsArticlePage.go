@@ -16,8 +16,6 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/notifications"
-	"github.com/arran4/goa4web/workers/postcountworker"
-	"github.com/arran4/goa4web/workers/searchworker"
 )
 
 func ArticlePage(w http.ResponseWriter, r *http.Request) {
@@ -161,15 +159,6 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data["target"] = notifications.Target{Type: "writing", ID: writing.Idwriting}
-		}
-	}
-
 	text := r.PostFormValue("replytext")
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
 
@@ -188,21 +177,18 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("clear unread labels: %v", err)
 	}
 
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(cid), ThreadID: threadID, TopicID: topicID}
-		}
-	}
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: int32(cid), Text: text}
-		}
+	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
+		ThreadID:         threadID,
+		TopicID:          topicID,
+		CommentID:        int32(cid),
+		CommentText:      text,
+		IncludePostCount: true,
+		IncludeSearch:    true,
+		AdditionalData: map[string]any{
+			"target": notifications.Target{Type: "writing", ID: writing.Idwriting},
+		},
+	}); err != nil {
+		log.Printf("writing article reply side effects: %v", err)
 	}
 
 	handlers.TaskDoneAutoRefreshPage(w, r)

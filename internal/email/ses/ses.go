@@ -5,7 +5,6 @@ package ses
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/mail"
 
 	"github.com/aws/aws-sdk-go/aws"

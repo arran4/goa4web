@@ -23,57 +23,60 @@ func parseRoleCmd(parent *rootCmd, args []string) (*roleCmd, error) {
 }
 
 func (c *roleCmd) Run() error {
-	if c.fs.NArg() == 0 {
-		c.Usage()
-		return fmt.Errorf("missing subcommand")
+	args := c.fs.Args()
+	if len(args) == 0 {
+		c.fs.Usage()
+		return fmt.Errorf("missing role command")
 	}
-
-	switch c.fs.Arg(0) {
-	case "list":
-		cmd, err := parseRoleListCmd(c, c.fs.Args()[1:])
-		if err != nil {
-			return err
-		}
-		return cmd.Run()
-	case "apply":
-		cmd, err := parseRoleApplyCmd(c, c.fs.Args()[1:])
-		if err != nil {
-			return err
-		}
-		return cmd.Run()
+	if err := usageIfHelp(c.fs, args); err != nil {
+		return err
+	}
+	switch args[0] {
 	case "load":
-		cmd, err := parseRoleLoadCmd(c, c.fs.Args()[1:])
+		cmd, err := parseRoleLoadCmd(c, args[1:])
 		if err != nil {
 			return err
 		}
 		return cmd.Run()
 	case "reset":
-		cmd, err := parseRoleResetCmd(c, c.fs.Args()[1:])
+		cmd, err := parseRoleResetCmd(c, args[1:])
 		if err != nil {
 			return err
 		}
 		return cmd.Run()
-	case "template":
-		cmd, err := parseRoleTemplateCmd(c, c.fs.Args()[1:])
+	case "apply":
+		cmd, err := parseRoleApplyCmd(c, args[1:])
 		if err != nil {
 			return err
 		}
 		return cmd.Run()
 	case "remove":
-		cmd, err := parseRoleRemoveCmd(c, c.fs.Args()[1:])
+		cmd, err := parseRoleRemoveCmd(c, args[1:])
+		if err != nil {
+			return err
+		}
+		return cmd.Run()
+	case "users":
+		cmd, err := parseRoleUsersCmd(c, args[1:])
+		if err != nil {
+			return err
+		}
+		return cmd.Run()
+	case "list":
+		cmd, err := parseRoleListCmd(c, args[1:])
 		if err != nil {
 			return err
 		}
 		return cmd.Run()
 	case "inspect":
-		cmd, err := parseRoleInspectCmd(c, c.args[1:])
+		cmd, err := parseRoleInspectCmd(c, args[1:])
 		if err != nil {
 			return fmt.Errorf("inspect: %w", err)
 		}
 		return cmd.Run()
 	default:
-		c.Usage()
-		return fmt.Errorf("unknown subcommand: %s", c.fs.Arg(0))
+		c.fs.Usage()
+		return fmt.Errorf("unknown role command %q", args[0])
 	}
 }
 

@@ -17,8 +17,8 @@ const Built = false
 
 // Register registers a stub for the SES provider.
 func Register(r *email.Registry) {
-	r.RegisterProvider("ses", func(cfg *config.RuntimeConfig) email.Provider {
-		return &stub{}
+	r.RegisterProvider("ses", func(cfg *config.RuntimeConfig) (email.Provider, error) {
+		return &stub{}, nil
 	})
 }
 

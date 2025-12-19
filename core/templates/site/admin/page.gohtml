@@ -1,6 +1,9 @@
 {{ define "adminPage" }}
     {{ template "head" $ }}
     <h2>Admin Dashboard</h2>
+    {{ if cd.EmailProviderError }}
+    <p class="text-error"><strong>Email Disabled:</strong> {{ cd.EmailProviderError }}</p>
+    {{ end }}
     <p><a href="/admin">Refresh</a></p>
     <p>Select an option:</p>
     <ul>

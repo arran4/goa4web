@@ -1,6 +1,7 @@
 package email
 
 import (
+	"fmt"
 	"log"
 	"sort"
 	"strings"
@@ -10,7 +11,7 @@ import (
 )
 
 // ProviderFactory creates a mail provider from cfg.
-type ProviderFactory func(*config.RuntimeConfig) Provider
+type ProviderFactory func(*config.RuntimeConfig) (Provider, error)
 
 // Registry stores email provider factories.
 type Registry struct {
@@ -41,15 +42,15 @@ func (r *Registry) providerFactory(name string) ProviderFactory {
 }
 
 // ProviderFromConfig returns a provider configured from cfg.
-func (r *Registry) ProviderFromConfig(cfg *config.RuntimeConfig) Provider {
+func (r *Registry) ProviderFromConfig(cfg *config.RuntimeConfig) (Provider, error) {
 	mode := strings.ToLower(cfg.EmailProvider)
 	if f := r.providerFactory(mode); f != nil {
 		return f(cfg)
 	}
 	if mode != "" {
-		log.Printf("Email disabled: unknown provider %q", mode)
+		return nil, fmt.Errorf("Email disabled: unknown provider %q", mode)
 	}
-	return nil
+	return nil, nil
 }
 
 // ProviderNames returns registered provider names in sorted order.

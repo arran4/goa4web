@@ -120,11 +120,10 @@ func (j Provider) TestConfig(ctx context.Context) error {
 	return nil
 }
 
-func providerFromConfig(cfg *config.RuntimeConfig) email.Provider {
+func providerFromConfig(cfg *config.RuntimeConfig) (email.Provider, error) {
 	ep := strings.TrimSpace(cfg.EmailJMAPEndpoint)
 	if ep == "" {
-		fmt.Printf("Email disabled: %s not set\n", config.EnvJMAPEndpoint)
-		return nil
+		return nil, fmt.Errorf("Email disabled: %s not set", config.EnvJMAPEndpoint)
 	}
 	acc := strings.TrimSpace(cfg.EmailJMAPAccount)
 	id := strings.TrimSpace(cfg.EmailJMAPIdentity)
@@ -139,8 +138,7 @@ func providerFromConfig(cfg *config.RuntimeConfig) email.Provider {
 	if acc == "" || id == "" {
 		session, err := DiscoverSession(context.Background(), httpClient, ep, cfg.EmailJMAPUser, cfg.EmailJMAPPass)
 		if err != nil {
-			fmt.Printf("Email disabled: failed to discover JMAP session: %v\n", err)
-			return nil
+			return nil, fmt.Errorf("Email disabled: failed to discover JMAP session: %v", err)
 		}
 		if acc == "" {
 			acc = SelectAccountID(session)
@@ -154,8 +152,7 @@ func providerFromConfig(cfg *config.RuntimeConfig) email.Provider {
 	}
 
 	if acc == "" || id == "" {
-		fmt.Printf("Email disabled: %s or %s not set and could not be discovered\n", config.EnvJMAPAccount, config.EnvJMAPIdentity)
-		return nil
+		return nil, fmt.Errorf("Email disabled: %s or %s not set and could not be discovered", config.EnvJMAPAccount, config.EnvJMAPIdentity)
 	}
 	return Provider{
 		Endpoint:  ep,
@@ -165,7 +162,7 @@ func providerFromConfig(cfg *config.RuntimeConfig) email.Provider {
 		Identity:  id,
 		From:      cfg.EmailFrom,
 		client:    httpClient,
-	}
+	}, nil
 }
 
 // Register registers the JMAP provider.

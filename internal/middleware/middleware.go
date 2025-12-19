@@ -24,7 +24,9 @@ func RequestLoggerMiddleware(next http.Handler) http.Handler {
 				sessID = s.ID
 			}
 		}
-		log.Printf("%s %s uid=%d session=%s", r.Method, r.URL.Path, uid, sessID)
+		if !(r.URL.Path == "/ws/notifications" && uid == 0) {
+			log.Printf("%s %s uid=%d session=%s", r.Method, r.URL.Path, uid, sessID)
+		}
 		next.ServeHTTP(w, r)
 	})
 }

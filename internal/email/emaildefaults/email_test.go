@@ -35,7 +35,7 @@ func newRegistry() *email.Registry {
 func TestGetEmailProviderLog(t *testing.T) {
 	cfg := config.RuntimeConfig{EmailProvider: "log"}
 	reg := newRegistry()
-	p := reg.ProviderFromConfig(&cfg)
+	p, _ := reg.ProviderFromConfig(&cfg)
 	if _, ok := p.(logProv.Provider); !ok {
 		t.Errorf("expected LogProvider, got %#v", p)
 	}
@@ -44,7 +44,7 @@ func TestGetEmailProviderLog(t *testing.T) {
 func TestGetEmailProviderUnknown(t *testing.T) {
 	cfg := config.RuntimeConfig{EmailProvider: "unknown"}
 	reg := newRegistry()
-	if p := reg.ProviderFromConfig(&cfg); p != nil {
+	if p, _ := reg.ProviderFromConfig(&cfg); p != nil {
 		t.Errorf("expected nil for unknown provider, got %#v", p)
 	}
 }
@@ -184,7 +184,7 @@ func TestProcessPendingEmailDLQ(t *testing.T) {
 
 func TestGetEmailProviderSMTP(t *testing.T) {
 	reg := newRegistry()
-	p := reg.ProviderFromConfig(&config.RuntimeConfig{
+	p, _ := reg.ProviderFromConfig(&config.RuntimeConfig{
 		EmailProvider:     "smtp",
 		EmailSMTPHost:     "localhost",
 		EmailSMTPPort:     "25",
@@ -202,14 +202,15 @@ func TestGetEmailProviderSMTP(t *testing.T) {
 
 func TestGetEmailProviderLocal(t *testing.T) {
 	reg := newRegistry()
-	if _, ok := reg.ProviderFromConfig(&config.RuntimeConfig{EmailProvider: "local"}).(localProv.Provider); !ok {
+	p, _ := reg.ProviderFromConfig(&config.RuntimeConfig{EmailProvider: "local"})
+	if _, ok := p.(localProv.Provider); !ok {
 		t.Fatalf("expected LocalProvider")
 	}
 }
 
 func TestGetEmailProviderJMAP(t *testing.T) {
 	reg := newRegistry()
-	p := reg.ProviderFromConfig(&config.RuntimeConfig{
+	p, _ := reg.ProviderFromConfig(&config.RuntimeConfig{
 		EmailProvider:     "jmap",
 		EmailJMAPEndpoint: "http://example.com",
 		EmailJMAPAccount:  "acct",
@@ -226,7 +227,7 @@ func TestGetEmailProviderJMAP(t *testing.T) {
 
 func TestGetEmailProviderSESNoCreds(t *testing.T) {
 	reg := newRegistry()
-	if p := reg.ProviderFromConfig(&config.RuntimeConfig{EmailProvider: "ses", EmailAWSRegion: "us-east-1"}); p != nil {
+	if p, _ := reg.ProviderFromConfig(&config.RuntimeConfig{EmailProvider: "ses", EmailAWSRegion: "us-east-1"}); p != nil {
 		t.Errorf("expected nil provider, got %#v", p)
 	}
 }
@@ -234,11 +235,11 @@ func TestGetEmailProviderSESNoCreds(t *testing.T) {
 func TestProviderRegistry(t *testing.T) {
 	reg := email.NewRegistry()
 	called := false
-	reg.RegisterProvider("testprov", func(cfg *config.RuntimeConfig) email.Provider {
+	reg.RegisterProvider("testprov", func(cfg *config.RuntimeConfig) (email.Provider, error) {
 		called = true
-		return logProv.Provider{}
+		return logProv.Provider{}, nil
 	})
-	p := reg.ProviderFromConfig(&config.RuntimeConfig{EmailProvider: "testprov"})
+	p, _ := reg.ProviderFromConfig(&config.RuntimeConfig{EmailProvider: "testprov"})
 	if !called {
 		t.Fatal("factory not called")
 	}

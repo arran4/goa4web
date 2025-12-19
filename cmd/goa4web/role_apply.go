@@ -45,7 +45,25 @@ func (c *roleApplyCmd) Run() error {
 
 	srcRole, err := q.GetRoleByName(ctx, c.srcRole)
 	if err != nil {
-		return fmt.Errorf("failed to get source role by name: %w", err)
+		if err == sql.ErrNoRows {
+			// Try to find and auto-load the role from embedded resources
+			log.Printf("Role %q not found in database. Searching embedded roles...", c.srcRole)
+			fileName, findErr := findEmbeddedRoleByName(c.srcRole)
+			if findErr != nil {
+				return fmt.Errorf("failed to get source role by name: %w (and failed to find embedded role: %v)", err, findErr)
+			}
+			log.Printf("Found embedded role file %q for role %q. Attempting to load...", fileName, c.srcRole)
+			if loadErr := loadRole(sdb, fileName, ""); loadErr != nil {
+				return fmt.Errorf("failed to load embedded role %q: %w", fileName, loadErr)
+			}
+			// Retry fetching the role
+			srcRole, err = q.GetRoleByName(ctx, c.srcRole)
+			if err != nil {
+				return fmt.Errorf("failed to get source role by name after loading: %w", err)
+			}
+		} else {
+			return fmt.Errorf("failed to get source role by name: %w", err)
+		}
 	}
 
 	destRole, err := q.GetRoleByName(ctx, c.destRole)

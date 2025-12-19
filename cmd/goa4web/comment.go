@@ -49,6 +49,12 @@ func (c *commentCmd) Run() error {
 			return fmt.Errorf("list-deactivated: %w", err)
 		}
 		return cmd.Run()
+	case "clean-bad":
+		cmd, err := parseCommentCleanBadCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("clean-bad: %w", err)
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown comment command %q", args[0])

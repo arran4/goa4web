@@ -121,7 +121,7 @@ INSERT INTO forumthread (forumtopic_idforumtopic) VALUES (?);
 SELECT forumtopic_idforumtopic FROM forumthread WHERE idforumthread = ?;
 
 -- name: AdminDeleteForumThread :exec
-UPDATE forumthread SET deleted_at = NOW() WHERE idforumthread = ?;
+DELETE FROM forumthread WHERE idforumthread = ?;
 
 -- name: AdminListForumThreadGrantsByThreadID :many
 SELECT

@@ -2,6 +2,7 @@ package news
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -112,17 +113,23 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	endURL := cd.AbsoluteURL(fmt.Sprintf("/news/news/%d", pid))
-	evt := cd.Event()
-	if evt.Data == nil {
-		evt.Data = map[string]any{}
-	}
-	evt.Data["CommentURL"] = endURL
-	evt.Data["PostURL"] = endURL
+	username := ""
 	if user, err := cd.CurrentUser(); err == nil && user != nil {
-		evt.Data["Username"] = user.Username.String
+		username = user.Username.String
 	}
-	evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(cid), ThreadID: ti.ThreadID, TopicID: ti.TopicID}
-	evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: int32(cid), Text: text}
+	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
+		ThreadID:         ti.ThreadID,
+		TopicID:          ti.TopicID,
+		CommentID:        int32(cid),
+		CommentText:      text,
+		CommentURL:       endURL,
+		PostURL:          endURL,
+		Username:         username,
+		IncludePostCount: true,
+		IncludeSearch:    true,
+	}); err != nil {
+		log.Printf("news reply side effects: %v", err)
+	}
 
 	return nil
 }

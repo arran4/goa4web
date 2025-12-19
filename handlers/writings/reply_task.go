@@ -89,15 +89,6 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return handlers.ErrRedirectOnSamePageHandler(handlers.ErrForbidden)
 	}
 
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data["target"] = notif.Target{Type: "writing", ID: writing.Idwriting}
-		}
-	}
-
 	text := r.PostFormValue("replytext")
 	languageID, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
@@ -117,14 +108,18 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("clear unread labels: %v", err)
 	}
 
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(cid), ThreadID: threadID, TopicID: topicID}
-			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: int32(cid), Text: text}
-		}
+	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
+		ThreadID:         threadID,
+		TopicID:          topicID,
+		CommentID:        int32(cid),
+		CommentText:      text,
+		IncludePostCount: true,
+		IncludeSearch:    true,
+		AdditionalData: map[string]any{
+			"target": notif.Target{Type: "writing", ID: writing.Idwriting},
+		},
+	}); err != nil {
+		log.Printf("writing reply side effects: %v", err)
 	}
 
 	return nil

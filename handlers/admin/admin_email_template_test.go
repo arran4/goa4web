@@ -34,7 +34,8 @@ func TestAdminEmailTemplateTestAction_NoProvider(t *testing.T) {
 
 	req := httptest.NewRequest("POST", "/admin/email/template", nil)
 	reg := newEmailReg()
-	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithEmailProvider(reg.ProviderFromConfig(cfg)))
+	p, _ := reg.ProviderFromConfig(cfg)
+	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithEmailProvider(p))
 	cd.UserID = 1
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -67,7 +68,8 @@ func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
 	req := httptest.NewRequest("POST", "/admin/email/template", nil)
 	q := db.New(conn)
 	reg := newEmailReg()
-	cd := common.NewCoreData(req.Context(), q, cfg, common.WithEmailProvider(reg.ProviderFromConfig(cfg)))
+	p, _ := reg.ProviderFromConfig(cfg)
+	cd := common.NewCoreData(req.Context(), q, cfg, common.WithEmailProvider(p))
 	cd.UserID = 1
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)

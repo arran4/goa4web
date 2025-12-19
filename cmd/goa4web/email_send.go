@@ -64,8 +64,11 @@ func (c *emailSendCmd) Run() error {
 	sendgrid.Register(reg)
 	smtp.Register(reg)
 
-	provider := reg.ProviderFromConfig(cfg)
-	if provider == nil {
+	provider, err := reg.ProviderFromConfig(cfg)
+	if err != nil || provider == nil {
+		if err != nil {
+			return fmt.Errorf("failed to create email provider for %q: %w", cfg.EmailProvider, err)
+		}
 		return fmt.Errorf("failed to create email provider for %q", cfg.EmailProvider)
 	}
 

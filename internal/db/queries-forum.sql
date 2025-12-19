@@ -87,6 +87,24 @@ FROM forumtopic t
 ORDER BY t.idforumtopic
 LIMIT ? OFFSET ?;
 
+-- name: AdminListForumTopicGrantsByTopicID :many
+SELECT
+    g.id,
+    g.section,
+    g.action,
+    r.name AS role_name,
+    u.username
+FROM
+    grants g
+LEFT JOIN
+    roles r ON g.role_id = r.id
+LEFT JOIN
+    users u ON g.user_id = u.idusers
+WHERE
+    g.section = 'forum'
+    AND (g.item = 'topic' OR g.item IS NULL)
+    AND g.item_id = ?;
+
 -- name: AdminUpdateForumTopic :exec
 UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ?, language_id = sqlc.narg(topic_language_id) WHERE idforumtopic = ?;
 

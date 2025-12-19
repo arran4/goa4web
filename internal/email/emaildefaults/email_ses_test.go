@@ -10,15 +10,19 @@ import (
 	sesProv "github.com/arran4/goa4web/internal/email/ses"
 )
 
-func newRegistry() *email.Registry {
+func newSesRegistry() *email.Registry {
 	r := email.NewRegistry()
 	sesProv.Register(r)
 	return r
 }
 
-func TestGetEmailProviderSESNoCreds(t *testing.T) {
-	reg := newRegistry()
-	if p := reg.ProviderFromConfig(&config.RuntimeConfig{EmailProvider: "ses", EmailAWSRegion: "us-east-1"}); p != nil {
+func TestGetEmailProviderSESNoCreds_SES(t *testing.T) {
+	reg := newSesRegistry()
+	p, err := reg.ProviderFromConfig(&config.RuntimeConfig{EmailProvider: "ses", EmailAWSRegion: "us-east-1"})
+	if err != nil {
+		// Error is expected if credentials are missing
+	}
+	if p != nil {
 		t.Errorf("expected nil provider, got %#v", p)
 	}
 }

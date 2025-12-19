@@ -8,14 +8,13 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"mime"
 	"mime/multipart"
 	"net/mail"
 	"strings"
 
 	sg "github.com/sendgrid/sendgrid-go"
-	"github.com/sendgrid/sendgrid-go/helpers/mail"
+	sgmail "github.com/sendgrid/sendgrid-go/helpers/mail"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/email"
@@ -32,9 +31,9 @@ type Provider struct {
 
 func (s Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []byte) error {
 	subject, textBody, htmlBody := parseRawEmail(rawEmailMessage)
-	from := mail.NewEmail("", s.From)
-	toAddr := mail.NewEmail(to.Name, to.Address)
-	msg := mail.NewSingleEmail(from, subject, toAddr, textBody, htmlBody)
+	from := sgmail.NewEmail("", s.From)
+	toAddr := sgmail.NewEmail(to.Name, to.Address)
+	msg := sgmail.NewSingleEmail(from, subject, toAddr, textBody, htmlBody)
 	client := sg.NewSendClient(s.APIKey)
 	resp, err := client.SendWithContext(ctx, msg)
 	if err != nil {

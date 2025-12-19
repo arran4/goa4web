@@ -225,13 +225,6 @@ func TestGetEmailProviderJMAP(t *testing.T) {
 	}
 }
 
-func TestGetEmailProviderSESNoCreds(t *testing.T) {
-	reg := newRegistry()
-	if p, _ := reg.ProviderFromConfig(&config.RuntimeConfig{EmailProvider: "ses", EmailAWSRegion: "us-east-1"}); p != nil {
-		t.Errorf("expected nil provider, got %#v", p)
-	}
-}
-
 func TestProviderRegistry(t *testing.T) {
 	reg := email.NewRegistry()
 	called := false

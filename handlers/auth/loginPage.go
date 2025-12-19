@@ -39,12 +39,7 @@ func (h redirectBackPageHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		Method  string
 		Values  url.Values
 	}
-	data := Data{
-		BackURL: h.BackURL,
-		Method:  h.Method,
-		Values:  h.Values,
-	}
-	if err := cd.ExecuteSiteTemplate(w, r, "redirectBackPage.gohtml", data); err != nil {
+	if err := cd.ExecuteSiteTemplate(w, r, "redirectBackPage.gohtml", Data(h)); err != nil {
 		log.Printf("Template Error: %s", err)
 		handlers.RenderErrorPage(w, r, err)
 	}

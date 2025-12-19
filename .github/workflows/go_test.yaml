@@ -9,6 +9,14 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        tags:
+          - 'nosqlite'
+          - 'nosqlite,s3'
+          - 'nosqlite,sendgrid'
+          - 'nosqlite,ses'
+          - 'nosqlite,s3,sendgrid,ses'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -17,4 +25,4 @@ jobs:
         with:
           go-version-file: go.mod
       - name: Run tests
-        run: go test -tags 'nosqlite' ./...
+        run: go test -tags '${{ matrix.tags }}' ./...

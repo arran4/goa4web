@@ -66,7 +66,7 @@ func (c *roleCmd) Run() error {
 		}
 		return cmd.Run()
 	case "inspect":
-		cmd, err := parseRoleInspectCmd(c, c.args[1:])
+		cmd, err := parseRoleInspectCmd(c, c.fs.Args()[1:])
 		if err != nil {
 			return fmt.Errorf("inspect: %w", err)
 		}

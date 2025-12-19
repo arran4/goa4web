@@ -1,0 +1,6 @@
+
+Usage: role template explain [options]
+
+Explains the purpose and contents of a role template.
+
+Options:

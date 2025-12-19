@@ -1,0 +1,6 @@
+
+Usage: role template setup [options]
+
+Applies a role template to the database.
+
+Options:

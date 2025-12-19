@@ -1,0 +1,6 @@
+
+Usage: role template list [options]
+
+Lists available role templates.
+
+Options:

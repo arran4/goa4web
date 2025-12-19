@@ -1,0 +1,6 @@
+
+Usage: role template diff [options]
+
+Shows the differences between a template and the current database state.
+
+Options:

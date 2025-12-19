@@ -125,7 +125,7 @@ type CoreData struct {
 	session      *sessions.Session
 	sessionProxy SessionManager
 
-	ctx           context.Context
+	ctx                context.Context
 	customQueries      db.CustomQueries
 	emailProvider      lazy.Value[MailProvider]
 	EmailProviderError string

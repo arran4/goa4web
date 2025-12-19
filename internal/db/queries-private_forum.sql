@@ -1,7 +1,7 @@
 -- name: AdminListAllPrivateTopics :many
 SELECT
     idforumtopic,
-    title,
+    COALESCE(title, '') AS title,
     lastposter AS last_post_by,
     lastaddition AS last_post_at,
     comments AS post_count
@@ -30,13 +30,13 @@ WHERE
 SELECT
     t.idforumthread,
     t.forumtopic_idforumtopic as idforumtopic,
-    SUBSTRING(c.text, 1, 100) AS title,
+    COALESCE(SUBSTRING(c.text, 1, 100), 'unknown') AS title,
     c.written as created_at,
     c.users_idusers as created_by,
     t.lastposter as last_post_by,
     t.lastaddition as last_post_at,
     t.comments as post_count,
-    ft.title as topic_title
+    COALESCE(ft.title, '') as topic_title
 FROM
     forumthread t
 JOIN

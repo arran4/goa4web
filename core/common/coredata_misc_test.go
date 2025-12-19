@@ -1,12 +1,10 @@
 package common
 
 import (
-	"context"
 	"database/sql"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -18,7 +16,7 @@ func TestCreatePrivateTopicUsesProvidedUsernames(t *testing.T) {
 	defer conn.Close()
 
 	queries := db.New(conn)
-	cd := NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
+	cd := NewTestCoreData(t, queries)
 	cd.UserID = 1
 
 	mock.ExpectQuery("WITH role_ids AS \\(").
@@ -84,7 +82,7 @@ func TestCreatePrivateTopicBuildsUsernamesWhenMissing(t *testing.T) {
 	defer conn.Close()
 
 	queries := db.New(conn)
-	cd := NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
+	cd := NewTestCoreData(t, queries)
 	cd.UserID = 1
 
 	mock.ExpectQuery("WITH role_ids AS \\(").

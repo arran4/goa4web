@@ -6,6 +6,10 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
+	"sort"
+	"strings"
+	"text/tabwriter"
 
 	"github.com/arran4/goa4web/internal/db"
 )
@@ -78,6 +82,13 @@ func parsePrivateForumCleanEmptyCmd(parent *privateForumCmd, args []string) (*pr
 	return c, nil
 }
 
+type deletedItem struct {
+	ID           int32
+	Title        string
+	Participants []string
+	Type         string
+}
+
 func (c *privateForumCleanEmptyCmd) Run() error {
 	conn, err := c.rootCmd.DB()
 	if err != nil {
@@ -108,11 +119,14 @@ func (c *privateForumCleanEmptyCmd) Run() error {
 		}
 	}
 
+	var deletedTopics []deletedItem
+	var totalGrantsDeleted int
+
 	for _, topic := range topics {
 		threads := threadsByTopic[topic.Idforumtopic]
 		if threads == 0 {
 			if c.verbose {
-				log.Printf("Found empty private forum topic: %s (ID: %d)", topic.Title.String, topic.Idforumtopic)
+				log.Printf("Found empty private forum topic: %s (ID: %d)", topic.Title, topic.Idforumtopic)
 			}
 
 			grants, err := queries.AdminListGrantsByTopicID(ctx, sql.NullInt32{Int32: topic.Idforumtopic, Valid: true})
@@ -121,7 +135,11 @@ func (c *privateForumCleanEmptyCmd) Run() error {
 				continue
 			}
 
+			participantsMap := make(map[string]struct{})
 			for _, grant := range grants {
+				if grant.Username.Valid {
+					participantsMap[grant.Username.String] = struct{}{}
+				}
 				if c.verbose {
 					log.Printf("  - Deleting grant ID: %d", grant.ID)
 				}
@@ -130,7 +148,14 @@ func (c *privateForumCleanEmptyCmd) Run() error {
 						log.Printf("  - error deleting grant %d: %v", grant.ID, err)
 					}
 				}
+				totalGrantsDeleted++
 			}
+
+			var participants []string
+			for p := range participantsMap {
+				participants = append(participants, p)
+			}
+			sort.Strings(participants)
 
 			if c.verbose {
 				log.Printf("  - Deleting topic ID: %d", topic.Idforumtopic)
@@ -140,9 +165,16 @@ func (c *privateForumCleanEmptyCmd) Run() error {
 					log.Printf("  - error deleting topic %d: %v", topic.Idforumtopic, err)
 				}
 			}
+			deletedTopics = append(deletedTopics, deletedItem{
+				ID:           topic.Idforumtopic,
+				Title:        topic.Title,
+				Participants: participants,
+				Type:         "Topic",
+			})
 		}
 	}
 
+	printSummary(deletedTopics, totalGrantsDeleted)
 	log.Println("Cleanup of empty private forum topics complete.")
 	return nil
 }
@@ -183,6 +215,9 @@ func (c *privateForumCleanEmptyThreadsCmd) Run() error {
 		return fmt.Errorf("getting private forum threads: %w", err)
 	}
 
+	var deletedThreads []deletedItem
+	var totalGrantsDeleted int
+
 	for _, thread := range threads {
 		// Use PostCount (comments count) from query to determine emptiness
 		if !thread.PostCount.Valid || thread.PostCount.Int32 == 0 {
@@ -196,7 +231,11 @@ func (c *privateForumCleanEmptyThreadsCmd) Run() error {
 				continue
 			}
 
+			participantsMap := make(map[string]struct{})
 			for _, grant := range grants {
+				if grant.Username.Valid {
+					participantsMap[grant.Username.String] = struct{}{}
+				}
 				if c.verbose {
 					log.Printf("  - Deleting grant ID: %d", grant.ID)
 				}
@@ -205,7 +244,14 @@ func (c *privateForumCleanEmptyThreadsCmd) Run() error {
 						log.Printf("  - error deleting grant %d: %v", grant.ID, err)
 					}
 				}
+				totalGrantsDeleted++
 			}
+
+			var participants []string
+			for p := range participantsMap {
+				participants = append(participants, p)
+			}
+			sort.Strings(participants)
 
 			if c.verbose {
 				log.Printf("  - Deleting thread ID: %d", thread.Idforumthread)
@@ -215,9 +261,58 @@ func (c *privateForumCleanEmptyThreadsCmd) Run() error {
 					log.Printf("  - error deleting thread %d: %v", thread.Idforumthread, err)
 				}
 			}
+
+			var title string
+			if t, ok := thread.Title.(string); ok {
+				title = t
+			} else if tBytes, ok := thread.Title.([]byte); ok {
+				title = string(tBytes)
+			} else {
+				title = fmt.Sprintf("%v", thread.Title)
+			}
+
+			deletedThreads = append(deletedThreads, deletedItem{
+				ID:           thread.Idforumthread,
+				Title:        title,
+				Participants: participants,
+				Type:         "Thread",
+			})
 		}
 	}
 
+	printSummary(deletedThreads, totalGrantsDeleted)
 	log.Println("Cleanup of empty private forum threads complete.")
 	return nil
+}
+
+func printSummary(items []deletedItem, grantsDeleted int) {
+	if len(items) == 0 {
+		fmt.Println("No items were affected.")
+		return
+	}
+
+	fmt.Printf("\nSummary:\n")
+	fmt.Printf("Total items affected: %d\n", len(items))
+	fmt.Printf("Total grants deleted: %d\n\n", grantsDeleted)
+
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(w, "ID\tType\tTitle\tParticipants")
+	fmt.Fprintln(w, "--\t----\t-----\t------------")
+
+	for _, item := range items {
+		participants := strings.Join(item.Participants, ", ")
+		if participants == "" {
+			participants = "(none)"
+		}
+		title := item.Title
+		if len(title) > 30 {
+			title = title[:27] + "..."
+		}
+		// Escape tabs/newlines in title just in case
+		title = strings.ReplaceAll(title, "\t", " ")
+		title = strings.ReplaceAll(title, "\n", " ")
+		fmt.Fprintf(w, "%d\t%s\t%s\t%s\n", item.ID, item.Type, title, participants)
+	}
+	w.Flush()
+	fmt.Println()
 }

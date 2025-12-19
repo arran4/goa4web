@@ -14,13 +14,13 @@ const adminListAllPrivateForumThreads = `-- name: AdminListAllPrivateForumThread
 SELECT
     t.idforumthread,
     t.forumtopic_idforumtopic as idforumtopic,
-    SUBSTRING(c.text, 1, 100) AS title,
+    COALESCE(SUBSTRING(c.text, 1, 100), 'unknown') AS title,
     c.written as created_at,
     c.users_idusers as created_by,
     t.lastposter as last_post_by,
     t.lastaddition as last_post_at,
     t.comments as post_count,
-    ft.title as topic_title
+    COALESCE(ft.title, '') as topic_title
 FROM
     forumthread t
 JOIN
@@ -34,13 +34,13 @@ WHERE
 type AdminListAllPrivateForumThreadsRow struct {
 	Idforumthread int32
 	Idforumtopic  int32
-	Title         string
+	Title         interface{}
 	CreatedAt     sql.NullTime
 	CreatedBy     int32
 	LastPostBy    int32
 	LastPostAt    sql.NullTime
 	PostCount     sql.NullInt32
-	TopicTitle    sql.NullString
+	TopicTitle    string
 }
 
 func (q *Queries) AdminListAllPrivateForumThreads(ctx context.Context) ([]*AdminListAllPrivateForumThreadsRow, error) {
@@ -79,7 +79,7 @@ func (q *Queries) AdminListAllPrivateForumThreads(ctx context.Context) ([]*Admin
 const adminListAllPrivateTopics = `-- name: AdminListAllPrivateTopics :many
 SELECT
     idforumtopic,
-    title,
+    COALESCE(title, '') AS title,
     lastposter AS last_post_by,
     lastaddition AS last_post_at,
     comments AS post_count
@@ -91,7 +91,7 @@ WHERE
 
 type AdminListAllPrivateTopicsRow struct {
 	Idforumtopic int32
-	Title        sql.NullString
+	Title        string
 	LastPostBy   int32
 	LastPostAt   sql.NullTime
 	PostCount    sql.NullInt32

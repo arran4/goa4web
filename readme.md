@@ -267,7 +267,7 @@ You can supply settings on the command line, in a config file or via environment
 | `DEFAULT_LANGUAGE` | `--default-language` | No | - | Site's default language name. |
 | `DLQ_PROVIDER` | `--dlq-provider` | No | `log` | Dead letter queue provider. |
 | `DLQ_FILE` | `--dlq-file` | No | `dlq.log` | File path for the file or directory DLQ providers. |
-| `AUTO_MIGRATE` | n/a | No | `false` | Run database migrations on startup. |
+| `AUTO_MIGRATE` | `--auto-migrate` | No | `false` | Run database migrations on startup. |
 | `CREATE_DIRS` | `--create-dirs` | No | `false` | Create missing directories on startup. |
 
 Paths using the `s3://` scheme must include a bucket name and may specify an optional prefix, e.g. `s3://mybucket/uploads`.
@@ -315,8 +315,8 @@ example provider built with the `sendgrid` tag.
 
 Database schema changes are stored in the `migrations/` directory. Run
 `goa4web db migrate` to apply all pending scripts using your configured
-database connection. Set `AUTO_MIGRATE=true` to perform this step
-automatically when the server starts.
+database connection. Set `AUTO_MIGRATE=true` or pass `--auto-migrate=1`
+to perform this step automatically when the server starts.
 Every new migration must conclude with an `UPDATE schema_version` statement, and the `ExpectedSchemaVersion` constant in `handlers/constants.go` should be incremented.
 
 When upgrading from v0.0.1 the script `migrations/0002.mysql.sql` must be applied.

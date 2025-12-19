@@ -161,7 +161,9 @@ func (c *roleTemplateExplainCmd) Run() error {
 			fmt.Println("    Grants:")
 			for _, g := range r.Grants {
 				item := g.Item
-				if item == "" { item = "*" }
+				if item == "" {
+					item = "*"
+				}
 				fmt.Printf("      - %s / %s / %s (ID: %d)\n", g.Section, item, g.Action, g.ItemID)
 			}
 		} else {
@@ -277,7 +279,9 @@ func printRolesState(ctx context.Context, q *db.Queries, roles []RoleDef) error 
 
 		for _, g := range grants {
 			item := g.Item.String
-			if !g.Item.Valid { item = "*" }
+			if !g.Item.Valid {
+				item = "*"
+			}
 			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%d\n", roleInfo, g.Section, item, g.Action, g.ItemID.Int32)
 		}
 	}
@@ -402,8 +406,12 @@ func (c *roleTemplateDiffCmd) Run() error {
 
 		// Role Properties Diff
 		changes := []string{}
-		if role.CanLogin != rDef.CanLogin { changes = append(changes, fmt.Sprintf("CanLogin: %v -> %v", role.CanLogin, rDef.CanLogin)) }
-		if role.IsAdmin != rDef.IsAdmin { changes = append(changes, fmt.Sprintf("IsAdmin: %v -> %v", role.IsAdmin, rDef.IsAdmin)) }
+		if role.CanLogin != rDef.CanLogin {
+			changes = append(changes, fmt.Sprintf("CanLogin: %v -> %v", role.CanLogin, rDef.CanLogin))
+		}
+		if role.IsAdmin != rDef.IsAdmin {
+			changes = append(changes, fmt.Sprintf("IsAdmin: %v -> %v", role.IsAdmin, rDef.IsAdmin))
+		}
 
 		if len(changes) > 0 {
 			fmt.Println("  Properties Update:")
@@ -462,7 +470,9 @@ func (c *roleTemplateDiffCmd) Run() error {
 }
 
 func grantKey(section, item, action string, itemID int32) string {
-	if item == "" { item = "*" }
+	if item == "" {
+		item = "*"
+	}
 	return fmt.Sprintf("%s / %s / %s [%d]", section, item, action, itemID)
 }
 

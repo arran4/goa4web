@@ -84,9 +84,9 @@ var IntOptions = []IntOption{
 	{"db-log-verbosity", EnvDBLogVerbosity, "The verbosity level for database logging. 0 = off, 1 = errors, 2 = warnings, 3 = info, 4 = debug.", 0, "", func(c *RuntimeConfig) *int { return &c.DBLogVerbosity }},
 	{"email-log-verbosity", EnvEmailLogVerbosity, "The verbosity level for email logging. 0 = off, 1 = errors, 2 = warnings, 3 = info, 4 = debug.", 0, "", func(c *RuntimeConfig) *int { return &c.EmailLogVerbosity }},
 	{"log-flags", EnvLogFlags, "The flags for request logging.", 0, "", func(c *RuntimeConfig) *int { return &c.LogFlags }},
-	{"page-size-min", EnvPageSizeMin, "The minimum allowed page size for paginated results.", 0, "", func(c *RuntimeConfig) *int { return &c.PageSizeMin }},
-	{"page-size-max", EnvPageSizeMax, "The maximum allowed page size for paginated results.", 0, "", func(c *RuntimeConfig) *int { return &c.PageSizeMax }},
-	{"page-size-default", EnvPageSizeDefault, "The default page size for paginated results.", 0, "", func(c *RuntimeConfig) *int { return &c.PageSizeDefault }},
+	{"page-size-min", EnvPageSizeMin, "The minimum allowed page size for paginated results.", 5, "", func(c *RuntimeConfig) *int { return &c.PageSizeMin }},
+	{"page-size-max", EnvPageSizeMax, "The maximum allowed page size for paginated results.", 50, "", func(c *RuntimeConfig) *int { return &c.PageSizeMax }},
+	{"page-size-default", EnvPageSizeDefault, "The default page size for paginated results.", DefaultPageSize, "", func(c *RuntimeConfig) *int { return &c.PageSizeDefault }},
 	{"image-max-bytes", EnvImageMaxBytes, "The maximum allowed size for uploaded images in bytes.", 0, "", func(c *RuntimeConfig) *int { return &c.ImageMaxBytes }},
 	{"image-cache-max-bytes", EnvImageCacheMaxBytes, "The maximum size of the image cache in bytes. A value of -1 means no limit.", -1, "", func(c *RuntimeConfig) *int { return &c.ImageCacheMaxBytes }},
 	{"email-worker-interval", EnvEmailWorkerInterval, "The interval in seconds between runs of the email worker.", 0, "", func(c *RuntimeConfig) *int { return &c.EmailWorkerInterval }},
@@ -94,7 +94,7 @@ var IntOptions = []IntOption{
 	{"password-reset-expiry-hours", EnvPasswordResetExpiryHours, "The number of hours a password reset request is valid for.", 0, "", func(c *RuntimeConfig) *int { return &c.PasswordResetExpiryHours }},
 	{"login-attempt-window", EnvLoginAttemptWindow, "The window in minutes for tracking failed login attempts.", 15, "", func(c *RuntimeConfig) *int { return &c.LoginAttemptWindow }},
 	{"login-attempt-threshold", EnvLoginAttemptThreshold, "The number of failed login attempts allowed within the window before throttling.", 5, "", func(c *RuntimeConfig) *int { return &c.LoginAttemptThreshold }},
-	{"stats-start-year", EnvStatsStartYear, "The start year for usage statistics.", 0, "", func(c *RuntimeConfig) *int { return &c.StatsStartYear }},
+	{"stats-start-year", EnvStatsStartYear, "The start year for usage statistics.", 2005, "", func(c *RuntimeConfig) *int { return &c.StatsStartYear }},
 }
 
 // BoolOptions lists the boolean runtime options shared by flag parsing and configuration generation.

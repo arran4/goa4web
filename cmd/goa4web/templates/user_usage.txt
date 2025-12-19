@@ -23,6 +23,7 @@ Commands:
   reject      Reject a pending user account, with an optional reason.
   comments    Manage administrative comments for a user.
   roles       List the roles assigned to a specific user.
+  rename      Rename a user account, updating the username.
   profile     Display detailed profile information for a user.
 
 Examples:
@@ -46,5 +47,8 @@ Examples:
 
   # List all roles assigned to the current user
   {{.Prog}} user roles
+
+  # Rename a user from "alice" to "alice2"
+  {{.Prog}} user rename -from alice -to alice2
 
 {{template "flag_groups_section" .FlagGroups}}

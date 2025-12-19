@@ -11,7 +11,7 @@ import (
 )
 
 const adminDeleteForumThread = `-- name: AdminDeleteForumThread :exec
-UPDATE forumthread SET deleted_at = NOW() WHERE idforumthread = ?
+DELETE FROM forumthread WHERE idforumthread = ?
 `
 
 func (q *Queries) AdminDeleteForumThread(ctx context.Context, idforumthread int32) error {

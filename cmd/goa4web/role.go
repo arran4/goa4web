@@ -1,12 +1,11 @@
 package main
 
 import (
-	_ "embed"
 	"flag"
 	"fmt"
+	"os"
 )
 
-// roleCmd implements "role" top-level command.
 type roleCmd struct {
 	*rootCmd
 	fs *flag.FlagSet
@@ -36,37 +35,37 @@ func (c *roleCmd) Run() error {
 	case "load":
 		cmd, err := parseRoleLoadCmd(c, args[1:])
 		if err != nil {
-			return fmt.Errorf("load: %w", err)
+			return err
 		}
 		return cmd.Run()
 	case "reset":
 		cmd, err := parseRoleResetCmd(c, args[1:])
 		if err != nil {
-			return fmt.Errorf("reset: %w", err)
+			return err
 		}
 		return cmd.Run()
 	case "apply":
 		cmd, err := parseRoleApplyCmd(c, args[1:])
 		if err != nil {
-			return fmt.Errorf("apply: %w", err)
+			return err
 		}
 		return cmd.Run()
 	case "remove":
 		cmd, err := parseRoleRemoveCmd(c, args[1:])
 		if err != nil {
-			return fmt.Errorf("remove: %w", err)
+			return err
 		}
 		return cmd.Run()
 	case "users":
 		cmd, err := parseRoleUsersCmd(c, args[1:])
 		if err != nil {
-			return fmt.Errorf("users: %w", err)
+			return err
 		}
 		return cmd.Run()
 	case "list":
 		cmd, err := parseRoleListCmd(c, args[1:])
 		if err != nil {
-			return fmt.Errorf("list: %w", err)
+			return err
 		}
 		return cmd.Run()
 	case "inspect":
@@ -82,7 +81,7 @@ func (c *roleCmd) Run() error {
 }
 
 func (c *roleCmd) Usage() {
-	executeUsage(c.fs.Output(), "role_usage.txt", c)
+	executeUsage(os.Stdout, "role_usage.txt", c)
 }
 
 func (c *roleCmd) FlagGroups() []flagGroup {

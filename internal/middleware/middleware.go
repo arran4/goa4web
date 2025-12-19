@@ -7,6 +7,7 @@ import (
 	"net/url"
 
 	"github.com/arran4/goa4web"
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -18,14 +19,22 @@ func RequestLoggerMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		uid := int32(0)
 		sessID := ""
-		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok && cd != nil {
+		var cd *common.CoreData
+		if c, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok && c != nil {
+			cd = c
 			uid = cd.UserID
 			if s := cd.Session(); s != nil {
 				sessID = s.ID
 			}
 		}
-		if !(r.URL.Path == "/ws/notifications" && uid == 0) {
-			log.Printf("%s %s uid=%d session=%s", r.Method, r.URL.Path, uid, sessID)
+		if cd != nil && cd.Config != nil && cd.Config.LogFlags&config.LogFlagDebug != 0 {
+			if !(r.URL.Path == "/ws/notifications" && uid == 0) {
+				if sessID != "" {
+					log.Printf("%s %s uid=%d session=%s", r.Method, r.URL.Path, uid, sessID)
+				} else {
+					log.Printf("%s %s uid=%d", r.Method, r.URL.Path, uid)
+				}
+			}
 		}
 		next.ServeHTTP(w, r)
 	})

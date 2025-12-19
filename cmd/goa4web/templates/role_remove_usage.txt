@@ -1,9 +1,6 @@
-Usage: goa4web role remove [flags]
 
-Removes the grants from a destination role that match a source role.
+Usage: role remove [options]
 
-Flags:
-  -src string
-        The source role.
-  -dest string
-        The destination role.
+Removes a role and all its grants.
+
+Options:

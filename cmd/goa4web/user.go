@@ -121,6 +121,12 @@ func (c *userCmd) Run() error {
 			return fmt.Errorf("profile: %w", err)
 		}
 		return cmd.Run()
+	case "rename":
+		cmd, err := parseUserRenameCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("rename: %w", err)
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown user command %q", args[0])

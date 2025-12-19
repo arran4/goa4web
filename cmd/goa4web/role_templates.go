@@ -24,12 +24,51 @@ type GrantDef struct {
 var roleTemplates = map[string]TemplateDef{
 	"default": {
 		Name:        "default",
-		Description: "Standard setup with guest, user, and admin roles.",
+		Description: "Basic setup with minimal news access.",
 		Roles: []RoleDef{
 			{
-				Name:     "guest",
-				CanLogin: false,
-				IsAdmin:  false,
+				Name:        "guest",
+				CanLogin:    false,
+				IsAdmin:     false,
+				Description: "Read-only access to news.",
+				Grants: []GrantDef{
+					{Section: "news", Item: "post", Action: "see"},
+					{Section: "news", Item: "post", Action: "view"},
+				},
+			},
+			{
+				Name:        "user",
+				CanLogin:    true,
+				IsAdmin:     false,
+				Description: "Basic user.",
+				Grants: []GrantDef{
+					{Section: "news", Item: "post", Action: "see"},
+					{Section: "news", Item: "post", Action: "view"},
+				},
+			},
+			{
+				Name:        "admin",
+				CanLogin:    true,
+				IsAdmin:     true,
+				Description: "Administrator with news management rights.",
+				Grants: []GrantDef{
+					{Section: "news", Item: "post", Action: "post"},
+					{Section: "news", Item: "post", Action: "edit"},
+					{Section: "news", Item: "post", Action: "reply"},
+					{Section: "news", Item: "post", Action: "see"},
+					{Section: "news", Item: "post", Action: "view"},
+				},
+			},
+		},
+	},
+	"simple-community": {
+		Name:        "simple-community",
+		Description: "Community setup with news, private forums, and labelling.",
+		Roles: []RoleDef{
+			{
+				Name:        "guest",
+				CanLogin:    false,
+				IsAdmin:     false,
 				Description: "Read-only access to public sections.",
 				Grants: []GrantDef{
 					{Section: "news", Item: "post", Action: "see"},
@@ -37,9 +76,9 @@ var roleTemplates = map[string]TemplateDef{
 				},
 			},
 			{
-				Name:     "user",
-				CanLogin: true,
-				IsAdmin:  false,
+				Name:        "user",
+				CanLogin:    true,
+				IsAdmin:     false,
 				Description: "Standard user with access to private forums and labelling.",
 				Grants: []GrantDef{
 					// News reader
@@ -54,9 +93,9 @@ var roleTemplates = map[string]TemplateDef{
 				},
 			},
 			{
-				Name:     "admin",
-				CanLogin: true,
-				IsAdmin:  true,
+				Name:        "admin",
+				CanLogin:    true,
+				IsAdmin:     true,
 				Description: "Administrator with full access and content management rights.",
 				Grants: []GrantDef{
 					// News writer
@@ -75,6 +114,78 @@ var roleTemplates = map[string]TemplateDef{
 					{Section: "privateforum", Item: "topic", Action: "post"},
 					{Section: "privateforum", Item: "topic", Action: "reply"},
 					{Section: "privateforum", Item: "topic", Action: "edit"},
+				},
+			},
+		},
+	},
+	"news-only": {
+		Name:        "news-only",
+		Description: "Setup focused solely on news publishing and reading.",
+		Roles: []RoleDef{
+			{
+				Name:        "guest",
+				CanLogin:    false,
+				IsAdmin:     false,
+				Description: "News reader.",
+				Grants: []GrantDef{
+					{Section: "news", Item: "post", Action: "see"},
+					{Section: "news", Item: "post", Action: "view"},
+				},
+			},
+			{
+				Name:        "editor",
+				CanLogin:    true,
+				IsAdmin:     false,
+				Description: "News content creator.",
+				Grants: []GrantDef{
+					{Section: "news", Item: "post", Action: "post"},
+					{Section: "news", Item: "post", Action: "edit"},
+					{Section: "news", Item: "post", Action: "reply"},
+					{Section: "news", Item: "post", Action: "see"},
+					{Section: "news", Item: "post", Action: "view"},
+				},
+			},
+			{
+				Name:        "admin",
+				CanLogin:    true,
+				IsAdmin:     true,
+				Description: "Administrator.",
+				Grants: []GrantDef{
+					{Section: "news", Item: "post", Action: "post"},
+					{Section: "news", Item: "post", Action: "edit"},
+					{Section: "news", Item: "post", Action: "reply"},
+					{Section: "news", Item: "post", Action: "see"},
+					{Section: "news", Item: "post", Action: "view"},
+				},
+			},
+		},
+	},
+	"read-only": {
+		Name:        "read-only",
+		Description: "Restrictive setup where almost everyone is a reader.",
+		Roles: []RoleDef{
+			{
+				Name:        "guest",
+				CanLogin:    false,
+				IsAdmin:     false,
+				Description: "Global reader.",
+				Grants: []GrantDef{
+					{Section: "news", Item: "post", Action: "see"},
+					{Section: "news", Item: "post", Action: "view"},
+					{Section: "privateforum", Item: "topic", Action: "see"},
+					{Section: "privateforum", Item: "topic", Action: "view"},
+				},
+			},
+			{
+				Name:        "admin",
+				CanLogin:    true,
+				IsAdmin:     true,
+				Description: "Administrator.",
+				Grants: []GrantDef{
+					{Section: "news", Item: "post", Action: "see"},
+					{Section: "news", Item: "post", Action: "view"},
+					{Section: "privateforum", Item: "topic", Action: "see"},
+					{Section: "privateforum", Item: "topic", Action: "view"},
 				},
 			},
 		},

@@ -19,7 +19,7 @@ func (c *notificationsTasksCmd) Usage() {
 }
 
 func (c *notificationsTasksCmd) FlagGroups() []flagGroup {
-	return append(c.notificationsCmd.rootCmd.FlagGroups(), flagGroup{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)})
+	return []flagGroup{{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)}}
 }
 
 var _ usageData = (*notificationsTasksCmd)(nil)

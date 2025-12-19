@@ -74,7 +74,7 @@ func (c *userApproveCmd) Usage() {
 }
 
 func (c *userApproveCmd) FlagGroups() []flagGroup {
-	return append(c.rootCmd.FlagGroups(), flagGroup{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)})
+	return []flagGroup{{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)}}
 }
 
 var _ usageData = (*userApproveCmd)(nil)

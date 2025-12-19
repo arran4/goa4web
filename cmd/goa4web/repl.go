@@ -184,7 +184,7 @@ func expandEnv(args []string) []string {
 func (c *replCmd) Usage() { executeUsage(c.fs.Output(), "repl_usage.txt", c) }
 
 func (c *replCmd) FlagGroups() []flagGroup {
-	return append(c.rootCmd.FlagGroups(), flagGroup{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)})
+	return []flagGroup{{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)}}
 }
 
 var _ usageData = (*replCmd)(nil)

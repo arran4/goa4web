@@ -54,7 +54,7 @@ func (c *roleUsersCmd) Usage() {
 }
 
 func (c *roleUsersCmd) FlagGroups() []flagGroup {
-	return append(c.rootCmd.FlagGroups(), flagGroup{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)})
+	return []flagGroup{{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)}}
 }
 
 var _ usageData = (*roleUsersCmd)(nil)

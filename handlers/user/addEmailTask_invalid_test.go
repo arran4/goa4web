@@ -53,7 +53,7 @@ func TestAddEmailTaskInvalid(t *testing.T) {
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
 	}
-	if evt.Data != nil && len(evt.Data) != 0 {
+	if len(evt.Data) != 0 {
 		t.Fatalf("unexpected event data: %+v", evt.Data)
 	}
 	if cd.AutoRefresh == "" || !strings.Contains(cd.AutoRefresh, "invalid+email") {

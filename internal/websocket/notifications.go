@@ -92,10 +92,7 @@ func NewNotificationsHandler(bus *eventbus.Bus, cfg *config.RuntimeConfig) *Noti
 				return true
 			}
 		}
-		if strings.EqualFold(o.Host, r.Host) {
-			return true
-		}
-		return false
+		return strings.EqualFold(o.Host, r.Host)
 	}
 	h.Upgrader = upgrader
 	return h

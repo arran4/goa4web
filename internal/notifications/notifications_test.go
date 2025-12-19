@@ -55,12 +55,9 @@ func (r *dummyProvider) Send(ctx context.Context, to mail.Address, rawEmailMessa
 func (r *dummyProvider) TestConfig(ctx context.Context) error { return nil }
 
 func TestNotifierNotifyAdmins(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	q := &db.QuerierStub{
+		SystemGetUserByEmailRow: &db.SystemGetUserByEmailRow{Idusers: 1, Email: "a@test", Username: "a"},
 	}
-	defer conn.Close()
-	q := db.New(conn)
 	cfg := config.NewRuntimeConfig()
 	cfg.EmailEnabled = true
 	cfg.AdminNotify = true
@@ -68,18 +65,26 @@ func TestNotifierNotifyAdmins(t *testing.T) {
 	cfg.EmailFrom = "from@example.com"
 	cfg.NotificationsEnabled = true
 
-	mock.ExpectQuery("SystemGetUserByEmail").
-		WithArgs(sql.NullString{String: "a@test", Valid: true}).
-		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username"}).AddRow(1, "a@test", "a"))
-	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(sql.NullInt32{Int32: 1, Valid: true}, sqlmock.AnyArg(), false).WillReturnResult(sqlmock.NewResult(1, 1))
 	rec := &dummyProvider{}
 	n := New(WithQueries(q), WithEmailProvider(rec), WithConfig(cfg))
 	n.NotifyAdmins(context.Background(), &EmailTemplates{}, EmailData{})
 	if rec.to != "" {
 		t.Fatalf("expected no direct mail got %s", rec.to)
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	if len(q.SystemGetUserByEmailCalls) != 1 || q.SystemGetUserByEmailCalls[0] != "a@test" {
+		t.Fatalf("expected user lookup for a@test, got %v", q.SystemGetUserByEmailCalls)
+	}
+	if len(q.InsertPendingEmailCalls) != 1 {
+		t.Fatalf("expected 1 queued email got %d", len(q.InsertPendingEmailCalls))
+	}
+	if !q.InsertPendingEmailCalls[0].ToUserID.Valid || q.InsertPendingEmailCalls[0].ToUserID.Int32 != 1 {
+		t.Fatalf("expected queued email for user 1, got %+v", q.InsertPendingEmailCalls[0].ToUserID)
+	}
+	if q.InsertPendingEmailCalls[0].DirectEmail {
+		t.Fatalf("expected queued email to be non-direct")
+	}
+	if q.InsertPendingEmailCalls[0].Body == "" {
+		t.Fatalf("expected non-empty email body")
 	}
 }
 

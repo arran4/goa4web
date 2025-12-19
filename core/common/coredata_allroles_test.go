@@ -1,11 +1,9 @@
 package common
 
 import (
-	"context"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -22,7 +20,7 @@ func TestAllRolesLazy(t *testing.T) {
 
 	mock.ExpectQuery("SELECT id, name, can_login, is_admin, private_labels, public_profile_allowed_at FROM roles ORDER BY id").WillReturnRows(rows)
 
-	cd := NewCoreData(context.Background(), db.New(conn), config.NewRuntimeConfig())
+	cd := NewTestCoreData(t, db.New(conn))
 
 	roles, err := cd.AllRoles()
 	if err != nil {

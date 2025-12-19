@@ -1,13 +1,11 @@
 package common
 
 import (
-	"context"
 	"database/sql"
 	"regexp"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -32,7 +30,7 @@ func TestPrivateForumBreadcrumbUsesDisplayTitle(t *testing.T) {
 		WillReturnRows(participantRows)
 
 	queries := db.New(conn)
-	cd := NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
+	cd := NewTestCoreData(t, queries)
 	cd.SetCurrentSection("privateforum")
 	cd.ForumBasePath = "/private"
 	cd.UserID = 1

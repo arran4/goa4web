@@ -1,13 +1,11 @@
 package common
 
 import (
-	"context"
 	"database/sql"
 	"testing"
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -19,7 +17,7 @@ func TestCoreData_PrivateForumTopics(t *testing.T) {
 	defer conn.Close()
 
 	q := db.New(conn)
-	cd := NewCoreData(context.Background(), q, config.NewRuntimeConfig())
+	cd := NewTestCoreData(t, q)
 	cd.UserID = 1
 
 	rows := sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_id", "title", "description", "threads", "comments", "lastaddition", "handler", "LastPosterUsername"}).

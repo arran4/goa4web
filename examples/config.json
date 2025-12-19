@@ -12,6 +12,7 @@
   "DB_DRIVER": "mysql",
   "DB_LOG_VERBOSITY": "0",
   "DB_TIMEZONE": "Australia/Melbourne",
+  "MIGRATIONS_DIR": "",
   "DEFAULT_LANGUAGE": "",
   "DLQ_FILE": "",
   "DLQ_PROVIDER": "",

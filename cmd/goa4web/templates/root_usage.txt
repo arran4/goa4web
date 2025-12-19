@@ -5,6 +5,8 @@ This is the main entry point for the goa4web application. It provides a
 command-line interface for managing the web server and its various
 components.
 
+{{template "flag_groups_section" .FlagGroups}}
+
 Commands:
   help    Show help for a command.
   serve   Run the web server. This is the primary command for running the
@@ -64,5 +66,3 @@ Examples:
 
 Flags apply to the subcommand they follow.
 For example: {{.Prog}} board list -verbosity 1
-
-{{template "flag_groups_section" .FlagGroups}}

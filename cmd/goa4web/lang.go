@@ -60,7 +60,7 @@ func (c *langCmd) Usage() {
 }
 
 func (c *langCmd) FlagGroups() []flagGroup {
-	return append(c.rootCmd.FlagGroups(), flagGroup{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)})
+	return []flagGroup{{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)}}
 }
 
 var _ usageData = (*langCmd)(nil)

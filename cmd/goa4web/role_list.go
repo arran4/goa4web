@@ -55,7 +55,7 @@ func (c *roleListCmd) Run() error {
 func (c *roleListCmd) Usage() { executeUsage(c.fs.Output(), "role_list_usage.txt", c) }
 
 func (c *roleListCmd) FlagGroups() []flagGroup {
-	return append(c.rootCmd.FlagGroups(), flagGroup{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)})
+	return []flagGroup{{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)}}
 }
 
 var _ usageData = (*roleListCmd)(nil)

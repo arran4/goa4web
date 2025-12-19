@@ -119,6 +119,8 @@ type RuntimeConfig struct {
 
 	// TemplatesDir specifies a directory to load templates and assets from.
 	TemplatesDir string
+	// AutoMigrate toggles automatic database migrations on startup.
+	AutoMigrate bool
 	// MigrationsDir specifies a directory to load migrations from at runtime.
 	MigrationsDir string
 

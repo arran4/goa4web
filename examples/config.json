@@ -4,6 +4,7 @@
   "ADMIN_EMAILS": "",
   "ADMIN_NOTIFY": "true",
   "AWS_REGION": "",
+  "AUTO_MIGRATE": "false",
   "CONFIG_FILE": "",
   "CREATE_DIRS": "false",
   "CSRF_ENABLED": "true",

@@ -115,6 +115,136 @@ func (q *Queries) AdminGetThreadsStartedByUserWithTopic(ctx context.Context, use
 	return items, nil
 }
 
+const adminListForumThreadGrantsByThreadID = `-- name: AdminListForumThreadGrantsByThreadID :many
+SELECT
+    g.id,
+    g.section,
+    g.action,
+    r.name AS role_name,
+    u.username
+FROM
+    grants g
+LEFT JOIN
+    roles r ON g.role_id = r.id
+LEFT JOIN
+    users u ON g.user_id = u.idusers
+WHERE
+    g.section = 'forum'
+    AND g.item = 'thread'
+    AND g.item_id = ?
+`
+
+type AdminListForumThreadGrantsByThreadIDRow struct {
+	ID       int32
+	Section  string
+	Action   string
+	RoleName sql.NullString
+	Username sql.NullString
+}
+
+func (q *Queries) AdminListForumThreadGrantsByThreadID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListForumThreadGrantsByThreadIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListForumThreadGrantsByThreadID, itemID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListForumThreadGrantsByThreadIDRow
+	for rows.Next() {
+		var i AdminListForumThreadGrantsByThreadIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Section,
+			&i.Action,
+			&i.RoleName,
+			&i.Username,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminListForumThreads = `-- name: AdminListForumThreads :many
+SELECT
+    t.idforumthread,
+    t.forumtopic_idforumtopic as idforumtopic,
+    SUBSTRING(c.text, 1, 100) AS title,
+    c.written as created_at,
+    c.users_idusers as created_by,
+    t.lastposter as last_post_by,
+    t.lastaddition as last_post_at,
+    t.comments as post_count,
+    ft.title as topic_title,
+    ft.handler as topic_handler
+FROM
+    forumthread t
+JOIN
+    forumtopic ft ON t.forumtopic_idforumtopic = ft.idforumtopic
+JOIN
+    comments c ON t.firstpost = c.idcomments
+ORDER BY t.idforumthread
+LIMIT ? OFFSET ?
+`
+
+type AdminListForumThreadsParams struct {
+	Limit  int32
+	Offset int32
+}
+
+type AdminListForumThreadsRow struct {
+	Idforumthread int32
+	Idforumtopic  int32
+	Title         string
+	CreatedAt     sql.NullTime
+	CreatedBy     int32
+	LastPostBy    int32
+	LastPostAt    sql.NullTime
+	PostCount     sql.NullInt32
+	TopicTitle    sql.NullString
+	TopicHandler  string
+}
+
+func (q *Queries) AdminListForumThreads(ctx context.Context, arg AdminListForumThreadsParams) ([]*AdminListForumThreadsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListForumThreads, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListForumThreadsRow
+	for rows.Next() {
+		var i AdminListForumThreadsRow
+		if err := rows.Scan(
+			&i.Idforumthread,
+			&i.Idforumtopic,
+			&i.Title,
+			&i.CreatedAt,
+			&i.CreatedBy,
+			&i.LastPostBy,
+			&i.LastPostAt,
+			&i.PostCount,
+			&i.TopicTitle,
+			&i.TopicHandler,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const adminRecalculateAllForumThreadMetaData = `-- name: AdminRecalculateAllForumThreadMetaData :exec
 UPDATE forumthread
 SET lastaddition = (

@@ -141,6 +141,9 @@ type Querier interface {
 	// admin task
 	AdminListFailedEmails(ctx context.Context, arg AdminListFailedEmailsParams) ([]*AdminListFailedEmailsRow, error)
 	AdminListForumCategoriesWithCounts(ctx context.Context, arg AdminListForumCategoriesWithCountsParams) ([]*AdminListForumCategoriesWithCountsRow, error)
+	AdminListForumThreadGrantsByThreadID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListForumThreadGrantsByThreadIDRow, error)
+	AdminListForumThreads(ctx context.Context, arg AdminListForumThreadsParams) ([]*AdminListForumThreadsRow, error)
+	AdminListForumTopicGrantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListForumTopicGrantsByTopicIDRow, error)
 	AdminListForumTopics(ctx context.Context, arg AdminListForumTopicsParams) ([]*Forumtopic, error)
 	// admin task
 	AdminListGrantsByRoleID(ctx context.Context, roleID sql.NullInt32) ([]*Grant, error)

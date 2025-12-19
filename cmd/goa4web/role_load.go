@@ -3,10 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
-	"os"
-	"path/filepath"
-	"strings"
 )
 
 // roleLoadCmd implements the "role load" subcommand.
@@ -40,36 +36,7 @@ func (c *roleLoadCmd) Run() error {
 	}
 	defer closeDB(sdb)
 
-	var data []byte
-	if c.file != "" {
-		// Explicit filesystem file provided
-		p := c.file
-		if !strings.HasSuffix(strings.ToLower(p), ".sql") {
-			p = p + ".sql"
-		}
-		abs, _ := filepath.Abs(p)
-		log.Printf("Loading role %q from file %s", c.role, abs)
-		b, err := os.ReadFile(p)
-		if err != nil {
-			return fmt.Errorf("failed to read role file: %w", err)
-		}
-		data = b
-	} else {
-		// Default to embedded role
-		log.Printf("Loading role %q from embedded roles", c.role)
-		b, err := readEmbeddedRole(c.role)
-		if err != nil {
-			return fmt.Errorf("failed to read embedded role %q: %w", c.role, err)
-		}
-		data = b
-	}
-
-	if err := runStatements(sdb, strings.NewReader(string(data))); err != nil {
-		return fmt.Errorf("failed to apply role: %w", err)
-	}
-
-	log.Printf("Role %q loaded successfully.", c.role)
-	return nil
+	return loadRole(sdb, c.role, c.file)
 }
 
 func (c *roleLoadCmd) Usage() {

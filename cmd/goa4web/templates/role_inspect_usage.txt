@@ -1,0 +1,8 @@
+Usage: goa4web role inspect [flags]
+
+Inspects a role, showing its metadata, assigned users, and grants.
+It also heuristically identifies if the role includes all grants from other known roles.
+
+Flags:
+  -role string
+        The name of the role to inspect.

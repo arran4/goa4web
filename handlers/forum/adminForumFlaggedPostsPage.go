@@ -12,5 +12,5 @@ import (
 func AdminForumFlaggedPostsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Forum - Flagged Posts"
-	handlers.TemplateHandler(w, r, "forumFlaggedPostsPage.gohtml", struct{}{})
+	handlers.TemplateHandler(w, r, "admin/forumFlaggedPostsPage.gohtml", struct{}{})
 }

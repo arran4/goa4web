@@ -86,5 +86,5 @@ func AdminTopicEditFormPage(w http.ResponseWriter, r *http.Request) {
 		Categories: categories,
 		Roles:      roles,
 	}
-	handlers.TemplateHandler(w, r, "adminTopicEditPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "forum/adminTopicEditPage.gohtml", data)
 }

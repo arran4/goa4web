@@ -2,13 +2,13 @@ package user
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
@@ -17,62 +17,81 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
-func setupRequest(t *testing.T, path string, userID int) (*http.Request, sqlmock.Sqlmock, *common.CoreData) {
-	t.Helper()
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+type adminUserRouteQueries struct {
+	db.Querier
+	userID      int32
+	user        *db.SystemGetUserByIDRow
+	roles       []*db.Role
+	permissions []*db.GetPermissionsByUserIDRow
+}
+
+func (q *adminUserRouteQueries) SystemGetUserByID(_ context.Context, id int32) (*db.SystemGetUserByIDRow, error) {
+	if id != q.userID {
+		return nil, fmt.Errorf("unexpected user id: %d", id)
 	}
-	t.Cleanup(func() { conn.Close() })
-	mock.MatchExpectationsInOrder(false)
+	return q.user, nil
+}
+
+func (q *adminUserRouteQueries) AdminListRoles(context.Context) ([]*db.Role, error) {
+	return q.roles, nil
+}
+
+func (q *adminUserRouteQueries) GetPermissionsByUserID(_ context.Context, id int32) ([]*db.GetPermissionsByUserIDRow, error) {
+	if id != q.userID {
+		return nil, fmt.Errorf("unexpected permissions user id: %d", id)
+	}
+	return q.permissions, nil
+}
+
+func setupRequest(t *testing.T, path string, userID int, queries db.Querier) (*http.Request, *common.CoreData) {
+	t.Helper()
 	req := httptest.NewRequest("GET", fmt.Sprintf(path, userID), nil)
 	req = mux.SetURLVars(req, map[string]string{"user": strconv.Itoa(userID)})
 	cfg := config.NewRuntimeConfig()
-	q := db.New(conn)
-	cd := common.NewCoreData(req.Context(), q, cfg)
+	cd := common.NewCoreData(req.Context(), queries, cfg, common.WithUserRoles([]string{"administrator"}))
 	cd.LoadSelectionsFromRequest(req)
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
-	return req, mock, cd
+	return req, cd
 }
 
 func TestAdminUserPermissionsPage_UserIDInjected(t *testing.T) {
-	req, mock, _ := setupRequest(t, "/admin/user/%d/permissions", 2)
-	mock.ExpectQuery("SELECT").WithArgs(int32(2)).WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(2, "", "u", nil))
-	mock.ExpectQuery("SELECT").WillReturnRows(sqlmock.NewRows([]string{"id", "name", "can_login", "is_admin", "private_labels", "public_profile_allowed_at"}))
-	mock.ExpectQuery("SELECT").WithArgs(int32(2)).WillReturnRows(sqlmock.NewRows([]string{"iduser_roles", "users_idusers", "role_id", "name"}))
+	queries := &adminUserRouteQueries{
+		userID:      2,
+		user:        &db.SystemGetUserByIDRow{Idusers: 2, Username: sql.NullString{String: "u", Valid: true}},
+		roles:       []*db.Role{},
+		permissions: []*db.GetPermissionsByUserIDRow{},
+	}
+	req, _ := setupRequest(t, "/admin/user/%d/permissions", 2, queries)
 	rr := httptest.NewRecorder()
 	adminUserPermissionsPage(rr, req)
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 }
 
 func TestAdminUserDisableConfirmPage_UserIDInjected(t *testing.T) {
-	req, mock, _ := setupRequest(t, "/admin/user/%d/disable", 5)
-	mock.ExpectQuery("SELECT").WithArgs(int32(5)).WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(5, "", "u", nil))
+	queries := &adminUserRouteQueries{
+		userID: 5,
+		user:   &db.SystemGetUserByIDRow{Idusers: 5, Username: sql.NullString{String: "u", Valid: true}},
+	}
+	req, _ := setupRequest(t, "/admin/user/%d/disable", 5, queries)
 	rr := httptest.NewRecorder()
 	adminUserDisableConfirmPage(rr, req)
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 }
 
 func TestAdminUserEditFormPage_UserIDInjected(t *testing.T) {
-	req, mock, _ := setupRequest(t, "/admin/user/%d/edit", 7)
-	mock.ExpectQuery("SELECT").WithArgs(int32(7)).WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(7, "", "u", nil))
+	queries := &adminUserRouteQueries{
+		userID: 7,
+		user:   &db.SystemGetUserByIDRow{Idusers: 7, Username: sql.NullString{String: "u", Valid: true}},
+	}
+	req, _ := setupRequest(t, "/admin/user/%d/edit", 7, queries)
 	rr := httptest.NewRecorder()
 	adminUserEditFormPage(rr, req)
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
-	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
 	}
 }

@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
@@ -19,28 +18,41 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
-func TestAdminRequestPage_RequestFound(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-	mock.MatchExpectationsInOrder(false)
+type requestPageQueries struct {
+	db.Querier
+	requestID int32
+	request   *db.AdminRequestQueue
+}
 
+func (q *requestPageQueries) AdminGetRequestByID(_ context.Context, id int32) (*db.AdminRequestQueue, error) {
+	if id != q.requestID {
+		return nil, fmt.Errorf("unexpected request id: %d", id)
+	}
+	return q.request, nil
+}
+
+func TestAdminRequestPage_RequestFound(t *testing.T) {
 	requestID := 5
-	reqRow := sqlmock.NewRows([]string{"id", "users_idusers", "change_table", "change_field", "change_row_id", "change_value", "contact_options", "status", "created_at", "acted_at"}).
-		AddRow(requestID, 7, "tbl", "fld", 0, sql.NullString{}, sql.NullString{}, "pending", time.Now(), sql.NullTime{})
-	mock.ExpectQuery("admin_request_queue").WillReturnRows(reqRow)
-	userRow := sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).
-		AddRow(7, "u@example.com", "user", sql.NullTime{})
-	mock.ExpectQuery("FROM users").WillReturnRows(userRow)
-	mock.ExpectQuery("admin_request_comments").WillReturnRows(sqlmock.NewRows([]string{"id", "request_id", "comment", "created_at"}))
+	queries := &requestPageQueries{
+		requestID: int32(requestID),
+		request: &db.AdminRequestQueue{
+			ID:             int32(requestID),
+			UsersIdusers:   7,
+			ChangeTable:    "tbl",
+			ChangeField:    "fld",
+			ChangeRowID:    0,
+			ChangeValue:    sql.NullString{},
+			ContactOptions: sql.NullString{},
+			Status:         "pending",
+			CreatedAt:      time.Now(),
+			ActedAt:        sql.NullTime{},
+		},
+	}
 
 	req := httptest.NewRequest("GET", fmt.Sprintf("/admin/request/%d", requestID), nil)
 	req = mux.SetURLVars(req, map[string]string{"request": strconv.Itoa(requestID)})
 	cfg := config.NewRuntimeConfig()
-	q := db.New(conn)
-	cd := common.NewCoreData(req.Context(), q, cfg)
+	cd := common.NewCoreData(req.Context(), queries, cfg)
 	cd.LoadSelectionsFromRequest(req)
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -53,8 +65,5 @@ func TestAdminRequestPage_RequestFound(t *testing.T) {
 	}
 	if cr := cd.CurrentRequest(); cr == nil || cr.ID != int32(requestID) {
 		t.Fatalf("current request id=%v", cr)
-	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expect: %v", err)
 	}
 }

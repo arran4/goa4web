@@ -2,6 +2,8 @@ package user
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -9,7 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -20,6 +21,34 @@ import (
 	"github.com/arran4/goa4web/internal/notifications"
 	"github.com/gorilla/mux"
 )
+
+type permissionQueries struct {
+	db.Querier
+	userID     int32
+	user       *db.SystemGetUserByIDRow
+	username   string
+	userByName *db.SystemGetUserByUsernameRow
+	created    []db.SystemCreateUserRoleParams
+}
+
+func (q *permissionQueries) SystemGetUserByID(_ context.Context, id int32) (*db.SystemGetUserByIDRow, error) {
+	if id != q.userID {
+		return nil, fmt.Errorf("unexpected user id: %d", id)
+	}
+	return q.user, nil
+}
+
+func (q *permissionQueries) SystemGetUserByUsername(_ context.Context, username sql.NullString) (*db.SystemGetUserByUsernameRow, error) {
+	if username.String != q.username {
+		return nil, fmt.Errorf("unexpected username: %s", username.String)
+	}
+	return q.userByName, nil
+}
+
+func (q *permissionQueries) SystemCreateUserRole(_ context.Context, arg db.SystemCreateUserRoleParams) error {
+	q.created = append(q.created, arg)
+	return nil
+}
 
 func TestPermissionUserTasksTemplates(t *testing.T) {
 	admins := []notifications.AdminEmailTemplateProvider{
@@ -41,22 +70,17 @@ func TestPermissionUserTasksTemplates(t *testing.T) {
 func TestPermissionUserAllowEventData(t *testing.T) {
 	bus := eventbus.NewBus()
 
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	queries := &permissionQueries{
+		userID:   2,
+		username: "bob",
+		user: &db.SystemGetUserByIDRow{
+			Idusers:                2,
+			Email:                  sql.NullString{String: "bob@test", Valid: true},
+			Username:               sql.NullString{String: "bob", Valid: true},
+			PublicProfileEnabledAt: sql.NullTime{},
+		},
+		userByName: &db.SystemGetUserByUsernameRow{Idusers: 2, Username: "bob"},
 	}
-	defer conn.Close()
-	queries := db.New(conn)
-
-	mock.ExpectQuery("FROM users").
-		WithArgs(int32(2)).
-		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(2, "bob@test", "bob", nil))
-	mock.ExpectQuery("FROM users").
-		WithArgs(sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"idusers", "username", "public_profile_enabled_at"}).AddRow(2, "bob", nil))
-	mock.ExpectExec("INSERT INTO user_roles").
-		WithArgs(int32(2), "moderator").
-		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	ch := bus.Subscribe(eventbus.TaskMessageType)
 
@@ -90,8 +114,10 @@ func TestPermissionUserAllowEventData(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Fatal("no event")
 	}
-
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	if len(queries.created) != 1 {
+		t.Fatalf("expected create user role, got %d", len(queries.created))
+	}
+	if arg := queries.created[0]; arg.UsersIdusers != 2 || arg.Name != "moderator" {
+		t.Fatalf("unexpected user role: %#v", arg)
 	}
 }

@@ -2,40 +2,68 @@ package admin
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"regexp"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
 )
 
-func TestAdminUserWritingsPage(t *testing.T) {
-	sqlDB, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+type userWritingsQueries struct {
+	db.Querier
+	userID   int32
+	user     *db.SystemGetUserByIDRow
+	writings []*db.AdminGetAllWritingsByAuthorRow
+}
+
+func (q *userWritingsQueries) SystemGetUserByID(_ context.Context, id int32) (*db.SystemGetUserByIDRow, error) {
+	if id != q.userID {
+		return nil, fmt.Errorf("unexpected user id: %d", id)
 	}
-	defer sqlDB.Close()
+	return q.user, nil
+}
 
-	queries := db.New(sqlDB)
+func (q *userWritingsQueries) AdminGetAllWritingsByAuthor(_ context.Context, id int32) ([]*db.AdminGetAllWritingsByAuthorRow, error) {
+	if id != q.userID {
+		return nil, fmt.Errorf("unexpected author id: %d", id)
+	}
+	return q.writings, nil
+}
 
-	userRows := sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).
-		AddRow(1, "u@test", "user", nil)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username, u.public_profile_enabled_at FROM users u LEFT JOIN user_emails ue ON ue.id = ( SELECT id FROM user_emails ue2 WHERE ue2.user_id = u.idusers AND ue2.verified_at IS NOT NULL ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1 ) WHERE u.idusers = ?")).
-		WithArgs(int32(1)).
-		WillReturnRows(userRows)
-
-	writingRows := sqlmock.NewRows([]string{"idwriting", "users_idusers", "forumthread_id", "language_id", "writing_category_id", "title", "published", "timezone", "writing", "abstract", "private", "deleted_at", "last_index", "username", "comments"}).
-		AddRow(1, 1, 0, 0, 2, "Title", time.Now(), time.Local.String(), "", "", false, nil, nil, "user", 0)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_id, w.writing_category_id, w.title, w.published, w.timezone, w.writing, w.abstract, w.private, w.deleted_at, w.last_index, u.username,\n    (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id IS NOT NULL) AS Comments\nFROM writing w\nLEFT JOIN users u ON w.users_idusers = u.idusers\nWHERE w.users_idusers = ?\nORDER BY w.published DESC")).
-		WithArgs(int32(1)).
-		WillReturnRows(writingRows)
+func TestAdminUserWritingsPage(t *testing.T) {
+	queries := &userWritingsQueries{
+		userID: 1,
+		user: &db.SystemGetUserByIDRow{
+			Idusers:                1,
+			Email:                  sql.NullString{String: "u@test", Valid: true},
+			Username:               sql.NullString{String: "user", Valid: true},
+			PublicProfileEnabledAt: sql.NullTime{},
+		},
+		writings: []*db.AdminGetAllWritingsByAuthorRow{{
+			Idwriting:         1,
+			UsersIdusers:      1,
+			ForumthreadID:     0,
+			LanguageID:        sql.NullInt32{},
+			WritingCategoryID: 2,
+			Title:             sql.NullString{String: "Title", Valid: true},
+			Published:         sql.NullTime{Time: time.Now(), Valid: true},
+			Timezone:          sql.NullString{String: time.Local.String(), Valid: true},
+			Writing:           sql.NullString{String: "", Valid: true},
+			Abstract:          sql.NullString{String: "", Valid: true},
+			Private:           sql.NullBool{Bool: false, Valid: true},
+			DeletedAt:         sql.NullTime{},
+			LastIndex:         sql.NullTime{},
+			Username:          sql.NullString{String: "user", Valid: true},
+			Comments:          0,
+		}},
+	}
 
 	req := httptest.NewRequest("GET", "/admin/user/1/writings", nil)
 	ctx := req.Context()
@@ -47,9 +75,6 @@ func TestAdminUserWritingsPage(t *testing.T) {
 
 	adminUserWritingsPage(rr, req)
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 	if rr.Result().StatusCode != http.StatusOK {
 		t.Fatalf("status=%d", rr.Result().StatusCode)
 	}

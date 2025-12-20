@@ -2,31 +2,38 @@ package admin
 
 import (
 	"context"
+	"database/sql"
 	"net/http"
 	"net/http/httptest"
-	"regexp"
 	"strings"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
 )
 
+type anyoneGrantsQueries struct {
+	db.Querier
+	grants []*db.Grant
+}
+
+func (q *anyoneGrantsQueries) ListGrants(context.Context) ([]*db.Grant, error) {
+	return q.grants, nil
+}
+
 func TestAdminAnyoneGrantsPage(t *testing.T) {
-	sqlDB, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	queries := &anyoneGrantsQueries{
+		grants: []*db.Grant{{
+			ID:       1,
+			Section:  "forum",
+			Item:     sql.NullString{},
+			RuleType: "allow",
+			Action:   "search",
+			Active:   true,
+		}},
 	}
-	defer sqlDB.Close()
-
-	queries := db.New(sqlDB)
-
-	grantsRows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "user_id", "role_id", "section", "item", "rule_type", "item_id", "item_rule", "action", "extra", "active"}).
-		AddRow(1, nil, nil, nil, nil, "forum", "", "allow", nil, nil, "search", nil, true)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, created_at, updated_at, user_id, role_id, section, item, rule_type, item_id, item_rule, action, extra, active FROM grants ORDER BY id")).WillReturnRows(grantsRows)
 
 	req := httptest.NewRequest("GET", "/admin/grants/anyone", nil)
 	ctx := req.Context()
@@ -39,9 +46,6 @@ func TestAdminAnyoneGrantsPage(t *testing.T) {
 
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
-	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
 	}
 	body := rr.Body.String()
 	if !strings.Contains(body, `<a href="/admin/grants/anyone">Anyone</a>`) {

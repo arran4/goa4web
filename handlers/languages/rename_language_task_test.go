@@ -2,13 +2,12 @@ package languages
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"net/http/httptest"
 	"net/url"
-	"regexp"
 	"strings"
 	"testing"
-
-	"github.com/DATA-DOG/go-sqlmock"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
@@ -16,13 +15,32 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
-func TestRenameLanguageTask_Action(t *testing.T) {
-	dbMock, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock: %v", err)
+type renameLanguageQueries struct {
+	db.Querier
+	languages  []*db.Language
+	renameArgs []db.AdminRenameLanguageParams
+}
+
+func (q *renameLanguageQueries) SystemListLanguages(context.Context) ([]*db.Language, error) {
+	return q.languages, nil
+}
+
+func (q *renameLanguageQueries) SystemGetLanguageIDByName(_ context.Context, name sql.NullString) (int32, error) {
+	if name.String != "en" {
+		return 0, fmt.Errorf("unexpected old name: %q", name.String)
 	}
-	defer dbMock.Close()
-	queries := db.New(dbMock)
+	return 1, nil
+}
+
+func (q *renameLanguageQueries) AdminRenameLanguage(_ context.Context, arg db.AdminRenameLanguageParams) error {
+	q.renameArgs = append(q.renameArgs, arg)
+	return nil
+}
+
+func TestRenameLanguageTask_Action(t *testing.T) {
+	queries := &renameLanguageQueries{
+		languages: []*db.Language{{ID: 1, Nameof: sql.NullString{String: "en", Valid: true}}},
+	}
 
 	form := url.Values{}
 	form.Set("cid", "1")
@@ -37,20 +55,14 @@ func TestRenameLanguageTask_Action(t *testing.T) {
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 
-	langRows := sqlmock.NewRows([]string{"id", "nameof"}).AddRow(1, "en")
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, nameof\nFROM language")).WillReturnRows(langRows)
-
-	idRow := sqlmock.NewRows([]string{"id"}).AddRow(1)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT id FROM language WHERE nameof = ?")).WithArgs("en").WillReturnRows(idRow)
-
-	mock.ExpectExec(regexp.QuoteMeta("UPDATE language\nSET nameof = ?\nWHERE id = ?")).WithArgs("fr", int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
-
 	result := renameLanguageTask.Action(rr, req)
 	if result != nil {
 		t.Fatalf("expected nil, got %v", result)
 	}
-
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	if len(queries.renameArgs) != 1 {
+		t.Fatalf("expected rename call, got %d", len(queries.renameArgs))
+	}
+	if arg := queries.renameArgs[0]; arg.ID != 1 || arg.Nameof.String != "fr" {
+		t.Fatalf("unexpected rename args: %#v", arg)
 	}
 }

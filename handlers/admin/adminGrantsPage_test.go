@@ -2,38 +2,81 @@ package admin
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"regexp"
 	"strings"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
 )
 
-func TestAdminGrantsPageGroupsActions(t *testing.T) {
-	sqlDB, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+type grantsPageQueries struct {
+	db.Querier
+	grants []*db.Grant
+	userID int32
+	user   *db.SystemGetUserByIDRow
+	roleID int32
+	role   *db.Role
+}
+
+func (q *grantsPageQueries) ListGrants(context.Context) ([]*db.Grant, error) {
+	return q.grants, nil
+}
+
+func (q *grantsPageQueries) SystemGetUserByID(_ context.Context, id int32) (*db.SystemGetUserByIDRow, error) {
+	if id != q.userID {
+		return nil, fmt.Errorf("unexpected user id: %d", id)
 	}
-	defer sqlDB.Close()
+	return q.user, nil
+}
 
-	queries := db.New(sqlDB)
+func (q *grantsPageQueries) AdminGetRoleByID(_ context.Context, id int32) (*db.Role, error) {
+	if id != q.roleID {
+		return nil, fmt.Errorf("unexpected role id: %d", id)
+	}
+	return q.role, nil
+}
 
-	grantsRows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "user_id", "role_id", "section", "item", "rule_type", "item_id", "item_rule", "action", "extra", "active"}).
-		AddRow(1, nil, nil, 5, 7, "forum", "topic", "allow", 42, nil, "search", nil, true).
-		AddRow(2, nil, nil, 5, 7, "forum", "topic", "allow", 42, nil, "view", nil, true)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, created_at, updated_at, user_id, role_id, section, item, rule_type, item_id, item_rule, action, extra, active FROM grants ORDER BY id")).WillReturnRows(grantsRows)
-
-	userRows := sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(5, nil, "bob", nil)
-	mock.ExpectQuery("SELECT u\\.idusers").WithArgs(5).WillReturnRows(userRows)
-
-	roleRows := sqlmock.NewRows([]string{"id", "name", "can_login", "is_admin", "private_labels", "public_profile_allowed_at"}).AddRow(7, "admin", true, false, true, nil)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, name, can_login, is_admin, private_labels, public_profile_allowed_at FROM roles WHERE id = ?")).WithArgs(7).WillReturnRows(roleRows)
+func TestAdminGrantsPageGroupsActions(t *testing.T) {
+	queries := &grantsPageQueries{
+		userID: 5,
+		roleID: 7,
+		grants: []*db.Grant{
+			{
+				ID:       1,
+				UserID:   sql.NullInt32{Int32: 5, Valid: true},
+				RoleID:   sql.NullInt32{Int32: 7, Valid: true},
+				Section:  "forum",
+				Item:     sql.NullString{String: "topic", Valid: true},
+				RuleType: "allow",
+				ItemID:   sql.NullInt32{Int32: 42, Valid: true},
+				Action:   "search",
+				Active:   true,
+			},
+			{
+				ID:       2,
+				UserID:   sql.NullInt32{Int32: 5, Valid: true},
+				RoleID:   sql.NullInt32{Int32: 7, Valid: true},
+				Section:  "forum",
+				Item:     sql.NullString{String: "topic", Valid: true},
+				RuleType: "allow",
+				ItemID:   sql.NullInt32{Int32: 42, Valid: true},
+				Action:   "view",
+				Active:   true,
+			},
+		},
+		user: &db.SystemGetUserByIDRow{
+			Idusers:                5,
+			Username:               sql.NullString{String: "bob", Valid: true},
+			PublicProfileEnabledAt: sql.NullTime{},
+		},
+		role: &db.Role{Name: "admin", CanLogin: true, IsAdmin: false, PrivateLabels: true},
+	}
 
 	req := httptest.NewRequest("GET", "/admin/grants", nil)
 	ctx := req.Context()
@@ -46,9 +89,6 @@ func TestAdminGrantsPageGroupsActions(t *testing.T) {
 
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
-	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
 	}
 	body := rr.Body.String()
 	if strings.Count(body, `<a href="/admin/user/5">bob (5)</a>`) != 1 {

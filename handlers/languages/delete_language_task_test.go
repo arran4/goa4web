@@ -2,13 +2,12 @@ package languages
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"net/http/httptest"
 	"net/url"
-	"regexp"
 	"strings"
 	"testing"
-
-	"github.com/DATA-DOG/go-sqlmock"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
@@ -16,13 +15,28 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
-func TestDeleteLanguageTask_PreventDeletion(t *testing.T) {
-	dbMock, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock: %v", err)
+type deleteLanguageQueries struct {
+	db.Querier
+	languages   []*db.Language
+	usageCounts *db.AdminLanguageUsageCountsRow
+}
+
+func (q *deleteLanguageQueries) SystemListLanguages(context.Context) ([]*db.Language, error) {
+	return q.languages, nil
+}
+
+func (q *deleteLanguageQueries) AdminLanguageUsageCounts(ctx context.Context, arg db.AdminLanguageUsageCountsParams) (*db.AdminLanguageUsageCountsRow, error) {
+	if arg.LangID.Int32 != 1 {
+		return nil, fmt.Errorf("unexpected language id: %v", arg.LangID.Int32)
 	}
-	defer dbMock.Close()
-	queries := db.New(dbMock)
+	return q.usageCounts, nil
+}
+
+func TestDeleteLanguageTask_PreventDeletion(t *testing.T) {
+	queries := &deleteLanguageQueries{
+		languages:   []*db.Language{{ID: 1, Nameof: sql.NullString{String: "en", Valid: true}}},
+		usageCounts: &db.AdminLanguageUsageCountsRow{Comments: 1},
+	}
 
 	form := url.Values{}
 	form.Set("cid", "1")
@@ -36,21 +50,11 @@ func TestDeleteLanguageTask_PreventDeletion(t *testing.T) {
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 
-	langRows := sqlmock.NewRows([]string{"id", "nameof"}).AddRow(1, "en")
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, nameof\nFROM language")).WillReturnRows(langRows)
-
-	countRows := sqlmock.NewRows([]string{"comments", "writings", "blogs", "news", "links"}).AddRow(1, 0, 0, 0, 0)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT\n    (SELECT COUNT(*) FROM comments WHERE comments.language_id = ?) AS comments,\n    (SELECT COUNT(*) FROM writing WHERE writing.language_id = ?) AS writings,\n    (SELECT COUNT(*) FROM blogs WHERE blogs.language_id = ?) AS blogs,\n    (SELECT COUNT(*) FROM site_news WHERE site_news.language_id = ?) AS news,\n    (SELECT COUNT(*) FROM linker WHERE linker.language_id = ?) AS links")).WithArgs(int32(1), int32(1), int32(1), int32(1), int32(1)).WillReturnRows(countRows)
-
 	result := deleteLanguageTask.Action(rr, req)
 	if result == nil {
 		t.Fatalf("expected error, got nil")
 	}
 	if _, ok := result.(error); !ok {
 		t.Fatalf("expected error result, got %T", result)
-	}
-
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
 	}
 }

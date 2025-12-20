@@ -3,16 +3,14 @@ package user
 import (
 	"context"
 	"database/sql"
-	"database/sql/driver"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"regexp"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/config"
@@ -24,30 +22,42 @@ import (
 	"github.com/arran4/goa4web/internal/eventbus"
 )
 
-type timeCloseMatcher struct {
-	target time.Time
-	margin time.Duration
+type addEmailQueries struct {
+	db.Querier
+	userID   int32
+	user     *db.SystemGetUserByIDRow
+	inserted []db.InsertUserEmailParams
 }
 
-func (m timeCloseMatcher) Match(v driver.Value) bool {
-	t, ok := v.(time.Time)
-	if !ok {
-		return false
+func (q *addEmailQueries) GetUserEmailByEmail(_ context.Context, email string) (*db.UserEmail, error) {
+	if email != "new@example.com" {
+		return nil, fmt.Errorf("unexpected email lookup: %s", email)
 	}
-	if t.After(m.target) {
-		return t.Sub(m.target) <= m.margin
+	return nil, sql.ErrNoRows
+}
+
+func (q *addEmailQueries) InsertUserEmail(_ context.Context, arg db.InsertUserEmailParams) error {
+	q.inserted = append(q.inserted, arg)
+	return nil
+}
+
+func (q *addEmailQueries) SystemGetUserByID(_ context.Context, id int32) (*db.SystemGetUserByIDRow, error) {
+	if id != q.userID {
+		return nil, fmt.Errorf("unexpected user id: %d", id)
 	}
-	return m.target.Sub(t) <= m.margin
+	return q.user, nil
 }
 
 func TestAddEmailTaskUsesConfigExpiry(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	queries := &addEmailQueries{
+		userID: 1,
+		user: &db.SystemGetUserByIDRow{
+			Idusers:                1,
+			Email:                  sql.NullString{String: "primary@example.com", Valid: true},
+			Username:               sql.NullString{String: "tester", Valid: true},
+			PublicProfileEnabledAt: sql.NullTime{},
+		},
 	}
-	defer conn.Close()
-
-	queries := db.New(conn)
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = "test"
@@ -66,16 +76,6 @@ func TestAddEmailTaskUsesConfigExpiry(t *testing.T) {
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 
 	expectedExpire := time.Now().Add(time.Duration(cfg.EmailVerificationExpiryHours) * time.Hour)
-	codeMatcher := sqlmock.AnyArg()
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority\nFROM user_emails\nWHERE email = ?")).
-		WithArgs("new@example.com").
-		WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}))
-	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO user_emails (user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority)\nVALUES (?, ?, ?, ?, ?, ?)\n")).
-		WithArgs(int32(1), "new@example.com", sqlmock.AnyArg(), codeMatcher, timeCloseMatcher{target: expectedExpire, margin: 2 * time.Second}, sqlmock.AnyArg()).
-		WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username, u.public_profile_enabled_at\nFROM users u\nLEFT JOIN user_emails ue ON ue.id = (\n        SELECT id FROM user_emails ue2\n        WHERE ue2.user_id = u.idusers AND ue2.verified_at IS NOT NULL\n        ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1\n)\nWHERE u.idusers = ?\n")).
-		WithArgs(int32(1)).
-		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(1, sql.NullString{String: "primary@example.com", Valid: true}, sql.NullString{String: "tester", Valid: true}, sql.NullTime{}))
 
 	form := url.Values{"new_email": {"new@example.com"}}
 	req := httptest.NewRequest(http.MethodPost, "http://example.com/usr/email", strings.NewReader(form.Encode()))
@@ -98,7 +98,14 @@ func TestAddEmailTaskUsesConfigExpiry(t *testing.T) {
 		t.Fatalf("expiry %v not within margin of expected %v", expiresAt, expectedExpire)
 	}
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	if len(queries.inserted) != 1 {
+		t.Fatalf("expected insert, got %d", len(queries.inserted))
+	}
+	inserted := queries.inserted[0]
+	if inserted.UserID != 1 || inserted.Email != "new@example.com" {
+		t.Fatalf("unexpected insert args: %#v", inserted)
+	}
+	if inserted.VerificationExpiresAt.Time.Before(expectedExpire.Add(-margin)) || inserted.VerificationExpiresAt.Time.After(expectedExpire.Add(margin)) {
+		t.Fatalf("insert expiry %v not within margin of expected %v", inserted.VerificationExpiresAt.Time, expectedExpire)
 	}
 }

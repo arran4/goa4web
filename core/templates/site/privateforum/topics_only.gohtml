@@ -6,6 +6,6 @@
     {{ if cd.CurrentError }}
         <p class="error-message">{{ cd.CurrentError }}</p>
     {{ end }}
-    {{ template "tableTopics" (dict "Topics" cd.PrivateTopics "BasePath" "/private") }}
+    {{ template "tableTopics" (dict "Topics" cd.PrivateTopics "BasePath" "/private" "IsAdmin" (and cd.IsAdmin cd.IsAdminMode)) }}
     {{ template "tail" $ }}
 {{ end }}

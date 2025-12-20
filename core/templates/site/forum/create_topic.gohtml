@@ -4,7 +4,7 @@
     {{ if cd.CurrentError }}
         <p class="error-message">{{ cd.CurrentError }}</p>
     {{ end }}
-    {{ template "tableTopics" (dict "Topics" cd.PrivateTopics "BasePath" "/private") }}
+    {{ template "tableTopics" (dict "Topics" cd.PrivateTopics "BasePath" "/private" "IsAdmin" (and cd.IsAdmin cd.IsAdminMode)) }}
     {{ if cd.HasGrant "privateforum" "topic" "create" 0 }}
         <h2>Start group discussion</h2>
         <p>Add people to start a shared conversation.</p>

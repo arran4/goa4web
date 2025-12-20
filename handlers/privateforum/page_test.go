@@ -10,6 +10,8 @@ import (
 	"testing"
 	"unsafe"
 
+	"time"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
@@ -78,6 +80,47 @@ func TestPage_SeeNoCreate(t *testing.T) {
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
+	}
+}
+
+func TestPage_AdminLinks(t *testing.T) {
+	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+	cd.AdminMode = true
+
+	// Inject a mock topic
+	topic := &common.PrivateTopic{
+		ListPrivateTopicsByUserIDRow: &db.ListPrivateTopicsByUserIDRow{},
+	}
+	topic.Idforumtopic = 123
+	topic.Title.String = "Secret Plans"
+	topic.Title.Valid = true
+	topic.Lastaddition.Time = time.Now()
+	topic.Lastaddition.Valid = true
+	cachePrivateTopics(cd, []*common.PrivateTopic{topic})
+
+	req := httptest.NewRequest(http.MethodGet, "/private", nil)
+	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
+
+	// Mock the template engine to handle tableTopics if needed, but since we are running in unit test without full template loading,
+	// we might run into template missing error if we don't set it up.
+	// However, PrivateForumPage uses handlers.TemplateHandler which uses global templates.
+	// We need to ensure templates are loaded or at least available.
+	// The existing TestPage_Access asserts body content, so templates must be working or mocked in some way.
+	// core/templates/site/* are embedded.
+
+	// But wait, the previous tests (TestPage_Access) pass. They use PrivateForumPage.
+	// This implies the standard template loading works in these tests or is bypassed?
+	// The tests are in package privateforum, so they use the same package.
+	// But `handlers.TemplateHandler` relies on `core.templates`.
+	// If `TestMain` is not setting up templates, they might be empty.
+	// Let's check `handlers/privateforum/main_test.go`.
+
+	w := httptest.NewRecorder()
+	PrivateForumPage(w, req)
+
+	body := w.Body.String()
+	if !strings.Contains(body, "/admin/forum/topics/topic/123/edit") {
+		t.Errorf("expected admin link for topic 123, got body length %d", len(body))
 	}
 }
 

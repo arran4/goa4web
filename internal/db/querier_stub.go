@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"sync"
 )
@@ -47,6 +48,27 @@ type QuerierStub struct {
 
 	ListSubscribersForPatternParams []ListSubscribersForPatternParams
 	ListSubscribersForPatternReturn map[string][]int32
+
+	DeleteThreadsByTopicIDCalls []int32
+	DeleteThreadsByTopicIDErr   error
+
+	AdminListForumTopicGrantsByTopicIDCalls   []sql.NullInt32
+	AdminListForumTopicGrantsByTopicIDReturns []*AdminListForumTopicGrantsByTopicIDRow
+	AdminListForumTopicGrantsByTopicIDErr     error
+}
+
+func (s *QuerierStub) AdminListForumTopicGrantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListForumTopicGrantsByTopicIDRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.AdminListForumTopicGrantsByTopicIDCalls = append(s.AdminListForumTopicGrantsByTopicIDCalls, itemID)
+	return s.AdminListForumTopicGrantsByTopicIDReturns, s.AdminListForumTopicGrantsByTopicIDErr
+}
+
+func (s *QuerierStub) DeleteThreadsByTopicID(ctx context.Context, forumtopicIdforumtopic int32) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.DeleteThreadsByTopicIDCalls = append(s.DeleteThreadsByTopicIDCalls, forumtopicIdforumtopic)
+	return s.DeleteThreadsByTopicIDErr
 }
 
 // SystemGetUserByID records the call and returns the configured response.

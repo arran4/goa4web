@@ -66,9 +66,9 @@ func TestTemplateLinks(t *testing.T) {
 	} else if _, err := os.Stat("cmd/goa4web/testdata"); err == nil {
 		scanDirs = append(scanDirs, "cmd/goa4web/testdata")
 	} else {
-        // Create testdata if missing? No, we created it.
-        // Assuming we are running in the right dir.
-    }
+		// Create testdata if missing? No, we created it.
+		// Assuming we are running in the right dir.
+	}
 
 	if len(scanDirs) == 0 {
 		t.Skip("Cannot find template directories")

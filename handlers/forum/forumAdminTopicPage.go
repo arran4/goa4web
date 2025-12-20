@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -35,10 +36,29 @@ func AdminTopicPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Forum Topic %d", tid)
+	// Check if "anyone" (public) has access to this topic.
+	// This logic depends on how "anyone" access is modeled in grants.
+	// Assuming a grant exists for role "Anyone" or similar logic.
+	// For now, we'll check if there's any grant for the topic that applies to public.
+	// Since we don't have a direct "IsPublic" helper, we'll fetch grants and check in memory or use a new query.
+	// Using AdminListForumTopicGrantsByTopicID.
+	grants, err := cd.Queries().AdminListForumTopicGrantsByTopicID(r.Context(), sql.NullInt32{Int32: int32(tid), Valid: true})
+	anyoneHasAccess := false
+	if err == nil {
+		for _, g := range grants {
+			if g.RoleName.Valid && strings.EqualFold(g.RoleName.String, "Anyone") && g.Action == "see" {
+				anyoneHasAccess = true
+				break
+			}
+		}
+	}
+
 	data := struct {
-		Topic *db.GetForumTopicByIdForUserRow
+		Topic           *db.GetForumTopicByIdForUserRow
+		AnyoneHasAccess bool
 	}{
-		Topic: topic,
+		Topic:           topic,
+		AnyoneHasAccess: anyoneHasAccess,
 	}
 	handlers.TemplateHandler(w, r, "forum/adminTopicPage.gohtml", data)
 }

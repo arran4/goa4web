@@ -149,6 +149,12 @@ func AdminTopicDeletePage(w http.ResponseWriter, r *http.Request) {
 		handlers.RedirectSeeOtherWithError(w, r, "", err)
 		return
 	}
+	if r.FormValue("cascade") == "true" {
+		if err := cd.Queries().DeleteThreadsByTopicID(r.Context(), int32(tid)); err != nil {
+			handlers.RedirectSeeOtherWithError(w, r, "", err)
+			return
+		}
+	}
 	if err := cd.Queries().AdminDeleteForumTopic(r.Context(), int32(tid)); err != nil {
 		handlers.RedirectSeeOtherWithError(w, r, "", err)
 		return

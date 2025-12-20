@@ -31,6 +31,10 @@ func TestAdminTopicPage(t *testing.T) {
 		AddRow(topicID, 0, 1, 0, "t", "d", 2, 3, time.Now(), "", nil)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.language_id, t.title, t.description, t.threads, t.comments, t.lastaddition, t.handler, lu.username AS LastPosterUsername FROM forumtopic t")).WillReturnRows(rows)
 
+	grantsRows := sqlmock.NewRows([]string{"id", "section", "action", "role_name", "username"}).
+		AddRow(1, "forum", "see", "Anyone", nil)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT g.id, g.section, g.action, r.name AS role_name, u.username FROM grants g")).WillReturnRows(grantsRows)
+
 	cd := common.NewCoreData(context.Background(), db.New(conn), config.NewRuntimeConfig())
 	r := httptest.NewRequest("GET", "/admin/forum/topics/topic/"+strconv.Itoa(topicID), nil)
 	r = mux.SetURLVars(r, map[string]string{"topic": strconv.Itoa(topicID)})

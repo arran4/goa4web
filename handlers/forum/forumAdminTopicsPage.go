@@ -142,6 +142,26 @@ func AdminTopicCreatePage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/admin/forum/topics", http.StatusSeeOther)
 }
 
+func AdminTopicDeleteConfirmPage(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	tid, err := strconv.Atoi(mux.Vars(r)["topic"])
+	if err != nil {
+		handlers.RedirectSeeOtherWithError(w, r, "/admin/forum/topics", err)
+		return
+	}
+	cd.PageTitle = "Confirm forum topic delete"
+	data := struct {
+		Message      string
+		ConfirmLabel string
+		Back         string
+	}{
+		Message:      "Are you sure you want to delete forum topic " + strconv.Itoa(tid) + "?",
+		ConfirmLabel: "Confirm delete",
+		Back:         "/admin/forum/topics/topic/" + strconv.Itoa(tid),
+	}
+	handlers.TemplateHandler(w, r, "confirmPage.gohtml", data)
+}
+
 func AdminTopicDeletePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	tid, err := strconv.Atoi(mux.Vars(r)["topic"])

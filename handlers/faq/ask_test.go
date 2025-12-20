@@ -2,34 +2,27 @@ package faq
 
 import (
 	"context"
-	"database/sql"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db/testutil"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/middleware"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
 func TestAskActionPage_InvalidForms(t *testing.T) {
-	dbconn, _, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer dbconn.Close()
-
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = "test-session"
@@ -62,12 +55,8 @@ func TestAskActionPage_InvalidForms(t *testing.T) {
 }
 
 func TestAskActionPage_AdminEvent(t *testing.T) {
-	dbconn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer dbconn.Close()
-
+	queries := testutil.NewFAQQuerier(t)
+	queries.AllowGrants()
 	cfg := config.NewRuntimeConfig()
 
 	cfg.EmailEnabled = true
@@ -91,15 +80,11 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 		req.AddCookie(c)
 	}
 	bus := eventbus.NewBus()
-	q := db.New(dbconn)
-	mock.ExpectQuery("SELECT 1 FROM grants").
-		WithArgs(sqlmock.AnyArg(), "faq", sqlmock.AnyArg(), "post", sqlmock.AnyArg(), sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
-	mock.ExpectExec("INSERT INTO faq").
-		WithArgs(sql.NullString{String: "hi", Valid: true}, int32(1), int32(1), sqlmock.AnyArg(), sqlmock.AnyArg()).
-		WillReturnResult(sqlmock.NewResult(1, 1))
+	if len(queries.CreatedFAQArgs) != 0 {
+		t.Fatalf("expected no create calls before action")
+	}
 	evt := &eventbus.TaskEvent{Path: "/faq/ask", Task: tasks.TaskString(TaskAsk), UserID: 1}
-	cd := common.NewCoreData(req.Context(), q, cfg)
+	cd := common.NewCoreData(req.Context(), queries, cfg, common.WithUserRoles([]string{"user"}), common.WithPreference(&db.Preference{PageSize: 15}))
 	cd.UserID = 1
 	cd.SetEvent(evt)
 
@@ -115,8 +100,10 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 		t.Fatalf("status=%d", rr.Code)
 	}
 	_ = cd.Event()
-
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	if len(queries.CreatedFAQArgs) != 1 {
+		t.Fatalf("expected one create call, got %d", len(queries.CreatedFAQArgs))
+	}
+	if queries.CreatedFAQArgs[0].Question.String != "hi" || queries.CreatedFAQArgs[0].WriterID != 1 {
+		t.Fatalf("CreateFAQQuestionForWriter args %+v", queries.CreatedFAQArgs[0])
 	}
 }

@@ -3,39 +3,33 @@ package common_test
 import (
 	"context"
 	"database/sql"
-	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http/httptest"
 	"strconv"
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db/testutil"
 )
 
 func TestCoreDataLatestNewsLazy(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-
-	queries := db.New(conn)
+	queries := testutil.NewNewsQuerier(t)
+	queries.AllowGrants()
 	now := time.Now()
-	rows := sqlmock.NewRows([]string{
-		"writerName", "writerId", "idsitenews", "forumthread_id", "language_id",
-		"users_idusers", "news", "occurred", "timezone", "comments",
-	}).AddRow("w", 1, 1, 0, 1, 1, "a", now, time.Local.String(), 0)
-
-	mock.ExpectQuery("SELECT u.username").WithArgs(int32(1), int32(1), int32(1), sql.NullInt32{Int32: 1, Valid: true}, int32(15), int32(0)).WillReturnRows(rows)
-	mock.ExpectQuery("SELECT 1 FROM grants g JOIN roles").WithArgs("user", "administrator").WillReturnError(sql.ErrNoRows)
-	mock.ExpectQuery("SELECT 1 FROM grants").WithArgs(int32(1), "news", sql.NullString{String: "post", Valid: true}, "see", sql.NullInt32{Int32: 1, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+	queries.Posts = []*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow{{
+		Writername: sql.NullString{String: "w", Valid: true},
+		Writerid:   sql.NullInt32{Int32: 1, Valid: true},
+		Idsitenews: 1,
+		Occurred:   sql.NullTime{Time: now, Valid: true},
+		Timezone:   sql.NullString{String: time.Local.String(), Valid: true},
+	}}
 
 	req := httptest.NewRequest("GET", "/", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}), common.WithPreference(&db.Preference{PageSize: 15}))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	_ = req.WithContext(ctx)
@@ -47,54 +41,47 @@ func TestCoreDataLatestNewsLazy(t *testing.T) {
 		t.Fatalf("LatestNews second call: %v", err)
 	}
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 }
 
 func TestUpdateFAQQuestion(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-
 	cfg := config.NewRuntimeConfig()
-	queries := db.New(conn)
-	mock.ExpectExec("UPDATE faq").
-		WithArgs(sql.NullString{String: "a", Valid: true}, sql.NullString{String: "q", Valid: true}, sql.NullInt32{Int32: 2, Valid: true}, int32(1)).
-		WillReturnResult(sqlmock.NewResult(0, 1))
-	mock.ExpectExec("INSERT INTO faq_revisions").
-		WithArgs(int32(1), int32(3), sql.NullString{String: "q", Valid: true}, sql.NullString{String: "a", Valid: true}, sql.NullString{String: cfg.Timezone, Valid: true}, sql.NullInt32{Int32: 3, Valid: true}, int32(3)).
-		WillReturnResult(sqlmock.NewResult(0, 1))
+	queries := testutil.NewFAQQuerier(t)
 
-	cd := common.NewCoreData(context.Background(), queries, cfg)
+	cd := common.NewCoreData(context.Background(), queries, cfg, common.WithPreference(&db.Preference{PageSize: 15}))
 	if err := cd.UpdateFAQQuestion("q", "a", 2, 1, 3); err != nil {
 		t.Fatalf("UpdateFAQQuestion: %v", err)
 	}
-
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	if len(queries.Updated) != 1 {
+		t.Fatalf("expected 1 update, got %d", len(queries.Updated))
 	}
+	if queries.Updated[0].ID != 1 {
+		t.Fatalf("AdminUpdateFAQQuestionAnswer ID %d, want 1", queries.Updated[0].ID)
+	}
+	if len(queries.Revisions) != 1 {
+		t.Fatalf("expected 1 revision, got %d", len(queries.Revisions))
+	}
+	rev := queries.Revisions[0]
+	if rev.FaqID != 1 || rev.UsersIdusers != 3 {
+		t.Fatalf("InsertFAQRevisionForUser IDs %+v", rev)
+	}
+	if rev.Timezone.String != cfg.Timezone {
+		t.Fatalf("InsertFAQRevisionForUser timezone %q, want %q", rev.Timezone.String, cfg.Timezone)
+	}
+
 }
 
 func TestWritingCategoriesLazy(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-
-	queries := db.New(conn)
-	rows := sqlmock.NewRows([]string{"idwritingcategory", "writing_category_id", "title", "description"}).
-		AddRow(1, 0, "a", "b")
-
-	mock.ExpectQuery("SELECT wc.idwritingcategory").WillReturnRows(rows)
-	mock.ExpectQuery("SELECT 1 FROM grants g JOIN roles").WithArgs("user", "administrator").WillReturnError(sql.ErrNoRows)
-	mock.ExpectQuery("SELECT 1 FROM grants").WithArgs(int32(1), "writing", sql.NullString{String: "category", Valid: true}, "see", sql.NullInt32{Int32: 1, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+	queries := testutil.NewWritingCategoriesQuerier(t)
+	queries.AllowGrants()
+	queries.Categories = []*db.WritingCategory{{
+		Idwritingcategory: 1,
+		WritingCategoryID: sql.NullInt32{Int32: 0, Valid: false},
+		Title:             sql.NullString{String: "a", Valid: true},
+		Description:       sql.NullString{String: "b", Valid: true},
+	}}
 
 	ctx := context.Background()
-	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}), common.WithPreference(&db.Preference{PageSize: 15}))
 	cd.UserID = 1
 
 	if _, err := cd.VisibleWritingCategories(); err != nil {
@@ -104,27 +91,15 @@ func TestWritingCategoriesLazy(t *testing.T) {
 		t.Fatalf("WritingCategories second call: %v", err)
 	}
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 }
 
 func TestNewsAnnouncementCaching(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-
-	queries := db.New(conn)
+	queries := testutil.NewAnnouncementQuerier(t)
 	now := time.Now()
-	annRows := sqlmock.NewRows([]string{"id", "site_news_id", "active", "created_at"}).
-		AddRow(1, 1, true, now)
-
-	mock.ExpectQuery("SELECT id, site_news_id, active, created_at").WithArgs(int32(1)).WillReturnRows(annRows)
+	queries.Announcement = &db.SiteAnnouncement{ID: 1, SiteNewsID: 1, Active: true, CreatedAt: now}
 
 	ctx := context.Background()
-	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithPreference(&db.Preference{PageSize: 15}))
 
 	if cd.NewsAnnouncement(1) == nil {
 		t.Fatalf("NewsAnnouncement returned nil")
@@ -133,24 +108,14 @@ func TestNewsAnnouncementCaching(t *testing.T) {
 		t.Fatalf("NewsAnnouncement second returned nil")
 	}
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 }
 
 func TestNewsAnnouncementError(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-
-	queries := db.New(conn)
-
-	mock.ExpectQuery("SELECT id, site_news_id, active, created_at").WithArgs(int32(1)).WillReturnError(sql.ErrConnDone)
+	queries := testutil.NewAnnouncementQuerier(t)
+	queries.Err = sql.ErrConnDone
 
 	ctx := context.Background()
-	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithPreference(&db.Preference{PageSize: 15}))
 
 	if cd.NewsAnnouncement(1) != nil {
 		t.Fatalf("NewsAnnouncement expected nil on error")
@@ -159,37 +124,32 @@ func TestNewsAnnouncementError(t *testing.T) {
 		t.Fatalf("NewsAnnouncement second expected nil on error")
 	}
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 }
 
 func TestPublicWritingsLazy(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-
-	queries := db.New(conn)
+	queries := testutil.NewWritingsQuerier(t)
+	queries.AllowGrants()
 	now := time.Now()
-	rows := sqlmock.NewRows([]string{"idwriting", "users_idusers", "forumthread_id", "language_id", "writing_category_id", "title", "published", "timezone", "writing", "abstract", "private", "deleted_at", "last_index", "Username", "Comments"}).
-		AddRow(1, 1, 0, 1, 0, "t", now, time.Local.String(), "w", "a", false, now, now, "u", 0)
-
-	mock.ExpectQuery("SELECT w.idwriting").WithArgs(int32(1), int32(0), int32(1), int32(1), sql.NullInt32{Int32: 1, Valid: true}, int32(15), int32(0)).WillReturnRows(rows)
-	mock.ExpectQuery("SELECT 1 FROM grants g JOIN roles").WithArgs("user", "administrator").WillReturnError(sql.ErrNoRows)
-	mock.ExpectQuery("SELECT 1 FROM grants").WithArgs(int32(1), "writing", sql.NullString{String: "article", Valid: true}, "see", sql.NullInt32{Int32: 1, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
-
-	rows2 := sqlmock.NewRows([]string{"idwriting", "users_idusers", "forumthread_id", "language_id", "writing_category_id", "title", "published", "timezone", "writing", "abstract", "private", "deleted_at", "last_index", "Username", "Comments"}).
-		AddRow(2, 1, 0, 1, 1, "t2", now, time.Local.String(), "w2", "a2", false, now, now, "u", 0)
-
-	mock.ExpectQuery("SELECT w.idwriting").WithArgs(int32(1), int32(1), int32(1), int32(1), sql.NullInt32{Int32: 1, Valid: true}, int32(15), int32(0)).WillReturnRows(rows2)
-	mock.ExpectQuery("SELECT 1 FROM grants g JOIN roles").WithArgs("user", "administrator").WillReturnError(sql.ErrNoRows)
-	mock.ExpectQuery("SELECT 1 FROM grants").WithArgs(int32(1), "writing", sql.NullString{String: "article", Valid: true}, "see", sql.NullInt32{Int32: 2, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+	queries.PublicRowsByCategory = map[int32][]*db.ListPublicWritingsInCategoryForListerRow{
+		0: {{
+			Idwriting:         1,
+			WritingCategoryID: 0,
+			Title:             sql.NullString{String: "t", Valid: true},
+			Published:         sql.NullTime{Time: now, Valid: true},
+			Timezone:          sql.NullString{String: time.Local.String(), Valid: true},
+		}},
+		1: {{
+			Idwriting:         2,
+			WritingCategoryID: 1,
+			Title:             sql.NullString{String: "t2", Valid: true},
+			Published:         sql.NullTime{Time: now, Valid: true},
+			Timezone:          sql.NullString{String: time.Local.String(), Valid: true},
+		}},
+	}
 
 	req := httptest.NewRequest("GET", "/", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}), common.WithPreference(&db.Preference{PageSize: 15}))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -207,32 +167,22 @@ func TestPublicWritingsLazy(t *testing.T) {
 		t.Fatalf("PublicWritings other category second call: %v", err)
 	}
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 }
 
 func TestCoreDataLatestWritingsLazy(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-
-	queries := db.New(conn)
+	queries := testutil.NewWritingsQuerier(t)
+	queries.AllowGrants()
 	now := time.Now()
-	rows := sqlmock.NewRows([]string{
-		"idwriting", "users_idusers", "forumthread_id", "language_id",
-		"writing_category_id", "title", "published", "timezone", "writing", "abstract",
-		"private", "deleted_at", "last_index",
-	}).AddRow(1, 1, 0, 1, 1, "t", now, time.Local.String(), "w", "a", nil, nil, now)
-
-	mock.ExpectQuery("SELECT w.idwriting").WithArgs(int32(15), int32(0)).WillReturnRows(rows)
-	mock.ExpectQuery("SELECT 1 FROM grants g JOIN roles").WithArgs("user", "administrator").WillReturnError(sql.ErrNoRows)
-	mock.ExpectQuery("SELECT 1 FROM grants").WithArgs(int32(1), "writing", sql.NullString{String: "article", Valid: true}, "see", sql.NullInt32{Int32: 1, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+	queries.Writings = []*db.Writing{{
+		Idwriting:         1,
+		WritingCategoryID: 1,
+		Title:             sql.NullString{String: "t", Valid: true},
+		Published:         sql.NullTime{Time: now, Valid: true},
+		Timezone:          sql.NullString{String: time.Local.String(), Valid: true},
+	}}
 
 	ctx := context.Background()
-	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}), common.WithPreference(&db.Preference{PageSize: 15}))
 	cd.UserID = 1
 
 	req := httptest.NewRequest("GET", "/", nil).WithContext(context.WithValue(ctx, consts.KeyCoreData, cd))
@@ -244,28 +194,16 @@ func TestCoreDataLatestWritingsLazy(t *testing.T) {
 		t.Fatalf("LatestWritings second call: %v", err)
 	}
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 }
 
 func TestBloggersLazy(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-
-	queries := db.New(conn)
-	rows := sqlmock.NewRows([]string{"username", "count"}).AddRow("bob", 2)
-	mock.ExpectQuery("SELECT u.username").
-		WithArgs(int32(1), int32(1), int32(1), sqlmock.AnyArg(), int32(16), int32(0)).
-		WillReturnRows(rows)
+	queries := testutil.NewBlogQuerier(t)
+	queries.Bloggers = []*db.ListBloggersForListerRow{{Username: sql.NullString{String: "bob", Valid: true}, Count: 2}}
 
 	req := httptest.NewRequest("GET", "/", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, cfg)
+	cd := common.NewCoreData(ctx, queries, cfg, common.WithPreference(&db.Preference{PageSize: 15}))
 	cd.UserID = 1
 	req = req.WithContext(ctx)
 
@@ -276,30 +214,18 @@ func TestBloggersLazy(t *testing.T) {
 		t.Fatalf("Bloggers second call: %v", err)
 	}
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 }
 
 func TestWritersLazy(t *testing.T) {
 
 	cfg := config.NewRuntimeConfig()
 
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-
-	queries := db.New(conn)
-	rows := sqlmock.NewRows([]string{"username", "count"}).AddRow("bob", 2)
-	mock.ExpectQuery("SELECT u.username").
-		WithArgs(int32(1), int32(1), int32(1), sqlmock.AnyArg(), int32(16), int32(0)).
-		WillReturnRows(rows)
+	queries := testutil.NewBlogQuerier(t)
+	queries.Writers = []*db.ListWritersForListerRow{{Username: sql.NullString{String: "bob", Valid: true}, Count: 2}}
 
 	req := httptest.NewRequest("GET", "/", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, cfg)
+	cd := common.NewCoreData(ctx, queries, cfg, common.WithPreference(&db.Preference{PageSize: 15}))
 	cd.UserID = 1
 	req = req.WithContext(ctx)
 
@@ -310,31 +236,27 @@ func TestWritersLazy(t *testing.T) {
 		t.Fatalf("Writers second call: %v", err)
 	}
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 }
 
 func TestBlogListLazy(t *testing.T) {
 
 	cfg := config.NewRuntimeConfig()
 
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-
-	queries := db.New(conn)
+	queries := testutil.NewBlogQuerier(t)
+	queries.AllowGrants()
 	now := time.Now()
-	rows := sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_id", "blog", "written", "timezone", "username", "comments", "is_owner"}).
-		AddRow(1, nil, 1, 0, "b", now, time.Local.String(), "bob", 0, true)
-	mock.ExpectQuery("SELECT b.idblogs").
-		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
-		WillReturnRows(rows)
+	queries.BlogEntries = []*db.ListBlogEntriesForListerRow{{
+		Idblogs:  1,
+		Blog:     sql.NullString{String: "b", Valid: true},
+		Written:  now,
+		Timezone: sql.NullString{String: time.Local.String(), Valid: true},
+		Username: sql.NullString{String: "bob", Valid: true},
+		Comments: 0,
+		IsOwner:  true,
+	}}
 
 	ctx := context.Background()
-	cd := common.NewCoreData(ctx, queries, cfg, common.WithUserRoles([]string{"administrator"}))
+	cd := common.NewCoreData(ctx, queries, cfg, common.WithUserRoles([]string{"administrator"}), common.WithPreference(&db.Preference{PageSize: 15}))
 	cd.UserID = 1
 
 	if _, err := cd.BlogList(); err != nil {
@@ -344,31 +266,27 @@ func TestBlogListLazy(t *testing.T) {
 		t.Fatalf("BlogList second call: %v", err)
 	}
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 }
 
 func TestBlogListForSelectedAuthorLazy(t *testing.T) {
 
 	cfg := config.NewRuntimeConfig()
 
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-
-	queries := db.New(conn)
+	queries := testutil.NewBlogQuerier(t)
+	queries.AllowGrants()
 	now := time.Now()
-	rows := sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_id", "blog", "written", "timezone", "username", "comments", "is_owner"}).
-		AddRow(1, nil, 1, 0, "b", now, time.Local.String(), "bob", 0, true)
-	mock.ExpectQuery("SELECT b.idblogs").
-		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
-		WillReturnRows(rows)
+	queries.BlogEntriesByAuthor = []*db.ListBlogEntriesByAuthorForListerRow{{
+		Idblogs:  1,
+		Blog:     sql.NullString{String: "b", Valid: true},
+		Written:  now,
+		Timezone: sql.NullString{String: time.Local.String(), Valid: true},
+		Username: sql.NullString{String: "bob", Valid: true},
+		Comments: 0,
+		IsOwner:  true,
+	}}
 
 	ctx := context.Background()
-	cd := common.NewCoreData(ctx, queries, cfg, common.WithUserRoles([]string{"administrator"}))
+	cd := common.NewCoreData(ctx, queries, cfg, common.WithUserRoles([]string{"administrator"}), common.WithPreference(&db.Preference{PageSize: 15}))
 	cd.UserID = 1
 	cd.SetCurrentProfileUserID(1)
 
@@ -379,68 +297,39 @@ func TestBlogListForSelectedAuthorLazy(t *testing.T) {
 		t.Fatalf("BlogListForSelectedAuthor second call: %v", err)
 	}
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 }
 
 func TestSelectedQuestionFromCategory(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-
-	queries := db.New(conn)
+	queries := testutil.NewFAQQuerier(t)
 	ctx := context.Background()
 	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
 
-	row := sqlmock.NewRows([]string{"id", "category_id", "language_id", "author_id", "answer", "question"}).
-		AddRow(1, 2, 0, 0, sql.NullString{}, sql.NullString{})
-	mock.ExpectQuery("SELECT id, category_id").WithArgs(int32(1)).WillReturnRows(row)
-	mock.ExpectExec("UPDATE faq SET deleted_at").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
+	queries.FAQ = &db.Faq{ID: 1, CategoryID: sql.NullInt32{Int32: 2, Valid: true}}
 
 	if err := cd.SelectedQuestionFromCategory(1, 2); err != nil {
 		t.Fatalf("SelectedQuestionFromCategory: %v", err)
 	}
-
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	if len(queries.DeletedIDs) != 1 || queries.DeletedIDs[0] != 1 {
+		t.Fatalf("AdminDeleteFAQ ids %+v, want [1]", queries.DeletedIDs)
 	}
+
 }
 
 func TestSelectedQuestionFromCategoryWrongCategory(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-
-	queries := db.New(conn)
+	queries := testutil.NewFAQQuerier(t)
 	ctx := context.Background()
 	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
 
-	row := sqlmock.NewRows([]string{"id", "category_id", "language_id", "author_id", "answer", "question"}).
-		AddRow(1, 3, 0, 0, sql.NullString{}, sql.NullString{})
-	mock.ExpectQuery("SELECT id, category_id").WithArgs(int32(1)).WillReturnRows(row)
+	queries.FAQ = &db.Faq{ID: 1, CategoryID: sql.NullInt32{Int32: 3, Valid: true}}
 
 	if err := cd.SelectedQuestionFromCategory(1, 2); err == nil {
 		t.Fatalf("expected error")
 	}
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 }
 
 func TestSelectedThreadCanReply(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-
-	queries := db.New(conn)
+	queries := testutil.NewThreadReplyQuerier(t)
 	ctx := context.Background()
 	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
 	cd.UserID = 1
@@ -448,37 +337,16 @@ func TestSelectedThreadCanReply(t *testing.T) {
 	threadID, topicID := int32(3), int32(2)
 	cd.SetCurrentThreadAndTopic(threadID, topicID)
 
-	rows := sqlmock.NewRows([]string{
-		"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked",
-	}).AddRow(threadID, 0, 0, topicID, nil, time.Now(), nil)
-	mock.ExpectQuery("SELECT th.idforumthread").WithArgs(
-		int32(1),
-		threadID,
-		int32(1),
-		int32(1),
-		"forum",
-		sql.NullString{String: "topic", Valid: true},
-		sql.NullInt32{Int32: topicID, Valid: true},
-		sql.NullInt32{Int32: 1, Valid: true},
-	).WillReturnRows(rows)
+	queries.Thread = &db.Forumthread{Idforumthread: threadID, ForumtopicIdforumtopic: topicID}
 
 	if !cd.SelectedThreadCanReply() {
 		t.Fatalf("SelectedThreadCanReply() = false; want true")
 	}
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 }
 
 func TestSelectedThreadCanReplyPrivateForum(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-
-	queries := db.New(conn)
+	queries := testutil.NewThreadReplyQuerier(t)
 	ctx := context.Background()
 	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
 	cd.UserID = 1
@@ -486,37 +354,17 @@ func TestSelectedThreadCanReplyPrivateForum(t *testing.T) {
 	threadID, topicID := int32(3), int32(2)
 	cd.SetCurrentThreadAndTopic(threadID, topicID)
 
-	rows := sqlmock.NewRows([]string{
-		"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked",
-	}).AddRow(threadID, 0, 0, topicID, nil, time.Now(), nil)
-	mock.ExpectQuery("SELECT th.idforumthread").WithArgs(
-		int32(1),
-		threadID,
-		int32(1),
-		int32(1),
-		"privateforum",
-		sql.NullString{String: "topic", Valid: true},
-		sql.NullInt32{Int32: topicID, Valid: true},
-		sql.NullInt32{Int32: 1, Valid: true},
-	).WillReturnRows(rows)
+	queries.Thread = &db.Forumthread{Idforumthread: threadID, ForumtopicIdforumtopic: topicID}
 
 	if !cd.SelectedThreadCanReply() {
 		t.Fatalf("SelectedThreadCanReply() = false; want true")
 	}
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 }
 
 func TestSelectedThreadCanReplyGrantFallback(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-
-	queries := db.New(conn)
+	queries := testutil.NewThreadReplyQuerier(t)
+	queries.AllowGrants()
 	ctx := context.Background()
 	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
 	cd.UserID = 1
@@ -525,44 +373,17 @@ func TestSelectedThreadCanReplyGrantFallback(t *testing.T) {
 	cd.SetCurrentThreadAndTopic(threadID, 0)
 	cd.SetCurrentBlog(blogID)
 
-	mock.ExpectQuery("SELECT th.idforumthread").WithArgs(
-		int32(1),
-		threadID,
-		int32(1),
-		int32(1),
-		"blogs",
-		sql.NullString{String: "entry", Valid: true},
-		sql.NullInt32{Int32: blogID, Valid: true},
-		sql.NullInt32{Int32: 1, Valid: true},
-	).WillReturnError(sql.ErrNoRows)
-
-	grantRows := sqlmock.NewRows([]string{"1"}).AddRow(1)
-	mock.ExpectQuery("SELECT 1 FROM grants g").WithArgs(
-		int32(1),
-		"blogs",
-		sql.NullString{String: "entry", Valid: true},
-		"reply",
-		sql.NullInt32{Int32: blogID, Valid: true},
-		sql.NullInt32{Int32: 1, Valid: true},
-	).WillReturnRows(grantRows)
+	queries.Err = sql.ErrNoRows
 
 	if !cd.SelectedThreadCanReply() {
 		t.Fatalf("SelectedThreadCanReply() = false; want true")
 	}
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 }
 
 func TestSelectedThreadCanReplyGrantFallbackNoThread(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-
-	queries := db.New(conn)
+	queries := testutil.NewBaseQuerier(t)
+	queries.AllowGrants()
 	ctx := context.Background()
 	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
 	cd.UserID = 1
@@ -570,21 +391,8 @@ func TestSelectedThreadCanReplyGrantFallbackNoThread(t *testing.T) {
 	blogID := int32(7)
 	cd.SetCurrentBlog(blogID)
 
-	grantRows := sqlmock.NewRows([]string{"1"}).AddRow(1)
-	mock.ExpectQuery("SELECT 1 FROM grants g").WithArgs(
-		int32(1),
-		"blogs",
-		sql.NullString{String: "entry", Valid: true},
-		"reply",
-		sql.NullInt32{Int32: blogID, Valid: true},
-		sql.NullInt32{Int32: 1, Valid: true},
-	).WillReturnRows(grantRows)
-
 	if !cd.SelectedThreadCanReply() {
 		t.Fatalf("SelectedThreadCanReply() = false; want true")
 	}
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 }

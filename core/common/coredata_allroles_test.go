@@ -4,25 +4,19 @@ import (
 	"context"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db/testutil"
 )
 
 func TestAllRolesLazy(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	queries := testutil.NewRolesQuerier(t)
+	queries.Roles = []*db.Role{
+		{ID: 1, Name: "user", CanLogin: true, IsAdmin: false, PrivateLabels: true},
+		{ID: 2, Name: "administrator", CanLogin: true, IsAdmin: true, PrivateLabels: true},
 	}
-	defer conn.Close()
 
-	rows := sqlmock.NewRows([]string{"id", "name", "can_login", "is_admin", "private_labels", "public_profile_allowed_at"}).
-		AddRow(int32(1), "user", true, false, true, nil).
-		AddRow(int32(2), "administrator", true, true, true, nil)
-
-	mock.ExpectQuery("SELECT id, name, can_login, is_admin, private_labels, public_profile_allowed_at FROM roles ORDER BY id").WillReturnRows(rows)
-
-	cd := NewCoreData(context.Background(), db.New(conn), config.NewRuntimeConfig())
+	cd := NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
 
 	roles, err := cd.AllRoles()
 	if err != nil {
@@ -38,7 +32,4 @@ func TestAllRolesLazy(t *testing.T) {
 		t.Fatalf("AllRoles second call: %v", err)
 	}
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 }

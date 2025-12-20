@@ -99,6 +99,7 @@ type Querier interface {
 	AdminGetRoleByID(ctx context.Context, id int32) (*Role, error)
 	AdminGetRoleByNameForUser(ctx context.Context, arg AdminGetRoleByNameForUserParams) (int32, error)
 	AdminGetSearchStats(ctx context.Context) (*AdminGetSearchStatsRow, error)
+	AdminGetSubsequentCommentID(ctx context.Context, arg AdminGetSubsequentCommentIDParams) (int32, error)
 	AdminGetThreadsStartedByUser(ctx context.Context, usersIdusers int32) ([]*Forumthread, error)
 	AdminGetThreadsStartedByUserWithTopic(ctx context.Context, usersIdusers int32) ([]*AdminGetThreadsStartedByUserWithTopicRow, error)
 	AdminGetWritingsByCategoryId(ctx context.Context, writingCategoryID int32) ([]*AdminGetWritingsByCategoryIdRow, error)

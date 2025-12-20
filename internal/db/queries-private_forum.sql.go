@@ -10,6 +10,26 @@ import (
 	"database/sql"
 )
 
+const adminGetSubsequentCommentID = `-- name: AdminGetSubsequentCommentID :one
+SELECT idcomments
+FROM comments
+WHERE forumthread_id = ? AND idcomments > ?
+ORDER BY idcomments ASC
+LIMIT 1
+`
+
+type AdminGetSubsequentCommentIDParams struct {
+	ForumthreadID int32
+	Idcomments    int32
+}
+
+func (q *Queries) AdminGetSubsequentCommentID(ctx context.Context, arg AdminGetSubsequentCommentIDParams) (int32, error) {
+	row := q.db.QueryRowContext(ctx, adminGetSubsequentCommentID, arg.ForumthreadID, arg.Idcomments)
+	var idcomments int32
+	err := row.Scan(&idcomments)
+	return idcomments, err
+}
+
 const adminListAllPrivateForumThreads = `-- name: AdminListAllPrivateForumThreads :many
 SELECT
     t.idforumthread,

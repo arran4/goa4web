@@ -148,26 +148,15 @@ func (c *privateForumCleanEmptyCmd) Run() error {
 			deleteReason = "no threads"
 		}
 
-		participantsMap := make(map[string]struct{})
 		if deleteReason == "" && validThreads == 0 {
-			grants, err := queries.AdminListGrantsByTopicID(ctx, sql.NullInt32{Int32: topic.Idforumtopic, Valid: true})
-			if err != nil {
-				log.Printf("error getting grants for topic %d: %v", topic.Idforumtopic, err)
-				continue
-			}
-			for _, grant := range grants {
-				if grant.Username.Valid {
-					participantsMap[grant.Username.String] = struct{}{}
-				}
-			}
-			if len(participantsMap) <= 1 {
-				deleteReason = "single participant with no content"
-			}
+			deleteReason = "no content"
 		}
 
 		if deleteReason == "" {
 			continue
 		}
+
+		participantsMap := make(map[string]struct{})
 
 		log.Printf("Deleting private forum topic ID %d (%s): %s", topic.Idforumtopic, topic.Title, deleteReason)
 
@@ -316,6 +305,15 @@ func (c *privateForumCleanEmptyThreadsCmd) deletePrivateForumThreadInvalidCommen
 	}
 
 	for _, commentID := range comments {
+		_, err := queries.AdminGetSubsequentCommentID(ctx, db.AdminGetSubsequentCommentIDParams{
+			ForumthreadID: threadID,
+			Idcomments:    commentID,
+		})
+		if err == nil {
+			log.Printf("  - Reporting invalid comment ID %d: has subsequent comments", commentID)
+			continue
+		}
+
 		log.Printf("  - Deleting invalid comment ID: %d", commentID)
 		if !c.dryRun {
 			if err := queries.AdminHardDeleteComment(ctx, commentID); err != nil {

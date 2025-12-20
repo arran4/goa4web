@@ -1,0 +1,52 @@
+{{ template "head" $ }}
+<div class="row">
+    <div class="col-12">
+        <h1>Email Tester</h1>
+
+        {{ if .Result }}
+        <div class="alert alert-success">
+            {{ .Result }}
+        </div>
+        {{ end }}
+
+        {{ if .Error }}
+        <div class="alert alert-danger">
+            {{ .Error }}
+        </div>
+        {{ end }}
+
+        <form method="POST">
+             {{ csrfField }}
+             <div class="form-group">
+                <label for="to_address">To Address</label>
+                <input type="email" class="form-control" id="to_address" name="to_address" value="{{ .ToAddress }}" required>
+                <small class="form-text text-muted">The email address to send the test email to.</small>
+            </div>
+
+            <hr>
+            <h3>Backend Settings</h3>
+            <p>Modify the values below to test different configurations (defaults to current runtime config).</p>
+
+            {{ range .Settings }}
+            <div class="form-group">
+                <label for="setting-{{ .Env }}">{{ .Name }} ({{ .Env }})</label>
+                {{ if eq .Env "EMAIL_PROVIDER" }}
+                <input type="text" class="form-control" id="setting-{{ .Env }}" name="{{ .Env }}" value="{{ .Value }}" list="email-providers">
+                <datalist id="email-providers">
+                  <option value="smtp">
+                  <option value="ses">
+                  <option value="jmap">
+                  <option value="log">
+                </datalist>
+                {{ else }}
+                <input type="text" class="form-control" id="setting-{{ .Env }}" name="{{ .Env }}" value="{{ .Value }}">
+                {{ end }}
+                <small class="form-text text-muted">{{ .Usage }}</small>
+            </div>
+            {{ end }}
+
+            <button type="submit" class="btn btn-primary">Send Test Email</button>
+        </form>
+    </div>
+</div>
+{{ template "tail" $ }}

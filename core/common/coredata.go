@@ -25,6 +25,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dbdrivers"
+	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
 	feedsign "github.com/arran4/goa4web/internal/feedsign"
 	imagesign "github.com/arran4/goa4web/internal/images"
@@ -102,6 +103,7 @@ type CoreData struct {
 	LinkSigner        *linksign.Signer
 	absoluteURLBase   lazy.Value[string]  // cached base URL for absolute links
 	dbRegistry        *dbdrivers.Registry // database driver registry
+	emailRegistry     *email.Registry
 	mapMu             sync.Mutex
 	Nav               NavigationProvider
 	NextLink          string
@@ -1066,6 +1068,9 @@ func (cd *CoreData) CustomQueries() db.CustomQueries { return cd.customQueries }
 
 // DBRegistry returns the database driver registry associated with this request.
 func (cd *CoreData) DBRegistry() *dbdrivers.Registry { return cd.dbRegistry }
+
+// EmailRegistry returns the email provider registry.
+func (cd *CoreData) EmailRegistry() *email.Registry { return cd.emailRegistry }
 
 // DefaultNotificationTemplate renders the default body for the current notification template.
 func (cd *CoreData) DefaultNotificationTemplate() string {
@@ -2655,6 +2660,11 @@ func WithTasksRegistry(r *tasks.Registry) CoreOption {
 // WithDBRegistry sets the database driver registry for CoreData.
 func WithDBRegistry(r *dbdrivers.Registry) CoreOption {
 	return func(cd *CoreData) { cd.dbRegistry = r }
+}
+
+// WithEmailRegistry sets the email registry for CoreData.
+func WithEmailRegistry(r *email.Registry) CoreOption {
+	return func(cd *CoreData) { cd.emailRegistry = r }
 }
 
 // WithNavRegistry registers the navigation registry on CoreData.

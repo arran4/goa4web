@@ -45,6 +45,16 @@ func (c *serveCmd) Run() error {
 		config.WithFileValues(fileVals),
 		config.WithGetenv(os.Getenv),
 	)
+
+	c.rootCmd.Infof("Starting Goa4Web")
+	c.rootCmd.Infof("Version: %s", version)
+	c.rootCmd.Infof("Commit: %s", commit)
+	c.rootCmd.Infof("Date: %s", date)
+	c.rootCmd.Infof("Listening on: %s", cfg.HTTPListen)
+	if cfg.HTTPHostname != "" {
+		c.rootCmd.Infof("Hostname: %s", cfg.HTTPHostname)
+	}
+
 	secret, err := config.LoadOrCreateSecret(core.OSFS{}, cfg.SessionSecret, cfg.SessionSecretFile, config.EnvSessionSecret, config.EnvSessionSecretFile)
 	if err != nil {
 		return fmt.Errorf("session secret: %w", err)

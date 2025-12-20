@@ -185,6 +185,28 @@ func (q *Queries) AdminArchiveWriting(ctx context.Context, arg AdminArchiveWriti
 	return err
 }
 
+const adminGetDeactivatedCommentById = `-- name: AdminGetDeactivatedCommentById :one
+SELECT idcomments, forumthread_id, users_idusers, language_id, written, text, timezone, deleted_at, restored_at FROM deactivated_comments
+WHERE idcomments = ? AND restored_at IS NULL
+`
+
+func (q *Queries) AdminGetDeactivatedCommentById(ctx context.Context, idcomments int32) (*DeactivatedComment, error) {
+	row := q.db.QueryRowContext(ctx, adminGetDeactivatedCommentById, idcomments)
+	var i DeactivatedComment
+	err := row.Scan(
+		&i.Idcomments,
+		&i.ForumthreadID,
+		&i.UsersIdusers,
+		&i.LanguageID,
+		&i.Written,
+		&i.Text,
+		&i.Timezone,
+		&i.DeletedAt,
+		&i.RestoredAt,
+	)
+	return &i, err
+}
+
 const adminIsBlogDeactivated = `-- name: AdminIsBlogDeactivated :one
 SELECT EXISTS(
     SELECT 1 FROM deactivated_blogs

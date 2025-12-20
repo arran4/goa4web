@@ -81,6 +81,7 @@ type Querier interface {
 	AdminGetAllCommentsByUser(ctx context.Context, userID int32) ([]*AdminGetAllCommentsByUserRow, error)
 	AdminGetAllWritingsByAuthor(ctx context.Context, authorID int32) ([]*AdminGetAllWritingsByAuthorRow, error)
 	AdminGetDashboardStats(ctx context.Context) (*AdminGetDashboardStatsRow, error)
+	AdminGetDeactivatedCommentById(ctx context.Context, idcomments int32) (*DeactivatedComment, error)
 	AdminGetFAQByID(ctx context.Context, id int32) (*Faq, error)
 	AdminGetFAQCategories(ctx context.Context) ([]*FaqCategory, error)
 	AdminGetFAQCategoriesWithQuestionCount(ctx context.Context) ([]*AdminGetFAQCategoriesWithQuestionCountRow, error)
@@ -89,6 +90,7 @@ type Querier interface {
 	AdminGetFAQQuestionsByCategory(ctx context.Context, categoryID sql.NullInt32) ([]*Faq, error)
 	AdminGetFAQUnansweredQuestions(ctx context.Context) ([]*Faq, error)
 	AdminGetForumStats(ctx context.Context) (*AdminGetForumStatsRow, error)
+	AdminGetForumThreadById(ctx context.Context, idforumthread int32) (*AdminGetForumThreadByIdRow, error)
 	AdminGetImagePost(ctx context.Context, idimagepost int32) (*AdminGetImagePostRow, error)
 	AdminGetNotification(ctx context.Context, id int32) (*Notification, error)
 	// admin task

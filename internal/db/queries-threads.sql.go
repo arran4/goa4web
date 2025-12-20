@@ -19,6 +19,58 @@ func (q *Queries) AdminDeleteForumThread(ctx context.Context, idforumthread int3
 	return err
 }
 
+const adminGetForumThreadById = `-- name: AdminGetForumThreadById :one
+SELECT
+    t.idforumthread,
+    t.forumtopic_idforumtopic as idforumtopic,
+    SUBSTRING(c.text, 1, 100) AS title,
+    c.written as created_at,
+    c.users_idusers as created_by,
+    t.lastposter as last_post_by,
+    t.lastaddition as last_post_at,
+    t.comments as post_count,
+    ft.title as topic_title,
+    ft.handler as topic_handler
+FROM
+    forumthread t
+JOIN
+    forumtopic ft ON t.forumtopic_idforumtopic = ft.idforumtopic
+JOIN
+    comments c ON t.firstpost = c.idcomments
+WHERE t.idforumthread = ?
+`
+
+type AdminGetForumThreadByIdRow struct {
+	Idforumthread int32
+	Idforumtopic  int32
+	Title         string
+	CreatedAt     sql.NullTime
+	CreatedBy     int32
+	LastPostBy    int32
+	LastPostAt    sql.NullTime
+	PostCount     sql.NullInt32
+	TopicTitle    sql.NullString
+	TopicHandler  string
+}
+
+func (q *Queries) AdminGetForumThreadById(ctx context.Context, idforumthread int32) (*AdminGetForumThreadByIdRow, error) {
+	row := q.db.QueryRowContext(ctx, adminGetForumThreadById, idforumthread)
+	var i AdminGetForumThreadByIdRow
+	err := row.Scan(
+		&i.Idforumthread,
+		&i.Idforumtopic,
+		&i.Title,
+		&i.CreatedAt,
+		&i.CreatedBy,
+		&i.LastPostBy,
+		&i.LastPostAt,
+		&i.PostCount,
+		&i.TopicTitle,
+		&i.TopicHandler,
+	)
+	return &i, err
+}
+
 const adminGetThreadsStartedByUser = `-- name: AdminGetThreadsStartedByUser :many
 SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked
 FROM forumthread th

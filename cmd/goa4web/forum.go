@@ -57,6 +57,24 @@ func (c *forumCmd) Run() error {
 			return fmt.Errorf("clean-empty-threads: %w", err)
 		}
 		return cmd.Run()
+	case "topic":
+		cmd, err := parseForumTopicCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("topic: %w", err)
+		}
+		return cmd.Run()
+	case "thread":
+		cmd, err := parseForumThreadCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("thread: %w", err)
+		}
+		return cmd.Run()
+	case "comment":
+		cmd, err := parseForumCommentCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("comment: %w", err)
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown forum command %q", args[0])
@@ -265,3 +283,13 @@ func (c *forumCleanEmptyThreadsCmd) Run() error {
 }
 
 var _ usageData = (*forumCmd)(nil)
+
+func isFlagPassed(fs *flag.FlagSet, name string) bool {
+	found := false
+	fs.Visit(func(f *flag.Flag) {
+		if f.Name == name {
+			found = true
+		}
+	})
+	return found
+}

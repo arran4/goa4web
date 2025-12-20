@@ -10,18 +10,24 @@ import (
 )
 
 const createSubscriptionArchetype = `-- name: CreateSubscriptionArchetype :exec
-INSERT INTO role_subscription_archetypes (role_id, archetype_name, pattern)
-VALUES (?, ?, ?)
+INSERT INTO role_subscription_archetypes (role_id, archetype_name, pattern, method)
+VALUES (?, ?, ?, ?)
 `
 
 type CreateSubscriptionArchetypeParams struct {
 	RoleID        int32
 	ArchetypeName string
 	Pattern       string
+	Method        string
 }
 
 func (q *Queries) CreateSubscriptionArchetype(ctx context.Context, arg CreateSubscriptionArchetypeParams) error {
-	_, err := q.db.ExecContext(ctx, createSubscriptionArchetype, arg.RoleID, arg.ArchetypeName, arg.Pattern)
+	_, err := q.db.ExecContext(ctx, createSubscriptionArchetype,
+		arg.RoleID,
+		arg.ArchetypeName,
+		arg.Pattern,
+		arg.Method,
+	)
 	return err
 }
 
@@ -41,7 +47,7 @@ func (q *Queries) DeleteSubscriptionArchetypesByRoleAndName(ctx context.Context,
 }
 
 const getSubscriptionArchetypesByRole = `-- name: GetSubscriptionArchetypesByRole :many
-SELECT id, role_id, archetype_name, pattern, created_at FROM role_subscription_archetypes
+SELECT id, role_id, archetype_name, pattern, method, created_at FROM role_subscription_archetypes
 WHERE role_id = ?
 `
 
@@ -59,6 +65,7 @@ func (q *Queries) GetSubscriptionArchetypesByRole(ctx context.Context, roleID in
 			&i.RoleID,
 			&i.ArchetypeName,
 			&i.Pattern,
+			&i.Method,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err
@@ -75,7 +82,7 @@ func (q *Queries) GetSubscriptionArchetypesByRole(ctx context.Context, roleID in
 }
 
 const listSubscriptionArchetypes = `-- name: ListSubscriptionArchetypes :many
-SELECT id, role_id, archetype_name, pattern, created_at FROM role_subscription_archetypes
+SELECT id, role_id, archetype_name, pattern, method, created_at FROM role_subscription_archetypes
 ORDER BY role_id, archetype_name
 `
 
@@ -93,6 +100,7 @@ func (q *Queries) ListSubscriptionArchetypes(ctx context.Context) ([]*RoleSubscr
 			&i.RoleID,
 			&i.ArchetypeName,
 			&i.Pattern,
+			&i.Method,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err

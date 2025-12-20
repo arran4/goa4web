@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/arran4/goa4web/internal/db"
 )
@@ -104,22 +105,33 @@ func (c *subscriptionTemplateLoadCmd) Run() error {
 
 	// Read content
 	var content []byte
-	// For now, let's assume we are loading from the embedded filesystem or local file.
-	// Since I cannot easily access the embedded FS from here without exporting it from main or a package,
-	// I will rely on reading a local file for this implementation, as "loadable from the system" usually implies an external file,
-	// but the prompt said "embedded system".
-	// Let's assume for this CLI we look for the file on disk first.
-	// TODO: Integrate with embedded FS if required.
+
 	if c.file != "" {
+		// Try to read from local file system first
 		content, err = os.ReadFile(c.file)
 		if err != nil {
-			// Try to read from embedded definitions if we export them.
-			return fmt.Errorf("read file %s: %w", c.file, err)
+			// If file not found locally, try embedded (treating c.file as a name/path)
+			var embedErr error
+			content, embedErr = getEmbeddedTemplate(c.file)
+			if embedErr != nil {
+				// Return original error if both fail
+				return fmt.Errorf("read file %s: %w (also failed embedded: %v)", c.file, err, embedErr)
+			}
+		}
+	} else if c.name != "" {
+		// Try to load by name from embedded templates
+		// First try exact name match with the archetype name
+		var err error
+		content, err = getEmbeddedTemplate(c.name)
+		if err != nil {
+			// Try with default_ prefix if simple name fails (common pattern)
+			content, err = getEmbeddedTemplate("default_" + c.name)
+			if err != nil {
+				return fmt.Errorf("embedded template for %q not found (use --file to specify explicit path)", c.name)
+			}
 		}
 	} else {
-		// Use a default based on name?
-		// For now require file.
-		return fmt.Errorf("file argument is required")
+		return fmt.Errorf("either --file or --name is required")
 	}
 
 	// Parse lines
@@ -133,10 +145,6 @@ func (c *subscriptionTemplateLoadCmd) Run() error {
 	qtx := db.New(tx)
 
 	// Clean existing for this role/archetype
-	// We need to use sql.NullInt32 for role ID if the generated code expects it, but usually GetRoleByName returns a Role struct with ID int32.
-	// However, usually DB params use sql.NullInt32 for nullable columns. RoleID in role_subscription_archetypes is NOT NULL.
-	// Let's check the generated code.
-
 	if err := qtx.DeleteSubscriptionArchetypesByRoleAndName(ctx, db.DeleteSubscriptionArchetypesByRoleAndNameParams{
 		RoleID:        role.ID,
 		ArchetypeName: c.name,
@@ -148,10 +156,26 @@ func (c *subscriptionTemplateLoadCmd) Run() error {
 		if line == "" || line[0] == '#' {
 			continue
 		}
+
+		method := "internal"
+		pattern := line
+
+		// Check if line starts with a method prefix (e.g. "email " or "internal ")
+		// or if we should parse generic "method pattern" format.
+		parts := strings.SplitN(line, " ", 2)
+		if len(parts) == 2 {
+			m := strings.ToLower(parts[0])
+			if m == "email" || m == "internal" {
+				method = m
+				pattern = parts[1]
+			}
+		}
+
 		if err := qtx.CreateSubscriptionArchetype(ctx, db.CreateSubscriptionArchetypeParams{
 			RoleID:        role.ID,
 			ArchetypeName: c.name,
-			Pattern:       line,
+			Pattern:       pattern,
+			Method:        method,
 		}); err != nil {
 			return fmt.Errorf("insert pattern %s: %w", line, err)
 		}

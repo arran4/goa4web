@@ -1,0 +1,2 @@
+internal new post:/news/*
+internal reply:/news/news/*

@@ -1,6 +1,6 @@
 -- name: CreateSubscriptionArchetype :exec
-INSERT INTO role_subscription_archetypes (role_id, archetype_name, pattern)
-VALUES (?, ?, ?);
+INSERT INTO role_subscription_archetypes (role_id, archetype_name, pattern, method)
+VALUES (?, ?, ?, ?);
 
 -- name: GetSubscriptionArchetypesByRole :many
 SELECT * FROM role_subscription_archetypes

@@ -1,0 +1,2 @@
+internal notify:/admin/*
+internal register:/auth/register

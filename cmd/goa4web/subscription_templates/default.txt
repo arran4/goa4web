@@ -1,2 +1,2 @@
-subscribe:/forum/topic/*/thread/*
-notify:/forum/topic/*/thread/*
+internal create thread:/forum/topic/*
+internal reply:/forum/topic/*/thread/*

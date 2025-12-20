@@ -445,6 +445,7 @@ type RoleSubscriptionArchetype struct {
 	RoleID        int32
 	ArchetypeName string
 	Pattern       string
+	Method        string
 	CreatedAt     time.Time
 }
 

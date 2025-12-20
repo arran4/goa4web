@@ -1,0 +1,2 @@
+internal ask:/faq/*
+internal create:/faq/*

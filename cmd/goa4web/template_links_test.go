@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -30,7 +31,7 @@ func TestTemplateLinks(t *testing.T) {
 	reg.InitModules(r, cfg, navReg)
 	router.RegisterRoutes(r, reg, cfg, navReg)
 
-	// Collect route regexps to bypass MatcherFunc checks (e.g. auth)
+	// Collect route regexps
 	var routeRegexps []*regexp.Regexp
 	r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
 		str, err := route.GetPathRegexp()
@@ -44,98 +45,122 @@ func TestTemplateLinks(t *testing.T) {
 		return nil
 	})
 
-	// 2. Find all templates
-	possibleRoots := []string{
-		"../../core/templates/site", // When running from cmd/goa4web
-		"core/templates/site",       // When running from root
+	// 2. Define roots to scan
+	possibleSiteRoots := []string{
+		"../../core/templates/site", // from cmd/goa4web
+		"core/templates/site",       // from root
 	}
 
-	var rootDir string
-	for _, path := range possibleRoots {
+	var scanDirs []string
+
+	for _, path := range possibleSiteRoots {
 		if _, err := os.Stat(path); err == nil {
-			rootDir = path
+			scanDirs = append(scanDirs, path)
 			break
 		}
 	}
 
-	if rootDir == "" {
-		t.Skip("Cannot find template directory")
+	// Add testdata dir
+	if _, err := os.Stat("testdata"); err == nil {
+		scanDirs = append(scanDirs, "testdata")
+	} else if _, err := os.Stat("cmd/goa4web/testdata"); err == nil {
+		scanDirs = append(scanDirs, "cmd/goa4web/testdata")
+	} else {
+        // Create testdata if missing? No, we created it.
+        // Assuming we are running in the right dir.
+    }
+
+	if len(scanDirs) == 0 {
+		t.Skip("Cannot find template directories")
 	}
 
 	hrefRegex := regexp.MustCompile(`href="([^"]+)"`)
 	tmplRegex := regexp.MustCompile(`\{\{[^}]+\}\}`)
 
-	err := filepath.WalkDir(rootDir, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if d.IsDir() || !strings.HasSuffix(path, ".gohtml") {
-			return nil
-		}
+	var validationErrors []string
+	foundTestdataError := false
 
-		content, err := os.ReadFile(path)
-		if err != nil {
-			return err
-		}
-
-		matches := hrefRegex.FindAllStringSubmatch(string(content), -1)
-		for _, match := range matches {
-			link := match[1]
-
-			// Validation Logic
-
-			// 1. Skip external, anchor, javascript, etc.
-			if strings.HasPrefix(link, "http") ||
-				strings.HasPrefix(link, "mailto:") ||
-				strings.HasPrefix(link, "#") ||
-				strings.HasPrefix(link, "javascript:") ||
-				strings.HasPrefix(link, "data:") {
-				continue
+	for _, rootDir := range scanDirs {
+		err := filepath.WalkDir(rootDir, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if d.IsDir() || !strings.HasSuffix(path, ".gohtml") {
+				return nil
 			}
 
-			// 2. Skip relative links (not starting with /)
-			if !strings.HasPrefix(link, "/") {
-				continue
+			content, err := os.ReadFile(path)
+			if err != nil {
+				return err
 			}
 
-			// 3. Skip complex control structures
-			if strings.Contains(link, "{{if ") || strings.Contains(link, "{{range ") || strings.Contains(link, "{{with ") {
-				continue
-			}
+			matches := hrefRegex.FindAllStringSubmatch(string(content), -1)
+			for _, match := range matches {
+				link := match[1]
 
-			// 4. Skip purely dynamic links (e.g. "{{.Url}}")
-			if strings.HasPrefix(link, "{{") && strings.HasSuffix(link, "}}") && strings.Count(link, "{{") == 1 {
-				continue
-			}
+				// Validation Logic
 
-			urlPath := link
-			if idx := strings.Index(urlPath, "?"); idx != -1 {
-				urlPath = urlPath[:idx]
-			}
+				if strings.HasPrefix(link, "http") ||
+					strings.HasPrefix(link, "mailto:") ||
+					strings.HasPrefix(link, "#") ||
+					strings.HasPrefix(link, "javascript:") ||
+					strings.HasPrefix(link, "data:") {
+					continue
+				}
 
-			// 5. Normalize and Match
-			// Try variants for variable substitution
-			variants := []string{"1", "dummy", "a", "user"}
+				if !strings.HasPrefix(link, "/") {
+					continue
+				}
 
-			matched := false
-			for _, v := range variants {
-				normalized := tmplRegex.ReplaceAllString(urlPath, v)
-				if matchAny(routeRegexps, normalized) {
-					matched = true
-					break
+				if strings.Contains(link, "{{if ") || strings.Contains(link, "{{range ") || strings.Contains(link, "{{with ") {
+					continue
+				}
+
+				if strings.HasPrefix(link, "{{") && strings.HasSuffix(link, "}}") && strings.Count(link, "{{") == 1 {
+					continue
+				}
+
+				urlPath := link
+				if idx := strings.Index(urlPath, "?"); idx != -1 {
+					urlPath = urlPath[:idx]
+				}
+
+				variants := []string{"1", "dummy", "a", "user"}
+				matched := false
+				for _, v := range variants {
+					normalized := tmplRegex.ReplaceAllString(urlPath, v)
+					if matchAny(routeRegexps, normalized) {
+						matched = true
+						break
+					}
+				}
+
+				if !matched {
+					sample := tmplRegex.ReplaceAllString(link, "{VAR}")
+					msg := fmt.Sprintf("File %s: Invalid link %q (normalized: %s)", path, link, sample)
+
+					if strings.Contains(path, "testdata") && strings.Contains(link, "this-route-does-not-exist") {
+						foundTestdataError = true
+					} else {
+						validationErrors = append(validationErrors, msg)
+					}
 				}
 			}
-
-			if !matched {
-				// Generate a sample normalization for the error message
-				sample := tmplRegex.ReplaceAllString(link, "{VAR}")
-				t.Errorf("File %s: Invalid link %q (normalized: %s)", path, link, sample)
-			}
+			return nil
+		})
+		if err != nil {
+			t.Fatal(err)
 		}
-		return nil
-	})
-	if err != nil {
-		t.Fatal(err)
+	}
+
+	if !foundTestdataError {
+		t.Error("Verification failed: Did not catch known invalid link in testdata/bad_link.gohtml")
+	}
+
+	if len(validationErrors) > 0 {
+		for _, msg := range validationErrors {
+			t.Error(msg)
+		}
 	}
 }
 

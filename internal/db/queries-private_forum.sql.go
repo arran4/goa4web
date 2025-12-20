@@ -14,33 +14,51 @@ const adminListAllPrivateForumThreads = `-- name: AdminListAllPrivateForumThread
 SELECT
     t.idforumthread,
     t.forumtopic_idforumtopic as idforumtopic,
-    COALESCE(SUBSTRING(c.text, 1, 100), 'unknown') AS title,
-    c.written as created_at,
-    c.users_idusers as created_by,
+    CAST(COALESCE(SUBSTRING(fp.text, 1, 100), 'unknown') AS CHAR) AS title,
+    fp.written as created_at,
+    fp.users_idusers as created_by,
     t.lastposter as last_post_by,
     t.lastaddition as last_post_at,
     t.comments as post_count,
-    COALESCE(ft.title, '') as topic_title
+    COALESCE(ft.title, '') as topic_title,
+    CAST(COUNT(c.idcomments) AS SIGNED) AS total_comments,
+    CAST(COALESCE(SUM(CASE WHEN c.text IS NOT NULL THEN 1 ELSE 0 END), 0) AS SIGNED) AS valid_comments,
+    CAST(COALESCE(SUM(CASE WHEN c.text IS NULL THEN 1 ELSE 0 END), 0) AS SIGNED) AS invalid_comments
 FROM
     forumthread t
 JOIN
     forumtopic ft ON t.forumtopic_idforumtopic = ft.idforumtopic
-JOIN
-    comments c ON t.firstpost = c.idcomments
+LEFT JOIN
+    comments fp ON t.firstpost = fp.idcomments
+LEFT JOIN
+    comments c ON c.forumthread_id = t.idforumthread
 WHERE
     ft.handler = 'private'
+GROUP BY
+    t.idforumthread,
+    t.forumtopic_idforumtopic,
+    fp.text,
+    fp.written,
+    fp.users_idusers,
+    t.lastposter,
+    t.lastaddition,
+    t.comments,
+    ft.title
 `
 
 type AdminListAllPrivateForumThreadsRow struct {
-	Idforumthread int32
-	Idforumtopic  int32
-	Title         interface{}
-	CreatedAt     sql.NullTime
-	CreatedBy     int32
-	LastPostBy    int32
-	LastPostAt    sql.NullTime
-	PostCount     sql.NullInt32
-	TopicTitle    string
+	Idforumthread   int32
+	Idforumtopic    int32
+	Title           interface{}
+	CreatedAt       sql.NullTime
+	CreatedBy       sql.NullInt32
+	LastPostBy      int32
+	LastPostAt      sql.NullTime
+	PostCount       sql.NullInt32
+	TopicTitle      string
+	TotalComments   int64
+	ValidComments   int64
+	InvalidComments int64
 }
 
 func (q *Queries) AdminListAllPrivateForumThreads(ctx context.Context) ([]*AdminListAllPrivateForumThreadsRow, error) {
@@ -62,6 +80,9 @@ func (q *Queries) AdminListAllPrivateForumThreads(ctx context.Context) ([]*Admin
 			&i.LastPostAt,
 			&i.PostCount,
 			&i.TopicTitle,
+			&i.TotalComments,
+			&i.ValidComments,
+			&i.InvalidComments,
 		); err != nil {
 			return nil, err
 		}
@@ -224,6 +245,39 @@ func (q *Queries) AdminListGrantsByTopicID(ctx context.Context, itemID sql.NullI
 			return nil, err
 		}
 		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminListPrivateForumInvalidCommentsByThread = `-- name: AdminListPrivateForumInvalidCommentsByThread :many
+SELECT
+    idcomments
+FROM
+    comments
+WHERE
+    forumthread_id = ?
+    AND text IS NULL
+`
+
+func (q *Queries) AdminListPrivateForumInvalidCommentsByThread(ctx context.Context, forumthreadID int32) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx, adminListPrivateForumInvalidCommentsByThread, forumthreadID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var idcomments int32
+		if err := rows.Scan(&idcomments); err != nil {
+			return nil, err
+		}
+		items = append(items, idcomments)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

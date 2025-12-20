@@ -9,6 +9,15 @@ import (
 	"context"
 )
 
+const adminDeleteCommentsByThread = `-- name: AdminDeleteCommentsByThread :exec
+DELETE FROM comments WHERE forumthread_id = ?
+`
+
+func (q *Queries) AdminDeleteCommentsByThread(ctx context.Context, forumthreadID int32) error {
+	_, err := q.db.ExecContext(ctx, adminDeleteCommentsByThread, forumthreadID)
+	return err
+}
+
 const adminHardDeleteComment = `-- name: AdminHardDeleteComment :exec
 DELETE FROM comments WHERE idcomments = ?
 `

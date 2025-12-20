@@ -106,6 +106,11 @@ func (c *privateForumCleanEmptyCmd) Run() error {
 		return fmt.Errorf("getting private forum topics: %w", err)
 	}
 
+	threads, err := queries.AdminListAllPrivateForumThreads(ctx)
+	if err != nil {
+		return fmt.Errorf("getting private forum threads: %w", err)
+	}
+
 	// Build a map of topicID -> thread count using stats query (threads should be obtained by query)
 	topicCounts, err := queries.AdminForumTopicThreadCounts(ctx)
 	if err != nil {
@@ -119,62 +124,106 @@ func (c *privateForumCleanEmptyCmd) Run() error {
 		}
 	}
 
-	var deletedTopics []deletedItem
+	threadStatsByTopic := make(map[int32][]*db.AdminListAllPrivateForumThreadsRow)
+	for _, thread := range threads {
+		threadStatsByTopic[thread.Idforumtopic] = append(threadStatsByTopic[thread.Idforumtopic], thread)
+	}
+
+	var deletedItems []deletedItem
 	var totalGrantsDeleted int
+	var totalCommentsDeleted int
 
 	for _, topic := range topics {
-		threads := threadsByTopic[topic.Idforumtopic]
-		if threads == 0 {
-			if c.verbose {
-				log.Printf("Found empty private forum topic: %s (ID: %d)", topic.Title, topic.Idforumtopic)
+		threadCount := threadsByTopic[topic.Idforumtopic]
+		threadsForTopic := threadStatsByTopic[topic.Idforumtopic]
+		validThreads := 0
+		for _, thread := range threadsForTopic {
+			if thread.ValidComments > 0 {
+				validThreads++
 			}
+		}
 
+		deleteReason := ""
+		if threadCount == 0 {
+			deleteReason = "no threads"
+		}
+
+		participantsMap := make(map[string]struct{})
+		if deleteReason == "" && validThreads == 0 {
 			grants, err := queries.AdminListGrantsByTopicID(ctx, sql.NullInt32{Int32: topic.Idforumtopic, Valid: true})
 			if err != nil {
 				log.Printf("error getting grants for topic %d: %v", topic.Idforumtopic, err)
 				continue
 			}
-
-			participantsMap := make(map[string]struct{})
 			for _, grant := range grants {
 				if grant.Username.Valid {
 					participantsMap[grant.Username.String] = struct{}{}
 				}
-				if c.verbose {
-					log.Printf("  - Deleting grant ID: %d", grant.ID)
-				}
-				if !c.dryRun {
-					if err := queries.AdminDeleteGrant(ctx, grant.ID); err != nil {
-						log.Printf("  - error deleting grant %d: %v", grant.ID, err)
-					}
-				}
-				totalGrantsDeleted++
 			}
+			if len(participantsMap) <= 1 {
+				deleteReason = "single participant with no content"
+			}
+		}
 
-			var participants []string
-			for p := range participantsMap {
-				participants = append(participants, p)
-			}
-			sort.Strings(participants)
+		if deleteReason == "" {
+			continue
+		}
 
-			if c.verbose {
-				log.Printf("  - Deleting topic ID: %d", topic.Idforumtopic)
-			}
-			if !c.dryRun {
-				if err := queries.AdminDeleteForumTopic(ctx, topic.Idforumtopic); err != nil {
-					log.Printf("  - error deleting topic %d: %v", topic.Idforumtopic, err)
-				}
-			}
-			deletedTopics = append(deletedTopics, deletedItem{
-				ID:           topic.Idforumtopic,
-				Title:        topic.Title,
-				Participants: participants,
-				Type:         "Topic",
+		log.Printf("Deleting private forum topic ID %d (%s): %s", topic.Idforumtopic, topic.Title, deleteReason)
+
+		for _, thread := range threadsForTopic {
+			threadTitle := formatThreadTitle(thread.Title)
+			threadParticipants, grantsDeleted, commentsDeleted := c.deletePrivateForumThread(ctx, queries, thread, threadTitle, "topic deletion")
+			totalGrantsDeleted += grantsDeleted
+			totalCommentsDeleted += commentsDeleted
+			deletedItems = append(deletedItems, deletedItem{
+				ID:           thread.Idforumthread,
+				Title:        threadTitle,
+				Participants: threadParticipants,
+				Type:         "Thread",
 			})
 		}
+
+		grants, err := queries.AdminListGrantsByTopicID(ctx, sql.NullInt32{Int32: topic.Idforumtopic, Valid: true})
+		if err != nil {
+			log.Printf("error getting grants for topic %d: %v", topic.Idforumtopic, err)
+			continue
+		}
+
+		for _, grant := range grants {
+			if grant.Username.Valid {
+				participantsMap[grant.Username.String] = struct{}{}
+			}
+			log.Printf("  - Deleting topic grant ID: %d", grant.ID)
+			if !c.dryRun {
+				if err := queries.AdminDeleteGrant(ctx, grant.ID); err != nil {
+					log.Printf("  - error deleting grant %d: %v", grant.ID, err)
+				}
+			}
+			totalGrantsDeleted++
+		}
+
+		var participants []string
+		for p := range participantsMap {
+			participants = append(participants, p)
+		}
+		sort.Strings(participants)
+
+		log.Printf("  - Deleting topic ID: %d", topic.Idforumtopic)
+		if !c.dryRun {
+			if err := queries.AdminDeleteForumTopic(ctx, topic.Idforumtopic); err != nil {
+				log.Printf("  - error deleting topic %d: %v", topic.Idforumtopic, err)
+			}
+		}
+		deletedItems = append(deletedItems, deletedItem{
+			ID:           topic.Idforumtopic,
+			Title:        topic.Title,
+			Participants: participants,
+			Type:         "Topic",
+		})
 	}
 
-	printSummary(deletedTopics, totalGrantsDeleted)
+	printSummary(deletedItems, totalGrantsDeleted, totalCommentsDeleted)
 	log.Println("Cleanup of empty private forum topics complete.")
 	return nil
 }
@@ -217,76 +266,175 @@ func (c *privateForumCleanEmptyThreadsCmd) Run() error {
 
 	var deletedThreads []deletedItem
 	var totalGrantsDeleted int
+	var totalCommentsDeleted int
 
 	for _, thread := range threads {
-		// Use PostCount (comments count) from query to determine emptiness
-		if !thread.PostCount.Valid || thread.PostCount.Int32 == 0 {
-			if c.verbose {
-				log.Printf("Found empty private forum thread: (ID: %d)", thread.Idforumthread)
+		threadTitle := formatThreadTitle(thread.Title)
+		if thread.ValidComments == 0 {
+			reason := "no comments"
+			if thread.InvalidComments > 0 {
+				reason = "only invalid comments"
 			}
+			log.Printf("Deleting private forum thread ID %d (%s): %s", thread.Idforumthread, threadTitle, reason)
 
-			grants, err := queries.AdminListGrantsByThreadID(ctx, sql.NullInt32{Int32: thread.Idforumthread, Valid: true})
-			if err != nil {
-				log.Printf("error getting grants for thread %d: %v", thread.Idforumthread, err)
-				continue
-			}
-
-			participantsMap := make(map[string]struct{})
-			for _, grant := range grants {
-				if grant.Username.Valid {
-					participantsMap[grant.Username.String] = struct{}{}
-				}
-				if c.verbose {
-					log.Printf("  - Deleting grant ID: %d", grant.ID)
-				}
-				if !c.dryRun {
-					if err := queries.AdminDeleteGrant(ctx, grant.ID); err != nil {
-						log.Printf("  - error deleting grant %d: %v", grant.ID, err)
-					}
-				}
-				totalGrantsDeleted++
-			}
-
-			var participants []string
-			for p := range participantsMap {
-				participants = append(participants, p)
-			}
-			sort.Strings(participants)
-
-			if c.verbose {
-				log.Printf("  - Deleting thread ID: %d", thread.Idforumthread)
-			}
-			if !c.dryRun {
-				if err := queries.AdminDeleteForumThread(ctx, thread.Idforumthread); err != nil {
-					log.Printf("  - error deleting thread %d: %v", thread.Idforumthread, err)
-				}
-			}
-
-			var title string
-			if t, ok := thread.Title.(string); ok {
-				title = t
-			} else if tBytes, ok := thread.Title.([]byte); ok {
-				title = string(tBytes)
-			} else {
-				title = fmt.Sprintf("%v", thread.Title)
-			}
-
+			participants, grantsDeleted, commentsDeleted := c.deletePrivateForumThread(ctx, queries, thread, threadTitle, reason)
+			totalGrantsDeleted += grantsDeleted
+			totalCommentsDeleted += commentsDeleted
 			deletedThreads = append(deletedThreads, deletedItem{
 				ID:           thread.Idforumthread,
-				Title:        title,
+				Title:        threadTitle,
 				Participants: participants,
 				Type:         "Thread",
 			})
+			continue
+		}
+
+		if thread.InvalidComments > 0 {
+			log.Printf("Cleaning invalid comments for thread ID %d (%s)", thread.Idforumthread, threadTitle)
+			commentsDeleted, err := c.deletePrivateForumThreadInvalidComments(ctx, queries, thread.Idforumthread)
+			if err != nil {
+				log.Printf("  - error deleting invalid comments for thread %d: %v", thread.Idforumthread, err)
+				continue
+			}
+			totalCommentsDeleted += commentsDeleted
 		}
 	}
 
-	printSummary(deletedThreads, totalGrantsDeleted)
+	printSummary(deletedThreads, totalGrantsDeleted, totalCommentsDeleted)
 	log.Println("Cleanup of empty private forum threads complete.")
 	return nil
 }
 
-func printSummary(items []deletedItem, grantsDeleted int) {
-	if len(items) == 0 {
+func (c *privateForumCleanEmptyThreadsCmd) deletePrivateForumThreadInvalidComments(ctx context.Context, queries *db.Queries, threadID int32) (int, error) {
+	comments, err := queries.AdminListPrivateForumInvalidCommentsByThread(ctx, threadID)
+	if err != nil {
+		return 0, err
+	}
+
+	if len(comments) == 0 {
+		return 0, nil
+	}
+
+	for _, commentID := range comments {
+		log.Printf("  - Deleting invalid comment ID: %d", commentID)
+		if !c.dryRun {
+			if err := queries.AdminHardDeleteComment(ctx, commentID); err != nil {
+				log.Printf("  - error deleting comment %d: %v", commentID, err)
+				continue
+			}
+		}
+	}
+
+	return len(comments), nil
+}
+
+func (c *privateForumCleanEmptyCmd) deletePrivateForumThread(ctx context.Context, queries *db.Queries, thread *db.AdminListAllPrivateForumThreadsRow, title string, reason string) ([]string, int, int) {
+	log.Printf("  - Deleting thread ID: %d (%s): %s", thread.Idforumthread, title, reason)
+
+	if thread.TotalComments > 0 {
+		log.Printf("  - Deleting %d comments for thread ID: %d", thread.TotalComments, thread.Idforumthread)
+	}
+	if !c.dryRun {
+		if err := queries.AdminDeleteCommentsByThread(ctx, thread.Idforumthread); err != nil {
+			log.Printf("  - error deleting comments for thread %d: %v", thread.Idforumthread, err)
+		}
+	}
+
+	grants, err := queries.AdminListGrantsByThreadID(ctx, sql.NullInt32{Int32: thread.Idforumthread, Valid: true})
+	if err != nil {
+		log.Printf("error getting grants for thread %d: %v", thread.Idforumthread, err)
+		return nil, 0, int(thread.TotalComments)
+	}
+
+	participantsMap := make(map[string]struct{})
+	for _, grant := range grants {
+		if grant.Username.Valid {
+			participantsMap[grant.Username.String] = struct{}{}
+		}
+		log.Printf("  - Deleting thread grant ID: %d", grant.ID)
+		if !c.dryRun {
+			if err := queries.AdminDeleteGrant(ctx, grant.ID); err != nil {
+				log.Printf("  - error deleting grant %d: %v", grant.ID, err)
+			}
+		}
+	}
+
+	log.Printf("  - Deleting thread ID: %d", thread.Idforumthread)
+	if !c.dryRun {
+		if err := queries.AdminDeleteForumThread(ctx, thread.Idforumthread); err != nil {
+			log.Printf("  - error deleting thread %d: %v", thread.Idforumthread, err)
+		}
+	}
+
+	var participants []string
+	for p := range participantsMap {
+		participants = append(participants, p)
+	}
+	sort.Strings(participants)
+
+	return participants, len(grants), int(thread.TotalComments)
+}
+
+func (c *privateForumCleanEmptyThreadsCmd) deletePrivateForumThread(ctx context.Context, queries *db.Queries, thread *db.AdminListAllPrivateForumThreadsRow, title string, reason string) ([]string, int, int) {
+	log.Printf("  - Deleting thread ID: %d (%s): %s", thread.Idforumthread, title, reason)
+
+	if thread.TotalComments > 0 {
+		log.Printf("  - Deleting %d comments for thread ID: %d", thread.TotalComments, thread.Idforumthread)
+	}
+	if !c.dryRun {
+		if err := queries.AdminDeleteCommentsByThread(ctx, thread.Idforumthread); err != nil {
+			log.Printf("  - error deleting comments for thread %d: %v", thread.Idforumthread, err)
+		}
+	}
+
+	grants, err := queries.AdminListGrantsByThreadID(ctx, sql.NullInt32{Int32: thread.Idforumthread, Valid: true})
+	if err != nil {
+		log.Printf("error getting grants for thread %d: %v", thread.Idforumthread, err)
+		return nil, 0, int(thread.TotalComments)
+	}
+
+	participantsMap := make(map[string]struct{})
+	for _, grant := range grants {
+		if grant.Username.Valid {
+			participantsMap[grant.Username.String] = struct{}{}
+		}
+		log.Printf("  - Deleting thread grant ID: %d", grant.ID)
+		if !c.dryRun {
+			if err := queries.AdminDeleteGrant(ctx, grant.ID); err != nil {
+				log.Printf("  - error deleting grant %d: %v", grant.ID, err)
+			}
+		}
+	}
+
+	log.Printf("  - Deleting thread ID: %d", thread.Idforumthread)
+	if !c.dryRun {
+		if err := queries.AdminDeleteForumThread(ctx, thread.Idforumthread); err != nil {
+			log.Printf("  - error deleting thread %d: %v", thread.Idforumthread, err)
+		}
+	}
+
+	var participants []string
+	for p := range participantsMap {
+		participants = append(participants, p)
+	}
+	sort.Strings(participants)
+
+	return participants, len(grants), int(thread.TotalComments)
+}
+
+func formatThreadTitle(title interface{}) string {
+	switch value := title.(type) {
+	case string:
+		return value
+	case []byte:
+		return string(value)
+	default:
+		return fmt.Sprintf("%v", title)
+	}
+}
+
+func printSummary(items []deletedItem, grantsDeleted int, commentsDeleted int) {
+	if len(items) == 0 && grantsDeleted == 0 && commentsDeleted == 0 {
 		fmt.Println("No items were affected.")
 		return
 	}
@@ -294,6 +442,7 @@ func printSummary(items []deletedItem, grantsDeleted int) {
 	fmt.Printf("\nSummary:\n")
 	fmt.Printf("Total items affected: %d\n", len(items))
 	fmt.Printf("Total grants deleted: %d\n\n", grantsDeleted)
+	fmt.Printf("Total comments deleted: %d\n\n", commentsDeleted)
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(w, "ID\tType\tTitle\tParticipants")

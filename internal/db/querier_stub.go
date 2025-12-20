@@ -103,6 +103,7 @@ func (s *QuerierStub) AdminListAdministratorEmails(ctx context.Context) ([]strin
 	s.mu.Unlock()
 	return s.AdminListAdministratorEmailsReturns, s.AdminListAdministratorEmailsErr
 }
+
 // SystemGetTemplateOverride records the call and returns the configured response.
 func (s *QuerierStub) SystemGetTemplateOverride(ctx context.Context, name string) (string, error) {
 	s.mu.Lock()

@@ -115,8 +115,8 @@
     <div class="admin-header">
         <span>Admin Mode: Comment {{ .Comment.Idcomments }}</span>
         <span>
-            Topic: <a href="/forum/topic/{{ .Comment.Idforumtopic }}">{{ topicTitleOrDefault .Comment.ForumtopicTitle.String }}</a>
-            / Thread: <a href="/forum/topic/{{ .Comment.Idforumtopic }}/thread/{{ .Comment.Idforumthread }}">{{ if .Comment.ThreadTitle.Valid }}{{ left 30 .Comment.ThreadTitle.String }}{{ else }}#{{ .Comment.Idforumthread }}{{ end }}</a>
+            Topic: <a href="/forum/topic/{{ .Comment.Idforumtopic.Int32 }}">{{ topicTitleOrDefault .Comment.ForumtopicTitle.String }}</a>
+            / Thread: <a href="/forum/topic/{{ .Comment.Idforumtopic.Int32 }}/thread/{{ .Comment.Idforumthread.Int32 }}">{{ if .Comment.ThreadTitle.Valid }}{{ left 30 .Comment.ThreadTitle.String }}{{ else }}#{{ .Comment.Idforumthread.Int32 }}{{ end }}</a>
         </span>
     </div>
 

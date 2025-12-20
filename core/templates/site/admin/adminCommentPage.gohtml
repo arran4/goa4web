@@ -1,20 +1,154 @@
 {{ define "admin/commentPage.gohtml" }}
 {{ template "head" $ }}
-<h2>Comment {{ .Comment.Idcomments }}</h2>
-<p>Topic <a href="/forum/topic/{{ .Comment.Idforumtopic }}">{{ topicTitleOrDefault .Comment.ForumtopicTitle.String }}</a> thread <a href="/forum/topic/{{ .Comment.Idforumtopic }}/thread/{{ .Comment.Idforumthread }}">{{ if .Comment.ThreadTitle.Valid }}{{ left 40 .Comment.ThreadTitle.String }}{{ else }}{{ .Comment.Idforumthread }}{{ end }}</a></p>
-<p>{{ if .Comment.Text.Valid }}{{ .Comment.Text.String | a4code2html }}{{ end }}</p>
-<p><a href="/forum/topic/{{ .Comment.Idforumtopic }}/thread/{{ .Comment.Idforumthread }}#c{{ .Comment.Idcomments }}">Original</a></p>
-<h3>Thread Context</h3>
-{{ range .Context }}
-<p>{{ .Posterusername.String }}: {{ if .Text.Valid }}{{ .Text.String | left 80 }}{{ end }}</p>
-{{ end }}
-<form method="post" action="/admin/comment/{{ .Comment.Idcomments }}">
-    {{ csrfField }}
-    <textarea name="replytext" rows="3" cols="40">{{ if .Comment.Text.Valid }}{{ .Comment.Text.String }}{{ end }}</textarea><br>
-    <input type="submit" name="task" value="Edit">
-    <input type="submit" name="task" value="Delete">
-    <input type="submit" name="task" value="Deactivate">
-    <input type="submit" name="task" value="Activate">
-</form>
+
+<style>
+/* Scoped styles for admin comment page */
+.admin-wrapper {
+    max-width: 900px;
+    margin: 20px auto;
+    background: #fff;
+    border: 1px solid #ddd;
+    box-shadow: 0 0 20px rgba(0,0,0,0.15);
+}
+
+.admin-header {
+    background: #c00;
+    color: #fff;
+    padding: 10px 15px;
+    font-size: 1.2em;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.admin-header a {
+    color: #fff;
+    text-decoration: underline;
+    font-size: 0.8em;
+    font-weight: normal;
+}
+
+.admin-body {
+    padding: 20px;
+}
+
+.admin-context {
+    opacity: 0.6;
+    transform: scale(0.98);
+    margin-bottom: 10px;
+}
+
+.admin-target {
+    border: 4px solid #c00;
+    margin: 20px -10px; /* Pull out slightly */
+    padding: 10px;
+    background: #fff;
+    box-shadow: 0 0 15px rgba(200,0,0,0.2);
+    position: relative;
+}
+
+.admin-target::before {
+    content: "EDITING THIS COMMENT";
+    position: absolute;
+    top: -12px;
+    right: 10px;
+    background: #c00;
+    color: #fff;
+    font-size: 0.7em;
+    padding: 2px 5px;
+    font-weight: bold;
+}
+
+/* Hide standard actions in admin view to avoid confusion */
+.admin-wrapper .comment footer {
+    display: none;
+}
+
+.admin-actions-panel {
+    margin-top: 15px;
+    background: #f8f8f8;
+    border-top: 2px solid #e22;
+    padding: 15px;
+}
+
+.admin-actions-panel textarea {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 150px;
+    margin-bottom: 10px;
+    font-family: monospace;
+    padding: 5px;
+}
+
+.admin-actions-panel h3 {
+    margin-top: 0;
+    color: #c00;
+    font-size: 1em;
+    text-transform: uppercase;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 5px;
+}
+
+.admin-btn-row {
+    display: flex;
+    gap: 10px;
+}
+
+.admin-btn-row input[type="submit"] {
+    padding: 5px 15px;
+    cursor: pointer;
+}
+
+.btn-delete {
+    background: #c00;
+    color: white;
+    border: 1px solid #900;
+}
+
+</style>
+
+<div class="admin-wrapper">
+    <div class="admin-header">
+        <span>Admin Mode: Comment {{ .Comment.Idcomments }}</span>
+        <span>
+            Topic: <a href="/forum/topic/{{ .Comment.Idforumtopic }}">{{ topicTitleOrDefault .Comment.ForumtopicTitle.String }}</a>
+            / Thread: <a href="/forum/topic/{{ .Comment.Idforumtopic }}/thread/{{ .Comment.Idforumthread }}">{{ if .Comment.ThreadTitle.Valid }}{{ left 30 .Comment.ThreadTitle.String }}{{ else }}#{{ .Comment.Idforumthread }}{{ end }}</a>
+        </span>
+    </div>
+
+    <div class="admin-body">
+        {{ $targetId := .Comment.Idcomments }}
+        {{ $prev := 0 }}
+
+        {{ range $i, $c := .Context }}
+            {{ if eq $c.Idcomments $targetId }}
+                <div class="admin-target">
+                    {{ template "comment" (dict "Comment" $c "Number" $c.Idcomments "Prev" $prev) }}
+
+                    <div class="admin-actions-panel">
+                        <h3>Administration</h3>
+                        <form method="post" action="/admin/comment/{{ $c.Idcomments }}">
+                            {{ csrfField }}
+                            <textarea name="replytext">{{ $c.Text.String }}</textarea>
+                            <div class="admin-btn-row">
+                                <input type="submit" name="task" value="Edit">
+                                <input type="submit" name="task" value="Deactivate">
+                                <input type="submit" name="task" value="Activate">
+                                <input type="submit" name="task" value="Delete" class="btn-delete" onclick="return confirm('Permanently delete this comment?');">
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            {{ else }}
+                <div class="admin-context">
+                    {{ template "comment" (dict "Comment" $c "Number" $c.Idcomments "Prev" $prev) }}
+                </div>
+            {{ end }}
+            {{ $prev = $c }}
+        {{ end }}
+    </div>
+</div>
+
 {{ template "tail" $ }}
 {{ end }}

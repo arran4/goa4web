@@ -1,0 +1,2 @@
+subscribe:/forum/topic/*/thread/*
+notify:/forum/topic/*/thread/*

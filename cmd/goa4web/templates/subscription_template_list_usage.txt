@@ -1,0 +1,6 @@
+goa4web subscription template list - List all loaded subscription templates.
+
+Usage:
+  goa4web subscription template list
+
+{{template "flag_groups_section" .FlagGroups}}

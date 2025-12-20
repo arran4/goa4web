@@ -1,0 +1,9 @@
+goa4web subscription - Manage user subscriptions and templates.
+
+Usage:
+  goa4web subscription <command> [flags]
+
+Commands:
+  template     Manage subscription templates/archetypes.
+
+{{template "flag_groups_section" .FlagGroups}}

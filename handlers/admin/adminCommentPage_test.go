@@ -2,13 +2,14 @@ package admin
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
@@ -17,35 +18,86 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
-func TestAdminCommentPage_UsesURLParam(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-	mock.MatchExpectationsInOrder(false)
+type commentPageQueries struct {
+	db.Querier
+	commentID  int32
+	comment    *db.GetCommentByIdForUserRow
+	threadInfo []*db.GetCommentsByIdsForUserWithThreadInfoRow
+	threadRows []*db.GetCommentsByThreadIdForUserRow
+}
 
+func (q *commentPageQueries) GetCommentByIdForUser(_ context.Context, arg db.GetCommentByIdForUserParams) (*db.GetCommentByIdForUserRow, error) {
+	if arg.ID != q.commentID {
+		return nil, fmt.Errorf("unexpected comment id: %d", arg.ID)
+	}
+	return q.comment, nil
+}
+
+func (q *commentPageQueries) GetCommentsByIdsForUserWithThreadInfo(context.Context, db.GetCommentsByIdsForUserWithThreadInfoParams) ([]*db.GetCommentsByIdsForUserWithThreadInfoRow, error) {
+	return q.threadInfo, nil
+}
+
+func (q *commentPageQueries) GetCommentsByThreadIdForUser(context.Context, db.GetCommentsByThreadIdForUserParams) ([]*db.GetCommentsByThreadIdForUserRow, error) {
+	return q.threadRows, nil
+}
+
+func TestAdminCommentPage_UsesURLParam(t *testing.T) {
 	commentID := 44
 	threadID := 55
 	topicID := 66
-
-	rows1 := sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_id", "written", "text", "timezone", "deleted_at", "last_index", "username", "is_owner"}).
-		AddRow(commentID, threadID, 2, 1, time.Now(), "body", nil, nil, nil, "user", true)
-	mock.ExpectQuery("SELECT").WillReturnRows(rows1)
-
-	rows2 := sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_id", "written", "text", "timezone", "deleted_at", "last_index", "posterusername", "is_owner", "idforumthread", "idforumtopic", "forumtopic_title", "thread_title", "idforumcategory", "forumcategory_title"}).
-		AddRow(commentID, threadID, 2, 1, time.Now(), "body", nil, nil, nil, "user", true, threadID, topicID, "topic", "thread", 1, "cat")
-	mock.ExpectQuery("SELECT").WillReturnRows(rows2)
-
-	rows3 := sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_id", "written", "text", "timezone", "deleted_at", "last_index", "posterusername", "is_owner"}).
-		AddRow(commentID, threadID, 2, 1, time.Now(), "body", nil, nil, nil, "user", true)
-	mock.ExpectQuery("SELECT").WillReturnRows(rows3)
+	queries := &commentPageQueries{
+		commentID: int32(commentID),
+		comment: &db.GetCommentByIdForUserRow{
+			Idcomments:    int32(commentID),
+			ForumthreadID: int32(threadID),
+			UsersIdusers:  2,
+			LanguageID:    sql.NullInt32{Int32: 1, Valid: true},
+			Written:       sql.NullTime{Time: time.Now(), Valid: true},
+			Text:          sql.NullString{String: "body", Valid: true},
+			Timezone:      sql.NullString{},
+			DeletedAt:     sql.NullTime{},
+			LastIndex:     sql.NullTime{},
+			Username:      sql.NullString{String: "user", Valid: true},
+			IsOwner:       true,
+		},
+		threadInfo: []*db.GetCommentsByIdsForUserWithThreadInfoRow{{
+			Idcomments:         int32(commentID),
+			ForumthreadID:      int32(threadID),
+			UsersIdusers:       2,
+			LanguageID:         sql.NullInt32{Int32: 1, Valid: true},
+			Written:            sql.NullTime{Time: time.Now(), Valid: true},
+			Text:               sql.NullString{String: "body", Valid: true},
+			Timezone:           sql.NullString{},
+			DeletedAt:          sql.NullTime{},
+			LastIndex:          sql.NullTime{},
+			Posterusername:     sql.NullString{String: "user", Valid: true},
+			IsOwner:            true,
+			Idforumthread:      sql.NullInt32{Int32: int32(threadID), Valid: true},
+			Idforumtopic:       sql.NullInt32{Int32: int32(topicID), Valid: true},
+			ForumtopicTitle:    sql.NullString{String: "topic", Valid: true},
+			ThreadTitle:        sql.NullString{String: "thread", Valid: true},
+			Idforumcategory:    sql.NullInt32{Int32: 1, Valid: true},
+			ForumcategoryTitle: sql.NullString{String: "cat", Valid: true},
+		}},
+		threadRows: []*db.GetCommentsByThreadIdForUserRow{{
+			Idcomments:     int32(commentID),
+			ForumthreadID:  int32(threadID),
+			UsersIdusers:   2,
+			LanguageID:     sql.NullInt32{Int32: 1, Valid: true},
+			Written:        sql.NullTime{Time: time.Now(), Valid: true},
+			Text:           sql.NullString{String: "body", Valid: true},
+			Timezone:       sql.NullString{},
+			DeletedAt:      sql.NullTime{},
+			LastIndex:      sql.NullTime{},
+			Posterusername: sql.NullString{String: "user", Valid: true},
+			IsOwner:        true,
+		}},
+	}
 
 	req := httptest.NewRequest("GET", "/admin/comment/"+strconv.Itoa(commentID), nil)
 	req = mux.SetURLVars(req, map[string]string{"comment": strconv.Itoa(commentID)})
 	cfg := config.NewRuntimeConfig()
-	q := db.New(conn)
-	cd := common.NewCoreData(req.Context(), q, cfg)
+	cd := common.NewCoreData(req.Context(), queries, cfg)
 	cd.LoadSelectionsFromRequest(req)
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -54,8 +106,5 @@ func TestAdminCommentPage_UsesURLParam(t *testing.T) {
 	adminCommentPage(rr, req)
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
-	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expect: %v", err)
 	}
 }

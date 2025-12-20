@@ -3,14 +3,13 @@ package user
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"regexp"
 	"strings"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/config"
@@ -20,17 +19,48 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
-func TestUserEmailVerifyCodePage_Invalid(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+type verifyEmailQueries struct {
+	db.Querier
+	code            string
+	email           *db.UserEmail
+	marked          []db.SystemMarkUserEmailVerifiedParams
+	prioritySetArgs []db.SetNotificationPriorityForListerParams
+	deletedArgs     []db.SystemDeleteUserEmailsByEmailExceptIDParams
+	maxPriority     interface{}
+}
+
+func (q *verifyEmailQueries) GetUserEmailByCode(_ context.Context, code sql.NullString) (*db.UserEmail, error) {
+	if code.String != q.code {
+		return nil, fmt.Errorf("unexpected code: %s", code.String)
 	}
-	defer conn.Close()
-	q := db.New(conn)
+	return q.email, nil
+}
+
+func (q *verifyEmailQueries) SystemMarkUserEmailVerified(_ context.Context, arg db.SystemMarkUserEmailVerifiedParams) error {
+	q.marked = append(q.marked, arg)
+	return nil
+}
+
+func (q *verifyEmailQueries) GetMaxNotificationPriority(_ context.Context, userID int32) (interface{}, error) {
+	return q.maxPriority, nil
+}
+
+func (q *verifyEmailQueries) SetNotificationPriorityForLister(_ context.Context, arg db.SetNotificationPriorityForListerParams) error {
+	q.prioritySetArgs = append(q.prioritySetArgs, arg)
+	return nil
+}
+
+func (q *verifyEmailQueries) SystemDeleteUserEmailsByEmailExceptID(_ context.Context, arg db.SystemDeleteUserEmailsByEmailExceptIDParams) error {
+	q.deletedArgs = append(q.deletedArgs, arg)
+	return nil
+}
+
+func TestUserEmailVerifyCodePage_Invalid(t *testing.T) {
 	code := "abc"
-	rows := sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).
-		AddRow(1, 1, "e@example.com", nil, code, nil, 0)
-	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(sql.NullString{String: code, Valid: true}).WillReturnRows(rows)
+	q := &verifyEmailQueries{
+		code:  code,
+		email: &db.UserEmail{ID: 1, UserID: 1, Email: "e@example.com", LastVerificationCode: sql.NullString{String: code, Valid: true}},
+	}
 
 	store := sessions.NewCookieStore([]byte("test"))
 	sess := sessions.NewSession(store, "test")
@@ -50,27 +80,15 @@ func TestUserEmailVerifyCodePage_Invalid(t *testing.T) {
 	if rr.Code != http.StatusNotFound {
 		t.Fatalf("status=%d", rr.Code)
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 }
 
 func TestUserEmailVerifyCodePage_Success(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-	q := db.New(conn)
 	code := "xyz"
-	rows := sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).
-		AddRow(1, 1, "e@example.com", nil, code, nil, 0)
-	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(sql.NullString{String: code, Valid: true}).WillReturnRows(rows)
-	mock.ExpectExec("UPDATE user_emails").WithArgs(sqlmock.AnyArg(), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT COALESCE(MAX(notification_priority),0) AS maxp FROM user_emails WHERE user_id = ?")).WithArgs(int32(1)).
-		WillReturnRows(sqlmock.NewRows([]string{"maxp"}).AddRow(0))
-	mock.ExpectExec(regexp.QuoteMeta("UPDATE user_emails SET notification_priority = ? WHERE id = ? AND user_id = ?")).WithArgs(int32(1), int32(1), int32(1)).
-		WillReturnResult(sqlmock.NewResult(0, 1))
+	q := &verifyEmailQueries{
+		code:        code,
+		email:       &db.UserEmail{ID: 1, UserID: 1, Email: "e@example.com", LastVerificationCode: sql.NullString{String: code, Valid: true}},
+		maxPriority: int64(0),
+	}
 
 	store := sessions.NewCookieStore([]byte("test"))
 	sess := sessions.NewSession(store, "test")
@@ -95,7 +113,19 @@ func TestUserEmailVerifyCodePage_Success(t *testing.T) {
 	if loc := rr.Header().Get("Location"); loc != "/usr/email" {
 		t.Fatalf("location=%q", loc)
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	if len(q.marked) != 1 || q.marked[0].ID != 1 {
+		t.Fatalf("unexpected mark args: %#v", q.marked)
+	}
+	if len(q.prioritySetArgs) != 1 {
+		t.Fatalf("unexpected priority updates: %#v", q.prioritySetArgs)
+	}
+	if arg := q.prioritySetArgs[0]; arg.ListerID != 1 || arg.NotificationPriority != 1 || arg.ID != 1 {
+		t.Fatalf("unexpected priority args: %#v", arg)
+	}
+	if len(q.deletedArgs) != 1 {
+		t.Fatalf("unexpected delete args: %#v", q.deletedArgs)
+	}
+	if arg := q.deletedArgs[0]; arg.Email != "e@example.com" || arg.ID != 1 {
+		t.Fatalf("unexpected delete args: %#v", arg)
 	}
 }

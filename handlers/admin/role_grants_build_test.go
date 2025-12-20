@@ -2,36 +2,37 @@ package admin
 
 import (
 	"context"
-	"regexp"
+	"database/sql"
 	"testing"
-	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 )
 
+type roleGrantGroupQueries struct {
+	db.Querier
+	grants []*db.Grant
+}
+
+func (q *roleGrantGroupQueries) AdminListGrantsByRoleID(context.Context, sql.NullInt32) ([]*db.Grant, error) {
+	return q.grants, nil
+}
+
+func (q *roleGrantGroupQueries) GetAllForumCategories(context.Context, db.GetAllForumCategoriesParams) ([]*db.Forumcategory, error) {
+	return []*db.Forumcategory{}, nil
+}
+
+func (q *roleGrantGroupQueries) SystemListLanguages(context.Context) ([]*db.Language, error) {
+	return []*db.Language{}, nil
+}
+
 // TestBuildGrantGroupsIncludesAvailableActionsWithoutGrants ensures that when a role has
 // no grants, buildGrantGroups still returns groups for section/item pairs that do not
 // require an item ID.
 func TestBuildGrantGroupsIncludesAvailableActionsWithoutGrants(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-	q := db.New(conn)
+	q := &roleGrantGroupQueries{}
 	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
-
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, created_at, updated_at, user_id, role_id, section, item, rule_type, item_id, item_rule, action, extra, active FROM grants WHERE role_id = ? ORDER BY id\n")).
-		WithArgs(sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "created_at", "updated_at", "user_id", "role_id", "section", "item", "rule_type", "item_id", "item_rule", "action", "extra", "active"}))
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT f.idforumcategory, f.forumcategory_idforumcategory, f.language_id, f.title, f.description\nFROM forumcategory f\nWHERE (")).
-		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "language_id", "title", "description"}))
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, nameof\nFROM language\n")).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "nameof"}))
 
 	groups, err := buildGrantGroups(context.Background(), cd, 1)
 	if err != nil {
@@ -62,32 +63,22 @@ func TestBuildGrantGroupsIncludesAvailableActionsWithoutGrants(t *testing.T) {
 	if !searchFound {
 		t.Fatalf("missing forum| search group")
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 }
 
 // TestBuildGrantGroupsSkipsInvalidItemIDGrants ensures that grants requiring an
 // item ID are ignored when the item ID is missing.
 func TestBuildGrantGroupsSkipsInvalidItemIDGrants(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	q := &roleGrantGroupQueries{
+		grants: []*db.Grant{{
+			ID:      1,
+			RoleID:  sql.NullInt32{Int32: 1, Valid: true},
+			Section: "forum",
+			Item:    sql.NullString{String: "topic", Valid: true},
+			Action:  "view",
+			Active:  true,
+		}},
 	}
-	defer conn.Close()
-	q := db.New(conn)
 	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
-
-	rows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "user_id", "role_id", "section", "item", "rule_type", "item_id", "item_rule", "action", "extra", "active"}).
-		AddRow(1, time.Now(), time.Now(), 0, 1, "forum", "topic", "", nil, "", "view", "", true)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, created_at, updated_at, user_id, role_id, section, item, rule_type, item_id, item_rule, action, extra, active FROM grants WHERE role_id = ? ORDER BY id\n")).
-		WithArgs(sqlmock.AnyArg()).
-		WillReturnRows(rows)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT f.idforumcategory, f.forumcategory_idforumcategory, f.language_id, f.title, f.description\nFROM forumcategory f\nWHERE (")).
-		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "language_id", "title", "description"}))
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, nameof\nFROM language\n")).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "nameof"}))
 
 	groups, err := buildGrantGroups(context.Background(), cd, 1)
 	if err != nil {
@@ -106,8 +97,5 @@ func TestBuildGrantGroupsSkipsInvalidItemIDGrants(t *testing.T) {
 		if g.Section == "forum" && g.Item == "topic" {
 			t.Fatalf("unexpected forum|topic group")
 		}
-	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
 	}
 }

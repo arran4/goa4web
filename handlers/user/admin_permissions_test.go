@@ -79,7 +79,7 @@ func TestPermissionUserAllowEventData(t *testing.T) {
 			Username:               sql.NullString{String: "bob", Valid: true},
 			PublicProfileEnabledAt: sql.NullTime{},
 		},
-		userByName: &db.SystemGetUserByUsernameRow{Idusers: 2, Username: "bob"},
+		userByName: &db.SystemGetUserByUsernameRow{Idusers: 2, Username: sql.NullString{String: "bob", Valid: true}},
 	}
 
 	ch := bus.Subscribe(eventbus.TaskMessageType)

@@ -79,8 +79,8 @@ func TestAdminUserWritingsPage(t *testing.T) {
 		t.Fatalf("status=%d", rr.Result().StatusCode)
 	}
 	body := rr.Body.String()
-	if !strings.Contains(body, `<a href="/admin/writings/article/1">1</a>`) {
-		t.Fatalf("missing admin link: %s", body)
+	if !strings.Contains(body, `<td>1</td>`) {
+		t.Fatalf("missing id: %s", body)
 	}
 	if !strings.Contains(body, "Title") {
 		t.Fatalf("missing title: %s", body)

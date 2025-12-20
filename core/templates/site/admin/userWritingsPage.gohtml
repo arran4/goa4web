@@ -4,7 +4,7 @@
     <tr><th>ID</th><th>Title</th><th>Category</th><th>Date</th><th>Comments</th><th>Actions</th></tr>
     {{- range .Writings }}
     <tr>
-        <td><a href="/admin/writings/article/{{ .Idwriting }}">{{ .Idwriting }}</a></td>
+        <td>{{ .Idwriting }}</td>
         <td>{{ .Title.String }}</td>
         <td><a href="/admin/writings/categories/category/{{ .WritingCategoryID }}">{{ .WritingCategoryID }}</a></td>
         <td>{{ if .Published.Valid }}{{ cd.FormatLocalTime .Published.Time }}{{ end }}</td>

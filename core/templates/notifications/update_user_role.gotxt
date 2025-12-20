@@ -1,1 +1,1 @@
-User role updated via {{.Path}}
+User role updated via {{.TaskEvent.Path}}

@@ -56,7 +56,7 @@ func (r *dummyProvider) TestConfig(ctx context.Context) error { return nil }
 
 func TestNotifierNotifyAdmins(t *testing.T) {
 	q := &db.QuerierStub{
-		SystemGetUserByEmailRow: &db.SystemGetUserByEmailRow{Idusers: 1, Email: "a@test", Username: "a"},
+		SystemGetUserByEmailRow: &db.SystemGetUserByEmailRow{Idusers: 1, Email: "a@test", Username: sql.NullString{String: "a", Valid: true}},
 	}
 	cfg := config.NewRuntimeConfig()
 	cfg.EmailEnabled = true

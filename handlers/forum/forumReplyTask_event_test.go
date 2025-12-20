@@ -35,9 +35,21 @@ func TestForumReplyTaskEventData(t *testing.T) {
 	topicID := int32(1)
 	threadID := int32(2)
 
+	mock.ExpectQuery("SELECT u.idusers, ue.email, u.username, u.public_profile_enabled_at").
+		WithArgs(uid).
+		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(uid, "test@example.com", "testuser", nil))
+
 	mock.ExpectExec("INSERT INTO comments").
 		WithArgs(int32(1), uid, threadID, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), "forum", sqlmock.AnyArg(), topicID, sqlmock.AnyArg(), uid).
 		WillReturnResult(sqlmock.NewResult(5, 1))
+
+	mock.ExpectExec("DELETE FROM content_private_labels").
+		WithArgs("thread", threadID, uid).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	mock.ExpectExec("INSERT INTO content_read_markers").
+		WithArgs("thread", threadID, uid, 5).
+		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store

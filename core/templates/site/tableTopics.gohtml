@@ -1,6 +1,7 @@
 {{ define "tableTopics" }}
     {{ $base := "/forum" }}
     {{ with .BasePath }}{{ $base = . }}{{ end }}
+    {{ $isAdmin := .IsAdmin }}
     <section class="topics">
         <div class="topic-controls">
             <div class="sort-buttons">
@@ -23,7 +24,7 @@
         {{ if .DisplayTitle }}{{ $title = topicTitleOrDefault .DisplayTitle }}{{ end }}
         <li class="topic-item" data-last-reply-time="{{ .Lastaddition.Time.Unix }}" data-threads="{{ .Threads.Int32 }}" data-replies="{{ .Comments.Int32 }}" data-name="{{ $title }}">
             <div class="topic-name">
-                <a href="{{$base}}/topic/{{ .Idforumtopic }}">{{ $title | a4code2html }}</a>{{ if and cd.IsAdmin cd.IsAdminMode }} [<a href="/admin/forum/topics/topic/{{ .Idforumtopic }}/edit">ADMIN</a>]{{ end }}<br>
+                <a href="{{$base}}/topic/{{ .Idforumtopic }}">{{ $title | a4code2html }}</a>{{ if $isAdmin }} [<a href="/admin/forum/topics/topic/{{ .Idforumtopic }}/edit">ADMIN</a>]{{ end }}<br>
                 {{ $description := topicDescriptionOrDefault .Description.String }}<em>{{ $description | a4code2html }}</em>
                 {{- if .Labels }}<br>{{ template "topicLabels" .Labels }}{{ end }}
             </div>

@@ -25,7 +25,7 @@
             <tr>
                 <td>
                     {{ template "getAllForumCategories" (call $.CopyDataToSubCategories .) }}
-                    {{ template "tableTopics" (dict "Topics" .Topics) }}
+                    {{ template "tableTopics" (dict "Topics" .Topics "IsAdmin" $.Admin) }}
                     {{ if $.Admin }}
                         <a href="/admin/forum/categories/create?category={{ .Idforumcategory }}">Create Category</a><br>
                         {{ if ne .Idforumcategory 0 }}

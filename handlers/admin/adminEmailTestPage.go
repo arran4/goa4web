@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/mail"
 	"sort"
+	"strings"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
@@ -37,86 +38,78 @@ func (h *Handlers) AdminEmailTestPage(w http.ResponseWriter, r *http.Request) {
 		config.EnvEmailSignOff:       true,
 	}
 
-	type Setting struct {
+	// Generate config text
+	var configBuilder strings.Builder
+
+	// Helper to append setting
+	appendSetting := func(name, env, val, usage string) {
+		configBuilder.WriteString(fmt.Sprintf("# %s: %s\n", name, usage))
+		configBuilder.WriteString(fmt.Sprintf("%s=%s\n\n", env, val))
+	}
+
+	type OptionInfo struct {
 		Name  string
 		Env   string
 		Value string
 		Usage string
 	}
+	var options []OptionInfo
 
-	var settings []Setting
-
-	// Map current config values
 	values := config.ValuesMap(*cd.Config)
 
-	// Process String Options
 	for _, opt := range config.StringOptions {
 		if emailKeys[opt.Env] {
-			val := values[opt.Env]
-			if r.Method == "POST" {
-				val = r.FormValue(opt.Env)
-			}
-			settings = append(settings, Setting{
-				Name:  opt.Name,
-				Env:   opt.Env,
-				Value: val,
-				Usage: opt.Usage,
-			})
+			options = append(options, OptionInfo{opt.Name, opt.Env, values[opt.Env], opt.Usage})
 		}
 	}
-
-	// Process Bool Options
 	for _, opt := range config.BoolOptions {
 		if emailKeys[opt.Env] {
 			val := "false"
-			// If POST, read from form
-			if r.Method == "POST" {
-				val = r.FormValue(opt.Env)
-			} else if *opt.Target(cd.Config) {
+			if *opt.Target(cd.Config) {
 				val = "true"
 			}
-
-			settings = append(settings, Setting{
-				Name:  opt.Name,
-				Env:   opt.Env,
-				Value: val,
-				Usage: opt.Usage,
-			})
+			options = append(options, OptionInfo{opt.Name, opt.Env, val, opt.Usage})
 		}
 	}
 
-	// Sort settings by Name for better UX
-	sort.Slice(settings, func(i, j int) bool {
-		return settings[i].Name < settings[j].Name
+	sort.Slice(options, func(i, j int) bool {
+		return options[i].Name < options[j].Name
 	})
 
+	for _, opt := range options {
+		appendSetting(opt.Name, opt.Env, opt.Value, opt.Usage)
+	}
+
+	initialConfigText := configBuilder.String()
+
 	data := struct {
-		Settings  []Setting
-		ToAddress string
-		Result    string
-		Error     string
+		ConfigText string
+		ToAddress  string
+		Result     string
+		Error      string
 	}{
-		Settings: settings,
+		ConfigText: initialConfigText,
 	}
 
 	if r.Method == "POST" {
 		data.ToAddress = r.FormValue("to_address")
+		data.ConfigText = r.FormValue("config_text")
 
 		// Reconstruct Config
 		tempConfig := config.NewRuntimeConfig()
-		// Copy current config
 		*tempConfig = *cd.Config
 
-		// Override
+		// Parse config text
+		parsed := config.ParseEnvBytes([]byte(data.ConfigText))
+
+		// Apply overrides
 		for _, opt := range config.StringOptions {
-			if emailKeys[opt.Env] {
-				val := r.FormValue(opt.Env)
+			if val, ok := parsed[opt.Env]; ok {
 				*opt.Target(tempConfig) = val
 			}
 		}
 		for _, opt := range config.BoolOptions {
-			if emailKeys[opt.Env] {
-				val := r.FormValue(opt.Env)
+			if val, ok := parsed[opt.Env]; ok {
 				*opt.Target(tempConfig) = (val == "true")
 			}
 		}

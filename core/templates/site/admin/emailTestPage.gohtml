@@ -1,0 +1,39 @@
+{{ template "head" $ }}
+<div class="row">
+    <div class="col-12">
+        <h1>Email Tester</h1>
+
+        {{ if .Result }}
+        <div class="alert alert-success">
+            {{ .Result }}
+        </div>
+        {{ end }}
+
+        {{ if .Error }}
+        <div class="alert alert-danger">
+            {{ .Error }}
+        </div>
+        {{ end }}
+
+        <form method="POST">
+             {{ csrfField }}
+             <div class="form-group">
+                <label for="to_address">To Address</label>
+                <input type="email" class="form-control" id="to_address" name="to_address" value="{{ .ToAddress }}" required>
+                <small class="form-text text-muted">The email address to send the test email to.</small>
+            </div>
+
+            <hr>
+            <h3>Backend Settings</h3>
+            <p>Modify the values below to test different configurations (defaults to current runtime config).</p>
+
+            <div class="form-group">
+                <textarea class="form-control" name="config_text" rows="20" style="font-family: monospace;">{{ .ConfigText }}</textarea>
+                <small class="form-text text-muted">Format: KEY=VALUE. Lines starting with # are comments.</small>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Send Test Email</button>
+        </form>
+    </div>
+</div>
+{{ template "tail" $ }}

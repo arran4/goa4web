@@ -114,3 +114,4 @@ dbbackups
 /*.db
 /.output.txt
 /*.log
+verification/

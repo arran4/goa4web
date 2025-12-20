@@ -279,6 +279,7 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 		common.WithNavRegistry(s.Nav),
 		common.WithTasksRegistry(s.TasksReg),
 		common.WithDBRegistry(s.DBReg),
+		common.WithEmailRegistry(s.EmailReg),
 		common.WithRouterModules(modules),
 		common.WithOffset(offset),
 		common.WithSiteTitle("Arran's Site"),

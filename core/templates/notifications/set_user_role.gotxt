@@ -1,1 +1,1 @@
-User role set via {{.Path}}
+User role set via {{.TaskEvent.Path}}

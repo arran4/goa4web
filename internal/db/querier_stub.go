@@ -28,6 +28,14 @@ type QuerierStub struct {
 
 	InsertPendingEmailErr   error
 	InsertPendingEmailCalls []InsertPendingEmailParams
+
+	AdminListAdministratorEmailsErr     error
+	AdminListAdministratorEmailsReturns []string
+	AdminListAdministratorEmailsCalls   int
+
+	SystemGetTemplateOverrideReturns string
+	SystemGetTemplateOverrideErr     error
+	SystemGetTemplateOverrideCalls   []string
 }
 
 // SystemGetUserByID records the call and returns the configured response.
@@ -86,4 +94,19 @@ func (s *QuerierStub) InsertPendingEmail(ctx context.Context, arg InsertPendingE
 	s.InsertPendingEmailCalls = append(s.InsertPendingEmailCalls, arg)
 	s.mu.Unlock()
 	return s.InsertPendingEmailErr
+}
+
+// AdminListAdministratorEmails records the call and returns the configured response.
+func (s *QuerierStub) AdminListAdministratorEmails(ctx context.Context) ([]string, error) {
+	s.mu.Lock()
+	s.AdminListAdministratorEmailsCalls++
+	s.mu.Unlock()
+	return s.AdminListAdministratorEmailsReturns, s.AdminListAdministratorEmailsErr
+}
+// SystemGetTemplateOverride records the call and returns the configured response.
+func (s *QuerierStub) SystemGetTemplateOverride(ctx context.Context, name string) (string, error) {
+	s.mu.Lock()
+	s.SystemGetTemplateOverrideCalls = append(s.SystemGetTemplateOverrideCalls, name)
+	s.mu.Unlock()
+	return s.SystemGetTemplateOverrideReturns, s.SystemGetTemplateOverrideErr
 }

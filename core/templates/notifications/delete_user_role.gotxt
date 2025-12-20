@@ -1,1 +1,1 @@
-User role deleted via {{.Path}}
+User role deleted via {{.TaskEvent.Path}}

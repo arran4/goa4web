@@ -2,6 +2,7 @@
     {{ $cmt := .Comment }}
     {{ $num := .Number }}
     {{ $prev := .Prev }}
+    {{ $readOnly := .ReadOnly }}
     <div class="comment">
         <aside class="author">
             <div class="avatar"></div>
@@ -16,7 +17,7 @@
             </div>
         </aside>
         <section class="body">
-            {{ if cd.CommentEditing $cmt }}
+            {{ if and (cd.CommentEditing $cmt) (not $readOnly) }}
                 <a id="edit"></a>
                 <span class="section-title">Edit:</span><br>
                 <form method="post" action="{{ cd.CommentEditSaveURL $cmt }}">
@@ -28,6 +29,7 @@
                 </form>
             {{ else }}
                 <div id="comment-{{ $cmt.Idcomments }}">{{ $cmt.Text.String | a4code2html}}</div>
+                {{ if not $readOnly }}
                 <footer>
                     {{ if cd.SelectedThreadCanReply }}
                         [<a href="#" class="quote-link" data-quote-type="full" data-comment-id="{{ $cmt.Idcomments }}">FULL REPLY</a>]
@@ -37,6 +39,7 @@
                     {{ if cd.CanEditComment $cmt }}[<a href="{{ cd.CommentEditURL $cmt }}">EDIT</a>]{{ end }}
                     {{ $admin := cd.CommentAdminURL $cmt }}{{ if $admin }}[<a href="{{ $admin }}">ADMIN</a>]{{ end }}
                 </footer>
+                {{ end }}
             {{ end }}
         </section>
     </div>

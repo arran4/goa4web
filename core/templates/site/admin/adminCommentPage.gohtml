@@ -127,7 +127,7 @@
         {{ range $i, $c := .Context }}
             {{ if eq $c.Idcomments $targetId }}
                 <div class="admin-target">
-                    {{ template "comment" (dict "Comment" $c "Number" $c.Idcomments "Prev" $prev) }}
+                    {{ template "comment" (dict "Comment" $c "Number" $c.Idcomments "Prev" $prev "ReadOnly" true) }}
 
                     <div class="admin-actions-panel">
                         <h3>Administration</h3>
@@ -145,7 +145,7 @@
                 </div>
             {{ else }}
                 <div class="admin-context">
-                    {{ template "comment" (dict "Comment" $c "Number" $c.Idcomments "Prev" $prev) }}
+                    {{ template "comment" (dict "Comment" $c "Number" $c.Idcomments "Prev" $prev "ReadOnly" true) }}
                 </div>
             {{ end }}
             {{ $prev = $c }}

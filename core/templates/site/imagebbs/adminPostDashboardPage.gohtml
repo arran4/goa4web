@@ -3,12 +3,11 @@
 <p><img src="{{ .Post.Fullimage }}" alt="post image"></p>
 <p>Description: {{ if .Post.Description.Valid }}{{ .Post.Description.String }}{{ end }}</p>
 <p>User: <a href="/admin/user/{{ .Post.UsersIdusers }}">{{ if .Post.Username.Valid }}{{ .Post.Username.String }}{{ else }}{{ .Post.UsersIdusers }}{{ end }}</a></p>
-<p>Board: <a href="/admin/imagebbs/boards/board/{{ .Post.ImageboardIdimageboard.Int32 }}">{{ .Post.ImageboardIdimageboard.Int32 }}</a> | <a href="/imagebbs/board/{{ .Post.ImageboardIdimageboard.Int32 }}">Public View</a></p>
+<p>Board: <a href="/admin/imagebbs/board/{{ .Post.ImageboardIdimageboard.Int32 }}">{{ .Post.ImageboardIdimageboard.Int32 }}</a> | <a href="/imagebbs/board/{{ .Post.ImageboardIdimageboard.Int32 }}">Public View</a></p>
 <p>Approved: {{ if .Post.Approved }}Yes{{ else }}No{{ end }}</p>
 <p>
     <a href="/admin/user/{{ .Post.UsersIdusers }}/imagebbs/post/{{ .Post.Idimagepost }}/edit">Edit</a> |
     <a href="/admin/user/{{ .Post.UsersIdusers }}/imagebbs/post/{{ .Post.Idimagepost }}/comments">Comments ({{ .Post.Comments }})</a> |
-    <a href="/imagebbs/post/{{ .Post.Idimagepost }}">View Post</a> |
     <a href="{{ .Post.Fullimage }}">Image URL</a>
 </p>
 {{ template "tail" $ }}

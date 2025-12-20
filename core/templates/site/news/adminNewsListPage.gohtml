@@ -1,6 +1,5 @@
 {{ template "head" $ }}
 {{ if .Error }}<p>{{ .Error }}</p>{{ end }}
-{{ if .CanPost }}<p><a href="/news/post">New post</a></p>{{ end }}
 <table class="table table-bordered">
     <tr><th>ID<th>Date<th>Writer<th>Comments<th>View</tr>
     {{ range cd.AdminLatestNews }}

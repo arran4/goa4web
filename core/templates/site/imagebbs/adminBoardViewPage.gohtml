@@ -19,7 +19,6 @@
 <td>{{ .Username.String }}</td>
 <td>{{ .Description.String }}</td>
 <td>{{ if .Posted.Valid }}{{ cd.LocalTimeIn .Posted.Time .Timezone.String }}{{ end }}</td>
-<td><a href="/imagebbs/post/{{ .Idimagepost }}">View</a></td>
 </tr>
 {{ end }}
 </table>

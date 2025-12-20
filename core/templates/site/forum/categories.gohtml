@@ -28,9 +28,6 @@
                     {{ template "tableTopics" (dict "Topics" .Topics "IsAdmin" $.Admin) }}
                     {{ if $.Admin }}
                         <a href="/admin/forum/categories/create?category={{ .Idforumcategory }}">Create Category</a><br>
-                        {{ if ne .Idforumcategory 0 }}
-                            <a href="/admin/forum/topics/create?category={{ .Idforumcategory }}">Create Topic</a><br>
-                        {{ end }}
                     {{ end }}
                 </td>
             </tr>

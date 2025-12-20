@@ -94,12 +94,7 @@ func TestNotifierInitialization(t *testing.T) {
 	if n.Queries != nil {
 		t.Fatalf("expected nil Queries")
 	}
-	conn, _, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-	q := db.New(conn)
+	q := &db.QuerierStub{}
 	n = New(WithQueries(q), WithConfig(cfg))
 	if n.Queries != q {
 		t.Fatalf("queries not set via option")

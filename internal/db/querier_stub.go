@@ -36,6 +36,17 @@ type QuerierStub struct {
 	SystemGetTemplateOverrideReturns string
 	SystemGetTemplateOverrideErr     error
 	SystemGetTemplateOverrideCalls   []string
+
+	ListSubscribersForPatternsParams []ListSubscribersForPatternsParams
+	ListSubscribersForPatternsReturn map[string][]int32
+
+	GetPreferenceForListerParams []int32
+	GetPreferenceForListerReturn map[int32]*Preference
+
+	InsertSubscriptionParams []InsertSubscriptionParams
+
+	ListSubscribersForPatternParams []ListSubscribersForPatternParams
+	ListSubscribersForPatternReturn map[string][]int32
 }
 
 // SystemGetUserByID records the call and returns the configured response.
@@ -110,4 +121,49 @@ func (s *QuerierStub) SystemGetTemplateOverride(ctx context.Context, name string
 	s.SystemGetTemplateOverrideCalls = append(s.SystemGetTemplateOverrideCalls, name)
 	s.mu.Unlock()
 	return s.SystemGetTemplateOverrideReturns, s.SystemGetTemplateOverrideErr
+}
+
+func (s *QuerierStub) ListSubscribersForPatterns(ctx context.Context, arg ListSubscribersForPatternsParams) ([]int32, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.ListSubscribersForPatternsParams = append(s.ListSubscribersForPatternsParams, arg)
+	// Flatten returns for all patterns or just return a default set
+	var ret []int32
+	if s.ListSubscribersForPatternsReturn != nil {
+		for _, p := range arg.Patterns {
+			ret = append(ret, s.ListSubscribersForPatternsReturn[p]...)
+		}
+	}
+	return ret, nil
+}
+
+func (s *QuerierStub) GetPreferenceForLister(ctx context.Context, listerID int32) (*Preference, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.GetPreferenceForListerParams = append(s.GetPreferenceForListerParams, listerID)
+	if s.GetPreferenceForListerReturn != nil {
+		if v, ok := s.GetPreferenceForListerReturn[listerID]; ok {
+			return v, nil
+		}
+	}
+	return nil, nil
+}
+
+func (s *QuerierStub) InsertSubscription(ctx context.Context, arg InsertSubscriptionParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.InsertSubscriptionParams = append(s.InsertSubscriptionParams, arg)
+	return nil
+}
+
+func (s *QuerierStub) ListSubscribersForPattern(ctx context.Context, arg ListSubscribersForPatternParams) ([]int32, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.ListSubscribersForPatternParams = append(s.ListSubscribersForPatternParams, arg)
+	if s.ListSubscribersForPatternReturn != nil {
+		if v, ok := s.ListSubscribersForPatternReturn[arg.Pattern]; ok {
+			return v, nil
+		}
+	}
+	return nil, nil
 }

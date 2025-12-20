@@ -159,7 +159,7 @@ func AdminTopicDeleteConfirmPage(w http.ResponseWriter, r *http.Request) {
 		ConfirmLabel: "Confirm delete",
 		Back:         "/admin/forum/topics/topic/" + strconv.Itoa(tid),
 	}
-	handlers.TemplateHandler(w, r, "confirmPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "forum/adminTopicDeletePage.gohtml", data)
 }
 
 func AdminTopicDeletePage(w http.ResponseWriter, r *http.Request) {

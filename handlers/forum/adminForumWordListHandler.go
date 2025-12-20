@@ -35,5 +35,5 @@ func AdminForumWordListPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Rows = rows
 
-	handlers.TemplateHandler(w, r, "forumWordListPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "admin/forumWordListPage.gohtml", data)
 }

@@ -40,5 +40,5 @@ func AdminTopicGrantsPage(w http.ResponseWriter, r *http.Request) {
 		UpdateURL:   strings.TrimSuffix(r.URL.Path, "/grants") + "/grant/update",
 		GrantGroups: groups,
 	}
-	handlers.TemplateHandler(w, r, "adminTopicGrantsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "forum/adminTopicGrantsPage.gohtml", data)
 }

@@ -27,7 +27,7 @@ func AdminCategoryCreatePage(w http.ResponseWriter, r *http.Request) {
 		Categories []*db.Forumcategory
 	}{Categories: cats}
 	cd.PageTitle = "Create Forum Category"
-	handlers.TemplateHandler(w, r, "forumAdminCategoryCreatePage.gohtml", data)
+	handlers.TemplateHandler(w, r, "forum/forumAdminCategoryCreatePage.gohtml", data)
 }
 
 // AdminCategoryCreateSubmit handles creation of a new forum category.

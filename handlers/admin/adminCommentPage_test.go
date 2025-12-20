@@ -209,4 +209,9 @@ func TestAdminCommentPage_RendersCorrectTopicLink(t *testing.T) {
 	if !strings.Contains(body, expectedThreadLink) {
 		t.Errorf("Expected link %s not found in body", expectedThreadLink)
 	}
+
+	expectedAdminLink := fmt.Sprintf("/admin/forum/topic/%d", topicID)
+	if !strings.Contains(body, expectedAdminLink) {
+		t.Errorf("Expected admin link %s not found in body", expectedAdminLink)
+	}
 }

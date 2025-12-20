@@ -85,3 +85,10 @@ FROM
 WHERE
     forumthread_id = ?
     AND text IS NULL;
+
+-- name: AdminGetSubsequentCommentID :one
+SELECT idcomments
+FROM comments
+WHERE forumthread_id = ? AND idcomments > ?
+ORDER BY idcomments ASC
+LIMIT 1;

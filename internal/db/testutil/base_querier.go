@@ -10,7 +10,8 @@ import (
 
 // BaseQuerier provides common permission helpers for test stubs.
 type BaseQuerier struct {
-	*UnimplementedQuerier
+	*db.Queries
+	t                testing.TB
 	GrantAllowed     bool
 	RoleGrantAllowed bool
 }
@@ -19,7 +20,8 @@ type BaseQuerier struct {
 func NewBaseQuerier(t testing.TB) *BaseQuerier {
 	t.Helper()
 	return &BaseQuerier{
-		UnimplementedQuerier: NewUnimplementedQuerier(t),
+		Queries: db.New(panicDB{t: t}),
+		t:       t,
 	}
 }
 
@@ -47,4 +49,40 @@ func (q *BaseQuerier) SystemCheckRoleGrant(ctx context.Context, arg db.SystemChe
 		return 1, nil
 	}
 	return 0, sql.ErrNoRows
+}
+
+type panicDB struct {
+	t testing.TB
+}
+
+func (p panicDB) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
+	if p.t != nil {
+		p.t.Helper()
+		p.t.Fatalf("unexpected ExecContext: %s", query)
+	}
+	return nil, sql.ErrConnDone
+}
+
+func (p panicDB) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
+	if p.t != nil {
+		p.t.Helper()
+		p.t.Fatalf("unexpected QueryContext: %s", query)
+	}
+	return nil, sql.ErrConnDone
+}
+
+func (p panicDB) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
+	if p.t != nil {
+		p.t.Helper()
+		p.t.Fatalf("unexpected QueryRowContext: %s", query)
+	}
+	return &sql.Row{}
+}
+
+func (p panicDB) PrepareContext(ctx context.Context, query string) (*sql.Stmt, error) {
+	if p.t != nil {
+		p.t.Helper()
+		p.t.Fatalf("unexpected PrepareContext: %s", query)
+	}
+	return nil, sql.ErrConnDone
 }

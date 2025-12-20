@@ -100,7 +100,7 @@ func (q *Queries) AdminDeleteForumCategory(ctx context.Context, idforumcategory 
 }
 
 const adminDeleteForumTopic = `-- name: AdminDeleteForumTopic :exec
-UPDATE forumtopic SET deleted_at = NOW() WHERE idforumtopic = ?
+DELETE FROM forumtopic WHERE idforumtopic = ?
 `
 
 // Removes a forum topic by ID.

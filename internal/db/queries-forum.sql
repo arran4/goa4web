@@ -395,7 +395,7 @@ UPDATE forumcategory SET deleted_at = NOW() WHERE idforumcategory = ?;
 
 -- name: AdminDeleteForumTopic :exec
 -- Removes a forum topic by ID.
-UPDATE forumtopic SET deleted_at = NOW() WHERE idforumtopic = ?;
+DELETE FROM forumtopic WHERE idforumtopic = ?;
 
 
 -- name: GetAllForumThreadsWithTopic :many

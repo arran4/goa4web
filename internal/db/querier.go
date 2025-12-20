@@ -44,6 +44,7 @@ type Querier interface {
 	AdminCreateLanguage(ctx context.Context, nameof sql.NullString) error
 	AdminCreateLinkerCategory(ctx context.Context, arg AdminCreateLinkerCategoryParams) error
 	AdminCreateLinkerItem(ctx context.Context, arg AdminCreateLinkerItemParams) error
+	AdminDeleteCommentsByThread(ctx context.Context, forumthreadID int32) error
 	AdminDeleteExternalLink(ctx context.Context, id int32) error
 	AdminDeleteExternalLinkByURL(ctx context.Context, url string) error
 	AdminDeleteFAQ(ctx context.Context, id int32) error
@@ -160,6 +161,7 @@ type Querier interface {
 	AdminListPendingDeactivatedWritings(ctx context.Context, arg AdminListPendingDeactivatedWritingsParams) ([]*AdminListPendingDeactivatedWritingsRow, error)
 	AdminListPendingRequests(ctx context.Context) ([]*AdminRequestQueue, error)
 	AdminListPendingUsers(ctx context.Context) ([]*AdminListPendingUsersRow, error)
+	AdminListPrivateForumInvalidCommentsByThread(ctx context.Context, forumthreadID int32) ([]int32, error)
 	AdminListRecentNotifications(ctx context.Context, limit int32) ([]*Notification, error)
 	AdminListRequestComments(ctx context.Context, requestID int32) ([]*AdminRequestComment, error)
 	// admin task

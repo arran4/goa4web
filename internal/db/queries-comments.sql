@@ -215,7 +215,7 @@ SELECT idcomments, text FROM comments WHERE deleted_at IS NULL;
 
 -- name: AdminListAllCommentsWithThreadInfo :many
 SELECT c.idcomments, c.written, c.text, c.deleted_at,
-       th.idforumthread, t.idforumtopic, t.title AS forumtopic_title,
+       th.idforumthread, t.idforumtopic, t.title AS forumtopic_title, t.handler AS topic_handler,
        u.idusers, u.username AS posterusername
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id = th.idforumthread

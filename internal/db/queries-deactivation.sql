@@ -166,3 +166,7 @@ SELECT EXISTS(
 SELECT idusers, email, username FROM deactivated_users
 WHERE restored_at IS NULL
 LIMIT ? OFFSET ?;
+
+-- name: AdminGetDeactivatedCommentById :one
+SELECT * FROM deactivated_comments
+WHERE idcomments = ? AND restored_at IS NULL;

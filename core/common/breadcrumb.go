@@ -281,6 +281,18 @@ func (cd *CoreData) adminBreadcrumbs() ([]Breadcrumb, error) {
 	case cd.currentRequestID != 0:
 		crumbs = append(crumbs, Breadcrumb{Title: "Requests", Link: "/admin/requests"})
 		crumbs = append(crumbs, Breadcrumb{Title: fmt.Sprintf("Request %d", cd.currentRequestID)})
+	case cd.currentTopicID != 0 && (strings.Contains(cd.PageTitle, "Forum Topic") || strings.Contains(cd.PageTitle, "Edit Forum Topic")):
+		crumbs = append(crumbs, Breadcrumb{Title: "Forum Topics", Link: "/admin/forum/topics"})
+		if t, err := cd.CurrentTopic(); err == nil && t != nil {
+			title := fmt.Sprintf("Topic %d", cd.currentTopicID)
+			if t.Title.Valid {
+				title = t.Title.String
+			}
+			crumbs = append(crumbs, Breadcrumb{Title: title, Link: fmt.Sprintf("/admin/forum/topics/topic/%d", cd.currentTopicID)})
+		}
+		if cd.PageTitle != "" {
+			crumbs = append(crumbs, Breadcrumb{Title: cd.PageTitle})
+		}
 	default:
 		if cd.PageTitle != "" {
 			crumbs = append(crumbs, Breadcrumb{Title: cd.PageTitle})

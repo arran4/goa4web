@@ -40,7 +40,7 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 		if cd.IsAdmin() && cd.IsAdminMode() {
 			items = append(items, common.IndexItem{
 				Name: "[ADMIN]",
-				Link: fmt.Sprintf("/admin/forum/topic/%s", topicID),
+				Link: fmt.Sprintf("/admin/forum/topics/topic/%s", topicID),
 			})
 		}
 		if hasThreadUnread(cd, threadID) {

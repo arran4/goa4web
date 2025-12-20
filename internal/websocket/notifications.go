@@ -145,7 +145,9 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
-	log.Printf("subscriptions loaded: %d entries", len(subsRows))
+	if h.Config.LogFlags&config.LogFlagDebug != 0 {
+		log.Printf("subscriptions loaded: %d entries", len(subsRows))
+	}
 
 	conn, err := h.Upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -169,7 +171,7 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 						subsRows, patterns, err = loadSubs()
 						if err != nil {
 							log.Printf("refresh subscriptions: %v", err)
-						} else {
+						} else if h.Config.LogFlags&config.LogFlagDebug != 0 {
 							log.Printf("subscriptions updated: %d entries", len(subsRows))
 						}
 						continue

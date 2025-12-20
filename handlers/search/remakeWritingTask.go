@@ -17,6 +17,7 @@ type RemakeWritingTask struct{ tasks.TaskString }
 var remakeWritingTask = &RemakeWritingTask{TaskString: TaskRemakeWritingSearch}
 var _ tasks.Task = (*RemakeWritingTask)(nil)
 var _ tasks.BackgroundTasker = (*RemakeWritingTask)(nil)
+var _ tasks.TemplatesRequired = (*RemakeWritingTask)(nil)
 
 func (RemakeWritingTask) Action(w http.ResponseWriter, r *http.Request) any {
 	data := struct {
@@ -27,7 +28,11 @@ func (RemakeWritingTask) Action(w http.ResponseWriter, r *http.Request) any {
 		Messages: []string{"work queued"},
 		Back:     "/admin/search",
 	}
-	return handlers.TemplateWithDataHandler("runTaskPage.gohtml", data)
+	return handlers.TemplateWithDataHandler(handlers.TemplateRunTaskPage, data)
+}
+
+func (RemakeWritingTask) TemplatesRequired() []string {
+	return []string{handlers.TemplateRunTaskPage}
 }
 
 func (RemakeWritingTask) BackgroundTask(ctx context.Context, q db.Querier) (tasks.Task, error) {

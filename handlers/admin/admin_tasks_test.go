@@ -1,22 +1,17 @@
-package search
+package admin
 
 import (
 	"github.com/arran4/goa4web/core/templates"
 	"testing"
 )
 
-func TestSearchTasksTemplatesRequiredExist(t *testing.T) {
+func TestAdminTasksTemplatesRequiredExist(t *testing.T) {
 	tasks := []struct {
 		name string
 		task templatesRequired
 	}{
-		{"searchTask", &searchTask{}},
-		{"RemakeBlogTask", &RemakeBlogTask{}},
-		{"RemakeCommentsTask", &RemakeCommentsTask{}},
-		{"RemakeImageTask", &RemakeImageTask{}},
-		{"RemakeLinkerTask", &RemakeLinkerTask{}},
-		{"RemakeNewsTask", &RemakeNewsTask{}},
-		{"RemakeWritingTask", &RemakeWritingTask{}},
+		{"UserPasswordResetTask", &UserPasswordResetTask{}},
+		{"ServerShutdownTask", &ServerShutdownTask{}},
 	}
 	for _, task := range tasks {
 		t.Run(task.name, func(t *testing.T) {

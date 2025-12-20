@@ -32,6 +32,7 @@ func (h *Handlers) NewServerShutdownTask() *ServerShutdownTask {
 
 var _ tasks.Task = (*ServerShutdownTask)(nil)
 var _ tasks.TaskMatcher = (*ServerShutdownTask)(nil)
+var _ tasks.TemplatesRequired = (*ServerShutdownTask)(nil)
 
 func (t *ServerShutdownTask) Matcher() mux.MatcherFunc {
 	taskM := tasks.HasTask(string(TaskServerShutdown))
@@ -78,5 +79,9 @@ func (t *ServerShutdownTask) Action(w http.ResponseWriter, r *http.Request) any 
 			}
 		}
 	}()
-	return handlers.TemplateWithDataHandler("runTaskPage.gohtml", data)
+	return handlers.TemplateWithDataHandler(handlers.TemplateRunTaskPage, data)
+}
+
+func (t *ServerShutdownTask) TemplatesRequired() []string {
+	return []string{handlers.TemplateRunTaskPage}
 }

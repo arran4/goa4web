@@ -17,6 +17,7 @@ type RemakeLinkerTask struct{ tasks.TaskString }
 var remakeLinkerTask = &RemakeLinkerTask{TaskString: TaskRemakeLinkerSearch}
 var _ tasks.Task = (*RemakeLinkerTask)(nil)
 var _ tasks.BackgroundTasker = (*RemakeLinkerTask)(nil)
+var _ tasks.TemplatesRequired = (*RemakeLinkerTask)(nil)
 
 func (RemakeLinkerTask) Action(w http.ResponseWriter, r *http.Request) any {
 	data := struct {
@@ -27,7 +28,11 @@ func (RemakeLinkerTask) Action(w http.ResponseWriter, r *http.Request) any {
 		Messages: []string{"work queued"},
 		Back:     "/admin/search",
 	}
-	return handlers.TemplateWithDataHandler("runTaskPage.gohtml", data)
+	return handlers.TemplateWithDataHandler(handlers.TemplateRunTaskPage, data)
+}
+
+func (RemakeLinkerTask) TemplatesRequired() []string {
+	return []string{handlers.TemplateRunTaskPage}
 }
 
 func (RemakeLinkerTask) BackgroundTask(ctx context.Context, q db.Querier) (tasks.Task, error) {

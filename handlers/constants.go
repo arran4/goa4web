@@ -13,4 +13,7 @@ const (
 
 	// TaskField is used by submit buttons to indicate the chosen task.
 	TaskField = "task"
+
+	// TemplateRunTaskPage is the template used for task execution feedback.
+	TemplateRunTaskPage = "admin/runTaskPage.gohtml"
 )

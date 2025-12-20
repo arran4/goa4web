@@ -37,7 +37,7 @@ func TestAdminAnyoneGrantsPage(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/admin/grants/anyone", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 

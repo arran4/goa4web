@@ -220,8 +220,8 @@ func TestNotifyAdminsEnv(t *testing.T) {
 	defer func() { cfg.AdminEmails = origEmails }()
 	q := &notifyAdminsQueries{
 		usersByEmail: map[string]*db.SystemGetUserByEmailRow{
-			"a@test.com": {Idusers: 1, Email: "a@test.com", Username: "a"},
-			"b@test.com": {Idusers: 2, Email: "b@test.com", Username: "b"},
+			"a@test.com": {Idusers: 1, Email: "a@test.com", Username: sql.NullString{String: "a", Valid: true}},
+			"b@test.com": {Idusers: 2, Email: "b@test.com", Username: sql.NullString{String: "b", Valid: true}},
 		},
 		templateOverrides: map[string]string{
 			"adminNotificationEmailSubject.gotxt": "",

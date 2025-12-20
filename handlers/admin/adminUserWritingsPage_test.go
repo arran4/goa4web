@@ -67,7 +67,7 @@ func TestAdminUserWritingsPage(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/admin/user/1/writings", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
 	cd.SetCurrentProfileUserID(1)
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)

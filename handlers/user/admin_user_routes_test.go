@@ -48,7 +48,7 @@ func setupRequest(t *testing.T, path string, userID int, queries db.Querier) (*h
 	req := httptest.NewRequest("GET", fmt.Sprintf(path, userID), nil)
 	req = mux.SetURLVars(req, map[string]string{"user": strconv.Itoa(userID)})
 	cfg := config.NewRuntimeConfig()
-	cd := common.NewCoreData(req.Context(), queries, cfg)
+	cd := common.NewCoreData(req.Context(), queries, cfg, common.WithUserRoles([]string{"administrator"}))
 	cd.LoadSelectionsFromRequest(req)
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)

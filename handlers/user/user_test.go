@@ -136,7 +136,7 @@ func TestUserEmailTestAction_NoProvider(t *testing.T) {
 	ctx := req.Context()
 	reg := newEmailReg()
 	p, _ := reg.ProviderFromConfig(cfg)
-	cd := common.NewCoreData(ctx, queries, cfg, common.WithEmailProvider(p))
+	cd := common.NewCoreData(ctx, queries, cfg, common.WithEmailProvider(p), common.WithUserRoles([]string{}))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -172,7 +172,7 @@ func TestUserEmailTestAction_WithProvider(t *testing.T) {
 	ctx := req.Context()
 	reg := newEmailReg()
 	p, _ := reg.ProviderFromConfig(cfg)
-	cd := common.NewCoreData(ctx, queries, cfg, common.WithEmailProvider(p))
+	cd := common.NewCoreData(ctx, queries, cfg, common.WithEmailProvider(p), common.WithUserRoles([]string{}))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -197,7 +197,7 @@ func TestUserEmailPage_ShowError(t *testing.T) {
 	}
 	req := httptest.NewRequest("GET", "/usr/email?error=missing", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{}))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -231,7 +231,7 @@ func TestUserEmailPage_NoUnverified(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/usr/email", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{}))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -261,7 +261,7 @@ func TestUserEmailPage_NoVerified(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/usr/email", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{}))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)

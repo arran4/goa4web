@@ -91,7 +91,7 @@ func TestPermissionUserAllowEventData(t *testing.T) {
 	req := httptest.NewRequest("POST", "/admin/user/2/permissions", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req = mux.SetURLVars(req, map[string]string{"user": "2"})
-	cd := common.NewCoreData(req.Context(), queries, config.NewRuntimeConfig())
+	cd := common.NewCoreData(req.Context(), queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
 	cd.LoadSelectionsFromRequest(req)
 	evt := &eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}
 	cd.SetEvent(evt)

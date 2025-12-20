@@ -193,14 +193,14 @@ func TestRestoreCommentTask_UsesURLParam(t *testing.T) {
 		},
 		deactivatedRows: []*db.AdminListDeactivatedCommentsRow{{
 			Idcomments: 44,
-			Text:       "body",
+			Text:       sql.NullString{String: "body", Valid: true},
 		}},
 	}
 	rr, req := setupCommentTest(t, 44, nil, queries)
 	if err, ok := restoreCommentTask.Action(rr, req).(error); ok && err != nil {
 		t.Fatalf("Action: %v", err)
 	}
-	if len(queries.restoreArgs) != 1 || queries.restoreArgs[0].Idcomments != 44 || queries.restoreArgs[0].Text != "body" {
+	if len(queries.restoreArgs) != 1 || queries.restoreArgs[0].Idcomments != 44 || queries.restoreArgs[0].Text.String != "body" {
 		t.Fatalf("unexpected restore args: %#v", queries.restoreArgs)
 	}
 	if len(queries.restoredIDs) != 1 || queries.restoredIDs[0] != 44 {

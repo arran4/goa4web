@@ -21,8 +21,8 @@
                 <td>
                     {{/* Display parameters nicely */}}
                     {{ if .Parameters }}
-                        {{ range $k, $v := .Parameters }}
-                            {{ $k }}: {{ $v }}
+                        {{ range .Parameters }}
+                            {{ .Key }}: {{ if .Resolved }}{{ .Resolved }}{{ else }}{{ .Value }}{{ end }}
                         {{ end }}
                     {{ else }}
                         All

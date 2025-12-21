@@ -1,7 +1,7 @@
 internal notify:/admin/*
 internal register:/auth/register
 internal password reset:/auth/reset
-internal email verification:/auth/verify_email
+email email verification:/auth/verify_email
 internal user approval:/admin/user_approval/*
 internal role grant:/admin/role_grant/*
 internal report:/admin/report/*

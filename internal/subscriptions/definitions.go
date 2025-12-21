@@ -14,12 +14,18 @@ type Definition struct {
 	IsAdminOnly bool
 }
 
+// Parameter represents a single parameter in a subscription pattern.
+type Parameter struct {
+	Key      string // e.g. "topicid"
+	Value    string // e.g. "1"
+	Resolved string // e.g. "General Discussion"
+}
+
 // SubscriptionInstance represents a concrete subscription (e.g. to Topic #1).
 type SubscriptionInstance struct {
-	Parameters     map[string]string // e.g. "topicid" -> "1"
-	ResolvedParams map[string]string // e.g. "topicid" -> "General Discussion"
-	Methods        []string          // e.g. ["internal", "email"]
-	Original       string            // Original DB pattern string
+	Parameters []Parameter // List of extracted parameters
+	Methods    []string    // e.g. ["internal", "email"]
+	Original   string      // Original DB pattern string
 }
 
 // HasMethod checks if the instance has the given method.
@@ -206,11 +212,14 @@ func GetUserSubscriptions(dbSubs []*db.ListSubscriptionsByUserRow) []*Subscripti
 		}
 
 		if instance == nil {
+			var paramList []Parameter
+			for k, v := range params {
+				paramList = append(paramList, Parameter{Key: k, Value: v})
+			}
 			instance = &SubscriptionInstance{
-				Parameters:     params,
-				ResolvedParams: make(map[string]string),
-				Methods:        []string{},
-				Original:       sub.Pattern,
+				Parameters: paramList,
+				Methods:    []string{},
+				Original:   sub.Pattern,
 			}
 			group.Instances = append(group.Instances, instance)
 		}
@@ -297,12 +306,12 @@ func matchPattern(template, pattern string) (map[string]string, bool) {
 	return params, true
 }
 
-func equalParams(a, b map[string]string) bool {
+func equalParams(a []Parameter, b map[string]string) bool {
 	if len(a) != len(b) {
 		return false
 	}
-	for k, v := range a {
-		if b[k] != v {
+	for _, p := range a {
+		if b[p.Key] != p.Value {
 			return false
 		}
 	}

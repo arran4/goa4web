@@ -121,7 +121,11 @@ INSERT INTO forumthread (forumtopic_idforumtopic) VALUES (?);
 SELECT forumtopic_idforumtopic FROM forumthread WHERE idforumthread = ?;
 
 -- name: AdminDeleteForumThread :exec
-DELETE FROM forumthread WHERE idforumthread = ?;
+DELETE forumthread, comments, comments_search
+FROM forumthread
+LEFT JOIN comments ON comments.forumthread_id = forumthread.idforumthread
+LEFT JOIN comments_search ON comments_search.comment_id = comments.idcomments
+WHERE forumthread.idforumthread = ?;
 
 -- name: AdminListForumThreadGrantsByThreadID :many
 SELECT

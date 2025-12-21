@@ -30,6 +30,10 @@ func TestAdminTopicsPage(t *testing.T) {
 		AddRow(1, 0, 0, 0, "t", "d", 0, 0, time.Now(), "")
 	mock.ExpectQuery("SELECT t.idforumtopic").WillReturnRows(rows)
 
+	categoryRows := sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "language_id", "title", "description"}).
+		AddRow(1, 0, 0, "cat", "desc")
+	mock.ExpectQuery("SELECT f\\.\\* FROM forumcategory").WillReturnRows(categoryRows)
+
 	cd := common.NewCoreData(context.Background(), db.New(conn), config.NewRuntimeConfig())
 	r := httptest.NewRequest("GET", "/admin/forum/topics", nil)
 	r = r.WithContext(context.WithValue(r.Context(), consts.KeyCoreData, cd))

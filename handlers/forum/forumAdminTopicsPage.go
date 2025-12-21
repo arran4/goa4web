@@ -16,6 +16,13 @@ import (
 	"github.com/gorilla/mux"
 )
 
+type adminTopicListItem struct {
+	Topic             *db.Forumtopic
+	CategoryLabel     string
+	ParticipantsLabel string
+	IsPrivate         bool
+}
+
 // AdminTopicsPage shows all forum topics for management.
 func AdminTopicsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -33,6 +40,15 @@ func AdminTopicsPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
+	categories, err := queries.GetAllForumCategories(r.Context(), db.GetAllForumCategoriesParams{ViewerID: 0})
+	if err != nil {
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		return
+	}
+	categoryMap := make(map[int32]string, len(categories))
+	for _, category := range categories {
+		categoryMap[category.Idforumcategory] = category.Title.String
+	}
 
 	numPages := int((total + int64(ps) - 1) / int64(ps))
 	currentPage := offset/ps + 1
@@ -48,10 +64,41 @@ func AdminTopicsPage(w http.ResponseWriter, r *http.Request) {
 		cd.StartLink = base + "?offset=0"
 	}
 
+	items := make([]adminTopicListItem, 0, len(rows))
+	for _, topic := range rows {
+		item := adminTopicListItem{Topic: topic}
+		if topic.Handler == "private" {
+			item.IsPrivate = true
+			participants, err := queries.AdminListPrivateTopicParticipantsByTopicID(r.Context(), sql.NullInt32{Int32: topic.Idforumtopic, Valid: true})
+			if err != nil {
+				handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+				return
+			}
+			if len(participants) == 0 {
+				item.ParticipantsLabel = "(none)"
+			} else {
+				names := make([]string, 0, len(participants))
+				for _, participant := range participants {
+					if participant.Username.Valid {
+						names = append(names, participant.Username.String)
+					}
+				}
+				item.ParticipantsLabel = strings.Join(names, ", ")
+			}
+		} else {
+			if label, ok := categoryMap[topic.ForumcategoryIdforumcategory]; ok && label != "" {
+				item.CategoryLabel = label
+			} else {
+				item.CategoryLabel = "(none)"
+			}
+		}
+		items = append(items, item)
+	}
+
 	data := struct {
-		Topics []*db.Forumtopic
+		Topics []adminTopicListItem
 	}{
-		Topics: rows,
+		Topics: items,
 	}
 
 	handlers.TemplateHandler(w, r, "forum/adminTopicsPage.gohtml", data)

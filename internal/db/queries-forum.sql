@@ -160,6 +160,17 @@ WHERE g.section = 'privateforum'
         AND pg.user_id = sqlc.arg(viewer_id)
   );
 
+-- name: AdminListPrivateTopicParticipantsByTopicID :many
+SELECT u.idusers, u.username
+FROM grants g
+JOIN users u ON u.idusers = g.user_id
+WHERE g.section = 'privateforum'
+  AND g.item = 'topic'
+  AND g.action = 'view'
+  AND g.active = 1
+  AND g.user_id IS NOT NULL
+  AND g.item_id = ?;
+
 -- name: SystemSetForumTopicHandlerByID :exec
 UPDATE forumtopic SET handler = sqlc.arg(handler) WHERE idforumtopic = sqlc.arg(id);
 

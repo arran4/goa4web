@@ -10,7 +10,10 @@ import (
 )
 
 const adminDeleteCommentsByThread = `-- name: AdminDeleteCommentsByThread :exec
-DELETE FROM comments WHERE forumthread_id = ?
+DELETE comments, comments_search
+FROM comments
+LEFT JOIN comments_search ON comments_search.comment_id = comments.idcomments
+WHERE comments.forumthread_id = ?
 `
 
 func (q *Queries) AdminDeleteCommentsByThread(ctx context.Context, forumthreadID int32) error {
@@ -19,7 +22,10 @@ func (q *Queries) AdminDeleteCommentsByThread(ctx context.Context, forumthreadID
 }
 
 const adminHardDeleteComment = `-- name: AdminHardDeleteComment :exec
-DELETE FROM comments WHERE idcomments = ?
+DELETE comments, comments_search
+FROM comments
+LEFT JOIN comments_search ON comments_search.comment_id = comments.idcomments
+WHERE comments.idcomments = ?
 `
 
 func (q *Queries) AdminHardDeleteComment(ctx context.Context, idcomments int32) error {

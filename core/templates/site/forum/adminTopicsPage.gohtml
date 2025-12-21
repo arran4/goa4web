@@ -1,16 +1,23 @@
 {{ template "head" $ }}
 <table class="table table-bordered">
-    <tr><th>ID<th>Title<th>Threads<th>Posts<th>View</tr>
+    <tr><th>ID<th>Title<th>Threads<th>Posts<th>Category / Participants<th>View</tr>
     {{ range .Topics }}
         <tr>
-            <td>{{ .Idforumtopic }}</td>
-            <td><a href="/admin/forum/topics/topic/{{ .Idforumtopic }}">{{ topicTitleOrDefault .Title.String }}</a></td>
-            <td>{{ .Threads.Int32 }}</td>
-            <td>{{ .Comments.Int32 }}</td>
-            <td><a href="/forum/topic/{{ .Idforumtopic }}">View</a></td>
+            <td>{{ .Topic.Idforumtopic }}</td>
+            <td><a href="/admin/forum/topics/topic/{{ .Topic.Idforumtopic }}">{{ topicTitleOrDefault .Topic.Title.String }}</a></td>
+            <td>{{ .Topic.Threads.Int32 }}</td>
+            <td>{{ .Topic.Comments.Int32 }}</td>
+            <td>
+                {{ if .IsPrivate }}
+                    Private forum{{ if .ParticipantsLabel }}<br>Participants: {{ .ParticipantsLabel }}{{ end }}
+                {{ else }}
+                    {{ .CategoryLabel }}
+                {{ end }}
+            </td>
+            <td><a href="/forum/topic/{{ .Topic.Idforumtopic }}">View</a></td>
         </tr>
     {{ else }}
-        <tr><td colspan="5">No topics</td></tr>
+        <tr><td colspan="6">No topics</td></tr>
     {{ end }}
 </table>
 {{ template "tail" $ }}

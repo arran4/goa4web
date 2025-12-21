@@ -286,6 +286,46 @@ func (q *Queries) AdminListForumTopics(ctx context.Context, arg AdminListForumTo
 	return items, nil
 }
 
+const adminListPrivateTopicParticipantsByTopicID = `-- name: AdminListPrivateTopicParticipantsByTopicID :many
+SELECT u.idusers, u.username
+FROM grants g
+JOIN users u ON u.idusers = g.user_id
+WHERE g.section = 'privateforum'
+  AND g.item = 'topic'
+  AND g.action = 'view'
+  AND g.active = 1
+  AND g.user_id IS NOT NULL
+  AND g.item_id = ?
+`
+
+type AdminListPrivateTopicParticipantsByTopicIDRow struct {
+	Idusers  int32
+	Username sql.NullString
+}
+
+func (q *Queries) AdminListPrivateTopicParticipantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListPrivateTopicParticipantsByTopicIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListPrivateTopicParticipantsByTopicID, itemID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListPrivateTopicParticipantsByTopicIDRow
+	for rows.Next() {
+		var i AdminListPrivateTopicParticipantsByTopicIDRow
+		if err := rows.Scan(&i.Idusers, &i.Username); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const adminListTopicsWithUserGrantsNoRoles = `-- name: AdminListTopicsWithUserGrantsNoRoles :many
 SELECT t.idforumtopic, t.title
 FROM forumtopic t

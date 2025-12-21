@@ -10,6 +10,21 @@ FROM
 WHERE
     handler = 'private';
 
+-- name: AdminListPrivateForumTopics :many
+SELECT
+    idforumtopic,
+    COALESCE(title, '') AS title,
+    handler,
+    threads,
+    comments,
+    lastaddition
+FROM
+    forumtopic
+WHERE
+    handler = 'private'
+ORDER BY idforumtopic
+LIMIT ? OFFSET ?;
+
 -- name: AdminListGrantsByTopicID :many
 SELECT
     g.id,
@@ -60,6 +75,41 @@ GROUP BY
     t.lastaddition,
     t.comments,
     ft.title;
+
+-- name: AdminListPrivateForumThreads :many
+SELECT
+    t.idforumthread,
+    t.forumtopic_idforumtopic as idforumtopic,
+    SUBSTRING(c.text, 1, 100) AS title,
+    c.written as created_at,
+    c.users_idusers as created_by,
+    t.lastposter as last_post_by,
+    t.lastaddition as last_post_at,
+    t.comments as post_count,
+    ft.title as topic_title,
+    ft.handler as topic_handler
+FROM
+    forumthread t
+JOIN
+    forumtopic ft ON t.forumtopic_idforumtopic = ft.idforumtopic
+JOIN
+    comments c ON t.firstpost = c.idcomments
+WHERE
+    ft.handler = 'private'
+ORDER BY t.idforumthread
+LIMIT ? OFFSET ?;
+
+-- name: AdminListPrivateForumComments :many
+SELECT c.idcomments, c.written, c.text, c.deleted_at,
+       th.idforumthread, t.idforumtopic, t.title AS forumtopic_title, t.handler AS topic_handler,
+       u.idusers, u.username AS posterusername
+FROM comments c
+LEFT JOIN forumthread th ON c.forumthread_id = th.idforumthread
+LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
+LEFT JOIN users u ON u.idusers = c.users_idusers
+WHERE t.handler = 'private'
+ORDER BY c.written DESC
+LIMIT ? OFFSET ?;
 
 -- name: AdminListGrantsByThreadID :many
 SELECT

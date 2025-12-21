@@ -465,3 +465,12 @@ ORDER BY category_path.depth DESC;
 -- name: AdminCreateForumTopic :execlastid
 INSERT INTO forumtopic (forumcategory_idforumcategory, language_id, title, description, handler)
 VALUES (sqlc.arg(forumcategory_id), sqlc.narg(language_id), sqlc.arg(title), sqlc.arg(description), sqlc.arg(handler));
+
+-- name: AdminGetTopicGrants :many
+SELECT g.section, g.role_id, r.name as role_name, g.user_id, u.username
+FROM grants g
+LEFT JOIN roles r ON r.id = g.role_id
+LEFT JOIN users u ON u.idusers = g.user_id
+WHERE (g.item = 'topic')
+  AND g.item_id = sqlc.arg(topic_id)
+  AND g.active = 1;

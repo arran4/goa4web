@@ -109,6 +109,53 @@ func (q *Queries) AdminDeleteForumTopic(ctx context.Context, idforumtopic int32)
 	return err
 }
 
+const adminGetTopicGrants = `-- name: AdminGetTopicGrants :many
+SELECT g.section, g.role_id, r.name as role_name, g.user_id, u.username
+FROM grants g
+LEFT JOIN roles r ON r.id = g.role_id
+LEFT JOIN users u ON u.idusers = g.user_id
+WHERE (g.item = 'topic')
+  AND g.item_id = ?
+  AND g.active = 1
+`
+
+type AdminGetTopicGrantsRow struct {
+	Section  string
+	RoleID   sql.NullInt32
+	RoleName sql.NullString
+	UserID   sql.NullInt32
+	Username sql.NullString
+}
+
+func (q *Queries) AdminGetTopicGrants(ctx context.Context, topicID sql.NullInt32) ([]*AdminGetTopicGrantsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminGetTopicGrants, topicID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminGetTopicGrantsRow
+	for rows.Next() {
+		var i AdminGetTopicGrantsRow
+		if err := rows.Scan(
+			&i.Section,
+			&i.RoleID,
+			&i.RoleName,
+			&i.UserID,
+			&i.Username,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const adminListForumCategoriesWithCounts = `-- name: AdminListForumCategoriesWithCounts :many
 SELECT c.idforumcategory, c.forumcategory_idforumcategory, c.language_id, c.title, c.description, COUNT(c2.idforumcategory) AS SubcategoryCount,
        COUNT(t.idforumtopic) AS TopicCount

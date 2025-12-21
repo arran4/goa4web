@@ -16,11 +16,16 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type adminTopicListItem struct {
-	Topic             *db.Forumtopic
-	CategoryLabel     string
-	ParticipantsLabel string
-	IsPrivate         bool
+type AdminTopicDisplay struct {
+	*db.Forumtopic
+
+	IsPrivate    bool
+	Participants string
+	AccessInfo   string
+	DisplayTitle string
+
+	// Optional but handy for the list view / future tweaks
+	CategoryLabel string
 }
 
 // AdminTopicsPage shows all forum topics for management.
@@ -30,31 +35,45 @@ func AdminTopicsPage(w http.ResponseWriter, r *http.Request) {
 	queries := cd.Queries()
 	offset := cd.Offset()
 	ps := cd.PageSize()
+
 	total, err := queries.AdminCountForumTopics(r.Context())
 	if err != nil {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
-	rows, err := queries.AdminListForumTopics(r.Context(), db.AdminListForumTopicsParams{Limit: int32(ps), Offset: int32(offset)})
+
+	rows, err := queries.AdminListForumTopics(r.Context(), db.AdminListForumTopicsParams{
+		Limit:  int32(ps),
+		Offset: int32(offset),
+	})
 	if err != nil {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
+
 	categories, err := queries.GetAllForumCategories(r.Context(), db.GetAllForumCategoriesParams{ViewerID: 0})
 	if err != nil {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
+
 	categoryMap := make(map[int32]string, len(categories))
 	for _, category := range categories {
-		categoryMap[category.Idforumcategory] = category.Title.String
+		if category.Title.Valid {
+			categoryMap[category.Idforumcategory] = category.Title.String
+		}
 	}
 
+	// pagination links
 	numPages := int((total + int64(ps) - 1) / int64(ps))
 	currentPage := offset/ps + 1
 	base := "/admin/forum/topics"
 	for i := 1; i <= numPages; i++ {
-		cd.PageLinks = append(cd.PageLinks, common.PageLink{Num: i, Link: fmt.Sprintf("%s?offset=%d", base, (i-1)*ps), Active: i == currentPage})
+		cd.PageLinks = append(cd.PageLinks, common.PageLink{
+			Num:    i,
+			Link:   fmt.Sprintf("%s?offset=%d", base, (i-1)*ps),
+			Active: i == currentPage,
+		})
 	}
 	if offset+ps < int(total) {
 		cd.NextLink = fmt.Sprintf("%s?offset=%d", base, offset+ps)
@@ -64,45 +83,108 @@ func AdminTopicsPage(w http.ResponseWriter, r *http.Request) {
 		cd.StartLink = base + "?offset=0"
 	}
 
-	items := make([]adminTopicListItem, 0, len(rows))
-	for _, topic := range rows {
-		item := adminTopicListItem{Topic: topic}
-		if topic.Handler == "private" {
-			item.IsPrivate = true
-			participants, err := queries.AdminListPrivateTopicParticipantsByTopicID(r.Context(), sql.NullInt32{Int32: topic.Idforumtopic, Valid: true})
-			if err != nil {
-				handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
-				return
-			}
-			if len(participants) == 0 {
-				item.ParticipantsLabel = "(none)"
-			} else {
-				names := make([]string, 0, len(participants))
-				for _, participant := range participants {
-					if participant.Username.Valid {
-						names = append(names, participant.Username.String)
-					}
-				}
-				item.ParticipantsLabel = strings.Join(names, ", ")
-			}
+	topics := make([]*AdminTopicDisplay, 0, len(rows))
+	for _, row := range rows {
+		display := &AdminTopicDisplay{
+			Forumtopic: row,
+			IsPrivate:  row.Handler == "private",
+		}
+
+		// Title (don’t explode on NULL)
+		if row.Title.Valid && strings.TrimSpace(row.Title.String) != "" {
+			display.DisplayTitle = row.Title.String
 		} else {
-			if label, ok := categoryMap[topic.ForumcategoryIdforumcategory]; ok && label != "" {
-				item.CategoryLabel = label
+			display.DisplayTitle = "(untitled)"
+		}
+
+		// Category label (for non-private)
+		if !display.IsPrivate {
+			if label, ok := categoryMap[row.ForumcategoryIdforumcategory]; ok && strings.TrimSpace(label) != "" {
+				display.CategoryLabel = label
 			} else {
-				item.CategoryLabel = "(none)"
+				display.CategoryLabel = "(none)"
 			}
 		}
-		items = append(items, item)
+
+		// Grants / access info
+		grants, err := queries.AdminGetTopicGrants(r.Context(), sql.NullInt32{Int32: row.Idforumtopic, Valid: true})
+		if err != nil {
+			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			return
+		}
+
+		if display.IsPrivate {
+			// Private: show participants (use the grants list)
+			var participants []string
+			for _, g := range grants {
+				if g.Username.Valid {
+					participants = append(participants, g.Username.String)
+				}
+			}
+			if len(participants) > 0 {
+				display.Participants = strings.Join(participants, ", ")
+			} else {
+				display.Participants = "No participants"
+			}
+			// AccessInfo not needed for private topics
+		} else {
+			// Public: build an access summary from grants
+			hasAnyone := false
+			hasUsers := false
+			var roles []string
+			var users []string
+
+			for _, g := range grants {
+				if g.RoleName.Valid {
+					rn := strings.ToLower(strings.TrimSpace(g.RoleName.String))
+					switch rn {
+					case "anyone":
+						hasAnyone = true
+					case "user", "users":
+						hasUsers = true
+					default:
+						roles = append(roles, g.RoleName.String)
+					}
+				} else if g.Username.Valid {
+					users = append(users, g.Username.String)
+				}
+			}
+
+			if hasAnyone {
+				display.AccessInfo = "Public (Anyone)"
+			} else if hasUsers {
+				display.AccessInfo = "Users"
+			} else {
+				parts := make([]string, 0, 2)
+				if len(roles) > 0 {
+					parts = append(parts, "Roles: "+strings.Join(roles, ", "))
+				}
+				if len(users) > 0 {
+					parts = append(parts, "Users: "+strings.Join(users, ", "))
+				}
+				if len(parts) > 0 {
+					display.AccessInfo = strings.Join(parts, "; ")
+				} else if display.CategoryLabel != "" {
+					// fallback that still gives the admin *some* signal
+					display.AccessInfo = "Category: " + display.CategoryLabel
+				} else {
+					display.AccessInfo = "Default/Global"
+				}
+			}
+		}
+
+		topics = append(topics, display)
 	}
 
 	data := struct {
-		Topics []adminTopicListItem
+		Topics []*AdminTopicDisplay
 	}{
-		Topics: items,
+		Topics: topics,
 	}
 
 	handlers.TemplateHandler(w, r, "forum/adminTopicsPage.gohtml", data)
 }
+
 
 func AdminTopicEditPage(w http.ResponseWriter, r *http.Request) {
 	name := r.PostFormValue("name")

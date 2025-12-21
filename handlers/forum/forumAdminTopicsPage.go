@@ -16,6 +16,14 @@ import (
 	"github.com/gorilla/mux"
 )
 
+type AdminTopicDisplay struct {
+	*db.Forumtopic
+	IsPrivate    bool
+	Participants string
+	AccessInfo   string
+	DisplayTitle string
+}
+
 // AdminTopicsPage shows all forum topics for management.
 func AdminTopicsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -48,10 +56,84 @@ func AdminTopicsPage(w http.ResponseWriter, r *http.Request) {
 		cd.StartLink = base + "?offset=0"
 	}
 
+	var topics []*AdminTopicDisplay
+	for _, row := range rows {
+		display := &AdminTopicDisplay{
+			Forumtopic: row,
+			IsPrivate:  row.Handler == "private",
+		}
+
+		grants, err := queries.AdminGetTopicGrants(r.Context(), sql.NullInt32{Int32: row.Idforumtopic, Valid: true})
+		if err != nil {
+			log.Printf("Error fetching grants for topic %d: %v", row.Idforumtopic, err)
+			continue
+		}
+
+		if display.IsPrivate {
+			display.DisplayTitle = "[Private Topic]" // Masked for list view as requested
+			var participants []string
+			for _, g := range grants {
+				if g.Username.Valid {
+					participants = append(participants, g.Username.String)
+				}
+			}
+			if len(participants) > 0 {
+				display.Participants = strings.Join(participants, ", ")
+			} else {
+				display.Participants = "No participants"
+			}
+		} else {
+			display.DisplayTitle = row.Title.String
+			// Determine access info
+			// Heuristic:
+			// - Check for "anyone" or "user" role grants
+			// - Else list specific roles/users
+			hasAnyone := false
+			hasUsers := false
+			var roles []string
+			var users []string
+
+			for _, g := range grants {
+				if g.RoleName.Valid {
+					rn := strings.ToLower(g.RoleName.String)
+					if rn == "anyone" {
+						hasAnyone = true
+					} else if rn == "user" {
+						hasUsers = true
+					} else {
+						roles = append(roles, g.RoleName.String)
+					}
+				} else if g.Username.Valid {
+					users = append(users, g.Username.String)
+				}
+			}
+
+			if hasAnyone {
+				display.AccessInfo = "Public (Anyone)"
+			} else if hasUsers {
+				display.AccessInfo = "Users"
+			} else {
+				parts := []string{}
+				if len(roles) > 0 {
+					parts = append(parts, "Roles: "+strings.Join(roles, ", "))
+				}
+				if len(users) > 0 {
+					parts = append(parts, "Users: "+strings.Join(users, ", "))
+				}
+				if len(parts) > 0 {
+					display.AccessInfo = strings.Join(parts, "; ")
+				} else {
+					display.AccessInfo = "Default/Global"
+				}
+			}
+		}
+		topics = append(topics, display)
+	}
+
 	data := struct {
-		Topics []*db.Forumtopic
+		Topics []*AdminTopicDisplay
 	}{
-		Topics: rows,
+		Topics: topics,
 	}
 
 	handlers.TemplateHandler(w, r, "forum/adminTopicsPage.gohtml", data)

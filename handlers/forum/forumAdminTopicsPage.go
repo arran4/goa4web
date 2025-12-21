@@ -185,7 +185,6 @@ func AdminTopicsPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TemplateHandler(w, r, "forum/adminTopicsPage.gohtml", data)
 }
 
-
 func AdminTopicEditPage(w http.ResponseWriter, r *http.Request) {
 	name := r.PostFormValue("name")
 	desc := r.PostFormValue("desc")

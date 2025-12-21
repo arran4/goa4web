@@ -1,6 +1,16 @@
 {{ template "head" $ }}
 {{ if eq .Topic.Handler "private" }}
 <div class="alert alert-warning">Warning: This is a private forum topic.</div>
+{{ if .Participants }}
+<h3>Participants</h3>
+<ul>
+    {{ range .Participants }}
+    <li>{{ .Username.String }} (ID: {{ .Idusers }})</li>
+    {{ end }}
+</ul>
+{{ else }}
+<p>No participants found.</p>
+{{ end }}
 {{ end }}
 <h2>Forum topic {{ .Topic.Idforumtopic }} - {{ if not .AnyoneHasAccess }}<span class="spoiler">{{ end }}{{ topicTitleOrDefault .Topic.Title.String }}{{ if not .AnyoneHasAccess }}</span>{{ end }}</h2>
 <p>{{ if not .AnyoneHasAccess }}<span class="spoiler">{{ end }}{{ topicDescriptionOrDefault .Topic.Description.String }}{{ if not .AnyoneHasAccess }}</span>{{ end }}</p>

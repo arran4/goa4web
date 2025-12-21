@@ -53,12 +53,24 @@ func AdminTopicPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	var participants []*db.AdminListPrivateTopicParticipantsByTopicIDRow
+	if topic.Handler == "private" {
+		participants, err = cd.Queries().AdminListPrivateTopicParticipantsByTopicID(r.Context(), sql.NullInt32{Int32: int32(tid), Valid: true})
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error fetching participants"))
+			return
+		}
+	}
+
 	data := struct {
 		Topic           *db.Forumtopic
 		AnyoneHasAccess bool
+		Participants    []*db.AdminListPrivateTopicParticipantsByTopicIDRow
 	}{
 		Topic:           topic,
 		AnyoneHasAccess: anyoneHasAccess,
+		Participants:    participants,
 	}
 	handlers.TemplateHandler(w, r, "forum/adminTopicPage.gohtml", data)
 }

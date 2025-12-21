@@ -55,6 +55,17 @@ type QuerierStub struct {
 	AdminListForumTopicGrantsByTopicIDCalls   []sql.NullInt32
 	AdminListForumTopicGrantsByTopicIDReturns []*AdminListForumTopicGrantsByTopicIDRow
 	AdminListForumTopicGrantsByTopicIDErr     error
+
+	AdminListPrivateTopicParticipantsByTopicIDCalls   []sql.NullInt32
+	AdminListPrivateTopicParticipantsByTopicIDReturns []*AdminListPrivateTopicParticipantsByTopicIDRow
+	AdminListPrivateTopicParticipantsByTopicIDErr     error
+}
+
+func (s *QuerierStub) AdminListPrivateTopicParticipantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListPrivateTopicParticipantsByTopicIDRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.AdminListPrivateTopicParticipantsByTopicIDCalls = append(s.AdminListPrivateTopicParticipantsByTopicIDCalls, itemID)
+	return s.AdminListPrivateTopicParticipantsByTopicIDReturns, s.AdminListPrivateTopicParticipantsByTopicIDErr
 }
 
 func (s *QuerierStub) AdminListForumTopicGrantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListForumTopicGrantsByTopicIDRow, error) {

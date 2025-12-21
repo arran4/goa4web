@@ -115,3 +115,4 @@ dbbackups
 /.output.txt
 /*.log
 verification/
+verification_*.png

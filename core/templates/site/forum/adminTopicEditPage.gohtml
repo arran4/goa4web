@@ -16,6 +16,6 @@ Category: <select name="cid"><option value="0">None</option>{{ range .Categories
 <form method="post" action="/admin/forum/topics/topic/{{ .Topic.Idforumtopic }}/delete">
 {{ csrfField }}
 <label><input type="checkbox" name="cascade" value="true"> Cascade Delete</label>
-<input type="submit" name="task" value="Delete Topic">
+<input type="submit" name="task" value="Forum topic delete">
 </form>
 {{ template "tail" $ }}

@@ -1,0 +1,51 @@
+{{ template "head" $ }}
+<h2>Thread Subscriptions</h2>
+
+{{ range .Groups }}
+<div class="subscription-group">
+    <h3>{{ .Name }}</h3>
+    <p>{{ .Description }}</p>
+
+    {{ if .Instances }}
+    <table>
+        <thead>
+            <tr>
+                <th>Target</th>
+                <th>Internal</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{ range .Instances }}
+            <tr>
+                <td>
+                    {{/* Display parameters nicely */}}
+                    {{ if .Parameters }}
+                        {{ range $k, $v := .Parameters }}
+                            {{ $k }}: {{ $v }}
+                        {{ end }}
+                    {{ else }}
+                        All
+                    {{ end }}
+                </td>
+                <td>
+                    <input type="checkbox" disabled {{ if .HasMethod "internal" }}checked{{ end }}>
+                </td>
+                <td>
+                    <input type="checkbox" disabled {{ if .HasMethod "email" }}checked{{ end }}>
+                </td>
+            </tr>
+            {{ end }}
+        </tbody>
+    </table>
+    {{ else }}
+    <p>No subscriptions.</p>
+    {{ end }}
+</div>
+{{ end }}
+
+<p>
+    <a href="/usr/subscriptions" class="button">Back to Subscriptions</a>
+</p>
+
+{{ template "tail" $ }}

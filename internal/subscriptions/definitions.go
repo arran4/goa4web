@@ -16,9 +16,10 @@ type Definition struct {
 
 // SubscriptionInstance represents a concrete subscription (e.g. to Topic #1).
 type SubscriptionInstance struct {
-	Parameters map[string]string // e.g. "topicid" -> "1"
-	Methods    []string          // e.g. ["internal", "email"]
-	Original   string            // Original DB pattern string
+	Parameters     map[string]string // e.g. "topicid" -> "1"
+	ResolvedParams map[string]string // e.g. "topicid" -> "General Discussion"
+	Methods        []string          // e.g. ["internal", "email"]
+	Original       string            // Original DB pattern string
 }
 
 // HasMethod checks if the instance has the given method.
@@ -59,6 +60,11 @@ var Definitions = []Definition{
 		Description: "Notify when a reply is posted in this thread",
 		Pattern:     "reply:/forum/topic/{topicid}/thread/{threadid}/*",
 	},
+	{
+		Name:        "Edit Reply",
+		Description: "Notify when a reply is edited",
+		Pattern:     "edit reply:/forum/topic/*/thread/*",
+	},
 
 	// Private Forum
 	{
@@ -77,6 +83,11 @@ var Definitions = []Definition{
 		Name:        "Reply to News",
 		Description: "Notify when a reply is posted to a news item",
 		Pattern:     "reply:/news/news/*",
+	},
+	{
+		Name:        "Edit News Post",
+		Description: "Notify when a news post is edited",
+		Pattern:     "edit post:/news/news/*",
 	},
 
 	// Linker
@@ -116,6 +127,36 @@ var Definitions = []Definition{
 		Pattern:     "register:/auth/register",
 		IsAdminOnly: true,
 	},
+	{
+		Name:        "Password Reset",
+		Description: "Notify when a user requests a password reset",
+		Pattern:     "password reset:/auth/reset",
+		IsAdminOnly: true,
+	},
+	{
+		Name:        "Email Verification",
+		Description: "Notify when an email verification is requested",
+		Pattern:     "email verification:/auth/verify_email",
+		IsAdminOnly: true,
+	},
+	{
+		Name:        "User Approval",
+		Description: "Notify when user approval is needed",
+		Pattern:     "user approval:/admin/user_approval/*",
+		IsAdminOnly: true,
+	},
+	{
+		Name:        "Role Grant",
+		Description: "Notify when a role is granted",
+		Pattern:     "role grant:/admin/role_grant/*",
+		IsAdminOnly: true,
+	},
+	{
+		Name:        "Reports",
+		Description: "Notify when content is reported",
+		Pattern:     "report:/admin/report/*",
+		IsAdminOnly: true,
+	},
 }
 
 // GetUserSubscriptions groups user subscriptions.
@@ -134,12 +175,26 @@ func GetUserSubscriptions(dbSubs []*db.ListSubscriptionsByUserRow) []*Subscripti
 
 	for _, sub := range dbSubs {
 		def, params := MatchDefinition(sub.Pattern)
+		// For unknown patterns, create a temporary definition group
 		if def == nil {
-			// Handle unknown/custom patterns? For now, skip or log.
-			continue
+			unknownKey := "unknown:" + sub.Pattern
+			if _, exists := groups[unknownKey]; !exists {
+				groups[unknownKey] = &SubscriptionGroup{
+					Definition: &Definition{
+						Name:    "Unknown: " + sub.Pattern,
+						Pattern: sub.Pattern,
+					},
+					Instances: []*SubscriptionInstance{},
+				}
+			}
+			def = groups[unknownKey].Definition
 		}
 
 		group := groups[def.Pattern]
+		if def.Pattern != group.Pattern {
+			// This happens for the dynamic "unknown" groups
+			group = groups["unknown:"+sub.Pattern]
+		}
 
 		// Find existing instance with same parameters
 		var instance *SubscriptionInstance
@@ -152,9 +207,10 @@ func GetUserSubscriptions(dbSubs []*db.ListSubscriptionsByUserRow) []*Subscripti
 
 		if instance == nil {
 			instance = &SubscriptionInstance{
-				Parameters: params,
-				Methods:    []string{},
-				Original:   sub.Pattern,
+				Parameters:     params,
+				ResolvedParams: make(map[string]string),
+				Methods:        []string{},
+				Original:       sub.Pattern,
 			}
 			group.Instances = append(group.Instances, instance)
 		}
@@ -172,11 +228,26 @@ func GetUserSubscriptions(dbSubs []*db.ListSubscriptionsByUserRow) []*Subscripti
 		}
 	}
 
-	// Convert map to slice, preserving order of Definitions
+	// Convert map to slice, preserving order of Definitions first
 	var result []*SubscriptionGroup
+	seen := make(map[string]bool)
+
+	// Add predefined definitions
 	for i := range Definitions {
-		result = append(result, groups[Definitions[i].Pattern])
+		key := Definitions[i].Pattern
+		if group, ok := groups[key]; ok {
+			result = append(result, group)
+			seen[key] = true
+		}
 	}
+
+	// Add any unknown/custom ones that were found
+	for key, group := range groups {
+		if !seen[key] {
+			result = append(result, group)
+		}
+	}
+
 	return result
 }
 
@@ -193,19 +264,11 @@ func MatchDefinition(pattern string) (*Definition, map[string]string) {
 }
 
 // matchPattern checks if 'pattern' matches 'template' (which may contain {param}).
-// It treats '*' in template as a literal wildcard character if the pattern has it too,
-// OR as a matching wildcard if the template has it and the pattern has content.
-//
-// Current simple implementation:
-// Template: create thread:/forum/topic/{topicid}/*
-// Pattern:  create thread:/forum/topic/123/*
 func matchPattern(template, pattern string) (map[string]string, bool) {
 	// Convert template to regex
-	// Escape special chars
 	regexStr := regexp.QuoteMeta(template)
 
 	// Replace \{param\} with named capturing group
-	// We need to un-escape the braces we just escaped
 	regexStr = strings.ReplaceAll(regexStr, "\\{", "{")
 	regexStr = strings.ReplaceAll(regexStr, "\\}", "}")
 
@@ -214,9 +277,7 @@ func matchPattern(template, pattern string) (map[string]string, bool) {
 	regexStr = paramRegex.ReplaceAllString(regexStr, `(?P<$1>[^/]+)`)
 
 	// Handle standard wildcard *
-	// If template has *, it matches anything remaining or specific segment?
-	// The definitions use * at the end mostly.
-	// Let's replace \* (escaped) with .*
+	// Replace \* with .*
 	regexStr = strings.ReplaceAll(regexStr, "\\*", ".*")
 
 	regexStr = "^" + regexStr + "$"

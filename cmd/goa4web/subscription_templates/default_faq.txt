@@ -1,2 +1,2 @@
-internal ask:/faq/*
 internal create:/faq/*
+internal ask:/faq/*

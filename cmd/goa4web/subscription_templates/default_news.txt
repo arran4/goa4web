@@ -1,2 +1,3 @@
 internal new post:/news/*
 internal reply:/news/news/*
+internal edit post:/news/news/*

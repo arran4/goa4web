@@ -1,0 +1,35 @@
+{{ template "head" $ }}
+<h2>Add Subscription</h2>
+
+<form method="post" action="/usr/subscriptions/update">
+    {{ csrfField }}
+
+    <label for="definition">Type:</label>
+    <select name="definition" id="definition">
+        {{ range .Definitions }}
+            {{ if not .IsAdminOnly }}
+            <option value="{{ .Pattern }}">{{ .Name }}</option>
+            {{ end }}
+        {{ end }}
+    </select>
+
+    {{/* Placeholder for dynamic parameters. Ideally JS would show/hide based on selection */}}
+    <div id="parameters">
+        <p>Parameters (if applicable, e.g., Topic ID):</p>
+        <label>Topic ID: <input type="text" name="topicid"></label>
+        <label>Thread ID: <input type="text" name="threadid"></label>
+    </div>
+
+    <div>
+        <label><input type="checkbox" name="method_internal" checked> Internal Notification</label>
+        <label><input type="checkbox" name="method_email"> Email</label>
+    </div>
+
+    <input type="submit" name="task" value="Add">
+</form>
+
+<p>
+    <a href="/usr/subscriptions" class="button">Back to Subscriptions</a>
+</p>
+
+{{ template "tail" $ }}

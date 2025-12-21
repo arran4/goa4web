@@ -1,1 +1,1 @@
-ALTER TABLE `role_subscription_archetypes` ADD COLUMN `method` varchar(16) NOT NULL DEFAULT 'internal';
+-- This migration is intentionally empty as the changes were merged into 0072_role_subscription_archetypes.sql

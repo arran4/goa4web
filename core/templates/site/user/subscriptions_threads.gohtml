@@ -1,5 +1,5 @@
 {{ template "head" $ }}
-<h2>Your Subscriptions</h2>
+<h2>Thread Subscriptions</h2>
 
 {{ range .Groups }}
 <div class="subscription-group">
@@ -45,8 +45,7 @@
 {{ end }}
 
 <p>
-    <a href="/usr/subscriptions/add" class="button">Add Subscription</a>
-    <a href="/usr/subscriptions/threads" class="button">Manage Thread Subscriptions</a>
+    <a href="/usr/subscriptions" class="button">Back to Subscriptions</a>
 </p>
 
 {{ template "tail" $ }}

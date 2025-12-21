@@ -10,10 +10,11 @@ import (
 	"github.com/arran4/goa4web/internal/subscriptions"
 )
 
-func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
+func userThreadSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	cd.PageTitle = "Subscriptions"
+	cd.PageTitle = "Thread Subscriptions"
 
+	// TODO: Filter only thread subscriptions here if we want a separate view
 	dbSubs, err := cd.Queries().ListSubscriptionsByUser(r.Context(), cd.UserID)
 	if err != nil {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("list subscriptions: %w", err))
@@ -21,16 +22,17 @@ func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	groups := subscriptions.GetUserSubscriptions(dbSubs)
+	var threadGroups []*subscriptions.SubscriptionGroup
+	for _, g := range groups {
+		if g.Definition.Name == "Replies (Specific Thread)" {
+			threadGroups = append(threadGroups, g)
+		}
+	}
 
 	data := struct {
 		Groups []*subscriptions.SubscriptionGroup
 	}{
-		Groups: groups,
+		Groups: threadGroups,
 	}
-	handlers.TemplateHandler(w, r, "user/subscriptions.gohtml", data)
+	handlers.TemplateHandler(w, r, "user/subscriptions_threads.gohtml", data)
 }
-
-// UserSubscriptionUpdateTask updates the user's subscriptions.
-// For now, this is a placeholder task to handle the form submission.
-// Actual implementation will need to parse the form and call logic to add/remove DB rows.
-// TODO: Implement the update logic.

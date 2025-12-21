@@ -261,12 +261,14 @@ type Querier interface {
 	CreateLinkerQueuedItemForWriter(ctx context.Context, arg CreateLinkerQueuedItemForWriterParams) error
 	CreateNewsPostForWriter(ctx context.Context, arg CreateNewsPostForWriterParams) (int64, error)
 	CreatePasswordResetForUser(ctx context.Context, arg CreatePasswordResetForUserParams) error
+	CreateSubscriptionArchetype(ctx context.Context, arg CreateSubscriptionArchetypeParams) error
 	CreateUploadedImageForUploader(ctx context.Context, arg CreateUploadedImageForUploaderParams) (int64, error)
 	CreateWritingForWriter(ctx context.Context, arg CreateWritingForWriterParams) (int64, error)
 	DeactivateNewsPost(ctx context.Context, idsitenews int32) error
 	DeleteGrantByProperties(ctx context.Context, arg DeleteGrantByPropertiesParams) error
 	DeleteGrantsByRoleID(ctx context.Context, roleID sql.NullInt32) error
 	DeleteNotificationForLister(ctx context.Context, arg DeleteNotificationForListerParams) error
+	DeleteSubscriptionArchetypesByRoleAndName(ctx context.Context, arg DeleteSubscriptionArchetypesByRoleAndNameParams) error
 	DeleteSubscriptionByIDForSubscriber(ctx context.Context, arg DeleteSubscriptionByIDForSubscriberParams) error
 	DeleteSubscriptionForSubscriber(ctx context.Context, arg DeleteSubscriptionForSubscriberParams) error
 	DeleteThreadsByTopicID(ctx context.Context, forumtopicIdforumtopic int32) error
@@ -352,6 +354,7 @@ type Querier interface {
 	GetPublicProfileRoleForUser(ctx context.Context, usersIdusers int32) (int32, error)
 	GetPublicWritings(ctx context.Context, arg GetPublicWritingsParams) ([]*Writing, error)
 	GetRoleByName(ctx context.Context, name string) (*Role, error)
+	GetSubscriptionArchetypesByRole(ctx context.Context, roleID int32) ([]*RoleSubscriptionArchetype, error)
 	GetThreadBySectionThreadIDForReplier(ctx context.Context, arg GetThreadBySectionThreadIDForReplierParams) (*Forumthread, error)
 	GetThreadLastPosterAndPerms(ctx context.Context, arg GetThreadLastPosterAndPermsParams) (*GetThreadLastPosterAndPermsRow, error)
 	// GetUnreadNotificationCountForLister returns the number of unread notifications for a
@@ -427,6 +430,7 @@ type Querier interface {
 	ListSiteNewsSearchNextForLister(ctx context.Context, arg ListSiteNewsSearchNextForListerParams) ([]int32, error)
 	ListSubscribersForPattern(ctx context.Context, arg ListSubscribersForPatternParams) ([]int32, error)
 	ListSubscribersForPatterns(ctx context.Context, arg ListSubscribersForPatternsParams) ([]int32, error)
+	ListSubscriptionArchetypes(ctx context.Context) ([]*RoleSubscriptionArchetype, error)
 	ListSubscriptionsByUser(ctx context.Context, usersIdusers int32) ([]*ListSubscriptionsByUserRow, error)
 	ListUnreadNotificationsForLister(ctx context.Context, arg ListUnreadNotificationsForListerParams) ([]*Notification, error)
 	ListUploadedImagesByUserForLister(ctx context.Context, arg ListUploadedImagesByUserForListerParams) ([]*UploadedImage, error)

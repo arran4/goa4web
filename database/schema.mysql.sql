@@ -716,7 +716,18 @@ CREATE TABLE `content_read_markers` (
   UNIQUE KEY `content_read_markers_uq` (`item`,`item_id`,`user_id`)
 );
 
+CREATE TABLE `role_subscription_archetypes` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `role_id` int NOT NULL,
+  `archetype_name` varchar(128) NOT NULL,
+  `pattern` varchar(255) NOT NULL,
+  `method` varchar(16) NOT NULL DEFAULT 'internal',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `role_subscription_archetypes_role_idx` (`role_id`)
+);
+
 -- Set the schema version to the latest migration.
-INSERT INTO `schema_version` (`version`) VALUES (71)
+INSERT INTO `schema_version` (`version`) VALUES (73)
 ON DUPLICATE KEY UPDATE version = VALUES(version);
 

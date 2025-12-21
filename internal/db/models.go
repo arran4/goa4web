@@ -440,6 +440,15 @@ type Role struct {
 	PublicProfileAllowedAt sql.NullTime
 }
 
+type RoleSubscriptionArchetype struct {
+	ID            int32
+	RoleID        int32
+	ArchetypeName string
+	Pattern       string
+	Method        string
+	CreatedAt     time.Time
+}
+
 type SchemaVersion struct {
 	Version int32
 	ID      bool

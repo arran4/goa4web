@@ -1,0 +1,9 @@
+goa4web subscription template load - Load a subscription template from a file for a specific role.
+
+Usage:
+  goa4web subscription template load --role <role> --name <archetype_name> --file <path>
+
+{{template "flag_groups_section" .FlagGroups}}
+
+Examples:
+  goa4web subscription template load --role user --name default --file cmd/goa4web/subscription_templates/default.txt

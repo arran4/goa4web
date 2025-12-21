@@ -227,6 +227,17 @@ func (c *helpCmd) showHelp(args []string) error {
 			}
 		}
 		return nil
+	case "subscription":
+		cmd, err := parseSubscriptionCmd(c.rootCmd, append(args[1:], "-h"))
+		if err != nil && err != flag.ErrHelp {
+			return fmt.Errorf("subscription: %w", err)
+		}
+		if err == nil {
+			if err := cmd.Run(); err != nil {
+				return err
+			}
+		}
+		return nil
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown help topic %q", args[0])

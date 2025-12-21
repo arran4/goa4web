@@ -264,6 +264,12 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("rootCmd.Run: role: %w", err)
 		}
 		return c.Run()
+	case "subscription":
+		c, err := parseSubscriptionCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("rootCmd.Run: subscription: %w", err)
+		}
+		return c.Run()
 	case "grant":
 		c, err := parseGrantCmd(r, args[1:])
 		if err != nil {

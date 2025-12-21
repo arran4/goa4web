@@ -1,0 +1,10 @@
+goa4web subscription template - Manage subscription templates.
+
+Usage:
+  goa4web subscription template <command> [flags]
+
+Commands:
+  load         Load a subscription template from a file.
+  list         List loaded subscription templates.
+
+{{template "flag_groups_section" .FlagGroups}}

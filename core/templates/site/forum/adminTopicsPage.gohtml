@@ -1,11 +1,7 @@
 {{ define "forum/adminTopicsPage.gohtml" }}
-    {{ template "header" . }}
-    <div class="row">
-        {{ template "forum/admin-sidebar" . }}
-        <div class="col-md-9">
+    {{ template "head" . }}
             <h1>Forum Topics</h1>
-            <a href="/admin/forum/category/new" class="btn btn-primary">Create Category</a>
-            <a href="/admin/forum/topic/new" class="btn btn-primary">Create Topic</a>
+            <a href="/admin/forum/categories/create" class="btn btn-primary">Create Category</a>
 
             <table class="table table-striped mt-3">
                 <thead>
@@ -47,7 +43,5 @@
             </table>
 
             {{ template "pagination" . }}
-        </div>
-    </div>
-    {{ template "footer" . }}
+    {{ template "tail" . }}
 {{ end }}

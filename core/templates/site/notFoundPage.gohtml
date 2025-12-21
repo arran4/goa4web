@@ -3,7 +3,7 @@
 {{- if $.Error }}
 <p>{{ $.Error }}</p>
 {{- end }}
-{{- if $.NotFoundLink.URL }}
+{{- if $.NotFoundLink }}
 <p><a href="{{ $.NotFoundLink.URL }}">{{ $.NotFoundLink.Text }}</a></p>
 {{- end }}
 {{- if $.BackURL }}

@@ -42,13 +42,17 @@ func RenderErrorPage(w http.ResponseWriter, r *http.Request, err error) {
 		cd.PageTitle = "Error"
 	}
 
+	errorMessage := err.Error()
+	if status == http.StatusNotFound {
+		errorMessage = ""
+	}
 	data := struct {
 		*common.CoreData
 		Error   string
 		BackURL string
 	}{
 		CoreData: cd,
-		Error:    err.Error(),
+		Error:    errorMessage,
 		BackURL:  r.Referer(),
 	}
 	w.WriteHeader(status)

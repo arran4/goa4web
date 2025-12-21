@@ -14,6 +14,10 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
+func isPrivateForumHandler(handler string) bool {
+	return handler == "private"
+}
+
 // privateForumCmd handles private-forum utilities.
 type privateForumCmd struct {
 	*rootCmd
@@ -49,6 +53,24 @@ func (c *privateForumCmd) Run() error {
 			return fmt.Errorf("clean-empty-threads: %w", err)
 		}
 		return cmd.Run()
+	case "topic":
+		cmd, err := parsePrivateForumTopicCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("topic: %w", err)
+		}
+		return cmd.Run()
+	case "thread":
+		cmd, err := parsePrivateForumThreadCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("thread: %w", err)
+		}
+		return cmd.Run()
+	case "comment":
+		cmd, err := parsePrivateForumCommentCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("comment: %w", err)
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown private-forum command %q", args[0])
@@ -61,6 +83,9 @@ func (c *privateForumCmd) Usage() {
 	fmt.Fprintln(c.fs.Output(), "Commands:")
 	fmt.Fprintln(c.fs.Output(), "  clean-empty          Clean up empty private forum topics")
 	fmt.Fprintln(c.fs.Output(), "  clean-empty-threads  Clean up empty private forum threads")
+	fmt.Fprintln(c.fs.Output(), "  topic                Manage private forum topics")
+	fmt.Fprintln(c.fs.Output(), "  thread               Manage private forum threads")
+	fmt.Fprintln(c.fs.Output(), "  comment              Manage private forum comments")
 }
 
 // privateForumCleanEmptyCmd implements "private-forum clean-empty".
@@ -119,7 +144,7 @@ func (c *privateForumCleanEmptyCmd) Run() error {
 	threadsByTopic := make(map[int32]int64, len(topicCounts))
 	for _, tc := range topicCounts {
 		// Only consider private forum topics
-		if tc.Handler == "private" {
+		if isPrivateForumHandler(tc.Handler) {
 			threadsByTopic[tc.Idforumtopic] = tc.Threads
 		}
 	}

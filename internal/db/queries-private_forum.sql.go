@@ -275,6 +275,71 @@ func (q *Queries) AdminListGrantsByTopicID(ctx context.Context, itemID sql.NullI
 	return items, nil
 }
 
+const adminListPrivateForumComments = `-- name: AdminListPrivateForumComments :many
+SELECT c.idcomments, c.written, c.text, c.deleted_at,
+       th.idforumthread, t.idforumtopic, t.title AS forumtopic_title, t.handler AS topic_handler,
+       u.idusers, u.username AS posterusername
+FROM comments c
+LEFT JOIN forumthread th ON c.forumthread_id = th.idforumthread
+LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
+LEFT JOIN users u ON u.idusers = c.users_idusers
+WHERE t.handler = 'private'
+ORDER BY c.written DESC
+LIMIT ? OFFSET ?
+`
+
+type AdminListPrivateForumCommentsParams struct {
+	Limit  int32
+	Offset int32
+}
+
+type AdminListPrivateForumCommentsRow struct {
+	Idcomments      int32
+	Written         sql.NullTime
+	Text            sql.NullString
+	DeletedAt       sql.NullTime
+	Idforumthread   sql.NullInt32
+	Idforumtopic    sql.NullInt32
+	ForumtopicTitle sql.NullString
+	TopicHandler    sql.NullString
+	Idusers         sql.NullInt32
+	Posterusername  sql.NullString
+}
+
+func (q *Queries) AdminListPrivateForumComments(ctx context.Context, arg AdminListPrivateForumCommentsParams) ([]*AdminListPrivateForumCommentsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListPrivateForumComments, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListPrivateForumCommentsRow
+	for rows.Next() {
+		var i AdminListPrivateForumCommentsRow
+		if err := rows.Scan(
+			&i.Idcomments,
+			&i.Written,
+			&i.Text,
+			&i.DeletedAt,
+			&i.Idforumthread,
+			&i.Idforumtopic,
+			&i.ForumtopicTitle,
+			&i.TopicHandler,
+			&i.Idusers,
+			&i.Posterusername,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const adminListPrivateForumInvalidCommentsByThread = `-- name: AdminListPrivateForumInvalidCommentsByThread :many
 SELECT
     idcomments
@@ -298,6 +363,142 @@ func (q *Queries) AdminListPrivateForumInvalidCommentsByThread(ctx context.Conte
 			return nil, err
 		}
 		items = append(items, idcomments)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminListPrivateForumThreads = `-- name: AdminListPrivateForumThreads :many
+SELECT
+    t.idforumthread,
+    t.forumtopic_idforumtopic as idforumtopic,
+    SUBSTRING(c.text, 1, 100) AS title,
+    c.written as created_at,
+    c.users_idusers as created_by,
+    t.lastposter as last_post_by,
+    t.lastaddition as last_post_at,
+    t.comments as post_count,
+    ft.title as topic_title,
+    ft.handler as topic_handler
+FROM
+    forumthread t
+JOIN
+    forumtopic ft ON t.forumtopic_idforumtopic = ft.idforumtopic
+JOIN
+    comments c ON t.firstpost = c.idcomments
+WHERE
+    ft.handler = 'private'
+ORDER BY t.idforumthread
+LIMIT ? OFFSET ?
+`
+
+type AdminListPrivateForumThreadsParams struct {
+	Limit  int32
+	Offset int32
+}
+
+type AdminListPrivateForumThreadsRow struct {
+	Idforumthread int32
+	Idforumtopic  int32
+	Title         string
+	CreatedAt     sql.NullTime
+	CreatedBy     int32
+	LastPostBy    int32
+	LastPostAt    sql.NullTime
+	PostCount     sql.NullInt32
+	TopicTitle    sql.NullString
+	TopicHandler  string
+}
+
+func (q *Queries) AdminListPrivateForumThreads(ctx context.Context, arg AdminListPrivateForumThreadsParams) ([]*AdminListPrivateForumThreadsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListPrivateForumThreads, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListPrivateForumThreadsRow
+	for rows.Next() {
+		var i AdminListPrivateForumThreadsRow
+		if err := rows.Scan(
+			&i.Idforumthread,
+			&i.Idforumtopic,
+			&i.Title,
+			&i.CreatedAt,
+			&i.CreatedBy,
+			&i.LastPostBy,
+			&i.LastPostAt,
+			&i.PostCount,
+			&i.TopicTitle,
+			&i.TopicHandler,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminListPrivateForumTopics = `-- name: AdminListPrivateForumTopics :many
+SELECT
+    idforumtopic,
+    COALESCE(title, '') AS title,
+    handler,
+    threads,
+    comments,
+    lastaddition
+FROM
+    forumtopic
+WHERE
+    handler = 'private'
+ORDER BY idforumtopic
+LIMIT ? OFFSET ?
+`
+
+type AdminListPrivateForumTopicsParams struct {
+	Limit  int32
+	Offset int32
+}
+
+type AdminListPrivateForumTopicsRow struct {
+	Idforumtopic int32
+	Title        string
+	Handler      string
+	Threads      sql.NullInt32
+	Comments     sql.NullInt32
+	Lastaddition sql.NullTime
+}
+
+func (q *Queries) AdminListPrivateForumTopics(ctx context.Context, arg AdminListPrivateForumTopicsParams) ([]*AdminListPrivateForumTopicsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListPrivateForumTopics, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListPrivateForumTopicsRow
+	for rows.Next() {
+		var i AdminListPrivateForumTopicsRow
+		if err := rows.Scan(
+			&i.Idforumtopic,
+			&i.Title,
+			&i.Handler,
+			&i.Threads,
+			&i.Comments,
+			&i.Lastaddition,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

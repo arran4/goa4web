@@ -1,56 +1,54 @@
-{{ define "forum/adminTopicsPage.gohtml" }}
-    {{ template "head" . }}
+{{ template "head" . }}
 
-    <h1>Forum Topics</h1>
-    <a href="/admin/forum/categories/create" class="btn btn-primary">Create Category</a>
+<h1>Forum Topics</h1>
+<a href="/admin/forum/categories/create" class="btn btn-primary">Create Category</a>
 
-    <table class="table table-striped mt-3">
-        <thead>
+<table class="table table-striped mt-3">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Type</th>
+        <th>Title</th>
+        <th>Threads</th>
+        <th>Posts</th>
+        <th>Access / Category / Participants</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{ range .Data.Topics }}
         <tr>
-            <th>ID</th>
-            <th>Type</th>
-            <th>Title</th>
-            <th>Threads</th>
-            <th>Posts</th>
-            <th>Access / Category / Participants</th>
-            <th>Actions</th>
+            <td>{{ .Idforumtopic }}</td>
+            <td>
+                {{ if .IsPrivate }}
+                    <span class="badge badge-warning">Private</span>
+                {{ else }}
+                    <span class="badge badge-success">Public</span>
+                {{ end }}
+            </td>
+            <td>
+                <a href="/admin/forum/topics/topic/{{ .Idforumtopic }}">{{ .DisplayTitle }}</a>
+            </td>
+            <td>{{ .Threads }}</td>
+            <td>{{ .Comments }}</td>
+            <td>
+                {{ if .IsPrivate }}
+                    Private forum{{ if .Participants }}<br><strong>Participants:</strong> {{ .Participants }}{{ end }}
+                {{ else }}
+                    {{ if .AccessInfo }}<strong>Access:</strong> {{ .AccessInfo }}{{ end }}
+                {{ end }}
+            </td>
+            <td>
+                <a href="/admin/forum/topics/topic/{{ .Idforumtopic }}" class="btn btn-sm btn-info">Edit</a>
+                <a href="/forum/topic/{{ .Idforumtopic }}" class="btn btn-sm btn-secondary">View</a>
+            </td>
         </tr>
-        </thead>
-        <tbody>
-        {{ range .Data.Topics }}
-            <tr>
-                <td>{{ .Idforumtopic }}</td>
-                <td>
-                    {{ if .IsPrivate }}
-                        <span class="badge badge-warning">Private</span>
-                    {{ else }}
-                        <span class="badge badge-success">Public</span>
-                    {{ end }}
-                </td>
-                <td>
-                    <a href="/admin/forum/topics/topic/{{ .Idforumtopic }}">{{ .DisplayTitle }}</a>
-                </td>
-                <td>{{ .Threads }}</td>
-                <td>{{ .Comments }}</td>
-                <td>
-                    {{ if .IsPrivate }}
-                        Private forum{{ if .Participants }}<br><strong>Participants:</strong> {{ .Participants }}{{ end }}
-                    {{ else }}
-                        {{ if .AccessInfo }}<strong>Access:</strong> {{ .AccessInfo }}{{ end }}
-                    {{ end }}
-                </td>
-                <td>
-                    <a href="/admin/forum/topics/topic/{{ .Idforumtopic }}" class="btn btn-sm btn-info">Edit</a>
-                    <a href="/forum/topic/{{ .Idforumtopic }}" class="btn btn-sm btn-secondary">View</a>
-                </td>
-            </tr>
-        {{ else }}
-            <tr><td colspan="7">No topics</td></tr>
-        {{ end }}
-        </tbody>
-    </table>
+    {{ else }}
+        <tr><td colspan="7">No topics</td></tr>
+    {{ end }}
+    </tbody>
+</table>
 
-    {{ template "pagination" . }}
+{{ template "pagination" . }}
 
-    {{ template "tail" . }}
-{{ end }}
+{{ template "tail" . }}

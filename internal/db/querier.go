@@ -158,6 +158,8 @@ type Querier interface {
 	AdminListGrantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListGrantsByTopicIDRow, error)
 	AdminListLoginAttempts(ctx context.Context) ([]*LoginAttempt, error)
 	AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescending(ctx context.Context, arg AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams) ([]*AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error)
+	AdminListOrphanComments(ctx context.Context) ([]int32, error)
+	AdminListOrphanForumThreads(ctx context.Context) ([]int32, error)
 	AdminListPendingDeactivatedBlogs(ctx context.Context, arg AdminListPendingDeactivatedBlogsParams) ([]*AdminListPendingDeactivatedBlogsRow, error)
 	AdminListPendingDeactivatedComments(ctx context.Context, arg AdminListPendingDeactivatedCommentsParams) ([]*AdminListPendingDeactivatedCommentsRow, error)
 	AdminListPendingDeactivatedImageposts(ctx context.Context, arg AdminListPendingDeactivatedImagepostsParams) ([]*AdminListPendingDeactivatedImagepostsRow, error)
@@ -166,6 +168,7 @@ type Querier interface {
 	AdminListPendingRequests(ctx context.Context) ([]*AdminRequestQueue, error)
 	AdminListPendingUsers(ctx context.Context) ([]*AdminListPendingUsersRow, error)
 	AdminListPrivateForumInvalidCommentsByThread(ctx context.Context, forumthreadID int32) ([]int32, error)
+	AdminListPrivateTopicParticipantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListPrivateTopicParticipantsByTopicIDRow, error)
 	AdminListRecentNotifications(ctx context.Context, limit int32) ([]*Notification, error)
 	AdminListRequestComments(ctx context.Context, requestID int32) ([]*AdminRequestComment, error)
 	// admin task

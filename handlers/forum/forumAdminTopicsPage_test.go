@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"testing"
 	"time"
 
@@ -29,6 +30,10 @@ func TestAdminTopicsPage(t *testing.T) {
 	rows := sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_id", "title", "description", "threads", "comments", "lastaddition", "handler"}).
 		AddRow(1, 0, 0, 0, "t", "d", 0, 0, time.Now(), "")
 	mock.ExpectQuery("SELECT t.idforumtopic").WillReturnRows(rows)
+
+	categoryRows := sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "language_id", "title", "description"}).
+		AddRow(1, 0, 0, "cat", "desc")
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT f.idforumcategory, f.forumcategory_idforumcategory, f.language_id, f.title, f.description FROM forumcategory f")).WithArgs(int32(0), int32(0)).WillReturnRows(categoryRows)
 
 	cd := common.NewCoreData(context.Background(), db.New(conn), config.NewRuntimeConfig())
 	r := httptest.NewRequest("GET", "/admin/forum/topics", nil)

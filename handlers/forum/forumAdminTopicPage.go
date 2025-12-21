@@ -24,7 +24,7 @@ func AdminTopicPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, handlers.ErrBadRequest)
 		return
 	}
-	topic, err := cd.ForumTopicByID(int32(tid))
+	topic, err := cd.Queries().GetForumTopicById(r.Context(), int32(tid))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			w.WriteHeader(http.StatusNotFound)
@@ -54,7 +54,7 @@ func AdminTopicPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
-		Topic           *db.GetForumTopicByIdForUserRow
+		Topic           *db.Forumtopic
 		AnyoneHasAccess bool
 	}{
 		Topic:           topic,
@@ -72,7 +72,7 @@ func AdminTopicEditFormPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, handlers.ErrBadRequest)
 		return
 	}
-	topic, err := cd.ForumTopicByID(int32(tid))
+	topic, err := cd.Queries().GetForumTopicById(r.Context(), int32(tid))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			w.WriteHeader(http.StatusNotFound)
@@ -97,7 +97,7 @@ func AdminTopicEditFormPage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd.PageTitle = fmt.Sprintf("Edit Forum Topic %d", tid)
 	data := struct {
-		Topic       *db.GetForumTopicByIdForUserRow
+		Topic       *db.Forumtopic
 		Categories  []*db.Forumcategory
 		Roles       []*db.Role
 		Restriction interface{}

@@ -57,6 +57,12 @@ func (c *forumCmd) Run() error {
 			return fmt.Errorf("clean-empty-threads: %w", err)
 		}
 		return cmd.Run()
+	case "clean-orphans":
+		cmd, err := parseForumCleanOrphansCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("clean-orphans: %w", err)
+		}
+		return cmd.Run()
 	case "topic":
 		cmd, err := parseForumTopicCmd(c, args[1:])
 		if err != nil {
@@ -279,6 +285,78 @@ func (c *forumCleanEmptyThreadsCmd) Run() error {
 	}
 
 	log.Println("Cleanup of empty forum threads complete.")
+	return nil
+}
+
+// forumCleanOrphansCmd implements "forum clean-orphans".
+type forumCleanOrphansCmd struct {
+	*forumCmd
+	fs      *flag.FlagSet
+	dryRun  bool
+	verbose bool
+}
+
+func parseForumCleanOrphansCmd(parent *forumCmd, args []string) (*forumCleanOrphansCmd, error) {
+	c := &forumCleanOrphansCmd{forumCmd: parent}
+	c.fs = newFlagSet("clean-orphans")
+	c.fs.BoolVar(&c.dryRun, "dry-run", false, "Dry run")
+	c.fs.BoolVar(&c.verbose, "verbose", false, "Verbose output")
+	if err := c.fs.Parse(args); err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
+func (c *forumCleanOrphansCmd) Run() error {
+	conn, err := c.rootCmd.DB()
+	if err != nil {
+		return fmt.Errorf("database: %w", err)
+	}
+	queries := db.New(conn)
+	ctx := context.Background()
+
+	if c.dryRun {
+		log.Println("Dry run mode enabled. No changes will be made.")
+	}
+
+	orphanComments, err := queries.AdminListOrphanComments(ctx)
+	if err != nil {
+		return fmt.Errorf("getting orphan comments: %w", err)
+	}
+	orphanThreads, err := queries.AdminListOrphanForumThreads(ctx)
+	if err != nil {
+		return fmt.Errorf("getting orphan threads: %w", err)
+	}
+
+	deletedComments := 0
+	for _, commentID := range orphanComments {
+		if c.verbose {
+			log.Printf("Deleting orphan comment ID %d", commentID)
+		}
+		if !c.dryRun {
+			if err := queries.AdminHardDeleteComment(ctx, commentID); err != nil {
+				log.Printf("  - error deleting orphan comment %d: %v", commentID, err)
+				continue
+			}
+		}
+		deletedComments++
+	}
+
+	deletedThreads := 0
+	for _, threadID := range orphanThreads {
+		if c.verbose {
+			log.Printf("Deleting orphan thread ID %d", threadID)
+		}
+		if !c.dryRun {
+			if err := queries.AdminDeleteForumThread(ctx, threadID); err != nil {
+				log.Printf("  - error deleting orphan thread %d: %v", threadID, err)
+				continue
+			}
+		}
+		deletedThreads++
+	}
+
+	log.Printf("Orphan cleanup complete. Threads deleted: %d. Comments deleted: %d.", deletedThreads, deletedComments)
 	return nil
 }
 

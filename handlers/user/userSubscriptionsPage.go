@@ -29,8 +29,3 @@ func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	handlers.TemplateHandler(w, r, "user/subscriptions.gohtml", data)
 }
-
-// UserSubscriptionUpdateTask updates the user's subscriptions.
-// For now, this is a placeholder task to handle the form submission.
-// Actual implementation will need to parse the form and call logic to add/remove DB rows.
-// TODO: Implement the update logic.

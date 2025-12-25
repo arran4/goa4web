@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
@@ -31,6 +32,48 @@ func (UpdateSubscriptionsTask) Action(w http.ResponseWriter, r *http.Request) an
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
+
+	// Check if this is an "Add Subscription" request
+	if r.PostFormValue("task") == "Add" {
+		definition := r.PostFormValue("definition")
+		if definition == "" {
+			return fmt.Errorf("missing definition %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("please select a subscription type")))
+		}
+
+		// Resolve parameters
+		pattern := definition
+		pattern = strings.ReplaceAll(pattern, "{topicid}", r.PostFormValue("topicid"))
+		pattern = strings.ReplaceAll(pattern, "{threadid}", r.PostFormValue("threadid"))
+
+		// Validate that no placeholders remain
+		if strings.Contains(pattern, "{") && strings.Contains(pattern, "}") {
+			return fmt.Errorf("invalid parameters %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("missing required parameters")))
+		}
+
+		methods := []string{}
+		if r.PostFormValue("method_internal") != "" {
+			methods = append(methods, "internal")
+		}
+		if r.PostFormValue("method_email") != "" {
+			methods = append(methods, "email")
+		}
+
+		if len(methods) == 0 {
+			return fmt.Errorf("no methods selected %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("please select at least one notification method")))
+		}
+
+		for _, m := range methods {
+			if err := queries.InsertSubscription(r.Context(), db.InsertSubscriptionParams{UsersIdusers: uid, Pattern: pattern, Method: m}); err != nil {
+				// We return the error here to inform the user if something went wrong (e.g. database error).
+				// While this might surface "Duplicate entry" errors, it's better than failing silently.
+				log.Printf("insert sub: %v", err)
+				return fmt.Errorf("insert subscription fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+			}
+		}
+
+		return handlers.RefreshDirectHandler{TargetURL: "/usr/subscriptions"}
+	}
+
 	existing, err := queries.ListSubscriptionsByUser(r.Context(), uid)
 	if err != nil {
 		log.Printf("list subs: %v", err)
@@ -52,6 +95,8 @@ func (UpdateSubscriptionsTask) Action(w http.ResponseWriter, r *http.Request) an
 					return fmt.Errorf("insert subscription fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 				}
 			} else if !want && have[hkey] {
+				// Only delete if it matches one of the options in userSubscriptionOptions
+				// This prevents deleting custom subscriptions added via the "Add" form
 				if err := queries.DeleteSubscriptionForSubscriber(r.Context(), db.DeleteSubscriptionForSubscriberParams{SubscriberID: uid, Pattern: opt.Pattern, Method: m}); err != nil {
 					log.Printf("delete sub: %v", err)
 					return fmt.Errorf("delete subscription fail %w", handlers.ErrRedirectOnSamePageHandler(err))

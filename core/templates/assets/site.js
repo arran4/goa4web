@@ -16,6 +16,10 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const targetId = e.target.getAttribute('data-target');
             convertMarkdownToA4Code(targetId);
+        } else if (e.target && e.target.classList.contains('convert-a4code-to-markdown')) {
+            e.preventDefault();
+            const targetId = e.target.getAttribute('data-target');
+            convertA4CodeToMarkdown(targetId);
         } else if (e.target && e.target.classList.contains('preview-a4code')) {
             e.preventDefault();
             const targetId = e.target.getAttribute('data-target');
@@ -28,23 +32,21 @@ document.addEventListener('DOMContentLoaded', function() {
 function convertMarkdownToA4Code(targetId) {
     const textarea = document.getElementById(targetId);
     if (!textarea) return;
+    if (window.A4Code) {
+        textarea.value = A4Code.markdownToA4Code(textarea.value);
+    } else {
+        alert("A4Code library not loaded");
+    }
+}
 
-    let text = textarea.value;
-
-    // Bold
-    text = text.replace(/\*\*(.*?)\*\*/g, '[b $1]');
-    // Italic
-    text = text.replace(/\*(.*?)\*/g, '[i $1]');
-    // Images
-    text = text.replace(/!\[(.*?)\]\((.*?)\)/g, '[img $2]');
-    // Links
-    text = text.replace(/\[(.*?)\]\((.*?)\)/g, '[link $2 $1]');
-    // Code blocks (simple)
-    text = text.replace(/```([\s\S]*?)```/g, '[code]$1[/code]');
-    // Quotes
-    text = text.replace(/^>\s?(.*)$/gm, '[quote $1]');
-
-    textarea.value = text;
+function convertA4CodeToMarkdown(targetId) {
+    const textarea = document.getElementById(targetId);
+    if (!textarea) return;
+    if (window.A4Code) {
+        textarea.value = A4Code.a4codeToMarkdown(textarea.value);
+    } else {
+        alert("A4Code library not loaded");
+    }
 }
 
 function previewA4Code(targetId, previewUrl) {

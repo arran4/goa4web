@@ -18,7 +18,7 @@ func StartGroupDiscussionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Page title/header as requested
-	cd.PageTitle = "Start pricate group discussion"
+	cd.PageTitle = "Start private group discussion"
 
 	// Prepare data matching forum.CreateTopicPageWithPostTask
 	data := struct {

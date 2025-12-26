@@ -1,0 +1,54 @@
+What is a4code?
+===
+[b]a4code[/b] is a lightweight markup language used on this site for formatting text. It uses square brackets to denote formatting tags.
+
+Here are the available tags:
+
+[b]Bold Text[/b]
+Usage: [code][b]Bold Text[/b][/code]
+Result: [b]Bold Text[/b]
+
+[i]Italic Text[/i]
+Usage: [code][i]Italic Text[/i][/code]
+Result: [i]Italic Text[/i]
+
+[u]Underlined Text[/u]
+Usage: [code][u]Underlined Text[/u][/code]
+Result: [u]Underlined Text[/u]
+
+[s]Subscript[/s] and [p]Superscript[/p]
+Usage: [code][s]Subscript[/s] and [p]Superscript[/p][/code]
+Result: [s]Subscript[/s] and [p]Superscript[/p]
+
+[b]Links[/b]
+Usage: [code][link https://example.com Example Website][/code]
+Result: [link https://example.com Example Website]
+(Note: You can also use [code][url][/code] or [code][a][/code])
+
+[b]Images[/b]
+Usage: [code][img https://example.com/image.png][/code]
+Result: (Displays the image)
+
+[b]Quotes[/b]
+Usage: [code][quote]This is a quote[/quote][/code]
+Result:
+[quote]This is a quote[/quote]
+
+[b]Quote with Author[/b]
+Usage: [code][quoteof User]This is a quote by User[/quoteof][/code]
+Result:
+[quoteof User]This is a quote by User[/quoteof]
+
+[b]Spoilers[/b]
+Usage: [code][spoiler]Hidden text[/spoiler][/code]
+Result: [spoiler]Hidden text[/spoiler]
+
+[b]Code Blocks[/b]
+Usage: [code][code]func main() {}[/code][/code]
+Result:
+[code]func main() {}[/code]
+
+[b]Horizontal Rule[/b]
+Usage: [code][hr][/code]
+Result:
+[hr]

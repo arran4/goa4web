@@ -93,5 +93,7 @@ func (NewPostTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
+	handlers.RedirectSeeOther(w, r, fmt.Sprintf("/news/news/%d", id))
+
 	return nil
 }

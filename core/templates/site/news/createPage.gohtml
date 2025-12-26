@@ -1,0 +1,18 @@
+{{ template "head" $ }}
+<div class="content">
+    <h2 class="section-heading">Add News</h2>
+    <form method="post" action="/news/post">
+        {{ csrfField }}
+        <div class="form-group">
+            <label for="text">Content</label>
+            <textarea name="text" id="text" cols="60" rows="20" required></textarea>
+        </div>
+        <div class="form-group">
+            {{ template "languageCombobox" }}
+        </div>
+        <div class="form-actions">
+            <input type="submit" value="Post News">
+        </div>
+    </form>
+</div>
+{{ template "tail" $ }}

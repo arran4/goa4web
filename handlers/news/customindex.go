@@ -30,8 +30,7 @@ func NewsGeneralIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 		Folded: true,
 	})
 
-	userHasWriter := cd.HasGrant("news", "post", "post", 0)
-	if userHasWriter {
+	if CanPostNews(cd) {
 		items = append(items, common.IndexItem{
 			Name: "Add News",
 			Link: "/news/post",

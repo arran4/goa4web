@@ -21,9 +21,10 @@ func CustomForumIndex(cd *common.CoreData, r *http.Request) {
 func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexItem {
 	base := forumBasePath(cd, r)
 	section := "forum"
-	if base == "/private" {
+	if strings.HasPrefix(base, "/private") {
 		section = "privateforum"
 	}
+
 	vars := mux.Vars(r)
 	threadID := vars["thread"]
 	topicID := vars["topic"]

@@ -78,6 +78,8 @@ WHERE ur.users_idusers = ?;
 -- name: SystemCheckGrant :one
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT 1 FROM grants g
 WHERE g.section = sqlc.arg(section)

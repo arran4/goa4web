@@ -14,11 +14,11 @@ import (
 
 // CustomForumIndex builds context-aware index items for the public forum.
 func CustomForumIndex(cd *common.CoreData, r *http.Request) {
-	cd.CustomIndexItems = ForumCustomIndexItems(cd, r, "forum")
+	cd.CustomIndexItems = ForumCustomIndexItems(cd, r)
 }
 
 // ForumCustomIndexItems returns the context-aware index items for forum pages.
-func ForumCustomIndexItems(cd *common.CoreData, r *http.Request, section string) []common.IndexItem {
+func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexItem {
 	base := forumBasePath(cd, r)
 	vars := mux.Vars(r)
 	threadID := vars["thread"]
@@ -59,7 +59,7 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request, section string)
 			Name: "Go to topic",
 			Link: fmt.Sprintf("%s/topic/%s", base, topicID),
 		})
-		if tid, err := strconv.Atoi(topicID); err == nil && cd.HasGrant(section, "topic", "reply", int32(tid)) {
+		if tid, err := strconv.Atoi(topicID); err == nil && cd.HasGrant(base, "topic", "reply", int32(tid)) {
 			items = append(items,
 				common.IndexItem{
 					Name: "Write Reply",
@@ -76,7 +76,7 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request, section string)
 				Link: fmt.Sprintf("/admin/forum/topics/topic/%s/edit", topicID),
 			})
 		}
-		if tid, err := strconv.Atoi(topicID); err == nil && cd.HasGrant(section, "topic", "post", int32(tid)) {
+		if tid, err := strconv.Atoi(topicID); err == nil && cd.HasGrant(base, "topic", "post", int32(tid)) {
 			name := "New Thread"
 			if base == "/private" {
 				name = "Create a new private thread"

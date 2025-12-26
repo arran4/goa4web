@@ -24,6 +24,6 @@ var CustomIndex = func(cd *common.CoreData, r *http.Request) {
 			Link: "/private",
 		})
 	}
-	items = append(items, forumhandlers.ForumCustomIndexItems(cd, r, "privateforum")...)
+	items = append(items, forumhandlers.ForumCustomIndexItems(cd, r)...)
 	cd.CustomIndexItems = items
 }

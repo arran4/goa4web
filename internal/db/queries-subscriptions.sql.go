@@ -168,6 +168,44 @@ func (q *Queries) ListSubscriptionsByUser(ctx context.Context, usersIdusers int3
 	return items, nil
 }
 
+const listThreadSubscriptionsByUser = `-- name: ListThreadSubscriptionsByUser :many
+SELECT id, pattern, method FROM subscriptions
+WHERE users_idusers = ?
+  AND pattern LIKE 'reply:/forum/topic/%/thread/%'
+  AND pattern NOT LIKE '%/topic/*/%'
+  AND pattern NOT LIKE '%/thread/*%'
+ORDER BY id
+`
+
+type ListThreadSubscriptionsByUserRow struct {
+	ID      int32
+	Pattern string
+	Method  string
+}
+
+func (q *Queries) ListThreadSubscriptionsByUser(ctx context.Context, usersIdusers int32) ([]*ListThreadSubscriptionsByUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, listThreadSubscriptionsByUser, usersIdusers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListThreadSubscriptionsByUserRow
+	for rows.Next() {
+		var i ListThreadSubscriptionsByUserRow
+		if err := rows.Scan(&i.ID, &i.Pattern, &i.Method); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateSubscriptionByIDForSubscriber = `-- name: UpdateSubscriptionByIDForSubscriber :exec
 UPDATE subscriptions SET pattern = ?, method = ?
 WHERE users_idusers = ? AND id = ?

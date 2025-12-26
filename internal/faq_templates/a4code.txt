@@ -1,54 +1,54 @@
 What is a4code?
 ===
-[b]a4code[/b] is a lightweight markup language used on this site for formatting text. It uses square brackets to denote formatting tags.
+[b a4code] is a lightweight markup language used on this site for formatting text. It uses square brackets to denote formatting tags.
 
 Here are the available tags:
 
-[b]Bold Text[/b]
-Usage: [code][b]Bold Text[/b][/code]
-Result: [b]Bold Text[/b]
+[b Bold Text]
+Usage: [code [b Bold Text]]
+Result: [b Bold Text]
 
-[i]Italic Text[/i]
-Usage: [code][i]Italic Text[/i][/code]
-Result: [i]Italic Text[/i]
+[i Italic Text]
+Usage: [code [i Italic Text]]
+Result: [i Italic Text]
 
-[u]Underlined Text[/u]
-Usage: [code][u]Underlined Text[/u][/code]
-Result: [u]Underlined Text[/u]
+[u Underlined Text]
+Usage: [code [u Underlined Text]]
+Result: [u Underlined Text]
 
-[s]Subscript[/s] and [p]Superscript[/p]
-Usage: [code][s]Subscript[/s] and [p]Superscript[/p][/code]
-Result: [s]Subscript[/s] and [p]Superscript[/p]
+[s Subscript] and [p Superscript]
+Usage: [code [s Subscript] and [p Superscript]]
+Result: [s Subscript] and [p Superscript]
 
-[b]Links[/b]
-Usage: [code][link https://example.com Example Website][/code]
+[b Links]
+Usage: [code [link https://example.com Example Website]]
 Result: [link https://example.com Example Website]
-(Note: You can also use [code][url][/code] or [code][a][/code])
+(Note: You can also use [code [url]] or [code [a]])
 
-[b]Images[/b]
-Usage: [code][img https://example.com/image.png][/code]
+[b Images]
+Usage: [code [img https://example.com/image.png]]
 Result: (Displays the image)
 
-[b]Quotes[/b]
-Usage: [code][quote]This is a quote[/quote][/code]
+[b Quotes]
+Usage: [code [quote This is a quote]]
 Result:
-[quote]This is a quote[/quote]
+[quote This is a quote]
 
-[b]Quote with Author[/b]
-Usage: [code][quoteof User]This is a quote by User[/quoteof][/code]
+[b Quote with Author]
+Usage: [code [quoteof User This is a quote by User]]
 Result:
-[quoteof User]This is a quote by User[/quoteof]
+[quoteof User This is a quote by User]
 
-[b]Spoilers[/b]
-Usage: [code][spoiler]Hidden text[/spoiler][/code]
-Result: [spoiler]Hidden text[/spoiler]
+[b Spoilers]
+Usage: [code [spoiler Hidden text]]
+Result: [spoiler Hidden text]
 
-[b]Code Blocks[/b]
-Usage: [code][code]func main() {}[/code][/code]
+[b Code Blocks]
+Usage: [code [code func main() {}]]
 Result:
-[code]func main() {}[/code]
+[code func main() {}]
 
-[b]Horizontal Rule[/b]
-Usage: [code][hr][/code]
+[b Horizontal Rule]
+Usage: [code [hr]]
 Result:
 [hr]

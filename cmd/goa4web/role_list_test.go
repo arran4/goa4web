@@ -27,7 +27,7 @@ func TestRoleListSQL(t *testing.T) {
 		t.Fatalf("Run: %v", err)
 	}
 
-	want := []string{"content-writer", "labeler", "moderator", "moderator-sectional", "news-reader", "news-writer", "private-forum-user"}
+	want := []string{"content-writer", "faq-reader", "labeler", "moderator", "moderator-sectional", "news-reader", "news-writer", "private-forum-user"}
 	got := strings.Split(strings.TrimSpace(buf.String()), "\n")
 	if len(got) != len(want) {
 		t.Fatalf("unexpected line count: got %d want %d (%v)", len(got), len(want), got)
@@ -60,7 +60,7 @@ func TestRoleListNames(t *testing.T) {
 		t.Fatalf("Run: %v", err)
 	}
 
-	want := []string{"content writer", "labeler", "moderator", "moderator-sectional", "news reader", "news writer", "private forum user"}
+	want := []string{"content writer", "faq reader", "labeler", "moderator", "moderator-sectional", "news reader", "news writer", "private forum user"}
 	got := strings.Split(strings.TrimSpace(buf.String()), "\n")
 	if len(got) != len(want) {
 		t.Fatalf("unexpected line count: got %d want %d (%v)", len(got), len(want), got)

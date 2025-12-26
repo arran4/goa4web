@@ -30,8 +30,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         field.value = names.join(',');
         const show = names.length > 0;
-        if (topicDetails) topicDetails.style.display = show ? '' : 'none';
-        if (createBtn) createBtn.style.display = show ? '' : 'none';
+        if (topicDetails) {
+            if (show) {
+                topicDetails.classList.remove('hidden');
+                topicDetails.style.display = '';
+            } else {
+                topicDetails.classList.add('hidden');
+                topicDetails.style.display = 'none';
+            }
+        }
+        if (createBtn) {
+            if (show) {
+                createBtn.classList.remove('hidden');
+                createBtn.style.display = '';
+            } else {
+                createBtn.classList.add('hidden');
+                createBtn.style.display = 'none';
+            }
+        }
         // Only update title if it's empty or starts with "Private chat with"
         if (titleField && (!titleField.value || titleField.value.startsWith("Private chat with"))) {
              titleField.value = "Private chat with " + names.join(", ");
@@ -67,13 +83,24 @@ document.addEventListener('DOMContentLoaded', () => {
         list.appendChild(li);
     }
 
-    addBtn?.addEventListener('click', (e) => {
-        e.preventDefault();
+    function handleAdd() {
         const name = input.value.trim();
         if (!name) return;
         addListItem(name);
         input.value = '';
         updateParticipants();
+    }
+
+    addBtn?.addEventListener('click', (e) => {
+        e.preventDefault();
+        handleAdd();
+    });
+
+    input?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleAdd();
+        }
     });
 
     // Initial update not needed if we populate via loop, but good for visibility check

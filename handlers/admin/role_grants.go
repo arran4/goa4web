@@ -31,7 +31,7 @@ var GrantActionMap = map[string]GrantDefinition{
 	"linker|category":     {Actions: []string{"see", "view", "post"}},
 	"linker|link":         {Actions: []string{"see", "view", "reply"}},
 	"imagebbs|":           {Actions: []string{"search"}},
-	"imagebbs|board":      {Actions: []string{"see", "view", "post"}},
+	"imagebbs|board":      {Actions: []string{"see", "view", "post", "approve"}},
 	"images|upload":       {Actions: []string{"see", "post"}},
 	"news|":               {Actions: []string{"search"}},
 	"news|post":           {Actions: []string{"see", "view", "reply", "post", "edit"}},

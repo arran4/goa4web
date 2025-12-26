@@ -466,6 +466,62 @@ func (q *Queries) ListGrantsByUserID(ctx context.Context, userID sql.NullInt32) 
 	return items, nil
 }
 
+const listGrantsExtended = `-- name: ListGrantsExtended :many
+SELECT g.id, g.section, g.item, g.action, g.rule_type, g.active, g.role_id, g.user_id,
+       r.name AS role_name, u.username
+FROM grants g
+LEFT JOIN roles r ON g.role_id = r.id
+LEFT JOIN users u ON g.user_id = u.idusers
+ORDER BY g.id
+`
+
+type ListGrantsExtendedRow struct {
+	ID       int32
+	Section  string
+	Item     sql.NullString
+	Action   string
+	RuleType string
+	Active   bool
+	RoleID   sql.NullInt32
+	UserID   sql.NullInt32
+	RoleName sql.NullString
+	Username sql.NullString
+}
+
+func (q *Queries) ListGrantsExtended(ctx context.Context) ([]*ListGrantsExtendedRow, error) {
+	rows, err := q.db.QueryContext(ctx, listGrantsExtended)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListGrantsExtendedRow
+	for rows.Next() {
+		var i ListGrantsExtendedRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Section,
+			&i.Item,
+			&i.Action,
+			&i.RuleType,
+			&i.Active,
+			&i.RoleID,
+			&i.UserID,
+			&i.RoleName,
+			&i.Username,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listUsersWithRoles = `-- name: ListUsersWithRoles :many
 SELECT u.idusers, u.username, GROUP_CONCAT(r.name ORDER BY r.name) AS roles
 FROM users u

@@ -18,7 +18,7 @@
             {{ template "languageCombobox" }}
             <input type="submit" name="task" value="Update writing">
         </form>
-        <script src="/forum/topic_labels.js"></script>
+    <script src="{{ assetHash "/forum/topic_labels.js" }}"></script>
     {{ else }}
         Sorry, there is no article that you can edit here.
     {{ end }}

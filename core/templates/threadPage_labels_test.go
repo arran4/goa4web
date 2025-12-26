@@ -14,6 +14,7 @@ func csrfField() template.HTML { return "" }
 func TestThreadPageShowsDefaultPrivateLabels(t *testing.T) {
 	funcMap := template.FuncMap{
 		"csrfField": csrfField,
+		"assetHash": func(s string) string { return s },
 	}
 	tmpl := template.New("test").Funcs(funcMap)
 

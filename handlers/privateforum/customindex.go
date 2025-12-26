@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
-	forumhandlers "github.com/arran4/goa4web/handlers/forum"
+	"github.com/arran4/goa4web/handlers/forumcommon"
 	"github.com/gorilla/mux"
 )
 
@@ -24,6 +24,6 @@ var CustomIndex = func(cd *common.CoreData, r *http.Request) {
 			Link: "/private",
 		})
 	}
-	items = append(items, forumhandlers.ForumCustomIndexItems(cd, r, "privateforum")...)
+	items = append(items, forumcommon.ForumCustomIndexItems(cd, r, "privateforum")...)
 	cd.CustomIndexItems = items
 }

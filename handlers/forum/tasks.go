@@ -1,6 +1,9 @@
 package forum
 
-import "github.com/arran4/goa4web/internal/tasks"
+import (
+	"github.com/arran4/goa4web/handlers/forumcommon"
+	"github.com/arran4/goa4web/internal/tasks"
+)
 
 // The following constants define the allowed values of the "task" form field.
 // Each HTML form includes a hidden or submit input named "task" whose value
@@ -10,7 +13,7 @@ import "github.com/arran4/goa4web/internal/tasks"
 // between templates and route declarations.
 const (
 	// TaskCreateThread creates a new forum thread.
-	TaskCreateThread tasks.TaskString = "Create Thread"
+	TaskCreateThread = forumcommon.TaskCreateThread
 
 	// TaskReply posts a reply to a thread.
 	TaskReply tasks.TaskString = "Reply"
@@ -85,10 +88,10 @@ const (
 	TaskCategoryGrantDelete tasks.TaskString = "Delete grant"
 
 	// TaskSubscribeToTopic subscribes the user to new threads in a topic.
-	TaskSubscribeToTopic tasks.TaskString = "Subscribe To Topic"
+	TaskSubscribeToTopic = forumcommon.TaskSubscribeToTopic
 
 	// TaskUnsubscribeFromTopic removes topic thread notifications.
-	TaskUnsubscribeFromTopic tasks.TaskString = "Unsubscribe From Topic"
+	TaskUnsubscribeFromTopic = forumcommon.TaskUnsubscribeFromTopic
 
 	// TaskAddPublicLabel adds a public label to a topic.
 	TaskAddPublicLabel tasks.TaskString = "Add Public Label"
@@ -109,7 +112,7 @@ const (
 	TaskRemovePrivateLabel tasks.TaskString = "Remove Private Label"
 
 	// TaskMarkThreadRead marks a thread as read for the current user.
-	TaskMarkThreadRead tasks.TaskString = "Mark Thread Read"
+	TaskMarkThreadRead = forumcommon.TaskMarkThreadRead
 
 	// TaskSetLabels replaces public and private labels on a topic.
 	TaskSetLabels tasks.TaskString = "Set Labels"

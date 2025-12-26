@@ -15,6 +15,7 @@
             <button type="button" id="add-participant">Add</button>
             <ul id="participants"></ul>
             <input type="hidden" name="participants" id="participants-field" value="{{ .FormData.Participants }}">
+            <input type="hidden" id="invalid-participants-field" value="{{ .FormData.InvalidParticipants }}">
         </div>
         <div id="topic-details" class="hidden">
             <div class="form-group">

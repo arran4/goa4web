@@ -9,9 +9,10 @@ import (
 
 // CreateTopicPageForm holds the data for the create topic form.
 type CreateTopicPageForm struct {
-	Participants string
-	Title        string
-	Description  string
+	Participants        string
+	InvalidParticipants string
+	Title               string
+	Description         string
 }
 
 // CreateTopicPageWithPostTask renders the create topic page with a given post task.

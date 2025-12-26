@@ -21,6 +21,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	pr.HandleFunc("", PrivateForumPage).Methods(http.MethodGet)
 	// Dedicated page to start a private group discussion
 	pr.HandleFunc("/topic/new", StartGroupDiscussionPage).Methods(http.MethodGet)
+	pr.HandleFunc("/topic/new", handlers.TaskHandler(privateTopicCreateTask)).Methods(http.MethodPost).MatcherFunc(privateTopicCreateTask.Matcher())
 	pr.HandleFunc("", handlers.TaskHandler(privateTopicCreateTask)).Methods(http.MethodPost).MatcherFunc(privateTopicCreateTask.Matcher())
 	pr.HandleFunc("/private_forum.js", handlers.PrivateForumJS).Methods(http.MethodGet)
 	pr.HandleFunc("/topic_labels.js", handlers.TopicLabelsJS).Methods(http.MethodGet)

@@ -185,6 +185,10 @@ func (RemoveAuthorLabelTask) Action(w http.ResponseWriter, r *http.Request) any 
 // MarkThreadReadTask clears the special new/unread flags for a thread.
 type MarkThreadReadTask struct{ tasks.TaskString }
 
+func (t *MarkThreadReadTask) Matcher() mux.MatcherFunc {
+	return tasks.HasFormOrQueryTask(string(t.TaskString))
+}
+
 func (MarkThreadReadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)

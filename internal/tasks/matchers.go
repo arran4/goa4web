@@ -9,7 +9,7 @@ import (
 // HasTask restricts requests to those specifying the provided task value.
 func HasTask(taskName string) mux.MatcherFunc {
 	return func(r *http.Request, m *mux.RouteMatch) bool {
-		if r.Method == http.MethodPost {
+		if r.Method == http.MethodPost || r.Method == http.MethodPut || r.Method == http.MethodPatch {
 			return r.PostFormValue("task") == taskName
 		}
 		return r.FormValue("task") == taskName
@@ -19,7 +19,7 @@ func HasTask(taskName string) mux.MatcherFunc {
 // HasNoTask matches requests that do not specify a task.
 func HasNoTask() mux.MatcherFunc {
 	return func(r *http.Request, m *mux.RouteMatch) bool {
-		if r.Method == http.MethodPost {
+		if r.Method == http.MethodPost || r.Method == http.MethodPut || r.Method == http.MethodPatch {
 			return r.PostFormValue("task") == ""
 		}
 		return r.FormValue("task") == ""

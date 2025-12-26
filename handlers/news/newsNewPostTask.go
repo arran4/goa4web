@@ -73,7 +73,7 @@ func (NewPostTask) Action(w http.ResponseWriter, r *http.Request) any {
 	uid, _ := session.Values["UID"].(int32)
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	if !cd.HasGrant("news", "post", "post", 0) {
+	if !CanPostNews(cd) {
 		r.URL.RawQuery = "error=" + url.QueryEscape("Forbidden")
 		handlers.TaskErrorAcknowledgementPage(w, r)
 		return nil

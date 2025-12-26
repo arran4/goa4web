@@ -17,7 +17,7 @@ func NewsCreatePageHandler(w http.ResponseWriter, r *http.Request) {
 	cd.PageTitle = "Add News"
 
 	// Permission check
-	if !common.Allowed(r, "content writer", "administrator") {
+	if !CanPostNews(cd) {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}

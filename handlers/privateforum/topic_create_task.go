@@ -82,6 +82,25 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 			Username: u.Username.String,
 		})
 	}
+
+	hasOtherMember := false
+	for _, participant := range participants {
+		if participant.ID != cd.UserID {
+			hasOtherMember = true
+			break
+		}
+	}
+
+	if !hasOtherMember {
+		cd.SetCurrentError("You must invite at least one other member")
+		forumhandlers.CreateTopicPageWithPostTask(w, r, TaskPrivateTopicCreate, &forumhandlers.CreateTopicPageForm{
+			Participants: participantsInput,
+			Title:        title,
+			Description:  description,
+		})
+		return nil
+	}
+
 	creator := cd.UserID
 	seen := false
 	for _, participant := range participants {

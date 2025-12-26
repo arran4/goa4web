@@ -3,6 +3,7 @@
     <h2 class="section-heading">Add News</h2>
     <form method="post" action="/news/post">
         {{ csrfField }}
+        <input type="hidden" name="task" value="New Post">
         <div class="form-group">
             <label for="text">Content</label>
             <textarea name="text" id="text" cols="60" rows="20" required></textarea>

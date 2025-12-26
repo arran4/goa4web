@@ -13,24 +13,11 @@ import (
 	"github.com/arran4/goa4web/internal/faq_templates"
 )
 
-// parseFaqTemplateCmd parses and executes the faq-from-template command.
-type faqTemplateCmd struct {
-	*rootCmd
-	categoryID int
-	languageID int
-	authorID   int
-}
-
-func parseFaqTemplateCmd(parent *faqCmd, args []string) (*faqTemplateCmd, error) {
-	c := &faqTemplateCmd{rootCmd: parent.rootCmd}
-	parent.fs.IntVar(&c.categoryID, "category", 0, "Category ID")
-	parent.fs.IntVar(&c.languageID, "language", 0, "Language ID")
-	parent.fs.IntVar(&c.authorID, "author", 0, "Author ID (defaults to admin/system user if not set)")
-	return c, nil
-}
 
 // Helper to parse the template format
 func parseTemplateContent(content string) (string, string, error) {
+	// Normalize CRLF to LF
+	content = strings.ReplaceAll(content, "\r\n", "\n")
 	parts := strings.SplitN(content, "\n===\n", 2)
 	if len(parts) != 2 {
 		return "", "", fmt.Errorf("invalid template format: missing '===' separator")

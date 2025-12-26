@@ -31,6 +31,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	nr.HandleFunc("", handlers.TaskDoneAutoRefreshPage).Methods("POST")
 	nr.HandleFunc("/post", NewsCreatePageHandler).Methods("GET").MatcherFunc(MatchCanPostNews)
 	nr.HandleFunc("/post", handlers.TaskHandler(newPostTask)).Methods("POST").MatcherFunc(MatchCanPostNews).MatcherFunc(newPostTask.Matcher())
+	nr.HandleFunc("/preview", PreviewPage).Methods("POST")
 	nr.HandleFunc("/news/{news}", NewsPostPageHandler).Methods("GET")
 	nr.Handle("/news/{news}/edit", RequireNewsPostAuthor(http.HandlerFunc(editTask.Page))).Methods("GET").MatcherFunc(handlers.RequiredAccess("content writer", "administrator"))
 	nr.Handle("/news/{news}/edit", RequireNewsPostAuthor(http.HandlerFunc(handlers.TaskHandler(editTask)))).Methods("POST").MatcherFunc(handlers.RequiredAccess("content writer", "administrator")).MatcherFunc(editTask.Matcher())

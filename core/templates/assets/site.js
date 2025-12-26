@@ -12,9 +12,77 @@ document.addEventListener('DOMContentLoaded', function() {
             if (targetElement) {
                 targetElement.classList.toggle('hidden');
             }
+        } else if (e.target && e.target.classList.contains('convert-markdown-to-a4code')) {
+            e.preventDefault();
+            const targetId = e.target.getAttribute('data-target');
+            convertMarkdownToA4Code(targetId);
+        } else if (e.target && e.target.classList.contains('preview-a4code')) {
+            e.preventDefault();
+            const targetId = e.target.getAttribute('data-target');
+            const previewUrl = e.target.getAttribute('data-preview-url');
+            previewA4Code(targetId, previewUrl);
         }
     });
 });
+
+function convertMarkdownToA4Code(targetId) {
+    const textarea = document.getElementById(targetId);
+    if (!textarea) return;
+
+    let text = textarea.value;
+
+    // Bold
+    text = text.replace(/\*\*(.*?)\*\*/g, '[b $1]');
+    // Italic
+    text = text.replace(/\*(.*?)\*/g, '[i $1]');
+    // Images
+    text = text.replace(/!\[(.*?)\]\((.*?)\)/g, '[img $2]');
+    // Links
+    text = text.replace(/\[(.*?)\]\((.*?)\)/g, '[link $2 $1]');
+    // Code blocks (simple)
+    text = text.replace(/```([\s\S]*?)```/g, '[code]$1[/code]');
+    // Quotes
+    text = text.replace(/^>\s?(.*)$/gm, '[quote $1]');
+
+    textarea.value = text;
+}
+
+function previewA4Code(targetId, previewUrl) {
+    const textarea = document.getElementById(targetId);
+    if (!textarea) return;
+
+    const text = textarea.value;
+    const previewContainer = document.getElementById('preview-container');
+    const previewContent = document.getElementById('preview-content');
+
+    const headers = {
+        'Content-Type': 'text/plain',
+    };
+    const csrfToken = document.querySelector('input[name="csrf_token"]');
+    if (csrfToken) {
+        headers['X-CSRF-Token'] = csrfToken.value;
+    }
+
+    fetch(previewUrl, {
+        method: 'POST',
+        headers: headers,
+        body: text
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.text();
+    })
+    .then(html => {
+        previewContent.innerHTML = html;
+        previewContainer.classList.remove('hidden');
+    })
+    .catch(error => {
+        console.error('Error fetching preview:', error);
+        alert('Failed to generate preview.');
+    });
+}
 
 function quote(type, commentId) {
     if (type === 'selected') {

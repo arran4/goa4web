@@ -148,6 +148,9 @@ func GetTopicLabelsJSData() []byte { return readFile("assets/topic_labels.js") }
 // GetSiteJSData returns the main site JavaScript.
 func GetSiteJSData() []byte { return readFile("assets/site.js") }
 
+// GetA4CodeJSData returns the A4Code parser/converter JavaScript.
+func GetA4CodeJSData() []byte { return readFile("assets/a4code.js") }
+
 // ListSiteTemplateNames returns the relative paths of all site templates
 // (under the site/ directory), e.g. "news/postPage.gohtml".
 func ListSiteTemplateNames() []string {

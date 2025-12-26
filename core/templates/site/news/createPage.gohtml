@@ -8,11 +8,21 @@
             <textarea name="text" id="text" cols="60" rows="20" required></textarea>
         </div>
         <div class="form-group">
+             <button type="button" class="convert-markdown-to-a4code" data-target="text">Convert Markdown to A4Code</button>
+             <button type="button" class="convert-a4code-to-markdown" data-target="text">Convert A4Code to Markdown</button>
+             <button type="button" class="preview-a4code" data-target="text" data-preview-url="/news/preview">Preview</button>
+        </div>
+        <div class="form-group">
             {{ template "languageCombobox" }}
+        </div>
+        <div class="form-group hidden" id="preview-container">
+            <label>Preview</label>
+            <div id="preview-content" class="preview-box"></div>
         </div>
         <div class="form-actions">
             <input type="submit" value="Post News">
         </div>
     </form>
 </div>
+<script src="/static/a4code.js"></script>
 {{ template "tail" $ }}

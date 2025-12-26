@@ -50,6 +50,12 @@ func SiteJS(w http.ResponseWriter, r *http.Request) {
 	http.ServeContent(w, r, "site.js", time.Time{}, bytes.NewReader(templates.GetSiteJSData()))
 }
 
+// A4CodeJS serves the A4Code parser/converter JavaScript.
+func A4CodeJS(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/javascript")
+	http.ServeContent(w, r, "a4code.js", time.Time{}, bytes.NewReader(templates.GetA4CodeJSData()))
+}
+
 // RedirectPermanent returns a handler that redirects to the provided path using StatusPermanentRedirect.
 func RedirectPermanent(to string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

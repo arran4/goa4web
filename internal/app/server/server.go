@@ -291,8 +291,10 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 	_ = cd.UserRoles()
 
 	cd.AdminMode = r.URL.Query().Get("mode") == "admin"
-	if strings.HasPrefix(r.URL.Path, "/admin") && cd.HasRole("administrator") {
-		cd.AdminMode = true
+	if strings.HasPrefix(r.URL.Path, "/admin") {
+		if cd.HasAdminRole() {
+			cd.AdminMode = true
+		}
 	}
 	if s.Nav != nil {
 		cd.IndexItems = s.Nav.IndexItemsWithPermission(func(section, item string) bool {

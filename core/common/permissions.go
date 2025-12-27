@@ -27,3 +27,8 @@ func (cd *CoreData) HasGrant(section, item, action string, itemID int32) bool {
 	})
 	return err == nil
 }
+
+// HasAdminAccess reports whether the caller can access admin functionality.
+func (cd *CoreData) HasAdminAccess() bool {
+	return cd.HasAdminRole()
+}

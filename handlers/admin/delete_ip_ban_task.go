@@ -25,7 +25,7 @@ var _ notif.AdminEmailTemplateProvider = (*DeleteIPBanTask)(nil)
 
 func (DeleteIPBanTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	if cd == nil || !cd.HasRole("administrator") {
+	if cd == nil || !cd.HasAdminAccess() {
 		return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { handlers.RenderErrorPage(w, r, handlers.ErrForbidden) })
 	}
 	queries := cd.Queries()

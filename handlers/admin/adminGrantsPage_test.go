@@ -28,6 +28,10 @@ func (q *grantsPageQueries) ListGrants(context.Context) ([]*db.Grant, error) {
 	return q.grants, nil
 }
 
+func (q *grantsPageQueries) GetAdministratorUserRole(ctx context.Context, usersIdusers int32) (*db.UserRole, error) {
+	return &db.UserRole{}, nil
+}
+
 func (q *grantsPageQueries) SystemGetUserByID(_ context.Context, id int32) (*db.SystemGetUserByIDRow, error) {
 	if id != q.userID {
 		return nil, fmt.Errorf("unexpected user id: %d", id)
@@ -80,7 +84,8 @@ func TestAdminGrantsPageGroupsActions(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/admin/grants", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{}))
+	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 

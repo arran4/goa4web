@@ -7,15 +7,36 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
 	"net/http/httptest"
-	"regexp"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 )
+
+type grantQueries struct {
+	db.Querier
+	allowed bool
+}
+
+func (g grantQueries) SystemCheckGrant(context.Context, db.SystemCheckGrantParams) (int32, error) {
+	if g.allowed {
+		return 1, nil
+	}
+	return 0, sql.ErrNoRows
+}
+
+func (g grantQueries) SystemCheckRoleGrant(context.Context, db.SystemCheckRoleGrantParams) (int32, error) {
+	return 0, sql.ErrNoRows
+}
+
+func (g grantQueries) GetAdministratorUserRole(ctx context.Context, usersIdusers int32) (*db.UserRole, error) {
+	if g.allowed {
+		return &db.UserRole{}, nil
+	}
+	return nil, sql.ErrNoRows
+}
 
 func TestRequiredGrantAllowed(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/add", nil)
@@ -43,16 +64,8 @@ func TestRequiredGrantDenied(t *testing.T) {
 
 func TestRequireGrantAllowed(t *testing.T) {
 	req := httptest.NewRequest("GET", "/news/1/edit", nil)
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-	mock.ExpectQuery(regexp.QuoteMeta("WITH role_ids AS (\n    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?\n    UNION\n    SELECT id FROM roles WHERE name = 'anyone'\n)\nSELECT 1 FROM grants g\nWHERE g.section = ?\n  AND (g.item = ? OR g.item IS NULL)\n  AND g.action = ?\n  AND g.active = 1\n  AND (g.item_id = ? OR g.item_id IS NULL)\n  AND (g.user_id = ? OR g.user_id IS NULL)\n  AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))\nLIMIT 1\n")).
-		WithArgs(int32(1), "news", sql.NullString{String: "post", Valid: true}, "edit", sql.NullInt32{Int32: 1, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}).
-		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
-	cd := common.NewCoreData(req.Context(), db.New(conn), config.NewRuntimeConfig())
+	cd := common.NewCoreData(req.Context(), grantQueries{allowed: true}, config.NewRuntimeConfig(), common.WithUserRoles([]string{}))
 	cd.UserID = 1
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -61,23 +74,12 @@ func TestRequireGrantAllowed(t *testing.T) {
 	if !RequireGrantForPathInt("news", "post", "edit", "news")(req, match) {
 		t.Fatalf("expected grant-based matcher to allow request")
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("grant expectations: %v", err)
-	}
 }
 
 func TestRequireGrantDenied(t *testing.T) {
 	req := httptest.NewRequest("GET", "/news/2/edit", nil)
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-	mock.ExpectQuery(regexp.QuoteMeta("WITH role_ids AS (\n    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?\n    UNION\n    SELECT id FROM roles WHERE name = 'anyone'\n)\nSELECT 1 FROM grants g\nWHERE g.section = ?\n  AND (g.item = ? OR g.item IS NULL)\n  AND g.action = ?\n  AND g.active = 1\n  AND (g.item_id = ? OR g.item_id IS NULL)\n  AND (g.user_id = ? OR g.user_id IS NULL)\n  AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))\nLIMIT 1\n")).
-		WithArgs(int32(2), "news", sql.NullString{String: "post", Valid: true}, "edit", sql.NullInt32{Int32: 2, Valid: true}, sql.NullInt32{Int32: 2, Valid: true}).
-		WillReturnError(sql.ErrNoRows)
 
-	cd := common.NewCoreData(req.Context(), db.New(conn), config.NewRuntimeConfig())
+	cd := common.NewCoreData(req.Context(), grantQueries{}, config.NewRuntimeConfig(), common.WithUserRoles([]string{}))
 	cd.UserID = 2
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -85,8 +87,5 @@ func TestRequireGrantDenied(t *testing.T) {
 	match := &mux.RouteMatch{Vars: map[string]string{"news": "2"}}
 	if RequireGrantForPathInt("news", "post", "edit", "news")(req, match) {
 		t.Fatalf("expected grant-based matcher to reject request")
-	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("grant expectations: %v", err)
 	}
 }

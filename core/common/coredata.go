@@ -205,6 +205,7 @@ type CoreData struct {
 	pref                             lazy.Value[*db.Preference]
 	preferredLanguageID              lazy.Value[int32]
 	privateForumTopics               lazy.Value[[]*PrivateTopic]
+	hasAdminRole                     lazy.Value[bool]
 	publicWritings                   map[string]*lazy.Value[[]*db.ListPublicWritingsInCategoryForListerRow]
 	roleRows                         map[int32]*lazy.Value[*db.Role]
 	searchBlogs                      []*db.Blog
@@ -1160,7 +1161,19 @@ func (cd *CoreData) FAQCategories() ([]*db.FaqCategory, error) {
 
 // HasAdminRole reports whether the current user has the administrator role.
 func (cd *CoreData) HasAdminRole() bool {
-	return cd.HasRole("administrator")
+	v, err := cd.hasAdminRole.Load(func() (bool, error) {
+		if cd.queries == nil || cd.UserID == 0 {
+			return false, nil
+		}
+		if _, err := cd.queries.GetAdministratorUserRole(cd.ctx, cd.UserID); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		log.Printf("check admin role: %v", err)
+	}
+	return v
 }
 
 // HasContentWriterRole reports whether the current user has the content writer role.

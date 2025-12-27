@@ -65,10 +65,20 @@ func TestLatestNewsRespectsPermissions(t *testing.T) {
 
 	mock.ExpectQuery("SELECT u.username").WithArgs(int32(1), int32(1), int32(1), sql.NullInt32{Int32: 1, Valid: true}, int32(15), int32(0)).WillReturnRows(rows)
 
-	mock.ExpectQuery("SELECT 1 FROM grants g JOIN roles").WithArgs("user", "administrator").WillReturnError(sql.ErrNoRows)
+	// HasAdminRole call 1
+	mock.ExpectQuery("SELECT .* FROM user_roles .* JOIN roles .* WHERE .*is_admin = 1").WithArgs(int32(1)).WillReturnError(sql.ErrNoRows)
+	// HasGrant call 1
 	mock.ExpectQuery("SELECT 1 FROM grants").WithArgs(int32(1), "news", sql.NullString{String: "post", Valid: true}, "see", sql.NullInt32{Int32: 1, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
-	mock.ExpectQuery("SELECT 1 FROM grants g JOIN roles").WithArgs("user", "administrator").WillReturnError(sql.ErrNoRows)
+	// HasAdminRole call 2 (lazy load cached? No, permission check is per item)
+	// But HasAdminRole uses lazy value! So it should be cached.
+	// So we expect NO second query for Admin Role if it was cached.
+	// Wait, HasGrant calls IsAdmin, IsAdmin calls HasAdminRole.
+	// HasAdminRole uses `cd.hasAdminRole` (lazy).
+	// So first call populates it. Subsequent calls use cached value.
+	// So we expect only ONE GetAdministratorUserRole query.
+
+	// HasGrant call 2
 	mock.ExpectQuery("SELECT 1 FROM grants").WithArgs(int32(1), "news", sql.NullString{String: "post", Valid: true}, "see", sql.NullInt32{Int32: 2, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}).WillReturnError(sql.ErrNoRows)
 
 	req := httptest.NewRequest("GET", "/", nil)

@@ -69,6 +69,17 @@ type QuerierStub struct {
 	AdminListPrivateTopicParticipantsByTopicIDCalls   []sql.NullInt32
 	AdminListPrivateTopicParticipantsByTopicIDReturns []*AdminListPrivateTopicParticipantsByTopicIDRow
 	AdminListPrivateTopicParticipantsByTopicIDErr     error
+
+	GetAdministratorUserRoleCalls   []int32
+	GetAdministratorUserRoleReturns *UserRole
+	GetAdministratorUserRoleErr     error
+}
+
+func (s *QuerierStub) GetAdministratorUserRole(ctx context.Context, usersIdusers int32) (*UserRole, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.GetAdministratorUserRoleCalls = append(s.GetAdministratorUserRoleCalls, usersIdusers)
+	return s.GetAdministratorUserRoleReturns, s.GetAdministratorUserRoleErr
 }
 
 func (s *QuerierStub) AdminListPrivateTopicParticipantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListPrivateTopicParticipantsByTopicIDRow, error) {

@@ -23,6 +23,10 @@ func (q *anyoneGrantsQueries) ListGrants(context.Context) ([]*db.Grant, error) {
 	return q.grants, nil
 }
 
+func (q *anyoneGrantsQueries) GetAdministratorUserRole(ctx context.Context, usersIdusers int32) (*db.UserRole, error) {
+	return &db.UserRole{}, nil
+}
+
 func TestAdminAnyoneGrantsPage(t *testing.T) {
 	queries := &anyoneGrantsQueries{
 		grants: []*db.Grant{{
@@ -37,7 +41,8 @@ func TestAdminAnyoneGrantsPage(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/admin/grants/anyone", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{}))
+	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 

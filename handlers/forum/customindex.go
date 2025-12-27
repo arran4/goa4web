@@ -68,7 +68,7 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 			items = append(items,
 				common.IndexItem{
 					Name: "Write Reply",
-					Link: fmt.Sprintf("%s/topic/%s/thread/%s/reply", base, topicID, threadID),
+					Link: fmt.Sprintf("%s/topic/%s/thread/%s#reply", base, topicID, threadID),
 				},
 			)
 		}

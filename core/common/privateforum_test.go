@@ -1,42 +1,100 @@
 package common
 
 import (
+	"context"
 	"database/sql"
+	"reflect"
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/internal/db"
 )
 
-func TestCoreData_PrivateForumTopics(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
+type privateForumQuerierStub struct {
+	db.QuerierStub
+	calls []string
+}
 
-	q := db.New(conn)
+func (q *privateForumQuerierStub) SystemCheckGrant(ctx context.Context, arg db.SystemCheckGrantParams) (int32, error) {
+	q.calls = append(q.calls, "SystemCheckGrant")
+	return q.QuerierStub.SystemCheckGrant(ctx, arg)
+}
+
+func (*privateForumQuerierStub) GetPermissionsByUserID(ctx context.Context, userID int32) ([]*db.GetPermissionsByUserIDRow, error) {
+	return nil, nil
+}
+
+func (q *privateForumQuerierStub) ListPrivateTopicsByUserID(ctx context.Context, userID sql.NullInt32) ([]*db.ListPrivateTopicsByUserIDRow, error) {
+	q.calls = append(q.calls, "ListPrivateTopicsByUserID")
+	return q.QuerierStub.ListPrivateTopicsByUserID(ctx, userID)
+}
+
+func (q *privateForumQuerierStub) ListPrivateTopicParticipantsByTopicIDForUser(ctx context.Context, arg db.ListPrivateTopicParticipantsByTopicIDForUserParams) ([]*db.ListPrivateTopicParticipantsByTopicIDForUserRow, error) {
+	q.calls = append(q.calls, "ListPrivateTopicParticipantsByTopicIDForUser")
+	return q.QuerierStub.ListPrivateTopicParticipantsByTopicIDForUser(ctx, arg)
+}
+
+func (q *privateForumQuerierStub) ListContentPublicLabels(ctx context.Context, arg db.ListContentPublicLabelsParams) ([]*db.ListContentPublicLabelsRow, error) {
+	q.calls = append(q.calls, "ListContentPublicLabels")
+	return q.QuerierStub.ListContentPublicLabels(ctx, arg)
+}
+
+func (q *privateForumQuerierStub) ListContentLabelStatus(ctx context.Context, arg db.ListContentLabelStatusParams) ([]*db.ListContentLabelStatusRow, error) {
+	q.calls = append(q.calls, "ListContentLabelStatus")
+	return q.QuerierStub.ListContentLabelStatus(ctx, arg)
+}
+
+func TestCoreData_PrivateForumTopics(t *testing.T) {
+	q := &privateForumQuerierStub{
+		QuerierStub: db.QuerierStub{
+			SystemCheckGrantReturns: 1,
+		},
+	}
 	cd := NewTestCoreData(t, q)
 	cd.UserID = 1
 
-	rows := sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_id", "title", "description", "threads", "comments", "lastaddition", "handler", "LastPosterUsername"}).
-		AddRow(1, 1, 0, 1, "Test Topic", "Test Description", 1, 1, time.Now(), "private", "testuser")
-	mock.ExpectQuery("SELECT 1 FROM grants").
-		WithArgs(int64(1), "privateforum", "topic", "see", nil, int64(1)).
-		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
-	mock.ExpectQuery("SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.language_id, t.title, t.description, t.threads, t.comments, t.lastaddition, t.handler, lu.username AS LastPosterUsername").
-		WithArgs(sql.NullInt32{Int32: 1, Valid: true}).
-		WillReturnRows(rows)
+	viewer := sql.NullInt32{Int32: 1, Valid: true}
+	topicRow := &db.ListPrivateTopicsByUserIDRow{
+		Idforumtopic:                 1,
+		Lastposter:                   1,
+		ForumcategoryIdforumcategory: 0,
+		LanguageID:                   sql.NullInt32{Int32: 1, Valid: true},
+		Title:                        sql.NullString{String: "Test Topic", Valid: true},
+		Description:                  sql.NullString{String: "Test Description", Valid: true},
+		Threads:                      sql.NullInt32{Int32: 1, Valid: true},
+		Comments:                     sql.NullInt32{Int32: 1, Valid: true},
+		Lastaddition:                 sql.NullTime{Time: time.Now(), Valid: true},
+		Handler:                      "private",
+		Lastposterusername:           sql.NullString{String: "testuser", Valid: true},
+	}
+	q.ListPrivateTopicsByUserIDReturns = []*db.ListPrivateTopicsByUserIDRow{topicRow}
 
-	participantRows := sqlmock.NewRows([]string{"idusers", "username"}).
-		AddRow(2, "participant1")
-	mock.ExpectQuery("SELECT u.idusers, u.username").
-		WithArgs(sql.NullInt32{Int32: 1, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}).
-		WillReturnRows(participantRows)
-	mock.ExpectQuery("SELECT item, item_id, label").
-		WithArgs("thread", int64(1)).
-		WillReturnRows(sqlmock.NewRows([]string{"item", "item_id", "label"}))
+	participantParams := db.ListPrivateTopicParticipantsByTopicIDForUserParams{
+		TopicID:  sql.NullInt32{Int32: 1, Valid: true},
+		ViewerID: viewer,
+	}
+	q.ListPrivateTopicParticipantsByTopicIDForUserReturn = map[db.ListPrivateTopicParticipantsByTopicIDForUserParams][]*db.ListPrivateTopicParticipantsByTopicIDForUserRow{
+		participantParams: {{
+			Idusers:  2,
+			Username: sql.NullString{String: "participant1", Valid: true},
+		}},
+	}
+	labelParams := db.ListContentPublicLabelsParams{Item: "thread", ItemID: 1}
+	q.ListContentPublicLabelsReturn = map[db.ListContentPublicLabelsParams][]*db.ListContentPublicLabelsRow{
+		labelParams: {{
+			Item:   "thread",
+			ItemID: 1,
+			Label:  "public",
+		}},
+	}
+	labelStatusParams := db.ListContentLabelStatusParams{Item: "thread", ItemID: 1}
+	q.ListContentLabelStatusReturn = map[db.ListContentLabelStatusParams][]*db.ListContentLabelStatusRow{
+		labelStatusParams: {{
+			Item:   "thread",
+			ItemID: 1,
+			Label:  "owner",
+		}},
+	}
 
 	topics, err := cd.PrivateForumTopics()
 	if err != nil {
@@ -51,7 +109,29 @@ func TestCoreData_PrivateForumTopics(t *testing.T) {
 		t.Errorf("expected topic id 1, got %d", topics[0].Idforumtopic)
 	}
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
+	expectedCalls := []string{
+		"SystemCheckGrant",
+		"ListPrivateTopicsByUserID",
+		"ListPrivateTopicParticipantsByTopicIDForUser",
+		"ListContentPublicLabels",
+		"ListContentLabelStatus",
+	}
+	if !reflect.DeepEqual(expectedCalls, q.calls) {
+		t.Fatalf("unexpected call order: got %v want %v", q.calls, expectedCalls)
+	}
+	if len(q.SystemCheckGrantCalls) != 1 || q.SystemCheckGrantCalls[0].Section != "privateforum" {
+		t.Fatalf("unexpected grant checks: %+v", q.SystemCheckGrantCalls)
+	}
+	if got := q.ListPrivateTopicsByUserIDCalls; len(got) != 1 || got[0] != viewer {
+		t.Fatalf("unexpected topic lookups: %+v", got)
+	}
+	if got := q.ListPrivateTopicParticipantsByTopicIDForUserCalls; len(got) != 1 || !reflect.DeepEqual(got[0], participantParams) {
+		t.Fatalf("unexpected participant lookups: %+v", got)
+	}
+	if got := q.ListContentPublicLabelsCalls; len(got) != 1 || !reflect.DeepEqual(got[0], labelParams) {
+		t.Fatalf("unexpected public label lookups: %+v", got)
+	}
+	if got := q.ListContentLabelStatusCalls; len(got) != 1 || !reflect.DeepEqual(got[0], labelStatusParams) {
+		t.Fatalf("unexpected label status lookups: %+v", got)
 	}
 }

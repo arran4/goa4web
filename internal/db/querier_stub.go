@@ -69,6 +69,21 @@ type QuerierStub struct {
 	AdminListPrivateTopicParticipantsByTopicIDCalls   []sql.NullInt32
 	AdminListPrivateTopicParticipantsByTopicIDReturns []*AdminListPrivateTopicParticipantsByTopicIDRow
 	AdminListPrivateTopicParticipantsByTopicIDErr     error
+
+	ListPrivateTopicsByUserIDCalls   []sql.NullInt32
+	ListPrivateTopicsByUserIDReturns []*ListPrivateTopicsByUserIDRow
+	ListPrivateTopicsByUserIDErr     error
+
+	ListPrivateTopicParticipantsByTopicIDForUserCalls  []ListPrivateTopicParticipantsByTopicIDForUserParams
+	ListPrivateTopicParticipantsByTopicIDForUserReturn map[ListPrivateTopicParticipantsByTopicIDForUserParams][]*ListPrivateTopicParticipantsByTopicIDForUserRow
+	ListPrivateTopicParticipantsByTopicIDForUserErr    error
+
+	ListContentPublicLabelsCalls  []ListContentPublicLabelsParams
+	ListContentPublicLabelsReturn map[ListContentPublicLabelsParams][]*ListContentPublicLabelsRow
+	ListContentPublicLabelsErr    error
+	ListContentLabelStatusCalls   []ListContentLabelStatusParams
+	ListContentLabelStatusReturn  map[ListContentLabelStatusParams][]*ListContentLabelStatusRow
+	ListContentLabelStatusErr     error
 }
 
 func (s *QuerierStub) AdminListPrivateTopicParticipantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListPrivateTopicParticipantsByTopicIDRow, error) {
@@ -249,4 +264,47 @@ func (s *QuerierStub) ListSubscribersForPattern(ctx context.Context, arg ListSub
 		}
 	}
 	return nil, nil
+}
+
+func (s *QuerierStub) ListPrivateTopicsByUserID(ctx context.Context, userID sql.NullInt32) ([]*ListPrivateTopicsByUserIDRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.ListPrivateTopicsByUserIDCalls = append(s.ListPrivateTopicsByUserIDCalls, userID)
+	return s.ListPrivateTopicsByUserIDReturns, s.ListPrivateTopicsByUserIDErr
+}
+
+func (s *QuerierStub) ListPrivateTopicParticipantsByTopicIDForUser(ctx context.Context, arg ListPrivateTopicParticipantsByTopicIDForUserParams) ([]*ListPrivateTopicParticipantsByTopicIDForUserRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.ListPrivateTopicParticipantsByTopicIDForUserCalls = append(s.ListPrivateTopicParticipantsByTopicIDForUserCalls, arg)
+	if s.ListPrivateTopicParticipantsByTopicIDForUserReturn != nil {
+		if v, ok := s.ListPrivateTopicParticipantsByTopicIDForUserReturn[arg]; ok {
+			return v, nil
+		}
+	}
+	return nil, s.ListPrivateTopicParticipantsByTopicIDForUserErr
+}
+
+func (s *QuerierStub) ListContentPublicLabels(ctx context.Context, arg ListContentPublicLabelsParams) ([]*ListContentPublicLabelsRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.ListContentPublicLabelsCalls = append(s.ListContentPublicLabelsCalls, arg)
+	if s.ListContentPublicLabelsReturn != nil {
+		if v, ok := s.ListContentPublicLabelsReturn[arg]; ok {
+			return v, s.ListContentPublicLabelsErr
+		}
+	}
+	return nil, s.ListContentPublicLabelsErr
+}
+
+func (s *QuerierStub) ListContentLabelStatus(ctx context.Context, arg ListContentLabelStatusParams) ([]*ListContentLabelStatusRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.ListContentLabelStatusCalls = append(s.ListContentLabelStatusCalls, arg)
+	if s.ListContentLabelStatusReturn != nil {
+		if v, ok := s.ListContentLabelStatusReturn[arg]; ok {
+			return v, s.ListContentLabelStatusErr
+		}
+	}
+	return nil, s.ListContentLabelStatusErr
 }

@@ -57,6 +57,14 @@ type QuerierStub struct {
 	SystemCheckGrantCalls   []SystemCheckGrantParams
 	SystemCheckGrantFn      func(SystemCheckGrantParams) (int32, error)
 
+	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingCalls   []int32
+	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingReturns *GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow
+	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingErr     error
+
+	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserCalls   []GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams
+	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserReturns *GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow
+	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserErr     error
+
 	SystemCheckRoleGrantReturns int32
 	SystemCheckRoleGrantErr     error
 	SystemCheckRoleGrantCalls   []SystemCheckRoleGrantParams
@@ -90,6 +98,36 @@ func (s *QuerierStub) DeleteThreadsByTopicID(ctx context.Context, forumtopicIdfo
 	defer s.mu.Unlock()
 	s.DeleteThreadsByTopicIDCalls = append(s.DeleteThreadsByTopicIDCalls, forumtopicIdforumtopic)
 	return s.DeleteThreadsByTopicIDErr
+}
+
+func (s *QuerierStub) GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(ctx context.Context, id int32) (*GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow, error) {
+	s.mu.Lock()
+	s.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingCalls = append(s.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingCalls, id)
+	ret := s.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingReturns
+	err := s.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingErr
+	s.mu.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	if ret == nil {
+		return nil, errors.New("GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending not stubbed")
+	}
+	return ret, nil
+}
+
+func (s *QuerierStub) GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(ctx context.Context, arg GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams) (*GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow, error) {
+	s.mu.Lock()
+	s.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserCalls = append(s.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserCalls, arg)
+	ret := s.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserReturns
+	err := s.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserErr
+	s.mu.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	if ret == nil {
+		return nil, errors.New("GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser not stubbed")
+	}
+	return ret, nil
 }
 
 // SystemCheckGrant records the call and returns the configured response.

@@ -49,6 +49,10 @@ type QuerierStub struct {
 	ListSubscribersForPatternParams []ListSubscribersForPatternParams
 	ListSubscribersForPatternReturn map[string][]int32
 
+	GetCommentByIdForUserCalls []GetCommentByIdForUserParams
+	GetCommentByIdForUserRow   *GetCommentByIdForUserRow
+	GetCommentByIdForUserErr   error
+
 	DeleteThreadsByTopicIDCalls []int32
 	DeleteThreadsByTopicIDErr   error
 
@@ -61,6 +65,10 @@ type QuerierStub struct {
 	SystemCheckRoleGrantErr     error
 	SystemCheckRoleGrantCalls   []SystemCheckRoleGrantParams
 	SystemCheckRoleGrantFn      func(SystemCheckRoleGrantParams) (int32, error)
+
+	GetPermissionsByUserIDCalls   []int32
+	GetPermissionsByUserIDReturns []*GetPermissionsByUserIDRow
+	GetPermissionsByUserIDErr     error
 
 	AdminListForumTopicGrantsByTopicIDCalls   []sql.NullInt32
 	AdminListForumTopicGrantsByTopicIDReturns []*AdminListForumTopicGrantsByTopicIDRow
@@ -90,6 +98,19 @@ func (s *QuerierStub) DeleteThreadsByTopicID(ctx context.Context, forumtopicIdfo
 	defer s.mu.Unlock()
 	s.DeleteThreadsByTopicIDCalls = append(s.DeleteThreadsByTopicIDCalls, forumtopicIdforumtopic)
 	return s.DeleteThreadsByTopicIDErr
+}
+
+// GetCommentByIdForUser records the call and returns the configured response.
+func (s *QuerierStub) GetCommentByIdForUser(ctx context.Context, arg GetCommentByIdForUserParams) (*GetCommentByIdForUserRow, error) {
+	s.mu.Lock()
+	s.GetCommentByIdForUserCalls = append(s.GetCommentByIdForUserCalls, arg)
+	ret := s.GetCommentByIdForUserRow
+	err := s.GetCommentByIdForUserErr
+	s.mu.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	return ret, nil
 }
 
 // SystemCheckGrant records the call and returns the configured response.
@@ -130,6 +151,17 @@ func (s *QuerierStub) SystemCheckRoleGrant(ctx context.Context, arg SystemCheckR
 		ret = 1
 	}
 	return ret, nil
+}
+
+// GetPermissionsByUserID records the call and returns the configured response.
+func (s *QuerierStub) GetPermissionsByUserID(ctx context.Context, usersID int32) ([]*GetPermissionsByUserIDRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.GetPermissionsByUserIDCalls = append(s.GetPermissionsByUserIDCalls, usersID)
+	if s.GetPermissionsByUserIDErr != nil {
+		return nil, s.GetPermissionsByUserIDErr
+	}
+	return s.GetPermissionsByUserIDReturns, nil
 }
 
 // SystemGetUserByID records the call and returns the configured response.

@@ -227,6 +227,7 @@ func (c *roleTemplateSetupCmd) Run() error {
 	defer tx.Rollback()
 
 	q := db.New(tx)
+	applier := roleTemplateApplier{Queries: q, tx: tx}
 
 	fmt.Println("--- BEFORE STATE ---")
 	if err := printRolesState(ctx, q, sc.Roles); err != nil {
@@ -234,7 +235,7 @@ func (c *roleTemplateSetupCmd) Run() error {
 	}
 
 	fmt.Printf("\nApplying template %q...\n", sc.Name)
-	if err := applyRoles(ctx, q, tx, sc.Roles); err != nil {
+	if err := applyRoles(ctx, applier, sc.Roles); err != nil {
 		return err
 	}
 
@@ -289,21 +290,41 @@ func printRolesState(ctx context.Context, q *db.Queries, roles []RoleDef) error 
 	return nil
 }
 
-func applyRoles(ctx context.Context, q *db.Queries, tx *sql.Tx, roles []RoleDef) error {
+type roleTemplateRoleInserter interface {
+	GetRoleByName(ctx context.Context, name string) (*db.Role, error)
+	AdminUpdateRole(ctx context.Context, arg db.AdminUpdateRoleParams) error
+	DeleteGrantsByRoleID(ctx context.Context, roleID sql.NullInt32) error
+	CreateGrant(ctx context.Context, arg db.CreateGrantParams) error
+	RoleInsert(ctx context.Context, name string, canLogin, isAdmin, privateLabels bool) (int32, error)
+}
+
+type roleTemplateApplier struct {
+	*db.Queries
+	tx *sql.Tx
+}
+
+func (q roleTemplateApplier) RoleInsert(ctx context.Context, name string, canLogin, isAdmin, privateLabels bool) (int32, error) {
+	res, err := q.tx.ExecContext(ctx, "INSERT INTO roles (name, can_login, is_admin, private_labels, public_profile_allowed_at) VALUES (?, ?, ?, ?, NOW())", name, canLogin, isAdmin, privateLabels)
+	if err != nil {
+		return 0, fmt.Errorf("create role %s: %w", name, err)
+	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		return 0, fmt.Errorf("get last insert id: %w", err)
+	}
+	return int32(id), nil
+}
+
+func applyRoles(ctx context.Context, q roleTemplateRoleInserter, roles []RoleDef) error {
 	for _, rDef := range roles {
 		role, err := q.GetRoleByName(ctx, rDef.Name)
 		var roleID int32
 		if err != nil {
 			if err == sql.ErrNoRows {
-				res, err := tx.ExecContext(ctx, "INSERT INTO roles (name, can_login, is_admin, private_labels, public_profile_allowed_at) VALUES (?, ?, ?, ?, NOW())", rDef.Name, rDef.CanLogin, rDef.IsAdmin, rDef.CanLogin)
+				roleID, err = q.RoleInsert(ctx, rDef.Name, rDef.CanLogin, rDef.IsAdmin, rDef.CanLogin)
 				if err != nil {
-					return fmt.Errorf("create role %s: %w", rDef.Name, err)
+					return err
 				}
-				id, err := res.LastInsertId()
-				if err != nil {
-					return fmt.Errorf("get last insert id: %w", err)
-				}
-				roleID = int32(id)
 				log.Printf("Created role %s (ID: %d)", rDef.Name, roleID)
 			} else {
 				return fmt.Errorf("get role %s: %w", rDef.Name, err)

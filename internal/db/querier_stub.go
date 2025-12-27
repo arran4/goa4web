@@ -52,6 +52,16 @@ type QuerierStub struct {
 	DeleteThreadsByTopicIDCalls []int32
 	DeleteThreadsByTopicIDErr   error
 
+	SystemCheckGrantReturns int32
+	SystemCheckGrantErr     error
+	SystemCheckGrantCalls   []SystemCheckGrantParams
+	SystemCheckGrantFn      func(SystemCheckGrantParams) (int32, error)
+
+	SystemCheckRoleGrantReturns int32
+	SystemCheckRoleGrantErr     error
+	SystemCheckRoleGrantCalls   []SystemCheckRoleGrantParams
+	SystemCheckRoleGrantFn      func(SystemCheckRoleGrantParams) (int32, error)
+
 	AdminListForumTopicGrantsByTopicIDCalls   []sql.NullInt32
 	AdminListForumTopicGrantsByTopicIDReturns []*AdminListForumTopicGrantsByTopicIDRow
 	AdminListForumTopicGrantsByTopicIDErr     error
@@ -80,6 +90,46 @@ func (s *QuerierStub) DeleteThreadsByTopicID(ctx context.Context, forumtopicIdfo
 	defer s.mu.Unlock()
 	s.DeleteThreadsByTopicIDCalls = append(s.DeleteThreadsByTopicIDCalls, forumtopicIdforumtopic)
 	return s.DeleteThreadsByTopicIDErr
+}
+
+// SystemCheckGrant records the call and returns the configured response.
+func (s *QuerierStub) SystemCheckGrant(ctx context.Context, arg SystemCheckGrantParams) (int32, error) {
+	s.mu.Lock()
+	s.SystemCheckGrantCalls = append(s.SystemCheckGrantCalls, arg)
+	fn := s.SystemCheckGrantFn
+	ret := s.SystemCheckGrantReturns
+	err := s.SystemCheckGrantErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(arg)
+	}
+	if err != nil {
+		return 0, err
+	}
+	if ret == 0 {
+		ret = 1
+	}
+	return ret, nil
+}
+
+// SystemCheckRoleGrant records the call and returns the configured response.
+func (s *QuerierStub) SystemCheckRoleGrant(ctx context.Context, arg SystemCheckRoleGrantParams) (int32, error) {
+	s.mu.Lock()
+	s.SystemCheckRoleGrantCalls = append(s.SystemCheckRoleGrantCalls, arg)
+	fn := s.SystemCheckRoleGrantFn
+	ret := s.SystemCheckRoleGrantReturns
+	err := s.SystemCheckRoleGrantErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(arg)
+	}
+	if err != nil {
+		return 0, err
+	}
+	if ret == 0 {
+		ret = 1
+	}
+	return ret, nil
 }
 
 // SystemGetUserByID records the call and returns the configured response.

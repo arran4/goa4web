@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
 	"net/http/httptest"
@@ -16,26 +17,26 @@ import (
 	"github.com/arran4/goa4web/core/common"
 )
 
-func TestRequiredAccessAllowed(t *testing.T) {
+func TestRequiredGrantAllowed(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/add", nil)
-	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"content writer"}))
-	cd.UserID = 1
+	q := &db.QuerierStub{}
+	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
-	if !RequiredAccess("content writer")(req, &mux.RouteMatch{}) {
+	if !RequiredGrant("blogs", "entry", "post", 0)(req, &mux.RouteMatch{}) {
 		t.Errorf("expected access allowed")
 	}
 }
 
-func TestRequiredAccessDenied(t *testing.T) {
+func TestRequiredGrantDenied(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/add", nil)
-	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))
-	cd.UserID = 1
+	q := &db.QuerierStub{SystemCheckGrantErr: errors.New("denied")}
+	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
-	if RequiredAccess("content writer")(req, &mux.RouteMatch{}) {
+	if RequiredGrant("blogs", "entry", "post", 0)(req, &mux.RouteMatch{}) {
 		t.Errorf("expected access denied")
 	}
 }
@@ -47,7 +48,7 @@ func TestRequireGrantAllowed(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer conn.Close()
-	mock.ExpectQuery(regexp.QuoteMeta("WITH role_ids AS (\n    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?\n)\nSELECT 1 FROM grants g\nWHERE g.section = ?\n  AND (g.item = ? OR g.item IS NULL)\n  AND g.action = ?\n  AND g.active = 1\n  AND (g.item_id = ? OR g.item_id IS NULL)\n  AND (g.user_id = ? OR g.user_id IS NULL)\n  AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))\nLIMIT 1\n")).
+	mock.ExpectQuery(regexp.QuoteMeta("WITH role_ids AS (\n    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?\n    UNION\n    SELECT id FROM roles WHERE name = 'anyone'\n)\nSELECT 1 FROM grants g\nWHERE g.section = ?\n  AND (g.item = ? OR g.item IS NULL)\n  AND g.action = ?\n  AND g.active = 1\n  AND (g.item_id = ? OR g.item_id IS NULL)\n  AND (g.user_id = ? OR g.user_id IS NULL)\n  AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))\nLIMIT 1\n")).
 		WithArgs(int32(1), "news", sql.NullString{String: "post", Valid: true}, "edit", sql.NullInt32{Int32: 1, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}).
 		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
@@ -72,7 +73,7 @@ func TestRequireGrantDenied(t *testing.T) {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
 	defer conn.Close()
-	mock.ExpectQuery(regexp.QuoteMeta("WITH role_ids AS (\n    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?\n)\nSELECT 1 FROM grants g\nWHERE g.section = ?\n  AND (g.item = ? OR g.item IS NULL)\n  AND g.action = ?\n  AND g.active = 1\n  AND (g.item_id = ? OR g.item_id IS NULL)\n  AND (g.user_id = ? OR g.user_id IS NULL)\n  AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))\nLIMIT 1\n")).
+	mock.ExpectQuery(regexp.QuoteMeta("WITH role_ids AS (\n    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?\n    UNION\n    SELECT id FROM roles WHERE name = 'anyone'\n)\nSELECT 1 FROM grants g\nWHERE g.section = ?\n  AND (g.item = ? OR g.item IS NULL)\n  AND g.action = ?\n  AND g.active = 1\n  AND (g.item_id = ? OR g.item_id IS NULL)\n  AND (g.user_id = ? OR g.user_id IS NULL)\n  AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))\nLIMIT 1\n")).
 		WithArgs(int32(2), "news", sql.NullString{String: "post", Valid: true}, "edit", sql.NullInt32{Int32: 2, Valid: true}, sql.NullInt32{Int32: 2, Valid: true}).
 		WillReturnError(sql.ErrNoRows)
 

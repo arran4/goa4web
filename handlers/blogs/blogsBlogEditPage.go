@@ -92,7 +92,8 @@ func (EditBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Edit Blog"
-	if !(cd.HasRole("content writer") || cd.HasRole("administrator")) {
+	blog := cd.CurrentBlogLoaded()
+	if blog == nil || !(cd.HasGrant("blogs", "entry", "edit-any", 0) || cd.HasGrant("blogs", "entry", "edit", blog.Idblogs)) {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}

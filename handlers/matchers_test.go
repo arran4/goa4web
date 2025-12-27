@@ -2,16 +2,12 @@ package handlers
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
-	"net/http/httptest"
-	"regexp"
-	"testing"
-
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/mux"
+	"net/http/httptest"
+	"testing"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
@@ -20,7 +16,7 @@ import (
 func TestRequiredGrantAllowed(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/add", nil)
 	q := &db.QuerierStub{}
-	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
+	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -32,7 +28,7 @@ func TestRequiredGrantAllowed(t *testing.T) {
 func TestRequiredGrantDenied(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/add", nil)
 	q := &db.QuerierStub{SystemCheckGrantErr: errors.New("denied")}
-	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
+	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -43,16 +39,27 @@ func TestRequiredGrantDenied(t *testing.T) {
 
 func TestRequireGrantAllowed(t *testing.T) {
 	req := httptest.NewRequest("GET", "/news/1/edit", nil)
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	q := &db.QuerierStub{
+		SystemCheckGrantFn: func(arg db.SystemCheckGrantParams) (int32, error) {
+			if arg.Section != "news" || arg.Action != "edit" {
+				t.Fatalf("unexpected section/action: %+v", arg)
+			}
+			if arg.Item.String != "post" || !arg.Item.Valid {
+				t.Fatalf("unexpected item: %+v", arg.Item)
+			}
+			if arg.ItemID.Int32 != 1 || !arg.ItemID.Valid {
+				t.Fatalf("unexpected item id: %+v", arg.ItemID)
+			}
+			if arg.UserID.Int32 != 1 || !arg.UserID.Valid {
+				t.Fatalf("unexpected user id: %+v", arg.UserID)
+			}
+			if arg.ViewerID != 1 {
+				t.Fatalf("unexpected viewer id: %d", arg.ViewerID)
+			}
+			return 1, nil
+		},
 	}
-	defer conn.Close()
-	mock.ExpectQuery(regexp.QuoteMeta("WITH role_ids AS (\n    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?\n    UNION\n    SELECT id FROM roles WHERE name = 'anyone'\n)\nSELECT 1 FROM grants g\nWHERE g.section = ?\n  AND (g.item = ? OR g.item IS NULL)\n  AND g.action = ?\n  AND g.active = 1\n  AND (g.item_id = ? OR g.item_id IS NULL)\n  AND (g.user_id = ? OR g.user_id IS NULL)\n  AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))\nLIMIT 1\n")).
-		WithArgs(int32(1), "news", sql.NullString{String: "post", Valid: true}, "edit", sql.NullInt32{Int32: 1, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}).
-		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
-
-	cd := common.NewCoreData(req.Context(), db.New(conn), config.NewRuntimeConfig())
+	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
 	cd.UserID = 1
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -61,23 +68,22 @@ func TestRequireGrantAllowed(t *testing.T) {
 	if !RequireGrantForPathInt("news", "post", "edit", "news")(req, match) {
 		t.Fatalf("expected grant-based matcher to allow request")
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("grant expectations: %v", err)
+	if len(q.SystemCheckGrantCalls) != 1 {
+		t.Fatalf("expected 1 grant check call, got %d", len(q.SystemCheckGrantCalls))
 	}
 }
 
 func TestRequireGrantDenied(t *testing.T) {
 	req := httptest.NewRequest("GET", "/news/2/edit", nil)
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	q := &db.QuerierStub{
+		SystemCheckGrantFn: func(arg db.SystemCheckGrantParams) (int32, error) {
+			if arg.ItemID.Int32 != 2 {
+				t.Fatalf("unexpected item id: %+v", arg.ItemID)
+			}
+			return 0, errors.New("denied")
+		},
 	}
-	defer conn.Close()
-	mock.ExpectQuery(regexp.QuoteMeta("WITH role_ids AS (\n    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?\n    UNION\n    SELECT id FROM roles WHERE name = 'anyone'\n)\nSELECT 1 FROM grants g\nWHERE g.section = ?\n  AND (g.item = ? OR g.item IS NULL)\n  AND g.action = ?\n  AND g.active = 1\n  AND (g.item_id = ? OR g.item_id IS NULL)\n  AND (g.user_id = ? OR g.user_id IS NULL)\n  AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))\nLIMIT 1\n")).
-		WithArgs(int32(2), "news", sql.NullString{String: "post", Valid: true}, "edit", sql.NullInt32{Int32: 2, Valid: true}, sql.NullInt32{Int32: 2, Valid: true}).
-		WillReturnError(sql.ErrNoRows)
-
-	cd := common.NewCoreData(req.Context(), db.New(conn), config.NewRuntimeConfig())
+	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
 	cd.UserID = 2
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -86,7 +92,7 @@ func TestRequireGrantDenied(t *testing.T) {
 	if RequireGrantForPathInt("news", "post", "edit", "news")(req, match) {
 		t.Fatalf("expected grant-based matcher to reject request")
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("grant expectations: %v", err)
+	if len(q.SystemCheckGrantCalls) != 1 {
+		t.Fatalf("expected 1 grant check call, got %d", len(q.SystemCheckGrantCalls))
 	}
 }

@@ -52,6 +52,10 @@ type QuerierStub struct {
 	DeleteThreadsByTopicIDCalls []int32
 	DeleteThreadsByTopicIDErr   error
 
+	GetForumThreadIdByNewsPostIdRow   *GetForumThreadIdByNewsPostIdRow
+	GetForumThreadIdByNewsPostIdErr   error
+	GetForumThreadIdByNewsPostIdCalls []int32
+
 	SystemCheckGrantReturns int32
 	SystemCheckGrantErr     error
 	SystemCheckGrantCalls   []SystemCheckGrantParams
@@ -90,6 +94,22 @@ func (s *QuerierStub) DeleteThreadsByTopicID(ctx context.Context, forumtopicIdfo
 	defer s.mu.Unlock()
 	s.DeleteThreadsByTopicIDCalls = append(s.DeleteThreadsByTopicIDCalls, forumtopicIdforumtopic)
 	return s.DeleteThreadsByTopicIDErr
+}
+
+// GetForumThreadIdByNewsPostId records the call and returns the configured response.
+func (s *QuerierStub) GetForumThreadIdByNewsPostId(ctx context.Context, idsitenews int32) (*GetForumThreadIdByNewsPostIdRow, error) {
+	s.mu.Lock()
+	s.GetForumThreadIdByNewsPostIdCalls = append(s.GetForumThreadIdByNewsPostIdCalls, idsitenews)
+	row := s.GetForumThreadIdByNewsPostIdRow
+	err := s.GetForumThreadIdByNewsPostIdErr
+	s.mu.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	if row == nil {
+		return nil, errors.New("GetForumThreadIdByNewsPostId not stubbed")
+	}
+	return row, nil
 }
 
 // SystemCheckGrant records the call and returns the configured response.

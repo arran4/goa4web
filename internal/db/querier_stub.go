@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"sync"
 )
 
@@ -11,6 +12,33 @@ import (
 type QuerierStub struct {
 	Querier
 	mu sync.Mutex
+
+	// Content label operations
+	ContentPublicLabelsRows                       map[string][]*ListContentPublicLabelsRow
+	ContentLabelStatusRows                        map[string][]*ListContentLabelStatusRow
+	ContentPrivateLabelsRows                      map[string][]*ListContentPrivateLabelsRow
+	ListContentPublicLabelsCalls                  []ListContentPublicLabelsParams
+	ListContentPublicLabelsErr                    error
+	ListContentLabelStatusCalls                   []ListContentLabelStatusParams
+	ListContentLabelStatusErr                     error
+	ListContentPrivateLabelsCalls                 []ListContentPrivateLabelsParams
+	ListContentPrivateLabelsErr                   error
+	AddContentPublicLabelCalls                    []AddContentPublicLabelParams
+	AddContentPublicLabelErr                      error
+	RemoveContentPublicLabelCalls                 []RemoveContentPublicLabelParams
+	RemoveContentPublicLabelErr                   error
+	AddContentLabelStatusCalls                    []AddContentLabelStatusParams
+	AddContentLabelStatusErr                      error
+	RemoveContentLabelStatusCalls                 []RemoveContentLabelStatusParams
+	RemoveContentLabelStatusErr                   error
+	AddContentPrivateLabelCalls                   []AddContentPrivateLabelParams
+	AddContentPrivateLabelErr                     error
+	RemoveContentPrivateLabelCalls                []RemoveContentPrivateLabelParams
+	RemoveContentPrivateLabelErr                  error
+	ClearUnreadContentPrivateLabelExceptUserCalls []ClearUnreadContentPrivateLabelExceptUserParams
+	ClearUnreadContentPrivateLabelExceptUserErr   error
+	SystemClearContentPrivateLabelCalls           []SystemClearContentPrivateLabelParams
+	SystemClearContentPrivateLabelErr             error
 
 	SystemGetUserByIDRow   *SystemGetUserByIDRow
 	SystemGetUserByIDErr   error
@@ -69,6 +97,115 @@ type QuerierStub struct {
 	AdminListPrivateTopicParticipantsByTopicIDCalls   []sql.NullInt32
 	AdminListPrivateTopicParticipantsByTopicIDReturns []*AdminListPrivateTopicParticipantsByTopicIDRow
 	AdminListPrivateTopicParticipantsByTopicIDErr     error
+}
+
+func contentLabelKey(item string, itemID int32) string {
+	return fmt.Sprintf("%s:%d", item, itemID)
+}
+
+func contentLabelKeyWithUser(item string, itemID, userID int32) string {
+	return fmt.Sprintf("%s:%d:%d", item, itemID, userID)
+}
+
+func (s *QuerierStub) ListContentPublicLabels(ctx context.Context, arg ListContentPublicLabelsParams) ([]*ListContentPublicLabelsRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.ListContentPublicLabelsCalls = append(s.ListContentPublicLabelsCalls, arg)
+	if s.ListContentPublicLabelsErr != nil {
+		return nil, s.ListContentPublicLabelsErr
+	}
+	if s.ContentPublicLabelsRows != nil {
+		if rows, ok := s.ContentPublicLabelsRows[contentLabelKey(arg.Item, arg.ItemID)]; ok {
+			return rows, nil
+		}
+	}
+	return nil, nil
+}
+
+func (s *QuerierStub) ListContentLabelStatus(ctx context.Context, arg ListContentLabelStatusParams) ([]*ListContentLabelStatusRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.ListContentLabelStatusCalls = append(s.ListContentLabelStatusCalls, arg)
+	if s.ListContentLabelStatusErr != nil {
+		return nil, s.ListContentLabelStatusErr
+	}
+	if s.ContentLabelStatusRows != nil {
+		if rows, ok := s.ContentLabelStatusRows[contentLabelKey(arg.Item, arg.ItemID)]; ok {
+			return rows, nil
+		}
+	}
+	return nil, nil
+}
+
+func (s *QuerierStub) AddContentPublicLabel(ctx context.Context, arg AddContentPublicLabelParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.AddContentPublicLabelCalls = append(s.AddContentPublicLabelCalls, arg)
+	return s.AddContentPublicLabelErr
+}
+
+func (s *QuerierStub) RemoveContentPublicLabel(ctx context.Context, arg RemoveContentPublicLabelParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.RemoveContentPublicLabelCalls = append(s.RemoveContentPublicLabelCalls, arg)
+	return s.RemoveContentPublicLabelErr
+}
+
+func (s *QuerierStub) AddContentLabelStatus(ctx context.Context, arg AddContentLabelStatusParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.AddContentLabelStatusCalls = append(s.AddContentLabelStatusCalls, arg)
+	return s.AddContentLabelStatusErr
+}
+
+func (s *QuerierStub) RemoveContentLabelStatus(ctx context.Context, arg RemoveContentLabelStatusParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.RemoveContentLabelStatusCalls = append(s.RemoveContentLabelStatusCalls, arg)
+	return s.RemoveContentLabelStatusErr
+}
+
+func (s *QuerierStub) ListContentPrivateLabels(ctx context.Context, arg ListContentPrivateLabelsParams) ([]*ListContentPrivateLabelsRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.ListContentPrivateLabelsCalls = append(s.ListContentPrivateLabelsCalls, arg)
+	if s.ListContentPrivateLabelsErr != nil {
+		return nil, s.ListContentPrivateLabelsErr
+	}
+	if s.ContentPrivateLabelsRows != nil {
+		if rows, ok := s.ContentPrivateLabelsRows[contentLabelKeyWithUser(arg.Item, arg.ItemID, arg.UserID)]; ok {
+			return rows, nil
+		}
+	}
+	return nil, nil
+}
+
+func (s *QuerierStub) AddContentPrivateLabel(ctx context.Context, arg AddContentPrivateLabelParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.AddContentPrivateLabelCalls = append(s.AddContentPrivateLabelCalls, arg)
+	return s.AddContentPrivateLabelErr
+}
+
+func (s *QuerierStub) RemoveContentPrivateLabel(ctx context.Context, arg RemoveContentPrivateLabelParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.RemoveContentPrivateLabelCalls = append(s.RemoveContentPrivateLabelCalls, arg)
+	return s.RemoveContentPrivateLabelErr
+}
+
+func (s *QuerierStub) ClearUnreadContentPrivateLabelExceptUser(ctx context.Context, arg ClearUnreadContentPrivateLabelExceptUserParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.ClearUnreadContentPrivateLabelExceptUserCalls = append(s.ClearUnreadContentPrivateLabelExceptUserCalls, arg)
+	return s.ClearUnreadContentPrivateLabelExceptUserErr
+}
+
+func (s *QuerierStub) SystemClearContentPrivateLabel(ctx context.Context, arg SystemClearContentPrivateLabelParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.SystemClearContentPrivateLabelCalls = append(s.SystemClearContentPrivateLabelCalls, arg)
+	return s.SystemClearContentPrivateLabelErr
 }
 
 func (s *QuerierStub) AdminListPrivateTopicParticipantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListPrivateTopicParticipantsByTopicIDRow, error) {

@@ -20,5 +20,5 @@ func NewTestCoreData(t *testing.T, q db.Querier) *CoreData {
 	if q == nil {
 		return NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
 	}
-	return NewCoreData(context.Background(), QuerierStub{Querier: q}, config.NewRuntimeConfig())
+	return NewCoreData(context.Background(), q, config.NewRuntimeConfig())
 }

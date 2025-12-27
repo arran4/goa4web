@@ -5,11 +5,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"regexp"
 	"strings"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
@@ -57,30 +55,19 @@ func TestMarkThreadReadTaskRefererFallback(t *testing.T) {
 }
 
 func TestSetLabelsTaskAddsInverseLabels(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	q := &db.QuerierStub{
+		ContentPublicLabelsRows: map[string][]*db.ListContentPublicLabelsRow{
+			"thread:1": {},
+		},
+		ContentLabelStatusRows: map[string][]*db.ListContentLabelStatusRow{
+			"thread:1": {},
+		},
+		ContentPrivateLabelsRows: map[string][]*db.ListContentPrivateLabelsRow{
+			"thread:1:1": {},
+		},
 	}
-	defer conn.Close()
-	q := db.New(conn)
 	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
 	cd.UserID = 1
-
-	mock.ExpectQuery("SELECT item, item_id, label\\s+FROM content_public_labels\\s+WHERE item = \\? AND item_id = \\?").
-		WithArgs("thread", int32(1)).
-		WillReturnRows(sqlmock.NewRows([]string{"item", "item_id", "label"}))
-	mock.ExpectQuery("SELECT item, item_id, label\\s+FROM content_label_status\\s+WHERE item = \\? AND item_id = \\?").
-		WithArgs("thread", int32(1)).
-		WillReturnRows(sqlmock.NewRows([]string{"item", "item_id", "label"}))
-	mock.ExpectQuery("SELECT item, item_id, user_id, label, invert\\s+FROM content_private_labels\\s+WHERE item = \\? AND item_id = \\? AND user_id = \\?").
-		WithArgs("thread", int32(1), int32(1)).
-		WillReturnRows(sqlmock.NewRows([]string{"item", "item_id", "user_id", "label", "invert"}))
-	mock.ExpectExec(regexp.QuoteMeta("INSERT IGNORE INTO content_private_labels")).
-		WithArgs("thread", int32(1), int32(1), "new", true).
-		WillReturnResult(sqlmock.NewResult(0, 1))
-	mock.ExpectExec(regexp.QuoteMeta("INSERT IGNORE INTO content_private_labels")).
-		WithArgs("thread", int32(1), int32(1), "unread", true).
-		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	form := url.Values{}
 	form.Set("task", string(TaskSetLabels))
@@ -92,28 +79,19 @@ func TestSetLabelsTaskAddsInverseLabels(t *testing.T) {
 	rr := httptest.NewRecorder()
 	setLabelsTask.Action(rr, req)
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	if got := q.AddContentPrivateLabelCalls; len(got) != 2 {
+		t.Fatalf("inverse private label inserts %+v, want two entries", got)
+	} else {
+		if got[0].Label != "new" || !got[0].Invert || got[1].Label != "unread" || !got[1].Invert {
+			t.Fatalf("inverse private label args %+v, want new/unread inverted", got)
+		}
 	}
 }
 
 func TestSetLabelsTaskUpdatesSpecialLabels(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-
-	q := db.New(conn)
+	q := &db.QuerierStub{}
 	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
 	cd.UserID = 2
-
-	mock.ExpectExec(regexp.QuoteMeta("INSERT IGNORE INTO content_private_labels")).
-		WithArgs("thread", int32(1), cd.UserID, "new", true).
-		WillReturnResult(sqlmock.NewResult(0, 1))
-	mock.ExpectExec(regexp.QuoteMeta("INSERT IGNORE INTO content_private_labels")).
-		WithArgs("thread", int32(1), cd.UserID, "unread", true).
-		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	form := url.Values{}
 	form.Set("redirect", "/private/topic/1/thread/3")
@@ -126,8 +104,12 @@ func TestSetLabelsTaskUpdatesSpecialLabels(t *testing.T) {
 	// Execute the mark-as-read task, which should upsert the inverse labels.
 	_ = MarkThreadReadTask{}.Action(httptest.NewRecorder(), req)
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	if got := q.AddContentPrivateLabelCalls; len(got) != 2 {
+		t.Fatalf("inverse private label inserts %+v, want new and unread", got)
+	} else {
+		if got[0].Label != "new" || !got[0].Invert || got[1].Label != "unread" || !got[1].Invert {
+			t.Fatalf("inverse private label args %+v, want inverted new/unread", got)
+		}
 	}
 }
 

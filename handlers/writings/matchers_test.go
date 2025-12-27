@@ -22,6 +22,8 @@ import (
 
 var grantQuery = regexp.QuoteMeta(`WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT 1 FROM grants g
 WHERE g.section = ?
@@ -52,7 +54,13 @@ func TestRequireWritingAuthorWritingVar(t *testing.T) {
 	sess, _ := store.Get(req, core.SessionName)
 	sess.Values["UID"] = int32(1)
 
-	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig(), common.WithSession(sess), common.WithUserRoles([]string{"content writer"}))
+	cd := common.NewCoreData(
+		req.Context(),
+		q,
+		config.NewRuntimeConfig(),
+		common.WithSession(sess),
+		common.WithUserRoles([]string{"content writer"}),
+	)
 	cd.LoadSelectionsFromRequest(req)
 	cd.UserID = 1
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)

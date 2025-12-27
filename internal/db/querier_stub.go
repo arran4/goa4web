@@ -69,6 +69,18 @@ type QuerierStub struct {
 	AdminListPrivateTopicParticipantsByTopicIDCalls   []sql.NullInt32
 	AdminListPrivateTopicParticipantsByTopicIDReturns []*AdminListPrivateTopicParticipantsByTopicIDRow
 	AdminListPrivateTopicParticipantsByTopicIDErr     error
+
+	ListSiteNewsSearchFirstForListerCalls   []ListSiteNewsSearchFirstForListerParams
+	ListSiteNewsSearchFirstForListerReturns []int32
+	ListSiteNewsSearchFirstForListerErr     error
+
+	ListSiteNewsSearchNextForListerCalls   []ListSiteNewsSearchNextForListerParams
+	ListSiteNewsSearchNextForListerReturns []int32
+	ListSiteNewsSearchNextForListerErr     error
+
+	GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountCalls   []GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountParams
+	GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountReturns []*GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountRow
+	GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountErr     error
 }
 
 func (s *QuerierStub) AdminListPrivateTopicParticipantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListPrivateTopicParticipantsByTopicIDRow, error) {
@@ -196,6 +208,39 @@ func (s *QuerierStub) AdminListAdministratorEmails(ctx context.Context) ([]strin
 	s.AdminListAdministratorEmailsCalls++
 	s.mu.Unlock()
 	return s.AdminListAdministratorEmailsReturns, s.AdminListAdministratorEmailsErr
+}
+
+// ListSiteNewsSearchFirstForLister records the call and returns the configured response.
+func (s *QuerierStub) ListSiteNewsSearchFirstForLister(ctx context.Context, arg ListSiteNewsSearchFirstForListerParams) ([]int32, error) {
+	s.mu.Lock()
+	s.ListSiteNewsSearchFirstForListerCalls = append(s.ListSiteNewsSearchFirstForListerCalls, arg)
+	ret := s.ListSiteNewsSearchFirstForListerReturns
+	err := s.ListSiteNewsSearchFirstForListerErr
+	s.mu.Unlock()
+	return ret, err
+}
+
+// ListSiteNewsSearchNextForLister records the call and returns the configured response.
+func (s *QuerierStub) ListSiteNewsSearchNextForLister(ctx context.Context, arg ListSiteNewsSearchNextForListerParams) ([]int32, error) {
+	s.mu.Lock()
+	s.ListSiteNewsSearchNextForListerCalls = append(s.ListSiteNewsSearchNextForListerCalls, arg)
+	ret := s.ListSiteNewsSearchNextForListerReturns
+	err := s.ListSiteNewsSearchNextForListerErr
+	s.mu.Unlock()
+	return ret, err
+}
+
+// GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCount records the call and returns the configured response.
+func (s *QuerierStub) GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCount(ctx context.Context, arg GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountParams) ([]*GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountRow, error) {
+	s.mu.Lock()
+	s.GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountCalls = append(s.GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountCalls, arg)
+	ret := s.GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountReturns
+	err := s.GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountErr
+	s.mu.Unlock()
+	if ret == nil && err == nil {
+		return nil, errors.New("GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCount not stubbed")
+	}
+	return ret, err
 }
 
 // SystemGetTemplateOverride records the call and returns the configured response.

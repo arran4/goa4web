@@ -62,6 +62,11 @@ type QuerierStub struct {
 	SystemCheckRoleGrantCalls   []SystemCheckRoleGrantParams
 	SystemCheckRoleGrantFn      func(SystemCheckRoleGrantParams) (int32, error)
 
+	GetPermissionsByUserIDReturns []*GetPermissionsByUserIDRow
+	GetPermissionsByUserIDErr     error
+	GetPermissionsByUserIDCalls   []int32
+	GetPermissionsByUserIDFn      func(int32) ([]*GetPermissionsByUserIDRow, error)
+
 	AdminListForumTopicGrantsByTopicIDCalls   []sql.NullInt32
 	AdminListForumTopicGrantsByTopicIDReturns []*AdminListForumTopicGrantsByTopicIDRow
 	AdminListForumTopicGrantsByTopicIDErr     error
@@ -69,6 +74,16 @@ type QuerierStub struct {
 	AdminListPrivateTopicParticipantsByTopicIDCalls   []sql.NullInt32
 	AdminListPrivateTopicParticipantsByTopicIDReturns []*AdminListPrivateTopicParticipantsByTopicIDRow
 	AdminListPrivateTopicParticipantsByTopicIDErr     error
+
+	ListWritersForListerCalls   []ListWritersForListerParams
+	ListWritersForListerReturns []*ListWritersForListerRow
+	ListWritersForListerErr     error
+	ListWritersForListerFn      func(ListWritersForListerParams) ([]*ListWritersForListerRow, error)
+
+	ListWritersSearchForListerCalls   []ListWritersSearchForListerParams
+	ListWritersSearchForListerReturns []*ListWritersSearchForListerRow
+	ListWritersSearchForListerErr     error
+	ListWritersSearchForListerFn      func(ListWritersSearchForListerParams) ([]*ListWritersSearchForListerRow, error)
 }
 
 func (s *QuerierStub) AdminListPrivateTopicParticipantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListPrivateTopicParticipantsByTopicIDRow, error) {
@@ -76,6 +91,32 @@ func (s *QuerierStub) AdminListPrivateTopicParticipantsByTopicID(ctx context.Con
 	defer s.mu.Unlock()
 	s.AdminListPrivateTopicParticipantsByTopicIDCalls = append(s.AdminListPrivateTopicParticipantsByTopicIDCalls, itemID)
 	return s.AdminListPrivateTopicParticipantsByTopicIDReturns, s.AdminListPrivateTopicParticipantsByTopicIDErr
+}
+
+func (s *QuerierStub) ListWritersForLister(ctx context.Context, arg ListWritersForListerParams) ([]*ListWritersForListerRow, error) {
+	s.mu.Lock()
+	s.ListWritersForListerCalls = append(s.ListWritersForListerCalls, arg)
+	fn := s.ListWritersForListerFn
+	ret := s.ListWritersForListerReturns
+	err := s.ListWritersForListerErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) ListWritersSearchForLister(ctx context.Context, arg ListWritersSearchForListerParams) ([]*ListWritersSearchForListerRow, error) {
+	s.mu.Lock()
+	s.ListWritersSearchForListerCalls = append(s.ListWritersSearchForListerCalls, arg)
+	fn := s.ListWritersSearchForListerFn
+	ret := s.ListWritersSearchForListerReturns
+	err := s.ListWritersSearchForListerErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(arg)
+	}
+	return ret, err
 }
 
 func (s *QuerierStub) AdminListForumTopicGrantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListForumTopicGrantsByTopicIDRow, error) {
@@ -130,6 +171,20 @@ func (s *QuerierStub) SystemCheckRoleGrant(ctx context.Context, arg SystemCheckR
 		ret = 1
 	}
 	return ret, nil
+}
+
+// GetPermissionsByUserID records the call and returns the configured response.
+func (s *QuerierStub) GetPermissionsByUserID(ctx context.Context, idusers int32) ([]*GetPermissionsByUserIDRow, error) {
+	s.mu.Lock()
+	s.GetPermissionsByUserIDCalls = append(s.GetPermissionsByUserIDCalls, idusers)
+	fn := s.GetPermissionsByUserIDFn
+	ret := s.GetPermissionsByUserIDReturns
+	err := s.GetPermissionsByUserIDErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(idusers)
+	}
+	return ret, err
 }
 
 // SystemGetUserByID records the call and returns the configured response.

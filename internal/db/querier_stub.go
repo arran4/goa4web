@@ -12,6 +12,14 @@ type QuerierStub struct {
 	Querier
 	mu sync.Mutex
 
+	GetForumTopicByIdForUserReturns map[int32]*GetForumTopicByIdForUserRow
+	GetForumTopicByIdForUserErr     error
+	GetForumTopicByIdForUserCalls   []GetForumTopicByIdForUserParams
+
+	ListPrivateTopicParticipantsByTopicIDForUserReturns map[int32][]*ListPrivateTopicParticipantsByTopicIDForUserRow
+	ListPrivateTopicParticipantsByTopicIDForUserErr     error
+	ListPrivateTopicParticipantsByTopicIDForUserCalls   []ListPrivateTopicParticipantsByTopicIDForUserParams
+
 	SystemGetUserByIDRow   *SystemGetUserByIDRow
 	SystemGetUserByIDErr   error
 	SystemGetUserByIDCalls []int32
@@ -83,6 +91,48 @@ func (s *QuerierStub) AdminListForumTopicGrantsByTopicID(ctx context.Context, it
 	defer s.mu.Unlock()
 	s.AdminListForumTopicGrantsByTopicIDCalls = append(s.AdminListForumTopicGrantsByTopicIDCalls, itemID)
 	return s.AdminListForumTopicGrantsByTopicIDReturns, s.AdminListForumTopicGrantsByTopicIDErr
+}
+
+func (s *QuerierStub) GetForumTopicByIdForUser(ctx context.Context, arg GetForumTopicByIdForUserParams) (*GetForumTopicByIdForUserRow, error) {
+	s.mu.Lock()
+	s.GetForumTopicByIdForUserCalls = append(s.GetForumTopicByIdForUserCalls, arg)
+	rowMap := s.GetForumTopicByIdForUserReturns
+	err := s.GetForumTopicByIdForUserErr
+	parent := s.Querier
+	s.mu.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	if rowMap != nil {
+		if row, ok := rowMap[arg.Idforumtopic]; ok {
+			return row, nil
+		}
+	}
+	if parent != nil {
+		return parent.GetForumTopicByIdForUser(ctx, arg)
+	}
+	return nil, errors.New("GetForumTopicByIdForUser not stubbed")
+}
+
+func (s *QuerierStub) ListPrivateTopicParticipantsByTopicIDForUser(ctx context.Context, arg ListPrivateTopicParticipantsByTopicIDForUserParams) ([]*ListPrivateTopicParticipantsByTopicIDForUserRow, error) {
+	s.mu.Lock()
+	s.ListPrivateTopicParticipantsByTopicIDForUserCalls = append(s.ListPrivateTopicParticipantsByTopicIDForUserCalls, arg)
+	rowMap := s.ListPrivateTopicParticipantsByTopicIDForUserReturns
+	err := s.ListPrivateTopicParticipantsByTopicIDForUserErr
+	parent := s.Querier
+	s.mu.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	if rowMap != nil {
+		if rows, ok := rowMap[arg.TopicID.Int32]; ok {
+			return rows, nil
+		}
+	}
+	if parent != nil {
+		return parent.ListPrivateTopicParticipantsByTopicIDForUser(ctx, arg)
+	}
+	return nil, errors.New("ListPrivateTopicParticipantsByTopicIDForUser not stubbed")
 }
 
 func (s *QuerierStub) DeleteThreadsByTopicID(ctx context.Context, forumtopicIdforumtopic int32) error {

@@ -2,34 +2,23 @@ package common
 
 import (
 	"database/sql"
-	"regexp"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/internal/db"
 )
 
 func TestPrivateForumBreadcrumbUsesDisplayTitle(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	queries := &db.QuerierStub{
+		GetForumTopicByIdForUserReturns: map[int32]*db.GetForumTopicByIdForUserRow{
+			1: {Idforumtopic: 1, Handler: "private", Title: sql.NullString{String: "Hidden", Valid: true}},
+		},
+		ListPrivateTopicParticipantsByTopicIDForUserReturns: map[int32][]*db.ListPrivateTopicParticipantsByTopicIDForUserRow{
+			1: {
+				{Idusers: 2, Username: sql.NullString{String: "Alice", Valid: true}},
+				{Idusers: 3, Username: sql.NullString{String: "Bob", Valid: true}},
+			},
+		},
 	}
-	defer conn.Close()
-
-	topicRows := sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_id", "title", "description", "threads", "comments", "lastaddition", "handler", "LastPosterUsername"}).
-		AddRow(1, 0, 0, nil, sql.NullString{String: "Hidden", Valid: true}, sql.NullString{}, sql.NullInt32{}, sql.NullInt32{}, sql.NullTime{}, "private", sql.NullString{})
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT t.idforumtopic")).
-		WithArgs(int32(1), int32(1), int32(1), int32(1), sql.NullInt32{Int32: 1, Valid: true}).
-		WillReturnRows(topicRows)
-
-	participantRows := sqlmock.NewRows([]string{"idusers", "username"}).
-		AddRow(2, sql.NullString{String: "Alice", Valid: true}).
-		AddRow(3, sql.NullString{String: "Bob", Valid: true})
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, u.username")).
-		WithArgs(sql.NullInt32{Int32: 1, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}).
-		WillReturnRows(participantRows)
-
-	queries := db.New(conn)
 	cd := NewTestCoreData(t, queries)
 	cd.SetCurrentSection("privateforum")
 	cd.ForumBasePath = "/private"
@@ -49,7 +38,10 @@ func TestPrivateForumBreadcrumbUsesDisplayTitle(t *testing.T) {
 	if crumbs[1].Title != "Alice, Bob" {
 		t.Fatalf("unexpected crumb title: %v", crumbs[1].Title)
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("mock expectations: %v", err)
+	if len(queries.GetForumTopicByIdForUserCalls) != 1 {
+		t.Fatalf("expected single topic lookup, got %d", len(queries.GetForumTopicByIdForUserCalls))
+	}
+	if len(queries.ListPrivateTopicParticipantsByTopicIDForUserCalls) != 1 {
+		t.Fatalf("expected single participant lookup, got %d", len(queries.ListPrivateTopicParticipantsByTopicIDForUserCalls))
 	}
 }

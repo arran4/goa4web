@@ -15,6 +15,9 @@ func TestThreadPageShowsDefaultPrivateLabels(t *testing.T) {
 	funcMap := template.FuncMap{
 		"csrfField": csrfField,
 		"assetHash": func(s string) string { return s },
+		"cd": func() any {
+			return struct{ ForumBasePath string }{ForumBasePath: "/forum"}
+		},
 	}
 	tmpl := template.New("test").Funcs(funcMap)
 

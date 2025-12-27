@@ -29,7 +29,9 @@
                 {{ template "languageCombobox" }}
                 <input type="submit" name="task" value="Create Thread">
                 <input type="submit" name="task" formaction="cancel" value="Cancel">
-                <a href="{{.BasePath}}/topic/{{.Topic.Idforumtopic}}">Go to topic</a>
+                {{ $base := "/forum" }}
+                {{ if cd.ForumBasePath }}{{ $base = cd.ForumBasePath }}{{ end }}
+                <a href="{{$base}}/topic/{{.Topic.Idforumtopic}}">Go to topic</a>
             </form>
         </section>
     </div>

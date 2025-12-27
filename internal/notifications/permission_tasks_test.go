@@ -35,6 +35,13 @@ func (updateTaskNoEmail) TargetEmailTemplate(evt eventbus.TaskEvent) (templates 
 	return nil, false
 }
 
+func assertCallCount(t *testing.T, method string, got, want int) {
+	t.Helper()
+	if got != want {
+		t.Fatalf("expected %d %s calls got %d", want, method, got)
+	}
+}
+
 func TestProcessEventPermissionTasks(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -79,12 +86,8 @@ func TestProcessEventPermissionTasks(t *testing.T) {
 	cancel()
 	wg.Wait()
 
-	if len(q.SystemGetUserByIDCalls) != len(cases) {
-		t.Fatalf("expected %d user lookups got %d", len(cases), len(q.SystemGetUserByIDCalls))
-	}
-	if len(q.SystemCreateNotificationCalls) != len(cases) {
-		t.Fatalf("expected %d notifications got %d", len(cases), len(q.SystemCreateNotificationCalls))
-	}
+	assertCallCount(t, "SystemGetUserByID", len(q.SystemGetUserByIDCalls), len(cases))
+	assertCallCount(t, "SystemCreateNotification", len(q.SystemCreateNotificationCalls), len(cases))
 	for _, call := range q.SystemCreateNotificationCalls {
 		if call.RecipientID != int32(2) {
 			t.Fatalf("expected recipient 2 got %d", call.RecipientID)

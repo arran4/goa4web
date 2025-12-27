@@ -107,7 +107,7 @@ func (AddBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 func BlogAddPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Add Blog"
-	if !(cd.HasRole("content writer") || cd.HasRole("administrator")) {
+	if !(cd.IsAdmin() || cd.HasGrant("blogs", "entry", "post", 0)) {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}

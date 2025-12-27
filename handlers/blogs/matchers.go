@@ -57,14 +57,39 @@ func RequireBlogAuthor(next http.Handler) http.Handler {
 			cd.BlogEntryByID(int32(blogID), lazy.Set[*db.GetBlogEntryForListerByIDRow](row))
 			cd.SetCurrentBlog(int32(blogID))
 		}
-		if cd != nil && cd.HasRole("administrator") {
-			next.ServeHTTP(w, r)
+		if cd == nil {
+			http.NotFound(w, r)
 			return
 		}
-		if cd == nil || !cd.HasRole("writer") || row.UsersIdusers != uid {
+		hasEditGrant := cd.HasGrant("blogs", "entry", "edit", row.Idblogs)
+		hasEditAnyGrant := cd.HasGrant("blogs", "entry", "edit-any", 0)
+		if !(hasEditGrant || hasEditAnyGrant) {
+			http.NotFound(w, r)
+			return
+		}
+		if !hasEditAnyGrant && row.UsersIdusers != uid {
 			http.NotFound(w, r)
 			return
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+// RequireBlogEditGrant checks whether the requester can edit the blog referenced in the URL path.
+func RequireBlogEditGrant() mux.MatcherFunc {
+	return func(r *http.Request, match *mux.RouteMatch) bool {
+		cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		if cd == nil {
+			return false
+		}
+		vars := mux.Vars(r)
+		blogID, err := strconv.Atoi(vars["blog"])
+		if err != nil {
+			return false
+		}
+		if cd.HasGrant("blogs", "entry", "edit-any", 0) {
+			return true
+		}
+		return cd.HasGrant("blogs", "entry", "edit", int32(blogID))
+	}
 }

@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"context"
-	"github.com/arran4/goa4web/core/consts"
+	"errors"
 	"net/http/httptest"
 	"testing"
 
@@ -10,28 +10,30 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/internal/db"
 )
 
-func TestRequiredAccessAllowed(t *testing.T) {
+func TestRequiredGrantAllowed(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/add", nil)
-	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"content writer"}))
-	cd.UserID = 1
+	q := &db.QuerierStub{}
+	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
-	if !RequiredAccess("content writer")(req, &mux.RouteMatch{}) {
+	if !RequiredGrant("blogs", "entry", "post", 0)(req, &mux.RouteMatch{}) {
 		t.Errorf("expected access allowed")
 	}
 }
 
-func TestRequiredAccessDenied(t *testing.T) {
+func TestRequiredGrantDenied(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/add", nil)
-	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))
-	cd.UserID = 1
+	q := &db.QuerierStub{SystemCheckGrantErr: errors.New("denied")}
+	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
-	if RequiredAccess("content writer")(req, &mux.RouteMatch{}) {
+	if RequiredGrant("blogs", "entry", "post", 0)(req, &mux.RouteMatch{}) {
 		t.Errorf("expected access denied")
 	}
 }

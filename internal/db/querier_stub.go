@@ -69,6 +69,13 @@ type QuerierStub struct {
 	AdminListPrivateTopicParticipantsByTopicIDCalls   []sql.NullInt32
 	AdminListPrivateTopicParticipantsByTopicIDReturns []*AdminListPrivateTopicParticipantsByTopicIDRow
 	AdminListPrivateTopicParticipantsByTopicIDErr     error
+
+	CreateFAQQuestionForWriterCalls []CreateFAQQuestionForWriterParams
+	CreateFAQQuestionForWriterErr   error
+
+	GetPermissionsByUserIDCalls   []int32
+	GetPermissionsByUserIDReturns []*GetPermissionsByUserIDRow
+	GetPermissionsByUserIDErr     error
 }
 
 func (s *QuerierStub) AdminListPrivateTopicParticipantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListPrivateTopicParticipantsByTopicIDRow, error) {
@@ -76,6 +83,13 @@ func (s *QuerierStub) AdminListPrivateTopicParticipantsByTopicID(ctx context.Con
 	defer s.mu.Unlock()
 	s.AdminListPrivateTopicParticipantsByTopicIDCalls = append(s.AdminListPrivateTopicParticipantsByTopicIDCalls, itemID)
 	return s.AdminListPrivateTopicParticipantsByTopicIDReturns, s.AdminListPrivateTopicParticipantsByTopicIDErr
+}
+
+func (s *QuerierStub) CreateFAQQuestionForWriter(ctx context.Context, arg CreateFAQQuestionForWriterParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.CreateFAQQuestionForWriterCalls = append(s.CreateFAQQuestionForWriterCalls, arg)
+	return s.CreateFAQQuestionForWriterErr
 }
 
 func (s *QuerierStub) AdminListForumTopicGrantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListForumTopicGrantsByTopicIDRow, error) {
@@ -90,6 +104,13 @@ func (s *QuerierStub) DeleteThreadsByTopicID(ctx context.Context, forumtopicIdfo
 	defer s.mu.Unlock()
 	s.DeleteThreadsByTopicIDCalls = append(s.DeleteThreadsByTopicIDCalls, forumtopicIdforumtopic)
 	return s.DeleteThreadsByTopicIDErr
+}
+
+func (s *QuerierStub) GetPermissionsByUserID(ctx context.Context, usersID int32) ([]*GetPermissionsByUserIDRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.GetPermissionsByUserIDCalls = append(s.GetPermissionsByUserIDCalls, usersID)
+	return s.GetPermissionsByUserIDReturns, s.GetPermissionsByUserIDErr
 }
 
 // SystemCheckGrant records the call and returns the configured response.

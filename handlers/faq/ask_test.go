@@ -2,7 +2,6 @@ package faq
 
 import (
 	"context"
-	"database/sql"
 	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"net/http/httptest"
@@ -10,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/config"
@@ -20,16 +18,9 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/middleware"
-	"github.com/arran4/goa4web/internal/tasks"
 )
 
 func TestAskActionPage_InvalidForms(t *testing.T) {
-	dbconn, _, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer dbconn.Close()
-
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = "test-session"
@@ -62,12 +53,6 @@ func TestAskActionPage_InvalidForms(t *testing.T) {
 }
 
 func TestAskActionPage_AdminEvent(t *testing.T) {
-	dbconn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer dbconn.Close()
-
 	cfg := config.NewRuntimeConfig()
 
 	cfg.EmailEnabled = true
@@ -91,17 +76,9 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 		req.AddCookie(c)
 	}
 	bus := eventbus.NewBus()
-	q := db.New(dbconn)
-	mock.ExpectQuery("SELECT 1 FROM grants").
-		WithArgs(sqlmock.AnyArg(), "faq", sqlmock.AnyArg(), "post", sqlmock.AnyArg(), sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
-	mock.ExpectExec("INSERT INTO faq").
-		WithArgs(sql.NullString{String: "hi", Valid: true}, int32(1), int32(1), sqlmock.AnyArg(), sqlmock.AnyArg()).
-		WillReturnResult(sqlmock.NewResult(1, 1))
-	evt := &eventbus.TaskEvent{Path: "/faq/ask", Task: tasks.TaskString(TaskAsk), UserID: 1}
+	q := &db.QuerierStub{}
 	cd := common.NewCoreData(req.Context(), q, cfg)
 	cd.UserID = 1
-	cd.SetEvent(evt)
 
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -114,9 +91,27 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
 	}
-	_ = cd.Event()
-
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	if got := len(q.SystemCheckGrantCalls); got != 1 {
+		t.Fatalf("expected 1 grant check, got %d", got)
+	}
+	grant := q.SystemCheckGrantCalls[0]
+	if grant.Section != "faq" || grant.Item.String != "question" || grant.Action != "post" {
+		t.Fatalf("unexpected grant check: %#v", grant)
+	}
+	if grant.UserID.Int32 != 1 || !grant.UserID.Valid {
+		t.Fatalf("unexpected grant user: %#v", grant.UserID)
+	}
+	if got := len(q.CreateFAQQuestionForWriterCalls); got != 1 {
+		t.Fatalf("expected 1 faq insert, got %d", got)
+	}
+	createCall := q.CreateFAQQuestionForWriterCalls[0]
+	if createCall.Question.String != "hi" || createCall.GranteeID.Int32 != 1 || createCall.WriterID != 1 {
+		t.Fatalf("unexpected insert params: %#v", createCall)
+	}
+	if createCall.LanguageID.Int32 != 1 || !createCall.LanguageID.Valid {
+		t.Fatalf("unexpected language params: %#v", createCall.LanguageID)
+	}
+	if evt := cd.Event(); evt == nil || evt.Path != "/admin/faq/questions" {
+		t.Fatalf("unexpected event path: %#v", evt)
 	}
 }

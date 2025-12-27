@@ -32,11 +32,7 @@ func (cd *CoreData) HasAdminAccess() bool {
 	if cd.HasAdminRole() {
 		return true
 	}
-	if cd.AdminMode && cd.IsAdmin() {
-		return true
-	}
-	return cd.checkGrant(AdminGrantSection, "", AdminGrantAccessAction, 0) ||
-		cd.checkGrant("role", "", "admin", 0)
+	return cd.checkGrant(AdminGrantSection, "", AdminGrantAccessAction, 0)
 }
 
 func (cd *CoreData) checkGrant(section, item, action string, itemID int32) bool {

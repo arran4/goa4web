@@ -69,6 +69,16 @@ type QuerierStub struct {
 	AdminListPrivateTopicParticipantsByTopicIDCalls   []sql.NullInt32
 	AdminListPrivateTopicParticipantsByTopicIDReturns []*AdminListPrivateTopicParticipantsByTopicIDRow
 	AdminListPrivateTopicParticipantsByTopicIDErr     error
+
+	ListBoardsByParentIDForListerCalls  []ListBoardsByParentIDForListerParams
+	ListBoardsByParentIDForListerReturn map[sql.NullInt32][]*Imageboard
+	ListBoardsByParentIDForListerErr    error
+	ListBoardsByParentIDForListerFn     func(ListBoardsByParentIDForListerParams) ([]*Imageboard, error)
+
+	ListImagePostsByBoardForListerCalls  []ListImagePostsByBoardForListerParams
+	ListImagePostsByBoardForListerReturn map[sql.NullInt32][]*ListImagePostsByBoardForListerRow
+	ListImagePostsByBoardForListerErr    error
+	ListImagePostsByBoardForListerFn     func(ListImagePostsByBoardForListerParams) ([]*ListImagePostsByBoardForListerRow, error)
 }
 
 func (s *QuerierStub) AdminListPrivateTopicParticipantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListPrivateTopicParticipantsByTopicIDRow, error) {
@@ -90,6 +100,48 @@ func (s *QuerierStub) DeleteThreadsByTopicID(ctx context.Context, forumtopicIdfo
 	defer s.mu.Unlock()
 	s.DeleteThreadsByTopicIDCalls = append(s.DeleteThreadsByTopicIDCalls, forumtopicIdforumtopic)
 	return s.DeleteThreadsByTopicIDErr
+}
+
+func (s *QuerierStub) ListBoardsByParentIDForLister(ctx context.Context, arg ListBoardsByParentIDForListerParams) ([]*Imageboard, error) {
+	s.mu.Lock()
+	s.ListBoardsByParentIDForListerCalls = append(s.ListBoardsByParentIDForListerCalls, arg)
+	fn := s.ListBoardsByParentIDForListerFn
+	ret := s.ListBoardsByParentIDForListerReturn
+	err := s.ListBoardsByParentIDForListerErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(arg)
+	}
+	if err != nil {
+		return nil, err
+	}
+	if ret != nil {
+		if boards, ok := ret[arg.ParentID]; ok {
+			return boards, nil
+		}
+	}
+	return nil, nil
+}
+
+func (s *QuerierStub) ListImagePostsByBoardForLister(ctx context.Context, arg ListImagePostsByBoardForListerParams) ([]*ListImagePostsByBoardForListerRow, error) {
+	s.mu.Lock()
+	s.ListImagePostsByBoardForListerCalls = append(s.ListImagePostsByBoardForListerCalls, arg)
+	fn := s.ListImagePostsByBoardForListerFn
+	ret := s.ListImagePostsByBoardForListerReturn
+	err := s.ListImagePostsByBoardForListerErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(arg)
+	}
+	if err != nil {
+		return nil, err
+	}
+	if ret != nil {
+		if posts, ok := ret[arg.BoardID]; ok {
+			return posts, nil
+		}
+	}
+	return nil, nil
 }
 
 // SystemCheckGrant records the call and returns the configured response.

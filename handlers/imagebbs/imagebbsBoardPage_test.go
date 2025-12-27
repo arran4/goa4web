@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
@@ -18,27 +17,41 @@ import (
 )
 
 func TestBoardPageRendersSubBoards(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	boardID := int32(3)
+	q := &db.QuerierStub{
+		ListBoardsByParentIDForListerReturn: map[sql.NullInt32][]*db.Imageboard{
+			{Int32: boardID, Valid: true}: {
+				{
+					Idimageboard:           4,
+					ImageboardIdimageboard: sql.NullInt32{Int32: boardID, Valid: true},
+					Title:                  sql.NullString{String: "child", Valid: true},
+					Description:            sql.NullString{String: "sub", Valid: true},
+				},
+			},
+		},
+		ListImagePostsByBoardForListerReturn: map[sql.NullInt32][]*db.ListImagePostsByBoardForListerRow{
+			{Int32: boardID, Valid: true}: {
+				{
+					Idimagepost:            1,
+					ForumthreadID:          1,
+					UsersIdusers:           1,
+					ImageboardIdimageboard: sql.NullInt32{Int32: boardID, Valid: true},
+					Posted:                 sql.NullTime{Time: time.Unix(0, 0), Valid: true},
+					Timezone:               sql.NullString{String: time.Local.String(), Valid: true},
+					Description:            sql.NullString{String: "desc", Valid: true},
+					Thumbnail:              sql.NullString{String: "/t", Valid: true},
+					Fullimage:              sql.NullString{String: "/f", Valid: true},
+					FileSize:               10,
+					Approved:               true,
+					Username:               sql.NullString{String: "alice", Valid: true},
+					Comments:               sql.NullInt32{Int32: 0, Valid: true},
+				},
+			},
+		},
 	}
-	defer conn.Close()
-
-	boardRows := sqlmock.NewRows([]string{"idimageboard", "imageboard_idimageboard", "title", "description", "approval_required", "deleted_at"}).
-		AddRow(4, 3, "child", "sub", false, nil)
-	mock.ExpectQuery("(?s)WITH role_ids AS .*SELECT b.idimageboard.*").
-		WithArgs(int32(0), sql.NullInt32{Int32: 3, Valid: true}, sql.NullInt32{Int32: 3, Valid: true}, sqlmock.AnyArg(), int32(200), int32(0)).
-		WillReturnRows(boardRows)
-
-	postRows := sqlmock.NewRows([]string{"idimagepost", "forumthread_id", "users_idusers", "imageboard_idimageboard", "posted", "timezone", "description", "thumbnail", "fullimage", "file_size", "approved", "deleted_at", "last_index", "username", "comments"}).
-		AddRow(1, 1, 1, 3, time.Unix(0, 0), time.Local.String(), "desc", "/t", "/f", 10, true, nil, nil, "alice", 0)
-	mock.ExpectQuery("(?s)WITH role_ids AS .*SELECT i.idimagepost.*").
-		WithArgs(int32(0), sql.NullInt32{Int32: 3, Valid: true}, sqlmock.AnyArg(), int32(200), int32(0)).
-		WillReturnRows(postRows)
 
 	req := httptest.NewRequest("GET", "/imagebbs/board/3", nil)
 	req = mux.SetURLVars(req, map[string]string{"board": "3"})
-	q := db.New(conn)
 	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
 	cd.AdminMode = true
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
@@ -47,8 +60,11 @@ func TestBoardPageRendersSubBoards(t *testing.T) {
 	rr := httptest.NewRecorder()
 	ImagebbsBoardPage(rr, req)
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	if got := len(q.ListBoardsByParentIDForListerCalls); got != 1 {
+		t.Fatalf("expected one sub-board query, got %d", got)
+	}
+	if got := len(q.ListImagePostsByBoardForListerCalls); got != 1 {
+		t.Fatalf("expected one post listing query, got %d", got)
 	}
 	body := rr.Body.String()
 	if !strings.Contains(body, "Sub-Boards") {

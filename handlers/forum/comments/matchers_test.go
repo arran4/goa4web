@@ -118,3 +118,53 @@ func TestRequireCommentAuthor_AllowsGrantHolder(t *testing.T) {
 		t.Fatalf("expectations: %v", err)
 	}
 }
+
+func TestRequireCommentAuthor_AllowsAdminMode(t *testing.T) {
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
+
+	commentID := int32(13)
+	threadID := int32(15)
+	authorID := int32(16)
+	adminID := int32(17)
+
+	mock.ExpectQuery("(?s)WITH role_ids AS .*FROM comments c").
+		WithArgs(adminID, adminID, commentID, adminID, adminID, sql.NullInt32{Int32: adminID, Valid: true}).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"idcomments", "forumthread_id", "users_idusers", "language_id", "written", "text", "timezone", "deleted_at", "last_index", "username", "is_owner",
+		}).AddRow(commentID, threadID, authorID, sql.NullInt32{}, sql.NullTime{}, sql.NullString{}, sql.NullString{}, sql.NullTime{}, sql.NullTime{}, sql.NullString{}, false))
+
+	req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/15/comment/13", nil)
+	req = mux.SetURLVars(req, map[string]string{"comment": "13"})
+
+	sess := &sessions.Session{Values: map[interface{}]interface{}{"UID": adminID}}
+	q := db.New(conn)
+	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig(), common.WithSession(sess), common.WithUserRoles([]string{"anyone", "user", "administrator"}))
+	cd.AdminMode = true
+
+	ctx := context.WithValue(req.Context(), core.ContextValues("session"), sess)
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+
+	called := false
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+	})
+
+	RequireCommentAuthor(handler).ServeHTTP(rr, req)
+
+	if !called {
+		t.Fatalf("expected downstream handler to be called")
+	}
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected status %d got %d", http.StatusOK, rr.Code)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}

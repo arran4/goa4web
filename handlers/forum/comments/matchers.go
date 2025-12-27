@@ -32,8 +32,12 @@ func RequireCommentAuthor(next http.Handler) http.Handler {
 
 		authorized := row.UsersIdusers == uid
 		if !authorized && cd != nil {
-			authorized = cd.HasGrant("forum", "thread", "edit-any", row.ForumthreadID) ||
-				cd.HasGrant("forum", "thread", "edit", row.ForumthreadID)
+			if cd.IsAdmin() {
+				authorized = true
+			} else {
+				authorized = cd.HasGrant("forum", "thread", "edit-any", row.ForumthreadID) ||
+					cd.HasGrant("forum", "thread", "edit", row.ForumthreadID)
+			}
 		}
 		if !authorized {
 			http.NotFound(w, r)

@@ -191,7 +191,7 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 		topicTitle = trow.Title.String
 		topic = trow
 	}
-	if u, err := queries.SystemGetUserByID(r.Context(), uid); err == nil {
+	if u := cd.UserByID(uid); u != nil {
 		author = u.Username.String
 	}
 	text := r.PostFormValue("replytext")

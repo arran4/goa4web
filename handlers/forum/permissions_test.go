@@ -3,104 +3,115 @@ package forum
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db/dbtest"
 )
 
-func TestUserCanCreateThread_Allowed(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
+func TestUserCanCreateThread(t *testing.T) {
+	ctx := context.Background()
+	q := &dbtest.GrantLookupQuerier{}
 
-	q := db.New(conn)
-	mock.ExpectQuery("SELECT 1 FROM grants").
-		WithArgs(sqlmock.AnyArg(), "forum", sqlmock.AnyArg(), "post", sqlmock.AnyArg(), sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
-
-	ok, err := UserCanCreateThread(context.Background(), q, "forum", 1, 2)
+	ok, err := UserCanCreateThread(ctx, q, "forum", 5, 42)
 	if err != nil {
-		t.Fatalf("UserCanCreateThread: %v", err)
+		t.Fatalf("unexpected error: %v", err)
 	}
 	if !ok {
-		t.Errorf("expected allowed")
+		t.Fatalf("expected permission granted")
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
+	requireGrantCall(t, q, "forum", "topic", "post", sql.NullInt32{Int32: 5, Valid: true}, 42)
 }
 
-func TestUserCanCreateThread_Denied(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
+func TestUserCanCreateThreadDenied(t *testing.T) {
+	ctx := context.Background()
+	q := &dbtest.GrantLookupQuerier{GrantResults: []error{sql.ErrNoRows}}
 
-	q := db.New(conn)
-	mock.ExpectQuery("SELECT 1 FROM grants").
-		WithArgs(sqlmock.AnyArg(), "forum", sqlmock.AnyArg(), "post", sqlmock.AnyArg(), sqlmock.AnyArg()).
-		WillReturnError(sql.ErrNoRows)
-
-	ok, err := UserCanCreateThread(context.Background(), q, "forum", 1, 2)
+	ok, err := UserCanCreateThread(ctx, q, "forum", 7, 9)
 	if err != nil {
-		t.Fatalf("UserCanCreateThread: %v", err)
+		t.Fatalf("unexpected error: %v", err)
 	}
 	if ok {
-		t.Errorf("expected denied")
+		t.Fatalf("expected permission denied")
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
+	requireGrantCall(t, q, "forum", "topic", "post", sql.NullInt32{Int32: 7, Valid: true}, 9)
 }
 
-func TestUserCanCreateTopic_Allowed(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+func TestUserCanCreateThreadError(t *testing.T) {
+	ctx := context.Background()
+	wantErr := errors.New("boom")
+	q := &dbtest.GrantLookupQuerier{GrantResults: []error{wantErr}}
+
+	ok, err := UserCanCreateThread(ctx, q, "forum", 3, 11)
+	if !errors.Is(err, wantErr) {
+		t.Fatalf("expected %v got %v", wantErr, err)
 	}
-	defer conn.Close()
+	if ok {
+		t.Fatalf("expected permission denied on error")
+	}
+	requireGrantCall(t, q, "forum", "topic", "post", sql.NullInt32{Int32: 3, Valid: true}, 11)
+}
 
-	q := db.New(conn)
-	mock.ExpectQuery("SELECT 1 FROM grants").
-		WithArgs(sqlmock.AnyArg(), "forum", sqlmock.AnyArg(), "post", sqlmock.AnyArg(), sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+func TestUserCanCreateTopic(t *testing.T) {
+	ctx := context.Background()
+	q := &dbtest.GrantLookupQuerier{}
 
-	ok, err := UserCanCreateTopic(context.Background(), q, "forum", 1, 2)
+	ok, err := UserCanCreateTopic(ctx, q, "forum", 8, 4)
 	if err != nil {
-		t.Fatalf("UserCanCreateTopic: %v", err)
+		t.Fatalf("unexpected error: %v", err)
 	}
 	if !ok {
-		t.Errorf("expected allowed")
+		t.Fatalf("expected permission granted")
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
+	requireGrantCall(t, q, "forum", "category", "post", sql.NullInt32{Int32: 8, Valid: true}, 4)
 }
 
-func TestUserCanCreateTopic_Denied(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
+func TestUserCanCreateTopicDenied(t *testing.T) {
+	ctx := context.Background()
+	q := &dbtest.GrantLookupQuerier{GrantResults: []error{sql.ErrNoRows}}
 
-	q := db.New(conn)
-	mock.ExpectQuery("SELECT 1 FROM grants").
-		WithArgs(sqlmock.AnyArg(), "forum", sqlmock.AnyArg(), "post", sqlmock.AnyArg(), sqlmock.AnyArg()).
-		WillReturnError(sql.ErrNoRows)
-
-	ok, err := UserCanCreateTopic(context.Background(), q, "forum", 1, 2)
+	ok, err := UserCanCreateTopic(ctx, q, "forum", 2, 6)
 	if err != nil {
-		t.Fatalf("UserCanCreateTopic: %v", err)
+		t.Fatalf("unexpected error: %v", err)
 	}
 	if ok {
-		t.Errorf("expected denied")
+		t.Fatalf("expected permission denied")
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	requireGrantCall(t, q, "forum", "category", "post", sql.NullInt32{Int32: 2, Valid: true}, 6)
+}
+
+func TestUserCanCreateTopicError(t *testing.T) {
+	ctx := context.Background()
+	wantErr := errors.New("grant failure")
+	q := &dbtest.GrantLookupQuerier{GrantResults: []error{wantErr}}
+
+	ok, err := UserCanCreateTopic(ctx, q, "forum", 10, 14)
+	if !errors.Is(err, wantErr) {
+		t.Fatalf("expected %v got %v", wantErr, err)
+	}
+	if ok {
+		t.Fatalf("expected permission denied on error")
+	}
+	requireGrantCall(t, q, "forum", "category", "post", sql.NullInt32{Int32: 10, Valid: true}, 14)
+}
+
+func requireGrantCall(t *testing.T, q *dbtest.GrantLookupQuerier, section, item, action string, itemID sql.NullInt32, viewerID int32) {
+	t.Helper()
+	if len(q.SystemCheckGrantCalls) != 1 {
+		t.Fatalf("expected one grant lookup, got %d", len(q.SystemCheckGrantCalls))
+	}
+	call := q.SystemCheckGrantCalls[0]
+	if call.Section != section || call.Action != action || call.ViewerID != viewerID {
+		t.Fatalf("unexpected call %+v", call)
+	}
+	if call.Item.String != item || !call.Item.Valid {
+		t.Fatalf("unexpected item %+v", call.Item)
+	}
+	if call.ItemID != itemID {
+		t.Fatalf("unexpected itemID %v", call.ItemID)
+	}
+	wantUserID := sql.NullInt32{Int32: viewerID, Valid: viewerID != 0}
+	if call.UserID != wantUserID {
+		t.Fatalf("unexpected userID %v", call.UserID)
 	}
 }

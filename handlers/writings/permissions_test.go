@@ -3,56 +3,69 @@ package writings
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db/dbtest"
 )
 
-func TestUserCanCreateWriting_Allowed(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
+func TestUserCanCreateWriting(t *testing.T) {
+	ctx := context.Background()
+	q := &dbtest.GrantLookupQuerier{}
 
-	q := db.New(conn)
-	mock.ExpectQuery("SELECT 1 FROM grants").
-		WithArgs(sqlmock.AnyArg(), "writing", sqlmock.AnyArg(), "post", sqlmock.AnyArg(), sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
-
-	ok, err := UserCanCreateWriting(context.Background(), q, 1, 2)
+	ok, err := UserCanCreateWriting(ctx, q, 6, 18)
 	if err != nil {
-		t.Fatalf("UserCanCreateWriting: %v", err)
+		t.Fatalf("unexpected error: %v", err)
 	}
 	if !ok {
-		t.Errorf("expected allowed")
+		t.Fatalf("expected permission granted")
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
+	requireWritingGrant(t, q, sql.NullInt32{Int32: 6, Valid: true}, 18)
 }
 
-func TestUserCanCreateWriting_Denied(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
+func TestUserCanCreateWritingDenied(t *testing.T) {
+	ctx := context.Background()
+	q := &dbtest.GrantLookupQuerier{GrantResults: []error{sql.ErrNoRows}}
 
-	q := db.New(conn)
-	mock.ExpectQuery("SELECT 1 FROM grants").
-		WithArgs(sqlmock.AnyArg(), "writing", sqlmock.AnyArg(), "post", sqlmock.AnyArg(), sqlmock.AnyArg()).
-		WillReturnError(sql.ErrNoRows)
-
-	ok, err := UserCanCreateWriting(context.Background(), q, 1, 2)
+	ok, err := UserCanCreateWriting(ctx, q, 7, 1)
 	if err != nil {
-		t.Fatalf("UserCanCreateWriting: %v", err)
+		t.Fatalf("unexpected error: %v", err)
 	}
 	if ok {
-		t.Errorf("expected denied")
+		t.Fatalf("expected permission denied")
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	requireWritingGrant(t, q, sql.NullInt32{Int32: 7, Valid: true}, 1)
+}
+
+func TestUserCanCreateWritingError(t *testing.T) {
+	ctx := context.Background()
+	wantErr := errors.New("grant lookup failed")
+	q := &dbtest.GrantLookupQuerier{GrantResults: []error{wantErr}}
+
+	ok, err := UserCanCreateWriting(ctx, q, 9, 10)
+	if !errors.Is(err, wantErr) {
+		t.Fatalf("expected %v got %v", wantErr, err)
+	}
+	if ok {
+		t.Fatalf("expected permission denied on error")
+	}
+	requireWritingGrant(t, q, sql.NullInt32{Int32: 9, Valid: true}, 10)
+}
+
+func requireWritingGrant(t *testing.T, q *dbtest.GrantLookupQuerier, itemID sql.NullInt32, viewerID int32) {
+	t.Helper()
+	if len(q.SystemCheckGrantCalls) != 1 {
+		t.Fatalf("expected one grant call, got %d", len(q.SystemCheckGrantCalls))
+	}
+	call := q.SystemCheckGrantCalls[0]
+	if call.Section != "writing" || call.Item.String != "category" || call.Action != "post" {
+		t.Fatalf("unexpected call %+v", call)
+	}
+	if call.ItemID != itemID {
+		t.Fatalf("unexpected item id %v", call.ItemID)
+	}
+	wantUserID := sql.NullInt32{Int32: viewerID, Valid: viewerID != 0}
+	if call.UserID != wantUserID || call.ViewerID != viewerID {
+		t.Fatalf("unexpected viewer/user ids %+v", call)
 	}
 }

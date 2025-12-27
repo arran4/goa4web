@@ -3,56 +3,72 @@ package linker
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/db/dbtest"
 )
 
-func TestUserCanCreateLink_Allowed(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
+func TestUserCanCreateLink(t *testing.T) {
+	ctx := context.Background()
+	q := &dbtest.GrantLookupQuerier{}
 
-	q := db.New(conn)
-	mock.ExpectQuery("SELECT 1 FROM grants").
-		WithArgs(sqlmock.AnyArg(), "linker", sqlmock.AnyArg(), "post", sqlmock.AnyArg(), sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
-
-	ok, err := UserCanCreateLink(context.Background(), q, sql.NullInt32{Int32: 1, Valid: true}, 2)
+	ok, err := UserCanCreateLink(ctx, q, sql.NullInt32{Int32: 12, Valid: true}, 21)
 	if err != nil {
-		t.Fatalf("UserCanCreateLink: %v", err)
+		t.Fatalf("unexpected error: %v", err)
 	}
 	if !ok {
-		t.Errorf("expected allowed")
+		t.Fatalf("expected permission granted")
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
+	requireSingleGrant(t, q, "linker", "category", "post", sql.NullInt32{Int32: 12, Valid: true}, 21)
 }
 
-func TestUserCanCreateLink_Denied(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
+func TestUserCanCreateLinkDenied(t *testing.T) {
+	ctx := context.Background()
+	q := &dbtest.GrantLookupQuerier{GrantResults: []error{sql.ErrNoRows}}
 
-	q := db.New(conn)
-	mock.ExpectQuery("SELECT 1 FROM grants").
-		WithArgs(sqlmock.AnyArg(), "linker", sqlmock.AnyArg(), "post", sqlmock.AnyArg(), sqlmock.AnyArg()).
-		WillReturnError(sql.ErrNoRows)
-
-	ok, err := UserCanCreateLink(context.Background(), q, sql.NullInt32{Int32: 1, Valid: true}, 2)
+	ok, err := UserCanCreateLink(ctx, q, sql.NullInt32{Int32: 2, Valid: true}, 3)
 	if err != nil {
-		t.Fatalf("UserCanCreateLink: %v", err)
+		t.Fatalf("unexpected error: %v", err)
 	}
 	if ok {
-		t.Errorf("expected denied")
+		t.Fatalf("expected permission denied")
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	requireSingleGrant(t, q, "linker", "category", "post", sql.NullInt32{Int32: 2, Valid: true}, 3)
+}
+
+func TestUserCanCreateLinkError(t *testing.T) {
+	ctx := context.Background()
+	wantErr := errors.New("grant check failed")
+	q := &dbtest.GrantLookupQuerier{GrantResults: []error{wantErr}}
+
+	ok, err := UserCanCreateLink(ctx, q, sql.NullInt32{Int32: 4, Valid: true}, 5)
+	if !errors.Is(err, wantErr) {
+		t.Fatalf("expected %v got %v", wantErr, err)
+	}
+	if ok {
+		t.Fatalf("expected permission denied on error")
+	}
+	requireSingleGrant(t, q, "linker", "category", "post", sql.NullInt32{Int32: 4, Valid: true}, 5)
+}
+
+func requireSingleGrant(t *testing.T, q *dbtest.GrantLookupQuerier, section, item, action string, itemID sql.NullInt32, viewerID int32) {
+	t.Helper()
+	if len(q.SystemCheckGrantCalls) != 1 {
+		t.Fatalf("expected one SystemCheckGrant call, got %d", len(q.SystemCheckGrantCalls))
+	}
+	call := q.SystemCheckGrantCalls[0]
+	if call.Section != section || call.Action != action || call.ViewerID != viewerID {
+		t.Fatalf("unexpected call %+v", call)
+	}
+	if call.Item.String != item || !call.Item.Valid {
+		t.Fatalf("unexpected item %+v", call.Item)
+	}
+	if call.ItemID != itemID {
+		t.Fatalf("unexpected item id %v", call.ItemID)
+	}
+	wantUserID := sql.NullInt32{Int32: viewerID, Valid: viewerID != 0}
+	if call.UserID != wantUserID {
+		t.Fatalf("unexpected user id %v", call.UserID)
 	}
 }

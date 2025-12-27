@@ -64,12 +64,8 @@ func (cd *CoreData) HandleThreadUpdated(ctx context.Context, event ThreadUpdated
 		if event.TopicTitle != "" {
 			evt.Data["TopicTitle"] = event.TopicTitle
 		}
-		if event.Username != "" {
-			evt.Data["Username"] = event.Username
-		}
-		if event.Author != "" {
-			evt.Data["Author"] = event.Author
-		}
+		evt.Data["Username"] = event.Username
+		evt.Data["Author"] = event.Author
 		if event.Thread != nil {
 			evt.Data["Thread"] = event.Thread
 		}
@@ -79,9 +75,7 @@ func (cd *CoreData) HandleThreadUpdated(ctx context.Context, event ThreadUpdated
 		if event.CommentURL != "" {
 			evt.Data["CommentURL"] = event.CommentURL
 		}
-		if event.CommentText != "" {
-			evt.Data["Body"] = event.CommentText
-		}
+		evt.Data["Body"] = event.CommentText
 		if event.PostURL != "" {
 			evt.Data["PostURL"] = event.PostURL
 		}

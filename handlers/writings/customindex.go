@@ -32,7 +32,7 @@ func WritingsGeneralIndexItems(cd *common.CoreData, r *http.Request) []common.In
 			Link: "/admin/writings",
 		})
 	}
-	userHasWriter := cd.HasContentWriterRole()
+	userHasWriter := cd.HasGrant("writing", "category", "post", 0)
 	if userHasWriter {
 		items = append(items, common.IndexItem{
 			Name: "Write writings",
@@ -56,8 +56,7 @@ func WritingsPageSpecificItems(cd *common.CoreData, r *http.Request) []common.In
 	var items []common.IndexItem
 	if writing, err := cd.Article(); err == nil && writing != nil {
 		// Edit
-		isAuthor := writing.UsersIdusers == cd.UserID
-		canEdit := cd.HasContentWriterRole() && isAuthor
+		canEdit := cd.HasGrant("writing", "article", "edit", writing.Idwriting)
 		if canEdit {
 			items = append(items, common.IndexItem{
 				Name: "Edit Writing",

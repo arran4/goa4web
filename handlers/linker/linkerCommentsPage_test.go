@@ -7,12 +7,10 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 
@@ -25,54 +23,56 @@ import (
 )
 
 func TestCommentsPageAllowsGlobalViewGrant(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	writeTempCommentsTemplate(t, `{{.Link.Title.String}}|{{(index .Comments 0).Posterusername.String}}|replyable={{.IsReplyable}}`)
+
+	stub := &db.QuerierStub{
+		GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow: &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow{
+			ID:         1,
+			LanguageID: sql.NullInt32{Int32: 1, Valid: true},
+			AuthorID:   2,
+			CategoryID: sql.NullInt32{Int32: 1, Valid: true},
+			ThreadID:   1,
+			Title:      sql.NullString{String: "t", Valid: true},
+			Url:        sql.NullString{String: "http://u", Valid: true},
+			Timezone:   sql.NullString{String: time.Local.String(), Valid: true},
+			Username:   sql.NullString{String: "bob", Valid: true},
+			Title_2:    sql.NullString{String: "cat", Valid: true},
+		},
+		GetCommentsBySectionThreadIdForUserRows: []*db.GetCommentsBySectionThreadIdForUserRow{{
+			Idcomments:     5,
+			ForumthreadID:  1,
+			UsersIdusers:   2,
+			Written:        sql.NullTime{Time: time.Unix(0, 0), Valid: true},
+			Text:           sql.NullString{String: "comment", Valid: true},
+			Posterusername: sql.NullString{String: "bob", Valid: true},
+			IsOwner:        true,
+		}},
+		GetThreadLastPosterAndPermsRow: &db.GetThreadLastPosterAndPermsRow{
+			Idforumthread:          1,
+			Firstpost:              1,
+			Lastposter:             1,
+			ForumtopicIdforumtopic: 1,
+			Lastaddition:           sql.NullTime{Time: time.Unix(0, 0), Valid: true},
+			Lastposterusername:     sql.NullString{String: "bob", Valid: true},
+		},
 	}
-	defer conn.Close()
 
-	queries := db.New(conn)
-	store := sessions.NewCookieStore([]byte("t"))
-	core.Store = store
-	core.SessionName = "test-session"
+	w, req, cd := newCommentsPageRequest(t, stub, []string{"administrator"}, 2)
+	cd.AdminMode = true
 
-	req := httptest.NewRequest("GET", "/linker/comments/1", nil)
-	req = mux.SetURLVars(req, map[string]string{"link": "1"})
-	w := httptest.NewRecorder()
-	sess, _ := store.Get(req, core.SessionName)
-	sess.Values["UID"] = int32(2)
-	sess.Save(req, w)
-	for _, c := range w.Result().Cookies() {
-		req.AddCookie(c)
+	CommentsPage(w, req)
+
+	if got := strings.TrimSpace(w.Body.String()); got != "t|bob|replyable=true" {
+		t.Fatalf("expected stubbed data to render, got %q", got)
 	}
-	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithSession(sess), common.WithUserRoles([]string{"administrator"}))
-	cd.AdminMode = true
-	cd.UserID = 2
-	cd.AdminMode = true
-	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
-	req = req.WithContext(ctx)
-
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT l.id")).
-		WithArgs(int32(2), sqlmock.AnyArg(), int32(1)).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "language_id", "author_id", "category_id", "thread_id", "title", "url", "description", "listed", "timezone", "username", "title"}).
-			AddRow(1, 1, 2, 1, 1, "t", "http://u", "d", time.Unix(0, 0), time.Local.String(), "bob", "cat"))
-
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT c.idcomments")).
-		WithArgs(int32(2), int32(2), int32(1), int32(2), int32(2), "linker", sql.NullString{String: "link", Valid: true}, sql.NullInt32{Int32: 2, Valid: true}).
-		WillReturnRows(sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_id", "written", "text", "timezone", "deleted_at", "last_index", "posterusername", "is_owner"}))
-
-	threadRows := sqlmock.NewRows([]string{"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername"}).
-		AddRow(1, 1, 1, 1, 0, time.Unix(0, 0), false, "bob")
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT th.idforumthread")).
-		WithArgs(int32(2), int32(1), int32(2), int32(2), int32(2), sql.NullInt32{Int32: 2, Valid: true}).
-		WillReturnRows(threadRows)
-
-	rr := httptest.NewRecorder()
-	CommentsPage(rr, req)
-
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	if len(stub.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserCalls) != 1 {
+		t.Fatalf("expected link fetch to be called once, got %d", len(stub.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserCalls))
+	}
+	if len(stub.GetCommentsBySectionThreadIdForUserCalls) != 1 {
+		t.Fatalf("expected comments fetch to be called once, got %d", len(stub.GetCommentsBySectionThreadIdForUserCalls))
+	}
+	if len(stub.GetThreadLastPosterAndPermsCalls) != 1 {
+		t.Fatalf("expected thread fetch to be called once, got %d", len(stub.GetThreadLastPosterAndPermsCalls))
 	}
 }
 
@@ -100,22 +100,6 @@ func newCommentsPageRequest(t *testing.T, queries db.Querier, roles []string, us
 	return w, req, cd
 }
 
-func expectGrantCheck(mock sqlmock.Sqlmock, viewerID, itemID int32, action string, err error) {
-	expect := mock.ExpectQuery(regexp.QuoteMeta("SELECT 1 FROM grants g")).WithArgs(
-		viewerID,
-		"linker",
-		sql.NullString{String: "link", Valid: true},
-		action,
-		sql.NullInt32{Int32: itemID, Valid: true},
-		sql.NullInt32{Int32: viewerID, Valid: viewerID != 0},
-	)
-	if err != nil {
-		expect.WillReturnError(err)
-		return
-	}
-	expect.WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
-}
-
 func writeTempCommentsTemplate(t *testing.T, content string) {
 	t.Helper()
 	dir := t.TempDir()
@@ -131,118 +115,147 @@ func writeTempCommentsTemplate(t *testing.T, content string) {
 }
 
 func TestCommentsPageEditControlsUseEditGrant(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
 	writeTempCommentsTemplate(t, `{{if .CanEdit}}can-edit{{else}}no-edit{{end}}`)
 
-	queries := db.New(conn)
-	w, req, cd := newCommentsPageRequest(t, queries, nil, 2)
+	stub := &db.QuerierStub{
+		GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow: &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow{
+			ID:         1,
+			LanguageID: sql.NullInt32{Int32: 1, Valid: true},
+			AuthorID:   2,
+			CategoryID: sql.NullInt32{Int32: 1, Valid: true},
+			ThreadID:   1,
+			Title:      sql.NullString{String: "t", Valid: true},
+			Url:        sql.NullString{String: "http://u", Valid: true},
+			Timezone:   sql.NullString{String: time.Local.String(), Valid: true},
+			Username:   sql.NullString{String: "bob", Valid: true},
+			Title_2:    sql.NullString{String: "cat", Valid: true},
+		},
+		GetCommentsBySectionThreadIdForUserRows: []*db.GetCommentsBySectionThreadIdForUserRow{{
+			Idcomments:     5,
+			ForumthreadID:  1,
+			UsersIdusers:   2,
+			Written:        sql.NullTime{Time: time.Unix(0, 0), Valid: true},
+			Text:           sql.NullString{String: "text", Valid: true},
+			Posterusername: sql.NullString{String: "bob", Valid: true},
+			IsOwner:        true,
+		}},
+		GetThreadLastPosterAndPermsRow: &db.GetThreadLastPosterAndPermsRow{
+			Idforumthread:          1,
+			Firstpost:              1,
+			Lastposter:             1,
+			ForumtopicIdforumtopic: 1,
+			Lastaddition:           sql.NullTime{Time: time.Unix(0, 0), Valid: true},
+			Lastposterusername:     sql.NullString{String: "bob", Valid: true},
+		},
+	}
+	stub.SystemCheckGrantFn = func(p db.SystemCheckGrantParams) (int32, error) {
+		if p.Action == "view" || p.Action == "reply" || p.Action == "edit" {
+			return 1, nil
+		}
+		return 0, sql.ErrNoRows
+	}
 
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT l.id")).WithArgs(int32(2), sql.NullInt32{Int32: 2, Valid: true}, int32(1)).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "language_id", "author_id", "category_id", "thread_id", "title", "url", "description", "listed", "timezone", "username", "title"}).
-			AddRow(1, 1, 2, 1, 1, "t", "http://u", "d", time.Unix(0, 0), time.Local.String(), "bob", "cat"))
-
-	expectGrantCheck(mock, 2, 1, "reply", nil)
-	expectGrantCheck(mock, 2, 1, "view", nil)
-	expectGrantCheck(mock, 2, 1, "edit-any", sql.ErrNoRows)
-	expectGrantCheck(mock, 2, 1, "edit", nil)
-
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT c.idcomments")).WithArgs(int32(2), int32(2), int32(1), int32(2), int32(2), "linker", sql.NullString{String: "link", Valid: true}, sql.NullInt32{Int32: 2, Valid: true}).
-		WillReturnRows(sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_id", "written", "text", "timezone", "deleted_at", "last_index", "posterusername", "is_owner"}).
-			AddRow(5, 1, 2, sql.NullInt32{}, sql.NullTime{Time: time.Unix(0, 0), Valid: true}, sql.NullString{String: "text", Valid: true}, sql.NullString{String: time.Local.String(), Valid: true}, sql.NullTime{}, sql.NullTime{}, sql.NullString{String: "bob", Valid: true}, true))
-
-	threadRows := sqlmock.NewRows([]string{"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername"}).
-		AddRow(1, 1, 1, 1, 0, time.Unix(0, 0), false, "bob")
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT th.idforumthread")).WithArgs(int32(2), int32(1), int32(2), int32(2), int32(2), sql.NullInt32{Int32: 2, Valid: true}).WillReturnRows(threadRows)
+	w, req, _ := newCommentsPageRequest(t, stub, nil, 2)
 
 	CommentsPage(w, req)
 
 	if got := strings.TrimSpace(w.Body.String()); got != "can-edit" {
 		t.Fatalf("expected edit controls, got %q", got)
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	if len(stub.SystemCheckGrantCalls) != 4 {
+		t.Fatalf("expected 4 grant checks, got %d", len(stub.SystemCheckGrantCalls))
 	}
-
-	// Prevent unused warning in case the handler changes.
-	_ = cd
 }
 
 func TestCommentsPageEditControlsRequireGrantNotRole(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
 	writeTempCommentsTemplate(t, `{{if .CanEdit}}can-edit{{else}}no-edit{{end}}`)
 
-	queries := db.New(conn)
-	w, req, cd := newCommentsPageRequest(t, queries, []string{"administrator"}, 3)
+	stub := &db.QuerierStub{
+		GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow: &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow{
+			ID:         1,
+			LanguageID: sql.NullInt32{Int32: 1, Valid: true},
+			AuthorID:   2,
+			CategoryID: sql.NullInt32{Int32: 1, Valid: true},
+			ThreadID:   1,
+			Title:      sql.NullString{String: "t", Valid: true},
+			Url:        sql.NullString{String: "http://u", Valid: true},
+			Timezone:   sql.NullString{String: time.Local.String(), Valid: true},
+			Username:   sql.NullString{String: "bob", Valid: true},
+			Title_2:    sql.NullString{String: "cat", Valid: true},
+		},
+		GetThreadLastPosterAndPermsRow: &db.GetThreadLastPosterAndPermsRow{
+			Idforumthread:          1,
+			Firstpost:              1,
+			Lastposter:             1,
+			ForumtopicIdforumtopic: 1,
+			Lastaddition:           sql.NullTime{Time: time.Unix(0, 0), Valid: true},
+			Lastposterusername:     sql.NullString{String: "bob", Valid: true},
+		},
+	}
+	stub.SystemCheckGrantFn = func(p db.SystemCheckGrantParams) (int32, error) {
+		switch p.Action {
+		case "view":
+			return 1, nil
+		default:
+			return 0, sql.ErrNoRows
+		}
+	}
+
+	w, req, cd := newCommentsPageRequest(t, stub, []string{"administrator"}, 3)
 	cd.AdminMode = false
-
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT l.id")).WithArgs(int32(3), sql.NullInt32{Int32: 3, Valid: true}, int32(1)).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "language_id", "author_id", "category_id", "thread_id", "title", "url", "description", "listed", "timezone", "username", "title"}).
-			AddRow(1, 1, 2, 1, 1, "t", "http://u", "d", time.Unix(0, 0), time.Local.String(), "bob", "cat"))
-
-	expectGrantCheck(mock, 3, 1, "reply", sql.ErrNoRows)
-	expectGrantCheck(mock, 3, 1, "view", nil)
-	expectGrantCheck(mock, 3, 1, "edit-any", sql.ErrNoRows)
-	expectGrantCheck(mock, 3, 1, "edit", sql.ErrNoRows)
-
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT c.idcomments")).WithArgs(int32(3), int32(3), int32(1), int32(3), int32(3), "linker", sql.NullString{String: "link", Valid: true}, sql.NullInt32{Int32: 3, Valid: true}).
-		WillReturnRows(sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_id", "written", "text", "timezone", "deleted_at", "last_index", "posterusername", "is_owner"}))
-
-	threadRows := sqlmock.NewRows([]string{"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername"}).
-		AddRow(1, 1, 1, 1, 0, time.Unix(0, 0), false, "bob")
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT th.idforumthread")).WithArgs(int32(3), int32(1), int32(3), int32(3), int32(3), sql.NullInt32{Int32: 3, Valid: true}).WillReturnRows(threadRows)
 
 	CommentsPage(w, req)
 
 	if got := strings.TrimSpace(w.Body.String()); got != "no-edit" {
 		t.Fatalf("expected edit controls to be hidden without grants, got %q", got)
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	if got := len(stub.SystemCheckGrantCalls); got != 4 {
+		t.Fatalf("expected 4 grant checks, got %d", got)
 	}
 
-	_ = cd
 }
 
 func TestCommentsPageEditControlsAllowAdminMode(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
 	writeTempCommentsTemplate(t, `{{if .CanEdit}}can-edit{{else}}no-edit{{end}}`)
 
-	queries := db.New(conn)
-	w, req, cd := newCommentsPageRequest(t, queries, []string{"administrator"}, 4)
+	stub := &db.QuerierStub{
+		GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow: &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow{
+			ID:         1,
+			LanguageID: sql.NullInt32{Int32: 1, Valid: true},
+			AuthorID:   2,
+			CategoryID: sql.NullInt32{Int32: 1, Valid: true},
+			ThreadID:   1,
+			Title:      sql.NullString{String: "t", Valid: true},
+			Url:        sql.NullString{String: "http://u", Valid: true},
+			Timezone:   sql.NullString{String: time.Local.String(), Valid: true},
+			Username:   sql.NullString{String: "bob", Valid: true},
+			Title_2:    sql.NullString{String: "cat", Valid: true},
+		},
+		GetCommentsBySectionThreadIdForUserRows: []*db.GetCommentsBySectionThreadIdForUserRow{{
+			Idcomments:     9,
+			ForumthreadID:  1,
+			UsersIdusers:   2,
+			Written:        sql.NullTime{Time: time.Unix(0, 0), Valid: true},
+			Text:           sql.NullString{String: "text", Valid: true},
+			Posterusername: sql.NullString{String: "bob", Valid: true},
+			IsOwner:        false,
+		}},
+		GetThreadLastPosterAndPermsRow: &db.GetThreadLastPosterAndPermsRow{
+			Idforumthread:          1,
+			Firstpost:              1,
+			Lastposter:             1,
+			ForumtopicIdforumtopic: 1,
+			Lastaddition:           sql.NullTime{Time: time.Unix(0, 0), Valid: true},
+			Lastposterusername:     sql.NullString{String: "bob", Valid: true},
+		},
+	}
+
+	w, req, cd := newCommentsPageRequest(t, stub, []string{"administrator"}, 4)
 	cd.AdminMode = true
-
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT l.id")).WithArgs(int32(4), sql.NullInt32{Int32: 4, Valid: true}, int32(1)).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "language_id", "author_id", "category_id", "thread_id", "title", "url", "description", "listed", "timezone", "username", "title"}).
-			AddRow(1, 1, 2, 1, 1, "t", "http://u", "d", time.Unix(0, 0), time.Local.String(), "bob", "cat"))
-
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT c.idcomments")).WithArgs(int32(4), int32(4), int32(1), int32(4), int32(4), "linker", sql.NullString{String: "link", Valid: true}, sql.NullInt32{Int32: 4, Valid: true}).
-		WillReturnRows(sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_id", "written", "text", "timezone", "deleted_at", "last_index", "posterusername", "is_owner"}).
-			AddRow(9, 1, 2, sql.NullInt32{}, sql.NullTime{Time: time.Unix(0, 0), Valid: true}, sql.NullString{String: "text", Valid: true}, sql.NullString{String: time.Local.String(), Valid: true}, sql.NullTime{}, sql.NullTime{}, sql.NullString{String: "bob", Valid: true}, false))
-
-	threadRows := sqlmock.NewRows([]string{"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername"}).
-		AddRow(1, 1, 1, 1, 0, time.Unix(0, 0), false, "bob")
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT th.idforumthread")).WithArgs(int32(4), int32(1), int32(4), int32(4), int32(4), sql.NullInt32{Int32: 4, Valid: true}).WillReturnRows(threadRows)
 
 	CommentsPage(w, req)
 
 	if got := strings.TrimSpace(w.Body.String()); got != "can-edit" {
 		t.Fatalf("expected admin mode to allow edit controls, got %q", got)
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
-
-	_ = cd
 }

@@ -57,6 +57,18 @@ type QuerierStub struct {
 	SystemCheckGrantCalls   []SystemCheckGrantParams
 	SystemCheckGrantFn      func(SystemCheckGrantParams) (int32, error)
 
+	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow   *GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow
+	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserErr   error
+	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserCalls []GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams
+
+	GetCommentsBySectionThreadIdForUserRows  []*GetCommentsBySectionThreadIdForUserRow
+	GetCommentsBySectionThreadIdForUserErr   error
+	GetCommentsBySectionThreadIdForUserCalls []GetCommentsBySectionThreadIdForUserParams
+
+	GetThreadLastPosterAndPermsRow   *GetThreadLastPosterAndPermsRow
+	GetThreadLastPosterAndPermsErr   error
+	GetThreadLastPosterAndPermsCalls []GetThreadLastPosterAndPermsParams
+
 	SystemCheckRoleGrantReturns int32
 	SystemCheckRoleGrantErr     error
 	SystemCheckRoleGrantCalls   []SystemCheckRoleGrantParams
@@ -90,6 +102,27 @@ func (s *QuerierStub) DeleteThreadsByTopicID(ctx context.Context, forumtopicIdfo
 	defer s.mu.Unlock()
 	s.DeleteThreadsByTopicIDCalls = append(s.DeleteThreadsByTopicIDCalls, forumtopicIdforumtopic)
 	return s.DeleteThreadsByTopicIDErr
+}
+
+func (s *QuerierStub) GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(ctx context.Context, arg GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams) (*GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserCalls = append(s.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserCalls, arg)
+	return s.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow, s.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserErr
+}
+
+func (s *QuerierStub) GetCommentsBySectionThreadIdForUser(ctx context.Context, arg GetCommentsBySectionThreadIdForUserParams) ([]*GetCommentsBySectionThreadIdForUserRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.GetCommentsBySectionThreadIdForUserCalls = append(s.GetCommentsBySectionThreadIdForUserCalls, arg)
+	return s.GetCommentsBySectionThreadIdForUserRows, s.GetCommentsBySectionThreadIdForUserErr
+}
+
+func (s *QuerierStub) GetThreadLastPosterAndPerms(ctx context.Context, arg GetThreadLastPosterAndPermsParams) (*GetThreadLastPosterAndPermsRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.GetThreadLastPosterAndPermsCalls = append(s.GetThreadLastPosterAndPermsCalls, arg)
+	return s.GetThreadLastPosterAndPermsRow, s.GetThreadLastPosterAndPermsErr
 }
 
 // SystemCheckGrant records the call and returns the configured response.

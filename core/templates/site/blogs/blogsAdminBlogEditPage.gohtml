@@ -15,7 +15,7 @@
         </div>
         <input type="submit" name="task" value="{{ .Mode }}">
     </form>
-    <script src="/forum/topic_labels.js"></script>
+    <script src="{{ assetHash "/forum/topic_labels.js" }}"></script>
 {{ else }}
     Dead. No BLOG!
 {{ end }}

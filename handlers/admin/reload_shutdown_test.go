@@ -2,6 +2,8 @@ package admin
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -15,12 +17,32 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/app/server"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/navigation"
 )
 
+type adminAccessQueries struct {
+	db.Querier
+	allow bool
+}
+
+func (q adminAccessQueries) SystemCheckGrant(_ context.Context, arg db.SystemCheckGrantParams) (int32, error) {
+	if arg.Section == common.AdminAccessSection && arg.Action == common.AdminAccessAction {
+		if q.allow {
+			return 1, nil
+		}
+		return 0, fmt.Errorf("no admin access grant")
+	}
+	return 0, fmt.Errorf("unexpected grant check: %#v", arg)
+}
+
+func (q adminAccessQueries) SystemCheckRoleGrant(context.Context, db.SystemCheckRoleGrantParams) (int32, error) {
+	return 0, sql.ErrNoRows
+}
+
 func TestAdminReloadConfigPage_Unauthorized(t *testing.T) {
 	req := httptest.NewRequest("POST", "/admin/reload", nil)
-	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))
+	cd := common.NewCoreData(req.Context(), adminAccessQueries{}, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	h := New()
@@ -42,7 +64,7 @@ func TestAdminReloadRoute_Unauthorized(t *testing.T) {
 	h.RegisterRoutes(ar, cfg, navReg)
 
 	req := httptest.NewRequest("POST", "/admin/reload", nil)
-	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithUserRoles([]string{"anyone"}))
+	cd := common.NewCoreData(req.Context(), adminAccessQueries{}, cfg, common.WithUserRoles([]string{"anyone"}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -63,7 +85,7 @@ func TestAdminReloadRoute_Authorized(t *testing.T) {
 	h.RegisterRoutes(ar, cfg, navReg)
 
 	req := httptest.NewRequest("POST", "/admin/reload", nil)
-	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithUserRoles([]string{"administrator"}))
+	cd := common.NewCoreData(req.Context(), adminAccessQueries{allow: true}, cfg, common.WithUserRoles([]string{}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -84,7 +106,7 @@ func TestAdminShutdownRoute_Unauthorized(t *testing.T) {
 	h.RegisterRoutes(ar, cfg, navReg)
 
 	req := httptest.NewRequest("POST", "/admin/shutdown", nil)
-	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithUserRoles([]string{"anyone"}))
+	cd := common.NewCoreData(req.Context(), adminAccessQueries{}, cfg, common.WithUserRoles([]string{"anyone"}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -108,7 +130,7 @@ func TestAdminShutdownRoute_Authorized(t *testing.T) {
 	form.Set("task", string(TaskServerShutdown))
 	req := httptest.NewRequest("POST", "/admin/shutdown", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithUserRoles([]string{"administrator"}))
+	cd := common.NewCoreData(req.Context(), adminAccessQueries{allow: true}, cfg, common.WithUserRoles([]string{}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -153,7 +175,7 @@ func TestServerShutdownMatcher_Allowed(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/admin/shutdown", body)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	cfg := config.NewRuntimeConfig()
-	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithUserRoles([]string{"administrator"}))
+	cd := common.NewCoreData(req.Context(), adminAccessQueries{allow: true}, cfg, common.WithUserRoles([]string{}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	h := New()

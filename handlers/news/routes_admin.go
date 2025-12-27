@@ -11,20 +11,20 @@ import (
 func RegisterAdminRoutes(ar *mux.Router) {
 	nr := ar.PathPrefix("/news").Subrouter()
 	msg := fmt.Errorf("administrator role required")
-	nr.HandleFunc("", handlers.VerifyAccess(AdminNewsPage, msg, "administrator")).Methods("GET")
+	nr.HandleFunc("", handlers.VerifyAdminAccess(AdminNewsPage, msg)).Methods("GET")
 
 	// Article routes
 	articleRouter := nr.PathPrefix("/article").Subrouter()
-	articleRouter.HandleFunc("/{news}", handlers.VerifyAccess(AdminNewsPostPage, msg, "administrator")).Methods("GET")
-	articleRouter.HandleFunc("/{news}/edit", handlers.VerifyAccess(adminNewsEditFormPage, msg, "administrator")).Methods("GET")
-	articleRouter.HandleFunc("/{news}/edit", handlers.VerifyAccess(handlers.TaskHandler(editTask), msg, "administrator")).Methods("POST").MatcherFunc(editTask.Matcher())
-	articleRouter.HandleFunc("/{news}/delete", handlers.VerifyAccess(AdminNewsDeleteConfirmPage, msg, "administrator")).Methods("GET")
-	articleRouter.HandleFunc("/{news}/delete", handlers.VerifyAccess(handlers.TaskHandler(deleteNewsPostTask), msg, "administrator")).Methods("POST").MatcherFunc(deleteNewsPostTask.Matcher())
+	articleRouter.HandleFunc("/{news}", handlers.VerifyAdminAccess(AdminNewsPostPage, msg)).Methods("GET")
+	articleRouter.HandleFunc("/{news}/edit", handlers.VerifyAdminAccess(adminNewsEditFormPage, msg)).Methods("GET")
+	articleRouter.HandleFunc("/{news}/edit", handlers.VerifyAdminAccess(handlers.TaskHandler(editTask), msg)).Methods("POST").MatcherFunc(editTask.Matcher())
+	articleRouter.HandleFunc("/{news}/delete", handlers.VerifyAdminAccess(AdminNewsDeleteConfirmPage, msg)).Methods("GET")
+	articleRouter.HandleFunc("/{news}/delete", handlers.VerifyAdminAccess(handlers.TaskHandler(deleteNewsPostTask), msg)).Methods("POST").MatcherFunc(deleteNewsPostTask.Matcher())
 
 	// Legacy routes for compatibility
-	nr.HandleFunc("/{news}", handlers.VerifyAccess(AdminNewsPostPage, msg, "administrator")).Methods("GET")
-	nr.HandleFunc("/{news}/edit", handlers.VerifyAccess(adminNewsEditFormPage, msg, "administrator")).Methods("GET")
-	nr.HandleFunc("/{news}/edit", handlers.VerifyAccess(handlers.TaskHandler(editTask), msg, "administrator")).Methods("POST").MatcherFunc(editTask.Matcher())
-	nr.HandleFunc("/{news}/delete", handlers.VerifyAccess(AdminNewsDeleteConfirmPage, msg, "administrator")).Methods("GET")
-	nr.HandleFunc("/{news}/delete", handlers.VerifyAccess(handlers.TaskHandler(deleteNewsPostTask), msg, "administrator")).Methods("POST").MatcherFunc(deleteNewsPostTask.Matcher())
+	nr.HandleFunc("/{news}", handlers.VerifyAdminAccess(AdminNewsPostPage, msg)).Methods("GET")
+	nr.HandleFunc("/{news}/edit", handlers.VerifyAdminAccess(adminNewsEditFormPage, msg)).Methods("GET")
+	nr.HandleFunc("/{news}/edit", handlers.VerifyAdminAccess(handlers.TaskHandler(editTask), msg)).Methods("POST").MatcherFunc(editTask.Matcher())
+	nr.HandleFunc("/{news}/delete", handlers.VerifyAdminAccess(AdminNewsDeleteConfirmPage, msg)).Methods("GET")
+	nr.HandleFunc("/{news}/delete", handlers.VerifyAdminAccess(handlers.TaskHandler(deleteNewsPostTask), msg)).Methods("POST").MatcherFunc(deleteNewsPostTask.Matcher())
 }

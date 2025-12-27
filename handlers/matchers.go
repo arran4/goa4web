@@ -18,6 +18,11 @@ func RequiredAccess(accessLevels ...string) mux.MatcherFunc {
 	}
 }
 
+// RequireAdminAccess ensures the requester has the admin access grant.
+func RequireAdminAccess() mux.MatcherFunc {
+	return RequireGrant(common.AdminAccessSection, "", common.AdminAccessAction, nil)
+}
+
 // RequiresAnAccount checks that the requester has a valid user session.
 func RequiresAnAccount() mux.MatcherFunc {
 	return func(request *http.Request, match *mux.RouteMatch) bool {

@@ -135,7 +135,7 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navRe
 	ar.HandleFunc("/audit", AdminAuditLogPage).Methods("GET")
 	ar.HandleFunc("/settings", h.AdminSiteSettingsPage).Methods("GET", "POST")
 	ar.HandleFunc("/page-size", AdminPageSizePage).Methods("GET", "POST")
-	ar.HandleFunc("/files", AdminFilesPage).Methods("GET").MatcherFunc(handlers.RequiredAccess("administrator"))
+	ar.HandleFunc("/files", AdminFilesPage).Methods("GET").MatcherFunc(handlers.RequireAdminAccess())
 	ar.HandleFunc("/stats", h.AdminServerStatsPage).Methods("GET")
 	ar.HandleFunc("/usage", AdminUsageStatsPage).Methods("GET")
 
@@ -164,14 +164,14 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navRe
 	// Verify administrator access within the handlers so direct CLI calls
 	// cannot bypass the permission checks.
 	ar.HandleFunc("/reload",
-		handlers.VerifyAccess(h.AdminReloadConfigPage, fmt.Errorf("administrator role required"), "administrator")).
+		handlers.VerifyAdminAccess(h.AdminReloadConfigPage, fmt.Errorf("administrator role required"))).
 		Methods("POST").
-		MatcherFunc(handlers.RequiredAccess("administrator"))
+		MatcherFunc(handlers.RequireAdminAccess())
 	sst := h.NewServerShutdownTask()
 	ar.HandleFunc("/shutdown",
-		handlers.VerifyAccess(handlers.TaskHandler(sst), fmt.Errorf("administrator role required"), "administrator")).
+		handlers.VerifyAdminAccess(handlers.TaskHandler(sst), fmt.Errorf("administrator role required"))).
 		Methods("POST").
-		MatcherFunc(handlers.RequiredAccess("administrator")).
+		MatcherFunc(handlers.RequireAdminAccess()).
 		MatcherFunc(sst.Matcher())
 
 	api := ar.PathPrefix("/api").Subrouter()

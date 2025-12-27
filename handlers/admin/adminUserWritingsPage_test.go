@@ -37,6 +37,13 @@ func (q *userWritingsQueries) AdminGetAllWritingsByAuthor(_ context.Context, id 
 	return q.writings, nil
 }
 
+func (q *userWritingsQueries) SystemCheckGrant(_ context.Context, arg db.SystemCheckGrantParams) (int32, error) {
+	if arg.Section == common.AdminAccessSection && arg.Action == common.AdminAccessAction {
+		return 1, nil
+	}
+	return 0, fmt.Errorf("unexpected grant check: %#v", arg)
+}
+
 func TestAdminUserWritingsPage(t *testing.T) {
 	queries := &userWritingsQueries{
 		userID: 1,
@@ -67,7 +74,7 @@ func TestAdminUserWritingsPage(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/admin/user/1/writings", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{}))
 	cd.SetCurrentProfileUserID(1)
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)

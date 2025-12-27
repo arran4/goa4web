@@ -45,6 +45,7 @@ type Server struct {
 	NotFoundHandler http.Handler
 	Store           *sessions.CookieStore
 	DB              *sql.DB
+	querier         db.Querier
 	Bus             *eventbus.Bus
 	EmailReg        *email.Registry
 	FeedSigner      *feedsign.Signer
@@ -138,6 +139,9 @@ func WithRouterRegistry(r *router.Registry) Option { return func(s *Server) { s.
 // WithNavRegistry sets the navigation registry.
 func WithNavRegistry(n *nav.Registry) Option { return func(s *Server) { s.Nav = n } }
 
+// WithQuerier overrides the database querier used by the server.
+func WithQuerier(q db.Querier) Option { return func(s *Server) { s.querier = q } }
+
 // WithDLQRegistry sets the dead letter queue registry.
 func WithDLQRegistry(r *dlq.Registry) Option { return func(s *Server) { s.DLQReg = r } }
 
@@ -228,30 +232,37 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 			return nil, nil
 		}
 	}
-	if s.DB == nil {
+	if s.DB == nil && s.querier == nil {
 		ue := common.UserError{Err: fmt.Errorf("db not initialized"), ErrorMessage: "database unavailable"}
 		log.Printf("%s: %v", ue.ErrorMessage, ue.Err)
 		handlers.RenderErrorPage(w, r, errors.New(ue.ErrorMessage))
 		return nil, nil
 	}
 
-	queries := db.New(s.DB)
+	queries := s.querier
+	if queries == nil {
+		queries = db.New(s.DB)
+	}
 	sm := s.SessionManager
 	if sm == nil {
-		sm = db.NewSessionProxy(queries)
+		if q, ok := queries.(*db.Queries); ok {
+			sm = db.NewSessionProxy(q)
+		}
 	}
-	if s.Config.DBLogVerbosity > 0 {
+	if s.Config.DBLogVerbosity > 0 && s.DB != nil {
 		log.Printf("db pool stats: %+v", s.DB.Stats())
 	}
 
 	if session.ID != "" {
-		if uid != 0 {
-			if err := sm.InsertSession(r.Context(), session.ID, uid); err != nil {
-				log.Printf("insert session: %v", err)
-			}
-		} else {
-			if err := sm.DeleteSessionByID(r.Context(), session.ID); err != nil {
-				log.Printf("delete session: %v", err)
+		if sm != nil {
+			if uid != 0 {
+				if err := sm.InsertSession(r.Context(), session.ID, uid); err != nil {
+					log.Printf("insert session: %v", err)
+				}
+			} else {
+				if err := sm.DeleteSessionByID(r.Context(), session.ID); err != nil {
+					log.Printf("delete session: %v", err)
+				}
 			}
 		}
 	}
@@ -266,9 +277,8 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 	if s.RouterReg != nil {
 		modules = s.RouterReg.Names()
 	}
-	cd := common.NewCoreData(r.Context(), queries, s.Config,
+	coreOpts := []common.CoreOption{
 		common.WithImageSigner(s.ImageSigner),
-		common.WithCustomQueries(queries),
 		common.WithLinkSigner(s.LinkSigner),
 		common.WithFeedSigner(s.FeedSigner),
 		common.WithImageURLMapper(s.ImageSigner.MapURL),
@@ -283,7 +293,11 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 		common.WithRouterModules(modules),
 		common.WithOffset(offset),
 		common.WithSiteTitle("Arran's Site"),
-	)
+	}
+	if cq, ok := queries.(db.CustomQueries); ok {
+		coreOpts = append(coreOpts, common.WithCustomQueries(cq))
+	}
+	cd := common.NewCoreData(r.Context(), queries, s.Config, coreOpts...)
 	if providerErr != nil {
 		cd.EmailProviderError = providerErr.Error()
 	}

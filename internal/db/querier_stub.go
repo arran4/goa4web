@@ -106,10 +106,10 @@ func (s *QuerierStub) SystemCheckGrant(ctx context.Context, arg SystemCheckGrant
 	if err != nil {
 		return 0, err
 	}
-	if ret == 0 {
-		ret = 1
+	if ret != 0 {
+		return ret, nil
 	}
-	return ret, nil
+	return 0, sql.ErrNoRows
 }
 
 // SystemCheckRoleGrant records the call and returns the configured response.
@@ -126,10 +126,10 @@ func (s *QuerierStub) SystemCheckRoleGrant(ctx context.Context, arg SystemCheckR
 	if err != nil {
 		return 0, err
 	}
-	if ret == 0 {
-		ret = 1
+	if ret != 0 {
+		return ret, nil
 	}
-	return ret, nil
+	return 0, sql.ErrNoRows
 }
 
 // SystemGetUserByID records the call and returns the configured response.

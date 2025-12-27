@@ -34,6 +34,15 @@ type QuerierStub struct {
 	AdminListAdministratorEmailsReturns []string
 	AdminListAdministratorEmailsCalls   int
 
+	ListContentPrivateLabelsReturns []*ListContentPrivateLabelsRow
+	ListContentPrivateLabelsErr     error
+	ListContentPrivateLabelsCalls   []ListContentPrivateLabelsParams
+	ListContentPrivateLabelsFn      func(ListContentPrivateLabelsParams) ([]*ListContentPrivateLabelsRow, error)
+
+	ListSubscriptionsByUserReturns []*ListSubscriptionsByUserRow
+	ListSubscriptionsByUserErr     error
+	ListSubscriptionsByUserCalls   []int32
+
 	SystemGetTemplateOverrideReturns string
 	SystemGetTemplateOverrideErr     error
 	SystemGetTemplateOverrideCalls   []string
@@ -196,6 +205,30 @@ func (s *QuerierStub) AdminListAdministratorEmails(ctx context.Context) ([]strin
 	s.AdminListAdministratorEmailsCalls++
 	s.mu.Unlock()
 	return s.AdminListAdministratorEmailsReturns, s.AdminListAdministratorEmailsErr
+}
+
+// ListContentPrivateLabels records the call and returns the configured response or a custom function.
+func (s *QuerierStub) ListContentPrivateLabels(ctx context.Context, arg ListContentPrivateLabelsParams) ([]*ListContentPrivateLabelsRow, error) {
+	s.mu.Lock()
+	s.ListContentPrivateLabelsCalls = append(s.ListContentPrivateLabelsCalls, arg)
+	fn := s.ListContentPrivateLabelsFn
+	ret := s.ListContentPrivateLabelsReturns
+	err := s.ListContentPrivateLabelsErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(arg)
+	}
+	return ret, err
+}
+
+// ListSubscriptionsByUser records the call and returns configured rows.
+func (s *QuerierStub) ListSubscriptionsByUser(ctx context.Context, userID int32) ([]*ListSubscriptionsByUserRow, error) {
+	s.mu.Lock()
+	s.ListSubscriptionsByUserCalls = append(s.ListSubscriptionsByUserCalls, userID)
+	ret := s.ListSubscriptionsByUserReturns
+	err := s.ListSubscriptionsByUserErr
+	s.mu.Unlock()
+	return ret, err
 }
 
 // SystemGetTemplateOverride records the call and returns the configured response.

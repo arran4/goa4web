@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"sort"
 	"sync"
+	"time"
 )
 
 // QuerierStub records calls for selective db.Querier methods in tests.
@@ -69,6 +71,9 @@ type QuerierStub struct {
 	AdminListPrivateTopicParticipantsByTopicIDCalls   []sql.NullInt32
 	AdminListPrivateTopicParticipantsByTopicIDReturns []*AdminListPrivateTopicParticipantsByTopicIDRow
 	AdminListPrivateTopicParticipantsByTopicIDErr     error
+
+	pendingEmails      map[int32]*PendingEmail
+	nextPendingEmailID int32
 }
 
 func (s *QuerierStub) AdminListPrivateTopicParticipantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListPrivateTopicParticipantsByTopicIDRow, error) {
@@ -186,8 +191,26 @@ func (s *QuerierStub) SystemCreateNotification(ctx context.Context, arg SystemCr
 func (s *QuerierStub) InsertPendingEmail(ctx context.Context, arg InsertPendingEmailParams) error {
 	s.mu.Lock()
 	s.InsertPendingEmailCalls = append(s.InsertPendingEmailCalls, arg)
+	err := s.InsertPendingEmailErr
+	if err == nil {
+		if s.pendingEmails == nil {
+			s.pendingEmails = make(map[int32]*PendingEmail)
+			if s.nextPendingEmailID == 0 {
+				s.nextPendingEmailID = 1
+			}
+		}
+		id := s.nextPendingEmailID
+		s.nextPendingEmailID++
+		s.pendingEmails[id] = &PendingEmail{
+			ID:          id,
+			ToUserID:    arg.ToUserID,
+			DirectEmail: arg.DirectEmail,
+			Body:        arg.Body,
+			CreatedAt:   time.Now(),
+		}
+	}
 	s.mu.Unlock()
-	return s.InsertPendingEmailErr
+	return err
 }
 
 // AdminListAdministratorEmails records the call and returns the configured response.
@@ -236,6 +259,137 @@ func (s *QuerierStub) InsertSubscription(ctx context.Context, arg InsertSubscrip
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.InsertSubscriptionParams = append(s.InsertSubscriptionParams, arg)
+	return nil
+}
+
+// PendingEmails returns a snapshot of queued pending emails sorted by id.
+func (s *QuerierStub) PendingEmails() []*PendingEmail {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	var ids []int
+	for id := range s.pendingEmails {
+		ids = append(ids, int(id))
+	}
+	sort.Ints(ids)
+	var res []*PendingEmail
+	for _, id := range ids {
+		p := *s.pendingEmails[int32(id)]
+		res = append(res, &p)
+	}
+	return res
+}
+
+// AdminDeletePendingEmail removes the pending email from the in-memory store.
+func (s *QuerierStub) AdminDeletePendingEmail(ctx context.Context, id int32) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.pendingEmails == nil {
+		return sql.ErrNoRows
+	}
+	if _, ok := s.pendingEmails[id]; !ok {
+		return sql.ErrNoRows
+	}
+	delete(s.pendingEmails, id)
+	return nil
+}
+
+// AdminGetPendingEmailByID fetches a pending email from the in-memory store.
+func (s *QuerierStub) AdminGetPendingEmailByID(ctx context.Context, id int32) (*AdminGetPendingEmailByIDRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.pendingEmails == nil {
+		return nil, sql.ErrNoRows
+	}
+	p, ok := s.pendingEmails[id]
+	if !ok {
+		return nil, sql.ErrNoRows
+	}
+	return &AdminGetPendingEmailByIDRow{
+		ID:          p.ID,
+		ToUserID:    p.ToUserID,
+		Body:        p.Body,
+		ErrorCount:  p.ErrorCount,
+		DirectEmail: p.DirectEmail,
+	}, nil
+}
+
+// SystemIncrementPendingEmailError increases the error counter for the pending email.
+func (s *QuerierStub) SystemIncrementPendingEmailError(ctx context.Context, id int32) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.pendingEmails == nil {
+		return sql.ErrNoRows
+	}
+	p, ok := s.pendingEmails[id]
+	if !ok {
+		return sql.ErrNoRows
+	}
+	p.ErrorCount++
+	return nil
+}
+
+// GetPendingEmailErrorCount returns the current error count for the pending email.
+func (s *QuerierStub) GetPendingEmailErrorCount(ctx context.Context, id int32) (int32, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.pendingEmails == nil {
+		return 0, sql.ErrNoRows
+	}
+	p, ok := s.pendingEmails[id]
+	if !ok {
+		return 0, sql.ErrNoRows
+	}
+	return p.ErrorCount, nil
+}
+
+// SystemListPendingEmails returns unsent emails ordered by id respecting limit and offset.
+func (s *QuerierStub) SystemListPendingEmails(ctx context.Context, arg SystemListPendingEmailsParams) ([]*SystemListPendingEmailsRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.pendingEmails == nil || arg.Limit == 0 {
+		return nil, nil
+	}
+	var ids []int
+	for id, p := range s.pendingEmails {
+		if !p.SentAt.Valid {
+			ids = append(ids, int(id))
+		}
+	}
+	sort.Ints(ids)
+	start := int(arg.Offset)
+	if start >= len(ids) {
+		return nil, nil
+	}
+	end := start + int(arg.Limit)
+	if end > len(ids) {
+		end = len(ids)
+	}
+	var res []*SystemListPendingEmailsRow
+	for _, id := range ids[start:end] {
+		p := s.pendingEmails[int32(id)]
+		res = append(res, &SystemListPendingEmailsRow{
+			ID:          p.ID,
+			ToUserID:    p.ToUserID,
+			Body:        p.Body,
+			ErrorCount:  p.ErrorCount,
+			DirectEmail: p.DirectEmail,
+		})
+	}
+	return res, nil
+}
+
+// SystemMarkPendingEmailSent marks the in-memory email as sent.
+func (s *QuerierStub) SystemMarkPendingEmailSent(ctx context.Context, id int32) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.pendingEmails == nil {
+		return sql.ErrNoRows
+	}
+	p, ok := s.pendingEmails[id]
+	if !ok {
+		return sql.ErrNoRows
+	}
+	p.SentAt = sql.NullTime{Time: time.Now(), Valid: true}
 	return nil
 }
 

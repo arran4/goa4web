@@ -34,6 +34,13 @@ type QuerierStub struct {
 	AdminListAdministratorEmailsReturns []string
 	AdminListAdministratorEmailsCalls   int
 
+	TemplateOverrides map[string]string
+
+	AdminSetTemplateOverrideErr      error
+	AdminSetTemplateOverrideCalls    []AdminSetTemplateOverrideParams
+	AdminDeleteTemplateOverrideErr   error
+	AdminDeleteTemplateOverrideCalls []string
+
 	SystemGetTemplateOverrideReturns string
 	SystemGetTemplateOverrideErr     error
 	SystemGetTemplateOverrideCalls   []string
@@ -202,8 +209,52 @@ func (s *QuerierStub) AdminListAdministratorEmails(ctx context.Context) ([]strin
 func (s *QuerierStub) SystemGetTemplateOverride(ctx context.Context, name string) (string, error) {
 	s.mu.Lock()
 	s.SystemGetTemplateOverrideCalls = append(s.SystemGetTemplateOverrideCalls, name)
+	ret := s.SystemGetTemplateOverrideReturns
+	err := s.SystemGetTemplateOverrideErr
+	body, ok := "", false
+	if s.TemplateOverrides != nil {
+		body, ok = s.TemplateOverrides[name]
+	}
 	s.mu.Unlock()
-	return s.SystemGetTemplateOverrideReturns, s.SystemGetTemplateOverrideErr
+	if err != nil {
+		return "", err
+	}
+	if s.TemplateOverrides != nil {
+		if !ok {
+			return "", sql.ErrNoRows
+		}
+		return body, nil
+	}
+	return ret, nil
+}
+
+// AdminSetTemplateOverride records the call and stores the override in memory.
+func (s *QuerierStub) AdminSetTemplateOverride(ctx context.Context, arg AdminSetTemplateOverrideParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.AdminSetTemplateOverrideCalls = append(s.AdminSetTemplateOverrideCalls, arg)
+	if s.AdminSetTemplateOverrideErr != nil {
+		return s.AdminSetTemplateOverrideErr
+	}
+	if s.TemplateOverrides == nil {
+		s.TemplateOverrides = map[string]string{}
+	}
+	s.TemplateOverrides[arg.Name] = arg.Body
+	return nil
+}
+
+// AdminDeleteTemplateOverride records the call and removes the override from memory.
+func (s *QuerierStub) AdminDeleteTemplateOverride(ctx context.Context, name string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.AdminDeleteTemplateOverrideCalls = append(s.AdminDeleteTemplateOverrideCalls, name)
+	if s.AdminDeleteTemplateOverrideErr != nil {
+		return s.AdminDeleteTemplateOverrideErr
+	}
+	if s.TemplateOverrides != nil {
+		delete(s.TemplateOverrides, name)
+	}
+	return nil
 }
 
 func (s *QuerierStub) ListSubscribersForPatterns(ctx context.Context, arg ListSubscribersForPatternsParams) ([]int32, error) {

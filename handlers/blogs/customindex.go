@@ -37,8 +37,8 @@ func BlogsGeneralIndexItems(cd *common.CoreData, r *http.Request) []common.Index
 			Link: "/admin/blogs",
 		})
 	}
-	userHasWriter := cd.HasRole("content writer")
-	if userHasWriter {
+	userCanPost := cd.HasGrant("blogs", "entry", "post", 0)
+	if userCanPost {
 		items = append(items, common.IndexItem{
 			Name: "Write blog",
 			Link: "/blogs/add",

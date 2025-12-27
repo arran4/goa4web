@@ -12,6 +12,24 @@ type QuerierStub struct {
 	Querier
 	mu sync.Mutex
 
+	AdminListAllUserIDsReturns []int32
+	AdminListAllUserIDsErr     error
+	AdminListAllUserIDsCalls   int
+
+	AdminListAllUsersReturns []*AdminListAllUsersRow
+	AdminListAllUsersErr     error
+	AdminListAllUsersCalls   int
+
+	SystemListAllUsersReturns []*SystemListAllUsersRow
+	SystemListAllUsersErr     error
+	SystemListAllUsersCalls   int
+
+	AdminDeleteUserByIDCalls []int32
+	AdminDeleteUserByIDErr   error
+
+	AdminUpdateUsernameByIDCalls []AdminUpdateUsernameByIDParams
+	AdminUpdateUsernameByIDErr   error
+
 	SystemGetUserByIDRow   *SystemGetUserByIDRow
 	SystemGetUserByIDErr   error
 	SystemGetUserByIDCalls []int32
@@ -69,6 +87,67 @@ type QuerierStub struct {
 	AdminListPrivateTopicParticipantsByTopicIDCalls   []sql.NullInt32
 	AdminListPrivateTopicParticipantsByTopicIDReturns []*AdminListPrivateTopicParticipantsByTopicIDRow
 	AdminListPrivateTopicParticipantsByTopicIDErr     error
+}
+
+func (s *QuerierStub) AdminListAllUserIDs(ctx context.Context) ([]int32, error) {
+	s.mu.Lock()
+	s.AdminListAllUserIDsCalls++
+	ret := s.AdminListAllUserIDsReturns
+	err := s.AdminListAllUserIDsErr
+	s.mu.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	if ret == nil {
+		return nil, errors.New("AdminListAllUserIDs not stubbed")
+	}
+	return ret, nil
+}
+
+func (s *QuerierStub) AdminListAllUsers(ctx context.Context) ([]*AdminListAllUsersRow, error) {
+	s.mu.Lock()
+	s.AdminListAllUsersCalls++
+	ret := s.AdminListAllUsersReturns
+	err := s.AdminListAllUsersErr
+	s.mu.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	if ret == nil {
+		return nil, errors.New("AdminListAllUsers not stubbed")
+	}
+	return ret, nil
+}
+
+func (s *QuerierStub) SystemListAllUsers(ctx context.Context) ([]*SystemListAllUsersRow, error) {
+	s.mu.Lock()
+	s.SystemListAllUsersCalls++
+	ret := s.SystemListAllUsersReturns
+	err := s.SystemListAllUsersErr
+	s.mu.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	if ret == nil {
+		return nil, errors.New("SystemListAllUsers not stubbed")
+	}
+	return ret, nil
+}
+
+func (s *QuerierStub) AdminDeleteUserByID(ctx context.Context, idusers int32) error {
+	s.mu.Lock()
+	s.AdminDeleteUserByIDCalls = append(s.AdminDeleteUserByIDCalls, idusers)
+	err := s.AdminDeleteUserByIDErr
+	s.mu.Unlock()
+	return err
+}
+
+func (s *QuerierStub) AdminUpdateUsernameByID(ctx context.Context, arg AdminUpdateUsernameByIDParams) error {
+	s.mu.Lock()
+	s.AdminUpdateUsernameByIDCalls = append(s.AdminUpdateUsernameByIDCalls, arg)
+	err := s.AdminUpdateUsernameByIDErr
+	s.mu.Unlock()
+	return err
 }
 
 func (s *QuerierStub) AdminListPrivateTopicParticipantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListPrivateTopicParticipantsByTopicIDRow, error) {

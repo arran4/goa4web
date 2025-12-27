@@ -69,6 +69,17 @@ type QuerierStub struct {
 	AdminListPrivateTopicParticipantsByTopicIDCalls   []sql.NullInt32
 	AdminListPrivateTopicParticipantsByTopicIDReturns []*AdminListPrivateTopicParticipantsByTopicIDRow
 	AdminListPrivateTopicParticipantsByTopicIDErr     error
+
+	AdminGetImagePostCalls []int32
+	AdminGetImagePostRow   *AdminGetImagePostRow
+	AdminGetImagePostErr   error
+
+	AdminApproveImagePostCalls []int32
+	AdminApproveImagePostErr   error
+
+	GetPermissionsByUserIDCalls   []int32
+	GetPermissionsByUserIDReturns []*GetPermissionsByUserIDRow
+	GetPermissionsByUserIDErr     error
 }
 
 func (s *QuerierStub) AdminListPrivateTopicParticipantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListPrivateTopicParticipantsByTopicIDRow, error) {
@@ -196,6 +207,41 @@ func (s *QuerierStub) AdminListAdministratorEmails(ctx context.Context) ([]strin
 	s.AdminListAdministratorEmailsCalls++
 	s.mu.Unlock()
 	return s.AdminListAdministratorEmailsReturns, s.AdminListAdministratorEmailsErr
+}
+
+// AdminGetImagePost records the call and returns the configured response.
+func (s *QuerierStub) AdminGetImagePost(ctx context.Context, idimagepost int32) (*AdminGetImagePostRow, error) {
+	s.mu.Lock()
+	s.AdminGetImagePostCalls = append(s.AdminGetImagePostCalls, idimagepost)
+	row := s.AdminGetImagePostRow
+	err := s.AdminGetImagePostErr
+	s.mu.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	if row == nil {
+		return nil, errors.New("AdminGetImagePost not stubbed")
+	}
+	return row, nil
+}
+
+// AdminApproveImagePost records the call and returns the configured response.
+func (s *QuerierStub) AdminApproveImagePost(ctx context.Context, idimagepost int32) error {
+	s.mu.Lock()
+	s.AdminApproveImagePostCalls = append(s.AdminApproveImagePostCalls, idimagepost)
+	err := s.AdminApproveImagePostErr
+	s.mu.Unlock()
+	return err
+}
+
+// GetPermissionsByUserID records the call and returns the configured permissions.
+func (s *QuerierStub) GetPermissionsByUserID(ctx context.Context, usersIdusers int32) ([]*GetPermissionsByUserIDRow, error) {
+	s.mu.Lock()
+	s.GetPermissionsByUserIDCalls = append(s.GetPermissionsByUserIDCalls, usersIdusers)
+	ret := s.GetPermissionsByUserIDReturns
+	err := s.GetPermissionsByUserIDErr
+	s.mu.Unlock()
+	return ret, err
 }
 
 // SystemGetTemplateOverride records the call and returns the configured response.

@@ -132,6 +132,8 @@ type CoreData struct {
 	emailProvider      lazy.Value[MailProvider]
 	EmailProviderError string
 	queries            db.Querier
+	grantChecker       func(section, item, action string, itemID int32) bool
+	newsFetcher        func(offset, limit int32) ([]*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error)
 
 	// Keep this sorted
 	adminLatestNews                  lazy.Value[[]*db.AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow]
@@ -1126,6 +1128,13 @@ func (cd *CoreData) ExternalLink(id int32) *db.ExternalLink {
 
 // fetchLatestNews loads news posts from the database with permission data.
 func (cd *CoreData) fetchLatestNews(offset, limit int32) ([]*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
+	if cd.newsFetcher != nil {
+		rows, err := cd.newsFetcher(offset, limit)
+		if err != nil {
+			return nil, err
+		}
+		return cd.filterNewsByGrant(rows), nil
+	}
 	if cd.queries == nil {
 		return nil, nil
 	}
@@ -1138,6 +1147,10 @@ func (cd *CoreData) fetchLatestNews(offset, limit int32) ([]*db.GetNewsPostsWith
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, err
 	}
+	return cd.filterNewsByGrant(rows), nil
+}
+
+func (cd *CoreData) filterNewsByGrant(rows []*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow) []*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow {
 	var posts []*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
 	for _, row := range rows {
 		if !cd.HasGrant("news", "post", "see", row.Idsitenews) {
@@ -1145,7 +1158,7 @@ func (cd *CoreData) fetchLatestNews(offset, limit int32) ([]*db.GetNewsPostsWith
 		}
 		posts = append(posts, row)
 	}
-	return posts, nil
+	return posts
 }
 
 // FAQCategories returns FAQ categories loaded on demand.
@@ -2617,6 +2630,16 @@ func WithPreference(p *db.Preference) CoreOption {
 // WithUserRoles preloads the current user roles.
 func WithUserRoles(r []string) CoreOption {
 	return func(cd *CoreData) { cd.userRoles.Set(r) }
+}
+
+// WithGrantChecker overrides grant checks, useful in tests.
+func WithGrantChecker(checker func(section, item, action string, itemID int32) bool) CoreOption {
+	return func(cd *CoreData) { cd.grantChecker = checker }
+}
+
+// WithNewsFetcher overrides news retrieval, useful in tests.
+func WithNewsFetcher(fetcher func(offset, limit int32) ([]*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error)) CoreOption {
+	return func(cd *CoreData) { cd.newsFetcher = fetcher }
 }
 
 // WithConfig sets the runtime config for this CoreData.

@@ -2,14 +2,12 @@ package common_test
 
 import (
 	"context"
-	"database/sql"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http/httptest"
 	"testing"
-	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -49,34 +47,32 @@ func TestTemplateFuncsCSRFToken(t *testing.T) {
 }
 
 func TestLatestNewsRespectsPermissions(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-
-	queries := db.New(conn)
-
-	now := time.Now()
-	rows := sqlmock.NewRows([]string{
-		"writerName", "writerId", "idsitenews", "forumthread_id", "language_id",
-		"users_idusers", "news", "occurred", "timezone", "comments",
-	}).AddRow("w", 1, 1, 0, 1, 1, "a", now, time.Local.String(), 0).AddRow("w", 1, 2, 0, 1, 1, "b", now, time.Local.String(), 0)
-
-	mock.ExpectQuery("SELECT u.username").WithArgs(int32(1), int32(1), int32(1), sql.NullInt32{Int32: 1, Valid: true}, int32(15), int32(0)).WillReturnRows(rows)
-
-	mock.ExpectQuery("SELECT 1 FROM grants g JOIN roles").WithArgs("user", "administrator").WillReturnError(sql.ErrNoRows)
-	mock.ExpectQuery("SELECT 1 FROM grants").WithArgs(int32(1), "news", sql.NullString{String: "post", Valid: true}, "see", sql.NullInt32{Int32: 1, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
-
-	mock.ExpectQuery("SELECT 1 FROM grants g JOIN roles").WithArgs("user", "administrator").WillReturnError(sql.ErrNoRows)
-	mock.ExpectQuery("SELECT 1 FROM grants").WithArgs(int32(1), "news", sql.NullString{String: "post", Valid: true}, "see", sql.NullInt32{Int32: 2, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}).WillReturnError(sql.ErrNoRows)
-
 	req := httptest.NewRequest("GET", "/", nil)
-	ctx := req.Context()
-	cd := common.NewTestCoreData(t, queries)
-	common.WithUserRoles([]string{"user"})(cd)
+	var grantChecks []int32
+	fetchCalls := 0
+	cfg := config.NewRuntimeConfig()
+	pageSize := cfg.PageSizeDefault
+	cd := common.NewCoreData(req.Context(), nil, cfg,
+		common.WithUserRoles([]string{"user"}),
+		common.WithGrantChecker(func(section, item, action string, itemID int32) bool {
+			grantChecks = append(grantChecks, itemID)
+			return itemID == 1
+		}),
+		common.WithNewsFetcher(func(offset, limit int32) ([]*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
+			fetchCalls++
+			if offset != 0 {
+				t.Fatalf("unexpected offset %d", offset)
+			}
+			if limit != int32(pageSize) {
+				t.Fatalf("unexpected limit %d", limit)
+			}
+			return []*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow{
+				{Idsitenews: 1},
+				{Idsitenews: 2},
+			}, nil
+		}))
 	cd.UserID = 1
-	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	_ = req.WithContext(ctx)
 
 	res, err := cd.LatestNews()
@@ -86,9 +82,14 @@ func TestLatestNewsRespectsPermissions(t *testing.T) {
 	if l := len(res); l != 1 {
 		t.Fatalf("expected 1 news post, got %d", l)
 	}
-
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	if res[0].Idsitenews != 1 {
+		t.Fatalf("unexpected news id %d", res[0].Idsitenews)
+	}
+	if len(grantChecks) != 2 || grantChecks[0] != 1 || grantChecks[1] != 2 {
+		t.Fatalf("grant checks = %v, want [1 2]", grantChecks)
+	}
+	if fetchCalls != 1 {
+		t.Fatalf("expected one fetch call, got %d", fetchCalls)
 	}
 }
 

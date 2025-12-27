@@ -17,5 +17,11 @@ func canEditNewsPost(cd *common.CoreData, postID int32) bool {
 
 // CanPostNews reports whether the current user can create news posts.
 func CanPostNews(cd *common.CoreData) bool {
-	return cd != nil && cd.HasGrant("news", "post", "post", 0)
+	if cd == nil {
+		return false
+	}
+	if cd.HasAdminRole() && !cd.IsAdminMode() {
+		return false
+	}
+	return cd.HasGrant("news", "post", "post", 0)
 }

@@ -1,7 +1,14 @@
 {{ template "head" $ }}
 <form method="post">
     {{ csrfField }}
-    Timezone: <input type="text" name="timezone" value="{{ .Timezone }}"><br>
+    <label for="timezone-input">Timezone:</label>
+    <input type="text" id="timezone-input" name="timezone" value="{{ .Timezone }}" list="timezones">
+    <datalist id="timezones">
+        {{ range .Timezones }}
+            <option value="{{ . }}"></option>
+        {{ end }}
+    </datalist>
+    <br>
     <input type="submit" name="task" value="Save timezone">
 </form>
 {{ template "tail" $ }}

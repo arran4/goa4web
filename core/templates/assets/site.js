@@ -12,9 +12,79 @@ document.addEventListener('DOMContentLoaded', function() {
             if (targetElement) {
                 targetElement.classList.toggle('hidden');
             }
+        } else if (e.target && e.target.classList.contains('convert-markdown-to-a4code')) {
+            e.preventDefault();
+            const targetId = e.target.getAttribute('data-target');
+            convertMarkdownToA4Code(targetId);
+        } else if (e.target && e.target.classList.contains('convert-a4code-to-markdown')) {
+            e.preventDefault();
+            const targetId = e.target.getAttribute('data-target');
+            convertA4CodeToMarkdown(targetId);
+        } else if (e.target && e.target.classList.contains('preview-a4code')) {
+            e.preventDefault();
+            const targetId = e.target.getAttribute('data-target');
+            const previewUrl = e.target.getAttribute('data-preview-url');
+            previewA4Code(targetId, previewUrl);
         }
     });
 });
+
+function convertMarkdownToA4Code(targetId) {
+    const textarea = document.getElementById(targetId);
+    if (!textarea) return;
+    if (window.A4Code) {
+        textarea.value = A4Code.markdownToA4Code(textarea.value);
+    } else {
+        alert("A4Code library not loaded");
+    }
+}
+
+function convertA4CodeToMarkdown(targetId) {
+    const textarea = document.getElementById(targetId);
+    if (!textarea) return;
+    if (window.A4Code) {
+        textarea.value = A4Code.a4codeToMarkdown(textarea.value);
+    } else {
+        alert("A4Code library not loaded");
+    }
+}
+
+function previewA4Code(targetId, previewUrl) {
+    const textarea = document.getElementById(targetId);
+    if (!textarea) return;
+
+    const text = textarea.value;
+    const previewContainer = document.getElementById('preview-container');
+    const previewContent = document.getElementById('preview-content');
+
+    const headers = {
+        'Content-Type': 'text/plain',
+    };
+    const csrfToken = document.querySelector('input[name="csrf_token"]');
+    if (csrfToken) {
+        headers['X-CSRF-Token'] = csrfToken.value;
+    }
+
+    fetch(previewUrl, {
+        method: 'POST',
+        headers: headers,
+        body: text
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.text();
+    })
+    .then(html => {
+        previewContent.innerHTML = html;
+        previewContainer.classList.remove('hidden');
+    })
+    .catch(error => {
+        console.error('Error fetching preview:', error);
+        alert('Failed to generate preview.');
+    });
+}
 
 function quote(type, commentId) {
     if (type === 'selected') {

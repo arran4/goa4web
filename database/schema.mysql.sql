@@ -63,6 +63,7 @@ CREATE TABLE `faq` (
   `author_id` int(10) NOT NULL DEFAULT 0,
   `answer` mediumtext DEFAULT NULL,
   `question` mediumtext DEFAULT NULL,
+  `priority` INT NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   KEY `Table_21_FKIndex1` (`author_id`),
   KEY `Table_21_FKIndex2` (`language_id`),

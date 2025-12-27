@@ -230,3 +230,10 @@ WHERE faq.category_id = sqlc.arg(category_id)
         AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   );
+
+-- name: AdminUpdateFAQPriority :exec
+UPDATE faq SET priority = ? WHERE id = ?;
+
+-- name: AdminCreateFAQ :execresult
+INSERT INTO faq (question, answer, category_id, author_id, language_id, priority)
+VALUES (?, ?, ?, ?, ?, ?);

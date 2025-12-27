@@ -1,6 +1,6 @@
 {{ template "head" $ }}
-<link rel="stylesheet" href="/forum/forum.css">
-<script src="/forum/forum.js"></script>
+<link rel="stylesheet" href="{{ assetHash "/forum/forum.css" }}">
+<script src="{{ assetHash "/forum/forum.js" }}"></script>
     {{ if .Category }}
         <h1>Category: {{ .Category.Title.String }}</h1>
     {{ end }}

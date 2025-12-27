@@ -43,6 +43,54 @@ func (c *faqCmd) Run() error {
 			return fmt.Errorf("read: %w", err)
 		}
 		return cmd.Run()
+	case "add-from-template":
+		cmd, err := parseFaqAddFromTemplateCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("add-from-template: %w", err)
+		}
+		return cmd.Run()
+	case "list-templates":
+		cmd, err := parseFaqListTemplatesCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("list-templates: %w", err)
+		}
+		return cmd.Run()
+	case "list":
+		cmd, err := parseFaqListCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("list: %w", err)
+		}
+		return cmd.Run()
+	case "dump":
+		cmd, err := parseFaqDumpCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("dump: %w", err)
+		}
+		return cmd.Run()
+	case "update":
+		cmd, err := parseFaqUpdateCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("update: %w", err)
+		}
+		return cmd.Run()
+	case "reorder":
+		cmd, err := parseFaqReorderCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("reorder: %w", err)
+		}
+		return cmd.Run()
+	case "delete":
+		cmd, err := parseFaqDeleteCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("delete: %w", err)
+		}
+		return cmd.Run()
+	case "create":
+		cmd, err := parseFaqCreateCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("create: %w", err)
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown faq command %q", args[0])

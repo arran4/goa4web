@@ -30,7 +30,16 @@ func (ApprovePostTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
-	if cd == nil || !cd.HasRole("administrator") {
+	if cd == nil {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+		})
+	}
+	boardID, err := imageBoardIDFromRequest(r, cd)
+	if err != nil {
+		return err
+	}
+	if !cd.HasGrant("imagebbs", "board", imagebbsApproveAction, boardID) {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		})

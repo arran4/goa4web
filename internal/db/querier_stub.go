@@ -69,6 +69,23 @@ type QuerierStub struct {
 	AdminListPrivateTopicParticipantsByTopicIDCalls   []sql.NullInt32
 	AdminListPrivateTopicParticipantsByTopicIDReturns []*AdminListPrivateTopicParticipantsByTopicIDRow
 	AdminListPrivateTopicParticipantsByTopicIDErr     error
+
+	AdminCountForumTopicsReturn int64
+	AdminCountForumTopicsErr    error
+	AdminCountForumTopicsCalls  int
+
+	AdminListForumTopicsParams  []AdminListForumTopicsParams
+	AdminListForumTopicsReturns []*Forumtopic
+	AdminListForumTopicsErr     error
+
+	GetAllForumCategoriesParams  []GetAllForumCategoriesParams
+	GetAllForumCategoriesReturns []*Forumcategory
+	GetAllForumCategoriesErr     error
+
+	AdminGetTopicGrantsParams  []sql.NullInt32
+	AdminGetTopicGrantsReturns map[int32][]*AdminGetTopicGrantsRow
+	AdminGetTopicGrantsDefault []*AdminGetTopicGrantsRow
+	AdminGetTopicGrantsErr     error
 }
 
 func (s *QuerierStub) AdminListPrivateTopicParticipantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListPrivateTopicParticipantsByTopicIDRow, error) {
@@ -76,6 +93,52 @@ func (s *QuerierStub) AdminListPrivateTopicParticipantsByTopicID(ctx context.Con
 	defer s.mu.Unlock()
 	s.AdminListPrivateTopicParticipantsByTopicIDCalls = append(s.AdminListPrivateTopicParticipantsByTopicIDCalls, itemID)
 	return s.AdminListPrivateTopicParticipantsByTopicIDReturns, s.AdminListPrivateTopicParticipantsByTopicIDErr
+}
+
+func (s *QuerierStub) AdminCountForumTopics(ctx context.Context) (int64, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.AdminCountForumTopicsCalls++
+	return s.AdminCountForumTopicsReturn, s.AdminCountForumTopicsErr
+}
+
+func (s *QuerierStub) AdminListForumTopics(ctx context.Context, arg AdminListForumTopicsParams) ([]*Forumtopic, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.AdminListForumTopicsParams = append(s.AdminListForumTopicsParams, arg)
+	return s.AdminListForumTopicsReturns, s.AdminListForumTopicsErr
+}
+
+func (s *QuerierStub) GetAllForumCategories(ctx context.Context, arg GetAllForumCategoriesParams) ([]*Forumcategory, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.GetAllForumCategoriesParams = append(s.GetAllForumCategoriesParams, arg)
+	return s.GetAllForumCategoriesReturns, s.GetAllForumCategoriesErr
+}
+
+func (s *QuerierStub) AdminGetTopicGrants(ctx context.Context, topicID sql.NullInt32) ([]*AdminGetTopicGrantsRow, error) {
+	s.mu.Lock()
+	s.AdminGetTopicGrantsParams = append(s.AdminGetTopicGrantsParams, topicID)
+	retMap := s.AdminGetTopicGrantsReturns
+	defaultRet := s.AdminGetTopicGrantsDefault
+	err := s.AdminGetTopicGrantsErr
+	s.mu.Unlock()
+
+	if err != nil {
+		return nil, err
+	}
+
+	if retMap != nil {
+		if rows, ok := retMap[topicID.Int32]; ok {
+			return rows, nil
+		}
+	}
+
+	if defaultRet != nil {
+		return defaultRet, nil
+	}
+
+	return nil, nil
 }
 
 func (s *QuerierStub) AdminListForumTopicGrantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListForumTopicGrantsByTopicIDRow, error) {

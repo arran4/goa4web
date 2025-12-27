@@ -5,11 +5,9 @@ import (
 	"database/sql"
 	"net/http"
 	"net/http/httptest"
-	"regexp"
+	"strings"
 	"testing"
-	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/config"
@@ -20,27 +18,38 @@ import (
 )
 
 func TestAdminTopicsPage(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	queries := &db.QuerierStub{
+		AdminCountForumTopicsReturn: 2,
+		AdminListForumTopicsReturns: []*db.Forumtopic{
+			{
+				Idforumtopic:                 1,
+				ForumcategoryIdforumcategory: 10,
+				Title:                        sql.NullString{String: "Public topic", Valid: true},
+				Threads:                      sql.NullInt32{Int32: 3, Valid: true},
+				Comments:                     sql.NullInt32{Int32: 4, Valid: true},
+			},
+			{
+				Idforumtopic:                 2,
+				ForumcategoryIdforumcategory: 20,
+				Title:                        sql.NullString{String: "Private topic", Valid: true},
+				Threads:                      sql.NullInt32{Int32: 1, Valid: true},
+				Comments:                     sql.NullInt32{Int32: 2, Valid: true},
+				Handler:                      "private",
+			},
+		},
+		GetAllForumCategoriesReturns: []*db.Forumcategory{
+			{Idforumcategory: 10, Title: sql.NullString{String: "General", Valid: true}},
+		},
+		AdminGetTopicGrantsReturns: map[int32][]*db.AdminGetTopicGrantsRow{
+			1: {
+				{RoleName: sql.NullString{String: "anyone", Valid: true}},
+			},
+			2: {
+				{Username: sql.NullString{String: "alice", Valid: true}},
+				{Username: sql.NullString{String: "bob", Valid: true}},
+			},
+		},
 	}
-	defer conn.Close()
-	mock.MatchExpectationsInOrder(false)
-
-	countRows := sqlmock.NewRows([]string{"count"}).AddRow(1)
-	mock.ExpectQuery(`SELECT COUNT\(`).WillReturnRows(countRows)
-
-	rows := sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_id", "title", "description", "threads", "comments", "lastaddition", "handler"}).
-		AddRow(1, 0, 0, 0, "t", "d", 0, 0, time.Now(), "")
-	mock.ExpectQuery("SELECT t.idforumtopic").WillReturnRows(rows)
-
-	categoryRows := sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "language_id", "title", "description"}).
-		AddRow(1, 0, 0, "cat", "desc")
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT f.idforumcategory, f.forumcategory_idforumcategory, f.language_id, f.title, f.description FROM forumcategory f")).WithArgs(int32(0), int32(0)).WillReturnRows(categoryRows)
-
-	grantsRows := sqlmock.NewRows([]string{"section", "role_id", "role_name", "user_id", "username"}).
-		AddRow("forum", sql.NullInt32{}, sql.NullString{}, sql.NullInt32{}, sql.NullString{})
-	mock.ExpectQuery("SELECT g.section").WithArgs(sqlmock.AnyArg()).WillReturnRows(grantsRows)
 
 	origStore := core.Store
 	origName := core.SessionName
@@ -51,7 +60,9 @@ func TestAdminTopicsPage(t *testing.T) {
 		core.SessionName = origName
 	}()
 
-	cd := common.NewCoreData(context.Background(), db.New(conn), config.NewRuntimeConfig())
+	cfg := config.NewRuntimeConfig()
+	cfg.PageSizeDefault = 2
+	cd := common.NewCoreData(context.Background(), queries, cfg, common.WithOffset(4))
 	r := httptest.NewRequest("GET", "/admin/forum/topics", nil)
 	sess, _ := core.Store.New(r, core.SessionName)
 	ctx := context.WithValue(r.Context(), core.ContextValues("session"), sess)
@@ -63,7 +74,31 @@ func TestAdminTopicsPage(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Fatalf("status: got %d want %d", w.Code, http.StatusOK)
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	if queries.AdminCountForumTopicsCalls != 1 {
+		t.Fatalf("expected AdminCountForumTopics to be called once, got %d", queries.AdminCountForumTopicsCalls)
+	}
+	if got := len(queries.AdminListForumTopicsParams); got != 1 {
+		t.Fatalf("AdminListForumTopics called %d times", got)
+	}
+	params := queries.AdminListForumTopicsParams[0]
+	expectedLimit := int32(cd.PageSize())
+	if params.Limit != expectedLimit || params.Offset != int32(cd.Offset()) {
+		t.Fatalf("AdminListForumTopics params = %+v want limit=%d offset=%d", params, expectedLimit, cd.Offset())
+	}
+	if got := len(queries.GetAllForumCategoriesParams); got != 1 {
+		t.Fatalf("GetAllForumCategories called %d times", got)
+	}
+	if queries.GetAllForumCategoriesParams[0].ViewerID != 0 {
+		t.Fatalf("GetAllForumCategories viewer ID = %d", queries.GetAllForumCategoriesParams[0].ViewerID)
+	}
+	if got := len(queries.AdminGetTopicGrantsParams); got != len(queries.AdminListForumTopicsReturns) {
+		t.Fatalf("AdminGetTopicGrants called %d times", got)
+	}
+	body := w.Body.String()
+	if !strings.Contains(body, "Public (Anyone)") {
+		t.Fatalf("expected public access info in response")
+	}
+	if !strings.Contains(body, "alice, bob") {
+		t.Fatalf("expected participants in response")
 	}
 }

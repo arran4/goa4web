@@ -52,6 +52,33 @@ type QuerierStub struct {
 	DeleteThreadsByTopicIDCalls []int32
 	DeleteThreadsByTopicIDErr   error
 
+	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow   *GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow
+	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingErr   error
+	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingCalls []int32
+
+	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow   *GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow
+	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserErr   error
+	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserCalls []GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams
+
+	GetCommentsBySectionThreadIdForUserRows  []*GetCommentsBySectionThreadIdForUserRow
+	GetCommentsBySectionThreadIdForUserErr   error
+	GetCommentsBySectionThreadIdForUserCalls []GetCommentsBySectionThreadIdForUserParams
+	GetThreadLastPosterAndPermsRow           *GetThreadLastPosterAndPermsRow
+	GetThreadLastPosterAndPermsErr           error
+	GetThreadLastPosterAndPermsCalls         []GetThreadLastPosterAndPermsParams
+	AdminInsertQueuedLinkFromQueueReturn     int64
+	AdminInsertQueuedLinkFromQueueErr        error
+	AdminInsertQueuedLinkFromQueueCalls      []int32
+	SystemCreateSearchWordReturnID           int64
+	SystemCreateSearchWordErr                error
+	SystemCreateSearchWordCalls              []string
+	SystemCreateSearchWordFn                 func(string) (int64, error)
+	SystemAddToLinkerSearchCalls             []SystemAddToLinkerSearchParams
+	SystemAddToLinkerSearchErr               error
+	SystemAddToLinkerSearchFn                func(SystemAddToLinkerSearchParams) error
+	SystemSetLinkerLastIndexCalls            []int32
+	SystemSetLinkerLastIndexErr              error
+
 	SystemCheckGrantReturns int32
 	SystemCheckGrantErr     error
 	SystemCheckGrantCalls   []SystemCheckGrantParams
@@ -90,6 +117,118 @@ func (s *QuerierStub) DeleteThreadsByTopicID(ctx context.Context, forumtopicIdfo
 	defer s.mu.Unlock()
 	s.DeleteThreadsByTopicIDCalls = append(s.DeleteThreadsByTopicIDCalls, forumtopicIdforumtopic)
 	return s.DeleteThreadsByTopicIDErr
+}
+
+func (s *QuerierStub) GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(ctx context.Context, id int32) (*GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow, error) {
+	s.mu.Lock()
+	s.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingCalls = append(s.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingCalls, id)
+	row := s.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow
+	err := s.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingErr
+	s.mu.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	if row == nil {
+		return nil, errors.New("GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending not stubbed")
+	}
+	return row, nil
+}
+
+func (s *QuerierStub) GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(ctx context.Context, arg GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams) (*GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow, error) {
+	s.mu.Lock()
+	s.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserCalls = append(s.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserCalls, arg)
+	row := s.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow
+	err := s.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserErr
+	s.mu.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	if row == nil {
+		return nil, errors.New("GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser not stubbed")
+	}
+	return row, nil
+}
+
+func (s *QuerierStub) GetCommentsBySectionThreadIdForUser(ctx context.Context, arg GetCommentsBySectionThreadIdForUserParams) ([]*GetCommentsBySectionThreadIdForUserRow, error) {
+	s.mu.Lock()
+	s.GetCommentsBySectionThreadIdForUserCalls = append(s.GetCommentsBySectionThreadIdForUserCalls, arg)
+	rows := s.GetCommentsBySectionThreadIdForUserRows
+	err := s.GetCommentsBySectionThreadIdForUserErr
+	s.mu.Unlock()
+	if rows == nil {
+		rows = []*GetCommentsBySectionThreadIdForUserRow{}
+	}
+	return rows, err
+}
+
+func (s *QuerierStub) GetThreadLastPosterAndPerms(ctx context.Context, arg GetThreadLastPosterAndPermsParams) (*GetThreadLastPosterAndPermsRow, error) {
+	s.mu.Lock()
+	s.GetThreadLastPosterAndPermsCalls = append(s.GetThreadLastPosterAndPermsCalls, arg)
+	row := s.GetThreadLastPosterAndPermsRow
+	err := s.GetThreadLastPosterAndPermsErr
+	s.mu.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	if row == nil {
+		return nil, errors.New("GetThreadLastPosterAndPerms not stubbed")
+	}
+	return row, nil
+}
+
+func (s *QuerierStub) AdminInsertQueuedLinkFromQueue(ctx context.Context, id int32) (int64, error) {
+	s.mu.Lock()
+	s.AdminInsertQueuedLinkFromQueueCalls = append(s.AdminInsertQueuedLinkFromQueueCalls, id)
+	ret := s.AdminInsertQueuedLinkFromQueueReturn
+	err := s.AdminInsertQueuedLinkFromQueueErr
+	s.mu.Unlock()
+	if err != nil {
+		return 0, err
+	}
+	if ret == 0 {
+		return 0, errors.New("AdminInsertQueuedLinkFromQueue not stubbed")
+	}
+	return ret, nil
+}
+
+func (s *QuerierStub) SystemCreateSearchWord(ctx context.Context, word string) (int64, error) {
+	s.mu.Lock()
+	s.SystemCreateSearchWordCalls = append(s.SystemCreateSearchWordCalls, word)
+	fn := s.SystemCreateSearchWordFn
+	ret := s.SystemCreateSearchWordReturnID
+	err := s.SystemCreateSearchWordErr
+	count := len(s.SystemCreateSearchWordCalls)
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(word)
+	}
+	if err != nil {
+		return 0, err
+	}
+	if ret == 0 {
+		ret = int64(count)
+	}
+	return ret, nil
+}
+
+func (s *QuerierStub) SystemAddToLinkerSearch(ctx context.Context, arg SystemAddToLinkerSearchParams) error {
+	s.mu.Lock()
+	s.SystemAddToLinkerSearchCalls = append(s.SystemAddToLinkerSearchCalls, arg)
+	fn := s.SystemAddToLinkerSearchFn
+	err := s.SystemAddToLinkerSearchErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(arg)
+	}
+	return err
+}
+
+func (s *QuerierStub) SystemSetLinkerLastIndex(ctx context.Context, linkerID int32) error {
+	s.mu.Lock()
+	s.SystemSetLinkerLastIndexCalls = append(s.SystemSetLinkerLastIndexCalls, linkerID)
+	err := s.SystemSetLinkerLastIndexErr
+	s.mu.Unlock()
+	return err
 }
 
 // SystemCheckGrant records the call and returns the configured response.

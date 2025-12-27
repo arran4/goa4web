@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/arran4/goa4web/core"
@@ -27,7 +28,7 @@ func (SaveTimezoneTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("ParseForm Error: %v", err)
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	tz := r.PostFormValue("timezone")
+	tz := strings.TrimSpace(r.PostFormValue("timezone"))
 	if tz != "" {
 		if _, err := time.LoadLocation(tz); err != nil {
 			return common.UserError{ErrorMessage: "invalid timezone"}

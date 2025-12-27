@@ -33,6 +33,7 @@ type Querier interface {
 	AdminCountThreadsByBoard(ctx context.Context, imageboardIdimageboard sql.NullInt32) (int64, error)
 	AdminCountWordList(ctx context.Context) (int64, error)
 	AdminCountWordListByPrefix(ctx context.Context, prefix interface{}) (int64, error)
+	AdminCreateFAQ(ctx context.Context, arg AdminCreateFAQParams) (sql.Result, error)
 	AdminCreateFAQCategory(ctx context.Context, name sql.NullString) error
 	AdminCreateForumCategory(ctx context.Context, arg AdminCreateForumCategoryParams) (int64, error)
 	AdminCreateForumTopic(ctx context.Context, arg AdminCreateForumTopicParams) (int64, error)
@@ -86,7 +87,7 @@ type Querier interface {
 	AdminGetFAQCategories(ctx context.Context) ([]*FaqCategory, error)
 	AdminGetFAQCategoriesWithQuestionCount(ctx context.Context) ([]*AdminGetFAQCategoriesWithQuestionCountRow, error)
 	AdminGetFAQCategoryWithQuestionCountByID(ctx context.Context, id int32) (*AdminGetFAQCategoryWithQuestionCountByIDRow, error)
-	AdminGetFAQDismissedQuestions(ctx context.Context) ([]*Faq, error)
+	AdminGetFAQDismissedQuestions(ctx context.Context) ([]*AdminGetFAQDismissedQuestionsRow, error)
 	AdminGetFAQQuestionsByCategory(ctx context.Context, categoryID sql.NullInt32) ([]*Faq, error)
 	AdminGetFAQUnansweredQuestions(ctx context.Context) ([]*Faq, error)
 	AdminGetForumStats(ctx context.Context) (*AdminGetForumStatsRow, error)
@@ -227,6 +228,7 @@ type Querier interface {
 	AdminSetAnnouncementActive(ctx context.Context, arg AdminSetAnnouncementActiveParams) error
 	AdminSetTemplateOverride(ctx context.Context, arg AdminSetTemplateOverrideParams) error
 	AdminUpdateBannedIp(ctx context.Context, arg AdminUpdateBannedIpParams) error
+	AdminUpdateFAQPriority(ctx context.Context, arg AdminUpdateFAQPriorityParams) error
 	AdminUpdateFAQQuestionAnswer(ctx context.Context, arg AdminUpdateFAQQuestionAnswerParams) error
 	AdminUpdateForumCategory(ctx context.Context, arg AdminUpdateForumCategoryParams) error
 	AdminUpdateForumTopic(ctx context.Context, arg AdminUpdateForumTopicParams) error
@@ -312,9 +314,9 @@ type Querier interface {
 	GetContentReadMarker(ctx context.Context, arg GetContentReadMarkerParams) (*GetContentReadMarkerRow, error)
 	GetExternalLink(ctx context.Context, url string) (*ExternalLink, error)
 	GetExternalLinkByID(ctx context.Context, id int32) (*ExternalLink, error)
-	GetFAQAnsweredQuestions(ctx context.Context, arg GetFAQAnsweredQuestionsParams) ([]*Faq, error)
-	GetFAQByID(ctx context.Context, arg GetFAQByIDParams) (*Faq, error)
-	GetFAQQuestionsByCategory(ctx context.Context, arg GetFAQQuestionsByCategoryParams) ([]*Faq, error)
+	GetFAQAnsweredQuestions(ctx context.Context, arg GetFAQAnsweredQuestionsParams) ([]*GetFAQAnsweredQuestionsRow, error)
+	GetFAQByID(ctx context.Context, arg GetFAQByIDParams) (*GetFAQByIDRow, error)
+	GetFAQQuestionsByCategory(ctx context.Context, arg GetFAQQuestionsByCategoryParams) ([]*GetFAQQuestionsByCategoryRow, error)
 	GetFAQRevisionsForAdmin(ctx context.Context, faqID int32) ([]*FaqRevision, error)
 	GetForumCategoryById(ctx context.Context, arg GetForumCategoryByIdParams) (*Forumcategory, error)
 	GetForumThreadIdByNewsPostId(ctx context.Context, idsitenews int32) (*GetForumThreadIdByNewsPostIdRow, error)

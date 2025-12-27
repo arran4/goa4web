@@ -34,6 +34,8 @@ var roleTemplates = map[string]TemplateDef{
 				Grants: []GrantDef{
 					{Section: "news", Item: "post", Action: "see"},
 					{Section: "news", Item: "post", Action: "view"},
+					{Section: "faq", Item: "", Action: "search"},
+					{Section: "faq", Item: "question/answer", Action: "see"},
 				},
 			},
 			{
@@ -44,6 +46,8 @@ var roleTemplates = map[string]TemplateDef{
 				Grants: []GrantDef{
 					{Section: "news", Item: "post", Action: "see"},
 					{Section: "news", Item: "post", Action: "view"},
+					{Section: "faq", Item: "", Action: "search"},
+					{Section: "faq", Item: "question/answer", Action: "see"},
 				},
 			},
 			{
@@ -57,6 +61,8 @@ var roleTemplates = map[string]TemplateDef{
 					{Section: "news", Item: "post", Action: "reply"},
 					{Section: "news", Item: "post", Action: "see"},
 					{Section: "news", Item: "post", Action: "view"},
+					{Section: "faq", Item: "", Action: "search"},
+					{Section: "faq", Item: "question/answer", Action: "see"},
 				},
 			},
 		},
@@ -73,6 +79,8 @@ var roleTemplates = map[string]TemplateDef{
 				Grants: []GrantDef{
 					{Section: "news", Item: "post", Action: "see"},
 					{Section: "news", Item: "post", Action: "view"},
+					{Section: "faq", Item: "", Action: "search"},
+					{Section: "faq", Item: "question/answer", Action: "see"},
 				},
 			},
 			{
@@ -90,6 +98,9 @@ var roleTemplates = map[string]TemplateDef{
 					// Private forum user
 					{Section: "privateforum", Item: "topic", Action: "see"},
 					{Section: "privateforum", Item: "topic", Action: "view"},
+					// FAQ reader
+					{Section: "faq", Item: "", Action: "search"},
+					{Section: "faq", Item: "question/answer", Action: "see"},
 				},
 			},
 			{
@@ -114,6 +125,9 @@ var roleTemplates = map[string]TemplateDef{
 					{Section: "privateforum", Item: "topic", Action: "post"},
 					{Section: "privateforum", Item: "topic", Action: "reply"},
 					{Section: "privateforum", Item: "topic", Action: "edit"},
+					// FAQ reader
+					{Section: "faq", Item: "", Action: "search"},
+					{Section: "faq", Item: "question/answer", Action: "see"},
 				},
 			},
 		},

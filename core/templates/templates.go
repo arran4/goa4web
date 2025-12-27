@@ -1,12 +1,16 @@
 package templates
 
 import (
+	"crypto/sha256"
 	"embed"
+	"encoding/hex"
 	"github.com/arran4/goa4web/core/consts"
 	htemplate "html/template"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
+	"sync"
 	ttemplate "text/template"
 	"time"
 )
@@ -21,6 +25,72 @@ var embeddedFS embed.FS
 
 // SetDir configures templates to be loaded from dir. When dir is empty the embedded templates are used.
 func SetDir(dir string) { templatesDir = dir }
+
+var (
+	assetHashes     = map[string]string{}
+	assetHashesLock sync.RWMutex
+)
+
+func init() {
+	// Pre-compute hashes for embedded assets to avoid runtime overhead in production
+	entries, err := embeddedFS.ReadDir("assets")
+	if err == nil {
+		for _, e := range entries {
+			if !e.IsDir() {
+				b, err := embeddedFS.ReadFile("assets/" + e.Name())
+				if err == nil {
+					sum := sha256.Sum256(b)
+					assetHashes[e.Name()] = hex.EncodeToString(sum[:])[:16]
+				}
+			}
+		}
+	}
+}
+
+func GetAssetHash(webPath string) string {
+	base := path.Base(webPath)
+
+	// If in development mode (serving from local directory), always recompute to reflect changes immediately.
+	if templatesDir != "" {
+		b, err := getAssetContent(base)
+		if err != nil {
+			return webPath
+		}
+		sum := sha256.Sum256(b)
+		h := hex.EncodeToString(sum[:])[:16]
+		return webPath + "?v=" + h
+	}
+
+	assetHashesLock.RLock()
+	h, ok := assetHashes[base]
+	assetHashesLock.RUnlock()
+	if ok {
+		return webPath + "?v=" + h
+	}
+
+	assetHashesLock.Lock()
+	defer assetHashesLock.Unlock()
+	if h, ok := assetHashes[base]; ok {
+		return webPath + "?v=" + h
+	}
+
+	b, err := getAssetContent(base)
+	if err != nil {
+		return webPath
+	}
+
+	sum := sha256.Sum256(b)
+	h = hex.EncodeToString(sum[:])[:16]
+	assetHashes[base] = h
+	return webPath + "?v=" + h
+}
+
+func getAssetContent(name string) ([]byte, error) {
+	if templatesDir == "" {
+		return embeddedFS.ReadFile("assets/" + name)
+	}
+	return os.ReadFile(filepath.Join(templatesDir, "assets", name))
+}
 
 func getFS(sub string) fs.FS {
 	if templatesDir == "" {
@@ -52,6 +122,7 @@ func GetCompiledSiteTemplates(funcs htemplate.FuncMap) *htemplate.Template {
 	if funcs == nil {
 		funcs = htemplate.FuncMap{}
 	}
+	funcs["assetHash"] = GetAssetHash
 
 	fsys := getFS("site")
 
@@ -147,6 +218,9 @@ func GetTopicLabelsJSData() []byte { return readFile("assets/topic_labels.js") }
 
 // GetSiteJSData returns the main site JavaScript.
 func GetSiteJSData() []byte { return readFile("assets/site.js") }
+
+// GetA4CodeJSData returns the A4Code parser/converter JavaScript.
+func GetA4CodeJSData() []byte { return readFile("assets/a4code.js") }
 
 // ListSiteTemplateNames returns the relative paths of all site templates
 // (under the site/ directory), e.g. "news/postPage.gohtml".

@@ -13,7 +13,9 @@ import (
 func TestHeadTemplateRendersSiteTitle(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
 	cd := &common.CoreData{SiteTitle: "My Site", PageTitle: "Page"}
-	tmpl := template.Must(template.New("").Funcs(cd.Funcs(r)).ParseFS(testTemplates,
+	funcs := cd.Funcs(r)
+	funcs["assetHash"] = func(s string) string { return s }
+	tmpl := template.Must(template.New("").Funcs(funcs).ParseFS(testTemplates,
 		"site/*.gohtml", "site/*/*.gohtml"))
 	var b strings.Builder
 	if err := tmpl.ExecuteTemplate(&b, "head", nil); err != nil {
@@ -32,7 +34,9 @@ func TestHeadTemplateIncludesModuleScripts(t *testing.T) {
 	)
 	cd.UserID = 1
 	cd.PageTitle = "Page"
-	tmpl := template.Must(template.New("").Funcs(cd.Funcs(r)).ParseFS(testTemplates,
+	funcs := cd.Funcs(r)
+	funcs["assetHash"] = func(s string) string { return s }
+	tmpl := template.Must(template.New("").Funcs(funcs).ParseFS(testTemplates,
 		"site/*.gohtml", "site/*/*.gohtml"))
 	var b strings.Builder
 	if err := tmpl.ExecuteTemplate(&b, "head", nil); err != nil {

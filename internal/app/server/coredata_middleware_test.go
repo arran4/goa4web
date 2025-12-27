@@ -4,10 +4,8 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
-	"regexp"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
@@ -24,27 +22,17 @@ import (
 func TestCoreDataMiddlewareUserRoles(t *testing.T) {
 	navReg := nav.NewRegistry()
 
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
 	cfg := config.NewRuntimeConfig()
-	defer conn.Close()
-	mock.MatchExpectationsInOrder(false)
-
-	mock.ExpectExec("INSERT INTO sessions").WithArgs("sessid", int32(1)).
-		WillReturnResult(sqlmock.NewResult(1, 1))
-	rows := sqlmock.NewRows([]string{"iduser_roles", "users_idusers", "role_id", "name"}).
-		AddRow(1, 1, 2, "moderator")
-	mock.ExpectQuery(regexp.QuoteMeta("FROM user_roles")).WithArgs(int32(1)).
-		WillReturnRows(rows)
+	queries := &db.QuerierStub{
+		GetPermissionsByUserIDReturns: []*db.GetPermissionsByUserIDRow{
+			{Name: "moderator"},
+		},
+	}
+	sm := &sessionManagerStub{}
 
 	session := &sessions.Session{ID: "sessid", Values: map[interface{}]interface{}{"UID": int32(1)}}
 	req := httptest.NewRequest("GET", "/", nil)
-	q := db.New(conn)
-	cd := common.NewCoreData(req.Context(), q, cfg)
 	ctx := context.WithValue(req.Context(), core.ContextValues("session"), session)
-	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	var cdOut *common.CoreData
@@ -56,12 +44,13 @@ func TestCoreDataMiddlewareUserRoles(t *testing.T) {
 	signer := imagesign.NewSigner(cfg, "k")
 	linkSigner := linksign.NewSigner(cfg, "k")
 	srv := New(
-		WithDB(conn),
 		WithConfig(cfg),
 		WithEmailRegistry(reg),
 		WithImageSigner(signer),
 		WithLinkSigner(linkSigner),
 		WithNavRegistry(navReg),
+		WithQueries(queries),
+		WithSessionManager(sm),
 	)
 	srv.CoreDataMiddleware()(handler).ServeHTTP(httptest.NewRecorder(), req)
 
@@ -70,31 +59,26 @@ func TestCoreDataMiddlewareUserRoles(t *testing.T) {
 		t.Fatalf("roles mismatch (-want +got):\n%s", diff)
 	}
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	if len(sm.insertCalls) != 1 || sm.insertCalls[0].sessionID != "sessid" || sm.insertCalls[0].userID != 1 {
+		t.Fatalf("session insert not recorded, got %#v", sm.insertCalls)
+	}
+	if len(queries.GetPermissionsByUserIDCalls) != 1 || queries.GetPermissionsByUserIDCalls[0] != 1 {
+		t.Fatalf("unexpected permission lookups: %#v", queries.GetPermissionsByUserIDCalls)
 	}
 }
 
 func TestCoreDataMiddlewareAnonymous(t *testing.T) {
 	navReg := nav.NewRegistry()
 
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
 	cfg := config.NewRuntimeConfig()
-	defer conn.Close()
-	mock.MatchExpectationsInOrder(false)
-
-	mock.ExpectExec("DELETE FROM sessions").WithArgs("sessid").
-		WillReturnResult(sqlmock.NewResult(0, 0))
+	queries := &db.QuerierStub{
+		GetPermissionsByUserIDReturns: []*db.GetPermissionsByUserIDRow{},
+	}
+	sm := &sessionManagerStub{}
 
 	session := &sessions.Session{ID: "sessid"}
 	req := httptest.NewRequest("GET", "/", nil)
-	q := db.New(conn)
-	cd := common.NewCoreData(req.Context(), q, cfg)
 	ctx := context.WithValue(req.Context(), core.ContextValues("session"), session)
-	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	var cdOut *common.CoreData
@@ -106,12 +90,13 @@ func TestCoreDataMiddlewareAnonymous(t *testing.T) {
 	signer := imagesign.NewSigner(cfg, "k")
 	linkSigner := linksign.NewSigner(cfg, "k")
 	srv := New(
-		WithDB(conn),
 		WithConfig(cfg),
 		WithEmailRegistry(reg),
 		WithImageSigner(signer),
 		WithLinkSigner(linkSigner),
 		WithNavRegistry(navReg),
+		WithQueries(queries),
+		WithSessionManager(sm),
 	)
 	srv.CoreDataMiddleware()(handler).ServeHTTP(httptest.NewRecorder(), req)
 
@@ -120,7 +105,27 @@ func TestCoreDataMiddlewareAnonymous(t *testing.T) {
 		t.Fatalf("roles mismatch (-want +got):\n%s", diff)
 	}
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	if len(sm.deleteCalls) != 1 || sm.deleteCalls[0] != "sessid" {
+		t.Fatalf("session delete not recorded, got %#v", sm.deleteCalls)
 	}
+}
+
+type sessionCall struct {
+	sessionID string
+	userID    int32
+}
+
+type sessionManagerStub struct {
+	insertCalls []sessionCall
+	deleteCalls []string
+}
+
+func (s *sessionManagerStub) InsertSession(_ context.Context, sessionID string, userID int32) error {
+	s.insertCalls = append(s.insertCalls, sessionCall{sessionID: sessionID, userID: userID})
+	return nil
+}
+
+func (s *sessionManagerStub) DeleteSessionByID(_ context.Context, sessionID string) error {
+	s.deleteCalls = append(s.deleteCalls, sessionID)
+	return nil
 }

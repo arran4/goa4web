@@ -69,6 +69,17 @@ type QuerierStub struct {
 	AdminListPrivateTopicParticipantsByTopicIDCalls   []sql.NullInt32
 	AdminListPrivateTopicParticipantsByTopicIDReturns []*AdminListPrivateTopicParticipantsByTopicIDRow
 	AdminListPrivateTopicParticipantsByTopicIDErr     error
+
+	SystemCreateUserRoleCalls []SystemCreateUserRoleParams
+	SystemCreateUserRoleErr   error
+
+	GetPermissionsByUserIDCalls   []int32
+	GetPermissionsByUserIDReturns []*GetPermissionsByUserIDRow
+	GetPermissionsByUserIDErr     error
+
+	GetUnreadNotificationCountForListerCalls  []int32
+	GetUnreadNotificationCountForListerReturn int64
+	GetUnreadNotificationCountForListerErr    error
 }
 
 func (s *QuerierStub) AdminListPrivateTopicParticipantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListPrivateTopicParticipantsByTopicIDRow, error) {
@@ -76,6 +87,39 @@ func (s *QuerierStub) AdminListPrivateTopicParticipantsByTopicID(ctx context.Con
 	defer s.mu.Unlock()
 	s.AdminListPrivateTopicParticipantsByTopicIDCalls = append(s.AdminListPrivateTopicParticipantsByTopicIDCalls, itemID)
 	return s.AdminListPrivateTopicParticipantsByTopicIDReturns, s.AdminListPrivateTopicParticipantsByTopicIDErr
+}
+
+// SystemCreateUserRole records the call and returns the configured response.
+func (s *QuerierStub) SystemCreateUserRole(ctx context.Context, arg SystemCreateUserRoleParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.SystemCreateUserRoleCalls = append(s.SystemCreateUserRoleCalls, arg)
+	return s.SystemCreateUserRoleErr
+}
+
+// GetPermissionsByUserID records the call and returns the configured response.
+func (s *QuerierStub) GetPermissionsByUserID(ctx context.Context, usersIdusers int32) ([]*GetPermissionsByUserIDRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.GetPermissionsByUserIDCalls = append(s.GetPermissionsByUserIDCalls, usersIdusers)
+	if s.GetPermissionsByUserIDErr != nil {
+		return nil, s.GetPermissionsByUserIDErr
+	}
+	if s.GetPermissionsByUserIDReturns == nil {
+		return nil, errors.New("GetPermissionsByUserID not stubbed")
+	}
+	return s.GetPermissionsByUserIDReturns, nil
+}
+
+// GetUnreadNotificationCountForLister records the call and returns the configured response.
+func (s *QuerierStub) GetUnreadNotificationCountForLister(ctx context.Context, listerID int32) (int64, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.GetUnreadNotificationCountForListerCalls = append(s.GetUnreadNotificationCountForListerCalls, listerID)
+	if s.GetUnreadNotificationCountForListerErr != nil {
+		return 0, s.GetUnreadNotificationCountForListerErr
+	}
+	return s.GetUnreadNotificationCountForListerReturn, nil
 }
 
 func (s *QuerierStub) AdminListForumTopicGrantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListForumTopicGrantsByTopicIDRow, error) {

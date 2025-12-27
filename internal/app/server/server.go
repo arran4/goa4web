@@ -45,6 +45,7 @@ type Server struct {
 	NotFoundHandler http.Handler
 	Store           *sessions.CookieStore
 	DB              *sql.DB
+	Queries         db.Querier
 	Bus             *eventbus.Bus
 	EmailReg        *email.Registry
 	FeedSigner      *feedsign.Signer
@@ -167,6 +168,9 @@ func WithSessionManager(sm common.SessionManager) Option {
 	return func(s *Server) { s.SessionManager = sm }
 }
 
+// WithQueries sets the database querier used by the server.
+func WithQueries(q db.Querier) Option { return func(s *Server) { s.Queries = q } }
+
 // WithDBRegistry sets the database driver registry.
 func WithDBRegistry(r *dbdrivers.Registry) Option { return func(s *Server) { s.DBReg = r } }
 
@@ -228,23 +232,33 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 			return nil, nil
 		}
 	}
-	if s.DB == nil {
+	if s.DB == nil && s.Queries == nil {
 		ue := common.UserError{Err: fmt.Errorf("db not initialized"), ErrorMessage: "database unavailable"}
 		log.Printf("%s: %v", ue.ErrorMessage, ue.Err)
 		handlers.RenderErrorPage(w, r, errors.New(ue.ErrorMessage))
 		return nil, nil
 	}
 
-	queries := db.New(s.DB)
-	sm := s.SessionManager
-	if sm == nil {
-		sm = db.NewSessionProxy(queries)
-	}
-	if s.Config.DBLogVerbosity > 0 {
+	queries := s.Queries
+	if queries == nil {
+		queries = db.New(s.DB)
+		if s.Config.DBLogVerbosity > 0 && s.DB != nil {
+			log.Printf("db pool stats: %+v", s.DB.Stats())
+		}
+	} else if s.Config.DBLogVerbosity > 0 && s.DB != nil {
 		log.Printf("db pool stats: %+v", s.DB.Stats())
 	}
+	sm := s.SessionManager
+	if sm == nil {
+		if q, ok := queries.(*db.Queries); ok {
+			sm = db.NewSessionProxy(q)
+		}
+	}
 
-	if session.ID != "" {
+	if session.ID != "" && sm == nil {
+		log.Printf("session manager not configured")
+	}
+	if session.ID != "" && sm != nil {
 		if uid != 0 {
 			if err := sm.InsertSession(r.Context(), session.ID, uid); err != nil {
 				log.Printf("insert session: %v", err)
@@ -266,9 +280,8 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 	if s.RouterReg != nil {
 		modules = s.RouterReg.Names()
 	}
-	cd := common.NewCoreData(r.Context(), queries, s.Config,
+	coreOptions := []common.CoreOption{
 		common.WithImageSigner(s.ImageSigner),
-		common.WithCustomQueries(queries),
 		common.WithLinkSigner(s.LinkSigner),
 		common.WithFeedSigner(s.FeedSigner),
 		common.WithImageURLMapper(s.ImageSigner.MapURL),
@@ -283,7 +296,11 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 		common.WithRouterModules(modules),
 		common.WithOffset(offset),
 		common.WithSiteTitle("Arran's Site"),
-	)
+	}
+	if cq, ok := queries.(db.CustomQueries); ok {
+		coreOptions = append(coreOptions, common.WithCustomQueries(cq))
+	}
+	cd := common.NewCoreData(r.Context(), queries, s.Config, coreOptions...)
 	if providerErr != nil {
 		cd.EmailProviderError = providerErr.Error()
 	}

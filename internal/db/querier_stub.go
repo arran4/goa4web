@@ -62,6 +62,16 @@ type QuerierStub struct {
 	SystemCheckRoleGrantCalls   []SystemCheckRoleGrantParams
 	SystemCheckRoleGrantFn      func(SystemCheckRoleGrantParams) (int32, error)
 
+	SystemGetUserByUsernameRow   *SystemGetUserByUsernameRow
+	SystemGetUserByUsernameErr   error
+	SystemGetUserByUsernameCalls []sql.NullString
+
+	SystemCreateUserRoleErr   error
+	SystemCreateUserRoleCalls []SystemCreateUserRoleParams
+
+	AdminUpdateUsernameByIDErr   error
+	AdminUpdateUsernameByIDCalls []AdminUpdateUsernameByIDParams
+
 	AdminListForumTopicGrantsByTopicIDCalls   []sql.NullInt32
 	AdminListForumTopicGrantsByTopicIDReturns []*AdminListForumTopicGrantsByTopicIDRow
 	AdminListForumTopicGrantsByTopicIDErr     error
@@ -130,6 +140,36 @@ func (s *QuerierStub) SystemCheckRoleGrant(ctx context.Context, arg SystemCheckR
 		ret = 1
 	}
 	return ret, nil
+}
+
+// SystemGetUserByUsername records the call and returns the configured response.
+func (s *QuerierStub) SystemGetUserByUsername(ctx context.Context, username sql.NullString) (*SystemGetUserByUsernameRow, error) {
+	s.mu.Lock()
+	s.SystemGetUserByUsernameCalls = append(s.SystemGetUserByUsernameCalls, username)
+	s.mu.Unlock()
+	if s.SystemGetUserByUsernameErr != nil {
+		return nil, s.SystemGetUserByUsernameErr
+	}
+	if s.SystemGetUserByUsernameRow == nil {
+		return nil, errors.New("SystemGetUserByUsername not stubbed")
+	}
+	return s.SystemGetUserByUsernameRow, nil
+}
+
+// SystemCreateUserRole records the call and returns the configured response.
+func (s *QuerierStub) SystemCreateUserRole(ctx context.Context, arg SystemCreateUserRoleParams) error {
+	s.mu.Lock()
+	s.SystemCreateUserRoleCalls = append(s.SystemCreateUserRoleCalls, arg)
+	s.mu.Unlock()
+	return s.SystemCreateUserRoleErr
+}
+
+// AdminUpdateUsernameByID records the call and returns the configured response.
+func (s *QuerierStub) AdminUpdateUsernameByID(ctx context.Context, arg AdminUpdateUsernameByIDParams) error {
+	s.mu.Lock()
+	s.AdminUpdateUsernameByIDCalls = append(s.AdminUpdateUsernameByIDCalls, arg)
+	s.mu.Unlock()
+	return s.AdminUpdateUsernameByIDErr
 }
 
 // SystemGetUserByID records the call and returns the configured response.

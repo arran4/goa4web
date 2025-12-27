@@ -28,6 +28,7 @@ import (
 	"github.com/arran4/goa4web/internal/app/dbstart"
 	"github.com/arran4/goa4web/internal/tasks"
 
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dbdrivers"
 	"github.com/arran4/goa4web/internal/dbdrivers/dbdefaults"
 	"github.com/arran4/goa4web/internal/dlq"
@@ -100,6 +101,7 @@ type rootCmd struct {
 	tasksReg      *tasks.Registry
 	dbReg         *dbdrivers.Registry
 	emailReg      *email.Registry
+	queries       db.Querier
 	dlqReg        *dlq.Registry
 	routerReg     *router.Registry
 	adminHandlers *adminhandlers.Handlers
@@ -116,6 +118,18 @@ func (r *rootCmd) DB() (*sql.DB, error) {
 	}
 	r.db = dbPool
 	return r.db, nil
+}
+
+func (r *rootCmd) Querier() (db.Querier, error) {
+	if r.queries != nil {
+		return r.queries, nil
+	}
+	conn, err := r.DB()
+	if err != nil {
+		return nil, err
+	}
+	r.queries = db.New(conn)
+	return r.queries, nil
 }
 
 func (r *rootCmd) Close() {

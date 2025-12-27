@@ -48,12 +48,11 @@ func (c *userRenameCmd) Run() error {
 		c.fs.Usage()
 		return fmt.Errorf("from and to usernames required")
 	}
-	conn, err := c.rootCmd.DB()
+	queries, err := c.rootCmd.Querier()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(conn)
 	user, err := queries.SystemGetUserByUsername(ctx, sql.NullString{String: c.OldUsername, Valid: true})
 	if err != nil {
 		return fmt.Errorf("get user: %w", err)

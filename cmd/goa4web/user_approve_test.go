@@ -5,7 +5,7 @@ import (
 	"flag"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 func TestUserApproveCmd(t *testing.T) {
@@ -16,7 +16,9 @@ func TestUserApproveCmd(t *testing.T) {
 		args          []string
 		wantID        int
 		wantUsername  string
-		setupMocks    func(sqlmock.Sqlmock)
+		setupStub     func(*db.QuerierStub)
+		wantLookup    *sql.NullString
+		wantRoleParam *db.SystemCreateUserRoleParams
 		expectedError string
 	}{
 		{
@@ -24,26 +26,23 @@ func TestUserApproveCmd(t *testing.T) {
 			args:         []string{"alice"},
 			wantID:       7,
 			wantUsername: "alice",
-			setupMocks: func(mock sqlmock.Sqlmock) {
-				mock.ExpectQuery("(?s).*SystemGetUserByUsername.*").
-					WithArgs(sql.NullString{String: "alice", Valid: true}).
-					WillReturnRows(sqlmock.NewRows([]string{"idusers", "username", "public_profile_enabled_at"}).AddRow(
-						int32(7), sql.NullString{String: "alice", Valid: true}, sql.NullTime{},
-					))
-				mock.ExpectExec("(?s).*SystemCreateUserRole.*").
-					WithArgs(int32(7), "user").
-					WillReturnResult(sqlmock.NewResult(0, 1))
+			setupStub: func(stub *db.QuerierStub) {
+				stub.SystemGetUserByUsernameRow = &db.SystemGetUserByUsernameRow{
+					Idusers:  7,
+					Username: sql.NullString{String: "alice", Valid: true},
+				}
 			},
+			wantLookup:    &sql.NullString{String: "alice", Valid: true},
+			wantRoleParam: &db.SystemCreateUserRoleParams{UsersIdusers: 7, Name: "user"},
 		},
 		{
 			name:   "id flag",
 			args:   []string{"-id", "9"},
 			wantID: 9,
-			setupMocks: func(mock sqlmock.Sqlmock) {
-				mock.ExpectExec("(?s).*SystemCreateUserRole.*").
-					WithArgs(int32(9), "user").
-					WillReturnResult(sqlmock.NewResult(0, 1))
+			setupStub: func(stub *db.QuerierStub) {
+				stub.SystemCreateUserRoleErr = nil
 			},
+			wantRoleParam: &db.SystemCreateUserRoleParams{UsersIdusers: 9, Name: "user"},
 		},
 		{
 			name:          "missing identifier",
@@ -59,15 +58,11 @@ func TestUserApproveCmd(t *testing.T) {
 
 			root := &rootCmd{fs: flag.NewFlagSet("prog", flag.ContinueOnError)}
 
-			var mock sqlmock.Sqlmock
-			if tc.setupMocks != nil {
-				conn, m, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherRegexp))
-				if err != nil {
-					t.Fatalf("sqlmock.New: %v", err)
-				}
-				mock = m
-				root.db = conn
-				tc.setupMocks(mock)
+			var stub *db.QuerierStub
+			if tc.setupStub != nil {
+				stub = &db.QuerierStub{}
+				tc.setupStub(stub)
+				root.queries = stub
 			}
 
 			parent := &userCmd{rootCmd: root}
@@ -99,9 +94,24 @@ func TestUserApproveCmd(t *testing.T) {
 				t.Fatalf("unexpected username: got %s want %s", cmd.Username, tc.wantUsername)
 			}
 
-			if tc.setupMocks != nil {
-				if err := mock.ExpectationsWereMet(); err != nil {
-					t.Fatalf("unmet expectations: %v", err)
+			if stub != nil {
+				if tc.wantLookup != nil {
+					if got := len(stub.SystemGetUserByUsernameCalls); got != 1 {
+						t.Fatalf("expected 1 user lookup, got %d", got)
+					}
+					if stub.SystemGetUserByUsernameCalls[0] != *tc.wantLookup {
+						t.Fatalf("unexpected lookup: got %#v want %#v", stub.SystemGetUserByUsernameCalls[0], *tc.wantLookup)
+					}
+				} else if calls := len(stub.SystemGetUserByUsernameCalls); calls > 0 {
+					t.Fatalf("unexpected user lookup calls: %d", calls)
+				}
+				if tc.wantRoleParam != nil {
+					if got := len(stub.SystemCreateUserRoleCalls); got != 1 {
+						t.Fatalf("expected 1 role insert, got %d", got)
+					}
+					if stub.SystemCreateUserRoleCalls[0] != *tc.wantRoleParam {
+						t.Fatalf("unexpected role params: got %#v want %#v", stub.SystemCreateUserRoleCalls[0], *tc.wantRoleParam)
+					}
 				}
 			}
 		})

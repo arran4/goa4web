@@ -12,9 +12,30 @@ import (
 	"strings"
 )
 
+type rowScanner interface {
+	Scan(dest ...any) error
+}
+
+type execQuerier interface {
+	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
+	QueryRowContext(ctx context.Context, query string, args ...any) rowScanner
+}
+
+type sqlDBQuerier struct {
+	db *sql.DB
+}
+
+func (q sqlDBQuerier) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
+	return q.db.ExecContext(ctx, query, args...)
+}
+
+func (q sqlDBQuerier) QueryRowContext(ctx context.Context, query string, args ...any) rowScanner {
+	return q.db.QueryRowContext(ctx, query, args...)
+}
+
 // ensureVersionTable creates the schema_version table when missing and
 // returns the current version number stored in the table.
-func ensureVersionTable(ctx context.Context, db *sql.DB) (int, error) {
+func ensureVersionTable(ctx context.Context, db execQuerier) (int, error) {
 	if _, err := db.ExecContext(ctx, "CREATE TABLE IF NOT EXISTS schema_version (version INT NOT NULL)"); err != nil {
 		return 0, fmt.Errorf("create schema_version: %w", err)
 	}
@@ -35,6 +56,10 @@ func ensureVersionTable(ctx context.Context, db *sql.DB) (int, error) {
 // each one in order, updating the schema_version table after every successful
 // script. When verbose is true, progress information is printed to stdout.
 func Apply(ctx context.Context, db *sql.DB, f fs.FS, verbose bool, driver string) error {
+	return applyWithQuerier(ctx, sqlDBQuerier{db}, f, verbose, driver)
+}
+
+func applyWithQuerier(ctx context.Context, db execQuerier, f fs.FS, verbose bool, driver string) error {
 	version, err := ensureVersionTable(ctx, db)
 	if err != nil {
 		return err
@@ -81,17 +106,10 @@ func Apply(ctx context.Context, db *sql.DB, f fs.FS, verbose bool, driver string
 		}
 		applied = true
 	}
-	if verbose {
-		if applied {
-			fmt.Println("migration complete")
-		} else {
-			fmt.Println("database schema already up to date")
-		}
-	}
-	return nil
+	return printMigrationSummary(verbose, applied)
 }
 
-func executeFile(ctx context.Context, db *sql.DB, f fs.FS, path string, verbose bool) error {
+func executeFile(ctx context.Context, db execQuerier, f fs.FS, path string, verbose bool) error {
 	data, err := fs.ReadFile(f, path)
 	if err != nil {
 		return err
@@ -128,5 +146,17 @@ func executeFile(ctx context.Context, db *sql.DB, f fs.FS, path string, verbose 
 			return err
 		}
 	}
+	return nil
+}
+
+func printMigrationSummary(verbose, applied bool) error {
+	if !verbose {
+		return nil
+	}
+	if applied {
+		fmt.Println("migration complete")
+		return nil
+	}
+	fmt.Println("database schema already up to date")
 	return nil
 }

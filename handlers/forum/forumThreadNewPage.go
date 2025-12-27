@@ -94,12 +94,43 @@ func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		Languages          []*db.Language
 		SelectedLanguageId int
+		BasePath           string
+		Topic              *db.GetForumTopicByIdForUserRow
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Forum - New Thread"
+
+	vars := mux.Vars(r)
+	topicId, err := strconv.Atoi(vars["topic"])
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("invalid topic id: %w", err))
+		return
+	}
+
+	uid := cd.UserID
+	queries := cd.Queries()
+	topic, err := queries.GetForumTopicByIdForUser(r.Context(), db.GetForumTopicByIdForUserParams{
+		ViewerID:      uid,
+		Idforumtopic:  int32(topicId),
+		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
+	})
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("topic not found: %w", err))
+		return
+	}
+
+	base := cd.ForumBasePath
+	if base == "" {
+		base = "/forum"
+	}
+
 	data := Data{
 		SelectedLanguageId: int(cd.PreferredLanguageID(cd.Config.DefaultLanguage)),
+		BasePath:           base,
+		Topic:              topic,
 	}
 
 	languageRows, err := cd.Languages()

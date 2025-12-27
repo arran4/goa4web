@@ -40,6 +40,7 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 	title := strings.TrimSpace(r.PostFormValue("title"))
 	description := strings.TrimSpace(r.PostFormValue("description"))
 	var participants []common.PrivateTopicParticipant
+	var invalidUsers []string
 	for _, p := range parts {
 		p = strings.TrimSpace(p)
 		if p == "" {
@@ -48,13 +49,8 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 		u, err := queries.SystemGetUserByUsername(r.Context(), sql.NullString{String: p, Valid: true})
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
-				cd.SetCurrentError(fmt.Sprintf("unknown user %q", p))
-				forumhandlers.CreateTopicPageWithPostTask(w, r, TaskPrivateTopicCreate, &forumhandlers.CreateTopicPageForm{
-					Participants: participantsInput,
-					Title:        title,
-					Description:  description,
-				})
-				return nil
+				invalidUsers = append(invalidUsers, p)
+				continue
 			}
 			return fmt.Errorf("unknown error %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
@@ -69,19 +65,44 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 			if !errors.Is(err, sql.ErrNoRows) {
 				return fmt.Errorf("checking user grant: %w", handlers.ErrRedirectOnSamePageHandler(err))
 			}
-			cd.SetCurrentError(fmt.Sprintf("user %q does not have permission to access private forums", p))
-			forumhandlers.CreateTopicPageWithPostTask(w, r, TaskPrivateTopicCreate, &forumhandlers.CreateTopicPageForm{
-				Participants: participantsInput,
-				Title:        title,
-				Description:  description,
-			})
-			return nil
+			invalidUsers = append(invalidUsers, p)
+			continue
 		}
 		participants = append(participants, common.PrivateTopicParticipant{
 			ID:       u.Idusers,
 			Username: u.Username.String,
 		})
 	}
+
+	if len(invalidUsers) > 0 {
+		cd.SetCurrentError(fmt.Sprintf("Invalid users: %s", strings.Join(invalidUsers, ", ")))
+		forumhandlers.CreateTopicPageWithPostTask(w, r, TaskPrivateTopicCreate, &forumhandlers.CreateTopicPageForm{
+			Participants:        participantsInput,
+			InvalidParticipants: strings.Join(invalidUsers, ","),
+			Title:               title,
+			Description:         description,
+		})
+		return nil
+	}
+
+	hasOtherMember := false
+	for _, participant := range participants {
+		if participant.ID != cd.UserID {
+			hasOtherMember = true
+			break
+		}
+	}
+
+	if !hasOtherMember {
+		cd.SetCurrentError("You must invite at least one other member")
+		forumhandlers.CreateTopicPageWithPostTask(w, r, TaskPrivateTopicCreate, &forumhandlers.CreateTopicPageForm{
+			Participants: participantsInput,
+			Title:        title,
+			Description:  description,
+		})
+		return nil
+	}
+
 	creator := cd.UserID
 	seen := false
 	for _, participant := range participants {

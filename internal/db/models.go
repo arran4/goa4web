@@ -236,6 +236,7 @@ type Faq struct {
 	AuthorID   int32
 	Answer     sql.NullString
 	Question   sql.NullString
+	Priority   int32
 }
 
 type FaqCategory struct {

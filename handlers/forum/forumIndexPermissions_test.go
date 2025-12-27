@@ -25,7 +25,7 @@ func TestCustomForumIndexWriteReply(t *testing.T) {
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
 
-	mock.ExpectQuery("SELECT 1 FROM grants").
+	mock.ExpectQuery(`WITH role_ids AS \( SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = \? UNION SELECT id FROM roles WHERE name = 'anyone' \) SELECT 1 FROM grants`).
 		WithArgs(sqlmock.AnyArg(), "forum", sqlmock.AnyArg(), "reply", sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
@@ -56,7 +56,7 @@ func TestCustomForumIndexMarkReadLinks(t *testing.T) {
 		WithArgs("thread", int32(3), int32(7)).
 		WillReturnRows(sqlmock.NewRows([]string{"item", "item_id", "user_id", "label", "invert"}).
 			AddRow("thread", 3, 7, "unread", false))
-	mock.ExpectQuery("SELECT 1 FROM grants").
+	mock.ExpectQuery(`WITH role_ids AS \( SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = \? UNION SELECT id FROM roles WHERE name = 'anyone' \) SELECT 1 FROM grants`).
 		WithArgs(sqlmock.AnyArg(), "forum", sqlmock.AnyArg(), "reply", sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
@@ -91,7 +91,7 @@ func TestCustomForumIndexHidesMarkReadWhenClear(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"item", "item_id", "user_id", "label", "invert"}).
 			AddRow("thread", 3, 7, "unread", true).
 			AddRow("thread", 3, 7, "new", true))
-	mock.ExpectQuery("SELECT 1 FROM grants").
+	mock.ExpectQuery(`WITH role_ids AS \( SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = \? UNION SELECT id FROM roles WHERE name = 'anyone' \) SELECT 1 FROM grants`).
 		WithArgs(sqlmock.AnyArg(), "forum", sqlmock.AnyArg(), "reply", sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
@@ -120,7 +120,7 @@ func TestCustomForumIndexWriteReplyDenied(t *testing.T) {
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
 
-	mock.ExpectQuery("SELECT 1 FROM grants").
+	mock.ExpectQuery(`WITH role_ids AS \( SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = \? UNION SELECT id FROM roles WHERE name = 'anyone' \) SELECT 1 FROM grants`).
 		WithArgs(sqlmock.AnyArg(), "forum", sqlmock.AnyArg(), "reply", sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnError(sql.ErrNoRows)
 
@@ -146,7 +146,7 @@ func TestCustomForumIndexCreateThread(t *testing.T) {
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
 
-	mock.ExpectQuery("SELECT 1 FROM grants").
+	mock.ExpectQuery(`WITH role_ids AS \( SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = \? UNION SELECT id FROM roles WHERE name = 'anyone' \) SELECT 1 FROM grants`).
 		WithArgs(sqlmock.AnyArg(), "forum", sqlmock.AnyArg(), "post", sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
@@ -186,7 +186,7 @@ func TestCustomForumIndexCreateThreadDenied(t *testing.T) {
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
 
-	mock.ExpectQuery("SELECT 1 FROM grants").
+	mock.ExpectQuery(`WITH role_ids AS \( SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = \? UNION SELECT id FROM roles WHERE name = 'anyone' \) SELECT 1 FROM grants`).
 		WithArgs(sqlmock.AnyArg(), "forum", sqlmock.AnyArg(), "post", sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnError(sql.ErrNoRows)
 

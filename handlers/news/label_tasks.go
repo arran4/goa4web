@@ -20,6 +20,10 @@ type SetLabelsTask struct{ tasks.TaskString }
 // MarkReadTask clears the new and unread labels on a news post.
 type MarkReadTask struct{ tasks.TaskString }
 
+func (t *MarkReadTask) Matcher() mux.MatcherFunc {
+	return tasks.HasFormOrQueryTask(string(t.TaskString))
+}
+
 var (
 	setLabelsTask = &SetLabelsTask{TaskString: forumhandlers.TaskSetLabels}
 	markReadTask  = &MarkReadTask{TaskString: forumhandlers.TaskMarkThreadRead}

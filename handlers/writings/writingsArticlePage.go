@@ -101,7 +101,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.IsAuthor = writing.UsersIdusers == cd.UserID
-	data.CanEdit = cd.HasContentWriterRole() && data.IsAuthor
+	data.CanEdit = cd.HasGrant("writing", "article", "edit", writing.Idwriting)
 
 	if als, err := cd.WritingAuthorLabels(writing.Idwriting); err == nil {
 		for _, l := range als {

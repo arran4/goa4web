@@ -1,6 +1,6 @@
 {{ define "privateforum/start_discussion.gohtml" }}
     {{ template "head" $ }}
-    <h1>Start pricate group discussion</h1>
+    <h1>Start private group discussion</h1>
     {{ if cd.CurrentError }}
         <p class="error-message">{{ cd.CurrentError }}</p>
     {{ end }}
@@ -14,6 +14,7 @@
             <button type="button" id="add-participant">Add</button>
             <ul id="participants"></ul>
             <input type="hidden" name="participants" id="participants-field" value="{{ .FormData.Participants }}">
+            <input type="hidden" id="invalid-participants-field" value="{{ .FormData.InvalidParticipants }}">
         </div>
         <div id="topic-details" class="hidden">
             <div class="form-group">
@@ -29,6 +30,6 @@
             </div>
         </div>
     </form>
-    <script src="/private/private_forum.js"></script>
+    <script src="{{ assetHash "/private/private_forum.js" }}"></script>
     {{ template "tail" $ }}
 {{ end }}

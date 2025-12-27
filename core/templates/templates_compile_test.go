@@ -20,6 +20,7 @@ func TestCompileGoHTML(t *testing.T) {
 	cd := &common.CoreData{}
 	funcs := cd.Funcs(r)
 	funcs["localTime"] = func(t time.Time) time.Time { return t }
+	funcs["assetHash"] = func(s string) string { return s }
 	template.Must(template.New("").Funcs(funcs).ParseFS(testTemplates,
 		"site/*.gohtml", "site/*/*.gohtml", "email/*.gohtml"))
 }
@@ -37,6 +38,7 @@ func TestParseEachTemplate(t *testing.T) {
 			cd := &common.CoreData{}
 			funcs := cd.Funcs(r)
 			funcs["localTime"] = func(t time.Time) time.Time { return t }
+			funcs["assetHash"] = func(s string) string { return s }
 			if _, err := template.New("").Funcs(funcs).ParseFS(testTemplates, path); err != nil {
 				t.Errorf("failed to parse %s: %v", path, err)
 			}

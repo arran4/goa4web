@@ -1,7 +1,7 @@
 {{ define "privateforum/topics_only.gohtml" }}
     {{ template "head" $ }}
-<link rel="stylesheet" href="/forum/forum.css">
-<script src="/forum/forum.js"></script>
+<link rel="stylesheet" href="{{ assetHash "/forum/forum.css" }}">
+<script src="{{ assetHash "/forum/forum.js" }}"></script>
     <h1>Private Topics</h1>
     {{ if cd.CurrentError }}
         <p class="error-message">{{ cd.CurrentError }}</p>

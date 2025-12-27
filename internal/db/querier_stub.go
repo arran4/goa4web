@@ -12,6 +12,7 @@ type QuerierStub struct {
 	Querier
 	mu sync.Mutex
 
+	SystemCheckGrantStubs  []SystemCheckGrantStub
 	SystemGetUserByIDRow   *SystemGetUserByIDRow
 	SystemGetUserByIDErr   error
 	SystemGetUserByIDCalls []int32
@@ -52,11 +53,16 @@ type QuerierStub struct {
 	DeleteThreadsByTopicIDCalls []int32
 	DeleteThreadsByTopicIDErr   error
 
+	GetPermissionsByUserIDReturns []*GetPermissionsByUserIDRow
+	GetPermissionsByUserIDErr     error
+	GetPermissionsByUserIDCalls   []int32
+
 	SystemCheckGrantReturns int32
 	SystemCheckGrantErr     error
 	SystemCheckGrantCalls   []SystemCheckGrantParams
 	SystemCheckGrantFn      func(SystemCheckGrantParams) (int32, error)
 
+	SystemCheckRoleGrantStubs   []SystemCheckRoleGrantStub
 	SystemCheckRoleGrantReturns int32
 	SystemCheckRoleGrantErr     error
 	SystemCheckRoleGrantCalls   []SystemCheckRoleGrantParams
@@ -69,6 +75,18 @@ type QuerierStub struct {
 	AdminListPrivateTopicParticipantsByTopicIDCalls   []sql.NullInt32
 	AdminListPrivateTopicParticipantsByTopicIDReturns []*AdminListPrivateTopicParticipantsByTopicIDRow
 	AdminListPrivateTopicParticipantsByTopicIDErr     error
+}
+
+// SystemCheckGrantStub defines a queued response for SystemCheckGrant.
+type SystemCheckGrantStub struct {
+	Result int32
+	Err    error
+}
+
+// SystemCheckRoleGrantStub defines a queued response for SystemCheckRoleGrant.
+type SystemCheckRoleGrantStub struct {
+	Result int32
+	Err    error
 }
 
 func (s *QuerierStub) AdminListPrivateTopicParticipantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListPrivateTopicParticipantsByTopicIDRow, error) {
@@ -92,6 +110,16 @@ func (s *QuerierStub) DeleteThreadsByTopicID(ctx context.Context, forumtopicIdfo
 	return s.DeleteThreadsByTopicIDErr
 }
 
+func (s *QuerierStub) GetPermissionsByUserID(ctx context.Context, idusers int32) ([]*GetPermissionsByUserIDRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.GetPermissionsByUserIDCalls = append(s.GetPermissionsByUserIDCalls, idusers)
+	if s.GetPermissionsByUserIDErr != nil || s.GetPermissionsByUserIDReturns != nil {
+		return s.GetPermissionsByUserIDReturns, s.GetPermissionsByUserIDErr
+	}
+	return nil, nil
+}
+
 // SystemCheckGrant records the call and returns the configured response.
 func (s *QuerierStub) SystemCheckGrant(ctx context.Context, arg SystemCheckGrantParams) (int32, error) {
 	s.mu.Lock()
@@ -99,6 +127,11 @@ func (s *QuerierStub) SystemCheckGrant(ctx context.Context, arg SystemCheckGrant
 	fn := s.SystemCheckGrantFn
 	ret := s.SystemCheckGrantReturns
 	err := s.SystemCheckGrantErr
+	if len(s.SystemCheckGrantStubs) > 0 {
+		ret = s.SystemCheckGrantStubs[0].Result
+		err = s.SystemCheckGrantStubs[0].Err
+		s.SystemCheckGrantStubs = s.SystemCheckGrantStubs[1:]
+	}
 	s.mu.Unlock()
 	if fn != nil {
 		return fn(arg)
@@ -119,6 +152,11 @@ func (s *QuerierStub) SystemCheckRoleGrant(ctx context.Context, arg SystemCheckR
 	fn := s.SystemCheckRoleGrantFn
 	ret := s.SystemCheckRoleGrantReturns
 	err := s.SystemCheckRoleGrantErr
+	if len(s.SystemCheckRoleGrantStubs) > 0 {
+		ret = s.SystemCheckRoleGrantStubs[0].Result
+		err = s.SystemCheckRoleGrantStubs[0].Err
+		s.SystemCheckRoleGrantStubs = s.SystemCheckRoleGrantStubs[1:]
+	}
 	s.mu.Unlock()
 	if fn != nil {
 		return fn(arg)

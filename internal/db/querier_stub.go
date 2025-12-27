@@ -4,13 +4,19 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
+	"sort"
 	"sync"
+	"time"
 )
 
 // QuerierStub records calls for selective db.Querier methods in tests.
 type QuerierStub struct {
 	Querier
 	mu sync.Mutex
+
+	notifications      []*Notification
+	nextNotificationID int32
 
 	SystemGetUserByIDRow   *SystemGetUserByIDRow
 	SystemGetUserByIDErr   error
@@ -169,6 +175,14 @@ func (s *QuerierStub) SystemGetLastNotificationForRecipientByMessage(ctx context
 		return nil, s.SystemGetLastNotificationForRecipientByMessageErr
 	}
 	if s.SystemGetLastNotificationForRecipientByMessageRow == nil {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		for i := len(s.notifications) - 1; i >= 0; i-- {
+			n := s.notifications[i]
+			if n.UsersIdusers == arg.RecipientID && n.Message == arg.Message {
+				return n, nil
+			}
+		}
 		return nil, errors.New("SystemGetLastNotificationForRecipientByMessage not stubbed")
 	}
 	return s.SystemGetLastNotificationForRecipientByMessageRow, nil
@@ -178,8 +192,23 @@ func (s *QuerierStub) SystemGetLastNotificationForRecipientByMessage(ctx context
 func (s *QuerierStub) SystemCreateNotification(ctx context.Context, arg SystemCreateNotificationParams) error {
 	s.mu.Lock()
 	s.SystemCreateNotificationCalls = append(s.SystemCreateNotificationCalls, arg)
+	err := s.SystemCreateNotificationErr
+	if err == nil {
+		if s.nextNotificationID == 0 {
+			s.nextNotificationID = 1
+		}
+		n := &Notification{
+			ID:           s.nextNotificationID,
+			UsersIdusers: arg.RecipientID,
+			Link:         arg.Link,
+			Message:      arg.Message,
+			CreatedAt:    time.Now(),
+		}
+		s.notifications = append(s.notifications, n)
+		s.nextNotificationID++
+	}
 	s.mu.Unlock()
-	return s.SystemCreateNotificationErr
+	return err
 }
 
 // InsertPendingEmail records the call and returns the configured response.
@@ -204,6 +233,81 @@ func (s *QuerierStub) SystemGetTemplateOverride(ctx context.Context, name string
 	s.SystemGetTemplateOverrideCalls = append(s.SystemGetTemplateOverrideCalls, name)
 	s.mu.Unlock()
 	return s.SystemGetTemplateOverrideReturns, s.SystemGetTemplateOverrideErr
+}
+
+func (s *QuerierStub) GetUnreadNotificationCountForLister(ctx context.Context, listerID int32) (int64, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	var count int64
+	for _, n := range s.notifications {
+		if n.UsersIdusers == listerID && !n.ReadAt.Valid {
+			count++
+		}
+	}
+	return count, nil
+}
+
+func (s *QuerierStub) ListUnreadNotificationsForLister(ctx context.Context, arg ListUnreadNotificationsForListerParams) ([]*Notification, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	var items []*Notification
+	for _, n := range s.notifications {
+		if n.UsersIdusers == arg.ListerID && !n.ReadAt.Valid {
+			items = append(items, n)
+		}
+	}
+	s.sortNotificationsByIDDesc(items)
+	return s.applyNotificationPagination(items, arg.Limit, arg.Offset), nil
+}
+
+func (s *QuerierStub) ListNotificationsForLister(ctx context.Context, arg ListNotificationsForListerParams) ([]*Notification, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	var items []*Notification
+	for _, n := range s.notifications {
+		if n.UsersIdusers == arg.ListerID {
+			items = append(items, n)
+		}
+	}
+	s.sortNotificationsByIDDesc(items)
+	return s.applyNotificationPagination(items, arg.Limit, arg.Offset), nil
+}
+
+func (s *QuerierStub) SetNotificationReadForLister(ctx context.Context, arg SetNotificationReadForListerParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, n := range s.notifications {
+		if n.ID == arg.ID && n.UsersIdusers == arg.ListerID {
+			n.ReadAt = sql.NullTime{Time: time.Now(), Valid: true}
+			return nil
+		}
+	}
+	return fmt.Errorf("notification %d not found for lister %d", arg.ID, arg.ListerID)
+}
+
+func (s *QuerierStub) SetNotificationUnreadForLister(ctx context.Context, arg SetNotificationUnreadForListerParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, n := range s.notifications {
+		if n.ID == arg.ID && n.UsersIdusers == arg.ListerID {
+			n.ReadAt = sql.NullTime{}
+			return nil
+		}
+	}
+	return fmt.Errorf("notification %d not found for lister %d", arg.ID, arg.ListerID)
+}
+
+func (s *QuerierStub) AdminPurgeReadNotifications(ctx context.Context) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	filtered := s.notifications[:0]
+	for _, n := range s.notifications {
+		if !n.ReadAt.Valid {
+			filtered = append(filtered, n)
+		}
+	}
+	s.notifications = filtered
+	return nil
 }
 
 func (s *QuerierStub) ListSubscribersForPatterns(ctx context.Context, arg ListSubscribersForPatternsParams) ([]int32, error) {
@@ -249,4 +353,20 @@ func (s *QuerierStub) ListSubscribersForPattern(ctx context.Context, arg ListSub
 		}
 	}
 	return nil, nil
+}
+
+func (s *QuerierStub) sortNotificationsByIDDesc(items []*Notification) {
+	sort.SliceStable(items, func(i, j int) bool { return items[i].ID > items[j].ID })
+}
+
+func (s *QuerierStub) applyNotificationPagination(items []*Notification, limit, offset int32) []*Notification {
+	start := int(offset)
+	if start > len(items) {
+		return nil
+	}
+	end := len(items)
+	if limit > 0 && start+int(limit) < end {
+		end = start + int(limit)
+	}
+	return items[start:end]
 }

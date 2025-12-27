@@ -5,43 +5,78 @@ import (
 	"database/sql"
 	"net/mail"
 	"testing"
-	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/db"
 )
 
 func TestNotificationsQueries(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	ctx := context.Background()
+	q := &db.QuerierStub{}
+
+	insert := func(recipient int32, msg string) {
+		t.Helper()
+		if err := q.SystemCreateNotification(ctx, db.SystemCreateNotificationParams{
+			RecipientID: recipient,
+			Link:        sql.NullString{String: "/x", Valid: true},
+			Message:     sql.NullString{String: msg, Valid: true},
+		}); err != nil {
+			t.Fatalf("insert %s: %v", msg, err)
+		}
 	}
-	defer conn.Close()
-	q := db.New(conn)
-	mock.ExpectExec("INSERT INTO notifications").WithArgs(int32(1), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
-	if err := q.SystemCreateNotification(context.Background(), db.SystemCreateNotificationParams{RecipientID: 1, Link: sql.NullString{String: "/x", Valid: true}, Message: sql.NullString{String: "hi", Valid: true}}); err != nil {
-		t.Fatalf("insert: %v", err)
-	}
-	rows := sqlmock.NewRows([]string{"cnt"}).AddRow(1)
-	mock.ExpectQuery("SELECT COUNT\\(\\*\\)").WillReturnRows(rows)
-	if c, err := q.GetUnreadNotificationCountForLister(context.Background(), 1); err != nil || c != 1 {
+
+	insert(1, "hi")
+	insert(1, "later")
+	insert(2, "other")
+
+	if c, err := q.GetUnreadNotificationCountForLister(ctx, 1); err != nil || c != 2 {
 		t.Fatalf("count=%d err=%v", c, err)
 	}
-	mock.ExpectQuery("SELECT id, users_idusers").WillReturnRows(sqlmock.NewRows([]string{"id", "users_idusers", "link", "message", "created_at", "read_at"}).AddRow(1, 1, "/x", "hi", time.Now(), nil))
-	if _, err := q.ListUnreadNotificationsForLister(context.Background(), db.ListUnreadNotificationsForListerParams{ListerID: 1, Limit: 10, Offset: 0}); err != nil {
-		t.Fatalf("get: %v", err)
+
+	unread, err := q.ListUnreadNotificationsForLister(ctx, db.ListUnreadNotificationsForListerParams{ListerID: 1, Limit: 10, Offset: 0})
+	if err != nil {
+		t.Fatalf("get unread: %v", err)
 	}
-	mock.ExpectExec("UPDATE notifications SET read_at").WithArgs(int32(1), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
-	if err := q.SetNotificationReadForLister(context.Background(), db.SetNotificationReadForListerParams{ID: 1, ListerID: 1}); err != nil {
+	if len(unread) != 2 {
+		t.Fatalf("expected 2 unread, got %d", len(unread))
+	}
+
+	last, err := q.SystemGetLastNotificationForRecipientByMessage(ctx, db.SystemGetLastNotificationForRecipientByMessageParams{
+		RecipientID: 1,
+		Message:     sql.NullString{String: "hi", Valid: true},
+	})
+	if err != nil || last == nil {
+		t.Fatalf("last notification lookup: %v", err)
+	}
+	if last.Message.String != "hi" {
+		t.Fatalf("expected message hi got %s", last.Message.String)
+	}
+
+	if err := q.SetNotificationReadForLister(ctx, db.SetNotificationReadForListerParams{ID: last.ID, ListerID: 1}); err != nil {
 		t.Fatalf("mark: %v", err)
 	}
-	mock.ExpectExec("DELETE FROM notifications").WillReturnResult(sqlmock.NewResult(1, 1))
-	if err := q.AdminPurgeReadNotifications(context.Background()); err != nil {
+	if c, err := q.GetUnreadNotificationCountForLister(ctx, 1); err != nil || c != 1 {
+		t.Fatalf("count after mark=%d err=%v", c, err)
+	}
+	if err := q.SetNotificationUnreadForLister(ctx, db.SetNotificationUnreadForListerParams{ID: last.ID, ListerID: 1}); err != nil {
+		t.Fatalf("unmark: %v", err)
+	}
+	if c, err := q.GetUnreadNotificationCountForLister(ctx, 1); err != nil || c != 2 {
+		t.Fatalf("count after unmark=%d err=%v", c, err)
+	}
+
+	if err := q.SetNotificationReadForLister(ctx, db.SetNotificationReadForListerParams{ID: last.ID, ListerID: 1}); err != nil {
+		t.Fatalf("mark again: %v", err)
+	}
+	if err := q.AdminPurgeReadNotifications(ctx); err != nil {
 		t.Fatalf("purge: %v", err)
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expect: %v", err)
+	all, err := q.ListNotificationsForLister(ctx, db.ListNotificationsForListerParams{ListerID: 1, Limit: 10, Offset: 0})
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(all) != 1 || all[0].ReadAt.Valid {
+		t.Fatalf("expected 1 unread notification after purge, got %+v", all)
 	}
 }
 

@@ -79,6 +79,9 @@ func (cd *CoreData) HandleThreadUpdated(ctx context.Context, event ThreadUpdated
 		if event.CommentURL != "" {
 			evt.Data["CommentURL"] = event.CommentURL
 		}
+		if event.CommentText != "" {
+			evt.Data["Body"] = event.CommentText
+		}
 		if event.PostURL != "" {
 			evt.Data["PostURL"] = event.PostURL
 		}

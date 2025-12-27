@@ -20,8 +20,12 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
+// grantQuery matches the sqlc generated query for SystemCheckGrant.
+// Note: whitespace handling in sqlmock with regexp can be tricky.
 var grantQuery = regexp.QuoteMeta(`WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT 1 FROM grants g
 WHERE g.section = ?
@@ -52,7 +56,8 @@ func TestRequireWritingAuthorWritingVar(t *testing.T) {
 	sess, _ := store.Get(req, core.SessionName)
 	sess.Values["UID"] = int32(1)
 
-	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig(), common.WithSession(sess), common.WithUserRoles([]string{"content writer"}))
+	// Ensure no admin role is present so HasGrant queries the DB
+	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig(), common.WithSession(sess), common.WithUserRoles([]string{}))
 	cd.LoadSelectionsFromRequest(req)
 	cd.UserID = 1
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
@@ -101,7 +106,7 @@ func TestMatchCanEditWritingArticleUsesGrant(t *testing.T) {
 	req := httptest.NewRequest("GET", "/writings/article/2/edit", nil)
 	req = mux.SetURLVars(req, map[string]string{"writing": "2"})
 
-	cd := common.NewCoreData(req.Context(), db.New(conn), config.NewRuntimeConfig())
+	cd := common.NewCoreData(req.Context(), db.New(conn), config.NewRuntimeConfig(), common.WithUserRoles([]string{}))
 	cd.UserID = 7
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -128,7 +133,7 @@ func TestMatchCanPostWritingDeniesWithoutGrant(t *testing.T) {
 	req := httptest.NewRequest("GET", "/writings/category/3/add", nil)
 	req = mux.SetURLVars(req, map[string]string{"category": "3"})
 
-	cd := common.NewCoreData(req.Context(), db.New(conn), config.NewRuntimeConfig())
+	cd := common.NewCoreData(req.Context(), db.New(conn), config.NewRuntimeConfig(), common.WithUserRoles([]string{}))
 	cd.UserID = 4
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)

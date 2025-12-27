@@ -37,6 +37,17 @@ func (q *renameLanguageQueries) AdminRenameLanguage(_ context.Context, arg db.Ad
 	return nil
 }
 
+func (q *renameLanguageQueries) SystemCheckGrant(_ context.Context, arg db.SystemCheckGrantParams) (int32, error) {
+	if arg.Section == common.AdminAccessSection && arg.Action == common.AdminAccessAction {
+		return 1, nil
+	}
+	return 0, fmt.Errorf("unexpected grant check: %#v", arg)
+}
+
+func (q *renameLanguageQueries) SystemCheckRoleGrant(context.Context, db.SystemCheckRoleGrantParams) (int32, error) {
+	return 0, sql.ErrNoRows
+}
+
 func TestRenameLanguageTask_Action(t *testing.T) {
 	queries := &renameLanguageQueries{
 		languages: []*db.Language{{ID: 1, Nameof: sql.NullString{String: "en", Valid: true}}},
@@ -50,7 +61,7 @@ func TestRenameLanguageTask_Action(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	cfg := config.NewRuntimeConfig()
-	cd := common.NewCoreData(context.Background(), queries, cfg, common.WithUserRoles([]string{"administrator"}))
+	cd := common.NewCoreData(context.Background(), queries, cfg, common.WithUserRoles([]string{}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()

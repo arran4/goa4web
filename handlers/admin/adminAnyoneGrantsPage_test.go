@@ -3,6 +3,7 @@ package admin
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -23,6 +24,13 @@ func (q *anyoneGrantsQueries) ListGrants(context.Context) ([]*db.Grant, error) {
 	return q.grants, nil
 }
 
+func (q *anyoneGrantsQueries) SystemCheckGrant(_ context.Context, arg db.SystemCheckGrantParams) (int32, error) {
+	if arg.Section == common.AdminAccessSection && arg.Action == common.AdminAccessAction {
+		return 1, nil
+	}
+	return 0, fmt.Errorf("unexpected grant check: %#v", arg)
+}
+
 func TestAdminAnyoneGrantsPage(t *testing.T) {
 	queries := &anyoneGrantsQueries{
 		grants: []*db.Grant{{
@@ -37,7 +45,7 @@ func TestAdminAnyoneGrantsPage(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/admin/grants/anyone", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{}))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 

@@ -57,6 +57,10 @@ type QuerierStub struct {
 	SystemCheckGrantCalls   []SystemCheckGrantParams
 	SystemCheckGrantFn      func(SystemCheckGrantParams) (int32, error)
 
+	GetWritingForListerByIDRow   *GetWritingForListerByIDRow
+	GetWritingForListerByIDErr   error
+	GetWritingForListerByIDCalls []GetWritingForListerByIDParams
+
 	SystemCheckRoleGrantReturns int32
 	SystemCheckRoleGrantErr     error
 	SystemCheckRoleGrantCalls   []SystemCheckRoleGrantParams
@@ -110,6 +114,22 @@ func (s *QuerierStub) SystemCheckGrant(ctx context.Context, arg SystemCheckGrant
 		ret = 1
 	}
 	return ret, nil
+}
+
+// GetWritingForListerByID records the call and returns the configured response.
+func (s *QuerierStub) GetWritingForListerByID(ctx context.Context, arg GetWritingForListerByIDParams) (*GetWritingForListerByIDRow, error) {
+	s.mu.Lock()
+	s.GetWritingForListerByIDCalls = append(s.GetWritingForListerByIDCalls, arg)
+	row := s.GetWritingForListerByIDRow
+	err := s.GetWritingForListerByIDErr
+	s.mu.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	if row == nil {
+		return nil, errors.New("GetWritingForListerByID not stubbed")
+	}
+	return row, nil
 }
 
 // SystemCheckRoleGrant records the call and returns the configured response.

@@ -16,19 +16,6 @@ func canEditNewsPost(cd *common.CoreData, postID int32) bool {
 }
 
 // CanPostNews reports whether the current user can create news posts.
-// Administrators must be in Admin Mode.
-// Users with explicit "news writer" or "content writer" roles can post anytime.
 func CanPostNews(cd *common.CoreData) bool {
-	if cd == nil {
-		return false
-	}
-	if cd.IsAdmin() {
-		return true
-	}
-	for _, r := range cd.UserRoles() {
-		if r == "news writer" || r == "content writer" {
-			return true
-		}
-	}
-	return false
+	return cd != nil && cd.HasGrant("news", "post", "post", 0)
 }

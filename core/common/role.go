@@ -16,6 +16,12 @@ func Allowed(r *http.Request, roles ...string) bool {
 		return false
 	}
 	for _, lvl := range roles {
+		if lvl == "administrator" {
+			if cd.HasAdminAccess() {
+				return true
+			}
+			continue
+		}
 		if cd.HasRole(lvl) {
 			return true
 		}

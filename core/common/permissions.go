@@ -6,6 +6,13 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
+const (
+	// AdminGrantSection identifies the grant section used for administrator access.
+	AdminGrantSection = "admin"
+	// AdminGrantAccessAction is the grant action that unlocks administrator pages.
+	AdminGrantAccessAction = "access"
+)
+
 // HasGrant reports whether the current user is allowed the given action.
 func (cd *CoreData) HasGrant(section, item, action string, itemID int32) bool {
 	if cd == nil {
@@ -14,7 +21,26 @@ func (cd *CoreData) HasGrant(section, item, action string, itemID int32) bool {
 	if cd.IsAdmin() {
 		return true
 	}
-	if cd.queries == nil {
+	return cd.checkGrant(section, item, action, itemID)
+}
+
+// HasAdminAccess reports whether the caller can reach administrator-only pages.
+func (cd *CoreData) HasAdminAccess() bool {
+	if cd == nil {
+		return false
+	}
+	if cd.HasAdminRole() {
+		return true
+	}
+	if cd.AdminMode && cd.IsAdmin() {
+		return true
+	}
+	return cd.checkGrant(AdminGrantSection, "", AdminGrantAccessAction, 0) ||
+		cd.checkGrant("role", "", "admin", 0)
+}
+
+func (cd *CoreData) checkGrant(section, item, action string, itemID int32) bool {
+	if cd == nil || cd.queries == nil {
 		return false
 	}
 	_, err := cd.queries.SystemCheckGrant(cd.ctx, db.SystemCheckGrantParams{

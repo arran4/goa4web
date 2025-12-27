@@ -51,6 +51,7 @@ func TestRenameLanguageTask_Action(t *testing.T) {
 
 	cfg := config.NewRuntimeConfig()
 	cd := common.NewCoreData(context.Background(), queries, cfg, common.WithUserRoles([]string{"administrator"}))
+	cd.AdminMode = true
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()

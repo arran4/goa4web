@@ -290,8 +290,11 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 	cd.UserID = uid
 	_ = cd.UserRoles()
 
-	cd.AdminMode = r.URL.Query().Get("mode") == "admin"
-	if strings.HasPrefix(r.URL.Path, "/admin") && cd.HasRole("administrator") {
+	reqAdminMode := r.URL.Query().Get("mode") == "admin"
+	if reqAdminMode && (cd.HasAdminAccess() || cd.HasAdminRole()) {
+		cd.AdminMode = true
+	}
+	if strings.HasPrefix(r.URL.Path, "/admin") && (cd.HasAdminAccess() || cd.HasAdminRole()) {
 		cd.AdminMode = true
 	}
 	if s.Nav != nil {

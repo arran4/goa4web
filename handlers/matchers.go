@@ -7,12 +7,24 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 )
 
 // RequiredAccess ensures the requestor has one of the provided roles.
 func RequiredAccess(accessLevels ...string) mux.MatcherFunc {
 	return func(request *http.Request, match *mux.RouteMatch) bool {
 		return common.Allowed(request, accessLevels...)
+	}
+}
+
+// RequiredAdminAccess ensures the requestor has administrator grants.
+func RequiredAdminAccess() mux.MatcherFunc {
+	return func(request *http.Request, match *mux.RouteMatch) bool {
+		cd, _ := request.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		if cd == nil {
+			return false
+		}
+		return cd.HasAdminAccess()
 	}
 }
 

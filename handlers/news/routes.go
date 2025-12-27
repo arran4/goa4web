@@ -40,8 +40,8 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	nr.HandleFunc("/news/{news}", handlers.TaskHandler(editTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("content writer", "administrator")).MatcherFunc(editTask.Matcher())
 	nr.HandleFunc("/news/{news}/labels", handlers.TaskHandler(setLabelsTask)).Methods("POST").MatcherFunc(setLabelsTask.Matcher())
 	nr.HandleFunc("/news/{news}/labels", handlers.TaskHandler(markReadTask)).Methods("GET", "POST").MatcherFunc(markReadTask.Matcher())
-	nr.HandleFunc("/news/{news}/announcement", handlers.TaskHandler(announcementAddTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(announcementAddTask.Matcher())
-	nr.HandleFunc("/news/{news}/announcement", handlers.TaskHandler(announcementDeleteTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(announcementDeleteTask.Matcher())
+	nr.HandleFunc("/news/{news}/announcement", handlers.TaskHandler(announcementAddTask)).Methods("POST").MatcherFunc(handlers.RequiredAdminAccess()).MatcherFunc(announcementAddTask.Matcher())
+	nr.HandleFunc("/news/{news}/announcement", handlers.TaskHandler(announcementDeleteTask)).Methods("POST").MatcherFunc(handlers.RequiredAdminAccess()).MatcherFunc(announcementDeleteTask.Matcher())
 	nr.HandleFunc("/news/{news}", handlers.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(cancelTask.Matcher())
 	nr.HandleFunc("/news/{news}", handlers.TaskDoneAutoRefreshPage).Methods("POST")
 }

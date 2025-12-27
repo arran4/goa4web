@@ -64,6 +64,7 @@ func TestAdminReloadRoute_Authorized(t *testing.T) {
 
 	req := httptest.NewRequest("POST", "/admin/reload", nil)
 	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithUserRoles([]string{"administrator"}))
+	cd.AdminMode = true
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -109,6 +110,7 @@ func TestAdminShutdownRoute_Authorized(t *testing.T) {
 	req := httptest.NewRequest("POST", "/admin/shutdown", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithUserRoles([]string{"administrator"}))
+	cd.AdminMode = true
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -154,6 +156,7 @@ func TestServerShutdownMatcher_Allowed(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	cfg := config.NewRuntimeConfig()
 	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithUserRoles([]string{"administrator"}))
+	cd.AdminMode = true
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	h := New()

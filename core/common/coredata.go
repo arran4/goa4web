@@ -572,6 +572,9 @@ func (cd *CoreData) SaveBookmark(p db.UpdateBookmarksForListerParams) error {
 
 // IsAdmin reports whether the current user has administrator privileges active.
 func (cd *CoreData) IsAdmin() bool {
+	if cd == nil {
+		return false
+	}
 	return cd.HasAdminRole() && cd.IsAdminMode()
 }
 

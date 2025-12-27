@@ -36,7 +36,7 @@ var _ tasks.TemplatesRequired = (*ServerShutdownTask)(nil)
 
 func (t *ServerShutdownTask) Matcher() mux.MatcherFunc {
 	taskM := tasks.HasTask(string(TaskServerShutdown))
-	adminM := handlers.RequiredAccess("administrator")
+	adminM := handlers.RequiredAdminAccess()
 	return func(r *http.Request, m *mux.RouteMatch) bool {
 		return taskM(r, m) && adminM(r, m)
 	}
@@ -44,7 +44,7 @@ func (t *ServerShutdownTask) Matcher() mux.MatcherFunc {
 
 func (t *ServerShutdownTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	if cd == nil || !cd.HasRole("administrator") {
+	if cd == nil || !cd.HasAdminAccess() {
 		return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		})

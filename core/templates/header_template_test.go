@@ -15,7 +15,9 @@ func TestHeaderTemplateRendersMobileNavIconAndText(t *testing.T) {
 		SiteTitle: "My Site",
 		PageTitle: "Page",
 	}
-	tmpl := template.Must(template.New("").Funcs(cd.Funcs(r)).ParseFS(testTemplates,
+	funcs := cd.Funcs(r)
+	funcs["assetHash"] = func(s string) string { return s }
+	tmpl := template.Must(template.New("").Funcs(funcs).ParseFS(testTemplates,
 		"site/*.gohtml", "site/*/*.gohtml"))
 
 	var b strings.Builder

@@ -38,6 +38,7 @@ func TestNewsPostPageLabelBars(t *testing.T) {
 		"a4code2html": func(s string) template.HTML { return template.HTML(s) },
 		"add":         func(a, b int) int { return a + b },
 		"since":       func(time.Time, time.Time) string { return "" },
+		"assetHash":   func(s string) string { return s },
 	}
 
 	base := filepath.Join("..", "..", "core", "templates", "site", "news")
@@ -96,6 +97,7 @@ func TestNewsPostPagePrivateLabelsOnce(t *testing.T) {
 		"NewsLabels":  func(int32) []templates.TopicLabel { return nil },
 		"add":         func(a, b int) int { return a + b },
 		"since":       func(time.Time, time.Time) string { return "" },
+		"assetHash":   func(s string) string { return s },
 	}
 
 	base := filepath.Join("..", "..", "core", "templates", "site", "news")

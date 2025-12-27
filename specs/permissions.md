@@ -182,6 +182,7 @@ Many queries now filter results directly in SQL using `lister_id` together with 
 | `imagebbs` | `board`    | `see`           | List image boards |
 | `imagebbs` | `board`    | `view`          | View posts on a board |
 | `imagebbs` | `board`    | `post`          | Create a new post on the board |
+| `imagebbs` | `board`    | `approve`       | Approve or administrate posts on a board |
 | `images`   | `upload`   | `see`           | List uploaded images |
 | `images`   | `upload`   | `post`          | Upload an image |
 | `privateforum` | `topic` | `see`           | Show a private topic in lists |

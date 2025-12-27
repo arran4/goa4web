@@ -210,3 +210,39 @@ func TestCommentsPageEditControlsRequireGrantNotRole(t *testing.T) {
 
 	_ = cd
 }
+
+func TestCommentsPageEditControlsAllowAdminMode(t *testing.T) {
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
+	writeTempCommentsTemplate(t, `{{if .CanEdit}}can-edit{{else}}no-edit{{end}}`)
+
+	queries := db.New(conn)
+	w, req, cd := newCommentsPageRequest(t, queries, []string{"administrator"}, 4)
+	cd.AdminMode = true
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT l.id")).WithArgs(int32(4), sql.NullInt32{Int32: 4, Valid: true}, int32(1)).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "language_id", "author_id", "category_id", "thread_id", "title", "url", "description", "listed", "timezone", "username", "title"}).
+			AddRow(1, 1, 2, 1, 1, "t", "http://u", "d", time.Unix(0, 0), time.Local.String(), "bob", "cat"))
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT c.idcomments")).WithArgs(int32(4), int32(4), int32(1), int32(4), int32(4), "linker", sql.NullString{String: "link", Valid: true}, sql.NullInt32{Int32: 4, Valid: true}).
+		WillReturnRows(sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_id", "written", "text", "timezone", "deleted_at", "last_index", "posterusername", "is_owner"}).
+			AddRow(9, 1, 2, sql.NullInt32{}, sql.NullTime{Time: time.Unix(0, 0), Valid: true}, sql.NullString{String: "text", Valid: true}, sql.NullString{String: time.Local.String(), Valid: true}, sql.NullTime{}, sql.NullTime{}, sql.NullString{String: "bob", Valid: true}, false))
+
+	threadRows := sqlmock.NewRows([]string{"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername"}).
+		AddRow(1, 1, 1, 1, 0, time.Unix(0, 0), false, "bob")
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT th.idforumthread")).WithArgs(int32(4), int32(1), int32(4), int32(4), int32(4), sql.NullInt32{Int32: 4, Valid: true}).WillReturnRows(threadRows)
+
+	CommentsPage(w, req)
+
+	if got := strings.TrimSpace(w.Body.String()); got != "can-edit" {
+		t.Fatalf("expected admin mode to allow edit controls, got %q", got)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+
+	_ = cd
+}

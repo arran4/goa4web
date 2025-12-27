@@ -12,6 +12,10 @@ type QuerierStub struct {
 	Querier
 	mu sync.Mutex
 
+	ListActiveBansReturns []*BannedIp
+	ListActiveBansErr     error
+	ListActiveBansCalls   int
+
 	SystemGetUserByIDRow   *SystemGetUserByIDRow
 	SystemGetUserByIDErr   error
 	SystemGetUserByIDCalls []int32
@@ -69,6 +73,18 @@ type QuerierStub struct {
 	AdminListPrivateTopicParticipantsByTopicIDCalls   []sql.NullInt32
 	AdminListPrivateTopicParticipantsByTopicIDReturns []*AdminListPrivateTopicParticipantsByTopicIDRow
 	AdminListPrivateTopicParticipantsByTopicIDErr     error
+}
+
+func (s *QuerierStub) ListActiveBans(ctx context.Context) ([]*BannedIp, error) {
+	s.mu.Lock()
+	s.ListActiveBansCalls++
+	rows := s.ListActiveBansReturns
+	err := s.ListActiveBansErr
+	s.mu.Unlock()
+	if rows == nil {
+		return []*BannedIp{}, err
+	}
+	return rows, err
 }
 
 func (s *QuerierStub) AdminListPrivateTopicParticipantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListPrivateTopicParticipantsByTopicIDRow, error) {

@@ -27,6 +27,9 @@ type QuerierStub struct {
 	Querier
 	mu sync.Mutex
 
+	ListActiveBansReturns []*BannedIp
+	ListActiveBansErr     error
+	ListActiveBansCalls   int
 	ContentLabelStatus                  map[string]map[int32]map[string]struct{}
 	ContentPrivateLabels                map[string]map[int32]map[int32]map[string]bool
 	ContentPublicLabels                 map[string]map[int32]map[string]struct{}
@@ -441,6 +444,18 @@ func (s *QuerierStub) SystemClearContentPrivateLabel(ctx context.Context, arg Sy
 		}
 	}
 	return nil
+}
+
+func (s *QuerierStub) ListActiveBans(ctx context.Context) ([]*BannedIp, error) {
+	s.mu.Lock()
+	s.ListActiveBansCalls++
+	rows := s.ListActiveBansReturns
+	err := s.ListActiveBansErr
+	s.mu.Unlock()
+	if rows == nil {
+		return []*BannedIp{}, err
+	}
+	return rows, err
 }
 
 func (s *QuerierStub) AdminListPrivateTopicParticipantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListPrivateTopicParticipantsByTopicIDRow, error) {

@@ -44,7 +44,7 @@ func (t *ServerShutdownTask) Matcher() mux.MatcherFunc {
 
 func (t *ServerShutdownTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	if cd == nil || !cd.HasRole("administrator") {
+	if cd == nil || !cd.HasAdminRole() {
 		return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		})

@@ -1160,7 +1160,16 @@ func (cd *CoreData) FAQCategories() ([]*db.FaqCategory, error) {
 
 // HasAdminRole reports whether the current user has the administrator role.
 func (cd *CoreData) HasAdminRole() bool {
-	return cd.HasRole("administrator")
+	perms, err := cd.Permissions()
+	if err != nil {
+		return false
+	}
+	for _, p := range perms {
+		if p.IsAdmin {
+			return true
+		}
+	}
+	return false
 }
 
 // HasContentWriterRole reports whether the current user has the content writer role.
@@ -1175,6 +1184,11 @@ func (cd *CoreData) HasRole(role string) bool {
 			return true
 		}
 	}
+	if cd.HasAdminRole() {
+		if role == "moderator" || role == "content writer" || role == "user" {
+			return true
+		}
+	}
 	if cd.queries != nil {
 		for _, r := range cd.UserRoles() {
 			if _, err := cd.queries.SystemCheckRoleGrant(cd.ctx, db.SystemCheckRoleGrantParams{Name: r, Action: role}); err == nil {
@@ -1184,10 +1198,6 @@ func (cd *CoreData) HasRole(role string) bool {
 	} else {
 		for _, r := range cd.UserRoles() {
 			switch r {
-			case "administrator":
-				if role == "moderator" || role == "content writer" || role == "user" {
-					return true
-				}
 			case "moderator":
 				if role == "user" {
 					return true
@@ -2617,6 +2627,11 @@ func WithPreference(p *db.Preference) CoreOption {
 // WithUserRoles preloads the current user roles.
 func WithUserRoles(r []string) CoreOption {
 	return func(cd *CoreData) { cd.userRoles.Set(r) }
+}
+
+// WithPermissions preloads the user permissions.
+func WithPermissions(p []*db.GetPermissionsByUserIDRow) CoreOption {
+	return func(cd *CoreData) { cd.perms.Set(p) }
 }
 
 // WithConfig sets the runtime config for this CoreData.

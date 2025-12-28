@@ -26,9 +26,6 @@ func TestBoardPageRendersSubBoards(t *testing.T) {
 	cd := common.NewCoreData(req.Context(), qs, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
 	cd.AdminMode = true
 
-	// Wrap with FakeCoreData
-	fakeCD := NewFakeCoreData(cd)
-
 	// Prepare test data
 	subBoards := []*db.Imageboard{
 		{
@@ -59,9 +56,19 @@ func TestBoardPageRendersSubBoards(t *testing.T) {
 	}
 
 	// Stub the fetches
-	fakeCD.StubSubImageBoards(3, subBoards)
-	fakeCD.StubImageBoardPosts(3, posts)
-    fakeCD.StubSystemCheckGrant(1)
+	qs.ListBoardsByParentIDForListerFn = func(arg db.ListBoardsByParentIDForListerParams) ([]*db.Imageboard, error) {
+		if arg.ParentID.Valid && arg.ParentID.Int32 == 3 {
+			return subBoards, nil
+		}
+		return nil, nil
+	}
+	qs.ListImagePostsByBoardForListerFn = func(arg db.ListImagePostsByBoardForListerParams) ([]*db.ListImagePostsByBoardForListerRow, error) {
+		if arg.BoardID.Valid && arg.BoardID.Int32 == 3 {
+			return posts, nil
+		}
+		return nil, nil
+	}
+    qs.SystemCheckGrantReturns = 1
 
 	// Inject CoreData into context
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)

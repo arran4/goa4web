@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 )
 
@@ -18,7 +19,7 @@ type UpdateEventData struct {
 }
 
 // Worker listens for post count events and updates the related metadata.
-func Worker(ctx context.Context, bus *eventbus.Bus, q PostUpdateQuerier) {
+func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier) {
 	if bus == nil || q == nil {
 		return
 	}

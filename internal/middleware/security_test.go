@@ -4,27 +4,37 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"testing"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
 )
 
-func newCoreData(t *testing.T, cfg config.RuntimeConfig) (*common.CoreData, *db.QuerierStub) {
+func newCoreData(t *testing.T, cfg config.RuntimeConfig) (*common.CoreData, sqlmock.Sqlmock, func()) {
 	t.Helper()
-	stub := &db.QuerierStub{ListActiveBansReturns: []*db.BannedIp{}}
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	cleanup := func() { conn.Close() }
+	queries := db.New(conn)
 	if cfg.HSTSHeaderValue == "" {
 		cfg.HSTSHeaderValue = "max-age=63072000; includeSubDomains"
 	}
-	cd := common.NewCoreData(context.Background(), stub, &cfg)
-	return cd, stub
+	cd := common.NewCoreData(context.Background(), queries, &cfg)
+	return cd, mock, cleanup
 }
 
 func TestSecurityHeadersMiddlewareHTTP(t *testing.T) {
 	cfg := config.RuntimeConfig{HTTPHostname: "http://example.com"}
-	cd, stub := newCoreData(t, cfg)
+	cd, mock, cleanup := newCoreData(t, cfg)
+	defer cleanup()
+
+	mock.ExpectQuery(regexp.QuoteMeta("FROM banned_ips")).WillReturnRows(sqlmock.NewRows([]string{"id", "ip_net", "reason", "created_at", "expires_at", "canceled_at"}))
 
 	req := httptest.NewRequest("GET", "http://example.com/", nil)
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
@@ -38,14 +48,17 @@ func TestSecurityHeadersMiddlewareHTTP(t *testing.T) {
 		t.Fatalf("unexpected HSTS header %q", h)
 	}
 
-	if stub.ListActiveBansCalls != 1 {
-		t.Fatalf("ListActiveBansCalls=%d want 1", stub.ListActiveBansCalls)
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
 	}
 }
 
 func TestSecurityHeadersMiddlewareHTTPS(t *testing.T) {
 	cfg := config.RuntimeConfig{HTTPHostname: "https://example.com"}
-	cd, stub := newCoreData(t, cfg)
+	cd, mock, cleanup := newCoreData(t, cfg)
+	defer cleanup()
+
+	mock.ExpectQuery(regexp.QuoteMeta("FROM banned_ips")).WillReturnRows(sqlmock.NewRows([]string{"id", "ip_net", "reason", "created_at", "expires_at", "canceled_at"}))
 
 	req := httptest.NewRequest("GET", "http://example.com/", nil)
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
@@ -60,14 +73,17 @@ func TestSecurityHeadersMiddlewareHTTPS(t *testing.T) {
 		t.Fatalf("unexpected HSTS header %q", h)
 	}
 
-	if stub.ListActiveBansCalls != 1 {
-		t.Fatalf("ListActiveBansCalls=%d want 1", stub.ListActiveBansCalls)
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
 	}
 }
 
 func TestSecurityHeadersMiddlewareForwardedProto(t *testing.T) {
 	cfg := config.RuntimeConfig{HTTPHostname: "http://example.com"}
-	cd, stub := newCoreData(t, cfg)
+	cd, mock, cleanup := newCoreData(t, cfg)
+	defer cleanup()
+
+	mock.ExpectQuery(regexp.QuoteMeta("FROM banned_ips")).WillReturnRows(sqlmock.NewRows([]string{"id", "ip_net", "reason", "created_at", "expires_at", "canceled_at"}))
 
 	req := httptest.NewRequest("GET", "http://example.com/", nil)
 	req.Header.Set("X-Forwarded-Proto", "https")
@@ -83,8 +99,8 @@ func TestSecurityHeadersMiddlewareForwardedProto(t *testing.T) {
 		t.Fatalf("unexpected HSTS header %q", h)
 	}
 
-	if stub.ListActiveBansCalls != 1 {
-		t.Fatalf("ListActiveBansCalls=%d want 1", stub.ListActiveBansCalls)
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
 	}
 }
 

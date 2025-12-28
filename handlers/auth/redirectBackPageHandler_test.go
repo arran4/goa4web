@@ -1,18 +1,31 @@
 package auth
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
-	"github.com/arran4/goa4web/handlers/handlertest"
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 func TestRedirectBackPageHandlerGETAlt(t *testing.T) {
+	conn, _, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
+	q := db.New(conn)
+
+	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
+	ctx := context.WithValue(context.Background(), consts.KeyCoreData, cd)
 	req := httptest.NewRequest(http.MethodGet, "http://example.com/", nil)
-	req, cd, _, cleanup := handlertest.RequestWithCoreData(t, req)
-	defer cleanup()
+	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 
 	h := redirectBackPageHandler{BackURL: "/foo", Method: http.MethodGet}

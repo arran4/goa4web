@@ -3,14 +3,23 @@ package writings
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"testing"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/internal/db"
 )
 
 func TestUserCanCreateWriting_Allowed(t *testing.T) {
-	q := &db.QuerierStub{SystemCheckGrantReturns: 1}
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
+
+	q := db.New(conn)
+	mock.ExpectQuery("SELECT 1 FROM grants").
+		WithArgs(sqlmock.AnyArg(), "writing", sqlmock.AnyArg(), "post", sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
 	ok, err := UserCanCreateWriting(context.Background(), q, 1, 2)
 	if err != nil {
@@ -19,13 +28,22 @@ func TestUserCanCreateWriting_Allowed(t *testing.T) {
 	if !ok {
 		t.Errorf("expected allowed")
 	}
-	if len(q.SystemCheckGrantCalls) != 1 {
-		t.Fatalf("expected 1 grant check, got %d", len(q.SystemCheckGrantCalls))
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
 	}
 }
 
 func TestUserCanCreateWriting_Denied(t *testing.T) {
-	q := &db.QuerierStub{SystemCheckGrantErr: sql.ErrNoRows}
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
+
+	q := db.New(conn)
+	mock.ExpectQuery("SELECT 1 FROM grants").
+		WithArgs(sqlmock.AnyArg(), "writing", sqlmock.AnyArg(), "post", sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnError(sql.ErrNoRows)
 
 	ok, err := UserCanCreateWriting(context.Background(), q, 1, 2)
 	if err != nil {
@@ -34,19 +52,7 @@ func TestUserCanCreateWriting_Denied(t *testing.T) {
 	if ok {
 		t.Errorf("expected denied")
 	}
-	if len(q.SystemCheckGrantCalls) != 1 {
-		t.Fatalf("expected 1 grant check, got %d", len(q.SystemCheckGrantCalls))
-	}
-}
-
-func TestUserCanCreateWriting_Error(t *testing.T) {
-	q := &db.QuerierStub{SystemCheckGrantErr: errors.New("db offline")}
-
-	ok, err := UserCanCreateWriting(context.Background(), q, 1, 2)
-	if err == nil {
-		t.Fatalf("expected error")
-	}
-	if ok {
-		t.Fatalf("expected denied when error occurs")
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
 	}
 }

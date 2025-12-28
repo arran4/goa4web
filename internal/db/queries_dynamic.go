@@ -158,10 +158,6 @@ func (q *Queries) monthlyCounts(ctx context.Context, table, column string, start
 	return m, rows.Err()
 }
 
-type monthlyUsageCounter interface {
-	monthlyCounts(ctx context.Context, table, column string, startYear int32) (map[[2]int32]int64, error)
-}
-
 func (q *Queries) userMonthlyCounts(ctx context.Context, table, column string, startYear int32) (map[string]map[[2]int32]int64, map[string]int32, error) {
 	query := fmt.Sprintf("SELECT u.idusers, u.username, YEAR(%s), MONTH(%s), COUNT(*) FROM %s t JOIN users u ON t.users_idusers = u.idusers WHERE YEAR(%s) >= ? GROUP BY u.idusers, YEAR(%s), MONTH(%s)", column, column, table, column, column, column)
 	rows, err := q.db.QueryContext(ctx, query, startYear)
@@ -190,7 +186,7 @@ func (q *Queries) userMonthlyCounts(ctx context.Context, table, column string, s
 	return data, ids, rows.Err()
 }
 
-func aggregateMonthlyUsageCounts(ctx context.Context, counter monthlyUsageCounter, startYear int32) ([]*MonthlyUsageRow, error) {
+func (q *Queries) MonthlyUsageCounts(ctx context.Context, startYear int32) ([]*MonthlyUsageRow, error) {
 	types := []struct {
 		table  string
 		column string
@@ -206,7 +202,7 @@ func aggregateMonthlyUsageCounts(ctx context.Context, counter monthlyUsageCounte
 
 	data := make(map[[2]int32]*MonthlyUsageRow)
 	for _, t := range types {
-		counts, err := counter.monthlyCounts(ctx, t.table, t.column, startYear)
+		counts, err := q.monthlyCounts(ctx, t.table, t.column, startYear)
 		if err != nil {
 			return nil, err
 		}
@@ -236,10 +232,6 @@ func aggregateMonthlyUsageCounts(ctx context.Context, counter monthlyUsageCounte
 		rows = append(rows, data[k])
 	}
 	return rows, nil
-}
-
-func (q *Queries) MonthlyUsageCounts(ctx context.Context, startYear int32) ([]*MonthlyUsageRow, error) {
-	return aggregateMonthlyUsageCounts(ctx, q, startYear)
 }
 
 func (q *Queries) UserMonthlyUsageCounts(ctx context.Context, startYear int32) ([]*UserMonthlyUsageRow, error) {

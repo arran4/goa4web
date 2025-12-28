@@ -12,11 +12,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"regexp"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
@@ -32,113 +33,17 @@ func signBackURL(key, u string, ts int64) string {
 	return hex.EncodeToString(mac.Sum(nil))
 }
 
-type loginAttemptRecord struct {
-	username  string
-	ip        string
-	createdAt time.Time
-}
-
-type loginQuerierFake struct {
-	db.Querier
-
-	mu                sync.Mutex
-	users             map[string]*db.SystemGetLoginRow
-	loginAttempts     []loginAttemptRecord
-	passwordResets    map[int32][]db.PendingPassword
-	loginRoleByUserID map[int32]bool
-	insertedPasswords []db.InsertPasswordParams
-	now               func() time.Time
-}
-
-func newLoginQuerierFake() *loginQuerierFake {
-	return &loginQuerierFake{
-		users:             map[string]*db.SystemGetLoginRow{},
-		passwordResets:    map[int32][]db.PendingPassword{},
-		loginRoleByUserID: map[int32]bool{},
-		now:               time.Now,
-	}
-}
-
-func (f *loginQuerierFake) SystemCountRecentLoginAttempts(_ context.Context, arg db.SystemCountRecentLoginAttemptsParams) (int64, error) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	var count int64
-	for _, attempt := range f.loginAttempts {
-		if attempt.createdAt.After(arg.CreatedAt) && (attempt.username == arg.Username || attempt.ip == arg.IpAddress) {
-			count++
-		}
-	}
-	return count, nil
-}
-
-func (f *loginQuerierFake) SystemInsertLoginAttempt(_ context.Context, arg db.SystemInsertLoginAttemptParams) error {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	f.loginAttempts = append(f.loginAttempts, loginAttemptRecord{username: arg.Username, ip: arg.IpAddress, createdAt: f.now()})
-	return nil
-}
-
-func (f *loginQuerierFake) SystemGetLogin(_ context.Context, username sql.NullString) (*db.SystemGetLoginRow, error) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	user, ok := f.users[username.String]
-	if !ok {
-		return nil, sql.ErrNoRows
-	}
-	return user, nil
-}
-
-func (f *loginQuerierFake) GetPasswordResetByUser(_ context.Context, arg db.GetPasswordResetByUserParams) (*db.PendingPassword, error) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	resets := f.passwordResets[arg.UserID]
-	var newest *db.PendingPassword
-	for i := range resets {
-		reset := resets[i]
-		if reset.CreatedAt.After(arg.CreatedAt) {
-			if newest == nil || reset.CreatedAt.After(newest.CreatedAt) {
-				cp := reset
-				newest = &cp
-			}
-		}
-	}
-	if newest == nil {
-		return nil, sql.ErrNoRows
-	}
-	return newest, nil
-}
-
-func (f *loginQuerierFake) SystemCheckRoleGrant(context.Context, db.SystemCheckRoleGrantParams) (int32, error) {
-	return 0, sql.ErrNoRows
-}
-
-func (f *loginQuerierFake) GetLoginRoleForUser(_ context.Context, usersIdusers int32) (int32, error) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	if f.loginRoleByUserID[usersIdusers] {
-		return 1, nil
-	}
-	return 0, sql.ErrNoRows
-}
-
-func (f *loginQuerierFake) InsertPassword(_ context.Context, arg db.InsertPasswordParams) error {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	f.insertedPasswords = append(f.insertedPasswords, arg)
-	for username, user := range f.users {
-		if user.Idusers == arg.UsersIdusers {
-			cp := *user
-			cp.Passwd = sql.NullString{String: arg.Passwd, Valid: true}
-			cp.PasswdAlgorithm = arg.PasswdAlgorithm
-			f.users[username] = &cp
-			break
-		}
-	}
-	return nil
-}
-
 func TestLoginAction_NoSuchUser(t *testing.T) {
-	queries := newLoginQuerierFake()
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
+
+	queries := db.New(conn)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM login_attempts")).WithArgs("bob", "1.2.3.4", sqlmock.AnyArg()).WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers,")).WithArgs(sql.NullString{String: "bob", Valid: true}).WillReturnError(sql.ErrNoRows)
+	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO login_attempts (username, ip_address) VALUES (?, ?)")).WithArgs("bob", "1.2.3.4").WillReturnResult(sqlmock.NewResult(1, 1))
 
 	form := url.Values{"username": {"bob"}, "password": {"pw"}}
 	req := httptest.NewRequest("POST", "/login", strings.NewReader(form.Encode()))
@@ -152,14 +57,11 @@ func TestLoginAction_NoSuchUser(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handlers.TaskHandler(loginTask)(rr, req)
 
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
-	}
-	if len(queries.loginAttempts) != 1 {
-		t.Fatalf("expected login attempt recorded, got %d", len(queries.loginAttempts))
-	}
-	if queries.loginAttempts[0].username != "bob" || queries.loginAttempts[0].ip != "1.2.3.4" {
-		t.Fatalf("unexpected login attempt record: %+v", queries.loginAttempts[0])
 	}
 	body := rr.Body.String()
 	if !strings.Contains(body, "No such user") {
@@ -168,13 +70,19 @@ func TestLoginAction_NoSuchUser(t *testing.T) {
 }
 
 func TestLoginAction_InvalidPassword(t *testing.T) {
-	queries := newLoginQuerierFake()
-	queries.users["bob"] = &db.SystemGetLoginRow{
-		Idusers:         1,
-		Passwd:          sql.NullString{String: "7c4f29407893c334a6cb7a87bf045c0d", Valid: true},
-		PasswdAlgorithm: sql.NullString{String: "md5", Valid: true},
-		Username:        sql.NullString{String: "bob", Valid: true},
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
 	}
+	defer conn.Close()
+
+	queries := db.New(conn)
+	rows := sqlmock.NewRows([]string{"idusers", "passwd", "passwd_algorithm", "username"}).
+		AddRow(1, "7c4f29407893c334a6cb7a87bf045c0d", "md5", "bob")
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM login_attempts")).WithArgs("bob", "1.2.3.4", sqlmock.AnyArg()).WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers,")).WithArgs(sql.NullString{String: "bob", Valid: true}).WillReturnRows(rows)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, user_id, passwd")).WithArgs(int32(1), sqlmock.AnyArg()).WillReturnError(sql.ErrNoRows)
+	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO login_attempts (username, ip_address) VALUES (?, ?)")).WithArgs("bob", "1.2.3.4").WillReturnResult(sqlmock.NewResult(1, 1))
 
 	form := url.Values{"username": {"bob"}, "password": {"wrong"}}
 	req := httptest.NewRequest("POST", "/login", strings.NewReader(form.Encode()))
@@ -188,11 +96,11 @@ func TestLoginAction_InvalidPassword(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handlers.TaskHandler(loginTask)(rr, req)
 
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
-	}
-	if len(queries.loginAttempts) != 1 {
-		t.Fatalf("expected login attempt recorded, got %d", len(queries.loginAttempts))
 	}
 	body := rr.Body.String()
 	if !strings.Contains(body, "Invalid password") {
@@ -201,13 +109,19 @@ func TestLoginAction_InvalidPassword(t *testing.T) {
 }
 
 func TestLoginAction_InvalidPasswordPreservesBackData(t *testing.T) {
-	queries := newLoginQuerierFake()
-	queries.users["bob"] = &db.SystemGetLoginRow{
-		Idusers:         1,
-		Passwd:          sql.NullString{String: "7c4f29407893c334a6cb7a87bf045c0d", Valid: true},
-		PasswdAlgorithm: sql.NullString{String: "md5", Valid: true},
-		Username:        sql.NullString{String: "bob", Valid: true},
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
 	}
+	defer conn.Close()
+
+	queries := db.New(conn)
+	rows := sqlmock.NewRows([]string{"idusers", "passwd", "passwd_algorithm", "username"}).
+		AddRow(1, "7c4f29407893c334a6cb7a87bf045c0d", "md5", "bob")
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM login_attempts")).WithArgs("bob", "1.2.3.4", sqlmock.AnyArg()).WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers,")).WithArgs(sql.NullString{String: "bob", Valid: true}).WillReturnRows(rows)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, user_id, passwd")).WithArgs(int32(1), sqlmock.AnyArg()).WillReturnError(sql.ErrNoRows)
+	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO login_attempts (username, ip_address) VALUES (?, ?)")).WithArgs("bob", "1.2.3.4").WillReturnResult(sqlmock.NewResult(1, 1))
 
 	form := url.Values{
 		"username": {"bob"},
@@ -227,11 +141,11 @@ func TestLoginAction_InvalidPasswordPreservesBackData(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handlers.TaskHandler(loginTask)(rr, req)
 
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
-	}
-	if len(queries.loginAttempts) != 1 {
-		t.Fatalf("expected login attempt recorded, got %d", len(queries.loginAttempts))
 	}
 	body := rr.Body.String()
 	if !strings.Contains(body, "Invalid password") {
@@ -291,22 +205,21 @@ func TestLoginFormHandler_ActionTarget(t *testing.T) {
 }
 
 func TestLoginAction_PendingResetPrompt(t *testing.T) {
-	q := newLoginQuerierFake()
-	pwHash, alg, _ := HashPassword("newpw")
-	q.users["bob"] = &db.SystemGetLoginRow{
-		Idusers:         1,
-		Passwd:          sql.NullString{String: "oldhash", Valid: true},
-		PasswdAlgorithm: sql.NullString{String: "md5", Valid: true},
-		Username:        sql.NullString{String: "bob", Valid: true},
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
 	}
-	q.passwordResets[1] = []db.PendingPassword{{
-		ID:               2,
-		UserID:           1,
-		Passwd:           pwHash,
-		PasswdAlgorithm:  alg,
-		VerificationCode: "code",
-		CreatedAt:        time.Now(),
-	}}
+	defer conn.Close()
+
+	q := db.New(conn)
+	pwHash, alg, _ := HashPassword("newpw")
+	userRows := sqlmock.NewRows([]string{"idusers", "passwd", "passwd_algorithm", "username"}).
+		AddRow(1, "oldhash", "md5", "bob")
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM login_attempts")).WithArgs("bob", "1.2.3.4", sqlmock.AnyArg()).WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers,")).WithArgs(sql.NullString{String: "bob", Valid: true}).WillReturnRows(userRows)
+	resetRows := sqlmock.NewRows([]string{"id", "user_id", "passwd", "passwd_algorithm", "verification_code", "created_at", "verified_at"}).
+		AddRow(2, 1, pwHash, alg, "code", time.Now(), nil)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, user_id, passwd")).WithArgs(int32(1), sqlmock.AnyArg()).WillReturnRows(resetRows)
 
 	form := url.Values{"username": {"bob"}, "password": {"newpw"}}
 	req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(form.Encode()))
@@ -320,11 +233,11 @@ func TestLoginAction_PendingResetPrompt(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handlers.TaskHandler(loginTask)(rr, req)
 
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
-	}
-	if len(q.loginAttempts) != 0 {
-		t.Fatalf("unexpected login attempts recorded: %v", q.loginAttempts)
 	}
 	body := rr.Body.String()
 	if !strings.Contains(body, "name=\"id\" value=\"2\"") {
@@ -383,9 +296,13 @@ func TestSanitizeBackURLSigned(t *testing.T) {
 }
 
 func TestLoginPageInvalidBackURL(t *testing.T) {
+	conn, _, _ := sqlmock.New()
+	defer conn.Close()
+	q := db.New(conn)
+
 	req := httptest.NewRequest(http.MethodGet, "/login?back=https://evil.com/x", nil)
 	req.Host = "example.com"
-	cd := common.NewCoreData(req.Context(), newLoginQuerierFake(), config.NewRuntimeConfig())
+	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
@@ -399,6 +316,10 @@ func TestLoginPageInvalidBackURL(t *testing.T) {
 }
 
 func TestLoginPageSignedBackURL(t *testing.T) {
+	conn, _, _ := sqlmock.New()
+	defer conn.Close()
+	q := db.New(conn)
+
 	cfg := config.NewRuntimeConfig()
 	cfg.LoginAttemptThreshold = 10
 	raw := "https://evil.com/x"
@@ -407,7 +328,7 @@ func TestLoginPageSignedBackURL(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/login?back="+url.QueryEscape(raw)+"&back_ts="+fmt.Sprint(ts)+"&back_sig="+sig, nil)
 	req.Host = "example.com"
 	signer := imagesign.NewSigner(cfg, "k")
-	cd := common.NewCoreData(req.Context(), newLoginQuerierFake(), cfg, common.WithImageSigner(signer))
+	cd := common.NewCoreData(req.Context(), q, cfg, common.WithImageSigner(signer))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
@@ -427,18 +348,19 @@ func TestLoginPageSignedBackURL(t *testing.T) {
 }
 
 func TestLoginAction_ExternalBackURLIgnored(t *testing.T) {
-	q := newLoginQuerierFake()
+	conn, mock, _ := sqlmock.New()
+	defer conn.Close()
+
+	q := db.New(conn)
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = "test-session"
 	pwHash, alg, _ := HashPassword("pw")
-	q.users["bob"] = &db.SystemGetLoginRow{
-		Idusers:         1,
-		Passwd:          sql.NullString{String: pwHash, Valid: true},
-		PasswdAlgorithm: sql.NullString{String: alg, Valid: true},
-		Username:        sql.NullString{String: "bob", Valid: true},
-	}
-	q.loginRoleByUserID[1] = true
+	userRows := sqlmock.NewRows([]string{"idusers", "passwd", "passwd_algorithm", "username"}).
+		AddRow(1, pwHash, alg, "bob")
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM login_attempts")).WithArgs("bob", sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers,")).WithArgs(sql.NullString{String: "bob", Valid: true}).WillReturnRows(userRows)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT 1")).WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
 	form := url.Values{"username": {"bob"}, "password": {"pw"}, "back": {"https://evil.com"}}
 	req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(form.Encode()))
@@ -453,6 +375,9 @@ func TestLoginAction_ExternalBackURLIgnored(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handlers.TaskHandler(loginTask)(rr, req)
 
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
 	}
@@ -463,20 +388,23 @@ func TestLoginAction_ExternalBackURLIgnored(t *testing.T) {
 }
 
 func TestLoginAction_SignedExternalBackURL(t *testing.T) {
+	conn, mock, _ := sqlmock.New()
+	defer conn.Close()
+
 	cfg := config.NewRuntimeConfig()
 	cfg.LoginAttemptThreshold = 10
-	q := newLoginQuerierFake()
+	q := db.New(conn)
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = "test-session"
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM login_attempts")).
+		WithArgs("bob", "1.2.3.4", sqlmock.AnyArg()).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
 	pwHash, alg, _ := HashPassword("pw")
-	q.users["bob"] = &db.SystemGetLoginRow{
-		Idusers:         1,
-		Passwd:          sql.NullString{String: pwHash, Valid: true},
-		PasswdAlgorithm: sql.NullString{String: alg, Valid: true},
-		Username:        sql.NullString{String: "bob", Valid: true},
-	}
-	q.loginRoleByUserID[1] = true
+	userRows := sqlmock.NewRows([]string{"idusers", "passwd", "passwd_algorithm", "username"}).
+		AddRow(1, pwHash, alg, "bob")
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers,")).WithArgs(sql.NullString{String: "bob", Valid: true}).WillReturnRows(userRows)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT 1")).WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
 	raw := "https://example.org/ok"
 	ts := time.Now().Add(time.Hour).Unix()
@@ -495,6 +423,9 @@ func TestLoginAction_SignedExternalBackURL(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handlers.TaskHandler(loginTask)(rr, req)
 
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
 	}
@@ -504,14 +435,16 @@ func TestLoginAction_SignedExternalBackURL(t *testing.T) {
 }
 
 func TestLoginAction_Throttle(t *testing.T) {
-	q := newLoginQuerierFake()
-	q.loginAttempts = append(q.loginAttempts,
-		loginAttemptRecord{username: "bob", ip: "1.2.3.4", createdAt: time.Now()},
-		loginAttemptRecord{username: "bob", ip: "1.2.3.4", createdAt: time.Now()},
-		loginAttemptRecord{username: "bob", ip: "1.2.3.4", createdAt: time.Now()},
-		loginAttemptRecord{username: "bob", ip: "1.2.3.4", createdAt: time.Now()},
-		loginAttemptRecord{username: "bob", ip: "1.2.3.4", createdAt: time.Now()},
-	)
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
+
+	q := db.New(conn)
+	rows := sqlmock.NewRows([]string{"count"}).AddRow(5)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM login_attempts")).
+		WithArgs("bob", "1.2.3.4", sqlmock.AnyArg()).WillReturnRows(rows)
 
 	cfg := config.NewRuntimeConfig()
 	cfg.LoginAttemptThreshold = 3
@@ -528,6 +461,9 @@ func TestLoginAction_Throttle(t *testing.T) {
 
 	handlers.TaskHandler(loginTask)(rr, req)
 
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
 	}

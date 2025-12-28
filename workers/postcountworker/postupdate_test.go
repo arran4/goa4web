@@ -3,36 +3,31 @@ package postcountworker
 import (
 	"context"
 	"testing"
+
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arran4/goa4web/internal/db"
 )
 
-type stubPostUpdateQuerier struct {
-	threadCalls []int32
-	topicCalls  []int32
-	threadErr   error
-	topicErr    error
-}
-
-func (s *stubPostUpdateQuerier) AdminRecalculateForumThreadByIdMetaData(_ context.Context, idforumthread int32) error {
-	s.threadCalls = append(s.threadCalls, idforumthread)
-	return s.threadErr
-}
-
-func (s *stubPostUpdateQuerier) SystemRebuildForumTopicMetaByID(_ context.Context, idforumtopic int32) error {
-	s.topicCalls = append(s.topicCalls, idforumtopic)
-	return s.topicErr
-}
-
 func TestPostUpdate(t *testing.T) {
-	q := &stubPostUpdateQuerier{}
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
+
+	q := db.New(conn)
+	mock.ExpectExec("AdminRecalculateForumThreadByIdMetaData").
+		WithArgs(int32(1)).
+		WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectExec("SystemRebuildForumTopicMetaByID").
+		WithArgs(int32(2)).
+		WillReturnResult(sqlmock.NewResult(0, 0))
 
 	if err := PostUpdate(context.Background(), q, 1, 2); err != nil {
 		t.Fatalf("PostUpdate: %v", err)
 	}
 
-	if got := q.threadCalls; len(got) != 1 || got[0] != 1 {
-		t.Fatalf("AdminRecalculateForumThreadByIdMetaData called with %v, want [1]", got)
-	}
-	if got := q.topicCalls; len(got) != 1 || got[0] != 2 {
-		t.Fatalf("SystemRebuildForumTopicMetaByID called with %v, want [2]", got)
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("expectations: %v", err)
 	}
 }

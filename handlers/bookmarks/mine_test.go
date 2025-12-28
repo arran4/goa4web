@@ -1,6 +1,7 @@
 package bookmarks
 
 import (
+	"context"
 	"database/sql"
 	"net/http"
 	"net/http/httptest"
@@ -8,12 +9,16 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/go-cmp/cmp"
 	"github.com/gorilla/sessions"
 
+	"github.com/arran4/goa4web/config"
+
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/handlers/handlertest"
+	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 func TestParseColumns(t *testing.T) {
@@ -67,11 +72,21 @@ func TestParseColumns(t *testing.T) {
 }
 
 func TestMinePage_NoBookmarks(t *testing.T) {
-	req := httptest.NewRequest("GET", "/bookmarks/mine", nil)
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
+
+	queries := db.New(conn)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT Idbookmarks, list\nFROM bookmarks\nWHERE users_idusers = ?")).
+		WithArgs(int32(1)).WillReturnError(sql.ErrNoRows)
+
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = "test-session"
 
+	req := httptest.NewRequest("GET", "/bookmarks/mine", nil)
 	sess, _ := store.Get(req, core.SessionName)
 	sess.Values["UID"] = int32(1)
 	w := httptest.NewRecorder()
@@ -80,12 +95,11 @@ func TestMinePage_NoBookmarks(t *testing.T) {
 		req.AddCookie(c)
 	}
 
-	req, cd, mock, cleanup := handlertest.RequestWithCoreData(t, req, common.WithSession(sess))
-	defer cleanup()
+	ctx := req.Context()
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithSession(sess))
 	cd.UserID = 1
-
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT Idbookmarks, list\nFROM bookmarks\nWHERE users_idusers = ?")).
-		WithArgs(int32(1)).WillReturnError(sql.ErrNoRows)
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
 	MinePage(rr, req)

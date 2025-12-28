@@ -16,12 +16,6 @@ type userRenameCmd struct {
 	fs          *flag.FlagSet
 	OldUsername string
 	NewUsername string
-	queries     userRenameQueries
-}
-
-type userRenameQueries interface {
-	SystemGetUserByUsername(ctx context.Context, username sql.NullString) (*db.SystemGetUserByUsernameRow, error)
-	AdminUpdateUsernameByID(ctx context.Context, arg db.AdminUpdateUsernameByIDParams) error
 }
 
 func parseUserRenameCmd(parent *userCmd, args []string) (*userRenameCmd, error) {
@@ -54,11 +48,12 @@ func (c *userRenameCmd) Run() error {
 		c.fs.Usage()
 		return fmt.Errorf("from and to usernames required")
 	}
-	queries, err := c.userQueries()
+	conn, err := c.rootCmd.DB()
 	if err != nil {
-		return err
+		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
+	queries := db.New(conn)
 	user, err := queries.SystemGetUserByUsername(ctx, sql.NullString{String: c.OldUsername, Valid: true})
 	if err != nil {
 		return fmt.Errorf("get user: %w", err)
@@ -74,15 +69,4 @@ func (c *userRenameCmd) Run() error {
 	}
 	c.rootCmd.Infof("renamed %s to %s", c.OldUsername, c.NewUsername)
 	return nil
-}
-
-func (c *userRenameCmd) userQueries() (userRenameQueries, error) {
-	if c.queries != nil {
-		return c.queries, nil
-	}
-	conn, err := c.rootCmd.DB()
-	if err != nil {
-		return nil, fmt.Errorf("database: %w", err)
-	}
-	return db.New(conn), nil
 }

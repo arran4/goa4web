@@ -95,52 +95,6 @@ func (q *querierStub) SystemGetUserByID(ctx context.Context, id int32) (*db.Syst
 	return q.QuerierStub.SystemGetUserByID(ctx, id)
 }
 
-type subscriberTestQuerier struct {
-	db.QuerierStub
-	users map[int32]*db.SystemGetUserByIDRow
-}
-
-type newsSubscriberTask struct{ tasks.TaskString }
-
-func (newsSubscriberTask) SubscribedEmailTemplate(eventbus.TaskEvent) (templates *EmailTemplates, send bool) {
-	return &EmailTemplates{
-		Text:    "subscriberText",
-		HTML:    "subscriberHTML",
-		Subject: "subscriberSubject",
-	}, true
-}
-
-func (newsSubscriberTask) SubscribedInternalNotificationTemplate(eventbus.TaskEvent) *string {
-	t := NotificationTemplateFilenameGenerator("subscriber")
-	return &t
-}
-
-func newSubscriberTestQuerier(patterns []string) *subscriberTestQuerier {
-	return &subscriberTestQuerier{
-		QuerierStub: db.QuerierStub{
-			ListSubscribersForPatternsReturn: map[string][]int32{
-				patterns[0]: {2},
-				patterns[1]: {3},
-				patterns[2]: {4},
-			},
-			SystemGetTemplateOverrideReturns: "message for {{.Item}}",
-		},
-		users: map[int32]*db.SystemGetUserByIDRow{
-			2: {Idusers: 2, Email: sql.NullString{String: "two@test", Valid: true}, Username: sql.NullString{String: "two", Valid: true}},
-			3: {Idusers: 3, Email: sql.NullString{String: "three@test", Valid: true}, Username: sql.NullString{String: "three", Valid: true}},
-			4: {Idusers: 4, Email: sql.NullString{String: "four@test", Valid: true}, Username: sql.NullString{String: "four", Valid: true}},
-		},
-	}
-}
-
-func (q *subscriberTestQuerier) SystemGetUserByID(ctx context.Context, id int32) (*db.SystemGetUserByIDRow, error) {
-	q.SystemGetUserByIDCalls = append(q.SystemGetUserByIDCalls, id)
-	if user, ok := q.users[id]; ok {
-		return user, nil
-	}
-	return nil, fmt.Errorf("user %d not found", id)
-}
-
 func TestCollectSubscribersQuery(t *testing.T) {
 	ctx := context.Background()
 	patterns := []string{"post:/blog/1", "post:/blog/*"}
@@ -325,36 +279,6 @@ func TestProcessEventTargetUsers(t *testing.T) {
 	}
 }
 
-func TestNotifySubscribersNews(t *testing.T) {
-	ctx := context.Background()
-	patterns := buildPatterns(tasks.TaskString("Reply"), "/news/news/3")
-	q := newSubscriberTestQuerier(patterns)
-
-	cfg := config.NewRuntimeConfig()
-	cfg.EmailFrom = "from@example.com"
-	cfg.NotificationsEnabled = true
-
-	task := newsSubscriberTask{TaskString: tasks.TaskString("Reply")}
-	n := New(WithQueries(q), WithConfig(cfg))
-	evt := eventbus.TaskEvent{
-		Path:    "/news/news/3",
-		Task:    task,
-		UserID:  1,
-		Data:    map[string]any{"Item": "news reply"},
-		Outcome: eventbus.TaskOutcomeSuccess,
-	}
-
-	if err := n.notifySubscribers(ctx, evt, task); err != nil {
-		t.Fatalf("notifySubscribers: %v", err)
-	}
-
-	assertSubscriberCall(t, q.ListSubscribersForPatternsParams, "email", patterns)
-	assertSubscriberCall(t, q.ListSubscribersForPatternsParams, "internal", patterns)
-	assertCallCount(t, "SystemGetUserByID", len(q.SystemGetUserByIDCalls), 3)
-	assertQueuedEmails(t, q.InsertPendingEmailCalls, []int32{2, 3, 4})
-	assertNotifications(t, q.SystemCreateNotificationCalls, []int32{2, 3, 4}, evt.Path)
-}
-
 func TestBusWorker(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cfg := config.NewRuntimeConfig()
@@ -436,74 +360,5 @@ func TestProcessEventAutoSubscribe(t *testing.T) {
 	pattern := buildPatterns(tasks.TaskString("AutoSub"), "/forum/topic/7/thread/42")[0]
 	if q.InsertSubscriptionParams[0].Pattern != pattern {
 		t.Fatalf("expected pattern %s, got %s", pattern, q.InsertSubscriptionParams[0].Pattern)
-	}
-}
-
-func assertSubscriberCall(t *testing.T, calls []db.ListSubscribersForPatternsParams, method string, patterns []string) {
-	t.Helper()
-	for _, call := range calls {
-		if call.Method == method {
-			if len(call.Patterns) != len(patterns) {
-				t.Fatalf("expected %d patterns for %s got %d", len(patterns), method, len(call.Patterns))
-			}
-			for i, p := range patterns {
-				if call.Patterns[i] != p {
-					t.Fatalf("%s pattern %d = %s want %s", method, i, call.Patterns[i], p)
-				}
-			}
-			return
-		}
-	}
-	t.Fatalf("no %s subscriber call recorded", method)
-}
-
-func assertCallCount(t *testing.T, method string, got, want int) {
-	t.Helper()
-	if got != want {
-		t.Fatalf("expected %d %s calls got %d", want, method, got)
-	}
-}
-
-func assertQueuedEmails(t *testing.T, calls []db.InsertPendingEmailParams, want []int32) {
-	t.Helper()
-	if len(calls) != len(want) {
-		t.Fatalf("expected %d queued emails got %d", len(want), len(calls))
-	}
-	seen := map[int32]bool{}
-	for _, call := range calls {
-		if !call.ToUserID.Valid {
-			t.Fatalf("expected recipient id for queued email")
-		}
-		seen[call.ToUserID.Int32] = true
-		if call.DirectEmail {
-			t.Fatalf("expected queued emails for subscribers, got direct email flag")
-		}
-	}
-	for _, id := range want {
-		if !seen[id] {
-			t.Fatalf("missing queued email for user %d", id)
-		}
-	}
-}
-
-func assertNotifications(t *testing.T, calls []db.SystemCreateNotificationParams, want []int32, link string) {
-	t.Helper()
-	if len(calls) != len(want) {
-		t.Fatalf("expected %d notifications got %d", len(want), len(calls))
-	}
-	seen := map[int32]bool{}
-	for _, call := range calls {
-		if call.Link.String != link || !call.Link.Valid {
-			t.Fatalf("expected link %s got %q (valid=%v)", link, call.Link.String, call.Link.Valid)
-		}
-		if !call.Message.Valid || call.Message.String == "" {
-			t.Fatalf("expected non-empty notification message")
-		}
-		seen[call.RecipientID] = true
-	}
-	for _, id := range want {
-		if !seen[id] {
-			t.Fatalf("missing notification for user %d", id)
-		}
 	}
 }

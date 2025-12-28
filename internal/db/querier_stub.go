@@ -76,6 +76,11 @@ type QuerierStub struct {
 	SystemGetTemplateOverrideReturns string
 	SystemGetTemplateOverrideErr     error
 	SystemGetTemplateOverrideCalls   []string
+	SystemGetTemplateOverrideSeq     []string
+	systemGetTemplateOverrideIdx     int
+
+	AdminSetTemplateOverrideCalls []AdminSetTemplateOverrideParams
+	AdminSetTemplateOverrideErr   error
 
 	ListSubscribersForPatternsParams []ListSubscribersForPatternsParams
 	ListSubscribersForPatternsReturn map[string][]int32
@@ -609,8 +614,31 @@ func (s *QuerierStub) AdminListAdministratorEmails(ctx context.Context) ([]strin
 func (s *QuerierStub) SystemGetTemplateOverride(ctx context.Context, name string) (string, error) {
 	s.mu.Lock()
 	s.SystemGetTemplateOverrideCalls = append(s.SystemGetTemplateOverrideCalls, name)
+	idx := s.systemGetTemplateOverrideIdx
+	var body string
+	if len(s.SystemGetTemplateOverrideSeq) > 0 {
+		if idx >= len(s.SystemGetTemplateOverrideSeq) {
+			idx = len(s.SystemGetTemplateOverrideSeq) - 1
+		}
+		body = s.SystemGetTemplateOverrideSeq[idx]
+		if s.systemGetTemplateOverrideIdx < len(s.SystemGetTemplateOverrideSeq)-1 {
+			s.systemGetTemplateOverrideIdx++
+		}
+	} else {
+		body = s.SystemGetTemplateOverrideReturns
+	}
+	err := s.SystemGetTemplateOverrideErr
 	s.mu.Unlock()
-	return s.SystemGetTemplateOverrideReturns, s.SystemGetTemplateOverrideErr
+	return body, err
+}
+
+// AdminSetTemplateOverride records the call and returns the configured response.
+func (s *QuerierStub) AdminSetTemplateOverride(ctx context.Context, arg AdminSetTemplateOverrideParams) error {
+	s.mu.Lock()
+	s.AdminSetTemplateOverrideCalls = append(s.AdminSetTemplateOverrideCalls, arg)
+	err := s.AdminSetTemplateOverrideErr
+	s.mu.Unlock()
+	return err
 }
 
 func (s *QuerierStub) ListSubscribersForPatterns(ctx context.Context, arg ListSubscribersForPatternsParams) ([]int32, error) {

@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -70,13 +71,10 @@ func TestBoardPageRendersSubBoards(t *testing.T) {
 		"csrfField": func() template.HTML { return "" },
 	}
 
-	tmpl := template.Must(template.New("root").Funcs(funcs).Parse(`{{ define "head" }}{{ end }}{{ define "tail" }}{{ end }}`))
-	tmpl = template.Must(tmpl.ParseFiles(
-		filepath.Join("..", "..", "core", "templates", "site", "subBoards.gohtml"),
-		filepath.Join("..", "..", "core", "templates", "site", "boardPosts.gohtml"),
-		filepath.Join("..", "..", "core", "templates", "site", "postImage.gohtml"),
-		filepath.Join("..", "..", "core", "templates", "site", "imagebbs", "boardPage.gohtml"),
-	))
+	tmpl, err := templates.LoadSiteTemplates(funcs, filepath.Join("..", "..", "core", "templates"))
+	if err != nil {
+		t.Fatalf("load templates: %v", err)
+	}
 
 	var out bytes.Buffer
 	if err := tmpl.ExecuteTemplate(&out, ImagebbsBoardPageTmpl, struct{}{}); err != nil {

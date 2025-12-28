@@ -10,9 +10,12 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+	"net/http/httptest"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 type grantQueries struct {
@@ -40,7 +43,7 @@ func (g grantQueries) GetAdministratorUserRole(ctx context.Context, usersIdusers
 
 func TestRequiredGrantAllowed(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/add", nil)
-	q := &db.QuerierStub{}
+	q := &db.QuerierStub{SystemCheckGrantReturns: 1}
 	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)

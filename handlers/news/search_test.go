@@ -11,19 +11,12 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/handlers/handlertest"
 )
 
 func TestNewsSearchFiltersUnauthorized(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-
-	queries := db.New(conn)
+	cd, mock, cleanup := handlertest.NewCoreData(t, context.Background())
+	defer cleanup()
 
 	firstRows := sqlmock.NewRows([]string{"site_news_id"}).AddRow(1).AddRow(2)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT DISTINCT cs.site_news_id")).
@@ -44,7 +37,6 @@ func TestNewsSearchFiltersUnauthorized(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	ctx := req.Context()
 	req = req.WithContext(ctx)
-	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
 	news, emptyWords, noResults, err := cd.SearchNews(req, 1)
 	if err != nil {
 		t.Fatalf("NewsSearch: %v", err)

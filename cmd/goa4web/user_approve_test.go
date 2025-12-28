@@ -9,8 +9,6 @@ import (
 )
 
 func TestUserApproveCmd(t *testing.T) {
-	t.Parallel()
-
 	cases := []struct {
 		name          string
 		args          []string
@@ -55,8 +53,6 @@ func TestUserApproveCmd(t *testing.T) {
 	for _, tc := range cases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
 			root := &rootCmd{fs: flag.NewFlagSet("prog", flag.ContinueOnError)}
 
 			var mock sqlmock.Sqlmock

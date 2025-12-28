@@ -10,7 +10,7 @@ import (
 )
 
 func TestUserCanCreateWriting_Allowed(t *testing.T) {
-	q := &db.QuerierStub{}
+	q := &db.QuerierStub{SystemCheckGrantReturns: 1}
 
 	ok, err := UserCanCreateWriting(context.Background(), q, 1, 2)
 	if err != nil {

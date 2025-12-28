@@ -10,7 +10,7 @@ import (
 )
 
 func TestUserCanCreateThread_Allowed(t *testing.T) {
-	q := &db.QuerierStub{}
+	q := &db.QuerierStub{SystemCheckGrantReturns: 1}
 
 	ok, err := UserCanCreateThread(context.Background(), q, "forum", 1, 2)
 	if err != nil {
@@ -62,7 +62,7 @@ func TestUserCanCreateThread_Error(t *testing.T) {
 }
 
 func TestUserCanCreateTopic_Allowed(t *testing.T) {
-	q := &db.QuerierStub{}
+	q := &db.QuerierStub{SystemCheckGrantReturns: 1}
 
 	ok, err := UserCanCreateTopic(context.Background(), q, "forum", 1, 2)
 	if err != nil {

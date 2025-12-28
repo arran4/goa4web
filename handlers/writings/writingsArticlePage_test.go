@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"regexp"
 	"strings"
 	"testing"
 
@@ -18,7 +17,6 @@ import (
 
 	"github.com/arran4/goa4web/config"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 
@@ -26,19 +24,13 @@ import (
 )
 
 func TestArticleReplyActionPage_UsesWritingParam(t *testing.T) {
-	dbconn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer dbconn.Close()
-
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = "test-session"
 
 	form := url.Values{}
 	form.Set("replytext", "hi")
-	form.Set("language", "1")
+	form.Set("language", "invalid")
 	req := httptest.NewRequest("POST", "/writings/article/1", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req = mux.SetURLVars(req, map[string]string{"writing": "1"})
@@ -51,23 +43,31 @@ func TestArticleReplyActionPage_UsesWritingParam(t *testing.T) {
 		req.AddCookie(c)
 	}
 
-	q := db.New(dbconn)
-	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig(), common.WithSession(sess))
-	cd.UserID = 1
+	q := &db.QuerierStub{
+		GetWritingForListerByIDRow: &db.GetWritingForListerByIDRow{Idwriting: 1},
+	}
+	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig(), common.WithSession(sess), common.WithUserRoles([]string{"user"}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
-
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT w.idwriting")).
-		WithArgs(int32(1), int32(1), sql.NullInt32{Int32: 1, Valid: true}).
-		WillReturnError(sqlmock.ErrCancelled)
 
 	rr := httptest.NewRecorder()
 	handlers.TaskHandler(replyTask)(rr, req)
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 	if rr.Result().StatusCode != http.StatusInternalServerError {
 		t.Fatalf("status=%d", rr.Result().StatusCode)
+	}
+	if got := len(q.GetWritingForListerByIDCalls); got != 1 {
+		t.Fatalf("GetWritingForListerByIDCalls=%d", got)
+	}
+	call := q.GetWritingForListerByIDCalls[0]
+	if call.Idwriting != 1 || call.ListerID != 1 || call.ListerMatchID != (sql.NullInt32{Int32: 1, Valid: true}) {
+		t.Fatalf("unexpected article lookup: %+v", call)
+	}
+	if got := len(q.SystemCheckGrantCalls); got != 1 {
+		t.Fatalf("SystemCheckGrantCalls=%d", got)
+	}
+	grant := q.SystemCheckGrantCalls[0]
+	if grant.Section != "writing" || grant.Item.String != "article" || grant.Action != "reply" || grant.ItemID != (sql.NullInt32{Int32: 1, Valid: true}) {
+		t.Fatalf("unexpected grant check: %+v", grant)
 	}
 }

@@ -17,7 +17,7 @@ import (
 
 func TestRequiredGrantAllowed(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/add", nil)
-	q := &db.QuerierStub{}
+	q := &db.QuerierStub{SystemCheckGrantReturns: 1}
 	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)

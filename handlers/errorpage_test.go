@@ -1,32 +1,20 @@
 package handlers
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
-
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/handlers/handlertest"
 )
 
 func TestRenderErrorPageNotFoundOmitsInternalError(t *testing.T) {
-	conn, _, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-
 	req := httptest.NewRequest(http.MethodGet, "/missing", nil)
-	cd := common.NewCoreData(req.Context(), db.New(conn), config.NewRuntimeConfig())
-	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
-	req = req.WithContext(ctx)
+	req, cd, _, cleanup := handlertest.RequestWithCoreData(t, req)
+	defer cleanup()
 
 	data := struct {
 		*common.CoreData

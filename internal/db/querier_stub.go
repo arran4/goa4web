@@ -31,6 +31,9 @@ type QuerierStub struct {
 
 	notifications      []*Notification
 	nextNotificationID int32
+	ListActiveBansReturns []*BannedIp
+	ListActiveBansErr     error
+	ListActiveBansCalls   int
 	ContentLabelStatus                  map[string]map[int32]map[string]struct{}
 	ContentPrivateLabels                map[string]map[int32]map[int32]map[string]bool
 	ContentPublicLabels                 map[string]map[int32]map[string]struct{}
@@ -77,9 +80,23 @@ type QuerierStub struct {
 	AdminListAdministratorEmailsReturns []string
 	AdminListAdministratorEmailsCalls   int
 
+	ListContentPrivateLabelsReturns []*ListContentPrivateLabelsRow
+	ListContentPrivateLabelsErr     error
+	ListContentPrivateLabelsCalls   []ListContentPrivateLabelsParams
+	ListContentPrivateLabelsFn      func(ListContentPrivateLabelsParams) ([]*ListContentPrivateLabelsRow, error)
+
+	ListSubscriptionsByUserReturns []*ListSubscriptionsByUserRow
+	ListSubscriptionsByUserErr     error
+	ListSubscriptionsByUserCalls   []int32
+
 	SystemGetTemplateOverrideReturns string
 	SystemGetTemplateOverrideErr     error
 	SystemGetTemplateOverrideCalls   []string
+	SystemGetTemplateOverrideSeq     []string
+	systemGetTemplateOverrideIdx     int
+
+	AdminSetTemplateOverrideCalls []AdminSetTemplateOverrideParams
+	AdminSetTemplateOverrideErr   error
 
 	ListSubscribersForPatternsParams []ListSubscribersForPatternsParams
 	ListSubscribersForPatternsReturn map[string][]int32
@@ -106,6 +123,10 @@ type QuerierStub struct {
 	SystemCheckGrantErr     error
 	SystemCheckGrantCalls   []SystemCheckGrantParams
 	SystemCheckGrantFn      func(SystemCheckGrantParams) (int32, error)
+
+	GetWritingForListerByIDRow   *GetWritingForListerByIDRow
+	GetWritingForListerByIDErr   error
+	GetWritingForListerByIDCalls []GetWritingForListerByIDParams
 
 	SystemCheckRoleGrantReturns int32
 	SystemCheckRoleGrantErr     error
@@ -429,6 +450,18 @@ func (s *QuerierStub) SystemClearContentPrivateLabel(ctx context.Context, arg Sy
 	return nil
 }
 
+func (s *QuerierStub) ListActiveBans(ctx context.Context) ([]*BannedIp, error) {
+	s.mu.Lock()
+	s.ListActiveBansCalls++
+	rows := s.ListActiveBansReturns
+	err := s.ListActiveBansErr
+	s.mu.Unlock()
+	if rows == nil {
+		return []*BannedIp{}, err
+	}
+	return rows, err
+}
+
 func (s *QuerierStub) AdminListPrivateTopicParticipantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListPrivateTopicParticipantsByTopicIDRow, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -503,10 +536,26 @@ func (s *QuerierStub) SystemCheckGrant(ctx context.Context, arg SystemCheckGrant
 	if err != nil {
 		return 0, err
 	}
-	if ret == 0 {
-		ret = 1
+	if ret != 0 {
+		return ret, nil
 	}
-	return ret, nil
+	return 0, sql.ErrNoRows
+}
+
+// GetWritingForListerByID records the call and returns the configured response.
+func (s *QuerierStub) GetWritingForListerByID(ctx context.Context, arg GetWritingForListerByIDParams) (*GetWritingForListerByIDRow, error) {
+	s.mu.Lock()
+	s.GetWritingForListerByIDCalls = append(s.GetWritingForListerByIDCalls, arg)
+	row := s.GetWritingForListerByIDRow
+	err := s.GetWritingForListerByIDErr
+	s.mu.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	if row == nil {
+		return nil, errors.New("GetWritingForListerByID not stubbed")
+	}
+	return row, nil
 }
 
 // SystemCheckRoleGrant records the call and returns the configured response.
@@ -523,10 +572,10 @@ func (s *QuerierStub) SystemCheckRoleGrant(ctx context.Context, arg SystemCheckR
 	if err != nil {
 		return 0, err
 	}
-	if ret == 0 {
-		ret = 1
+	if ret != 0 {
+		return ret, nil
 	}
-	return ret, nil
+	return 0, sql.ErrNoRows
 }
 
 // GetPermissionsByUserID records the call and returns the configured response.
@@ -632,12 +681,59 @@ func (s *QuerierStub) AdminListAdministratorEmails(ctx context.Context) ([]strin
 	return s.AdminListAdministratorEmailsReturns, s.AdminListAdministratorEmailsErr
 }
 
+// ListContentPrivateLabels records the call and returns the configured response or a custom function.
+func (s *QuerierStub) ListContentPrivateLabels(ctx context.Context, arg ListContentPrivateLabelsParams) ([]*ListContentPrivateLabelsRow, error) {
+	s.mu.Lock()
+	s.ListContentPrivateLabelsCalls = append(s.ListContentPrivateLabelsCalls, arg)
+	fn := s.ListContentPrivateLabelsFn
+	ret := s.ListContentPrivateLabelsReturns
+	err := s.ListContentPrivateLabelsErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(arg)
+	}
+	return ret, err
+}
+
+// ListSubscriptionsByUser records the call and returns configured rows.
+func (s *QuerierStub) ListSubscriptionsByUser(ctx context.Context, userID int32) ([]*ListSubscriptionsByUserRow, error) {
+	s.mu.Lock()
+	s.ListSubscriptionsByUserCalls = append(s.ListSubscriptionsByUserCalls, userID)
+	ret := s.ListSubscriptionsByUserReturns
+	err := s.ListSubscriptionsByUserErr
+	s.mu.Unlock()
+	return ret, err
+}
+
 // SystemGetTemplateOverride records the call and returns the configured response.
 func (s *QuerierStub) SystemGetTemplateOverride(ctx context.Context, name string) (string, error) {
 	s.mu.Lock()
 	s.SystemGetTemplateOverrideCalls = append(s.SystemGetTemplateOverrideCalls, name)
+	idx := s.systemGetTemplateOverrideIdx
+	var body string
+	if len(s.SystemGetTemplateOverrideSeq) > 0 {
+		if idx >= len(s.SystemGetTemplateOverrideSeq) {
+			idx = len(s.SystemGetTemplateOverrideSeq) - 1
+		}
+		body = s.SystemGetTemplateOverrideSeq[idx]
+		if s.systemGetTemplateOverrideIdx < len(s.SystemGetTemplateOverrideSeq)-1 {
+			s.systemGetTemplateOverrideIdx++
+		}
+	} else {
+		body = s.SystemGetTemplateOverrideReturns
+	}
+	err := s.SystemGetTemplateOverrideErr
 	s.mu.Unlock()
-	return s.SystemGetTemplateOverrideReturns, s.SystemGetTemplateOverrideErr
+	return body, err
+}
+
+// AdminSetTemplateOverride records the call and returns the configured response.
+func (s *QuerierStub) AdminSetTemplateOverride(ctx context.Context, arg AdminSetTemplateOverrideParams) error {
+	s.mu.Lock()
+	s.AdminSetTemplateOverrideCalls = append(s.AdminSetTemplateOverrideCalls, arg)
+	err := s.AdminSetTemplateOverrideErr
+	s.mu.Unlock()
+	return err
 }
 
 func (s *QuerierStub) GetUnreadNotificationCountForLister(ctx context.Context, listerID int32) (int64, error) {

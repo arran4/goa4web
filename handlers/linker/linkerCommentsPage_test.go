@@ -58,15 +58,18 @@ func TestCommentsPageAllowsGlobalViewGrant(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"id", "language_id", "author_id", "category_id", "thread_id", "title", "url", "description", "listed", "timezone", "username", "title"}).
 			AddRow(1, 1, 2, 1, 1, "t", "http://u", "d", time.Unix(0, 0), time.Local.String(), "bob", "cat"))
 
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT c.idcomments")).
-		WithArgs(int32(2), int32(2), int32(1), int32(2), int32(2), "linker", sql.NullString{String: "link", Valid: true}, sql.NullInt32{Int32: 2, Valid: true}).
-		WillReturnRows(sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_id", "written", "text", "timezone", "deleted_at", "last_index", "posterusername", "is_owner"}))
-
 	threadRows := sqlmock.NewRows([]string{"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername"}).
 		AddRow(1, 1, 1, 1, 0, time.Unix(0, 0), false, "bob")
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT th.idforumthread")).
 		WithArgs(int32(2), int32(1), int32(2), int32(2), int32(2), sql.NullInt32{Int32: 2, Valid: true}).
 		WillReturnRows(threadRows)
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT c.idcomments")).
+		WithArgs(int32(2), int32(2), int32(1), int32(2), int32(2), "linker", sql.NullString{String: "link", Valid: true}, sql.NullInt32{Int32: 2, Valid: true}).
+		WillReturnRows(sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_id", "written", "text", "timezone", "deleted_at", "last_index", "posterusername", "is_owner"}))
+
+	// HasAdminRole call (called in template)
+	mock.ExpectQuery("SELECT .* FROM user_roles .* JOIN roles .* WHERE .*is_admin = 1").WithArgs(int32(2)).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
 	rr := httptest.NewRecorder()
 	CommentsPage(rr, req)
@@ -227,13 +230,16 @@ func TestCommentsPageEditControlsAllowAdminMode(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"id", "language_id", "author_id", "category_id", "thread_id", "title", "url", "description", "listed", "timezone", "username", "title"}).
 			AddRow(1, 1, 2, 1, 1, "t", "http://u", "d", time.Unix(0, 0), time.Local.String(), "bob", "cat"))
 
+	threadRows := sqlmock.NewRows([]string{"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername"}).
+		AddRow(1, 1, 1, 1, 0, time.Unix(0, 0), false, "bob")
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT th.idforumthread")).WithArgs(int32(4), int32(1), int32(4), int32(4), int32(4), sql.NullInt32{Int32: 4, Valid: true}).WillReturnRows(threadRows)
+
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT c.idcomments")).WithArgs(int32(4), int32(4), int32(1), int32(4), int32(4), "linker", sql.NullString{String: "link", Valid: true}, sql.NullInt32{Int32: 4, Valid: true}).
 		WillReturnRows(sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_id", "written", "text", "timezone", "deleted_at", "last_index", "posterusername", "is_owner"}).
 			AddRow(9, 1, 2, sql.NullInt32{}, sql.NullTime{Time: time.Unix(0, 0), Valid: true}, sql.NullString{String: "text", Valid: true}, sql.NullString{String: time.Local.String(), Valid: true}, sql.NullTime{}, sql.NullTime{}, sql.NullString{String: "bob", Valid: true}, false))
 
-	threadRows := sqlmock.NewRows([]string{"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername"}).
-		AddRow(1, 1, 1, 1, 0, time.Unix(0, 0), false, "bob")
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT th.idforumthread")).WithArgs(int32(4), int32(1), int32(4), int32(4), int32(4), sql.NullInt32{Int32: 4, Valid: true}).WillReturnRows(threadRows)
+	// HasAdminRole call
+	mock.ExpectQuery("SELECT .* FROM user_roles .* JOIN roles .* WHERE .*is_admin = 1").WithArgs(int32(4)).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
 	CommentsPage(w, req)
 

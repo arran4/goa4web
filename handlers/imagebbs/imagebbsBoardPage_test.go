@@ -36,6 +36,11 @@ func TestBoardPageRendersSubBoards(t *testing.T) {
 		WithArgs(int32(0), sql.NullInt32{Int32: 3, Valid: true}, sqlmock.AnyArg(), int32(200), int32(0)).
 		WillReturnRows(postRows)
 
+	// HasAdminRole (called by CanPostImage in template)
+	mock.ExpectQuery("SELECT .* FROM user_roles .* JOIN roles .* WHERE .*is_admin = 1").WithArgs(int32(0)).WillReturnError(sql.ErrNoRows)
+	// HasGrant (fallback)
+	mock.ExpectQuery("SELECT 1 FROM grants").WithArgs(int32(0), "imagebbs", sql.NullString{String: "board", Valid: true}, "post", sql.NullInt32{Int32: 3, Valid: true}, sqlmock.AnyArg()).WillReturnError(sql.ErrNoRows)
+
 	req := httptest.NewRequest("GET", "/imagebbs/board/3", nil)
 	req = mux.SetURLVars(req, map[string]string{"board": "3"})
 	q := db.New(conn)

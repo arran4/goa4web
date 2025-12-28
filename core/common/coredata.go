@@ -225,6 +225,7 @@ type CoreData struct {
 	subscriptionRows                 lazy.Value[[]*db.ListSubscriptionsByUserRow]
 	subscriptions                    lazy.Value[map[string]bool]
 	notificationTemplateOverrides    map[string]*lazy.Value[string]
+	testGrants                       []*db.Grant // manual grants for testing
 	unreadCount                      lazy.Value[int64]
 	user                             lazy.Value[*db.User]
 	userRoles                        lazy.Value[[]string]
@@ -1174,7 +1175,7 @@ func (cd *CoreData) HasAdminRole() bool {
 
 // HasContentWriterRole reports whether the current user has the content writer role.
 func (cd *CoreData) HasContentWriterRole() bool {
-	return cd.HasRole("content writer")
+	return cd.HasGrant("news", "post", "post", 0) || cd.HasGrant("writing", "article", "post", 0)
 }
 
 // HasRole reports whether the current user explicitly has the named role.
@@ -1185,7 +1186,7 @@ func (cd *CoreData) HasRole(role string) bool {
 		}
 	}
 	if cd.HasAdminRole() {
-		if role == "moderator" || role == "content writer" || role == "user" {
+		if role == "user" {
 			return true
 		}
 	}
@@ -1193,19 +1194,6 @@ func (cd *CoreData) HasRole(role string) bool {
 		for _, r := range cd.UserRoles() {
 			if _, err := cd.queries.SystemCheckRoleGrant(cd.ctx, db.SystemCheckRoleGrantParams{Name: r, Action: role}); err == nil {
 				return true
-			}
-		}
-	} else {
-		for _, r := range cd.UserRoles() {
-			switch r {
-			case "moderator":
-				if role == "user" {
-					return true
-				}
-			case "content writer":
-				if role == "user" {
-					return true
-				}
 			}
 		}
 	}
@@ -2632,6 +2620,11 @@ func WithUserRoles(r []string) CoreOption {
 // WithPermissions preloads the user permissions.
 func WithPermissions(p []*db.GetPermissionsByUserIDRow) CoreOption {
 	return func(cd *CoreData) { cd.perms.Set(p) }
+}
+
+// WithGrants preloads the user grants for testing.
+func WithGrants(g []*db.Grant) CoreOption {
+	return func(cd *CoreData) { cd.testGrants = g }
 }
 
 // WithConfig sets the runtime config for this CoreData.

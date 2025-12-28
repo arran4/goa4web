@@ -37,7 +37,7 @@ LIMIT 1;
 --   iduser_roles (int)
 --   role (string)
 --   username (string)
-SELECT ur.iduser_roles, ur.users_idusers, r.name AS role,
+SELECT ur.iduser_roles, ur.users_idusers, r.name AS role, r.is_admin,
        u.username
 FROM user_roles ur
 JOIN users u ON u.idusers = ur.users_idusers

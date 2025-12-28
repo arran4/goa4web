@@ -273,7 +273,7 @@ func (q *Queries) GetUserRole(ctx context.Context, usersIdusers int32) (string, 
 }
 
 const getUserRoles = `-- name: GetUserRoles :many
-SELECT ur.iduser_roles, ur.users_idusers, r.name AS role,
+SELECT ur.iduser_roles, ur.users_idusers, r.name AS role, r.is_admin,
        u.username
 FROM user_roles ur
 JOIN users u ON u.idusers = ur.users_idusers
@@ -285,6 +285,7 @@ type GetUserRolesRow struct {
 	IduserRoles  int32
 	UsersIdusers int32
 	Role         string
+	IsAdmin      bool
 	Username     sql.NullString
 }
 
@@ -306,6 +307,7 @@ func (q *Queries) GetUserRoles(ctx context.Context) ([]*GetUserRolesRow, error) 
 			&i.IduserRoles,
 			&i.UsersIdusers,
 			&i.Role,
+			&i.IsAdmin,
 			&i.Username,
 		); err != nil {
 			return nil, err

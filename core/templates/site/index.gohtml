@@ -27,7 +27,7 @@
             {{- end }}
         </div>
     {{- end }}
-    {{ if cd.HasRole "administrator" }}
+    {{ if cd.HasAdminRole }}
         {{ if cd.AdminMode }}
             <a href="{{ addmode "/admin" }}">Admin Dashboard</a><br>
         {{ end }}

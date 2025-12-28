@@ -7,6 +7,20 @@ import (
 	"sync"
 )
 
+// FakeSQLResult implements sql.Result for tests.
+type FakeSQLResult struct {
+	LastInsertIDValue int64
+	RowsAffectedValue int64
+}
+
+func (r FakeSQLResult) LastInsertId() (int64, error) {
+	return r.LastInsertIDValue, nil
+}
+
+func (r FakeSQLResult) RowsAffected() (int64, error) {
+	return r.RowsAffectedValue, nil
+}
+
 // QuerierStub records calls for selective db.Querier methods in tests.
 type QuerierStub struct {
 	Querier
@@ -44,7 +58,10 @@ type QuerierStub struct {
 	GetPreferenceForListerParams []int32
 	GetPreferenceForListerReturn map[int32]*Preference
 
-	InsertSubscriptionParams []InsertSubscriptionParams
+	InsertSubscriptionParams         []InsertSubscriptionParams
+	InsertFAQQuestionForWriterCalls  []InsertFAQQuestionForWriterParams
+	InsertFAQQuestionForWriterResult sql.Result
+	InsertFAQQuestionForWriterErr    error
 
 	ListSubscribersForPatternParams []ListSubscribersForPatternParams
 	ListSubscribersForPatternReturn map[string][]int32
@@ -292,6 +309,22 @@ func (s *QuerierStub) InsertSubscription(ctx context.Context, arg InsertSubscrip
 	defer s.mu.Unlock()
 	s.InsertSubscriptionParams = append(s.InsertSubscriptionParams, arg)
 	return nil
+}
+
+// InsertFAQQuestionForWriter records the call and returns the configured sql.Result.
+func (s *QuerierStub) InsertFAQQuestionForWriter(ctx context.Context, arg InsertFAQQuestionForWriterParams) (sql.Result, error) {
+	s.mu.Lock()
+	s.InsertFAQQuestionForWriterCalls = append(s.InsertFAQQuestionForWriterCalls, arg)
+	res := s.InsertFAQQuestionForWriterResult
+	err := s.InsertFAQQuestionForWriterErr
+	s.mu.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	if res == nil {
+		return FakeSQLResult{}, nil
+	}
+	return res, nil
 }
 
 func (s *QuerierStub) ListSubscribersForPattern(ctx context.Context, arg ListSubscribersForPatternParams) ([]int32, error) {

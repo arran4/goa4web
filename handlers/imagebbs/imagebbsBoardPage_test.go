@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
@@ -18,43 +17,70 @@ import (
 )
 
 func TestBoardPageRendersSubBoards(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-
-	boardRows := sqlmock.NewRows([]string{"idimageboard", "imageboard_idimageboard", "title", "description", "approval_required", "deleted_at"}).
-		AddRow(4, 3, "child", "sub", false, nil)
-	mock.ExpectQuery("(?s)WITH role_ids AS .*SELECT b.idimageboard.*").
-		WithArgs(int32(0), sql.NullInt32{Int32: 3, Valid: true}, sql.NullInt32{Int32: 3, Valid: true}, sqlmock.AnyArg(), int32(200), int32(0)).
-		WillReturnRows(boardRows)
-
-	postRows := sqlmock.NewRows([]string{"idimagepost", "forumthread_id", "users_idusers", "imageboard_idimageboard", "posted", "timezone", "description", "thumbnail", "fullimage", "file_size", "approved", "deleted_at", "last_index", "username", "comments"}).
-		AddRow(1, 1, 1, 3, time.Unix(0, 0), time.Local.String(), "desc", "/t", "/f", 10, true, nil, nil, "alice", 0)
-	mock.ExpectQuery("(?s)WITH role_ids AS .*SELECT i.idimagepost.*").
-		WithArgs(int32(0), sql.NullInt32{Int32: 3, Valid: true}, sqlmock.AnyArg(), int32(200), int32(0)).
-		WillReturnRows(postRows)
+	qs := &db.QuerierStub{}
 
 	req := httptest.NewRequest("GET", "/imagebbs/board/3", nil)
 	req = mux.SetURLVars(req, map[string]string{"board": "3"})
-	q := db.New(conn)
-	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+
+	// Create CoreData with the QuerierStub
+	cd := common.NewCoreData(req.Context(), qs, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
 	cd.AdminMode = true
+
+	// Wrap with FakeCoreData
+	fakeCD := NewFakeCoreData(cd)
+
+	// Prepare test data
+	subBoards := []*db.Imageboard{
+		{
+			Idimageboard:     4,
+			ImageboardIdimageboard: sql.NullInt32{Int32: 3, Valid: true},
+			Title:            sql.NullString{String: "child", Valid: true},
+			Description:      sql.NullString{String: "sub", Valid: true},
+			ApprovalRequired: false,
+		},
+	}
+
+	posts := []*db.ListImagePostsByBoardForListerRow{
+		{
+			Idimagepost:           1,
+			ForumthreadID:         1,
+			UsersIdusers:          1,
+			ImageboardIdimageboard: sql.NullInt32{Int32: 3, Valid: true},
+			Posted:                sql.NullTime{Time: time.Unix(0, 0), Valid: true},
+			Timezone:              sql.NullString{String: time.Local.String(), Valid: true},
+			Description:           sql.NullString{String: "desc", Valid: true},
+			Thumbnail:             sql.NullString{String: "/t", Valid: true},
+			Fullimage:             sql.NullString{String: "/f", Valid: true},
+			FileSize:              10,
+			Approved:              true,
+			Username:              sql.NullString{String: "alice", Valid: true},
+			Comments:              sql.NullInt32{Int32: 0, Valid: true},
+		},
+	}
+
+	// Stub the fetches
+	fakeCD.StubSubImageBoards(3, subBoards)
+	fakeCD.StubImageBoardPosts(3, posts)
+    fakeCD.StubSystemCheckGrant(1)
+
+	// Inject CoreData into context
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
 	ImagebbsBoardPage(rr, req)
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 	body := rr.Body.String()
 	if !strings.Contains(body, "Sub-Boards") {
 		t.Fatalf("expected sub boards in output: %s", body)
 	}
 	if !strings.Contains(body, "Pictures:") {
 		t.Fatalf("expected pictures in output: %s", body)
+	}
+	if !strings.Contains(body, "child") {
+		t.Errorf("expected sub-board title 'child' in output")
+	}
+	if !strings.Contains(body, "desc") {
+		t.Errorf("expected post description 'desc' in output")
 	}
 }

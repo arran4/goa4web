@@ -149,6 +149,16 @@ type QuerierStub struct {
 	ListWritersSearchForListerReturns []*ListWritersSearchForListerRow
 	ListWritersSearchForListerErr     error
 	ListWritersSearchForListerFn      func(ListWritersSearchForListerParams) ([]*ListWritersSearchForListerRow, error)
+
+	ListImagePostsByBoardForListerCalls   []ListImagePostsByBoardForListerParams
+	ListImagePostsByBoardForListerReturns []*ListImagePostsByBoardForListerRow
+	ListImagePostsByBoardForListerErr     error
+	ListImagePostsByBoardForListerFn      func(ListImagePostsByBoardForListerParams) ([]*ListImagePostsByBoardForListerRow, error)
+
+	ListBoardsByParentIDForListerCalls   []ListBoardsByParentIDForListerParams
+	ListBoardsByParentIDForListerReturns []*Imageboard
+	ListBoardsByParentIDForListerErr     error
+	ListBoardsByParentIDForListerFn      func(ListBoardsByParentIDForListerParams) ([]*Imageboard, error)
 }
 
 func (s *QuerierStub) ensurePublicLabelSetLocked(item string, itemID int32) map[string]struct{} {
@@ -490,6 +500,32 @@ func (s *QuerierStub) ListWritersSearchForLister(ctx context.Context, arg ListWr
 	fn := s.ListWritersSearchForListerFn
 	ret := s.ListWritersSearchForListerReturns
 	err := s.ListWritersSearchForListerErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) ListImagePostsByBoardForLister(ctx context.Context, arg ListImagePostsByBoardForListerParams) ([]*ListImagePostsByBoardForListerRow, error) {
+	s.mu.Lock()
+	s.ListImagePostsByBoardForListerCalls = append(s.ListImagePostsByBoardForListerCalls, arg)
+	fn := s.ListImagePostsByBoardForListerFn
+	ret := s.ListImagePostsByBoardForListerReturns
+	err := s.ListImagePostsByBoardForListerErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) ListBoardsByParentIDForLister(ctx context.Context, arg ListBoardsByParentIDForListerParams) ([]*Imageboard, error) {
+	s.mu.Lock()
+	s.ListBoardsByParentIDForListerCalls = append(s.ListBoardsByParentIDForListerCalls, arg)
+	fn := s.ListBoardsByParentIDForListerFn
+	ret := s.ListBoardsByParentIDForListerReturns
+	err := s.ListBoardsByParentIDForListerErr
 	s.mu.Unlock()
 	if fn != nil {
 		return fn(arg)

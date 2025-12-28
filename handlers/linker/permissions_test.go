@@ -10,7 +10,7 @@ import (
 )
 
 func TestUserCanCreateLink_Allowed(t *testing.T) {
-	q := &db.QuerierStub{}
+	q := &db.QuerierStub{SystemCheckGrantReturns: 1}
 
 	ok, err := UserCanCreateLink(context.Background(), q, sql.NullInt32{Int32: 1, Valid: true}, 2)
 	if err != nil {

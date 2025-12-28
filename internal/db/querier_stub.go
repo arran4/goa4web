@@ -41,8 +41,6 @@ type QuerierStub struct {
 	AddContentPublicLabelCalls          []AddContentPublicLabelParams
 	ListContentLabelStatusErr           error
 	ListContentLabelStatusCalls         []ListContentLabelStatusParams
-	ListContentPrivateLabelsErr         error
-	ListContentPrivateLabelsCalls       []ListContentPrivateLabelsParams
 	ListContentPublicLabelsErr          error
 	ListContentPublicLabelsCalls        []ListContentPublicLabelsParams
 	RemoveContentLabelStatusErr         error
@@ -373,6 +371,14 @@ func (s *QuerierStub) ListContentPrivateLabels(ctx context.Context, arg ListCont
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.ListContentPrivateLabelsCalls = append(s.ListContentPrivateLabelsCalls, arg)
+
+	if s.ListContentPrivateLabelsFn != nil {
+		return s.ListContentPrivateLabelsFn(arg)
+	}
+	if s.ListContentPrivateLabelsReturns != nil {
+		return s.ListContentPrivateLabelsReturns, s.ListContentPrivateLabelsErr
+	}
+
 	if s.ListContentPrivateLabelsErr != nil {
 		return nil, s.ListContentPrivateLabelsErr
 	}
@@ -654,19 +660,6 @@ func (s *QuerierStub) AdminListAdministratorEmails(ctx context.Context) ([]strin
 	return s.AdminListAdministratorEmailsReturns, s.AdminListAdministratorEmailsErr
 }
 
-// ListContentPrivateLabels records the call and returns the configured response or a custom function.
-func (s *QuerierStub) ListContentPrivateLabels(ctx context.Context, arg ListContentPrivateLabelsParams) ([]*ListContentPrivateLabelsRow, error) {
-	s.mu.Lock()
-	s.ListContentPrivateLabelsCalls = append(s.ListContentPrivateLabelsCalls, arg)
-	fn := s.ListContentPrivateLabelsFn
-	ret := s.ListContentPrivateLabelsReturns
-	err := s.ListContentPrivateLabelsErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(arg)
-	}
-	return ret, err
-}
 
 // ListSubscriptionsByUser records the call and returns configured rows.
 func (s *QuerierStub) ListSubscriptionsByUser(ctx context.Context, userID int32) ([]*ListSubscriptionsByUserRow, error) {

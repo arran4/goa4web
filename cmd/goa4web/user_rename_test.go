@@ -12,8 +12,6 @@ import (
 )
 
 func TestUserRenameCmd(t *testing.T) {
-	t.Parallel()
-
 	cases := []struct {
 		name           string
 		args           []string
@@ -69,8 +67,6 @@ func TestUserRenameCmd(t *testing.T) {
 	for _, tc := range cases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
 			root := &rootCmd{fs: flag.NewFlagSet("prog", flag.ContinueOnError)}
 
 			parent := &userCmd{rootCmd: root}

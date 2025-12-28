@@ -41,7 +41,7 @@ func TestRequiredGrantDenied(t *testing.T) {
 
 func TestRequireGrantAllowed(t *testing.T) {
 	req := httptest.NewRequest("GET", "/news/1/edit", nil)
-	q := &db.QuerierStub{}
+	q := &db.QuerierStub{SystemCheckGrantReturns: 1}
 	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
 	cd.UserID = 1
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)

@@ -45,6 +45,7 @@ func TestArticleReplyActionPage_UsesWritingParam(t *testing.T) {
 
 	q := &db.QuerierStub{
 		GetWritingForListerByIDRow: &db.GetWritingForListerByIDRow{Idwriting: 1},
+		SystemCheckGrantReturns:    1,
 	}
 	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig(), common.WithSession(sess), common.WithUserRoles([]string{"user"}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)

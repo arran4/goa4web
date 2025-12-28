@@ -2,50 +2,95 @@ package db
 
 import (
 	"context"
-	"regexp"
 	"testing"
-
-	"github.com/DATA-DOG/go-sqlmock"
 )
+
+type monthlyUsageCounterStub struct {
+	counts map[string]map[[2]int32]int64
+	calls  []struct {
+		table     string
+		column    string
+		startYear int32
+	}
+}
+
+func (s *monthlyUsageCounterStub) monthlyCounts(_ context.Context, table, column string, startYear int32) (map[[2]int32]int64, error) {
+	s.calls = append(s.calls, struct {
+		table     string
+		column    string
+		startYear int32
+	}{table: table, column: column, startYear: startYear})
+	return s.counts[table], nil
+}
 
 // TestMonthlyUsageCounts ensures that writing statistics are included in the
 // monthly usage aggregation.
 func TestMonthlyUsageCounts(t *testing.T) {
-	sqlDB, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer sqlDB.Close()
-
-	queries := New(sqlDB)
-
 	startYear := int32(2024)
-	expect := func(table, column string) {
-		q := "SELECT YEAR(" + column + "), MONTH(" + column + "), COUNT(*) FROM " + table + " WHERE YEAR(" + column + ") >= ? GROUP BY YEAR(" + column + "), MONTH(" + column + ")"
-		rows := sqlmock.NewRows([]string{"year", "month", "count"}).AddRow(int32(2024), int32(1), int64(1))
-		mock.ExpectQuery(regexp.QuoteMeta(q)).
-			WithArgs(startYear).
-			WillReturnRows(rows)
+	stub := &monthlyUsageCounterStub{
+		counts: map[string]map[[2]int32]int64{
+			"blogs": {
+				{2024, 1}: 2,
+			},
+			"comments": {
+				{2024, 1}: 4,
+				{2024, 2}: 1,
+			},
+			"writing": {
+				{2024, 1}: 3,
+			},
+		},
 	}
 
-	expect("blogs", "written")
-	expect("site_news", "occurred")
-	expect("comments", "written")
-	expect("imagepost", "posted")
-	expect("linker", "listed")
-	expect("writing", "published")
-
-	rows, err := queries.MonthlyUsageCounts(context.Background(), startYear)
+	rows, err := aggregateMonthlyUsageCounts(context.Background(), stub, startYear)
 	if err != nil {
-		t.Fatalf("MonthlyUsageCounts: %v", err)
+		t.Fatalf("aggregateMonthlyUsageCounts: %v", err)
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+
+	if got := len(stub.calls); got != 6 {
+		t.Fatalf("expected monthlyCounts to be called for 6 tables, got %d", got)
 	}
-	if len(rows) != 1 {
-		t.Fatalf("expected 1 row, got %d", len(rows))
+	for _, c := range stub.calls {
+		if c.startYear != startYear {
+			t.Fatalf("expected startYear %d, got %d", startYear, c.startYear)
+		}
 	}
-	if rows[0].Writings != 1 {
-		t.Fatalf("expected writings=1, got %d", rows[0].Writings)
+
+	if len(rows) != 2 {
+		t.Fatalf("expected 2 rows, got %d", len(rows))
+	}
+
+	find := func(year, month int32) *MonthlyUsageRow {
+		for _, r := range rows {
+			if r.Year == year && r.Month == month {
+				return r
+			}
+		}
+		return nil
+	}
+
+	jan := find(2024, 1)
+	if jan == nil {
+		t.Fatalf("expected row for 2024-01")
+	}
+	if jan.Blogs != 2 {
+		t.Fatalf("expected blogs=2, got %d", jan.Blogs)
+	}
+	if jan.Comments != 4 {
+		t.Fatalf("expected comments=4, got %d", jan.Comments)
+	}
+	if jan.Writings != 3 {
+		t.Fatalf("expected writings=3, got %d", jan.Writings)
+	}
+
+	feb := find(2024, 2)
+	if feb == nil {
+		t.Fatalf("expected row for 2024-02")
+	}
+	if feb.Comments != 1 {
+		t.Fatalf("expected comments=1, got %d", feb.Comments)
+	}
+	if feb.Writings != 0 {
+		t.Fatalf("expected writings=0, got %d", feb.Writings)
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"sort"
 	"sync"
 )
 
@@ -25,6 +26,30 @@ func (r FakeSQLResult) RowsAffected() (int64, error) {
 type QuerierStub struct {
 	Querier
 	mu sync.Mutex
+
+	ContentLabelStatus                  map[string]map[int32]map[string]struct{}
+	ContentPrivateLabels                map[string]map[int32]map[int32]map[string]bool
+	ContentPublicLabels                 map[string]map[int32]map[string]struct{}
+	AddContentLabelStatusErr            error
+	AddContentLabelStatusCalls          []AddContentLabelStatusParams
+	AddContentPrivateLabelErr           error
+	AddContentPrivateLabelCalls         []AddContentPrivateLabelParams
+	AddContentPublicLabelErr            error
+	AddContentPublicLabelCalls          []AddContentPublicLabelParams
+	ListContentLabelStatusErr           error
+	ListContentLabelStatusCalls         []ListContentLabelStatusParams
+	ListContentPrivateLabelsErr         error
+	ListContentPrivateLabelsCalls       []ListContentPrivateLabelsParams
+	ListContentPublicLabelsErr          error
+	ListContentPublicLabelsCalls        []ListContentPublicLabelsParams
+	RemoveContentLabelStatusErr         error
+	RemoveContentLabelStatusCalls       []RemoveContentLabelStatusParams
+	RemoveContentPrivateLabelErr        error
+	RemoveContentPrivateLabelCalls      []RemoveContentPrivateLabelParams
+	RemoveContentPublicLabelErr         error
+	RemoveContentPublicLabelCalls       []RemoveContentPublicLabelParams
+	SystemClearContentPrivateLabelErr   error
+	SystemClearContentPrivateLabelCalls []SystemClearContentPrivateLabelParams
 
 	SystemGetUserByIDRow   *SystemGetUserByIDRow
 	SystemGetUserByIDErr   error
@@ -101,6 +126,299 @@ type QuerierStub struct {
 	ListWritersSearchForListerReturns []*ListWritersSearchForListerRow
 	ListWritersSearchForListerErr     error
 	ListWritersSearchForListerFn      func(ListWritersSearchForListerParams) ([]*ListWritersSearchForListerRow, error)
+}
+
+func (s *QuerierStub) ensurePublicLabelSetLocked(item string, itemID int32) map[string]struct{} {
+	if s.ContentPublicLabels == nil {
+		s.ContentPublicLabels = make(map[string]map[int32]map[string]struct{})
+	}
+	itemMap, ok := s.ContentPublicLabels[item]
+	if !ok {
+		itemMap = make(map[int32]map[string]struct{})
+		s.ContentPublicLabels[item] = itemMap
+	}
+	labels, ok := itemMap[itemID]
+	if !ok {
+		labels = make(map[string]struct{})
+		itemMap[itemID] = labels
+	}
+	return labels
+}
+
+func (s *QuerierStub) publicLabelSet(item string, itemID int32) map[string]struct{} {
+	itemMap := s.ContentPublicLabels[item]
+	if itemMap == nil {
+		return nil
+	}
+	return itemMap[itemID]
+}
+
+func (s *QuerierStub) ensureAuthorLabelSetLocked(item string, itemID int32) map[string]struct{} {
+	if s.ContentLabelStatus == nil {
+		s.ContentLabelStatus = make(map[string]map[int32]map[string]struct{})
+	}
+	itemMap, ok := s.ContentLabelStatus[item]
+	if !ok {
+		itemMap = make(map[int32]map[string]struct{})
+		s.ContentLabelStatus[item] = itemMap
+	}
+	labels, ok := itemMap[itemID]
+	if !ok {
+		labels = make(map[string]struct{})
+		itemMap[itemID] = labels
+	}
+	return labels
+}
+
+func (s *QuerierStub) authorLabelSet(item string, itemID int32) map[string]struct{} {
+	itemMap := s.ContentLabelStatus[item]
+	if itemMap == nil {
+		return nil
+	}
+	return itemMap[itemID]
+}
+
+func (s *QuerierStub) ensurePrivateLabelSetLocked(item string, itemID int32, userID int32) map[string]bool {
+	if s.ContentPrivateLabels == nil {
+		s.ContentPrivateLabels = make(map[string]map[int32]map[int32]map[string]bool)
+	}
+	itemMap, ok := s.ContentPrivateLabels[item]
+	if !ok {
+		itemMap = make(map[int32]map[int32]map[string]bool)
+		s.ContentPrivateLabels[item] = itemMap
+	}
+	userMap, ok := itemMap[itemID]
+	if !ok {
+		userMap = make(map[int32]map[string]bool)
+		itemMap[itemID] = userMap
+	}
+	labels, ok := userMap[userID]
+	if !ok {
+		labels = make(map[string]bool)
+		userMap[userID] = labels
+	}
+	return labels
+}
+
+func (s *QuerierStub) privateLabelSet(item string, itemID int32, userID int32) map[string]bool {
+	itemMap := s.ContentPrivateLabels[item]
+	if itemMap == nil {
+		return nil
+	}
+	userMap := itemMap[itemID]
+	if userMap == nil {
+		return nil
+	}
+	return userMap[userID]
+}
+
+// AddContentPublicLabel records the call and stores the label for later retrieval.
+func (s *QuerierStub) AddContentPublicLabel(ctx context.Context, arg AddContentPublicLabelParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.AddContentPublicLabelCalls = append(s.AddContentPublicLabelCalls, arg)
+	if s.AddContentPublicLabelErr != nil {
+		return s.AddContentPublicLabelErr
+	}
+	labels := s.ensurePublicLabelSetLocked(arg.Item, arg.ItemID)
+	labels[arg.Label] = struct{}{}
+	return nil
+}
+
+// ListContentPublicLabels records the call and returns stored public labels.
+func (s *QuerierStub) ListContentPublicLabels(ctx context.Context, arg ListContentPublicLabelsParams) ([]*ListContentPublicLabelsRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.ListContentPublicLabelsCalls = append(s.ListContentPublicLabelsCalls, arg)
+	if s.ListContentPublicLabelsErr != nil {
+		return nil, s.ListContentPublicLabelsErr
+	}
+	var res []*ListContentPublicLabelsRow
+	labels := s.publicLabelSet(arg.Item, arg.ItemID)
+	if len(labels) == 0 {
+		return res, nil
+	}
+	names := make([]string, 0, len(labels))
+	for label := range labels {
+		names = append(names, label)
+	}
+	sort.Strings(names)
+	for _, l := range names {
+		res = append(res, &ListContentPublicLabelsRow{Item: arg.Item, ItemID: arg.ItemID, Label: l})
+	}
+	return res, nil
+}
+
+// RemoveContentPublicLabel records the call and removes the label from the store.
+func (s *QuerierStub) RemoveContentPublicLabel(ctx context.Context, arg RemoveContentPublicLabelParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.RemoveContentPublicLabelCalls = append(s.RemoveContentPublicLabelCalls, arg)
+	if s.RemoveContentPublicLabelErr != nil {
+		return s.RemoveContentPublicLabelErr
+	}
+	if itemMap := s.ContentPublicLabels[arg.Item]; itemMap != nil {
+		if labels := itemMap[arg.ItemID]; labels != nil {
+			delete(labels, arg.Label)
+			if len(labels) == 0 {
+				delete(itemMap, arg.ItemID)
+			}
+		}
+		if len(itemMap) == 0 {
+			delete(s.ContentPublicLabels, arg.Item)
+		}
+	}
+	return nil
+}
+
+// AddContentLabelStatus records the call and stores the author label for later retrieval.
+func (s *QuerierStub) AddContentLabelStatus(ctx context.Context, arg AddContentLabelStatusParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.AddContentLabelStatusCalls = append(s.AddContentLabelStatusCalls, arg)
+	if s.AddContentLabelStatusErr != nil {
+		return s.AddContentLabelStatusErr
+	}
+	labels := s.ensureAuthorLabelSetLocked(arg.Item, arg.ItemID)
+	labels[arg.Label] = struct{}{}
+	return nil
+}
+
+// ListContentLabelStatus records the call and returns stored author labels.
+func (s *QuerierStub) ListContentLabelStatus(ctx context.Context, arg ListContentLabelStatusParams) ([]*ListContentLabelStatusRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.ListContentLabelStatusCalls = append(s.ListContentLabelStatusCalls, arg)
+	if s.ListContentLabelStatusErr != nil {
+		return nil, s.ListContentLabelStatusErr
+	}
+	var res []*ListContentLabelStatusRow
+	labels := s.authorLabelSet(arg.Item, arg.ItemID)
+	if len(labels) == 0 {
+		return res, nil
+	}
+	names := make([]string, 0, len(labels))
+	for label := range labels {
+		names = append(names, label)
+	}
+	sort.Strings(names)
+	for _, l := range names {
+		res = append(res, &ListContentLabelStatusRow{Item: arg.Item, ItemID: arg.ItemID, Label: l})
+	}
+	return res, nil
+}
+
+// RemoveContentLabelStatus records the call and removes the author label from the store.
+func (s *QuerierStub) RemoveContentLabelStatus(ctx context.Context, arg RemoveContentLabelStatusParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.RemoveContentLabelStatusCalls = append(s.RemoveContentLabelStatusCalls, arg)
+	if s.RemoveContentLabelStatusErr != nil {
+		return s.RemoveContentLabelStatusErr
+	}
+	if itemMap := s.ContentLabelStatus[arg.Item]; itemMap != nil {
+		if labels := itemMap[arg.ItemID]; labels != nil {
+			delete(labels, arg.Label)
+			if len(labels) == 0 {
+				delete(itemMap, arg.ItemID)
+			}
+		}
+		if len(itemMap) == 0 {
+			delete(s.ContentLabelStatus, arg.Item)
+		}
+	}
+	return nil
+}
+
+// AddContentPrivateLabel records the call and stores the private label for later retrieval.
+func (s *QuerierStub) AddContentPrivateLabel(ctx context.Context, arg AddContentPrivateLabelParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.AddContentPrivateLabelCalls = append(s.AddContentPrivateLabelCalls, arg)
+	if s.AddContentPrivateLabelErr != nil {
+		return s.AddContentPrivateLabelErr
+	}
+	labels := s.ensurePrivateLabelSetLocked(arg.Item, arg.ItemID, arg.UserID)
+	labels[arg.Label] = arg.Invert
+	return nil
+}
+
+// ListContentPrivateLabels records the call and returns stored private labels.
+func (s *QuerierStub) ListContentPrivateLabels(ctx context.Context, arg ListContentPrivateLabelsParams) ([]*ListContentPrivateLabelsRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.ListContentPrivateLabelsCalls = append(s.ListContentPrivateLabelsCalls, arg)
+	if s.ListContentPrivateLabelsErr != nil {
+		return nil, s.ListContentPrivateLabelsErr
+	}
+	var res []*ListContentPrivateLabelsRow
+	labels := s.privateLabelSet(arg.Item, arg.ItemID, arg.UserID)
+	if len(labels) == 0 {
+		return res, nil
+	}
+	names := make([]string, 0, len(labels))
+	for label := range labels {
+		names = append(names, label)
+	}
+	sort.Strings(names)
+	for _, l := range names {
+		res = append(res, &ListContentPrivateLabelsRow{Item: arg.Item, ItemID: arg.ItemID, UserID: arg.UserID, Label: l, Invert: labels[l]})
+	}
+	return res, nil
+}
+
+// RemoveContentPrivateLabel records the call and removes the private label from the store.
+func (s *QuerierStub) RemoveContentPrivateLabel(ctx context.Context, arg RemoveContentPrivateLabelParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.RemoveContentPrivateLabelCalls = append(s.RemoveContentPrivateLabelCalls, arg)
+	if s.RemoveContentPrivateLabelErr != nil {
+		return s.RemoveContentPrivateLabelErr
+	}
+	if itemMap := s.ContentPrivateLabels[arg.Item]; itemMap != nil {
+		if userMap := itemMap[arg.ItemID]; userMap != nil {
+			if labels := userMap[arg.UserID]; labels != nil {
+				delete(labels, arg.Label)
+				if len(labels) == 0 {
+					delete(userMap, arg.UserID)
+				}
+			}
+			if len(userMap) == 0 {
+				delete(itemMap, arg.ItemID)
+			}
+		}
+		if len(itemMap) == 0 {
+			delete(s.ContentPrivateLabels, arg.Item)
+		}
+	}
+	return nil
+}
+
+// SystemClearContentPrivateLabel records the call and removes the label for all users.
+func (s *QuerierStub) SystemClearContentPrivateLabel(ctx context.Context, arg SystemClearContentPrivateLabelParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.SystemClearContentPrivateLabelCalls = append(s.SystemClearContentPrivateLabelCalls, arg)
+	if s.SystemClearContentPrivateLabelErr != nil {
+		return s.SystemClearContentPrivateLabelErr
+	}
+	if itemMap := s.ContentPrivateLabels[arg.Item]; itemMap != nil {
+		if userMap := itemMap[arg.ItemID]; userMap != nil {
+			for uid, labels := range userMap {
+				delete(labels, arg.Label)
+				if len(labels) == 0 {
+					delete(userMap, uid)
+				}
+			}
+			if len(userMap) == 0 {
+				delete(itemMap, arg.ItemID)
+			}
+		}
+		if len(itemMap) == 0 {
+			delete(s.ContentPrivateLabels, arg.Item)
+		}
+	}
+	return nil
 }
 
 func (s *QuerierStub) AdminListPrivateTopicParticipantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListPrivateTopicParticipantsByTopicIDRow, error) {

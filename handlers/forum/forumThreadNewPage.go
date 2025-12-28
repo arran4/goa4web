@@ -54,7 +54,7 @@ func (CreateThreadTask) IndexData(data map[string]any) []searchworker.IndexEvent
 }
 
 func (CreateThreadTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("threadEmail"), true
+	return notif.NewEmailTemplates("forum_thread_create"), true
 }
 
 func (CreateThreadTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
@@ -191,7 +191,7 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 		topicTitle = trow.Title.String
 		topic = trow
 	}
-	if u, err := queries.SystemGetUserByID(r.Context(), uid); err == nil {
+	if u := cd.UserByID(uid); u != nil {
 		author = u.Username.String
 	}
 	text := r.PostFormValue("replytext")

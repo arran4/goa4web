@@ -50,7 +50,7 @@ func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
 var _ searchworker.IndexedTask = ReplyTask{}
 
 func (ReplyTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("replyEmail"), evt.Outcome == eventbus.TaskOutcomeSuccess
+	return notif.NewEmailTemplates("forum_reply"), evt.Outcome == eventbus.TaskOutcomeSuccess
 }
 
 func (ReplyTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
@@ -107,10 +107,8 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	uid, _ := session.Values["UID"].(int32)
 	var username string
-	if q := cd.Queries(); q != nil {
-		if u, err := q.SystemGetUserByID(r.Context(), uid); err == nil {
-			username = u.Username.String
-		}
+	if u := cd.UserByID(uid); u != nil {
+		username = u.Username.String
 	}
 	text := r.PostFormValue("replytext")
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))

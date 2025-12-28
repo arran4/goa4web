@@ -72,6 +72,7 @@ Permission actions describe groups of related operations. The main verbs are:
 - **demote** – remove a post from the announcements
 - **label** – create, edit or remove public/shared labels. Logged-in roles with
   view access to a section receive this grant automatically.
+- **create** - create a new topic in private forums.
 
 Sections may introduce extra actions but these form the base vocabulary used by
 the templates and permission checks.
@@ -213,6 +214,7 @@ Many queries now filter results directly in SQL using `lister_id` together with 
 | `writing`  | `article`  | `reply`         | Comment on a writing article |
 | `writing`  | `article`  | `post`          | Publish a writing article |
 | `writing`  | `article`  | `edit`          | Edit a writing article |
+| `search`   | —          | `search`        | Site-wide search |
 
 Viewing comments within any section uses the `view` action on the section's
 primary item type since comments inherit their thread's grants and do not have

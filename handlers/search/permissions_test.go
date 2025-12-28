@@ -6,6 +6,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 func TestCanSearch(t *testing.T) {
@@ -17,13 +18,21 @@ func TestCanSearch(t *testing.T) {
 	}{
 		{
 			name: "no grants",
-			cd:   common.NewCoreData(context.Background(), nil, cfg),
+			cd: func() *common.CoreData {
+				cd := common.NewCoreData(context.Background(), nil, cfg)
+				cd.UserID = 1
+				return cd
+			}(),
 			want: false,
 		},
 		{
 			name: "global grant",
 			cd: func() *common.CoreData {
-				cd := common.NewCoreData(context.Background(), nil, cfg, common.WithUserRoles([]string{"administrator"}))
+				q := &db.QuerierStub{
+					GetAdministratorUserRoleReturns: &db.UserRole{},
+				}
+				cd := common.NewCoreData(context.Background(), q, cfg, common.WithUserRoles([]string{"administrator"}))
+				cd.UserID = 1
 				cd.AdminMode = true
 				return cd
 			}(),
@@ -32,7 +41,11 @@ func TestCanSearch(t *testing.T) {
 		{
 			name: "section grant",
 			cd: func() *common.CoreData {
-				cd := common.NewCoreData(context.Background(), nil, cfg, common.WithUserRoles([]string{"administrator"}))
+				q := &db.QuerierStub{
+					GetAdministratorUserRoleReturns: &db.UserRole{},
+				}
+				cd := common.NewCoreData(context.Background(), q, cfg, common.WithUserRoles([]string{"administrator"}))
+				cd.UserID = 1
 				cd.AdminMode = true
 				return cd
 			}(),

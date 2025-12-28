@@ -21,6 +21,7 @@ import (
 
 func TestPage_NoAccess(t *testing.T) {
 	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
+	cd.UserID = 1
 	req := httptest.NewRequest(http.MethodGet, "/private", nil)
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 
@@ -33,7 +34,12 @@ func TestPage_NoAccess(t *testing.T) {
 }
 
 func TestPage_Access(t *testing.T) {
-	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+	// Need a stub querier because HasAdminRole calls GetAdministratorUserRole
+	q := &db.QuerierStub{
+		GetAdministratorUserRoleReturns: &db.UserRole{},
+	}
+	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+	cd.UserID = 1
 	cd.AdminMode = true
 	req := httptest.NewRequest(http.MethodGet, "/private", nil)
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
@@ -84,7 +90,12 @@ func TestPage_SeeNoCreate(t *testing.T) {
 }
 
 func TestPage_AdminLinks(t *testing.T) {
-	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+	// Need a stub querier for HasAdminRole
+	q := &db.QuerierStub{
+		GetAdministratorUserRoleReturns: &db.UserRole{},
+	}
+	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+	cd.UserID = 1
 	cd.AdminMode = true
 
 	// Inject a mock topic

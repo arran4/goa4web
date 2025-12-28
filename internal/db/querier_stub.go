@@ -73,6 +73,28 @@ type QuerierStub struct {
 	GetAdministratorUserRoleCalls   []int32
 	GetAdministratorUserRoleReturns *UserRole
 	GetAdministratorUserRoleErr     error
+
+	ListPrivateTopicsByUserIDCalls   []sql.NullInt32
+	ListPrivateTopicsByUserIDReturns []*ListPrivateTopicsByUserIDRow
+	ListPrivateTopicsByUserIDErr     error
+
+	ListSubscriptionsByUserCalls   []int32
+	ListSubscriptionsByUserReturns []*ListSubscriptionsByUserRow
+	ListSubscriptionsByUserErr     error
+}
+
+func (s *QuerierStub) ListSubscriptionsByUser(ctx context.Context, usersIdusers int32) ([]*ListSubscriptionsByUserRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.ListSubscriptionsByUserCalls = append(s.ListSubscriptionsByUserCalls, usersIdusers)
+	return s.ListSubscriptionsByUserReturns, s.ListSubscriptionsByUserErr
+}
+
+func (s *QuerierStub) ListPrivateTopicsByUserID(ctx context.Context, userID sql.NullInt32) ([]*ListPrivateTopicsByUserIDRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.ListPrivateTopicsByUserIDCalls = append(s.ListPrivateTopicsByUserIDCalls, userID)
+	return s.ListPrivateTopicsByUserIDReturns, s.ListPrivateTopicsByUserIDErr
 }
 
 func (s *QuerierStub) GetAdministratorUserRole(ctx context.Context, usersIdusers int32) (*UserRole, error) {

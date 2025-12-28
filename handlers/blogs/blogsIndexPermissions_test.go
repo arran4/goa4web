@@ -14,6 +14,7 @@ func TestCustomBlogIndexRoles(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs", nil)
 
 	cd := common.NewCoreData(req.Context(), &db.QuerierStub{}, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+	cd.UserID = 1
 	cd.AdminMode = true
 	BlogsMiddlewareIndex(cd, req)
 	if !common.ContainsItem(cd.CustomIndexItems, "Blogs Admin") {
@@ -24,6 +25,7 @@ func TestCustomBlogIndexRoles(t *testing.T) {
 	}
 
 	cd = common.NewCoreData(req.Context(), &db.QuerierStub{}, config.NewRuntimeConfig(), common.WithUserRoles([]string{"content writer"}))
+	cd.UserID = 1
 	BlogsMiddlewareIndex(cd, req)
 	if common.ContainsItem(cd.CustomIndexItems, "Blogs Admin") {
 		t.Errorf("content writer should not see blogs admin link")

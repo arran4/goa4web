@@ -137,6 +137,11 @@ func TestRequireCommentAuthor_AllowsAdminMode(t *testing.T) {
 			"idcomments", "forumthread_id", "users_idusers", "language_id", "written", "text", "timezone", "deleted_at", "last_index", "username", "is_owner",
 		}).AddRow(commentID, threadID, authorID, sql.NullInt32{}, sql.NullTime{}, sql.NullString{}, sql.NullString{}, sql.NullTime{}, sql.NullTime{}, sql.NullString{}, false))
 
+	// HasAdminRole call
+	mock.ExpectQuery("SELECT .* FROM user_roles .* JOIN roles .* WHERE .*is_admin = 1").
+		WithArgs(int32(adminID)).
+		WillReturnRows(sqlmock.NewRows([]string{"iduser_roles", "users_idusers", "role_id"}).AddRow(1, adminID, 1))
+
 	req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/15/comment/13", nil)
 	req = mux.SetURLVars(req, map[string]string{"comment": "13"})
 

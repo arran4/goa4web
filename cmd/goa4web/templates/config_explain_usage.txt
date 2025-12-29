@@ -1,0 +1,6 @@
+Usage: {{.Prog}} config explain [flags]
+
+Explain the source of configuration values, showing whether they come from command-line arguments, config files, environment variables, or defaults.
+
+Flags:
+{{template "flag_groups_section" .FlagGroups}}

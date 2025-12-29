@@ -95,6 +95,7 @@ type rootCmd struct {
 	fs            *flag.FlagSet
 	cfg           *config.RuntimeConfig
 	ConfigFile    string
+	ConfigFileValues map[string]string
 	db            *sql.DB
 	Verbosity     int
 	tasksReg      *tasks.Registry
@@ -201,17 +202,40 @@ func parseRoot(args []string) (*rootCmd, error) {
 	}
 
 	r.ConfigFile = cfgPath
+	r.ConfigFileValues = fileVals
 	r.cfg = config.NewRuntimeConfig(
 		config.WithFlagSet(r.fs),
 		config.WithFileValues(fileVals),
 		config.WithGetenv(os.Getenv),
 	)
 	coretemplates.SetDir(r.cfg.TemplatesDir)
-	if r.cfg.TemplatesDir == "" {
-		r.Infof("Embedded Template Mode")
-	} else {
-		r.Infof("Live Template Mode: %s", r.cfg.TemplatesDir)
+
+	isTemplateCommand := false
+	if len(r.fs.Args()) > 0 {
+		switch r.fs.Arg(0) {
+		case "serve", "templates":
+			isTemplateCommand = true
+		}
 	}
+
+	if r.cfg.TemplatesDir == "" {
+		if isTemplateCommand {
+			r.Infof("Embedded Template Mode")
+		} else {
+			r.Verbosef("Embedded Template Mode")
+		}
+	} else {
+		if isTemplateCommand {
+			r.Infof("Live Template Mode: %s", r.cfg.TemplatesDir)
+		} else {
+			r.Verbosef("Live Template Mode: %s", r.cfg.TemplatesDir)
+		}
+	}
+
+	for _, name := range r.routerReg.Names() {
+		r.Verbosef("Registered module: %s", name)
+	}
+
 	return r, nil
 }
 

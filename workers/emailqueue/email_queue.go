@@ -20,7 +20,7 @@ import (
 // queued by listening for EmailQueueEvent messages.
 func EmailQueueWorker(ctx context.Context, q db.Querier, provider email.Provider, dlqProvider dlq.DLQ, bus *eventbus.Bus, delay time.Duration, cfg *config.RuntimeConfig) {
 	if q == nil {
-		log.Printf("email queue worker disabled: missing queue")
+		log.Printf("email queue worker disabled: queue configured=%v", q != nil)
 		return
 	}
 	var ch <-chan eventbus.Message

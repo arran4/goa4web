@@ -31,6 +31,10 @@ FROM user_emails
 WHERE user_id = sqlc.arg(user_id) AND verified_at IS NOT NULL
 ORDER BY notification_priority DESC, id;
 
+-- name: SystemListAllUserEmails :many
+SELECT user_id, email, verified_at
+FROM user_emails
+ORDER BY user_id, email;
 
 -- name: GetUserEmailByEmail :one
 SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority
@@ -78,4 +82,3 @@ SELECT COALESCE(MAX(notification_priority),0) AS maxp FROM user_emails WHERE use
 
 -- name: SystemDeleteUserEmailsByEmailExceptID :exec
 DELETE FROM user_emails WHERE email = sqlc.arg(email) AND id != sqlc.arg(id);
-

@@ -1,7 +1,6 @@
 package news
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/arran4/goa4web/handlers/forum/comments"
@@ -17,7 +16,6 @@ import (
 
 // RegisterRoutes attaches the public news endpoints to r.
 func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
-	log.Printf("News: Registering Routes")
 	navReg.RegisterIndexLinkWithViewPermission("News", "/", SectionWeight, "news", "post")
 	navReg.RegisterAdminControlCenter("News", "News", "/admin/news", SectionWeight)
 	r.Use(handlers.IndexMiddleware(CustomNewsIndex), handlers.SectionMiddleware("news"))
@@ -55,6 +53,5 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 
 // Register registers the news router module.
 func Register(reg *router.Registry) {
-	log.Printf("News: Registering")
 	reg.RegisterModule("news", nil, RegisterRoutes)
 }

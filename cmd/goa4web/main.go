@@ -229,6 +229,11 @@ func parseRoot(args []string) (*rootCmd, error) {
 			r.Verbosef("Live Template Mode: %s", r.cfg.TemplatesDir)
 		}
 	}
+
+	for _, name := range r.routerReg.Names() {
+		r.Verbosef("Registered module: %s", name)
+	}
+
 	return r, nil
 }
 

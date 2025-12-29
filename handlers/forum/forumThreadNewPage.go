@@ -54,7 +54,7 @@ func (CreateThreadTask) IndexData(data map[string]any) []searchworker.IndexEvent
 }
 
 func (CreateThreadTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("forum_thread_create"), true
+	return notif.NewEmailTemplates("forumThreadCreateEmail"), true
 }
 
 func (CreateThreadTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/stats"
 )
 
 // EventKey is the map key used for search index events.
@@ -89,13 +90,22 @@ func index(ctx context.Context, q db.Querier, data IndexEventData) error {
 	}
 	switch data.Type {
 	case TypeComment:
-		return q.SystemSetCommentLastIndex(ctx, data.ID)
+		if err := q.SystemSetCommentLastIndex(ctx, data.ID); err != nil {
+			return err
+		}
 	case TypeWriting:
-		return q.SystemSetWritingLastIndex(ctx, data.ID)
+		if err := q.SystemSetWritingLastIndex(ctx, data.ID); err != nil {
+			return err
+		}
 	case TypeLinker:
-		return q.SystemSetLinkerLastIndex(ctx, data.ID)
+		if err := q.SystemSetLinkerLastIndex(ctx, data.ID); err != nil {
+			return err
+		}
 	case TypeImage:
-		return q.SystemSetImagePostLastIndex(ctx, data.ID)
+		if err := q.SystemSetImagePostLastIndex(ctx, data.ID); err != nil {
+			return err
+		}
 	}
+	stats.Inc("indexed_items")
 	return nil
 }

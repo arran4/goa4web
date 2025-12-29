@@ -17,6 +17,7 @@ import (
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/stats"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -142,6 +143,8 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if cd.Config.LogFlags&config.LogFlagAuth != 0 {
 		log.Printf("login success uid=%d session=%s", row.Idusers, handlers.HashSessionID(session.ID))
 	}
+
+	stats.Inc("logins")
 
 	if backURL != "" {
 		if backMethod == "" || backMethod == http.MethodGet {

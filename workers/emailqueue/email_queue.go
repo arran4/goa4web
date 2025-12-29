@@ -13,6 +13,7 @@ import (
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/stats"
 )
 
 // EmailQueueWorker sends pending emails ensuring a minimum delay between sends.
@@ -184,5 +185,6 @@ func ProcessPendingEmail(ctx context.Context, q db.Querier, provider email.Provi
 	if err := q.SystemMarkPendingEmailSent(ctx, e.ID); err != nil {
 		log.Printf("mark sent: %v", err)
 	}
+	stats.Inc("emails")
 	return true
 }

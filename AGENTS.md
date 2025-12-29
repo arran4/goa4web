@@ -2,6 +2,17 @@
 
 This repository powers the Goa4Web services. Follow these conventions when modifying the code base.
 
+## Specifications
+
+The `specs/` directory documents the current implementation and architecture. These files are the source of truth for understanding the system.
+
+- **Reflection**: The specs reflect the current code state.
+- **Updates**: Changes to specification files should only be made when explicitly requested via a prompt.
+
+Refer to `specs/query_naming.md` for SQL naming conventions and `specs/permissions.md` for the permissions model.
+
+## Configuration
+
 Configuration values may be supplied in three ways and must be resolved in this order:
 
 1. Command line flags
@@ -11,6 +22,8 @@ Configuration values may be supplied in three ways and must be resolved in this 
 Defaults should only be used when a value is still empty after applying the above rules. See `runtimeconfig.GenerateRuntimeConfig` for details.
 
 Environment variable names are centralised in `config/env.go`. Example configuration files live in `examples/` and use the same keys.
+
+## Coding Standards
 
 All `const` declarations must include a short comment describing their purpose.
 
@@ -22,8 +35,6 @@ go test ./...
 
 SQL query files are compiled using `sqlc`. Do not manually edit the generated `*.sql.go` files; instead edit the `.sql` files under `internal/db/` and run `sqlc generate`.
 Avoid using the `overrides` section in `sqlc.yaml`; prefer Go type aliases if a different struct name is required.
-
-All query names must follow the conventions in `specs/query_naming.md`.
 
 All database schema changes must include a new migration script in the `migrations/` directory (for example `0002.mysql.sql`, `0003.mysql.sql`). Never modify existing migration files as that would break deployments running older versions. Every migration must also update the `schema_version` table so deployments can track the current schema state. Bump the `ExpectedSchemaVersion` constant in `handlers/constants.go` whenever a new migration is added so tests stay in sync.
 
@@ -38,8 +49,6 @@ When tackling bugs or missing features, check if the behaviour can be verified w
 Before committing, run `go mod tidy` followed by `go fmt ./...`, `go vet ./...`, and `golangci-lint` to match the CI checks. If `go mod tidy` fails, continue but mention the error in the PR summary.
 
 Do not add new global variables unless explicitly instructed or already well established.
-
-The permissions model is documented in specs/permissions.md. Keep this document in sync with any code or migration changes affecting permissions.
 
 ## Database and Testing Notes
 

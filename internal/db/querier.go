@@ -529,6 +529,7 @@ type Querier interface {
 	SystemInsertSession(ctx context.Context, arg SystemInsertSessionParams) error
 	SystemInsertUser(ctx context.Context, username sql.NullString) (int64, error)
 	SystemLatestDeadLetter(ctx context.Context) (interface{}, error)
+	SystemListAllUserEmails(ctx context.Context) ([]*SystemListAllUserEmailsRow, error)
 	SystemListAllUsers(ctx context.Context) ([]*SystemListAllUsersRow, error)
 	SystemListBoardsByParentID(ctx context.Context, arg SystemListBoardsByParentIDParams) ([]*Imageboard, error)
 	SystemListCommentsByThreadID(ctx context.Context, forumthreadID int32) ([]*SystemListCommentsByThreadIDRow, error)

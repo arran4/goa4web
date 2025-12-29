@@ -91,6 +91,12 @@ func (c *configCmd) Run() error {
 			return fmt.Errorf("set: %w", err)
 		}
 		return cmd.Run()
+	case "explain":
+		cmd, err := parseConfigExplainCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("explain: %w", err)
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown config command %q", args[0])

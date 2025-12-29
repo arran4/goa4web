@@ -31,17 +31,10 @@ func ensureVersionTable(ctx context.Context, db *sql.DB) (int, error) {
 	return version, nil
 }
 
-// Apply reads SQL migration files from the provided filesystem and executes
-// each one in order, updating the schema_version table after every successful
-// script. When verbose is true, progress information is printed to stdout.
-func Apply(ctx context.Context, db *sql.DB, f fs.FS, verbose bool, driver string) error {
-	version, err := ensureVersionTable(ctx, db)
-	if err != nil {
-		return err
-	}
+func getAvailableMigrations(f fs.FS, driver string) ([]int, error) {
 	entries, err := fs.ReadDir(f, ".")
 	if err != nil {
-		return fmt.Errorf("read dir: %w", err)
+		return nil, fmt.Errorf("read dir: %w", err)
 	}
 	var nums []int
 	for _, e := range entries {
@@ -61,6 +54,21 @@ func Apply(ctx context.Context, db *sql.DB, f fs.FS, verbose bool, driver string
 		nums = append(nums, n)
 	}
 	sort.Ints(nums)
+	return nums, nil
+}
+
+// Apply reads SQL migration files from the provided filesystem and executes
+// each one in order, updating the schema_version table after every successful
+// script. When verbose is true, progress information is printed to stdout.
+func Apply(ctx context.Context, db *sql.DB, f fs.FS, verbose bool, driver string) error {
+	version, err := ensureVersionTable(ctx, db)
+	if err != nil {
+		return err
+	}
+	nums, err := getAvailableMigrations(f, driver)
+	if err != nil {
+		return err
+	}
 	applied := false
 	for _, n := range nums {
 		if n <= version {

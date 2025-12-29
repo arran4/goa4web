@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 
-	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -32,17 +31,10 @@ func parseServeCmd(parent *rootCmd, args []string) (*serveCmd, error) {
 }
 
 func (c *serveCmd) Run() error {
-	fileVals, err := config.LoadAppConfigFile(core.OSFS{}, c.rootCmd.ConfigFile)
-	if err != nil {
-		if errors.Is(err, config.ErrConfigFileNotFound) {
-			return fmt.Errorf("config file not found: %s", c.rootCmd.ConfigFile)
-		}
-		return fmt.Errorf("load config file: %w", err)
-	}
 	app.ConfigFile = c.rootCmd.ConfigFile
 	cfg := config.NewRuntimeConfig(
 		config.WithFlagSet(c.fs),
-		config.WithFileValues(fileVals),
+		config.WithFileValues(c.rootCmd.ConfigFileValues),
 		config.WithGetenv(os.Getenv),
 	)
 

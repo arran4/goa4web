@@ -52,7 +52,7 @@ func (c *serveCmd) Run() error {
 	c.rootCmd.Infof("Date: %s", date)
 	c.rootCmd.Infof("Listening on: %s", cfg.HTTPListen)
 	if cfg.HTTPHostname != "" {
-		c.rootCmd.Infof("Hostname: %s", cfg.HTTPHostname)
+		c.rootCmd.Infof("Base URL: %s", cfg.HTTPHostname)
 	}
 
 	secret, err := config.LoadOrCreateSecret(core.OSFS{}, cfg.SessionSecret, cfg.SessionSecretFile, config.EnvSessionSecret, config.EnvSessionSecretFile)

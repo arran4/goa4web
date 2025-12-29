@@ -26,31 +26,29 @@ Optional notification emails can be sent through several providers. See the [Ema
 ## Getting Started
 
 1. Install Go 1.23 or newer and ensure `go` is available in your `PATH`.
-2. Create a database named `a4web` using your preferred server. The schema is defined in `schema/schema.mysql.sql`, `schema/schema.psql.sql`, or `schema/schema.sqlite.sql`
-   ```bash
-   mysql -u a4web -p a4web < schema/schema.mysql.sql
-   ```
-   Run the scripts in `migrations/` to update the database. Every table change requires a migration script in this directory.
-   After running migrations insert the initial roles and grants with the seed file:
-   ```bash
-   ./goa4web db seed
-   ```
-3. Provide the database connection string and driver via flags, a config file or environment variables. Examples:
-   * MySQL TCP: `user:password@tcp(127.0.0.1:3306)/a4web?parseTime=true`
-   * MySQL socket: `user:password@unix(/var/run/mysqld/mysqld.sock)/a4web?parseTime=true`
-   * PostgreSQL: `postgres://user:pass@localhost/a4web?sslmode=disable`
-   * SQLite: `file:./a4web.sqlite?_fk=1`
-4. Download dependencies and build the application. Use the `sqlite` build tag for SQLite support:
+2. Download dependencies and build the application.
    ```bash
    go mod download
    go build -o goa4web ./cmd/goa4web
-   ./goa4web serve
+   ```
+3. Create a database named `a4web` using your preferred server (MySQL). The schema is defined in `database/schema.mysql.sql`.
+
+   To setup the database, provide the connection string and use the `db setup` command:
+   ```bash
+   # Example for MySQL
+   DB_CONN="user:password@tcp(127.0.0.1:3306)/a4web?parseTime=true" ./goa4web db setup
+   ```
+   This command applies the schema and inserts initial seed data (roles and grants).
+4. Run the application:
+   ```bash
+   # Using environment variables for configuration
+   DB_CONN="user:password@tcp(127.0.0.1:3306)/a4web?parseTime=true" ./goa4web serve
    ```
 
 During development you can load templates directly from disk. Extract the embedded templates and point the server at the directory:
 ```bash
 goa4web templates extract -dir ./tmpl
-go run -tags sqlite ./cmd/goa4web --templates-dir ./tmpl
+go run ./cmd/goa4web --templates-dir ./tmpl
 ```
 The default build embeds templates and `main.css`, producing a self-contained binary.
 
@@ -79,7 +77,7 @@ Gorilla/csrf protects form submissions. Templates embed tokens and the middlewar
 ├── core/templates/      – HTML and email templates
 ├── examples/            – generated configuration examples
 ├── migrations/          – database schema migrations
-├── schema/schema.mysql.sql    – initial database schema
+├── database/schema.mysql.sql    – initial database schema
 ├── core/templates/templates.go – load templates from disk or embedded data
 ├── internal/db/models.go       – sqlc generated data models
 └── internal/db/queries-*.sql   – SQL queries consumed by sqlc
@@ -139,15 +137,15 @@ go run ./cmd/goa4web config as-env-file > examples/config.env
 `examples/config.env` might contain:
 ```conf
 # examples/config.env
-DB_DRIVER=sqlite
-DB_CONN=file:./a4web.sqlite?_fk=1
+DB_DRIVER=mysql
+DB_CONN=user:password@tcp(127.0.0.1:3306)/a4web?parseTime=true
 LISTEN=:8080
 HOSTNAME=http://localhost:8080
 AUTO_MIGRATE=true
 ```
 
 Run `goa4web config options --extended` to see detailed descriptions of all
-configuration keys. When using SQLite you must compile the binary with the `sqlite` build tag.
+configuration keys.
 
 ## Email Provider Configuration
 
@@ -438,12 +436,13 @@ Start the container with environment variables for your database connection:
 
 ```bash
 docker run -p 8080:8080 \
-  -e DB_DRIVER=sqlite \
-  -e DB_CONN=file:/data/a4web.sqlite?_fk=1 \
+  -e DB_DRIVER=mysql \
+  -e DB_CONN="user:password@tcp(host.docker.internal:3306)/a4web?parseTime=true" \
   -e AUTO_MIGRATE=true \
-  -v $(pwd)/data:/data \
   ghcr.io/arran4/goa4web:latest
 ```
+
+**Note**: The example above assumes a MySQL database is accessible from the container. `host.docker.internal` is used to reach the host machine on some Docker installations. For a self-contained setup including a database, see the Docker Compose section.
 
 Setting `GOA4WEB_DOCKER=1` tells the application to store generated secret files
 such as `session_secret` under `/var/lib/goa4web`. Mount this directory as a

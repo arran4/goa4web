@@ -95,6 +95,7 @@ type rootCmd struct {
 	fs            *flag.FlagSet
 	cfg           *config.RuntimeConfig
 	ConfigFile    string
+	ConfigFileValues map[string]string
 	db            *sql.DB
 	Verbosity     int
 	tasksReg      *tasks.Registry
@@ -201,6 +202,7 @@ func parseRoot(args []string) (*rootCmd, error) {
 	}
 
 	r.ConfigFile = cfgPath
+	r.ConfigFileValues = fileVals
 	r.cfg = config.NewRuntimeConfig(
 		config.WithFlagSet(r.fs),
 		config.WithFileValues(fileVals),

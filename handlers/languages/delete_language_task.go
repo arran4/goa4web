@@ -23,7 +23,7 @@ var _ notif.AdminEmailTemplateProvider = (*DeleteLanguageTask)(nil)
 
 func (DeleteLanguageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	if cd == nil || !cd.HasRole("administrator") {
+	if cd == nil || !cd.HasAdminRole() {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusForbidden)
 			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)

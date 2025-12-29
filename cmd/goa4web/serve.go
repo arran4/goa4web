@@ -46,14 +46,12 @@ func (c *serveCmd) Run() error {
 		config.WithGetenv(os.Getenv),
 	)
 
-	c.rootCmd.Infof("Starting Goa4Web")
-	c.rootCmd.Infof("Version: %s", version)
-	c.rootCmd.Infof("Commit: %s", commit)
-	c.rootCmd.Infof("Date: %s", date)
-	c.rootCmd.Infof("Listening on: %s", cfg.HTTPListen)
+	c.rootCmd.Infof("Starting Goa4Web v%s (commit: %s; build date: %s)", version, commit, date)
+	listenMsg := fmt.Sprintf("Listening on: %s", cfg.HTTPListen)
 	if cfg.HTTPHostname != "" {
-		c.rootCmd.Infof("Hostname: %s", cfg.HTTPHostname)
+		listenMsg += fmt.Sprintf(" (Hostname: %s)", cfg.HTTPHostname)
 	}
+	c.rootCmd.Infof("%s", listenMsg)
 
 	secret, err := config.LoadOrCreateSecret(core.OSFS{}, cfg.SessionSecret, cfg.SessionSecretFile, config.EnvSessionSecret, config.EnvSessionSecretFile)
 	if err != nil {

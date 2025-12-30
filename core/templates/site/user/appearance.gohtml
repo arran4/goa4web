@@ -1,0 +1,66 @@
+{{ template "head" $ }}
+        <h2>Appearance Settings</h2>
+
+        {{ if .CustomCSS }}
+        <div class="alert alert-info">
+            Your custom CSS is active.
+        </div>
+        {{ end }}
+
+        <form method="POST" action="/usr/appearance">
+            {{ csrfField }}
+            <input type="hidden" name="task" value="Save appearance">
+
+            <div class="form-group">
+                <label for="custom_css">Custom CSS</label>
+                <textarea class="form-control" id="custom_css" name="custom_css" rows="15" style="font-family: monospace;">{{ .CustomCSS }}</textarea>
+                <small class="form-text text-muted">
+                    Enter your custom CSS here. It will be injected into the head of every page.
+                </small>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save Settings</button>
+        </form>
+
+        <hr>
+
+        <h3>Examples & Snippets</h3>
+        <p>Copy and paste these into the box above to customize your experience.</p>
+
+        <h4>Dark Mode tweaks</h4>
+        <pre><code>body {
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+}
+a {
+    color: #8ab4f8;
+}
+.sidebar {
+    background-color: #2d2d2d;
+}
+</code></pre>
+
+        <h4>Larger Font Size</h4>
+        <pre><code>body {
+    font-size: 18px;
+}
+</code></pre>
+
+        <h4>Compact Thread List</h4>
+        <pre><code>.thread-list td {
+    padding: 2px 5px;
+}
+</code></pre>
+
+        <h3>Useful Selectors</h3>
+        <ul>
+            <li><code>body</code> - The main page container.</li>
+            <li><code>.sidebar</code> - The left navigation sidebar.</li>
+            <li><code>.content</code> - The main content area.</li>
+            <li><code>.header</code> - The top header (if present).</li>
+            <li><code>.thread-list</code> - List of threads in a forum.</li>
+            <li><code>.comment</code> - Individual comments.</li>
+            <li><code>.comment-body</code> - The text content of a comment.</li>
+        </ul>
+
+{{ template "tail" $ }}

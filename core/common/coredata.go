@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"html/template"
 	"io"
 	"log"
 	"net/http"
@@ -2326,6 +2327,15 @@ func (cd *CoreData) Subscriptions() ([]*db.ListSubscriptionsByUserRow, error) {
 
 // CurrentError returns a generic error message for the current request.
 func (cd *CoreData) CurrentError() string { return cd.currentError }
+
+// CustomCSS returns the user's custom CSS setting.
+func (cd *CoreData) CustomCSS() template.CSS {
+	pref, err := cd.Preference()
+	if err != nil || pref == nil || !pref.CustomCss.Valid {
+		return ""
+	}
+	return template.CSS(pref.CustomCss.String)
+}
 
 // CurrentNotice returns the informational message for the current request.
 func (cd *CoreData) CurrentNotice() string { return cd.currentNotice }

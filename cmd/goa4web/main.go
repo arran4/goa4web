@@ -93,19 +93,19 @@ func main() {
 
 // rootCmd is the top-level command state.
 type rootCmd struct {
-	fs            *flag.FlagSet
-	cfg           *config.RuntimeConfig
-	ConfigFile    string
+	fs               *flag.FlagSet
+	cfg              *config.RuntimeConfig
+	ConfigFile       string
 	ConfigFileValues map[string]string
-	db            *sql.DB
-	Verbosity     int
-	tasksReg      *tasks.Registry
-	dbReg         *dbdrivers.Registry
-	emailReg      *email.Registry
-	dlqReg        *dlq.Registry
-	routerReg     *router.Registry
-	adminHandlers *adminhandlers.Handlers
-	ctx           context.Context
+	db               *sql.DB
+	Verbosity        int
+	tasksReg         *tasks.Registry
+	dbReg            *dbdrivers.Registry
+	emailReg         *email.Registry
+	dlqReg           *dlq.Registry
+	routerReg        *router.Registry
+	adminHandlers    *adminhandlers.Handlers
+	ctx              context.Context
 }
 
 func (r *rootCmd) DB() (*sql.DB, error) {

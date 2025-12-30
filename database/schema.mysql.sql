@@ -276,6 +276,7 @@ CREATE TABLE `preferences` (
   `page_size` int(10) NOT NULL DEFAULT 15,
   `auto_subscribe_replies` tinyint(1) NOT NULL DEFAULT 1,
   `timezone` tinytext DEFAULT NULL,
+  `custom_css` text DEFAULT NULL,
   PRIMARY KEY (`idpreferences`),
   KEY `preferences_FKIndex1` (`users_idusers`),
   KEY `preferences_FKIndex2` (`language_id`)
@@ -729,6 +730,6 @@ CREATE TABLE `role_subscription_archetypes` (
 );
 
 -- Set the schema version to the latest migration.
-INSERT INTO `schema_version` (`version`) VALUES (73)
+INSERT INTO `schema_version` (`version`) VALUES (75)
 ON DUPLICATE KEY UPDATE version = VALUES(version);
 

@@ -36,7 +36,6 @@ func TestAdminBlogCommentsPage_UsesURLParam(t *testing.T) {
 	mock.ExpectQuery("SELECT th.idforumthread").
 		WithArgs(int32(0), int32(1), int32(0), int32(0), sql.NullInt32{Valid: false}, sql.NullInt32{Valid: false}).
 		WillReturnRows(permRows)
-	mock.ExpectQuery("SELECT").WillReturnError(sql.ErrNoRows)
 	mock.ExpectQuery("SELECT").WillReturnRows(sqlmock.NewRows([]string{}))
 
 	req := httptest.NewRequest("GET", "/admin/blogs/blog/"+strconv.Itoa(blogID)+"/comments", nil)

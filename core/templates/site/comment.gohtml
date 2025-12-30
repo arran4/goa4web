@@ -22,10 +22,14 @@
                 <span class="section-title">Edit:</span><br>
                 <form method="post" action="{{ cd.CommentEditSaveURL $cmt }}">
                     {{ csrfField }}
-                    <textarea id="reply" name="replytext" cols="40" rows="20">{{ $cmt.Text.String }}</textarea><br>
+                    <textarea id="reply-{{ $cmt.Idcomments }}" name="replytext" cols="40" rows="20">{{ $cmt.Text.String }}</textarea><br>
                     {{ template "languageCombobox" }}
                     <input type="submit" name="task" value="Edit Reply">
+                    <button type="button" class="preview-a4code" data-target="reply-{{ $cmt.Idcomments }}" data-container="preview-container-{{ $cmt.Idcomments }}" data-preview-url="{{$base := "/forum"}}{{with cd.ForumBasePath}}{{$base = .}}{{end}}{{$base}}/preview">Preview</button>
                     <a href="?#c{{ $num }}">Cancel</a>
+                    <div class="form-group hidden" id="preview-container-{{ $cmt.Idcomments }}">
+                        <div class="preview-box"></div>
+                    </div>
                 </form>
             {{ else }}
                 <div id="comment-{{ $cmt.Idcomments }}">{{ $cmt.Text.String | a4code2html}}</div>

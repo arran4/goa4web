@@ -159,6 +159,10 @@ type QuerierStub struct {
 	ListBoardsByParentIDForListerReturns []*Imageboard
 	ListBoardsByParentIDForListerErr     error
 	ListBoardsByParentIDForListerFn      func(ListBoardsByParentIDForListerParams) ([]*Imageboard, error)
+
+	UpdateTimezoneForListerCalls []UpdateTimezoneForListerParams
+	UpdateTimezoneForListerErr   error
+	UpdateTimezoneForListerFn    func(context.Context, UpdateTimezoneForListerParams) error
 }
 
 func (s *QuerierStub) ensurePublicLabelSetLocked(item string, itemID int32) map[string]struct{} {
@@ -531,6 +535,18 @@ func (s *QuerierStub) ListBoardsByParentIDForLister(ctx context.Context, arg Lis
 		return fn(arg)
 	}
 	return ret, err
+}
+
+func (s *QuerierStub) UpdateTimezoneForLister(ctx context.Context, arg UpdateTimezoneForListerParams) error {
+	s.mu.Lock()
+	s.UpdateTimezoneForListerCalls = append(s.UpdateTimezoneForListerCalls, arg)
+	fn := s.UpdateTimezoneForListerFn
+	err := s.UpdateTimezoneForListerErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
 }
 
 func (s *QuerierStub) AdminListForumTopicGrantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListForumTopicGrantsByTopicIDRow, error) {

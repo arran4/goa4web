@@ -40,6 +40,8 @@ type A4code2html struct {
 	// ImageURLMapper optionally maps tag URLs to fully qualified versions.
 	// The first parameter provides the tag name, e.g. "img" or "a".
 	ImageURLMapper func(tag, val string) string
+	// UserColorMapper optionally maps a username to a CSS class for styling quotes.
+	UserColorMapper func(username string) string
 }
 
 // WithTOC enables or disables table-of-contents generation when passed to New.
@@ -60,6 +62,8 @@ func New(opts ...interface{}) *A4code2html {
 			c.CodeType = v
 		case func(tag, val string) string:
 			c.ImageURLMapper = v
+		case func(string) string:
+			c.UserColorMapper = v
 		case WithTOC:
 			c.makeTC = bool(v)
 		case *bufio.Reader:
@@ -329,13 +333,13 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 		switch a.CodeType {
 		case CTTableOfContents, CTTagStrip, CTWordsOnly:
 		default:
-			if _, err := io.WriteString(w, "<pre class=\"a4code-block a4code-code\">"); err != nil {
+			if _, err := io.WriteString(w, "<div class=\"a4code-block a4code-code-wrapper\"><div class=\"code-header\">Code</div><pre class=\"a4code-code-body\">"); err != nil {
 				return err
 			}
 			if err := a.directOutputReader(r, w, "[/code]", "code]"); err != nil {
 				return err
 			}
-			if _, err := io.WriteString(w, "</pre>"); err != nil {
+			if _, err := io.WriteString(w, "</pre></div>"); err != nil {
 				return err
 			}
 		}
@@ -347,19 +351,23 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 			if err != nil && err != io.EOF {
 				return err
 			}
-			if _, err := io.WriteString(w, fmt.Sprintf("<blockquote class=\"a4code-block a4code-quoteof\"><div>Quote of %s:</div>", name)); err != nil {
+			colorClass := ""
+			if a.UserColorMapper != nil {
+				colorClass = " " + a.UserColorMapper(name)
+			}
+			if _, err := io.WriteString(w, fmt.Sprintf("<blockquote class=\"a4code-block a4code-quoteof%s\"><div class=\"quote-header\">Quote of %s:</div><div class=\"quote-body\">", colorClass, name)); err != nil {
 				return err
 			}
-			a.stack = append(a.stack, "</blockquote>")
+			a.stack = append(a.stack, "</div></blockquote>")
 		}
 	case "quote", "q":
 		switch a.CodeType {
 		case CTTableOfContents, CTTagStrip, CTWordsOnly:
 		default:
-			if _, err := io.WriteString(w, "<blockquote class=\"a4code-block a4code-quote\">"); err != nil {
+			if _, err := io.WriteString(w, "<blockquote class=\"a4code-block a4code-quote\"><div class=\"quote-header\">Quote:</div><div class=\"quote-body\">"); err != nil {
 				return err
 			}
-			a.stack = append(a.stack, "</blockquote>")
+			a.stack = append(a.stack, "</div></blockquote>")
 		}
 	case "spoiler", "sp":
 		switch a.CodeType {

@@ -199,9 +199,9 @@ type Account struct {
 }
 
 type SessionResponse struct {
-	APIURL          string            `json:"apiUrl"`
-	PrimaryAccounts map[string]string `json:"primaryAccounts"`
-	DefaultIdentity map[string]string `json:"defaultIdentity"`
+	APIURL          string             `json:"apiUrl"`
+	PrimaryAccounts map[string]string  `json:"primaryAccounts"`
+	DefaultIdentity map[string]string  `json:"defaultIdentity"`
 	Accounts        map[string]Account `json:"accounts"`
 }
 

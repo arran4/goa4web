@@ -56,6 +56,12 @@ func A4CodeJS(w http.ResponseWriter, r *http.Request) {
 	http.ServeContent(w, r, "a4code.js", time.Time{}, bytes.NewReader(templates.GetA4CodeJSData()))
 }
 
+// PasteLinkJS serves the Paste Link JavaScript.
+func PasteLinkJS(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/javascript")
+	http.ServeContent(w, r, "pastelink.js", time.Time{}, bytes.NewReader(templates.GetPasteLinkJSData()))
+}
+
 // RedirectPermanent returns a handler that redirects to the provided path using StatusPermanentRedirect.
 func RedirectPermanent(to string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

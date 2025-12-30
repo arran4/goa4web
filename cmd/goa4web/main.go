@@ -12,6 +12,7 @@ import (
 
 	"github.com/arran4/goa4web"
 	adminhandlers "github.com/arran4/goa4web/handlers/admin"
+	apihandlers "github.com/arran4/goa4web/handlers/api"
 	authhandlers "github.com/arran4/goa4web/handlers/auth"
 	bloghandlers "github.com/arran4/goa4web/handlers/blogs"
 	bookmarkhandlers "github.com/arran4/goa4web/handlers/bookmarks"

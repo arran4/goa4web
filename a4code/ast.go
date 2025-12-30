@@ -369,9 +369,12 @@ func (*Custom) isNode()                {}
 func (c *Custom) childrenPtr() *[]Node { return &c.Children }
 
 func (c *Custom) html(w io.Writer) {
+	io.WriteString(w, "[")
+	io.WriteString(w, htmlEscape(c.Tag))
 	for _, ch := range c.Children {
 		ch.html(w)
 	}
+	io.WriteString(w, "]")
 }
 
 func (c *Custom) a4code(w io.Writer) {

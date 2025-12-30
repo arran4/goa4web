@@ -45,7 +45,7 @@ func TestDeleteLanguageTask_PreventDeletion(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	cfg := config.NewRuntimeConfig()
-	cd := common.NewCoreData(context.Background(), queries, cfg, common.WithUserRoles([]string{"administrator"}))
+	cd := common.NewCoreData(context.Background(), queries, cfg, common.WithUserRoles([]string{"administrator"}), common.WithPermissions([]*db.GetPermissionsByUserIDRow{{IsAdmin: true}}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()

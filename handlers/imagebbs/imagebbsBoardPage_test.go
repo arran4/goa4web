@@ -29,29 +29,29 @@ func TestBoardPageRendersSubBoards(t *testing.T) {
 	// Prepare test data
 	subBoards := []*db.Imageboard{
 		{
-			Idimageboard:     4,
+			Idimageboard:           4,
 			ImageboardIdimageboard: sql.NullInt32{Int32: 3, Valid: true},
-			Title:            sql.NullString{String: "child", Valid: true},
-			Description:      sql.NullString{String: "sub", Valid: true},
-			ApprovalRequired: false,
+			Title:                  sql.NullString{String: "child", Valid: true},
+			Description:            sql.NullString{String: "sub", Valid: true},
+			ApprovalRequired:       false,
 		},
 	}
 
 	posts := []*db.ListImagePostsByBoardForListerRow{
 		{
-			Idimagepost:           1,
-			ForumthreadID:         1,
-			UsersIdusers:          1,
+			Idimagepost:            1,
+			ForumthreadID:          1,
+			UsersIdusers:           1,
 			ImageboardIdimageboard: sql.NullInt32{Int32: 3, Valid: true},
-			Posted:                sql.NullTime{Time: time.Unix(0, 0), Valid: true},
-			Timezone:              sql.NullString{String: time.Local.String(), Valid: true},
-			Description:           sql.NullString{String: "desc", Valid: true},
-			Thumbnail:             sql.NullString{String: "/t", Valid: true},
-			Fullimage:             sql.NullString{String: "/f", Valid: true},
-			FileSize:              10,
-			Approved:              true,
-			Username:              sql.NullString{String: "alice", Valid: true},
-			Comments:              sql.NullInt32{Int32: 0, Valid: true},
+			Posted:                 sql.NullTime{Time: time.Unix(0, 0), Valid: true},
+			Timezone:               sql.NullString{String: time.Local.String(), Valid: true},
+			Description:            sql.NullString{String: "desc", Valid: true},
+			Thumbnail:              sql.NullString{String: "/t", Valid: true},
+			Fullimage:              sql.NullString{String: "/f", Valid: true},
+			FileSize:               10,
+			Approved:               true,
+			Username:               sql.NullString{String: "alice", Valid: true},
+			Comments:               sql.NullInt32{Int32: 0, Valid: true},
 		},
 	}
 
@@ -68,7 +68,7 @@ func TestBoardPageRendersSubBoards(t *testing.T) {
 		}
 		return nil, nil
 	}
-    qs.SystemCheckGrantReturns = 1
+	qs.SystemCheckGrantReturns = 1
 
 	// Inject CoreData into context
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)

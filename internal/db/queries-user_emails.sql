@@ -79,3 +79,25 @@ SELECT COALESCE(MAX(notification_priority),0) AS maxp FROM user_emails WHERE use
 -- name: SystemDeleteUserEmailsByEmailExceptID :exec
 DELETE FROM user_emails WHERE email = sqlc.arg(email) AND id != sqlc.arg(id);
 
+-- name: SystemListUnverifiedEmailsCreatedAfter :many
+SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority
+FROM user_emails
+WHERE verified_at IS NULL
+  AND verification_expires_at > ?
+ORDER BY id;
+
+-- name: SystemListAllUnverifiedEmails :many
+SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority
+FROM user_emails
+WHERE verified_at IS NULL
+ORDER BY id;
+
+-- name: SystemDeleteUnverifiedEmailsExpiresBefore :execresult
+DELETE FROM user_emails
+WHERE verified_at IS NULL
+  AND verification_expires_at < ?;
+
+-- name: SystemUpdateVerificationCode :exec
+UPDATE user_emails
+SET last_verification_code = ?, verification_expires_at = ?
+WHERE id = ?;

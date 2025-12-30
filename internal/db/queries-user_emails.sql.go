@@ -279,6 +279,16 @@ func (q *Queries) SetVerificationCodeForLister(ctx context.Context, arg SetVerif
 	return err
 }
 
+const systemDeleteUnverifiedEmailsExpiresBefore = `-- name: SystemDeleteUnverifiedEmailsExpiresBefore :execresult
+DELETE FROM user_emails
+WHERE verified_at IS NULL
+  AND verification_expires_at < ?
+`
+
+func (q *Queries) SystemDeleteUnverifiedEmailsExpiresBefore(ctx context.Context, verificationExpiresAt sql.NullTime) (sql.Result, error) {
+	return q.db.ExecContext(ctx, systemDeleteUnverifiedEmailsExpiresBefore, verificationExpiresAt)
+}
+
 const systemDeleteUserEmailsByEmailExceptID = `-- name: SystemDeleteUserEmailsByEmailExceptID :exec
 DELETE FROM user_emails WHERE email = ? AND id != ?
 `
@@ -291,6 +301,83 @@ type SystemDeleteUserEmailsByEmailExceptIDParams struct {
 func (q *Queries) SystemDeleteUserEmailsByEmailExceptID(ctx context.Context, arg SystemDeleteUserEmailsByEmailExceptIDParams) error {
 	_, err := q.db.ExecContext(ctx, systemDeleteUserEmailsByEmailExceptID, arg.Email, arg.ID)
 	return err
+}
+
+const systemListAllUnverifiedEmails = `-- name: SystemListAllUnverifiedEmails :many
+SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority
+FROM user_emails
+WHERE verified_at IS NULL
+ORDER BY id
+`
+
+func (q *Queries) SystemListAllUnverifiedEmails(ctx context.Context) ([]*UserEmail, error) {
+	rows, err := q.db.QueryContext(ctx, systemListAllUnverifiedEmails)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*UserEmail
+	for rows.Next() {
+		var i UserEmail
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Email,
+			&i.VerifiedAt,
+			&i.LastVerificationCode,
+			&i.VerificationExpiresAt,
+			&i.NotificationPriority,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const systemListUnverifiedEmailsCreatedAfter = `-- name: SystemListUnverifiedEmailsCreatedAfter :many
+SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority
+FROM user_emails
+WHERE verified_at IS NULL
+  AND verification_expires_at > ?
+ORDER BY id
+`
+
+func (q *Queries) SystemListUnverifiedEmailsCreatedAfter(ctx context.Context, verificationExpiresAt sql.NullTime) ([]*UserEmail, error) {
+	rows, err := q.db.QueryContext(ctx, systemListUnverifiedEmailsCreatedAfter, verificationExpiresAt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*UserEmail
+	for rows.Next() {
+		var i UserEmail
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Email,
+			&i.VerifiedAt,
+			&i.LastVerificationCode,
+			&i.VerificationExpiresAt,
+			&i.NotificationPriority,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const systemListVerifiedEmailsByUserID = `-- name: SystemListVerifiedEmailsByUserID :many
@@ -344,5 +431,22 @@ type SystemMarkUserEmailVerifiedParams struct {
 
 func (q *Queries) SystemMarkUserEmailVerified(ctx context.Context, arg SystemMarkUserEmailVerifiedParams) error {
 	_, err := q.db.ExecContext(ctx, systemMarkUserEmailVerified, arg.VerifiedAt, arg.ID)
+	return err
+}
+
+const systemUpdateVerificationCode = `-- name: SystemUpdateVerificationCode :exec
+UPDATE user_emails
+SET last_verification_code = ?, verification_expires_at = ?
+WHERE id = ?
+`
+
+type SystemUpdateVerificationCodeParams struct {
+	LastVerificationCode  sql.NullString
+	VerificationExpiresAt sql.NullTime
+	ID                    int32
+}
+
+func (q *Queries) SystemUpdateVerificationCode(ctx context.Context, arg SystemUpdateVerificationCodeParams) error {
+	_, err := q.db.ExecContext(ctx, systemUpdateVerificationCode, arg.LastVerificationCode, arg.VerificationExpiresAt, arg.ID)
 	return err
 }

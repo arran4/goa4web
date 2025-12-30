@@ -27,9 +27,9 @@ type QuerierStub struct {
 	Querier
 	mu sync.Mutex
 
-	ListActiveBansReturns []*BannedIp
-	ListActiveBansErr     error
-	ListActiveBansCalls   int
+	ListActiveBansReturns               []*BannedIp
+	ListActiveBansErr                   error
+	ListActiveBansCalls                 int
 	ContentLabelStatus                  map[string]map[int32]map[string]struct{}
 	ContentPrivateLabels                map[string]map[int32]map[int32]map[string]bool
 	ContentPublicLabels                 map[string]map[int32]map[string]struct{}
@@ -695,7 +695,6 @@ func (s *QuerierStub) AdminListAdministratorEmails(ctx context.Context) ([]strin
 	s.mu.Unlock()
 	return s.AdminListAdministratorEmailsReturns, s.AdminListAdministratorEmailsErr
 }
-
 
 // ListSubscriptionsByUser records the call and returns configured rows.
 func (s *QuerierStub) ListSubscriptionsByUser(ctx context.Context, userID int32) ([]*ListSubscriptionsByUserRow, error) {

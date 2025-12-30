@@ -127,6 +127,18 @@ func (c *userCmd) Run() error {
 			return fmt.Errorf("rename: %w", err)
 		}
 		return cmd.Run()
+	case "resend-verification":
+		cmd, err := parseUserResendVerificationCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("resend-verification: %w", err)
+		}
+		return cmd.Run()
+	case "expunge-unverified":
+		cmd, err := parseUserExpungeUnverifiedCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("expunge-unverified: %w", err)
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown user command %q", args[0])

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	_ "time/tzdata"
 
 	"github.com/arran4/goa4web"
 	adminhandlers "github.com/arran4/goa4web/handlers/admin"

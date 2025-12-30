@@ -62,7 +62,14 @@ A CLI tool is available to verify template rendering with mock data. This is use
 
 Usage:
 ```bash
+# Render to stdout
 ./goa4web test verification template -template <path/to/template.gohtml> -data <data.json>
+
+# Render to file
+./goa4web test verification template -template <path/to/template.gohtml> -data <data.json> -output <file.html>
+
+# Serve locally (serves static assets too)
+./goa4web test verification template -template <path/to/template.gohtml> -data <data.json> -listen :8080
 ```
 
 The JSON data file should contain the data structure expected by the template (the `Dot` field) and optional configuration:

@@ -77,18 +77,35 @@ func NewsPageSpecificItems(cd *common.CoreData, r *http.Request, post *db.GetNew
 			})
 		}
 
-		// Mark as Read
-		redirect := r.URL.RequestURI()
-		items = append(items, common.IndexItem{
-			Name: "Mark as Read",
-			Link: fmt.Sprintf("/news/news/%d/labels?task=Mark+Thread+Read&redirect=%s", post.Idsitenews, url.QueryEscape(redirect)),
-		})
-		items = append(items, common.IndexItem{
-			Name: "Mark as Read & Return",
-			Link: fmt.Sprintf("/news/news/%d/labels?task=Mark+Thread+Read&redirect=%s", post.Idsitenews, url.QueryEscape("/news")),
-		})
+		if hasNewsUnread(cd, post.Idsitenews) {
+			redirect := r.URL.RequestURI()
+			items = append(items, common.IndexItem{
+				Name: "Mark as read",
+				Link: fmt.Sprintf("/news/news/%d/labels?task=Mark+Thread+Read&redirect=%s", post.Idsitenews, url.QueryEscape(redirect)),
+			})
+			items = append(items, common.IndexItem{
+				Name: "Mark as read and go back",
+				Link: fmt.Sprintf("/news/news/%d/labels?task=Mark+Thread+Read&redirect=%s", post.Idsitenews, url.QueryEscape("/news")),
+			})
+		}
 	}
 	return items
+}
+
+func hasNewsUnread(cd *common.CoreData, postID int32) bool {
+	if cd == nil || cd.UserID == 0 {
+		return false
+	}
+	labels, err := cd.NewsPrivateLabels(postID)
+	if err != nil {
+		return false
+	}
+	for _, l := range labels {
+		if l == "unread" || l == "new" {
+			return true
+		}
+	}
+	return false
 }
 
 // Deprecated/Wrapper

@@ -1,18 +1,25 @@
 {{ template "head" $ }}
-<div id="notifications-list">
-{{ range cd.Notifications .Request }}
-    <div class="notification" id="notif-{{ .ID }}" data-notification-id="{{ .ID }}">
-        {{ if .Link.Valid }}<a href="/usr/notifications/open/{{ .ID }}">{{ end }}{{ .Message.String }}{{ if .Link.Valid }}</a>{{ end }}
-        <form method="post" action="/usr/notifications/dismiss" class="inline-form">
-            {{ csrfField }}
-            <input type="hidden" name="id" value="{{ .ID }}">
-            <input type="submit" name="task" value="Dismiss">
-        </form>
+<form method="post" action="/usr/notifications/dismiss" id="notifications-form">
+    {{ csrfField }}
+    <input type="hidden" name="task" value="Dismiss">
+    <div id="notifications-actions" class="actions-bar">
+        <button type="button" id="btn-select-all">Select All</button>
+        <button type="button" id="btn-invert-selection">Invert Selection</button>
+        <input type="submit" value="Dismiss Selected">
     </div>
-{{ else }}
-    <div id="notifications-empty">No notifications</div>
-{{ end }}
-</div>
+    <div id="notifications-list">
+    {{ range cd.Notifications .Request }}
+        <div class="notification" id="notif-{{ .ID }}" data-notification-id="{{ .ID }}">
+            <label>
+                <input type="checkbox" name="id" value="{{ .ID }}">
+                {{ if .Link.Valid }}<a href="/usr/notifications/open/{{ .ID }}">{{ end }}{{ .Message.String }}{{ if .Link.Valid }}</a>{{ end }}
+            </label>
+        </div>
+    {{ else }}
+        <div id="notifications-empty">No notifications</div>
+    {{ end }}
+    </div>
+</form>
 {{ if cd.FeedsEnabled }}
     <p>Feeds: <a href="{{ cd.RSSFeedURL }}">RSS</a> | <a href="{{ cd.AtomFeedURL }}">Atom</a></p>
 {{ end }}

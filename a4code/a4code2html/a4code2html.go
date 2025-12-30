@@ -317,6 +317,11 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 				if _, err := io.WriteString(w, "<a href=\""+safe+"\" target=\"_BLANK\">"); err != nil {
 					return err
 				}
+				if p, err := r.Peek(1); err == nil && len(p) > 0 && p[0] == ']' {
+					if _, err := io.WriteString(w, safe); err != nil {
+						return err
+					}
+				}
 				a.stack = append(a.stack, "</a>")
 			} else {
 				if _, err := io.WriteString(w, safe); err != nil {

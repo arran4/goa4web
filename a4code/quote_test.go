@@ -21,7 +21,7 @@ func TestQuote(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected QuoteOf node, got %T", ast.Children[0])
 	}
-	if q.Name != "\"bob\"" {
+	if q.Name != "bob" {
 		t.Errorf("quote name = %q", q.Name)
 	}
 	if len(q.Children) < 1 {

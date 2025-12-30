@@ -299,7 +299,7 @@ func (q *QuoteOf) html(w io.Writer) {
 
 func (q *QuoteOf) a4code(w io.Writer) {
 	io.WriteString(w, "[quoteof ")
-	escapeArg(w, q.Name)
+	escapeQuotedArg(w, q.Name)
 	for _, c := range q.Children {
 		c.a4code(w)
 	}
@@ -415,4 +415,18 @@ func escapeArg(w io.Writer, s string) {
 			writeByte(w, s[i])
 		}
 	}
+}
+
+func escapeQuotedArg(w io.Writer, s string) {
+	writeByte(w, '"')
+	for i := 0; i < len(s); i++ {
+		switch s[i] {
+		case '"', '\\':
+			writeByte(w, '\\')
+			writeByte(w, s[i])
+		default:
+			writeByte(w, s[i])
+		}
+	}
+	writeByte(w, '"')
 }

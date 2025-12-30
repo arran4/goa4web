@@ -158,6 +158,30 @@ func TestQuoteOfWithSpacesAndEscapedQuote(t *testing.T) {
 	}
 }
 
+func TestQuoteRoundTripComplexName(t *testing.T) {
+	name := `Foo "Bar" Baz \ Quux`
+	text := "some content"
+	// Generate
+	encoded := QuoteText(name, text)
+
+	// Parse back
+	ast, err := ParseString(encoded)
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	if len(ast.Children) < 1 {
+		t.Fatalf("no nodes parsed")
+	}
+	q, ok := ast.Children[0].(*QuoteOf)
+	if !ok {
+		t.Fatalf("expected QuoteOf node, got %T", ast.Children[0])
+	}
+
+	if q.Name != name {
+		t.Errorf("Round trip name mismatch.\nGot: %q\nWant: %q", q.Name, name)
+	}
+}
+
 func TestSubstring(t *testing.T) {
 	tests := []struct {
 		name  string

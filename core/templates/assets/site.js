@@ -24,7 +24,8 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const targetId = e.target.getAttribute('data-target');
             const previewUrl = e.target.getAttribute('data-preview-url');
-            previewA4Code(targetId, previewUrl);
+            const containerId = e.target.getAttribute('data-container');
+            previewA4Code(targetId, previewUrl, containerId);
         }
     });
 });
@@ -49,13 +50,19 @@ function convertA4CodeToMarkdown(targetId) {
     }
 }
 
-function previewA4Code(targetId, previewUrl) {
+function previewA4Code(targetId, previewUrl, containerId) {
     const textarea = document.getElementById(targetId);
     if (!textarea) return;
 
     const text = textarea.value;
-    const previewContainer = document.getElementById('preview-container');
-    const previewContent = document.getElementById('preview-content');
+    let previewContainer = document.getElementById('preview-container');
+    let previewContent = document.getElementById('preview-content');
+    if (containerId) {
+        previewContainer = document.getElementById(containerId);
+        if (previewContainer) {
+            previewContent = previewContainer.querySelector('.preview-box');
+        }
+    }
 
     const headers = {
         'Content-Type': 'text/plain',

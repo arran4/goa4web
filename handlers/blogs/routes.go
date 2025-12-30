@@ -22,6 +22,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	br.HandleFunc("/atom", AtomPage).Methods("GET")
 	br.HandleFunc("", Page).Methods("GET")
 	br.HandleFunc("/", Page).Methods("GET")
+	br.HandleFunc("/preview", handlers.PreviewPage).Methods("POST")
 	br.HandleFunc("/add", addBlogTask.Page).Methods("GET").MatcherFunc(handlers.RequiredGrant("blogs", "entry", "post", 0))
 	br.HandleFunc("/add", handlers.TaskHandler(addBlogTask)).Methods("POST").MatcherFunc(handlers.RequiredGrant("blogs", "entry", "post", 0)).MatcherFunc(addBlogTask.Matcher())
 	br.HandleFunc("/bloggers", BloggerListPage).Methods("GET")

@@ -55,3 +55,25 @@ Do not add new global variables unless explicitly instructed or already well est
 - Roles defined in migrations must also be present in `database/seed.sql`. These two sources are strongly linked. If a role is not in the seed data (because it is optional), it should not be included in migrations.
 - If the database setup is blocking frontend verification, it is acceptable to skip it and note that the user may perform manual testing instead.
 - For unit tests that require a database connection, it is recommended to mock the `db.Querier` interface to avoid database dependencies.
+
+## Verification Tooling
+
+A CLI tool is available to verify template rendering with mock data. This is useful for generating HTML snapshots for testing or visual verification without running the full server.
+
+Usage:
+```bash
+./goa4web test verification template -template <path/to/template.gohtml> -data <data.json>
+```
+
+The JSON data file should contain the data structure expected by the template (the `Dot` field) and optional configuration:
+```json
+{
+  "Dot": { ... },     // Data passed as {{ . }}
+  "User": { ... },    // Mocked current user (optional)
+  "Config": { ... },  // Runtime configuration (optional)
+  "URL": "..."        // Request URL (optional)
+}
+```
+Field types in `Dot` are automatically fixed:
+- Strings in RFC3339 format are converted to `time.Time`.
+- Whole number `float64` values are converted to `int32` to match typical DB IDs.

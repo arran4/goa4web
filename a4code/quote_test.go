@@ -120,6 +120,44 @@ func TestQuoteTrim(t *testing.T) {
 	}
 }
 
+func TestQuoteOfWithSpaces(t *testing.T) {
+	input := `[quoteof "Arran on messenger" https://github.com/nao1215/sqly]`
+	ast, err := ParseString(input)
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	if len(ast.Children) < 1 {
+		t.Fatalf("no nodes parsed")
+	}
+	q, ok := ast.Children[0].(*QuoteOf)
+	if !ok {
+		t.Fatalf("expected QuoteOf node, got %T", ast.Children[0])
+	}
+	wantName := "Arran on messenger"
+	if q.Name != wantName {
+		t.Errorf("quote name = %q, want %q", q.Name, wantName)
+	}
+}
+
+func TestQuoteOfWithSpacesAndEscapedQuote(t *testing.T) {
+	input := `[quoteof "Arran \"The Man\" on messenger" https://github.com/nao1215/sqly]`
+	ast, err := ParseString(input)
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	if len(ast.Children) < 1 {
+		t.Fatalf("no nodes parsed")
+	}
+	q, ok := ast.Children[0].(*QuoteOf)
+	if !ok {
+		t.Fatalf("expected QuoteOf node, got %T", ast.Children[0])
+	}
+	wantName := `Arran "The Man" on messenger`
+	if q.Name != wantName {
+		t.Errorf("quote name = %q, want %q", q.Name, wantName)
+	}
+}
+
 func TestSubstring(t *testing.T) {
 	tests := []struct {
 		name  string

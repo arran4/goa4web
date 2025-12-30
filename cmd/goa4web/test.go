@@ -43,6 +43,12 @@ func (c *testCmd) Run() error {
 			return fmt.Errorf("migrations: %w", err)
 		}
 		return cmd.Run()
+	case "verification":
+		cmd, err := parseTestVerificationCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("verification: %w", err)
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown test command %q", args[0])

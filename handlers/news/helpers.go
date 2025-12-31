@@ -20,8 +20,8 @@ func CanPostNews(cd *common.CoreData) bool {
 	if cd == nil {
 		return false
 	}
-	if cd.HasAdminRole() && cd.IsAdminMode() {
-		return true
+	if cd.HasAdminRole() && !cd.IsAdminMode() {
+		return false
 	}
 	return cd.HasGrant("news", "post", "post", 0)
 }

@@ -58,18 +58,12 @@ func (DismissTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	ids := r.Form["id"]
+	id, _ := strconv.Atoi(r.FormValue("id"))
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	for _, idStr := range ids {
-		id, _ := strconv.Atoi(idStr)
-		if id == 0 {
-			continue
-		}
-		n, err := queries.GetNotificationForLister(r.Context(), db.GetNotificationForListerParams{ID: int32(id), ListerID: uid})
-		if err == nil && !n.ReadAt.Valid {
-			if err := queries.SetNotificationReadForLister(r.Context(), db.SetNotificationReadForListerParams{ID: n.ID, ListerID: uid}); err != nil {
-				log.Printf("mark notification read: %v", err)
-			}
+	n, err := queries.GetNotificationForLister(r.Context(), db.GetNotificationForListerParams{ID: int32(id), ListerID: uid})
+	if err == nil && !n.ReadAt.Valid {
+		if err := queries.SetNotificationReadForLister(r.Context(), db.SetNotificationReadForListerParams{ID: n.ID, ListerID: uid}); err != nil {
+			log.Printf("mark notification read: %v", err)
 		}
 	}
 	return handlers.RefreshDirectHandler{TargetURL: "/usr/notifications"}

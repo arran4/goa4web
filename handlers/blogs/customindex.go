@@ -66,44 +66,8 @@ func BlogsPageSpecificItems(cd *common.CoreData, r *http.Request) []common.Index
 				Link: fmt.Sprintf("/admin/blogs/blog/%d", blog.Idblogs),
 			})
 		}
-		if hasBlogUnread(cd, blog.Idblogs) {
-			items = append(items,
-				common.IndexItem{
-					Name: "Mark as read",
-					Link: markBlogReadLink(blog.Idblogs, r.URL.RequestURI()),
-				},
-				common.IndexItem{
-					Name: "Mark as read and go back",
-					Link: markBlogReadLink(blog.Idblogs, "/blogs"),
-				},
-			)
-		}
 	}
 	return items
-}
-
-func hasBlogUnread(cd *common.CoreData, blogID int32) bool {
-	if cd == nil || cd.UserID == 0 {
-		return false
-	}
-	labels, err := cd.BlogPrivateLabels(blogID)
-	if err != nil {
-		return false
-	}
-	for _, l := range labels {
-		if l == "unread" || l == "new" {
-			return true
-		}
-	}
-	return false
-}
-
-func markBlogReadLink(blogID int32, redirect string) string {
-	link := fmt.Sprintf("/blogs/blog/%d/labels?task=%s", blogID, url.QueryEscape(TaskMarkBlogRead))
-	if redirect != "" {
-		link = fmt.Sprintf("%s&redirect=%s", link, url.QueryEscape(redirect))
-	}
-	return link
 }
 
 func BlogsMiddlewareIndex(cd *common.CoreData, r *http.Request) {

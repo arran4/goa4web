@@ -37,10 +37,6 @@ func (q *renameLanguageQueries) AdminRenameLanguage(_ context.Context, arg db.Ad
 	return nil
 }
 
-func (q *renameLanguageQueries) GetPermissionsByUserID(ctx context.Context, idusers int32) ([]*db.GetPermissionsByUserIDRow, error) {
-	return []*db.GetPermissionsByUserIDRow{{Name: "administrator", IsAdmin: true}}, nil
-}
-
 func TestRenameLanguageTask_Action(t *testing.T) {
 	queries := &renameLanguageQueries{
 		languages: []*db.Language{{ID: 1, Nameof: sql.NullString{String: "en", Valid: true}}},
@@ -55,8 +51,6 @@ func TestRenameLanguageTask_Action(t *testing.T) {
 
 	cfg := config.NewRuntimeConfig()
 	cd := common.NewCoreData(context.Background(), queries, cfg, common.WithUserRoles([]string{"administrator"}))
-	cd.UserID = 1
-	cd.AdminMode = true
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()

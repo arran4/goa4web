@@ -69,8 +69,8 @@ func TestQueries_SystemListAllUsers(t *testing.T) {
 	defer conn.Close()
 	q := New(conn)
 
-	rows := sqlmock.NewRows([]string{"idusers", "username", "admin", "created_at", "deleted_at"}).
-		AddRow(1, "bob", false, time.Now(), nil)
+	rows := sqlmock.NewRows([]string{"idusers", "username", "admin", "created_at"}).
+		AddRow(1, "bob", false, time.Now())
 	mock.ExpectQuery(regexp.QuoteMeta(systemListAllUsers)).
 		WillReturnRows(rows)
 

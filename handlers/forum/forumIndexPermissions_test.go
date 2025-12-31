@@ -162,7 +162,7 @@ func TestCustomForumIndexCreateThreadFromThreadPrivate(t *testing.T) {
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
 
 	CustomForumIndex(cd, req.WithContext(ctx))
-	if !common.ContainsItem(cd.CustomIndexItems, "Create a new private thread") {
+	if !common.ContainsItem(cd.CustomIndexItems, "New Private Thread") {
 		t.Errorf("expected create private thread item")
 	}
 }

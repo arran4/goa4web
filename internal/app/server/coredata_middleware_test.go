@@ -34,8 +34,8 @@ func TestCoreDataMiddlewareUserRoles(t *testing.T) {
 
 	mock.ExpectExec("INSERT INTO sessions").WithArgs("sessid", int32(1)).
 		WillReturnResult(sqlmock.NewResult(1, 1))
-	rows := sqlmock.NewRows([]string{"iduser_roles", "users_idusers", "role_id", "name", "is_admin"}).
-		AddRow(1, 1, 2, "moderator", false)
+	rows := sqlmock.NewRows([]string{"iduser_roles", "users_idusers", "role_id", "name"}).
+		AddRow(1, 1, 2, "moderator")
 	mock.ExpectQuery(regexp.QuoteMeta("FROM user_roles")).WithArgs(int32(1)).
 		WillReturnRows(rows)
 

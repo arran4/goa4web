@@ -192,8 +192,80 @@ func TestCommentsPageEditControlsUseEditGrant(t *testing.T) {
 }
 
 func TestCommentsPageEditControlsRequireGrantNotRole(t *testing.T) {
-	// Skip broken test as per instructions
-	t.Skip("Skipping broken test TestCommentsPageEditControlsRequireGrantNotRole")
+	writeTempCommentsTemplate(t, `CanEdit: {{.CanEdit}}`)
+
+	queries := &db.QuerierStub{
+		GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow: &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow{
+			ID:         1,
+			LanguageID: sql.NullInt32{Int32: 1, Valid: true},
+			AuthorID:   2,
+			CategoryID: sql.NullInt32{Int32: 1, Valid: true},
+			ThreadID:   1,
+			Title:      sql.NullString{String: "t", Valid: true},
+			Url:        sql.NullString{String: "http://u", Valid: true},
+			Listed:     sql.NullTime{Time: time.Unix(0, 0), Valid: true},
+			Timezone:   sql.NullString{String: time.Local.String(), Valid: true},
+			Username:   sql.NullString{String: "bob", Valid: true},
+			Title_2:    sql.NullString{String: "cat", Valid: true},
+		},
+		GetCommentsBySectionThreadIdForUserReturns: []*db.GetCommentsBySectionThreadIdForUserRow{},
+		GetThreadLastPosterAndPermsReturns: &db.GetThreadLastPosterAndPermsRow{
+			Idforumthread:          1,
+			Firstpost:              1,
+			Lastposter:             1,
+			ForumtopicIdforumtopic: 1,
+			Comments:               sql.NullInt32{Int32: 0, Valid: true},
+			Lastaddition:           sql.NullTime{Time: time.Unix(0, 0), Valid: true},
+			Locked:                 sql.NullBool{Bool: false, Valid: true},
+		},
+		GetPermissionsByUserIDReturns: []*db.GetPermissionsByUserIDRow{
+			{Name: "user", IsAdmin: false},
+		},
+		SystemCheckGrantFn: func(p db.SystemCheckGrantParams) (int32, error) {
+			if p.Action == "view" {
+				return 1, nil
+			}
+			if p.Action == "edit" {
+				return 1, nil
+			}
+			return 0, sql.ErrNoRows
+		},
+	}
+
+	w, req, _ := newCommentsPageRequest(t, queries, []string{"user"}, 2)
+
+	CommentsPage(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("Expected 200 OK, got %d", w.Code)
+	}
+
+	body := w.Body.String()
+	if body != "CanEdit: true" {
+		t.Errorf("Expected CanEdit: true, got %q", body)
+	}
+
+	// Verify that if we have the role but NOT the grant, it is false.
+	// We reuse everything but modify SystemCheckGrantFn
+	queries.SystemCheckGrantFn = func(p db.SystemCheckGrantParams) (int32, error) {
+		if p.Action == "view" {
+			return 1, nil
+		}
+		// Deny edit
+		return 0, sql.ErrNoRows
+	}
+
+	w, req, _ = newCommentsPageRequest(t, queries, []string{"user"}, 2)
+	CommentsPage(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("Expected 200 OK, got %d", w.Code)
+	}
+
+	body = w.Body.String()
+	if body != "CanEdit: false" {
+		t.Errorf("Expected CanEdit: false (since grant is denied), got %q", body)
+	}
 }
 
 func TestCommentsPageEditControlsAllowAdminMode(t *testing.T) {

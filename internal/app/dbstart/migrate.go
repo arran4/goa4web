@@ -33,8 +33,21 @@ func ensureVersionTable(ctx context.Context, db *sql.DB) (int, error) {
 }
 
 type migrationFile struct {
-	Name    string
-	Version int
+	Name        string
+	Version     int
+	Description string // For future use
+	Driver      string
+}
+
+func (m migrationFile) String() string {
+	parts := []string{fmt.Sprintf("%04d", m.Version)}
+	if m.Description != "" {
+		parts = append(parts, m.Description)
+	}
+	if m.Driver != "" {
+		parts = append(parts, m.Driver)
+	}
+	return strings.Join(parts, ".") + ".sql"
 }
 
 func parseVersion(name string) (int, error) {
@@ -58,7 +71,7 @@ func getAvailableMigrations(f fs.FS, driver string) ([]migrationFile, error) {
 		return nil, fmt.Errorf("read dir: %w", err)
 	}
 	// Map version to filename, preferring specific driver over generic
-	migrations := make(map[int]string)
+	migrations := make(map[int]migrationFile)
 	driverSuffix := "." + driver + ".sql"
 
 	for _, e := range entries {
@@ -88,19 +101,35 @@ func getAvailableMigrations(f fs.FS, driver string) ([]migrationFile, error) {
 			continue
 		}
 
+		mf := migrationFile{
+			Name:    name,
+			Version: n,
+			Driver:  driver,
+		}
+		// Try to parse description if present (e.g. 0001_description.driver.sql)
+		// This is a naive implementation matching the previous logic's flexibility
+		parts := strings.Split(name, ".")
+		if len(parts) > 2 {
+			base := parts[0]
+			// remove version prefix
+			if idx := strings.Index(base, "_"); idx != -1 {
+				mf.Description = base[idx+1:]
+			}
+		}
+
 		existing, exists := migrations[n]
 		if exists {
-			existingIsSpecific := strings.HasSuffix(existing, driverSuffix)
+			existingIsSpecific := strings.HasSuffix(existing.Name, driverSuffix)
 			if existingIsSpecific && !isSpecific {
 				continue // Keep specific
 			}
 			if !existingIsSpecific && isSpecific {
-				migrations[n] = name // Upgrade to specific
+				migrations[n] = mf // Upgrade to specific
 				continue
 			}
 			// Collision of same specificity, keep existing (lexicographical or arbitrary)
 		} else {
-			migrations[n] = name
+			migrations[n] = mf
 		}
 	}
 
@@ -112,7 +141,7 @@ func getAvailableMigrations(f fs.FS, driver string) ([]migrationFile, error) {
 
 	var result []migrationFile
 	for _, n := range nums {
-		result = append(result, migrationFile{Version: n, Name: migrations[n]})
+		result = append(result, migrations[n])
 	}
 
 	return result, nil

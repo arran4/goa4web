@@ -3,6 +3,7 @@ package linker
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -135,8 +136,59 @@ func writeTempCommentsTemplate(t *testing.T, content string) {
 }
 
 func TestCommentsPageEditControlsUseEditGrant(t *testing.T) {
-	// Skip broken test as per instructions
-	t.Skip("Skipping broken test TestCommentsPageEditControlsUseEditGrant")
+	writeTempCommentsTemplate(t, "{{ if .CanEdit }}EDIT_CONTROLS{{ end }}")
+
+	queries := &db.QuerierStub{
+		GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow: &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow{
+			ID:       1,
+			ThreadID: 1,
+			Title:    sql.NullString{String: "Link Title", Valid: true},
+		},
+		GetCommentsBySectionThreadIdForUserReturns: []*db.GetCommentsBySectionThreadIdForUserRow{}, // Return empty comments
+		GetThreadBySectionThreadIDForReplierReturn: &db.Forumthread{
+			Idforumthread: 1,
+		},
+		GetThreadLastPosterAndPermsReturns: &db.GetThreadLastPosterAndPermsRow{
+			Idforumthread: 1,
+		},
+	}
+
+	// Map to track grant checks
+	grantChecks := make(map[string]bool)
+
+	queries.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
+		key := fmt.Sprintf("%s:%s:%s", arg.Section, arg.Item.String, arg.Action)
+		grantChecks[key] = true
+
+		// Allow 'view' so page renders
+		if arg.Section == "linker" && arg.Item.String == "link" && arg.Action == "view" {
+			return 1, nil
+		}
+		// Allow 'edit' to test the specific case
+		if arg.Section == "linker" && arg.Item.String == "link" && arg.Action == "edit" {
+			return 1, nil
+		}
+
+		return 0, sql.ErrNoRows
+	}
+
+	w, req, _ := newCommentsPageRequest(t, queries, []string{"user"}, 2)
+
+	CommentsPage(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status=%d", w.Code)
+	}
+
+	body := w.Body.String()
+	if body != "EDIT_CONTROLS" {
+		t.Errorf("Expected 'EDIT_CONTROLS' in body, got: %q", body)
+	}
+
+	// Verify that the edit grant was checked
+	if !grantChecks["linker:link:edit"] {
+		t.Error("Expected check for 'edit' grant")
+	}
 }
 
 func TestCommentsPageEditControlsRequireGrantNotRole(t *testing.T) {

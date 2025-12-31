@@ -5,7 +5,7 @@
             <span class="hamburger-icon" aria-hidden="true">&#9776;</span>
             <span class="hamburger-text">Menu</span>
         </label>
-        {{ if cd.HasRole "administrator" }}
+        {{ if cd.HasAdminRole }}
             {{ if cd.AdminMode }}
                 <a href="?">Disable admin mode</a>
             {{ else }}

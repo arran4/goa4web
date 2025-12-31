@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"html/template"
 	"io"
 	"log"
 	"net/http"
@@ -225,6 +226,7 @@ type CoreData struct {
 	subscriptionRows                 lazy.Value[[]*db.ListSubscriptionsByUserRow]
 	subscriptions                    lazy.Value[map[string]bool]
 	notificationTemplateOverrides    map[string]*lazy.Value[string]
+	testGrants                       []*db.Grant // manual grants for testing
 	unreadCount                      lazy.Value[int64]
 	user                             lazy.Value[*db.User]
 	userRoles                        lazy.Value[[]string]
@@ -1160,12 +1162,21 @@ func (cd *CoreData) FAQCategories() ([]*db.FaqCategory, error) {
 
 // HasAdminRole reports whether the current user has the administrator role.
 func (cd *CoreData) HasAdminRole() bool {
-	return cd.HasRole("administrator")
+	perms, err := cd.Permissions()
+	if err != nil {
+		return false
+	}
+	for _, p := range perms {
+		if p.IsAdmin {
+			return true
+		}
+	}
+	return false
 }
 
 // HasContentWriterRole reports whether the current user has the content writer role.
 func (cd *CoreData) HasContentWriterRole() bool {
-	return cd.HasRole("content writer")
+	return cd.HasGrant("news", "post", "post", 0) || cd.HasGrant("writing", "article", "post", 0)
 }
 
 // HasRole reports whether the current user explicitly has the named role.
@@ -1175,27 +1186,15 @@ func (cd *CoreData) HasRole(role string) bool {
 			return true
 		}
 	}
+	if cd.HasAdminRole() {
+		if role == "user" {
+			return true
+		}
+	}
 	if cd.queries != nil {
 		for _, r := range cd.UserRoles() {
 			if _, err := cd.queries.SystemCheckRoleGrant(cd.ctx, db.SystemCheckRoleGrantParams{Name: r, Action: role}); err == nil {
 				return true
-			}
-		}
-	} else {
-		for _, r := range cd.UserRoles() {
-			switch r {
-			case "administrator":
-				if role == "moderator" || role == "content writer" || role == "user" {
-					return true
-				}
-			case "moderator":
-				if role == "user" {
-					return true
-				}
-			case "content writer":
-				if role == "user" {
-					return true
-				}
 			}
 		}
 	}
@@ -2329,6 +2328,15 @@ func (cd *CoreData) Subscriptions() ([]*db.ListSubscriptionsByUserRow, error) {
 // CurrentError returns a generic error message for the current request.
 func (cd *CoreData) CurrentError() string { return cd.currentError }
 
+// CustomCSS returns the user's custom CSS setting.
+func (cd *CoreData) CustomCSS() template.CSS {
+	pref, err := cd.Preference()
+	if err != nil || pref == nil || !pref.CustomCss.Valid {
+		return ""
+	}
+	return template.CSS(pref.CustomCss.String)
+}
+
 // CurrentNotice returns the informational message for the current request.
 func (cd *CoreData) CurrentNotice() string { return cd.currentNotice }
 
@@ -2617,6 +2625,16 @@ func WithPreference(p *db.Preference) CoreOption {
 // WithUserRoles preloads the current user roles.
 func WithUserRoles(r []string) CoreOption {
 	return func(cd *CoreData) { cd.userRoles.Set(r) }
+}
+
+// WithPermissions preloads the user permissions.
+func WithPermissions(p []*db.GetPermissionsByUserIDRow) CoreOption {
+	return func(cd *CoreData) { cd.perms.Set(p) }
+}
+
+// WithGrants preloads the user grants for testing.
+func WithGrants(g []*db.Grant) CoreOption {
+	return func(cd *CoreData) { cd.testGrants = g }
 }
 
 // WithConfig sets the runtime config for this CoreData.

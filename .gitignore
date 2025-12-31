@@ -106,7 +106,7 @@ fabric.properties
 dbbackups
 /uploads/
 /dev-config.json
-/dev-config.env
+/dev-*-config.env
 /dlq
 /.idea/
 /.admin_api_secret

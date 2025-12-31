@@ -25,8 +25,8 @@ func AdminWritingsPage(w http.ResponseWriter, r *http.Request) {
 	data := Data{CanPost: cd.HasGrant("writing", "post", "edit", 0) && cd.AdminMode}
 
 	queries := cd.Queries()
-	userRoles, err := admincommon.LoadUserRoleInfo(r.Context(), queries, func(role string) bool {
-		return role == "administrator" || role == "content writer"
+	userRoles, err := admincommon.LoadUserRoleInfo(r.Context(), queries, func(role string, isAdmin bool) bool {
+		return isAdmin || role == "content writer"
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))

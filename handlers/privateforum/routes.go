@@ -5,6 +5,8 @@ import (
 
 	"github.com/gorilla/mux"
 
+	. "github.com/arran4/gorillamuxlogic"
+
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
 	forumhandlers "github.com/arran4/goa4web/handlers/forum"
@@ -57,6 +59,8 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	pr.Handle("/topic/{topic}/thread/{thread}/reply", forumhandlers.RequireThreadAndTopic(http.HandlerFunc(handlers.TaskHandler(forumhandlers.ReplyTaskHandler)))).Methods(http.MethodPost).MatcherFunc(forumhandlers.ReplyTaskHandler.Matcher())
 	pr.Handle("/topic/{topic}/thread/{thread}/comment/{comment}", forumhandlers.RequireThreadAndTopic(forumcomments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(forumhandlers.TopicThreadCommentEditActionHandler))))).Methods(http.MethodPost).MatcherFunc(forumhandlers.TopicThreadCommentEditActionHandler.Matcher())
 	pr.Handle("/topic/{topic}/thread/{thread}/comment/{comment}", forumhandlers.RequireThreadAndTopic(forumcomments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(forumhandlers.TopicThreadCommentEditActionCancelHandler))))).Methods(http.MethodPost).MatcherFunc(forumhandlers.TopicThreadCommentEditActionCancelHandler.Matcher())
+
+	pr.HandleFunc("/{path:.*}", handlers.RenderPermissionDenied).MatcherFunc(Not(handlers.RequiresAnAccount()))
 }
 
 // Register registers the private forum router module.

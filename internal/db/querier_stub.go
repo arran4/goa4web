@@ -74,6 +74,26 @@ type QuerierStub struct {
 	AdminListAdministratorEmailsReturns []string
 	AdminListAdministratorEmailsCalls   int
 
+	AdminListUserEmailsReturns []*UserEmail
+	AdminListUserEmailsErr     error
+	AdminListUserEmailsCalls   []int32
+
+	AdminUserPostCountsByIDReturns *AdminUserPostCountsByIDRow
+	AdminUserPostCountsByIDErr     error
+	AdminUserPostCountsByIDCalls   []int32
+
+	GetBookmarksForUserReturns *GetBookmarksForUserRow
+	GetBookmarksForUserErr     error
+	GetBookmarksForUserCalls   []int32
+
+	ListGrantsByUserIDReturns []*Grant
+	ListGrantsByUserIDErr     error
+	ListGrantsByUserIDCalls   []sql.NullInt32
+
+	ListAdminUserCommentsReturns []*AdminUserComment
+	ListAdminUserCommentsErr     error
+	ListAdminUserCommentsCalls   []int32
+
 	ListContentPrivateLabelsReturns []*ListContentPrivateLabelsRow
 	ListContentPrivateLabelsErr     error
 	ListContentPrivateLabelsCalls   []ListContentPrivateLabelsParams
@@ -789,6 +809,41 @@ func (s *QuerierStub) AdminListAdministratorEmails(ctx context.Context) ([]strin
 	s.AdminListAdministratorEmailsCalls++
 	s.mu.Unlock()
 	return s.AdminListAdministratorEmailsReturns, s.AdminListAdministratorEmailsErr
+}
+
+func (s *QuerierStub) AdminListUserEmails(ctx context.Context, id int32) ([]*UserEmail, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.AdminListUserEmailsCalls = append(s.AdminListUserEmailsCalls, id)
+	return s.AdminListUserEmailsReturns, s.AdminListUserEmailsErr
+}
+
+func (s *QuerierStub) AdminUserPostCountsByID(ctx context.Context, id int32) (*AdminUserPostCountsByIDRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.AdminUserPostCountsByIDCalls = append(s.AdminUserPostCountsByIDCalls, id)
+	return s.AdminUserPostCountsByIDReturns, s.AdminUserPostCountsByIDErr
+}
+
+func (s *QuerierStub) GetBookmarksForUser(ctx context.Context, id int32) (*GetBookmarksForUserRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.GetBookmarksForUserCalls = append(s.GetBookmarksForUserCalls, id)
+	return s.GetBookmarksForUserReturns, s.GetBookmarksForUserErr
+}
+
+func (s *QuerierStub) ListGrantsByUserID(ctx context.Context, userID sql.NullInt32) ([]*Grant, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.ListGrantsByUserIDCalls = append(s.ListGrantsByUserIDCalls, userID)
+	return s.ListGrantsByUserIDReturns, s.ListGrantsByUserIDErr
+}
+
+func (s *QuerierStub) ListAdminUserComments(ctx context.Context, userID int32) ([]*AdminUserComment, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.ListAdminUserCommentsCalls = append(s.ListAdminUserCommentsCalls, userID)
+	return s.ListAdminUserCommentsReturns, s.ListAdminUserCommentsErr
 }
 
 // ListSubscriptionsByUser records the call and returns configured rows.

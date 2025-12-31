@@ -80,6 +80,10 @@ func (q *userEmailPageQueries) ListUserEmailsForLister(context.Context, db.ListU
 	return q.emails, nil
 }
 
+func (q *userEmailPageQueries) GetPermissionsByUserID(context.Context, int32) ([]*db.GetPermissionsByUserIDRow, error) {
+	return nil, nil
+}
+
 type languageSaveQueries struct {
 	db.Querier
 	languages     []*db.Language

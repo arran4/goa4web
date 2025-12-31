@@ -32,6 +32,10 @@ func (q *deleteLanguageQueries) AdminLanguageUsageCounts(ctx context.Context, ar
 	return q.usageCounts, nil
 }
 
+func (q *deleteLanguageQueries) GetPermissionsByUserID(ctx context.Context, idusers int32) ([]*db.GetPermissionsByUserIDRow, error) {
+	return []*db.GetPermissionsByUserIDRow{{Name: "administrator", IsAdmin: true}}, nil
+}
+
 func TestDeleteLanguageTask_PreventDeletion(t *testing.T) {
 	queries := &deleteLanguageQueries{
 		languages:   []*db.Language{{ID: 1, Nameof: sql.NullString{String: "en", Valid: true}}},
@@ -46,6 +50,8 @@ func TestDeleteLanguageTask_PreventDeletion(t *testing.T) {
 
 	cfg := config.NewRuntimeConfig()
 	cd := common.NewCoreData(context.Background(), queries, cfg, common.WithUserRoles([]string{"administrator"}))
+	cd.UserID = 1
+	cd.AdminMode = true
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()

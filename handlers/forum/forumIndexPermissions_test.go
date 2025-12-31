@@ -132,8 +132,14 @@ func TestCustomForumIndexAdminEditLink(t *testing.T) {
 	req := httptest.NewRequest("GET", "/forum/topic/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "2", "category": "1"})
 
+	q := testhelpers.NewQuerierStub(testhelpers.StubConfig{
+		Permissions: []*db.GetPermissionsByUserIDRow{
+			{Name: "administrator", IsAdmin: true},
+		},
+	})
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+	cd.UserID = 1
 	cd.AdminMode = true
 
 	CustomForumIndex(cd, req.WithContext(ctx))

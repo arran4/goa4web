@@ -110,6 +110,10 @@ type QuerierStub struct {
 	GetCommentByIdForUserRow   *GetCommentByIdForUserRow
 	GetCommentByIdForUserErr   error
 
+	GetCommentsBySectionThreadIdForUserCalls   []GetCommentsBySectionThreadIdForUserParams
+	GetCommentsBySectionThreadIdForUserReturns []*GetCommentsBySectionThreadIdForUserRow
+	GetCommentsBySectionThreadIdForUserErr     error
+
 	DeleteThreadsByTopicIDCalls []int32
 	DeleteThreadsByTopicIDErr   error
 
@@ -122,6 +126,14 @@ type QuerierStub struct {
 	GetWritingForListerByIDErr   error
 	GetWritingForListerByIDCalls []GetWritingForListerByIDParams
 
+	GetBlogEntryForListerByIDRow   *GetBlogEntryForListerByIDRow
+	GetBlogEntryForListerByIDErr   error
+	GetBlogEntryForListerByIDCalls []GetBlogEntryForListerByIDParams
+
+	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow   *GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow
+	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserErr   error
+	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserCalls []GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams
+
 	SystemCheckRoleGrantReturns int32
 	SystemCheckRoleGrantErr     error
 	SystemCheckRoleGrantCalls   []SystemCheckRoleGrantParams
@@ -131,6 +143,18 @@ type QuerierStub struct {
 	GetPermissionsByUserIDErr     error
 	GetPermissionsByUserIDCalls   []int32
 	GetPermissionsByUserIDFn      func(int32) ([]*GetPermissionsByUserIDRow, error)
+
+	GetThreadBySectionThreadIDForReplierCalls   []GetThreadBySectionThreadIDForReplierParams
+	GetThreadBySectionThreadIDForReplierReturn  *Forumthread
+	GetThreadBySectionThreadIDForReplierErr     error
+
+	GetThreadLastPosterAndPermsCalls   []GetThreadLastPosterAndPermsParams
+	GetThreadLastPosterAndPermsReturns *GetThreadLastPosterAndPermsRow
+	GetThreadLastPosterAndPermsErr     error
+
+	ListPrivateTopicParticipantsByTopicIDForUserCalls   []ListPrivateTopicParticipantsByTopicIDForUserParams
+	ListPrivateTopicParticipantsByTopicIDForUserReturns []*ListPrivateTopicParticipantsByTopicIDForUserRow
+	ListPrivateTopicParticipantsByTopicIDForUserErr     error
 
 	AdminListForumTopicGrantsByTopicIDCalls   []sql.NullInt32
 	AdminListForumTopicGrantsByTopicIDReturns []*AdminListForumTopicGrantsByTopicIDRow
@@ -560,6 +584,13 @@ func (s *QuerierStub) GetCommentByIdForUser(ctx context.Context, arg GetCommentB
 	return ret, nil
 }
 
+func (s *QuerierStub) GetCommentsBySectionThreadIdForUser(ctx context.Context, arg GetCommentsBySectionThreadIdForUserParams) ([]*GetCommentsBySectionThreadIdForUserRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.GetCommentsBySectionThreadIdForUserCalls = append(s.GetCommentsBySectionThreadIdForUserCalls, arg)
+	return s.GetCommentsBySectionThreadIdForUserReturns, s.GetCommentsBySectionThreadIdForUserErr
+}
+
 // SystemCheckGrant records the call and returns the configured response.
 func (s *QuerierStub) SystemCheckGrant(ctx context.Context, arg SystemCheckGrantParams) (int32, error) {
 	s.mu.Lock()
@@ -596,6 +627,33 @@ func (s *QuerierStub) GetWritingForListerByID(ctx context.Context, arg GetWritin
 	return row, nil
 }
 
+func (s *QuerierStub) GetBlogEntryForListerByID(ctx context.Context, arg GetBlogEntryForListerByIDParams) (*GetBlogEntryForListerByIDRow, error) {
+	s.mu.Lock()
+	s.GetBlogEntryForListerByIDCalls = append(s.GetBlogEntryForListerByIDCalls, arg)
+	row := s.GetBlogEntryForListerByIDRow
+	err := s.GetBlogEntryForListerByIDErr
+	s.mu.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	if row == nil {
+		return nil, errors.New("GetBlogEntryForListerByID not stubbed")
+	}
+	return row, nil
+}
+
+func (s *QuerierStub) GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(ctx context.Context, arg GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams) (*GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow, error) {
+	s.mu.Lock()
+	s.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserCalls = append(s.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserCalls, arg)
+	row := s.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow
+	err := s.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserErr
+	s.mu.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	return row, nil
+}
+
 // SystemCheckRoleGrant records the call and returns the configured response.
 func (s *QuerierStub) SystemCheckRoleGrant(ctx context.Context, arg SystemCheckRoleGrantParams) (int32, error) {
 	s.mu.Lock()
@@ -628,6 +686,27 @@ func (s *QuerierStub) GetPermissionsByUserID(ctx context.Context, idusers int32)
 		return fn(idusers)
 	}
 	return ret, err
+}
+
+func (s *QuerierStub) GetThreadBySectionThreadIDForReplier(ctx context.Context, arg GetThreadBySectionThreadIDForReplierParams) (*Forumthread, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.GetThreadBySectionThreadIDForReplierCalls = append(s.GetThreadBySectionThreadIDForReplierCalls, arg)
+	return s.GetThreadBySectionThreadIDForReplierReturn, s.GetThreadBySectionThreadIDForReplierErr
+}
+
+func (s *QuerierStub) GetThreadLastPosterAndPerms(ctx context.Context, arg GetThreadLastPosterAndPermsParams) (*GetThreadLastPosterAndPermsRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.GetThreadLastPosterAndPermsCalls = append(s.GetThreadLastPosterAndPermsCalls, arg)
+	return s.GetThreadLastPosterAndPermsReturns, s.GetThreadLastPosterAndPermsErr
+}
+
+func (s *QuerierStub) ListPrivateTopicParticipantsByTopicIDForUser(ctx context.Context, arg ListPrivateTopicParticipantsByTopicIDForUserParams) ([]*ListPrivateTopicParticipantsByTopicIDForUserRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.ListPrivateTopicParticipantsByTopicIDForUserCalls = append(s.ListPrivateTopicParticipantsByTopicIDForUserCalls, arg)
+	return s.ListPrivateTopicParticipantsByTopicIDForUserReturns, s.ListPrivateTopicParticipantsByTopicIDForUserErr
 }
 
 // SystemGetUserByID records the call and returns the configured response.

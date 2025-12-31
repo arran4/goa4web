@@ -55,8 +55,9 @@ func applyMigrations(ctx context.Context, cfg *config.RuntimeConfig, reg *dbdriv
 
 	target := current
 	if len(found) > 0 {
-		if max := found[len(found)-1]; max > target {
-			target = max
+		max := found[len(found)-1]
+		if max.Version > target {
+			target = max.Version
 		}
 	}
 

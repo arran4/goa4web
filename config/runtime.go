@@ -2,13 +2,8 @@ package config
 
 import (
 	"flag"
-	"fmt"
-	"log"
-	"net"
 	"os"
 	"strconv"
-
-	"github.com/go-sql-driver/mysql"
 )
 
 // DefaultPageSize defines the number of items shown per page.
@@ -20,11 +15,6 @@ type RuntimeConfig struct {
 	DBConn            string
 	DBDriver          string
 	DBTimezone        string
-	DBHost            string
-	DBPort            string
-	DBUser            string
-	DBPass            string
-	DBName            string
 	DBLogVerbosity    int
 	EmailLogVerbosity int
 	LogFlags          int
@@ -296,72 +286,6 @@ func NewRuntimeConfig(ops ...Option) *RuntimeConfig {
 
 // normalizeRuntimeConfig applies default values and ensures pagination limits are valid.
 func normalizeRuntimeConfig(cfg *RuntimeConfig) {
-	if cfg.DBConn != "" {
-		if cfg.DBUser != "" || cfg.DBPass != "" || cfg.DBHost != "" || cfg.DBPort != "" {
-			conf, err := mysql.ParseDSN(cfg.DBConn)
-			if err != nil {
-				log.Fatalf("Invalid DB_CONN: %v", err)
-			}
-			if cfg.DBUser != "" && conf.User != cfg.DBUser {
-				log.Fatalf("DB_CONN user (%s) contradicts DB_USER (%s)", conf.User, cfg.DBUser)
-			}
-			if cfg.DBPass != "" && conf.Passwd != cfg.DBPass {
-				log.Fatalf("DB_CONN password contradicts DB_PASS")
-			}
-			// DB_NAME check
-			if cfg.DBName != "" && conf.DBName != cfg.DBName {
-				log.Fatalf("DB_CONN database name (%s) contradicts DB_NAME (%s)", conf.DBName, cfg.DBName)
-			}
-
-			if (cfg.DBHost != "" || cfg.DBPort != "") && (conf.Net == "tcp" || conf.Net == "") {
-				// Parse Addr which is host:port
-				addr := conf.Addr
-				if addr == "" {
-					addr = "127.0.0.1:3306"
-				}
-
-				// Very basic parsing, might need 'net.SplitHostPort'
-				host, port, err := splitHostPort(addr)
-				if err == nil {
-					if cfg.DBHost != "" && host != cfg.DBHost {
-						log.Fatalf("DB_CONN host (%s) contradicts DB_HOST (%s)", host, cfg.DBHost)
-					}
-					if cfg.DBPort != "" && port != cfg.DBPort {
-						log.Fatalf("DB_CONN port (%s) contradicts DB_PORT (%s)", port, cfg.DBPort)
-					}
-				}
-			}
-		}
-	} else if cfg.DBHost != "" || cfg.DBUser != "" || cfg.DBName != "" {
-		// Construct DB_CONN from components if DB_CONN is missing
-		// Default to tcp
-		user := cfg.DBUser
-		pass := cfg.DBPass
-		host := cfg.DBHost
-		port := cfg.DBPort
-		dbname := cfg.DBName
-
-		if host == "" {
-			host = "127.0.0.1"
-		}
-		if port == "" {
-			port = "3306"
-		}
-
-		// Format: user:password@tcp(host:port)/dbname
-		// Need to handle missing user/pass
-		auth := ""
-		if user != "" {
-			auth = user
-			if pass != "" {
-				auth += ":" + pass
-			}
-			auth += "@"
-		}
-
-		cfg.DBConn = fmt.Sprintf("%stcp(%s:%s)/%s?parseTime=true", auth, host, port, dbname)
-	}
-
 	if cfg.HTTPHostname == "" {
 		cfg.HTTPHostname = "http://localhost:8080"
 	}
@@ -410,8 +334,4 @@ func UpdatePaginationConfig(cfg *RuntimeConfig, min, max, def int) {
 		cfg.PageSizeDefault = def
 	}
 	normalizeRuntimeConfig(cfg)
-}
-
-func splitHostPort(addr string) (string, string, error) {
-	return net.SplitHostPort(addr)
 }

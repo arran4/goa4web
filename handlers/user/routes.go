@@ -4,8 +4,6 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 
-	. "github.com/arran4/gorillamuxlogic"
-
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
 	nav "github.com/arran4/goa4web/internal/navigation"
@@ -34,8 +32,6 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, _ *nav.Registry) {
 	ur.HandleFunc("/paging", handlers.TaskHandler(pagingSaveTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(pagingSaveTask.Matcher())
 	ur.HandleFunc("/timezone", userTimezonePage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	ur.HandleFunc("/timezone", handlers.TaskHandler(saveTimezoneTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(saveTimezoneTask.Matcher())
-	ur.HandleFunc("/appearance", userAppearancePage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
-	ur.HandleFunc("/appearance", handlers.TaskHandler(appearanceSaveTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(appearanceSaveTask.Matcher())
 	ur.HandleFunc("/profile", userPublicProfileSettingPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	ur.HandleFunc("/profile", handlers.TaskHandler(publicProfileSaveTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(publicProfileSaveTask.Matcher())
 	ur.HandleFunc("/notifications", userNotificationsPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
@@ -52,8 +48,6 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, _ *nav.Registry) {
 	ur.HandleFunc("/subscriptions/threads", userThreadSubscriptionsPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	ur.HandleFunc("/subscriptions/update", handlers.TaskHandler(updateSubscriptionsTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(updateSubscriptionsTask.Matcher())
 	ur.HandleFunc("/subscriptions/delete", handlers.TaskHandler(deleteTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(deleteTask.Matcher())
-
-	ur.HandleFunc("/{path:.*}", handlers.RenderPermissionDenied).MatcherFunc(Not(handlers.RequiresAnAccount()))
 
 	// legacy redirects
 	r.HandleFunc("/user/lang", handlers.RedirectPermanent("/usr/lang"))

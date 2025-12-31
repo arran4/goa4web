@@ -254,7 +254,4 @@ const (
 
 	// TaskPurge removes old records.
 	TaskPurge = "Purge"
-
-	// TaskMarkBlogRead marks a blog as read for the current user.
-	TaskMarkBlogRead = "Mark Blog Read"
 )

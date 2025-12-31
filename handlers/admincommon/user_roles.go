@@ -19,7 +19,7 @@ type UserRoleInfo struct {
 
 // LoadUserRoleInfo collects all users, their verified email addresses, and their roles.
 // An optional roleFilter limits which roles are included for each user.
-func LoadUserRoleInfo(ctx context.Context, queries db.Querier, roleFilter func(string, bool) bool) ([]UserRoleInfo, error) {
+func LoadUserRoleInfo(ctx context.Context, queries db.Querier, roleFilter func(string) bool) ([]UserRoleInfo, error) {
 	users, err := queries.AdminListAllUsers(ctx)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, err
@@ -56,7 +56,7 @@ func LoadUserRoleInfo(ctx context.Context, queries db.Querier, roleFilter func(s
 		return nil, err
 	}
 	for _, row := range rows {
-		if roleFilter != nil && !roleFilter(row.Role, row.IsAdmin) {
+		if roleFilter != nil && !roleFilter(row.Role) {
 			continue
 		}
 		u := userMap[row.UsersIdusers]

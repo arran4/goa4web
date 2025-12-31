@@ -18,13 +18,6 @@
        {{ if and (cd.HasModule "websocket") cd.Config.NotificationsEnabled (ne cd.UserID 0) }}               <script src="{{ assetHash "/websocket/notifications.js" }}"></script>               {{ end }}
        <script src="{{ assetHash "/static/site.js" }}"></script>
        {{ if cd.AutoRefresh }}            <meta http-equiv="refresh" content="{{cd.AutoRefresh}}">       {{ end }}
-       {{ if cd.UserID }}
-       {{ if cd.CustomCSS }}
-       <style>
-       {{ cd.CustomCSS }}
-       </style>
-       {{ end }}
-       {{ end }}
     </head>
     {{ end }}
     {{ if cd.Marked "bodyBegin" }}

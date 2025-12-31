@@ -23,7 +23,6 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	navReg.RegisterAdminControlCenter("Help", "Help Categories", "/admin/faq/categories", SectionWeight+2)
 	faqr := r.PathPrefix("/faq").Subrouter()
 	faqr.Use(handlers.IndexMiddleware(CustomFAQIndex))
-	faqr.HandleFunc("/preview", handlers.PreviewPage).Methods("POST")
 	faqr.HandleFunc("", Page).Methods("GET", "POST")
 	faqr.HandleFunc("/ask", askTask.Page).Methods("GET")
 	faqr.HandleFunc("/ask", handlers.TaskHandler(askTask)).Methods("POST").MatcherFunc(askTask.Matcher())

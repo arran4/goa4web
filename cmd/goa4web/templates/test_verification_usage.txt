@@ -1,9 +1,0 @@
-goa4web test verification - Verification tools
-
-Usage:
-  goa4web test verification <command> [arguments]
-
-Commands:
-  template    Render a template with mock data
-
-Use "goa4web test verification <command> -h" for more information about a command.

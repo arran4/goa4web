@@ -115,7 +115,7 @@ func AdminNewsPostPage(w http.ResponseWriter, r *http.Request) {
 	data.EditSaveURL = func(*db.GetCommentsByThreadIdForUserRow) string { return "" }
 	data.Editing = func(*db.GetCommentsByThreadIdForUserRow) bool { return false }
 	data.AdminURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
-		if cd.HasAdminRole() {
+		if cd.HasRole("administrator") {
 			return fmt.Sprintf("/admin/comment/%d", cmt.Idcomments)
 		}
 		return ""

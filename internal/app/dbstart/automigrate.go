@@ -39,33 +39,11 @@ func applyMigrations(ctx context.Context, cfg *config.RuntimeConfig, reg *dbdriv
 	var fsys fs.FS
 	if cfg.MigrationsDir == "" || cfg.MigrationsDir == "migrations" {
 		fsys = migrations.FS
+		log.Printf("applying embedded migrations")
 	} else {
 		fsys = os.DirFS(cfg.MigrationsDir)
+		log.Printf("applying migrations from %s", cfg.MigrationsDir)
 	}
-
-	current, err := ensureVersionTable(ctx, sdb)
-	if err != nil {
-		return fmt.Errorf("check version: %w", err)
-	}
-
-	found, err := getAvailableMigrations(fsys, cfg.DBDriver)
-	if err != nil {
-		return fmt.Errorf("check migrations: %w", err)
-	}
-
-	target := current
-	if len(found) > 0 {
-		if max := found[len(found)-1]; max > target {
-			target = max
-		}
-	}
-
-	if cfg.MigrationsDir == "" || cfg.MigrationsDir == "migrations" {
-		log.Printf("applying embedded migrations (current: %d, target: %d)", current, target)
-	} else {
-		log.Printf("applying migrations from %s (current: %d, target: %d)", cfg.MigrationsDir, current, target)
-	}
-
 	return Apply(ctx, sdb, fsys, false, cfg.DBDriver)
 }
 

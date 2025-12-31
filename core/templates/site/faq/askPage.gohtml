@@ -2,7 +2,7 @@
         <h2 class="section-heading">Ask a Question</h2>
         <form method="post" action="">
         {{ csrfField }}
-            <textarea id="text" name="text" cols="60" rows="20"></textarea><br>
+            <textarea name="text" cols="60" rows="20"></textarea><br>
             Please select a category:
             <select name="category">
                 {{- range (cd).FAQCategories }}
@@ -13,9 +13,5 @@
             </select><br>
             {{ template "languageCombobox" }}
             <input type="submit" name="task" value="Ask">
-            <button type="button" class="preview-a4code" data-target="text" data-preview-url="/faq/preview">Preview</button>
-            <div class="form-group hidden" id="preview-container">
-                <div id="preview-content" class="preview-box"></div>
-            </div>
         </form>
 {{ template "tail" $ }}

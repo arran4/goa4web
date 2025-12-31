@@ -15,7 +15,6 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/app/server"
-	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/navigation"
 )
 
@@ -64,12 +63,7 @@ func TestAdminReloadRoute_Authorized(t *testing.T) {
 	h.RegisterRoutes(ar, cfg, navReg)
 
 	req := httptest.NewRequest("POST", "/admin/reload", nil)
-	cd := common.NewCoreData(req.Context(), nil, cfg,
-		common.WithUserRoles([]string{"administrator"}),
-		common.WithPermissions([]*db.GetPermissionsByUserIDRow{
-			{Name: "administrator", IsAdmin: true},
-		}),
-	)
+	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithUserRoles([]string{"administrator"}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -114,12 +108,7 @@ func TestAdminShutdownRoute_Authorized(t *testing.T) {
 	form.Set("task", string(TaskServerShutdown))
 	req := httptest.NewRequest("POST", "/admin/shutdown", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	cd := common.NewCoreData(req.Context(), nil, cfg,
-		common.WithUserRoles([]string{"administrator"}),
-		common.WithPermissions([]*db.GetPermissionsByUserIDRow{
-			{Name: "administrator", IsAdmin: true},
-		}),
-	)
+	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithUserRoles([]string{"administrator"}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -164,12 +153,7 @@ func TestServerShutdownMatcher_Allowed(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/admin/shutdown", body)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	cfg := config.NewRuntimeConfig()
-	cd := common.NewCoreData(req.Context(), nil, cfg,
-		common.WithUserRoles([]string{"administrator"}),
-		common.WithPermissions([]*db.GetPermissionsByUserIDRow{
-			{Name: "administrator", IsAdmin: true},
-		}),
-	)
+	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithUserRoles([]string{"administrator"}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	h := New()

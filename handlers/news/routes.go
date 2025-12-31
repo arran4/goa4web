@@ -1,13 +1,12 @@
 package news
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/arran4/goa4web/handlers/forum/comments"
 
 	"github.com/gorilla/mux"
-
-	. "github.com/arran4/gorillamuxlogic"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
@@ -18,6 +17,7 @@ import (
 
 // RegisterRoutes attaches the public news endpoints to r.
 func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
+	log.Printf("News: Registering Routes")
 	navReg.RegisterIndexLinkWithViewPermission("News", "/", SectionWeight, "news", "post")
 	navReg.RegisterAdminControlCenter("News", "News", "/admin/news", SectionWeight)
 	r.Use(handlers.IndexMiddleware(CustomNewsIndex), handlers.SectionMiddleware("news"))
@@ -29,11 +29,14 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	nr.Use(handlers.IndexMiddleware(CustomNewsIndex), handlers.SectionMiddleware("news"))
 	nr.HandleFunc("", NewsPageHandler).Methods("GET")
 	nr.HandleFunc("", handlers.TaskDoneAutoRefreshPage).Methods("POST")
+	postGrant := handlers.RequireGrant("news", "post", "post", nil)
 	editGrant := handlers.RequireGrantForPathInt("news", "post", "edit", "news")
 	promoteAnnouncementGrant := handlers.RequireGrantForPathInt("news", "post", "promote", "news")
 	demoteAnnouncementGrant := handlers.RequireGrantForPathInt("news", "post", "demote", "news")
-	nr.HandleFunc("/post", NewsCreatePageHandler).Methods("GET").MatcherFunc(MatchCanPostNews)
-	nr.HandleFunc("/post", handlers.TaskHandler(newPostTask)).Methods("POST").MatcherFunc(MatchCanPostNews).MatcherFunc(newPostTask.Matcher())
+	nr.HandleFunc("/post", NewsCreatePageHandler).Methods("GET").MatcherFunc(postGrant)
+	nr.HandleFunc("/post", handlers.TaskHandler(newPostTask)).Methods("POST").MatcherFunc(postGrant).MatcherFunc(newPostTask.Matcher())
+	//dup? nr.HandleFunc("/post", NewsCreatePageHandler).Methods("GET").MatcherFunc(MatchCanPostNews)
+	//dup? nr.HandleFunc("/post", handlers.TaskHandler(newPostTask)).Methods("POST").MatcherFunc(MatchCanPostNews).MatcherFunc(newPostTask.Matcher())
 	nr.HandleFunc("/preview", PreviewPage).Methods("POST")
 	nr.HandleFunc("/news/{news}", NewsPostPageHandler).Methods("GET")
 	nr.Handle("/news/{news}/edit", RequireNewsPostAuthor(http.HandlerFunc(editTask.Page))).Methods("GET").MatcherFunc(editGrant)
@@ -48,11 +51,10 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	nr.HandleFunc("/news/{news}/announcement", handlers.TaskHandler(announcementDeleteTask)).Methods("POST").MatcherFunc(demoteAnnouncementGrant).MatcherFunc(announcementDeleteTask.Matcher())
 	nr.HandleFunc("/news/{news}", handlers.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(cancelTask.Matcher())
 	nr.HandleFunc("/news/{news}", handlers.TaskDoneAutoRefreshPage).Methods("POST")
-
-	nr.HandleFunc("/{path:.*}", handlers.RenderPermissionDenied).MatcherFunc(Not(handlers.RequiresAnAccount()))
 }
 
 // Register registers the news router module.
 func Register(reg *router.Registry) {
+	log.Printf("News: Registering")
 	reg.RegisterModule("news", nil, RegisterRoutes)
 }

@@ -191,7 +191,7 @@ func parseCommand(r *bufio.Reader, stack []parent, depth int, yield func(Node, i
 		yield(n, depth)
 	case "quoteof":
 		skipArgPrefix(r)
-		name, err := getNextArg(r)
+		name, err := getNext(r, false)
 		if err != nil && err != io.EOF {
 			return stack, err
 		}
@@ -212,55 +212,6 @@ func parseCommand(r *bufio.Reader, stack []parent, depth int, yield func(Node, i
 		stack = append(stack, &Custom{Tag: cmd})
 	}
 	return stack, nil
-}
-
-func getNextArg(r *bufio.Reader) (string, error) {
-	ch, err := r.ReadByte()
-	if err != nil {
-		if err == io.EOF {
-			return "", io.EOF
-		}
-		return "", err
-	}
-	if ch == '"' {
-		var result bytes.Buffer
-		for {
-			ch, err = r.ReadByte()
-			if err != nil {
-				if err == io.EOF {
-					return result.String(), io.EOF
-				}
-				return "", err
-			}
-			switch ch {
-			case '"':
-				return result.String(), nil
-			case '\\':
-				next, err := r.ReadByte()
-				if err != nil {
-					if err == io.EOF {
-						result.WriteByte('\\')
-						return result.String(), io.EOF
-					}
-					return "", err
-				}
-				switch next {
-				case '"', ' ', '[', ']', '=', '\\', '*', '/', '_':
-					result.WriteByte(next)
-				default:
-					result.WriteByte('\\')
-					result.WriteByte(next)
-				}
-			default:
-				result.WriteByte(ch)
-			}
-		}
-	} else {
-		if err := r.UnreadByte(); err != nil {
-			return "", err
-		}
-		return getNext(r, false)
-	}
 }
 
 func getNext(r *bufio.Reader, endAtEqual bool) (string, error) {

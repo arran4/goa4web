@@ -36,9 +36,6 @@ var (
 	ErrUnauthorized = NewHTTPError(http.StatusUnauthorized, nil)
 	ErrBadRequest   = NewHTTPError(http.StatusBadRequest, nil)
 	ErrNotFound     = NewHTTPError(http.StatusNotFound, nil)
-
-	// ErrLoginRequired indicates that the user must be logged in to access the resource.
-	ErrLoginRequired = errors.New("Access denied: please login")
 )
 
 // Wrapper helpers for common HTTP errors.

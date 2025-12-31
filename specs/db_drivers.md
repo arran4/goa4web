@@ -4,7 +4,7 @@ The `internal/dbdrivers` package defines a small registry for database connector
 
 - **MySQL** – implements connection handling using `github.com/go-sql-driver/mysql`. Backups are created with `mysqldump` and restores use the `mysql` command.
 
-`dbdefaults.Register(registry)` registers all stable drivers on a `dbdrivers.Registry`. Applications pass this registry to functions that need to open database connections.
+`dbdefaults.Register()` registers all stable drivers on a `dbdrivers.Registry`. Applications pass this registry to functions that need to open database connections.
 
 Example connection strings are shown in `config/templates/db_conn.txt`:
 

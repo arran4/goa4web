@@ -29,6 +29,7 @@ func LoadAppConfigFile(fs core.FileSystem, path string) (map[string]string, erro
 		log.Printf("config file not specified")
 		return values, nil
 	}
+	log.Printf("reading config file %s", path)
 	b, err := fs.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {

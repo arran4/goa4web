@@ -28,8 +28,8 @@ func TestCustomForumIndexWriteReply(t *testing.T) {
 	if !common.ContainsItem(cd.CustomIndexItems, "Write Reply") {
 		t.Errorf("expected write reply item")
 	}
-	if len(q.SystemCheckGrantCalls) != 2 {
-		t.Fatalf("expected 2 grant check, got %d", len(q.SystemCheckGrantCalls))
+	if len(q.SystemCheckGrantCalls) != 1 {
+		t.Fatalf("expected 1 grant check, got %d", len(q.SystemCheckGrantCalls))
 	}
 }
 
@@ -102,8 +102,8 @@ func TestCustomForumIndexWriteReplyDenied(t *testing.T) {
 	if common.ContainsItem(cd.CustomIndexItems, "Write Reply") {
 		t.Errorf("unexpected write reply item")
 	}
-	if len(q.SystemCheckGrantCalls) != 2 {
-		t.Fatalf("expected 2 grant check, got %d", len(q.SystemCheckGrantCalls))
+	if len(q.SystemCheckGrantCalls) != 1 {
+		t.Fatalf("expected 1 grant check, got %d", len(q.SystemCheckGrantCalls))
 	}
 }
 
@@ -132,14 +132,8 @@ func TestCustomForumIndexAdminEditLink(t *testing.T) {
 	req := httptest.NewRequest("GET", "/forum/topic/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "2", "category": "1"})
 
-	q := testhelpers.NewQuerierStub(testhelpers.StubConfig{
-		Permissions: []*db.GetPermissionsByUserIDRow{
-			{Name: "administrator", IsAdmin: true},
-		},
-	})
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
-	cd.UserID = 1
+	cd := common.NewCoreData(ctx, nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
 	cd.AdminMode = true
 
 	CustomForumIndex(cd, req.WithContext(ctx))

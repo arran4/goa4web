@@ -8,17 +8,6 @@ const (
 	// EnvDBTimezone sets the database timezone.
 	EnvDBTimezone = "DB_TIMEZONE"
 
-	// EnvDBHost is the database server hostname.
-	EnvDBHost = "DB_HOST"
-	// EnvDBPort is the database server port.
-	EnvDBPort = "DB_PORT"
-	// EnvDBUser is the database username.
-	EnvDBUser = "DB_USER"
-	// EnvDBPass is the database password.
-	EnvDBPass = "DB_PASS"
-	// EnvDBName is the database name.
-	EnvDBName = "DB_NAME"
-
 	// EnvEmailProvider selects the mail sending backend.
 	EnvEmailProvider = "EMAIL_PROVIDER"
 	// EnvSMTPHost is the SMTP server hostname.

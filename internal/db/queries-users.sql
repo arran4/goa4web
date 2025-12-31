@@ -47,8 +47,7 @@ VALUES (?);
 -- name: SystemListAllUsers :many
 SELECT u.idusers, u.username,
        IF(r.id IS NULL, 0, 1) AS admin,
-       MIN(s.created_at) AS created_at,
-       u.deleted_at
+       MIN(s.created_at) AS created_at
 FROM users u
 LEFT JOIN user_roles ur ON ur.users_idusers = u.idusers
 LEFT JOIN roles r ON ur.role_id = r.id AND r.is_admin = 1

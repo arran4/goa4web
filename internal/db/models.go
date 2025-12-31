@@ -430,7 +430,6 @@ type Preference struct {
 	PageSize             int32
 	AutoSubscribeReplies bool
 	Timezone             sql.NullString
-	CustomCss            sql.NullString
 }
 
 type Role struct {

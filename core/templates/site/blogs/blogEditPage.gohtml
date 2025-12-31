@@ -4,11 +4,7 @@
         {{ csrfField }}
             <!-- Title <input name="title" value=""><br> -->
             Blog:<br>
-            <textarea id="text" name="text" cols=40 rows=20>{{.Blog.Blog.String}}</textarea><br>
-            <button type="button" class="preview-a4code" data-target="text" data-preview-url="/blogs/preview">Preview</button>
-            <div class="form-group hidden" id="preview-container">
-                <div id="preview-content" class="preview-box"></div>
-            </div>
+            <textarea name="text" cols=40 rows=20>{{.Blog.Blog.String}}</textarea><br>
             Author Labels:<br>
             <div class="label-editor">
             {{ range .AuthorLabels }}

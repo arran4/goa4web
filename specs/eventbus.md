@@ -5,28 +5,14 @@ are consumed by the notification worker.
 
 ## Event Structure
 
-Events are defined in `internal/eventbus/eventbus.go`. The core message interface is:
-
-```go
-type Message interface {
-	Type() MessageType
-}
-```
-
-Two main message types are supported:
-- `TaskMessageType` for application actions (`TaskEvent`)
-- `EmailQueueMessageType` for email processing triggers (`EmailQueueEvent`)
-
-### TaskEvent
-
-`TaskEvent` contains contextual information about a user action:
+Events are defined in `internal/eventbus/eventbus.go` as a small struct
+containing contextual information about a user action. The fields are:
 
 - `Path` – a path uniquely identifying the affected object; often the URL path but not always.
-- `Task` – the `tasks.Task` instance associated with the action.
+- `Task` – the task name associated with the action.
 - `UserID` – identifier of the user performing the action.
 - `Time` – timestamp when the event occurred.
 - `Data` – optional key/value map used when rendering templates.
-- `Outcome` – status string (e.g. "success").
 
 ## Subscription Model
 
@@ -41,13 +27,6 @@ returns the union of user IDs for the chosen delivery method. Events can
 also specify a `target` item through `Event.Data` which is used to link
 notifications to a specific record.
 
-## Bus Implementation
-
-The `Bus` struct manages subscribers and dispatching.
-
-- `Subscribe(types ...MessageType)` returns a channel that receives matching messages.
-- `Publish(msg Message)` sends a message to all matching subscribers non-blocking (dropping messages if channel is full).
-
 ## Shutdown
 
 Calling `Bus.Shutdown(ctx)` stops new publications and waits for all
@@ -56,7 +35,7 @@ either all pending events are processed or the context is cancelled.
 
 ## BusWorker
 
-`notifications.BusWorker` subscribes to an `eventbus.Bus` (specifically for `TaskMessageType`) and processes
+`notifications.BusWorker` subscribes to an `eventbus.Bus` and processes
 each event in sequence. It invokes `processEvent` which renders email and
 internal notifications based on interfaces implemented by the event's
 task.

@@ -27,7 +27,7 @@ var _ notif.AdminEmailTemplateProvider = (*DeleteAnnouncementTask)(nil)
 
 func (DeleteAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	if cd == nil || !cd.HasAdminRole() {
+	if cd == nil || !cd.HasRole("administrator") {
 		return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { handlers.RenderErrorPage(w, r, handlers.ErrForbidden) })
 	}
 	queries := cd.Queries()

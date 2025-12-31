@@ -5,16 +5,8 @@
         <form method="post">
         {{ csrfField }}
             Title:<br><input name="title" value="{{ .Writing.Title.String }}"><br>
-            Abstract:<br><textarea id="abstract" name="abstract" cols="60" rows="10">{{ .Writing.Abstract.String }}</textarea><br>
-            <button type="button" class="preview-a4code" data-target="abstract" data-container="preview-container-abstract" data-preview-url="/writings/preview">Preview Abstract</button>
-            <div class="form-group hidden" id="preview-container-abstract">
-                <div class="preview-box"></div>
-            </div>
-            Writing:<br><textarea id="body" name="body" cols="60" rows="30">{{ .Writing.Writing.String }}</textarea><br>
-            <button type="button" class="preview-a4code" data-target="body" data-container="preview-container-body" data-preview-url="/writings/preview">Preview Body</button>
-            <div class="form-group hidden" id="preview-container-body">
-                <div class="preview-box"></div>
-            </div>
+            Abstract:<br><textarea name="abstract" cols="60" rows="10">{{ .Writing.Abstract.String }}</textarea><br>
+            Writing:<br><textarea name="body" cols="60" rows="30">{{ .Writing.Writing.String }}</textarea><br>
             Private writing: <input type="checkbox" name="isitprivate" {{ if .Writing.Private.Bool }}checked{{ end }}><br>
             Author Labels:<br>
             <div class="label-editor">

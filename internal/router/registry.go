@@ -1,7 +1,6 @@
 package router
 
 import (
-	"log"
 	"sort"
 	"sync"
 
@@ -72,10 +71,7 @@ func (reg *Registry) InitModules(r *mux.Router, cfg *config.RuntimeConfig, navRe
 		if m.Setup == nil {
 			continue
 		}
-		m.once.Do(func() {
-			log.Printf("Initializing router module: %s", m.Name)
-			m.Setup(r, cfg, navReg)
-		})
+		m.once.Do(func() { m.Setup(r, cfg, navReg) })
 	}
 }
 

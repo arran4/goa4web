@@ -115,12 +115,6 @@ func (j Provider) TestConfig(ctx context.Context) error {
 	}
 	acc := SelectAccountID(session)
 	id := SelectIdentityID(session)
-	if id == "" {
-		id, err = DiscoverIdentityID(ctx, j.client, session.APIURL, j.Username, j.Password, acc)
-		if err != nil {
-			fmt.Printf("failed to discover Identity ID via API: %v\n", err)
-		}
-	}
 	fmt.Printf("Discovered Account ID: %s\n", acc)
 	fmt.Printf("Discovered Identity ID: %s\n", id)
 	return nil
@@ -155,13 +149,6 @@ func providerFromConfig(cfg *config.RuntimeConfig) (email.Provider, error) {
 		if ep == "" {
 			ep = session.APIURL
 		}
-		if id == "" && acc != "" {
-			// Try to fetch identities via API
-			fetchedId, err := DiscoverIdentityID(context.Background(), httpClient, session.APIURL, cfg.EmailJMAPUser, cfg.EmailJMAPPass, acc)
-			if err == nil && fetchedId != "" {
-				id = fetchedId
-			}
-		}
 	}
 
 	if acc == "" || id == "" {
@@ -184,25 +171,13 @@ func Register(r *email.Registry) { r.RegisterProvider("jmap", providerFromConfig
 // mailCapabilityURN identifies the JMAP mail capability.
 const mailCapabilityURN = "urn:ietf:params:jmap:mail"
 
-// submissionCapabilityURN identifies the JMAP submission capability.
-const submissionCapabilityURN = "urn:ietf:params:jmap:submission"
-
-// coreCapabilityURN identifies the JMAP core capability.
-const coreCapabilityURN = "urn:ietf:params:jmap:core"
-
 // sieveCapabilityURN identifies the JMAP sieve capability.
 const sieveCapabilityURN = "urn:ietf:params:jmap:sieve"
 
-type Account struct {
-	Name         string                 `json:"name"`
-	Capabilities map[string]interface{} `json:"capabilities"`
-}
-
 type SessionResponse struct {
-	APIURL          string             `json:"apiUrl"`
-	PrimaryAccounts map[string]string  `json:"primaryAccounts"`
-	DefaultIdentity map[string]string  `json:"defaultIdentity"`
-	Accounts        map[string]Account `json:"accounts"`
+	APIURL          string            `json:"apiUrl"`
+	PrimaryAccounts map[string]string `json:"primaryAccounts"`
+	DefaultIdentity map[string]string `json:"defaultIdentity"`
 }
 
 func DiscoverSession(ctx context.Context, client *http.Client, endpoint, username, password string) (*SessionResponse, error) {
@@ -253,12 +228,6 @@ func SelectAccountID(session *SessionResponse) string {
 	if acc := session.PrimaryAccounts[sieveCapabilityURN]; acc != "" {
 		return acc
 	}
-	// Fallback to checking Accounts for mail capability
-	for id, acc := range session.Accounts {
-		if _, ok := acc.Capabilities[mailCapabilityURN]; ok {
-			return id
-		}
-	}
 	for _, acc := range session.PrimaryAccounts {
 		if acc != "" {
 			return acc
@@ -280,72 +249,4 @@ func SelectIdentityID(session *SessionResponse) string {
 		}
 	}
 	return ""
-}
-
-func DiscoverIdentityID(ctx context.Context, client *http.Client, apiURL, username, password, accountID string) (string, error) {
-	payload := map[string]interface{}{
-		"using": []string{coreCapabilityURN, submissionCapabilityURN},
-		"methodCalls": [][]interface{}{
-			{
-				"Identity/get",
-				map[string]interface{}{
-					"accountId": accountID,
-				},
-				"c1",
-			},
-		},
-	}
-
-	buf, err := json.Marshal(payload)
-	if err != nil {
-		return "", err
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, apiURL, bytes.NewReader(buf))
-	if err != nil {
-		return "", err
-	}
-	if username != "" || password != "" {
-		req.SetBasicAuth(username, password)
-	}
-	req.Header.Set("Content-Type", "application/json")
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode >= 300 {
-		return "", fmt.Errorf("jmap identity discovery failed: %s", resp.Status)
-	}
-
-	var jmapResp struct {
-		MethodResponses [][]interface{} `json:"methodResponses"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&jmapResp); err != nil {
-		return "", err
-	}
-
-	for _, methodResponse := range jmapResp.MethodResponses {
-		if len(methodResponse) >= 2 && methodResponse[0] == "Identity/get" {
-			args, ok := methodResponse[1].(map[string]interface{})
-			if !ok {
-				continue
-			}
-			list, ok := args["list"].([]interface{})
-			if !ok {
-				continue
-			}
-			for _, item := range list {
-				identity, ok := item.(map[string]interface{})
-				if !ok {
-					continue
-				}
-				if id, ok := identity["id"].(string); ok && id != "" {
-					return id, nil
-				}
-			}
-		}
-	}
-
-	return "", nil
 }

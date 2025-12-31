@@ -293,41 +293,6 @@ func (q *Queries) SystemDeleteUserEmailsByEmailExceptID(ctx context.Context, arg
 	return err
 }
 
-const systemListAllUserEmails = `-- name: SystemListAllUserEmails :many
-SELECT user_id, email, verified_at
-FROM user_emails
-ORDER BY user_id, email
-`
-
-type SystemListAllUserEmailsRow struct {
-	UserID     int32
-	Email      string
-	VerifiedAt sql.NullTime
-}
-
-func (q *Queries) SystemListAllUserEmails(ctx context.Context) ([]*SystemListAllUserEmailsRow, error) {
-	rows, err := q.db.QueryContext(ctx, systemListAllUserEmails)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*SystemListAllUserEmailsRow
-	for rows.Next() {
-		var i SystemListAllUserEmailsRow
-		if err := rows.Scan(&i.UserID, &i.Email, &i.VerifiedAt); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const systemListVerifiedEmailsByUserID = `-- name: SystemListVerifiedEmailsByUserID :many
 SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority
 FROM user_emails

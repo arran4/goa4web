@@ -31,13 +31,8 @@
                 const fd = new FormData();
                 fd.append('image', file);
                 fd.append('id', id);
-                fd.append('task', 'Upload image');
                 const xhr = new XMLHttpRequest();
                 xhr.open('POST', uploadUrl);
-                const csrf = document.querySelector("input[name='csrf_token']");
-                if (csrf) {
-                    xhr.setRequestHeader('X-CSRF-Token', csrf.value);
-                }
                 let last = 0;
                 xhr.upload.addEventListener('progress', ev => {
                     if(ev.lengthComputable){
@@ -57,20 +52,12 @@
                         e.target.setSelectionRange(pos+finalText.length, pos+finalText.length);
                         autoSize(e.target);
                     } else {
-                        console.error('Image upload failed:', xhr.status, xhr.statusText, xhr.responseText);
-                        const failedText = '[img upload failed]';
-                        const v = e.target.value;
-                        e.target.value = v.substring(0,pos) + v.substring(pos).replace(placeholder, failedText);
-                        e.target.setSelectionRange(pos+failedText.length, pos+failedText.length);
+                        e.target.value = e.target.value.replace(placeholder, '');
                         autoSize(e.target);
                     }
                 };
                 xhr.onerror = function(){
-                    console.error('Image upload failed: network error');
-                    const failedText = '[img upload failed]';
-                    const v = e.target.value;
-                    e.target.value = v.substring(0,pos) + v.substring(pos).replace(placeholder, failedText);
-                    e.target.setSelectionRange(pos+failedText.length, pos+failedText.length);
+                    e.target.value = e.target.value.replace(placeholder, '');
                     autoSize(e.target);
                 };
                 xhr.send(fd);

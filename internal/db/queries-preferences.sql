@@ -13,13 +13,8 @@ SET auto_subscribe_replies = sqlc.arg(auto_subscribe_replies)
 WHERE users_idusers = sqlc.arg(lister_id);
 
 -- name: GetPreferenceForLister :one
-SELECT idpreferences, language_id, users_idusers, emailforumupdates, page_size, auto_subscribe_replies, timezone, custom_css
+SELECT idpreferences, language_id, users_idusers, emailforumupdates, page_size, auto_subscribe_replies, timezone
 FROM preferences
-WHERE users_idusers = sqlc.arg(lister_id);
-
--- name: UpdateCustomCssForLister :exec
-UPDATE preferences
-SET custom_css = sqlc.arg(custom_css)
 WHERE users_idusers = sqlc.arg(lister_id);
 
 -- name: InsertPreferenceForLister :exec

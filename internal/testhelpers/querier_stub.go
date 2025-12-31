@@ -12,7 +12,6 @@ type StubConfig struct {
 	// DefaultGrantAllowed controls the fallback grant decision when a specific key is not present.
 	DefaultGrantAllowed bool
 
-	Permissions   []*db.GetPermissionsByUserIDRow
 	PrivateLabels []*db.ListContentPrivateLabelsRow
 	Subscriptions []*db.ListSubscriptionsByUserRow
 }
@@ -25,13 +24,8 @@ func GrantKey(section, item, action string) string {
 // NewQuerierStub builds a db.QuerierStub configured with common grant and query responses.
 func NewQuerierStub(cfg StubConfig) *db.QuerierStub {
 	stub := &db.QuerierStub{
-		GetPermissionsByUserIDReturns:   cfg.Permissions,
 		ListContentPrivateLabelsReturns: cfg.PrivateLabels,
 		ListSubscriptionsByUserReturns:  cfg.Subscriptions,
-	}
-
-	if stub.GetPermissionsByUserIDReturns == nil {
-		stub.GetPermissionsByUserIDReturns = []*db.GetPermissionsByUserIDRow{}
 	}
 
 	stub.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {

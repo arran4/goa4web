@@ -1,14 +1,13 @@
 package handlers
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
 )
 
 func RenderPermissionDenied(w http.ResponseWriter, r *http.Request) {
-	RenderErrorPage(w, r, WrapForbidden(errors.New("Access denied: please login")))
+	RenderErrorPage(w, r, WrapForbidden(ErrLoginRequired))
 }
 
 // VerifyAccess wraps h and denies the request if the caller lacks any of

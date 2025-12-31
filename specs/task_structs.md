@@ -58,14 +58,17 @@ func RegisterTasks() []tasks.NamedTask {
 ```
 
 `tasks.Action` should wrap handlers so the current task is recorded on the
-request event and automatically registered:
+request event and automatically registered. (Note: `tasks.Action` is currently a placeholder concept in some contexts or implemented via `tasks.Task` interface method `Action`).
+
+The `tasks.Task` interface is defined as:
 
 ```go
-r.HandleFunc("/writings/submit", tasks.Action(submitWritingTask)).Methods("POST")
+type Task interface {
+	Action(w http.ResponseWriter, r *http.Request) any
+}
 ```
 
-Following this layout keeps task behaviour consistent across the codebase and
-ensures notification templates are discoverable.
+`TaskString` implements `Task` with a no-op action, so it must be embedded or `Action` must be implemented.
 
 ## Template and Interface Compliance
 
@@ -78,4 +81,3 @@ reply templates.
 
 Compile-time interface assertions guarantee that tasks implement the provider
 interfaces while the tests confirm the referenced templates are present.
-

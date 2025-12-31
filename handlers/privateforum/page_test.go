@@ -33,7 +33,19 @@ func TestPage_NoAccess(t *testing.T) {
 }
 
 func TestPage_Access(t *testing.T) {
-	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
+	queries := db.New(conn)
+
+	mock.ExpectQuery("SELECT .* FROM user_roles").
+		WillReturnRows(sqlmock.NewRows([]string{"iduser_roles", "users_idusers", "role_id", "name", "is_admin"}).
+			AddRow(1, 1, 1, "administrator", true))
+
+	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+	cd.UserID = 1
 	cd.AdminMode = true
 	req := httptest.NewRequest(http.MethodGet, "/private", nil)
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
@@ -51,25 +63,25 @@ func TestPage_Access(t *testing.T) {
 }
 
 func TestPage_SeeNoCreate(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	q := &db.QuerierStub{
+		GetPermissionsByUserIDReturns: []*db.GetPermissionsByUserIDRow{},
+		SystemCheckGrantFn: func(arg db.SystemCheckGrantParams) (int32, error) {
+			if arg.Action == "post" {
+				return 0, sql.ErrNoRows
+			}
+			return 1, nil
+		},
+		ListContentPublicLabelsCalls:                        []db.ListContentPublicLabelsParams{},
+		ListContentPrivateLabelsCalls:                       []db.ListContentPrivateLabelsParams{},
+		ListPrivateTopicParticipantsByTopicIDForUserReturns: []*db.ListPrivateTopicParticipantsByTopicIDForUserRow{},
 	}
-	defer conn.Close()
-	mock.MatchExpectationsInOrder(false)
-
-	queries := db.New(conn)
-	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
+	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
 	cd.UserID = 1
 	cd.AdminMode = false
 	cachePrivateTopics(cd, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/private", nil)
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
-
-	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
-	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
-	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnError(sql.ErrNoRows)
 
 	w := httptest.NewRecorder()
 	PrivateForumPage(w, req)
@@ -78,13 +90,22 @@ func TestPage_SeeNoCreate(t *testing.T) {
 	if strings.Contains(body, "Start conversation") {
 		t.Fatalf("unexpected create form, got %q", body)
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 }
 
 func TestPage_AdminLinks(t *testing.T) {
-	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
+	queries := db.New(conn)
+
+	mock.ExpectQuery("SELECT .* FROM user_roles").
+		WillReturnRows(sqlmock.NewRows([]string{"iduser_roles", "users_idusers", "role_id", "name", "is_admin"}).
+			AddRow(1, 1, 1, "administrator", true))
+
+	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+	cd.UserID = 1
 	cd.AdminMode = true
 
 	// Inject a mock topic

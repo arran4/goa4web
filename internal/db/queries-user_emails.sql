@@ -31,6 +31,10 @@ FROM user_emails
 WHERE user_id = sqlc.arg(user_id) AND verified_at IS NOT NULL
 ORDER BY notification_priority DESC, id;
 
+-- name: SystemListAllUserEmails :many
+SELECT user_id, email, verified_at
+FROM user_emails
+ORDER BY user_id, email;
 
 -- name: GetUserEmailByEmail :one
 SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority

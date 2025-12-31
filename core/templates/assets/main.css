@@ -905,3 +905,88 @@ tr.unsupported td {
     display: inline-block;
     margin: 0.5em;
 }
+
+/* Enhanced Quote and Code Styles */
+
+/* Reset base styles for blocks that now use internal structure */
+.a4code-quote,
+.a4code-quoteof {
+    background-color: transparent; /* Reset from previous default */
+    padding: 0;
+    border: 1px solid #808000;
+}
+
+.a4code-code-wrapper {
+    border: 1px solid #000;
+    margin: 0.5em auto;
+    width: 90%;
+}
+
+.code-header,
+.quote-header {
+    padding: 0.25em 0.5em;
+    font-weight: bold;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.quote-body {
+    padding: 0.5em;
+}
+
+.a4code-code-body {
+    margin: 0;
+    padding: 0.5em;
+    /* Reset a4code-block margin since wrapper handles it */
+    width: auto;
+    background-color: #E0FFFF; /* Light Cyan default for code body */
+}
+
+/* Default Quote Style (Green) */
+.a4code-quote,
+.a4code-quoteof {
+    /* Default fallback if no color class */
+}
+
+.a4code-quote .quote-header,
+.a4code-quoteof .quote-header {
+    background-color: lightgreen; /* #90EE90 */
+}
+
+.a4code-quote .quote-body,
+.a4code-quoteof .quote-body {
+    background-color: #E0F8E0; /* Lighter green */
+}
+
+/* Code Style */
+.code-header {
+    background-color: lightblue; /* #ADD8E6 */
+}
+.a4code-code-body {
+    background-color: #E6F2FF; /* Lighter blue */
+}
+
+/* Color Variations for Quotes */
+
+/* 0: Green (Default-ish) */
+.quote-color-0 .quote-header { background-color: #90EE90; }
+.quote-color-0 .quote-body   { background-color: #E0F8E0; }
+
+/* 1: Blue */
+.quote-color-1 .quote-header { background-color: #ADD8E6; }
+.quote-color-1 .quote-body   { background-color: #E6F2FF; }
+
+/* 2: Red/Pink */
+.quote-color-2 .quote-header { background-color: #FFB6C1; }
+.quote-color-2 .quote-body   { background-color: #FFE4E1; }
+
+/* 3: Yellow/Orange */
+.quote-color-3 .quote-header { background-color: #FFE4B5; }
+.quote-color-3 .quote-body   { background-color: #FFF8DC; }
+
+/* 4: Purple */
+.quote-color-4 .quote-header { background-color: #E6E6FA; }
+.quote-color-4 .quote-body   { background-color: #F3E5F5; }
+
+/* 5: Grey */
+.quote-color-5 .quote-header { background-color: #D3D3D3; }
+.quote-color-5 .quote-body   { background-color: #F5F5F5; }

@@ -147,7 +147,7 @@ func (q *Queries) GetLoginRoleForUser(ctx context.Context, usersIdusers int32) (
 }
 
 const getPermissionsByUserID = `-- name: GetPermissionsByUserID :many
-SELECT ur.iduser_roles, ur.users_idusers, ur.role_id, r.name
+SELECT ur.iduser_roles, ur.users_idusers, ur.role_id, r.name, r.is_admin
 FROM user_roles ur
 JOIN roles r ON ur.role_id = r.id
 WHERE ur.users_idusers = ?
@@ -158,6 +158,7 @@ type GetPermissionsByUserIDRow struct {
 	UsersIdusers int32
 	RoleID       int32
 	Name         string
+	IsAdmin      bool
 }
 
 // Lists the role names granted to a user.
@@ -175,6 +176,7 @@ func (q *Queries) GetPermissionsByUserID(ctx context.Context, usersIdusers int32
 			&i.UsersIdusers,
 			&i.RoleID,
 			&i.Name,
+			&i.IsAdmin,
 		); err != nil {
 			return nil, err
 		}
@@ -271,7 +273,7 @@ func (q *Queries) GetUserRole(ctx context.Context, usersIdusers int32) (string, 
 }
 
 const getUserRoles = `-- name: GetUserRoles :many
-SELECT ur.iduser_roles, ur.users_idusers, r.name AS role,
+SELECT ur.iduser_roles, ur.users_idusers, r.name AS role, r.is_admin,
        u.username
 FROM user_roles ur
 JOIN users u ON u.idusers = ur.users_idusers
@@ -283,6 +285,7 @@ type GetUserRolesRow struct {
 	IduserRoles  int32
 	UsersIdusers int32
 	Role         string
+	IsAdmin      bool
 	Username     sql.NullString
 }
 
@@ -304,6 +307,7 @@ func (q *Queries) GetUserRoles(ctx context.Context) ([]*GetUserRolesRow, error) 
 			&i.IduserRoles,
 			&i.UsersIdusers,
 			&i.Role,
+			&i.IsAdmin,
 			&i.Username,
 		); err != nil {
 			return nil, err

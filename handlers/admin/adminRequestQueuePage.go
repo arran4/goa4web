@@ -66,7 +66,7 @@ func handleRequestAction(w http.ResponseWriter, r *http.Request, status string) 
 	comment := r.PostFormValue("comment")
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.LoadSelectionsFromRequest(r)
-	if cd == nil || !cd.HasRole("administrator") {
+	if cd == nil || !cd.HasAdminRole() {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}

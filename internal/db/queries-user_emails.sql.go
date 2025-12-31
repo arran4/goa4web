@@ -455,6 +455,7 @@ func (q *Queries) SystemListUnverifiedEmailsCreatedAfter(ctx context.Context, ve
 	return items, nil
 }
 
+
 const systemListUnverifiedEmailsExpiresBefore = `-- name: SystemListUnverifiedEmailsExpiresBefore :many
 SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority
 FROM user_emails
@@ -465,11 +466,11 @@ ORDER BY id
 
 func (q *Queries) SystemListUnverifiedEmailsExpiresBefore(ctx context.Context, verificationExpiresAt sql.NullTime) ([]*UserEmail, error) {
 	rows, err := q.db.QueryContext(ctx, systemListUnverifiedEmailsExpiresBefore, verificationExpiresAt)
-	if err != nil {
+  	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*UserEmail
+  var items []*UserEmail
 	for rows.Next() {
 		var i UserEmail
 		if err := rows.Scan(
@@ -481,6 +482,41 @@ func (q *Queries) SystemListUnverifiedEmailsExpiresBefore(ctx context.Context, v
 			&i.VerificationExpiresAt,
 			&i.NotificationPriority,
 		); err != nil {
+      			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const systemListAllUserEmails = `-- name: SystemListAllUserEmails :many
+SELECT user_id, email, verified_at
+FROM user_emails
+ORDER BY user_id, email
+`
+
+type SystemListAllUserEmailsRow struct {
+	UserID     int32
+	Email      string
+	VerifiedAt sql.NullTime
+}
+
+func (q *Queries) SystemListAllUserEmails(ctx context.Context) ([]*SystemListAllUserEmailsRow, error) {
+	rows, err := q.db.QueryContext(ctx, systemListAllUserEmails)
+  	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+  var items []*SystemListAllUserEmailsRow
+	for rows.Next() {
+		var i SystemListAllUserEmailsRow
+		if err := rows.Scan(&i.UserID, &i.Email, &i.VerifiedAt); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)

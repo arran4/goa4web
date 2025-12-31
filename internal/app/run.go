@@ -124,7 +124,6 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 		op(o)
 	}
 
-	log.Printf("application version %s starting", goa4web.Version)
 	adminhandlers.StartTime = time.Now()
 
 	store := o.Store

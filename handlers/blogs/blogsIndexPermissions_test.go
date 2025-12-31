@@ -13,7 +13,10 @@ import (
 func TestCustomBlogIndexRoles(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs", nil)
 
-	cd := common.NewCoreData(req.Context(), &db.QuerierStub{}, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+	cd := common.NewCoreData(req.Context(), &db.QuerierStub{}, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}), common.WithPermissions([]*db.GetPermissionsByUserIDRow{
+		{Name: "administrator", IsAdmin: true},
+	}))
+	cd.UserID = 1
 	cd.AdminMode = true
 	BlogsMiddlewareIndex(cd, req)
 	if !common.ContainsItem(cd.CustomIndexItems, "Blogs Admin") {

@@ -535,6 +535,7 @@ type Querier interface {
 	SystemInsertUser(ctx context.Context, username sql.NullString) (int64, error)
 	SystemLatestDeadLetter(ctx context.Context) (interface{}, error)
 	SystemListAllUnverifiedEmails(ctx context.Context) ([]*UserEmail, error)
+	SystemListAllUserEmails(ctx context.Context) ([]*SystemListAllUserEmailsRow, error)
 	SystemListAllUsers(ctx context.Context) ([]*SystemListAllUsersRow, error)
 	SystemListBoardsByParentID(ctx context.Context, arg SystemListBoardsByParentIDParams) ([]*Imageboard, error)
 	SystemListCommentsByThreadID(ctx context.Context, forumthreadID int32) ([]*SystemListCommentsByThreadIDRow, error)
@@ -570,6 +571,7 @@ type Querier interface {
 	// This query updates the "list" column in the "bookmarks" table for a specific lister.
 	UpdateBookmarksForLister(ctx context.Context, arg UpdateBookmarksForListerParams) error
 	UpdateCommentForEditor(ctx context.Context, arg UpdateCommentForEditorParams) error
+	UpdateCustomCssForLister(ctx context.Context, arg UpdateCustomCssForListerParams) error
 	UpdateEmailForumUpdatesForLister(ctx context.Context, arg UpdateEmailForumUpdatesForListerParams) error
 	UpdateNewsPostForWriter(ctx context.Context, arg UpdateNewsPostForWriterParams) error
 	UpdatePreferenceForLister(ctx context.Context, arg UpdatePreferenceForListerParams) error

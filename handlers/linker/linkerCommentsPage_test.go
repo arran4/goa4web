@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"testing"
 	"time"
 
@@ -40,7 +41,7 @@ func TestCommentsPageAllowsGlobalViewGrant(t *testing.T) {
 			Title_2:    sql.NullString{String: "cat", Valid: true},
 		},
 		GetCommentsBySectionThreadIdForUserReturns: []*db.GetCommentsBySectionThreadIdForUserRow{},
-		GetThreadBySectionThreadIDForReplierReturn: &db.Forumthread{
+		GetThreadLastPosterAndPermsReturns: &db.GetThreadLastPosterAndPermsRow{
 			Idforumthread:          1,
 			Firstpost:              1,
 			Lastposter:             1,
@@ -128,7 +129,10 @@ func writeTempCommentsTemplate(t *testing.T, content string) {
 	if err := os.Mkdir(siteDir, 0o755); err != nil {
 		t.Fatalf("create site dir: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(siteDir, "commentsPage.gohtml"), []byte(content), 0o644); err != nil {
+	if err := os.Mkdir(filepath.Join(siteDir, "linker"), 0o755); err != nil {
+		t.Fatalf("create site/linker dir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(siteDir, "linker", "commentsPage.gohtml"), []byte(content), 0o644); err != nil {
 		t.Fatalf("write template: %v", err)
 	}
 	templates.SetDir(dir)
@@ -269,6 +273,65 @@ func TestCommentsPageEditControlsRequireGrantNotRole(t *testing.T) {
 }
 
 func TestCommentsPageEditControlsAllowAdminMode(t *testing.T) {
-	// Skip broken test as per instructions
-	t.Skip("Skipping broken test TestCommentsPageEditControlsAllowAdminMode")
+	writeTempCommentsTemplate(t, `{{ range .Comments }}{{ call $.AdminURL . }}{{ end }}`)
+
+	t.Logf("Templates in site: %v", templates.ListSiteTemplateNames())
+
+	linkID := 1
+	threadID := 1
+	userID := int32(2)
+	commentID := int32(100)
+
+	queries := &db.QuerierStub{
+		GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow: &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow{
+			ID:         int32(linkID),
+			LanguageID: sql.NullInt32{Int32: 1, Valid: true},
+			AuthorID:   userID,
+			CategoryID: sql.NullInt32{Int32: 1, Valid: true},
+			ThreadID:   int32(threadID),
+			Title:      sql.NullString{String: "t", Valid: true},
+			Url:        sql.NullString{String: "http://u", Valid: true},
+			Listed:     sql.NullTime{Time: time.Unix(0, 0), Valid: true},
+			Timezone:   sql.NullString{String: time.Local.String(), Valid: true},
+			Username:   sql.NullString{String: "bob", Valid: true},
+			Title_2:    sql.NullString{String: "cat", Valid: true},
+		},
+		GetCommentsBySectionThreadIdForUserReturns: []*db.GetCommentsBySectionThreadIdForUserRow{
+			{
+				Idcomments:    int32(commentID),
+				ForumthreadID: int32(threadID),
+				Text:          sql.NullString{String: "some comment", Valid: true},
+				IsOwner:       false,
+			},
+		},
+		GetThreadLastPosterAndPermsReturns: &db.GetThreadLastPosterAndPermsRow{
+			Idforumthread:          int32(threadID),
+			Firstpost:              1,
+			Lastposter:             1,
+			ForumtopicIdforumtopic: 1,
+			Comments:               sql.NullInt32{Int32: 0, Valid: true},
+			Lastaddition:           sql.NullTime{Time: time.Unix(0, 0), Valid: true},
+			Locked:                 sql.NullBool{Bool: false, Valid: true},
+		},
+		GetPermissionsByUserIDReturns: []*db.GetPermissionsByUserIDRow{
+			{Name: "administrator", IsAdmin: true},
+		},
+		SystemCheckGrantReturns: 1,
+	}
+
+	w, req, cd := newCommentsPageRequest(t, queries, []string{"administrator"}, userID)
+	cd.AdminMode = true
+
+	CommentsPage(w, req)
+
+	resp := w.Result()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected status 200 OK, got %d", resp.StatusCode)
+	}
+
+	body := w.Body.String()
+	expectedAdminURL := "/admin/comment/100"
+	if !strings.Contains(body, expectedAdminURL) {
+		t.Errorf("expected admin URL %q in body, got: %q", expectedAdminURL, body)
+	}
 }

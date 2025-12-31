@@ -118,6 +118,23 @@ func (q *Queries) DeleteNotificationForLister(ctx context.Context, arg DeleteNot
 	return err
 }
 
+const getNotificationCountForLister = `-- name: GetNotificationCountForLister :one
+SELECT COUNT(*) FROM notifications
+WHERE users_idusers = ?
+`
+
+// GetNotificationCountForLister returns the total number of notifications for a
+// lister.
+// Parameters:
+//
+//	lister_id - ID of the lister to count notifications for
+func (q *Queries) GetNotificationCountForLister(ctx context.Context, listerID int32) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getNotificationCountForLister, listerID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const getNotificationForLister = `-- name: GetNotificationForLister :one
 SELECT id, users_idusers, link, message, created_at, read_at
 FROM notifications

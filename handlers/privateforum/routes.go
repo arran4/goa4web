@@ -19,6 +19,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	pr := r.PathPrefix("/private").Subrouter()
 	pr.Use(handlers.IndexMiddleware(CustomIndex), handlers.SectionMiddleware("privateforum"), forumhandlers.BasePathMiddleware("/private"))
 	pr.HandleFunc("", PrivateForumPage).Methods(http.MethodGet)
+	pr.HandleFunc("/preview", handlers.PreviewPage).Methods("POST")
 	// Dedicated page to start a private group discussion
 	pr.HandleFunc("/topic/new", StartGroupDiscussionPage).Methods(http.MethodGet)
 	pr.HandleFunc("/topic/new", handlers.TaskHandler(privateTopicCreateTask)).Methods(http.MethodPost).MatcherFunc(privateTopicCreateTask.Matcher())

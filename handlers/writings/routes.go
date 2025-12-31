@@ -26,6 +26,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	wr.HandleFunc("/u/{username}/atom", AtomPage).Methods("GET")
 	wr.HandleFunc("", WritingsPage).Methods("GET")
 	wr.HandleFunc("/", WritingsPage).Methods("GET")
+	wr.HandleFunc("/preview", handlers.PreviewPage).Methods("POST")
 	wr.HandleFunc("/writer/{username}", WriterPage).Methods("GET")
 	wr.HandleFunc("/writer/{username}/", WriterPage).Methods("GET")
 	wr.HandleFunc("/writers", WriterListPage).Methods("GET")

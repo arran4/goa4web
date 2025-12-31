@@ -84,6 +84,10 @@ func (q *userEmailPageQueries) GetPermissionsByUserID(context.Context, int32) ([
 	return nil, nil
 }
 
+func (q *userEmailPageQueries) UpdateCustomCssForLister(context.Context, db.UpdateCustomCssForListerParams) error {
+	return nil
+}
+
 type languageSaveQueries struct {
 	db.Querier
 	languages     []*db.Language
@@ -123,6 +127,10 @@ func (q *languageSaveQueries) InsertPreferenceForLister(_ context.Context, arg d
 
 func (q *languageSaveQueries) UpdatePreferenceForLister(_ context.Context, arg db.UpdatePreferenceForListerParams) error {
 	q.updatedPrefs = append(q.updatedPrefs, arg)
+	return nil
+}
+
+func (q *languageSaveQueries) UpdateCustomCssForLister(context.Context, db.UpdateCustomCssForListerParams) error {
 	return nil
 }
 

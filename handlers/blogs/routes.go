@@ -22,6 +22,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	br.HandleFunc("/atom", AtomPage).Methods("GET")
 	br.HandleFunc("", Page).Methods("GET")
 	br.HandleFunc("/", Page).Methods("GET")
+	br.HandleFunc("/preview", handlers.PreviewPage).Methods("POST")
 	br.HandleFunc("/add", addBlogTask.Page).Methods("GET").MatcherFunc(handlers.RequiredGrant("blogs", "entry", "post", 0))
 	br.HandleFunc("/add", handlers.TaskHandler(addBlogTask)).Methods("POST").MatcherFunc(handlers.RequiredGrant("blogs", "entry", "post", 0)).MatcherFunc(addBlogTask.Matcher())
 	br.HandleFunc("/bloggers", BloggerListPage).Methods("GET")
@@ -37,6 +38,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	br.Handle("/blog/{blog}/edit", RequireBlogAuthor(http.HandlerFunc(handlers.TaskHandler(editBlogTask)))).Methods("POST").MatcherFunc(RequireBlogEditGrant()).MatcherFunc(editBlogTask.Matcher())
 	br.HandleFunc("/blog/{blog}/edit", handlers.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(cancelTask.Matcher())
 	br.HandleFunc("/blog/{blog}/labels", handlers.TaskHandler(setLabelsTask)).Methods("POST").MatcherFunc(setLabelsTask.Matcher())
+	br.HandleFunc("/blog/{blog}/labels", handlers.TaskHandler(markBlogReadTask)).Methods("GET").MatcherFunc(markBlogReadTask.Matcher())
 
 }
 

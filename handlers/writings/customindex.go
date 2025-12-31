@@ -72,18 +72,35 @@ func WritingsPageSpecificItems(cd *common.CoreData, r *http.Request) []common.In
 			})
 		}
 
-		// Mark as Read
-		redirect := r.URL.RequestURI()
-		items = append(items, common.IndexItem{
-			Name: "Mark as Read",
-			Link: fmt.Sprintf("/writings/article/%d/labels?task=Mark+Thread+Read&redirect=%s", writing.Idwriting, url.QueryEscape(redirect)),
-		})
-		items = append(items, common.IndexItem{
-			Name: "Mark as Read & Return",
-			Link: fmt.Sprintf("/writings/article/%d/labels?task=Mark+Thread+Read&redirect=%s", writing.Idwriting, url.QueryEscape(fmt.Sprintf("/writings/category/%d", writing.WritingCategoryID))),
-		})
+		if hasWritingUnread(cd, writing.Idwriting) {
+			redirect := r.URL.RequestURI()
+			items = append(items, common.IndexItem{
+				Name: "Mark as read",
+				Link: fmt.Sprintf("/writings/article/%d/labels?task=Mark+Thread+Read&redirect=%s", writing.Idwriting, url.QueryEscape(redirect)),
+			})
+			items = append(items, common.IndexItem{
+				Name: "Mark as read and go back",
+				Link: fmt.Sprintf("/writings/article/%d/labels?task=Mark+Thread+Read&redirect=%s", writing.Idwriting, url.QueryEscape(fmt.Sprintf("/writings/category/%d", writing.WritingCategoryID))),
+			})
+		}
 	}
 	return items
+}
+
+func hasWritingUnread(cd *common.CoreData, writingID int32) bool {
+	if cd == nil || cd.UserID == 0 {
+		return false
+	}
+	labels, err := cd.WritingPrivateLabels(writingID)
+	if err != nil {
+		return false
+	}
+	for _, l := range labels {
+		if l == "unread" || l == "new" {
+			return true
+		}
+	}
+	return false
 }
 
 // Deprecated/Wrapper

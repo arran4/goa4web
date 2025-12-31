@@ -11,7 +11,7 @@ import (
 )
 
 const getPreferenceForLister = `-- name: GetPreferenceForLister :one
-SELECT idpreferences, language_id, users_idusers, emailforumupdates, page_size, auto_subscribe_replies, timezone
+SELECT idpreferences, language_id, users_idusers, emailforumupdates, page_size, auto_subscribe_replies, timezone, custom_css
 FROM preferences
 WHERE users_idusers = ?
 `
@@ -27,6 +27,7 @@ func (q *Queries) GetPreferenceForLister(ctx context.Context, listerID int32) (*
 		&i.PageSize,
 		&i.AutoSubscribeReplies,
 		&i.Timezone,
+		&i.CustomCss,
 	)
 	return &i, err
 }
@@ -82,6 +83,22 @@ type UpdateAutoSubscribeRepliesForListerParams struct {
 
 func (q *Queries) UpdateAutoSubscribeRepliesForLister(ctx context.Context, arg UpdateAutoSubscribeRepliesForListerParams) error {
 	_, err := q.db.ExecContext(ctx, updateAutoSubscribeRepliesForLister, arg.AutoSubscribeReplies, arg.ListerID)
+	return err
+}
+
+const updateCustomCssForLister = `-- name: UpdateCustomCssForLister :exec
+UPDATE preferences
+SET custom_css = ?
+WHERE users_idusers = ?
+`
+
+type UpdateCustomCssForListerParams struct {
+	CustomCss sql.NullString
+	ListerID  int32
+}
+
+func (q *Queries) UpdateCustomCssForLister(ctx context.Context, arg UpdateCustomCssForListerParams) error {
+	_, err := q.db.ExecContext(ctx, updateCustomCssForLister, arg.CustomCss, arg.ListerID)
 	return err
 }
 

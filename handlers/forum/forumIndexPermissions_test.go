@@ -28,8 +28,8 @@ func TestCustomForumIndexWriteReply(t *testing.T) {
 	if !common.ContainsItem(cd.CustomIndexItems, "Write Reply") {
 		t.Errorf("expected write reply item")
 	}
-	if len(q.SystemCheckGrantCalls) != 1 {
-		t.Fatalf("expected 1 grant check, got %d", len(q.SystemCheckGrantCalls))
+	if len(q.SystemCheckGrantCalls) != 2 {
+		t.Fatalf("expected 2 grant check, got %d", len(q.SystemCheckGrantCalls))
 	}
 }
 
@@ -102,8 +102,8 @@ func TestCustomForumIndexWriteReplyDenied(t *testing.T) {
 	if common.ContainsItem(cd.CustomIndexItems, "Write Reply") {
 		t.Errorf("unexpected write reply item")
 	}
-	if len(q.SystemCheckGrantCalls) != 1 {
-		t.Fatalf("expected 1 grant check, got %d", len(q.SystemCheckGrantCalls))
+	if len(q.SystemCheckGrantCalls) != 2 {
+		t.Fatalf("expected 2 grant check, got %d", len(q.SystemCheckGrantCalls))
 	}
 }
 

@@ -6,6 +6,8 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestCanSearch(t *testing.T) {
@@ -23,7 +25,13 @@ func TestCanSearch(t *testing.T) {
 		{
 			name: "global grant",
 			cd: func() *common.CoreData {
-				cd := common.NewCoreData(context.Background(), nil, cfg, common.WithUserRoles([]string{"administrator"}))
+				q := testhelpers.NewQuerierStub(testhelpers.StubConfig{
+					Permissions: []*db.GetPermissionsByUserIDRow{
+						{Name: "administrator", IsAdmin: true},
+					},
+				})
+				cd := common.NewCoreData(context.Background(), q, cfg, common.WithUserRoles([]string{"administrator"}))
+				cd.UserID = 1
 				cd.AdminMode = true
 				return cd
 			}(),
@@ -32,7 +40,13 @@ func TestCanSearch(t *testing.T) {
 		{
 			name: "section grant",
 			cd: func() *common.CoreData {
-				cd := common.NewCoreData(context.Background(), nil, cfg, common.WithUserRoles([]string{"administrator"}))
+				q := testhelpers.NewQuerierStub(testhelpers.StubConfig{
+					Permissions: []*db.GetPermissionsByUserIDRow{
+						{Name: "administrator", IsAdmin: true},
+					},
+				})
+				cd := common.NewCoreData(context.Background(), q, cfg, common.WithUserRoles([]string{"administrator"}))
+				cd.UserID = 1
 				cd.AdminMode = true
 				return cd
 			}(),

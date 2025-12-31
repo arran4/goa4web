@@ -25,7 +25,7 @@
             <span class="section-title">New Thread:</span><br>
             <form method="post" action="">
                 {{ csrfField }}
-                <textarea id="reply" name="replytext" cols="40" rows="20"></textarea><br>
+                <textarea id="reply" name="replytext" cols="40" rows="20">{{ .QuoteText }}</textarea><br>
                 {{ template "languageCombobox" }}
                 <input type="submit" name="task" value="Create Thread">
                 <button type="button" class="preview-a4code" data-target="reply" data-preview-url="{{.BasePath}}/preview">Preview</button>

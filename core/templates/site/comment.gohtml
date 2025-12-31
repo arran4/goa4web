@@ -36,9 +36,14 @@
                 {{ if ne $context "admin" }}
                 <footer>
                     {{ if cd.SelectedThreadCanReply }}
-                        [<a href="#" class="quote-link" data-quote-type="full" data-comment-id="{{ $cmt.Idcomments }}">FULL REPLY</a>]
-                        [<a href="#" class="quote-link" data-quote-type="paragraph" data-comment-id="{{ $cmt.Idcomments }}">PARAGRAPH REPLY</a>]
-                        [<a href="#" class="quote-link" data-quote-type="selected" data-comment-id="{{ $cmt.Idcomments }}">QUOTE SELECTED</a>]
+                        {{ $topicID := 0 }}
+                        {{ if cd.SelectedThreadLoaded }}{{ $topicID = cd.SelectedThreadLoaded.ForumtopicIdforumtopic }}{{ end }}
+                        [<a href="#" class="quote-link" data-quote-type="full" data-comment-id="{{ $cmt.Idcomments }}">FULL REPLY</a>
+                         <a href="{{ cd.ForumBasePath }}/topic/{{ $topicID }}/thread/new?quote_comment_id={{ $cmt.Idcomments }}&quote_type=full" title="Reply in new thread">&#x2197;</a>]
+                        [<a href="#" class="quote-link" data-quote-type="paragraph" data-comment-id="{{ $cmt.Idcomments }}">PARAGRAPH REPLY</a>
+                         <a href="{{ cd.ForumBasePath }}/topic/{{ $topicID }}/thread/new?quote_comment_id={{ $cmt.Idcomments }}&quote_type=paragraph" title="Reply in new thread">&#x2197;</a>]
+                        [<a href="#" class="quote-link" data-quote-type="selected" data-comment-id="{{ $cmt.Idcomments }}">QUOTE SELECTED</a>
+                         <a href="#" class="quote-new-thread-link" data-comment-id="{{ $cmt.Idcomments }}" data-topic-id="{{ $topicID }}" title="Reply in new thread">&#x2197;</a>]
                     {{ end }}
                     {{ if cd.CanEditComment $cmt }}[<a href="{{ cd.CommentEditURL $cmt }}">EDIT</a>]{{ end }}
                     {{ $admin := cd.CommentAdminURL $cmt }}{{ if $admin }}[<a href="{{ $admin }}">ADMIN</a>]{{ end }}

@@ -150,6 +150,9 @@ func TestRequireCommentAuthor_AllowsAdminMode(t *testing.T) {
 			UsersIdusers:  authorID,
 			IsOwner:       false,
 		},
+		GetPermissionsByUserIDReturns: []*db.GetPermissionsByUserIDRow{
+			{Name: "administrator", IsAdmin: true},
+		},
 	}
 
 	req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/15/comment/13", nil)

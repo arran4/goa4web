@@ -131,9 +131,9 @@ func (f *forumTopicPageQuerierFake) GetForumTopicByIdForUser(_ context.Context, 
 	return f.topic, nil
 }
 
-func (f *forumTopicPageQuerierFake) SystemCheckRoleGrant(_ context.Context, arg db.SystemCheckRoleGrantParams) (int32, error) {
-	f.record(fmt.Sprintf("SystemCheckRoleGrant:%s:%s", arg.Name, arg.Action))
-	return 0, nil
+func (f *forumTopicPageQuerierFake) GetPermissionsByUserID(_ context.Context, idusers int32) ([]*db.GetPermissionsByUserIDRow, error) {
+	f.record(fmt.Sprintf("GetPermissionsByUserID:%d", idusers))
+	return nil, nil
 }
 
 func (f *forumTopicPageQuerierFake) GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText(_ context.Context, arg db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams) ([]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow, error) {

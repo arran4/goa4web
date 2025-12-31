@@ -1,0 +1,6 @@
+goa4web test verification template - Render a template with mock data
+
+Usage:
+  goa4web test verification template -template <path> [-data <json_file>]
+
+Flags:

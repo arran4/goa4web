@@ -18,7 +18,7 @@ import (
 )
 
 type userProfileQueries struct {
-	db.Querier
+	db.QuerierStub
 	userID int32
 	user   *db.SystemGetUserByIDRow
 }
@@ -31,7 +31,6 @@ func (q *userProfileQueries) SystemGetUserByID(_ context.Context, id int32) (*db
 }
 
 func TestAdminUserProfilePage_UserFound(t *testing.T) {
-	t.Skip("templates not available")
 	userID := 22
 	queries := &userProfileQueries{
 		userID: int32(userID),
@@ -42,6 +41,13 @@ func TestAdminUserProfilePage_UserFound(t *testing.T) {
 			PublicProfileEnabledAt: sql.NullTime{},
 		},
 	}
+	queries.AdminListUserEmailsReturns = []*db.UserEmail{}
+	queries.AdminUserPostCountsByIDReturns = &db.AdminUserPostCountsByIDRow{}
+	queries.GetBookmarksForUserReturns = &db.GetBookmarksForUserRow{}
+	queries.ListGrantsByUserIDReturns = []*db.Grant{}
+	queries.ListAdminUserCommentsReturns = []*db.AdminUserComment{}
+	queries.GetPermissionsByUserIDReturns = []*db.GetPermissionsByUserIDRow{}
+	queries.ListSubscriptionsByUserReturns = []*db.ListSubscriptionsByUserRow{}
 
 	req := httptest.NewRequest("GET", fmt.Sprintf("/admin/user/%d", userID), nil)
 	req = mux.SetURLVars(req, map[string]string{"user": strconv.Itoa(userID)})

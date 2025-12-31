@@ -6,6 +6,8 @@ import (
 
 	"github.com/gorilla/mux"
 
+	. "github.com/arran4/gorillamuxlogic"
+
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/router"
@@ -35,6 +37,8 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Reg
 	ibr.HandleFunc("/", ImagebbsPage).Methods("GET")
 	ibr.HandleFunc("/poster/{username}", PosterPage).Methods("GET")
 	ibr.HandleFunc("/poster/{username}/", PosterPage).Methods("GET")
+
+	ibr.HandleFunc("/{path:.*}", handlers.RenderPermissionDenied).MatcherFunc(Not(handlers.RequiresAnAccount()))
 }
 
 // Register registers the imagebbs router module.

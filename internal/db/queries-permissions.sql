@@ -157,3 +157,21 @@ LEFT JOIN user_roles ur ON u.idusers = ur.users_idusers
 LEFT JOIN roles r ON r.id = ur.role_id
 GROUP BY u.idusers
 ORDER BY u.idusers;
+
+-- name: ListGrantsExtended :many
+SELECT
+    g.id,
+    g.section,
+    g.item,
+    g.rule_type,
+    g.item_id,
+    g.item_rule,
+    g.action,
+    g.extra,
+    g.active,
+    u.username,
+    r.name as role_name
+FROM grants g
+LEFT JOIN users u ON g.user_id = u.idusers
+LEFT JOIN roles r ON g.role_id = r.id
+ORDER BY g.id;

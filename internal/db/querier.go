@@ -14,6 +14,7 @@ type Querier interface {
 	AddContentLabelStatus(ctx context.Context, arg AddContentLabelStatusParams) error
 	AddContentPrivateLabel(ctx context.Context, arg AddContentPrivateLabelParams) error
 	AddContentPublicLabel(ctx context.Context, arg AddContentPublicLabelParams) error
+	AdminAddUserEmail(ctx context.Context, arg AdminAddUserEmailParams) error
 	AdminApproveImagePost(ctx context.Context, idimagepost int32) error
 	AdminArchiveBlog(ctx context.Context, arg AdminArchiveBlogParams) error
 	AdminArchiveComment(ctx context.Context, arg AdminArchiveCommentParams) error
@@ -69,6 +70,7 @@ type Querier interface {
 	AdminDeletePendingEmail(ctx context.Context, id int32) error
 	AdminDeleteTemplateOverride(ctx context.Context, name string) error
 	AdminDeleteUserByID(ctx context.Context, idusers int32) error
+	AdminDeleteUserEmail(ctx context.Context, id int32) error
 	// This query deletes a permission from the "permissions" table based on the provided "permid".
 	// Parameters:
 	//   ? - Permission ID to be deleted (int)
@@ -106,6 +108,7 @@ type Querier interface {
 	AdminGetThreadsStartedByUser(ctx context.Context, usersIdusers int32) ([]*Forumthread, error)
 	AdminGetThreadsStartedByUserWithTopic(ctx context.Context, usersIdusers int32) ([]*AdminGetThreadsStartedByUserWithTopicRow, error)
 	AdminGetTopicGrants(ctx context.Context, topicID sql.NullInt32) ([]*AdminGetTopicGrantsRow, error)
+	AdminGetUserEmailByID(ctx context.Context, id int32) (*UserEmail, error)
 	AdminGetWritingsByCategoryId(ctx context.Context, writingCategoryID int32) ([]*AdminGetWritingsByCategoryIdRow, error)
 	AdminHardDeleteComment(ctx context.Context, idcomments int32) error
 	AdminImageboardPostCounts(ctx context.Context) ([]*AdminImageboardPostCountsRow, error)
@@ -244,6 +247,7 @@ type Querier interface {
 	// admin task
 	AdminUpdateRolePublicProfileAllowed(ctx context.Context, arg AdminUpdateRolePublicProfileAllowedParams) error
 	AdminUpdateUserEmail(ctx context.Context, arg AdminUpdateUserEmailParams) error
+	AdminUpdateUserEmailDetails(ctx context.Context, arg AdminUpdateUserEmailDetailsParams) error
 	AdminUpdateUserRole(ctx context.Context, arg AdminUpdateUserRoleParams) error
 	AdminUpdateUsernameByID(ctx context.Context, arg AdminUpdateUsernameByIDParams) error
 	AdminUpdateWritingCategory(ctx context.Context, arg AdminUpdateWritingCategoryParams) error
@@ -541,6 +545,7 @@ type Querier interface {
 	SystemListPublicWritingsByAuthor(ctx context.Context, arg SystemListPublicWritingsByAuthorParams) ([]*SystemListPublicWritingsByAuthorRow, error)
 	SystemListPublicWritingsInCategory(ctx context.Context, arg SystemListPublicWritingsInCategoryParams) ([]*SystemListPublicWritingsInCategoryRow, error)
 	SystemListUnverifiedEmailsCreatedAfter(ctx context.Context, verificationExpiresAt sql.NullTime) ([]*UserEmail, error)
+	SystemListUnverifiedEmailsExpiresBefore(ctx context.Context, verificationExpiresAt sql.NullTime) ([]*UserEmail, error)
 	SystemListUserInfo(ctx context.Context) ([]*SystemListUserInfoRow, error)
 	SystemListVerifiedEmailsByUserID(ctx context.Context, userID int32) ([]*UserEmail, error)
 	SystemListWritingCategories(ctx context.Context, arg SystemListWritingCategoriesParams) ([]*WritingCategory, error)

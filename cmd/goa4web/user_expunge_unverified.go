@@ -14,12 +14,14 @@ import (
 type userExpungeUnverifiedCmd struct {
 	*userCmd
 	olderThan time.Duration
+	dryRun    bool
 }
 
 func parseUserExpungeUnverifiedCmd(parent *userCmd, args []string) (*userExpungeUnverifiedCmd, error) {
 	c := &userExpungeUnverifiedCmd{userCmd: parent}
 	c.fs = newFlagSet("expunge-unverified")
 	c.fs.DurationVar(&c.olderThan, "older-than", 0, "Duration to define 'older than' (e.g., 72h).")
+	c.fs.BoolVar(&c.dryRun, "dry-run", false, "List emails that would be deleted without taking action.")
 	c.fs.Usage = c.Usage
 	if err := c.fs.Parse(args); err != nil {
 		return nil, err
@@ -48,21 +50,18 @@ func (c *userExpungeUnverifiedCmd) Run() error {
 	defer d.Close()
 	queries := db.New(d)
 
-	// "Older than X" => verification_expires_at < now - X
-	// Actually, verification_expires_at is usually created + 24h.
-	// So if created T, expires T+24.
-	// If we want created < Now - X.
-	// T < N - X
-	// T + 24 < N - X + 24
-	// Expires < N - X + 24.
-	//
-	// However, simplistically, let's just say if it expired before (Now - X), it's definitely older than X (assuming expiry > creation).
-	// If expiry is 24h, and we want older than 72h.
-	// We want expired before Now - 72h.
-	// If it expired 73h ago, it was created 73+24 = 97h ago. Correct.
-	// So `verification_expires_at < Now - olderThan`.
-
 	cutoff := time.Now().Add(-c.olderThan)
+
+	if c.dryRun {
+		// We need a list query for this
+		// SystemListUnverifiedEmailsExpiresBefore(cutoff)
+		// I need to add this query or reuse existing
+		// SystemDeleteUnverifiedEmailsExpiresBefore uses `verification_expires_at < ?`
+		// I should check `internal/db/queries-user_emails.sql` if there is a list variant.
+		// I don't think I added one. I should add `SystemListUnverifiedEmailsExpiresBefore`
+		return fmt.Errorf("dry-run not implemented yet, missing query")
+	}
+
 	res, err := queries.SystemDeleteUnverifiedEmailsExpiresBefore(c.rootCmd.Context(), sql.NullTime{Time: cutoff, Valid: true})
 	if err != nil {
 		return fmt.Errorf("expunge unverified emails: %w", err)

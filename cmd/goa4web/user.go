@@ -127,16 +127,16 @@ func (c *userCmd) Run() error {
 			return fmt.Errorf("rename: %w", err)
 		}
 		return cmd.Run()
-	case "resend-verification":
-		cmd, err := parseUserResendVerificationCmd(c, args[1:])
+	case "email":
+		cmd, err := parseUserEmailCmd(c, args[1:])
 		if err != nil {
-			return fmt.Errorf("resend-verification: %w", err)
+			return fmt.Errorf("email: %w", err)
 		}
 		return cmd.Run()
-	case "expunge-unverified":
-		cmd, err := parseUserExpungeUnverifiedCmd(c, args[1:])
+	case "unverified-emails":
+		cmd, err := parseUserUnverifiedEmailsCmd(c, args[1:])
 		if err != nil {
-			return fmt.Errorf("expunge-unverified: %w", err)
+			return fmt.Errorf("unverified-emails: %w", err)
 		}
 		return cmd.Run()
 	default:

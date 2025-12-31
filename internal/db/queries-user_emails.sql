@@ -97,7 +97,31 @@ DELETE FROM user_emails
 WHERE verified_at IS NULL
   AND verification_expires_at < ?;
 
+-- name: SystemListUnverifiedEmailsExpiresBefore :many
+SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority
+FROM user_emails
+WHERE verified_at IS NULL
+  AND verification_expires_at < ?
+ORDER BY id;
+
 -- name: SystemUpdateVerificationCode :exec
 UPDATE user_emails
 SET last_verification_code = ?, verification_expires_at = ?
+WHERE id = ?;
+
+-- name: AdminAddUserEmail :exec
+INSERT INTO user_emails (user_id, email, verified_at, notification_priority)
+VALUES (?, ?, ?, ?);
+
+-- name: AdminDeleteUserEmail :exec
+DELETE FROM user_emails WHERE id = ?;
+
+-- name: AdminUpdateUserEmailDetails :exec
+UPDATE user_emails
+SET email = ?, verified_at = ?, notification_priority = ?
+WHERE id = ?;
+
+-- name: AdminGetUserEmailByID :one
+SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority
+FROM user_emails
 WHERE id = ?;

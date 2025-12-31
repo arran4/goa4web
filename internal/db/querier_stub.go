@@ -114,6 +114,10 @@ type QuerierStub struct {
 	GetCommentsBySectionThreadIdForUserReturns []*GetCommentsBySectionThreadIdForUserRow
 	GetCommentsBySectionThreadIdForUserErr     error
 
+	GetCommentsByThreadIdForUserCalls   []GetCommentsByThreadIdForUserParams
+	GetCommentsByThreadIdForUserReturns []*GetCommentsByThreadIdForUserRow
+	GetCommentsByThreadIdForUserErr     error
+
 	DeleteThreadsByTopicIDCalls []int32
 	DeleteThreadsByTopicIDErr   error
 
@@ -605,6 +609,13 @@ func (s *QuerierStub) GetCommentsBySectionThreadIdForUser(ctx context.Context, a
 	defer s.mu.Unlock()
 	s.GetCommentsBySectionThreadIdForUserCalls = append(s.GetCommentsBySectionThreadIdForUserCalls, arg)
 	return s.GetCommentsBySectionThreadIdForUserReturns, s.GetCommentsBySectionThreadIdForUserErr
+}
+
+func (s *QuerierStub) GetCommentsByThreadIdForUser(ctx context.Context, arg GetCommentsByThreadIdForUserParams) ([]*GetCommentsByThreadIdForUserRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.GetCommentsByThreadIdForUserCalls = append(s.GetCommentsByThreadIdForUserCalls, arg)
+	return s.GetCommentsByThreadIdForUserReturns, s.GetCommentsByThreadIdForUserErr
 }
 
 // SystemCheckGrant records the call and returns the configured response.

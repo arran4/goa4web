@@ -5,6 +5,8 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 
+	. "github.com/arran4/gorillamuxlogic"
+
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/router"
@@ -44,6 +46,8 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	wr.HandleFunc("/category/{category}", CategoryPage).Methods("GET")
 	wr.HandleFunc("/category/{category}/add", submitWritingTask.Page).Methods("GET").MatcherFunc(MatchCanPostWriting)
 	wr.HandleFunc("/category/{category}/add", handlers.TaskHandler(submitWritingTask)).Methods("POST").MatcherFunc(MatchCanPostWriting).MatcherFunc(submitWritingTask.Matcher())
+
+	wr.HandleFunc("/{path:.*}", handlers.RenderPermissionDenied).MatcherFunc(Not(handlers.RequiresAnAccount()))
 
 	if legacyRedirectsEnabled {
 		// legacy redirects

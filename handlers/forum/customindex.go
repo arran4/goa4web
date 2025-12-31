@@ -64,6 +64,18 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 			Name: "Go to topic",
 			Link: fmt.Sprintf("%s/topic/%s", base, topicID),
 		})
+		if tid, err := strconv.Atoi(topicID); err == nil && cd.HasGrant(section, "topic", "post", int32(tid)) {
+			name := "New Thread"
+			if base == "/private" {
+				name = "Create a new private thread"
+			}
+			items = append(items,
+				common.IndexItem{
+					Name: name,
+					Link: fmt.Sprintf("%s/topic/%s/thread", base, topicID),
+				},
+			)
+		}
 		if tid, err := strconv.Atoi(topicID); err == nil && cd.HasGrant(section, "topic", "reply", int32(tid)) {
 			items = append(items,
 				common.IndexItem{

@@ -156,7 +156,9 @@ func TestRequireCommentAuthor_AllowsAdminMode(t *testing.T) {
 	req = mux.SetURLVars(req, map[string]string{"comment": "13"})
 
 	sess := &sessions.Session{Values: map[interface{}]interface{}{"UID": adminID}}
-	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig(), common.WithSession(sess), common.WithUserRoles([]string{"anyone", "user", "administrator"}))
+	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig(), common.WithSession(sess), common.WithPermissions([]*db.GetPermissionsByUserIDRow{
+		{Name: "administrator", IsAdmin: true},
+	}))
 	cd.AdminMode = true
 
 	ctx := context.WithValue(req.Context(), core.ContextValues("session"), sess)

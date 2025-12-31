@@ -85,7 +85,6 @@ func TestTopicsPage_ThreadLinks(t *testing.T) {
 		t.Fatalf("unexpected double slash in link: %q", body)
 	}
 	expectedCalls := []string{
-		"SystemCheckRoleGrant:anyone:administrator",
 		"GetAllForumCategories",
 		"GetForumTopicByIdForUser:1",
 		"GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText:1",
@@ -94,8 +93,6 @@ func TestTopicsPage_ThreadLinks(t *testing.T) {
 		"ListContentPrivateLabels:thread:2",
 		"ListContentPublicLabels:thread:1",
 		"ListContentLabelStatus:thread:1",
-		"SystemCheckRoleGrant:anyone:administrator",
-		"SystemCheckRoleGrant:anyone:administrator",
 	}
 	if diff := cmp.Diff(expectedCalls, queries.calls); diff != "" {
 		t.Fatalf("unexpected query sequence (-want +got):\n%s", diff)

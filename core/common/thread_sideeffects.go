@@ -50,12 +50,6 @@ func (cd *CoreData) HandleThreadUpdated(ctx context.Context, event ThreadUpdated
 			if err := cd.SetThreadReadMarker(event.ThreadID, event.CommentID); err != nil {
 				errs = append(errs, fmt.Errorf("set read marker: %w", err))
 			}
-			// When marking a thread as read, we also want to ensure the "new" and "unread" labels
-			// are cleared for the current user (author/viewer).
-			// Passing false, false means: Not New, Not Unread.
-			if err := cd.SetThreadPrivateLabelStatus(event.ThreadID, false, false); err != nil {
-				errs = append(errs, fmt.Errorf("set private label status: %w", err))
-			}
 		}
 	}
 

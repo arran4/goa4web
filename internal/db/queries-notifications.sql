@@ -10,14 +10,6 @@ VALUES (sqlc.arg(recipient_id), sqlc.arg(link), sqlc.arg(message));
 SELECT COUNT(*) FROM notifications
 WHERE users_idusers = sqlc.arg(lister_id) AND read_at IS NULL;
 
--- GetNotificationCountForLister returns the total number of notifications for a
--- lister.
--- Parameters:
---   lister_id - ID of the lister to count notifications for
--- name: GetNotificationCountForLister :one
-SELECT COUNT(*) FROM notifications
-WHERE users_idusers = sqlc.arg(lister_id);
-
 -- name: ListNotificationsForLister :many
 SELECT id, users_idusers, link, message, created_at, read_at
 FROM notifications

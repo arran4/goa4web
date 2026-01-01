@@ -168,17 +168,9 @@ type QuerierStub struct {
 	GetPermissionsByUserIDCalls   []int32
 	GetPermissionsByUserIDFn      func(int32) ([]*GetPermissionsByUserIDRow, error)
 
-	GetThreadBySectionThreadIDForReplierCalls  []GetThreadBySectionThreadIDForReplierParams
-	GetThreadBySectionThreadIDForReplierReturn *Forumthread
-	GetThreadBySectionThreadIDForReplierErr    error
-
-	GetUnreadNotificationCountForListerCalls   []int32
-	GetUnreadNotificationCountForListerReturns int64
-	GetUnreadNotificationCountForListerErr     error
-
-	GetNotificationCountForListerCalls   []int32
-	GetNotificationCountForListerReturns int64
-	GetNotificationCountForListerErr     error
+	GetThreadBySectionThreadIDForReplierCalls   []GetThreadBySectionThreadIDForReplierParams
+	GetThreadBySectionThreadIDForReplierReturn  *Forumthread
+	GetThreadBySectionThreadIDForReplierErr     error
 
 	GetThreadLastPosterAndPermsCalls   []GetThreadLastPosterAndPermsParams
 	GetThreadLastPosterAndPermsReturns *GetThreadLastPosterAndPermsRow
@@ -965,17 +957,4 @@ func (s *QuerierStub) ListSubscribersForPattern(ctx context.Context, arg ListSub
 		}
 	}
 	return nil, nil
-}
-func (s *QuerierStub) GetUnreadNotificationCountForLister(ctx context.Context, listerID int32) (int64, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.GetUnreadNotificationCountForListerCalls = append(s.GetUnreadNotificationCountForListerCalls, listerID)
-	return s.GetUnreadNotificationCountForListerReturns, s.GetUnreadNotificationCountForListerErr
-}
-
-func (s *QuerierStub) GetNotificationCountForLister(ctx context.Context, listerID int32) (int64, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.GetNotificationCountForListerCalls = append(s.GetNotificationCountForListerCalls, listerID)
-	return s.GetNotificationCountForListerReturns, s.GetNotificationCountForListerErr
 }

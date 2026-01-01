@@ -2,11 +2,7 @@ package news
 
 import (
 	"bytes"
-	"context"
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/internal/db"
 	navpkg "github.com/arran4/goa4web/internal/navigation"
 	"github.com/gorilla/mux"
 	"net/http"
@@ -22,16 +18,7 @@ func TestPreviewRoute(t *testing.T) {
 
 	RegisterRoutes(r, cfg, navReg)
 
-	// Middleware to inject CoreData
-	mw := func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			cd := common.NewCoreData(r.Context(), &db.QuerierStub{}, cfg)
-			ctx := context.WithValue(r.Context(), consts.KeyCoreData, cd)
-			next.ServeHTTP(w, r.WithContext(ctx))
-		})
-	}
-
-	ts := httptest.NewServer(mw(r))
+	ts := httptest.NewServer(r)
 	defer ts.Close()
 
 	// Test /news/preview
@@ -58,9 +45,6 @@ func TestPreviewRoute(t *testing.T) {
 	if !strings.Contains(body, "<strong>Bold</strong>") {
 		t.Errorf("Expected '<strong>Bold</strong>', got %q", body)
 	}
-	if !strings.Contains(body, "<article class=\"thread\">") {
-		t.Errorf("Expected article frame, got %q", body)
-	}
 }
 
 func TestPreviewHandler(t *testing.T) {
@@ -68,11 +52,6 @@ func TestPreviewHandler(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	// Inject CoreData
-	cd := common.NewCoreData(req.Context(), &db.QuerierStub{}, &config.RuntimeConfig{})
-	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
-	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(PreviewPage)
@@ -88,8 +67,5 @@ func TestPreviewHandler(t *testing.T) {
 	if !strings.Contains(rr.Body.String(), expected) {
 		t.Errorf("handler returned unexpected body: got %v want %v",
 			rr.Body.String(), expected)
-	}
-	if !strings.Contains(rr.Body.String(), "<article class=\"thread\">") {
-		t.Errorf("Expected article frame, got %q", rr.Body.String())
 	}
 }

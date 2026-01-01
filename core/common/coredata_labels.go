@@ -150,9 +150,6 @@ func (cd *CoreData) PrivateLabels(item string, itemID int32, authorID int32) ([]
 			inverted[r.Label] = true
 			continue
 		}
-		if r.Label == "new" || r.Label == "unread" {
-			continue
-		}
 		userLabels = append(userLabels, r.Label)
 	}
 	sort.Strings(userLabels)

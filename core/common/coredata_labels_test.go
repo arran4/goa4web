@@ -115,7 +115,27 @@ func TestPrivateLabelsDefaultAndInversion(t *testing.T) {
 		}
 	})
 
-	if len(q.ListContentPrivateLabelsCalls) != 2 {
+	t.Run("Explicit labels for thread author", func(t *testing.T) {
+		q.ContentPrivateLabels = map[string]map[int32]map[int32]map[string]bool{
+			"thread": {
+				1: {
+					2: {"unread": false, "new": false},
+				},
+			},
+		}
+		q.ListContentPrivateLabelsCalls = nil
+
+		labels, err := cd.PrivateLabels("thread", 1, 2)
+		if err != nil {
+			t.Fatalf("PrivateLabels explicit: %v", err)
+		}
+		expected := []string{"new", "unread"}
+		if !reflect.DeepEqual(labels, expected) {
+			t.Fatalf("explicit labels %+v, want %+v", labels, expected)
+		}
+	})
+
+	if len(q.ListContentPrivateLabelsCalls) != 1 {
 		t.Fatalf("list private labels calls = %d", len(q.ListContentPrivateLabelsCalls))
 	}
 

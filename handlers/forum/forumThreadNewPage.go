@@ -298,6 +298,7 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 		ThreadURL:        cd.AbsoluteURL(endUrl),
 		IncludePostCount: true,
 		IncludeSearch:    true,
+		MarkThreadRead:   true,
 	}); err != nil {
 		log.Printf("thread create side effects: %v", err)
 	}

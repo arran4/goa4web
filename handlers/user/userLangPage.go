@@ -81,7 +81,7 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 		DefaultIsMultilingual: defaultIsMulti,
 	}
 
-	handlers.TemplateHandler(w, r, "langPage.gohtml", data)
+	handlers.TemplateHandler(w, r, "user/langPage.gohtml", data)
 }
 
 // updateLanguageSelections stores the languages selected by the user.

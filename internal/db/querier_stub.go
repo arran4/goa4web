@@ -54,9 +54,9 @@ type QuerierStub struct {
 	SystemClearContentPrivateLabelErr   error
 	SystemClearContentPrivateLabelCalls []SystemClearContentPrivateLabelParams
 
-	ClearUnreadContentPrivateLabelExceptUserErr error
+	ClearUnreadContentPrivateLabelExceptUserErr   error
 	ClearUnreadContentPrivateLabelExceptUserCalls []ClearUnreadContentPrivateLabelExceptUserParams
-	ClearUnreadContentPrivateLabelExceptUserFn func(context.Context, ClearUnreadContentPrivateLabelExceptUserParams) error
+	ClearUnreadContentPrivateLabelExceptUserFn    func(context.Context, ClearUnreadContentPrivateLabelExceptUserParams) error
 
 	SystemGetUserByIDRow   *SystemGetUserByIDRow
 	SystemGetUserByIDErr   error
@@ -97,6 +97,11 @@ type QuerierStub struct {
 	ListGrantsByUserIDReturns []*Grant
 	ListGrantsByUserIDErr     error
 	ListGrantsByUserIDCalls   []sql.NullInt32
+
+	ListGrantsExtendedReturns []*ListGrantsExtendedRow
+	ListGrantsExtendedErr     error
+	ListGrantsExtendedCalls   int
+	ListGrantsExtendedFn      func(context.Context) ([]*ListGrantsExtendedRow, error)
 
 	ListAdminUserCommentsReturns []*AdminUserComment
 	ListAdminUserCommentsErr     error
@@ -139,18 +144,18 @@ type QuerierStub struct {
 	GetCommentByIdForUserErr   error
 	GetCommentByIdForUserFn    func(context.Context, GetCommentByIdForUserParams) (*GetCommentByIdForUserRow, error)
 
-	CreateCommentInSectionForCommenterCalls []CreateCommentInSectionForCommenterParams
-	CreateCommentInSectionForCommenterFn    func(context.Context, CreateCommentInSectionForCommenterParams) (int64, error)
+	CreateCommentInSectionForCommenterCalls  []CreateCommentInSectionForCommenterParams
+	CreateCommentInSectionForCommenterFn     func(context.Context, CreateCommentInSectionForCommenterParams) (int64, error)
 	CreateCommentInSectionForCommenterResult int64
-	CreateCommentInSectionForCommenterErr error
+	CreateCommentInSectionForCommenterErr    error
 
 	UpsertContentReadMarkerCalls []UpsertContentReadMarkerParams
 	UpsertContentReadMarkerFn    func(context.Context, UpsertContentReadMarkerParams) error
-	UpsertContentReadMarkerErr error
+	UpsertContentReadMarkerErr   error
 
 	SystemGetUserByIDFn func(context.Context, int32) (*SystemGetUserByIDRow, error)
 
-	SystemInsertDeadLetterFn func(context.Context, string) error
+	SystemInsertDeadLetterFn  func(context.Context, string) error
 	SystemInsertDeadLetterErr error
 
 	GetThreadLastPosterAndPermsFn func(context.Context, GetThreadLastPosterAndPermsParams) (*GetThreadLastPosterAndPermsRow, error)
@@ -159,10 +164,10 @@ type QuerierStub struct {
 
 	RemoveContentPrivateLabelFn func(context.Context, RemoveContentPrivateLabelParams) error
 
-	GetForumTopicByIdForUserFn func(context.Context, GetForumTopicByIdForUserParams) (*GetForumTopicByIdForUserRow, error)
-	GetForumTopicByIdForUserCalls []GetForumTopicByIdForUserParams
+	GetForumTopicByIdForUserFn      func(context.Context, GetForumTopicByIdForUserParams) (*GetForumTopicByIdForUserRow, error)
+	GetForumTopicByIdForUserCalls   []GetForumTopicByIdForUserParams
 	GetForumTopicByIdForUserReturns *GetForumTopicByIdForUserRow
-	GetForumTopicByIdForUserErr error
+	GetForumTopicByIdForUserErr     error
 
 	ListPrivateTopicParticipantsByTopicIDForUserFn func(context.Context, ListPrivateTopicParticipantsByTopicIDForUserParams) ([]*ListPrivateTopicParticipantsByTopicIDForUserRow, error)
 
@@ -990,6 +995,16 @@ func (s *QuerierStub) ListGrantsByUserID(ctx context.Context, userID sql.NullInt
 	defer s.mu.Unlock()
 	s.ListGrantsByUserIDCalls = append(s.ListGrantsByUserIDCalls, userID)
 	return s.ListGrantsByUserIDReturns, s.ListGrantsByUserIDErr
+}
+
+func (s *QuerierStub) ListGrantsExtended(ctx context.Context) ([]*ListGrantsExtendedRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.ListGrantsExtendedCalls++
+	if s.ListGrantsExtendedFn != nil {
+		return s.ListGrantsExtendedFn(ctx)
+	}
+	return s.ListGrantsExtendedReturns, s.ListGrantsExtendedErr
 }
 
 func (s *QuerierStub) ListAdminUserComments(ctx context.Context, userID int32) ([]*AdminUserComment, error) {

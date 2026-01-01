@@ -54,6 +54,7 @@ func TestTopicsPage_ThreadLinks(t *testing.T) {
 			Lastposterusername:     sql.NullString{String: "abc", Valid: true},
 			Lastposterid:           sql.NullInt32{Int32: 5, Valid: true},
 			Firstpostusername:      sql.NullString{String: "abc", Valid: true},
+			Firstpostuserid:        sql.NullInt32{Int32: 5, Valid: true},
 			Firstpostwritten:       sql.NullTime{Time: now, Valid: true},
 			Firstposttext:          sql.NullString{String: "first post", Valid: true},
 		}},

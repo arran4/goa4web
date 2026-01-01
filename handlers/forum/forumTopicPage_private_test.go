@@ -2,13 +2,13 @@ package forum
 
 import (
 	"context"
+	"database/sql"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 
@@ -23,35 +23,39 @@ func TestTopicsPage_PrivateTopic(t *testing.T) {
 	core.Store = sessions.NewCookieStore([]byte("test"))
 	core.SessionName = "test-session"
 
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	qs := &db.QuerierStub{
+		GetAllForumCategoriesFn: func(ctx context.Context, arg db.GetAllForumCategoriesParams) ([]*db.Forumcategory, error) {
+			return []*db.Forumcategory{}, nil
+		},
+		GetForumTopicByIdForUserFn: func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
+			return &db.GetForumTopicByIdForUserRow{
+				Idforumtopic:                 1,
+				ForumcategoryIdforumcategory: 1,
+				Title:                        sql.NullString{String: "Topic: old is now Private chat with: Bob", Valid: true},
+				Handler:                      "private",
+				Lastaddition:                 sql.NullTime{Time: time.Now(), Valid: true},
+			}, nil
+		},
+		ListPrivateTopicParticipantsByTopicIDForUserFn: func(ctx context.Context, arg db.ListPrivateTopicParticipantsByTopicIDForUserParams) ([]*db.ListPrivateTopicParticipantsByTopicIDForUserRow, error) {
+			return []*db.ListPrivateTopicParticipantsByTopicIDForUserRow{
+				{Idusers: 1, Username: sql.NullString{String: "Alice", Valid: true}},
+				{Idusers: 2, Username: sql.NullString{String: "Bob", Valid: true}},
+			}, nil
+		},
+		GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextFn: func(ctx context.Context, arg db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams) ([]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow, error) {
+			return []*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow{}, nil
+		},
+		ListContentPublicLabelsFn: func(arg db.ListContentPublicLabelsParams) ([]*db.ListContentPublicLabelsRow, error) {
+			return []*db.ListContentPublicLabelsRow{}, nil
+		},
 	}
-	defer conn.Close()
-	queries := db.New(conn)
 
-	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
+	cd := common.NewCoreData(context.Background(), qs, config.NewRuntimeConfig())
+	cd.UserID = 1 // Set viewer ID to 1 (Alice)
 
 	req := httptest.NewRequest(http.MethodGet, "/forum/topic/1", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "1"})
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
-
-	mock.ExpectQuery("SELECT .* FROM forumcategory").
-		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "language_id", "title", "description"}))
-
-	mock.ExpectQuery("SELECT t.* FROM forumtopic t").
-		WithArgs(sqlmock.AnyArg(), 1, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_id", "title", "description", "threads", "comments", "lastaddition", "handler", "lastposterusername"}).
-			AddRow(1, 0, 1, 0, "Topic: old is now Private chat with: Bob", "", 0, 0, time.Now(), "private", ""))
-
-	mock.ExpectQuery("SELECT u.idusers, u.username FROM grants").
-		WithArgs(1, sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"idusers", "username"}).AddRow(1, "Alice").AddRow(2, "Bob"))
-
-	mock.ExpectQuery("SELECT .* FROM forumthread").
-		WithArgs(sqlmock.AnyArg(), 1, sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "lastposterusername", "lastposterid", "firstpostusername", "firstpostwritten", "firstposttext"}))
 
 	w := httptest.NewRecorder()
 	TopicsPage(w, req)
@@ -63,10 +67,7 @@ func TestTopicsPage_PrivateTopic(t *testing.T) {
 	if strings.Contains(body, "Category:") {
 		t.Fatalf("unexpected category heading: %q", body)
 	}
-	if !strings.Contains(body, "Topic: Alice, Bob") {
-		t.Fatalf("expected participant names, got %q", body)
-	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	if !strings.Contains(body, "Topic: Bob") {
+		t.Fatalf("expected participant names (Bob, as Alice is viewer), got %q", body)
 	}
 }

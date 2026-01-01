@@ -72,7 +72,7 @@ func WritingsPageSpecificItems(cd *common.CoreData, r *http.Request) []common.In
 			})
 		}
 
-		if hasWritingUnread(cd, writing.Idwriting) {
+		if hasWritingUnread(cd, writing.Idwriting, writing.Writerid) {
 			redirect := r.URL.RequestURI()
 			items = append(items, common.IndexItem{
 				Name: "Mark as read",
@@ -87,11 +87,11 @@ func WritingsPageSpecificItems(cd *common.CoreData, r *http.Request) []common.In
 	return items
 }
 
-func hasWritingUnread(cd *common.CoreData, writingID int32) bool {
+func hasWritingUnread(cd *common.CoreData, writingID int32, authorID int32) bool {
 	if cd == nil || cd.UserID == 0 {
 		return false
 	}
-	labels, err := cd.WritingPrivateLabels(writingID)
+	labels, err := cd.WritingPrivateLabels(writingID, authorID)
 	if err != nil {
 		return false
 	}

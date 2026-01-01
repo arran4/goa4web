@@ -95,6 +95,13 @@ LIMIT 1;
 -- name: ListGrants :many
 SELECT * FROM grants ORDER BY id;
 
+-- name: ListGrantsExtended :many
+SELECT g.*, u.username, r.name as role_name
+FROM grants g
+LEFT JOIN users u ON g.user_id = u.idusers
+LEFT JOIN roles r ON g.role_id = r.id
+ORDER BY g.id;
+
 -- name: ListGrantsByUserID :many
 SELECT * FROM grants WHERE user_id = ? ORDER BY id;
 

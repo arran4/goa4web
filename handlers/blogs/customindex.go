@@ -66,7 +66,7 @@ func BlogsPageSpecificItems(cd *common.CoreData, r *http.Request) []common.Index
 				Link: fmt.Sprintf("/admin/blogs/blog/%d", blog.Idblogs),
 			})
 		}
-		if hasBlogUnread(cd, blog.Idblogs) {
+		if hasBlogUnread(cd, blog.Idblogs, blog.UsersIdusers) {
 			items = append(items,
 				common.IndexItem{
 					Name: "Mark as read",
@@ -82,11 +82,11 @@ func BlogsPageSpecificItems(cd *common.CoreData, r *http.Request) []common.Index
 	return items
 }
 
-func hasBlogUnread(cd *common.CoreData, blogID int32) bool {
+func hasBlogUnread(cd *common.CoreData, blogID int32, authorID int32) bool {
 	if cd == nil || cd.UserID == 0 {
 		return false
 	}
-	labels, err := cd.BlogPrivateLabels(blogID)
+	labels, err := cd.BlogPrivateLabels(blogID, authorID)
 	if err != nil {
 		return false
 	}

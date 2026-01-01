@@ -94,14 +94,47 @@ func TestPrivateLabelsDefaultAndInversion(t *testing.T) {
 	cd := common.NewTestCoreData(t, q)
 	cd.UserID = 2
 
-	labels, err := cd.PrivateLabels("thread", 1)
-	if err != nil {
-		t.Fatalf("PrivateLabels default: %v", err)
-	}
-	expected := []string{"new", "unread"}
-	if !reflect.DeepEqual(labels, expected) {
-		t.Fatalf("default labels %+v, want %+v", labels, expected)
-	}
+	t.Run("Default labels for thread", func(t *testing.T) {
+		labels, err := cd.PrivateLabels("thread", 1, 1)
+		if err != nil {
+			t.Fatalf("PrivateLabels default: %v", err)
+		}
+		expected := []string{"new", "unread"}
+		if !reflect.DeepEqual(labels, expected) {
+			t.Fatalf("default labels %+v, want %+v", labels, expected)
+		}
+	})
+
+	t.Run("Default labels for thread author", func(t *testing.T) {
+		labels, err := cd.PrivateLabels("thread", 1, 2)
+		if err != nil {
+			t.Fatalf("PrivateLabels default: %v", err)
+		}
+		if len(labels) != 0 {
+			t.Fatalf("default labels %+v, want empty", labels)
+		}
+	})
+
+	t.Run("Explicit labels for thread author", func(t *testing.T) {
+		q.ContentPrivateLabels = map[string]map[int32]map[int32]map[string]bool{
+			"thread": {
+				1: {
+					2: {"unread": false, "new": false},
+				},
+			},
+		}
+		q.ListContentPrivateLabelsCalls = nil
+
+		labels, err := cd.PrivateLabels("thread", 1, 2)
+		if err != nil {
+			t.Fatalf("PrivateLabels explicit: %v", err)
+		}
+		expected := []string{"new", "unread"}
+		if !reflect.DeepEqual(labels, expected) {
+			t.Fatalf("explicit labels %+v, want %+v", labels, expected)
+		}
+	})
+
 	if len(q.ListContentPrivateLabelsCalls) != 1 {
 		t.Fatalf("list private labels calls = %d", len(q.ListContentPrivateLabelsCalls))
 	}
@@ -115,11 +148,11 @@ func TestPrivateLabelsDefaultAndInversion(t *testing.T) {
 	}
 	q.ListContentPrivateLabelsCalls = nil
 
-	labels, err = cd.PrivateLabels("thread", 1)
+	labels, err := cd.PrivateLabels("thread", 1, 1)
 	if err != nil {
 		t.Fatalf("PrivateLabels invert: %v", err)
 	}
-	expected = []string{"unread", "foo"}
+	expected := []string{"unread", "foo"}
 	if !reflect.DeepEqual(labels, expected) {
 		t.Fatalf("inverted labels %+v, want %+v", labels, expected)
 	}
@@ -166,7 +199,7 @@ func TestPrivateLabelsTopicExcludesStatus(t *testing.T) {
 	cd := common.NewTestCoreData(t, q)
 	cd.UserID = 2
 
-	labels, err := cd.PrivateLabels("topic", 1)
+	labels, err := cd.PrivateLabels("topic", 1, 1)
 	if err != nil {
 		t.Fatalf("PrivateLabels topic: %v", err)
 	}

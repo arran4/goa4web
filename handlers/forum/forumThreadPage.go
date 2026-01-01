@@ -152,7 +152,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	} else {
 		log.Printf("list public labels: %v", err)
 	}
-	if priv, err := cd.ThreadPrivateLabels(threadRow.Idforumthread); err == nil {
+	if priv, err := cd.ThreadPrivateLabels(threadRow.Idforumthread, threadRow.Firstpostuserid.Int32); err == nil {
 		for _, l := range priv {
 			labels = append(labels, templates.TopicLabel{Name: l, Type: "private"})
 		}

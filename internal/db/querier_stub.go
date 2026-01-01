@@ -37,12 +37,14 @@ type QuerierStub struct {
 	AddContentLabelStatusCalls          []AddContentLabelStatusParams
 	AddContentPrivateLabelErr           error
 	AddContentPrivateLabelCalls         []AddContentPrivateLabelParams
+	AddContentPrivateLabelFn            func(context.Context, AddContentPrivateLabelParams) error
 	AddContentPublicLabelErr            error
 	AddContentPublicLabelCalls          []AddContentPublicLabelParams
 	ListContentLabelStatusErr           error
 	ListContentLabelStatusCalls         []ListContentLabelStatusParams
 	ListContentPublicLabelsErr          error
 	ListContentPublicLabelsCalls        []ListContentPublicLabelsParams
+	ListContentPublicLabelsFn           func(ListContentPublicLabelsParams) ([]*ListContentPublicLabelsRow, error)
 	RemoveContentLabelStatusErr         error
 	RemoveContentLabelStatusCalls       []RemoveContentLabelStatusParams
 	RemoveContentPrivateLabelErr        error
@@ -51,6 +53,10 @@ type QuerierStub struct {
 	RemoveContentPublicLabelCalls       []RemoveContentPublicLabelParams
 	SystemClearContentPrivateLabelErr   error
 	SystemClearContentPrivateLabelCalls []SystemClearContentPrivateLabelParams
+
+	ClearUnreadContentPrivateLabelExceptUserErr   error
+	ClearUnreadContentPrivateLabelExceptUserCalls []ClearUnreadContentPrivateLabelExceptUserParams
+	ClearUnreadContentPrivateLabelExceptUserFn    func(context.Context, ClearUnreadContentPrivateLabelExceptUserParams) error
 
 	SystemGetUserByIDRow   *SystemGetUserByIDRow
 	SystemGetUserByIDErr   error
@@ -66,6 +72,8 @@ type QuerierStub struct {
 
 	SystemCreateNotificationErr   error
 	SystemCreateNotificationCalls []SystemCreateNotificationParams
+
+	SystemInsertDeadLetterCalls int
 
 	InsertPendingEmailErr   error
 	InsertPendingEmailCalls []InsertPendingEmailParams
@@ -89,6 +97,11 @@ type QuerierStub struct {
 	ListGrantsByUserIDReturns []*Grant
 	ListGrantsByUserIDErr     error
 	ListGrantsByUserIDCalls   []sql.NullInt32
+
+	ListGrantsExtendedReturns []*ListGrantsExtendedRow
+	ListGrantsExtendedErr     error
+	ListGrantsExtendedCalls   int
+	ListGrantsExtendedFn      func(context.Context) ([]*ListGrantsExtendedRow, error)
 
 	ListAdminUserCommentsReturns []*AdminUserComment
 	ListAdminUserCommentsErr     error
@@ -129,6 +142,34 @@ type QuerierStub struct {
 	GetCommentByIdForUserCalls []GetCommentByIdForUserParams
 	GetCommentByIdForUserRow   *GetCommentByIdForUserRow
 	GetCommentByIdForUserErr   error
+	GetCommentByIdForUserFn    func(context.Context, GetCommentByIdForUserParams) (*GetCommentByIdForUserRow, error)
+
+	CreateCommentInSectionForCommenterCalls  []CreateCommentInSectionForCommenterParams
+	CreateCommentInSectionForCommenterFn     func(context.Context, CreateCommentInSectionForCommenterParams) (int64, error)
+	CreateCommentInSectionForCommenterResult int64
+	CreateCommentInSectionForCommenterErr    error
+
+	UpsertContentReadMarkerCalls []UpsertContentReadMarkerParams
+	UpsertContentReadMarkerFn    func(context.Context, UpsertContentReadMarkerParams) error
+	UpsertContentReadMarkerErr   error
+
+	SystemGetUserByIDFn func(context.Context, int32) (*SystemGetUserByIDRow, error)
+
+	SystemInsertDeadLetterFn  func(context.Context, string) error
+	SystemInsertDeadLetterErr error
+
+	GetThreadLastPosterAndPermsFn func(context.Context, GetThreadLastPosterAndPermsParams) (*GetThreadLastPosterAndPermsRow, error)
+
+	GetThreadBySectionThreadIDForReplierFn func(context.Context, GetThreadBySectionThreadIDForReplierParams) (*Forumthread, error)
+
+	RemoveContentPrivateLabelFn func(context.Context, RemoveContentPrivateLabelParams) error
+
+	GetForumTopicByIdForUserFn      func(context.Context, GetForumTopicByIdForUserParams) (*GetForumTopicByIdForUserRow, error)
+	GetForumTopicByIdForUserCalls   []GetForumTopicByIdForUserParams
+	GetForumTopicByIdForUserReturns *GetForumTopicByIdForUserRow
+	GetForumTopicByIdForUserErr     error
+
+	ListPrivateTopicParticipantsByTopicIDForUserFn func(context.Context, ListPrivateTopicParticipantsByTopicIDForUserParams) ([]*ListPrivateTopicParticipantsByTopicIDForUserRow, error)
 
 	GetCommentsBySectionThreadIdForUserCalls   []GetCommentsBySectionThreadIdForUserParams
 	GetCommentsBySectionThreadIdForUserReturns []*GetCommentsBySectionThreadIdForUserRow
@@ -157,6 +198,14 @@ type QuerierStub struct {
 	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow   *GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow
 	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserErr   error
 	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserCalls []GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams
+
+	GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextCalls []GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams
+	GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextFn    func(context.Context, GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams) ([]*GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow, error)
+
+	GetAllForumCategoriesCalls   []GetAllForumCategoriesParams
+	GetAllForumCategoriesReturns []*Forumcategory
+	GetAllForumCategoriesErr     error
+	GetAllForumCategoriesFn      func(context.Context, GetAllForumCategoriesParams) ([]*Forumcategory, error)
 
 	SystemCheckRoleGrantReturns int32
 	SystemCheckRoleGrantErr     error
@@ -323,6 +372,9 @@ func (s *QuerierStub) ListContentPublicLabels(ctx context.Context, arg ListConte
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.ListContentPublicLabelsCalls = append(s.ListContentPublicLabelsCalls, arg)
+	if s.ListContentPublicLabelsFn != nil {
+		return s.ListContentPublicLabelsFn(arg)
+	}
 	if s.ListContentPublicLabelsErr != nil {
 		return nil, s.ListContentPublicLabelsErr
 	}
@@ -340,6 +392,17 @@ func (s *QuerierStub) ListContentPublicLabels(ctx context.Context, arg ListConte
 		res = append(res, &ListContentPublicLabelsRow{Item: arg.Item, ItemID: arg.ItemID, Label: l})
 	}
 	return res, nil
+}
+
+func (s *QuerierStub) CreateCommentInSectionForCommenter(ctx context.Context, arg CreateCommentInSectionForCommenterParams) (int64, error) {
+	s.mu.Lock()
+	s.CreateCommentInSectionForCommenterCalls = append(s.CreateCommentInSectionForCommenterCalls, arg)
+	fn := s.CreateCommentInSectionForCommenterFn
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return s.CreateCommentInSectionForCommenterResult, s.CreateCommentInSectionForCommenterErr
 }
 
 // RemoveContentPublicLabel records the call and removes the label from the store.
@@ -362,6 +425,17 @@ func (s *QuerierStub) RemoveContentPublicLabel(ctx context.Context, arg RemoveCo
 		}
 	}
 	return nil
+}
+
+func (s *QuerierStub) ClearUnreadContentPrivateLabelExceptUser(ctx context.Context, arg ClearUnreadContentPrivateLabelExceptUserParams) error {
+	s.mu.Lock()
+	s.ClearUnreadContentPrivateLabelExceptUserCalls = append(s.ClearUnreadContentPrivateLabelExceptUserCalls, arg)
+	fn := s.ClearUnreadContentPrivateLabelExceptUserFn
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return s.ClearUnreadContentPrivateLabelExceptUserErr
 }
 
 // AddContentLabelStatus records the call and stores the author label for later retrieval.
@@ -426,11 +500,18 @@ func (s *QuerierStub) RemoveContentLabelStatus(ctx context.Context, arg RemoveCo
 // AddContentPrivateLabel records the call and stores the private label for later retrieval.
 func (s *QuerierStub) AddContentPrivateLabel(ctx context.Context, arg AddContentPrivateLabelParams) error {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	s.AddContentPrivateLabelCalls = append(s.AddContentPrivateLabelCalls, arg)
-	if s.AddContentPrivateLabelErr != nil {
-		return s.AddContentPrivateLabelErr
+	fn := s.AddContentPrivateLabelFn
+	err := s.AddContentPrivateLabelErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
 	}
+	if err != nil {
+		return err
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	labels := s.ensurePrivateLabelSetLocked(arg.Item, arg.ItemID, arg.UserID)
 	labels[arg.Label] = arg.Invert
 	return nil
@@ -471,11 +552,18 @@ func (s *QuerierStub) ListContentPrivateLabels(ctx context.Context, arg ListCont
 // RemoveContentPrivateLabel records the call and removes the private label from the store.
 func (s *QuerierStub) RemoveContentPrivateLabel(ctx context.Context, arg RemoveContentPrivateLabelParams) error {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	s.RemoveContentPrivateLabelCalls = append(s.RemoveContentPrivateLabelCalls, arg)
-	if s.RemoveContentPrivateLabelErr != nil {
-		return s.RemoveContentPrivateLabelErr
+	fn := s.RemoveContentPrivateLabelFn
+	err := s.RemoveContentPrivateLabelErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
 	}
+	if err != nil {
+		return err
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	if itemMap := s.ContentPrivateLabels[arg.Item]; itemMap != nil {
 		if userMap := itemMap[arg.ItemID]; userMap != nil {
 			if labels := userMap[arg.UserID]; labels != nil {
@@ -623,13 +711,15 @@ func (s *QuerierStub) DeleteThreadsByTopicID(ctx context.Context, forumtopicIdfo
 func (s *QuerierStub) GetCommentByIdForUser(ctx context.Context, arg GetCommentByIdForUserParams) (*GetCommentByIdForUserRow, error) {
 	s.mu.Lock()
 	s.GetCommentByIdForUserCalls = append(s.GetCommentByIdForUserCalls, arg)
-	ret := s.GetCommentByIdForUserRow
-	err := s.GetCommentByIdForUserErr
+	fn := s.GetCommentByIdForUserFn
 	s.mu.Unlock()
-	if err != nil {
-		return nil, err
+	if fn != nil {
+		return fn(ctx, arg)
 	}
-	return ret, nil
+	if s.GetCommentByIdForUserErr != nil {
+		return nil, s.GetCommentByIdForUserErr
+	}
+	return s.GetCommentByIdForUserRow, nil
 }
 
 func (s *QuerierStub) GetCommentsBySectionThreadIdForUser(ctx context.Context, arg GetCommentsBySectionThreadIdForUserParams) ([]*GetCommentsBySectionThreadIdForUserRow, error) {
@@ -709,6 +799,28 @@ func (s *QuerierStub) GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescend
 	return row, nil
 }
 
+func (s *QuerierStub) GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText(ctx context.Context, arg GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams) ([]*GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow, error) {
+	s.mu.Lock()
+	s.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextCalls = append(s.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextCalls, arg)
+	fn := s.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextFn
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return nil, nil
+}
+
+func (s *QuerierStub) GetAllForumCategories(ctx context.Context, arg GetAllForumCategoriesParams) ([]*Forumcategory, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.GetAllForumCategoriesCalls = append(s.GetAllForumCategoriesCalls, arg)
+	fn := s.GetAllForumCategoriesFn
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return s.GetAllForumCategoriesReturns, s.GetAllForumCategoriesErr
+}
+
 // SystemCheckRoleGrant records the call and returns the configured response.
 func (s *QuerierStub) SystemCheckRoleGrant(ctx context.Context, arg SystemCheckRoleGrantParams) (int32, error) {
 	s.mu.Lock()
@@ -745,22 +857,45 @@ func (s *QuerierStub) GetPermissionsByUserID(ctx context.Context, idusers int32)
 
 func (s *QuerierStub) GetThreadBySectionThreadIDForReplier(ctx context.Context, arg GetThreadBySectionThreadIDForReplierParams) (*Forumthread, error) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	s.GetThreadBySectionThreadIDForReplierCalls = append(s.GetThreadBySectionThreadIDForReplierCalls, arg)
+	fn := s.GetThreadBySectionThreadIDForReplierFn
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
 	return s.GetThreadBySectionThreadIDForReplierReturn, s.GetThreadBySectionThreadIDForReplierErr
 }
 
 func (s *QuerierStub) GetThreadLastPosterAndPerms(ctx context.Context, arg GetThreadLastPosterAndPermsParams) (*GetThreadLastPosterAndPermsRow, error) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	s.GetThreadLastPosterAndPermsCalls = append(s.GetThreadLastPosterAndPermsCalls, arg)
+	fn := s.GetThreadLastPosterAndPermsFn
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
 	return s.GetThreadLastPosterAndPermsReturns, s.GetThreadLastPosterAndPermsErr
+}
+
+func (s *QuerierStub) GetForumTopicByIdForUser(ctx context.Context, arg GetForumTopicByIdForUserParams) (*GetForumTopicByIdForUserRow, error) {
+	s.mu.Lock()
+	s.GetForumTopicByIdForUserCalls = append(s.GetForumTopicByIdForUserCalls, arg)
+	fn := s.GetForumTopicByIdForUserFn
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return s.GetForumTopicByIdForUserReturns, s.GetForumTopicByIdForUserErr
 }
 
 func (s *QuerierStub) ListPrivateTopicParticipantsByTopicIDForUser(ctx context.Context, arg ListPrivateTopicParticipantsByTopicIDForUserParams) ([]*ListPrivateTopicParticipantsByTopicIDForUserRow, error) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	s.ListPrivateTopicParticipantsByTopicIDForUserCalls = append(s.ListPrivateTopicParticipantsByTopicIDForUserCalls, arg)
+	fn := s.ListPrivateTopicParticipantsByTopicIDForUserFn
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
 	return s.ListPrivateTopicParticipantsByTopicIDForUserReturns, s.ListPrivateTopicParticipantsByTopicIDForUserErr
 }
 
@@ -768,7 +903,11 @@ func (s *QuerierStub) ListPrivateTopicParticipantsByTopicIDForUser(ctx context.C
 func (s *QuerierStub) SystemGetUserByID(ctx context.Context, idusers int32) (*SystemGetUserByIDRow, error) {
 	s.mu.Lock()
 	s.SystemGetUserByIDCalls = append(s.SystemGetUserByIDCalls, idusers)
+	fn := s.SystemGetUserByIDFn
 	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, idusers)
+	}
 	if s.SystemGetUserByIDErr != nil {
 		return nil, s.SystemGetUserByIDErr
 	}
@@ -856,6 +995,16 @@ func (s *QuerierStub) ListGrantsByUserID(ctx context.Context, userID sql.NullInt
 	defer s.mu.Unlock()
 	s.ListGrantsByUserIDCalls = append(s.ListGrantsByUserIDCalls, userID)
 	return s.ListGrantsByUserIDReturns, s.ListGrantsByUserIDErr
+}
+
+func (s *QuerierStub) ListGrantsExtended(ctx context.Context) ([]*ListGrantsExtendedRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.ListGrantsExtendedCalls++
+	if s.ListGrantsExtendedFn != nil {
+		return s.ListGrantsExtendedFn(ctx)
+	}
+	return s.ListGrantsExtendedReturns, s.ListGrantsExtendedErr
 }
 
 func (s *QuerierStub) ListAdminUserComments(ctx context.Context, userID int32) ([]*AdminUserComment, error) {
@@ -978,4 +1127,26 @@ func (s *QuerierStub) GetNotificationCountForLister(ctx context.Context, listerI
 	defer s.mu.Unlock()
 	s.GetNotificationCountForListerCalls = append(s.GetNotificationCountForListerCalls, listerID)
 	return s.GetNotificationCountForListerReturns, s.GetNotificationCountForListerErr
+}
+
+func (s *QuerierStub) UpsertContentReadMarker(ctx context.Context, arg UpsertContentReadMarkerParams) error {
+	s.mu.Lock()
+	s.UpsertContentReadMarkerCalls = append(s.UpsertContentReadMarkerCalls, arg)
+	fn := s.UpsertContentReadMarkerFn
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return s.UpsertContentReadMarkerErr
+}
+
+func (s *QuerierStub) SystemInsertDeadLetter(ctx context.Context, message string) error {
+	s.mu.Lock()
+	s.SystemInsertDeadLetterCalls++
+	fn := s.SystemInsertDeadLetterFn
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, message)
+	}
+	return s.SystemInsertDeadLetterErr
 }

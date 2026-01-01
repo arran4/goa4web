@@ -86,7 +86,7 @@ func (t *blogsCommentTask) Get(w http.ResponseWriter, r *http.Request) {
 			data.Labels = append(data.Labels, templates.TopicLabel{Name: l, Type: "author"})
 		}
 	}
-	if pls, err := cd.BlogPrivateLabels(blog.Idblogs); err == nil {
+	if pls, err := cd.BlogPrivateLabels(blog.Idblogs, blog.UsersIdusers); err == nil {
 		for _, l := range pls {
 			data.Labels = append(data.Labels, templates.TopicLabel{Name: l, Type: "private"})
 		}

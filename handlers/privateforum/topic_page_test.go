@@ -50,15 +50,22 @@ func TestTopicPage_Prefix(t *testing.T) {
 		WithArgs(1, sqlmock.AnyArg()).
 		WillReturnRows(sqlmock.NewRows([]string{"idusers", "username"}).AddRow(1, "Alice"))
 
-	mock.ExpectQuery("SELECT .* FROM forumthread").
+	// GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText expects 3 args now:
+	// viewer_id, topic_id, viewer_match_id
+	// We match start of query "WITH role_ids AS"
+	mock.ExpectQuery(`^-- name: GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText :many`).
 		WithArgs(sqlmock.AnyArg(), 1, sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "lastposterusername", "lastposterid", "firstpostusername", "firstpostwritten", "firstposttext"}).
-			AddRow(1, 1, 1, 1, sql.NullInt32{Int32: 0, Valid: true}, sql.NullTime{}, sql.NullBool{}, sql.NullString{String: "Bob", Valid: true}, sql.NullInt32{Int32: 1, Valid: true}, sql.NullString{String: "Alice", Valid: true}, sql.NullTime{}, sql.NullString{String: "hi", Valid: true}))
+		WillReturnRows(sqlmock.NewRows([]string{"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "lastposterusername", "lastposterid", "firstpostusername", "firstpostuserid", "firstpostwritten", "firstposttext"}).
+			AddRow(1, 1, 1, 1, sql.NullInt32{Int32: 0, Valid: true}, sql.NullTime{}, sql.NullBool{}, sql.NullString{String: "Bob", Valid: true}, sql.NullInt32{Int32: 1, Valid: true}, sql.NullString{String: "Alice", Valid: true}, sql.NullInt32{Int32: 1, Valid: true}, sql.NullTime{}, sql.NullString{String: "hi", Valid: true}))
 
 	w := httptest.NewRecorder()
 	TopicPage(w, req)
 
 	body := w.Body.String()
+	if strings.Contains(body, "?error=") {
+		t.Fatalf("page rendered with error: %s", body)
+	}
+
 	if !strings.Contains(body, "/private/topic/1/thread") {
 		t.Fatalf("expected private thread link, got %q", body)
 	}

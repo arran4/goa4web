@@ -91,6 +91,12 @@ func (c *faqCmd) Run() error {
 			return fmt.Errorf("create: %w", err)
 		}
 		return cmd.Run()
+	case "category":
+		cmd, err := parseFaqCategoryCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("category: %w", err)
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown faq command %q", args[0])

@@ -65,5 +65,5 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 
 // Register registers the private forum router module.
 func Register(reg *router.Registry) {
-	reg.RegisterModule("privateforum", []string{"private"}, RegisterRoutes)
+	reg.RegisterModule("privateforum", nil, RegisterRoutes)
 }

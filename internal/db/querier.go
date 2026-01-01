@@ -35,7 +35,7 @@ type Querier interface {
 	AdminCountWordList(ctx context.Context) (int64, error)
 	AdminCountWordListByPrefix(ctx context.Context, prefix interface{}) (int64, error)
 	AdminCreateFAQ(ctx context.Context, arg AdminCreateFAQParams) (sql.Result, error)
-	AdminCreateFAQCategory(ctx context.Context, name sql.NullString) error
+	AdminCreateFAQCategory(ctx context.Context, arg AdminCreateFAQCategoryParams) (sql.Result, error)
 	AdminCreateForumCategory(ctx context.Context, arg AdminCreateForumCategoryParams) (int64, error)
 	AdminCreateForumTopic(ctx context.Context, arg AdminCreateForumTopicParams) (int64, error)
 	AdminCreateGrant(ctx context.Context, arg AdminCreateGrantParams) (int64, error)
@@ -88,6 +88,7 @@ type Querier interface {
 	AdminGetFAQByID(ctx context.Context, id int32) (*Faq, error)
 	AdminGetFAQCategories(ctx context.Context) ([]*FaqCategory, error)
 	AdminGetFAQCategoriesWithQuestionCount(ctx context.Context) ([]*AdminGetFAQCategoriesWithQuestionCountRow, error)
+	AdminGetFAQCategory(ctx context.Context, id int32) (*FaqCategory, error)
 	AdminGetFAQCategoryWithQuestionCountByID(ctx context.Context, id int32) (*AdminGetFAQCategoryWithQuestionCountByIDRow, error)
 	AdminGetFAQDismissedQuestions(ctx context.Context) ([]*AdminGetFAQDismissedQuestionsRow, error)
 	AdminGetFAQQuestionsByCategory(ctx context.Context, categoryID sql.NullInt32) ([]*Faq, error)
@@ -149,6 +150,7 @@ type Querier interface {
 	AdminListDeactivatedUsers(ctx context.Context, arg AdminListDeactivatedUsersParams) ([]*AdminListDeactivatedUsersRow, error)
 	AdminListDeactivatedWritings(ctx context.Context, arg AdminListDeactivatedWritingsParams) ([]*AdminListDeactivatedWritingsRow, error)
 	AdminListExternalLinks(ctx context.Context, arg AdminListExternalLinksParams) ([]*ExternalLink, error)
+	AdminListFAQCategories(ctx context.Context) ([]*FaqCategory, error)
 	// admin task
 	AdminListFailedEmails(ctx context.Context, arg AdminListFailedEmailsParams) ([]*AdminListFailedEmailsRow, error)
 	AdminListForumCategoriesWithCounts(ctx context.Context, arg AdminListForumCategoriesWithCountsParams) ([]*AdminListForumCategoriesWithCountsRow, error)
@@ -202,6 +204,8 @@ type Querier interface {
 	AdminMarkNotificationRead(ctx context.Context, id int32) error
 	AdminMarkNotificationUnread(ctx context.Context, id int32) error
 	AdminMarkWritingRestored(ctx context.Context, idwriting int32) error
+	AdminMoveFAQChildren(ctx context.Context, arg AdminMoveFAQChildrenParams) error
+	AdminMoveFAQContent(ctx context.Context, arg AdminMoveFAQContentParams) error
 	// admin task
 	AdminPromoteAnnouncement(ctx context.Context, siteNewsID int32) error
 	AdminPurgeReadNotifications(ctx context.Context) error
@@ -231,6 +235,7 @@ type Querier interface {
 	AdminSetAnnouncementActive(ctx context.Context, arg AdminSetAnnouncementActiveParams) error
 	AdminSetTemplateOverride(ctx context.Context, arg AdminSetTemplateOverrideParams) error
 	AdminUpdateBannedIp(ctx context.Context, arg AdminUpdateBannedIpParams) error
+	AdminUpdateFAQCategory(ctx context.Context, arg AdminUpdateFAQCategoryParams) error
 	AdminUpdateFAQPriority(ctx context.Context, arg AdminUpdateFAQPriorityParams) error
 	AdminUpdateFAQQuestionAnswer(ctx context.Context, arg AdminUpdateFAQQuestionAnswerParams) error
 	AdminUpdateForumCategory(ctx context.Context, arg AdminUpdateForumCategoryParams) error

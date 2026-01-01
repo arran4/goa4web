@@ -48,12 +48,17 @@ UPDATE faq_categories
 SET name = ?
 WHERE id = ?;
 
+-- name: AdminUpdateFAQCategory :exec
+UPDATE faq_categories
+SET name = ?, parent_category_id = ?, language_id = ?
+WHERE id = ?;
+
 -- name: AdminDeleteFAQCategory :exec
 UPDATE faq_categories SET deleted_at = NOW()
 WHERE id = ?;
 
--- name: AdminCreateFAQCategory :exec
-INSERT INTO faq_categories (name) VALUES (sqlc.arg(name));
+-- name: AdminCreateFAQCategory :execresult
+INSERT INTO faq_categories (name, parent_category_id, language_id) VALUES (?, ?, ?);
 
 -- name: CreateFAQQuestionForWriter :exec
 INSERT INTO faq (question, author_id, language_id)
@@ -96,7 +101,17 @@ WHERE id = ?;
 
 -- name: AdminGetFAQCategories :many
 SELECT *
-FROM faq_categories;
+FROM faq_categories
+WHERE deleted_at IS NULL;
+
+-- name: AdminListFAQCategories :many
+SELECT *
+FROM faq_categories
+WHERE deleted_at IS NULL
+ORDER BY parent_category_id, id;
+
+-- name: AdminGetFAQCategory :one
+SELECT * FROM faq_categories WHERE id = ?;
 
 -- name: GetAllAnsweredFAQWithFAQCategoriesForUser :many
 WITH role_ids AS (
@@ -135,6 +150,7 @@ ORDER BY c.id, f.id;
 SELECT c.*, COUNT(f.id) AS QuestionCount
 FROM faq_categories c
 LEFT JOIN faq f ON f.category_id = c.id
+WHERE c.deleted_at IS NULL
 GROUP BY c.id;
 
 
@@ -237,3 +253,9 @@ UPDATE faq SET priority = ? WHERE id = ?;
 -- name: AdminCreateFAQ :execresult
 INSERT INTO faq (question, answer, category_id, author_id, language_id, priority)
 VALUES (?, ?, ?, ?, ?, ?);
+
+-- name: AdminMoveFAQContent :exec
+UPDATE faq SET category_id = sqlc.arg(new_category_id) WHERE category_id = sqlc.arg(old_category_id);
+
+-- name: AdminMoveFAQChildren :exec
+UPDATE faq_categories SET parent_category_id = sqlc.arg(new_parent_id) WHERE parent_category_id = sqlc.arg(old_parent_id);

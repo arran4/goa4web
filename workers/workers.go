@@ -20,6 +20,7 @@ import (
 	"github.com/arran4/goa4web/workers/logworker"
 	"github.com/arran4/goa4web/workers/postcountworker"
 	"github.com/arran4/goa4web/workers/searchworker"
+	"github.com/arran4/goa4web/workers/statsworker"
 )
 
 // safeGo runs fn in a goroutine and exits the program if the goroutine panics.
@@ -73,4 +74,6 @@ func Start(ctx context.Context, sdb *sql.DB, provider email.Provider, dlqProvide
 	safeGo(func() { backgroundtaskworker.Worker(ctx, bus, db.New(sdb)) })
 	log.Printf("Starting post count worker")
 	safeGo(func() { postcountworker.Worker(ctx, bus, db.New(sdb)) })
+	log.Printf("Starting stats worker")
+	safeGo(func() { statsworker.Worker(ctx) })
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/stats"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -190,6 +191,7 @@ func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp Se
 			}); err != nil {
 				return err
 			}
+			stats.Inc("notifications")
 		}
 	}
 	return nil
@@ -243,6 +245,7 @@ func (n *Notifier) notifyTargetUsers(ctx context.Context, evt eventbus.TaskEvent
 				}); err != nil {
 					return err
 				}
+				stats.Inc("notifications")
 			}
 		}
 	}

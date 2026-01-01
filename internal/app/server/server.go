@@ -31,6 +31,7 @@ import (
 	"github.com/arran4/goa4web/internal/middleware"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	"github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/stats"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/internal/websocket"
 	"github.com/arran4/goa4web/workers"
@@ -100,6 +101,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 // Close releases resources associated with the server such as background
 // workers, the event bus and the database connection.
 func (s *Server) Close() {
+	stats.Dump()
 	if s.WorkerCancel != nil {
 		s.WorkerCancel()
 	}

@@ -182,6 +182,7 @@ func GetUserSubscriptions(dbSubs []*db.ListSubscriptionsByUserRow) []*Subscripti
 	for _, sub := range dbSubs {
 		def, params := MatchDefinition(sub.Pattern)
 		// For unknown patterns, create a temporary definition group
+		var group *SubscriptionGroup
 		if def == nil {
 			unknownKey := "unknown:" + sub.Pattern
 			if _, exists := groups[unknownKey]; !exists {
@@ -193,13 +194,10 @@ func GetUserSubscriptions(dbSubs []*db.ListSubscriptionsByUserRow) []*Subscripti
 					Instances: []*SubscriptionInstance{},
 				}
 			}
-			def = groups[unknownKey].Definition
-		}
-
-		group := groups[def.Pattern]
-		if def.Pattern != group.Pattern {
-			// This happens for the dynamic "unknown" groups
-			group = groups["unknown:"+sub.Pattern]
+			group = groups[unknownKey]
+			def = group.Definition
+		} else {
+			group = groups[def.Pattern]
 		}
 
 		// Find existing instance with same parameters

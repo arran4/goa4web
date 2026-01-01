@@ -133,7 +133,7 @@ func (cd *CoreData) SetPublicLabels(item string, itemID int32, labels []string) 
 }
 
 // PrivateLabels returns private labels for an item sorted alphabetically.
-func (cd *CoreData) PrivateLabels(item string, itemID int32) ([]string, error) {
+func (cd *CoreData) PrivateLabels(item string, itemID int32, authorID int32) ([]string, error) {
 	if cd.queries == nil {
 		return nil, nil
 	}
@@ -159,13 +159,15 @@ func (cd *CoreData) PrivateLabels(item string, itemID int32) ([]string, error) {
 	labels := make([]string, 0, len(userLabels)+2)
 	// Only threads, news articles, links, image board posts, blog entries,
 	// and writing articles receive default status labels.
-	switch item {
-	case "thread", "news", "link", "imagebbs", "blog", "writing":
-		if !inverted["new"] {
-			labels = append(labels, "new")
-		}
-		if !inverted["unread"] {
-			labels = append(labels, "unread")
+	if cd.UserID != 0 && authorID != cd.UserID {
+		switch item {
+		case "thread", "news", "link", "imagebbs", "blog", "writing":
+			if !inverted["new"] {
+				labels = append(labels, "new")
+			}
+			if !inverted["unread"] {
+				labels = append(labels, "unread")
+			}
 		}
 	}
 	labels = append(labels, userLabels...)
@@ -298,8 +300,8 @@ func (cd *CoreData) SetThreadPublicLabels(threadID int32, labels []string) error
 	return cd.SetPublicLabels("thread", threadID, labels)
 }
 
-func (cd *CoreData) ThreadPrivateLabels(threadID int32) ([]string, error) {
-	return cd.PrivateLabels("thread", threadID)
+func (cd *CoreData) ThreadPrivateLabels(threadID int32, authorID int32) ([]string, error) {
+	return cd.PrivateLabels("thread", threadID, authorID)
 }
 
 func (cd *CoreData) ClearThreadPrivateLabelStatus(threadID int32) error {
@@ -349,8 +351,8 @@ func (cd *CoreData) SetWritingAuthorLabels(writingID int32, labels []string) err
 	return cd.SetAuthorLabels("writing", writingID, labels)
 }
 
-func (cd *CoreData) WritingPrivateLabels(writingID int32) ([]string, error) {
-	return cd.PrivateLabels("writing", writingID)
+func (cd *CoreData) WritingPrivateLabels(writingID int32, authorID int32) ([]string, error) {
+	return cd.PrivateLabels("writing", writingID, authorID)
 }
 
 func (cd *CoreData) SetWritingPrivateLabels(writingID int32, labels []string) error {
@@ -362,14 +364,14 @@ func (cd *CoreData) ClearWritingUnreadForOthers(writingID int32) error {
 }
 
 // WritingLabels returns author and private labels for a writing.
-func (cd *CoreData) WritingLabels(writingID int32) []templates.TopicLabel {
+func (cd *CoreData) WritingLabels(writingID int32, authorID int32) []templates.TopicLabel {
 	var labels []templates.TopicLabel
 	if als, err := cd.WritingAuthorLabels(writingID); err == nil {
 		for _, l := range als {
 			labels = append(labels, templates.TopicLabel{Name: l, Type: "author"})
 		}
 	}
-	if pls, err := cd.WritingPrivateLabels(writingID); err == nil {
+	if pls, err := cd.WritingPrivateLabels(writingID, authorID); err == nil {
 		for _, l := range pls {
 			labels = append(labels, templates.TopicLabel{Name: l, Type: "private"})
 		}
@@ -400,8 +402,8 @@ func (cd *CoreData) SetNewsAuthorLabels(newsID int32, labels []string) error {
 	return cd.SetAuthorLabels("news", newsID, labels)
 }
 
-func (cd *CoreData) NewsPrivateLabels(newsID int32) ([]string, error) {
-	return cd.PrivateLabels("news", newsID)
+func (cd *CoreData) NewsPrivateLabels(newsID int32, authorID int32) ([]string, error) {
+	return cd.PrivateLabels("news", newsID, authorID)
 }
 
 func (cd *CoreData) SetNewsPrivateLabels(newsID int32, labels []string) error {
@@ -409,14 +411,14 @@ func (cd *CoreData) SetNewsPrivateLabels(newsID int32, labels []string) error {
 }
 
 // NewsLabels returns author and private labels for a news item.
-func (cd *CoreData) NewsLabels(newsID int32) []templates.TopicLabel {
+func (cd *CoreData) NewsLabels(newsID int32, authorID int32) []templates.TopicLabel {
 	var labels []templates.TopicLabel
 	if als, err := cd.NewsAuthorLabels(newsID); err == nil {
 		for _, l := range als {
 			labels = append(labels, templates.TopicLabel{Name: l, Type: "author"})
 		}
 	}
-	if pls, err := cd.NewsPrivateLabels(newsID); err == nil {
+	if pls, err := cd.NewsPrivateLabels(newsID, authorID); err == nil {
 		for _, l := range pls {
 			labels = append(labels, templates.TopicLabel{Name: l, Type: "private"})
 		}
@@ -447,8 +449,8 @@ func (cd *CoreData) SetBlogAuthorLabels(blogID int32, labels []string) error {
 	return cd.SetAuthorLabels("blog", blogID, labels)
 }
 
-func (cd *CoreData) BlogPrivateLabels(blogID int32) ([]string, error) {
-	return cd.PrivateLabels("blog", blogID)
+func (cd *CoreData) BlogPrivateLabels(blogID int32, authorID int32) ([]string, error) {
+	return cd.PrivateLabels("blog", blogID, authorID)
 }
 
 func (cd *CoreData) SetBlogPrivateLabels(blogID int32, labels []string) error {
@@ -456,14 +458,14 @@ func (cd *CoreData) SetBlogPrivateLabels(blogID int32, labels []string) error {
 }
 
 // BlogLabels returns author and private labels for a blog post.
-func (cd *CoreData) BlogLabels(blogID int32) []templates.TopicLabel {
+func (cd *CoreData) BlogLabels(blogID int32, authorID int32) []templates.TopicLabel {
 	var labels []templates.TopicLabel
 	if als, err := cd.BlogAuthorLabels(blogID); err == nil {
 		for _, l := range als {
 			labels = append(labels, templates.TopicLabel{Name: l, Type: "author"})
 		}
 	}
-	if pls, err := cd.BlogPrivateLabels(blogID); err == nil {
+	if pls, err := cd.BlogPrivateLabels(blogID, authorID); err == nil {
 		for _, l := range pls {
 			labels = append(labels, templates.TopicLabel{Name: l, Type: "private"})
 		}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
@@ -77,7 +78,7 @@ func NewsPageSpecificItems(cd *common.CoreData, r *http.Request, post *db.GetNew
 			})
 		}
 
-		if hasNewsUnread(cd, post.Idsitenews) {
+		if hasNewsUnread(cd, post.Idsitenews, post.UsersIdusers) {
 			redirect := r.URL.RequestURI()
 			items = append(items, common.IndexItem{
 				Name: "Mark as read",
@@ -92,11 +93,11 @@ func NewsPageSpecificItems(cd *common.CoreData, r *http.Request, post *db.GetNew
 	return items
 }
 
-func hasNewsUnread(cd *common.CoreData, postID int32) bool {
+func hasNewsUnread(cd *common.CoreData, postID int32, authorID int32) bool {
 	if cd == nil || cd.UserID == 0 {
 		return false
 	}
-	labels, err := cd.NewsPrivateLabels(postID)
+	labels, err := cd.NewsPrivateLabels(postID, authorID)
 	if err != nil {
 		return false
 	}
@@ -113,6 +114,22 @@ func NewsCustomIndexItems(cd *common.CoreData, r *http.Request, post *db.GetNews
 	items := NewsGeneralIndexItems(cd, r)
 	if post != nil {
 		items = append(items, NewsPageSpecificItems(cd, r, post)...)
+	} else {
+		vars := mux.Vars(r)
+		if newsID := vars["news"]; newsID != "" {
+			if nid, err := strconv.Atoi(newsID); err == nil {
+				// TODO: Fetch post if not provided to get author ID?
+				// For now, if post is nil, we can't fully support unread check suppression for author.
+				// But NewsCustomIndexItems is usually called with post if available.
+				if hasNewsUnread(cd, int32(nid), 0) {
+					redirect := r.URL.RequestURI()
+					items = append(items, common.IndexItem{
+						Name: "Mark as read",
+						Link: fmt.Sprintf("/news/news/%d/labels?task=Mark+Thread+Read&redirect=%s", nid, url.QueryEscape(redirect)),
+					})
+				}
+			}
+		}
 	}
 	return items
 }

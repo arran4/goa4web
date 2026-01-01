@@ -74,11 +74,12 @@ LIMIT ? OFFSET ?;
 WITH role_ids AS (
     SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
 )
-SELECT th.*, lu.username AS LastPosterUsername
+SELECT th.*, lu.username AS LastPosterUsername, fcu.idusers AS firstpostuserid
 FROM forumthread th
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN users lu ON lu.idusers = t.lastposter
 LEFT JOIN comments fc ON th.firstpost = fc.idcomments
+LEFT JOIN users fcu ON fc.users_idusers = fcu.idusers
 WHERE th.idforumthread=sqlc.arg(thread_id)
   AND (
       fc.language_id = 0

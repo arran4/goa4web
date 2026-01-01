@@ -108,7 +108,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 			data.Labels = append(data.Labels, templates.TopicLabel{Name: l, Type: "author"})
 		}
 	}
-	if pls, err := cd.WritingPrivateLabels(writing.Idwriting); err == nil {
+	if pls, err := cd.WritingPrivateLabels(writing.Idwriting, writing.Writerid); err == nil {
 		for _, l := range pls {
 			data.Labels = append(data.Labels, templates.TopicLabel{Name: l, Type: "private"})
 		}

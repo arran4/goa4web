@@ -444,11 +444,12 @@ const getThreadLastPosterAndPerms = `-- name: GetThreadLastPosterAndPerms :one
 WITH role_ids AS (
     SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, lu.username AS LastPosterUsername
+SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, lu.username AS LastPosterUsername, fcu.idusers AS firstpostuserid
 FROM forumthread th
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN users lu ON lu.idusers = t.lastposter
 LEFT JOIN comments fc ON th.firstpost = fc.idcomments
+LEFT JOIN users fcu ON fc.users_idusers = fcu.idusers
 WHERE th.idforumthread=?
   AND (
       fc.language_id = 0
@@ -499,6 +500,7 @@ type GetThreadLastPosterAndPermsRow struct {
 	Lastaddition           sql.NullTime
 	Locked                 sql.NullBool
 	Lastposterusername     sql.NullString
+	Firstpostuserid        sql.NullInt32
 }
 
 func (q *Queries) GetThreadLastPosterAndPerms(ctx context.Context, arg GetThreadLastPosterAndPermsParams) (*GetThreadLastPosterAndPermsRow, error) {
@@ -520,6 +522,7 @@ func (q *Queries) GetThreadLastPosterAndPerms(ctx context.Context, arg GetThread
 		&i.Lastaddition,
 		&i.Locked,
 		&i.Lastposterusername,
+		&i.Firstpostuserid,
 	)
 	return &i, err
 }

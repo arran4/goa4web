@@ -138,7 +138,9 @@ func hasThreadUnread(cd *common.CoreData, threadID string) bool {
 	if err != nil {
 		return false
 	}
-	labels, err := cd.ThreadPrivateLabels(int32(tid))
+	// TODO: Pass author ID. For now passing 0 to keep default behavior (showing unread) if author is unknown.
+	// This function is deprecated/wrapper, so less critical.
+	labels, err := cd.ThreadPrivateLabels(int32(tid), 0)
 	if err != nil {
 		log.Printf("thread private labels: %v", err)
 		return false

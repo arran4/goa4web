@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io/fs"
 	"sort"
-	"strconv"
 	"strings"
 )
 
@@ -31,30 +30,67 @@ func ensureVersionTable(ctx context.Context, db *sql.DB) (int, error) {
 	return version, nil
 }
 
-func getAvailableMigrations(f fs.FS, driver string) ([]int, error) {
+func getAvailableMigrations(f fs.FS, driver string) ([]*migrationFile, error) {
 	entries, err := fs.ReadDir(f, ".")
 	if err != nil {
 		return nil, fmt.Errorf("read dir: %w", err)
 	}
-	var nums []int
+
+	// Group files by version
+	byVersion := make(map[int][]*migrationFile)
+
 	for _, e := range entries {
 		if e.IsDir() {
 			continue
 		}
-		name := e.Name()
-		suffix := "." + driver + ".sql"
-		if !strings.HasSuffix(name, suffix) {
-			continue
-		}
-		base := strings.TrimSuffix(name, suffix)
-		n, err := strconv.Atoi(base)
+		m, err := parseMigrationFilename(e.Name())
 		if err != nil {
+			// Skip non-conforming files
 			continue
 		}
-		nums = append(nums, n)
+
+		// Filter by driver: accept exact match or generic (empty driver)
+		if m.Driver != "" && m.Driver != driver {
+			continue
+		}
+
+		byVersion[m.Version] = append(byVersion[m.Version], m)
 	}
-	sort.Ints(nums)
-	return nums, nil
+
+	var result []*migrationFile
+	var versions []int
+	for v := range byVersion {
+		versions = append(versions, v)
+	}
+	sort.Ints(versions)
+
+	for _, v := range versions {
+		files := byVersion[v]
+		var selected *migrationFile
+
+		// Selection logic: Prefer specific driver over generic
+		for _, f := range files {
+			if f.Driver == driver {
+				selected = f
+				break
+			}
+		}
+		if selected == nil {
+			// Find generic one
+			for _, f := range files {
+				if f.Driver == "" {
+					selected = f
+					break
+				}
+			}
+		}
+
+		if selected != nil {
+			result = append(result, selected)
+		}
+	}
+
+	return result, nil
 }
 
 // Apply reads SQL migration files from the provided filesystem and executes
@@ -65,27 +101,26 @@ func Apply(ctx context.Context, db *sql.DB, f fs.FS, verbose bool, driver string
 	if err != nil {
 		return err
 	}
-	nums, err := getAvailableMigrations(f, driver)
+	migrations, err := getAvailableMigrations(f, driver)
 	if err != nil {
 		return err
 	}
 	applied := false
-	for _, n := range nums {
-		if n <= version {
+	for _, m := range migrations {
+		if m.Version <= version {
 			continue
 		}
-		path := fmt.Sprintf("%04d.%s.sql", n, driver)
 		if verbose {
-			fmt.Printf("applying %s\n", path)
+			fmt.Printf("applying %s\n", m.Name)
 		}
-		if err := executeFile(ctx, db, f, path, verbose); err != nil {
-			return fmt.Errorf("execute %s: %w", path, err)
+		if err := executeFile(ctx, db, f, m.Name, verbose); err != nil {
+			return fmt.Errorf("execute %s: %w", m.Name, err)
 		}
-		if _, err := db.ExecContext(ctx, "UPDATE schema_version SET version = ?", n); err != nil {
+		if _, err := db.ExecContext(ctx, "UPDATE schema_version SET version = ?", m.Version); err != nil {
 			return fmt.Errorf("update schema_version: %w", err)
 		}
 		if verbose {
-			fmt.Printf("schema version updated to %d\n", n)
+			fmt.Printf("schema version updated to %d\n", m.Version)
 		}
 		applied = true
 	}

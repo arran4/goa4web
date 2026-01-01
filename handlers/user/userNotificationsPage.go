@@ -40,6 +40,44 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	if _, ok := core.GetSessionOrFail(w, r); !ok {
 		return
 	}
+	ps := cd.PageSize()
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	showAll := r.URL.Query().Get("all") == "1"
+
+	var count int64
+	var err error
+	if showAll {
+		count, err = cd.Queries().GetNotificationCountForLister(r.Context(), cd.UserID)
+	} else {
+		count, err = cd.Queries().GetUnreadNotificationCountForLister(r.Context(), cd.UserID)
+	}
+	if err != nil {
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		return
+	}
+
+	numPages := int((count + int64(ps) - 1) / int64(ps))
+	currentPage := offset/ps + 1
+	base := "/usr/notifications"
+	allParam := ""
+	if showAll {
+		allParam = "&all=1"
+	}
+	for i := 1; i <= numPages; i++ {
+		cd.PageLinks = append(cd.PageLinks, common.PageLink{
+			Num:    i,
+			Link:   fmt.Sprintf("%s?offset=%d%s", base, (i-1)*ps, allParam),
+			Active: i == currentPage,
+		})
+	}
+	if offset+ps < int(count) {
+		cd.NextLink = fmt.Sprintf("%s?offset=%d%s", base, offset+ps, allParam)
+	}
+	if offset > 0 {
+		cd.PrevLink = fmt.Sprintf("%s?offset=%d%s", base, offset-ps, allParam)
+		cd.StartLink = fmt.Sprintf("%s?offset=0%s", base, allParam)
+	}
+
 	data := struct{ Request *http.Request }{r}
 	handlers.TemplateHandler(w, r, "user/notifications.gohtml", data)
 }
@@ -58,12 +96,18 @@ func (DismissTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	id, _ := strconv.Atoi(r.FormValue("id"))
+	ids := r.Form["id"]
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	n, err := queries.GetNotificationForLister(r.Context(), db.GetNotificationForListerParams{ID: int32(id), ListerID: uid})
-	if err == nil && !n.ReadAt.Valid {
-		if err := queries.SetNotificationReadForLister(r.Context(), db.SetNotificationReadForListerParams{ID: n.ID, ListerID: uid}); err != nil {
-			log.Printf("mark notification read: %v", err)
+	for _, idStr := range ids {
+		id, _ := strconv.Atoi(idStr)
+		if id == 0 {
+			continue
+		}
+		n, err := queries.GetNotificationForLister(r.Context(), db.GetNotificationForListerParams{ID: int32(id), ListerID: uid})
+		if err == nil && !n.ReadAt.Valid {
+			if err := queries.SetNotificationReadForLister(r.Context(), db.SetNotificationReadForListerParams{ID: n.ID, ListerID: uid}); err != nil {
+				log.Printf("mark notification read: %v", err)
+			}
 		}
 	}
 	return handlers.RefreshDirectHandler{TargetURL: "/usr/notifications"}

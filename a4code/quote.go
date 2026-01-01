@@ -43,7 +43,22 @@ func quoteOfText(username, text string, trim bool) string {
 	if trim {
 		text = strings.TrimSpace(text)
 	}
-	return fmt.Sprintf("[quoteof \"%s\" %s]\n", username, text)
+	return fmt.Sprintf("[quoteof \"%s\" %s]\n", escapeUsername(username), text)
+}
+
+func escapeUsername(u string) string {
+	var b bytes.Buffer
+	for i := 0; i < len(u); i++ {
+		switch u[i] {
+		case '"':
+			b.WriteString(`\"`)
+		case '\\':
+			b.WriteString(`\\`)
+		default:
+			b.WriteByte(u[i])
+		}
+	}
+	return b.String()
 }
 
 func fullQuoteOf(username, text string, trim bool) string {

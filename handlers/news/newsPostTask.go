@@ -170,7 +170,7 @@ func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 			data.PublicLabels = append(data.PublicLabels, tl)
 		}
 	}
-	if pls, err := cd.NewsPrivateLabels(post.Idsitenews); err == nil {
+	if pls, err := cd.NewsPrivateLabels(post.Idsitenews, post.UsersIdusers); err == nil {
 		for _, l := range pls {
 			data.Labels = append(data.Labels, templates.TopicLabel{Name: l, Type: "private"})
 		}

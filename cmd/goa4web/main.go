@@ -120,6 +120,22 @@ func (r *rootCmd) DB() (*sql.DB, error) {
 	return r.db, nil
 }
 
+func (r *rootCmd) InitDB(cfg *config.RuntimeConfig) (*sql.DB, error) {
+	if r.db != nil {
+		return r.db, nil
+	}
+	dbPool, ue := dbstart.InitDB(cfg, r.dbReg)
+	if ue != nil {
+		return nil, fmt.Errorf("rootCmd.DB: init: %w", ue.Err)
+	}
+	r.db = dbPool
+	return r.db, nil
+}
+
+func (r *rootCmd) Context() context.Context {
+	return r.ctx
+}
+
 func (r *rootCmd) Close() {
 	if r.db != nil {
 		if err := r.db.Close(); err != nil {

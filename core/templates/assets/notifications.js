@@ -55,15 +55,14 @@
         div.className = 'notification';
         div.id = 'notif-'+n.id;
         let html = '';
+        html += '<label>';
+        html += '<input type="checkbox" name="id" value="'+n.id+'"> ';
         if(n.link){
             html += '<a href="'+n.link+'">'+n.message+'</a>';
         } else {
             html += n.message;
         }
-        html += ' <form method="post" action="/usr/notifications/dismiss" class="inline-form">';
-        html += '<input type="hidden" name="id" value="'+n.id+'">';
-        html += '<input type="submit" name="task" value="Dismiss">';
-        html += '</form>';
+        html += '</label>';
         div.innerHTML = html;
         list.prepend(div);
     }
@@ -71,5 +70,18 @@
     window.addEventListener('load', function(){
         document.querySelectorAll('[data-notification-id]').forEach(el => seen.add(parseInt(el.dataset.notificationId,10)));
         connect();
+
+        const btnAll = document.getElementById('btn-select-all');
+        if(btnAll) {
+            btnAll.addEventListener('click', () => {
+                document.querySelectorAll('#notifications-list input[type="checkbox"]').forEach(el => el.checked = true);
+            });
+        }
+        const btnInvert = document.getElementById('btn-invert-selection');
+        if(btnInvert) {
+            btnInvert.addEventListener('click', () => {
+                document.querySelectorAll('#notifications-list input[type="checkbox"]').forEach(el => el.checked = !el.checked);
+            });
+        }
     });
 })();

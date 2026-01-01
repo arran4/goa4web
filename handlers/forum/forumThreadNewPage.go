@@ -12,6 +12,7 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 
+	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
@@ -96,6 +97,7 @@ func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 		SelectedLanguageId int
 		BasePath           string
 		Topic              *db.GetForumTopicByIdForUserRow
+		QuoteText          string
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -131,6 +133,53 @@ func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 		SelectedLanguageId: int(cd.PreferredLanguageID(cd.Config.DefaultLanguage)),
 		BasePath:           base,
 		Topic:              topic,
+	}
+
+	// Handle quoting if query parameters are present.
+	// This logic mirrors the QuoteApi functionality but runs server-side to
+	// pre-populate the thread creation form.
+	quoteCommentId := r.URL.Query().Get("quote_comment_id")
+	if quoteCommentId != "" {
+		if cId, err := strconv.Atoi(quoteCommentId); err == nil {
+			// Retrieve the comment ensuring the user has permission to view it.
+			if c, err := cd.CommentByID(int32(cId)); err == nil && c != nil {
+				quoteType := r.URL.Query().Get("quote_type")
+				var text string
+				switch quoteType {
+				case "paragraph":
+					text = a4code.QuoteText(c.Username.String, c.Text.String, a4code.WithParagraphQuote())
+				case "full":
+					text = a4code.QuoteText(c.Username.String, c.Text.String)
+				case "selected":
+					start, _ := strconv.Atoi(r.URL.Query().Get("quote_start"))
+					end, _ := strconv.Atoi(r.URL.Query().Get("quote_end"))
+					text = a4code.QuoteText(c.Username.String, a4code.Substring(c.Text.String, start, end))
+				default:
+					text = a4code.QuoteText(c.Username.String, c.Text.String, a4code.WithParagraphQuote())
+				}
+
+				// Append a link back to the original thread/comment.
+				// We need to fetch the full thread context to get the topic ID for the link.
+				// While cd.CommentByID retrieves the comment, it lacks the full context
+				// required to build the canonical URL.
+				if th, err := cd.ForumThreadByID(c.ForumthreadID); err == nil && th != nil {
+					if comments, err := cd.Queries().GetCommentsByIdsForUserWithThreadInfo(r.Context(), db.GetCommentsByIdsForUserWithThreadInfoParams{
+						ViewerID: uid,
+						Ids:      []int32{int32(cId)},
+						UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
+					}); err == nil && len(comments) > 0 {
+						srcC := comments[0]
+						if srcC.Idforumtopic.Valid {
+							srcTopicId := srcC.Idforumtopic.Int32
+							srcThreadId := srcC.Idforumthread.Int32
+							link := fmt.Sprintf("\n\n[url=%s/topic/%d/thread/%d#c%d]View original[/url]", base, srcTopicId, srcThreadId, cId)
+							text += link
+						}
+					}
+				}
+				data.QuoteText = text
+			}
+		}
 	}
 
 	languageRows, err := cd.Languages()
@@ -249,6 +298,7 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 		ThreadURL:        cd.AbsoluteURL(endUrl),
 		IncludePostCount: true,
 		IncludeSearch:    true,
+		MarkThreadRead:   true,
 	}); err != nil {
 		log.Printf("thread create side effects: %v", err)
 	}

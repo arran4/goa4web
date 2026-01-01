@@ -54,6 +54,7 @@ func TestTopicsPage_ThreadLinks(t *testing.T) {
 			Lastposterusername:     sql.NullString{String: "abc", Valid: true},
 			Lastposterid:           sql.NullInt32{Int32: 5, Valid: true},
 			Firstpostusername:      sql.NullString{String: "abc", Valid: true},
+			Firstpostuserid:        sql.NullInt32{Int32: 5, Valid: true},
 			Firstpostwritten:       sql.NullTime{Time: now, Valid: true},
 			Firstposttext:          sql.NullString{String: "first post", Valid: true},
 		}},
@@ -85,7 +86,6 @@ func TestTopicsPage_ThreadLinks(t *testing.T) {
 		t.Fatalf("unexpected double slash in link: %q", body)
 	}
 	expectedCalls := []string{
-		"SystemCheckRoleGrant:anyone:administrator",
 		"GetAllForumCategories",
 		"GetForumTopicByIdForUser:1",
 		"GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText:1",
@@ -94,8 +94,6 @@ func TestTopicsPage_ThreadLinks(t *testing.T) {
 		"ListContentPrivateLabels:thread:2",
 		"ListContentPublicLabels:thread:1",
 		"ListContentLabelStatus:thread:1",
-		"SystemCheckRoleGrant:anyone:administrator",
-		"SystemCheckRoleGrant:anyone:administrator",
 	}
 	if diff := cmp.Diff(expectedCalls, queries.calls); diff != "" {
 		t.Fatalf("unexpected query sequence (-want +got):\n%s", diff)
@@ -134,9 +132,9 @@ func (f *forumTopicPageQuerierFake) GetForumTopicByIdForUser(_ context.Context, 
 	return f.topic, nil
 }
 
-func (f *forumTopicPageQuerierFake) SystemCheckRoleGrant(_ context.Context, arg db.SystemCheckRoleGrantParams) (int32, error) {
-	f.record(fmt.Sprintf("SystemCheckRoleGrant:%s:%s", arg.Name, arg.Action))
-	return 0, nil
+func (f *forumTopicPageQuerierFake) GetPermissionsByUserID(_ context.Context, idusers int32) ([]*db.GetPermissionsByUserIDRow, error) {
+	f.record(fmt.Sprintf("GetPermissionsByUserID:%d", idusers))
+	return nil, nil
 }
 
 func (f *forumTopicPageQuerierFake) GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText(_ context.Context, arg db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams) ([]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow, error) {

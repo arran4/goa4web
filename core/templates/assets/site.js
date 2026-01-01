@@ -5,6 +5,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const type = e.target.getAttribute('data-quote-type');
             const commentId = e.target.getAttribute('data-comment-id');
             quote(type, commentId);
+        } else if (e.target && e.target.classList.contains('quote-new-thread-link')) {
+            e.preventDefault();
+            const commentId = e.target.getAttribute('data-comment-id');
+            const topicId = e.target.getAttribute('data-topic-id');
+            quoteInNewThread(commentId, topicId, e);
         } else if (e.target && e.target.classList.contains('folded-toggle')) {
             e.preventDefault();
             const targetId = e.target.getAttribute('data-target');
@@ -24,7 +29,8 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const targetId = e.target.getAttribute('data-target');
             const previewUrl = e.target.getAttribute('data-preview-url');
-            previewA4Code(targetId, previewUrl);
+            const containerId = e.target.getAttribute('data-container');
+            previewA4Code(targetId, previewUrl, containerId);
         }
     });
 });
@@ -49,13 +55,19 @@ function convertA4CodeToMarkdown(targetId) {
     }
 }
 
-function previewA4Code(targetId, previewUrl) {
+function previewA4Code(targetId, previewUrl, containerId) {
     const textarea = document.getElementById(targetId);
     if (!textarea) return;
 
     const text = textarea.value;
-    const previewContainer = document.getElementById('preview-container');
-    const previewContent = document.getElementById('preview-content');
+    let previewContainer = document.getElementById('preview-container');
+    let previewContent = document.getElementById('preview-content');
+    if (containerId) {
+        previewContainer = document.getElementById(containerId);
+        if (previewContainer) {
+            previewContent = previewContainer.querySelector('.preview-box');
+        }
+    }
 
     const headers = {
         'Content-Type': 'text/plain',
@@ -84,6 +96,45 @@ function previewA4Code(targetId, previewUrl) {
         console.error('Error fetching preview:', error);
         alert('Failed to generate preview.');
     });
+}
+
+function quoteInNewThread(commentId, topicId, event) {
+    const selection = window.getSelection();
+    let url = '';
+
+    // Determine base path based on current location (public or private forum)
+    let basePath = '/forum';
+    if (window.location.pathname.startsWith('/private')) {
+        basePath = '/private';
+    }
+
+    if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const commentContainer = document.getElementById('comment-' + commentId);
+
+        if (commentContainer && commentContainer.contains(range.commonAncestorContainer)) {
+            // Calculate absolute offsets relative to the comment container
+            const start = calculateOffset(commentContainer, range.startContainer, range.startOffset);
+            const end = calculateOffset(commentContainer, range.endContainer, range.endOffset);
+
+            // Construct URL for selected text
+            url = basePath + '/topic/' + topicId + '/thread/new?quote_comment_id=' + commentId + '&quote_type=selected&quote_start=' + start + '&quote_end=' + end;
+        }
+    }
+
+    // If no selection or invalid selection, maybe fallback to full quote?
+    // Or just alert? The UI says "QUOTE SELECTED".
+    // If invalid selection, we shouldn't proceed or just do nothing.
+    if (!url) {
+        alert("Please select text within the comment you are quoting.");
+        return;
+    }
+
+    if (event.ctrlKey || event.metaKey || event.shiftKey) {
+        window.open(url, '_blank');
+    } else {
+        window.location.href = url;
+    }
 }
 
 function quote(type, commentId) {

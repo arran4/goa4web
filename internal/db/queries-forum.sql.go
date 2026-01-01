@@ -904,7 +904,7 @@ const getForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText
 WITH role_ids AS (
     SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, lu.username AS lastposterusername, lu.idusers AS lastposterid, fcu.username as firstpostusername, fc.written as firstpostwritten, fc.text as firstposttext
+SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, lu.username AS lastposterusername, lu.idusers AS lastposterid, fcu.username as firstpostusername, fcu.idusers as firstpostuserid, fc.written as firstpostwritten, fc.text as firstposttext
 FROM forumthread th
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN users lu ON lu.idusers = t.lastposter
@@ -941,6 +941,7 @@ type GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextR
 	Lastposterusername     sql.NullString
 	Lastposterid           sql.NullInt32
 	Firstpostusername      sql.NullString
+	Firstpostuserid        sql.NullInt32
 	Firstpostwritten       sql.NullTime
 	Firstposttext          sql.NullString
 }
@@ -965,6 +966,7 @@ func (q *Queries) GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndF
 			&i.Lastposterusername,
 			&i.Lastposterid,
 			&i.Firstpostusername,
+			&i.Firstpostuserid,
 			&i.Firstpostwritten,
 			&i.Firstposttext,
 		); err != nil {

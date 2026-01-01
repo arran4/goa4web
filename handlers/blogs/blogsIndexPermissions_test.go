@@ -18,6 +18,7 @@ func TestCustomBlogIndexRoles(t *testing.T) {
 			{Name: "administrator", IsAdmin: true},
 		},
 	}, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+	cd.UserID = 1
 	cd.AdminMode = true
 	BlogsMiddlewareIndex(cd, req)
 	if !common.ContainsItem(cd.CustomIndexItems, "Blogs Admin") {

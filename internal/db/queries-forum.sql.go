@@ -103,7 +103,6 @@ const adminDeleteForumTopic = `-- name: AdminDeleteForumTopic :exec
 DELETE FROM forumtopic WHERE idforumtopic = ?
 `
 
-// Removes a forum topic by ID.
 func (q *Queries) AdminDeleteForumTopic(ctx context.Context, idforumtopic int32) error {
 	_, err := q.db.ExecContext(ctx, adminDeleteForumTopic, idforumtopic)
 	return err
@@ -211,8 +210,8 @@ type AdminListForumTopicGrantsByTopicIDRow struct {
 	Username sql.NullString
 }
 
-func (q *Queries) AdminListForumTopicGrantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListForumTopicGrantsByTopicIDRow, error) {
-	rows, err := q.db.QueryContext(ctx, adminListForumTopicGrantsByTopicID, itemID)
+func (q *Queries) AdminListForumTopicGrantsByTopicID(ctx context.Context, topicID sql.NullInt32) ([]*AdminListForumTopicGrantsByTopicIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListForumTopicGrantsByTopicID, topicID)
 	if err != nil {
 		return nil, err
 	}
@@ -311,8 +310,8 @@ type AdminListTopicsWithUserGrantsNoRolesRow struct {
 	Title        sql.NullString
 }
 
-func (q *Queries) AdminListTopicsWithUserGrantsNoRoles(ctx context.Context, includeAdmin interface{}) ([]*AdminListTopicsWithUserGrantsNoRolesRow, error) {
-	rows, err := q.db.QueryContext(ctx, adminListTopicsWithUserGrantsNoRoles, includeAdmin)
+func (q *Queries) AdminListTopicsWithUserGrantsNoRoles(ctx context.Context, dollar_1 interface{}) ([]*AdminListTopicsWithUserGrantsNoRolesRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListTopicsWithUserGrantsNoRoles, dollar_1)
 	if err != nil {
 		return nil, err
 	}
@@ -413,6 +412,17 @@ func (q *Queries) AdminUpdateForumTopic(ctx context.Context, arg AdminUpdateForu
 		arg.Idforumtopic,
 	)
 	return err
+}
+
+const countForumThreadsByTopicID = `-- name: CountForumThreadsByTopicID :one
+SELECT COUNT(*) FROM forumthread WHERE forumtopic_idforumtopic = ?
+`
+
+func (q *Queries) CountForumThreadsByTopicID(ctx context.Context, topicID int32) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countForumThreadsByTopicID, topicID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const createForumTopicForPoster = `-- name: CreateForumTopicForPoster :execlastid
@@ -823,7 +833,7 @@ LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN users lu ON lu.idusers = t.lastposter
 LEFT JOIN comments fc ON th.firstpost=fc.idcomments
 LEFT JOIN users fcu ON fcu.idusers = fc.users_idusers
-WHERE th.forumtopic_idforumtopic=?
+WHERE th.forumtopic_idforumtopic = ?
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE ((t.handler = 'private' AND g.section = 'privateforum') OR (t.handler <> 'private' AND g.section = 'forum'))
@@ -1015,12 +1025,12 @@ ORDER BY lastaddition DESC
 `
 
 type GetForumTopicsByCategoryIdParams struct {
-	CategoryID int32
-	ViewerID   int32
+	GrantCategoryID int32
+	ViewerID        int32
 }
 
 func (q *Queries) GetForumTopicsByCategoryId(ctx context.Context, arg GetForumTopicsByCategoryIdParams) ([]*Forumtopic, error) {
-	rows, err := q.db.QueryContext(ctx, getForumTopicsByCategoryId, arg.CategoryID, arg.ViewerID, arg.ViewerID)
+	rows, err := q.db.QueryContext(ctx, getForumTopicsByCategoryId, arg.GrantCategoryID, arg.ViewerID, arg.ViewerID)
 	if err != nil {
 		return nil, err
 	}
@@ -1165,8 +1175,8 @@ type ListForumcategoryPathRow struct {
 	Title           sql.NullString
 }
 
-func (q *Queries) ListForumcategoryPath(ctx context.Context, categoryID int32) ([]*ListForumcategoryPathRow, error) {
-	rows, err := q.db.QueryContext(ctx, listForumcategoryPath, categoryID)
+func (q *Queries) ListForumcategoryPath(ctx context.Context, idforumcategory int32) ([]*ListForumcategoryPathRow, error) {
+	rows, err := q.db.QueryContext(ctx, listForumcategoryPath, idforumcategory)
 	if err != nil {
 		return nil, err
 	}
@@ -1280,8 +1290,8 @@ type ListPrivateTopicsByUserIDRow struct {
 	Lastposterusername           sql.NullString
 }
 
-func (q *Queries) ListPrivateTopicsByUserID(ctx context.Context, userID sql.NullInt32) ([]*ListPrivateTopicsByUserIDRow, error) {
-	rows, err := q.db.QueryContext(ctx, listPrivateTopicsByUserID, userID)
+func (q *Queries) ListPrivateTopicsByUserID(ctx context.Context, viewerMatchID sql.NullInt32) ([]*ListPrivateTopicsByUserIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, listPrivateTopicsByUserID, viewerMatchID)
 	if err != nil {
 		return nil, err
 	}

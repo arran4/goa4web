@@ -51,7 +51,6 @@ type Querier interface {
 	AdminDeleteFAQCategory(ctx context.Context, id int32) error
 	AdminDeleteForumCategory(ctx context.Context, idforumcategory int32) error
 	AdminDeleteForumThread(ctx context.Context, idforumthread int32) error
-	// Removes a forum topic by ID.
 	AdminDeleteForumTopic(ctx context.Context, idforumtopic int32) error
 	AdminDeleteGrant(ctx context.Context, id int32) error
 	AdminDeleteImageBoard(ctx context.Context, idimageboard int32) error
@@ -149,7 +148,7 @@ type Querier interface {
 	AdminListForumCategoriesWithCounts(ctx context.Context, arg AdminListForumCategoriesWithCountsParams) ([]*AdminListForumCategoriesWithCountsRow, error)
 	AdminListForumThreadGrantsByThreadID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListForumThreadGrantsByThreadIDRow, error)
 	AdminListForumThreads(ctx context.Context, arg AdminListForumThreadsParams) ([]*AdminListForumThreadsRow, error)
-	AdminListForumTopicGrantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListForumTopicGrantsByTopicIDRow, error)
+	AdminListForumTopicGrantsByTopicID(ctx context.Context, topicID sql.NullInt32) ([]*AdminListForumTopicGrantsByTopicIDRow, error)
 	AdminListForumTopics(ctx context.Context, arg AdminListForumTopicsParams) ([]*Forumtopic, error)
 	// admin task
 	AdminListGrantsByRoleID(ctx context.Context, roleID sql.NullInt32) ([]*Grant, error)
@@ -174,7 +173,7 @@ type Querier interface {
 	// admin task
 	AdminListSentEmails(ctx context.Context, arg AdminListSentEmailsParams) ([]*AdminListSentEmailsRow, error)
 	AdminListSessions(ctx context.Context) ([]*AdminListSessionsRow, error)
-	AdminListTopicsWithUserGrantsNoRoles(ctx context.Context, includeAdmin interface{}) ([]*AdminListTopicsWithUserGrantsNoRolesRow, error)
+	AdminListTopicsWithUserGrantsNoRoles(ctx context.Context, dollar_1 interface{}) ([]*AdminListTopicsWithUserGrantsNoRolesRow, error)
 	// admin task
 	AdminListUnsentPendingEmails(ctx context.Context, arg AdminListUnsentPendingEmailsParams) ([]*AdminListUnsentPendingEmailsRow, error)
 	// Admin
@@ -246,6 +245,7 @@ type Querier interface {
 	AdminWritingCategoryCounts(ctx context.Context) ([]*AdminWritingCategoryCountsRow, error)
 	CheckUserHasGrant(ctx context.Context, arg CheckUserHasGrantParams) (bool, error)
 	ClearUnreadContentPrivateLabelExceptUser(ctx context.Context, arg ClearUnreadContentPrivateLabelExceptUserParams) error
+	CountForumThreadsByTopicID(ctx context.Context, topicID int32) (int64, error)
 	CreateBlogEntryForWriter(ctx context.Context, arg CreateBlogEntryForWriterParams) (int64, error)
 	// This query adds a new entry to the "bookmarks" table for a lister.
 	CreateBookmarksForLister(ctx context.Context, arg CreateBookmarksForListerParams) error
@@ -407,7 +407,7 @@ type Querier interface {
 	ListContentPrivateLabels(ctx context.Context, arg ListContentPrivateLabelsParams) ([]*ListContentPrivateLabelsRow, error)
 	ListContentPublicLabels(ctx context.Context, arg ListContentPublicLabelsParams) ([]*ListContentPublicLabelsRow, error)
 	ListEffectiveRoleIDsByUserID(ctx context.Context, usersIdusers int32) ([]int32, error)
-	ListForumcategoryPath(ctx context.Context, categoryID int32) ([]*ListForumcategoryPathRow, error)
+	ListForumcategoryPath(ctx context.Context, idforumcategory int32) ([]*ListForumcategoryPathRow, error)
 	ListGrants(ctx context.Context) ([]*Grant, error)
 	ListGrantsByUserID(ctx context.Context, userID sql.NullInt32) ([]*Grant, error)
 	ListImagePostsByBoardForLister(ctx context.Context, arg ListImagePostsByBoardForListerParams) ([]*ListImagePostsByBoardForListerRow, error)
@@ -416,7 +416,7 @@ type Querier interface {
 	ListLinkerCategoryPath(ctx context.Context, categoryID int32) ([]*ListLinkerCategoryPathRow, error)
 	ListNotificationsForLister(ctx context.Context, arg ListNotificationsForListerParams) ([]*Notification, error)
 	ListPrivateTopicParticipantsByTopicIDForUser(ctx context.Context, arg ListPrivateTopicParticipantsByTopicIDForUserParams) ([]*ListPrivateTopicParticipantsByTopicIDForUserRow, error)
-	ListPrivateTopicsByUserID(ctx context.Context, userID sql.NullInt32) ([]*ListPrivateTopicsByUserIDRow, error)
+	ListPrivateTopicsByUserID(ctx context.Context, viewerMatchID sql.NullInt32) ([]*ListPrivateTopicsByUserIDRow, error)
 	ListPublicWritingsByUserForLister(ctx context.Context, arg ListPublicWritingsByUserForListerParams) ([]*ListPublicWritingsByUserForListerRow, error)
 	ListPublicWritingsInCategoryForLister(ctx context.Context, arg ListPublicWritingsInCategoryForListerParams) ([]*ListPublicWritingsInCategoryForListerRow, error)
 	ListSiteNewsSearchFirstForLister(ctx context.Context, arg ListSiteNewsSearchFirstForListerParams) ([]int32, error)

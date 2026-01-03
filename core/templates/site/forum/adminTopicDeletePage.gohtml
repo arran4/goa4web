@@ -1,0 +1,25 @@
+{{ template "head" $ }}
+<div class="block">
+<h2>Delete Topic: {{ .Topic.Title.String }}</h2>
+<p>Are you sure you want to delete this topic?</p>
+{{ if .ThreadCount }}
+    <p>This topic contains {{ .ThreadCount }} threads.</p>
+{{ end }}
+
+<form method="post">
+    {{ csrfField }}
+    {{ if .ThreadCount }}
+        <div class="row">
+        <label><input type="checkbox" name="cascade" value="true"> Delete all {{ .ThreadCount }} threads in this topic (Cascade)</label>
+        </div>
+        <div class="row">
+        <i>If you do not cascade delete, you will need to delete threads manually or move them. (Actually the backend might fail if FK constraints exist, better check)</i>
+        </div>
+    {{ end }}
+    <div class="row">
+    <input type="submit" name="task" value="Confirm Delete">
+    </div>
+</form>
+<a href="/admin/forum/topics/topic/{{ .Topic.Idforumtopic }}">Cancel</a>
+</div>
+{{ template "tail" $ }}

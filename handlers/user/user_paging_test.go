@@ -10,13 +10,9 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/core/templates"
 )
 
 func TestUserPagingPage_Render(t *testing.T) {
-	// Initialize templates
-	templates.SetDir("../../core/templates")
-
 	req := httptest.NewRequest("GET", "/usr/paging", nil)
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, nil, config.NewRuntimeConfig())

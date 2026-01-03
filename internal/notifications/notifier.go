@@ -69,21 +69,21 @@ func New(opts ...Option) *Notifier {
 
 func (n *Notifier) notificationTemplates() *ttemplate.Template {
 	n.noteOnce.Do(func() {
-		n.noteTmpls = templates.GetCompiledNotificationTemplates(map[string]any{})
+		n.noteTmpls = templates.GetCompiledNotificationTemplates(map[string]any{}, templates.WithDir(n.Config.TemplatesDir))
 	})
 	return n.noteTmpls
 }
 
 func (n *Notifier) emailTextTemplates() *ttemplate.Template {
 	n.emailTextOnce.Do(func() {
-		n.emailTextTmpls = templates.GetCompiledEmailTextTemplates(map[string]any{})
+		n.emailTextTmpls = templates.GetCompiledEmailTextTemplates(map[string]any{}, templates.WithDir(n.Config.TemplatesDir))
 	})
 	return n.emailTextTmpls
 }
 
 func (n *Notifier) emailHTMLTemplates() *htemplate.Template {
 	n.emailHTMLOnce.Do(func() {
-		n.emailHTMLTmpls = templates.GetCompiledEmailHtmlTemplates(map[string]any{})
+		n.emailHTMLTmpls = templates.GetCompiledEmailHtmlTemplates(map[string]any{}, templates.WithDir(n.Config.TemplatesDir))
 	})
 	return n.emailHTMLTmpls
 }

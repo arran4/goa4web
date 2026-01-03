@@ -40,7 +40,6 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	coretemplates "github.com/arran4/goa4web/core/templates"
 )
 
 var (
@@ -225,7 +224,6 @@ func parseRoot(args []string) (*rootCmd, error) {
 		config.WithFileValues(fileVals),
 		config.WithGetenv(os.Getenv),
 	)
-	coretemplates.SetDir(r.cfg.TemplatesDir)
 
 	isTemplateCommand := false
 	if len(r.fs.Args()) > 0 {

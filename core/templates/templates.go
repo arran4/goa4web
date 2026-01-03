@@ -273,7 +273,9 @@ func GetFaviconData(opts ...Option) []byte { return readFile("assets/favicon.svg
 func GetPasteImageJSData(opts ...Option) []byte { return readFile("assets/pasteimg.js", opts...) }
 
 // GetNotificationsJSData returns the JavaScript used for real-time notification updates.
-func GetNotificationsJSData(opts ...Option) []byte { return readFile("assets/notifications.js", opts...) }
+func GetNotificationsJSData(opts ...Option) []byte {
+	return readFile("assets/notifications.js", opts...)
+}
 
 // GetRoleGrantsEditorJSData returns the JavaScript powering the role grants drag-and-drop editor.
 func GetRoleGrantsEditorJSData(opts ...Option) []byte {
@@ -281,7 +283,9 @@ func GetRoleGrantsEditorJSData(opts ...Option) []byte {
 }
 
 // GetPrivateForumJSData returns the JavaScript for private forum pages.
-func GetPrivateForumJSData(opts ...Option) []byte { return readFile("assets/private_forum.js", opts...) }
+func GetPrivateForumJSData(opts ...Option) []byte {
+	return readFile("assets/private_forum.js", opts...)
+}
 
 // GetTopicLabelsJSData returns the JavaScript for topic label editing.
 func GetTopicLabelsJSData(opts ...Option) []byte { return readFile("assets/topic_labels.js", opts...) }

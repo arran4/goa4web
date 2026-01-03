@@ -3,8 +3,8 @@ package notifications
 import (
 	"context"
 
-	coretemplates "github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/config"
+	coretemplates "github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/db"
 	ttemplate "text/template"
 )

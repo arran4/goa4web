@@ -68,6 +68,11 @@ func (c *testVerificationTemplateCmd) Run() error {
 		data.Config = &config.RuntimeConfig{}
 	}
 
+	// Override templates dir for verification if empty (assume dev mode like old code did)
+	if data.Config.TemplatesDir == "" {
+		data.Config.TemplatesDir = "core/templates"
+	}
+
 	// Mock DB
 	qs := &db.QuerierStub{}
 	if data.User != nil {
@@ -92,10 +97,9 @@ func (c *testVerificationTemplateCmd) Run() error {
 	req := httptest.NewRequest("GET", u, nil)
 
 	// Load template
-	templates.SetDir("core/templates")
 
 	// Verify template existence
-	if !templates.TemplateExists(c.Template) {
+	if !templates.TemplateExists(c.Template, templates.WithDir(data.Config.TemplatesDir)) {
 		return fmt.Errorf("template %q not found", c.Template)
 	}
 
@@ -112,7 +116,7 @@ func (c *testVerificationTemplateCmd) Run() error {
 
 	// Prepare execution
 	funcs := cd.Funcs(req)
-	tmpl := templates.GetCompiledSiteTemplates(funcs)
+	tmpl := templates.GetCompiledSiteTemplates(funcs, templates.WithDir(data.Config.TemplatesDir))
 
 	// Define handler for rendering
 	renderHandler := func(w http.ResponseWriter, r *http.Request) {
@@ -128,17 +132,18 @@ func (c *testVerificationTemplateCmd) Run() error {
 	if c.Listen != "" {
 		r := mux.NewRouter()
 
+		cfg := data.Config
 		// Static assets
-		r.HandleFunc("/main.css", handlers.MainCSS).Methods("GET")
-		r.HandleFunc("/favicon.svg", handlers.Favicon).Methods("GET")
-		r.HandleFunc("/static/site.js", handlers.SiteJS).Methods("GET")
-		r.HandleFunc("/static/a4code.js", handlers.A4CodeJS).Methods("GET")
+		r.HandleFunc("/main.css", handlers.MainCSS(cfg)).Methods("GET")
+		r.HandleFunc("/favicon.svg", handlers.Favicon(cfg)).Methods("GET")
+		r.HandleFunc("/static/site.js", handlers.SiteJS(cfg)).Methods("GET")
+		r.HandleFunc("/static/a4code.js", handlers.A4CodeJS(cfg)).Methods("GET")
 
 		// Module specific assets that are often hardcoded in templates
 		// These paths should ideally be dynamic but for verification we map common ones
-		r.HandleFunc("/forum/topic_labels.js", handlers.TopicLabelsJS).Methods("GET")
-		r.HandleFunc("/private/topic_labels.js", handlers.TopicLabelsJS).Methods("GET")
-		r.HandleFunc("/news/topic_labels.js", handlers.TopicLabelsJS).Methods("GET") // Guessed path
+		r.HandleFunc("/forum/topic_labels.js", handlers.TopicLabelsJS(cfg)).Methods("GET")
+		r.HandleFunc("/private/topic_labels.js", handlers.TopicLabelsJS(cfg)).Methods("GET")
+		r.HandleFunc("/news/topic_labels.js", handlers.TopicLabelsJS(cfg)).Methods("GET") // Guessed path
 		// Add more if discovered
 
 		// Render page

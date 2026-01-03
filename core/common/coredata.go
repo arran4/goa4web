@@ -1094,7 +1094,11 @@ func (cd *CoreData) Event() *eventbus.TaskEvent { return cd.event }
 // ExecuteSiteTemplate renders the named site template using cd's helper
 // functions. It wraps templates.GetCompiledSiteTemplates(cd.Funcs(r)).
 func (cd *CoreData) ExecuteSiteTemplate(w io.Writer, r *http.Request, name string, data any) error {
-	return templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, name, data)
+	var opts []templates.Option
+	if cd.Config != nil && cd.Config.TemplatesDir != "" {
+		opts = append(opts, templates.WithDir(cd.Config.TemplatesDir))
+	}
+	return templates.GetCompiledSiteTemplates(cd.Funcs(r), opts...).ExecuteTemplate(w, name, data)
 }
 
 // ExternalLink lazily resolves metadata for id.
@@ -2857,17 +2861,21 @@ func WithWritingsLimit(l int32) LatestWritingsOption {
 
 func defaultNotificationTemplate(name string, cfg *config.RuntimeConfig) string {
 	var buf bytes.Buffer
+	var opts []templates.Option
+	if cfg != nil && cfg.TemplatesDir != "" {
+		opts = append(opts, templates.WithDir(cfg.TemplatesDir))
+	}
 	if strings.HasSuffix(name, ".gohtml") {
-		tmpl := templates.GetCompiledEmailHtmlTemplates(map[string]any{})
+		tmpl := templates.GetCompiledEmailHtmlTemplates(map[string]any{}, opts...)
 		if err := tmpl.ExecuteTemplate(&buf, name, sampleEmailData(cfg)); err == nil {
 			return buf.String()
 		}
 	} else {
-		tmpl := templates.GetCompiledEmailTextTemplates(map[string]any{})
+		tmpl := templates.GetCompiledEmailTextTemplates(map[string]any{}, opts...)
 		if err := tmpl.ExecuteTemplate(&buf, name, sampleEmailData(cfg)); err == nil {
 			return buf.String()
 		}
-		tmpl2 := templates.GetCompiledNotificationTemplates(map[string]any{})
+		tmpl2 := templates.GetCompiledNotificationTemplates(map[string]any{}, opts...)
 		buf.Reset()
 		if err := tmpl2.ExecuteTemplate(&buf, name, sampleEmailData(cfg)); err == nil {
 			return buf.String()

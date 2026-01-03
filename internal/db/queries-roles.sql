@@ -33,7 +33,7 @@ SELECT * FROM grants WHERE role_id = ? ORDER BY id;
 
 -- name: AdminUpdateRole :exec
 -- admin task
-UPDATE roles SET name = ?, can_login = ?, is_admin = ?, private_labels = ? WHERE id = ?;
+UPDATE roles SET name = ?, can_login = ?, is_admin = ?, private_labels = ?, public_profile_allowed_at = ? WHERE id = ?;
 
 -- name: GetRoleByName :one
 SELECT id, name, can_login, is_admin, private_labels, public_profile_allowed_at FROM roles WHERE name = ?;

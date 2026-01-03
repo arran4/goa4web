@@ -1452,7 +1452,7 @@ func (cd *CoreData) CreateFAQCategory(name string) error {
 	if cd.queries == nil {
 		return nil
 	}
-	_, err := cd.queries.AdminCreateFAQCategory(cd.ctx, db.AdminCreateFAQCategoryParams{Name: sql.NullString{String: name, Valid: name != ""}});
+	_, err := cd.queries.AdminCreateFAQCategory(cd.ctx, db.AdminCreateFAQCategoryParams{Name: sql.NullString{String: name, Valid: name != ""}})
 	return err
 }
 

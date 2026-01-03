@@ -153,7 +153,7 @@ LIMIT ? OFFSET ?;
 
 -- name: AdminRestoreUser :exec
 UPDATE users u JOIN deactivated_users d ON u.idusers = d.idusers
-SET u.email = d.email, u.passwd = d.passwd, u.passwd_algorithm = d.passwd_algorithm, u.username = d.username, u.deleted_at = NULL, d.restored_at = NOW()
+SET u.passwd = d.passwd, u.passwd_algorithm = d.passwd_algorithm, u.username = d.username, u.deleted_at = NULL, d.restored_at = NOW()
 WHERE u.idusers = ? AND d.restored_at IS NULL;
 
 -- name: AdminIsUserDeactivated :one

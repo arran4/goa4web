@@ -14,7 +14,7 @@
             {{ $idwriting := .Idwriting }}
             {{ $private := .Private.Bool }}
             {{ $comments := .Comments }}
-            {{ $labels := cd.WritingLabels $idwriting }}
+            {{ $labels := cd.WritingLabels $idwriting .UsersIdusers }}
             <article class="full-width link-item">
                 <header class="bg-muted link-header">{{ $title }} By {{ $username }} on {{ $published }}
                     {{ if $private }} - <i>Warning: Privileged information.</i>{{ end }}

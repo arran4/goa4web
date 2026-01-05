@@ -182,7 +182,7 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		data.Subscribed = true
 	}
 
-	handlers.TemplateHandler(w, r, "forum/topicsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, ForumTopicPageTmpl, data)
 }
 
 // TopicsPage serves the forum topic page at the default /forum prefix.

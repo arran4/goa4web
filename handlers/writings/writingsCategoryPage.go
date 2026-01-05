@@ -45,5 +45,5 @@ func CategoryPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	handlers.TemplateHandler(w, r, "writingsCategoryPage", data)
+	handlers.TemplateHandler(w, r, WritingsCategoryPageTmpl, data)
 }

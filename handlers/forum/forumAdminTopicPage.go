@@ -72,7 +72,7 @@ func AdminTopicPage(w http.ResponseWriter, r *http.Request) {
 		AnyoneHasAccess: anyoneHasAccess,
 		Participants:    participants,
 	}
-	handlers.TemplateHandler(w, r, "forum/adminTopicPage.gohtml", data)
+	handlers.TemplateHandler(w, r, ForumAdminTopicPageTmpl, data)
 }
 
 // AdminTopicEditFormPage shows the edit form for a forum topic.
@@ -118,5 +118,5 @@ func AdminTopicEditFormPage(w http.ResponseWriter, r *http.Request) {
 		Categories: categories,
 		Roles:      roles,
 	}
-	handlers.TemplateHandler(w, r, "forum/adminTopicEditPage.gohtml", data)
+	handlers.TemplateHandler(w, r, ForumAdminTopicEditPageTmpl, data)
 }

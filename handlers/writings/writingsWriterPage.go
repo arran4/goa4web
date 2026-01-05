@@ -59,5 +59,5 @@ func WriterPage(w http.ResponseWriter, r *http.Request) {
 		data.Abstracts = append(data.Abstracts, row)
 	}
 
-	handlers.TemplateHandler(w, r, "writerPage.gohtml", data)
+	handlers.TemplateHandler(w, r, WritingsWriterPageTmpl, data)
 }

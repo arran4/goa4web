@@ -41,5 +41,5 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 		Category: cat,
 		Topics:   topics,
 	}
-	handlers.TemplateHandler(w, r, "forum/forumAdminCategoryPage.gohtml", data)
+	handlers.TemplateHandler(w, r, ForumAdminCategoryPageTmpl, data)
 }

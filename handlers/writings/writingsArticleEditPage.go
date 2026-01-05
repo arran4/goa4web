@@ -57,7 +57,7 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	handlers.TemplateHandler(w, r, "articleEditPage.gohtml", data)
+	handlers.TemplateHandler(w, r, WritingsArticleEditPageTmpl, data)
 }
 
 func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {

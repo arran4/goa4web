@@ -12,10 +12,6 @@ import (
 type writingsTask struct {
 }
 
-const (
-	WritingsPageTmpl = "writings/page.gohtml"
-)
-
 func NewWritingsTask() tasks.Task {
 	return &writingsTask{}
 }

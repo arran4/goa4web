@@ -45,7 +45,7 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 		Category:   cat,
 		Categories: cats,
 	}
-	handlers.TemplateHandler(w, r, "forum/forumAdminCategoryEditPage.gohtml", data)
+	handlers.TemplateHandler(w, r, ForumAdminCategoryEditPageTmpl, data)
 }
 
 // AdminCategoryEditSubmit processes updates to an existing forum category.

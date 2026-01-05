@@ -45,7 +45,7 @@ func AdminNewsPage(w http.ResponseWriter, r *http.Request) {
 		return data.UserRoles[i].Username.String < data.UserRoles[j].Username.String
 	})
 
-	if err := cd.ExecuteSiteTemplate(w, r, "news/adminNewsListPage.gohtml", data); err != nil {
+	if err := cd.ExecuteSiteTemplate(w, r, NewsAdminListPageTmpl, data); err != nil {
 		handlers.RenderErrorPage(w, r, err)
 	}
 }
@@ -121,7 +121,7 @@ func AdminNewsPostPage(w http.ResponseWriter, r *http.Request) {
 		return ""
 	}
 
-	if err := cd.ExecuteSiteTemplate(w, r, "news/adminNewsPostPage.gohtml", data); err != nil {
+	if err := cd.ExecuteSiteTemplate(w, r, NewsAdminPostPageTmpl, data); err != nil {
 		handlers.RenderErrorPage(w, r, err)
 	}
 }
@@ -161,7 +161,7 @@ func adminNewsEditFormPage(w http.ResponseWriter, r *http.Request) {
 		SelectedLanguageId: int(post.LanguageID.Int32),
 		AuthorLabels:       labels,
 	}
-	if err := cd.ExecuteSiteTemplate(w, r, "news/adminNewsEditPage.gohtml", data); err != nil {
+	if err := cd.ExecuteSiteTemplate(w, r, NewsAdminEditPageTmpl, data); err != nil {
 		handlers.RenderErrorPage(w, r, err)
 	}
 }
@@ -183,7 +183,7 @@ func AdminNewsDeleteConfirmPage(w http.ResponseWriter, r *http.Request) {
 		ConfirmLabel: "Confirm delete",
 		Back:         fmt.Sprintf("/admin/news/article/%d", pid),
 	}
-	if err := cd.ExecuteSiteTemplate(w, r, "news/adminNewsDeleteConfirmPage.gohtml", data); err != nil {
+	if err := cd.ExecuteSiteTemplate(w, r, NewsAdminDeleteConfirmPageTmpl, data); err != nil {
 		handlers.RenderErrorPage(w, r, err)
 	}
 }

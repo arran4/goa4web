@@ -33,7 +33,7 @@ func ArticleAddPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	handlers.TemplateHandler(w, r, "articleAddPage.gohtml", data)
+	handlers.TemplateHandler(w, r, WritingsArticleAddPageTmpl, data)
 }
 func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)

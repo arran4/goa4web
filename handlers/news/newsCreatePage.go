@@ -8,9 +8,6 @@ import (
 	"github.com/arran4/goa4web/handlers"
 )
 
-const (
-	NewsCreatePageTmpl = "news/createPage.gohtml"
-)
 
 func NewsCreatePageHandler(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)

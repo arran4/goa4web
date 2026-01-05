@@ -71,5 +71,5 @@ func WriterListPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	handlers.TemplateHandler(w, r, "writings/writerListPage.gohtml", data)
+	handlers.TemplateHandler(w, r, WritingsWriterListPageTmpl, data)
 }

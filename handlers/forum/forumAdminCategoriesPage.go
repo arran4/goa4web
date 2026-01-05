@@ -85,5 +85,5 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 		data.Tree = template.HTML(build(0))
 	}
 
-	handlers.TemplateHandler(w, r, "forum/forumAdminCategoriesPage.gohtml", data)
+	handlers.TemplateHandler(w, r, ForumAdminCategoriesPageTmpl, data)
 }

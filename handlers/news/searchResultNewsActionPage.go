@@ -63,7 +63,7 @@ func SearchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 		data.EmptyWords = noResults
 	}
 
-	if err := cd.ExecuteSiteTemplate(w, r, "search/resultNewsActionPage.gohtml", data); err != nil {
+	if err := cd.ExecuteSiteTemplate(w, r, NewsSearchResultActionPageTmpl, data); err != nil {
 		handlers.RenderErrorPage(w, r, err)
 	}
 }

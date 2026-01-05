@@ -19,5 +19,5 @@ func CategoriesPage(w http.ResponseWriter, r *http.Request) {
 	cd.LoadSelectionsFromRequest(r)
 	cd.PageTitle = "Writing Categories"
 	data := Data{Request: r}
-	handlers.TemplateHandler(w, r, "writingsCategoriesPage.gohtml", data)
+	handlers.TemplateHandler(w, r, WritingsCategoriesPageTmpl, data)
 }

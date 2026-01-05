@@ -45,7 +45,7 @@ func PreviewPage(w http.ResponseWriter, r *http.Request) {
 	// Set headers for partial HTML content
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	if err := cd.ExecuteSiteTemplate(w, r, "news/preview.gohtml", data); err != nil {
+	if err := cd.ExecuteSiteTemplate(w, r, NewsPreviewTmpl, data); err != nil {
 		fmt.Printf("Error processing preview: %v\n", err)
 		http.Error(w, "Error processing preview", http.StatusInternalServerError)
 		return

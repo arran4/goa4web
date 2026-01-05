@@ -11,17 +11,12 @@ import (
 type privateForumTask struct {
 }
 
-const (
-	CreateTopicTmpl = "forum/create_topic.gohtml"
-	TopicsOnlyTmpl  = "privateforum/topics_only.gohtml"
-)
-
 func NewPrivateForumTask() tasks.Task {
 	return &privateForumTask{}
 }
 
 func (t *privateForumTask) TemplatesRequired() []string {
-	return []string{CreateTopicTmpl, TopicsOnlyTmpl}
+	return []string{PrivateForumCreateTopicPageTmpl, PrivateForumTopicsOnlyTmpl}
 }
 
 func (t *privateForumTask) Action(w http.ResponseWriter, r *http.Request) any {
@@ -36,5 +31,5 @@ func (t *privateForumTask) Get(w http.ResponseWriter, r *http.Request) {
 	}
 	cd.PageTitle = "Private Forum"
 	// Show topics only on the main private page (no creation form)
-	handlers.TemplateHandler(w, r, TopicsOnlyTmpl, nil)
+	handlers.TemplateHandler(w, r, PrivateForumTopicsOnlyTmpl, nil)
 }

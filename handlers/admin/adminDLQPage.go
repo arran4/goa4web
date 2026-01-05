@@ -106,7 +106,7 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	handlers.TemplateHandler(w, r, "admin/dlqPage.gohtml", data)
+	handlers.TemplateHandler(w, r, TemplateDLQPage, data)
 }
 
 func (DeleteDLQTask) Action(w http.ResponseWriter, r *http.Request) any {

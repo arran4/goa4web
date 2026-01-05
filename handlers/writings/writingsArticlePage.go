@@ -127,7 +127,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 
 	cd.CustomIndexItems = append(cd.CustomIndexItems, WritingsPageSpecificItems(cd, r)...)
 
-	handlers.TemplateHandler(w, r, "articlePage.gohtml", data)
+	handlers.TemplateHandler(w, r, WritingsArticlePageTmpl, data)
 }
 
 func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {

@@ -36,5 +36,5 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 		return data.Users[i].Username.String < data.Users[j].Username.String
 	})
 
-	handlers.TemplateHandler(w, r, "writingsAdminPage.gohtml", data)
+	handlers.TemplateHandler(w, r, WritingsAdminPageTmpl, data)
 }

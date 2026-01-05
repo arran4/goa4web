@@ -13,9 +13,6 @@ import (
 type newsTask struct {
 }
 
-const (
-	NewsPageTmpl = "news/page.gohtml"
-)
 
 func NewNewsTask() tasks.Task {
 	return &newsTask{}

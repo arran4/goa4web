@@ -182,7 +182,7 @@ func AdminTopicsPage(w http.ResponseWriter, r *http.Request) {
 		Topics: topics,
 	}
 
-	handlers.TemplateHandler(w, r, "forum/adminTopicsPage.gohtml", data)
+	handlers.TemplateHandler(w, r, ForumAdminTopicsPageTmpl, data)
 }
 
 func AdminTopicEditPage(w http.ResponseWriter, r *http.Request) {
@@ -287,7 +287,7 @@ func AdminTopicDeleteConfirmPage(w http.ResponseWriter, r *http.Request) {
 		ConfirmLabel: "Confirm delete",
 		Back:         "/admin/forum/topics/topic/" + strconv.Itoa(tid),
 	}
-	handlers.TemplateHandler(w, r, "forum/adminTopicDeletePage.gohtml", data)
+	handlers.TemplateHandler(w, r, ForumAdminTopicDeletePageTmpl, data)
 }
 
 func AdminTopicDeletePage(w http.ResponseWriter, r *http.Request) {

@@ -122,7 +122,7 @@ func expectGrantCheck(mock sqlmock.Sqlmock, viewerID, itemID int32, action strin
 	expect.WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 }
 
-func writeTempCommentsTemplate(t *testing.T, content string) {
+func writeTempCommentsTemplate(t *testing.T, content string) string {
 	t.Helper()
 	dir := t.TempDir()
 	siteDir := filepath.Join(dir, "site")
@@ -135,12 +135,11 @@ func writeTempCommentsTemplate(t *testing.T, content string) {
 	if err := os.WriteFile(filepath.Join(siteDir, "linker", "commentsPage.gohtml"), []byte(content), 0o644); err != nil {
 		t.Fatalf("write template: %v", err)
 	}
-	templates.SetDir(dir)
-	t.Cleanup(func() { templates.SetDir("") })
+	return dir
 }
 
 func TestCommentsPageEditControlsUseEditGrant(t *testing.T) {
-	writeTempCommentsTemplate(t, "{{ if .CanEdit }}EDIT_CONTROLS{{ end }}")
+	dir := writeTempCommentsTemplate(t, "{{ if .CanEdit }}EDIT_CONTROLS{{ end }}")
 
 	queries := &db.QuerierStub{
 		GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow: &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow{
@@ -176,7 +175,8 @@ func TestCommentsPageEditControlsUseEditGrant(t *testing.T) {
 		return 0, sql.ErrNoRows
 	}
 
-	w, req, _ := newCommentsPageRequest(t, queries, []string{"user"}, 2)
+	w, req, cd := newCommentsPageRequest(t, queries, []string{"user"}, 2)
+	cd.Config.TemplatesDir = dir
 
 	CommentsPage(w, req)
 
@@ -196,7 +196,7 @@ func TestCommentsPageEditControlsUseEditGrant(t *testing.T) {
 }
 
 func TestCommentsPageEditControlsRequireGrantNotRole(t *testing.T) {
-	writeTempCommentsTemplate(t, `CanEdit: {{.CanEdit}}`)
+	dir := writeTempCommentsTemplate(t, `CanEdit: {{.CanEdit}}`)
 
 	queries := &db.QuerierStub{
 		GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow: &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow{
@@ -236,7 +236,8 @@ func TestCommentsPageEditControlsRequireGrantNotRole(t *testing.T) {
 		},
 	}
 
-	w, req, _ := newCommentsPageRequest(t, queries, []string{"user"}, 2)
+	w, req, cd := newCommentsPageRequest(t, queries, []string{"user"}, 2)
+	cd.Config.TemplatesDir = dir
 
 	CommentsPage(w, req)
 
@@ -259,7 +260,8 @@ func TestCommentsPageEditControlsRequireGrantNotRole(t *testing.T) {
 		return 0, sql.ErrNoRows
 	}
 
-	w, req, _ = newCommentsPageRequest(t, queries, []string{"user"}, 2)
+	w, req, cd = newCommentsPageRequest(t, queries, []string{"user"}, 2)
+	cd.Config.TemplatesDir = dir
 	CommentsPage(w, req)
 
 	if w.Code != http.StatusOK {
@@ -273,7 +275,7 @@ func TestCommentsPageEditControlsRequireGrantNotRole(t *testing.T) {
 }
 
 func TestCommentsPageEditControlsAllowAdminMode(t *testing.T) {
-	writeTempCommentsTemplate(t, `{{ range .Comments }}{{ call $.AdminURL . }}{{ end }}`)
+	dir := writeTempCommentsTemplate(t, `{{ range .Comments }}{{ call $.AdminURL . }}{{ end }}`)
 
 	t.Logf("Templates in site: %v", templates.ListSiteTemplateNames())
 
@@ -321,6 +323,7 @@ func TestCommentsPageEditControlsAllowAdminMode(t *testing.T) {
 
 	w, req, cd := newCommentsPageRequest(t, queries, []string{"administrator"}, userID)
 	cd.AdminMode = true
+	cd.Config.TemplatesDir = dir
 
 	CommentsPage(w, req)
 

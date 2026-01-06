@@ -12,7 +12,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/templates"
+	coretemplates "github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/mux"
@@ -92,10 +92,11 @@ func (c *testVerificationTemplateCmd) Run() error {
 	req := httptest.NewRequest("GET", u, nil)
 
 	// Load template
-	templates.SetDir("core/templates")
+	// coretemplates.SetDir("core/templates")
+	dir := "core/templates"
 
 	// Verify template existence
-	if !templates.TemplateExists(c.Template) {
+	if !coretemplates.TemplateExists(c.Template, dir) {
 		return fmt.Errorf("template %q not found", c.Template)
 	}
 
@@ -111,8 +112,11 @@ func (c *testVerificationTemplateCmd) Run() error {
 	fixDataFields(dot)
 
 	// Prepare execution
+	if cd.Config.TemplatesDir == "" {
+		cd.Config.TemplatesDir = dir
+	}
 	funcs := cd.Funcs(req)
-	tmpl := templates.GetCompiledSiteTemplates(funcs)
+	tmpl := coretemplates.GetCompiledSiteTemplates(funcs, dir)
 
 	// Define handler for rendering
 	renderHandler := func(w http.ResponseWriter, r *http.Request) {

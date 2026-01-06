@@ -17,7 +17,7 @@ func TestGetAssetHash(t *testing.T) {
 	}
 
 	// Verify hash correctness
-	content, err := getAssetContent("site.js")
+	content, err := getAssetContent("site.js", "")
 	if err != nil {
 		t.Fatalf("Failed to read asset content: %v", err)
 	}

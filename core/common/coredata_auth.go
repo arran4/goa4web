@@ -144,7 +144,7 @@ func (cd *CoreData) CreatePasswordReset(email, hash, alg string) (string, error)
 			return "", ErrPasswordResetRecentlyRequested
 		}
 		_ = cd.queries.SystemDeletePasswordReset(cd.ctx, reset.ID)
-	} else if err != nil && !errors.Is(err, sql.ErrNoRows) {
+	} else if !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("get reset: %v", err)
 		return "", fmt.Errorf("CoreData.CreatePasswordReset: get reset %w", err)
 	}

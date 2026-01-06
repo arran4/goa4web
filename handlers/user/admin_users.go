@@ -131,10 +131,7 @@ func adminUserDisableConfirmPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("user not found"))
 		return
 	}
-	back := "/admin/users"
-	if u != nil {
-		back = fmt.Sprintf("/admin/user/%d", u.Idusers)
-	}
+	back := fmt.Sprintf("/admin/user/%d", u.Idusers)
 	data := struct {
 		Message      string
 		ConfirmLabel string

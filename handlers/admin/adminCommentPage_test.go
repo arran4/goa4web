@@ -113,6 +113,7 @@ func TestAdminCommentPage_UsesURLParam(t *testing.T) {
 	req := httptest.NewRequest("GET", "/admin/comment/"+strconv.Itoa(commentID), nil)
 	req = mux.SetURLVars(req, map[string]string{"comment": strconv.Itoa(commentID)})
 	cfg := config.NewRuntimeConfig()
+	cfg.TemplatesDir = "../../core/templates"
 	cd := common.NewCoreData(req.Context(), queries, cfg)
 	cd.LoadSelectionsFromRequest(req)
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
@@ -183,6 +184,7 @@ func TestAdminCommentPage_RendersCorrectTopicLink(t *testing.T) {
 	req := httptest.NewRequest("GET", "/admin/comment/"+strconv.Itoa(commentID), nil)
 	req = mux.SetURLVars(req, map[string]string{"comment": strconv.Itoa(commentID)})
 	cfg := config.NewRuntimeConfig()
+	cfg.TemplatesDir = "../../core/templates"
 	cd := common.NewCoreData(req.Context(), queries, cfg)
 	cd.LoadSelectionsFromRequest(req)
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)

@@ -1,8 +1,9 @@
 package privateforum
 
 import (
-	"github.com/arran4/goa4web/core/templates"
 	"testing"
+
+	coretemplates "github.com/arran4/goa4web/core/templates"
 )
 
 func TestTemplatesExist(t *testing.T) {
@@ -12,9 +13,9 @@ func TestTemplatesExist(t *testing.T) {
 		PrivateForumTopicsOnlyTmpl,
 	}
 
-	templates.SetDir("../../core/templates")
+	dir := "../../core/templates"
 	for _, tmpl := range pageTemplates {
-		if !templates.IsTemplateAvailable(tmpl) {
+		if !coretemplates.IsTemplateAvailable(tmpl, dir) {
 			t.Errorf("Template %s not found", tmpl)
 		}
 	}

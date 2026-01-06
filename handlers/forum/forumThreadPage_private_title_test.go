@@ -26,8 +26,8 @@ func TestThreadPagePrivateSetsTitle(t *testing.T) {
 
 	mock.ExpectQuery("SELECT th.idforumthread").
 		WillReturnRows(sqlmock.NewRows([]string{
-			"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername",
-		}).AddRow(int32(1), int32(1), int32(1), int32(1), sql.NullInt32{}, sql.NullTime{}, sql.NullBool{}, sql.NullString{}))
+			"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "LastPosterUsername", "firstpostuserid",
+		}).AddRow(int32(1), int32(1), int32(1), int32(1), sql.NullInt32{}, sql.NullTime{}, sql.NullBool{}, sql.NullString{}, sql.NullInt32{}))
 
 	mock.ExpectQuery("SELECT").
 		WillReturnRows(sqlmock.NewRows([]string{

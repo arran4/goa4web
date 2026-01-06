@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"embed"
 	"encoding/hex"
-	"github.com/arran4/goa4web/core/consts"
 	htemplate "html/template"
 	"io/fs"
 	"os"
@@ -13,6 +12,8 @@ import (
 	"sync"
 	ttemplate "text/template"
 	"time"
+
+	"github.com/arran4/goa4web/core/consts"
 )
 
 // templatesDir holds the optional directory to load templates from.

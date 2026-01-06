@@ -13,7 +13,6 @@ import (
 )
 
 func TestUserPagingPage_Render(t *testing.T) {
-	// Initialize templates
 
 	req := httptest.NewRequest("GET", "/usr/paging", nil)
 	ctx := req.Context()

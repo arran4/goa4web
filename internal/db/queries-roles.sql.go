@@ -183,15 +183,16 @@ func (q *Queries) AdminListUsersByRoleID(ctx context.Context, roleID int32) ([]*
 }
 
 const adminUpdateRole = `-- name: AdminUpdateRole :exec
-UPDATE roles SET name = ?, can_login = ?, is_admin = ?, private_labels = ? WHERE id = ?
+UPDATE roles SET name = ?, can_login = ?, is_admin = ?, private_labels = ?, public_profile_allowed_at = ? WHERE id = ?
 `
 
 type AdminUpdateRoleParams struct {
-	Name          string
-	CanLogin      bool
-	IsAdmin       bool
-	PrivateLabels bool
-	ID            int32
+	Name                   string
+	CanLogin               bool
+	IsAdmin                bool
+	PrivateLabels          bool
+	PublicProfileAllowedAt sql.NullTime
+	ID                     int32
 }
 
 // admin task
@@ -201,6 +202,7 @@ func (q *Queries) AdminUpdateRole(ctx context.Context, arg AdminUpdateRoleParams
 		arg.CanLogin,
 		arg.IsAdmin,
 		arg.PrivateLabels,
+		arg.PublicProfileAllowedAt,
 		arg.ID,
 	)
 	return err

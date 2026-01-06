@@ -97,5 +97,5 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 		PageSize: size,
 	}
 
-	handlers.TemplateHandler(w, r, "gallery.gohtml", data)
+	handlers.TemplateHandler(w, r, "user/gallery.gohtml", data)
 }

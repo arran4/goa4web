@@ -203,6 +203,7 @@ type Querier interface {
 	AdminMarkLinkRestored(ctx context.Context, id int32) error
 	AdminMarkNotificationRead(ctx context.Context, id int32) error
 	AdminMarkNotificationUnread(ctx context.Context, id int32) error
+	AdminMarkUserRestored(ctx context.Context, idusers int32) error
 	AdminMarkWritingRestored(ctx context.Context, idwriting int32) error
 	AdminMoveFAQChildren(ctx context.Context, arg AdminMoveFAQChildrenParams) error
 	AdminMoveFAQContent(ctx context.Context, arg AdminMoveFAQContentParams) error
@@ -225,12 +226,16 @@ type Querier interface {
 	AdminRestoreImagepost(ctx context.Context, arg AdminRestoreImagepostParams) error
 	AdminRestoreLink(ctx context.Context, arg AdminRestoreLinkParams) error
 	AdminRestoreUser(ctx context.Context, idusers int32) error
+	AdminRestoreUserEmail(ctx context.Context, idusers int32) error
+	AdminRestoreUserPassword(ctx context.Context, idusers int32) error
 	AdminRestoreWriting(ctx context.Context, arg AdminRestoreWritingParams) error
 	AdminScrubBlog(ctx context.Context, arg AdminScrubBlogParams) error
 	AdminScrubComment(ctx context.Context, arg AdminScrubCommentParams) error
 	AdminScrubImagepost(ctx context.Context, idimagepost int32) error
 	AdminScrubLink(ctx context.Context, arg AdminScrubLinkParams) error
 	AdminScrubUser(ctx context.Context, arg AdminScrubUserParams) error
+	AdminScrubUserEmails(ctx context.Context, userID int32) error
+	AdminScrubUserPasswords(ctx context.Context, usersIdusers int32) error
 	AdminScrubWriting(ctx context.Context, arg AdminScrubWritingParams) error
 	AdminSetAnnouncementActive(ctx context.Context, arg AdminSetAnnouncementActiveParams) error
 	AdminSetTemplateOverride(ctx context.Context, arg AdminSetTemplateOverrideParams) error

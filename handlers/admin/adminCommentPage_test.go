@@ -127,7 +127,6 @@ func TestAdminCommentPage_UsesURLParam(t *testing.T) {
 }
 
 func TestAdminCommentPage_RendersCorrectTopicLink(t *testing.T) {
-	// Note: templates.SetDir is already called in TestMain (handlers/admin/main_test.go)
 
 	commentID := 44
 	threadID := 55

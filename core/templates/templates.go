@@ -32,6 +32,8 @@ func SetDir(dir string) {
 var (
 	assetHashes     = map[string]string{}
 	assetHashesLock sync.RWMutex
+	siteTemplates   *htemplate.Template
+	siteTemplatesMu sync.Mutex
 )
 
 func init() {
@@ -63,9 +65,24 @@ func parseOptions(ops ...any) (string, error) {
 	return dir, nil
 }
 
-func GetAssetHash(webPath string) string {
-	// ... (unchanged)
+func GetAssetHash(webPath string, ops ...any) string {
+	dir, err := parseOptions(ops...)
+	if err != nil {
+		panic(err)
+	}
+
 	base := path.Base(webPath)
+
+	// If in development mode (serving from local directory), always recompute to reflect changes immediately.
+	if dir != "" {
+		b, err := getAssetContent(base, dir)
+		if err != nil {
+			return webPath
+		}
+		sum := sha256.Sum256(b)
+		h := hex.EncodeToString(sum[:])[:16]
+		return webPath + "?v=" + h
+	}
 
 	assetHashesLock.RLock()
 	h, ok := assetHashes[base]
@@ -109,7 +126,11 @@ func getFS(sub string, dir string) fs.FS {
 	return os.DirFS(filepath.Join(dir, sub))
 }
 
-func readFile(name string, dir string) []byte {
+func readFile(name string, ops ...any) []byte {
+	dir, err := parseOptions(ops...)
+	if err != nil {
+		panic(err)
+	}
 	if dir == "" {
 		b, err := embeddedFS.ReadFile(name)
 		if err != nil {
@@ -133,7 +154,25 @@ func GetCompiledSiteTemplates(funcs htemplate.FuncMap, ops ...any) *htemplate.Te
 	if funcs == nil {
 		funcs = htemplate.FuncMap{}
 	}
-	funcs["assetHash"] = GetAssetHash
+	funcs["assetHash"] = func(p string) string {
+		return GetAssetHash(p, ops...)
+	}
+
+	// Try to use cached templates if we are using embedded assets (no custom directory)
+	if dir == "" {
+		siteTemplatesMu.Lock()
+		if siteTemplates != nil {
+			// Clone the cached template so the caller can execute it without
+			// affecting the master copy (which would mark it as executed).
+			t, err := siteTemplates.Clone()
+			siteTemplatesMu.Unlock()
+			if err != nil {
+				panic(err)
+			}
+			return t.Funcs(funcs)
+		}
+		// If cache is missing, we must parse. We hold the lock to update cache.
+	}
 
 	fsys := getFS("site", dir)
 
@@ -161,10 +200,25 @@ func GetCompiledSiteTemplates(funcs htemplate.FuncMap, ops ...any) *htemplate.Te
 		return err
 	})
 	if err != nil {
+		if dir == "" {
+			siteTemplatesMu.Unlock()
+		}
 		panic(err)
 	}
 
-	return root
+	if dir == "" {
+		// Cache the unexecuted root
+		siteTemplates = root
+		siteTemplatesMu.Unlock()
+	}
+
+	// Always return a clone to the caller to ensure the root (cached or not)
+	// remains unexecuted.
+	t, err := root.Clone()
+	if err != nil {
+		panic(err)
+	}
+	return t
 }
 
 func GetCompiledNotificationTemplates(funcs ttemplate.FuncMap, ops ...any) *ttemplate.Template {
@@ -219,31 +273,33 @@ func GetCompiledEmailTextTemplates(funcs ttemplate.FuncMap, ops ...any) *ttempla
 	return ttemplate.Must(ttemplate.New("").Funcs(funcs).ParseFS(getFS("email", dir), "*.gotxt"))
 }
 
-func GetMainCSSData() []byte { return readFile("assets/main.css", "") }
+func GetMainCSSData(ops ...any) []byte { return readFile("assets/main.css", ops...) }
 
 // GetFaviconData returns the site's favicon image data.
-func GetFaviconData() []byte { return readFile("assets/favicon.svg", "") }
+func GetFaviconData(ops ...any) []byte { return readFile("assets/favicon.svg", ops...) }
 
 // GetPasteImageJSData returns the JavaScript that enables image pasting.
-func GetPasteImageJSData() []byte { return readFile("assets/pasteimg.js", "") }
+func GetPasteImageJSData(ops ...any) []byte { return readFile("assets/pasteimg.js", ops...) }
 
 // GetNotificationsJSData returns the JavaScript used for real-time notification updates.
-func GetNotificationsJSData() []byte { return readFile("assets/notifications.js", "") }
+func GetNotificationsJSData(ops ...any) []byte { return readFile("assets/notifications.js", ops...) }
 
 // GetRoleGrantsEditorJSData returns the JavaScript powering the role grants drag-and-drop editor.
-func GetRoleGrantsEditorJSData() []byte { return readFile("assets/role_grants_editor.js", "") }
+func GetRoleGrantsEditorJSData(ops ...any) []byte {
+	return readFile("assets/role_grants_editor.js", ops...)
+}
 
 // GetPrivateForumJSData returns the JavaScript for private forum pages.
-func GetPrivateForumJSData() []byte { return readFile("assets/private_forum.js", "") }
+func GetPrivateForumJSData(ops ...any) []byte { return readFile("assets/private_forum.js", ops...) }
 
 // GetTopicLabelsJSData returns the JavaScript for topic label editing.
-func GetTopicLabelsJSData() []byte { return readFile("assets/topic_labels.js", "") }
+func GetTopicLabelsJSData(ops ...any) []byte { return readFile("assets/topic_labels.js", ops...) }
 
 // GetSiteJSData returns the main site JavaScript.
-func GetSiteJSData() []byte { return readFile("assets/site.js", "") }
+func GetSiteJSData(ops ...any) []byte { return readFile("assets/site.js", ops...) }
 
 // GetA4CodeJSData returns the A4Code parser/converter JavaScript.
-func GetA4CodeJSData() []byte { return readFile("assets/a4code.js", "") }
+func GetA4CodeJSData(ops ...any) []byte { return readFile("assets/a4code.js", ops...) }
 
 // ListSiteTemplateNames returns the relative paths of all site templates
 // (under the site/ directory), e.g. "news/postPage.gohtml".

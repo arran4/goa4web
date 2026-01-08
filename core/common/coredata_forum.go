@@ -152,8 +152,15 @@ func (cd *CoreData) UpdateForumComment(commentID, languageID int32, text string)
 	if cd.queries == nil {
 		return nil
 	}
-	comment, err := cd.validateCodeImagesForComment(cd.UserID, commentID, text)
+	paths, err := cd.imagePathsFromText(text)
 	if err != nil {
+		return fmt.Errorf("parse images: %w", err)
+	}
+	comment, err := cd.CommentByID(commentID)
+	if err != nil || comment == nil {
+		return fmt.Errorf("load comment: %w", err)
+	}
+	if err := cd.validateImagePathsForThread(cd.UserID, comment.ForumthreadID, paths); err != nil {
 		return fmt.Errorf("validate images: %w", err)
 	}
 	if err := cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
@@ -165,8 +172,8 @@ func (cd *CoreData) UpdateForumComment(commentID, languageID int32, text string)
 	}); err != nil {
 		return err
 	}
-	if err := cd.shareCodeImagesWithThreadParticipants(comment.ForumthreadID, cd.UserID, text); err != nil {
-		log.Printf("share thread images: %v", err)
+	if err := cd.recordThreadImages(comment.ForumthreadID, paths); err != nil {
+		log.Printf("record thread images: %v", err)
 	}
 	return nil
 }
@@ -176,8 +183,15 @@ func (cd *CoreData) EditForumComment(commentID, commenterID, languageID int32, t
 	if cd.queries == nil {
 		return nil
 	}
-	comment, err := cd.validateCodeImagesForComment(commenterID, commentID, text)
+	paths, err := cd.imagePathsFromText(text)
 	if err != nil {
+		return fmt.Errorf("parse images: %w", err)
+	}
+	comment, err := cd.CommentByID(commentID)
+	if err != nil || comment == nil {
+		return fmt.Errorf("load comment: %w", err)
+	}
+	if err := cd.validateImagePathsForThread(commenterID, comment.ForumthreadID, paths); err != nil {
 		return fmt.Errorf("validate images: %w", err)
 	}
 	if err := cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
@@ -189,8 +203,8 @@ func (cd *CoreData) EditForumComment(commentID, commenterID, languageID int32, t
 	}); err != nil {
 		return err
 	}
-	if err := cd.shareCodeImagesWithThreadParticipants(comment.ForumthreadID, commenterID, text); err != nil {
-		log.Printf("share thread images: %v", err)
+	if err := cd.recordThreadImages(comment.ForumthreadID, paths); err != nil {
+		log.Printf("record thread images: %v", err)
 	}
 	return nil
 }

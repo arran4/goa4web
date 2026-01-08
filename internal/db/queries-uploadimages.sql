@@ -10,27 +10,6 @@ FROM uploaded_images
 WHERE users_idusers = sqlc.arg(user_id)
   AND path IN (sqlc.slice(paths));
 
--- name: ListUploadedImagePathsByThread :many
-SELECT DISTINCT ui.path
-FROM uploaded_images ui
-JOIN comments c ON c.users_idusers = ui.users_idusers
-WHERE c.forumthread_id = sqlc.arg(thread_id)
-  AND ui.path IN (sqlc.slice(paths));
-
--- name: ShareUploadedImageWithUser :exec
-INSERT INTO uploaded_images (
-    users_idusers, path, width, height, file_size, uploaded
-)
-SELECT sqlc.arg(user_id), ui.path, ui.width, ui.height, ui.file_size, NOW()
-FROM uploaded_images ui
-WHERE ui.path = sqlc.arg(path)
-  AND NOT EXISTS (
-      SELECT 1 FROM uploaded_images existing
-      WHERE existing.users_idusers = sqlc.arg(user_id)
-        AND existing.path = sqlc.arg(path)
-  )
-LIMIT 1;
-
 -- name: ListUploadedImagesByUserForLister :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)

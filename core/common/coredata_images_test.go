@@ -15,13 +15,10 @@ func TestCreateCommentValidatesGalleryImages(t *testing.T) {
 	imagePath := path.Join("/uploads", imageID[:2], imageID[2:4], imageID)
 	text := "[img image:" + imageID + "]"
 
-	t.Run("accepts gallery image and shares with participants", func(t *testing.T) {
+	t.Run("accepts gallery image and records thread usage", func(t *testing.T) {
 		queries := &db.QuerierStub{
 			ListUploadedImagePathsByUserFn: func(ctx context.Context, arg db.ListUploadedImagePathsByUserParams) ([]sql.NullString, error) {
 				return []sql.NullString{{String: imagePath, Valid: true}}, nil
-			},
-			ListThreadParticipantIDsFn: func(ctx context.Context, threadID int32) ([]int32, error) {
-				return []int32{17}, nil
 			},
 			CreateCommentInSectionForCommenterResult: 42,
 		}
@@ -43,21 +40,18 @@ func TestCreateCommentValidatesGalleryImages(t *testing.T) {
 		if len(gotPaths) != 1 || !gotPaths[0].Valid || gotPaths[0].String != imagePath {
 			t.Fatalf("paths = %#v, want %q", gotPaths, imagePath)
 		}
-		if len(queries.ShareUploadedImageWithUserCalls) != 2 {
-			t.Fatalf("expected share for participants, got %d calls", len(queries.ShareUploadedImageWithUserCalls))
+		if len(queries.CreateThreadImageCalls) != 1 {
+			t.Fatalf("expected thread image record, got %d calls", len(queries.CreateThreadImageCalls))
 		}
 	})
 
-	t.Run("accepts thread gallery image", func(t *testing.T) {
+	t.Run("accepts thread image", func(t *testing.T) {
 		queries := &db.QuerierStub{
 			ListUploadedImagePathsByUserFn: func(ctx context.Context, arg db.ListUploadedImagePathsByUserParams) ([]sql.NullString, error) {
 				return []sql.NullString{}, nil
 			},
-			ListUploadedImagePathsByThreadFn: func(ctx context.Context, arg db.ListUploadedImagePathsByThreadParams) ([]sql.NullString, error) {
+			ListThreadImagePathsFn: func(ctx context.Context, arg db.ListThreadImagePathsParams) ([]sql.NullString, error) {
 				return []sql.NullString{{String: imagePath, Valid: true}}, nil
-			},
-			ListThreadParticipantIDsFn: func(ctx context.Context, threadID int32) ([]int32, error) {
-				return []int32{17}, nil
 			},
 			CreateCommentInSectionForCommenterResult: 42,
 		}
@@ -65,11 +59,11 @@ func TestCreateCommentValidatesGalleryImages(t *testing.T) {
 		if _, err := cd.CreateCommentInSectionForCommenter("forum", "topic", 1, 1, 9, 1, text); err != nil {
 			t.Fatalf("expected thread image acceptance: %v", err)
 		}
-		if len(queries.ListUploadedImagePathsByThreadCalls) != 1 {
-			t.Fatalf("expected thread image lookup, got %d calls", len(queries.ListUploadedImagePathsByThreadCalls))
+		if len(queries.ListThreadImagePathsCalls) != 1 {
+			t.Fatalf("expected thread image lookup, got %d calls", len(queries.ListThreadImagePathsCalls))
 		}
-		if len(queries.ShareUploadedImageWithUserCalls) != 2 {
-			t.Fatalf("expected share for participants, got %d calls", len(queries.ShareUploadedImageWithUserCalls))
+		if len(queries.CreateThreadImageCalls) != 1 {
+			t.Fatalf("expected thread image record, got %d calls", len(queries.CreateThreadImageCalls))
 		}
 	})
 
@@ -78,7 +72,7 @@ func TestCreateCommentValidatesGalleryImages(t *testing.T) {
 			ListUploadedImagePathsByUserFn: func(ctx context.Context, arg db.ListUploadedImagePathsByUserParams) ([]sql.NullString, error) {
 				return []sql.NullString{}, nil
 			},
-			ListUploadedImagePathsByThreadFn: func(ctx context.Context, arg db.ListUploadedImagePathsByThreadParams) ([]sql.NullString, error) {
+			ListThreadImagePathsFn: func(ctx context.Context, arg db.ListThreadImagePathsParams) ([]sql.NullString, error) {
 				return []sql.NullString{}, nil
 			},
 		}

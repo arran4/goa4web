@@ -84,53 +84,6 @@ func (q *Queries) CreateUploadedImageForUploader(ctx context.Context, arg Create
 	return result.LastInsertId()
 }
 
-const listUploadedImagePathsByThread = `-- name: ListUploadedImagePathsByThread :many
-SELECT DISTINCT ui.path
-FROM uploaded_images ui
-JOIN comments c ON c.users_idusers = ui.users_idusers
-WHERE c.forumthread_id = ?
-  AND ui.path IN (/*SLICE:paths*/?)
-`
-
-type ListUploadedImagePathsByThreadParams struct {
-	ThreadID int32
-	Paths    []sql.NullString
-}
-
-func (q *Queries) ListUploadedImagePathsByThread(ctx context.Context, arg ListUploadedImagePathsByThreadParams) ([]sql.NullString, error) {
-	query := listUploadedImagePathsByThread
-	var queryParams []interface{}
-	queryParams = append(queryParams, arg.ThreadID)
-	if len(arg.Paths) > 0 {
-		for _, v := range arg.Paths {
-			queryParams = append(queryParams, v)
-		}
-		query = strings.Replace(query, "/*SLICE:paths*/?", strings.Repeat(",?", len(arg.Paths))[1:], 1)
-	} else {
-		query = strings.Replace(query, "/*SLICE:paths*/?", "NULL", 1)
-	}
-	rows, err := q.db.QueryContext(ctx, query, queryParams...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []sql.NullString
-	for rows.Next() {
-		var path sql.NullString
-		if err := rows.Scan(&path); err != nil {
-			return nil, err
-		}
-		items = append(items, path)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listUploadedImagePathsByUser = `-- name: ListUploadedImagePathsByUser :many
 SELECT path
 FROM uploaded_images
@@ -240,34 +193,4 @@ func (q *Queries) ListUploadedImagesByUserForLister(ctx context.Context, arg Lis
 		return nil, err
 	}
 	return items, nil
-}
-
-const shareUploadedImageWithUser = `-- name: ShareUploadedImageWithUser :exec
-INSERT INTO uploaded_images (
-    users_idusers, path, width, height, file_size, uploaded
-)
-SELECT ?, ui.path, ui.width, ui.height, ui.file_size, NOW()
-FROM uploaded_images ui
-WHERE ui.path = ?
-  AND NOT EXISTS (
-      SELECT 1 FROM uploaded_images existing
-      WHERE existing.users_idusers = ?
-        AND existing.path = ?
-  )
-LIMIT 1
-`
-
-type ShareUploadedImageWithUserParams struct {
-	UserID int32
-	Path   sql.NullString
-}
-
-func (q *Queries) ShareUploadedImageWithUser(ctx context.Context, arg ShareUploadedImageWithUserParams) error {
-	_, err := q.db.ExecContext(ctx, shareUploadedImageWithUser,
-		arg.UserID,
-		arg.Path,
-		arg.UserID,
-		arg.Path,
-	)
-	return err
 }

@@ -31,6 +31,7 @@ sql:
         - "internal/db/queries-password_resets.sql"
         - "internal/db/queries-dlq.sql"
         - "internal/db/queries-uploadimages.sql"
+        - "internal/db/queries-threadimages.sql"
         - "internal/db/queries-roles.sql"
         - "internal/db/queries-admin_user_comments.sql"
         - "internal/db/queries-comments-admin.sql"

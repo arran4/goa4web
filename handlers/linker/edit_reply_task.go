@@ -89,8 +89,8 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}); err != nil {
 		log.Printf("linker comment edit side effects: %v", err)
 	}
-	if err := cd.ShareCodeImagesWithThreadParticipants(thread.Idforumthread, cd.UserID, text); err != nil {
-		log.Printf("share thread images: %v", err)
+	if err := cd.RecordThreadImages(thread.Idforumthread, text); err != nil {
+		log.Printf("record thread images: %v", err)
 	}
 
 	return handlers.RefreshDirectHandler{TargetURL: fmt.Sprintf("/linker/comments/%d", linkId)}

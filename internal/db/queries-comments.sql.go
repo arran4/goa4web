@@ -651,35 +651,6 @@ func (q *Queries) GetCommentsByThreadIdForUser(ctx context.Context, arg GetComme
 	return items, nil
 }
 
-const listThreadParticipantIDs = `-- name: ListThreadParticipantIDs :many
-SELECT DISTINCT users_idusers
-FROM comments
-WHERE forumthread_id = ?
-`
-
-func (q *Queries) ListThreadParticipantIDs(ctx context.Context, threadID int32) ([]int32, error) {
-	rows, err := q.db.QueryContext(ctx, listThreadParticipantIDs, threadID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []int32
-	for rows.Next() {
-		var users_idusers int32
-		if err := rows.Scan(&users_idusers); err != nil {
-			return nil, err
-		}
-		items = append(items, users_idusers)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const systemListCommentsByThreadID = `-- name: SystemListCommentsByThreadID :many
 SELECT c.idcomments, c.text
 FROM comments c

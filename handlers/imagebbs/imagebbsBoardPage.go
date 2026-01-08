@@ -86,6 +86,11 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		})
 	}
+	if !cd.HasGrant("images", "upload", "post", 0) {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+		})
+	}
 
 	r.Body = http.MaxBytesReader(w, r.Body, int64(cd.Config.ImageMaxBytes))
 	if err := r.ParseMultipartForm(int64(cd.Config.ImageMaxBytes)); err != nil {

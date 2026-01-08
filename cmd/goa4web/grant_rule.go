@@ -49,6 +49,12 @@ func (c *grantCmd) Run() error {
 			return fmt.Errorf("delete: %w", err)
 		}
 		return cmd.Run()
+	case "list-available":
+		cmd := newGrantListAvailableCmd()
+		if err := cmd.Init(args[1:]); err != nil {
+			return fmt.Errorf("list-available: %w", err)
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown grant command %q", args[0])

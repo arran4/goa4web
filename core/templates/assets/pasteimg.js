@@ -56,6 +56,11 @@
                         e.target.value = v.substring(0,pos) + v.substring(pos).replace(placeholder, finalText);
                         e.target.setSelectionRange(pos+finalText.length, pos+finalText.length);
                         autoSize(e.target);
+                    } else if (xhr.status === 403) {
+                        const v = e.target.value;
+                        e.target.value = v.substring(0,pos) + v.substring(pos).replace(placeholder, '');
+                        e.target.setSelectionRange(pos, pos);
+                        autoSize(e.target);
                     } else {
                         console.error('Image upload failed:', xhr.status, xhr.statusText, xhr.responseText);
                         const failedText = '[img upload failed]';

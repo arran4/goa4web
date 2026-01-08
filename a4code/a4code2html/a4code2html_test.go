@@ -222,7 +222,7 @@ func TestImageURLMapper(t *testing.T) {
 	c := New(mapper)
 	c.SetInput("[img=image:abc]")
 	got, _ := io.ReadAll(c.Process())
-	want := "<img class=\"a4code-image\" src=\"map:img:=image:abc\" />"
+	want := "<img class=\"a4code-image\" src=\"map:img:image:abc\" />"
 	if string(got) != want {
 		t.Fatalf("img map got %q want %q", got, want)
 	}

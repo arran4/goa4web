@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	_ "time/tzdata"
 
 	"github.com/arran4/goa4web"
 	adminhandlers "github.com/arran4/goa4web/handlers/admin"
@@ -39,7 +40,6 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	coretemplates "github.com/arran4/goa4web/core/templates"
 )
 
 var (
@@ -92,18 +92,19 @@ func main() {
 
 // rootCmd is the top-level command state.
 type rootCmd struct {
-	fs            *flag.FlagSet
-	cfg           *config.RuntimeConfig
-	ConfigFile    string
-	db            *sql.DB
-	Verbosity     int
-	tasksReg      *tasks.Registry
-	dbReg         *dbdrivers.Registry
-	emailReg      *email.Registry
-	dlqReg        *dlq.Registry
-	routerReg     *router.Registry
-	adminHandlers *adminhandlers.Handlers
-	ctx           context.Context
+	fs               *flag.FlagSet
+	cfg              *config.RuntimeConfig
+	ConfigFile       string
+	ConfigFileValues map[string]string
+	db               *sql.DB
+	Verbosity        int
+	tasksReg         *tasks.Registry
+	dbReg            *dbdrivers.Registry
+	emailReg         *email.Registry
+	dlqReg           *dlq.Registry
+	routerReg        *router.Registry
+	adminHandlers    *adminhandlers.Handlers
+	ctx              context.Context
 }
 
 func (r *rootCmd) DB() (*sql.DB, error) {
@@ -116,6 +117,22 @@ func (r *rootCmd) DB() (*sql.DB, error) {
 	}
 	r.db = dbPool
 	return r.db, nil
+}
+
+func (r *rootCmd) InitDB(cfg *config.RuntimeConfig) (*sql.DB, error) {
+	if r.db != nil {
+		return r.db, nil
+	}
+	dbPool, ue := dbstart.InitDB(cfg, r.dbReg)
+	if ue != nil {
+		return nil, fmt.Errorf("rootCmd.DB: init: %w", ue.Err)
+	}
+	r.db = dbPool
+	return r.db, nil
+}
+
+func (r *rootCmd) Context() context.Context {
+	return r.ctx
 }
 
 func (r *rootCmd) Close() {
@@ -201,17 +218,39 @@ func parseRoot(args []string) (*rootCmd, error) {
 	}
 
 	r.ConfigFile = cfgPath
+	r.ConfigFileValues = fileVals
 	r.cfg = config.NewRuntimeConfig(
 		config.WithFlagSet(r.fs),
 		config.WithFileValues(fileVals),
 		config.WithGetenv(os.Getenv),
 	)
-	coretemplates.SetDir(r.cfg.TemplatesDir)
-	if r.cfg.TemplatesDir == "" {
-		r.Infof("Embedded Template Mode")
-	} else {
-		r.Infof("Live Template Mode: %s", r.cfg.TemplatesDir)
+
+	isTemplateCommand := false
+	if len(r.fs.Args()) > 0 {
+		switch r.fs.Arg(0) {
+		case "serve", "templates":
+			isTemplateCommand = true
+		}
 	}
+
+	if r.cfg.TemplatesDir == "" {
+		if isTemplateCommand {
+			r.Infof("Embedded Template Mode")
+		} else {
+			r.Verbosef("Embedded Template Mode")
+		}
+	} else {
+		if isTemplateCommand {
+			r.Infof("Live Template Mode: %s", r.cfg.TemplatesDir)
+		} else {
+			r.Verbosef("Live Template Mode: %s", r.cfg.TemplatesDir)
+		}
+	}
+
+	for _, name := range r.routerReg.Names() {
+		r.Verbosef("Registered module: %s", name)
+	}
+
 	return r, nil
 }
 

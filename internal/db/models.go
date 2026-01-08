@@ -430,6 +430,7 @@ type Preference struct {
 	PageSize             int32
 	AutoSubscribeReplies bool
 	Timezone             sql.NullString
+	CustomCss            sql.NullString
 }
 
 type Role struct {
@@ -507,6 +508,13 @@ type TemplateOverride struct {
 	Name      string
 	Body      string
 	UpdatedAt time.Time
+}
+
+type ThreadImage struct {
+	IdthreadImage int32
+	ForumthreadID int32
+	Path          sql.NullString
+	CreatedAt     time.Time
 }
 
 type UploadedImage struct {

@@ -276,6 +276,7 @@ CREATE TABLE `preferences` (
   `page_size` int(10) NOT NULL DEFAULT 15,
   `auto_subscribe_replies` tinyint(1) NOT NULL DEFAULT 1,
   `timezone` tinytext DEFAULT NULL,
+  `custom_css` text DEFAULT NULL,
   PRIMARY KEY (`idpreferences`),
   KEY `preferences_FKIndex1` (`users_idusers`),
   KEY `preferences_FKIndex2` (`language_id`)
@@ -625,6 +626,15 @@ CREATE TABLE IF NOT EXISTS `uploaded_images` (
   KEY `uploaded_images_user_idx` (`users_idusers`)
 );
 
+CREATE TABLE IF NOT EXISTS `thread_images` (
+  `idthread_image` int NOT NULL AUTO_INCREMENT,
+  `forumthread_id` int NOT NULL,
+  `path` tinytext,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idthread_image`),
+  KEY `thread_images_thread_idx` (`forumthread_id`)
+);
+
 -- Comments from admins about users
 CREATE TABLE IF NOT EXISTS `admin_user_comments` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -729,6 +739,5 @@ CREATE TABLE `role_subscription_archetypes` (
 );
 
 -- Set the schema version to the latest migration.
-INSERT INTO `schema_version` (`version`) VALUES (73)
+INSERT INTO `schema_version` (`version`) VALUES (76)
 ON DUPLICATE KEY UPDATE version = VALUES(version);
-

@@ -15,20 +15,28 @@ import (
 	"time"
 )
 
-// templatesDir holds the optional directory to load templates from.
-var templatesDir string
-
 // embeddedFS contains site templates, notification templates, email templates and static assets.
 //
 //go:embed site/*.gohtml site/*/*.gohtml notifications/*.gotxt email/*.gohtml email/*.gotxt assets/*
 var embeddedFS embed.FS
 
-// SetDir configures templates to be loaded from dir. When dir is empty the embedded templates are used.
-func SetDir(dir string) { templatesDir = dir }
+type config struct {
+	Dir string
+}
+
+type Option func(*config)
+
+func WithDir(dir string) Option {
+	return func(c *config) {
+		c.Dir = dir
+	}
+}
 
 var (
 	assetHashes     = map[string]string{}
 	assetHashesLock sync.RWMutex
+	siteTemplates   *htemplate.Template
+	siteTemplatesMu sync.Mutex
 )
 
 func init() {
@@ -47,12 +55,16 @@ func init() {
 	}
 }
 
-func GetAssetHash(webPath string) string {
+func GetAssetHash(webPath string, opts ...Option) string {
+	cfg := &config{}
+	for _, o := range opts {
+		o(cfg)
+	}
 	base := path.Base(webPath)
 
 	// If in development mode (serving from local directory), always recompute to reflect changes immediately.
-	if templatesDir != "" {
-		b, err := getAssetContent(base)
+	if cfg.Dir != "" {
+		b, err := getAssetContent(base, cfg)
 		if err != nil {
 			return webPath
 		}
@@ -74,7 +86,7 @@ func GetAssetHash(webPath string) string {
 		return webPath + "?v=" + h
 	}
 
-	b, err := getAssetContent(base)
+	b, err := getAssetContent(base, cfg)
 	if err != nil {
 		return webPath
 	}
@@ -85,47 +97,76 @@ func GetAssetHash(webPath string) string {
 	return webPath + "?v=" + h
 }
 
-func getAssetContent(name string) ([]byte, error) {
-	if templatesDir == "" {
+func getAssetContent(name string, cfg *config) ([]byte, error) {
+	if cfg.Dir == "" {
 		return embeddedFS.ReadFile("assets/" + name)
 	}
-	return os.ReadFile(filepath.Join(templatesDir, "assets", name))
+	return os.ReadFile(filepath.Join(cfg.Dir, "assets", name))
 }
 
-func getFS(sub string) fs.FS {
-	if templatesDir == "" {
+func getFS(sub string, cfg *config) fs.FS {
+	if cfg.Dir == "" {
 		f, err := fs.Sub(embeddedFS, sub)
 		if err != nil {
 			panic(err)
 		}
 		return f
 	}
-	return os.DirFS(filepath.Join(templatesDir, sub))
+	return os.DirFS(filepath.Join(cfg.Dir, sub))
 }
 
-func readFile(name string) []byte {
-	if templatesDir == "" {
+func readFile(name string, opts ...Option) []byte {
+	cfg := &config{}
+	for _, o := range opts {
+		o(cfg)
+	}
+	if cfg.Dir == "" {
 		b, err := embeddedFS.ReadFile(name)
 		if err != nil {
 			panic(err)
 		}
 		return b
 	}
-	b, err := os.ReadFile(filepath.Join(templatesDir, name))
+	b, err := os.ReadFile(filepath.Join(cfg.Dir, name))
 	if err != nil {
 		panic(err)
 	}
 	return b
 }
 
-func GetCompiledSiteTemplates(funcs htemplate.FuncMap) *htemplate.Template {
+func GetCompiledSiteTemplates(funcs htemplate.FuncMap, opts ...Option) *htemplate.Template {
+	cfg := &config{}
+	for _, o := range opts {
+		o(cfg)
+	}
+
 	if funcs == nil {
 		funcs = htemplate.FuncMap{}
 	}
-	funcs["assetHash"] = GetAssetHash
+	funcs["assetHash"] = func(p string) string {
+		return GetAssetHash(p, opts...)
+	}
 
-	fsys := getFS("site")
+	// Try to use cached templates if we are using embedded assets (no custom directory)
+	if cfg.Dir == "" {
+		siteTemplatesMu.Lock()
+		if siteTemplates != nil {
+			// Clone the cached template so the caller can execute it without
+			// affecting the master copy (which would mark it as executed).
+			t, err := siteTemplates.Clone()
+			siteTemplatesMu.Unlock()
+			if err != nil {
+				panic(err)
+			}
+			return t.Funcs(funcs)
+		}
+		// If cache is missing, we must parse. We hold the lock to update cache.
+		// NOTE: Optimistic locking or double check could be better, but parsing is fast enough.
+	}
 
+	fsys := getFS("site", cfg)
+
+	// Create root template.
 	root := htemplate.New("root").Funcs(funcs)
 
 	// Walk the sub-FS and parse every *.gohtml, naming templates by relative path.
@@ -150,17 +191,40 @@ func GetCompiledSiteTemplates(funcs htemplate.FuncMap) *htemplate.Template {
 		return err
 	})
 	if err != nil {
+		if cfg.Dir == "" {
+			siteTemplatesMu.Unlock()
+		}
 		panic(err)
 	}
 
-	return root
+	if cfg.Dir == "" {
+		// Cache the unexecuted root
+		siteTemplates = root
+		siteTemplatesMu.Unlock()
+	}
+
+	// Always return a clone to the caller to ensure the root (cached or not)
+	// remains unexecuted.
+	t, err := root.Clone()
+	if err != nil {
+		panic(err)
+	}
+	return t
 }
 
-func GetCompiledNotificationTemplates(funcs ttemplate.FuncMap) *ttemplate.Template {
-	return ttemplate.Must(ttemplate.New("").Funcs(funcs).ParseFS(getFS("notifications"), "*.gotxt"))
+func GetCompiledNotificationTemplates(funcs ttemplate.FuncMap, opts ...Option) *ttemplate.Template {
+	cfg := &config{}
+	for _, o := range opts {
+		o(cfg)
+	}
+	return ttemplate.Must(ttemplate.New("").Funcs(funcs).ParseFS(getFS("notifications", cfg), "*.gotxt"))
 }
 
-func GetCompiledEmailHtmlTemplates(funcs htemplate.FuncMap) *htemplate.Template {
+func GetCompiledEmailHtmlTemplates(funcs htemplate.FuncMap, opts ...Option) *htemplate.Template {
+	cfg := &config{}
+	for _, o := range opts {
+		o(cfg)
+	}
 	if funcs == nil {
 		funcs = htemplate.FuncMap{}
 	}
@@ -175,10 +239,14 @@ func GetCompiledEmailHtmlTemplates(funcs htemplate.FuncMap) *htemplate.Template 
 			return t.Format(consts.DisplayDateTimeFormat)
 		}
 	}
-	return htemplate.Must(htemplate.New("").Funcs(funcs).ParseFS(getFS("email"), "*.gohtml"))
+	return htemplate.Must(htemplate.New("").Funcs(funcs).ParseFS(getFS("email", cfg), "*.gohtml"))
 }
 
-func GetCompiledEmailTextTemplates(funcs ttemplate.FuncMap) *ttemplate.Template {
+func GetCompiledEmailTextTemplates(funcs ttemplate.FuncMap, opts ...Option) *ttemplate.Template {
+	cfg := &config{}
+	for _, o := range opts {
+		o(cfg)
+	}
 	if funcs == nil {
 		funcs = ttemplate.FuncMap{}
 	}
@@ -193,40 +261,50 @@ func GetCompiledEmailTextTemplates(funcs ttemplate.FuncMap) *ttemplate.Template 
 			return t.Format(consts.DisplayDateTimeFormat)
 		}
 	}
-	return ttemplate.Must(ttemplate.New("").Funcs(funcs).ParseFS(getFS("email"), "*.gotxt"))
+	return ttemplate.Must(ttemplate.New("").Funcs(funcs).ParseFS(getFS("email", cfg), "*.gotxt"))
 }
 
-func GetMainCSSData() []byte { return readFile("assets/main.css") }
+func GetMainCSSData(opts ...Option) []byte { return readFile("assets/main.css", opts...) }
 
 // GetFaviconData returns the site's favicon image data.
-func GetFaviconData() []byte { return readFile("assets/favicon.svg") }
+func GetFaviconData(opts ...Option) []byte { return readFile("assets/favicon.svg", opts...) }
 
 // GetPasteImageJSData returns the JavaScript that enables image pasting.
-func GetPasteImageJSData() []byte { return readFile("assets/pasteimg.js") }
+func GetPasteImageJSData(opts ...Option) []byte { return readFile("assets/pasteimg.js", opts...) }
 
 // GetNotificationsJSData returns the JavaScript used for real-time notification updates.
-func GetNotificationsJSData() []byte { return readFile("assets/notifications.js") }
+func GetNotificationsJSData(opts ...Option) []byte {
+	return readFile("assets/notifications.js", opts...)
+}
 
 // GetRoleGrantsEditorJSData returns the JavaScript powering the role grants drag-and-drop editor.
-func GetRoleGrantsEditorJSData() []byte { return readFile("assets/role_grants_editor.js") }
+func GetRoleGrantsEditorJSData(opts ...Option) []byte {
+	return readFile("assets/role_grants_editor.js", opts...)
+}
 
 // GetPrivateForumJSData returns the JavaScript for private forum pages.
-func GetPrivateForumJSData() []byte { return readFile("assets/private_forum.js") }
+func GetPrivateForumJSData(opts ...Option) []byte {
+	return readFile("assets/private_forum.js", opts...)
+}
 
 // GetTopicLabelsJSData returns the JavaScript for topic label editing.
-func GetTopicLabelsJSData() []byte { return readFile("assets/topic_labels.js") }
+func GetTopicLabelsJSData(opts ...Option) []byte { return readFile("assets/topic_labels.js", opts...) }
 
 // GetSiteJSData returns the main site JavaScript.
-func GetSiteJSData() []byte { return readFile("assets/site.js") }
+func GetSiteJSData(opts ...Option) []byte { return readFile("assets/site.js", opts...) }
 
 // GetA4CodeJSData returns the A4Code parser/converter JavaScript.
-func GetA4CodeJSData() []byte { return readFile("assets/a4code.js") }
+func GetA4CodeJSData(opts ...Option) []byte { return readFile("assets/a4code.js", opts...) }
 
 // ListSiteTemplateNames returns the relative paths of all site templates
 // (under the site/ directory), e.g. "news/postPage.gohtml".
-func ListSiteTemplateNames() []string {
+func ListSiteTemplateNames(opts ...Option) []string {
+	cfg := &config{}
+	for _, o := range opts {
+		o(cfg)
+	}
 	var names []string
-	fsys := getFS("site")
+	fsys := getFS("site", cfg)
 	_ = fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -245,8 +323,12 @@ func ListSiteTemplateNames() []string {
 
 // TemplateExists reports whether a site template with the given relative path
 // exists in the current template source (embedded or templatesDir).
-func TemplateExists(name string) bool {
-	fsys := getFS("site")
+func TemplateExists(name string, opts ...Option) bool {
+	cfg := &config{}
+	for _, o := range opts {
+		o(cfg)
+	}
+	fsys := getFS("site", cfg)
 	if _, err := fs.Stat(fsys, name); err == nil {
 		return true
 	}

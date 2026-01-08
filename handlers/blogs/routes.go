@@ -5,6 +5,8 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 
+	. "github.com/arran4/gorillamuxlogic"
+
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/router"
@@ -22,8 +24,9 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	br.HandleFunc("/atom", AtomPage).Methods("GET")
 	br.HandleFunc("", Page).Methods("GET")
 	br.HandleFunc("/", Page).Methods("GET")
-	br.HandleFunc("/add", addBlogTask.Page).Methods("GET").MatcherFunc(handlers.RequiredAccess("content writer", "administrator"))
-	br.HandleFunc("/add", handlers.TaskHandler(addBlogTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("content writer", "administrator")).MatcherFunc(addBlogTask.Matcher())
+	br.HandleFunc("/preview", handlers.PreviewPage).Methods("POST")
+	br.HandleFunc("/add", addBlogTask.Page).Methods("GET").MatcherFunc(handlers.RequiredGrant("blogs", "entry", "post", 0))
+	br.HandleFunc("/add", handlers.TaskHandler(addBlogTask)).Methods("POST").MatcherFunc(handlers.RequiredGrant("blogs", "entry", "post", 0)).MatcherFunc(addBlogTask.Matcher())
 	br.HandleFunc("/bloggers", BloggerListPage).Methods("GET")
 	br.HandleFunc("/blogger/{username}", BloggerPostsPage).Methods("GET")
 	br.HandleFunc("/blogger/{username}/", BloggerPostsPage).Methods("GET")
@@ -33,11 +36,13 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	br.HandleFunc("/blog/{blog}/reply", handlers.TaskHandler(replyBlogTask)).Methods("POST").MatcherFunc(replyBlogTask.Matcher())
 	br.Handle("/blog/{blog}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(editReplyTask)))).Methods("POST").MatcherFunc(editReplyTask.Matcher())
 	br.Handle("/blog/{blog}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(cancelTask)))).Methods("POST").MatcherFunc(cancelTask.Matcher())
-	br.Handle("/blog/{blog}/edit", RequireBlogAuthor(http.HandlerFunc(editBlogTask.Page))).Methods("GET").MatcherFunc(handlers.RequiredAccess("content writer", "administrator"))
-	br.Handle("/blog/{blog}/edit", RequireBlogAuthor(http.HandlerFunc(handlers.TaskHandler(editBlogTask)))).Methods("POST").MatcherFunc(handlers.RequiredAccess("content writer", "administrator")).MatcherFunc(editBlogTask.Matcher())
+	br.Handle("/blog/{blog}/edit", RequireBlogAuthor(http.HandlerFunc(editBlogTask.Page))).Methods("GET").MatcherFunc(RequireBlogEditGrant())
+	br.Handle("/blog/{blog}/edit", RequireBlogAuthor(http.HandlerFunc(handlers.TaskHandler(editBlogTask)))).Methods("POST").MatcherFunc(RequireBlogEditGrant()).MatcherFunc(editBlogTask.Matcher())
 	br.HandleFunc("/blog/{blog}/edit", handlers.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(cancelTask.Matcher())
 	br.HandleFunc("/blog/{blog}/labels", handlers.TaskHandler(setLabelsTask)).Methods("POST").MatcherFunc(setLabelsTask.Matcher())
+	br.HandleFunc("/blog/{blog}/labels", handlers.TaskHandler(markBlogReadTask)).Methods("GET").MatcherFunc(markBlogReadTask.Matcher())
 
+	br.HandleFunc("/{path:.*}", handlers.RenderPermissionDenied).MatcherFunc(Not(handlers.RequiresAnAccount()))
 }
 
 // Register registers the blogs router module.

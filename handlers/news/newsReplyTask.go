@@ -108,25 +108,25 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("create comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	if err := cd.SetPrivateLabelStatus("news", int32(pid), false, false); err != nil {
-		return fmt.Errorf("mark read %w", handlers.ErrRedirectOnSamePageHandler(err))
-	}
-
 	endURL := cd.AbsoluteURL(fmt.Sprintf("/news/news/%d", pid))
 	username := ""
 	if user, err := cd.CurrentUser(); err == nil && user != nil {
 		username = user.Username.String
 	}
 	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
-		ThreadID:         ti.ThreadID,
-		TopicID:          ti.TopicID,
-		CommentID:        int32(cid),
-		CommentText:      text,
-		CommentURL:       endURL,
-		PostURL:          endURL,
-		Username:         username,
-		IncludePostCount: true,
-		IncludeSearch:    true,
+		ThreadID:             ti.ThreadID,
+		TopicID:              ti.TopicID,
+		CommentID:            int32(cid),
+		LabelItem:            "news",
+		LabelItemID:          int32(pid),
+		CommentText:          text,
+		CommentURL:           endURL,
+		PostURL:              endURL,
+		Username:             username,
+		ClearUnreadForOthers: true,
+		MarkThreadRead:       true,
+		IncludePostCount:     true,
+		IncludeSearch:        true,
 	}); err != nil {
 		log.Printf("news reply side effects: %v", err)
 	}

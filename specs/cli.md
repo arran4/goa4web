@@ -1,28 +1,29 @@
-# Command Line Interface Structure
+# CLI Framework
 
-The `goa4web` binary exposes a tree of commands implemented under
-`cmd/goa4web/`. A small wrapper in `main.go` creates a `rootCmd` which
-parses global flags before dispatching to a subcommand.
+The Goa4Web CLI uses the standard `flag` package with a custom nested command structure.
 
-Global flags are defined by `config.NewRuntimeFlagSet` and include
-`--config-file`, `--verbosity` and all configuration options documented in
-[Configuration](configuration.md). Values are resolved in the order
-command line, configuration file and environment variables.
+## Architecture
 
-Each subcommand has its own `parse<Name>Cmd` function returning a struct
-with a `Run()` method. The `help` command relies on `helpCmd.showHelp` to
-instantiate each command with the `-h` flag so every subcommand can print
-its own usage text. New commands follow the same pattern: create a
-`<name>Cmd` type with a `FlagSet`, parse any arguments and implement
-`Run()` to perform the action.
+- **Entry Point**: `cmd/goa4web/main.go`.
+- **Command Pattern**: Each command is a struct holding:
+    - `*flag.FlagSet`: For parsing arguments.
+    - `*rootCmd` (or parent): For accessing dependencies (DB, Config, Email).
+    - `Run() error`: The execution logic.
+- **Parsing**: `parseXCmd` functions initialize the struct, define flags, parse args, and return the command instance.
+- **Dispatch**: Parent commands switch on the first non-flag argument to call the appropriate child parser.
 
-Subcommands may themselves dispatch to further nested commands (for
-example `user` and `config`). All of them share the same configuration
-mechanism via the embedded `rootCmd`. Running `goa4web help` or
-`goa4web help <command>` displays the relevant usage information.
+## Dependency Injection
 
-A special `repl` command starts an interactive shell. The REPL accepts the
-same commands as the normal CLI and supports background execution by
-appending `&`, external commands prefixed with `!` and simple environment
-variables using `set KEY=VALUE`. Type `jobs` to list running background
-commands and `wait <id>` to wait for completion.
+Dependencies (`DB`, `Config`, `Registry`) are lazy-loaded via the `rootCmd` instance passed down the chain. Avoid global state.
+
+## Help System
+
+Help text is generated from templates in `cmd/goa4web/templates/`. Commands implement `usageData` (providing `FlagGroups`) to render context-aware help.
+
+## Development
+
+To add a command:
+1. Define `type myCmd struct { ... }`.
+2. Implement `parseMyCmd(...) (*myCmd, error)`.
+3. Implement `Run() error`.
+4. Register in the parent's switch statement.

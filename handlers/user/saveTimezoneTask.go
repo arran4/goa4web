@@ -1,17 +1,16 @@
 package user
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -27,7 +26,7 @@ func (SaveTimezoneTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("ParseForm Error: %v", err)
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	tz := r.PostFormValue("timezone")
+	tz := strings.TrimSpace(r.PostFormValue("timezone"))
 	if tz != "" {
 		if _, err := time.LoadLocation(tz); err != nil {
 			return common.UserError{ErrorMessage: "invalid timezone"}
@@ -38,8 +37,8 @@ func (SaveTimezoneTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return handlers.SessionFetchFail{}
 	}
 	uid, _ := session.Values["UID"].(int32)
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	if err := queries.UpdateTimezoneForLister(r.Context(), db.UpdateTimezoneForListerParams{Timezone: sql.NullString{String: tz, Valid: tz != ""}, ListerID: uid}); err != nil {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if err := cd.SetTimezone(uid, tz); err != nil {
 		log.Printf("Save timezone Error: %v", err)
 		return fmt.Errorf("save timezone fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

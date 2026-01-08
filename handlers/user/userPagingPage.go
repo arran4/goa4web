@@ -27,7 +27,7 @@ var _ tasks.Task = (*PagingSaveTask)(nil)
 func userPagingPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Pagination"
-	handlers.TemplateHandler(w, r, "pagingPage.gohtml", struct{}{})
+	handlers.TemplateHandler(w, r, "user/pagingPage.gohtml", struct{}{})
 }
 
 func (PagingSaveTask) Action(w http.ResponseWriter, r *http.Request) any {

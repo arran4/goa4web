@@ -2,7 +2,8 @@ package news
 
 import (
 	"fmt"
-	"github.com/arran4/goa4web/a4code/a4code2html"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"io"
 	"net/http"
 )
@@ -21,13 +22,30 @@ func PreviewPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conv := a4code2html.New()
-	conv.SetInput(string(body))
+	cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if !ok {
+		// CoreData should be injected by the middleware stack.
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	username := "Guest"
+	if u := cd.CurrentUserLoaded(); u != nil {
+		username = u.Username.String
+	}
+
+	data := struct {
+		Content  string
+		Username string
+	}{
+		Content:  string(body),
+		Username: username,
+	}
 
 	// Set headers for partial HTML content
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	if _, err := io.Copy(w, conv.Process()); err != nil {
+	if err := cd.ExecuteSiteTemplate(w, r, "news/preview.gohtml", data); err != nil {
 		fmt.Printf("Error processing preview: %v\n", err)
 		http.Error(w, "Error processing preview", http.StatusInternalServerError)
 		return

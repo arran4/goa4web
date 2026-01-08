@@ -5,6 +5,8 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 
+	. "github.com/arran4/gorillamuxlogic"
+
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/router"
@@ -13,7 +15,7 @@ import (
 )
 
 // RegisterRoutes attaches the public forum endpoints to r.
-func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
+func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Registry) {
 	navReg.RegisterIndexLinkWithViewPermission("Forum", "/forum", SectionWeight, "forum", "category")
 	navReg.RegisterAdminControlCenter("Forum", "Forum", "/admin/forum", SectionWeight)
 	fr := r.PathPrefix("/forum").Subrouter()
@@ -34,7 +36,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	fr.HandleFunc("/topic/{topic}/unsubscribe", UnsubscribeTopicPage).Methods("GET")
 	fr.HandleFunc("/topic/{topic}/subscribe", handlers.TaskHandler(subscribeTopicTaskAction)).Methods("POST").MatcherFunc(subscribeTopicTaskAction.Matcher())
 	fr.HandleFunc("/topic/{topic}/unsubscribe", handlers.TaskHandler(unsubscribeTopicTaskAction)).Methods("POST").MatcherFunc(unsubscribeTopicTaskAction.Matcher())
-	fr.HandleFunc("/topic_labels.js", handlers.TopicLabelsJS).Methods(http.MethodGet)
+	fr.HandleFunc("/topic_labels.js", handlers.TopicLabelsJS(cfg)).Methods(http.MethodGet)
 	fr.HandleFunc("/thread/{thread}/labels", handlers.TaskHandler(markThreadReadTask)).Methods(http.MethodGet)
 	fr.HandleFunc("/thread/{thread}/labels", handlers.TaskHandler(setLabelsTask)).Methods("POST").MatcherFunc(setLabelsTask.Matcher())
 	fr.HandleFunc("/thread/{thread}/labels", handlers.TaskHandler(addPublicLabelTask)).Methods("POST").MatcherFunc(addPublicLabelTask.Matcher())
@@ -54,6 +56,10 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	fr.Handle("/topic/{topic}/thread/{thread}/reply", RequireThreadAndTopic(http.HandlerFunc(handlers.TaskHandler(replyTask)))).Methods("POST").MatcherFunc(replyTask.Matcher())
 	fr.Handle("/topic/{topic}/thread/{thread}/comment/{comment}", RequireThreadAndTopic(comments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(topicThreadCommentEditAction))))).Methods("POST").MatcherFunc(topicThreadCommentEditAction.Matcher())
 	fr.Handle("/topic/{topic}/thread/{thread}/comment/{comment}", RequireThreadAndTopic(comments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(topicThreadCommentEditActionCancel))))).Methods("POST").MatcherFunc(topicThreadCommentEditActionCancel.Matcher())
+
+	fr.HandleFunc("/preview", handlers.PreviewPage).Methods("POST")
+
+	fr.HandleFunc("/{path:.*}", handlers.RenderPermissionDenied).MatcherFunc(Not(handlers.RequiresAnAccount()))
 
 	api := r.PathPrefix("/api/forum").Subrouter()
 	api.HandleFunc("/quote/{commentid}", QuoteApi).Methods("GET")

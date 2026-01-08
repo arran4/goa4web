@@ -47,14 +47,14 @@ func verifyMiddleware(prefix string) mux.MiddlewareFunc {
 }
 
 // RegisterRoutes attaches the image endpoints to r.
-func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, _ *nav.Registry) {
+func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, _ *nav.Registry) {
 	ir := r.PathPrefix("/images").Subrouter()
 	ir.Use(handlers.IndexMiddleware(CustomIndex))
 	ir.HandleFunc("/upload/image", handlers.TaskHandler(uploadImageTask)).
 		Methods(http.MethodPost).
 		MatcherFunc(handlers.RequiresAnAccount()).
 		MatcherFunc(uploadImageTask.Matcher())
-	ir.HandleFunc("/pasteimg.js", handlers.PasteImageJS).Methods(http.MethodGet)
+	ir.HandleFunc("/pasteimg.js", handlers.PasteImageJS(cfg)).Methods(http.MethodGet)
 	ir.Handle("/image/{id}", verifyMiddleware("image:")(http.HandlerFunc(serveImage))).
 		Methods(http.MethodGet)
 	ir.Handle("/cache/{id}", verifyMiddleware("cache:")(http.HandlerFunc(serveCache))).

@@ -50,7 +50,7 @@ func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
 var _ searchworker.IndexedTask = ReplyTask{}
 
 func (ReplyTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("replyEmail"), evt.Outcome == eventbus.TaskOutcomeSuccess
+	return notif.NewEmailTemplates("forumReplyEmail"), evt.Outcome == eventbus.TaskOutcomeSuccess
 }
 
 func (ReplyTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
@@ -107,10 +107,8 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	uid, _ := session.Values["UID"].(int32)
 	var username string
-	if q := cd.Queries(); q != nil {
-		if u, err := q.SystemGetUserByID(r.Context(), uid); err == nil {
-			username = u.Username.String
-		}
+	if u := cd.UserByID(uid); u != nil {
+		username = u.Username.String
 	}
 	text := r.PostFormValue("replytext")
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
@@ -119,12 +117,6 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if base == "" {
 		base = "/forum"
 	}
-	commentNum := int32(1)
-	if threadRow.Comments.Valid {
-		commentNum = threadRow.Comments.Int32 + 1
-	}
-	endUrl := fmt.Sprintf("%s/topic/%d/thread/%d#c%d", base, topicRow.Idforumtopic, threadRow.Idforumthread, commentNum)
-
 	var cid int64
 	if topicRow.Handler == "private" {
 		cid, err = cd.CreatePrivateForumCommentForCommenter(uid, threadRow.Idforumthread, topicRow.Idforumtopic, int32(languageId), text)
@@ -140,6 +132,9 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("Error: CreateComment: %s", err)
 		return fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
+
+	endUrl := fmt.Sprintf("%s/topic/%d/thread/%d#c%d", base, topicRow.Idforumtopic, threadRow.Idforumthread, cid)
+
 	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
 		ThreadID:             threadRow.Idforumthread,
 		TopicID:              topicRow.Idforumtopic,

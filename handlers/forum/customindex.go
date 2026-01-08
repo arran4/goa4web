@@ -68,7 +68,19 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 			items = append(items,
 				common.IndexItem{
 					Name: "Write Reply",
-					Link: "#reply",
+					Link: fmt.Sprintf("%s/topic/%s/thread/%s#reply", base, topicID, threadID),
+				},
+			)
+		}
+		if tid, err := strconv.Atoi(topicID); err == nil && cd.HasGrant(section, "topic", "post", int32(tid)) {
+			name := "New Thread"
+			if base == "/private" {
+				name = "Create a new private thread"
+			}
+			items = append(items,
+				common.IndexItem{
+					Name: name,
+					Link: fmt.Sprintf("%s/topic/%s/thread", base, topicID),
 				},
 			)
 		}
@@ -126,7 +138,9 @@ func hasThreadUnread(cd *common.CoreData, threadID string) bool {
 	if err != nil {
 		return false
 	}
-	labels, err := cd.ThreadPrivateLabels(int32(tid))
+	// TODO: Pass author ID. For now passing 0 to keep default behavior (showing unread) if author is unknown.
+	// This function is deprecated/wrapper, so less critical.
+	labels, err := cd.ThreadPrivateLabels(int32(tid), 0)
 	if err != nil {
 		log.Printf("thread private labels: %v", err)
 		return false

@@ -1,0 +1,20 @@
+How do labels work?
+===
+Labels are tags that can be attached to content (like forum threads, blog posts, etc.) to help organize and filter them. There are three types of labels:
+
+[b Public Labels]
+These are labels visible to everyone. In the forum, they are typically managed by administrators and moderators. Examples include "Pinned" or "Announcement".
+
+[b Author Labels]
+These are labels set by the author of the content. They allow the author to categorize their own posts. For example, a blog post author might add tags like "Tech" or "Personal".
+
+[b Private Labels]
+These are labels that are only visible to you. You can use them to organize content for your own reference.
+Some private labels are automatically managed by the system, such as:
+- [b new]: Indicates content you haven't seen yet.
+- [b unread]: Indicates content that has been updated since you last viewed it.
+
+You can also add your own private labels to threads or posts to bookmark them or categorize them in a way that makes sense to you.
+
+[b Managing Labels]
+You can typically manage labels from the sidebar or the bottom of the content page. Look for a "Labels" section where you can add or remove your private labels.

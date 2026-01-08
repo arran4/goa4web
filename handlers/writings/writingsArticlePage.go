@@ -101,14 +101,14 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.IsAuthor = writing.UsersIdusers == cd.UserID
-	data.CanEdit = cd.HasContentWriterRole() && data.IsAuthor
+	data.CanEdit = cd.HasGrant("writing", "article", "edit", writing.Idwriting)
 
 	if als, err := cd.WritingAuthorLabels(writing.Idwriting); err == nil {
 		for _, l := range als {
 			data.Labels = append(data.Labels, templates.TopicLabel{Name: l, Type: "author"})
 		}
 	}
-	if pls, err := cd.WritingPrivateLabels(writing.Idwriting); err == nil {
+	if pls, err := cd.WritingPrivateLabels(writing.Idwriting, writing.Writerid); err == nil {
 		for _, l := range pls {
 			data.Labels = append(data.Labels, templates.TopicLabel{Name: l, Type: "private"})
 		}
@@ -173,17 +173,17 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := cd.ClearUnreadForOthers("writing", writing.Idwriting); err != nil {
-		log.Printf("clear unread labels: %v", err)
-	}
-
 	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
-		ThreadID:         threadID,
-		TopicID:          topicID,
-		CommentID:        int32(cid),
-		CommentText:      text,
-		IncludePostCount: true,
-		IncludeSearch:    true,
+		ThreadID:             threadID,
+		TopicID:              topicID,
+		CommentID:            int32(cid),
+		LabelItem:            "writing",
+		LabelItemID:          writing.Idwriting,
+		CommentText:          text,
+		ClearUnreadForOthers: true,
+		MarkThreadRead:       true,
+		IncludePostCount:     true,
+		IncludeSearch:        true,
 		AdditionalData: map[string]any{
 			"target": notifications.Target{Type: "writing", ID: writing.Idwriting},
 		},

@@ -1,7 +1,7 @@
 {{ template "head" $ }}
 <div class="content">
     <h2 class="section-heading">Add News</h2>
-    <form method="post" action="/news/post">
+    <form method="post" action="/news/post{{if .AdminMode}}?mode=admin{{end}}">
         {{ csrfField }}
         <input type="hidden" name="task" value="New Post">
         <div class="form-group">

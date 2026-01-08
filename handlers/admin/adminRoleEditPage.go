@@ -55,12 +55,20 @@ func adminRoleEditSavePage(w http.ResponseWriter, r *http.Request) {
 		Back   string
 	}{Back: fmt.Sprintf("/admin/role/%d", id)}
 
+	role, err := queries.AdminGetRoleByID(r.Context(), id)
+	if err != nil {
+		data.Errors = append(data.Errors, fmt.Errorf("get role: %w", err).Error())
+		handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+		return
+	}
+
 	if err := queries.AdminUpdateRole(r.Context(), db.AdminUpdateRoleParams{
-		Name:          name,
-		CanLogin:      canLogin,
-		IsAdmin:       isAdmin,
-		PrivateLabels: privateLabels,
-		ID:            id,
+		Name:                   name,
+		CanLogin:               canLogin,
+		IsAdmin:                isAdmin,
+		PrivateLabels:          privateLabels,
+		PublicProfileAllowedAt: role.PublicProfileAllowedAt,
+		ID:                     id,
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("update role: %w", err).Error())
 	}

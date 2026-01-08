@@ -18,7 +18,7 @@ var (
 func LoadAllTemplatesMap() {
 	allTemplatesOnce.Do(func() {
 		allTemplates = make(map[string]struct{})
-		fsys := getFS("site")
+		fsys := getFS("site", &config{})
 
 		err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
 			if err != nil {

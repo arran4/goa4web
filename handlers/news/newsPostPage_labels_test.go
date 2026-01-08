@@ -26,7 +26,7 @@ func (*fakeCD) NewsAnnouncement(int32) *db.SiteAnnouncement                     
 func (*fakeCD) Location() *time.Location                                             { return time.UTC }
 func (*fakeCD) LocalTime(t time.Time) time.Time                                      { return t }
 func (*fakeCD) LocalTimeIn(t time.Time, _ string) time.Time                          { return t }
-func (*fakeCD) NewsLabels(int32) []templates.TopicLabel {
+func (*fakeCD) NewsLabels(int32, int32) []templates.TopicLabel {
 	return []templates.TopicLabel{{Name: "foo", Type: "author"}}
 }
 
@@ -94,7 +94,7 @@ func TestNewsPostPagePrivateLabelsOnce(t *testing.T) {
 		"localTime":   func(t time.Time) time.Time { return t },
 		"now":         func() time.Time { return time.Unix(0, 0) },
 		"a4code2html": func(s string) template.HTML { return template.HTML(s) },
-		"NewsLabels":  func(int32) []templates.TopicLabel { return nil },
+		"NewsLabels":  func(int32, int32) []templates.TopicLabel { return nil },
 		"add":         func(a, b int) int { return a + b },
 		"since":       func(time.Time, time.Time) string { return "" },
 		"assetHash":   func(s string) string { return s },

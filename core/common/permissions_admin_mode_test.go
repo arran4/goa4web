@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 func TestHasGrant_AdminMode(t *testing.T) {
@@ -17,7 +18,12 @@ func TestHasGrant_AdminMode(t *testing.T) {
 	// if cd.queries == nil { return false }
 	// So nil querier is fine for testing the fallthrough.
 
-	cd := common.NewCoreData(context.Background(), nil, nil, common.WithUserRoles([]string{"administrator"}))
+	cd := common.NewCoreData(context.Background(), nil, nil,
+		common.WithUserRoles([]string{"administrator"}),
+		common.WithPermissions([]*db.GetPermissionsByUserIDRow{
+			{Name: "administrator", IsAdmin: true},
+		}),
+	)
 
 	// Case 1: Admin Mode is ON
 	cd.AdminMode = true

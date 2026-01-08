@@ -44,10 +44,14 @@ func ArticleCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
-		ThreadID:         thread.Idforumthread,
-		TopicID:          thread.ForumtopicIdforumtopic,
-		CommentID:        comment.Idcomments,
-		IncludePostCount: true,
+		ThreadID:             thread.Idforumthread,
+		TopicID:              thread.ForumtopicIdforumtopic,
+		CommentID:            comment.Idcomments,
+		LabelItem:            "writing",
+		LabelItemID:          writing.Idwriting,
+		ClearUnreadForOthers: true,
+		MarkThreadRead:       true,
+		IncludePostCount:     true,
 	}); err != nil {
 		log.Printf("writing comment edit side effects: %v", err)
 	}

@@ -49,3 +49,39 @@ func TestSignedURLTTL(t *testing.T) {
 		t.Fatalf("expiry not roughly ttl: %d", exp)
 	}
 }
+
+func TestSignedURLQueryParams(t *testing.T) {
+	cfg := &config.RuntimeConfig{HTTPHostname: "http://example.com"}
+	signer := NewSigner(cfg, "k")
+
+	// Case 1: ID with existing params but no sig/ts
+	idWithParams := "img123.jpg?foo=bar"
+	surl := signer.SignedURLTTL(idWithParams, time.Hour)
+	if strings.Count(surl, "?") > 1 {
+		t.Errorf("url has multiple '?': %s", surl)
+	}
+	if !strings.Contains(surl, "&ts=") {
+		t.Errorf("url missing chained ts param: %s", surl)
+	}
+
+	// Case 2: ID that looks like it's already signed
+	// We construct a fake signed URL string as the ID
+	idAlreadySigned := "img123.jpg?ts=12345&sig=abcde"
+	surl2 := signer.SignedURLTTL(idAlreadySigned, time.Hour)
+	if strings.Count(surl2, "?") > 1 {
+		t.Errorf("url has multiple '?': %s", surl2)
+	}
+	if strings.Count(surl2, "ts=") > 1 || strings.Count(surl2, "sig=") > 1 {
+		t.Errorf("url has duplicate sig/ts params: %s", surl2)
+	}
+
+	// Case 3: Just to be sure, verify parsing
+	u, err := url.Parse(surl2)
+	if err != nil {
+		t.Errorf("result is not a valid url: %s", surl2)
+	}
+	q := u.Query()
+	if len(q["ts"]) != 1 {
+		t.Errorf("expected exactly 1 ts param, got %d", len(q["ts"]))
+	}
+}

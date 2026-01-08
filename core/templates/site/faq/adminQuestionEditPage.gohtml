@@ -2,8 +2,18 @@
 <h4>{{ if eq .Faq.ID 0 }}Create FAQ Entry{{ else }}Edit FAQ Entry{{ end }}</h4>
 <form method="post" action="/admin/faq/questions">
 {{ csrfField }}
-<textarea name="question" cols="80" rows="15">{{ .Faq.Question.String }}</textarea><br>
-<textarea name="answer" cols="80" rows="15">{{ .Faq.Answer.String }}</textarea><br>
+Question: <br>
+<textarea id="question" name="question" cols="80" rows="15">{{ .Faq.Question.String }}</textarea><br>
+<button type="button" class="preview-a4code" data-target="question" data-container="preview-container-question" data-preview-url="/faq/preview">Preview Question</button>
+<div class="form-group hidden" id="preview-container-question">
+    <div class="preview-box"></div>
+</div>
+Answer: <br>
+<textarea id="answer" name="answer" cols="80" rows="15">{{ .Faq.Answer.String }}</textarea><br>
+<button type="button" class="preview-a4code" data-target="answer" data-container="preview-container-answer" data-preview-url="/faq/preview">Preview Answer</button>
+<div class="form-group hidden" id="preview-container-answer">
+    <div class="preview-box"></div>
+</div>
 <select name="category">
     <option value="0">Hidden</option>
     {{$cat := .Faq.CategoryID.Int32}}

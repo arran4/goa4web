@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 
-	"errors"
 	"flag"
 	"fmt"
+	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
@@ -32,28 +32,27 @@ func parseServeCmd(parent *rootCmd, args []string) (*serveCmd, error) {
 }
 
 func (c *serveCmd) Run() error {
-	fileVals, err := config.LoadAppConfigFile(core.OSFS{}, c.rootCmd.ConfigFile)
-	if err != nil {
-		if errors.Is(err, config.ErrConfigFileNotFound) {
-			return fmt.Errorf("config file not found: %s", c.rootCmd.ConfigFile)
-		}
-		return fmt.Errorf("load config file: %w", err)
-	}
 	app.ConfigFile = c.rootCmd.ConfigFile
 	cfg := config.NewRuntimeConfig(
 		config.WithFlagSet(c.fs),
-		config.WithFileValues(fileVals),
+		config.WithFileValues(c.rootCmd.ConfigFileValues),
 		config.WithGetenv(os.Getenv),
 	)
 
-	c.rootCmd.Infof("Starting Goa4Web")
-	c.rootCmd.Infof("Version: %s", version)
-	c.rootCmd.Infof("Commit: %s", commit)
-	c.rootCmd.Infof("Date: %s", date)
-	c.rootCmd.Infof("Listening on: %s", cfg.HTTPListen)
+	c.rootCmd.Infof("Starting Goa4Web v%s (commit: %s; build date: %s)", version, commit, date)
+	listenMsg := fmt.Sprintf("Listening on: %s", cfg.HTTPListen)
 	if cfg.HTTPHostname != "" {
-		c.rootCmd.Infof("Hostname: %s", cfg.HTTPHostname)
+		// switching dest url with hostname and populating hostname from parsed url
+		if u, err := url.Parse(cfg.HTTPHostname); err == nil && u.Host != "" {
+			if u.Scheme != "" {
+				c.rootCmd.Infof("WARNING: HTTPHostname configuration is a URL (scheme: %s), expected a hostname. Using extracted host: %s", u.Scheme, u.Host)
+			}
+			listenMsg += fmt.Sprintf(" (Hostname: %s)", u.Host)
+		} else {
+			listenMsg += fmt.Sprintf(" (Hostname: %s)", cfg.HTTPHostname)
+		}
 	}
+	c.rootCmd.Infof("%s", listenMsg)
 
 	secret, err := config.LoadOrCreateSecret(core.OSFS{}, cfg.SessionSecret, cfg.SessionSecretFile, config.EnvSessionSecret, config.EnvSessionSecretFile)
 	if err != nil {

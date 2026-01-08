@@ -25,7 +25,7 @@ import (
 
 // RegisterRoutes attaches the admin endpoints to ar. The router is expected to
 // already have any required authentication middleware applied.
-func (h *Handlers) RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
+func (h *Handlers) RegisterRoutes(ar *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Registry) {
 	ar.Use(handlers.SectionMiddleware("admin"))
 	navReg.RegisterAdminControlCenter("Core", "Roles", "/admin/roles", 25)
 	navReg.RegisterAdminControlCenter("Core", "Grants", "/admin/grants", 27)
@@ -50,7 +50,7 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navRe
 
 	ar.HandleFunc("", AdminPage).Methods("GET")
 	ar.HandleFunc("/", AdminPage).Methods("GET")
-	ar.HandleFunc("/role-grants-editor.js", handlers.RoleGrantsEditorJS).Methods(http.MethodGet, http.MethodHead, http.MethodOptions)
+	ar.HandleFunc("/role-grants-editor.js", handlers.RoleGrantsEditorJS(cfg)).Methods(http.MethodGet, http.MethodHead, http.MethodOptions)
 	ar.HandleFunc("/roles", AdminRolesPage).Methods("GET")
 	ar.HandleFunc("/roles", handlers.TaskHandler(rolePublicProfileTask)).Methods("POST").MatcherFunc(rolePublicProfileTask.Matcher())
 	ar.HandleFunc("/external-links", AdminExternalLinksPage).Methods("GET")

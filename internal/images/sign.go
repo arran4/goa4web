@@ -2,6 +2,8 @@ package images
 
 import (
 	"fmt"
+	"log"
+	"net/url"
 	"strings"
 	"time"
 
@@ -31,8 +33,31 @@ func (s *Signer) SignedURL(id string) string {
 func (s *Signer) SignedURLTTL(id string, ttl time.Duration) string {
 	id = strings.TrimPrefix(strings.TrimPrefix(id, "image:"), "img:")
 	host := strings.TrimSuffix(s.cfg.HTTPHostname, "/")
-	ts, sig := s.signer.Sign("image:"+id, time.Now().Add(ttl))
-	return fmt.Sprintf("%s/images/image/%s?ts=%d&sig=%s", host, id, ts, sig)
+	cleanId, sep := s.cleanParams(id)
+	ts, sig := s.signer.Sign("image:"+cleanId, time.Now().Add(ttl))
+	return fmt.Sprintf("%s/images/image/%s%sts=%d&sig=%s", host, cleanId, sep, ts, sig)
+}
+
+func (s *Signer) cleanParams(id string) (string, string) {
+	u, err := url.Parse(id)
+	if err != nil {
+		if strings.Contains(id, "?") {
+			return id, "&"
+		}
+		return id, "?"
+	}
+	q := u.Query()
+	if q.Has("ts") || q.Has("sig") {
+		log.Printf("[Signer] Double signing detected for ID %q. Removing existing ts/sig params.", id)
+		q.Del("ts")
+		q.Del("sig")
+	}
+	u.RawQuery = q.Encode()
+	cleanId := u.String()
+	if strings.Contains(cleanId, "?") {
+		return cleanId, "&"
+	}
+	return cleanId, "?"
 }
 
 // SignedCacheURL maps a cache identifier to a signed URL.
@@ -43,8 +68,9 @@ func (s *Signer) SignedCacheURL(id string) string {
 // SignedCacheURLTTL maps a cache identifier to a signed URL that expires after ttl.
 func (s *Signer) SignedCacheURLTTL(id string, ttl time.Duration) string {
 	host := strings.TrimSuffix(s.cfg.HTTPHostname, "/")
-	ts, sig := s.signer.Sign("cache:"+id, time.Now().Add(ttl))
-	return fmt.Sprintf("%s/images/cache/%s?ts=%d&sig=%s", host, id, ts, sig)
+	cleanId, sep := s.cleanParams(id)
+	ts, sig := s.signer.Sign("cache:"+cleanId, time.Now().Add(ttl))
+	return fmt.Sprintf("%s/images/cache/%s%sts=%d&sig=%s", host, cleanId, sep, ts, sig)
 }
 
 // Verify checks the provided signature matches data.
@@ -67,8 +93,10 @@ func (s *Signer) SignedRef(ref string) string {
 	default:
 		return ref
 	}
-	ts, sig := s.signer.Sign(prefix + id)
-	return fmt.Sprintf("%s%s?ts=%d&sig=%s", prefix, id, ts, sig)
+
+	cleanId, sep := s.cleanParams(id)
+	ts, sig := s.signer.Sign(prefix + cleanId)
+	return fmt.Sprintf("%s%s%sts=%d&sig=%s", prefix, cleanId, sep, ts, sig)
 }
 
 // MapURL converts image references to signed HTTP URLs.

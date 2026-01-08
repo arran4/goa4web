@@ -23,7 +23,7 @@
                     {{ end }}
                 </a>]
             {{ end }}
-            {{ $labels := cd.NewsLabels .Idsitenews }}
+            {{ $labels := cd.NewsLabels .Idsitenews .UsersIdusers }}
             {{ if $labels }}<section class="label-bar">{{ template "topicLabels" $labels }}</section>{{ end }}
         </div>
     </article>

@@ -3,6 +3,8 @@ package common
 import (
 	"database/sql"
 	"errors"
+	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/arran4/goa4web/internal/db"
@@ -64,13 +66,30 @@ func (cd *CoreData) UpdateBlogReply(commentID, commenterID, languageID int32, te
 	if cd.queries == nil {
 		return nil
 	}
-	return cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
+	paths, err := cd.imagePathsFromText(text)
+	if err != nil {
+		return fmt.Errorf("parse images: %w", err)
+	}
+	comment, err := cd.CommentByID(commentID)
+	if err != nil || comment == nil {
+		return fmt.Errorf("load comment: %w", err)
+	}
+	if err := cd.validateImagePathsForThread(commenterID, comment.ForumthreadID, paths); err != nil {
+		return fmt.Errorf("validate images: %w", err)
+	}
+	if err := cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
 		LanguageID:  sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:        sql.NullString{String: text, Valid: true},
 		CommentID:   commentID,
 		CommenterID: commenterID,
 		EditorID:    sql.NullInt32{Int32: commenterID, Valid: commenterID != 0},
-	})
+	}); err != nil {
+		return err
+	}
+	if err := cd.recordThreadImages(comment.ForumthreadID, paths); err != nil {
+		log.Printf("record thread images: %v", err)
+	}
+	return nil
 }
 
 // BloggerProfile loads a blogger by username and stores the user ID.

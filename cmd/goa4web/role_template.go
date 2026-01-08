@@ -9,6 +9,7 @@ import (
 	"os"
 	"sort"
 	"text/tabwriter"
+	"time"
 
 	"github.com/arran4/goa4web/internal/db"
 )
@@ -311,11 +312,12 @@ func applyRoles(ctx context.Context, q *db.Queries, tx *sql.Tx, roles []RoleDef)
 		} else {
 			roleID = role.ID
 			if err := q.AdminUpdateRole(ctx, db.AdminUpdateRoleParams{
-				Name:          rDef.Name,
-				CanLogin:      rDef.CanLogin,
-				IsAdmin:       rDef.IsAdmin,
-				PrivateLabels: rDef.CanLogin,
-				ID:            role.ID,
+				Name:                   rDef.Name,
+				CanLogin:               rDef.CanLogin,
+				IsAdmin:                rDef.IsAdmin,
+				PrivateLabels:          rDef.CanLogin,
+				PublicProfileAllowedAt: sql.NullTime{Time: time.Now(), Valid: true},
+				ID:                     role.ID,
 			}); err != nil {
 				return fmt.Errorf("update role %s: %w", rDef.Name, err)
 			}

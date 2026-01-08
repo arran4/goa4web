@@ -23,6 +23,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	pr.HandleFunc("/private_forum.js", handlers.PrivateForumJS).Methods(http.MethodGet)
 	pr.HandleFunc("/topic_labels.js", handlers.TopicLabelsJS).Methods(http.MethodGet)
 	pr.HandleFunc("/topic/{topic}", TopicPage).Methods(http.MethodGet)
+	pr.HandleFunc("/api/user-exists", UserExistsAPI).Methods(http.MethodPost)
 
 	pr.HandleFunc("/topic/{topic}/subscribe", handlers.TaskHandler(forumhandlers.SubscribeTopicTaskHandler)).Methods(http.MethodPost).MatcherFunc(forumhandlers.SubscribeTopicTaskHandler.Matcher())
 	pr.HandleFunc("/topic/{topic}/unsubscribe", handlers.TaskHandler(forumhandlers.UnsubscribeTopicTaskHandler)).Methods(http.MethodPost).MatcherFunc(forumhandlers.UnsubscribeTopicTaskHandler.Matcher())

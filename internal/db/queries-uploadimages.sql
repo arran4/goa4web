@@ -2,18 +2,13 @@
 INSERT INTO uploaded_images (
     users_idusers, path, width, height, file_size, uploaded
 )
-SELECT sqlc.arg(uploader_id), sqlc.arg(path), sqlc.arg(width), sqlc.arg(height), sqlc.arg(file_size), NOW()
-WHERE EXISTS (
-    SELECT 1 FROM grants g
-    WHERE g.section='images'
-      AND g.item='upload'
-      AND g.action='post'
-      AND g.active=1
-      AND (g.user_id = sqlc.arg(grantee_id) OR g.user_id IS NULL)
-      AND (g.role_id IS NULL OR g.role_id IN (
-          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(uploader_id)
-      ))
-);
+VALUES (sqlc.arg(uploader_id), sqlc.arg(path), sqlc.arg(width), sqlc.arg(height), sqlc.arg(file_size), NOW());
+
+-- name: ListUploadedImagePathsByUser :many
+SELECT path
+FROM uploaded_images
+WHERE users_idusers = sqlc.arg(user_id)
+  AND path IN (sqlc.slice(paths));
 
 -- name: ListUploadedImagesByUserForLister :many
 WITH role_ids AS (

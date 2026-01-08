@@ -70,14 +70,32 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 		if !img.Path.Valid {
 			continue
 		}
-		fname := path.Base(img.Path.String)
-		ext := filepath.Ext(fname)
-		id := strings.TrimSuffix(fname, ext)
-		thumb := id + "_thumb" + ext
+		imgPath := img.Path.String
+		if strings.HasPrefix(imgPath, "/uploads/") {
+			fname := path.Base(imgPath)
+			ext := filepath.Ext(fname)
+			id := strings.TrimSuffix(fname, ext)
+			thumb := id + "_thumb" + ext
+			full := imgPath
+			thumbURL := thumb
+			if cd.ImageSigner != nil {
+				full = cd.ImageSigner.SignedURL("image:" + fname)
+				thumbURL = cd.ImageSigner.SignedCacheURL(thumb)
+			}
+			imgs = append(imgs, galleryImage{
+				Thumb:  thumbURL,
+				Full:   full,
+				A4Code: "[img=image:" + fname + "]",
+			})
+			continue
+		}
+		ext := filepath.Ext(imgPath)
+		base := strings.TrimSuffix(imgPath, ext)
+		thumb := base + "_thumb" + ext
 		imgs = append(imgs, galleryImage{
-			Thumb:  cd.ImageSigner.SignedCacheURL(thumb),
-			Full:   cd.ImageSigner.SignedURL("image:" + fname),
-			A4Code: "[img=image:" + fname + "]",
+			Thumb:  thumb,
+			Full:   imgPath,
+			A4Code: "[img " + imgPath + "]",
 		})
 	}
 

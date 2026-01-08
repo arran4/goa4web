@@ -107,6 +107,9 @@ func (cd *CoreData) StoreImage(p StoreImageParams) (string, error) {
 	if !imagesign.AllowedExtension(p.Ext) {
 		return "", fmt.Errorf("unsupported image extension: %s", p.Ext)
 	}
+	if !cd.HasGrant("images", "upload", "post", 0) {
+		return "", fmt.Errorf("permission denied")
+	}
 	cfg := cd.Config
 	sub1, sub2 := p.ID[:2], p.ID[2:4]
 	fname := p.ID + p.Ext
@@ -158,7 +161,6 @@ func (cd *CoreData) StoreImage(p StoreImageParams) (string, error) {
 		Width:      sql.NullInt32{Int32: int32(width), Valid: true},
 		Height:     sql.NullInt32{Int32: int32(height), Valid: true},
 		FileSize:   int32(len(p.Data)),
-		GranteeID:  sql.NullInt32{Int32: p.UploaderID, Valid: p.UploaderID != 0},
 	})
 	if err != nil {
 		return "", fmt.Errorf("create uploaded image %w", err)

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"math"
 	"net/http"
 	"strconv"
@@ -63,13 +64,30 @@ func (cd *CoreData) ArticleComment(r *http.Request, ops ...lazy.Option[*db.GetCo
 // UpdateArticleComment updates a comment on a writing.
 func (cd *CoreData) UpdateArticleComment(commentID, languageID int32, text string) error {
 	uid := cd.UserID
-	return cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
+	paths, err := cd.imagePathsFromText(text)
+	if err != nil {
+		return fmt.Errorf("parse images: %w", err)
+	}
+	comment, err := cd.CommentByID(commentID)
+	if err != nil || comment == nil {
+		return fmt.Errorf("load comment: %w", err)
+	}
+	if err := cd.validateImagePathsForThread(uid, comment.ForumthreadID, paths); err != nil {
+		return fmt.Errorf("validate images: %w", err)
+	}
+	if err := cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
 		LanguageID:  sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:        sql.NullString{String: text, Valid: true},
 		CommentID:   commentID,
 		CommenterID: uid,
 		EditorID:    sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
+	}); err != nil {
+		return err
+	}
+	if err := cd.recordThreadImages(comment.ForumthreadID, paths); err != nil {
+		log.Printf("record thread images: %v", err)
+	}
+	return nil
 }
 
 // WriterByUsername fetches a user by username.
@@ -123,6 +141,13 @@ func (cd *CoreData) UpdateWritingReply(commentID, languageID int32, text string)
 		return nil, err
 	}
 	uid := cd.UserID
+	paths, err := cd.imagePathsFromText(text)
+	if err != nil {
+		return nil, fmt.Errorf("parse images: %w", err)
+	}
+	if err := cd.validateImagePathsForThread(uid, cmt.ForumthreadID, paths); err != nil {
+		return nil, fmt.Errorf("validate images: %w", err)
+	}
 	thread, err := cd.queries.GetThreadLastPosterAndPerms(cd.ctx, db.GetThreadLastPosterAndPermsParams{
 		ViewerID:      uid,
 		ThreadID:      cmt.ForumthreadID,
@@ -139,6 +164,9 @@ func (cd *CoreData) UpdateWritingReply(commentID, languageID int32, text string)
 		EditorID:    sql.NullInt32{Int32: uid, Valid: uid != 0},
 	}); err != nil {
 		return nil, err
+	}
+	if err := cd.recordThreadImages(cmt.ForumthreadID, paths); err != nil {
+		log.Printf("record thread images: %v", err)
 	}
 	return thread, nil
 }
@@ -194,6 +222,15 @@ func (cd *CoreData) UpdateWriting(w *db.GetWritingForListerByIDRow, title, abstr
 	if cd.queries == nil || w == nil {
 		return fmt.Errorf("invalid writing")
 	}
+	if err := cd.validateCodeImagesForUser(cd.UserID, title); err != nil {
+		return fmt.Errorf("validate title images: %w", err)
+	}
+	if err := cd.validateCodeImagesForUser(cd.UserID, abstract); err != nil {
+		return fmt.Errorf("validate abstract images: %w", err)
+	}
+	if err := cd.validateCodeImagesForUser(cd.UserID, body); err != nil {
+		return fmt.Errorf("validate body images: %w", err)
+	}
 	return cd.queries.UpdateWritingForWriter(cd.ctx, db.UpdateWritingForWriterParams{
 		Title:      sql.NullString{Valid: true, String: title},
 		Abstract:   sql.NullString{Valid: true, String: abstract},
@@ -213,6 +250,15 @@ func (cd *CoreData) CreateWriting(categoryID, languageID int32, title, abstract,
 	}
 	if !cd.HasGrant("writing", "category", "post", categoryID) {
 		return 0, sql.ErrNoRows
+	}
+	if err := cd.validateCodeImagesForUser(cd.UserID, title); err != nil {
+		return 0, fmt.Errorf("validate title images: %w", err)
+	}
+	if err := cd.validateCodeImagesForUser(cd.UserID, abstract); err != nil {
+		return 0, fmt.Errorf("validate abstract images: %w", err)
+	}
+	if err := cd.validateCodeImagesForUser(cd.UserID, body); err != nil {
+		return 0, fmt.Errorf("validate body images: %w", err)
 	}
 	return cd.queries.CreateWritingForWriter(cd.ctx, db.CreateWritingForWriterParams{
 		WriterID:          cd.UserID,

@@ -510,6 +510,13 @@ type TemplateOverride struct {
 	UpdatedAt time.Time
 }
 
+type ThreadImage struct {
+	IdthreadImage int32
+	ForumthreadID int32
+	Path          sql.NullString
+	CreatedAt     time.Time
+}
+
 type UploadedImage struct {
 	Iduploadedimage int32
 	UsersIdusers    int32

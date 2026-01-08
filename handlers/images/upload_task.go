@@ -33,6 +33,10 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cfg := cd.Config
 
+	if !cd.HasGrant("images", "upload", "post", 0) {
+		return fmt.Errorf("upload denied %w", handlers.ErrRedirectOnSamePageHandler(handlers.ErrForbidden))
+	}
+
 	r.Body = http.MaxBytesReader(w, r.Body, int64(cfg.ImageMaxBytes))
 	if err := r.ParseMultipartForm(int64(cfg.ImageMaxBytes)); err != nil {
 		return fmt.Errorf("bad upload %w", handlers.ErrRedirectOnSamePageHandler(err))
@@ -53,10 +57,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("decode image %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	id := r.FormValue("id")
-	if id == "" {
-		id = fmt.Sprintf("%x", sha1.Sum(data))
-	}
+	id := fmt.Sprintf("%x", sha1.Sum(data))
 	ext, err := intimages.CleanExtension(header.Filename)
 	if err != nil {
 		return fmt.Errorf("invalid extension %w", handlers.ErrRedirectOnSamePageHandler(err))

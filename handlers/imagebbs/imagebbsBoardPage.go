@@ -86,6 +86,11 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		})
 	}
+	if !cd.HasGrant("images", "upload", "post", 0) {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+		})
+	}
 
 	r.Body = http.MaxBytesReader(w, r.Body, int64(cd.Config.ImageMaxBytes))
 	if err := r.ParseMultipartForm(int64(cd.Config.ImageMaxBytes)); err != nil {
@@ -152,6 +157,16 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	relFull := path.Join(relBase, fname)
 	thumbName := shaHex + "_thumb" + ext
 	relThumb := path.Join(relBase, thumbName)
+
+	if _, err := queries.CreateUploadedImageForUploader(r.Context(), db.CreateUploadedImageForUploaderParams{
+		UploaderID: uid,
+		Path:       sql.NullString{String: relFull, Valid: true},
+		Width:      sql.NullInt32{Int32: int32(img.Bounds().Dx()), Valid: true},
+		Height:     sql.NullInt32{Int32: int32(img.Bounds().Dy()), Valid: true},
+		FileSize:   int32(size),
+	}); err != nil {
+		return fmt.Errorf("record uploaded image %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
 
 	approved := !board.ApprovalRequired
 

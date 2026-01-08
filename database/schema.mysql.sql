@@ -626,6 +626,15 @@ CREATE TABLE IF NOT EXISTS `uploaded_images` (
   KEY `uploaded_images_user_idx` (`users_idusers`)
 );
 
+CREATE TABLE IF NOT EXISTS `thread_images` (
+  `idthread_image` int NOT NULL AUTO_INCREMENT,
+  `forumthread_id` int NOT NULL,
+  `path` tinytext,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idthread_image`),
+  KEY `thread_images_thread_idx` (`forumthread_id`)
+);
+
 -- Comments from admins about users
 CREATE TABLE IF NOT EXISTS `admin_user_comments` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -732,4 +741,3 @@ CREATE TABLE `role_subscription_archetypes` (
 -- Set the schema version to the latest migration.
 INSERT INTO `schema_version` (`version`) VALUES (76)
 ON DUPLICATE KEY UPDATE version = VALUES(version);
-

@@ -34,7 +34,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cfg := cd.Config
 
 	if !cd.HasGrant("images", "upload", "post", 0) {
-		return fmt.Errorf("upload denied %w", handlers.ErrRedirectOnSamePageHandler(handlers.ErrForbidden))
+		return fmt.Errorf("upload denied: %w", handlers.ErrForbidden)
 	}
 
 	r.Body = http.MaxBytesReader(w, r.Body, int64(cfg.ImageMaxBytes))

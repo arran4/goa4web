@@ -10,6 +10,8 @@ import (
 	_ "image/png"
 	"io"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/arran4/goa4web/core/consts"
 
@@ -67,9 +69,23 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil {
 		return fmt.Errorf("store image %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	if cd.ImageSigner != nil {
-		signed := cd.ImageSigner.SignedRef("image:" + fname)
-		return handlers.TextByteWriter([]byte(signed))
+	retType := r.FormValue("return")
+	if retType == "url" {
+		ref := "image:" + fname
+		if cd.ImageSigner != nil && r.FormValue("signed") == "true" {
+			signed := cd.ImageSigner.SignedRef(ref)
+			return handlers.TextByteWriter([]byte(cd.ImageURLMapper("img", signed)))
+		}
+		// Construct URL manually to avoid forced signing by the mapper.
+		host := strings.TrimSuffix(cd.Config.HTTPHostname, "/")
+		urlStr := fmt.Sprintf("%s/images/image/%s", host, fname)
+		if cd.ImageSigner != nil && r.FormValue("signed") == "true" {
+			// We can use SignedRef but that returns "image:ID?..." which we then need to map to URL?
+			// Or we can use cd.ImageSigner.SignedURLTTL which returns the full URL.
+			urlStr = cd.ImageSigner.SignedURLTTL("image:"+fname, 24*time.Hour) // Default TTL?
+		}
+		return handlers.TextByteWriter([]byte(urlStr))
 	}
+	// Default: return=uuid
 	return handlers.TextByteWriter([]byte("image:" + fname))
 }

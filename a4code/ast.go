@@ -14,6 +14,7 @@ type Node interface {
 	html(io.Writer)
 	a4code(io.Writer)
 	isNode()
+	Transform(op func(Node) (Node, error)) (Node, error)
 }
 
 type parent interface {
@@ -37,6 +38,21 @@ func (r *Root) a4code(w io.Writer) {
 	for _, c := range r.Children {
 		c.a4code(w)
 	}
+}
+
+func (r *Root) Transform(op func(Node) (Node, error)) (Node, error) {
+	newChildren := r.Children[:0]
+	for _, c := range r.Children {
+		res, err := c.Transform(op)
+		if err != nil {
+			return nil, err
+		}
+		if res != nil {
+			newChildren = append(newChildren, res)
+		}
+	}
+	r.Children = newChildren
+	return op(r)
 }
 
 func (r *Root) childrenPtr() *[]Node { return &r.Children }
@@ -77,6 +93,10 @@ func (t *Text) a4code(w io.Writer) {
 	}
 }
 
+func (t *Text) Transform(op func(Node) (Node, error)) (Node, error) {
+	return op(t)
+}
+
 // Bold text.
 type Bold struct{ Children []Node }
 
@@ -97,6 +117,21 @@ func (b *Bold) a4code(w io.Writer) {
 		c.a4code(w)
 	}
 	writeByte(w, ']')
+}
+
+func (b *Bold) Transform(op func(Node) (Node, error)) (Node, error) {
+	newChildren := b.Children[:0]
+	for _, c := range b.Children {
+		res, err := c.Transform(op)
+		if err != nil {
+			return nil, err
+		}
+		if res != nil {
+			newChildren = append(newChildren, res)
+		}
+	}
+	b.Children = newChildren
+	return op(b)
 }
 
 // Italic text.
@@ -121,6 +156,21 @@ func (i *Italic) a4code(w io.Writer) {
 	writeByte(w, ']')
 }
 
+func (i *Italic) Transform(op func(Node) (Node, error)) (Node, error) {
+	newChildren := i.Children[:0]
+	for _, c := range i.Children {
+		res, err := c.Transform(op)
+		if err != nil {
+			return nil, err
+		}
+		if res != nil {
+			newChildren = append(newChildren, res)
+		}
+	}
+	i.Children = newChildren
+	return op(i)
+}
+
 // Underline text.
 type Underline struct{ Children []Node }
 
@@ -141,6 +191,21 @@ func (u *Underline) a4code(w io.Writer) {
 		c.a4code(w)
 	}
 	writeByte(w, ']')
+}
+
+func (u *Underline) Transform(op func(Node) (Node, error)) (Node, error) {
+	newChildren := u.Children[:0]
+	for _, c := range u.Children {
+		res, err := c.Transform(op)
+		if err != nil {
+			return nil, err
+		}
+		if res != nil {
+			newChildren = append(newChildren, res)
+		}
+	}
+	u.Children = newChildren
+	return op(u)
 }
 
 // Superscript text.
@@ -165,6 +230,21 @@ func (s *Sup) a4code(w io.Writer) {
 	writeByte(w, ']')
 }
 
+func (s *Sup) Transform(op func(Node) (Node, error)) (Node, error) {
+	newChildren := s.Children[:0]
+	for _, c := range s.Children {
+		res, err := c.Transform(op)
+		if err != nil {
+			return nil, err
+		}
+		if res != nil {
+			newChildren = append(newChildren, res)
+		}
+	}
+	s.Children = newChildren
+	return op(s)
+}
+
 // Subscript text.
 type Sub struct{ Children []Node }
 
@@ -185,6 +265,21 @@ func (s *Sub) a4code(w io.Writer) {
 		c.a4code(w)
 	}
 	writeByte(w, ']')
+}
+
+func (s *Sub) Transform(op func(Node) (Node, error)) (Node, error) {
+	newChildren := s.Children[:0]
+	for _, c := range s.Children {
+		res, err := c.Transform(op)
+		if err != nil {
+			return nil, err
+		}
+		if res != nil {
+			newChildren = append(newChildren, res)
+		}
+	}
+	s.Children = newChildren
+	return op(s)
 }
 
 // Link to a URL.
@@ -222,6 +317,21 @@ func (l *Link) a4code(w io.Writer) {
 	writeByte(w, ']')
 }
 
+func (l *Link) Transform(op func(Node) (Node, error)) (Node, error) {
+	newChildren := l.Children[:0]
+	for _, c := range l.Children {
+		res, err := c.Transform(op)
+		if err != nil {
+			return nil, err
+		}
+		if res != nil {
+			newChildren = append(newChildren, res)
+		}
+	}
+	l.Children = newChildren
+	return op(l)
+}
+
 // Image embeds an image.
 type Image struct{ Src string }
 
@@ -239,6 +349,10 @@ func (i *Image) a4code(w io.Writer) {
 	writeByte(w, ']')
 }
 
+func (i *Image) Transform(op func(Node) (Node, error)) (Node, error) {
+	return op(i)
+}
+
 // Code block.
 type Code struct{ Value string }
 
@@ -254,6 +368,10 @@ func (c *Code) a4code(w io.Writer) {
 	io.WriteString(w, "[code]")
 	io.WriteString(w, c.Value)
 	io.WriteString(w, "[/code]")
+}
+
+func (c *Code) Transform(op func(Node) (Node, error)) (Node, error) {
+	return op(c)
 }
 
 // Quote node.
@@ -276,6 +394,21 @@ func (q *Quote) a4code(w io.Writer) {
 		c.a4code(w)
 	}
 	writeByte(w, ']')
+}
+
+func (q *Quote) Transform(op func(Node) (Node, error)) (Node, error) {
+	newChildren := q.Children[:0]
+	for _, c := range q.Children {
+		res, err := c.Transform(op)
+		if err != nil {
+			return nil, err
+		}
+		if res != nil {
+			newChildren = append(newChildren, res)
+		}
+	}
+	q.Children = newChildren
+	return op(q)
 }
 
 // QuoteOf node.
@@ -306,6 +439,21 @@ func (q *QuoteOf) a4code(w io.Writer) {
 	writeByte(w, ']')
 }
 
+func (q *QuoteOf) Transform(op func(Node) (Node, error)) (Node, error) {
+	newChildren := q.Children[:0]
+	for _, c := range q.Children {
+		res, err := c.Transform(op)
+		if err != nil {
+			return nil, err
+		}
+		if res != nil {
+			newChildren = append(newChildren, res)
+		}
+	}
+	q.Children = newChildren
+	return op(q)
+}
+
 // Spoiler node.
 type Spoiler struct{ Children []Node }
 
@@ -326,6 +474,21 @@ func (s *Spoiler) a4code(w io.Writer) {
 		c.a4code(w)
 	}
 	writeByte(w, ']')
+}
+
+func (s *Spoiler) Transform(op func(Node) (Node, error)) (Node, error) {
+	newChildren := s.Children[:0]
+	for _, c := range s.Children {
+		res, err := c.Transform(op)
+		if err != nil {
+			return nil, err
+		}
+		if res != nil {
+			newChildren = append(newChildren, res)
+		}
+	}
+	s.Children = newChildren
+	return op(s)
 }
 
 // Indent node.
@@ -350,6 +513,21 @@ func (i *Indent) a4code(w io.Writer) {
 	writeByte(w, ']')
 }
 
+func (i *Indent) Transform(op func(Node) (Node, error)) (Node, error) {
+	newChildren := i.Children[:0]
+	for _, c := range i.Children {
+		res, err := c.Transform(op)
+		if err != nil {
+			return nil, err
+		}
+		if res != nil {
+			newChildren = append(newChildren, res)
+		}
+	}
+	i.Children = newChildren
+	return op(i)
+}
+
 // HR node.
 type HR struct{}
 
@@ -358,6 +536,10 @@ func (*HR) isNode() {}
 func (*HR) html(w io.Writer) { io.WriteString(w, "<hr/>") }
 
 func (*HR) a4code(w io.Writer) { io.WriteString(w, "[hr]") }
+
+func (h *HR) Transform(op func(Node) (Node, error)) (Node, error) {
+	return op(h)
+}
 
 // Custom element for unrecognised tags.
 type Custom struct {
@@ -384,6 +566,21 @@ func (c *Custom) a4code(w io.Writer) {
 		ch.a4code(w)
 	}
 	writeByte(w, ']')
+}
+
+func (c *Custom) Transform(op func(Node) (Node, error)) (Node, error) {
+	newChildren := c.Children[:0]
+	for _, ch := range c.Children {
+		res, err := ch.Transform(op)
+		if err != nil {
+			return nil, err
+		}
+		if res != nil {
+			newChildren = append(newChildren, res)
+		}
+	}
+	c.Children = newChildren
+	return op(c)
 }
 
 // helper to escape plain strings for HTML output.

@@ -21,6 +21,7 @@ import (
 
 	"github.com/gorilla/sessions"
 
+	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/core/templates"
@@ -2051,6 +2052,7 @@ func (cd *CoreData) CreateCommentInSectionForCommenter(section, itemType string,
 	if cd.queries == nil {
 		return 0, nil
 	}
+	text = sanitizeCodeImages(text)
 	return cd.queries.CreateCommentInSectionForCommenter(cd.ctx, db.CreateCommentInSectionForCommenterParams{
 		LanguageID:    sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		CommenterID:   sql.NullInt32{Int32: commenterID, Valid: commenterID != 0},
@@ -2891,4 +2893,33 @@ func sampleEmailData(cfg *config.RuntimeConfig) map[string]any {
 		"From":           cfg.EmailFrom,
 		"To":             "user@example.com",
 	}
+}
+
+func sanitizeCodeImages(text string) string {
+	root, err := a4code.ParseString(text)
+	if err != nil {
+		return text
+	}
+	root.Transform(func(n a4code.Node) (a4code.Node, error) {
+		if t, ok := n.(*a4code.Image); ok {
+			t.Src = cleanSignedParam(t.Src)
+		}
+		return n, nil
+	})
+	return a4code.ToCode(root)
+}
+
+func cleanSignedParam(urlStr string) string {
+	u, err := url.Parse(urlStr)
+	if err != nil {
+		return urlStr
+	}
+	q := u.Query()
+	if q.Has("ts") || q.Has("sig") {
+		q.Del("ts")
+		q.Del("sig")
+		u.RawQuery = q.Encode()
+		return u.String()
+	}
+	return urlStr
 }

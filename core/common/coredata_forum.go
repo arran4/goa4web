@@ -3,6 +3,7 @@ package common
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/arran4/goa4web/internal/db"
@@ -151,13 +152,23 @@ func (cd *CoreData) UpdateForumComment(commentID, languageID int32, text string)
 	if cd.queries == nil {
 		return nil
 	}
-	return cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
+	comment, err := cd.validateCodeImagesForComment(cd.UserID, commentID, text)
+	if err != nil {
+		return fmt.Errorf("validate images: %w", err)
+	}
+	if err := cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
 		LanguageID:  sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:        sql.NullString{String: text, Valid: true},
 		CommentID:   commentID,
 		CommenterID: cd.UserID,
 		EditorID:    sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-	})
+	}); err != nil {
+		return err
+	}
+	if err := cd.shareCodeImagesWithThreadParticipants(comment.ForumthreadID, cd.UserID, text); err != nil {
+		log.Printf("share thread images: %v", err)
+	}
+	return nil
 }
 
 // EditForumComment updates a comment providing the commenter identifier explicitly.
@@ -165,13 +176,23 @@ func (cd *CoreData) EditForumComment(commentID, commenterID, languageID int32, t
 	if cd.queries == nil {
 		return nil
 	}
-	return cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
+	comment, err := cd.validateCodeImagesForComment(commenterID, commentID, text)
+	if err != nil {
+		return fmt.Errorf("validate images: %w", err)
+	}
+	if err := cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
 		LanguageID:  sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:        sql.NullString{String: text, Valid: true},
 		CommentID:   commentID,
 		CommenterID: commenterID,
 		EditorID:    sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-	})
+	}); err != nil {
+		return err
+	}
+	if err := cd.shareCodeImagesWithThreadParticipants(comment.ForumthreadID, commenterID, text); err != nil {
+		log.Printf("share thread images: %v", err)
+	}
+	return nil
 }
 
 func topicSubscriptionPattern(topicID int32) string {

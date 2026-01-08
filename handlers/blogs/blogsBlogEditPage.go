@@ -58,6 +58,9 @@ func (EditBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
 	row := cd.CurrentBlogLoaded()
+	if err := cd.ValidateCodeImagesForUser(cd.UserID, text); err != nil {
+		return fmt.Errorf("validate images: %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
 
 	if err = queries.UpdateBlogEntryForWriter(r.Context(), db.UpdateBlogEntryForWriterParams{
 		EntryID:      row.Idblogs,

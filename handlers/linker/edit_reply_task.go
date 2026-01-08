@@ -64,6 +64,10 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
+	if err := cd.ValidateCodeImagesForThread(cd.UserID, thread.Idforumthread, text); err != nil {
+		return fmt.Errorf("validate images: %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+
 	if err = queries.UpdateCommentForEditor(r.Context(), db.UpdateCommentForEditorParams{
 		LanguageID: sql.NullInt32{Int32: int32(languageId), Valid: languageId != 0},
 		Text: sql.NullString{
@@ -84,6 +88,9 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		IncludePostCount: true,
 	}); err != nil {
 		log.Printf("linker comment edit side effects: %v", err)
+	}
+	if err := cd.ShareCodeImagesWithThreadParticipants(thread.Idforumthread, cd.UserID, text); err != nil {
+		log.Printf("share thread images: %v", err)
 	}
 
 	return handlers.RefreshDirectHandler{TargetURL: fmt.Sprintf("/linker/comments/%d", linkId)}

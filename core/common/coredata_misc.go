@@ -158,7 +158,6 @@ func (cd *CoreData) StoreImage(p StoreImageParams) (string, error) {
 		Width:      sql.NullInt32{Int32: int32(width), Valid: true},
 		Height:     sql.NullInt32{Int32: int32(height), Valid: true},
 		FileSize:   int32(len(p.Data)),
-		GranteeID:  sql.NullInt32{Int32: p.UploaderID, Valid: p.UploaderID != 0},
 	})
 	if err != nil {
 		return "", fmt.Errorf("create uploaded image %w", err)

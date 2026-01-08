@@ -149,6 +149,25 @@ type QuerierStub struct {
 	CreateCommentInSectionForCommenterResult int64
 	CreateCommentInSectionForCommenterErr    error
 
+	ListUploadedImagePathsByUserCalls   []ListUploadedImagePathsByUserParams
+	ListUploadedImagePathsByUserFn      func(context.Context, ListUploadedImagePathsByUserParams) ([]sql.NullString, error)
+	ListUploadedImagePathsByUserReturns []sql.NullString
+	ListUploadedImagePathsByUserErr     error
+
+	ListUploadedImagePathsByThreadCalls   []ListUploadedImagePathsByThreadParams
+	ListUploadedImagePathsByThreadFn      func(context.Context, ListUploadedImagePathsByThreadParams) ([]sql.NullString, error)
+	ListUploadedImagePathsByThreadReturns []sql.NullString
+	ListUploadedImagePathsByThreadErr     error
+
+	ShareUploadedImageWithUserCalls []ShareUploadedImageWithUserParams
+	ShareUploadedImageWithUserFn    func(context.Context, ShareUploadedImageWithUserParams) error
+	ShareUploadedImageWithUserErr   error
+
+	ListThreadParticipantIDsCalls  []int32
+	ListThreadParticipantIDsFn     func(context.Context, int32) ([]int32, error)
+	ListThreadParticipantIDsReturn []int32
+	ListThreadParticipantIDsErr    error
+
 	UpsertContentReadMarkerCalls []UpsertContentReadMarkerParams
 	UpsertContentReadMarkerFn    func(context.Context, UpsertContentReadMarkerParams) error
 	UpsertContentReadMarkerErr   error
@@ -403,6 +422,63 @@ func (s *QuerierStub) CreateCommentInSectionForCommenter(ctx context.Context, ar
 		return fn(ctx, arg)
 	}
 	return s.CreateCommentInSectionForCommenterResult, s.CreateCommentInSectionForCommenterErr
+}
+
+// ListUploadedImagePathsByUser records the call and returns stored paths.
+func (s *QuerierStub) ListUploadedImagePathsByUser(ctx context.Context, arg ListUploadedImagePathsByUserParams) ([]sql.NullString, error) {
+	s.mu.Lock()
+	s.ListUploadedImagePathsByUserCalls = append(s.ListUploadedImagePathsByUserCalls, arg)
+	fn := s.ListUploadedImagePathsByUserFn
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	if s.ListUploadedImagePathsByUserErr != nil {
+		return nil, s.ListUploadedImagePathsByUserErr
+	}
+	return s.ListUploadedImagePathsByUserReturns, nil
+}
+
+// ListUploadedImagePathsByThread records the call and returns stored paths.
+func (s *QuerierStub) ListUploadedImagePathsByThread(ctx context.Context, arg ListUploadedImagePathsByThreadParams) ([]sql.NullString, error) {
+	s.mu.Lock()
+	s.ListUploadedImagePathsByThreadCalls = append(s.ListUploadedImagePathsByThreadCalls, arg)
+	fn := s.ListUploadedImagePathsByThreadFn
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	if s.ListUploadedImagePathsByThreadErr != nil {
+		return nil, s.ListUploadedImagePathsByThreadErr
+	}
+	return s.ListUploadedImagePathsByThreadReturns, nil
+}
+
+// ShareUploadedImageWithUser records the call and returns a stubbed error.
+func (s *QuerierStub) ShareUploadedImageWithUser(ctx context.Context, arg ShareUploadedImageWithUserParams) error {
+	s.mu.Lock()
+	s.ShareUploadedImageWithUserCalls = append(s.ShareUploadedImageWithUserCalls, arg)
+	fn := s.ShareUploadedImageWithUserFn
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return s.ShareUploadedImageWithUserErr
+}
+
+// ListThreadParticipantIDs records the call and returns stored participants.
+func (s *QuerierStub) ListThreadParticipantIDs(ctx context.Context, threadID int32) ([]int32, error) {
+	s.mu.Lock()
+	s.ListThreadParticipantIDsCalls = append(s.ListThreadParticipantIDsCalls, threadID)
+	fn := s.ListThreadParticipantIDsFn
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, threadID)
+	}
+	if s.ListThreadParticipantIDsErr != nil {
+		return nil, s.ListThreadParticipantIDsErr
+	}
+	return s.ListThreadParticipantIDsReturn, nil
 }
 
 // RemoveContentPublicLabel records the call and removes the label from the store.

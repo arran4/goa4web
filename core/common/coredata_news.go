@@ -99,6 +99,9 @@ func (cd *CoreData) UpdateNewsReply(commentID, editorID, languageID int32, text 
 	if err != nil {
 		return ThreadInfo{}, fmt.Errorf("load comment: %w", err)
 	}
+	if err := cd.validateCodeImagesForThread(editorID, comment.ForumthreadID, text); err != nil {
+		return ThreadInfo{}, fmt.Errorf("validate images: %w", err)
+	}
 	thread, err := cd.queries.GetThreadLastPosterAndPerms(cd.ctx, db.GetThreadLastPosterAndPermsParams{
 		ViewerID:      editorID,
 		ThreadID:      comment.ForumthreadID,
@@ -116,6 +119,9 @@ func (cd *CoreData) UpdateNewsReply(commentID, editorID, languageID int32, text 
 	}); err != nil {
 		return ThreadInfo{}, fmt.Errorf("update comment: %w", err)
 	}
+	if err := cd.shareCodeImagesWithThreadParticipants(comment.ForumthreadID, editorID, text); err != nil {
+		log.Printf("share thread images: %v", err)
+	}
 	return ThreadInfo{ThreadID: thread.Idforumthread, TopicID: thread.ForumtopicIdforumtopic}, nil
 }
 
@@ -123,6 +129,9 @@ func (cd *CoreData) UpdateNewsReply(commentID, editorID, languageID int32, text 
 func (cd *CoreData) UpdateNewsPost(postID, languageID, userID int32, text string) error {
 	if cd.queries == nil {
 		return nil
+	}
+	if err := cd.validateCodeImagesForUser(userID, text); err != nil {
+		return fmt.Errorf("validate images: %w", err)
 	}
 	return cd.queries.UpdateNewsPostForWriter(cd.ctx, db.UpdateNewsPostForWriterParams{
 		PostID:      postID,
@@ -146,6 +155,9 @@ func (cd *CoreData) DeleteNewsPost(postID int32) error {
 func (cd *CoreData) CreateNewsPost(languageID, userID int32, text string) (int64, error) {
 	if cd.queries == nil {
 		return 0, nil
+	}
+	if err := cd.validateCodeImagesForUser(userID, text); err != nil {
+		return 0, fmt.Errorf("validate images: %w", err)
 	}
 	id, err := cd.queries.CreateNewsPostForWriter(cd.ctx, db.CreateNewsPostForWriterParams{
 		LanguageID: sql.NullInt32{Int32: languageID, Valid: languageID != 0},

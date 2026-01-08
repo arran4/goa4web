@@ -113,6 +113,11 @@ WHERE EXISTS (
       ))
   );
 
+-- name: ListThreadParticipantIDs :many
+SELECT DISTINCT users_idusers
+FROM comments
+WHERE forumthread_id = sqlc.arg(thread_id);
+
 -- name: GetCommentsByThreadIdForUser :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)

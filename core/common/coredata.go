@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/mail"
 	"net/url"
+	"path"
 	"strconv"
 	"strings"
 	"sync"
@@ -2052,8 +2053,11 @@ func (cd *CoreData) CreateCommentInSectionForCommenter(section, itemType string,
 	if cd.queries == nil {
 		return 0, nil
 	}
+	if err := cd.validateCodeImagesForThread(commenterID, threadID, text); err != nil {
+		return 0, fmt.Errorf("validate images: %w", err)
+	}
 	text = sanitizeCodeImages(text)
-	return cd.queries.CreateCommentInSectionForCommenter(cd.ctx, db.CreateCommentInSectionForCommenterParams{
+	commentID, err := cd.queries.CreateCommentInSectionForCommenter(cd.ctx, db.CreateCommentInSectionForCommenterParams{
 		LanguageID:    sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		CommenterID:   sql.NullInt32{Int32: commenterID, Valid: commenterID != 0},
 		ForumthreadID: threadID,
@@ -2064,6 +2068,13 @@ func (cd *CoreData) CreateCommentInSectionForCommenter(section, itemType string,
 		ItemType:      sql.NullString{String: itemType, Valid: itemType != ""},
 		ItemID:        sql.NullInt32{Int32: itemID, Valid: itemID != 0},
 	})
+	if err != nil {
+		return 0, err
+	}
+	if err := cd.shareCodeImagesWithThreadParticipants(threadID, commenterID, text); err != nil {
+		log.Printf("share thread images: %v", err)
+	}
+	return commentID, nil
 }
 
 func (cd *CoreData) CreateNewsCommentForCommenter(commenterID, threadID, postID, languageID int32, text string) (int64, error) {
@@ -2907,6 +2918,258 @@ func sanitizeCodeImages(text string) string {
 		return n, nil
 	})
 	return a4code.ToCode(root)
+}
+
+func (cd *CoreData) validateCodeImagesForUser(userID int32, text string) error {
+	if cd == nil || cd.queries == nil || userID == 0 {
+		return nil
+	}
+	root, err := a4code.ParseString(text)
+	if err != nil {
+		return fmt.Errorf("parse a4code: %w", err)
+	}
+	paths, err := imagePathsFromA4Code(root)
+	if err != nil {
+		return err
+	}
+	if len(paths) == 0 {
+		return nil
+	}
+	lookupPaths := make([]sql.NullString, 0, len(paths))
+	for _, p := range paths {
+		lookupPaths = append(lookupPaths, sql.NullString{String: p, Valid: true})
+	}
+	rows, err := cd.queries.ListUploadedImagePathsByUser(cd.ctx, db.ListUploadedImagePathsByUserParams{
+		UserID: userID,
+		Paths:  lookupPaths,
+	})
+	if err != nil {
+		return fmt.Errorf("list uploaded images: %w", err)
+	}
+	found := make(map[string]struct{}, len(rows))
+	for _, row := range rows {
+		if row.Valid {
+			found[row.String] = struct{}{}
+		}
+	}
+	for _, p := range paths {
+		if _, ok := found[p]; !ok {
+			return fmt.Errorf("image not in gallery")
+		}
+	}
+	return nil
+}
+
+func (cd *CoreData) validateCodeImagesForThread(userID, threadID int32, text string) error {
+	if cd == nil || cd.queries == nil || userID == 0 {
+		return nil
+	}
+	root, err := a4code.ParseString(text)
+	if err != nil {
+		return fmt.Errorf("parse a4code: %w", err)
+	}
+	paths, err := imagePathsFromA4Code(root)
+	if err != nil {
+		return err
+	}
+	if len(paths) == 0 {
+		return nil
+	}
+	lookupPaths := imagePathsToNulls(paths)
+	found, err := cd.listUploadedImagePathSetByUser(userID, lookupPaths)
+	if err != nil {
+		return err
+	}
+	if len(found) == len(paths) {
+		return nil
+	}
+	if threadID == 0 {
+		return fmt.Errorf("image not in gallery")
+	}
+	threadFound, err := cd.listUploadedImagePathSetByThread(threadID, lookupPaths)
+	if err != nil {
+		return err
+	}
+	for _, p := range paths {
+		if _, ok := found[p]; ok {
+			continue
+		}
+		if _, ok := threadFound[p]; ok {
+			continue
+		}
+		return fmt.Errorf("image not in gallery")
+	}
+	return nil
+}
+
+func (cd *CoreData) validateCodeImagesForComment(userID, commentID int32, text string) (*db.GetCommentByIdForUserRow, error) {
+	comment, err := cd.CommentByID(commentID)
+	if err != nil || comment == nil {
+		return nil, fmt.Errorf("load comment: %w", err)
+	}
+	if err := cd.validateCodeImagesForThread(userID, comment.ForumthreadID, text); err != nil {
+		return comment, err
+	}
+	return comment, nil
+}
+
+// ValidateCodeImagesForUser ensures image references in text are present in the user's gallery.
+func (cd *CoreData) ValidateCodeImagesForUser(userID int32, text string) error {
+	return cd.validateCodeImagesForUser(userID, text)
+}
+
+// ValidateCodeImagesForThread ensures image references are present in the user's or thread gallery.
+func (cd *CoreData) ValidateCodeImagesForThread(userID, threadID int32, text string) error {
+	return cd.validateCodeImagesForThread(userID, threadID, text)
+}
+
+// ShareCodeImagesWithThreadParticipants adds image references to all thread participant galleries.
+func (cd *CoreData) ShareCodeImagesWithThreadParticipants(threadID, commenterID int32, text string) error {
+	return cd.shareCodeImagesWithThreadParticipants(threadID, commenterID, text)
+}
+
+func imagePathsFromA4Code(root *a4code.Root) ([]string, error) {
+	refs := map[string]struct{}{}
+	root.Transform(func(n a4code.Node) (a4code.Node, error) {
+		if t, ok := n.(*a4code.Image); ok {
+			ref := strings.TrimSpace(t.Src)
+			if ref != "" {
+				refs[ref] = struct{}{}
+			}
+		}
+		return n, nil
+	})
+	if len(refs) == 0 {
+		return nil, nil
+	}
+	paths := make([]string, 0, len(refs))
+	for ref := range refs {
+		pathVal, err := imageRefToPath(ref)
+		if err != nil {
+			return nil, err
+		}
+		paths = append(paths, pathVal)
+	}
+	return paths, nil
+}
+
+func imagePathsToNulls(paths []string) []sql.NullString {
+	lookup := make([]sql.NullString, 0, len(paths))
+	for _, p := range paths {
+		lookup = append(lookup, sql.NullString{String: p, Valid: true})
+	}
+	return lookup
+}
+
+func (cd *CoreData) listUploadedImagePathSetByUser(userID int32, paths []sql.NullString) (map[string]struct{}, error) {
+	rows, err := cd.queries.ListUploadedImagePathsByUser(cd.ctx, db.ListUploadedImagePathsByUserParams{
+		UserID: userID,
+		Paths:  paths,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("list uploaded images: %w", err)
+	}
+	found := make(map[string]struct{}, len(rows))
+	for _, row := range rows {
+		if row.Valid {
+			found[row.String] = struct{}{}
+		}
+	}
+	return found, nil
+}
+
+func (cd *CoreData) listUploadedImagePathSetByThread(threadID int32, paths []sql.NullString) (map[string]struct{}, error) {
+	rows, err := cd.queries.ListUploadedImagePathsByThread(cd.ctx, db.ListUploadedImagePathsByThreadParams{
+		ThreadID: threadID,
+		Paths:    paths,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("list thread images: %w", err)
+	}
+	found := make(map[string]struct{}, len(rows))
+	for _, row := range rows {
+		if row.Valid {
+			found[row.String] = struct{}{}
+		}
+	}
+	return found, nil
+}
+
+func (cd *CoreData) shareCodeImagesWithThreadParticipants(threadID, commenterID int32, text string) error {
+	if cd == nil || cd.queries == nil || threadID == 0 || commenterID == 0 {
+		return nil
+	}
+	root, err := a4code.ParseString(text)
+	if err != nil {
+		return fmt.Errorf("parse a4code: %w", err)
+	}
+	paths, err := imagePathsFromA4Code(root)
+	if err != nil {
+		return err
+	}
+	if len(paths) == 0 {
+		return nil
+	}
+	participants, err := cd.queries.ListThreadParticipantIDs(cd.ctx, threadID)
+	if err != nil {
+		return fmt.Errorf("list thread participants: %w", err)
+	}
+	userIDs := map[int32]struct{}{commenterID: {}}
+	for _, id := range participants {
+		userIDs[id] = struct{}{}
+	}
+	for userID := range userIDs {
+		for _, p := range paths {
+			if err := cd.queries.ShareUploadedImageWithUser(cd.ctx, db.ShareUploadedImageWithUserParams{
+				UserID: userID,
+				Path:   sql.NullString{String: p, Valid: true},
+			}); err != nil {
+				return fmt.Errorf("share image: %w", err)
+			}
+		}
+	}
+	return nil
+}
+
+func imageRefToPath(ref string) (string, error) {
+	ref = strings.TrimSpace(ref)
+	if ref == "" {
+		return "", fmt.Errorf("empty image reference")
+	}
+	if strings.HasPrefix(ref, "uploading:") {
+		return "", fmt.Errorf("image upload pending")
+	}
+	if strings.HasPrefix(ref, "cache:") {
+		return "", fmt.Errorf("cache images are not allowed")
+	}
+	if strings.HasPrefix(ref, "image:") || strings.HasPrefix(ref, "img:") {
+		id := strings.TrimPrefix(ref, "image:")
+		id = strings.TrimPrefix(id, "img:")
+		id = cleanSignedParam(id)
+		return imageIDToUploadPath(id)
+	}
+	if u, err := url.Parse(ref); err == nil && u.Path != "" {
+		ref = u.Path
+	}
+	ref = cleanSignedParam(ref)
+	switch {
+	case strings.HasPrefix(ref, "/images/image/"):
+		id := strings.TrimPrefix(ref, "/images/image/")
+		return imageIDToUploadPath(id)
+	case strings.HasPrefix(ref, "/uploads/"):
+		return ref, nil
+	case strings.HasPrefix(ref, "/imagebbs/images/"):
+		return ref, nil
+	default:
+		return "", fmt.Errorf("image reference not in gallery")
+	}
+}
+
+func imageIDToUploadPath(id string) (string, error) {
+	if !imagesign.ValidID(id) {
+		return "", fmt.Errorf("invalid image id")
+	}
+	return path.Join("/uploads", id[:2], id[2:4], id), nil
 }
 
 func cleanSignedParam(urlStr string) string {

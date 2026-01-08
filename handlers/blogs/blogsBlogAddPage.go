@@ -74,6 +74,9 @@ func (AddBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return handlers.SessionFetchFail{}
 	}
 	uid, _ := session.Values["UID"].(int32)
+	if err := cd.ValidateCodeImagesForUser(uid, text); err != nil {
+		return fmt.Errorf("validate images: %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
 
 	id, err := queries.CreateBlogEntryForWriter(r.Context(), db.CreateBlogEntryForWriterParams{
 		UsersIdusers: uid,

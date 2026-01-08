@@ -25,7 +25,7 @@ func OGImageHandler(w http.ResponseWriter, r *http.Request) {
 		Dst:  img,
 		Src:  image.NewUniform(color.Black),
 		Face: basicfont.Face7x13,
-		Dot:  fixed.Point26_6{fixed.Int26_6(10 * 64), fixed.Int26_6(10 * 64)},
+		Dot:  fixed.Point26_6{X: fixed.Int26_6(10 * 64), Y: fixed.Int26_6(300 * 64)},
 	}
 	d.DrawString(title)
 

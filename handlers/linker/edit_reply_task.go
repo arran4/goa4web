@@ -78,10 +78,14 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
-		ThreadID:         thread.Idforumthread,
-		TopicID:          thread.ForumtopicIdforumtopic,
-		CommentID:        int32(commentId),
-		IncludePostCount: true,
+		ThreadID:             thread.Idforumthread,
+		TopicID:              thread.ForumtopicIdforumtopic,
+		CommentID:            int32(commentId),
+		LabelItem:            "link",
+		LabelItemID:          int32(linkId),
+		ClearUnreadForOthers: true,
+		MarkThreadRead:       true,
+		IncludePostCount:     true,
 	}); err != nil {
 		log.Printf("linker comment edit side effects: %v", err)
 	}

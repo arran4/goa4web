@@ -173,17 +173,17 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := cd.ClearUnreadForOthers("writing", writing.Idwriting); err != nil {
-		log.Printf("clear unread labels: %v", err)
-	}
-
 	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
-		ThreadID:         threadID,
-		TopicID:          topicID,
-		CommentID:        int32(cid),
-		CommentText:      text,
-		IncludePostCount: true,
-		IncludeSearch:    true,
+		ThreadID:             threadID,
+		TopicID:              topicID,
+		CommentID:            int32(cid),
+		LabelItem:            "writing",
+		LabelItemID:          writing.Idwriting,
+		CommentText:          text,
+		ClearUnreadForOthers: true,
+		MarkThreadRead:       true,
+		IncludePostCount:     true,
+		IncludeSearch:        true,
 		AdditionalData: map[string]any{
 			"target": notifications.Target{Type: "writing", ID: writing.Idwriting},
 		},

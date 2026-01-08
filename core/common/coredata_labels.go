@@ -153,17 +153,25 @@ func (cd *CoreData) PrivateLabels(item string, itemID int32, authorID int32) ([]
 		userLabels = append(userLabels, r.Label)
 	}
 	sort.Strings(userLabels)
+	labelSet := make(map[string]struct{}, len(userLabels))
+	for _, label := range userLabels {
+		labelSet[label] = struct{}{}
+	}
 	labels := make([]string, 0, len(userLabels)+2)
 	// Only threads, news articles, links, image board posts, blog entries,
 	// and writing articles receive default status labels.
-	if cd.UserID != 0 && authorID != cd.UserID {
+	if cd.UserID != 0 {
 		switch item {
 		case "thread", "news", "link", "imagebbs", "blog", "writing":
-			if !inverted["new"] {
-				labels = append(labels, "new")
+			if !inverted["new"] && authorID != cd.UserID {
+				if _, ok := labelSet["new"]; !ok {
+					labels = append(labels, "new")
+				}
 			}
 			if !inverted["unread"] {
-				labels = append(labels, "unread")
+				if _, ok := labelSet["unread"]; !ok {
+					labels = append(labels, "unread")
+				}
 			}
 		}
 	}

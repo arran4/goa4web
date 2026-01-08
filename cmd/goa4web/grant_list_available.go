@@ -10,13 +10,15 @@ import (
 )
 
 type grantListAvailableCmd struct {
-	fs *flag.FlagSet
+	fs          *flag.FlagSet
+	asCliCommand bool
 }
 
 func newGrantListAvailableCmd() *grantListAvailableCmd {
 	c := &grantListAvailableCmd{
 		fs: flag.NewFlagSet("list-available", flag.ContinueOnError),
 	}
+	c.fs.BoolVar(&c.asCliCommand, "as-cli-command", false, "Output as CLI commands instead of a table.")
 	return c
 }
 
@@ -29,6 +31,13 @@ func (c *grantListAvailableCmd) Init(args []string) error {
 }
 
 func (c *grantListAvailableCmd) Run() error {
+	if c.asCliCommand {
+		for _, def := range permissions.Definitions {
+			fmt.Printf("goa4web grant add -section %s -item %s -action %s <-user-[id] / -role[-id]>\n", def.Section, def.Item, def.Action)
+		}
+		return nil
+	}
+
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
 	fmt.Fprintln(w, "Section\tItem\tAction\tDescription\tExample")
 	for _, def := range permissions.Definitions {

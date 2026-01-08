@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
@@ -90,6 +91,13 @@ func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 	if !cd.HasGrant("news", "post", "view", post.Idsitenews) {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
+	}
+
+	cd.OpenGraph = &common.OpenGraph{
+		Title:       strings.Split(post.News.String, "\n")[0],
+		Description: a4code.Snip(post.News.String, 128),
+		Image:       cd.AbsoluteURL("/static/default-og-image.png"),
+		URL:         cd.AbsoluteURL(r.URL.String()),
 	}
 
 	replyType := r.URL.Query().Get("type")

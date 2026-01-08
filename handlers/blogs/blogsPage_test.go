@@ -97,8 +97,8 @@ func TestBlogsRssPageWritesRSS(t *testing.T) {
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT b.idblogs")).
 		WithArgs(int32(0), int32(0), int32(1), int32(1), int32(0), int32(0), sqlmock.AnyArg(), int32(15), int32(0)).
-		WillReturnRows(sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_id", "blog", "written", "timezone", "username", "coalesce(th.comments, 0)", "is_owner"}).
-			AddRow(1, 1, 1, 1, "hello", time.Unix(0, 0), time.Local.String(), "bob", 0, true))
+		WillReturnRows(sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_id", "blog", "written", "timezone", "username", "coalesce(th.comments, 0)", "is_owner", "title"}).
+			AddRow(1, 1, 1, 1, "hello", time.Unix(0, 0), time.Local.String(), "bob", 0, true, "hello"))
 
 	req := httptest.NewRequest("GET", "http://example.com/blogs/rss?rss=bob", nil)
 	q := db.New(conn)

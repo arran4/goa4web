@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -31,6 +32,14 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+
+	cd.OpenGraph = &common.OpenGraph{
+		Title:       "Forum",
+		Description: "A place for discussion.",
+		Image:       cd.AbsoluteURL(fmt.Sprintf("/api/og-image?title=%s", "Forum")),
+		URL:         cd.AbsoluteURL(r.URL.String()),
+	}
+
 	vars := mux.Vars(r)
 	categoryId, _ := strconv.Atoi(vars["category"])
 

@@ -40,6 +40,13 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		cd.PrevLink = "/blogs?" + qv.Encode()
 	}
 
+	cd.OpenGraph = &common.OpenGraph{
+		Title:       "Blogs",
+		Description: "Read blogs from our community.",
+		Image:       cd.AbsoluteURL(fmt.Sprintf("/api/og-image?title=%s", "Blogs")),
+		URL:         cd.AbsoluteURL(r.URL.String()),
+	}
+
 	handlers.TemplateHandler(w, r, "blogsPage", struct{}{})
 }
 

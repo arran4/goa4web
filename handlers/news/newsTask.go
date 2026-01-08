@@ -38,6 +38,14 @@ func (t *newsTask) Get(w http.ResponseWriter, r *http.Request) {
 		cd.PrevLink = fmt.Sprintf("?offset=%d", offset-ps)
 		cd.StartLink = "?offset=0"
 	}
+
+	cd.OpenGraph = &common.OpenGraph{
+		Title:       "News",
+		Description: "Latest news and announcements.",
+		Image:       cd.AbsoluteURL(fmt.Sprintf("/api/og-image?title=%s", "News")),
+		URL:         cd.AbsoluteURL(r.URL.String()),
+	}
+
 	if err := cd.ExecuteSiteTemplate(w, r, NewsPageTmpl, struct{}{}); err != nil {
 		handlers.RenderErrorPage(w, r, err)
 	}

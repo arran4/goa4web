@@ -33,8 +33,8 @@ func TestAdminCommentPage_UsesURLParam(t *testing.T) {
 		AddRow(commentID, threadID, 2, 1, time.Now(), "body", nil, nil, nil, "user", true)
 	mock.ExpectQuery("SELECT").WillReturnRows(rows1)
 
-	rows2 := sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_id", "written", "text", "timezone", "deleted_at", "last_index", "posterusername", "is_owner", "idforumthread", "idforumtopic", "forumtopic_title", "thread_title", "idforumcategory", "forumcategory_title"}).
-		AddRow(commentID, threadID, 2, 1, time.Now(), "body", nil, nil, nil, "user", true, threadID, topicID, "topic", "thread", 1, "cat")
+	rows2 := sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_id", "written", "text", "timezone", "deleted_at", "last_index", "posterusername", "is_owner", "idforumthread", "idforumtopic", "forumtopic_title", "thread_title", "idforumcategory", "forumcategory_title", "handler"}).
+		AddRow(commentID, threadID, 2, 1, time.Now(), "body", nil, nil, nil, "user", true, threadID, topicID, "topic", "thread", 1, "cat", "forum")
 	mock.ExpectQuery("SELECT").WillReturnRows(rows2)
 
 	rows3 := sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_id", "written", "text", "timezone", "deleted_at", "last_index", "posterusername", "is_owner"}).

@@ -64,7 +64,8 @@ WITH role_ids AS (
 SELECT c.*, pu.username AS posterusername,
        c.users_idusers = sqlc.arg(viewer_id) AS is_owner,
        th.idforumthread, t.idforumtopic, t.title AS forumtopic_title,
-       fp.text AS thread_title, fc.idforumcategory, fc.title AS forumcategory_title
+       fp.text AS thread_title, fc.idforumcategory, fc.title AS forumcategory_title,
+       t.handler
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN comments fp ON th.firstpost = fp.idcomments

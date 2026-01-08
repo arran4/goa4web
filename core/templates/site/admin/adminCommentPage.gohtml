@@ -1,9 +1,15 @@
 {{ define "admin/commentPage.gohtml" }}
 {{ template "head" $ }}
 <h2>Comment {{ .Comment.Idcomments }}</h2>
-<p>Topic <a href="/forum/topic/{{ .Comment.Idforumtopic }}">{{ topicTitleOrDefault .Comment.ForumtopicTitle.String }}</a> thread <a href="/forum/topic/{{ .Comment.Idforumtopic }}/thread/{{ .Comment.Idforumthread }}">{{ if .Comment.ThreadTitle.Valid }}{{ left 40 .Comment.ThreadTitle.String }}{{ else }}{{ .Comment.Idforumthread }}{{ end }}</a></p>
+{{ $basePath := "/forum" }}
+{{ if eq .Comment.Handler.String "news" }}
+  {{ $basePath = "/news" }}
+{{ else if eq .Comment.Handler.String "private" }}
+  {{ $basePath = "/private" }}
+{{ end }}
+<p>Topic <a href="{{ $basePath }}/topic/{{ .Comment.Idforumtopic }}">{{ topicTitleOrDefault .Comment.ForumtopicTitle.String }}</a> thread <a href="{{ $basePath }}/topic/{{ .Comment.Idforumtopic }}/thread/{{ .Comment.Idforumthread }}">{{ if .Comment.ThreadTitle.Valid }}{{ left 40 .Comment.ThreadTitle.String }}{{ else }}{{ .Comment.Idforumthread }}{{ end }}</a></p>
 <p>{{ if .Comment.Text.Valid }}{{ .Comment.Text.String | a4code2html }}{{ end }}</p>
-<p><a href="/forum/topic/{{ .Comment.Idforumtopic }}/thread/{{ .Comment.Idforumthread }}#c{{ .Comment.Idcomments }}">Original</a></p>
+<p><a href="{{ $basePath }}/topic/{{ .Comment.Idforumtopic }}/thread/{{ .Comment.Idforumthread }}#c{{ .Comment.Idcomments }}">Original</a></p>
 <h3>Thread Context</h3>
 {{ range .Context }}
 <p>{{ .Posterusername.String }}: {{ if .Text.Valid }}{{ .Text.String | left 80 }}{{ end }}</p>

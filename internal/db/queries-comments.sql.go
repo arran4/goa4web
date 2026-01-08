@@ -330,7 +330,8 @@ WITH role_ids AS (
 SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_id, c.written, c.text, c.timezone, c.deleted_at, c.last_index, pu.username AS posterusername,
        c.users_idusers = ? AS is_owner,
        th.idforumthread, t.idforumtopic, t.title AS forumtopic_title,
-       fp.text AS thread_title, fc.idforumcategory, fc.title AS forumcategory_title
+       fp.text AS thread_title, fc.idforumcategory, fc.title AS forumcategory_title,
+       t.handler
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN comments fp ON th.firstpost = fp.idcomments
@@ -387,6 +388,7 @@ type GetCommentsByIdsForUserWithThreadInfoRow struct {
 	ThreadTitle        sql.NullString
 	Idforumcategory    sql.NullInt32
 	ForumcategoryTitle sql.NullString
+	Handler            sql.NullString
 }
 
 func (q *Queries) GetCommentsByIdsForUserWithThreadInfo(ctx context.Context, arg GetCommentsByIdsForUserWithThreadInfoParams) ([]*GetCommentsByIdsForUserWithThreadInfoRow, error) {
@@ -431,6 +433,7 @@ func (q *Queries) GetCommentsByIdsForUserWithThreadInfo(ctx context.Context, arg
 			&i.ThreadTitle,
 			&i.Idforumcategory,
 			&i.ForumcategoryTitle,
+			&i.Handler,
 		); err != nil {
 			return nil, err
 		}

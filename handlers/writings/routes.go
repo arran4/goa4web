@@ -1,11 +1,10 @@
 package writings
 
 import (
-	"github.com/arran4/goa4web/handlers/forum/comments"
-	"github.com/gorilla/mux"
 	"net/http"
 
-	. "github.com/arran4/gorillamuxlogic"
+	"github.com/arran4/goa4web/handlers/forum/comments"
+	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
@@ -21,6 +20,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	navReg.RegisterIndexLinkWithViewPermission("Writings", "/writings", SectionWeight, "writing", "category")
 	navReg.RegisterAdminControlCenter("Writings", "Writings", "/admin/writings", SectionWeight)
 	wr := r.PathPrefix("/writings").Subrouter()
+	wr.NotFoundHandler = http.HandlerFunc(handlers.RenderNotFoundOrLogin)
 	wr.Use(handlers.IndexMiddleware(CustomWritingsIndex), handlers.SectionMiddleware("writing"))
 	wr.HandleFunc("/rss", RssPage).Methods("GET")
 	wr.HandleFunc("/u/{username}/rss", RssPage).Methods("GET")
@@ -46,8 +46,6 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	wr.HandleFunc("/category/{category}", CategoryPage).Methods("GET")
 	wr.HandleFunc("/category/{category}/add", submitWritingTask.Page).Methods("GET").MatcherFunc(MatchCanPostWriting)
 	wr.HandleFunc("/category/{category}/add", handlers.TaskHandler(submitWritingTask)).Methods("POST").MatcherFunc(MatchCanPostWriting).MatcherFunc(submitWritingTask.Matcher())
-
-	wr.HandleFunc("/{path:.*}", handlers.RenderPermissionDenied).MatcherFunc(Not(handlers.RequiresAnAccount()))
 
 	if legacyRedirectsEnabled {
 		// legacy redirects

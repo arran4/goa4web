@@ -4,12 +4,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
@@ -75,7 +76,7 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	topicRow, err := cd.ForumTopicByID(int32(topicId))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			http.NotFound(w, r)
+			handlers.RenderErrorPage(w, r, handlers.ErrNotFound) // Use consistent error page helper
 		} else {
 			log.Printf("showTableTopics Error: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)

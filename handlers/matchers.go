@@ -52,6 +52,11 @@ func RequiredGrantFromPath(section, item, action, param string) mux.MatcherFunc 
 // RequiresAnAccount checks that the requester has a valid user session.
 func RequiresAnAccount() mux.MatcherFunc {
 	return func(request *http.Request, match *mux.RouteMatch) bool {
+		if cd, ok := request.Context().Value(consts.KeyCoreData).(*common.CoreData); ok && cd != nil {
+			if cd.UserID != 0 {
+				return true
+			}
+		}
 		session, err := core.GetSession(request)
 		if err != nil {
 			return false

@@ -1,11 +1,10 @@
 package forum
 
 import (
-	"github.com/arran4/goa4web/handlers/forum/comments"
-	"github.com/gorilla/mux"
 	"net/http"
 
-	. "github.com/arran4/gorillamuxlogic"
+	"github.com/arran4/goa4web/handlers/forum/comments"
+	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
@@ -19,6 +18,7 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Reg
 	navReg.RegisterIndexLinkWithViewPermission("Forum", "/forum", SectionWeight, "forum", "category")
 	navReg.RegisterAdminControlCenter("Forum", "Forum", "/admin/forum", SectionWeight)
 	fr := r.PathPrefix("/forum").Subrouter()
+	fr.NotFoundHandler = http.HandlerFunc(handlers.RenderNotFoundOrLogin)
 	h := New()
 	fr.HandleFunc("/forum.js", h.serveJS).Methods("GET")
 	fr.HandleFunc("/forum.css", h.serveCSS).Methods("GET")
@@ -58,8 +58,6 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Reg
 	fr.Handle("/topic/{topic}/thread/{thread}/comment/{comment}", RequireThreadAndTopic(comments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(topicThreadCommentEditActionCancel))))).Methods("POST").MatcherFunc(topicThreadCommentEditActionCancel.Matcher())
 
 	fr.HandleFunc("/preview", handlers.PreviewPage).Methods("POST")
-
-	fr.HandleFunc("/{path:.*}", handlers.RenderPermissionDenied).MatcherFunc(Not(handlers.RequiresAnAccount()))
 
 	api := r.PathPrefix("/api/forum").Subrouter()
 	api.HandleFunc("/quote/{commentid}", QuoteApi).Methods("GET")

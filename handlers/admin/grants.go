@@ -41,7 +41,9 @@ type grantGroup struct {
 func AdminGrantsAvailablePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Available Grants"
-	data := struct{ Definitions []*permissions.GrantDefinition }{permissions.Definitions}
+	data := struct {
+		Definitions []*permissions.GrantDefinition
+	}{permissions.Definitions}
 	handlers.TemplateHandler(w, r, "admin/grantsAvailablePage.gohtml", data)
 }
 

@@ -10,7 +10,7 @@ import (
 )
 
 type grantListAvailableCmd struct {
-	fs          *flag.FlagSet
+	fs           *flag.FlagSet
 	asCliCommand bool
 }
 

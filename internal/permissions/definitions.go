@@ -65,12 +65,12 @@ var (
 	FaqQuestionPost = &GrantDefinition{"faq", "question", "post", "Allows posting new FAQ questions."}
 
 	// Writings
-	WritingArticleEdit    = &GrantDefinition{"writing", "article", "edit", "Allows editing own articles."}
-	WritingCategoryPost   = &GrantDefinition{"writing", "category", "post", "Allows posting new articles in a category."}
-	WritingArticleView    = &GrantDefinition{"writing", "article", "view", "Allows viewing articles."}
-	WritingArticleReply   = &GrantDefinition{"writing", "article", "reply", "Allows replying to articles."}
-	WritingArticleSee     = &GrantDefinition{"writing", "article", "see", "Allows seeing articles in lists."}
-	WritingPostEdit       = &GrantDefinition{"writing", "post", "edit", "Allows editing any article (admin)."}
+	WritingArticleEdit  = &GrantDefinition{"writing", "article", "edit", "Allows editing own articles."}
+	WritingCategoryPost = &GrantDefinition{"writing", "category", "post", "Allows posting new articles in a category."}
+	WritingArticleView  = &GrantDefinition{"writing", "article", "view", "Allows viewing articles."}
+	WritingArticleReply = &GrantDefinition{"writing", "article", "reply", "Allows replying to articles."}
+	WritingArticleSee   = &GrantDefinition{"writing", "article", "see", "Allows seeing articles in lists."}
+	WritingPostEdit     = &GrantDefinition{"writing", "post", "edit", "Allows editing any article (admin)."}
 )
 
 // Definitions is a complete list of all grant permissions in the system.

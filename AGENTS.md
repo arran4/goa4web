@@ -56,6 +56,16 @@ Do not add new global variables unless explicitly instructed or already well est
 - If the database setup is blocking frontend verification, it is acceptable to skip it and note that the user may perform manual testing instead.
 - For unit tests that require a database connection, it is recommended to mock the `db.Querier` interface to avoid database dependencies.
 
+## Quality Assurance
+
+After every successful build or significant code changeset, you must run the following commands to ensure code quality:
+
+```bash
+go fmt ./...
+go vet ./...
+go test ./...
+```
+
 ## Verification Tooling
 
 A CLI tool is available to verify template rendering with mock data. This is useful for generating HTML snapshots for testing or visual verification without running the full server.

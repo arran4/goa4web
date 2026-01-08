@@ -47,10 +47,12 @@ func (topicThreadCommentEditActionTask) Action(w http.ResponseWriter, r *http.Re
 	}
 
 	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
-		ThreadID:         threadRow.Idforumthread,
-		TopicID:          topicRow.Idforumtopic,
-		CommentID:        int32(commentID),
-		IncludePostCount: true,
+		ThreadID:             threadRow.Idforumthread,
+		TopicID:              topicRow.Idforumtopic,
+		CommentID:            int32(commentID),
+		ClearUnreadForOthers: true,
+		MarkThreadRead:       true,
+		IncludePostCount:     true,
 	}); err != nil {
 		log.Printf("thread comment update side effects: %v", err)
 	}

@@ -57,11 +57,15 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("update comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
-		ThreadID:         ti.ThreadID,
-		TopicID:          ti.TopicID,
-		CommentID:        int32(commentId),
-		CommentURL:       cd.AbsoluteURL(fmt.Sprintf("/news/news/%d", postId)),
-		IncludePostCount: true,
+		ThreadID:             ti.ThreadID,
+		TopicID:              ti.TopicID,
+		CommentID:            int32(commentId),
+		LabelItem:            "news",
+		LabelItemID:          int32(postId),
+		CommentURL:           cd.AbsoluteURL(fmt.Sprintf("/news/news/%d", postId)),
+		ClearUnreadForOthers: true,
+		MarkThreadRead:       true,
+		IncludePostCount:     true,
 	}); err != nil {
 		log.Printf("news comment edit side effects: %v", err)
 	}

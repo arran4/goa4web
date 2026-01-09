@@ -2,7 +2,6 @@ package sharesign
 
 import (
 	"fmt"
-	"net/url"
 	"strings"
 	"time"
 
@@ -25,7 +24,7 @@ func NewSigner(cfg *config.RuntimeConfig, key string) *Signer {
 func (s *Signer) SignedURL(link string, exp ...time.Time) string {
 	host := strings.TrimSuffix(s.cfg.HTTPHostname, "/")
 	ts, sig := s.signer.Sign("share:"+link, exp...)
-	return fmt.Sprintf("%s/shared?u=%s&ts=%d&sig=%s", host, url.QueryEscape(link), ts, sig)
+	return fmt.Sprintf("%s/shared%s?ts=%d&sig=%s", host, link, ts, sig)
 }
 
 // Sign returns the timestamp and signature for link using the optional expiry time.

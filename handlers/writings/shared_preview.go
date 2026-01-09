@@ -1,6 +1,7 @@
 package writings
 
 import (
+	"html/template"
 	"net/http"
 	"strconv"
 
@@ -38,11 +39,17 @@ func SharedPreviewPage(w http.ResponseWriter, r *http.Request) {
 	ogTitle := writing.Title.String
 	ogDescription := a4code.Snip(writing.Abstract.String, 128)
 
+	if r.Method == http.MethodHead {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
 	ogData := share.OpenGraphData{
 		Title:       ogTitle,
 		Description: ogDescription,
-		ImageURL:    share.MakeImageURL(cd.AbsoluteURL(""), ogTitle, signer),
-		ContentURL:  cd.AbsoluteURL(r.URL.Path),
+		ImageURL:    template.URL(share.MakeImageURL(cd.AbsoluteURL(""), ogTitle, signer)),
+		ContentURL:  template.URL(cd.AbsoluteURL(r.URL.Path)),
 	}
 
 	if err := share.RenderOpenGraph(w, r, ogData); err != nil {

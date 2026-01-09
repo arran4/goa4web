@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -12,8 +13,8 @@ import (
 type OpenGraphData struct {
 	Title       string
 	Description string
-	ImageURL    string
-	ContentURL  string
+	ImageURL    template.URL
+	ContentURL  template.URL
 }
 
 // RenderOpenGraph renders an OpenGraph preview page with the provided metadata.
@@ -25,6 +26,7 @@ func RenderOpenGraph(w http.ResponseWriter, r *http.Request, data OpenGraphData)
 	<meta property="og:title" content="{{.Title}}" />
 	<meta property="og:description" content="{{.Description}}" />
 	<meta property="og:image" content="{{.ImageURL}}" />
+	<meta property="og:image:secure_url" content="{{.ImageURL}}" />
 	<meta property="og:url" content="{{.ContentURL}}" />
 	<meta http-equiv="refresh" content="0;url={{.ContentURL}}" />
 </head>
@@ -70,7 +72,8 @@ type URLSigner interface {
 
 // MakeImageURL creates an OpenGraph image URL for the given title.
 func MakeImageURL(baseURL, title string, signer URLSigner) string {
-	path := fmt.Sprintf("/api/og-image?title=%s", url.QueryEscape(title))
+	encodedTitle := strings.ReplaceAll(url.QueryEscape(title), "+", "%20")
+	path := fmt.Sprintf("/api/og-image?title=%s", encodedTitle)
 	ts, sig := signer.Sign(path, time.Now().Add(24*time.Hour))
 	return fmt.Sprintf("%s%s&ts=%d&sig=%s", baseURL, path, ts, sig)
 }

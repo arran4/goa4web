@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	"github.com/arran4/goa4web/core/templates"
 	"golang.org/x/image/font"
@@ -61,7 +62,7 @@ func (h *OGImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Font parse error: %v", err)
 		drawBasic(img, title)
-		writeImage(w, img)
+		writeImage(w, r, img)
 		return
 	}
 	face, err := opentype.NewFace(f, &opentype.FaceOptions{
@@ -72,7 +73,7 @@ func (h *OGImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Font face error: %v", err)
 		drawBasic(img, title)
-		writeImage(w, img)
+		writeImage(w, r, img)
 		return
 	}
 	defer face.Close()
@@ -121,7 +122,7 @@ func (h *OGImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	d.Dot = fixed.Point26_6{X: fixed.I(x), Y: fixed.I(y)}
 	d.DrawString(title)
 
-	writeImage(w, img)
+	writeImage(w, r, img)
 }
 
 func drawChecker(img draw.Image, w, h int, c1, c2 color.Color) {
@@ -154,7 +155,20 @@ func drawBasic(img draw.Image, title string) {
 	d.DrawString(title)
 }
 
-func writeImage(w http.ResponseWriter, img image.Image) {
+func writeImage(w http.ResponseWriter, r *http.Request, img image.Image) {
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, img); err != nil {
+		log.Printf("Error encoding png: %v", err)
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
 	w.Header().Set("Content-Type", "image/png")
-	png.Encode(w, img)
+	w.Header().Set("Content-Length", strconv.Itoa(buf.Len()))
+	w.Header().Set("Cache-Control", "public, max-age=86400")
+
+	if r.Method == http.MethodHead {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	w.Write(buf.Bytes())
 }

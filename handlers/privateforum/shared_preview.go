@@ -65,7 +65,13 @@ func SharedPreviewPage(w http.ResponseWriter, r *http.Request) {
 		Title:       ogTitle,
 		Description: ogDescription,
 		Image:       share.MakeImageURL(cd.AbsoluteURL(""), ogTitle, cd.ShareSigner),
-		URL:         cd.AbsoluteURL(redirectURL),
+		URL:         cd.AbsoluteURL(r.URL.Path),
+	}
+
+	if r.Method == http.MethodHead {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.WriteHeader(http.StatusOK)
+		return
 	}
 
 	// Render login page with OpenGraph metadata

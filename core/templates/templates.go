@@ -147,6 +147,9 @@ func GetCompiledSiteTemplates(funcs htemplate.FuncMap, opts ...Option) *htemplat
 	funcs["assetHash"] = func(p string) string {
 		return GetAssetHash(p, opts...)
 	}
+	funcs["url"] = func(s string) htemplate.URL {
+		return htemplate.URL(s)
+	}
 
 	// Try to use cached templates if we are using embedded assets (no custom directory)
 	if cfg.Dir == "" {

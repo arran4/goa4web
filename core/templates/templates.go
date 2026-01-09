@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"embed"
 	"encoding/hex"
-	"github.com/arran4/goa4web/core/consts"
 	htemplate "html/template"
 	"io/fs"
 	"os"
@@ -13,6 +12,8 @@ import (
 	"sync"
 	ttemplate "text/template"
 	"time"
+
+	"github.com/arran4/goa4web/core/consts"
 )
 
 // embeddedFS contains site templates, notification templates, email templates and static assets.
@@ -266,8 +267,11 @@ func GetCompiledEmailTextTemplates(funcs ttemplate.FuncMap, opts ...Option) *tte
 
 func GetMainCSSData(opts ...Option) []byte { return readFile("assets/main.css", opts...) }
 
-// GetFaviconData returns the site's favicon image data.
+// GetFaviconData returns the site's favicon image.
 func GetFaviconData(opts ...Option) []byte { return readFile("assets/favicon.svg", opts...) }
+
+// GetFaviconPNG returns the site's favicon image as PNG.
+func GetFaviconPNG(opts ...Option) []byte { return readFile("assets/favicon.png", opts...) }
 
 // GetPasteImageJSData returns the JavaScript that enables image pasting.
 func GetPasteImageJSData(opts ...Option) []byte { return readFile("assets/pasteimg.js", opts...) }

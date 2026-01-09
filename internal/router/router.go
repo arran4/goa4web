@@ -13,6 +13,7 @@ import (
 
 // RegisterRoutes sets up all application routes on r.
 func RegisterRoutes(r *mux.Router, reg *Registry, cfg *config.RuntimeConfig, navReg *nav.Registry) {
+	r.HandleFunc("/robots.txt", handlers.RobotsTXT(cfg)).Methods("GET")
 	r.HandleFunc("/main.css", handlers.MainCSS(cfg)).Methods("GET")
 	r.HandleFunc("/favicon.svg", handlers.Favicon(cfg)).Methods("GET")
 	r.HandleFunc("/static/site.js", handlers.SiteJS(cfg)).Methods("GET")

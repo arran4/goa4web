@@ -4,6 +4,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
+	"net/http"
+	"strconv"
+
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
@@ -13,9 +17,6 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
-	"log"
-	"net/http"
-	"strconv"
 )
 
 type newsPostTask struct {
@@ -88,6 +89,7 @@ func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !cd.HasGrant("news", "post", "view", post.Idsitenews) {
+		fmt.Println("TODO: FIx: Add enforced Access in router rather than task")
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}

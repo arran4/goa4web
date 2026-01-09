@@ -4,15 +4,16 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
+	"net/http"
+	"strconv"
+
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/tasks"
-	"log"
-	"net/http"
-	"strconv"
 )
 
 type blogsCommentTask struct {
@@ -64,6 +65,7 @@ func (t *blogsCommentTask) Get(w http.ResponseWriter, r *http.Request) {
 	if !(cd.HasGrant("blogs", "entry", "view", blog.Idblogs) ||
 		cd.HasGrant("blogs", "entry", "reply", blog.Idblogs) ||
 		cd.SelectedThreadCanReply()) {
+		fmt.Println("TODO: FIx: Add enforced Access in router rather than task")
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}

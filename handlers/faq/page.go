@@ -3,6 +3,9 @@ package faq
 import (
 	"fmt"
 	"net/http"
+	"time"
+
+	"github.com/arran4/goa4web/handlers/share"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -12,6 +15,15 @@ import (
 func Page(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "FAQ"
+	cd.OpenGraph = &common.OpenGraph{
+		Title:       "FAQ",
+		Description: "Frequently Asked Questions",
+		Image:       share.MakeImageURL(cd.AbsoluteURL(""), "FAQ", cd.ShareSigner, time.Now().Add(24*time.Hour)),
+		ImageWidth:  cd.Config.OGImageWidth,
+		ImageHeight: cd.Config.OGImageHeight,
+		TwitterSite: cd.Config.TwitterSite,
+		URL:         cd.AbsoluteURL(r.URL.String()),
+	}
 
 	if _, err := cd.AllAnsweredFAQ(); err != nil {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))

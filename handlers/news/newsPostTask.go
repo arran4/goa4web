@@ -6,8 +6,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strings"
 	"strconv"
+	"strings"
+	"time"
+
+	"github.com/arran4/goa4web/handlers/share"
 
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core"
@@ -98,7 +101,10 @@ func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       strings.Split(post.News.String, "\n")[0],
 		Description: a4code.Snip(post.News.String, 128),
-		Image:       cd.AbsoluteURL("/static/default-og-image.png"),
+		Image:       share.MakeImageURL(cd.AbsoluteURL(""), strings.Split(post.News.String, "\n")[0], cd.ShareSigner, time.Now().Add(24*time.Hour)),
+		ImageWidth:  cd.Config.OGImageWidth,
+		ImageHeight: cd.Config.OGImageHeight,
+		TwitterSite: cd.Config.TwitterSite,
 		URL:         cd.AbsoluteURL(r.URL.String()),
 	}
 

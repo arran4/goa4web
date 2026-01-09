@@ -7,6 +7,9 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
+
+	"github.com/arran4/goa4web/handlers/share"
 
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core"
@@ -63,7 +66,10 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       writing.Title.String,
 		Description: a4code.Snip(writing.Abstract.String, 128),
-		Image:       cd.AbsoluteURL("/static/default-og-image.png"),
+		Image:       share.MakeImageURL(cd.AbsoluteURL(""), writing.Title.String, cd.ShareSigner, time.Now().Add(24*time.Hour)),
+		ImageWidth:  cd.Config.OGImageWidth,
+		ImageHeight: cd.Config.OGImageHeight,
+		TwitterSite: cd.Config.TwitterSite,
 		URL:         cd.AbsoluteURL(r.URL.String()),
 	}
 

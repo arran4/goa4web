@@ -3,12 +3,13 @@ package blogs
 import (
 	"context"
 	"encoding/xml"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
 	"testing"
 	"time"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/mux"
@@ -19,6 +20,7 @@ import (
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/sharesign"
 )
 
 var (
@@ -55,6 +57,7 @@ func TestBlogsBloggerPostsPage(t *testing.T) {
 
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithSession(sess))
+	cd.ShareSigner = sharesign.NewSigner(config.NewRuntimeConfig(), "secret")
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 

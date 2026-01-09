@@ -65,7 +65,7 @@ func SharedPreviewPage(w http.ResponseWriter, r *http.Request) {
 		Title:       ogTitle,
 		Description: ogDescription,
 		Image:       share.MakeImageURL(cd.AbsoluteURL(""), ogTitle, cd.ShareSigner),
-		URL:         cd.AbsoluteURL(r.URL.Path),
+		URL:         cd.AbsoluteURL(r.URL.RequestURI()),
 	}
 
 	if r.Method == http.MethodHead {

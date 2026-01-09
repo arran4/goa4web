@@ -49,7 +49,7 @@ func SharedPreviewPage(w http.ResponseWriter, r *http.Request) {
 		Title:       ogTitle,
 		Description: ogDescription,
 		ImageURL:    template.URL(share.MakeImageURL(cd.AbsoluteURL(""), ogTitle, signer)),
-		ContentURL:  template.URL(cd.AbsoluteURL(r.URL.Path)),
+		ContentURL:  template.URL(cd.AbsoluteURL(r.URL.RequestURI())),
 	}
 
 	if err := share.RenderOpenGraph(w, r, ogData); err != nil {

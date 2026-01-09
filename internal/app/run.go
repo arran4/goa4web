@@ -27,11 +27,11 @@ import (
 	feedsign "github.com/arran4/goa4web/internal/feedsign"
 	imagesign "github.com/arran4/goa4web/internal/images"
 	linksign "github.com/arran4/goa4web/internal/linksign"
-	"github.com/arran4/goa4web/internal/sharesign"
 	"github.com/arran4/goa4web/internal/middleware"
 	csrfmw "github.com/arran4/goa4web/internal/middleware/csrf"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	routerpkg "github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/sharesign"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/internal/websocket"
 	"github.com/gorilla/mux"
@@ -211,7 +211,7 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 		server.WithTasksRegistry(o.TasksReg),
 		server.WithSessionManager(sm),
 	)
-	share.RegisterShareRoutes(r, cfg, shareSigner, srv)
+	share.RegisterShareRoutes(r, cfg, shareSigner)
 
 	srv.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cd, r := srv.GetCoreData(w, r)

@@ -21,10 +21,21 @@ func NewSigner(cfg *config.RuntimeConfig, key string) *Signer {
 }
 
 // SignedURL generates a redirect URL for the given link.
+// For module paths like "/private/topic/2/thread/1", it becomes "/private/shared/topic/2/thread/1"
 func (s *Signer) SignedURL(link string, exp ...time.Time) string {
 	host := strings.TrimSuffix(s.cfg.HTTPHostname, "/")
-	ts, sig := s.signer.Sign("share:"+link, exp...)
-	return fmt.Sprintf("%s/shared%s?ts=%d&sig=%s", host, link, ts, sig)
+
+	// Inject "/shared" after the first path segment (module name)
+	// e.g., "/private/topic/2/thread/1" → "/private/shared/topic/2/thread/1"
+	parts := strings.SplitN(link, "/", 3)
+	sharedLink := link
+	if len(parts) >= 3 && parts[0] == "" && parts[1] != "" {
+		// parts: ["", "private", "topic/2/thread/1"]
+		sharedLink = "/" + parts[1] + "/shared/" + parts[2]
+	}
+
+	ts, sig := s.signer.Sign("share:"+sharedLink, exp...)
+	return fmt.Sprintf("%s%s?ts=%d&sig=%s", host, sharedLink, ts, sig)
 }
 
 // Sign returns the timestamp and signature for link using the optional expiry time.

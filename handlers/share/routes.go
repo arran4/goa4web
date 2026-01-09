@@ -4,11 +4,10 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/internal/app/server"
 	"github.com/arran4/goa4web/internal/sharesign"
 )
 
-func RegisterShareRoutes(r *mux.Router, cfg *config.RuntimeConfig, signer *sharesign.Signer, srv *server.Server) {
+func RegisterShareRoutes(r *mux.Router, cfg *config.RuntimeConfig, signer *sharesign.Signer) {
 	newsShareHandler := NewShareHandler(signer)
 	r.Handle("/api/news/share", newsShareHandler).Methods("GET")
 
@@ -20,9 +19,6 @@ func RegisterShareRoutes(r *mux.Router, cfg *config.RuntimeConfig, signer *share
 
 	forumShareHandler := NewShareHandler(signer)
 	r.Handle("/api/forum/share", forumShareHandler).Methods("GET")
-
-	sharedContentHandler := NewSharedContentHandler(signer, srv)
-	r.PathPrefix("/shared/").Handler(sharedContentHandler).Methods("GET")
 
 	r.HandleFunc("/api/og-image", OGImageHandler).Methods("GET")
 }

@@ -381,6 +381,12 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("rootCmd.Run: links: %w", err)
 		}
 		return c.Run()
+	case "share":
+		c, err := parseShareCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("rootCmd.Run: share: %w", err)
+		}
+		return c.Run()
 	case "comment", "comments":
 		c, err := parseCommentCmd(r, args[1:])
 		if err != nil {

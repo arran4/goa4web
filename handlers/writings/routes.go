@@ -33,6 +33,10 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	wr.HandleFunc("/writer/{username}/", WriterPage).Methods("GET")
 	wr.HandleFunc("/writers", WriterListPage).Methods("GET")
 	// Writing routes use {writing} to identify the requested writing.
+
+	// OpenGraph preview endpoint (no auth required for social media bots)
+	wr.HandleFunc("/shared/article/{writing}", SharedPreviewPage).Methods("GET")
+
 	wr.HandleFunc("/article/{writing}", ArticlePage).Methods("GET")
 	wr.HandleFunc("/article/{writing}", handlers.TaskHandler(replyTask)).Methods("POST").MatcherFunc(replyTask.Matcher())
 	wr.Handle("/article/{writing}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(editReplyTask)))).Methods("POST").MatcherFunc(editReplyTask.Matcher())

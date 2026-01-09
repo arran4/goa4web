@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/arran4/goa4web/core/templates"
 	"golang.org/x/image/font"
@@ -41,7 +42,7 @@ func (h *OGImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ts := r.URL.Query().Get("ts")
 	sig := r.URL.Query().Get("sig")
 
-	path := fmt.Sprintf("/api/og-image?title=%s", url.QueryEscape(title))
+	path := fmt.Sprintf("/api/og-image?title=%s", strings.ReplaceAll(url.QueryEscape(title), "+", "%20"))
 	if !h.signer.Verify(path, ts, sig) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return

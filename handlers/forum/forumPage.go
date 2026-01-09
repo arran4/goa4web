@@ -1,7 +1,6 @@
 package forum
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -12,6 +11,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers/share"
 	"github.com/gorilla/mux"
 )
 
@@ -36,7 +36,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       "Forum",
 		Description: "A place for discussion.",
-		Image:       cd.AbsoluteURL(fmt.Sprintf("/api/og-image?title=%s", "Forum")),
+		Image:       share.MakeImageURL(cd.AbsoluteURL(""), "Forum", cd.ShareSigner),
 		URL:         cd.AbsoluteURL(r.URL.String()),
 	}
 

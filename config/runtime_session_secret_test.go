@@ -1,15 +1,16 @@
 package config
 
 import (
-	"github.com/arran4/goa4web"
 	"path/filepath"
 	"testing"
+
+	"github.com/arran4/goa4web"
 
 	"github.com/arran4/goa4web/core"
 )
 
 func TestLoadOrCreateSecretCLI(t *testing.T) {
-	secret, err := LoadOrCreateSecret(core.UseMemFS(t), "cli", "", EnvSessionSecret, EnvSessionSecretFile)
+	secret, err := LoadOrCreateSessionSecret(core.UseMemFS(t), "cli", "")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -20,7 +21,7 @@ func TestLoadOrCreateSecretCLI(t *testing.T) {
 
 func TestLoadOrCreateSecretEnv(t *testing.T) {
 	t.Setenv(EnvSessionSecret, "env")
-	secret, err := LoadOrCreateSecret(core.UseMemFS(t), "", "", EnvSessionSecret, EnvSessionSecretFile)
+	secret, err := LoadOrCreateSessionSecret(core.UseMemFS(t), "", "")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -35,7 +36,7 @@ func TestLoadOrCreateSecretFile(t *testing.T) {
 	if err := fs.WriteFile(file, []byte("fromfile"), 0600); err != nil {
 		t.Fatalf("write file: %v", err)
 	}
-	secret, err := LoadOrCreateSecret(fs, "", file, EnvSessionSecret, EnvSessionSecretFile)
+	secret, err := LoadOrCreateSessionSecret(fs, "", file)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -47,7 +48,7 @@ func TestLoadOrCreateSecretFile(t *testing.T) {
 func TestLoadOrCreateSecretGenerate(t *testing.T) {
 	fs := core.UseMemFS(t)
 	file := "new"
-	secret, err := LoadOrCreateSecret(fs, "", file, EnvSessionSecret, EnvSessionSecretFile)
+	secret, err := LoadOrCreateSessionSecret(fs, "", file)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

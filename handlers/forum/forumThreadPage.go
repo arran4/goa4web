@@ -3,18 +3,19 @@ package forum
 import (
 	"database/sql"
 	"fmt"
-	"github.com/arran4/goa4web/a4code"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
-	"net/url"
 	"sort"
 	"strconv"
 	"strings"
 
+	"github.com/arran4/goa4web/a4code"
+	"github.com/arran4/goa4web/core/consts"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers/share"
 	"github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/core"
@@ -88,7 +89,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       displayTitle,
 		Description: "A discussion on our forum.",
-		Image:       cd.AbsoluteURL(fmt.Sprintf("/api/og-image?title=%s", url.QueryEscape(displayTitle))),
+		Image:       share.MakeImageURL(cd.AbsoluteURL(""), displayTitle, cd.ShareSigner),
 		URL:         cd.AbsoluteURL(r.URL.String()),
 	}
 

@@ -2,12 +2,14 @@ package news
 
 import (
 	"fmt"
+	"net/http"
+	"strconv"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers/share"
 	"github.com/arran4/goa4web/internal/tasks"
-	"net/http"
-	"strconv"
 )
 
 type newsTask struct {
@@ -42,7 +44,7 @@ func (t *newsTask) Get(w http.ResponseWriter, r *http.Request) {
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       "News",
 		Description: "Latest news and announcements.",
-		Image:       cd.AbsoluteURL(fmt.Sprintf("/api/og-image?title=%s", "News")),
+		Image:       share.MakeImageURL(cd.AbsoluteURL(""), "News", cd.ShareSigner),
 		URL:         cd.AbsoluteURL(r.URL.String()),
 	}
 

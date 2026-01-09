@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 // OpenGraphData contains the metadata for an OpenGraph preview page.
@@ -62,7 +63,14 @@ type SignatureVerifier interface {
 	Verify(data, ts, sig string) bool
 }
 
+// URLSigner is an interface for signing URLs.
+type URLSigner interface {
+	Sign(data string, exp ...time.Time) (int64, string)
+}
+
 // MakeImageURL creates an OpenGraph image URL for the given title.
-func MakeImageURL(baseURL, title string) string {
-	return fmt.Sprintf("%s/api/og-image?title=%s", baseURL, url.QueryEscape(title))
+func MakeImageURL(baseURL, title string, signer URLSigner) string {
+	path := fmt.Sprintf("/api/og-image?title=%s", url.QueryEscape(title))
+	ts, sig := signer.Sign(path, time.Now().Add(24*time.Hour))
+	return fmt.Sprintf("%s%s&ts=%d&sig=%s", baseURL, path, ts, sig)
 }

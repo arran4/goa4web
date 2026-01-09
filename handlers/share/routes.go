@@ -20,5 +20,6 @@ func RegisterShareRoutes(r *mux.Router, cfg *config.RuntimeConfig, signer *share
 	forumShareHandler := NewShareHandler(signer)
 	r.Handle("/api/forum/share", forumShareHandler).Methods("GET")
 
-	r.HandleFunc("/api/og-image", OGImageHandler).Methods("GET")
+	ogHandler := NewOGImageHandler(signer)
+	r.Handle("/api/og-image", ogHandler).Methods("GET")
 }

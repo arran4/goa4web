@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers/share"
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/gorilla/feeds"
@@ -43,7 +44,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       "Blogs",
 		Description: "Read blogs from our community.",
-		Image:       cd.AbsoluteURL(fmt.Sprintf("/api/og-image?title=%s", "Blogs")),
+		Image:       share.MakeImageURL(cd.AbsoluteURL(""), "Blogs", cd.ShareSigner),
 		URL:         cd.AbsoluteURL(r.URL.String()),
 	}
 

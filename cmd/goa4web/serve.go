@@ -54,11 +54,11 @@ func (c *serveCmd) Run() error {
 	}
 	c.rootCmd.Infof("%s", listenMsg)
 
-	secret, err := config.LoadOrCreateSecret(core.OSFS{}, cfg.SessionSecret, cfg.SessionSecretFile, config.EnvSessionSecret, config.EnvSessionSecretFile)
+	secret, err := config.LoadOrCreateSessionSecret(core.OSFS{}, cfg.SessionSecret, cfg.SessionSecretFile)
 	if err != nil {
 		return fmt.Errorf("session secret: %w", err)
 	}
-	signKey, err := config.LoadOrCreateSecret(core.OSFS{}, cfg.ImageSignSecret, cfg.ImageSignSecretFile, config.EnvImageSignSecret, config.EnvImageSignSecretFile)
+	signKey, err := config.LoadOrCreateImageSignSecret(core.OSFS{}, cfg.ImageSignSecret, cfg.ImageSignSecretFile)
 	if err != nil {
 		return fmt.Errorf("image sign secret: %w", err)
 	}

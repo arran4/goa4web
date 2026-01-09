@@ -68,6 +68,7 @@ func TestNewsPostPageLabelBars(t *testing.T) {
 		Labels       []templates.TopicLabel
 		PublicLabels []templates.TopicLabel
 		BackURL      string
+		ShareURL     string
 	}{
 		Post:         post,
 		Labels:       []templates.TopicLabel{{Name: "foo", Type: "author"}},
@@ -122,6 +123,7 @@ func TestNewsPostPagePrivateLabelsOnce(t *testing.T) {
 		Labels       []templates.TopicLabel
 		PublicLabels []templates.TopicLabel
 		BackURL      string
+		ShareURL     string
 	}{
 		Post:    post,
 		Labels:  []templates.TopicLabel{{Name: "secret", Type: "private"}},

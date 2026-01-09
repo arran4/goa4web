@@ -1,12 +1,15 @@
 package privateforum
 
 import (
-	"fmt"
 	"net/http"
+	"net/url"
+
+	"time"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers/share"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -32,12 +35,26 @@ func (t *privateForumTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 func (t *privateForumTask) Get(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+
+	cd.PageTitle = "Private Forum"
+	cd.OpenGraph = &common.OpenGraph{
+		Title:       "Private Forum",
+		Description: "Private discussion forums",
+		Image:       share.MakeImageURL(cd.AbsoluteURL(""), "Private Forum", cd.ShareSigner, time.Now().Add(24*time.Hour)),
+		ImageWidth:  cd.Config.OGImageWidth,
+		ImageHeight: cd.Config.OGImageHeight,
+		TwitterSite: cd.Config.TwitterSite,
+		URL:         cd.AbsoluteURL(r.URL.RequestURI()),
+	}
+
 	if !cd.HasGrant("privateforum", "topic", "see", 0) {
-		fmt.Println("TODO: FIx: Add enforced Access in router rather than task")
-		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+		handlers.TemplateHandler(w, r, "sharedPreviewLogin.gohtml", struct {
+			RedirectURL string
+		}{
+			RedirectURL: url.QueryEscape(r.URL.RequestURI()),
+		})
 		return
 	}
-	cd.PageTitle = "Private Forum"
 	// Show topics only on the main private page (no creation form)
 	handlers.TemplateHandler(w, r, TopicsOnlyTmpl, nil)
 }

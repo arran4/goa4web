@@ -12,13 +12,31 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/handlers/share"
+	"github.com/arran4/goa4web/internal/sharesign"
 	"github.com/gorilla/mux"
 )
 
-// SharedPreviewPage renders an OpenGraph preview for a private forum thread.
-// This endpoint bypasses access control to allow social media bots to see metadata.
-func SharedPreviewPage(w http.ResponseWriter, r *http.Request) {
+// SharedThreadPreviewPage renders an OpenGraph preview for a private forum thread.
+// It verifies the signature before displaying any metadata.
+func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+
+	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
+	cd.ShareSigner = signer // Ensure it's set for MakeImageURL
+
+	if share.VerifyAndGetPath(r, signer) == "" {
+		// No valid signature? If user is logged in, redirect to actual content (they might have perm).
+		// If not logged in, show 403.
+		if cd.UserID != 0 {
+			vars := mux.Vars(r)
+			actualURL := fmt.Sprintf("/private/topic/%s/thread/%s", vars["topic"], vars["thread"])
+			http.Redirect(w, r, actualURL, http.StatusFound)
+			return
+		}
+		http.Error(w, "invalid signature", http.StatusForbidden)
+		return
+	}
+
 	vars := mux.Vars(r)
 	threadID, _ := strconv.Atoi(vars["thread"])
 	topicID, _ := strconv.Atoi(vars["topic"])
@@ -30,9 +48,7 @@ func SharedPreviewPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// For non-authenticated users, fetch metadata and show login page with OG tags
-
-	// Use admin queries to bypass access control for OpenGraph previews
+	// For non-authenticated users with VALID SIGNATURE, fetch metadata and show login page with OG tags
 	queries := cd.Queries()
 	thread, err := queries.AdminGetForumThreadById(r.Context(), int32(threadID))
 	if err != nil {
@@ -59,9 +75,51 @@ func SharedPreviewPage(w http.ResponseWriter, r *http.Request) {
 		ogDescription = a4code.Snip(comments[0].Text.String, 128)
 	}
 
-	// Redirect URL after successful login
-	redirectURL := fmt.Sprintf("/private/topic/%d/thread/%d", topicID, threadID)
+	renderSharedPreview(w, r, cd, ogTitle, ogDescription, fmt.Sprintf("/private/topic/%d/thread/%d", topicID, threadID))
+}
 
+// SharedTopicPreviewPage renders an OpenGraph preview for a private forum topic.
+func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+
+	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
+	cd.ShareSigner = signer // Ensure it's set for MakeImageURL
+
+	// Verify signature
+	if share.VerifyAndGetPath(r, signer) == "" {
+		if cd.UserID != 0 {
+			vars := mux.Vars(r)
+			actualURL := fmt.Sprintf("/private/topic/%s", vars["topic"])
+			http.Redirect(w, r, actualURL, http.StatusFound)
+			return
+		}
+		http.Error(w, "invalid signature", http.StatusForbidden)
+		return
+	}
+
+	vars := mux.Vars(r)
+	topicID, _ := strconv.Atoi(vars["topic"])
+
+	if cd.UserID != 0 {
+		actualURL := fmt.Sprintf("/private/topic/%d", topicID)
+		http.Redirect(w, r, actualURL, http.StatusFound)
+		return
+	}
+
+	queries := cd.Queries()
+	topic, err := queries.GetForumTopicById(r.Context(), int32(topicID))
+	if err != nil {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+
+	ogTitle := topic.Title.String
+	ogDescription := topic.Description.String
+
+	renderSharedPreview(w, r, cd, ogTitle, ogDescription, fmt.Sprintf("/private/topic/%d", topicID))
+}
+
+func renderSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.CoreData, title, desc, redirectPath string) {
 	tsStr := r.URL.Query().Get("ts")
 	ts, _ := strconv.ParseInt(tsStr, 10, 64)
 	exp := time.Now().Add(24 * time.Hour)
@@ -70,9 +128,9 @@ func SharedPreviewPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd.OpenGraph = &common.OpenGraph{
-		Title:       ogTitle,
-		Description: ogDescription,
-		Image:       share.MakeImageURL(cd.AbsoluteURL(""), ogTitle, cd.ShareSigner, exp),
+		Title:       title,
+		Description: desc,
+		Image:       share.MakeImageURL(cd.AbsoluteURL(""), title, cd.ShareSigner, exp),
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,
@@ -85,10 +143,9 @@ func SharedPreviewPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Render login page with OpenGraph metadata
 	handlers.TemplateHandler(w, r, "sharedPreviewLogin.gohtml", struct {
 		RedirectURL string
 	}{
-		RedirectURL: url.QueryEscape(redirectURL),
+		RedirectURL: url.QueryEscape(redirectPath),
 	})
 }

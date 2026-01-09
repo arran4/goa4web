@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/handlers/share"
+	"github.com/arran4/goa4web/internal/sharesign"
 
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/common"
@@ -20,9 +21,10 @@ import (
 
 func BlogPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		Text    string
-		Labels  []templates.TopicLabel
-		BackURL string
+		Text     string
+		Labels   []templates.TopicLabel
+		BackURL  string
+		ShareURL string
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -86,6 +88,9 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd.CustomIndexItems = append(cd.CustomIndexItems, BlogsPageSpecificItems(cd, r)...)
+
+	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
+	data.ShareURL = signer.SignedURL(fmt.Sprintf("/blogs/blog/%d", blog.Idblogs))
 
 	handlers.TemplateHandler(w, r, "blogPage.gohtml", data)
 }

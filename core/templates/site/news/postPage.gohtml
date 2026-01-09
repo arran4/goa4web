@@ -19,10 +19,28 @@
             </span>
             <input type="text" class="label-input" data-type="private" placeholder="Add private label"/>
             <input type="submit" value="Save Labels"/>
-            <button type="button" class="share-button" data-link="{{ .BackURL }}" data-module="news">Share</button>
-            <input type="text" class="share-link" readonly style="display: none;"/>
         </form>
     </div>
+    {{ if .ShareURL }}
+    <div style="margin: 1em 0; padding: 1em; border: 1px solid #ddd; border-radius: 4px;">
+        <h3 style="margin-top: 0; font-size: 1.1em;">Share News Post</h3>
+        <div style="margin-bottom: 0.5em;">
+            <label style="display: flex; align-items: center; gap: 0.5em;">
+                <input type="radio" checked disabled>
+                <strong>Social Media Card (OpenGraph / Twitter)</strong>
+            </label>
+        </div>
+        <div style="margin-left: 1.8em;">
+            <p style="margin: 0 0 0.5em; font-size: 0.9em; color: #666;">
+                Use this signed link to share a preview of this news post on social media.
+            </p>
+            <div style="display: flex; gap: 0.5em; max-width: 500px;">
+                <input type="text" id="share-url-news" value="{{ .ShareURL }}" readonly style="flex: 1; padding: 0.5em;">
+                <button onclick="navigator.clipboard.writeText(document.getElementById('share-url-news').value)" style="padding: 0.5em 1em; cursor: pointer;">Copy</button>
+            </div>
+        </div>
+    </div>
+    {{ end }}
     <script src="{{ assetHash "/forum/topic_labels.js" }}"></script>
     {{ if cd.SelectedThreadCanReply }}
         <div class="comment">

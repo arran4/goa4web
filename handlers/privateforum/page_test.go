@@ -17,18 +17,20 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/sharesign"
 )
 
 func TestPage_NoAccess(t *testing.T) {
 	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
+	cd.ShareSigner = sharesign.NewSigner(config.NewRuntimeConfig(), "secret")
 	req := httptest.NewRequest(http.MethodGet, "/private", nil)
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 
 	w := httptest.NewRecorder()
 	PrivateForumPage(w, req)
 
-	if body := w.Body.String(); !strings.Contains(body, "Forbidden") {
-		t.Fatalf("expected no access message, got %q", body)
+	if body := w.Body.String(); !strings.Contains(body, "Login Required") {
+		t.Fatalf("expected login required message, got %q", body)
 	}
 }
 
@@ -45,6 +47,7 @@ func TestPage_Access(t *testing.T) {
 			AddRow(1, 1, 1, "administrator", true))
 
 	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+	cd.ShareSigner = sharesign.NewSigner(config.NewRuntimeConfig(), "secret")
 	cd.UserID = 1
 	cd.AdminMode = true
 	req := httptest.NewRequest(http.MethodGet, "/private", nil)
@@ -76,6 +79,7 @@ func TestPage_SeeNoCreate(t *testing.T) {
 		ListPrivateTopicParticipantsByTopicIDForUserReturns: []*db.ListPrivateTopicParticipantsByTopicIDForUserRow{},
 	}
 	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
+	cd.ShareSigner = sharesign.NewSigner(config.NewRuntimeConfig(), "secret")
 	cd.UserID = 1
 	cd.AdminMode = false
 	cachePrivateTopics(cd, nil)
@@ -105,6 +109,7 @@ func TestPage_AdminLinks(t *testing.T) {
 			AddRow(1, 1, 1, "administrator", true))
 
 	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+	cd.ShareSigner = sharesign.NewSigner(config.NewRuntimeConfig(), "secret")
 	cd.UserID = 1
 	cd.AdminMode = true
 

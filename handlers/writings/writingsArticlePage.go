@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/handlers/share"
+	"github.com/arran4/goa4web/internal/sharesign"
 
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core"
@@ -35,6 +36,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		AdminURL       func(*db.GetCommentsByThreadIdForUserRow) string
 		Labels         []templates.TopicLabel
 		BackURL        string
+		ShareURL       string
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -140,6 +142,9 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd.CustomIndexItems = append(cd.CustomIndexItems, WritingsPageSpecificItems(cd, r)...)
+
+	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
+	data.ShareURL = signer.SignedURL(fmt.Sprintf("/writings/article/%d", writing.Idwriting))
 
 	handlers.TemplateHandler(w, r, "articlePage.gohtml", data)
 }

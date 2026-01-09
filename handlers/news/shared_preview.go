@@ -1,9 +1,11 @@
 package news
 
 import (
+	"database/sql"
 	"html/template"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/arran4/goa4web/a4code"
@@ -11,7 +13,6 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/handlers/share"
-	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/sharesign"
 	"github.com/gorilla/mux"
 )
@@ -32,26 +33,18 @@ func SharedPreviewPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	newsID, _ := strconv.Atoi(vars["news"])
 
-	posts, err := cd.LatestNewsList(0, 1000)
+	foundPost, err := cd.SystemGetNewsPost(int32(newsID))
 	if err != nil {
-		http.Error(w, "not found", http.StatusNotFound)
-		return
-	}
-
-	var foundPost *db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
-	for _, p := range posts {
-		if p.Idsitenews == int32(newsID) {
-			foundPost = p
-			break
+		if err == sql.ErrNoRows {
+			http.Error(w, "not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "internal error", http.StatusInternalServerError)
 		}
-	}
-
-	if foundPost == nil {
-		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
 
-	ogTitle := a4code.Snip(foundPost.News.String, 100)
+	titleLine := strings.Split(foundPost.News.String, "\n")[0]
+	ogTitle := a4code.Snip(titleLine, 100)
 	ogDescription := a4code.Snip(foundPost.News.String, 128)
 
 	if r.Method == http.MethodHead {

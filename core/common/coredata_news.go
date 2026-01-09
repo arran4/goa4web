@@ -300,3 +300,22 @@ func (cd *CoreData) DeleteAnnouncement(postID int32) error {
 	}
 	return nil
 }
+
+// SystemGetNewsPost returns a news post by ID without permission checks, iterating through all posts.
+// This is inefficient but necessary for shared previews where no specific system query exists.
+func (cd *CoreData) SystemGetNewsPost(id int32) (*db.GetAllSiteNewsForIndexRow, error) {
+	if cd.queries == nil {
+		return nil, nil
+	}
+	// Fetch ALL news posts
+	rows, err := cd.queries.GetAllSiteNewsForIndex(cd.ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, row := range rows {
+		if row.Idsitenews == id {
+			return row, nil
+		}
+	}
+	return nil, sql.ErrNoRows
+}

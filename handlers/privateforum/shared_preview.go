@@ -3,6 +3,7 @@ package privateforum
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/arran4/goa4web/a4code"
@@ -60,15 +61,17 @@ func SharedPreviewPage(w http.ResponseWriter, r *http.Request) {
 	// Redirect URL after successful login
 	redirectURL := fmt.Sprintf("/private/topic/%d/thread/%d", topicID, threadID)
 
-	ogData := share.OpenGraphData{
+	cd.OpenGraph = &common.OpenGraph{
 		Title:       ogTitle,
 		Description: ogDescription,
-		ImageURL:    share.MakeImageURL(cd.AbsoluteURL(""), ogTitle),
-		ContentURL:  cd.AbsoluteURL(redirectURL),
+		Image:       share.MakeImageURL(cd.AbsoluteURL(""), ogTitle),
+		URL:         cd.AbsoluteURL(redirectURL),
 	}
 
 	// Render login page with OpenGraph metadata
-	if err := share.RenderLoginWithOG(w, r, ogData, redirectURL); err != nil {
-		handlers.RenderErrorPage(w, r, err)
-	}
+	handlers.TemplateHandler(w, r, "sharedPreviewLogin.gohtml", struct {
+		RedirectURL string
+	}{
+		RedirectURL: url.QueryEscape(redirectURL),
+	})
 }

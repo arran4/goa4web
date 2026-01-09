@@ -83,6 +83,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	if !(cd.HasGrant("linker", "link", "view", link.ID) ||
 		canReply ||
 		cd.SelectedThreadCanReply()) {
+		fmt.Println("TODO: FIx: Add enforced Access in router rather than task")
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
@@ -297,13 +298,17 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
-		ThreadID:         pthid,
-		TopicID:          ptid,
-		CommentID:        int32(cid),
-		CommentText:      text,
-		CommentURL:       cd.AbsoluteURL(endUrl),
-		IncludePostCount: true,
-		IncludeSearch:    true,
+		ThreadID:             pthid,
+		TopicID:              ptid,
+		CommentID:            int32(cid),
+		LabelItem:            "link",
+		LabelItemID:          int32(linkId),
+		CommentText:          text,
+		CommentURL:           cd.AbsoluteURL(endUrl),
+		ClearUnreadForOthers: true,
+		MarkThreadRead:       true,
+		IncludePostCount:     true,
+		IncludeSearch:        true,
 	}); err != nil {
 		log.Printf("linker comment side effects: %v", err)
 	}

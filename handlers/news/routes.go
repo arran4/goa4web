@@ -7,8 +7,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	. "github.com/arran4/gorillamuxlogic"
-
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/router"
@@ -24,6 +22,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	r.HandleFunc("/", NewsPageHandler).Methods("GET")
 	r.HandleFunc("/", handlers.TaskDoneAutoRefreshPage).Methods("POST")
 	nr := r.PathPrefix("/news").Subrouter()
+	nr.NotFoundHandler = http.HandlerFunc(handlers.RenderNotFoundOrLogin)
 	nr.HandleFunc("/rss", NewsRssPage).Methods("GET")
 	nr.HandleFunc("/u/{username}/rss", NewsRssPage).Methods("GET")
 	nr.Use(handlers.IndexMiddleware(CustomNewsIndex), handlers.SectionMiddleware("news"))
@@ -49,7 +48,6 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	nr.HandleFunc("/news/{news}", handlers.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(cancelTask.Matcher())
 	nr.HandleFunc("/news/{news}", handlers.TaskDoneAutoRefreshPage).Methods("POST")
 
-	nr.HandleFunc("/{path:.*}", handlers.RenderPermissionDenied).MatcherFunc(Not(handlers.RequiresAnAccount()))
 }
 
 // Register registers the news router module.

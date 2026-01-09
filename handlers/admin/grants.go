@@ -12,6 +12,7 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/permissions"
 )
 
 // grantWithNames augments a grant with user and role names.
@@ -34,6 +35,16 @@ type grantGroup struct {
 	RoleName string
 	ItemLink string
 	Actions  []grantAction
+}
+
+// AdminGrantsAvailablePage lists all available grants.
+func AdminGrantsAvailablePage(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Available Grants"
+	data := struct {
+		Definitions []*permissions.GrantDefinition
+	}{permissions.Definitions}
+	handlers.TemplateHandler(w, r, "admin/grantsAvailablePage.gohtml", data)
 }
 
 // AdminGrantsPage lists all grants.

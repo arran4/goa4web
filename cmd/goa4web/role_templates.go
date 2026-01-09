@@ -130,6 +130,15 @@ var roleTemplates = map[string]TemplateDef{
 					{Section: "faq", Item: "question/answer", Action: "see"},
 				},
 			},
+			{
+				Name:        "image-uploader",
+				CanLogin:    false,
+				IsAdmin:     false,
+				Description: "Can upload images.",
+				Grants: []GrantDef{
+					{Section: "images", Item: "upload", Action: "post"},
+				},
+			},
 		},
 	},
 	"news-only": {

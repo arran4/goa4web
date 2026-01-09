@@ -2,8 +2,9 @@ Usage:
   {{.Prog}} grant <command> [<args>]
 
 Commands:
-  add      create a grant rule
-  delete   delete a grant rule
-  list     list grant rules
+  add               create a grant rule
+  delete            delete a grant rule
+  list              list grant rules
+  list-available    list all available grant rules
 
 {{template "flag_groups_section" .FlagGroups}}

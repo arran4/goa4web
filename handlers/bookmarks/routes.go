@@ -1,9 +1,9 @@
 package bookmarks
 
 import (
-	"github.com/gorilla/mux"
+	"net/http"
 
-	. "github.com/arran4/gorillamuxlogic"
+	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
@@ -16,6 +16,7 @@ import (
 func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
 	navReg.RegisterIndexLink("Bookmarks", "/bookmarks", SectionWeight)
 	br := r.PathPrefix("/bookmarks").Subrouter()
+	br.NotFoundHandler = http.HandlerFunc(handlers.RenderNotFoundOrLogin)
 	br.Use(handlers.IndexMiddleware(bookmarksCustomIndex))
 	br.HandleFunc("", BookmarksPage).Methods("GET")
 	br.HandleFunc("/mine", MinePage).Methods("GET").MatcherFunc(handlers.RequiresAnAccount())
@@ -23,7 +24,6 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	br.HandleFunc("/edit", handlers.TaskHandler(saveTask)).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(saveTask.Matcher())
 	br.HandleFunc("/edit", handlers.TaskHandler(createTask)).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(createTask.Matcher())
 
-	br.HandleFunc("/{path:.*}", handlers.RenderPermissionDenied).MatcherFunc(Not(handlers.RequiresAnAccount()))
 }
 
 // Register registers the bookmarks router module.

@@ -98,6 +98,7 @@ func newsEditFormPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !cd.HasGrant("news", "post", "edit", post.Idsitenews) {
+		fmt.Println("TODO: FIx: Add enforced Access in router rather than task")
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}

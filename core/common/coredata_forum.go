@@ -3,6 +3,7 @@ package common
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/arran4/goa4web/internal/db"
@@ -151,13 +152,30 @@ func (cd *CoreData) UpdateForumComment(commentID, languageID int32, text string)
 	if cd.queries == nil {
 		return nil
 	}
-	return cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
+	paths, err := cd.imagePathsFromText(text)
+	if err != nil {
+		return fmt.Errorf("parse images: %w", err)
+	}
+	comment, err := cd.CommentByID(commentID)
+	if err != nil || comment == nil {
+		return fmt.Errorf("load comment: %w", err)
+	}
+	if err := cd.validateImagePathsForThread(cd.UserID, comment.ForumthreadID, paths); err != nil {
+		return fmt.Errorf("validate images: %w", err)
+	}
+	if err := cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
 		LanguageID:  sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:        sql.NullString{String: text, Valid: true},
 		CommentID:   commentID,
 		CommenterID: cd.UserID,
 		EditorID:    sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-	})
+	}); err != nil {
+		return err
+	}
+	if err := cd.recordThreadImages(comment.ForumthreadID, paths); err != nil {
+		log.Printf("record thread images: %v", err)
+	}
+	return nil
 }
 
 // EditForumComment updates a comment providing the commenter identifier explicitly.
@@ -165,13 +183,30 @@ func (cd *CoreData) EditForumComment(commentID, commenterID, languageID int32, t
 	if cd.queries == nil {
 		return nil
 	}
-	return cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
+	paths, err := cd.imagePathsFromText(text)
+	if err != nil {
+		return fmt.Errorf("parse images: %w", err)
+	}
+	comment, err := cd.CommentByID(commentID)
+	if err != nil || comment == nil {
+		return fmt.Errorf("load comment: %w", err)
+	}
+	if err := cd.validateImagePathsForThread(commenterID, comment.ForumthreadID, paths); err != nil {
+		return fmt.Errorf("validate images: %w", err)
+	}
+	if err := cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
 		LanguageID:  sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:        sql.NullString{String: text, Valid: true},
 		CommentID:   commentID,
 		CommenterID: commenterID,
 		EditorID:    sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-	})
+	}); err != nil {
+		return err
+	}
+	if err := cd.recordThreadImages(comment.ForumthreadID, paths); err != nil {
+		log.Printf("record thread images: %v", err)
+	}
+	return nil
 }
 
 func topicSubscriptionPattern(topicID int32) string {

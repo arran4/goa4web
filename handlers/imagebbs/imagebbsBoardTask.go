@@ -2,11 +2,12 @@ package imagebbs
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/tasks"
-	"net/http"
 )
 
 type imagebbsBoardTask struct {
@@ -34,6 +35,7 @@ func (t *imagebbsBoardTask) Get(w http.ResponseWriter, r *http.Request) {
 	bid := cd.SelectedBoardID()
 
 	if !cd.HasGrant("imagebbs", "board", "view", bid) {
+		fmt.Println("TODO: FIx: Add enforced Access in router rather than task")
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}

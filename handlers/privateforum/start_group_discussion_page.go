@@ -1,6 +1,7 @@
 package privateforum
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
@@ -13,7 +14,9 @@ import (
 // StartGroupDiscussionPage renders a dedicated page to start a private group discussion.
 func StartGroupDiscussionPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	// TODO: FIx: Add enforced Access in router rather than task
 	if !cd.HasGrant("privateforum", "topic", "see", 0) {
+		fmt.Println("TODO: FIx: Add enforced Access in router rather than task")
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}

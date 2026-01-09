@@ -50,6 +50,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd.SetCurrentThreadAndTopic(writing.ForumthreadID, 0)
 	if !(cd.HasGrant("writing", "article", "view", writing.Idwriting) || cd.SelectedThreadCanReply()) {
+		fmt.Println("TODO: FIx: Add enforced Access in router rather than task")
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
@@ -180,17 +181,17 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := cd.ClearUnreadForOthers("writing", writing.Idwriting); err != nil {
-		log.Printf("clear unread labels: %v", err)
-	}
-
 	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
-		ThreadID:         threadID,
-		TopicID:          topicID,
-		CommentID:        int32(cid),
-		CommentText:      text,
-		IncludePostCount: true,
-		IncludeSearch:    true,
+		ThreadID:             threadID,
+		TopicID:              topicID,
+		CommentID:            int32(cid),
+		LabelItem:            "writing",
+		LabelItemID:          writing.Idwriting,
+		CommentText:          text,
+		ClearUnreadForOthers: true,
+		MarkThreadRead:       true,
+		IncludePostCount:     true,
+		IncludeSearch:        true,
 		AdditionalData: map[string]any{
 			"target": notifications.Target{Type: "writing", ID: writing.Idwriting},
 		},

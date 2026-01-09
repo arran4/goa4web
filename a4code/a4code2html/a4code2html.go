@@ -236,7 +236,7 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 	if err != nil && err != io.EOF {
 		return err
 	}
-	_, err = a.readWhiteSpace(r)
+	_, err = a.readCommandBreak(r)
 	if err != nil && err != io.EOF {
 		return err
 	}
@@ -525,4 +525,33 @@ func (c *A4code2html) readWhiteSpace(r *bufio.Reader) (string, error) {
 			return result.String(), nil
 		}
 	}
+}
+
+func (c *A4code2html) readCommandBreak(r *bufio.Reader) (string, error) {
+	var buf bytes.Buffer
+	ws, err := c.readWhiteSpace(r)
+	buf.WriteString(ws)
+	if err != nil {
+		return buf.String(), err
+	}
+
+	ch, err := r.ReadByte()
+	if err != nil {
+		if err == io.EOF {
+			return buf.String(), io.EOF
+		}
+		return buf.String(), err
+	}
+
+	if ch == '=' {
+		buf.WriteByte(ch)
+		ws2, err := c.readWhiteSpace(r)
+		buf.WriteString(ws2)
+		if err != nil {
+			return buf.String(), err
+		}
+	} else {
+		r.UnreadByte()
+	}
+	return buf.String(), nil
 }

@@ -1,10 +1,9 @@
 package user
 
 import (
-	"github.com/gorilla/mux"
 	"net/http"
 
-	. "github.com/arran4/gorillamuxlogic"
+	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
@@ -15,6 +14,7 @@ import (
 // RegisterRoutes attaches user account endpoints to the router.
 func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, _ *nav.Registry) {
 	ur := r.PathPrefix("/usr").Subrouter()
+	ur.NotFoundHandler = http.HandlerFunc(handlers.RenderNotFoundOrLogin)
 	ur.Use(handlers.IndexMiddleware(CustomIndex))
 	ur.HandleFunc("", UserPage).Methods(http.MethodGet)
 	ur.HandleFunc("/logout", userLogoutPage).Methods(http.MethodGet)
@@ -52,8 +52,6 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, _ *nav.Registry) {
 	ur.HandleFunc("/subscriptions/threads", userThreadSubscriptionsPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	ur.HandleFunc("/subscriptions/update", handlers.TaskHandler(updateSubscriptionsTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(updateSubscriptionsTask.Matcher())
 	ur.HandleFunc("/subscriptions/delete", handlers.TaskHandler(deleteTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(deleteTask.Matcher())
-
-	ur.HandleFunc("/{path:.*}", handlers.RenderPermissionDenied).MatcherFunc(Not(handlers.RequiresAnAccount()))
 
 	// legacy redirects
 	r.HandleFunc("/user/lang", handlers.RedirectPermanent("/usr/lang"))

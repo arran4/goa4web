@@ -43,11 +43,13 @@ func TopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
-		ThreadID:         threadRow.Idforumthread,
-		TopicID:          topicRow.Idforumtopic,
-		CommentID:        int32(commentId),
-		CommentURL:       cd.AbsoluteURL(fmt.Sprintf("/forum/topic/%d/thread/%d#comment-%d", topicRow.Idforumtopic, threadRow.Idforumthread, commentId)),
-		IncludePostCount: true,
+		ThreadID:             threadRow.Idforumthread,
+		TopicID:              topicRow.Idforumtopic,
+		CommentID:            int32(commentId),
+		CommentURL:           cd.AbsoluteURL(fmt.Sprintf("/forum/topic/%d/thread/%d#comment-%d", topicRow.Idforumtopic, threadRow.Idforumthread, commentId)),
+		ClearUnreadForOthers: true,
+		MarkThreadRead:       true,
+		IncludePostCount:     true,
 	}); err != nil {
 		log.Printf("thread comment edit side effects: %v", err)
 	}

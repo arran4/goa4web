@@ -22,6 +22,9 @@ type ThreadUpdatedEvent struct {
 	Username   string
 	Author     string
 
+	LabelItem   string
+	LabelItemID int32
+
 	CommentText string
 	CommentURL  string
 	PostURL     string
@@ -45,6 +48,11 @@ func (cd *CoreData) HandleThreadUpdated(ctx context.Context, event ThreadUpdated
 			if err := cd.ClearThreadUnreadForOthers(event.ThreadID); err != nil {
 				errs = append(errs, fmt.Errorf("clear unread labels: %w", err))
 			}
+			if event.LabelItem != "" && event.LabelItemID != 0 {
+				if err := cd.ClearUnreadForOthers(event.LabelItem, event.LabelItemID); err != nil {
+					errs = append(errs, fmt.Errorf("clear item unread labels: %w", err))
+				}
+			}
 		}
 		if event.MarkThreadRead {
 			if err := cd.SetThreadReadMarker(event.ThreadID, event.CommentID); err != nil {
@@ -55,6 +63,11 @@ func (cd *CoreData) HandleThreadUpdated(ctx context.Context, event ThreadUpdated
 			// Passing false, false means: Not New, Not Unread.
 			if err := cd.SetThreadPrivateLabelStatus(event.ThreadID, false, false); err != nil {
 				errs = append(errs, fmt.Errorf("set private label status: %w", err))
+			}
+			if event.LabelItem != "" && event.LabelItemID != 0 {
+				if err := cd.SetPrivateLabelStatus(event.LabelItem, event.LabelItemID, false, false); err != nil {
+					errs = append(errs, fmt.Errorf("set item private label status: %w", err))
+				}
 			}
 		}
 	}

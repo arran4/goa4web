@@ -74,6 +74,9 @@ func (AddBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return handlers.SessionFetchFail{}
 	}
 	uid, _ := session.Values["UID"].(int32)
+	if err := cd.ValidateCodeImagesForUser(uid, text); err != nil {
+		return fmt.Errorf("validate images: %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
 
 	id, err := queries.CreateBlogEntryForWriter(r.Context(), db.CreateBlogEntryForWriterParams{
 		UsersIdusers: uid,
@@ -108,6 +111,7 @@ func BlogAddPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Add Blog"
 	if !(cd.IsAdmin() || cd.HasGrant("blogs", "entry", "post", 0)) {
+		fmt.Println("TODO: FIx: Add enforced Access in router rather than task")
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}

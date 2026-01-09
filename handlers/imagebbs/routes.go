@@ -6,8 +6,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	. "github.com/arran4/gorillamuxlogic"
-
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/router"
@@ -20,6 +18,7 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Reg
 	navReg.RegisterIndexLinkWithViewPermission("ImageBBS", "/imagebbs", SectionWeight, "imagebbs", "board")
 	navReg.RegisterAdminControlCenter("ImageBBS", "ImageBBS", "/admin/imagebbs", SectionWeight)
 	ibr := r.PathPrefix("/imagebbs").Subrouter()
+	ibr.NotFoundHandler = http.HandlerFunc(handlers.RenderNotFoundOrLogin)
 	ibr.Use(handlers.IndexMiddleware(CustomImageBBSIndex), handlers.SectionMiddleware("imagebbs"))
 	ibr.HandleFunc("/rss", RssPage).Methods("GET")
 	ibr.HandleFunc("/u/{username}/rss", RssPage).Methods("GET")
@@ -38,7 +37,6 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Reg
 	ibr.HandleFunc("/poster/{username}", PosterPage).Methods("GET")
 	ibr.HandleFunc("/poster/{username}/", PosterPage).Methods("GET")
 
-	ibr.HandleFunc("/{path:.*}", handlers.RenderPermissionDenied).MatcherFunc(Not(handlers.RequiresAnAccount()))
 }
 
 // Register registers the imagebbs router module.

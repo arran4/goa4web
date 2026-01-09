@@ -160,8 +160,10 @@ func FeedGen(r *http.Request, queries db.Querier, uid int, username string) (*fe
 	}
 
 	for _, row := range rows {
-		u := r.URL
-		u.Query().Set("show", fmt.Sprintf("%d", row.Idblogs))
+		u := *r.URL
+		q := u.Query()
+		q.Set("show", fmt.Sprintf("%d", row.Idblogs))
+		u.RawQuery = q.Encode()
 		conv := a4code2html.New(cd.ImageURLMapper)
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(row.Blog.String)

@@ -23,6 +23,7 @@ func TestPrivateLabelRoutes(t *testing.T) {
 
 	t.Run("uses redirect parameter", func(t *testing.T) {
 		cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
+		cd.UserID = 1
 		cd.ForumBasePath = "/private"
 
 		body := "task=" + url.QueryEscape(string(forumhandlers.TaskMarkThreadRead)) + "&redirect=" + url.QueryEscape("/private/topic/1/thread/2")
@@ -42,6 +43,7 @@ func TestPrivateLabelRoutes(t *testing.T) {
 
 	t.Run("falls back without redirect parameter", func(t *testing.T) {
 		cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
+		cd.UserID = 1
 		cd.ForumBasePath = "/private"
 
 		req := httptest.NewRequest(http.MethodPost, "/private/thread/1/labels", strings.NewReader("task="+url.QueryEscape(string(forumhandlers.TaskMarkThreadRead))))

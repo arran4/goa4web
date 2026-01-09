@@ -149,6 +149,20 @@ type QuerierStub struct {
 	CreateCommentInSectionForCommenterResult int64
 	CreateCommentInSectionForCommenterErr    error
 
+	ListUploadedImagePathsByUserCalls   []ListUploadedImagePathsByUserParams
+	ListUploadedImagePathsByUserFn      func(context.Context, ListUploadedImagePathsByUserParams) ([]sql.NullString, error)
+	ListUploadedImagePathsByUserReturns []sql.NullString
+	ListUploadedImagePathsByUserErr     error
+
+	ListThreadImagePathsCalls   []ListThreadImagePathsParams
+	ListThreadImagePathsFn      func(context.Context, ListThreadImagePathsParams) ([]sql.NullString, error)
+	ListThreadImagePathsReturns []sql.NullString
+	ListThreadImagePathsErr     error
+
+	CreateThreadImageCalls []CreateThreadImageParams
+	CreateThreadImageFn    func(context.Context, CreateThreadImageParams) error
+	CreateThreadImageErr   error
+
 	UpsertContentReadMarkerCalls []UpsertContentReadMarkerParams
 	UpsertContentReadMarkerFn    func(context.Context, UpsertContentReadMarkerParams) error
 	UpsertContentReadMarkerErr   error
@@ -403,6 +417,48 @@ func (s *QuerierStub) CreateCommentInSectionForCommenter(ctx context.Context, ar
 		return fn(ctx, arg)
 	}
 	return s.CreateCommentInSectionForCommenterResult, s.CreateCommentInSectionForCommenterErr
+}
+
+// ListUploadedImagePathsByUser records the call and returns stored paths.
+func (s *QuerierStub) ListUploadedImagePathsByUser(ctx context.Context, arg ListUploadedImagePathsByUserParams) ([]sql.NullString, error) {
+	s.mu.Lock()
+	s.ListUploadedImagePathsByUserCalls = append(s.ListUploadedImagePathsByUserCalls, arg)
+	fn := s.ListUploadedImagePathsByUserFn
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	if s.ListUploadedImagePathsByUserErr != nil {
+		return nil, s.ListUploadedImagePathsByUserErr
+	}
+	return s.ListUploadedImagePathsByUserReturns, nil
+}
+
+// ListThreadImagePaths records the call and returns stored paths.
+func (s *QuerierStub) ListThreadImagePaths(ctx context.Context, arg ListThreadImagePathsParams) ([]sql.NullString, error) {
+	s.mu.Lock()
+	s.ListThreadImagePathsCalls = append(s.ListThreadImagePathsCalls, arg)
+	fn := s.ListThreadImagePathsFn
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	if s.ListThreadImagePathsErr != nil {
+		return nil, s.ListThreadImagePathsErr
+	}
+	return s.ListThreadImagePathsReturns, nil
+}
+
+// CreateThreadImage records the call and returns a stubbed error.
+func (s *QuerierStub) CreateThreadImage(ctx context.Context, arg CreateThreadImageParams) error {
+	s.mu.Lock()
+	s.CreateThreadImageCalls = append(s.CreateThreadImageCalls, arg)
+	fn := s.CreateThreadImageFn
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return s.CreateThreadImageErr
 }
 
 // RemoveContentPublicLabel records the call and removes the label from the store.

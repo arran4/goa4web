@@ -110,8 +110,9 @@ func TestPrivateLabelsDefaultAndInversion(t *testing.T) {
 		if err != nil {
 			t.Fatalf("PrivateLabels default: %v", err)
 		}
-		if len(labels) != 0 {
-			t.Fatalf("default labels %+v, want empty", labels)
+		expected := []string{"unread"}
+		if !reflect.DeepEqual(labels, expected) {
+			t.Fatalf("default labels %+v, want %+v", labels, expected)
 		}
 	})
 

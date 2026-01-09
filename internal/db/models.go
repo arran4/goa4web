@@ -215,6 +215,17 @@ type DeadLetter struct {
 	CreatedAt time.Time
 }
 
+type Draft struct {
+	ID        int32
+	UserID    int32
+	ThreadID  int32
+	Name      string
+	Content   string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt sql.NullTime
+}
+
 type ExternalLink struct {
 	ID              int32
 	Url             string

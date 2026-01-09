@@ -112,6 +112,8 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	text := r.PostFormValue("replytext")
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
+	draftIDVal := r.PostFormValue("draft_id")
+	draftID, _ := strconv.Atoi(draftIDVal)
 
 	base := cd.ForumBasePath
 	if base == "" {
@@ -150,6 +152,29 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		IncludeSearch:        true,
 	}); err != nil {
 		log.Printf("thread reply side effects: %v", err)
+	}
+
+	if draftID > 0 {
+		if err := cd.Queries().DeleteDraft(r.Context(), db.DeleteDraftParams{
+			ID:     int32(draftID),
+			UserID: uid,
+		}); err != nil {
+			log.Printf("deleting draft: %v", err)
+		}
+		hasDrafts, err := cd.HasDrafts(r.Context(), threadRow.Idforumthread, uid)
+		if err != nil {
+			log.Printf("checking for drafts: %v", err)
+		}
+		if !hasDrafts {
+			if err := cd.Queries().RemoveContentPrivateLabel(r.Context(), db.RemoveContentPrivateLabelParams{
+				Item:   "thread",
+				ItemID: threadRow.Idforumthread,
+				UserID: uid,
+				Label:  "has draft",
+			}); err != nil {
+				log.Printf("removing private label: %v", err)
+			}
+		}
 	}
 
 	return handlers.RedirectHandler(endUrl)

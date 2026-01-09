@@ -17,6 +17,7 @@
        {{ if cd.HasModule "images" }}               <script src="{{ assetHash "/images/pasteimg.js" }}"></script>               {{ end }}
        {{ if and (cd.HasModule "websocket") cd.Config.NotificationsEnabled (ne cd.UserID 0) }}               <script src="{{ assetHash "/websocket/notifications.js" }}"></script>               {{ end }}
        <script src="{{ assetHash "/static/site.js" }}"></script>
+       <script src="{{ assetHash "/static/drafts.js" }}"></script>
        {{ if cd.AutoRefresh }}            <meta http-equiv="refresh" content="{{cd.AutoRefresh}}">       {{ end }}
        {{ if cd.UserID }}
        {{ if cd.CustomCSS }}

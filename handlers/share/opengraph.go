@@ -25,9 +25,9 @@ func RenderOpenGraph(w http.ResponseWriter, r *http.Request, data OpenGraphData)
 <head>
 	<meta property="og:title" content="{{.Title}}" />
 	<meta property="og:description" content="{{.Description}}" />
-	<meta property="og:image" content="{{.ImageURL}}" />
-	<meta property="og:image:secure_url" content="{{.ImageURL}}" />
-	<meta property="og:url" content="{{.ContentURL}}" />
+	{{.ImageMeta}}
+	{{.SecureImageMeta}}
+	{{.URLMeta}}
 	<meta http-equiv="refresh" content="0;url={{.ContentURL}}" />
 </head>
 <body>
@@ -42,6 +42,18 @@ func RenderOpenGraph(w http.ResponseWriter, r *http.Request, data OpenGraphData)
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	return tmpl.Execute(w, data)
+}
+
+func (d OpenGraphData) URLMeta() template.HTML {
+	return template.HTML(fmt.Sprintf(`<meta property="og:url" content="%s" />`, d.ContentURL))
+}
+
+func (d OpenGraphData) ImageMeta() template.HTML {
+	return template.HTML(fmt.Sprintf(`<meta property="og:image" content="%s" />`, d.ImageURL))
+}
+
+func (d OpenGraphData) SecureImageMeta() template.HTML {
+	return template.HTML(fmt.Sprintf(`<meta property="og:image:secure_url" content="%s" />`, d.ImageURL))
 }
 
 // VerifyAndGetPath verifies the signature and returns the content path without query parameters.

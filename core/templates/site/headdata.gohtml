@@ -10,9 +10,9 @@
     {{ with .OpenGraph }}
         <meta property="og:title" content="{{ .Title }}" />
         <meta property="og:description" content="{{ .Description }}" />
-        <meta property="og:image" content="{{ .Image | url }}" />
-        <meta property="og:image:secure_url" content="{{ .Image | url }}" />
-        <meta property="og:url" content="{{ .URL | url }}" />
+        	{{.ImageMeta}}
+	{{.SecureImageMeta}}
+	{{.URLMeta}}
         <meta property="og:type" content="website" />
     {{ end }}
 {{- end}}

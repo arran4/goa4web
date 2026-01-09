@@ -79,7 +79,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		Request:  r,
 		Comments: comments,
-		BackURL:  r.URL.RequestURI(),
+		BackURL:  r.URL.Path,
 	}
 
 	data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {

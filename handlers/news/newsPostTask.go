@@ -61,7 +61,7 @@ func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 	queries := cd.Queries()
 	data := Data{
 		IsReplyable: true,
-		BackURL:     r.URL.RequestURI(),
+		BackURL:     r.URL.Path,
 	}
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["news"])

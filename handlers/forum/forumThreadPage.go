@@ -47,7 +47,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	data := Data{
 		IsReplyable: true,
 		BasePath:    basePath,
-		BackURL:     r.URL.RequestURI(),
+		BackURL:     r.URL.Path,
 	}
 
 	threadRow, err := cd.SelectedThread()

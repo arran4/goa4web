@@ -54,7 +54,7 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("BlogCommentThread: %v", err)
 	}
 
-	data := Data{BackURL: r.URL.RequestURI()}
+	data := Data{BackURL: r.URL.Path}
 	quoteID, _ := strconv.Atoi(r.URL.Query().Get("quote"))
 	replyType := r.URL.Query().Get("type")
 	if quoteID != 0 {

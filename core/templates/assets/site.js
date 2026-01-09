@@ -203,7 +203,7 @@ function share(link, module, button) {
     fetch('/api/' + module + '/share?link=' + encodeURIComponent(link))
         .then(response => response.json())
         .then(data => {
-            shareLinkInput.value = data.signed_url;
+            shareLinkInput.value = data.signed_url + window.location.hash;
             shareLinkInput.style.display = 'inline-block';
             shareLinkInput.select();
         })

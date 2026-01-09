@@ -33,7 +33,7 @@ func NewSharedContentHandler(signer *sharesign.Signer, server *server.Server) *S
 }
 
 func (h *SharedContentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	u := r.URL.Query().Get("u")
+	u := strings.TrimPrefix(r.URL.Path, "/shared")
 	ts := r.URL.Query().Get("ts")
 	sig := r.URL.Query().Get("sig")
 

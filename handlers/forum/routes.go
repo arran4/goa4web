@@ -53,7 +53,7 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Reg
 	fr.HandleFunc("/topic/{topic}/thread", handlers.TaskHandler(threadNewCancelAction)).Methods("POST").MatcherFunc(threadNewCancelAction.Matcher())
 
 	// OpenGraph preview endpoint (no auth required for social media bots)
-	fr.HandleFunc("/shared/topic/{topic}/thread/{thread}", SharedPreviewPage).Methods("GET")
+	fr.HandleFunc("/shared/topic/{topic}/thread/{thread}", SharedPreviewPage).Methods("GET", "HEAD")
 
 	fr.Handle("/topic/{topic}/thread/{thread}", RequireThreadAndTopic(http.HandlerFunc(ThreadPage))).Methods("GET")
 	fr.Handle("/topic/{topic}/thread/{thread}", RequireThreadAndTopic(http.HandlerFunc(handlers.TaskDoneAutoRefreshPage))).Methods("POST")

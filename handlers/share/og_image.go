@@ -84,7 +84,7 @@ func (h *OGImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer face.Close()
 
 	// Draw Favicon/Logo
-	var offsetY int = 0
+	var offsetY int
 	favBytes := templates.GetFaviconPNG()
 	if len(favBytes) > 0 {
 		favImg, _, err := image.Decode(bytes.NewReader(favBytes))

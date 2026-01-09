@@ -141,6 +141,13 @@ type RuntimeConfig struct {
 
 	// CreateDirs creates missing directories when enabled.
 	CreateDirs bool
+
+	// OGImageWidth is the width of the generated Open Graph image.
+	OGImageWidth int
+	// OGImageHeight is the height of the generated Open Graph image.
+	OGImageHeight int
+	// TwitterSite is the Twitter handle for the site.
+	TwitterSite string
 }
 
 // Option configures RuntimeConfig values.

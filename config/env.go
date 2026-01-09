@@ -182,4 +182,11 @@ const (
 	EnvAdminAPISecret = "ADMIN_API_SECRET"
 	// EnvAdminAPISecretFile specifies the file containing the admin API signing key.
 	EnvAdminAPISecretFile = "ADMIN_API_SECRET_FILE"
+
+	// EnvOGImageWidth sets the width of the Open Graph image.
+	EnvOGImageWidth = "OG_IMAGE_WIDTH"
+	// EnvOGImageHeight sets the height of the Open Graph image.
+	EnvOGImageHeight = "OG_IMAGE_HEIGHT"
+	// EnvTwitterSite sets the Twitter site handle.
+	EnvTwitterSite = "TWITTER_SITE"
 )

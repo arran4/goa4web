@@ -44,7 +44,10 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       "Blogs",
 		Description: "Read blogs from our community.",
-		Image:       share.MakeImageURL(cd.AbsoluteURL(""), "Blogs", cd.ShareSigner),
+		Image:       share.MakeImageURL(cd.AbsoluteURL(""), "Blogs", cd.ShareSigner, time.Now().Add(24*time.Hour)),
+		ImageWidth:  cd.Config.OGImageWidth,
+		ImageHeight: cd.Config.OGImageHeight,
+		TwitterSite: cd.Config.TwitterSite,
 		URL:         cd.AbsoluteURL(r.URL.String()),
 	}
 

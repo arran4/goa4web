@@ -15,6 +15,9 @@ type OpenGraphData struct {
 	Description string
 	ImageURL    template.URL
 	ContentURL  template.URL
+	ImageWidth  int
+	ImageHeight int
+	TwitterSite string
 }
 
 // RenderOpenGraph renders an OpenGraph preview page with the provided metadata.
@@ -27,7 +30,14 @@ func RenderOpenGraph(w http.ResponseWriter, r *http.Request, data OpenGraphData)
 	<meta property="og:description" content="{{.Description}}" />
 	{{.ImageMeta}}
 	{{.SecureImageMeta}}
+	{{.ImageWidthMeta}}
+	{{.ImageHeightMeta}}
 	{{.URLMeta}}
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="{{.Title}}" />
+	<meta name="twitter:description" content="{{.Description}}" />
+	{{if .TwitterSite}}<meta name="twitter:site" content="{{.TwitterSite}}" />{{end}}
+	{{.TwitterImageMeta}}
 	<meta http-equiv="refresh" content="0;url={{.ContentURL}}" />
 </head>
 <body>
@@ -56,6 +66,18 @@ func (d OpenGraphData) SecureImageMeta() template.HTML {
 	return template.HTML(fmt.Sprintf(`<meta property="og:image:secure_url" content="%s" />`, d.ImageURL))
 }
 
+func (d OpenGraphData) ImageWidthMeta() template.HTML {
+	return template.HTML(fmt.Sprintf(`<meta property="og:image:width" content="%d" />`, d.ImageWidth))
+}
+
+func (d OpenGraphData) ImageHeightMeta() template.HTML {
+	return template.HTML(fmt.Sprintf(`<meta property="og:image:height" content="%d" />`, d.ImageHeight))
+}
+
+func (d OpenGraphData) TwitterImageMeta() template.HTML {
+	return template.HTML(fmt.Sprintf(`<meta name="twitter:image" content="%s" />`, d.ImageURL))
+}
+
 // VerifyAndGetPath verifies the signature and returns the content path without query parameters.
 // Returns empty string if verification fails.
 func VerifyAndGetPath(r *http.Request, signer SignatureVerifier) string {
@@ -82,10 +104,10 @@ type URLSigner interface {
 	Sign(data string, exp ...time.Time) (int64, string)
 }
 
-// MakeImageURL creates an OpenGraph image URL for the given title.
-func MakeImageURL(baseURL, title string, signer URLSigner) string {
+// MakeImageURL creates an OpenGraph image URL for the given title with a specific expiration.
+func MakeImageURL(baseURL, title string, signer URLSigner, expiration time.Time) string {
 	encodedTitle := strings.ReplaceAll(url.QueryEscape(title), "+", "%20")
 	path := fmt.Sprintf("/api/og-image?title=%s", encodedTitle)
-	ts, sig := signer.Sign(path, time.Now().Add(24*time.Hour))
+	ts, sig := signer.Sign(path, expiration)
 	return fmt.Sprintf("%s%s&ts=%d&sig=%s", baseURL, path, ts, sig)
 }

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/common"
@@ -61,10 +62,20 @@ func SharedPreviewPage(w http.ResponseWriter, r *http.Request) {
 	// Redirect URL after successful login
 	redirectURL := fmt.Sprintf("/private/topic/%d/thread/%d", topicID, threadID)
 
+	tsStr := r.URL.Query().Get("ts")
+	ts, _ := strconv.ParseInt(tsStr, 10, 64)
+	exp := time.Now().Add(24 * time.Hour)
+	if ts > 0 {
+		exp = time.Unix(ts, 0)
+	}
+
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       ogTitle,
 		Description: ogDescription,
-		Image:       share.MakeImageURL(cd.AbsoluteURL(""), ogTitle, cd.ShareSigner),
+		Image:       share.MakeImageURL(cd.AbsoluteURL(""), ogTitle, cd.ShareSigner, exp),
+		ImageWidth:  cd.Config.OGImageWidth,
+		ImageHeight: cd.Config.OGImageHeight,
+		TwitterSite: cd.Config.TwitterSite,
 		URL:         cd.AbsoluteURL(r.URL.RequestURI()),
 	}
 

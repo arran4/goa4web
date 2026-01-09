@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/templates"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/basicfont"
@@ -23,10 +24,11 @@ import (
 
 type OGImageHandler struct {
 	signer SignatureVerifier
+	config *config.RuntimeConfig
 }
 
-func NewOGImageHandler(signer SignatureVerifier) *OGImageHandler {
-	return &OGImageHandler{signer: signer}
+func NewOGImageHandler(signer SignatureVerifier, cfg *config.RuntimeConfig) *OGImageHandler {
+	return &OGImageHandler{signer: signer, config: cfg}
 }
 
 func (h *OGImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -48,7 +50,9 @@ func (h *OGImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	img := image.NewRGBA(image.Rect(0, 0, 1200, 630))
+	width := h.config.OGImageWidth
+	height := h.config.OGImageHeight
+	img := image.NewRGBA(image.Rect(0, 0, width, height))
 
 	// Background
 	switch style {
@@ -91,7 +95,7 @@ func (h *OGImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 			// Scale up if too small (make it at least 64px)
 			// But for now just draw centering.
-			x := (1200 - width) / 2
+			x := (width - b.Dx()) / 2
 			y := 150
 			draw.Draw(img, image.Rect(x, y, x+width, y+height), favImg, image.Point{}, draw.Over)
 			offsetY = y + height + 50
@@ -110,17 +114,17 @@ func (h *OGImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Face: face,
 	}
 
-	width := d.MeasureString(title)
-	x := (1200 - width.Ceil()) / 2
-	if x < 60 {
-		x = 60
+	wStr := d.MeasureString(title)
+	xStr := (width - wStr.Ceil()) / 2
+	if xStr < 60 {
+		xStr = 60
 	}
 	y := offsetY + 64 // baseline
 	if y > 550 {
 		y = 550
 	}
 
-	d.Dot = fixed.Point26_6{X: fixed.I(x), Y: fixed.I(y)}
+	d.Dot = fixed.Point26_6{X: fixed.I(xStr), Y: fixed.I(y)}
 	d.DrawString(title)
 
 	writeImage(w, r, img)

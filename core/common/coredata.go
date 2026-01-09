@@ -68,6 +68,9 @@ type OpenGraph struct {
 	Title       string
 	Description string
 	Image       string
+	ImageWidth  int
+	ImageHeight int
+	TwitterSite string
 	URL         string
 }
 

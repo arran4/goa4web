@@ -122,6 +122,11 @@ type RuntimeConfig struct {
 	// LinkSignSecretFile specifies the path to the external link signing key.
 	LinkSignSecretFile string
 
+	// ShareSignSecret is used to sign share URLs.
+	ShareSignSecret string
+	// ShareSignSecretFile specifies the path to the share signing key.
+	ShareSignSecretFile string
+
 	// AdminAPISecret is used to sign administrator API tokens.
 	AdminAPISecret string
 	// AdminAPISecretFile specifies the path to the administrator API signing key.

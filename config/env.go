@@ -157,6 +157,11 @@ const (
 	// EnvLinkSignSecretFile specifies the file containing the link signing key.
 	EnvLinkSignSecretFile = "LINK_SIGN_SECRET_FILE"
 
+	// EnvShareSignSecret provides the signing key for share URLs.
+	EnvShareSignSecret = "SHARE_SIGN_SECRET"
+	// EnvShareSignSecretFile specifies the file containing the share signing key.
+	EnvShareSignSecretFile = "SHARE_SIGN_SECRET_FILE"
+
 	// EnvDefaultLanguage specifies the site's default language.
 	EnvDefaultLanguage = "DEFAULT_LANGUAGE"
 

@@ -42,11 +42,19 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		cd.PageTitle = fmt.Sprintf("Blog %d", blog.Idblogs)
 	}
+
+	cd.OpenGraph = &common.OpenGraph{
+		Title:       cd.PageTitle,
+		Description: a4code.Snip(blog.Blog.String, 128),
+		Image:       cd.AbsoluteURL("/static/default-og-image.png"),
+		URL:         cd.AbsoluteURL(r.URL.String()),
+	}
+
 	if _, err := cd.BlogCommentThread(); err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("BlogCommentThread: %v", err)
 	}
 
-	data := Data{BackURL: r.URL.RequestURI()}
+	data := Data{BackURL: r.URL.Path}
 	quoteID, _ := strconv.Atoi(r.URL.Query().Get("quote"))
 	replyType := r.URL.Query().Get("type")
 	if quoteID != 0 {

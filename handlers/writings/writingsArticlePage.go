@@ -60,6 +60,13 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		cd.PageTitle = fmt.Sprintf("Writing %d", writing.Idwriting)
 	}
 
+	cd.OpenGraph = &common.OpenGraph{
+		Title:       writing.Title.String,
+		Description: a4code.Snip(writing.Abstract.String, 128),
+		Image:       cd.AbsoluteURL("/static/default-og-image.png"),
+		URL:         cd.AbsoluteURL(r.URL.String()),
+	}
+
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	common.WithOffset(offset)(cd)
 	editCommentId, _ := strconv.Atoi(r.URL.Query().Get("editComment"))
@@ -73,7 +80,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		Request:  r,
 		Comments: comments,
-		BackURL:  r.URL.RequestURI(),
+		BackURL:  r.URL.Path,
 	}
 
 	data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {

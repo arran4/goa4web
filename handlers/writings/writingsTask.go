@@ -1,6 +1,7 @@
 package writings
 
 import (
+	"fmt"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -50,6 +51,13 @@ func (t *writingsTask) Get(w http.ResponseWriter, r *http.Request) {
 		qv.Set("offset", strconv.Itoa(offset-ps))
 		cd.PrevLink = "/writings?" + qv.Encode()
 		cd.StartLink = "/writings?offset=0"
+	}
+
+	cd.OpenGraph = &common.OpenGraph{
+		Title:       "Writings",
+		Description: "A collection of articles and long-form content.",
+		Image:       cd.AbsoluteURL(fmt.Sprintf("/api/og-image?title=%s", "Writings")),
+		URL:         cd.AbsoluteURL(r.URL.String()),
 	}
 
 	if err := cd.ExecuteSiteTemplate(w, r, WritingsPageTmpl, data); err != nil {

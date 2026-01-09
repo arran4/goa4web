@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"strconv"
 
 	"github.com/arran4/goa4web/a4code"
@@ -61,7 +62,7 @@ func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 	queries := cd.Queries()
 	data := Data{
 		IsReplyable: true,
-		BackURL:     r.URL.RequestURI(),
+		BackURL:     r.URL.Path,
 	}
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["news"])
@@ -92,6 +93,13 @@ func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("TODO: FIx: Add enforced Access in router rather than task")
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
+	}
+
+	cd.OpenGraph = &common.OpenGraph{
+		Title:       strings.Split(post.News.String, "\n")[0],
+		Description: a4code.Snip(post.News.String, 128),
+		Image:       cd.AbsoluteURL("/static/default-og-image.png"),
+		URL:         cd.AbsoluteURL(r.URL.String()),
 	}
 
 	replyType := r.URL.Query().Get("type")

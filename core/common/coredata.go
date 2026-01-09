@@ -34,6 +34,7 @@ import (
 	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/lazy"
 	linksign "github.com/arran4/goa4web/internal/linksign"
+	"github.com/arran4/goa4web/internal/sharesign"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -60,6 +61,14 @@ type PageLink struct {
 	Num    int
 	Link   string
 	Active bool
+}
+
+// OpenGraph represents the Open Graph data for a page.
+type OpenGraph struct {
+	Title       string
+	Description string
+	Image       string
+	URL         string
 }
 
 // NotFoundLink represents a contextual link on the 404 page.
@@ -102,6 +111,7 @@ type CoreData struct {
 	FeedsEnabled      bool
 	FeedSigner        *feedsign.Signer
 	ImageSigner       *imagesign.Signer
+	ShareSigner       *sharesign.Signer
 	IndexItems        []IndexItem
 	LinkSigner        *linksign.Signer
 	absoluteURLBase   lazy.Value[string]  // cached base URL for absolute links
@@ -114,6 +124,7 @@ type CoreData struct {
 	NotificationCount int32
 	PageLinks         []PageLink
 	PageTitle         string
+	OpenGraph         *OpenGraph
 	PrevLink          string
 	RSSFeedURL        string
 	RSSFeedTitle      string
@@ -2673,6 +2684,14 @@ func WithSiteTitle(title string) CoreOption {
 func WithImageSigner(s *imagesign.Signer) CoreOption {
 	return func(cd *CoreData) {
 		cd.ImageSigner = s
+		cd.composeMapper()
+	}
+}
+
+// WithShareSigner registers the external link signer on CoreData.
+func WithShareSigner(s *sharesign.Signer) CoreOption {
+	return func(cd *CoreData) {
+		cd.ShareSigner = s
 		cd.composeMapper()
 	}
 }

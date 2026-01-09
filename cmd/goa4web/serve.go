@@ -66,6 +66,10 @@ func (c *serveCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("link sign secret: %w", err)
 	}
+	shareKey, err := config.LoadOrCreateShareSignSecret(core.OSFS{}, cfg.ShareSignSecret, cfg.ShareSignSecretFile)
+	if err != nil {
+		return fmt.Errorf("share sign secret: %w", err)
+	}
 	apiKey, err := config.LoadOrCreateAdminAPISecret(core.OSFS{}, cfg.AdminAPISecret, cfg.AdminAPISecretFile)
 	if err != nil {
 		return fmt.Errorf("admin api secret: %w", err)
@@ -76,6 +80,7 @@ func (c *serveCmd) Run() error {
 		app.WithSessionSecret(secret),
 		app.WithImageSignSecret(signKey),
 		app.WithLinkSignSecret(linkKey),
+		app.WithShareSignSecret(shareKey),
 		app.WithDBRegistry(c.rootCmd.dbReg),
 		app.WithEmailRegistry(c.rootCmd.emailReg),
 		app.WithDLQRegistry(c.rootCmd.dlqReg),

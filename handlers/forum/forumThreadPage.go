@@ -3,9 +3,11 @@ package forum
 import (
 	"database/sql"
 	"fmt"
+	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
+	"net/url"
 	"sort"
 	"strconv"
 	"strings"
@@ -45,7 +47,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	data := Data{
 		IsReplyable: true,
 		BasePath:    basePath,
-		BackURL:     r.URL.RequestURI(),
+		BackURL:     r.URL.Path,
 	}
 
 	threadRow, err := cd.SelectedThread()
@@ -83,12 +85,22 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	}
 	cd.PageTitle = fmt.Sprintf("Forum - %s", displayTitle)
 
+	cd.OpenGraph = &common.OpenGraph{
+		Title:       displayTitle,
+		Description: "A discussion on our forum.",
+		Image:       cd.AbsoluteURL(fmt.Sprintf("/api/og-image?title=%s", url.QueryEscape(displayTitle))),
+		URL:         cd.AbsoluteURL(r.URL.String()),
+	}
+
 	if _, ok := core.GetSessionOrFail(w, r); !ok {
 		return
 	}
 	commentRows, err := cd.SelectedThreadComments()
 	if err != nil {
 		log.Printf("thread comments: %v", err)
+	}
+	if len(commentRows) > 0 {
+		cd.OpenGraph.Description = a4code.Snip(commentRows[0].Text.String, 128)
 	}
 
 	// threadRow and topicRow are provided by the RequireThreadAndTopic

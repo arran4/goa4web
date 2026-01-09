@@ -130,7 +130,8 @@ WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_id, b.blog, b.written, b.timezone, u.username, coalesce(th.comments, 0),
-       b.users_idusers = ? AS is_owner
+       b.users_idusers = ? AS is_owner,
+       SUBSTRING_INDEX(b.blog, '\n', 1) as title
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
@@ -177,6 +178,7 @@ type GetBlogEntryForListerByIDRow struct {
 	Username      sql.NullString
 	Comments      int32
 	IsOwner       bool
+	Title         string
 }
 
 func (q *Queries) GetBlogEntryForListerByID(ctx context.Context, arg GetBlogEntryForListerByIDParams) (*GetBlogEntryForListerByIDRow, error) {
@@ -200,6 +202,7 @@ func (q *Queries) GetBlogEntryForListerByID(ctx context.Context, arg GetBlogEntr
 		&i.Username,
 		&i.Comments,
 		&i.IsOwner,
+		&i.Title,
 	)
 	return &i, err
 }
@@ -209,7 +212,8 @@ WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_id, b.blog, b.written, b.timezone, u.username, coalesce(th.comments, 0),
-       b.users_idusers = ? AS is_owner
+       b.users_idusers = ? AS is_owner,
+       SUBSTRING_INDEX(b.blog, '\n', 1) as title
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
@@ -259,6 +263,7 @@ type ListBlogEntriesByAuthorForListerRow struct {
 	Username      sql.NullString
 	Comments      int32
 	IsOwner       bool
+	Title         string
 }
 
 func (q *Queries) ListBlogEntriesByAuthorForLister(ctx context.Context, arg ListBlogEntriesByAuthorForListerParams) ([]*ListBlogEntriesByAuthorForListerRow, error) {
@@ -291,6 +296,7 @@ func (q *Queries) ListBlogEntriesByAuthorForLister(ctx context.Context, arg List
 			&i.Username,
 			&i.Comments,
 			&i.IsOwner,
+			&i.Title,
 		); err != nil {
 			return nil, err
 		}

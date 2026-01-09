@@ -24,6 +24,8 @@
             <input type="text" class="label-input" data-type="public" placeholder="Add public label"/>
             <input type="text" class="label-input" data-type="private" placeholder="Add private label"/>
             <input type="submit" value="Save Labels"/>
+            <button type="button" class="share-button" data-link="{{ .BackURL }}" data-module="forum">Share</button>
+            <input type="text" class="share-link" readonly style="display: none;"/>
         </form>
     </div>
     <script src="{{ assetHash "/forum/topic_labels.js" }}"></script>

@@ -28,6 +28,7 @@ import (
 	feedsign "github.com/arran4/goa4web/internal/feedsign"
 	imagesign "github.com/arran4/goa4web/internal/images"
 	linksign "github.com/arran4/goa4web/internal/linksign"
+	"github.com/arran4/goa4web/internal/sharesign"
 	"github.com/arran4/goa4web/internal/middleware"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	"github.com/arran4/goa4web/internal/router"
@@ -50,6 +51,7 @@ type Server struct {
 	FeedSigner      *feedsign.Signer
 	ImageSigner     *imagesign.Signer
 	LinkSigner      *linksign.Signer
+	ShareSigner     *sharesign.Signer
 	SessionManager  common.SessionManager
 	TasksReg        *tasks.Registry
 	DBReg           *dbdrivers.Registry
@@ -155,6 +157,11 @@ func WithImageSigner(signer *imagesign.Signer) Option {
 // WithLinkSigner sets the external link signer.
 func WithLinkSigner(signer *linksign.Signer) Option {
 	return func(s *Server) { s.LinkSigner = signer }
+}
+
+// WithShareSigner sets the external link signer.
+func WithShareSigner(signer *sharesign.Signer) Option {
+	return func(s *Server) { s.ShareSigner = signer }
 }
 
 // WithFeedSigner sets the feed signer.
@@ -270,6 +277,7 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 		common.WithImageSigner(s.ImageSigner),
 		common.WithCustomQueries(queries),
 		common.WithLinkSigner(s.LinkSigner),
+		common.WithShareSigner(s.ShareSigner),
 		common.WithFeedSigner(s.FeedSigner),
 		common.WithImageURLMapper(s.ImageSigner.MapURL),
 		common.WithSession(session),

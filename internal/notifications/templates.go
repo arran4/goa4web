@@ -3,10 +3,11 @@ package notifications
 import (
 	"bytes"
 	"context"
-	"github.com/arran4/goa4web/internal/db"
 	htemplate "html/template"
 	"io"
 	ttemplate "text/template"
+
+	"github.com/arran4/goa4web/internal/db"
 )
 
 type TemplateEngine interface {

@@ -46,6 +46,9 @@ func (AddAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) any {
 				evt.Data = map[string]any{}
 			}
 			evt.Data["NewsID"] = nid
+			if u, _ := cd.CurrentUser(); u != nil && u.Username.Valid {
+				evt.Data["Username"] = u.Username.String
+			}
 		}
 	}
 	return nil

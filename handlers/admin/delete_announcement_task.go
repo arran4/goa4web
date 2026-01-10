@@ -45,6 +45,9 @@ func (DeleteAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) any
 					evt.Data = map[string]any{}
 				}
 				evt.Data["AnnouncementID"] = id
+				if u, _ := cd.CurrentUser(); u != nil && u.Username.Valid {
+					evt.Data["Username"] = u.Username.String
+				}
 			}
 		}
 	}

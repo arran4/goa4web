@@ -65,6 +65,7 @@ type QuerierStub struct {
 	SystemGetUserByEmailRow   *SystemGetUserByEmailRow
 	SystemGetUserByEmailErr   error
 	SystemGetUserByEmailCalls []string
+	SystemGetUserByEmailFn    func(context.Context, string) (*SystemGetUserByEmailRow, error)
 
 	SystemGetLastNotificationForRecipientByMessageRow   *Notification
 	SystemGetLastNotificationForRecipientByMessageErr   error
@@ -98,10 +99,43 @@ type QuerierStub struct {
 	ListGrantsByUserIDErr     error
 	ListGrantsByUserIDCalls   []sql.NullInt32
 
+	AdminInsertBannedIpCalls []AdminInsertBannedIpParams
+	AdminInsertBannedIpErr   error
+	AdminInsertBannedIpFn    func(context.Context, AdminInsertBannedIpParams) error
+
+	InsertPasswordCalls []InsertPasswordParams
+	InsertPasswordErr   error
+	InsertPasswordFn    func(context.Context, InsertPasswordParams) error
+
+	AdminPromoteAnnouncementCalls []int32
+	AdminPromoteAnnouncementErr   error
+	AdminPromoteAnnouncementFn    func(context.Context, int32) error
+
+	AdminDemoteAnnouncementCalls []int32
+	AdminDemoteAnnouncementErr   error
+	AdminDemoteAnnouncementFn    func(context.Context, int32) error
+
+	AdminCancelBannedIpCalls []string
+	AdminCancelBannedIpErr   error
+	AdminCancelBannedIpFn    func(context.Context, string) error
+
+	SystemListPendingEmailsCalls  []SystemListPendingEmailsParams
+	SystemListPendingEmailsReturn []*SystemListPendingEmailsRow
+	SystemListPendingEmailsErr    error
+	SystemListPendingEmailsFn     func(context.Context, SystemListPendingEmailsParams) ([]*SystemListPendingEmailsRow, error)
+
+	SystemMarkPendingEmailSentCalls []int32
+	SystemMarkPendingEmailSentErr   error
+	SystemMarkPendingEmailSentFn    func(context.Context, int32) error
+
 	ListGrantsExtendedReturns []*ListGrantsExtendedRow
 	ListGrantsExtendedErr     error
 	ListGrantsExtendedCalls   int
 	ListGrantsExtendedFn      func(context.Context) ([]*ListGrantsExtendedRow, error)
+
+	AdminDeletePendingEmailCalls []int32
+	AdminDeletePendingEmailErr   error
+	AdminDeletePendingEmailFn    func(context.Context, int32) error
 
 	ListAdminUserCommentsReturns []*AdminUserComment
 	ListAdminUserCommentsErr     error
@@ -977,14 +1011,20 @@ func (s *QuerierStub) SystemGetUserByID(ctx context.Context, idusers int32) (*Sy
 func (s *QuerierStub) SystemGetUserByEmail(ctx context.Context, email string) (*SystemGetUserByEmailRow, error) {
 	s.mu.Lock()
 	s.SystemGetUserByEmailCalls = append(s.SystemGetUserByEmailCalls, email)
+	fn := s.SystemGetUserByEmailFn
+	row := s.SystemGetUserByEmailRow
+	err := s.SystemGetUserByEmailErr
 	s.mu.Unlock()
-	if s.SystemGetUserByEmailErr != nil {
-		return nil, s.SystemGetUserByEmailErr
+	if fn != nil {
+		return fn(ctx, email)
 	}
-	if s.SystemGetUserByEmailRow == nil {
+	if err != nil {
+		return nil, err
+	}
+	if row == nil {
 		return nil, errors.New("SystemGetUserByEmail not stubbed")
 	}
-	return s.SystemGetUserByEmailRow, nil
+	return row, nil
 }
 
 // SystemGetLastNotificationForRecipientByMessage records the call and returns the configured response.

@@ -146,7 +146,15 @@ func (n *Notifier) notifyAdmins(ctx context.Context, et *EmailTemplates, nt *str
 			}
 		}
 		if nt != nil {
-			msg, err := n.renderNotification(ctx, *nt, data)
+			// Internal notifications expect data wrapped in .Item and .Path
+			renderData := struct {
+				Path string
+				Item any
+			}{
+				Path: link,
+				Item: data,
+			}
+			msg, err := n.renderNotification(ctx, *nt, renderData)
 			if err != nil {
 				return err
 			}

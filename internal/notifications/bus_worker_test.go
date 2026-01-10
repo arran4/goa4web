@@ -207,7 +207,7 @@ func TestProcessEventDLQ(t *testing.T) {
 	n := New(WithQueries(q), WithEmailProvider(prov), WithConfig(cfg))
 	dlqRec := &recordDLQ{}
 
-	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/p", Task: TestTask{TaskString: TaskTest}, UserID: 1, Outcome: eventbus.TaskOutcomeSuccess}, dlqRec); err != nil {
+	if err := n.ProcessEvent(ctx, eventbus.TaskEvent{Path: "/p", Task: TestTask{TaskString: TaskTest}, UserID: 1, Outcome: eventbus.TaskOutcomeSuccess}, dlqRec); err != nil {
 		t.Fatalf("process: %v", err)
 	}
 	if dlqRec.msg != "" {
@@ -226,7 +226,7 @@ func TestProcessEventSubscribeSelf(t *testing.T) {
 	q := &querierStub{}
 	n := New(WithQueries(q), WithConfig(cfg))
 
-	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/p", Task: TaskTest, UserID: 1, Outcome: eventbus.TaskOutcomeSuccess}, nil); err != nil {
+	if err := n.ProcessEvent(ctx, eventbus.TaskEvent{Path: "/p", Task: TaskTest, UserID: 1, Outcome: eventbus.TaskOutcomeSuccess}, nil); err != nil {
 		t.Fatalf("process: %v", err)
 	}
 }
@@ -241,7 +241,7 @@ func TestProcessEventNoAutoSubscribe(t *testing.T) {
 	q := &querierStub{}
 	n := New(WithQueries(q), WithConfig(cfg))
 
-	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/p", Task: TaskTest, UserID: 1, Outcome: eventbus.TaskOutcomeSuccess}, nil); err != nil {
+	if err := n.ProcessEvent(ctx, eventbus.TaskEvent{Path: "/p", Task: TaskTest, UserID: 1, Outcome: eventbus.TaskOutcomeSuccess}, nil); err != nil {
 		t.Fatalf("process: %v", err)
 	}
 }
@@ -264,7 +264,7 @@ func TestProcessEventAdminNotify(t *testing.T) {
 	prov := &busDummyProvider{}
 	n := New(WithQueries(q), WithEmailProvider(prov), WithConfig(cfg))
 
-	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/admin/x", Task: TaskTest, UserID: 1, Outcome: eventbus.TaskOutcomeSuccess}, nil); err != nil {
+	if err := n.ProcessEvent(ctx, eventbus.TaskEvent{Path: "/admin/x", Task: TaskTest, UserID: 1, Outcome: eventbus.TaskOutcomeSuccess}, nil); err != nil {
 		t.Fatalf("process: %v", err)
 	}
 }
@@ -280,7 +280,7 @@ func TestProcessEventWritingSubscribers(t *testing.T) {
 	q := &querierStub{}
 	n := New(WithQueries(q), WithConfig(cfg))
 
-	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/writings/article/1", Task: TaskTest, UserID: 2, Data: map[string]any{"target": Target{Type: "writing", ID: 1}}, Outcome: eventbus.TaskOutcomeSuccess}, nil); err != nil {
+	if err := n.ProcessEvent(ctx, eventbus.TaskEvent{Path: "/writings/article/1", Task: TaskTest, UserID: 2, Data: map[string]any{"target": Target{Type: "writing", ID: 1}}, Outcome: eventbus.TaskOutcomeSuccess}, nil); err != nil {
 		t.Fatalf("process: %v", err)
 	}
 }
@@ -316,7 +316,7 @@ func TestProcessEventTargetUsers(t *testing.T) {
 
 	evt := eventbus.TaskEvent{Path: "/announce/1", Task: targetTask{TaskString: "Target"}, UserID: 1, Data: map[string]any{"Username": "bob"}, Outcome: eventbus.TaskOutcomeSuccess}
 
-	if err := n.processEvent(ctx, evt, nil); err != nil {
+	if err := n.ProcessEvent(ctx, evt, nil); err != nil {
 		t.Fatalf("process: %v", err)
 	}
 	// Check calls

@@ -16,10 +16,12 @@ type Signer struct {
 }
 
 // NewSigner returns a Signer using cfg for hostname resolution and key for HMAC.
-func NewSigner(cfg *config.RuntimeConfig, key string, expiry ...time.Duration) *Signer {
+func NewSigner(cfg *config.RuntimeConfig, key string, expiry ...any) *Signer {
 	var e time.Duration
 	if len(expiry) > 0 {
-		e = expiry[0]
+		if v, ok := expiry[0].(time.Duration); ok {
+			e = v
+		}
 	}
 	return &Signer{cfg: cfg, signer: &sign.Signer{Key: key, DefaultExpiry: e}}
 }

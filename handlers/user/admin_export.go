@@ -2,16 +2,18 @@ package user
 
 import (
 	"archive/zip"
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"strconv"
 
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 )
@@ -32,34 +34,38 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO evaluate why we are creating a new entity
-	cd := common.NewCoreData(r.Context(), queries, config.NewRuntimeConfig())
-	cd.UserID = int32(uid)
-
-	user, err := cd.CurrentUser()
+	uid32 := int32(uid)
+	userRow, err := queries.SystemGetUserByID(r.Context(), uid32)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			http.NotFound(w, r)
+			return
+		}
 		log.Printf("current user: %v", err)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
-	if user == nil {
-		http.NotFound(w, r)
-		return
+	user := &db.User{
+		Idusers:                userRow.Idusers,
+		Username:               userRow.Username,
+		PublicProfileEnabledAt: userRow.PublicProfileEnabledAt,
+		// DeletedAt is not returned by SystemGetUserByID and not populated by CurrentUser.
+		// Email is not in db.User struct.
 	}
 
-	pref, err := cd.Preference()
+	pref, err := queries.GetPreferenceForLister(r.Context(), uid32)
 	if err != nil {
 		log.Printf("load preference: %v", err)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
-	langs, err := queries.GetUserLanguages(r.Context(), int32(uid))
+	langs, err := queries.GetUserLanguages(r.Context(), uid32)
 	if err != nil {
 		log.Printf("load languages: %v", err)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
-	perms, err := cd.Permissions()
+	perms, err := queries.GetPermissionsByUserID(r.Context(), uid32)
 	if err != nil {
 		log.Printf("load permissions: %v", err)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
@@ -80,7 +86,10 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 		Permissions: perms,
 	}
 
-	cats, err := cd.WritingCategories()
+	cats, err := queries.SystemListWritingCategories(r.Context(), db.SystemListWritingCategoriesParams{
+		Limit:  math.MaxInt32,
+		Offset: 0,
+	})
 	if err != nil {
 		log.Printf("fetch categories: %v", err)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))

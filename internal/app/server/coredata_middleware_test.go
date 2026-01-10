@@ -53,8 +53,8 @@ func TestCoreDataMiddlewareUserRoles(t *testing.T) {
 	})
 
 	reg := email.NewRegistry()
-	signer := imagesign.NewSigner(cfg, "k")
-	linkSigner := linksign.NewSigner(cfg, "k")
+	signer := imagesign.NewSigner(cfg, "k", 0)
+	linkSigner := linksign.NewSigner(cfg, "k", 0)
 	srv := New(
 		WithDB(conn),
 		WithConfig(cfg),
@@ -103,8 +103,8 @@ func TestCoreDataMiddlewareAnonymous(t *testing.T) {
 	})
 
 	reg := email.NewRegistry()
-	signer := imagesign.NewSigner(cfg, "k")
-	linkSigner := linksign.NewSigner(cfg, "k")
+	signer := imagesign.NewSigner(cfg, "k", 0)
+	linkSigner := linksign.NewSigner(cfg, "k", 0)
 	srv := New(
 		WithDB(conn),
 		WithConfig(cfg),

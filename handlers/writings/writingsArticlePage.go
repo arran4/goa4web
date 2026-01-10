@@ -143,7 +143,13 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 
 	cd.CustomIndexItems = append(cd.CustomIndexItems, WritingsPageSpecificItems(cd, r)...)
 
-	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
+	shareSignExpiry, err := time.ParseDuration(cd.Config.ShareSignExpiry)
+	if err != nil {
+		cd.SetCurrentError(fmt.Sprintf("parsing share sign expiry: %v", err))
+		handlers.TemplateHandler(w, r, "writings/articlePage.gohtml", data)
+		return
+	}
+	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret, shareSignExpiry)
 	data.ShareURL = signer.SignedURL(fmt.Sprintf("/writings/article/%d", writing.Idwriting))
 
 	handlers.TemplateHandler(w, r, "articlePage.gohtml", data)

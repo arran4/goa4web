@@ -196,7 +196,15 @@ func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 
 	cd.CustomIndexItems = append(cd.CustomIndexItems, NewsPageSpecificItems(cd, r, post)...)
 
-	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
+	shareSignExpiry, err := time.ParseDuration(cd.Config.ShareSignExpiry)
+	if err != nil {
+		cd.SetCurrentError(fmt.Sprintf("parsing share sign expiry: %v", err))
+		if err := cd.ExecuteSiteTemplate(w, r, NewsPostPageTmpl, data); err != nil {
+			handlers.RenderErrorPage(w, r, err)
+		}
+		return
+	}
+	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret, shareSignExpiry)
 	data.ShareURL = signer.SignedURL(fmt.Sprintf("/news/news/%d", pid))
 
 	if err := cd.ExecuteSiteTemplate(w, r, NewsPostPageTmpl, data); err != nil {

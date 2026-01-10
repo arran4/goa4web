@@ -42,7 +42,11 @@ func (c *linksSignCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("link sign secret: %w", err)
 	}
-	signer := linksign.NewSigner(cfg, key)
+	linkSignExpiry, err := time.ParseDuration(cfg.LinkSignExpiry)
+	if err != nil {
+		return fmt.Errorf("parsing link sign expiry: %w", err)
+	}
+	signer := linksign.NewSigner(cfg, key, linkSignExpiry)
 	var exp time.Time
 	if !c.NoExpiry {
 		d, err := time.ParseDuration(c.Duration)

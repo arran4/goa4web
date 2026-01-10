@@ -16,8 +16,8 @@ type Signer struct {
 }
 
 // NewSigner returns a Signer using cfg for hostname resolution and key for HMAC.
-func NewSigner(cfg *config.RuntimeConfig, key string) *Signer {
-	return &Signer{cfg: cfg, signer: &sign.Signer{Key: key}}
+func NewSigner(cfg *config.RuntimeConfig, key string, expiry time.Duration) *Signer {
+	return &Signer{cfg: cfg, signer: &sign.Signer{Key: key, DefaultExpiry: expiry}}
 }
 
 // SignedURL generates a redirect URL for the given link.

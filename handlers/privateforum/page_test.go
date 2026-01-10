@@ -22,7 +22,7 @@ import (
 
 func TestPage_NoAccess(t *testing.T) {
 	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
-	cd.ShareSigner = sharesign.NewSigner(config.NewRuntimeConfig(), "secret")
+	cd.ShareSigner = sharesign.NewSigner(config.NewRuntimeConfig(), "secret", 0)
 	req := httptest.NewRequest(http.MethodGet, "/private", nil)
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 
@@ -47,7 +47,7 @@ func TestPage_Access(t *testing.T) {
 			AddRow(1, 1, 1, "administrator", true))
 
 	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
-	cd.ShareSigner = sharesign.NewSigner(config.NewRuntimeConfig(), "secret")
+	cd.ShareSigner = sharesign.NewSigner(config.NewRuntimeConfig(), "secret", 0)
 	cd.UserID = 1
 	cd.AdminMode = true
 	req := httptest.NewRequest(http.MethodGet, "/private", nil)
@@ -79,7 +79,7 @@ func TestPage_SeeNoCreate(t *testing.T) {
 		ListPrivateTopicParticipantsByTopicIDForUserReturns: []*db.ListPrivateTopicParticipantsByTopicIDForUserRow{},
 	}
 	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
-	cd.ShareSigner = sharesign.NewSigner(config.NewRuntimeConfig(), "secret")
+	cd.ShareSigner = sharesign.NewSigner(config.NewRuntimeConfig(), "secret", 0)
 	cd.UserID = 1
 	cd.AdminMode = false
 	cachePrivateTopics(cd, nil)
@@ -109,7 +109,7 @@ func TestPage_AdminLinks(t *testing.T) {
 			AddRow(1, 1, 1, "administrator", true))
 
 	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
-	cd.ShareSigner = sharesign.NewSigner(config.NewRuntimeConfig(), "secret")
+	cd.ShareSigner = sharesign.NewSigner(config.NewRuntimeConfig(), "secret", 0)
 	cd.UserID = 1
 	cd.AdminMode = true
 

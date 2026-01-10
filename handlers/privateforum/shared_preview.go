@@ -21,7 +21,12 @@ import (
 func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
+	loginExpiry, err := time.ParseDuration(cd.Config.ShareSignExpiryLogin)
+	if err != nil {
+		handlers.RenderErrorPage(w, r, fmt.Errorf("parsing share sign expiry login: %w", err))
+		return
+	}
+	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret, loginExpiry)
 	cd.ShareSigner = signer // Ensure it's set for MakeImageURL
 
 	if share.VerifyAndGetPath(r, signer) == "" {
@@ -33,7 +38,10 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, actualURL, http.StatusFound)
 			return
 		}
-		http.Error(w, "invalid signature", http.StatusForbidden)
+		// If user is not logged in, redirect to login page with a new short-lived signed URL
+		newSignedURL := signer.SignedURL(r.URL.Path)
+		loginURL := fmt.Sprintf("/login?redirect_to=%s", url.QueryEscape(newSignedURL))
+		http.Redirect(w, r, loginURL, http.StatusFound)
 		return
 	}
 
@@ -82,7 +90,12 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
+	loginExpiry, err := time.ParseDuration(cd.Config.ShareSignExpiryLogin)
+	if err != nil {
+		handlers.RenderErrorPage(w, r, fmt.Errorf("parsing share sign expiry login: %w", err))
+		return
+	}
+	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret, loginExpiry)
 	cd.ShareSigner = signer // Ensure it's set for MakeImageURL
 
 	// Verify signature
@@ -93,7 +106,10 @@ func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, actualURL, http.StatusFound)
 			return
 		}
-		http.Error(w, "invalid signature", http.StatusForbidden)
+		// If user is not logged in, redirect to login page with a new short-lived signed URL
+		newSignedURL := signer.SignedURL(r.URL.Path)
+		loginURL := fmt.Sprintf("/login?redirect_to=%s", url.QueryEscape(newSignedURL))
+		http.Redirect(w, r, loginURL, http.StatusFound)
 		return
 	}
 

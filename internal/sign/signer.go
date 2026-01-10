@@ -12,7 +12,8 @@ import (
 
 // Signer signs and verifies arbitrary data using HMAC-SHA256.
 type Signer struct {
-	Key string
+	Key           string
+	DefaultExpiry time.Duration
 }
 
 // Sign generates a signature for data. When exp is zero, the
@@ -23,7 +24,11 @@ func (s *Signer) Sign(data string, exp ...time.Time) (int64, string) {
 	if len(exp) > 0 {
 		ts = exp[0].Unix()
 	} else {
-		ts = time.Now().Add(24 * time.Hour).Unix()
+		expiry := 24 * time.Hour
+		if s.DefaultExpiry > 0 {
+			expiry = s.DefaultExpiry
+		}
+		ts = time.Now().Add(expiry).Unix()
 	}
 	mac := hmac.New(sha256.New, []byte(s.Key))
 	io.WriteString(mac, fmt.Sprintf("%s:%d", data, ts))

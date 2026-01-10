@@ -89,7 +89,13 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 
 	cd.CustomIndexItems = append(cd.CustomIndexItems, BlogsPageSpecificItems(cd, r)...)
 
-	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
+	shareSignExpiry, err := time.ParseDuration(cd.Config.ShareSignExpiry)
+	if err != nil {
+		cd.SetCurrentError(fmt.Sprintf("parsing share sign expiry: %v", err))
+		handlers.TemplateHandler(w, r, "blogPage.gohtml", data)
+		return
+	}
+	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret, shareSignExpiry)
 	data.ShareURL = signer.SignedURL(fmt.Sprintf("/blogs/blog/%d", blog.Idblogs))
 
 	handlers.TemplateHandler(w, r, "blogPage.gohtml", data)

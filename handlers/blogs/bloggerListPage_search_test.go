@@ -31,7 +31,7 @@ func TestBloggerListPageSearchRedirect(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/bloggers?search=arran4", nil)
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
-	cd.ShareSigner = sharesign.NewSigner(config.NewRuntimeConfig(), "secret")
+	cd.ShareSigner = sharesign.NewSigner(config.NewRuntimeConfig(), "secret", 0)
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()

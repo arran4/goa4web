@@ -13,7 +13,7 @@ func TestSigner(t *testing.T) {
 	cfg := &config.RuntimeConfig{
 		HTTPHostname: "http://localhost:8080",
 	}
-	s := sharesign.NewSigner(cfg, "secret")
+	s := sharesign.NewSigner(cfg, "secret", 0)
 	link := "/news/news/1"
 	ts, sig := s.Sign(link)
 	if !s.Verify(link, fmt.Sprint(ts), sig) {

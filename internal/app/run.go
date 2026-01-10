@@ -173,9 +173,23 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 	if err := config.ApplySMTPFallbacks(cfg); err != nil {
 		return nil, fmt.Errorf("smtp fallback: %w", err)
 	}
-	imgSigner := imagesign.NewSigner(cfg, o.ImageSignSecret)
-	linkSigner := linksign.NewSigner(cfg, o.LinkSignSecret)
-	shareSigner := sharesign.NewSigner(cfg, o.ShareSignSecret)
+
+	imageSignExpiry, err := time.ParseDuration(cfg.ImageSignExpiry)
+	if err != nil {
+		return nil, fmt.Errorf("parsing image sign expiry: %w", err)
+	}
+	linkSignExpiry, err := time.ParseDuration(cfg.LinkSignExpiry)
+	if err != nil {
+		return nil, fmt.Errorf("parsing link sign expiry: %w", err)
+	}
+	shareSignExpiry, err := time.ParseDuration(cfg.ShareSignExpiry)
+	if err != nil {
+		return nil, fmt.Errorf("parsing share sign expiry: %w", err)
+	}
+
+	imgSigner := imagesign.NewSigner(cfg, o.ImageSignSecret, imageSignExpiry)
+	linkSigner := linksign.NewSigner(cfg, o.LinkSignSecret, linkSignExpiry)
+	shareSigner := sharesign.NewSigner(cfg, o.ShareSignSecret, shareSignExpiry)
 	feedSigner := feedsign.NewSigner(cfg, o.LinkSignSecret)
 	adminhandlers.AdminAPISecret = o.APISecret
 	email.SetDefaultFromName(cfg.EmailFrom)

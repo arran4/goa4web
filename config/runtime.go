@@ -116,16 +116,24 @@ type RuntimeConfig struct {
 	ImageSignSecret string
 	// ImageSignSecretFile specifies the path to the image signing key.
 	ImageSignSecretFile string
+	// ImageSignExpiry is the default expiry duration for image URLs.
+	ImageSignExpiry string
 
 	// LinkSignSecret is used to sign external link URLs.
 	LinkSignSecret string
 	// LinkSignSecretFile specifies the path to the external link signing key.
 	LinkSignSecretFile string
+	// LinkSignExpiry is the default expiry duration for external link URLs.
+	LinkSignExpiry string
 
 	// ShareSignSecret is used to sign share URLs.
 	ShareSignSecret string
 	// ShareSignSecretFile specifies the path to the share signing key.
 	ShareSignSecretFile string
+	// ShareSignExpiry is the default expiry duration for share URLs.
+	ShareSignExpiry string
+	// ShareSignExpiryLogin is the expiry duration for share URLs when a user is not logged in.
+	ShareSignExpiryLogin string
 
 	// AdminAPISecret is used to sign administrator API tokens.
 	AdminAPISecret string

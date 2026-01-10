@@ -6,11 +6,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"regexp"
 	"strings"
 	"testing"
-
-	"github.com/DATA-DOG/go-sqlmock"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
@@ -19,23 +16,24 @@ import (
 )
 
 func TestAdminCategoryCreateSubmitSuccess(t *testing.T) {
-	sqlDB, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	queries := &db.QuerierStub{
+		GetAllForumCategoriesReturns: []*db.Forumcategory{},
+		AdminCreateForumCategoryFn: func(ctx context.Context, arg db.AdminCreateForumCategoryParams) (int64, error) {
+			if arg.ParentID != 1 {
+				t.Fatalf("unexpected parent id %d", arg.ParentID)
+			}
+			if arg.CategoryLanguageID != (sql.NullInt32{Int32: 2, Valid: true}) {
+				t.Fatalf("unexpected language id %+v", arg.CategoryLanguageID)
+			}
+			if arg.Title.String != "name" || !arg.Title.Valid {
+				t.Fatalf("unexpected title %+v", arg.Title)
+			}
+			if arg.Description.String != "desc" || !arg.Description.Valid {
+				t.Fatalf("unexpected desc %+v", arg.Description)
+			}
+			return 5, nil
+		},
 	}
-	defer sqlDB.Close()
-
-	mock.MatchExpectationsInOrder(false)
-	categoriesRows := sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "language_id", "title", "description"})
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT f.idforumcategory, f.forumcategory_idforumcategory, f.language_id, f.title, f.description\nFROM forumcategory f\nWHERE (\n    f.language_id = 0\n    OR f.language_id IS NULL\n    OR EXISTS (\n        SELECT 1 FROM user_language ul\n        WHERE ul.users_idusers = ?\n          AND ul.language_id = f.language_id\n    )\n    OR NOT EXISTS (\n        SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?\n    )\n)\n")).WithArgs(int32(0), int32(0)).WillReturnRows(categoriesRows)
-	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO forumcategory (forumcategory_idforumcategory, language_id, title, description)\nVALUES (?, ?, ?, ?)")).WithArgs(
-		int32(1),
-		sql.NullInt32{Int32: 2, Valid: true},
-		sql.NullString{String: "name", Valid: true},
-		sql.NullString{String: "desc", Valid: true},
-	).WillReturnResult(sqlmock.NewResult(5, 1))
-
-	queries := db.New(sqlDB)
 	form := url.Values{
 		"name":     {"name"},
 		"desc":     {"desc"},
@@ -52,9 +50,6 @@ func TestAdminCategoryCreateSubmitSuccess(t *testing.T) {
 
 	AdminCategoryCreateSubmit(rr, req)
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 	if rr.Code != http.StatusSeeOther {
 		t.Fatalf("status=%d", rr.Code)
 	}
@@ -65,13 +60,7 @@ func TestAdminCategoryCreateSubmitSuccess(t *testing.T) {
 }
 
 func TestAdminCategoryCreateSubmitValidationError(t *testing.T) {
-	sqlDB, _, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer sqlDB.Close()
-
-	queries := db.New(sqlDB)
+	queries := &db.QuerierStub{}
 	form := url.Values{
 		"desc":     {"desc"},
 		"pcid":     {"1"},

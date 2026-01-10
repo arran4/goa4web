@@ -184,11 +184,13 @@ func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp Se
 	}
 	if nt := tp.SelfInternalNotificationTemplate(evt); nt != nil {
 		data := struct {
-			Path string
-			Item any
+			Path      string
+			Item      any
+			TaskEvent eventbus.TaskEvent
 		}{
-			Path: evt.Path,
-			Item: evt.Data,
+			Path:      evt.Path,
+			Item:      evt.Data,
+			TaskEvent: evt,
 		}
 		msg, err := n.renderNotification(ctx, *nt, data)
 		if err != nil {
@@ -243,11 +245,13 @@ func (n *Notifier) notifyTargetUsers(ctx context.Context, evt eventbus.TaskEvent
 		}
 		if nt := tp.TargetInternalNotificationTemplate(evt); nt != nil {
 			data := struct {
-				Path string
-				Item any
+				Path      string
+				Item      any
+				TaskEvent eventbus.TaskEvent
 			}{
-				Path: evt.Path,
-				Item: evt.Data,
+				Path:      evt.Path,
+				Item:      evt.Data,
+				TaskEvent: evt,
 			}
 			msg, err := n.renderNotification(ctx, *nt, data)
 			if err != nil {

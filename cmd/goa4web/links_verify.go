@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 
+	"time"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	linksign "github.com/arran4/goa4web/internal/linksign"
@@ -41,7 +42,11 @@ func (c *linksVerifyCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("link sign secret: %w", err)
 	}
-	signer := linksign.NewSigner(cfg, key)
+	linkSignExpiry, err := time.ParseDuration(cfg.LinkSignExpiry)
+	if err != nil {
+		return fmt.Errorf("parsing link sign expiry: %w", err)
+	}
+	signer := linksign.NewSigner(cfg, key, linkSignExpiry)
 	if signer.Verify(c.url, c.ts, c.sig) {
 		fmt.Println("valid")
 	} else {

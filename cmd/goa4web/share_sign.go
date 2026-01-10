@@ -42,7 +42,11 @@ func (c *shareSignCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("share sign secret: %w", err)
 	}
-	signer := sharesign.NewSigner(cfg, key)
+	shareSignExpiry, err := time.ParseDuration(cfg.ShareSignExpiry)
+	if err != nil {
+		return fmt.Errorf("parsing share sign expiry: %w", err)
+	}
+	signer := sharesign.NewSigner(cfg, key, shareSignExpiry)
 	var exp time.Time
 	if !c.NoExpiry {
 		d, err := time.ParseDuration(c.Duration)

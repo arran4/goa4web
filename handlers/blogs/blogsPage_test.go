@@ -57,7 +57,7 @@ func TestBlogsBloggerPostsPage(t *testing.T) {
 
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithSession(sess))
-	cd.ShareSigner = sharesign.NewSigner(config.NewRuntimeConfig(), "secret")
+	cd.ShareSigner = sharesign.NewSigner(config.NewRuntimeConfig(), "secret", 0)
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 

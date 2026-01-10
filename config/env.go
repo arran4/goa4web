@@ -151,16 +151,24 @@ const (
 	EnvImageSignSecret = "IMAGE_SIGN_SECRET"
 	// EnvImageSignSecretFile specifies the file containing the signing key.
 	EnvImageSignSecretFile = "IMAGE_SIGN_SECRET_FILE"
+	// EnvImageSignExpiry sets the default expiry duration for image URLs.
+	EnvImageSignExpiry = "IMAGE_SIGN_EXPIRY"
 
 	// EnvLinkSignSecret provides the signing key for external link URLs.
 	EnvLinkSignSecret = "LINK_SIGN_SECRET"
 	// EnvLinkSignSecretFile specifies the file containing the link signing key.
 	EnvLinkSignSecretFile = "LINK_SIGN_SECRET_FILE"
+	// EnvLinkSignExpiry sets the default expiry duration for external link URLs.
+	EnvLinkSignExpiry = "LINK_SIGN_EXPIRY"
 
 	// EnvShareSignSecret provides the signing key for share URLs.
 	EnvShareSignSecret = "SHARE_SIGN_SECRET"
 	// EnvShareSignSecretFile specifies the file containing the share signing key.
 	EnvShareSignSecretFile = "SHARE_SIGN_SECRET_FILE"
+	// EnvShareSignExpiry sets the default expiry duration for share URLs.
+	EnvShareSignExpiry = "SHARE_SIGN_EXPIRY"
+	// EnvShareSignExpiryLogin sets the expiry duration for share URLs when a user is not logged in.
+	EnvShareSignExpiryLogin = "SHARE_SIGN_EXPIRY_LOGIN"
 
 	// EnvDefaultLanguage specifies the site's default language.
 	EnvDefaultLanguage = "DEFAULT_LANGUAGE"

@@ -11,7 +11,7 @@ import (
 )
 
 func TestMapURLUploading(t *testing.T) {
-	signer := NewSigner(&config.RuntimeConfig{}, "k")
+	signer := NewSigner(&config.RuntimeConfig{}, "k", 0)
 	got := signer.MapURL("img", "uploading:abc")
 	if got != "uploading:abc" {
 		t.Fatalf("expected placeholder unchanged, got %s", got)
@@ -20,7 +20,7 @@ func TestMapURLUploading(t *testing.T) {
 
 func TestMapURLImage(t *testing.T) {
 	cfg := &config.RuntimeConfig{HTTPHostname: "http://mysite"}
-	signer := NewSigner(cfg, "k")
+	signer := NewSigner(cfg, "k", 0)
 	got := signer.MapURL("img", "image:foo")
 	if got == "image:foo" || !strings.Contains(got, "/images/image/") {
 		t.Fatalf("expected signed image url, got %s", got)
@@ -29,7 +29,7 @@ func TestMapURLImage(t *testing.T) {
 
 func TestSignedURLTTL(t *testing.T) {
 	cfg := &config.RuntimeConfig{HTTPHostname: "http://example.com"}
-	signer := NewSigner(cfg, "k")
+	signer := NewSigner(cfg, "k", 0)
 	ttl := 2 * time.Hour
 	surl := signer.SignedURLTTL("img123.jpg", ttl)
 	if !strings.Contains(surl, "ts=") || !strings.Contains(surl, "sig=") {
@@ -52,7 +52,7 @@ func TestSignedURLTTL(t *testing.T) {
 
 func TestSignedURLQueryParams(t *testing.T) {
 	cfg := &config.RuntimeConfig{HTTPHostname: "http://example.com"}
-	signer := NewSigner(cfg, "k")
+	signer := NewSigner(cfg, "k", 0)
 
 	// Case 1: ID with existing params but no sig/ts
 	idWithParams := "img123.jpg?foo=bar"

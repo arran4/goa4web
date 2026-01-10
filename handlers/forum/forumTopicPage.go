@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"time"
 	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
@@ -186,7 +187,13 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	}
 
 	// Generate signed share link for all topics (supports public topics with restrictive grants)
-	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
+	shareSignExpiry, err := time.ParseDuration(cd.Config.ShareSignExpiry)
+	if err != nil {
+		cd.SetCurrentError(fmt.Sprintf("parsing share sign expiry: %v", err))
+		handlers.TemplateHandler(w, r, "forum/topicsPage.gohtml", data)
+		return
+	}
+	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret, shareSignExpiry)
 	targetPath := fmt.Sprintf("%s/topic/%d", basePath, topicId)
 	data.ShareURL = signer.SignedURL(targetPath)
 

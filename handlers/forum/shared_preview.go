@@ -12,6 +12,7 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/handlers/share"
+	"net/url"
 	"github.com/arran4/goa4web/internal/sharesign"
 	"github.com/gorilla/mux"
 )
@@ -20,12 +21,29 @@ import (
 func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	// Create signer from config
-	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
+	loginExpiry, err := time.ParseDuration(cd.Config.ShareSignExpiryLogin)
+	if err != nil {
+		handlers.RenderErrorPage(w, r, fmt.Errorf("parsing share sign expiry login: %w", err))
+		return
+	}
+	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret, loginExpiry)
 
 	// Verify signature
 	if share.VerifyAndGetPath(r, signer) == "" {
-		http.Error(w, "invalid signature", http.StatusForbidden)
+		// If user is logged in, redirect to actual content URL
+		if cd.UserID != 0 {
+			vars := mux.Vars(r)
+			threadID, _ := strconv.Atoi(vars["thread"])
+			topicID, _ := strconv.Atoi(vars["topic"])
+			actualURL := fmt.Sprintf("/forum/topic/%d/thread/%d", topicID, threadID)
+			http.Redirect(w, r, actualURL, http.StatusFound)
+			return
+		}
+
+		// If user is not logged in, redirect to login page with a new short-lived signed URL
+		newSignedURL := signer.SignedURL(r.URL.Path)
+		loginURL := fmt.Sprintf("/login?redirect_to=%s", url.QueryEscape(newSignedURL))
+		http.Redirect(w, r, loginURL, http.StatusFound)
 		return
 	}
 
@@ -74,10 +92,27 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
+	loginExpiry, err := time.ParseDuration(cd.Config.ShareSignExpiryLogin)
+	if err != nil {
+		handlers.RenderErrorPage(w, r, fmt.Errorf("parsing share sign expiry login: %w", err))
+		return
+	}
+	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret, loginExpiry)
 
 	if share.VerifyAndGetPath(r, signer) == "" {
-		http.Error(w, "invalid signature", http.StatusForbidden)
+		// If user is logged in, redirect to actual content URL
+		if cd.UserID != 0 {
+			vars := mux.Vars(r)
+			topicID, _ := strconv.Atoi(vars["topic"])
+			actualURL := fmt.Sprintf("/forum/topic/%d", topicID)
+			http.Redirect(w, r, actualURL, http.StatusFound)
+			return
+		}
+
+		// If user is not logged in, redirect to login page with a new short-lived signed URL
+		newSignedURL := signer.SignedURL(r.URL.Path)
+		loginURL := fmt.Sprintf("/login?redirect_to=%s", url.QueryEscape(newSignedURL))
+		http.Redirect(w, r, loginURL, http.StatusFound)
 		return
 	}
 

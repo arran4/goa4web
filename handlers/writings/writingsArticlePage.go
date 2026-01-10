@@ -144,7 +144,8 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	cd.CustomIndexItems = append(cd.CustomIndexItems, WritingsPageSpecificItems(cd, r)...)
 
 	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
-	data.ShareURL = signer.SignedURL(fmt.Sprintf("/writings/article/%d", writing.Idwriting))
+	cd.ShareURL = signer.SignedURL(fmt.Sprintf("/writings/article/%d", writing.Idwriting))
+	data.ShareURL = cd.ShareURL
 
 	ArticlePageTmpl.Handle(w, r, data)
 }

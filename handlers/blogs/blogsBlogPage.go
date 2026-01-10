@@ -90,7 +90,8 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 	cd.CustomIndexItems = append(cd.CustomIndexItems, BlogsPageSpecificItems(cd, r)...)
 
 	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
-	data.ShareURL = signer.SignedURL(fmt.Sprintf("/blogs/blog/%d", blog.Idblogs))
+	cd.ShareURL = signer.SignedURL(fmt.Sprintf("/blogs/blog/%d", blog.Idblogs))
+	data.ShareURL = cd.ShareURL
 
 	BlogsBlogPageTmpl.Handle(w, r, data)
 }

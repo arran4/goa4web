@@ -52,6 +52,14 @@ func NewsGeneralIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 func NewsPageSpecificItems(cd *common.CoreData, r *http.Request, post *db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow) []common.IndexItem {
 	var items []common.IndexItem
 	if post != nil {
+		if cd.ShareURL != "" {
+			items = append(items, common.IndexItem{
+				TemplateName: "sharing/_share.gohtml",
+				TemplateData: map[string]interface{}{
+					"ShareURL": cd.ShareURL,
+				},
+			})
+		}
 		// Edit
 		if cd.ShowEditNews(post.Idsitenews, post.UsersIdusers) {
 			items = append(items, common.IndexItem{

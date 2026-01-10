@@ -97,7 +97,7 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 		// Add the Share Topic item
 		if cd.ShareURL != "" {
 			items = append(items, common.IndexItem{
-				TemplateName: "forum/_share_topic.gohtml",
+				TemplateName: "sharing/_share.gohtml",
 				TemplateData: map[string]interface{}{
 					"ShareURL": cd.ShareURL,
 				},

@@ -197,7 +197,8 @@ func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 	cd.CustomIndexItems = append(cd.CustomIndexItems, NewsPageSpecificItems(cd, r, post)...)
 
 	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
-	data.ShareURL = signer.SignedURL(fmt.Sprintf("/news/news/%d", pid))
+	cd.ShareURL = signer.SignedURL(fmt.Sprintf("/news/news/%d", pid))
+	data.ShareURL = cd.ShareURL
 
 	NewsPostPageTmpl.Handle(w, r, data)
 }

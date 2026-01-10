@@ -51,8 +51,8 @@ func (m *MockEmailProvider) Send(ctx context.Context, to mail.Address, rawEmailM
 
 func (m *MockEmailProvider) TestConfig(ctx context.Context) error { return nil }
 
-// TestForumReplyNotifications verifies that forum reply use correct templates with real event data and exact string matching.
-func TestForumReplyNotifications(t *testing.T) {
+// TestForumReply verifies that forum reply use correct templates with real event data and exact string matching.
+func TestForumReply(t *testing.T) {
 	replierUID := int32(1)
 	subscriberUID := int32(2)
 	adminUID := int32(99)

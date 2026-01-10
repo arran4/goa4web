@@ -41,7 +41,7 @@ func TestNewsPostPageLabelBars(t *testing.T) {
 		"add":         func(a, b int) int { return a + b },
 		"since":       func(time.Time, time.Time) string { return "" },
 		"assetHash":   func(s string) string { return s },
-		"dict":        func(values ...interface{}) (map[string]interface{}, error) {
+		"dict": func(values ...interface{}) (map[string]interface{}, error) {
 			if len(values)%2 != 0 {
 				return nil, errors.New("invalid dict call")
 			}
@@ -117,7 +117,7 @@ func TestNewsPostPagePrivateLabelsOnce(t *testing.T) {
 		"add":         func(a, b int) int { return a + b },
 		"since":       func(time.Time, time.Time) string { return "" },
 		"assetHash":   func(s string) string { return s },
-		"dict":        func(values ...interface{}) (map[string]interface{}, error) {
+		"dict": func(values ...interface{}) (map[string]interface{}, error) {
 			if len(values)%2 != 0 {
 				return nil, errors.New("invalid dict call")
 			}

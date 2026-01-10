@@ -153,10 +153,10 @@ func (ForgotPasswordTask) Page(w http.ResponseWriter, r *http.Request) {
 }
 
 // TemplatesRequired declares templates used by ForgotPasswordTask.
-func (ForgotPasswordTask) TemplatesRequired() []string {
-	return []string{
-		string(ForgotPasswordPageTmpl),
-		string(ForgotPasswordNoEmailPageTmpl),
-		string(ForgotPasswordEmailSentPageTmpl),
+func (ForgotPasswordTask) TemplatesRequired() []tasks.Page {
+	return []tasks.Page{
+		ForgotPasswordPageTmpl,
+		ForgotPasswordNoEmailPageTmpl,
+		ForgotPasswordEmailSentPageTmpl,
 	}
 }

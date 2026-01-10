@@ -4,24 +4,27 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-type Page string
+type Page = tasks.Page
 
-func (p Page) Handle(w http.ResponseWriter, r *http.Request, data any) error {
-	if err := TemplateHandler(w, r, string(p), data); err != nil {
-		return fmt.Errorf("page %s: %w", p, err)
+func init() {
+	tasks.Handle = func(w http.ResponseWriter, r *http.Request, p tasks.Page, data any) error {
+		return TemplateHandler(w, r, p, data)
 	}
-	return nil
-}
-
-func (p Page) Exists(opts ...templates.Option) bool {
-	return templates.TemplateExists(string(p), opts...)
-}
-
-func (p Page) Handler(data any) http.Handler {
-	return &templateWithDataHandler{tmpl: string(p), data: data}
+	tasks.TemplateExecute = func(w http.ResponseWriter, r *http.Request, p tasks.Page, data any) error {
+		cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		if cd == nil {
+			return fmt.Errorf("core data not found in context")
+		}
+		return cd.ExecuteSiteTemplate(w, r, string(p), data)
+	}
+	tasks.Handler = func(p tasks.Page, data any) http.Handler {
+		return &templateWithDataHandler{tmpl: p, data: data}
+	}
 }
 
 const (

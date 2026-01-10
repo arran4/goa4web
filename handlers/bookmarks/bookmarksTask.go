@@ -21,8 +21,8 @@ func NewBookmarksTask() tasks.Task {
 	return &bookmarksTask{}
 }
 
-func (t *bookmarksTask) TemplatesRequired() []string {
-	return []string{BookmarksPageTmpl, InfoPageTmpl}
+func (t *bookmarksTask) TemplatesRequired() []tasks.Page {
+	return []tasks.Page{BookmarksPageTmpl, InfoPageTmpl}
 }
 
 func (t *bookmarksTask) Action(w http.ResponseWriter, r *http.Request) any {

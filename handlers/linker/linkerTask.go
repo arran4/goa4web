@@ -23,8 +23,8 @@ func NewLinkerTask() tasks.Task {
 	return &linkerTask{}
 }
 
-func (t *linkerTask) TemplatesRequired() []string {
-	return []string{string(LinkerPageTmpl)}
+func (t *linkerTask) TemplatesRequired() []tasks.Page {
+	return []tasks.Page{LinkerPageTmpl}
 }
 
 func (t *linkerTask) Action(w http.ResponseWriter, r *http.Request) any {

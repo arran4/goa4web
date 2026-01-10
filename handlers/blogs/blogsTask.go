@@ -21,8 +21,8 @@ func NewBlogsTask() tasks.Task {
 	return &blogsTask{}
 }
 
-func (t *blogsTask) TemplatesRequired() []string {
-	return []string{string(BlogsPageTmpl)}
+func (t *blogsTask) TemplatesRequired() []tasks.Page {
+	return []tasks.Page{BlogsPageTmpl}
 }
 
 func (t *blogsTask) Action(w http.ResponseWriter, r *http.Request) any {

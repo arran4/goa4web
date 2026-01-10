@@ -77,10 +77,10 @@ func (UserPasswordResetTask) Action(w http.ResponseWriter, r *http.Request) any 
 	return handlers.TemplateWithDataHandler(handlers.TemplateRunTaskPage, data)
 }
 
-func (UserPasswordResetTask) TemplatesRequired() []string {
-	return []string{
-		handlers.TemplateRunTaskPage,
-		string(TemplateUserResetPasswordConfirmPage),
+func (UserPasswordResetTask) TemplatesRequired() []tasks.Page {
+	return []tasks.Page{
+		tasks.Page(handlers.TemplateRunTaskPage),
+		TemplateUserResetPasswordConfirmPage,
 	}
 }
 

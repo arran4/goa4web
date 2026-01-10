@@ -121,6 +121,6 @@ func newsEditFormPage(w http.ResponseWriter, r *http.Request) {
 }
 
 // TemplatesRequired declares the templates used by this task's pages.
-func (EditTask) TemplatesRequired() []string {
-	return []string{string(NewsEditPageTmpl)}
+func (EditTask) TemplatesRequired() []tasks.Page {
+	return []tasks.Page{NewsEditPageTmpl}
 }

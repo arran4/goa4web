@@ -24,8 +24,8 @@ func NewNewsTask() tasks.Task {
 	return &newsTask{}
 }
 
-func (t *newsTask) TemplatesRequired() []string {
-	return []string{string(NewsPageTmpl)}
+func (t *newsTask) TemplatesRequired() []tasks.Page {
+	return []tasks.Page{NewsPageTmpl}
 }
 
 func (t *newsTask) Action(w http.ResponseWriter, r *http.Request) any {

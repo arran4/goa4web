@@ -23,8 +23,8 @@ func NewWritingsTask() tasks.Task {
 	return &writingsTask{}
 }
 
-func (t *writingsTask) TemplatesRequired() []string {
-	return []string{string(WritingsPageTmpl)}
+func (t *writingsTask) TemplatesRequired() []tasks.Page {
+	return []tasks.Page{WritingsPageTmpl}
 }
 
 func (t *writingsTask) Action(w http.ResponseWriter, r *http.Request) any {

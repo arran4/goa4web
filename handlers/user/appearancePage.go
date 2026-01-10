@@ -131,6 +131,6 @@ func (AppearanceSaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return nil
 }
 
-func (t *AppearanceSaveTask) TemplatesRequired() []string {
-	return []string{string(AppearancePage)}
+func (t *AppearanceSaveTask) TemplatesRequired() []tasks.Page {
+	return []tasks.Page{AppearancePage}
 }

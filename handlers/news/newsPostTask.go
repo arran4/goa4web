@@ -35,8 +35,8 @@ func NewNewsPostTask() tasks.Task {
 	return &newsPostTask{}
 }
 
-func (t *newsPostTask) TemplatesRequired() []string {
-	return []string{string(NewsPostPageTmpl)}
+func (t *newsPostTask) TemplatesRequired() []tasks.Page {
+	return []tasks.Page{NewsPostPageTmpl}
 }
 
 func (t *newsPostTask) Action(w http.ResponseWriter, r *http.Request) any {

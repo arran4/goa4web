@@ -25,8 +25,8 @@ func NewPrivateForumTask() tasks.Task {
 	return &privateForumTask{}
 }
 
-func (t *privateForumTask) TemplatesRequired() []string {
-	return []string{string(CreateTopicTmpl), string(TopicsOnlyTmpl)}
+func (t *privateForumTask) TemplatesRequired() []tasks.Page {
+	return []tasks.Page{CreateTopicTmpl, TopicsOnlyTmpl}
 }
 
 func (t *privateForumTask) Action(w http.ResponseWriter, r *http.Request) any {

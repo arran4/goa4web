@@ -24,8 +24,8 @@ func NewUserTask() tasks.Task {
 	return &userTask{}
 }
 
-func (t *userTask) TemplatesRequired() []string {
-	return []string{string(UserPageTmpl)}
+func (t *userTask) TemplatesRequired() []tasks.Page {
+	return []tasks.Page{UserPageTmpl}
 }
 
 func (t *userTask) Action(w http.ResponseWriter, r *http.Request) any {

@@ -31,8 +31,8 @@ func (RemakeImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return handlers.TemplateWithDataHandler(handlers.TemplateRunTaskPage, data)
 }
 
-func (RemakeImageTask) TemplatesRequired() []string {
-	return []string{handlers.TemplateRunTaskPage}
+func (RemakeImageTask) TemplatesRequired() []tasks.Page {
+	return []tasks.Page{handlers.TemplateRunTaskPage}
 }
 
 func (RemakeImageTask) BackgroundTask(ctx context.Context, q db.Querier) (tasks.Task, error) {

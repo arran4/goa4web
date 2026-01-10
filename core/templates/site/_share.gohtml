@@ -1,0 +1,21 @@
+{{ define "_share.gohtml" }}
+<div style="margin: 1em 0; padding: 1em; border: 1px solid #ddd; border-radius: 4px;">
+    <h3 style="margin-top: 0; font-size: 1.1em;">Share</h3>
+    <div style="margin-bottom: 0.5em;">
+        <label style="display: flex; align-items: center; gap: 0.5em;">
+            <input type="radio" name="share-type" value="social" checked>
+            <strong>Social Media Card (OpenGraph / Twitter)</strong>
+        </label>
+    </div>
+    <div style="margin-left: 1.8em;">
+        <p style="margin: 0 0 0.5em; font-size: 0.9em; color: #666;">
+            Use this signed link to share a preview of this content on social media.
+        </p>
+        <div style="display: flex; gap: 0.5em; max-width: 500px;">
+            <button class="share-button" data-link="{{ .link }}" data-module="{{ .module }}">Generate Share Link</button>
+            <input type="text" class="share-url-input" style="display: none; flex: 1; padding: 0.5em;" readonly>
+            <button class="copy-share-url-button" style="display: none; padding: 0.5em 1em; cursor: pointer;">Copy</button>
+        </div>
+    </div>
+</div>
+{{ end }}

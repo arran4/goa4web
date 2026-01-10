@@ -27,6 +27,7 @@ import (
 	"github.com/arran4/goa4web/internal/lazy"
 	"github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/workers/emailqueue"
+	"github.com/arran4/goa4web/workers/postcountworker"
 )
 
 type captureDLQ struct {
@@ -317,4 +318,55 @@ func getEmailBody(t *testing.T, msg *mail.Message) string {
 		t.Fatal(err)
 	}
 	return buf.String()
+}
+
+func TestForumAutoSubscribeTasks(t *testing.T) {
+	if _, ok := interface{}(replyTask).(notifications.AutoSubscribeProvider); !ok {
+		t.Fatalf("ReplyTask should implement AutoSubscribeProvider so users get notified about thread replies")
+	}
+	if _, ok := interface{}(createThreadTask).(notifications.AutoSubscribeProvider); !ok {
+		t.Fatalf("CreateThreadTask should implement AutoSubscribeProvider so thread authors follow their threads")
+	}
+
+	replyEvt := eventbus.TaskEvent{
+		Data: map[string]any{
+			postcountworker.EventKey: postcountworker.UpdateEventData{
+				ThreadID:  77,
+				TopicID:   88,
+				CommentID: 999,
+			},
+		},
+		Path: "/forum/topic/1/thread/2/reply",
+	}
+	actionName, path, err := replyTask.AutoSubscribePath(replyEvt)
+	if err != nil {
+		t.Fatalf("reply AutoSubscribePath error: %v", err)
+	}
+	if actionName != string(TaskReply) {
+		t.Fatalf("expected action name %q, got %q", TaskReply, actionName)
+	}
+	if path != "/forum/topic/88/thread/77" {
+		t.Fatalf("expected reply auto-subscribe path /forum/topic/88/thread/77, got %q", path)
+	}
+
+	createThreadEvt := eventbus.TaskEvent{
+		Data: map[string]any{
+			postcountworker.EventKey: postcountworker.UpdateEventData{
+				ThreadID:  55,
+				TopicID:   44,
+				CommentID: 777,
+			},
+		},
+		Path: "/forum/topic/9/thread/10/new",
+	}
+	actionName, path, err = createThreadTask.AutoSubscribePath(createThreadEvt)
+	if err != nil {
+		t.Fatalf("create thread AutoSubscribePath error: %v", err)
+	}
+	if actionName != string(TaskCreateThread) {
+		t.Fatalf("expected action name %q, got %q", TaskCreateThread, actionName)
+	}
+	if path != "/forum/topic/44/thread/55" {
+		t.Fatalf("expected create thread auto-subscribe path /forum/topic/44/thread/55, got %q", path)
+	}
 }

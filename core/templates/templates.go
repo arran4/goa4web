@@ -303,6 +303,9 @@ func GetSiteJSData(opts ...Option) []byte { return readFile("assets/site.js", op
 // GetA4CodeJSData returns the A4Code parser/converter JavaScript.
 func GetA4CodeJSData(opts ...Option) []byte { return readFile("assets/a4code.js", opts...) }
 
+// GetRobotsTXTData returns the robots.txt file.
+func GetRobotsTXTData(opts ...Option) []byte { return readFile("assets/robots.txt", opts...) }
+
 // ListSiteTemplateNames returns the relative paths of all site templates
 // (under the site/ directory), e.g. "news/postPage.gohtml".
 func ListSiteTemplateNames(opts ...Option) []string {

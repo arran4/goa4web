@@ -27,10 +27,6 @@ import (
 type newsPostTask struct {
 }
 
-const (
-	NewsPostPageTmpl = "news/postPage.gohtml"
-)
-
 func NewNewsPostTask() tasks.Task {
 	return &newsPostTask{}
 }

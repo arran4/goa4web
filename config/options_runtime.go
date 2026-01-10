@@ -86,7 +86,6 @@ var StringOptions = []StringOption{
 	{"share-sign-secret", EnvShareSignSecret, "The secret key used to sign share URLs.", "", nil, "", func(c *RuntimeConfig) *string { return &c.ShareSignSecret }},
 	{"share-sign-secret-file", EnvShareSignSecretFile, "The path to a file containing the share signing key.", "", nil, "", func(c *RuntimeConfig) *string { return &c.ShareSignSecretFile }},
 	{"share-sign-expiry", EnvShareSignExpiry, "The default expiry duration for share URLs.", "26280h", nil, "", func(c *RuntimeConfig) *string { return &c.ShareSignExpiry }},
-	{"share-sign-expiry-login", EnvShareSignExpiryLogin, "The expiry duration for share URLs when a user is not logged in.", "1h", nil, "", func(c *RuntimeConfig) *string { return &c.ShareSignExpiryLogin }},
 	{"admin-api-secret", EnvAdminAPISecret, "The secret key used to sign administrator API tokens.", "", nil, "", func(c *RuntimeConfig) *string { return &c.AdminAPISecret }},
 	{"admin-api-secret-file", EnvAdminAPISecretFile, "The path to a file containing the administrator API signing key.", "", nil, "", func(c *RuntimeConfig) *string { return &c.AdminAPISecretFile }},
 	{"twitter-site", EnvTwitterSite, "The Twitter handle for the site (e.g. @mysite).", "", nil, "", func(c *RuntimeConfig) *string { return &c.TwitterSite }},

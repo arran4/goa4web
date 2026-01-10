@@ -167,8 +167,6 @@ const (
 	EnvShareSignSecretFile = "SHARE_SIGN_SECRET_FILE"
 	// EnvShareSignExpiry sets the default expiry duration for share URLs.
 	EnvShareSignExpiry = "SHARE_SIGN_EXPIRY"
-	// EnvShareSignExpiryLogin sets the expiry duration for share URLs when a user is not logged in.
-	EnvShareSignExpiryLogin = "SHARE_SIGN_EXPIRY_LOGIN"
 
 	// EnvDefaultLanguage specifies the site's default language.
 	EnvDefaultLanguage = "DEFAULT_LANGUAGE"

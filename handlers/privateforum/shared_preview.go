@@ -21,12 +21,12 @@ import (
 func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	loginExpiry, err := time.ParseDuration(cd.Config.ShareSignExpiryLogin)
+	shareSignExpiry, err := time.ParseDuration(cd.Config.ShareSignExpiry)
 	if err != nil {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("parsing share sign expiry login: %w", err))
+		handlers.RenderErrorPage(w, r, fmt.Errorf("parsing share sign expiry: %w", err))
 		return
 	}
-	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret, loginExpiry)
+	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret, shareSignExpiry)
 	cd.ShareSigner = signer // Ensure it's set for MakeImageURL
 
 	if share.VerifyAndGetPath(r, signer) == "" {
@@ -90,12 +90,12 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	loginExpiry, err := time.ParseDuration(cd.Config.ShareSignExpiryLogin)
+	shareSignExpiry, err := time.ParseDuration(cd.Config.ShareSignExpiry)
 	if err != nil {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("parsing share sign expiry login: %w", err))
+		handlers.RenderErrorPage(w, r, fmt.Errorf("parsing share sign expiry: %w", err))
 		return
 	}
-	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret, loginExpiry)
+	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret, shareSignExpiry)
 	cd.ShareSigner = signer // Ensure it's set for MakeImageURL
 
 	// Verify signature

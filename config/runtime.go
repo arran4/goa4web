@@ -132,8 +132,6 @@ type RuntimeConfig struct {
 	ShareSignSecretFile string
 	// ShareSignExpiry is the default expiry duration for share URLs.
 	ShareSignExpiry string
-	// ShareSignExpiryLogin is the expiry duration for share URLs when a user is not logged in.
-	ShareSignExpiryLogin string
 
 	// AdminAPISecret is used to sign administrator API tokens.
 	AdminAPISecret string

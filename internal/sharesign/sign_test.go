@@ -2,6 +2,7 @@ package sharesign_test
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -30,5 +31,29 @@ func TestSigner(t *testing.T) {
 	}
 	if s.Verify(link, fmt.Sprint(time.Now().Add(-48*time.Hour).Unix()), sig) {
 		t.Errorf("Verify succeeded with expired timestamp")
+	}
+}
+
+func TestSignedURL(t *testing.T) {
+	cfg := &config.RuntimeConfig{
+		HTTPHostname: "http://localhost:8080",
+	}
+	s := sharesign.NewSigner(cfg, "secret")
+
+	// Test Path based (default)
+	link := "/private/topic/1/thread/2"
+	signed := s.SignedURL(link)
+	// expected: http://localhost:8080/private/shared/topic/1/thread/2/ts/.../sign/...
+	if !strings.Contains(signed, "/private/shared/topic/1/thread/2/ts/") {
+		t.Errorf("Path signature format incorrect: %s", signed)
+	}
+	if !strings.Contains(signed, "/sign/") {
+		t.Errorf("Path signature missing sign: %s", signed)
+	}
+
+	// Test Query based
+	signedQuery := s.SignedURLQuery(link)
+	if !strings.Contains(signedQuery, "/private/shared/topic/1/thread/2?ts=") {
+		t.Errorf("Query signature format incorrect: %s", signedQuery)
 	}
 }

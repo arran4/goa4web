@@ -17,7 +17,12 @@ func ShareLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
-	signedURL := signer.SignedURL(link)
+	var signedURL string
+	if r.URL.Query().Get("use_query") == "true" {
+		signedURL = signer.SignedURLQuery(link)
+	} else {
+		signedURL = signer.SignedURL(link)
+	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
 		"signed_url": signedURL,

@@ -34,6 +34,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 
 	// OpenGraph preview endpoint (no auth required for social media bots)
 	br.HandleFunc("/shared/blog/{blog}", SharedPreviewPage).Methods("GET", "HEAD")
+	br.HandleFunc("/shared/blog/{blog}/ts/{ts}/sign/{sign}", SharedPreviewPage).Methods("GET", "HEAD")
 
 	br.HandleFunc("/blog/{blog}", BlogPage).Methods("GET")
 	br.HandleFunc("/blog/{blog}", handlers.TaskDoneAutoRefreshPage).Methods("POST")

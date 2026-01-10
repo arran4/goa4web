@@ -22,7 +22,12 @@ func (h *ShareHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	signedURL := h.signer.SignedURL(link)
+	var signedURL string
+	if r.URL.Query().Get("use_query") == "true" {
+		signedURL = h.signer.SignedURLQuery(link)
+	} else {
+		signedURL = h.signer.SignedURL(link)
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{

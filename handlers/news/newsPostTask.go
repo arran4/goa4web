@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/handlers/share"
-	"github.com/arran4/goa4web/internal/sharesign"
 
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core"
@@ -195,10 +194,6 @@ func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd.CustomIndexItems = append(cd.CustomIndexItems, NewsPageSpecificItems(cd, r, post)...)
-
-	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
-	cd.ShareURL = signer.SignedURL(fmt.Sprintf("/news/news/%d", pid))
-	data.ShareURL = cd.ShareURL
 
 	NewsPostPageTmpl.Handle(w, r, data)
 }

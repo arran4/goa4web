@@ -16,7 +16,6 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/sharesign"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/mux"
@@ -184,12 +183,6 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	if subscribedToTopic(cd, topicRow.Idforumtopic) {
 		data.Subscribed = true
 	}
-
-	// Generate signed share link for all topics (supports public topics with restrictive grants)
-	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
-	targetPath := fmt.Sprintf("%s/topic/%d", basePath, topicId)
-	cd.ShareURL = signer.SignedURL(targetPath)
-	data.ShareURL = cd.ShareURL
 
 	ForumTopicsPageTmpl.Handle(w, r, data)
 }

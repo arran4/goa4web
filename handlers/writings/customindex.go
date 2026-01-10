@@ -55,14 +55,6 @@ func WritingsGeneralIndexItems(cd *common.CoreData, r *http.Request) []common.In
 func WritingsPageSpecificItems(cd *common.CoreData, r *http.Request) []common.IndexItem {
 	var items []common.IndexItem
 	if writing, err := cd.Article(); err == nil && writing != nil {
-		if cd.ShareURL != "" {
-			items = append(items, common.IndexItem{
-				TemplateName: "sharing/_share.gohtml",
-				TemplateData: map[string]interface{}{
-					"ShareURL": cd.ShareURL,
-				},
-			})
-		}
 		// Edit
 		canEdit := cd.HasGrant("writing", "article", "edit", writing.Idwriting)
 		if canEdit {

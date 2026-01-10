@@ -54,14 +54,6 @@ func BlogsGeneralIndexItems(cd *common.CoreData, r *http.Request) []common.Index
 func BlogsPageSpecificItems(cd *common.CoreData, r *http.Request) []common.IndexItem {
 	var items []common.IndexItem
 	if blog, err := cd.BlogPost(); err == nil && blog != nil {
-		if cd.ShareURL != "" {
-			items = append(items, common.IndexItem{
-				TemplateName: "sharing/_share.gohtml",
-				TemplateData: map[string]interface{}{
-					"ShareURL": cd.ShareURL,
-				},
-			})
-		}
 		if cd.CanEditBlog(blog.Idblogs, blog.UsersIdusers) {
 			items = append(items, common.IndexItem{
 				Name: "Edit Blog",

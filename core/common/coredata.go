@@ -133,7 +133,6 @@ type CoreData struct {
 	RSSFeedTitle      string
 	AtomFeedTitle     string
 	PublicRSSFeedURL  string
-	ShareURL          string
 	StartLink         string
 	TasksReg          *tasks.Registry
 	SiteTitle         string

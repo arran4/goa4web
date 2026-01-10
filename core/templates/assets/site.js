@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
             share(link, module, e.target);
         } else if (e.target && e.target.classList.contains('copy-share-url-button')) {
             e.preventDefault();
-            const container = e.target.closest('.share-url-container');
+            const container = e.target.closest('div');
             if (container) {
                 const input = container.querySelector('.share-url-input');
                 if (input) {
@@ -211,12 +211,15 @@ function calculateOffset(root, node, offset) {
 }
 
 function share(link, module, button) {
-    const shareLinkInput = button.nextElementSibling;
+    const shareLinkInput = button.closest('div').querySelector('.share-url-input');
+    const copyButton = button.closest('div').querySelector('.copy-share-url-button');
     fetch('/api/' + module + '/share?link=' + encodeURIComponent(link))
         .then(response => response.json())
         .then(data => {
             shareLinkInput.value = data.signed_url + window.location.hash;
             shareLinkInput.style.display = 'inline-block';
+            copyButton.style.display = 'inline-block';
+            button.style.display = 'none';
             shareLinkInput.select();
         })
         .catch(error => {

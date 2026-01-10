@@ -10,6 +10,7 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/router"
 
+	"github.com/arran4/goa4web/handlers/share"
 	navpkg "github.com/arran4/goa4web/internal/navigation"
 )
 
@@ -66,6 +67,7 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Reg
 
 	api := r.PathPrefix("/api/forum").Subrouter()
 	api.HandleFunc("/quote/{commentid}", QuoteApi).Methods("GET")
+	api.HandleFunc("/share", share.ShareLink).Methods("GET")
 }
 
 // Register registers the forum router module.

@@ -10,6 +10,7 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/router"
 
+	"github.com/arran4/goa4web/handlers/share"
 	navpkg "github.com/arran4/goa4web/internal/navigation"
 )
 
@@ -46,6 +47,8 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	br.HandleFunc("/blog/{blog}/labels", handlers.TaskHandler(setLabelsTask)).Methods("POST").MatcherFunc(setLabelsTask.Matcher())
 	br.HandleFunc("/blog/{blog}/labels", handlers.TaskHandler(markBlogReadTask)).Methods("GET").MatcherFunc(markBlogReadTask.Matcher())
 
+	api := r.PathPrefix("/api/blogs").Subrouter()
+	api.HandleFunc("/share", share.ShareLink).Methods("GET")
 }
 
 // Register registers the blogs router module.

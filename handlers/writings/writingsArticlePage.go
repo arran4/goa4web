@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/handlers/share"
-	"github.com/arran4/goa4web/internal/sharesign"
 
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core"
@@ -142,9 +141,6 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd.CustomIndexItems = append(cd.CustomIndexItems, WritingsPageSpecificItems(cd, r)...)
-
-	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
-	data.ShareURL = signer.SignedURL(fmt.Sprintf("/writings/article/%d", writing.Idwriting))
 
 	ArticlePageTmpl.Handle(w, r, data)
 }

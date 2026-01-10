@@ -36,6 +36,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const link = e.target.getAttribute('data-link');
             const module = e.target.getAttribute('data-module');
             share(link, module, e.target);
+        } else if (e.target && e.target.classList.contains('copy-share-url-button')) {
+            e.preventDefault();
+            const container = e.target.closest('.share-url-container');
+            if (container) {
+                const input = container.querySelector('.share-url-input');
+                if (input) {
+                    navigator.clipboard.writeText(input.value).then(() => {
+                    }).catch(err => {
+                        console.error('Failed to copy text: ', err);
+                    });
+                }
+            }
         }
     });
 });

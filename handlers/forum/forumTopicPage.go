@@ -188,7 +188,8 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	// Generate signed share link for all topics (supports public topics with restrictive grants)
 	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
 	targetPath := fmt.Sprintf("%s/topic/%d", basePath, topicId)
-	data.ShareURL = signer.SignedURL(targetPath)
+	cd.ShareURL = signer.SignedURL(targetPath)
+	data.ShareURL = cd.ShareURL
 
 	ForumTopicsPageTmpl.Handle(w, r, data)
 }

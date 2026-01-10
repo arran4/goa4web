@@ -93,6 +93,16 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 				Link: fmt.Sprintf("/admin/forum/topics/topic/%s/edit", topicID),
 			})
 		}
+
+		// Add the Share Topic item
+		if cd.ShareURL != "" {
+			items = append(items, common.IndexItem{
+				TemplateName: "forum/_share_topic.gohtml",
+				TemplateData: map[string]interface{}{
+					"ShareURL": cd.ShareURL,
+				},
+			})
+		}
 		if tid, err := strconv.Atoi(topicID); err == nil && cd.HasGrant(section, "topic", "post", int32(tid)) {
 			name := "New Thread"
 			if base == "/private" {

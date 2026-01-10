@@ -31,6 +31,9 @@ type AssociateEmailParams struct {
 // ErrPasswordResetRecentlyRequested indicates a password reset was requested too recently.
 var ErrPasswordResetRecentlyRequested = errors.New("reset recently requested")
 
+// ErrDBNotInitialized indicates the database isn't available on the CoreData object.
+var ErrDBNotInitialized = errors.New("database not initialized")
+
 // UserCredentials fetches the stored password hash and algorithm for username.
 func (cd *CoreData) UserCredentials(username string) (*db.SystemGetLoginRow, error) {
 	if cd.queries == nil {

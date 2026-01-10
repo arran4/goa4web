@@ -44,10 +44,7 @@ func (dt *DraftsTask) Action(w http.ResponseWriter, r *http.Request) any {
 }
 
 func (dt *DraftsTask) get(w http.ResponseWriter, r *http.Request, cd *common.CoreData, uid int32) any {
-	threadID, err := strconv.Atoi(cd.Get("thread"))
-	if err != nil {
-		return fmt.Errorf("parsing thread id: %w", err)
-	}
+	threadID := cd.SelectedThreadID()
 
 	draftIDVal := r.URL.Query().Get("id")
 	if draftIDVal != "" {
@@ -76,29 +73,18 @@ func (dt *DraftsTask) get(w http.ResponseWriter, r *http.Request, cd *common.Cor
 func (dt *DraftsTask) post(w http.ResponseWriter, r *http.Request, cd *common.CoreData, uid int32) any {
 	text := r.PostFormValue("replytext")
 	draftIDVal := r.PostFormValue("draft_id")
+	draftName := r.PostFormValue("draft_name")
 
-	threadID, err := strconv.Atoi(cd.Get("thread"))
-	if err != nil {
-		return fmt.Errorf("parsing thread id: %w", err)
-	}
+	threadID := cd.SelectedThreadID()
 
 	draftID, _ := strconv.Atoi(draftIDVal)
 
-	var draftName string
-	if draftID > 0 {
-		draft, err := cd.GetDraft(r.Context(), int32(draftID), uid)
-		if err != nil {
-			return fmt.Errorf("getting draft: %w", err)
-		}
-		if draft == nil {
-			return fmt.Errorf("draft not found")
-		}
-		draftName = draft.Name
-	} else {
+	if draftName == "" {
 		draftName = "Draft from " + time.Now().Format("2006-01-02 15:04:05")
 	}
 
 	var newDraftID int64
+	var err error
 	if draftID > 0 {
 		err = cd.UpdateDraft(r.Context(), db.UpdateDraftParams{
 			ID:      int32(draftID),
@@ -113,7 +99,7 @@ func (dt *DraftsTask) post(w http.ResponseWriter, r *http.Request, cd *common.Co
 	} else {
 		newDraftID, err = cd.CreateDraft(r.Context(), db.CreateDraftParams{
 			UserID:   uid,
-			ThreadID: int32(threadID),
+			ThreadID: threadID,
 			Name:     draftName,
 			Content:  text,
 		})
@@ -124,7 +110,7 @@ func (dt *DraftsTask) post(w http.ResponseWriter, r *http.Request, cd *common.Co
 
 	err = cd.Queries().AddContentPrivateLabel(r.Context(), db.AddContentPrivateLabelParams{
 		Item:   "thread",
-		ItemID: int32(threadID),
+		ItemID: threadID,
 		UserID: uid,
 		Label:  "has draft",
 	})
@@ -155,12 +141,9 @@ func (dt *DraftsTask) delete(w http.ResponseWriter, r *http.Request, cd *common.
 		return fmt.Errorf("deleting draft: %w", err)
 	}
 
-	threadID, err := strconv.Atoi(cd.Get("thread"))
-	if err != nil {
-		return fmt.Errorf("parsing thread id: %w", err)
-	}
+	threadID := cd.SelectedThreadID()
 
-	hasDrafts, err := cd.HasDrafts(r.Context(), int32(threadID), uid)
+	hasDrafts, err := cd.HasDrafts(r.Context(), threadID, uid)
 	if err != nil {
 		return fmt.Errorf("checking for drafts: %w", err)
 	}

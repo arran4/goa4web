@@ -752,5 +752,5 @@ CREATE TABLE `drafts` (
 );
 
 -- Set the schema version to the latest migration.
-INSERT INTO `schema_version` (`version`) VALUES (78)
+INSERT INTO `schema_version` (`version`) VALUES (77)
 ON DUPLICATE KEY UPDATE version = VALUES(version);

@@ -30,8 +30,10 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	handlers.TemplateHandler(w, r, "faqPage", cd)
+	FaqPageTmpl.Handle(w, r, cd)
 }
+
+const FaqPageTmpl handlers.Page = "faq/page.gohtml"
 
 func CustomFAQIndex(data *common.CoreData, r *http.Request) {
 	data.CustomIndexItems = []common.IndexItem{}

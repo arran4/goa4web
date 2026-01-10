@@ -143,9 +143,11 @@ func renderSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.Core
 		return
 	}
 
-	handlers.TemplateHandler(w, r, "sharedPreviewLogin.gohtml", struct {
+	SharedPreviewLoginPageTmpl.Handle(w, r, struct {
 		RedirectURL string
 	}{
 		RedirectURL: url.QueryEscape(redirectPath),
 	})
 }
+
+const SharedPreviewLoginPageTmpl handlers.Page = "sharedPreviewLogin.gohtml"

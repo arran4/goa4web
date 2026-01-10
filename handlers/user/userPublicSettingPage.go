@@ -28,8 +28,10 @@ func userPublicProfileSettingPage(w http.ResponseWriter, r *http.Request) {
 	}{
 		Enabled: user.PublicProfileEnabledAt.Valid,
 	}
-	handlers.TemplateHandler(w, r, "publicProfileSettings.gohtml", data)
+	UserPublicProfileSettingsPage.Handle(w, r, data)
 }
+
+const UserPublicProfileSettingsPage handlers.Page = "user/publicProfileSettings.gohtml"
 
 type PublicProfileSaveTask struct{ tasks.TaskString }
 

@@ -123,5 +123,7 @@ func AdminFailedEmailsPage(w http.ResponseWriter, r *http.Request) {
 		cd.PrevLink = "/admin/email/failed?" + prevVals.Encode()
 	}
 
-	handlers.TemplateHandler(w, r, "admin/emailFailedPage.gohtml", data)
+	AdminEmailFailedPageTmpl.Handle(w, r, data)
 }
+
+const AdminEmailFailedPageTmpl handlers.Page = "admin/emailFailedPage.gohtml"

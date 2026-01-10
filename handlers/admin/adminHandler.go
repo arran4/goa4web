@@ -16,5 +16,7 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("database not available"))
 		return
 	}
-	handlers.TemplateHandler(w, r, "adminPage", struct{}{})
+	AdminPageTmpl.Handle(w, r, struct{}{})
 }
+
+const AdminPageTmpl handlers.Page = "admin/page.gohtml"

@@ -43,5 +43,7 @@ func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 		URL:         cd.AbsoluteURL(r.URL.String()),
 	}
 
-	handlers.TemplateHandler(w, r, "blogs/bloggerPostsPage.gohtml", struct{}{})
+	BloggerPostsPageTmpl.Handle(w, r, struct{}{})
 }
+
+const BloggerPostsPageTmpl handlers.Page = "blogs/bloggerPostsPage.gohtml"

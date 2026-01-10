@@ -28,7 +28,7 @@ type newsPostTask struct {
 }
 
 const (
-	NewsPostPageTmpl = "news/postPage.gohtml"
+	NewsPostPageTmpl handlers.Page = "news/postPage.gohtml"
 )
 
 func NewNewsPostTask() tasks.Task {
@@ -36,7 +36,7 @@ func NewNewsPostTask() tasks.Task {
 }
 
 func (t *newsPostTask) TemplatesRequired() []string {
-	return []string{NewsPostPageTmpl}
+	return []string{string(NewsPostPageTmpl)}
 }
 
 func (t *newsPostTask) Action(w http.ResponseWriter, r *http.Request) any {
@@ -199,7 +199,5 @@ func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
 	data.ShareURL = signer.SignedURL(fmt.Sprintf("/news/news/%d", pid))
 
-	if err := cd.ExecuteSiteTemplate(w, r, NewsPostPageTmpl, data); err != nil {
-		handlers.RenderErrorPage(w, r, err)
-	}
+	NewsPostPageTmpl.Handle(w, r, data)
 }

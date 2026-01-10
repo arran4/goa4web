@@ -137,5 +137,7 @@ func (h *Handlers) AdminEmailTestPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	handlers.TemplateHandler(w, r, "admin/emailTestPage.gohtml", data)
+	AdminEmailTestPageTmpl.Handle(w, r, data)
 }
+
+const AdminEmailTestPageTmpl handlers.Page = "admin/emailTestPage.gohtml"

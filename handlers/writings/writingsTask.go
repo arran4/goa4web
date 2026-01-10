@@ -16,7 +16,7 @@ type writingsTask struct {
 }
 
 const (
-	WritingsPageTmpl = "writings/page.gohtml"
+	WritingsPageTmpl handlers.Page = "writings/page.gohtml"
 )
 
 func NewWritingsTask() tasks.Task {
@@ -24,7 +24,7 @@ func NewWritingsTask() tasks.Task {
 }
 
 func (t *writingsTask) TemplatesRequired() []string {
-	return []string{WritingsPageTmpl}
+	return []string{string(WritingsPageTmpl)}
 }
 
 func (t *writingsTask) Action(w http.ResponseWriter, r *http.Request) any {
@@ -65,7 +65,5 @@ func (t *writingsTask) Get(w http.ResponseWriter, r *http.Request) {
 		URL:         cd.AbsoluteURL(r.URL.String()),
 	}
 
-	if err := cd.ExecuteSiteTemplate(w, r, WritingsPageTmpl, data); err != nil {
-		handlers.RenderErrorPage(w, r, err)
-	}
+	WritingsPageTmpl.Handle(w, r, data)
 }

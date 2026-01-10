@@ -4,12 +4,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"html/template"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
@@ -81,5 +82,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Tree = template.HTML(build(0))
 
-	handlers.TemplateHandler(w, r, "writingsAdminCategoriesPage.gohtml", data)
+	WritingsAdminCategoriesPageTmpl.Handle(w, r, data)
 }
+
+const WritingsAdminCategoriesPageTmpl handlers.Page = "writings/writingsAdminCategoriesPage.gohtml"

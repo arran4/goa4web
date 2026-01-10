@@ -3,13 +3,14 @@ package user
 import (
 	"database/sql"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
 
@@ -115,5 +116,7 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 		PageSize: size,
 	}
 
-	handlers.TemplateHandler(w, r, "user/gallery.gohtml", data)
+	UserGalleryPage.Handle(w, r, data)
 }
+
+const UserGalleryPage handlers.Page = "user/gallery.gohtml"

@@ -56,8 +56,10 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 	cd.PageTitle = "FAQ Category"
 
 	data := Data{Category: cat, Latest: latest}
-	handlers.TemplateHandler(w, r, "faqAdminCategoryPage.gohtml", data)
+	FaqAdminCategoryPageTmpl.Handle(w, r, data)
 }
+
+const FaqAdminCategoryPageTmpl handlers.Page = "faq/faqAdminCategoryPage.gohtml"
 
 // AdminCategoryEditPage shows a form to rename or delete a FAQ category.
 func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
@@ -88,8 +90,10 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 
 	cd.PageTitle = "Edit FAQ Category"
 	data := Data{Category: cat}
-	handlers.TemplateHandler(w, r, "faqAdminCategoryEditPage.gohtml", data)
+	FaqAdminCategoryEditPageTmpl.Handle(w, r, data)
 }
+
+const FaqAdminCategoryEditPageTmpl handlers.Page = "faq/faqAdminCategoryEditPage.gohtml"
 
 // AdminCategoryQuestionsPage lists questions for a FAQ category.
 func AdminCategoryQuestionsPage(w http.ResponseWriter, r *http.Request) {
@@ -127,12 +131,16 @@ func AdminCategoryQuestionsPage(w http.ResponseWriter, r *http.Request) {
 
 	cd.PageTitle = "FAQ Category Questions"
 	data := Data{Category: cat, Questions: questions}
-	handlers.TemplateHandler(w, r, "faqAdminCategoryQuestionsPage.gohtml", data)
+	FaqAdminCategoryQuestionsPageTmpl.Handle(w, r, data)
 }
+
+const FaqAdminCategoryQuestionsPageTmpl handlers.Page = "faq/faqAdminCategoryQuestionsPage.gohtml"
 
 // AdminNewCategoryPage displays a form to create a new FAQ category.
 func AdminNewCategoryPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "New FAQ Category"
-	handlers.TemplateHandler(w, r, "faqAdminNewCategoryPage.gohtml", struct{}{})
+	FaqAdminNewCategoryPageTmpl.Handle(w, r, struct{}{})
 }
+
+const FaqAdminNewCategoryPageTmpl handlers.Page = "faq/faqAdminNewCategoryPage.gohtml"

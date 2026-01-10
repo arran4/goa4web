@@ -146,8 +146,10 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
 	data.ShareURL = signer.SignedURL(fmt.Sprintf("/writings/article/%d", writing.Idwriting))
 
-	handlers.TemplateHandler(w, r, "articlePage.gohtml", data)
+	ArticlePageTmpl.Handle(w, r, data)
 }
+
+const ArticlePageTmpl handlers.Page = "writings/articlePage.gohtml"
 
 func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	if _, ok := core.GetSessionOrFail(w, r); !ok {
@@ -159,7 +161,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			if err := cd.ExecuteSiteTemplate(w, r, "admin/noAccessPage.gohtml", struct{}{}); err != nil {
+			if err := AdminNoAccessPageTmpl.Handle(w, r, struct{}{}); err != nil {
 				log.Printf("render no access page: %v", err)
 			}
 			return
@@ -212,3 +214,5 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
+
+const AdminNoAccessPageTmpl handlers.Page = "admin/noAccessPage.gohtml"

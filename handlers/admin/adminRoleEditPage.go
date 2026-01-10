@@ -32,8 +32,10 @@ func adminRoleEditFormPage(w http.ResponseWriter, r *http.Request) {
 		Role        *db.Role
 		GrantGroups []GrantGroup
 	}{Role: role, GrantGroups: groups}
-	handlers.TemplateHandler(w, r, "admin/roleEditPage.gohtml", data)
+	AdminRoleEditPageTmpl.Handle(w, r, data)
 }
+
+const AdminRoleEditPageTmpl handlers.Page = "admin/roleEditPage.gohtml"
 
 // adminRoleEditSavePage persists role updates.
 func adminRoleEditSavePage(w http.ResponseWriter, r *http.Request) {
@@ -58,7 +60,7 @@ func adminRoleEditSavePage(w http.ResponseWriter, r *http.Request) {
 	role, err := queries.AdminGetRoleByID(r.Context(), id)
 	if err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("get role: %w", err).Error())
-		handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+		RunTaskPageTmpl.Handle(w, r, data)
 		return
 	}
 
@@ -72,5 +74,5 @@ func adminRoleEditSavePage(w http.ResponseWriter, r *http.Request) {
 	}); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("update role: %w", err).Error())
 	}
-	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	RunTaskPageTmpl.Handle(w, r, data)
 }

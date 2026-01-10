@@ -190,8 +190,10 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	targetPath := fmt.Sprintf("%s/topic/%d", basePath, topicId)
 	data.ShareURL = signer.SignedURL(targetPath)
 
-	handlers.TemplateHandler(w, r, "forum/topicsPage.gohtml", data)
+	ForumTopicsPageTmpl.Handle(w, r, data)
 }
+
+const ForumTopicsPageTmpl handlers.Page = "forum/topicsPage.gohtml"
 
 // TopicsPage serves the forum topic page at the default /forum prefix.
 func TopicsPage(w http.ResponseWriter, r *http.Request) {

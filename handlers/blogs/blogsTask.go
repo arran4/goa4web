@@ -1,19 +1,20 @@
 package blogs
 
 import (
+	"net/http"
+	"strconv"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/tasks"
-	"net/http"
-	"strconv"
 )
 
 type blogsTask struct {
 }
 
 const (
-	BlogsPageTmpl = "blogs/page.gohtml"
+	BlogsPageTmpl handlers.Page = "blogs/page.gohtml"
 )
 
 func NewBlogsTask() tasks.Task {
@@ -21,7 +22,7 @@ func NewBlogsTask() tasks.Task {
 }
 
 func (t *blogsTask) TemplatesRequired() []string {
-	return []string{BlogsPageTmpl}
+	return []string{string(BlogsPageTmpl)}
 }
 
 func (t *blogsTask) Action(w http.ResponseWriter, r *http.Request) any {
@@ -46,7 +47,5 @@ func (t *blogsTask) Get(w http.ResponseWriter, r *http.Request) {
 		cd.PrevLink = "/blogs?" + qv.Encode()
 	}
 
-	if err := cd.ExecuteSiteTemplate(w, r, BlogsPageTmpl, struct{}{}); err != nil {
-		handlers.RenderErrorPage(w, r, err)
-	}
+	BlogsPageTmpl.Handle(w, r, struct{}{})
 }

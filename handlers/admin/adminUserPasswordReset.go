@@ -23,7 +23,7 @@ type UserPasswordResetTask struct{ tasks.TaskString }
 var userPasswordResetTask = &UserPasswordResetTask{TaskString: TaskUserResetPassword}
 
 const (
-	TemplateUserResetPasswordConfirmPage = "admin/userResetPasswordConfirmPage.gohtml"
+	TemplateUserResetPasswordConfirmPage handlers.Page = "admin/userResetPasswordConfirmPage.gohtml"
 )
 
 var _ tasks.Task = (*UserPasswordResetTask)(nil)
@@ -80,7 +80,7 @@ func (UserPasswordResetTask) Action(w http.ResponseWriter, r *http.Request) any 
 func (UserPasswordResetTask) TemplatesRequired() []string {
 	return []string{
 		handlers.TemplateRunTaskPage,
-		TemplateUserResetPasswordConfirmPage,
+		string(TemplateUserResetPasswordConfirmPage),
 	}
 }
 
@@ -129,5 +129,5 @@ func adminUserResetPasswordConfirmPage(w http.ResponseWriter, r *http.Request) {
 		User: &db.User{Idusers: user.Idusers, Username: user.Username},
 		Back: fmt.Sprintf("/admin/user/%d", user.Idusers),
 	}
-	handlers.TemplateHandler(w, r, TemplateUserResetPasswordConfirmPage, data)
+	TemplateUserResetPasswordConfirmPage.Handle(w, r, data)
 }

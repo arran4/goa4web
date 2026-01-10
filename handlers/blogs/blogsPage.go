@@ -51,7 +51,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		URL:         cd.AbsoluteURL(r.URL.String()),
 	}
 
-	handlers.TemplateHandler(w, r, "blogsPage", struct{}{})
+	BlogsPageTmpl.Handle(w, r, struct{}{})
 }
 
 func RssPage(w http.ResponseWriter, r *http.Request) {

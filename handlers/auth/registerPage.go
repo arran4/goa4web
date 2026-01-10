@@ -3,12 +3,13 @@ package auth
 import (
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"net/mail"
 	"net/url"
 	"strings"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
@@ -31,8 +32,10 @@ var _ tasks.Task = (*RegisterTask)(nil)
 func (RegisterTask) Page(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Register"
-	handlers.TemplateHandler(w, r, "registerPage.gohtml", struct{}{})
+	RegisterPageTmpl.Handle(w, r, struct{}{})
 }
+
+const RegisterPageTmpl handlers.Page = "registerPage.gohtml"
 
 // RegisterActionPage handles user creation from the registration form.
 func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) any {

@@ -2,21 +2,22 @@ package user
 
 import (
 	"fmt"
+	"log"
+	"net/http"
+
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/middleware"
 	"github.com/arran4/goa4web/internal/tasks"
-	"log"
-	"net/http"
 )
 
 type userTask struct {
 }
 
 const (
-	UserPageTmpl = "user/page.gohtml"
+	UserPageTmpl handlers.Page = "user/page.gohtml"
 )
 
 func NewUserTask() tasks.Task {
@@ -24,7 +25,7 @@ func NewUserTask() tasks.Task {
 }
 
 func (t *userTask) TemplatesRequired() []string {
-	return []string{UserPageTmpl}
+	return []string{string(UserPageTmpl)}
 }
 
 func (t *userTask) Action(w http.ResponseWriter, r *http.Request) any {
@@ -46,7 +47,5 @@ func (t *userTask) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := cd.ExecuteSiteTemplate(w, r, UserPageTmpl, struct{}{}); err != nil {
-		handlers.RenderErrorPage(w, r, err)
-	}
+	UserPageTmpl.Handle(w, r, struct{}{})
 }

@@ -4,12 +4,13 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
 
@@ -135,8 +136,10 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 		cd.PrevLink = base + "?" + vals.Encode()
 	}
 
-	handlers.TemplateHandler(w, r, "admin/searchWordListPage.gohtml", data)
+	AdminSearchWordListPageTmpl.Handle(w, r, data)
 }
+
+const AdminSearchWordListPageTmpl handlers.Page = "admin/searchWordListPage.gohtml"
 
 // adminSearchWordListDownloadPage sends the full word list as a text file.
 func adminSearchWordListDownloadPage(w http.ResponseWriter, r *http.Request) {

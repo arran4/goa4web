@@ -20,5 +20,7 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 		cd.StartLink = "/admin/blogs?offset=0"
 	}
 	cd.PageTitle = "Blog Admin"
-	handlers.TemplateHandler(w, r, "blogsAdminPage.gohtml", struct{}{})
+	BlogsAdminPageTmpl.Handle(w, r, struct{}{})
 }
+
+const BlogsAdminPageTmpl handlers.Page = "blogs/adminPage.gohtml"

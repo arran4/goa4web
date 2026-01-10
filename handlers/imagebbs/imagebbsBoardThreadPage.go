@@ -99,8 +99,10 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	handlers.TemplateHandler(w, r, "boardThreadPage.gohtml", data)
+	ImageBBSBoardThreadPageTmpl.Handle(w, r, data)
 }
+
+const ImageBBSBoardThreadPageTmpl handlers.Page = "imagebbs/boardThreadPage.gohtml"
 
 func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)

@@ -25,5 +25,7 @@ func CreateTopicPageWithPostTask(w http.ResponseWriter, r *http.Request, postTas
 		CreateTask: postTask,
 		FormData:   formData,
 	}
-	handlers.TemplateHandler(w, r, "forum/create_topic.gohtml", data)
+	ForumCreateTopicPageTmpl.Handle(w, r, data)
 }
+
+const ForumCreateTopicPageTmpl handlers.Page = "forum/create_topic.gohtml"

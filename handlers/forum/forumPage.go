@@ -106,5 +106,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		data.Back = true
 	}
 
-	handlers.TemplateHandler(w, r, "forumPage", data)
+	ForumPageTmpl.Handle(w, r, data)
 }
+
+const ForumPageTmpl handlers.Page = "forum/page.gohtml"

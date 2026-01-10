@@ -79,8 +79,10 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct{ Request *http.Request }{r}
-	handlers.TemplateHandler(w, r, "user/notifications.gohtml", data)
+	UserNotificationsPage.Handle(w, r, data)
 }
+
+const UserNotificationsPage handlers.Page = "user/notifications.gohtml"
 
 func (DismissTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -230,8 +232,10 @@ func userNotificationOpenPage(w http.ResponseWriter, r *http.Request) {
 		RedirectURL:  n.Link.String,
 		TaskName:     string(TaskDismiss),
 	}
-	handlers.TemplateHandler(w, r, "user/notificationOpen.gohtml", data)
+	UserNotificationOpenPage.Handle(w, r, data)
 }
+
+const UserNotificationOpenPage handlers.Page = "user/notificationOpen.gohtml"
 
 func userNotificationEmailActionPage(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)

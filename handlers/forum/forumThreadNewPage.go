@@ -190,8 +190,10 @@ func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	handlers.TemplateHandler(w, r, "forum/threadNewPage.gohtml", data)
+	ForumThreadNewPageTmpl.Handle(w, r, data)
 }
+
+const ForumThreadNewPageTmpl handlers.Page = "forum/threadNewPage.gohtml"
 
 func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)

@@ -45,10 +45,10 @@ func AdminNewsPage(w http.ResponseWriter, r *http.Request) {
 		return data.UserRoles[i].Username.String < data.UserRoles[j].Username.String
 	})
 
-	if err := cd.ExecuteSiteTemplate(w, r, "news/adminNewsListPage.gohtml", data); err != nil {
-		handlers.RenderErrorPage(w, r, err)
-	}
+	AdminNewsListPageTmpl.Handle(w, r, data)
 }
+
+const AdminNewsListPageTmpl handlers.Page = "news/adminNewsListPage.gohtml"
 
 func AdminNewsPostPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
@@ -121,10 +121,10 @@ func AdminNewsPostPage(w http.ResponseWriter, r *http.Request) {
 		return ""
 	}
 
-	if err := cd.ExecuteSiteTemplate(w, r, "news/adminNewsPostPage.gohtml", data); err != nil {
-		handlers.RenderErrorPage(w, r, err)
-	}
+	AdminNewsPostPageTmpl.Handle(w, r, data)
 }
+
+const AdminNewsPostPageTmpl handlers.Page = "news/adminNewsPostPage.gohtml"
 
 func adminNewsEditFormPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -161,10 +161,10 @@ func adminNewsEditFormPage(w http.ResponseWriter, r *http.Request) {
 		SelectedLanguageId: int(post.LanguageID.Int32),
 		AuthorLabels:       labels,
 	}
-	if err := cd.ExecuteSiteTemplate(w, r, "news/adminNewsEditPage.gohtml", data); err != nil {
-		handlers.RenderErrorPage(w, r, err)
-	}
+	AdminNewsEditPageTmpl.Handle(w, r, data)
 }
+
+const AdminNewsEditPageTmpl handlers.Page = "news/adminNewsEditPage.gohtml"
 
 func AdminNewsDeleteConfirmPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -183,7 +183,7 @@ func AdminNewsDeleteConfirmPage(w http.ResponseWriter, r *http.Request) {
 		ConfirmLabel: "Confirm delete",
 		Back:         fmt.Sprintf("/admin/news/article/%d", pid),
 	}
-	if err := cd.ExecuteSiteTemplate(w, r, "news/adminNewsDeleteConfirmPage.gohtml", data); err != nil {
-		handlers.RenderErrorPage(w, r, err)
-	}
+	AdminNewsDeleteConfirmPageTmpl.Handle(w, r, data)
 }
+
+const AdminNewsDeleteConfirmPageTmpl handlers.Page = "news/adminNewsDeleteConfirmPage.gohtml"

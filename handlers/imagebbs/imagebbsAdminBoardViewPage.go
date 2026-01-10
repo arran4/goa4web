@@ -62,5 +62,7 @@ func AdminBoardViewPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := Data{Board: board, Posts: rows}
-	handlers.TemplateHandler(w, r, "adminBoardViewPage.gohtml", data)
+	ImageBBSAdminBoardViewPageTmpl.Handle(w, r, data)
 }
+
+const ImageBBSAdminBoardViewPageTmpl handlers.Page = "imagebbs/adminBoardViewPage.gohtml"

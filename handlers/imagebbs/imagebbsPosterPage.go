@@ -34,5 +34,7 @@ func PosterPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	handlers.TemplateHandler(w, r, "posterPage.gohtml", data)
+	ImageBBSPosterPageTmpl.Handle(w, r, data)
 }
+
+const ImageBBSPosterPageTmpl handlers.Page = "imagebbs/posterPage.gohtml"

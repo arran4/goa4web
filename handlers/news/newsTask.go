@@ -17,7 +17,7 @@ type newsTask struct {
 }
 
 const (
-	NewsPageTmpl = "news/page.gohtml"
+	NewsPageTmpl handlers.Page = "news/page.gohtml"
 )
 
 func NewNewsTask() tasks.Task {
@@ -25,7 +25,7 @@ func NewNewsTask() tasks.Task {
 }
 
 func (t *newsTask) TemplatesRequired() []string {
-	return []string{NewsPageTmpl}
+	return []string{string(NewsPageTmpl)}
 }
 
 func (t *newsTask) Action(w http.ResponseWriter, r *http.Request) any {
@@ -52,7 +52,5 @@ func (t *newsTask) Get(w http.ResponseWriter, r *http.Request) {
 		URL:         cd.AbsoluteURL(r.URL.String()),
 	}
 
-	if err := cd.ExecuteSiteTemplate(w, r, NewsPageTmpl, struct{}{}); err != nil {
-		handlers.RenderErrorPage(w, r, err)
-	}
+	NewsPageTmpl.Handle(w, r, struct{}{})
 }

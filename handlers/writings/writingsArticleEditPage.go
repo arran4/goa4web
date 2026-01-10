@@ -2,17 +2,19 @@ package writings
 
 import (
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/arran4/goa4web/core/consts"
+
+	"strings"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/workers/searchworker"
-	"strings"
 
 	"github.com/arran4/goa4web/core"
 )
@@ -57,8 +59,10 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	handlers.TemplateHandler(w, r, "articleEditPage.gohtml", data)
+	WritingsArticleEditPageTmpl.Handle(w, r, data)
 }
+
+const WritingsArticleEditPageTmpl handlers.Page = "writings/articleEditPage.gohtml"
 
 func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 	// RequireWritingAuthor middleware loads the writing and validates access.

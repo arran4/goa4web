@@ -169,8 +169,10 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Thread = threadRow
 
-	handlers.TemplateHandler(w, r, "linker/commentsPage.gohtml", data)
+	LinkerCommentsPageTmpl.Handle(w, r, data)
 }
+
+const LinkerCommentsPageTmpl handlers.Page = "linker/commentsPage.gohtml"
 
 type replyTask struct{ tasks.TaskString }
 

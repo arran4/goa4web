@@ -100,5 +100,7 @@ func adminGrantAddPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	handlers.TemplateHandler(w, r, "grantAddPage.gohtml", data)
+	AdminGrantAddPageTmpl.Handle(w, r, data)
 }
+
+const AdminGrantAddPageTmpl handlers.Page = "admin/grantAddPage.gohtml"

@@ -92,5 +92,7 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
 	data.ShareURL = signer.SignedURL(fmt.Sprintf("/blogs/blog/%d", blog.Idblogs))
 
-	handlers.TemplateHandler(w, r, "blogPage.gohtml", data)
+	BlogsBlogPageTmpl.Handle(w, r, data)
 }
+
+const BlogsBlogPageTmpl handlers.Page = "blogs/blogPage.gohtml"

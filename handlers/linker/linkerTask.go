@@ -2,20 +2,21 @@ package linker
 
 import (
 	"fmt"
+	"net/http"
+	"strconv"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
-	"net/http"
-	"strconv"
 )
 
 type linkerTask struct {
 }
 
 const (
-	LinkerPageTmpl = "linker/page.gohtml"
+	LinkerPageTmpl handlers.Page = "linker/page.gohtml"
 )
 
 func NewLinkerTask() tasks.Task {
@@ -23,7 +24,7 @@ func NewLinkerTask() tasks.Task {
 }
 
 func (t *linkerTask) TemplatesRequired() []string {
-	return []string{LinkerPageTmpl}
+	return []string{string(LinkerPageTmpl)}
 }
 
 func (t *linkerTask) Action(w http.ResponseWriter, r *http.Request) any {
@@ -70,7 +71,5 @@ func (t *linkerTask) Get(w http.ResponseWriter, r *http.Request) {
 		cd.PrevLink = fmt.Sprintf("%s?offset=%d", base, offset-ps)
 	}
 
-	if err := cd.ExecuteSiteTemplate(w, r, LinkerPageTmpl, data); err != nil {
-		handlers.RenderErrorPage(w, r, err)
-	}
+	LinkerPageTmpl.Handle(w, r, data)
 }

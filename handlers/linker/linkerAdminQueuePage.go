@@ -4,12 +4,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
@@ -104,8 +105,10 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 		cd.PrevLink = baseURL + "?" + qv.Encode()
 	}
 
-	handlers.TemplateHandler(w, r, "adminQueuePage.gohtml", data)
+	LinkerAdminQueuePageTmpl.Handle(w, r, data)
 }
+
+const LinkerAdminQueuePageTmpl handlers.Page = "linker/adminQueuePage.gohtml"
 
 func AdminQueueUpdateActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()

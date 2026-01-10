@@ -4,8 +4,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
@@ -34,5 +35,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Rows = rows
 
-	handlers.TemplateHandler(w, r, "faq/faqAdminCategoriesPage.gohtml", data)
+	FaqAdminCategoriesPageTmpl.Handle(w, r, data)
 }
+
+const FaqAdminCategoriesPageTmpl handlers.Page = "faq/faqAdminCategoriesPage.gohtml"

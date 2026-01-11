@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/sign"
@@ -22,22 +21,15 @@ func NewSigner(cfg *config.RuntimeConfig, key string) *Signer {
 }
 
 // SignedURL generates a redirect URL for the given link.
-func (s *Signer) SignedURL(link string, exp ...time.Time) string {
-	var ops []any
-	for _, t := range exp {
-		ops = append(ops, sign.WithExpiry(t))
-	}
+func (s *Signer) SignedURL(link string, ops ...any) string {
 	host := strings.TrimSuffix(s.cfg.HTTPHostname, "/")
 	ts, sig := s.signer.Sign("link:"+link, ops...)
 	return fmt.Sprintf("%s/goto?u=%s&ts=%d&sig=%s", host, url.QueryEscape(link), ts, sig)
 }
 
 // Sign returns the timestamp and signature for link using the optional expiry time.
-func (s *Signer) Sign(link string, exp ...time.Time) (int64, string) {
-	var ops []any
-	for _, t := range exp {
-		ops = append(ops, sign.WithExpiry(t))
-	}
+// Sign returns the timestamp and signature for link using the provided options.
+func (s *Signer) Sign(link string, ops ...any) (int64, string) {
 	return s.signer.Sign("link:"+link, ops...)
 }
 

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/sign"
@@ -25,14 +24,10 @@ func NewSigner(cfg *config.RuntimeConfig, key string) *Signer {
 // path should be the base path (e.g. "/blogs/rss").
 // query should be the encoded query string (e.g. "rss=bob"), or empty.
 // The resulting URL will be "/{section}/u/{username}/{rest}?ts={ts}&sig={sig}&{query}"
-func (s *Signer) SignedURL(path, query, username string, exp ...time.Time) string {
+func (s *Signer) SignedURL(path, query, username string, ops ...any) string {
 	data := fmt.Sprintf("feed:%s:%s", username, path)
 	if query != "" {
 		data += "?" + query
-	}
-	var ops []any
-	for _, t := range exp {
-		ops = append(ops, sign.WithExpiry(t))
 	}
 	ts, sig := s.signer.Sign(data, ops...)
 	// Check if path ends with slash, if so remove it to avoid double slashes

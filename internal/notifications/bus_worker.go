@@ -245,13 +245,13 @@ func (n *Notifier) notifyTargetUsers(ctx context.Context, evt eventbus.TaskEvent
 		}
 		if nt := tp.TargetInternalNotificationTemplate(evt); nt != nil {
 			data := struct {
+				TaskEvent eventbus.TaskEvent
 				Path      string
 				Item      any
-				TaskEvent eventbus.TaskEvent
 			}{
+				TaskEvent: evt,
 				Path:      evt.Path,
 				Item:      evt.Data,
-				TaskEvent: evt,
 			}
 			msg, err := n.renderNotification(ctx, *nt, data)
 			if err != nil {

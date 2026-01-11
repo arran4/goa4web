@@ -166,6 +166,8 @@ type QuerierStub struct {
 	GetPreferenceForListerReturn map[int32]*Preference
 
 	InsertSubscriptionParams         []InsertSubscriptionParams
+	DeleteSubscriptionParams         []DeleteSubscriptionForSubscriberParams
+	DeleteSubscriptionErr            error
 	InsertFAQQuestionForWriterCalls  []InsertFAQQuestionForWriterParams
 	InsertFAQQuestionForWriterResult sql.Result
 	InsertFAQQuestionForWriterErr    error
@@ -1358,6 +1360,13 @@ func (s *QuerierStub) InsertSubscription(ctx context.Context, arg InsertSubscrip
 	defer s.mu.Unlock()
 	s.InsertSubscriptionParams = append(s.InsertSubscriptionParams, arg)
 	return nil
+}
+
+func (s *QuerierStub) DeleteSubscriptionForSubscriber(ctx context.Context, arg DeleteSubscriptionForSubscriberParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.DeleteSubscriptionParams = append(s.DeleteSubscriptionParams, arg)
+	return s.DeleteSubscriptionErr
 }
 
 // InsertFAQQuestionForWriter records the call and returns the configured sql.Result.

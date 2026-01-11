@@ -1,6 +1,7 @@
 package images
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/url"
@@ -29,35 +30,42 @@ func (s *Signer) SignedURL(id string) string {
 	return s.SignedURLTTL(id, 24*time.Hour)
 }
 
+// ErrDoubleSigning is returned when a signer is asked to sign an already-signed URL.
+var ErrDoubleSigning = errors.New("double signing detected")
+
 // SignedURLTTL maps an image identifier to a signed URL that expires after ttl.
 func (s *Signer) SignedURLTTL(id string, ttl time.Duration) string {
 	id = strings.TrimPrefix(strings.TrimPrefix(id, "image:"), "img:")
 	host := strings.TrimSuffix(s.cfg.HTTPHostname, "/")
-	cleanId, sep := s.cleanParams(id)
+	cleanId, sep, err := s.cleanParams(id)
+	if err != nil {
+		log.Printf("Signer.SignedURLTTL: cleaning ID %q: %v", id, err)
+	}
 	ts, sig := s.signer.Sign("image:"+cleanId, time.Now().Add(ttl))
 	return fmt.Sprintf("%s/images/image/%s%sts=%d&sig=%s", host, cleanId, sep, ts, sig)
 }
 
-func (s *Signer) cleanParams(id string) (string, string) {
+func (s *Signer) cleanParams(id string) (string, string, error) {
 	u, err := url.Parse(id)
 	if err != nil {
 		if strings.Contains(id, "?") {
-			return id, "&"
+			return id, "&", nil
 		}
-		return id, "?"
+		return id, "?", nil
 	}
 	q := u.Query()
+	var errDoubleSigning error
 	if q.Has("ts") || q.Has("sig") {
-		log.Printf("[Signer] Double signing detected for ID %q. Removing existing ts/sig params.", id)
+		errDoubleSigning = fmt.Errorf("%w: for %q", ErrDoubleSigning, id)
 		q.Del("ts")
 		q.Del("sig")
 	}
 	u.RawQuery = q.Encode()
 	cleanId := u.String()
 	if strings.Contains(cleanId, "?") {
-		return cleanId, "&"
+		return cleanId, "&", errDoubleSigning
 	}
-	return cleanId, "?"
+	return cleanId, "?", errDoubleSigning
 }
 
 // SignedCacheURL maps a cache identifier to a signed URL.
@@ -68,7 +76,10 @@ func (s *Signer) SignedCacheURL(id string) string {
 // SignedCacheURLTTL maps a cache identifier to a signed URL that expires after ttl.
 func (s *Signer) SignedCacheURLTTL(id string, ttl time.Duration) string {
 	host := strings.TrimSuffix(s.cfg.HTTPHostname, "/")
-	cleanId, sep := s.cleanParams(id)
+	cleanId, sep, err := s.cleanParams(id)
+	if err != nil {
+		log.Printf("Signer.SignedCacheURLTTL: cleaning ID %q: %v", id, err)
+	}
 	ts, sig := s.signer.Sign("cache:"+cleanId, time.Now().Add(ttl))
 	return fmt.Sprintf("%s/images/cache/%s%sts=%d&sig=%s", host, cleanId, sep, ts, sig)
 }
@@ -94,7 +105,10 @@ func (s *Signer) SignedRef(ref string) string {
 		return ref
 	}
 
-	cleanId, sep := s.cleanParams(id)
+	cleanId, sep, err := s.cleanParams(id)
+	if err != nil {
+		log.Printf("Signer.SignedRef: cleaning ID %q: %v", id, err)
+	}
 	ts, sig := s.signer.Sign(prefix + cleanId)
 	return fmt.Sprintf("%s%s%sts=%d&sig=%s", prefix, cleanId, sep, ts, sig)
 }

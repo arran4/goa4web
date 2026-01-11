@@ -3,6 +3,7 @@ package share
 import (
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -107,7 +108,10 @@ func VerifyAndGetPath(r *http.Request, signer SignatureVerifier) string {
 		path = path + "?" + encoded
 	}
 
+	log.Printf("Verifying signature. Path: %s, TS: %s, Sig: %s", path, ts, sig)
+
 	if !signer.Verify(path, ts, sig) {
+		log.Printf("Signature verification failed for path: %s", path)
 		return ""
 	}
 

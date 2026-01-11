@@ -2,6 +2,7 @@ package privateforum
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -25,6 +26,7 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 	cd.ShareSigner = signer // Ensure it's set for MakeImageURL
 
 	if share.VerifyAndGetPath(r, signer) == "" {
+		log.Printf("[Share] Invalid signature for URL: %s", r.URL.String())
 		// No valid signature? If user is logged in, redirect to actual content (they might have perm).
 		// If not logged in, show 403.
 		if cd.UserID != 0 {
@@ -33,7 +35,7 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, actualURL, http.StatusFound)
 			return
 		}
-		http.Error(w, "invalid signature", http.StatusForbidden)
+		handlers.RenderErrorPage(w, r, handlers.WrapForbidden(fmt.Errorf("invalid signature")))
 		return
 	}
 
@@ -52,20 +54,20 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 	queries := cd.Queries()
 	thread, err := queries.AdminGetForumThreadById(r.Context(), int32(threadID))
 	if err != nil {
-		http.Error(w, "not found", http.StatusNotFound)
+		handlers.RenderErrorPage(w, r, handlers.WrapNotFound(err))
 		return
 	}
 
 	topic, err := queries.GetForumTopicById(r.Context(), thread.Idforumtopic)
 	if err != nil {
-		http.Error(w, "not found", http.StatusNotFound)
+		handlers.RenderErrorPage(w, r, handlers.WrapNotFound(err))
 		return
 	}
 
 	// Get first comment for description
 	comments, err := queries.SystemListCommentsByThreadID(r.Context(), int32(threadID))
 	if err != nil {
-		http.Error(w, "not found", http.StatusNotFound)
+		handlers.RenderErrorPage(w, r, handlers.WrapNotFound(err))
 		return
 	}
 
@@ -87,13 +89,14 @@ func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 
 	// Verify signature
 	if share.VerifyAndGetPath(r, signer) == "" {
+		log.Printf("[Share] Invalid signature for URL: %s", r.URL.String())
 		if cd.UserID != 0 {
 			vars := mux.Vars(r)
 			actualURL := fmt.Sprintf("/private/topic/%s", vars["topic"])
 			http.Redirect(w, r, actualURL, http.StatusFound)
 			return
 		}
-		http.Error(w, "invalid signature", http.StatusForbidden)
+		handlers.RenderErrorPage(w, r, handlers.WrapForbidden(fmt.Errorf("invalid signature")))
 		return
 	}
 
@@ -109,7 +112,7 @@ func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 	queries := cd.Queries()
 	topic, err := queries.GetForumTopicById(r.Context(), int32(topicID))
 	if err != nil {
-		http.Error(w, "not found", http.StatusNotFound)
+		handlers.RenderErrorPage(w, r, handlers.WrapNotFound(err))
 		return
 	}
 

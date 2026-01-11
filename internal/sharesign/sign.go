@@ -81,6 +81,10 @@ func (s *Signer) injectShared(link string) string {
 	// e.g., "/private/topic/2/thread/1" → "/private/shared/topic/2/thread/1"
 	parts := strings.SplitN(link, "/", 3)
 	if len(parts) >= 3 && parts[0] == "" && parts[1] != "" {
+		// Avoid double injection if "shared" is already the next segment
+		if strings.HasPrefix(parts[2], "shared/") || parts[2] == "shared" {
+			return link
+		}
 		// parts: ["", "private", "topic/2/thread/1"]
 		return "/" + parts[1] + "/shared/" + parts[2]
 	}

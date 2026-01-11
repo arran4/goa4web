@@ -33,7 +33,7 @@ func BloggerListPage(w http.ResponseWriter, r *http.Request) {
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       cd.PageTitle,
 		Description: "List of bloggers",
-		Image:       share.MakeImageURL(cd.AbsoluteURL(""), "Blogger List", cd.ShareSigner, false),
+		Image:       share.MakeImageURL(cd.AbsoluteURL(), "Blogger List", cd.ShareSigner, false),
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,

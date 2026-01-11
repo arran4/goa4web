@@ -127,7 +127,7 @@ func renderPublicSharedPreview(w http.ResponseWriter, r *http.Request, cd *commo
 	ogData := share.OpenGraphData{
 		Title:       title,
 		Description: desc,
-		ImageURL:    template.URL(share.MakeImageURL(cd.AbsoluteURL(""), title, signer, usePathAuth)),
+		ImageURL:    template.URL(share.MakeImageURL(cd.AbsoluteURL(), title, signer, usePathAuth)),
 		ContentURL:  template.URL(cd.AbsoluteURL(r.URL.RequestURI())),
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,

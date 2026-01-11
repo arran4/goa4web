@@ -259,13 +259,86 @@ type CoreData struct {
 }
 
 // AbsoluteURL returns an absolute URL by combining the configured hostname or
-// the request host with path. The base value is cached per request.
-func (cd *CoreData) AbsoluteURL(path string) string {
-	base, err := cd.absoluteURLBase.Load(func() (string, error) { return "", nil })
+// the request host with path parts. The base value is cached per request.
+// parts are joined slightly safely.
+// AbsoluteURL returns an absolute URL by combining the configured hostname or
+// the request host with path parts. The base value is cached per request.
+// parts are joined slightly safely.
+func (cd *CoreData) AbsoluteURL(ops ...any) string {
+	base, err := cd.absoluteURLBase.Load(func() (string, error) {
+		if cd.Config != nil {
+			return cd.Config.HTTPHostname, nil
+		}
+		return "", nil
+	})
 	if err != nil {
 		log.Printf("load absolute URL base: %v", err)
 	}
-	return base + path
+	u, err := url.Parse(base)
+	if err != nil {
+		log.Printf("absolute url base parse error: %v", err)
+		// Fallback to simple concatenation if base is invalid
+		var path []string
+		for _, op := range ops {
+			if s, ok := op.(string); ok {
+				path = append(path, s)
+			}
+		}
+		return base + "/" + strings.Join(path, "/")
+	}
+
+	for i, op := range ops {
+		switch v := op.(type) {
+		case string:
+			// Handle fragments and queries manually to prevent JoinPath from escaping them
+			if idx := strings.IndexByte(v, '#'); idx >= 0 {
+				u.Fragment = v[idx+1:]
+				v = v[:idx]
+			}
+			if idx := strings.IndexByte(v, '?'); idx >= 0 {
+				q, err := url.ParseQuery(v[idx+1:])
+				if err == nil {
+					query := u.Query()
+					for k, vals := range q {
+						for _, val := range vals {
+							query.Add(k, val)
+						}
+					}
+					u.RawQuery = query.Encode()
+				}
+				v = v[:idx]
+			}
+			if v != "" {
+				// url.JoinPath cleans paths and handles slashes, but escapes special chars.
+				// We've stripped # and ? so this should be dealing with path segments only.
+				// However, if the user provided an already-escaped path, JoinPath might double-escape?
+				// Assuming input strings are unescaped path segments.
+				var err error
+				u.Path, err = url.JoinPath(u.Path, v)
+				if err != nil {
+					log.Printf("url.JoinPath error at op %d: %v", i, err)
+				}
+			}
+		case func(*url.URL) *url.URL:
+			u = v(u)
+		case func(*url.URL) (*url.URL, error):
+			var err error
+			u, err = v(u)
+			if err != nil {
+				log.Printf("absolute url op %d error: %v", i, err)
+			}
+		case func(string) string:
+			// Fallback for simple string manipulators if needed, though working on URL object is preferred
+			if u != nil {
+				uStr := u.String()
+				uStr = v(uStr)
+				if parsed, err := url.Parse(uStr); err == nil {
+					u = parsed
+				}
+			}
+		}
+	}
+	return u.String()
 }
 
 // AdminForumTopics returns all forum topics without category filtering.

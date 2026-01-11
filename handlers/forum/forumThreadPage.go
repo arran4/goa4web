@@ -89,7 +89,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       displayTitle,
 		Description: "A discussion on our forum.",
-		Image:       share.MakeImageURL(cd.AbsoluteURL(""), displayTitle, cd.ShareSigner, false),
+		Image:       share.MakeImageURL(cd.AbsoluteURL(), displayTitle, cd.ShareSigner, false),
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,

@@ -22,6 +22,31 @@ type OpenGraphData struct {
 	TwitterSite string
 }
 
+// SignatureStyle determines where signature parameters are stored.
+type SignatureStyle string
+
+const (
+	// SignatureStyleQuery stores signature values in query parameters.
+	SignatureStyleQuery SignatureStyle = "query"
+	// SignatureStylePath stores signature values in path segments.
+	SignatureStylePath SignatureStyle = "path"
+)
+
+// SignatureStyleFromRequest returns the signature style used by the incoming request.
+func SignatureStyleFromRequest(r *http.Request) SignatureStyle {
+	if r == nil {
+		return SignatureStyleQuery
+	}
+	if r.URL.Query().Get("ts") != "" && r.URL.Query().Get("sig") != "" {
+		return SignatureStyleQuery
+	}
+	vars := mux.Vars(r)
+	if vars["ts"] != "" && vars["sign"] != "" {
+		return SignatureStylePath
+	}
+	return SignatureStyleQuery
+}
+
 // RenderOpenGraph renders an OpenGraph preview page with the provided metadata.
 func RenderOpenGraph(w http.ResponseWriter, r *http.Request, data OpenGraphData) error {
 	tmpl, err := template.New("og").Parse(`
@@ -145,8 +170,32 @@ type URLSigner interface {
 
 // MakeImageURL creates an OpenGraph image URL for the given title with a specific expiration.
 func MakeImageURL(baseURL, title string, signer URLSigner, expiration time.Time) string {
+	return MakeImageURLWithStyle(baseURL, title, signer, expiration, SignatureStyleQuery, "")
+}
+
+// MakeImageURLWithStyle creates an OpenGraph image URL with a defined signature style.
+func MakeImageURLWithStyle(baseURL, title string, signer URLSigner, expiration time.Time, style SignatureStyle, imageStyle string) string {
 	encodedTitle := strings.ReplaceAll(url.QueryEscape(title), "+", "%20")
-	path := fmt.Sprintf("/api/og-image?title=%s", encodedTitle)
-	ts, sig := signer.Sign(path, expiration)
-	return fmt.Sprintf("%s%s&ts=%d&sig=%s", baseURL, path, ts, sig)
+	query := fmt.Sprintf("title=%s", encodedTitle)
+	if imageStyle != "" {
+		query += "&style=" + strings.ReplaceAll(url.QueryEscape(imageStyle), "+", "%20")
+	}
+	path := "/api/og-image"
+	signData := path
+	if query != "" {
+		signData += "?" + query
+	}
+	ts, sig := signer.Sign(signData, expiration)
+	switch style {
+	case SignatureStylePath:
+		if query != "" {
+			return fmt.Sprintf("%s%s/ts/%d/sign/%s?%s", baseURL, path, ts, sig, query)
+		}
+		return fmt.Sprintf("%s%s/ts/%d/sign/%s", baseURL, path, ts, sig)
+	default:
+		if query != "" {
+			return fmt.Sprintf("%s%s?%s&ts=%d&sig=%s", baseURL, path, query, ts, sig)
+		}
+		return fmt.Sprintf("%s%s?ts=%d&sig=%s", baseURL, path, ts, sig)
+	}
 }

@@ -9,12 +9,12 @@ import (
 	"image/png"
 	"log"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/gorilla/mux"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/basicfont"
 	"golang.org/x/image/font/gofont/goregular"
@@ -44,8 +44,22 @@ func (h *OGImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ts := r.URL.Query().Get("ts")
 	sig := r.URL.Query().Get("sig")
 
-	path := fmt.Sprintf("/api/og-image?title=%s", strings.ReplaceAll(url.QueryEscape(title), "+", "%20"))
-	if !h.signer.Verify(path, ts, sig) {
+	path := r.URL.Path
+	if ts == "" || sig == "" {
+		vars := mux.Vars(r)
+		ts = vars["ts"]
+		sig = vars["sign"]
+		if ts != "" && sig != "" {
+			suffix := fmt.Sprintf("/ts/%s/sign/%s", ts, sig)
+			path = strings.TrimSuffix(path, suffix)
+		}
+	}
+	filteredQuery := filterQueryParams(r.URL.RawQuery, map[string]struct{}{"ts": {}, "sig": {}})
+	signData := path
+	if filteredQuery != "" {
+		signData = signData + "?" + filteredQuery
+	}
+	if !h.signer.Verify(signData, ts, sig) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}

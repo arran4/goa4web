@@ -136,7 +136,7 @@ func renderSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.Core
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       title,
 		Description: desc,
-		Image:       share.MakeImageURL(cd.AbsoluteURL(""), title, cd.ShareSigner, exp),
+		Image:       share.MakeImageURLWithStyle(cd.AbsoluteURL(""), title, cd.ShareSigner, exp, share.SignatureStyleFromRequest(r), ""),
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,

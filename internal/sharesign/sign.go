@@ -2,6 +2,7 @@ package sharesign
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -30,17 +31,49 @@ func (s *Signer) SignedURL(link string, exp ...time.Time) string {
 // SignedURLQuery generates a redirect URL with query parameters.
 func (s *Signer) SignedURLQuery(link string, exp ...time.Time) string {
 	host := strings.TrimSuffix(s.cfg.HTTPHostname, "/")
-	sharedLink := s.injectShared(link)
-	ts, sig := s.signer.Sign("share:"+sharedLink, exp...)
-	return fmt.Sprintf("%s%s?ts=%d&sig=%s", host, sharedLink, ts, sig)
+	sharedPath, rawQuery, fragment := s.prepareSharedLink(link)
+	data := s.signatureData(sharedPath, rawQuery)
+	ts, sig := s.signer.Sign(data, exp...)
+	if rawQuery != "" {
+		return fmt.Sprintf("%s%s?%s&ts=%d&sig=%s%s", host, sharedPath, rawQuery, ts, sig, fragment)
+	}
+	return fmt.Sprintf("%s%s?ts=%d&sig=%s%s", host, sharedPath, ts, sig, fragment)
 }
 
 // SignedURLPath generates a redirect URL with path parameters.
 func (s *Signer) SignedURLPath(link string, exp ...time.Time) string {
 	host := strings.TrimSuffix(s.cfg.HTTPHostname, "/")
-	sharedLink := s.injectShared(link)
-	ts, sig := s.signer.Sign("share:"+sharedLink, exp...)
-	return fmt.Sprintf("%s%s/ts/%d/sign/%s", host, sharedLink, ts, sig)
+	sharedPath, rawQuery, fragment := s.prepareSharedLink(link)
+	data := s.signatureData(sharedPath, rawQuery)
+	ts, sig := s.signer.Sign(data, exp...)
+	if rawQuery != "" {
+		return fmt.Sprintf("%s%s/ts/%d/sign/%s?%s%s", host, sharedPath, ts, sig, rawQuery, fragment)
+	}
+	return fmt.Sprintf("%s%s/ts/%d/sign/%s%s", host, sharedPath, ts, sig, fragment)
+}
+
+func (s *Signer) signatureData(path, rawQuery string) string {
+	if rawQuery == "" {
+		return "share:" + path
+	}
+	return "share:" + path + "?" + rawQuery
+}
+
+func (s *Signer) prepareSharedLink(link string) (string, string, string) {
+	sharedPath := link
+	rawQuery := ""
+	fragment := ""
+	if parsed, err := url.Parse(link); err == nil {
+		if parsed.Path != "" {
+			sharedPath = parsed.Path
+		}
+		rawQuery = parsed.RawQuery
+		if parsed.Fragment != "" {
+			fragment = "#" + parsed.Fragment
+		}
+	}
+	sharedPath = s.injectShared(sharedPath)
+	return sharedPath, rawQuery, fragment
 }
 
 func (s *Signer) injectShared(link string) string {

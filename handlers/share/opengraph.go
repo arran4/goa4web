@@ -100,6 +100,13 @@ func VerifyAndGetPath(r *http.Request, signer SignatureVerifier) string {
 		}
 	}
 
+	query := r.URL.Query()
+	query.Del("ts")
+	query.Del("sig")
+	if encoded := query.Encode(); encoded != "" {
+		path = path + "?" + encoded
+	}
+
 	if !signer.Verify(path, ts, sig) {
 		return ""
 	}

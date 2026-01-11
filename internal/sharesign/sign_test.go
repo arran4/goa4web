@@ -2,6 +2,7 @@ package sharesign_test
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -55,5 +56,30 @@ func TestSignedURL(t *testing.T) {
 	signedQuery := s.SignedURLQuery(link)
 	if !strings.Contains(signedQuery, "/private/shared/topic/1/thread/2?ts=") {
 		t.Errorf("Query signature format incorrect: %s", signedQuery)
+	}
+}
+
+func TestSignedURLQueryWithParams(t *testing.T) {
+	cfg := &config.RuntimeConfig{
+		HTTPHostname: "http://localhost:8080",
+	}
+	s := sharesign.NewSigner(cfg, "secret")
+	link := "/private/topic/1/thread/2?from=share"
+	signed := s.SignedURLQuery(link)
+	parsed, err := url.Parse(signed)
+	if err != nil {
+		t.Fatalf("parse signed url: %v", err)
+	}
+	ts := parsed.Query().Get("ts")
+	sig := parsed.Query().Get("sig")
+	query := parsed.Query()
+	query.Del("ts")
+	query.Del("sig")
+	dataPath := parsed.Path
+	if encoded := query.Encode(); encoded != "" {
+		dataPath = dataPath + "?" + encoded
+	}
+	if !s.Verify(dataPath, ts, sig) {
+		t.Fatalf("signature did not verify for %s", signed)
 	}
 }

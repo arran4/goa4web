@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/common"
@@ -115,16 +114,20 @@ func renderPublicSharedPreview(w http.ResponseWriter, r *http.Request, cd *commo
 	}
 
 	tsStr := r.URL.Query().Get("ts")
-	ts, _ := strconv.ParseInt(tsStr, 10, 64)
-	exp := time.Now().Add(24 * time.Hour)
-	if ts > 0 {
-		exp = time.Unix(ts, 0)
+	tsVal, _ := strconv.ParseInt(tsStr, 10, 64)
+	if tsVal == 0 {
+		vars := mux.Vars(r)
+		if t, err := strconv.ParseInt(vars["ts"], 10, 64); err == nil {
+			tsVal = t
+		}
 	}
+
+	usePathAuth := mux.Vars(r)["ts"] != ""
 
 	ogData := share.OpenGraphData{
 		Title:       title,
 		Description: desc,
-		ImageURL:    template.URL(share.MakeImageURL(cd.AbsoluteURL(""), title, signer, exp)),
+		ImageURL:    template.URL(share.MakeImageURL(cd.AbsoluteURL(""), title, signer, usePathAuth)),
 		ContentURL:  template.URL(cd.AbsoluteURL(r.URL.RequestURI())),
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,

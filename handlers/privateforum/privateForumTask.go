@@ -4,8 +4,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"time"
-
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -40,7 +38,7 @@ func (t *privateForumTask) Get(w http.ResponseWriter, r *http.Request) {
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       "Private Forum",
 		Description: "Private discussion forums",
-		Image:       share.MakeImageURL(cd.AbsoluteURL(""), "Private Forum", cd.ShareSigner, time.Now().Add(24*time.Hour)),
+		Image:       share.MakeImageURL(cd.AbsoluteURL(""), "Private Forum", cd.ShareSigner, false),
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,

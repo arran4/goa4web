@@ -4,7 +4,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/consts"
@@ -37,7 +36,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       "Forum",
 		Description: "A place for discussion.",
-		Image:       share.MakeImageURL(cd.AbsoluteURL(""), "Forum", cd.ShareSigner, time.Now().Add(24*time.Hour)),
+		Image:       share.MakeImageURL(cd.AbsoluteURL(""), "Forum", cd.ShareSigner, false),
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,

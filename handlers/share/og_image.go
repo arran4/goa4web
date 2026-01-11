@@ -13,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gorilla/mux"
+
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/templates"
 	"golang.org/x/image/font"
@@ -44,8 +46,16 @@ func (h *OGImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ts := r.URL.Query().Get("ts")
 	sig := r.URL.Query().Get("sig")
 
+	if ts == "" || sig == "" {
+		vars := mux.Vars(r)
+		ts = vars["ts"]
+		sig = vars["sign"]
+	}
+
 	path := fmt.Sprintf("/api/og-image?title=%s", strings.ReplaceAll(url.QueryEscape(title), "+", "%20"))
+	log.Printf("[OGImage] Verifying: %s, TS: %s, Sig: %s", path, ts, sig)
 	if !h.signer.Verify(path, ts, sig) {
+		log.Printf("[OGImage] Verification failed for: %s", path)
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}

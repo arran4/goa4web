@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"time"
 
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/common"
@@ -124,16 +123,26 @@ func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 
 func renderSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.CoreData, title, desc, redirectPath string) {
 	tsStr := r.URL.Query().Get("ts")
-	ts, _ := strconv.ParseInt(tsStr, 10, 64)
-	exp := time.Now().Add(24 * time.Hour)
-	if ts > 0 {
-		exp = time.Unix(ts, 0)
+	tsVal, _ := strconv.ParseInt(tsStr, 10, 64)
+	if tsVal == 0 {
+		// Try path vars
+		vars := mux.Vars(r)
+		if t, err := strconv.ParseInt(vars["ts"], 10, 64); err == nil {
+			tsVal = t
+		}
 	}
+
+	// Determine auth style: if ts was found in query, use query auth. If in path, use path auth.
+	// Actually, easier: check if mux var is empty.
+	usePathAuth := mux.Vars(r)["ts"] != ""
+
+	// tsVal is CREATION TIME of the share link. Do not use as expiration.
+	// Generate a fresh expiration for the image link.
 
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       title,
 		Description: desc,
-		Image:       share.MakeImageURL(cd.AbsoluteURL(""), title, cd.ShareSigner, exp),
+		Image:       share.MakeImageURL(cd.AbsoluteURL(""), title, cd.ShareSigner, usePathAuth),
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,

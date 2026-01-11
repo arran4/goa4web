@@ -130,8 +130,8 @@ type QuerierStub struct {
 
 	ListGrantsExtendedReturns []*ListGrantsExtendedRow
 	ListGrantsExtendedErr     error
-	ListGrantsExtendedCalls   int
-	ListGrantsExtendedFn      func(context.Context) ([]*ListGrantsExtendedRow, error)
+	ListGrantsExtendedCalls   []ListGrantsExtendedParams
+	ListGrantsExtendedFn      func(context.Context, ListGrantsExtendedParams) ([]*ListGrantsExtendedRow, error)
 
 	AdminDeletePendingEmailCalls []int32
 	AdminDeletePendingEmailErr   error
@@ -1253,12 +1253,12 @@ func (s *QuerierStub) ListGrantsByUserID(ctx context.Context, userID sql.NullInt
 	return s.ListGrantsByUserIDReturns, s.ListGrantsByUserIDErr
 }
 
-func (s *QuerierStub) ListGrantsExtended(ctx context.Context) ([]*ListGrantsExtendedRow, error) {
+func (s *QuerierStub) ListGrantsExtended(ctx context.Context, arg ListGrantsExtendedParams) ([]*ListGrantsExtendedRow, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.ListGrantsExtendedCalls++
+	s.ListGrantsExtendedCalls = append(s.ListGrantsExtendedCalls, arg)
 	if s.ListGrantsExtendedFn != nil {
-		return s.ListGrantsExtendedFn(ctx)
+		return s.ListGrantsExtendedFn(ctx, arg)
 	}
 	return s.ListGrantsExtendedReturns, s.ListGrantsExtendedErr
 }

@@ -1,83 +1,169 @@
-package main
+package main_test
 
 import (
 	"bytes"
 	"database/sql"
+	"regexp"
 	"strings"
 	"testing"
 
+	"github.com/arran4/goa4web/cmd"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/golang/mock/gomock"
 )
 
-func TestPrintGrantsTable(t *testing.T) {
+func TestGrantListCmd(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	tests := []struct {
-		name     string
-		rows     []*db.ListGrantsExtendedRow
-		expected []string
+		name           string
+		args           []string
+		expectedParams db.ListGrantsExtendedParams
+		expectedOutput string
+		wantErr        bool
 	}{
 		{
-			name: "User Grant",
-			rows: []*db.ListGrantsExtendedRow{
-				{
-					ID:       1,
-					Section:  "forum",
-					Action:   "view",
-					RuleType: "allow",
-					Username: sql.NullString{String: "user1", Valid: true},
-					UserID:   sql.NullInt32{Int32: 10, Valid: true},
-				},
+			name: "no filter",
+			args: []string{},
+			expectedParams: db.ListGrantsExtendedParams{
+				OnlyRoles: true,
 			},
-			expected: []string{
-				"ID", "Section", "Item", "Action", "Rule Type", "Target",
-				"1", "forum", "view", "allow", "User: user1",
-			},
+			expectedOutput: "ID\tSection\tItem\tAction\tRule Type\tTarget\tScope\tActive\n1\tsection\titem\taction\t-\tRole: test-role\tID: 1\tYes\n",
 		},
 		{
-			name: "Role Grant",
-			rows: []*db.ListGrantsExtendedRow{
-				{
-					ID:       1,
-					Section:  "forum",
-					Action:   "view",
-					RuleType: "allow",
-					RoleName: sql.NullString{String: "admin", Valid: true},
-					RoleID:   sql.NullInt32{Int32: 5, Valid: true},
-				},
+			name: "filter by user id",
+			args: []string{"-uid", "123"},
+			expectedParams: db.ListGrantsExtendedParams{
+				UserID:    sql.NullInt32{Int32: 123, Valid: true},
+				OnlyUsers: true,
 			},
-			expected: []string{
-				"ID", "Section", "Item", "Action", "Rule Type", "Target",
-				"1", "forum", "view", "allow", "Role: admin",
-			},
+			expectedOutput: "ID\tSection\tItem\tAction\tRule Type\tTarget\tScope\tActive\n1\tsection\titem\taction\t-\tUser: test-user\tID: 1\tYes\n",
 		},
 		{
-			name: "Row with Item",
-			rows: []*db.ListGrantsExtendedRow{
-				{
-					ID:       2,
-					Section:  "blog",
-					Item:     sql.NullString{String: "post", Valid: true},
-					Action:   "edit",
-					RuleType: "deny",
-				},
+			name: "filter by username",
+			args: []string{"-username", "test-user"},
+			expectedParams: db.ListGrantsExtendedParams{
+				Username:  "test-user",
+				OnlyRoles: true,
 			},
-			expected: []string{
-				"2", "blog", "post", "edit", "deny",
+			expectedOutput: "ID\tSection\tItem\tAction\tRule Type\tTarget\tScope\tActive\n1\tsection\titem\taction\t-\tUser: test-user\tID: 1\tYes\n",
+		},
+		{
+			name: "filter by role id",
+			args: []string{"-rid", "456"},
+			expectedParams: db.ListGrantsExtendedParams{
+				RoleID:    sql.NullInt32{Int32: 456, Valid: true},
+				OnlyRoles: true,
 			},
+			expectedOutput: "ID\tSection\tItem\tAction\tRule Type\tTarget\tScope\tActive\n1\tsection\titem\taction\t-\tRole: test-role\tID: 1\tYes\n",
+		},
+		{
+			name: "filter by role name",
+			args: []string{"-role-name", "test-role"},
+			expectedParams: db.ListGrantsExtendedParams{
+				RoleName:  "test-role",
+				OnlyRoles: true,
+			},
+			expectedOutput: "ID\tSection\tItem\tAction\tRule Type\tTarget\tScope\tActive\n1\tsection\titem\taction\t-\tRole: test-role\tID: 1\tYes\n",
+		},
+		{
+			name: "filter users",
+			args: []string{"-filter", "users"},
+			expectedParams: db.ListGrantsExtendedParams{
+				OnlyUsers: true,
+			},
+			expectedOutput: "ID\tSection\tItem\tAction\tRule Type\tTarget\tScope\tActive\n1\tsection\titem\taction\t-\tUser: test-user\tID: 1\tYes\n",
+		},
+		{
+			name:           "filter both",
+			args:           []string{"-filter", "both"},
+			expectedParams: db.ListGrantsExtendedParams{},
+			expectedOutput: "ID\tSection\tItem\tAction\tRule Type\tTarget\tScope\tActive\n1\tsection\titem\taction\t-\tUser: test-user\tID: 1\tYes\n1\tsection\titem\taction\t-\tRole: test-role\tID: 1\tYes\n",
+		},
+		{
+			name:    "invalid filter",
+			args:    []string{"-filter", "invalid"},
+			wantErr: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var buf bytes.Buffer
-			if err := printGrantsTable(&buf, tt.rows); err != nil {
-				t.Fatalf("printGrantsTable() error = %v", err)
+			m := db.NewMockQuerier(ctrl)
+			m.EXPECT().ListGrantsExtended(gomock.Any(), gomock.Eq(tt.expectedParams)).Return(getMockGrants(tt.expectedParams), nil).AnyTimes()
+			var out bytes.Buffer
+			rootCmd := cmd.NewRoot(&out, m)
+			rootCmd.SetArgs(append([]string{"grant", "list"}, tt.args...))
+			err := rootCmd.Execute()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("grant list cmd.Run() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			output := buf.String()
-			for _, exp := range tt.expected {
-				if !strings.Contains(output, exp) {
-					t.Errorf("Expected output to contain %q, but got:\n%s", exp, output)
+			if !tt.wantErr {
+				if !strings.Contains(strings.ReplaceAll(out.String(), " ", ""), strings.ReplaceAll(tt.expectedOutput, " ", "")) {
+					t.Errorf("Expected output to contain '%s', but got '%s'", tt.expectedOutput, out.String())
 				}
 			}
 		})
+	}
+}
+
+func getMockGrants(params db.ListGrantsExtendedParams) []*db.ListGrantsExtendedRow {
+	var rows []*db.ListGrantsExtendedRow
+	if !params.OnlyUsers {
+		rows = append(rows, &db.ListGrantsExtendedRow{
+			ID:       1,
+			Section:  "section",
+			Item:     sql.NullString{String: "item", Valid: true},
+			Action:   "action",
+			RoleID:   sql.NullInt32{Int32: 1, Valid: true},
+			RoleName: sql.NullString{String: "test-role", Valid: true},
+			ItemID:   sql.NullInt32{Int32: 1, Valid: true},
+			Active:   true,
+		})
+	}
+	if !params.OnlyRoles {
+		rows = append(rows, &db.ListGrantsExtendedRow{
+			ID:       1,
+			Section:  "section",
+			Item:     sql.NullString{String: "item", Valid: true},
+			Action:   "action",
+			UserID:   sql.NullInt32{Int32: 1, Valid: true},
+			Username: sql.NullString{String: "test-user", Valid: true},
+			ItemID:   sql.NullInt32{Int32: 1, Valid: true},
+			Active:   true,
+		})
+	}
+	return rows
+}
+
+func TestGrantListCmdHelp(t *testing.T) {
+	var out bytes.Buffer
+	rootCmd := cmd.NewRoot(&out, nil)
+	rootCmd.SetArgs([]string{"grant", "list", "-help"})
+	err := rootCmd.Execute()
+	if err != nil {
+		t.Fatalf("Failed to execute command: %v", err)
+	}
+
+	output := out.String()
+
+	expectedFlags := []string{
+		"-filter",
+		"-uid",
+		"-user-id",
+		"-username",
+		"-rid",
+		"-role-id",
+		"-role-name",
+	}
+	for _, flag := range expectedFlags {
+		match, err := regexp.MatchString(flag, output)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !match {
+			t.Errorf("Expected help output to contain %s", flag)
+		}
 	}
 }

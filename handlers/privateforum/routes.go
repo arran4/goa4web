@@ -28,6 +28,7 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Reg
 	pr.HandleFunc("/private_forum.js", handlers.PrivateForumJS(cfg)).Methods(http.MethodGet)
 	pr.HandleFunc("/topic_labels.js", handlers.TopicLabelsJS(cfg)).Methods(http.MethodGet)
 	pr.HandleFunc("/topic/{topic}", TopicPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	pr.HandleFunc("/api/user-exists", UserExistsAPI).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount())
 
 	// Provide GET confirmation pages for subscribe/unsubscribe (mirrors public forum)
 	pr.HandleFunc("/topic/{topic}/subscribe", forumhandlers.SubscribeTopicPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())

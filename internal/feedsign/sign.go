@@ -30,7 +30,11 @@ func (s *Signer) SignedURL(path, query, username string, exp ...time.Time) strin
 	if query != "" {
 		data += "?" + query
 	}
-	ts, sig := s.signer.Sign(data, exp...)
+	var ops []any
+	for _, t := range exp {
+		ops = append(ops, sign.WithExpiry(t))
+	}
+	ts, sig := s.signer.Sign(data, ops...)
 	// Check if path ends with slash, if so remove it to avoid double slashes
 	path = strings.TrimSuffix(path, "/")
 
@@ -62,7 +66,8 @@ func (s *Signer) Verify(path, query, username, ts, sig string) bool {
 	if query != "" {
 		data += "?" + query
 	}
-	return s.signer.Verify(data, ts, sig)
+	valid, _ := s.signer.Verify(data, sig, sign.WithExpiryTimestamp(ts))
+	return valid
 }
 
 // StripSignatureParams removes ts and sig from values and returns encoded string.

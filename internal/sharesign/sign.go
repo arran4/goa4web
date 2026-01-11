@@ -33,7 +33,11 @@ func (s *Signer) SignedURLQuery(link string, exp ...time.Time) string {
 	host := strings.TrimSuffix(s.cfg.HTTPHostname, "/")
 	sharedPath, rawQuery, fragment := s.prepareSharedLink(link)
 	data := s.signatureData(sharedPath, rawQuery)
-	ts, sig := s.signer.Sign(data, exp...)
+	var ops []any
+	for _, t := range exp {
+		ops = append(ops, sign.WithExpiry(t))
+	}
+	ts, sig := s.signer.Sign(data, ops...)
 	if rawQuery != "" {
 		return fmt.Sprintf("%s%s?%s&ts=%d&sig=%s%s", host, sharedPath, rawQuery, ts, sig, fragment)
 	}
@@ -45,7 +49,11 @@ func (s *Signer) SignedURLPath(link string, exp ...time.Time) string {
 	host := strings.TrimSuffix(s.cfg.HTTPHostname, "/")
 	sharedPath, rawQuery, fragment := s.prepareSharedLink(link)
 	data := s.signatureData(sharedPath, rawQuery)
-	ts, sig := s.signer.Sign(data, exp...)
+	var ops []any
+	for _, t := range exp {
+		ops = append(ops, sign.WithExpiry(t))
+	}
+	ts, sig := s.signer.Sign(data, ops...)
 	if rawQuery != "" {
 		return fmt.Sprintf("%s%s/ts/%d/sign/%s?%s%s", host, sharedPath, ts, sig, rawQuery, fragment)
 	}
@@ -92,11 +100,20 @@ func (s *Signer) injectShared(link string) string {
 }
 
 // Sign returns the timestamp and signature for link using the optional expiry time.
-func (s *Signer) Sign(link string, exp ...time.Time) (int64, string) {
-	return s.signer.Sign("share:"+link, exp...)
+func (s *Signer) Sign(link string, ops ...any) (int64, string) {
+	var newOps []any
+	for _, op := range ops {
+		if t, ok := op.(time.Time); ok {
+			newOps = append(newOps, sign.WithExpiry(t))
+		} else {
+			newOps = append(newOps, op)
+		}
+	}
+	return s.signer.Sign("share:"+link, newOps...)
 }
 
 // Verify checks the provided signature matches the link.
-func (s *Signer) Verify(link, ts, sig string) bool {
-	return s.signer.Verify("share:"+link, ts, sig)
+// You must provide either sign.WithExpiryTimestamp(ts) or sign.WithNoExpiry().
+func (s *Signer) Verify(link, sig string, ops ...any) (bool, error) {
+	return s.signer.Verify("share:"+link, sig, ops...)
 }

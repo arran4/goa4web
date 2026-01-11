@@ -23,19 +23,28 @@ func NewSigner(cfg *config.RuntimeConfig, key string) *Signer {
 
 // SignedURL generates a redirect URL for the given link.
 func (s *Signer) SignedURL(link string, exp ...time.Time) string {
+	var ops []any
+	for _, t := range exp {
+		ops = append(ops, sign.WithExpiry(t))
+	}
 	host := strings.TrimSuffix(s.cfg.HTTPHostname, "/")
-	ts, sig := s.signer.Sign("link:"+link, exp...)
+	ts, sig := s.signer.Sign("link:"+link, ops...)
 	return fmt.Sprintf("%s/goto?u=%s&ts=%d&sig=%s", host, url.QueryEscape(link), ts, sig)
 }
 
 // Sign returns the timestamp and signature for link using the optional expiry time.
 func (s *Signer) Sign(link string, exp ...time.Time) (int64, string) {
-	return s.signer.Sign("link:"+link, exp...)
+	var ops []any
+	for _, t := range exp {
+		ops = append(ops, sign.WithExpiry(t))
+	}
+	return s.signer.Sign("link:"+link, ops...)
 }
 
 // Verify checks the provided signature matches the link.
 func (s *Signer) Verify(link, ts, sig string) bool {
-	return s.signer.Verify("link:"+link, ts, sig)
+	valid, _ := s.signer.Verify("link:"+link, sig, sign.WithExpiryTimestamp(ts))
+	return valid
 }
 
 // MapURL rewrites outbound links to SignedURL when the host is external.

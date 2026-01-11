@@ -18,6 +18,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/internal/sign"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/basicfont"
 	"golang.org/x/image/font/gofont/goregular"
@@ -62,17 +63,27 @@ func (h *OGImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		style = "checker"
 	}
 
-	ts := r.URL.Query().Get("ts")
+	expiryTs := r.URL.Query().Get("ts")
 	sig := r.URL.Query().Get("sig")
+	nonce := r.URL.Query().Get("nonce")
 
-	if ts == "" || sig == "" {
-		ts = vars["ts"]
+	if (expiryTs == "" && nonce == "") || sig == "" {
+		expiryTs = vars["ts"]
 		sig = vars["sign"]
+		nonce = vars["nonce"]
 	}
 
-	log.Printf("[OGImage] Verifying: %s, TS: %s, Sig: %s", path, ts, sig)
-	if !h.signer.Verify(path, ts, sig) {
-		log.Printf("[OGImage] Verification failed for: %s", path)
+	log.Printf("[OGImage] Verifying: %s, TS: %s, Nonce: %s, Sig: %s", path, expiryTs, nonce, sig)
+	var valid bool
+	var err error
+	if nonce != "" {
+		valid, err = h.signer.Verify(path, sig, sign.WithVerifyNonce(nonce))
+	} else {
+		valid, err = h.signer.Verify(path, sig, sign.WithExpiryTimestamp(expiryTs))
+	}
+
+	if !valid {
+		log.Printf("[OGImage] Verification failed for: %s. Reason: %v", path, err)
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}

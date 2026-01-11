@@ -1,7 +1,9 @@
 package share
 
 import (
+	"crypto/rand"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"html/template"
 	"log"
@@ -9,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/arran4/goa4web/internal/sign"
 	"github.com/gorilla/mux"
 )
 
@@ -86,17 +89,22 @@ func (d OpenGraphData) TwitterImageMeta() template.HTML {
 func VerifyAndGetPath(r *http.Request, signer SignatureVerifier) string {
 	ts := r.URL.Query().Get("ts")
 	sig := r.URL.Query().Get("sig")
+	nonce := r.URL.Query().Get("nonce")
 
 	// Get path without query params
 	path := r.URL.Path
 
-	if ts == "" || sig == "" {
+	if (ts == "" && nonce == "") || sig == "" {
 		vars := mux.Vars(r)
 		ts = vars["ts"]
 		sig = vars["sign"]
+		nonce = vars["nonce"]
 
 		if ts != "" && sig != "" {
 			suffix := fmt.Sprintf("/ts/%s/sign/%s", ts, sig)
+			path = strings.TrimSuffix(path, suffix)
+		} else if nonce != "" && sig != "" {
+			suffix := fmt.Sprintf("/nonce/%s/sign/%s", nonce, sig)
 			path = strings.TrimSuffix(path, suffix)
 		}
 	}
@@ -104,14 +112,26 @@ func VerifyAndGetPath(r *http.Request, signer SignatureVerifier) string {
 	query := r.URL.Query()
 	query.Del("ts")
 	query.Del("sig")
+	query.Del("nonce")
 	if encoded := query.Encode(); encoded != "" {
 		path = path + "?" + encoded
 	}
 
-	log.Printf("Verifying signature. Path: %s, TS: %s, Sig: %s", path, ts, sig)
+	log.Printf("Verifying signature. Path: %s, TS: %s, Nonce: %s, Sig: %s", path, ts, nonce, sig)
 
-	if !signer.Verify(path, ts, sig) {
-		log.Printf("Signature verification failed for path: %s", path)
+	var valid bool
+	var err error
+	if nonce != "" {
+		valid, err = signer.Verify(path, sig, sign.WithVerifyNonce(nonce))
+	} else if ts != "" {
+		valid, err = signer.Verify(path, sig, sign.WithExpiryTimestamp(ts))
+	} else {
+		// No ts or nonce, assume no expiry/nonce was intended for verification
+		valid, err = signer.Verify(path, sig)
+	}
+
+	if !valid {
+		log.Printf("Signature verification failed for path: %s. Reason: %v", path, err)
 		return ""
 	}
 
@@ -120,38 +140,54 @@ func VerifyAndGetPath(r *http.Request, signer SignatureVerifier) string {
 
 // SignatureVerifier is an interface for signature verification.
 type SignatureVerifier interface {
-	Verify(data, ts, sig string) bool
+	Verify(data, sig string, ops ...any) (bool, error)
 }
 
 // URLSigner is an interface for signing URLs.
 type URLSigner interface {
-	Sign(data string, exp ...time.Time) (int64, string)
+	Sign(data string, ops ...any) (int64, string)
+}
+
+func generateNonce() string {
+	b := make([]byte, 16)
+	rand.Read(b)
+	return hex.EncodeToString(b)
 }
 
 // MakeImageURL creates an OpenGraph image URL for the given title with a specific expiration.
 // If usePathAuth is true, it generates a URL with auth parameters in the path (/ts/.../sign/...).
 // Expiration is optional. If not provided, the link will not expire.
-// MakeImageURL creates an OpenGraph image URL for the given title with a specific expiration.
-// If usePathAuth is true, it generates a URL with auth parameters in the path (/ts/.../sign/...).
-// Expiration is optional. If not provided, the link will not expire.
-func MakeImageURL(baseURL, title string, signer URLSigner, usePathAuth bool, expiration ...time.Time) string {
+func MakeImageURL(baseURL, title string, signer URLSigner, usePathAuth bool, ops ...any) string {
 	encodedData := base64.RawURLEncoding.EncodeToString([]byte(title))
 	path := fmt.Sprintf("/api/og-image/%s", encodedData)
 
-	var exp time.Time
-	if len(expiration) > 0 {
-		exp = expiration[0]
-	} else {
-		// If no expiration provided, explicitly set to 0 (no expiry)
-		exp = time.Unix(0, 0)
+	foundExp := false
+	for _, op := range ops {
+		if _, ok := op.(time.Time); ok {
+			foundExp = true
+			break
+		}
 	}
 
-	ts, sig := signer.Sign(path, exp)
+	var nonce string
+	if !foundExp {
+		// If no expiration provided, use a nonce
+		nonce = generateNonce()
+		ops = append(ops, sign.WithNonce(nonce))
+	}
+
+	ts, sig := signer.Sign(path, ops...)
 
 	if usePathAuth {
 		// Output: /api/og-image/{base64}/ts/{ts}/sign/{sign}
+		if nonce != "" {
+			return fmt.Sprintf("%s%s/nonce/%s/sign/%s", baseURL, path, nonce, sig)
+		}
 		return fmt.Sprintf("%s%s/ts/%d/sign/%s", baseURL, path, ts, sig)
 	}
 
+	if nonce != "" {
+		return fmt.Sprintf("%s%s?nonce=%s&sig=%s", baseURL, path, nonce, sig)
+	}
 	return fmt.Sprintf("%s%s?ts=%d&sig=%s", baseURL, path, ts, sig)
 }

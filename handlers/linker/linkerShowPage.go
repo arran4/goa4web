@@ -66,8 +66,10 @@ func ShowPage(w http.ResponseWriter, r *http.Request) {
 		cd.PageTitle = fmt.Sprintf("Link %d", link.ID)
 	}
 
-	handlers.TemplateHandler(w, r, "showPage.gohtml", data)
+	LinkerShowPageTmpl.Handle(w, r, data)
 }
+
+const LinkerShowPageTmpl handlers.Page = "linker/showPage.gohtml"
 
 func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)

@@ -50,9 +50,11 @@ func (EmailAssociationRequestTask) Action(w http.ResponseWriter, r *http.Request
 		evt.Data["UserURL"] = cd.AbsoluteURL(fmt.Sprintf("/admin/user/%d", row.Idusers))
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		handlers.TemplateHandler(w, r, "forgotPasswordRequestSentPage.gohtml", struct{}{})
+		ForgotPasswordRequestSentPageTmpl.Handle(w, r, struct{}{})
 	})
 }
+
+const ForgotPasswordRequestSentPageTmpl handlers.Page = "forgotPasswordRequestSentPage.gohtml"
 
 func (EmailAssociationRequestTask) AuditRecord(data map[string]any) string {
 	u, _ := data["Username"].(string)

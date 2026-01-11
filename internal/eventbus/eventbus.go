@@ -3,10 +3,11 @@ package eventbus
 import (
 	"context"
 	"errors"
-	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"sync"
 	"time"
+
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 // MessageType identifies the kind of event carried by a Message.
@@ -63,6 +64,7 @@ type Bus struct {
 	mu          sync.RWMutex
 	subscribers []subscriber
 	closed      bool
+	SyncPublish func(Message) // Optional hook for synchronous delivery (mostly for tests)
 }
 
 // ErrBusClosed is returned when publishing to a bus after Shutdown.
@@ -90,6 +92,13 @@ func (b *Bus) Subscribe(types ...MessageType) <-chan Message {
 // Publish dispatches an event to all current subscribers.
 // It returns ErrBusClosed when publishing after Shutdown.
 func (b *Bus) Publish(msg Message) error {
+	b.mu.RLock()
+	syncPub := b.SyncPublish
+	b.mu.RUnlock()
+	if syncPub != nil {
+		syncPub(msg)
+	}
+
 	if evt, ok := msg.(TaskEvent); ok {
 		if n, ok := evt.Task.(tasks.Name); ok && n.Name() == "MISSING" {
 			log.Printf("event bus received MISSING task for path %s", evt.Path)

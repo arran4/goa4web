@@ -3,16 +3,20 @@ package forum
 import (
 	"database/sql"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"sort"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/arran4/goa4web/a4code"
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers/share"
 	"github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/core"
@@ -45,7 +49,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	data := Data{
 		IsReplyable: true,
 		BasePath:    basePath,
-		BackURL:     r.URL.RequestURI(),
+		BackURL:     r.URL.Path,
 	}
 
 	threadRow, err := cd.SelectedThread()
@@ -83,12 +87,25 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	}
 	cd.PageTitle = fmt.Sprintf("Forum - %s", displayTitle)
 
+	cd.OpenGraph = &common.OpenGraph{
+		Title:       displayTitle,
+		Description: "A discussion on our forum.",
+		Image:       share.MakeImageURL(cd.AbsoluteURL(""), displayTitle, cd.ShareSigner, time.Now().Add(24*time.Hour)),
+		ImageWidth:  cd.Config.OGImageWidth,
+		ImageHeight: cd.Config.OGImageHeight,
+		TwitterSite: cd.Config.TwitterSite,
+		URL:         cd.AbsoluteURL(r.URL.String()),
+	}
+
 	if _, ok := core.GetSessionOrFail(w, r); !ok {
 		return
 	}
 	commentRows, err := cd.SelectedThreadComments()
 	if err != nil {
 		log.Printf("thread comments: %v", err)
+	}
+	if len(commentRows) > 0 {
+		cd.OpenGraph.Description = a4code.Snip(commentRows[0].Text.String, 128)
 	}
 
 	// threadRow and topicRow are provided by the RequireThreadAndTopic
@@ -162,8 +179,10 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	sort.Slice(labels, func(i, j int) bool { return labels[i].Name < labels[j].Name })
 	data.Labels = labels
 
-	handlers.TemplateHandler(w, r, "forum/threadPage.gohtml", data)
+	ForumThreadPageTmpl.Handle(w, r, data)
 }
+
+const ForumThreadPageTmpl handlers.Page = "forum/threadPage.gohtml"
 
 // ThreadPage serves the forum thread page at the default /forum prefix.
 func ThreadPage(w http.ResponseWriter, r *http.Request) {

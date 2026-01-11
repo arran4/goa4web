@@ -20,15 +20,15 @@ type blogsCommentTask struct {
 }
 
 const (
-	BlogsCommentPageTmpl = "blogs/commentPage.gohtml"
+	BlogsCommentPageTmpl handlers.Page = "blogs/commentPage.gohtml"
 )
 
 func NewBlogsCommentTask() tasks.Task {
 	return &blogsCommentTask{}
 }
 
-func (t *blogsCommentTask) TemplatesRequired() []string {
-	return []string{BlogsCommentPageTmpl}
+func (t *blogsCommentTask) TemplatesRequired() []tasks.Page {
+	return []tasks.Page{BlogsCommentPageTmpl}
 }
 
 func (t *blogsCommentTask) Action(w http.ResponseWriter, r *http.Request) any {
@@ -94,7 +94,5 @@ func (t *blogsCommentTask) Get(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err := cd.ExecuteSiteTemplate(w, r, BlogsCommentPageTmpl, data); err != nil {
-		handlers.RenderErrorPage(w, r, err)
-	}
+	BlogsCommentPageTmpl.Handle(w, r, data)
 }

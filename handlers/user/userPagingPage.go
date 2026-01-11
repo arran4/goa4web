@@ -4,10 +4,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
 
@@ -27,8 +28,10 @@ var _ tasks.Task = (*PagingSaveTask)(nil)
 func userPagingPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Pagination"
-	handlers.TemplateHandler(w, r, "user/pagingPage.gohtml", struct{}{})
+	UserPagingPage.Handle(w, r, struct{}{})
 }
+
+const UserPagingPage handlers.Page = "user/pagingPage.gohtml"
 
 func (PagingSaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := r.ParseForm(); err != nil {

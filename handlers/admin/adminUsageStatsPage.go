@@ -214,5 +214,7 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 	data.StartYear = cd.Config.StatsStartYear
 
 	log.Print("render usage stats page")
-	handlers.TemplateHandler(w, r, "admin/usageStatsPage.gohtml", data)
+	AdminUsageStatsPageTmpl.Handle(w, r, data)
 }
+
+const AdminUsageStatsPageTmpl handlers.Page = "admin/usageStatsPage.gohtml"

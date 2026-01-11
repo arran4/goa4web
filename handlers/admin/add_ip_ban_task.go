@@ -60,8 +60,8 @@ func (AddIPBanTask) Action(w http.ResponseWriter, r *http.Request) any {
 		if reason != "" {
 			evt.Data["Reason"] = reason
 		}
-		if u, _ := cd.CurrentUser(); u != nil {
-			evt.Data["Moderator"] = u.Username
+		if u, _ := cd.CurrentUser(); u != nil && u.Username.Valid {
+			evt.Data["Moderator"] = u.Username.String
 		}
 	}
 	return nil

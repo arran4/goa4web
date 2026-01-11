@@ -12,5 +12,7 @@ import (
 func AdminLinksPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Links"
-	handlers.TemplateHandler(w, r, "linkerAdminLinksPage.gohtml", struct{}{})
+	LinkerAdminLinksPageTmpl.Handle(w, r, struct{}{})
 }
+
+const LinkerAdminLinksPageTmpl handlers.Page = "linker/linkerAdminLinksPage.gohtml"

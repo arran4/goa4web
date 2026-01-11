@@ -2,7 +2,6 @@ package forum
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 
@@ -34,8 +33,7 @@ func SubscribeTopicPage(w http.ResponseWriter, r *http.Request) {
 		Method:  http.MethodPost,
 		Values:  url.Values{},
 	}
-	if err := cd.ExecuteSiteTemplate(w, r, "redirectBackPage.gohtml", data); err != nil {
-		log.Printf("Template Error: %s", err)
-		handlers.RenderErrorPage(w, r, err)
-	}
+	RedirectBackPageTmpl.Handle(w, r, data)
 }
+
+const RedirectBackPageTmpl handlers.Page = "redirectBackPage.gohtml"

@@ -39,5 +39,7 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 		Category: cat,
 		Writings: writings,
 	}
-	handlers.TemplateHandler(w, r, "writingsAdminCategoryPage.gohtml", data)
+	WritingsAdminCategoryPageTmpl.Handle(w, r, data)
 }
+
+const WritingsAdminCategoryPageTmpl handlers.Page = "writings/writingsAdminCategoryPage.gohtml"

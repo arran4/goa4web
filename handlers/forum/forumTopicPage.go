@@ -39,6 +39,7 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		CopyDataToSubCategories func(rootCategory *ForumcategoryPlus) *Data
 		BasePath                string
 		BackURL                 string
+		ShareURL                string
 		Labels                  []templates.TopicLabel
 	}
 
@@ -183,8 +184,10 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		data.Subscribed = true
 	}
 
-	handlers.TemplateHandler(w, r, "forum/topicsPage.gohtml", data)
+	ForumTopicsPageTmpl.Handle(w, r, data)
 }
+
+const ForumTopicsPageTmpl handlers.Page = "forum/topicsPage.gohtml"
 
 // TopicsPage serves the forum topic page at the default /forum prefix.
 func TopicsPage(w http.ResponseWriter, r *http.Request) {

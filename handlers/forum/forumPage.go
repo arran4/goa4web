@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/consts"
@@ -11,6 +12,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers/share"
 	"github.com/gorilla/mux"
 )
 
@@ -31,6 +33,17 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+
+	cd.OpenGraph = &common.OpenGraph{
+		Title:       "Forum",
+		Description: "A place for discussion.",
+		Image:       share.MakeImageURL(cd.AbsoluteURL(""), "Forum", cd.ShareSigner, time.Now().Add(24*time.Hour)),
+		ImageWidth:  cd.Config.OGImageWidth,
+		ImageHeight: cd.Config.OGImageHeight,
+		TwitterSite: cd.Config.TwitterSite,
+		URL:         cd.AbsoluteURL(r.URL.String()),
+	}
+
 	vars := mux.Vars(r)
 	categoryId, _ := strconv.Atoi(vars["category"])
 
@@ -93,5 +106,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		data.Back = true
 	}
 
-	handlers.TemplateHandler(w, r, "forumPage", data)
+	ForumPageTmpl.Handle(w, r, data)
 }
+
+const ForumPageTmpl handlers.Page = "forum/page.gohtml"

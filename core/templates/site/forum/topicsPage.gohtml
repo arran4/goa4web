@@ -12,4 +12,6 @@
     {{ end }}
 
     {{ template "topicThreads" $ }}
+
+    {{ template "_share.gohtml" (dict "module" "forum" "link" (printf "/forum/topic/%d" .Topic.Idforumtopic)) }}
 {{ template "tail" $ }}

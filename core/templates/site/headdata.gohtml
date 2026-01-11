@@ -7,4 +7,19 @@
             <link rel="alternate" type="application/atom+xml" title="{{ if $.AtomFeedTitle }}{{$.AtomFeedTitle}}{{ else }}Atom Feed{{ end }}" href="{{$.AtomFeedURL}}">
         {{ end }}
     {{ end }}
+    {{ with .OpenGraph }}
+        <meta property="og:title" content="{{ .Title }}" />
+        <meta property="og:description" content="{{ .Description }}" />
+        	{{.ImageMeta}}
+	{{.SecureImageMeta}}
+	{{.ImageWidthMeta}}
+	{{.ImageHeightMeta}}
+	{{.URLMeta}}
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="{{.Title}}" />
+	<meta name="twitter:description" content="{{.Description}}" />
+	{{if .TwitterSite}}<meta name="twitter:site" content="{{.TwitterSite}}" />{{end}}
+	{{.TwitterImageMeta}}
+        <meta property="og:type" content="website" />
+    {{ end }}
 {{- end}}

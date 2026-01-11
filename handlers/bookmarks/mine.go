@@ -27,7 +27,9 @@ func MinePage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	handlers.TemplateHandler(w, r, "bookmarks/minePage.gohtml", struct {
+	MinePageTmpl.Handle(w, r, struct {
 		Columns []*Column
 	}{cols})
 }
+
+const MinePageTmpl handlers.Page = "bookmarks/minePage.gohtml"

@@ -19,8 +19,8 @@ func NewImagebbsTask() tasks.Task {
 	return &imagebbsTask{}
 }
 
-func (t *imagebbsTask) TemplatesRequired() []string {
-	return []string{ImagebbsPageTmpl}
+func (t *imagebbsTask) TemplatesRequired() []tasks.Page {
+	return []tasks.Page{ImagebbsPageTmpl}
 }
 
 func (t *imagebbsTask) Action(w http.ResponseWriter, r *http.Request) any {

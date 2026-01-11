@@ -158,8 +158,8 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 }
 
 // TemplatesRequired declares the templates used by this task's pages.
-func (LoginTask) TemplatesRequired() []string {
-	return []string{
+func (LoginTask) TemplatesRequired() []tasks.Page {
+	return []tasks.Page{
 		templateLoginPage,
 		templatePasswordVerifyPage,
 	}

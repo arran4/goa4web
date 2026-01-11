@@ -29,5 +29,7 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		Category *db.LinkerCategory
 	}{Category: cat}
-	handlers.TemplateHandler(w, r, "linkerAdminCategoryEditPage.gohtml", data)
+	LinkerAdminCategoryEditPageTmpl.Handle(w, r, data)
 }
+
+const LinkerAdminCategoryEditPageTmpl handlers.Page = "linker/linkerAdminCategoryEditPage.gohtml"

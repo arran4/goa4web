@@ -133,5 +133,7 @@ func BlogAddPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	handlers.TemplateHandler(w, r, "blogAddPage.gohtml", data)
+	BlogsBlogAddPageTmpl.Handle(w, r, data)
 }
+
+const BlogsBlogAddPageTmpl handlers.Page = "blogs/blogAddPage.gohtml"

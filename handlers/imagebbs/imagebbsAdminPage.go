@@ -2,9 +2,10 @@ package imagebbs
 
 import (
 	"database/sql"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
@@ -24,5 +25,7 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd.PageTitle = "Image Board Admin"
 	data := Data{Stats: stats}
-	handlers.TemplateHandler(w, r, "imagebbsAdminPage", data)
+	ImageBBSAdminPageTmpl.Handle(w, r, data)
 }
+
+const ImageBBSAdminPageTmpl handlers.Page = "imagebbs/adminPage.gohtml"

@@ -43,5 +43,7 @@ func userThreadSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 	}{
 		Groups: threadGroups,
 	}
-	handlers.TemplateHandler(w, r, "user/subscriptions_threads.gohtml", data)
+	UserThreadSubscriptionsPage.Handle(w, r, data)
 }
+
+const UserThreadSubscriptionsPage handlers.Page = "user/subscriptions_threads.gohtml"

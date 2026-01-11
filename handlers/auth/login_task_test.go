@@ -13,7 +13,7 @@ func TestLoginTaskTemplatesRequiredExist(t *testing.T) {
 		t.Fatalf("LoginTask.TemplatesRequired returned no templates; expected at least one")
 	}
 	for _, name := range req {
-		if !templates.TemplateExists(name) {
+		if !templates.TemplateExists(string(name)) {
 			t.Fatalf("missing template: %s", name)
 		}
 	}

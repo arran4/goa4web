@@ -157,6 +157,11 @@ const (
 	// EnvLinkSignSecretFile specifies the file containing the link signing key.
 	EnvLinkSignSecretFile = "LINK_SIGN_SECRET_FILE"
 
+	// EnvShareSignSecret provides the signing key for share URLs.
+	EnvShareSignSecret = "SHARE_SIGN_SECRET"
+	// EnvShareSignSecretFile specifies the file containing the share signing key.
+	EnvShareSignSecretFile = "SHARE_SIGN_SECRET_FILE"
+
 	// EnvDefaultLanguage specifies the site's default language.
 	EnvDefaultLanguage = "DEFAULT_LANGUAGE"
 
@@ -177,4 +182,11 @@ const (
 	EnvAdminAPISecret = "ADMIN_API_SECRET"
 	// EnvAdminAPISecretFile specifies the file containing the admin API signing key.
 	EnvAdminAPISecretFile = "ADMIN_API_SECRET_FILE"
+
+	// EnvOGImageWidth sets the width of the Open Graph image.
+	EnvOGImageWidth = "OG_IMAGE_WIDTH"
+	// EnvOGImageHeight sets the height of the Open Graph image.
+	EnvOGImageHeight = "OG_IMAGE_HEIGHT"
+	// EnvTwitterSite sets the Twitter site handle.
+	EnvTwitterSite = "TWITTER_SITE"
 )

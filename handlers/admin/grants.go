@@ -44,8 +44,10 @@ func AdminGrantsAvailablePage(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		Definitions []*permissions.GrantDefinition
 	}{permissions.Definitions}
-	handlers.TemplateHandler(w, r, "admin/grantsAvailablePage.gohtml", data)
+	AdminGrantsAvailablePageTmpl.Handle(w, r, data)
 }
+
+const AdminGrantsAvailablePageTmpl handlers.Page = "admin/grantsAvailablePage.gohtml"
 
 // AdminGrantsPage lists all grants.
 func AdminGrantsPage(w http.ResponseWriter, r *http.Request) {
@@ -59,8 +61,10 @@ func AdminGrantsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	rows := groupGrants(r.Context(), queries, grants)
 	data := struct{ Grants []grantGroup }{rows}
-	handlers.TemplateHandler(w, r, "admin/grantsPage.gohtml", data)
+	AdminGrantsPageTmpl.Handle(w, r, data)
 }
+
+const AdminGrantsPageTmpl handlers.Page = "admin/grantsPage.gohtml"
 
 // AdminAnyoneGrantsPage lists grants applying to all users.
 func AdminAnyoneGrantsPage(w http.ResponseWriter, r *http.Request) {
@@ -81,7 +85,7 @@ func AdminAnyoneGrantsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	rows := groupGrants(r.Context(), queries, filtered)
 	data := struct{ Grants []grantGroup }{rows}
-	handlers.TemplateHandler(w, r, "admin/grantsPage.gohtml", data)
+	AdminGrantsPageTmpl.Handle(w, r, data)
 }
 
 // adminGrantPage shows a single grant for editing.
@@ -126,8 +130,10 @@ func adminGrantPage(w http.ResponseWriter, r *http.Request) {
 	gw.ItemLink = grantItemLink(g)
 	cd.PageTitle = fmt.Sprintf("Grant %d", g.ID)
 	data := struct{ Grant grantWithNames }{gw}
-	handlers.TemplateHandler(w, r, "grantPage.gohtml", data)
+	GrantPageTmpl.Handle(w, r, data)
 }
+
+const GrantPageTmpl handlers.Page = "admin/grantPage.gohtml"
 
 // grantItemLink returns the admin page URL for a grant's item, or "" if none.
 func grantItemLink(g *db.Grant) string {

@@ -1,4 +1,3 @@
-{{ define "faqPage" }}
     {{ template "head" $ }}
     {{ range $index, $categoryFAQs := (cd).AllAnsweredFAQ }}
         <section class="faq-section">
@@ -12,4 +11,3 @@
         </section>
     {{ end }}
     {{ template "tail" $ }}
-{{ end }}

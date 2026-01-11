@@ -14,8 +14,8 @@ func DefaultSessionSecretPath() string {
 	return secrets.DefaultPath(sessionSecretName, EnvDocker)
 }
 
-// LoadOrCreateSecret returns a secret using DefaultSessionSecretPath when no path
+// LoadOrCreateSessionSecret returns a secret using DefaultSessionSecretPath when no path
 // is provided.
-func LoadOrCreateSecret(fs core.FileSystem, cliSecret, path, envSecret, envSecretFile string) (string, error) {
-	return secrets.LoadOrCreate(fs, cliSecret, path, envSecret, envSecretFile, DefaultSessionSecretPath)
+func LoadOrCreateSessionSecret(fs core.FileSystem, cliSecret, path string) (string, error) {
+	return secrets.LoadOrCreate(fs, cliSecret, path, EnvSessionSecret, EnvSessionSecretFile, DefaultSessionSecretPath)
 }

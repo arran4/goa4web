@@ -57,8 +57,10 @@ func AdminAddPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	handlers.TemplateHandler(w, r, "adminAddPage.gohtml", data)
+	LinkerAdminAddPageTmpl.Handle(w, r, data)
 }
+
+const LinkerAdminAddPageTmpl handlers.Page = "linker/adminAddPage.gohtml"
 
 type addTask struct{ tasks.TaskString }
 

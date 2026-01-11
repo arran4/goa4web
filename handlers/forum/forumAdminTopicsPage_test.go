@@ -5,11 +5,9 @@ import (
 	"database/sql"
 	"net/http"
 	"net/http/httptest"
-	"regexp"
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/config"
@@ -20,27 +18,30 @@ import (
 )
 
 func TestAdminTopicsPage(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	queries := &db.QuerierStub{
+		AdminCountForumTopicsReturns: 1,
+		AdminListForumTopicsReturns: []*db.Forumtopic{
+			{
+				Idforumtopic:                 1,
+				ForumcategoryIdforumcategory: 1,
+				Title:                        sql.NullString{String: "t", Valid: true},
+				Description:                  sql.NullString{String: "d", Valid: true},
+				Lastaddition:                 sql.NullTime{Time: time.Now(), Valid: true},
+				Handler:                      "",
+			},
+		},
+		GetAllForumCategoriesReturns: []*db.Forumcategory{
+			{
+				Idforumcategory:              1,
+				ForumcategoryIdforumcategory: 0,
+				Title:                        sql.NullString{String: "cat", Valid: true},
+				Description:                  sql.NullString{String: "desc", Valid: true},
+			},
+		},
+		AdminGetTopicGrantsReturns: []*db.AdminGetTopicGrantsRow{
+			{Section: "forum", RoleID: sql.NullInt32{}, RoleName: sql.NullString{}, UserID: sql.NullInt32{}, Username: sql.NullString{}},
+		},
 	}
-	defer conn.Close()
-	mock.MatchExpectationsInOrder(false)
-
-	countRows := sqlmock.NewRows([]string{"count"}).AddRow(1)
-	mock.ExpectQuery(`SELECT COUNT\(`).WillReturnRows(countRows)
-
-	rows := sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_id", "title", "description", "threads", "comments", "lastaddition", "handler"}).
-		AddRow(1, 0, 0, 0, "t", "d", 0, 0, time.Now(), "")
-	mock.ExpectQuery("SELECT t.idforumtopic").WillReturnRows(rows)
-
-	categoryRows := sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "language_id", "title", "description"}).
-		AddRow(1, 0, 0, "cat", "desc")
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT f.idforumcategory, f.forumcategory_idforumcategory, f.language_id, f.title, f.description FROM forumcategory f")).WithArgs(int32(0), int32(0)).WillReturnRows(categoryRows)
-
-	grantsRows := sqlmock.NewRows([]string{"section", "role_id", "role_name", "user_id", "username"}).
-		AddRow("forum", sql.NullInt32{}, sql.NullString{}, sql.NullInt32{}, sql.NullString{})
-	mock.ExpectQuery("SELECT g.section").WithArgs(sqlmock.AnyArg()).WillReturnRows(grantsRows)
 
 	origStore := core.Store
 	origName := core.SessionName
@@ -51,7 +52,7 @@ func TestAdminTopicsPage(t *testing.T) {
 		core.SessionName = origName
 	}()
 
-	cd := common.NewCoreData(context.Background(), db.New(conn), config.NewRuntimeConfig())
+	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
 	r := httptest.NewRequest("GET", "/admin/forum/topics", nil)
 	sess, _ := core.Store.New(r, core.SessionName)
 	ctx := context.WithValue(r.Context(), core.ContextValues("session"), sess)
@@ -62,8 +63,5 @@ func TestAdminTopicsPage(t *testing.T) {
 	AdminTopicsPage(w, r)
 	if w.Code != http.StatusOK {
 		t.Fatalf("status: got %d want %d", w.Code, http.StatusOK)
-	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
 	}
 }

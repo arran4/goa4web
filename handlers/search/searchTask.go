@@ -19,8 +19,8 @@ func NewSearchTask() tasks.Task {
 	return &searchTask{}
 }
 
-func (t *searchTask) TemplatesRequired() []string {
-	return []string{SearchPageTmpl}
+func (t *searchTask) TemplatesRequired() []tasks.Page {
+	return []tasks.Page{SearchPageTmpl}
 }
 
 func (t *searchTask) Action(w http.ResponseWriter, r *http.Request) any {

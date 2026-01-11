@@ -2,7 +2,7 @@ package forum
 
 import (
 	"fmt"
-	"log"
+
 	"net/http"
 	"net/url"
 
@@ -10,7 +10,6 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers"
 )
 
 // UnsubscribeTopicPage renders a simple confirmation form that POSTS to the
@@ -34,8 +33,5 @@ func UnsubscribeTopicPage(w http.ResponseWriter, r *http.Request) {
 		Method:  http.MethodPost,
 		Values:  url.Values{},
 	}
-	if err := cd.ExecuteSiteTemplate(w, r, "redirectBackPage.gohtml", data); err != nil {
-		log.Printf("Template Error: %s", err)
-		handlers.RenderErrorPage(w, r, err)
-	}
+	RedirectBackPageTmpl.Handle(w, r, data)
 }

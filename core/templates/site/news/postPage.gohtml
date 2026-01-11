@@ -21,6 +21,7 @@
             <input type="submit" value="Save Labels"/>
         </form>
     </div>
+
     <script src="{{ assetHash "/forum/topic_labels.js" }}"></script>
     {{ if cd.SelectedThreadCanReply }}
         <div class="comment">
@@ -57,4 +58,6 @@
             </section>
         </div>
     {{ end }}
+
+    {{ template "_share.gohtml" (dict "module" "news" "link" (printf "/news/news/%d" .Post.Idsitenews)) }}
 {{ template "tail" $ }}

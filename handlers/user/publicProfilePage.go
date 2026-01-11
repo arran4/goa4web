@@ -47,5 +47,7 @@ func userPublicProfilePage(w http.ResponseWriter, r *http.Request) {
 		User:       &db.User{Idusers: u.Idusers, Username: u.Username},
 		ProfileOff: profileOff,
 	}
-	handlers.TemplateHandler(w, r, "user/publicProfile.gohtml", data)
+	PublicProfilePage.Handle(w, r, data)
 }
+
+const PublicProfilePage handlers.Page = "user/publicProfile.gohtml"

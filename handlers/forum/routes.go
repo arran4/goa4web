@@ -10,6 +10,7 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/router"
 
+	"github.com/arran4/goa4web/handlers/share"
 	navpkg "github.com/arran4/goa4web/internal/navigation"
 )
 
@@ -51,6 +52,13 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Reg
 	fr.HandleFunc("/topic/{topic}/thread/cancel", ThreadNewCancelPage).Methods("GET")
 	fr.HandleFunc("/topic/{topic}/thread/cancel", handlers.TaskHandler(threadNewCancelAction)).Methods("POST").MatcherFunc(threadNewCancelAction.Matcher())
 	fr.HandleFunc("/topic/{topic}/thread", handlers.TaskHandler(threadNewCancelAction)).Methods("POST").MatcherFunc(threadNewCancelAction.Matcher())
+
+	// OpenGraph preview endpoint (no auth required for social media bots if signed)
+	fr.HandleFunc("/shared/topic/{topic}", SharedTopicPreviewPage).Methods("GET", "HEAD")
+	fr.HandleFunc("/shared/topic/{topic}/ts/{ts}/sign/{sign}", SharedTopicPreviewPage).Methods("GET", "HEAD")
+	fr.HandleFunc("/shared/topic/{topic}/thread/{thread}", SharedThreadPreviewPage).Methods("GET", "HEAD")
+	fr.HandleFunc("/shared/topic/{topic}/thread/{thread}/ts/{ts}/sign/{sign}", SharedThreadPreviewPage).Methods("GET", "HEAD")
+
 	fr.Handle("/topic/{topic}/thread/{thread}", RequireThreadAndTopic(http.HandlerFunc(ThreadPage))).Methods("GET")
 	fr.Handle("/topic/{topic}/thread/{thread}", RequireThreadAndTopic(http.HandlerFunc(handlers.TaskDoneAutoRefreshPage))).Methods("POST")
 	fr.Handle("/topic/{topic}/thread/{thread}/reply", RequireThreadAndTopic(http.HandlerFunc(handlers.TaskHandler(replyTask)))).Methods("POST").MatcherFunc(replyTask.Matcher())
@@ -62,6 +70,7 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Reg
 	api := r.PathPrefix("/api/forum").Subrouter()
 	api.HandleFunc("/quote/{commentid}", QuoteApi).Methods("GET")
 	api.HandleFunc("/thread/{thread}/drafts", handlers.TaskHandler(draftsTask)).Methods("GET", "POST", "DELETE").MatcherFunc(draftsTask.Matcher())
+	api.HandleFunc("/share", share.ShareLink).Methods("GET")
 }
 
 // Register registers the forum router module.

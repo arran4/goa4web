@@ -7,6 +7,9 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
+
+	"github.com/arran4/goa4web/handlers/share"
 
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core"
@@ -32,6 +35,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		AdminURL       func(*db.GetCommentsByThreadIdForUserRow) string
 		Labels         []templates.TopicLabel
 		BackURL        string
+		ShareURL       string
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -60,6 +64,16 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		cd.PageTitle = fmt.Sprintf("Writing %d", writing.Idwriting)
 	}
 
+	cd.OpenGraph = &common.OpenGraph{
+		Title:       writing.Title.String,
+		Description: a4code.Snip(writing.Abstract.String, 128),
+		Image:       share.MakeImageURL(cd.AbsoluteURL(""), writing.Title.String, cd.ShareSigner, time.Now().Add(24*time.Hour)),
+		ImageWidth:  cd.Config.OGImageWidth,
+		ImageHeight: cd.Config.OGImageHeight,
+		TwitterSite: cd.Config.TwitterSite,
+		URL:         cd.AbsoluteURL(r.URL.String()),
+	}
+
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	common.WithOffset(offset)(cd)
 	editCommentId, _ := strconv.Atoi(r.URL.Query().Get("editComment"))
@@ -73,7 +87,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		Request:  r,
 		Comments: comments,
-		BackURL:  r.URL.RequestURI(),
+		BackURL:  r.URL.Path,
 	}
 
 	data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
@@ -128,8 +142,10 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 
 	cd.CustomIndexItems = append(cd.CustomIndexItems, WritingsPageSpecificItems(cd, r)...)
 
-	handlers.TemplateHandler(w, r, "articlePage.gohtml", data)
+	ArticlePageTmpl.Handle(w, r, data)
 }
+
+const ArticlePageTmpl handlers.Page = "writings/articlePage.gohtml"
 
 func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	if _, ok := core.GetSessionOrFail(w, r); !ok {
@@ -141,7 +157,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			if err := cd.ExecuteSiteTemplate(w, r, "admin/noAccessPage.gohtml", struct{}{}); err != nil {
+			if err := AdminNoAccessPageTmpl.Handle(w, r, struct{}{}); err != nil {
 				log.Printf("render no access page: %v", err)
 			}
 			return
@@ -194,3 +210,5 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
+
+const AdminNoAccessPageTmpl handlers.Page = "admin/noAccessPage.gohtml"

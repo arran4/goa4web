@@ -55,6 +55,8 @@
   "LOG_FLAGS": "0",
   "MIGRATIONS_DIR": "",
   "NOTIFICATIONS_ENABLED": "true",
+  "OG_IMAGE_HEIGHT": "630",
+  "OG_IMAGE_WIDTH": "1200",
   "PAGE_SIZE_DEFAULT": "15",
   "PAGE_SIZE_MAX": "50",
   "PAGE_SIZE_MIN": "5",
@@ -64,6 +66,8 @@
   "SESSION_SAME_SITE": "strict",
   "SESSION_SECRET": "",
   "SESSION_SECRET_FILE": ".session_secret",
+  "SHARE_SIGN_SECRET": "",
+  "SHARE_SIGN_SECRET_FILE": "",
   "SMTP_AUTH": "plain",
   "SMTP_HOST": "",
   "SMTP_PASS": "",
@@ -72,5 +76,6 @@
   "SMTP_USER": "",
   "STATS_START_YEAR": "2005",
   "TEMPLATES_DIR": "",
-  "TIMEZONE": "Australia/Melbourne"
+  "TIMEZONE": "Australia/Melbourne",
+  "TWITTER_SITE": ""
 }

@@ -1,27 +1,30 @@
 package writings
 
 import (
+	"net/http"
+	"strconv"
+	"time"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers/share"
 	"github.com/arran4/goa4web/internal/tasks"
-	"net/http"
-	"strconv"
 )
 
 type writingsTask struct {
 }
 
 const (
-	WritingsPageTmpl = "writings/page.gohtml"
+	WritingsPageTmpl handlers.Page = "writings/page.gohtml"
 )
 
 func NewWritingsTask() tasks.Task {
 	return &writingsTask{}
 }
 
-func (t *writingsTask) TemplatesRequired() []string {
-	return []string{WritingsPageTmpl}
+func (t *writingsTask) TemplatesRequired() []tasks.Page {
+	return []tasks.Page{WritingsPageTmpl}
 }
 
 func (t *writingsTask) Action(w http.ResponseWriter, r *http.Request) any {
@@ -52,7 +55,15 @@ func (t *writingsTask) Get(w http.ResponseWriter, r *http.Request) {
 		cd.StartLink = "/writings?offset=0"
 	}
 
-	if err := cd.ExecuteSiteTemplate(w, r, WritingsPageTmpl, data); err != nil {
-		handlers.RenderErrorPage(w, r, err)
+	cd.OpenGraph = &common.OpenGraph{
+		Title:       "Writings",
+		Description: "A collection of articles and long-form content.",
+		Image:       share.MakeImageURL(cd.AbsoluteURL(""), "Writings", cd.ShareSigner, time.Now().Add(24*time.Hour)),
+		ImageWidth:  cd.Config.OGImageWidth,
+		ImageHeight: cd.Config.OGImageHeight,
+		TwitterSite: cd.Config.TwitterSite,
+		URL:         cd.AbsoluteURL(r.URL.String()),
 	}
+
+	WritingsPageTmpl.Handle(w, r, data)
 }

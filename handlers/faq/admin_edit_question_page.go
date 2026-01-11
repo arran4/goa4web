@@ -56,8 +56,10 @@ func AdminEditQuestionPage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		cd.PageTitle = "New FAQ"
 	}
-	handlers.TemplateHandler(w, r, "adminQuestionEditPage.gohtml", data)
+	AdminQuestionEditPageTmpl.Handle(w, r, data)
 }
+
+const AdminQuestionEditPageTmpl handlers.Page = "faq/adminQuestionEditPage.gohtml"
 
 // AdminCreateQuestionPage redirects to AdminEditQuestionPage with id zero to
 // display the form for creating a new FAQ entry.

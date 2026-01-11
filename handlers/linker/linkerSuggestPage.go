@@ -4,10 +4,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
@@ -57,8 +58,10 @@ func SuggestPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	handlers.TemplateHandler(w, r, "suggestPage.gohtml", data)
+	LinkerSuggestPageTmpl.Handle(w, r, data)
 }
+
+const LinkerSuggestPageTmpl handlers.Page = "linker/suggestPage.gohtml"
 
 type SuggestTask struct{ tasks.TaskString }
 

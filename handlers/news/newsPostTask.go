@@ -7,6 +7,10 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
+	"time"
+
+	"github.com/arran4/goa4web/handlers/share"
 
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core"
@@ -23,15 +27,15 @@ type newsPostTask struct {
 }
 
 const (
-	NewsPostPageTmpl = "news/postPage.gohtml"
+	NewsPostPageTmpl handlers.Page = "news/postPage.gohtml"
 )
 
 func NewNewsPostTask() tasks.Task {
 	return &newsPostTask{}
 }
 
-func (t *newsPostTask) TemplatesRequired() []string {
-	return []string{NewsPostPageTmpl}
+func (t *newsPostTask) TemplatesRequired() []tasks.Page {
+	return []tasks.Page{NewsPostPageTmpl}
 }
 
 func (t *newsPostTask) Action(w http.ResponseWriter, r *http.Request) any {
@@ -53,6 +57,7 @@ func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 		Labels         []templates.TopicLabel
 		PublicLabels   []templates.TopicLabel
 		BackURL        string
+		ShareURL       string
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -61,7 +66,7 @@ func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 	queries := cd.Queries()
 	data := Data{
 		IsReplyable: true,
-		BackURL:     r.URL.RequestURI(),
+		BackURL:     r.URL.Path,
 	}
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["news"])
@@ -92,6 +97,16 @@ func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("TODO: FIx: Add enforced Access in router rather than task")
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
+	}
+
+	cd.OpenGraph = &common.OpenGraph{
+		Title:       strings.Split(post.News.String, "\n")[0],
+		Description: a4code.Snip(post.News.String, 128),
+		Image:       share.MakeImageURL(cd.AbsoluteURL(""), strings.Split(post.News.String, "\n")[0], cd.ShareSigner, time.Now().Add(24*time.Hour)),
+		ImageWidth:  cd.Config.OGImageWidth,
+		ImageHeight: cd.Config.OGImageHeight,
+		TwitterSite: cd.Config.TwitterSite,
+		URL:         cd.AbsoluteURL(r.URL.String()),
 	}
 
 	replyType := r.URL.Query().Get("type")
@@ -180,7 +195,5 @@ func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 
 	cd.CustomIndexItems = append(cd.CustomIndexItems, NewsPageSpecificItems(cd, r, post)...)
 
-	if err := cd.ExecuteSiteTemplate(w, r, NewsPostPageTmpl, data); err != nil {
-		handlers.RenderErrorPage(w, r, err)
-	}
+	NewsPostPageTmpl.Handle(w, r, data)
 }

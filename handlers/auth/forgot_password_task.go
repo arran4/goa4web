@@ -33,9 +33,9 @@ var (
 var _ tasks.TemplatesRequired = (*ForgotPasswordTask)(nil)
 
 const (
-	templateForgotPasswordPage        = "forgotPasswordPage.gohtml"
-	templateForgotPasswordNoEmailPage = "forgotPasswordNoEmailPage.gohtml"
-	templateForgotPasswordEmailSent   = "forgotPasswordEmailSentPage.gohtml"
+	ForgotPasswordPageTmpl          handlers.Page = "forgotPasswordPage.gohtml"
+	ForgotPasswordNoEmailPageTmpl   handlers.Page = "forgotPasswordNoEmailPage.gohtml"
+	ForgotPasswordEmailSentPageTmpl handlers.Page = "forgotPasswordEmailSentPage.gohtml"
 )
 
 var forgotPasswordTask = &ForgotPasswordTask{TaskString: TaskUserResetPassword}
@@ -74,7 +74,7 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 			cd.PageTitle = "Password Reset"
-			handlers.TemplateHandler(w, r, templateForgotPasswordNoEmailPage, data)
+			ForgotPasswordNoEmailPageTmpl.Handle(w, r, data)
 		})
 	}
 
@@ -107,7 +107,7 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 	cd.PageTitle = "Password Reset"
-	return handlers.TemplateWithDataHandler(templateForgotPasswordEmailSent, struct{}{})
+	return ForgotPasswordEmailSentPageTmpl.Handler(struct{}{})
 }
 
 func (ForgotPasswordTask) AuditRecord(data map[string]any) string {
@@ -149,14 +149,14 @@ func (ForgotPasswordTask) SelfEmailBroadcast() bool { return true }
 func (ForgotPasswordTask) Page(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Password Reset"
-	handlers.TemplateHandler(w, r, templateForgotPasswordPage, struct{}{})
+	ForgotPasswordPageTmpl.Handle(w, r, struct{}{})
 }
 
 // TemplatesRequired declares templates used by ForgotPasswordTask.
-func (ForgotPasswordTask) TemplatesRequired() []string {
-	return []string{
-		templateForgotPasswordPage,
-		templateForgotPasswordNoEmailPage,
-		templateForgotPasswordEmailSent,
+func (ForgotPasswordTask) TemplatesRequired() []tasks.Page {
+	return []tasks.Page{
+		ForgotPasswordPageTmpl,
+		ForgotPasswordNoEmailPageTmpl,
+		ForgotPasswordEmailSentPageTmpl,
 	}
 }

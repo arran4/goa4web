@@ -2,16 +2,16 @@ package news
 
 import (
 	"context"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
 
+	"github.com/arran4/goa4web/core/consts"
+
 	"github.com/arran4/goa4web/core/common"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 
@@ -20,12 +20,6 @@ import (
 )
 
 func TestNewsPostNewActionPage_InvalidForms(t *testing.T) {
-	dbconn, _, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer dbconn.Close()
-
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = "test-session"
@@ -64,12 +58,6 @@ func TestNewsPostNewActionPage_InvalidForms(t *testing.T) {
 }
 
 func TestNewsPostEditActionPage_InvalidForms(t *testing.T) {
-	dbconn, _, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer dbconn.Close()
-
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = "test-session"

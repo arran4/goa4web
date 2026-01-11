@@ -3,7 +3,6 @@ package admin
 import (
 	"database/sql"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"os"
@@ -12,6 +11,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
 
@@ -107,5 +108,7 @@ func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
 	}
 	sort.Slice(data.Entries, func(i, j int) bool { return data.Entries[i].Name < data.Entries[j].Name })
 
-	handlers.TemplateHandler(w, r, "admin/adminFilesPage.gohtml", data)
+	AdminFilesPageTmpl.Handle(w, r, data)
 }
+
+const AdminFilesPageTmpl handlers.Page = "admin/adminFilesPage.gohtml"

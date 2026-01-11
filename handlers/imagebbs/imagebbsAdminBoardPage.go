@@ -123,5 +123,7 @@ func AdminBoardPage(w http.ResponseWriter, r *http.Request) {
 
 	data := Data{Board: board, Boards: boards}
 
-	handlers.TemplateHandler(w, r, "adminBoardPage.gohtml", data)
+	ImageBBSAdminBoardPageTmpl.Handle(w, r, data)
 }
+
+const ImageBBSAdminBoardPageTmpl handlers.Page = "imagebbs/adminBoardPage.gohtml"

@@ -38,5 +38,7 @@ func adminLinkViewPage(w http.ResponseWriter, r *http.Request) {
 		Link: link,
 	}
 
-	handlers.TemplateHandler(w, r, "adminLinkViewPage.gohtml", data)
+	LinkerAdminLinkViewPageTmpl.Handle(w, r, data)
 }
+
+const LinkerAdminLinkViewPageTmpl handlers.Page = "linker/adminLinkViewPage.gohtml"

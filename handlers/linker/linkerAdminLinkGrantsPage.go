@@ -64,5 +64,7 @@ func AdminLinkGrantsPage(w http.ResponseWriter, r *http.Request) {
 			data.Grants = append(data.Grants, gi)
 		}
 	}
-	handlers.TemplateHandler(w, r, "adminLinkGrantsPage.gohtml", data)
+	LinkerAdminLinkGrantsPageTmpl.Handle(w, r, data)
 }
+
+const LinkerAdminLinkGrantsPageTmpl handlers.Page = "linker/adminLinkGrantsPage.gohtml"

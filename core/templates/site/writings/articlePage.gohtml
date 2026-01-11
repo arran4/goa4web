@@ -29,6 +29,7 @@
                 <input type="submit" value="Save Labels"/>
             </form>
         </div>
+
 <script src="{{ assetHash "/forum/topic_labels.js" }}"></script>
         {{ if cd.SelectedThreadCanReply }}
             <div class="comment">
@@ -77,4 +78,6 @@
     {{ else }}
         Article doesn't exist.<br>
     {{ end }}
+
+    {{ template "_share.gohtml" (dict "module" "writings" "link" (printf "/writings/article/%d" $writing.Idwriting)) }}
 {{ template "tail" $ }}

@@ -105,6 +105,18 @@ func A4CodeJS(cfg *config.RuntimeConfig) http.HandlerFunc {
 	}
 }
 
+// RobotsTXT serves the robots.txt file.
+func RobotsTXT(cfg *config.RuntimeConfig) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var opts []templates.Option
+		if cfg != nil && cfg.TemplatesDir != "" {
+			opts = append(opts, templates.WithDir(cfg.TemplatesDir))
+		}
+		w.Header().Set("Content-Type", "text/plain")
+		http.ServeContent(w, r, "robots.txt", time.Time{}, bytes.NewReader(templates.GetRobotsTXTData(opts...)))
+	}
+}
+
 // RedirectPermanent returns a handler that redirects to the provided path using StatusPermanentRedirect.
 func RedirectPermanent(to string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

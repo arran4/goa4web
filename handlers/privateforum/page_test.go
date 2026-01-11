@@ -12,41 +12,41 @@ import (
 
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/sharesign"
 )
 
 func TestPage_NoAccess(t *testing.T) {
 	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
+	cd.ShareSigner = sharesign.NewSigner(config.NewRuntimeConfig(), "secret")
 	req := httptest.NewRequest(http.MethodGet, "/private", nil)
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 
 	w := httptest.NewRecorder()
 	PrivateForumPage(w, req)
 
-	if body := w.Body.String(); !strings.Contains(body, "Forbidden") {
-		t.Fatalf("expected no access message, got %q", body)
+	if body := w.Body.String(); !strings.Contains(body, "Login Required") {
+		t.Fatalf("expected login required message, got %q", body)
 	}
 }
 
 func TestPage_Access(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	queries := &db.QuerierStub{
+		SystemCheckGrantFn: func(arg db.SystemCheckGrantParams) (int32, error) {
+			if arg.Section == "privateforum" && arg.Action == "see" {
+				return 1, nil
+			}
+			return 0, sql.ErrNoRows
+		},
 	}
-	defer conn.Close()
-	queries := db.New(conn)
-
-	mock.ExpectQuery("SELECT .* FROM user_roles").
-		WillReturnRows(sqlmock.NewRows([]string{"iduser_roles", "users_idusers", "role_id", "name", "is_admin"}).
-			AddRow(1, 1, 1, "administrator", true))
-
-	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
+	cd.ShareSigner = sharesign.NewSigner(config.NewRuntimeConfig(), "secret")
 	cd.UserID = 1
 	cd.AdminMode = true
+	cachePrivateTopics(cd, nil)
 	req := httptest.NewRequest(http.MethodGet, "/private", nil)
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 
@@ -76,6 +76,7 @@ func TestPage_SeeNoCreate(t *testing.T) {
 		ListPrivateTopicParticipantsByTopicIDForUserReturns: []*db.ListPrivateTopicParticipantsByTopicIDForUserRow{},
 	}
 	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
+	cd.ShareSigner = sharesign.NewSigner(config.NewRuntimeConfig(), "secret")
 	cd.UserID = 1
 	cd.AdminMode = false
 	cachePrivateTopics(cd, nil)
@@ -93,18 +94,17 @@ func TestPage_SeeNoCreate(t *testing.T) {
 }
 
 func TestPage_AdminLinks(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	queries := &db.QuerierStub{
+		SystemCheckGrantFn: func(arg db.SystemCheckGrantParams) (int32, error) {
+			if arg.Section == "privateforum" && arg.Action == "see" {
+				return 1, nil
+			}
+			return 0, sql.ErrNoRows
+		},
+		GetPermissionsByUserIDReturns: []*db.GetPermissionsByUserIDRow{{IsAdmin: true}},
 	}
-	defer conn.Close()
-	queries := db.New(conn)
-
-	mock.ExpectQuery("SELECT .* FROM user_roles").
-		WillReturnRows(sqlmock.NewRows([]string{"iduser_roles", "users_idusers", "role_id", "name", "is_admin"}).
-			AddRow(1, 1, 1, "administrator", true))
-
-	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
+	cd.ShareSigner = sharesign.NewSigner(config.NewRuntimeConfig(), "secret")
 	cd.UserID = 1
 	cd.AdminMode = true
 

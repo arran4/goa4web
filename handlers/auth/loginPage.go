@@ -43,7 +43,7 @@ func (h redirectBackPageHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		}
 		rdh := handlers.RefreshDirectHandler{TargetURL: targetURL}
 		cd.AutoRefresh = rdh.Content()
-		handlers.TemplateHandler(w, r, "taskDoneAutoRefreshPage.gohtml", rdh)
+		TaskDoneAutoRefreshPageTmpl.Handle(w, r, rdh)
 		return
 	}
 
@@ -52,11 +52,16 @@ func (h redirectBackPageHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		Method  string
 		Values  url.Values
 	}
-	if err := cd.ExecuteSiteTemplate(w, r, "redirectBackPage.gohtml", Data(h)); err != nil {
+	if err := RedirectBackPageTmpl.Handle(w, r, Data(h)); err != nil {
 		log.Printf("Template Error: %s", err)
 		handlers.RenderErrorPage(w, r, err)
 	}
 }
+
+const (
+	TaskDoneAutoRefreshPageTmpl handlers.Page = "taskDoneAutoRefreshPage.gohtml"
+	RedirectBackPageTmpl        handlers.Page = "redirectBackPage.gohtml"
+)
 
 var _ http.Handler = (*redirectBackPageHandler)(nil)
 
@@ -81,5 +86,7 @@ func renderLoginForm(w http.ResponseWriter, r *http.Request, errMsg, noticeMsg s
 		Method:  r.FormValue("method"),
 		Data:    r.FormValue("data"),
 	}
-	handlers.TemplateHandler(w, r, "loginPage.gohtml", data)
+	LoginPageTmpl.Handle(w, r, data)
 }
+
+const LoginPageTmpl handlers.Page = "loginPage.gohtml"

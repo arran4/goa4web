@@ -30,5 +30,7 @@ func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data.Bans = rows
-	handlers.TemplateHandler(w, r, "ipBanPage.gohtml", data)
+	AdminIPBanPageTmpl.Handle(w, r, data)
 }
+
+const AdminIPBanPageTmpl handlers.Page = "ipBanPage.gohtml"

@@ -27,5 +27,7 @@ func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 	}{
 		Groups: groups,
 	}
-	handlers.TemplateHandler(w, r, "user/subscriptions.gohtml", data)
+	UserSubscriptionsPage.Handle(w, r, data)
 }
+
+const UserSubscriptionsPage handlers.Page = "user/subscriptions.gohtml"

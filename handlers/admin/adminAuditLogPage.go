@@ -89,5 +89,7 @@ func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 		cd.PrevLink = "/admin/audit?" + prevVals.Encode()
 	}
 
-	handlers.TemplateHandler(w, r, "auditLogPage.gohtml", data)
+	AdminAuditLogPageTmpl.Handle(w, r, data)
 }
+
+const AdminAuditLogPageTmpl handlers.Page = "admin/auditLogPage.gohtml"

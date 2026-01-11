@@ -31,5 +31,7 @@ func AdminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Announcements = rows
 	data.NewsID = r.FormValue("news_id")
-	handlers.TemplateHandler(w, r, "admin/announcementsPage.gohtml", data)
+	AdminAnnouncementsPageTmpl.Handle(w, r, data)
 }
+
+const AdminAnnouncementsPageTmpl handlers.Page = "admin/announcementsPage.gohtml"

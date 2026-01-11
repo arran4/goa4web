@@ -31,6 +31,23 @@ document.addEventListener('DOMContentLoaded', function() {
             const previewUrl = e.target.getAttribute('data-preview-url');
             const containerId = e.target.getAttribute('data-container');
             previewA4Code(targetId, previewUrl, containerId);
+        } else if (e.target && e.target.classList.contains('share-button')) {
+            e.preventDefault();
+            const link = e.target.getAttribute('data-link');
+            const module = e.target.getAttribute('data-module');
+            share(link, module, e.target);
+        } else if (e.target && e.target.classList.contains('copy-share-url-button')) {
+            e.preventDefault();
+            const container = e.target.closest('div');
+            if (container) {
+                const input = container.querySelector('.share-url-input');
+                if (input) {
+                    navigator.clipboard.writeText(input.value).then(() => {
+                    }).catch(err => {
+                        console.error('Failed to copy text: ', err);
+                    });
+                }
+            }
         }
     });
 });
@@ -191,4 +208,22 @@ function calculateOffset(root, node, offset) {
     range.setStart(root, 0);
     range.setEnd(node, offset);
     return range.toString().length;
+}
+
+function share(link, module, button) {
+    const shareLinkInput = button.closest('div').querySelector('.share-url-input');
+    const copyButton = button.closest('div').querySelector('.copy-share-url-button');
+    fetch('/api/' + module + '/share?link=' + encodeURIComponent(link))
+        .then(response => response.json())
+        .then(data => {
+            shareLinkInput.value = data.signed_url + window.location.hash;
+            shareLinkInput.style.display = 'inline-block';
+            copyButton.style.display = 'inline-block';
+            button.style.display = 'none';
+            shareLinkInput.select();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while generating the share link.');
+        });
 }

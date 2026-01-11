@@ -78,7 +78,8 @@ WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_id, b.blog, b.written, b.timezone, u.username, coalesce(th.comments, 0),
-       b.users_idusers = sqlc.arg(lister_id) AS is_owner
+       b.users_idusers = sqlc.arg(lister_id) AS is_owner,
+       SUBSTRING_INDEX(b.blog, '\n', 1) as title
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
@@ -145,7 +146,8 @@ WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
 )
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_id, b.blog, b.written, b.timezone, u.username, coalesce(th.comments, 0),
-       b.users_idusers = sqlc.arg(lister_id) AS is_owner
+       b.users_idusers = sqlc.arg(lister_id) AS is_owner,
+       SUBSTRING_INDEX(b.blog, '\n', 1) as title
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread

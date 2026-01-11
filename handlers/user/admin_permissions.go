@@ -49,5 +49,7 @@ func adminUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	})
 	data.Rows = rows
 
-	handlers.TemplateHandler(w, r, "admin/userPermissionsPage.gohtml", data)
+	AdminUserPermissionsPage.Handle(w, r, data)
 }
+
+const AdminUserPermissionsPage handlers.Page = "admin/userPermissionsPage.gohtml"

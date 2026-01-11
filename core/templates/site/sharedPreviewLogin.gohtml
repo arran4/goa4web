@@ -1,0 +1,7 @@
+{{ template "head" $ }}
+    <h1>Login Required</h1>
+    <p><strong>{{ cd.OpenGraph.Title }}</strong></p>
+    <p>{{ cd.OpenGraph.Description }}</p>
+    <p>Please login to view this content.</p>
+    <a class="button" href="/login?redirect={{ .RedirectURL }}">Login</a>
+{{ template "tail" $ }}

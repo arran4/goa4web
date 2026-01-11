@@ -4,9 +4,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
@@ -40,5 +41,7 @@ func CategoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Categories = categories
 
-	handlers.TemplateHandler(w, r, "linkerCategoriesPage.gohtml", data)
+	LinkerCategoriesPageTmpl.Handle(w, r, data)
 }
+
+const LinkerCategoriesPageTmpl handlers.Page = "linker/linkerCategoriesPage.gohtml"

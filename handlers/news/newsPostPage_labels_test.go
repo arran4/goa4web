@@ -3,6 +3,8 @@ package news
 import (
 	"bytes"
 	"database/sql"
+	"errors"
+	"fmt"
 	"html/template"
 	"path/filepath"
 	"strings"
@@ -39,12 +41,28 @@ func TestNewsPostPageLabelBars(t *testing.T) {
 		"add":         func(a, b int) int { return a + b },
 		"since":       func(time.Time, time.Time) string { return "" },
 		"assetHash":   func(s string) string { return s },
+		"dict": func(values ...interface{}) (map[string]interface{}, error) {
+			if len(values)%2 != 0 {
+				return nil, errors.New("invalid dict call")
+			}
+			dict := make(map[string]interface{}, len(values)/2)
+			for i := 0; i < len(values); i += 2 {
+				key, ok := values[i].(string)
+				if !ok {
+					return nil, errors.New("dict keys must be strings")
+				}
+				dict[key] = values[i+1]
+			}
+			return dict, nil
+		},
+		"printf": fmt.Sprintf,
 	}
 
-	base := filepath.Join("..", "..", "core", "templates", "site", "news")
+	base := filepath.Join("..", "..", "core", "templates", "site")
 	tmpl := template.Must(template.New("root").Funcs(funcMap).ParseFiles(
-		filepath.Join(base, "postPage.gohtml"),
-		filepath.Join(base, "post.gohtml"),
+		filepath.Join(base, "news", "postPage.gohtml"),
+		filepath.Join(base, "news", "post.gohtml"),
+		filepath.Join(base, "_share.gohtml"),
 	))
 	tmpl = template.Must(tmpl.Parse(`{{ define "head" }}{{ end }}
 {{ define "tail" }}{{ end }}
@@ -68,6 +86,7 @@ func TestNewsPostPageLabelBars(t *testing.T) {
 		Labels       []templates.TopicLabel
 		PublicLabels []templates.TopicLabel
 		BackURL      string
+		ShareURL     string
 	}{
 		Post:         post,
 		Labels:       []templates.TopicLabel{{Name: "foo", Type: "author"}},
@@ -98,12 +117,28 @@ func TestNewsPostPagePrivateLabelsOnce(t *testing.T) {
 		"add":         func(a, b int) int { return a + b },
 		"since":       func(time.Time, time.Time) string { return "" },
 		"assetHash":   func(s string) string { return s },
+		"dict": func(values ...interface{}) (map[string]interface{}, error) {
+			if len(values)%2 != 0 {
+				return nil, errors.New("invalid dict call")
+			}
+			dict := make(map[string]interface{}, len(values)/2)
+			for i := 0; i < len(values); i += 2 {
+				key, ok := values[i].(string)
+				if !ok {
+					return nil, errors.New("dict keys must be strings")
+				}
+				dict[key] = values[i+1]
+			}
+			return dict, nil
+		},
+		"printf": fmt.Sprintf,
 	}
 
-	base := filepath.Join("..", "..", "core", "templates", "site", "news")
+	base := filepath.Join("..", "..", "core", "templates", "site")
 	tmpl := template.Must(template.New("root").Funcs(funcMap).ParseFiles(
-		filepath.Join(base, "postPage.gohtml"),
-		filepath.Join(base, "post.gohtml"),
+		filepath.Join(base, "news", "postPage.gohtml"),
+		filepath.Join(base, "news", "post.gohtml"),
+		filepath.Join(base, "_share.gohtml"),
 	))
 	tmpl = template.Must(tmpl.Parse(`{{ define "head" }}{{ end }}{{ define "tail" }}{{ end }}{{ define "threadComments" }}{{ end }}{{ define "comment" }}{{ end }}{{ define "topicLabels" }}{{ end }}{{ define "languageCombobox" }}{{ end }}`))
 
@@ -122,6 +157,7 @@ func TestNewsPostPagePrivateLabelsOnce(t *testing.T) {
 		Labels       []templates.TopicLabel
 		PublicLabels []templates.TopicLabel
 		BackURL      string
+		ShareURL     string
 	}{
 		Post:    post,
 		Labels:  []templates.TopicLabel{{Name: "secret", Type: "private"}},

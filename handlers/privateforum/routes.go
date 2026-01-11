@@ -19,7 +19,7 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Reg
 	pr := r.PathPrefix("/private").Subrouter()
 	pr.NotFoundHandler = http.HandlerFunc(handlers.RenderNotFoundOrLogin)
 	pr.Use(handlers.IndexMiddleware(CustomIndex), handlers.SectionMiddleware("privateforum"), forumhandlers.BasePathMiddleware("/private"))
-	pr.HandleFunc("", PrivateForumPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	pr.HandleFunc("", PrivateForumPage).Methods(http.MethodGet)
 	pr.HandleFunc("/preview", handlers.PreviewPage).Methods("POST")
 	// Dedicated page to start a private group discussion
 	pr.HandleFunc("/topic/new", StartGroupDiscussionPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
@@ -28,6 +28,7 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Reg
 	pr.HandleFunc("/private_forum.js", handlers.PrivateForumJS(cfg)).Methods(http.MethodGet)
 	pr.HandleFunc("/topic_labels.js", handlers.TopicLabelsJS(cfg)).Methods(http.MethodGet)
 	pr.HandleFunc("/topic/{topic}", TopicPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	pr.HandleFunc("/api/user-exists", UserExistsAPI).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount())
 
 	// Provide GET confirmation pages for subscribe/unsubscribe (mirrors public forum)
 	pr.HandleFunc("/topic/{topic}/subscribe", forumhandlers.SubscribeTopicPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
@@ -52,6 +53,12 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Reg
 	pr.HandleFunc("/topic/{topic}/thread/cancel", forumhandlers.ThreadNewCancelPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	pr.HandleFunc("/topic/{topic}/thread/cancel", handlers.TaskHandler(forumhandlers.ThreadNewCancelHandler)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.ThreadNewCancelHandler.Matcher())
 	pr.HandleFunc("/topic/{topic}/thread", handlers.TaskHandler(forumhandlers.ThreadNewCancelHandler)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.ThreadNewCancelHandler.Matcher())
+
+	// OpenGraph preview endpoints (no auth required for social media bots if signed)
+	pr.HandleFunc("/shared/topic/{topic}", SharedTopicPreviewPage).Methods(http.MethodGet, http.MethodHead)
+	pr.HandleFunc("/shared/topic/{topic}/ts/{ts}/sign/{sign}", SharedTopicPreviewPage).Methods(http.MethodGet, http.MethodHead)
+	pr.HandleFunc("/shared/topic/{topic}/thread/{thread}", SharedThreadPreviewPage).Methods(http.MethodGet, http.MethodHead)
+	pr.HandleFunc("/shared/topic/{topic}/thread/{thread}/ts/{ts}/sign/{sign}", SharedThreadPreviewPage).Methods(http.MethodGet, http.MethodHead)
 
 	pr.Handle("/topic/{topic}/thread/{thread}", forumhandlers.RequireThreadAndTopic(http.HandlerFunc(ThreadPage))).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	pr.Handle("/topic/{topic}/thread/{thread}", forumhandlers.RequireThreadAndTopic(http.HandlerFunc(handlers.TaskDoneAutoRefreshPage))).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount())

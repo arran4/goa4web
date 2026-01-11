@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers/share"
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/gorilla/feeds"
@@ -40,7 +41,17 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		cd.PrevLink = "/blogs?" + qv.Encode()
 	}
 
-	handlers.TemplateHandler(w, r, "blogsPage", struct{}{})
+	cd.OpenGraph = &common.OpenGraph{
+		Title:       "Blogs",
+		Description: "Read blogs from our community.",
+		Image:       share.MakeImageURL(cd.AbsoluteURL(""), "Blogs", cd.ShareSigner, time.Now().Add(24*time.Hour)),
+		ImageWidth:  cd.Config.OGImageWidth,
+		ImageHeight: cd.Config.OGImageHeight,
+		TwitterSite: cd.Config.TwitterSite,
+		URL:         cd.AbsoluteURL(r.URL.String()),
+	}
+
+	BlogsPageTmpl.Handle(w, r, struct{}{})
 }
 
 func RssPage(w http.ResponseWriter, r *http.Request) {

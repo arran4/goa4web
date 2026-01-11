@@ -17,9 +17,8 @@ import (
 //
 // Template helpers are provided via the CoreData in the request context,
 // accessible in templates as Funcs["cd"] (*common.CoreData).
-func TemplateHandler(w http.ResponseWriter, r *http.Request, tmpl string, data any) {
-	cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	if err := cd.ExecuteSiteTemplate(w, r, tmpl, data); err != nil {
+func TemplateHandler(w http.ResponseWriter, r *http.Request, tmpl Page, data any) error {
+	if err := tmpl.TemplateExecute(w, r, data); err != nil {
 		log.Printf("Template Error: %s", err)
 		errData := struct {
 			Error   string
@@ -28,11 +27,13 @@ func TemplateHandler(w http.ResponseWriter, r *http.Request, tmpl string, data a
 			Error:   err.Error(),
 			BackURL: r.Referer(),
 		}
-		if err2 := cd.ExecuteSiteTemplate(w, r, "taskErrorAcknowledgementPage.gohtml", errData); err2 != nil {
+		if err2 := TaskErrorAcknowledgementPageTmpl.TemplateExecute(w, r, errData); err2 != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		}
+		return err
 	}
+	return nil
 }
 
 // IndexMiddleware injects custom index items via fn before executing the next handler.

@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"embed"
 	"encoding/hex"
-	"github.com/arran4/goa4web/core/consts"
 	htemplate "html/template"
 	"io/fs"
 	"os"
@@ -13,6 +12,8 @@ import (
 	"sync"
 	ttemplate "text/template"
 	"time"
+
+	"github.com/arran4/goa4web/core/consts"
 )
 
 // embeddedFS contains site templates, notification templates, email templates and static assets.
@@ -146,6 +147,9 @@ func GetCompiledSiteTemplates(funcs htemplate.FuncMap, opts ...Option) *htemplat
 	funcs["assetHash"] = func(p string) string {
 		return GetAssetHash(p, opts...)
 	}
+	funcs["url"] = func(s string) htemplate.URL {
+		return htemplate.URL(s)
+	}
 
 	// Try to use cached templates if we are using embedded assets (no custom directory)
 	if cfg.Dir == "" {
@@ -266,8 +270,11 @@ func GetCompiledEmailTextTemplates(funcs ttemplate.FuncMap, opts ...Option) *tte
 
 func GetMainCSSData(opts ...Option) []byte { return readFile("assets/main.css", opts...) }
 
-// GetFaviconData returns the site's favicon image data.
+// GetFaviconData returns the site's favicon image.
 func GetFaviconData(opts ...Option) []byte { return readFile("assets/favicon.svg", opts...) }
+
+// GetFaviconPNG returns the site's favicon image as PNG.
+func GetFaviconPNG(opts ...Option) []byte { return readFile("assets/favicon.png", opts...) }
 
 // GetPasteImageJSData returns the JavaScript that enables image pasting.
 func GetPasteImageJSData(opts ...Option) []byte { return readFile("assets/pasteimg.js", opts...) }
@@ -295,6 +302,9 @@ func GetSiteJSData(opts ...Option) []byte { return readFile("assets/site.js", op
 
 // GetA4CodeJSData returns the A4Code parser/converter JavaScript.
 func GetA4CodeJSData(opts ...Option) []byte { return readFile("assets/a4code.js", opts...) }
+
+// GetRobotsTXTData returns the robots.txt file.
+func GetRobotsTXTData(opts ...Option) []byte { return readFile("assets/robots.txt", opts...) }
 
 // ListSiteTemplateNames returns the relative paths of all site templates
 // (under the site/ directory), e.g. "news/postPage.gohtml".

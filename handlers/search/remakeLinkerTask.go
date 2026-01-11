@@ -31,8 +31,8 @@ func (RemakeLinkerTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return handlers.TemplateWithDataHandler(handlers.TemplateRunTaskPage, data)
 }
 
-func (RemakeLinkerTask) TemplatesRequired() []string {
-	return []string{handlers.TemplateRunTaskPage}
+func (RemakeLinkerTask) TemplatesRequired() []tasks.Page {
+	return []tasks.Page{handlers.TemplateRunTaskPage}
 }
 
 func (RemakeLinkerTask) BackgroundTask(ctx context.Context, q db.Querier) (tasks.Task, error) {

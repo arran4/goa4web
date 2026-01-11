@@ -20,8 +20,10 @@ func adminUserProfilePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("User %s", user.Username.String)
-	handlers.TemplateHandler(w, r, "admin/adminUserPage.gohtml", struct{}{})
+	AdminUserProfilePageTmpl.Handle(w, r, struct{}{})
 }
+
+const AdminUserProfilePageTmpl handlers.Page = "admin/adminUserPage.gohtml"
 
 func adminUserAddCommentPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -50,5 +52,5 @@ func adminUserAddCommentPage(w http.ResponseWriter, r *http.Request) {
 			data.Messages = append(data.Messages, "comment added")
 		}
 	}
-	handlers.TemplateHandler(w, r, "admin/runTaskPage.gohtml", data)
+	RunTaskPageTmpl.Handle(w, r, data)
 }

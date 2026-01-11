@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	NewsCreatePageTmpl = "news/createPage.gohtml"
+	NewsCreatePageTmpl handlers.Page = "news/createPage.gohtml"
 )
 
 func NewsCreatePageHandler(w http.ResponseWriter, r *http.Request) {
@@ -22,7 +22,5 @@ func NewsCreatePageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := cd.ExecuteSiteTemplate(w, r, NewsCreatePageTmpl, nil); err != nil {
-		handlers.RenderErrorPage(w, r, err)
-	}
+	NewsCreatePageTmpl.Handle(w, r, nil)
 }

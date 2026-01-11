@@ -6,11 +6,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"regexp"
 	"strings"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
@@ -19,7 +17,7 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
-func setupCategoryEditRequest(t *testing.T, queries *db.Queries, path string, form url.Values, vars map[string]string) (*http.Request, *httptest.ResponseRecorder) {
+func setupCategoryEditRequest(t *testing.T, queries db.Querier, path string, form url.Values, vars map[string]string) (*http.Request, *httptest.ResponseRecorder) {
 	t.Helper()
 	req := httptest.NewRequest("POST", path, strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -33,31 +31,49 @@ func setupCategoryEditRequest(t *testing.T, queries *db.Queries, path string, fo
 }
 
 func TestAdminCategoryEditSubmitSuccess(t *testing.T) {
-	sqlDB, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	queries := &db.QuerierStub{
+		GetForumCategoryByIdReturns: &db.Forumcategory{
+			Idforumcategory:              1,
+			ForumcategoryIdforumcategory: 0,
+			LanguageID:                   sql.NullInt32{Int32: 0, Valid: true},
+			Title:                        sql.NullString{String: "cat", Valid: true},
+			Description:                  sql.NullString{String: "desc", Valid: true},
+		},
+		GetAllForumCategoriesReturns: []*db.Forumcategory{
+			{
+				Idforumcategory:              1,
+				ForumcategoryIdforumcategory: 0,
+				LanguageID:                   sql.NullInt32{Int32: 0, Valid: true},
+				Title:                        sql.NullString{String: "cat", Valid: true},
+				Description:                  sql.NullString{String: "desc", Valid: true},
+			},
+			{
+				Idforumcategory:              2,
+				ForumcategoryIdforumcategory: 0,
+				LanguageID:                   sql.NullInt32{Int32: 0, Valid: true},
+				Title:                        sql.NullString{String: "parent", Valid: true},
+				Description:                  sql.NullString{String: "pdesc", Valid: true},
+			},
+		},
+		AdminUpdateForumCategoryFn: func(ctx context.Context, arg db.AdminUpdateForumCategoryParams) error {
+			if arg.Title.String != "Updated" || !arg.Title.Valid {
+				t.Fatalf("unexpected title %+v", arg.Title)
+			}
+			if arg.Description.String != "Updated desc" || !arg.Description.Valid {
+				t.Fatalf("unexpected desc %+v", arg.Description)
+			}
+			if arg.ParentID != 2 {
+				t.Fatalf("unexpected parent %d", arg.ParentID)
+			}
+			if arg.LanguageID != (sql.NullInt32{Int32: 3, Valid: true}) {
+				t.Fatalf("unexpected language %+v", arg.LanguageID)
+			}
+			if arg.Idforumcategory != 1 {
+				t.Fatalf("unexpected category id %d", arg.Idforumcategory)
+			}
+			return nil
+		},
 	}
-	defer sqlDB.Close()
-
-	queries := db.New(sqlDB)
-	mock.MatchExpectationsInOrder(false)
-
-	categoryRows := sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "language_id", "title", "description"}).
-		AddRow(1, 0, 0, "cat", "desc")
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT idforumcategory, forumcategory_idforumcategory, language_id, title, description FROM forumcategory")).
-		WithArgs(int32(1), int32(0), int32(0)).
-		WillReturnRows(categoryRows)
-
-	allRows := sqlmock.NewRows([]string{"idforumcategory", "forumcategory_idforumcategory", "language_id", "title", "description"}).
-		AddRow(1, 0, 0, "cat", "desc").
-		AddRow(2, 0, 0, "parent", "pdesc")
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT f.idforumcategory, f.forumcategory_idforumcategory, f.language_id, f.title, f.description\nFROM forumcategory f")).
-		WithArgs(int32(0), int32(0)).
-		WillReturnRows(allRows)
-
-	mock.ExpectExec(regexp.QuoteMeta("UPDATE forumcategory\nSET title = ?,\n    description = ?,\n    forumcategory_idforumcategory = ?,\n    language_id = ?\nWHERE idforumcategory = ?")).
-		WithArgs(sql.NullString{String: "Updated", Valid: true}, sql.NullString{String: "Updated desc", Valid: true}, int32(2), sql.NullInt32{Int32: 3, Valid: true}, int32(1)).
-		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	form := url.Values{
 		"name":     {"Updated"},
@@ -69,9 +85,6 @@ func TestAdminCategoryEditSubmitSuccess(t *testing.T) {
 
 	AdminCategoryEditSubmit(rr, req)
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 	if rr.Code != http.StatusSeeOther {
 		t.Fatalf("status=%d", rr.Code)
 	}
@@ -81,17 +94,9 @@ func TestAdminCategoryEditSubmitSuccess(t *testing.T) {
 }
 
 func TestAdminCategoryEditSubmitMissingCategory(t *testing.T) {
-	sqlDB, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	queries := &db.QuerierStub{
+		GetForumCategoryByIdErr: sql.ErrNoRows,
 	}
-	defer sqlDB.Close()
-
-	queries := db.New(sqlDB)
-
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT idforumcategory, forumcategory_idforumcategory, language_id, title, description FROM forumcategory")).
-		WithArgs(int32(99), int32(0), int32(0)).
-		WillReturnError(sql.ErrNoRows)
 
 	form := url.Values{
 		"name": {"Updated"},
@@ -102,22 +107,13 @@ func TestAdminCategoryEditSubmitMissingCategory(t *testing.T) {
 
 	AdminCategoryEditSubmit(rr, req)
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 	if rr.Code != http.StatusNotFound {
 		t.Fatalf("status=%d", rr.Code)
 	}
 }
 
 func TestAdminCategoryEditSubmitValidationError(t *testing.T) {
-	sqlDB, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer sqlDB.Close()
-
-	queries := db.New(sqlDB)
+	queries := &db.QuerierStub{}
 
 	form := url.Values{
 		"name": {""},
@@ -128,9 +124,6 @@ func TestAdminCategoryEditSubmitValidationError(t *testing.T) {
 
 	AdminCategoryEditSubmit(rr, req)
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 	if rr.Code != http.StatusSeeOther {
 		t.Fatalf("status=%d", rr.Code)
 	}

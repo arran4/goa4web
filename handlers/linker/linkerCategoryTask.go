@@ -22,8 +22,8 @@ func NewLinkerCategoryTask() tasks.Task {
 	return &linkerCategoryTask{}
 }
 
-func (t *linkerCategoryTask) TemplatesRequired() []string {
-	return []string{LinkerCategoryPageTmpl}
+func (t *linkerCategoryTask) TemplatesRequired() []tasks.Page {
+	return []tasks.Page{LinkerCategoryPageTmpl}
 }
 
 func (t *linkerCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {

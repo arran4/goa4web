@@ -126,5 +126,7 @@ func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 		data.AuthorLabels = als
 	}
 
-	handlers.TemplateHandler(w, r, "blogEditPage.gohtml", data)
+	BlogsBlogEditPageTmpl.Handle(w, r, data)
 }
+
+const BlogsBlogEditPageTmpl handlers.Page = "blogs/blogEditPage.gohtml"

@@ -48,5 +48,5 @@ func (h *Handlers) AdminReloadConfigPage(w http.ResponseWriter, r *http.Request)
 
 	data.Messages = append(data.Messages, "Configuration reloaded")
 
-	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	RunTaskPageTmpl.Handle(w, r, data)
 }

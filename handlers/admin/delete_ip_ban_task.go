@@ -47,8 +47,8 @@ func (DeleteIPBanTask) Action(w http.ResponseWriter, r *http.Request) any {
 			evt.Data = map[string]any{}
 		}
 		evt.Data["IP"] = strings.Join(ips, ", ")
-		if u, _ := cd.CurrentUser(); u != nil {
-			evt.Data["Moderator"] = u.Username
+		if u, _ := cd.CurrentUser(); u != nil && u.Username.Valid {
+			evt.Data["Moderator"] = u.Username.String
 		}
 	}
 	return nil

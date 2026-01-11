@@ -82,5 +82,7 @@ func AdminBoardListPage(w http.ResponseWriter, r *http.Request) {
 		data.NextPage = nextPage
 	}
 	cd.PageTitle = "Board Images"
-	handlers.TemplateHandler(w, r, "adminBoardListPage.gohtml", data)
+	ImageBBSAdminBoardListPageTmpl.Handle(w, r, data)
 }
+
+const ImageBBSAdminBoardListPageTmpl handlers.Page = "imagebbs/adminBoardListPage.gohtml"

@@ -54,17 +54,21 @@ func (c *serveCmd) Run() error {
 	}
 	c.rootCmd.Infof("%s", listenMsg)
 
-	secret, err := config.LoadOrCreateSecret(core.OSFS{}, cfg.SessionSecret, cfg.SessionSecretFile, config.EnvSessionSecret, config.EnvSessionSecretFile)
+	secret, err := config.LoadOrCreateSessionSecret(core.OSFS{}, cfg.SessionSecret, cfg.SessionSecretFile)
 	if err != nil {
 		return fmt.Errorf("session secret: %w", err)
 	}
-	signKey, err := config.LoadOrCreateSecret(core.OSFS{}, cfg.ImageSignSecret, cfg.ImageSignSecretFile, config.EnvImageSignSecret, config.EnvImageSignSecretFile)
+	signKey, err := config.LoadOrCreateImageSignSecret(core.OSFS{}, cfg.ImageSignSecret, cfg.ImageSignSecretFile)
 	if err != nil {
 		return fmt.Errorf("image sign secret: %w", err)
 	}
 	linkKey, err := config.LoadOrCreateLinkSignSecret(core.OSFS{}, cfg.LinkSignSecret, cfg.LinkSignSecretFile)
 	if err != nil {
 		return fmt.Errorf("link sign secret: %w", err)
+	}
+	shareKey, err := config.LoadOrCreateShareSignSecret(core.OSFS{}, cfg.ShareSignSecret, cfg.ShareSignSecretFile)
+	if err != nil {
+		return fmt.Errorf("share sign secret: %w", err)
 	}
 	apiKey, err := config.LoadOrCreateAdminAPISecret(core.OSFS{}, cfg.AdminAPISecret, cfg.AdminAPISecretFile)
 	if err != nil {
@@ -76,6 +80,7 @@ func (c *serveCmd) Run() error {
 		app.WithSessionSecret(secret),
 		app.WithImageSignSecret(signKey),
 		app.WithLinkSignSecret(linkKey),
+		app.WithShareSignSecret(shareKey),
 		app.WithDBRegistry(c.rootCmd.dbReg),
 		app.WithEmailRegistry(c.rootCmd.emailReg),
 		app.WithDLQRegistry(c.rootCmd.dlqReg),

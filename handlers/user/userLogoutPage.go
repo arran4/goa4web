@@ -45,5 +45,7 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 
 	cd.UserID = 0
 
-	handlers.TemplateHandler(w, r, "user/logoutPage.gohtml", struct{}{})
+	UserLogoutPage.Handle(w, r, struct{}{})
 }
+
+const UserLogoutPage handlers.Page = "user/logoutPage.gohtml"

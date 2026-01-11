@@ -63,10 +63,10 @@ func SearchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 		data.EmptyWords = noResults
 	}
 
-	if err := cd.ExecuteSiteTemplate(w, r, "search/resultNewsActionPage.gohtml", data); err != nil {
-		handlers.RenderErrorPage(w, r, err)
-	}
+	SearchResultNewsActionPageTmpl.Handle(w, r, data)
 }
+
+const SearchResultNewsActionPageTmpl handlers.Page = "search/resultNewsActionPage.gohtml"
 
 func forumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request, queries db.Querier, forumTopicId []int32, uid int32) ([]*db.GetCommentsByIdsForUserWithThreadInfoRow, bool, bool, error) {
 	searchWords := searchutil.BreakupTextToWords(r.PostFormValue("searchwords"))

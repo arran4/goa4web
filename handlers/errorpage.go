@@ -34,14 +34,14 @@ func RenderErrorPage(w http.ResponseWriter, r *http.Request, err error) {
 		}
 	}
 
-	templateName := "taskErrorAcknowledgementPage.gohtml"
+	templateName := TaskErrorAcknowledgementPageTmpl
 	backURL := r.Referer()
 	if status == http.StatusNotFound {
 		cd.PageTitle = "Not Found"
-		templateName = "notFoundPage.gohtml"
+		templateName = NotFoundPageTmpl
 	} else if errors.Is(err, ErrLoginRequired) {
 		cd.PageTitle = "Login Required"
-		templateName = "accessDeniedLoginPage.gohtml"
+		templateName = AccessDeniedLoginPageTmpl
 		backURL = r.RequestURI
 	} else {
 		cd.PageTitle = "Error"
@@ -62,7 +62,7 @@ func RenderErrorPage(w http.ResponseWriter, r *http.Request, err error) {
 	}
 	w.WriteHeader(status)
 
-	if err := cd.ExecuteSiteTemplate(w, r, templateName, data); err != nil {
+	if err := cd.ExecuteSiteTemplate(w, r, string(templateName), data); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "Internal Server Error")
 	}

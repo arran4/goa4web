@@ -98,8 +98,10 @@ func AdminForumPage(w http.ResponseWriter, r *http.Request) {
 	data.Stats.Topics = stats.Topics
 	data.Stats.Threads = stats.Threads
 
-	handlers.TemplateHandler(w, r, "forumAdminPage", data)
+	ForumAdminPageTmpl.Handle(w, r, data)
 }
+
+const ForumAdminPageTmpl handlers.Page = "forum/adminPage.gohtml"
 
 func AdminForumRemakeForumThreadPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -123,7 +125,7 @@ func AdminForumRemakeForumThreadPage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		data.Messages = append(data.Messages, "Thread metadata rebuild complete.")
 	}
-	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	RunTaskPageTmpl.Handle(w, r, data)
 }
 
 func AdminForumRemakeForumTopicPage(w http.ResponseWriter, r *http.Request) {
@@ -147,8 +149,10 @@ func AdminForumRemakeForumTopicPage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		data.Messages = append(data.Messages, "Topic metadata rebuild complete.")
 	}
-	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	RunTaskPageTmpl.Handle(w, r, data)
 }
+
+const RunTaskPageTmpl handlers.Page = "admin/runTaskPage.gohtml"
 
 func countForumThreads(ctx context.Context, q db.Querier) (int64, error) {
 	return q.AdminCountForumThreads(ctx)

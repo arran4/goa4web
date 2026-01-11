@@ -2,9 +2,12 @@ package common
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/workers/postcountworker"
 	"github.com/arran4/goa4web/workers/searchworker"
@@ -40,8 +43,6 @@ type ThreadUpdatedEvent struct {
 
 // HandleThreadUpdated applies notification, email, and thread-update side effects.
 func (cd *CoreData) HandleThreadUpdated(ctx context.Context, event ThreadUpdatedEvent) error {
-	_ = ctx
-
 	var errs []error
 	if cd != nil {
 		if event.ClearUnreadForOthers {
@@ -80,16 +81,42 @@ func (cd *CoreData) HandleThreadUpdated(ctx context.Context, event ThreadUpdated
 		if evt.Data == nil {
 			evt.Data = map[string]any{}
 		}
+		if _, ok := evt.Data["Time"]; !ok {
+			evt.Data["Time"] = time.Now().UTC()
+		}
 		if event.TopicTitle != "" {
 			evt.Data["TopicTitle"] = event.TopicTitle
+		} else if event.TopicID != 0 && cd != nil && cd.queries != nil {
+			if topic, err := cd.queries.GetForumTopicById(ctx, event.TopicID); err == nil && topic != nil && topic.Title.Valid {
+				evt.Data["TopicTitle"] = topic.Title.String
+			}
 		}
 		evt.Data["Username"] = event.Username
 		evt.Data["Author"] = event.Author
 		if event.Thread != nil {
 			evt.Data["Thread"] = event.Thread
+		} else if event.ThreadID != 0 && cd != nil && cd.queries != nil {
+			thread, err := cd.queries.GetThreadLastPosterAndPerms(ctx, db.GetThreadLastPosterAndPermsParams{
+				ViewerID:      cd.UserID,
+				ThreadID:      event.ThreadID,
+				ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+			})
+			if err == nil && thread != nil {
+				evt.Data["Thread"] = thread
+			}
 		}
 		if event.ThreadID != 0 {
 			evt.Data["ThreadID"] = event.ThreadID
+		}
+		if _, ok := evt.Data["URL"]; !ok {
+			switch {
+			case event.CommentURL != "":
+				evt.Data["URL"] = event.CommentURL
+			case event.PostURL != "":
+				evt.Data["URL"] = event.PostURL
+			case event.ThreadURL != "":
+				evt.Data["URL"] = event.ThreadURL
+			}
 		}
 		if event.CommentURL != "" {
 			evt.Data["CommentURL"] = event.CommentURL

@@ -4,7 +4,9 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
+	"time"
 
 	"github.com/gorilla/mux"
 
@@ -90,5 +92,33 @@ func TestVerifyMiddlewareUnauthorized(t *testing.T) {
 	}
 	if rr.Code != http.StatusForbidden {
 		t.Fatalf("want %d got %d", http.StatusForbidden, rr.Code)
+	}
+}
+
+func TestVerifyMiddlewareAllowsQuerySignedImage(t *testing.T) {
+	called := false
+	cfg := config.NewRuntimeConfig()
+	cfg.HTTPHostname = "http://localhost"
+	signer := intimages.NewSigner(cfg, "k")
+	signedURL := signer.SignedURLTTL("abcd.png?size=small", time.Hour)
+	parsed, err := url.Parse(signedURL)
+	if err != nil {
+		t.Fatalf("parse signed url: %v", err)
+	}
+	h := verifyMiddleware("image:")(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+	}))
+	req := httptest.NewRequest("GET", parsed.Path+"?"+parsed.RawQuery, nil)
+	req = mux.SetURLVars(req, map[string]string{"id": "abcd.png"})
+	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithImageSigner(signer))
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, req.WithContext(ctx))
+
+	if !called {
+		t.Fatalf("next handler was not called")
+	}
+	if rr.Code != http.StatusOK {
+		t.Fatalf("want %d got %d", http.StatusOK, rr.Code)
 	}
 }

@@ -24,4 +24,6 @@ func RegisterShareRoutes(r *mux.Router, cfg *config.RuntimeConfig, signer *share
 	r.Handle("/api/og-image", ogHandler).Methods("GET", "HEAD")
 	r.Handle("/api/og-image/ts/{ts}/sign/{sign}", ogHandler).Methods("GET", "HEAD")
 	r.Handle("/api/og-image/{data}/ts/{ts}/sign/{sign}", ogHandler).Methods("GET", "HEAD")
+	r.Handle("/api/og-image/nonce/{nonce}/sign/{sign}", ogHandler).Methods("GET", "HEAD")
+	r.Handle("/api/og-image/{data}/nonce/{nonce}/sign/{sign}", ogHandler).Methods("GET", "HEAD")
 }

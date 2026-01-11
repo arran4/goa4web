@@ -41,8 +41,8 @@ func TestSubscribeTopicTaskAction(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected RedirectHandler result, got %T", result)
 	}
-	if redirect.TargetURL != "/forum/topic/12" {
-		t.Fatalf("expected redirect to /forum/topic/12, got %q", redirect.TargetURL)
+	if string(redirect) != "/forum/topic/12" {
+		t.Fatalf("expected redirect to /forum/topic/12, got %q", string(redirect))
 	}
 
 	if len(qs.InsertSubscriptionParams) != 1 {
@@ -84,8 +84,8 @@ func TestUnsubscribeTopicTaskAction(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected RedirectHandler result, got %T", result)
 	}
-	if redirect.TargetURL != "/forum/topic/9" {
-		t.Fatalf("expected redirect to /forum/topic/9, got %q", redirect.TargetURL)
+	if string(redirect) != "/forum/topic/9" {
+		t.Fatalf("expected redirect to /forum/topic/9, got %q", string(redirect))
 	}
 
 	if len(qs.DeleteSubscriptionParams) != 1 {

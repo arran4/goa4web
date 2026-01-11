@@ -46,9 +46,9 @@ func (c *grantListCmd) Run() error {
 
 func printGrantsTable(out io.Writer, rows []*db.ListGrantsExtendedRow) error {
 	w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "ID\tSection\tItem\tAction\tRule Type\tTarget")
+	fmt.Fprintln(w, "ID\tSection\tItem\tAction\tRule Type\tTarget\tScope\tActive")
 	for _, g := range rows {
-		target := ""
+		target := "Everyone"
 		if g.RoleName.Valid {
 			target = fmt.Sprintf("Role: %s", g.RoleName.String)
 		} else if g.Username.Valid {
@@ -58,11 +58,30 @@ func printGrantsTable(out io.Writer, rows []*db.ListGrantsExtendedRow) error {
 		} else if g.UserID.Valid {
 			target = fmt.Sprintf("User ID: %d", g.UserID.Int32)
 		}
-		item := ""
-		if g.Item.Valid {
+
+		item := "-"
+		if g.Item.Valid && g.Item.String != "" {
 			item = g.Item.String
 		}
-		fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%s\t%s\n", g.ID, g.Section, item, g.Action, g.RuleType, target)
+
+		scope := "All"
+		if g.ItemID.Valid {
+			scope = fmt.Sprintf("ID: %d", g.ItemID.Int32)
+		} else if g.ItemRule.Valid && g.ItemRule.String != "" {
+			scope = fmt.Sprintf("Rule: %s", g.ItemRule.String)
+		}
+
+		ruleType := g.RuleType
+		if ruleType == "" {
+			ruleType = "-"
+		}
+
+		active := "Yes"
+		if !g.Active {
+			active = "No"
+		}
+
+		fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", g.ID, g.Section, item, g.Action, ruleType, target, scope, active)
 	}
 	return w.Flush()
 }

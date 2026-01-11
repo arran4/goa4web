@@ -56,6 +56,7 @@ func (m *MockEmailProvider) TestConfig(ctx context.Context) error { return nil }
 func TestForumReply(t *testing.T) {
 	replierUID := int32(1)
 	subscriberUID := int32(2)
+	missingEmailUID := int32(3)
 	adminUID := int32(99)
 	topicID := int32(5)
 	threadID := int32(42)
@@ -77,6 +78,11 @@ func TestForumReply(t *testing.T) {
 					Idusers:  subscriberUID,
 					Username: sql.NullString{String: "subscriber", Valid: true},
 					Email:    sql.NullString{String: "subscriber@example.com", Valid: true},
+				}, nil
+			case missingEmailUID:
+				return &db.SystemGetUserByIDRow{
+					Idusers:  missingEmailUID,
+					Username: sql.NullString{String: "missing-email", Valid: true},
 				}, nil
 			case adminUID:
 				return &db.SystemGetUserByIDRow{
@@ -120,17 +126,18 @@ func TestForumReply(t *testing.T) {
 			}, nil
 		},
 		ListSubscribersForPatternsReturn: map[string][]int32{
-			fmt.Sprintf("reply:/forum/topic/%d/thread/%d/*", topicID, threadID): {subscriberUID},
+			fmt.Sprintf("reply:/forum/topic/%d/thread/%d/*", topicID, threadID): {subscriberUID, missingEmailUID},
 		},
 		GetPreferenceForListerReturn: map[int32]*db.Preference{
 			replierUID:    {AutoSubscribeReplies: true},
 			subscriberUID: {AutoSubscribeReplies: true},
 		},
-		AdminListAdministratorEmailsReturns:        []string{"admin@example.com"},
-		UpsertContentReadMarkerFn:                  func(ctx context.Context, arg db.UpsertContentReadMarkerParams) error { return nil },
-		ClearUnreadContentPrivateLabelExceptUserFn: func(ctx context.Context, arg db.ClearUnreadContentPrivateLabelExceptUserParams) error { return nil },
-		AdminDeletePendingEmailFn:                  func(ctx context.Context, id int32) error { return nil },
-		SystemMarkPendingEmailSentFn:               func(ctx context.Context, id int32) error { return nil },
+		AdminListAdministratorEmailsReturns:               []string{"admin@example.com"},
+		SystemGetLastNotificationForRecipientByMessageErr: sql.ErrNoRows,
+		UpsertContentReadMarkerFn:                         func(ctx context.Context, arg db.UpsertContentReadMarkerParams) error { return nil },
+		ClearUnreadContentPrivateLabelExceptUserFn:        func(ctx context.Context, arg db.ClearUnreadContentPrivateLabelExceptUserParams) error { return nil },
+		AdminDeletePendingEmailFn:                         func(ctx context.Context, id int32) error { return nil },
+		SystemMarkPendingEmailSentFn:                      func(ctx context.Context, id int32) error { return nil },
 	}
 
 	qs.SystemListPendingEmailsFn = func(ctx context.Context, arg db.SystemListPendingEmailsParams) ([]*db.SystemListPendingEmailsRow, error) {
@@ -208,84 +215,105 @@ func TestForumReply(t *testing.T) {
 		t.Errorf("sync process error: %s", cdlq.lastError)
 	}
 
-	// 1. Verify Internal Notifications
-	var subscriberNotif, adminNotif string
+	notificationsByRecipient := make(map[int32][]string)
 	for _, call := range qs.SystemCreateNotificationCalls {
-		if call.RecipientID == subscriberUID {
-			subscriberNotif = call.Message.String
+		notificationsByRecipient[call.RecipientID] = append(notificationsByRecipient[call.RecipientID], call.Message.String)
+	}
+
+	findNotification := func(recipient int32, expected string) bool {
+		for _, msg := range notificationsByRecipient[recipient] {
+			if msg == expected {
+				return true
+			}
 		}
-		if call.RecipientID == adminUID {
-			adminNotif = call.Message.String
+		return false
+	}
+
+	t.Run("internal notifications", func(t *testing.T) {
+		t.Helper()
+		expectedSubscriberNotif := "New reply in \"Test Topic\" by replier\n"
+		if !findNotification(subscriberUID, expectedSubscriberNotif) {
+			t.Fatalf("expected subscriber notification %q, got %q", expectedSubscriberNotif, notificationsByRecipient[subscriberUID])
 		}
-	}
 
-	expectedSubscriberNotif := "New reply in \"Test Topic\" by replier\n"
-	if subscriberNotif != expectedSubscriberNotif {
-		t.Errorf("expected subscriber notif %q, got %q", expectedSubscriberNotif, subscriberNotif)
-	}
+		expectedAdminNotif := "User replier replied to a forum thread.\nHello World\n"
+		if !findNotification(adminUID, expectedAdminNotif) {
+			t.Fatalf("expected admin notification %q, got %q", expectedAdminNotif, notificationsByRecipient[adminUID])
+		}
 
-	expectedAdminNotif := "User replier replied to a forum thread.\nHello World\n"
-	if adminNotif != expectedAdminNotif {
-		t.Errorf("expected admin notif %q, got %q", expectedAdminNotif, adminNotif)
-	}
+		if !findNotification(missingEmailUID, expectedSubscriberNotif) {
+			t.Fatalf("expected missing email subscriber to receive internal notification %q, got %q", expectedSubscriberNotif, notificationsByRecipient[missingEmailUID])
+		}
+	})
 
-	// 2. Verify Emails
-	for emailqueue.ProcessPendingEmail(ctx, qs, mockProvider, cdlq, cfg) {
-	}
+	t.Run("missing email notifications", func(t *testing.T) {
+		t.Helper()
+		expected := "missing email address"
+		if !findNotification(missingEmailUID, expected) {
+			t.Fatalf("expected missing email notification %q, got %q", expected, notificationsByRecipient[missingEmailUID])
+		}
+	})
 
-	if len(mockProvider.SentMessages) != 2 {
-		t.Fatalf("expected 2 emails sent, got %d", len(mockProvider.SentMessages))
-	}
+	t.Run("emails", func(t *testing.T) {
+		for emailqueue.ProcessPendingEmail(ctx, qs, mockProvider, cdlq, cfg) {
+		}
 
-	var subscriberEmail, adminEmail *mail.Message
-	for i, raw := range mockProvider.SentMessages {
-		msg, err := mail.ReadMessage(strings.NewReader(string(raw)))
+		if len(mockProvider.SentMessages) != 2 {
+			t.Fatalf("expected 2 emails sent, got %d", len(mockProvider.SentMessages))
+		}
+
+		var subscriberEmail, adminEmail *mail.Message
+		for i, raw := range mockProvider.SentMessages {
+			msg, err := mail.ReadMessage(strings.NewReader(string(raw)))
+			if err != nil {
+				t.Fatalf("parse email %d: %v", i, err)
+			}
+			to := mockProvider.Recipients[i].Address
+			if to == "subscriber@example.com" {
+				subscriberEmail = msg
+			} else if to == "admin@example.com" {
+				adminEmail = msg
+			}
+		}
+
+		if subscriberEmail == nil {
+			t.Fatal("subscriber email not found")
+		}
+		if subscriberEmail.Header.Get("Subject") != "[goa4web] New forum reply" {
+			t.Errorf("subscriber email subject mismatch: %s", subscriberEmail.Header.Get("Subject"))
+		}
+		subBody := getEmailBody(t, subscriberEmail)
+		expectedSubBody := "Hi replier,\nYour reply has been posted.\n\nView comment:\n/forum/topic/5/thread/42#c999\n\nManage notifications: http://example.com/usr/subscriptions"
+		if subBody != expectedSubBody {
+			t.Errorf("subscriber email body mismatch: %q, want %q", subBody, expectedSubBody)
+		}
+
+		if adminEmail == nil {
+			t.Fatal("admin email not found")
+		}
+		if adminEmail.Header.Get("Subject") != "[goa4web Admin] Forum reply posted" {
+			t.Errorf("admin email subject mismatch: %s", adminEmail.Header.Get("Subject"))
+		}
+		adminBody := getEmailBody(t, adminEmail)
+		expectedAdminBody := "User replier replied to a forum thread.\nHello World\n\nView comment:\n/forum/topic/5/thread/42#c999\n\nManage notifications: http://example.com/usr/subscriptions"
+		if adminBody != expectedAdminBody {
+			t.Errorf("admin email body mismatch: %q, want %q", adminBody, expectedAdminBody)
+		}
+	})
+
+	t.Run("auto subscribe path", func(t *testing.T) {
+		// TODO: add subscription-chaining checks (topic -> thread) once modeled in the reply task.
+		actionName, path, err := task.AutoSubscribePath(*evt)
 		if err != nil {
-			t.Fatalf("parse email %d: %v", i, err)
+			t.Errorf("AutoSubscribePath error: %v", err)
 		}
-		to := mockProvider.Recipients[i].Address
-		if to == "subscriber@example.com" {
-			subscriberEmail = msg
-		} else if to == "admin@example.com" {
-			adminEmail = msg
+		if actionName != "Reply" {
+			t.Errorf("expected action name Reply, got %q", actionName)
 		}
-	}
-
-	if subscriberEmail == nil {
-		t.Fatal("subscriber email not found")
-	}
-	if subscriberEmail.Header.Get("Subject") != "[goa4web] New forum reply" {
-		t.Errorf("subscriber email subject mismatch: %s", subscriberEmail.Header.Get("Subject"))
-	}
-	subBody := getEmailBody(t, subscriberEmail)
-	expectedSubBody := "Hi replier,\nYour reply has been posted.\n\nView comment:\n/forum/topic/5/thread/42#c999\n\nManage notifications: http://example.com/usr/subscriptions"
-	if subBody != expectedSubBody {
-		t.Errorf("subscriber email body mismatch: %q, want %q", subBody, expectedSubBody)
-	}
-
-	if adminEmail == nil {
-		t.Fatal("admin email not found")
-	}
-	if adminEmail.Header.Get("Subject") != "[goa4web Admin] Forum reply posted" {
-		t.Errorf("admin email subject mismatch: %s", adminEmail.Header.Get("Subject"))
-	}
-	adminBody := getEmailBody(t, adminEmail)
-	expectedAdminBody := "User replier replied to a forum thread.\nHello World\n\nView comment:\n/forum/topic/5/thread/42#c999\n\nManage notifications: http://example.com/usr/subscriptions"
-	if adminBody != expectedAdminBody {
-		t.Errorf("admin email body mismatch: %q, want %q", adminBody, expectedAdminBody)
-	}
-
-	// 3. Verify AutoSubscribePath
-	actionName, path, err := task.AutoSubscribePath(*evt)
-	if err != nil {
-		t.Errorf("AutoSubscribePath error: %v", err)
-	}
-	if actionName != "Reply" {
-		t.Errorf("expected action name Reply, got %q", actionName)
-	}
-	if path != "/forum/topic/5/thread/42" {
-		t.Errorf("expected path /forum/topic/5/thread/42, got %q", path)
-	}
+		if path != "/forum/topic/5/thread/42" {
+			t.Errorf("expected path /forum/topic/5/thread/42, got %q", path)
+		}
+	})
 }
 
 func getEmailBody(t *testing.T, msg *mail.Message) string {

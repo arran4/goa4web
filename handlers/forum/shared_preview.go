@@ -20,12 +20,14 @@ import (
 func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	// Create signer from config
-	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
+	signer := cd.ShareSigner
+	if signer == nil {
+		signer = sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
+	}
 
 	// Verify signature
 	if share.VerifyAndGetPath(r, signer) == "" {
-		http.Error(w, "invalid signature", http.StatusForbidden)
+		handlers.RenderErrorPage(w, r, handlers.WrapForbidden(fmt.Errorf("invalid signature")))
 		return
 	}
 
@@ -74,10 +76,13 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
+	signer := cd.ShareSigner
+	if signer == nil {
+		signer = sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
+	}
 
 	if share.VerifyAndGetPath(r, signer) == "" {
-		http.Error(w, "invalid signature", http.StatusForbidden)
+		handlers.RenderErrorPage(w, r, handlers.WrapForbidden(fmt.Errorf("invalid signature")))
 		return
 	}
 

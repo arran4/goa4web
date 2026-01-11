@@ -21,7 +21,10 @@ import (
 func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
+	signer := cd.ShareSigner
+	if signer == nil {
+		signer = sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
+	}
 	cd.ShareSigner = signer // Ensure it's set for MakeImageURL
 
 	if share.VerifyAndGetPath(r, signer) == "" {
@@ -33,7 +36,7 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, actualURL, http.StatusFound)
 			return
 		}
-		http.Error(w, "invalid signature", http.StatusForbidden)
+		handlers.RenderErrorPage(w, r, handlers.WrapForbidden(fmt.Errorf("invalid signature")))
 		return
 	}
 
@@ -82,7 +85,10 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
+	signer := cd.ShareSigner
+	if signer == nil {
+		signer = sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
+	}
 	cd.ShareSigner = signer // Ensure it's set for MakeImageURL
 
 	// Verify signature
@@ -93,7 +99,7 @@ func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, actualURL, http.StatusFound)
 			return
 		}
-		http.Error(w, "invalid signature", http.StatusForbidden)
+		handlers.RenderErrorPage(w, r, handlers.WrapForbidden(fmt.Errorf("invalid signature")))
 		return
 	}
 

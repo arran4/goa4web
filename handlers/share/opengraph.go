@@ -100,11 +100,8 @@ func VerifyAndGetPath(r *http.Request, signer SignatureVerifier) string {
 		}
 	}
 
-	query := r.URL.Query()
-	query.Del("ts")
-	query.Del("sig")
-	if encoded := query.Encode(); encoded != "" {
-		path = path + "?" + encoded
+	if filtered := filterQueryParams(r.URL.RawQuery, map[string]struct{}{"ts": {}, "sig": {}}); filtered != "" {
+		path = path + "?" + filtered
 	}
 
 	if !signer.Verify(path, ts, sig) {
@@ -112,6 +109,28 @@ func VerifyAndGetPath(r *http.Request, signer SignatureVerifier) string {
 	}
 
 	return path
+}
+
+func filterQueryParams(rawQuery string, removeKeys map[string]struct{}) string {
+	if rawQuery == "" {
+		return ""
+	}
+	parts := strings.Split(rawQuery, "&")
+	kept := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if part == "" {
+			continue
+		}
+		key := part
+		if idx := strings.Index(part, "="); idx != -1 {
+			key = part[:idx]
+		}
+		if _, ok := removeKeys[key]; ok {
+			continue
+		}
+		kept = append(kept, part)
+	}
+	return strings.Join(kept, "&")
 }
 
 // SignatureVerifier is an interface for signature verification.

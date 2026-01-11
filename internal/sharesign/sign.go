@@ -2,6 +2,7 @@ package sharesign
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -21,21 +22,69 @@ func NewSigner(cfg *config.RuntimeConfig, key string) *Signer {
 }
 
 // SignedURL generates a redirect URL for the given link.
-// For module paths like "/private/topic/2/thread/1", it becomes "/private/shared/topic/2/thread/1"
+// Defaults to path-based signature.
+// For module paths like "/private/topic/2/thread/1", it becomes "/private/shared/topic/2/thread/1/ts/{ts}/sign/{sig}"
 func (s *Signer) SignedURL(link string, exp ...time.Time) string {
-	host := strings.TrimSuffix(s.cfg.HTTPHostname, "/")
+	return s.SignedURLPath(link, exp...)
+}
 
+// SignedURLQuery generates a redirect URL with query parameters.
+func (s *Signer) SignedURLQuery(link string, exp ...time.Time) string {
+	host := strings.TrimSuffix(s.cfg.HTTPHostname, "/")
+	sharedPath, rawQuery, fragment := s.prepareSharedLink(link)
+	data := s.signatureData(sharedPath, rawQuery)
+	ts, sig := s.signer.Sign(data, exp...)
+	if rawQuery != "" {
+		return fmt.Sprintf("%s%s?%s&ts=%d&sig=%s%s", host, sharedPath, rawQuery, ts, sig, fragment)
+	}
+	return fmt.Sprintf("%s%s?ts=%d&sig=%s%s", host, sharedPath, ts, sig, fragment)
+}
+
+// SignedURLPath generates a redirect URL with path parameters.
+func (s *Signer) SignedURLPath(link string, exp ...time.Time) string {
+	host := strings.TrimSuffix(s.cfg.HTTPHostname, "/")
+	sharedPath, rawQuery, fragment := s.prepareSharedLink(link)
+	data := s.signatureData(sharedPath, rawQuery)
+	ts, sig := s.signer.Sign(data, exp...)
+	if rawQuery != "" {
+		return fmt.Sprintf("%s%s/ts/%d/sign/%s?%s%s", host, sharedPath, ts, sig, rawQuery, fragment)
+	}
+	return fmt.Sprintf("%s%s/ts/%d/sign/%s%s", host, sharedPath, ts, sig, fragment)
+}
+
+func (s *Signer) signatureData(path, rawQuery string) string {
+	if rawQuery == "" {
+		return "share:" + path
+	}
+	return "share:" + path + "?" + rawQuery
+}
+
+func (s *Signer) prepareSharedLink(link string) (string, string, string) {
+	sharedPath := link
+	rawQuery := ""
+	fragment := ""
+	if parsed, err := url.Parse(link); err == nil {
+		if parsed.Path != "" {
+			sharedPath = parsed.Path
+		}
+		rawQuery = parsed.RawQuery
+		if parsed.Fragment != "" {
+			fragment = "#" + parsed.Fragment
+		}
+	}
+	sharedPath = s.injectShared(sharedPath)
+	return sharedPath, rawQuery, fragment
+}
+
+func (s *Signer) injectShared(link string) string {
 	// Inject "/shared" after the first path segment (module name)
 	// e.g., "/private/topic/2/thread/1" → "/private/shared/topic/2/thread/1"
 	parts := strings.SplitN(link, "/", 3)
-	sharedLink := link
 	if len(parts) >= 3 && parts[0] == "" && parts[1] != "" {
 		// parts: ["", "private", "topic/2/thread/1"]
-		sharedLink = "/" + parts[1] + "/shared/" + parts[2]
+		return "/" + parts[1] + "/shared/" + parts[2]
 	}
-
-	ts, sig := s.signer.Sign("share:"+sharedLink, exp...)
-	return fmt.Sprintf("%s%s?ts=%d&sig=%s", host, sharedLink, ts, sig)
+	return link
 }
 
 // Sign returns the timestamp and signature for link using the optional expiry time.

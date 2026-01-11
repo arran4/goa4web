@@ -7,6 +7,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/gorilla/mux"
 )
 
 // OpenGraphData contains the metadata for an OpenGraph preview page.
@@ -86,6 +88,24 @@ func VerifyAndGetPath(r *http.Request, signer SignatureVerifier) string {
 
 	// Get path without query params
 	path := r.URL.Path
+
+	if ts == "" || sig == "" {
+		vars := mux.Vars(r)
+		ts = vars["ts"]
+		sig = vars["sign"]
+
+		if ts != "" && sig != "" {
+			suffix := fmt.Sprintf("/ts/%s/sign/%s", ts, sig)
+			path = strings.TrimSuffix(path, suffix)
+		}
+	}
+
+	query := r.URL.Query()
+	query.Del("ts")
+	query.Del("sig")
+	if encoded := query.Encode(); encoded != "" {
+		path = path + "?" + encoded
+	}
 
 	if !signer.Verify(path, ts, sig) {
 		return ""

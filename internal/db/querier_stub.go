@@ -218,6 +218,10 @@ type QuerierStub struct {
 	GetForumTopicByIdForUserCalls   []GetForumTopicByIdForUserParams
 	GetForumTopicByIdForUserReturns *GetForumTopicByIdForUserRow
 	GetForumTopicByIdForUserErr     error
+	GetForumTopicByIdFn             func(context.Context, int32) (*Forumtopic, error)
+	GetForumTopicByIdCalls          []int32
+	GetForumTopicByIdReturns        *Forumtopic
+	GetForumTopicByIdErr            error
 
 	ListPrivateTopicParticipantsByTopicIDForUserFn func(context.Context, ListPrivateTopicParticipantsByTopicIDForUserParams) ([]*ListPrivateTopicParticipantsByTopicIDForUserRow, error)
 
@@ -256,6 +260,15 @@ type QuerierStub struct {
 	GetAllForumCategoriesReturns []*Forumcategory
 	GetAllForumCategoriesErr     error
 	GetAllForumCategoriesFn      func(context.Context, GetAllForumCategoriesParams) ([]*Forumcategory, error)
+	GetForumCategoryByIdCalls    []GetForumCategoryByIdParams
+	GetForumCategoryByIdReturns  *Forumcategory
+	GetForumCategoryByIdErr      error
+	GetForumCategoryByIdFn       func(context.Context, GetForumCategoryByIdParams) (*Forumcategory, error)
+
+	GetAllForumTopicsByCategoryIdForUserWithLastPosterNameCalls   []GetAllForumTopicsByCategoryIdForUserWithLastPosterNameParams
+	GetAllForumTopicsByCategoryIdForUserWithLastPosterNameReturns []*GetAllForumTopicsByCategoryIdForUserWithLastPosterNameRow
+	GetAllForumTopicsByCategoryIdForUserWithLastPosterNameErr     error
+	GetAllForumTopicsByCategoryIdForUserWithLastPosterNameFn      func(context.Context, GetAllForumTopicsByCategoryIdForUserWithLastPosterNameParams) ([]*GetAllForumTopicsByCategoryIdForUserWithLastPosterNameRow, error)
 
 	SystemCheckRoleGrantReturns int32
 	SystemCheckRoleGrantErr     error
@@ -294,6 +307,40 @@ type QuerierStub struct {
 	AdminListPrivateTopicParticipantsByTopicIDCalls   []sql.NullInt32
 	AdminListPrivateTopicParticipantsByTopicIDReturns []*AdminListPrivateTopicParticipantsByTopicIDRow
 	AdminListPrivateTopicParticipantsByTopicIDErr     error
+
+	AdminCreateForumCategoryCalls   []AdminCreateForumCategoryParams
+	AdminCreateForumCategoryReturns int64
+	AdminCreateForumCategoryErr     error
+	AdminCreateForumCategoryFn      func(context.Context, AdminCreateForumCategoryParams) (int64, error)
+
+	AdminUpdateForumCategoryCalls []AdminUpdateForumCategoryParams
+	AdminUpdateForumCategoryErr   error
+	AdminUpdateForumCategoryFn    func(context.Context, AdminUpdateForumCategoryParams) error
+
+	AdminCountForumTopicsCalls   int
+	AdminCountForumTopicsReturns int64
+	AdminCountForumTopicsErr     error
+	AdminCountForumTopicsFn      func(context.Context) (int64, error)
+
+	AdminListForumTopicsCalls   []AdminListForumTopicsParams
+	AdminListForumTopicsReturns []*Forumtopic
+	AdminListForumTopicsErr     error
+	AdminListForumTopicsFn      func(context.Context, AdminListForumTopicsParams) ([]*Forumtopic, error)
+
+	AdminGetTopicGrantsCalls   []sql.NullInt32
+	AdminGetTopicGrantsReturns []*AdminGetTopicGrantsRow
+	AdminGetTopicGrantsErr     error
+	AdminGetTopicGrantsFn      func(context.Context, sql.NullInt32) ([]*AdminGetTopicGrantsRow, error)
+
+	AdminListRolesCalls   int
+	AdminListRolesReturns []*Role
+	AdminListRolesErr     error
+	AdminListRolesFn      func(context.Context) ([]*Role, error)
+
+	ListGrantsCalls   int
+	ListGrantsReturns []*Grant
+	ListGrantsErr     error
+	ListGrantsFn      func(context.Context) ([]*Grant, error)
 
 	ListWritersForListerCalls   []ListWritersForListerParams
 	ListWritersForListerReturns []*ListWritersForListerRow
@@ -721,6 +768,96 @@ func (s *QuerierStub) AdminListPrivateTopicParticipantsByTopicID(ctx context.Con
 	return s.AdminListPrivateTopicParticipantsByTopicIDReturns, s.AdminListPrivateTopicParticipantsByTopicIDErr
 }
 
+func (s *QuerierStub) AdminCreateForumCategory(ctx context.Context, arg AdminCreateForumCategoryParams) (int64, error) {
+	s.mu.Lock()
+	s.AdminCreateForumCategoryCalls = append(s.AdminCreateForumCategoryCalls, arg)
+	fn := s.AdminCreateForumCategoryFn
+	ret := s.AdminCreateForumCategoryReturns
+	err := s.AdminCreateForumCategoryErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) AdminUpdateForumCategory(ctx context.Context, arg AdminUpdateForumCategoryParams) error {
+	s.mu.Lock()
+	s.AdminUpdateForumCategoryCalls = append(s.AdminUpdateForumCategoryCalls, arg)
+	fn := s.AdminUpdateForumCategoryFn
+	err := s.AdminUpdateForumCategoryErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
+}
+
+func (s *QuerierStub) AdminCountForumTopics(ctx context.Context) (int64, error) {
+	s.mu.Lock()
+	s.AdminCountForumTopicsCalls++
+	fn := s.AdminCountForumTopicsFn
+	ret := s.AdminCountForumTopicsReturns
+	err := s.AdminCountForumTopicsErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) AdminListForumTopics(ctx context.Context, arg AdminListForumTopicsParams) ([]*Forumtopic, error) {
+	s.mu.Lock()
+	s.AdminListForumTopicsCalls = append(s.AdminListForumTopicsCalls, arg)
+	fn := s.AdminListForumTopicsFn
+	ret := s.AdminListForumTopicsReturns
+	err := s.AdminListForumTopicsErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) AdminGetTopicGrants(ctx context.Context, topicID sql.NullInt32) ([]*AdminGetTopicGrantsRow, error) {
+	s.mu.Lock()
+	s.AdminGetTopicGrantsCalls = append(s.AdminGetTopicGrantsCalls, topicID)
+	fn := s.AdminGetTopicGrantsFn
+	ret := s.AdminGetTopicGrantsReturns
+	err := s.AdminGetTopicGrantsErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, topicID)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) AdminListRoles(ctx context.Context) ([]*Role, error) {
+	s.mu.Lock()
+	s.AdminListRolesCalls++
+	fn := s.AdminListRolesFn
+	ret := s.AdminListRolesReturns
+	err := s.AdminListRolesErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) ListGrants(ctx context.Context) ([]*Grant, error) {
+	s.mu.Lock()
+	s.ListGrantsCalls++
+	fn := s.ListGrantsFn
+	ret := s.ListGrantsReturns
+	err := s.ListGrantsErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx)
+	}
+	return ret, err
+}
+
 func (s *QuerierStub) ListWritersForLister(ctx context.Context, arg ListWritersForListerParams) ([]*ListWritersForListerRow, error) {
 	s.mu.Lock()
 	s.ListWritersForListerCalls = append(s.ListWritersForListerCalls, arg)
@@ -913,6 +1050,32 @@ func (s *QuerierStub) GetAllForumCategories(ctx context.Context, arg GetAllForum
 	return s.GetAllForumCategoriesReturns, s.GetAllForumCategoriesErr
 }
 
+func (s *QuerierStub) GetForumCategoryById(ctx context.Context, arg GetForumCategoryByIdParams) (*Forumcategory, error) {
+	s.mu.Lock()
+	s.GetForumCategoryByIdCalls = append(s.GetForumCategoryByIdCalls, arg)
+	fn := s.GetForumCategoryByIdFn
+	row := s.GetForumCategoryByIdReturns
+	err := s.GetForumCategoryByIdErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return row, err
+}
+
+func (s *QuerierStub) GetAllForumTopicsByCategoryIdForUserWithLastPosterName(ctx context.Context, arg GetAllForumTopicsByCategoryIdForUserWithLastPosterNameParams) ([]*GetAllForumTopicsByCategoryIdForUserWithLastPosterNameRow, error) {
+	s.mu.Lock()
+	s.GetAllForumTopicsByCategoryIdForUserWithLastPosterNameCalls = append(s.GetAllForumTopicsByCategoryIdForUserWithLastPosterNameCalls, arg)
+	fn := s.GetAllForumTopicsByCategoryIdForUserWithLastPosterNameFn
+	rows := s.GetAllForumTopicsByCategoryIdForUserWithLastPosterNameReturns
+	err := s.GetAllForumTopicsByCategoryIdForUserWithLastPosterNameErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return rows, err
+}
+
 // SystemCheckRoleGrant records the call and returns the configured response.
 func (s *QuerierStub) SystemCheckRoleGrant(ctx context.Context, arg SystemCheckRoleGrantParams) (int32, error) {
 	s.mu.Lock()
@@ -978,6 +1141,19 @@ func (s *QuerierStub) GetForumTopicByIdForUser(ctx context.Context, arg GetForum
 		return fn(ctx, arg)
 	}
 	return s.GetForumTopicByIdForUserReturns, s.GetForumTopicByIdForUserErr
+}
+
+func (s *QuerierStub) GetForumTopicById(ctx context.Context, idforumtopic int32) (*Forumtopic, error) {
+	s.mu.Lock()
+	s.GetForumTopicByIdCalls = append(s.GetForumTopicByIdCalls, idforumtopic)
+	fn := s.GetForumTopicByIdFn
+	row := s.GetForumTopicByIdReturns
+	err := s.GetForumTopicByIdErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, idforumtopic)
+	}
+	return row, err
 }
 
 func (s *QuerierStub) ListPrivateTopicParticipantsByTopicIDForUser(ctx context.Context, arg ListPrivateTopicParticipantsByTopicIDForUserParams) ([]*ListPrivateTopicParticipantsByTopicIDForUserRow, error) {

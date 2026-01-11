@@ -2,6 +2,8 @@ package sharesign_test
 
 import (
 	"fmt"
+	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -30,5 +32,54 @@ func TestSigner(t *testing.T) {
 	}
 	if s.Verify(link, fmt.Sprint(time.Now().Add(-48*time.Hour).Unix()), sig) {
 		t.Errorf("Verify succeeded with expired timestamp")
+	}
+}
+
+func TestSignedURL(t *testing.T) {
+	cfg := &config.RuntimeConfig{
+		HTTPHostname: "http://localhost:8080",
+	}
+	s := sharesign.NewSigner(cfg, "secret")
+
+	// Test Path based (default)
+	link := "/private/topic/1/thread/2"
+	signed := s.SignedURL(link)
+	// expected: http://localhost:8080/private/shared/topic/1/thread/2/ts/.../sign/...
+	if !strings.Contains(signed, "/private/shared/topic/1/thread/2/ts/") {
+		t.Errorf("Path signature format incorrect: %s", signed)
+	}
+	if !strings.Contains(signed, "/sign/") {
+		t.Errorf("Path signature missing sign: %s", signed)
+	}
+
+	// Test Query based
+	signedQuery := s.SignedURLQuery(link)
+	if !strings.Contains(signedQuery, "/private/shared/topic/1/thread/2?ts=") {
+		t.Errorf("Query signature format incorrect: %s", signedQuery)
+	}
+}
+
+func TestSignedURLQueryWithParams(t *testing.T) {
+	cfg := &config.RuntimeConfig{
+		HTTPHostname: "http://localhost:8080",
+	}
+	s := sharesign.NewSigner(cfg, "secret")
+	link := "/private/topic/1/thread/2?from=share"
+	signed := s.SignedURLQuery(link)
+	parsed, err := url.Parse(signed)
+	if err != nil {
+		t.Fatalf("parse signed url: %v", err)
+	}
+	ts := parsed.Query().Get("ts")
+	sig := parsed.Query().Get("sig")
+	query := parsed.Query()
+	query.Del("ts")
+	query.Del("sig")
+	dataPath := parsed.Path
+	if encoded := query.Encode(); encoded != "" {
+		dataPath = dataPath + "?" + encoded
+	}
+	if !s.Verify(dataPath, ts, sig) {
+		t.Fatalf("signature did not verify for %s", signed)
 	}
 }

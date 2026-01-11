@@ -29,11 +29,17 @@ func verifyMiddleware(prefix string) mux.MiddlewareFunc {
 				handlers.RenderErrorPage(w, r, fmt.Errorf("invalid id"))
 				return
 			}
-			ts := r.URL.Query().Get("ts")
-			sig := r.URL.Query().Get("sig")
+			query := r.URL.Query()
+			ts := query.Get("ts")
+			sig := query.Get("sig")
+			query.Del("ts")
+			query.Del("sig")
 			data := id
+			if encoded := query.Encode(); encoded != "" {
+				data = data + "?" + encoded
+			}
 			if prefix != "" {
-				data = prefix + id
+				data = prefix + data
 			}
 			cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 			if cd.ImageSigner == nil || !cd.ImageSigner.Verify(data, ts, sig) {

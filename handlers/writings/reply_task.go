@@ -104,6 +104,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("create comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
+	endURL := cd.AbsoluteURL(fmt.Sprintf("/writings/article/%d", writing.Idwriting))
 	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
 		ThreadID:             threadID,
 		TopicID:              topicID,
@@ -111,6 +112,8 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		LabelItem:            "writing",
 		LabelItemID:          writing.Idwriting,
 		CommentText:          text,
+		CommentURL:           endURL,
+		PostURL:              endURL,
 		ClearUnreadForOthers: true,
 		MarkThreadRead:       true,
 		IncludePostCount:     true,

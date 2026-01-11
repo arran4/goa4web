@@ -10,6 +10,7 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/router"
 
+	"github.com/arran4/goa4web/handlers/share"
 	navpkg "github.com/arran4/goa4web/internal/navigation"
 )
 
@@ -36,6 +37,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 
 	// OpenGraph preview endpoint (no auth required for social media bots)
 	wr.HandleFunc("/shared/article/{writing}", SharedPreviewPage).Methods("GET", "HEAD")
+	wr.HandleFunc("/shared/article/{writing}/ts/{ts}/sign/{sign}", SharedPreviewPage).Methods("GET", "HEAD")
 
 	wr.HandleFunc("/article/{writing}", ArticlePage).Methods("GET")
 	wr.HandleFunc("/article/{writing}", handlers.TaskHandler(replyTask)).Methods("POST").MatcherFunc(replyTask.Matcher())
@@ -56,6 +58,9 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 		r.Path("/writing").HandlerFunc(handlers.RedirectPermanentPrefix("/writing", "/writings"))
 		r.PathPrefix("/writing/").HandlerFunc(handlers.RedirectPermanentPrefix("/writing", "/writings"))
 	}
+
+	api := r.PathPrefix("/api/writings").Subrouter()
+	api.HandleFunc("/share", share.ShareLink).Methods("GET")
 }
 
 // Register registers the writings router module.

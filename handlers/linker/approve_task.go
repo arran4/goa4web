@@ -73,6 +73,7 @@ func (approveTask) Action(w http.ResponseWriter, r *http.Request) any {
 			evt.Data["Username"] = link.Username.String
 			evt.Data["Moderator"] = mod
 			evt.Data["LinkURL"] = cd.AbsoluteURL(fmt.Sprintf("/linker/show/%d", lid))
+			evt.Data["UnsubURL"] = cd.AbsoluteURL("/usr/subscriptions")
 			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeLinker, ID: int32(lid), Text: text}
 		}
 	}

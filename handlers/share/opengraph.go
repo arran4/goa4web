@@ -132,7 +132,7 @@ type URLSigner interface {
 // If usePathAuth is true, it generates a URL with auth parameters in the path (/ts/.../sign/...).
 // Expiration is optional. If not provided, the link will not expire.
 func MakeImageURL(baseURL, title string, signer URLSigner, usePathAuth bool, expiration ...time.Time) string {
-	encodedTitle := strings.ReplaceAll(url.QueryEscape(title), "+", "%20")
+	encodedTitle := url.QueryEscape(title)
 	path := fmt.Sprintf("/api/og-image?title=%s", encodedTitle)
 
 	var exp time.Time

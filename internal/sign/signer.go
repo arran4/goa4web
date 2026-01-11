@@ -19,12 +19,12 @@ type Signer struct {
 // Use WithExpiry(time.Time) to set specific expiry.
 // Use WithNonce(string) to use a nonce (valid indefinitely, assuming nonce is valid).
 func (s *Signer) Sign(data string, ops ...any) (int64, string) {
-	opts := &signOpts{
-		expiry: time.Now().Add(24 * time.Hour),
+	opts := &SignData{
+		Expiry: time.Now().Add(24 * time.Hour),
 	}
 	for _, op := range ops {
 		switch f := op.(type) {
-		case func(*signOpts):
+		case func(*SignData):
 			f(opts)
 		default:
 			panic(fmt.Sprintf("invalid option type: %T", op))
@@ -32,30 +32,30 @@ func (s *Signer) Sign(data string, ops ...any) (int64, string) {
 	}
 
 	mac := hmac.New(sha256.New, []byte(s.Key))
-	if opts.nonce != "" {
-		io.WriteString(mac, fmt.Sprintf("%s:%s", data, opts.nonce))
+	if opts.Nonce != "" {
+		io.WriteString(mac, fmt.Sprintf("%s:%s", data, opts.Nonce))
 		return 0, hex.EncodeToString(mac.Sum(nil))
 	}
 
-	ts := opts.expiry.Unix()
+	ts := opts.Expiry.Unix()
 	io.WriteString(mac, fmt.Sprintf("%s:%d", data, ts))
 	return ts, hex.EncodeToString(mac.Sum(nil))
 }
 
-type signOpts struct {
-	expiry time.Time
-	nonce  string
+type SignData struct {
+	Expiry time.Time
+	Nonce  string
 }
 
-func WithExpiry(t time.Time) func(*signOpts) {
-	return func(o *signOpts) {
-		o.expiry = t
+func WithExpiry(t time.Time) func(*SignData) {
+	return func(o *SignData) {
+		o.Expiry = t
 	}
 }
 
-func WithNonce(nonce string) func(*signOpts) {
-	return func(o *signOpts) {
-		o.nonce = nonce
+func WithNonce(nonce string) func(*SignData) {
+	return func(o *SignData) {
+		o.Nonce = nonce
 	}
 }
 

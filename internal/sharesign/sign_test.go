@@ -60,7 +60,7 @@ func TestSignedURL(t *testing.T) {
 	link := "/private/topic/1/thread/2"
 	signed := s.SignedURL(link)
 	// expected: http://localhost:8080/private/shared/topic/1/thread/2/ts/.../sign/...
-	if !strings.Contains(signed, "/private/shared/topic/1/thread/2/ts/") {
+	if !strings.Contains(signed, "/private/shared/topic/1/thread/2/nonce/") {
 		t.Errorf("Path signature format incorrect: %s", signed)
 	}
 	if !strings.Contains(signed, "/sign/") {
@@ -69,7 +69,7 @@ func TestSignedURL(t *testing.T) {
 
 	// Test Query based
 	signedQuery := s.SignedURLQuery(link)
-	if !strings.Contains(signedQuery, "/private/shared/topic/1/thread/2?ts=") {
+	if !strings.Contains(signedQuery, "/private/shared/topic/1/thread/2?nonce=") {
 		t.Errorf("Query signature format incorrect: %s", signedQuery)
 	}
 }
@@ -87,9 +87,11 @@ func TestSignedURLQueryWithParams(t *testing.T) {
 	}
 	ts := parsed.Query().Get("ts")
 	sig := parsed.Query().Get("sig")
+	nonce := parsed.Query().Get("nonce")
 	query := parsed.Query()
 	query.Del("ts")
 	query.Del("sig")
+	query.Del("nonce")
 	dataPath := parsed.Path
 	if encoded := query.Encode(); encoded != "" {
 		dataPath = dataPath + "?" + encoded
@@ -101,7 +103,13 @@ func TestSignedURLQueryWithParams(t *testing.T) {
 	// Wait, TestSignedURLQueryWithParams verification logic:
 	// `dataPath` extracted from URL is correct path.
 	// `s.Verify(dataPath...)`.
-	if valid, err := s.Verify(dataPath, sig, sign.WithExpiryTimestamp(ts)); !valid || err != nil {
+	var valid bool
+	if nonce != "" {
+		valid, err = s.Verify(dataPath, sig, sign.WithVerifyNonce(nonce))
+	} else {
+		valid, err = s.Verify(dataPath, sig, sign.WithExpiryTimestamp(ts))
+	}
+	if !valid || err != nil {
 		t.Fatalf("signature did not verify for %s. Err: %v", signed, err)
 	}
 }

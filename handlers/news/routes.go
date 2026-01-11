@@ -39,6 +39,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	// OpenGraph preview endpoint (no auth required for social media bots)
 	nr.HandleFunc("/shared/news/{news}", SharedPreviewPage).Methods("GET", "HEAD")
 	nr.HandleFunc("/shared/news/{news}/ts/{ts}/sign/{sign}", SharedPreviewPage).Methods("GET", "HEAD")
+	nr.HandleFunc("/shared/news/{news}/nonce/{nonce}/sign/{sign}", SharedPreviewPage).Methods("GET", "HEAD")
 
 	nr.HandleFunc("/news/{news}", NewsPostPageHandler).Methods("GET")
 	nr.Handle("/news/{news}/edit", RequireNewsPostAuthor(http.HandlerFunc(editTask.Page))).Methods("GET").MatcherFunc(editGrant)

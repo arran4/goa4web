@@ -1,6 +1,8 @@
 package sharesign
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"net/url"
 	"strings"
@@ -33,15 +35,25 @@ func (s *Signer) SignedURLQuery(link string, exp ...time.Time) string {
 	host := strings.TrimSuffix(s.cfg.HTTPHostname, "/")
 	sharedPath, rawQuery, fragment := s.prepareSharedLink(link)
 	data := s.signatureData(sharedPath, rawQuery)
+	var nonce string
 	var ops []any
-	for _, t := range exp {
-		ops = append(ops, sign.WithExpiry(t))
+	if len(exp) == 0 {
+		nonce = generateNonce()
+		ops = append(ops, sign.WithNonce(nonce))
+	} else {
+		for _, t := range exp {
+			ops = append(ops, sign.WithExpiry(t))
+		}
 	}
 	ts, sig := s.signer.Sign(data, ops...)
-	if rawQuery != "" {
-		return fmt.Sprintf("%s%s?%s&ts=%d&sig=%s%s", host, sharedPath, rawQuery, ts, sig, fragment)
+	queryPart := fmt.Sprintf("ts=%d&sig=%s", ts, sig)
+	if nonce != "" {
+		queryPart = fmt.Sprintf("nonce=%s&sig=%s", nonce, sig)
 	}
-	return fmt.Sprintf("%s%s?ts=%d&sig=%s%s", host, sharedPath, ts, sig, fragment)
+	if rawQuery != "" {
+		return fmt.Sprintf("%s%s?%s&%s%s", host, sharedPath, rawQuery, queryPart, fragment)
+	}
+	return fmt.Sprintf("%s%s?%s%s", host, sharedPath, queryPart, fragment)
 }
 
 // SignedURLPath generates a redirect URL with path parameters.
@@ -49,15 +61,25 @@ func (s *Signer) SignedURLPath(link string, exp ...time.Time) string {
 	host := strings.TrimSuffix(s.cfg.HTTPHostname, "/")
 	sharedPath, rawQuery, fragment := s.prepareSharedLink(link)
 	data := s.signatureData(sharedPath, rawQuery)
+	var nonce string
 	var ops []any
-	for _, t := range exp {
-		ops = append(ops, sign.WithExpiry(t))
+	if len(exp) == 0 {
+		nonce = generateNonce()
+		ops = append(ops, sign.WithNonce(nonce))
+	} else {
+		for _, t := range exp {
+			ops = append(ops, sign.WithExpiry(t))
+		}
 	}
 	ts, sig := s.signer.Sign(data, ops...)
-	if rawQuery != "" {
-		return fmt.Sprintf("%s%s/ts/%d/sign/%s?%s%s", host, sharedPath, ts, sig, rawQuery, fragment)
+	authPart := fmt.Sprintf("/ts/%d/sign/%s", ts, sig)
+	if nonce != "" {
+		authPart = fmt.Sprintf("/nonce/%s/sign/%s", nonce, sig)
 	}
-	return fmt.Sprintf("%s%s/ts/%d/sign/%s%s", host, sharedPath, ts, sig, fragment)
+	if rawQuery != "" {
+		return fmt.Sprintf("%s%s%s?%s%s", host, sharedPath, authPart, rawQuery, fragment)
+	}
+	return fmt.Sprintf("%s%s%s%s", host, sharedPath, authPart, fragment)
 }
 
 func (s *Signer) signatureData(path, rawQuery string) string {
@@ -116,4 +138,10 @@ func (s *Signer) Sign(link string, ops ...any) (int64, string) {
 // You must provide either sign.WithExpiryTimestamp(ts) or sign.WithNoExpiry().
 func (s *Signer) Verify(link, sig string, ops ...any) (bool, error) {
 	return s.signer.Verify("share:"+link, sig, ops...)
+}
+
+func generateNonce() string {
+	b := make([]byte, 16)
+	_, _ = rand.Read(b)
+	return hex.EncodeToString(b)
 }

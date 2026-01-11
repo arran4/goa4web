@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/arran4/goa4web/internal/sharesign"
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
@@ -27,11 +28,11 @@ import (
 )
 
 type OGImageHandler struct {
-	signer SignatureVerifier
+	signer *sharesign.Signer
 	config *config.RuntimeConfig
 }
 
-func NewOGImageHandler(signer SignatureVerifier, cfg *config.RuntimeConfig) *OGImageHandler {
+func NewOGImageHandler(signer *sharesign.Signer, cfg *config.RuntimeConfig) *OGImageHandler {
 	return &OGImageHandler{signer: signer, config: cfg}
 }
 
@@ -77,7 +78,7 @@ func (h *OGImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var valid bool
 	var err error
 	if nonce != "" {
-		valid, err = h.signer.Verify(path, sig, sign.WithVerifyNonce(nonce))
+		valid, err = h.signer.Verify(path, sig, sign.WithNonce(nonce))
 	} else {
 		valid, err = h.signer.Verify(path, sig, sign.WithExpiryTimestamp(expiryTs))
 	}

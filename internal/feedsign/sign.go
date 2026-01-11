@@ -29,7 +29,14 @@ func (s *Signer) SignedURL(path, query, username string, ops ...any) string {
 	if query != "" {
 		data += "?" + query
 	}
-	ts, sig := s.signer.Sign(data, ops...)
+
+	// Set default option if none provided
+	if len(ops) == 0 {
+		ops = append(ops, sign.WithOutNonce())
+	}
+
+	sig := s.signer.Sign(data, ops...)
+
 	// Check if path ends with slash, if so remove it to avoid double slashes
 	path = strings.TrimSuffix(path, "/")
 
@@ -47,7 +54,7 @@ func (s *Signer) SignedURL(path, query, username string, ops ...any) string {
 		path = fmt.Sprintf("/u/%s%s", url.QueryEscape(username), path)
 	}
 
-	res := fmt.Sprintf("%s?ts=%d&sig=%s", path, ts, sig)
+	res := fmt.Sprintf("%s?sig=%s", path, sig)
 	if query != "" {
 		res += "&" + query
 	}

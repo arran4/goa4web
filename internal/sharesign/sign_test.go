@@ -1,7 +1,6 @@
 package sharesign_test
 
 import (
-	"fmt"
 	"net/url"
 	"strings"
 	"testing"
@@ -18,31 +17,25 @@ func TestSigner(t *testing.T) {
 	}
 	s := sharesign.NewSigner(cfg, "secret")
 	link := "/news/news/1"
-	ts, sig := s.Sign(link)
+	sig := s.Sign(link, sign.WithNonce("testnonce"))
 
-	if valid, err := s.Verify(link, sig, sign.WithExpiryTimestamp(fmt.Sprint(ts))); !valid || err != nil {
+	if valid, err := s.Verify(link, sig, sign.WithNonce("testnonce")); !valid || err != nil {
 		t.Errorf("Verify failed: %v", err)
 	}
-	if valid, _ := s.Verify(link, "invalid", sign.WithExpiryTimestamp(fmt.Sprint(ts))); valid {
+	if valid, _ := s.Verify(link, "invalid", sign.WithNonce("testnonce")); valid {
 		t.Errorf("Verify succeeded with invalid signature")
 	}
-	if valid, _ := s.Verify("invalid", sig, sign.WithExpiryTimestamp(fmt.Sprint(ts))); valid {
+	if valid, _ := s.Verify("invalid", sig, sign.WithNonce("testnonce")); valid {
 		t.Errorf("Verify succeeded with invalid link")
 	}
-	if valid, _ := s.Verify(link, sig, sign.WithExpiryTimestamp(fmt.Sprint(ts+1))); valid {
-		t.Errorf("Verify succeeded with invalid timestamp (signature mismatch)")
+	if valid, _ := s.Verify(link, sig, sign.WithNonce("wrongnonce")); valid {
+		t.Errorf("Verify succeeded with wrong nonce")
 	}
-	// Expired check
-	// Note: Sign generates valid signature for "link:oldTs". But Verify checks if oldTs is expired.
-	// We need to generate a signature for this oldTs to test expiry check vs signature check.
-	// But Sign() generates current TS (or future).
-	// We can't easily force Sign() to sign a past timestamp via public API unless we pass it as option?
-	// s.Sign(link, WithExpiry(pastTime)) sets expiry param.
-	// But implementation of Sign uses provided expiry.
+	// Test expiry
 	oldTime := time.Now().Add(-48 * time.Hour)
-	oldTsSigned, oldSig := s.Sign(link, sign.WithExpiry(oldTime))
+	oldSig := s.Sign(link, sign.WithExpiry(oldTime))
 
-	if valid, err := s.Verify(link, oldSig, sign.WithExpiryTimestamp(fmt.Sprint(oldTsSigned))); valid {
+	if valid, err := s.Verify(link, oldSig, sign.WithExpiryTime(oldTime)); valid {
 		t.Errorf("Verify succeeded with expired timestamp")
 	} else if err == nil || !strings.Contains(err.Error(), "expired") {
 		// It should fail with expired error
@@ -114,7 +107,7 @@ func TestSignedURLQueryWithParams(t *testing.T) {
 	// `s.Verify(dataPath...)`.
 	var valid bool
 	if nonce != "" {
-		valid, err = s.Verify(dataPath, sig, sign.WithVerifyNonce(nonce))
+		valid, err = s.Verify(dataPath, sig, sign.WithNonce(nonce))
 	} else {
 		valid, err = s.Verify(dataPath, sig, sign.WithExpiryTimestamp(ts))
 	}

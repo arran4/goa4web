@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/arran4/goa4web/internal/sharesign"
 	"github.com/arran4/goa4web/internal/sign"
 	"github.com/gorilla/mux"
 )
@@ -85,7 +86,7 @@ func (d OpenGraphData) TwitterImageMeta() template.HTML {
 
 // VerifyAndGetPath verifies the signature and returns the content path without query parameters.
 // Returns empty string if verification fails.
-func VerifyAndGetPath(r *http.Request, signer SignatureVerifier) string {
+func VerifyAndGetPath(r *http.Request, signer *sharesign.Signer) string {
 	ts := r.URL.Query().Get("ts")
 	sig := r.URL.Query().Get("sig")
 	nonce := r.URL.Query().Get("nonce")
@@ -121,7 +122,7 @@ func VerifyAndGetPath(r *http.Request, signer SignatureVerifier) string {
 	var valid bool
 	var err error
 	if nonce != "" {
-		valid, err = signer.Verify(path, sig, sign.WithVerifyNonce(nonce))
+		valid, err = signer.Verify(path, sig, sign.WithNonce(nonce))
 	} else if ts != "" {
 		valid, err = signer.Verify(path, sig, sign.WithExpiryTimestamp(ts))
 	} else {
@@ -137,16 +138,6 @@ func VerifyAndGetPath(r *http.Request, signer SignatureVerifier) string {
 	return path
 }
 
-// SignatureVerifier is an interface for signature verification.
-type SignatureVerifier interface {
-	Verify(data, sig string, ops ...any) (bool, error)
-}
-
-// URLSigner is an interface for signing URLs.
-type URLSigner interface {
-	Sign(data string, ops ...any) (int64, string)
-}
-
 func generateNonce() string {
 	b := make([]byte, 16)
 	rand.Read(b)
@@ -154,42 +145,34 @@ func generateNonce() string {
 }
 
 // MakeImageURL creates an OpenGraph image URL for the given title with a specific expiration.
-// If usePathAuth is true, it generates a URL with auth parameters in the path (/ts/.../sign/...).
-// Expiration is optional. If not provided, the link will not expire.
-func MakeImageURL(baseURL, title string, signer URLSigner, usePathAuth bool, ops ...any) string {
+// If usePathAuth is true, it generates a URL with auth parameters in the path (/nonce/.../sign/...).
+// Expiration is optional. If not provided, a nonce is used.
+func MakeImageURL(baseURL, title string, signer *sharesign.Signer, usePathAuth bool, ops ...any) string {
 	encodedData := base64.RawURLEncoding.EncodeToString([]byte(title))
 	path := fmt.Sprintf("/api/og-image/%s", encodedData)
 
-	optsData := &sign.SignData{}
-	for _, op := range ops {
-		if f, ok := op.(func(*sign.SignData)); ok {
-			f(optsData)
-		}
-	}
-
+	// Generate nonce if no options provided
 	var nonce string
-	if optsData.Expiry.IsZero() && optsData.Nonce == "" {
-		// If no expiration provided, use a nonce
+	if len(ops) == 0 {
 		nonce = generateNonce()
 		ops = append(ops, sign.WithNonce(nonce))
-	} else if optsData.Nonce != "" {
-		nonce = optsData.Nonce
 	}
 
-	ts, sig := signer.Sign(path, ops...)
+	sig := signer.Sign(path, ops...)
 
-	log.Printf("Creating signature. Path: %s, TS: %d, Nonce: %s, Sig: %s", path, ts, nonce, sig)
+	log.Printf("Creating signature. Path: %s, Nonce: %s, Sig: %s", path, nonce, sig)
 
 	if usePathAuth {
-		// Output: /api/og-image/{base64}/ts/{ts}/sign/{sign}
+		// Output: /api/og-image/{base64}/nonce/{nonce}/sign/{sign}
 		if nonce != "" {
 			return fmt.Sprintf("%s%s/nonce/%s/sign/%s", baseURL, path, nonce, sig)
 		}
-		return fmt.Sprintf("%s%s/ts/%d/sign/%s", baseURL, path, ts, sig)
+		// If nonce is empty, ops must have provided timestamp or other auth
+		return fmt.Sprintf("%s%s/sign/%s", baseURL, path, sig)
 	}
 
 	if nonce != "" {
 		return fmt.Sprintf("%s%s?nonce=%s&sig=%s", baseURL, path, nonce, sig)
 	}
-	return fmt.Sprintf("%s%s?ts=%d&sig=%s", baseURL, path, ts, sig)
+	return fmt.Sprintf("%s%s?sig=%s", baseURL, path, sig)
 }

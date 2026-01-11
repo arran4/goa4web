@@ -24,7 +24,7 @@ func NewSigner(cfg *config.RuntimeConfig, key string) *Signer {
 
 // SignedURL generates a redirect URL for the given link.
 // Defaults to path-based signature.
-// For module paths like "/private/topic/2/thread/1", it becomes "/private/shared/topic/2/thread/1/ts/{ts}/sign/{sig}"
+// For module paths like "/private/topic/2/thread/1", it becomes "/private/shared/topic/2/thread/1/nonce/{nonce}/sign/{sig}"
 func (s *Signer) SignedURL(link string, ops ...any) (string, error) {
 	return s.SignedURLPath(link, ops...)
 }
@@ -35,25 +35,15 @@ func (s *Signer) SignedURLQuery(link string, ops ...any) (string, error) {
 	sharedPath, rawQuery, fragment := s.prepareSharedLink(link)
 	data := s.signatureData(sharedPath, rawQuery)
 
-	opts := &sign.SignData{}
-	for _, op := range ops {
-		if f, ok := op.(func(*sign.SignData)); ok {
-			f(opts)
-		}
-	}
-
-	var nonce string
-	if opts.Expiry.IsZero() && opts.Nonce == "" {
-		nonce = generateNonce()
+	// Generate nonce if not provided
+	nonce := generateNonce()
+	if len(ops) == 0 {
 		ops = append(ops, sign.WithNonce(nonce))
-		opts.Nonce = nonce
 	}
 
-	ts, sig := s.signer.Sign(data, ops...)
-	queryPart := fmt.Sprintf("ts=%d&sig=%s", ts, sig)
-	if opts.Nonce != "" {
-		queryPart = fmt.Sprintf("nonce=%s&sig=%s", opts.Nonce, sig)
-	}
+	sig := s.signer.Sign(data, ops...)
+	queryPart := fmt.Sprintf("nonce=%s&sig=%s", nonce, sig)
+
 	if rawQuery != "" {
 		return fmt.Sprintf("%s%s?%s&%s%s", host, sharedPath, rawQuery, queryPart, fragment), nil
 	}
@@ -66,25 +56,14 @@ func (s *Signer) SignedURLPath(link string, ops ...any) (string, error) {
 	sharedPath, rawQuery, fragment := s.prepareSharedLink(link)
 	data := s.signatureData(sharedPath, rawQuery)
 
-	opts := &sign.SignData{}
-	for _, op := range ops {
-		if f, ok := op.(func(*sign.SignData)); ok {
-			f(opts)
-		}
-	}
-
-	var nonce string
-	if opts.Expiry.IsZero() && opts.Nonce == "" {
-		nonce = generateNonce()
+	// Generate nonce if no options provided
+	nonce := generateNonce()
+	if len(ops) == 0 {
 		ops = append(ops, sign.WithNonce(nonce))
-		opts.Nonce = nonce
 	}
 
-	ts, sig := s.signer.Sign(data, ops...)
-	authPart := fmt.Sprintf("/ts/%d/sign/%s", ts, sig)
-	if opts.Nonce != "" {
-		authPart = fmt.Sprintf("/nonce/%s/sign/%s", opts.Nonce, sig)
-	}
+	sig := s.signer.Sign(data, ops...)
+	authPart := fmt.Sprintf("/nonce/%s/sign/%s", nonce, sig)
 	if rawQuery != "" {
 		return fmt.Sprintf("%s%s%s?%s%s", host, sharedPath, authPart, rawQuery, fragment), nil
 	}
@@ -134,7 +113,7 @@ func (s *Signer) injectShared(link string) string {
 }
 
 // Sign returns the timestamp and signature for link using the provided options.
-func (s *Signer) Sign(link string, ops ...any) (int64, string) {
+func (s *Signer) Sign(link string, ops ...any) string {
 	return s.signer.Sign("share:"+link, ops...)
 }
 

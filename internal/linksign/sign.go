@@ -23,13 +23,17 @@ func NewSigner(cfg *config.RuntimeConfig, key string) *Signer {
 // SignedURL generates a redirect URL for the given link.
 func (s *Signer) SignedURL(link string, ops ...any) string {
 	host := strings.TrimSuffix(s.cfg.HTTPHostname, "/")
-	ts, sig := s.signer.Sign("link:"+link, ops...)
-	return fmt.Sprintf("%s/goto?u=%s&ts=%d&sig=%s", host, url.QueryEscape(link), ts, sig)
+	// Generate nonce if not provided
+	if len(ops) == 0 {
+		ops = append(ops, sign.WithOutNonce())
+	}
+	sig := s.signer.Sign("link:"+link, ops...)
+	return fmt.Sprintf("%s/goto?u=%s&sig=%s", host, url.QueryEscape(link), sig)
 }
 
 // Sign returns the timestamp and signature for link using the optional expiry time.
 // Sign returns the timestamp and signature for link using the provided options.
-func (s *Signer) Sign(link string, ops ...any) (int64, string) {
+func (s *Signer) Sign(link string, ops ...any) string {
 	return s.signer.Sign("link:"+link, ops...)
 }
 
@@ -66,7 +70,7 @@ func (s *Signer) MapURL(tag, val string) string {
 			}
 		}
 		if !allowed {
-			return s.SignedURL(val)
+			return s.SignedURL(val, sign.WithOutNonce())
 		}
 	}
 	return val

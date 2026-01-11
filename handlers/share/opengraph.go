@@ -132,6 +132,6 @@ type URLSigner interface {
 func MakeImageURL(baseURL, title string, signer URLSigner, expiration time.Time) string {
 	encodedTitle := strings.ReplaceAll(url.QueryEscape(title), "+", "%20")
 	path := fmt.Sprintf("/api/og-image?title=%s", encodedTitle)
-	ts, sig := signer.Sign(path, expiration)
+	ts, sig := signer.Sign("share:"+path, expiration)
 	return fmt.Sprintf("%s%s&ts=%d&sig=%s", baseURL, path, ts, sig)
 }

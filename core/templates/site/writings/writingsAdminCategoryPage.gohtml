@@ -12,7 +12,7 @@
     </tr>
     {{ range .Writings }}
     <tr>
-        <td><a href="/admin/writings/article/{{ .Idwriting }}">{{ .Idwriting }}</a></td>
+        <td>{{ .Idwriting }}</td>
         <td>{{ .Title.String }}</td>
         <td>{{ .Username.String }}</td>
         <td>{{ cd.LocalTime .Published.Time }}</td>

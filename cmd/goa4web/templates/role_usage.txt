@@ -1,15 +1,18 @@
 Usage: goa4web role <subcommand> [flags]
 
 Subcommands:
-  load   Loads a role from a seed script.
-  reset  Resets a role to the state defined in its seed script.
-  apply  Applies the grants from a source role to a destination role.
-  remove Removes the grants from a destination role that match a source role.
-  users  Lists the users in a role.
+  load    Loads a role from a seed script.
+  reset   Resets a role to the state defined in its seed script.
+  apply   Applies the grants from a source role to a destination role.
+  remove  Removes the grants from a destination role that match a source role.
+  users   Lists the users in a role.
+  list    Lists embedded role identifiers or human-friendly role names.
+  inspect Inspects a role, showing its metadata, users, and grants.
 
 Examples:
   # Load the "content-writer" role from its seed script
   {{.Prog}} role load -role content-writer
+  {{.Prog}} role load -role content-writer -file ./my-content-writer.sql
 
   # Reset the "moderator" role to its default state
   {{.Prog}} role reset -role moderator
@@ -22,3 +25,12 @@ Examples:
 
   # Remove all grants from the "user" role
   {{.Prog}} role remove -dest user
+
+  # List raw SQL role identifiers available in this build
+  {{.Prog}} role list sql
+
+  # List the human-friendly role names from embedded seed scripts
+  {{.Prog}} role list names
+
+  # Inspect the "user" role to see its permissions and users
+  {{.Prog}} role inspect -role user

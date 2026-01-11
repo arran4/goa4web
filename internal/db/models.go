@@ -236,6 +236,7 @@ type Faq struct {
 	AuthorID   int32
 	Answer     sql.NullString
 	Question   sql.NullString
+	Priority   int32
 }
 
 type FaqCategory struct {
@@ -429,6 +430,7 @@ type Preference struct {
 	PageSize             int32
 	AutoSubscribeReplies bool
 	Timezone             sql.NullString
+	CustomCss            sql.NullString
 }
 
 type Role struct {
@@ -438,6 +440,15 @@ type Role struct {
 	IsAdmin                bool
 	PrivateLabels          bool
 	PublicProfileAllowedAt sql.NullTime
+}
+
+type RoleSubscriptionArchetype struct {
+	ID            int32
+	RoleID        int32
+	ArchetypeName string
+	Pattern       string
+	Method        string
+	CreatedAt     time.Time
 }
 
 type SchemaVersion struct {
@@ -497,6 +508,13 @@ type TemplateOverride struct {
 	Name      string
 	Body      string
 	UpdatedAt time.Time
+}
+
+type ThreadImage struct {
+	IdthreadImage int32
+	ForumthreadID int32
+	Path          sql.NullString
+	CreatedAt     time.Time
 }
 
 type UploadedImage struct {

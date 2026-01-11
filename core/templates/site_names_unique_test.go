@@ -15,7 +15,9 @@ var uniqueTemplates embed.FS
 func TestSiteTemplateNamesUnique(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
 	cd := &common.CoreData{}
-	tmpl, err := template.New("").Funcs(cd.Funcs(r)).ParseFS(uniqueTemplates,
+	funcs := cd.Funcs(r)
+	funcs["assetHash"] = func(s string) string { return s }
+	tmpl, err := template.New("").Funcs(funcs).ParseFS(uniqueTemplates,
 		"site/*.gohtml", "site/*/*.gohtml")
 	if err != nil {
 		t.Fatalf("failed to parse templates: %v", err)

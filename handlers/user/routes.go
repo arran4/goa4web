@@ -1,8 +1,9 @@
 package user
 
 import (
-	"github.com/gorilla/mux"
 	"net/http"
+
+	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
@@ -13,8 +14,9 @@ import (
 // RegisterRoutes attaches user account endpoints to the router.
 func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, _ *nav.Registry) {
 	ur := r.PathPrefix("/usr").Subrouter()
+	ur.NotFoundHandler = http.HandlerFunc(handlers.RenderNotFoundOrLogin)
 	ur.Use(handlers.IndexMiddleware(CustomIndex))
-	ur.HandleFunc("", userPage).Methods(http.MethodGet)
+	ur.HandleFunc("", UserPage).Methods(http.MethodGet)
 	ur.HandleFunc("/logout", userLogoutPage).Methods(http.MethodGet)
 	ur.HandleFunc("/lang", userLangPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	ur.HandleFunc("/lang", handlers.TaskHandler(saveLanguagesTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(saveLanguagesTask.Matcher())
@@ -32,14 +34,22 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, _ *nav.Registry) {
 	ur.HandleFunc("/paging", handlers.TaskHandler(pagingSaveTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(pagingSaveTask.Matcher())
 	ur.HandleFunc("/timezone", userTimezonePage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	ur.HandleFunc("/timezone", handlers.TaskHandler(saveTimezoneTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(saveTimezoneTask.Matcher())
+	ur.HandleFunc("/appearance", userAppearancePage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	ur.HandleFunc("/appearance", handlers.TaskHandler(appearanceSaveTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(appearanceSaveTask.Matcher())
 	ur.HandleFunc("/profile", userPublicProfileSettingPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	ur.HandleFunc("/profile", handlers.TaskHandler(publicProfileSaveTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(publicProfileSaveTask.Matcher())
 	ur.HandleFunc("/notifications", userNotificationsPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	ur.HandleFunc("/notifications", handlers.TaskHandler(saveAllTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(saveAllTask.Matcher())
 	ur.HandleFunc("/notifications/dismiss", handlers.TaskHandler(dismissTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(dismissTask.Matcher())
 	ur.HandleFunc("/notifications/rss", notificationsRssPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	ur.HandleFunc("/notifications/atom", notificationsAtomPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	ur.HandleFunc("/notifications/open/{id}", userNotificationOpenPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	ur.HandleFunc("/u/{username}/notifications/rss", notificationsRssPage).Methods(http.MethodGet)
+	ur.HandleFunc("/u/{username}/notifications/atom", notificationsAtomPage).Methods(http.MethodGet)
 	ur.HandleFunc("/notifications/gallery", userGalleryPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	ur.HandleFunc("/subscriptions", userSubscriptionsPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	ur.HandleFunc("/subscriptions/add", userSubscriptionAddPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	ur.HandleFunc("/subscriptions/threads", userThreadSubscriptionsPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	ur.HandleFunc("/subscriptions/update", handlers.TaskHandler(updateSubscriptionsTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(updateSubscriptionsTask.Matcher())
 	ur.HandleFunc("/subscriptions/delete", handlers.TaskHandler(deleteTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(deleteTask.Matcher())
 

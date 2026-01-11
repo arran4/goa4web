@@ -14,8 +14,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/workers/postcountworker"
-	"github.com/arran4/goa4web/workers/searchworker"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/mux"
@@ -56,6 +54,7 @@ func ShowPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !cd.HasGrant("linker", "link", "view", link.ID) {
+		fmt.Println("TODO: FIx: Add enforced Access in router rather than task")
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
@@ -67,8 +66,10 @@ func ShowPage(w http.ResponseWriter, r *http.Request) {
 		cd.PageTitle = fmt.Sprintf("Link %d", link.ID)
 	}
 
-	handlers.TemplateHandler(w, r, "showPage.gohtml", data)
+	LinkerShowPageTmpl.Handle(w, r, data)
 }
+
+const LinkerShowPageTmpl handlers.Page = "linker/showPage.gohtml"
 
 func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
@@ -195,22 +196,20 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(cid), ThreadID: pthid, TopicID: ptid}
-			evt.Data["CommentURL"] = cd.AbsoluteURL(endUrl)
-		}
-	}
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: int32(cid), Text: text}
-		}
+	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
+		ThreadID:             pthid,
+		TopicID:              ptid,
+		CommentID:            int32(cid),
+		LabelItem:            "link",
+		LabelItemID:          int32(linkId),
+		CommentText:          text,
+		CommentURL:           cd.AbsoluteURL(endUrl),
+		ClearUnreadForOthers: true,
+		MarkThreadRead:       true,
+		IncludePostCount:     true,
+		IncludeSearch:        true,
+	}); err != nil {
+		log.Printf("linker reply side effects: %v", err)
 	}
 
 	http.Redirect(w, r, endUrl, http.StatusSeeOther)

@@ -2,13 +2,13 @@ package admin
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
@@ -17,25 +17,42 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
-func TestAdminUserProfilePage_UserFound(t *testing.T) {
-	t.Skip("templates not available")
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-	mock.MatchExpectationsInOrder(false)
+type userProfileQueries struct {
+	db.QuerierStub
+	userID int32
+	user   *db.SystemGetUserByIDRow
+}
 
+func (q *userProfileQueries) SystemGetUserByID(_ context.Context, id int32) (*db.SystemGetUserByIDRow, error) {
+	if id != q.userID {
+		return nil, fmt.Errorf("unexpected user id: %d", id)
+	}
+	return q.user, nil
+}
+
+func TestAdminUserProfilePage_UserFound(t *testing.T) {
 	userID := 22
-	rows := sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).
-		AddRow(userID, "u@example.com", "u", nil)
-	mock.ExpectQuery("SELECT").WillReturnRows(rows)
+	queries := &userProfileQueries{
+		userID: int32(userID),
+		user: &db.SystemGetUserByIDRow{
+			Idusers:                int32(userID),
+			Email:                  sql.NullString{String: "u@example.com", Valid: true},
+			Username:               sql.NullString{String: "u", Valid: true},
+			PublicProfileEnabledAt: sql.NullTime{},
+		},
+	}
+	queries.AdminListUserEmailsReturns = []*db.UserEmail{}
+	queries.AdminUserPostCountsByIDReturns = &db.AdminUserPostCountsByIDRow{}
+	queries.GetBookmarksForUserReturns = &db.GetBookmarksForUserRow{}
+	queries.ListGrantsByUserIDReturns = []*db.Grant{}
+	queries.ListAdminUserCommentsReturns = []*db.AdminUserComment{}
+	queries.GetPermissionsByUserIDReturns = []*db.GetPermissionsByUserIDRow{}
+	queries.ListSubscriptionsByUserReturns = []*db.ListSubscriptionsByUserRow{}
 
 	req := httptest.NewRequest("GET", fmt.Sprintf("/admin/user/%d", userID), nil)
 	req = mux.SetURLVars(req, map[string]string{"user": strconv.Itoa(userID)})
 	cfg := config.NewRuntimeConfig()
-	q := db.New(conn)
-	cd := common.NewCoreData(req.Context(), q, cfg)
+	cd := common.NewCoreData(req.Context(), queries, cfg)
 	cd.LoadSelectionsFromRequest(req)
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -45,8 +62,5 @@ func TestAdminUserProfilePage_UserFound(t *testing.T) {
 
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
-	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expect: %v", err)
 	}
 }

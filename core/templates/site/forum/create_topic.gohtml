@@ -1,0 +1,40 @@
+{{ template "head" $ }}
+<h1>Private Topics</h1>
+{{ if cd.CurrentError }}
+    <p class="error-message">{{ cd.CurrentError }}</p>
+{{ end }}
+{{ template "tableTopics" (dict "Topics" cd.PrivateTopics "BasePath" "/private" "IsAdmin" (and cd.IsAdmin cd.IsAdminMode)) }}
+{{ if cd.HasGrant "privateforum" "topic" "create" 0 }}
+    <h2>Start group discussion</h2>
+    <p>Add people to start a shared conversation.</p>
+    <form id="private-form" method="POST">
+        <input type="hidden" name="task" value="{{ .CreateTask }}">
+        <div class="form-group">
+            <label for="participant-input">Participants</label>
+            <input type="text" id="participant-input" placeholder="username">
+            <button type="button" id="add-participant">Add</button>
+            <ul id="participants"></ul>
+            <input type="hidden" name="participants" id="participants-field" value="{{ .FormData.Participants }}">
+            <input type="hidden" id="invalid-participants-field" value="{{ .FormData.InvalidParticipants }}">
+        </div>
+        <div id="topic-details" class="hidden">
+            <div class="form-group">
+                <label for="title-field">Title</label>
+                <input type="text" name="title" id="title-field" placeholder="Title" value="{{ .FormData.Title }}">
+            </div>
+            <div class="form-group">
+                <label for="description-field">Description</label>
+                <textarea name="description" id="description-field" placeholder="Description">{{ .FormData.Description }}</textarea>
+            </div>
+            <div class="form-actions">
+                <button type="submit" id="create-button">Create</button>
+                <button type="button" class="preview-a4code" data-target="description-field" data-preview-url="{{$base := "/forum"}}{{with .BasePath}}{{$base = .}}{{end}}{{$base}}/preview">Preview</button>
+            </div>
+            <div class="form-group hidden" id="preview-container">
+                <div id="preview-content" class="preview-box"></div>
+            </div>
+        </div>
+    </form>
+    <script src="{{ assetHash "/private/private_forum.js" }}"></script>
+{{ end }}
+{{ template "tail" $ }}

@@ -139,7 +139,12 @@ func (q *Queries) AdminArchiveLink(ctx context.Context, arg AdminArchiveLinkPara
 const adminArchiveUser = `-- name: AdminArchiveUser :exec
 
 INSERT INTO deactivated_users (idusers, email, passwd, passwd_algorithm, username, deleted_at)
-SELECT u.idusers, u.email, u.passwd, u.passwd_algorithm, u.username, NOW()
+SELECT u.idusers, 
+       COALESCE((SELECT email FROM user_emails WHERE user_id = u.idusers ORDER BY id DESC LIMIT 1), ''),
+       COALESCE((SELECT passwd FROM passwords WHERE users_idusers = u.idusers ORDER BY id DESC LIMIT 1), ''),
+       COALESCE((SELECT passwd_algorithm FROM passwords WHERE users_idusers = u.idusers ORDER BY id DESC LIMIT 1), ''),
+       u.username, 
+       NOW()
 FROM users u WHERE u.idusers = ?
 `
 
@@ -183,6 +188,28 @@ func (q *Queries) AdminArchiveWriting(ctx context.Context, arg AdminArchiveWriti
 		arg.Private,
 	)
 	return err
+}
+
+const adminGetDeactivatedCommentById = `-- name: AdminGetDeactivatedCommentById :one
+SELECT idcomments, forumthread_id, users_idusers, language_id, written, text, timezone, deleted_at, restored_at FROM deactivated_comments
+WHERE idcomments = ? AND restored_at IS NULL
+`
+
+func (q *Queries) AdminGetDeactivatedCommentById(ctx context.Context, idcomments int32) (*DeactivatedComment, error) {
+	row := q.db.QueryRowContext(ctx, adminGetDeactivatedCommentById, idcomments)
+	var i DeactivatedComment
+	err := row.Scan(
+		&i.Idcomments,
+		&i.ForumthreadID,
+		&i.UsersIdusers,
+		&i.LanguageID,
+		&i.Written,
+		&i.Text,
+		&i.Timezone,
+		&i.DeletedAt,
+		&i.RestoredAt,
+	)
+	return &i, err
 }
 
 const adminIsBlogDeactivated = `-- name: AdminIsBlogDeactivated :one
@@ -783,6 +810,15 @@ func (q *Queries) AdminMarkLinkRestored(ctx context.Context, id int32) error {
 	return err
 }
 
+const adminMarkUserRestored = `-- name: AdminMarkUserRestored :exec
+UPDATE deactivated_users SET restored_at = NOW() WHERE idusers = ?
+`
+
+func (q *Queries) AdminMarkUserRestored(ctx context.Context, idusers int32) error {
+	_, err := q.db.ExecContext(ctx, adminMarkUserRestored, idusers)
+	return err
+}
+
 const adminMarkWritingRestored = `-- name: AdminMarkWritingRestored :exec
 UPDATE deactivated_writings SET restored_at = NOW() WHERE idwriting = ?
 `
@@ -864,12 +900,36 @@ func (q *Queries) AdminRestoreLink(ctx context.Context, arg AdminRestoreLinkPara
 
 const adminRestoreUser = `-- name: AdminRestoreUser :exec
 UPDATE users u JOIN deactivated_users d ON u.idusers = d.idusers
-SET u.email = d.email, u.passwd = d.passwd, u.passwd_algorithm = d.passwd_algorithm, u.username = d.username, u.deleted_at = NULL, d.restored_at = NOW()
+SET u.username = d.username, u.deleted_at = NULL
 WHERE u.idusers = ? AND d.restored_at IS NULL
 `
 
 func (q *Queries) AdminRestoreUser(ctx context.Context, idusers int32) error {
 	_, err := q.db.ExecContext(ctx, adminRestoreUser, idusers)
+	return err
+}
+
+const adminRestoreUserEmail = `-- name: AdminRestoreUserEmail :exec
+INSERT INTO user_emails (user_id, email, verified_at)
+SELECT idusers, email, NOW() FROM deactivated_users
+WHERE idusers = ? AND restored_at IS NULL
+ON DUPLICATE KEY UPDATE email = VALUES(email)
+`
+
+func (q *Queries) AdminRestoreUserEmail(ctx context.Context, idusers int32) error {
+	_, err := q.db.ExecContext(ctx, adminRestoreUserEmail, idusers)
+	return err
+}
+
+const adminRestoreUserPassword = `-- name: AdminRestoreUserPassword :exec
+INSERT INTO passwords (users_idusers, passwd, passwd_algorithm)
+SELECT idusers, passwd, passwd_algorithm FROM deactivated_users
+WHERE idusers = ? AND restored_at IS NULL
+ON DUPLICATE KEY UPDATE passwd = VALUES(passwd), passwd_algorithm = VALUES(passwd_algorithm)
+`
+
+func (q *Queries) AdminRestoreUserPassword(ctx context.Context, idusers int32) error {
+	_, err := q.db.ExecContext(ctx, adminRestoreUserPassword, idusers)
 	return err
 }
 
@@ -948,8 +1008,7 @@ func (q *Queries) AdminScrubLink(ctx context.Context, arg AdminScrubLinkParams) 
 }
 
 const adminScrubUser = `-- name: AdminScrubUser :exec
-UPDATE users SET username = ?, email = '', passwd = '', passwd_algorithm = '', deleted_at = NOW()
-WHERE idusers = ?
+UPDATE users SET username = ?, deleted_at = NOW() WHERE idusers = ?
 `
 
 type AdminScrubUserParams struct {
@@ -959,6 +1018,24 @@ type AdminScrubUserParams struct {
 
 func (q *Queries) AdminScrubUser(ctx context.Context, arg AdminScrubUserParams) error {
 	_, err := q.db.ExecContext(ctx, adminScrubUser, arg.Username, arg.Idusers)
+	return err
+}
+
+const adminScrubUserEmails = `-- name: AdminScrubUserEmails :exec
+DELETE FROM user_emails WHERE user_id = ?
+`
+
+func (q *Queries) AdminScrubUserEmails(ctx context.Context, userID int32) error {
+	_, err := q.db.ExecContext(ctx, adminScrubUserEmails, userID)
+	return err
+}
+
+const adminScrubUserPasswords = `-- name: AdminScrubUserPasswords :exec
+DELETE FROM passwords WHERE users_idusers = ?
+`
+
+func (q *Queries) AdminScrubUserPasswords(ctx context.Context, usersIdusers int32) error {
+	_, err := q.db.ExecContext(ctx, adminScrubUserPasswords, usersIdusers)
 	return err
 }
 

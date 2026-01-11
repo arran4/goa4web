@@ -7,3 +7,5 @@ var _ tasks.Task = (*myTaskType)(nil)
 ```
 
 This pattern prevents accidental API drift if method signatures change.
+
+

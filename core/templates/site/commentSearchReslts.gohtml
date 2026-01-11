@@ -8,7 +8,7 @@
     {{- else }}
         <ul>
         {{- range $i, $result := $cd.SearchComments }}
-            <li>{{ $i }}: <a href="/forum/category/{{$result.Idforumcategory}}">{{ $result.ForumcategoryTitle.String}}</a>: <a href="/forum/topic/{{$result.Idforumtopic}}">{{ topicTitleOrDefault $result.ForumtopicTitle.String }}</a>: {{$result.Posterusername.String}} on {{ cd.LocalTimeIn $result.Written.Time $result.Timezone.String }}: <a href="/forum/topic/{{$result.Idforumtopic}}/thread/{{$result.Idforumthread}}">{{ $result.Text.String | a4code2html}}</a></li>
+            <li>{{ $i }}: <a href="/forum/category/{{$result.Idforumcategory}}">{{ $result.ForumcategoryTitle.String}}</a>: <a href="/forum/topic/{{$result.Idforumtopic}}">{{ topicTitleOrDefault $result.ForumtopicTitle.String }}</a>: {{$result.Posterusername.String}} on {{ cd.LocalTimeIn $result.Written.Time $result.Timezone.String }}: <a href="/forum/topic/{{$result.Idforumtopic}}/thread/{{$result.Idforumthread}}">{{ highlightSearch $result.Text.String }}</a></li>
         {{- end }}
         </ul>
     {{ end }}

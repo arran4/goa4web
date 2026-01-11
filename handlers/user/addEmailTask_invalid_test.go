@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/config"
@@ -20,13 +19,10 @@ import (
 	"github.com/arran4/goa4web/internal/eventbus"
 )
 
+type addEmailInvalidQueries struct{ db.Querier }
+
 func TestAddEmailTaskInvalid(t *testing.T) {
-	conn, _, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-	q := db.New(conn)
+	q := &addEmailInvalidQueries{}
 
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
@@ -53,7 +49,7 @@ func TestAddEmailTaskInvalid(t *testing.T) {
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
 	}
-	if evt.Data != nil && len(evt.Data) != 0 {
+	if len(evt.Data) != 0 {
 		t.Fatalf("unexpected event data: %+v", evt.Data)
 	}
 	if cd.AutoRefresh == "" || !strings.Contains(cd.AutoRefresh, "invalid+email") {

@@ -38,6 +38,58 @@ func (q *Queries) AdminCountForumCategories(ctx context.Context, arg AdminCountF
 	return count, err
 }
 
+const adminCreateForumCategory = `-- name: AdminCreateForumCategory :execlastid
+INSERT INTO forumcategory (forumcategory_idforumcategory, language_id, title, description)
+VALUES (?, ?, ?, ?)
+`
+
+type AdminCreateForumCategoryParams struct {
+	ParentID           int32
+	CategoryLanguageID sql.NullInt32
+	Title              sql.NullString
+	Description        sql.NullString
+}
+
+func (q *Queries) AdminCreateForumCategory(ctx context.Context, arg AdminCreateForumCategoryParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, adminCreateForumCategory,
+		arg.ParentID,
+		arg.CategoryLanguageID,
+		arg.Title,
+		arg.Description,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
+}
+
+const adminCreateForumTopic = `-- name: AdminCreateForumTopic :execlastid
+INSERT INTO forumtopic (forumcategory_idforumcategory, language_id, title, description, handler)
+VALUES (?, ?, ?, ?, ?)
+`
+
+type AdminCreateForumTopicParams struct {
+	ForumcategoryID int32
+	LanguageID      sql.NullInt32
+	Title           sql.NullString
+	Description     sql.NullString
+	Handler         string
+}
+
+func (q *Queries) AdminCreateForumTopic(ctx context.Context, arg AdminCreateForumTopicParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, adminCreateForumTopic,
+		arg.ForumcategoryID,
+		arg.LanguageID,
+		arg.Title,
+		arg.Description,
+		arg.Handler,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
+}
+
 const adminDeleteForumCategory = `-- name: AdminDeleteForumCategory :exec
 UPDATE forumcategory SET deleted_at = NOW() WHERE idforumcategory = ?
 `
@@ -48,13 +100,60 @@ func (q *Queries) AdminDeleteForumCategory(ctx context.Context, idforumcategory 
 }
 
 const adminDeleteForumTopic = `-- name: AdminDeleteForumTopic :exec
-UPDATE forumtopic SET deleted_at = NOW() WHERE idforumtopic = ?
+DELETE FROM forumtopic WHERE idforumtopic = ?
 `
 
 // Removes a forum topic by ID.
 func (q *Queries) AdminDeleteForumTopic(ctx context.Context, idforumtopic int32) error {
 	_, err := q.db.ExecContext(ctx, adminDeleteForumTopic, idforumtopic)
 	return err
+}
+
+const adminGetTopicGrants = `-- name: AdminGetTopicGrants :many
+SELECT g.section, g.role_id, r.name as role_name, g.user_id, u.username
+FROM grants g
+LEFT JOIN roles r ON r.id = g.role_id
+LEFT JOIN users u ON u.idusers = g.user_id
+WHERE (g.item = 'topic')
+  AND g.item_id = ?
+  AND g.active = 1
+`
+
+type AdminGetTopicGrantsRow struct {
+	Section  string
+	RoleID   sql.NullInt32
+	RoleName sql.NullString
+	UserID   sql.NullInt32
+	Username sql.NullString
+}
+
+func (q *Queries) AdminGetTopicGrants(ctx context.Context, topicID sql.NullInt32) ([]*AdminGetTopicGrantsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminGetTopicGrants, topicID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminGetTopicGrantsRow
+	for rows.Next() {
+		var i AdminGetTopicGrantsRow
+		if err := rows.Scan(
+			&i.Section,
+			&i.RoleID,
+			&i.RoleName,
+			&i.UserID,
+			&i.Username,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const adminListForumCategoriesWithCounts = `-- name: AdminListForumCategoriesWithCounts :many
@@ -132,6 +231,62 @@ func (q *Queries) AdminListForumCategoriesWithCounts(ctx context.Context, arg Ad
 	return items, nil
 }
 
+const adminListForumTopicGrantsByTopicID = `-- name: AdminListForumTopicGrantsByTopicID :many
+SELECT
+    g.id,
+    g.section,
+    g.action,
+    r.name AS role_name,
+    u.username
+FROM
+    grants g
+LEFT JOIN
+    roles r ON g.role_id = r.id
+LEFT JOIN
+    users u ON g.user_id = u.idusers
+WHERE
+    g.section = 'forum'
+    AND (g.item = 'topic' OR g.item IS NULL)
+    AND g.item_id = ?
+`
+
+type AdminListForumTopicGrantsByTopicIDRow struct {
+	ID       int32
+	Section  string
+	Action   string
+	RoleName sql.NullString
+	Username sql.NullString
+}
+
+func (q *Queries) AdminListForumTopicGrantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListForumTopicGrantsByTopicIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListForumTopicGrantsByTopicID, itemID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListForumTopicGrantsByTopicIDRow
+	for rows.Next() {
+		var i AdminListForumTopicGrantsByTopicIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Section,
+			&i.Action,
+			&i.RoleName,
+			&i.Username,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const adminListForumTopics = `-- name: AdminListForumTopics :many
 SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.language_id, t.title, t.description, t.threads, t.comments, t.lastaddition, t.handler
 FROM forumtopic t
@@ -165,6 +320,46 @@ func (q *Queries) AdminListForumTopics(ctx context.Context, arg AdminListForumTo
 			&i.Lastaddition,
 			&i.Handler,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminListPrivateTopicParticipantsByTopicID = `-- name: AdminListPrivateTopicParticipantsByTopicID :many
+SELECT u.idusers, u.username
+FROM grants g
+JOIN users u ON u.idusers = g.user_id
+WHERE g.section = 'privateforum'
+  AND g.item = 'topic'
+  AND g.action = 'view'
+  AND g.active = 1
+  AND g.user_id IS NOT NULL
+  AND g.item_id = ?
+`
+
+type AdminListPrivateTopicParticipantsByTopicIDRow struct {
+	Idusers  int32
+	Username sql.NullString
+}
+
+func (q *Queries) AdminListPrivateTopicParticipantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListPrivateTopicParticipantsByTopicIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListPrivateTopicParticipantsByTopicID, itemID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListPrivateTopicParticipantsByTopicIDRow
+	for rows.Next() {
+		var i AdminListPrivateTopicParticipantsByTopicIDRow
+		if err := rows.Scan(&i.Idusers, &i.Username); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -253,6 +448,57 @@ SET threads = (
 
 func (q *Queries) AdminRebuildAllForumTopicMetaColumns(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, adminRebuildAllForumTopicMetaColumns)
+	return err
+}
+
+const adminUpdateForumCategory = `-- name: AdminUpdateForumCategory :exec
+UPDATE forumcategory
+SET title = ?,
+    description = ?,
+    forumcategory_idforumcategory = ?,
+    language_id = ?
+WHERE idforumcategory = ?
+`
+
+type AdminUpdateForumCategoryParams struct {
+	Title           sql.NullString
+	Description     sql.NullString
+	ParentID        int32
+	LanguageID      sql.NullInt32
+	Idforumcategory int32
+}
+
+func (q *Queries) AdminUpdateForumCategory(ctx context.Context, arg AdminUpdateForumCategoryParams) error {
+	_, err := q.db.ExecContext(ctx, adminUpdateForumCategory,
+		arg.Title,
+		arg.Description,
+		arg.ParentID,
+		arg.LanguageID,
+		arg.Idforumcategory,
+	)
+	return err
+}
+
+const adminUpdateForumTopic = `-- name: AdminUpdateForumTopic :exec
+UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ?, language_id = ? WHERE idforumtopic = ?
+`
+
+type AdminUpdateForumTopicParams struct {
+	Title                        sql.NullString
+	Description                  sql.NullString
+	ForumcategoryIdforumcategory int32
+	TopicLanguageID              sql.NullInt32
+	Idforumtopic                 int32
+}
+
+func (q *Queries) AdminUpdateForumTopic(ctx context.Context, arg AdminUpdateForumTopicParams) error {
+	_, err := q.db.ExecContext(ctx, adminUpdateForumTopic,
+		arg.Title,
+		arg.Description,
+		arg.ForumcategoryIdforumcategory,
+		arg.TopicLanguageID,
+		arg.Idforumtopic,
+	)
 	return err
 }
 
@@ -658,7 +904,7 @@ const getForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText
 WITH role_ids AS (
     SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, lu.username AS lastposterusername, lu.idusers AS lastposterid, fcu.username as firstpostusername, fc.written as firstpostwritten, fc.text as firstposttext
+SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, lu.username AS lastposterusername, lu.idusers AS lastposterid, fcu.username as firstpostusername, fcu.idusers as firstpostuserid, fc.written as firstpostwritten, fc.text as firstposttext
 FROM forumthread th
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN users lu ON lu.idusers = t.lastposter
@@ -695,6 +941,7 @@ type GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextR
 	Lastposterusername     sql.NullString
 	Lastposterid           sql.NullInt32
 	Firstpostusername      sql.NullString
+	Firstpostuserid        sql.NullInt32
 	Firstpostwritten       sql.NullTime
 	Firstposttext          sql.NullString
 }
@@ -719,6 +966,7 @@ func (q *Queries) GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndF
 			&i.Lastposterusername,
 			&i.Lastposterid,
 			&i.Firstpostusername,
+			&i.Firstpostuserid,
 			&i.Firstpostwritten,
 			&i.Firstposttext,
 		); err != nil {

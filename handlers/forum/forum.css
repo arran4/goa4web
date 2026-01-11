@@ -1,0 +1,28 @@
+.foldable {
+    position: relative;
+}
+
+.foldable.folded {
+    max-height: 12rem; /* reasonable collapsed height */
+    overflow: hidden;
+}
+
+.foldable.folded::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2.5rem;
+    background: linear-gradient(to bottom, transparent, white);
+}
+
+.expand-button {
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: blue;
+    text-decoration: underline;
+    padding: 0;
+    margin-top: 5px;
+}

@@ -63,6 +63,7 @@ CREATE TABLE `faq` (
   `author_id` int(10) NOT NULL DEFAULT 0,
   `answer` mediumtext DEFAULT NULL,
   `question` mediumtext DEFAULT NULL,
+  `priority` INT NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   KEY `Table_21_FKIndex1` (`author_id`),
   KEY `Table_21_FKIndex2` (`language_id`),
@@ -275,6 +276,7 @@ CREATE TABLE `preferences` (
   `page_size` int(10) NOT NULL DEFAULT 15,
   `auto_subscribe_replies` tinyint(1) NOT NULL DEFAULT 1,
   `timezone` tinytext DEFAULT NULL,
+  `custom_css` text DEFAULT NULL,
   PRIMARY KEY (`idpreferences`),
   KEY `preferences_FKIndex1` (`users_idusers`),
   KEY `preferences_FKIndex2` (`language_id`)
@@ -624,6 +626,15 @@ CREATE TABLE IF NOT EXISTS `uploaded_images` (
   KEY `uploaded_images_user_idx` (`users_idusers`)
 );
 
+CREATE TABLE IF NOT EXISTS `thread_images` (
+  `idthread_image` int NOT NULL AUTO_INCREMENT,
+  `forumthread_id` int NOT NULL,
+  `path` tinytext,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idthread_image`),
+  KEY `thread_images_thread_idx` (`forumthread_id`)
+);
+
 -- Comments from admins about users
 CREATE TABLE IF NOT EXISTS `admin_user_comments` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -716,7 +727,17 @@ CREATE TABLE `content_read_markers` (
   UNIQUE KEY `content_read_markers_uq` (`item`,`item_id`,`user_id`)
 );
 
--- Set the schema version to the latest migration.
-INSERT INTO `schema_version` (`version`) VALUES (71)
-ON DUPLICATE KEY UPDATE version = VALUES(version);
+CREATE TABLE `role_subscription_archetypes` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `role_id` int NOT NULL,
+  `archetype_name` varchar(128) NOT NULL,
+  `pattern` varchar(255) NOT NULL,
+  `method` varchar(16) NOT NULL DEFAULT 'internal',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `role_subscription_archetypes_role_idx` (`role_id`)
+);
 
+-- Set the schema version to the latest migration.
+INSERT INTO `schema_version` (`version`) VALUES (76)
+ON DUPLICATE KEY UPDATE version = VALUES(version);

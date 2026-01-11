@@ -17,6 +17,7 @@ func TestPaginationTemplateWithoutPageSize(t *testing.T) {
 	cd.PrevLink = "/prev"
 	funcs := cd.Funcs(r)
 	funcs["localTime"] = func(t time.Time) time.Time { return t }
+	funcs["assetHash"] = func(s string) string { return s }
 	tmpl := template.Must(template.New("").Funcs(funcs).ParseFS(testTemplates,
 		"site/*.gohtml", "site/*/*.gohtml", "email/*.gohtml"))
 	var buf bytes.Buffer

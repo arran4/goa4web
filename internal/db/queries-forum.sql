@@ -1,4 +1,10 @@
-UPDATE forumcategory SET title = ?, description = ?, forumcategory_idforumcategory = ?, language_id = sqlc.narg(category_language_id) WHERE idforumcategory = ?;
+-- name: AdminUpdateForumCategory :exec
+UPDATE forumcategory
+SET title = sqlc.arg(title),
+    description = sqlc.arg(description),
+    forumcategory_idforumcategory = sqlc.arg(parent_id),
+    language_id = sqlc.narg(language_id)
+WHERE idforumcategory = sqlc.arg(idforumcategory);
 
 -- name: GetAllForumCategoriesWithSubcategoryCount :many
 SELECT c.*, COUNT(c2.idforumcategory) as SubcategoryCount,
@@ -81,6 +87,25 @@ FROM forumtopic t
 ORDER BY t.idforumtopic
 LIMIT ? OFFSET ?;
 
+-- name: AdminListForumTopicGrantsByTopicID :many
+SELECT
+    g.id,
+    g.section,
+    g.action,
+    r.name AS role_name,
+    u.username
+FROM
+    grants g
+LEFT JOIN
+    roles r ON g.role_id = r.id
+LEFT JOIN
+    users u ON g.user_id = u.idusers
+WHERE
+    g.section = 'forum'
+    AND (g.item = 'topic' OR g.item IS NULL)
+    AND g.item_id = ?;
+
+-- name: AdminUpdateForumTopic :exec
 UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ?, language_id = sqlc.narg(topic_language_id) WHERE idforumtopic = ?;
 
 -- name: GetAllForumTopicsByCategoryIdForUserWithLastPosterName :many
@@ -134,6 +159,17 @@ WHERE g.section = 'privateforum'
         AND pg.item_id = g.item_id
         AND pg.user_id = sqlc.arg(viewer_id)
   );
+
+-- name: AdminListPrivateTopicParticipantsByTopicID :many
+SELECT u.idusers, u.username
+FROM grants g
+JOIN users u ON u.idusers = g.user_id
+WHERE g.section = 'privateforum'
+  AND g.item = 'topic'
+  AND g.action = 'view'
+  AND g.active = 1
+  AND g.user_id IS NOT NULL
+  AND g.item_id = ?;
 
 -- name: SystemSetForumTopicHandlerByID :exec
 UPDATE forumtopic SET handler = sqlc.arg(handler) WHERE idforumtopic = sqlc.arg(id);
@@ -238,7 +274,9 @@ WHERE (
     )
 );
 
-INSERT INTO forumcategory (forumcategory_idforumcategory, language_id, title, description) VALUES (?, sqlc.narg(category_language_id), ?, ?);
+-- name: AdminCreateForumCategory :execlastid
+INSERT INTO forumcategory (forumcategory_idforumcategory, language_id, title, description)
+VALUES (sqlc.arg(parent_id), sqlc.narg(category_language_id), sqlc.arg(title), sqlc.arg(description));
 
 INSERT INTO forumtopic (forumcategory_idforumcategory, language_id, title, description, handler) VALUES (?, sqlc.narg(topic_language_id), ?, ?, ?);
 
@@ -272,7 +310,7 @@ WHERE idforumtopic = ?;
 WITH role_ids AS (
     SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
 )
-SELECT th.*, lu.username AS lastposterusername, lu.idusers AS lastposterid, fcu.username as firstpostusername, fc.written as firstpostwritten, fc.text as firstposttext
+SELECT th.*, lu.username AS lastposterusername, lu.idusers AS lastposterid, fcu.username as firstpostusername, fcu.idusers as firstpostuserid, fc.written as firstpostwritten, fc.text as firstposttext
 FROM forumthread th
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN users lu ON lu.idusers = t.lastposter
@@ -368,7 +406,7 @@ UPDATE forumcategory SET deleted_at = NOW() WHERE idforumcategory = ?;
 
 -- name: AdminDeleteForumTopic :exec
 -- Removes a forum topic by ID.
-UPDATE forumtopic SET deleted_at = NOW() WHERE idforumtopic = ?;
+DELETE FROM forumtopic WHERE idforumtopic = ?;
 
 
 -- name: GetAllForumThreadsWithTopic :many
@@ -424,3 +462,15 @@ SELECT category_path.idforumcategory, category_path.title
 FROM category_path
 ORDER BY category_path.depth DESC;
 
+-- name: AdminCreateForumTopic :execlastid
+INSERT INTO forumtopic (forumcategory_idforumcategory, language_id, title, description, handler)
+VALUES (sqlc.arg(forumcategory_id), sqlc.narg(language_id), sqlc.arg(title), sqlc.arg(description), sqlc.arg(handler));
+
+-- name: AdminGetTopicGrants :many
+SELECT g.section, g.role_id, r.name as role_name, g.user_id, u.username
+FROM grants g
+LEFT JOIN roles r ON r.id = g.role_id
+LEFT JOIN users u ON u.idusers = g.user_id
+WHERE (g.item = 'topic')
+  AND g.item_id = sqlc.arg(topic_id)
+  AND g.active = 1;

@@ -3,9 +3,10 @@ package user
 import (
 	"database/sql"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
 
@@ -48,8 +49,10 @@ func adminPendingUsersPage(w http.ResponseWriter, r *http.Request) {
 	}{
 		Rows: pending,
 	}
-	handlers.TemplateHandler(w, r, "admin/pendingUsersPage.gohtml", data)
+	AdminPendingUsersPage.Handle(w, r, data)
 }
+
+const AdminPendingUsersPage handlers.Page = "admin/pendingUsersPage.gohtml"
 
 func adminPendingUsersApprove(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -74,7 +77,7 @@ func adminPendingUsersApprove(w http.ResponseWriter, r *http.Request) {
 		}
 
 	}
-	handlers.TemplateHandler(w, r, "admin/runTaskPage.gohtml", data)
+	AdminRunTaskPage.Handle(w, r, data)
 }
 
 func adminPendingUsersReject(w http.ResponseWriter, r *http.Request) {
@@ -108,5 +111,5 @@ func adminPendingUsersReject(w http.ResponseWriter, r *http.Request) {
 		}
 
 	}
-	handlers.TemplateHandler(w, r, "admin/runTaskPage.gohtml", data)
+	AdminRunTaskPage.Handle(w, r, data)
 }

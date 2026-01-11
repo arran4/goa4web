@@ -9,10 +9,10 @@ import (
 )
 
 // UserCanCreateThread reports whether uid may create a thread in the topic.
-func UserCanCreateThread(ctx context.Context, q db.Querier, topicID, uid int32) (bool, error) {
+func UserCanCreateThread(ctx context.Context, q db.Querier, section string, topicID, uid int32) (bool, error) {
 	_, err := q.SystemCheckGrant(ctx, db.SystemCheckGrantParams{
 		ViewerID: uid,
-		Section:  "forum",
+		Section:  section,
 		Item:     sql.NullString{String: "topic", Valid: true},
 		Action:   "post",
 		ItemID:   sql.NullInt32{Int32: topicID, Valid: true},
@@ -30,10 +30,10 @@ func UserCanCreateThread(ctx context.Context, q db.Querier, topicID, uid int32) 
 }
 
 // UserCanCreateTopic reports whether uid may create a topic in the category.
-func UserCanCreateTopic(ctx context.Context, q db.Querier, categoryID, uid int32) (bool, error) {
+func UserCanCreateTopic(ctx context.Context, q db.Querier, section string, categoryID, uid int32) (bool, error) {
 	_, err := q.SystemCheckGrant(ctx, db.SystemCheckGrantParams{
 		ViewerID: uid,
-		Section:  "forum",
+		Section:  section,
 		Item:     sql.NullString{String: "category", Valid: true},
 		Action:   "post",
 		ItemID:   sql.NullInt32{Int32: categoryID, Valid: true},

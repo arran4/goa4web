@@ -46,8 +46,9 @@ func (e DLQ) Record(ctx context.Context, message string) error {
 // Register registers the email provider.
 func Register(r *dlq.Registry, er *email.Registry) {
 	r.RegisterProvider("email", func(cfg *config.RuntimeConfig, q db.Querier) dlq.DLQ {
-		p := er.ProviderFromConfig(cfg)
-		if p == nil {
+		p, err := er.ProviderFromConfig(cfg)
+		if err != nil || p == nil {
+			log.Printf("dlq email provider error: %v", err)
 			return dlq.LogDLQ{}
 		}
 		from := email.ParseAddress(cfg.EmailFrom)

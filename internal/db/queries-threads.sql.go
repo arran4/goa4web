@@ -11,12 +11,68 @@ import (
 )
 
 const adminDeleteForumThread = `-- name: AdminDeleteForumThread :exec
-UPDATE forumthread SET deleted_at = NOW() WHERE idforumthread = ?
+DELETE forumthread, comments, comments_search
+FROM forumthread
+LEFT JOIN comments ON comments.forumthread_id = forumthread.idforumthread
+LEFT JOIN comments_search ON comments_search.comment_id = comments.idcomments
+WHERE forumthread.idforumthread = ?
 `
 
 func (q *Queries) AdminDeleteForumThread(ctx context.Context, idforumthread int32) error {
 	_, err := q.db.ExecContext(ctx, adminDeleteForumThread, idforumthread)
 	return err
+}
+
+const adminGetForumThreadById = `-- name: AdminGetForumThreadById :one
+SELECT
+    t.idforumthread,
+    t.forumtopic_idforumtopic as idforumtopic,
+    SUBSTRING(c.text, 1, 100) AS title,
+    c.written as created_at,
+    c.users_idusers as created_by,
+    t.lastposter as last_post_by,
+    t.lastaddition as last_post_at,
+    t.comments as post_count,
+    ft.title as topic_title,
+    ft.handler as topic_handler
+FROM
+    forumthread t
+JOIN
+    forumtopic ft ON t.forumtopic_idforumtopic = ft.idforumtopic
+JOIN
+    comments c ON t.firstpost = c.idcomments
+WHERE t.idforumthread = ?
+`
+
+type AdminGetForumThreadByIdRow struct {
+	Idforumthread int32
+	Idforumtopic  int32
+	Title         string
+	CreatedAt     sql.NullTime
+	CreatedBy     int32
+	LastPostBy    int32
+	LastPostAt    sql.NullTime
+	PostCount     sql.NullInt32
+	TopicTitle    sql.NullString
+	TopicHandler  string
+}
+
+func (q *Queries) AdminGetForumThreadById(ctx context.Context, idforumthread int32) (*AdminGetForumThreadByIdRow, error) {
+	row := q.db.QueryRowContext(ctx, adminGetForumThreadById, idforumthread)
+	var i AdminGetForumThreadByIdRow
+	err := row.Scan(
+		&i.Idforumthread,
+		&i.Idforumtopic,
+		&i.Title,
+		&i.CreatedAt,
+		&i.CreatedBy,
+		&i.LastPostBy,
+		&i.LastPostAt,
+		&i.PostCount,
+		&i.TopicTitle,
+		&i.TopicHandler,
+	)
+	return &i, err
 }
 
 const adminGetThreadsStartedByUser = `-- name: AdminGetThreadsStartedByUser :many
@@ -101,6 +157,136 @@ func (q *Queries) AdminGetThreadsStartedByUserWithTopic(ctx context.Context, use
 			&i.TopicTitle,
 			&i.CategoryID,
 			&i.CategoryTitle,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminListForumThreadGrantsByThreadID = `-- name: AdminListForumThreadGrantsByThreadID :many
+SELECT
+    g.id,
+    g.section,
+    g.action,
+    r.name AS role_name,
+    u.username
+FROM
+    grants g
+LEFT JOIN
+    roles r ON g.role_id = r.id
+LEFT JOIN
+    users u ON g.user_id = u.idusers
+WHERE
+    g.section = 'forum'
+    AND g.item = 'thread'
+    AND g.item_id = ?
+`
+
+type AdminListForumThreadGrantsByThreadIDRow struct {
+	ID       int32
+	Section  string
+	Action   string
+	RoleName sql.NullString
+	Username sql.NullString
+}
+
+func (q *Queries) AdminListForumThreadGrantsByThreadID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListForumThreadGrantsByThreadIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListForumThreadGrantsByThreadID, itemID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListForumThreadGrantsByThreadIDRow
+	for rows.Next() {
+		var i AdminListForumThreadGrantsByThreadIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Section,
+			&i.Action,
+			&i.RoleName,
+			&i.Username,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminListForumThreads = `-- name: AdminListForumThreads :many
+SELECT
+    t.idforumthread,
+    t.forumtopic_idforumtopic as idforumtopic,
+    SUBSTRING(c.text, 1, 100) AS title,
+    c.written as created_at,
+    c.users_idusers as created_by,
+    t.lastposter as last_post_by,
+    t.lastaddition as last_post_at,
+    t.comments as post_count,
+    ft.title as topic_title,
+    ft.handler as topic_handler
+FROM
+    forumthread t
+JOIN
+    forumtopic ft ON t.forumtopic_idforumtopic = ft.idforumtopic
+JOIN
+    comments c ON t.firstpost = c.idcomments
+ORDER BY t.idforumthread
+LIMIT ? OFFSET ?
+`
+
+type AdminListForumThreadsParams struct {
+	Limit  int32
+	Offset int32
+}
+
+type AdminListForumThreadsRow struct {
+	Idforumthread int32
+	Idforumtopic  int32
+	Title         string
+	CreatedAt     sql.NullTime
+	CreatedBy     int32
+	LastPostBy    int32
+	LastPostAt    sql.NullTime
+	PostCount     sql.NullInt32
+	TopicTitle    sql.NullString
+	TopicHandler  string
+}
+
+func (q *Queries) AdminListForumThreads(ctx context.Context, arg AdminListForumThreadsParams) ([]*AdminListForumThreadsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListForumThreads, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListForumThreadsRow
+	for rows.Next() {
+		var i AdminListForumThreadsRow
+		if err := rows.Scan(
+			&i.Idforumthread,
+			&i.Idforumtopic,
+			&i.Title,
+			&i.CreatedAt,
+			&i.CreatedBy,
+			&i.LastPostBy,
+			&i.LastPostAt,
+			&i.PostCount,
+			&i.TopicTitle,
+			&i.TopicHandler,
 		); err != nil {
 			return nil, err
 		}
@@ -258,11 +444,12 @@ const getThreadLastPosterAndPerms = `-- name: GetThreadLastPosterAndPerms :one
 WITH role_ids AS (
     SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, lu.username AS LastPosterUsername
+SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, lu.username AS LastPosterUsername, fcu.idusers AS firstpostuserid
 FROM forumthread th
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN users lu ON lu.idusers = t.lastposter
 LEFT JOIN comments fc ON th.firstpost = fc.idcomments
+LEFT JOIN users fcu ON fc.users_idusers = fcu.idusers
 WHERE th.idforumthread=?
   AND (
       fc.language_id = 0
@@ -313,6 +500,7 @@ type GetThreadLastPosterAndPermsRow struct {
 	Lastaddition           sql.NullTime
 	Locked                 sql.NullBool
 	Lastposterusername     sql.NullString
+	Firstpostuserid        sql.NullInt32
 }
 
 func (q *Queries) GetThreadLastPosterAndPerms(ctx context.Context, arg GetThreadLastPosterAndPermsParams) (*GetThreadLastPosterAndPermsRow, error) {
@@ -334,6 +522,7 @@ func (q *Queries) GetThreadLastPosterAndPerms(ctx context.Context, arg GetThread
 		&i.Lastaddition,
 		&i.Locked,
 		&i.Lastposterusername,
+		&i.Firstpostuserid,
 	)
 	return &i, err
 }

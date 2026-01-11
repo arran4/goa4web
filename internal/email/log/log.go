@@ -26,8 +26,8 @@ func (p Provider) TestConfig(ctx context.Context) error {
 	return nil
 }
 
-func providerFromConfig(cfg *config.RuntimeConfig) email.Provider {
-	return Provider{Verbosity: cfg.EmailLogVerbosity}
+func providerFromConfig(cfg *config.RuntimeConfig) (email.Provider, error) {
+	return Provider{Verbosity: cfg.EmailLogVerbosity}, nil
 }
 
 // Register registers the log provider factory.

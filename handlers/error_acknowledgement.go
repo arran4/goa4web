@@ -24,5 +24,5 @@ func TaskErrorAcknowledgementPage(w http.ResponseWriter, r *http.Request) {
 	if data.Error == "" {
 		data.Error = r.PostFormValue("error")
 	}
-	TemplateHandler(w, r, "taskErrorAcknowledgementPage.gohtml", data)
+	TaskErrorAcknowledgementPageTmpl.Handle(w, r, data)
 }

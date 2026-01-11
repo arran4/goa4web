@@ -1,0 +1,118 @@
+package blogs
+
+import (
+	"fmt"
+	"net/http"
+	"net/url"
+
+	"github.com/arran4/goa4web/core/common"
+)
+
+func BlogsGeneralIndexItems(cd *common.CoreData, r *http.Request) []common.IndexItem {
+	var items []common.IndexItem
+	user := r.URL.Query().Get("user")
+
+	if cd.FeedsEnabled {
+		path := "/blogs"
+		suffix := ""
+		if user != "" {
+			suffix = "?rss=" + url.QueryEscape(user)
+		}
+		cd.RSSFeedURL = cd.GenerateFeedURL(path + "/rss" + suffix)
+		cd.RSSFeedTitle = "Blogs RSS Feed"
+		cd.AtomFeedURL = cd.GenerateFeedURL(path + "/atom" + suffix)
+		cd.AtomFeedTitle = "Blogs Atom Feed"
+		cd.PublicRSSFeedURL = path + "/rss" + suffix
+		cd.PublicAtomFeedURL = path + "/atom" + suffix
+
+		items = append(items,
+			common.IndexItem{Name: "Blogs Atom Feed", Link: cd.AtomFeedURL, Folded: true},
+			common.IndexItem{Name: "Blogs RSS Feed", Link: cd.RSSFeedURL, Folded: true},
+		)
+	}
+
+	if cd.IsAdmin() {
+		items = append(items, common.IndexItem{
+			Name: "Blogs Admin",
+			Link: "/admin/blogs",
+		})
+	}
+	userCanPost := cd.HasGrant("blogs", "entry", "post", 0)
+	if userCanPost {
+		items = append(items, common.IndexItem{
+			Name: "Write blog",
+			Link: "/blogs/add",
+		})
+	}
+	items = append(items, common.IndexItem{
+		Name: "List bloggers",
+		Link: "/blogs/bloggers",
+	})
+	return items
+}
+
+func BlogsPageSpecificItems(cd *common.CoreData, r *http.Request) []common.IndexItem {
+	var items []common.IndexItem
+	if blog, err := cd.BlogPost(); err == nil && blog != nil {
+		if cd.CanEditBlog(blog.Idblogs, blog.UsersIdusers) {
+			items = append(items, common.IndexItem{
+				Name: "Edit Blog",
+				Link: fmt.Sprintf("/blogs/blog/%d/edit", blog.Idblogs),
+			})
+		}
+		if cd.IsAdmin() && cd.IsAdminMode() {
+			items = append(items, common.IndexItem{
+				Name: "Blog Admin",
+				Link: fmt.Sprintf("/admin/blogs/blog/%d", blog.Idblogs),
+			})
+		}
+		if hasBlogUnread(cd, blog.Idblogs, blog.UsersIdusers) {
+			items = append(items,
+				common.IndexItem{
+					Name: "Mark as read",
+					Link: markBlogReadLink(blog.Idblogs, r.URL.RequestURI()),
+				},
+				common.IndexItem{
+					Name: "Mark as read and go back",
+					Link: markBlogReadLink(blog.Idblogs, "/blogs"),
+				},
+			)
+		}
+	}
+	return items
+}
+
+func hasBlogUnread(cd *common.CoreData, blogID int32, authorID int32) bool {
+	if cd == nil || cd.UserID == 0 {
+		return false
+	}
+	labels, err := cd.BlogPrivateLabels(blogID, authorID)
+	if err != nil {
+		return false
+	}
+	for _, l := range labels {
+		if l == "unread" || l == "new" {
+			return true
+		}
+	}
+	return false
+}
+
+func markBlogReadLink(blogID int32, redirect string) string {
+	link := fmt.Sprintf("/blogs/blog/%d/labels?task=%s", blogID, url.QueryEscape(TaskMarkBlogRead))
+	if redirect != "" {
+		link = fmt.Sprintf("%s&redirect=%s", link, url.QueryEscape(redirect))
+	}
+	return link
+}
+
+func BlogsMiddlewareIndex(cd *common.CoreData, r *http.Request) {
+	cd.CustomIndexItems = append(cd.CustomIndexItems, BlogsGeneralIndexItems(cd, r)...)
+}
+
+// Deprecated: Use BlogsGeneralIndexItems and BlogsPageSpecificItems
+func BlogsCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexItem {
+	items := BlogsGeneralIndexItems(cd, r)
+	items = append(items, BlogsPageSpecificItems(cd, r)...)
+	return items
+}

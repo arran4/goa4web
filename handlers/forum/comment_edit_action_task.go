@@ -2,6 +2,7 @@ package forum
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -9,7 +10,6 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/tasks"
-	"github.com/arran4/goa4web/workers/postcountworker"
 	"github.com/gorilla/mux"
 )
 
@@ -46,13 +46,15 @@ func (topicThreadCommentEditActionTask) Action(w http.ResponseWriter, r *http.Re
 		return fmt.Errorf("update comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(commentID), ThreadID: threadRow.Idforumthread, TopicID: topicRow.Idforumtopic}
-		}
+	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
+		ThreadID:             threadRow.Idforumthread,
+		TopicID:              topicRow.Idforumtopic,
+		CommentID:            int32(commentID),
+		ClearUnreadForOthers: true,
+		MarkThreadRead:       true,
+		IncludePostCount:     true,
+	}); err != nil {
+		log.Printf("thread comment update side effects: %v", err)
 	}
 
 	base := cd.ForumBasePath

@@ -6,42 +6,115 @@ import (
 	"strings"
 	"time"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/templates"
 )
 
 // MainCSS serves the site's stylesheet.
-func MainCSS(w http.ResponseWriter, r *http.Request) {
-	http.ServeContent(w, r, "main.css", time.Time{}, bytes.NewReader(templates.GetMainCSSData()))
+func MainCSS(cfg *config.RuntimeConfig) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var opts []templates.Option
+		if cfg != nil && cfg.TemplatesDir != "" {
+			opts = append(opts, templates.WithDir(cfg.TemplatesDir))
+		}
+		http.ServeContent(w, r, "main.css", time.Time{}, bytes.NewReader(templates.GetMainCSSData(opts...)))
+	}
 }
 
 // Favicon serves the site's favicon image.
-func Favicon(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "image/svg+xml")
-	http.ServeContent(w, r, "favicon.svg", time.Time{}, bytes.NewReader(templates.GetFaviconData()))
+func Favicon(cfg *config.RuntimeConfig) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var opts []templates.Option
+		if cfg != nil && cfg.TemplatesDir != "" {
+			opts = append(opts, templates.WithDir(cfg.TemplatesDir))
+		}
+		w.Header().Set("Content-Type", "image/svg+xml")
+		http.ServeContent(w, r, "favicon.svg", time.Time{}, bytes.NewReader(templates.GetFaviconData(opts...)))
+	}
 }
 
 // PasteImageJS serves the JavaScript enabling clipboard image pasting.
-func PasteImageJS(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/javascript")
-	http.ServeContent(w, r, "pasteimg.js", time.Time{}, bytes.NewReader(templates.GetPasteImageJSData()))
+func PasteImageJS(cfg *config.RuntimeConfig) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var opts []templates.Option
+		if cfg != nil && cfg.TemplatesDir != "" {
+			opts = append(opts, templates.WithDir(cfg.TemplatesDir))
+		}
+		w.Header().Set("Content-Type", "application/javascript")
+		http.ServeContent(w, r, "pasteimg.js", time.Time{}, bytes.NewReader(templates.GetPasteImageJSData(opts...)))
+	}
 }
 
 // RoleGrantsEditorJS serves the JavaScript for the role grants editor.
-func RoleGrantsEditorJS(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/javascript")
-	http.ServeContent(w, r, "role_grants_editor.js", time.Time{}, bytes.NewReader(templates.GetRoleGrantsEditorJSData()))
+func RoleGrantsEditorJS(cfg *config.RuntimeConfig) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var opts []templates.Option
+		if cfg != nil && cfg.TemplatesDir != "" {
+			opts = append(opts, templates.WithDir(cfg.TemplatesDir))
+		}
+		w.Header().Set("Content-Type", "application/javascript")
+		http.ServeContent(w, r, "role_grants_editor.js", time.Time{}, bytes.NewReader(templates.GetRoleGrantsEditorJSData(opts...)))
+	}
 }
 
 // PrivateForumJS serves the JavaScript for the private forum pages.
-func PrivateForumJS(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/javascript")
-	http.ServeContent(w, r, "private_forum.js", time.Time{}, bytes.NewReader(templates.GetPrivateForumJSData()))
+func PrivateForumJS(cfg *config.RuntimeConfig) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var opts []templates.Option
+		if cfg != nil && cfg.TemplatesDir != "" {
+			opts = append(opts, templates.WithDir(cfg.TemplatesDir))
+		}
+		w.Header().Set("Content-Type", "application/javascript")
+		http.ServeContent(w, r, "private_forum.js", time.Time{}, bytes.NewReader(templates.GetPrivateForumJSData(opts...)))
+	}
 }
 
 // TopicLabelsJS serves the JavaScript for topic label editing.
-func TopicLabelsJS(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/javascript")
-	http.ServeContent(w, r, "topic_labels.js", time.Time{}, bytes.NewReader(templates.GetTopicLabelsJSData()))
+func TopicLabelsJS(cfg *config.RuntimeConfig) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var opts []templates.Option
+		if cfg != nil && cfg.TemplatesDir != "" {
+			opts = append(opts, templates.WithDir(cfg.TemplatesDir))
+		}
+		w.Header().Set("Content-Type", "application/javascript")
+		http.ServeContent(w, r, "topic_labels.js", time.Time{}, bytes.NewReader(templates.GetTopicLabelsJSData(opts...)))
+	}
+}
+
+// SiteJS serves the main site JavaScript.
+func SiteJS(cfg *config.RuntimeConfig) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var opts []templates.Option
+		if cfg != nil && cfg.TemplatesDir != "" {
+			opts = append(opts, templates.WithDir(cfg.TemplatesDir))
+		}
+		w.Header().Set("Content-Type", "application/javascript")
+		http.ServeContent(w, r, "site.js", time.Time{}, bytes.NewReader(templates.GetSiteJSData(opts...)))
+	}
+}
+
+// A4CodeJS serves the A4Code parser/converter JavaScript.
+func A4CodeJS(cfg *config.RuntimeConfig) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var opts []templates.Option
+		if cfg != nil && cfg.TemplatesDir != "" {
+			opts = append(opts, templates.WithDir(cfg.TemplatesDir))
+		}
+		w.Header().Set("Content-Type", "application/javascript")
+		http.ServeContent(w, r, "a4code.js", time.Time{}, bytes.NewReader(templates.GetA4CodeJSData(opts...)))
+	}
+}
+
+// RobotsTXT serves the robots.txt file.
+func RobotsTXT(cfg *config.RuntimeConfig) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var opts []templates.Option
+		if cfg != nil && cfg.TemplatesDir != "" {
+			opts = append(opts, templates.WithDir(cfg.TemplatesDir))
+		}
+		w.Header().Set("Content-Type", "text/plain")
+		http.ServeContent(w, r, "robots.txt", time.Time{}, bytes.NewReader(templates.GetRobotsTXTData(opts...)))
+	}
 }
 
 // RedirectPermanent returns a handler that redirects to the provided path using StatusPermanentRedirect.

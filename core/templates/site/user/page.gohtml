@@ -1,12 +1,11 @@
-{{ define "userPage" }}
     {{ template "head" $ }}
-        User preferences:<br><br>
-        Modify <a href="/usr/lang">Language settings</a><br>
-        Modify <a href="/usr/timezone">Timezone settings</a><br>
-        Modify <a href="/usr/email">Email and notification settings</a><br>
-        View <a href="/usr/notifications/gallery">Your uploaded images</a><br>
-        Modify <a href="/usr/paging">Pagination settings</a><br>
-        Manage <a href="/usr/subscriptions">Subscriptions</a><br>
-        Modify <a href="/user/profile">Public profile settings</a><br>
+        <h2>User preferences:</h2>
+        <div>Modify <a href="/usr/lang">Language settings</a></div>
+        <div>Modify <a href="/usr/timezone">Timezone settings</a></div>
+        <div>Modify <a href="/usr/appearance">Appearance settings</a></div>
+        <div>Modify <a href="/usr/email">Email and notification settings</a></div>
+        <div>View <a href="/usr/notifications/gallery">Your uploaded images</a></div>
+        <div>Modify <a href="/usr/paging">Pagination settings</a></div>
+        <div>Manage <a href="/usr/subscriptions">Subscriptions</a></div>
+        <div>Modify <a href="/usr/profile">Public profile settings</a></div>
     {{ template "tail" $ }}
-{{ end }}

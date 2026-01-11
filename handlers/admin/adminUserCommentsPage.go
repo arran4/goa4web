@@ -23,5 +23,7 @@ func adminUserCommentsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Comments by %s", cpu.Username.String)
-	handlers.TemplateHandler(w, r, "userCommentsPage.gohtml", struct{}{})
+	AdminUserCommentsPageTmpl.Handle(w, r, struct{}{})
 }
+
+const AdminUserCommentsPageTmpl handlers.Page = "admin/userCommentsPage.gohtml"

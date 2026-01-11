@@ -100,5 +100,7 @@ func adminRoleGrantAddPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	handlers.TemplateHandler(w, r, "adminRoleGrantAddPage.gohtml", data)
+	AdminRoleGrantAddPageTmpl.Handle(w, r, data)
 }
+
+const AdminRoleGrantAddPageTmpl handlers.Page = "admin/adminRoleGrantAddPage.gohtml"

@@ -64,8 +64,10 @@ func (AskTask) Page(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	handlers.TemplateHandler(w, r, "askPage.gohtml", data)
+	AskPageTmpl.Handle(w, r, data)
 }
+
+const AskPageTmpl handlers.Page = "faq/askPage.gohtml"
 
 func (AskTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := handlers.ValidateForm(r, []string{"language", "text"}, []string{"language", "text"}); err != nil {

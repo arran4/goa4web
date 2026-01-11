@@ -38,5 +38,7 @@ func adminUserGrantsPage(w http.ResponseWriter, r *http.Request) {
 		GrantGroups: groups,
 	}
 
-	handlers.TemplateHandler(w, r, "admin/userGrantsPage.gohtml", data)
+	AdminUserGrantsPageTmpl.Handle(w, r, data)
 }
+
+const AdminUserGrantsPageTmpl handlers.Page = "admin/userGrantsPage.gohtml"

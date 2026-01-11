@@ -58,6 +58,9 @@ func (EditBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
 	row := cd.CurrentBlogLoaded()
+	if err := cd.ValidateCodeImagesForUser(cd.UserID, text); err != nil {
+		return fmt.Errorf("validate images: %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
 
 	if err = queries.UpdateBlogEntryForWriter(r.Context(), db.UpdateBlogEntryForWriterParams{
 		EntryID:      row.Idblogs,
@@ -92,7 +95,9 @@ func (EditBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Edit Blog"
-	if !(cd.HasRole("content writer") || cd.HasRole("administrator")) {
+	blog := cd.CurrentBlogLoaded()
+	if blog == nil || !(cd.HasGrant("blogs", "entry", "edit-any", 0) || cd.HasGrant("blogs", "entry", "edit", blog.Idblogs)) {
+		fmt.Println("TODO: FIx: Add enforced Access in router rather than task")
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
@@ -121,5 +126,7 @@ func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 		data.AuthorLabels = als
 	}
 
-	handlers.TemplateHandler(w, r, "blogEditPage.gohtml", data)
+	BlogsBlogEditPageTmpl.Handle(w, r, data)
 }
+
+const BlogsBlogEditPageTmpl handlers.Page = "blogs/blogEditPage.gohtml"

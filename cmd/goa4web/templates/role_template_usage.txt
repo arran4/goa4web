@@ -1,0 +1,10 @@
+
+Usage: role template [command] [options]
+
+Commands:
+  list      List available templates
+  explain   Explain a template
+  setup     Apply a template
+  diff      Show differences
+
+Options:

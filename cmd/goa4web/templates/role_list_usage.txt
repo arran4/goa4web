@@ -1,0 +1,12 @@
+Usage:
+  {{.Prog}} role list <command> [<args>]
+
+Commands:
+  sql    list embedded role identifiers (SQL filenames)
+  names  list human-friendly role names declared in the seed scripts
+
+Examples:
+  {{.Prog}} role list sql
+  {{.Prog}} role list names
+
+{{template "flag_groups_section" .FlagGroups}}

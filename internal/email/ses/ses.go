@@ -5,7 +5,6 @@ package ses
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/mail"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -45,21 +44,19 @@ func (s Provider) TestConfig(ctx context.Context) error {
 	return nil
 }
 
-func providerFromConfig(cfg *config.RuntimeConfig) email.Provider {
+func providerFromConfig(cfg *config.RuntimeConfig) (email.Provider, error) {
 	awsCfg := aws.NewConfig()
 	if region := cfg.EmailAWSRegion; region != "" {
 		awsCfg = awsCfg.WithRegion(region)
 	}
 	sess, err := session.NewSession(awsCfg)
 	if err != nil {
-		log.Printf("Email disabled: cannot initialise AWS session: %v", err)
-		return nil
+		return nil, fmt.Errorf("Email disabled: cannot initialise AWS session: %v", err)
 	}
 	if _, err := sess.Config.Credentials.Get(); err != nil {
-		log.Printf("Email disabled: no AWS credentials: %v", err)
-		return nil
+		return nil, fmt.Errorf("Email disabled: no AWS credentials: %v", err)
 	}
-	return Provider{Client: ses.New(sess), From: cfg.EmailFrom}
+	return Provider{Client: ses.New(sess), From: cfg.EmailFrom}, nil
 }
 
 // Register registers the SES provider factory.

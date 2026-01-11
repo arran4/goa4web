@@ -9,23 +9,11 @@ import (
 	"io/fs"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dbdrivers"
 )
-
-// autoMigrateEnabled reports whether automatic migrations should run.
-func autoMigrateEnabled() bool {
-	v := strings.ToLower(os.Getenv(config.EnvAutoMigrate))
-	switch v {
-	case "1", "true", "on", "yes":
-		return true
-	default:
-		return false
-	}
-}
 
 // applyMigrations connects to the database and executes SQL migrations.
 func applyMigrations(ctx context.Context, cfg *config.RuntimeConfig, reg *dbdrivers.Registry) error {
@@ -51,17 +39,39 @@ func applyMigrations(ctx context.Context, cfg *config.RuntimeConfig, reg *dbdriv
 	var fsys fs.FS
 	if cfg.MigrationsDir == "" || cfg.MigrationsDir == "migrations" {
 		fsys = migrations.FS
-		log.Printf("applying embedded migrations")
 	} else {
 		fsys = os.DirFS(cfg.MigrationsDir)
-		log.Printf("applying migrations from %s", cfg.MigrationsDir)
 	}
+
+	current, err := ensureVersionTable(ctx, sdb)
+	if err != nil {
+		return fmt.Errorf("check version: %w", err)
+	}
+
+	found, err := getAvailableMigrations(fsys, cfg.DBDriver)
+	if err != nil {
+		return fmt.Errorf("check migrations: %w", err)
+	}
+
+	target := current
+	if len(found) > 0 {
+		if max := found[len(found)-1]; max.Version > target {
+			target = max.Version
+		}
+	}
+
+	if cfg.MigrationsDir == "" || cfg.MigrationsDir == "migrations" {
+		log.Printf("applying embedded migrations (current: %d, target: %d)", current, target)
+	} else {
+		log.Printf("applying migrations from %s (current: %d, target: %d)", cfg.MigrationsDir, current, target)
+	}
+
 	return Apply(ctx, sdb, fsys, false, cfg.DBDriver)
 }
 
-// MaybeAutoMigrate runs migrations when enabled via AUTO_MIGRATE.
+// MaybeAutoMigrate runs migrations when enabled via runtime configuration.
 func MaybeAutoMigrate(cfg *config.RuntimeConfig, reg *dbdrivers.Registry) error {
-	if !autoMigrateEnabled() {
+	if !cfg.AutoMigrate {
 		return nil
 	}
 	ctx := context.Background()

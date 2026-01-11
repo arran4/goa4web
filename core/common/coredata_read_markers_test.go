@@ -1,13 +1,11 @@
 package common_test
 
 import (
-	"context"
 	"regexp"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
 
-	"github.com/arran4/goa4web/config"
 	common "github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 )
@@ -19,7 +17,7 @@ func TestThreadReadMarker(t *testing.T) {
 	}
 	defer conn.Close()
 	q := db.New(conn)
-	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
+	cd := common.NewTestCoreData(t, q)
 	cd.UserID = 1
 
 	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO content_read_markers")).

@@ -3,7 +3,7 @@
     <tr><th>Time</th><th>Username</th><th>IP</th></tr>
     {{- range cd.AdminLoginAttempts }}
     <tr>
-        <td>{{ cd.LocalTime .CreatedAt }}</td>
+        <td>{{ cd.FormatLocalTime .CreatedAt }}</td>
         <td>{{ .Username }}</td>
         <td>{{ .IpAddress }}</td>
     </tr>

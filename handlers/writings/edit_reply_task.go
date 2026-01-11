@@ -3,6 +3,7 @@ package writings
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -14,7 +15,6 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
-	"github.com/arran4/goa4web/workers/postcountworker"
 )
 
 // EditReplyTask updates an existing comment.
@@ -53,13 +53,17 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil {
 		return fmt.Errorf("update comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: comment.Idcomments, ThreadID: thread.Idforumthread, TopicID: thread.ForumtopicIdforumtopic}
-		}
+	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
+		ThreadID:             thread.Idforumthread,
+		TopicID:              thread.ForumtopicIdforumtopic,
+		CommentID:            comment.Idcomments,
+		LabelItem:            "writing",
+		LabelItemID:          writing.Idwriting,
+		ClearUnreadForOthers: true,
+		MarkThreadRead:       true,
+		IncludePostCount:     true,
+	}); err != nil {
+		log.Printf("writing comment edit side effects: %v", err)
 	}
 
 	return handlers.RedirectHandler(fmt.Sprintf("/writings/article/%d", writing.Idwriting))

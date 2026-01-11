@@ -3,6 +3,8 @@ package news
 import (
 	"bytes"
 	"database/sql"
+	"errors"
+	"fmt"
 	"html/template"
 	"path/filepath"
 	"strings"
@@ -26,7 +28,7 @@ func (*fakeCD) NewsAnnouncement(int32) *db.SiteAnnouncement                     
 func (*fakeCD) Location() *time.Location                                             { return time.UTC }
 func (*fakeCD) LocalTime(t time.Time) time.Time                                      { return t }
 func (*fakeCD) LocalTimeIn(t time.Time, _ string) time.Time                          { return t }
-func (*fakeCD) NewsLabels(int32) []templates.TopicLabel {
+func (*fakeCD) NewsLabels(int32, int32) []templates.TopicLabel {
 	return []templates.TopicLabel{{Name: "foo", Type: "author"}}
 }
 
@@ -38,12 +40,29 @@ func TestNewsPostPageLabelBars(t *testing.T) {
 		"a4code2html": func(s string) template.HTML { return template.HTML(s) },
 		"add":         func(a, b int) int { return a + b },
 		"since":       func(time.Time, time.Time) string { return "" },
+		"assetHash":   func(s string) string { return s },
+		"dict": func(values ...interface{}) (map[string]interface{}, error) {
+			if len(values)%2 != 0 {
+				return nil, errors.New("invalid dict call")
+			}
+			dict := make(map[string]interface{}, len(values)/2)
+			for i := 0; i < len(values); i += 2 {
+				key, ok := values[i].(string)
+				if !ok {
+					return nil, errors.New("dict keys must be strings")
+				}
+				dict[key] = values[i+1]
+			}
+			return dict, nil
+		},
+		"printf": fmt.Sprintf,
 	}
 
-	base := filepath.Join("..", "..", "core", "templates", "site", "news")
+	base := filepath.Join("..", "..", "core", "templates", "site")
 	tmpl := template.Must(template.New("root").Funcs(funcMap).ParseFiles(
-		filepath.Join(base, "postPage.gohtml"),
-		filepath.Join(base, "post.gohtml"),
+		filepath.Join(base, "news", "postPage.gohtml"),
+		filepath.Join(base, "news", "post.gohtml"),
+		filepath.Join(base, "_share.gohtml"),
 	))
 	tmpl = template.Must(tmpl.Parse(`{{ define "head" }}{{ end }}
 {{ define "tail" }}{{ end }}
@@ -67,6 +86,7 @@ func TestNewsPostPageLabelBars(t *testing.T) {
 		Labels       []templates.TopicLabel
 		PublicLabels []templates.TopicLabel
 		BackURL      string
+		ShareURL     string
 	}{
 		Post:         post,
 		Labels:       []templates.TopicLabel{{Name: "foo", Type: "author"}},
@@ -93,15 +113,32 @@ func TestNewsPostPagePrivateLabelsOnce(t *testing.T) {
 		"localTime":   func(t time.Time) time.Time { return t },
 		"now":         func() time.Time { return time.Unix(0, 0) },
 		"a4code2html": func(s string) template.HTML { return template.HTML(s) },
-		"NewsLabels":  func(int32) []templates.TopicLabel { return nil },
+		"NewsLabels":  func(int32, int32) []templates.TopicLabel { return nil },
 		"add":         func(a, b int) int { return a + b },
 		"since":       func(time.Time, time.Time) string { return "" },
+		"assetHash":   func(s string) string { return s },
+		"dict": func(values ...interface{}) (map[string]interface{}, error) {
+			if len(values)%2 != 0 {
+				return nil, errors.New("invalid dict call")
+			}
+			dict := make(map[string]interface{}, len(values)/2)
+			for i := 0; i < len(values); i += 2 {
+				key, ok := values[i].(string)
+				if !ok {
+					return nil, errors.New("dict keys must be strings")
+				}
+				dict[key] = values[i+1]
+			}
+			return dict, nil
+		},
+		"printf": fmt.Sprintf,
 	}
 
-	base := filepath.Join("..", "..", "core", "templates", "site", "news")
+	base := filepath.Join("..", "..", "core", "templates", "site")
 	tmpl := template.Must(template.New("root").Funcs(funcMap).ParseFiles(
-		filepath.Join(base, "postPage.gohtml"),
-		filepath.Join(base, "post.gohtml"),
+		filepath.Join(base, "news", "postPage.gohtml"),
+		filepath.Join(base, "news", "post.gohtml"),
+		filepath.Join(base, "_share.gohtml"),
 	))
 	tmpl = template.Must(tmpl.Parse(`{{ define "head" }}{{ end }}{{ define "tail" }}{{ end }}{{ define "threadComments" }}{{ end }}{{ define "comment" }}{{ end }}{{ define "topicLabels" }}{{ end }}{{ define "languageCombobox" }}{{ end }}`))
 
@@ -120,6 +157,7 @@ func TestNewsPostPagePrivateLabelsOnce(t *testing.T) {
 		Labels       []templates.TopicLabel
 		PublicLabels []templates.TopicLabel
 		BackURL      string
+		ShareURL     string
 	}{
 		Post:    post,
 		Labels:  []templates.TopicLabel{{Name: "secret", Type: "private"}},

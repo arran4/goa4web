@@ -38,5 +38,7 @@ func adminUserSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 		User: &db.User{Idusers: cpu.Idusers, Username: user.Username},
 		Subs: rows,
 	}
-	handlers.TemplateHandler(w, r, "userSubscriptionsPage.gohtml", data)
+	AdminUserSubscriptionsPageTmpl.Handle(w, r, data)
 }
+
+const AdminUserSubscriptionsPageTmpl handlers.Page = "admin/userSubscriptionsPage.gohtml"

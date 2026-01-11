@@ -1,9 +1,7 @@
-{{ define "newsPage" }}
-    {{ template "head" $ }}
-        {{ range cd.LatestNews }}
-            {{ template "newsPost" . }}
-        {{ else }}
-            <p>There is no news.</p>
-        {{ end }}
-    {{ template "tail" $ }}
-{{ end }}
+{{ template "head" $ }}
+    {{ range cd.LatestNews }}
+        {{ template "newsPost" . }}
+    {{ else }}
+        <p>There is no news.</p>
+    {{ end }}
+{{ template "tail" $ }}

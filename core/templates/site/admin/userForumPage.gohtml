@@ -8,7 +8,7 @@
         <td><a href="/admin/forum/topics/topic/{{ .ForumtopicIdforumtopic }}/edit">{{ topicTitleOrDefault .TopicTitle.String }}</a></td>
         <td>{{ if .CategoryID.Valid }}<a href="/admin/forum/categories/category/{{ .CategoryID.Int32 }}/grants">{{ .CategoryTitle.String }}</a>{{ end }}</td>
         <td>{{ .Comments.Int32 }}</td>
-        <td>{{ cd.LocalTime .Lastaddition.Time }}</td>
+        <td>{{ cd.FormatLocalTime .Lastaddition.Time }}</td>
         <td><a href="/forum/topic/{{ .ForumtopicIdforumtopic }}/thread/{{ .Idforumthread }}">View</a></td>
     </tr>
     {{- end }}

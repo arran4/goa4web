@@ -1,0 +1,9 @@
+{{ template "head" $ }}
+<p>{{ .Message }}</p>
+<form method="post">
+    {{ csrfField }}
+    <p><label><input type="checkbox" name="cascade" value="true"> Cascade Delete</label></p>
+    <input type="submit" name="task" value="{{ .ConfirmLabel }}">
+</form>
+<p><a href="{{ .Back }}">Cancel</a></p>
+{{ template "tail" $ }}

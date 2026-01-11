@@ -49,15 +49,37 @@ SET lastaddition = (
 )
 WHERE idforumthread = ?;
 
+-- name: AdminListForumThreads :many
+SELECT
+    t.idforumthread,
+    t.forumtopic_idforumtopic as idforumtopic,
+    SUBSTRING(c.text, 1, 100) AS title,
+    c.written as created_at,
+    c.users_idusers as created_by,
+    t.lastposter as last_post_by,
+    t.lastaddition as last_post_at,
+    t.comments as post_count,
+    ft.title as topic_title,
+    ft.handler as topic_handler
+FROM
+    forumthread t
+JOIN
+    forumtopic ft ON t.forumtopic_idforumtopic = ft.idforumtopic
+JOIN
+    comments c ON t.firstpost = c.idcomments
+ORDER BY t.idforumthread
+LIMIT ? OFFSET ?;
+
 -- name: GetThreadLastPosterAndPerms :one
 WITH role_ids AS (
     SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
 )
-SELECT th.*, lu.username AS LastPosterUsername
+SELECT th.*, lu.username AS LastPosterUsername, fcu.idusers AS firstpostuserid
 FROM forumthread th
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN users lu ON lu.idusers = t.lastposter
 LEFT JOIN comments fc ON th.firstpost = fc.idcomments
+LEFT JOIN users fcu ON fc.users_idusers = fcu.idusers
 WHERE th.idforumthread=sqlc.arg(thread_id)
   AND (
       fc.language_id = 0
@@ -100,7 +122,29 @@ INSERT INTO forumthread (forumtopic_idforumtopic) VALUES (?);
 SELECT forumtopic_idforumtopic FROM forumthread WHERE idforumthread = ?;
 
 -- name: AdminDeleteForumThread :exec
-UPDATE forumthread SET deleted_at = NOW() WHERE idforumthread = ?;
+DELETE forumthread, comments, comments_search
+FROM forumthread
+LEFT JOIN comments ON comments.forumthread_id = forumthread.idforumthread
+LEFT JOIN comments_search ON comments_search.comment_id = comments.idcomments
+WHERE forumthread.idforumthread = ?;
+
+-- name: AdminListForumThreadGrantsByThreadID :many
+SELECT
+    g.id,
+    g.section,
+    g.action,
+    r.name AS role_name,
+    u.username
+FROM
+    grants g
+LEFT JOIN
+    roles r ON g.role_id = r.id
+LEFT JOIN
+    users u ON g.user_id = u.idusers
+WHERE
+    g.section = 'forum'
+    AND g.item = 'thread'
+    AND g.item_id = ?;
 
 
 -- name: AdminGetThreadsStartedByUser :many
@@ -149,3 +193,23 @@ WHERE th.idforumthread = sqlc.arg(thread_id)
       AND (g.user_id = sqlc.arg(replier_match_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   );
+
+-- name: AdminGetForumThreadById :one
+SELECT
+    t.idforumthread,
+    t.forumtopic_idforumtopic as idforumtopic,
+    SUBSTRING(c.text, 1, 100) AS title,
+    c.written as created_at,
+    c.users_idusers as created_by,
+    t.lastposter as last_post_by,
+    t.lastaddition as last_post_at,
+    t.comments as post_count,
+    ft.title as topic_title,
+    ft.handler as topic_handler
+FROM
+    forumthread t
+JOIN
+    forumtopic ft ON t.forumtopic_idforumtopic = ft.idforumtopic
+JOIN
+    comments c ON t.firstpost = c.idcomments
+WHERE t.idforumthread = ?;

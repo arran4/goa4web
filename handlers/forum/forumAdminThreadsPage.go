@@ -2,9 +2,10 @@ package forum
 
 import (
 	"database/sql"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"strconv"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
@@ -18,8 +19,10 @@ func AdminThreadsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Forum Admin Threads"
 
-	handlers.TemplateHandler(w, r, "adminThreadsPage.gohtml", struct{}{})
+	ForumAdminThreadsPageTmpl.Handle(w, r, struct{}{})
 }
+
+const ForumAdminThreadsPageTmpl handlers.Page = "forum/adminThreadsPage.gohtml"
 
 func AdminThreadDeletePage(w http.ResponseWriter, r *http.Request) {
 	threadID, err := strconv.Atoi(mux.Vars(r)["thread"])
@@ -57,8 +60,10 @@ func AdminThreadDeleteConfirmPage(w http.ResponseWriter, r *http.Request) {
 		ConfirmLabel: "Confirm delete",
 		Back:         "/admin/forum/thread/" + strconv.Itoa(threadID),
 	}
-	handlers.TemplateHandler(w, r, "confirmPage.gohtml", data)
+	ConfirmPageTmpl.Handle(w, r, data)
 }
+
+const ConfirmPageTmpl handlers.Page = "confirmPage.gohtml"
 
 func AdminThreadPage(w http.ResponseWriter, r *http.Request) {
 	threadID, err := strconv.Atoi(mux.Vars(r)["thread"])
@@ -91,5 +96,7 @@ func AdminThreadPage(w http.ResponseWriter, r *http.Request) {
 		Thread: threadRow,
 	}
 
-	handlers.TemplateHandler(w, r, "adminThreadPage.gohtml", data)
+	ForumAdminThreadPageTmpl.Handle(w, r, data)
 }
+
+const ForumAdminThreadPageTmpl handlers.Page = "forum/adminThreadPage.gohtml"

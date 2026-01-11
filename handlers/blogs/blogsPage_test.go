@@ -3,12 +3,13 @@ package blogs
 import (
 	"context"
 	"encoding/xml"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
 	"testing"
 	"time"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/mux"
@@ -19,6 +20,7 @@ import (
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/sharesign"
 )
 
 var (
@@ -55,6 +57,7 @@ func TestBlogsBloggerPostsPage(t *testing.T) {
 
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithSession(sess))
+	cd.ShareSigner = sharesign.NewSigner(config.NewRuntimeConfig(), "secret")
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -96,9 +99,9 @@ func TestBlogsRssPageWritesRSS(t *testing.T) {
 			AddRow(1, "bob", nil))
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT b.idblogs")).
-		WithArgs(int32(1), int32(1), int32(1), int32(1), int32(1), int32(1), sqlmock.AnyArg(), int32(15), int32(0)).
-		WillReturnRows(sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_id", "blog", "written", "timezone", "username", "coalesce(th.comments, 0)", "is_owner"}).
-			AddRow(1, 1, 1, 1, "hello", time.Unix(0, 0), time.Local.String(), "bob", 0, true))
+		WithArgs(int32(0), int32(0), int32(1), int32(1), int32(0), int32(0), sqlmock.AnyArg(), int32(15), int32(0)).
+		WillReturnRows(sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_id", "blog", "written", "timezone", "username", "coalesce(th.comments, 0)", "is_owner", "title"}).
+			AddRow(1, 1, 1, 1, "hello", time.Unix(0, 0), time.Local.String(), "bob", 0, true, "hello"))
 
 	req := httptest.NewRequest("GET", "http://example.com/blogs/rss?rss=bob", nil)
 	q := db.New(conn)

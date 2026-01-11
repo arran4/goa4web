@@ -30,6 +30,12 @@ var loginTask = &LoginTask{TaskString: TaskLogin}
 
 // ensure LoginTask conforms to tasks.Task
 var _ tasks.Task = (*LoginTask)(nil)
+var _ tasks.TemplatesRequired = (*LoginTask)(nil)
+
+const (
+	templateLoginPage          = "loginPage.gohtml"
+	templatePasswordVerifyPage = "passwordVerifyPage.gohtml"
+)
 
 // Page serves the username/password login form.
 func (LoginTask) Page(w http.ResponseWriter, r *http.Request) {
@@ -91,7 +97,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 				cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 				cd.PageTitle = "Verify Password"
 				data := Data{ID: reset.ID}
-				return handlers.TemplateWithDataHandler("passwordVerifyPage.gohtml", data)
+				return handlers.TemplateWithDataHandler(templatePasswordVerifyPage, data)
 			}
 		} else {
 			if err := queries.SystemInsertLoginAttempt(r.Context(), db.SystemInsertLoginAttemptParams{Username: username, IpAddress: strings.Split(r.RemoteAddr, ":")[0]}); err != nil {
@@ -149,4 +155,12 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	return handlers.RefreshDirectHandler{TargetURL: "/"}
+}
+
+// TemplatesRequired declares the templates used by this task's pages.
+func (LoginTask) TemplatesRequired() []tasks.Page {
+	return []tasks.Page{
+		templateLoginPage,
+		templatePasswordVerifyPage,
+	}
 }

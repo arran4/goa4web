@@ -3,10 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
-	"os"
-	"path/filepath"
-	"strings"
 )
 
 // roleLoadCmd implements the "role load" subcommand.
@@ -14,6 +10,7 @@ type roleLoadCmd struct {
 	*roleCmd
 	fs   *flag.FlagSet
 	role string
+	file string
 }
 
 func parseRoleLoadCmd(parent *roleCmd, args []string) (*roleLoadCmd, error) {
@@ -21,6 +18,7 @@ func parseRoleLoadCmd(parent *roleCmd, args []string) (*roleLoadCmd, error) {
 	fs := flag.NewFlagSet("load", flag.ContinueOnError)
 	c.fs = fs
 	fs.StringVar(&c.role, "role", "", "The name of the role to load.")
+	fs.StringVar(&c.file, "file", "", "Optional path to a .sql file to load instead of the embedded role script.")
 	fs.Usage = c.Usage
 	if err := fs.Parse(args); err != nil {
 		return nil, err
@@ -38,21 +36,7 @@ func (c *roleLoadCmd) Run() error {
 	}
 	defer closeDB(sdb)
 
-	filename := fmt.Sprintf("%s.sql", c.role)
-	filepath := filepath.Join("database", "roles", filename)
-	log.Printf("Loading role from %s", filepath)
-
-	data, err := os.ReadFile(filepath)
-	if err != nil {
-		return fmt.Errorf("failed to read role file: %w", err)
-	}
-
-	if err := runStatements(sdb, strings.NewReader(string(data))); err != nil {
-		return fmt.Errorf("failed to apply role: %w", err)
-	}
-
-	log.Printf("Role %q loaded successfully.", c.role)
-	return nil
+	return loadRole(sdb, c.role, c.file)
 }
 
 func (c *roleLoadCmd) Usage() {
@@ -60,7 +44,7 @@ func (c *roleLoadCmd) Usage() {
 }
 
 func (c *roleLoadCmd) FlagGroups() []flagGroup {
-	return append(c.rootCmd.FlagGroups(), flagGroup{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)})
+	return []flagGroup{{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)}}
 }
 
 var _ usageData = (*roleLoadCmd)(nil)

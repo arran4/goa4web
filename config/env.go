@@ -8,6 +8,17 @@ const (
 	// EnvDBTimezone sets the database timezone.
 	EnvDBTimezone = "DB_TIMEZONE"
 
+	// EnvDBHost is the database server hostname.
+	EnvDBHost = "DB_HOST"
+	// EnvDBPort is the database server port.
+	EnvDBPort = "DB_PORT"
+	// EnvDBUser is the database username.
+	EnvDBUser = "DB_USER"
+	// EnvDBPass is the database password.
+	EnvDBPass = "DB_PASS"
+	// EnvDBName is the database name.
+	EnvDBName = "DB_NAME"
+
 	// EnvEmailProvider selects the mail sending backend.
 	EnvEmailProvider = "EMAIL_PROVIDER"
 	// EnvSMTPHost is the SMTP server hostname.
@@ -103,6 +114,8 @@ const (
 	// EnvEmailWorkerInterval controls how often the email worker processes
 	// pending messages in seconds.
 	EnvEmailWorkerInterval = "EMAIL_WORKER_INTERVAL"
+	// EnvEmailVerificationExpiryHours sets the email verification expiry in hours.
+	EnvEmailVerificationExpiryHours = "EMAIL_VERIFICATION_EXPIRY_HOURS"
 	// EnvPasswordResetExpiryHours sets the password reset expiry in hours.
 	EnvPasswordResetExpiryHours = "PASSWORD_RESET_EXPIRY_HOURS"
 	// EnvLoginAttemptWindow defines the time window in minutes used to
@@ -144,6 +157,11 @@ const (
 	// EnvLinkSignSecretFile specifies the file containing the link signing key.
 	EnvLinkSignSecretFile = "LINK_SIGN_SECRET_FILE"
 
+	// EnvShareSignSecret provides the signing key for share URLs.
+	EnvShareSignSecret = "SHARE_SIGN_SECRET"
+	// EnvShareSignSecretFile specifies the file containing the share signing key.
+	EnvShareSignSecretFile = "SHARE_SIGN_SECRET_FILE"
+
 	// EnvDefaultLanguage specifies the site's default language.
 	EnvDefaultLanguage = "DEFAULT_LANGUAGE"
 
@@ -164,4 +182,11 @@ const (
 	EnvAdminAPISecret = "ADMIN_API_SECRET"
 	// EnvAdminAPISecretFile specifies the file containing the admin API signing key.
 	EnvAdminAPISecretFile = "ADMIN_API_SECRET_FILE"
+
+	// EnvOGImageWidth sets the width of the Open Graph image.
+	EnvOGImageWidth = "OG_IMAGE_WIDTH"
+	// EnvOGImageHeight sets the height of the Open Graph image.
+	EnvOGImageHeight = "OG_IMAGE_HEIGHT"
+	// EnvTwitterSite sets the Twitter site handle.
+	EnvTwitterSite = "TWITTER_SITE"
 )

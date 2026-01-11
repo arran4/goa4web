@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gorilla/sessions"
@@ -24,11 +25,13 @@ import (
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
+	feedsign "github.com/arran4/goa4web/internal/feedsign"
 	imagesign "github.com/arran4/goa4web/internal/images"
 	linksign "github.com/arran4/goa4web/internal/linksign"
 	"github.com/arran4/goa4web/internal/middleware"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	"github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/sharesign"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/internal/websocket"
 	"github.com/arran4/goa4web/workers"
@@ -45,8 +48,10 @@ type Server struct {
 	DB              *sql.DB
 	Bus             *eventbus.Bus
 	EmailReg        *email.Registry
+	FeedSigner      *feedsign.Signer
 	ImageSigner     *imagesign.Signer
 	LinkSigner      *linksign.Signer
+	ShareSigner     *sharesign.Signer
 	SessionManager  common.SessionManager
 	TasksReg        *tasks.Registry
 	DBReg           *dbdrivers.Registry
@@ -57,6 +62,11 @@ type Server struct {
 
 	addr       string
 	httpServer *http.Server
+
+	cachedEmailProvider common.MailProvider
+	cachedEmailError    error
+	lastEmailConfig     *config.RuntimeConfig
+	emailMu             sync.Mutex
 }
 
 // Addr returns the address the server is listening on after Start is called.
@@ -149,6 +159,16 @@ func WithLinkSigner(signer *linksign.Signer) Option {
 	return func(s *Server) { s.LinkSigner = signer }
 }
 
+// WithShareSigner sets the external link signer.
+func WithShareSigner(signer *sharesign.Signer) Option {
+	return func(s *Server) { s.ShareSigner = signer }
+}
+
+// WithFeedSigner sets the feed signer.
+func WithFeedSigner(signer *feedsign.Signer) Option {
+	return func(s *Server) { s.FeedSigner = signer }
+}
+
 // WithSessionManager sets the session manager used by the server.
 func WithSessionManager(sm common.SessionManager) Option {
 	return func(s *Server) { s.SessionManager = sm }
@@ -170,6 +190,19 @@ func New(opts ...Option) *Server {
 		o(s)
 	}
 	return s
+}
+
+func (s *Server) getEmailProvider() (common.MailProvider, error) {
+	s.emailMu.Lock()
+	defer s.emailMu.Unlock()
+	if s.lastEmailConfig == s.Config {
+		return s.cachedEmailProvider, s.cachedEmailError
+	}
+	p, err := s.EmailReg.ProviderFromConfig(s.Config)
+	s.cachedEmailProvider = p
+	s.cachedEmailError = err
+	s.lastEmailConfig = s.Config
+	return p, err
 }
 
 // CoreDataMiddleware constructs the middleware responsible for populating
@@ -234,7 +267,7 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 	if s.Config.HTTPHostname != "" {
 		base = strings.TrimRight(s.Config.HTTPHostname, "/")
 	}
-	provider := s.EmailReg.ProviderFromConfig(s.Config)
+	provider, providerErr := s.getEmailProvider()
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	modules := []string{}
 	if s.RouterReg != nil {
@@ -244,6 +277,8 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 		common.WithImageSigner(s.ImageSigner),
 		common.WithCustomQueries(queries),
 		common.WithLinkSigner(s.LinkSigner),
+		common.WithShareSigner(s.ShareSigner),
+		common.WithFeedSigner(s.FeedSigner),
 		common.WithImageURLMapper(s.ImageSigner.MapURL),
 		common.WithSession(session),
 		common.WithEmailProvider(provider),
@@ -252,23 +287,27 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 		common.WithNavRegistry(s.Nav),
 		common.WithTasksRegistry(s.TasksReg),
 		common.WithDBRegistry(s.DBReg),
+		common.WithEmailRegistry(s.EmailReg),
 		common.WithRouterModules(modules),
 		common.WithOffset(offset),
 		common.WithSiteTitle("Arran's Site"),
 	)
+	if providerErr != nil {
+		cd.EmailProviderError = providerErr.Error()
+	}
 	cd.UserID = uid
 	_ = cd.UserRoles()
 
+	cd.AdminMode = r.URL.Query().Get("mode") == "admin"
+	if strings.HasPrefix(r.URL.Path, "/admin") && cd.HasAdminRole() {
+		cd.AdminMode = true
+	}
 	if s.Nav != nil {
 		cd.IndexItems = s.Nav.IndexItemsWithPermission(func(section, item string) bool {
-			return cd.HasGrant(section, item, "view", 0)
+			return cd.HasGrant(section, item, "view", 0) || cd.IsAdmin()
 		})
 	}
 	cd.FeedsEnabled = s.Config.FeedsEnabled
-	cd.AdminMode = r.URL.Query().Get("mode") == "admin"
-	if strings.HasPrefix(r.URL.Path, "/admin") && cd.HasRole("administrator") {
-		cd.AdminMode = true
-	}
 	if uid != 0 && s.Config.NotificationsEnabled {
 		cd.NotificationCount = int32(cd.UnreadNotificationCount())
 	}
@@ -292,7 +331,10 @@ func (s *Server) startWorkers(ctx context.Context) {
 		return
 	}
 	workerCtx, cancel := context.WithCancel(ctx)
-	emailProvider := s.EmailReg.ProviderFromConfig(s.Config)
+	emailProvider, err := s.EmailReg.ProviderFromConfig(s.Config)
+	if err != nil {
+		log.Printf("Email provider init failed: %v", err)
+	}
 	if s.Config.EmailEnabled && s.Config.EmailProvider != "" && s.Config.EmailFrom == "" {
 		log.Printf("%s not set while EMAIL_PROVIDER=%s", config.EnvEmailFrom, s.Config.EmailProvider)
 	}

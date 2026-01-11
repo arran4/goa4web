@@ -2,9 +2,10 @@ package user
 
 import (
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
 
@@ -44,5 +45,7 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 
 	cd.UserID = 0
 
-	handlers.TemplateHandler(w, r, "logoutPage.gohtml", struct{}{})
+	UserLogoutPage.Handle(w, r, struct{}{})
 }
+
+const UserLogoutPage handlers.Page = "user/logoutPage.gohtml"

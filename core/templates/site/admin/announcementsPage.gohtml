@@ -14,7 +14,7 @@
         <td><input type="checkbox" name="id" value="{{ .ID }}"></td>
         <td>{{ .ID }}</td>
         <td>{{ .SiteNewsID }}</td>
-        <td>{{ cd.LocalTime .CreatedAt }}</td>
+        <td>{{ cd.FormatLocalTime .CreatedAt }}</td>
         <td>{{ if .Active }}yes{{ else }}no{{ end }}</td>
         <td>{{ .News.String }}</td>
     </tr>

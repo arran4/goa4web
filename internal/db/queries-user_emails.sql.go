@@ -10,6 +10,58 @@ import (
 	"database/sql"
 )
 
+const adminAddUserEmail = `-- name: AdminAddUserEmail :exec
+INSERT INTO user_emails (user_id, email, verified_at, notification_priority)
+VALUES (?, ?, ?, ?)
+`
+
+type AdminAddUserEmailParams struct {
+	UserID               int32
+	Email                string
+	VerifiedAt           sql.NullTime
+	NotificationPriority int32
+}
+
+func (q *Queries) AdminAddUserEmail(ctx context.Context, arg AdminAddUserEmailParams) error {
+	_, err := q.db.ExecContext(ctx, adminAddUserEmail,
+		arg.UserID,
+		arg.Email,
+		arg.VerifiedAt,
+		arg.NotificationPriority,
+	)
+	return err
+}
+
+const adminDeleteUserEmail = `-- name: AdminDeleteUserEmail :exec
+DELETE FROM user_emails WHERE id = ?
+`
+
+func (q *Queries) AdminDeleteUserEmail(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, adminDeleteUserEmail, id)
+	return err
+}
+
+const adminGetUserEmailByID = `-- name: AdminGetUserEmailByID :one
+SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority
+FROM user_emails
+WHERE id = ?
+`
+
+func (q *Queries) AdminGetUserEmailByID(ctx context.Context, id int32) (*UserEmail, error) {
+	row := q.db.QueryRowContext(ctx, adminGetUserEmailByID, id)
+	var i UserEmail
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Email,
+		&i.VerifiedAt,
+		&i.LastVerificationCode,
+		&i.VerificationExpiresAt,
+		&i.NotificationPriority,
+	)
+	return &i, err
+}
+
 const adminListUserEmails = `-- name: AdminListUserEmails :many
 SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority
 FROM user_emails
@@ -46,6 +98,29 @@ func (q *Queries) AdminListUserEmails(ctx context.Context, userID int32) ([]*Use
 		return nil, err
 	}
 	return items, nil
+}
+
+const adminUpdateUserEmailDetails = `-- name: AdminUpdateUserEmailDetails :exec
+UPDATE user_emails
+SET email = ?, verified_at = ?, notification_priority = ?
+WHERE id = ?
+`
+
+type AdminUpdateUserEmailDetailsParams struct {
+	Email                string
+	VerifiedAt           sql.NullTime
+	NotificationPriority int32
+	ID                   int32
+}
+
+func (q *Queries) AdminUpdateUserEmailDetails(ctx context.Context, arg AdminUpdateUserEmailDetailsParams) error {
+	_, err := q.db.ExecContext(ctx, adminUpdateUserEmailDetails,
+		arg.Email,
+		arg.VerifiedAt,
+		arg.NotificationPriority,
+		arg.ID,
+	)
+	return err
 }
 
 const deleteUserEmailForOwner = `-- name: DeleteUserEmailForOwner :exec
@@ -279,6 +354,16 @@ func (q *Queries) SetVerificationCodeForLister(ctx context.Context, arg SetVerif
 	return err
 }
 
+const systemDeleteUnverifiedEmailsExpiresBefore = `-- name: SystemDeleteUnverifiedEmailsExpiresBefore :execresult
+DELETE FROM user_emails
+WHERE verified_at IS NULL
+  AND verification_expires_at < ?
+`
+
+func (q *Queries) SystemDeleteUnverifiedEmailsExpiresBefore(ctx context.Context, verificationExpiresAt sql.NullTime) (sql.Result, error) {
+	return q.db.ExecContext(ctx, systemDeleteUnverifiedEmailsExpiresBefore, verificationExpiresAt)
+}
+
 const systemDeleteUserEmailsByEmailExceptID = `-- name: SystemDeleteUserEmailsByEmailExceptID :exec
 DELETE FROM user_emails WHERE email = ? AND id != ?
 `
@@ -291,6 +376,157 @@ type SystemDeleteUserEmailsByEmailExceptIDParams struct {
 func (q *Queries) SystemDeleteUserEmailsByEmailExceptID(ctx context.Context, arg SystemDeleteUserEmailsByEmailExceptIDParams) error {
 	_, err := q.db.ExecContext(ctx, systemDeleteUserEmailsByEmailExceptID, arg.Email, arg.ID)
 	return err
+}
+
+const systemListAllUnverifiedEmails = `-- name: SystemListAllUnverifiedEmails :many
+SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority
+FROM user_emails
+WHERE verified_at IS NULL
+ORDER BY id
+`
+
+func (q *Queries) SystemListAllUnverifiedEmails(ctx context.Context) ([]*UserEmail, error) {
+	rows, err := q.db.QueryContext(ctx, systemListAllUnverifiedEmails)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*UserEmail
+	for rows.Next() {
+		var i UserEmail
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Email,
+			&i.VerifiedAt,
+			&i.LastVerificationCode,
+			&i.VerificationExpiresAt,
+			&i.NotificationPriority,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const systemListAllUserEmails = `-- name: SystemListAllUserEmails :many
+SELECT user_id, email, verified_at
+FROM user_emails
+ORDER BY user_id, email
+`
+
+type SystemListAllUserEmailsRow struct {
+	UserID     int32
+	Email      string
+	VerifiedAt sql.NullTime
+}
+
+func (q *Queries) SystemListAllUserEmails(ctx context.Context) ([]*SystemListAllUserEmailsRow, error) {
+	rows, err := q.db.QueryContext(ctx, systemListAllUserEmails)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*SystemListAllUserEmailsRow
+	for rows.Next() {
+		var i SystemListAllUserEmailsRow
+		if err := rows.Scan(&i.UserID, &i.Email, &i.VerifiedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const systemListUnverifiedEmailsCreatedAfter = `-- name: SystemListUnverifiedEmailsCreatedAfter :many
+SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority
+FROM user_emails
+WHERE verified_at IS NULL
+  AND verification_expires_at > ?
+ORDER BY id
+`
+
+func (q *Queries) SystemListUnverifiedEmailsCreatedAfter(ctx context.Context, verificationExpiresAt sql.NullTime) ([]*UserEmail, error) {
+	rows, err := q.db.QueryContext(ctx, systemListUnverifiedEmailsCreatedAfter, verificationExpiresAt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*UserEmail
+	for rows.Next() {
+		var i UserEmail
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Email,
+			&i.VerifiedAt,
+			&i.LastVerificationCode,
+			&i.VerificationExpiresAt,
+			&i.NotificationPriority,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const systemListUnverifiedEmailsExpiresBefore = `-- name: SystemListUnverifiedEmailsExpiresBefore :many
+SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority
+FROM user_emails
+WHERE verified_at IS NULL
+  AND verification_expires_at < ?
+ORDER BY id
+`
+
+func (q *Queries) SystemListUnverifiedEmailsExpiresBefore(ctx context.Context, verificationExpiresAt sql.NullTime) ([]*UserEmail, error) {
+	rows, err := q.db.QueryContext(ctx, systemListUnverifiedEmailsExpiresBefore, verificationExpiresAt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*UserEmail
+	for rows.Next() {
+		var i UserEmail
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Email,
+			&i.VerifiedAt,
+			&i.LastVerificationCode,
+			&i.VerificationExpiresAt,
+			&i.NotificationPriority,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const systemListVerifiedEmailsByUserID = `-- name: SystemListVerifiedEmailsByUserID :many
@@ -344,5 +580,22 @@ type SystemMarkUserEmailVerifiedParams struct {
 
 func (q *Queries) SystemMarkUserEmailVerified(ctx context.Context, arg SystemMarkUserEmailVerifiedParams) error {
 	_, err := q.db.ExecContext(ctx, systemMarkUserEmailVerified, arg.VerifiedAt, arg.ID)
+	return err
+}
+
+const systemUpdateVerificationCode = `-- name: SystemUpdateVerificationCode :exec
+UPDATE user_emails
+SET last_verification_code = ?, verification_expires_at = ?
+WHERE id = ?
+`
+
+type SystemUpdateVerificationCodeParams struct {
+	LastVerificationCode  sql.NullString
+	VerificationExpiresAt sql.NullTime
+	ID                    int32
+}
+
+func (q *Queries) SystemUpdateVerificationCode(ctx context.Context, arg SystemUpdateVerificationCodeParams) error {
+	_, err := q.db.ExecContext(ctx, systemUpdateVerificationCode, arg.LastVerificationCode, arg.VerificationExpiresAt, arg.ID)
 	return err
 }

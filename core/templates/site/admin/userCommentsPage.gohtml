@@ -6,7 +6,7 @@
     {{- range cd.AdminCommentsByUser $u.Idusers }}
     <tr>
         <td><a href="/admin/comment/{{ .Idcomments }}">{{ .Idcomments }}</a></td>
-        <td>{{ if .Written.Valid }}{{ cd.LocalTimeIn .Written.Time .Timezone.String }}{{ end }}</td>
+        <td>{{ if .Written.Valid }}{{ cd.FormatLocalTimeIn .Written.Time .Timezone.String }}{{ end }}</td>
         <td>{{ if .ForumtopicIdforumtopic.Valid }}<a href="/forum/topic/{{ .ForumtopicIdforumtopic.Int32 }}">{{ topicTitleOrDefault .ForumtopicTitle.String }}</a>{{ end }}</td>
         <td><a href="/forum/topic/{{ .ForumtopicIdforumtopic.Int32 }}/thread/{{ .ForumthreadID }}">{{ if .ThreadTitle.Valid }}{{ left 40 .ThreadTitle.String }}{{ else }}{{ .ForumthreadID }}{{ end }}</a></td>
         <td>{{ if .Text.Valid }}{{ left 40 .Text.String }}{{ end }}</td>

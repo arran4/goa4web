@@ -1,0 +1,12 @@
+Usage: goa4web role list [all]
+
+Lists all roles, combining information from the database and embedded seed files.
+
+If no database connection is available, it will only list roles found in embedded seed files.
+
+Columns:
+  Role Name:   The name of the role.
+  Seed File:   The filename of the seed SQL file (if present).
+  DB ID:       The ID of the role in the database (if present).
+  Status:      Indicates if the role is synced, DB-only, or Seed-only.
+  Users (DB):  List of users who have this role assigned in the database.

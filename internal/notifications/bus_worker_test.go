@@ -2,17 +2,16 @@ package notifications
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"net/http"
 	"net/mail"
-	"regexp"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/arran4/goa4web/internal/tasks"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
@@ -82,20 +81,78 @@ func TestBuildPatternsAdditional(t *testing.T) {
 	}
 }
 
+type querierStub struct {
+	db.QuerierStub
+	mu sync.Mutex
+
+	SystemGetUserByIDFunc func(context.Context, int32) (*db.SystemGetUserByIDRow, error)
+}
+
+func (q *querierStub) SystemGetUserByID(ctx context.Context, id int32) (*db.SystemGetUserByIDRow, error) {
+	if q.SystemGetUserByIDFunc != nil {
+		return q.SystemGetUserByIDFunc(ctx, id)
+	}
+	return q.QuerierStub.SystemGetUserByID(ctx, id)
+}
+
+type subscriberTestQuerier struct {
+	db.QuerierStub
+	users map[int32]*db.SystemGetUserByIDRow
+}
+
+type newsSubscriberTask struct{ tasks.TaskString }
+
+func (newsSubscriberTask) SubscribedEmailTemplate(eventbus.TaskEvent) (templates *EmailTemplates, send bool) {
+	return &EmailTemplates{
+		Text:    "subscriberText",
+		HTML:    "subscriberHTML",
+		Subject: "subscriberSubject",
+	}, true
+}
+
+func (newsSubscriberTask) SubscribedInternalNotificationTemplate(eventbus.TaskEvent) *string {
+	t := NotificationTemplateFilenameGenerator("subscriber")
+	return &t
+}
+
+func newSubscriberTestQuerier(patterns []string) *subscriberTestQuerier {
+	return &subscriberTestQuerier{
+		QuerierStub: db.QuerierStub{
+			ListSubscribersForPatternsReturn: map[string][]int32{
+				patterns[0]: {2},
+				patterns[1]: {3},
+				patterns[2]: {4},
+			},
+			SystemGetTemplateOverrideReturns: "message for {{.Item}}",
+		},
+		users: map[int32]*db.SystemGetUserByIDRow{
+			2: {Idusers: 2, Email: sql.NullString{String: "two@test", Valid: true}, Username: sql.NullString{String: "two", Valid: true}},
+			3: {Idusers: 3, Email: sql.NullString{String: "three@test", Valid: true}, Username: sql.NullString{String: "three", Valid: true}},
+			4: {Idusers: 4, Email: sql.NullString{String: "four@test", Valid: true}, Username: sql.NullString{String: "four", Valid: true}},
+		},
+	}
+}
+
+func (q *subscriberTestQuerier) SystemGetUserByID(ctx context.Context, id int32) (*db.SystemGetUserByIDRow, error) {
+	q.SystemGetUserByIDCalls = append(q.SystemGetUserByIDCalls, id)
+	if user, ok := q.users[id]; ok {
+		return user, nil
+	}
+	return nil, fmt.Errorf("user %d not found", id)
+}
+
 func TestCollectSubscribersQuery(t *testing.T) {
 	ctx := context.Background()
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-	q := db.New(conn)
-
 	patterns := []string{"post:/blog/1", "post:/blog/*"}
-	rows := sqlmock.NewRows([]string{"users_idusers"}).AddRow(1).AddRow(2)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT DISTINCT users_idusers FROM subscriptions WHERE pattern IN (?,?) AND method = ?")).
-		WithArgs(patterns[0], patterns[1], "email").
-		WillReturnRows(rows)
+
+	q := &querierStub{
+		QuerierStub: db.QuerierStub{
+			ListSubscribersForPatternsReturn: map[string][]int32{
+				"post:/blog/1": {1},
+				"post:/blog/*": {2},
+			},
+		},
+	}
 
 	subs, err := collectSubscribers(ctx, q, patterns, "email")
 	if err != nil {
@@ -104,8 +161,15 @@ func TestCollectSubscribersQuery(t *testing.T) {
 	if len(subs) != 2 {
 		t.Fatalf("want 2 subs got %d", len(subs))
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	if len(q.ListSubscribersForPatternsParams) != 1 {
+		t.Fatalf("expected 1 call, got %d", len(q.ListSubscribersForPatternsParams))
+	}
+	args := q.ListSubscribersForPatternsParams[0]
+	if len(args.Patterns) != 2 {
+		t.Fatalf("expected 2 patterns, got %d", len(args.Patterns))
+	}
+	if args.Method != "email" {
+		t.Fatalf("expected method email, got %s", args.Method)
 	}
 }
 
@@ -138,21 +202,13 @@ func TestProcessEventDLQ(t *testing.T) {
 	cfg.NotificationsEnabled = true
 	cfg.EmailFrom = "from@example.com"
 
-	conn, _, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-	q := db.New(conn)
+	q := &querierStub{}
 	prov := &errProvider{}
 	n := New(WithQueries(q), WithEmailProvider(prov), WithConfig(cfg))
 	dlqRec := &recordDLQ{}
 
-	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/p", Task: TestTask{TaskString: TaskTest}, UserID: 1, Outcome: eventbus.TaskOutcomeSuccess}, dlqRec); err != nil {
+	if err := n.ProcessEvent(ctx, eventbus.TaskEvent{Path: "/p", Task: TestTask{TaskString: TaskTest}, UserID: 1, Outcome: eventbus.TaskOutcomeSuccess}, dlqRec); err != nil {
 		t.Fatalf("process: %v", err)
-	}
-	if dlqRec.msg != "" {
-		t.Fatalf("unexpected dlq message: %s", dlqRec.msg)
 	}
 	if dlqRec.msg != "" {
 		t.Fatalf("unexpected dlq message: %s", dlqRec.msg)
@@ -167,15 +223,10 @@ func TestProcessEventSubscribeSelf(t *testing.T) {
 	cfg.NotificationsEnabled = true
 	cfg.EmailFrom = "from@example.com"
 
-	conn, _, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-	q := db.New(conn)
+	q := &querierStub{}
 	n := New(WithQueries(q), WithConfig(cfg))
 
-	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/p", Task: TaskTest, UserID: 1, Outcome: eventbus.TaskOutcomeSuccess}, nil); err != nil {
+	if err := n.ProcessEvent(ctx, eventbus.TaskEvent{Path: "/p", Task: TaskTest, UserID: 1, Outcome: eventbus.TaskOutcomeSuccess}, nil); err != nil {
 		t.Fatalf("process: %v", err)
 	}
 }
@@ -187,15 +238,10 @@ func TestProcessEventNoAutoSubscribe(t *testing.T) {
 	cfg.AdminNotify = true
 	cfg.NotificationsEnabled = true
 
-	conn, _, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-	q := db.New(conn)
+	q := &querierStub{}
 	n := New(WithQueries(q), WithConfig(cfg))
 
-	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/p", Task: TaskTest, UserID: 1, Outcome: eventbus.TaskOutcomeSuccess}, nil); err != nil {
+	if err := n.ProcessEvent(ctx, eventbus.TaskEvent{Path: "/p", Task: TaskTest, UserID: 1, Outcome: eventbus.TaskOutcomeSuccess}, nil); err != nil {
 		t.Fatalf("process: %v", err)
 	}
 }
@@ -209,16 +255,16 @@ func TestProcessEventAdminNotify(t *testing.T) {
 	cfg.EmailFrom = "from@example.com"
 	cfg.NotificationsEnabled = true
 
-	conn, _, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	q := &querierStub{
+		QuerierStub: db.QuerierStub{
+			SystemGetUserByEmailRow: &db.SystemGetUserByEmailRow{Idusers: 1, Email: "a@test", Username: sql.NullString{String: "a", Valid: true}},
+		},
 	}
-	defer conn.Close()
-	q := db.New(conn)
+
 	prov := &busDummyProvider{}
 	n := New(WithQueries(q), WithEmailProvider(prov), WithConfig(cfg))
 
-	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/admin/x", Task: TaskTest, UserID: 1, Outcome: eventbus.TaskOutcomeSuccess}, nil); err != nil {
+	if err := n.ProcessEvent(ctx, eventbus.TaskEvent{Path: "/admin/x", Task: TaskTest, UserID: 1, Outcome: eventbus.TaskOutcomeSuccess}, nil); err != nil {
 		t.Fatalf("process: %v", err)
 	}
 }
@@ -231,19 +277,11 @@ func TestProcessEventWritingSubscribers(t *testing.T) {
 	cfg.NotificationsEnabled = true
 	cfg.EmailFrom = "from@example.com"
 
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-	q := db.New(conn)
+	q := &querierStub{}
 	n := New(WithQueries(q), WithConfig(cfg))
 
-	if err := n.processEvent(ctx, eventbus.TaskEvent{Path: "/writings/article/1", Task: TaskTest, UserID: 2, Data: map[string]any{"target": Target{Type: "writing", ID: 1}}, Outcome: eventbus.TaskOutcomeSuccess}, nil); err != nil {
+	if err := n.ProcessEvent(ctx, eventbus.TaskEvent{Path: "/writings/article/1", Task: TaskTest, UserID: 2, Data: map[string]any{"target": Target{Type: "writing", ID: 1}}, Outcome: eventbus.TaskOutcomeSuccess}, nil); err != nil {
 		t.Fatalf("process: %v", err)
-	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expect: %v", err)
 	}
 }
 
@@ -267,34 +305,54 @@ func TestProcessEventTargetUsers(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
 	cfg.NotificationsEnabled = true
 
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	q := &querierStub{}
+	q.SystemGetTemplateOverrideReturns = ""
+	// Override SystemGetUserByID for different users
+	q.SystemGetUserByIDFunc = func(ctx context.Context, id int32) (*db.SystemGetUserByIDRow, error) {
+		return &db.SystemGetUserByIDRow{Idusers: id, Email: sql.NullString{String: "u@test", Valid: true}, Username: sql.NullString{String: fmt.Sprintf("u%d", id), Valid: true}}, nil
 	}
-	defer conn.Close()
-	q := db.New(conn)
-	n := New(WithQueries(q), WithConfig(cfg))
 
-	for _, id := range []int32{2, 3} {
-		mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username, u.public_profile_enabled_at FROM users u LEFT JOIN user_emails ue ON ue.id = ( SELECT id FROM user_emails ue2 WHERE ue2.user_id = u.idusers AND ue2.verified_at IS NOT NULL ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1 ) WHERE u.idusers = ?")).
-			WithArgs(id).
-			WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(id, "u@test", fmt.Sprintf("u%d", id), nil))
-		mock.ExpectQuery(regexp.QuoteMeta("SELECT body FROM template_overrides WHERE name = ?")).
-			WithArgs("announcement.gotxt").
-			WillReturnRows(sqlmock.NewRows([]string{"body"}).AddRow(""))
-		mock.ExpectExec(regexp.QuoteMeta("INSERT INTO notifications (users_idusers, link, message) VALUES (?, ?, ?)")).
-			WithArgs(id, sqlmock.AnyArg(), sqlmock.AnyArg()).
-			WillReturnResult(sqlmock.NewResult(1, 1))
-	}
+	n := New(WithQueries(q), WithConfig(cfg))
 
 	evt := eventbus.TaskEvent{Path: "/announce/1", Task: targetTask{TaskString: "Target"}, UserID: 1, Data: map[string]any{"Username": "bob"}, Outcome: eventbus.TaskOutcomeSuccess}
 
-	if err := n.processEvent(ctx, evt, nil); err != nil {
+	if err := n.ProcessEvent(ctx, evt, nil); err != nil {
 		t.Fatalf("process: %v", err)
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expect: %v", err)
+	// Check calls
+	if len(q.SystemCreateNotificationCalls) != 2 {
+		t.Fatalf("expected 2 notifications, got %d", len(q.SystemCreateNotificationCalls))
 	}
+}
+
+func TestNotifySubscribersNews(t *testing.T) {
+	ctx := context.Background()
+	patterns := buildPatterns(tasks.TaskString("Reply"), "/news/news/3")
+	q := newSubscriberTestQuerier(patterns)
+
+	cfg := config.NewRuntimeConfig()
+	cfg.EmailFrom = "from@example.com"
+	cfg.NotificationsEnabled = true
+
+	task := newsSubscriberTask{TaskString: tasks.TaskString("Reply")}
+	n := New(WithQueries(q), WithConfig(cfg))
+	evt := eventbus.TaskEvent{
+		Path:    "/news/news/3",
+		Task:    task,
+		UserID:  1,
+		Data:    map[string]any{"Item": "news reply"},
+		Outcome: eventbus.TaskOutcomeSuccess,
+	}
+
+	if err := n.notifySubscribers(ctx, evt, task); err != nil {
+		t.Fatalf("notifySubscribers: %v", err)
+	}
+
+	assertSubscriberCall(t, q.ListSubscribersForPatternsParams, "email", patterns)
+	assertSubscriberCall(t, q.ListSubscribersForPatternsParams, "internal", patterns)
+	assertCallCount(t, "SystemGetUserByID", len(q.SystemGetUserByIDCalls), 3)
+	assertQueuedEmails(t, q.InsertPendingEmailCalls, []int32{2, 3, 4})
+	assertNotifications(t, q.SystemCreateNotificationCalls, []int32{2, 3, 4}, evt.Path)
 }
 
 func TestBusWorker(t *testing.T) {
@@ -307,13 +365,7 @@ func TestBusWorker(t *testing.T) {
 
 	bus := eventbus.NewBus()
 
-	conn, _, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-	q := db.New(conn)
-
+	q := &querierStub{}
 	prov := &busDummyProvider{}
 	n := New(WithQueries(q), WithEmailProvider(prov), WithConfig(cfg))
 
@@ -352,24 +404,18 @@ func TestProcessEventAutoSubscribe(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
 	cfg.NotificationsEnabled = true
 
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	q := &querierStub{
+		QuerierStub: db.QuerierStub{
+			GetPreferenceForListerReturn: map[int32]*db.Preference{
+				1: {Idpreferences: 1, UsersIdusers: 1, AutoSubscribeReplies: true, Emailforumupdates: sql.NullBool{Bool: false, Valid: true}},
+			},
+			ListSubscribersForPatternReturn: map[string][]int32{
+				// "autosub:/forum/topic/7/thread/42": {1}, // Assuming already subscribed if we wanted to test idempotency, but here we expect insert
+			},
+		},
 	}
-	defer conn.Close()
-	q := db.New(conn)
+
 	n := New(WithQueries(q), WithConfig(cfg))
-
-	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_id", "users_idusers", "emailforumupdates", "page_size", "auto_subscribe_replies", "timezone"}).
-		AddRow(1, 0, 1, nil, 0, true, nil)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT idpreferences, language_id, users_idusers, emailforumupdates, page_size, auto_subscribe_replies, timezone FROM preferences WHERE users_idusers = ?")).
-		WithArgs(int32(1)).WillReturnRows(prefRows)
-
-	pattern := buildPatterns(tasks.TaskString("AutoSub"), "/forum/topic/7/thread/42")[0]
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT users_idusers FROM subscriptions WHERE pattern = ? AND method = ?")).
-		WithArgs(pattern, "internal").WillReturnRows(sqlmock.NewRows([]string{"users_idusers"}))
-	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO subscriptions (users_idusers, pattern, method) VALUES (?, ?, ?)")).
-		WithArgs(int32(1), pattern, "internal").WillReturnResult(sqlmock.NewResult(1, 1))
 
 	evt := eventbus.TaskEvent{
 		Path:   "/forum/topic/7/thread/42/reply",
@@ -380,8 +426,84 @@ func TestProcessEventAutoSubscribe(t *testing.T) {
 		Outcome: eventbus.TaskOutcomeSuccess,
 	}
 
-	n.handleAutoSubscribe(ctx, evt, autoSubTask{TaskString: "AutoSub"})
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expect: %v", err)
+	if err := n.handleAutoSubscribe(ctx, evt, autoSubTask{TaskString: "AutoSub"}); err != nil {
+		t.Fatalf("handleAutoSubscribe: %v", err)
+	}
+
+	if len(q.InsertSubscriptionParams) != 1 {
+		t.Fatalf("expected 1 subscription insert, got %d", len(q.InsertSubscriptionParams))
+	}
+	pattern := buildPatterns(tasks.TaskString("AutoSub"), "/forum/topic/7/thread/42")[0]
+	if q.InsertSubscriptionParams[0].Pattern != pattern {
+		t.Fatalf("expected pattern %s, got %s", pattern, q.InsertSubscriptionParams[0].Pattern)
+	}
+}
+
+func assertSubscriberCall(t *testing.T, calls []db.ListSubscribersForPatternsParams, method string, patterns []string) {
+	t.Helper()
+	for _, call := range calls {
+		if call.Method == method {
+			if len(call.Patterns) != len(patterns) {
+				t.Fatalf("expected %d patterns for %s got %d", len(patterns), method, len(call.Patterns))
+			}
+			for i, p := range patterns {
+				if call.Patterns[i] != p {
+					t.Fatalf("%s pattern %d = %s want %s", method, i, call.Patterns[i], p)
+				}
+			}
+			return
+		}
+	}
+	t.Fatalf("no %s subscriber call recorded", method)
+}
+
+func assertCallCount(t *testing.T, method string, got, want int) {
+	t.Helper()
+	if got != want {
+		t.Fatalf("expected %d %s calls got %d", want, method, got)
+	}
+}
+
+func assertQueuedEmails(t *testing.T, calls []db.InsertPendingEmailParams, want []int32) {
+	t.Helper()
+	if len(calls) != len(want) {
+		t.Fatalf("expected %d queued emails got %d", len(want), len(calls))
+	}
+	seen := map[int32]bool{}
+	for _, call := range calls {
+		if !call.ToUserID.Valid {
+			t.Fatalf("expected recipient id for queued email")
+		}
+		seen[call.ToUserID.Int32] = true
+		if call.DirectEmail {
+			t.Fatalf("expected queued emails for subscribers, got direct email flag")
+		}
+	}
+	for _, id := range want {
+		if !seen[id] {
+			t.Fatalf("missing queued email for user %d", id)
+		}
+	}
+}
+
+func assertNotifications(t *testing.T, calls []db.SystemCreateNotificationParams, want []int32, link string) {
+	t.Helper()
+	if len(calls) != len(want) {
+		t.Fatalf("expected %d notifications got %d", len(want), len(calls))
+	}
+	seen := map[int32]bool{}
+	for _, call := range calls {
+		if call.Link.String != link || !call.Link.Valid {
+			t.Fatalf("expected link %s got %q (valid=%v)", link, call.Link.String, call.Link.Valid)
+		}
+		if !call.Message.Valid || call.Message.String == "" {
+			t.Fatalf("expected non-empty notification message")
+		}
+		seen[call.RecipientID] = true
+	}
+	for _, id := range want {
+		if !seen[id] {
+			t.Fatalf("missing notification for user %d", id)
+		}
 	}
 }

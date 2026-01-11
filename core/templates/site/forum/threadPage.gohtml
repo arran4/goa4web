@@ -3,18 +3,6 @@
     {{ with .BasePath }}{{ $base = . }}{{ end }}
     <div class="label-bar">
         {{ template "topicLabels" .Labels }}
-        <form method="post" action="{{$base}}/thread/{{.Thread.Idforumthread}}/labels" class="mark-read">
-            {{ csrfField }}
-            <input type="hidden" name="task" value="Mark Thread Read"/>
-            <input type="hidden" name="redirect" value="{{ .BackURL }}"/>
-            <button type="submit">Mark as read</button>
-        </form>
-        <form method="post" action="{{$base}}/thread/{{.Thread.Idforumthread}}/labels" class="mark-read">
-            {{ csrfField }}
-            <input type="hidden" name="task" value="Mark Thread Read"/>
-            <input type="hidden" name="redirect" value="{{$base}}/topic/{{.Topic.Idforumtopic}}"/>
-            <button type="submit">Mark as read and go back</button>
-        </form>
     </div>
     {{ template "threadComments" }}
     {{ template "forumReply" $ }}
@@ -36,23 +24,10 @@
             <input type="text" class="label-input" data-type="public" placeholder="Add public label"/>
             <input type="text" class="label-input" data-type="private" placeholder="Add private label"/>
             <input type="submit" value="Save Labels"/>
-        </form>
-        <form method="post" action="{{$base}}/thread/{{.Thread.Idforumthread}}/labels" class="mark-read">
-            {{ csrfField }}
-            <input type="hidden" name="task" value="Mark Thread Read"/>
-            <input type="hidden" name="redirect" value="{{ .BackURL }}"/>
-            <button type="submit">Mark as read</button>
-        </form>
-        <form method="post" action="{{$base}}/thread/{{.Thread.Idforumthread}}/labels" class="mark-read">
-            {{ csrfField }}
-            <input type="hidden" name="task" value="Mark Thread Read"/>
-            <input type="hidden" name="redirect" value="{{$base}}/topic/{{.Topic.Idforumtopic}}"/>
-            <button type="submit">Mark as read and go back</button>
-        </form>
-        <form method="get" action="{{$base}}/topic/{{.Topic.Idforumtopic}}">
-            <button type="submit">Go to topic</button>
+            <button type="button" class="share-button" data-link="{{ .BackURL }}" data-module="forum">Share</button>
+            <input type="text" class="share-link" readonly style="display: none;"/>
         </form>
     </div>
-    <script src="{{$base}}/topic_labels.js"></script>
+    <script src="{{ assetHash "/forum/topic_labels.js" }}"></script>
 
 {{ template "tail" $ }}

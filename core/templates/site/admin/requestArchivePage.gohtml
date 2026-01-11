@@ -9,7 +9,7 @@
     <td><a href="/admin/user/{{ .UsersIdusers }}">{{ with $u := cd.UserByID .UsersIdusers }}{{ if $u.Username.Valid }}{{ $u.Username.String }}{{ end }}{{ end }}</a></td>
     <td>{{ .Status }}</td>
     <td>{{ .ChangeValue.String }}</td>
-    <td>{{ if .ActedAt.Valid }}{{ cd.LocalTime .ActedAt.Time }}{{ end }}</td>
+    <td>{{ if .ActedAt.Valid }}{{ cd.FormatLocalTime .ActedAt.Time }}{{ end }}</td>
 </tr>
 {{ end }}
 </table>

@@ -2,13 +2,14 @@ package forum
 
 import (
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
+	"log"
 	"net/http"
 	"strconv"
 
+	"github.com/arran4/goa4web/core/consts"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/workers/postcountworker"
 	"github.com/gorilla/mux"
 )
 
@@ -41,14 +42,16 @@ func TopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(commentId), ThreadID: threadRow.Idforumthread, TopicID: topicRow.Idforumtopic}
-			evt.Data["CommentURL"] = cd.AbsoluteURL(fmt.Sprintf("/forum/topic/%d/thread/%d#comment-%d", topicRow.Idforumtopic, threadRow.Idforumthread, commentId))
-		}
+	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
+		ThreadID:             threadRow.Idforumthread,
+		TopicID:              topicRow.Idforumtopic,
+		CommentID:            int32(commentId),
+		CommentURL:           cd.AbsoluteURL(fmt.Sprintf("/forum/topic/%d/thread/%d#comment-%d", topicRow.Idforumtopic, threadRow.Idforumthread, commentId)),
+		ClearUnreadForOthers: true,
+		MarkThreadRead:       true,
+		IncludePostCount:     true,
+	}); err != nil {
+		log.Printf("thread comment edit side effects: %v", err)
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/forum/topic/%d/thread/%d#comment-%d", topicRow.Idforumtopic, threadRow.Idforumthread, commentId), http.StatusSeeOther)

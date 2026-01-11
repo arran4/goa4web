@@ -45,5 +45,7 @@ func AdminLinkRemapPage(w http.ResponseWriter, r *http.Request) {
 		wcsv.Flush()
 		data.CSV = buf.String()
 	}
-	handlers.TemplateHandler(w, r, "admin/linkRemapPage.gohtml", data)
+	AdminLinkRemapPageTmpl.Handle(w, r, data)
 }
+
+const AdminLinkRemapPageTmpl handlers.Page = "admin/linkRemapPage.gohtml"

@@ -3,12 +3,13 @@ package handlers
 import (
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"net/url"
+
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 // TaskHandler wraps t.Action to record the task on the request event and handle the
@@ -21,11 +22,13 @@ func TaskHandler(t tasks.Task) func(http.ResponseWriter, *http.Request) {
 		result := t.Action(w, r)
 		switch result := result.(type) {
 		case RedirectHandler:
-			http.Redirect(w, r, string(result), http.StatusTemporaryRedirect)
+			// Use 303 See Other so POST actions redirect to a GET of the target resource.
+			// 307 would preserve the HTTP method and often breaks when the target only supports GET.
+			http.Redirect(w, r, string(result), http.StatusSeeOther)
 		case RefreshDirectHandler:
 			cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 			cd.AutoRefresh = result.Content()
-			TemplateHandler(w, r, "taskDoneAutoRefreshPage.gohtml", result)
+			TaskDoneAutoRefreshPageTmpl.Handle(w, r, result)
 		case TextByteWriter:
 			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 			if _, err := w.Write([]byte(result)); err != nil {

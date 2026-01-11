@@ -1,17 +1,18 @@
 package forum
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
-
-	"github.com/arran4/goa4web/core/consts"
+	"time"
 
 	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/core/consts"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers/share"
 	"github.com/gorilla/mux"
 )
 
@@ -32,6 +33,17 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+
+	cd.OpenGraph = &common.OpenGraph{
+		Title:       "Forum",
+		Description: "A place for discussion.",
+		Image:       share.MakeImageURL(cd.AbsoluteURL(""), "Forum", cd.ShareSigner, time.Now().Add(24*time.Hour)),
+		ImageWidth:  cd.Config.OGImageWidth,
+		ImageHeight: cd.Config.OGImageHeight,
+		TwitterSite: cd.Config.TwitterSite,
+		URL:         cd.AbsoluteURL(r.URL.String()),
+	}
+
 	vars := mux.Vars(r)
 	categoryId, _ := strconv.Atoi(vars["category"])
 
@@ -94,62 +106,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		data.Back = true
 	}
 
-	handlers.TemplateHandler(w, r, "forumPage", data)
+	ForumPageTmpl.Handle(w, r, data)
 }
 
-func CustomForumIndex(data *common.CoreData, r *http.Request) {
-	vars := mux.Vars(r)
-	threadId := vars["thread"]
-	topicId := vars["topic"]
-	categoryId := vars["category"]
-	data.CustomIndexItems = []common.IndexItem{}
-	if data.FeedsEnabled && topicId != "" && threadId == "" {
-		data.RSSFeedURL = fmt.Sprintf("/forum/topic/%s.rss", topicId)
-		data.AtomFeedURL = fmt.Sprintf("/forum/topic/%s.atom", topicId)
-		data.CustomIndexItems = append(data.CustomIndexItems,
-			common.IndexItem{Name: "Atom Feed", Link: data.AtomFeedURL},
-			common.IndexItem{Name: "RSS Feed", Link: data.RSSFeedURL},
-		)
-	}
-	// Administrative actions moved to the admin portal.
-	if threadId != "" && topicId != "" {
-		if tid, err := strconv.Atoi(topicId); err == nil && data.HasGrant("forum", "topic", "reply", int32(tid)) {
-			data.CustomIndexItems = append(data.CustomIndexItems,
-				common.IndexItem{
-					Name: "Write Reply",
-					Link: fmt.Sprintf("/forum/topic/%s/thread/%s/reply", topicId, threadId),
-				},
-			)
-		}
-	}
-	if categoryId != "" && topicId != "" {
-		if tid, err := strconv.Atoi(topicId); err == nil && data.HasGrant("forum", "topic", "post", int32(tid)) {
-			data.CustomIndexItems = append(data.CustomIndexItems,
-				common.IndexItem{
-					Name: "Create Thread",
-					Link: fmt.Sprintf("/forum/topic/%s/new", topicId),
-				},
-			)
-		}
-	}
-	if threadId == "" && topicId != "" && data.UserID != 0 {
-		tid, err := strconv.Atoi(topicId)
-		if err == nil {
-			if subscribedToTopic(data, int32(tid)) {
-				data.CustomIndexItems = append(data.CustomIndexItems,
-					common.IndexItem{
-						Name: "Unsubscribe From Topic",
-						Link: fmt.Sprintf("/forum/topic/%s/unsubscribe", topicId),
-					},
-				)
-			} else {
-				data.CustomIndexItems = append(data.CustomIndexItems,
-					common.IndexItem{
-						Name: "Subscribe To Topic",
-						Link: fmt.Sprintf("/forum/topic/%s/subscribe", topicId),
-					},
-				)
-			}
-		}
-	}
-}
+const ForumPageTmpl handlers.Page = "forum/page.gohtml"

@@ -106,10 +106,15 @@ fabric.properties
 dbbackups
 /uploads/
 /dev-config.json
-/dev-config.env
+/dev-*-config.env
 /dlq
 /.idea/
 /.admin_api_secret
 /.link_sign_secret
 /*.db
 /.output.txt
+/*.log
+verification/
+verification_*.png
+a4code2html
+.share_sign_secret

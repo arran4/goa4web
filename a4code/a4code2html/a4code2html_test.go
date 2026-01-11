@@ -128,7 +128,7 @@ func TestCodeSlashClose(t *testing.T) {
 	c := New()
 	c.SetInput("[code]foo[/code]")
 	got, _ := io.ReadAll(c.Process())
-	want := "<pre class=\"a4code-block a4code-code\">]foo</pre>"
+	want := "<div class=\"a4code-block a4code-code-wrapper\"><div class=\"code-header\">Code</div><pre class=\"a4code-code-body\">]foo</pre></div>"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)
 	}
@@ -138,7 +138,7 @@ func TestQuoteMarkup(t *testing.T) {
 	c := New()
 	c.SetInput("[quote hi]")
 	got, _ := io.ReadAll(c.Process())
-	want := "<blockquote class=\"a4code-block a4code-quote\">hi</blockquote>"
+	want := "<blockquote class=\"a4code-block a4code-quote\"><div class=\"quote-header\">Quote:</div><div class=\"quote-body\">hi</div></blockquote>"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)
 	}
@@ -148,7 +148,20 @@ func TestQuoteOfMarkup(t *testing.T) {
 	c := New()
 	c.SetInput("[quoteof bob hi]")
 	got, _ := io.ReadAll(c.Process())
-	want := "<blockquote class=\"a4code-block a4code-quoteof\"><div>Quote of bob:</div> hi</blockquote>"
+	want := "<blockquote class=\"a4code-block a4code-quoteof\"><div class=\"quote-header\">Quote of bob:</div><div class=\"quote-body\"> hi</div></blockquote>"
+	if string(got) != want {
+		t.Errorf("got %q want %q", string(got), want)
+	}
+}
+
+func TestQuoteOfColorMapping(t *testing.T) {
+	colorMap := func(name string) string {
+		return "mapped-color"
+	}
+	c := New(colorMap)
+	c.SetInput("[quoteof bob hi]")
+	got, _ := io.ReadAll(c.Process())
+	want := "<blockquote class=\"a4code-block a4code-quoteof mapped-color\"><div class=\"quote-header\">Quote of bob:</div><div class=\"quote-body\"> hi</div></blockquote>"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)
 	}
@@ -209,7 +222,7 @@ func TestImageURLMapper(t *testing.T) {
 	c := New(mapper)
 	c.SetInput("[img=image:abc]")
 	got, _ := io.ReadAll(c.Process())
-	want := "<img class=\"a4code-image\" src=\"map:img:=image:abc\" />"
+	want := "<img class=\"a4code-image\" src=\"map:img:image:abc\" />"
 	if string(got) != want {
 		t.Fatalf("img map got %q want %q", got, want)
 	}

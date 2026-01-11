@@ -6,11 +6,11 @@
         <tr>
             <td><a href="/admin/user/{{.Idusers}}">{{.Idusers}}</a></td><td>{{.Username.String}}</td><td>{{.Email}}</td>
             <td>
-                <form style="display:inline" method="post" action="/admin/users/pending/approve">
+                <form class="inline-form" method="post" action="/admin/users/pending/approve">
                     {{ csrfField }}<input type="hidden" name="uid" value="{{.Idusers}}">
                     <input type="submit" name="task" value="Approve">
                 </form>
-                <form style="display:inline" method="post" action="/admin/users/pending/reject">
+                <form class="inline-form" method="post" action="/admin/users/pending/reject">
                     {{ csrfField }}<input type="hidden" name="uid" value="{{.Idusers}}">
                     Reason:<input name="reason">
                     <input type="submit" name="task" value="Reject">

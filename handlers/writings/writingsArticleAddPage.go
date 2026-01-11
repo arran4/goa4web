@@ -2,17 +2,19 @@ package writings
 
 import (
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/arran4/goa4web/core/consts"
+
+	"strings"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/workers/searchworker"
-	"strings"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/mux"
@@ -33,8 +35,11 @@ func ArticleAddPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	handlers.TemplateHandler(w, r, "articleAddPage.gohtml", data)
+	WritingsArticleAddPageTmpl.Handle(w, r, data)
 }
+
+const WritingsArticleAddPageTmpl handlers.Page = "writings/articleAddPage.gohtml"
+
 func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	categoryId, _ := strconv.Atoi(vars["category"])

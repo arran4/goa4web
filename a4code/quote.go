@@ -16,11 +16,15 @@ type quoteOptions struct {
 	Trim bool
 }
 
-// WithFullQuote enables paragraph aware quoting.
-func WithFullQuote() QuoteOption { return func(o *quoteOptions) { o.Full = true } }
+// WithParagraphQuote enables paragraph aware quoting.
+func WithParagraphQuote() QuoteOption { return func(o *quoteOptions) { o.Full = true } }
 
 // WithTrimSpace removes surrounding whitespace from the quoted text.
 func WithTrimSpace() QuoteOption { return func(o *quoteOptions) { o.Trim = true } }
+
+// WithFullQuote is a backward-compatible alias for paragraph-aware quoting.
+// Deprecated: use WithParagraphQuote instead.
+func WithFullQuote() QuoteOption { return WithParagraphQuote() }
 
 // QuoteText wraps the provided text in quote markup for the given user.
 // Behaviour can be customised through QuoteOption values.
@@ -39,7 +43,22 @@ func quoteOfText(username, text string, trim bool) string {
 	if trim {
 		text = strings.TrimSpace(text)
 	}
-	return fmt.Sprintf("[quoteof \"%s\" %s]\n", username, text)
+	return fmt.Sprintf("[quoteof \"%s\" %s]\n", escapeUsername(username), text)
+}
+
+func escapeUsername(u string) string {
+	var b bytes.Buffer
+	for i := 0; i < len(u); i++ {
+		switch u[i] {
+		case '"':
+			b.WriteString(`\"`)
+		case '\\':
+			b.WriteString(`\\`)
+		default:
+			b.WriteByte(u[i])
+		}
+	}
+	return b.String()
 }
 
 func fullQuoteOf(username, text string, trim bool) string {
@@ -90,4 +109,8 @@ func fullQuoteOf(username, text string, trim bool) string {
 	}
 	quote.WriteString(quoteOfText(username, out.String(), trim))
 	return quote.String()
+}
+
+func Substring(s string, start, end int) string {
+	return substring(s, start, end)
 }

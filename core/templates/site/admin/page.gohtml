@@ -1,35 +1,36 @@
-{{ define "adminPage" }}
     {{ template "head" $ }}
     <h2>Admin Dashboard</h2>
+    {{ if cd.EmailProviderError }}
+    <p class="text-error"><strong>Email Disabled:</strong> {{ cd.EmailProviderError }}</p>
+    {{ end }}
     <p><a href="/admin">Refresh</a></p>
-<p>Select an option:</p>
-<ul>
-    {{- if cd.Nav }}
-        {{- range $s := cd.Nav.AdminSections }}
-        <li>{{ $s.Name }}
-            <ul>
-                {{- range $l := $s.Links }}
-                <li><a href="{{ $l.Link }}">{{ $l.Name }}</a></li>
-                {{- end }}
-            </ul>
-        </li>
+    <p>Select an option:</p>
+    <ul>
+        {{- if cd.Nav }}
+            {{- range $s := cd.Nav.AdminSections }}
+            <li>{{ $s.Name }}
+                <ul>
+                    {{- range $l := $s.Links }}
+                    <li><a href="{{ $l.Link }}">{{ $l.Name }}</a></li>
+                    {{- end }}
+                </ul>
+            </li>
+            {{- end }}
         {{- end }}
-    {{- end }}
-</ul>
+    </ul>
 
-<h3>Site statistics</h3>
-{{ $stats := cd.AdminDashboardStats }}
-{{ if $stats }}
-<table class="table table-bordered">
-    <tr><th>Item</th><th>Count</th></tr>
-    <tr><td>Users</td><td>{{ $stats.Users }}</td></tr>
-    <tr><td>Languages</td><td>{{ $stats.Languages }}</td></tr>
-    <tr><td>News Posts</td><td>{{ $stats.News }}</td></tr>
-    <tr><td>Blogs</td><td>{{ $stats.Blogs }}</td></tr>
-    <tr><td>Forum Topics</td><td>{{ $stats.ForumTopics }}</td></tr>
-    <tr><td>Forum Threads</td><td>{{ $stats.ForumThreads }}</td></tr>
-    <tr><td>Writings</td><td>{{ $stats.Writings }}</td></tr>
-</table>
-{{ end }}
+    <h3>Site statistics</h3>
+    {{ $stats := cd.AdminDashboardStats }}
+    {{ if $stats }}
+    <table class="table table-bordered">
+        <tr><th>Item</th><th>Count</th></tr>
+        <tr><td>Users</td><td>{{ $stats.Users }}</td></tr>
+        <tr><td>Languages</td><td>{{ $stats.Languages }}</td></tr>
+        <tr><td>News Posts</td><td>{{ $stats.News }}</td></tr>
+        <tr><td>Blogs</td><td>{{ $stats.Blogs }}</td></tr>
+        <tr><td>Forum Topics</td><td>{{ $stats.ForumTopics }}</td></tr>
+        <tr><td>Forum Threads</td><td>{{ $stats.ForumThreads }}</td></tr>
+        <tr><td>Writings</td><td>{{ $stats.Writings }}</td></tr>
+    </table>
+    {{ end }}
     {{ template "tail" $ }}
-{{ end }}

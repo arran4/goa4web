@@ -58,6 +58,18 @@ func (c *userActivateCmd) Run() error {
 		tx.Rollback()
 		return fmt.Errorf("restore user: %w", err)
 	}
+	if err := qtx.AdminRestoreUserEmail(ctx, int32(c.ID)); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("restore user email: %w", err)
+	}
+	if err := qtx.AdminRestoreUserPassword(ctx, int32(c.ID)); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("restore user password: %w", err)
+	}
+	if err := qtx.AdminMarkUserRestored(ctx, int32(c.ID)); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("mark user restored: %w", err)
+	}
 	rows, err := qtx.AdminListPendingDeactivatedComments(ctx, db.AdminListPendingDeactivatedCommentsParams{UsersIdusers: int32(c.ID), Limit: math.MaxInt32, Offset: 0})
 	if err != nil {
 		tx.Rollback()

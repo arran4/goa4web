@@ -26,7 +26,15 @@ func userTimezonePage(w http.ResponseWriter, r *http.Request) {
 	if pref != nil && pref.Timezone.Valid {
 		tz = pref.Timezone.String
 	}
-	type Data struct{ Timezone string }
-	data := Data{Timezone: tz}
-	handlers.TemplateHandler(w, r, "user/timezonePage.gohtml", data)
+	type Data struct {
+		Timezone  string
+		Timezones []string
+	}
+	data := Data{
+		Timezone:  tz,
+		Timezones: getAvailableTimezones(),
+	}
+	UserTimezonePage.Handle(w, r, data)
 }
+
+const UserTimezonePage handlers.Page = "user/timezonePage.gohtml"

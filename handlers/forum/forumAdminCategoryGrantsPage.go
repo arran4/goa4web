@@ -3,14 +3,15 @@ package forum
 import (
 	"database/sql"
 	"fmt"
+	"log"
+	"net/http"
+	"strconv"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/mux"
-	"log"
-	"net/http"
-	"strconv"
 )
 
 // AdminCategoryGrantsPage displays grants for a forum category.
@@ -65,5 +66,7 @@ func AdminCategoryGrantsPage(w http.ResponseWriter, r *http.Request) {
 			data.Grants = append(data.Grants, gi)
 		}
 	}
-	handlers.TemplateHandler(w, r, "forum/adminCategoryGrantsPage.gohtml", data)
+	ForumAdminCategoryGrantsPageTmpl.Handle(w, r, data)
 }
+
+const ForumAdminCategoryGrantsPageTmpl handlers.Page = "forum/adminCategoryGrantsPage.gohtml"

@@ -44,7 +44,7 @@ func (Provider) TestConfig(ctx context.Context) error {
 	return nil
 }
 
-func providerFromConfig(*config.RuntimeConfig) email.Provider { return Provider{} }
+func providerFromConfig(*config.RuntimeConfig) (email.Provider, error) { return Provider{}, nil }
 
 // Register registers the local provider factory.
 func Register(r *email.Registry) { r.RegisterProvider("local", providerFromConfig) }

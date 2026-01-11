@@ -3,15 +3,14 @@ package user
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"regexp"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
@@ -22,18 +21,101 @@ import (
 	"github.com/gorilla/sessions"
 )
 
-func TestAddEmailTaskEventData(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+type emailEventQueries struct {
+	db.Querier
+	userID   int32
+	user     *db.SystemGetUserByIDRow
+	inserted []db.InsertUserEmailParams
+}
+
+func (q *emailEventQueries) GetUserEmailByEmail(context.Context, string) (*db.UserEmail, error) {
+	return nil, sql.ErrNoRows
+}
+
+func (q *emailEventQueries) InsertUserEmail(_ context.Context, arg db.InsertUserEmailParams) error {
+	q.inserted = append(q.inserted, arg)
+	return nil
+}
+
+func (q *emailEventQueries) SystemGetUserByID(_ context.Context, id int32) (*db.SystemGetUserByIDRow, error) {
+	if id != q.userID {
+		return nil, fmt.Errorf("unexpected user id: %d", id)
 	}
-	defer conn.Close()
-	q := db.New(conn)
-	mock.ExpectQuery("SELECT id, user_id, email").WillReturnError(sql.ErrNoRows)
-	mock.ExpectExec("INSERT INTO user_emails").WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectQuery("SELECT u.idusers").WithArgs(int32(1)).
-		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).
-			AddRow(1, nil, "alice", nil))
+	return q.user, nil
+}
+
+type verifyEventQueries struct {
+	db.Querier
+	code        string
+	email       *db.UserEmail
+	maxPriority interface{}
+	marked      []db.SystemMarkUserEmailVerifiedParams
+	priority    []db.SetNotificationPriorityForListerParams
+	deleted     []db.SystemDeleteUserEmailsByEmailExceptIDParams
+}
+
+func (q *verifyEventQueries) GetUserEmailByCode(_ context.Context, code sql.NullString) (*db.UserEmail, error) {
+	if code.String != q.code {
+		return nil, fmt.Errorf("unexpected code: %s", code.String)
+	}
+	return q.email, nil
+}
+
+func (q *verifyEventQueries) SystemMarkUserEmailVerified(_ context.Context, arg db.SystemMarkUserEmailVerifiedParams) error {
+	q.marked = append(q.marked, arg)
+	return nil
+}
+
+func (q *verifyEventQueries) GetMaxNotificationPriority(context.Context, int32) (interface{}, error) {
+	return q.maxPriority, nil
+}
+
+func (q *verifyEventQueries) SetNotificationPriorityForLister(_ context.Context, arg db.SetNotificationPriorityForListerParams) error {
+	q.priority = append(q.priority, arg)
+	return nil
+}
+
+func (q *verifyEventQueries) SystemDeleteUserEmailsByEmailExceptID(_ context.Context, arg db.SystemDeleteUserEmailsByEmailExceptIDParams) error {
+	q.deleted = append(q.deleted, arg)
+	return nil
+}
+
+type resendVerificationQueries struct {
+	db.Querier
+	emailID int32
+	email   *db.UserEmail
+	user    *db.SystemGetUserByIDRow
+	updated []db.SetVerificationCodeForListerParams
+}
+
+func (q *resendVerificationQueries) GetUserEmailByID(_ context.Context, id int32) (*db.UserEmail, error) {
+	if id != q.emailID {
+		return nil, fmt.Errorf("unexpected email id: %d", id)
+	}
+	return q.email, nil
+}
+
+func (q *resendVerificationQueries) SetVerificationCodeForLister(_ context.Context, arg db.SetVerificationCodeForListerParams) error {
+	q.updated = append(q.updated, arg)
+	return nil
+}
+
+func (q *resendVerificationQueries) SystemGetUserByID(_ context.Context, id int32) (*db.SystemGetUserByIDRow, error) {
+	if q.user != nil && id != q.user.Idusers {
+		return nil, fmt.Errorf("unexpected user id: %d", id)
+	}
+	return q.user, nil
+}
+
+func TestAddEmailTaskEventData(t *testing.T) {
+	q := &emailEventQueries{
+		userID: 1,
+		user: &db.SystemGetUserByIDRow{
+			Idusers:                1,
+			Username:               sql.NullString{String: "alice", Valid: true},
+			PublicProfileEnabledAt: sql.NullTime{},
+		},
+	}
 
 	store = sessions.NewCookieStore([]byte("test"))
 	core.Store = store
@@ -50,6 +132,9 @@ func TestAddEmailTaskEventData(t *testing.T) {
 	ctx = context.WithValue(ctx, core.ContextValues("session"), sess)
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 
+	addEmailTask.codeGenerator = func() (string, error) { return "deadbeef", nil }
+	defer func() { addEmailTask.codeGenerator = nil }()
+
 	req := httptest.NewRequest("POST", "http://example.com/usr/email", strings.NewReader("new_email=a@example.com"))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req = req.WithContext(ctx)
@@ -62,21 +147,31 @@ func TestAddEmailTaskEventData(t *testing.T) {
 	if _, ok := evt.Data["URL"]; !ok {
 		t.Fatalf("missing URL event data: %+v", evt.Data)
 	}
+	if evt.Data["VerificationCode"] != "deadbeef" {
+		t.Fatalf("verification code not set: %+v", evt.Data)
+	}
+	if evt.Data["Token"] != "deadbeef" {
+		t.Fatalf("token not set: %+v", evt.Data)
+	}
 	if evt.Data["Username"] != "alice" {
 		t.Fatalf("username not set: %+v", evt.Data)
-	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
 	}
 }
 
 func TestVerifyRemovesDuplicates(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	q := &verifyEventQueries{
+		code: "code",
+		email: &db.UserEmail{
+			ID:                    1,
+			UserID:                1,
+			Email:                 "a@example.com",
+			VerifiedAt:            sql.NullTime{},
+			LastVerificationCode:  sql.NullString{String: "code", Valid: true},
+			VerificationExpiresAt: sql.NullTime{Time: time.Now().Add(time.Hour), Valid: true},
+			NotificationPriority:  0,
+		},
+		maxPriority: int64(0),
 	}
-	defer conn.Close()
-	q := db.New(conn)
 
 	store = sessions.NewCookieStore([]byte("test"))
 	core.Store = store
@@ -91,17 +186,8 @@ func TestVerifyRemovesDuplicates(t *testing.T) {
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithSession(sess), common.WithEvent(evt))
 	cd.UserID = 1
 
-	rows := sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).
-		AddRow(1, 1, "a@example.com", nil, "code", time.Now().Add(time.Hour), 0)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority\nFROM user_emails\nWHERE last_verification_code = ?")).
-		WithArgs(sql.NullString{String: "code", Valid: true}).
-		WillReturnRows(rows)
-	mock.ExpectExec(regexp.QuoteMeta("UPDATE user_emails\nSET verified_at = ?, last_verification_code = NULL, verification_expires_at = NULL\nWHERE id = ?")).
-		WithArgs(sqlmock.AnyArg(), int32(1)).
-		WillReturnResult(sqlmock.NewResult(0, 1))
-	mock.ExpectExec(regexp.QuoteMeta("DELETE FROM user_emails WHERE email = ? AND id != ?")).
-		WithArgs("a@example.com", int32(1)).
-		WillReturnResult(sqlmock.NewResult(0, 1))
+	addEmailTask.codeGenerator = func() (string, error) { return "deadbeef", nil }
+	defer func() { addEmailTask.codeGenerator = nil }()
 
 	sess.Values = map[interface{}]interface{}{"UID": int32(1)}
 	core.Store = store
@@ -119,20 +205,29 @@ func TestVerifyRemovesDuplicates(t *testing.T) {
 	if rr.Code != http.StatusSeeOther {
 		t.Fatalf("status=%d", rr.Code)
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	if len(q.marked) != 1 || q.marked[0].ID != 1 {
+		t.Fatalf("unexpected mark args: %#v", q.marked)
+	}
+	if len(q.priority) != 1 {
+		t.Fatalf("unexpected priority args: %#v", q.priority)
+	}
+	if arg := q.priority[0]; arg.ListerID != 1 || arg.NotificationPriority != 1 || arg.ID != 1 {
+		t.Fatalf("unexpected priority args: %#v", arg)
+	}
+	if len(q.deleted) != 1 {
+		t.Fatalf("unexpected delete args: %#v", q.deleted)
+	}
+	if arg := q.deleted[0]; arg.Email != "a@example.com" || arg.ID != 1 {
+		t.Fatalf("unexpected delete args: %#v", arg)
 	}
 }
 
 func TestResendVerificationEmailTaskEventData(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	q := &resendVerificationQueries{
+		emailID: 1,
+		email:   &db.UserEmail{ID: 1, UserID: 1, Email: "a@example.com"},
+		user:    &db.SystemGetUserByIDRow{Idusers: 1, Username: sql.NullString{String: "alice", Valid: true}},
 	}
-	defer conn.Close()
-	q := db.New(conn)
-	mock.ExpectQuery("SELECT id, user_id, email").WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).AddRow(1, 1, "a@example.com", nil, nil, nil, 0))
-	mock.ExpectExec("UPDATE user_emails SET").WillReturnResult(sqlmock.NewResult(1, 1))
 
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
@@ -154,6 +249,9 @@ func TestResendVerificationEmailTaskEventData(t *testing.T) {
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithSession(sess), common.WithEvent(evt))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 
+	addEmailTask.codeGenerator = func() (string, error) { return "deadbeef", nil }
+	defer func() { addEmailTask.codeGenerator = nil }()
+
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 	handlers.TaskHandler(resendVerificationEmailTask)(rr, req)
@@ -167,7 +265,16 @@ func TestResendVerificationEmailTaskEventData(t *testing.T) {
 	if _, ok := evt.Data["email"]; !ok {
 		t.Fatalf("missing email event data: %+v", evt.Data)
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	if evt.Data["VerificationCode"] != "deadbeef" {
+		t.Fatalf("verification code missing: %+v", evt.Data)
+	}
+	if evt.Data["Token"] != "deadbeef" {
+		t.Fatalf("token missing: %+v", evt.Data)
+	}
+	if len(q.updated) != 1 {
+		t.Fatalf("expected verification update, got %d", len(q.updated))
+	}
+	if arg := q.updated[0]; arg.ListerID != 1 || arg.ID != 1 {
+		t.Fatalf("unexpected verification args: %#v", arg)
 	}
 }

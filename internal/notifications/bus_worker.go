@@ -58,7 +58,7 @@ func (n *Notifier) BusWorker(ctx context.Context, bus *eventbus.Bus, q dlq.DLQ) 
 			if !ok {
 				continue
 			}
-			if err := n.processEvent(ctx, evt, q); err != nil {
+			if err := n.ProcessEvent(ctx, evt, q); err != nil {
 				log.Printf("process event: %v", err)
 			}
 		case <-ctx.Done():
@@ -67,7 +67,18 @@ func (n *Notifier) BusWorker(ctx context.Context, bus *eventbus.Bus, q dlq.DLQ) 
 	}
 }
 
-func (n *Notifier) processEvent(ctx context.Context, evt eventbus.TaskEvent, q dlq.DLQ) error {
+// RegisterSync configures the bus to deliver events synchronously to this notifier.
+func (n *Notifier) RegisterSync(bus *eventbus.Bus, q dlq.DLQ) {
+	bus.SyncPublish = func(msg eventbus.Message) {
+		if evt, ok := msg.(eventbus.TaskEvent); ok {
+			if err := n.ProcessEvent(context.Background(), evt, q); err != nil {
+				log.Printf("sync process event: %v", err)
+			}
+		}
+	}
+}
+
+func (n *Notifier) ProcessEvent(ctx context.Context, evt eventbus.TaskEvent, q dlq.DLQ) error {
 	if !n.Config.NotificationsEnabled {
 		return nil
 	}
@@ -147,11 +158,6 @@ func (n *Notifier) processEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 	return nil
 }
 
-type NotificationData struct {
-	TaskEvent eventbus.TaskEvent
-	Item      map[string]any
-}
-
 func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp SelfNotificationTemplateProvider) error {
 	if et, send := tp.SelfEmailTemplate(evt); send {
 		if b, ok := evt.Task.(SelfEmailBroadcaster); ok && b.SelfEmailBroadcast() {
@@ -177,7 +183,15 @@ func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp Se
 		}
 	}
 	if nt := tp.SelfInternalNotificationTemplate(evt); nt != nil {
-		data := NotificationData{TaskEvent: evt, Item: evt.Data}
+		data := struct {
+			Path      string
+			Item      any
+			TaskEvent eventbus.TaskEvent
+		}{
+			Path:      evt.Path,
+			Item:      evt.Data,
+			TaskEvent: evt,
+		}
 		msg, err := n.renderNotification(ctx, *nt, data)
 		if err != nil {
 			return err
@@ -230,7 +244,15 @@ func (n *Notifier) notifyTargetUsers(ctx context.Context, evt eventbus.TaskEvent
 			}
 		}
 		if nt := tp.TargetInternalNotificationTemplate(evt); nt != nil {
-			data := NotificationData{TaskEvent: evt, Item: evt.Data}
+			data := struct {
+				Path      string
+				Item      any
+				TaskEvent eventbus.TaskEvent
+			}{
+				Path:      evt.Path,
+				Item:      evt.Data,
+				TaskEvent: evt,
+			}
 			msg, err := n.renderNotification(ctx, *nt, data)
 			if err != nil {
 				return err
@@ -297,7 +319,7 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 	}
 
 	var msg []byte
-	data := NotificationData{TaskEvent: evt, Item: evt.Data}
+	data := EmailData{Item: evt.Data, any: evt.Data}
 	if nt := tp.SubscribedInternalNotificationTemplate(evt); nt != nil {
 		var err error
 		msg, err = n.renderNotification(ctx, *nt, data)

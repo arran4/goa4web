@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -23,7 +24,7 @@ func AdminTopicPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, handlers.ErrBadRequest)
 		return
 	}
-	topic, err := cd.ForumTopicByID(int32(tid))
+	topic, err := cd.Queries().GetForumTopicById(r.Context(), int32(tid))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			w.WriteHeader(http.StatusNotFound)
@@ -35,13 +36,46 @@ func AdminTopicPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Forum Topic %d", tid)
-	data := struct {
-		Topic *db.GetForumTopicByIdForUserRow
-	}{
-		Topic: topic,
+	// Check if "anyone" (public) has access to this topic.
+	// This logic depends on how "anyone" access is modeled in grants.
+	// Assuming a grant exists for role "Anyone" or similar logic.
+	// For now, we'll check if there's any grant for the topic that applies to public.
+	// Since we don't have a direct "IsPublic" helper, we'll fetch grants and check in memory or use a new query.
+	// Using AdminListForumTopicGrantsByTopicID.
+	grants, err := cd.Queries().AdminListForumTopicGrantsByTopicID(r.Context(), sql.NullInt32{Int32: int32(tid), Valid: true})
+	anyoneHasAccess := false
+	if err == nil {
+		for _, g := range grants {
+			if g.RoleName.Valid && strings.EqualFold(g.RoleName.String, "Anyone") && g.Action == "see" {
+				anyoneHasAccess = true
+				break
+			}
+		}
 	}
-	handlers.TemplateHandler(w, r, "forum/adminTopicPage.gohtml", data)
+
+	var participants []*db.AdminListPrivateTopicParticipantsByTopicIDRow
+	if topic.Handler == "private" {
+		participants, err = cd.Queries().AdminListPrivateTopicParticipantsByTopicID(r.Context(), sql.NullInt32{Int32: int32(tid), Valid: true})
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error fetching participants"))
+			return
+		}
+	}
+
+	data := struct {
+		Topic           *db.Forumtopic
+		AnyoneHasAccess bool
+		Participants    []*db.AdminListPrivateTopicParticipantsByTopicIDRow
+	}{
+		Topic:           topic,
+		AnyoneHasAccess: anyoneHasAccess,
+		Participants:    participants,
+	}
+	ForumAdminTopicPageTmpl.Handle(w, r, data)
 }
+
+const ForumAdminTopicPageTmpl handlers.Page = "forum/adminTopicPage.gohtml"
 
 // AdminTopicEditFormPage shows the edit form for a forum topic.
 func AdminTopicEditFormPage(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +86,7 @@ func AdminTopicEditFormPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, handlers.ErrBadRequest)
 		return
 	}
-	topic, err := cd.ForumTopicByID(int32(tid))
+	topic, err := cd.Queries().GetForumTopicById(r.Context(), int32(tid))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			w.WriteHeader(http.StatusNotFound)
@@ -77,7 +111,7 @@ func AdminTopicEditFormPage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd.PageTitle = fmt.Sprintf("Edit Forum Topic %d", tid)
 	data := struct {
-		Topic       *db.GetForumTopicByIdForUserRow
+		Topic       *db.Forumtopic
 		Categories  []*db.Forumcategory
 		Roles       []*db.Role
 		Restriction interface{}
@@ -86,5 +120,7 @@ func AdminTopicEditFormPage(w http.ResponseWriter, r *http.Request) {
 		Categories: categories,
 		Roles:      roles,
 	}
-	handlers.TemplateHandler(w, r, "adminTopicEditPage.gohtml", data)
+	ForumAdminTopicEditPageTmpl.Handle(w, r, data)
 }
+
+const ForumAdminTopicEditPageTmpl handlers.Page = "forum/adminTopicEditPage.gohtml"

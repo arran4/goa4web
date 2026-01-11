@@ -1,6 +1,7 @@
 package common
 
 import (
+	"bytes"
 	"fmt"
 	"html/template"
 	"io"
@@ -13,9 +14,10 @@ import (
 
 	"github.com/arran4/goa4web"
 
-	"filippo.io/csrf/gorilla"
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/core/templates"
+	csrfmiddleware "github.com/arran4/goa4web/internal/middleware/csrf"
 )
 
 const (
@@ -28,11 +30,65 @@ const (
 // Funcs returns template helpers configured with cd's ImageURLMapper.
 func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 	mapper := cd.ImageURLMapper
+
+	// Color assignment state for quotes
+	assignedColors := make(map[string]int)
+	counts := make([]int, 6)
+
+	getColor := func(name string) string {
+		if idx, ok := assignedColors[name]; ok {
+			return fmt.Sprintf("quote-color-%d", idx)
+		}
+
+		// Calculate hash
+		h := 0
+		for _, c := range name {
+			h += int(c)
+		}
+		pref := h % 6
+
+		best := pref
+		// Check for collision with preference
+		// If preferred color is already used by someone else (count > 0), try to find an unused color or less used one
+		// Only check counts, as "used for an existing name" implies we track usage.
+		if counts[pref] > 0 {
+			// Try to find an unused color
+			foundUnused := false
+			for i := 0; i < 6; i++ {
+				idx := (pref + i) % 6
+				if counts[idx] == 0 {
+					best = idx
+					foundUnused = true
+					break
+				}
+			}
+
+			// If all used, find the one with minimum usage to ensure even spread
+			if !foundUnused {
+				minC := counts[pref]
+				for i := 0; i < 6; i++ {
+					if counts[i] < minC {
+						minC = counts[i]
+						best = i
+					}
+				}
+			}
+		}
+
+		assignedColors[name] = best
+		counts[best]++
+		return fmt.Sprintf("quote-color-%d", best)
+	}
+
 	return map[string]any{
 		"cd":        func() *CoreData { return cd },
 		"now":       func() time.Time { return time.Now().In(cd.Location()) },
-		"csrfField": func() template.HTML { return csrf.TemplateField(r) },
-		"csrfToken": func() string { return csrf.Token(r) },
+		"localTime": cd.LocalTime,
+		"formatLocalTime": func(t time.Time) string {
+			return cd.FormatLocalTime(t)
+		},
+		"csrfField": func() template.HTML { return csrfmiddleware.TemplateField(r) },
+		"csrfToken": func() string { return csrfmiddleware.Token(r) },
 		"version":   func() string { return goa4web.Version },
 		"dict": func(values ...any) map[string]any {
 			m := make(map[string]any)
@@ -42,8 +98,11 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 			}
 			return m
 		},
+		"highlightSearch": func(s string) template.HTML {
+			return HighlightSearchTerms(s, cd.SearchWords())
+		},
 		"a4code2html": func(s string) template.HTML {
-			c := a4code2html.New(mapper)
+			c := a4code2html.New(mapper, getColor)
 			c.CodeType = a4code2html.CTHTML
 			c.SetInput(s)
 			out, err := io.ReadAll(c.Process())
@@ -140,6 +199,12 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 				return u + "&mode=admin"
 			}
 			return u + "?mode=admin"
+		},
+		"include": func(name string, data any) (template.HTML, error) {
+			var buf bytes.Buffer
+			t := templates.GetCompiledSiteTemplates(cd.Funcs(r))
+			err := t.ExecuteTemplate(&buf, name, data)
+			return template.HTML(buf.String()), err
 		},
 	}
 }

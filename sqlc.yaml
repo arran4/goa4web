@@ -31,8 +31,10 @@ sql:
         - "internal/db/queries-password_resets.sql"
         - "internal/db/queries-dlq.sql"
         - "internal/db/queries-uploadimages.sql"
+        - "internal/db/queries-threadimages.sql"
         - "internal/db/queries-roles.sql"
         - "internal/db/queries-admin_user_comments.sql"
+        - "internal/db/queries-comments-admin.sql"
         - "internal/db/queries-notifications.sql"
         - "internal/db/queries-pending_emails.sql"
         - "internal/db/queries-externallinks.sql"
@@ -42,6 +44,8 @@ sql:
         - "internal/db/queries-stats.sql"
         - "internal/db/queries-read_markers.sql"
         - "internal/db/queries-private_forum.sql"
+        - "internal/db/queries-forum-cleanup.sql"
+        - "internal/db/queries-subscription-archetypes.sql"
       gen:
           go:
               package: "db"

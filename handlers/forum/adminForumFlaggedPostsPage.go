@@ -1,8 +1,9 @@
 package forum
 
 import (
-	"github.com/arran4/goa4web/core/consts"
 	"net/http"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
@@ -12,5 +13,7 @@ import (
 func AdminForumFlaggedPostsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Forum - Flagged Posts"
-	handlers.TemplateHandler(w, r, "forumFlaggedPostsPage.gohtml", struct{}{})
+	AdminForumFlaggedPostsPageTmpl.Handle(w, r, struct{}{})
 }
+
+const AdminForumFlaggedPostsPageTmpl handlers.Page = "admin/forumFlaggedPostsPage.gohtml"

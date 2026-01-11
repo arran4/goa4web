@@ -17,10 +17,16 @@ import (
 
 // CreatePrivateTopicParams groups input for CreatePrivateTopic.
 type CreatePrivateTopicParams struct {
-	CreatorID      int32
-	ParticipantIDs []int32
-	Title          string
-	Description    string
+	CreatorID    int32
+	Participants []PrivateTopicParticipant
+	Title        string
+	Description  string
+}
+
+// PrivateTopicParticipant pairs a participant ID with an optional username.
+type PrivateTopicParticipant struct {
+	ID       int32
+	Username string
 }
 
 // CreatePrivateTopic creates a new private topic and assigns grants and the initial comment.
@@ -32,13 +38,17 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID int3
 		log.Printf("private topic create denied: user=%d", p.CreatorID)
 		return 0, fmt.Errorf("permission denied")
 	}
-	var usernames []string // TODO this should be fed in from the caller and if it is not provided we can fill it htis way
-	for _, id := range p.ParticipantIDs {
-		if u := cd.UserByID(id); u != nil {
-			usernames = append(usernames, u.Username.String)
-		} else {
-			return 0, fmt.Errorf("unknown user %d", id)
+	usernames := make([]string, 0, len(p.Participants))
+	for _, participant := range p.Participants {
+		name := participant.Username
+		if name == "" {
+			if u := cd.UserByID(participant.ID); u != nil {
+				name = u.Username.String
+			} else {
+				return 0, fmt.Errorf("unknown user %d", participant.ID)
+			}
 		}
+		usernames = append(usernames, name)
 	}
 	title := p.Title
 	description := p.Description
@@ -66,19 +76,10 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID int3
 		return 0, fmt.Errorf("create topic returned 0")
 	}
 	topicID = int32(tid)
-	for _, uid := range p.ParticipantIDs {
+	for _, participant := range p.Participants {
+		uid := participant.ID
 		for _, act := range []string{"see", "view", "post", "reply", "edit"} {
-			if _, err := cd.queries.SystemCreateGrant(cd.ctx, db.SystemCreateGrantParams{ // TODO switch to cd.GrantForumTopic
-				UserID:   sql.NullInt32{Int32: uid, Valid: true},
-				RoleID:   sql.NullInt32{},
-				Section:  "privateforum",
-				Item:     sql.NullString{String: "topic", Valid: true},
-				RuleType: "allow",
-				ItemID:   sql.NullInt32{Int32: topicID, Valid: true},
-				ItemRule: sql.NullString{},
-				Action:   act,
-				Extra:    sql.NullString{},
-			}); err != nil {
+			if _, err := cd.GrantPrivateForumTopic(topicID, sql.NullInt32{Int32: uid, Valid: true}, sql.NullInt32{}, act); err != nil {
 				return 0, fmt.Errorf("create %s grant %w", act, err)
 			}
 		}
@@ -99,6 +100,15 @@ type StoreImageParams struct {
 func (cd *CoreData) StoreImage(p StoreImageParams) (string, error) {
 	if cd == nil || cd.queries == nil {
 		return "", fmt.Errorf("no queries")
+	}
+	if !imagesign.ValidID(p.ID) {
+		return "", fmt.Errorf("invalid id")
+	}
+	if !imagesign.AllowedExtension(p.Ext) {
+		return "", fmt.Errorf("unsupported image extension: %s", p.Ext)
+	}
+	if !cd.HasGrant("images", "upload", "post", 0) {
+		return "", fmt.Errorf("permission denied")
 	}
 	cfg := cd.Config
 	sub1, sub2 := p.ID[:2], p.ID[2:4]
@@ -151,7 +161,6 @@ func (cd *CoreData) StoreImage(p StoreImageParams) (string, error) {
 		Width:      sql.NullInt32{Int32: int32(width), Valid: true},
 		Height:     sql.NullInt32{Int32: int32(height), Valid: true},
 		FileSize:   int32(len(p.Data)),
-		GranteeID:  sql.NullInt32{Int32: p.UploaderID, Valid: p.UploaderID != 0},
 	})
 	if err != nil {
 		return "", fmt.Errorf("create uploaded image %w", err)

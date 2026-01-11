@@ -125,5 +125,7 @@ func (h *Handlers) AdminServerStatsPage(w http.ResponseWriter, r *http.Request) 
 	}
 	data.Registries.UploadProviders = upload.ProviderNames()
 
-	handlers.TemplateHandler(w, r, "serverStatsPage.gohtml", data)
+	AdminServerStatsPageTmpl.Handle(w, r, data)
 }
+
+const AdminServerStatsPageTmpl handlers.Page = "admin/serverStatsPage.gohtml"

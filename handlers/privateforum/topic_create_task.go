@@ -10,6 +10,8 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	forumhandlers "github.com/arran4/goa4web/handlers/forum"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -33,10 +35,12 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	parts := strings.Split(r.PostFormValue("participants"), ",")
+	participantsInput := r.PostFormValue("participants")
+	parts := strings.Split(participantsInput, ",")
 	title := strings.TrimSpace(r.PostFormValue("title"))
 	description := strings.TrimSpace(r.PostFormValue("description"))
-	var uids []int32 // TODO make map
+	var participants []common.PrivateTopicParticipant
+	var invalidUsers []string
 	for _, p := range parts {
 		p = strings.TrimSpace(p)
 		if p == "" {
@@ -45,30 +49,87 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 		u, err := queries.SystemGetUserByUsername(r.Context(), sql.NullString{String: p, Valid: true})
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
-				return fmt.Errorf("unknown user %q: %w", p, handlers.ErrRedirectOnSamePageHandler(err))
+				invalidUsers = append(invalidUsers, p)
+				continue
 			}
 			return fmt.Errorf("unknown error %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
-		uids = append(uids, u.Idusers)
+		if _, err := queries.SystemCheckGrant(r.Context(), db.SystemCheckGrantParams{
+			ViewerID: u.Idusers,
+			Section:  "privateforum",
+			Item:     sql.NullString{String: "topic", Valid: true},
+			Action:   "see",
+			ItemID:   sql.NullInt32{Valid: false},
+			UserID:   sql.NullInt32{Int32: u.Idusers, Valid: true},
+		}); err != nil {
+			if !errors.Is(err, sql.ErrNoRows) {
+				return fmt.Errorf("checking user grant: %w", handlers.ErrRedirectOnSamePageHandler(err))
+			}
+			invalidUsers = append(invalidUsers, p)
+			continue
+		}
+		participants = append(participants, common.PrivateTopicParticipant{
+			ID:       u.Idusers,
+			Username: u.Username.String,
+		})
 	}
+
+	if len(invalidUsers) > 0 {
+		cd.SetCurrentError(fmt.Sprintf("Invalid users: %s", strings.Join(invalidUsers, ", ")))
+		forumhandlers.CreateTopicPageWithPostTask(w, r, TaskPrivateTopicCreate, &forumhandlers.CreateTopicPageForm{
+			Participants:        participantsInput,
+			InvalidParticipants: strings.Join(invalidUsers, ","),
+			Title:               title,
+			Description:         description,
+		})
+		return nil
+	}
+
+	hasOtherMember := false
+	for _, participant := range participants {
+		if participant.ID != cd.UserID {
+			hasOtherMember = true
+			break
+		}
+	}
+
+	if !hasOtherMember {
+		cd.SetCurrentError("You must invite at least one other member")
+		forumhandlers.CreateTopicPageWithPostTask(w, r, TaskPrivateTopicCreate, &forumhandlers.CreateTopicPageForm{
+			Participants: participantsInput,
+			Title:        title,
+			Description:  description,
+		})
+		return nil
+	}
+
 	creator := cd.UserID
 	seen := false
-	for _, id := range uids {
-		if id == creator {
+	for _, participant := range participants {
+		if participant.ID == creator {
 			seen = true
 			break
 		}
 	}
 	if creator != 0 && !seen {
-		uids = append(uids, creator)
+		username := ""
+		if u := cd.UserByID(creator); u != nil {
+			username = u.Username.String
+		}
+		participants = append(participants, common.PrivateTopicParticipant{ID: creator, Username: username})
 	}
-	topicID, err := cd.CreatePrivateTopic(common.CreatePrivateTopicParams{CreatorID: creator, ParticipantIDs: uids, Title: title, Description: description})
+	topicID, err := cd.CreatePrivateTopic(common.CreatePrivateTopicParams{
+		CreatorID:    creator,
+		Participants: participants,
+		Title:        title,
+		Description:  description,
+	})
 	if err != nil {
 		return fmt.Errorf("create private topic %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	for _, uid := range uids {
-		if err := cd.SubscribeTopic(uid, topicID); err != nil {
-			return fmt.Errorf("subscribe topic for user %d: %w", uid, handlers.ErrRedirectOnSamePageHandler(err))
+	for _, participant := range participants {
+		if err := cd.SubscribeTopic(participant.ID, topicID); err != nil {
+			return fmt.Errorf("subscribe topic for user %d: %w", participant.ID, handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
 	base := cd.ForumBasePath

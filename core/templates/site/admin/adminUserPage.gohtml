@@ -35,7 +35,7 @@
 {{ range $emails }}
 <tr>
   <td>{{ .Email }}</td>
-  <td>{{ if .VerifiedAt.Valid }}{{ cd.LocalTime .VerifiedAt.Time }}{{ else }}no{{ end }}</td>
+  <td>{{ if .VerifiedAt.Valid }}{{ cd.FormatLocalTime .VerifiedAt.Time }}{{ else }}no{{ end }}</td>
   <td>{{ .NotificationPriority }}</td>
 </tr>
 {{ end }}
@@ -104,7 +104,7 @@
 <tr><th>Date</th><th>Comment</th></tr>
 {{ range $comments }}
 <tr>
-  <td>{{ (cd.LocalTime .CreatedAt).Format "2006-01-02 15:04" }}</td>
+  <td>{{ cd.FormatLocalTime .CreatedAt }}</td>
   <td>{{ .Comment }}</td>
 </tr>
 {{ end }}

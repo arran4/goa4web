@@ -10,13 +10,43 @@ import (
 	"database/sql"
 )
 
-const adminCreateFAQCategory = `-- name: AdminCreateFAQCategory :exec
-INSERT INTO faq_categories (name) VALUES (?)
+const adminCreateFAQ = `-- name: AdminCreateFAQ :execresult
+INSERT INTO faq (question, answer, category_id, author_id, language_id, priority)
+VALUES (?, ?, ?, ?, ?, ?)
 `
 
-func (q *Queries) AdminCreateFAQCategory(ctx context.Context, name sql.NullString) error {
-	_, err := q.db.ExecContext(ctx, adminCreateFAQCategory, name)
-	return err
+type AdminCreateFAQParams struct {
+	Question   sql.NullString
+	Answer     sql.NullString
+	CategoryID sql.NullInt32
+	AuthorID   int32
+	LanguageID sql.NullInt32
+	Priority   int32
+}
+
+func (q *Queries) AdminCreateFAQ(ctx context.Context, arg AdminCreateFAQParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, adminCreateFAQ,
+		arg.Question,
+		arg.Answer,
+		arg.CategoryID,
+		arg.AuthorID,
+		arg.LanguageID,
+		arg.Priority,
+	)
+}
+
+const adminCreateFAQCategory = `-- name: AdminCreateFAQCategory :execresult
+INSERT INTO faq_categories (name, parent_category_id, language_id) VALUES (?, ?, ?)
+`
+
+type AdminCreateFAQCategoryParams struct {
+	Name             sql.NullString
+	ParentCategoryID sql.NullInt32
+	LanguageID       sql.NullInt32
+}
+
+func (q *Queries) AdminCreateFAQCategory(ctx context.Context, arg AdminCreateFAQCategoryParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, adminCreateFAQCategory, arg.Name, arg.ParentCategoryID, arg.LanguageID)
 }
 
 const adminDeleteFAQ = `-- name: AdminDeleteFAQ :exec
@@ -40,7 +70,7 @@ func (q *Queries) AdminDeleteFAQCategory(ctx context.Context, id int32) error {
 }
 
 const adminGetFAQByID = `-- name: AdminGetFAQByID :one
-SELECT id, category_id, language_id, author_id, answer, question FROM faq WHERE id = ?
+SELECT id, category_id, language_id, author_id, answer, question, priority FROM faq WHERE id = ?
 `
 
 func (q *Queries) AdminGetFAQByID(ctx context.Context, id int32) (*Faq, error) {
@@ -53,6 +83,7 @@ func (q *Queries) AdminGetFAQByID(ctx context.Context, id int32) (*Faq, error) {
 		&i.AuthorID,
 		&i.Answer,
 		&i.Question,
+		&i.Priority,
 	)
 	return &i, err
 }
@@ -60,6 +91,7 @@ func (q *Queries) AdminGetFAQByID(ctx context.Context, id int32) (*Faq, error) {
 const adminGetFAQCategories = `-- name: AdminGetFAQCategories :many
 SELECT id, parent_category_id, language_id, name
 FROM faq_categories
+WHERE deleted_at IS NULL
 `
 
 func (q *Queries) AdminGetFAQCategories(ctx context.Context) ([]*FaqCategory, error) {
@@ -94,6 +126,7 @@ const adminGetFAQCategoriesWithQuestionCount = `-- name: AdminGetFAQCategoriesWi
 SELECT c.id, c.parent_category_id, c.language_id, c.name, COUNT(f.id) AS QuestionCount
 FROM faq_categories c
 LEFT JOIN faq f ON f.category_id = c.id
+WHERE c.deleted_at IS NULL
 GROUP BY c.id
 `
 
@@ -134,6 +167,22 @@ func (q *Queries) AdminGetFAQCategoriesWithQuestionCount(ctx context.Context) ([
 	return items, nil
 }
 
+const adminGetFAQCategory = `-- name: AdminGetFAQCategory :one
+SELECT id, parent_category_id, language_id, name FROM faq_categories WHERE id = ?
+`
+
+func (q *Queries) AdminGetFAQCategory(ctx context.Context, id int32) (*FaqCategory, error) {
+	row := q.db.QueryRowContext(ctx, adminGetFAQCategory, id)
+	var i FaqCategory
+	err := row.Scan(
+		&i.ID,
+		&i.ParentCategoryID,
+		&i.LanguageID,
+		&i.Name,
+	)
+	return &i, err
+}
+
 const adminGetFAQCategoryWithQuestionCountByID = `-- name: AdminGetFAQCategoryWithQuestionCountByID :one
 SELECT c.id, c.parent_category_id, c.language_id, c.name, COUNT(f.id) AS QuestionCount
 FROM faq_categories c
@@ -169,15 +218,24 @@ FROM faq
 WHERE deleted_at IS NOT NULL
 `
 
-func (q *Queries) AdminGetFAQDismissedQuestions(ctx context.Context) ([]*Faq, error) {
+type AdminGetFAQDismissedQuestionsRow struct {
+	ID         int32
+	CategoryID sql.NullInt32
+	LanguageID sql.NullInt32
+	AuthorID   int32
+	Answer     sql.NullString
+	Question   sql.NullString
+}
+
+func (q *Queries) AdminGetFAQDismissedQuestions(ctx context.Context) ([]*AdminGetFAQDismissedQuestionsRow, error) {
 	rows, err := q.db.QueryContext(ctx, adminGetFAQDismissedQuestions)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*Faq
+	var items []*AdminGetFAQDismissedQuestionsRow
 	for rows.Next() {
-		var i Faq
+		var i AdminGetFAQDismissedQuestionsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.CategoryID,
@@ -200,7 +258,7 @@ func (q *Queries) AdminGetFAQDismissedQuestions(ctx context.Context) ([]*Faq, er
 }
 
 const adminGetFAQQuestionsByCategory = `-- name: AdminGetFAQQuestionsByCategory :many
-SELECT id, category_id, language_id, author_id, answer, question FROM faq WHERE category_id = ?
+SELECT id, category_id, language_id, author_id, answer, question, priority FROM faq WHERE category_id = ?
 `
 
 func (q *Queries) AdminGetFAQQuestionsByCategory(ctx context.Context, categoryID sql.NullInt32) ([]*Faq, error) {
@@ -219,6 +277,7 @@ func (q *Queries) AdminGetFAQQuestionsByCategory(ctx context.Context, categoryID
 			&i.AuthorID,
 			&i.Answer,
 			&i.Question,
+			&i.Priority,
 		); err != nil {
 			return nil, err
 		}
@@ -234,7 +293,7 @@ func (q *Queries) AdminGetFAQQuestionsByCategory(ctx context.Context, categoryID
 }
 
 const adminGetFAQUnansweredQuestions = `-- name: AdminGetFAQUnansweredQuestions :many
-SELECT id, category_id, language_id, author_id, answer, question
+SELECT id, category_id, language_id, author_id, answer, question, priority
 FROM faq
 WHERE category_id IS NULL OR answer IS NULL
 `
@@ -255,6 +314,7 @@ func (q *Queries) AdminGetFAQUnansweredQuestions(ctx context.Context) ([]*Faq, e
 			&i.AuthorID,
 			&i.Answer,
 			&i.Question,
+			&i.Priority,
 		); err != nil {
 			return nil, err
 		}
@@ -267,6 +327,69 @@ func (q *Queries) AdminGetFAQUnansweredQuestions(ctx context.Context) ([]*Faq, e
 		return nil, err
 	}
 	return items, nil
+}
+
+const adminListFAQCategories = `-- name: AdminListFAQCategories :many
+SELECT id, parent_category_id, language_id, name
+FROM faq_categories
+WHERE deleted_at IS NULL
+ORDER BY parent_category_id, id
+`
+
+func (q *Queries) AdminListFAQCategories(ctx context.Context) ([]*FaqCategory, error) {
+	rows, err := q.db.QueryContext(ctx, adminListFAQCategories)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*FaqCategory
+	for rows.Next() {
+		var i FaqCategory
+		if err := rows.Scan(
+			&i.ID,
+			&i.ParentCategoryID,
+			&i.LanguageID,
+			&i.Name,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminMoveFAQChildren = `-- name: AdminMoveFAQChildren :exec
+UPDATE faq_categories SET parent_category_id = ? WHERE parent_category_id = ?
+`
+
+type AdminMoveFAQChildrenParams struct {
+	NewParentID sql.NullInt32
+	OldParentID sql.NullInt32
+}
+
+func (q *Queries) AdminMoveFAQChildren(ctx context.Context, arg AdminMoveFAQChildrenParams) error {
+	_, err := q.db.ExecContext(ctx, adminMoveFAQChildren, arg.NewParentID, arg.OldParentID)
+	return err
+}
+
+const adminMoveFAQContent = `-- name: AdminMoveFAQContent :exec
+UPDATE faq SET category_id = ? WHERE category_id = ?
+`
+
+type AdminMoveFAQContentParams struct {
+	NewCategoryID sql.NullInt32
+	OldCategoryID sql.NullInt32
+}
+
+func (q *Queries) AdminMoveFAQContent(ctx context.Context, arg AdminMoveFAQContentParams) error {
+	_, err := q.db.ExecContext(ctx, adminMoveFAQContent, arg.NewCategoryID, arg.OldCategoryID)
+	return err
 }
 
 const adminRenameFAQCategory = `-- name: AdminRenameFAQCategory :exec
@@ -282,6 +405,43 @@ type AdminRenameFAQCategoryParams struct {
 
 func (q *Queries) AdminRenameFAQCategory(ctx context.Context, arg AdminRenameFAQCategoryParams) error {
 	_, err := q.db.ExecContext(ctx, adminRenameFAQCategory, arg.Name, arg.ID)
+	return err
+}
+
+const adminUpdateFAQCategory = `-- name: AdminUpdateFAQCategory :exec
+UPDATE faq_categories
+SET name = ?, parent_category_id = ?, language_id = ?
+WHERE id = ?
+`
+
+type AdminUpdateFAQCategoryParams struct {
+	Name             sql.NullString
+	ParentCategoryID sql.NullInt32
+	LanguageID       sql.NullInt32
+	ID               int32
+}
+
+func (q *Queries) AdminUpdateFAQCategory(ctx context.Context, arg AdminUpdateFAQCategoryParams) error {
+	_, err := q.db.ExecContext(ctx, adminUpdateFAQCategory,
+		arg.Name,
+		arg.ParentCategoryID,
+		arg.LanguageID,
+		arg.ID,
+	)
+	return err
+}
+
+const adminUpdateFAQPriority = `-- name: AdminUpdateFAQPriority :exec
+UPDATE faq SET priority = ? WHERE id = ?
+`
+
+type AdminUpdateFAQPriorityParams struct {
+	Priority int32
+	ID       int32
+}
+
+func (q *Queries) AdminUpdateFAQPriority(ctx context.Context, arg AdminUpdateFAQPriorityParams) error {
+	_, err := q.db.ExecContext(ctx, adminUpdateFAQPriority, arg.Priority, arg.ID)
 	return err
 }
 
@@ -466,7 +626,16 @@ type GetFAQAnsweredQuestionsParams struct {
 	UserID   sql.NullInt32
 }
 
-func (q *Queries) GetFAQAnsweredQuestions(ctx context.Context, arg GetFAQAnsweredQuestionsParams) ([]*Faq, error) {
+type GetFAQAnsweredQuestionsRow struct {
+	ID         int32
+	CategoryID sql.NullInt32
+	LanguageID sql.NullInt32
+	AuthorID   int32
+	Answer     sql.NullString
+	Question   sql.NullString
+}
+
+func (q *Queries) GetFAQAnsweredQuestions(ctx context.Context, arg GetFAQAnsweredQuestionsParams) ([]*GetFAQAnsweredQuestionsRow, error) {
 	rows, err := q.db.QueryContext(ctx, getFAQAnsweredQuestions,
 		arg.ViewerID,
 		arg.ViewerID,
@@ -477,9 +646,9 @@ func (q *Queries) GetFAQAnsweredQuestions(ctx context.Context, arg GetFAQAnswere
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*Faq
+	var items []*GetFAQAnsweredQuestionsRow
 	for rows.Next() {
-		var i Faq
+		var i GetFAQAnsweredQuestionsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.CategoryID,
@@ -539,7 +708,16 @@ type GetFAQByIDParams struct {
 	UserID   sql.NullInt32
 }
 
-func (q *Queries) GetFAQByID(ctx context.Context, arg GetFAQByIDParams) (*Faq, error) {
+type GetFAQByIDRow struct {
+	ID         int32
+	CategoryID sql.NullInt32
+	LanguageID sql.NullInt32
+	AuthorID   int32
+	Answer     sql.NullString
+	Question   sql.NullString
+}
+
+func (q *Queries) GetFAQByID(ctx context.Context, arg GetFAQByIDParams) (*GetFAQByIDRow, error) {
 	row := q.db.QueryRowContext(ctx, getFAQByID,
 		arg.ViewerID,
 		arg.FaqID,
@@ -547,7 +725,7 @@ func (q *Queries) GetFAQByID(ctx context.Context, arg GetFAQByIDParams) (*Faq, e
 		arg.ViewerID,
 		arg.UserID,
 	)
-	var i Faq
+	var i GetFAQByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.CategoryID,
@@ -597,7 +775,16 @@ type GetFAQQuestionsByCategoryParams struct {
 	UserID     sql.NullInt32
 }
 
-func (q *Queries) GetFAQQuestionsByCategory(ctx context.Context, arg GetFAQQuestionsByCategoryParams) ([]*Faq, error) {
+type GetFAQQuestionsByCategoryRow struct {
+	ID         int32
+	CategoryID sql.NullInt32
+	LanguageID sql.NullInt32
+	AuthorID   int32
+	Answer     sql.NullString
+	Question   sql.NullString
+}
+
+func (q *Queries) GetFAQQuestionsByCategory(ctx context.Context, arg GetFAQQuestionsByCategoryParams) ([]*GetFAQQuestionsByCategoryRow, error) {
 	rows, err := q.db.QueryContext(ctx, getFAQQuestionsByCategory,
 		arg.ViewerID,
 		arg.CategoryID,
@@ -609,9 +796,9 @@ func (q *Queries) GetFAQQuestionsByCategory(ctx context.Context, arg GetFAQQuest
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*Faq
+	var items []*GetFAQQuestionsByCategoryRow
 	for rows.Next() {
-		var i Faq
+		var i GetFAQQuestionsByCategoryRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.CategoryID,
@@ -745,7 +932,7 @@ func (q *Queries) InsertFAQRevisionForUser(ctx context.Context, arg InsertFAQRev
 }
 
 const systemGetFAQQuestions = `-- name: SystemGetFAQQuestions :many
-SELECT id, category_id, language_id, author_id, answer, question
+SELECT id, category_id, language_id, author_id, answer, question, priority
 FROM faq
 `
 
@@ -765,6 +952,7 @@ func (q *Queries) SystemGetFAQQuestions(ctx context.Context) ([]*Faq, error) {
 			&i.AuthorID,
 			&i.Answer,
 			&i.Question,
+			&i.Priority,
 		); err != nil {
 			return nil, err
 		}

@@ -27,9 +27,8 @@
                 <td><a href="/admin/user/{{.Idusers}}">{{.Idusers}}</a></td>
                 <td>{{.Username.String}}</td>
                 <td>{{.Email.String}}</td>
-                <td>{{with $c := index $.Comments .Idusers}}{{ (cd.LocalTime $c.CreatedAt).Format "2006-01-02" }} - {{$c.Comment}}{{end}}</td>
+                <td>{{with $c := index $.Comments .Idusers}}{{ cd.FormatLocalTime $c.CreatedAt }} - {{$c.Comment}}{{end}}</td>
             </tr>
         {{end}}
     </table>
 {{ template "tail" $ }}
-

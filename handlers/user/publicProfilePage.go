@@ -23,19 +23,31 @@ func userPublicProfilePage(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	isOwner := cd.UserID == u.Idusers
+	var profileOff bool
 	if !u.PublicProfileEnabledAt.Valid {
-		http.NotFound(w, r)
-		return
+		if !isOwner {
+			http.NotFound(w, r)
+			return
+		}
+		profileOff = true
 	}
 	if _, err := queries.GetPublicProfileRoleForUser(r.Context(), u.Idusers); err != nil {
-		http.NotFound(w, r)
-		return
+		if !isOwner {
+			http.NotFound(w, r)
+			return
+		}
+		profileOff = true
 	}
 	cd.PageTitle = fmt.Sprintf("Profile for %s", u.Username.String)
 	data := struct {
-		User *db.User
+		User       *db.User
+		ProfileOff bool
 	}{
-		User: &db.User{Idusers: u.Idusers, Username: u.Username},
+		User:       &db.User{Idusers: u.Idusers, Username: u.Username},
+		ProfileOff: profileOff,
 	}
-	handlers.TemplateHandler(w, r, "user/publicProfile.gohtml", data)
+	PublicProfilePage.Handle(w, r, data)
 }
+
+const PublicProfilePage handlers.Page = "user/publicProfile.gohtml"

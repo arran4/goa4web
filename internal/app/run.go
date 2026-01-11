@@ -12,6 +12,7 @@ import (
 	"github.com/arran4/goa4web"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers/share"
 	"github.com/arran4/goa4web/internal/app/server"
 
 	"github.com/arran4/goa4web/config"
@@ -23,12 +24,14 @@ import (
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
+	feedsign "github.com/arran4/goa4web/internal/feedsign"
 	imagesign "github.com/arran4/goa4web/internal/images"
 	linksign "github.com/arran4/goa4web/internal/linksign"
 	"github.com/arran4/goa4web/internal/middleware"
 	csrfmw "github.com/arran4/goa4web/internal/middleware/csrf"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	routerpkg "github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/sharesign"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/internal/websocket"
 	"github.com/gorilla/mux"
@@ -50,6 +53,7 @@ type serverOptions struct {
 	SessionSecret   string
 	ImageSignSecret string
 	LinkSignSecret  string
+	ShareSignSecret string
 	APISecret       string
 	DBReg           *dbdrivers.Registry
 	EmailReg        *email.Registry
@@ -74,6 +78,11 @@ func WithImageSignSecret(secret string) ServerOption {
 // WithLinkSignSecret supplies the external link signing secret.
 func WithLinkSignSecret(secret string) ServerOption {
 	return func(o *serverOptions) { o.LinkSignSecret = secret }
+}
+
+// WithShareSignSecret supplies the share signing secret.
+func WithShareSignSecret(secret string) ServerOption {
+	return func(o *serverOptions) { o.ShareSignSecret = secret }
 }
 
 // WithAPISecret sets the administrator API secret.
@@ -123,7 +132,6 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 		op(o)
 	}
 
-	log.Printf("application version %s starting", goa4web.Version)
 	adminhandlers.StartTime = time.Now()
 
 	store := o.Store
@@ -167,6 +175,8 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 	}
 	imgSigner := imagesign.NewSigner(cfg, o.ImageSignSecret)
 	linkSigner := linksign.NewSigner(cfg, o.LinkSignSecret)
+	shareSigner := sharesign.NewSigner(cfg, o.ShareSignSecret)
+	feedSigner := feedsign.NewSigner(cfg, o.LinkSignSecret)
 	adminhandlers.AdminAPISecret = o.APISecret
 	email.SetDefaultFromName(cfg.EmailFrom)
 
@@ -194,11 +204,14 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 		server.WithEmailRegistry(o.EmailReg),
 		server.WithImageSigner(imgSigner),
 		server.WithLinkSigner(linkSigner),
+		server.WithShareSigner(shareSigner),
+		server.WithFeedSigner(feedSigner),
 		server.WithDBRegistry(o.DBReg),
 		server.WithWebsocket(wsMod),
 		server.WithTasksRegistry(o.TasksReg),
 		server.WithSessionManager(sm),
 	)
+	share.RegisterShareRoutes(r, cfg, shareSigner)
 
 	srv.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cd, r := srv.GetCoreData(w, r)

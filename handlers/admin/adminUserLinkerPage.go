@@ -42,5 +42,7 @@ func adminUserLinkerPage(w http.ResponseWriter, r *http.Request) {
 		User:  &db.User{Idusers: cpu.Idusers, Username: user.Username},
 		Links: rows,
 	}
-	handlers.TemplateHandler(w, r, "userLinkerPage.gohtml", data)
+	AdminUserLinkerPageTmpl.Handle(w, r, data)
 }
+
+const AdminUserLinkerPageTmpl handlers.Page = "admin/userLinkerPage.gohtml"

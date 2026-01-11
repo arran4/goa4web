@@ -7,7 +7,7 @@
     {{- else }}
         <ul>
         {{- range $i, $result := .News }}
-            <li>{{ $i }}: <a href="/news/{{$result.Idsitenews}}">{{ $result.News.String }}</a></li>
+            <li>{{ $i }}: <a href="/news/news/{{$result.Idsitenews}}">{{ highlightSearch $result.News.String }}</a></li>
         {{- end }}
         </ul>
     {{ end }}

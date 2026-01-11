@@ -49,6 +49,12 @@ func (c *commentCmd) Run() error {
 			return fmt.Errorf("list-deactivated: %w", err)
 		}
 		return cmd.Run()
+	case "clean-bad":
+		cmd, err := parseCommentCleanBadCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("clean-bad: %w", err)
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown comment command %q", args[0])
@@ -60,7 +66,7 @@ func (c *commentCmd) Usage() {
 }
 
 func (c *commentCmd) FlagGroups() []flagGroup {
-	return append(c.rootCmd.FlagGroups(), flagGroup{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)})
+	return []flagGroup{{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)}}
 }
 
 var _ usageData = (*commentCmd)(nil)

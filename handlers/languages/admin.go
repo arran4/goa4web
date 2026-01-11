@@ -23,8 +23,10 @@ func adminLanguageRedirect(w http.ResponseWriter, r *http.Request) {
 func adminLanguagesPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Languages"
-	handlers.TemplateHandler(w, r, "languagesPage.gohtml", struct{}{})
+	AdminLanguagesPage.Handle(w, r, struct{}{})
 }
+
+const AdminLanguagesPage handlers.Page = "admin/languagesPage.gohtml"
 
 // adminLanguagePage displays statistics for a specific language.
 func adminLanguagePage(w http.ResponseWriter, r *http.Request) {
@@ -60,8 +62,10 @@ func adminLanguagePage(w http.ResponseWriter, r *http.Request) {
 		Language: lang,
 		Counts:   counts,
 	}
-	handlers.TemplateHandler(w, r, "languagePage.gohtml", data)
+	AdminLanguagePage.Handle(w, r, data)
 }
+
+const AdminLanguagePage handlers.Page = "admin/languagePage.gohtml"
 
 // adminLanguageEditPage shows forms to rename or delete a language.
 func adminLanguageEditPage(w http.ResponseWriter, r *http.Request) {
@@ -86,12 +90,16 @@ func adminLanguageEditPage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd.PageTitle = "Edit Language"
 	data := struct{ Language *db.Language }{Language: lang}
-	handlers.TemplateHandler(w, r, "languageEditPage.gohtml", data)
+	AdminLanguageEditPage.Handle(w, r, data)
 }
+
+const AdminLanguageEditPage handlers.Page = "admin/languageEditPage.gohtml"
 
 // adminLanguageNewPage shows the form to create a new language.
 func adminLanguageNewPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "New Language"
-	handlers.TemplateHandler(w, r, "languageNewPage.gohtml", struct{}{})
+	AdminLanguageNewPage.Handle(w, r, struct{}{})
 }
+
+const AdminLanguageNewPage handlers.Page = "admin/languageNewPage.gohtml"

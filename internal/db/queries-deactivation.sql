@@ -2,12 +2,22 @@
 
 -- name: AdminArchiveUser :exec
 INSERT INTO deactivated_users (idusers, email, passwd, passwd_algorithm, username, deleted_at)
-SELECT u.idusers, u.email, u.passwd, u.passwd_algorithm, u.username, NOW()
+SELECT u.idusers, 
+       COALESCE((SELECT email FROM user_emails WHERE user_id = u.idusers ORDER BY id DESC LIMIT 1), ''),
+       COALESCE((SELECT passwd FROM passwords WHERE users_idusers = u.idusers ORDER BY id DESC LIMIT 1), ''),
+       COALESCE((SELECT passwd_algorithm FROM passwords WHERE users_idusers = u.idusers ORDER BY id DESC LIMIT 1), ''),
+       u.username, 
+       NOW()
 FROM users u WHERE u.idusers = ?;
 
 -- name: AdminScrubUser :exec
-UPDATE users SET username = ?, email = '', passwd = '', passwd_algorithm = '', deleted_at = NOW()
-WHERE idusers = ?;
+UPDATE users SET username = ?, deleted_at = NOW() WHERE idusers = ?;
+
+-- name: AdminScrubUserEmails :exec
+DELETE FROM user_emails WHERE user_id = ?;
+
+-- name: AdminScrubUserPasswords :exec
+DELETE FROM passwords WHERE users_idusers = ?;
 
 -- name: AdminArchiveComment :exec
 INSERT INTO deactivated_comments (idcomments, forumthread_id, users_idusers, language_id, written, text, timezone, deleted_at)
@@ -153,8 +163,23 @@ LIMIT ? OFFSET ?;
 
 -- name: AdminRestoreUser :exec
 UPDATE users u JOIN deactivated_users d ON u.idusers = d.idusers
-SET u.email = d.email, u.passwd = d.passwd, u.passwd_algorithm = d.passwd_algorithm, u.username = d.username, u.deleted_at = NULL, d.restored_at = NOW()
+SET u.username = d.username, u.deleted_at = NULL
 WHERE u.idusers = ? AND d.restored_at IS NULL;
+
+-- name: AdminRestoreUserEmail :exec
+INSERT INTO user_emails (user_id, email, verified_at)
+SELECT idusers, email, NOW() FROM deactivated_users
+WHERE idusers = ? AND restored_at IS NULL
+ON DUPLICATE KEY UPDATE email = VALUES(email);
+
+-- name: AdminRestoreUserPassword :exec
+INSERT INTO passwords (users_idusers, passwd, passwd_algorithm)
+SELECT idusers, passwd, passwd_algorithm FROM deactivated_users
+WHERE idusers = ? AND restored_at IS NULL
+ON DUPLICATE KEY UPDATE passwd = VALUES(passwd), passwd_algorithm = VALUES(passwd_algorithm);
+
+-- name: AdminMarkUserRestored :exec
+UPDATE deactivated_users SET restored_at = NOW() WHERE idusers = ?;
 
 -- name: AdminIsUserDeactivated :one
 SELECT EXISTS(
@@ -166,3 +191,7 @@ SELECT EXISTS(
 SELECT idusers, email, username FROM deactivated_users
 WHERE restored_at IS NULL
 LIMIT ? OFFSET ?;
+
+-- name: AdminGetDeactivatedCommentById :one
+SELECT * FROM deactivated_comments
+WHERE idcomments = ? AND restored_at IS NULL;

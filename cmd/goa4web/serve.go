@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 
-	"errors"
 	"flag"
 	"fmt"
+	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
@@ -32,30 +32,43 @@ func parseServeCmd(parent *rootCmd, args []string) (*serveCmd, error) {
 }
 
 func (c *serveCmd) Run() error {
-	fileVals, err := config.LoadAppConfigFile(core.OSFS{}, c.rootCmd.ConfigFile)
-	if err != nil {
-		if errors.Is(err, config.ErrConfigFileNotFound) {
-			return fmt.Errorf("config file not found: %s", c.rootCmd.ConfigFile)
-		}
-		return fmt.Errorf("load config file: %w", err)
-	}
 	app.ConfigFile = c.rootCmd.ConfigFile
 	cfg := config.NewRuntimeConfig(
 		config.WithFlagSet(c.fs),
-		config.WithFileValues(fileVals),
+		config.WithFileValues(c.rootCmd.ConfigFileValues),
 		config.WithGetenv(os.Getenv),
 	)
-	secret, err := config.LoadOrCreateSecret(core.OSFS{}, cfg.SessionSecret, cfg.SessionSecretFile, config.EnvSessionSecret, config.EnvSessionSecretFile)
+
+	c.rootCmd.Infof("Starting Goa4Web v%s (commit: %s; build date: %s)", version, commit, date)
+	listenMsg := fmt.Sprintf("Listening on: %s", cfg.HTTPListen)
+	if cfg.HTTPHostname != "" {
+		// switching dest url with hostname and populating hostname from parsed url
+		if u, err := url.Parse(cfg.HTTPHostname); err == nil && u.Host != "" {
+			if u.Scheme != "" {
+				c.rootCmd.Infof("WARNING: HTTPHostname configuration is a URL (scheme: %s), expected a hostname. Using extracted host: %s", u.Scheme, u.Host)
+			}
+			listenMsg += fmt.Sprintf(" (Hostname: %s)", u.Host)
+		} else {
+			listenMsg += fmt.Sprintf(" (Hostname: %s)", cfg.HTTPHostname)
+		}
+	}
+	c.rootCmd.Infof("%s", listenMsg)
+
+	secret, err := config.LoadOrCreateSessionSecret(core.OSFS{}, cfg.SessionSecret, cfg.SessionSecretFile)
 	if err != nil {
 		return fmt.Errorf("session secret: %w", err)
 	}
-	signKey, err := config.LoadOrCreateSecret(core.OSFS{}, cfg.ImageSignSecret, cfg.ImageSignSecretFile, config.EnvImageSignSecret, config.EnvImageSignSecretFile)
+	signKey, err := config.LoadOrCreateImageSignSecret(core.OSFS{}, cfg.ImageSignSecret, cfg.ImageSignSecretFile)
 	if err != nil {
 		return fmt.Errorf("image sign secret: %w", err)
 	}
 	linkKey, err := config.LoadOrCreateLinkSignSecret(core.OSFS{}, cfg.LinkSignSecret, cfg.LinkSignSecretFile)
 	if err != nil {
 		return fmt.Errorf("link sign secret: %w", err)
+	}
+	shareKey, err := config.LoadOrCreateShareSignSecret(core.OSFS{}, cfg.ShareSignSecret, cfg.ShareSignSecretFile)
+	if err != nil {
+		return fmt.Errorf("share sign secret: %w", err)
 	}
 	apiKey, err := config.LoadOrCreateAdminAPISecret(core.OSFS{}, cfg.AdminAPISecret, cfg.AdminAPISecretFile)
 	if err != nil {
@@ -67,6 +80,7 @@ func (c *serveCmd) Run() error {
 		app.WithSessionSecret(secret),
 		app.WithImageSignSecret(signKey),
 		app.WithLinkSignSecret(linkKey),
+		app.WithShareSignSecret(shareKey),
 		app.WithDBRegistry(c.rootCmd.dbReg),
 		app.WithEmailRegistry(c.rootCmd.emailReg),
 		app.WithDLQRegistry(c.rootCmd.dlqReg),
@@ -90,7 +104,7 @@ func (c *serveCmd) Usage() {
 }
 
 func (c *serveCmd) FlagGroups() []flagGroup {
-	return append(c.rootCmd.FlagGroups(), flagGroup{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)})
+	return []flagGroup{{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)}}
 }
 
 var _ usageData = (*serveCmd)(nil)

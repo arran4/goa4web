@@ -2,7 +2,7 @@
 <html>
 <body>
 <p>Hello,</p>
-<p>{{.Item.Action}} occurred at <a href="{{.URL}}">{{.URL}}</a> on {{ localTime .Item.Time }}.</p>
+<p>{{.Item.Action}} occurred at <a href="{{.URL}}">{{.URL}}</a> on {{ formatLocalTime (localTime .Item.Time) }}.</p>
 <p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
 {{- if .SignOff}}
 <p>{{.SignOffHTML}}</p>

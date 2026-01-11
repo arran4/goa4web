@@ -32,6 +32,7 @@ func (h *Handlers) NewServerShutdownTask() *ServerShutdownTask {
 
 var _ tasks.Task = (*ServerShutdownTask)(nil)
 var _ tasks.TaskMatcher = (*ServerShutdownTask)(nil)
+var _ tasks.TemplatesRequired = (*ServerShutdownTask)(nil)
 
 func (t *ServerShutdownTask) Matcher() mux.MatcherFunc {
 	taskM := tasks.HasTask(string(TaskServerShutdown))
@@ -43,7 +44,7 @@ func (t *ServerShutdownTask) Matcher() mux.MatcherFunc {
 
 func (t *ServerShutdownTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	if cd == nil || !cd.HasRole("administrator") {
+	if cd == nil || !cd.HasAdminRole() {
 		return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		})
@@ -78,5 +79,9 @@ func (t *ServerShutdownTask) Action(w http.ResponseWriter, r *http.Request) any 
 			}
 		}
 	}()
-	return handlers.TemplateWithDataHandler("runTaskPage.gohtml", data)
+	return handlers.TemplateWithDataHandler(handlers.TemplateRunTaskPage, data)
+}
+
+func (t *ServerShutdownTask) TemplatesRequired() []tasks.Page {
+	return []tasks.Page{handlers.TemplateRunTaskPage}
 }

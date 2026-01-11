@@ -1,30 +1,13 @@
 package bookmarks
 
 import (
-	"github.com/arran4/goa4web/core/consts"
-	"net/http"
-
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/handlers"
+	"net/http"
 )
 
-func Page(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return
-	}
-	uid, _ := session.Values["UID"].(int32)
-
-	cd.PageTitle = "Bookmarks"
-
-	if uid == 0 {
-		handlers.TemplateHandler(w, r, "infoPage.gohtml", struct{}{})
-		return
-	}
-
-	handlers.TemplateHandler(w, r, "bookmarksPage", struct{}{})
+func BookmarksPage(w http.ResponseWriter, r *http.Request) {
+	t := NewBookmarksTask().(*bookmarksTask)
+	t.Get(w, r)
 }
 
 func bookmarksCustomIndex(data *common.CoreData, r *http.Request) {

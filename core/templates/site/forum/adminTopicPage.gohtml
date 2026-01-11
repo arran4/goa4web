@@ -1,6 +1,19 @@
 {{ template "head" $ }}
-<h2>Forum topic {{ .Topic.Idforumtopic }} - {{ topicTitleOrDefault .Topic.Title.String }}</h2>
-<p>{{ topicDescriptionOrDefault .Topic.Description.String }}</p>
+{{ if eq .Topic.Handler "private" }}
+<div class="alert alert-warning">Warning: This is a private forum topic.</div>
+{{ if .Participants }}
+<h3>Participants</h3>
+<ul>
+    {{ range .Participants }}
+    <li>{{ .Username.String }} (ID: {{ .Idusers }})</li>
+    {{ end }}
+</ul>
+{{ else }}
+<p>No participants found.</p>
+{{ end }}
+{{ end }}
+<h2>Forum topic {{ .Topic.Idforumtopic }} - {{ if not .AnyoneHasAccess }}<span class="spoiler">{{ end }}{{ topicTitleOrDefault .Topic.Title.String }}{{ if not .AnyoneHasAccess }}</span>{{ end }}</h2>
+<p>{{ if not .AnyoneHasAccess }}<span class="spoiler">{{ end }}{{ topicDescriptionOrDefault .Topic.Description.String }}{{ if not .AnyoneHasAccess }}</span>{{ end }}</p>
 <table class="table table-bordered">
     <tr><th>ID</th><th>Threads</th><th>Posts</th><th>Last Addition</th><th>View</th></tr>
     <tr>
@@ -15,6 +28,7 @@
     <li><a href="/admin/forum/topics/topic/{{ .Topic.Idforumtopic }}/edit">Edit</a></li>
     <li><a href="/admin/forum/topics/topic/{{ .Topic.Idforumtopic }}/grants">Grants</a></li>
     <li><a href="/forum/topic/{{ .Topic.Idforumtopic }}">Contents</a></li>
+    <li><a href="/admin/forum/threads">Admin List of Threads</a></li>
 </ul>
 <p><a href="/admin/forum/topics">Back</a></p>
 {{ template "tail" $ }}

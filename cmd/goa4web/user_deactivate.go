@@ -72,6 +72,14 @@ func (c *userDeactivateCmd) Run() error {
 		tx.Rollback()
 		return fmt.Errorf("scrub user: %w", err)
 	}
+	if err := qtx.AdminScrubUserEmails(ctx, u.Idusers); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("scrub user emails: %w", err)
+	}
+	if err := qtx.AdminScrubUserPasswords(ctx, u.Idusers); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("scrub user passwords: %w", err)
+	}
 	comments, err := qtx.AdminGetAllCommentsByUser(ctx, u.Idusers)
 	if err != nil {
 		tx.Rollback()

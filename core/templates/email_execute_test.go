@@ -23,6 +23,7 @@ func sampleEmailData() emailData {
 	item := map[string]interface{}{
 		"Action":       "action",
 		"Author":       "author",
+		"ExpiresAt":    time.Now().Add(24 * time.Hour),
 		"BlogURL":      "https://example.com/blog",
 		"BoardURL":     "https://example.com/board",
 		"Code":         "code",

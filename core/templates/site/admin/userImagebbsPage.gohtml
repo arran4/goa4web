@@ -5,16 +5,15 @@
     {{- range .Posts }}
     <tr>
         <td><a href="/admin/user/{{ $.User.Idusers }}/imagebbs/post/{{ .Idimagepost }}">{{ .Idimagepost }}</a></td>
-        <td>{{ cd.LocalTimeIn .Posted .Timezone.String }}</td>
+        <td>{{ cd.FormatLocalTimeIn .Posted .Timezone.String }}</td>
         <td>{{ .ImageboardIdimageboard.Int32 }}</td>
         <td>{{ if .Approved }}Yes{{ else }}No{{ end }}</td>
         <td>
             <a href="/admin/user/{{ $.User.Idusers }}/imagebbs/post/{{ .Idimagepost }}">Dashboard</a> |
             <a href="/admin/user/{{ $.User.Idusers }}/imagebbs/post/{{ .Idimagepost }}/edit">Edit</a> |
-            <a href="/admin/user/{{ $.User.Idusers }}/imagebbs/post/{{ .Idimagepost }}/comments">Comments</a> |
-            <a href="/imagebbs/post/{{ .Idimagepost }}">View</a>
+            <a href="/admin/user/{{ $.User.Idusers }}/imagebbs/post/{{ .Idimagepost }}/comments">Comments</a>
             {{- if not .Approved }}
-            <form style="display:inline" method="post" action="/admin/imagebbs/approve/{{ .Idimagepost }}">
+            <form class="inline-form" method="post" action="/admin/imagebbs/approve/{{ .Idimagepost }}">
                 {{ csrfField }}<input type="submit" name="task" value="Approve">
             </form>
             {{- end }}

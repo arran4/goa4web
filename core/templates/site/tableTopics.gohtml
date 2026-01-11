@@ -1,7 +1,17 @@
 {{ define "tableTopics" }}
     {{ $base := "/forum" }}
     {{ with .BasePath }}{{ $base = . }}{{ end }}
+    {{ $isAdmin := .IsAdmin }}
     <section class="topics">
+        <div class="topic-controls">
+            <div class="sort-buttons">
+                <span>Sort by:</span>
+                <button class="sort-button" data-sort="last-reply" data-order="desc">Last Reply</button>
+                <button class="sort-button" data-sort="threads" data-order="desc">Threads</button>
+                <button class="sort-button" data-sort="replies" data-order="desc">Replies</button>
+                <button class="sort-button" data-sort="name" data-order="asc">Name</button>
+            </div>
+        </div>
         <div class="topics-header">
             <div class="topic-name">Topic name<br>Description</div>
             <div class="last-reply">Last reply<br>By</div>
@@ -10,11 +20,11 @@
         </div>
         <ul class="topic-list">
     {{ range .Topics }}
-        <li class="topic-item">
+        {{ $title := topicTitleOrDefault .Title.String }}
+        {{ if .DisplayTitle }}{{ $title = topicTitleOrDefault .DisplayTitle }}{{ end }}
+        <li class="topic-item" data-last-reply-time="{{ .Lastaddition.Time.Unix }}" data-threads="{{ .Threads.Int32 }}" data-replies="{{ .Comments.Int32 }}" data-name="{{ $title }}">
             <div class="topic-name">
-                {{ $title := topicTitleOrDefault .Title.String }}
-                {{ if .DisplayTitle }}{{ $title = topicTitleOrDefault .DisplayTitle }}{{ end }}
-                <a href="{{$base}}/topic/{{ .Idforumtopic }}">{{ $title | a4code2html }}</a>{{ if and cd.IsAdmin cd.IsAdminMode }} [<a href="/admin/forum/topics/topic/{{ .Idforumtopic }}/edit">ADMIN</a>]{{ end }}<br>
+                <a href="{{$base}}/topic/{{ .Idforumtopic }}">{{ $title | a4code2html }}</a>{{ if $isAdmin }} [<a href="/admin/forum/topics/topic/{{ .Idforumtopic }}/edit">ADMIN</a>]{{ end }}<br>
                 {{ $description := topicDescriptionOrDefault .Description.String }}<em>{{ $description | a4code2html }}</em>
                 {{- if .Labels }}<br>{{ template "topicLabels" .Labels }}{{ end }}
             </div>
@@ -28,4 +38,3 @@
         </ul>
     </section>
 {{ end }}
-

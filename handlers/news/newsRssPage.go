@@ -2,15 +2,17 @@ package news
 
 import (
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"io"
 	"log"
 	"net/http"
 	"time"
 
+	"github.com/arran4/goa4web/core/consts"
+
 	"github.com/arran4/goa4web/core/common"
 
 	"github.com/gorilla/feeds"
+	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/arran4/goa4web/handlers"
@@ -18,6 +20,16 @@ import (
 
 func NewsRssPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+
+	if _, ok := mux.Vars(r)["username"]; ok {
+		u, err := handlers.VerifyFeedRequest(r, "/news/rss")
+		if err != nil {
+			handlers.RenderErrorPage(w, r, err)
+			return
+		}
+		cd.UserID = u.Idusers
+	}
+
 	posts, err := cd.LatestNews()
 	if err != nil {
 		log.Printf("latestNews: %v", err)

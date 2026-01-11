@@ -2,14 +2,23 @@
     {{ $base := "/forum" }}
     {{ with .BasePath }}{{ $base = . }}{{ end }}
     <h2>Threads</h2>
+    <div class="thread-controls">
+        <input type="text" class="label-filter" placeholder="Filter by label...">
+        <div class="sort-buttons">
+            <span>Sort by:</span>
+            <button class="sort-button" data-sort="last-reply" data-order="desc">Last Reply</button>
+            <button class="sort-button" data-sort="creation" data-order="desc">Creation</button>
+            <button class="sort-button" data-sort="comments" data-order="desc">Comments</button>
+        </div>
+    </div>
     <div class="thread-list">
     {{- range .Threads }}
-        <div class="thread">
+        <div class="thread" data-last-reply-time="{{ .Lastaddition.Time.Unix }}" data-creation-time="{{ .Firstpostwritten.Time.Unix }}" data-comments="{{ .Comments.Int32 }}">
             <div class="thread-meta thread-header">
                 First poster: <span class="poster-name first">{{ .Firstpostusername.String }}</span>
                 At <span class="post-time first">{{ cd.LocalTime .Firstpostwritten.Time }}</span>
             </div>
-            <div class="thread-content">
+            <div class="thread-content foldable">
                 {{ .Firstposttext.String | a4code2html }}<br>
             </div>
             <div class="thread-meta">

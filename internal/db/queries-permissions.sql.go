@@ -147,7 +147,7 @@ func (q *Queries) GetLoginRoleForUser(ctx context.Context, usersIdusers int32) (
 }
 
 const getPermissionsByUserID = `-- name: GetPermissionsByUserID :many
-SELECT ur.iduser_roles, ur.users_idusers, ur.role_id, r.name
+SELECT ur.iduser_roles, ur.users_idusers, ur.role_id, r.name, r.is_admin
 FROM user_roles ur
 JOIN roles r ON ur.role_id = r.id
 WHERE ur.users_idusers = ?
@@ -158,6 +158,7 @@ type GetPermissionsByUserIDRow struct {
 	UsersIdusers int32
 	RoleID       int32
 	Name         string
+	IsAdmin      bool
 }
 
 // Lists the role names granted to a user.
@@ -175,6 +176,7 @@ func (q *Queries) GetPermissionsByUserID(ctx context.Context, usersIdusers int32
 			&i.UsersIdusers,
 			&i.RoleID,
 			&i.Name,
+			&i.IsAdmin,
 		); err != nil {
 			return nil, err
 		}
@@ -271,7 +273,7 @@ func (q *Queries) GetUserRole(ctx context.Context, usersIdusers int32) (string, 
 }
 
 const getUserRoles = `-- name: GetUserRoles :many
-SELECT ur.iduser_roles, ur.users_idusers, r.name AS role,
+SELECT ur.iduser_roles, ur.users_idusers, r.name AS role, r.is_admin,
        u.username
 FROM user_roles ur
 JOIN users u ON u.idusers = ur.users_idusers
@@ -283,6 +285,7 @@ type GetUserRolesRow struct {
 	IduserRoles  int32
 	UsersIdusers int32
 	Role         string
+	IsAdmin      bool
 	Username     sql.NullString
 }
 
@@ -304,6 +307,7 @@ func (q *Queries) GetUserRoles(ctx context.Context) ([]*GetUserRolesRow, error) 
 			&i.IduserRoles,
 			&i.UsersIdusers,
 			&i.Role,
+			&i.IsAdmin,
 			&i.Username,
 		); err != nil {
 			return nil, err
@@ -466,6 +470,71 @@ func (q *Queries) ListGrantsByUserID(ctx context.Context, userID sql.NullInt32) 
 	return items, nil
 }
 
+const listGrantsExtended = `-- name: ListGrantsExtended :many
+SELECT g.id, g.created_at, g.updated_at, g.user_id, g.role_id, g.section, g.item, g.rule_type, g.item_id, g.item_rule, g.action, g.extra, g.active, u.username, r.name as role_name
+FROM grants g
+LEFT JOIN users u ON g.user_id = u.idusers
+LEFT JOIN roles r ON g.role_id = r.id
+ORDER BY g.id
+`
+
+type ListGrantsExtendedRow struct {
+	ID        int32
+	CreatedAt sql.NullTime
+	UpdatedAt sql.NullTime
+	UserID    sql.NullInt32
+	RoleID    sql.NullInt32
+	Section   string
+	Item      sql.NullString
+	RuleType  string
+	ItemID    sql.NullInt32
+	ItemRule  sql.NullString
+	Action    string
+	Extra     sql.NullString
+	Active    bool
+	Username  sql.NullString
+	RoleName  sql.NullString
+}
+
+func (q *Queries) ListGrantsExtended(ctx context.Context) ([]*ListGrantsExtendedRow, error) {
+	rows, err := q.db.QueryContext(ctx, listGrantsExtended)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListGrantsExtendedRow
+	for rows.Next() {
+		var i ListGrantsExtendedRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.UserID,
+			&i.RoleID,
+			&i.Section,
+			&i.Item,
+			&i.RuleType,
+			&i.ItemID,
+			&i.ItemRule,
+			&i.Action,
+			&i.Extra,
+			&i.Active,
+			&i.Username,
+			&i.RoleName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listUsersWithRoles = `-- name: ListUsersWithRoles :many
 SELECT u.idusers, u.username, GROUP_CONCAT(r.name ORDER BY r.name) AS roles
 FROM users u
@@ -507,6 +576,8 @@ func (q *Queries) ListUsersWithRoles(ctx context.Context) ([]*ListUsersWithRoles
 const systemCheckGrant = `-- name: SystemCheckGrant :one
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT 1 FROM grants g
 WHERE g.section = ?
@@ -618,5 +689,25 @@ type SystemCreateUserRoleParams struct {
 //	? - Role of the permission (string)
 func (q *Queries) SystemCreateUserRole(ctx context.Context, arg SystemCreateUserRoleParams) error {
 	_, err := q.db.ExecContext(ctx, systemCreateUserRole, arg.UsersIdusers, arg.Name)
+	return err
+}
+
+const systemCreateUserRoleByID = `-- name: SystemCreateUserRoleByID :exec
+INSERT INTO user_roles (users_idusers, role_id)
+VALUES (?, ?)
+`
+
+type SystemCreateUserRoleByIDParams struct {
+	UsersIdusers int32
+	RoleID       int32
+}
+
+// This query inserts a new permission into the "permissions" table by role ID.
+// Parameters:
+//
+//	? - User ID to be associated with the permission (int)
+//	? - Role ID (int)
+func (q *Queries) SystemCreateUserRoleByID(ctx context.Context, arg SystemCreateUserRoleByIDParams) error {
+	_, err := q.db.ExecContext(ctx, systemCreateUserRoleByID, arg.UsersIdusers, arg.RoleID)
 	return err
 }

@@ -1,34 +1,52 @@
 {{ template "head" $ }}
 <h2>Your Subscriptions</h2>
-<table>
-<tr><th>Pattern</th><th>Method</th><th></th></tr>
-{{ range cd.UserSubscriptions }}
-<tr>
-<td>{{ .Pattern }}</td>
-<td>{{ .Method }}</td>
-<td>
-<form method="post" action="/usr/subscriptions/delete" style="display:inline">
-    {{ csrfField }}
-    <input type="hidden" name="id" value="{{ .ID }}">
-    <input type="submit" name="task" value="Delete">
-    </form>
-</td>
-</tr>
-{{ else }}
-<tr><td colspan="3">No subscriptions</td></tr>
-{{ end }}
-</table>
 
-<h3>Update Subscriptions</h3>
-<form method="post" action="/usr/subscriptions/update">
-    {{ csrfField }}
-    {{ range .Options }}
-    <div>
-        {{ .Name }}
-        <label><input type="checkbox" name="{{ .Path }}_internal" {{ if cd.HasSubscription .Pattern "internal" }}checked{{ end }}>Internal</label>
-        <label><input type="checkbox" name="{{ .Path }}_email" {{ if cd.HasSubscription .Pattern "email" }}checked{{ end }}>Email</label>
-    </div>
+{{ range .Groups }}
+<div class="subscription-group">
+    <h3>{{ .Name }}</h3>
+    <p>{{ .Description }}</p>
+
+    {{ if .Instances }}
+    <table>
+        <thead>
+            <tr>
+                <th>Target</th>
+                <th>Internal</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{ range .Instances }}
+            <tr>
+                <td>
+                    {{/* Display parameters nicely */}}
+                    {{ if .Parameters }}
+                        {{ range .Parameters }}
+                            {{ .Key }}: {{ if .Resolved }}{{ .Resolved }}{{ else }}{{ .Value }}{{ end }}
+                        {{ end }}
+                    {{ else }}
+                        All
+                    {{ end }}
+                </td>
+                <td>
+                    <input type="checkbox" disabled {{ if .HasMethod "internal" }}checked{{ end }}>
+                </td>
+                <td>
+                    <input type="checkbox" disabled {{ if .HasMethod "email" }}checked{{ end }}>
+                </td>
+            </tr>
+            {{ end }}
+        </tbody>
+    </table>
+    {{ else }}
+    <p>No subscriptions.</p>
     {{ end }}
-    <input type="submit" name="task" value="Update">
-</form>
+</div>
+{{ end }}
+
+<p>
+    <a href="/usr/subscriptions/add" class="button">Add Subscription</a>
+    <a href="/usr/subscriptions/threads" class="button">Manage Thread Subscriptions</a>
+</p>
+
 {{ template "tail" $ }}

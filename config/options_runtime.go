@@ -34,8 +34,13 @@ type BoolOption struct {
 // StringOptions lists the string runtime options shared by flag parsing and configuration generation.
 var StringOptions = []StringOption{
 	{"db-conn", EnvDBConn, "Database connection string. This is used to connect to the database.", "", nil, "db_conn.txt", func(c *RuntimeConfig) *string { return &c.DBConn }},
-	{"db-driver", EnvDBDriver, "Database driver to use. Supported drivers are 'mysql' and 'sqlite3'.", "mysql", nil, "db_driver.txt", func(c *RuntimeConfig) *string { return &c.DBDriver }},
+	{"db-driver", EnvDBDriver, "Database driver to use. Supported drivers are 'mysql'.", "mysql", nil, "db_driver.txt", func(c *RuntimeConfig) *string { return &c.DBDriver }},
 	{"db-timezone", EnvDBTimezone, "Timezone for the database connection.", "Australia/Melbourne", nil, "", func(c *RuntimeConfig) *string { return &c.DBTimezone }},
+	{"db-host", EnvDBHost, "Database server hostname.", "", nil, "", func(c *RuntimeConfig) *string { return &c.DBHost }},
+	{"db-port", EnvDBPort, "Database server port.", "", nil, "", func(c *RuntimeConfig) *string { return &c.DBPort }},
+	{"db-user", EnvDBUser, "Database username.", "", nil, "", func(c *RuntimeConfig) *string { return &c.DBUser }},
+	{"db-pass", EnvDBPass, "Database password.", "", nil, "", func(c *RuntimeConfig) *string { return &c.DBPass }},
+	{"db-name", EnvDBName, "Database name.", "", nil, "", func(c *RuntimeConfig) *string { return &c.DBName }},
 	{"listen", EnvListen, "The address and port for the HTTP server to listen on.", ":8080", nil, "", func(c *RuntimeConfig) *string { return &c.HTTPListen }},
 	{"hostname", EnvHostname, "The base URL of the server, used for generating absolute links.", "", nil, "", func(c *RuntimeConfig) *string { return &c.HTTPHostname }},
 	{"hsts-header", EnvHSTSHeader, "The value for the Strict-Transport-Security header.", "max-age=63072000; includeSubDomains", nil, "", func(c *RuntimeConfig) *string { return &c.HSTSHeaderValue }},
@@ -58,6 +63,7 @@ var StringOptions = []StringOption{
 	{"default-language", EnvDefaultLanguage, "The default language for the application.", "", nil, "", func(c *RuntimeConfig) *string { return &c.DefaultLanguage }},
 	{"timezone", EnvTimezone, "The default timezone for the application.", "Australia/Melbourne", nil, "", func(c *RuntimeConfig) *string { return &c.Timezone }},
 	{"templates-dir", EnvTemplatesDir, "The directory to load templates from. If not specified, the embedded templates will be used.", "", nil, "", func(c *RuntimeConfig) *string { return &c.TemplatesDir }},
+	{"migrations-dir", EnvMigrationsDir, "The directory to load migrations from at runtime.", "", nil, "", func(c *RuntimeConfig) *string { return &c.MigrationsDir }},
 	{"image-upload-dir", EnvImageUploadDir, "The directory to store uploaded images when using the 'local' provider.", "", nil, "", func(c *RuntimeConfig) *string { return &c.ImageUploadDir }},
 	{"image-upload-provider", EnvImageUploadProvider, "The provider to use for image uploads. Supported providers are 'local' and 's3'.", "local", nil, "", func(c *RuntimeConfig) *string { return &c.ImageUploadProvider }},
 	{"image-upload-s3-url", EnvImageUploadS3URL, "The S3 prefix URL for image uploads.", "", []string{"s3://mybucket/uploads", "s3://bucket/images"}, "", func(c *RuntimeConfig) *string { return &c.ImageUploadS3URL }},
@@ -75,8 +81,11 @@ var StringOptions = []StringOption{
 	{"image-sign-secret-file", EnvImageSignSecretFile, "The path to a file containing the image signing key.", "", nil, "", func(c *RuntimeConfig) *string { return &c.ImageSignSecretFile }},
 	{"link-sign-secret", EnvLinkSignSecret, "The secret key used to sign external link URLs.", "", nil, "", func(c *RuntimeConfig) *string { return &c.LinkSignSecret }},
 	{"link-sign-secret-file", EnvLinkSignSecretFile, "The path to a file containing the external link signing key.", "", nil, "", func(c *RuntimeConfig) *string { return &c.LinkSignSecretFile }},
+	{"share-sign-secret", EnvShareSignSecret, "The secret key used to sign share URLs.", "", nil, "", func(c *RuntimeConfig) *string { return &c.ShareSignSecret }},
+	{"share-sign-secret-file", EnvShareSignSecretFile, "The path to a file containing the share signing key.", "", nil, "", func(c *RuntimeConfig) *string { return &c.ShareSignSecretFile }},
 	{"admin-api-secret", EnvAdminAPISecret, "The secret key used to sign administrator API tokens.", "", nil, "", func(c *RuntimeConfig) *string { return &c.AdminAPISecret }},
 	{"admin-api-secret-file", EnvAdminAPISecretFile, "The path to a file containing the administrator API signing key.", "", nil, "", func(c *RuntimeConfig) *string { return &c.AdminAPISecretFile }},
+	{"twitter-site", EnvTwitterSite, "The Twitter handle for the site (e.g. @mysite).", "", nil, "", func(c *RuntimeConfig) *string { return &c.TwitterSite }},
 }
 
 // IntOptions lists the integer runtime options shared by flag parsing and configuration generation.
@@ -84,16 +93,19 @@ var IntOptions = []IntOption{
 	{"db-log-verbosity", EnvDBLogVerbosity, "The verbosity level for database logging. 0 = off, 1 = errors, 2 = warnings, 3 = info, 4 = debug.", 0, "", func(c *RuntimeConfig) *int { return &c.DBLogVerbosity }},
 	{"email-log-verbosity", EnvEmailLogVerbosity, "The verbosity level for email logging. 0 = off, 1 = errors, 2 = warnings, 3 = info, 4 = debug.", 0, "", func(c *RuntimeConfig) *int { return &c.EmailLogVerbosity }},
 	{"log-flags", EnvLogFlags, "The flags for request logging.", 0, "", func(c *RuntimeConfig) *int { return &c.LogFlags }},
-	{"page-size-min", EnvPageSizeMin, "The minimum allowed page size for paginated results.", 0, "", func(c *RuntimeConfig) *int { return &c.PageSizeMin }},
-	{"page-size-max", EnvPageSizeMax, "The maximum allowed page size for paginated results.", 0, "", func(c *RuntimeConfig) *int { return &c.PageSizeMax }},
-	{"page-size-default", EnvPageSizeDefault, "The default page size for paginated results.", 0, "", func(c *RuntimeConfig) *int { return &c.PageSizeDefault }},
+	{"page-size-min", EnvPageSizeMin, "The minimum allowed page size for paginated results.", 5, "", func(c *RuntimeConfig) *int { return &c.PageSizeMin }},
+	{"page-size-max", EnvPageSizeMax, "The maximum allowed page size for paginated results.", 50, "", func(c *RuntimeConfig) *int { return &c.PageSizeMax }},
+	{"page-size-default", EnvPageSizeDefault, "The default page size for paginated results.", DefaultPageSize, "", func(c *RuntimeConfig) *int { return &c.PageSizeDefault }},
 	{"image-max-bytes", EnvImageMaxBytes, "The maximum allowed size for uploaded images in bytes.", 0, "", func(c *RuntimeConfig) *int { return &c.ImageMaxBytes }},
 	{"image-cache-max-bytes", EnvImageCacheMaxBytes, "The maximum size of the image cache in bytes. A value of -1 means no limit.", -1, "", func(c *RuntimeConfig) *int { return &c.ImageCacheMaxBytes }},
 	{"email-worker-interval", EnvEmailWorkerInterval, "The interval in seconds between runs of the email worker.", 0, "", func(c *RuntimeConfig) *int { return &c.EmailWorkerInterval }},
+	{"email-verification-expiry-hours", EnvEmailVerificationExpiryHours, "The number of hours an email verification request is valid for.", 0, "", func(c *RuntimeConfig) *int { return &c.EmailVerificationExpiryHours }},
 	{"password-reset-expiry-hours", EnvPasswordResetExpiryHours, "The number of hours a password reset request is valid for.", 0, "", func(c *RuntimeConfig) *int { return &c.PasswordResetExpiryHours }},
 	{"login-attempt-window", EnvLoginAttemptWindow, "The window in minutes for tracking failed login attempts.", 15, "", func(c *RuntimeConfig) *int { return &c.LoginAttemptWindow }},
 	{"login-attempt-threshold", EnvLoginAttemptThreshold, "The number of failed login attempts allowed within the window before throttling.", 5, "", func(c *RuntimeConfig) *int { return &c.LoginAttemptThreshold }},
-	{"stats-start-year", EnvStatsStartYear, "The start year for usage statistics.", 0, "", func(c *RuntimeConfig) *int { return &c.StatsStartYear }},
+	{"stats-start-year", EnvStatsStartYear, "The start year for usage statistics.", 2005, "", func(c *RuntimeConfig) *int { return &c.StatsStartYear }},
+	{"og-image-width", EnvOGImageWidth, "The width of the generated Open Graph image.", 1200, "", func(c *RuntimeConfig) *int { return &c.OGImageWidth }},
+	{"og-image-height", EnvOGImageHeight, "The height of the generated Open Graph image.", 630, "", func(c *RuntimeConfig) *int { return &c.OGImageHeight }},
 }
 
 // BoolOptions lists the boolean runtime options shared by flag parsing and configuration generation.
@@ -105,5 +117,6 @@ var BoolOptions = []BoolOption{
 	{"notifications-enabled", EnvNotificationsEnabled, "Enable or disable the internal notification system.", true, "", func(c *RuntimeConfig) *bool { return &c.NotificationsEnabled }},
 	{"csrf-enabled", EnvCSRFEnabled, "Enable or disable CSRF protection.", true, "", func(c *RuntimeConfig) *bool { return &c.CSRFEnabled }},
 	{"admin-notify", EnvAdminNotify, "Enable or disable email notifications for administrators.", true, "", func(c *RuntimeConfig) *bool { return &c.AdminNotify }},
+	{"auto-migrate", EnvAutoMigrate, "Run database migrations on startup.", false, "", func(c *RuntimeConfig) *bool { return &c.AutoMigrate }},
 	{"create-dirs", EnvCreateDirs, "Enable or disable the automatic creation of missing directories.", false, "", func(c *RuntimeConfig) *bool { return &c.CreateDirs }},
 }

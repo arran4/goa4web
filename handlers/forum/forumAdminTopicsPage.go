@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
@@ -15,6 +16,18 @@ import (
 	"github.com/gorilla/mux"
 )
 
+type AdminTopicDisplay struct {
+	*db.Forumtopic
+
+	IsPrivate    bool
+	Participants string
+	AccessInfo   string
+	DisplayTitle string
+
+	// Optional but handy for the list view / future tweaks
+	CategoryLabel string
+}
+
 // AdminTopicsPage shows all forum topics for management.
 func AdminTopicsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -22,22 +35,45 @@ func AdminTopicsPage(w http.ResponseWriter, r *http.Request) {
 	queries := cd.Queries()
 	offset := cd.Offset()
 	ps := cd.PageSize()
+
 	total, err := queries.AdminCountForumTopics(r.Context())
 	if err != nil {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
-	rows, err := queries.AdminListForumTopics(r.Context(), db.AdminListForumTopicsParams{Limit: int32(ps), Offset: int32(offset)})
+
+	rows, err := queries.AdminListForumTopics(r.Context(), db.AdminListForumTopicsParams{
+		Limit:  int32(ps),
+		Offset: int32(offset),
+	})
 	if err != nil {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
 
+	categories, err := queries.GetAllForumCategories(r.Context(), db.GetAllForumCategoriesParams{ViewerID: 0})
+	if err != nil {
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		return
+	}
+
+	categoryMap := make(map[int32]string, len(categories))
+	for _, category := range categories {
+		if category.Title.Valid {
+			categoryMap[category.Idforumcategory] = category.Title.String
+		}
+	}
+
+	// pagination links
 	numPages := int((total + int64(ps) - 1) / int64(ps))
 	currentPage := offset/ps + 1
 	base := "/admin/forum/topics"
 	for i := 1; i <= numPages; i++ {
-		cd.PageLinks = append(cd.PageLinks, common.PageLink{Num: i, Link: fmt.Sprintf("%s?offset=%d", base, (i-1)*ps), Active: i == currentPage})
+		cd.PageLinks = append(cd.PageLinks, common.PageLink{
+			Num:    i,
+			Link:   fmt.Sprintf("%s?offset=%d", base, (i-1)*ps),
+			Active: i == currentPage,
+		})
 	}
 	if offset+ps < int(total) {
 		cd.NextLink = fmt.Sprintf("%s?offset=%d", base, offset+ps)
@@ -47,14 +83,109 @@ func AdminTopicsPage(w http.ResponseWriter, r *http.Request) {
 		cd.StartLink = base + "?offset=0"
 	}
 
-	data := struct {
-		Topics []*db.Forumtopic
-	}{
-		Topics: rows,
+	topics := make([]*AdminTopicDisplay, 0, len(rows))
+	for _, row := range rows {
+		display := &AdminTopicDisplay{
+			Forumtopic: row,
+			IsPrivate:  row.Handler == "private",
+		}
+
+		// Title (don’t explode on NULL)
+		if row.Title.Valid && strings.TrimSpace(row.Title.String) != "" {
+			display.DisplayTitle = row.Title.String
+		} else {
+			display.DisplayTitle = "(untitled)"
+		}
+
+		// Category label (for non-private)
+		if !display.IsPrivate {
+			if label, ok := categoryMap[row.ForumcategoryIdforumcategory]; ok && strings.TrimSpace(label) != "" {
+				display.CategoryLabel = label
+			} else {
+				display.CategoryLabel = "(none)"
+			}
+		}
+
+		// Grants / access info
+		grants, err := queries.AdminGetTopicGrants(r.Context(), sql.NullInt32{Int32: row.Idforumtopic, Valid: true})
+		if err != nil {
+			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			return
+		}
+
+		if display.IsPrivate {
+			// Private: show participants (use the grants list)
+			var participants []string
+			for _, g := range grants {
+				if g.Username.Valid {
+					participants = append(participants, g.Username.String)
+				}
+			}
+			if len(participants) > 0 {
+				display.Participants = strings.Join(participants, ", ")
+			} else {
+				display.Participants = "No participants"
+			}
+			// AccessInfo not needed for private topics
+		} else {
+			// Public: build an access summary from grants
+			hasAnyone := false
+			hasUsers := false
+			var roles []string
+			var users []string
+
+			for _, g := range grants {
+				if g.RoleName.Valid {
+					rn := strings.ToLower(strings.TrimSpace(g.RoleName.String))
+					switch rn {
+					case "anyone":
+						hasAnyone = true
+					case "user", "users":
+						hasUsers = true
+					default:
+						roles = append(roles, g.RoleName.String)
+					}
+				} else if g.Username.Valid {
+					users = append(users, g.Username.String)
+				}
+			}
+
+			if hasAnyone {
+				display.AccessInfo = "Public (Anyone)"
+			} else if hasUsers {
+				display.AccessInfo = "Users"
+			} else {
+				parts := make([]string, 0, 2)
+				if len(roles) > 0 {
+					parts = append(parts, "Roles: "+strings.Join(roles, ", "))
+				}
+				if len(users) > 0 {
+					parts = append(parts, "Users: "+strings.Join(users, ", "))
+				}
+				if len(parts) > 0 {
+					display.AccessInfo = strings.Join(parts, "; ")
+				} else if display.CategoryLabel != "" {
+					// fallback that still gives the admin *some* signal
+					display.AccessInfo = "Category: " + display.CategoryLabel
+				} else {
+					display.AccessInfo = "Default/Global"
+				}
+			}
+		}
+
+		topics = append(topics, display)
 	}
 
-	handlers.TemplateHandler(w, r, "forum/adminTopicsPage.gohtml", data)
+	data := struct {
+		Topics []*AdminTopicDisplay
+	}{
+		Topics: topics,
+	}
+
+	ForumAdminTopicsPageTmpl.Handle(w, r, data)
 }
+
+const ForumAdminTopicsPageTmpl handlers.Page = "forum/adminTopicsPage.gohtml"
 
 func AdminTopicEditPage(w http.ResponseWriter, r *http.Request) {
 	name := r.PostFormValue("name")
@@ -70,13 +201,19 @@ func AdminTopicEditPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RedirectSeeOtherWithError(w, r, "", err)
 		return
 	}
-	_ = name
-	_ = desc
-	_ = cid
-	_ = cd
-	_ = tid
 	languageID, _ := strconv.Atoi(r.PostFormValue("language"))
-	_ = languageID // TODO: implement topic update
+
+	if err := cd.Queries().AdminUpdateForumTopic(r.Context(), db.AdminUpdateForumTopicParams{
+		Title:                        sql.NullString{String: name, Valid: true},
+		Description:                  sql.NullString{String: desc, Valid: true},
+		ForumcategoryIdforumcategory: int32(cid),
+		TopicLanguageID:              sql.NullInt32{Int32: int32(languageID), Valid: languageID != 0},
+		Idforumtopic:                 int32(tid),
+	}); err != nil {
+		handlers.RedirectSeeOtherWithError(w, r, "", err)
+		return
+	}
+
 	http.Redirect(w, r, "/admin/forum/topics", http.StatusSeeOther)
 }
 
@@ -94,7 +231,16 @@ func AdminTopicCreatePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)
-	allowed, err := UserCanCreateTopic(r.Context(), cd.Queries(), int32(pcid), uid)
+	// derive section from base path, handling private forum mapping
+	base := cd.ForumBasePath
+	if base == "" {
+		base = "/forum"
+	}
+	section := strings.TrimPrefix(base, "/")
+	if section == "private" {
+		section = "privateforum"
+	}
+	allowed, err := UserCanCreateTopic(r.Context(), cd.Queries(), section, int32(pcid), uid)
 	if err != nil {
 		log.Printf("UserCanCreateTopic error: %v", err)
 		w.WriteHeader(http.StatusForbidden)
@@ -107,17 +253,12 @@ func AdminTopicCreatePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	languageID, _ := strconv.Atoi(r.PostFormValue("language"))
-	// TODO make and use an admin version of this
-	topicID, err := cd.Queries().CreateForumTopicForPoster(r.Context(), db.CreateForumTopicForPosterParams{
-		PosterID:        uid,
+	topicID, err := cd.Queries().AdminCreateForumTopic(r.Context(), db.AdminCreateForumTopicParams{
 		ForumcategoryID: int32(pcid),
-		ForumLang:       sql.NullInt32{Int32: int32(languageID), Valid: languageID != 0},
+		LanguageID:      sql.NullInt32{Int32: int32(languageID), Valid: languageID != 0},
 		Title:           sql.NullString{String: name, Valid: true},
 		Description:     sql.NullString{String: desc, Valid: true},
 		Handler:         "",
-		Section:         "forum",
-		GrantCategoryID: sql.NullInt32{Int32: int32(pcid), Valid: true},
-		GranteeID:       sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		handlers.RedirectSeeOtherWithError(w, r, "", err)
@@ -131,12 +272,40 @@ func AdminTopicCreatePage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/admin/forum/topics", http.StatusSeeOther)
 }
 
+func AdminTopicDeleteConfirmPage(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	tid, err := strconv.Atoi(mux.Vars(r)["topic"])
+	if err != nil {
+		handlers.RedirectSeeOtherWithError(w, r, "/admin/forum/topics", err)
+		return
+	}
+	cd.PageTitle = "Confirm forum topic delete"
+	data := struct {
+		Message      string
+		ConfirmLabel string
+		Back         string
+	}{
+		Message:      "Are you sure you want to delete forum topic " + strconv.Itoa(tid) + "?",
+		ConfirmLabel: "Confirm delete",
+		Back:         "/admin/forum/topics/topic/" + strconv.Itoa(tid),
+	}
+	ForumAdminTopicDeletePageTmpl.Handle(w, r, data)
+}
+
+const ForumAdminTopicDeletePageTmpl handlers.Page = "forum/adminTopicDeletePage.gohtml"
+
 func AdminTopicDeletePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	tid, err := strconv.Atoi(mux.Vars(r)["topic"])
 	if err != nil {
 		handlers.RedirectSeeOtherWithError(w, r, "", err)
 		return
+	}
+	if r.FormValue("cascade") == "true" {
+		if err := cd.Queries().DeleteThreadsByTopicID(r.Context(), int32(tid)); err != nil {
+			handlers.RedirectSeeOtherWithError(w, r, "", err)
+			return
+		}
 	}
 	if err := cd.Queries().AdminDeleteForumTopic(r.Context(), int32(tid)); err != nil {
 		handlers.RedirectSeeOtherWithError(w, r, "", err)

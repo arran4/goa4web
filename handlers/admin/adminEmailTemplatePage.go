@@ -86,11 +86,15 @@ func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
 			*common.CoreData
 			Infos []taskTemplateInfo
 		}{cd, gatherTaskTemplateInfos(cd.TasksReg)}
-		handlers.TemplateHandler(w, r, "emailTemplateListPage.gohtml", data)
+		AdminEmailTemplateListPageTmpl.Handle(w, r, data)
 		return
 	}
 	errMsg := r.URL.Query().Get("error")
 	cd.SetCurrentNotificationTemplate(name, errMsg)
 	cd.SetCurrentError(errMsg)
-	handlers.TemplateHandler(w, r, "emailTemplateEditPage.gohtml", struct{}{})
+	AdminEmailTemplateEditPageTmpl.Handle(w, r, struct{}{})
 }
+
+const AdminEmailTemplateListPageTmpl handlers.Page = "admin/emailTemplateListPage.gohtml"
+
+const AdminEmailTemplateEditPageTmpl handlers.Page = "admin/emailTemplateEditPage.gohtml"

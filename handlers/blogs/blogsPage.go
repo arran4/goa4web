@@ -4,19 +4,20 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"io"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 
 	"log"
 	"net/http"
-	"net/url"
 	"strconv"
 	"time"
 
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers/share"
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/gorilla/feeds"
@@ -40,43 +41,17 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		cd.PrevLink = "/blogs?" + qv.Encode()
 	}
 
-	handlers.TemplateHandler(w, r, "blogsPage", struct{}{})
-}
-
-func CustomBlogIndex(data *common.CoreData, r *http.Request) {
-	user := r.URL.Query().Get("user")
-	data.CustomIndexItems = []common.IndexItem{}
-	if data.FeedsEnabled {
-		suffix := ""
-		if user != "" {
-			suffix = "?user=" + url.QueryEscape(user)
-		}
-		data.RSSFeedURL = "/blogs/rss" + suffix
-		data.AtomFeedURL = "/blogs/atom" + suffix
-		data.CustomIndexItems = append(data.CustomIndexItems,
-			common.IndexItem{Name: "Atom Feed", Link: data.AtomFeedURL},
-			common.IndexItem{Name: "RSS Feed", Link: data.RSSFeedURL},
-		)
+	cd.OpenGraph = &common.OpenGraph{
+		Title:       "Blogs",
+		Description: "Read blogs from our community.",
+		Image:       share.MakeImageURL(cd.AbsoluteURL(""), "Blogs", cd.ShareSigner, time.Now().Add(24*time.Hour)),
+		ImageWidth:  cd.Config.OGImageWidth,
+		ImageHeight: cd.Config.OGImageHeight,
+		TwitterSite: cd.Config.TwitterSite,
+		URL:         cd.AbsoluteURL(r.URL.String()),
 	}
 
-	if data.HasRole("administrator") && data.AdminMode {
-		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-			Name: "Blogs Admin",
-			Link: "/admin/blogs",
-		})
-	}
-	userHasWriter := data.HasRole("content writer")
-	if userHasWriter {
-		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-			Name: "Write blog",
-			Link: "/blogs/add",
-		})
-
-	}
-	data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-		Name: "List bloggers",
-		Link: "/blogs/bloggers",
-	})
+	BlogsPageTmpl.Handle(w, r, struct{}{})
 }
 
 func RssPage(w http.ResponseWriter, r *http.Request) {
@@ -105,6 +80,21 @@ func RssPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func RssPageSigned(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+
+	u, err := handlers.VerifyFeedRequest(r, "/blogs/rss")
+	if err != nil {
+		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+		return
+	}
+
+	// Pretend to be the signed user
+	cd.UserID = u.Idusers
+
+	RssPage(w, r)
+}
+
 func AtomPage(w http.ResponseWriter, r *http.Request) {
 	username := r.URL.Query().Get("rss")
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
@@ -128,6 +118,21 @@ func AtomPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func AtomPageSigned(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+
+	u, err := handlers.VerifyFeedRequest(r, "/blogs/atom")
+	if err != nil {
+		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+		return
+	}
+
+	// Pretend to be the signed user
+	cd.UserID = u.Idusers
+
+	AtomPage(w, r)
+}
+
 func FeedGen(r *http.Request, queries db.Querier, uid int, username string) (*feeds.Feed, error) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
@@ -145,8 +150,8 @@ func FeedGen(r *http.Request, queries db.Querier, uid int, username string) (*fe
 
 	rows, err := queries.ListBlogEntriesByAuthorForLister(r.Context(), db.ListBlogEntriesByAuthorForListerParams{
 		AuthorID: int32(uid),
-		ListerID: int32(uid),
-		UserID:   sql.NullInt32{Int32: int32(uid), Valid: uid != 0},
+		ListerID: cd.UserID,
+		UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		Limit:    15,
 		Offset:   0,
 	})
@@ -159,8 +164,10 @@ func FeedGen(r *http.Request, queries db.Querier, uid int, username string) (*fe
 	}
 
 	for _, row := range rows {
-		u := r.URL
-		u.Query().Set("show", fmt.Sprintf("%d", row.Idblogs))
+		u := *r.URL
+		q := u.Query()
+		q.Set("show", fmt.Sprintf("%d", row.Idblogs))
+		u.RawQuery = q.Encode()
 		conv := a4code2html.New(cd.ImageURLMapper)
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(row.Blog.String)

@@ -10,6 +10,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/app/server"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -19,7 +20,12 @@ func TestServerShutdownTask_EventPublished(t *testing.T) {
 	h := New(WithServer(&server.Server{Bus: bus}))
 	ch := bus.Subscribe(eventbus.TaskMessageType)
 
-	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig(),
+		common.WithUserRoles([]string{"administrator"}),
+		common.WithPermissions([]*db.GetPermissionsByUserIDRow{
+			{Name: "administrator", IsAdmin: true},
+		}),
+	)
 	cd.UserID = 1
 	ctx := context.WithValue(context.Background(), consts.KeyCoreData, cd)
 

@@ -1,0 +1,26 @@
+{{define "title"}}{{.PageTitle}}{{end}}
+{{define "body"}}
+<div class="admin-wrapper">
+    <h1>{{.PageTitle}}</h1>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Section</th>
+                <th>Item</th>
+                <th>Action</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Definitions}}
+            <tr>
+                <td>{{.Section}}</td>
+                <td>{{.Item}}</td>
+                <td>{{.Action}}</td>
+                <td>{{.Description}}</td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{end}}

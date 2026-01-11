@@ -42,5 +42,7 @@ func adminUserImagebbsPage(w http.ResponseWriter, r *http.Request) {
 		User:  &db.User{Idusers: cpu.Idusers, Username: user.Username},
 		Posts: rows,
 	}
-	handlers.TemplateHandler(w, r, "userImagebbsPage.gohtml", data)
+	AdminUserImagebbsPageTmpl.Handle(w, r, data)
 }
+
+const AdminUserImagebbsPageTmpl handlers.Page = "admin/userImagebbsPage.gohtml"

@@ -40,10 +40,10 @@ func TestPageTemplatesRender(t *testing.T) {
 		name string
 		data any
 	}{
-		{"newsPage", struct{}{}},
-		{"faqPage", struct{ *common.CoreData }{&common.CoreData{}}},
-		{"userPage", struct{ *common.CoreData }{&common.CoreData{}}},
-		{"linkerPage", struct {
+		{"news/page.gohtml", struct{}{}},
+		{"faq/page.gohtml", struct{ *common.CoreData }{&common.CoreData{}}},
+		{"user/page.gohtml", struct{ *common.CoreData }{&common.CoreData{}}},
+		{"linker/page.gohtml", struct {
 			*common.CoreData
 			Categories any
 			Links      any
@@ -56,16 +56,16 @@ func TestPageTemplatesRender(t *testing.T) {
 			Category   *forum.ForumcategoryPlus
 			Admin      bool
 		}{&common.CoreData{}, nil, nil, false}},
-		{"bookmarksPage", struct{ *common.CoreData }{&common.CoreData{}}},
-		{"imagebbsPage", struct {
+		{"bookmarks/page.gohtml", struct{ *common.CoreData }{&common.CoreData{}}},
+		{"imagebbs/page.gohtml", struct {
 			*common.CoreData
 			Boards any
 		}{&common.CoreData{}, nil}},
-		{"blogsPage", struct{}{}},
-		{"writingsPage", struct {
+		{"blogs/page.gohtml", struct{}{}},
+		{"writings/page.gohtml", struct {
 			WritingCategoryID int32
 		}{0}},
-		{"linkerCategoryPage", struct {
+		{"linker/categoryPage.gohtml", struct {
 			*common.CoreData
 			Offset      int
 			HasOffset   bool
@@ -79,15 +79,15 @@ func TestPageTemplatesRender(t *testing.T) {
 			CategoryId        int32
 			WritingCategoryID int32
 		}{req, 0, 0}},
-		{"searchPage", struct {
+		{"searchPage.gohtml", struct {
 			*common.CoreData
 			SearchWords string
 		}{&common.CoreData{}, ""}},
-		{"adminSearchPage", struct {
+		{"admin/searchPage.gohtml", struct {
 			*common.CoreData
 			Stats struct{ Words, Comments, News, Blogs, Linker, Writing, Writings, Images int64 }
 		}{&common.CoreData{}, struct{ Words, Comments, News, Blogs, Linker, Writing, Writings, Images int64 }{}}},
-		{"blogsAdminPage", struct {
+		{"blogs/adminPage.gohtml", struct {
 			*common.CoreData
 			Rows []struct {
 				Username sql.NullString
@@ -96,16 +96,16 @@ func TestPageTemplatesRender(t *testing.T) {
 				Idusers  int32
 			}
 		}{&common.CoreData{}, nil}},
-		{"adminPage", struct {
+		{"admin/page.gohtml", struct {
 			*common.CoreData
 			AdminSections []common.AdminSection
 			Stats         adminStats
 		}{&common.CoreData{}, nil, adminStats{}}},
-		{"forumAdminPage", struct {
+		{"forum/adminPage.gohtml", struct {
 			*common.CoreData
 			Stats struct{ Categories, Topics, Threads int64 }
 		}{&common.CoreData{}, struct{ Categories, Topics, Threads int64 }{}}},
-		{"imagebbsAdminPage", struct {
+		{"imagebbs/adminPage.gohtml", struct {
 			*common.CoreData
 			Stats []*db.AdminImageboardPostCountsRow
 		}{&common.CoreData{}, nil}},

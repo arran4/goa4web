@@ -47,7 +47,8 @@ VALUES (?);
 -- name: SystemListAllUsers :many
 SELECT u.idusers, u.username,
        IF(r.id IS NULL, 0, 1) AS admin,
-       MIN(s.created_at) AS created_at
+       MIN(s.created_at) AS created_at,
+       u.deleted_at
 FROM users u
 LEFT JOIN user_roles ur ON ur.users_idusers = u.idusers
 LEFT JOIN roles r ON ur.role_id = r.id AND r.is_admin = 1
@@ -116,3 +117,14 @@ DELETE FROM users WHERE idusers = ?;
 
 -- name: AdminUpdateUsernameByID :exec
 UPDATE users SET username = ? WHERE idusers = ?;
+
+-- name: CheckUserHasGrant :one
+SELECT EXISTS(
+    SELECT 1
+    FROM grants g
+    WHERE g.user_id = ?
+    AND g.section = ?
+    AND g.item = ?
+    AND g.action = ?
+    AND g.active = 1
+);

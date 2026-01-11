@@ -8,6 +8,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"strings"
 )
 
 const adminListUploadedImages = `-- name: AdminListUploadedImages :many
@@ -58,18 +59,7 @@ const createUploadedImageForUploader = `-- name: CreateUploadedImageForUploader 
 INSERT INTO uploaded_images (
     users_idusers, path, width, height, file_size, uploaded
 )
-SELECT ?, ?, ?, ?, ?, NOW()
-WHERE EXISTS (
-    SELECT 1 FROM grants g
-    WHERE g.section='images'
-      AND g.item='upload'
-      AND g.action='post'
-      AND g.active=1
-      AND (g.user_id = ? OR g.user_id IS NULL)
-      AND (g.role_id IS NULL OR g.role_id IN (
-          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
-      ))
-)
+VALUES (?, ?, ?, ?, ?, NOW())
 `
 
 type CreateUploadedImageForUploaderParams struct {
@@ -78,7 +68,6 @@ type CreateUploadedImageForUploaderParams struct {
 	Width      sql.NullInt32
 	Height     sql.NullInt32
 	FileSize   int32
-	GranteeID  sql.NullInt32
 }
 
 func (q *Queries) CreateUploadedImageForUploader(ctx context.Context, arg CreateUploadedImageForUploaderParams) (int64, error) {
@@ -88,13 +77,57 @@ func (q *Queries) CreateUploadedImageForUploader(ctx context.Context, arg Create
 		arg.Width,
 		arg.Height,
 		arg.FileSize,
-		arg.GranteeID,
-		arg.UploaderID,
 	)
 	if err != nil {
 		return 0, err
 	}
 	return result.LastInsertId()
+}
+
+const listUploadedImagePathsByUser = `-- name: ListUploadedImagePathsByUser :many
+SELECT path
+FROM uploaded_images
+WHERE users_idusers = ?
+  AND path IN (/*SLICE:paths*/?)
+`
+
+type ListUploadedImagePathsByUserParams struct {
+	UserID int32
+	Paths  []sql.NullString
+}
+
+func (q *Queries) ListUploadedImagePathsByUser(ctx context.Context, arg ListUploadedImagePathsByUserParams) ([]sql.NullString, error) {
+	query := listUploadedImagePathsByUser
+	var queryParams []interface{}
+	queryParams = append(queryParams, arg.UserID)
+	if len(arg.Paths) > 0 {
+		for _, v := range arg.Paths {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:paths*/?", strings.Repeat(",?", len(arg.Paths))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:paths*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []sql.NullString
+	for rows.Next() {
+		var path sql.NullString
+		if err := rows.Scan(&path); err != nil {
+			return nil, err
+		}
+		items = append(items, path)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listUploadedImagesByUserForLister = `-- name: ListUploadedImagesByUserForLister :many

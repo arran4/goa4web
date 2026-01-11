@@ -7,6 +7,9 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
+
+	"github.com/arran4/goa4web/handlers/share"
 
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core"
@@ -16,8 +19,6 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/notifications"
-	"github.com/arran4/goa4web/workers/postcountworker"
-	"github.com/arran4/goa4web/workers/searchworker"
 )
 
 func ArticlePage(w http.ResponseWriter, r *http.Request) {
@@ -34,6 +35,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		AdminURL       func(*db.GetCommentsByThreadIdForUserRow) string
 		Labels         []templates.TopicLabel
 		BackURL        string
+		ShareURL       string
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -52,6 +54,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd.SetCurrentThreadAndTopic(writing.ForumthreadID, 0)
 	if !(cd.HasGrant("writing", "article", "view", writing.Idwriting) || cd.SelectedThreadCanReply()) {
+		fmt.Println("TODO: FIx: Add enforced Access in router rather than task")
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
@@ -59,6 +62,16 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		cd.PageTitle = fmt.Sprintf("Writing: %s", writing.Title.String)
 	} else {
 		cd.PageTitle = fmt.Sprintf("Writing %d", writing.Idwriting)
+	}
+
+	cd.OpenGraph = &common.OpenGraph{
+		Title:       writing.Title.String,
+		Description: a4code.Snip(writing.Abstract.String, 128),
+		Image:       share.MakeImageURL(cd.AbsoluteURL(""), writing.Title.String, cd.ShareSigner, time.Now().Add(24*time.Hour)),
+		ImageWidth:  cd.Config.OGImageWidth,
+		ImageHeight: cd.Config.OGImageHeight,
+		TwitterSite: cd.Config.TwitterSite,
+		URL:         cd.AbsoluteURL(r.URL.String()),
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
@@ -74,7 +87,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		Request:  r,
 		Comments: comments,
-		BackURL:  r.URL.RequestURI(),
+		BackURL:  r.URL.Path,
 	}
 
 	data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
@@ -103,14 +116,14 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.IsAuthor = writing.UsersIdusers == cd.UserID
-	data.CanEdit = cd.HasContentWriterRole() && data.IsAuthor
+	data.CanEdit = cd.HasGrant("writing", "article", "edit", writing.Idwriting)
 
 	if als, err := cd.WritingAuthorLabels(writing.Idwriting); err == nil {
 		for _, l := range als {
 			data.Labels = append(data.Labels, templates.TopicLabel{Name: l, Type: "author"})
 		}
 	}
-	if pls, err := cd.WritingPrivateLabels(writing.Idwriting); err == nil {
+	if pls, err := cd.WritingPrivateLabels(writing.Idwriting, writing.Writerid); err == nil {
 		for _, l := range pls {
 			data.Labels = append(data.Labels, templates.TopicLabel{Name: l, Type: "private"})
 		}
@@ -127,8 +140,12 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	handlers.TemplateHandler(w, r, "articlePage.gohtml", data)
+	cd.CustomIndexItems = append(cd.CustomIndexItems, WritingsPageSpecificItems(cd, r)...)
+
+	ArticlePageTmpl.Handle(w, r, data)
 }
+
+const ArticlePageTmpl handlers.Page = "writings/articlePage.gohtml"
 
 func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	if _, ok := core.GetSessionOrFail(w, r); !ok {
@@ -140,7 +157,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{}); err != nil {
+			if err := AdminNoAccessPageTmpl.Handle(w, r, struct{}{}); err != nil {
 				log.Printf("render no access page: %v", err)
 			}
 			return
@@ -159,15 +176,6 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data["target"] = notifications.Target{Type: "writing", ID: writing.Idwriting}
-		}
-	}
-
 	text := r.PostFormValue("replytext")
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
 
@@ -182,26 +190,25 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := cd.ClearUnreadForOthers("writing", writing.Idwriting); err != nil {
-		log.Printf("clear unread labels: %v", err)
-	}
-
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(cid), ThreadID: threadID, TopicID: topicID}
-		}
-	}
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: int32(cid), Text: text}
-		}
+	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
+		ThreadID:             threadID,
+		TopicID:              topicID,
+		CommentID:            int32(cid),
+		LabelItem:            "writing",
+		LabelItemID:          writing.Idwriting,
+		CommentText:          text,
+		ClearUnreadForOthers: true,
+		MarkThreadRead:       true,
+		IncludePostCount:     true,
+		IncludeSearch:        true,
+		AdditionalData: map[string]any{
+			"target": notifications.Target{Type: "writing", ID: writing.Idwriting},
+		},
+	}); err != nil {
+		log.Printf("writing article reply side effects: %v", err)
 	}
 
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
+
+const AdminNoAccessPageTmpl handlers.Page = "admin/noAccessPage.gohtml"

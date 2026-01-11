@@ -5,7 +5,7 @@
     {{- range .Links }}
     <tr>
         <td><a href="/admin/linker/links/link/{{ .ID }}">{{ .ID }}</a></td>
-        <td>{{ if .Listed.Valid }}{{ cd.LocalTimeIn .Listed.Time .Timezone.String }}{{ end }}</td>
+        <td>{{ if .Listed.Valid }}{{ cd.FormatLocalTimeIn .Listed.Time .Timezone.String }}{{ end }}</td>
         <td>{{ if .Title.Valid }}{{ .Title.String }}{{ end }}</td>
         <td>{{ if .Url.Valid }}<a href="{{ .Url.String }}" target="_blank">{{ .Url.String }}</a>{{ end }}</td>
         <td><a href="/linker/show/{{ .ID }}">View</a></td>

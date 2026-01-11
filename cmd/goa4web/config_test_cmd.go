@@ -71,7 +71,7 @@ func (c *configTestCmd) Usage() {
 }
 
 func (c *configTestCmd) FlagGroups() []flagGroup {
-	return append(c.rootCmd.FlagGroups(), flagGroup{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)})
+	return []flagGroup{{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)}}
 }
 
 var _ usageData = (*configTestCmd)(nil)
@@ -92,8 +92,11 @@ func parseConfigTestEmailCmd(parent *configTestCmd, args []string) (*configTestE
 }
 
 func (c *configTestEmailCmd) Run() error {
-	provider := c.rootCmd.emailReg.ProviderFromConfig(c.rootCmd.cfg)
-	if provider == nil {
+	provider, err := c.rootCmd.emailReg.ProviderFromConfig(c.rootCmd.cfg)
+	if err != nil || provider == nil {
+		if err != nil {
+			return fmt.Errorf("email provider error: %w", err)
+		}
 		return fmt.Errorf("email provider not configured")
 	}
 	var q db.Querier

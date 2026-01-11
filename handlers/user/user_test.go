@@ -3,26 +3,23 @@ package user
 import (
 	"context"
 	"database/sql"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"regexp"
 	"strings"
 	"testing"
+	"time"
 
-	"github.com/arran4/goa4web/handlers"
-
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
 	logProv "github.com/arran4/goa4web/internal/email/log"
-	"time"
 )
 
 func newEmailReg() *email.Registry {
@@ -51,18 +48,107 @@ func newRequestWithSession(method, target string, values map[string]interface{})
 	return r, httptest.NewRecorder()
 }
 
+type testMailQueries struct {
+	db.Querier
+	user *db.SystemGetUserByIDRow
+}
+
+func (q *testMailQueries) SystemGetUserByID(context.Context, int32) (*db.SystemGetUserByIDRow, error) {
+	return q.user, nil
+}
+
+type userEmailPageQueries struct {
+	db.Querier
+	user    *db.SystemGetUserByIDRow
+	pref    *db.Preference
+	prefErr error
+	emails  []*db.UserEmail
+}
+
+func (q *userEmailPageQueries) SystemGetUserByID(context.Context, int32) (*db.SystemGetUserByIDRow, error) {
+	return q.user, nil
+}
+
+func (q *userEmailPageQueries) GetPreferenceForLister(context.Context, int32) (*db.Preference, error) {
+	if q.prefErr != nil {
+		return nil, q.prefErr
+	}
+	return q.pref, nil
+}
+
+func (q *userEmailPageQueries) ListUserEmailsForLister(context.Context, db.ListUserEmailsForListerParams) ([]*db.UserEmail, error) {
+	return q.emails, nil
+}
+
+func (q *userEmailPageQueries) GetPermissionsByUserID(context.Context, int32) ([]*db.GetPermissionsByUserIDRow, error) {
+	return nil, nil
+}
+
+func (q *userEmailPageQueries) UpdateCustomCssForLister(context.Context, db.UpdateCustomCssForListerParams) error {
+	return nil
+}
+
+type languageSaveQueries struct {
+	db.Querier
+	languages     []*db.Language
+	deleted       bool
+	insertedLangs []db.InsertUserLangParams
+	pref          *db.Preference
+	prefErr       error
+	insertedPrefs []db.InsertPreferenceForListerParams
+	updatedPrefs  []db.UpdatePreferenceForListerParams
+}
+
+func (q *languageSaveQueries) DeleteUserLanguagesForUser(context.Context, int32) error {
+	q.deleted = true
+	return nil
+}
+
+func (q *languageSaveQueries) SystemListLanguages(context.Context) ([]*db.Language, error) {
+	return q.languages, nil
+}
+
+func (q *languageSaveQueries) InsertUserLang(_ context.Context, arg db.InsertUserLangParams) error {
+	q.insertedLangs = append(q.insertedLangs, arg)
+	return nil
+}
+
+func (q *languageSaveQueries) GetPreferenceForLister(context.Context, int32) (*db.Preference, error) {
+	if q.prefErr != nil {
+		return nil, q.prefErr
+	}
+	return q.pref, nil
+}
+
+func (q *languageSaveQueries) InsertPreferenceForLister(_ context.Context, arg db.InsertPreferenceForListerParams) error {
+	q.insertedPrefs = append(q.insertedPrefs, arg)
+	return nil
+}
+
+func (q *languageSaveQueries) UpdatePreferenceForLister(_ context.Context, arg db.UpdatePreferenceForListerParams) error {
+	q.updatedPrefs = append(q.updatedPrefs, arg)
+	return nil
+}
+
+func (q *languageSaveQueries) UpdateCustomCssForLister(context.Context, db.UpdateCustomCssForListerParams) error {
+	return nil
+}
+
 func TestUserEmailTestAction_NoProvider(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
 	cfg.EmailProvider = ""
-	conn, mock, _ := sqlmock.New()
-	defer conn.Close()
-	queries := db.New(conn)
-	mock.ExpectQuery("SELECT u.idusers, ue.email, u.username").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(1, "e", "u", nil))
-	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).AddRow(1, 1, "e", nil, nil, nil, 100))
+	queries := &testMailQueries{
+		user: &db.SystemGetUserByIDRow{
+			Idusers:  1,
+			Email:    sql.NullString{String: "e", Valid: true},
+			Username: sql.NullString{String: "u", Valid: true},
+		},
+	}
 	req := httptest.NewRequest("POST", "/email", nil)
 	ctx := req.Context()
 	reg := newEmailReg()
-	cd := common.NewCoreData(ctx, queries, cfg, common.WithEmailProvider(reg.ProviderFromConfig(cfg)))
+	p, _ := reg.ProviderFromConfig(cfg)
+	cd := common.NewCoreData(ctx, queries, cfg, common.WithEmailProvider(p), common.WithUserRoles([]string{}))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -87,15 +173,18 @@ func TestUserEmailTestAction_WithProvider(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
 	cfg.EmailProvider = "log"
 
-	conn, mock, _ := sqlmock.New()
-	defer conn.Close()
-	queries := db.New(conn)
-	mock.ExpectQuery("SELECT u.idusers, ue.email, u.username").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(1, "e", "u", nil))
-	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).AddRow(1, 1, "e", nil, nil, nil, 100))
+	queries := &testMailQueries{
+		user: &db.SystemGetUserByIDRow{
+			Idusers:  1,
+			Email:    sql.NullString{String: "e", Valid: true},
+			Username: sql.NullString{String: "u", Valid: true},
+		},
+	}
 	req := httptest.NewRequest("POST", "/email", nil)
 	ctx := req.Context()
 	reg := newEmailReg()
-	cd := common.NewCoreData(ctx, queries, cfg, common.WithEmailProvider(reg.ProviderFromConfig(cfg)))
+	p, _ := reg.ProviderFromConfig(cfg)
+	cd := common.NewCoreData(ctx, queries, cfg, common.WithEmailProvider(p), common.WithUserRoles([]string{}))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -109,14 +198,18 @@ func TestUserEmailTestAction_WithProvider(t *testing.T) {
 }
 
 func TestUserEmailPage_ShowError(t *testing.T) {
-	conn, mock, _ := sqlmock.New()
-	defer conn.Close()
-	queries := db.New(conn)
-	mock.ExpectQuery("SELECT u.idusers, ue.email, u.username").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(1, "e", "u", nil))
-	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).AddRow(1, 1, "e", nil, nil, nil, 100))
+	queries := &userEmailPageQueries{
+		user: &db.SystemGetUserByIDRow{
+			Idusers:  1,
+			Email:    sql.NullString{String: "e", Valid: true},
+			Username: sql.NullString{String: "u", Valid: true},
+		},
+		prefErr: sql.ErrNoRows,
+		emails:  []*db.UserEmail{{ID: 1, UserID: 1, Email: "e"}},
+	}
 	req := httptest.NewRequest("GET", "/usr/email?error=missing", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{}))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -133,15 +226,24 @@ func TestUserEmailPage_ShowError(t *testing.T) {
 }
 
 func TestUserEmailPage_NoUnverified(t *testing.T) {
-	conn, mock, _ := sqlmock.New()
-	defer conn.Close()
-	queries := db.New(conn)
-	mock.ExpectQuery("SELECT u.idusers, ue.email, u.username").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(1, "e", "u", nil))
-	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}).AddRow(1, 1, "e", time.Now(), nil, nil, 100))
+	queries := &userEmailPageQueries{
+		user: &db.SystemGetUserByIDRow{
+			Idusers:  1,
+			Email:    sql.NullString{String: "e", Valid: true},
+			Username: sql.NullString{String: "u", Valid: true},
+		},
+		prefErr: sql.ErrNoRows,
+		emails: []*db.UserEmail{{
+			ID:         1,
+			UserID:     1,
+			Email:      "e",
+			VerifiedAt: sql.NullTime{Time: time.Now(), Valid: true},
+		}},
+	}
 
 	req := httptest.NewRequest("GET", "/usr/email", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{}))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -159,15 +261,19 @@ func TestUserEmailPage_NoUnverified(t *testing.T) {
 }
 
 func TestUserEmailPage_NoVerified(t *testing.T) {
-	conn, mock, _ := sqlmock.New()
-	defer conn.Close()
-	queries := db.New(conn)
-	mock.ExpectQuery("SELECT u.idusers, ue.email, u.username").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(1, "e", "u", nil))
-	mock.ExpectQuery("SELECT id, user_id, email").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}))
+	queries := &userEmailPageQueries{
+		user: &db.SystemGetUserByIDRow{
+			Idusers:  1,
+			Email:    sql.NullString{String: "e", Valid: true},
+			Username: sql.NullString{String: "u", Valid: true},
+		},
+		prefErr: sql.ErrNoRows,
+		emails:  []*db.UserEmail{},
+	}
 
 	req := httptest.NewRequest("GET", "/usr/email", nil)
 	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{}))
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -185,13 +291,13 @@ func TestUserEmailPage_NoVerified(t *testing.T) {
 }
 
 func TestUserLangSaveAllActionPage_NewPref(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	queries := &languageSaveQueries{
+		languages: []*db.Language{
+			{ID: 1, Nameof: sql.NullString{String: "en", Valid: true}},
+			{ID: 2, Nameof: sql.NullString{String: "fr", Valid: true}},
+		},
+		prefErr: sql.ErrNoRows,
 	}
-	defer conn.Close()
-
-	queries := db.New(conn)
 	store = sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = sessionName
@@ -222,31 +328,31 @@ func TestUserLangSaveAllActionPage_NewPref(t *testing.T) {
 	cd.UserID = 1
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
-	rows := sqlmock.NewRows([]string{"id", "nameof"}).AddRow(1, "en").AddRow(2, "fr")
-	mock.ExpectExec("DELETE FROM user_language").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, nameof\nFROM language")).WillReturnRows(rows)
-	mock.ExpectExec("INSERT INTO user_language").WithArgs(int32(1), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectQuery("SELECT idpreferences").WithArgs(int32(1)).WillReturnError(sql.ErrNoRows)
-	mock.ExpectExec("INSERT INTO preferences").WithArgs(int32(2), int32(1), int32(cfg.PageSizeDefault), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
 
 	saveAllTask.Action(rr, req)
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 	if rr.Result().StatusCode != http.StatusOK {
 		t.Fatalf("status=%d", rr.Result().StatusCode)
+	}
+	if !queries.deleted {
+		t.Fatal("expected user languages to be deleted")
+	}
+	if len(queries.insertedLangs) != 1 || queries.insertedLangs[0].LanguageID != 1 {
+		t.Fatalf("unexpected inserted languages: %#v", queries.insertedLangs)
+	}
+	if len(queries.insertedPrefs) != 1 {
+		t.Fatalf("unexpected preference inserts: %#v", queries.insertedPrefs)
+	}
+	insertedPref := queries.insertedPrefs[0]
+	if insertedPref.ListerID != 1 || insertedPref.LanguageID.Int32 != 2 || insertedPref.PageSize != int32(cfg.PageSizeDefault) {
+		t.Fatalf("unexpected preference insert: %#v", insertedPref)
 	}
 }
 
 func TestUserLangSaveLanguagesActionPage(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	queries := &languageSaveQueries{
+		languages: []*db.Language{{ID: 1, Nameof: sql.NullString{String: "en", Valid: true}}},
 	}
-	defer conn.Close()
-
-	queries := db.New(conn)
 	store = sessions.NewCookieStore([]byte("test"))
 
 	form := url.Values{}
@@ -271,29 +377,31 @@ func TestUserLangSaveLanguagesActionPage(t *testing.T) {
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
-	rows := sqlmock.NewRows([]string{"id", "nameof"}).AddRow(1, "en")
-	mock.ExpectExec("DELETE FROM user_language").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, nameof\nFROM language")).WillReturnRows(rows)
-	mock.ExpectExec("INSERT INTO user_language").WithArgs(int32(1), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
-
 	saveLanguagesTask.Action(rr, req)
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 	if rr.Result().StatusCode != http.StatusOK {
 		t.Fatalf("status=%d", rr.Result().StatusCode)
+	}
+	if !queries.deleted {
+		t.Fatal("expected user languages to be deleted")
+	}
+	if len(queries.insertedLangs) != 1 || queries.insertedLangs[0].LanguageID != 1 {
+		t.Fatalf("unexpected inserted languages: %#v", queries.insertedLangs)
 	}
 }
 
 func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	queries := &languageSaveQueries{
+		pref: &db.Preference{
+			Idpreferences:        1,
+			LanguageID:           sql.NullInt32{Int32: 1, Valid: true},
+			UsersIdusers:         1,
+			Emailforumupdates:    sql.NullBool{},
+			PageSize:             int32(15),
+			AutoSubscribeReplies: true,
+			Timezone:             sql.NullString{},
+		},
 	}
-	defer conn.Close()
-
-	queries := db.New(conn)
 	store = sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = sessionName
@@ -322,17 +430,16 @@ func TestUserLangSaveLanguageActionPage_UpdatePref(t *testing.T) {
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
-	prefRows := sqlmock.NewRows([]string{"idpreferences", "language_id", "users_idusers", "emailforumupdates", "page_size", "auto_subscribe_replies", "timezone"}).
-		AddRow(1, 1, 1, nil, cfg.PageSizeDefault, true, nil)
-	mock.ExpectQuery("SELECT idpreferences").WithArgs(int32(1)).WillReturnRows(prefRows)
-	mock.ExpectExec("UPDATE preferences").WithArgs(int32(2), int32(cfg.PageSizeDefault), sqlmock.AnyArg(), int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
-
 	saveLanguageTask.Action(rr, req)
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 	if rr.Result().StatusCode != http.StatusOK {
 		t.Fatalf("status=%d", rr.Result().StatusCode)
+	}
+	if len(queries.updatedPrefs) != 1 {
+		t.Fatalf("unexpected preference updates: %#v", queries.updatedPrefs)
+	}
+	updatedPref := queries.updatedPrefs[0]
+	if updatedPref.LanguageID.Int32 != 2 || updatedPref.ListerID != 1 {
+		t.Fatalf("unexpected preference update: %#v", updatedPref)
 	}
 }

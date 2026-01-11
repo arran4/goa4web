@@ -69,3 +69,65 @@ func TestGenerateRuntimeConfigWithInjectedFileValue(t *testing.T) {
 		t.Fatalf("merged %#v", cfg)
 	}
 }
+
+func TestGenerateRuntimeConfigMigrationsDirPrecedence(t *testing.T) {
+	t.Run("flag-overrides-file-and-env", func(t *testing.T) {
+		fs := config.NewRuntimeFlagSet("test")
+		_ = fs.Parse([]string{"--migrations-dir=cli"})
+
+		cfg := config.NewRuntimeConfig(
+			config.WithFlagSet(fs),
+			config.WithFileValues(map[string]string{config.EnvMigrationsDir: "file"}),
+			config.WithGetenv(func(k string) string {
+				if k == config.EnvMigrationsDir {
+					return "env"
+				}
+				return ""
+			}),
+		)
+
+		if cfg.MigrationsDir != "cli" {
+			t.Fatalf("expected flag to win, got %q", cfg.MigrationsDir)
+		}
+	})
+
+	t.Run("file-overrides-env", func(t *testing.T) {
+		fs := config.NewRuntimeFlagSet("test")
+		_ = fs.Parse(nil)
+
+		cfg := config.NewRuntimeConfig(
+			config.WithFlagSet(fs),
+			config.WithFileValues(map[string]string{config.EnvMigrationsDir: "file"}),
+			config.WithGetenv(func(k string) string {
+				if k == config.EnvMigrationsDir {
+					return "env"
+				}
+				return ""
+			}),
+		)
+
+		if cfg.MigrationsDir != "file" {
+			t.Fatalf("expected file to win, got %q", cfg.MigrationsDir)
+		}
+	})
+
+	t.Run("env-used-when-flag-and-file-missing", func(t *testing.T) {
+		fs := config.NewRuntimeFlagSet("test")
+		_ = fs.Parse(nil)
+
+		cfg := config.NewRuntimeConfig(
+			config.WithFlagSet(fs),
+			config.WithFileValues(map[string]string{}),
+			config.WithGetenv(func(k string) string {
+				if k == config.EnvMigrationsDir {
+					return "env"
+				}
+				return ""
+			}),
+		)
+
+		if cfg.MigrationsDir != "env" {
+			t.Fatalf("expected env to win, got %q", cfg.MigrationsDir)
+		}
+	})
+}

@@ -1,3 +1,8 @@
 {{ template "head" $ }}
+{{ if .ProfileOff }}
+    <div class="notice">
+        <strong>Notice:</strong> Your profile is currently hidden from the public.
+    </div>
+{{ end }}
 <h2>Profile for {{ .User.Username.String }}</h2>
 {{ template "tail" $ }}

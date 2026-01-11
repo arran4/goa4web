@@ -30,7 +30,16 @@ func RequireCommentAuthor(next http.Handler) http.Handler {
 		}
 		uid, _ := session.Values["UID"].(int32)
 
-		if row.UsersIdusers != uid && (cd == nil || !cd.HasRole("administrator")) {
+		authorized := row.UsersIdusers == uid
+		if !authorized && cd != nil {
+			if cd.IsAdmin() {
+				authorized = true
+			} else {
+				authorized = cd.HasGrant("forum", "thread", "edit-any", row.ForumthreadID) ||
+					cd.HasGrant("forum", "thread", "edit", row.ForumthreadID)
+			}
+		}
+		if !authorized {
 			http.NotFound(w, r)
 			return
 		}

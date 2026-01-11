@@ -2,13 +2,12 @@ package admin
 
 import (
 	"context"
+	"database/sql"
 	"net/http/httptest"
 	"net/url"
-	"regexp"
 	"strings"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
@@ -18,15 +17,19 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
+type roleGrantQueries struct {
+	db.Querier
+	created []db.AdminCreateGrantParams
+}
+
+func (q *roleGrantQueries) AdminCreateGrant(_ context.Context, arg db.AdminCreateGrantParams) (int64, error) {
+	q.created = append(q.created, arg)
+	return int64(len(q.created)), nil
+}
+
 // TestRoleGrantCreateTask_ItemIDRequired verifies that grants needing an item ID
 // fail when no item_id is supplied.
 func TestRoleGrantCreateTask_ItemIDRequired(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-
 	body := url.Values{
 		"section": {"forum"},
 		"item":    {"topic"},
@@ -36,7 +39,7 @@ func TestRoleGrantCreateTask_ItemIDRequired(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req = mux.SetURLVars(req, map[string]string{"role": "1"})
 
-	cd := common.NewCoreData(context.Background(), db.New(conn), config.NewRuntimeConfig())
+	cd := common.NewCoreData(context.Background(), &roleGrantQueries{}, config.NewRuntimeConfig())
 	cd.LoadSelectionsFromRequest(req)
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -47,19 +50,12 @@ func TestRoleGrantCreateTask_ItemIDRequired(t *testing.T) {
 	} else if err, ok := res.(error); !ok || err == nil {
 		t.Fatalf("expected error, got %v", res)
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 }
 
 // TestRoleGrantCreateTask_MultipleActions verifies multiple action selections create
 // a grant for each action.
 func TestRoleGrantCreateTask_MultipleActions(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
+	queries := &roleGrantQueries{}
 
 	body := url.Values{
 		"section": {"forum"},
@@ -71,11 +67,7 @@ func TestRoleGrantCreateTask_MultipleActions(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req = mux.SetURLVars(req, map[string]string{"role": "1"})
 
-	insert := regexp.QuoteMeta("INSERT INTO grants (")
-	mock.ExpectExec(insert).WithArgs(nil, int64(1), "forum", "topic", "allow", int64(1), nil, "see", nil).WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectExec(insert).WithArgs(nil, int64(1), "forum", "topic", "allow", int64(1), nil, "view", nil).WillReturnResult(sqlmock.NewResult(2, 1))
-
-	cd := common.NewCoreData(context.Background(), db.New(conn), config.NewRuntimeConfig())
+	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
 	cd.LoadSelectionsFromRequest(req)
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -86,7 +78,18 @@ func TestRoleGrantCreateTask_MultipleActions(t *testing.T) {
 	} else if _, ok := res.(handlers.RefreshDirectHandler); !ok {
 		t.Fatalf("expected RefreshDirectHandler, got %T", res)
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	if len(queries.created) != 2 {
+		t.Fatalf("expected 2 grants, got %d", len(queries.created))
+	}
+	for _, grant := range queries.created {
+		if !grant.RoleID.Valid || grant.RoleID.Int32 != 1 {
+			t.Fatalf("unexpected role id: %#v", grant.RoleID)
+		}
+		if grant.Section != "forum" || grant.Item.String != "topic" || grant.Action == "" {
+			t.Fatalf("unexpected grant: %#v", grant)
+		}
+		if grant.ItemID != (sql.NullInt32{Int32: 1, Valid: true}) {
+			t.Fatalf("unexpected item id: %#v", grant.ItemID)
+		}
 	}
 }

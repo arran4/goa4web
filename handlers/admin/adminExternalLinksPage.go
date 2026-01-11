@@ -28,5 +28,7 @@ func AdminExternalLinksPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data := Data{Links: rows}
-	handlers.TemplateHandler(w, r, "admin/externalLinksPage.gohtml", data)
+	AdminExternalLinksPageTmpl.Handle(w, r, data)
 }
+
+const AdminExternalLinksPageTmpl handlers.Page = "admin/externalLinksPage.gohtml"

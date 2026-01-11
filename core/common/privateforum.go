@@ -24,13 +24,16 @@ type PrivateTopic struct {
 
 // PrivateForumTopics returns private forum topics visible to the current user.
 func (cd *CoreData) PrivateForumTopics() ([]*PrivateTopic, error) {
-	if cd == nil || cd.queries == nil {
+	if cd == nil {
 		return nil, nil
 	}
 	if !cd.HasGrant("privateforum", "topic", "see", 0) {
 		return nil, nil
 	}
 	return cd.privateForumTopics.Load(func() ([]*PrivateTopic, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
 		tops, err := cd.queries.ListPrivateTopicsByUserID(cd.ctx, sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0})
 		if err != nil {
 			return nil, err
@@ -69,4 +72,22 @@ func (cd *CoreData) PrivateForumTopics() ([]*PrivateTopic, error) {
 func (cd *CoreData) PrivateTopics() []*PrivateTopic {
 	pts, _ := cd.PrivateForumTopics()
 	return pts
+}
+
+// GrantPrivateForumTopic creates a grant for a private forum topic.
+func (cd *CoreData) GrantPrivateForumTopic(topicID int32, uid, rid sql.NullInt32, action string) (int64, error) {
+	if cd.queries == nil {
+		return 0, fmt.Errorf("no queries")
+	}
+	return cd.queries.SystemCreateGrant(cd.ctx, db.SystemCreateGrantParams{
+		UserID:   uid,
+		RoleID:   rid,
+		Section:  "privateforum",
+		Item:     sql.NullString{String: "topic", Valid: true},
+		RuleType: "allow",
+		ItemID:   sql.NullInt32{Int32: topicID, Valid: true},
+		ItemRule: sql.NullString{},
+		Action:   action,
+		Extra:    sql.NullString{},
+	})
 }

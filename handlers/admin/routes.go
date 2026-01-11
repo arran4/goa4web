@@ -25,17 +25,19 @@ import (
 
 // RegisterRoutes attaches the admin endpoints to ar. The router is expected to
 // already have any required authentication middleware applied.
-func (h *Handlers) RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
+func (h *Handlers) RegisterRoutes(ar *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Registry) {
 	ar.Use(handlers.SectionMiddleware("admin"))
 	navReg.RegisterAdminControlCenter("Core", "Roles", "/admin/roles", 25)
 	navReg.RegisterAdminControlCenter("Core", "Grants", "/admin/grants", 27)
-	navReg.RegisterAdminControlCenter("Core", "Once Off & Maintenance", "/admin/maintenance", 28)
+	navReg.RegisterAdminControlCenter("Core", "Available Grants", "/admin/grants/available", 28)
+	navReg.RegisterAdminControlCenter("Core", "Once Off & Maintenance", "/admin/maintenance", 29)
 	navReg.RegisterAdminControlCenter("Core", "External Links", "/admin/external-links", 30)
 	navReg.RegisterAdminControlCenter("Core", "Link Remap", "/admin/link-remap", 32)
 	navReg.RegisterAdminControlCenter("Core", "Notifications", "/admin/notifications", 90)
 	navReg.RegisterAdminControlCenter("Core", "Queued Emails", "/admin/email/queue", 110)
 	navReg.RegisterAdminControlCenter("Core", "Failed Emails", "/admin/email/failed", 112)
 	navReg.RegisterAdminControlCenter("Core", "Sent Emails", "/admin/email/sent", 115)
+	navReg.RegisterAdminControlCenter("Core", "Email Tester", "/admin/email/test", 118)
 	navReg.RegisterAdminControlCenter("Core", "Email Template", "/admin/email/template", 120)
 	navReg.RegisterAdminControlCenter("Core", "Dead Letter Queue", "/admin/dlq", 130)
 	navReg.RegisterAdminControlCenter("Core", "Server Stats", "/admin/stats", 140)
@@ -49,7 +51,7 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navRe
 
 	ar.HandleFunc("", AdminPage).Methods("GET")
 	ar.HandleFunc("/", AdminPage).Methods("GET")
-	ar.HandleFunc("/role-grants-editor.js", handlers.RoleGrantsEditorJS).Methods(http.MethodGet, http.MethodHead, http.MethodOptions)
+	ar.HandleFunc("/role-grants-editor.js", handlers.RoleGrantsEditorJS(cfg)).Methods(http.MethodGet, http.MethodHead, http.MethodOptions)
 	ar.HandleFunc("/roles", AdminRolesPage).Methods("GET")
 	ar.HandleFunc("/roles", handlers.TaskHandler(rolePublicProfileTask)).Methods("POST").MatcherFunc(rolePublicProfileTask.Matcher())
 	ar.HandleFunc("/external-links", AdminExternalLinksPage).Methods("GET")
@@ -62,6 +64,7 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navRe
 	ar.HandleFunc("/email/sent", AdminSentEmailsPage).Methods("GET")
 	ar.HandleFunc("/email/sent", handlers.TaskHandler(resendSentEmailTask)).Methods("POST").MatcherFunc(resendSentEmailTask.Matcher())
 	ar.HandleFunc("/email/sent", handlers.TaskHandler(retrySentEmailTask)).Methods("POST").MatcherFunc(retrySentEmailTask.Matcher())
+	ar.HandleFunc("/email/test", h.AdminEmailTestPage).Methods("GET", "POST")
 	ar.HandleFunc("/email/queue", handlers.TaskHandler(resendQueueTask)).Methods("POST").MatcherFunc(resendQueueTask.Matcher())
 	ar.HandleFunc("/email/queue", handlers.TaskHandler(deleteQueueTask)).Methods("POST").MatcherFunc(deleteQueueTask.Matcher())
 	ar.HandleFunc("/email/template", AdminEmailTemplatePage).Methods("GET")
@@ -110,6 +113,7 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, _ *config.RuntimeConfig, navRe
 	ar.HandleFunc("/maintenance", AdminMaintenancePage).Methods("GET")
 	ar.HandleFunc("/maintenance", handlers.TaskHandler(convertTopicToPrivateTask)).Methods("POST").MatcherFunc(convertTopicToPrivateTask.Matcher())
 	ar.HandleFunc("/grants/anyone", AdminAnyoneGrantsPage).Methods("GET")
+	ar.HandleFunc("/grants/available", AdminGrantsAvailablePage).Methods("GET")
 	ar.HandleFunc("/grants", AdminGrantsPage).Methods("GET")
 	ar.HandleFunc("/grant/add", adminGrantAddPage).Methods("GET")
 	ar.HandleFunc("/grant", handlers.TaskHandler(globalGrantCreateTask)).Methods("POST").MatcherFunc(globalGrantCreateTask.Matcher())

@@ -3,14 +3,15 @@ package writings
 import (
 	"database/sql"
 	"fmt"
+	"log"
+	"net/http"
+	"strconv"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/mux"
-	"log"
-	"net/http"
-	"strconv"
 )
 
 // AdminCategoryGrantsPage shows grants for a writing category.
@@ -66,5 +67,7 @@ func AdminCategoryGrantsPage(w http.ResponseWriter, r *http.Request) {
 			data.Grants = append(data.Grants, gi)
 		}
 	}
-	handlers.TemplateHandler(w, r, "adminCategoryGrantsPage.gohtml", data)
+	WritingsAdminCategoryGrantsPageTmpl.Handle(w, r, data)
 }
+
+const WritingsAdminCategoryGrantsPageTmpl handlers.Page = "writings/adminCategoryGrantsPage.gohtml"

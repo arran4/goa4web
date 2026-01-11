@@ -19,7 +19,7 @@ import (
 func (h *Handlers) AdminReloadConfigPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Reload Config"
-	if cd == nil || !cd.HasRole("administrator") {
+	if cd == nil || !cd.HasAdminRole() {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
@@ -48,5 +48,5 @@ func (h *Handlers) AdminReloadConfigPage(w http.ResponseWriter, r *http.Request)
 
 	data.Messages = append(data.Messages, "Configuration reloaded")
 
-	handlers.TemplateHandler(w, r, "runTaskPage.gohtml", data)
+	RunTaskPageTmpl.Handle(w, r, data)
 }

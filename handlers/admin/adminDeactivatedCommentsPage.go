@@ -23,5 +23,7 @@ func AdminDeactivatedCommentsPage(w http.ResponseWriter, r *http.Request) {
 		*common.CoreData
 		Comments []*db.AdminListDeactivatedCommentsRow
 	}{cd, rows}
-	handlers.TemplateHandler(w, r, "deactivatedCommentsPage.gohtml", data)
+	AdminDeactivatedCommentsPageTmpl.Handle(w, r, data)
 }
+
+const AdminDeactivatedCommentsPageTmpl handlers.Page = "admin/deactivatedCommentsPage.gohtml"

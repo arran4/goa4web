@@ -3,8 +3,9 @@ package bookmarks
 import (
 	"database/sql"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
@@ -29,8 +30,10 @@ func EditPage(w http.ResponseWriter, r *http.Request) {
 	_ = session
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Edit Bookmarks"
-	handlers.TemplateHandler(w, r, "editPage.gohtml", struct{}{})
+	BookmarkEditPageTmpl.Handle(w, r, struct{}{})
 }
+
+const BookmarkEditPageTmpl handlers.Page = "bookmarks/editPage.gohtml"
 
 func (SaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	text := r.PostFormValue("text")

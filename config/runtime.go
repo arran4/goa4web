@@ -2,8 +2,13 @@ package config
 
 import (
 	"flag"
+	"fmt"
+	"log"
+	"net"
 	"os"
 	"strconv"
+
+	"github.com/go-sql-driver/mysql"
 )
 
 // DefaultPageSize defines the number of items shown per page.
@@ -15,6 +20,11 @@ type RuntimeConfig struct {
 	DBConn            string
 	DBDriver          string
 	DBTimezone        string
+	DBHost            string
+	DBPort            string
+	DBUser            string
+	DBPass            string
+	DBName            string
 	DBLogVerbosity    int
 	EmailLogVerbosity int
 	LogFlags          int
@@ -59,6 +69,8 @@ type RuntimeConfig struct {
 
 	// EmailWorkerInterval sets how often the email worker runs in seconds.
 	EmailWorkerInterval int
+	// EmailVerificationExpiryHours sets how long verification links remain valid.
+	EmailVerificationExpiryHours int
 	// PasswordResetExpiryHours sets how long password reset requests remain valid.
 	PasswordResetExpiryHours int
 	// LoginAttemptWindow defines the timeframe in minutes used when counting
@@ -110,6 +122,11 @@ type RuntimeConfig struct {
 	// LinkSignSecretFile specifies the path to the external link signing key.
 	LinkSignSecretFile string
 
+	// ShareSignSecret is used to sign share URLs.
+	ShareSignSecret string
+	// ShareSignSecretFile specifies the path to the share signing key.
+	ShareSignSecretFile string
+
 	// AdminAPISecret is used to sign administrator API tokens.
 	AdminAPISecret string
 	// AdminAPISecretFile specifies the path to the administrator API signing key.
@@ -117,11 +134,20 @@ type RuntimeConfig struct {
 
 	// TemplatesDir specifies a directory to load templates and assets from.
 	TemplatesDir string
+	// AutoMigrate toggles automatic database migrations on startup.
+	AutoMigrate bool
 	// MigrationsDir specifies a directory to load migrations from at runtime.
 	MigrationsDir string
 
 	// CreateDirs creates missing directories when enabled.
 	CreateDirs bool
+
+	// OGImageWidth is the width of the generated Open Graph image.
+	OGImageWidth int
+	// OGImageHeight is the height of the generated Open Graph image.
+	OGImageHeight int
+	// TwitterSite is the Twitter handle for the site.
+	TwitterSite string
 }
 
 // Option configures RuntimeConfig values.
@@ -282,29 +308,74 @@ func NewRuntimeConfig(ops ...Option) *RuntimeConfig {
 
 // normalizeRuntimeConfig applies default values and ensures pagination limits are valid.
 func normalizeRuntimeConfig(cfg *RuntimeConfig) {
-	if cfg.HTTPListen == "" {
-		cfg.HTTPListen = ":8080"
+	if cfg.DBConn != "" {
+		if cfg.DBUser != "" || cfg.DBPass != "" || cfg.DBHost != "" || cfg.DBPort != "" {
+			conf, err := mysql.ParseDSN(cfg.DBConn)
+			if err != nil {
+				log.Fatalf("Invalid DB_CONN: %v", err)
+			}
+			if cfg.DBUser != "" && conf.User != cfg.DBUser {
+				log.Fatalf("DB_CONN user (%s) contradicts DB_USER (%s)", conf.User, cfg.DBUser)
+			}
+			if cfg.DBPass != "" && conf.Passwd != cfg.DBPass {
+				log.Fatalf("DB_CONN password contradicts DB_PASS")
+			}
+			// DB_NAME check
+			if cfg.DBName != "" && conf.DBName != cfg.DBName {
+				log.Fatalf("DB_CONN database name (%s) contradicts DB_NAME (%s)", conf.DBName, cfg.DBName)
+			}
+
+			if (cfg.DBHost != "" || cfg.DBPort != "") && (conf.Net == "tcp" || conf.Net == "") {
+				// Parse Addr which is host:port
+				addr := conf.Addr
+				if addr == "" {
+					addr = "127.0.0.1:3306"
+				}
+
+				// Very basic parsing, might need 'net.SplitHostPort'
+				host, port, err := splitHostPort(addr)
+				if err == nil {
+					if cfg.DBHost != "" && host != cfg.DBHost {
+						log.Fatalf("DB_CONN host (%s) contradicts DB_HOST (%s)", host, cfg.DBHost)
+					}
+					if cfg.DBPort != "" && port != cfg.DBPort {
+						log.Fatalf("DB_CONN port (%s) contradicts DB_PORT (%s)", port, cfg.DBPort)
+					}
+				}
+			}
+		}
+	} else if cfg.DBHost != "" || cfg.DBUser != "" || cfg.DBName != "" {
+		// Construct DB_CONN from components if DB_CONN is missing
+		// Default to tcp
+		user := cfg.DBUser
+		pass := cfg.DBPass
+		host := cfg.DBHost
+		port := cfg.DBPort
+		dbname := cfg.DBName
+
+		if host == "" {
+			host = "127.0.0.1"
+		}
+		if port == "" {
+			port = "3306"
+		}
+
+		// Format: user:password@tcp(host:port)/dbname
+		// Need to handle missing user/pass
+		auth := ""
+		if user != "" {
+			auth = user
+			if pass != "" {
+				auth += ":" + pass
+			}
+			auth += "@"
+		}
+
+		cfg.DBConn = fmt.Sprintf("%stcp(%s:%s)/%s?parseTime=true", auth, host, port, dbname)
 	}
+
 	if cfg.HTTPHostname == "" {
 		cfg.HTTPHostname = "http://localhost:8080"
-	}
-	if cfg.HSTSHeaderValue == "" {
-		cfg.HSTSHeaderValue = "max-age=63072000; includeSubDomains"
-	}
-	if cfg.SessionName == "" {
-		cfg.SessionName = "my-session"
-	}
-	if cfg.SessionSameSite == "" {
-		cfg.SessionSameSite = "strict"
-	}
-	if cfg.PageSizeMin == 0 {
-		cfg.PageSizeMin = 5
-	}
-	if cfg.PageSizeMax == 0 {
-		cfg.PageSizeMax = 50
-	}
-	if cfg.PageSizeDefault == 0 {
-		cfg.PageSizeDefault = DefaultPageSize
 	}
 	if cfg.PageSizeMin > cfg.PageSizeMax {
 		cfg.PageSizeMin = cfg.PageSizeMax
@@ -315,23 +386,8 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 	if cfg.PageSizeDefault > cfg.PageSizeMax {
 		cfg.PageSizeDefault = cfg.PageSizeMax
 	}
-	if cfg.StatsStartYear == 0 {
-		cfg.StatsStartYear = 2005
-	}
-	if cfg.DBTimezone == "" {
-		cfg.DBTimezone = "Australia/Melbourne"
-	}
-	if cfg.Timezone == "" {
-		cfg.Timezone = "Australia/Melbourne"
-	}
-	if cfg.ImageUploadProvider == "" {
-		cfg.ImageUploadProvider = "local"
-	}
 	if cfg.ImageUploadDir == "" {
 		cfg.ImageUploadDir = "uploads/images"
-	}
-	if cfg.ImageCacheProvider == "" {
-		cfg.ImageCacheProvider = "local"
 	}
 	if cfg.ImageCacheDir == "" {
 		cfg.ImageCacheDir = "uploads/cache"
@@ -345,14 +401,11 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 	if cfg.EmailWorkerInterval == 0 {
 		cfg.EmailWorkerInterval = 60
 	}
+	if cfg.EmailVerificationExpiryHours == 0 {
+		cfg.EmailVerificationExpiryHours = 24
+	}
 	if cfg.PasswordResetExpiryHours == 0 {
 		cfg.PasswordResetExpiryHours = 24
-	}
-	if cfg.LoginAttemptWindow == 0 {
-		cfg.LoginAttemptWindow = 15
-	}
-	if cfg.LoginAttemptThreshold == 0 {
-		cfg.LoginAttemptThreshold = 5
 	}
 }
 
@@ -369,4 +422,8 @@ func UpdatePaginationConfig(cfg *RuntimeConfig, min, max, def int) {
 		cfg.PageSizeDefault = def
 	}
 	normalizeRuntimeConfig(cfg)
+}
+
+func splitHostPort(addr string) (string, string, error) {
+	return net.SplitHostPort(addr)
 }

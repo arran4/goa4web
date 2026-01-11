@@ -46,5 +46,7 @@ func AdminBlogEditPage(w http.ResponseWriter, r *http.Request) {
 		PostURL:      fmt.Sprintf("/blogs/blog/%d/edit", blogID),
 		AuthorLabels: labels,
 	}
-	handlers.TemplateHandler(w, r, "blogsAdminBlogEditPage.gohtml", data)
+	BlogsAdminBlogEditPageTmpl.Handle(w, r, data)
 }
+
+const BlogsAdminBlogEditPageTmpl handlers.Page = "blogs/blogsAdminBlogEditPage.gohtml"

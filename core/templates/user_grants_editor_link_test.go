@@ -18,6 +18,7 @@ var userGrantsEditorTemplate embed.FS
 func TestUserGrantsEditor_ItemIDLink(t *testing.T) {
 	tmpl := template.Must(template.New("").Funcs(template.FuncMap{
 		"csrfField": func() template.HTML { return "" },
+		"assetHash": func(s string) string { return s },
 	}).ParseFS(userGrantsEditorTemplate, "site/admin/userGrantsEditor.gohtml"))
 
 	data := struct {

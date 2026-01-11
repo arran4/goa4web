@@ -39,8 +39,10 @@ func adminLinkPage(w http.ResponseWriter, r *http.Request) {
 		SelectedLanguageId: int(link.LanguageID.Int32),
 	}
 
-	handlers.TemplateHandler(w, r, "adminLinkPage.gohtml", data)
+	LinkerAdminLinkPageTmpl.Handle(w, r, data)
 }
+
+const LinkerAdminLinkPageTmpl handlers.Page = "linker/adminLinkPage.gohtml"
 
 // editLinkTask updates an existing linker item.
 type editLinkTask struct{ tasks.TaskString }

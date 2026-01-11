@@ -6,10 +6,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"html/template"
 	"io"
 	"log"
 	"net/http"
 	"net/mail"
+	"net/url"
+	"path"
 	"strconv"
 	"strings"
 	"sync"
@@ -19,14 +22,19 @@ import (
 
 	"github.com/gorilla/sessions"
 
+	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dbdrivers"
+	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
+	feedsign "github.com/arran4/goa4web/internal/feedsign"
 	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/lazy"
 	linksign "github.com/arran4/goa4web/internal/linksign"
+	"github.com/arran4/goa4web/internal/sharesign"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -35,8 +43,11 @@ var _ SessionManager = (*db.SessionProxy)(nil)
 
 // IndexItem represents a navigation item linking to site sections.
 type IndexItem struct {
-	Name string
-	Link string
+	Name         string
+	Link         string
+	TemplateName string
+	TemplateData any
+	Folded       bool
 }
 
 // AdminSection groups admin navigation links under a section heading.
@@ -50,6 +61,17 @@ type PageLink struct {
 	Num    int
 	Link   string
 	Active bool
+}
+
+// OpenGraph represents the Open Graph data for a page.
+type OpenGraph struct {
+	Title       string
+	Description string
+	Image       string
+	ImageWidth  int
+	ImageHeight int
+	TwitterSite string
+	URL         string
 }
 
 // NotFoundLink represents a contextual link on the 404 page.
@@ -85,15 +107,19 @@ type CoreData struct {
 	// AdminMode indicates whether admin-only UI elements should be displayed.
 	AdminMode         bool
 	AtomFeedURL       string
+	PublicAtomFeedURL string
 	AutoRefresh       string
 	Config            *config.RuntimeConfig
 	CustomIndexItems  []IndexItem
 	FeedsEnabled      bool
+	FeedSigner        *feedsign.Signer
 	ImageSigner       *imagesign.Signer
+	ShareSigner       *sharesign.Signer
 	IndexItems        []IndexItem
 	LinkSigner        *linksign.Signer
 	absoluteURLBase   lazy.Value[string]  // cached base URL for absolute links
 	dbRegistry        *dbdrivers.Registry // database driver registry
+	emailRegistry     *email.Registry
 	mapMu             sync.Mutex
 	Nav               NavigationProvider
 	NextLink          string
@@ -101,8 +127,12 @@ type CoreData struct {
 	NotificationCount int32
 	PageLinks         []PageLink
 	PageTitle         string
+	OpenGraph         *OpenGraph
 	PrevLink          string
 	RSSFeedURL        string
+	RSSFeedTitle      string
+	AtomFeedTitle     string
+	PublicRSSFeedURL  string
 	StartLink         string
 	TasksReg          *tasks.Registry
 	SiteTitle         string
@@ -114,10 +144,11 @@ type CoreData struct {
 	session      *sessions.Session
 	sessionProxy SessionManager
 
-	ctx           context.Context
-	customQueries db.CustomQueries
-	emailProvider lazy.Value[MailProvider]
-	queries       db.Querier
+	ctx                context.Context
+	customQueries      db.CustomQueries
+	emailProvider      lazy.Value[MailProvider]
+	EmailProviderError string
+	queries            db.Querier
 
 	// Keep this sorted
 	adminLatestNews                  lazy.Value[[]*db.AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow]
@@ -202,6 +233,7 @@ type CoreData struct {
 	searchLinkerEmptyWords           bool
 	searchLinkerItems                []*db.GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow
 	searchLinkerNoResults            bool
+	searchWords                      []string
 	searchWritings                   []*db.ListWritingsByIDsForListerRow
 	searchWritingsEmptyWords         bool
 	searchWritingsNoResults          bool
@@ -210,6 +242,7 @@ type CoreData struct {
 	subscriptionRows                 lazy.Value[[]*db.ListSubscriptionsByUserRow]
 	subscriptions                    lazy.Value[map[string]bool]
 	notificationTemplateOverrides    map[string]*lazy.Value[string]
+	testGrants                       []*db.Grant // manual grants for testing
 	unreadCount                      lazy.Value[int64]
 	user                             lazy.Value[*db.User]
 	userRoles                        lazy.Value[[]string]
@@ -555,9 +588,9 @@ func (cd *CoreData) SaveBookmark(p db.UpdateBookmarksForListerParams) error {
 	return nil
 }
 
-// IsAdmin reports whether the current user has the administrator role.
+// IsAdmin reports whether the current user has administrator privileges active.
 func (cd *CoreData) IsAdmin() bool {
-	return cd.HasRole("administrator")
+	return cd.HasAdminRole() && cd.IsAdminMode()
 }
 
 // IsAdminMode reports whether admin-only UI elements should be displayed.
@@ -1054,6 +1087,9 @@ func (cd *CoreData) CustomQueries() db.CustomQueries { return cd.customQueries }
 // DBRegistry returns the database driver registry associated with this request.
 func (cd *CoreData) DBRegistry() *dbdrivers.Registry { return cd.dbRegistry }
 
+// EmailRegistry returns the email provider registry.
+func (cd *CoreData) EmailRegistry() *email.Registry { return cd.emailRegistry }
+
 // DefaultNotificationTemplate renders the default body for the current notification template.
 func (cd *CoreData) DefaultNotificationTemplate() string {
 	return defaultNotificationTemplate(cd.currentNotificationTemplateName, cd.Config)
@@ -1074,7 +1110,11 @@ func (cd *CoreData) Event() *eventbus.TaskEvent { return cd.event }
 // ExecuteSiteTemplate renders the named site template using cd's helper
 // functions. It wraps templates.GetCompiledSiteTemplates(cd.Funcs(r)).
 func (cd *CoreData) ExecuteSiteTemplate(w io.Writer, r *http.Request, name string, data any) error {
-	return templates.GetCompiledSiteTemplates(cd.Funcs(r)).ExecuteTemplate(w, name, data)
+	var opts []templates.Option
+	if cd.Config != nil && cd.Config.TemplatesDir != "" {
+		opts = append(opts, templates.WithDir(cd.Config.TemplatesDir))
+	}
+	return templates.GetCompiledSiteTemplates(cd.Funcs(r), opts...).ExecuteTemplate(w, name, data)
 }
 
 // ExternalLink lazily resolves metadata for id.
@@ -1142,12 +1182,21 @@ func (cd *CoreData) FAQCategories() ([]*db.FaqCategory, error) {
 
 // HasAdminRole reports whether the current user has the administrator role.
 func (cd *CoreData) HasAdminRole() bool {
-	return cd.HasRole("administrator")
+	perms, err := cd.Permissions()
+	if err != nil {
+		return false
+	}
+	for _, p := range perms {
+		if p.IsAdmin {
+			return true
+		}
+	}
+	return false
 }
 
 // HasContentWriterRole reports whether the current user has the content writer role.
 func (cd *CoreData) HasContentWriterRole() bool {
-	return cd.HasRole("content writer")
+	return cd.HasGrant("news", "post", "post", 0) || cd.HasGrant("writing", "article", "post", 0)
 }
 
 // HasRole reports whether the current user explicitly has the named role.
@@ -1157,27 +1206,15 @@ func (cd *CoreData) HasRole(role string) bool {
 			return true
 		}
 	}
+	if cd.HasAdminRole() {
+		if role == "user" {
+			return true
+		}
+	}
 	if cd.queries != nil {
 		for _, r := range cd.UserRoles() {
 			if _, err := cd.queries.SystemCheckRoleGrant(cd.ctx, db.SystemCheckRoleGrantParams{Name: r, Action: role}); err == nil {
 				return true
-			}
-		}
-	} else {
-		for _, r := range cd.UserRoles() {
-			switch r {
-			case "administrator":
-				if role == "moderator" || role == "content writer" || role == "user" {
-					return true
-				}
-			case "moderator":
-				if role == "user" {
-					return true
-				}
-			case "content writer":
-				if role == "user" {
-					return true
-				}
 			}
 		}
 	}
@@ -1431,7 +1468,8 @@ func (cd *CoreData) CreateFAQCategory(name string) error {
 	if cd.queries == nil {
 		return nil
 	}
-	return cd.queries.AdminCreateFAQCategory(cd.ctx, sql.NullString{String: name, Valid: name != ""})
+	_, err := cd.queries.AdminCreateFAQCategory(cd.ctx, db.AdminCreateFAQCategoryParams{Name: sql.NullString{String: name, Valid: name != ""}})
+	return err
 }
 
 // LinkerItemsForUser returns linker items for the given category and offset respecting viewer permissions.
@@ -1664,6 +1702,14 @@ func (cd *CoreData) Location() *time.Location {
 // LocalTime converts t to cd's configured time zone.
 func (cd *CoreData) LocalTime(t time.Time) time.Time { return t.In(cd.Location()) }
 
+// FormatLocalTime renders t using the configured time zone and standard layout.
+func (cd *CoreData) FormatLocalTime(t time.Time) string {
+	if t.IsZero() {
+		return ""
+	}
+	return cd.LocalTime(t).Format(consts.DisplayDateTimeFormat)
+}
+
 // LocalTimeIn converts t to the named time zone when available, otherwise
 // falling back to cd's configured time zone.
 func (cd *CoreData) LocalTimeIn(t time.Time, zone string) time.Time {
@@ -1673,6 +1719,15 @@ func (cd *CoreData) LocalTimeIn(t time.Time, zone string) time.Time {
 		}
 	}
 	return t.In(cd.Location())
+}
+
+// FormatLocalTimeIn renders t using the provided zone when valid or the configured
+// time zone, applying the standard timestamp layout.
+func (cd *CoreData) FormatLocalTimeIn(t time.Time, zone string) string {
+	if t.IsZero() {
+		return ""
+	}
+	return cd.LocalTimeIn(t, zone).Format(consts.DisplayDateTimeFormat)
 }
 
 // PublicWritings returns public writings in a category, cached per category and offset.
@@ -2012,7 +2067,15 @@ func (cd *CoreData) CreateCommentInSectionForCommenter(section, itemType string,
 	if cd.queries == nil {
 		return 0, nil
 	}
-	return cd.queries.CreateCommentInSectionForCommenter(cd.ctx, db.CreateCommentInSectionForCommenterParams{
+	paths, err := cd.imagePathsFromText(text)
+	if err != nil {
+		return 0, fmt.Errorf("parse images: %w", err)
+	}
+	if err := cd.validateImagePathsForThread(commenterID, threadID, paths); err != nil {
+		return 0, fmt.Errorf("validate images: %w", err)
+	}
+	text = sanitizeCodeImages(text)
+	commentID, err := cd.queries.CreateCommentInSectionForCommenter(cd.ctx, db.CreateCommentInSectionForCommenterParams{
 		LanguageID:    sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		CommenterID:   sql.NullInt32{Int32: commenterID, Valid: commenterID != 0},
 		ForumthreadID: threadID,
@@ -2023,6 +2086,13 @@ func (cd *CoreData) CreateCommentInSectionForCommenter(section, itemType string,
 		ItemType:      sql.NullString{String: itemType, Valid: itemType != ""},
 		ItemID:        sql.NullInt32{Int32: itemID, Valid: itemID != 0},
 	})
+	if err != nil {
+		return 0, err
+	}
+	if err := cd.recordThreadImages(threadID, paths); err != nil {
+		log.Printf("record thread images: %v", err)
+	}
+	return commentID, nil
 }
 
 func (cd *CoreData) CreateNewsCommentForCommenter(commenterID, threadID, postID, languageID int32, text string) (int64, error) {
@@ -2108,7 +2178,7 @@ func (cd *CoreData) CommentEditSaveURL(cmt *db.GetCommentsByThreadIdForUserRow) 
 		if base != "" {
 			return fmt.Sprintf("%s/topic/%d/thread/%d/comment/%d", base, cd.currentTopicID, cd.currentThreadID, cmt.Idcomments)
 		}
-		fallthrough
+		return fmt.Sprintf("/forum/topic/%d/thread/%d/comment/%d", cd.currentTopicID, cd.currentThreadID, cmt.Idcomments)
 	case "forum":
 		if base == "" {
 			base = "/forum"
@@ -2293,6 +2363,15 @@ func (cd *CoreData) Subscriptions() ([]*db.ListSubscriptionsByUserRow, error) {
 
 // CurrentError returns a generic error message for the current request.
 func (cd *CoreData) CurrentError() string { return cd.currentError }
+
+// CustomCSS returns the user's custom CSS setting.
+func (cd *CoreData) CustomCSS() template.CSS {
+	pref, err := cd.Preference()
+	if err != nil || pref == nil || !pref.CustomCss.Valid {
+		return ""
+	}
+	return template.CSS(pref.CustomCss.String)
+}
 
 // CurrentNotice returns the informational message for the current request.
 func (cd *CoreData) CurrentNotice() string { return cd.currentNotice }
@@ -2584,6 +2663,16 @@ func WithUserRoles(r []string) CoreOption {
 	return func(cd *CoreData) { cd.userRoles.Set(r) }
 }
 
+// WithPermissions preloads the user permissions.
+func WithPermissions(p []*db.GetPermissionsByUserIDRow) CoreOption {
+	return func(cd *CoreData) { cd.perms.Set(p) }
+}
+
+// WithGrants preloads the user grants for testing.
+func WithGrants(g []*db.Grant) CoreOption {
+	return func(cd *CoreData) { cd.testGrants = g }
+}
+
 // WithConfig sets the runtime config for this CoreData.
 func WithConfig(cfg *config.RuntimeConfig) CoreOption {
 	return func(cd *CoreData) { cd.Config = cfg }
@@ -2602,11 +2691,26 @@ func WithImageSigner(s *imagesign.Signer) CoreOption {
 	}
 }
 
+// WithShareSigner registers the external link signer on CoreData.
+func WithShareSigner(s *sharesign.Signer) CoreOption {
+	return func(cd *CoreData) {
+		cd.ShareSigner = s
+		cd.composeMapper()
+	}
+}
+
 // WithLinkSigner registers the external link signer on CoreData.
 func WithLinkSigner(s *linksign.Signer) CoreOption {
 	return func(cd *CoreData) {
 		cd.LinkSigner = s
 		cd.composeMapper()
+	}
+}
+
+// WithFeedSigner registers the feed signer on CoreData.
+func WithFeedSigner(s *feedsign.Signer) CoreOption {
+	return func(cd *CoreData) {
+		cd.FeedSigner = s
 	}
 }
 
@@ -2618,6 +2722,11 @@ func WithTasksRegistry(r *tasks.Registry) CoreOption {
 // WithDBRegistry sets the database driver registry for CoreData.
 func WithDBRegistry(r *dbdrivers.Registry) CoreOption {
 	return func(cd *CoreData) { cd.dbRegistry = r }
+}
+
+// WithEmailRegistry sets the email registry for CoreData.
+func WithEmailRegistry(r *email.Registry) CoreOption {
+	return func(cd *CoreData) { cd.emailRegistry = r }
 }
 
 // WithNavRegistry registers the navigation registry on CoreData.
@@ -2744,6 +2853,32 @@ func (cd *CoreData) HasModule(name string) bool {
 	return ok
 }
 
+// GenerateFeedURL returns a signed feed URL if the user is logged in, otherwise the raw path.
+func (cd *CoreData) GenerateFeedURL(path string) string {
+	if cd.UserID != 0 && cd.FeedSigner != nil {
+		u := cd.CurrentUserLoaded()
+		if u == nil {
+			// Try to load it if not loaded
+			var err error
+			u, err = cd.CurrentUser()
+			if err != nil {
+				log.Printf("GenerateFeedURL: error loading current user: %v", err)
+			}
+		}
+		if u != nil {
+			parsed, err := url.Parse(path)
+			if err == nil {
+				username := ""
+				if u.Username.Valid {
+					username = u.Username.String
+				}
+				return cd.FeedSigner.SignedURL(parsed.Path, parsed.RawQuery, username)
+			}
+		}
+	}
+	return path
+}
+
 // LatestWritings returns recent public writings with permission data.
 type LatestWritingsOption func(*db.GetPublicWritingsParams)
 
@@ -2765,17 +2900,21 @@ func WithWritingsLimit(l int32) LatestWritingsOption {
 
 func defaultNotificationTemplate(name string, cfg *config.RuntimeConfig) string {
 	var buf bytes.Buffer
+	var opts []templates.Option
+	if cfg != nil && cfg.TemplatesDir != "" {
+		opts = append(opts, templates.WithDir(cfg.TemplatesDir))
+	}
 	if strings.HasSuffix(name, ".gohtml") {
-		tmpl := templates.GetCompiledEmailHtmlTemplates(map[string]any{})
+		tmpl := templates.GetCompiledEmailHtmlTemplates(map[string]any{}, opts...)
 		if err := tmpl.ExecuteTemplate(&buf, name, sampleEmailData(cfg)); err == nil {
 			return buf.String()
 		}
 	} else {
-		tmpl := templates.GetCompiledEmailTextTemplates(map[string]any{})
+		tmpl := templates.GetCompiledEmailTextTemplates(map[string]any{}, opts...)
 		if err := tmpl.ExecuteTemplate(&buf, name, sampleEmailData(cfg)); err == nil {
 			return buf.String()
 		}
-		tmpl2 := templates.GetCompiledNotificationTemplates(map[string]any{})
+		tmpl2 := templates.GetCompiledNotificationTemplates(map[string]any{}, opts...)
 		buf.Reset()
 		if err := tmpl2.ExecuteTemplate(&buf, name, sampleEmailData(cfg)); err == nil {
 			return buf.String()
@@ -2791,4 +2930,259 @@ func sampleEmailData(cfg *config.RuntimeConfig) map[string]any {
 		"From":           cfg.EmailFrom,
 		"To":             "user@example.com",
 	}
+}
+
+func sanitizeCodeImages(text string) string {
+	root, err := a4code.ParseString(text)
+	if err != nil {
+		return text
+	}
+	root.Transform(func(n a4code.Node) (a4code.Node, error) {
+		if t, ok := n.(*a4code.Image); ok {
+			t.Src = cleanSignedParam(t.Src)
+		}
+		return n, nil
+	})
+	return a4code.ToCode(root)
+}
+
+func (cd *CoreData) imagePathsFromText(text string) ([]string, error) {
+	if text == "" {
+		return nil, nil
+	}
+	root, err := a4code.ParseString(text)
+	if err != nil {
+		return nil, fmt.Errorf("parse a4code: %w", err)
+	}
+	return imagePathsFromA4Code(root)
+}
+
+func (cd *CoreData) validateCodeImagesForUser(userID int32, text string) error {
+	if cd == nil || cd.queries == nil || userID == 0 {
+		return nil
+	}
+	paths, err := cd.imagePathsFromText(text)
+	if err != nil {
+		return err
+	}
+	return cd.validateImagePathsForUser(userID, paths)
+}
+
+func (cd *CoreData) validateImagePathsForUser(userID int32, paths []string) error {
+	if cd == nil || cd.queries == nil || userID == 0 {
+		return nil
+	}
+	if len(paths) == 0 {
+		return nil
+	}
+	found, err := cd.listUploadedImagePathSetByUser(userID, imagePathsToStringNulls(paths))
+	if err != nil {
+		return err
+	}
+	if len(found) == len(paths) {
+		return nil
+	}
+	for _, p := range paths {
+		if _, ok := found[p]; !ok {
+			return fmt.Errorf("image not in gallery")
+		}
+	}
+	return nil
+}
+
+func (cd *CoreData) validateImagePathsForThread(userID, threadID int32, paths []string) error {
+	if cd == nil || cd.queries == nil || userID == 0 {
+		return nil
+	}
+	if len(paths) == 0 {
+		return nil
+	}
+	lookupPaths := imagePathsToStringNulls(paths)
+	found, err := cd.listUploadedImagePathSetByUser(userID, lookupPaths)
+	if err != nil {
+		return err
+	}
+	if len(found) == len(paths) {
+		return nil
+	}
+	if threadID == 0 {
+		return fmt.Errorf("image not in gallery")
+	}
+	threadFound, err := cd.listThreadImagePathSet(threadID, lookupPaths)
+	if err != nil {
+		return err
+	}
+	for _, p := range paths {
+		if _, ok := found[p]; ok {
+			continue
+		}
+		if _, ok := threadFound[p]; ok {
+			continue
+		}
+		return fmt.Errorf("image not in gallery")
+	}
+	return nil
+}
+
+// ValidateCodeImagesForUser ensures image references in text are present in the user's gallery.
+func (cd *CoreData) ValidateCodeImagesForUser(userID int32, text string) error {
+	return cd.validateCodeImagesForUser(userID, text)
+}
+
+// ValidateCodeImagesForThread ensures image references are present in the user's or thread gallery.
+func (cd *CoreData) ValidateCodeImagesForThread(userID, threadID int32, text string) error {
+	paths, err := cd.imagePathsFromText(text)
+	if err != nil {
+		return err
+	}
+	return cd.validateImagePathsForThread(userID, threadID, paths)
+}
+
+// RecordThreadImages stores image references for the specified thread.
+func (cd *CoreData) RecordThreadImages(threadID int32, text string) error {
+	paths, err := cd.imagePathsFromText(text)
+	if err != nil {
+		return err
+	}
+	return cd.recordThreadImages(threadID, paths)
+}
+
+func imagePathsFromA4Code(root *a4code.Root) ([]string, error) {
+	refs := map[string]struct{}{}
+	if err := a4code.Walk(root, func(n a4code.Node) error {
+		if t, ok := n.(*a4code.Image); ok {
+			ref := strings.TrimSpace(t.Src)
+			if ref != "" {
+				refs[ref] = struct{}{}
+			}
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	if len(refs) == 0 {
+		return nil, nil
+	}
+	paths := make([]string, 0, len(refs))
+	for ref := range refs {
+		pathVal, err := imageRefToPath(ref)
+		if err != nil {
+			return nil, err
+		}
+		paths = append(paths, pathVal)
+	}
+	return paths, nil
+}
+
+func imagePathsToStringNulls(paths []string) []sql.NullString {
+	lookup := make([]sql.NullString, 0, len(paths))
+	for _, p := range paths {
+		lookup = append(lookup, sql.NullString{String: p, Valid: true})
+	}
+	return lookup
+}
+
+func (cd *CoreData) listUploadedImagePathSetByUser(userID int32, paths []sql.NullString) (map[string]struct{}, error) {
+	rows, err := cd.queries.ListUploadedImagePathsByUser(cd.ctx, db.ListUploadedImagePathsByUserParams{
+		UserID: userID,
+		Paths:  paths,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("list uploaded images: %w", err)
+	}
+	found := make(map[string]struct{}, len(rows))
+	for _, row := range rows {
+		if row.Valid {
+			found[row.String] = struct{}{}
+		}
+	}
+	return found, nil
+}
+
+func (cd *CoreData) listThreadImagePathSet(threadID int32, paths []sql.NullString) (map[string]struct{}, error) {
+	rows, err := cd.queries.ListThreadImagePaths(cd.ctx, db.ListThreadImagePathsParams{
+		ThreadID: threadID,
+		Paths:    paths,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("list thread images: %w", err)
+	}
+	found := make(map[string]struct{}, len(rows))
+	for _, row := range rows {
+		if row.Valid {
+			found[row.String] = struct{}{}
+		}
+	}
+	return found, nil
+}
+
+func (cd *CoreData) recordThreadImages(threadID int32, paths []string) error {
+	if cd == nil || cd.queries == nil || threadID == 0 || len(paths) == 0 {
+		return nil
+	}
+	for _, p := range paths {
+		if err := cd.queries.CreateThreadImage(cd.ctx, db.CreateThreadImageParams{
+			ThreadID: threadID,
+			Path:     sql.NullString{String: p, Valid: true},
+		}); err != nil {
+			return fmt.Errorf("record thread image: %w", err)
+		}
+	}
+	return nil
+}
+
+func imageRefToPath(ref string) (string, error) {
+	ref = strings.TrimSpace(ref)
+	if ref == "" {
+		return "", fmt.Errorf("empty image reference")
+	}
+	if strings.HasPrefix(ref, "uploading:") {
+		return "", fmt.Errorf("image upload pending")
+	}
+	if strings.HasPrefix(ref, "cache:") {
+		return "", fmt.Errorf("cache images are not allowed")
+	}
+	if strings.HasPrefix(ref, "image:") || strings.HasPrefix(ref, "img:") {
+		id := strings.TrimPrefix(ref, "image:")
+		id = strings.TrimPrefix(id, "img:")
+		id = cleanSignedParam(id)
+		return imageIDToUploadPath(id)
+	}
+	if u, err := url.Parse(ref); err == nil && u.Path != "" {
+		ref = u.Path
+	}
+	ref = cleanSignedParam(ref)
+	switch {
+	case strings.HasPrefix(ref, "/images/image/"):
+		id := strings.TrimPrefix(ref, "/images/image/")
+		return imageIDToUploadPath(id)
+	case strings.HasPrefix(ref, "/uploads/"):
+		return ref, nil
+	case strings.HasPrefix(ref, "/imagebbs/images/"):
+		return ref, nil
+	default:
+		return "", fmt.Errorf("image reference not in gallery")
+	}
+}
+
+func imageIDToUploadPath(id string) (string, error) {
+	if !imagesign.ValidID(id) {
+		return "", fmt.Errorf("invalid image id")
+	}
+	return path.Join("/uploads", id[:2], id[2:4], id), nil
+}
+
+func cleanSignedParam(urlStr string) string {
+	u, err := url.Parse(urlStr)
+	if err != nil {
+		return urlStr
+	}
+	q := u.Query()
+	if q.Has("ts") || q.Has("sig") {
+		q.Del("ts")
+		q.Del("sig")
+		u.RawQuery = q.Encode()
+		return u.String()
+	}
+	return urlStr
 }

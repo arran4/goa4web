@@ -7,5 +7,8 @@ import (
 )
 
 func adminLoginAttemptsPage(w http.ResponseWriter, r *http.Request) {
-	handlers.TemplateHandler(w, r, "loginAttemptsPage.gohtml", struct{}{})
+	// handlers.TemplateHandler(w, r, "loginAttemptsPage.gohtml", struct{}{})
+	AdminLoginAttemptsPage.Handle(w, r, struct{}{})
 }
+
+const AdminLoginAttemptsPage handlers.Page = "admin/loginAttemptsPage.gohtml"

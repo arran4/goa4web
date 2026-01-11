@@ -1,20 +1,21 @@
 {{ template "head" $ }}
+{{ if eq .Topic.Handler "private" }}
+<div class="alert alert-warning">Warning: This is a private forum topic.</div>
+{{ end }}
 <h4>Edit Topic</h4>
+<p><a href="/admin/forum/topics/topic/{{ .Topic.Idforumtopic }}">Back to Topic</a></p>
 <form method="post" action="/admin/forum/topics/topic/{{ .Topic.Idforumtopic }}/edit">
 {{ csrfField }}
 Title: <input name="name" value="{{ .Topic.Title.String }}"><br>
 Description:<br>
 <textarea name="desc">{{ .Topic.Description.String }}</textarea><br>
 Category: <select name="cid"><option value="0">None</option>{{ range .Categories }}<option value="{{.Idforumcategory}}" {{if eq $.Topic.ForumcategoryIdforumcategory .Idforumcategory}}selected{{end}}>{{.Title.String}}</option>{{ end }}</select><br>
-<h5>Grants</h5>
-View: <select name="view">{{- range $.Roles }}<option value="{{.ID}}" {{if $.Restriction}}{{if eq $.Restriction.ViewRoleID.Int32 .ID}}selected{{end}}{{end}}>{{.Name}}</option>{{- end }}</select><br>
-Reply: <select name="reply">{{- range $.Roles }}<option value="{{.ID}}" {{if $.Restriction}}{{if eq $.Restriction.ReplyRoleID.Int32 .ID}}selected{{end}}{{end}}>{{.Name}}</option>{{- end }}</select><br>
-New thread: <select name="newthread">{{- range $.Roles }}<option value="{{.ID}}" {{if $.Restriction}}{{if eq $.Restriction.NewthreadRoleID.Int32 .ID}}selected{{end}}{{end}}>{{.Name}}</option>{{- end }}</select><br>
-See: <select name="see">{{- range $.Roles }}<option value="{{.ID}}" {{if $.Restriction}}{{if eq $.Restriction.SeeRoleID.Int32 .ID}}selected{{end}}{{end}}>{{.Name}}</option>{{- end }}</select><br>
-Starting roles: <select name="startingRoles">{{- range $.Roles }}<option value="{{.ID}}" {{if $.Restriction}}{{if eq $.Restriction.InviteRoleID.Int32 .ID}}selected{{end}}{{end}}>{{.Name}}</option>{{- end }}</select><br>
-Read: <select name="read">{{- range $.Roles }}<option value="{{.ID}}" {{if $.Restriction}}{{if eq $.Restriction.ReadRoleID.Int32 .ID}}selected{{end}}{{end}}>{{.Name}}</option>{{- end }}</select><br>
-Moderator: <select name="mod">{{- range $.Roles }}<option value="{{.ID}}" {{if $.Restriction}}{{if eq $.Restriction.ModRoleID.Int32 .ID}}selected{{end}}{{end}}>{{.Name}}</option>{{- end }}</select><br>
-Administrator: <select name="admin">{{- range $.Roles }}<option value="{{.ID}}" {{if $.Restriction}}{{if eq $.Restriction.AdminRoleID.Int32 .ID}}selected{{end}}{{end}}>{{.Name}}</option>{{- end }}</select><br>
 <input type="submit" name="task" value="Forum topic change">
+</form>
+
+<form method="post" action="/admin/forum/topics/topic/{{ .Topic.Idforumtopic }}/delete">
+{{ csrfField }}
+<label><input type="checkbox" name="cascade" value="true"> Cascade Delete</label>
+<input type="submit" name="task" value="Forum topic delete">
 </form>
 {{ template "tail" $ }}

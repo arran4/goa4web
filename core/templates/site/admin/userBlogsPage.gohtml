@@ -5,7 +5,7 @@
     {{- range .Blogs }}
     <tr>
         <td><a href="/admin/blogs/blog/{{ .Idblogs }}">{{ .Idblogs }}</a></td>
-        <td>{{ cd.LocalTimeIn .Written .Timezone.String }}</td>
+        <td>{{ cd.FormatLocalTimeIn .Written .Timezone.String }}</td>
         <td>{{ .Comments }}</td>
         <td>{{ .LanguageID }}</td>
         <td>{{if .Idforumcategory.Valid}}<a href="/forum/category/{{ .Idforumcategory.Int32 }}">{{ .ForumcategoryTitle.String }}</a>{{end}}</td>

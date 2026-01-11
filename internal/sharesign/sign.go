@@ -1,0 +1,65 @@
+package sharesign
+
+import (
+	"fmt"
+	"strings"
+	"time"
+
+	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/internal/sign"
+)
+
+// Signer signs external links so they are redirected through a confirmation page.
+type Signer struct {
+	cfg    *config.RuntimeConfig
+	signer *sign.Signer
+}
+
+// NewSigner returns a Signer using cfg for hostname resolution and key for HMAC.
+func NewSigner(cfg *config.RuntimeConfig, key string) *Signer {
+	return &Signer{cfg: cfg, signer: &sign.Signer{Key: key}}
+}
+
+// SignedURL generates a redirect URL for the given link.
+// Defaults to path-based signature.
+// For module paths like "/private/topic/2/thread/1", it becomes "/private/shared/topic/2/thread/1/ts/{ts}/sign/{sig}"
+func (s *Signer) SignedURL(link string, exp ...time.Time) string {
+	return s.SignedURLPath(link, exp...)
+}
+
+// SignedURLQuery generates a redirect URL with query parameters.
+func (s *Signer) SignedURLQuery(link string, exp ...time.Time) string {
+	host := strings.TrimSuffix(s.cfg.HTTPHostname, "/")
+	sharedLink := s.injectShared(link)
+	ts, sig := s.signer.Sign("share:"+sharedLink, exp...)
+	return fmt.Sprintf("%s%s?ts=%d&sig=%s", host, sharedLink, ts, sig)
+}
+
+// SignedURLPath generates a redirect URL with path parameters.
+func (s *Signer) SignedURLPath(link string, exp ...time.Time) string {
+	host := strings.TrimSuffix(s.cfg.HTTPHostname, "/")
+	sharedLink := s.injectShared(link)
+	ts, sig := s.signer.Sign("share:"+sharedLink, exp...)
+	return fmt.Sprintf("%s%s/ts/%d/sign/%s", host, sharedLink, ts, sig)
+}
+
+func (s *Signer) injectShared(link string) string {
+	// Inject "/shared" after the first path segment (module name)
+	// e.g., "/private/topic/2/thread/1" → "/private/shared/topic/2/thread/1"
+	parts := strings.SplitN(link, "/", 3)
+	if len(parts) >= 3 && parts[0] == "" && parts[1] != "" {
+		// parts: ["", "private", "topic/2/thread/1"]
+		return "/" + parts[1] + "/shared/" + parts[2]
+	}
+	return link
+}
+
+// Sign returns the timestamp and signature for link using the optional expiry time.
+func (s *Signer) Sign(link string, exp ...time.Time) (int64, string) {
+	return s.signer.Sign("share:"+link, exp...)
+}
+
+// Verify checks the provided signature matches the link.
+func (s *Signer) Verify(link, ts, sig string) bool {
+	return s.signer.Verify("share:"+link, ts, sig)
+}

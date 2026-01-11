@@ -1,0 +1,5 @@
+Usage: {{.Prog}} role list sql
+
+Lists the raw role identifiers provided by embedded SQL seed scripts.
+
+{{template "flag_groups_section" .FlagGroups}}

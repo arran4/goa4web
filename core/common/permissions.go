@@ -2,15 +2,29 @@ package common
 
 import (
 	"database/sql"
+
 	"github.com/arran4/goa4web/internal/db"
 )
 
 // HasGrant reports whether the current user is allowed the given action.
 func (cd *CoreData) HasGrant(section, item, action string, itemID int32) bool {
-	if cd.HasRole("administrator") {
+	if cd == nil {
+		return false
+	}
+	if cd.IsAdmin() {
 		return true
 	}
-	if cd == nil || cd.queries == nil {
+	if cd.queries == nil {
+		if cd.testGrants != nil {
+			for _, g := range cd.testGrants {
+				if g.Section == section && g.Action == action &&
+					(!g.Item.Valid || g.Item.String == item || g.Item.String == "") &&
+					(!g.ItemID.Valid || g.ItemID.Int32 == itemID || g.ItemID.Int32 == 0) &&
+					g.Active {
+					return true
+				}
+			}
+		}
 		return false
 	}
 	_, err := cd.queries.SystemCheckGrant(cd.ctx, db.SystemCheckGrantParams{

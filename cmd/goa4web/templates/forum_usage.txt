@@ -1,0 +1,26 @@
+Usage:
+  {{.Prog}} forum <command> [<args>]
+
+The forum command provides maintenance utilities for public forum topics and
+threads. Use these commands to identify and remove empty records that no longer
+contain posts.
+
+Commands:
+  clean-empty          Clean up empty forum topics.
+  clean-empty-threads  Clean up empty forum threads.
+  clean-orphans        Clean up orphaned forum threads and comments.
+
+Examples:
+  # Preview empty forum topics
+  {{.Prog}} forum clean-empty -dry-run -verbose
+
+  # Remove empty forum topics
+  {{.Prog}} forum clean-empty
+
+  # Preview empty forum threads
+  {{.Prog}} forum clean-empty-threads -dry-run -verbose
+
+  # Clean up orphaned forum threads and comments
+  {{.Prog}} forum clean-orphans -verbose
+
+{{template "flag_groups_section" .FlagGroups}}

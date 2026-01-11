@@ -38,5 +38,7 @@ func adminUserWritingsPage(w http.ResponseWriter, r *http.Request) {
 		User:     &db.User{Idusers: cpu.Idusers, Username: user.Username},
 		Writings: rows,
 	}
-	handlers.TemplateHandler(w, r, "admin/userWritingsPage.gohtml", data)
+	AdminUserWritingsPageTmpl.Handle(w, r, data)
 }
+
+const AdminUserWritingsPageTmpl handlers.Page = "admin/userWritingsPage.gohtml"

@@ -25,7 +25,10 @@ type EditTask struct{ tasks.TaskString }
 var editTask = &EditTask{TaskString: TaskEdit}
 
 var _ tasks.Task = (*EditTask)(nil)
+var _ tasks.TemplatesRequired = (*EditTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*EditTask)(nil)
+
+const NewsEditPageTmpl handlers.Page = "news/newsEditPage.gohtml"
 
 func (EditTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
 	return notif.NewEmailTemplates("adminNotificationNewsEditEmail"), true
@@ -95,6 +98,7 @@ func newsEditFormPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !cd.HasGrant("news", "post", "edit", post.Idsitenews) {
+		fmt.Println("TODO: FIx: Add enforced Access in router rather than task")
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
@@ -113,7 +117,10 @@ func newsEditFormPage(w http.ResponseWriter, r *http.Request) {
 		Post:               post,
 		SelectedLanguageId: int(post.LanguageID.Int32),
 	}
-	if err := cd.ExecuteSiteTemplate(w, r, "newsEditPage.gohtml", data); err != nil {
-		handlers.RenderErrorPage(w, r, err)
-	}
+	NewsEditPageTmpl.Handle(w, r, data)
+}
+
+// TemplatesRequired declares the templates used by this task's pages.
+func (EditTask) TemplatesRequired() []tasks.Page {
+	return []tasks.Page{NewsEditPageTmpl}
 }

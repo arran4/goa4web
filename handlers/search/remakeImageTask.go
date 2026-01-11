@@ -17,6 +17,7 @@ type RemakeImageTask struct{ tasks.TaskString }
 var remakeImageTask = &RemakeImageTask{TaskString: TaskRemakeImageSearch}
 var _ tasks.Task = (*RemakeImageTask)(nil)
 var _ tasks.BackgroundTasker = (*RemakeImageTask)(nil)
+var _ tasks.TemplatesRequired = (*RemakeImageTask)(nil)
 
 func (RemakeImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	data := struct {
@@ -27,7 +28,11 @@ func (RemakeImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 		Messages: []string{"work queued"},
 		Back:     "/admin/search",
 	}
-	return handlers.TemplateWithDataHandler("runTaskPage.gohtml", data)
+	return handlers.TemplateWithDataHandler(handlers.TemplateRunTaskPage, data)
+}
+
+func (RemakeImageTask) TemplatesRequired() []tasks.Page {
+	return []tasks.Page{handlers.TemplateRunTaskPage}
 }
 
 func (RemakeImageTask) BackgroundTask(ctx context.Context, q db.Querier) (tasks.Task, error) {

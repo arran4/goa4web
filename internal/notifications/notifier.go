@@ -69,21 +69,21 @@ func New(opts ...Option) *Notifier {
 
 func (n *Notifier) notificationTemplates() *ttemplate.Template {
 	n.noteOnce.Do(func() {
-		n.noteTmpls = templates.GetCompiledNotificationTemplates(map[string]any{})
+		n.noteTmpls = templates.GetCompiledNotificationTemplates(map[string]any{}, templates.WithDir(n.Config.TemplatesDir))
 	})
 	return n.noteTmpls
 }
 
 func (n *Notifier) emailTextTemplates() *ttemplate.Template {
 	n.emailTextOnce.Do(func() {
-		n.emailTextTmpls = templates.GetCompiledEmailTextTemplates(map[string]any{})
+		n.emailTextTmpls = templates.GetCompiledEmailTextTemplates(map[string]any{}, templates.WithDir(n.Config.TemplatesDir))
 	})
 	return n.emailTextTmpls
 }
 
 func (n *Notifier) emailHTMLTemplates() *htemplate.Template {
 	n.emailHTMLOnce.Do(func() {
-		n.emailHTMLTmpls = templates.GetCompiledEmailHtmlTemplates(map[string]any{})
+		n.emailHTMLTmpls = templates.GetCompiledEmailHtmlTemplates(map[string]any{}, templates.WithDir(n.Config.TemplatesDir))
 	})
 	return n.emailHTMLTmpls
 }
@@ -146,7 +146,15 @@ func (n *Notifier) notifyAdmins(ctx context.Context, et *EmailTemplates, nt *str
 			}
 		}
 		if nt != nil {
-			msg, err := n.renderNotification(ctx, *nt, data)
+			// Internal notifications expect data wrapped in .Item and .Path
+			renderData := struct {
+				Path string
+				Item any
+			}{
+				Path: link,
+				Item: data,
+			}
+			msg, err := n.renderNotification(ctx, *nt, renderData)
 			if err != nil {
 				return err
 			}

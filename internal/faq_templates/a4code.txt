@@ -1,0 +1,54 @@
+What is a4code?
+===
+[b a4code] is a lightweight markup language used on this site for formatting text. It uses square brackets to denote formatting tags.
+
+Here are the available tags:
+
+[b Bold Text]
+Usage: [code [b Bold Text]]
+Result: [b Bold Text]
+
+[i Italic Text]
+Usage: [code [i Italic Text]]
+Result: [i Italic Text]
+
+[u Underlined Text]
+Usage: [code [u Underlined Text]]
+Result: [u Underlined Text]
+
+[s Subscript] and [p Superscript]
+Usage: [code [s Subscript] and [p Superscript]]
+Result: [s Subscript] and [p Superscript]
+
+[b Links]
+Usage: [code [link https://example.com Example Website]]
+Result: [link https://example.com Example Website]
+(Note: You can also use [code [url]] or [code [a]])
+
+[b Images]
+Usage: [code [img https://example.com/image.png]]
+Result: (Displays the image)
+
+[b Quotes]
+Usage: [code [quote This is a quote]]
+Result:
+[quote This is a quote]
+
+[b Quote with Author]
+Usage: [code [quoteof User This is a quote by User]]
+Result:
+[quoteof User This is a quote by User]
+
+[b Spoilers]
+Usage: [code [spoiler Hidden text]]
+Result: [spoiler Hidden text]
+
+[b Code Blocks]
+Usage: [code [code func main() {}]]
+Result:
+[code func main() {}]
+
+[b Horizontal Rule]
+Usage: [code [hr]]
+Result:
+[hr]

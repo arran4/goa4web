@@ -1,6 +1,5 @@
 {{ template "head" $ }}
 {{ if .Error }}<p>{{ .Error }}</p>{{ end }}
-{{ if .CanPost }}<p><a href="/news/post">New post</a></p>{{ end }}
 <table class="table table-bordered">
     <tr><th>ID<th>Date<th>Writer<th>Comments<th>View</tr>
     {{ range cd.AdminLatestNews }}
@@ -21,8 +20,8 @@
     <tr><th>User</th><th>Email</th><th>Roles</th></tr>
     {{ range .UserRoles }}
     <tr>
-        <td>{{ .Username.String }}</td>
-        <td>{{ if .Email }}{{ range $i, $e := .Email }}{{ if $i }}, {{ end }}{{ $e }}{{ end }}{{ else }}None{{ end }}</td>
+        <td><a href="/admin/user/{{ .ID }}">{{ .Username.String }}</a></td>
+        <td>{{ if .Emails }}{{ range $i, $e := .Emails }}{{ if $i }}, {{ end }}{{ $e }}{{ end }}{{ else }}None{{ end }}</td>
         <td>{{ if .Roles }}{{ range $i, $r := .Roles }}{{ if $i }}, {{ end }}{{ $r }}{{ end }}{{ else }}None{{ end }}</td>
     </tr>
     {{ end }}

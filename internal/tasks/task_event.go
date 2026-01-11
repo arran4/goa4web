@@ -17,6 +17,13 @@ type Task interface {
 	Action(w http.ResponseWriter, r *http.Request) any
 }
 
+// TemplatesRequired can be implemented by Task types that render templates
+// to declare the exact site template paths they depend on. Tests can use this
+// to verify that the templates exist.
+type TemplatesRequired interface {
+	TemplatesRequired() []Page
+}
+
 type TaskMatcher interface {
 	Matcher() mux.MatcherFunc
 }

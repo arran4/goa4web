@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
 	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
@@ -13,6 +14,9 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/arran4/goa4web/handlers/share"
 
 	"github.com/arran4/goa4web/handlers"
 )
@@ -27,6 +31,15 @@ func BloggerListPage(w http.ResponseWriter, r *http.Request) {
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Bloggers"
+	cd.OpenGraph = &common.OpenGraph{
+		Title:       cd.PageTitle,
+		Description: "List of bloggers",
+		Image:       share.MakeImageURL(cd.AbsoluteURL(""), cd.PageTitle, cd.ShareSigner, time.Now().Add(24*time.Hour)),
+		ImageWidth:  cd.Config.OGImageWidth,
+		ImageHeight: cd.Config.OGImageHeight,
+		TwitterSite: cd.Config.TwitterSite,
+		URL:         cd.AbsoluteURL(r.URL.String()),
+	}
 	data := Data{
 		Search:   r.URL.Query().Get("search"),
 		PageSize: cd.PageSize(),
@@ -82,5 +95,7 @@ func BloggerListPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	handlers.TemplateHandler(w, r, "bloggerListPage.gohtml", data)
+	BloggerListPageTmpl.Handle(w, r, data)
 }
+
+const BloggerListPageTmpl handlers.Page = "blogs/bloggerListPage.gohtml"

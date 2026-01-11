@@ -185,6 +185,10 @@ func (RemoveAuthorLabelTask) Action(w http.ResponseWriter, r *http.Request) any 
 // MarkThreadReadTask clears the special new/unread flags for a thread.
 type MarkThreadReadTask struct{ tasks.TaskString }
 
+func (t *MarkThreadReadTask) Matcher() mux.MatcherFunc {
+	return tasks.HasFormOrQueryTask(string(t.TaskString))
+}
+
 func (MarkThreadReadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
@@ -196,7 +200,7 @@ func (MarkThreadReadTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("mark read: %v", err)
 		return fmt.Errorf("mark read %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	if last := r.PostFormValue("last_comment"); last != "" {
+	if last := r.FormValue("last_comment"); last != "" {
 		if cid, err := strconv.Atoi(last); err == nil {
 			if err := cd.SetThreadReadMarker(int32(threadID), int32(cid)); err != nil {
 				log.Printf("set read marker: %v", err)
@@ -205,7 +209,7 @@ func (MarkThreadReadTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	target := r.PostFormValue("redirect")
+	target := r.FormValue("redirect")
 	if target == "" {
 		target = r.Header.Get("Referer")
 	}

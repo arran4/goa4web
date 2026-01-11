@@ -19,6 +19,14 @@ SELECT id, pattern, method FROM subscriptions
 WHERE users_idusers = ?
 ORDER BY id;
 
+-- name: ListThreadSubscriptionsByUser :many
+SELECT id, pattern, method FROM subscriptions
+WHERE users_idusers = ?
+  AND pattern LIKE 'reply:/forum/topic/%/thread/%'
+  AND pattern NOT LIKE '%/topic/*/%'
+  AND pattern NOT LIKE '%/thread/*%'
+ORDER BY id;
+
 -- name: DeleteSubscriptionByIDForSubscriber :exec
 DELETE FROM subscriptions WHERE users_idusers = sqlc.arg(subscriber_id) AND id = sqlc.arg(id);
 

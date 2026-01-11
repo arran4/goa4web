@@ -4,12 +4,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
@@ -23,7 +24,8 @@ import (
 func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath string) {
 	type threadWithLabels struct {
 		*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow
-		Labels []templates.TopicLabel
+		Labels   []templates.TopicLabel
+		IsUnread bool
 	}
 
 	type Data struct {
@@ -36,6 +38,8 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		Category                *ForumcategoryPlus
 		CopyDataToSubCategories func(rootCategory *ForumcategoryPlus) *Data
 		BasePath                string
+		BackURL                 string
+		ShareURL                string
 		Labels                  []templates.TopicLabel
 	}
 
@@ -51,6 +55,7 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	data := &Data{
 		Admin:    cd.IsAdmin() && cd.IsAdminMode(),
 		BasePath: basePath,
+		BackURL:  r.URL.RequestURI(),
 	}
 
 	copyDataToSubCategories := func(rootCategory *ForumcategoryPlus) *Data {
@@ -72,7 +77,7 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	topicRow, err := cd.ForumTopicByID(int32(topicId))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			http.NotFound(w, r)
+			handlers.RenderErrorPage(w, r, handlers.ErrNotFound) // Use consistent error page helper
 		} else {
 			log.Printf("showTableTopics Error: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -148,9 +153,12 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		} else {
 			log.Printf("list public labels: %v", err)
 		}
-		if priv, err := cd.ThreadPrivateLabels(r.Idforumthread); err == nil {
+		if priv, err := cd.ThreadPrivateLabels(r.Idforumthread, r.Firstpostuserid.Int32); err == nil {
 			for _, l := range priv {
 				lbls = append(lbls, templates.TopicLabel{Name: l, Type: "private"})
+				if l == "unread" {
+					t.IsUnread = true
+				}
 			}
 		} else {
 			log.Printf("list private labels: %v", err)
@@ -176,8 +184,10 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		data.Subscribed = true
 	}
 
-	handlers.TemplateHandler(w, r, "forum/topicsPage.gohtml", data)
+	ForumTopicsPageTmpl.Handle(w, r, data)
 }
+
+const ForumTopicsPageTmpl handlers.Page = "forum/topicsPage.gohtml"
 
 // TopicsPage serves the forum topic page at the default /forum prefix.
 func TopicsPage(w http.ResponseWriter, r *http.Request) {

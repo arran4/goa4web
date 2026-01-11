@@ -12,9 +12,7 @@ import (
 	"io"
 	"net/http"
 	"path"
-	"path/filepath"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -31,6 +29,9 @@ import (
 	"github.com/arran4/goa4web/workers/searchworker"
 	"golang.org/x/image/draw"
 )
+
+// ImagebbsUploadPrefix isolates image board uploads from other stored files.
+const ImagebbsUploadPrefix = "imagebbs"
 
 // UploadImageTask handles uploading an image to a board.
 type UploadImageTask struct{ tasks.TaskString }
@@ -52,18 +53,9 @@ func (UploadImageTask) IndexData(data map[string]any) []searchworker.IndexEventD
 
 var _ searchworker.IndexedTask = UploadImageTask{}
 
-func BoardPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	cd.LoadSelectionsFromRequest(r)
-	bid := cd.SelectedBoardID()
-
-	if !cd.HasGrant("imagebbs", "board", "view", bid) {
-		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
-		return
-	}
-
-	cd.PageTitle = fmt.Sprintf("Board %d", bid)
-	handlers.TemplateHandler(w, r, "imagebbs/boardPage.gohtml", struct{}{})
+func ImagebbsBoardPage(w http.ResponseWriter, r *http.Request) {
+	t := NewImagebbsBoardTask().(*imagebbsBoardTask)
+	t.Get(w, r)
 }
 
 func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
@@ -94,6 +86,11 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		})
 	}
+	if !cd.HasGrant("images", "upload", "post", 0) {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+		})
+	}
 
 	r.Body = http.MaxBytesReader(w, r.Body, int64(cd.Config.ImageMaxBytes))
 	if err := r.ParseMultipartForm(int64(cd.Config.ImageMaxBytes)); err != nil {
@@ -114,7 +111,10 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	shaHex := fmt.Sprintf("%x", h.Sum(nil))
-	ext := strings.ToLower(filepath.Ext(header.Filename))
+	ext, err := imagesign.CleanExtension(header.Filename)
+	if err != nil {
+		return fmt.Errorf("invalid extension %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
 	sub1, sub2 := shaHex[:2], shaHex[2:4]
 	data := buf.Bytes()
 	img, _, err := image.Decode(bytes.NewReader(data))
@@ -123,7 +123,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	fname := shaHex + ext
 	if p := upload.ProviderFromConfig(cd.Config); p != nil {
-		if err := p.Write(r.Context(), path.Join(sub1, sub2, fname), data); err != nil {
+		if err := p.Write(r.Context(), path.Join(ImagebbsUploadPrefix, sub1, sub2, fname), data); err != nil {
 			return fmt.Errorf("upload write fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		src := img.Bounds()
@@ -148,7 +148,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 			return fmt.Errorf("encode thumb fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		thumbName := shaHex + "_thumb" + ext
-		if err := p.Write(r.Context(), path.Join(sub1, sub2, thumbName), buf.Bytes()); err != nil {
+		if err := p.Write(r.Context(), path.Join(ImagebbsUploadPrefix, sub1, sub2, thumbName), buf.Bytes()); err != nil {
 			return fmt.Errorf("thumb write fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
@@ -157,6 +157,16 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	relFull := path.Join(relBase, fname)
 	thumbName := shaHex + "_thumb" + ext
 	relThumb := path.Join(relBase, thumbName)
+
+	if _, err := queries.CreateUploadedImageForUploader(r.Context(), db.CreateUploadedImageForUploaderParams{
+		UploaderID: uid,
+		Path:       sql.NullString{String: relFull, Valid: true},
+		Width:      sql.NullInt32{Int32: int32(img.Bounds().Dx()), Valid: true},
+		Height:     sql.NullInt32{Int32: int32(img.Bounds().Dy()), Valid: true},
+		FileSize:   int32(size),
+	}); err != nil {
+		return fmt.Errorf("record uploaded image %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
 
 	approved := !board.ApprovalRequired
 

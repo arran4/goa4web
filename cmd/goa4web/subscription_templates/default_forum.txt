@@ -1,0 +1,3 @@
+internal,email create thread:/forum/topic/*
+internal,email reply:/forum/topic/*/thread/*
+internal edit reply:/forum/topic/*/thread/*

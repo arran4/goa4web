@@ -1,19 +1,5 @@
 {{ template "head" $ }}
     {{ template "newsPost" $.Post }}
-    <div class="mark-read-bar">
-        <form method="post" action="/news/news/{{ .Post.Idsitenews }}/labels" class="mark-read">
-            {{ csrfField }}
-            <input type="hidden" name="task" value="Mark Thread Read"/>
-            <input type="hidden" name="redirect" value="{{ .BackURL }}"/>
-            <button type="submit">Mark as read</button>
-        </form>
-        <form method="post" action="/news/news/{{ .Post.Idsitenews }}/labels" class="mark-read">
-            {{ csrfField }}
-            <input type="hidden" name="task" value="Mark Thread Read"/>
-            <input type="hidden" name="redirect" value="/news"/>
-            <button type="submit">Mark as read and go back</button>
-        </form>
-    </div>
     <hr><h2 class="section-heading">Replies:</h2>
     {{ template "threadComments" }}
     <div class="label-editor">
@@ -34,20 +20,9 @@
             <input type="text" class="label-input" data-type="private" placeholder="Add private label"/>
             <input type="submit" value="Save Labels"/>
         </form>
-        <form method="post" action="/news/news/{{ .Post.Idsitenews }}/labels" class="mark-read">
-            {{ csrfField }}
-            <input type="hidden" name="task" value="Mark Thread Read"/>
-            <input type="hidden" name="redirect" value="{{ .BackURL }}"/>
-            <button type="submit">Mark as read</button>
-        </form>
-        <form method="post" action="/news/news/{{ .Post.Idsitenews }}/labels" class="mark-read">
-            {{ csrfField }}
-            <input type="hidden" name="task" value="Mark Thread Read"/>
-            <input type="hidden" name="redirect" value="/news"/>
-            <button type="submit">Mark as read and go back</button>
-        </form>
     </div>
-    <script src="/forum/topic_labels.js"></script>
+
+    <script src="{{ assetHash "/forum/topic_labels.js" }}"></script>
     {{ if cd.SelectedThreadCanReply }}
         <div class="comment">
             <aside class="author">
@@ -83,4 +58,6 @@
             </section>
         </div>
     {{ end }}
+
+    {{ template "_share.gohtml" (dict "module" "news" "link" (printf "/news/news/%d" .Post.Idsitenews)) }}
 {{ template "tail" $ }}

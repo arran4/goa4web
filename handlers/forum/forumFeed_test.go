@@ -20,13 +20,14 @@ func TestForumTopicFeed(t *testing.T) {
 			Idforumthread:     1,
 			Firstposttext:     sql.NullString{String: "hello world", Valid: true},
 			Firstpostusername: sql.NullString{String: "bob", Valid: true},
+			Firstpostuserid:   sql.NullInt32{Int32: 1, Valid: true},
 			Firstpostwritten:  sql.NullTime{Time: time.Unix(0, 0), Valid: true},
 		},
 	}
 	r := httptest.NewRequest("GET", "http://example.com/forum/topic/1.rss", nil)
 	cd := &common.CoreData{ImageSigner: imagesign.NewSigner(&config.RuntimeConfig{}, "k")}
 	r = r.WithContext(context.WithValue(r.Context(), consts.KeyCoreData, cd))
-	feed := TopicFeed(r, "Test", 1, rows)
+	feed := TopicFeed(r, "Test", 1, rows, "/forum")
 	if len(feed.Items) != 1 {
 		t.Fatalf("expected 1 item got %d", len(feed.Items))
 	}

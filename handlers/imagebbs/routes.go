@@ -2,6 +2,7 @@ package imagebbs
 
 import (
 	"net/http"
+	"path/filepath"
 
 	"github.com/gorilla/mux"
 
@@ -16,21 +17,26 @@ import (
 func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Registry) {
 	navReg.RegisterIndexLinkWithViewPermission("ImageBBS", "/imagebbs", SectionWeight, "imagebbs", "board")
 	navReg.RegisterAdminControlCenter("ImageBBS", "ImageBBS", "/admin/imagebbs", SectionWeight)
-	r.HandleFunc("/imagebbs.rss", RssPage).Methods("GET")
 	ibr := r.PathPrefix("/imagebbs").Subrouter()
+	ibr.NotFoundHandler = http.HandlerFunc(handlers.RenderNotFoundOrLogin)
 	ibr.Use(handlers.IndexMiddleware(CustomImageBBSIndex), handlers.SectionMiddleware("imagebbs"))
-	ibr.PathPrefix("/images/").Handler(http.StripPrefix("/imagebbs/images/", http.FileServer(http.Dir(cfg.ImageUploadDir))))
+	ibr.HandleFunc("/rss", RssPage).Methods("GET")
+	ibr.HandleFunc("/u/{username}/rss", RssPage).Methods("GET")
+	ibr.HandleFunc("/atom", AtomPage).Methods("GET")
+	ibr.HandleFunc("/u/{username}/atom", AtomPage).Methods("GET")
+	bbsDir := filepath.Join(cfg.ImageUploadDir, ImagebbsUploadPrefix)
+	ibr.PathPrefix("/images/").Handler(http.StripPrefix("/imagebbs/images/", http.FileServer(http.Dir(bbsDir))))
 	ibr.HandleFunc("/board/{boardno:[0-9]+}.rss", BoardRssPage).Methods("GET")
-	r.HandleFunc("/imagebbs.atom", AtomPage).Methods("GET")
 	ibr.HandleFunc("/board/{boardno:[0-9]+}.atom", BoardAtomPage).Methods("GET")
-	ibr.HandleFunc("/board/{boardno}", BoardPage).Methods("GET")
+	ibr.HandleFunc("/board/{boardno}", ImagebbsBoardPage).Methods("GET")
 	ibr.HandleFunc("/board/{boardno}", handlers.TaskHandler(uploadImageTask)).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(uploadImageTask.Matcher())
 	ibr.HandleFunc("/board/{boardno}/thread/{thread}", BoardThreadPage).Methods("GET")
 	ibr.HandleFunc("/board/{boardno}/thread/{thread}", handlers.TaskHandler(replyTask)).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(replyTask.Matcher())
-	ibr.HandleFunc("", Page).Methods("GET")
-	ibr.HandleFunc("/", Page).Methods("GET")
+	ibr.HandleFunc("", ImagebbsPage).Methods("GET")
+	ibr.HandleFunc("/", ImagebbsPage).Methods("GET")
 	ibr.HandleFunc("/poster/{username}", PosterPage).Methods("GET")
 	ibr.HandleFunc("/poster/{username}/", PosterPage).Methods("GET")
+
 }
 
 // Register registers the imagebbs router module.

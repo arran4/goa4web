@@ -9,7 +9,7 @@
         {{- else }}
             <ul>
             {{- range $i, $result := . }}
-                <li>{{ $i }}: <a href="/linker/show/{{$result.ID}}">{{ $result.Title.String }}</a></li>
+                <li>{{ $i }}: <a href="/linker/show/{{$result.ID}}">{{ highlightSearch $result.Title.String }}</a></li>
             {{- end }}
             </ul>
         {{ end }}

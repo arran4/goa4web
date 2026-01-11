@@ -3,6 +3,7 @@ package admin
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -11,7 +12,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
@@ -20,13 +20,58 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
-func setupCommentTest(t *testing.T, commentID int, body url.Values) (*httptest.ResponseRecorder, *http.Request, *sql.DB, sqlmock.Sqlmock) {
-	t.Helper()
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+type commentTaskQueries struct {
+	db.Querier
+	commentID       int32
+	comment         *db.GetCommentByIdForUserRow
+	deactivated     bool
+	deactivatedRows []*db.AdminListDeactivatedCommentsRow
+	scrubArgs       []db.AdminScrubCommentParams
+	archiveArgs     []db.AdminArchiveCommentParams
+	restoreArgs     []db.AdminRestoreCommentParams
+	restoredIDs     []int32
+}
+
+func (q *commentTaskQueries) GetCommentByIdForUser(_ context.Context, arg db.GetCommentByIdForUserParams) (*db.GetCommentByIdForUserRow, error) {
+	if arg.ID != q.commentID {
+		return nil, fmt.Errorf("unexpected comment id: %d", arg.ID)
 	}
-	mock.MatchExpectationsInOrder(false)
+	return q.comment, nil
+}
+
+func (q *commentTaskQueries) AdminScrubComment(_ context.Context, arg db.AdminScrubCommentParams) error {
+	q.scrubArgs = append(q.scrubArgs, arg)
+	return nil
+}
+
+func (q *commentTaskQueries) AdminIsCommentDeactivated(_ context.Context, id int32) (bool, error) {
+	if id != q.commentID {
+		return false, fmt.Errorf("unexpected comment id: %d", id)
+	}
+	return q.deactivated, nil
+}
+
+func (q *commentTaskQueries) AdminArchiveComment(_ context.Context, arg db.AdminArchiveCommentParams) error {
+	q.archiveArgs = append(q.archiveArgs, arg)
+	return nil
+}
+
+func (q *commentTaskQueries) AdminListDeactivatedComments(context.Context, db.AdminListDeactivatedCommentsParams) ([]*db.AdminListDeactivatedCommentsRow, error) {
+	return q.deactivatedRows, nil
+}
+
+func (q *commentTaskQueries) AdminRestoreComment(_ context.Context, arg db.AdminRestoreCommentParams) error {
+	q.restoreArgs = append(q.restoreArgs, arg)
+	return nil
+}
+
+func (q *commentTaskQueries) AdminMarkCommentRestored(_ context.Context, id int32) error {
+	q.restoredIDs = append(q.restoredIDs, id)
+	return nil
+}
+
+func setupCommentTest(t *testing.T, commentID int, body url.Values, queries db.Querier) (*httptest.ResponseRecorder, *http.Request) {
+	t.Helper()
 	var reader *strings.Reader
 	if body != nil {
 		reader = strings.NewReader(body.Encode())
@@ -39,76 +84,126 @@ func setupCommentTest(t *testing.T, commentID int, body url.Values) (*httptest.R
 	}
 	req = mux.SetURLVars(req, map[string]string{"comment": strconv.Itoa(commentID)})
 	cfg := config.NewRuntimeConfig()
-	q := db.New(conn)
-	cd := common.NewCoreData(req.Context(), q, cfg)
+	cd := common.NewCoreData(req.Context(), queries, cfg)
 	cd.LoadSelectionsFromRequest(req)
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
-	return httptest.NewRecorder(), req, conn, mock
+	return httptest.NewRecorder(), req
 }
 
 func TestDeleteCommentTask_UsesURLParam(t *testing.T) {
-	rr, req, conn, mock := setupCommentTest(t, 15, nil)
-	defer conn.Close()
-	rows := sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_id", "written", "text", "timezone", "deleted_at", "last_index", "username", "is_owner"}).
-		AddRow(15, 2, 3, 1, time.Now(), "body", nil, nil, nil, "user", true)
-	mock.ExpectQuery("SELECT").WillReturnRows(rows)
-	mock.ExpectExec("UPDATE").WithArgs(sqlmock.AnyArg(), int32(15)).WillReturnResult(sqlmock.NewResult(0, 1))
+	queries := &commentTaskQueries{
+		commentID: 15,
+		comment: &db.GetCommentByIdForUserRow{
+			Idcomments:    15,
+			ForumthreadID: 2,
+			UsersIdusers:  3,
+			LanguageID:    sql.NullInt32{Int32: 1, Valid: true},
+			Written:       sql.NullTime{Time: time.Now(), Valid: true},
+			Text:          sql.NullString{String: "body", Valid: true},
+			Timezone:      sql.NullString{},
+			DeletedAt:     sql.NullTime{},
+			LastIndex:     sql.NullTime{},
+			Username:      sql.NullString{String: "user", Valid: true},
+			IsOwner:       true,
+		},
+	}
+	rr, req := setupCommentTest(t, 15, nil, queries)
 	if err, ok := deleteCommentTask.Action(rr, req).(error); ok && err != nil {
 		t.Fatalf("Action: %v", err)
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expect: %v", err)
+	if len(queries.scrubArgs) != 1 || queries.scrubArgs[0].Idcomments != 15 {
+		t.Fatalf("unexpected scrub args: %#v", queries.scrubArgs)
 	}
 }
 
 func TestEditCommentTask_UsesURLParam(t *testing.T) {
 	body := url.Values{"replytext": {"updated"}}
-	rr, req, conn, mock := setupCommentTest(t, 22, body)
-	defer conn.Close()
-	rows := sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_id", "written", "text", "timezone", "deleted_at", "last_index", "username", "is_owner"}).
-		AddRow(22, 2, 3, 1, time.Now(), "body", nil, nil, nil, "user", true)
-	mock.ExpectQuery("SELECT").WillReturnRows(rows)
-	mock.ExpectExec("UPDATE").WithArgs(sqlmock.AnyArg(), int32(22)).WillReturnResult(sqlmock.NewResult(0, 1))
+	queries := &commentTaskQueries{
+		commentID: 22,
+		comment: &db.GetCommentByIdForUserRow{
+			Idcomments:    22,
+			ForumthreadID: 2,
+			UsersIdusers:  3,
+			LanguageID:    sql.NullInt32{Int32: 1, Valid: true},
+			Written:       sql.NullTime{Time: time.Now(), Valid: true},
+			Text:          sql.NullString{String: "body", Valid: true},
+			Timezone:      sql.NullString{},
+			DeletedAt:     sql.NullTime{},
+			LastIndex:     sql.NullTime{},
+			Username:      sql.NullString{String: "user", Valid: true},
+			IsOwner:       true,
+		},
+	}
+	rr, req := setupCommentTest(t, 22, body, queries)
 	if err, ok := editCommentTask.Action(rr, req).(error); ok && err != nil {
 		t.Fatalf("Action: %v", err)
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expect: %v", err)
+	if len(queries.scrubArgs) != 1 || queries.scrubArgs[0].Idcomments != 22 || queries.scrubArgs[0].Text.String != "updated" {
+		t.Fatalf("unexpected scrub args: %#v", queries.scrubArgs)
 	}
 }
 
 func TestDeactivateCommentTask_UsesURLParam(t *testing.T) {
-	rr, req, conn, mock := setupCommentTest(t, 33, nil)
-	defer conn.Close()
-	rows := sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_id", "written", "text", "timezone", "deleted_at", "last_index", "username", "is_owner"}).
-		AddRow(33, 2, 3, 1, time.Now(), "body", nil, nil, nil, "user", true)
-	mock.ExpectQuery("SELECT").WillReturnRows(rows)
-	mock.ExpectQuery("SELECT").WithArgs(int32(33)).WillReturnRows(sqlmock.NewRows([]string{"is_deactivated"}).AddRow(false))
-	mock.ExpectExec("INSERT").WithArgs(int32(33), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
-	mock.ExpectExec("UPDATE").WithArgs(sqlmock.AnyArg(), int32(33)).WillReturnResult(sqlmock.NewResult(0, 1))
+	queries := &commentTaskQueries{
+		commentID:   33,
+		deactivated: false,
+		comment: &db.GetCommentByIdForUserRow{
+			Idcomments:    33,
+			ForumthreadID: 2,
+			UsersIdusers:  3,
+			LanguageID:    sql.NullInt32{Int32: 1, Valid: true},
+			Written:       sql.NullTime{Time: time.Now(), Valid: true},
+			Text:          sql.NullString{String: "body", Valid: true},
+			Timezone:      sql.NullString{},
+			DeletedAt:     sql.NullTime{},
+			LastIndex:     sql.NullTime{},
+			Username:      sql.NullString{String: "user", Valid: true},
+			IsOwner:       true,
+		},
+	}
+	rr, req := setupCommentTest(t, 33, nil, queries)
 	if err, ok := deactivateCommentTask.Action(rr, req).(error); ok && err != nil {
 		t.Fatalf("Action: %v", err)
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expect: %v", err)
+	if len(queries.archiveArgs) != 1 || queries.archiveArgs[0].Idcomments != 33 {
+		t.Fatalf("unexpected archive args: %#v", queries.archiveArgs)
+	}
+	if len(queries.scrubArgs) != 1 || queries.scrubArgs[0].Idcomments != 33 {
+		t.Fatalf("unexpected scrub args: %#v", queries.scrubArgs)
 	}
 }
 
 func TestRestoreCommentTask_UsesURLParam(t *testing.T) {
-	rr, req, conn, mock := setupCommentTest(t, 44, nil)
-	defer conn.Close()
-	rows := sqlmock.NewRows([]string{"idcomments", "forumthread_id", "users_idusers", "language_id", "written", "text", "timezone", "deleted_at", "last_index", "username", "is_owner"}).
-		AddRow(44, 2, 3, 1, time.Now(), "", nil, nil, nil, "user", true)
-	mock.ExpectQuery("SELECT").WillReturnRows(rows)
-	mock.ExpectQuery("SELECT").WithArgs(int32(44)).WillReturnRows(sqlmock.NewRows([]string{"is_deactivated"}).AddRow(true))
-	mock.ExpectQuery("SELECT").WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnRows(sqlmock.NewRows([]string{"idcomments", "text"}).AddRow(44, "body"))
-	mock.ExpectExec("UPDATE").WithArgs("body", int32(44)).WillReturnResult(sqlmock.NewResult(0, 1))
-	mock.ExpectExec("UPDATE").WithArgs(int32(44)).WillReturnResult(sqlmock.NewResult(0, 1))
+	queries := &commentTaskQueries{
+		commentID:   44,
+		deactivated: true,
+		comment: &db.GetCommentByIdForUserRow{
+			Idcomments:    44,
+			ForumthreadID: 2,
+			UsersIdusers:  3,
+			LanguageID:    sql.NullInt32{Int32: 1, Valid: true},
+			Written:       sql.NullTime{Time: time.Now(), Valid: true},
+			Text:          sql.NullString{String: "", Valid: true},
+			Timezone:      sql.NullString{},
+			DeletedAt:     sql.NullTime{},
+			LastIndex:     sql.NullTime{},
+			Username:      sql.NullString{String: "user", Valid: true},
+			IsOwner:       true,
+		},
+		deactivatedRows: []*db.AdminListDeactivatedCommentsRow{{
+			Idcomments: 44,
+			Text:       sql.NullString{String: "body", Valid: true},
+		}},
+	}
+	rr, req := setupCommentTest(t, 44, nil, queries)
 	if err, ok := restoreCommentTask.Action(rr, req).(error); ok && err != nil {
 		t.Fatalf("Action: %v", err)
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expect: %v", err)
+	if len(queries.restoreArgs) != 1 || queries.restoreArgs[0].Idcomments != 44 || queries.restoreArgs[0].Text.String != "body" {
+		t.Fatalf("unexpected restore args: %#v", queries.restoreArgs)
+	}
+	if len(queries.restoredIDs) != 1 || queries.restoredIDs[0] != 44 {
+		t.Fatalf("unexpected restored ids: %#v", queries.restoredIDs)
 	}
 }

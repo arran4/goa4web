@@ -17,6 +17,7 @@ type RemakeCommentsTask struct{ tasks.TaskString }
 var remakeCommentsTask = &RemakeCommentsTask{TaskString: TaskRemakeCommentsSearch}
 var _ tasks.Task = (*RemakeCommentsTask)(nil)
 var _ tasks.BackgroundTasker = (*RemakeCommentsTask)(nil)
+var _ tasks.TemplatesRequired = (*RemakeCommentsTask)(nil)
 
 func (RemakeCommentsTask) Action(w http.ResponseWriter, r *http.Request) any {
 	data := struct {
@@ -27,7 +28,11 @@ func (RemakeCommentsTask) Action(w http.ResponseWriter, r *http.Request) any {
 		Messages: []string{"work queued"},
 		Back:     "/admin/search",
 	}
-	return handlers.TemplateWithDataHandler("runTaskPage.gohtml", data)
+	return handlers.TemplateWithDataHandler(handlers.TemplateRunTaskPage, data)
+}
+
+func (RemakeCommentsTask) TemplatesRequired() []tasks.Page {
+	return []tasks.Page{handlers.TemplateRunTaskPage}
 }
 
 func (RemakeCommentsTask) BackgroundTask(ctx context.Context, q db.Querier) (tasks.Task, error) {

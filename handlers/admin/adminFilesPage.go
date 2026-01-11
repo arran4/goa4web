@@ -3,7 +3,6 @@ package admin
 import (
 	"database/sql"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"os"
@@ -13,9 +12,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/arran4/goa4web/core/consts"
+
 	"github.com/arran4/goa4web/core/common"
 
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers/imagebbs"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -38,7 +40,7 @@ func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
 		Entries []Entry
 	}
 
-	base := cd.Config.ImageUploadDir
+	base := filepath.Join(cd.Config.ImageUploadDir, imagebbs.ImagebbsUploadPrefix)
 	reqPath := r.URL.Query().Get("path")
 	cleaned := filepath.Clean("/" + reqPath)
 	abs := filepath.Join(base, cleaned)
@@ -106,5 +108,7 @@ func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
 	}
 	sort.Slice(data.Entries, func(i, j int) bool { return data.Entries[i].Name < data.Entries[j].Name })
 
-	handlers.TemplateHandler(w, r, "adminFilesPage.gohtml", data)
+	AdminFilesPageTmpl.Handle(w, r, data)
 }
+
+const AdminFilesPageTmpl handlers.Page = "admin/adminFilesPage.gohtml"

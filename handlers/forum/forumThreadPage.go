@@ -3,17 +3,20 @@ package forum
 import (
 	"database/sql"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/arran4/goa4web/a4code"
+	"github.com/arran4/goa4web/core/consts"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers/share"
 	"github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/core"
@@ -46,7 +49,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	data := Data{
 		IsReplyable: true,
 		BasePath:    basePath,
-		BackURL:     r.URL.RequestURI(),
+		BackURL:     r.URL.Path,
 	}
 
 	threadRow, err := cd.SelectedThread()
@@ -84,6 +87,16 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	}
 	cd.PageTitle = fmt.Sprintf("Forum - %s", displayTitle)
 
+	cd.OpenGraph = &common.OpenGraph{
+		Title:       displayTitle,
+		Description: "A discussion on our forum.",
+		Image:       share.MakeImageURL(cd.AbsoluteURL(""), displayTitle, cd.ShareSigner, time.Now().Add(24*time.Hour)),
+		ImageWidth:  cd.Config.OGImageWidth,
+		ImageHeight: cd.Config.OGImageHeight,
+		TwitterSite: cd.Config.TwitterSite,
+		URL:         cd.AbsoluteURL(r.URL.String()),
+	}
+
 	if _, ok := core.GetSessionOrFail(w, r); !ok {
 		return
 	}
@@ -91,12 +104,14 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	if err != nil {
 		log.Printf("thread comments: %v", err)
 	}
+	if len(commentRows) > 0 {
+		cd.OpenGraph.Description = a4code.Snip(commentRows[0].Text.String, 128)
+	}
 
 	// threadRow and topicRow are provided by the RequireThreadAndTopic
 	// middleware.
 
 	commentId, _ := strconv.Atoi(r.URL.Query().Get("comment"))
-	quoteId, _ := strconv.Atoi(r.URL.Query().Get("quote"))
 	data.Comments = commentRows
 
 	data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
@@ -154,7 +169,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	} else {
 		log.Printf("list public labels: %v", err)
 	}
-	if priv, err := cd.ThreadPrivateLabels(threadRow.Idforumthread); err == nil {
+	if priv, err := cd.ThreadPrivateLabels(threadRow.Idforumthread, threadRow.Firstpostuserid.Int32); err == nil {
 		for _, l := range priv {
 			labels = append(labels, templates.TopicLabel{Name: l, Type: "private"})
 		}
@@ -164,20 +179,10 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	sort.Slice(labels, func(i, j int) bool { return labels[i].Name < labels[j].Name })
 	data.Labels = labels
 
-	replyType := r.URL.Query().Get("type")
-	if quoteId != 0 {
-		if c, err := cd.CommentByID(int32(quoteId)); err == nil && c != nil {
-			switch replyType {
-			case "full":
-				data.Text = a4code.QuoteText(c.Username.String, c.Text.String, a4code.WithFullQuote())
-			default:
-				data.Text = a4code.QuoteText(c.Username.String, c.Text.String)
-			}
-		}
-	}
-
-	handlers.TemplateHandler(w, r, "forum/threadPage.gohtml", data)
+	ForumThreadPageTmpl.Handle(w, r, data)
 }
+
+const ForumThreadPageTmpl handlers.Page = "forum/threadPage.gohtml"
 
 // ThreadPage serves the forum thread page at the default /forum prefix.
 func ThreadPage(w http.ResponseWriter, r *http.Request) {

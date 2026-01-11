@@ -8,14 +8,13 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"mime"
 	"mime/multipart"
 	"net/mail"
 	"strings"
 
 	sg "github.com/sendgrid/sendgrid-go"
-	"github.com/sendgrid/sendgrid-go/helpers/mail"
+	sgmail "github.com/sendgrid/sendgrid-go/helpers/mail"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/email"
@@ -32,9 +31,9 @@ type Provider struct {
 
 func (s Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []byte) error {
 	subject, textBody, htmlBody := parseRawEmail(rawEmailMessage)
-	from := mail.NewEmail("", s.From)
-	toAddr := mail.NewEmail(to.Name, to.Address)
-	msg := mail.NewSingleEmail(from, subject, toAddr, textBody, htmlBody)
+	from := sgmail.NewEmail("", s.From)
+	toAddr := sgmail.NewEmail(to.Name, to.Address)
+	msg := sgmail.NewSingleEmail(from, subject, toAddr, textBody, htmlBody)
 	client := sg.NewSendClient(s.APIKey)
 	resp, err := client.SendWithContext(ctx, msg)
 	if err != nil {
@@ -85,17 +84,16 @@ func parseRawEmail(raw []byte) (string, string, string) {
 	return subject, string(b), ""
 }
 
-func providerFromConfig(key string, from string) email.Provider {
+func providerFromConfig(key string, from string) (email.Provider, error) {
 	if key == "" {
-		log.Printf("Email disabled: SENDGRID_KEY not set")
-		return nil
+		return nil, fmt.Errorf("Email disabled: SENDGRID_KEY not set")
 	}
-	return Provider{APIKey: key, From: from}
+	return Provider{APIKey: key, From: from}, nil
 }
 
 // Register registers the SendGrid provider factory.
 func Register(r *email.Registry) {
-	r.RegisterProvider("sendgrid", func(cfg *config.RuntimeConfig) email.Provider {
+	r.RegisterProvider("sendgrid", func(cfg *config.RuntimeConfig) (email.Provider, error) {
 		return providerFromConfig(cfg.EmailSendGridKey, cfg.EmailFrom)
 	})
 }

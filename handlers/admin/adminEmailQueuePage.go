@@ -76,5 +76,7 @@ func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 		}
 		data.Emails = append(data.Emails, EmailItem{e, emailStr, subj})
 	}
-	handlers.TemplateHandler(w, r, "emailQueuePage.gohtml", data)
+	AdminEmailQueuePageTmpl.Handle(w, r, data)
 }
+
+const AdminEmailQueuePageTmpl handlers.Page = "admin/emailQueuePage.gohtml"

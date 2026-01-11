@@ -50,7 +50,7 @@ func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
 var _ searchworker.IndexedTask = ReplyTask{}
 
 func (ReplyTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("replyEmail"), evt.Outcome == eventbus.TaskOutcomeSuccess
+	return notif.NewEmailTemplates("forumReplyEmail"), evt.Outcome == eventbus.TaskOutcomeSuccess
 }
 
 func (ReplyTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
@@ -107,23 +107,9 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	uid, _ := session.Values["UID"].(int32)
 	var username string
-	if q := cd.Queries(); q != nil {
-		if u, err := q.SystemGetUserByID(r.Context(), uid); err == nil {
-			username = u.Username.String
-		}
+	if u := cd.UserByID(uid); u != nil {
+		username = u.Username.String
 	}
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data["TopicTitle"] = topicRow.Title.String
-			evt.Data["ThreadID"] = threadRow.Idforumthread
-			evt.Data["Thread"] = threadRow
-			evt.Data["Username"] = username
-		}
-	}
-
 	text := r.PostFormValue("replytext")
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
 
@@ -131,12 +117,6 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if base == "" {
 		base = "/forum"
 	}
-	commentNum := int32(1)
-	if threadRow.Comments.Valid {
-		commentNum = threadRow.Comments.Int32 + 1
-	}
-	endUrl := fmt.Sprintf("%s/topic/%d/thread/%d#c%d", base, topicRow.Idforumtopic, threadRow.Idforumthread, commentNum)
-
 	var cid int64
 	if topicRow.Handler == "private" {
 		cid, err = cd.CreatePrivateForumCommentForCommenter(uid, threadRow.Idforumthread, topicRow.Idforumtopic, int32(languageId), text)
@@ -152,29 +132,24 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("Error: CreateComment: %s", err)
 		return fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	if err := cd.ClearThreadUnreadForOthers(threadRow.Idforumthread); err != nil {
-		log.Printf("clear unread labels: %v", err)
-	}
-	if err := cd.SetThreadReadMarker(threadRow.Idforumthread, int32(cid)); err != nil {
-		log.Printf("set read marker: %v", err)
-	}
 
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(cid), ThreadID: threadRow.Idforumthread, TopicID: topicRow.Idforumtopic}
-			evt.Data["CommentURL"] = cd.AbsoluteURL(endUrl)
-		}
-	}
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: int32(cid), Text: text}
-		}
+	endUrl := fmt.Sprintf("%s/topic/%d/thread/%d#c%d", base, topicRow.Idforumtopic, threadRow.Idforumthread, cid)
+
+	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
+		ThreadID:             threadRow.Idforumthread,
+		TopicID:              topicRow.Idforumtopic,
+		CommentID:            int32(cid),
+		Thread:               threadRow,
+		TopicTitle:           topicRow.Title.String,
+		Username:             username,
+		CommentText:          text,
+		CommentURL:           cd.AbsoluteURL(endUrl),
+		ClearUnreadForOthers: true,
+		MarkThreadRead:       true,
+		IncludePostCount:     true,
+		IncludeSearch:        true,
+	}); err != nil {
+		log.Printf("thread reply side effects: %v", err)
 	}
 
 	return handlers.RedirectHandler(endUrl)

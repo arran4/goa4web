@@ -27,7 +27,7 @@ var _ notif.AdminEmailTemplateProvider = (*AddAnnouncementTask)(nil)
 
 func (AddAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	if cd == nil || !cd.HasRole("administrator") {
+	if cd == nil || !cd.HasAdminRole() {
 		return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		})
@@ -46,6 +46,9 @@ func (AddAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) any {
 				evt.Data = map[string]any{}
 			}
 			evt.Data["NewsID"] = nid
+			if u, _ := cd.CurrentUser(); u != nil && u.Username.Valid {
+				evt.Data["Username"] = u.Username.String
+			}
 		}
 	}
 	return nil

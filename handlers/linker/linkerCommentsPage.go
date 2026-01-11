@@ -17,7 +17,6 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
-	"github.com/arran4/goa4web/workers/postcountworker"
 	"github.com/arran4/goa4web/workers/searchworker"
 )
 
@@ -84,6 +83,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	if !(cd.HasGrant("linker", "link", "view", link.ID) ||
 		canReply ||
 		cd.SelectedThreadCanReply()) {
+		fmt.Println("TODO: FIx: Add enforced Access in router rather than task")
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
@@ -92,7 +92,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Link = link
 	cd.PageTitle = fmt.Sprintf("Link %d Comments", link.ID)
-	data.CanEdit = cd.HasRole("administrator") || uid == link.AuthorID
+	data.CanEdit = cd.IsAdmin() || cd.HasGrant("linker", "link", "edit-any", link.ID) || cd.HasGrant("linker", "link", "edit", link.ID)
 
 	cd.SetCurrentThreadAndTopic(link.ThreadID, 0)
 	commentRows, err := cd.SectionThreadComments("linker", "link", link.ThreadID)
@@ -169,8 +169,10 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Thread = threadRow
 
-	handlers.TemplateHandler(w, r, "commentsPage.gohtml", data)
+	LinkerCommentsPageTmpl.Handle(w, r, data)
 }
+
+const LinkerCommentsPageTmpl handlers.Page = "linker/commentsPage.gohtml"
 
 type replyTask struct{ tasks.TaskString }
 
@@ -215,7 +217,7 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			if err := cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{}); err != nil {
+			if err := cd.ExecuteSiteTemplate(w, r, "admin/noAccessPage.gohtml", struct{}{}); err != nil {
 				log.Printf("render no access page: %v", err)
 			}
 			return nil
@@ -297,22 +299,20 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("create comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(cid), ThreadID: pthid, TopicID: ptid}
-			evt.Data["CommentURL"] = cd.AbsoluteURL(endUrl)
-		}
-	}
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: int32(cid), Text: text}
-		}
+	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
+		ThreadID:             pthid,
+		TopicID:              ptid,
+		CommentID:            int32(cid),
+		LabelItem:            "link",
+		LabelItemID:          int32(linkId),
+		CommentText:          text,
+		CommentURL:           cd.AbsoluteURL(endUrl),
+		ClearUnreadForOthers: true,
+		MarkThreadRead:       true,
+		IncludePostCount:     true,
+		IncludeSearch:        true,
+	}); err != nil {
+		log.Printf("linker comment side effects: %v", err)
 	}
 
 	return handlers.RefreshDirectHandler{TargetURL: endUrl}

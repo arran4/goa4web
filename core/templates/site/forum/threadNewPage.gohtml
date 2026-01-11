@@ -25,10 +25,15 @@
             <span class="section-title">New Thread:</span><br>
             <form method="post" action="">
                 {{ csrfField }}
-                <textarea id="reply" name="replytext" cols="40" rows="20"></textarea><br>
+                <textarea id="reply" name="replytext" cols="40" rows="20">{{ .QuoteText }}</textarea><br>
                 {{ template "languageCombobox" }}
                 <input type="submit" name="task" value="Create Thread">
+                <button type="button" class="preview-a4code" data-target="reply" data-preview-url="{{.BasePath}}/preview">Preview</button>
                 <input type="submit" name="task" formaction="cancel" value="Cancel">
+                <a href="{{.BasePath}}/topic/{{.Topic.Idforumtopic}}">Go to topic</a>
+                <div class="form-group hidden" id="preview-container">
+                    <div id="preview-content" class="preview-box"></div>
+                </div>
             </form>
         </section>
     </div>

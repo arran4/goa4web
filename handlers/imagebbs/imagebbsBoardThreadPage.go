@@ -19,7 +19,6 @@ import (
 	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
-	"github.com/arran4/goa4web/workers/postcountworker"
 	"github.com/arran4/goa4web/workers/searchworker"
 )
 
@@ -79,6 +78,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	cd.PageTitle = fmt.Sprintf("Thread %d/%d", bid, thid)
 
 	if !cd.HasGrant("imagebbs", "board", "view", int32(bid)) {
+		fmt.Println("TODO: FIx: Add enforced Access in router rather than task")
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
@@ -99,8 +99,10 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	handlers.TemplateHandler(w, r, "boardThreadPage.gohtml", data)
+	ImageBBSBoardThreadPageTmpl.Handle(w, r, data)
 }
+
+const ImageBBSBoardThreadPageTmpl handlers.Page = "imagebbs/boardThreadPage.gohtml"
 
 func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -134,7 +136,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			_ = cd.ExecuteSiteTemplate(w, r, "noAccessPage.gohtml", struct{}{})
+			_ = cd.ExecuteSiteTemplate(w, r, "admin/noAccessPage.gohtml", struct{}{})
 			return nil
 		default:
 			return fmt.Errorf("get image post fail %w", handlers.ErrRedirectOnSamePageHandler(err))
@@ -203,22 +205,20 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("create comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{CommentID: int32(cid), ThreadID: pthid, TopicID: ptid}
-			evt.Data["CommentURL"] = cd.AbsoluteURL(endUrl)
-		}
-	}
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeComment, ID: int32(cid), Text: text}
-		}
+	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
+		ThreadID:             pthid,
+		TopicID:              ptid,
+		CommentID:            int32(cid),
+		LabelItem:            "imagebbs",
+		LabelItemID:          int32(bid),
+		CommentText:          text,
+		CommentURL:           cd.AbsoluteURL(endUrl),
+		ClearUnreadForOthers: true,
+		MarkThreadRead:       true,
+		IncludePostCount:     true,
+		IncludeSearch:        true,
+	}); err != nil {
+		log.Printf("imagebbs reply side effects: %v", err)
 	}
 
 	return handlers.RedirectHandler(endUrl)

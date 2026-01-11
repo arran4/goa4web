@@ -9,7 +9,6 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/arran4/goa4web/internal/sign"
 	"github.com/gorilla/mux"
@@ -161,19 +160,20 @@ func MakeImageURL(baseURL, title string, signer URLSigner, usePathAuth bool, ops
 	encodedData := base64.RawURLEncoding.EncodeToString([]byte(title))
 	path := fmt.Sprintf("/api/og-image/%s", encodedData)
 
-	foundExp := false
+	optsData := &sign.SignData{}
 	for _, op := range ops {
-		if _, ok := op.(time.Time); ok {
-			foundExp = true
-			break
+		if f, ok := op.(func(*sign.SignData)); ok {
+			f(optsData)
 		}
 	}
 
 	var nonce string
-	if !foundExp {
+	if optsData.Expiry.IsZero() && optsData.Nonce == "" {
 		// If no expiration provided, use a nonce
 		nonce = generateNonce()
 		ops = append(ops, sign.WithNonce(nonce))
+	} else if optsData.Nonce != "" {
+		nonce = optsData.Nonce
 	}
 
 	ts, sig := signer.Sign(path, ops...)

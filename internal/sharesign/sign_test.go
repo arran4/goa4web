@@ -40,7 +40,7 @@ func TestSigner(t *testing.T) {
 	// s.Sign(link, WithExpiry(pastTime)) sets expiry param.
 	// But implementation of Sign uses provided expiry.
 	oldTime := time.Now().Add(-48 * time.Hour)
-	oldTsSigned, oldSig := s.Sign(link, oldTime)
+	oldTsSigned, oldSig := s.Sign(link, sign.WithExpiry(oldTime))
 
 	if valid, err := s.Verify(link, oldSig, sign.WithExpiryTimestamp(fmt.Sprint(oldTsSigned))); valid {
 		t.Errorf("Verify succeeded with expired timestamp")
@@ -58,7 +58,10 @@ func TestSignedURL(t *testing.T) {
 
 	// Test Path based (default)
 	link := "/private/topic/1/thread/2"
-	signed := s.SignedURL(link)
+	signed, err := s.SignedURL(link)
+	if err != nil {
+		t.Fatalf("SignedURL error: %v", err)
+	}
 	// expected: http://localhost:8080/private/shared/topic/1/thread/2/ts/.../sign/...
 	if !strings.Contains(signed, "/private/shared/topic/1/thread/2/nonce/") {
 		t.Errorf("Path signature format incorrect: %s", signed)
@@ -68,7 +71,10 @@ func TestSignedURL(t *testing.T) {
 	}
 
 	// Test Query based
-	signedQuery := s.SignedURLQuery(link)
+	signedQuery, err := s.SignedURLQuery(link)
+	if err != nil {
+		t.Fatalf("SignedURLQuery error: %v", err)
+	}
 	if !strings.Contains(signedQuery, "/private/shared/topic/1/thread/2?nonce=") {
 		t.Errorf("Query signature format incorrect: %s", signedQuery)
 	}
@@ -80,7 +86,10 @@ func TestSignedURLQueryWithParams(t *testing.T) {
 	}
 	s := sharesign.NewSigner(cfg, "secret")
 	link := "/private/topic/1/thread/2?from=share"
-	signed := s.SignedURLQuery(link)
+	signed, err := s.SignedURLQuery(link)
+	if err != nil {
+		t.Fatalf("SignedURLQueryURL error: %v", err)
+	}
 	parsed, err := url.Parse(signed)
 	if err != nil {
 		t.Fatalf("parse signed url: %v", err)

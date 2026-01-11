@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/sign"
@@ -26,65 +25,78 @@ func NewSigner(cfg *config.RuntimeConfig, key string) *Signer {
 // SignedURL generates a redirect URL for the given link.
 // Defaults to path-based signature.
 // For module paths like "/private/topic/2/thread/1", it becomes "/private/shared/topic/2/thread/1/ts/{ts}/sign/{sig}"
-func (s *Signer) SignedURL(link string, exp ...time.Time) string {
-	return s.SignedURLPath(link, exp...)
+func (s *Signer) SignedURL(link string, ops ...any) (string, error) {
+	return s.SignedURLPath(link, ops...)
 }
 
 // SignedURLQuery generates a redirect URL with query parameters.
-func (s *Signer) SignedURLQuery(link string, exp ...time.Time) string {
+func (s *Signer) SignedURLQuery(link string, ops ...any) (string, error) {
 	host := strings.TrimSuffix(s.cfg.HTTPHostname, "/")
 	sharedPath, rawQuery, fragment := s.prepareSharedLink(link)
 	data := s.signatureData(sharedPath, rawQuery)
-	var nonce string
-	var ops []any
-	if len(exp) == 0 {
-		nonce = generateNonce()
-		ops = append(ops, sign.WithNonce(nonce))
-	} else {
-		for _, t := range exp {
-			ops = append(ops, sign.WithExpiry(t))
+
+	opts := &sign.SignData{}
+	for _, op := range ops {
+		if f, ok := op.(func(*sign.SignData)); ok {
+			f(opts)
 		}
 	}
+
+	var nonce string
+	if opts.Expiry.IsZero() && opts.Nonce == "" {
+		nonce = generateNonce()
+		ops = append(ops, sign.WithNonce(nonce))
+		opts.Nonce = nonce
+	}
+
 	ts, sig := s.signer.Sign(data, ops...)
 	queryPart := fmt.Sprintf("ts=%d&sig=%s", ts, sig)
-	if nonce != "" {
-		queryPart = fmt.Sprintf("nonce=%s&sig=%s", nonce, sig)
+	if opts.Nonce != "" {
+		queryPart = fmt.Sprintf("nonce=%s&sig=%s", opts.Nonce, sig)
 	}
 	if rawQuery != "" {
-		return fmt.Sprintf("%s%s?%s&%s%s", host, sharedPath, rawQuery, queryPart, fragment)
+		return fmt.Sprintf("%s%s?%s&%s%s", host, sharedPath, rawQuery, queryPart, fragment), nil
 	}
-	return fmt.Sprintf("%s%s?%s%s", host, sharedPath, queryPart, fragment)
+	return fmt.Sprintf("%s%s?%s%s", host, sharedPath, queryPart, fragment), nil
 }
 
 // SignedURLPath generates a redirect URL with path parameters.
-func (s *Signer) SignedURLPath(link string, exp ...time.Time) string {
+func (s *Signer) SignedURLPath(link string, ops ...any) (string, error) {
 	host := strings.TrimSuffix(s.cfg.HTTPHostname, "/")
 	sharedPath, rawQuery, fragment := s.prepareSharedLink(link)
 	data := s.signatureData(sharedPath, rawQuery)
-	var nonce string
-	var ops []any
-	if len(exp) == 0 {
-		nonce = generateNonce()
-		ops = append(ops, sign.WithNonce(nonce))
-	} else {
-		for _, t := range exp {
-			ops = append(ops, sign.WithExpiry(t))
+
+	opts := &sign.SignData{}
+	for _, op := range ops {
+		if f, ok := op.(func(*sign.SignData)); ok {
+			f(opts)
 		}
 	}
+
+	var nonce string
+	if opts.Expiry.IsZero() && opts.Nonce == "" {
+		nonce = generateNonce()
+		ops = append(ops, sign.WithNonce(nonce))
+		opts.Nonce = nonce
+	}
+
 	ts, sig := s.signer.Sign(data, ops...)
 	authPart := fmt.Sprintf("/ts/%d/sign/%s", ts, sig)
-	if nonce != "" {
-		authPart = fmt.Sprintf("/nonce/%s/sign/%s", nonce, sig)
+	if opts.Nonce != "" {
+		authPart = fmt.Sprintf("/nonce/%s/sign/%s", opts.Nonce, sig)
 	}
 	if rawQuery != "" {
-		return fmt.Sprintf("%s%s%s?%s%s", host, sharedPath, authPart, rawQuery, fragment)
+		return fmt.Sprintf("%s%s%s?%s%s", host, sharedPath, authPart, rawQuery, fragment), nil
 	}
-	return fmt.Sprintf("%s%s%s%s", host, sharedPath, authPart, fragment)
+	return fmt.Sprintf("%s%s%s%s", host, sharedPath, authPart, fragment), nil
 }
 
 func (s *Signer) signatureData(path, rawQuery string) string {
 	if rawQuery == "" {
 		return "share:" + path
+	}
+	if strings.Contains(path, "?") {
+		return "share:" + path + "&" + rawQuery
 	}
 	return "share:" + path + "?" + rawQuery
 }
@@ -121,17 +133,9 @@ func (s *Signer) injectShared(link string) string {
 	return link
 }
 
-// Sign returns the timestamp and signature for link using the optional expiry time.
+// Sign returns the timestamp and signature for link using the provided options.
 func (s *Signer) Sign(link string, ops ...any) (int64, string) {
-	var newOps []any
-	for _, op := range ops {
-		if t, ok := op.(time.Time); ok {
-			newOps = append(newOps, sign.WithExpiry(t))
-		} else {
-			newOps = append(newOps, op)
-		}
-	}
-	return s.signer.Sign("share:"+link, newOps...)
+	return s.signer.Sign("share:"+link, ops...)
 }
 
 // Verify checks the provided signature matches the link.

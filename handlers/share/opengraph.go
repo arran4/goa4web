@@ -178,6 +178,8 @@ func MakeImageURL(baseURL, title string, signer URLSigner, usePathAuth bool, ops
 
 	ts, sig := signer.Sign(path, ops...)
 
+	log.Printf("Creating signature. Path: %s, TS: %d, Nonce: %s, Sig: %s", path, ts, nonce, sig)
+
 	if usePathAuth {
 		// Output: /api/og-image/{base64}/ts/{ts}/sign/{sign}
 		if nonce != "" {

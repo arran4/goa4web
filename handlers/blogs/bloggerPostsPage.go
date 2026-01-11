@@ -12,8 +12,6 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/gorilla/mux"
 
-	"time"
-
 	"github.com/arran4/goa4web/handlers/share"
 )
 
@@ -36,7 +34,7 @@ func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       cd.PageTitle,
 		Description: fmt.Sprintf("View posts by %s", username),
-		Image:       share.MakeImageURL(cd.AbsoluteURL(""), cd.PageTitle, cd.ShareSigner, time.Now().Add(24*time.Hour)),
+		Image:       share.MakeImageURL(cd.AbsoluteURL(""), cd.PageTitle, cd.ShareSigner, false),
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,

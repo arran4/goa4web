@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/common"
@@ -53,17 +52,10 @@ func SharedPreviewPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tsStr := r.URL.Query().Get("ts")
-	ts, _ := strconv.ParseInt(tsStr, 10, 64)
-	exp := time.Now().Add(24 * time.Hour)
-	if ts > 0 {
-		exp = time.Unix(ts, 0)
-	}
-
 	ogData := share.OpenGraphData{
 		Title:       ogTitle,
 		Description: ogDescription,
-		ImageURL:    template.URL(share.MakeImageURL(cd.AbsoluteURL(""), ogTitle, signer, exp)),
+		ImageURL:    template.URL(share.MakeImageURL(cd.AbsoluteURL(""), ogTitle, cd.ShareSigner, false)),
 		ContentURL:  template.URL(cd.AbsoluteURL(r.URL.RequestURI())),
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,

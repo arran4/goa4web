@@ -8,7 +8,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/consts"
@@ -90,7 +89,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       displayTitle,
 		Description: "A discussion on our forum.",
-		Image:       share.MakeImageURL(cd.AbsoluteURL(""), displayTitle, cd.ShareSigner, time.Now().Add(24*time.Hour)),
+		Image:       share.MakeImageURL(cd.AbsoluteURL(""), displayTitle, cd.ShareSigner, false),
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,

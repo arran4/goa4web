@@ -3,7 +3,6 @@ package faq
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/arran4/goa4web/handlers/share"
 
@@ -18,7 +17,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       "FAQ",
 		Description: "Frequently Asked Questions",
-		Image:       share.MakeImageURL(cd.AbsoluteURL(""), "FAQ", cd.ShareSigner, time.Now().Add(24*time.Hour)),
+		Image:       share.MakeImageURL(cd.AbsoluteURL(""), "FAQ", cd.ShareSigner, false),
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,

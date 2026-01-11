@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -45,7 +44,7 @@ func (t *newsTask) Get(w http.ResponseWriter, r *http.Request) {
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       "News",
 		Description: "Latest news and announcements.",
-		Image:       share.MakeImageURL(cd.AbsoluteURL(""), "News", cd.ShareSigner, time.Now().Add(24*time.Hour)),
+		Image:       share.MakeImageURL(cd.AbsoluteURL(""), "Latest News", cd.ShareSigner, false),
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,

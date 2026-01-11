@@ -2,6 +2,7 @@ package share
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/arran4/goa4web/internal/sharesign"
@@ -21,6 +22,7 @@ func (h *ShareHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "link parameter is required", http.StatusBadRequest)
 		return
 	}
+	log.Printf("Generating share link (Handler) for: %s, UseQuery: %s", link, r.URL.Query().Get("use_query"))
 
 	var signedURL string
 	if r.URL.Query().Get("use_query") == "true" {
@@ -28,6 +30,7 @@ func (h *ShareHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else {
 		signedURL = h.signer.SignedURL(link)
 	}
+	log.Printf("Generated signed URL (Handler): %s", signedURL)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{

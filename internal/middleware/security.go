@@ -72,7 +72,7 @@ func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 				}
 			}
 		}
-		w.Header().Set("Content-Security-Policy", "default-src 'self'")
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:;")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		var cfg *config.RuntimeConfig
 		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {

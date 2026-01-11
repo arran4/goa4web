@@ -3,9 +3,9 @@ package forum
 import (
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/common"
@@ -25,7 +25,8 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 
 	// Verify signature
 	if share.VerifyAndGetPath(r, signer) == "" {
-		http.Error(w, "invalid signature", http.StatusForbidden)
+		log.Printf("[Forum Share] Invalid signature for URL: %s", r.URL.String())
+		handlers.RenderErrorPage(w, r, handlers.WrapForbidden(fmt.Errorf("invalid signature")))
 		return
 	}
 
@@ -44,20 +45,20 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 	queries := cd.Queries()
 	thread, err := queries.AdminGetForumThreadById(r.Context(), int32(threadID))
 	if err != nil {
-		http.Error(w, "not found", http.StatusNotFound)
+		handlers.RenderErrorPage(w, r, handlers.WrapNotFound(err))
 		return
 	}
 
 	topic, err := queries.GetForumTopicById(r.Context(), thread.Idforumtopic)
 	if err != nil {
-		http.Error(w, "not found", http.StatusNotFound)
+		handlers.RenderErrorPage(w, r, handlers.WrapNotFound(err))
 		return
 	}
 
 	// Get first comment for description
 	comments, err := queries.SystemListCommentsByThreadID(r.Context(), int32(threadID))
 	if err != nil {
-		http.Error(w, "not found", http.StatusNotFound)
+		handlers.RenderErrorPage(w, r, handlers.WrapNotFound(err))
 		return
 	}
 
@@ -77,7 +78,8 @@ func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
 
 	if share.VerifyAndGetPath(r, signer) == "" {
-		http.Error(w, "invalid signature", http.StatusForbidden)
+		log.Printf("[Forum Share] Invalid signature for URL: %s", r.URL.String())
+		handlers.RenderErrorPage(w, r, handlers.WrapForbidden(fmt.Errorf("invalid signature")))
 		return
 	}
 
@@ -94,7 +96,7 @@ func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 	queries := cd.Queries()
 	topic, err := queries.GetForumTopicById(r.Context(), int32(topicID))
 	if err != nil {
-		http.Error(w, "not found", http.StatusNotFound)
+		handlers.RenderErrorPage(w, r, handlers.WrapNotFound(err))
 		return
 	}
 
@@ -112,16 +114,20 @@ func renderPublicSharedPreview(w http.ResponseWriter, r *http.Request, cd *commo
 	}
 
 	tsStr := r.URL.Query().Get("ts")
-	ts, _ := strconv.ParseInt(tsStr, 10, 64)
-	exp := time.Now().Add(24 * time.Hour)
-	if ts > 0 {
-		exp = time.Unix(ts, 0)
+	tsVal, _ := strconv.ParseInt(tsStr, 10, 64)
+	if tsVal == 0 {
+		vars := mux.Vars(r)
+		if t, err := strconv.ParseInt(vars["ts"], 10, 64); err == nil {
+			tsVal = t
+		}
 	}
+
+	usePathAuth := mux.Vars(r)["ts"] != ""
 
 	ogData := share.OpenGraphData{
 		Title:       title,
 		Description: desc,
-		ImageURL:    template.URL(share.MakeImageURL(cd.AbsoluteURL(""), title, signer, exp)),
+		ImageURL:    template.URL(share.MakeImageURL(cd.AbsoluteURL(""), title, signer, usePathAuth)),
 		ContentURL:  template.URL(cd.AbsoluteURL(r.URL.RequestURI())),
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,

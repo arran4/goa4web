@@ -24,8 +24,11 @@
             <input type="text" class="label-input" data-type="public" placeholder="Add public label"/>
             <input type="text" class="label-input" data-type="private" placeholder="Add private label"/>
             <input type="submit" value="Save Labels"/>
-            <button type="button" class="share-button" data-link="{{ .BackURL }}" data-module="forum">Share</button>
-            <input type="text" class="share-link" readonly style="display: none;"/>
+            <div style="display: inline-flex; gap: 0.5em;">
+                <button type="button" class="share-button" data-link="{{ .BackURL }}" data-module="forum">Share</button>
+                <input type="text" class="share-url-input" style="display: none; padding: 0.5em;" readonly/>
+                <button type="button" class="copy-share-url-button" style="display: none; cursor: pointer;">Copy</button>
+            </div>
         </form>
     </div>
     <script src="{{ assetHash "/forum/topic_labels.js" }}"></script>

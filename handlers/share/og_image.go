@@ -2,6 +2,7 @@ package share
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"image"
 	"image/color"
@@ -34,10 +35,28 @@ func NewOGImageHandler(signer SignatureVerifier, cfg *config.RuntimeConfig) *OGI
 }
 
 func (h *OGImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	title := r.URL.Query().Get("title")
-	if title == "" {
-		title = "Shared Content"
+	var title string
+	var path string
+
+	vars := mux.Vars(r)
+	if data, ok := vars["data"]; ok {
+		decoded, err := base64.RawURLEncoding.DecodeString(data)
+		if err == nil {
+			title = string(decoded)
+			path = fmt.Sprintf("/api/og-image/%s", data)
+		} else {
+			log.Printf("Base64 decode error: %v", err)
+		}
 	}
+
+	if title == "" {
+		title = r.URL.Query().Get("title")
+		if title == "" {
+			title = "Shared Content"
+		}
+		path = fmt.Sprintf("/api/og-image?title=%s", strings.ReplaceAll(url.QueryEscape(title), "+", "%20"))
+	}
+
 	style := r.URL.Query().Get("style")
 	if style == "" {
 		style = "checker"
@@ -47,12 +66,10 @@ func (h *OGImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	sig := r.URL.Query().Get("sig")
 
 	if ts == "" || sig == "" {
-		vars := mux.Vars(r)
 		ts = vars["ts"]
 		sig = vars["sign"]
 	}
 
-	path := fmt.Sprintf("/api/og-image?title=%s", strings.ReplaceAll(url.QueryEscape(title), "+", "%20"))
 	log.Printf("[OGImage] Verifying: %s, TS: %s, Sig: %s", path, ts, sig)
 	if !h.signer.Verify(path, ts, sig) {
 		log.Printf("[OGImage] Verification failed for: %s", path)

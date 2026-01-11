@@ -1,11 +1,11 @@
 package share
 
 import (
+	"encoding/base64"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 
@@ -131,28 +131,27 @@ type URLSigner interface {
 // MakeImageURL creates an OpenGraph image URL for the given title with a specific expiration.
 // If usePathAuth is true, it generates a URL with auth parameters in the path (/ts/.../sign/...).
 // Expiration is optional. If not provided, the link will not expire.
+// MakeImageURL creates an OpenGraph image URL for the given title with a specific expiration.
+// If usePathAuth is true, it generates a URL with auth parameters in the path (/ts/.../sign/...).
+// Expiration is optional. If not provided, the link will not expire.
 func MakeImageURL(baseURL, title string, signer URLSigner, usePathAuth bool, expiration ...time.Time) string {
-	encodedTitle := url.QueryEscape(title)
-	path := fmt.Sprintf("/api/og-image?title=%s", encodedTitle)
+	encodedData := base64.RawURLEncoding.EncodeToString([]byte(title))
+	path := fmt.Sprintf("/api/og-image/%s", encodedData)
 
 	var exp time.Time
 	if len(expiration) > 0 {
 		exp = expiration[0]
 	} else {
 		// If no expiration provided, explicitly set to 0 (no expiry)
-		// We pass time.Unix(0, 0) because Signer defaults to 24h if we pass nothing (empty slice).
-		// Wait, Signer.Sign takes ...time.Time.
-		// If we pass empty 'expiration' slice to Signer.Sign, it defaults to 24h.
-		// We want NO expiry by default. So we MUST pass time.Unix(0, 0).
 		exp = time.Unix(0, 0)
 	}
 
 	ts, sig := signer.Sign(path, exp)
 
 	if usePathAuth {
-		// Output: /api/og-image/ts/{ts}/sign/{sign}?title=...
-		return fmt.Sprintf("%s/api/og-image/ts/%d/sign/%s?title=%s", baseURL, ts, sig, encodedTitle)
+		// Output: /api/og-image/{base64}/ts/{ts}/sign/{sign}
+		return fmt.Sprintf("%s%s/ts/%d/sign/%s", baseURL, path, ts, sig)
 	}
 
-	return fmt.Sprintf("%s%s&ts=%d&sig=%s", baseURL, path, ts, sig)
+	return fmt.Sprintf("%s%s?ts=%d&sig=%s", baseURL, path, ts, sig)
 }

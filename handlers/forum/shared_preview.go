@@ -12,7 +12,6 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/handlers/share"
-	"github.com/arran4/goa4web/internal/sharesign"
 	"github.com/gorilla/mux"
 )
 
@@ -20,11 +19,8 @@ import (
 func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	// Create signer from config
-	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
-
 	// Verify signature
-	if share.VerifyAndGetPath(r, signer) == "" {
+	if share.VerifyAndGetPath(r, cd.ShareSignKey) == "" {
 		log.Printf("[Forum Share] Invalid signature for URL: %s", r.URL.String())
 		handlers.RenderErrorPage(w, r, handlers.WrapForbidden(fmt.Errorf("invalid signature")))
 		return
@@ -68,16 +64,14 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 		ogDescription = a4code.Snip(comments[0].Text.String, 128)
 	}
 
-	renderPublicSharedPreview(w, r, cd, signer, ogTitle, ogDescription)
+	renderPublicSharedPreview(w, r, cd, cd.ShareSignKey, ogTitle, ogDescription)
 }
 
 // SharedTopicPreviewPage renders an OpenGraph preview for a forum topic.
 func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
-
-	if share.VerifyAndGetPath(r, signer) == "" {
+	if share.VerifyAndGetPath(r, cd.ShareSignKey) == "" {
 		log.Printf("[Forum Share] Invalid signature for URL: %s", r.URL.String())
 		handlers.RenderErrorPage(w, r, handlers.WrapForbidden(fmt.Errorf("invalid signature")))
 		return
@@ -103,10 +97,10 @@ func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 	ogTitle := topic.Title.String
 	ogDescription := topic.Description.String
 
-	renderPublicSharedPreview(w, r, cd, signer, ogTitle, ogDescription)
+	renderPublicSharedPreview(w, r, cd, cd.ShareSignKey, ogTitle, ogDescription)
 }
 
-func renderPublicSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.CoreData, signer *sharesign.Signer, title, desc string) {
+func renderPublicSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.CoreData, signKey string, title, desc string) {
 	if r.Method == http.MethodHead {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
@@ -124,10 +118,11 @@ func renderPublicSharedPreview(w http.ResponseWriter, r *http.Request, cd *commo
 
 	usePathAuth := mux.Vars(r)["ts"] != ""
 
+	imageURL, _ := share.MakeImageURL(cd.AbsoluteURL(), title, cd.ShareSignKey, usePathAuth)
 	ogData := share.OpenGraphData{
 		Title:       title,
 		Description: desc,
-		ImageURL:    template.URL(share.MakeImageURL(cd.AbsoluteURL(), title, signer, usePathAuth)),
+		ImageURL:    template.URL(imageURL),
 		ContentURL:  template.URL(cd.AbsoluteURL(r.URL.RequestURI())),
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,

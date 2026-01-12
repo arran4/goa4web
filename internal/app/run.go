@@ -24,14 +24,10 @@ import (
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
-	feedsign "github.com/arran4/goa4web/internal/feedsign"
-	imagesign "github.com/arran4/goa4web/internal/images"
-	linksign "github.com/arran4/goa4web/internal/linksign"
 	"github.com/arran4/goa4web/internal/middleware"
 	csrfmw "github.com/arran4/goa4web/internal/middleware/csrf"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	routerpkg "github.com/arran4/goa4web/internal/router"
-	"github.com/arran4/goa4web/internal/sharesign"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/internal/websocket"
 	"github.com/gorilla/mux"
@@ -173,10 +169,7 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 	if err := config.ApplySMTPFallbacks(cfg); err != nil {
 		return nil, fmt.Errorf("smtp fallback: %w", err)
 	}
-	imgSigner := imagesign.NewSigner(cfg, o.ImageSignSecret)
-	linkSigner := linksign.NewSigner(cfg, o.LinkSignSecret)
-	shareSigner := sharesign.NewSigner(cfg, o.ShareSignSecret)
-	feedSigner := feedsign.NewSigner(cfg, o.LinkSignSecret)
+	// Signing keys are now stored directly in CoreData, not as Signer objects
 	adminhandlers.AdminAPISecret = o.APISecret
 	email.SetDefaultFromName(cfg.EmailFrom)
 
@@ -202,16 +195,16 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 		server.WithTasksRegistry(o.TasksReg),
 		server.WithBus(o.Bus),
 		server.WithEmailRegistry(o.EmailReg),
-		server.WithImageSigner(imgSigner),
-		server.WithLinkSigner(linkSigner),
-		server.WithShareSigner(shareSigner),
-		server.WithFeedSigner(feedSigner),
+		server.WithImageSignKey(o.ImageSignSecret),
+		server.WithLinkSignKey(o.LinkSignSecret),
+		server.WithShareSignKey(o.ShareSignSecret),
+		server.WithFeedSignKey(o.LinkSignSecret),
 		server.WithDBRegistry(o.DBReg),
 		server.WithWebsocket(wsMod),
 		server.WithTasksRegistry(o.TasksReg),
 		server.WithSessionManager(sm),
 	)
-	share.RegisterShareRoutes(r, cfg, shareSigner)
+	share.RegisterShareRoutes(r, cfg, o.ShareSignSecret)
 
 	srv.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cd, r := srv.GetCoreData(w, r)

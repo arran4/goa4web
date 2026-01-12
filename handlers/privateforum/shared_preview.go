@@ -12,7 +12,6 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/handlers/share"
-	"github.com/arran4/goa4web/internal/sharesign"
 	"github.com/gorilla/mux"
 )
 
@@ -21,10 +20,8 @@ import (
 func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
-	cd.ShareSigner = signer // Ensure it's set for MakeImageURL
 
-	if share.VerifyAndGetPath(r, signer) == "" {
+	if share.VerifyAndGetPath(r, cd.ShareSignKey) == "" {
 		log.Printf("[Share] Invalid signature for URL: %s", r.URL.String())
 		// No valid signature? If user is logged in, redirect to actual content (they might have perm).
 		// If not logged in, show 403.
@@ -83,11 +80,9 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
-	cd.ShareSigner = signer // Ensure it's set for MakeImageURL
 
 	// Verify signature
-	if share.VerifyAndGetPath(r, signer) == "" {
+	if share.VerifyAndGetPath(r, cd.ShareSignKey) == "" {
 		log.Printf("[Share] Invalid signature for URL: %s", r.URL.String())
 		if cd.UserID != 0 {
 			vars := mux.Vars(r)

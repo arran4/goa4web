@@ -86,10 +86,11 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	}
 	cd.PageTitle = fmt.Sprintf("Forum - %s", displayTitle)
 
+	imageURL, _ := share.MakeImageURL(cd.AbsoluteURL(), displayTitle, cd.ShareSignKey, false)
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       displayTitle,
 		Description: "A discussion on our forum.",
-		Image:       share.MakeImageURL(cd.AbsoluteURL(), displayTitle, cd.ShareSigner, false),
+		Image:       imageURL,
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,

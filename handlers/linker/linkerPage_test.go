@@ -30,7 +30,7 @@ func TestLinkerFeed(t *testing.T) {
 		},
 	}
 	r := httptest.NewRequest("GET", "http://example.com/linker/rss", nil)
-	cd := &common.CoreData{ImageSigner: imagesign.NewSigner(&config.RuntimeConfig{}, "k")}
+	cd := &common.CoreData{ImageSignKey: "test-key",
 	r = r.WithContext(context.WithValue(r.Context(), consts.KeyCoreData, cd))
 	feed := linkerFeed(r, rows)
 	if len(feed.Items) != 1 {

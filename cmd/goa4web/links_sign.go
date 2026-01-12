@@ -7,7 +7,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	linksign "github.com/arran4/goa4web/internal/linksign"
+	"github.com/arran4/goa4web/internal/sign"
 )
 
 // linksSignCmd implements "links sign".
@@ -42,17 +42,23 @@ func (c *linksSignCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("link sign secret: %w", err)
 	}
-	signer := linksign.NewSigner(cfg, key)
-	var exp time.Time
+
+	data := "link:" + c.url
+	var opts []sign.SignOption
+
 	if !c.NoExpiry {
 		d, err := time.ParseDuration(c.Duration)
 		if err != nil {
 			return fmt.Errorf("parse duration: %w", err)
 		}
-		exp = time.Now().Add(d)
+		opts = append(opts, sign.WithExpiry(time.Now().Add(d)))
+	} else {
+		opts = append(opts, sign.WithOutNonce())
 	}
-	signed := signer.SignedURL(c.url, exp)
-	fmt.Println(signed)
+
+	sig := sign.Sign(data, key, opts...)
+	signedURL, _ := sign.AddQuerySig(cfg.HTTPHostname+"/goto?u="+c.url, sig, opts...)
+	fmt.Println(signedURL)
 	return nil
 }
 

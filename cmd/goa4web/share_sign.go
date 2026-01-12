@@ -7,7 +7,6 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	sharesign "github.com/arran4/goa4web/internal/sharesign"
 	"github.com/arran4/goa4web/internal/sign"
 )
 
@@ -43,7 +42,6 @@ func (c *shareSignCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("share sign secret: %w", err)
 	}
-	signer := sharesign.NewSigner(cfg, key)
 	var ops []any
 	if !c.NoExpiry {
 		d, err := time.ParseDuration(c.Duration)

@@ -99,9 +99,9 @@ func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
 					ent.Posted = row.Posted.Time
 				}
 			}
-			if cd.ImageSigner != nil {
+			if cd.ImageSignKey != "" {
 				id := filepath.Base(ent.Path)
-				ent.URL = cd.ImageSigner.SignedURLTTL(id, ttl)
+				ent.URL = cd.SignImageURL(id, ttl)
 			}
 		}
 		data.Entries = append(data.Entries, ent)

@@ -7,7 +7,6 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/internal/sharesign"
 )
 
 func ShareLink(w http.ResponseWriter, r *http.Request) {
@@ -18,13 +17,13 @@ func ShareLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Printf("Generating share link for: %s, UseQuery: %s", link, r.URL.Query().Get("use_query"))
-	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
+
 	var signedURL string
 	var err error
 	if r.URL.Query().Get("use_query") == "true" {
-		signedURL, err = signer.SignedURLQuery(link)
+		signedURL, err = cd.SignShareURLQuery(link)
 	} else {
-		signedURL, err = signer.SignedURL(link)
+		signedURL, err = cd.SignShareURL(link)
 	}
 	if err != nil {
 		log.Printf("[Share] Error signing URL: %v", err)

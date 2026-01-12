@@ -18,7 +18,7 @@ func (cd *CoreData) SignShareURL(path string, opts ...sign.SignOption) (string, 
 		opts = append(opts, sign.WithNonce(signutil.GenerateNonce()))
 	}
 
-	fullURL := cd.Config.HTTPHostname + sharedPath
+	fullURL := strings.TrimSuffix(cd.Config.HTTPHostname, "/") + "/" + strings.TrimPrefix(sharedPath, "/")
 	return signutil.SignAndAddPath(fullURL, sharedPath, cd.ShareSignKey, opts...)
 }
 
@@ -31,7 +31,7 @@ func (cd *CoreData) SignShareURLQuery(path string, opts ...sign.SignOption) (str
 		opts = append(opts, sign.WithNonce(signutil.GenerateNonce()))
 	}
 
-	fullURL := cd.Config.HTTPHostname + sharedPath
+	fullURL := strings.TrimSuffix(cd.Config.HTTPHostname, "/") + "/" + strings.TrimPrefix(sharedPath, "/")
 	return signutil.SignAndAddQuery(fullURL, sharedPath, cd.ShareSignKey, opts...)
 }
 
@@ -47,7 +47,7 @@ func (cd *CoreData) SignImageURL(imageRef string, ttl time.Duration) string {
 	sig := sign.Sign(path, cd.ImageSignKey, sign.WithExpiry(expiry))
 
 	// Add signature as query param
-	fullURL := cd.Config.HTTPHostname + path
+	fullURL := strings.TrimSuffix(cd.Config.HTTPHostname, "/") + "/" + strings.TrimPrefix(path, "/")
 	signedURL, _ := sign.AddQuerySig(fullURL, sig, sign.WithExpiry(expiry))
 	return signedURL
 }
@@ -59,7 +59,7 @@ func (cd *CoreData) SignCacheURL(cacheRef string, ttl time.Duration) string {
 
 	sig := sign.Sign(path, cd.ImageSignKey, sign.WithExpiry(expiry))
 
-	fullURL := cd.Config.HTTPHostname + path
+	fullURL := strings.TrimSuffix(cd.Config.HTTPHostname, "/") + "/" + strings.TrimPrefix(path, "/")
 	signedURL, _ := sign.AddQuerySig(fullURL, sig, sign.WithExpiry(expiry))
 	return signedURL
 }
@@ -70,7 +70,7 @@ func (cd *CoreData) SignLinkURL(externalURL string) string {
 	sig := sign.Sign(data, cd.LinkSignKey, sign.WithOutNonce())
 
 	// Return /goto?u={url}&sig={sig}
-	return cd.Config.HTTPHostname + "/goto?u=" + externalURL + "&sig=" + sig
+	return strings.TrimSuffix(cd.Config.HTTPHostname, "/") + "/goto?u=" + externalURL + "&sig=" + sig
 }
 
 // SignFeedURL signs a feed URL for authenticated access.
@@ -91,7 +91,7 @@ func (cd *CoreData) SignFeedURL(path, username string) string {
 		newPath = "/u/" + username + path
 	}
 
-	return cd.Config.HTTPHostname + newPath + "?sig=" + sig
+	return strings.TrimSuffix(cd.Config.HTTPHostname, "/") + "/" + strings.TrimPrefix(newPath, "/") + "?sig=" + sig
 }
 
 // MapImageURL converts image references to signed URLs.

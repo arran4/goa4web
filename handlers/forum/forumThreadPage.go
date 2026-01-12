@@ -94,6 +94,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,
 		URL:         cd.AbsoluteURL(r.URL.String()),
+		Type:        "article",
 	}
 
 	if _, ok := core.GetSessionOrFail(w, r); !ok {

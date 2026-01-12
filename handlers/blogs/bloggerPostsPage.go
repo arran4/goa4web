@@ -39,6 +39,7 @@ func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,
 		URL:         cd.AbsoluteURL(r.URL.String()),
+		Type:        "profile",
 	}
 
 	BloggerPostsPageTmpl.Handle(w, r, struct{}{})

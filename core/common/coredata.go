@@ -72,6 +72,7 @@ type OpenGraph struct {
 	ImageHeight int
 	TwitterSite string
 	URL         string
+	Type        string
 }
 
 // NotFoundLink represents a contextual link on the 404 page.

@@ -62,6 +62,7 @@ func (t *writingsTask) Get(w http.ResponseWriter, r *http.Request) {
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,
 		URL:         cd.AbsoluteURL(r.URL.String()),
+		Type:        "website",
 	}
 
 	WritingsPageTmpl.Handle(w, r, data)

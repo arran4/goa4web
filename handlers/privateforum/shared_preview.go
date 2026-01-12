@@ -147,6 +147,7 @@ func renderSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.Core
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,
 		URL:         cd.AbsoluteURL(r.URL.RequestURI()),
+		Type:        "website",
 	}
 
 	if r.Method == http.MethodHead {

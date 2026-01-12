@@ -15,11 +15,11 @@
 	{{.ImageWidthMeta}}
 	{{.ImageHeightMeta}}
 	{{.URLMeta}}
+	{{.TypeMeta}}
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content="{{.Title}}" />
 	<meta name="twitter:description" content="{{.Description}}" />
 	{{if .TwitterSite}}<meta name="twitter:site" content="{{.TwitterSite}}" />{{end}}
 	{{.TwitterImageMeta}}
-        <meta property="og:type" content="website" />
     {{ end }}
 {{- end}}

@@ -22,6 +22,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,
 		URL:         cd.AbsoluteURL(r.URL.String()),
+		Type:        "website",
 	}
 
 	if _, err := cd.AllAnsweredFAQ(); err != nil {

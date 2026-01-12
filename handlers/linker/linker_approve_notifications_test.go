@@ -226,7 +226,7 @@ func TestLinkerApprove(t *testing.T) {
 		t.Errorf("subscriber email subject mismatch: %s", subscriberEmail.Header.Get("Subject"))
 	}
 	subBody := getEmailBody(t, subscriberEmail)
-	expectedSubBody := "Hi subscriber,\nYour link \"Example Link\" has been approved by moderator.\n\nView link:\n/linker/show/7\n\nManage notifications: /usr/subscriptions"
+	expectedSubBody := "Hi subscriber,\nYour link \"Example Link\" has been approved by moderator.\n\nView link:\nhttp://example.com/linker/show/7\n\nManage notifications: http://example.com/usr/subscriptions"
 	if subBody != expectedSubBody {
 		t.Errorf("subscriber email body mismatch: %q, want %q", subBody, expectedSubBody)
 	}
@@ -238,7 +238,7 @@ func TestLinkerApprove(t *testing.T) {
 		t.Errorf("admin email subject mismatch: %s", adminEmail.Header.Get("Subject"))
 	}
 	adminBody := getEmailBody(t, adminEmail)
-	expectedAdminBody := "Moderator moderator approved the link \"Example Link\".\n\nView link:\n/linker/show/7\n\nManage notifications: /usr/subscriptions"
+	expectedAdminBody := "Moderator moderator approved the link \"Example Link\".\n\nView link:\nhttp://example.com/linker/show/7\n\nManage notifications: http://example.com/usr/subscriptions"
 	if adminBody != expectedAdminBody {
 		t.Errorf("admin email body mismatch: %q, want %q", adminBody, expectedAdminBody)
 	}

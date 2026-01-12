@@ -25,10 +25,16 @@ func (h *ShareHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Generating share link (Handler) for: %s, UseQuery: %s", link, r.URL.Query().Get("use_query"))
 
 	var signedURL string
+	var err error
 	if r.URL.Query().Get("use_query") == "true" {
-		signedURL = h.signer.SignedURLQuery(link)
+		signedURL, err = h.signer.SignedURLQuery(link)
 	} else {
-		signedURL = h.signer.SignedURL(link)
+		signedURL, err = h.signer.SignedURL(link)
+	}
+	if err != nil {
+		log.Printf("[ShareHandler] Error signing URL: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 	log.Printf("Generated signed URL (Handler): %s", signedURL)
 

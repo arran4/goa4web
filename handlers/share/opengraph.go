@@ -1,14 +1,17 @@
 package share
 
 import (
+	"crypto/rand"
+	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
-	"net/url"
 	"strings"
-	"time"
 
+	"github.com/arran4/goa4web/internal/sharesign"
+	"github.com/arran4/goa4web/internal/sign"
 	"github.com/gorilla/mux"
 )
 
@@ -83,20 +86,25 @@ func (d OpenGraphData) TwitterImageMeta() template.HTML {
 
 // VerifyAndGetPath verifies the signature and returns the content path without query parameters.
 // Returns empty string if verification fails.
-func VerifyAndGetPath(r *http.Request, signer SignatureVerifier) string {
+func VerifyAndGetPath(r *http.Request, signer *sharesign.Signer) string {
 	ts := r.URL.Query().Get("ts")
 	sig := r.URL.Query().Get("sig")
+	nonce := r.URL.Query().Get("nonce")
 
 	// Get path without query params
 	path := r.URL.Path
 
-	if ts == "" || sig == "" {
+	if (ts == "" && nonce == "") || sig == "" {
 		vars := mux.Vars(r)
 		ts = vars["ts"]
 		sig = vars["sign"]
+		nonce = vars["nonce"]
 
 		if ts != "" && sig != "" {
 			suffix := fmt.Sprintf("/ts/%s/sign/%s", ts, sig)
+			path = strings.TrimSuffix(path, suffix)
+		} else if nonce != "" && sig != "" {
+			suffix := fmt.Sprintf("/nonce/%s/sign/%s", nonce, sig)
 			path = strings.TrimSuffix(path, suffix)
 		}
 	}
@@ -104,55 +112,67 @@ func VerifyAndGetPath(r *http.Request, signer SignatureVerifier) string {
 	query := r.URL.Query()
 	query.Del("ts")
 	query.Del("sig")
+	query.Del("nonce")
 	if encoded := query.Encode(); encoded != "" {
 		path = path + "?" + encoded
 	}
 
-	log.Printf("Verifying signature. Path: %s, TS: %s, Sig: %s", path, ts, sig)
+	log.Printf("Verifying signature. Path: %s, TS: %s, Nonce: %s, Sig: %s", path, ts, nonce, sig)
 
-	if !signer.Verify(path, ts, sig) {
-		log.Printf("Signature verification failed for path: %s", path)
+	var valid bool
+	var err error
+	if nonce != "" {
+		valid, err = signer.Verify(path, sig, sign.WithNonce(nonce))
+	} else if ts != "" {
+		valid, err = signer.Verify(path, sig, sign.WithExpiryTimestamp(ts))
+	} else {
+		// No ts or nonce, assume no expiry/nonce was intended for verification
+		valid, err = signer.Verify(path, sig)
+	}
+
+	if !valid {
+		log.Printf("Signature verification failed for path: %s. Reason: %v", path, err)
 		return ""
 	}
 
 	return path
 }
 
-// SignatureVerifier is an interface for signature verification.
-type SignatureVerifier interface {
-	Verify(data, ts, sig string) bool
-}
-
-// URLSigner is an interface for signing URLs.
-type URLSigner interface {
-	Sign(data string, exp ...time.Time) (int64, string)
+func generateNonce() string {
+	b := make([]byte, 16)
+	rand.Read(b)
+	return hex.EncodeToString(b)
 }
 
 // MakeImageURL creates an OpenGraph image URL for the given title with a specific expiration.
-// If usePathAuth is true, it generates a URL with auth parameters in the path (/ts/.../sign/...).
-// Expiration is optional. If not provided, the link will not expire.
-func MakeImageURL(baseURL, title string, signer URLSigner, usePathAuth bool, expiration ...time.Time) string {
-	encodedTitle := strings.ReplaceAll(url.QueryEscape(title), "+", "%20")
-	path := fmt.Sprintf("/api/og-image?title=%s", encodedTitle)
+// If usePathAuth is true, it generates a URL with auth parameters in the path (/nonce/.../sign/...).
+// Expiration is optional. If not provided, a nonce is used.
+func MakeImageURL(baseURL, title string, signer *sharesign.Signer, usePathAuth bool, ops ...any) string {
+	encodedData := base64.RawURLEncoding.EncodeToString([]byte(title))
+	path := fmt.Sprintf("/api/og-image/%s", encodedData)
 
-	var exp time.Time
-	if len(expiration) > 0 {
-		exp = expiration[0]
-	} else {
-		// If no expiration provided, explicitly set to 0 (no expiry)
-		// We pass time.Unix(0, 0) because Signer defaults to 24h if we pass nothing (empty slice).
-		// Wait, Signer.Sign takes ...time.Time.
-		// If we pass empty 'expiration' slice to Signer.Sign, it defaults to 24h.
-		// We want NO expiry by default. So we MUST pass time.Unix(0, 0).
-		exp = time.Unix(0, 0)
+	// Generate nonce if no options provided
+	var nonce string
+	if len(ops) == 0 {
+		nonce = generateNonce()
+		ops = append(ops, sign.WithNonce(nonce))
 	}
 
-	ts, sig := signer.Sign(path, exp)
+	sig := signer.Sign(path, ops...)
+
+	log.Printf("Creating signature. Path: %s, Nonce: %s, Sig: %s", path, nonce, sig)
 
 	if usePathAuth {
-		// Output: /api/og-image/ts/{ts}/sign/{sign}?title=...
-		return fmt.Sprintf("%s/api/og-image/ts/%d/sign/%s?title=%s", baseURL, ts, sig, encodedTitle)
+		// Output: /api/og-image/{base64}/nonce/{nonce}/sign/{sign}
+		if nonce != "" {
+			return fmt.Sprintf("%s%s/nonce/%s/sign/%s", baseURL, path, nonce, sig)
+		}
+		// If nonce is empty, ops must have provided timestamp or other auth
+		return fmt.Sprintf("%s%s/sign/%s", baseURL, path, sig)
 	}
 
-	return fmt.Sprintf("%s%s&ts=%d&sig=%s", baseURL, path, ts, sig)
+	if nonce != "" {
+		return fmt.Sprintf("%s%s?nonce=%s&sig=%s", baseURL, path, nonce, sig)
+	}
+	return fmt.Sprintf("%s%s?sig=%s", baseURL, path, sig)
 }

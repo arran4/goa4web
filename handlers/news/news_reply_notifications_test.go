@@ -259,7 +259,7 @@ func TestNewsReply(t *testing.T) {
 	}
 	subBody := getEmailBody(t, subscriberEmail)
 	expectedSubBody := fmt.Sprintf(
-		"Hi replier,\n\nA new reply was posted in %q (thread #%d) on %s.\nThere are now %d comments in the discussion.\n\nView it here:\n/news/news/1\n\n\nManage notifications: http://example.com/usr/subscriptions",
+		"Hi replier,\n\nA new reply was posted in %q (thread #%d) on %s.\nThere are now %d comments in the discussion.\n\nView it here:\nhttp://example.com/news/news/1\n\n\nManage notifications: http://example.com/usr/subscriptions",
 		NewsTopicName,
 		threadID,
 		fixedTime.Format(consts.DisplayDateTimeFormat),
@@ -276,7 +276,7 @@ func TestNewsReply(t *testing.T) {
 		t.Errorf("admin email subject mismatch: %s", adminEmail.Header.Get("Subject"))
 	}
 	adminBody := getEmailBody(t, adminEmail)
-	expectedAdminBody := "User replier replied to a news post.\n\nView post:\n/news/news/1\n\nManage notifications: http://example.com/usr/subscriptions"
+	expectedAdminBody := "User replier replied to a news post.\n\nView post:\nhttp://example.com/news/news/1\n\nManage notifications: http://example.com/usr/subscriptions"
 	if adminBody != expectedAdminBody {
 		t.Errorf("admin email body mismatch: %q, want %q", adminBody, expectedAdminBody)
 	}

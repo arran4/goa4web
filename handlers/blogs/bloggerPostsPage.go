@@ -34,7 +34,7 @@ func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       cd.PageTitle,
 		Description: fmt.Sprintf("View posts by %s", username),
-		Image:       share.MakeImageURL(cd.AbsoluteURL(""), cd.PageTitle, cd.ShareSigner, false),
+		Image:       share.MakeImageURL(cd.AbsoluteURL(), cd.PageTitle, cd.ShareSigner, false),
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,

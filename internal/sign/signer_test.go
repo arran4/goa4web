@@ -8,17 +8,17 @@ import (
 
 func TestSignAndVerifyNoExpiry(t *testing.T) {
 	s := &Signer{Key: "k"}
-	_, sig := s.Sign("data", time.Unix(0, 0))
-	if !s.Verify("data", "0", sig) {
-		t.Fatalf("verify failed for no expiry")
+	sig := s.Sign("data", WithExpiryTime(time.Unix(0, 0)))
+	if valid, err := s.Verify("data", sig, WithExpiryTimestamp("0")); !valid || err != nil {
+		t.Fatalf("verify failed for no expiry: %v", err)
 	}
 }
 
 func TestSignCustomExpiry(t *testing.T) {
 	s := &Signer{Key: "k"}
 	exp := time.Now().Add(2 * time.Hour)
-	ts, sig := s.Sign("x", exp)
-	if !s.Verify("x", fmt.Sprintf("%d", ts), sig) {
-		t.Fatalf("verify failed")
+	sig := s.Sign("x", WithExpiryTime(exp))
+	if valid, err := s.Verify("x", sig, WithExpiryTimestamp(fmt.Sprintf("%d", exp.Unix()))); !valid || err != nil {
+		t.Fatalf("verify failed: %v", err)
 	}
 }

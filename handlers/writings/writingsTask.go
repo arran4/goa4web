@@ -57,7 +57,7 @@ func (t *writingsTask) Get(w http.ResponseWriter, r *http.Request) {
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       "Writings",
 		Description: "A collection of articles and long-form content.",
-		Image:       share.MakeImageURL(cd.AbsoluteURL(""), "Writings", cd.ShareSigner, false),
+		Image:       share.MakeImageURL(cd.AbsoluteURL(), "Writings", cd.ShareSigner, false),
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,

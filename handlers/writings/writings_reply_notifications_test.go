@@ -220,7 +220,7 @@ func TestWritingReply(t *testing.T) {
 	}
 	subBody := getEmailBody(t, msg)
 	expectedSubBody := fmt.Sprintf(
-		"Hi replier,\n\nA new reply was posted in %q (thread #%d) on %s.\nThere are now %d comments in the discussion.\n\nView it here:\n/writings/article/3\n\n\nManage notifications: http://example.com/usr/subscriptions",
+		"Hi replier,\n\nA new reply was posted in %q (thread #%d) on %s.\nThere are now %d comments in the discussion.\n\nView it here:\nhttp://example.com/writings/article/3\n\n\nManage notifications: http://example.com/usr/subscriptions",
 		WritingTopicName,
 		threadID,
 		fixedTime.Format(consts.DisplayDateTimeFormat),

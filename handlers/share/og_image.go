@@ -2,6 +2,7 @@ package share
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"image"
 	"image/color"
@@ -13,10 +14,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/arran4/goa4web/internal/sharesign"
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/internal/sign"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/basicfont"
 	"golang.org/x/image/font/gofont/goregular"
@@ -25,37 +28,63 @@ import (
 )
 
 type OGImageHandler struct {
-	signer SignatureVerifier
+	signer *sharesign.Signer
 	config *config.RuntimeConfig
 }
 
-func NewOGImageHandler(signer SignatureVerifier, cfg *config.RuntimeConfig) *OGImageHandler {
+func NewOGImageHandler(signer *sharesign.Signer, cfg *config.RuntimeConfig) *OGImageHandler {
 	return &OGImageHandler{signer: signer, config: cfg}
 }
 
 func (h *OGImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	title := r.URL.Query().Get("title")
-	if title == "" {
-		title = "Shared Content"
+	var title string
+	var path string
+
+	vars := mux.Vars(r)
+	if data, ok := vars["data"]; ok {
+		decoded, err := base64.RawURLEncoding.DecodeString(data)
+		if err == nil {
+			title = string(decoded)
+			path = fmt.Sprintf("/api/og-image/%s", data)
+		} else {
+			log.Printf("Base64 decode error: %v", err)
+		}
 	}
+
+	if title == "" {
+		title = r.URL.Query().Get("title")
+		if title == "" {
+			title = "Shared Content"
+		}
+		path = fmt.Sprintf("/api/og-image?title=%s", strings.ReplaceAll(url.QueryEscape(title), "+", "%20"))
+	}
+
 	style := r.URL.Query().Get("style")
 	if style == "" {
 		style = "checker"
 	}
 
-	ts := r.URL.Query().Get("ts")
+	expiryTs := r.URL.Query().Get("ts")
 	sig := r.URL.Query().Get("sig")
+	nonce := r.URL.Query().Get("nonce")
 
-	if ts == "" || sig == "" {
-		vars := mux.Vars(r)
-		ts = vars["ts"]
+	if (expiryTs == "" && nonce == "") || sig == "" {
+		expiryTs = vars["ts"]
 		sig = vars["sign"]
+		nonce = vars["nonce"]
 	}
 
-	path := fmt.Sprintf("/api/og-image?title=%s", strings.ReplaceAll(url.QueryEscape(title), "+", "%20"))
-	log.Printf("[OGImage] Verifying: %s, TS: %s, Sig: %s", path, ts, sig)
-	if !h.signer.Verify(path, ts, sig) {
-		log.Printf("[OGImage] Verification failed for: %s", path)
+	log.Printf("[OGImage] Verifying: %s, TS: %s, Nonce: %s, Sig: %s", path, expiryTs, nonce, sig)
+	var valid bool
+	var err error
+	if nonce != "" {
+		valid, err = h.signer.Verify(path, sig, sign.WithNonce(nonce))
+	} else {
+		valid, err = h.signer.Verify(path, sig, sign.WithExpiryTimestamp(expiryTs))
+	}
+
+	if !valid {
+		log.Printf("[OGImage] Verification failed for: %s. Reason: %v", path, err)
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}

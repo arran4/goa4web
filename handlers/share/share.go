@@ -20,10 +20,16 @@ func ShareLink(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Generating share link for: %s, UseQuery: %s", link, r.URL.Query().Get("use_query"))
 	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
 	var signedURL string
+	var err error
 	if r.URL.Query().Get("use_query") == "true" {
-		signedURL = signer.SignedURLQuery(link)
+		signedURL, err = signer.SignedURLQuery(link)
 	} else {
-		signedURL = signer.SignedURL(link)
+		signedURL, err = signer.SignedURL(link)
+	}
+	if err != nil {
+		log.Printf("[Share] Error signing URL: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 	log.Printf("Generated signed URL: %s", signedURL)
 	w.Header().Set("Content-Type", "application/json")

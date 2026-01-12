@@ -41,8 +41,9 @@ func (s *Signer) SignedURLTTL(id string, ttl time.Duration) string {
 	if err != nil {
 		log.Printf("Signer.SignedURLTTL: cleaning ID %q: %v", id, err)
 	}
-	ts, sig := s.signer.Sign("image:"+cleanId, time.Now().Add(ttl))
-	return fmt.Sprintf("%s/images/image/%s%sts=%d&sig=%s", host, cleanId, sep, ts, sig)
+	ts := time.Now().Add(ttl)
+	sig := s.signer.Sign("image:"+cleanId, sign.WithExpiryTime(ts))
+	return fmt.Sprintf("%s/images/image/%s%sts=%d&sig=%s", host, cleanId, sep, ts.Unix(), sig)
 }
 
 func (s *Signer) cleanParams(id string) (string, string, error) {
@@ -80,12 +81,16 @@ func (s *Signer) SignedCacheURLTTL(id string, ttl time.Duration) string {
 	if err != nil {
 		log.Printf("Signer.SignedCacheURLTTL: cleaning ID %q: %v", id, err)
 	}
-	ts, sig := s.signer.Sign("cache:"+cleanId, time.Now().Add(ttl))
-	return fmt.Sprintf("%s/images/cache/%s%sts=%d&sig=%s", host, cleanId, sep, ts, sig)
+	ts := time.Now().Add(ttl)
+	sig := s.signer.Sign("cache:"+cleanId, sign.WithExpiryTime(ts))
+	return fmt.Sprintf("%s/images/cache/%s%sts=%d&sig=%s", host, cleanId, sep, ts.Unix(), sig)
 }
 
 // Verify checks the provided signature matches data.
-func (s *Signer) Verify(data, ts, sig string) bool { return s.signer.Verify(data, ts, sig) }
+func (s *Signer) Verify(data, ts, sig string) bool {
+	valid, _ := s.signer.Verify(data, sig, sign.WithExpiryTimestamp(ts))
+	return valid
+}
 
 // SignedRef appends a signature to an image or cache reference.
 // The input should start with "image:", "img:", or "cache:".
@@ -109,8 +114,9 @@ func (s *Signer) SignedRef(ref string) string {
 	if err != nil {
 		log.Printf("Signer.SignedRef: cleaning ID %q: %v", id, err)
 	}
-	ts, sig := s.signer.Sign(prefix + cleanId)
-	return fmt.Sprintf("%s%s%sts=%d&sig=%s", prefix, cleanId, sep, ts, sig)
+	expiry := time.Now().Add(24 * time.Hour)
+	sig := s.signer.Sign(prefix+cleanId, sign.WithExpiryTime(expiry))
+	return fmt.Sprintf("%s%s%sts=%d&sig=%s", prefix, cleanId, sep, expiry.Unix(), sig)
 }
 
 // MapURL converts image references to signed HTTP URLs.

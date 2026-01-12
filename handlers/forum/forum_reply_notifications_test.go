@@ -283,7 +283,7 @@ func TestForumReply(t *testing.T) {
 			t.Errorf("subscriber email subject mismatch: %s", subscriberEmail.Header.Get("Subject"))
 		}
 		subBody := getEmailBody(t, subscriberEmail)
-		expectedSubBody := "Hi replier,\nYour reply has been posted.\n\nView comment:\n/forum/topic/5/thread/42#c999\n\nManage notifications: http://example.com/usr/subscriptions"
+		expectedSubBody := "Hi replier,\nYour reply has been posted.\n\nView comment:\nhttp://example.com/forum/topic/5/thread/42#c999\n\nManage notifications: http://example.com/usr/subscriptions"
 		if subBody != expectedSubBody {
 			t.Errorf("subscriber email body mismatch: %q, want %q", subBody, expectedSubBody)
 		}
@@ -295,7 +295,7 @@ func TestForumReply(t *testing.T) {
 			t.Errorf("admin email subject mismatch: %s", adminEmail.Header.Get("Subject"))
 		}
 		adminBody := getEmailBody(t, adminEmail)
-		expectedAdminBody := "User replier replied to a forum thread.\nHello World\n\nView comment:\n/forum/topic/5/thread/42#c999\n\nManage notifications: http://example.com/usr/subscriptions"
+		expectedAdminBody := "User replier replied to a forum thread.\nHello World\n\nView comment:\nhttp://example.com/forum/topic/5/thread/42#c999\n\nManage notifications: http://example.com/usr/subscriptions"
 		if adminBody != expectedAdminBody {
 			t.Errorf("admin email body mismatch: %q, want %q", adminBody, expectedAdminBody)
 		}

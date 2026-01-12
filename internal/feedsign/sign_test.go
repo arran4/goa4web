@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/internal/sign"
 )
 
 func TestSigner_SignedURL_and_Verify(t *testing.T) {
@@ -19,9 +20,9 @@ func TestSigner_SignedURL_and_Verify(t *testing.T) {
 	username := "testuser"
 
 	// Generate signed URL
-	signedURL := signer.SignedURL(path, query, username)
+	signedURL := signer.SignedURL(path, query, username, sign.WithOutNonce())
 
-	// Expect format: /blogs/u/testuser/rss?ts=...&sig=...&rss=bob
+	// Expect format: /blogs/u/testuser/rss?sig=...&rss=bob
 	expectedPrefix := "/blogs/u/testuser/rss?"
 	if !strings.HasPrefix(signedURL, expectedPrefix) {
 		t.Errorf("Expected URL to start with %s, got %s", expectedPrefix, signedURL)
@@ -30,46 +31,44 @@ func TestSigner_SignedURL_and_Verify(t *testing.T) {
 		t.Errorf("Expected URL to contain query params, got %s", signedURL)
 	}
 
-	// Parse URL to extract ts and sig
+	// Parse URL to extract sig
 	parts := strings.Split(signedURL, "?")
 	if len(parts) != 2 {
 		t.Fatalf("Invalid URL format: %s", signedURL)
 	}
 	queryParams := parts[1]
 
-	var ts, sig string
+	var sig string
 	for _, pair := range strings.Split(queryParams, "&") {
 		kv := strings.Split(pair, "=")
 		if len(kv) == 2 {
-			if kv[0] == "ts" {
-				ts = kv[1]
-			} else if kv[0] == "sig" {
+			if kv[0] == "sig" {
 				sig = kv[1]
 			}
 		}
 	}
 
-	if ts == "" || sig == "" {
-		t.Fatalf("Missing ts or sig in URL: %s", signedURL)
+	if sig == "" {
+		t.Fatalf("Missing sig in URL: %s", signedURL)
 	}
 
-	// Verify
-	if !signer.Verify(path, query, username, ts, sig) {
+	// Verify - using WithOutNonce to match how we signed
+	if !signer.Verify(path, query, username, "", sig) {
 		t.Errorf("Verification failed for valid signature")
 	}
 
 	// Verify with wrong username
-	if signer.Verify(path, query, "wronguser", ts, sig) {
+	if signer.Verify(path, query, "wronguser", "", sig) {
 		t.Errorf("Verification succeeded for wrong username")
 	}
 
 	// Verify with wrong path
-	if signer.Verify("/blogs/atom", query, username, ts, sig) {
+	if signer.Verify("/blogs/atom", query, username, "", sig) {
 		t.Errorf("Verification succeeded for wrong path")
 	}
 
 	// Verify with wrong query
-	if signer.Verify(path, "rss=alice", username, ts, sig) {
+	if signer.Verify(path, "rss=alice", username, "", sig) {
 		t.Errorf("Verification succeeded for wrong query")
 	}
 }

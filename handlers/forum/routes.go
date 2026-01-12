@@ -56,8 +56,10 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Reg
 	// OpenGraph preview endpoint (no auth required for social media bots if signed)
 	fr.HandleFunc("/shared/topic/{topic}", SharedTopicPreviewPage).Methods("GET", "HEAD")
 	fr.HandleFunc("/shared/topic/{topic}/ts/{ts}/sign/{sign}", SharedTopicPreviewPage).Methods("GET", "HEAD")
+	fr.HandleFunc("/shared/topic/{topic}/nonce/{nonce}/sign/{sign}", SharedTopicPreviewPage).Methods("GET", "HEAD")
 	fr.HandleFunc("/shared/topic/{topic}/thread/{thread}", SharedThreadPreviewPage).Methods("GET", "HEAD")
 	fr.HandleFunc("/shared/topic/{topic}/thread/{thread}/ts/{ts}/sign/{sign}", SharedThreadPreviewPage).Methods("GET", "HEAD")
+	fr.HandleFunc("/shared/topic/{topic}/thread/{thread}/nonce/{nonce}/sign/{sign}", SharedThreadPreviewPage).Methods("GET", "HEAD")
 
 	fr.Handle("/topic/{topic}/thread/{thread}", RequireThreadAndTopic(http.HandlerFunc(ThreadPage))).Methods("GET")
 	fr.Handle("/topic/{topic}/thread/{thread}", RequireThreadAndTopic(http.HandlerFunc(handlers.TaskDoneAutoRefreshPage))).Methods("POST")

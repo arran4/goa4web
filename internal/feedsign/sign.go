@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/sign"
@@ -25,12 +24,19 @@ func NewSigner(cfg *config.RuntimeConfig, key string) *Signer {
 // path should be the base path (e.g. "/blogs/rss").
 // query should be the encoded query string (e.g. "rss=bob"), or empty.
 // The resulting URL will be "/{section}/u/{username}/{rest}?ts={ts}&sig={sig}&{query}"
-func (s *Signer) SignedURL(path, query, username string, exp ...time.Time) string {
+func (s *Signer) SignedURL(path, query, username string, ops ...any) string {
 	data := fmt.Sprintf("feed:%s:%s", username, path)
 	if query != "" {
 		data += "?" + query
 	}
-	ts, sig := s.signer.Sign(data, exp...)
+
+	// Set default option if none provided
+	if len(ops) == 0 {
+		ops = append(ops, sign.WithOutNonce())
+	}
+
+	sig := s.signer.Sign(data, ops...)
+
 	// Check if path ends with slash, if so remove it to avoid double slashes
 	path = strings.TrimSuffix(path, "/")
 
@@ -48,7 +54,7 @@ func (s *Signer) SignedURL(path, query, username string, exp ...time.Time) strin
 		path = fmt.Sprintf("/u/%s%s", url.QueryEscape(username), path)
 	}
 
-	res := fmt.Sprintf("%s?ts=%d&sig=%s", path, ts, sig)
+	res := fmt.Sprintf("%s?sig=%s", path, sig)
 	if query != "" {
 		res += "&" + query
 	}
@@ -62,7 +68,8 @@ func (s *Signer) Verify(path, query, username, ts, sig string) bool {
 	if query != "" {
 		data += "?" + query
 	}
-	return s.signer.Verify(data, ts, sig)
+	valid, _ := s.signer.Verify(data, sig, sign.WithExpiryTimestamp(ts))
+	return valid
 }
 
 // StripSignatureParams removes ts and sig from values and returns encoded string.

@@ -1077,24 +1077,6 @@ func (s *QuerierStub) GetAllForumTopicsByCategoryIdForUserWithLastPosterName(ctx
 }
 
 // SystemCheckRoleGrant records the call and returns the configured response.
-func (s *QuerierStub) SystemCheckRoleGrant(ctx context.Context, arg SystemCheckRoleGrantParams) (int32, error) {
-	s.mu.Lock()
-	s.SystemCheckRoleGrantCalls = append(s.SystemCheckRoleGrantCalls, arg)
-	fn := s.SystemCheckRoleGrantFn
-	ret := s.SystemCheckRoleGrantReturns
-	err := s.SystemCheckRoleGrantErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(arg)
-	}
-	if err != nil {
-		return 0, err
-	}
-	if ret != 0 {
-		return ret, nil
-	}
-	return 0, sql.ErrNoRows
-}
 
 // GetPermissionsByUserID records the call and returns the configured response.
 func (s *QuerierStub) GetPermissionsByUserID(ctx context.Context, idusers int32) ([]*GetPermissionsByUserIDRow, error) {
@@ -1430,4 +1412,17 @@ func (s *QuerierStub) SystemInsertDeadLetter(ctx context.Context, message string
 		return fn(ctx, message)
 	}
 	return s.SystemInsertDeadLetterErr
+}
+
+func (s *QuerierStub) SystemCheckRoleGrant(ctx context.Context, arg SystemCheckRoleGrantParams) (int32, error) {
+	s.mu.Lock()
+	s.SystemCheckRoleGrantCalls = append(s.SystemCheckRoleGrantCalls, arg)
+	fn := s.SystemCheckRoleGrantFn
+	ret := s.SystemCheckRoleGrantReturns
+	err := s.SystemCheckRoleGrantErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(arg)
+	}
+	return ret, err
 }

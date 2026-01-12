@@ -18,8 +18,8 @@ func TestRedirectHandlerSignedURLParam(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
 	signer := linksign.NewSigner(cfg, "k")
 	link := "https://example.com/foo"
-	ts, sig := signer.Sign(link)
-	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/goto?u=%s&ts=%d&sig=%s&go=1", url.QueryEscape(link), ts, sig), nil)
+	sig := signer.Sign(link)
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/goto?u=%s&sig=%s&go=1", url.QueryEscape(link), sig), nil)
 	cd := common.NewCoreData(context.Background(), nil, cfg, common.WithLinkSigner(signer))
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 	rec := httptest.NewRecorder()

@@ -132,17 +132,17 @@ func renderSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.Core
 		}
 	}
 
-	// Determine auth style: if ts was found in query, use query auth. If in path, use path auth.
-	// Actually, easier: check if mux var is empty.
-	usePathAuth := mux.Vars(r)["ts"] != ""
+	// Determine auth style: check if mux vars for ts/nonce are present
+	vars := mux.Vars(r)
+	usePathAuth := vars["ts"] != "" || vars["nonce"] != ""
 
-	// tsVal is CREATION TIME of the share link. Do not use as expiration.
+	// tsVal is CREATION TIME of the share link (if ts used). Do not use as expiration.
 	// Generate a fresh expiration for the image link.
 
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       title,
 		Description: desc,
-		Image:       share.MakeImageURL(cd.AbsoluteURL(""), title, cd.ShareSigner, usePathAuth),
+		Image:       share.MakeImageURL(cd.AbsoluteURL(), title, cd.ShareSigner, usePathAuth),
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,

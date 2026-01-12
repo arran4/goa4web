@@ -14,8 +14,6 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
-	imagesign "github.com/arran4/goa4web/internal/images"
-	linksign "github.com/arran4/goa4web/internal/linksign"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	"github.com/google/go-cmp/cmp"
 	"github.com/gorilla/sessions"
@@ -53,14 +51,14 @@ func TestCoreDataMiddlewareUserRoles(t *testing.T) {
 	})
 
 	reg := email.NewRegistry()
-	signer := imagesign.NewSigner(cfg, "k")
-	linkSigner := linksign.NewSigner(cfg, "k")
+	signer := "k"
+	linkSigner := "k"
 	srv := New(
 		WithDB(conn),
 		WithConfig(cfg),
 		WithEmailRegistry(reg),
-		WithImageSigner(signer),
-		WithLinkSigner(linkSigner),
+		WithImageSignKey(signer),
+		WithLinkSignKey(linkSigner),
 		WithNavRegistry(navReg),
 	)
 	srv.CoreDataMiddleware()(handler).ServeHTTP(httptest.NewRecorder(), req)
@@ -103,14 +101,14 @@ func TestCoreDataMiddlewareAnonymous(t *testing.T) {
 	})
 
 	reg := email.NewRegistry()
-	signer := imagesign.NewSigner(cfg, "k")
-	linkSigner := linksign.NewSigner(cfg, "k")
+	signer := "k"
+	linkSigner := "k"
 	srv := New(
 		WithDB(conn),
 		WithConfig(cfg),
 		WithEmailRegistry(reg),
-		WithImageSigner(signer),
-		WithLinkSigner(linkSigner),
+		WithImageSignKey(signer),
+		WithLinkSignKey(linkSigner),
 		WithNavRegistry(navReg),
 	)
 	srv.CoreDataMiddleware()(handler).ServeHTTP(httptest.NewRecorder(), req)

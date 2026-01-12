@@ -201,7 +201,7 @@ func TestOGImageHandler_WrongKey(t *testing.T) {
 func TestVerifyAndGetPath_WithQueryParams(t *testing.T) {
 	// Test that additional query params are preserved
 	path := "/api/og-image/data"
-	extraQuery := "foo=bar&baz=qux"
+	extraQuery := "baz=qux&foo=bar"
 	fullPath := path + "?" + extraQuery
 
 	nonce := "test-nonce-123"

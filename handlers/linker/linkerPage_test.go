@@ -14,7 +14,6 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
-	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/workers/searchworker"
 )
 
@@ -30,7 +29,7 @@ func TestLinkerFeed(t *testing.T) {
 		},
 	}
 	r := httptest.NewRequest("GET", "http://example.com/linker/rss", nil)
-	cd := &common.CoreData{ImageSignKey: "test-key",
+	cd := &common.CoreData{ImageSignKey: "test-key"}
 	r = r.WithContext(context.WithValue(r.Context(), consts.KeyCoreData, cd))
 	feed := linkerFeed(r, rows)
 	if len(feed.Items) != 1 {

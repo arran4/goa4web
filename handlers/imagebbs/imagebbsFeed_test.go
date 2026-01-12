@@ -7,11 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
-	imagesign "github.com/arran4/goa4web/internal/images"
 )
 
 func TestImagebbsFeed(t *testing.T) {
@@ -25,7 +23,7 @@ func TestImagebbsFeed(t *testing.T) {
 		},
 	}
 	r := httptest.NewRequest("GET", "http://example.com/imagebbs/board/1.rss", nil)
-	cd := &common.CoreData{ImageSignKey: "test-key",
+	cd := &common.CoreData{ImageSignKey: "test-key"}
 	r = r.WithContext(context.WithValue(r.Context(), consts.KeyCoreData, cd))
 	feed := cd.ImageBBSFeed(r, "Test", 1, rows)
 	if len(feed.Items) != 1 {

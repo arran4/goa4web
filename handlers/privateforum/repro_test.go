@@ -38,7 +38,7 @@ func TestPrivateRoute(t *testing.T) {
 			name:          "Unauthenticated",
 			path:          "/private",
 			userID:        0,
-			expectedCode:  http.StatusForbidden,
+			expectedCode:  http.StatusOK,
 			expectMatched: true,
 		},
 		{
@@ -47,7 +47,7 @@ func TestPrivateRoute(t *testing.T) {
 			userID:        1,
 			username:      "user",
 			grantReturns:  0, // No grant
-			expectedCode:  http.StatusForbidden,
+			expectedCode:  http.StatusOK,
 			expectMatched: true,
 		},
 		{

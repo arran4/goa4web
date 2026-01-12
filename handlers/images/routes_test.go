@@ -6,7 +6,6 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"testing"
-	"time"
 
 	"github.com/gorilla/mux"
 
@@ -15,6 +14,7 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	intimages "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/navigation"
+	"github.com/arran4/goa4web/internal/sign"
 )
 
 func TestValidID(t *testing.T) {
@@ -99,8 +99,8 @@ func TestVerifyMiddlewareAllowsQuerySignedImage(t *testing.T) {
 	called := false
 	cfg := config.NewRuntimeConfig()
 	cfg.HTTPHostname = "http://localhost"
-	signer := intimages.NewSigner(cfg, "k")
-	signedURL := signer.SignedURLTTL("abcd.png?size=small", time.Hour)
+	key := "k"
+	signedURL := "http://localhost/images/image/abcd.png?size=small&sig=" + sign.Sign("image:abcd.png?size=small", key, sign.WithOutNonce())
 	parsed, err := url.Parse(signedURL)
 	if err != nil {
 		t.Fatalf("parse signed url: %v", err)
@@ -110,7 +110,7 @@ func TestVerifyMiddlewareAllowsQuerySignedImage(t *testing.T) {
 	}))
 	req := httptest.NewRequest("GET", parsed.Path+"?"+parsed.RawQuery, nil)
 	req = mux.SetURLVars(req, map[string]string{"id": "abcd.png"})
-	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithImageSigner(signer))
+	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithImageSignKey(key))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	rr := httptest.NewRecorder()
 	h.ServeHTTP(rr, req.WithContext(ctx))

@@ -20,7 +20,6 @@ import (
 func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-
 	if share.VerifyAndGetPath(r, cd.ShareSignKey) == "" {
 		log.Printf("[Share] Invalid signature for URL: %s", r.URL.String())
 		// No valid signature? If user is logged in, redirect to actual content (they might have perm).
@@ -80,7 +79,6 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-
 	// Verify signature
 	if share.VerifyAndGetPath(r, cd.ShareSignKey) == "" {
 		log.Printf("[Share] Invalid signature for URL: %s", r.URL.String())
@@ -134,10 +132,16 @@ func renderSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.Core
 	// tsVal is CREATION TIME of the share link (if ts used). Do not use as expiration.
 	// Generate a fresh expiration for the image link.
 
+	// Calculate image URL with error handling
+	imgURL, err := share.MakeImageURL(cd.AbsoluteURL(), title, cd.ShareSignKey, usePathAuth)
+	if err != nil {
+		log.Printf("Error making image URL: %v", err)
+	}
+
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       title,
 		Description: desc,
-		Image:       share.MakeImageURL(cd.AbsoluteURL(), title, cd.ShareSignKey, usePathAuth),
+		Image:       imgURL,
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,

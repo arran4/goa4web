@@ -11,16 +11,18 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	linksign "github.com/arran4/goa4web/internal/linksign"
+	"github.com/arran4/goa4web/internal/sign"
 )
 
 func TestRedirectHandlerSignedURLParam(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
-	signer := linksign.NewSigner(cfg, "k")
+	key := "k"
 	link := "https://example.com/foo"
-	sig := signer.Sign(link)
+	sig := sign.Sign("link:"+link, key)
 	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/goto?u=%s&sig=%s&go=1", url.QueryEscape(link), sig), nil)
-	cd := common.NewCoreData(context.Background(), nil, cfg, common.WithLinkSigner(signer))
+	cd := common.NewCoreData(context.Background(), nil, cfg, func(cd *common.CoreData) {
+		cd.LinkSignKey = key
+	})
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 	rec := httptest.NewRecorder()
 

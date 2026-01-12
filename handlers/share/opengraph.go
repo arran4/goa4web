@@ -1,17 +1,27 @@
 package share
 
 import (
+	"bytes"
 	"encoding/base64"
 	"fmt"
 	"html/template"
+	"image"
+	"image/color"
+	"image/draw"
+	"image/png"
 	"log"
 	"net/http"
 	"strings"
 
+	"github.com/arran4/go-pattern"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/sign"
 	"github.com/arran4/goa4web/internal/sign/signutil"
+	"github.com/golang/freetype/truetype"
 	"github.com/gorilla/mux"
+	"golang.org/x/image/font"
+	"golang.org/x/image/math/fixed"
 )
 
 // OpenGraphData contains the metadata for an OpenGraph preview page.
@@ -247,18 +257,63 @@ func (h *OGImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid title encoding", http.StatusBadRequest)
 		return
 	}
-
 	title := string(titleBytes)
 
-	// Generate a simple SVG image
-	svg := fmt.Sprintf(`<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
-		<rect width="1200" height="630" fill="#282c34"/>
-		<text x="600" y="315" font-family="Arial" font-size="48" fill="white" text-anchor="middle" dominant-baseline="middle">%s</text>
-	</svg>`, template.HTMLEscapeString(title))
+	// --- PNG Generation ---
+	width, height := 1200, 630
+	img := image.NewRGBA(image.Rect(0, 0, width, height))
 
-	w.Header().Set("Content-Type", "image/svg+xml")
+	// Create a pattern
+	p := pattern.NewSierpinskiTriangle(
+		pattern.SetBounds(image.Rect(0, 0, width, height)),
+		pattern.SetFillColor(color.RGBA{R: 60, G: 66, B: 78, A: 255}),
+		pattern.SetSpaceColor(color.RGBA{R: 40, G: 44, B: 52, A: 255}))
+
+	// Draw the pattern onto the image
+	draw.Draw(img, img.Bounds(), p, image.Point{}, draw.Src)
+
+	// Load logo
+	logoData := templates.GetFaviconPNG()
+	logo, _, err := image.Decode(bytes.NewReader(logoData))
+	if err != nil {
+		http.Error(w, "Failed to decode logo", http.StatusInternalServerError)
+		return
+	}
+	// Draw logo in top-left
+	logoBounds := logo.Bounds()
+	draw.Draw(img, image.Rect(20, 20, 20+logoBounds.Dx(), 20+logoBounds.Dy()), logo, image.Point{}, draw.Over)
+
+	// Load font and draw text
+	fontData := templates.GetGoRegularFont()
+	f, err := truetype.Parse(fontData)
+	if err != nil {
+		http.Error(w, "Failed to parse font", http.StatusInternalServerError)
+		return
+	}
+
+	face := truetype.NewFace(f, &truetype.Options{Size: 48})
+
+	d := &font.Drawer{
+		Dst:  img,
+		Src:  image.NewUniform(color.White),
+		Face: face,
+		Dot:  fixed.Point26_6{X: fixed.I(width / 2), Y: fixed.I(height / 2)},
+	}
+	// Center the text
+	bounds, _ := font.BoundString(face, title)
+	d.Dot.X -= bounds.Max.X / 2
+	d.DrawString(title)
+
+	// Encode as PNG
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, img); err != nil {
+		http.Error(w, "Failed to encode PNG", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "image/png")
 	w.Header().Set("Cache-Control", "public, max-age=31536000") // Cache for 1 year
-	w.Write([]byte(svg))
+	w.Write(buf.Bytes())
 }
 
 // SharedContentPreview generates a signed OpenGraph preview URL.

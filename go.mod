@@ -41,8 +41,10 @@ replace github.com/gorilla/csrf => filippo.io/csrf/gorilla v0.2.1
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
+	github.com/arran4/go-pattern v0.0.6 // indirect
 	github.com/clipperhouse/stringish v0.1.1 // indirect
 	github.com/clipperhouse/uax29/v2 v2.3.0 // indirect
+	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/mattn/go-runewidth v0.0.19 // indirect

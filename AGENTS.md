@@ -33,6 +33,8 @@ Tests must not interact with the real file system. Use in-memory file systems fr
 go test ./...
 ```
 
+To streamline the human approval process, run a full test suite with `go test ./...` instead of testing individual files or modules. This allows for a single, pre-approved overall test, which is faster for human verification.
+
 SQL query files are compiled using `sqlc`. Do not manually edit the generated `*.sql.go` files; instead edit the `.sql` files under `internal/db/` and run `sqlc generate`.
 Avoid using the `overrides` section in `sqlc.yaml`; prefer Go type aliases if a different struct name is required.
 

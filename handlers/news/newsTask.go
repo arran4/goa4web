@@ -44,7 +44,7 @@ func (t *newsTask) Get(w http.ResponseWriter, r *http.Request) {
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       "News",
 		Description: "Latest news and announcements.",
-		Image:       share.MakeImageURL(cd.AbsoluteURL(), "Latest News", cd.ShareSigner, false),
+		Image:       share.MakeImageURL(cd.AbsoluteURL(), "Latest News", cd.ShareSignKey, false),
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,

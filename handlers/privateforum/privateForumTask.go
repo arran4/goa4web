@@ -38,7 +38,7 @@ func (t *privateForumTask) Get(w http.ResponseWriter, r *http.Request) {
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       "Private Forum",
 		Description: "Private discussion forums",
-		Image:       share.MakeImageURL(cd.AbsoluteURL(), "Private Forum", cd.ShareSigner, false),
+		Image:       share.MakeImageURL(cd.AbsoluteURL(), "Private Forum", cd.ShareSignKey, false),
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,

@@ -41,10 +41,11 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		cd.PrevLink = "/blogs?" + qv.Encode()
 	}
 
+	imageURL, _ := share.MakeImageURL(cd.AbsoluteURL(), "Blogs", cd.ShareSignKey, false)
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       "Blogs",
 		Description: "Read blogs from our community.",
-		Image:       share.MakeImageURL(cd.AbsoluteURL(), "Blogs", cd.ShareSigner, false),
+		Image:       imageURL,
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,

@@ -284,9 +284,6 @@ func GetFaviconData(opts ...Option) []byte { return readFile("assets/favicon.svg
 // GetFaviconPNG returns the site's favicon image as PNG.
 func GetFaviconPNG(opts ...Option) []byte { return readFile("assets/favicon.png", opts...) }
 
-// GetGoRegularFont returns the Go-Regular.ttf font data.
-func GetGoRegularFont(opts ...Option) []byte { return readFile("assets/Go-Regular.ttf", opts...) }
-
 // GetPasteImageJSData returns the JavaScript that enables image pasting.
 func GetPasteImageJSData(opts ...Option) []byte { return readFile("assets/pasteimg.js", opts...) }
 

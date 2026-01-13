@@ -18,8 +18,9 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/sign"
 	"github.com/arran4/goa4web/internal/sign/signutil"
-	"github.com/golang/freetype/truetype"
 	"github.com/gorilla/mux"
+	"golang.org/x/image/font/gofont/goregular"
+	"golang.org/x/image/font/opentype"
 	"golang.org/x/image/font"
 	"golang.org/x/image/math/fixed"
 )
@@ -284,14 +285,19 @@ func (h *OGImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	draw.Draw(img, image.Rect(20, 20, 20+logoBounds.Dx(), 20+logoBounds.Dy()), logo, image.Point{}, draw.Over)
 
 	// Load font and draw text
-	fontData := templates.GetGoRegularFont()
-	f, err := truetype.Parse(fontData)
+	fontData, err := opentype.Parse(goregular.TTF)
 	if err != nil {
 		http.Error(w, "Failed to parse font", http.StatusInternalServerError)
 		return
 	}
-
-	face := truetype.NewFace(f, &truetype.Options{Size: 48})
+	face, err := opentype.NewFace(fontData, &opentype.FaceOptions{
+		Size: 48,
+		DPI: 72,
+	})
+	if err != nil {
+		http.Error(w, "Failed to create face", http.StatusInternalServerError)
+		return
+	}
 
 	d := &font.Drawer{
 		Dst:  img,

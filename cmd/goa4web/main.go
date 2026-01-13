@@ -441,6 +441,12 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("rootCmd.Run: test: %w", err)
 		}
 		return c.Run()
+	case "gen-og-image":
+		c, err := newGenOgImageCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("rootCmd.Run: gen-og-image: %w", err)
+		}
+		return c.Run()
 	default:
 		r.fs.Usage()
 		return fmt.Errorf("rootCmd.Run: unknown command %q", args[0])

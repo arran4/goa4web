@@ -442,7 +442,7 @@ type Querier interface {
 	ListForumcategoryPath(ctx context.Context, categoryID int32) ([]*ListForumcategoryPathRow, error)
 	ListGrants(ctx context.Context) ([]*Grant, error)
 	ListGrantsByUserID(ctx context.Context, userID sql.NullInt32) ([]*Grant, error)
-	ListGrantsExtended(ctx context.Context) ([]*ListGrantsExtendedRow, error)
+	ListGrantsExtended(ctx context.Context, arg ListGrantsExtendedParams) ([]*ListGrantsExtendedRow, error)
 	ListImagePostsByBoardForLister(ctx context.Context, arg ListImagePostsByBoardForListerParams) ([]*ListImagePostsByBoardForListerRow, error)
 	ListImagePostsByPosterForLister(ctx context.Context, arg ListImagePostsByPosterForListerParams) ([]*ListImagePostsByPosterForListerRow, error)
 	ListImageboardPath(ctx context.Context, boardID int32) ([]*ListImageboardPathRow, error)

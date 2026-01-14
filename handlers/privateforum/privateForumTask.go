@@ -48,6 +48,7 @@ func (t *privateForumTask) Get(w http.ResponseWriter, r *http.Request) {
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,
 		URL:         cd.AbsoluteURL(r.URL.RequestURI()),
+		Type:        "website",
 	}
 
 	if !cd.HasGrant("privateforum", "topic", "see", 0) {

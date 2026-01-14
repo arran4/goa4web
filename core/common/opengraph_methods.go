@@ -34,3 +34,11 @@ func (og *OpenGraph) ImageHeightMeta() template.HTML {
 func (og *OpenGraph) TwitterImageMeta() template.HTML {
 	return template.HTML(fmt.Sprintf(`<meta name="twitter:image" content="%s" />`, og.Image))
 }
+
+func (og *OpenGraph) TypeMeta() template.HTML {
+	ogType := "website"
+	if og.Type != "" {
+		ogType = og.Type
+	}
+	return template.HTML(fmt.Sprintf(`<meta property="og:type" content="%s" />`, ogType))
+}

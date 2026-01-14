@@ -20,7 +20,6 @@ import (
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/sharesign"
 )
 
 var (
@@ -57,7 +56,7 @@ func TestBlogsBloggerPostsPage(t *testing.T) {
 
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithSession(sess))
-	cd.ShareSigner = sharesign.NewSigner(config.NewRuntimeConfig(), "secret")
+	cd.ShareSignKey = "secret"
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 

@@ -1,6 +1,7 @@
 package writings
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 
@@ -54,10 +55,15 @@ func (t *writingsTask) Get(w http.ResponseWriter, r *http.Request) {
 		cd.StartLink = "/writings?offset=0"
 	}
 
+	imgURL, err := share.MakeImageURL(cd.AbsoluteURL(), "Writings", cd.ShareSignKey, false)
+	if err != nil {
+		log.Printf("Error making image URL: %v", err)
+	}
+
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       "Writings",
 		Description: "A collection of articles and long-form content.",
-		Image:       share.MakeImageURL(cd.AbsoluteURL(), "Writings", cd.ShareSigner, false),
+		Image:       imgURL,
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,

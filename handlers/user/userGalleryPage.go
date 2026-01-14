@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/arran4/goa4web/core/consts"
 
@@ -79,9 +80,9 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 			thumb := id + "_thumb" + ext
 			full := imgPath
 			thumbURL := thumb
-			if cd.ImageSigner != nil {
-				full = cd.ImageSigner.SignedURL("image:" + fname)
-				thumbURL = cd.ImageSigner.SignedCacheURL(thumb)
+			if cd.ImageSignKey != "" {
+				full = cd.SignImageURL("image:"+fname, 24*time.Hour)
+				thumbURL = cd.SignCacheURL(thumb, 24*time.Hour)
 			}
 			imgs = append(imgs, galleryImage{
 				Thumb:  thumbURL,

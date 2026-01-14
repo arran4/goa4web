@@ -5,15 +5,16 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/arran4/goa4web/internal/sharesign"
+	"github.com/arran4/goa4web/internal/sign"
+	"github.com/arran4/goa4web/internal/sign/signutil"
 )
 
 type ShareHandler struct {
-	signer *sharesign.Signer
+	signKey string
 }
 
-func NewShareHandler(signer *sharesign.Signer) *ShareHandler {
-	return &ShareHandler{signer: signer}
+func NewShareHandler(signKey string) *ShareHandler {
+	return &ShareHandler{signKey: signKey}
 }
 
 func (h *ShareHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -24,12 +25,19 @@ func (h *ShareHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("Generating share link (Handler) for: %s, UseQuery: %s", link, r.URL.Query().Get("use_query"))
 
+	// Inject /shared/ into path
+	sharedPath := signutil.InjectShared(link)
+
+	// Generate nonce
+	nonce := signutil.GenerateNonce()
+
+	// Sign the URL
 	var signedURL string
 	var err error
 	if r.URL.Query().Get("use_query") == "true" {
-		signedURL, err = h.signer.SignedURLQuery(link)
+		signedURL, err = signutil.SignAndAddQuery(sharedPath, sharedPath, h.signKey, sign.WithNonce(nonce))
 	} else {
-		signedURL, err = h.signer.SignedURL(link)
+		signedURL, err = signutil.SignAndAddPath(sharedPath, sharedPath, h.signKey, sign.WithNonce(nonce))
 	}
 	if err != nil {
 		log.Printf("[ShareHandler] Error signing URL: %v", err)

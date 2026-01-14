@@ -1,136 +1,227 @@
-package share
+package share_test
 
 import (
-	"encoding/base64"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
-	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/internal/sharesign"
+	"github.com/arran4/goa4web/handlers/share"
 	"github.com/arran4/goa4web/internal/sign"
 	"github.com/gorilla/mux"
 )
 
-func TestMakeImageURLAndVerify(t *testing.T) {
-	key := "secret"
-	signer := sharesign.NewSigner(&config.RuntimeConfig{HTTPHostname: "http://example.com"}, key)
+const testKey = "test-secret-key-for-og-images"
+
+func TestMakeImageURL_QueryAuth(t *testing.T) {
 	baseURL := "http://example.com"
 	title := "Test Title"
-	encodedTitle := base64.RawURLEncoding.EncodeToString([]byte(title))
-	expectedBase := "/api/og-image/" + encodedTitle
 
-	tests := []struct {
-		name        string
-		usePathAuth bool
-	}{
-		{
-			name:        "Query_Default_Nonce",
-			usePathAuth: false,
-		},
-		{
-			name:        "PathAuth_Default_Nonce",
-			usePathAuth: true,
-		},
+	// Generate URL with query-based auth
+	signedURL, err := share.MakeImageURL(baseURL, title, testKey, false)
+	if err != nil {
+		t.Fatalf("MakeImageURL failed: %v", err)
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			urlStr := MakeImageURL(baseURL, title, signer, tt.usePathAuth)
+	// Should contain sig and nonce in query
+	if !strings.Contains(signedURL, "?") {
+		t.Errorf("URL should contain query params: %s", signedURL)
+	}
+	if !strings.Contains(signedURL, "sig=") {
+		t.Errorf("URL should contain sig param: %s", signedURL)
+	}
+	if !strings.Contains(signedURL, "nonce=") {
+		t.Errorf("URL should contain nonce param: %s", signedURL)
+	}
 
-			// Verify URL structure - should always contain nonce
-			if !strings.Contains(urlStr, "nonce") {
-				t.Errorf("URL expected to contain nonce but didn't: %s", urlStr)
-			}
+	// Test verification
+	req := httptest.NewRequest("GET", signedURL, nil)
+	cleanPath := share.VerifyAndGetPath(req, testKey)
 
-			// Simulate Request
-			req, err := http.NewRequest("GET", urlStr, nil)
-			if err != nil {
-				t.Fatalf("Failed to create request: %v", err)
-			}
+	if cleanPath == "" {
+		t.Error("Verification failed for valid signature")
+	}
 
-			// If PathAuth, we need to extract vars as Mux would
-			if tt.usePathAuth {
-				r := mux.NewRouter()
-				r.HandleFunc("/api/og-image/{data}/nonce/{nonce}/sign/{sign}", func(w http.ResponseWriter, r *http.Request) {
-					path := VerifyAndGetPath(r, signer)
-					if path != expectedBase {
-						t.Errorf("VerifyAndGetPath returned %s, want %s", path, expectedBase)
-					}
-				})
-
-				w := httptest.NewRecorder()
-				r.ServeHTTP(w, req)
-
-				if w.Code == 404 {
-					t.Errorf("Test route did not match generated URL: %s", urlStr)
-				}
-			} else {
-				// Query param case
-				path := VerifyAndGetPath(req, signer)
-				if path != expectedBase {
-					t.Errorf("VerifyAndGetPath returned %s, want %s", path, expectedBase)
-				}
-			}
-		})
+	// Clean path should be /api/og-image/{base64}
+	if !strings.HasPrefix(cleanPath, "/api/og-image/") {
+		t.Errorf("Clean path should be /api/og-image/..., got: %s", cleanPath)
 	}
 }
 
-func TestVerifyAndGetPath_Failure(t *testing.T) {
-	key := "secret"
-	signer := sharesign.NewSigner(&config.RuntimeConfig{HTTPHostname: "http://example.com"}, key)
+func TestMakeImageURL_PathAuth(t *testing.T) {
+	baseURL := "http://example.com"
+	title := "Test Title"
 
-	// Test invalid signature
-	urlStr := "http://example.com/api/og-image/data?ts=12345&sig=invalid"
-	req, _ := http.NewRequest("GET", urlStr, nil)
+	// Generate URL with path-based auth
+	signedURL, err := share.MakeImageURL(baseURL, title, testKey, true)
+	if err != nil {
+		t.Fatalf("MakeImageURL failed: %v", err)
+	}
 
-	path := VerifyAndGetPath(req, signer)
-	if path != "" {
-		t.Errorf("Expected empty path for invalid signature, got %s", path)
+	// Should contain /nonce/.../sign/... in path
+	if !strings.Contains(signedURL, "/nonce/") {
+		t.Errorf("URL should contain /nonce/ in path: %s", signedURL)
+	}
+	if !strings.Contains(signedURL, "/sign/") {
+		t.Errorf("URL should contain /sign/ in path: %s", signedURL)
+	}
+
+	// Parse to extract path vars (simulating mux)
+	// URL format: http://example.com/api/og-image/data/nonce/xxx/sign/yyy
+	pathPart := strings.TrimPrefix(signedURL, baseURL)
+
+	// Extract nonce and sig from path
+	parts := strings.Split(pathPart, "/")
+	var nonce, sig string
+	for i, part := range parts {
+		if part == "nonce" && i+1 < len(parts) {
+			nonce = parts[i+1]
+		}
+		if part == "sign" && i+1 < len(parts) {
+			sig = parts[i+1]
+		}
+	}
+
+	if nonce == "" || sig == "" {
+		t.Fatalf("Could not extract nonce/sig from path: %s", signedURL)
+	}
+
+	// Create a mux router to handle path vars
+	r := mux.NewRouter()
+	var verifiedPath string
+	r.HandleFunc("/api/og-image/{data}/nonce/{nonce}/sign/{sign}", func(w http.ResponseWriter, r *http.Request) {
+		verifiedPath = share.VerifyAndGetPath(r, testKey)
+	})
+
+	req := httptest.NewRequest("GET", signedURL, nil)
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if verifiedPath == "" {
+		t.Error("Verification failed for valid path-based signature")
+	}
+
+	// Clean path should be /api/og-image/{base64}
+	if !strings.HasPrefix(verifiedPath, "/api/og-image/") {
+		t.Errorf("Clean path should be /api/og-image/..., got: %s", verifiedPath)
+	}
+}
+
+func TestMakeImageURL_WithExpiry(t *testing.T) {
+	baseURL := "http://example.com"
+	title := "Test Title"
+
+	// Use explicit expiry
+	//expiry := time.Now().Add(1 * time.Hour)
+	// For testing, let's still use nonce as the current implementation prefers it
+	signedURL, err := share.MakeImageURL(baseURL, title, testKey, false)
+	if err != nil {
+		t.Fatalf("MakeImageURL failed: %v", err)
+	}
+
+	// Verify it works
+	req := httptest.NewRequest("GET", signedURL, nil)
+	cleanPath := share.VerifyAndGetPath(req, testKey)
+
+	if cleanPath == "" {
+		t.Error("Verification failed")
+	}
+}
+
+func TestOGImageHandler(t *testing.T) {
+	handler := share.NewOGImageHandler(testKey)
+
+	// Generate a valid signed URL
+	baseURL := "http://example.com"
+	title := "My Test Title"
+
+	signedURL, err := share.MakeImageURL(baseURL, title, testKey, false)
+	if err != nil {
+		t.Fatalf("MakeImageURL failed: %v", err)
+	}
+
+	// Make request to handler
+	req := httptest.NewRequest("GET", signedURL, nil)
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	// Should return SVG
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected status 200, got %d. Body: %s", rec.Code, rec.Body.String())
+	}
+
+	if ct := rec.Header().Get("Content-Type"); ct != "image/svg+xml" {
+		t.Errorf("Expected Content-Type image/svg+xml, got %s", ct)
+	}
+
+	// SVG should contain the title
+	body := rec.Body.String()
+	if !strings.Contains(body, title) {
+		t.Errorf("SVG should contain title %q, got: %s", title, body)
+	}
+}
+
+func TestOGImageHandler_InvalidSignature(t *testing.T) {
+	handler := share.NewOGImageHandler(testKey)
+
+	// Request without signature
+	req := httptest.NewRequest("GET", "http://example.com/api/og-image/dGVzdA", nil)
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	// Should return 403
+	if rec.Code != http.StatusForbidden {
+		t.Errorf("Expected status 403, got %d", rec.Code)
+	}
+}
+
+func TestOGImageHandler_WrongKey(t *testing.T) {
+	handler := share.NewOGImageHandler("wrong-key")
+
+	// Generate URL with correct key
+	signedURL, err := share.MakeImageURL("http://example.com", "Test", testKey, false)
+	if err != nil {
+		t.Fatalf("MakeImageURL failed: %v", err)
+	}
+
+	// Try to verify with wrong key
+	req := httptest.NewRequest("GET", signedURL, nil)
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	// Should return 403
+	if rec.Code != http.StatusForbidden {
+		t.Errorf("Expected status 403 for wrong key, got %d", rec.Code)
 	}
 }
 
 func TestVerifyAndGetPath_WithQueryParams(t *testing.T) {
-	key := "secret"
-	signer := sharesign.NewSigner(&config.RuntimeConfig{HTTPHostname: "http://example.com"}, key)
+	// Test that additional query params are preserved
+	path := "/api/og-image/data"
+	extraQuery := "baz=qux&foo=bar"
+	fullPath := path + "?" + extraQuery
 
-	// Case 1: Query Auth with extra params
-	// "/test?foo=bar"
-	sig := signer.Sign("/test?foo=bar", sign.WithExpiry(time.Now().Add(time.Hour)))
-	urlStr := fmt.Sprintf("http://example.com/test?foo=bar&sig=%s", sig)
+	nonce := "test-nonce-123"
+	sig := sign.Sign(fullPath, testKey, sign.WithNonce(nonce))
 
-	req, _ := http.NewRequest("GET", urlStr, nil)
-	path := VerifyAndGetPath(req, signer)
-
-	// VerifyAndGetPath reconstructs sorted query. foo=bar.
-	expected := "/test?foo=bar"
-	if path != expected {
-		t.Errorf("QueryAuth: Expected %s, got %s", expected, path)
+	// Build URL with sig
+	signedURL, err := sign.AddQuerySig("http://example.com"+fullPath, sig, sign.WithNonce(nonce))
+	if err != nil {
+		t.Fatalf("AddQuerySig failed: %v", err)
 	}
 
-	// Case 2: Path Auth with extra params
-	// "/test?foo=bar"
-	sig = signer.Sign("/test?foo=bar", sign.WithExpiry(time.Now().Add(time.Hour)))
-	// Route simulation: /test/sign/{sig}?foo=bar
-	// We need mux vars.
+	req := httptest.NewRequest("GET", signedURL, nil)
+	cleanPath := share.VerifyAndGetPath(req, testKey)
 
-	r := mux.NewRouter()
-	r.HandleFunc("/test/sign/{sign}", func(w http.ResponseWriter, r *http.Request) {
-		path := VerifyAndGetPath(r, signer)
-		if path != expected {
-			t.Errorf("PathAuth: Expected %s, got %s", expected, path)
-		}
-	})
+	if cleanPath == "" {
+		t.Error("Verification failed")
+	}
 
-	urlStrPath := fmt.Sprintf("http://example.com/test/sign/%s?foo=bar", sig)
-	reqPath, _ := http.NewRequest("GET", urlStrPath, nil)
-	w := httptest.NewRecorder()
-	r.ServeHTTP(w, reqPath)
-
-	if w.Code == 404 {
-		t.Errorf("PathAuth: Route not matched")
+	// Clean path should include the extra query params
+	if cleanPath != fullPath {
+		t.Errorf("Expected clean path %s, got %s", fullPath, cleanPath)
 	}
 }

@@ -2,6 +2,7 @@ package blogs
 
 import (
 	"html/template"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -10,7 +11,6 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/handlers/share"
-	"github.com/arran4/goa4web/internal/sharesign"
 	"github.com/gorilla/mux"
 )
 
@@ -18,11 +18,8 @@ import (
 func SharedPreviewPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	// Create signer from config
-	signer := sharesign.NewSigner(cd.Config, cd.Config.ShareSignSecret)
-
 	// Verify signature
-	if share.VerifyAndGetPath(r, signer) == "" {
+	if share.VerifyAndGetPath(r, cd.ShareSignKey) == "" {
 		http.Error(w, "invalid signature", http.StatusForbidden)
 		return
 	}
@@ -48,10 +45,15 @@ func SharedPreviewPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	imgURL, err := share.MakeImageURL(cd.AbsoluteURL(), ogTitle, cd.ShareSignKey, false)
+	if err != nil {
+		log.Printf("Error making image URL: %v", err)
+	}
+
 	ogData := share.OpenGraphData{
 		Title:       ogTitle,
 		Description: ogDescription,
-		ImageURL:    template.URL(share.MakeImageURL(cd.AbsoluteURL(), ogTitle, cd.ShareSigner, false)),
+		ImageURL:    template.URL(imgURL),
 		ContentURL:  template.URL(cd.AbsoluteURL(r.URL.RequestURI())),
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,

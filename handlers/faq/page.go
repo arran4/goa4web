@@ -14,10 +14,11 @@ import (
 func Page(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "FAQ"
+	imageURL, _ := share.MakeImageURL(cd.AbsoluteURL(), "FAQ", cd.ShareSignKey, false)
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       "FAQ",
 		Description: "Frequently Asked Questions",
-		Image:       share.MakeImageURL(cd.AbsoluteURL(), "FAQ", cd.ShareSigner, false),
+		Image:       imageURL,
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,

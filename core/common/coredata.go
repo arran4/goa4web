@@ -30,11 +30,8 @@ import (
 	"github.com/arran4/goa4web/internal/dbdrivers"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
-	feedsign "github.com/arran4/goa4web/internal/feedsign"
 	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/lazy"
-	linksign "github.com/arran4/goa4web/internal/linksign"
-	"github.com/arran4/goa4web/internal/sharesign"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -112,11 +109,14 @@ type CoreData struct {
 	Config            *config.RuntimeConfig
 	CustomIndexItems  []IndexItem
 	FeedsEnabled      bool
-	FeedSigner        *feedsign.Signer
-	ImageSigner       *imagesign.Signer
-	ShareSigner       *sharesign.Signer
+
+	// Signing keys for various URL types
+	FeedSignKey  string // Key for signing feed URLs
+	ImageSignKey string // Key for signing image URLs
+	ShareSignKey string // Key for signing share/OG URLs
+	LinkSignKey  string // Key for signing external link redirects
+
 	IndexItems        []IndexItem
-	LinkSigner        *linksign.Signer
 	absoluteURLBase   lazy.Value[string]  // cached base URL for absolute links
 	dbRegistry        *dbdrivers.Registry // database driver registry
 	emailRegistry     *email.Registry
@@ -704,11 +704,11 @@ func (cd *CoreData) CommentByID(id int32, ops ...lazy.Option[*db.GetCommentByIdF
 
 func (cd *CoreData) composeMapper() {
 	var fns []func(tag, val string) string
-	if cd.ImageSigner != nil {
-		fns = append(fns, cd.ImageSigner.MapURL)
+	if cd.ImageSignKey != "" {
+		fns = append(fns, cd.MapImageURL)
 	}
-	if cd.LinkSigner != nil {
-		fns = append(fns, cd.LinkSigner.MapURL)
+	if cd.LinkSignKey != "" {
+		fns = append(fns, cd.MapLinkURL)
 	}
 	if len(fns) == 0 {
 		cd.a4codeMapper = nil
@@ -2756,34 +2756,33 @@ func WithSiteTitle(title string) CoreOption {
 	return func(cd *CoreData) { cd.SiteTitle = title }
 }
 
-// WithImageSigner registers the image signer and URL mapper on CoreData.
-func WithImageSigner(s *imagesign.Signer) CoreOption {
+// WithImageSignKey sets the image signing key and initializes the mapper.
+func WithImageSignKey(key string) CoreOption {
 	return func(cd *CoreData) {
-		cd.ImageSigner = s
+		cd.ImageSignKey = key
 		cd.composeMapper()
 	}
 }
 
-// WithShareSigner registers the external link signer on CoreData.
-func WithShareSigner(s *sharesign.Signer) CoreOption {
+// WithShareSignKey sets the share signing key.
+func WithShareSignKey(key string) CoreOption {
 	return func(cd *CoreData) {
-		cd.ShareSigner = s
+		cd.ShareSignKey = key
+	}
+}
+
+// WithLinkSignKey sets the external link signing key and initializes the mapper.
+func WithLinkSignKey(key string) CoreOption {
+	return func(cd *CoreData) {
+		cd.LinkSignKey = key
 		cd.composeMapper()
 	}
 }
 
-// WithLinkSigner registers the external link signer on CoreData.
-func WithLinkSigner(s *linksign.Signer) CoreOption {
+// WithFeedSignKey sets the feed signing key.
+func WithFeedSignKey(key string) CoreOption {
 	return func(cd *CoreData) {
-		cd.LinkSigner = s
-		cd.composeMapper()
-	}
-}
-
-// WithFeedSigner registers the feed signer on CoreData.
-func WithFeedSigner(s *feedsign.Signer) CoreOption {
-	return func(cd *CoreData) {
-		cd.FeedSigner = s
+		cd.FeedSignKey = key
 	}
 }
 
@@ -2928,7 +2927,7 @@ func (cd *CoreData) HasModule(name string) bool {
 
 // GenerateFeedURL returns a signed feed URL if the user is logged in, otherwise the raw path.
 func (cd *CoreData) GenerateFeedURL(path string) string {
-	if cd.UserID != 0 && cd.FeedSigner != nil {
+	if cd.UserID != 0 && cd.FeedSignKey != "" {
 		u := cd.CurrentUserLoaded()
 		if u == nil {
 			// Try to load it if not loaded
@@ -2945,7 +2944,7 @@ func (cd *CoreData) GenerateFeedURL(path string) string {
 				if u.Username.Valid {
 					username = u.Username.String
 				}
-				return cd.FeedSigner.SignedURL(parsed.Path, parsed.RawQuery, username)
+				return cd.SignFeedURL(parsed.Path, username)
 			}
 		}
 	}

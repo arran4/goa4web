@@ -2,6 +2,7 @@ package news
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -41,10 +42,15 @@ func (t *newsTask) Get(w http.ResponseWriter, r *http.Request) {
 		cd.StartLink = "?offset=0"
 	}
 
+	img, err := share.MakeImageURL(cd.AbsoluteURL(), "Latest News", cd.ShareSignKey, false)
+	if err != nil {
+		log.Printf("Error making image URL: %v", err)
+	}
+
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       "News",
 		Description: "Latest news and announcements.",
-		Image:       share.MakeImageURL(cd.AbsoluteURL(), "Latest News", cd.ShareSigner, false),
+		Image:       img,
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,

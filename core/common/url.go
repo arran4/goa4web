@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/arran4/goa4web/internal/sign"
 )
 
 // SanitizeBackURL validates raw and returns a safe back URL.
@@ -58,14 +60,15 @@ func (cd *CoreData) SanitizeBackURL(r *http.Request, raw string) string {
 		return result
 	}
 
-	signer := cd.ImageSigner
 	sig := r.FormValue("back_sig")
-	ts := r.FormValue("back_ts")
-	if signer != nil && sig != "" && ts != "" && signer.Verify("back:"+raw, ts, sig) {
-		return raw
+	if cd.ImageSignKey != "" && sig != "" {
+		data := "back:" + raw
+		if err := sign.Verify(data, sig, cd.ImageSignKey, sign.WithOutNonce()); err == nil {
+			return raw
+		}
 	}
-	if sig != "" || ts != "" {
-		log.Printf("invalid back signature url=%q ts=%s sig=%s", raw, ts, sig)
+	if sig != "" {
+		log.Printf("invalid back signature url=%q sig=%s", raw, sig)
 	} else {
 		log.Printf("disallowed back host url=%q", raw)
 	}

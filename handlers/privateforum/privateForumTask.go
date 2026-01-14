@@ -1,6 +1,7 @@
 package privateforum
 
 import (
+	"log"
 	"net/http"
 	"net/url"
 
@@ -35,10 +36,14 @@ func (t *privateForumTask) Get(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
 	cd.PageTitle = "Private Forum"
+	img, err := share.MakeImageURL(cd.AbsoluteURL(), "Private Forum", cd.ShareSignKey, false)
+	if err != nil {
+		log.Printf("Error making image URL: %v", err)
+	}
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       "Private Forum",
 		Description: "Private discussion forums",
-		Image:       share.MakeImageURL(cd.AbsoluteURL(), "Private Forum", cd.ShareSigner, false),
+		Image:       img,
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,

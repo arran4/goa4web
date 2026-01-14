@@ -2,13 +2,8 @@ package auth
 
 import (
 	"context"
-	"crypto/hmac"
-	"crypto/sha256"
 	"database/sql"
-	"encoding/hex"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -17,19 +12,19 @@ import (
 	"testing"
 	"time"
 
+	"github.com/arran4/goa4web/core/consts"
+
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
-	imagesign "github.com/arran4/goa4web/internal/images"
+	"github.com/arran4/goa4web/internal/sign"
 	"github.com/gorilla/sessions"
 )
 
 func signBackURL(key, u string, ts int64) string {
-	mac := hmac.New(sha256.New, []byte(key))
-	io.WriteString(mac, fmt.Sprintf("back:%s:%d", u, ts))
-	return hex.EncodeToString(mac.Sum(nil))
+	return sign.Sign("back:"+u, key, sign.WithOutNonce())
 }
 
 type loginAttemptRecord struct {
@@ -367,8 +362,8 @@ func TestSanitizeBackURLSigned(t *testing.T) {
 	req.Host = "example.com"
 	cfg := config.NewRuntimeConfig()
 	cfg.LoginAttemptThreshold = 10
-	signer := imagesign.NewSigner(cfg, "k")
-	cd := common.NewCoreData(req.Context(), db.New(nil), config.NewRuntimeConfig(), common.WithImageSigner(signer))
+	key := "k"
+	cd := common.NewCoreData(req.Context(), db.New(nil), config.NewRuntimeConfig(), common.WithImageSignKey(key))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	ts := time.Now().Add(time.Hour).Unix()
@@ -406,8 +401,8 @@ func TestLoginPageSignedBackURL(t *testing.T) {
 	sig := signBackURL("k", raw, ts)
 	req := httptest.NewRequest(http.MethodGet, "/login?back="+url.QueryEscape(raw)+"&back_ts="+fmt.Sprint(ts)+"&back_sig="+sig, nil)
 	req.Host = "example.com"
-	signer := imagesign.NewSigner(cfg, "k")
-	cd := common.NewCoreData(req.Context(), newLoginQuerierFake(), cfg, common.WithImageSigner(signer))
+	key := "k"
+	cd := common.NewCoreData(req.Context(), newLoginQuerierFake(), cfg, common.WithImageSignKey(key))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
@@ -481,14 +476,14 @@ func TestLoginAction_SignedExternalBackURL(t *testing.T) {
 	raw := "https://example.org/ok"
 	ts := time.Now().Add(time.Hour).Unix()
 	sig := signBackURL("k", raw, ts)
-	signer := imagesign.NewSigner(cfg, "k")
+	key := "k"
 	form := url.Values{"username": {"bob"}, "password": {"pw"}, "back": {raw}, "back_ts": {fmt.Sprint(ts)}, "back_sig": {sig}}
 	req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.RemoteAddr = "1.2.3.4:1111"
 	req.Host = "example.com"
 
-	cd := common.NewCoreData(req.Context(), q, cfg, common.WithImageSigner(signer))
+	cd := common.NewCoreData(req.Context(), q, cfg, common.WithImageSignKey(key))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 

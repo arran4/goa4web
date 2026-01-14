@@ -98,10 +98,15 @@ func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	imgURL, err := share.MakeImageURL(cd.AbsoluteURL(""), "Latest News", cd.ShareSignKey, false)
+	if err != nil {
+		log.Printf("Error making image URL: %v", err)
+	}
+
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       strings.Split(post.News.String, "\n")[0],
 		Description: a4code.Snip(post.News.String, 128),
-		Image:       share.MakeImageURL(cd.AbsoluteURL(""), "Latest News", cd.ShareSigner, false),
+		Image:       imgURL,
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,

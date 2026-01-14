@@ -73,17 +73,17 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	retType := r.FormValue("return")
 	if retType == "url" {
 		ref := "image:" + fname
-		if cd.ImageSigner != nil && r.FormValue("signed") == "true" {
-			signed := cd.ImageSigner.SignedRef(ref)
+		if cd.ImageSignKey != "" && r.FormValue("signed") == "true" {
+			signed := cd.SignImageURL(ref, 24*time.Hour)
 			return handlers.TextByteWriter([]byte(cd.ImageURLMapper("img", signed)))
 		}
 		// Construct URL manually to avoid forced signing by the mapper.
 		host := strings.TrimSuffix(cd.Config.HTTPHostname, "/")
 		urlStr := fmt.Sprintf("%s/images/image/%s", host, fname)
-		if cd.ImageSigner != nil && r.FormValue("signed") == "true" {
+		if cd.ImageSignKey != "" && r.FormValue("signed") == "true" {
 			// We can use SignedRef but that returns "image:ID?..." which we then need to map to URL?
-			// Or we can use cd.ImageSigner.SignedURLTTL which returns the full URL.
-			urlStr = cd.ImageSigner.SignedURLTTL("image:"+fname, 24*time.Hour) // Default TTL?
+			// Or we can use cd.SignImageURL which returns the full URL.
+			urlStr = cd.SignImageURL("image:"+fname, 24*time.Hour) // Default TTL?
 		}
 		return handlers.TextByteWriter([]byte(urlStr))
 	}

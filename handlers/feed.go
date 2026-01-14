@@ -8,7 +8,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/feedsign"
+	"github.com/arran4/goa4web/internal/sign"
 	"github.com/gorilla/mux"
 )
 
@@ -22,16 +22,21 @@ func VerifyFeedRequest(r *http.Request, basePath string) (*db.User, error) {
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	if cd.FeedSigner == nil {
-		return nil, fmt.Errorf("feed signer not configured")
+	if cd.FeedSignKey == "" {
+		return nil, fmt.Errorf("feed signing key not configured")
 	}
 
-	ts := r.URL.Query().Get("ts")
 	sig := r.URL.Query().Get("sig")
-	originalQuery := feedsign.StripSignatureParams(r.URL.Query())
+	if sig == "" {
+		return nil, fmt.Errorf("missing signature")
+	}
 
-	if !cd.FeedSigner.Verify(basePath, originalQuery, username, ts, sig) {
-		return nil, fmt.Errorf("invalid signature")
+	// Build data to verify
+	data := "feed:" + username + ":" + basePath
+
+	// Verify signature (feeds use WithOutNonce by default)
+	if err := sign.Verify(data, sig, cd.FeedSignKey, sign.WithOutNonce()); err != nil {
+		return nil, fmt.Errorf("invalid signature: %w", err)
 	}
 
 	queries := cd.Queries()

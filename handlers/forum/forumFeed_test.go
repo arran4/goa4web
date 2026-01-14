@@ -7,11 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
-	imagesign "github.com/arran4/goa4web/internal/images"
 )
 
 func TestForumTopicFeed(t *testing.T) {
@@ -25,7 +23,7 @@ func TestForumTopicFeed(t *testing.T) {
 		},
 	}
 	r := httptest.NewRequest("GET", "http://example.com/forum/topic/1.rss", nil)
-	cd := &common.CoreData{ImageSigner: imagesign.NewSigner(&config.RuntimeConfig{}, "k")}
+	cd := &common.CoreData{ImageSignKey: "test-key"}
 	r = r.WithContext(context.WithValue(r.Context(), consts.KeyCoreData, cd))
 	feed := TopicFeed(r, "Test", 1, rows, "/forum")
 	if len(feed.Items) != 1 {

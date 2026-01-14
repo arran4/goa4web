@@ -12,7 +12,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/sharesign"
 )
 
 func TestBloggerListPageSearchRedirect(t *testing.T) {
@@ -31,7 +30,7 @@ func TestBloggerListPageSearchRedirect(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/bloggers?search=arran4", nil)
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
-	cd.ShareSigner = sharesign.NewSigner(config.NewRuntimeConfig(), "secret")
+	cd.ShareSignKey = "secret"
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()

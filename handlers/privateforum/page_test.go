@@ -16,12 +16,11 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/sharesign"
 )
 
 func TestPage_NoAccess(t *testing.T) {
 	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
-	cd.ShareSigner = sharesign.NewSigner(config.NewRuntimeConfig(), "secret")
+	cd.ShareSignKey = "secret"
 	req := httptest.NewRequest(http.MethodGet, "/private", nil)
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 
@@ -43,7 +42,7 @@ func TestPage_Access(t *testing.T) {
 		},
 	}
 	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
-	cd.ShareSigner = sharesign.NewSigner(config.NewRuntimeConfig(), "secret")
+	cd.ShareSignKey = "secret"
 	cd.UserID = 1
 	cd.AdminMode = true
 	cachePrivateTopics(cd, nil)
@@ -76,7 +75,7 @@ func TestPage_SeeNoCreate(t *testing.T) {
 		ListPrivateTopicParticipantsByTopicIDForUserReturns: []*db.ListPrivateTopicParticipantsByTopicIDForUserRow{},
 	}
 	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
-	cd.ShareSigner = sharesign.NewSigner(config.NewRuntimeConfig(), "secret")
+	cd.ShareSignKey = "secret"
 	cd.UserID = 1
 	cd.AdminMode = false
 	cachePrivateTopics(cd, nil)
@@ -104,7 +103,7 @@ func TestPage_AdminLinks(t *testing.T) {
 		GetPermissionsByUserIDReturns: []*db.GetPermissionsByUserIDRow{{IsAdmin: true}},
 	}
 	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
-	cd.ShareSigner = sharesign.NewSigner(config.NewRuntimeConfig(), "secret")
+	cd.ShareSignKey = "secret"
 	cd.UserID = 1
 	cd.AdminMode = true
 

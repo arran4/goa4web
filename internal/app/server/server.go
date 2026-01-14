@@ -25,13 +25,9 @@ import (
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
-	feedsign "github.com/arran4/goa4web/internal/feedsign"
-	imagesign "github.com/arran4/goa4web/internal/images"
-	linksign "github.com/arran4/goa4web/internal/linksign"
 	"github.com/arran4/goa4web/internal/middleware"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	"github.com/arran4/goa4web/internal/router"
-	"github.com/arran4/goa4web/internal/sharesign"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/internal/websocket"
 	"github.com/arran4/goa4web/workers"
@@ -48,15 +44,18 @@ type Server struct {
 	DB              *sql.DB
 	Bus             *eventbus.Bus
 	EmailReg        *email.Registry
-	FeedSigner      *feedsign.Signer
-	ImageSigner     *imagesign.Signer
-	LinkSigner      *linksign.Signer
-	ShareSigner     *sharesign.Signer
-	SessionManager  common.SessionManager
-	TasksReg        *tasks.Registry
-	DBReg           *dbdrivers.Registry
-	DLQReg          *dlq.Registry
-	Websocket       *websocket.Module
+
+	// Signing keys (simple strings, no complex objects)
+	FeedSignKey  string
+	ImageSignKey string
+	LinkSignKey  string
+	ShareSignKey string
+
+	SessionManager common.SessionManager
+	TasksReg       *tasks.Registry
+	DBReg          *dbdrivers.Registry
+	DLQReg         *dlq.Registry
+	Websocket      *websocket.Module
 
 	WorkerCancel context.CancelFunc
 
@@ -149,24 +148,24 @@ func WithBus(b *eventbus.Bus) Option { return func(s *Server) { s.Bus = b } }
 // WithEmailRegistry sets the email provider registry.
 func WithEmailRegistry(r *email.Registry) Option { return func(s *Server) { s.EmailReg = r } }
 
-// WithImageSigner sets the image signer.
-func WithImageSigner(signer *imagesign.Signer) Option {
-	return func(s *Server) { s.ImageSigner = signer }
+// WithImageSignKey sets the image signing key.
+func WithImageSignKey(key string) Option {
+	return func(s *Server) { s.ImageSignKey = key }
 }
 
-// WithLinkSigner sets the external link signer.
-func WithLinkSigner(signer *linksign.Signer) Option {
-	return func(s *Server) { s.LinkSigner = signer }
+// WithLinkSignKey sets the external link signing key.
+func WithLinkSignKey(key string) Option {
+	return func(s *Server) { s.LinkSignKey = key }
 }
 
-// WithShareSigner sets the external link signer.
-func WithShareSigner(signer *sharesign.Signer) Option {
-	return func(s *Server) { s.ShareSigner = signer }
+// WithShareSignKey sets the share signing key.
+func WithShareSignKey(key string) Option {
+	return func(s *Server) { s.ShareSignKey = key }
 }
 
-// WithFeedSigner sets the feed signer.
-func WithFeedSigner(signer *feedsign.Signer) Option {
-	return func(s *Server) { s.FeedSigner = signer }
+// WithFeedSignKey sets the feed signing key.
+func WithFeedSignKey(key string) Option {
+	return func(s *Server) { s.FeedSignKey = key }
 }
 
 // WithSessionManager sets the session manager used by the server.
@@ -274,12 +273,11 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 		modules = s.RouterReg.Names()
 	}
 	cd := common.NewCoreData(r.Context(), queries, s.Config,
-		common.WithImageSigner(s.ImageSigner),
+		common.WithImageSignKey(s.ImageSignKey),
 		common.WithCustomQueries(queries),
-		common.WithLinkSigner(s.LinkSigner),
-		common.WithShareSigner(s.ShareSigner),
-		common.WithFeedSigner(s.FeedSigner),
-		common.WithImageURLMapper(s.ImageSigner.MapURL),
+		common.WithLinkSignKey(s.LinkSignKey),
+		common.WithShareSignKey(s.ShareSignKey),
+		common.WithFeedSignKey(s.FeedSignKey),
 		common.WithSession(session),
 		common.WithEmailProvider(provider),
 		common.WithAbsoluteURLBase(base),

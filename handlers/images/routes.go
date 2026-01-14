@@ -17,6 +17,7 @@ import (
 	intimages "github.com/arran4/goa4web/internal/images"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	"github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/sign"
 	"github.com/arran4/goa4web/internal/upload"
 )
 
@@ -30,7 +31,6 @@ func verifyMiddleware(prefix string) mux.MiddlewareFunc {
 				return
 			}
 			query := r.URL.Query()
-			ts := query.Get("ts")
 			sig := query.Get("sig")
 			query.Del("ts")
 			query.Del("sig")
@@ -42,7 +42,7 @@ func verifyMiddleware(prefix string) mux.MiddlewareFunc {
 				data = prefix + data
 			}
 			cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-			if cd.ImageSigner == nil || !cd.ImageSigner.Verify(data, ts, sig) {
+			if cd.ImageSignKey == "" || sign.Verify(data, sig, cd.ImageSignKey, sign.WithOutNonce()) != nil {
 				w.WriteHeader(http.StatusForbidden)
 				handlers.RenderErrorPage(w, r, fmt.Errorf("forbidden"))
 				return

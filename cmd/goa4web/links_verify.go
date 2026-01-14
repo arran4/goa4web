@@ -6,7 +6,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	linksign "github.com/arran4/goa4web/internal/linksign"
+	"github.com/arran4/goa4web/internal/sign"
 )
 
 // linksVerifyCmd implements "links verify".
@@ -41,8 +41,7 @@ func (c *linksVerifyCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("link sign secret: %w", err)
 	}
-	signer := linksign.NewSigner(cfg, key)
-	if signer.Verify(c.url, c.ts, c.sig) {
+	if err := sign.Verify(c.url, c.sig, key, sign.WithExpiryTimestamp(c.ts)); err == nil {
 		fmt.Println("valid")
 	} else {
 		fmt.Println("invalid")

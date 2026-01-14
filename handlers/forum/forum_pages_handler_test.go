@@ -20,7 +20,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/sharesign"
 )
 
 func TestForumPageHandlers(t *testing.T) {
@@ -412,7 +411,7 @@ func TestForumPageHandlers(t *testing.T) {
 
 		cfg := config.NewRuntimeConfig()
 		cd := common.NewCoreData(ctx, queries, cfg)
-		cd.ShareSigner = sharesign.NewSigner(cfg, "secret")
+		cd.ShareSignKey = "secret"
 		cd.SetCurrentSection("privateforum")
 		ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 		req = req.WithContext(ctx)

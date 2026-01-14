@@ -111,6 +111,7 @@ func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,
 		URL:         cd.AbsoluteURL(r.URL.String()),
+		Type:        "article",
 	}
 
 	replyType := r.URL.Query().Get("type")

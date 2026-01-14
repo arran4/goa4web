@@ -55,6 +55,7 @@ func (t *newsTask) Get(w http.ResponseWriter, r *http.Request) {
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,
 		URL:         cd.AbsoluteURL(r.URL.String()),
+		Type:        "website",
 	}
 
 	NewsPageTmpl.Handle(w, r, struct{}{})

@@ -63,7 +63,17 @@ var (
 	assetHashesLock sync.RWMutex
 	siteTemplates   *htemplate.Template
 	siteTemplatesMu sync.Mutex
+	templatesDir    string // To override embedded fs for tests/dev
 )
+
+
+// Asset reads an asset file from the configured source (embedded or local).
+func Asset(name string) ([]byte, error) {
+	if templatesDir != "" {
+		return os.ReadFile(filepath.Join(templatesDir, "assets", name))
+	}
+	return embeddedFS.ReadFile("assets/" + name)
+}
 
 func init() {
 	// Pre-compute hashes for embedded assets to avoid runtime overhead in production

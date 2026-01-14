@@ -146,6 +146,14 @@ type RuntimeConfig struct {
 	OGImageWidth int
 	// OGImageHeight is the height of the generated Open Graph image.
 	OGImageHeight int
+	// OGImagePattern is the pattern style to use for the Open Graph image.
+	OGImagePattern string
+	// OGImageFgColor is the foreground color for the Open Graph image.
+	OGImageFgColor string
+	// OGImageBgColor is the background color for the Open Graph image.
+	OGImageBgColor string
+	// OGImageRpgTheme uses the RPG theme for the Open Graph image.
+	OGImageRpgTheme bool
 	// TwitterSite is the Twitter handle for the site.
 	TwitterSite string
 }

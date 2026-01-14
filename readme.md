@@ -1,6 +1,8 @@
 # Goa4Web
 
-![GoA4Web](og-image.png)
+<p align="center">
+  <img src="og-image.png" alt="GoA4Web" />
+</p>
 
 [![CI](https://github.com/arran4/goa4web/actions/workflows/go_test.yaml/badge.svg)](https://github.com/arran4/goa4web/actions/workflows/go_test.yaml)
 

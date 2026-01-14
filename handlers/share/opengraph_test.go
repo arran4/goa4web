@@ -17,7 +17,7 @@ import (
 
 func TestMain(m *testing.M) {
 	// Set the templates directory to the project root so that the embedded assets can be found.
-	templates.SetDir("/app/core/templates")
+	templates.SetDir("../..")
 	os.Exit(m.Run())
 }
 
@@ -139,7 +139,10 @@ func TestMakeImageURL_WithExpiry(t *testing.T) {
 }
 
 func TestOGImageHandler(t *testing.T) {
-	handler := share.NewOGImageHandler(testKey)
+	cfg := &config.RuntimeConfig{
+		ShareSignSecret: testKey,
+	}
+	handler := share.NewOGImageHandler(cfg)
 
 	// Generate a valid signed URL
 	baseURL := "http://example.com"
@@ -173,7 +176,10 @@ func TestOGImageHandler(t *testing.T) {
 }
 
 func TestOGImageHandler_InvalidSignature(t *testing.T) {
-	handler := share.NewOGImageHandler(testKey)
+	cfg := &config.RuntimeConfig{
+		ShareSignSecret: testKey,
+	}
+	handler := share.NewOGImageHandler(cfg)
 
 	// Request without signature
 	req := httptest.NewRequest("GET", "http://example.com/api/og-image/dGVzdA", nil)
@@ -188,7 +194,10 @@ func TestOGImageHandler_InvalidSignature(t *testing.T) {
 }
 
 func TestOGImageHandler_WrongKey(t *testing.T) {
-	handler := share.NewOGImageHandler("wrong-key")
+	cfg := &config.RuntimeConfig{
+		ShareSignSecret: "wrong-key",
+	}
+	handler := share.NewOGImageHandler(cfg)
 
 	// Generate URL with correct key
 	signedURL, err := share.MakeImageURL("http://example.com", "Test", testKey, false)

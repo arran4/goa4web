@@ -13,15 +13,14 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/arran4/go-pattern"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/sign"
 	"github.com/arran4/goa4web/internal/sign/signutil"
 	"github.com/gorilla/mux"
+	"golang.org/x/image/font"
 	"golang.org/x/image/font/gofont/goregular"
 	"golang.org/x/image/font/opentype"
-	"golang.org/x/image/font"
 	"golang.org/x/image/math/fixed"
 )
 
@@ -222,104 +221,99 @@ func MakeImageURL(baseURL, title, key string, usePathAuth bool, opts ...sign.Sig
 
 // OGImageHandler serves dynamically generated OpenGraph images.
 type OGImageHandler struct {
-	key string
+	sign.Signer
 }
 
 // NewOGImageHandler creates a new OpenGraph image handler.
-func NewOGImageHandler(key string) *OGImageHandler {
-	return &OGImageHandler{key: key}
+func NewOGImageHandler(signKey string) *OGImageHandler {
+	return &OGImageHandler{
+		Signer: sign.New(signKey),
+	}
 }
 
 func (h *OGImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Verify signature
-	cleanPath := VerifyAndGetPath(r, h.key)
-	if cleanPath == "" {
-		http.Error(w, "Invalid or missing signature", http.StatusForbidden)
+	vars := mux.Vars(r)
+	dataB64, ok := vars["data"]
+	if !ok {
+		log.Printf("data not found")
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
-	// Extract base64 encoded title from path
-	parts := strings.Split(cleanPath, "/")
-	var encodedTitle string
-	for i, part := range parts {
-		if i > 0 && parts[i-1] == "og-image" {
-			encodedTitle = part
-			break
-		}
-	}
-
-	if encodedTitle == "" {
-		http.Error(w, "Invalid path format", http.StatusBadRequest)
-		return
-	}
-
-	titleBytes, err := base64.RawURLEncoding.DecodeString(encodedTitle)
+	signed, err := signutil.GetSignedData(r, h.Signer)
 	if err != nil {
-		http.Error(w, "Invalid title encoding", http.StatusBadRequest)
+		log.Printf("Error getting signed data: %v", err)
+		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	title := string(titleBytes)
-
-	// --- PNG Generation ---
-	width, height := 1200, 630
-	img := image.NewRGBA(image.Rect(0, 0, width, height))
-
-	// Create a pattern
-	p := pattern.NewSierpinskiTriangle(
-		pattern.SetBounds(image.Rect(0, 0, width, height)),
-		pattern.SetFillColor(color.RGBA{R: 60, G: 66, B: 78, A: 255}),
-		pattern.SetSpaceColor(color.RGBA{R: 40, G: 44, B: 52, A: 255}))
-
-	// Draw the pattern onto the image
-	draw.Draw(img, img.Bounds(), p, image.Point{}, draw.Src)
-
-	// Load logo
-	logoData := templates.GetFaviconPNG()
-	logo, _, err := image.Decode(bytes.NewReader(logoData))
+	if !signed.Valid {
+		log.Printf("Invalid signature")
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	dataBytes, err := base64.RawURLEncoding.DecodeString(dataB64)
 	if err != nil {
-		http.Error(w, "Failed to decode logo", http.StatusInternalServerError)
+		log.Printf("Error decoding data: %v", err)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	// Draw logo in top-left
-	logoBounds := logo.Bounds()
-	draw.Draw(img, image.Rect(20, 20, 20+logoBounds.Dx(), 20+logoBounds.Dy()), logo, image.Point{}, draw.Over)
-
-	// Load font and draw text
-	fontData, err := opentype.Parse(goregular.TTF)
+	data := string(dataBytes)
+	img, err := h.generateImage(data)
 	if err != nil {
-		http.Error(w, "Failed to parse font", http.StatusInternalServerError)
+		log.Printf("Error generating image: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	face, err := opentype.NewFace(fontData, &opentype.FaceOptions{
-		Size: 48,
-		DPI: 72,
+	w.Header().Set("Content-Type", "image/png")
+	if err := png.Encode(w, img); err != nil {
+		log.Printf("Error encoding png: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
+func (h *OGImageHandler) generateImage(data string) (image.Image, error) {
+	img := image.NewRGBA(image.Rect(0, 0, 1200, 630))
+	draw.Draw(img, img.Bounds(), image.NewUniform(color.RGBA{R: 0x0b, G: 0x35, B: 0x13, A: 0xff}), image.Point{}, draw.Src)
+	f, err := opentype.Parse(goregular.TTF)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing font: %w", err)
+	}
+	face, err := opentype.NewFace(f, &opentype.FaceOptions{
+		Size:    48,
+		DPI:     72,
+		Hinting: font.HintingFull,
 	})
 	if err != nil {
-		http.Error(w, "Failed to create face", http.StatusInternalServerError)
-		return
+		return nil, fmt.Errorf("error creating font face: %w", err)
 	}
-
+	logoBytes, err := templates.Asset("favicon.png")
+	if err != nil {
+		return nil, fmt.Errorf("error getting logo: %w", err)
+	}
+	logo, _, err := image.Decode(bytes.NewReader(logoBytes))
+	if err != nil {
+		return nil, fmt.Errorf("error decoding logo: %w", err)
+	}
+	drawImage := img
+	// draw logo centered
+	logoBounds := logo.Bounds()
+	logoPt := image.Point{
+		X: (1200 - logoBounds.Dx()) / 2,
+		Y: 50,
+	}
+	draw.Draw(drawImage, logo.Bounds().Add(logoPt), logo, image.Point{}, draw.Over)
+	// draw text centered
 	d := &font.Drawer{
-		Dst:  img,
+		Dst:  drawImage,
 		Src:  image.NewUniform(color.White),
 		Face: face,
-		Dot:  fixed.Point26_6{X: fixed.I(width / 2), Y: fixed.I(height / 2)},
+		Dot:  fixed.Point26_6{},
 	}
-	// Center the text
-	bounds, _ := font.BoundString(face, title)
-	d.Dot.X -= bounds.Max.X / 2
-	d.DrawString(title)
-
-	// Encode as PNG
-	var buf bytes.Buffer
-	if err := png.Encode(&buf, img); err != nil {
-		http.Error(w, "Failed to encode PNG", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "image/png")
-	w.Header().Set("Cache-Control", "public, max-age=31536000") // Cache for 1 year
-	w.Write(buf.Bytes())
+	textWidth := d.MeasureString(data)
+	d.Dot.X = (fixed.I(1200) - textWidth) / 2
+	d.Dot.Y = fixed.I(630 - 50)
+	d.DrawString(data)
+	return img, nil
 }
 
 // SharedContentPreview generates a signed OpenGraph preview URL.

@@ -11,8 +11,14 @@ import (
 
 	"github.com/arran4/go-pattern"
 	"github.com/arran4/goa4web/core/templates"
+	"fmt"
+	"io/ioutil"
+
+	"github.com/arran4/goa4web/handlers/share"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/gofont/goregular"
+	"fmt"
+	"io/ioutil"
 	"golang.org/x/image/font/opentype"
 	"golang.org/x/image/math/fixed"
 )
@@ -21,6 +27,10 @@ type genOgImageCmd struct {
 	fs *flag.FlagSet
 	Title string
 	OutputFile string
+	Pattern string
+	FgColor string
+	BgColor string
+	RpgTheme bool
 }
 
 func (c *genOgImageCmd) Name() string {
@@ -28,58 +38,22 @@ func (c *genOgImageCmd) Name() string {
 }
 
 func (c *genOgImageCmd) Run() error {
-	return GenerateOgImage(c.Title, c.OutputFile)
+	fg, err := share.ParseHexColor(c.FgColor)
+	if err != nil {
+		return err
+	}
+	bg, err := share.ParseHexColor(c.BgColor)
+	if err != nil {
+		return err
+	}
+	buf, err := share.GenerateOgImage(c.Title, c.Pattern, fg, bg, c.RpgTheme)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(c.OutputFile, buf.Bytes(), 0644)
 }
 
-func GenerateOgImage(title, outputFile string) error {
-	templates.SetDir("core/templates")
-	width, height := 1200, 630
-	img := image.NewRGBA(image.Rect(0, 0, width, height))
 
-	p := pattern.NewSierpinskiTriangle(
-		pattern.SetBounds(image.Rect(0, 0, width, height)),
-		pattern.SetFillColor(color.RGBA{R: 60, G: 66, B: 78, A: 255}),
-		pattern.SetSpaceColor(color.RGBA{R: 40, G: 44, B: 52, A: 255}))
-
-	draw.Draw(img, img.Bounds(), p, image.Point{}, draw.Src)
-
-	logoData := templates.GetFaviconPNG()
-	logo, _, err := image.Decode(bytes.NewReader(logoData))
-	if err != nil {
-		return err
-	}
-	logoBounds := logo.Bounds()
-	draw.Draw(img, image.Rect(20, 20, 20+logoBounds.Dx(), 20+logoBounds.Dy()), logo, image.Point{}, draw.Src)
-
-	fontData, err := opentype.Parse(goregular.TTF)
-	if err != nil {
-		return err
-	}
-	face, err := opentype.NewFace(fontData, &opentype.FaceOptions{
-		Size: 48,
-		DPI: 72,
-	})
-	if err != nil {
-		return err
-	}
-
-	d := &font.Drawer{
-		Dst: img,
-		Src: image.NewUniform(color.White),
-		Face: face,
-		Dot: fixed.Point26_6{X: fixed.I(width / 2), Y: fixed.I(height / 2)},
-	}
-	bounds, _ := font.BoundString(face, title)
-	d.Dot.X -= bounds.Max.X / 2
-	d.DrawString(title)
-
-	var buf bytes.Buffer
-	if err := png.Encode(&buf, img); err != nil {
-		return err
-	}
-
-	return ioutil.WriteFile(outputFile, buf.Bytes(), 0644)
-}
 
 func newGenOgImageCmd(r *rootCmd, args []string) (*genOgImageCmd, error) {
 	c := &genOgImageCmd{
@@ -87,6 +61,10 @@ func newGenOgImageCmd(r *rootCmd, args []string) (*genOgImageCmd, error) {
 	}
 	c.fs.StringVar(&c.Title, "title", "GoA4Web", "The title to use in the image")
 	c.fs.StringVar(&c.OutputFile, "output", "og-image.png", "The output file")
+	c.fs.StringVar(&c.Pattern, "pattern", "SierpinskiTriangle", "The pattern style to use")
+	c.fs.StringVar(&c.FgColor, "fg-color", "#3C424E", "The foreground color")
+	c.fs.StringVar(&c.BgColor, "bg-color", "#282C34", "The background color")
+	c.fs.BoolVar(&c.RpgTheme, "rpg-theme", false, "Use the RPG theme")
 	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}

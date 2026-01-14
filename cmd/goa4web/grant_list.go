@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"flag"
 	"fmt"
 	"io"
-	"os"
 	"text/tabwriter"
 
 	"github.com/arran4/goa4web/internal/db"
@@ -98,7 +98,7 @@ func (c *grantListCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("list grants: %w", err)
 	}
-	if err := printGrantsTable(os.Stdout, rows); err != nil {
+	if err := printGrantsTable(c.fs.Output(), rows); err != nil {
 		return fmt.Errorf("printing grants table: %w", err)
 	}
 	return nil

@@ -122,15 +122,6 @@ func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func renderSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.CoreData, title, desc, redirectPath string) {
-	tsStr := r.URL.Query().Get("ts")
-	tsVal, _ := strconv.ParseInt(tsStr, 10, 64)
-	if tsVal == 0 {
-		// Try path vars
-		vars := mux.Vars(r)
-		if t, err := strconv.ParseInt(vars["ts"], 10, 64); err == nil {
-			tsVal = t
-		}
-	}
 
 	// Determine auth style: if ts was found in query, use query auth. If in path, use path auth.
 	// Actually, easier: check if mux var is empty.

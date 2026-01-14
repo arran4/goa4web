@@ -113,15 +113,6 @@ func renderPublicSharedPreview(w http.ResponseWriter, r *http.Request, cd *commo
 		return
 	}
 
-	tsStr := r.URL.Query().Get("ts")
-	tsVal, _ := strconv.ParseInt(tsStr, 10, 64)
-	if tsVal == 0 {
-		vars := mux.Vars(r)
-		if t, err := strconv.ParseInt(vars["ts"], 10, 64); err == nil {
-			tsVal = t
-		}
-	}
-
 	usePathAuth := mux.Vars(r)["ts"] != ""
 
 	ogData := share.OpenGraphData{

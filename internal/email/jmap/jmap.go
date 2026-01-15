@@ -222,7 +222,12 @@ func providerFromConfig(cfg *config.RuntimeConfig) (email.Provider, error) {
 		}
 		// Use session.APIURL if it looks valid, otherwise fallback to ep if using custom path
 		apiURL := session.APIURL
-		if ep != "" {
+
+		// If an override is provided, force it to be the API URL and the final endpoint
+		if override := strings.TrimSpace(cfg.EmailJMAPEndpointOverride); override != "" {
+			apiURL = override
+			ep = override
+		} else if ep != "" {
 			u, _ := url.Parse(ep)
 			if u != nil && u.Path != "" && u.Path != "/" {
 				// If the user provided a custom path endpoint, use it (or prefer it)
@@ -232,6 +237,9 @@ func providerFromConfig(cfg *config.RuntimeConfig) (email.Provider, error) {
 				// For now, let's stick to the previous fix which used 'ep' for identity discovery.
 				apiURL = ep
 			}
+		} else if session.APIURL != "" {
+			// If no override and no custom path provided, default to session's API URL
+			ep = session.APIURL
 		}
 
 		if id == "" && acc != "" {

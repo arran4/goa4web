@@ -35,23 +35,24 @@ type RuntimeConfig struct {
 	// HSTSHeaderValue defines the Strict-Transport-Security header value.
 	HSTSHeaderValue string
 
-	EmailProvider      string
-	EmailSMTPHost      string
-	EmailSMTPPort      string
-	EmailSMTPUser      string
-	EmailSMTPPass      string
-	EmailSMTPAuth      string
-	EmailSMTPStartTLS  bool
-	EmailFrom          string
-	EmailAWSRegion     string
-	EmailJMAPEndpoint  string
-	EmailJMAPAccount   string
-	EmailJMAPIdentity  string
-	EmailJMAPUser      string
-	EmailJMAPPass      string
-	EmailJMAPInsecure  bool
-	EmailSendGridKey   string
-	EmailSubjectPrefix string
+	EmailProvider             string
+	EmailSMTPHost             string
+	EmailSMTPPort             string
+	EmailSMTPUser             string
+	EmailSMTPPass             string
+	EmailSMTPAuth             string
+	EmailSMTPStartTLS         bool
+	EmailFrom                 string
+	EmailAWSRegion            string
+	EmailJMAPEndpoint         string
+	EmailJMAPEndpointOverride string
+	EmailJMAPAccount          string
+	EmailJMAPIdentity         string
+	EmailJMAPUser             string
+	EmailJMAPPass             string
+	EmailJMAPInsecure         bool
+	EmailSendGridKey          string
+	EmailSubjectPrefix        string
 	// EmailSignOff defines the optional sign-off appended to emails.
 	EmailSignOff string
 

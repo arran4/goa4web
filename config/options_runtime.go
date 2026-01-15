@@ -55,6 +55,7 @@ var StringOptions = []StringOption{
 	{"email-signoff", EnvEmailSignOff, "A sign-off message to append to the end of all outgoing emails.", "", nil, "", func(c *RuntimeConfig) *string { return &c.EmailSignOff }},
 	{"aws-region", EnvAWSRegion, "The AWS region to use for SES.", "", []string{"us-east-1"}, "", func(c *RuntimeConfig) *string { return &c.EmailAWSRegion }},
 	{"jmap-endpoint", EnvJMAPEndpoint, "The endpoint for the JMAP server.", "", nil, "", func(c *RuntimeConfig) *string { return &c.EmailJMAPEndpoint }},
+	{"jmap-endpoint-override", EnvJMAPEndpointOverride, "The override URL for the JMAP endpoint, bypassing autodiscovery.", "", nil, "", func(c *RuntimeConfig) *string { return &c.EmailJMAPEndpointOverride }},
 	{"jmap-account", EnvJMAPAccount, "The account to use for the JMAP server. When omitted the primary mail account from the JMAP session is used.", "", nil, "", func(c *RuntimeConfig) *string { return &c.EmailJMAPAccount }},
 	{"jmap-identity", EnvJMAPIdentity, "The identity to use for the JMAP server. When omitted the default mail identity from the JMAP session is used.", "", nil, "", func(c *RuntimeConfig) *string { return &c.EmailJMAPIdentity }},
 	{"jmap-user", EnvJMAPUser, "The username for the JMAP server.", "", nil, "", func(c *RuntimeConfig) *string { return &c.EmailJMAPUser }},

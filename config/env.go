@@ -44,6 +44,8 @@ const (
 	EnvAWSRegion = "AWS_REGION"
 	// EnvJMAPEndpoint is the JMAP API endpoint.
 	EnvJMAPEndpoint = "JMAP_ENDPOINT"
+	// EnvJMAPEndpointOverride overrides the discovered JMAP endpoint URL.
+	EnvJMAPEndpointOverride = "JMAP_ENDPOINT_OVERRIDE"
 	// EnvJMAPAccount is the JMAP account identifier.
 	EnvJMAPAccount = "JMAP_ACCOUNT"
 	// EnvJMAPIdentity is the JMAP identity identifier.

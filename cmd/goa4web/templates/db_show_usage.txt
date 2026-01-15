@@ -1,15 +1,17 @@
-{{.Command}} - Shows the contents of embedded SQL files.
-
 Usage:
+  {{.Prog}} db show <file>
 
-  {{.Exec}} {{.Command}} <file>
+The db show command displays the contents of the embedded SQL files that are
+compiled into the application. This is useful for inspecting the raw SQL that is
+used to create the database schema and to seed the database with initial data.
 
 Arguments:
-
   seed.sql           - Show the contents of the seed.sql file.
   schema.mysql.sql   - Show the contents of the schema.mysql.sql file.
 
 Examples:
+  # Show the contents of the seed.sql file
+  {{.Prog}} db show seed.sql
 
-  {{.Exec}} {{.Command}} seed.sql
-  {{.Exec}} {{.Command}} schema.mysql.sql
+  # Show the contents of the schema.mysql.sql file
+  {{.Prog}} db show schema.mysql.sql

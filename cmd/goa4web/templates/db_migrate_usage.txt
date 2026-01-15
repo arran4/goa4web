@@ -1,0 +1,22 @@
+Usage:
+  {{.Prog}} db migrate [flags]
+
+The db migrate command applies all pending database migrations to bring the
+schema up to date. Migrations are SQL files that contain incremental changes to
+the database schema, allowing for version control and controlled updates.
+
+By default, this command uses the embedded migration files that are compiled
+into the application. However, you can specify a custom directory of migration
+files using the -dir flag.
+
+Before running this command, ensure that the database connection string is
+correctly configured in your configuration file or environment variables.
+
+Examples:
+  # Apply all pending migrations from the embedded collection
+  {{.Prog}} db migrate
+
+  # Apply migrations from a custom directory
+  {{.Prog}} db migrate -dir /path/to/migrations
+
+{{template "flag_groups_section" .FlagGroups}}

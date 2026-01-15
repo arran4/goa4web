@@ -25,6 +25,9 @@ Commands:
   roles       List the roles assigned to a specific user.
   rename      Rename a user account, updating the username.
   profile     Display detailed profile information for a user.
+  password    Manage a user's password.
+  email       Manage a user's email addresses.
+  unverified-emails List all unverified email addresses.
 
 Examples:
   # Add a new user named "bob" with the password "secret"

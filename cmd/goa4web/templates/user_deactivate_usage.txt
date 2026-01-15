@@ -1,0 +1,15 @@
+Usage:
+  {{.Prog}} user deactivate [flags]
+
+The user deactivate command deactivates a user's account, preventing them from
+logging in. This command also scrubs the user's personal information from the
+database, replacing it with random data. This is a destructive operation and
+should be used with caution.
+
+You must specify the user to be deactivated by their username.
+
+Examples:
+  # Deactivate the user "bob"
+  {{.Prog}} user deactivate -username bob
+
+{{template "flag_groups_section" .FlagGroups}}

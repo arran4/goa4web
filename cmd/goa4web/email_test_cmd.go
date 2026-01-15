@@ -72,3 +72,9 @@ func (c *emailTestCmd) Run() error {
 func (c *emailTestCmd) Usage() {
 	executeUsage(c.fs.Output(), "email_test_usage.txt", c)
 }
+
+func (c *emailTestCmd) FlagGroups() []flagGroup {
+	return []flagGroup{{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)}}
+}
+
+var _ usageData = (*emailTestCmd)(nil)

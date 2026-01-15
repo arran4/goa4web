@@ -46,6 +46,12 @@ func (c *userPasswordCmd) Run() error {
 			return fmt.Errorf("clear-user: %w", err)
 		}
 		return cmd.Run()
+	case "generate-reset":
+		cmd, err := parseUserPasswordGenerateResetCmd(c.userCmd, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("generate-reset: %w", err)
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown password command %q", c.args[0])

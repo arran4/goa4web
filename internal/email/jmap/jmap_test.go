@@ -15,7 +15,8 @@ func TestProviderFromConfigDiscoversSession(t *testing.T) {
 	var sawWellKnown bool
 	var srv *httptest.Server
 	srv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/.well-known/jmap" {
+		// New logic respects custom paths, so we expect /jmap if that's what we configured
+		if r.URL.Path != "/.well-known/jmap" && r.URL.Path != "/jmap" {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
 		user, pass, ok := r.BasicAuth()

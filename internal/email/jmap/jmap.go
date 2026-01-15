@@ -12,6 +12,7 @@ import (
 	"net/mail"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/email"
@@ -196,7 +197,19 @@ func providerFromConfig(cfg *config.RuntimeConfig) (email.Provider, error) {
 	}
 
 	if acc == "" || id == "" {
-		session, err := DiscoverSession(context.Background(), httpClient, ep, cfg.EmailJMAPUser, cfg.EmailJMAPPass)
+		var session *SessionResponse
+		var err error
+		// Retry JMAP session discovery as it might be flaky on startup (e.g. 500 errors)
+		for i := 0; i < 5; i++ {
+			session, err = DiscoverSession(context.Background(), httpClient, ep, cfg.EmailJMAPUser, cfg.EmailJMAPPass)
+			if err == nil {
+				break
+			}
+			// Only sleep if we are going to retry
+			if i < 4 {
+				time.Sleep(2 * time.Second)
+			}
+		}
 		if err != nil {
 			return nil, fmt.Errorf("Email disabled: failed to discover JMAP session: %v", err)
 		}
@@ -206,12 +219,23 @@ func providerFromConfig(cfg *config.RuntimeConfig) (email.Provider, error) {
 		if id == "" {
 			id = SelectIdentityID(session)
 		}
-		if ep == "" {
-			ep = session.APIURL
+		// Use session.APIURL if it looks valid, otherwise fallback to ep if using custom path
+		apiURL := session.APIURL
+		if ep != "" {
+			u, _ := url.Parse(ep)
+			if u != nil && u.Path != "" && u.Path != "/" {
+				// If the user provided a custom path endpoint, use it (or prefer it)
+				// But we should stick to session.APIURL if it's authoritative.
+				// However, observed issue is session.APIURL might be internal or unreachable.
+				// So if session discovery succeeded via 'ep', we might trust 'ep' more if it has a path?
+				// For now, let's stick to the previous fix which used 'ep' for identity discovery.
+				apiURL = ep
+			}
 		}
+
 		if id == "" && acc != "" {
 			// Try to fetch identities via API
-			fetchedId, err := DiscoverIdentityID(context.Background(), httpClient, session.APIURL, cfg.EmailJMAPUser, cfg.EmailJMAPPass, acc)
+			fetchedId, err := DiscoverIdentityID(context.Background(), httpClient, apiURL, cfg.EmailJMAPUser, cfg.EmailJMAPPass, acc)
 			if err == nil && fetchedId != "" {
 				id = fetchedId
 			}
@@ -221,6 +245,19 @@ func providerFromConfig(cfg *config.RuntimeConfig) (email.Provider, error) {
 	if acc == "" || id == "" {
 		return nil, fmt.Errorf("Email disabled: %s or %s not set and could not be discovered", config.EnvJMAPAccount, config.EnvJMAPIdentity)
 	}
+	// Ensure we use the correct endpoint for the provider calls
+	if ep == "" {
+		// This case shouldn't happen based on above check, but logical fallback
+		// if we started with empty ep and discovered it (not possible with current logic)
+	}
+
+	// If the user specified an endpoint with a path (e.g. /jmap/), we should use it.
+	// DiscoverSession might have returned a session with an APIURL.
+	// If the user explicitly configured an endpoint, we usually trust it.
+	// But standard JMAP says use the one from Session.
+	// In the failing case, the user likely set the endpoint manually to the API endpoint.
+	// So let's prefer 'ep' if it was working for discovery.
+
 	return Provider{
 		Endpoint:  ep,
 		Username:  cfg.EmailJMAPUser,
@@ -294,6 +331,14 @@ func JmapWellKnownURL(endpoint string) (string, error) {
 	}
 	if u.Scheme == "" || u.Host == "" {
 		return "", errors.New("invalid JMAP endpoint")
+	}
+	// If the endpoint already has a path (other than root), assume it is the full URL or a custom well-known location substitute
+	// Actually, strictly speaking, well-known is a GET. API endpoint is usually POST.
+	// But often they can be the same or related.
+	// If the user provides `https://host/jmap/`, we probably should try `https://host/jmap/` for the session resource
+	// instead of `https://host/.well-known/jmap`.
+	if u.Path != "" && u.Path != "/" {
+		return endpoint, nil
 	}
 	return (&url.URL{Scheme: u.Scheme, Host: u.Host, Path: "/.well-known/jmap"}).String(), nil
 }

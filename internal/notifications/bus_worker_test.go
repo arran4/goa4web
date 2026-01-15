@@ -485,8 +485,15 @@ func TestProcessEventSelfNotifyWithUserIDTemplate(t *testing.T) {
 		Outcome: eventbus.TaskOutcomeSuccess,
 	}
 
-	if err := n.ProcessEvent(ctx, evt, nil); err != nil {
+	dlqRec := &recordDLQ{}
+	if err := n.ProcessEvent(ctx, evt, dlqRec); err != nil {
+		if dlqRec.msg != "" {
+			t.Fatalf("ProcessEvent failed with DLQ message: %s (underlying error: %v)", dlqRec.msg, err)
+		}
 		t.Fatalf("ProcessEvent failed: %v", err)
+	}
+	if dlqRec.msg != "" {
+		t.Fatalf("unexpected DLQ message: %s", dlqRec.msg)
 	}
 
 	if len(q.SystemCreateNotificationCalls) != 1 {

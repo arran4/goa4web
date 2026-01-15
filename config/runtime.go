@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/go-sql-driver/mysql"
 )
@@ -385,6 +386,7 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 	if cfg.HTTPHostname == "" {
 		cfg.HTTPHostname = "http://localhost:8080"
 	}
+	cfg.HTTPHostname = strings.TrimSuffix(cfg.HTTPHostname, "/")
 	if cfg.PageSizeMin > cfg.PageSizeMax {
 		cfg.PageSizeMin = cfg.PageSizeMax
 	}

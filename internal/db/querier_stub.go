@@ -155,6 +155,7 @@ type QuerierStub struct {
 	SystemGetTemplateOverrideCalls   []string
 	SystemGetTemplateOverrideSeq     []string
 	systemGetTemplateOverrideIdx     int
+	SystemGetTemplateOverrideFn      func(context.Context, string) (string, error)
 
 	AdminSetTemplateOverrideCalls []AdminSetTemplateOverrideParams
 	AdminSetTemplateOverrideErr   error
@@ -1284,6 +1285,7 @@ func (s *QuerierStub) ListSubscriptionsByUser(ctx context.Context, userID int32)
 func (s *QuerierStub) SystemGetTemplateOverride(ctx context.Context, name string) (string, error) {
 	s.mu.Lock()
 	s.SystemGetTemplateOverrideCalls = append(s.SystemGetTemplateOverrideCalls, name)
+	fn := s.SystemGetTemplateOverrideFn
 	idx := s.systemGetTemplateOverrideIdx
 	var body string
 	if len(s.SystemGetTemplateOverrideSeq) > 0 {
@@ -1299,6 +1301,9 @@ func (s *QuerierStub) SystemGetTemplateOverride(ctx context.Context, name string
 	}
 	err := s.SystemGetTemplateOverrideErr
 	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, name)
+	}
 	return body, err
 }
 

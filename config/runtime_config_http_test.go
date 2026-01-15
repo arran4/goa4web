@@ -46,3 +46,18 @@ func TestLoadHTTPConfigFromFileValues(t *testing.T) {
 		t.Fatalf("want :9 got %q", cfg.HTTPListen)
 	}
 }
+
+func TestHTTPHostnameWithTrailingSlash(t *testing.T) {
+	fs := flag.NewFlagSet("test", flag.ContinueOnError)
+	vals := map[string]string{
+		config.EnvHostname: "http://example.com/",
+	}
+	cfg := config.NewRuntimeConfig(
+		config.WithFlagSet(fs),
+		config.WithFileValues(vals),
+		config.WithGetenv(func(string) string { return "" }),
+	)
+	if cfg.HTTPHostname != "http://example.com" {
+		t.Fatalf("want http://example.com got %q", cfg.HTTPHostname)
+	}
+}

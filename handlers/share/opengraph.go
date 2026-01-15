@@ -11,7 +11,6 @@ import (
 	"image/png"
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
@@ -221,7 +220,7 @@ func MakeImageURL(baseURL, title, key string, usePathAuth bool, opts ...sign.Sig
 
 // OGImageHandler serves dynamically generated OpenGraph images.
 type OGImageHandler struct {
-	sign.Signer
+	*sign.Signer
 }
 
 // NewOGImageHandler creates a new OpenGraph image handler.
@@ -257,7 +256,7 @@ func (h *OGImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data := string(dataBytes)
-	img, err := h.generateImage(data)
+	img, err := GenerateImage(data)
 	if err != nil {
 		log.Printf("Error generating image: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -271,7 +270,7 @@ func (h *OGImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *OGImageHandler) generateImage(data string) (image.Image, error) {
+func GenerateImage(data string) (image.Image, error) {
 	img := image.NewRGBA(image.Rect(0, 0, 1200, 630))
 	draw.Draw(img, img.Bounds(), image.NewUniform(color.RGBA{R: 0x0b, G: 0x35, B: 0x13, A: 0xff}), image.Point{}, draw.Src)
 	f, err := opentype.Parse(goregular.TTF)

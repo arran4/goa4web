@@ -49,6 +49,12 @@ func (c *testCmd) Run() error {
 			return fmt.Errorf("verification: %w", err)
 		}
 		return cmd.Run()
+	case "gen-og-image":
+		cmd, err := parseTestGenOgImageCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("gen-og-image: %w", err)
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown test command %q", args[0])

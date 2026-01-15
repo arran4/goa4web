@@ -12,6 +12,12 @@ type Signer struct {
 	Key string
 }
 
+// New creates a new Signer with the given key.
+// Deprecated: Use sign functions directly instead.
+func New(key string) *Signer {
+	return &Signer{Key: key}
+}
+
 // Sign is a legacy method.
 // Deprecated: Use sign.Sign function directly.
 func (s *Signer) Sign(data string, opts ...SignOption) string {

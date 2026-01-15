@@ -139,10 +139,7 @@ func TestMakeImageURL_WithExpiry(t *testing.T) {
 }
 
 func TestOGImageHandler(t *testing.T) {
-	cfg := &config.RuntimeConfig{
-		ShareSignSecret: testKey,
-	}
-	handler := share.NewOGImageHandler(cfg)
+	handler := share.NewOGImageHandler(testKey)
 
 	// Generate a valid signed URL
 	baseURL := "http://example.com"
@@ -157,7 +154,9 @@ func TestOGImageHandler(t *testing.T) {
 	req := httptest.NewRequest("GET", signedURL, nil)
 	rec := httptest.NewRecorder()
 
-	handler.ServeHTTP(rec, req)
+	r := mux.NewRouter()
+	r.Handle("/api/og-image/{data}", handler)
+	r.ServeHTTP(rec, req)
 
 	// Should return PNG
 	if rec.Code != http.StatusOK {
@@ -176,28 +175,25 @@ func TestOGImageHandler(t *testing.T) {
 }
 
 func TestOGImageHandler_InvalidSignature(t *testing.T) {
-	cfg := &config.RuntimeConfig{
-		ShareSignSecret: testKey,
-	}
-	handler := share.NewOGImageHandler(cfg)
+	handler := share.NewOGImageHandler(testKey)
 
+	// Request without signature
 	// Request without signature
 	req := httptest.NewRequest("GET", "http://example.com/api/og-image/dGVzdA", nil)
 	rec := httptest.NewRecorder()
 
-	handler.ServeHTTP(rec, req)
+	r := mux.NewRouter()
+	r.Handle("/api/og-image/{data}", handler)
+	r.ServeHTTP(rec, req)
 
-	// Should return 403
-	if rec.Code != http.StatusForbidden {
-		t.Errorf("Expected status 403, got %d", rec.Code)
+	// Should return 401
+	if rec.Code != http.StatusUnauthorized {
+		t.Errorf("Expected status 401, got %d", rec.Code)
 	}
 }
 
 func TestOGImageHandler_WrongKey(t *testing.T) {
-	cfg := &config.RuntimeConfig{
-		ShareSignSecret: "wrong-key",
-	}
-	handler := share.NewOGImageHandler(cfg)
+	handler := share.NewOGImageHandler("wrong-key")
 
 	// Generate URL with correct key
 	signedURL, err := share.MakeImageURL("http://example.com", "Test", testKey, false)
@@ -209,11 +205,13 @@ func TestOGImageHandler_WrongKey(t *testing.T) {
 	req := httptest.NewRequest("GET", signedURL, nil)
 	rec := httptest.NewRecorder()
 
-	handler.ServeHTTP(rec, req)
+	r := mux.NewRouter()
+	r.Handle("/api/og-image/{data}", handler)
+	r.ServeHTTP(rec, req)
 
-	// Should return 403
-	if rec.Code != http.StatusForbidden {
-		t.Errorf("Expected status 403 for wrong key, got %d", rec.Code)
+	// Should return 401
+	if rec.Code != http.StatusUnauthorized {
+		t.Errorf("Expected status 401 for wrong key, got %d", rec.Code)
 	}
 }
 

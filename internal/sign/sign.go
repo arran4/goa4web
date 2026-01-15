@@ -142,10 +142,8 @@ func AddPathSig(urlStr string, sig string, opts ...SignOption) (string, error) {
 		switch v := opt.(type) {
 		case WithNonce:
 			authPart = fmt.Sprintf("/nonce/%s/sign/%s", url.PathEscape(string(v)), sig)
-			break
 		case WithExpiry:
 			authPart = fmt.Sprintf("/ts/%d/sign/%s", time.Time(v).Unix(), sig)
-			break
 		}
 	}
 

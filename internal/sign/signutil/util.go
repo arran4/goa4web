@@ -4,10 +4,12 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strings"
 
 	"github.com/arran4/goa4web/internal/sign"
+	"github.com/gorilla/mux"
 )
 
 // SignAndAddQuery signs data and adds the signature to the URL as query parameters.
@@ -101,4 +103,54 @@ func GenerateNonce() string {
 	b := make([]byte, 16)
 	rand.Read(b)
 	return hex.EncodeToString(b)
+}
+
+// SignedData contains the result of a signature verification
+type SignedData struct {
+	Valid bool
+}
+
+// GetSignedData extracts and verifies signature from the request using the signer
+func GetSignedData(r *http.Request, s *sign.Signer) (*SignedData, error) {
+	// Try query params first
+	if r.URL.Query().Get("sig") != "" {
+		_, err := VerifyQueryURL(r.URL.String(), s.Key)
+		if err != nil {
+			return &SignedData{Valid: false}, nil
+		}
+		return &SignedData{Valid: true}, nil
+	}
+
+	// Try path params
+	vars := mux.Vars(r)
+	if vars["sig"] != "" || vars["sign"] != "" {
+		// Handle path verification
+		// We need to reconstruct what the full path was including query params if any
+		cleanPath, sig, opts, err := sign.ExtractPathSig(r.URL.Path, vars)
+		if err != nil {
+			return &SignedData{Valid: false}, nil
+		}
+
+		if sig == "" {
+			return &SignedData{Valid: false}, nil
+		}
+
+		// Reconstruct data to be verified
+		data := cleanPath
+		q := r.URL.Query()
+		q.Del("sig")
+		q.Del("nonce")
+		q.Del("ts")
+		if encoded := q.Encode(); encoded != "" {
+			data += "?" + encoded
+		}
+
+		if err := sign.Verify(data, sig, s.Key, opts...); err != nil {
+			return &SignedData{Valid: false}, nil
+		}
+
+		return &SignedData{Valid: true}, nil
+	}
+
+	return &SignedData{Valid: false}, nil
 }

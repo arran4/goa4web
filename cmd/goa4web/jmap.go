@@ -90,12 +90,29 @@ func (c *jmapCmd) runTest() error {
 			id = jmap.SelectIdentityID(session)
 			fmt.Printf("Selected IdentityID: %s\n", id)
 		}
-		if ep == "" {
+
+		// Determine the API Endpoint to use
+		apiURL := session.APIURL
+		if override := strings.TrimSpace(cfg.EmailJMAPEndpointOverride); override != "" {
+			fmt.Printf("Using configured JMAP Endpoint Override: %s\n", override)
+			apiURL = override
+			ep = override
+		} else if ep == "" {
 			ep = session.APIURL
+		} else {
+			// If ep was set (discovery endpoint), check if it has a path that suggests it is the API endpoint
+			// Same logic as in providerFromConfig
+			// But for test command, let's trust session.APIURL unless overridden or if ep looks like a full URL
+			if session.APIURL == "" {
+				// Should not happen if valid session
+				apiURL = ep
+			}
 		}
+
 		if id == "" && acc != "" {
 			// Try to fetch identities via API
-			fetchedId, err := jmap.DiscoverIdentityID(context.Background(), httpClient, ep, cfg.EmailJMAPUser, cfg.EmailJMAPPass, acc)
+			fmt.Printf("Attempting to discover identity via API: %s\n", apiURL)
+			fetchedId, err := jmap.DiscoverIdentityID(context.Background(), httpClient, apiURL, cfg.EmailJMAPUser, cfg.EmailJMAPPass, acc)
 			if err != nil {
 				fmt.Printf("Failed to discover Identity ID via API: %v\n", err)
 			} else if fetchedId != "" {
@@ -109,6 +126,11 @@ func (c *jmapCmd) runTest() error {
 
 	if acc == "" || id == "" {
 		return fmt.Errorf("Email disabled: %s or %s not set and could not be discovered", config.EnvJMAPAccount, config.EnvJMAPIdentity)
+	}
+
+	// Double check endpoint for provider init
+	if override := strings.TrimSpace(cfg.EmailJMAPEndpointOverride); override != "" {
+		ep = override
 	}
 
 	provider := jmap.NewProvider(ep, cfg.EmailJMAPUser, cfg.EmailJMAPPass, acc, id, cfg.EmailFrom, httpClient)

@@ -1,15 +1,25 @@
 package share_test
 
 import (
+	"bytes"
+	"image/png"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
+	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers/share"
 	"github.com/arran4/goa4web/internal/sign"
 	"github.com/gorilla/mux"
 )
+
+func TestMain(m *testing.M) {
+	// Set the templates directory to the project root so that the embedded assets can be found.
+	templates.SetDir("../..")
+	os.Exit(m.Run())
+}
 
 const testKey = "test-secret-key-for-og-images"
 
@@ -129,7 +139,10 @@ func TestMakeImageURL_WithExpiry(t *testing.T) {
 }
 
 func TestOGImageHandler(t *testing.T) {
-	handler := share.NewOGImageHandler(testKey)
+	cfg := &config.RuntimeConfig{
+		ShareSignSecret: testKey,
+	}
+	handler := share.NewOGImageHandler(cfg)
 
 	// Generate a valid signed URL
 	baseURL := "http://example.com"
@@ -146,24 +159,27 @@ func TestOGImageHandler(t *testing.T) {
 
 	handler.ServeHTTP(rec, req)
 
-	// Should return SVG
+	// Should return PNG
 	if rec.Code != http.StatusOK {
 		t.Errorf("Expected status 200, got %d. Body: %s", rec.Code, rec.Body.String())
 	}
 
-	if ct := rec.Header().Get("Content-Type"); ct != "image/svg+xml" {
-		t.Errorf("Expected Content-Type image/svg+xml, got %s", ct)
+	if ct := rec.Header().Get("Content-Type"); ct != "image/png" {
+		t.Errorf("Expected Content-Type image/png, got %s", ct)
 	}
 
-	// SVG should contain the title
-	body := rec.Body.String()
-	if !strings.Contains(body, title) {
-		t.Errorf("SVG should contain title %q, got: %s", title, body)
+	// Body should be a valid PNG image
+	_, err = png.Decode(bytes.NewReader(rec.Body.Bytes()))
+	if err != nil {
+		t.Errorf("Failed to decode response body as PNG: %v", err)
 	}
 }
 
 func TestOGImageHandler_InvalidSignature(t *testing.T) {
-	handler := share.NewOGImageHandler(testKey)
+	cfg := &config.RuntimeConfig{
+		ShareSignSecret: testKey,
+	}
+	handler := share.NewOGImageHandler(cfg)
 
 	// Request without signature
 	req := httptest.NewRequest("GET", "http://example.com/api/og-image/dGVzdA", nil)
@@ -178,7 +194,10 @@ func TestOGImageHandler_InvalidSignature(t *testing.T) {
 }
 
 func TestOGImageHandler_WrongKey(t *testing.T) {
-	handler := share.NewOGImageHandler("wrong-key")
+	cfg := &config.RuntimeConfig{
+		ShareSignSecret: "wrong-key",
+	}
+	handler := share.NewOGImageHandler(cfg)
 
 	// Generate URL with correct key
 	signedURL, err := share.MakeImageURL("http://example.com", "Test", testKey, false)

@@ -300,6 +300,19 @@ func (targetTask) TargetInternalNotificationTemplate(evt eventbus.TaskEvent) *st
 	return &t
 }
 
+type selfNotifyTask struct{ tasks.TaskString }
+
+func (s selfNotifyTask) SelfEmailTemplate(evt eventbus.TaskEvent) (templates *EmailTemplates, send bool) {
+	return nil, false
+}
+
+func (s selfNotifyTask) SelfInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
+	// This template needs to exist and be valid, but its content doesn't matter for this test.
+	// Let's use a simple one that's known to be present.
+	t := NotificationTemplateFilenameGenerator("password_reset")
+	return &t
+}
+
 func TestProcessEventTargetUsers(t *testing.T) {
 	ctx := context.Background()
 	cfg := config.NewRuntimeConfig()
@@ -436,6 +449,47 @@ func TestProcessEventAutoSubscribe(t *testing.T) {
 	pattern := buildPatterns(tasks.TaskString("AutoSub"), "/forum/topic/7/thread/42")[0]
 	if q.InsertSubscriptionParams[0].Pattern != pattern {
 		t.Fatalf("expected pattern %s, got %s", pattern, q.InsertSubscriptionParams[0].Pattern)
+	}
+}
+
+func TestProcessEventSelfNotifyWithUserIDTemplate(t *testing.T) {
+	ctx := context.Background()
+	cfg := config.NewRuntimeConfig()
+	cfg.NotificationsEnabled = true
+
+	q := &querierStub{}
+	// This template must exist in `core/templates/notifications`
+	q.SystemGetTemplateOverrideReturns = "Password reset for {{.UserID}}"
+
+	n := New(WithQueries(q), WithConfig(cfg))
+
+	evt := eventbus.TaskEvent{
+		Path:    "/user/password-reset",
+		Task:    selfNotifyTask{TaskString: "SelfNotify"},
+		UserID:  123,
+		Data:    map[string]any{"some": "data"},
+		Outcome: eventbus.TaskOutcomeSuccess,
+	}
+
+	// The process event should not return an error. The original bug would cause a
+	// template execution error here because .UserID was missing.
+	if err := n.ProcessEvent(ctx, evt, nil); err != nil {
+		t.Fatalf("ProcessEvent failed: %v", err)
+	}
+
+	// Verify that a notification was created
+	if len(q.SystemCreateNotificationCalls) != 1 {
+		t.Fatalf("expected 1 notification to be created, got %d", len(q.SystemCreateNotificationCalls))
+	}
+
+	// Verify the content of the notification
+	notification := q.SystemCreateNotificationCalls[0]
+	if notification.RecipientID != 123 {
+		t.Errorf("expected recipient ID to be 123, got %d", notification.RecipientID)
+	}
+	expectedMsg := "Password reset for 123"
+	if !notification.Message.Valid || notification.Message.String != expectedMsg {
+		t.Errorf("expected message '%s', got '%s'", expectedMsg, notification.Message.String)
 	}
 }
 

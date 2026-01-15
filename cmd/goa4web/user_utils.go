@@ -3,15 +3,15 @@ package main
 import (
 	"context"
 	"crypto/rand"
-	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
 	"fmt"
+	"time"
 
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/internal/db"
-	dbm "github.com/arran4/goa4web/internal/db"
-	"golang.org/x/crypto/pbkdf2"
+	"github.com/arran4/goa4web/internal/sign"
 )
 
 func resolveUserID(ctx context.Context, queries *db.Queries, userID int, username string) (int32, error) {
@@ -71,45 +71,30 @@ func generatePasswordReset(
 		user.Username = u.Username.String
 	}
 
-	var codeBuf [16]byte
-	if _, err := rand.Read(codeBuf[:]); err != nil {
-		return fmt.Errorf("failed to generate random code: %w", err)
-	}
-	code := hex.EncodeToString(codeBuf[:])
-
-	var tempPassBuf [12]byte
-	if _, err := rand.Read(tempPassBuf[:]); err != nil {
-		return fmt.Errorf("failed to generate random password: %w", err)
-	}
-	tempPassword := hex.EncodeToString(tempPassBuf[:])
-
-	var salt [8]byte
-	if _, err := rand.Read(salt[:]); err != nil {
-		return fmt.Errorf("failed to generate salt: %w", err)
-	}
-	iterations := 600000
-	hash := pbkdf2.Key([]byte(tempPassword), salt[:], iterations, 32, sha256.New)
-	alg := fmt.Sprintf("pbkdf2-sha256:%d:%s", iterations, hex.EncodeToString(salt[:]))
-
-	params := dbm.CreatePasswordResetForUserParams{
-		UserID:           user.ID,
-		Passwd:           hex.EncodeToString(hash),
-		PasswdAlgorithm:  alg,
-		VerificationCode: code,
+	key, err := config.LoadOrCreateLinkSignSecret(core.OSFS{}, cfg.LinkSignSecret, cfg.LinkSignSecretFile)
+	if err != nil {
+		return fmt.Errorf("link sign secret: %w", err)
 	}
 
-	if err := queries.CreatePasswordResetForUser(ctx, params); err != nil {
-		return fmt.Errorf("failed to create password reset in database: %w", err)
+	targetURL := fmt.Sprintf("/user/%d/reset", user.ID)
+	data := "link:" + targetURL
+
+	duration := time.Hour * 24
+	opts := []sign.SignOption{
+		sign.WithExpiry(time.Now().Add(duration)),
 	}
 
-	resetURL := fmt.Sprintf("%s/password-reset?code=%s", cfg.HTTPHostname, code)
+	sig := sign.Sign(data, key, opts...)
+	signedURL, err := sign.AddQuerySig(cfg.HTTPHostname+targetURL, sig, opts...)
+	if err != nil {
+		return fmt.Errorf("failed to add query signature: %w", err)
+	}
 
 	fmt.Printf("Successfully generated password reset link for user %q (ID: %d).\n", user.Username, user.ID)
-	fmt.Println("\nPlease provide the following temporary password and URL to the user.")
-	fmt.Println("The user will be required to enter the temporary password to set their new password.")
+	fmt.Println("\nPlease provide the following URL to the user.")
+	fmt.Println("This link is valid for 24 hours.")
 	fmt.Println("--------------------------------------------------------------------------")
-	fmt.Printf("Temporary Password: %s\n", tempPassword)
-	fmt.Printf("Reset URL:          %s\n", resetURL)
+	fmt.Printf("Reset URL: %s\n", signedURL)
 	fmt.Println("--------------------------------------------------------------------------")
 
 	return nil

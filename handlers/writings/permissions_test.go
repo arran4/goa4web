@@ -6,11 +6,13 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestUserCanCreateWriting_Allowed(t *testing.T) {
-	q := &db.QuerierStub{SystemCheckGrantReturns: 1}
+	q := testhelpers.NewQuerierStub(
+		testhelpers.WithGrantResult(true),
+	)
 
 	ok, err := UserCanCreateWriting(context.Background(), q, 1, 2)
 	if err != nil {
@@ -25,7 +27,9 @@ func TestUserCanCreateWriting_Allowed(t *testing.T) {
 }
 
 func TestUserCanCreateWriting_Denied(t *testing.T) {
-	q := &db.QuerierStub{SystemCheckGrantErr: sql.ErrNoRows}
+	q := testhelpers.NewQuerierStub(
+		testhelpers.WithGrantError(sql.ErrNoRows),
+	)
 
 	ok, err := UserCanCreateWriting(context.Background(), q, 1, 2)
 	if err != nil {
@@ -40,7 +44,9 @@ func TestUserCanCreateWriting_Denied(t *testing.T) {
 }
 
 func TestUserCanCreateWriting_Error(t *testing.T) {
-	q := &db.QuerierStub{SystemCheckGrantErr: errors.New("db offline")}
+	q := testhelpers.NewQuerierStub(
+		testhelpers.WithGrantError(errors.New("db offline")),
+	)
 
 	ok, err := UserCanCreateWriting(context.Background(), q, 1, 2)
 	if err == nil {

@@ -4,20 +4,23 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/gorilla/mux"
-	"net/http/httptest"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestRequiredGrantAllowed(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/add", nil)
-	q := &db.QuerierStub{SystemCheckGrantReturns: 1}
+	q := testhelpers.NewQuerierStub(
+		testhelpers.WithGrantResult(true),
+	)
 	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -29,7 +32,9 @@ func TestRequiredGrantAllowed(t *testing.T) {
 
 func TestRequiredGrantDenied(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/add", nil)
-	q := &db.QuerierStub{SystemCheckGrantErr: errors.New("denied")}
+	q := testhelpers.NewQuerierStub(
+		testhelpers.WithGrantError(errors.New("denied")),
+	)
 	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -41,7 +46,9 @@ func TestRequiredGrantDenied(t *testing.T) {
 
 func TestRequireGrantAllowed(t *testing.T) {
 	req := httptest.NewRequest("GET", "/news/1/edit", nil)
-	q := &db.QuerierStub{SystemCheckGrantReturns: 1}
+	q := testhelpers.NewQuerierStub(
+		testhelpers.WithGrantResult(true),
+	)
 	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
 	cd.UserID = 1
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
@@ -69,7 +76,9 @@ func TestRequireGrantAllowed(t *testing.T) {
 
 func TestRequireGrantDenied(t *testing.T) {
 	req := httptest.NewRequest("GET", "/news/2/edit", nil)
-	q := &db.QuerierStub{SystemCheckGrantErr: sql.ErrNoRows}
+	q := testhelpers.NewQuerierStub(
+		testhelpers.WithGrantError(sql.ErrNoRows),
+	)
 	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
 	cd.UserID = 2
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)

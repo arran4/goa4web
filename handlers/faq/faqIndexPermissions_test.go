@@ -12,11 +12,9 @@ import (
 func TestCustomFAQIndexAsk(t *testing.T) {
 	req := httptest.NewRequest("GET", "/faq", nil)
 
-	q := testhelpers.NewQuerierStub(testhelpers.StubConfig{
-		Grants: map[string]bool{
-			testhelpers.GrantKey("faq", "question", "post"): true,
-		},
-	})
+	q := testhelpers.NewQuerierStub(
+		testhelpers.WithGrant("faq", "question", "post"),
+	)
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
 
@@ -32,9 +30,9 @@ func TestCustomFAQIndexAsk(t *testing.T) {
 func TestCustomFAQIndexAskDenied(t *testing.T) {
 	req := httptest.NewRequest("GET", "/faq", nil)
 
-	q := testhelpers.NewQuerierStub(testhelpers.StubConfig{
-		DefaultGrantAllowed: false,
-	})
+	q := testhelpers.NewQuerierStub(
+		testhelpers.WithDefaultGrantAllowed(false),
+	)
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
 

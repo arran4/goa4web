@@ -169,11 +169,13 @@ func (c *jmapCmd) runTest() error {
 		}
 
 		if len(msgIDs) > 0 {
+			fmt.Printf("Found %d recent messages, checking subjects...\n", len(msgIDs))
 			emails, err := provider.GetMessages(ctx, msgIDs)
 			if err != nil {
 				fmt.Printf("Error getting messages: %v\n", err)
 			} else {
 				for _, email := range emails {
+					fmt.Printf(" - Checking email with subject: %q\n", email.Subject)
 					if email.Subject == subject {
 						fmt.Printf("SUCCESS: Found email '%s' (ID: %s) from %v received at %s\n", email.Subject, email.ID, email.From, email.ReceivedAt)
 						return nil

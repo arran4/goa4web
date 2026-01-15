@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image/png"
 	"os"
+	"strings"
 
 	"github.com/arran4/goa4web/handlers/share"
 )
@@ -28,6 +29,7 @@ func parseTestGenOgImageCmd(parent *testCmd, args []string) (*testGenOgImageCmd,
 	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
+	c.Description = strings.ReplaceAll(c.Description, "\\n", "\n")
 	return c, nil
 }
 

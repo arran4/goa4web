@@ -111,10 +111,10 @@ type SignedData struct {
 }
 
 // GetSignedData extracts and verifies signature from the request using the signer
-func GetSignedData(r *http.Request, s *sign.Signer) (*SignedData, error) {
+func GetSignedData(r *http.Request, key string) (*SignedData, error) {
 	// Try query params first
 	if r.URL.Query().Get("sig") != "" {
-		_, err := VerifyQueryURL(r.URL.String(), s.Key)
+		_, err := VerifyQueryURL(r.URL.String(), key)
 		if err != nil {
 			return &SignedData{Valid: false}, nil
 		}
@@ -145,7 +145,7 @@ func GetSignedData(r *http.Request, s *sign.Signer) (*SignedData, error) {
 			data += "?" + encoded
 		}
 
-		if err := sign.Verify(data, sig, s.Key, opts...); err != nil {
+		if err := sign.Verify(data, sig, key, opts...); err != nil {
 			return &SignedData{Valid: false}, nil
 		}
 

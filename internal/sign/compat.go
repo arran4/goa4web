@@ -6,31 +6,6 @@ import (
 
 // Legacy compatibility functions for old code that hasn't been migrated yet
 
-// Signer is a legacy wrapper for backward compatibility.
-// Deprecated: Use sign functions directly instead.
-type Signer struct {
-	Key string
-}
-
-// New creates a new Signer with the given key.
-// Deprecated: Use sign functions directly instead.
-func New(key string) *Signer {
-	return &Signer{Key: key}
-}
-
-// Sign is a legacy method.
-// Deprecated: Use sign.Sign function directly.
-func (s *Signer) Sign(data string, opts ...SignOption) string {
-	return Sign(data, s.Key, opts...)
-}
-
-// Verify is a legacy method.
-// Deprecated: Use sign.Verify function directly.
-func (s *Signer) Verify(data, sig string, opts ...SignOption) (bool, error) {
-	err := Verify(data, sig, s.Key, opts...)
-	return err == nil, err
-}
-
 // WithExpiryTimestamp creates an expiry option from a timestamp string.
 // Deprecated: Use WithExpiry with time.Time directly.
 func WithExpiryTimestamp(tsStr string) SignOption {

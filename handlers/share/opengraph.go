@@ -220,13 +220,13 @@ func MakeImageURL(baseURL, title, key string, usePathAuth bool, opts ...sign.Sig
 
 // OGImageHandler serves dynamically generated OpenGraph images.
 type OGImageHandler struct {
-	*sign.Signer
+	signKey string
 }
 
 // NewOGImageHandler creates a new OpenGraph image handler.
 func NewOGImageHandler(signKey string) *OGImageHandler {
 	return &OGImageHandler{
-		Signer: sign.New(signKey),
+		signKey: signKey,
 	}
 }
 
@@ -238,7 +238,7 @@ func (h *OGImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	signed, err := signutil.GetSignedData(r, h.Signer)
+	signed, err := signutil.GetSignedData(r, h.signKey)
 	if err != nil {
 		log.Printf("Error getting signed data: %v", err)
 		w.WriteHeader(http.StatusUnauthorized)

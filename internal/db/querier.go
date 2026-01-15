@@ -288,6 +288,7 @@ type Querier interface {
 	DeleteGrantByProperties(ctx context.Context, arg DeleteGrantByPropertiesParams) error
 	DeleteGrantsByRoleID(ctx context.Context, roleID sql.NullInt32) error
 	DeleteNotificationForLister(ctx context.Context, arg DeleteNotificationForListerParams) error
+	DeletePendingPassword(ctx context.Context, userID int32) error
 	DeleteSubscriptionArchetypesByRoleAndName(ctx context.Context, arg DeleteSubscriptionArchetypesByRoleAndNameParams) error
 	DeleteSubscriptionByIDForSubscriber(ctx context.Context, arg DeleteSubscriptionByIDForSubscriberParams) error
 	DeleteSubscriptionForSubscriber(ctx context.Context, arg DeleteSubscriptionForSubscriberParams) error
@@ -372,6 +373,7 @@ type Querier interface {
 	GetPasswordResetByCode(ctx context.Context, arg GetPasswordResetByCodeParams) (*PendingPassword, error)
 	GetPasswordResetByUser(ctx context.Context, arg GetPasswordResetByUserParams) (*PendingPassword, error)
 	GetPendingEmailErrorCount(ctx context.Context, id int32) (int32, error)
+	GetPendingPassword(ctx context.Context, userID int32) (*PendingPassword, error)
 	// Lists the role names granted to a user.
 	GetPermissionsByUserID(ctx context.Context, usersIdusers int32) ([]*GetPermissionsByUserIDRow, error)
 	GetPermissionsWithUsers(ctx context.Context, arg GetPermissionsWithUsersParams) ([]*GetPermissionsWithUsersRow, error)
@@ -597,6 +599,7 @@ type Querier interface {
 	UpdatePublicProfileEnabledAtForUser(ctx context.Context, arg UpdatePublicProfileEnabledAtForUserParams) error
 	UpdateSubscriptionByIDForSubscriber(ctx context.Context, arg UpdateSubscriptionByIDForSubscriberParams) error
 	UpdateTimezoneForLister(ctx context.Context, arg UpdateTimezoneForListerParams) error
+	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 	UpdateWritingForWriter(ctx context.Context, arg UpdateWritingForWriterParams) error
 	UpsertContentReadMarker(ctx context.Context, arg UpsertContentReadMarkerParams) error
 }

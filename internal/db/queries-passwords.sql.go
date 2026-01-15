@@ -10,6 +10,34 @@ import (
 	"database/sql"
 )
 
+const deletePendingPassword = `-- name: DeletePendingPassword :exec
+DELETE FROM pending_passwords WHERE user_id = ?
+`
+
+func (q *Queries) DeletePendingPassword(ctx context.Context, userID int32) error {
+	_, err := q.db.ExecContext(ctx, deletePendingPassword, userID)
+	return err
+}
+
+const getPendingPassword = `-- name: GetPendingPassword :one
+SELECT id, user_id, passwd, passwd_algorithm, verification_code, created_at, verified_at FROM pending_passwords WHERE user_id = ?
+`
+
+func (q *Queries) GetPendingPassword(ctx context.Context, userID int32) (*PendingPassword, error) {
+	row := q.db.QueryRowContext(ctx, getPendingPassword, userID)
+	var i PendingPassword
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Passwd,
+		&i.PasswdAlgorithm,
+		&i.VerificationCode,
+		&i.CreatedAt,
+		&i.VerifiedAt,
+	)
+	return &i, err
+}
+
 const insertPassword = `-- name: InsertPassword :exec
 INSERT INTO passwords (users_idusers, passwd, passwd_algorithm)
 VALUES (?, ?, ?)
@@ -23,5 +51,20 @@ type InsertPasswordParams struct {
 
 func (q *Queries) InsertPassword(ctx context.Context, arg InsertPasswordParams) error {
 	_, err := q.db.ExecContext(ctx, insertPassword, arg.UsersIdusers, arg.Passwd, arg.PasswdAlgorithm)
+	return err
+}
+
+const updateUserPassword = `-- name: UpdateUserPassword :exec
+INSERT INTO passwords (users_idusers, passwd, passwd_algorithm) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE passwd = VALUES(passwd), passwd_algorithm = VALUES(passwd_algorithm)
+`
+
+type UpdateUserPasswordParams struct {
+	UsersIdusers    int32
+	Passwd          string
+	PasswdAlgorithm sql.NullString
+}
+
+func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error {
+	_, err := q.db.ExecContext(ctx, updateUserPassword, arg.UsersIdusers, arg.Passwd, arg.PasswdAlgorithm)
 	return err
 }

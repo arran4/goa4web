@@ -66,7 +66,6 @@ var (
 	templatesDir    string // To override embedded fs for tests/dev
 )
 
-
 // Asset reads an asset file from the configured source (embedded or local).
 func Asset(name string) ([]byte, error) {
 	if templatesDir != "" {

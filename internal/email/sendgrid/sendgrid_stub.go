@@ -1,5 +1,4 @@
 //go:build !sendgrid
-// +build !sendgrid
 
 package sendgrid
 

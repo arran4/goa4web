@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"text/tabwriter"
 	"time"
 
 	"github.com/arran4/goa4web/config"
@@ -34,15 +35,10 @@ func (c *userExpungeUnverifiedCmd) Run() error {
 		return fmt.Errorf("missing or invalid -older-than duration")
 	}
 
-	fileVals, err := config.LoadAppConfigFile(core.OSFS{}, c.rootCmd.ConfigFile)
+	cfg, err := c.loadConfig()
 	if err != nil {
-		return fmt.Errorf("load config file: %w", err)
+		return err
 	}
-	cfg := config.NewRuntimeConfig(
-		config.WithFileValues(fileVals),
-		config.WithGetenv(os.Getenv),
-	)
-
 	d, err := c.rootCmd.InitDB(cfg)
 	if err != nil {
 		return err
@@ -53,13 +49,21 @@ func (c *userExpungeUnverifiedCmd) Run() error {
 	cutoff := time.Now().Add(-c.olderThan)
 
 	if c.dryRun {
-		// We need a list query for this
-		// SystemListUnverifiedEmailsExpiresBefore(cutoff)
-		// I need to add this query or reuse existing
-		// SystemDeleteUnverifiedEmailsExpiresBefore uses `verification_expires_at < ?`
-		// I should check `internal/db/queries-user_emails.sql` if there is a list variant.
-		// I don't think I added one. I should add `SystemListUnverifiedEmailsExpiresBefore`
-		return fmt.Errorf("dry-run not implemented yet, missing query")
+		es, err := queries.SystemListUnverifiedEmailsExpiresBefore(c.rootCmd.Context(), sql.NullTime{Time: cutoff, Valid: true})
+		if err != nil {
+			return fmt.Errorf("list unverified emails: %w", err)
+		}
+		w := tabwriter.NewWriter(c.fs.Output(), 0, 0, 2, ' ', 0)
+		fmt.Fprintln(w, "ID\tUserID\tEmail\tExpires")
+		for _, e := range es {
+			expires := "N/A"
+			if e.VerificationExpiresAt.Valid {
+				expires = e.VerificationExpiresAt.Time.Format(time.RFC3339)
+			}
+			fmt.Fprintf(w, "%d\t%d\t%s\t%s\n", e.ID, e.UserID, e.Email, expires)
+		}
+		w.Flush()
+		return nil
 	}
 
 	res, err := queries.SystemDeleteUnverifiedEmailsExpiresBefore(c.rootCmd.Context(), sql.NullTime{Time: cutoff, Valid: true})
@@ -68,16 +72,27 @@ func (c *userExpungeUnverifiedCmd) Run() error {
 	}
 
 	rows, err := res.RowsAffected()
-	if err != nil {
+	if err !=
+nil {
 		c.Infof("Expunged unknown number of unverified emails")
 	} else {
 		c.Infof("Expunged %d unverified emails", rows)
 	}
-
 	return nil
 }
 
 func (c *userExpungeUnverifiedCmd) Usage() {
-	fmt.Fprintf(c.fs.Output(), "Usage: %s user expunge-unverified [flags]\n\nFlags:\n", os.Args[0])
+	fmt.Fprintf(c.fs.Output(), "Usage: %s user expunge-unverified [flags]\n", os.Args[0])
 	c.fs.PrintDefaults()
+}
+
+func (c *userExpungeUnverifiedCmd) loadConfig() (*config.RuntimeConfig, error) {
+	fileVals, err := config.LoadAppConfigFile(core.OSFS{}, c.rootCmd.ConfigFile)
+	if err != nil {
+		return nil, fmt.Errorf("load config file: %w", err)
+	}
+	return config.NewRuntimeConfig(
+		config.WithFileValues(fileVals),
+		config.WithGetenv(os.Getenv),
+	), nil
 }

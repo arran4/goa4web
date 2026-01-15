@@ -12,13 +12,13 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
-type userEmailCmd struct {
-	*userCmd
+type emailUserManagementCmd struct {
+	*emailCmd
 }
 
-func parseUserEmailCmd(parent *userCmd, args []string) (*userEmailCmd, error) {
-	c := &userEmailCmd{userCmd: parent}
-	c.fs = newFlagSet("email")
+func parseEmailUserManagementCmd(parent *emailCmd, args []string) (*emailUserManagementCmd, error) {
+	c := &emailUserManagementCmd{emailCmd: parent}
+	c.fs = newFlagSet("user-management")
 	c.fs.Usage = c.Usage
 	if err := c.fs.Parse(args); err != nil {
 		return nil, err
@@ -26,11 +26,11 @@ func parseUserEmailCmd(parent *userCmd, args []string) (*userEmailCmd, error) {
 	return c, nil
 }
 
-func (c *userEmailCmd) Run() error {
+func (c *emailUserManagementCmd) Run() error {
 	args := c.fs.Args()
 	if len(args) == 0 {
 		c.Usage()
-		return fmt.Errorf("missing email subcommand")
+		return fmt.Errorf("missing user-management subcommand")
 	}
 	if err := usageIfHelp(c.fs, args); err != nil {
 		return err
@@ -46,16 +46,16 @@ func (c *userEmailCmd) Run() error {
 		return c.runUpdate(args[1:])
 	default:
 		c.Usage()
-		return fmt.Errorf("unknown email subcommand %q", args[0])
+		return fmt.Errorf("unknown user-management subcommand %q", args[0])
 	}
 }
 
-func (c *userEmailCmd) Usage() {
-	fmt.Fprintf(c.fs.Output(), "Usage: %s user email [subcommand] [flags]\n\nSubcommands: list, add, delete, update\n", os.Args[0])
+func (c *emailUserManagementCmd) Usage() {
+	fmt.Fprintf(c.fs.Output(), "Usage: %s email user-management [subcommand] [flags]\n\nSubcommands: list, add, delete, update\n", os.Args[0])
 	c.fs.PrintDefaults()
 }
 
-func (c *userEmailCmd) runList(args []string) error {
+func (c *emailUserManagementCmd) runList(args []string) error {
 	fs := newFlagSet("list")
 	userID := fs.Int("user-id", 0, "User ID to list verified emails for")
 	username := fs.String("username", "", "Username to list verified emails for")
@@ -97,7 +97,7 @@ func (c *userEmailCmd) runList(args []string) error {
 	return nil
 }
 
-func (c *userEmailCmd) runAdd(args []string) error {
+func (c *emailUserManagementCmd) runAdd(args []string) error {
 	fs := newFlagSet("add")
 	userID := fs.Int("user-id", 0, "User ID to add email to")
 	username := fs.String("username", "", "Username to add email to")
@@ -126,7 +126,6 @@ func (c *userEmailCmd) runAdd(args []string) error {
 		return err
 	}
 
-	// Always add as verified since this command is for verified emails
 	verifiedAt := sql.NullTime{Time: time.Now(), Valid: true}
 
 	if err := queries.AdminAddUserEmail(c.rootCmd.Context(), db.AdminAddUserEmailParams{
@@ -141,7 +140,7 @@ func (c *userEmailCmd) runAdd(args []string) error {
 	return nil
 }
 
-func (c *userEmailCmd) runDelete(args []string) error {
+func (c *emailUserManagementCmd) runDelete(args []string) error {
 	fs := newFlagSet("delete")
 	id := fs.Int("id", 0, "Email ID to delete (use list to find ID)")
 	if err := fs.Parse(args); err != nil {
@@ -169,7 +168,7 @@ func (c *userEmailCmd) runDelete(args []string) error {
 	return nil
 }
 
-func (c *userEmailCmd) runUpdate(args []string) error {
+func (c *emailUserManagementCmd) runUpdate(args []string) error {
 	fs := newFlagSet("update")
 	id := fs.Int("id", 0, "Email ID to update")
 	email := fs.String("email", "", "New email address (optional)")
@@ -228,7 +227,7 @@ func (c *userEmailCmd) runUpdate(args []string) error {
 	return nil
 }
 
-func (c *userEmailCmd) loadConfig() (*config.RuntimeConfig, error) {
+func (c *emailUserManagementCmd) loadConfig() (*config.RuntimeConfig, error) {
 	fileVals, err := config.LoadAppConfigFile(core.OSFS{}, c.rootCmd.ConfigFile)
 	if err != nil {
 		return nil, fmt.Errorf("load config file: %w", err)

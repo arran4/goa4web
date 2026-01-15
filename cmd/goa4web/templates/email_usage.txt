@@ -9,6 +9,7 @@ Commands:
   send     Send a test email.
   queue    Manage the queue of emails waiting to be sent.
   log      View the email log.
+  user-management Manage user email addresses.
 
 Examples:
   # Send a test email

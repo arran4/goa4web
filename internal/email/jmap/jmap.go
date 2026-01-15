@@ -205,6 +205,7 @@ func providerFromConfig(cfg *config.RuntimeConfig) (email.Provider, error) {
 			if err == nil {
 				break
 			}
+			fmt.Printf("JMAP discovery attempt %d failed: %v\n", i+1, err)
 			// Only sleep if we are going to retry
 			if i < 4 {
 				time.Sleep(2 * time.Second)

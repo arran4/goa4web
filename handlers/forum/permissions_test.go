@@ -6,11 +6,13 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestUserCanCreateThread_Allowed(t *testing.T) {
-	q := &db.QuerierStub{SystemCheckGrantReturns: 1}
+	q := testhelpers.NewQuerierStub(
+		testhelpers.WithGrantResult(true),
+	)
 
 	ok, err := UserCanCreateThread(context.Background(), q, "forum", 1, 2)
 	if err != nil {
@@ -35,7 +37,9 @@ func TestUserCanCreateThread_Allowed(t *testing.T) {
 }
 
 func TestUserCanCreateThread_Denied(t *testing.T) {
-	q := &db.QuerierStub{SystemCheckGrantErr: sql.ErrNoRows}
+	q := testhelpers.NewQuerierStub(
+		testhelpers.WithGrantError(sql.ErrNoRows),
+	)
 
 	ok, err := UserCanCreateThread(context.Background(), q, "forum", 1, 2)
 	if err != nil {
@@ -50,7 +54,9 @@ func TestUserCanCreateThread_Denied(t *testing.T) {
 }
 
 func TestUserCanCreateThread_Error(t *testing.T) {
-	q := &db.QuerierStub{SystemCheckGrantErr: errors.New("db offline")}
+	q := testhelpers.NewQuerierStub(
+		testhelpers.WithGrantError(errors.New("db offline")),
+	)
 
 	ok, err := UserCanCreateThread(context.Background(), q, "forum", 1, 2)
 	if err == nil {
@@ -62,7 +68,9 @@ func TestUserCanCreateThread_Error(t *testing.T) {
 }
 
 func TestUserCanCreateTopic_Allowed(t *testing.T) {
-	q := &db.QuerierStub{SystemCheckGrantReturns: 1}
+	q := testhelpers.NewQuerierStub(
+		testhelpers.WithGrantResult(true),
+	)
 
 	ok, err := UserCanCreateTopic(context.Background(), q, "forum", 1, 2)
 	if err != nil {
@@ -77,7 +85,9 @@ func TestUserCanCreateTopic_Allowed(t *testing.T) {
 }
 
 func TestUserCanCreateTopic_Denied(t *testing.T) {
-	q := &db.QuerierStub{SystemCheckGrantErr: sql.ErrNoRows}
+	q := testhelpers.NewQuerierStub(
+		testhelpers.WithGrantError(sql.ErrNoRows),
+	)
 
 	ok, err := UserCanCreateTopic(context.Background(), q, "forum", 1, 2)
 	if err != nil {
@@ -92,7 +102,9 @@ func TestUserCanCreateTopic_Denied(t *testing.T) {
 }
 
 func TestUserCanCreateTopic_Error(t *testing.T) {
-	q := &db.QuerierStub{SystemCheckGrantErr: errors.New("db offline")}
+	q := testhelpers.NewQuerierStub(
+		testhelpers.WithGrantError(errors.New("db offline")),
+	)
 
 	ok, err := UserCanCreateTopic(context.Background(), q, "forum", 1, 2)
 	if err == nil {

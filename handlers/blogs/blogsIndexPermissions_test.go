@@ -7,17 +7,15 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestCustomBlogIndexRoles(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs", nil)
 
-	cd := common.NewCoreData(req.Context(), &db.QuerierStub{
-		GetPermissionsByUserIDReturns: []*db.GetPermissionsByUserIDRow{
-			{Name: "administrator", IsAdmin: true},
-		},
-	}, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+	cd := common.NewCoreData(req.Context(), testhelpers.NewQuerierStub(
+		testhelpers.FromScenario(testhelpers.ScenarioAdmin()),
+	), config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
 	cd.UserID = 1
 	cd.AdminMode = true
 	BlogsMiddlewareIndex(cd, req)
@@ -28,9 +26,9 @@ func TestCustomBlogIndexRoles(t *testing.T) {
 		t.Errorf("admin should see write blog")
 	}
 
-	cd = common.NewCoreData(req.Context(), &db.QuerierStub{
-		SystemCheckGrantReturns: 1,
-	}, config.NewRuntimeConfig(), common.WithUserRoles([]string{"content writer"}))
+	cd = common.NewCoreData(req.Context(), testhelpers.NewQuerierStub(
+		testhelpers.WithGrantResult(true),
+	), config.NewRuntimeConfig(), common.WithUserRoles([]string{"content writer"}))
 	BlogsMiddlewareIndex(cd, req)
 	if common.ContainsItem(cd.CustomIndexItems, "Blogs Admin") {
 		t.Errorf("content writer should not see blogs admin link")
@@ -39,7 +37,9 @@ func TestCustomBlogIndexRoles(t *testing.T) {
 		t.Errorf("content writer should see write blog")
 	}
 
-	cd = common.NewCoreData(req.Context(), &db.QuerierStub{SystemCheckGrantErr: errors.New("grant denied")}, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))
+	cd = common.NewCoreData(req.Context(), testhelpers.NewQuerierStub(
+		testhelpers.WithGrantError(errors.New("grant denied")),
+	), config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))
 	BlogsMiddlewareIndex(cd, req)
 	if common.ContainsItem(cd.CustomIndexItems, "Blogs Admin") || common.ContainsItem(cd.CustomIndexItems, "Write blog") {
 		t.Errorf("anyone should not see writer/admin items")

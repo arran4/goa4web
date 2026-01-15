@@ -14,7 +14,7 @@ import (
 func Page(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "FAQ"
-	imageURL, _ := share.MakeImageURL(cd.AbsoluteURL(), "FAQ", cd.ShareSignKey, false)
+	imageURL, _ := share.MakeImageURL(cd.AbsoluteURL(), "FAQ", "Frequently Asked Questions", cd.ShareSignKey, false)
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       "FAQ",
 		Description: "Frequently Asked Questions",

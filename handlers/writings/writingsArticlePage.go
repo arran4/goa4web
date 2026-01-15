@@ -63,7 +63,8 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		cd.PageTitle = fmt.Sprintf("Writing %d", writing.Idwriting)
 	}
 
-	imgURL, err := share.MakeImageURL(cd.AbsoluteURL(), writing.Title.String, cd.ShareSignKey, false)
+	desc := a4code.Snip(writing.Abstract.String, 128)
+	imgURL, err := share.MakeImageURL(cd.AbsoluteURL(), writing.Title.String, desc, cd.ShareSignKey, false)
 	if err != nil {
 		log.Printf("Error making image URL: %v", err)
 	}

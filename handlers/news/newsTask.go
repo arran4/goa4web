@@ -42,7 +42,7 @@ func (t *newsTask) Get(w http.ResponseWriter, r *http.Request) {
 		cd.StartLink = "?offset=0"
 	}
 
-	img, err := share.MakeImageURL(cd.AbsoluteURL(), "Latest News", cd.ShareSignKey, false)
+	img, err := share.MakeImageURL(cd.AbsoluteURL(), "Latest News", "Latest news and announcements.", cd.ShareSignKey, false)
 	if err != nil {
 		log.Printf("Error making image URL: %v", err)
 	}

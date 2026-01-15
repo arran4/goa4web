@@ -9,17 +9,20 @@ import (
 	"github.com/arran4/goa4web/handlers/share"
 )
 
+// Add Description field to struct
 type testGenOgImageCmd struct {
 	*testCmd
-	fs         *flag.FlagSet
-	Title      string
-	OutputFile string
+	fs          *flag.FlagSet
+	Title       string
+	Description string
+	OutputFile  string
 }
 
 func parseTestGenOgImageCmd(parent *testCmd, args []string) (*testGenOgImageCmd, error) {
 	c := &testGenOgImageCmd{testCmd: parent}
 	c.fs = newFlagSet("gen-og-image")
 	c.fs.StringVar(&c.Title, "title", "GoA4Web", "The title to use in the image")
+	c.fs.StringVar(&c.Description, "description", "", "The description to use in the image")
 	c.fs.StringVar(&c.OutputFile, "output", "og-image.png", "The output file")
 	c.fs.Usage = c.Usage
 	if err := c.fs.Parse(args); err != nil {
@@ -29,7 +32,7 @@ func parseTestGenOgImageCmd(parent *testCmd, args []string) (*testGenOgImageCmd,
 }
 
 func (c *testGenOgImageCmd) Run() error {
-	img, err := share.GenerateImage(c.Title)
+	img, err := share.GenerateImage(c.Title, c.Description)
 	if err != nil {
 		return fmt.Errorf("generate image: %w", err)
 	}

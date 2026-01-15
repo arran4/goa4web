@@ -3,6 +3,7 @@ package share
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"image"
@@ -11,6 +12,7 @@ import (
 	"image/png"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
@@ -172,11 +174,20 @@ func VerifyAndGetPath(r *http.Request, key string) string {
 	return ""
 }
 
-// Make ImageURL creates an OpenGraph image URL for the given title.
+// MakeImageURL creates an OpenGraph image URL for the given title and description.
 // By default generates a nonce-based signature.
 // Pass usePathAuth=true for path-based signatures, false for query-based.
-func MakeImageURL(baseURL, title, key string, usePathAuth bool, opts ...sign.SignOption) (string, error) {
-	encodedData := base64.RawURLEncoding.EncodeToString([]byte(title))
+func MakeImageURL(baseURL, title, description, key string, usePathAuth bool, opts ...sign.SignOption) (string, error) {
+	payload := imagePayload{
+		Title:       title,
+		Description: description,
+	}
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return "", fmt.Errorf("marshal payload: %w", err)
+	}
+
+	encodedData := base64.RawURLEncoding.EncodeToString(data)
 	path := "/api/og-image/" + encodedData
 
 	// Generate nonce if no options provided
@@ -218,6 +229,11 @@ func MakeImageURL(baseURL, title, key string, usePathAuth bool, opts ...sign.Sig
 	return signutil.SignAndAddQuery(fullURL, path, key, opts...)
 }
 
+type imagePayload struct {
+	Title       string `json:"t"`
+	Description string `json:"d,omitempty"`
+}
+
 // OGImageHandler serves dynamically generated OpenGraph images.
 type OGImageHandler struct {
 	signKey string
@@ -255,8 +271,15 @@ func (h *OGImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	data := string(dataBytes)
-	img, err := GenerateImage(data)
+
+	// Try unmarshal as JSON
+	var payload imagePayload
+	if err := json.Unmarshal(dataBytes, &payload); err != nil {
+		// Fallback for legacy URLs: treat entire data as title
+		payload.Title = string(dataBytes)
+	}
+
+	img, err := GenerateImage(payload.Title, payload.Description)
 	if err != nil {
 		log.Printf("Error generating image: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -270,7 +293,7 @@ func (h *OGImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func GenerateImage(data string) (image.Image, error) {
+func GenerateImage(title, description string) (image.Image, error) {
 	img := image.NewRGBA(image.Rect(0, 0, 1200, 630))
 	draw.Draw(img, img.Bounds(), image.NewUniform(color.RGBA{R: 0x0b, G: 0x35, B: 0x13, A: 0xff}), image.Point{}, draw.Src)
 	f, err := opentype.Parse(goregular.TTF)
@@ -301,6 +324,7 @@ func GenerateImage(data string) (image.Image, error) {
 		Y: 50,
 	}
 	draw.Draw(drawImage, logo.Bounds().Add(logoPt), logo, image.Point{}, draw.Over)
+
 	// draw text centered
 	d := &font.Drawer{
 		Dst:  drawImage,
@@ -308,10 +332,37 @@ func GenerateImage(data string) (image.Image, error) {
 		Face: face,
 		Dot:  fixed.Point26_6{},
 	}
-	textWidth := d.MeasureString(data)
+
+	// Draw Title
+	textWidth := d.MeasureString(title)
 	d.Dot.X = (fixed.I(1200) - textWidth) / 2
 	d.Dot.Y = fixed.I(630 - 50)
-	d.DrawString(data)
+
+	// If description is present, move title up
+	if description != "" {
+		d.Dot.Y -= fixed.I(60) // Move title up
+	}
+	d.DrawString(title)
+
+	// Draw Description (First Line)
+	if description != "" {
+		// Get first line of description
+		lines := strings.Split(description, "\n")
+		descLine := lines[0]
+		if len(descLine) > 60 {
+			descLine = descLine[:57] + "..."
+		}
+
+		descWidth := d.MeasureString(descLine)
+		d.Dot.X = (fixed.I(1200) - descWidth) / 2
+		d.Dot.Y = fixed.I(630 - 30) // Position for description
+
+		// Use smaller font for description?
+		// For now using same font but maybe we should scale it down ideally.
+		// Continuing with same font for simplicity unless requested otherwise.
+		d.DrawString(descLine)
+	}
+
 	return img, nil
 }
 

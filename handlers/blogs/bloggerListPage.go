@@ -30,7 +30,7 @@ func BloggerListPage(w http.ResponseWriter, r *http.Request) {
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Bloggers"
-	imageURL, _ := share.MakeImageURL(cd.AbsoluteURL(), "Blogger List", cd.ShareSignKey, false)
+	imageURL, _ := share.MakeImageURL(cd.AbsoluteURL(), "Blogger List", "List of bloggers", cd.ShareSignKey, false)
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       cd.PageTitle,
 		Description: "List of bloggers",

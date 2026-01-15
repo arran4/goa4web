@@ -33,7 +33,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	imageURL, _ := share.MakeImageURL(cd.AbsoluteURL(), "Forum", cd.ShareSignKey, false)
+	imageURL, _ := share.MakeImageURL(cd.AbsoluteURL(), "Forum", "A place for discussion.", cd.ShareSignKey, false)
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       "Forum",
 		Description: "A place for discussion.",

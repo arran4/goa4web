@@ -43,6 +43,7 @@
   "IMAGE_UPLOAD_S3_URL": "",
   "JMAP_ACCOUNT": "",
   "JMAP_ENDPOINT": "",
+  "JMAP_ENDPOINT_OVERRIDE": "",
   "JMAP_IDENTITY": "",
   "JMAP_INSECURE": "false",
   "JMAP_PASS": "",

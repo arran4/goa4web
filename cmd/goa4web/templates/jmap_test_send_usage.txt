@@ -1,0 +1,7 @@
+Sends a test email to the specified address.
+
+Usage:
+  {{.Prog}} jmap test-send
+
+Flags:
+  -h, --help   help for test-send

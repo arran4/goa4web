@@ -187,10 +187,12 @@ func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp Se
 			Path      string
 			Item      any
 			TaskEvent eventbus.TaskEvent
+			UserID    int32
 		}{
 			Path:      evt.Path,
 			Item:      evt.Data,
 			TaskEvent: evt,
+			UserID:    evt.UserID,
 		}
 		msg, err := n.renderNotification(ctx, *nt, data)
 		if err != nil {

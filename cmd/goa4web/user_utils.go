@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/arran4/goa4web/config"
@@ -85,7 +86,11 @@ func generatePasswordReset(
 	}
 
 	sig := sign.Sign(data, key, opts...)
-	signedURL, err := sign.AddQuerySig(cfg.HTTPHostname+targetURL, sig, opts...)
+	base, err := url.Parse(cfg.HTTPHostname)
+	if err != nil {
+		return fmt.Errorf("failed to parse hostname: %w", err)
+	}
+	signedURL, err := sign.AddQuerySig(base.JoinPath(targetURL).String(), sig, opts...)
 	if err != nil {
 		return fmt.Errorf("failed to add query signature: %w", err)
 	}

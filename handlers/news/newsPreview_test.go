@@ -3,16 +3,18 @@ package news
 import (
 	"bytes"
 	"context"
-	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/internal/db"
-	navpkg "github.com/arran4/goa4web/internal/navigation"
-	"github.com/gorilla/mux"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/gorilla/mux"
+
+	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
+	navpkg "github.com/arran4/goa4web/internal/navigation"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestPreviewRoute(t *testing.T) {
@@ -25,7 +27,7 @@ func TestPreviewRoute(t *testing.T) {
 	// Middleware to inject CoreData
 	mw := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			cd := common.NewCoreData(r.Context(), &db.QuerierStub{}, cfg)
+			cd := common.NewCoreData(r.Context(), testhelpers.NewQuerierStub(), cfg)
 			ctx := context.WithValue(r.Context(), consts.KeyCoreData, cd)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
@@ -70,7 +72,7 @@ func TestPreviewHandler(t *testing.T) {
 	}
 
 	// Inject CoreData
-	cd := common.NewCoreData(req.Context(), &db.QuerierStub{}, &config.RuntimeConfig{})
+	cd := common.NewCoreData(req.Context(), testhelpers.NewQuerierStub(), &config.RuntimeConfig{})
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 

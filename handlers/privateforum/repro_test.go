@@ -13,6 +13,7 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 	navpkg "github.com/arran4/goa4web/internal/navigation"
 	"github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/testhelpers"
 	"github.com/gorilla/mux"
 )
 
@@ -71,10 +72,8 @@ func TestPrivateRoute(t *testing.T) {
 			req, _ := http.NewRequest("GET", tt.path, nil)
 			rr := httptest.NewRecorder()
 
-			stub := &db.QuerierStub{
-				SystemCheckGrantReturns:       tt.grantReturns,
-				GetPermissionsByUserIDReturns: []*db.GetPermissionsByUserIDRow{},
-			}
+			stub := testhelpers.NewQuerierStub(testhelpers.WithGrantResult(tt.grantReturns == 1))
+			stub.GetPermissionsByUserIDReturns = []*db.GetPermissionsByUserIDRow{}
 			if tt.userID != 0 {
 				stub.SystemGetUserByIDRow = &db.SystemGetUserByIDRow{
 					Idusers:  tt.userID, // Correct field name for ID

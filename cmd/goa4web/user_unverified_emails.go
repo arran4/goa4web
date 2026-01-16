@@ -50,9 +50,14 @@ func (c *userUnverifiedEmailsCmd) Run() error {
 }
 
 func (c *userUnverifiedEmailsCmd) Usage() {
-	fmt.Fprintf(c.fs.Output(), "Usage: %s user unverified-emails [subcommand] [flags]\n\nSubcommands: list, resend, expunge\n", os.Args[0])
-	c.fs.PrintDefaults()
+	executeUsage(c.fs.Output(), "user_unverified_emails_usage.txt", c)
 }
+
+func (c *userUnverifiedEmailsCmd) FlagGroups() []flagGroup {
+	return []flagGroup{{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)}}
+}
+
+var _ usageData = (*userUnverifiedEmailsCmd)(nil)
 
 func (c *userUnverifiedEmailsCmd) runList(args []string) error {
 	fs := newFlagSet("list")

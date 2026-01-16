@@ -10,11 +10,13 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func newCoreData(t *testing.T, cfg config.RuntimeConfig) (*common.CoreData, *db.QuerierStub) {
 	t.Helper()
-	stub := &db.QuerierStub{ListActiveBansReturns: []*db.BannedIp{}}
+	stub := testhelpers.NewQuerierStub()
+	stub.ListActiveBansReturns = []*db.BannedIp{}
 	if cfg.HSTSHeaderValue == "" {
 		cfg.HSTSHeaderValue = "max-age=63072000; includeSubDomains"
 	}

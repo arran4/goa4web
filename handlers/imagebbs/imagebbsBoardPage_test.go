@@ -14,10 +14,11 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestBoardPageRendersSubBoards(t *testing.T) {
-	qs := &db.QuerierStub{}
+	qs := testhelpers.NewQuerierStub(testhelpers.WithGrantResult(true))
 
 	req := httptest.NewRequest("GET", "/imagebbs/board/3", nil)
 	req = mux.SetURLVars(req, map[string]string{"board": "3"})
@@ -68,8 +69,6 @@ func TestBoardPageRendersSubBoards(t *testing.T) {
 		}
 		return nil, nil
 	}
-	qs.SystemCheckGrantReturns = 1
-
 	// Inject CoreData into context
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)

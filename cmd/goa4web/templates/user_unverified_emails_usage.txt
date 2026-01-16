@@ -1,0 +1,25 @@
+Usage:
+  {{.Prog}} user unverified-emails <subcommand> [flags]
+
+The user unverified-emails command is used to manage unverified email
+addresses. You can list, resend verification emails for, and expunge unverified
+email addresses.
+
+Subcommands:
+  list     List all unverified email addresses.
+  resend   Resend verification emails for unverified email addresses.
+  expunge  Delete unverified email addresses that are older than a specified
+           duration.
+
+Examples:
+  # List all unverified email addresses
+  {{.Prog}} user unverified-emails list
+
+  # Resend verification emails for all unverified email addresses that were
+  # created in the last 24 hours
+  {{.Prog}} user unverified-emails resend -since 24h
+
+  # Expunge all unverified email addresses that are older than 72 hours
+  {{.Prog}} user unverified-emails expunge -older-than 72h
+
+{{template "flag_groups_section" .FlagGroups}}

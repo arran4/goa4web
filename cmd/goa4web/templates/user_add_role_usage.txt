@@ -1,0 +1,18 @@
+Usage:
+  {{.Prog}} user add-role [flags]
+
+The user add-role command grants a specific role to a user. Roles are used to
+assign a pre-defined set of permissions, making it easy to manage access control
+for large numbers of users.
+
+You must specify the user by their username and the role by either its name or
+ID.
+
+Examples:
+  # Grant the "editor" role to the user "bob"
+  {{.Prog}} user add-role -username bob -role editor
+
+  # Grant the role with ID 3 to the user "alice"
+  {{.Prog}} user add-role -username alice -role-id 3
+
+{{template "flag_groups_section" .FlagGroups}}

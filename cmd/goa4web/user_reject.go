@@ -33,6 +33,16 @@ func parseUserRejectCmd(parent *userCmd, args []string) (*userRejectCmd, error) 
 	return c, nil
 }
 
+func (c *userRejectCmd) Usage() {
+	executeUsage(c.fs.Output(), "user_reject_usage.txt", c)
+}
+
+func (c *userRejectCmd) FlagGroups() []flagGroup {
+	return []flagGroup{{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)}}
+}
+
+var _ usageData = (*userRejectCmd)(nil)
+
 func (c *userRejectCmd) Run() error {
 	if c.ID == 0 && c.Username == "" {
 		return fmt.Errorf("id or username required")

@@ -42,6 +42,16 @@ type UserEmailStatus struct {
 	Unverified []string
 }
 
+func (c *userListCmd) Usage() {
+	executeUsage(c.fs.Output(), "user_list_usage.txt", c)
+}
+
+func (c *userListCmd) FlagGroups() []flagGroup {
+	return []flagGroup{{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)}}
+}
+
+var _ usageData = (*userListCmd)(nil)
+
 func (c *userListCmd) Run() error {
 	conn, err := c.rootCmd.DB()
 	if err != nil {

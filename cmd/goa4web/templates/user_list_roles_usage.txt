@@ -1,0 +1,12 @@
+Usage:
+  {{.Prog}} user list-roles
+
+The user list-roles command displays a list of all available roles that can be
+assigned to users. The output includes the role ID and the role name, which can
+be used with the "user add-role" and "user remove-role" commands.
+
+Examples:
+  # List all available roles
+  {{.Prog}} user list-roles
+
+{{template "flag_groups_section" .FlagGroups}}

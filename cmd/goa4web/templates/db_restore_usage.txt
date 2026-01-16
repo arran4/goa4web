@@ -1,0 +1,18 @@
+Usage:
+  {{.Prog}} db restore [flags]
+
+The db restore command restores the database from a SQL file that was created
+with the "db backup" command. This is useful for recovering from data loss or
+for migrating the database to a new server.
+
+The restore process will overwrite the existing database, so be sure to have a
+backup of the current database before running this command.
+
+Before running this command, ensure that the database connection string is
+correctly configured in your configuration file or environment variables.
+
+Examples:
+  # Restore the database from "backup.sql"
+  {{.Prog}} db restore -file backup.sql
+
+{{template "flag_groups_section" .FlagGroups}}

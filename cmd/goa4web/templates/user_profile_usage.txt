@@ -1,0 +1,20 @@
+Usage:
+  {{.Prog}} user profile [flags]
+
+The user profile command displays detailed information about a user, including
+their ID, username, email addresses, and any administrative comments.
+
+You must specify the user by either their ID or username. You can also specify
+a viewer user ID to see the profile as that user would see it.
+
+Examples:
+  # Show the profile for the user with ID 3
+  {{.Prog}} user profile -id 3
+
+  # Show the profile for the user "bob"
+  {{.Prog}} user profile -username bob
+
+  # Show the profile for the user "bob" as seen by the user with ID 4
+  {{.Prog}} user profile -username bob -user 4
+
+{{template "flag_groups_section" .FlagGroups}}

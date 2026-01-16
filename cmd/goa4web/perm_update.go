@@ -28,6 +28,16 @@ func parsePermUpdateCmd(parent *permCmd, args []string) (*permUpdateCmd, error) 
 	return c, nil
 }
 
+func (c *permUpdateCmd) Usage() {
+	executeUsage(c.fs.Output(), "perm_update_usage.txt", c)
+}
+
+func (c *permUpdateCmd) FlagGroups() []flagGroup {
+	return []flagGroup{{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)}}
+}
+
+var _ usageData = (*permUpdateCmd)(nil)
+
 func (c *permUpdateCmd) Run() error {
 	if c.ID == 0 || c.Role == "" {
 		return fmt.Errorf("id and role required")

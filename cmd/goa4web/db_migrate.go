@@ -60,6 +60,16 @@ func parseDbMigrateCmd(parent *dbCmd, args []string) (*dbMigrateCmd, error) {
 	return c, nil
 }
 
+func (c *dbMigrateCmd) Usage() {
+	executeUsage(c.fs.Output(), "db_migrate_usage.txt", c)
+}
+
+func (c *dbMigrateCmd) FlagGroups() []flagGroup {
+	return []flagGroup{{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)}}
+}
+
+var _ usageData = (*dbMigrateCmd)(nil)
+
 func (c *dbMigrateCmd) Run() error {
 	c.rootCmd.Verbosef("connecting to database using %s", c.rootCmd.cfg.DBConn)
 	db, err := openDB(c.rootCmd.cfg, c.rootCmd.dbReg)

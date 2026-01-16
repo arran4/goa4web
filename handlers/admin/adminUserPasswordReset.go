@@ -40,9 +40,10 @@ func (UserPasswordResetTask) Action(w http.ResponseWriter, r *http.Request) any 
 		back = fmt.Sprintf("/admin/user/%d", user.Idusers)
 	}
 	data := struct {
-		Errors   []string
-		Messages []string
-		Back     string
+		Errors      []string
+		Messages    []string
+		Back        string
+		NewPassword string
 	}{
 		Back: back,
 	}
@@ -57,6 +58,7 @@ func (UserPasswordResetTask) Action(w http.ResponseWriter, r *http.Request) any 
 		return handlers.TemplateWithDataHandler(handlers.TemplateRunTaskPage, data)
 	}
 	newPass := hex.EncodeToString(buf[:])
+	data.NewPassword = newPass
 	hash, alg, err := auth.HashPassword(newPass)
 	if err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("hashPassword: %w", err).Error())

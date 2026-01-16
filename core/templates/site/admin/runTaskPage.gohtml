@@ -22,5 +22,8 @@
 {{- if not $.Errors }}
         Task completed successfully.
 {{- end }}
+{{- if $.NewPassword }}
+        <p>New password: <code>{{ .NewPassword }}</code></p>
+{{- end }}
 <a href="{{$.Back}}">Back</a>
 {{ template "tail" $ }}

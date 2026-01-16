@@ -1,0 +1,20 @@
+Usage:
+  {{.Prog}} user email list -user-id <id> [flags]
+  {{.Prog}} user email list -username <name> [flags]
+
+Lists email addresses for a user. By default only verified addresses are
+returned unless -include-unverified is set.
+
+Flags:
+  -user-id int          User ID to list emails for
+  -username string      Username to list emails for
+  -include-unverified   Include unverified emails in results
+
+Examples:
+  # List verified emails for user ID 3
+  {{.Prog}} user email list -user-id 3
+
+  # List all emails for user "bob"
+  {{.Prog}} user email list -username bob -include-unverified
+
+{{template "flag_groups_section" .FlagGroups}}

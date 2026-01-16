@@ -13,26 +13,26 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestAdminCategoryCreateSubmitSuccess(t *testing.T) {
-	queries := &db.QuerierStub{
-		GetAllForumCategoriesReturns: []*db.Forumcategory{},
-		AdminCreateForumCategoryFn: func(ctx context.Context, arg db.AdminCreateForumCategoryParams) (int64, error) {
-			if arg.ParentID != 1 {
-				t.Fatalf("unexpected parent id %d", arg.ParentID)
-			}
-			if arg.CategoryLanguageID != (sql.NullInt32{Int32: 2, Valid: true}) {
-				t.Fatalf("unexpected language id %+v", arg.CategoryLanguageID)
-			}
-			if arg.Title.String != "name" || !arg.Title.Valid {
-				t.Fatalf("unexpected title %+v", arg.Title)
-			}
-			if arg.Description.String != "desc" || !arg.Description.Valid {
-				t.Fatalf("unexpected desc %+v", arg.Description)
-			}
-			return 5, nil
-		},
+	queries := testhelpers.NewQuerierStub()
+	queries.GetAllForumCategoriesReturns = []*db.Forumcategory{}
+	queries.AdminCreateForumCategoryFn = func(ctx context.Context, arg db.AdminCreateForumCategoryParams) (int64, error) {
+		if arg.ParentID != 1 {
+			t.Fatalf("unexpected parent id %d", arg.ParentID)
+		}
+		if arg.CategoryLanguageID != (sql.NullInt32{Int32: 2, Valid: true}) {
+			t.Fatalf("unexpected language id %+v", arg.CategoryLanguageID)
+		}
+		if arg.Title.String != "name" || !arg.Title.Valid {
+			t.Fatalf("unexpected title %+v", arg.Title)
+		}
+		if arg.Description.String != "desc" || !arg.Description.Valid {
+			t.Fatalf("unexpected desc %+v", arg.Description)
+		}
+		return 5, nil
 	}
 	form := url.Values{
 		"name":     {"name"},
@@ -60,7 +60,7 @@ func TestAdminCategoryCreateSubmitSuccess(t *testing.T) {
 }
 
 func TestAdminCategoryCreateSubmitValidationError(t *testing.T) {
-	queries := &db.QuerierStub{}
+	queries := testhelpers.NewQuerierStub()
 	form := url.Values{
 		"desc":     {"desc"},
 		"pcid":     {"1"},

@@ -13,30 +13,30 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestRequireThreadAndTopicTrue(t *testing.T) {
 	threadID := int32(2)
 	topicID := int32(1)
 
-	qs := &db.QuerierStub{
-		GetThreadLastPosterAndPermsFn: func(ctx context.Context, arg db.GetThreadLastPosterAndPermsParams) (*db.GetThreadLastPosterAndPermsRow, error) {
-			if arg.ThreadID != threadID {
-				return nil, sql.ErrNoRows
-			}
-			return &db.GetThreadLastPosterAndPermsRow{
-				Idforumthread:          threadID,
-				ForumtopicIdforumtopic: topicID,
-			}, nil
-		},
-		GetForumTopicByIdForUserFn: func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
-			if arg.Idforumtopic != topicID {
-				return nil, sql.ErrNoRows
-			}
-			return &db.GetForumTopicByIdForUserRow{
-				Idforumtopic: topicID,
-			}, nil
-		},
+	qs := testhelpers.NewQuerierStub()
+	qs.GetThreadLastPosterAndPermsFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsParams) (*db.GetThreadLastPosterAndPermsRow, error) {
+		if arg.ThreadID != threadID {
+			return nil, sql.ErrNoRows
+		}
+		return &db.GetThreadLastPosterAndPermsRow{
+			Idforumthread:          threadID,
+			ForumtopicIdforumtopic: topicID,
+		}, nil
+	}
+	qs.GetForumTopicByIdForUserFn = func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
+		if arg.Idforumtopic != topicID {
+			return nil, sql.ErrNoRows
+		}
+		return &db.GetForumTopicByIdForUserRow{
+			Idforumtopic: topicID,
+		}, nil
 	}
 
 	req := httptest.NewRequest("GET", "/forum/topic/1/thread/2", nil)
@@ -71,18 +71,17 @@ func TestRequireThreadAndTopicFalse(t *testing.T) {
 	threadID := int32(2)
 	wrongTopicID := int32(3)
 
-	qs := &db.QuerierStub{
-		GetThreadLastPosterAndPermsFn: func(ctx context.Context, arg db.GetThreadLastPosterAndPermsParams) (*db.GetThreadLastPosterAndPermsRow, error) {
-			return &db.GetThreadLastPosterAndPermsRow{
-				Idforumthread:          threadID,
-				ForumtopicIdforumtopic: wrongTopicID,
-			}, nil
-		},
-		GetForumTopicByIdForUserFn: func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
-			return &db.GetForumTopicByIdForUserRow{
-				Idforumtopic: wrongTopicID,
-			}, nil
-		},
+	qs := testhelpers.NewQuerierStub()
+	qs.GetThreadLastPosterAndPermsFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsParams) (*db.GetThreadLastPosterAndPermsRow, error) {
+		return &db.GetThreadLastPosterAndPermsRow{
+			Idforumthread:          threadID,
+			ForumtopicIdforumtopic: wrongTopicID,
+		}, nil
+	}
+	qs.GetForumTopicByIdForUserFn = func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
+		return &db.GetForumTopicByIdForUserRow{
+			Idforumtopic: wrongTopicID,
+		}, nil
 	}
 
 	req := httptest.NewRequest("GET", "/forum/topic/1/thread/2", nil)
@@ -108,13 +107,12 @@ func TestRequireThreadAndTopicFalse(t *testing.T) {
 }
 
 func TestRequireThreadAndTopicError(t *testing.T) {
-	qs := &db.QuerierStub{
-		GetThreadLastPosterAndPermsFn: func(ctx context.Context, arg db.GetThreadLastPosterAndPermsParams) (*db.GetThreadLastPosterAndPermsRow, error) {
-			return nil, sql.ErrNoRows
-		},
-		GetForumTopicByIdForUserFn: func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
-			return nil, sql.ErrNoRows
-		},
+	qs := testhelpers.NewQuerierStub()
+	qs.GetThreadLastPosterAndPermsFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsParams) (*db.GetThreadLastPosterAndPermsRow, error) {
+		return nil, sql.ErrNoRows
+	}
+	qs.GetForumTopicByIdForUserFn = func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
+		return nil, sql.ErrNoRows
 	}
 
 	req := httptest.NewRequest("GET", "/forum/topic/1/thread/2", nil)

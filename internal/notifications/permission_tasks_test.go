@@ -13,6 +13,7 @@ import (
 	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 type allowTaskNoEmail struct{ user.PermissionUserAllowTask }
@@ -50,13 +51,12 @@ func TestProcessEventPermissionTasks(t *testing.T) {
 	cfg.EmailFrom = "from@example.com"
 
 	bus := eventbus.NewBus()
-	q := &db.QuerierStub{
-		SystemGetUserByIDRow: &db.SystemGetUserByIDRow{
-			Idusers:                2,
-			Email:                  sql.NullString{String: "u@test", Valid: true},
-			Username:               sql.NullString{String: "bob", Valid: true},
-			PublicProfileEnabledAt: sql.NullTime{},
-		},
+	q := testhelpers.NewQuerierStub()
+	q.SystemGetUserByIDRow = &db.SystemGetUserByIDRow{
+		Idusers:                2,
+		Email:                  sql.NullString{String: "u@test", Valid: true},
+		Username:               sql.NullString{String: "bob", Valid: true},
+		PublicProfileEnabledAt: sql.NullTime{},
 	}
 	n := notif.New(notif.WithQueries(q), notif.WithConfig(cfg))
 

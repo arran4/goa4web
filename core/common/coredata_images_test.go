@@ -8,6 +8,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestCreateCommentValidatesGalleryImages(t *testing.T) {
@@ -16,12 +17,11 @@ func TestCreateCommentValidatesGalleryImages(t *testing.T) {
 	text := "[img image:" + imageID + "]"
 
 	t.Run("accepts gallery image and records thread usage", func(t *testing.T) {
-		queries := &db.QuerierStub{
-			ListUploadedImagePathsByUserFn: func(ctx context.Context, arg db.ListUploadedImagePathsByUserParams) ([]sql.NullString, error) {
-				return []sql.NullString{{String: imagePath, Valid: true}}, nil
-			},
-			CreateCommentInSectionForCommenterResult: 42,
+		queries := testhelpers.NewQuerierStub()
+		queries.ListUploadedImagePathsByUserFn = func(ctx context.Context, arg db.ListUploadedImagePathsByUserParams) ([]sql.NullString, error) {
+			return []sql.NullString{{String: imagePath, Valid: true}}, nil
 		}
+		queries.CreateCommentInSectionForCommenterResult = 42
 		cd := NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
 		commentID, err := cd.CreateCommentInSectionForCommenter("forum", "topic", 1, 1, 9, 1, text)
 		if err != nil {
@@ -46,15 +46,14 @@ func TestCreateCommentValidatesGalleryImages(t *testing.T) {
 	})
 
 	t.Run("accepts thread image", func(t *testing.T) {
-		queries := &db.QuerierStub{
-			ListUploadedImagePathsByUserFn: func(ctx context.Context, arg db.ListUploadedImagePathsByUserParams) ([]sql.NullString, error) {
-				return []sql.NullString{}, nil
-			},
-			ListThreadImagePathsFn: func(ctx context.Context, arg db.ListThreadImagePathsParams) ([]sql.NullString, error) {
-				return []sql.NullString{{String: imagePath, Valid: true}}, nil
-			},
-			CreateCommentInSectionForCommenterResult: 42,
+		queries := testhelpers.NewQuerierStub()
+		queries.ListUploadedImagePathsByUserFn = func(ctx context.Context, arg db.ListUploadedImagePathsByUserParams) ([]sql.NullString, error) {
+			return []sql.NullString{}, nil
 		}
+		queries.ListThreadImagePathsFn = func(ctx context.Context, arg db.ListThreadImagePathsParams) ([]sql.NullString, error) {
+			return []sql.NullString{{String: imagePath, Valid: true}}, nil
+		}
+		queries.CreateCommentInSectionForCommenterResult = 42
 		cd := NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
 		if _, err := cd.CreateCommentInSectionForCommenter("forum", "topic", 1, 1, 9, 1, text); err != nil {
 			t.Fatalf("expected thread image acceptance: %v", err)
@@ -68,13 +67,12 @@ func TestCreateCommentValidatesGalleryImages(t *testing.T) {
 	})
 
 	t.Run("rejects missing gallery image", func(t *testing.T) {
-		queries := &db.QuerierStub{
-			ListUploadedImagePathsByUserFn: func(ctx context.Context, arg db.ListUploadedImagePathsByUserParams) ([]sql.NullString, error) {
-				return []sql.NullString{}, nil
-			},
-			ListThreadImagePathsFn: func(ctx context.Context, arg db.ListThreadImagePathsParams) ([]sql.NullString, error) {
-				return []sql.NullString{}, nil
-			},
+		queries := testhelpers.NewQuerierStub()
+		queries.ListUploadedImagePathsByUserFn = func(ctx context.Context, arg db.ListUploadedImagePathsByUserParams) ([]sql.NullString, error) {
+			return []sql.NullString{}, nil
+		}
+		queries.ListThreadImagePathsFn = func(ctx context.Context, arg db.ListThreadImagePathsParams) ([]sql.NullString, error) {
+			return []sql.NullString{}, nil
 		}
 		cd := NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
 		if _, err := cd.CreateCommentInSectionForCommenter("forum", "topic", 1, 1, 9, 1, text); err == nil {

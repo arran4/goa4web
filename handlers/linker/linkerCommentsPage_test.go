@@ -23,36 +23,36 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestCommentsPageAllowsGlobalViewGrant(t *testing.T) {
-	queries := &db.QuerierStub{
-		GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow: &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow{
-			ID:         1,
-			LanguageID: sql.NullInt32{Int32: 1, Valid: true},
-			AuthorID:   2,
-			CategoryID: sql.NullInt32{Int32: 1, Valid: true},
-			ThreadID:   1,
-			Title:      sql.NullString{String: "t", Valid: true},
-			Url:        sql.NullString{String: "http://u", Valid: true},
-			Listed:     sql.NullTime{Time: time.Unix(0, 0), Valid: true},
-			Timezone:   sql.NullString{String: time.Local.String(), Valid: true},
-			Username:   sql.NullString{String: "bob", Valid: true},
-			Title_2:    sql.NullString{String: "cat", Valid: true},
-		},
-		GetCommentsBySectionThreadIdForUserReturns: []*db.GetCommentsBySectionThreadIdForUserRow{},
-		GetThreadLastPosterAndPermsReturns: &db.GetThreadLastPosterAndPermsRow{
-			Idforumthread:          1,
-			Firstpost:              1,
-			Lastposter:             1,
-			ForumtopicIdforumtopic: 1,
-			Comments:               sql.NullInt32{Int32: 0, Valid: true},
-			Lastaddition:           sql.NullTime{Time: time.Unix(0, 0), Valid: true},
-			Locked:                 sql.NullBool{Bool: false, Valid: true},
-		},
-		GetPermissionsByUserIDReturns: []*db.GetPermissionsByUserIDRow{
-			{Name: "administrator", IsAdmin: true},
-		},
+	queries := testhelpers.NewQuerierStub()
+	queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow = &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow{
+		ID:         1,
+		LanguageID: sql.NullInt32{Int32: 1, Valid: true},
+		AuthorID:   2,
+		CategoryID: sql.NullInt32{Int32: 1, Valid: true},
+		ThreadID:   1,
+		Title:      sql.NullString{String: "t", Valid: true},
+		Url:        sql.NullString{String: "http://u", Valid: true},
+		Listed:     sql.NullTime{Time: time.Unix(0, 0), Valid: true},
+		Timezone:   sql.NullString{String: time.Local.String(), Valid: true},
+		Username:   sql.NullString{String: "bob", Valid: true},
+		Title_2:    sql.NullString{String: "cat", Valid: true},
+	}
+	queries.GetCommentsBySectionThreadIdForUserReturns = []*db.GetCommentsBySectionThreadIdForUserRow{}
+	queries.GetThreadLastPosterAndPermsReturns = &db.GetThreadLastPosterAndPermsRow{
+		Idforumthread:          1,
+		Firstpost:              1,
+		Lastposter:             1,
+		ForumtopicIdforumtopic: 1,
+		Comments:               sql.NullInt32{Int32: 0, Valid: true},
+		Lastaddition:           sql.NullTime{Time: time.Unix(0, 0), Valid: true},
+		Locked:                 sql.NullBool{Bool: false, Valid: true},
+	}
+	queries.GetPermissionsByUserIDReturns = []*db.GetPermissionsByUserIDRow{
+		{Name: "administrator", IsAdmin: true},
 	}
 	store := sessions.NewCookieStore([]byte("t"))
 	core.Store = store
@@ -141,19 +141,18 @@ func writeTempCommentsTemplate(t *testing.T, content string) string {
 func TestCommentsPageEditControlsUseEditGrant(t *testing.T) {
 	dir := writeTempCommentsTemplate(t, "{{ if .CanEdit }}EDIT_CONTROLS{{ end }}")
 
-	queries := &db.QuerierStub{
-		GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow: &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow{
-			ID:       1,
-			ThreadID: 1,
-			Title:    sql.NullString{String: "Link Title", Valid: true},
-		},
-		GetCommentsBySectionThreadIdForUserReturns: []*db.GetCommentsBySectionThreadIdForUserRow{}, // Return empty comments
-		GetThreadBySectionThreadIDForReplierReturn: &db.Forumthread{
-			Idforumthread: 1,
-		},
-		GetThreadLastPosterAndPermsReturns: &db.GetThreadLastPosterAndPermsRow{
-			Idforumthread: 1,
-		},
+	queries := testhelpers.NewQuerierStub()
+	queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow = &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow{
+		ID:       1,
+		ThreadID: 1,
+		Title:    sql.NullString{String: "Link Title", Valid: true},
+	}
+	queries.GetCommentsBySectionThreadIdForUserReturns = []*db.GetCommentsBySectionThreadIdForUserRow{}
+	queries.GetThreadBySectionThreadIDForReplierReturn = &db.Forumthread{
+		Idforumthread: 1,
+	}
+	queries.GetThreadLastPosterAndPermsReturns = &db.GetThreadLastPosterAndPermsRow{
+		Idforumthread: 1,
 	}
 
 	// Map to track grant checks
@@ -198,42 +197,41 @@ func TestCommentsPageEditControlsUseEditGrant(t *testing.T) {
 func TestCommentsPageEditControlsRequireGrantNotRole(t *testing.T) {
 	dir := writeTempCommentsTemplate(t, `CanEdit: {{.CanEdit}}`)
 
-	queries := &db.QuerierStub{
-		GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow: &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow{
-			ID:         1,
-			LanguageID: sql.NullInt32{Int32: 1, Valid: true},
-			AuthorID:   2,
-			CategoryID: sql.NullInt32{Int32: 1, Valid: true},
-			ThreadID:   1,
-			Title:      sql.NullString{String: "t", Valid: true},
-			Url:        sql.NullString{String: "http://u", Valid: true},
-			Listed:     sql.NullTime{Time: time.Unix(0, 0), Valid: true},
-			Timezone:   sql.NullString{String: time.Local.String(), Valid: true},
-			Username:   sql.NullString{String: "bob", Valid: true},
-			Title_2:    sql.NullString{String: "cat", Valid: true},
-		},
-		GetCommentsBySectionThreadIdForUserReturns: []*db.GetCommentsBySectionThreadIdForUserRow{},
-		GetThreadLastPosterAndPermsReturns: &db.GetThreadLastPosterAndPermsRow{
-			Idforumthread:          1,
-			Firstpost:              1,
-			Lastposter:             1,
-			ForumtopicIdforumtopic: 1,
-			Comments:               sql.NullInt32{Int32: 0, Valid: true},
-			Lastaddition:           sql.NullTime{Time: time.Unix(0, 0), Valid: true},
-			Locked:                 sql.NullBool{Bool: false, Valid: true},
-		},
-		GetPermissionsByUserIDReturns: []*db.GetPermissionsByUserIDRow{
-			{Name: "user", IsAdmin: false},
-		},
-		SystemCheckGrantFn: func(p db.SystemCheckGrantParams) (int32, error) {
-			if p.Action == "view" {
-				return 1, nil
-			}
-			if p.Action == "edit" {
-				return 1, nil
-			}
-			return 0, sql.ErrNoRows
-		},
+	queries := testhelpers.NewQuerierStub()
+	queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow = &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow{
+		ID:         1,
+		LanguageID: sql.NullInt32{Int32: 1, Valid: true},
+		AuthorID:   2,
+		CategoryID: sql.NullInt32{Int32: 1, Valid: true},
+		ThreadID:   1,
+		Title:      sql.NullString{String: "t", Valid: true},
+		Url:        sql.NullString{String: "http://u", Valid: true},
+		Listed:     sql.NullTime{Time: time.Unix(0, 0), Valid: true},
+		Timezone:   sql.NullString{String: time.Local.String(), Valid: true},
+		Username:   sql.NullString{String: "bob", Valid: true},
+		Title_2:    sql.NullString{String: "cat", Valid: true},
+	}
+	queries.GetCommentsBySectionThreadIdForUserReturns = []*db.GetCommentsBySectionThreadIdForUserRow{}
+	queries.GetThreadLastPosterAndPermsReturns = &db.GetThreadLastPosterAndPermsRow{
+		Idforumthread:          1,
+		Firstpost:              1,
+		Lastposter:             1,
+		ForumtopicIdforumtopic: 1,
+		Comments:               sql.NullInt32{Int32: 0, Valid: true},
+		Lastaddition:           sql.NullTime{Time: time.Unix(0, 0), Valid: true},
+		Locked:                 sql.NullBool{Bool: false, Valid: true},
+	}
+	queries.GetPermissionsByUserIDReturns = []*db.GetPermissionsByUserIDRow{
+		{Name: "user", IsAdmin: false},
+	}
+	queries.SystemCheckGrantFn = func(p db.SystemCheckGrantParams) (int32, error) {
+		if p.Action == "view" {
+			return 1, nil
+		}
+		if p.Action == "edit" {
+			return 1, nil
+		}
+		return 0, sql.ErrNoRows
 	}
 
 	w, req, cd := newCommentsPageRequest(t, queries, []string{"user"}, 2)
@@ -284,41 +282,39 @@ func TestCommentsPageEditControlsAllowAdminMode(t *testing.T) {
 	userID := int32(2)
 	commentID := int32(100)
 
-	queries := &db.QuerierStub{
-		GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow: &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow{
-			ID:         int32(linkID),
-			LanguageID: sql.NullInt32{Int32: 1, Valid: true},
-			AuthorID:   userID,
-			CategoryID: sql.NullInt32{Int32: 1, Valid: true},
-			ThreadID:   int32(threadID),
-			Title:      sql.NullString{String: "t", Valid: true},
-			Url:        sql.NullString{String: "http://u", Valid: true},
-			Listed:     sql.NullTime{Time: time.Unix(0, 0), Valid: true},
-			Timezone:   sql.NullString{String: time.Local.String(), Valid: true},
-			Username:   sql.NullString{String: "bob", Valid: true},
-			Title_2:    sql.NullString{String: "cat", Valid: true},
+	queries := testhelpers.NewQuerierStub(testhelpers.WithGrantResult(true))
+	queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow = &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow{
+		ID:         int32(linkID),
+		LanguageID: sql.NullInt32{Int32: 1, Valid: true},
+		AuthorID:   userID,
+		CategoryID: sql.NullInt32{Int32: 1, Valid: true},
+		ThreadID:   int32(threadID),
+		Title:      sql.NullString{String: "t", Valid: true},
+		Url:        sql.NullString{String: "http://u", Valid: true},
+		Listed:     sql.NullTime{Time: time.Unix(0, 0), Valid: true},
+		Timezone:   sql.NullString{String: time.Local.String(), Valid: true},
+		Username:   sql.NullString{String: "bob", Valid: true},
+		Title_2:    sql.NullString{String: "cat", Valid: true},
+	}
+	queries.GetCommentsBySectionThreadIdForUserReturns = []*db.GetCommentsBySectionThreadIdForUserRow{
+		{
+			Idcomments:    int32(commentID),
+			ForumthreadID: int32(threadID),
+			Text:          sql.NullString{String: "some comment", Valid: true},
+			IsOwner:       false,
 		},
-		GetCommentsBySectionThreadIdForUserReturns: []*db.GetCommentsBySectionThreadIdForUserRow{
-			{
-				Idcomments:    int32(commentID),
-				ForumthreadID: int32(threadID),
-				Text:          sql.NullString{String: "some comment", Valid: true},
-				IsOwner:       false,
-			},
-		},
-		GetThreadLastPosterAndPermsReturns: &db.GetThreadLastPosterAndPermsRow{
-			Idforumthread:          int32(threadID),
-			Firstpost:              1,
-			Lastposter:             1,
-			ForumtopicIdforumtopic: 1,
-			Comments:               sql.NullInt32{Int32: 0, Valid: true},
-			Lastaddition:           sql.NullTime{Time: time.Unix(0, 0), Valid: true},
-			Locked:                 sql.NullBool{Bool: false, Valid: true},
-		},
-		GetPermissionsByUserIDReturns: []*db.GetPermissionsByUserIDRow{
-			{Name: "administrator", IsAdmin: true},
-		},
-		SystemCheckGrantReturns: 1,
+	}
+	queries.GetThreadLastPosterAndPermsReturns = &db.GetThreadLastPosterAndPermsRow{
+		Idforumthread:          int32(threadID),
+		Firstpost:              1,
+		Lastposter:             1,
+		ForumtopicIdforumtopic: 1,
+		Comments:               sql.NullInt32{Int32: 0, Valid: true},
+		Lastaddition:           sql.NullTime{Time: time.Unix(0, 0), Valid: true},
+		Locked:                 sql.NullBool{Bool: false, Valid: true},
+	}
+	queries.GetPermissionsByUserIDReturns = []*db.GetPermissionsByUserIDRow{
+		{Name: "administrator", IsAdmin: true},
 	}
 
 	w, req, cd := newCommentsPageRequest(t, queries, []string{"administrator"}, userID)

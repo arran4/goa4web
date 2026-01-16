@@ -15,6 +15,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 	"github.com/gorilla/mux"
 )
 
@@ -74,7 +75,7 @@ func (c *testVerificationTemplateCmd) Run() error {
 	}
 
 	// Mock DB
-	qs := &db.QuerierStub{}
+	qs := testhelpers.NewQuerierStub()
 	if data.User != nil {
 		qs.SystemGetUserByIDRow = &db.SystemGetUserByIDRow{
 			Idusers:  data.User.Idusers,

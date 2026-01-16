@@ -20,33 +20,33 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestForumPageHandlers(t *testing.T) {
 	t.Run("admin topics page", func(t *testing.T) {
-		queries := &db.QuerierStub{
-			AdminCountForumTopicsReturns: 1,
-			AdminListForumTopicsReturns: []*db.Forumtopic{
-				{
-					Idforumtopic:                 1,
-					ForumcategoryIdforumcategory: 1,
-					Title:                        sql.NullString{String: "t", Valid: true},
-					Description:                  sql.NullString{String: "d", Valid: true},
-					Lastaddition:                 sql.NullTime{Time: time.Now(), Valid: true},
-					Handler:                      "",
-				},
+		queries := testhelpers.NewQuerierStub()
+		queries.AdminCountForumTopicsReturns = 1
+		queries.AdminListForumTopicsReturns = []*db.Forumtopic{
+			{
+				Idforumtopic:                 1,
+				ForumcategoryIdforumcategory: 1,
+				Title:                        sql.NullString{String: "t", Valid: true},
+				Description:                  sql.NullString{String: "d", Valid: true},
+				Lastaddition:                 sql.NullTime{Time: time.Now(), Valid: true},
+				Handler:                      "",
 			},
-			GetAllForumCategoriesReturns: []*db.Forumcategory{
-				{
-					Idforumcategory:              1,
-					ForumcategoryIdforumcategory: 0,
-					Title:                        sql.NullString{String: "cat", Valid: true},
-					Description:                  sql.NullString{String: "desc", Valid: true},
-				},
+		}
+		queries.GetAllForumCategoriesReturns = []*db.Forumcategory{
+			{
+				Idforumcategory:              1,
+				ForumcategoryIdforumcategory: 0,
+				Title:                        sql.NullString{String: "cat", Valid: true},
+				Description:                  sql.NullString{String: "desc", Valid: true},
 			},
-			AdminGetTopicGrantsReturns: []*db.AdminGetTopicGrantsRow{
-				{Section: "forum", RoleID: sql.NullInt32{}, RoleName: sql.NullString{}, UserID: sql.NullInt32{}, Username: sql.NullString{}},
-			},
+		}
+		queries.AdminGetTopicGrantsReturns = []*db.AdminGetTopicGrantsRow{
+			{Section: "forum", RoleID: sql.NullInt32{}, RoleName: sql.NullString{}, UserID: sql.NullInt32{}, Username: sql.NullString{}},
 		}
 
 		origStore := core.Store
@@ -74,20 +74,19 @@ func TestForumPageHandlers(t *testing.T) {
 
 	t.Run("admin topic page", func(t *testing.T) {
 		topicID := 4
-		queries := &db.QuerierStub{
-			GetForumTopicByIdReturns: &db.Forumtopic{
-				Idforumtopic:                 int32(topicID),
-				ForumcategoryIdforumcategory: 1,
-				Title:                        sql.NullString{String: "t", Valid: true},
-				Description:                  sql.NullString{String: "d", Valid: true},
-				Threads:                      sql.NullInt32{Int32: 2, Valid: true},
-				Comments:                     sql.NullInt32{Int32: 3, Valid: true},
-				Lastaddition:                 sql.NullTime{Time: time.Now(), Valid: true},
-				Handler:                      "",
-			},
-			AdminListForumTopicGrantsByTopicIDReturns: []*db.AdminListForumTopicGrantsByTopicIDRow{
-				{ID: 1, Section: "forum", Action: "see", RoleName: sql.NullString{String: "Anyone", Valid: true}},
-			},
+		queries := testhelpers.NewQuerierStub()
+		queries.GetForumTopicByIdReturns = &db.Forumtopic{
+			Idforumtopic:                 int32(topicID),
+			ForumcategoryIdforumcategory: 1,
+			Title:                        sql.NullString{String: "t", Valid: true},
+			Description:                  sql.NullString{String: "d", Valid: true},
+			Threads:                      sql.NullInt32{Int32: 2, Valid: true},
+			Comments:                     sql.NullInt32{Int32: 3, Valid: true},
+			Lastaddition:                 sql.NullTime{Time: time.Now(), Valid: true},
+			Handler:                      "",
+		}
+		queries.AdminListForumTopicGrantsByTopicIDReturns = []*db.AdminListForumTopicGrantsByTopicIDRow{
+			{ID: 1, Section: "forum", Action: "see", RoleName: sql.NullString{String: "Anyone", Valid: true}},
 		}
 
 		cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
@@ -103,28 +102,27 @@ func TestForumPageHandlers(t *testing.T) {
 
 	t.Run("admin topic edit form page", func(t *testing.T) {
 		topicID := 4
-		queries := &db.QuerierStub{
-			GetForumTopicByIdReturns: &db.Forumtopic{
-				Idforumtopic:                 int32(topicID),
-				ForumcategoryIdforumcategory: 1,
-				Title:                        sql.NullString{String: "t", Valid: true},
-				Description:                  sql.NullString{String: "d", Valid: true},
-				Threads:                      sql.NullInt32{Int32: 2, Valid: true},
-				Comments:                     sql.NullInt32{Int32: 3, Valid: true},
-				Lastaddition:                 sql.NullTime{Time: time.Now(), Valid: true},
-				Handler:                      "",
+		queries := testhelpers.NewQuerierStub()
+		queries.GetForumTopicByIdReturns = &db.Forumtopic{
+			Idforumtopic:                 int32(topicID),
+			ForumcategoryIdforumcategory: 1,
+			Title:                        sql.NullString{String: "t", Valid: true},
+			Description:                  sql.NullString{String: "d", Valid: true},
+			Threads:                      sql.NullInt32{Int32: 2, Valid: true},
+			Comments:                     sql.NullInt32{Int32: 3, Valid: true},
+			Lastaddition:                 sql.NullTime{Time: time.Now(), Valid: true},
+			Handler:                      "",
+		}
+		queries.GetAllForumCategoriesReturns = []*db.Forumcategory{
+			{
+				Idforumcategory:              1,
+				ForumcategoryIdforumcategory: 0,
+				Title:                        sql.NullString{String: "cat", Valid: true},
+				Description:                  sql.NullString{String: "desc", Valid: true},
 			},
-			GetAllForumCategoriesReturns: []*db.Forumcategory{
-				{
-					Idforumcategory:              1,
-					ForumcategoryIdforumcategory: 0,
-					Title:                        sql.NullString{String: "cat", Valid: true},
-					Description:                  sql.NullString{String: "desc", Valid: true},
-				},
-			},
-			AdminListRolesReturns: []*db.Role{
-				{ID: 1, Name: "role", CanLogin: true},
-			},
+		}
+		queries.AdminListRolesReturns = []*db.Role{
+			{ID: 1, Name: "role", CanLogin: true},
 		}
 
 		cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
@@ -139,48 +137,47 @@ func TestForumPageHandlers(t *testing.T) {
 	})
 
 	t.Run("admin category pages", func(t *testing.T) {
-		queries := &db.QuerierStub{
-			GetForumCategoryByIdReturns: &db.Forumcategory{
+		queries := testhelpers.NewQuerierStub()
+		queries.GetForumCategoryByIdReturns = &db.Forumcategory{
+			Idforumcategory:              1,
+			ForumcategoryIdforumcategory: 0,
+			LanguageID:                   sql.NullInt32{Int32: 0, Valid: true},
+			Title:                        sql.NullString{String: "cat", Valid: true},
+			Description:                  sql.NullString{String: "desc", Valid: true},
+		}
+		queries.GetAllForumTopicsByCategoryIdForUserWithLastPosterNameReturns = []*db.GetAllForumTopicsByCategoryIdForUserWithLastPosterNameRow{
+			{
+				Idforumtopic:                 1,
+				ForumcategoryIdforumcategory: 1,
+				Title:                        sql.NullString{String: "t", Valid: true},
+				Description:                  sql.NullString{String: "d", Valid: true},
+				Threads:                      sql.NullInt32{Int32: 0, Valid: true},
+				Comments:                     sql.NullInt32{Int32: 0, Valid: true},
+				Lastaddition:                 sql.NullTime{Time: time.Now(), Valid: true},
+				Handler:                      "",
+			},
+		}
+		queries.GetAllForumCategoriesReturns = []*db.Forumcategory{
+			{
 				Idforumcategory:              1,
 				ForumcategoryIdforumcategory: 0,
 				LanguageID:                   sql.NullInt32{Int32: 0, Valid: true},
 				Title:                        sql.NullString{String: "cat", Valid: true},
 				Description:                  sql.NullString{String: "desc", Valid: true},
 			},
-			GetAllForumTopicsByCategoryIdForUserWithLastPosterNameReturns: []*db.GetAllForumTopicsByCategoryIdForUserWithLastPosterNameRow{
-				{
-					Idforumtopic:                 1,
-					ForumcategoryIdforumcategory: 1,
-					Title:                        sql.NullString{String: "t", Valid: true},
-					Description:                  sql.NullString{String: "d", Valid: true},
-					Threads:                      sql.NullInt32{Int32: 0, Valid: true},
-					Comments:                     sql.NullInt32{Int32: 0, Valid: true},
-					Lastaddition:                 sql.NullTime{Time: time.Now(), Valid: true},
-					Handler:                      "",
-				},
-			},
-			GetAllForumCategoriesReturns: []*db.Forumcategory{
-				{
-					Idforumcategory:              1,
-					ForumcategoryIdforumcategory: 0,
-					LanguageID:                   sql.NullInt32{Int32: 0, Valid: true},
-					Title:                        sql.NullString{String: "cat", Valid: true},
-					Description:                  sql.NullString{String: "desc", Valid: true},
-				},
-			},
-			AdminListRolesReturns: []*db.Role{
-				{ID: 1, Name: "user", CanLogin: true},
-			},
-			ListGrantsReturns: []*db.Grant{
-				{
-					ID:      1,
-					RoleID:  sql.NullInt32{Int32: 1, Valid: true},
-					Section: "forum",
-					Item:    sql.NullString{String: "category", Valid: true},
-					ItemID:  sql.NullInt32{Int32: 1, Valid: true},
-					Action:  "see",
-					Active:  true,
-				},
+		}
+		queries.AdminListRolesReturns = []*db.Role{
+			{ID: 1, Name: "user", CanLogin: true},
+		}
+		queries.ListGrantsReturns = []*db.Grant{
+			{
+				ID:      1,
+				RoleID:  sql.NullInt32{Int32: 1, Valid: true},
+				Section: "forum",
+				Item:    sql.NullString{String: "category", Valid: true},
+				ItemID:  sql.NullInt32{Int32: 1, Valid: true},
+				Action:  "see",
+				Active:  true,
 			},
 		}
 
@@ -320,31 +317,30 @@ func TestForumPageHandlers(t *testing.T) {
 			core.SessionName = origName
 		}()
 
-		qs := &db.QuerierStub{
-			GetAllForumCategoriesFn: func(ctx context.Context, arg db.GetAllForumCategoriesParams) ([]*db.Forumcategory, error) {
-				return []*db.Forumcategory{}, nil
-			},
-			GetForumTopicByIdForUserFn: func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
-				return &db.GetForumTopicByIdForUserRow{
-					Idforumtopic:                 1,
-					ForumcategoryIdforumcategory: 1,
-					Title:                        sql.NullString{String: "Topic: old is now Private chat with: Bob", Valid: true},
-					Handler:                      "private",
-					Lastaddition:                 sql.NullTime{Time: time.Now(), Valid: true},
-				}, nil
-			},
-			ListPrivateTopicParticipantsByTopicIDForUserFn: func(ctx context.Context, arg db.ListPrivateTopicParticipantsByTopicIDForUserParams) ([]*db.ListPrivateTopicParticipantsByTopicIDForUserRow, error) {
-				return []*db.ListPrivateTopicParticipantsByTopicIDForUserRow{
-					{Idusers: 1, Username: sql.NullString{String: "Alice", Valid: true}},
-					{Idusers: 2, Username: sql.NullString{String: "Bob", Valid: true}},
-				}, nil
-			},
-			GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextFn: func(ctx context.Context, arg db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams) ([]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow, error) {
-				return []*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow{}, nil
-			},
-			ListContentPublicLabelsFn: func(arg db.ListContentPublicLabelsParams) ([]*db.ListContentPublicLabelsRow, error) {
-				return []*db.ListContentPublicLabelsRow{}, nil
-			},
+		qs := testhelpers.NewQuerierStub()
+		qs.GetAllForumCategoriesFn = func(ctx context.Context, arg db.GetAllForumCategoriesParams) ([]*db.Forumcategory, error) {
+			return []*db.Forumcategory{}, nil
+		}
+		qs.GetForumTopicByIdForUserFn = func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
+			return &db.GetForumTopicByIdForUserRow{
+				Idforumtopic:                 1,
+				ForumcategoryIdforumcategory: 1,
+				Title:                        sql.NullString{String: "Topic: old is now Private chat with: Bob", Valid: true},
+				Handler:                      "private",
+				Lastaddition:                 sql.NullTime{Time: time.Now(), Valid: true},
+			}, nil
+		}
+		qs.ListPrivateTopicParticipantsByTopicIDForUserFn = func(ctx context.Context, arg db.ListPrivateTopicParticipantsByTopicIDForUserParams) ([]*db.ListPrivateTopicParticipantsByTopicIDForUserRow, error) {
+			return []*db.ListPrivateTopicParticipantsByTopicIDForUserRow{
+				{Idusers: 1, Username: sql.NullString{String: "Alice", Valid: true}},
+				{Idusers: 2, Username: sql.NullString{String: "Bob", Valid: true}},
+			}, nil
+		}
+		qs.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextFn = func(ctx context.Context, arg db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams) ([]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow, error) {
+			return []*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow{}, nil
+		}
+		qs.ListContentPublicLabelsFn = func(arg db.ListContentPublicLabelsParams) ([]*db.ListContentPublicLabelsRow, error) {
+			return []*db.ListContentPublicLabelsRow{}, nil
 		}
 
 		cd := common.NewCoreData(context.Background(), qs, config.NewRuntimeConfig())
@@ -370,31 +366,30 @@ func TestForumPageHandlers(t *testing.T) {
 	})
 
 	t.Run("thread page private sets title", func(t *testing.T) {
-		queries := &db.QuerierStub{
-			GetThreadLastPosterAndPermsReturns: &db.GetThreadLastPosterAndPermsRow{
-				Idforumthread:          1,
-				Firstpost:              1,
-				Lastposter:             1,
-				ForumtopicIdforumtopic: 1,
-				Comments:               sql.NullInt32{},
-				Lastaddition:           sql.NullTime{},
-				Locked:                 sql.NullBool{},
-			},
-			GetForumTopicByIdForUserReturns: &db.GetForumTopicByIdForUserRow{
-				Idforumtopic:                 1,
-				ForumcategoryIdforumcategory: 1,
-				Title:                        sql.NullString{},
-				Description:                  sql.NullString{},
-				Threads:                      sql.NullInt32{},
-				Comments:                     sql.NullInt32{},
-				Lastaddition:                 sql.NullTime{},
-				Handler:                      "private",
-			},
-			ListPrivateTopicParticipantsByTopicIDForUserReturns: []*db.ListPrivateTopicParticipantsByTopicIDForUserRow{
-				{Idusers: 2, Username: sql.NullString{String: "Bob", Valid: true}},
-			},
-			GetCommentsByThreadIdForUserReturns: []*db.GetCommentsByThreadIdForUserRow{},
+		queries := testhelpers.NewQuerierStub()
+		queries.GetThreadLastPosterAndPermsReturns = &db.GetThreadLastPosterAndPermsRow{
+			Idforumthread:          1,
+			Firstpost:              1,
+			Lastposter:             1,
+			ForumtopicIdforumtopic: 1,
+			Comments:               sql.NullInt32{},
+			Lastaddition:           sql.NullTime{},
+			Locked:                 sql.NullBool{},
 		}
+		queries.GetForumTopicByIdForUserReturns = &db.GetForumTopicByIdForUserRow{
+			Idforumtopic:                 1,
+			ForumcategoryIdforumcategory: 1,
+			Title:                        sql.NullString{},
+			Description:                  sql.NullString{},
+			Threads:                      sql.NullInt32{},
+			Comments:                     sql.NullInt32{},
+			Lastaddition:                 sql.NullTime{},
+			Handler:                      "private",
+		}
+		queries.ListPrivateTopicParticipantsByTopicIDForUserReturns = []*db.ListPrivateTopicParticipantsByTopicIDForUserRow{
+			{Idusers: 2, Username: sql.NullString{String: "Bob", Valid: true}},
+		}
+		queries.GetCommentsByThreadIdForUserReturns = []*db.GetCommentsByThreadIdForUserRow{}
 
 		origStore := core.Store
 		origName := core.SessionName

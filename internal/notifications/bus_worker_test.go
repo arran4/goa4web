@@ -301,17 +301,6 @@ func (targetTask) TargetInternalNotificationTemplate(evt eventbus.TaskEvent) *st
 	return &t
 }
 
-type selfNotifyTask struct{ tasks.TaskString }
-
-func (s selfNotifyTask) SelfEmailTemplate(evt eventbus.TaskEvent) (templates *EmailTemplates, send bool) {
-	return nil, false
-}
-
-func (s selfNotifyTask) SelfInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	t := "notifications/password_reset.gotxt"
-	return &t
-}
-
 func TestProcessEventTargetUsers(t *testing.T) {
 	ctx := context.Background()
 	cfg := config.NewRuntimeConfig()
@@ -479,7 +468,7 @@ func TestProcessEventSelfNotifyWithUserIDTemplate(t *testing.T) {
 
 	evt := eventbus.TaskEvent{
 		Path:    "/user/password-reset",
-		Task:    selfNotifyTask{TaskString: "SelfNotify"},
+		Task:    selfNotifyTaskForTest{TaskString: "SelfNotify"},
 		UserID:  123,
 		Data:    map[string]any{"some": "data"},
 		Outcome: eventbus.TaskOutcomeSuccess,

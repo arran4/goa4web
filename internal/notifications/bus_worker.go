@@ -191,13 +191,11 @@ func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp Se
 			Path      string
 			Item      any
 			TaskEvent eventbus.TaskEvent
-			UserID    int32
 			User      *db.SystemGetUserByIDRow
 		}{
 			Path:      evt.Path,
 			Item:      evt.Data,
 			TaskEvent: evt,
-			UserID:    evt.UserID,
 			User:      user,
 		}
 		msg, err := n.renderNotification(ctx, *nt, data)

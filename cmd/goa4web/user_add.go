@@ -39,6 +39,16 @@ func parseUserAddCmd(parent *userCmd, args []string) (*userAddCmd, error) {
 	return c, nil
 }
 
+func (c *userAddCmd) Usage() {
+	executeUsage(c.fs.Output(), "user_add_usage.txt", c)
+}
+
+func (c *userAddCmd) FlagGroups() []flagGroup {
+	return []flagGroup{{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)}}
+}
+
+var _ usageData = (*userAddCmd)(nil)
+
 func (c *userAddCmd) Run() error {
 	pw := c.Password
 	if pw == "" {

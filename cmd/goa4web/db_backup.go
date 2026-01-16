@@ -23,6 +23,16 @@ func parseDbBackupCmd(parent *dbCmd, args []string) (*dbBackupCmd, error) {
 	return c, nil
 }
 
+func (c *dbBackupCmd) Usage() {
+	executeUsage(c.fs.Output(), "db_backup_usage.txt", c)
+}
+
+func (c *dbBackupCmd) FlagGroups() []flagGroup {
+	return []flagGroup{{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)}}
+}
+
+var _ usageData = (*dbBackupCmd)(nil)
+
 func (c *dbBackupCmd) Run() error {
 	if c.File == "" {
 		return fmt.Errorf("file required")

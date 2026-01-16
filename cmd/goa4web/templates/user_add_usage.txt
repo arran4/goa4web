@@ -1,0 +1,21 @@
+Usage:
+  {{.Prog}} user add [flags]
+
+The user add command creates a new user account. You can specify the username,
+email address, and password using flags. If the password is not provided, you
+will be prompted to enter it securely.
+
+By default, the new user will be assigned the "user" role. You can grant
+administrator rights by using the -admin flag.
+
+Examples:
+  # Create a new user named "bob" with the password "secret"
+  {{.Prog}} user add -username bob -password secret
+
+  # Create a new user with an email address
+  {{.Prog}} user add -username alice -email "alice@example.com"
+
+  # Create a new administrator user
+  {{.Prog}} user add -username admin -password "supersecret" -admin
+
+{{template "flag_groups_section" .FlagGroups}}

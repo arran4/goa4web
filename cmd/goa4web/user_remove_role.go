@@ -30,6 +30,16 @@ func parseUserRemoveRoleCmd(parent *userCmd, args []string) (*userRemoveRoleCmd,
 	return c, nil
 }
 
+func (c *userRemoveRoleCmd) Usage() {
+	executeUsage(c.fs.Output(), "user_remove_role_usage.txt", c)
+}
+
+func (c *userRemoveRoleCmd) FlagGroups() []flagGroup {
+	return []flagGroup{{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)}}
+}
+
+var _ usageData = (*userRemoveRoleCmd)(nil)
+
 func (c *userRemoveRoleCmd) Run() error {
 	if c.Username == "" || c.Role == "" {
 		return fmt.Errorf("username and role required")

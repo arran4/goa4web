@@ -1,0 +1,22 @@
+Usage:
+  {{.Prog}} user list [flags]
+
+The user list command displays a list of all users in the system. The output
+includes the user ID, username, status, roles, and email addresses.
+
+You can customize the output with the following flags:
+  -admin    Include the user's administrator status in the output.
+  -created  Include the user's creation date in the output.
+  -json     Output the user list in a machine-readable JSON format.
+
+Examples:
+  # List all users
+  {{.Prog}} user list
+
+  # List all users and include their administrator status
+  {{.Prog}} user list -admin
+
+  # List all users in JSON format
+  {{.Prog}} user list -json
+
+{{template "flag_groups_section" .FlagGroups}}

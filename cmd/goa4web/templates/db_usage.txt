@@ -7,7 +7,8 @@ and inspect the embedded SQL files. This is the primary interface for all
 database-related administrative tasks.
 
 Commands:
-  create     Create the database schema and apply seed data. This is used for
+  create     Create the database schema.
+  setup      Create the database schema and apply seed data. This is used for
              initializing a new database.
   migrate    Run database migrations to update the schema to the latest version.
   seed       Apply seed data to the database.

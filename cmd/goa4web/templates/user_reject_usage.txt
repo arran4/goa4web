@@ -1,0 +1,18 @@
+Usage:
+  {{.Prog}} user reject [flags]
+
+The user reject command rejects a pending user account. This command will assign
+the "rejected" role to the user, which will prevent them from logging in. You
+can also provide an optional reason for the rejection, which will be stored as an
+administrative comment.
+
+You must specify the user to be rejected by either their ID or username.
+
+Examples:
+  # Reject the user with ID 3
+  {{.Prog}} user reject -id 3
+
+  # Reject the user "bob" with a reason
+  {{.Prog}} user reject -username bob -reason "Spam account"
+
+{{template "flag_groups_section" .FlagGroups}}

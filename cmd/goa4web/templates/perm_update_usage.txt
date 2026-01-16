@@ -1,0 +1,15 @@
+Usage:
+  {{.Prog}} perm update [flags]
+
+The perm update command is used to modify an existing permission. You can use
+this command to change the scope of a permission, such as the section, item, or
+action.
+
+You must specify the permission to be updated by its ID.
+
+Examples:
+  # Update the permission with ID 3 to grant the "write" permission for the
+  # "blog" section
+  {{.Prog}} perm update -id 3 -permission write
+
+{{template "flag_groups_section" .FlagGroups}}

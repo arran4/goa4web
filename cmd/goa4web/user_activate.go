@@ -31,6 +31,16 @@ func parseUserActivateCmd(parent *userCmd, args []string) (*userActivateCmd, err
 	return c, nil
 }
 
+func (c *userActivateCmd) Usage() {
+	executeUsage(c.fs.Output(), "user_activate_usage.txt", c)
+}
+
+func (c *userActivateCmd) FlagGroups() []flagGroup {
+	return []flagGroup{{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)}}
+}
+
+var _ usageData = (*userActivateCmd)(nil)
+
 func (c *userActivateCmd) Run() error {
 	if c.ID == 0 && c.Username == "" {
 		return fmt.Errorf("id or username required")

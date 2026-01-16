@@ -1,0 +1,17 @@
+Usage:
+  {{.Prog}} user activate [flags]
+
+The user activate command reactivates a previously deactivated user account.
+This command will restore the user's account and all of their content,
+including comments, writings, blogs, images, and links.
+
+You must specify the user to be activated by either their ID or username.
+
+Examples:
+  # Activate the user with ID 3
+  {{.Prog}} user activate -id 3
+
+  # Activate the user "bob"
+  {{.Prog}} user activate -username bob
+
+{{template "flag_groups_section" .FlagGroups}}

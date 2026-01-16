@@ -33,6 +33,16 @@ func parseUserAddRoleCmd(parent *userCmd, args []string) (*userAddRoleCmd, error
 	return c, nil
 }
 
+func (c *userAddRoleCmd) Usage() {
+	executeUsage(c.fs.Output(), "user_add_role_usage.txt", c)
+}
+
+func (c *userAddRoleCmd) FlagGroups() []flagGroup {
+	return []flagGroup{{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)}}
+}
+
+var _ usageData = (*userAddRoleCmd)(nil)
+
 func (c *userAddRoleCmd) Run() error {
 	if c.Username == "" {
 		return fmt.Errorf("username required")

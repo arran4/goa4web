@@ -1,6 +1,17 @@
-{{.Prog}} db create
+Usage:
+  {{.Prog}} db create
 
-Creates the database schema.
+The db create command initializes a new database by creating the necessary
+tables and schema. This command is intended to be run once when setting up a new
+installation. It does not apply any seed data; for that, use the "db seed"
+or "db setup" command.
+
+Before running this command, ensure that the database connection string is
+correctly configured in your configuration file or environment variables.
+
+Examples:
+  # Create the database schema
+  {{.Prog}} db create
 
 {{- range .FlagGroups}}
 {{.Title}}

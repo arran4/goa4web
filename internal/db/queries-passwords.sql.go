@@ -38,6 +38,25 @@ func (q *Queries) GetPendingPassword(ctx context.Context, userID int32) (*Pendin
 	return &i, err
 }
 
+const getPendingPasswordByCode = `-- name: GetPendingPasswordByCode :one
+SELECT id, user_id, passwd, passwd_algorithm, verification_code, created_at, verified_at FROM pending_passwords WHERE verification_code = ?
+`
+
+func (q *Queries) GetPendingPasswordByCode(ctx context.Context, verificationCode string) (*PendingPassword, error) {
+	row := q.db.QueryRowContext(ctx, getPendingPasswordByCode, verificationCode)
+	var i PendingPassword
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Passwd,
+		&i.PasswdAlgorithm,
+		&i.VerificationCode,
+		&i.CreatedAt,
+		&i.VerifiedAt,
+	)
+	return &i, err
+}
+
 const insertPassword = `-- name: InsertPassword :exec
 INSERT INTO passwords (users_idusers, passwd, passwd_algorithm)
 VALUES (?, ?, ?)

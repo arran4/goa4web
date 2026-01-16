@@ -23,12 +23,11 @@ func TestUserPasswordApproveCmd(t *testing.T) {
 				mock.ExpectQuery("(?s).*SystemGetUserByUsername.*").
 					WithArgs(sql.NullString{String: "testuser", Valid: true}).
 					WillReturnRows(sqlmock.NewRows([]string{"idusers", "username", "public_profile_enabled_at"}).AddRow(1, "testuser", sql.NullTime{}))
-				mock.ExpectBegin()
 				mock.ExpectQuery("(?s).*GetPendingPassword.*").
 					WithArgs(int32(1)).
 					WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "passwd", "passwd_algorithm", "verification_code", "created_at", "verified_at"}).
 						AddRow(1, 1, "newpassword", "bcrypt", "testcode", time.Now(), sql.NullTime{}))
-
+				mock.ExpectBegin()
 				mock.ExpectExec("(?s).*UpdateUserPassword.*").
 					WithArgs(int32(1), "newpassword", sql.NullString{String: "bcrypt", Valid: true}).
 					WillReturnResult(sqlmock.NewResult(1, 1))
@@ -43,12 +42,30 @@ func TestUserPasswordApproveCmd(t *testing.T) {
 			name: "by id",
 			args: []string{"--id=1"},
 			setupMocks: func(mock sqlmock.Sqlmock) {
-				mock.ExpectBegin()
 				mock.ExpectQuery("(?s).*GetPendingPassword.*").
 					WithArgs(int32(1)).
 					WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "passwd", "passwd_algorithm", "verification_code", "created_at", "verified_at"}).
 						AddRow(1, 1, "newpassword", "bcrypt", "testcode", time.Now(), sql.NullTime{}))
+				mock.ExpectBegin()
+				mock.ExpectExec("(?s).*UpdateUserPassword.*").
+					WithArgs(int32(1), "newpassword", sql.NullString{String: "bcrypt", Valid: true}).
+					WillReturnResult(sqlmock.NewResult(1, 1))
 
+				mock.ExpectExec("(?s).*DeletePendingPassword.*").
+					WithArgs(int32(1)).
+					WillReturnResult(sqlmock.NewResult(1, 1))
+				mock.ExpectCommit()
+			},
+		},
+		{
+			name: "by code",
+			args: []string{"--code=testcode"},
+			setupMocks: func(mock sqlmock.Sqlmock) {
+				mock.ExpectQuery("(?s).*GetPendingPasswordByCode.*").
+					WithArgs("testcode").
+					WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "passwd", "passwd_algorithm", "verification_code", "created_at", "verified_at"}).
+						AddRow(1, 1, "newpassword", "bcrypt", "testcode", time.Now(), sql.NullTime{}))
+				mock.ExpectBegin()
 				mock.ExpectExec("(?s).*UpdateUserPassword.*").
 					WithArgs(int32(1), "newpassword", sql.NullString{String: "bcrypt", Valid: true}).
 					WillReturnResult(sqlmock.NewResult(1, 1))
@@ -62,7 +79,7 @@ func TestUserPasswordApproveCmd(t *testing.T) {
 		{
 			name:          "missing identifier",
 			args:          []string{},
-			expectedError: "id or username required",
+			expectedError: "id, username, or code required",
 		},
 	}
 

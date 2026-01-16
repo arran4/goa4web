@@ -170,8 +170,8 @@ func ProcessPendingEmail(ctx context.Context, q db.Querier, provider email.Provi
 				msg := fmt.Sprintf("email %d to %s failed: no provider configured\n%s", e.ID, addr.Address, e.Body)
 				_ = dlqProvider.Record(ctx, msg)
 			}
-			if delErr := q.AdminDeletePendingEmail(ctx, e.ID); delErr != nil {
-				log.Printf("delete email: %v", delErr)
+			if err := q.SystemMarkPendingEmailSent(ctx, e.ID); err != nil {
+				log.Printf("mark sent: %v", err)
 			}
 		}
 		return true
@@ -188,8 +188,8 @@ func ProcessPendingEmail(ctx context.Context, q db.Querier, provider email.Provi
 				msg := fmt.Sprintf("email %d to %s failed: %v\n%s", e.ID, addr.Address, err, e.Body)
 				_ = dlqProvider.Record(ctx, msg)
 			}
-			if delErr := q.AdminDeletePendingEmail(ctx, e.ID); delErr != nil {
-				log.Printf("delete email: %v", delErr)
+			if err := q.SystemMarkPendingEmailSent(ctx, e.ID); err != nil {
+				log.Printf("mark sent: %v", err)
 			}
 		}
 		return true

@@ -1,0 +1,13 @@
+Usage:
+  {{.Prog}} user remove-role [flags]
+
+The user remove-role command revokes a specific role from a user, removing the
+associated permissions. This is the counterpart to the "user add-role" command.
+
+You must specify the user by their username and the role by its name.
+
+Examples:
+  # Revoke the "editor" role from the user "bob"
+  {{.Prog}} user remove-role -username bob -role editor
+
+{{template "flag_groups_section" .FlagGroups}}

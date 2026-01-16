@@ -577,8 +577,8 @@ func (j Provider) GetAllMessages(ctx context.Context, limit int) ([]string, erro
 }
 
 func (j Provider) getBestMailboxID(ctx context.Context) (string, error) {
-	for _, role := range []string{"drafts", "outbox", "sent", "inbox"} {
-		fmt.Printf("Checking for mailbox with role: %s\n", role)
+	// Try Outbox, then Sent first for sending. Fallback to Drafts or Inbox.
+	for _, role := range []string{"outbox", "sent", "drafts", "inbox"} {
 		id, err := j.getMailboxIDByRole(ctx, role)
 		if err == nil && id != "" {
 			fmt.Printf("Found mailbox '%s' with ID: %s\n", role, id)

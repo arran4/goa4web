@@ -1,6 +1,21 @@
-{{.Prog}} db setup
+Usage:
+  {{.Prog}} db setup
 
-Creates and seeds the database with initial data.
+The db setup command is a convenient shortcut for initializing a new database.
+It performs the following actions in order:
+
+1. Creates the database schema (equivalent to "db create")
+2. Applies seed data to populate the database with initial records (equivalent
+   to "db seed")
+
+This command is ideal for setting up a fresh installation of the application.
+
+Before running this command, ensure that the database connection string is
+correctly configured in your configuration file or environment variables.
+
+Examples:
+  # Create the database schema and apply seed data
+  {{.Prog}} db setup
 
 {{- range .FlagGroups}}
 {{.Title}}

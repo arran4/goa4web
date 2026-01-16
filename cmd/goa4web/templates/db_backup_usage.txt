@@ -1,0 +1,19 @@
+Usage:
+  {{.Prog}} db backup [flags]
+
+The db backup command creates a backup of the database and saves it to a SQL
+file. This can be used to create snapshots of the database for disaster recovery
+or for migrating the database to a new server.
+
+The backup is created using the database driver's native backup tools, so the
+resulting file will be in a format that is compatible with the original database
+engine.
+
+Before running this command, ensure that the database connection string is
+correctly configured in your configuration file or environment variables.
+
+Examples:
+  # Create a backup of the database and save it to "backup.sql"
+  {{.Prog}} db backup -file backup.sql
+
+{{template "flag_groups_section" .FlagGroups}}

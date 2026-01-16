@@ -36,6 +36,16 @@ func scrubText(s string) string {
 	return randomString(len(s))
 }
 
+func (c *userDeactivateCmd) Usage() {
+	executeUsage(c.fs.Output(), "user_deactivate_usage.txt", c)
+}
+
+func (c *userDeactivateCmd) FlagGroups() []flagGroup {
+	return []flagGroup{{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)}}
+}
+
+var _ usageData = (*userDeactivateCmd)(nil)
+
 func (c *userDeactivateCmd) Run() error {
 	if c.Username == "" {
 		return fmt.Errorf("username required")

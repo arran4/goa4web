@@ -8,7 +8,7 @@ primary interface for all email-related administrative tasks.
 Commands:
   send     Send a test email.
   queue    Manage the queue of emails waiting to be sent.
-  log      View the email log.
+  test     Send a test email to check the email configuration.
 
 Examples:
   # Send a test email

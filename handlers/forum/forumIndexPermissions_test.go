@@ -16,11 +16,9 @@ func TestCustomForumIndexWriteReply(t *testing.T) {
 	req := httptest.NewRequest("GET", "/forum/topic/2/thread/3", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "2", "thread": "3"})
 
-	q := testhelpers.NewQuerierStub(testhelpers.StubConfig{
-		Grants: map[string]bool{
-			testhelpers.GrantKey("forum", "topic", "reply"): true,
-		},
-	})
+	q := testhelpers.NewQuerierStub(
+		testhelpers.WithGrant("forum", "topic", "reply"),
+	)
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
 
@@ -37,12 +35,10 @@ func TestCustomForumIndexMarkReadLinks(t *testing.T) {
 	req := httptest.NewRequest("GET", "/forum/topic/2/thread/3", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "2", "thread": "3"})
 
-	q := testhelpers.NewQuerierStub(testhelpers.StubConfig{
-		Grants: map[string]bool{
-			testhelpers.GrantKey("forum", "topic", "reply"): true,
-		},
-		PrivateLabels: testdata.VisibleThreadLabels(7),
-	})
+	q := testhelpers.NewQuerierStub(
+		testhelpers.WithGrant("forum", "topic", "reply"),
+		testhelpers.WithPrivateLabels(testdata.VisibleThreadLabels(7)),
+	)
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
 	cd.UserID = 7
@@ -63,15 +59,13 @@ func TestCustomForumIndexHidesMarkReadWhenClear(t *testing.T) {
 	req := httptest.NewRequest("GET", "/forum/topic/2/thread/3", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "2", "thread": "3"})
 
-	q := testhelpers.NewQuerierStub(testhelpers.StubConfig{
-		Grants: map[string]bool{
-			testhelpers.GrantKey("forum", "topic", "reply"): true,
-		},
-		PrivateLabels: []*db.ListContentPrivateLabelsRow{
+	q := testhelpers.NewQuerierStub(
+		testhelpers.WithGrant("forum", "topic", "reply"),
+		testhelpers.WithPrivateLabels([]*db.ListContentPrivateLabelsRow{
 			{Item: "thread", ItemID: 3, UserID: 7, Label: "unread", Invert: true},
 			{Item: "thread", ItemID: 3, UserID: 7, Label: "new", Invert: true},
-		},
-	})
+		}),
+	)
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
 	cd.UserID = 7
@@ -92,9 +86,9 @@ func TestCustomForumIndexWriteReplyDenied(t *testing.T) {
 	req := httptest.NewRequest("GET", "/forum/topic/2/thread/3", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "2", "thread": "3"})
 
-	q := testhelpers.NewQuerierStub(testhelpers.StubConfig{
-		DefaultGrantAllowed: false,
-	})
+	q := testhelpers.NewQuerierStub(
+		testhelpers.WithDefaultGrantAllowed(false),
+	)
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
 
@@ -111,11 +105,9 @@ func TestCustomForumIndexCreateThread(t *testing.T) {
 	req := httptest.NewRequest("GET", "/forum/topic/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "2", "category": "1"})
 
-	q := testhelpers.NewQuerierStub(testhelpers.StubConfig{
-		Grants: map[string]bool{
-			testhelpers.GrantKey("forum", "topic", "post"): true,
-		},
-	})
+	q := testhelpers.NewQuerierStub(
+		testhelpers.WithGrant("forum", "topic", "post"),
+	)
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
 
@@ -132,11 +124,9 @@ func TestCustomForumIndexAdminEditLink(t *testing.T) {
 	req := httptest.NewRequest("GET", "/forum/topic/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "2", "category": "1"})
 
-	q := testhelpers.NewQuerierStub(testhelpers.StubConfig{
-		Permissions: []*db.GetPermissionsByUserIDRow{
-			{Name: "administrator", IsAdmin: true},
-		},
-	})
+	q := testhelpers.NewQuerierStub(
+		testhelpers.FromScenario(testhelpers.ScenarioAdmin()),
+	)
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
 	cd.UserID = 1
@@ -152,9 +142,9 @@ func TestCustomForumIndexCreateThreadDenied(t *testing.T) {
 	req := httptest.NewRequest("GET", "/forum/topic/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "2", "category": "1"})
 
-	q := testhelpers.NewQuerierStub(testhelpers.StubConfig{
-		DefaultGrantAllowed: false,
-	})
+	q := testhelpers.NewQuerierStub(
+		testhelpers.WithDefaultGrantAllowed(false),
+	)
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
 
@@ -171,7 +161,7 @@ func TestCustomForumIndexSubscribeLink(t *testing.T) {
 	req := httptest.NewRequest("GET", "/forum/topic/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "2", "category": "1"})
 
-	q := testhelpers.NewQuerierStub(testhelpers.StubConfig{})
+	q := testhelpers.NewQuerierStub()
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
 	cd.UserID = 1
@@ -190,9 +180,9 @@ func TestCustomForumIndexUnsubscribeLink(t *testing.T) {
 	req = mux.SetURLVars(req, map[string]string{"topic": "2", "category": "1"})
 
 	pattern := topicSubscriptionPattern(2)
-	q := testhelpers.NewQuerierStub(testhelpers.StubConfig{
-		Subscriptions: testdata.SampleSubscriptions(1, pattern),
-	})
+	q := testhelpers.NewQuerierStub(
+		testhelpers.WithSubscriptions(testdata.SampleSubscriptions(1, pattern)),
+	)
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
 	cd.UserID = 1

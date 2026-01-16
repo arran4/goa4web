@@ -38,6 +38,16 @@ func parseUserMakeAdminCmd(parent *userCmd, args []string) (*userMakeAdminCmd, e
 	return c, nil
 }
 
+func (c *userMakeAdminCmd) Usage() {
+	executeUsage(c.fs.Output(), "user_make_admin_usage.txt", c)
+}
+
+func (c *userMakeAdminCmd) FlagGroups() []flagGroup {
+	return []flagGroup{{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)}}
+}
+
+var _ usageData = (*userMakeAdminCmd)(nil)
+
 func (c *userMakeAdminCmd) Run() error {
 	if c.Username == "" {
 		c.fs.Usage()

@@ -1,0 +1,18 @@
+Usage:
+  {{.Prog}} user make-admin [flags] <username>
+
+The user make-admin command grants administrator rights to an existing user.
+This is useful for promoting a regular user to an administrator without having
+to create a new account.
+
+The user to be promoted can be specified either with the -username flag or as an
+argument to the command.
+
+Examples:
+  # Grant administrator rights to the user "bob"
+  {{.Prog}} user make-admin bob
+
+  # Grant administrator rights to the user "alice" using the -username flag
+  {{.Prog}} user make-admin -username alice
+
+{{template "flag_groups_section" .FlagGroups}}

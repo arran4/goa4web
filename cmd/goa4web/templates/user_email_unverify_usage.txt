@@ -1,0 +1,13 @@
+Usage:
+  {{.Prog}} user email unverify -id <id>
+
+Marks an email address as unverified by clearing its verification timestamp.
+
+Flags:
+  -id int   Email ID to unverify
+
+Examples:
+  # Unverify the email address with ID 5
+  {{.Prog}} user email unverify -id 5
+
+{{template "flag_groups_section" .FlagGroups}}

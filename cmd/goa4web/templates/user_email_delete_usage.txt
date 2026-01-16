@@ -1,0 +1,13 @@
+Usage:
+  {{.Prog}} user email delete -id <id>
+
+Deletes an email address from a user's account.
+
+Flags:
+  -id int   Email ID to delete (use list to find ID)
+
+Examples:
+  # Delete the email address with ID 5
+  {{.Prog}} user email delete -id 5
+
+{{template "flag_groups_section" .FlagGroups}}

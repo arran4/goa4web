@@ -3,12 +3,10 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"os"
 	"text/tabwriter"
 	"time"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -234,12 +232,5 @@ func (c *userEmailCmd) runUpdate(args []string) error {
 }
 
 func (c *userEmailCmd) loadConfig() (*config.RuntimeConfig, error) {
-	fileVals, err := config.LoadAppConfigFile(core.OSFS{}, c.rootCmd.ConfigFile)
-	if err != nil {
-		return nil, fmt.Errorf("load config file: %w", err)
-	}
-	return config.NewRuntimeConfig(
-		config.WithFileValues(fileVals),
-		config.WithGetenv(os.Getenv),
-	), nil
+	return c.rootCmd.RuntimeConfig()
 }

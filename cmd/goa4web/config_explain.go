@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -10,7 +9,6 @@ import (
 	"text/tabwriter"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core"
 )
 
 type configExplainCmd struct {
@@ -38,14 +36,7 @@ func (c *configExplainCmd) Run() error {
 	setFlags := map[string]bool{}
 	c.rootCmd.fs.Visit(func(f *flag.Flag) { setFlags[f.Name] = true })
 
-	fileVals := map[string]string{}
-	if c.ConfigFile != "" {
-		var err error
-		fileVals, err = config.LoadAppConfigFile(core.OSFS{}, c.ConfigFile)
-		if err != nil && !errors.Is(err, config.ErrConfigFileNotFound) {
-			return fmt.Errorf("load config file: %w", err)
-		}
-	}
+	fileVals := c.rootCmd.ConfigFileValues
 
 	w := tabwriter.NewWriter(c.fs.Output(), 0, 8, 2, ' ', 0)
 	fmt.Fprintln(w, "Option\tFinal Value\tSource\tDetail")

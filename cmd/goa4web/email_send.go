@@ -5,10 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"net/mail"
-	"os"
 
-	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/email/jmap"
 	"github.com/arran4/goa4web/internal/email/log"
@@ -48,14 +45,10 @@ func (c *emailSendCmd) Run() error {
 		return fmt.Errorf("invalid recipient email address: %w", err)
 	}
 
-	fileVals, err := config.LoadAppConfigFile(core.OSFS{}, c.rootCmd.ConfigFile)
+	cfg, err := c.rootCmd.RuntimeConfig()
 	if err != nil {
-		return fmt.Errorf("load config file: %w", err)
+		return err
 	}
-	cfg := config.NewRuntimeConfig(
-		config.WithFileValues(fileVals),
-		config.WithGetenv(os.Getenv),
-	)
 
 	reg := email.NewRegistry()
 	jmap.Register(reg)

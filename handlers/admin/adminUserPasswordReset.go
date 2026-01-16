@@ -66,6 +66,10 @@ func (UserPasswordResetTask) Action(w http.ResponseWriter, r *http.Request) any 
 		data.Errors = append(data.Errors, fmt.Errorf("reset password: %w", err).Error())
 		return handlers.TemplateWithDataHandler(handlers.TemplateRunTaskPage, data)
 	}
+	if _, err := queries.SystemDeletePasswordResetsByUser(r.Context(), user.Idusers); err != nil {
+		data.Errors = append(data.Errors, fmt.Errorf("clear password resets: %w", err).Error())
+		return handlers.TemplateWithDataHandler(handlers.TemplateRunTaskPage, data)
+	}
 	if evt := cd.Event(); evt != nil {
 		if evt.Data == nil {
 			evt.Data = map[string]any{}

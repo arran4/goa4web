@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 )
 
 func (s *QuerierStub) AdminInsertBannedIp(ctx context.Context, arg AdminInsertBannedIpParams) error {
@@ -26,6 +27,19 @@ func (s *QuerierStub) InsertPassword(ctx context.Context, arg InsertPasswordPara
 		return fn(ctx, arg)
 	}
 	return err
+}
+
+func (s *QuerierStub) SystemDeletePasswordResetsByUser(ctx context.Context, userID int32) (sql.Result, error) {
+	s.mu.Lock()
+	s.SystemDeletePasswordResetsByUserCalls = append(s.SystemDeletePasswordResetsByUserCalls, userID)
+	fn := s.SystemDeletePasswordResetsByUserFn
+	ret := s.SystemDeletePasswordResetsByUserResult
+	err := s.SystemDeletePasswordResetsByUserErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, userID)
+	}
+	return ret, err
 }
 
 func (s *QuerierStub) AdminPromoteAnnouncement(ctx context.Context, id int32) error {

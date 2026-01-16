@@ -49,10 +49,10 @@ func (c *emailCmd) Run() error {
 			return fmt.Errorf("test: %w", err)
 		}
 		return cmd.Run()
-	case "user-management":
-		cmd, err := parseEmailUserManagementCmd(c, args[1:])
+	case "user":
+		cmd, err := parseEmailUserCmd(c, args[1:])
 		if err != nil {
-			return fmt.Errorf("user-management: %w", err)
+			return fmt.Errorf("user: %w", err)
 		}
 		return cmd.Run()
 	default:

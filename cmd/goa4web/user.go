@@ -127,6 +127,12 @@ func (c *userCmd) Run() error {
 			return fmt.Errorf("rename: %w", err)
 		}
 		return cmd.Run()
+	case "email":
+		cmd, err := parseUserEmailCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("email: %w", err)
+		}
+		return cmd.Run()
 	case "resend-verification":
 		cmd, err := parseUserResendVerificationCmd(c, args[1:])
 		if err != nil {

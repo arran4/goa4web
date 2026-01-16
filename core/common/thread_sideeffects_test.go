@@ -5,12 +5,12 @@ import (
 	"testing"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestHandleThreadUpdatedMarksThreadAndItemLabels(t *testing.T) {
 	ctx := context.Background()
-	queries := &db.QuerierStub{}
+	queries := testhelpers.NewQuerierStub()
 	cd := NewCoreData(ctx, queries, config.NewRuntimeConfig())
 	cd.UserID = 5
 

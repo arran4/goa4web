@@ -2,20 +2,19 @@ package privateforum
 
 import (
 	"context"
-	"database/sql"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"strings"
 	"testing"
-	"unsafe"
-
 	"time"
+	"unsafe"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestPage_NoAccess(t *testing.T) {
@@ -33,14 +32,7 @@ func TestPage_NoAccess(t *testing.T) {
 }
 
 func TestPage_Access(t *testing.T) {
-	queries := &db.QuerierStub{
-		SystemCheckGrantFn: func(arg db.SystemCheckGrantParams) (int32, error) {
-			if arg.Section == "privateforum" && arg.Action == "see" {
-				return 1, nil
-			}
-			return 0, sql.ErrNoRows
-		},
-	}
+	queries := testhelpers.NewQuerierStub(testhelpers.WithGrantResult(true))
 	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
 	cd.ShareSignKey = "secret"
 	cd.UserID = 1
@@ -62,18 +54,16 @@ func TestPage_Access(t *testing.T) {
 }
 
 func TestPage_SeeNoCreate(t *testing.T) {
-	q := &db.QuerierStub{
-		GetPermissionsByUserIDReturns: []*db.GetPermissionsByUserIDRow{},
-		SystemCheckGrantFn: func(arg db.SystemCheckGrantParams) (int32, error) {
-			if arg.Action == "post" {
-				return 0, sql.ErrNoRows
-			}
-			return 1, nil
-		},
-		ListContentPublicLabelsCalls:                        []db.ListContentPublicLabelsParams{},
-		ListContentPrivateLabelsCalls:                       []db.ListContentPrivateLabelsParams{},
-		ListPrivateTopicParticipantsByTopicIDForUserReturns: []*db.ListPrivateTopicParticipantsByTopicIDForUserRow{},
-	}
+	q := testhelpers.NewQuerierStub(
+		testhelpers.WithDefaultGrantAllowed(true),
+		testhelpers.WithGrants(map[string]bool{
+			testhelpers.GrantKey("privateforum", "", "post"): false,
+		}),
+	)
+	q.GetPermissionsByUserIDReturns = []*db.GetPermissionsByUserIDRow{}
+	q.ListContentPublicLabelsCalls = []db.ListContentPublicLabelsParams{}
+	q.ListContentPrivateLabelsCalls = []db.ListContentPrivateLabelsParams{}
+	q.ListPrivateTopicParticipantsByTopicIDForUserReturns = []*db.ListPrivateTopicParticipantsByTopicIDForUserRow{}
 	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
 	cd.ShareSignKey = "secret"
 	cd.UserID = 1
@@ -93,15 +83,8 @@ func TestPage_SeeNoCreate(t *testing.T) {
 }
 
 func TestPage_AdminLinks(t *testing.T) {
-	queries := &db.QuerierStub{
-		SystemCheckGrantFn: func(arg db.SystemCheckGrantParams) (int32, error) {
-			if arg.Section == "privateforum" && arg.Action == "see" {
-				return 1, nil
-			}
-			return 0, sql.ErrNoRows
-		},
-		GetPermissionsByUserIDReturns: []*db.GetPermissionsByUserIDRow{{IsAdmin: true}},
-	}
+	queries := testhelpers.NewQuerierStub(testhelpers.WithGrantResult(true))
+	queries.GetPermissionsByUserIDReturns = []*db.GetPermissionsByUserIDRow{{IsAdmin: true}}
 	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
 	cd.ShareSignKey = "secret"
 	cd.UserID = 1

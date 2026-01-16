@@ -14,11 +14,11 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestSubscribeTopicTaskAction(t *testing.T) {
-	qs := &db.QuerierStub{}
+	qs := testhelpers.NewQuerierStub()
 	cfg := config.NewRuntimeConfig()
 	cd := common.NewCoreData(context.Background(), qs, cfg)
 	cd.UserID = 42
@@ -61,7 +61,7 @@ func TestSubscribeTopicTaskAction(t *testing.T) {
 }
 
 func TestUnsubscribeTopicTaskAction(t *testing.T) {
-	qs := &db.QuerierStub{}
+	qs := testhelpers.NewQuerierStub()
 	cfg := config.NewRuntimeConfig()
 	cd := common.NewCoreData(context.Background(), qs, cfg)
 	cd.UserID = 24

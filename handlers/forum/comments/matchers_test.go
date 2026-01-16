@@ -15,6 +15,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestRequireCommentAuthor_AllowsAuthor(t *testing.T) {
@@ -22,13 +23,12 @@ func TestRequireCommentAuthor_AllowsAuthor(t *testing.T) {
 	threadID := int32(5)
 	userID := int32(7)
 
-	q := &db.QuerierStub{
-		GetCommentByIdForUserRow: &db.GetCommentByIdForUserRow{
-			Idcomments:    commentID,
-			ForumthreadID: threadID,
-			UsersIdusers:  userID,
-			IsOwner:       true,
-		},
+	q := testhelpers.NewQuerierStub()
+	q.GetCommentByIdForUserRow = &db.GetCommentByIdForUserRow{
+		Idcomments:    commentID,
+		ForumthreadID: threadID,
+		UsersIdusers:  userID,
+		IsOwner:       true,
 	}
 
 	req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/5/comment/3", nil)
@@ -78,19 +78,12 @@ func TestRequireCommentAuthor_AllowsGrantHolder(t *testing.T) {
 	authorID := int32(11)
 	adminID := int32(12)
 
-	q := &db.QuerierStub{
-		GetCommentByIdForUserRow: &db.GetCommentByIdForUserRow{
-			Idcomments:    commentID,
-			ForumthreadID: threadID,
-			UsersIdusers:  authorID,
-			IsOwner:       false,
-		},
-		SystemCheckGrantFn: func(arg db.SystemCheckGrantParams) (int32, error) {
-			if arg.Action == "edit-any" {
-				return 1, nil
-			}
-			return 0, sql.ErrNoRows
-		},
+	q := testhelpers.NewQuerierStub(testhelpers.WithGrant("forum", "thread", "edit-any"))
+	q.GetCommentByIdForUserRow = &db.GetCommentByIdForUserRow{
+		Idcomments:    commentID,
+		ForumthreadID: threadID,
+		UsersIdusers:  authorID,
+		IsOwner:       false,
 	}
 
 	req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/10/comment/9", nil)
@@ -143,16 +136,15 @@ func TestRequireCommentAuthor_AllowsAdminMode(t *testing.T) {
 	authorID := int32(16)
 	adminID := int32(17)
 
-	q := &db.QuerierStub{
-		GetCommentByIdForUserRow: &db.GetCommentByIdForUserRow{
-			Idcomments:    commentID,
-			ForumthreadID: threadID,
-			UsersIdusers:  authorID,
-			IsOwner:       false,
-		},
-		GetPermissionsByUserIDReturns: []*db.GetPermissionsByUserIDRow{
-			{Name: "administrator", IsAdmin: true},
-		},
+	q := testhelpers.NewQuerierStub()
+	q.GetCommentByIdForUserRow = &db.GetCommentByIdForUserRow{
+		Idcomments:    commentID,
+		ForumthreadID: threadID,
+		UsersIdusers:  authorID,
+		IsOwner:       false,
+	}
+	q.GetPermissionsByUserIDReturns = []*db.GetPermissionsByUserIDRow{
+		{Name: "administrator", IsAdmin: true},
 	}
 
 	req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/15/comment/13", nil)

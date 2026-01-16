@@ -19,6 +19,7 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 type captureDLQ struct {
@@ -32,23 +33,22 @@ func (c *captureDLQ) Record(ctx context.Context, message string) error {
 
 func setupTest(t *testing.T) (*db.QuerierStub, *eventbus.Bus, *notifications.Notifier, *captureDLQ, *sessions.CookieStore) {
 	uid := int32(1)
-	qs := &db.QuerierStub{
-		SystemGetUserByIDFn: func(ctx context.Context, idusers int32) (*db.SystemGetUserByIDRow, error) {
-			return &db.SystemGetUserByIDRow{
-				Idusers:  uid,
-				Username: sql.NullString{String: "adminuser", Valid: true},
-				Email:    sql.NullString{String: "admin@example.com", Valid: true},
-			}, nil
-		},
-		AdminListAdministratorEmailsReturns: []string{"root@example.com"},
-		SystemGetUserByEmailRow: &db.SystemGetUserByEmailRow{
-			Idusers: 99,
-		},
-		GetPermissionsByUserIDFn: func(idusers int32) ([]*db.GetPermissionsByUserIDRow, error) {
-			return []*db.GetPermissionsByUserIDRow{
-				{Name: "admin", IsAdmin: true},
-			}, nil
-		},
+	qs := testhelpers.NewQuerierStub()
+	qs.SystemGetUserByIDFn = func(ctx context.Context, idusers int32) (*db.SystemGetUserByIDRow, error) {
+		return &db.SystemGetUserByIDRow{
+			Idusers:  uid,
+			Username: sql.NullString{String: "adminuser", Valid: true},
+			Email:    sql.NullString{String: "admin@example.com", Valid: true},
+		}, nil
+	}
+	qs.AdminListAdministratorEmailsReturns = []string{"root@example.com"}
+	qs.SystemGetUserByEmailRow = &db.SystemGetUserByEmailRow{
+		Idusers: 99,
+	}
+	qs.GetPermissionsByUserIDFn = func(idusers int32) ([]*db.GetPermissionsByUserIDRow, error) {
+		return []*db.GetPermissionsByUserIDRow{
+			{Name: "admin", IsAdmin: true},
+		}, nil
 	}
 
 	bus := eventbus.NewBus()

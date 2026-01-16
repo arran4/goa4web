@@ -3,24 +3,22 @@ package writings
 import (
 	"context"
 	"database/sql"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
 
-	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/internal/db"
-
-	"github.com/arran4/goa4web/handlers"
-
-	"github.com/arran4/goa4web/config"
-
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestArticleReplyActionPage_UsesWritingParam(t *testing.T) {
@@ -43,10 +41,8 @@ func TestArticleReplyActionPage_UsesWritingParam(t *testing.T) {
 		req.AddCookie(c)
 	}
 
-	q := &db.QuerierStub{
-		GetWritingForListerByIDRow: &db.GetWritingForListerByIDRow{Idwriting: 1},
-		SystemCheckGrantReturns:    1,
-	}
+	q := testhelpers.NewQuerierStub(testhelpers.WithGrantResult(true))
+	q.GetWritingForListerByIDRow = &db.GetWritingForListerByIDRow{Idwriting: 1}
 	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig(), common.WithSession(sess), common.WithUserRoles([]string{"user"}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)

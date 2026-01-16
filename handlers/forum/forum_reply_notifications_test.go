@@ -26,6 +26,7 @@ import (
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/lazy"
 	"github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/testhelpers"
 	"github.com/arran4/goa4web/workers/emailqueue"
 	"github.com/arran4/goa4web/workers/postcountworker"
 )
@@ -61,84 +62,83 @@ func TestForumReply(t *testing.T) {
 	topicID := int32(5)
 	threadID := int32(42)
 
-	qs := &db.QuerierStub{
-		GetPermissionsByUserIDFn: func(idusers int32) ([]*db.GetPermissionsByUserIDRow, error) {
-			return []*db.GetPermissionsByUserIDRow{}, nil
-		},
-		SystemGetUserByIDFn: func(ctx context.Context, idusers int32) (*db.SystemGetUserByIDRow, error) {
-			switch idusers {
-			case replierUID:
-				return &db.SystemGetUserByIDRow{
-					Idusers:  replierUID,
-					Username: sql.NullString{String: "replier", Valid: true},
-					Email:    sql.NullString{String: "replier@example.com", Valid: true},
-				}, nil
-			case subscriberUID:
-				return &db.SystemGetUserByIDRow{
-					Idusers:  subscriberUID,
-					Username: sql.NullString{String: "subscriber", Valid: true},
-					Email:    sql.NullString{String: "subscriber@example.com", Valid: true},
-				}, nil
-			case missingEmailUID:
-				return &db.SystemGetUserByIDRow{
-					Idusers:  missingEmailUID,
-					Username: sql.NullString{String: "missing-email", Valid: true},
-				}, nil
-			case adminUID:
-				return &db.SystemGetUserByIDRow{
-					Idusers:  adminUID,
-					Username: sql.NullString{String: "adminuser", Valid: true},
-					Email:    sql.NullString{String: "admin@example.com", Valid: true},
-				}, nil
-			}
-			return nil, sql.ErrNoRows
-		},
-		SystemGetUserByEmailFn: func(ctx context.Context, email string) (*db.SystemGetUserByEmailRow, error) {
-			if email == "admin@example.com" {
-				return &db.SystemGetUserByEmailRow{Idusers: adminUID}, nil
-			}
-			return nil, sql.ErrNoRows
-		},
-		CreateCommentInSectionForCommenterFn: func(ctx context.Context, arg db.CreateCommentInSectionForCommenterParams) (int64, error) {
-			return 999, nil
-		},
-		GetCommentByIdForUserRow: &db.GetCommentByIdForUserRow{
-			Idcomments: 999,
-		},
-		GetThreadBySectionThreadIDForReplierFn: func(ctx context.Context, arg db.GetThreadBySectionThreadIDForReplierParams) (*db.Forumthread, error) {
-			return &db.Forumthread{
-				Idforumthread:          threadID,
-				ForumtopicIdforumtopic: topicID,
-			}, nil
-		},
-		GetThreadLastPosterAndPermsFn: func(ctx context.Context, arg db.GetThreadLastPosterAndPermsParams) (*db.GetThreadLastPosterAndPermsRow, error) {
-			return &db.GetThreadLastPosterAndPermsRow{
-				Idforumthread:          threadID,
-				ForumtopicIdforumtopic: topicID,
-				Lastposterusername:     sql.NullString{String: "replier", Valid: true},
-				Comments:               sql.NullInt32{Int32: 1, Valid: true},
-			}, nil
-		},
-		GetForumTopicByIdForUserFn: func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
-			return &db.GetForumTopicByIdForUserRow{
-				Idforumtopic: topicID,
-				Title:        sql.NullString{String: "Test Topic", Valid: true},
-			}, nil
-		},
-		ListSubscribersForPatternsReturn: map[string][]int32{
-			fmt.Sprintf("reply:/forum/topic/%d/thread/%d/*", topicID, threadID): {subscriberUID, missingEmailUID},
-		},
-		GetPreferenceForListerReturn: map[int32]*db.Preference{
-			replierUID:    {AutoSubscribeReplies: true},
-			subscriberUID: {AutoSubscribeReplies: true},
-		},
-		AdminListAdministratorEmailsReturns:               []string{"admin@example.com"},
-		SystemGetLastNotificationForRecipientByMessageErr: sql.ErrNoRows,
-		UpsertContentReadMarkerFn:                         func(ctx context.Context, arg db.UpsertContentReadMarkerParams) error { return nil },
-		ClearUnreadContentPrivateLabelExceptUserFn:        func(ctx context.Context, arg db.ClearUnreadContentPrivateLabelExceptUserParams) error { return nil },
-		AdminDeletePendingEmailFn:                         func(ctx context.Context, id int32) error { return nil },
-		SystemMarkPendingEmailSentFn:                      func(ctx context.Context, id int32) error { return nil },
+	qs := testhelpers.NewQuerierStub()
+	qs.GetPermissionsByUserIDFn = func(idusers int32) ([]*db.GetPermissionsByUserIDRow, error) {
+		return []*db.GetPermissionsByUserIDRow{}, nil
 	}
+	qs.SystemGetUserByIDFn = func(ctx context.Context, idusers int32) (*db.SystemGetUserByIDRow, error) {
+		switch idusers {
+		case replierUID:
+			return &db.SystemGetUserByIDRow{
+				Idusers:  replierUID,
+				Username: sql.NullString{String: "replier", Valid: true},
+				Email:    sql.NullString{String: "replier@example.com", Valid: true},
+			}, nil
+		case subscriberUID:
+			return &db.SystemGetUserByIDRow{
+				Idusers:  subscriberUID,
+				Username: sql.NullString{String: "subscriber", Valid: true},
+				Email:    sql.NullString{String: "subscriber@example.com", Valid: true},
+			}, nil
+		case missingEmailUID:
+			return &db.SystemGetUserByIDRow{
+				Idusers:  missingEmailUID,
+				Username: sql.NullString{String: "missing-email", Valid: true},
+			}, nil
+		case adminUID:
+			return &db.SystemGetUserByIDRow{
+				Idusers:  adminUID,
+				Username: sql.NullString{String: "adminuser", Valid: true},
+				Email:    sql.NullString{String: "admin@example.com", Valid: true},
+			}, nil
+		}
+		return nil, sql.ErrNoRows
+	}
+	qs.SystemGetUserByEmailFn = func(ctx context.Context, email string) (*db.SystemGetUserByEmailRow, error) {
+		if email == "admin@example.com" {
+			return &db.SystemGetUserByEmailRow{Idusers: adminUID}, nil
+		}
+		return nil, sql.ErrNoRows
+	}
+	qs.CreateCommentInSectionForCommenterFn = func(ctx context.Context, arg db.CreateCommentInSectionForCommenterParams) (int64, error) {
+		return 999, nil
+	}
+	qs.GetCommentByIdForUserRow = &db.GetCommentByIdForUserRow{
+		Idcomments: 999,
+	}
+	qs.GetThreadBySectionThreadIDForReplierFn = func(ctx context.Context, arg db.GetThreadBySectionThreadIDForReplierParams) (*db.Forumthread, error) {
+		return &db.Forumthread{
+			Idforumthread:          threadID,
+			ForumtopicIdforumtopic: topicID,
+		}, nil
+	}
+	qs.GetThreadLastPosterAndPermsFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsParams) (*db.GetThreadLastPosterAndPermsRow, error) {
+		return &db.GetThreadLastPosterAndPermsRow{
+			Idforumthread:          threadID,
+			ForumtopicIdforumtopic: topicID,
+			Lastposterusername:     sql.NullString{String: "replier", Valid: true},
+			Comments:               sql.NullInt32{Int32: 1, Valid: true},
+		}, nil
+	}
+	qs.GetForumTopicByIdForUserFn = func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
+		return &db.GetForumTopicByIdForUserRow{
+			Idforumtopic: topicID,
+			Title:        sql.NullString{String: "Test Topic", Valid: true},
+		}, nil
+	}
+	qs.ListSubscribersForPatternsReturn = map[string][]int32{
+		fmt.Sprintf("reply:/forum/topic/%d/thread/%d/*", topicID, threadID): {subscriberUID, missingEmailUID},
+	}
+	qs.GetPreferenceForListerReturn = map[int32]*db.Preference{
+		replierUID:    {AutoSubscribeReplies: true},
+		subscriberUID: {AutoSubscribeReplies: true},
+	}
+	qs.AdminListAdministratorEmailsReturns = []string{"admin@example.com"}
+	qs.SystemGetLastNotificationForRecipientByMessageErr = sql.ErrNoRows
+	qs.UpsertContentReadMarkerFn = func(ctx context.Context, arg db.UpsertContentReadMarkerParams) error { return nil }
+	qs.ClearUnreadContentPrivateLabelExceptUserFn = func(ctx context.Context, arg db.ClearUnreadContentPrivateLabelExceptUserParams) error { return nil }
+	qs.AdminDeletePendingEmailFn = func(ctx context.Context, id int32) error { return nil }
+	qs.SystemMarkPendingEmailSentFn = func(ctx context.Context, id int32) error { return nil }
 
 	qs.SystemListPendingEmailsFn = func(ctx context.Context, arg db.SystemListPendingEmailsParams) ([]*db.SystemListPendingEmailsRow, error) {
 		var rows []*db.SystemListPendingEmailsRow

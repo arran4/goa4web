@@ -5,14 +5,13 @@ import (
 	"testing"
 
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestRenderNotificationUsesSequentialOverrides(t *testing.T) {
 	ctx := context.Background()
-	q := &db.QuerierStub{
-		SystemGetTemplateOverrideSeq: []string{"first", "second"},
-	}
+	q := testhelpers.NewQuerierStub()
+	q.SystemGetTemplateOverrideSeq = []string{"first", "second"}
 	n := New(WithQueries(q), WithConfig(config.NewRuntimeConfig()))
 	filename := NotificationTemplateFilenameGenerator("reply")
 

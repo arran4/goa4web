@@ -26,6 +26,7 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/testhelpers"
 	"github.com/arran4/goa4web/workers/emailqueue"
 )
 
@@ -69,60 +70,58 @@ func TestWritingReply(t *testing.T) {
 	fixedTime := time.Date(2024, 3, 4, 5, 6, 0, 0, time.UTC)
 
 	qs := &writingsQueries{
-		QuerierStub: &db.QuerierStub{
-			SystemCheckGrantReturns: 1,
-			GetPermissionsByUserIDFn: func(idusers int32) ([]*db.GetPermissionsByUserIDRow, error) {
-				return []*db.GetPermissionsByUserIDRow{}, nil
-			},
-			SystemGetUserByIDFn: func(ctx context.Context, idusers int32) (*db.SystemGetUserByIDRow, error) {
-				switch idusers {
-				case replierUID:
-					return &db.SystemGetUserByIDRow{
-						Idusers:  replierUID,
-						Username: sql.NullString{String: "replier", Valid: true},
-						Email:    sql.NullString{String: "replier@example.com", Valid: true},
-					}, nil
-				case subscriberUID:
-					return &db.SystemGetUserByIDRow{
-						Idusers:  subscriberUID,
-						Username: sql.NullString{String: "subscriber", Valid: true},
-						Email:    sql.NullString{String: "subscriber@example.com", Valid: true},
-					}, nil
-				}
-				return nil, sql.ErrNoRows
-			},
-			GetThreadLastPosterAndPermsFn: func(ctx context.Context, arg db.GetThreadLastPosterAndPermsParams) (*db.GetThreadLastPosterAndPermsRow, error) {
-				return &db.GetThreadLastPosterAndPermsRow{
-					Idforumthread:          threadID,
-					ForumtopicIdforumtopic: topicID,
-					Lastposterusername:     sql.NullString{String: "replier", Valid: true},
-					Comments:               sql.NullInt32{Int32: 4, Valid: true},
-				}, nil
-			},
-			GetForumTopicByIdFn: func(ctx context.Context, idforumtopic int32) (*db.Forumtopic, error) {
-				return &db.Forumtopic{Idforumtopic: topicID, Title: sql.NullString{String: WritingTopicName, Valid: true}}, nil
-			},
-			GetWritingForListerByIDRow: &db.GetWritingForListerByIDRow{
-				Idwriting:     writingID,
-				ForumthreadID: threadID,
-				LanguageID:    sql.NullInt32{Int32: 1, Valid: true},
-				Title:         sql.NullString{String: "Test Writing", Valid: true},
-			},
-			ListSubscribersForPatternsReturn: map[string][]int32{
-				fmt.Sprintf("reply:/writings/article/%d", writingID): {subscriberUID},
-			},
-			GetPreferenceForListerReturn: map[int32]*db.Preference{
-				replierUID: {AutoSubscribeReplies: true},
-			},
-			UpsertContentReadMarkerFn:                  func(ctx context.Context, arg db.UpsertContentReadMarkerParams) error { return nil },
-			ClearUnreadContentPrivateLabelExceptUserFn: func(ctx context.Context, arg db.ClearUnreadContentPrivateLabelExceptUserParams) error { return nil },
-			AdminDeletePendingEmailFn:                  func(ctx context.Context, id int32) error { return nil },
-			SystemMarkPendingEmailSentFn:               func(ctx context.Context, id int32) error { return nil },
-			CreateCommentInSectionForCommenterFn: func(ctx context.Context, arg db.CreateCommentInSectionForCommenterParams) (int64, error) {
-				return 555, nil
-			},
-		},
-		forumTopic: &db.Forumtopic{Idforumtopic: topicID, Title: sql.NullString{String: WritingTopicName, Valid: true}},
+		QuerierStub: testhelpers.NewQuerierStub(testhelpers.WithGrantResult(true)),
+		forumTopic:  &db.Forumtopic{Idforumtopic: topicID, Title: sql.NullString{String: WritingTopicName, Valid: true}},
+	}
+	qs.GetPermissionsByUserIDFn = func(idusers int32) ([]*db.GetPermissionsByUserIDRow, error) {
+		return []*db.GetPermissionsByUserIDRow{}, nil
+	}
+	qs.SystemGetUserByIDFn = func(ctx context.Context, idusers int32) (*db.SystemGetUserByIDRow, error) {
+		switch idusers {
+		case replierUID:
+			return &db.SystemGetUserByIDRow{
+				Idusers:  replierUID,
+				Username: sql.NullString{String: "replier", Valid: true},
+				Email:    sql.NullString{String: "replier@example.com", Valid: true},
+			}, nil
+		case subscriberUID:
+			return &db.SystemGetUserByIDRow{
+				Idusers:  subscriberUID,
+				Username: sql.NullString{String: "subscriber", Valid: true},
+				Email:    sql.NullString{String: "subscriber@example.com", Valid: true},
+			}, nil
+		}
+		return nil, sql.ErrNoRows
+	}
+	qs.GetThreadLastPosterAndPermsFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsParams) (*db.GetThreadLastPosterAndPermsRow, error) {
+		return &db.GetThreadLastPosterAndPermsRow{
+			Idforumthread:          threadID,
+			ForumtopicIdforumtopic: topicID,
+			Lastposterusername:     sql.NullString{String: "replier", Valid: true},
+			Comments:               sql.NullInt32{Int32: 4, Valid: true},
+		}, nil
+	}
+	qs.GetForumTopicByIdFn = func(ctx context.Context, idforumtopic int32) (*db.Forumtopic, error) {
+		return &db.Forumtopic{Idforumtopic: topicID, Title: sql.NullString{String: WritingTopicName, Valid: true}}, nil
+	}
+	qs.GetWritingForListerByIDRow = &db.GetWritingForListerByIDRow{
+		Idwriting:     writingID,
+		ForumthreadID: threadID,
+		LanguageID:    sql.NullInt32{Int32: 1, Valid: true},
+		Title:         sql.NullString{String: "Test Writing", Valid: true},
+	}
+	qs.ListSubscribersForPatternsReturn = map[string][]int32{
+		fmt.Sprintf("reply:/writings/article/%d", writingID): {subscriberUID},
+	}
+	qs.GetPreferenceForListerReturn = map[int32]*db.Preference{
+		replierUID: {AutoSubscribeReplies: true},
+	}
+	qs.UpsertContentReadMarkerFn = func(ctx context.Context, arg db.UpsertContentReadMarkerParams) error { return nil }
+	qs.ClearUnreadContentPrivateLabelExceptUserFn = func(ctx context.Context, arg db.ClearUnreadContentPrivateLabelExceptUserParams) error { return nil }
+	qs.AdminDeletePendingEmailFn = func(ctx context.Context, id int32) error { return nil }
+	qs.SystemMarkPendingEmailSentFn = func(ctx context.Context, id int32) error { return nil }
+	qs.CreateCommentInSectionForCommenterFn = func(ctx context.Context, arg db.CreateCommentInSectionForCommenterParams) (int64, error) {
+		return 555, nil
 	}
 
 	qs.SystemListPendingEmailsFn = func(ctx context.Context, arg db.SystemListPendingEmailsParams) ([]*db.SystemListPendingEmailsRow, error) {

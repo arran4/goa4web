@@ -5,20 +5,19 @@ import (
 	"testing"
 
 	common "github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestSetThreadPublicLabels(t *testing.T) {
-	q := &db.QuerierStub{
-		ContentPublicLabels: map[string]map[int32]map[string]struct{}{
-			"thread": {
-				1: {"foo": {}, "bar": {}},
-			},
+	q := testhelpers.NewQuerierStub()
+	q.ContentPublicLabels = map[string]map[int32]map[string]struct{}{
+		"thread": {
+			1: {"foo": {}, "bar": {}},
 		},
-		ContentLabelStatus: map[string]map[int32]map[string]struct{}{
-			"thread": {
-				1: {},
-			},
+	}
+	q.ContentLabelStatus = map[string]map[int32]map[string]struct{}{
+		"thread": {
+			1: {},
 		},
 	}
 	cd := common.NewTestCoreData(t, q)
@@ -53,12 +52,11 @@ func TestSetThreadPublicLabels(t *testing.T) {
 }
 
 func TestSetThreadPrivateLabels(t *testing.T) {
-	q := &db.QuerierStub{
-		ContentPrivateLabels: map[string]map[int32]map[int32]map[string]bool{
-			"thread": {
-				1: {
-					2: {"one": false, "two": false},
-				},
+	q := testhelpers.NewQuerierStub()
+	q.ContentPrivateLabels = map[string]map[int32]map[int32]map[string]bool{
+		"thread": {
+			1: {
+				2: {"one": false, "two": false},
 			},
 		},
 	}
@@ -90,7 +88,7 @@ func TestSetThreadPrivateLabels(t *testing.T) {
 }
 
 func TestPrivateLabelsDefaultAndInversion(t *testing.T) {
-	q := &db.QuerierStub{}
+	q := testhelpers.NewQuerierStub()
 	cd := common.NewTestCoreData(t, q)
 	cd.UserID = 2
 
@@ -164,13 +162,12 @@ func TestPrivateLabelsDefaultAndInversion(t *testing.T) {
 }
 
 func TestClearThreadPrivateLabelStatus(t *testing.T) {
-	q := &db.QuerierStub{
-		ContentPrivateLabels: map[string]map[int32]map[int32]map[string]bool{
-			"thread": {
-				1: {
-					1: {"unread": true, "keep": false},
-					2: {"unread": false},
-				},
+	q := testhelpers.NewQuerierStub()
+	q.ContentPrivateLabels = map[string]map[int32]map[int32]map[string]bool{
+		"thread": {
+			1: {
+				1: {"unread": true, "keep": false},
+				2: {"unread": false},
 			},
 		},
 	}
@@ -196,7 +193,7 @@ func TestClearThreadPrivateLabelStatus(t *testing.T) {
 }
 
 func TestPrivateLabelsTopicExcludesStatus(t *testing.T) {
-	q := &db.QuerierStub{}
+	q := testhelpers.NewQuerierStub()
 	cd := common.NewTestCoreData(t, q)
 	cd.UserID = 2
 
@@ -214,16 +211,15 @@ func TestPrivateLabelsTopicExcludesStatus(t *testing.T) {
 }
 
 func TestSetWritingPublicLabels(t *testing.T) {
-	q := &db.QuerierStub{
-		ContentLabelStatus: map[string]map[int32]map[string]struct{}{
-			"writing": {
-				5: {"a": {}, "b": {}},
-			},
+	q := testhelpers.NewQuerierStub()
+	q.ContentLabelStatus = map[string]map[int32]map[string]struct{}{
+		"writing": {
+			5: {"a": {}, "b": {}},
 		},
-		ContentPublicLabels: map[string]map[int32]map[string]struct{}{
-			"writing": {
-				5: {},
-			},
+	}
+	q.ContentPublicLabels = map[string]map[int32]map[string]struct{}{
+		"writing": {
+			5: {},
 		},
 	}
 	cd := common.NewTestCoreData(t, q)

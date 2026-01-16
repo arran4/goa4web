@@ -22,6 +22,7 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/testhelpers"
 	"github.com/arran4/goa4web/workers/emailqueue"
 )
 
@@ -63,54 +64,53 @@ func TestLinkerApprove(t *testing.T) {
 	linkID := int64(7)
 
 	qs := &approveQueries{
-		QuerierStub: &db.QuerierStub{
-			SystemGetUserByIDFn: func(ctx context.Context, idusers int32) (*db.SystemGetUserByIDRow, error) {
-				switch idusers {
-				case moderatorUID:
-					return &db.SystemGetUserByIDRow{
-						Idusers:  moderatorUID,
-						Username: sql.NullString{String: "moderator", Valid: true},
-						Email:    sql.NullString{String: "moderator@example.com", Valid: true},
-					}, nil
-				case subscriberUID:
-					return &db.SystemGetUserByIDRow{
-						Idusers:  subscriberUID,
-						Username: sql.NullString{String: "subscriber", Valid: true},
-						Email:    sql.NullString{String: "subscriber@example.com", Valid: true},
-					}, nil
-				case adminUID:
-					return &db.SystemGetUserByIDRow{
-						Idusers:  adminUID,
-						Username: sql.NullString{String: "adminuser", Valid: true},
-						Email:    sql.NullString{String: "admin@example.com", Valid: true},
-					}, nil
-				}
-				return nil, sql.ErrNoRows
-			},
-			SystemGetUserByEmailFn: func(ctx context.Context, email string) (*db.SystemGetUserByEmailRow, error) {
-				if email == "admin@example.com" {
-					return &db.SystemGetUserByEmailRow{Idusers: adminUID}, nil
-				}
-				return nil, sql.ErrNoRows
-			},
-			GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow: &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow{
-				ID:          int32(linkID),
-				Title:       sql.NullString{String: "Example Link", Valid: true},
-				Description: sql.NullString{String: "Example Description", Valid: true},
-				Username:    sql.NullString{String: "subscriber", Valid: true},
-			},
-			ListSubscribersForPatternsReturn: map[string][]int32{
-				"approve:/admin/queue": {subscriberUID},
-			},
-			GetPreferenceForListerReturn: map[int32]*db.Preference{
-				moderatorUID: {AutoSubscribeReplies: true},
-			},
-			AdminListAdministratorEmailsReturns: []string{"admin@example.com"},
-			AdminDeletePendingEmailFn:           func(ctx context.Context, id int32) error { return nil },
-			SystemMarkPendingEmailSentFn:        func(ctx context.Context, id int32) error { return nil },
-		},
+		QuerierStub:  testhelpers.NewQuerierStub(),
 		queuedLinkID: linkID,
 	}
+	qs.SystemGetUserByIDFn = func(ctx context.Context, idusers int32) (*db.SystemGetUserByIDRow, error) {
+		switch idusers {
+		case moderatorUID:
+			return &db.SystemGetUserByIDRow{
+				Idusers:  moderatorUID,
+				Username: sql.NullString{String: "moderator", Valid: true},
+				Email:    sql.NullString{String: "moderator@example.com", Valid: true},
+			}, nil
+		case subscriberUID:
+			return &db.SystemGetUserByIDRow{
+				Idusers:  subscriberUID,
+				Username: sql.NullString{String: "subscriber", Valid: true},
+				Email:    sql.NullString{String: "subscriber@example.com", Valid: true},
+			}, nil
+		case adminUID:
+			return &db.SystemGetUserByIDRow{
+				Idusers:  adminUID,
+				Username: sql.NullString{String: "adminuser", Valid: true},
+				Email:    sql.NullString{String: "admin@example.com", Valid: true},
+			}, nil
+		}
+		return nil, sql.ErrNoRows
+	}
+	qs.SystemGetUserByEmailFn = func(ctx context.Context, email string) (*db.SystemGetUserByEmailRow, error) {
+		if email == "admin@example.com" {
+			return &db.SystemGetUserByEmailRow{Idusers: adminUID}, nil
+		}
+		return nil, sql.ErrNoRows
+	}
+	qs.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow = &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow{
+		ID:          int32(linkID),
+		Title:       sql.NullString{String: "Example Link", Valid: true},
+		Description: sql.NullString{String: "Example Description", Valid: true},
+		Username:    sql.NullString{String: "subscriber", Valid: true},
+	}
+	qs.ListSubscribersForPatternsReturn = map[string][]int32{
+		"approve:/admin/queue": {subscriberUID},
+	}
+	qs.GetPreferenceForListerReturn = map[int32]*db.Preference{
+		moderatorUID: {AutoSubscribeReplies: true},
+	}
+	qs.AdminListAdministratorEmailsReturns = []string{"admin@example.com"}
+	qs.AdminDeletePendingEmailFn = func(ctx context.Context, id int32) error { return nil }
+	qs.SystemMarkPendingEmailSentFn = func(ctx context.Context, id int32) error { return nil }
 
 	qs.SystemListPendingEmailsFn = func(ctx context.Context, arg db.SystemListPendingEmailsParams) ([]*db.SystemListPendingEmailsRow, error) {
 		var rows []*db.SystemListPendingEmailsRow

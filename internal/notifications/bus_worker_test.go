@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/mail"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -436,6 +437,65 @@ func TestProcessEventAutoSubscribe(t *testing.T) {
 	pattern := buildPatterns(tasks.TaskString("AutoSub"), "/forum/topic/7/thread/42")[0]
 	if q.InsertSubscriptionParams[0].Pattern != pattern {
 		t.Fatalf("expected pattern %s, got %s", pattern, q.InsertSubscriptionParams[0].Pattern)
+	}
+}
+
+func TestProcessEventSelfNotifyWithUserIDTemplate(t *testing.T) {
+	ctx := context.Background()
+	cfg := config.NewRuntimeConfig()
+	cfg.NotificationsEnabled = true
+
+	q := &querierStub{}
+	q.SystemGetTemplateOverrideFn = func(ctx context.Context, name string) (string, error) {
+		if name == "notifications/password_reset.gotxt" {
+			return "Password reset for {{.User.Username.String}} ({{.User.Email.String}}, UID: {{.User.Idusers}})", nil
+		}
+		return "", fmt.Errorf("unexpected template: %s", name)
+	}
+
+	q.SystemGetUserByIDFn = func(ctx context.Context, id int32) (*db.SystemGetUserByIDRow, error) {
+		if id == 123 {
+			return &db.SystemGetUserByIDRow{
+				Idusers:  123,
+				Username: sql.NullString{String: "testuser", Valid: true},
+				Email:    sql.NullString{String: "test@example.com", Valid: true},
+			}, nil
+		}
+		return nil, fmt.Errorf("user not found")
+	}
+
+	n := New(WithQueries(q), WithConfig(cfg))
+
+	evt := eventbus.TaskEvent{
+		Path:    "/user/password-reset",
+		Task:    selfNotifyTaskForTest{TaskString: "SelfNotify"},
+		UserID:  123,
+		Data:    map[string]any{"some": "data"},
+		Outcome: eventbus.TaskOutcomeSuccess,
+	}
+
+	dlqRec := &recordDLQ{}
+	if err := n.ProcessEvent(ctx, evt, dlqRec); err != nil {
+		if dlqRec.msg != "" {
+			t.Fatalf("ProcessEvent failed with DLQ message: %s (underlying error: %v)", dlqRec.msg, err)
+		}
+		t.Fatalf("ProcessEvent failed: %v", err)
+	}
+	if dlqRec.msg != "" {
+		t.Fatalf("unexpected DLQ message: %s", dlqRec.msg)
+	}
+
+	if len(q.SystemCreateNotificationCalls) != 1 {
+		t.Fatalf("expected 1 notification to be created, got %d", len(q.SystemCreateNotificationCalls))
+	}
+
+	notification := q.SystemCreateNotificationCalls[0]
+	if notification.RecipientID != 123 {
+		t.Errorf("expected recipient ID to be 123, got %d", notification.RecipientID)
+	}
+	expectedMsg := "Password reset for testuser (test@example.com, UID: 123)"
+	if !notification.Message.Valid || strings.TrimSpace(notification.Message.String) != expectedMsg {
+		t.Errorf("expected message '%s', got '%s'", expectedMsg, notification.Message.String)
 	}
 }
 

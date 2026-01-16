@@ -6,8 +6,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -34,14 +32,10 @@ func (c *userExpungeUnverifiedCmd) Run() error {
 		return fmt.Errorf("missing or invalid -older-than duration")
 	}
 
-	fileVals, err := config.LoadAppConfigFile(core.OSFS{}, c.rootCmd.ConfigFile)
+	cfg, err := c.rootCmd.RuntimeConfig()
 	if err != nil {
-		return fmt.Errorf("load config file: %w", err)
+		return err
 	}
-	cfg := config.NewRuntimeConfig(
-		config.WithFileValues(fileVals),
-		config.WithGetenv(os.Getenv),
-	)
 
 	d, err := c.rootCmd.InitDB(cfg)
 	if err != nil {

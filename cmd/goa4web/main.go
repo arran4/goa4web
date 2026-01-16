@@ -153,6 +153,13 @@ func (r *rootCmd) Verbosef(format string, args ...any) {
 	}
 }
 
+func (r *rootCmd) RuntimeConfig() (*config.RuntimeConfig, error) {
+	if r.cfg == nil {
+		return nil, fmt.Errorf("runtime config not initialized")
+	}
+	return r.cfg, nil
+}
+
 func parseRoot(args []string) (*rootCmd, error) {
 	r := &rootCmd{
 		tasksReg:      tasks.NewRegistry(),
@@ -208,6 +215,7 @@ func parseRoot(args []string) (*rootCmd, error) {
 		}
 		return nil, fmt.Errorf("load config file: %w", err)
 	}
+	loadedConfigFile := cfgPath != ""
 
 	if err := r.fs.Parse(rest); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
@@ -215,6 +223,9 @@ func parseRoot(args []string) (*rootCmd, error) {
 			return r, flag.ErrHelp
 		}
 		return nil, err
+	}
+	if loadedConfigFile {
+		r.Verbosef("loaded config file %s", cfgPath)
 	}
 
 	r.ConfigFile = cfgPath

@@ -581,11 +581,17 @@ func (j Provider) getBestMailboxID(ctx context.Context) (string, error) {
 	for _, role := range []string{"outbox", "sent", "drafts", "inbox"} {
 		id, err := j.getMailboxIDByRole(ctx, role)
 		if err == nil && id != "" {
+			fmt.Printf("Found mailbox '%s' with ID: %s\n", role, id)
 			return id, nil
 		}
 	}
 	// Fallback: Get ANY mailbox
-	return j.getAnyMailboxID(ctx)
+	fmt.Println("No standard mailbox found, checking for any available mailbox.")
+	id, err := j.getAnyMailboxID(ctx)
+	if err == nil && id != "" {
+		fmt.Printf("Found fallback mailbox with ID: %s\n", id)
+	}
+	return id, err
 }
 
 func (j Provider) getMailboxIDByRole(ctx context.Context, role string) (string, error) {

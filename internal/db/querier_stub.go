@@ -107,6 +107,11 @@ type QuerierStub struct {
 	InsertPasswordErr   error
 	InsertPasswordFn    func(context.Context, InsertPasswordParams) error
 
+	SystemDeletePasswordResetsByUserCalls  []int32
+	SystemDeletePasswordResetsByUserErr    error
+	SystemDeletePasswordResetsByUserResult sql.Result
+	SystemDeletePasswordResetsByUserFn     func(context.Context, int32) (sql.Result, error)
+
 	AdminPromoteAnnouncementCalls []int32
 	AdminPromoteAnnouncementErr   error
 	AdminPromoteAnnouncementFn    func(context.Context, int32) error

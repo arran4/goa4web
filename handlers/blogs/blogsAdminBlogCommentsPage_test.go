@@ -15,29 +15,29 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestAdminBlogCommentsPage_UsesURLParam(t *testing.T) {
 	blogID := 9
-	q := &db.QuerierStub{
-		GetBlogEntryForListerByIDRow: &db.GetBlogEntryForListerByIDRow{
-			Idblogs:       int32(blogID),
-			ForumthreadID: sql.NullInt32{Int32: 1, Valid: true},
-			UsersIdusers:  1,
-			LanguageID:    sql.NullInt32{Int32: 1, Valid: true},
-			Blog:          sql.NullString{String: "body", Valid: true},
-			Written:       time.Now(),
-			Timezone:      sql.NullString{String: time.Local.String(), Valid: true},
-			Username:      sql.NullString{String: "user", Valid: true},
-			Comments:      0,
-			IsOwner:       true,
-		},
-		GetCommentsBySectionThreadIdForUserReturns: []*db.GetCommentsBySectionThreadIdForUserRow{
-			{Idcomments: 1},
-		},
-		GetThreadLastPosterAndPermsReturns: &db.GetThreadLastPosterAndPermsRow{
-			Idforumthread: 1,
-		},
+	q := testhelpers.NewQuerierStub()
+	q.GetBlogEntryForListerByIDRow = &db.GetBlogEntryForListerByIDRow{
+		Idblogs:       int32(blogID),
+		ForumthreadID: sql.NullInt32{Int32: 1, Valid: true},
+		UsersIdusers:  1,
+		LanguageID:    sql.NullInt32{Int32: 1, Valid: true},
+		Blog:          sql.NullString{String: "body", Valid: true},
+		Written:       time.Now(),
+		Timezone:      sql.NullString{String: time.Local.String(), Valid: true},
+		Username:      sql.NullString{String: "user", Valid: true},
+		Comments:      0,
+		IsOwner:       true,
+	}
+	q.GetCommentsBySectionThreadIdForUserReturns = []*db.GetCommentsBySectionThreadIdForUserRow{
+		{Idcomments: 1},
+	}
+	q.GetThreadLastPosterAndPermsReturns = &db.GetThreadLastPosterAndPermsRow{
+		Idforumthread: 1,
 	}
 
 	req := httptest.NewRequest("GET", "/admin/blogs/blog/"+strconv.Itoa(blogID)+"/comments", nil)

@@ -15,6 +15,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func setupCategoryEditRequest(t *testing.T, queries db.Querier, path string, form url.Values, vars map[string]string) (*http.Request, *httptest.ResponseRecorder) {
@@ -31,48 +32,47 @@ func setupCategoryEditRequest(t *testing.T, queries db.Querier, path string, for
 }
 
 func TestAdminCategoryEditSubmitSuccess(t *testing.T) {
-	queries := &db.QuerierStub{
-		GetForumCategoryByIdReturns: &db.Forumcategory{
+	queries := testhelpers.NewQuerierStub()
+	queries.GetForumCategoryByIdReturns = &db.Forumcategory{
+		Idforumcategory:              1,
+		ForumcategoryIdforumcategory: 0,
+		LanguageID:                   sql.NullInt32{Int32: 0, Valid: true},
+		Title:                        sql.NullString{String: "cat", Valid: true},
+		Description:                  sql.NullString{String: "desc", Valid: true},
+	}
+	queries.GetAllForumCategoriesReturns = []*db.Forumcategory{
+		{
 			Idforumcategory:              1,
 			ForumcategoryIdforumcategory: 0,
 			LanguageID:                   sql.NullInt32{Int32: 0, Valid: true},
 			Title:                        sql.NullString{String: "cat", Valid: true},
 			Description:                  sql.NullString{String: "desc", Valid: true},
 		},
-		GetAllForumCategoriesReturns: []*db.Forumcategory{
-			{
-				Idforumcategory:              1,
-				ForumcategoryIdforumcategory: 0,
-				LanguageID:                   sql.NullInt32{Int32: 0, Valid: true},
-				Title:                        sql.NullString{String: "cat", Valid: true},
-				Description:                  sql.NullString{String: "desc", Valid: true},
-			},
-			{
-				Idforumcategory:              2,
-				ForumcategoryIdforumcategory: 0,
-				LanguageID:                   sql.NullInt32{Int32: 0, Valid: true},
-				Title:                        sql.NullString{String: "parent", Valid: true},
-				Description:                  sql.NullString{String: "pdesc", Valid: true},
-			},
+		{
+			Idforumcategory:              2,
+			ForumcategoryIdforumcategory: 0,
+			LanguageID:                   sql.NullInt32{Int32: 0, Valid: true},
+			Title:                        sql.NullString{String: "parent", Valid: true},
+			Description:                  sql.NullString{String: "pdesc", Valid: true},
 		},
-		AdminUpdateForumCategoryFn: func(ctx context.Context, arg db.AdminUpdateForumCategoryParams) error {
-			if arg.Title.String != "Updated" || !arg.Title.Valid {
-				t.Fatalf("unexpected title %+v", arg.Title)
-			}
-			if arg.Description.String != "Updated desc" || !arg.Description.Valid {
-				t.Fatalf("unexpected desc %+v", arg.Description)
-			}
-			if arg.ParentID != 2 {
-				t.Fatalf("unexpected parent %d", arg.ParentID)
-			}
-			if arg.LanguageID != (sql.NullInt32{Int32: 3, Valid: true}) {
-				t.Fatalf("unexpected language %+v", arg.LanguageID)
-			}
-			if arg.Idforumcategory != 1 {
-				t.Fatalf("unexpected category id %d", arg.Idforumcategory)
-			}
-			return nil
-		},
+	}
+	queries.AdminUpdateForumCategoryFn = func(ctx context.Context, arg db.AdminUpdateForumCategoryParams) error {
+		if arg.Title.String != "Updated" || !arg.Title.Valid {
+			t.Fatalf("unexpected title %+v", arg.Title)
+		}
+		if arg.Description.String != "Updated desc" || !arg.Description.Valid {
+			t.Fatalf("unexpected desc %+v", arg.Description)
+		}
+		if arg.ParentID != 2 {
+			t.Fatalf("unexpected parent %d", arg.ParentID)
+		}
+		if arg.LanguageID != (sql.NullInt32{Int32: 3, Valid: true}) {
+			t.Fatalf("unexpected language %+v", arg.LanguageID)
+		}
+		if arg.Idforumcategory != 1 {
+			t.Fatalf("unexpected category id %d", arg.Idforumcategory)
+		}
+		return nil
 	}
 
 	form := url.Values{
@@ -94,9 +94,8 @@ func TestAdminCategoryEditSubmitSuccess(t *testing.T) {
 }
 
 func TestAdminCategoryEditSubmitMissingCategory(t *testing.T) {
-	queries := &db.QuerierStub{
-		GetForumCategoryByIdErr: sql.ErrNoRows,
-	}
+	queries := testhelpers.NewQuerierStub()
+	queries.GetForumCategoryByIdErr = sql.ErrNoRows
 
 	form := url.Values{
 		"name": {"Updated"},
@@ -113,7 +112,7 @@ func TestAdminCategoryEditSubmitMissingCategory(t *testing.T) {
 }
 
 func TestAdminCategoryEditSubmitValidationError(t *testing.T) {
-	queries := &db.QuerierStub{}
+	queries := testhelpers.NewQuerierStub()
 
 	form := url.Values{
 		"name": {""},

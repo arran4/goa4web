@@ -12,16 +12,16 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestWriterListPage_List(t *testing.T) {
 	t.Helper()
-	q := &db.QuerierStub{
-		ListWritersForListerReturns: []*db.ListWritersForListerRow{
-			{Username: sql.NullString{String: "alice", Valid: true}, Count: 3},
-			{Username: sql.NullString{String: "bob", Valid: true}, Count: 2},
-			{Username: sql.NullString{String: "carol", Valid: true}, Count: 1},
-		},
+	q := testhelpers.NewQuerierStub()
+	q.ListWritersForListerReturns = []*db.ListWritersForListerRow{
+		{Username: sql.NullString{String: "alice", Valid: true}, Count: 3},
+		{Username: sql.NullString{String: "bob", Valid: true}, Count: 2},
+		{Username: sql.NullString{String: "carol", Valid: true}, Count: 1},
 	}
 
 	req := httptest.NewRequest("GET", "/writings/writers", nil)
@@ -64,12 +64,11 @@ func TestWriterListPage_List(t *testing.T) {
 
 func TestWriterListPage_Search(t *testing.T) {
 	t.Helper()
-	q := &db.QuerierStub{
-		ListWritersSearchForListerReturns: []*db.ListWritersSearchForListerRow{
-			{Username: sql.NullString{String: "bob", Valid: true}, Count: 2},
-			{Username: sql.NullString{String: "bobby", Valid: true}, Count: 1},
-			{Username: sql.NullString{String: "robert", Valid: true}, Count: 4},
-		},
+	q := testhelpers.NewQuerierStub()
+	q.ListWritersSearchForListerReturns = []*db.ListWritersSearchForListerRow{
+		{Username: sql.NullString{String: "bob", Valid: true}, Count: 2},
+		{Username: sql.NullString{String: "bobby", Valid: true}, Count: 1},
+		{Username: sql.NullString{String: "robert", Valid: true}, Count: 4},
 	}
 
 	req := httptest.NewRequest("GET", "/writings/writers?search=bob&offset=2", nil)

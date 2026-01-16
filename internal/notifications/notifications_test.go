@@ -10,6 +10,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestNotificationsQueries(t *testing.T) {
@@ -55,9 +56,8 @@ func (r *dummyProvider) Send(ctx context.Context, to mail.Address, rawEmailMessa
 func (r *dummyProvider) TestConfig(ctx context.Context) error { return nil }
 
 func TestNotifierNotifyAdmins(t *testing.T) {
-	q := &db.QuerierStub{
-		SystemGetUserByEmailRow: &db.SystemGetUserByEmailRow{Idusers: 1, Email: "a@test", Username: sql.NullString{String: "a", Valid: true}},
-	}
+	q := testhelpers.NewQuerierStub()
+	q.SystemGetUserByEmailRow = &db.SystemGetUserByEmailRow{Idusers: 1, Email: "a@test", Username: sql.NullString{String: "a", Valid: true}}
 	cfg := config.NewRuntimeConfig()
 	cfg.EmailEnabled = true
 	cfg.AdminNotify = true
@@ -94,7 +94,7 @@ func TestNotifierInitialization(t *testing.T) {
 	if n.Queries != nil {
 		t.Fatalf("expected nil Queries")
 	}
-	q := &db.QuerierStub{}
+	q := testhelpers.NewQuerierStub()
 	n = New(WithQueries(q), WithConfig(cfg))
 	if n.Queries != q {
 		t.Fatalf("queries not set via option")

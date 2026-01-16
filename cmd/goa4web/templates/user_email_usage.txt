@@ -1,0 +1,26 @@
+Usage:
+  {{.Prog}} user email <subcommand> [flags]
+
+The user email command is used to manage a user's email addresses. You can list,
+add, delete, and update email addresses for a user.
+
+Subcommands:
+  list     List all email addresses for a user.
+  add      Add a new email address to a user's account.
+  delete   Delete an email address from a user's account.
+  update   Update an existing email address.
+
+Examples:
+  # List all email addresses for the user with ID 3
+  {{.Prog}} user email list -user-id 3
+
+  # Add a new email address to the user "bob"
+  {{.Prog}} user email add -username bob -email "bob@example.com"
+
+  # Delete the email address with ID 5
+  {{.Prog}} user email delete -id 5
+
+  # Update the email address with ID 5 to be verified
+  {{.Prog}} user email update -id 5 -verified true
+
+{{template "flag_groups_section" .FlagGroups}}

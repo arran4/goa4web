@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	htemplate "html/template"
 	"io/fs"
+	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -21,6 +22,19 @@ import (
 //go:embed site/*.gohtml site/*/*.gohtml notifications/*.gotxt email/*.gohtml email/*.gotxt assets/*
 var embeddedFS embed.FS
 
+var (
+	// templateDir allows overriding the embedded templates for development.
+	templateDir     string
+	templateDirOnce sync.Once
+)
+
+// SetDir sets the directory to load templates from. This is intended for testing and development.
+func SetDir(dir string) {
+	templateDirOnce.Do(func() {
+		templateDir = dir
+	})
+}
+
 type config struct {
 	Dir string
 }
@@ -33,12 +47,32 @@ func WithDir(dir string) Option {
 	}
 }
 
+// newCfg creates a new config, applying the package-level templateDir if set.
+func newCfg(opts ...Option) *config {
+	cfg := &config{
+		Dir: templateDir,
+	}
+	for _, o := range opts {
+		o(cfg)
+	}
+	return cfg
+}
+
 var (
 	assetHashes     = map[string]string{}
 	assetHashesLock sync.RWMutex
 	siteTemplates   *htemplate.Template
 	siteTemplatesMu sync.Mutex
+	templatesDir    string // To override embedded fs for tests/dev
 )
+
+// Asset reads an asset file from the configured source (embedded or local).
+func Asset(name string) ([]byte, error) {
+	if templatesDir != "" {
+		return os.ReadFile(filepath.Join(templatesDir, "assets", name))
+	}
+	return embeddedFS.ReadFile("assets/" + name)
+}
 
 func init() {
 	// Pre-compute hashes for embedded assets to avoid runtime overhead in production
@@ -57,10 +91,7 @@ func init() {
 }
 
 func GetAssetHash(webPath string, opts ...Option) string {
-	cfg := &config{}
-	for _, o := range opts {
-		o(cfg)
-	}
+	cfg := newCfg(opts...)
 	base := path.Base(webPath)
 
 	// If in development mode (serving from local directory), always recompute to reflect changes immediately.
@@ -107,6 +138,7 @@ func getAssetContent(name string, cfg *config) ([]byte, error) {
 
 func getFS(sub string, cfg *config) fs.FS {
 	if cfg.Dir == "" {
+		log.Println("Embedded Template Mode")
 		f, err := fs.Sub(embeddedFS, sub)
 		if err != nil {
 			panic(err)
@@ -117,10 +149,7 @@ func getFS(sub string, cfg *config) fs.FS {
 }
 
 func readFile(name string, opts ...Option) []byte {
-	cfg := &config{}
-	for _, o := range opts {
-		o(cfg)
-	}
+	cfg := newCfg(opts...)
 	if cfg.Dir == "" {
 		b, err := embeddedFS.ReadFile(name)
 		if err != nil {
@@ -136,10 +165,7 @@ func readFile(name string, opts ...Option) []byte {
 }
 
 func GetCompiledSiteTemplates(funcs htemplate.FuncMap, opts ...Option) *htemplate.Template {
-	cfg := &config{}
-	for _, o := range opts {
-		o(cfg)
-	}
+	cfg := newCfg(opts...)
 
 	if funcs == nil {
 		funcs = htemplate.FuncMap{}
@@ -217,18 +243,12 @@ func GetCompiledSiteTemplates(funcs htemplate.FuncMap, opts ...Option) *htemplat
 }
 
 func GetCompiledNotificationTemplates(funcs ttemplate.FuncMap, opts ...Option) *ttemplate.Template {
-	cfg := &config{}
-	for _, o := range opts {
-		o(cfg)
-	}
+	cfg := newCfg(opts...)
 	return ttemplate.Must(ttemplate.New("").Funcs(funcs).ParseFS(getFS("notifications", cfg), "*.gotxt"))
 }
 
 func GetCompiledEmailHtmlTemplates(funcs htemplate.FuncMap, opts ...Option) *htemplate.Template {
-	cfg := &config{}
-	for _, o := range opts {
-		o(cfg)
-	}
+	cfg := newCfg(opts...)
 	if funcs == nil {
 		funcs = htemplate.FuncMap{}
 	}
@@ -247,10 +267,7 @@ func GetCompiledEmailHtmlTemplates(funcs htemplate.FuncMap, opts ...Option) *hte
 }
 
 func GetCompiledEmailTextTemplates(funcs ttemplate.FuncMap, opts ...Option) *ttemplate.Template {
-	cfg := &config{}
-	for _, o := range opts {
-		o(cfg)
-	}
+	cfg := newCfg(opts...)
 	if funcs == nil {
 		funcs = ttemplate.FuncMap{}
 	}
@@ -309,10 +326,7 @@ func GetRobotsTXTData(opts ...Option) []byte { return readFile("assets/robots.tx
 // ListSiteTemplateNames returns the relative paths of all site templates
 // (under the site/ directory), e.g. "news/postPage.gohtml".
 func ListSiteTemplateNames(opts ...Option) []string {
-	cfg := &config{}
-	for _, o := range opts {
-		o(cfg)
-	}
+	cfg := newCfg(opts...)
 	var names []string
 	fsys := getFS("site", cfg)
 	_ = fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
@@ -334,10 +348,7 @@ func ListSiteTemplateNames(opts ...Option) []string {
 // TemplateExists reports whether a site template with the given relative path
 // exists in the current template source (embedded or templatesDir).
 func TemplateExists(name string, opts ...Option) bool {
-	cfg := &config{}
-	for _, o := range opts {
-		o(cfg)
-	}
+	cfg := newCfg(opts...)
 	fsys := getFS("site", cfg)
 	if _, err := fs.Stat(fsys, name); err == nil {
 		return true

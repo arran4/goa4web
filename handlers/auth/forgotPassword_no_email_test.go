@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"database/sql"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -15,6 +16,7 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/eventbus"
 )
 
 func TestForgotPasswordNoEmail(t *testing.T) {
@@ -27,8 +29,11 @@ func TestForgotPasswordNoEmail(t *testing.T) {
 	mock.ExpectQuery("SystemGetLogin").WillReturnRows(sqlmock.NewRows([]string{"idusers", "passwd", "passwd_algorithm", "username"}).AddRow(1, "", "", "u"))
 	mock.ExpectQuery("SystemListVerifiedEmailsByUserID").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "email", "verified_at", "last_verification_code", "verification_expires_at", "notification_priority"}))
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT 1 FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.users_idusers = ? AND r.can_login = 1 LIMIT 1")).WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"column_1"}).AddRow(1))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, user_id, passwd, passwd_algorithm, verification_code, created_at, verified_at FROM pending_passwords WHERE user_id = ? AND verified_at IS NULL AND created_at > ? ORDER BY created_at DESC LIMIT 1")).WithArgs(int32(1), sqlmock.AnyArg()).WillReturnError(sql.ErrNoRows)
+	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO pending_passwords (user_id, passwd, passwd_algorithm, verification_code) VALUES (?, ?, ?, ?)")).WithArgs(int32(1), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
 
-	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
+	evt := &eventbus.TaskEvent{}
+	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig(), common.WithEvent(evt))
 	ctx := context.WithValue(context.Background(), consts.KeyCoreData, cd)
 
 	form := url.Values{"username": {"u"}, "password": {"pw"}}

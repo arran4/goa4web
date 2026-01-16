@@ -51,9 +51,14 @@ func (c *userEmailCmd) Run() error {
 }
 
 func (c *userEmailCmd) Usage() {
-	fmt.Fprintf(c.fs.Output(), "Usage: %s user email [subcommand] [flags]\n\nSubcommands: list, add, delete, update\n", os.Args[0])
-	c.fs.PrintDefaults()
+	executeUsage(c.fs.Output(), "user_email_usage.txt", c)
 }
+
+func (c *userEmailCmd) FlagGroups() []flagGroup {
+	return []flagGroup{{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)}}
+}
+
+var _ usageData = (*userEmailCmd)(nil)
 
 func (c *userEmailCmd) runList(args []string) error {
 	fs := newFlagSet("list")

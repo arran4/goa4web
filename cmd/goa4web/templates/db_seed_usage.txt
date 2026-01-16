@@ -1,6 +1,17 @@
-{{.Prog}} db seed
+Usage:
+  {{.Prog}} db seed
 
-Seeds the database with initial data.
+The db seed command populates the database with initial data, such as default
+roles, permissions, and other essential records. This command is typically run
+after creating the database schema with "db create" or as part of the "db setup"
+command.
+
+Before running this command, ensure that the database connection string is
+correctly configured in your configuration file or environment variables.
+
+Examples:
+  # Seed the database with initial data
+  {{.Prog}} db seed
 
 {{- range .FlagGroups}}
 {{.Title}}

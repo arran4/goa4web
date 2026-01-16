@@ -9,6 +9,7 @@ security and access control.
 Commands:
   grant    Grant a permission to a user or role for a specific section.
   revoke   Revoke a previously granted permission from a user or role.
+  update   Update an existing permission.
   list     List all permissions, with options for filtering by user or role.
 
 Examples:

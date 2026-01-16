@@ -62,27 +62,18 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 		return fmt.Errorf("user role %w", err)
 	}
-	if len(verifiedEmails) == 0 {
-		type Data struct {
-			Username    string
-			RequestTask string
-		}
-		data := Data{
-			Username:    row.Username.String,
-			RequestTask: string(TaskEmailAssociationRequest),
-		}
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-			cd.PageTitle = "Password Reset"
-			ForgotPasswordNoEmailPageTmpl.Handle(w, r, data)
-		})
-	}
-
+	userHasNoVerifiedEmail := len(verifiedEmails) == 0
 	hash, alg, err := HashPassword(pw)
 	if err != nil {
 		return fmt.Errorf("hash error %w", err)
 	}
-	code, err := cd.CreatePasswordReset(verifiedEmails[0], hash, alg)
+
+	var code string
+	if userHasNoVerifiedEmail {
+		code, err = cd.CreatePasswordResetForUser(row.Idusers, hash, alg)
+	} else {
+		code, err = cd.CreatePasswordReset(verifiedEmails[0], hash, alg)
+	}
 	if err != nil {
 		if errors.Is(err, common.ErrPasswordResetRecentlyRequested) {
 			return handlers.ErrRedirectOnSamePageHandler(err)
@@ -90,20 +81,19 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("create reset: %v", err)
 		return fmt.Errorf("create reset %w", err)
 	}
-	if len(verifiedEmails) > 0 {
-		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-			if evt := cd.Event(); evt != nil {
-				if evt.Data == nil {
-					evt.Data = map[string]any{}
-				}
-				evt.UserID = row.Idusers
-				// Expose fields directly for email templates
-				evt.Data["Username"] = row.Username.String
-				evt.Data["Code"] = code
-				evt.Data["ResetURL"] = cd.AbsoluteURL("/login?code=" + code)
-				evt.Data["UserURL"] = cd.AbsoluteURL(fmt.Sprintf("/admin/user/%d", row.Idusers))
-				evt.Data["Emails"] = verifiedEmails
+	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
 			}
+			evt.UserID = row.Idusers
+			// Expose fields directly for email templates
+			evt.Data["Username"] = row.Username.String
+			evt.Data["Code"] = code
+			evt.Data["ResetURL"] = cd.AbsoluteURL("/login?code=" + code)
+			evt.Data["UserURL"] = cd.AbsoluteURL(fmt.Sprintf("/admin/user/%d", row.Idusers))
+			evt.Data["Emails"] = verifiedEmails
+			evt.Data["UserHasNoVerifiedEmail"] = userHasNoVerifiedEmail
 		}
 	}
 	cd.PageTitle = "Password Reset"
@@ -136,6 +126,9 @@ func (f ForgotPasswordTask) AdminInternalNotificationTemplate(evt eventbus.TaskE
 }
 
 func (f ForgotPasswordTask) SelfEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	if v, ok := evt.Data["UserHasNoVerifiedEmail"].(bool); ok && v {
+		return nil, false
+	}
 	return notif.NewEmailTemplates("passwordResetEmail"), true
 }
 

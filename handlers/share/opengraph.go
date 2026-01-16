@@ -1,17 +1,31 @@
 package share
 
 import (
+	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"html/template"
+	"image"
+	"image/color"
+	"image/draw"
+	"image/png"
 	"log"
 	"net/http"
 	"strings"
 
+	"github.com/arran4/go-pattern"
+
+	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/sign"
 	"github.com/arran4/goa4web/internal/sign/signutil"
 	"github.com/gorilla/mux"
+	"golang.org/x/image/font"
+	"golang.org/x/image/font/gofont/goregular"
+	"golang.org/x/image/font/opentype"
+	"golang.org/x/image/math/fixed"
 )
 
 // OpenGraphData contains the metadata for an OpenGraph preview page.
@@ -163,11 +177,20 @@ func VerifyAndGetPath(r *http.Request, key string) string {
 	return ""
 }
 
-// Make ImageURL creates an OpenGraph image URL for the given title.
+// MakeImageURL creates an OpenGraph image URL for the given title and description.
 // By default generates a nonce-based signature.
 // Pass usePathAuth=true for path-based signatures, false for query-based.
-func MakeImageURL(baseURL, title, key string, usePathAuth bool, opts ...sign.SignOption) (string, error) {
-	encodedData := base64.RawURLEncoding.EncodeToString([]byte(title))
+func MakeImageURL(baseURL, title, description, key string, usePathAuth bool, opts ...sign.SignOption) (string, error) {
+	payload := imagePayload{
+		Title:       title,
+		Description: description,
+	}
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return "", fmt.Errorf("marshal payload: %w", err)
+	}
+
+	encodedData := base64.RawURLEncoding.EncodeToString(data)
 	path := "/api/og-image/" + encodedData
 
 	// Generate nonce if no options provided
@@ -209,56 +232,171 @@ func MakeImageURL(baseURL, title, key string, usePathAuth bool, opts ...sign.Sig
 	return signutil.SignAndAddQuery(fullURL, path, key, opts...)
 }
 
+type imagePayload struct {
+	Title       string `json:"t"`
+	Description string `json:"d,omitempty"`
+}
+
 // OGImageHandler serves dynamically generated OpenGraph images.
 type OGImageHandler struct {
-	key string
+	signKey string
 }
 
 // NewOGImageHandler creates a new OpenGraph image handler.
-func NewOGImageHandler(key string) *OGImageHandler {
-	return &OGImageHandler{key: key}
+func NewOGImageHandler(signKey string) *OGImageHandler {
+	return &OGImageHandler{
+		signKey: signKey,
+	}
 }
 
 func (h *OGImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Verify signature
-	cleanPath := VerifyAndGetPath(r, h.key)
-	if cleanPath == "" {
-		http.Error(w, "Invalid or missing signature", http.StatusForbidden)
+	vars := mux.Vars(r)
+	dataB64, ok := vars["data"]
+	if !ok {
+		log.Printf("data not found")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	signed, err := signutil.GetSignedData(r, h.signKey)
+	if err != nil {
+		log.Printf("Error getting signed data: %v", err)
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	if !signed.Valid {
+		log.Printf("Invalid signature")
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	dataBytes, err := base64.RawURLEncoding.DecodeString(dataB64)
+	if err != nil {
+		log.Printf("Error decoding data: %v", err)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	// Extract base64 encoded title from path
-	parts := strings.Split(cleanPath, "/")
-	var encodedTitle string
-	for i, part := range parts {
-		if i > 0 && parts[i-1] == "og-image" {
-			encodedTitle = part
-			break
+	// Try unmarshal as JSON
+	var payload imagePayload
+	if err := json.Unmarshal(dataBytes, &payload); err != nil {
+		// Fallback for legacy URLs: treat entire data as title
+		payload.Title = string(dataBytes)
+	}
+
+	img, err := GenerateImage(payload.Title, payload.Description)
+	if err != nil {
+		log.Printf("Error generating image: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "image/png")
+	if err := png.Encode(w, img); err != nil {
+		log.Printf("Error encoding png: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
+func GenerateImage(title, description string) (image.Image, error) {
+	img := image.NewRGBA(image.Rect(0, 0, 1200, 630))
+
+	// Create Sierpinski Triangle pattern for background
+	st := &pattern.SierpinskiTriangle{}
+	st.SetBounds(img.Bounds())
+	st.SetFillColor(color.RGBA{R: 0x0b, G: 0x35, B: 0x13, A: 0xff})  // Dark green
+	st.SetSpaceColor(color.RGBA{R: 0x1a, G: 0x5e, B: 0x27, A: 0xff}) // Lighter green
+	draw.Draw(img, img.Bounds(), st, image.Point{}, draw.Src)
+
+	f, err := opentype.Parse(goregular.TTF)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing font: %w", err)
+	}
+	// Title Face
+	titleFace, err := opentype.NewFace(f, &opentype.FaceOptions{
+		Size:    64,
+		DPI:     72,
+		Hinting: font.HintingFull,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error creating title font face: %w", err)
+	}
+
+	// Description Face
+	descFace, err := opentype.NewFace(f, &opentype.FaceOptions{
+		Size:    40,
+		DPI:     72,
+		Hinting: font.HintingFull,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error creating desc font face: %w", err)
+	}
+
+	logoBytes, err := templates.Asset("favicon.png")
+	if err != nil {
+		return nil, fmt.Errorf("error getting logo: %w", err)
+	}
+	logo, _, err := image.Decode(bytes.NewReader(logoBytes))
+	if err != nil {
+		return nil, fmt.Errorf("error decoding logo: %w", err)
+	}
+	drawImage := img
+	// draw logo centered
+	logoBounds := logo.Bounds()
+	logoPt := image.Point{
+		X: (1200 - logoBounds.Dx()) / 2,
+		Y: 50,
+	}
+	draw.Draw(drawImage, logo.Bounds().Add(logoPt), logo, image.Point{}, draw.Over)
+
+	// draw text centered
+	d := &font.Drawer{
+		Dst:  drawImage,
+		Src:  image.NewUniform(color.White),
+		Face: titleFace,
+		Dot:  fixed.Point26_6{},
+	}
+
+	// Draw Title
+	// Basic wrapping for Title if it's too long?
+	// For now, let's assume title fits on one line or accept truncation for simplicity unless requested explicitly.
+	// Actually, let's position it higher.
+	textWidth := d.MeasureString(title)
+	d.Dot.X = (fixed.I(1200) - textWidth) / 2
+	d.Dot.Y = fixed.I(300)
+	d.DrawString(title)
+
+	// Draw Description (Multi-line)
+	if description != "" {
+		// Try to parse description as a4code to strip tags
+		if root, err := a4code.ParseString(description); err == nil {
+			description = a4code.ToText(root)
+		} else {
+			// Fallback: minimal cleanup or just usage as is
+		}
+
+		d.Face = descFace
+		lines := strings.Split(description, "\n")
+		// Filter empty lines?? No, respect them.
+
+		startY := 400
+		lineHeight := 50
+
+		for i, line := range lines {
+			if startY+(i*lineHeight) > 600 {
+				break // Stop if out of bounds
+			}
+			// Snip if too long
+			if len(line) > 60 {
+				line = line[:57] + "..."
+			}
+
+			w := d.MeasureString(line)
+			d.Dot.X = (fixed.I(1200) - w) / 2
+			d.Dot.Y = fixed.I(startY + (i * lineHeight))
+			d.DrawString(line)
 		}
 	}
 
-	if encodedTitle == "" {
-		http.Error(w, "Invalid path format", http.StatusBadRequest)
-		return
-	}
-
-	titleBytes, err := base64.RawURLEncoding.DecodeString(encodedTitle)
-	if err != nil {
-		http.Error(w, "Invalid title encoding", http.StatusBadRequest)
-		return
-	}
-
-	title := string(titleBytes)
-
-	// Generate a simple SVG image
-	svg := fmt.Sprintf(`<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
-		<rect width="1200" height="630" fill="#282c34"/>
-		<text x="600" y="315" font-family="Arial" font-size="48" fill="white" text-anchor="middle" dominant-baseline="middle">%s</text>
-	</svg>`, template.HTMLEscapeString(title))
-
-	w.Header().Set("Content-Type", "image/svg+xml")
-	w.Header().Set("Cache-Control", "public, max-age=31536000") // Cache for 1 year
-	w.Write([]byte(svg))
+	return img, nil
 }
 
 // SharedContentPreview generates a signed OpenGraph preview URL.

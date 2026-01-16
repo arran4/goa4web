@@ -1,5 +1,9 @@
 # Goa4Web
 
+<p align="center">
+  <img src="og-image.png" alt="GoA4Web" />
+</p>
+
 [![CI](https://github.com/arran4/goa4web/actions/workflows/go_test.yaml/badge.svg)](https://github.com/arran4/goa4web/actions/workflows/go_test.yaml)
 
 Goa4Web is composed of modular packages written in Go. It powers the original `arran4` website, providing a collection of community features including blogs, forums, a bookmark manager and an image board.

@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/go-sql-driver/mysql"
 )
@@ -34,23 +35,24 @@ type RuntimeConfig struct {
 	// HSTSHeaderValue defines the Strict-Transport-Security header value.
 	HSTSHeaderValue string
 
-	EmailProvider      string
-	EmailSMTPHost      string
-	EmailSMTPPort      string
-	EmailSMTPUser      string
-	EmailSMTPPass      string
-	EmailSMTPAuth      string
-	EmailSMTPStartTLS  bool
-	EmailFrom          string
-	EmailAWSRegion     string
-	EmailJMAPEndpoint  string
-	EmailJMAPAccount   string
-	EmailJMAPIdentity  string
-	EmailJMAPUser      string
-	EmailJMAPPass      string
-	EmailJMAPInsecure  bool
-	EmailSendGridKey   string
-	EmailSubjectPrefix string
+	EmailProvider             string
+	EmailSMTPHost             string
+	EmailSMTPPort             string
+	EmailSMTPUser             string
+	EmailSMTPPass             string
+	EmailSMTPAuth             string
+	EmailSMTPStartTLS         bool
+	EmailFrom                 string
+	EmailAWSRegion            string
+	EmailJMAPEndpoint         string
+	EmailJMAPEndpointOverride string
+	EmailJMAPAccount          string
+	EmailJMAPIdentity         string
+	EmailJMAPUser             string
+	EmailJMAPPass             string
+	EmailJMAPInsecure         bool
+	EmailSendGridKey          string
+	EmailSubjectPrefix        string
 	// EmailSignOff defines the optional sign-off appended to emails.
 	EmailSignOff string
 
@@ -146,6 +148,14 @@ type RuntimeConfig struct {
 	OGImageWidth int
 	// OGImageHeight is the height of the generated Open Graph image.
 	OGImageHeight int
+	// OGImagePattern is the pattern style to use for the Open Graph image.
+	OGImagePattern string
+	// OGImageFgColor is the foreground color for the Open Graph image.
+	OGImageFgColor string
+	// OGImageBgColor is the background color for the Open Graph image.
+	OGImageBgColor string
+	// OGImageRpgTheme uses the RPG theme for the Open Graph image.
+	OGImageRpgTheme bool
 	// TwitterSite is the Twitter handle for the site.
 	TwitterSite string
 }
@@ -377,6 +387,7 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 	if cfg.HTTPHostname == "" {
 		cfg.HTTPHostname = "http://localhost:8080"
 	}
+	cfg.HTTPHostname = strings.TrimSuffix(cfg.HTTPHostname, "/")
 	if cfg.PageSizeMin > cfg.PageSizeMax {
 		cfg.PageSizeMin = cfg.PageSizeMax
 	}

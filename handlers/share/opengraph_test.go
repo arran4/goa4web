@@ -1,15 +1,25 @@
 package share_test
 
 import (
+	"bytes"
+	"image/png"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
+	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers/share"
 	"github.com/arran4/goa4web/internal/sign"
 	"github.com/gorilla/mux"
 )
+
+func TestMain(m *testing.M) {
+	// Set the templates directory to the project root so that the embedded assets can be found.
+	templates.SetDir("../..")
+	os.Exit(m.Run())
+}
 
 const testKey = "test-secret-key-for-og-images"
 
@@ -18,7 +28,7 @@ func TestMakeImageURL_QueryAuth(t *testing.T) {
 	title := "Test Title"
 
 	// Generate URL with query-based auth
-	signedURL, err := share.MakeImageURL(baseURL, title, testKey, false)
+	signedURL, err := share.MakeImageURL(baseURL, title, "", testKey, false)
 	if err != nil {
 		t.Fatalf("MakeImageURL failed: %v", err)
 	}
@@ -53,7 +63,7 @@ func TestMakeImageURL_PathAuth(t *testing.T) {
 	title := "Test Title"
 
 	// Generate URL with path-based auth
-	signedURL, err := share.MakeImageURL(baseURL, title, testKey, true)
+	signedURL, err := share.MakeImageURL(baseURL, title, "", testKey, true)
 	if err != nil {
 		t.Fatalf("MakeImageURL failed: %v", err)
 	}
@@ -114,7 +124,7 @@ func TestMakeImageURL_WithExpiry(t *testing.T) {
 	// Use explicit expiry
 	//expiry := time.Now().Add(1 * time.Hour)
 	// For testing, let's still use nonce as the current implementation prefers it
-	signedURL, err := share.MakeImageURL(baseURL, title, testKey, false)
+	signedURL, err := share.MakeImageURL(baseURL, title, "", testKey, false)
 	if err != nil {
 		t.Fatalf("MakeImageURL failed: %v", err)
 	}
@@ -135,7 +145,7 @@ func TestOGImageHandler(t *testing.T) {
 	baseURL := "http://example.com"
 	title := "My Test Title"
 
-	signedURL, err := share.MakeImageURL(baseURL, title, testKey, false)
+	signedURL, err := share.MakeImageURL(baseURL, title, "Test Description", testKey, false)
 	if err != nil {
 		t.Fatalf("MakeImageURL failed: %v", err)
 	}
@@ -144,21 +154,23 @@ func TestOGImageHandler(t *testing.T) {
 	req := httptest.NewRequest("GET", signedURL, nil)
 	rec := httptest.NewRecorder()
 
-	handler.ServeHTTP(rec, req)
+	r := mux.NewRouter()
+	r.Handle("/api/og-image/{data}", handler)
+	r.ServeHTTP(rec, req)
 
-	// Should return SVG
+	// Should return PNG
 	if rec.Code != http.StatusOK {
 		t.Errorf("Expected status 200, got %d. Body: %s", rec.Code, rec.Body.String())
 	}
 
-	if ct := rec.Header().Get("Content-Type"); ct != "image/svg+xml" {
-		t.Errorf("Expected Content-Type image/svg+xml, got %s", ct)
+	if ct := rec.Header().Get("Content-Type"); ct != "image/png" {
+		t.Errorf("Expected Content-Type image/png, got %s", ct)
 	}
 
-	// SVG should contain the title
-	body := rec.Body.String()
-	if !strings.Contains(body, title) {
-		t.Errorf("SVG should contain title %q, got: %s", title, body)
+	// Body should be a valid PNG image
+	_, err = png.Decode(bytes.NewReader(rec.Body.Bytes()))
+	if err != nil {
+		t.Errorf("Failed to decode response body as PNG: %v", err)
 	}
 }
 
@@ -166,14 +178,17 @@ func TestOGImageHandler_InvalidSignature(t *testing.T) {
 	handler := share.NewOGImageHandler(testKey)
 
 	// Request without signature
+	// Request without signature
 	req := httptest.NewRequest("GET", "http://example.com/api/og-image/dGVzdA", nil)
 	rec := httptest.NewRecorder()
 
-	handler.ServeHTTP(rec, req)
+	r := mux.NewRouter()
+	r.Handle("/api/og-image/{data}", handler)
+	r.ServeHTTP(rec, req)
 
-	// Should return 403
-	if rec.Code != http.StatusForbidden {
-		t.Errorf("Expected status 403, got %d", rec.Code)
+	// Should return 401
+	if rec.Code != http.StatusUnauthorized {
+		t.Errorf("Expected status 401, got %d", rec.Code)
 	}
 }
 
@@ -181,7 +196,7 @@ func TestOGImageHandler_WrongKey(t *testing.T) {
 	handler := share.NewOGImageHandler("wrong-key")
 
 	// Generate URL with correct key
-	signedURL, err := share.MakeImageURL("http://example.com", "Test", testKey, false)
+	signedURL, err := share.MakeImageURL("http://example.com", "Test", "", testKey, false)
 	if err != nil {
 		t.Fatalf("MakeImageURL failed: %v", err)
 	}
@@ -190,11 +205,13 @@ func TestOGImageHandler_WrongKey(t *testing.T) {
 	req := httptest.NewRequest("GET", signedURL, nil)
 	rec := httptest.NewRecorder()
 
-	handler.ServeHTTP(rec, req)
+	r := mux.NewRouter()
+	r.Handle("/api/og-image/{data}", handler)
+	r.ServeHTTP(rec, req)
 
-	// Should return 403
-	if rec.Code != http.StatusForbidden {
-		t.Errorf("Expected status 403 for wrong key, got %d", rec.Code)
+	// Should return 401
+	if rec.Code != http.StatusUnauthorized {
+		t.Errorf("Expected status 401 for wrong key, got %d", rec.Code)
 	}
 }
 

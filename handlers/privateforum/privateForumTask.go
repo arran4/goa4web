@@ -36,7 +36,7 @@ func (t *privateForumTask) Get(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
 	cd.PageTitle = "Private Forum"
-	img, err := share.MakeImageURL(cd.AbsoluteURL(), "Private Forum", cd.ShareSignKey, false)
+	img, err := share.MakeImageURL(cd.AbsoluteURL(), "Private Forum", "Private discussion forums", cd.ShareSignKey, false)
 	if err != nil {
 		log.Printf("Error making image URL: %v", err)
 	}

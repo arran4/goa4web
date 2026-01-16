@@ -55,6 +55,7 @@ var StringOptions = []StringOption{
 	{"email-signoff", EnvEmailSignOff, "A sign-off message to append to the end of all outgoing emails.", "", nil, "", func(c *RuntimeConfig) *string { return &c.EmailSignOff }},
 	{"aws-region", EnvAWSRegion, "The AWS region to use for SES.", "", []string{"us-east-1"}, "", func(c *RuntimeConfig) *string { return &c.EmailAWSRegion }},
 	{"jmap-endpoint", EnvJMAPEndpoint, "The endpoint for the JMAP server.", "", nil, "", func(c *RuntimeConfig) *string { return &c.EmailJMAPEndpoint }},
+	{"jmap-endpoint-override", EnvJMAPEndpointOverride, "The override URL for the JMAP endpoint, bypassing autodiscovery.", "", nil, "", func(c *RuntimeConfig) *string { return &c.EmailJMAPEndpointOverride }},
 	{"jmap-account", EnvJMAPAccount, "The account to use for the JMAP server. When omitted the primary mail account from the JMAP session is used.", "", nil, "", func(c *RuntimeConfig) *string { return &c.EmailJMAPAccount }},
 	{"jmap-identity", EnvJMAPIdentity, "The identity to use for the JMAP server. When omitted the default mail identity from the JMAP session is used.", "", nil, "", func(c *RuntimeConfig) *string { return &c.EmailJMAPIdentity }},
 	{"jmap-user", EnvJMAPUser, "The username for the JMAP server.", "", nil, "", func(c *RuntimeConfig) *string { return &c.EmailJMAPUser }},
@@ -85,6 +86,9 @@ var StringOptions = []StringOption{
 	{"share-sign-secret-file", EnvShareSignSecretFile, "The path to a file containing the share signing key.", "", nil, "", func(c *RuntimeConfig) *string { return &c.ShareSignSecretFile }},
 	{"admin-api-secret", EnvAdminAPISecret, "The secret key used to sign administrator API tokens.", "", nil, "", func(c *RuntimeConfig) *string { return &c.AdminAPISecret }},
 	{"admin-api-secret-file", EnvAdminAPISecretFile, "The path to a file containing the administrator API signing key.", "", nil, "", func(c *RuntimeConfig) *string { return &c.AdminAPISecretFile }},
+	{"og-image-pattern", EnvOGImagePattern, "The pattern style to use for the Open Graph image.", "SierpinskiTriangle", nil, "", func(c *RuntimeConfig) *string { return &c.OGImagePattern }},
+	{"og-image-fg-color", EnvOGImageFgColor, "The foreground color for the Open Graph image.", "#3C424E", nil, "", func(c *RuntimeConfig) *string { return &c.OGImageFgColor }},
+	{"og-image-bg-color", EnvOGImageBgColor, "The background color for the Open Graph image.", "#282C34", nil, "", func(c *RuntimeConfig) *string { return &c.OGImageBgColor }},
 	{"twitter-site", EnvTwitterSite, "The Twitter handle for the site (e.g. @mysite).", "", nil, "", func(c *RuntimeConfig) *string { return &c.TwitterSite }},
 }
 
@@ -110,6 +114,7 @@ var IntOptions = []IntOption{
 
 // BoolOptions lists the boolean runtime options shared by flag parsing and configuration generation.
 var BoolOptions = []BoolOption{
+	{"og-image-rpg-theme", EnvOGImageRpgTheme, "Use the RPG theme for the Open Graph image.", false, "", func(c *RuntimeConfig) *bool { return &c.OGImageRpgTheme }},
 	{"feeds-enabled", EnvFeedsEnabled, "Enable or disable RSS/Atom feeds.", true, "", func(c *RuntimeConfig) *bool { return &c.FeedsEnabled }},
 	{"smtp-starttls", EnvSMTPStartTLS, "Enable or disable STARTTLS for SMTP connections.", true, "", func(c *RuntimeConfig) *bool { return &c.EmailSMTPStartTLS }},
 	{"jmap-insecure", EnvJMAPInsecure, "Skip TLS certificate verification for JMAP.", false, "", func(c *RuntimeConfig) *bool { return &c.EmailJMAPInsecure }},

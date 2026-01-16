@@ -109,7 +109,7 @@ func renderPublicSharedPreview(w http.ResponseWriter, r *http.Request, cd *commo
 
 	usePathAuth := mux.Vars(r)["ts"] != ""
 
-	imageURL, _ := share.MakeImageURL(cd.AbsoluteURL(), title, cd.ShareSignKey, usePathAuth)
+	imageURL, _ := share.MakeImageURL(cd.AbsoluteURL(), title, desc, cd.ShareSignKey, usePathAuth)
 	ogData := share.OpenGraphData{
 		Title:       title,
 		Description: desc,

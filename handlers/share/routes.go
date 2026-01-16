@@ -19,10 +19,8 @@ func RegisterShareRoutes(r *mux.Router, cfg *config.RuntimeConfig, shareSignKey 
 	forumShareHandler := NewShareHandler(shareSignKey)
 	r.Handle("/api/forum/share", forumShareHandler).Methods("GET")
 
-	ogHandler := NewOGImageHandler(shareSignKey)
-	r.Handle("/api/og-image", ogHandler).Methods("GET", "HEAD")
-	r.Handle("/api/og-image/ts/{ts}/sign/{sign}", ogHandler).Methods("GET", "HEAD")
-	r.Handle("/api/og-image/{data}/ts/{ts}/sign/{sign}", ogHandler).Methods("GET", "HEAD")
-	r.Handle("/api/og-image/nonce/{nonce}/sign/{sign}", ogHandler).Methods("GET", "HEAD")
-	r.Handle("/api/og-image/{data}/nonce/{nonce}/sign/{sign}", ogHandler).Methods("GET", "HEAD")
+	ogImageHandler := NewOGImageHandler(shareSignKey)
+	ogImage := r.PathPrefix("/api/og-image/").Subrouter()
+	ogImage.HandleFunc("/{data}/nonce/{nonce}/sign/{sign}", ogImageHandler.ServeHTTP)
+	ogImage.HandleFunc("/{data}/ts/{ts}/sign/{sign}", ogImageHandler.ServeHTTP)
 }

@@ -44,6 +44,8 @@ const (
 	EnvAWSRegion = "AWS_REGION"
 	// EnvJMAPEndpoint is the JMAP API endpoint.
 	EnvJMAPEndpoint = "JMAP_ENDPOINT"
+	// EnvJMAPEndpointOverride overrides the discovered JMAP endpoint URL.
+	EnvJMAPEndpointOverride = "JMAP_ENDPOINT_OVERRIDE"
 	// EnvJMAPAccount is the JMAP account identifier.
 	EnvJMAPAccount = "JMAP_ACCOUNT"
 	// EnvJMAPIdentity is the JMAP identity identifier.
@@ -187,6 +189,14 @@ const (
 	EnvOGImageWidth = "OG_IMAGE_WIDTH"
 	// EnvOGImageHeight sets the height of the Open Graph image.
 	EnvOGImageHeight = "OG_IMAGE_HEIGHT"
+	// EnvOGImagePattern sets the pattern of the Open Graph image.
+	EnvOGImagePattern = "OG_IMAGE_PATTERN"
+	// EnvOGImageFgColor sets the foreground color of the Open Graph image.
+	EnvOGImageFgColor = "OG_IMAGE_FG_COLOR"
+	// EnvOGImageBgColor sets the background color of the Open Graph image.
+	EnvOGImageBgColor = "OG_IMAGE_BG_COLOR"
+	// EnvOGImageRpgTheme sets the RPG theme of the Open Graph image.
+	EnvOGImageRpgTheme = "OG_IMAGE_RPG_THEME"
 	// EnvTwitterSite sets the Twitter site handle.
 	EnvTwitterSite = "TWITTER_SITE"
 )

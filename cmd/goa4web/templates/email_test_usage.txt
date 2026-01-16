@@ -1,4 +1,14 @@
 Usage:
-  goa4web email test
+  {{.Prog}} email test [flags]
 
-The test command verifies the email configuration for the currently active provider. This is useful for ensuring that your email settings are correct and that the application can connect to the email server.
+The email test command sends a test email to the specified address. This is
+useful for verifying that the email configuration is correct and that the email
+server is working as expected.
+
+You must specify the recipient's email address.
+
+Examples:
+  # Send a test email to "test@example.com"
+  {{.Prog}} email test -to "test@example.com"
+
+{{template "flag_groups_section" .FlagGroups}}

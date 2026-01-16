@@ -139,8 +139,16 @@ func (cd *CoreData) CreatePasswordReset(email, hash, alg string) (string, error)
 	if err != nil {
 		return "", fmt.Errorf("CoreData.CreatePasswordReset: user by email %w", err)
 	}
+	return cd.CreatePasswordResetForUser(row.Idusers, hash, alg)
+}
+
+// CreatePasswordResetForUser creates a new password reset entry for the given user ID and returns the verification code.
+func (cd *CoreData) CreatePasswordResetForUser(userID int32, hash, alg string) (string, error) {
+	if cd.queries == nil {
+		return "", nil
+	}
 	if reset, err := cd.queries.GetPasswordResetByUser(cd.ctx, db.GetPasswordResetByUserParams{
-		UserID:    row.Idusers,
+		UserID:    userID,
 		CreatedAt: time.Now().Add(-time.Duration(cd.Config.PasswordResetExpiryHours) * time.Hour),
 	}); err == nil {
 		if time.Since(reset.CreatedAt) < 24*time.Hour {
@@ -156,7 +164,7 @@ func (cd *CoreData) CreatePasswordReset(email, hash, alg string) (string, error)
 		return "", fmt.Errorf("CoreData.CreatePasswordReset: rand %w", err)
 	}
 	code := hex.EncodeToString(buf[:])
-	if err := cd.queries.CreatePasswordResetForUser(cd.ctx, db.CreatePasswordResetForUserParams{UserID: row.Idusers, Passwd: hash, PasswdAlgorithm: alg, VerificationCode: code}); err != nil {
+	if err := cd.queries.CreatePasswordResetForUser(cd.ctx, db.CreatePasswordResetForUserParams{UserID: userID, Passwd: hash, PasswdAlgorithm: alg, VerificationCode: code}); err != nil {
 		return "", fmt.Errorf("CoreData.CreatePasswordReset: create reset %w", err)
 	}
 	return code, nil

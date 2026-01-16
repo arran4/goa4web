@@ -45,7 +45,7 @@ func SharedPreviewPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	imgURL, err := share.MakeImageURL(cd.AbsoluteURL(), ogTitle, cd.ShareSignKey, false)
+	imgURL, err := share.MakeImageURL(cd.AbsoluteURL(), ogTitle, ogDescription, cd.ShareSignKey, false)
 	if err != nil {
 		log.Printf("Error making image URL: %v", err)
 	}

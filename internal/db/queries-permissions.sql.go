@@ -475,8 +475,24 @@ SELECT g.id, g.created_at, g.updated_at, g.user_id, g.role_id, g.section, g.item
 FROM grants g
 LEFT JOIN users u ON g.user_id = u.idusers
 LEFT JOIN roles r ON g.role_id = r.id
+WHERE
+    (? = 'both' OR
+     (? = 'roles' AND g.user_id IS NULL) OR
+     (? = 'users' AND g.user_id IS NOT NULL))
+AND (? = 0 OR g.user_id = ?)
+AND (? = '' OR u.username = ?)
+AND (? = 0 OR g.role_id = ?)
+AND (? = '' OR r.name = ?)
 ORDER BY g.id
 `
+
+type ListGrantsExtendedParams struct {
+	Filter   interface{}
+	UserID   sql.NullInt32
+	Username sql.NullString
+	RoleID   sql.NullInt32
+	RoleName string
+}
 
 type ListGrantsExtendedRow struct {
 	ID        int32
@@ -496,8 +512,20 @@ type ListGrantsExtendedRow struct {
 	RoleName  sql.NullString
 }
 
-func (q *Queries) ListGrantsExtended(ctx context.Context) ([]*ListGrantsExtendedRow, error) {
-	rows, err := q.db.QueryContext(ctx, listGrantsExtended)
+func (q *Queries) ListGrantsExtended(ctx context.Context, arg ListGrantsExtendedParams) ([]*ListGrantsExtendedRow, error) {
+	rows, err := q.db.QueryContext(ctx, listGrantsExtended,
+		arg.Filter,
+		arg.Filter,
+		arg.Filter,
+		arg.UserID,
+		arg.UserID,
+		arg.Username,
+		arg.Username,
+		arg.RoleID,
+		arg.RoleID,
+		arg.RoleName,
+		arg.RoleName,
+	)
 	if err != nil {
 		return nil, err
 	}

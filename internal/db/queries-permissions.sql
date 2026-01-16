@@ -100,6 +100,14 @@ SELECT g.*, u.username, r.name as role_name
 FROM grants g
 LEFT JOIN users u ON g.user_id = u.idusers
 LEFT JOIN roles r ON g.role_id = r.id
+WHERE
+    (sqlc.arg(filter) = 'both' OR
+     (sqlc.arg(filter) = 'roles' AND g.user_id IS NULL) OR
+     (sqlc.arg(filter) = 'users' AND g.user_id IS NOT NULL))
+AND (sqlc.arg(user_id) = 0 OR g.user_id = sqlc.arg(user_id))
+AND (sqlc.arg(username) = '' OR u.username = sqlc.arg(username))
+AND (sqlc.arg(role_id) = 0 OR g.role_id = sqlc.arg(role_id))
+AND (sqlc.arg(role_name) = '' OR r.name = sqlc.arg(role_name))
 ORDER BY g.id;
 
 -- name: ListGrantsByUserID :many

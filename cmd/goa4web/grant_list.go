@@ -15,11 +15,24 @@ import (
 type grantListCmd struct {
 	*grantCmd
 	fs *flag.FlagSet
+
+	filter   string
+	uid      int64
+	username string
+	rid      int64
+	rolename string
 }
 
 func parseGrantListCmd(parent *grantCmd, args []string) (*grantListCmd, error) {
 	c := &grantListCmd{grantCmd: parent}
 	c.fs = newFlagSet("list")
+	c.fs.StringVar(&c.filter, "filter", "roles", "Filter grants by 'roles', 'users', or 'both'")
+	c.fs.Int64Var(&c.uid, "uid", 0, "Filter by user ID")
+	c.fs.Int64Var(&c.uid, "user-id", 0, "Filter by user ID")
+	c.fs.StringVar(&c.username, "username", "", "Filter by username")
+	c.fs.Int64Var(&c.rid, "rid", 0, "Filter by role ID")
+	c.fs.Int64Var(&c.rid, "role-id", 0, "Filter by role ID")
+	c.fs.StringVar(&c.rolename, "role-name", "", "Filter by role name")
 	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
@@ -34,7 +47,24 @@ func (c *grantListCmd) Run() error {
 	}
 	ctx := context.Background()
 	q := db.New(conn)
-	rows, err := q.ListGrantsExtended(ctx)
+	filter := c.filter
+	if c.uid != 0 || c.username != "" {
+		if c.rid != 0 || c.rolename != "" {
+			filter = "both"
+		} else {
+			filter = "users"
+		}
+	} else if c.rid != 0 || c.rolename != "" {
+		filter = "roles"
+	}
+	params := db.ListGrantsExtendedParams{
+		Filter:   filter,
+		UserID:   c.uid,
+		Username: c.username,
+		RoleID:   c.rid,
+		RoleName: c.rolename,
+	}
+	rows, err := q.ListGrantsExtended(ctx, params)
 	if err != nil {
 		return fmt.Errorf("list grants: %w", err)
 	}

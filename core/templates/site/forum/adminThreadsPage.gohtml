@@ -3,16 +3,17 @@
 {{ range $topic := $cd.AdminForumTopics }}
     <h2>{{ topicTitleOrDefault $topic.Title.String }}</h2>
     <table class="table table-bordered">
-        <tr><th>ID<th>Posts<th>Last Addition<th>View public</tr>
+        <tr><th>ID<th>Title<th>Posts<th>Last Addition<th>View public</tr>
         {{ range $cd.ForumThreads $topic.Idforumtopic }}
             <tr>
                 <td><a href="/admin/forum/thread/{{ .Idforumthread }}">{{ .Idforumthread }}</a></td>
+                <td>{{ .Firstposttext.String | a4code2string | truncateWords 10 }}</td>
                 <td>{{ .Comments.Int32 }}</td>
                 <td>{{ cd.LocalTime .Lastaddition.Time }}</td>
                 <td><a href="/forum/topic/{{ .ForumtopicIdforumtopic }}/thread/{{ .Idforumthread }}">View</a></td>
             </tr>
         {{ else }}
-            <tr><td colspan="4">No threads</td></tr>
+            <tr><td colspan="5">No threads</td></tr>
         {{ end }}
     </table>
 {{ else }}

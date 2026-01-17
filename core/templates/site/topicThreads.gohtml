@@ -18,6 +18,11 @@
                 First poster: <span class="poster-name first">{{ .Firstpostusername.String }}</span>
                 At <span class="post-time first">{{ cd.LocalTime .Firstpostwritten.Time }}</span>
             </div>
+            <div class="thread-title">
+                 <a href="{{$base}}/topic/{{.ForumtopicIdforumtopic}}/thread/{{ .Idforumthread }}">
+                    {{ .Firstposttext.String | a4code2string | truncateWords 10 }}
+                 </a>
+            </div>
             <div class="thread-content foldable">
                 {{ .Firstposttext.String | a4code2html }}<br>
             </div>

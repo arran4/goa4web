@@ -127,6 +127,13 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 			}
 			return string(out)
 		},
+		"truncateWords": func(limit int, s string) string {
+			words := strings.Fields(s)
+			if len(words) > limit {
+				return strings.Join(words[:limit], " ") + "..."
+			}
+			return s
+		},
 		"topicTitleOrDefault": func(title string) string {
 			if trimmed := strings.TrimSpace(title); trimmed != "" {
 				return trimmed

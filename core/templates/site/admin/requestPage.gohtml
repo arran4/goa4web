@@ -2,8 +2,29 @@
 {{ $req := cd.CurrentRequest }}
 {{ $user := cd.CurrentRequestUser }}
 <h2>Request {{ $req.ID }} for user <a href="/admin/user/{{ $user.Idusers }}">{{ $user.Username.String }}</a></h2>
+
+{{ if eq $req.ChangeTable "user_emails" }}
+<h3>Request: Add Email Address</h3>
+<p><strong>Proposed Email:</strong> {{ $req.ChangeValue.String }}</p>
+
+<h4>Current Emails for User</h4>
+<ul>
+    {{ range cd.CurrentProfileEmails }}
+    <li>
+        {{ .Email }}
+        {{ if .VerifiedAt.Valid }}
+        (Verified)
+        {{ else }}
+        (Unverified)
+        {{ end }}
+    </li>
+    {{ end }}
+</ul>
+{{ else }}
 <p>Field: {{ $req.ChangeTable }}.{{ $req.ChangeField }} row {{ $req.ChangeRowID }}</p>
 <p>Value: {{ $req.ChangeValue.String }}</p>
+{{ end }}
+
 <p>Contact: {{ $req.ContactOptions.String }}</p>
 <p>Status: {{ $req.Status }}</p>
 {{ $comments := cd.CurrentRequestComments }}

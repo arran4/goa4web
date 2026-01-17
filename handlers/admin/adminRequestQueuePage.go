@@ -34,6 +34,9 @@ func adminRequestPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("not found"))
 		return
 	}
+	if req := cd.CurrentRequest(); req != nil {
+		cd.SetCurrentProfileUserID(req.UsersIdusers)
+	}
 	cd.PageTitle = fmt.Sprintf("Request %d", id)
 	AdminRequestPageTmpl.Handle(w, r, struct{}{})
 }
@@ -47,6 +50,7 @@ func adminRequestAddCommentPage(w http.ResponseWriter, r *http.Request) {
 	var id int32
 	if req != nil {
 		id = req.ID
+		cd.SetCurrentProfileUserID(req.UsersIdusers)
 	}
 	comment := r.PostFormValue("comment")
 	cd.PageTitle = "Add Comment"

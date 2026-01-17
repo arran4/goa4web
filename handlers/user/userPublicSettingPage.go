@@ -24,9 +24,11 @@ func userPublicProfileSettingPage(w http.ResponseWriter, r *http.Request) {
 	}
 	user, _ := cd.CurrentUser()
 	data := struct {
-		Enabled bool
+		Enabled  bool
+		Username string
 	}{
-		Enabled: user.PublicProfileEnabledAt.Valid,
+		Enabled:  user.PublicProfileEnabledAt.Valid,
+		Username: user.Username.String,
 	}
 	UserPublicProfileSettingsPage.Handle(w, r, data)
 }

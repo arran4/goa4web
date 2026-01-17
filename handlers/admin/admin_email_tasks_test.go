@@ -70,7 +70,7 @@ func (q *emailTasksQueries) SystemUpdateVerificationCode(_ context.Context, arg 
 	return nil
 }
 
-func setupTest(t *testing.T, userID int, task tasks.Task, form url.Values, queries *emailTasksQueries) *httptest.ResponseRecorder {
+func setupEmailTaskTest(t *testing.T, userID int, task tasks.Task, form url.Values, queries *emailTasksQueries) *httptest.ResponseRecorder {
 	req := httptest.NewRequest("POST", fmt.Sprintf("/admin/user/%d", userID), strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req = mux.SetURLVars(req, map[string]string{"user": strconv.Itoa(userID)})
@@ -94,7 +94,7 @@ func TestAdminAddEmailTask(t *testing.T) {
 	form.Set("task", string(TaskAddEmail))
 	form.Set("new_email", "new@example.com")
 
-	rr := setupTest(t, userID, adminAddEmailTask, form, queries)
+	rr := setupEmailTaskTest(t, userID, adminAddEmailTask, form, queries)
 
 	if queries.addedEmail != "new@example.com" {
 		t.Errorf("expected email to be added, got %s", queries.addedEmail)
@@ -115,14 +115,14 @@ func TestAdminDeleteEmailTask(t *testing.T) {
 	userID := 10
 	emailID := 55
 	queries := &emailTasksQueries{
-		userID: int32(userID),
+		userID:    int32(userID),
 		userEmail: &db.UserEmail{ID: int32(emailID), UserID: int32(userID)},
 	}
 	form := url.Values{}
 	form.Set("task", string(TaskDeleteEmail))
 	form.Set("email_id", strconv.Itoa(emailID))
 
-	setupTest(t, userID, adminDeleteEmailTask, form, queries)
+	setupEmailTaskTest(t, userID, adminDeleteEmailTask, form, queries)
 
 	if queries.deletedID != int32(emailID) {
 		t.Errorf("expected email %d to be deleted, got %d", emailID, queries.deletedID)
@@ -133,14 +133,14 @@ func TestAdminVerifyEmailTask(t *testing.T) {
 	userID := 10
 	emailID := 55
 	queries := &emailTasksQueries{
-		userID: int32(userID),
+		userID:    int32(userID),
 		userEmail: &db.UserEmail{ID: int32(emailID), UserID: int32(userID), Email: "test@example.com"},
 	}
 	form := url.Values{}
 	form.Set("task", string(TaskVerifyEmail))
 	form.Set("email_id", strconv.Itoa(emailID))
 
-	setupTest(t, userID, adminVerifyEmailTask, form, queries)
+	setupEmailTaskTest(t, userID, adminVerifyEmailTask, form, queries)
 
 	if queries.updated == nil || !queries.updated.VerifiedAt.Valid {
 		t.Errorf("expected email to be verified")
@@ -153,9 +153,9 @@ func TestAdminUnverifyEmailTask(t *testing.T) {
 	queries := &emailTasksQueries{
 		userID: int32(userID),
 		userEmail: &db.UserEmail{
-			ID: int32(emailID),
-			UserID: int32(userID),
-			Email: "test@example.com",
+			ID:         int32(emailID),
+			UserID:     int32(userID),
+			Email:      "test@example.com",
 			VerifiedAt: sql.NullTime{Time: time.Now(), Valid: true},
 		},
 	}
@@ -163,7 +163,7 @@ func TestAdminUnverifyEmailTask(t *testing.T) {
 	form.Set("task", string(TaskUnverifyEmail))
 	form.Set("email_id", strconv.Itoa(emailID))
 
-	setupTest(t, userID, adminUnverifyEmailTask, form, queries)
+	setupEmailTaskTest(t, userID, adminUnverifyEmailTask, form, queries)
 
 	if queries.updated == nil || queries.updated.VerifiedAt.Valid {
 		t.Errorf("expected email to be unverified")
@@ -174,15 +174,15 @@ func TestAdminResendVerificationEmailTask(t *testing.T) {
 	userID := 10
 	emailID := 55
 	queries := &emailTasksQueries{
-		userID: int32(userID),
+		userID:    int32(userID),
 		userEmail: &db.UserEmail{ID: int32(emailID), UserID: int32(userID), Email: "test@example.com"},
-		user:   &db.SystemGetUserByIDRow{Idusers: int32(userID), Username: sql.NullString{String: "testuser", Valid: true}},
+		user:      &db.SystemGetUserByIDRow{Idusers: int32(userID), Username: sql.NullString{String: "testuser", Valid: true}},
 	}
 	form := url.Values{}
 	form.Set("task", string(TaskResendVerification))
 	form.Set("email_id", strconv.Itoa(emailID))
 
-	setupTest(t, userID, adminResendVerificationEmailTask, form, queries)
+	setupEmailTaskTest(t, userID, adminResendVerificationEmailTask, form, queries)
 
 	if queries.codeUpdated == nil || !queries.codeUpdated.LastVerificationCode.Valid {
 		t.Errorf("expected verification code to be updated")

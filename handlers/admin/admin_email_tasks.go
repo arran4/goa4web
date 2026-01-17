@@ -82,11 +82,11 @@ func (t AdminAddEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	expire := time.Now().Add(time.Duration(expiryHours) * time.Hour)
 
 	// Use AdminAddUserEmail or InsertUserEmail. InsertUserEmail is what addEmailTask uses.
-    // But AdminAddUserEmail exists.
-    // InsertUserEmailParams: UserID, Email, VerifiedAt, LastVerificationCode, VerificationExpiresAt, NotificationPriority
-    // AdminAddUserEmailParams: UserID, Email, VerifiedAt, NotificationPriority
-    // AdminAddUserEmail doesn't set verification code.
-    // So I should use InsertUserEmail to set the code.
+	// But AdminAddUserEmail exists.
+	// InsertUserEmailParams: UserID, Email, VerifiedAt, LastVerificationCode, VerificationExpiresAt, NotificationPriority
+	// AdminAddUserEmailParams: UserID, Email, VerifiedAt, NotificationPriority
+	// AdminAddUserEmail doesn't set verification code.
+	// So I should use InsertUserEmail to set the code.
 	if err := queries.InsertUserEmail(r.Context(), db.InsertUserEmailParams{
 		UserID:                targetUID,
 		Email:                 emailAddr,
@@ -213,10 +213,10 @@ func (t AdminVerifyEmailTask) Action(w http.ResponseWriter, r *http.Request) any
 	}
 
 	if err := queries.AdminUpdateUserEmailDetails(r.Context(), db.AdminUpdateUserEmailDetailsParams{
-		Email: ue.Email,
-		VerifiedAt: sql.NullTime{Time: time.Now(), Valid: true},
+		Email:                ue.Email,
+		VerifiedAt:           sql.NullTime{Time: time.Now(), Valid: true},
 		NotificationPriority: ue.NotificationPriority,
-		ID: ue.ID,
+		ID:                   ue.ID,
 	}); err != nil {
 		return fmt.Errorf("verify user email fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
@@ -258,10 +258,10 @@ func (t AdminUnverifyEmailTask) Action(w http.ResponseWriter, r *http.Request) a
 	}
 
 	if err := queries.AdminUpdateUserEmailDetails(r.Context(), db.AdminUpdateUserEmailDetailsParams{
-		Email: ue.Email,
-		VerifiedAt: sql.NullTime{Valid: false},
+		Email:                ue.Email,
+		VerifiedAt:           sql.NullTime{Valid: false},
 		NotificationPriority: ue.NotificationPriority,
-		ID: ue.ID,
+		ID:                   ue.ID,
 	}); err != nil {
 		return fmt.Errorf("unverify user email fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
@@ -270,7 +270,7 @@ func (t AdminUnverifyEmailTask) Action(w http.ResponseWriter, r *http.Request) a
 }
 
 // AdminResendVerificationEmailTask resends the verification link for an unverified user email address.
-type AdminResendVerificationEmailTask struct{
+type AdminResendVerificationEmailTask struct {
 	tasks.TaskString
 }
 

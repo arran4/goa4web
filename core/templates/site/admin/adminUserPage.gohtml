@@ -31,18 +31,38 @@
 <h4>Emails</h4>
 {{ if $emails }}
 <table class="table table-bordered">
-<tr><th>Email</th><th>Verified</th><th>Priority</th></tr>
+<tr><th>Email</th><th>Verified</th><th>Priority</th><th>Actions</th></tr>
 {{ range $emails }}
 <tr>
   <td>{{ .Email }}</td>
   <td>{{ if .VerifiedAt.Valid }}{{ cd.FormatLocalTime .VerifiedAt.Time }}{{ else }}no{{ end }}</td>
   <td>{{ .NotificationPriority }}</td>
+  <td>
+      <form method="post" action="/admin/user/{{ $u.Idusers }}" style="display:inline;">
+          {{ csrfField }}
+          <input type="hidden" name="email_id" value="{{ .ID }}">
+          {{ if .VerifiedAt.Valid }}
+          <input type="submit" name="task" value="Unverify Email">
+          {{ else }}
+          <input type="submit" name="task" value="Verify Email">
+          <input type="submit" name="task" value="Resend Verification">
+          {{ end }}
+          <input type="submit" name="task" value="Delete Email" onclick="return confirm('Are you sure?');">
+      </form>
+  </td>
 </tr>
 {{ end }}
 </table>
 {{ else }}
 <p>No emails.</p>
 {{ end }}
+
+<h4>Add Email</h4>
+<form method="post" action="/admin/user/{{ $u.Idusers }}">
+    {{ csrfField }}
+    <input type="email" name="new_email" placeholder="New Email" required>
+    <input type="submit" name="task" value="Add Email">
+</form>
 
 {{ $roles := cd.CurrentProfileRoles }}
 <h4>Groups</h4>

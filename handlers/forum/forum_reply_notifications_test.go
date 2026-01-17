@@ -199,7 +199,7 @@ func TestForumReply(t *testing.T) {
 	ctx = context.WithValue(ctx, core.ContextValues("session"), sess)
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 
-	form := url.Values{"replytext": {"Hello World"}, "language": {"1"}}
+	form := url.Values{"replytext": {"This is a test message with a link [a https://example.com] and enough words to trigger the truncation of twenty words limit plus more."}, "language": {"1"}}
 	req := httptest.NewRequest(http.MethodPost, "http://example.com/forum/topic/5/thread/42/reply", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req = req.WithContext(ctx)
@@ -236,7 +236,7 @@ func TestForumReply(t *testing.T) {
 			t.Fatalf("expected subscriber notification %q, got %q", expectedSubscriberNotif, notificationsByRecipient[subscriberUID])
 		}
 
-		expectedAdminNotif := "User replier replied to a forum thread.\nHello World\n"
+		expectedAdminNotif := "User replier replied to a forum thread.\nThis is a test message with a link https://example.com and enough words to trigger the truncation of twenty words limit...\n"
 		if !findNotification(adminUID, expectedAdminNotif) {
 			t.Fatalf("expected admin notification %q, got %q", expectedAdminNotif, notificationsByRecipient[adminUID])
 		}
@@ -295,7 +295,7 @@ func TestForumReply(t *testing.T) {
 			t.Errorf("admin email subject mismatch: %s", adminEmail.Header.Get("Subject"))
 		}
 		adminBody := getEmailBody(t, adminEmail)
-		expectedAdminBody := "User replier replied to a forum thread.\nHello World\n\nView comment:\nhttp://example.com/forum/topic/5/thread/42#c999\n\nManage notifications: http://example.com/usr/subscriptions"
+		expectedAdminBody := "User replier replied to a forum thread.\nThis is a test message with a link [a https://example.com] and enough words to trigger the truncation of twenty words limit plus more.\n\nView comment:\nhttp://example.com/forum/topic/5/thread/42#c999\n\nManage notifications: http://example.com/usr/subscriptions"
 		if adminBody != expectedAdminBody {
 			t.Errorf("admin email body mismatch: %q, want %q", adminBody, expectedAdminBody)
 		}

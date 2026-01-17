@@ -16,6 +16,21 @@ const (
 	// TaskAddApproval adds an approval for a user or item.
 	TaskAddApproval tasks.TaskString = "Add approval"
 
+	// TaskAddEmail adds a new email to the user.
+	TaskAddEmail tasks.TaskString = "Add Email"
+
+	// TaskDeleteEmail deletes an email from the user.
+	TaskDeleteEmail tasks.TaskString = "Delete Email"
+
+	// TaskVerifyEmail verifies a user's email.
+	TaskVerifyEmail tasks.TaskString = "Verify Email"
+
+	// TaskUnverifyEmail unverifies a user's email.
+	TaskUnverifyEmail tasks.TaskString = "Unverify Email"
+
+	// TaskResendVerification resends the verification email.
+	TaskResendVerification tasks.TaskString = "Resend Verification"
+
 	// TaskUploadImage uploads an image file to the image board.
 	TaskUploadImage tasks.TaskString = "Upload image"
 

@@ -305,8 +305,14 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 		switch a.CodeType {
 		case CTTableOfContents:
 		case CTTagStrip, CTWordsOnly:
-			if _, err := a.getNextReader(r, false); err != nil && err != io.EOF {
+			raw, err := a.getNextReader(r, false)
+			if err != nil && err != io.EOF {
 				return err
+			}
+			if p, err := r.Peek(1); err == nil && len(p) > 0 && p[0] == ']' {
+				if _, err := io.WriteString(w, raw); err != nil {
+					return err
+				}
 			}
 		default:
 			raw, err := a.getNextReader(r, false)

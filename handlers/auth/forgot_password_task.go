@@ -47,6 +47,14 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 	username := r.PostFormValue("username")
 	pw := r.PostFormValue("password")
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+
+	if evt := cd.Event(); evt != nil {
+		if evt.Data == nil {
+			evt.Data = map[string]any{}
+		}
+		evt.Data["Username"] = username
+	}
+
 	queries := cd.Queries()
 	row, err := cd.UserCredentials(username)
 	if err != nil {

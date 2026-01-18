@@ -1,7 +1,14 @@
 {{ template "head" $ }}
 <ul>
+{{ $counts := cd.AdminUserPendingPasswordResetCounts }}
 {{ range cd.AdminListUsers }}
-    <li><a href="/admin/user/{{ .Idusers }}">{{ .Username.String }}</a></li>
+    <li>
+        <a href="/admin/user/{{ .Idusers }}">{{ .Username.String }}</a>
+        {{ $count := index $counts .Idusers }}
+        {{ if gt $count 0 }}
+            <span style="color: red; font-weight: bold;">(p/w req #: {{ $count }})</span>
+        {{ end }}
+    </li>
 {{ end }}
 </ul>
 {{ template "tail" $ }}

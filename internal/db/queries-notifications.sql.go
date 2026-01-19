@@ -19,6 +19,16 @@ func (q *Queries) AdminDeleteNotification(ctx context.Context, id int32) error {
 	return err
 }
 
+const adminDeleteNotificationsByMessage = `-- name: AdminDeleteNotificationsByMessage :exec
+DELETE FROM notifications
+WHERE message LIKE ?
+`
+
+func (q *Queries) AdminDeleteNotificationsByMessage(ctx context.Context, message sql.NullString) error {
+	_, err := q.db.ExecContext(ctx, adminDeleteNotificationsByMessage, message)
+	return err
+}
+
 const adminGetNotification = `-- name: AdminGetNotification :one
 SELECT id, users_idusers, link, message, created_at, read_at
 FROM notifications

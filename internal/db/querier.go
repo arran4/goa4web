@@ -31,6 +31,8 @@ type Querier interface {
 	AdminCountForumThreads(ctx context.Context) (int64, error)
 	AdminCountForumTopics(ctx context.Context) (int64, error)
 	AdminCountLinksByCategory(ctx context.Context, categoryID sql.NullInt32) (int64, error)
+	AdminCountPasswordResets(ctx context.Context, arg AdminCountPasswordResetsParams) (int64, error)
+	AdminCountPendingPasswordResetsByUser(ctx context.Context) ([]*AdminCountPendingPasswordResetsByUserRow, error)
 	AdminCountThreadsByBoard(ctx context.Context, imageboardIdimageboard sql.NullInt32) (int64, error)
 	AdminCountWordList(ctx context.Context) (int64, error)
 	AdminCountWordListByPrefix(ctx context.Context, prefix interface{}) (int64, error)
@@ -66,6 +68,7 @@ type Querier interface {
 	AdminDeleteLinkerCategory(ctx context.Context, id int32) error
 	AdminDeleteLinkerQueuedItem(ctx context.Context, id int32) error
 	AdminDeleteNotification(ctx context.Context, id int32) error
+	AdminDeleteNotificationsByMessage(ctx context.Context, message sql.NullString) error
 	// admin task
 	AdminDeletePendingEmail(ctx context.Context, id int32) error
 	AdminDeleteTemplateOverride(ctx context.Context, name string) error
@@ -97,9 +100,11 @@ type Querier interface {
 	AdminGetForumThreadById(ctx context.Context, idforumthread int32) (*AdminGetForumThreadByIdRow, error)
 	AdminGetImagePost(ctx context.Context, idimagepost int32) (*AdminGetImagePostRow, error)
 	AdminGetNotification(ctx context.Context, id int32) (*Notification, error)
+	AdminGetPasswordResetByID(ctx context.Context, id int32) (*PendingPassword, error)
 	// admin task
 	AdminGetPendingEmailByID(ctx context.Context, id int32) (*AdminGetPendingEmailByIDRow, error)
 	AdminGetRecentAuditLogs(ctx context.Context, limit int32) ([]*AdminGetRecentAuditLogsRow, error)
+	AdminGetRequest(ctx context.Context, id int32) (*AdminRequestQueue, error)
 	AdminGetRequestByID(ctx context.Context, id int32) (*AdminRequestQueue, error)
 	// admin task
 	AdminGetRoleByID(ctx context.Context, id int32) (*Role, error)
@@ -166,6 +171,7 @@ type Querier interface {
 	AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescending(ctx context.Context, arg AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams) ([]*AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error)
 	AdminListOrphanComments(ctx context.Context) ([]int32, error)
 	AdminListOrphanForumThreads(ctx context.Context) ([]int32, error)
+	AdminListPasswordResets(ctx context.Context, arg AdminListPasswordResetsParams) ([]*AdminListPasswordResetsRow, error)
 	AdminListPendingDeactivatedBlogs(ctx context.Context, arg AdminListPendingDeactivatedBlogsParams) ([]*AdminListPendingDeactivatedBlogsRow, error)
 	AdminListPendingDeactivatedComments(ctx context.Context, arg AdminListPendingDeactivatedCommentsParams) ([]*AdminListPendingDeactivatedCommentsRow, error)
 	AdminListPendingDeactivatedImageposts(ctx context.Context, arg AdminListPendingDeactivatedImagepostsParams) ([]*AdminListPendingDeactivatedImagepostsRow, error)
@@ -180,6 +186,9 @@ type Querier interface {
 	AdminListPrivateTopicParticipantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListPrivateTopicParticipantsByTopicIDRow, error)
 	AdminListRecentNotifications(ctx context.Context, limit int32) ([]*Notification, error)
 	AdminListRequestComments(ctx context.Context, requestID int32) ([]*AdminRequestComment, error)
+	AdminListRequestQueue(ctx context.Context) ([]*AdminRequestQueue, error)
+	AdminListRequestQueueByStatus(ctx context.Context, status string) ([]*AdminRequestQueue, error)
+	AdminListRequestsByUserID(ctx context.Context, usersIdusers int32) ([]*AdminRequestQueue, error)
 	// admin task
 	AdminListRoles(ctx context.Context) ([]*Role, error)
 	// admin task
@@ -252,6 +261,7 @@ type Querier interface {
 	AdminUpdateLinkerItem(ctx context.Context, arg AdminUpdateLinkerItemParams) error
 	AdminUpdateLinkerQueuedItem(ctx context.Context, arg AdminUpdateLinkerQueuedItemParams) error
 	AdminUpdateRequestStatus(ctx context.Context, arg AdminUpdateRequestStatusParams) error
+	AdminUpdateRequestStatusByTableAndRow(ctx context.Context, arg AdminUpdateRequestStatusByTableAndRowParams) error
 	// admin task
 	AdminUpdateRole(ctx context.Context, arg AdminUpdateRoleParams) error
 	// admin task

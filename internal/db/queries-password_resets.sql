@@ -29,3 +29,32 @@ DELETE FROM pending_passwords WHERE user_id = ?;
 DELETE FROM pending_passwords
 WHERE created_at < ? OR verified_at IS NOT NULL;
 
+-- name: AdminGetPasswordResetByID :one
+SELECT id, user_id, passwd, passwd_algorithm, verification_code, created_at, verified_at
+FROM pending_passwords
+WHERE id = ?;
+
+-- name: AdminListPasswordResets :many
+SELECT pp.id, pp.user_id, u.username, pp.created_at, pp.verified_at
+FROM pending_passwords pp
+JOIN users u ON pp.user_id = u.idusers
+WHERE
+    (sqlc.narg('status') = 'pending' AND pp.verified_at IS NULL) OR
+    (sqlc.narg('status') = 'verified' AND pp.verified_at IS NOT NULL) OR
+    (sqlc.narg('status') IS NULL)
+ORDER BY pp.created_at DESC
+LIMIT ? OFFSET ?;
+
+-- name: AdminCountPasswordResets :one
+SELECT COUNT(*)
+FROM pending_passwords pp
+WHERE
+    (sqlc.narg('status') = 'pending' AND pp.verified_at IS NULL) OR
+    (sqlc.narg('status') = 'verified' AND pp.verified_at IS NOT NULL) OR
+    (sqlc.narg('status') IS NULL);
+
+-- name: AdminCountPendingPasswordResetsByUser :many
+SELECT user_id, COUNT(*) as count
+FROM pending_passwords
+WHERE verified_at IS NULL
+GROUP BY user_id;

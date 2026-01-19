@@ -164,6 +164,22 @@ func (cd *CoreData) CreatePasswordResetForUser(userID int32, hash, alg string) (
 	if err := cd.queries.CreatePasswordResetForUser(cd.ctx, db.CreatePasswordResetForUserParams{UserID: userID, Passwd: hash, PasswdAlgorithm: alg, VerificationCode: code}); err != nil {
 		return "", fmt.Errorf("CoreData.CreatePasswordReset: create reset %w", err)
 	}
+
+	// Insert into request queue
+	reset, err := cd.queries.GetPasswordResetByUser(cd.ctx, db.GetPasswordResetByUserParams{
+		UserID:    userID,
+		CreatedAt: time.Now().Add(-24 * time.Hour), // Assuming created just now
+	})
+	if err == nil {
+		_, _ = cd.queries.AdminInsertRequestQueue(cd.ctx, db.AdminInsertRequestQueueParams{
+			UsersIdusers: userID,
+			ChangeTable:  "pending_passwords",
+			ChangeField:  "password",
+			ChangeRowID:  reset.ID,
+			ChangeValue:  sql.NullString{String: "hidden", Valid: true},
+		})
+	}
+
 	return code, nil
 }
 

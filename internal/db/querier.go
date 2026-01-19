@@ -68,6 +68,7 @@ type Querier interface {
 	AdminDeleteLinkerCategory(ctx context.Context, id int32) error
 	AdminDeleteLinkerQueuedItem(ctx context.Context, id int32) error
 	AdminDeleteNotification(ctx context.Context, id int32) error
+	AdminDeleteNotificationsByMessage(ctx context.Context, message sql.NullString) error
 	// admin task
 	AdminDeletePendingEmail(ctx context.Context, id int32) error
 	AdminDeleteTemplateOverride(ctx context.Context, name string) error
@@ -103,6 +104,7 @@ type Querier interface {
 	// admin task
 	AdminGetPendingEmailByID(ctx context.Context, id int32) (*AdminGetPendingEmailByIDRow, error)
 	AdminGetRecentAuditLogs(ctx context.Context, limit int32) ([]*AdminGetRecentAuditLogsRow, error)
+	AdminGetRequest(ctx context.Context, id int32) (*AdminRequestQueue, error)
 	AdminGetRequestByID(ctx context.Context, id int32) (*AdminRequestQueue, error)
 	// admin task
 	AdminGetRoleByID(ctx context.Context, id int32) (*Role, error)
@@ -184,6 +186,9 @@ type Querier interface {
 	AdminListPrivateTopicParticipantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListPrivateTopicParticipantsByTopicIDRow, error)
 	AdminListRecentNotifications(ctx context.Context, limit int32) ([]*Notification, error)
 	AdminListRequestComments(ctx context.Context, requestID int32) ([]*AdminRequestComment, error)
+	AdminListRequestQueue(ctx context.Context) ([]*AdminRequestQueue, error)
+	AdminListRequestQueueByStatus(ctx context.Context, status string) ([]*AdminRequestQueue, error)
+	AdminListRequestsByUserID(ctx context.Context, usersIdusers int32) ([]*AdminRequestQueue, error)
 	// admin task
 	AdminListRoles(ctx context.Context) ([]*Role, error)
 	// admin task
@@ -256,6 +261,7 @@ type Querier interface {
 	AdminUpdateLinkerItem(ctx context.Context, arg AdminUpdateLinkerItemParams) error
 	AdminUpdateLinkerQueuedItem(ctx context.Context, arg AdminUpdateLinkerQueuedItemParams) error
 	AdminUpdateRequestStatus(ctx context.Context, arg AdminUpdateRequestStatusParams) error
+	AdminUpdateRequestStatusByTableAndRow(ctx context.Context, arg AdminUpdateRequestStatusByTableAndRowParams) error
 	// admin task
 	AdminUpdateRole(ctx context.Context, arg AdminUpdateRoleParams) error
 	// admin task

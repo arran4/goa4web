@@ -109,6 +109,14 @@ func (cd *CoreData) AdminApprovePasswordReset(id int32) error {
 		log.Printf("insert password: %v", err)
 		return err
 	}
+	// Update request queue if exists
+	_ = cd.queries.AdminUpdateRequestStatusByTableAndRow(cd.ctx, db.AdminUpdateRequestStatusByTableAndRowParams{
+		Status:      "accepted",
+		ChangeTable: "pending_passwords",
+		ChangeRowID: id,
+	})
+	// Delete notification
+	_ = cd.queries.AdminDeleteNotificationsByMessage(cd.ctx, sql.NullString{String: "Is attempting a password reset.", Valid: true})
 	return nil
 }
 
@@ -117,5 +125,14 @@ func (cd *CoreData) AdminDenyPasswordReset(id int32) error {
 	if cd.queries == nil {
 		return errors.New("no queries")
 	}
+	// Update request queue if exists
+	_ = cd.queries.AdminUpdateRequestStatusByTableAndRow(cd.ctx, db.AdminUpdateRequestStatusByTableAndRowParams{
+		Status:      "rejected",
+		ChangeTable: "pending_passwords",
+		ChangeRowID: id,
+	})
+	// Delete notification
+	_ = cd.queries.AdminDeleteNotificationsByMessage(cd.ctx, sql.NullString{String: "Is attempting a password reset.", Valid: true})
+
 	return cd.queries.SystemDeletePasswordReset(cd.ctx, id)
 }

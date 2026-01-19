@@ -79,3 +79,7 @@ ORDER BY id DESC LIMIT 1;
 SELECT id, users_idusers, link, message, created_at, read_at
 FROM notifications
 ORDER BY id DESC LIMIT ?;
+
+-- name: AdminDeleteNotificationsByMessage :exec
+DELETE FROM notifications
+WHERE message LIKE ?;

@@ -6,6 +6,7 @@ import (
 	"github.com/arran4/goa4web/internal/eventbus"
 
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/handlers/handlertest"
 	notif "github.com/arran4/goa4web/internal/notifications"
 )
 
@@ -28,7 +29,7 @@ func requireNotificationTemplate(t *testing.T, name *string) {
 	if name == nil {
 		return
 	}
-	tmpl := templates.GetCompiledNotificationTemplates(map[string]any{})
+	tmpl := templates.GetCompiledNotificationTemplates(handlertest.GetTemplateFuncs())
 	if tmpl.Lookup(*name) == nil {
 		t.Errorf("missing notification template %s", *name)
 	}

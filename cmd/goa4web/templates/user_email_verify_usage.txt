@@ -1,0 +1,18 @@
+Usage:
+  {{.Prog}} user email verify -id <id> [flags]
+
+Marks an email address as verified. Use -at to set a specific verification
+timestamp in RFC3339 format.
+
+Flags:
+  -id int     Email ID to verify
+  -at string  Verification timestamp (RFC3339, optional)
+
+Examples:
+  # Verify the email address with ID 5
+  {{.Prog}} user email verify -id 5
+
+  # Verify with a specific timestamp
+  {{.Prog}} user email verify -id 5 -at 2026-01-16T09:27:26Z
+
+{{template "flag_groups_section" .FlagGroups}}

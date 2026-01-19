@@ -150,6 +150,13 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 			}
 			return s[:l]
 		},
+		"truncateWords": func(i int, s string) string {
+			words := strings.Fields(s)
+			if len(words) > i {
+				return strings.Join(words[:i], " ") + "..."
+			}
+			return s
+		},
 		"int32": func(i any) int32 {
 			switch v := i.(type) {
 			case int:
@@ -166,6 +173,16 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 			}
 		},
 		"add": func(a, b int) int { return a + b },
+		"seq": func(start, end int) []int {
+			var seq []int
+			if start > end {
+				return seq
+			}
+			for i := start; i <= end; i++ {
+				seq = append(seq, i)
+			}
+			return seq
+		},
 		"since": func(prev, curr time.Time) string {
 			if prev.IsZero() {
 				return ""

@@ -14,8 +14,18 @@ import (
 var textTemplates embed.FS
 
 func TestParseGoTxtTemplates(t *testing.T) {
+	funcs := map[string]any{
+		"a4code2string": func(s string) string { return s },
+		"truncateWords": func(i int, s string) string {
+			words := strings.Fields(s)
+			if len(words) > i {
+				return strings.Join(words[:i], " ") + "..."
+			}
+			return s
+		},
+	}
 	emailTemplates := templates.GetCompiledEmailTextTemplates(nil)
-	notificationTemplates := templates.GetCompiledNotificationTemplates(nil)
+	notificationTemplates := templates.GetCompiledNotificationTemplates(funcs)
 
 	err := fs.WalkDir(textTemplates, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -48,7 +58,17 @@ func TestParseGoTxtTemplates(t *testing.T) {
 }
 
 func TestAnnouncementTemplatesExist(t *testing.T) {
-	nt := templates.GetCompiledNotificationTemplates(nil)
+	funcs := map[string]any{
+		"a4code2string": func(s string) string { return s },
+		"truncateWords": func(i int, s string) string {
+			words := strings.Fields(s)
+			if len(words) > i {
+				return strings.Join(words[:i], " ") + "..."
+			}
+			return s
+		},
+	}
+	nt := templates.GetCompiledNotificationTemplates(funcs)
 	if nt.Lookup("announcement.gotxt") == nil {
 		t.Fatalf("missing announcement notification template")
 	}

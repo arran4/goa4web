@@ -11,6 +11,143 @@ import (
 	"time"
 )
 
+const adminCountPasswordResets = `-- name: AdminCountPasswordResets :one
+SELECT COUNT(*)
+FROM pending_passwords pp
+WHERE
+    (? = 'pending' AND pp.verified_at IS NULL) OR
+    (? = 'verified' AND pp.verified_at IS NOT NULL) OR
+    (? IS NULL)
+`
+
+type AdminCountPasswordResetsParams struct {
+	Status interface{}
+}
+
+func (q *Queries) AdminCountPasswordResets(ctx context.Context, arg AdminCountPasswordResetsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, adminCountPasswordResets, arg.Status, arg.Status, arg.Status)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const adminCountPendingPasswordResetsByUser = `-- name: AdminCountPendingPasswordResetsByUser :many
+SELECT user_id, COUNT(*) as count
+FROM pending_passwords
+WHERE verified_at IS NULL
+GROUP BY user_id
+`
+
+type AdminCountPendingPasswordResetsByUserRow struct {
+	UserID int32
+	Count  int64
+}
+
+func (q *Queries) AdminCountPendingPasswordResetsByUser(ctx context.Context) ([]*AdminCountPendingPasswordResetsByUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminCountPendingPasswordResetsByUser)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminCountPendingPasswordResetsByUserRow
+	for rows.Next() {
+		var i AdminCountPendingPasswordResetsByUserRow
+		if err := rows.Scan(&i.UserID, &i.Count); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminGetPasswordResetByID = `-- name: AdminGetPasswordResetByID :one
+SELECT id, user_id, passwd, passwd_algorithm, verification_code, created_at, verified_at
+FROM pending_passwords
+WHERE id = ?
+`
+
+func (q *Queries) AdminGetPasswordResetByID(ctx context.Context, id int32) (*PendingPassword, error) {
+	row := q.db.QueryRowContext(ctx, adminGetPasswordResetByID, id)
+	var i PendingPassword
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Passwd,
+		&i.PasswdAlgorithm,
+		&i.VerificationCode,
+		&i.CreatedAt,
+		&i.VerifiedAt,
+	)
+	return &i, err
+}
+
+const adminListPasswordResets = `-- name: AdminListPasswordResets :many
+SELECT pp.id, pp.user_id, u.username, pp.created_at, pp.verified_at
+FROM pending_passwords pp
+JOIN users u ON pp.user_id = u.idusers
+WHERE
+    (? = 'pending' AND pp.verified_at IS NULL) OR
+    (? = 'verified' AND pp.verified_at IS NOT NULL) OR
+    (? IS NULL)
+ORDER BY pp.created_at DESC
+LIMIT ? OFFSET ?
+`
+
+type AdminListPasswordResetsParams struct {
+	Status interface{}
+	Limit  int32
+	Offset int32
+}
+
+type AdminListPasswordResetsRow struct {
+	ID         int32
+	UserID     int32
+	Username   sql.NullString
+	CreatedAt  time.Time
+	VerifiedAt sql.NullTime
+}
+
+func (q *Queries) AdminListPasswordResets(ctx context.Context, arg AdminListPasswordResetsParams) ([]*AdminListPasswordResetsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListPasswordResets,
+		arg.Status,
+		arg.Status,
+		arg.Status,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListPasswordResetsRow
+	for rows.Next() {
+		var i AdminListPasswordResetsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Username,
+			&i.CreatedAt,
+			&i.VerifiedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const createPasswordResetForUser = `-- name: CreatePasswordResetForUser :exec
 INSERT INTO pending_passwords (user_id, passwd, passwd_algorithm, verification_code)
 VALUES (?, ?, ?, ?)

@@ -1,2 +1,2 @@
 User {{.Item.Username}} replied to a forum thread.
-{{.Item.Body}}
+{{ .Item.Body | a4code2string | truncateWords 20 }}

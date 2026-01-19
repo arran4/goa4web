@@ -31,6 +31,21 @@ func (q *requestPageQueries) AdminGetRequestByID(_ context.Context, id int32) (*
 	return q.request, nil
 }
 
+func (q *requestPageQueries) SystemGetUserByID(ctx context.Context, id int32) (*db.SystemGetUserByIDRow, error) {
+	return &db.SystemGetUserByIDRow{
+		Idusers:  id,
+		Username: sql.NullString{String: "testuser", Valid: true},
+	}, nil
+}
+
+func (q *requestPageQueries) AdminListUserEmails(ctx context.Context, id int32) ([]*db.UserEmail, error) {
+	return []*db.UserEmail{}, nil
+}
+
+func (q *requestPageQueries) AdminListRequestComments(ctx context.Context, id int32) ([]*db.AdminRequestComment, error) {
+	return []*db.AdminRequestComment{}, nil
+}
+
 func TestAdminRequestPage_RequestFound(t *testing.T) {
 	requestID := 5
 	queries := &requestPageQueries{
@@ -65,5 +80,47 @@ func TestAdminRequestPage_RequestFound(t *testing.T) {
 	}
 	if cr := cd.CurrentRequest(); cr == nil || cr.ID != int32(requestID) {
 		t.Fatalf("current request id=%v", cr)
+	}
+}
+
+func TestAdminRequestPage_UserEmailsRequest(t *testing.T) {
+	requestID := 5
+	userID := int32(7)
+	queries := &requestPageQueries{
+		requestID: int32(requestID),
+		request: &db.AdminRequestQueue{
+			ID:             int32(requestID),
+			UsersIdusers:   userID,
+			ChangeTable:    "user_emails",
+			ChangeField:    "email",
+			ChangeRowID:    userID,
+			ChangeValue:    sql.NullString{String: "new@example.com", Valid: true},
+			ContactOptions: sql.NullString{String: "new@example.com", Valid: true},
+			Status:         "pending",
+			CreatedAt:      time.Now(),
+			ActedAt:        sql.NullTime{},
+		},
+	}
+
+	req := httptest.NewRequest("GET", fmt.Sprintf("/admin/request/%d", requestID), nil)
+	req = mux.SetURLVars(req, map[string]string{"request": strconv.Itoa(requestID)})
+	cfg := config.NewRuntimeConfig()
+	cd := common.NewCoreData(req.Context(), queries, cfg)
+	cd.LoadSelectionsFromRequest(req)
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	adminRequestPage(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status=%d", rr.Code)
+	}
+	if cr := cd.CurrentRequest(); cr == nil || cr.ID != int32(requestID) {
+		t.Fatalf("current request id=%v", cr)
+	}
+	// Check if CurrentProfileUserID was set correctly
+	if pid := cd.CurrentProfileUserID(); pid != userID {
+		t.Fatalf("CurrentProfileUserID not set: got %d, want %d", pid, userID)
 	}
 }

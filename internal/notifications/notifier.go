@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	htemplate "html/template"
+	"io"
 	"log"
 	"os"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	ttemplate "text/template"
 	"time"
 
+	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/db"
@@ -69,9 +71,28 @@ func New(opts ...Option) *Notifier {
 
 func (n *Notifier) notificationTemplates() *ttemplate.Template {
 	n.noteOnce.Do(func() {
-		n.noteTmpls = templates.GetCompiledNotificationTemplates(map[string]any{}, templates.WithDir(n.Config.TemplatesDir))
+		n.noteTmpls = templates.GetCompiledNotificationTemplates(defaultFuncs(), templates.WithDir(n.Config.TemplatesDir))
 	})
 	return n.noteTmpls
+}
+
+func defaultFuncs() map[string]any {
+	return map[string]any{
+		"a4code2string": func(s string) string {
+			c := a4code2html.New()
+			c.CodeType = a4code2html.CTWordsOnly
+			c.SetInput(s)
+			out, _ := io.ReadAll(c.Process())
+			return string(out)
+		},
+		"truncateWords": func(i int, s string) string {
+			words := strings.Fields(s)
+			if len(words) > i {
+				return strings.Join(words[:i], " ") + "..."
+			}
+			return s
+		},
+	}
 }
 
 func (n *Notifier) emailTextTemplates() *ttemplate.Template {

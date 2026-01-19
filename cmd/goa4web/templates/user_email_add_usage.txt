@@ -1,0 +1,22 @@
+Usage:
+  {{.Prog}} user email add -user-id <id> -email <email> [flags]
+  {{.Prog}} user email add -username <name> -email <email> [flags]
+
+Adds a new email address to a user. Use -verified false to add an unverified
+address, or -verified now to set the verification timestamp to now.
+
+Flags:
+  -user-id int     User ID to add email to
+  -username string Username to add email to
+  -email string    Email address to add
+  -priority int    Notification priority
+  -verified string Set verification status (true/false/now)
+
+Examples:
+  # Add a verified email to user ID 42
+  {{.Prog}} user email add -user-id 42 -email "user@example.com"
+
+  # Add an unverified email to user "bob"
+  {{.Prog}} user email add -username bob -email "bob@example.com" -verified false
+
+{{template "flag_groups_section" .FlagGroups}}

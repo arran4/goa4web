@@ -183,14 +183,20 @@ func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp Se
 		}
 	}
 	if nt := tp.SelfInternalNotificationTemplate(evt); nt != nil {
+		user, err := n.Queries.SystemGetUserByID(ctx, evt.UserID)
+		if err != nil {
+			return fmt.Errorf("getting user %d for self-notification: %w", evt.UserID, err)
+		}
 		data := struct {
 			Path      string
 			Item      any
 			TaskEvent eventbus.TaskEvent
+			User      *db.SystemGetUserByIDRow
 		}{
 			Path:      evt.Path,
 			Item:      evt.Data,
 			TaskEvent: evt,
+			User:      user,
 		}
 		msg, err := n.renderNotification(ctx, *nt, data)
 		if err != nil {

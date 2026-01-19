@@ -6,6 +6,7 @@ import (
 	"github.com/arran4/goa4web/internal/eventbus"
 
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/handlers/handlertest"
 	notif "github.com/arran4/goa4web/internal/notifications"
 )
 
@@ -25,7 +26,7 @@ func TestReplyTemplatesCompile(t *testing.T) {
 		t.Fatalf("missing subject template %s", et.Subject)
 	}
 
-	nt := templates.GetCompiledNotificationTemplates(map[string]any{})
+	nt := templates.GetCompiledNotificationTemplates(handlertest.GetTemplateFuncs())
 	it := replyTask.SubscribedInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess})
 	if nt.Lookup(*it) == nil {
 		t.Fatalf("missing notification template %s", *it)

@@ -15,10 +15,10 @@
             {{ csrfField }}<input type="submit" name="task" value="Accept">
         </form>
         <form class="inline-form" method="post" action="/admin/request/{{ .ID }}/reject">
-            {{ csrfField }}<input name="comment"><input type="submit" name="task" value="Reject">
+            {{ csrfField }}<input name="comment" placeholder="Optional comment"><input type="submit" name="task" value="Reject">
         </form>
         <form class="inline-form" method="post" action="/admin/request/{{ .ID }}/query">
-            {{ csrfField }}<input name="comment"><input type="submit" name="task" value="Query">
+            {{ csrfField }}<input name="comment" placeholder="Optional comment"><input type="submit" name="task" value="Query">
         </form>
         <a href="/admin/request/{{ .ID }}">View</a>
     </td>

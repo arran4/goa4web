@@ -72,3 +72,7 @@ func (f *fakeForgotPasswordQueries) CreatePasswordResetForUser(_ context.Context
 	f.createdResets = append(f.createdResets, arg)
 	return nil
 }
+
+func (f *fakeForgotPasswordQueries) AdminInsertRequestQueue(ctx context.Context, arg db.AdminInsertRequestQueueParams) (sql.Result, error) {
+	return nil, nil
+}

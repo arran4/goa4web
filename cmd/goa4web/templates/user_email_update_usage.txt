@@ -1,0 +1,23 @@
+Usage:
+  {{.Prog}} user email update -id <id> [flags]
+
+Updates an existing email address. Provide the fields you want to change.
+Use -verified false to mark an email as unverified.
+
+Flags:
+  -id int        Email ID to update
+  -email string  New email address (optional)
+  -verified string Set verification status (true/false/now) (optional)
+  -priority int  New notification priority (optional)
+
+Examples:
+  # Update the email address with ID 5 to be verified
+  {{.Prog}} user email update -id 5 -verified true
+
+  # Update the email address with ID 5 to be unverified
+  {{.Prog}} user email update -id 5 -verified false
+
+  # Update the notification priority for ID 5
+  {{.Prog}} user email update -id 5 -priority 2
+
+{{template "flag_groups_section" .FlagGroups}}

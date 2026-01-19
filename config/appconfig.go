@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -26,22 +25,18 @@ var ErrConfigFileNotFound = errors.New("config file not found")
 func LoadAppConfigFile(fs core.FileSystem, path string) (map[string]string, error) {
 	values := make(map[string]string)
 	if path == "" {
-		log.Printf("config file not specified")
 		return values, nil
 	}
 	b, err := fs.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			log.Printf("config file not found: %s", path)
 			return values, ErrConfigFileNotFound
 		}
 		return nil, fmt.Errorf("app config file error: %w", err)
 	}
-	log.Printf("loaded config file %s", path)
 	switch strings.ToLower(filepath.Ext(path)) {
 	case ".json":
 		if err := json.Unmarshal(b, &values); err != nil {
-			log.Printf("app config file parse error: %v", err)
 			return nil, fmt.Errorf("parse json: %w", err)
 		}
 		return values, nil

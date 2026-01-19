@@ -1,0 +1,7 @@
+Tests the JMAP configuration and prints discovery information.
+
+Usage:
+  {{.Prog}} jmap test-config [flags]
+
+Flags:
+  -h, --help   help for test-config

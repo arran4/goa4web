@@ -92,8 +92,8 @@ func (c *userPasswordApproveCmd) Run() error {
 
 	if err := qtx.UpdateUserPassword(ctx, db.UpdateUserPasswordParams{
 		UsersIdusers:    int32(c.ID),
-		Passwd:          pendingPassword.Passwd,
-		PasswdAlgorithm: sql.NullString{String: pendingPassword.PasswdAlgorithm, Valid: true},
+		Passwd:          pendingPassword.Passwd.String,
+		PasswdAlgorithm: pendingPassword.PasswdAlgorithm,
 	}); err != nil {
 		return fmt.Errorf("update user password: %w", err)
 	}

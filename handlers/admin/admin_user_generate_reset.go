@@ -8,6 +8,8 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/eventbus"
+	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -17,6 +19,7 @@ var adminGenerateResetURLTask = &AdminGenerateResetURLTask{TaskString: "admin_ge
 
 var _ tasks.Task = (*AdminGenerateResetURLTask)(nil)
 var _ tasks.TemplatesRequired = (*AdminGenerateResetURLTask)(nil)
+var _ notif.TargetUsersNotificationProvider = (*AdminGenerateResetURLTask)(nil)
 
 const TemplateAdminUserGenerateResetPage handlers.Page = "admin/userGenerateResetPage.gohtml"
 
@@ -36,6 +39,15 @@ func (AdminGenerateResetURLTask) Action(w http.ResponseWriter, r *http.Request) 
 
 	resetURL := cd.AbsoluteURL(fmt.Sprintf("/reset?code=%s", code))
 
+	// Send internal notification if possible
+	if evt := cd.Event(); evt != nil {
+		evt.UserID = user.Idusers
+		evt.Data = map[string]any{
+			"ResetURL": resetURL,
+			"User":     user,
+		}
+	}
+
 	data := struct {
 		User     *db.SystemGetUserByIDRow
 		ResetURL string
@@ -51,4 +63,20 @@ func (AdminGenerateResetURLTask) Action(w http.ResponseWriter, r *http.Request) 
 
 func (AdminGenerateResetURLTask) TemplatesRequired() []tasks.Page {
 	return []tasks.Page{TemplateAdminUserGenerateResetPage}
+}
+
+func (AdminGenerateResetURLTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, error) {
+	if user, ok := evt.Data["User"].(*db.SystemGetUserByIDRow); ok {
+		return []int32{user.Idusers}, nil
+	}
+	return nil, fmt.Errorf("user not found in event data")
+}
+
+func (AdminGenerateResetURLTask) TargetEmailTemplate(evt eventbus.TaskEvent) (*notif.EmailTemplates, bool) {
+	return notif.NewEmailTemplates("passwordResetEmail"), true
+}
+
+func (AdminGenerateResetURLTask) TargetInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
+	t := "adminGeneratedResetURL"
+	return &t
 }

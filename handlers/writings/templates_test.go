@@ -25,7 +25,11 @@ func TestReplyTemplatesCompile(t *testing.T) {
 		t.Fatalf("missing subject template %s", et.Subject)
 	}
 
-	nt := templates.GetCompiledNotificationTemplates(map[string]any{})
+	funcMap := map[string]any{
+		"a4code2string": func(s string) string { return s },
+		"truncateWords": func(i int, s string) string { return s },
+	}
+	nt := templates.GetCompiledNotificationTemplates(funcMap)
 	it := replyTask.SubscribedInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess})
 	if nt.Lookup(*it) == nil {
 		t.Fatalf("missing notification template %s", *it)

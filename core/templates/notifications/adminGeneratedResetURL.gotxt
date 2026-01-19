@@ -1,0 +1,3 @@
+{{ .Item.User.Username.String }} has generated a password reset link for you.
+
+Link: {{ .Item.ResetURL }}

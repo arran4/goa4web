@@ -143,10 +143,10 @@ func (n *Notifier) adminEmails(ctx context.Context) []string {
 
 // NotifyAdmins sends a generic update notice to administrator accounts.
 func (n *Notifier) NotifyAdmins(ctx context.Context, et *EmailTemplates, data EmailData) error {
-	return n.notifyAdmins(ctx, et, nil, data, "")
+	return n.notifyAdmins(ctx, et, nil, nil, data, "")
 }
 
-func (n *Notifier) notifyAdmins(ctx context.Context, et *EmailTemplates, nt *string, data interface{}, link string) error {
+func (n *Notifier) notifyAdmins(ctx context.Context, et *EmailTemplates, nt *string, excludeUserID *int32, data interface{}, link string) error {
 	if n.Queries == nil {
 		return nil
 	}
@@ -157,6 +157,9 @@ func (n *Notifier) notifyAdmins(ctx context.Context, et *EmailTemplates, nt *str
 		var uid *int32
 		if u, err := n.Queries.SystemGetUserByEmail(ctx, addr); err == nil {
 			id := u.Idusers
+			if excludeUserID != nil && id == *excludeUserID {
+				continue
+			}
 			uid = &id
 		} else {
 			log.Printf("notify admin %s: %v", addr, err)

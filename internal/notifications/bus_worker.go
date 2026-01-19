@@ -93,7 +93,7 @@ func (n *Notifier) ProcessEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 
 	if tp, ok := evt.Task.(AdminEmailTemplateProvider); ok {
 		if et, send := tp.AdminEmailTemplate(evt); send {
-			if err := n.notifyAdmins(ctx, et, tp.AdminInternalNotificationTemplate(evt), evt.Data, evt.Path); err != nil {
+			if err := n.notifyAdmins(ctx, et, tp.AdminInternalNotificationTemplate(evt), &evt.UserID, evt.Data, evt.Path); err != nil {
 				errW := fmt.Errorf("AdminEmailTemplateProvider: %w", err)
 				if dlqErr := n.dlqRecordAndNotify(ctx, q, fmt.Sprintf("admin notify: %v", errW)); dlqErr != nil {
 					return dlqErr

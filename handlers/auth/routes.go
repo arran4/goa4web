@@ -26,6 +26,9 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, _ *nav.Registry) {
 	fr.HandleFunc("", forgotPasswordTask.Page).Methods("GET").MatcherFunc(Not(handlers.RequiresAnAccount()))
 	fr.HandleFunc("", handlers.TaskHandler(emailAssociationRequestTask)).Methods("POST").MatcherFunc(Not(handlers.RequiresAnAccount())).MatcherFunc(emailAssociationRequestTask.Matcher())
 	fr.HandleFunc("", handlers.TaskHandler(forgotPasswordTask)).Methods("POST").MatcherFunc(Not(handlers.RequiresAnAccount())).MatcherFunc(forgotPasswordTask.Matcher())
+
+	r.HandleFunc("/reset", resetPasswordTask.Page).Methods("GET")
+	r.HandleFunc("/reset", handlers.TaskHandler(resetPasswordTask)).Methods("POST").MatcherFunc(resetPasswordTask.Matcher())
 }
 
 // Register registers the auth router module.

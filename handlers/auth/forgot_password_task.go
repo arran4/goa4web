@@ -78,7 +78,7 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	var code string
 	if userHasNoVerifiedEmail {
-		code, err = cd.CreatePasswordResetForUser(row.Idusers, hash, alg)
+		err = cd.CreatePasswordResetRequestForUser(row.Idusers, hash, alg)
 	} else {
 		code, err = cd.CreatePasswordReset(verifiedEmails[0], hash, alg)
 	}
@@ -105,6 +105,9 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 	cd.PageTitle = "Password Reset"
+	if userHasNoVerifiedEmail {
+		return ForgotPasswordRequestSentPageTmpl.Handler(struct{}{})
+	}
 	return ForgotPasswordEmailSentPageTmpl.Handler(struct{}{})
 }
 
@@ -159,5 +162,6 @@ func (ForgotPasswordTask) TemplatesRequired() []tasks.Page {
 		ForgotPasswordPageTmpl,
 		ForgotPasswordNoEmailPageTmpl,
 		ForgotPasswordEmailSentPageTmpl,
+		ForgotPasswordRequestSentPageTmpl,
 	}
 }

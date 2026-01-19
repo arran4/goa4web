@@ -28,7 +28,11 @@ func checkNotificationTemplate(t *testing.T, name *string) {
 	if name == nil {
 		return
 	}
-	nt := templates.GetCompiledNotificationTemplates(map[string]any{})
+	funcMap := map[string]any{
+		"a4code2string": func(s string) string { return s },
+		"truncateWords": func(i int, s string) string { return s },
+	}
+	nt := templates.GetCompiledNotificationTemplates(funcMap)
 	if nt.Lookup(*name) == nil {
 		t.Errorf("missing notification template %s", *name)
 	}

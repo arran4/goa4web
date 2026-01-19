@@ -39,8 +39,8 @@ func TestForgotPasswordRateLimit(t *testing.T) {
 		pending: &db.PendingPassword{
 			ID:               1,
 			UserID:           1,
-			Passwd:           "hash",
-			PasswdAlgorithm:  "alg",
+			Passwd:           sql.NullString{String: "hash", Valid: true},
+			PasswdAlgorithm:  sql.NullString{String: "alg", Valid: true},
 			VerificationCode: "code",
 			CreatedAt:        now,
 			VerifiedAt:       sql.NullTime{},
@@ -89,8 +89,8 @@ func TestForgotPasswordReplaceOld(t *testing.T) {
 		pending: &db.PendingPassword{
 			ID:               1,
 			UserID:           1,
-			Passwd:           "hash",
-			PasswdAlgorithm:  "alg",
+			Passwd:           sql.NullString{String: "hash", Valid: true},
+			PasswdAlgorithm:  sql.NullString{String: "alg", Valid: true},
 			VerificationCode: "code",
 			CreatedAt:        time.Now().Add(-25 * time.Hour),
 			VerifiedAt:       sql.NullTime{},

@@ -13,6 +13,13 @@
     <li><a href="/admin/user/{{ $u.Idusers }}/edit">Edit Profile</a></li>
     <li><a href="/admin/user/{{ $u.Idusers }}/permissions">Permissions</a></li>
     <li><a href="/admin/user/{{ $u.Idusers }}/reset">Reset Password</a></li>
+    <li>
+        <form method="post" action="/admin/user/{{ $u.Idusers }}/generate-reset-url" style="display:inline;">
+            {{ csrfField }}
+            <input type="hidden" name="task" value="admin_generate_reset_url">
+            <input type="submit" value="Generate Reset URL" style="border:none;background:none;text-decoration:underline;color:blue;cursor:pointer;padding:0;">
+        </form>
+    </li>
     <li><a href="/admin/user/{{ $u.Idusers }}/disable">Disable Account</a></li>
     <li><a href="/admin/user/{{ $u.Idusers }}/blogs">Blog Posts</a></li>
     <li><a href="/admin/user/{{ $u.Idusers }}/writings">Writings</a></li>

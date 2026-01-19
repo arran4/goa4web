@@ -297,8 +297,8 @@ func TestLoginAction_PendingResetPrompt(t *testing.T) {
 	q.passwordResets[1] = []db.PendingPassword{{
 		ID:               2,
 		UserID:           1,
-		Passwd:           pwHash,
-		PasswdAlgorithm:  alg,
+		Passwd:           sql.NullString{String: pwHash, Valid: true},
+		PasswdAlgorithm:  sql.NullString{String: alg, Valid: true},
 		VerificationCode: "code",
 		CreatedAt:        time.Now(),
 	}}

@@ -81,7 +81,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if !VerifyPassword(password, row.Passwd.String, row.PasswdAlgorithm.String) {
 		expiry := time.Now().Add(-time.Duration(cd.Config.PasswordResetExpiryHours) * time.Hour)
 		reset, err := queries.GetPasswordResetByUser(r.Context(), db.GetPasswordResetByUserParams{UserID: row.Idusers, CreatedAt: expiry})
-		if err == nil && VerifyPassword(password, reset.Passwd, reset.PasswdAlgorithm) {
+		if err == nil && reset.Passwd.Valid && VerifyPassword(password, reset.Passwd.String, reset.PasswdAlgorithm.String) {
 			code := r.FormValue("code")
 			if code != "" {
 				if err := cd.VerifyPasswordReset(code, password); err != nil {

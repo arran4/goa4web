@@ -18,8 +18,8 @@ VALUES (?, ?, ?, ?)
 
 type CreatePasswordResetForUserParams struct {
 	UserID           int32
-	Passwd           string
-	PasswdAlgorithm  string
+	Passwd           sql.NullString
+	PasswdAlgorithm  sql.NullString
 	VerificationCode string
 }
 
@@ -30,6 +30,21 @@ func (q *Queries) CreatePasswordResetForUser(ctx context.Context, arg CreatePass
 		arg.PasswdAlgorithm,
 		arg.VerificationCode,
 	)
+	return err
+}
+
+const createPasswordResetTokenForUser = `-- name: CreatePasswordResetTokenForUser :exec
+INSERT INTO pending_passwords (user_id, verification_code, passwd, passwd_algorithm)
+VALUES (?, ?, NULL, NULL)
+`
+
+type CreatePasswordResetTokenForUserParams struct {
+	UserID           int32
+	VerificationCode string
+}
+
+func (q *Queries) CreatePasswordResetTokenForUser(ctx context.Context, arg CreatePasswordResetTokenForUserParams) error {
+	_, err := q.db.ExecContext(ctx, createPasswordResetTokenForUser, arg.UserID, arg.VerificationCode)
 	return err
 }
 

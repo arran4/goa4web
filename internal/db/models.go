@@ -415,8 +415,8 @@ type PendingEmail struct {
 type PendingPassword struct {
 	ID               int32
 	UserID           int32
-	Passwd           string
-	PasswdAlgorithm  string
+	Passwd           sql.NullString
+	PasswdAlgorithm  sql.NullString
 	VerificationCode string
 	CreatedAt        time.Time
 	VerifiedAt       sql.NullTime

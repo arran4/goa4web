@@ -2,6 +2,10 @@
 INSERT INTO pending_passwords (user_id, passwd, passwd_algorithm, verification_code)
 VALUES (?, ?, ?, ?);
 
+-- name: CreatePasswordResetTokenForUser :exec
+INSERT INTO pending_passwords (user_id, verification_code, passwd, passwd_algorithm)
+VALUES (?, ?, NULL, NULL);
+
 -- name: GetPasswordResetByUser :one
 SELECT id, user_id, passwd, passwd_algorithm, verification_code, created_at, verified_at
 FROM pending_passwords

@@ -280,6 +280,7 @@ type Querier interface {
 	CreateLinkerQueuedItemForWriter(ctx context.Context, arg CreateLinkerQueuedItemForWriterParams) error
 	CreateNewsPostForWriter(ctx context.Context, arg CreateNewsPostForWriterParams) (int64, error)
 	CreatePasswordResetForUser(ctx context.Context, arg CreatePasswordResetForUserParams) error
+	CreatePasswordResetTokenForUser(ctx context.Context, arg CreatePasswordResetTokenForUserParams) error
 	CreateSubscriptionArchetype(ctx context.Context, arg CreateSubscriptionArchetypeParams) error
 	CreateThreadImage(ctx context.Context, arg CreateThreadImageParams) error
 	CreateUploadedImageForUploader(ctx context.Context, arg CreateUploadedImageForUploaderParams) (int64, error)

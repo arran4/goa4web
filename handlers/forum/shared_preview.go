@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"database/sql"
 	"fmt"
 	"html/template"
 	"log"
@@ -10,6 +11,7 @@ import (
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/handlers/share"
 	"github.com/gorilla/mux"
@@ -96,6 +98,18 @@ func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 
 	ogTitle := topic.Title.String
 	ogDescription := topic.Description.String
+	if ogDescription == "" {
+		// Try to find the first thread and use its first comment
+		if threads, err := queries.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText(r.Context(), db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams{
+			TopicID:       int32(topicID),
+			ViewerID:      cd.UserID,
+			ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		}); err == nil && len(threads) > 0 {
+			if comments, err := queries.SystemListCommentsByThreadID(r.Context(), threads[0].Idforumthread); err == nil && len(comments) > 0 {
+				ogDescription = a4code.Snip(comments[0].Text.String, 128)
+			}
+		}
+	}
 
 	renderPublicSharedPreview(w, r, cd, cd.ShareSignKey, ogTitle, ogDescription)
 }
@@ -107,7 +121,8 @@ func renderPublicSharedPreview(w http.ResponseWriter, r *http.Request, cd *commo
 		return
 	}
 
-	usePathAuth := mux.Vars(r)["ts"] != ""
+	vars := mux.Vars(r)
+	usePathAuth := vars["ts"] != "" || vars["nonce"] != ""
 
 	imageURL, _ := share.MakeImageURL(cd.AbsoluteURL(), title, desc, cd.ShareSignKey, usePathAuth)
 	ogData := share.OpenGraphData{

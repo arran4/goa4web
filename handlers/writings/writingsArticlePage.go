@@ -57,20 +57,24 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
+	dateSuffix := ""
+	if writing.Published.Valid {
+		dateSuffix = fmt.Sprintf(" - %s", cd.FormatLocalTime(writing.Published.Time))
+	}
 	if writing.Title.Valid {
-		cd.PageTitle = fmt.Sprintf("Writing: %s", writing.Title.String)
+		cd.PageTitle = fmt.Sprintf("Writing: %s%s", writing.Title.String, dateSuffix)
 	} else {
-		cd.PageTitle = fmt.Sprintf("Writing %d", writing.Idwriting)
+		cd.PageTitle = fmt.Sprintf("Writing %d%s", writing.Idwriting, dateSuffix)
 	}
 
 	desc := a4code.Snip(writing.Abstract.String, 128)
-	imgURL, err := share.MakeImageURL(cd.AbsoluteURL(), writing.Title.String, desc, cd.ShareSignKey, false)
+	imgURL, err := share.MakeImageURL(cd.AbsoluteURL(), cd.PageTitle, desc, cd.ShareSignKey, false)
 	if err != nil {
 		log.Printf("Error making image URL: %v", err)
 	}
 
 	cd.OpenGraph = &common.OpenGraph{
-		Title:       writing.Title.String,
+		Title:       cd.PageTitle,
 		Description: a4code.Snip(writing.Abstract.String, 128),
 		Image:       imgURL,
 		ImageWidth:  cd.Config.OGImageWidth,

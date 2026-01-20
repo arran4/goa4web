@@ -2,13 +2,16 @@ package share_test
 
 import (
 	"bytes"
+	"fmt"
 	"image/png"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers/share"
 	"github.com/arran4/goa4web/internal/sign"
@@ -240,5 +243,85 @@ func TestVerifyAndGetPath_WithQueryParams(t *testing.T) {
 	// Clean path should include the extra query params
 	if cleanPath != fullPath {
 		t.Errorf("Expected clean path %s, got %s", fullPath, cleanPath)
+	}
+}
+
+func TestVerifyAndGetPath_MixedAuth(t *testing.T) {
+	key := "test-key"
+	ts := time.Now().Add(1 * time.Hour).Unix()
+
+	// Goal: Support /path/ts/{ts}?sig={sig}
+	// Signature generated with Expiry option on base path
+	basePath := "/some/content"
+
+	sig := sign.Sign(basePath, key, sign.WithExpiry(time.Unix(ts, 0)))
+
+	// Construct mixed URL: Path has TS, Query has Sig
+	pathWithTs := fmt.Sprintf("%s/ts/%d", basePath, ts)
+	reqURL := fmt.Sprintf("http://example.com%s?sig=%s", pathWithTs, sig)
+
+	req := httptest.NewRequest(http.MethodGet, reqURL, nil)
+
+	// Simulate router variables
+	vars := map[string]string{
+		"ts": fmt.Sprintf("%d", ts),
+	}
+	req = mux.SetURLVars(req, vars)
+
+	cleanPath := share.VerifyAndGetPath(req, key)
+
+	if cleanPath != basePath {
+		t.Errorf("Expected clean path '%s', got '%s'", basePath, cleanPath)
+	}
+}
+
+func TestVerifyAndGetPath_MixedAuth_Expired(t *testing.T) {
+	key := "test-key"
+	// Expired 1 hour ago
+	ts := time.Now().Add(-1 * time.Hour).Unix()
+
+	basePath := "/some/content"
+
+	sig := sign.Sign(basePath, key, sign.WithExpiry(time.Unix(ts, 0)))
+
+	pathWithTs := fmt.Sprintf("%s/ts/%d", basePath, ts)
+	reqURL := fmt.Sprintf("http://example.com%s?sig=%s", pathWithTs, sig)
+
+	req := httptest.NewRequest(http.MethodGet, reqURL, nil)
+
+	vars := map[string]string{
+		"ts": fmt.Sprintf("%d", ts),
+	}
+	req = mux.SetURLVars(req, vars)
+
+	cleanPath := share.VerifyAndGetPath(req, key)
+
+	if cleanPath != "" {
+		t.Errorf("Expected empty path (expired), got '%s'", cleanPath)
+	}
+}
+
+func TestShareRoutes_MixedAuth(t *testing.T) {
+	r := mux.NewRouter()
+	cfg := &config.RuntimeConfig{} // Minimal config
+	shareKey := "test-key"
+
+	share.RegisterShareRoutes(r, cfg, shareKey)
+
+	// Test cases that should match
+	tests := []string{
+		"/api/og-image/data",
+		"/api/og-image/data/ts/123",
+		"/api/og-image/data/nonce/abc",
+		"/api/og-image/data/ts/123/sign/sig",
+		"/api/og-image/data/nonce/abc/sign/sig",
+	}
+
+	for _, path := range tests {
+		req := httptest.NewRequest("GET", path, nil)
+		match := &mux.RouteMatch{}
+		if !r.Match(req, match) {
+			t.Errorf("Route not matched: %s", path)
+		}
 	}
 }

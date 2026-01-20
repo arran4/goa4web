@@ -23,4 +23,7 @@ func RegisterShareRoutes(r *mux.Router, cfg *config.RuntimeConfig, shareSignKey 
 	ogImage := r.PathPrefix("/api/og-image/").Subrouter()
 	ogImage.HandleFunc("/{data}/nonce/{nonce}/sign/{sign}", ogImageHandler.ServeHTTP)
 	ogImage.HandleFunc("/{data}/ts/{ts}/sign/{sign}", ogImageHandler.ServeHTTP)
+	ogImage.HandleFunc("/{data}/nonce/{nonce}", ogImageHandler.ServeHTTP)
+	ogImage.HandleFunc("/{data}/ts/{ts}", ogImageHandler.ServeHTTP)
+	ogImage.HandleFunc("/{data}", ogImageHandler.ServeHTTP)
 }

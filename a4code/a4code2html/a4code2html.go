@@ -319,6 +319,7 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 			if err != nil && err != io.EOF {
 				return err
 			}
+			original := raw
 			if a.ImageURLMapper != nil {
 				raw = a.ImageURLMapper("a", raw)
 			}
@@ -328,7 +329,7 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 					return err
 				}
 				if p, err := r.Peek(1); err == nil && len(p) > 0 && p[0] == ']' {
-					if _, err := io.WriteString(w, safe); err != nil {
+					if _, err := io.WriteString(w, html.EscapeString(original)); err != nil {
 						return err
 					}
 				}

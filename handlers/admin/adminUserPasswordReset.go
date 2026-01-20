@@ -78,6 +78,8 @@ func (UserPasswordResetTask) Action(w http.ResponseWriter, r *http.Request) any 
 		evt.Data["Username"] = user.Username.String
 		evt.Data["Password"] = newPass
 	}
+	data.Messages = append(data.Messages, fmt.Sprintf("Password reset to: %s", newPass))
+	data.Messages = append(data.Messages, fmt.Sprintf("User can login at: %s", cd.AbsoluteURL("/login")))
 	return handlers.TemplateWithDataHandler(handlers.TemplateRunTaskPage, data)
 }
 

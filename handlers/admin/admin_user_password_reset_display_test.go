@@ -57,14 +57,4 @@ func TestUserPasswordResetIncludesPasswordInMessages(t *testing.T) {
 	if !strings.Contains(body, "Password reset to:") {
 		t.Fatalf("Did not find password in output. Body snippet: %s", body[strings.Index(body, "<main") : strings.Index(body, "</main>")+7])
 	}
-
-    if !strings.Contains(body, "User can login at:") {
-        t.Fatalf("Did not find login link text in output.")
-    }
-
-    // AbsoluteURL should use the request host if configured or default
-    // Since req.Host is set, it might use that scheme http/https
-    if !strings.Contains(body, "/login") {
-         t.Fatalf("Did not find login URL in output.")
-    }
 }

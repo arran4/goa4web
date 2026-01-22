@@ -2,6 +2,7 @@ package templates
 
 import (
 	"bytes"
+	"errors"
 	"html/template"
 	"strings"
 	"testing"
@@ -9,12 +10,31 @@ import (
 
 func csrfField() template.HTML { return "" }
 
+type TopicLabel struct {
+	Name string
+	Type string
+}
+
 // TestThreadPageShowsDefaultPrivateLabels ensures that the thread page template
 // renders special private labels like "new" and "unread".
 func TestThreadPageShowsDefaultPrivateLabels(t *testing.T) {
 	funcMap := template.FuncMap{
 		"csrfField": csrfField,
 		"assetHash": func(s string) string { return s },
+		"dict": func(values ...interface{}) (map[string]interface{}, error) {
+			if len(values)%2 != 0 {
+				return nil, errors.New("invalid dict call")
+			}
+			dict := make(map[string]interface{}, len(values)/2)
+			for i := 0; i < len(values); i += 2 {
+				key, ok := values[i].(string)
+				if !ok {
+					return nil, errors.New("dict keys must be strings")
+				}
+				dict[key] = values[i+1]
+			}
+			return dict, nil
+		},
 	}
 	tmpl := template.New("test").Funcs(funcMap)
 

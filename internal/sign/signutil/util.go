@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/arran4/goa4web/internal/sign"
 	"github.com/gorilla/mux"
@@ -114,10 +116,41 @@ type SignedData struct {
 func GetSignedData(r *http.Request, key string) (*SignedData, error) {
 	// Try query params first
 	if r.URL.Query().Get("sig") != "" {
-		_, err := VerifyQueryURL(r.URL.String(), key)
+		cleanURL, sig, opts, err := sign.ExtractQuerySig(r.URL.String())
 		if err != nil {
 			return &SignedData{Valid: false}, nil
 		}
+
+		vars := mux.Vars(r)
+		tsPath := vars["ts"]
+		noncePath := vars["nonce"]
+
+		u, err := url.Parse(cleanURL)
+		if err != nil {
+			return &SignedData{Valid: false}, nil
+		}
+		cleanPath := u.Path
+
+		if tsPath != "" {
+			if ts, err := strconv.ParseInt(tsPath, 10, 64); err == nil {
+				opts = append(opts, sign.WithExpiry(time.Unix(ts, 0)))
+				cleanPath = strings.Replace(cleanPath, "/ts/"+tsPath, "", 1)
+			}
+		}
+		if noncePath != "" {
+			opts = append(opts, sign.WithNonce(noncePath))
+			cleanPath = strings.Replace(cleanPath, "/nonce/"+noncePath, "", 1)
+		}
+
+		data := cleanPath
+		if u.RawQuery != "" {
+			data += "?" + u.RawQuery
+		}
+
+		if err := sign.Verify(data, sig, key, opts...); err != nil {
+			return &SignedData{Valid: false}, nil
+		}
+
 		return &SignedData{Valid: true}, nil
 	}
 

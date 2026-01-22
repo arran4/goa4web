@@ -12,7 +12,9 @@ import (
 	"image/png"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/arran4/go-pattern"
 
@@ -105,6 +107,8 @@ func VerifyAndGetPath(r *http.Request, key string) string {
 	sigQuery := r.URL.Query().Get("sig")
 	nonceQuery := r.URL.Query().Get("nonce")
 
+	vars := mux.Vars(r)
+
 	if sigQuery != "" {
 		// Query-based auth
 		_, sig, opts, err := sign.ExtractQuerySig(r.URL.String())
@@ -115,6 +119,21 @@ func VerifyAndGetPath(r *http.Request, key string) string {
 
 		// Parse to get path + remaining query
 		cleanPath := r.URL.Path
+
+		tsPath := vars["ts"]
+		noncePath := vars["nonce"]
+
+		if tsPath != "" {
+			if ts, err := strconv.ParseInt(tsPath, 10, 64); err == nil {
+				opts = append(opts, sign.WithExpiry(time.Unix(ts, 0)))
+				cleanPath = strings.Replace(cleanPath, "/ts/"+tsPath, "", 1)
+			}
+		}
+		if noncePath != "" {
+			opts = append(opts, sign.WithNonce(noncePath))
+			cleanPath = strings.Replace(cleanPath, "/nonce/"+noncePath, "", 1)
+		}
+
 		q := r.URL.Query()
 		q.Del("sig")
 		q.Del("nonce")
@@ -134,7 +153,6 @@ func VerifyAndGetPath(r *http.Request, key string) string {
 	}
 
 	// Try path-based auth
-	vars := mux.Vars(r)
 	tspath := vars["ts"]
 	sigPath := vars["sign"]
 	if sigPath == "" {

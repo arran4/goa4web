@@ -64,8 +64,9 @@ func (c *testVerificationTemplateCmd) Run() error {
 		if err := json.Unmarshal(b, &data); err != nil {
 			return fmt.Errorf("unmarshal data: %w", err)
 		}
-	} else {
-		// Default empty config if not provided
+	}
+
+	if data.Config == nil {
 		data.Config = &config.RuntimeConfig{}
 	}
 
@@ -101,7 +102,7 @@ func (c *testVerificationTemplateCmd) Run() error {
 
 	// Verify template existence
 	if !templates.TemplateExists(c.Template, templates.WithDir(data.Config.TemplatesDir)) {
-		return fmt.Errorf("template %q not found", c.Template)
+		return fmt.Errorf("template %q not found in %s", c.Template, data.Config.TemplatesDir)
 	}
 
 	// Decode Dot data

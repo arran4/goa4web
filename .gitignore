@@ -119,3 +119,4 @@ verification_*.png
 a4code2html
 .share_sign_secret
 jmap.env
+*.txt

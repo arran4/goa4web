@@ -21,25 +21,25 @@ func TestThreadPageShowsDefaultPrivateLabels(t *testing.T) {
 	funcMap := template.FuncMap{
 		"csrfField": csrfField,
 		"assetHash": func(s string) string { return s },
-		"dict": func(values ...interface{}) (map[string]interface{}, error) {
+    "dict": func(values ...any) (map[string]any, error) {
 			if len(values)%2 != 0 {
 				return nil, errors.New("invalid dict call")
 			}
-			dict := make(map[string]interface{}, len(values)/2)
-			for i := 0; i < len(values); i += 2 {
-				key, ok := values[i].(string)
+			m := make(map[string]interface{}, len(values)/2)
+			for i := 0; i+1 < len(values); i += 2 {
+				k, ok := values[i].(string)
 				if !ok {
 					return nil, errors.New("dict keys must be strings")
 				}
-				dict[key] = values[i+1]
+				m[k] = values[i+1]
 			}
-			return dict, nil
+			return m, nil
 		},
 	}
 	tmpl := template.New("test").Funcs(funcMap)
 
 	// Provide stub templates used by threadPage.gohtml.
-	if _, err := tmpl.Parse(`{{define "head"}}{{end}}{{define "tail"}}{{end}}{{define "threadComments"}}{{end}}{{define "forumReply"}}{{end}}`); err != nil {
+	if _, err := tmpl.Parse(`{{define "head"}}{{end}}{{define "tail"}}{{end}}{{define "threadComments"}}{{end}}{{define "forumReply"}}{{end}}{{define "_share.gohtml"}}{{end}}`); err != nil {
 		t.Fatalf("parse stubs: %v", err)
 	}
 	if _, err := tmpl.ParseFiles("site/forum/topicLabels.gohtml", "site/forum/threadPage.gohtml"); err != nil {

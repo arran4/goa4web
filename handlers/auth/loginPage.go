@@ -76,6 +76,8 @@ func renderLoginForm(w http.ResponseWriter, r *http.Request, errMsg, noticeMsg s
 		BackTS  string
 		Method  string
 		Data    string
+		Sig     string
+		TS      string
 	}
 	handlers.SetPageTitle(r, "Login")
 	data := Data{
@@ -85,6 +87,8 @@ func renderLoginForm(w http.ResponseWriter, r *http.Request, errMsg, noticeMsg s
 		BackTS:  r.FormValue("back_ts"),
 		Method:  r.FormValue("method"),
 		Data:    r.FormValue("data"),
+		Sig:     r.FormValue("sig"),
+		TS:      r.FormValue("ts"),
 	}
 	LoginPageTmpl.Handle(w, r, data)
 }

@@ -78,13 +78,13 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("LoginTask.Action: user credentials query: %w", err)
 	}
 
-	if !VerifyPassword(password, row.Passwd.String, row.PasswdAlgorithm.String) {
+	if !common.VerifyPassword(password, row.Passwd.String, row.PasswdAlgorithm.String) {
 		expiry := time.Now().Add(-time.Duration(cd.Config.PasswordResetExpiryHours) * time.Hour)
 		reset, err := queries.GetPasswordResetByUser(r.Context(), db.GetPasswordResetByUserParams{UserID: row.Idusers, CreatedAt: expiry})
-		if err == nil && VerifyPassword(password, reset.Passwd, reset.PasswdAlgorithm) {
+		if err == nil && common.VerifyPassword(password, reset.Passwd.String, reset.PasswdAlgorithm.String) {
 			code := r.FormValue("code")
 			if code != "" {
-				if err := cd.VerifyPasswordReset(code, password); err != nil {
+				if err := cd.VerifyPasswordReset(code, password, nil); err != nil {
 					if err := queries.SystemInsertLoginAttempt(r.Context(), db.SystemInsertLoginAttemptParams{Username: username, IpAddress: strings.Split(r.RemoteAddr, ":")[0]}); err != nil {
 						log.Printf("insert login attempt: %v", err)
 					}
@@ -115,7 +115,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	if row.PasswdAlgorithm.String == "" || row.PasswdAlgorithm.String == "md5" {
-		newHash, newAlg, err := HashPassword(password)
+		newHash, newAlg, err := common.HashPassword(password)
 		if err == nil {
 			if err := queries.InsertPassword(r.Context(), db.InsertPasswordParams{UsersIdusers: row.Idusers, Passwd: newHash, PasswdAlgorithm: sql.NullString{String: newAlg, Valid: true}}); err != nil {
 				log.Printf("insert password: %v", err)

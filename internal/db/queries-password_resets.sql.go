@@ -155,8 +155,8 @@ VALUES (?, ?, ?, ?)
 
 type CreatePasswordResetForUserParams struct {
 	UserID           int32
-	Passwd           string
-	PasswdAlgorithm  string
+	Passwd           sql.NullString
+	PasswdAlgorithm  sql.NullString
 	VerificationCode string
 }
 

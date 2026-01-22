@@ -15,7 +15,6 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/handlers/auth"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -256,7 +255,7 @@ func adminUserResetPasswordPage(w http.ResponseWriter, r *http.Request) {
 		data.Errors = append(data.Errors, fmt.Errorf("rand.Read: %w", err).Error())
 	}
 	newPass := hex.EncodeToString(buf[:])
-	if hash, alg, err := auth.HashPassword(newPass); err != nil {
+	if hash, alg, err := common.HashPassword(newPass); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("hashPassword: %w", err).Error())
 	} else if uidi, err := strconv.Atoi(uid); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("strconv.Atoi: %w", err).Error())

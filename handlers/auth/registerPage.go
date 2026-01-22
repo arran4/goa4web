@@ -59,7 +59,7 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return handlers.ErrRedirectOnSamePageHandler(errors.New("user exists"))
 	}
 
-	hash, alg, err := HashPassword(password)
+	hash, alg, err := common.HashPassword(password)
 	if err != nil {
 		log.Printf("hashPassword Error: %s", err)
 		return fmt.Errorf("hash password %w", err)

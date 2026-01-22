@@ -1,0 +1,11 @@
+{{ template "head" $ }}
+<h2>Password Reset Link Created</h2>
+<p>User: {{ .User.Username.String }}</p>
+
+<div class="card">
+    <p>Share this link with the user. They can use it to reset their password.</p>
+    <input type="text" value="{{ .Link }}" readonly style="width: 100%;">
+</div>
+
+<p><a href="{{ .Back }}">Back to User Profile</a></p>
+{{ template "tail" $ }}

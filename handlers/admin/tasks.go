@@ -284,6 +284,9 @@ const (
 	// TaskUserResetPassword resets a user's password.
 	TaskUserResetPassword tasks.TaskString = "Password Reset"
 
+	// TaskCreateResetLink creates a signed password reset link.
+	TaskCreateResetLink tasks.TaskString = "Create Reset Link"
+
 	// TaskPasswordVerify verifies a password reset code.
 	TaskPasswordVerify tasks.TaskString = "Password Verify"
 

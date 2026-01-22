@@ -2,6 +2,7 @@ package auth
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -28,7 +29,19 @@ func (VerifyPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	code := r.FormValue("code")
 	pw := r.FormValue("password")
-	if err := cd.VerifyPasswordReset(code, pw); err != nil {
+	sig := r.FormValue("sig")
+	ts := r.FormValue("ts")
+
+	var expiry *time.Time
+	if sig != "" {
+		t, err := cd.VerifyPasswordResetLink(code, sig, ts)
+		if err != nil {
+			return handlers.ErrRedirectOnSamePageHandler(err)
+		}
+		expiry = &t
+	}
+
+	if err := cd.VerifyPasswordReset(code, pw, expiry); err != nil {
 		return handlers.ErrRedirectOnSamePageHandler(err)
 	}
 	return handlers.RefreshDirectHandler{TargetURL: "/login"}

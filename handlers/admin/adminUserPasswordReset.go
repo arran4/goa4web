@@ -10,7 +10,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/handlers/auth"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
@@ -57,7 +56,7 @@ func (UserPasswordResetTask) Action(w http.ResponseWriter, r *http.Request) any 
 		return handlers.TemplateWithDataHandler(handlers.TemplateRunTaskPage, data)
 	}
 	newPass := hex.EncodeToString(buf[:])
-	hash, alg, err := auth.HashPassword(newPass)
+	hash, alg, err := common.HashPassword(newPass)
 	if err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("hashPassword: %w", err).Error())
 		return handlers.TemplateWithDataHandler(handlers.TemplateRunTaskPage, data)

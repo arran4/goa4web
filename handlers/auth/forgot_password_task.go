@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/arran4/goa4web/internal/eventbus"
 
@@ -71,7 +72,7 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("user role %w", err)
 	}
 	userHasNoVerifiedEmail := len(verifiedEmails) == 0
-	hash, alg, err := HashPassword(pw)
+	hash, alg, err := common.HashPassword(pw)
 	if err != nil {
 		return fmt.Errorf("hash error %w", err)
 	}
@@ -98,7 +99,8 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 			// Expose fields directly for email templates
 			evt.Data["Username"] = row.Username.String
 			evt.Data["Code"] = code
-			evt.Data["ResetURL"] = cd.AbsoluteURL("/login?code=" + code)
+			link := cd.SignPasswordResetLink(code, time.Duration(cd.Config.PasswordResetExpiryHours)*time.Hour)
+			evt.Data["ResetURL"] = cd.AbsoluteURL(link)
 			evt.Data["UserURL"] = cd.AbsoluteURL(fmt.Sprintf("/admin/user/%d", row.Idusers))
 			evt.Data["Emails"] = verifiedEmails
 			evt.Data["UserHasNoVerifiedEmail"] = userHasNoVerifiedEmail

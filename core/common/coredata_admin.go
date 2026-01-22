@@ -101,10 +101,13 @@ func (cd *CoreData) AdminApprovePasswordReset(id int32) error {
 		return err
 	}
 	// Update user's password
+	if !reset.Passwd.Valid {
+		return errors.New("cannot approve reset link with no password")
+	}
 	if err := cd.queries.InsertPassword(cd.ctx, db.InsertPasswordParams{
 		UsersIdusers:    reset.UserID,
-		Passwd:          reset.Passwd,
-		PasswdAlgorithm: sql.NullString{String: reset.PasswdAlgorithm, Valid: true},
+		Passwd:          reset.Passwd.String,
+		PasswdAlgorithm: reset.PasswdAlgorithm,
 	}); err != nil {
 		log.Printf("insert password: %v", err)
 		return err

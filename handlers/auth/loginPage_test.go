@@ -287,7 +287,7 @@ func TestLoginFormHandler_ActionTarget(t *testing.T) {
 
 func TestLoginAction_PendingResetPrompt(t *testing.T) {
 	q := newLoginQuerierFake()
-	pwHash, alg, _ := HashPassword("newpw")
+	pwHash, alg, _ := common.HashPassword("newpw")
 	q.users["bob"] = &db.SystemGetLoginRow{
 		Idusers:         1,
 		Passwd:          sql.NullString{String: "oldhash", Valid: true},
@@ -297,8 +297,8 @@ func TestLoginAction_PendingResetPrompt(t *testing.T) {
 	q.passwordResets[1] = []db.PendingPassword{{
 		ID:               2,
 		UserID:           1,
-		Passwd:           pwHash,
-		PasswdAlgorithm:  alg,
+		Passwd:           sql.NullString{String: pwHash, Valid: true},
+		PasswdAlgorithm:  sql.NullString{String: alg, Valid: true},
 		VerificationCode: "code",
 		CreatedAt:        time.Now(),
 	}}
@@ -426,7 +426,7 @@ func TestLoginAction_ExternalBackURLIgnored(t *testing.T) {
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = "test-session"
-	pwHash, alg, _ := HashPassword("pw")
+	pwHash, alg, _ := common.HashPassword("pw")
 	q.users["bob"] = &db.SystemGetLoginRow{
 		Idusers:         1,
 		Passwd:          sql.NullString{String: pwHash, Valid: true},
@@ -464,7 +464,7 @@ func TestLoginAction_SignedExternalBackURL(t *testing.T) {
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = "test-session"
-	pwHash, alg, _ := HashPassword("pw")
+	pwHash, alg, _ := common.HashPassword("pw")
 	q.users["bob"] = &db.SystemGetLoginRow{
 		Idusers:         1,
 		Passwd:          sql.NullString{String: pwHash, Valid: true},

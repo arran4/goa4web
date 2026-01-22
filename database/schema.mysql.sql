@@ -436,8 +436,8 @@ CREATE TABLE IF NOT EXISTS `pending_emails` (
 CREATE TABLE IF NOT EXISTS `pending_passwords` (
   `id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
-  `passwd` tinytext NOT NULL,
-  `passwd_algorithm` tinytext NOT NULL,
+  `passwd` tinytext,
+  `passwd_algorithm` tinytext,
   `verification_code` varchar(64) NOT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `verified_at` datetime DEFAULT NULL,

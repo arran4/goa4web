@@ -27,14 +27,16 @@ func TestVerifyPasswordAction_Success(t *testing.T) {
 	defer conn.Close()
 	q := db.New(conn)
 
-	pwHash, alg, _ := HashPassword("pw")
+	pwHash, alg, _ := common.HashPassword("pw")
 	rows := sqlmock.NewRows([]string{"id", "user_id", "passwd", "passwd_algorithm", "verification_code", "created_at", "verified_at"}).
-		AddRow(1, 1, pwHash, alg, "code", time.Now(), nil)
+		AddRow(1, 1, sql.NullString{String: pwHash, Valid: true}, sql.NullString{String: alg, Valid: true}, "code", time.Now(), nil)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, user_id, passwd")).WithArgs("code", sqlmock.AnyArg()).WillReturnRows(rows)
+	// CoreData.VerifyPasswordReset does a role check
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT 1 FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.users_idusers = ? AND r.can_login = 1 LIMIT 1")).WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"column_1"}).AddRow(1))
+
 	mock.ExpectExec(regexp.QuoteMeta("UPDATE pending_passwords SET verified_at = NOW() WHERE id = ?")).WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO passwords (users_idusers, passwd, passwd_algorithm) VALUES (?, ?, ?)")).
-		WithArgs(int32(1), pwHash, sql.NullString{String: alg, Valid: true}).
+		WithArgs(int32(1), sql.NullString{String: pwHash, Valid: true}, sql.NullString{String: alg, Valid: true}).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
@@ -63,7 +65,7 @@ func TestVerifyPasswordAction_InvalidPassword(t *testing.T) {
 	defer conn.Close()
 	q := db.New(conn)
 
-	pwHash, alg, _ := HashPassword("pw")
+	pwHash, alg, _ := common.HashPassword("pw")
 	rows := sqlmock.NewRows([]string{"id", "user_id", "passwd", "passwd_algorithm", "verification_code", "created_at", "verified_at"}).
 		AddRow(1, 1, pwHash, alg, "code", time.Now(), nil)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, user_id, passwd")).WithArgs("code", sqlmock.AnyArg()).WillReturnRows(rows)

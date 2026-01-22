@@ -10,7 +10,8 @@ func TestAdminTasksTemplatesRequiredExist(t *testing.T) {
 		name string
 		task templatesRequired
 	}{
-		{"UserPasswordResetTask", &UserPasswordResetTask{}},
+		{"UserForcePasswordChangeTask", &UserForcePasswordChangeTask{}},
+		{"UserSendResetEmailTask", &UserSendResetEmailTask{}},
 		{"ServerShutdownTask", &ServerShutdownTask{}},
 	}
 	for _, task := range tasks {

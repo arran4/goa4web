@@ -2,6 +2,7 @@ package templates
 
 import (
 	"bytes"
+	"errors"
 	"html/template"
 	"strings"
 	"testing"
@@ -15,13 +16,19 @@ func TestThreadPageShowsDefaultPrivateLabels(t *testing.T) {
 	funcMap := template.FuncMap{
 		"csrfField": csrfField,
 		"assetHash": func(s string) string { return s },
-		"dict": func(values ...any) map[string]any {
-			m := make(map[string]any)
+		"dict": func(values ...any) (map[string]any, error) {
+			if len(values)%2 != 0 {
+				return nil, errors.New("invalid dict call")
+			}
+			m := make(map[string]interface{}, len(values)/2)
 			for i := 0; i+1 < len(values); i += 2 {
-				k, _ := values[i].(string)
+				k, ok := values[i].(string)
+				if !ok {
+					return nil, errors.New("dict keys must be strings")
+				}
 				m[k] = values[i+1]
 			}
-			return m
+			return m, nil
 		},
 	}
 	tmpl := template.New("test").Funcs(funcMap)

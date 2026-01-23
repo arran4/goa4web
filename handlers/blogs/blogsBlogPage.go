@@ -40,14 +40,18 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	dateSuffix := ""
+	if !blog.Written.IsZero() {
+		dateSuffix = fmt.Sprintf(" - %s", cd.FormatLocalTime(blog.Written))
+	}
 	if blog.Username.Valid {
-		cd.PageTitle = fmt.Sprintf("Blog by %s", blog.Username.String)
+		cd.PageTitle = fmt.Sprintf("Blog by %s%s", blog.Username.String, dateSuffix)
 	} else {
-		cd.PageTitle = fmt.Sprintf("Blog %d", blog.Idblogs)
+		cd.PageTitle = fmt.Sprintf("Blog %d%s", blog.Idblogs, dateSuffix)
 	}
 
 	desc := a4code.Snip(blog.Blog.String, 128)
-	imageURL, _ := share.MakeImageURL(cd.AbsoluteURL(""), "Blog: "+blog.Username.String, desc, cd.ShareSignKey, false)
+	imageURL, _ := share.MakeImageURL(cd.AbsoluteURL(""), cd.PageTitle, desc, cd.ShareSignKey, false)
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       cd.PageTitle,
 		Description: a4code.Snip(blog.Blog.String, 128),

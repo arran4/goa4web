@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/arran4/goa4web/handlers/share"
 
@@ -98,14 +97,18 @@ func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if post.Occurred.Valid {
+		cd.PageTitle = fmt.Sprintf("News - %s", cd.FormatLocalTime(post.Occurred.Time))
+	}
+
 	desc := a4code.Snip(post.News.String, 128)
-	imgURL, err := share.MakeImageURL(cd.AbsoluteURL(""), "Latest News", desc, cd.ShareSignKey, false)
+	imgURL, err := share.MakeImageURL(cd.AbsoluteURL(""), cd.PageTitle, desc, cd.ShareSignKey, false)
 	if err != nil {
 		log.Printf("Error making image URL: %v", err)
 	}
 
 	cd.OpenGraph = &common.OpenGraph{
-		Title:       strings.Split(post.News.String, "\n")[0],
+		Title:       cd.PageTitle,
 		Description: desc,
 		Image:       imgURL,
 		ImageWidth:  cd.Config.OGImageWidth,

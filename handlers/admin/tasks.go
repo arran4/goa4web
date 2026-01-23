@@ -281,8 +281,14 @@ const (
 	// TaskUsersDisallow removes multiple user roles.
 	TaskUsersDisallow tasks.TaskString = "Users Disallow"
 
-	// TaskUserResetPassword resets a user's password.
-	TaskUserResetPassword tasks.TaskString = "Password Reset"
+	// TaskUserForcePasswordChange resets a user's password.
+	TaskUserForcePasswordChange tasks.TaskString = "Force Password Change"
+
+	// TaskUserSendResetEmail sends a reset password email to the user.
+	TaskUserSendResetEmail tasks.TaskString = "Send Reset Email"
+
+	// TaskUserGenerateResetLink generates a reset password link for the user.
+	TaskUserGenerateResetLink tasks.TaskString = "Generate Reset Link"
 
 	// TaskPasswordVerify verifies a password reset code.
 	TaskPasswordVerify tasks.TaskString = "Password Verify"

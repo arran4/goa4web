@@ -120,9 +120,37 @@ type QuerierStub struct {
 	AdminDemoteAnnouncementErr   error
 	AdminDemoteAnnouncementFn    func(context.Context, int32) error
 
-	AdminCancelBannedIpCalls []string
-	AdminCancelBannedIpErr   error
-	AdminCancelBannedIpFn    func(context.Context, string) error
+	AdminCancelBannedIpCalls      []string
+	AdminCancelBannedIpErr        error
+	AdminCancelBannedIpFn         func(context.Context, string) error
+	GetPasswordResetByUserCalls   []GetPasswordResetByUserParams
+	GetPasswordResetByUserReturns *PendingPassword
+	GetPasswordResetByUserErr     error
+	GetPasswordResetByUserFn      func(context.Context, GetPasswordResetByUserParams) (*PendingPassword, error)
+
+	CreatePasswordResetForUserCalls []CreatePasswordResetForUserParams
+	CreatePasswordResetForUserErr   error
+	CreatePasswordResetForUserFn    func(context.Context, CreatePasswordResetForUserParams) error
+
+	AdminInsertRequestQueueCalls   []AdminInsertRequestQueueParams
+	AdminInsertRequestQueueReturns sql.Result
+	AdminInsertRequestQueueErr     error
+	AdminInsertRequestQueueFn      func(context.Context, AdminInsertRequestQueueParams) (sql.Result, error)
+
+	SystemGetLoginRow     *SystemGetLoginRow
+	SystemGetLoginErr     error
+	SystemGetLoginCalls   []sql.NullString
+	SystemGetLoginFn      func(context.Context, sql.NullString) (*SystemGetLoginRow, error)
+
+	SystemListVerifiedEmailsByUserIDReturn []*UserEmail
+	SystemListVerifiedEmailsByUserIDErr    error
+	SystemListVerifiedEmailsByUserIDCalls  []int32
+	SystemListVerifiedEmailsByUserIDFn     func(context.Context, int32) ([]*UserEmail, error)
+
+	GetLoginRoleForUserReturns int32
+	GetLoginRoleForUserErr     error
+	GetLoginRoleForUserCalls   []int32
+	GetLoginRoleForUserFn      func(context.Context, int32) (int32, error)
 
 	SystemListPendingEmailsCalls  []SystemListPendingEmailsParams
 	SystemListPendingEmailsReturn []*SystemListPendingEmailsRow
@@ -1435,4 +1463,48 @@ func (s *QuerierStub) SystemCheckRoleGrant(ctx context.Context, arg SystemCheckR
 		return fn(arg)
 	}
 	return ret, err
+}
+
+func (s *QuerierStub) GetPasswordResetByUser(ctx context.Context, arg GetPasswordResetByUserParams) (*PendingPassword, error) {
+	s.mu.Lock()
+	s.GetPasswordResetByUserCalls = append(s.GetPasswordResetByUserCalls, arg)
+	fn := s.GetPasswordResetByUserFn
+	ret := s.GetPasswordResetByUserReturns
+	err := s.GetPasswordResetByUserErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) CreatePasswordResetForUser(ctx context.Context, arg CreatePasswordResetForUserParams) error {
+	s.mu.Lock()
+	s.CreatePasswordResetForUserCalls = append(s.CreatePasswordResetForUserCalls, arg)
+	fn := s.CreatePasswordResetForUserFn
+	err := s.CreatePasswordResetForUserErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
+}
+
+func (s *QuerierStub) AdminInsertRequestQueue(ctx context.Context, arg AdminInsertRequestQueueParams) (sql.Result, error) {
+	s.mu.Lock()
+	s.AdminInsertRequestQueueCalls = append(s.AdminInsertRequestQueueCalls, arg)
+	fn := s.AdminInsertRequestQueueFn
+	ret := s.AdminInsertRequestQueueReturns
+	err := s.AdminInsertRequestQueueErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	if err != nil {
+		return nil, err
+	}
+	if ret == nil {
+		return FakeSQLResult{}, nil
+	}
+	return ret, nil
 }

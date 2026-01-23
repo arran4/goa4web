@@ -287,6 +287,9 @@ const (
 	// TaskUserSendResetEmail sends a reset password email to the user.
 	TaskUserSendResetEmail tasks.TaskString = "Send Reset Email"
 
+	// TaskUserGenerateResetLink generates a reset password link for the user.
+	TaskUserGenerateResetLink tasks.TaskString = "Generate Reset Link"
+
 	// TaskPasswordVerify verifies a password reset code.
 	TaskPasswordVerify tasks.TaskString = "Password Verify"
 

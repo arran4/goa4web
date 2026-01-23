@@ -322,7 +322,7 @@ func TestUserPasswordResetTaskEventData(t *testing.T) {
 		Data:    map[string]any{},
 		UserID:  uid,
 		Path:    "/admin/user/2/password/reset",
-		Task:    userPasswordResetTask,
+		Task:    userForcePasswordChangeTask,
 		Outcome: eventbus.TaskOutcomeSuccess,
 	}
 	ctx := context.Background()
@@ -336,7 +336,7 @@ func TestUserPasswordResetTaskEventData(t *testing.T) {
 	req = mux.SetURLVars(req, map[string]string{"user": "2"})
 
 	rr := httptest.NewRecorder()
-	userPasswordResetTask.Action(rr, req)
+	userForcePasswordChangeTask.Action(rr, req)
 	bus.Publish(*evt)
 
 	if cdlq.lastError != "" {

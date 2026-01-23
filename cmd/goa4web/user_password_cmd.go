@@ -52,6 +52,18 @@ func (c *userPasswordCmd) Run() error {
 			return fmt.Errorf("generate-reset: %w", err)
 		}
 		return cmd.Run()
+	case "force-change":
+		cmd, err := parseUserPasswordForceChangeCmd(c.userCmd, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("force-change: %w", err)
+		}
+		return cmd.Run()
+	case "send-reset-email":
+		cmd, err := parseUserPasswordSendResetEmailCmd(c.userCmd, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("send-reset-email: %w", err)
+		}
+		return cmd.Run()
 	case "approve":
 		cmd, err := parseUserPasswordApproveCmd(c, c.args[1:])
 		if err != nil {

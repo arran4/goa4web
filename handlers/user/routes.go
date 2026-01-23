@@ -59,6 +59,9 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, _ *nav.Registry) {
 
 	r.HandleFunc("/user/profile/{username}", userPublicProfilePage).Methods(http.MethodGet)
 	r.HandleFunc("/user/profile/{username}/", userPublicProfilePage).Methods(http.MethodGet)
+
+	r.HandleFunc("/user/{user:[0-9]+}/reset", UserResetPasswordPage).Methods("GET")
+	r.HandleFunc("/user/{user:[0-9]+}/reset", handlers.TaskHandler(userResetPasswordTask)).Methods("POST").MatcherFunc(userResetPasswordTask.Matcher())
 }
 
 // Register registers the user router module.

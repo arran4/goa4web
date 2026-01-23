@@ -37,7 +37,7 @@ func TestUserPasswordResetIncludesPasswordInMessages(t *testing.T) {
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 
 	rr := httptest.NewRecorder()
-	result := userPasswordResetTask.Action(rr, req)
+	result := userForcePasswordChangeTask.Action(rr, req)
 
 	handler, ok := result.(http.Handler)
 	if !ok {

@@ -10,18 +10,13 @@ import (
 
 func csrfField() template.HTML { return "" }
 
-type TopicLabel struct {
-	Name string
-	Type string
-}
-
 // TestThreadPageShowsDefaultPrivateLabels ensures that the thread page template
 // renders special private labels like "new" and "unread".
 func TestThreadPageShowsDefaultPrivateLabels(t *testing.T) {
 	funcMap := template.FuncMap{
 		"csrfField": csrfField,
 		"assetHash": func(s string) string { return s },
-    "dict": func(values ...any) (map[string]any, error) {
+		"dict": func(values ...any) (map[string]any, error) {
 			if len(values)%2 != 0 {
 				return nil, errors.New("invalid dict call")
 			}

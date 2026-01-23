@@ -114,3 +114,42 @@ func (s *QuerierStub) AdminDeletePendingEmail(ctx context.Context, id int32) err
 	}
 	return err
 }
+
+func (s *QuerierStub) SystemGetLogin(ctx context.Context, arg sql.NullString) (*SystemGetLoginRow, error) {
+	s.mu.Lock()
+	s.SystemGetLoginCalls = append(s.SystemGetLoginCalls, arg)
+	fn := s.SystemGetLoginFn
+	row := s.SystemGetLoginRow
+	err := s.SystemGetLoginErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return row, err
+}
+
+func (s *QuerierStub) SystemListVerifiedEmailsByUserID(ctx context.Context, userID int32) ([]*UserEmail, error) {
+	s.mu.Lock()
+	s.SystemListVerifiedEmailsByUserIDCalls = append(s.SystemListVerifiedEmailsByUserIDCalls, userID)
+	fn := s.SystemListVerifiedEmailsByUserIDFn
+	ret := s.SystemListVerifiedEmailsByUserIDReturn
+	err := s.SystemListVerifiedEmailsByUserIDErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, userID)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) GetLoginRoleForUser(ctx context.Context, userID int32) (int32, error) {
+	s.mu.Lock()
+	s.GetLoginRoleForUserCalls = append(s.GetLoginRoleForUserCalls, userID)
+	fn := s.GetLoginRoleForUserFn
+	ret := s.GetLoginRoleForUserReturns
+	err := s.GetLoginRoleForUserErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, userID)
+	}
+	return ret, err
+}

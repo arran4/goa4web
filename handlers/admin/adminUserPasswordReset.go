@@ -29,6 +29,11 @@ type UserSendResetEmailTask struct{ tasks.TaskString }
 
 var userSendResetEmailTask = &UserSendResetEmailTask{TaskString: TaskUserSendResetEmail}
 
+// UserGenerateResetLinkTask generates a password reset link for the user.
+type UserGenerateResetLinkTask struct{ tasks.TaskString }
+
+var userGenerateResetLinkTask = &UserGenerateResetLinkTask{TaskString: TaskUserGenerateResetLink}
+
 const (
 	TemplateUserResetPasswordConfirmPage handlers.Page = "admin/userResetPasswordConfirmPage.gohtml"
 )
@@ -42,6 +47,11 @@ var _ tasks.Task = (*UserSendResetEmailTask)(nil)
 var _ tasks.AuditableTask = (*UserSendResetEmailTask)(nil)
 var _ notif.TargetUsersNotificationProvider = (*UserSendResetEmailTask)(nil)
 var _ tasks.TemplatesRequired = (*UserSendResetEmailTask)(nil)
+
+var _ tasks.Task = (*UserGenerateResetLinkTask)(nil)
+var _ tasks.AuditableTask = (*UserGenerateResetLinkTask)(nil)
+var _ notif.TargetUsersNotificationProvider = (*UserGenerateResetLinkTask)(nil)
+var _ tasks.TemplatesRequired = (*UserGenerateResetLinkTask)(nil)
 
 func (UserForcePasswordChangeTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -224,6 +234,94 @@ func (UserSendResetEmailTask) AuditRecord(data map[string]any) string {
 		return fmt.Sprintf("password reset email sent for %d", id)
 	}
 	return "password reset email sent"
+}
+
+func (UserGenerateResetLinkTask) Action(w http.ResponseWriter, r *http.Request) any {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
+	user := cd.CurrentProfileUser()
+	back := "/admin/user"
+	if user != nil {
+		back = fmt.Sprintf("/admin/user/%d", user.Idusers)
+	}
+	data := struct {
+		Errors   []string
+		Messages []string
+		Back     string
+	}{
+		Back: back,
+	}
+	if user == nil {
+		data.Errors = append(data.Errors, "user not found")
+		return handlers.TemplateWithDataHandler(handlers.TemplateRunTaskPage, data)
+	}
+
+	code, err := cd.CreatePasswordResetForUser(user.Idusers, "magic-link", "magic")
+	if err != nil {
+		data.Errors = append(data.Errors, fmt.Errorf("create reset token: %w", err).Error())
+		return handlers.TemplateWithDataHandler(handlers.TemplateRunTaskPage, data)
+	}
+
+	targetURL := fmt.Sprintf("/user/%d/reset", user.Idusers)
+	targetURLWithCode := fmt.Sprintf("%s?code=%s", targetURL, code)
+	linkData := "link:" + targetURLWithCode
+	duration := time.Hour * 24
+	opts := []sign.SignOption{
+		sign.WithExpiry(time.Now().Add(duration)),
+	}
+	sig := sign.Sign(linkData, cd.LinkSignKey, opts...)
+	signedURL, err := sign.AddQuerySig(cd.AbsoluteURL(targetURLWithCode), sig, opts...)
+	if err != nil {
+		data.Errors = append(data.Errors, fmt.Errorf("sign url: %w", err).Error())
+		return handlers.TemplateWithDataHandler(handlers.TemplateRunTaskPage, data)
+	}
+
+	if evt := cd.Event(); evt != nil {
+		if evt.Data == nil {
+			evt.Data = map[string]any{}
+		}
+		evt.Data["targetUserID"] = user.Idusers
+		evt.Data["Username"] = user.Username.String
+		evt.Data["ResetURL"] = signedURL
+	}
+	data.Messages = append(data.Messages, fmt.Sprintf("Reset link generated: %s", signedURL))
+	return handlers.TemplateWithDataHandler(handlers.TemplateRunTaskPage, data)
+}
+
+func (UserGenerateResetLinkTask) TemplatesRequired() []tasks.Page {
+	return []tasks.Page{
+		tasks.Page(handlers.TemplateRunTaskPage),
+		TemplateUserResetPasswordConfirmPage,
+	}
+}
+
+func (UserGenerateResetLinkTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, error) {
+	if id, ok := evt.Data["targetUserID"].(int32); ok {
+		return []int32{id}, nil
+	}
+	if id, ok := evt.Data["targetUserID"].(int); ok {
+		return []int32{int32(id)}, nil
+	}
+	return nil, fmt.Errorf("target user id not provided")
+}
+
+func (UserGenerateResetLinkTask) TargetEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
+	// No email sent
+	return nil, false
+}
+
+func (UserGenerateResetLinkTask) TargetInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
+	return nil
+}
+
+func (UserGenerateResetLinkTask) AuditRecord(data map[string]any) string {
+	if u, ok := data["Username"].(string); ok {
+		return "password reset link generated for " + u
+	}
+	if id, ok := data["targetUserID"].(int32); ok {
+		return fmt.Sprintf("password reset link generated for %d", id)
+	}
+	return "password reset link generated"
 }
 
 func adminUserResetPasswordConfirmPage(w http.ResponseWriter, r *http.Request) {

@@ -33,9 +33,10 @@ var (
 var _ tasks.TemplatesRequired = (*ForgotPasswordTask)(nil)
 
 const (
-	ForgotPasswordPageTmpl          handlers.Page = "forgotPasswordPage.gohtml"
-	ForgotPasswordNoEmailPageTmpl   handlers.Page = "forgotPasswordNoEmailPage.gohtml"
-	ForgotPasswordEmailSentPageTmpl handlers.Page = "forgotPasswordEmailSentPage.gohtml"
+	ForgotPasswordPageTmpl            handlers.Page = "forgotPasswordPage.gohtml"
+	ForgotPasswordNoEmailPageTmpl     handlers.Page = "forgotPasswordNoEmailPage.gohtml"
+	ForgotPasswordEmailSentPageTmpl   handlers.Page = "forgotPasswordEmailSentPage.gohtml"
+	PasswordResetRequestSentPageTmpl  handlers.Page = "passwordResetRequestSentPage.gohtml"
 )
 
 var forgotPasswordTask = &ForgotPasswordTask{TaskString: TaskUserResetPassword}
@@ -105,6 +106,9 @@ func (ForgotPasswordTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 	cd.PageTitle = "Password Reset"
+	if userHasNoVerifiedEmail {
+		return PasswordResetRequestSentPageTmpl.Handler(struct{}{})
+	}
 	return ForgotPasswordEmailSentPageTmpl.Handler(struct{}{})
 }
 
@@ -159,5 +163,6 @@ func (ForgotPasswordTask) TemplatesRequired() []tasks.Page {
 		ForgotPasswordPageTmpl,
 		ForgotPasswordNoEmailPageTmpl,
 		ForgotPasswordEmailSentPageTmpl,
+		PasswordResetRequestSentPageTmpl,
 	}
 }

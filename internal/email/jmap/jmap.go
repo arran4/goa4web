@@ -182,9 +182,14 @@ func (j Provider) TestConfig(ctx context.Context) error {
 }
 
 func providerFromConfig(cfg *config.RuntimeConfig) (email.Provider, error) {
-	ep := strings.TrimSpace(cfg.EmailJMAPEndpoint)
+	// If an override is provided, use it. Otherwise, use the standard endpoint.
+	ep := strings.TrimSpace(cfg.EmailJMAPEndpointOverride)
 	if ep == "" {
-		return nil, fmt.Errorf("Email disabled: %s not set", config.EnvJMAPEndpoint)
+		ep = strings.TrimSpace(cfg.EmailJMAPEndpoint)
+	}
+	if ep == "" {
+		return nil, fmt.Errorf("Email disabled: %s or %s not set",
+			config.EnvJMAPEndpoint, config.EnvJMAPEndpointOverride)
 	}
 	acc := strings.TrimSpace(cfg.EmailJMAPAccount)
 	id := strings.TrimSpace(cfg.EmailJMAPIdentity)
@@ -220,27 +225,15 @@ func providerFromConfig(cfg *config.RuntimeConfig) (email.Provider, error) {
 		if id == "" {
 			id = SelectIdentityID(session)
 		}
-		// Use session.APIURL if it looks valid, otherwise fallback to ep if using custom path
-		apiURL := session.APIURL
 
-		// If an override is provided, force it to be the API URL and the final endpoint
-		if override := strings.TrimSpace(cfg.EmailJMAPEndpointOverride); override != "" {
-			apiURL = override
-			ep = override
-		} else if ep != "" {
-			u, _ := url.Parse(ep)
-			if u != nil && u.Path != "" && u.Path != "/" {
-				// If the user provided a custom path endpoint, use it (or prefer it)
-				// But we should stick to session.APIURL if it's authoritative.
-				// However, observed issue is session.APIURL might be internal or unreachable.
-				// So if session discovery succeeded via 'ep', we might trust 'ep' more if it has a path?
-				// For now, let's stick to the previous fix which used 'ep' for identity discovery.
-				apiURL = ep
-			}
-		} else if session.APIURL != "" {
-			// If no override and no custom path provided, default to session's API URL
+		// If no override was provided, the discovered API URL is authoritative.
+		// If an override was used, 'ep' is already set to it and we stick with it.
+		if strings.TrimSpace(cfg.EmailJMAPEndpointOverride) == "" && session.APIURL != "" {
 			ep = session.APIURL
 		}
+
+		// The API URL for the next call is our determined endpoint.
+		apiURL := ep
 
 		if id == "" && acc != "" {
 			// Try to fetch identities via API
@@ -254,19 +247,6 @@ func providerFromConfig(cfg *config.RuntimeConfig) (email.Provider, error) {
 	if acc == "" || id == "" {
 		return nil, fmt.Errorf("Email disabled: %s or %s not set and could not be discovered", config.EnvJMAPAccount, config.EnvJMAPIdentity)
 	}
-	// Ensure we use the correct endpoint for the provider calls
-	if ep == "" {
-		// This case shouldn't happen based on above check, but logical fallback
-		// if we started with empty ep and discovered it (not possible with current logic)
-	}
-
-	// If the user specified an endpoint with a path (e.g. /jmap/), we should use it.
-	// DiscoverSession might have returned a session with an APIURL.
-	// If the user explicitly configured an endpoint, we usually trust it.
-	// But standard JMAP says use the one from Session.
-	// In the failing case, the user likely set the endpoint manually to the API endpoint.
-	// So let's prefer 'ep' if it was working for discovery.
-
 	return Provider{
 		Endpoint:  ep,
 		Username:  cfg.EmailJMAPUser,

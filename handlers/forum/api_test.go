@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/handlers/forumcommon"
 	"context"
 	"database/sql"
 	"net/http"
@@ -109,7 +110,7 @@ func TestQuoteApi(t *testing.T) {
 
 			rr := httptest.NewRecorder()
 			router := mux.NewRouter()
-			router.HandleFunc("/api/forum/quote/{commentid}", QuoteApi)
+			router.HandleFunc("/api/forum/quote/{commentid}", forumcommon.QuoteApi)
 			router.ServeHTTP(rr, req)
 
 			if status := rr.Code; status != tt.expectedStatus {

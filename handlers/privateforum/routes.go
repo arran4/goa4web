@@ -1,6 +1,7 @@
 package privateforum
 
 import (
+	"github.com/arran4/goa4web/handlers/forumcommon"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -15,10 +16,10 @@ import (
 
 // RegisterRoutes attaches the private forum endpoints to r.
 func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Registry) {
-	navReg.RegisterIndexLinkWithViewPermission("Private", "/private", SectionWeight, "privateforum", "topic")
+	navReg.RegisterIndexLinkWithViewPermission("Private", "/private", forumcommon.SectionWeight, "privateforum", "topic")
 	pr := r.PathPrefix("/private").Subrouter()
 	pr.NotFoundHandler = http.HandlerFunc(handlers.RenderNotFoundOrLogin)
-	pr.Use(handlers.IndexMiddleware(CustomIndex), handlers.SectionMiddleware("privateforum"), forumhandlers.BasePathMiddleware("/private"))
+	pr.Use(handlers.IndexMiddleware(forumcommon.CustomIndex), handlers.SectionMiddleware("privateforum"), forumcommon.BasePathMiddleware("/private"))
 	pr.HandleFunc("", PrivateForumPage).Methods(http.MethodGet)
 	pr.HandleFunc("/preview", handlers.PreviewPage).Methods("POST")
 	// Dedicated page to start a private group discussion
@@ -55,18 +56,18 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Reg
 	pr.HandleFunc("/topic/{topic}/thread", handlers.TaskHandler(forumhandlers.ThreadNewCancelHandler)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.ThreadNewCancelHandler.Matcher())
 
 	// OpenGraph preview endpoints (no auth required for social media bots if signed)
-	pr.HandleFunc("/shared/topic/{topic}", SharedTopicPreviewPage).Methods(http.MethodGet, http.MethodHead)
-	pr.HandleFunc("/shared/topic/{topic}/ts/{ts}/sign/{sign}", SharedTopicPreviewPage).Methods(http.MethodGet, http.MethodHead)
-	pr.HandleFunc("/shared/topic/{topic}/nonce/{nonce}/sign/{sign}", SharedTopicPreviewPage).Methods(http.MethodGet, http.MethodHead)
-	pr.HandleFunc("/shared/topic/{topic}/thread/{thread}", SharedThreadPreviewPage).Methods(http.MethodGet, http.MethodHead)
-	pr.HandleFunc("/shared/topic/{topic}/thread/{thread}/ts/{ts}/sign/{sign}", SharedThreadPreviewPage).Methods(http.MethodGet, http.MethodHead)
-	pr.HandleFunc("/shared/topic/{topic}/thread/{thread}/nonce/{nonce}/sign/{sign}", SharedThreadPreviewPage).Methods(http.MethodGet, http.MethodHead)
+	pr.HandleFunc("/shared/topic/{topic}", forumcommon.SharedTopicPreviewPage).Methods(http.MethodGet, http.MethodHead)
+	pr.HandleFunc("/shared/topic/{topic}/ts/{ts}/sign/{sign}", forumcommon.SharedTopicPreviewPage).Methods(http.MethodGet, http.MethodHead)
+	pr.HandleFunc("/shared/topic/{topic}/nonce/{nonce}/sign/{sign}", forumcommon.SharedTopicPreviewPage).Methods(http.MethodGet, http.MethodHead)
+	pr.HandleFunc("/shared/topic/{topic}/thread/{thread}", forumcommon.SharedThreadPreviewPage).Methods(http.MethodGet, http.MethodHead)
+	pr.HandleFunc("/shared/topic/{topic}/thread/{thread}/ts/{ts}/sign/{sign}", forumcommon.SharedThreadPreviewPage).Methods(http.MethodGet, http.MethodHead)
+	pr.HandleFunc("/shared/topic/{topic}/thread/{thread}/nonce/{nonce}/sign/{sign}", forumcommon.SharedThreadPreviewPage).Methods(http.MethodGet, http.MethodHead)
 
-	pr.Handle("/topic/{topic}/thread/{thread}", forumhandlers.RequireThreadAndTopic(http.HandlerFunc(ThreadPage))).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
-	pr.Handle("/topic/{topic}/thread/{thread}", forumhandlers.RequireThreadAndTopic(http.HandlerFunc(handlers.TaskDoneAutoRefreshPage))).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount())
-	pr.Handle("/topic/{topic}/thread/{thread}/reply", forumhandlers.RequireThreadAndTopic(http.HandlerFunc(handlers.TaskHandler(forumhandlers.ReplyTaskHandler)))).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.ReplyTaskHandler.Matcher())
-	pr.Handle("/topic/{topic}/thread/{thread}/comment/{comment}", forumhandlers.RequireThreadAndTopic(forumcomments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(forumhandlers.TopicThreadCommentEditActionHandler))))).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.TopicThreadCommentEditActionHandler.Matcher())
-	pr.Handle("/topic/{topic}/thread/{thread}/comment/{comment}", forumhandlers.RequireThreadAndTopic(forumcomments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(forumhandlers.TopicThreadCommentEditActionCancelHandler))))).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.TopicThreadCommentEditActionCancelHandler.Matcher())
+	pr.Handle("/topic/{topic}/thread/{thread}", forumcommon.RequireThreadAndTopic(http.HandlerFunc(ThreadPage))).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	pr.Handle("/topic/{topic}/thread/{thread}", forumcommon.RequireThreadAndTopic(http.HandlerFunc(handlers.TaskDoneAutoRefreshPage))).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount())
+	pr.Handle("/topic/{topic}/thread/{thread}/reply", forumcommon.RequireThreadAndTopic(http.HandlerFunc(handlers.TaskHandler(forumhandlers.ReplyTaskHandler)))).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.ReplyTaskHandler.Matcher())
+	pr.Handle("/topic/{topic}/thread/{thread}/comment/{comment}", forumcommon.RequireThreadAndTopic(forumcomments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(forumhandlers.TopicThreadCommentEditActionHandler))))).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.TopicThreadCommentEditActionHandler.Matcher())
+	pr.Handle("/topic/{topic}/thread/{thread}/comment/{comment}", forumcommon.RequireThreadAndTopic(forumcomments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(forumhandlers.TopicThreadCommentEditActionCancelHandler))))).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.TopicThreadCommentEditActionCancelHandler.Matcher())
 
 }
 

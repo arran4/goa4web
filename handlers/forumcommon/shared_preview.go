@@ -1,4 +1,4 @@
-package forum
+package forumcommon
 
 import (
 	"fmt"
@@ -32,7 +32,11 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 
 	// If user is logged in, redirect to actual content URL
 	if cd.UserID != 0 {
-		actualURL := fmt.Sprintf("/forum/topic/%d/thread/%d", topicID, threadID)
+		base := cd.ForumBasePath
+		if base == "" {
+			base = "/forum"
+		}
+		actualURL := fmt.Sprintf("%s/topic/%d/thread/%d", base, topicID, threadID)
 		http.Redirect(w, r, actualURL, http.StatusFound)
 		return
 	}
@@ -82,7 +86,11 @@ func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 
 	// If user is logged in, redirect to actual content URL
 	if cd.UserID != 0 {
-		actualURL := fmt.Sprintf("/forum/topic/%d", topicID)
+		base := cd.ForumBasePath
+		if base == "" {
+			base = "/forum"
+		}
+		actualURL := fmt.Sprintf("%s/topic/%d", base, topicID)
 		http.Redirect(w, r, actualURL, http.StatusFound)
 		return
 	}

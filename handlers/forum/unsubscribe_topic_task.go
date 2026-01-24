@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/handlers/forumcommon"
 	"fmt"
 	"log"
 	"net/http"
@@ -18,7 +19,7 @@ import (
 // unsubscribeTopicTask removes a topic subscription.
 type unsubscribeTopicTask struct{ tasks.TaskString }
 
-var unsubscribeTopicTaskAction = &unsubscribeTopicTask{TaskString: TaskUnsubscribeFromTopic}
+var unsubscribeTopicTaskAction = &unsubscribeTopicTask{TaskString: forumcommon.TaskUnsubscribeFromTopic}
 
 // UnsubscribeTopicTaskHandler removes a topic subscription. Exported for reuse.
 var UnsubscribeTopicTaskHandler = unsubscribeTopicTaskAction

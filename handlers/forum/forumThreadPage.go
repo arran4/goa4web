@@ -109,7 +109,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		cd.OpenGraph.Description = a4code.Snip(commentRows[0].Text.String, 128)
 	}
 
-	// threadRow and topicRow are provided by the RequireThreadAndTopic
+	// threadRow and topicRow are provided by the forumcommon.RequireThreadAndTopic
 	// middleware.
 
 	commentId, _ := strconv.Atoi(r.URL.Query().Get("comment"))

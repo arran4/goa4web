@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/handlers/forumcommon"
 	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -9,7 +10,7 @@ import (
 // TopicCreateTask creates a new forum topic.
 type TopicCreateTask struct{ tasks.TaskString }
 
-var topicCreateTask = &TopicCreateTask{TaskString: TaskForumTopicCreate}
+var topicCreateTask = &TopicCreateTask{TaskString: forumcommon.TaskForumTopicCreate}
 
 var (
 	_ tasks.Task                       = (*TopicCreateTask)(nil)

@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/handlers/forumcommon"
 	"context"
 	"database/sql"
 	"net/http"
@@ -58,7 +59,7 @@ func TestRequireThreadAndTopicTrue(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	RequireThreadAndTopic(handler).ServeHTTP(rr, req)
+	forumcommon.RequireThreadAndTopic(handler).ServeHTTP(rr, req)
 	if !called {
 		t.Errorf("expected handler call")
 	}
@@ -97,7 +98,7 @@ func TestRequireThreadAndTopicFalse(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	RequireThreadAndTopic(handler).ServeHTTP(rr, req)
+	forumcommon.RequireThreadAndTopic(handler).ServeHTTP(rr, req)
 	if called {
 		t.Errorf("expected handler not called")
 	}
@@ -127,7 +128,7 @@ func TestRequireThreadAndTopicError(t *testing.T) {
 		called = true
 	})
 
-	RequireThreadAndTopic(handler).ServeHTTP(rr, req)
+	forumcommon.RequireThreadAndTopic(handler).ServeHTTP(rr, req)
 	if called {
 		t.Errorf("expected handler not called")
 	}

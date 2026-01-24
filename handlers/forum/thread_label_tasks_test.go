@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/handlers/forumcommon"
 	"context"
 	"net/http"
 	"net/http/httptest"
@@ -83,7 +84,7 @@ func TestSetLabelsTaskAddsInverseLabels(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	form := url.Values{}
-	form.Set("task", string(TaskSetLabels))
+	form.Set("task", string(forumcommon.TaskSetLabels))
 	req := httptest.NewRequest(http.MethodPost, "/forum/thread/1/labels", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req = mux.SetURLVars(req, map[string]string{"thread": "1"})
@@ -117,7 +118,7 @@ func TestSetLabelsTaskUpdatesSpecialLabels(t *testing.T) {
 
 	form := url.Values{}
 	form.Set("redirect", "/private/topic/1/thread/3")
-	form.Set("task", string(TaskMarkThreadRead))
+	form.Set("task", string(forumcommon.TaskMarkThreadRead))
 	req := httptest.NewRequest(http.MethodPost, "/private/topic/1/thread/1/labels", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "1"})
@@ -135,7 +136,7 @@ func TestMarkThreadReadTaskRedirectWithThread(t *testing.T) {
 	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
 	form := url.Values{}
 	form.Set("redirect", "/private/topic/1/thread/3")
-	form.Set("task", string(TaskMarkThreadRead))
+	form.Set("task", string(forumcommon.TaskMarkThreadRead))
 	req := httptest.NewRequest(http.MethodPost, "/private/topic/1/thread/1/labels", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))

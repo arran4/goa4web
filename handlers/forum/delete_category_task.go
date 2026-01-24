@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/handlers/forumcommon"
 	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -9,7 +10,7 @@ import (
 // DeleteCategoryTask removes a forum category.
 type DeleteCategoryTask struct{ tasks.TaskString }
 
-var deleteCategoryTask = &DeleteCategoryTask{TaskString: TaskDeleteCategory}
+var deleteCategoryTask = &DeleteCategoryTask{TaskString: forumcommon.TaskDeleteCategory}
 
 var (
 	_ tasks.Task                       = (*DeleteCategoryTask)(nil)

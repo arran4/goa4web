@@ -1,4 +1,4 @@
-package forum
+package forumcommon
 
 import (
 	"net/http"

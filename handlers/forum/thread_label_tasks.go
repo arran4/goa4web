@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/handlers/forumcommon"
 	"fmt"
 	"log"
 	"net/http"
@@ -27,14 +28,14 @@ type AddPrivateLabelTask struct{ tasks.TaskString }
 type RemovePrivateLabelTask struct{ tasks.TaskString }
 
 var (
-	addPublicLabelTask     = &AddPublicLabelTask{TaskString: TaskAddPublicLabel}
-	removePublicLabelTask  = &RemovePublicLabelTask{TaskString: TaskRemovePublicLabel}
-	addPrivateLabelTask    = &AddPrivateLabelTask{TaskString: TaskAddPrivateLabel}
-	removePrivateLabelTask = &RemovePrivateLabelTask{TaskString: TaskRemovePrivateLabel}
-	addAuthorLabelTask     = &AddAuthorLabelTask{TaskString: TaskAddAuthorLabel}
-	removeAuthorLabelTask  = &RemoveAuthorLabelTask{TaskString: TaskRemoveAuthorLabel}
-	markThreadReadTask     = &MarkThreadReadTask{TaskString: TaskMarkThreadRead}
-	setLabelsTask          = &SetLabelsTask{TaskString: TaskSetLabels}
+	addPublicLabelTask     = &AddPublicLabelTask{TaskString: forumcommon.TaskAddPublicLabel}
+	removePublicLabelTask  = &RemovePublicLabelTask{TaskString: forumcommon.TaskRemovePublicLabel}
+	addPrivateLabelTask    = &AddPrivateLabelTask{TaskString: forumcommon.TaskAddPrivateLabel}
+	removePrivateLabelTask = &RemovePrivateLabelTask{TaskString: forumcommon.TaskRemovePrivateLabel}
+	addAuthorLabelTask     = &AddAuthorLabelTask{TaskString: forumcommon.TaskAddAuthorLabel}
+	removeAuthorLabelTask  = &RemoveAuthorLabelTask{TaskString: forumcommon.TaskRemoveAuthorLabel}
+	markThreadReadTask     = &MarkThreadReadTask{TaskString: forumcommon.TaskMarkThreadRead}
+	setLabelsTask          = &SetLabelsTask{TaskString: forumcommon.TaskSetLabels}
 )
 
 // Exported task handlers for reuse outside the forum package.

@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/handlers/forumcommon"
 	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -9,7 +10,7 @@ import (
 // ThreadDeleteTask removes a forum thread.
 type ThreadDeleteTask struct{ tasks.TaskString }
 
-var threadDeleteTask = &ThreadDeleteTask{TaskString: TaskForumThreadDelete}
+var threadDeleteTask = &ThreadDeleteTask{TaskString: forumcommon.TaskForumThreadDelete}
 
 var (
 	_ tasks.Task                       = (*ThreadDeleteTask)(nil)

@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/handlers/forumcommon"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -15,7 +16,7 @@ import (
 // threadNewCancelTask aborts creating a new thread.
 type threadNewCancelTask struct{ tasks.TaskString }
 
-var threadNewCancelAction = &threadNewCancelTask{TaskString: TaskCancel}
+var threadNewCancelAction = &threadNewCancelTask{TaskString: forumcommon.TaskCancel}
 
 // ThreadNewCancelHandler aborts creating a new thread. Exported for reuse.
 var ThreadNewCancelHandler = threadNewCancelAction

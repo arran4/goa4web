@@ -1,4 +1,4 @@
-package forum
+package forumcommon
 
 import (
 	"fmt"
@@ -12,14 +12,17 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// CustomForumIndex builds context-aware index items for the public forum.
-func CustomForumIndex(cd *common.CoreData, r *http.Request) {
-	cd.CustomIndexItems = ForumCustomIndexItems(cd, r)
+// CustomIndex builds context-aware index items.
+func CustomIndex(cd *common.CoreData, r *http.Request) {
+	cd.CustomIndexItems = GetCustomIndexItems(cd, r)
 }
 
-// ForumCustomIndexItems returns the context-aware index items for forum pages.
-func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexItem {
-	base := forumBasePath(cd, r)
+// GetCustomIndexItems returns the context-aware index items for forum pages.
+func GetCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexItem {
+	base := cd.ForumBasePath
+	if base == "" {
+		base = "/forum"
+	}
 	section := "forum"
 	if strings.HasPrefix(base, "/private") {
 		section = "privateforum"
@@ -30,6 +33,30 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 	topicID := vars["topic"]
 
 	items := []common.IndexItem{}
+
+	// Root Level Logic (topicID == "")
+	if topicID == "" {
+		if section == "privateforum" {
+			items = append(items, common.IndexItem{
+				Name: "Create New private topic",
+				Link: fmt.Sprintf("%s/topic/new", base),
+			})
+		}
+		return items
+	}
+
+	// Topic/Thread Level Logic (topicID != "")
+
+	// "Go back" link
+	title := "Forum"
+	if section == "privateforum" {
+		title = "Private Forum"
+	}
+	items = append(items, common.IndexItem{
+		Name: fmt.Sprintf("Go back to %s", title),
+		Link: base,
+	})
+
 	if cd.FeedsEnabled && topicID != "" && threadID == "" {
 		cd.RSSFeedURL = fmt.Sprintf("%s/topic/%s.rss", base, topicID)
 		cd.RSSFeedTitle = "Topic RSS Feed"
@@ -74,7 +101,7 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 		}
 		if tid, err := strconv.Atoi(topicID); err == nil && cd.HasGrant(section, "topic", "post", int32(tid)) {
 			name := "New Thread"
-			if base == "/private" {
+			if strings.HasPrefix(base, "/private") {
 				name = "Create a new private thread"
 			}
 			items = append(items,
@@ -95,7 +122,7 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 		}
 		if tid, err := strconv.Atoi(topicID); err == nil && cd.HasGrant(section, "topic", "post", int32(tid)) {
 			name := "New Thread"
-			if base == "/private" {
+			if strings.HasPrefix(base, "/private") {
 				name = "Create a new private thread"
 			}
 			items = append(items,
@@ -107,7 +134,7 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 		}
 		if cd.UserID != 0 {
 			if tid, err := strconv.Atoi(topicID); err == nil {
-				if subscribedToTopic(cd, int32(tid)) {
+				if SubscribedToTopic(cd, int32(tid)) {
 					items = append(items,
 						common.IndexItem{
 							Name:   "Unsubscribe From Topic",
@@ -138,8 +165,6 @@ func hasThreadUnread(cd *common.CoreData, threadID string) bool {
 	if err != nil {
 		return false
 	}
-	// TODO: Pass author ID. For now passing 0 to keep default behavior (showing unread) if author is unknown.
-	// This function is deprecated/wrapper, so less critical.
 	labels, err := cd.ThreadPrivateLabels(int32(tid), 0)
 	if err != nil {
 		log.Printf("thread private labels: %v", err)
@@ -159,14 +184,4 @@ func markThreadReadLink(base, threadID, redirect string) string {
 		link = fmt.Sprintf("%s&redirect=%s", link, url.QueryEscape(redirect))
 	}
 	return link
-}
-
-func forumBasePath(cd *common.CoreData, r *http.Request) string {
-	if cd != nil && cd.ForumBasePath != "" {
-		return cd.ForumBasePath
-	}
-	if r != nil && strings.HasPrefix(r.URL.Path, "/private") {
-		return "/private"
-	}
-	return "/forum"
 }

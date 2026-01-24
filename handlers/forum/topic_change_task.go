@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/handlers/forumcommon"
 	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -9,7 +10,7 @@ import (
 // TopicChangeTask updates a forum topic title or details.
 type TopicChangeTask struct{ tasks.TaskString }
 
-var topicChangeTask = &TopicChangeTask{TaskString: TaskForumTopicChange}
+var topicChangeTask = &TopicChangeTask{TaskString: forumcommon.TaskForumTopicChange}
 
 var (
 	_ tasks.Task                       = (*TopicChangeTask)(nil)

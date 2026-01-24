@@ -15,7 +15,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// SharedThreadPreviewPage renders an OpenGraph preview for a private forum thread.
+// forumcommon.SharedThreadPreviewPage renders an OpenGraph preview for a private forum thread.
 // It verifies the signature before displaying any metadata.
 func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -75,7 +75,7 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 	renderSharedPreview(w, r, cd, ogTitle, ogDescription, fmt.Sprintf("/private/topic/%d/thread/%d", topicID, threadID))
 }
 
-// SharedTopicPreviewPage renders an OpenGraph preview for a private forum topic.
+// forumcommon.SharedTopicPreviewPage renders an OpenGraph preview for a private forum topic.
 func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 

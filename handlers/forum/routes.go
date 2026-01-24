@@ -8,6 +8,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers/forumcommon"
 	"github.com/arran4/goa4web/internal/router"
 
 	"github.com/arran4/goa4web/handlers/share"
@@ -16,14 +17,14 @@ import (
 
 // RegisterRoutes attaches the public forum endpoints to r.
 func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Registry) {
-	navReg.RegisterIndexLinkWithViewPermission("Forum", "/forum", SectionWeight, "forum", "category")
-	navReg.RegisterAdminControlCenter("Forum", "Forum", "/admin/forum", SectionWeight)
+	navReg.RegisterIndexLinkWithViewPermission("Forum", "/forum", forumcommon.SectionWeight, "forum", "category")
+	navReg.RegisterAdminControlCenter("Forum", "Forum", "/admin/forum", forumcommon.SectionWeight)
 	fr := r.PathPrefix("/forum").Subrouter()
 	fr.NotFoundHandler = http.HandlerFunc(handlers.RenderNotFoundOrLogin)
 	h := New()
 	fr.HandleFunc("/forum.js", h.serveJS).Methods("GET")
 	fr.HandleFunc("/forum.css", h.serveCSS).Methods("GET")
-	fr.Use(handlers.IndexMiddleware(CustomForumIndex), handlers.SectionMiddleware("forum"))
+	fr.Use(handlers.IndexMiddleware(forumcommon.CustomIndex), handlers.SectionMiddleware("forum"))
 	fr.HandleFunc("/topic/{topic}.rss", TopicRssPage).Methods("GET")
 	fr.HandleFunc("/topic/{topic}.rss/u/{username}", TopicRssPage).Methods("GET")
 	fr.HandleFunc("/topic/{topic}.atom", TopicAtomPage).Methods("GET")
@@ -54,23 +55,23 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Reg
 	fr.HandleFunc("/topic/{topic}/thread", handlers.TaskHandler(threadNewCancelAction)).Methods("POST").MatcherFunc(threadNewCancelAction.Matcher())
 
 	// OpenGraph preview endpoint (no auth required for social media bots if signed)
-	fr.HandleFunc("/shared/topic/{topic}", SharedTopicPreviewPage).Methods("GET", "HEAD")
-	fr.HandleFunc("/shared/topic/{topic}/ts/{ts}/sign/{sign}", SharedTopicPreviewPage).Methods("GET", "HEAD")
-	fr.HandleFunc("/shared/topic/{topic}/nonce/{nonce}/sign/{sign}", SharedTopicPreviewPage).Methods("GET", "HEAD")
-	fr.HandleFunc("/shared/topic/{topic}/thread/{thread}", SharedThreadPreviewPage).Methods("GET", "HEAD")
-	fr.HandleFunc("/shared/topic/{topic}/thread/{thread}/ts/{ts}/sign/{sign}", SharedThreadPreviewPage).Methods("GET", "HEAD")
-	fr.HandleFunc("/shared/topic/{topic}/thread/{thread}/nonce/{nonce}/sign/{sign}", SharedThreadPreviewPage).Methods("GET", "HEAD")
+	fr.HandleFunc("/shared/topic/{topic}", forumcommon.SharedTopicPreviewPage).Methods("GET", "HEAD")
+	fr.HandleFunc("/shared/topic/{topic}/ts/{ts}/sign/{sign}", forumcommon.SharedTopicPreviewPage).Methods("GET", "HEAD")
+	fr.HandleFunc("/shared/topic/{topic}/nonce/{nonce}/sign/{sign}", forumcommon.SharedTopicPreviewPage).Methods("GET", "HEAD")
+	fr.HandleFunc("/shared/topic/{topic}/thread/{thread}", forumcommon.SharedThreadPreviewPage).Methods("GET", "HEAD")
+	fr.HandleFunc("/shared/topic/{topic}/thread/{thread}/ts/{ts}/sign/{sign}", forumcommon.SharedThreadPreviewPage).Methods("GET", "HEAD")
+	fr.HandleFunc("/shared/topic/{topic}/thread/{thread}/nonce/{nonce}/sign/{sign}", forumcommon.SharedThreadPreviewPage).Methods("GET", "HEAD")
 
-	fr.Handle("/topic/{topic}/thread/{thread}", RequireThreadAndTopic(http.HandlerFunc(ThreadPage))).Methods("GET")
-	fr.Handle("/topic/{topic}/thread/{thread}", RequireThreadAndTopic(http.HandlerFunc(handlers.TaskDoneAutoRefreshPage))).Methods("POST")
-	fr.Handle("/topic/{topic}/thread/{thread}/reply", RequireThreadAndTopic(http.HandlerFunc(handlers.TaskHandler(replyTask)))).Methods("POST").MatcherFunc(replyTask.Matcher())
-	fr.Handle("/topic/{topic}/thread/{thread}/comment/{comment}", RequireThreadAndTopic(comments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(topicThreadCommentEditAction))))).Methods("POST").MatcherFunc(topicThreadCommentEditAction.Matcher())
-	fr.Handle("/topic/{topic}/thread/{thread}/comment/{comment}", RequireThreadAndTopic(comments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(topicThreadCommentEditActionCancel))))).Methods("POST").MatcherFunc(topicThreadCommentEditActionCancel.Matcher())
+	fr.Handle("/topic/{topic}/thread/{thread}", forumcommon.RequireThreadAndTopic(http.HandlerFunc(ThreadPage))).Methods("GET")
+	fr.Handle("/topic/{topic}/thread/{thread}", forumcommon.RequireThreadAndTopic(http.HandlerFunc(handlers.TaskDoneAutoRefreshPage))).Methods("POST")
+	fr.Handle("/topic/{topic}/thread/{thread}/reply", forumcommon.RequireThreadAndTopic(http.HandlerFunc(handlers.TaskHandler(replyTask)))).Methods("POST").MatcherFunc(replyTask.Matcher())
+	fr.Handle("/topic/{topic}/thread/{thread}/comment/{comment}", forumcommon.RequireThreadAndTopic(comments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(topicThreadCommentEditAction))))).Methods("POST").MatcherFunc(topicThreadCommentEditAction.Matcher())
+	fr.Handle("/topic/{topic}/thread/{thread}/comment/{comment}", forumcommon.RequireThreadAndTopic(comments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(topicThreadCommentEditActionCancel))))).Methods("POST").MatcherFunc(topicThreadCommentEditActionCancel.Matcher())
 
 	fr.HandleFunc("/preview", handlers.PreviewPage).Methods("POST")
 
 	api := r.PathPrefix("/api/forum").Subrouter()
-	api.HandleFunc("/quote/{commentid}", QuoteApi).Methods("GET")
+	api.HandleFunc("/quote/{commentid}", forumcommon.QuoteApi).Methods("GET")
 	api.HandleFunc("/share", share.ShareLink).Methods("GET")
 }
 

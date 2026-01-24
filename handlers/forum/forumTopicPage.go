@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/handlers/forumcommon"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -180,7 +181,7 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	sort.Slice(labels, func(i, j int) bool { return labels[i].Name < labels[j].Name })
 	data.Labels = labels
 
-	if subscribedToTopic(cd, topicRow.Idforumtopic) {
+	if forumcommon.SubscribedToTopic(cd, topicRow.Idforumtopic) {
 		data.Subscribed = true
 	}
 

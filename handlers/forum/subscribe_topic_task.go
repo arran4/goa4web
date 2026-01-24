@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/handlers/forumcommon"
 	"fmt"
 	"log"
 	"net/http"
@@ -18,7 +19,7 @@ import (
 // subscribeTopicTask subscribes a user to new threads within a topic.
 type subscribeTopicTask struct{ tasks.TaskString }
 
-var subscribeTopicTaskAction = &subscribeTopicTask{TaskString: TaskSubscribeToTopic}
+var subscribeTopicTaskAction = &subscribeTopicTask{TaskString: forumcommon.TaskSubscribeToTopic}
 
 // SubscribeTopicTaskHandler subscribes a user to a topic. Exported for reuse.
 var SubscribeTopicTaskHandler = subscribeTopicTaskAction

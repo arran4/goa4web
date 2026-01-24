@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/handlers/forumcommon"
 	"fmt"
 	"log"
 	"net/http"
@@ -16,7 +17,7 @@ import (
 // CategoryGrantDeleteTask removes a grant from a forum category.
 type CategoryGrantDeleteTask struct{ tasks.TaskString }
 
-var categoryGrantDeleteTask = &CategoryGrantDeleteTask{TaskString: TaskCategoryGrantDelete}
+var categoryGrantDeleteTask = &CategoryGrantDeleteTask{TaskString: forumcommon.TaskCategoryGrantDelete}
 
 var _ tasks.Task = (*CategoryGrantDeleteTask)(nil)
 

@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/handlers/forumcommon"
 	"net/http/httptest"
 	"testing"
 
@@ -22,7 +23,7 @@ func TestCustomForumIndexWriteReply(t *testing.T) {
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
 
-	CustomForumIndex(cd, req.WithContext(ctx))
+	forumcommon.CustomIndex(cd, req.WithContext(ctx))
 	if !common.ContainsItem(cd.CustomIndexItems, "Write Reply") {
 		t.Errorf("expected write reply item")
 	}
@@ -43,7 +44,7 @@ func TestCustomForumIndexMarkReadLinks(t *testing.T) {
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
 	cd.UserID = 7
 
-	CustomForumIndex(cd, req.WithContext(ctx))
+	forumcommon.CustomIndex(cd, req.WithContext(ctx))
 
 	for _, name := range []string{"Mark as read", "Mark as read and go back", "Go to topic"} {
 		if !common.ContainsItem(cd.CustomIndexItems, name) {
@@ -70,7 +71,7 @@ func TestCustomForumIndexHidesMarkReadWhenClear(t *testing.T) {
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
 	cd.UserID = 7
 
-	CustomForumIndex(cd, req.WithContext(ctx))
+	forumcommon.CustomIndex(cd, req.WithContext(ctx))
 
 	for _, name := range []string{"Mark as read", "Mark as read and go back"} {
 		if common.ContainsItem(cd.CustomIndexItems, name) {
@@ -92,7 +93,7 @@ func TestCustomForumIndexWriteReplyDenied(t *testing.T) {
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
 
-	CustomForumIndex(cd, req.WithContext(ctx))
+	forumcommon.CustomIndex(cd, req.WithContext(ctx))
 	if common.ContainsItem(cd.CustomIndexItems, "Write Reply") {
 		t.Errorf("unexpected write reply item")
 	}
@@ -111,7 +112,7 @@ func TestCustomForumIndexCreateThread(t *testing.T) {
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
 
-	CustomForumIndex(cd, req.WithContext(ctx))
+	forumcommon.CustomIndex(cd, req.WithContext(ctx))
 	if !common.ContainsItem(cd.CustomIndexItems, "New Thread") {
 		t.Errorf("expected create thread item")
 	}
@@ -132,7 +133,7 @@ func TestCustomForumIndexAdminEditLink(t *testing.T) {
 	cd.UserID = 1
 	cd.AdminMode = true
 
-	CustomForumIndex(cd, req.WithContext(ctx))
+	forumcommon.CustomIndex(cd, req.WithContext(ctx))
 	if !common.ContainsItem(cd.CustomIndexItems, "Admin Edit Topic") {
 		t.Errorf("expected admin edit link")
 	}
@@ -148,7 +149,7 @@ func TestCustomForumIndexCreateThreadDenied(t *testing.T) {
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
 
-	CustomForumIndex(cd, req.WithContext(ctx))
+	forumcommon.CustomIndex(cd, req.WithContext(ctx))
 	if common.ContainsItem(cd.CustomIndexItems, "New Thread") {
 		t.Errorf("unexpected create thread item")
 	}
@@ -166,7 +167,7 @@ func TestCustomForumIndexSubscribeLink(t *testing.T) {
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
 	cd.UserID = 1
 
-	CustomForumIndex(cd, req.WithContext(ctx))
+	forumcommon.CustomIndex(cd, req.WithContext(ctx))
 	if !common.ContainsItem(cd.CustomIndexItems, "Subscribe To Topic") {
 		t.Errorf("expected subscribe item")
 	}
@@ -179,7 +180,7 @@ func TestCustomForumIndexUnsubscribeLink(t *testing.T) {
 	req := httptest.NewRequest("GET", "/forum/topic/2", nil)
 	req = mux.SetURLVars(req, map[string]string{"topic": "2", "category": "1"})
 
-	pattern := topicSubscriptionPattern(2)
+	pattern := forumcommon.TopicSubscriptionPattern(2)
 	q := testhelpers.NewQuerierStub(
 		testhelpers.WithSubscriptions(testdata.SampleSubscriptions(1, pattern)),
 	)
@@ -187,7 +188,7 @@ func TestCustomForumIndexUnsubscribeLink(t *testing.T) {
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
 	cd.UserID = 1
 
-	CustomForumIndex(cd, req.WithContext(ctx))
+	forumcommon.CustomIndex(cd, req.WithContext(ctx))
 	if !common.ContainsItem(cd.CustomIndexItems, "Unsubscribe From Topic") {
 		t.Errorf("expected unsubscribe item")
 	}

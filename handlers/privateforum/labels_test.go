@@ -1,6 +1,7 @@
 package privateforum
 
 import (
+	"github.com/arran4/goa4web/handlers/forumcommon"
 	"context"
 	"net/http"
 	"net/http/httptest"
@@ -11,7 +12,6 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	forumhandlers "github.com/arran4/goa4web/handlers/forum"
 	navpkg "github.com/arran4/goa4web/internal/navigation"
 	"github.com/gorilla/mux"
 )
@@ -26,7 +26,7 @@ func TestPrivateLabelRoutes(t *testing.T) {
 		cd.UserID = 1
 		cd.ForumBasePath = "/private"
 
-		body := "task=" + url.QueryEscape(string(forumhandlers.TaskMarkThreadRead)) + "&redirect=" + url.QueryEscape("/private/topic/1/thread/2")
+		body := "task=" + url.QueryEscape(string(forumcommon.TaskMarkThreadRead)) + "&redirect=" + url.QueryEscape("/private/topic/1/thread/2")
 		req := httptest.NewRequest(http.MethodPost, "/private/thread/1/labels", strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
@@ -46,7 +46,7 @@ func TestPrivateLabelRoutes(t *testing.T) {
 		cd.UserID = 1
 		cd.ForumBasePath = "/private"
 
-		req := httptest.NewRequest(http.MethodPost, "/private/thread/1/labels", strings.NewReader("task="+url.QueryEscape(string(forumhandlers.TaskMarkThreadRead))))
+		req := httptest.NewRequest(http.MethodPost, "/private/thread/1/labels", strings.NewReader("task="+url.QueryEscape(string(forumcommon.TaskMarkThreadRead))))
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 		rr := httptest.NewRecorder()

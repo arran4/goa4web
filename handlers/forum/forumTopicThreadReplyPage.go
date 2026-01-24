@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/handlers/forumcommon"
 	"fmt"
 	"log"
 	"net/http"
@@ -26,7 +27,7 @@ type ReplyTask struct{ tasks.TaskString }
 // compile-time assertions that ReplyTask provides notifications, indexing and
 // auto-subscription for thread replies.
 var (
-	replyTask = &ReplyTask{TaskString: TaskReply}
+	replyTask = &ReplyTask{TaskString: forumcommon.TaskReply}
 
 	// ReplyTaskHandler exposes the reply task for registration on other routes.
 	ReplyTaskHandler = replyTask
@@ -82,9 +83,9 @@ func (ReplyTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, erro
 		if idx := strings.Index(evt.Path, "/topic/"); idx > 0 {
 			base = evt.Path[:idx]
 		}
-		return string(TaskReply), fmt.Sprintf("%s/topic/%d/thread/%d", base, data.TopicID, data.ThreadID), nil
+		return string(forumcommon.TaskReply), fmt.Sprintf("%s/topic/%d/thread/%d", base, data.TopicID, data.ThreadID), nil
 	}
-	return string(TaskReply), evt.Path, nil
+	return string(forumcommon.TaskReply), evt.Path, nil
 }
 
 func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {

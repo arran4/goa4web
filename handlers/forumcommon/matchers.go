@@ -1,4 +1,4 @@
-package forum
+package forumcommon
 
 import (
 	"database/sql"

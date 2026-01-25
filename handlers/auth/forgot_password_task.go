@@ -33,10 +33,10 @@ var (
 var _ tasks.TemplatesRequired = (*ForgotPasswordTask)(nil)
 
 const (
-	ForgotPasswordPageTmpl            handlers.Page = "forgotPasswordPage.gohtml"
-	ForgotPasswordNoEmailPageTmpl     handlers.Page = "forgotPasswordNoEmailPage.gohtml"
-	ForgotPasswordEmailSentPageTmpl   handlers.Page = "forgotPasswordEmailSentPage.gohtml"
-	PasswordResetRequestSentPageTmpl  handlers.Page = "passwordResetRequestSentPage.gohtml"
+	ForgotPasswordPageTmpl           handlers.Page = "forgotPasswordPage.gohtml"
+	ForgotPasswordNoEmailPageTmpl    handlers.Page = "forgotPasswordNoEmailPage.gohtml"
+	ForgotPasswordEmailSentPageTmpl  handlers.Page = "forgotPasswordEmailSentPage.gohtml"
+	PasswordResetRequestSentPageTmpl handlers.Page = "passwordResetRequestSentPage.gohtml"
 )
 
 var forgotPasswordTask = &ForgotPasswordTask{TaskString: TaskUserResetPassword}

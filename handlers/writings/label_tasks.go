@@ -10,7 +10,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	forumhandlers "github.com/arran4/goa4web/handlers/forum"
+	"github.com/arran4/goa4web/handlers/forumcommon"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 )
@@ -18,14 +18,14 @@ import (
 // SetLabelsTask replaces private labels on a writing.
 type SetLabelsTask struct{ tasks.TaskString }
 
-var setLabelsTask = &SetLabelsTask{TaskString: forumhandlers.TaskSetLabels}
+var setLabelsTask = &SetLabelsTask{TaskString: forumcommon.TaskSetLabels}
 
 var _ tasks.Task = (*SetLabelsTask)(nil)
 
 // MarkWritingReadTask clears the special new/unread flags for a writing and its thread.
 type MarkWritingReadTask struct{ tasks.TaskString }
 
-var markWritingReadTask = &MarkWritingReadTask{TaskString: forumhandlers.TaskMarkThreadRead}
+var markWritingReadTask = &MarkWritingReadTask{TaskString: forumcommon.TaskMarkThreadRead}
 
 var _ tasks.Task = (*MarkWritingReadTask)(nil)
 

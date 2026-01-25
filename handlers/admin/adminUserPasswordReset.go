@@ -35,18 +35,22 @@ type UserGenerateResetLinkTask struct{ tasks.TaskString }
 var userGenerateResetLinkTask = &UserGenerateResetLinkTask{TaskString: TaskUserGenerateResetLink}
 
 const (
-	TemplateUserResetPasswordConfirmPage handlers.Page = "admin/userResetPasswordConfirmPage.gohtml"
+	TemplateUserResetPasswordConfirmPage handlers.Page           = "admin/userResetPasswordConfirmPage.gohtml"
+	EmailTemplateAdminPasswordReset      notif.EmailTemplateName = "adminPasswordResetEmail"
+	EmailTemplateUserMagicReset          notif.EmailTemplateName = "userMagicResetEmail"
 )
 
 var _ tasks.Task = (*UserForcePasswordChangeTask)(nil)
 var _ tasks.AuditableTask = (*UserForcePasswordChangeTask)(nil)
 var _ notif.TargetUsersNotificationProvider = (*UserForcePasswordChangeTask)(nil)
 var _ tasks.TemplatesRequired = (*UserForcePasswordChangeTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*UserForcePasswordChangeTask)(nil)
 
 var _ tasks.Task = (*UserSendResetEmailTask)(nil)
 var _ tasks.AuditableTask = (*UserSendResetEmailTask)(nil)
 var _ notif.TargetUsersNotificationProvider = (*UserSendResetEmailTask)(nil)
 var _ tasks.TemplatesRequired = (*UserSendResetEmailTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*UserSendResetEmailTask)(nil)
 
 var _ tasks.Task = (*UserGenerateResetLinkTask)(nil)
 var _ tasks.AuditableTask = (*UserGenerateResetLinkTask)(nil)
@@ -111,6 +115,10 @@ func (UserForcePasswordChangeTask) TemplatesRequired() []tasks.Page {
 	}
 }
 
+func (UserForcePasswordChangeTask) EmailTemplatesRequired() []tasks.Page {
+	return EmailTemplateAdminPasswordReset.RequiredPages()
+}
+
 func (UserForcePasswordChangeTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, error) {
 	if id, ok := evt.Data["targetUserID"].(int32); ok {
 		return []int32{id}, nil
@@ -122,11 +130,11 @@ func (UserForcePasswordChangeTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int3
 }
 
 func (UserForcePasswordChangeTask) TargetEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("adminPasswordResetEmail"), true
+	return EmailTemplateAdminPasswordReset.EmailTemplates(), true
 }
 
 func (UserForcePasswordChangeTask) TargetInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := notif.NotificationTemplateFilenameGenerator("admin_password_reset")
+	v := EmailTemplateAdminPasswordReset.NotificationTemplate()
 	return &v
 }
 
@@ -204,6 +212,10 @@ func (UserSendResetEmailTask) TemplatesRequired() []tasks.Page {
 	}
 }
 
+func (UserSendResetEmailTask) EmailTemplatesRequired() []tasks.Page {
+	return EmailTemplateUserMagicReset.RequiredPages()
+}
+
 func (UserSendResetEmailTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, error) {
 	if id, ok := evt.Data["targetUserID"].(int32); ok {
 		return []int32{id}, nil
@@ -215,7 +227,7 @@ func (UserSendResetEmailTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, er
 }
 
 func (UserSendResetEmailTask) TargetEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("userMagicResetEmail"), true
+	return EmailTemplateUserMagicReset.EmailTemplates(), true
 }
 
 func (UserSendResetEmailTask) TargetInternalNotificationTemplate(evt eventbus.TaskEvent) *string {

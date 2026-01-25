@@ -1,11 +1,38 @@
 package notifications
 
-import "github.com/arran4/goa4web/internal/eventbus"
+import (
+	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/tasks"
+)
 
 type EmailTemplates struct {
 	Text    string
 	HTML    string
 	Subject string
+}
+
+// EmailTemplateName is a strongly-typed name for email templates (prefix).
+type EmailTemplateName string
+
+func (e EmailTemplateName) String() string {
+	return string(e)
+}
+
+func (e EmailTemplateName) EmailTemplates() *EmailTemplates {
+	return NewEmailTemplates(string(e))
+}
+
+func (e EmailTemplateName) NotificationTemplate() string {
+	return NotificationTemplateFilenameGenerator(string(e))
+}
+
+func (e EmailTemplateName) RequiredPages() []tasks.Page {
+	et := e.EmailTemplates()
+	return []tasks.Page{
+		tasks.Page(et.Text),
+		tasks.Page(et.HTML),
+		tasks.Page(et.Subject),
+	}
 }
 
 // NewEmailTemplates returns EmailTemplates populated with file names derived

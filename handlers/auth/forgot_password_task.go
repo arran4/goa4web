@@ -27,6 +27,7 @@ var (
 	_ notif.SelfNotificationTemplateProvider = (*ForgotPasswordTask)(nil)
 	_ notif.AdminEmailTemplateProvider       = (*ForgotPasswordTask)(nil)
 	_ notif.SelfEmailBroadcaster             = (*ForgotPasswordTask)(nil)
+	_ tasks.EmailTemplatesRequired           = (*ForgotPasswordTask)(nil)
 )
 
 // Ensure template requirements are declared for this task.
@@ -163,6 +164,14 @@ func (ForgotPasswordTask) TemplatesRequired() []tasks.Page {
 		ForgotPasswordPageTmpl,
 		ForgotPasswordNoEmailPageTmpl,
 		ForgotPasswordEmailSentPageTmpl,
-		PasswordResetRequestSentPageTmpl,
+	}
+}
+
+func (ForgotPasswordTask) EmailTemplatesRequired() []tasks.Page {
+	admin := notif.NewEmailTemplates("adminNotificationUserRequestPasswordResetEmail")
+	self := notif.NewEmailTemplates("passwordResetEmail")
+	return []tasks.Page{
+		tasks.Page(admin.Text), tasks.Page(admin.HTML), tasks.Page(admin.Subject),
+		tasks.Page(self.Text), tasks.Page(self.HTML), tasks.Page(self.Subject),
 	}
 }

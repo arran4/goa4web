@@ -24,6 +24,10 @@ type TemplatesRequired interface {
 	TemplatesRequired() []Page
 }
 
+type EmailTemplatesRequired interface {
+	EmailTemplatesRequired() []Page
+}
+
 type TaskMatcher interface {
 	Matcher() mux.MatcherFunc
 }

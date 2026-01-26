@@ -22,6 +22,7 @@ var (
 	_ tasks.Task                                    = (*bulkDeleteTask)(nil)
 	_ notif.SubscribersNotificationTemplateProvider = (*bulkDeleteTask)(nil)
 	_ notif.AdminEmailTemplateProvider              = (*bulkDeleteTask)(nil)
+	_ tasks.EmailTemplatesRequired                  = (*bulkDeleteTask)(nil)
 )
 
 func (bulkDeleteTask) Action(w http.ResponseWriter, r *http.Request) any {
@@ -76,19 +77,23 @@ func (bulkDeleteTask) Action(w http.ResponseWriter, r *http.Request) any {
 }
 
 func (bulkDeleteTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("linkerRejectedEmail"), true
+	return EmailTemplateLinkerRejected.EmailTemplates(), true
 }
 
 func (bulkDeleteTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	s := notif.NotificationTemplateFilenameGenerator("linker_rejected")
+	s := NotificationTemplateLinkerRejected.NotificationTemplate()
 	return &s
 }
 
 func (bulkDeleteTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("adminNotificationLinkerRejectedEmail"), true
+	return EmailTemplateAdminNotificationLinkerRejected.EmailTemplates(), true
 }
 
 func (bulkDeleteTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := notif.NotificationTemplateFilenameGenerator("adminNotificationLinkerRejectedEmail")
+	v := EmailTemplateAdminNotificationLinkerRejected.NotificationTemplate()
 	return &v
+}
+
+func (bulkDeleteTask) EmailTemplatesRequired() []tasks.Page {
+	return append(EmailTemplateLinkerRejected.RequiredPages(), EmailTemplateAdminNotificationLinkerRejected.RequiredPages()...)
 }

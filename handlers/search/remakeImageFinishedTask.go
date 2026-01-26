@@ -17,23 +17,28 @@ var remakeImageFinishedTask = &RemakeImageFinishedTask{TaskString: TaskRemakeIma
 var _ tasks.Task = (*RemakeImageFinishedTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*RemakeImageFinishedTask)(nil)
 var _ notif.SelfNotificationTemplateProvider = (*RemakeImageFinishedTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*RemakeImageFinishedTask)(nil)
 
 func (RemakeImageFinishedTask) Action(http.ResponseWriter, *http.Request) any { return nil }
 
 func (RemakeImageFinishedTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("searchRebuildImageEmail"), true
+	return EmailTemplateSearchRebuildImage.EmailTemplates(), true
 }
 
 func (RemakeImageFinishedTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	s := notif.NotificationTemplateFilenameGenerator("search_rebuild_image")
+	s := NotificationTemplateSearchRebuildImage.NotificationTemplate()
 	return &s
 }
 
 func (RemakeImageFinishedTask) SelfEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("searchRebuildImageEmail"), true
+	return EmailTemplateSearchRebuildImage.EmailTemplates(), true
 }
 
 func (RemakeImageFinishedTask) SelfInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	s := notif.NotificationTemplateFilenameGenerator("search_rebuild_image")
+	s := NotificationTemplateSearchRebuildImage.NotificationTemplate()
 	return &s
+}
+
+func (RemakeImageFinishedTask) EmailTemplatesRequired() []tasks.Page {
+	return EmailTemplateSearchRebuildImage.RequiredPages()
 }

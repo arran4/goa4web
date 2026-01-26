@@ -50,6 +50,7 @@ var adminAddEmailTask = &AdminAddEmailTask{TaskString: TaskAddEmail}
 
 var _ tasks.Task = (*AdminAddEmailTask)(nil)
 var _ notif.DirectEmailNotificationTemplateProvider = (*AdminAddEmailTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*AdminAddEmailTask)(nil)
 
 func (t AdminAddEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	targetUID, err := getTargetUserID(r)
@@ -127,7 +128,11 @@ func (t AdminAddEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 }
 
 func (AdminAddEmailTask) DirectEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("verifyEmail"), true
+	return EmailTemplateVerify.EmailTemplates(), true
+}
+
+func (AdminAddEmailTask) EmailTemplatesRequired() []tasks.Page {
+	return EmailTemplateVerify.RequiredPages()
 }
 
 func (AdminAddEmailTask) DirectEmailAddress(evt eventbus.TaskEvent) (string, error) {
@@ -278,6 +283,7 @@ var adminResendVerificationEmailTask = &AdminResendVerificationEmailTask{TaskStr
 
 var _ tasks.Task = (*AdminResendVerificationEmailTask)(nil)
 var _ notif.DirectEmailNotificationTemplateProvider = (*AdminResendVerificationEmailTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*AdminResendVerificationEmailTask)(nil)
 
 func (t AdminResendVerificationEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	targetUID, err := getTargetUserID(r)
@@ -342,7 +348,11 @@ func (t AdminResendVerificationEmailTask) Action(w http.ResponseWriter, r *http.
 }
 
 func (AdminResendVerificationEmailTask) DirectEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("verifyEmail"), true
+	return EmailTemplateVerify.EmailTemplates(), true
+}
+
+func (AdminResendVerificationEmailTask) EmailTemplatesRequired() []tasks.Page {
+	return EmailTemplateVerify.RequiredPages()
 }
 
 func (AdminResendVerificationEmailTask) DirectEmailAddress(evt eventbus.TaskEvent) (string, error) {

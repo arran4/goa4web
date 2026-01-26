@@ -22,14 +22,14 @@ var (
 )
 
 func (DeleteCategoryTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return EmailTemplateAdminNotificationForumDeleteCategory.EmailTemplates(), true
+	return EmailTemplateAdminNotificationForumCategoryDelete.EmailTemplates(), true
 }
 
 func (DeleteCategoryTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := EmailTemplateAdminNotificationForumDeleteCategory.NotificationTemplate()
+	v := EmailTemplateAdminNotificationForumCategoryDelete.NotificationTemplate()
 	return &v
 }
 
 func (DeleteCategoryTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateAdminNotificationForumDeleteCategory.RequiredPages()
+	return EmailTemplateAdminNotificationForumCategoryDelete.RequiredPages()
 }

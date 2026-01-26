@@ -18,10 +18,6 @@ type DeleteLanguageTask struct{ tasks.TaskString }
 
 var deleteLanguageTask = &DeleteLanguageTask{TaskString: tasks.TaskString("Delete Language")}
 
-const (
-	EmailTemplateAdminNotificationLanguageDelete notif.EmailTemplateName = "adminNotificationLanguageDeleteEmail"
-)
-
 var _ tasks.Task = (*DeleteLanguageTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*DeleteLanguageTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*DeleteLanguageTask)(nil)

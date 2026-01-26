@@ -24,6 +24,7 @@ var permissionUpdateTask = &PermissionUpdateTask{TaskString: TaskUpdate}
 
 var _ tasks.Task = (*PermissionUpdateTask)(nil)
 var _ notif.TargetUsersNotificationProvider = (*PermissionUpdateTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*PermissionUpdateTask)(nil)
 
 func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -95,10 +96,14 @@ func (PermissionUpdateTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, erro
 }
 
 func (PermissionUpdateTask) TargetEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("updateUserRoleEmail"), true
+	return EmailTemplateUpdateUserRole.EmailTemplates(), true
 }
 
 func (PermissionUpdateTask) TargetInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := notif.NotificationTemplateFilenameGenerator("update_user_role")
+	v := NotificationTemplateUpdateUserRole.NotificationTemplate()
 	return &v
+}
+
+func (PermissionUpdateTask) EmailTemplatesRequired() []tasks.Page {
+	return append(EmailTemplateUpdateUserRole.RequiredPages(), NotificationTemplateUpdateUserRole.RequiredPages()...)
 }

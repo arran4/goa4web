@@ -33,6 +33,7 @@ var addEmailTask = &AddEmailTask{TaskString: tasks.TaskString(TaskAdd)}
 
 var _ tasks.Task = (*AddEmailTask)(nil)
 var _ notif.DirectEmailNotificationTemplateProvider = (*AddEmailTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*AddEmailTask)(nil)
 
 func (t AddEmailTask) generateVerificationCode() string {
 	if t.codeGenerator != nil {
@@ -171,7 +172,11 @@ func (AddEmailTask) Notify(w http.ResponseWriter, r *http.Request) {
 }
 
 func (AddEmailTask) DirectEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("verifyEmail"), true
+	return EmailTemplateVerify.EmailTemplates(), true
+}
+
+func (AddEmailTask) EmailTemplatesRequired() []tasks.Page {
+	return EmailTemplateVerify.RequiredPages()
 }
 
 func (AddEmailTask) DirectEmailAddress(evt eventbus.TaskEvent) (string, error) {

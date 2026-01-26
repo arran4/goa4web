@@ -17,7 +17,9 @@ const (
 	EmailTemplateNewsEdit                  notif.EmailTemplateName        = "newsEditEmail"
 	NotificationTemplateNewsEdit           notif.NotificationTemplateName = "news_edit"
 
-	EmailTemplateAdminNotificationNewsUserAllow    notif.EmailTemplateName = "adminNotificationNewsUserAllowEmail"
-	EmailTemplateAdminNotificationNewsUserDisallow notif.EmailTemplateName = "adminNotificationNewsUserDisallowEmail"
-	EmailTemplateAdminNotificationNewsDelete       notif.EmailTemplateName = "adminNotificationNewsDeleteEmail"
+	EmailTemplateAdminNotificationNewsUserAllow     notif.EmailTemplateName = "adminNotificationNewsUserAllowEmail"
+	EmailTemplateAdminNotificationNewsUserDisallow  notif.EmailTemplateName = "adminNotificationNewsUserDisallowEmail"
+	EmailTemplateAdminNotificationNewsDelete        notif.EmailTemplateName = "adminNotificationNewsDeleteEmail"
+	EmailTemplateAdminNotificationNewsCommentEdit   notif.EmailTemplateName = "adminNotificationNewsCommentEditEmail"
+	EmailTemplateAdminNotificationNewsCommentCancel notif.EmailTemplateName = "adminNotificationNewsCommentCancelEmail"
 )

@@ -38,11 +38,6 @@ const (
 	ForgotPasswordNoEmailPageTmpl    handlers.Page = "forgotPasswordNoEmailPage.gohtml"
 	ForgotPasswordEmailSentPageTmpl  handlers.Page = "forgotPasswordEmailSentPage.gohtml"
 	PasswordResetRequestSentPageTmpl handlers.Page = "passwordResetRequestSentPage.gohtml"
-
-	EmailTemplateAdminEmailAssociationRequest  notif.EmailTemplateName        = "adminNotificationEmailAssociationRequestEmail"
-	EmailTemplateAdminUserRequestPasswordReset notif.EmailTemplateName        = "adminNotificationUserRequestPasswordResetEmail"
-	EmailTemplatePasswordReset                 notif.EmailTemplateName        = "passwordResetEmail"
-	NotificationTemplatePasswordReset          notif.NotificationTemplateName = "password_reset"
 )
 
 var forgotPasswordTask = &ForgotPasswordTask{TaskString: TaskUserResetPassword}

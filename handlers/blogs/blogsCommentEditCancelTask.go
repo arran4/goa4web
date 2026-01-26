@@ -23,14 +23,19 @@ var cancelTask = &CancelTask{TaskString: TaskCancel}
 
 var _ tasks.Task = (*CancelTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*CancelTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*CancelTask)(nil)
 
 func (CancelTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("adminNotificationBlogCommentCancelEmail"), true
+	return EmailTemplateAdminNotificationBlogCommentCancel.EmailTemplates(), true
 }
 
 func (CancelTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := notif.NotificationTemplateFilenameGenerator("adminNotificationBlogCommentCancelEmail")
+	v := EmailTemplateAdminNotificationBlogCommentCancel.NotificationTemplate()
 	return &v
+}
+
+func (CancelTask) EmailTemplatesRequired() []tasks.Page {
+	return EmailTemplateAdminNotificationBlogCommentCancel.RequiredPages()
 }
 
 func (CancelTask) Action(w http.ResponseWriter, r *http.Request) any {

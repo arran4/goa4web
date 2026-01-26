@@ -34,18 +34,23 @@ var (
 	_ notif.SubscribersNotificationTemplateProvider = (*ReplyBlogTask)(nil)
 	_ notif.AutoSubscribeProvider                   = (*ReplyBlogTask)(nil)
 	_ notif.GrantsRequiredProvider                  = (*ReplyBlogTask)(nil)
+	_ tasks.EmailTemplatesRequired                  = (*ReplyBlogTask)(nil)
 )
 
 func (ReplyBlogTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("replyEmail"), evt.Outcome == eventbus.TaskOutcomeSuccess
+	return EmailTemplateBlogReply.EmailTemplates(), evt.Outcome == eventbus.TaskOutcomeSuccess
 }
 
 func (ReplyBlogTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	if evt.Outcome != eventbus.TaskOutcomeSuccess {
 		return nil
 	}
-	s := notif.NotificationTemplateFilenameGenerator("reply")
+	s := NotificationTemplateBlogReply.NotificationTemplate()
 	return &s
+}
+
+func (ReplyBlogTask) EmailTemplatesRequired() []tasks.Page {
+	return EmailTemplateBlogReply.RequiredPages()
 }
 
 // GrantsRequired implements notif.GrantsRequiredProvider for blog replies.

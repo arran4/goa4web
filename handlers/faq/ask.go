@@ -26,14 +26,19 @@ var askTask = &AskTask{TaskString: TaskAsk}
 
 var _ tasks.Task = (*AskTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*AskTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*AskTask)(nil)
 
 func (AskTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("adminNotificationFaqAskEmail"), true
+	return EmailTemplateAdminNotificationFaqAsk.EmailTemplates(), true
 }
 
 func (AskTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := notif.NotificationTemplateFilenameGenerator("adminNotificationFaqAskEmail")
+	v := EmailTemplateAdminNotificationFaqAsk.NotificationTemplate()
 	return &v
+}
+
+func (AskTask) EmailTemplatesRequired() []tasks.Page {
+	return EmailTemplateAdminNotificationFaqAsk.RequiredPages()
 }
 
 func (AskTask) Match(r *http.Request, m *mux.RouteMatch) bool {

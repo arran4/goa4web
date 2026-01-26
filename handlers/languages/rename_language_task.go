@@ -19,10 +19,6 @@ type RenameLanguageTask struct{ tasks.TaskString }
 
 var renameLanguageTask = &RenameLanguageTask{TaskString: tasks.TaskString("Rename Language")}
 
-const (
-	EmailTemplateAdminNotificationLanguageRename notif.EmailTemplateName = "adminNotificationLanguageRenameEmail"
-)
-
 var _ tasks.Task = (*RenameLanguageTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*RenameLanguageTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*RenameLanguageTask)(nil)

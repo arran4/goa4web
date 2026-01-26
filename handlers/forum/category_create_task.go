@@ -11,10 +11,6 @@ type CategoryCreateTask struct{ tasks.TaskString }
 
 var categoryCreateTask = &CategoryCreateTask{TaskString: TaskForumCategoryCreate}
 
-const (
-	EmailTemplateAdminNotificationForumCategoryCreate notif.EmailTemplateName = "adminNotificationForumCategoryCreateEmail"
-)
-
 var (
 	_ tasks.Task                       = (*CategoryCreateTask)(nil)
 	_ notif.AdminEmailTemplateProvider = (*CategoryCreateTask)(nil)

@@ -11,4 +11,5 @@ const (
 	EmailTemplateAdminAddIPBan notif.EmailTemplateName = "adminAddIPBanEmail"
 
 	EmailTemplateAdminDeleteIPBan notif.EmailTemplateName = "adminRemoveIPBanEmail"
+	EmailTemplateVerify           notif.EmailTemplateName = "verifyEmail"
 )

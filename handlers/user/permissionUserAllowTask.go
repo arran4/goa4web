@@ -22,13 +22,14 @@ var permissionUserAllowTask = &PermissionUserAllowTask{TaskString: TaskUserAllow
 var _ tasks.Task = (*PermissionUserAllowTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*PermissionUserAllowTask)(nil)
 var _ notif.TargetUsersNotificationProvider = (*PermissionUserAllowTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*PermissionUserAllowTask)(nil)
 
 func (PermissionUserAllowTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("adminPermissionAllowEmail"), true
+	return EmailTemplateAdminPermissionAllow.EmailTemplates(), true
 }
 
 func (PermissionUserAllowTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := notif.NotificationTemplateFilenameGenerator("adminPermissionAllowEmail")
+	v := EmailTemplateAdminPermissionAllow.NotificationTemplate()
 	return &v
 }
 
@@ -86,10 +87,14 @@ func (PermissionUserAllowTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, e
 }
 
 func (PermissionUserAllowTask) TargetEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("setUserRoleEmail"), true
+	return EmailTemplateSetUserRole.EmailTemplates(), true
 }
 
 func (PermissionUserAllowTask) TargetInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := notif.NotificationTemplateFilenameGenerator("set_user_role")
+	v := NotificationTemplateSetUserRole.NotificationTemplate()
 	return &v
+}
+
+func (PermissionUserAllowTask) EmailTemplatesRequired() []tasks.Page {
+	return append(EmailTemplateAdminPermissionAllow.RequiredPages(), append(EmailTemplateSetUserRole.RequiredPages(), NotificationTemplateSetUserRole.RequiredPages()...)...)
 }

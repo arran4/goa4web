@@ -17,23 +17,28 @@ var remakeLinkerFinishedTask = &RemakeLinkerFinishedTask{TaskString: TaskRemakeL
 var _ tasks.Task = (*RemakeLinkerFinishedTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*RemakeLinkerFinishedTask)(nil)
 var _ notif.SelfNotificationTemplateProvider = (*RemakeLinkerFinishedTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*RemakeLinkerFinishedTask)(nil)
 
 func (RemakeLinkerFinishedTask) Action(http.ResponseWriter, *http.Request) any { return nil }
 
 func (RemakeLinkerFinishedTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("searchRebuildLinkerEmail"), true
+	return EmailTemplateSearchRebuildLinker.EmailTemplates(), true
 }
 
 func (RemakeLinkerFinishedTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	s := notif.NotificationTemplateFilenameGenerator("search_rebuild_linker")
+	s := NotificationTemplateSearchRebuildLinker.NotificationTemplate()
 	return &s
 }
 
 func (RemakeLinkerFinishedTask) SelfEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("searchRebuildLinkerEmail"), true
+	return EmailTemplateSearchRebuildLinker.EmailTemplates(), true
 }
 
 func (RemakeLinkerFinishedTask) SelfInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	s := notif.NotificationTemplateFilenameGenerator("search_rebuild_linker")
+	s := NotificationTemplateSearchRebuildLinker.NotificationTemplate()
 	return &s
+}
+
+func (RemakeLinkerFinishedTask) EmailTemplatesRequired() []tasks.Page {
+	return EmailTemplateSearchRebuildLinker.RequiredPages()
 }

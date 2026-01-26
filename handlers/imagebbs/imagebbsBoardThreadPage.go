@@ -33,6 +33,7 @@ var _ tasks.Task = (*ReplyTask)(nil)
 // they see further responses.
 var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
 var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*ReplyTask)(nil)
 
 func (ReplyTask) IndexType() string { return searchworker.TypeComment }
 
@@ -46,15 +47,19 @@ func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
 var _ searchworker.IndexedTask = ReplyTask{}
 
 func (ReplyTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("replyEmail"), evt.Outcome == eventbus.TaskOutcomeSuccess
+	return EmailTemplateImagebbsReply.EmailTemplates(), evt.Outcome == eventbus.TaskOutcomeSuccess
 }
 
 func (ReplyTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	if evt.Outcome != eventbus.TaskOutcomeSuccess {
 		return nil
 	}
-	s := notif.NotificationTemplateFilenameGenerator("reply")
+	s := NotificationTemplateImagebbsReply.NotificationTemplate()
 	return &s
+}
+
+func (ReplyTask) EmailTemplatesRequired() []tasks.Page {
+	return EmailTemplateImagebbsReply.RequiredPages()
 }
 
 func (ReplyTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, error) {

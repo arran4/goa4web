@@ -9,8 +9,9 @@ const (
 	NotificationTemplateLinkerApproved           notif.NotificationTemplateName = "linker_approved"
 	EmailTemplateAdminNotificationLinkerApproved notif.EmailTemplateName        = "adminNotificationLinkerApprovedEmail"
 
-	EmailTemplateLinkerAdminAdd        notif.EmailTemplateName        = "linkerAdminAddEmail"
-	NotificationTemplateLinkerAdminAdd notif.NotificationTemplateName = "linker_admin_add"
+	EmailTemplateLinkerAdd                  notif.EmailTemplateName        = "linkerAddEmail"
+	NotificationTemplateLinkerAdd           notif.NotificationTemplateName = "linker_add"
+	EmailTemplateAdminNotificationLinkerAdd notif.EmailTemplateName        = "adminNotificationLinkerAddEmail"
 
 	EmailTemplateLinkerDeleted        notif.EmailTemplateName        = "linkerDeletedEmail"
 	NotificationTemplateLinkerDeleted notif.NotificationTemplateName = "linker_deleted"

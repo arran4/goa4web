@@ -22,6 +22,7 @@ type ApprovePostTask struct{ tasks.TaskString }
 
 var _ tasks.Task = (*ApprovePostTask)(nil)
 var _ notif.SelfNotificationTemplateProvider = (*ApprovePostTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*ApprovePostTask)(nil)
 var _ tasks.AuditableTask = (*ApprovePostTask)(nil)
 
 var approvePostTask = &ApprovePostTask{TaskString: TaskApprove}
@@ -58,12 +59,16 @@ func (ApprovePostTask) Action(w http.ResponseWriter, r *http.Request) any {
 }
 
 func (ApprovePostTask) SelfEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("imagePostApprovedEmail"), true
+	return EmailTemplateImagePostApproved.EmailTemplates(), true
 }
 
 func (ApprovePostTask) SelfInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	s := notif.NotificationTemplateFilenameGenerator("image_post_approved")
+	s := NotificationTemplateImagePostApproved.NotificationTemplate()
 	return &s
+}
+
+func (ApprovePostTask) EmailTemplatesRequired() []tasks.Page {
+	return EmailTemplateImagePostApproved.RequiredPages()
 }
 
 func (ApprovePostTask) AuditRecord(data map[string]any) string {

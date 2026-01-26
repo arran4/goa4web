@@ -14,13 +14,18 @@ var topicDeleteTask = &TopicDeleteTask{TaskString: TaskForumTopicDelete}
 var (
 	_ tasks.Task                       = (*TopicDeleteTask)(nil)
 	_ notif.AdminEmailTemplateProvider = (*TopicDeleteTask)(nil)
+	_ tasks.EmailTemplatesRequired     = (*TopicDeleteTask)(nil)
 )
 
 func (TopicDeleteTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("adminNotificationForumTopicDeleteEmail"), true
+	return EmailTemplateAdminNotificationForumTopicDelete.EmailTemplates(), true
 }
 
 func (TopicDeleteTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := notif.NotificationTemplateFilenameGenerator("adminNotificationForumTopicDeleteEmail")
+	v := EmailTemplateAdminNotificationForumTopicDelete.NotificationTemplate()
 	return &v
+}
+
+func (TopicDeleteTask) EmailTemplatesRequired() []tasks.Page {
+	return EmailTemplateAdminNotificationForumTopicDelete.RequiredPages()
 }

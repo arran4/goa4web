@@ -16,10 +16,6 @@ import (
 // CreateLanguageTask creates a new language.
 type CreateLanguageTask struct{ tasks.TaskString }
 
-const (
-	EmailTemplateAdminNotificationLanguageCreate notif.EmailTemplateName = "adminNotificationLanguageCreateEmail"
-)
-
 var createLanguageTask = &CreateLanguageTask{TaskString: tasks.TaskString("Create Language")}
 
 var _ tasks.Task = (*CreateLanguageTask)(nil)

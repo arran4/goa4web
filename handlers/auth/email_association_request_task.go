@@ -19,6 +19,7 @@ var (
 	_ tasks.Task                       = (*EmailAssociationRequestTask)(nil)
 	_ tasks.AuditableTask              = (*EmailAssociationRequestTask)(nil)
 	_ notif.AdminEmailTemplateProvider = (*EmailAssociationRequestTask)(nil)
+	_ tasks.EmailTemplatesRequired     = (*EmailAssociationRequestTask)(nil)
 )
 
 var emailAssociationRequestTask = &EmailAssociationRequestTask{TaskString: TaskEmailAssociationRequest}

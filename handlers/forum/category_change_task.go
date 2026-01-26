@@ -22,14 +22,14 @@ var (
 )
 
 func (CategoryChangeTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return EmailTemplateAdminNotificationForumCategoryChange.EmailTemplates(), true
+	return EmailTemplateAdminNotificationForumCategoryUpdate.EmailTemplates(), true
 }
 
 func (CategoryChangeTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := EmailTemplateAdminNotificationForumCategoryChange.NotificationTemplate()
+	v := EmailTemplateAdminNotificationForumCategoryUpdate.NotificationTemplate()
 	return &v
 }
 
 func (CategoryChangeTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateAdminNotificationForumCategoryChange.RequiredPages()
+	return EmailTemplateAdminNotificationForumCategoryUpdate.RequiredPages()
 }

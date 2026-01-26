@@ -23,6 +23,7 @@ var testMailTask = &TestMailTask{TaskString: tasks.TaskString(TaskTestMail)}
 
 var _ tasks.Task = (*TestMailTask)(nil)
 var _ notif.SelfNotificationTemplateProvider = (*TestMailTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*TestMailTask)(nil)
 
 func (TestMailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -42,10 +43,14 @@ func (TestMailTask) Action(w http.ResponseWriter, r *http.Request) any {
 }
 
 func (TestMailTask) SelfEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("testEmail"), true
+	return EmailTemplateTest.EmailTemplates(), true
 }
 
 func (TestMailTask) SelfInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	s := notif.NotificationTemplateFilenameGenerator("testEmail")
+	s := EmailTemplateTest.NotificationTemplate()
 	return &s
+}
+
+func (TestMailTask) EmailTemplatesRequired() []tasks.Page {
+	return EmailTemplateTest.RequiredPages()
 }

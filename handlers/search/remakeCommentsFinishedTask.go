@@ -17,23 +17,28 @@ var remakeCommentsFinishedTask = &RemakeCommentsFinishedTask{TaskString: TaskRem
 var _ tasks.Task = (*RemakeCommentsFinishedTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*RemakeCommentsFinishedTask)(nil)
 var _ notif.SelfNotificationTemplateProvider = (*RemakeCommentsFinishedTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*RemakeCommentsFinishedTask)(nil)
 
 func (RemakeCommentsFinishedTask) Action(http.ResponseWriter, *http.Request) any { return nil }
 
 func (RemakeCommentsFinishedTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("searchRebuildCommentsEmail"), true
+	return EmailTemplateSearchRebuildComments.EmailTemplates(), true
 }
 
 func (RemakeCommentsFinishedTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	s := notif.NotificationTemplateFilenameGenerator("search_rebuild_comments")
+	s := NotificationTemplateSearchRebuildComments.NotificationTemplate()
 	return &s
 }
 
 func (RemakeCommentsFinishedTask) SelfEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("searchRebuildCommentsEmail"), true
+	return EmailTemplateSearchRebuildComments.EmailTemplates(), true
 }
 
 func (RemakeCommentsFinishedTask) SelfInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	s := notif.NotificationTemplateFilenameGenerator("search_rebuild_comments")
+	s := NotificationTemplateSearchRebuildComments.NotificationTemplate()
 	return &s
+}
+
+func (RemakeCommentsFinishedTask) EmailTemplatesRequired() []tasks.Page {
+	return EmailTemplateSearchRebuildComments.RequiredPages()
 }

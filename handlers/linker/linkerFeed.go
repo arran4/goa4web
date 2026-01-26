@@ -21,8 +21,12 @@ import (
 
 func linkerFeed(r *http.Request, rows []*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow) *feeds.Feed {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	title := "Latest links"
+	if cd.SiteTitle != "" {
+		title = fmt.Sprintf("%s - %s", cd.SiteTitle, title)
+	}
 	feed := &feeds.Feed{
-		Title:       "Latest links",
+		Title:       title,
 		Link:        &feeds.Link{Href: r.URL.Path},
 		Description: "Latest submitted links",
 		Created:     time.Now(),

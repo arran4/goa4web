@@ -104,7 +104,7 @@ func TestBlogsRssPageWritesRSS(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "http://example.com/blogs/rss?rss=bob", nil)
 	q := db.New(conn)
-	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
+	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig(), common.WithSiteTitle("Site"))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
@@ -118,12 +118,20 @@ func TestBlogsRssPageWritesRSS(t *testing.T) {
 		t.Errorf("Content-Type=%q", ct)
 	}
 
-	var v struct{ XMLName xml.Name }
+	var v struct {
+		XMLName xml.Name
+		Channel struct {
+			Title string `xml:"title"`
+		} `xml:"channel"`
+	}
 	if err := xml.Unmarshal(rr.Body.Bytes(), &v); err != nil {
 		t.Fatalf("xml parse: %v", err)
 	}
 	if v.XMLName.Local != "rss" {
 		t.Errorf("expected root rss got %s", v.XMLName.Local)
+	}
+	if v.Channel.Title != "Site - bob blog" {
+		t.Errorf("expected title 'Site - bob blog' got %q", v.Channel.Title)
 	}
 }
 

@@ -37,8 +37,12 @@ func NewsRssPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	title := "News feed"
+	if cd.SiteTitle != "" {
+		title = fmt.Sprintf("%s - %s", cd.SiteTitle, title)
+	}
 	feed := &feeds.Feed{
-		Title:       "News feed",
+		Title:       title,
 		Link:        &feeds.Link{Href: r.URL.Path},
 		Description: "Latest news posts",
 		Created:     time.Now(),

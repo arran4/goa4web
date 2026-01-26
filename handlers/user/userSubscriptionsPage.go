@@ -2,6 +2,7 @@ package user
 
 import (
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
@@ -30,4 +31,4 @@ func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 	UserSubscriptionsPage.Handle(w, r, data)
 }
 
-const UserSubscriptionsPage handlers.Page = "user/subscriptions.gohtml"
+const UserSubscriptionsPage tasks.Template = "user/subscriptions.gohtml"

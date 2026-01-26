@@ -20,6 +20,7 @@ var createLanguageTask = &CreateLanguageTask{TaskString: tasks.TaskString("Creat
 
 var _ tasks.Task = (*CreateLanguageTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*CreateLanguageTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*CreateLanguageTask)(nil)
 
 func (CreateLanguageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -45,10 +46,14 @@ func (CreateLanguageTask) Action(w http.ResponseWriter, r *http.Request) any {
 }
 
 func (CreateLanguageTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("adminNotificationLanguageCreateEmail"), true
+	return EmailTemplateAdminNotificationLanguageCreate.EmailTemplates(), true
 }
 
 func (CreateLanguageTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := notif.NotificationTemplateFilenameGenerator("adminNotificationLanguageCreateEmail")
+	v := EmailTemplateAdminNotificationLanguageCreate.NotificationTemplate()
 	return &v
+}
+
+func (CreateLanguageTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateAdminNotificationLanguageCreate.RequiredTemplates()
 }

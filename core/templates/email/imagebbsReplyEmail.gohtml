@@ -1,0 +1,9 @@
+<p>Hi {{.Recipient.Username.String}},</p>
+
+<p>A new reply was posted in "<strong>{{.Item.TopicTitle}}</strong>" by {{.Item.Thread.Lastposterusername.String}} on {{formatLocalTime .Item.Time}}.</p>
+<p>There are now {{.Item.Thread.Comments.Int32}} comments in the discussion.</p>
+
+<p>View it here: <a href="{{.Item.URL}}">{{.Item.URL}}</a></p>
+
+<hr>
+<p>Manage notifications: <a href="{{.UnsubscribeUrl}}">{{.UnsubscribeUrl}}</a></p>

@@ -109,7 +109,7 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 	AdminDLQPageTmpl.Handle(w, r, data)
 }
 
-const AdminDLQPageTmpl handlers.Page = "admin/dlqPage.gohtml"
+const AdminDLQPageTmpl tasks.Template = "admin/dlqPage.gohtml"
 
 func (DeleteDLQTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()

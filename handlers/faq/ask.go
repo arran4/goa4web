@@ -26,14 +26,20 @@ var askTask = &AskTask{TaskString: TaskAsk}
 
 var _ tasks.Task = (*AskTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*AskTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*AskTask)(nil)
 
 func (AskTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("adminNotificationFaqAskEmail"), true
+	return EmailTemplateAdminNotificationFaqAsk.EmailTemplates(), true
 }
 
 func (AskTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := notif.NotificationTemplateFilenameGenerator("adminNotificationFaqAskEmail")
+	v := EmailTemplateAdminNotificationFaqAsk.NotificationTemplate()
 	return &v
+}
+
+func (AskTask) RequiredTemplates() []tasks.Template {
+	return append([]tasks.Template{tasks.Template(AskPageTmpl)},
+		EmailTemplateAdminNotificationFaqAsk.RequiredTemplates()...)
 }
 
 func (AskTask) Match(r *http.Request, m *mux.RouteMatch) bool {
@@ -67,7 +73,7 @@ func (AskTask) Page(w http.ResponseWriter, r *http.Request) {
 	AskPageTmpl.Handle(w, r, data)
 }
 
-const AskPageTmpl handlers.Page = "faq/askPage.gohtml"
+const AskPageTmpl tasks.Template = "faq/askPage.gohtml"
 
 func (AskTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := handlers.ValidateForm(r, []string{"language", "text"}, []string{"language", "text"}); err != nil {

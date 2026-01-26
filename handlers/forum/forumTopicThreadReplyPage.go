@@ -20,6 +20,12 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
+const (
+	EmailTemplateForumReply                  notif.EmailTemplateName        = "forumReplyEmail"
+	NotificationTemplateForumReply           notif.NotificationTemplateName = "reply"
+	EmailTemplateAdminNotificationForumReply notif.EmailTemplateName        = "adminNotificationForumReplyEmail"
+)
+
 // ReplyTask handles replying to an existing thread.
 type ReplyTask struct{ tasks.TaskString }
 
@@ -35,6 +41,7 @@ var (
 	_ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
 	_ notif.AdminEmailTemplateProvider              = (*ReplyTask)(nil)
 	_ notif.AutoSubscribeProvider                   = (*ReplyTask)(nil)
+	_ tasks.EmailTemplatesRequired                  = (*ReplyTask)(nil)
 	_ searchworker.IndexedTask                      = ReplyTask{}
 )
 
@@ -50,27 +57,31 @@ func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
 var _ searchworker.IndexedTask = ReplyTask{}
 
 func (ReplyTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("forumReplyEmail"), evt.Outcome == eventbus.TaskOutcomeSuccess
+	return EmailTemplateForumReply.EmailTemplates(), evt.Outcome == eventbus.TaskOutcomeSuccess
 }
 
 func (ReplyTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	if evt.Outcome != eventbus.TaskOutcomeSuccess {
 		return nil
 	}
-	s := notif.NotificationTemplateFilenameGenerator("reply")
+	s := NotificationTemplateForumReply.NotificationTemplate()
 	return &s
 }
 
 func (ReplyTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("adminNotificationForumReplyEmail"), evt.Outcome == eventbus.TaskOutcomeSuccess
+	return EmailTemplateAdminNotificationForumReply.EmailTemplates(), evt.Outcome == eventbus.TaskOutcomeSuccess
 }
 
 func (ReplyTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	if evt.Outcome != eventbus.TaskOutcomeSuccess {
 		return nil
 	}
-	v := notif.NotificationTemplateFilenameGenerator("adminNotificationForumReplyEmail")
+	v := EmailTemplateAdminNotificationForumReply.NotificationTemplate()
 	return &v
+}
+
+func (ReplyTask) RequiredTemplates() []tasks.Template {
+	return append(EmailTemplateForumReply.RequiredTemplates(), EmailTemplateAdminNotificationForumReply.RequiredTemplates()...)
 }
 
 // AutoSubscribePath ensures authors automatically receive updates on replies.

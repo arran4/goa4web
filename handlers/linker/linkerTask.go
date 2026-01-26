@@ -7,7 +7,6 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 )
@@ -16,15 +15,15 @@ type linkerTask struct {
 }
 
 const (
-	LinkerPageTmpl handlers.Page = "linker/page.gohtml"
+	LinkerPageTmpl tasks.Template = "linker/page.gohtml"
 )
 
 func NewLinkerTask() tasks.Task {
 	return &linkerTask{}
 }
 
-func (t *linkerTask) TemplatesRequired() []tasks.Page {
-	return []tasks.Page{LinkerPageTmpl}
+func (t *linkerTask) RequiredTemplates() []tasks.Template {
+	return []tasks.Template{LinkerPageTmpl}
 }
 
 func (t *linkerTask) Action(w http.ResponseWriter, r *http.Request) any {

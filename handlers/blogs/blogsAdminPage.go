@@ -2,11 +2,11 @@ package blogs
 
 import (
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers"
 )
 
 // AdminPage shows the blog administration index with a list of blogs.
@@ -23,4 +23,4 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 	BlogsAdminPageTmpl.Handle(w, r, struct{}{})
 }
 
-const BlogsAdminPageTmpl handlers.Page = "blogs/adminPage.gohtml"
+const BlogsAdminPageTmpl tasks.Template = "blogs/adminPage.gohtml"

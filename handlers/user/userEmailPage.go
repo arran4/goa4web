@@ -3,6 +3,7 @@ package user
 import (
 	"database/sql"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"net/url"
@@ -62,7 +63,7 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 	UserEmailPage.Handle(w, r, data)
 }
 
-const UserEmailPage handlers.Page = "user/emailPage.gohtml"
+const UserEmailPage tasks.Template = "user/emailPage.gohtml"
 
 func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -129,5 +130,5 @@ func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
 	UserEmailVerifyConfirmPage.Handle(w, r, data)
 }
 
-const UserEmailVerifyConfirmPage handlers.Page = "user/emailVerifyConfirmPage.gohtml"
-const UserEmailVerifiedPage handlers.Page = "user/emailVerifiedPage.gohtml"
+const UserEmailVerifyConfirmPage tasks.Template = "user/emailVerifyConfirmPage.gohtml"
+const UserEmailVerifiedPage tasks.Template = "user/emailVerifiedPage.gohtml"

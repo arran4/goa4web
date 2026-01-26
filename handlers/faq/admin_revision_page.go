@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"strconv"
 
@@ -49,4 +50,4 @@ func AdminRevisionHistoryPage(w http.ResponseWriter, r *http.Request) {
 	AdminFaqRevisionPageTmpl.Handle(w, r, data)
 }
 
-const AdminFaqRevisionPageTmpl handlers.Page = "faq/adminFaqRevisionPage.gohtml"
+const AdminFaqRevisionPageTmpl tasks.Template = "faq/adminFaqRevisionPage.gohtml"

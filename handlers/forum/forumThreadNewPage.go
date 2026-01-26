@@ -42,6 +42,7 @@ var (
 	_ notif.SubscribersNotificationTemplateProvider = (*CreateThreadTask)(nil)
 	_ notif.AdminEmailTemplateProvider              = (*CreateThreadTask)(nil)
 	_ notif.AutoSubscribeProvider                   = (*CreateThreadTask)(nil)
+	_ tasks.EmailTemplatesRequired                  = (*CreateThreadTask)(nil)
 	_ searchworker.IndexedTask                      = CreateThreadTask{}
 )
 
@@ -55,21 +56,26 @@ func (CreateThreadTask) IndexData(data map[string]any) []searchworker.IndexEvent
 }
 
 func (CreateThreadTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("forumThreadCreateEmail"), true
+	return EmailTemplateForumThreadCreate.EmailTemplates(), true
 }
 
 func (CreateThreadTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	s := notif.NotificationTemplateFilenameGenerator("thread")
+	s := NotificationTemplateForumThread.NotificationTemplate()
 	return &s
 }
 
 func (CreateThreadTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("adminNotificationForumThreadCreateEmail"), true
+	return EmailTemplateAdminNotificationForumThreadCreate.EmailTemplates(), true
 }
 
 func (CreateThreadTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := notif.NotificationTemplateFilenameGenerator("adminNotificationForumThreadCreateEmail")
+	v := EmailTemplateAdminNotificationForumThreadCreate.NotificationTemplate()
 	return &v
+}
+
+func (CreateThreadTask) RequiredTemplates() []tasks.Template {
+	return append([]tasks.Template{tasks.Template(ForumThreadNewPageTmpl)},
+		append(EmailTemplateForumThreadCreate.RequiredTemplates(), EmailTemplateAdminNotificationForumThreadCreate.RequiredTemplates()...)...)
 }
 
 // AutoSubscribePath records the created thread so the author and topic
@@ -193,7 +199,7 @@ func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 	ForumThreadNewPageTmpl.Handle(w, r, data)
 }
 
-const ForumThreadNewPageTmpl handlers.Page = "forum/threadNewPage.gohtml"
+const ForumThreadNewPageTmpl tasks.Template = "forum/threadNewPage.gohtml"
 
 func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)

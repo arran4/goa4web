@@ -3,13 +3,13 @@ package bookmarks
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"strings"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers"
 )
 
 func MinePage(w http.ResponseWriter, r *http.Request) {
@@ -32,4 +32,4 @@ func MinePage(w http.ResponseWriter, r *http.Request) {
 	}{cols})
 }
 
-const MinePageTmpl handlers.Page = "bookmarks/minePage.gohtml"
+const MinePageTmpl tasks.Template = "bookmarks/minePage.gohtml"

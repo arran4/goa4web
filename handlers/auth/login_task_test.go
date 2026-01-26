@@ -8,9 +8,9 @@ import (
 
 func TestLoginTaskTemplatesRequiredExist(t *testing.T) {
 	var task LoginTask
-	req := task.TemplatesRequired()
+	req := task.RequiredTemplates()
 	if len(req) == 0 {
-		t.Fatalf("LoginTask.TemplatesRequired returned no templates; expected at least one")
+		t.Fatalf("LoginTask.RequiredTemplates returned no templates; expected at least one")
 	}
 	for _, name := range req {
 		if !templates.TemplateExists(string(name)) {

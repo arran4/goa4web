@@ -3,6 +3,7 @@ package writings
 import (
 	"database/sql"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"strconv"
 
@@ -47,4 +48,4 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 	WritingsAdminCategoryEditPageTmpl.Handle(w, r, data)
 }
 
-const WritingsAdminCategoryEditPageTmpl handlers.Page = "writings/writingsAdminCategoryEditPage.gohtml"
+const WritingsAdminCategoryEditPageTmpl tasks.Template = "writings/writingsAdminCategoryEditPage.gohtml"

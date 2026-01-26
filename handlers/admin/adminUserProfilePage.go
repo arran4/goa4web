@@ -2,6 +2,7 @@ package admin
 
 import (
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"strings"
 
@@ -23,7 +24,7 @@ func adminUserProfilePage(w http.ResponseWriter, r *http.Request) {
 	AdminUserProfilePageTmpl.Handle(w, r, struct{}{})
 }
 
-const AdminUserProfilePageTmpl handlers.Page = "admin/adminUserPage.gohtml"
+const AdminUserProfilePageTmpl tasks.Template = "admin/adminUserPage.gohtml"
 
 func adminUserAddCommentPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)

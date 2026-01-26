@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"net/url"
@@ -69,7 +70,7 @@ func ShowPage(w http.ResponseWriter, r *http.Request) {
 	LinkerShowPageTmpl.Handle(w, r, data)
 }
 
-const LinkerShowPageTmpl handlers.Page = "linker/showPage.gohtml"
+const LinkerShowPageTmpl tasks.Template = "linker/showPage.gohtml"
 
 func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)

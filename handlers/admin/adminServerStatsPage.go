@@ -3,6 +3,7 @@ package admin
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"runtime"
 	"sort"
@@ -12,7 +13,6 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/upload"
 )
 
@@ -128,4 +128,4 @@ func (h *Handlers) AdminServerStatsPage(w http.ResponseWriter, r *http.Request) 
 	AdminServerStatsPageTmpl.Handle(w, r, data)
 }
 
-const AdminServerStatsPageTmpl handlers.Page = "admin/serverStatsPage.gohtml"
+const AdminServerStatsPageTmpl tasks.Template = "admin/serverStatsPage.gohtml"

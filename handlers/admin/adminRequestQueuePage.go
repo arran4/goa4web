@@ -2,6 +2,7 @@ package admin
 
 import (
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
@@ -16,7 +17,7 @@ func AdminRequestQueuePage(w http.ResponseWriter, r *http.Request) {
 	AdminRequestQueuePageTmpl.Handle(w, r, struct{}{})
 }
 
-const AdminRequestQueuePageTmpl handlers.Page = "admin/requestQueuePage.gohtml"
+const AdminRequestQueuePageTmpl tasks.Template = "admin/requestQueuePage.gohtml"
 
 func AdminRequestArchivePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -24,7 +25,7 @@ func AdminRequestArchivePage(w http.ResponseWriter, r *http.Request) {
 	AdminRequestArchivePageTmpl.Handle(w, r, struct{}{})
 }
 
-const AdminRequestArchivePageTmpl handlers.Page = "admin/requestArchivePage.gohtml"
+const AdminRequestArchivePageTmpl tasks.Template = "admin/requestArchivePage.gohtml"
 
 func adminRequestPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -41,7 +42,7 @@ func adminRequestPage(w http.ResponseWriter, r *http.Request) {
 	AdminRequestPageTmpl.Handle(w, r, struct{}{})
 }
 
-const AdminRequestPageTmpl handlers.Page = "admin/requestPage.gohtml"
+const AdminRequestPageTmpl tasks.Template = "admin/requestPage.gohtml"
 
 func adminRequestAddCommentPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)

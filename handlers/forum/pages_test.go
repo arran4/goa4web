@@ -1,14 +1,14 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/internal/tasks"
 	"testing"
 
-	"github.com/arran4/goa4web/handlers"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestPagesExist(t *testing.T) {
-	pages := []handlers.Page{
+	pages := []tasks.Template{
 		ForumPageTmpl,
 		ForumThreadPageTmpl,
 		ForumTopicsPageTmpl,

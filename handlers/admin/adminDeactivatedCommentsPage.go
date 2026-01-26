@@ -2,6 +2,7 @@ package admin
 
 import (
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
@@ -26,4 +27,4 @@ func AdminDeactivatedCommentsPage(w http.ResponseWriter, r *http.Request) {
 	AdminDeactivatedCommentsPageTmpl.Handle(w, r, data)
 }
 
-const AdminDeactivatedCommentsPageTmpl handlers.Page = "admin/deactivatedCommentsPage.gohtml"
+const AdminDeactivatedCommentsPageTmpl tasks.Template = "admin/deactivatedCommentsPage.gohtml"

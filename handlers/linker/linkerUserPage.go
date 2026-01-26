@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"strconv"
@@ -68,4 +69,4 @@ func UserPage(w http.ResponseWriter, r *http.Request) {
 	LinkerUserPageTmpl.Handle(w, r, data)
 }
 
-const LinkerUserPageTmpl handlers.Page = "linker/linkerPage.gohtml"
+const LinkerUserPageTmpl tasks.Template = "linker/linkerPage.gohtml"

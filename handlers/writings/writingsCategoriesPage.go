@@ -1,11 +1,11 @@
 package writings
 
 import (
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers"
 )
 
 func CategoriesPage(w http.ResponseWriter, r *http.Request) {
@@ -22,4 +22,4 @@ func CategoriesPage(w http.ResponseWriter, r *http.Request) {
 	WritingsCategoriesPageTmpl.Handle(w, r, data)
 }
 
-const WritingsCategoriesPageTmpl handlers.Page = "writings/writingsCategoriesPage.gohtml"
+const WritingsCategoriesPageTmpl tasks.Template = "writings/writingsCategoriesPage.gohtml"

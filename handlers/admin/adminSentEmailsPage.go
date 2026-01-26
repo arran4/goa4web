@@ -3,6 +3,7 @@ package admin
 import (
 	"database/sql"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"net/mail"
@@ -126,4 +127,4 @@ func AdminSentEmailsPage(w http.ResponseWriter, r *http.Request) {
 	AdminEmailSentPageTmpl.Handle(w, r, data)
 }
 
-const AdminEmailSentPageTmpl handlers.Page = "admin/emailSentPage.gohtml"
+const AdminEmailSentPageTmpl tasks.Template = "admin/emailSentPage.gohtml"

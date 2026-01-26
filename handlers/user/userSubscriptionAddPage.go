@@ -1,11 +1,11 @@
 package user
 
 import (
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/subscriptions"
 )
 
@@ -21,4 +21,4 @@ func userSubscriptionAddPage(w http.ResponseWriter, r *http.Request) {
 	UserSubscriptionAddPage.Handle(w, r, data)
 }
 
-const UserSubscriptionAddPage handlers.Page = "user/subscription_add.gohtml"
+const UserSubscriptionAddPage tasks.Template = "user/subscription_add.gohtml"

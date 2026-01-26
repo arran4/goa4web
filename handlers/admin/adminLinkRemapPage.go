@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/csv"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"regexp"
@@ -48,4 +49,4 @@ func AdminLinkRemapPage(w http.ResponseWriter, r *http.Request) {
 	AdminLinkRemapPageTmpl.Handle(w, r, data)
 }
 
-const AdminLinkRemapPageTmpl handlers.Page = "admin/linkRemapPage.gohtml"
+const AdminLinkRemapPageTmpl tasks.Template = "admin/linkRemapPage.gohtml"

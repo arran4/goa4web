@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"os"
 	"sort"
@@ -8,7 +9,6 @@ import (
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers"
 
 	"github.com/arran4/goa4web/config"
 )
@@ -90,4 +90,4 @@ func (h *Handlers) AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request)
 	AdminSiteSettingsPageTmpl.Handle(w, r, data)
 }
 
-const AdminSiteSettingsPageTmpl handlers.Page = "admin/siteSettingsPage.gohtml"
+const AdminSiteSettingsPageTmpl tasks.Template = "admin/siteSettingsPage.gohtml"

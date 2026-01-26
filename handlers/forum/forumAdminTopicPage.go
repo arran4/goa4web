@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"strconv"
 	"strings"
@@ -75,7 +76,7 @@ func AdminTopicPage(w http.ResponseWriter, r *http.Request) {
 	ForumAdminTopicPageTmpl.Handle(w, r, data)
 }
 
-const ForumAdminTopicPageTmpl handlers.Page = "forum/adminTopicPage.gohtml"
+const ForumAdminTopicPageTmpl tasks.Template = "forum/adminTopicPage.gohtml"
 
 // AdminTopicEditFormPage shows the edit form for a forum topic.
 func AdminTopicEditFormPage(w http.ResponseWriter, r *http.Request) {
@@ -123,4 +124,4 @@ func AdminTopicEditFormPage(w http.ResponseWriter, r *http.Request) {
 	ForumAdminTopicEditPageTmpl.Handle(w, r, data)
 }
 
-const ForumAdminTopicEditPageTmpl handlers.Page = "forum/adminTopicEditPage.gohtml"
+const ForumAdminTopicEditPageTmpl tasks.Template = "forum/adminTopicEditPage.gohtml"

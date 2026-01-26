@@ -1,11 +1,12 @@
 package imagebbs
 
 import (
+	"net/http"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/tasks"
-	"net/http"
 )
 
 type imagebbsTask struct {
@@ -19,8 +20,8 @@ func NewImagebbsTask() tasks.Task {
 	return &imagebbsTask{}
 }
 
-func (t *imagebbsTask) TemplatesRequired() []tasks.Page {
-	return []tasks.Page{ImagebbsPageTmpl}
+func (t *imagebbsTask) RequiredTemplates() []tasks.Template {
+	return []tasks.Template{tasks.Template(ImagebbsPageTmpl)}
 }
 
 func (t *imagebbsTask) Action(w http.ResponseWriter, r *http.Request) any {

@@ -3,6 +3,7 @@ package imagebbs
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"strconv"
 
@@ -85,4 +86,4 @@ func AdminBoardListPage(w http.ResponseWriter, r *http.Request) {
 	ImageBBSAdminBoardListPageTmpl.Handle(w, r, data)
 }
 
-const ImageBBSAdminBoardListPageTmpl handlers.Page = "imagebbs/adminBoardListPage.gohtml"
+const ImageBBSAdminBoardListPageTmpl tasks.Template = "imagebbs/adminBoardListPage.gohtml"

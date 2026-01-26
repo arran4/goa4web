@@ -27,14 +27,20 @@ var editBlogTask = &EditBlogTask{TaskString: TaskEdit}
 
 var _ tasks.Task = (*EditBlogTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*EditBlogTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*EditBlogTask)(nil)
 
 func (EditBlogTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("adminNotificationBlogEditEmail"), true
+	return EmailTemplateAdminNotificationBlogEdit.EmailTemplates(), true
 }
 
 func (EditBlogTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := notif.NotificationTemplateFilenameGenerator("adminNotificationBlogEditEmail")
+	v := EmailTemplateAdminNotificationBlogEdit.NotificationTemplate()
 	return &v
+}
+
+func (EditBlogTask) RequiredTemplates() []tasks.Template {
+	return append([]tasks.Template{tasks.Template(BlogsBlogEditPageTmpl)},
+		EmailTemplateAdminNotificationBlogEdit.RequiredTemplates()...)
 }
 
 func (EditBlogTask) Page(w http.ResponseWriter, r *http.Request) { BlogEditPage(w, r) }
@@ -129,4 +135,4 @@ func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 	BlogsBlogEditPageTmpl.Handle(w, r, data)
 }
 
-const BlogsBlogEditPageTmpl handlers.Page = "blogs/blogEditPage.gohtml"
+const BlogsBlogEditPageTmpl tasks.Template = "blogs/blogEditPage.gohtml"

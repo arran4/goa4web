@@ -1,13 +1,13 @@
 package user_test
 
 import (
+	"github.com/arran4/goa4web/internal/tasks"
 	"testing"
 
-	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/handlers/user"
 )
 
-var allPages = []handlers.Page{
+var allPages = []tasks.Template{
 	user.UserPageTmpl,
 	user.UserPublicProfileSettingsPage,
 	user.AppearancePage,

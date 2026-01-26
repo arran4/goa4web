@@ -7,7 +7,6 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/handlers/share"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -16,16 +15,16 @@ type privateForumTask struct {
 }
 
 const (
-	CreateTopicTmpl handlers.Page = "forum/create_topic.gohtml"
-	TopicsOnlyTmpl  handlers.Page = "privateforum/topics_only.gohtml"
+	CreateTopicTmpl tasks.Template = "forum/create_topic.gohtml"
+	TopicsOnlyTmpl  tasks.Template = "privateforum/topics_only.gohtml"
 )
 
 func NewPrivateForumTask() tasks.Task {
 	return &privateForumTask{}
 }
 
-func (t *privateForumTask) TemplatesRequired() []tasks.Page {
-	return []tasks.Page{CreateTopicTmpl, TopicsOnlyTmpl}
+func (t *privateForumTask) RequiredTemplates() []tasks.Template {
+	return []tasks.Template{CreateTopicTmpl, TopicsOnlyTmpl}
 }
 
 func (t *privateForumTask) Action(w http.ResponseWriter, r *http.Request) any {

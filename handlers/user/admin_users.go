@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"net/url"
@@ -122,7 +123,7 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 	AdminUsersPage.Handle(w, r, data)
 }
 
-const AdminUsersPage handlers.Page = "admin/usersPage.gohtml"
+const AdminUsersPage tasks.Template = "admin/usersPage.gohtml"
 
 func adminUserDisableConfirmPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -149,7 +150,7 @@ func adminUserDisableConfirmPage(w http.ResponseWriter, r *http.Request) {
 	AdminConfirmPage.Handle(w, r, data)
 }
 
-const AdminConfirmPage handlers.Page = "confirmPage.gohtml"
+const AdminConfirmPage tasks.Template = "confirmPage.gohtml"
 
 func adminUserDisablePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -191,7 +192,7 @@ func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
 	AdminUserEditPage.Handle(w, r, data)
 }
 
-const AdminUserEditPage handlers.Page = "admin/userEditPage.gohtml"
+const AdminUserEditPage tasks.Template = "admin/userEditPage.gohtml"
 
 func adminUserEditSavePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -232,7 +233,7 @@ func adminUserEditSavePage(w http.ResponseWriter, r *http.Request) {
 	AdminRunTaskPage.Handle(w, r, data)
 }
 
-const AdminRunTaskPage handlers.Page = "admin/runTaskPage.gohtml"
+const AdminRunTaskPage tasks.Template = "admin/runTaskPage.gohtml"
 
 func adminUserResetPasswordPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -268,4 +269,4 @@ func adminUserResetPasswordPage(w http.ResponseWriter, r *http.Request) {
 	AdminUserResetPasswordPage.Handle(w, r, data)
 }
 
-const AdminUserResetPasswordPage handlers.Page = "admin/userResetPasswordPage.gohtml"
+const AdminUserResetPasswordPage tasks.Template = "admin/userResetPasswordPage.gohtml"

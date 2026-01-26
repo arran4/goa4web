@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"strconv"
 
@@ -52,6 +53,6 @@ func AdminPageSizePage(w http.ResponseWriter, r *http.Request) {
 	AdminPageSizePageTmpl.Handle(w, r, data)
 }
 
-const AdminPageSizePageTmpl handlers.Page = "admin/pageSizePage.gohtml"
+const AdminPageSizePageTmpl tasks.Template = "admin/pageSizePage.gohtml"
 
-const RunTaskPageTmpl handlers.Page = "admin/runTaskPage.gohtml"
+const RunTaskPageTmpl tasks.Template = "admin/runTaskPage.gohtml"

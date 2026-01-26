@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"net/url"
@@ -108,7 +109,7 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 	LinkerAdminQueuePageTmpl.Handle(w, r, data)
 }
 
-const LinkerAdminQueuePageTmpl handlers.Page = "linker/adminQueuePage.gohtml"
+const LinkerAdminQueuePageTmpl tasks.Template = "linker/adminQueuePage.gohtml"
 
 func AdminQueueUpdateActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()

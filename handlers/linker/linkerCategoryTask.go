@@ -2,28 +2,28 @@ package linker
 
 import (
 	"fmt"
-	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/tasks"
-	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
+
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/internal/tasks"
+	"github.com/gorilla/mux"
 )
 
 type linkerCategoryTask struct {
 }
 
 const (
-	LinkerCategoryPageTmpl = "linker/categoryPage.gohtml"
+	LinkerCategoryPageTmpl tasks.Template = "linker/categoryPage.gohtml"
 )
 
 func NewLinkerCategoryTask() tasks.Task {
 	return &linkerCategoryTask{}
 }
 
-func (t *linkerCategoryTask) TemplatesRequired() []tasks.Page {
-	return []tasks.Page{LinkerCategoryPageTmpl}
+func (t *linkerCategoryTask) RequiredTemplates() []tasks.Template {
+	return []tasks.Template{LinkerCategoryPageTmpl}
 }
 
 func (t *linkerCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
@@ -61,7 +61,5 @@ func (t *linkerCategoryTask) Get(w http.ResponseWriter, r *http.Request) {
 	} else {
 		cd.PageTitle = fmt.Sprintf("Category %d", data.CatId)
 	}
-	if err := cd.ExecuteSiteTemplate(w, r, LinkerCategoryPageTmpl, data); err != nil {
-		handlers.RenderErrorPage(w, r, err)
-	}
+	LinkerCategoryPageTmpl.Handle(w, r, data)
 }

@@ -17,23 +17,28 @@ var remakeBlogFinishedTask = &RemakeBlogFinishedTask{TaskString: TaskRemakeBlogS
 var _ tasks.Task = (*RemakeBlogFinishedTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*RemakeBlogFinishedTask)(nil)
 var _ notif.SelfNotificationTemplateProvider = (*RemakeBlogFinishedTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*RemakeBlogFinishedTask)(nil)
 
 func (RemakeBlogFinishedTask) Action(http.ResponseWriter, *http.Request) any { return nil }
 
 func (RemakeBlogFinishedTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("searchRebuildBlogEmail"), true
+	return EmailTemplateSearchRebuildBlog.EmailTemplates(), true
 }
 
 func (RemakeBlogFinishedTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	s := notif.NotificationTemplateFilenameGenerator("search_rebuild_blog")
+	s := NotificationTemplateSearchRebuildBlog.NotificationTemplate()
 	return &s
 }
 
 func (RemakeBlogFinishedTask) SelfEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("searchRebuildBlogEmail"), true
+	return EmailTemplateSearchRebuildBlog.EmailTemplates(), true
 }
 
 func (RemakeBlogFinishedTask) SelfInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	s := notif.NotificationTemplateFilenameGenerator("search_rebuild_blog")
+	s := NotificationTemplateSearchRebuildBlog.NotificationTemplate()
 	return &s
+}
+
+func (RemakeBlogFinishedTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateSearchRebuildBlog.RequiredTemplates()
 }

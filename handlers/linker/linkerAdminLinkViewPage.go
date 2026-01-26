@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
@@ -41,4 +42,4 @@ func adminLinkViewPage(w http.ResponseWriter, r *http.Request) {
 	LinkerAdminLinkViewPageTmpl.Handle(w, r, data)
 }
 
-const LinkerAdminLinkViewPageTmpl handlers.Page = "linker/adminLinkViewPage.gohtml"
+const LinkerAdminLinkViewPageTmpl tasks.Template = "linker/adminLinkViewPage.gohtml"

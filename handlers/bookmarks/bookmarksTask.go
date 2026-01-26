@@ -1,12 +1,13 @@
 package bookmarks
 
 import (
+	"net/http"
+
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/tasks"
-	"net/http"
 )
 
 type bookmarksTask struct {
@@ -21,8 +22,8 @@ func NewBookmarksTask() tasks.Task {
 	return &bookmarksTask{}
 }
 
-func (t *bookmarksTask) TemplatesRequired() []tasks.Page {
-	return []tasks.Page{BookmarksPageTmpl, InfoPageTmpl}
+func (t *bookmarksTask) RequiredTemplates() []tasks.Template {
+	return []tasks.Template{tasks.Template(BookmarksPageTmpl), tasks.Template(InfoPageTmpl)}
 }
 
 func (t *bookmarksTask) Action(w http.ResponseWriter, r *http.Request) any {

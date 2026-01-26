@@ -355,3 +355,31 @@ func TemplateExists(name string, opts ...Option) bool {
 	}
 	return false
 }
+
+// EmailTemplateExists reports whether an email template with the given relative path
+// exists in the current template source (embedded or templatesDir).
+func EmailTemplateExists(name string, opts ...Option) bool {
+	cfg := newCfg(opts...)
+	fsys := getFS("email", cfg)
+	if _, err := fs.Stat(fsys, name); err == nil {
+		return true
+	}
+	return false
+}
+
+// NotificationTemplateExists reports whether a notification template with the given relative path
+// exists in the current template source (embedded or templatesDir).
+func NotificationTemplateExists(name string, opts ...Option) bool {
+	cfg := newCfg(opts...)
+	fsys := getFS("notifications", cfg)
+	if _, err := fs.Stat(fsys, name); err == nil {
+		return true
+	}
+	return false
+}
+
+// AnyTemplateExists reports whether a template with the given relative path
+// exists in any of the template sources (site, email, notifications).
+func AnyTemplateExists(name string, opts ...Option) bool {
+	return TemplateExists(name, opts...) || EmailTemplateExists(name, opts...) || NotificationTemplateExists(name, opts...)
+}

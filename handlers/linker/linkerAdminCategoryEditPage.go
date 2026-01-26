@@ -2,6 +2,7 @@ package linker
 
 import (
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"strconv"
 
@@ -32,4 +33,4 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 	LinkerAdminCategoryEditPageTmpl.Handle(w, r, data)
 }
 
-const LinkerAdminCategoryEditPageTmpl handlers.Page = "linker/linkerAdminCategoryEditPage.gohtml"
+const LinkerAdminCategoryEditPageTmpl tasks.Template = "linker/linkerAdminCategoryEditPage.gohtml"

@@ -2,6 +2,7 @@ package admin
 
 import (
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
@@ -45,4 +46,4 @@ func adminUserLinkerPage(w http.ResponseWriter, r *http.Request) {
 	AdminUserLinkerPageTmpl.Handle(w, r, data)
 }
 
-const AdminUserLinkerPageTmpl handlers.Page = "admin/userLinkerPage.gohtml"
+const AdminUserLinkerPageTmpl tasks.Template = "admin/userLinkerPage.gohtml"

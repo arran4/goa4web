@@ -1,12 +1,12 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/handlers"
 )
 
 // adminForumFlaggedPostsPage displays posts flagged for moderator review.
@@ -16,4 +16,4 @@ func AdminForumFlaggedPostsPage(w http.ResponseWriter, r *http.Request) {
 	AdminForumFlaggedPostsPageTmpl.Handle(w, r, struct{}{})
 }
 
-const AdminForumFlaggedPostsPageTmpl handlers.Page = "admin/forumFlaggedPostsPage.gohtml"
+const AdminForumFlaggedPostsPageTmpl tasks.Template = "admin/forumFlaggedPostsPage.gohtml"

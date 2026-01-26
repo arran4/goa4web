@@ -24,6 +24,7 @@ var _ tasks.AuditableTask = (*AddAnnouncementTask)(nil)
 
 // addAnnouncementTask notifies admins so they know announcements were updated.
 var _ notif.AdminEmailTemplateProvider = (*AddAnnouncementTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*AddAnnouncementTask)(nil)
 
 func (AddAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -55,12 +56,16 @@ func (AddAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) any {
 }
 
 func (AddAnnouncementTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("announcementEmail"), true
+	return EmailTemplateAnnouncement.EmailTemplates(), true
 }
 
 func (AddAnnouncementTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := notif.NotificationTemplateFilenameGenerator("announcement")
+	v := NotificationTemplateAnnouncement.NotificationTemplate()
 	return &v
+}
+
+func (AddAnnouncementTask) EmailTemplatesRequired() []tasks.Page {
+	return append(EmailTemplateAnnouncement.RequiredPages(), NotificationTemplateAnnouncement.RequiredPages()...)
 }
 
 // AuditRecord summarises an announcement being created.

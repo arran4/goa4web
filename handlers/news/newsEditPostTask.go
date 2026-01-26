@@ -27,16 +27,21 @@ var editTask = &EditTask{TaskString: TaskEdit}
 var _ tasks.Task = (*EditTask)(nil)
 var _ tasks.TemplatesRequired = (*EditTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*EditTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*EditTask)(nil)
 
 const NewsEditPageTmpl handlers.Page = "news/newsEditPage.gohtml"
 
 func (EditTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("adminNotificationNewsEditEmail"), true
+	return EmailTemplateAdminNotificationNewsEdit.EmailTemplates(), true
 }
 
 func (EditTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := notif.NotificationTemplateFilenameGenerator("adminNotificationNewsEditEmail")
+	v := EmailTemplateAdminNotificationNewsEdit.NotificationTemplate()
 	return &v
+}
+
+func (EditTask) EmailTemplatesRequired() []tasks.Page {
+	return EmailTemplateAdminNotificationNewsEdit.RequiredPages()
 }
 
 func (EditTask) Page(w http.ResponseWriter, r *http.Request) { newsEditFormPage(w, r) }

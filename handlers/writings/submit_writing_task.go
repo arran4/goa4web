@@ -26,6 +26,7 @@ var submitWritingTask = &SubmitWritingTask{TaskString: TaskSubmitWriting}
 var _ tasks.Task = (*SubmitWritingTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*SubmitWritingTask)(nil)
 var _ notif.GrantsRequiredProvider = (*SubmitWritingTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*SubmitWritingTask)(nil)
 
 func (SubmitWritingTask) Page(w http.ResponseWriter, r *http.Request) { ArticleAddPage(w, r) }
 
@@ -91,12 +92,16 @@ func (SubmitWritingTask) Action(w http.ResponseWriter, r *http.Request) any {
 }
 
 func (SubmitWritingTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("writingEmail"), true
+	return EmailTemplateWriting.EmailTemplates(), true
 }
 
 func (SubmitWritingTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	s := notif.NotificationTemplateFilenameGenerator("writing")
+	s := NotificationTemplateWriting.NotificationTemplate()
 	return &s
+}
+
+func (SubmitWritingTask) EmailTemplatesRequired() []tasks.Page {
+	return append(EmailTemplateWriting.RequiredPages(), NotificationTemplateWriting.RequiredPages()...)
 }
 
 func (SubmitWritingTask) GrantsRequired(evt eventbus.TaskEvent) ([]notif.GrantRequirement, error) {

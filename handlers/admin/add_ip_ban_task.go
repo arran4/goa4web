@@ -25,6 +25,7 @@ var addIPBanTask = &AddIPBanTask{TaskString: TaskAdd}
 var _ tasks.Task = (*AddIPBanTask)(nil)
 var _ tasks.AuditableTask = (*AddIPBanTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*AddIPBanTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*AddIPBanTask)(nil)
 
 func (AddIPBanTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -68,12 +69,16 @@ func (AddIPBanTask) Action(w http.ResponseWriter, r *http.Request) any {
 }
 
 func (AddIPBanTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("adminAddIPBanEmail"), true
+	return EmailTemplateAdminAddIPBan.EmailTemplates(), true
 }
 
 func (AddIPBanTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := notif.NotificationTemplateFilenameGenerator("adminAddIPBanEmail")
+	v := EmailTemplateAdminAddIPBan.NotificationTemplate()
 	return &v
+}
+
+func (AddIPBanTask) EmailTemplatesRequired() []tasks.Page {
+	return EmailTemplateAdminAddIPBan.RequiredPages()
 }
 
 // AuditRecord summarises the addition of an IP ban.

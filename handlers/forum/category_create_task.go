@@ -11,16 +11,25 @@ type CategoryCreateTask struct{ tasks.TaskString }
 
 var categoryCreateTask = &CategoryCreateTask{TaskString: TaskForumCategoryCreate}
 
+const (
+	EmailTemplateAdminNotificationForumCategoryCreate notif.EmailTemplateName = "adminNotificationForumCategoryCreateEmail"
+)
+
 var (
 	_ tasks.Task                       = (*CategoryCreateTask)(nil)
 	_ notif.AdminEmailTemplateProvider = (*CategoryCreateTask)(nil)
+	_ tasks.EmailTemplatesRequired     = (*CategoryCreateTask)(nil)
 )
 
 func (CategoryCreateTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("adminNotificationForumCategoryCreateEmail"), true
+	return EmailTemplateAdminNotificationForumCategoryCreate.EmailTemplates(), true
 }
 
 func (CategoryCreateTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := notif.NotificationTemplateFilenameGenerator("adminNotificationForumCategoryCreateEmail")
+	v := EmailTemplateAdminNotificationForumCategoryCreate.NotificationTemplate()
 	return &v
+}
+
+func (CategoryCreateTask) EmailTemplatesRequired() []tasks.Page {
+	return EmailTemplateAdminNotificationForumCategoryCreate.RequiredPages()
 }

@@ -26,24 +26,29 @@ var (
 	_ notif.SubscribersNotificationTemplateProvider = (*NewPostTask)(nil)
 	_ notif.AdminEmailTemplateProvider              = (*NewPostTask)(nil)
 	_ notif.AutoSubscribeProvider                   = (*NewPostTask)(nil)
+	_ tasks.EmailTemplatesRequired                  = (*NewPostTask)(nil)
 )
 
 func (NewPostTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("adminNotificationNewsAddEmail"), true
+	return EmailTemplateAdminNotificationNewsAdd.EmailTemplates(), true
 }
 
 func (NewPostTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := notif.NotificationTemplateFilenameGenerator("adminNotificationNewsAddEmail")
+	v := EmailTemplateAdminNotificationNewsAdd.NotificationTemplate()
 	return &v
 }
 
 func (NewPostTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("newsAddEmail"), true
+	return EmailTemplateNewsAdd.EmailTemplates(), true
 }
 
 func (NewPostTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	s := notif.NotificationTemplateFilenameGenerator("news_add")
+	s := NotificationTemplateNewsAdd.NotificationTemplate()
 	return &s
+}
+
+func (NewPostTask) EmailTemplatesRequired() []tasks.Page {
+	return append(EmailTemplateAdminNotificationNewsAdd.RequiredPages(), EmailTemplateNewsAdd.RequiredPages()...)
 }
 
 // AutoSubscribePath links the newly created post so that any future replies notify the author by default.

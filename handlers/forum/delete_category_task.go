@@ -11,16 +11,25 @@ type DeleteCategoryTask struct{ tasks.TaskString }
 
 var deleteCategoryTask = &DeleteCategoryTask{TaskString: TaskDeleteCategory}
 
+const (
+	EmailTemplateAdminNotificationForumDeleteCategory notif.EmailTemplateName = "adminNotificationForumDeleteCategoryEmail"
+)
+
 var (
 	_ tasks.Task                       = (*DeleteCategoryTask)(nil)
 	_ notif.AdminEmailTemplateProvider = (*DeleteCategoryTask)(nil)
+	_ tasks.EmailTemplatesRequired     = (*DeleteCategoryTask)(nil)
 )
 
 func (DeleteCategoryTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("adminNotificationForumDeleteCategoryEmail"), true
+	return EmailTemplateAdminNotificationForumDeleteCategory.EmailTemplates(), true
 }
 
 func (DeleteCategoryTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := notif.NotificationTemplateFilenameGenerator("adminNotificationForumDeleteCategoryEmail")
+	v := EmailTemplateAdminNotificationForumDeleteCategory.NotificationTemplate()
 	return &v
+}
+
+func (DeleteCategoryTask) EmailTemplatesRequired() []tasks.Page {
+	return EmailTemplateAdminNotificationForumDeleteCategory.RequiredPages()
 }

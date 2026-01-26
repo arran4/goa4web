@@ -32,6 +32,24 @@ func (e EmailTemplateName) RequiredPages() []tasks.Page {
 		tasks.Page(et.Text),
 		tasks.Page(et.HTML),
 		tasks.Page(et.Subject),
+		tasks.Page(e.NotificationTemplate()),
+	}
+}
+
+// NotificationTemplateName is a strongly-typed name for internal notification templates.
+type NotificationTemplateName string
+
+func (n NotificationTemplateName) String() string {
+	return string(n)
+}
+
+func (n NotificationTemplateName) NotificationTemplate() string {
+	return NotificationTemplateFilenameGenerator(string(n))
+}
+
+func (n NotificationTemplateName) RequiredPages() []tasks.Page {
+	return []tasks.Page{
+		tasks.Page(n.NotificationTemplate()),
 	}
 }
 

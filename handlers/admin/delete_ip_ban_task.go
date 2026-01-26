@@ -22,6 +22,7 @@ var deleteIPBanTask = &DeleteIPBanTask{TaskString: TaskDelete}
 var _ tasks.Task = (*DeleteIPBanTask)(nil)
 var _ tasks.AuditableTask = (*DeleteIPBanTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*DeleteIPBanTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*DeleteIPBanTask)(nil)
 
 func (DeleteIPBanTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -55,12 +56,16 @@ func (DeleteIPBanTask) Action(w http.ResponseWriter, r *http.Request) any {
 }
 
 func (DeleteIPBanTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("adminRemoveIPBanEmail"), true
+	return EmailTemplateAdminDeleteIPBan.EmailTemplates(), true
 }
 
 func (DeleteIPBanTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := notif.NotificationTemplateFilenameGenerator("adminRemoveIPBanEmail")
+	v := EmailTemplateAdminDeleteIPBan.NotificationTemplate()
 	return &v
+}
+
+func (DeleteIPBanTask) EmailTemplatesRequired() []tasks.Page {
+	return EmailTemplateAdminDeleteIPBan.RequiredPages()
 }
 
 // AuditRecord summarises the removal of an IP ban.

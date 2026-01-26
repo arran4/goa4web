@@ -56,6 +56,7 @@ var _ tasks.Task = (*UserGenerateResetLinkTask)(nil)
 var _ tasks.AuditableTask = (*UserGenerateResetLinkTask)(nil)
 var _ notif.TargetUsersNotificationProvider = (*UserGenerateResetLinkTask)(nil)
 var _ tasks.TemplatesRequired = (*UserGenerateResetLinkTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*UserGenerateResetLinkTask)(nil)
 
 func (UserForcePasswordChangeTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -305,6 +306,10 @@ func (UserGenerateResetLinkTask) TemplatesRequired() []tasks.Page {
 		tasks.Page(handlers.TemplateRunTaskPage),
 		TemplateUserResetPasswordConfirmPage,
 	}
+}
+
+func (UserGenerateResetLinkTask) EmailTemplatesRequired() []tasks.Page {
+	return nil
 }
 
 func (UserGenerateResetLinkTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, error) {

@@ -19,8 +19,13 @@ type RenameLanguageTask struct{ tasks.TaskString }
 
 var renameLanguageTask = &RenameLanguageTask{TaskString: tasks.TaskString("Rename Language")}
 
+const (
+	EmailTemplateAdminNotificationLanguageRename notif.EmailTemplateName = "adminNotificationLanguageRenameEmail"
+)
+
 var _ tasks.Task = (*RenameLanguageTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*RenameLanguageTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*RenameLanguageTask)(nil)
 
 func (RenameLanguageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -60,10 +65,14 @@ func (RenameLanguageTask) Action(w http.ResponseWriter, r *http.Request) any {
 }
 
 func (RenameLanguageTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("adminNotificationLanguageRenameEmail"), true
+	return EmailTemplateAdminNotificationLanguageRename.EmailTemplates(), true
 }
 
 func (RenameLanguageTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := notif.NotificationTemplateFilenameGenerator("adminNotificationLanguageRenameEmail")
+	v := EmailTemplateAdminNotificationLanguageRename.NotificationTemplate()
 	return &v
+}
+
+func (RenameLanguageTask) EmailTemplatesRequired() []tasks.Page {
+	return EmailTemplateAdminNotificationLanguageRename.RequiredPages()
 }

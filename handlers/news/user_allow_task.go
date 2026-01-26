@@ -20,14 +20,19 @@ var userAllowTask = &UserAllowTask{TaskString: TaskUserAllow}
 
 var _ tasks.Task = (*UserAllowTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*UserAllowTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*UserAllowTask)(nil)
 
 func (UserAllowTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("adminNotificationNewsUserAllowEmail"), true
+	return EmailTemplateAdminNotificationNewsUserAllow.EmailTemplates(), true
 }
 
 func (UserAllowTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := notif.NotificationTemplateFilenameGenerator("adminNotificationNewsUserAllowEmail")
+	v := EmailTemplateAdminNotificationNewsUserAllow.NotificationTemplate()
 	return &v
+}
+
+func (UserAllowTask) EmailTemplatesRequired() []tasks.Page {
+	return EmailTemplateAdminNotificationNewsUserAllow.RequiredPages()
 }
 
 func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) any {

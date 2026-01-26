@@ -30,6 +30,7 @@ var (
 	_ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
 	_ notif.AdminEmailTemplateProvider              = (*ReplyTask)(nil)
 	_ notif.AutoSubscribeProvider                   = (*ReplyTask)(nil)
+	_ tasks.EmailTemplatesRequired                  = (*ReplyTask)(nil)
 )
 
 func (ReplyTask) IndexType() string { return searchworker.TypeComment }
@@ -44,27 +45,31 @@ func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
 var _ searchworker.IndexedTask = ReplyTask{}
 
 func (ReplyTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("replyEmail"), evt.Outcome == eventbus.TaskOutcomeSuccess
+	return EmailTemplateNewsReply.EmailTemplates(), evt.Outcome == eventbus.TaskOutcomeSuccess
 }
 
 func (ReplyTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	if evt.Outcome != eventbus.TaskOutcomeSuccess {
 		return nil
 	}
-	s := notif.NotificationTemplateFilenameGenerator("reply")
+	s := NotificationTemplateNewsReply.NotificationTemplate()
 	return &s
 }
 
 func (ReplyTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("adminNotificationNewsReplyEmail"), evt.Outcome == eventbus.TaskOutcomeSuccess
+	return EmailTemplateAdminNotificationNewsReply.EmailTemplates(), evt.Outcome == eventbus.TaskOutcomeSuccess
 }
 
 func (ReplyTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	if evt.Outcome != eventbus.TaskOutcomeSuccess {
 		return nil
 	}
-	v := notif.NotificationTemplateFilenameGenerator("adminNotificationNewsReplyEmail")
+	v := EmailTemplateAdminNotificationNewsReply.NotificationTemplate()
 	return &v
+}
+
+func (ReplyTask) EmailTemplatesRequired() []tasks.Page {
+	return append(EmailTemplateNewsReply.RequiredPages(), EmailTemplateAdminNotificationNewsReply.RequiredPages()...)
 }
 
 // AutoSubscribePath registers this reply so the author automatically follows subsequent comments on the news post.

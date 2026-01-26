@@ -3,6 +3,7 @@ package admin
 import (
 	"database/sql"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"os"
@@ -111,4 +112,4 @@ func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
 	AdminFilesPageTmpl.Handle(w, r, data)
 }
 
-const AdminFilesPageTmpl handlers.Page = "admin/adminFilesPage.gohtml"
+const AdminFilesPageTmpl tasks.Template = "admin/adminFilesPage.gohtml"

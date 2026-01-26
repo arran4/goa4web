@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"strings"
 
@@ -80,4 +81,4 @@ func adminRolePage(w http.ResponseWriter, r *http.Request) {
 	AdminRolePageTmpl.Handle(w, r, data)
 }
 
-const AdminRolePageTmpl handlers.Page = "admin/adminRolePage.gohtml"
+const AdminRolePageTmpl tasks.Template = "admin/adminRolePage.gohtml"

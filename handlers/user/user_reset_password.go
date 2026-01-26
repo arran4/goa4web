@@ -23,7 +23,7 @@ type UserResetPasswordTask struct{ tasks.TaskString }
 
 var userResetPasswordTask = &UserResetPasswordTask{TaskString: "Password Reset"}
 
-const TemplateUserResetPasswordPage handlers.Page = "userResetPasswordPage.gohtml"
+const TemplateUserResetPasswordPage tasks.Template = "userResetPasswordPage.gohtml"
 
 var _ tasks.Task = (*UserResetPasswordTask)(nil)
 var _ tasks.TemplatesRequired = (*UserResetPasswordTask)(nil)
@@ -102,8 +102,8 @@ func (UserResetPasswordTask) Action(w http.ResponseWriter, r *http.Request) any 
 	return handlers.RefreshDirectHandler{TargetURL: "/login?notice=Password+updated.+Please+login."}
 }
 
-func (UserResetPasswordTask) TemplatesRequired() []tasks.Page {
-	return []tasks.Page{TemplateUserResetPasswordPage}
+func (UserResetPasswordTask) RequiredTemplates() []tasks.Template {
+	return []tasks.Template{TemplateUserResetPasswordPage}
 }
 
 func UserResetPasswordPage(w http.ResponseWriter, r *http.Request) {

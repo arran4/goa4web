@@ -64,8 +64,8 @@ func (DeleteAnnouncementTask) AdminInternalNotificationTemplate(evt eventbus.Tas
 	return &v
 }
 
-func (DeleteAnnouncementTask) EmailTemplatesRequired() []tasks.Page {
-	return append(EmailTemplateAnnouncement.RequiredPages(), NotificationTemplateAnnouncement.RequiredPages()...)
+func (DeleteAnnouncementTask) RequiredTemplates() []tasks.Template {
+	return append(EmailTemplateAnnouncement.RequiredTemplates(), NotificationTemplateAnnouncement.RequiredTemplates()...)
 }
 
 // AuditRecord summarises an announcement deletion.

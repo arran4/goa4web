@@ -26,6 +26,6 @@ func (TopicChangeTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent)
 	return &v
 }
 
-func (TopicChangeTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateAdminNotificationForumTopicChange.RequiredPages()
+func (TopicChangeTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateAdminNotificationForumTopicChange.RequiredTemplates()
 }

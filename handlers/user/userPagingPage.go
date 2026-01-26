@@ -31,7 +31,7 @@ func userPagingPage(w http.ResponseWriter, r *http.Request) {
 	UserPagingPage.Handle(w, r, struct{}{})
 }
 
-const UserPagingPage handlers.Page = "user/pagingPage.gohtml"
+const UserPagingPage tasks.Template = "user/pagingPage.gohtml"
 
 func (PagingSaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := r.ParseForm(); err != nil {

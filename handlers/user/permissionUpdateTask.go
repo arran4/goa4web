@@ -104,6 +104,6 @@ func (PermissionUpdateTask) TargetInternalNotificationTemplate(evt eventbus.Task
 	return &v
 }
 
-func (PermissionUpdateTask) EmailTemplatesRequired() []tasks.Page {
-	return append(EmailTemplateUpdateUserRole.RequiredPages(), NotificationTemplateUpdateUserRole.RequiredPages()...)
+func (PermissionUpdateTask) RequiredTemplates() []tasks.Template {
+	return append(EmailTemplateUpdateUserRole.RequiredTemplates(), NotificationTemplateUpdateUserRole.RequiredTemplates()...)
 }

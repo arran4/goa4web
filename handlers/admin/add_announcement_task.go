@@ -64,8 +64,8 @@ func (AddAnnouncementTask) AdminInternalNotificationTemplate(evt eventbus.TaskEv
 	return &v
 }
 
-func (AddAnnouncementTask) EmailTemplatesRequired() []tasks.Page {
-	return append(EmailTemplateAnnouncement.RequiredPages(), NotificationTemplateAnnouncement.RequiredPages()...)
+func (AddAnnouncementTask) RequiredTemplates() []tasks.Template {
+	return append(EmailTemplateAnnouncement.RequiredTemplates(), NotificationTemplateAnnouncement.RequiredTemplates()...)
 }
 
 // AuditRecord summarises an announcement being created.

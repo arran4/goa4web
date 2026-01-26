@@ -2,6 +2,7 @@ package user
 
 import (
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 
@@ -48,4 +49,4 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 	UserLogoutPage.Handle(w, r, struct{}{})
 }
 
-const UserLogoutPage handlers.Page = "user/logoutPage.gohtml"
+const UserLogoutPage tasks.Template = "user/logoutPage.gohtml"

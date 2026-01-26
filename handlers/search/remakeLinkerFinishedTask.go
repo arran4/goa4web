@@ -39,6 +39,6 @@ func (RemakeLinkerFinishedTask) SelfInternalNotificationTemplate(evt eventbus.Ta
 	return &s
 }
 
-func (RemakeLinkerFinishedTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateSearchRebuildLinker.RequiredPages()
+func (RemakeLinkerFinishedTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateSearchRebuildLinker.RequiredTemplates()
 }

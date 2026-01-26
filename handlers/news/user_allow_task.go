@@ -31,8 +31,9 @@ func (UserAllowTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *
 	return &v
 }
 
-func (UserAllowTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateAdminNotificationNewsUserAllow.RequiredPages()
+func (UserAllowTask) RequiredTemplates() []tasks.Template {
+	return append([]tasks.Template{tasks.Template(handlers.TemplateRunTaskPage)},
+		EmailTemplateAdminNotificationNewsUserAllow.RequiredTemplates()...)
 }
 
 func (UserAllowTask) Action(w http.ResponseWriter, r *http.Request) any {

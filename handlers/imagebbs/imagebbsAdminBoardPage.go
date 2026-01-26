@@ -40,8 +40,9 @@ func (ModifyBoardTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent)
 	return &v
 }
 
-func (ModifyBoardTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateImageBoardUpdate.RequiredPages()
+func (ModifyBoardTask) RequiredTemplates() []tasks.Template {
+	return append([]tasks.Template{tasks.Template(ImageBBSAdminBoardPageTmpl)},
+		EmailTemplateImageBoardUpdate.RequiredTemplates()...)
 }
 
 func (ModifyBoardTask) Action(w http.ResponseWriter, r *http.Request) any {
@@ -131,4 +132,4 @@ func AdminBoardPage(w http.ResponseWriter, r *http.Request) {
 	ImageBBSAdminBoardPageTmpl.Handle(w, r, data)
 }
 
-const ImageBBSAdminBoardPageTmpl handlers.Page = "imagebbs/adminBoardPage.gohtml"
+const ImageBBSAdminBoardPageTmpl tasks.Template = "imagebbs/adminBoardPage.gohtml"

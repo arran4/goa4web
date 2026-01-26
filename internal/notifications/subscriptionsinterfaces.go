@@ -26,13 +26,13 @@ func (e EmailTemplateName) NotificationTemplate() string {
 	return NotificationTemplateFilenameGenerator(string(e))
 }
 
-func (e EmailTemplateName) RequiredPages() []tasks.Page {
+func (e EmailTemplateName) RequiredTemplates() []tasks.Template {
 	et := e.EmailTemplates()
-	return []tasks.Page{
-		tasks.Page(et.Text),
-		tasks.Page(et.HTML),
-		tasks.Page(et.Subject),
-		tasks.Page(e.NotificationTemplate()),
+	return []tasks.Template{
+		tasks.Template(et.Text),
+		tasks.Template(et.HTML),
+		tasks.Template(et.Subject),
+		tasks.Template(e.NotificationTemplate()),
 	}
 }
 
@@ -47,9 +47,9 @@ func (n NotificationTemplateName) NotificationTemplate() string {
 	return NotificationTemplateFilenameGenerator(string(n))
 }
 
-func (n NotificationTemplateName) RequiredPages() []tasks.Page {
-	return []tasks.Page{
-		tasks.Page(n.NotificationTemplate()),
+func (n NotificationTemplateName) RequiredTemplates() []tasks.Template {
+	return []tasks.Template{
+		tasks.Template(n.NotificationTemplate()),
 	}
 }
 

@@ -47,8 +47,8 @@ func (NewPostTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent
 	return &s
 }
 
-func (NewPostTask) EmailTemplatesRequired() []tasks.Page {
-	return append(EmailTemplateAdminNotificationNewsAdd.RequiredPages(), EmailTemplateNewsAdd.RequiredPages()...)
+func (NewPostTask) RequiredTemplates() []tasks.Template {
+	return append(EmailTemplateAdminNotificationNewsAdd.RequiredTemplates(), EmailTemplateNewsAdd.RequiredTemplates()...)
 }
 
 // AutoSubscribePath links the newly created post so that any future replies notify the author by default.

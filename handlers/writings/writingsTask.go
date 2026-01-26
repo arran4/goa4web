@@ -7,7 +7,6 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/handlers/share"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -16,15 +15,15 @@ type writingsTask struct {
 }
 
 const (
-	WritingsPageTmpl handlers.Page = "writings/page.gohtml"
+	WritingsPageTmpl tasks.Template = "writings/page.gohtml"
 )
 
 func NewWritingsTask() tasks.Task {
 	return &writingsTask{}
 }
 
-func (t *writingsTask) TemplatesRequired() []tasks.Page {
-	return []tasks.Page{WritingsPageTmpl}
+func (t *writingsTask) RequiredTemplates() []tasks.Template {
+	return []tasks.Template{WritingsPageTmpl}
 }
 
 func (t *writingsTask) Action(w http.ResponseWriter, r *http.Request) any {

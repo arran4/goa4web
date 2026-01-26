@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"strconv"
@@ -37,4 +38,4 @@ func PosterPage(w http.ResponseWriter, r *http.Request) {
 	ImageBBSPosterPageTmpl.Handle(w, r, data)
 }
 
-const ImageBBSPosterPageTmpl handlers.Page = "imagebbs/posterPage.gohtml"
+const ImageBBSPosterPageTmpl tasks.Template = "imagebbs/posterPage.gohtml"

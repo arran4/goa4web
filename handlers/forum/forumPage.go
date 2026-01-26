@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"strconv"
@@ -110,4 +111,4 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	ForumPageTmpl.Handle(w, r, data)
 }
 
-const ForumPageTmpl handlers.Page = "forum/page.gohtml"
+const ForumPageTmpl tasks.Template = "forum/page.gohtml"

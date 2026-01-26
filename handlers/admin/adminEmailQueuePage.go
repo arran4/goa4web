@@ -3,6 +3,7 @@ package admin
 import (
 	"database/sql"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"net/mail"
@@ -79,4 +80,4 @@ func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 	AdminEmailQueuePageTmpl.Handle(w, r, data)
 }
 
-const AdminEmailQueuePageTmpl handlers.Page = "admin/emailQueuePage.gohtml"
+const AdminEmailQueuePageTmpl tasks.Template = "admin/emailQueuePage.gohtml"

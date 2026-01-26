@@ -21,11 +21,11 @@ type Task interface {
 // to declare the exact site template paths they depend on. Tests can use this
 // to verify that the templates exist.
 type TemplatesRequired interface {
-	TemplatesRequired() []Page
+	RequiredTemplates() []Template
 }
 
 type EmailTemplatesRequired interface {
-	EmailTemplatesRequired() []Page
+	RequiredTemplates() []Template
 }
 
 type TaskMatcher interface {

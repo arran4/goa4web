@@ -69,6 +69,6 @@ func (RenameLanguageTask) AdminInternalNotificationTemplate(evt eventbus.TaskEve
 	return &v
 }
 
-func (RenameLanguageTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateAdminNotificationLanguageRename.RequiredPages()
+func (RenameLanguageTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateAdminNotificationLanguageRename.RequiredTemplates()
 }

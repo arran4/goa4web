@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"net/url"
@@ -59,8 +60,8 @@ func (h redirectBackPageHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 }
 
 const (
-	TaskDoneAutoRefreshPageTmpl handlers.Page = "taskDoneAutoRefreshPage.gohtml"
-	RedirectBackPageTmpl        handlers.Page = "redirectBackPage.gohtml"
+	TaskDoneAutoRefreshPageTmpl tasks.Template = "taskDoneAutoRefreshPage.gohtml"
+	RedirectBackPageTmpl        tasks.Template = "redirectBackPage.gohtml"
 )
 
 var _ http.Handler = (*redirectBackPageHandler)(nil)
@@ -89,4 +90,4 @@ func renderLoginForm(w http.ResponseWriter, r *http.Request, errMsg, noticeMsg s
 	LoginPageTmpl.Handle(w, r, data)
 }
 
-const LoginPageTmpl handlers.Page = "loginPage.gohtml"
+const LoginPageTmpl tasks.Template = "loginPage.gohtml"

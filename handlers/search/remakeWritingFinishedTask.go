@@ -39,6 +39,6 @@ func (RemakeWritingFinishedTask) SelfInternalNotificationTemplate(evt eventbus.T
 	return &s
 }
 
-func (RemakeWritingFinishedTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateSearchRebuildWriting.RequiredPages()
+func (RemakeWritingFinishedTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateSearchRebuildWriting.RequiredTemplates()
 }

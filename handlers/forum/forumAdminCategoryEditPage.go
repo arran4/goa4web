@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/arran4/goa4web/internal/tasks"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -48,7 +50,7 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 	ForumAdminCategoryEditPageTmpl.Handle(w, r, data)
 }
 
-const ForumAdminCategoryEditPageTmpl handlers.Page = "forum/forumAdminCategoryEditPage.gohtml"
+const ForumAdminCategoryEditPageTmpl tasks.Template = "forum/forumAdminCategoryEditPage.gohtml"
 
 // AdminCategoryEditSubmit processes updates to an existing forum category.
 func AdminCategoryEditSubmit(w http.ResponseWriter, r *http.Request) {
@@ -132,6 +134,16 @@ func AdminCategoryEditSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if evt := cd.Event(); evt != nil {
+		if evt.Data == nil {
+			evt.Data = map[string]any{}
+		}
+		evt.Data["Name"] = name
+		if u := cd.UserByID(cd.UserID); u != nil {
+			evt.Data["Username"] = u.Username.String
+		}
+	}
+
 	redirectURL := "/admin/forum/categories"
 	if strings.HasSuffix(r.URL.Path, "/edit") {
 		redirectURL = fmt.Sprintf("/admin/forum/categories/category/%d", categoryId)
@@ -147,6 +159,19 @@ func AdminCategoryDeletePage(w http.ResponseWriter, r *http.Request) {
 		handlers.RedirectSeeOtherWithError(w, r, "", err)
 		return
 	}
+	cat, err := cd.ForumCategory(int32(cid))
+	if err == nil && cat != nil {
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data["Name"] = cat.Title.String
+			if u := cd.UserByID(cd.UserID); u != nil {
+				evt.Data["Username"] = u.Username.String
+			}
+		}
+	}
+
 	if err := cd.Queries().AdminDeleteForumCategory(r.Context(), int32(cid)); err != nil {
 		handlers.RedirectSeeOtherWithError(w, r, "", err)
 		return

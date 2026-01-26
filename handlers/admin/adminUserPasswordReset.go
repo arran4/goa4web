@@ -35,8 +35,7 @@ type UserGenerateResetLinkTask struct{ tasks.TaskString }
 var userGenerateResetLinkTask = &UserGenerateResetLinkTask{TaskString: TaskUserGenerateResetLink}
 
 const (
-	TemplateUserResetPasswordConfirmPage handlers.Page           = "admin/userResetPasswordConfirmPage.gohtml"
-	EmailTemplateAdminPasswordReset      notif.EmailTemplateName = "adminPasswordResetEmail"
+	TemplateUserResetPasswordConfirmPage tasks.Template          = "admin/userResetPasswordConfirmPage.gohtml"
 	EmailTemplateUserMagicReset          notif.EmailTemplateName = "userMagicResetEmail"
 )
 
@@ -109,15 +108,11 @@ func (UserForcePasswordChangeTask) Action(w http.ResponseWriter, r *http.Request
 	return handlers.TemplateWithDataHandler(handlers.TemplateRunTaskPage, data)
 }
 
-func (UserForcePasswordChangeTask) TemplatesRequired() []tasks.Page {
-	return []tasks.Page{
-		tasks.Page(handlers.TemplateRunTaskPage),
+func (UserForcePasswordChangeTask) RequiredTemplates() []tasks.Template {
+	return append([]tasks.Template{
+		tasks.Template(handlers.TemplateRunTaskPage),
 		TemplateUserResetPasswordConfirmPage,
-	}
-}
-
-func (UserForcePasswordChangeTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateAdminPasswordReset.RequiredPages()
+	}, EmailTemplateAdminUserRequestPasswordReset.RequiredTemplates()...)
 }
 
 func (UserForcePasswordChangeTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, error) {
@@ -206,15 +201,11 @@ func (UserSendResetEmailTask) Action(w http.ResponseWriter, r *http.Request) any
 	return handlers.TemplateWithDataHandler(handlers.TemplateRunTaskPage, data)
 }
 
-func (UserSendResetEmailTask) TemplatesRequired() []tasks.Page {
-	return []tasks.Page{
-		tasks.Page(handlers.TemplateRunTaskPage),
+func (UserSendResetEmailTask) RequiredTemplates() []tasks.Template {
+	return append([]tasks.Template{
+		tasks.Template(handlers.TemplateRunTaskPage),
 		TemplateUserResetPasswordConfirmPage,
-	}
-}
-
-func (UserSendResetEmailTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateUserMagicReset.RequiredPages()
+	}, EmailTemplateUserMagicReset.RequiredTemplates()...)
 }
 
 func (UserSendResetEmailTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, error) {
@@ -301,15 +292,11 @@ func (UserGenerateResetLinkTask) Action(w http.ResponseWriter, r *http.Request) 
 	return handlers.TemplateWithDataHandler(handlers.TemplateRunTaskPage, data)
 }
 
-func (UserGenerateResetLinkTask) TemplatesRequired() []tasks.Page {
-	return []tasks.Page{
-		tasks.Page(handlers.TemplateRunTaskPage),
+func (UserGenerateResetLinkTask) RequiredTemplates() []tasks.Template {
+	return []tasks.Template{
+		tasks.Template(handlers.TemplateRunTaskPage),
 		TemplateUserResetPasswordConfirmPage,
 	}
-}
-
-func (UserGenerateResetLinkTask) EmailTemplatesRequired() []tasks.Page {
-	return nil
 }
 
 func (UserGenerateResetLinkTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, error) {

@@ -80,8 +80,8 @@ func (ReplyTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *stri
 	return &v
 }
 
-func (ReplyTask) EmailTemplatesRequired() []tasks.Page {
-	return append(EmailTemplateForumReply.RequiredPages(), EmailTemplateAdminNotificationForumReply.RequiredPages()...)
+func (ReplyTask) RequiredTemplates() []tasks.Template {
+	return append(EmailTemplateForumReply.RequiredTemplates(), EmailTemplateAdminNotificationForumReply.RequiredTemplates()...)
 }
 
 // AutoSubscribePath ensures authors automatically receive updates on replies.

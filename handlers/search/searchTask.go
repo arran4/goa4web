@@ -1,11 +1,12 @@
 package search
 
 import (
+	"net/http"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/tasks"
-	"net/http"
 )
 
 type searchTask struct {
@@ -19,8 +20,8 @@ func NewSearchTask() tasks.Task {
 	return &searchTask{}
 }
 
-func (t *searchTask) TemplatesRequired() []tasks.Page {
-	return []tasks.Page{SearchPageTmpl}
+func (t *searchTask) RequiredTemplates() []tasks.Template {
+	return []tasks.Template{tasks.Template(SearchPageTmpl)}
 }
 
 func (t *searchTask) Action(w http.ResponseWriter, r *http.Request) any {

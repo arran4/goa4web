@@ -3,6 +3,7 @@ package news
 import (
 	"database/sql"
 	"errors"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 
@@ -66,7 +67,7 @@ func SearchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 	SearchResultNewsActionPageTmpl.Handle(w, r, data)
 }
 
-const SearchResultNewsActionPageTmpl handlers.Page = "search/resultNewsActionPage.gohtml"
+const SearchResultNewsActionPageTmpl tasks.Template = "search/resultNewsActionPage.gohtml"
 
 func forumCommentSearchInRestrictedTopic(w http.ResponseWriter, r *http.Request, queries db.Querier, forumTopicId []int32, uid int32) ([]*db.GetCommentsByIdsForUserWithThreadInfoRow, bool, bool, error) {
 	searchWords := searchutil.BreakupTextToWords(r.PostFormValue("searchwords"))

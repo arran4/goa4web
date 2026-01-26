@@ -55,6 +55,6 @@ func (DeleteLanguageTask) AdminInternalNotificationTemplate(evt eventbus.TaskEve
 	return &v
 }
 
-func (DeleteLanguageTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateAdminNotificationLanguageDelete.RequiredPages()
+func (DeleteLanguageTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateAdminNotificationLanguageDelete.RequiredTemplates()
 }

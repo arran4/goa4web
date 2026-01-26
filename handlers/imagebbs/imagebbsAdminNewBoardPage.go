@@ -37,8 +37,8 @@ func (NewBoardTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *s
 	return &v
 }
 
-func (NewBoardTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateAdminNotificationImageBoardNew.RequiredPages()
+func (NewBoardTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateAdminNotificationImageBoardNew.RequiredTemplates()
 }
 
 func AdminNewBoardPage(w http.ResponseWriter, r *http.Request) {

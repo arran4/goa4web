@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 
@@ -33,4 +34,4 @@ func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 	AdminIPBanPageTmpl.Handle(w, r, data)
 }
 
-const AdminIPBanPageTmpl handlers.Page = "ipBanPage.gohtml"
+const AdminIPBanPageTmpl tasks.Template = "ipBanPage.gohtml"

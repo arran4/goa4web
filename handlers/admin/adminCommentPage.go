@@ -3,11 +3,11 @@ package admin
 import (
 	"database/sql"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -58,4 +58,4 @@ func adminCommentPage(w http.ResponseWriter, r *http.Request) {
 	AdminCommentPageTmpl.Handle(w, r, data)
 }
 
-const AdminCommentPageTmpl handlers.Page = "admin/adminCommentPage.gohtml"
+const AdminCommentPageTmpl tasks.Template = "admin/adminCommentPage.gohtml"

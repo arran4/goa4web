@@ -4,12 +4,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/internal/db"
 
@@ -157,10 +158,10 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return handlers.RefreshDirectHandler{TargetURL: "/"}
 }
 
-// TemplatesRequired declares the templates used by this task's pages.
-func (LoginTask) TemplatesRequired() []tasks.Page {
-	return []tasks.Page{
-		templateLoginPage,
-		templatePasswordVerifyPage,
+// RequiredTemplates declares the templates used by this task's pages.
+func (LoginTask) RequiredTemplates() []tasks.Template {
+	return []tasks.Template{
+		tasks.Template(templateLoginPage),
+		tasks.Template(templatePasswordVerifyPage),
 	}
 }

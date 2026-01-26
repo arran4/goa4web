@@ -131,8 +131,8 @@ func (AdminAddEmailTask) DirectEmailTemplate(evt eventbus.TaskEvent) (templates 
 	return EmailTemplateVerify.EmailTemplates(), true
 }
 
-func (AdminAddEmailTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateVerify.RequiredPages()
+func (AdminAddEmailTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateVerify.RequiredTemplates()
 }
 
 func (AdminAddEmailTask) DirectEmailAddress(evt eventbus.TaskEvent) (string, error) {
@@ -351,8 +351,8 @@ func (AdminResendVerificationEmailTask) DirectEmailTemplate(evt eventbus.TaskEve
 	return EmailTemplateVerify.EmailTemplates(), true
 }
 
-func (AdminResendVerificationEmailTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateVerify.RequiredPages()
+func (AdminResendVerificationEmailTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateVerify.RequiredTemplates()
 }
 
 func (AdminResendVerificationEmailTask) DirectEmailAddress(evt eventbus.TaskEvent) (string, error) {

@@ -3,6 +3,7 @@ package linker
 import (
 	"database/sql"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"strconv"
@@ -67,4 +68,4 @@ func AdminCategoryGrantsPage(w http.ResponseWriter, r *http.Request) {
 	LinkerAdminCategoryGrantsPageTmpl.Handle(w, r, data)
 }
 
-const LinkerAdminCategoryGrantsPageTmpl handlers.Page = "linker/adminCategoryGrantsPage.gohtml"
+const LinkerAdminCategoryGrantsPageTmpl tasks.Template = "linker/adminCategoryGrantsPage.gohtml"

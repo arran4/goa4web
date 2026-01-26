@@ -100,8 +100,9 @@ func (SubmitWritingTask) SubscribedInternalNotificationTemplate(evt eventbus.Tas
 	return &s
 }
 
-func (SubmitWritingTask) EmailTemplatesRequired() []tasks.Page {
-	return append(EmailTemplateWriting.RequiredPages(), NotificationTemplateWriting.RequiredPages()...)
+func (SubmitWritingTask) RequiredTemplates() []tasks.Template {
+	return append([]tasks.Template{tasks.Template(WritingsArticleAddPageTmpl)},
+		append(EmailTemplateWriting.RequiredTemplates(), NotificationTemplateWriting.RequiredTemplates()...)...)
 }
 
 func (SubmitWritingTask) GrantsRequired(evt eventbus.TaskEvent) ([]notif.GrantRequirement, error) {

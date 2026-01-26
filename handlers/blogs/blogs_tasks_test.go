@@ -1,23 +1,24 @@
 package blogs
 
 import (
-	"github.com/arran4/goa4web/internal/tasks"
 	"testing"
+
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 func TestBlogsTasksTemplatesRequiredExist(t *testing.T) {
 	tasks := []struct {
 		name string
-		task templatesRequired
+		task tasks.TemplatesRequired
 	}{
 		{"blogsTask", &blogsTask{}},
 		{"blogsCommentTask", &blogsCommentTask{}},
 	}
 	for _, task := range tasks {
 		t.Run(task.name, func(t *testing.T) {
-			req := task.task.TemplatesRequired()
+			req := task.task.RequiredTemplates()
 			if len(req) == 0 {
-				t.Fatalf("TemplatesRequired returned no templates; expected at least one")
+				t.Fatalf("RequiredTemplates returned no templates; expected at least one")
 			}
 			for _, name := range req {
 				if !name.Exists() {
@@ -26,8 +27,4 @@ func TestBlogsTasksTemplatesRequiredExist(t *testing.T) {
 			}
 		})
 	}
-}
-
-type templatesRequired interface {
-	TemplatesRequired() []tasks.Page
 }

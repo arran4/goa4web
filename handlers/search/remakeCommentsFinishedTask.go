@@ -39,6 +39,6 @@ func (RemakeCommentsFinishedTask) SelfInternalNotificationTemplate(evt eventbus.
 	return &s
 }
 
-func (RemakeCommentsFinishedTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateSearchRebuildComments.RequiredPages()
+func (RemakeCommentsFinishedTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateSearchRebuildComments.RequiredTemplates()
 }

@@ -221,7 +221,7 @@ func TestImageBbsReply(t *testing.T) {
 	}
 	subBody := getEmailBody(t, msg)
 	expectedSubBody := fmt.Sprintf(
-		"Hi replier,\n\nA new reply was posted in %q (thread #%d) on %s.\nThere are now %d comments in the discussion.\n\nView it here:\nhttp://example.com/imagebbss/imagebbs/9/comments\n\n\nManage notifications: http://example.com/usr/subscriptions",
+		"Hi subscriber,\n\nA new reply was posted in %q (thread #%d) on %s.\nThere are now %d comments in the discussion.\n\nView it here:\nhttp://example.com/imagebbss/imagebbs/9/comments\n\n\nManage notifications: http://example.com/usr/subscriptions",
 		ImageBBSTopicName,
 		threadID,
 		fixedTime.Format(consts.DisplayDateTimeFormat),

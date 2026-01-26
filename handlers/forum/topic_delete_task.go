@@ -26,6 +26,6 @@ func (TopicDeleteTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent)
 	return &v
 }
 
-func (TopicDeleteTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateAdminNotificationForumTopicDelete.RequiredPages()
+func (TopicDeleteTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateAdminNotificationForumTopicDelete.RequiredTemplates()
 }

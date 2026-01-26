@@ -36,8 +36,8 @@ func (EditReplyTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *
 	return &v
 }
 
-func (EditReplyTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateAdminNotificationNewsCommentEdit.RequiredPages()
+func (EditReplyTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateAdminNotificationNewsCommentEdit.RequiredTemplates()
 }
 
 func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {

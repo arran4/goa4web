@@ -2,6 +2,7 @@ package forum
 
 import (
 	"database/sql"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"strconv"
 
@@ -22,7 +23,7 @@ func AdminThreadsPage(w http.ResponseWriter, r *http.Request) {
 	ForumAdminThreadsPageTmpl.Handle(w, r, struct{}{})
 }
 
-const ForumAdminThreadsPageTmpl handlers.Page = "forum/adminThreadsPage.gohtml"
+const ForumAdminThreadsPageTmpl tasks.Template = "forum/adminThreadsPage.gohtml"
 
 func AdminThreadDeletePage(w http.ResponseWriter, r *http.Request) {
 	threadID, err := strconv.Atoi(mux.Vars(r)["thread"])
@@ -63,7 +64,7 @@ func AdminThreadDeleteConfirmPage(w http.ResponseWriter, r *http.Request) {
 	ConfirmPageTmpl.Handle(w, r, data)
 }
 
-const ConfirmPageTmpl handlers.Page = "confirmPage.gohtml"
+const ConfirmPageTmpl tasks.Template = "confirmPage.gohtml"
 
 func AdminThreadPage(w http.ResponseWriter, r *http.Request) {
 	threadID, err := strconv.Atoi(mux.Vars(r)["thread"])
@@ -99,4 +100,4 @@ func AdminThreadPage(w http.ResponseWriter, r *http.Request) {
 	ForumAdminThreadPageTmpl.Handle(w, r, data)
 }
 
-const ForumAdminThreadPageTmpl handlers.Page = "forum/adminThreadPage.gohtml"
+const ForumAdminThreadPageTmpl tasks.Template = "forum/adminThreadPage.gohtml"

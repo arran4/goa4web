@@ -2,6 +2,7 @@ package search
 
 import (
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
@@ -48,4 +49,4 @@ func adminSearchPage(w http.ResponseWriter, r *http.Request) {
 	AdminSearchPageTmpl.Handle(w, r, data)
 }
 
-const AdminSearchPageTmpl handlers.Page = "admin/searchPage.gohtml"
+const AdminSearchPageTmpl tasks.Template = "admin/searchPage.gohtml"

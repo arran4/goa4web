@@ -67,8 +67,8 @@ func (ApprovePostTask) SelfInternalNotificationTemplate(evt eventbus.TaskEvent) 
 	return &s
 }
 
-func (ApprovePostTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateImagePostApproved.RequiredPages()
+func (ApprovePostTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateImagePostApproved.RequiredTemplates()
 }
 
 func (ApprovePostTask) AuditRecord(data map[string]any) string {

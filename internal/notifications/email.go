@@ -51,6 +51,7 @@ type EmailData struct {
 	SignOff        string
 	SignOffHTML    htemplate.HTML
 	Item           interface{}
+	Recipient      *db.SystemGetUserByIDRow
 }
 
 // EmailOption configures EmailData prior to rendering.
@@ -59,6 +60,11 @@ type EmailOption func(*EmailData)
 // WithAdmin appends " Admin" to the subject prefix to flag administrative emails.
 func WithAdmin() EmailOption {
 	return func(d *EmailData) { d.SubjectPrefix += " Admin" }
+}
+
+// WithRecipient adds the recipient user to EmailData.
+func WithRecipient(u *db.SystemGetUserByIDRow) EmailOption {
+	return func(d *EmailData) { d.Recipient = u }
 }
 
 // RenderEmailFromTemplates returns the rendered email message using the provided templates.
@@ -169,5 +175,5 @@ func (n *Notifier) sendSubscriberEmail(ctx context.Context, userID int32, evt ev
 	if et == nil {
 		return nil
 	}
-	return n.renderAndQueueEmailFromTemplates(ctx, &userID, user.Email.String, et, evt.Data)
+	return n.renderAndQueueEmailFromTemplates(ctx, &userID, user.Email.String, et, evt.Data, WithRecipient(user))
 }

@@ -60,7 +60,7 @@ func AdminAddPage(w http.ResponseWriter, r *http.Request) {
 	LinkerAdminAddPageTmpl.Handle(w, r, data)
 }
 
-const LinkerAdminAddPageTmpl handlers.Page = "linker/adminAddPage.gohtml"
+const LinkerAdminAddPageTmpl tasks.Template = "linker/adminAddPage.gohtml"
 
 type addTask struct{ tasks.TaskString }
 
@@ -131,6 +131,6 @@ func (addTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string
 	return &v
 }
 
-func (addTask) EmailTemplatesRequired() []tasks.Page {
-	return append(EmailTemplateLinkerAdd.RequiredPages(), EmailTemplateAdminNotificationLinkerAdd.RequiredPages()...)
+func (addTask) RequiredTemplates() []tasks.Template {
+	return append(EmailTemplateLinkerAdd.RequiredTemplates(), EmailTemplateAdminNotificationLinkerAdd.RequiredTemplates()...)
 }

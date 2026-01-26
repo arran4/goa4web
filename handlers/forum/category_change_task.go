@@ -30,6 +30,6 @@ func (CategoryChangeTask) AdminInternalNotificationTemplate(evt eventbus.TaskEve
 	return &v
 }
 
-func (CategoryChangeTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateAdminNotificationForumCategoryUpdate.RequiredPages()
+func (CategoryChangeTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateAdminNotificationForumCategoryUpdate.RequiredTemplates()
 }

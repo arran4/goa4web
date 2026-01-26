@@ -3,6 +3,7 @@ package admin
 import (
 	"context"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"strconv"
 
@@ -47,7 +48,7 @@ func AdminGrantsAvailablePage(w http.ResponseWriter, r *http.Request) {
 	AdminGrantsAvailablePageTmpl.Handle(w, r, data)
 }
 
-const AdminGrantsAvailablePageTmpl handlers.Page = "admin/grantsAvailablePage.gohtml"
+const AdminGrantsAvailablePageTmpl tasks.Template = "admin/grantsAvailablePage.gohtml"
 
 // AdminGrantsPage lists all grants.
 func AdminGrantsPage(w http.ResponseWriter, r *http.Request) {
@@ -64,7 +65,7 @@ func AdminGrantsPage(w http.ResponseWriter, r *http.Request) {
 	AdminGrantsPageTmpl.Handle(w, r, data)
 }
 
-const AdminGrantsPageTmpl handlers.Page = "admin/grantsPage.gohtml"
+const AdminGrantsPageTmpl tasks.Template = "admin/grantsPage.gohtml"
 
 // AdminAnyoneGrantsPage lists grants applying to all users.
 func AdminAnyoneGrantsPage(w http.ResponseWriter, r *http.Request) {
@@ -133,7 +134,7 @@ func adminGrantPage(w http.ResponseWriter, r *http.Request) {
 	GrantPageTmpl.Handle(w, r, data)
 }
 
-const GrantPageTmpl handlers.Page = "admin/grantPage.gohtml"
+const GrantPageTmpl tasks.Template = "admin/grantPage.gohtml"
 
 // grantItemLink returns the admin page URL for a grant's item, or "" if none.
 func grantItemLink(g *db.Grant) string {

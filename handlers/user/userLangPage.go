@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"strconv"
@@ -84,7 +85,7 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 	UserLangPage.Handle(w, r, data)
 }
 
-const UserLangPage handlers.Page = "user/langPage.gohtml"
+const UserLangPage tasks.Template = "user/langPage.gohtml"
 
 // updateLanguageSelections stores the languages selected by the user.
 func updateLanguageSelections(r *http.Request, cd *common.CoreData, queries db.Querier, uid int32) error {

@@ -26,6 +26,6 @@ func (CategoryCreateTask) AdminInternalNotificationTemplate(evt eventbus.TaskEve
 	return &v
 }
 
-func (CategoryCreateTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateAdminNotificationForumCategoryCreate.RequiredPages()
+func (CategoryCreateTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateAdminNotificationForumCategoryCreate.RequiredTemplates()
 }

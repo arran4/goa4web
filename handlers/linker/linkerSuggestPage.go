@@ -61,7 +61,7 @@ func SuggestPage(w http.ResponseWriter, r *http.Request) {
 	LinkerSuggestPageTmpl.Handle(w, r, data)
 }
 
-const LinkerSuggestPageTmpl handlers.Page = "linker/suggestPage.gohtml"
+const LinkerSuggestPageTmpl tasks.Template = "linker/suggestPage.gohtml"
 
 type SuggestTask struct{ tasks.TaskString }
 

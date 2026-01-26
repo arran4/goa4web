@@ -39,6 +39,6 @@ func (RemakeImageFinishedTask) SelfInternalNotificationTemplate(evt eventbus.Tas
 	return &s
 }
 
-func (RemakeImageFinishedTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateSearchRebuildImage.RequiredPages()
+func (RemakeImageFinishedTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateSearchRebuildImage.RequiredTemplates()
 }

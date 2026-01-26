@@ -64,8 +64,8 @@ func (DeleteIPBanTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent)
 	return &v
 }
 
-func (DeleteIPBanTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateAdminDeleteIPBan.RequiredPages()
+func (DeleteIPBanTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateAdminDeleteIPBan.RequiredTemplates()
 }
 
 // AuditRecord summarises the removal of an IP ban.

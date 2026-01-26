@@ -30,6 +30,6 @@ func (DeleteCategoryTask) AdminInternalNotificationTemplate(evt eventbus.TaskEve
 	return &v
 }
 
-func (DeleteCategoryTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateAdminNotificationForumCategoryDelete.RequiredPages()
+func (DeleteCategoryTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateAdminNotificationForumCategoryDelete.RequiredTemplates()
 }

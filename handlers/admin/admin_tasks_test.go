@@ -3,14 +3,13 @@ package admin
 import (
 	"testing"
 
-	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
 func TestAdminTasksTemplatesRequiredExist(t *testing.T) {
-	tasks := []struct {
+	tasksList := []struct {
 		name string
-		task templatesRequired
+		task tasks.TemplatesRequired
 	}{
 		{"UserForcePasswordChangeTask", &UserForcePasswordChangeTask{}},
 		{"UserSendResetEmailTask", &UserSendResetEmailTask{}},
@@ -20,36 +19,17 @@ func TestAdminTasksTemplatesRequiredExist(t *testing.T) {
 		// For now, I will create a new test file in `handlers/auth` that mirrors this logic if I can't add it here.
 
 	}
-	for _, task := range tasks {
+	for _, task := range tasksList {
 		t.Run(task.name, func(t *testing.T) {
-			req := task.task.TemplatesRequired()
+			req := task.task.RequiredTemplates()
 			if len(req) == 0 {
-				t.Fatalf("TemplatesRequired returned no templates; expected at least one")
+				t.Fatalf("RequiredTemplates returned no templates; expected at least one")
 			}
 			for _, name := range req {
 				if !name.Exists() {
 					t.Fatalf("missing template: %s", name)
 				}
 			}
-			if etr, ok := task.task.(emailTemplatesRequired); ok {
-				req := etr.EmailTemplatesRequired()
-				if len(req) == 0 {
-					t.Fatalf("EmailTemplatesRequired returned no templates; expected at least one")
-				}
-				for _, name := range req {
-					if !templates.EmailTemplateExists(string(name)) {
-						t.Fatalf("missing email template: %s", name)
-					}
-				}
-			}
 		})
 	}
-}
-
-type emailTemplatesRequired interface {
-	EmailTemplatesRequired() []tasks.Page
-}
-
-type templatesRequired interface {
-	TemplatesRequired() []tasks.Page
 }

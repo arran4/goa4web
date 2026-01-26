@@ -73,8 +73,9 @@ func (CreateThreadTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent
 	return &v
 }
 
-func (CreateThreadTask) EmailTemplatesRequired() []tasks.Page {
-	return append(EmailTemplateForumThreadCreate.RequiredPages(), EmailTemplateAdminNotificationForumThreadCreate.RequiredPages()...)
+func (CreateThreadTask) RequiredTemplates() []tasks.Template {
+	return append([]tasks.Template{tasks.Template(ForumThreadNewPageTmpl)},
+		append(EmailTemplateForumThreadCreate.RequiredTemplates(), EmailTemplateAdminNotificationForumThreadCreate.RequiredTemplates()...)...)
 }
 
 // AutoSubscribePath records the created thread so the author and topic
@@ -198,7 +199,7 @@ func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 	ForumThreadNewPageTmpl.Handle(w, r, data)
 }
 
-const ForumThreadNewPageTmpl handlers.Page = "forum/threadNewPage.gohtml"
+const ForumThreadNewPageTmpl tasks.Template = "forum/threadNewPage.gohtml"
 
 func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)

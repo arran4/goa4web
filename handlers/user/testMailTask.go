@@ -51,6 +51,6 @@ func (TestMailTask) SelfInternalNotificationTemplate(evt eventbus.TaskEvent) *st
 	return &s
 }
 
-func (TestMailTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateTest.RequiredPages()
+func (TestMailTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateTest.RequiredTemplates()
 }

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 
@@ -37,4 +38,4 @@ func userTimezonePage(w http.ResponseWriter, r *http.Request) {
 	UserTimezonePage.Handle(w, r, data)
 }
 
-const UserTimezonePage handlers.Page = "user/timezonePage.gohtml"
+const UserTimezonePage tasks.Template = "user/timezonePage.gohtml"

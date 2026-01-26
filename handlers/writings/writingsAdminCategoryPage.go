@@ -2,6 +2,7 @@ package writings
 
 import (
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"strconv"
 
@@ -42,4 +43,4 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 	WritingsAdminCategoryPageTmpl.Handle(w, r, data)
 }
 
-const WritingsAdminCategoryPageTmpl handlers.Page = "writings/writingsAdminCategoryPage.gohtml"
+const WritingsAdminCategoryPageTmpl tasks.Template = "writings/writingsAdminCategoryPage.gohtml"

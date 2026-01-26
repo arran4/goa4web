@@ -19,8 +19,8 @@ func (AnnouncementAddTask) AdminInternalNotificationTemplate(evt eventbus.TaskEv
 	return &v
 }
 
-func (AnnouncementAddTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateAdminNotificationNewsAdd.RequiredPages()
+func (AnnouncementAddTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateAdminNotificationNewsAdd.RequiredTemplates()
 }
 
 var _ tasks.Task = (*AnnouncementDeleteTask)(nil)
@@ -36,6 +36,6 @@ func (AnnouncementDeleteTask) AdminInternalNotificationTemplate(evt eventbus.Tas
 	return &v
 }
 
-func (AnnouncementDeleteTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateAdminNotificationNewsDelete.RequiredPages()
+func (AnnouncementDeleteTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateAdminNotificationNewsDelete.RequiredTemplates()
 }

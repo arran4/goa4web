@@ -377,3 +377,9 @@ func NotificationTemplateExists(name string, opts ...Option) bool {
 	}
 	return false
 }
+
+// AnyTemplateExists reports whether a template with the given relative path
+// exists in any of the template sources (site, email, notifications).
+func AnyTemplateExists(name string, opts ...Option) bool {
+	return TemplateExists(name, opts...) || EmailTemplateExists(name, opts...) || NotificationTemplateExists(name, opts...)
+}

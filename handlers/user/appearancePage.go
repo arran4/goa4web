@@ -38,7 +38,7 @@ func userAppearancePage(w http.ResponseWriter, r *http.Request) {
 	AppearancePage.Handle(w, r, data)
 }
 
-const AppearancePage handlers.Page = "user/appearance.gohtml"
+const AppearancePage tasks.Template = "user/appearance.gohtml"
 
 // AppearanceSaveTask saves the user's custom CSS preference.
 type AppearanceSaveTask struct{ tasks.TaskString }
@@ -131,6 +131,6 @@ func (AppearanceSaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return nil
 }
 
-func (t *AppearanceSaveTask) TemplatesRequired() []tasks.Page {
-	return []tasks.Page{AppearancePage}
+func (t *AppearanceSaveTask) RequiredTemplates() []tasks.Template {
+	return []tasks.Template{AppearancePage}
 }

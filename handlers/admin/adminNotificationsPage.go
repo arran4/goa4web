@@ -2,6 +2,7 @@ package admin
 
 import (
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 
@@ -63,4 +64,4 @@ func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	AdminNotificationsPageTmpl.Handle(w, r, data)
 }
 
-const AdminNotificationsPageTmpl handlers.Page = "admin/notificationsPage.gohtml"
+const AdminNotificationsPageTmpl tasks.Template = "admin/notificationsPage.gohtml"

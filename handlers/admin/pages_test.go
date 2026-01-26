@@ -1,14 +1,14 @@
 package admin
 
 import (
+	"github.com/arran4/goa4web/internal/tasks"
 	"testing"
 
-	"github.com/arran4/goa4web/handlers"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestAdminTemplatesExist(t *testing.T) {
-	pages := []handlers.Page{
+	pages := []tasks.Template{
 		AdminAuditLogPageTmpl,
 		AdminCommentPageTmpl,
 		AdminLinkRemapPageTmpl,

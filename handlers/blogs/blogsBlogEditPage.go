@@ -38,8 +38,9 @@ func (EditBlogTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *s
 	return &v
 }
 
-func (EditBlogTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateAdminNotificationBlogEdit.RequiredPages()
+func (EditBlogTask) RequiredTemplates() []tasks.Template {
+	return append([]tasks.Template{tasks.Template(BlogsBlogEditPageTmpl)},
+		EmailTemplateAdminNotificationBlogEdit.RequiredTemplates()...)
 }
 
 func (EditBlogTask) Page(w http.ResponseWriter, r *http.Request) { BlogEditPage(w, r) }
@@ -134,4 +135,4 @@ func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 	BlogsBlogEditPageTmpl.Handle(w, r, data)
 }
 
-const BlogsBlogEditPageTmpl handlers.Page = "blogs/blogEditPage.gohtml"
+const BlogsBlogEditPageTmpl tasks.Template = "blogs/blogEditPage.gohtml"

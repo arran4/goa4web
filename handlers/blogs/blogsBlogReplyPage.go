@@ -49,8 +49,8 @@ func (ReplyBlogTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEve
 	return &s
 }
 
-func (ReplyBlogTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateBlogReply.RequiredPages()
+func (ReplyBlogTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateBlogReply.RequiredTemplates()
 }
 
 // GrantsRequired implements notif.GrantsRequiredProvider for blog replies.

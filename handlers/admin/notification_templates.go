@@ -12,4 +12,7 @@ const (
 
 	EmailTemplateAdminDeleteIPBan notif.EmailTemplateName = "adminRemoveIPBanEmail"
 	EmailTemplateVerify           notif.EmailTemplateName = "verifyEmail"
+
+	EmailTemplateAdminPasswordReset            notif.EmailTemplateName = "passwordResetEmail"
+	EmailTemplateAdminUserRequestPasswordReset notif.EmailTemplateName = "adminNotificationUserRequestPasswordResetEmail"
 )

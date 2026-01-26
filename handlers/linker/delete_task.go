@@ -82,6 +82,6 @@ func (deleteTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *str
 	return &v
 }
 
-func (deleteTask) EmailTemplatesRequired() []tasks.Page {
-	return append(EmailTemplateLinkerRejected.RequiredPages(), EmailTemplateAdminNotificationLinkerRejected.RequiredPages()...)
+func (deleteTask) RequiredTemplates() []tasks.Template {
+	return append(EmailTemplateLinkerRejected.RequiredTemplates(), EmailTemplateAdminNotificationLinkerRejected.RequiredTemplates()...)
 }

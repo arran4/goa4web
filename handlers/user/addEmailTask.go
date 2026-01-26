@@ -175,8 +175,8 @@ func (AddEmailTask) DirectEmailTemplate(evt eventbus.TaskEvent) (templates *noti
 	return EmailTemplateVerify.EmailTemplates(), true
 }
 
-func (AddEmailTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateVerify.RequiredPages()
+func (AddEmailTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateVerify.RequiredTemplates()
 }
 
 func (AddEmailTask) DirectEmailAddress(evt eventbus.TaskEvent) (string, error) {

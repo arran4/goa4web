@@ -12,6 +12,6 @@ const (
 	NotificationTemplatePasswordReset          notif.NotificationTemplateName = "password_reset"
 )
 
-func (EmailAssociationRequestTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateAdminEmailAssociationRequest.RequiredPages()
+func (EmailAssociationRequestTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateAdminEmailAssociationRequest.RequiredTemplates()
 }

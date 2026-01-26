@@ -54,6 +54,6 @@ func (CreateLanguageTask) AdminInternalNotificationTemplate(evt eventbus.TaskEve
 	return &v
 }
 
-func (CreateLanguageTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateAdminNotificationLanguageCreate.RequiredPages()
+func (CreateLanguageTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateAdminNotificationLanguageCreate.RequiredTemplates()
 }

@@ -3,6 +3,7 @@ package admin
 import (
 	"context"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"sort"
@@ -12,7 +13,6 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -217,4 +217,4 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 	AdminUsageStatsPageTmpl.Handle(w, r, data)
 }
 
-const AdminUsageStatsPageTmpl handlers.Page = "admin/usageStatsPage.gohtml"
+const AdminUsageStatsPageTmpl tasks.Template = "admin/usageStatsPage.gohtml"

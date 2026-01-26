@@ -2,6 +2,7 @@ package faq
 
 import (
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
 	"github.com/arran4/goa4web/handlers/share"
@@ -34,7 +35,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	FaqPageTmpl.Handle(w, r, cd)
 }
 
-const FaqPageTmpl handlers.Page = "faq/page.gohtml"
+const FaqPageTmpl tasks.Template = "faq/page.gohtml"
 
 func CustomFAQIndex(data *common.CoreData, r *http.Request) {
 	data.CustomIndexItems = []common.IndexItem{}

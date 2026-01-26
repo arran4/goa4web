@@ -31,8 +31,8 @@ func (RemakeNewsTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return handlers.TemplateWithDataHandler(handlers.TemplateRunTaskPage, data)
 }
 
-func (RemakeNewsTask) TemplatesRequired() []tasks.Page {
-	return []tasks.Page{handlers.TemplateRunTaskPage}
+func (RemakeNewsTask) RequiredTemplates() []tasks.Template {
+	return []tasks.Template{tasks.Template(handlers.TemplateRunTaskPage)}
 }
 
 func (RemakeNewsTask) BackgroundTask(ctx context.Context, q db.Querier) (tasks.Task, error) {

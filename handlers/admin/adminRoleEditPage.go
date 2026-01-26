@@ -2,6 +2,7 @@ package admin
 
 import (
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
@@ -35,7 +36,7 @@ func adminRoleEditFormPage(w http.ResponseWriter, r *http.Request) {
 	AdminRoleEditPageTmpl.Handle(w, r, data)
 }
 
-const AdminRoleEditPageTmpl handlers.Page = "admin/roleEditPage.gohtml"
+const AdminRoleEditPageTmpl tasks.Template = "admin/roleEditPage.gohtml"
 
 // adminRoleEditSavePage persists role updates.
 func adminRoleEditSavePage(w http.ResponseWriter, r *http.Request) {

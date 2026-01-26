@@ -34,10 +34,10 @@ var (
 var _ tasks.TemplatesRequired = (*ForgotPasswordTask)(nil)
 
 const (
-	ForgotPasswordPageTmpl           handlers.Page = "forgotPasswordPage.gohtml"
-	ForgotPasswordNoEmailPageTmpl    handlers.Page = "forgotPasswordNoEmailPage.gohtml"
-	ForgotPasswordEmailSentPageTmpl  handlers.Page = "forgotPasswordEmailSentPage.gohtml"
-	PasswordResetRequestSentPageTmpl handlers.Page = "passwordResetRequestSentPage.gohtml"
+	ForgotPasswordPageTmpl           tasks.Template = "forgotPasswordPage.gohtml"
+	ForgotPasswordNoEmailPageTmpl    tasks.Template = "forgotPasswordNoEmailPage.gohtml"
+	ForgotPasswordEmailSentPageTmpl  tasks.Template = "forgotPasswordEmailSentPage.gohtml"
+	PasswordResetRequestSentPageTmpl tasks.Template = "passwordResetRequestSentPage.gohtml"
 )
 
 var forgotPasswordTask = &ForgotPasswordTask{TaskString: TaskUserResetPassword}
@@ -158,15 +158,11 @@ func (ForgotPasswordTask) Page(w http.ResponseWriter, r *http.Request) {
 	ForgotPasswordPageTmpl.Handle(w, r, struct{}{})
 }
 
-// TemplatesRequired declares templates used by ForgotPasswordTask.
-func (ForgotPasswordTask) TemplatesRequired() []tasks.Page {
-	return []tasks.Page{
-		ForgotPasswordPageTmpl,
-		ForgotPasswordNoEmailPageTmpl,
-		ForgotPasswordEmailSentPageTmpl,
-	}
-}
-
-func (ForgotPasswordTask) EmailTemplatesRequired() []tasks.Page {
-	return append(EmailTemplateAdminUserRequestPasswordReset.RequiredPages(), EmailTemplatePasswordReset.RequiredPages()...)
+// RequiredTemplates declares templates used by ForgotPasswordTask.
+func (ForgotPasswordTask) RequiredTemplates() []tasks.Template {
+	return append([]tasks.Template{
+		tasks.Template(ForgotPasswordPageTmpl),
+		tasks.Template(ForgotPasswordNoEmailPageTmpl),
+		tasks.Template(ForgotPasswordEmailSentPageTmpl),
+	}, append(EmailTemplateAdminUserRequestPasswordReset.RequiredTemplates(), EmailTemplatePasswordReset.RequiredTemplates()...)...)
 }

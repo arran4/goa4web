@@ -26,8 +26,8 @@ func (ResendVerificationEmailTask) DirectEmailTemplate(evt eventbus.TaskEvent) (
 	return EmailTemplateVerify.EmailTemplates(), true
 }
 
-func (ResendVerificationEmailTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateVerify.RequiredPages()
+func (ResendVerificationEmailTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateVerify.RequiredTemplates()
 }
 
 func (ResendVerificationEmailTask) DirectEmailAddress(evt eventbus.TaskEvent) (string, error) {

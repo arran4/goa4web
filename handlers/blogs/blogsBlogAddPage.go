@@ -50,8 +50,9 @@ func (AddBlogTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent
 	return &s
 }
 
-func (AddBlogTask) EmailTemplatesRequired() []tasks.Page {
-	return append(EmailTemplateAdminNotificationBlogAdd.RequiredPages(), EmailTemplateBlogAdd.RequiredPages()...)
+func (AddBlogTask) RequiredTemplates() []tasks.Template {
+	return append([]tasks.Template{tasks.Template(BlogsBlogAddPageTmpl)},
+		append(EmailTemplateAdminNotificationBlogAdd.RequiredTemplates(), EmailTemplateBlogAdd.RequiredTemplates()...)...)
 }
 
 // GrantsRequired implements notif.GrantsRequiredProvider for new blog entries.
@@ -141,4 +142,4 @@ func BlogAddPage(w http.ResponseWriter, r *http.Request) {
 	BlogsBlogAddPageTmpl.Handle(w, r, data)
 }
 
-const BlogsBlogAddPageTmpl handlers.Page = "blogs/blogAddPage.gohtml"
+const BlogsBlogAddPageTmpl tasks.Template = "blogs/blogAddPage.gohtml"

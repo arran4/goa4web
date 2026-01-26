@@ -2,6 +2,7 @@ package privateforum
 
 import (
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"net/url"
@@ -153,4 +154,4 @@ func renderSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.Core
 	})
 }
 
-const SharedPreviewLoginPageTmpl handlers.Page = "sharedPreviewLogin.gohtml"
+const SharedPreviewLoginPageTmpl tasks.Template = "sharedPreviewLogin.gohtml"

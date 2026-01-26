@@ -68,8 +68,8 @@ func (ReplyTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *stri
 	return &v
 }
 
-func (ReplyTask) EmailTemplatesRequired() []tasks.Page {
-	return append(EmailTemplateNewsReply.RequiredPages(), EmailTemplateAdminNotificationNewsReply.RequiredPages()...)
+func (ReplyTask) RequiredTemplates() []tasks.Template {
+	return append(EmailTemplateNewsReply.RequiredTemplates(), EmailTemplateAdminNotificationNewsReply.RequiredTemplates()...)
 }
 
 // AutoSubscribePath registers this reply so the author automatically follows subsequent comments on the news post.

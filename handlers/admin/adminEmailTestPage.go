@@ -2,6 +2,7 @@ package admin
 
 import (
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"net/mail"
 	"sort"
@@ -10,7 +11,6 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers"
 )
 
 func (h *Handlers) AdminEmailTestPage(w http.ResponseWriter, r *http.Request) {
@@ -140,4 +140,4 @@ func (h *Handlers) AdminEmailTestPage(w http.ResponseWriter, r *http.Request) {
 	AdminEmailTestPageTmpl.Handle(w, r, data)
 }
 
-const AdminEmailTestPageTmpl handlers.Page = "admin/emailTestPage.gohtml"
+const AdminEmailTestPageTmpl tasks.Template = "admin/emailTestPage.gohtml"

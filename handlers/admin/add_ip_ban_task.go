@@ -77,8 +77,8 @@ func (AddIPBanTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *s
 	return &v
 }
 
-func (AddIPBanTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateAdminAddIPBan.RequiredPages()
+func (AddIPBanTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateAdminAddIPBan.RequiredTemplates()
 }
 
 // AuditRecord summarises the addition of an IP ban.

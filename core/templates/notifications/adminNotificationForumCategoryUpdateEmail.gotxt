@@ -1,0 +1,1 @@
+Forum category "{{.Item.Name}}" updated by {{.Item.Username}}

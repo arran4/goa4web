@@ -58,8 +58,9 @@ func (ReplyTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) 
 	return &s
 }
 
-func (ReplyTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateImagebbsReply.RequiredPages()
+func (ReplyTask) RequiredTemplates() []tasks.Template {
+	return append([]tasks.Template{tasks.Template(ImageBBSBoardThreadPageTmpl)},
+		EmailTemplateImagebbsReply.RequiredTemplates()...)
 }
 
 func (ReplyTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, error) {
@@ -107,7 +108,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	ImageBBSBoardThreadPageTmpl.Handle(w, r, data)
 }
 
-const ImageBBSBoardThreadPageTmpl handlers.Page = "imagebbs/boardThreadPage.gohtml"
+const ImageBBSBoardThreadPageTmpl tasks.Template = "imagebbs/boardThreadPage.gohtml"
 
 func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)

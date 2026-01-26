@@ -55,7 +55,7 @@ func (EmailAssociationRequestTask) Action(w http.ResponseWriter, r *http.Request
 	})
 }
 
-const ForgotPasswordRequestSentPageTmpl handlers.Page = "forgotPasswordRequestSentPage.gohtml"
+const ForgotPasswordRequestSentPageTmpl tasks.Template = "forgotPasswordRequestSentPage.gohtml"
 
 func (EmailAssociationRequestTask) AuditRecord(data map[string]any) string {
 	u, _ := data["Username"].(string)

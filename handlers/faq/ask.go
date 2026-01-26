@@ -37,8 +37,9 @@ func (AskTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string
 	return &v
 }
 
-func (AskTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateAdminNotificationFaqAsk.RequiredPages()
+func (AskTask) RequiredTemplates() []tasks.Template {
+	return append([]tasks.Template{tasks.Template(AskPageTmpl)},
+		EmailTemplateAdminNotificationFaqAsk.RequiredTemplates()...)
 }
 
 func (AskTask) Match(r *http.Request, m *mux.RouteMatch) bool {
@@ -72,7 +73,7 @@ func (AskTask) Page(w http.ResponseWriter, r *http.Request) {
 	AskPageTmpl.Handle(w, r, data)
 }
 
-const AskPageTmpl handlers.Page = "faq/askPage.gohtml"
+const AskPageTmpl tasks.Template = "faq/askPage.gohtml"
 
 func (AskTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := handlers.ValidateForm(r, []string{"language", "text"}, []string{"language", "text"}); err != nil {

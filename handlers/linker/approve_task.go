@@ -99,6 +99,6 @@ func (approveTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *st
 	return &v
 }
 
-func (approveTask) EmailTemplatesRequired() []tasks.Page {
-	return append(EmailTemplateLinkerApproved.RequiredPages(), EmailTemplateAdminNotificationLinkerApproved.RequiredPages()...)
+func (approveTask) RequiredTemplates() []tasks.Template {
+	return append(EmailTemplateLinkerApproved.RequiredTemplates(), EmailTemplateAdminNotificationLinkerApproved.RequiredTemplates()...)
 }

@@ -32,8 +32,8 @@ func (CancelTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *str
 	return &v
 }
 
-func (CancelTask) EmailTemplatesRequired() []tasks.Page {
-	return EmailTemplateAdminNotificationNewsCommentCancel.RequiredPages()
+func (CancelTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateAdminNotificationNewsCommentCancel.RequiredTemplates()
 }
 
 func (CancelTask) Action(w http.ResponseWriter, r *http.Request) any {

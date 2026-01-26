@@ -106,6 +106,6 @@ func (PermissionUserDisallowTask) TargetInternalNotificationTemplate(evt eventbu
 	return &v
 }
 
-func (PermissionUserDisallowTask) EmailTemplatesRequired() []tasks.Page {
-	return append(EmailTemplateAdminPermissionDisallow.RequiredPages(), append(EmailTemplateDeleteUserRole.RequiredPages(), NotificationTemplateDeleteUserRole.RequiredPages()...)...)
+func (PermissionUserDisallowTask) RequiredTemplates() []tasks.Template {
+	return append(EmailTemplateAdminPermissionDisallow.RequiredTemplates(), append(EmailTemplateDeleteUserRole.RequiredTemplates(), NotificationTemplateDeleteUserRole.RequiredTemplates()...)...)
 }

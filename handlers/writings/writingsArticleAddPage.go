@@ -14,6 +14,7 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/workers/searchworker"
 
 	"github.com/arran4/goa4web/core"
@@ -38,7 +39,7 @@ func ArticleAddPage(w http.ResponseWriter, r *http.Request) {
 	WritingsArticleAddPageTmpl.Handle(w, r, data)
 }
 
-const WritingsArticleAddPageTmpl handlers.Page = "writings/articleAddPage.gohtml"
+const WritingsArticleAddPageTmpl tasks.Template = "writings/articleAddPage.gohtml"
 
 func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)

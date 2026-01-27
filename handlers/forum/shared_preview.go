@@ -61,7 +61,7 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 	ogTitle := topic.Title.String
 	ogDescription := ""
 	if len(comments) > 0 {
-		ogDescription = a4code.Snip(comments[0].Text.String, 128)
+		ogDescription = a4code.SnipText(comments[0].Text.String, 128)
 	}
 
 	renderPublicSharedPreview(w, r, cd, cd.ShareSignKey, ogTitle, ogDescription)

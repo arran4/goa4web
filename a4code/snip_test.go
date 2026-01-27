@@ -22,3 +22,13 @@ func TestSnip(t *testing.T) {
 		t.Errorf("Snip failed")
 	}
 }
+
+func TestSnipText(t *testing.T) {
+	s := "This is a [b]long[/b] string"
+	if SnipText(s, 10) != "This is a..." {
+		t.Errorf("SnipText failed: %s", SnipText(s, 10))
+	}
+	if SnipText("[b]"+s+"[/b]", 10) != "This is a..." {
+		t.Errorf("SnipText failed: %s", SnipText("[b]"+s+"[/b]", 10))
+	}
+}

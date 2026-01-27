@@ -265,3 +265,36 @@ func userNotificationEmailActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	http.Redirect(w, r, "/usr/notifications", http.StatusSeeOther)
 }
+
+func notificationsGoPage(w http.ResponseWriter, r *http.Request) {
+	session, ok := core.GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
+	uid, _ := session.Values["UID"].(int32)
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		http.Redirect(w, r, "/usr/notifications", http.StatusSeeOther)
+		return
+	}
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	n, err := queries.GetNotificationForLister(r.Context(), db.GetNotificationForListerParams{ID: int32(id), ListerID: uid})
+	if err != nil {
+		if err != sql.ErrNoRows {
+			log.Printf("notification go: %v", err)
+		}
+		http.Redirect(w, r, "/usr/notifications", http.StatusSeeOther)
+		return
+	}
+	if !n.ReadAt.Valid {
+		if err := queries.SetNotificationReadForLister(r.Context(), db.SetNotificationReadForListerParams{ID: n.ID, ListerID: uid}); err != nil {
+			log.Printf("mark notification read: %v", err)
+		}
+	}
+	if n.Link.Valid && n.Link.String != "" {
+		http.Redirect(w, r, n.Link.String, http.StatusSeeOther)
+		return
+	}
+	http.Redirect(w, r, "/usr/notifications", http.StatusSeeOther)
+}

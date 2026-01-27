@@ -907,7 +907,7 @@ WITH role_ids AS (
 SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, lu.username AS lastposterusername, lu.idusers AS lastposterid, fcu.username as firstpostusername, fcu.idusers as firstpostuserid, fc.written as firstpostwritten, fc.text as firstposttext
 FROM forumthread th
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
-LEFT JOIN users lu ON lu.idusers = t.lastposter
+LEFT JOIN users lu ON lu.idusers = th.lastposter
 LEFT JOIN comments fc ON th.firstpost=fc.idcomments
 LEFT JOIN users fcu ON fcu.idusers = fc.users_idusers
 WHERE th.forumtopic_idforumtopic=?

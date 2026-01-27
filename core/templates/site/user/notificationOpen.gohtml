@@ -1,23 +1,27 @@
 {{ template "head" $ }}
 <div id="notification-open">
+    <h3>Notification</h3>
+    <p>{{ .Notification.Message.String }}</p>
+    {{ if .RedirectURL }}
     <p>Opening notification…</p>
     <p>If you are not redirected, <a href="{{ .RedirectURL }}">continue to the notification</a>.</p>
-</div>
-<script>
-window.addEventListener('load', () => {
-    const params = new URLSearchParams();
-    params.set('id', '{{ .Notification.ID }}');
-    params.set('task', '{{ .TaskName }}');
-    fetch('/usr/notifications/dismiss', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'X-CSRF-Token': '{{ csrfToken }}'
-        },
-        body: params.toString()
-    }).catch(() => {}).finally(() => {
-        window.location.href = '{{ .RedirectURL }}';
+    <script>
+    window.addEventListener('load', () => {
+        const params = new URLSearchParams();
+        params.set('id', '{{ .Notification.ID }}');
+        params.set('task', '{{ .TaskName }}');
+        fetch('/usr/notifications/dismiss', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRF-Token': '{{ csrfToken }}'
+            },
+            body: params.toString()
+        }).catch(() => {}).finally(() => {
+            window.location.href = '{{ .RedirectURL }}';
+        });
     });
-});
-</script>
+    </script>
+    {{ end }}
+</div>
 {{ template "tail" $ }}

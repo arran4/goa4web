@@ -3,14 +3,18 @@ package user
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/feeds"
 )
 
 // NotificationsFeed converts a list of notifications into a feed.
 func NotificationsFeed(r *http.Request, notifications []*db.Notification, siteTitle string) *feeds.Feed {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	title := "Notifications"
 	if siteTitle != "" {
 		title = fmt.Sprintf("%s - %s", siteTitle, title)
@@ -24,7 +28,7 @@ func NotificationsFeed(r *http.Request, notifications []*db.Notification, siteTi
 	for _, n := range notifications {
 		link := ""
 		if n.Link.Valid {
-			link = n.Link.String
+			link = cd.AbsoluteURL("/usr/notifications/go/" + strconv.Itoa(int(n.ID)))
 		}
 		msg := ""
 		if n.Message.Valid {

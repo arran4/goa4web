@@ -294,6 +294,10 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(handlers.ErrForbidden))
 	}
 
+	if evt := cd.Event(); evt != nil {
+		evt.Path = endUrl
+	}
+
 	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
 		ThreadID:         int32(threadId),
 		TopicID:          int32(topicId),

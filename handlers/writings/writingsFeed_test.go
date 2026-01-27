@@ -36,42 +36,6 @@ func TestWritingsFeed(t *testing.T) {
 		}).
 			AddRow(1, 1, 1, 1, 1, "Title", time.Now(), "UTC", "Content", "Abstract", false, nil, nil))
 
-	// Mock HasGrant check if called. The feedGen calls LatestWritings which does check permissions.
-	// But LatestWritings in CoreData calls HasGrant which calls Permissions() which queries DB.
-	// However, LatestWritings logic:
-	/*
-		rows, err := cd.queries.GetPublicWritings(cd.ctx, params)
-		...
-		for _, row := range rows {
-			if !cd.HasGrant("writing", "article", "see", row.Idwriting) {
-				continue
-			}
-			writings = append(writings, row)
-		}
-	*/
-	// Permissions() -> GetPermissionsByUserID. If UserID is 0, it returns nil and HasGrant returns false unless "anyone" role has permission.
-	// cd.UserRoles() appends "anyone".
-	// HasGrant -> HasRole -> ...
-
-	// Actually, HasGrant implementation:
-	/*
-	func (cd *CoreData) HasGrant(section, itemType, action string, itemID int32) bool {
-        // ... checks grants ...
-		// checks roles ...
-	}
-	*/
-
-	// Since creating proper mocks for permissions is complex, I will try to make HasGrant pass or ensure the test setup allows it.
-	// If UserID is 0, it relies on "anyone" role.
-	// HasGrant calls Permissions() which returns empty for UserID 0.
-
-	// Wait, HasGrant also checks:
-	/*
-		if cd.queries != nil {
-			g, err := cd.queries.SystemCheckGrant(cd.ctx, ...)
-	*/
-	// SystemCheckGrant is called.
-
 	mock.ExpectQuery(regexp.QuoteMeta("-- name: SystemCheckGrant :one")).
 		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))

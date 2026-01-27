@@ -138,7 +138,7 @@ func TestQuoteMarkup(t *testing.T) {
 	c := New()
 	c.SetInput("[quote hi]")
 	got, _ := io.ReadAll(c.Process())
-	want := "<blockquote class=\"a4code-block a4code-quote\"><div class=\"quote-header\">Quote:</div><div class=\"quote-body\">hi</div></blockquote>"
+	want := "<blockquote class=\"a4code-block a4code-quote quote-color-0\"><div class=\"quote-header\">Quote:</div><div class=\"quote-body\">hi</div></blockquote>"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)
 	}
@@ -148,7 +148,7 @@ func TestQuoteOfMarkup(t *testing.T) {
 	c := New()
 	c.SetInput("[quoteof bob hi]")
 	got, _ := io.ReadAll(c.Process())
-	want := "<blockquote class=\"a4code-block a4code-quoteof\"><div class=\"quote-header\">Quote of bob:</div><div class=\"quote-body\"> hi</div></blockquote>"
+	want := "<blockquote class=\"a4code-block a4code-quoteof quote-color-0\"><div class=\"quote-header\">Quote of bob:</div><div class=\"quote-body\"> hi</div></blockquote>"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)
 	}
@@ -161,7 +161,17 @@ func TestQuoteOfColorMapping(t *testing.T) {
 	c := New(colorMap)
 	c.SetInput("[quoteof bob hi]")
 	got, _ := io.ReadAll(c.Process())
-	want := "<blockquote class=\"a4code-block a4code-quoteof mapped-color\"><div class=\"quote-header\">Quote of bob:</div><div class=\"quote-body\"> hi</div></blockquote>"
+	want := "<blockquote class=\"a4code-block a4code-quoteof mapped-color quote-color-0\"><div class=\"quote-header\">Quote of bob:</div><div class=\"quote-body\"> hi</div></blockquote>"
+	if string(got) != want {
+		t.Errorf("got %q want %q", string(got), want)
+	}
+}
+
+func TestNestedQuotes(t *testing.T) {
+	c := New()
+	c.SetInput("[quote 0 [quote 1 [quote 2]]]")
+	got, _ := io.ReadAll(c.Process())
+	want := "<blockquote class=\"a4code-block a4code-quote quote-color-0\"><div class=\"quote-header\">Quote:</div><div class=\"quote-body\">0 <blockquote class=\"a4code-block a4code-quote quote-color-1\"><div class=\"quote-header\">Quote:</div><div class=\"quote-body\">1 <blockquote class=\"a4code-block a4code-quote quote-color-2\"><div class=\"quote-header\">Quote:</div><div class=\"quote-body\">2</div></blockquote></div></blockquote></div></blockquote>"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)
 	}

@@ -22,8 +22,12 @@ import (
 
 func TopicFeed(r *http.Request, title string, topicID int, rows []*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow, basePath string) *feeds.Feed {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	feedTitle := title
+	if cd.SiteTitle != "" {
+		feedTitle = fmt.Sprintf("%s - %s", cd.SiteTitle, title)
+	}
 	feed := &feeds.Feed{
-		Title:       title,
+		Title:       feedTitle,
 		Link:        &feeds.Link{Href: r.URL.Path},
 		Description: fmt.Sprintf("Latest threads for %s", title),
 		Created:     time.Now(),

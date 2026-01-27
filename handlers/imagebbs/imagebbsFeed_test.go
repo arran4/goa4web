@@ -23,9 +23,12 @@ func TestImagebbsFeed(t *testing.T) {
 		},
 	}
 	r := httptest.NewRequest("GET", "http://example.com/imagebbs/board/1.rss", nil)
-	cd := &common.CoreData{ImageSignKey: "test-key"}
+	cd := &common.CoreData{ImageSignKey: "test-key", SiteTitle: "Site"}
 	r = r.WithContext(context.WithValue(r.Context(), consts.KeyCoreData, cd))
 	feed := cd.ImageBBSFeed(r, "Test", 1, rows)
+	if feed.Title != "Site - Test" {
+		t.Errorf("feed title incorrect: %s", feed.Title)
+	}
 	if len(feed.Items) != 1 {
 		t.Fatalf("expected 1 item got %d", len(feed.Items))
 	}

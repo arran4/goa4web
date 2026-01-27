@@ -17,8 +17,12 @@ import (
 
 // ImageBBSFeed constructs an RSS/Atom feed for the provided image posts.
 func (cd *CoreData) ImageBBSFeed(r *http.Request, title string, boardID int, rows []*db.ListImagePostsByBoardForListerRow) *feeds.Feed {
+	feedTitle := title
+	if cd.SiteTitle != "" {
+		feedTitle = fmt.Sprintf("%s - %s", cd.SiteTitle, title)
+	}
 	feed := &feeds.Feed{
-		Title:       title,
+		Title:       feedTitle,
 		Link:        &feeds.Link{Href: r.URL.Path},
 		Description: fmt.Sprintf("Latest posts for %s", title),
 		Created:     time.Now(),

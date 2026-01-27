@@ -142,6 +142,9 @@ func FeedGen(r *http.Request, queries db.Querier, uid int, username string) (*fe
 	if uid > 0 {
 		title = fmt.Sprintf("%s blog", username)
 	}
+	if cd.SiteTitle != "" {
+		title = fmt.Sprintf("%s - %s", cd.SiteTitle, title)
+	}
 	feed := &feeds.Feed{
 		Title:       title,
 		Link:        &feeds.Link{Href: r.URL.String()},

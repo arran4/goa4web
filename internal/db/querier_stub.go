@@ -74,6 +74,11 @@ type QuerierStub struct {
 	SystemCreateNotificationErr   error
 	SystemCreateNotificationCalls []SystemCreateNotificationParams
 
+	SystemCreateThreadCalls   []int32
+	SystemCreateThreadReturns int64
+	SystemCreateThreadErr     error
+	SystemCreateThreadFn      func(context.Context, int32) (int64, error)
+
 	SystemInsertDeadLetterCalls int
 
 	InsertPendingEmailErr   error
@@ -1241,6 +1246,19 @@ func (s *QuerierStub) SystemCreateNotification(ctx context.Context, arg SystemCr
 	s.SystemCreateNotificationCalls = append(s.SystemCreateNotificationCalls, arg)
 	s.mu.Unlock()
 	return s.SystemCreateNotificationErr
+}
+
+func (s *QuerierStub) SystemCreateThread(ctx context.Context, forumtopicIdforumtopic int32) (int64, error) {
+	s.mu.Lock()
+	s.SystemCreateThreadCalls = append(s.SystemCreateThreadCalls, forumtopicIdforumtopic)
+	fn := s.SystemCreateThreadFn
+	ret := s.SystemCreateThreadReturns
+	err := s.SystemCreateThreadErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, forumtopicIdforumtopic)
+	}
+	return ret, err
 }
 
 // InsertPendingEmail records the call and returns the configured response.

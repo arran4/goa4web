@@ -15,8 +15,7 @@
         <div class="topics-header">
             <div class="topic-name">Topic name<br>Description</div>
             <div class="last-reply">Last reply<br>By</div>
-            <div class="threads">Threads</div>
-            <div class="replies">Replies</div>
+            <div class="threads-replies">Threads<br>Replies</div>
         </div>
         <ul class="topic-list">
     {{ range .Topics }}
@@ -29,8 +28,7 @@
                 {{- if .Labels }}<br>{{ template "topicLabels" .Labels }}{{ end }}
             </div>
                 <div class="last-reply">{{ cd.LocalTime .Lastaddition.Time }}<br>{{ .Lastposterusername.String }}</div>
-                <div class="threads">{{ .Threads.Int32 }}</div>
-                <div class="replies">{{ .Comments.Int32 }}</div>
+                <div class="threads-replies">{{ .Threads.Int32 }}<br>{{ .Comments.Int32 }}</div>
             </li>
         {{ else }}
             <li class="topic-item no-topics"><div class="topic-name">No topics</div></li>

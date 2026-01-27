@@ -738,17 +738,16 @@ tr.unsupported td {
 }
 
 .topic-name {
-        flex: 0 0 400px;
+        flex: 1;
 }
 
 .last-reply {
-        flex: 0 0 300px;
+        flex: 0 0 200px;
         text-align: center;
 }
 
-.threads,
-.replies {
-        flex: 1;
+.threads-replies {
+        flex: 0 0 100px;
         text-align: center;
 }
 

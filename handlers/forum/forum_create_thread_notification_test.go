@@ -87,10 +87,10 @@ func TestCreateThreadNotificationLink(t *testing.T) {
 			Lastposterusername:     sql.NullString{String: "creator", Valid: true},
 		}, nil
 	}
-    // Mock for CoreData.Languages() which is called in Page but maybe not Action?
-    // Action calls r.PostFormValue("language")
+	// Mock for CoreData.Languages() which is called in Page but maybe not Action?
+	// Action calls r.PostFormValue("language")
 
-    // CoreData.Languages() is not called in Action.
+	// CoreData.Languages() is not called in Action.
 
 	bus := eventbus.NewBus()
 	cfg := config.NewRuntimeConfig()
@@ -130,8 +130,8 @@ func TestCreateThreadNotificationLink(t *testing.T) {
 
 	form := url.Values{
 		"replytext": {"First post content"},
-		"language": {"1"},
-		"task": {string(TaskCreateThread)},
+		"language":  {"1"},
+		"task":      {string(TaskCreateThread)},
 	}
 	req := httptest.NewRequest(http.MethodPost, "http://example.com"+creationPagePath, strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")

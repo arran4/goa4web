@@ -172,10 +172,7 @@ function quote(type, commentId) {
                 fetch(url)
                     .then(response => response.json())
                     .then(data => {
-                        let reply = document.getElementById('reply');
-                        reply.value += data.text;
-                        reply.focus();
-                        reply.scrollIntoView();
+                        insertQuote(data.text);
                     })
                     .catch(error => {
                         console.error('Error:', error);
@@ -190,10 +187,7 @@ function quote(type, commentId) {
         fetch('/api/forum/quote/' + commentId + '?type=' + type)
             .then(response => response.json())
             .then(data => {
-                let reply = document.getElementById('reply');
-                reply.value += data.text;
-                reply.focus();
-                reply.scrollIntoView();
+                insertQuote(data.text);
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -226,4 +220,36 @@ function share(link, module, button) {
             console.error('Error:', error);
             alert('An error occurred while generating the share link.');
         });
+}
+
+function insertQuote(text) {
+    let reply = document.getElementById('reply');
+    if (!reply) return;
+
+    let cursorPos = reply.selectionEnd;
+    let textVal = reply.value;
+    let nextNewLine = textVal.indexOf('\n', cursorPos);
+    let insertPos = nextNewLine === -1 ? textVal.length : nextNewLine + 1;
+
+    let textToInsert = text;
+    // Ensure we start on a new line if not at the beginning
+    if (insertPos > 0 && textVal.charAt(insertPos - 1) !== '\n') {
+        textToInsert = '\n' + textToInsert;
+    }
+
+    // Ensure we end with a newline if we are not at the end of the text
+    if (insertPos < textVal.length && !textToInsert.endsWith('\n')) {
+        textToInsert += '\n';
+    }
+
+    const before = textVal.substring(0, insertPos);
+    const after = textVal.substring(insertPos);
+
+    reply.value = before + textToInsert + after;
+
+    const newCursorPos = before.length + textToInsert.length;
+    reply.setSelectionRange(newCursorPos, newCursorPos);
+
+    reply.focus();
+    reply.scrollIntoView();
 }

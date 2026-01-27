@@ -108,6 +108,22 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	}
 	if len(commentRows) > 0 {
 		cd.OpenGraph.Description = a4code.Snip(commentRows[0].Text.String, 128)
+		if cd.UserID != 0 {
+			maxId := int32(0)
+			for _, row := range commentRows {
+				if row.Idcomments > maxId {
+					maxId = row.Idcomments
+				}
+			}
+			if maxId > 0 {
+				if err := cd.SetThreadReadMarker(threadRow.Idforumthread, maxId); err != nil {
+					log.Printf("set thread read marker: %v", err)
+				}
+				if err := cd.SetThreadPrivateLabelStatus(threadRow.Idforumthread, false, false); err != nil {
+					log.Printf("set thread private label status: %v", err)
+				}
+			}
+		}
 	}
 
 	// threadRow and topicRow are provided by the RequireThreadAndTopic

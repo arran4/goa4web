@@ -13,7 +13,7 @@
                 <div class="time">{{ (cd.LocalTimeIn $cmt.Written.Time $cmt.Timezone.String).Format "15:04 MST" }}</div>
                 <div class="day">{{ (cd.LocalTimeIn $cmt.Written.Time $cmt.Timezone.String).Format "Monday" }}</div>
                 <div class="zone">{{ if $cmt.Timezone.Valid }}{{ $cmt.Timezone.String }}{{ else }}{{ cd.Location }}{{ end }}</div>
-                {{ if $prev }}<div class="since">{{ since (cd.LocalTimeIn $prev.Written.Time $prev.Timezone.String) (cd.LocalTimeIn $cmt.Written.Time $cmt.Timezone.String) }}</div>{{ end }}
+                {{ if $prev }}<div class="since">{{ timeAgo (cd.LocalTimeIn $cmt.Written.Time $cmt.Timezone.String) }} and {{ since (cd.LocalTimeIn $prev.Written.Time $prev.Timezone.String) (cd.LocalTimeIn $cmt.Written.Time $cmt.Timezone.String) }}</div>{{ end }}
             </div>
         </aside>
         <section class="body">

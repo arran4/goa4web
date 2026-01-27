@@ -29,6 +29,7 @@ func TestCommentTimestampSelfLink(t *testing.T) {
 		"a4code2html": func(s string) template.HTML { return template.HTML(s) },
 		"csrfField":   func() template.HTML { return "" },
 		"since":       func(time.Time, time.Time) string { return "" },
+		"timeAgo":     func(time.Time) string { return "" },
 	}
 	tmpl := template.Must(template.New("root").Funcs(funcMap).ParseFiles("site/comment.gohtml", "site/languageCombobox.gohtml"))
 	var buf bytes.Buffer

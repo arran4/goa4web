@@ -183,6 +183,39 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 			}
 			return seq
 		},
+		"timeAgo": func(t time.Time) string {
+			if t.IsZero() {
+				return ""
+			}
+			now := time.Now().In(cd.Location())
+			diff := now.Sub(t)
+			if diff < 0 {
+				diff = -diff
+			}
+
+			var n int
+			var unit string
+
+			switch {
+			case diff < time.Minute:
+				n = int(diff.Seconds())
+				unit = "second"
+			case diff < time.Hour:
+				n = int(diff.Minutes())
+				unit = "minute"
+			case diff < 24*time.Hour:
+				n = int(diff.Hours())
+				unit = "hour"
+			default:
+				n = int(diff.Hours() / 24)
+				unit = "day"
+			}
+
+			if n == 1 {
+				return fmt.Sprintf("post was %d %s ago", n, unit)
+			}
+			return fmt.Sprintf("post was %d %ss ago", n, unit)
+		},
 		"since": func(prev, curr time.Time) string {
 			if prev.IsZero() {
 				return ""

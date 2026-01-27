@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/handlers/share"
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/gorilla/feeds"
@@ -41,7 +40,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		cd.PrevLink = "/blogs?" + qv.Encode()
 	}
 
-	imageURL, _ := share.MakeImageURL(cd.AbsoluteURL(), "Blogs", "Read blogs from our community.", cd.ShareSignKey, false)
+	imageURL, _ := common.MakeImageURL(cd.AbsoluteURL(), "Blogs", "Read blogs from our community.", cd.ShareSignKey, false)
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       "Blogs",
 		Description: "Read blogs from our community.",

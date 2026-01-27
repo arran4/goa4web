@@ -7,7 +7,6 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers/share"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -35,7 +34,7 @@ func (t *privateForumTask) Get(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
 	cd.PageTitle = "Private Forum"
-	img, err := share.MakeImageURL(cd.AbsoluteURL(), "Private Forum", "Private discussion forums", cd.ShareSignKey, false)
+	img, err := common.MakeImageURL(cd.AbsoluteURL(), "Private Forum", "Private discussion forums", cd.ShareSignKey, false)
 	if err != nil {
 		log.Printf("Error making image URL: %v", err)
 	}

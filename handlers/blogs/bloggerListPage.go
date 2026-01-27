@@ -16,7 +16,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/arran4/goa4web/handlers/share"
 
 	"github.com/arran4/goa4web/handlers"
 )
@@ -31,7 +30,7 @@ func BloggerListPage(w http.ResponseWriter, r *http.Request) {
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Bloggers"
-	imageURL, _ := share.MakeImageURL(cd.AbsoluteURL(), "Blogger List", "List of bloggers", cd.ShareSignKey, false)
+	imageURL, _ := common.MakeImageURL(cd.AbsoluteURL(), "Blogger List", "List of bloggers", cd.ShareSignKey, false)
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       cd.PageTitle,
 		Description: "List of bloggers",

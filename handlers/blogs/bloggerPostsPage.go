@@ -13,7 +13,6 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/gorilla/mux"
 
-	"github.com/arran4/goa4web/handlers/share"
 )
 
 // BloggerPostsPage shows the posts written by a specific blogger.
@@ -33,7 +32,7 @@ func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd.PageTitle = fmt.Sprintf("Posts by %s", username)
 	desc := fmt.Sprintf("View posts by %s", username)
-	imageURL, _ := share.MakeImageURL(cd.AbsoluteURL(), cd.PageTitle, desc, cd.ShareSignKey, false)
+	imageURL, _ := common.MakeImageURL(cd.AbsoluteURL(), cd.PageTitle, desc, cd.ShareSignKey, false)
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       cd.PageTitle,
 		Description: fmt.Sprintf("View posts by %s", username),

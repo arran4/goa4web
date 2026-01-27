@@ -8,7 +8,6 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers/share"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -41,7 +40,7 @@ func (t *newsTask) Get(w http.ResponseWriter, r *http.Request) {
 		cd.StartLink = "?offset=0"
 	}
 
-	img, err := share.MakeImageURL(cd.AbsoluteURL(), "Latest News", "Latest news and announcements.", cd.ShareSignKey, false)
+	img, err := common.MakeImageURL(cd.AbsoluteURL(), "Latest News", "Latest news and announcements.", cd.ShareSignKey, false)
 	if err != nil {
 		log.Printf("Error making image URL: %v", err)
 	}

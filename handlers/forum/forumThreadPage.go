@@ -16,7 +16,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/handlers/share"
 	"github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/core"
@@ -87,7 +86,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	}
 	cd.PageTitle = fmt.Sprintf("Forum - %s", displayTitle)
 
-	imageURL, _ := share.MakeImageURL(cd.AbsoluteURL(), displayTitle, "A discussion on our forum.", cd.ShareSignKey, false)
+	imageURL, _ := common.MakeImageURL(cd.AbsoluteURL(), displayTitle, "A discussion on our forum.", cd.ShareSignKey, false)
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       displayTitle,
 		Description: "A discussion on our forum.",

@@ -5,7 +5,6 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
-	"github.com/arran4/goa4web/handlers/share"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -15,7 +14,7 @@ import (
 func Page(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "FAQ"
-	imageURL, _ := share.MakeImageURL(cd.AbsoluteURL(), "FAQ", "Frequently Asked Questions", cd.ShareSignKey, false)
+	imageURL, _ := common.MakeImageURL(cd.AbsoluteURL(), "FAQ", "Frequently Asked Questions", cd.ShareSignKey, false)
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       "FAQ",
 		Description: "Frequently Asked Questions",

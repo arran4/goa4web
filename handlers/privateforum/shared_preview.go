@@ -125,7 +125,7 @@ func renderSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.Core
 	// Generate a fresh expiration for the image link.
 
 	// Calculate image URL with error handling
-	imgURL, err := share.MakeImageURL(cd.AbsoluteURL(), title, desc, cd.ShareSignKey, usePathAuth)
+	imgURL, err := common.MakeImageURL(cd.AbsoluteURL(), title, desc, cd.ShareSignKey, usePathAuth)
 	if err != nil {
 		log.Printf("Error making image URL: %v", err)
 	}

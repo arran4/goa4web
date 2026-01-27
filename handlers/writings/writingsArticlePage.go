@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/arran4/goa4web/handlers/share"
 
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core"
@@ -69,7 +68,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	desc := a4code.Snip(writing.Abstract.String, 128)
-	imgURL, err := share.MakeImageURL(cd.AbsoluteURL(), cd.PageTitle, desc, cd.ShareSignKey, false)
+	imgURL, err := common.MakeImageURL(cd.AbsoluteURL(), cd.PageTitle, desc, cd.ShareSignKey, false)
 	if err != nil {
 		log.Printf("Error making image URL: %v", err)
 	}

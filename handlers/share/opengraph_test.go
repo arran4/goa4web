@@ -1,6 +1,7 @@
 package share_test
 
 import (
+	"github.com/arran4/goa4web/core/common"
 	"bytes"
 	"fmt"
 	"image/png"
@@ -31,7 +32,7 @@ func TestMakeImageURL_QueryAuth(t *testing.T) {
 	title := "Test Title"
 
 	// Generate URL with query-based auth
-	signedURL, err := share.MakeImageURL(baseURL, title, "", testKey, false)
+	signedURL, err := common.MakeImageURL(baseURL, title, "", testKey, false)
 	if err != nil {
 		t.Fatalf("MakeImageURL failed: %v", err)
 	}
@@ -66,7 +67,7 @@ func TestMakeImageURL_PathAuth(t *testing.T) {
 	title := "Test Title"
 
 	// Generate URL with path-based auth
-	signedURL, err := share.MakeImageURL(baseURL, title, "", testKey, true)
+	signedURL, err := common.MakeImageURL(baseURL, title, "", testKey, true)
 	if err != nil {
 		t.Fatalf("MakeImageURL failed: %v", err)
 	}
@@ -127,7 +128,7 @@ func TestMakeImageURL_WithExpiry(t *testing.T) {
 	// Use explicit expiry
 	//expiry := time.Now().Add(1 * time.Hour)
 	// For testing, let's still use nonce as the current implementation prefers it
-	signedURL, err := share.MakeImageURL(baseURL, title, "", testKey, false)
+	signedURL, err := common.MakeImageURL(baseURL, title, "", testKey, false)
 	if err != nil {
 		t.Fatalf("MakeImageURL failed: %v", err)
 	}
@@ -148,7 +149,7 @@ func TestOGImageHandler(t *testing.T) {
 	baseURL := "http://example.com"
 	title := "My Test Title"
 
-	signedURL, err := share.MakeImageURL(baseURL, title, "Test Description", testKey, false)
+	signedURL, err := common.MakeImageURL(baseURL, title, "Test Description", testKey, false)
 	if err != nil {
 		t.Fatalf("MakeImageURL failed: %v", err)
 	}
@@ -199,7 +200,7 @@ func TestOGImageHandler_WrongKey(t *testing.T) {
 	handler := share.NewOGImageHandler("wrong-key")
 
 	// Generate URL with correct key
-	signedURL, err := share.MakeImageURL("http://example.com", "Test", "", testKey, false)
+	signedURL, err := common.MakeImageURL("http://example.com", "Test", "", testKey, false)
 	if err != nil {
 		t.Fatalf("MakeImageURL failed: %v", err)
 	}

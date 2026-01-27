@@ -12,7 +12,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/handlers/share"
 	"github.com/gorilla/mux"
 )
 
@@ -34,7 +33,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	imageURL, _ := share.MakeImageURL(cd.AbsoluteURL(), "Forum", "A place for discussion.", cd.ShareSignKey, false)
+	imageURL, _ := common.MakeImageURL(cd.AbsoluteURL(), "Forum", "A place for discussion.", cd.ShareSignKey, false)
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       "Forum",
 		Description: "A place for discussion.",

@@ -1,8 +1,14 @@
 package common
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"html/template"
+	"log"
+
+	"github.com/arran4/goa4web/internal/sign"
+	"github.com/arran4/goa4web/internal/sign/signutil"
 )
 
 func (og *OpenGraph) URLMeta() template.HTML {
@@ -41,4 +47,64 @@ func (og *OpenGraph) TypeMeta() template.HTML {
 		ogType = og.Type
 	}
 	return template.HTML(fmt.Sprintf(`<meta property="og:type" content="%s" />`, ogType))
+}
+
+type ImagePayload struct {
+	Title       string `json:"t"`
+	Description string `json:"d,omitempty"`
+}
+
+// MakeImageURL creates an OpenGraph image URL for the given title and description.
+// By default generates a nonce-based signature.
+// Pass usePathAuth=true for path-based signatures, false for query-based.
+func MakeImageURL(baseURL, title, description, key string, usePathAuth bool, opts ...sign.SignOption) (string, error) {
+	payload := ImagePayload{
+		Title:       title,
+		Description: description,
+	}
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return "", fmt.Errorf("marshal payload: %w", err)
+	}
+
+	encodedData := base64.RawURLEncoding.EncodeToString(data)
+	path := "/api/og-image/" + encodedData
+
+	// Generate nonce if no options provided
+	var nonce string
+	if len(opts) == 0 {
+		nonce = signutil.GenerateNonce()
+		opts = append(opts, sign.WithNonce(nonce))
+	} else {
+		// Check if nonce is in opts
+		for _, opt := range opts {
+			if n, ok := opt.(sign.WithNonce); ok {
+				nonce = string(n)
+				break
+			}
+		}
+		// If no nonce and no expiry, add nonce
+		if nonce == "" {
+			hasExpiry := false
+			for _, opt := range opts {
+				if _, ok := opt.(sign.WithExpiry); ok {
+					hasExpiry = true
+					break
+				}
+			}
+			if !hasExpiry {
+				nonce = signutil.GenerateNonce()
+				opts = append(opts, sign.WithNonce(nonce))
+			}
+		}
+	}
+
+	fullURL := baseURL + path
+
+	log.Printf("Making image URL. Path: %s, Nonce: %s, UsePathAuth: %v", path, nonce, usePathAuth)
+
+	if usePathAuth {
+		return signutil.SignAndAddPath(fullURL, path, key, opts...)
+	}
+	return signutil.SignAndAddQuery(fullURL, path, key, opts...)
 }

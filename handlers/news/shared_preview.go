@@ -48,7 +48,7 @@ func SharedPreviewPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	imageURL, _ := share.MakeImageURL(cd.AbsoluteURL(), ogTitle, ogDescription, cd.ShareSignKey, false)
+	imageURL, _ := common.MakeImageURL(cd.AbsoluteURL(), ogTitle, ogDescription, cd.ShareSignKey, false)
 	ogData := share.OpenGraphData{
 		Title:       ogTitle,
 		Description: ogDescription,

@@ -7,7 +7,6 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers/share"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -54,7 +53,7 @@ func (t *writingsTask) Get(w http.ResponseWriter, r *http.Request) {
 		cd.StartLink = "/writings?offset=0"
 	}
 
-	imgURL, err := share.MakeImageURL(cd.AbsoluteURL(), "Writings", "A collection of articles and long-form content.", cd.ShareSignKey, false)
+	imgURL, err := common.MakeImageURL(cd.AbsoluteURL(), "Writings", "A collection of articles and long-form content.", cd.ShareSignKey, false)
 	if err != nil {
 		log.Printf("Error making image URL: %v", err)
 	}

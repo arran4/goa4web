@@ -145,7 +145,7 @@ func notificationsRssPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
-	feed := NotificationsFeed(r, notifs)
+	feed := NotificationsFeed(r, notifs, cd.SiteTitle)
 	if err := feed.WriteRss(w); err != nil {
 		log.Printf("feed write: %v", err)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
@@ -183,7 +183,7 @@ func notificationsAtomPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
-	feed := NotificationsFeed(r, notifs)
+	feed := NotificationsFeed(r, notifs, cd.SiteTitle)
 	if err := feed.WriteAtom(w); err != nil {
 		log.Printf("feed write: %v", err)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))

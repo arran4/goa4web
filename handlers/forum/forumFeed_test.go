@@ -23,9 +23,12 @@ func TestForumTopicFeed(t *testing.T) {
 		},
 	}
 	r := httptest.NewRequest("GET", "http://example.com/forum/topic/1.rss", nil)
-	cd := &common.CoreData{ImageSignKey: "test-key"}
+	cd := &common.CoreData{ImageSignKey: "test-key", SiteTitle: "Site"}
 	r = r.WithContext(context.WithValue(r.Context(), consts.KeyCoreData, cd))
 	feed := TopicFeed(r, "Test", 1, rows, "/forum")
+	if feed.Title != "Site - Test" {
+		t.Errorf("feed title incorrect: %s", feed.Title)
+	}
 	if len(feed.Items) != 1 {
 		t.Fatalf("expected 1 item got %d", len(feed.Items))
 	}

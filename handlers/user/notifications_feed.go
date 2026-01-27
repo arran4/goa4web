@@ -1,6 +1,7 @@
 package user
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -9,9 +10,13 @@ import (
 )
 
 // NotificationsFeed converts a list of notifications into a feed.
-func NotificationsFeed(r *http.Request, notifications []*db.Notification) *feeds.Feed {
+func NotificationsFeed(r *http.Request, notifications []*db.Notification, siteTitle string) *feeds.Feed {
+	title := "Notifications"
+	if siteTitle != "" {
+		title = fmt.Sprintf("%s - %s", siteTitle, title)
+	}
 	feed := &feeds.Feed{
-		Title:       "Notifications",
+		Title:       title,
 		Link:        &feeds.Link{Href: r.URL.Path},
 		Description: "recent notifications",
 		Created:     time.Now(),

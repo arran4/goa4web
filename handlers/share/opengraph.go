@@ -36,6 +36,7 @@ type OpenGraphData struct {
 	Description string
 	ImageURL    template.URL
 	ContentURL  template.URL
+	RedirectURL template.URL
 	ImageWidth  int
 	ImageHeight int
 	TwitterSite string
@@ -59,11 +60,11 @@ func RenderOpenGraph(w http.ResponseWriter, r *http.Request, data OpenGraphData)
 	<meta name="twitter:description" content="{{.Description}}" />
 	{{if .TwitterSite}}<meta name="twitter:site" content="{{.TwitterSite}}" />{{end}}
 	{{.TwitterImageMeta}}
-	<meta http-equiv="refresh" content="0;url={{.ContentURL}}" />
+	{{if .RedirectURL}}<meta http-equiv="refresh" content="0;url={{.RedirectURL}}" />{{else}}<meta http-equiv="refresh" content="0;url={{.ContentURL}}" />{{end}}
 </head>
 <body>
 	<h1>Redirecting...</h1>
-	<p>If you are not redirected automatically, <a href="{{.ContentURL}}">click here</a>.</p>
+	<p>If you are not redirected automatically, <a href="{{if .RedirectURL}}{{.RedirectURL}}{{else}}{{.ContentURL}}{{end}}">click here</a>.</p>
 </body>
 </html>
 `)

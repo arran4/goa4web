@@ -20,43 +20,45 @@ import (
 	"golang.org/x/net/html"
 )
 
-func fetchOpenGraph(urlStr string) (title, desc, image string, err error) {
-	u, err := url.Parse(urlStr)
-	if err != nil {
-		return "", "", "", err
-	}
-
-	host := u.Hostname()
-	ips, err := net.LookupIP(host)
-	if err != nil {
-		return "", "", "", err
-	}
-
-	for _, ip := range ips {
-		if ip.IsPrivate() || ip.IsLoopback() || ip.IsUnspecified() {
-			return "", "", "", fmt.Errorf("blocked internal ip: %s", ip)
+func fetchOpenGraph(urlStr string, client *http.Client) (title, desc, image string, err error) {
+	if client == nil {
+		u, err := url.Parse(urlStr)
+		if err != nil {
+			return "", "", "", err
 		}
-	}
 
-	client := &http.Client{
-		Timeout: 5 * time.Second,
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			if len(via) >= 10 {
-				return errors.New("stopped after 10 redirects")
+		host := u.Hostname()
+		ips, err := net.LookupIP(host)
+		if err != nil {
+			return "", "", "", err
+		}
+
+		for _, ip := range ips {
+			if ip.IsPrivate() || ip.IsLoopback() || ip.IsUnspecified() {
+				return "", "", "", fmt.Errorf("blocked internal ip: %s", ip)
 			}
-			// Re-check IP on redirect
-			h := req.URL.Hostname()
-			ips, err := net.LookupIP(h)
-			if err != nil {
-				return err
-			}
-			for _, ip := range ips {
-				if ip.IsPrivate() || ip.IsLoopback() || ip.IsUnspecified() {
-					return fmt.Errorf("blocked internal ip on redirect: %s", ip)
+		}
+
+		client = &http.Client{
+			Timeout: 5 * time.Second,
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				if len(via) >= 10 {
+					return errors.New("stopped after 10 redirects")
 				}
-			}
-			return nil
-		},
+				// Re-check IP on redirect
+				h := req.URL.Hostname()
+				ips, err := net.LookupIP(h)
+				if err != nil {
+					return err
+				}
+				for _, ip := range ips {
+					if ip.IsPrivate() || ip.IsLoopback() || ip.IsUnspecified() {
+						return fmt.Errorf("blocked internal ip on redirect: %s", ip)
+					}
+				}
+				return nil
+			},
+		}
 	}
 	resp, err := client.Get(urlStr)
 	if err != nil {
@@ -198,7 +200,7 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if needFetch && rawURL != "" && !isInternal {
-		title, desc, img, err := fetchOpenGraph(rawURL)
+		title, desc, img, err := fetchOpenGraph(rawURL, cd.HTTPClient())
 		if err == nil {
 			if linkID == 0 {
 				res, err := cd.Queries().CreateExternalLink(r.Context(), rawURL)

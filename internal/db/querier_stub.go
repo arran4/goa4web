@@ -207,6 +207,9 @@ type QuerierStub struct {
 	InsertSubscriptionParams         []InsertSubscriptionParams
 	DeleteSubscriptionParams         []DeleteSubscriptionForSubscriberParams
 	DeleteSubscriptionErr            error
+	CreateFAQQuestionForWriterCalls  []CreateFAQQuestionForWriterParams
+	CreateFAQQuestionForWriterErr    error
+	CreateFAQQuestionForWriterFn     func(context.Context, CreateFAQQuestionForWriterParams) error
 	InsertFAQQuestionForWriterCalls  []InsertFAQQuestionForWriterParams
 	InsertFAQQuestionForWriterResult sql.Result
 	InsertFAQQuestionForWriterErr    error
@@ -1405,6 +1408,18 @@ func (s *QuerierStub) DeleteSubscriptionForSubscriber(ctx context.Context, arg D
 	defer s.mu.Unlock()
 	s.DeleteSubscriptionParams = append(s.DeleteSubscriptionParams, arg)
 	return s.DeleteSubscriptionErr
+}
+
+func (s *QuerierStub) CreateFAQQuestionForWriter(ctx context.Context, arg CreateFAQQuestionForWriterParams) error {
+	s.mu.Lock()
+	s.CreateFAQQuestionForWriterCalls = append(s.CreateFAQQuestionForWriterCalls, arg)
+	fn := s.CreateFAQQuestionForWriterFn
+	err := s.CreateFAQQuestionForWriterErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
 }
 
 // InsertFAQQuestionForWriter records the call and returns the configured sql.Result.

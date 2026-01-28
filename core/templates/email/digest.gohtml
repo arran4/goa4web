@@ -1,0 +1,13 @@
+<p>Here is your daily digest of unread notifications:</p>
+<ul>
+{{ range .Notifications }}
+    <li>
+        {{ if .Link.Valid }}<a href="{{ $.BaseURL }}{{ .Link.String }}">{{ end }}
+        {{ .Message.String }}
+        {{ if .Link.Valid }}</a>{{ end }}
+        <span style="color: #888;">({{ .CreatedAt.Format "2006-01-02 15:04" }})</span>
+    </li>
+{{ end }}
+</ul>
+<p>You have {{ len .Notifications }} unread notifications.</p>
+<p><a href="{{ .BaseURL }}/usr/notifications">View all notifications</a></p>

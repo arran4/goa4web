@@ -78,7 +78,34 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		cd.StartLink = fmt.Sprintf("%s?offset=0%s", base, allParam)
 	}
 
-	data := struct{ Request *http.Request }{r}
+	pref, _ := cd.UserSettings(cd.UserID)
+	var digestHour *int32
+	var digestMarkRead bool
+	if pref != nil {
+		if pref.DailyDigestHour.Valid {
+			digestHour = &pref.DailyDigestHour.Int32
+		}
+		digestMarkRead = pref.DailyDigestMarkRead
+	}
+
+	dHour := -1
+	dEnabled := false
+	if digestHour != nil {
+		dHour = int(*digestHour)
+		dEnabled = true
+	}
+
+	data := struct {
+		Request        *http.Request
+		DigestHour     int
+		DigestEnabled  bool
+		DigestMarkRead bool
+	}{
+		Request:        r,
+		DigestHour:     dHour,
+		DigestEnabled:  dEnabled,
+		DigestMarkRead: digestMarkRead,
+	}
 	UserNotificationsPage.Handle(w, r, data)
 }
 

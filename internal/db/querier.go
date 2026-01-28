@@ -413,6 +413,7 @@ type Querier interface {
 	//   role (string)
 	//   username (string)
 	GetUserRoles(ctx context.Context) ([]*GetUserRolesRow, error)
+	GetUsersForDailyDigest(ctx context.Context, arg GetUsersForDailyDigestParams) ([]*GetUsersForDailyDigestRow, error)
 	// Fetch verified (active) email addresses ordered by notification priority.
 	GetVerifiedUserEmails(ctx context.Context) ([]*GetVerifiedUserEmailsRow, error)
 	GetWritingCategoryById(ctx context.Context, idwritingcategory int32) (*WritingCategory, error)
@@ -491,6 +492,7 @@ type Querier interface {
 	SetNotificationPriorityForLister(ctx context.Context, arg SetNotificationPriorityForListerParams) error
 	SetNotificationReadForLister(ctx context.Context, arg SetNotificationReadForListerParams) error
 	SetNotificationUnreadForLister(ctx context.Context, arg SetNotificationUnreadForListerParams) error
+	SetNotificationsReadForListerBatch(ctx context.Context, arg SetNotificationsReadForListerBatchParams) error
 	SetVerificationCodeForLister(ctx context.Context, arg SetVerificationCodeForListerParams) error
 	SystemAddToBlogsSearch(ctx context.Context, arg SystemAddToBlogsSearchParams) error
 	SystemAddToForumCommentSearch(ctx context.Context, arg SystemAddToForumCommentSearchParams) error
@@ -605,7 +607,9 @@ type Querier interface {
 	UpdateCommentForEditor(ctx context.Context, arg UpdateCommentForEditorParams) error
 	UpdateCustomCssForLister(ctx context.Context, arg UpdateCustomCssForListerParams) error
 	UpdateEmailForumUpdatesForLister(ctx context.Context, arg UpdateEmailForumUpdatesForListerParams) error
+	UpdateLastDigestSentAt(ctx context.Context, arg UpdateLastDigestSentAtParams) error
 	UpdateNewsPostForWriter(ctx context.Context, arg UpdateNewsPostForWriterParams) error
+	UpdateNotificationDigestPreferences(ctx context.Context, arg UpdateNotificationDigestPreferencesParams) error
 	UpdatePreferenceForLister(ctx context.Context, arg UpdatePreferenceForListerParams) error
 	UpdatePublicProfileEnabledAtForUser(ctx context.Context, arg UpdatePublicProfileEnabledAtForUserParams) error
 	UpdateSubscriptionByIDForSubscriber(ctx context.Context, arg UpdateSubscriptionByIDForSubscriberParams) error

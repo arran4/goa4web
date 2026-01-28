@@ -11,11 +11,11 @@ func TestCleanData(t *testing.T) {
 	shortString := "Short string"
 
 	data := map[string]any{
-		"Body": longString,
-		"Other": shortString,
-		"Number": 123,
-		"Title": "Some Title",
-		"UTF8": strings.Repeat("日", 60),
+		"Body":      longString,
+		"Other":     shortString,
+		"Number":    123,
+		"Title":     "Some Title",
+		"UTF8":      strings.Repeat("日", 60),
 		"Multiline": "Line 1\nLine 2\rLine 3",
 	}
 

@@ -529,7 +529,7 @@ type QuerierStub struct {
 	ListBlogEntriesByIDsForListerReturns []*ListBlogEntriesByIDsForListerRow
 	ListBlogEntriesByIDsForListerErr     error
 	ListBlogEntriesByIDsForListerFn      func(context.Context, ListBlogEntriesByIDsForListerParams) ([]*ListBlogEntriesByIDsForListerRow, error)
-  
+
 	ListSiteNewsSearchFirstForListerCalls   []ListSiteNewsSearchFirstForListerParams
 	ListSiteNewsSearchFirstForListerReturns []int32
 	ListSiteNewsSearchFirstForListerErr     error
@@ -539,6 +539,11 @@ type QuerierStub struct {
 	ListSiteNewsSearchNextForListerReturns []int32
 	ListSiteNewsSearchNextForListerErr     error
 	ListSiteNewsSearchNextForListerFn      func(ListSiteNewsSearchNextForListerParams) ([]int32, error)
+
+	GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingCalls   []GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams
+	GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingReturns []*GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
+	GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingErr     error
+	GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingFn      func(context.Context, GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams) ([]*GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error)
 
 	GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountCalls   []GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountParams
 	GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountReturns []*GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountRow
@@ -1119,6 +1124,19 @@ func (s *QuerierStub) ListSiteNewsSearchNextForLister(ctx context.Context, arg L
 	s.mu.Unlock()
 	if fn != nil {
 		return fn(arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(ctx context.Context, arg GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams) ([]*GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
+	s.mu.Lock()
+	s.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingCalls = append(s.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingCalls, arg)
+	fn := s.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingFn
+	ret := s.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingReturns
+	err := s.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
 	}
 	return ret, err
 }

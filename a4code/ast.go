@@ -7,7 +7,11 @@ import (
 )
 
 func writeByte(w io.Writer, b byte) {
-	w.Write([]byte{b})
+	if bw, ok := w.(io.ByteWriter); ok {
+		_ = bw.WriteByte(b)
+		return
+	}
+	_, _ = w.Write([]byte{b})
 }
 
 // Node represents a parsed element of markup.
@@ -56,6 +60,24 @@ func Walk(n Node, fn func(Node) error) error {
 	return nil
 }
 
+func transformChildren(n Node, op func(Node) (Node, error)) (Node, error) {
+	if p, ok := n.(parent); ok {
+		children := p.childrenPtr()
+		newChildren := (*children)[:0]
+		for _, c := range *children {
+			res, err := c.Transform(op)
+			if err != nil {
+				return nil, err
+			}
+			if res != nil {
+				newChildren = append(newChildren, res)
+			}
+		}
+		*children = newChildren
+	}
+	return op(n)
+}
+
 // Root is the top level node of a document.
 type Root struct {
 	BaseNode
@@ -77,18 +99,7 @@ func (r *Root) a4code(w io.Writer) {
 }
 
 func (r *Root) Transform(op func(Node) (Node, error)) (Node, error) {
-	newChildren := r.Children[:0]
-	for _, c := range r.Children {
-		res, err := c.Transform(op)
-		if err != nil {
-			return nil, err
-		}
-		if res != nil {
-			newChildren = append(newChildren, res)
-		}
-	}
-	r.Children = newChildren
-	return op(r)
+	return transformChildren(r, op)
 }
 
 func (r *Root) childrenPtr() *[]Node { return &r.Children }
@@ -134,7 +145,7 @@ func (t *Text) a4code(w io.Writer) {
 }
 
 func (t *Text) Transform(op func(Node) (Node, error)) (Node, error) {
-	return op(t)
+	return transformChildren(t, op)
 }
 
 // Bold text.
@@ -163,18 +174,7 @@ func (b *Bold) a4code(w io.Writer) {
 }
 
 func (b *Bold) Transform(op func(Node) (Node, error)) (Node, error) {
-	newChildren := b.Children[:0]
-	for _, c := range b.Children {
-		res, err := c.Transform(op)
-		if err != nil {
-			return nil, err
-		}
-		if res != nil {
-			newChildren = append(newChildren, res)
-		}
-	}
-	b.Children = newChildren
-	return op(b)
+	return transformChildren(b, op)
 }
 
 // Italic text.
@@ -203,18 +203,7 @@ func (i *Italic) a4code(w io.Writer) {
 }
 
 func (i *Italic) Transform(op func(Node) (Node, error)) (Node, error) {
-	newChildren := i.Children[:0]
-	for _, c := range i.Children {
-		res, err := c.Transform(op)
-		if err != nil {
-			return nil, err
-		}
-		if res != nil {
-			newChildren = append(newChildren, res)
-		}
-	}
-	i.Children = newChildren
-	return op(i)
+	return transformChildren(i, op)
 }
 
 // Underline text.
@@ -243,18 +232,7 @@ func (u *Underline) a4code(w io.Writer) {
 }
 
 func (u *Underline) Transform(op func(Node) (Node, error)) (Node, error) {
-	newChildren := u.Children[:0]
-	for _, c := range u.Children {
-		res, err := c.Transform(op)
-		if err != nil {
-			return nil, err
-		}
-		if res != nil {
-			newChildren = append(newChildren, res)
-		}
-	}
-	u.Children = newChildren
-	return op(u)
+	return transformChildren(u, op)
 }
 
 // Superscript text.
@@ -283,18 +261,7 @@ func (s *Sup) a4code(w io.Writer) {
 }
 
 func (s *Sup) Transform(op func(Node) (Node, error)) (Node, error) {
-	newChildren := s.Children[:0]
-	for _, c := range s.Children {
-		res, err := c.Transform(op)
-		if err != nil {
-			return nil, err
-		}
-		if res != nil {
-			newChildren = append(newChildren, res)
-		}
-	}
-	s.Children = newChildren
-	return op(s)
+	return transformChildren(s, op)
 }
 
 // Subscript text.
@@ -323,18 +290,7 @@ func (s *Sub) a4code(w io.Writer) {
 }
 
 func (s *Sub) Transform(op func(Node) (Node, error)) (Node, error) {
-	newChildren := s.Children[:0]
-	for _, c := range s.Children {
-		res, err := c.Transform(op)
-		if err != nil {
-			return nil, err
-		}
-		if res != nil {
-			newChildren = append(newChildren, res)
-		}
-	}
-	s.Children = newChildren
-	return op(s)
+	return transformChildren(s, op)
 }
 
 // Link to a URL.
@@ -376,18 +332,7 @@ func (l *Link) a4code(w io.Writer) {
 }
 
 func (l *Link) Transform(op func(Node) (Node, error)) (Node, error) {
-	newChildren := l.Children[:0]
-	for _, c := range l.Children {
-		res, err := c.Transform(op)
-		if err != nil {
-			return nil, err
-		}
-		if res != nil {
-			newChildren = append(newChildren, res)
-		}
-	}
-	l.Children = newChildren
-	return op(l)
+	return transformChildren(l, op)
 }
 
 // Image embeds an image.
@@ -411,7 +356,7 @@ func (i *Image) a4code(w io.Writer) {
 }
 
 func (i *Image) Transform(op func(Node) (Node, error)) (Node, error) {
-	return op(i)
+	return transformChildren(i, op)
 }
 
 // Code block.
@@ -438,7 +383,7 @@ func (c *Code) a4code(w io.Writer) {
 }
 
 func (c *Code) Transform(op func(Node) (Node, error)) (Node, error) {
-	return op(c)
+	return transformChildren(c, op)
 }
 
 // Quote node.
@@ -470,18 +415,7 @@ func (q *Quote) a4code(w io.Writer) {
 }
 
 func (q *Quote) Transform(op func(Node) (Node, error)) (Node, error) {
-	newChildren := q.Children[:0]
-	for _, c := range q.Children {
-		res, err := c.Transform(op)
-		if err != nil {
-			return nil, err
-		}
-		if res != nil {
-			newChildren = append(newChildren, res)
-		}
-	}
-	q.Children = newChildren
-	return op(q)
+	return transformChildren(q, op)
 }
 
 // QuoteOf node.
@@ -496,7 +430,7 @@ func (q *QuoteOf) childrenPtr() *[]Node { return &q.Children }
 
 func (q *QuoteOf) html(w io.Writer, depth int) {
 	colorClass := fmt.Sprintf("quote-color-%d", depth%6)
-	fmt.Fprintf(w, `<blockquote class="a4code-block a4code-quoteof %s" data-start-pos="%d" data-end-pos="%d"><div>Quote of `, colorClass, q.Start, q.End)
+	fmt.Fprintf(w, `<blockquote class="a4code-block a4code-quoteof %s" data-start-pos="%d" data-end-pos="%d">`, colorClass, q.Start, q.End)
 	io.WriteString(w, "<div class=\"quote-header\">Quote of ")
 	io.WriteString(w, htmlEscape(q.Name))
 	io.WriteString(w, ":</div>")
@@ -518,18 +452,7 @@ func (q *QuoteOf) a4code(w io.Writer) {
 }
 
 func (q *QuoteOf) Transform(op func(Node) (Node, error)) (Node, error) {
-	newChildren := q.Children[:0]
-	for _, c := range q.Children {
-		res, err := c.Transform(op)
-		if err != nil {
-			return nil, err
-		}
-		if res != nil {
-			newChildren = append(newChildren, res)
-		}
-	}
-	q.Children = newChildren
-	return op(q)
+	return transformChildren(q, op)
 }
 
 // Spoiler node.
@@ -558,18 +481,7 @@ func (s *Spoiler) a4code(w io.Writer) {
 }
 
 func (s *Spoiler) Transform(op func(Node) (Node, error)) (Node, error) {
-	newChildren := s.Children[:0]
-	for _, c := range s.Children {
-		res, err := c.Transform(op)
-		if err != nil {
-			return nil, err
-		}
-		if res != nil {
-			newChildren = append(newChildren, res)
-		}
-	}
-	s.Children = newChildren
-	return op(s)
+	return transformChildren(s, op)
 }
 
 // Indent node.
@@ -598,18 +510,7 @@ func (i *Indent) a4code(w io.Writer) {
 }
 
 func (i *Indent) Transform(op func(Node) (Node, error)) (Node, error) {
-	newChildren := i.Children[:0]
-	for _, c := range i.Children {
-		res, err := c.Transform(op)
-		if err != nil {
-			return nil, err
-		}
-		if res != nil {
-			newChildren = append(newChildren, res)
-		}
-	}
-	i.Children = newChildren
-	return op(i)
+	return transformChildren(i, op)
 }
 
 // HR node.
@@ -626,7 +527,7 @@ func (h *HR) html(w io.Writer, depth int) {
 func (*HR) a4code(w io.Writer) { io.WriteString(w, "[hr]") }
 
 func (h *HR) Transform(op func(Node) (Node, error)) (Node, error) {
-	return op(h)
+	return transformChildren(h, op)
 }
 
 // Custom element for unrecognised tags.
@@ -660,18 +561,7 @@ func (c *Custom) a4code(w io.Writer) {
 }
 
 func (c *Custom) Transform(op func(Node) (Node, error)) (Node, error) {
-	newChildren := c.Children[:0]
-	for _, ch := range c.Children {
-		res, err := ch.Transform(op)
-		if err != nil {
-			return nil, err
-		}
-		if res != nil {
-			newChildren = append(newChildren, res)
-		}
-	}
-	c.Children = newChildren
-	return op(c)
+	return transformChildren(c, op)
 }
 
 // helper to escape plain strings for HTML output.

@@ -55,9 +55,12 @@ type ImagePayload struct {
 }
 
 // MakeImageURL creates an OpenGraph image URL for the given title and description.
-// By default generates a nonce-based signature.
-// Pass usePathAuth=true for path-based signatures, false for query-based.
-func MakeImageURL(baseURL, title, description, key string, usePathAuth bool, opts ...sign.SignOption) (string, error) {
+// It supports variadic options to configure signing and path behavior.
+// Options can be:
+// - string: the signing key
+// - bool: true to use path-based auth, false (default) for query-based
+// - sign.SignOption: options for the signature generation (nonce, expiry)
+func MakeImageURL(baseURL, title, description string, ops ...any) (string, error) {
 	payload := ImagePayload{
 		Title:       title,
 		Description: description,
@@ -69,6 +72,26 @@ func MakeImageURL(baseURL, title, description, key string, usePathAuth bool, opt
 
 	encodedData := base64.RawURLEncoding.EncodeToString(data)
 	path := "/api/og-image/" + encodedData
+
+	var key string
+	var usePathAuth bool
+	var opts []sign.SignOption
+
+	for _, op := range ops {
+		switch v := op.(type) {
+		case string:
+			key = v
+		case bool:
+			usePathAuth = v
+		case sign.SignOption:
+			opts = append(opts, v)
+		}
+	}
+
+	fullURL := baseURL + path
+	if key == "" {
+		return fullURL, nil
+	}
 
 	// Generate nonce if no options provided
 	var nonce string
@@ -98,8 +121,6 @@ func MakeImageURL(baseURL, title, description, key string, usePathAuth bool, opt
 			}
 		}
 	}
-
-	fullURL := baseURL + path
 
 	log.Printf("Making image URL. Path: %s, Nonce: %s, UsePathAuth: %v", path, nonce, usePathAuth)
 

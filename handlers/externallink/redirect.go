@@ -191,9 +191,7 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	needFetch := false
-	if r.URL.Query().Get("reload") == "1" {
-		needFetch = true
-	} else if linkID == 0 && usedURL {
+	if linkID == 0 && usedURL {
 		needFetch = true
 	} else if existingLink != nil && (!existingLink.CardTitle.Valid || !existingLink.CardDescription.Valid) {
 		needFetch = true
@@ -258,7 +256,7 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		URL:         rawURL,
 		RedirectURL: fmt.Sprintf("/goto?%s=%s&sig=%s&go=1", linkParam, linkValue, sig),
-		ReloadURL:   fmt.Sprintf("/goto?%s=%s&sig=%s&reload=1", linkParam, linkValue, sig),
+		ReloadURL:   fmt.Sprintf("/reload?%s=%s&sig=%s", linkParam, linkValue, sig),
 	}
 	if err := cd.ExecuteSiteTemplate(w, r, "externalLinkPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %v", err)

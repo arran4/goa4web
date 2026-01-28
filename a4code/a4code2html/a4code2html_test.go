@@ -88,7 +88,7 @@ func TestA4code2htmlComplex(t *testing.T) {
 	c := New()
 	c.SetInput("[b Bold [i Italic]] plain [link http://x example]")
 	got, _ := io.ReadAll(c.Process())
-	want := "<strong>Bold <i>Italic</i></strong> plain <a href=\"http://x\" target=\"_BLANK\"> example</a>"
+	want := "<strong>Bold <i>Italic</i></strong> plain <a href=\"http://x\" target=\"_blank\"> example</a>"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)
 	}
@@ -267,6 +267,81 @@ func TestHrTag(t *testing.T) {
 			got, _ := io.ReadAll(c.Process())
 			if string(got) != tt.want {
 				t.Errorf("got %q want %q", string(got), tt.want)
+			}
+		})
+	}
+}
+
+func TestExternalLinkCard(t *testing.T) {
+	provider := func(u string) *LinkMetadata {
+		if u == "http://example.com/card" {
+			return &LinkMetadata{
+				Title:       "Example Title",
+				Description: "Example Description",
+				ImageURL:    "http://example.com/image.jpg",
+			}
+		}
+		if u == "http://example.com/simple" {
+			return &LinkMetadata{
+				Title:       "Simple Title",
+				Description: "Simple Description",
+				ImageURL:    "http://example.com/image.jpg",
+			}
+		}
+		return nil
+	}
+
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "Inline with metadata (Title injection)",
+			input: "See [link http://example.com/card]",
+			want:  "See <a href=\"http://example.com/card\" target=\"_blank\">Example Title</a>",
+		},
+		{
+			name:  "Inline without metadata",
+			input: "See [link http://example.com/none]",
+			want:  "See <a href=\"http://example.com/none\" target=\"_blank\">http://example.com/none</a>",
+		},
+		{
+			name:  "Inline with explicit title (ignore metadata title)",
+			input: "See [link http://example.com/card Explicit]",
+			want:  "See <a href=\"http://example.com/card\" target=\"_blank\"> Explicit</a>",
+		},
+		{
+			name:  "Block link [link url] with metadata (Complex Card)",
+			input: "[link http://example.com/card]\n",
+			want:  "<div class=\"external-link-card\"><a href=\"http://example.com/card\" target=\"_blank\" class=\"external-link-card-inner\"><img src=\"http://example.com/image.jpg\" class=\"external-link-image\" /><div class=\"external-link-content\"><div class=\"external-link-title\">Example Title</div><div class=\"external-link-description\">Example Description</div></div></a></div>",
+		},
+		{
+			name:  "Block link [link url] without metadata -> Inline",
+			input: "[link http://example.com/none]\n",
+			want:  "<a href=\"http://example.com/none\" target=\"_blank\">http://example.com/none</a><br />\n",
+		},
+		{
+			name:  "Block link [link url Title] with metadata -> Simple Card",
+			input: "[link http://example.com/simple Simple!]\n",
+			want:  "<div class=\"external-link-card\"><a href=\"http://example.com/simple\" target=\"_blank\" class=\"external-link-card-inner\"><img src=\"http://example.com/image.jpg\" class=\"external-link-image\" /><div class=\"external-link-content\"><div class=\"external-link-title\"> Simple!</div></div></a></div><br />\n",
+		},
+		{
+			name:  "Consecutive Block Links",
+			input: "[link http://example.com/card]\n[link http://example.com/card]\n",
+			want:  "<div class=\"external-link-card\"><a href=\"http://example.com/card\" target=\"_blank\" class=\"external-link-card-inner\"><img src=\"http://example.com/image.jpg\" class=\"external-link-image\" /><div class=\"external-link-content\"><div class=\"external-link-title\">Example Title</div><div class=\"external-link-description\">Example Description</div></div></a></div>" +
+				"<div class=\"external-link-card\"><a href=\"http://example.com/card\" target=\"_blank\" class=\"external-link-card-inner\"><img src=\"http://example.com/image.jpg\" class=\"external-link-image\" /><div class=\"external-link-content\"><div class=\"external-link-title\">Example Title</div><div class=\"external-link-description\">Example Description</div></div></a></div>",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := New(LinkMetadataProvider(provider))
+			c.SetInput(tt.input)
+			gotBytes, _ := io.ReadAll(c.Process())
+			got := string(gotBytes)
+			if diff := cmp.Diff(got, tt.want); diff != "" {
+				t.Errorf("%s: diff\n%s", tt.name, diff)
 			}
 		})
 	}

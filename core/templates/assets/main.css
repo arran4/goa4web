@@ -1113,3 +1113,49 @@ kbd {
     white-space: nowrap;
     margin: 0 0.2em;
 }
+
+/* External Link Card */
+.external-link-card {
+    border: 1px solid #808000;
+    margin: 0.5em 0;
+    background-color: #FFF;
+    overflow: hidden;
+}
+
+.external-link-card-inner {
+    display: flex;
+    text-decoration: none;
+    color: inherit;
+}
+
+.external-link-card-inner:hover {
+    text-decoration: none;
+    background-color: #f0f0f0;
+}
+
+.external-link-image {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background-color: #ccc;
+}
+
+.external-link-content {
+    padding: 1em;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.external-link-title {
+    font-weight: bold;
+    font-size: 1.1em;
+    margin-bottom: 0.5em;
+    color: #800000;
+}
+
+.external-link-description {
+    font-size: 0.9em;
+    color: #333;
+}

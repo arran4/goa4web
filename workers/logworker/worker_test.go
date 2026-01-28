@@ -16,6 +16,7 @@ func TestCleanData(t *testing.T) {
 		"Number": 123,
 		"Title": "Some Title",
 		"UTF8": strings.Repeat("日", 60),
+		"Multiline": "Line 1\nLine 2\rLine 3",
 	}
 
 	cleaned := cleanData(data)
@@ -54,5 +55,13 @@ func TestCleanData(t *testing.T) {
 	runes := []rune(strings.TrimSuffix(cleanedUTF8, "..."))
 	if len(runes) != 50 {
 		t.Errorf("Expected 50 runes, got %d", len(runes))
+	}
+
+	cleanedMultiline, ok := cleaned["Multiline"].(string)
+	if !ok {
+		t.Fatal("Multiline should be a string")
+	}
+	if strings.ContainsAny(cleanedMultiline, "\n\r") {
+		t.Error("Expected newlines to be removed/replaced")
 	}
 }

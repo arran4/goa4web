@@ -3,6 +3,7 @@ package logworker
 import (
 	"context"
 	"log"
+	"strings"
 
 	"github.com/arran4/goa4web/internal/eventbus"
 )
@@ -34,6 +35,8 @@ func cleanData(data map[string]any) map[string]any {
 	newData := make(map[string]any, len(data))
 	for k, v := range data {
 		if s, ok := v.(string); ok {
+			s = strings.ReplaceAll(s, "\n", " ")
+			s = strings.ReplaceAll(s, "\r", " ")
 			if len(s) > 50 {
 				runes := 0
 				idx := -1

@@ -42,6 +42,7 @@ type Server struct {
 	NotFoundHandler http.Handler
 	Store           *sessions.CookieStore
 	DB              *sql.DB
+	Queries         db.Querier
 	Bus             *eventbus.Bus
 	EmailReg        *email.Registry
 
@@ -129,6 +130,9 @@ func WithStore(store *sessions.CookieStore) Option { return func(s *Server) { s.
 
 // WithDB sets the database pool.
 func WithDB(db *sql.DB) Option { return func(s *Server) { s.DB = db } }
+
+// WithQuerier sets a custom query implementation for the server.
+func WithQuerier(q db.Querier) Option { return func(s *Server) { s.Queries = q } }
 
 // WithConfig supplies the runtime configuration.
 func WithConfig(cfg *config.RuntimeConfig) Option { return func(s *Server) { s.Config = cfg } }
@@ -234,23 +238,28 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 			return nil, nil
 		}
 	}
-	if s.DB == nil {
-		ue := common.UserError{Err: fmt.Errorf("db not initialized"), ErrorMessage: "database unavailable"}
-		log.Printf("%s: %v", ue.ErrorMessage, ue.Err)
-		handlers.RenderErrorPage(w, r, errors.New(ue.ErrorMessage))
-		return nil, nil
+	queries := s.Queries
+	if queries == nil {
+		if s.DB == nil {
+			ue := common.UserError{Err: fmt.Errorf("db not initialized"), ErrorMessage: "database unavailable"}
+			log.Printf("%s: %v", ue.ErrorMessage, ue.Err)
+			handlers.RenderErrorPage(w, r, errors.New(ue.ErrorMessage))
+			return nil, nil
+		}
+		queries = db.New(s.DB)
 	}
 
-	queries := db.New(s.DB)
 	sm := s.SessionManager
 	if sm == nil {
-		sm = db.NewSessionProxy(queries)
+		if q, ok := queries.(*db.Queries); ok {
+			sm = db.NewSessionProxy(q)
+		}
 	}
-	if s.Config.DBLogVerbosity > 0 {
+	if s.Config.DBLogVerbosity > 0 && s.DB != nil {
 		log.Printf("db pool stats: %+v", s.DB.Stats())
 	}
 
-	if session.ID != "" {
+	if session.ID != "" && sm != nil {
 		if uid != 0 {
 			if err := sm.InsertSession(r.Context(), session.ID, uid); err != nil {
 				log.Printf("insert session: %v", err)
@@ -272,9 +281,10 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 	if s.RouterReg != nil {
 		modules = s.RouterReg.Names()
 	}
+	customQueries, _ := queries.(db.CustomQueries)
 	cd := common.NewCoreData(r.Context(), queries, s.Config,
 		common.WithImageSignKey(s.ImageSignKey),
-		common.WithCustomQueries(queries),
+		common.WithCustomQueries(customQueries),
 		common.WithLinkSignKey(s.LinkSignKey),
 		common.WithShareSignKey(s.ShareSignKey),
 		common.WithFeedSignKey(s.FeedSignKey),

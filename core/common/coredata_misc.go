@@ -106,7 +106,13 @@ func (cd *CoreData) StoreImage(p StoreImageParams) (string, error) {
 	if !cd.HasGrant("images", "upload", "post", 0) {
 		return "", fmt.Errorf("permission denied")
 	}
-	return cd.storeImageInternal(p)
+	return imagesign.StoreSystemImage(cd.ctx, cd.queries, cd.Config, imagesign.StoreImageParams{
+		ID:         p.ID,
+		Ext:        p.Ext,
+		Data:       p.Data,
+		Image:      p.Image,
+		UploaderID: p.UploaderID,
+	})
 }
 
 // StoreSystemImage stores the image bytes as a system upload (bypassing user grant checks).
@@ -121,10 +127,6 @@ func (cd *CoreData) StoreSystemImage(p StoreImageParams) (string, error) {
 		return "", fmt.Errorf("unsupported image extension: %s", p.Ext)
 	}
 	// System upload: no grant check needed, but ensure uploader is system/admin or 0
-	return cd.storeImageInternal(p)
-}
-
-func (cd *CoreData) storeImageInternal(p StoreImageParams) (string, error) {
 	return imagesign.StoreSystemImage(cd.ctx, cd.queries, cd.Config, imagesign.StoreImageParams{
 		ID:         p.ID,
 		Ext:        p.Ext,

@@ -97,6 +97,16 @@ func (q *Queries) CreateExternalLink(ctx context.Context, url string) (sql.Resul
 	return q.db.ExecContext(ctx, createExternalLink, url)
 }
 
+const ensureExternalLink = `-- name: EnsureExternalLink :execresult
+INSERT INTO external_links (url, clicks)
+VALUES (?, 0)
+ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)
+`
+
+func (q *Queries) EnsureExternalLink(ctx context.Context, url string) (sql.Result, error) {
+	return q.db.ExecContext(ctx, ensureExternalLink, url)
+}
+
 const getExternalLink = `-- name: GetExternalLink :one
 SELECT id, url, clicks, created_at, updated_at, updated_by, card_title, card_description, card_image, card_image_cache, favicon_cache FROM external_links WHERE url = ? LIMIT 1
 `

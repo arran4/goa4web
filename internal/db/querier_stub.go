@@ -569,6 +569,11 @@ type QuerierStub struct {
 	UpdateTimezoneForListerCalls []UpdateTimezoneForListerParams
 	UpdateTimezoneForListerErr   error
 	UpdateTimezoneForListerFn    func(context.Context, UpdateTimezoneForListerParams) error
+
+	EnsureExternalLinkCalls   []string
+	EnsureExternalLinkReturns sql.Result
+	EnsureExternalLinkErr     error
+	EnsureExternalLinkFn      func(context.Context, string) (sql.Result, error)
 }
 
 func (s *QuerierStub) ensurePublicLabelSetLocked(item string, itemID int32) map[string]struct{} {
@@ -1736,6 +1741,25 @@ func (s *QuerierStub) ListSubscribersForPatterns(ctx context.Context, arg ListSu
 		for _, p := range arg.Patterns {
 			ret = append(ret, s.ListSubscribersForPatternsReturn[p]...)
 		}
+	}
+	return ret, nil
+}
+
+func (s *QuerierStub) EnsureExternalLink(ctx context.Context, url string) (sql.Result, error) {
+	s.mu.Lock()
+	s.EnsureExternalLinkCalls = append(s.EnsureExternalLinkCalls, url)
+	fn := s.EnsureExternalLinkFn
+	ret := s.EnsureExternalLinkReturns
+	err := s.EnsureExternalLinkErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, url)
+	}
+	if err != nil {
+		return nil, err
+	}
+	if ret == nil {
+		return FakeSQLResult{}, nil
 	}
 	return ret, nil
 }

@@ -88,3 +88,29 @@ func TestOffsets(t *testing.T) {
 		t.Errorf("got %q want %q", got, want)
 	}
 }
+
+func TestQuoteHTML(t *testing.T) {
+	input := "[quote Outer [quote Nested]]"
+	ast, err := Parse(strings.NewReader(input))
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+	got := ToHTML(ast)
+	want := `<blockquote class="a4code-block a4code-quote quote-color-0"><div class="quote-body"> Outer <blockquote class="a4code-block a4code-quote quote-color-1"><div class="quote-body"> Nested</div></blockquote></div></blockquote>`
+	if got != want {
+		t.Errorf("got %q want %q", got, want)
+	}
+}
+
+func TestQuoteOfHTML(t *testing.T) {
+	input := `[quoteof "User" Outer [quoteof "User2" Nested]]`
+	ast, err := Parse(strings.NewReader(input))
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+	got := ToHTML(ast)
+	want := `<blockquote class="a4code-block a4code-quoteof quote-color-0"><div class="quote-header">Quote of User:</div><div class="quote-body"> Outer <blockquote class="a4code-block a4code-quoteof quote-color-1"><div class="quote-header">Quote of User2:</div><div class="quote-body"> Nested</div></blockquote></div></blockquote>`
+	if got != want {
+		t.Errorf("got %q want %q", got, want)
+	}
+}

@@ -12,7 +12,7 @@ func writeByte(w io.Writer, b byte) {
 
 // Node represents a parsed element of markup.
 type Node interface {
-	html(io.Writer)
+	html(io.Writer, int)
 	a4code(io.Writer)
 	isNode()
 	Transform(op func(Node) (Node, error)) (Node, error)
@@ -64,9 +64,9 @@ type Root struct {
 
 func (*Root) isNode() {}
 
-func (r *Root) html(w io.Writer) {
+func (r *Root) html(w io.Writer, depth int) {
 	for _, c := range r.Children {
-		c.html(w)
+		c.html(w, depth)
 	}
 }
 
@@ -101,7 +101,7 @@ type Text struct {
 
 func (*Text) isNode() {}
 
-func (t *Text) html(w io.Writer) {
+func (t *Text) html(w io.Writer, depth int) {
 	fmt.Fprintf(w, `<span data-start-pos="%d" data-end-pos="%d">`, t.Start, t.End)
 	for i := 0; i < len(t.Value); i++ {
 		switch t.Value[i] {
@@ -111,6 +111,7 @@ func (t *Text) html(w io.Writer) {
 			io.WriteString(w, "&lt;")
 		case '>':
 			io.WriteString(w, "&gt;")
+		case '\r':
 		case '\n':
 			io.WriteString(w, "<br />\n")
 		default:
@@ -145,10 +146,10 @@ type Bold struct {
 func (*Bold) isNode()                {}
 func (b *Bold) childrenPtr() *[]Node { return &b.Children }
 
-func (b *Bold) html(w io.Writer) {
+func (b *Bold) html(w io.Writer, depth int) {
 	fmt.Fprintf(w, `<strong data-start-pos="%d" data-end-pos="%d">`, b.Start, b.End)
 	for _, c := range b.Children {
-		c.html(w)
+		c.html(w, depth)
 	}
 	io.WriteString(w, "</strong>")
 }
@@ -185,10 +186,10 @@ type Italic struct {
 func (*Italic) isNode()                {}
 func (i *Italic) childrenPtr() *[]Node { return &i.Children }
 
-func (i *Italic) html(w io.Writer) {
+func (i *Italic) html(w io.Writer, depth int) {
 	fmt.Fprintf(w, `<i data-start-pos="%d" data-end-pos="%d">`, i.Start, i.End)
 	for _, c := range i.Children {
-		c.html(w)
+		c.html(w, depth)
 	}
 	io.WriteString(w, "</i>")
 }
@@ -225,10 +226,10 @@ type Underline struct {
 func (*Underline) isNode()                {}
 func (u *Underline) childrenPtr() *[]Node { return &u.Children }
 
-func (u *Underline) html(w io.Writer) {
+func (u *Underline) html(w io.Writer, depth int) {
 	fmt.Fprintf(w, `<u data-start-pos="%d" data-end-pos="%d">`, u.Start, u.End)
 	for _, c := range u.Children {
-		c.html(w)
+		c.html(w, depth)
 	}
 	io.WriteString(w, "</u>")
 }
@@ -265,10 +266,10 @@ type Sup struct {
 func (*Sup) isNode()                {}
 func (s *Sup) childrenPtr() *[]Node { return &s.Children }
 
-func (s *Sup) html(w io.Writer) {
+func (s *Sup) html(w io.Writer, depth int) {
 	fmt.Fprintf(w, `<sup data-start-pos="%d" data-end-pos="%d">`, s.Start, s.End)
 	for _, c := range s.Children {
-		c.html(w)
+		c.html(w, depth)
 	}
 	io.WriteString(w, "</sup>")
 }
@@ -305,10 +306,10 @@ type Sub struct {
 func (*Sub) isNode()                {}
 func (s *Sub) childrenPtr() *[]Node { return &s.Children }
 
-func (s *Sub) html(w io.Writer) {
+func (s *Sub) html(w io.Writer, depth int) {
 	fmt.Fprintf(w, `<sub data-start-pos="%d" data-end-pos="%d">`, s.Start, s.End)
 	for _, c := range s.Children {
-		c.html(w)
+		c.html(w, depth)
 	}
 	io.WriteString(w, "</sub>")
 }
@@ -346,20 +347,20 @@ type Link struct {
 func (*Link) isNode()                {}
 func (l *Link) childrenPtr() *[]Node { return &l.Children }
 
-func (l *Link) html(w io.Writer) {
+func (l *Link) html(w io.Writer, depth int) {
 	if safe, ok := SanitizeURL(l.Href); ok {
 		fmt.Fprintf(w, `<a href="`)
 		io.WriteString(w, safe)
 		fmt.Fprintf(w, `" target="_BLANK" data-start-pos="%d" data-end-pos="%d">`, l.Start, l.End)
 		for _, c := range l.Children {
-			c.html(w)
+			c.html(w, depth)
 		}
 		io.WriteString(w, "</a>")
 	} else {
 		fmt.Fprintf(w, `<span data-start-pos="%d" data-end-pos="%d">`, l.Start, l.End)
 		io.WriteString(w, safe)
 		for _, c := range l.Children {
-			c.html(w)
+			c.html(w, depth)
 		}
 		io.WriteString(w, "</span>")
 	}
@@ -397,7 +398,7 @@ type Image struct {
 
 func (*Image) isNode() {}
 
-func (i *Image) html(w io.Writer) {
+func (i *Image) html(w io.Writer, depth int) {
 	io.WriteString(w, "<img src=\"")
 	io.WriteString(w, htmlEscape(i.Src))
 	fmt.Fprintf(w, `" data-start-pos="%d" data-end-pos="%d" />`, i.Start, i.End)
@@ -423,7 +424,7 @@ type Code struct {
 
 func (*Code) isNode() {}
 
-func (c *Code) html(w io.Writer) {
+func (c *Code) html(w io.Writer, depth int) {
 	fmt.Fprintf(w, `<pre class="a4code-block a4code-code" data-start-pos="%d" data-end-pos="%d">`, c.Start, c.End)
 	fmt.Fprintf(w, `<span data-start-pos="%d" data-end-pos="%d">`, c.InnerStart, c.InnerEnd)
 	io.WriteString(w, htmlEscape(c.Value))
@@ -449,11 +450,14 @@ type Quote struct {
 func (*Quote) isNode()                {}
 func (q *Quote) childrenPtr() *[]Node { return &q.Children }
 
-func (q *Quote) html(w io.Writer) {
-	fmt.Fprintf(w, `<blockquote class="a4code-block a4code-quote" data-start-pos="%d" data-end-pos="%d">`, q.Start, q.End)
+func (q *Quote) html(w io.Writer, depth int) {
+	colorClass := fmt.Sprintf("quote-color-%d", depth%6)
+	fmt.Fprintf(w, `<blockquote class="a4code-block a4code-quote %s" data-start-pos="%d" data-end-pos="%d">`, colorClass, q.Start, q.End)
+	io.WriteString(w, "<div class=\"quote-body\">")
 	for _, c := range q.Children {
-		c.html(w)
+		c.html(w, depth+1)
 	}
+	io.WriteString(w, "</div>")
 	io.WriteString(w, "</blockquote>")
 }
 
@@ -490,13 +494,17 @@ type QuoteOf struct {
 func (*QuoteOf) isNode()                {}
 func (q *QuoteOf) childrenPtr() *[]Node { return &q.Children }
 
-func (q *QuoteOf) html(w io.Writer) {
-	fmt.Fprintf(w, `<blockquote class="a4code-block a4code-quoteof" data-start-pos="%d" data-end-pos="%d"><div>Quote of `, q.Start, q.End)
+func (q *QuoteOf) html(w io.Writer, depth int) {
+	colorClass := fmt.Sprintf("quote-color-%d", depth%6)
+	fmt.Fprintf(w, `<blockquote class="a4code-block a4code-quoteof %s" data-start-pos="%d" data-end-pos="%d"><div>Quote of `, colorClass, q.Start, q.End)
+	io.WriteString(w, "<div class=\"quote-header\">Quote of ")
 	io.WriteString(w, htmlEscape(q.Name))
 	io.WriteString(w, ":</div>")
+	io.WriteString(w, "<div class=\"quote-body\">")
 	for _, c := range q.Children {
-		c.html(w)
+		c.html(w, depth+1)
 	}
+	io.WriteString(w, "</div>")
 	io.WriteString(w, "</blockquote>")
 }
 
@@ -533,10 +541,10 @@ type Spoiler struct {
 func (*Spoiler) isNode()                {}
 func (s *Spoiler) childrenPtr() *[]Node { return &s.Children }
 
-func (s *Spoiler) html(w io.Writer) {
+func (s *Spoiler) html(w io.Writer, depth int) {
 	fmt.Fprintf(w, `<span class="spoiler" data-start-pos="%d" data-end-pos="%d">`, s.Start, s.End)
 	for _, c := range s.Children {
-		c.html(w)
+		c.html(w, depth)
 	}
 	io.WriteString(w, "</span>")
 }
@@ -573,10 +581,10 @@ type Indent struct {
 func (*Indent) isNode()                {}
 func (i *Indent) childrenPtr() *[]Node { return &i.Children }
 
-func (i *Indent) html(w io.Writer) {
+func (i *Indent) html(w io.Writer, depth int) {
 	fmt.Fprintf(w, `<div class="a4code-block a4code-indent" data-start-pos="%d" data-end-pos="%d"><div>`, i.Start, i.End)
 	for _, c := range i.Children {
-		c.html(w)
+		c.html(w, depth)
 	}
 	io.WriteString(w, "</div></div>")
 }
@@ -611,7 +619,7 @@ type HR struct {
 
 func (*HR) isNode() {}
 
-func (h *HR) html(w io.Writer) {
+func (h *HR) html(w io.Writer, depth int) {
 	fmt.Fprintf(w, `<hr data-start-pos="%d" data-end-pos="%d" />`, h.Start, h.End)
 }
 
@@ -631,12 +639,12 @@ type Custom struct {
 func (*Custom) isNode()                {}
 func (c *Custom) childrenPtr() *[]Node { return &c.Children }
 
-func (c *Custom) html(w io.Writer) {
+func (c *Custom) html(w io.Writer, depth int) {
 	fmt.Fprintf(w, `<span data-start-pos="%d" data-end-pos="%d">`, c.Start, c.End)
 	io.WriteString(w, "[")
 	io.WriteString(w, htmlEscape(c.Tag))
 	for _, ch := range c.Children {
-		ch.html(w)
+		ch.html(w, depth)
 	}
 	io.WriteString(w, "]")
 	io.WriteString(w, "</span>")

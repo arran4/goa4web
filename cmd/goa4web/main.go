@@ -40,6 +40,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 var (
@@ -97,6 +98,7 @@ type rootCmd struct {
 	ConfigFile       string
 	ConfigFileValues map[string]string
 	db               *sql.DB
+	querier          db.Querier
 	Verbosity        int
 	tasksReg         *tasks.Registry
 	dbReg            *dbdrivers.Registry
@@ -117,6 +119,17 @@ func (r *rootCmd) DB() (*sql.DB, error) {
 	}
 	r.db = dbPool
 	return r.db, nil
+}
+
+func (r *rootCmd) Querier() (db.Querier, error) {
+	if r.querier != nil {
+		return r.querier, nil
+	}
+	conn, err := r.DB()
+	if err != nil {
+		return nil, fmt.Errorf("rootCmd.Querier: %w", err)
+	}
+	return db.New(conn), nil
 }
 
 func (r *rootCmd) InitDB(cfg *config.RuntimeConfig) (*sql.DB, error) {

@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"time"
 )
 
 func (s *QuerierStub) AdminInsertBannedIp(ctx context.Context, arg AdminInsertBannedIpParams) error {
@@ -54,6 +55,19 @@ func (s *QuerierStub) InsertPassword(ctx context.Context, arg InsertPasswordPara
 	return err
 }
 
+func (s *QuerierStub) SystemGetUserByUsername(ctx context.Context, arg sql.NullString) (*SystemGetUserByUsernameRow, error) {
+	s.mu.Lock()
+	s.SystemGetUserByUsernameCalls = append(s.SystemGetUserByUsernameCalls, arg)
+	fn := s.SystemGetUserByUsernameFn
+	row := s.SystemGetUserByUsernameRow
+	err := s.SystemGetUserByUsernameErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return row, err
+}
+
 func (s *QuerierStub) SystemDeletePasswordResetsByUser(ctx context.Context, userID int32) (sql.Result, error) {
 	s.mu.Lock()
 	s.SystemDeletePasswordResetsByUserCalls = append(s.SystemDeletePasswordResetsByUserCalls, userID)
@@ -67,6 +81,133 @@ func (s *QuerierStub) SystemDeletePasswordResetsByUser(ctx context.Context, user
 	return ret, err
 }
 
+func (s *QuerierStub) AdminCountPasswordResets(ctx context.Context, arg AdminCountPasswordResetsParams) (int64, error) {
+	s.mu.Lock()
+	s.AdminCountPasswordResetsCalls = append(s.AdminCountPasswordResetsCalls, arg)
+	fn := s.AdminCountPasswordResetsFn
+	ret := s.AdminCountPasswordResetsReturns
+	err := s.AdminCountPasswordResetsErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) AdminInsertRequestComment(ctx context.Context, arg AdminInsertRequestCommentParams) error {
+	s.mu.Lock()
+	s.AdminInsertRequestCommentCalls = append(s.AdminInsertRequestCommentCalls, arg)
+	fn := s.AdminInsertRequestCommentFn
+	err := s.AdminInsertRequestCommentErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
+}
+
+func (s *QuerierStub) InsertAdminUserComment(ctx context.Context, arg InsertAdminUserCommentParams) error {
+	s.mu.Lock()
+	s.InsertAdminUserCommentCalls = append(s.InsertAdminUserCommentCalls, arg)
+	fn := s.InsertAdminUserCommentFn
+	err := s.InsertAdminUserCommentErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
+}
+
+func (s *QuerierStub) AdminCountPendingPasswordResetsByUser(ctx context.Context) ([]*AdminCountPendingPasswordResetsByUserRow, error) {
+	s.mu.Lock()
+	s.AdminCountPendingPasswordResetsByUserCalls++
+	fn := s.AdminCountPendingPasswordResetsByUserFn
+	ret := s.AdminCountPendingPasswordResetsByUserReturns
+	err := s.AdminCountPendingPasswordResetsByUserErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) AdminGetPasswordResetByID(ctx context.Context, id int32) (*PendingPassword, error) {
+	s.mu.Lock()
+	s.AdminGetPasswordResetByIDCalls = append(s.AdminGetPasswordResetByIDCalls, id)
+	fn := s.AdminGetPasswordResetByIDFn
+	ret := s.AdminGetPasswordResetByIDReturns
+	err := s.AdminGetPasswordResetByIDErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, id)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) AdminListPasswordResets(ctx context.Context, arg AdminListPasswordResetsParams) ([]*AdminListPasswordResetsRow, error) {
+	s.mu.Lock()
+	s.AdminListPasswordResetsCalls = append(s.AdminListPasswordResetsCalls, arg)
+	fn := s.AdminListPasswordResetsFn
+	ret := s.AdminListPasswordResetsReturns
+	err := s.AdminListPasswordResetsErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) DeletePendingPassword(ctx context.Context, userID int32) error {
+	s.mu.Lock()
+	s.DeletePendingPasswordCalls = append(s.DeletePendingPasswordCalls, userID)
+	fn := s.DeletePendingPasswordFn
+	err := s.DeletePendingPasswordErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, userID)
+	}
+	return err
+}
+
+func (s *QuerierStub) GetPasswordResetByCode(ctx context.Context, arg GetPasswordResetByCodeParams) (*PendingPassword, error) {
+	s.mu.Lock()
+	s.GetPasswordResetByCodeCalls = append(s.GetPasswordResetByCodeCalls, arg)
+	fn := s.GetPasswordResetByCodeFn
+	ret := s.GetPasswordResetByCodeReturns
+	err := s.GetPasswordResetByCodeErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) GetPendingPassword(ctx context.Context, userID int32) (*PendingPassword, error) {
+	s.mu.Lock()
+	s.GetPendingPasswordCalls = append(s.GetPendingPasswordCalls, userID)
+	fn := s.GetPendingPasswordFn
+	ret := s.GetPendingPasswordReturns
+	err := s.GetPendingPasswordErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, userID)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) GetPendingPasswordByCode(ctx context.Context, verificationCode string) (*PendingPassword, error) {
+	s.mu.Lock()
+	s.GetPendingPasswordByCodeCalls = append(s.GetPendingPasswordByCodeCalls, verificationCode)
+	fn := s.GetPendingPasswordByCodeFn
+	row := s.GetPendingPasswordByCodeRow
+	err := s.GetPendingPasswordByCodeErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, verificationCode)
+	}
+	return row, err
+}
+
 func (s *QuerierStub) AdminPromoteAnnouncement(ctx context.Context, id int32) error {
 	s.mu.Lock()
 	s.AdminPromoteAnnouncementCalls = append(s.AdminPromoteAnnouncementCalls, id)
@@ -77,6 +218,43 @@ func (s *QuerierStub) AdminPromoteAnnouncement(ctx context.Context, id int32) er
 		return fn(ctx, id)
 	}
 	return err
+}
+
+func (s *QuerierStub) SystemDeletePasswordReset(ctx context.Context, id int32) error {
+	s.mu.Lock()
+	s.SystemDeletePasswordResetCalls = append(s.SystemDeletePasswordResetCalls, id)
+	fn := s.SystemDeletePasswordResetFn
+	err := s.SystemDeletePasswordResetErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, id)
+	}
+	return err
+}
+
+func (s *QuerierStub) SystemMarkPasswordResetVerified(ctx context.Context, id int32) error {
+	s.mu.Lock()
+	s.SystemMarkPasswordResetVerifiedCalls = append(s.SystemMarkPasswordResetVerifiedCalls, id)
+	fn := s.SystemMarkPasswordResetVerifiedFn
+	err := s.SystemMarkPasswordResetVerifiedErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, id)
+	}
+	return err
+}
+
+func (s *QuerierStub) SystemPurgePasswordResetsBefore(ctx context.Context, createdAt time.Time) (sql.Result, error) {
+	s.mu.Lock()
+	s.SystemPurgePasswordResetsBeforeCalls = append(s.SystemPurgePasswordResetsBeforeCalls, createdAt)
+	fn := s.SystemPurgePasswordResetsBeforeFn
+	ret := s.SystemPurgePasswordResetsBeforeResult
+	err := s.SystemPurgePasswordResetsBeforeErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, createdAt)
+	}
+	return ret, err
 }
 
 func (s *QuerierStub) AdminDemoteAnnouncement(ctx context.Context, id int32) error {

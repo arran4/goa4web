@@ -381,6 +381,11 @@ type QuerierStub struct {
 	ListGrantsErr     error
 	ListGrantsFn      func(context.Context) ([]*Grant, error)
 
+	ListBloggersSearchForListerCalls   []ListBloggersSearchForListerParams
+	ListBloggersSearchForListerReturns []*ListBloggersSearchForListerRow
+	ListBloggersSearchForListerErr     error
+	ListBloggersSearchForListerFn      func(ListBloggersSearchForListerParams) ([]*ListBloggersSearchForListerRow, error)
+
 	ListWritersForListerCalls   []ListWritersForListerParams
 	ListWritersForListerReturns []*ListWritersForListerRow
 	ListWritersForListerErr     error
@@ -893,6 +898,19 @@ func (s *QuerierStub) ListGrants(ctx context.Context) ([]*Grant, error) {
 	s.mu.Unlock()
 	if fn != nil {
 		return fn(ctx)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) ListBloggersSearchForLister(ctx context.Context, arg ListBloggersSearchForListerParams) ([]*ListBloggersSearchForListerRow, error) {
+	s.mu.Lock()
+	s.ListBloggersSearchForListerCalls = append(s.ListBloggersSearchForListerCalls, arg)
+	fn := s.ListBloggersSearchForListerFn
+	ret := s.ListBloggersSearchForListerReturns
+	err := s.ListBloggersSearchForListerErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(arg)
 	}
 	return ret, err
 }

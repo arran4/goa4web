@@ -38,12 +38,15 @@ type QuerierStub struct {
 	AddContentPrivateLabelErr           error
 	AddContentPrivateLabelCalls         []AddContentPrivateLabelParams
 	AddContentPrivateLabelFn            func(context.Context, AddContentPrivateLabelParams) error
+	AddContentPrivateLabelIgnoreLabels  map[string]bool
 	AddContentPublicLabelErr            error
 	AddContentPublicLabelCalls          []AddContentPublicLabelParams
 	ListContentLabelStatusErr           error
 	ListContentLabelStatusCalls         []ListContentLabelStatusParams
+	ListContentLabelStatusReturns       []*ListContentLabelStatusRow
 	ListContentPublicLabelsErr          error
 	ListContentPublicLabelsCalls        []ListContentPublicLabelsParams
+	ListContentPublicLabelsReturns      []*ListContentPublicLabelsRow
 	ListContentPublicLabelsFn           func(ListContentPublicLabelsParams) ([]*ListContentPublicLabelsRow, error)
 	RemoveContentLabelStatusErr         error
 	RemoveContentLabelStatusCalls       []RemoveContentLabelStatusParams
@@ -339,6 +342,11 @@ type QuerierStub struct {
 	ListPrivateTopicParticipantsByTopicIDForUserReturns []*ListPrivateTopicParticipantsByTopicIDForUserRow
 	ListPrivateTopicParticipantsByTopicIDForUserErr     error
 
+	ListPrivateTopicsByUserIDCalls   []sql.NullInt32
+	ListPrivateTopicsByUserIDReturns []*ListPrivateTopicsByUserIDRow
+	ListPrivateTopicsByUserIDErr     error
+	ListPrivateTopicsByUserIDFn      func(context.Context, sql.NullInt32) ([]*ListPrivateTopicsByUserIDRow, error)
+
 	AdminListForumTopicGrantsByTopicIDCalls   []sql.NullInt32
 	AdminListForumTopicGrantsByTopicIDReturns []*AdminListForumTopicGrantsByTopicIDRow
 	AdminListForumTopicGrantsByTopicIDErr     error
@@ -526,6 +534,9 @@ func (s *QuerierStub) ListContentPublicLabels(ctx context.Context, arg ListConte
 	if s.ListContentPublicLabelsFn != nil {
 		return s.ListContentPublicLabelsFn(arg)
 	}
+	if s.ListContentPublicLabelsReturns != nil && s.ContentPublicLabels == nil {
+		return s.ListContentPublicLabelsReturns, s.ListContentPublicLabelsErr
+	}
 	if s.ListContentPublicLabelsErr != nil {
 		return nil, s.ListContentPublicLabelsErr
 	}
@@ -649,6 +660,9 @@ func (s *QuerierStub) ListContentLabelStatus(ctx context.Context, arg ListConten
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.ListContentLabelStatusCalls = append(s.ListContentLabelStatusCalls, arg)
+	if s.ListContentLabelStatusReturns != nil && s.ContentLabelStatus == nil {
+		return s.ListContentLabelStatusReturns, s.ListContentLabelStatusErr
+	}
 	if s.ListContentLabelStatusErr != nil {
 		return nil, s.ListContentLabelStatusErr
 	}
@@ -696,11 +710,12 @@ func (s *QuerierStub) AddContentPrivateLabel(ctx context.Context, arg AddContent
 	s.AddContentPrivateLabelCalls = append(s.AddContentPrivateLabelCalls, arg)
 	fn := s.AddContentPrivateLabelFn
 	err := s.AddContentPrivateLabelErr
+	ignoreErr := s.AddContentPrivateLabelIgnoreLabels != nil && s.AddContentPrivateLabelIgnoreLabels[arg.Label]
 	s.mu.Unlock()
 	if fn != nil {
 		return fn(ctx, arg)
 	}
-	if err != nil {
+	if err != nil && !ignoreErr {
 		return err
 	}
 	s.mu.Lock()
@@ -719,7 +734,7 @@ func (s *QuerierStub) ListContentPrivateLabels(ctx context.Context, arg ListCont
 	if s.ListContentPrivateLabelsFn != nil {
 		return s.ListContentPrivateLabelsFn(arg)
 	}
-	if s.ListContentPrivateLabelsReturns != nil {
+	if s.ListContentPrivateLabelsReturns != nil && s.ContentPrivateLabels == nil {
 		return s.ListContentPrivateLabelsReturns, s.ListContentPrivateLabelsErr
 	}
 
@@ -1240,6 +1255,18 @@ func (s *QuerierStub) ListPrivateTopicParticipantsByTopicIDForUser(ctx context.C
 		return fn(ctx, arg)
 	}
 	return s.ListPrivateTopicParticipantsByTopicIDForUserReturns, s.ListPrivateTopicParticipantsByTopicIDForUserErr
+}
+
+// ListPrivateTopicsByUserID records the call and returns stubbed topics.
+func (s *QuerierStub) ListPrivateTopicsByUserID(ctx context.Context, userID sql.NullInt32) ([]*ListPrivateTopicsByUserIDRow, error) {
+	s.mu.Lock()
+	s.ListPrivateTopicsByUserIDCalls = append(s.ListPrivateTopicsByUserIDCalls, userID)
+	fn := s.ListPrivateTopicsByUserIDFn
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, userID)
+	}
+	return s.ListPrivateTopicsByUserIDReturns, s.ListPrivateTopicsByUserIDErr
 }
 
 // SystemGetUserByID records the call and returns the configured response.

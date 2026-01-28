@@ -142,6 +142,8 @@ type CoreData struct {
 	// routerModules tracks enabled router modules.
 	routerModules map[string]struct{}
 
+	httpClient *http.Client
+
 	session      *sessions.Session
 	sessionProxy SessionManager
 
@@ -1176,6 +1178,11 @@ func (cd *CoreData) EmailProvider() MailProvider {
 		log.Printf("load email provider: %v", err)
 	}
 	return p
+}
+
+// HTTPClient returns the configured HTTP client.
+func (cd *CoreData) HTTPClient() *http.Client {
+	return cd.httpClient
 }
 
 // Event returns the event associated with the request, if any.
@@ -2701,6 +2708,11 @@ type CoreOption func(*CoreData)
 // WithImageURLMapper sets the a4code image mapper option.
 func WithImageURLMapper(fn func(tag, val string) string) CoreOption {
 	return func(cd *CoreData) { cd.a4codeMapper = fn }
+}
+
+// WithHTTPClient sets the HTTP client used for external requests.
+func WithHTTPClient(client *http.Client) CoreOption {
+	return func(cd *CoreData) { cd.httpClient = client }
 }
 
 // WithSession stores the gorilla session on the CoreData object and

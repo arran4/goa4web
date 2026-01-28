@@ -37,7 +37,7 @@ func SharedPreviewPage(w http.ResponseWriter, r *http.Request) {
 	if ogTitle == "" {
 		ogTitle = "Blog by " + blog.Username.String
 	}
-	ogDescription := a4code.Snip(blog.Blog.String, 128)
+	ogDescription := a4code.SnipText(blog.Blog.String, 128)
 
 	if r.Method == http.MethodHead {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")

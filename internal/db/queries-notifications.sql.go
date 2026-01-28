@@ -8,6 +8,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"strings"
 )
 
 const adminDeleteNotification = `-- name: AdminDeleteNotification :exec
@@ -304,6 +305,34 @@ type SetNotificationUnreadForListerParams struct {
 
 func (q *Queries) SetNotificationUnreadForLister(ctx context.Context, arg SetNotificationUnreadForListerParams) error {
 	_, err := q.db.ExecContext(ctx, setNotificationUnreadForLister, arg.ID, arg.ListerID)
+	return err
+}
+
+const setNotificationsReadForListerBatch = `-- name: SetNotificationsReadForListerBatch :exec
+UPDATE notifications
+SET read_at = NOW()
+WHERE users_idusers = ?
+  AND id IN (/*SLICE:ids*/?)
+`
+
+type SetNotificationsReadForListerBatchParams struct {
+	ListerID int32
+	Ids      []int32
+}
+
+func (q *Queries) SetNotificationsReadForListerBatch(ctx context.Context, arg SetNotificationsReadForListerBatchParams) error {
+	query := setNotificationsReadForListerBatch
+	var queryParams []interface{}
+	queryParams = append(queryParams, arg.ListerID)
+	if len(arg.Ids) > 0 {
+		for _, v := range arg.Ids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(arg.Ids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
+	}
+	_, err := q.db.ExecContext(ctx, query, queryParams...)
 	return err
 }
 

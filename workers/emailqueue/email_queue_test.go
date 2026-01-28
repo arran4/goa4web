@@ -44,7 +44,7 @@ func TestResolveQueuedEmailAddress_DirectEmail_VerifiedUser_Success(t *testing.T
 	}
 }
 
-func TestResolveQueuedEmailAddress_DirectEmail_NonUser_Success(t *testing.T) {
+func TestResolveQueuedEmailAddress_DirectEmail_NonUser_Fails(t *testing.T) {
 	q := &db.QuerierStub{}
 	cfg := &config.RuntimeConfig{}
 
@@ -63,12 +63,13 @@ func TestResolveQueuedEmailAddress_DirectEmail_NonUser_Success(t *testing.T) {
 		DirectEmail: true,
 	}
 
-	addr, err := ResolveQueuedEmailAddress(context.Background(), q, cfg, e)
-	if err != nil {
-		t.Fatalf("Expected success for non-user with DirectEmail, got error: %v", err)
+	_, err := ResolveQueuedEmailAddress(context.Background(), q, cfg, e)
+	if err == nil {
+		t.Fatal("Expected error for non-user with DirectEmail, got nil")
 	}
-	if addr.Address != emailAddr {
-		t.Errorf("Expected address %s, got %s", emailAddr, addr.Address)
+	expectedErr := fmt.Sprintf("no verification record for %s", emailAddr)
+	if err.Error() != expectedErr {
+		t.Fatalf("Expected error %q, got %q", expectedErr, err.Error())
 	}
 }
 

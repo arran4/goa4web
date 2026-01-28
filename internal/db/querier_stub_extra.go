@@ -42,6 +42,44 @@ func (s *QuerierStub) SystemDeletePasswordResetsByUser(ctx context.Context, user
 	return ret, err
 }
 
+func (s *QuerierStub) SystemMarkPasswordResetVerified(ctx context.Context, id int32) error {
+	s.mu.Lock()
+	s.SystemMarkPasswordResetVerifiedCalls = append(s.SystemMarkPasswordResetVerifiedCalls, id)
+	fn := s.SystemMarkPasswordResetVerifiedFn
+	err := s.SystemMarkPasswordResetVerifiedErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, id)
+	}
+	return err
+}
+
+func (s *QuerierStub) GetPasswordResetByCode(ctx context.Context, arg GetPasswordResetByCodeParams) (*PendingPassword, error) {
+	s.mu.Lock()
+	s.GetPasswordResetByCodeCalls = append(s.GetPasswordResetByCodeCalls, arg)
+	fn := s.GetPasswordResetByCodeFn
+	ret := s.GetPasswordResetByCodeReturns
+	err := s.GetPasswordResetByCodeErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) GetPendingPasswordByCode(ctx context.Context, verificationCode string) (*PendingPassword, error) {
+	s.mu.Lock()
+	s.GetPendingPasswordByCodeCalls = append(s.GetPendingPasswordByCodeCalls, verificationCode)
+	fn := s.GetPendingPasswordByCodeFn
+	ret := s.GetPendingPasswordByCodeReturns
+	err := s.GetPendingPasswordByCodeErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, verificationCode)
+	}
+	return ret, err
+}
+
 func (s *QuerierStub) AdminPromoteAnnouncement(ctx context.Context, id int32) error {
 	s.mu.Lock()
 	s.AdminPromoteAnnouncementCalls = append(s.AdminPromoteAnnouncementCalls, id)

@@ -116,6 +116,9 @@ type QuerierStub struct {
 	SystemDeletePasswordResetsByUserErr    error
 	SystemDeletePasswordResetsByUserResult sql.Result
 	SystemDeletePasswordResetsByUserFn     func(context.Context, int32) (sql.Result, error)
+	SystemMarkPasswordResetVerifiedCalls   []int32
+	SystemMarkPasswordResetVerifiedErr     error
+	SystemMarkPasswordResetVerifiedFn      func(context.Context, int32) error
 
 	AdminPromoteAnnouncementCalls []int32
 	AdminPromoteAnnouncementErr   error
@@ -125,13 +128,21 @@ type QuerierStub struct {
 	AdminDemoteAnnouncementErr   error
 	AdminDemoteAnnouncementFn    func(context.Context, int32) error
 
-	AdminCancelBannedIpCalls      []string
-	AdminCancelBannedIpErr        error
-	AdminCancelBannedIpFn         func(context.Context, string) error
-	GetPasswordResetByUserCalls   []GetPasswordResetByUserParams
-	GetPasswordResetByUserReturns *PendingPassword
-	GetPasswordResetByUserErr     error
-	GetPasswordResetByUserFn      func(context.Context, GetPasswordResetByUserParams) (*PendingPassword, error)
+	AdminCancelBannedIpCalls        []string
+	AdminCancelBannedIpErr          error
+	AdminCancelBannedIpFn           func(context.Context, string) error
+	GetPasswordResetByUserCalls     []GetPasswordResetByUserParams
+	GetPasswordResetByUserReturns   *PendingPassword
+	GetPasswordResetByUserErr       error
+	GetPasswordResetByUserFn        func(context.Context, GetPasswordResetByUserParams) (*PendingPassword, error)
+	GetPasswordResetByCodeCalls     []GetPasswordResetByCodeParams
+	GetPasswordResetByCodeReturns   *PendingPassword
+	GetPasswordResetByCodeErr       error
+	GetPasswordResetByCodeFn        func(context.Context, GetPasswordResetByCodeParams) (*PendingPassword, error)
+	GetPendingPasswordByCodeCalls   []string
+	GetPendingPasswordByCodeReturns *PendingPassword
+	GetPendingPasswordByCodeErr     error
+	GetPendingPasswordByCodeFn      func(context.Context, string) (*PendingPassword, error)
 
 	CreatePasswordResetForUserCalls []CreatePasswordResetForUserParams
 	CreatePasswordResetForUserErr   error

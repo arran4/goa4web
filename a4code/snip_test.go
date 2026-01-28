@@ -24,11 +24,21 @@ func TestSnip(t *testing.T) {
 }
 
 func TestSnipText(t *testing.T) {
-	s := "This is a [b]long[/b] string"
-	if SnipText(s, 10) != "This is a..." {
-		t.Errorf("SnipText failed: %s", SnipText(s, 10))
+	tests := []struct {
+		input  string
+		length int
+		want   string
+	}{
+		{"This is a [b]long[/b] string", 10, "This is a..."},
+		{"[b]Bold[/b] text", 4, "Bold..."},
+		{"[b]Bold[/b] text", 3, "Bol..."},
+		{"Short", 10, "Short"},
+		{"[i]Italic[/i] and [b]Bold[/b]", 6, "Italic..."},
+		{"[quote]Ignored[/quote] content", 10, "Ignored co..."},
 	}
-	if SnipText("[b]"+s+"[/b]", 10) != "This is a..." {
-		t.Errorf("SnipText failed: %s", SnipText("[b]"+s+"[/b]", 10))
+	for _, tt := range tests {
+		if got := SnipText(tt.input, tt.length); got != tt.want {
+			t.Errorf("SnipText(%q, %d) = %q, want %q", tt.input, tt.length, got, tt.want)
+		}
 	}
 }

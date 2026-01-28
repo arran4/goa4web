@@ -18,8 +18,12 @@ import (
 )
 
 func feedGen(r *http.Request, cd *common.CoreData) (*feeds.Feed, error) {
+	title := "Latest writings"
+	if cd.SiteTitle != "" {
+		title = fmt.Sprintf("%s - %s", cd.SiteTitle, title)
+	}
 	feed := &feeds.Feed{
-		Title:       "Latest writings",
+		Title:       title,
 		Link:        &feeds.Link{Href: r.URL.String()},
 		Description: "recent writings",
 		Created:     time.Now(),

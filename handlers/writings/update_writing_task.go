@@ -23,6 +23,7 @@ var updateWritingTask = &UpdateWritingTask{TaskString: TaskUpdateWriting}
 var _ tasks.Task = (*UpdateWritingTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*UpdateWritingTask)(nil)
 var _ notif.GrantsRequiredProvider = (*UpdateWritingTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*UpdateWritingTask)(nil)
 
 func (UpdateWritingTask) Page(w http.ResponseWriter, r *http.Request) { ArticleEditPage(w, r) }
 
@@ -100,12 +101,17 @@ func (UpdateWritingTask) Action(w http.ResponseWriter, r *http.Request) any {
 }
 
 func (UpdateWritingTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("writingUpdateEmail"), true
+	return EmailTemplateWritingUpdate.EmailTemplates(), true
 }
 
 func (UpdateWritingTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	s := notif.NotificationTemplateFilenameGenerator("writing_update")
+	s := NotificationTemplateWritingUpdate.NotificationTemplate()
 	return &s
+}
+
+func (UpdateWritingTask) RequiredTemplates() []tasks.Template {
+	return append([]tasks.Template{tasks.Template(WritingsArticleEditPageTmpl)},
+		append(EmailTemplateWritingUpdate.RequiredTemplates(), NotificationTemplateWritingUpdate.RequiredTemplates()...)...)
 }
 
 func (UpdateWritingTask) GrantsRequired(evt eventbus.TaskEvent) ([]notif.GrantRequirement, error) {

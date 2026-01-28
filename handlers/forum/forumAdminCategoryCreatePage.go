@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/arran4/goa4web/internal/tasks"
+
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -30,7 +32,7 @@ func AdminCategoryCreatePage(w http.ResponseWriter, r *http.Request) {
 	ForumAdminCategoryCreatePageTmpl.Handle(w, r, data)
 }
 
-const ForumAdminCategoryCreatePageTmpl handlers.Page = "forum/forumAdminCategoryCreatePage.gohtml"
+const ForumAdminCategoryCreatePageTmpl tasks.Template = "forum/forumAdminCategoryCreatePage.gohtml"
 
 // AdminCategoryCreateSubmit handles creation of a new forum category.
 func AdminCategoryCreateSubmit(w http.ResponseWriter, r *http.Request) {
@@ -78,5 +80,16 @@ func AdminCategoryCreateSubmit(w http.ResponseWriter, r *http.Request) {
 		handlers.RedirectSeeOtherWithError(w, r, createCategoryURL, err)
 		return
 	}
+
+	if evt := cd.Event(); evt != nil {
+		if evt.Data == nil {
+			evt.Data = map[string]any{}
+		}
+		evt.Data["Name"] = name
+		if u := cd.UserByID(cd.UserID); u != nil {
+			evt.Data["Username"] = u.Username.String
+		}
+	}
+
 	handlers.RedirectSeeOtherWithMessage(w, r, "/admin/forum/categories", "category created")
 }

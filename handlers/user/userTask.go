@@ -17,15 +17,15 @@ type userTask struct {
 }
 
 const (
-	UserPageTmpl handlers.Page = "user/page.gohtml"
+	UserPageTmpl tasks.Template = "user/page.gohtml"
 )
 
 func NewUserTask() tasks.Task {
 	return &userTask{}
 }
 
-func (t *userTask) TemplatesRequired() []tasks.Page {
-	return []tasks.Page{UserPageTmpl}
+func (t *userTask) RequiredTemplates() []tasks.Template {
+	return []tasks.Template{UserPageTmpl}
 }
 
 func (t *userTask) Action(w http.ResponseWriter, r *http.Request) any {

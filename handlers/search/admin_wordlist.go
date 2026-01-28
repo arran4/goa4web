@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"net/url"
@@ -139,7 +140,7 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 	AdminSearchWordListPageTmpl.Handle(w, r, data)
 }
 
-const AdminSearchWordListPageTmpl handlers.Page = "admin/searchWordListPage.gohtml"
+const AdminSearchWordListPageTmpl tasks.Template = "admin/searchWordListPage.gohtml"
 
 // adminSearchWordListDownloadPage sends the full word list as a text file.
 func adminSearchWordListDownloadPage(w http.ResponseWriter, r *http.Request) {

@@ -60,7 +60,7 @@ func AdminAddPage(w http.ResponseWriter, r *http.Request) {
 	LinkerAdminAddPageTmpl.Handle(w, r, data)
 }
 
-const LinkerAdminAddPageTmpl handlers.Page = "linker/adminAddPage.gohtml"
+const LinkerAdminAddPageTmpl tasks.Template = "linker/adminAddPage.gohtml"
 
 type addTask struct{ tasks.TaskString }
 
@@ -72,6 +72,7 @@ var AdminAddTask = &addTask{TaskString: TaskAdd}
 var _ tasks.Task = (*addTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*addTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*addTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*addTask)(nil)
 
 func (addTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -113,19 +114,23 @@ func (addTask) Action(w http.ResponseWriter, r *http.Request) any {
 }
 
 func (addTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("linkerAddEmail"), true
+	return EmailTemplateLinkerAdd.EmailTemplates(), true
 }
 
 func (addTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	s := notif.NotificationTemplateFilenameGenerator("linker_add")
+	s := NotificationTemplateLinkerAdd.NotificationTemplate()
 	return &s
 }
 
 func (addTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("adminNotificationLinkerAddEmail"), true
+	return EmailTemplateAdminNotificationLinkerAdd.EmailTemplates(), true
 }
 
 func (addTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := notif.NotificationTemplateFilenameGenerator("adminNotificationLinkerAddEmail")
+	v := EmailTemplateAdminNotificationLinkerAdd.NotificationTemplate()
 	return &v
+}
+
+func (addTask) RequiredTemplates() []tasks.Template {
+	return append(EmailTemplateLinkerAdd.RequiredTemplates(), EmailTemplateAdminNotificationLinkerAdd.RequiredTemplates()...)
 }

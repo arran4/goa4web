@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"strconv"
 
@@ -59,7 +60,7 @@ func AdminEditQuestionPage(w http.ResponseWriter, r *http.Request) {
 	AdminQuestionEditPageTmpl.Handle(w, r, data)
 }
 
-const AdminQuestionEditPageTmpl handlers.Page = "faq/adminQuestionEditPage.gohtml"
+const AdminQuestionEditPageTmpl tasks.Template = "faq/adminQuestionEditPage.gohtml"
 
 // AdminCreateQuestionPage redirects to AdminEditQuestionPage with id zero to
 // display the form for creating a new FAQ entry.

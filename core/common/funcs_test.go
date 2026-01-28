@@ -118,3 +118,38 @@ func TestAddmodeSkipsAdminLinks(t *testing.T) {
 		}
 	}
 }
+
+func TestTemplateFuncsTimeAgo(t *testing.T) {
+	req := httptest.NewRequest("GET", "/", nil)
+	cd := &common.CoreData{}
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+
+	funcs := cd.Funcs(req)
+	timeAgo := funcs["timeAgo"].(func(time.Time) string)
+
+	// Since timeAgo uses time.Now() internally, we must ensure we don't hit race conditions with boundaries.
+	// We add a small buffer to ensure we stay within the expected unit range.
+	now := time.Now()
+
+	tests := []struct {
+		d    time.Duration
+		want string
+	}{
+		{time.Second * 30, "post was 30 seconds ago"},
+		{time.Second, "post was 1 second ago"},
+		{time.Minute + time.Second, "post was 1 minute ago"},
+		{time.Minute * 2, "post was 2 minutes ago"},
+		{time.Hour + time.Minute, "post was 1 hour ago"},
+		{time.Hour * 5, "post was 5 hours ago"},
+		{time.Hour * 25, "post was 1 day ago"},
+		{time.Hour * 49, "post was 2 days ago"},
+	}
+
+	for _, tt := range tests {
+		got := timeAgo(now.Add(-tt.d))
+		if got != tt.want {
+			t.Errorf("timeAgo(-%v) = %q, want %q", tt.d, got, tt.want)
+		}
+	}
+}

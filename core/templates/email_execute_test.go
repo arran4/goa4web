@@ -17,6 +17,7 @@ type emailData struct {
 	SignOff        string
 	SignOffHTML    htemplate.HTML
 	Item           interface{}
+	Recipient      interface{}
 }
 
 func sampleEmailData() emailData {
@@ -63,6 +64,9 @@ func sampleEmailData() emailData {
 		SignOff:        "signoff",
 		SignOffHTML:    htemplate.HTML("signoff"),
 		Item:           item,
+		Recipient: map[string]interface{}{
+			"Username": map[string]interface{}{"String": "recipient"},
+		},
 	}
 }
 

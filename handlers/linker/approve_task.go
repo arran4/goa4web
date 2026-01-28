@@ -28,6 +28,7 @@ var (
 	_ tasks.Task                                    = (*approveTask)(nil)
 	_ notif.SubscribersNotificationTemplateProvider = (*approveTask)(nil)
 	_ notif.AdminEmailTemplateProvider              = (*approveTask)(nil)
+	_ tasks.EmailTemplatesRequired                  = (*approveTask)(nil)
 	_ searchworker.IndexedTask                      = approveTask{}
 )
 
@@ -81,19 +82,23 @@ func (approveTask) Action(w http.ResponseWriter, r *http.Request) any {
 }
 
 func (approveTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("linkerApprovedEmail"), true
+	return EmailTemplateLinkerApproved.EmailTemplates(), true
 }
 
 func (approveTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	s := notif.NotificationTemplateFilenameGenerator("linker_approved")
+	s := NotificationTemplateLinkerApproved.NotificationTemplate()
 	return &s
 }
 
 func (approveTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("adminNotificationLinkerApprovedEmail"), true
+	return EmailTemplateAdminNotificationLinkerApproved.EmailTemplates(), true
 }
 
 func (approveTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := notif.NotificationTemplateFilenameGenerator("adminNotificationLinkerApprovedEmail")
+	v := EmailTemplateAdminNotificationLinkerApproved.NotificationTemplate()
 	return &v
+}
+
+func (approveTask) RequiredTemplates() []tasks.Template {
+	return append(EmailTemplateLinkerApproved.RequiredTemplates(), EmailTemplateAdminNotificationLinkerApproved.RequiredTemplates()...)
 }

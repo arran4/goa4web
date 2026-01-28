@@ -27,16 +27,17 @@ var (
 	_ notif.SelfNotificationTemplateProvider = (*ForgotPasswordTask)(nil)
 	_ notif.AdminEmailTemplateProvider       = (*ForgotPasswordTask)(nil)
 	_ notif.SelfEmailBroadcaster             = (*ForgotPasswordTask)(nil)
+	_ tasks.EmailTemplatesRequired           = (*ForgotPasswordTask)(nil)
 )
 
 // Ensure template requirements are declared for this task.
 var _ tasks.TemplatesRequired = (*ForgotPasswordTask)(nil)
 
 const (
-	ForgotPasswordPageTmpl            handlers.Page = "forgotPasswordPage.gohtml"
-	ForgotPasswordNoEmailPageTmpl     handlers.Page = "forgotPasswordNoEmailPage.gohtml"
-	ForgotPasswordEmailSentPageTmpl   handlers.Page = "forgotPasswordEmailSentPage.gohtml"
-	PasswordResetRequestSentPageTmpl  handlers.Page = "passwordResetRequestSentPage.gohtml"
+	ForgotPasswordPageTmpl           tasks.Template = "forgotPasswordPage.gohtml"
+	ForgotPasswordNoEmailPageTmpl    tasks.Template = "forgotPasswordNoEmailPage.gohtml"
+	ForgotPasswordEmailSentPageTmpl  tasks.Template = "forgotPasswordEmailSentPage.gohtml"
+	PasswordResetRequestSentPageTmpl tasks.Template = "passwordResetRequestSentPage.gohtml"
 )
 
 var forgotPasswordTask = &ForgotPasswordTask{TaskString: TaskUserResetPassword}
@@ -120,20 +121,20 @@ func (ForgotPasswordTask) AuditRecord(data map[string]any) string {
 }
 
 func (EmailAssociationRequestTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("adminNotificationEmailAssociationRequestEmail"), true
+	return EmailTemplateAdminEmailAssociationRequest.EmailTemplates(), true
 }
 
 func (EmailAssociationRequestTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := notif.NotificationTemplateFilenameGenerator("adminNotificationEmailAssociationRequestEmail")
+	v := EmailTemplateAdminEmailAssociationRequest.NotificationTemplate()
 	return &v
 }
 
 func (f ForgotPasswordTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("adminNotificationUserRequestPasswordResetEmail"), true
+	return EmailTemplateAdminUserRequestPasswordReset.EmailTemplates(), true
 }
 
 func (f ForgotPasswordTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := notif.NotificationTemplateFilenameGenerator("adminNotificationUserRequestPasswordResetEmail")
+	v := EmailTemplateAdminUserRequestPasswordReset.NotificationTemplate()
 	return &v
 }
 
@@ -141,11 +142,11 @@ func (f ForgotPasswordTask) SelfEmailTemplate(evt eventbus.TaskEvent) (templates
 	if v, ok := evt.Data["UserHasNoVerifiedEmail"].(bool); ok && v {
 		return nil, false
 	}
-	return notif.NewEmailTemplates("passwordResetEmail"), true
+	return EmailTemplatePasswordReset.EmailTemplates(), true
 }
 
 func (f ForgotPasswordTask) SelfInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	s := notif.NotificationTemplateFilenameGenerator("password_reset")
+	s := NotificationTemplatePasswordReset.NotificationTemplate()
 	return &s
 }
 
@@ -157,12 +158,11 @@ func (ForgotPasswordTask) Page(w http.ResponseWriter, r *http.Request) {
 	ForgotPasswordPageTmpl.Handle(w, r, struct{}{})
 }
 
-// TemplatesRequired declares templates used by ForgotPasswordTask.
-func (ForgotPasswordTask) TemplatesRequired() []tasks.Page {
-	return []tasks.Page{
-		ForgotPasswordPageTmpl,
-		ForgotPasswordNoEmailPageTmpl,
-		ForgotPasswordEmailSentPageTmpl,
-		PasswordResetRequestSentPageTmpl,
-	}
+// RequiredTemplates declares templates used by ForgotPasswordTask.
+func (ForgotPasswordTask) RequiredTemplates() []tasks.Template {
+	return append([]tasks.Template{
+		tasks.Template(ForgotPasswordPageTmpl),
+		tasks.Template(ForgotPasswordNoEmailPageTmpl),
+		tasks.Template(ForgotPasswordEmailSentPageTmpl),
+	}, append(EmailTemplateAdminUserRequestPasswordReset.RequiredTemplates(), EmailTemplatePasswordReset.RequiredTemplates()...)...)
 }

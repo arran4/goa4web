@@ -1,12 +1,12 @@
 package linker
 
 import (
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"strings"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -35,4 +35,4 @@ func AdminDashboardPage(w http.ResponseWriter, r *http.Request) {
 	LinkerAdminDashboardPageTmpl.Handle(w, r, data)
 }
 
-const LinkerAdminDashboardPageTmpl handlers.Page = "linker/linkerAdminDashboardPage.gohtml"
+const LinkerAdminDashboardPageTmpl tasks.Template = "linker/linkerAdminDashboardPage.gohtml"

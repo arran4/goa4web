@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"strconv"
@@ -155,7 +156,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	ArticlePageTmpl.Handle(w, r, data)
 }
 
-const ArticlePageTmpl handlers.Page = "writings/articlePage.gohtml"
+const ArticlePageTmpl tasks.Template = "writings/articlePage.gohtml"
 
 func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	if _, ok := core.GetSessionOrFail(w, r); !ok {
@@ -221,4 +222,4 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-const AdminNoAccessPageTmpl handlers.Page = "admin/noAccessPage.gohtml"
+const AdminNoAccessPageTmpl tasks.Template = "admin/noAccessPage.gohtml"

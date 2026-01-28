@@ -29,14 +29,20 @@ var modifyBoardTask = &ModifyBoardTask{TaskString: TaskModifyBoard}
 
 var _ tasks.Task = (*ModifyBoardTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*ModifyBoardTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*ModifyBoardTask)(nil)
 
 func (ModifyBoardTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("imageBoardUpdateEmail"), true
+	return EmailTemplateImageBoardUpdate.EmailTemplates(), true
 }
 
 func (ModifyBoardTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := notif.NotificationTemplateFilenameGenerator("imageBoardUpdateEmail")
+	v := EmailTemplateImageBoardUpdate.NotificationTemplate()
 	return &v
+}
+
+func (ModifyBoardTask) RequiredTemplates() []tasks.Template {
+	return append([]tasks.Template{tasks.Template(ImageBBSAdminBoardPageTmpl)},
+		EmailTemplateImageBoardUpdate.RequiredTemplates()...)
 }
 
 func (ModifyBoardTask) Action(w http.ResponseWriter, r *http.Request) any {
@@ -126,4 +132,4 @@ func AdminBoardPage(w http.ResponseWriter, r *http.Request) {
 	ImageBBSAdminBoardPageTmpl.Handle(w, r, data)
 }
 
-const ImageBBSAdminBoardPageTmpl handlers.Page = "imagebbs/adminBoardPage.gohtml"
+const ImageBBSAdminBoardPageTmpl tasks.Template = "imagebbs/adminBoardPage.gohtml"

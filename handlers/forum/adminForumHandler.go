@@ -6,6 +6,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 
@@ -101,7 +102,7 @@ func AdminForumPage(w http.ResponseWriter, r *http.Request) {
 	ForumAdminPageTmpl.Handle(w, r, data)
 }
 
-const ForumAdminPageTmpl handlers.Page = "forum/adminPage.gohtml"
+const ForumAdminPageTmpl tasks.Template = "forum/adminPage.gohtml"
 
 func AdminForumRemakeForumThreadPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -152,7 +153,7 @@ func AdminForumRemakeForumTopicPage(w http.ResponseWriter, r *http.Request) {
 	RunTaskPageTmpl.Handle(w, r, data)
 }
 
-const RunTaskPageTmpl handlers.Page = "admin/runTaskPage.gohtml"
+const RunTaskPageTmpl tasks.Template = "admin/runTaskPage.gohtml"
 
 func countForumThreads(ctx context.Context, q db.Querier) (int64, error) {
 	return q.AdminCountForumThreads(ctx)

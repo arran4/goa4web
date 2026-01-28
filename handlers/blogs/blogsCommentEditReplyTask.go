@@ -27,14 +27,19 @@ var editReplyTask = &EditReplyTask{TaskString: TaskEditReply}
 
 var _ tasks.Task = (*EditReplyTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*EditReplyTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*EditReplyTask)(nil)
 
 func (EditReplyTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("adminNotificationBlogCommentEditEmail"), true
+	return EmailTemplateAdminNotificationBlogCommentEdit.EmailTemplates(), true
 }
 
 func (EditReplyTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := notif.NotificationTemplateFilenameGenerator("adminNotificationBlogCommentEditEmail")
+	v := EmailTemplateAdminNotificationBlogCommentEdit.NotificationTemplate()
 	return &v
+}
+
+func (EditReplyTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateAdminNotificationBlogCommentEdit.RequiredTemplates()
 }
 
 func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {

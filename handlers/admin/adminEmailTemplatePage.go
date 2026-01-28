@@ -6,7 +6,6 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -95,6 +94,6 @@ func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
 	AdminEmailTemplateEditPageTmpl.Handle(w, r, struct{}{})
 }
 
-const AdminEmailTemplateListPageTmpl handlers.Page = "admin/emailTemplateListPage.gohtml"
+const AdminEmailTemplateListPageTmpl tasks.Template = "admin/emailTemplateListPage.gohtml"
 
-const AdminEmailTemplateEditPageTmpl handlers.Page = "admin/emailTemplateEditPage.gohtml"
+const AdminEmailTemplateEditPageTmpl tasks.Template = "admin/emailTemplateEditPage.gohtml"

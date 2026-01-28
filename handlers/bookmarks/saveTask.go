@@ -33,7 +33,7 @@ func EditPage(w http.ResponseWriter, r *http.Request) {
 	BookmarkEditPageTmpl.Handle(w, r, struct{}{})
 }
 
-const BookmarkEditPageTmpl handlers.Page = "bookmarks/editPage.gohtml"
+const BookmarkEditPageTmpl tasks.Template = "bookmarks/editPage.gohtml"
 
 func (SaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	text := r.PostFormValue("text")

@@ -20,15 +20,15 @@ type blogsCommentTask struct {
 }
 
 const (
-	BlogsCommentPageTmpl handlers.Page = "blogs/commentPage.gohtml"
+	BlogsCommentPageTmpl tasks.Template = "blogs/commentPage.gohtml"
 )
 
 func NewBlogsCommentTask() tasks.Task {
 	return &blogsCommentTask{}
 }
 
-func (t *blogsCommentTask) TemplatesRequired() []tasks.Page {
-	return []tasks.Page{BlogsCommentPageTmpl}
+func (t *blogsCommentTask) RequiredTemplates() []tasks.Template {
+	return []tasks.Template{BlogsCommentPageTmpl}
 }
 
 func (t *blogsCommentTask) Action(w http.ResponseWriter, r *http.Request) any {

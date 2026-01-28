@@ -1,13 +1,13 @@
 package admin
 
 import (
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -103,4 +103,4 @@ func adminGrantAddPage(w http.ResponseWriter, r *http.Request) {
 	AdminGrantAddPageTmpl.Handle(w, r, data)
 }
 
-const AdminGrantAddPageTmpl handlers.Page = "admin/grantAddPage.gohtml"
+const AdminGrantAddPageTmpl tasks.Template = "admin/grantAddPage.gohtml"

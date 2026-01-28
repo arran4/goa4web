@@ -26,14 +26,19 @@ var newBoardTask = &NewBoardTask{TaskString: TaskNewBoard}
 
 var _ tasks.Task = (*NewBoardTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*NewBoardTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*NewBoardTask)(nil)
 
 func (NewBoardTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("adminNotificationImageBoardNewEmail"), true
+	return EmailTemplateAdminNotificationImageBoardNew.EmailTemplates(), true
 }
 
 func (NewBoardTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := notif.NotificationTemplateFilenameGenerator("adminNotificationImageBoardNewEmail")
+	v := EmailTemplateAdminNotificationImageBoardNew.NotificationTemplate()
 	return &v
+}
+
+func (NewBoardTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateAdminNotificationImageBoardNew.RequiredTemplates()
 }
 
 func AdminNewBoardPage(w http.ResponseWriter, r *http.Request) {

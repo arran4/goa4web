@@ -30,23 +30,29 @@ var _ tasks.Task = (*AddBlogTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*AddBlogTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*AddBlogTask)(nil)
 var _ notif.GrantsRequiredProvider = (*AddBlogTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*AddBlogTask)(nil)
 
 func (AddBlogTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("adminNotificationBlogAddEmail"), true
+	return EmailTemplateAdminNotificationBlogAdd.EmailTemplates(), true
 }
 
 func (AddBlogTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := notif.NotificationTemplateFilenameGenerator("adminNotificationBlogAddEmail")
+	v := EmailTemplateAdminNotificationBlogAdd.NotificationTemplate()
 	return &v
 }
 
 func (AddBlogTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("blogAddEmail"), true
+	return EmailTemplateBlogAdd.EmailTemplates(), true
 }
 
 func (AddBlogTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	s := notif.NotificationTemplateFilenameGenerator("blog_add")
+	s := NotificationTemplateBlogAdd.NotificationTemplate()
 	return &s
+}
+
+func (AddBlogTask) RequiredTemplates() []tasks.Template {
+	return append([]tasks.Template{tasks.Template(BlogsBlogAddPageTmpl)},
+		append(EmailTemplateAdminNotificationBlogAdd.RequiredTemplates(), EmailTemplateBlogAdd.RequiredTemplates()...)...)
 }
 
 // GrantsRequired implements notif.GrantsRequiredProvider for new blog entries.
@@ -136,4 +142,4 @@ func BlogAddPage(w http.ResponseWriter, r *http.Request) {
 	BlogsBlogAddPageTmpl.Handle(w, r, data)
 }
 
-const BlogsBlogAddPageTmpl handlers.Page = "blogs/blogAddPage.gohtml"
+const BlogsBlogAddPageTmpl tasks.Template = "blogs/blogAddPage.gohtml"

@@ -1,6 +1,7 @@
 package news
 
 import (
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
@@ -9,7 +10,7 @@ import (
 )
 
 const (
-	NewsCreatePageTmpl handlers.Page = "news/createPage.gohtml"
+	NewsCreatePageTmpl tasks.Template = "news/createPage.gohtml"
 )
 
 func NewsCreatePageHandler(w http.ResponseWriter, r *http.Request) {

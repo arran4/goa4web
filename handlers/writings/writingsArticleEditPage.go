@@ -14,6 +14,7 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	notif "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/workers/searchworker"
 
 	"github.com/arran4/goa4web/core"
@@ -62,7 +63,7 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	WritingsArticleEditPageTmpl.Handle(w, r, data)
 }
 
-const WritingsArticleEditPageTmpl handlers.Page = "writings/articleEditPage.gohtml"
+const WritingsArticleEditPageTmpl tasks.Template = "writings/articleEditPage.gohtml"
 
 func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 	// RequireWritingAuthor middleware loads the writing and validates access.

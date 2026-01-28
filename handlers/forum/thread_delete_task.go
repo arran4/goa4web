@@ -14,13 +14,18 @@ var threadDeleteTask = &ThreadDeleteTask{TaskString: TaskForumThreadDelete}
 var (
 	_ tasks.Task                       = (*ThreadDeleteTask)(nil)
 	_ notif.AdminEmailTemplateProvider = (*ThreadDeleteTask)(nil)
+	_ tasks.EmailTemplatesRequired     = (*ThreadDeleteTask)(nil)
 )
 
 func (ThreadDeleteTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("adminNotificationForumThreadDeleteEmail"), true
+	return EmailTemplateAdminNotificationForumThreadDelete.EmailTemplates(), true
 }
 
 func (ThreadDeleteTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := notif.NotificationTemplateFilenameGenerator("adminNotificationForumThreadDeleteEmail")
+	v := EmailTemplateAdminNotificationForumThreadDelete.NotificationTemplate()
 	return &v
+}
+
+func (ThreadDeleteTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateAdminNotificationForumThreadDelete.RequiredTemplates()
 }

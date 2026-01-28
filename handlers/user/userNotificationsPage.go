@@ -82,7 +82,7 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	UserNotificationsPage.Handle(w, r, data)
 }
 
-const UserNotificationsPage handlers.Page = "user/notifications.gohtml"
+const UserNotificationsPage tasks.Template = "user/notifications.gohtml"
 
 func (DismissTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -145,7 +145,7 @@ func notificationsRssPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
-	feed := NotificationsFeed(r, notifs)
+	feed := NotificationsFeed(r, notifs, cd.SiteTitle)
 	if err := feed.WriteRss(w); err != nil {
 		log.Printf("feed write: %v", err)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
@@ -183,7 +183,7 @@ func notificationsAtomPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
-	feed := NotificationsFeed(r, notifs)
+	feed := NotificationsFeed(r, notifs, cd.SiteTitle)
 	if err := feed.WriteAtom(w); err != nil {
 		log.Printf("feed write: %v", err)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
@@ -217,9 +217,9 @@ func userNotificationOpenPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/usr/notifications", http.StatusSeeOther)
 		return
 	}
-	if !n.Link.Valid {
-		http.Redirect(w, r, "/usr/notifications", http.StatusSeeOther)
-		return
+	redirectURL := ""
+	if n.Link.Valid {
+		redirectURL = n.Link.String
 	}
 	data := struct {
 		Request      *http.Request
@@ -229,13 +229,13 @@ func userNotificationOpenPage(w http.ResponseWriter, r *http.Request) {
 	}{
 		Request:      r,
 		Notification: n,
-		RedirectURL:  n.Link.String,
+		RedirectURL:  redirectURL,
 		TaskName:     string(TaskDismiss),
 	}
 	UserNotificationOpenPage.Handle(w, r, data)
 }
 
-const UserNotificationOpenPage handlers.Page = "user/notificationOpen.gohtml"
+const UserNotificationOpenPage tasks.Template = "user/notificationOpen.gohtml"
 
 func userNotificationEmailActionPage(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
@@ -264,4 +264,37 @@ func userNotificationEmailActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	http.Redirect(w, r, "/usr/notifications", http.StatusSeeOther)
+}
+
+func notificationsGoPage(w http.ResponseWriter, r *http.Request) {
+	session, ok := core.GetSessionOrFail(w, r)
+	if !ok {
+		return
+	}
+	uid, _ := session.Values["UID"].(int32)
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		http.Redirect(w, r, "/usr/notifications", http.StatusSeeOther)
+		return
+	}
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	n, err := queries.GetNotificationForLister(r.Context(), db.GetNotificationForListerParams{ID: int32(id), ListerID: uid})
+	if err != nil {
+		if err != sql.ErrNoRows {
+			log.Printf("notification go: %v", err)
+		}
+		http.Redirect(w, r, "/usr/notifications", http.StatusSeeOther)
+		return
+	}
+	if !n.ReadAt.Valid {
+		if err := queries.SetNotificationReadForLister(r.Context(), db.SetNotificationReadForListerParams{ID: n.ID, ListerID: uid}); err != nil {
+			log.Printf("mark notification read: %v", err)
+		}
+	}
+	if n.Link.Valid && n.Link.String != "" {
+		http.Redirect(w, r, n.Link.String, http.StatusSeeOther)
+		return
+	}
+	http.Redirect(w, r, fmt.Sprintf("/usr/notifications/open/%d", n.ID), http.StatusSeeOther)
 }

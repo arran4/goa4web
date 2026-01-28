@@ -31,8 +31,8 @@ func (RemakeWritingTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return handlers.TemplateWithDataHandler(handlers.TemplateRunTaskPage, data)
 }
 
-func (RemakeWritingTask) TemplatesRequired() []tasks.Page {
-	return []tasks.Page{handlers.TemplateRunTaskPage}
+func (RemakeWritingTask) RequiredTemplates() []tasks.Template {
+	return []tasks.Template{tasks.Template(handlers.TemplateRunTaskPage)}
 }
 
 func (RemakeWritingTask) BackgroundTask(ctx context.Context, q db.Querier) (tasks.Task, error) {

@@ -3,6 +3,7 @@ package forum
 import (
 	"database/sql"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"sort"
@@ -183,7 +184,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	ForumThreadPageTmpl.Handle(w, r, data)
 }
 
-const ForumThreadPageTmpl handlers.Page = "forum/threadPage.gohtml"
+const ForumThreadPageTmpl tasks.Template = "forum/threadPage.gohtml"
 
 // ThreadPage serves the forum thread page at the default /forum prefix.
 func ThreadPage(w http.ResponseWriter, r *http.Request) {

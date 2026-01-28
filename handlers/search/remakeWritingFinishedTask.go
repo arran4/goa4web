@@ -17,23 +17,28 @@ var remakeWritingFinishedTask = &RemakeWritingFinishedTask{TaskString: TaskRemak
 var _ tasks.Task = (*RemakeWritingFinishedTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*RemakeWritingFinishedTask)(nil)
 var _ notif.SelfNotificationTemplateProvider = (*RemakeWritingFinishedTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*RemakeWritingFinishedTask)(nil)
 
 func (RemakeWritingFinishedTask) Action(http.ResponseWriter, *http.Request) any { return nil }
 
 func (RemakeWritingFinishedTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("searchRebuildWritingEmail"), true
+	return EmailTemplateSearchRebuildWriting.EmailTemplates(), true
 }
 
 func (RemakeWritingFinishedTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	s := notif.NotificationTemplateFilenameGenerator("search_rebuild_writing")
+	s := NotificationTemplateSearchRebuildWriting.NotificationTemplate()
 	return &s
 }
 
 func (RemakeWritingFinishedTask) SelfEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("searchRebuildWritingEmail"), true
+	return EmailTemplateSearchRebuildWriting.EmailTemplates(), true
 }
 
 func (RemakeWritingFinishedTask) SelfInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	s := notif.NotificationTemplateFilenameGenerator("search_rebuild_writing")
+	s := NotificationTemplateSearchRebuildWriting.NotificationTemplate()
 	return &s
+}
+
+func (RemakeWritingFinishedTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateSearchRebuildWriting.RequiredTemplates()
 }

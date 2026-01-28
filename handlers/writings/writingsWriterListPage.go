@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -75,4 +76,4 @@ func WriterListPage(w http.ResponseWriter, r *http.Request) {
 	WritingsWriterListPageTmpl.Handle(w, r, data)
 }
 
-const WritingsWriterListPageTmpl handlers.Page = "writings/writerListPage.gohtml"
+const WritingsWriterListPageTmpl tasks.Template = "writings/writerListPage.gohtml"

@@ -2,6 +2,7 @@ package admin
 
 import (
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"strconv"
 
@@ -11,7 +12,7 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
-const AdminPasswordResetListPageTmpl handlers.Page = "admin/passwordResetList.gohtml"
+const AdminPasswordResetListPageTmpl tasks.Template = "admin/passwordResetList.gohtml"
 
 type AdminPasswordResetListPageData struct {
 	Rows       []*db.AdminListPasswordResetsRow

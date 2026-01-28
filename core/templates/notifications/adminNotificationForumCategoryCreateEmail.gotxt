@@ -1,1 +1,1 @@
-User {{.Item.Username}} created a new forum category.
+Forum category "{{.Item.Name}}" created by {{.Item.Username}}

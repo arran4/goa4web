@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"strconv"
@@ -97,4 +98,4 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 	BlogsBlogPageTmpl.Handle(w, r, data)
 }
 
-const BlogsBlogPageTmpl handlers.Page = "blogs/blogPage.gohtml"
+const BlogsBlogPageTmpl tasks.Template = "blogs/blogPage.gohtml"

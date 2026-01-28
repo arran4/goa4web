@@ -28,6 +28,7 @@ var _ tasks.Task = (*ReplyTask)(nil)
 var _ notif.GrantsRequiredProvider = (*ReplyTask)(nil)
 var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
 var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*ReplyTask)(nil)
 var _ searchworker.IndexedTask = ReplyTask{}
 
 func (ReplyTask) IndexType() string { return searchworker.TypeComment }
@@ -40,15 +41,19 @@ func (ReplyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
 }
 
 func (ReplyTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("replyEmail"), evt.Outcome == eventbus.TaskOutcomeSuccess
+	return EmailTemplateWritingReply.EmailTemplates(), evt.Outcome == eventbus.TaskOutcomeSuccess
 }
 
 func (ReplyTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
 	if evt.Outcome != eventbus.TaskOutcomeSuccess {
 		return nil
 	}
-	s := notif.NotificationTemplateFilenameGenerator("reply")
+	s := NotificationTemplateWritingReply.NotificationTemplate()
 	return &s
+}
+
+func (ReplyTask) RequiredTemplates() []tasks.Template {
+	return append(EmailTemplateWritingReply.RequiredTemplates(), NotificationTemplateWritingReply.RequiredTemplates()...)
 }
 
 func (ReplyTask) GrantsRequired(evt eventbus.TaskEvent) ([]notif.GrantRequirement, error) {

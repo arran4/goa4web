@@ -3,6 +3,7 @@ package blogs
 import (
 	"database/sql"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"strconv"
 
@@ -37,4 +38,4 @@ func AdminBlogCommentsPage(w http.ResponseWriter, r *http.Request) {
 	BlogsAdminBlogCommentsPageTmpl.Handle(w, r, struct{}{})
 }
 
-const BlogsAdminBlogCommentsPageTmpl handlers.Page = "blogs/blogsAdminBlogCommentsPage.gohtml"
+const BlogsAdminBlogCommentsPageTmpl tasks.Template = "blogs/blogsAdminBlogCommentsPage.gohtml"

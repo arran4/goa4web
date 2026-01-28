@@ -19,6 +19,7 @@ var (
 	_ tasks.Task                       = (*EmailAssociationRequestTask)(nil)
 	_ tasks.AuditableTask              = (*EmailAssociationRequestTask)(nil)
 	_ notif.AdminEmailTemplateProvider = (*EmailAssociationRequestTask)(nil)
+	_ tasks.EmailTemplatesRequired     = (*EmailAssociationRequestTask)(nil)
 )
 
 var emailAssociationRequestTask = &EmailAssociationRequestTask{TaskString: TaskEmailAssociationRequest}
@@ -54,7 +55,7 @@ func (EmailAssociationRequestTask) Action(w http.ResponseWriter, r *http.Request
 	})
 }
 
-const ForgotPasswordRequestSentPageTmpl handlers.Page = "forgotPasswordRequestSentPage.gohtml"
+const ForgotPasswordRequestSentPageTmpl tasks.Template = "forgotPasswordRequestSentPage.gohtml"
 
 func (EmailAssociationRequestTask) AuditRecord(data map[string]any) string {
 	u, _ := data["Username"].(string)

@@ -24,6 +24,7 @@ var _ tasks.AuditableTask = (*DeleteAnnouncementTask)(nil)
 
 // deleteAnnouncementTask also notifies admins of changes for transparency.
 var _ notif.AdminEmailTemplateProvider = (*DeleteAnnouncementTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*DeleteAnnouncementTask)(nil)
 
 func (DeleteAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -55,12 +56,16 @@ func (DeleteAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) any
 }
 
 func (DeleteAnnouncementTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("announcementEmail"), true
+	return EmailTemplateAnnouncement.EmailTemplates(), true
 }
 
 func (DeleteAnnouncementTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := notif.NotificationTemplateFilenameGenerator("announcement")
+	v := NotificationTemplateAnnouncement.NotificationTemplate()
 	return &v
+}
+
+func (DeleteAnnouncementTask) RequiredTemplates() []tasks.Template {
+	return append(EmailTemplateAnnouncement.RequiredTemplates(), NotificationTemplateAnnouncement.RequiredTemplates()...)
 }
 
 // AuditRecord summarises an announcement deletion.

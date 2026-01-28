@@ -20,6 +20,7 @@ var deleteLanguageTask = &DeleteLanguageTask{TaskString: tasks.TaskString("Delet
 
 var _ tasks.Task = (*DeleteLanguageTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*DeleteLanguageTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*DeleteLanguageTask)(nil)
 
 func (DeleteLanguageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -46,10 +47,14 @@ func (DeleteLanguageTask) Action(w http.ResponseWriter, r *http.Request) any {
 }
 
 func (DeleteLanguageTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("adminNotificationLanguageDeleteEmail"), true
+	return EmailTemplateAdminNotificationLanguageDelete.EmailTemplates(), true
 }
 
 func (DeleteLanguageTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	v := notif.NotificationTemplateFilenameGenerator("adminNotificationLanguageDeleteEmail")
+	v := EmailTemplateAdminNotificationLanguageDelete.NotificationTemplate()
 	return &v
+}
+
+func (DeleteLanguageTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateAdminNotificationLanguageDelete.RequiredTemplates()
 }

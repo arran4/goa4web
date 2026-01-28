@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"sort"
@@ -48,7 +49,7 @@ func AdminNewsPage(w http.ResponseWriter, r *http.Request) {
 	AdminNewsListPageTmpl.Handle(w, r, data)
 }
 
-const AdminNewsListPageTmpl handlers.Page = "news/adminNewsListPage.gohtml"
+const AdminNewsListPageTmpl tasks.Template = "news/adminNewsListPage.gohtml"
 
 func AdminNewsPostPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
@@ -124,7 +125,7 @@ func AdminNewsPostPage(w http.ResponseWriter, r *http.Request) {
 	AdminNewsPostPageTmpl.Handle(w, r, data)
 }
 
-const AdminNewsPostPageTmpl handlers.Page = "news/adminNewsPostPage.gohtml"
+const AdminNewsPostPageTmpl tasks.Template = "news/adminNewsPostPage.gohtml"
 
 func adminNewsEditFormPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -164,7 +165,7 @@ func adminNewsEditFormPage(w http.ResponseWriter, r *http.Request) {
 	AdminNewsEditPageTmpl.Handle(w, r, data)
 }
 
-const AdminNewsEditPageTmpl handlers.Page = "news/adminNewsEditPage.gohtml"
+const AdminNewsEditPageTmpl tasks.Template = "news/adminNewsEditPage.gohtml"
 
 func AdminNewsDeleteConfirmPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -186,4 +187,4 @@ func AdminNewsDeleteConfirmPage(w http.ResponseWriter, r *http.Request) {
 	AdminNewsDeleteConfirmPageTmpl.Handle(w, r, data)
 }
 
-const AdminNewsDeleteConfirmPageTmpl handlers.Page = "news/adminNewsDeleteConfirmPage.gohtml"
+const AdminNewsDeleteConfirmPageTmpl tasks.Template = "news/adminNewsDeleteConfirmPage.gohtml"

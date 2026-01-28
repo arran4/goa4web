@@ -22,7 +22,7 @@ func TestForgotPassword_VerifiedEmail(t *testing.T) {
 
 	// Mock User Credentials
 	qs.SystemGetLoginRow = &db.SystemGetLoginRow{
-		Idusers: 101,
+		Idusers:  101,
 		Username: sql.NullString{String: "user_verified", Valid: true},
 	}
 
@@ -82,7 +82,7 @@ func TestForgotPassword_NoVerifiedEmail(t *testing.T) {
 
 	// Mock User Credentials
 	qs.SystemGetLoginRow = &db.SystemGetLoginRow{
-		Idusers: 102,
+		Idusers:  102,
 		Username: sql.NullString{String: "user_no_email", Valid: true},
 	}
 

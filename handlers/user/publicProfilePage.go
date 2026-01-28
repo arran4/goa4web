@@ -3,13 +3,13 @@ package user
 import (
 	"database/sql"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -50,4 +50,4 @@ func userPublicProfilePage(w http.ResponseWriter, r *http.Request) {
 	PublicProfilePage.Handle(w, r, data)
 }
 
-const PublicProfilePage handlers.Page = "user/publicProfile.gohtml"
+const PublicProfilePage tasks.Template = "user/publicProfile.gohtml"

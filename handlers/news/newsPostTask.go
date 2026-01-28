@@ -25,15 +25,15 @@ type newsPostTask struct {
 }
 
 const (
-	NewsPostPageTmpl handlers.Page = "news/postPage.gohtml"
+	NewsPostPageTmpl tasks.Template = "news/postPage.gohtml"
 )
 
 func NewNewsPostTask() tasks.Task {
 	return &newsPostTask{}
 }
 
-func (t *newsPostTask) TemplatesRequired() []tasks.Page {
-	return []tasks.Page{NewsPostPageTmpl}
+func (t *newsPostTask) RequiredTemplates() []tasks.Template {
+	return []tasks.Template{NewsPostPageTmpl}
 }
 
 func (t *newsPostTask) Action(w http.ResponseWriter, r *http.Request) any {

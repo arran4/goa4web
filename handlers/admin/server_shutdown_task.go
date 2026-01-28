@@ -82,6 +82,6 @@ func (t *ServerShutdownTask) Action(w http.ResponseWriter, r *http.Request) any 
 	return handlers.TemplateWithDataHandler(handlers.TemplateRunTaskPage, data)
 }
 
-func (t *ServerShutdownTask) TemplatesRequired() []tasks.Page {
-	return []tasks.Page{handlers.TemplateRunTaskPage}
+func (t *ServerShutdownTask) RequiredTemplates() []tasks.Template {
+	return []tasks.Template{tasks.Template(handlers.TemplateRunTaskPage)}
 }

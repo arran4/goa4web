@@ -1,20 +1,19 @@
 package user
 
 import (
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
-
-	"github.com/arran4/goa4web/handlers"
 )
 
 func adminSessionsPage(w http.ResponseWriter, r *http.Request) {
 	AdminSessionsPage.Handle(w, r, struct{}{})
 }
 
-const AdminSessionsPage handlers.Page = "admin/sessionsPage.gohtml"
+const AdminSessionsPage tasks.Template = "admin/sessionsPage.gohtml"
 
 func adminSessionsDeletePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)

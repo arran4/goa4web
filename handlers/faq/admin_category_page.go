@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"strconv"
 
@@ -59,7 +60,7 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 	FaqAdminCategoryPageTmpl.Handle(w, r, data)
 }
 
-const FaqAdminCategoryPageTmpl handlers.Page = "faq/faqAdminCategoryPage.gohtml"
+const FaqAdminCategoryPageTmpl tasks.Template = "faq/faqAdminCategoryPage.gohtml"
 
 // AdminCategoryEditPage shows a form to rename or delete a FAQ category.
 func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
@@ -93,7 +94,7 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 	FaqAdminCategoryEditPageTmpl.Handle(w, r, data)
 }
 
-const FaqAdminCategoryEditPageTmpl handlers.Page = "faq/faqAdminCategoryEditPage.gohtml"
+const FaqAdminCategoryEditPageTmpl tasks.Template = "faq/faqAdminCategoryEditPage.gohtml"
 
 // AdminCategoryQuestionsPage lists questions for a FAQ category.
 func AdminCategoryQuestionsPage(w http.ResponseWriter, r *http.Request) {
@@ -134,7 +135,7 @@ func AdminCategoryQuestionsPage(w http.ResponseWriter, r *http.Request) {
 	FaqAdminCategoryQuestionsPageTmpl.Handle(w, r, data)
 }
 
-const FaqAdminCategoryQuestionsPageTmpl handlers.Page = "faq/faqAdminCategoryQuestionsPage.gohtml"
+const FaqAdminCategoryQuestionsPageTmpl tasks.Template = "faq/faqAdminCategoryQuestionsPage.gohtml"
 
 // AdminNewCategoryPage displays a form to create a new FAQ category.
 func AdminNewCategoryPage(w http.ResponseWriter, r *http.Request) {
@@ -143,4 +144,4 @@ func AdminNewCategoryPage(w http.ResponseWriter, r *http.Request) {
 	FaqAdminNewCategoryPageTmpl.Handle(w, r, struct{}{})
 }
 
-const FaqAdminNewCategoryPageTmpl handlers.Page = "faq/faqAdminNewCategoryPage.gohtml"
+const FaqAdminNewCategoryPageTmpl tasks.Template = "faq/faqAdminNewCategoryPage.gohtml"

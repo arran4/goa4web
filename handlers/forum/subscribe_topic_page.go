@@ -2,6 +2,7 @@ package forum
 
 import (
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"net/url"
 
@@ -9,7 +10,6 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers"
 )
 
 // SubscribeTopicPage renders a simple confirmation form that POSTS to the
@@ -36,4 +36,4 @@ func SubscribeTopicPage(w http.ResponseWriter, r *http.Request) {
 	RedirectBackPageTmpl.Handle(w, r, data)
 }
 
-const RedirectBackPageTmpl handlers.Page = "redirectBackPage.gohtml"
+const RedirectBackPageTmpl tasks.Template = "redirectBackPage.gohtml"

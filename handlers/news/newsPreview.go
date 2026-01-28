@@ -2,12 +2,12 @@ package news
 
 import (
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"io"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers"
 )
 
 func PreviewPage(w http.ResponseWriter, r *http.Request) {
@@ -52,4 +52,4 @@ func PreviewPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-const NewsPreviewPageTmpl handlers.Page = "news/preview.gohtml"
+const NewsPreviewPageTmpl tasks.Template = "news/preview.gohtml"

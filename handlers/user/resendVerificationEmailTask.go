@@ -16,13 +16,18 @@ var resendVerificationEmailTask = &ResendVerificationEmailTask{TaskString: TaskR
 
 var _ tasks.Task = (*ResendVerificationEmailTask)(nil)
 var _ notif.DirectEmailNotificationTemplateProvider = (*ResendVerificationEmailTask)(nil)
+var _ tasks.EmailTemplatesRequired = (*ResendVerificationEmailTask)(nil)
 
 func (ResendVerificationEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return addEmailTask.Resend(w, r)
 }
 
 func (ResendVerificationEmailTask) DirectEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return notif.NewEmailTemplates("verifyEmail"), true
+	return EmailTemplateVerify.EmailTemplates(), true
+}
+
+func (ResendVerificationEmailTask) RequiredTemplates() []tasks.Template {
+	return EmailTemplateVerify.RequiredTemplates()
 }
 
 func (ResendVerificationEmailTask) DirectEmailAddress(evt eventbus.TaskEvent) (string, error) {

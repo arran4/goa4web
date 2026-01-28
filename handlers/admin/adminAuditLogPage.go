@@ -3,6 +3,7 @@ package admin
 import (
 	"database/sql"
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"net/url"
@@ -92,4 +93,4 @@ func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 	AdminAuditLogPageTmpl.Handle(w, r, data)
 }
 
-const AdminAuditLogPageTmpl handlers.Page = "admin/auditLogPage.gohtml"
+const AdminAuditLogPageTmpl tasks.Template = "admin/auditLogPage.gohtml"

@@ -8,7 +8,6 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/handlers/share"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -17,15 +16,15 @@ type newsTask struct {
 }
 
 const (
-	NewsPageTmpl handlers.Page = "news/page.gohtml"
+	NewsPageTmpl tasks.Template = "news/page.gohtml"
 )
 
 func NewNewsTask() tasks.Task {
 	return &newsTask{}
 }
 
-func (t *newsTask) TemplatesRequired() []tasks.Page {
-	return []tasks.Page{NewsPageTmpl}
+func (t *newsTask) RequiredTemplates() []tasks.Template {
+	return []tasks.Template{NewsPageTmpl}
 }
 
 func (t *newsTask) Action(w http.ResponseWriter, r *http.Request) any {

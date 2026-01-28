@@ -2,6 +2,7 @@ package forum
 
 import (
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"strconv"
 
@@ -44,4 +45,4 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 	ForumAdminCategoryPageTmpl.Handle(w, r, data)
 }
 
-const ForumAdminCategoryPageTmpl handlers.Page = "forum/forumAdminCategoryPage.gohtml"
+const ForumAdminCategoryPageTmpl tasks.Template = "forum/forumAdminCategoryPage.gohtml"

@@ -2,6 +2,7 @@ package admin
 
 import (
 	"fmt"
+	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
@@ -41,4 +42,4 @@ func adminUserWritingsPage(w http.ResponseWriter, r *http.Request) {
 	AdminUserWritingsPageTmpl.Handle(w, r, data)
 }
 
-const AdminUserWritingsPageTmpl handlers.Page = "admin/userWritingsPage.gohtml"
+const AdminUserWritingsPageTmpl tasks.Template = "admin/userWritingsPage.gohtml"

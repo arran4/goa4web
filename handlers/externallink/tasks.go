@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -115,7 +116,14 @@ func (ReloadExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) any
 		}
 	}
 
-	return handlers.TextByteWriter([]byte("Reloaded"))
+	linkParam := "id"
+	linkValue := id
+	if u != "" {
+		linkParam = "u"
+		linkValue = url.QueryEscape(u)
+	}
+
+	return handlers.RedirectHandler(fmt.Sprintf("/goto?%s=%s&sig=%s", linkParam, linkValue, sig))
 }
 
 func (t *ReloadExternalLinkTask) Matcher() func(*http.Request, *mux.RouteMatch) bool {

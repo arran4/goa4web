@@ -344,8 +344,12 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 	}
 
 	if len(msg) != 0 {
+		link := evt.Path
+		if url, ok := evt.Data["URL"].(string); ok && url != "" {
+			link = url
+		}
 		for id := range internalSubs {
-			if err := n.sendInternalNotification(ctx, id, evt.Path, string(msg)); err != nil {
+			if err := n.sendInternalNotification(ctx, id, link, string(msg)); err != nil {
 				return fmt.Errorf("deliver internal to %d: %w", id, err)
 			}
 		}

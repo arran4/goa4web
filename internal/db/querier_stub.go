@@ -372,6 +372,7 @@ type QuerierStub struct {
 	GetCommentsByThreadIdForUserCalls   []GetCommentsByThreadIdForUserParams
 	GetCommentsByThreadIdForUserReturns []*GetCommentsByThreadIdForUserRow
 	GetCommentsByThreadIdForUserErr     error
+	GetCommentsByThreadIdForUserFn      func(context.Context, GetCommentsByThreadIdForUserParams) ([]*GetCommentsByThreadIdForUserRow, error)
 
 	DeleteThreadsByTopicIDCalls []int32
 	DeleteThreadsByTopicIDErr   error
@@ -1237,6 +1238,9 @@ func (s *QuerierStub) GetCommentsByThreadIdForUser(ctx context.Context, arg GetC
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.GetCommentsByThreadIdForUserCalls = append(s.GetCommentsByThreadIdForUserCalls, arg)
+	if s.GetCommentsByThreadIdForUserFn != nil {
+		return s.GetCommentsByThreadIdForUserFn(ctx, arg)
+	}
 	return s.GetCommentsByThreadIdForUserReturns, s.GetCommentsByThreadIdForUserErr
 }
 

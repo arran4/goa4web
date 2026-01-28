@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"path"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -32,17 +33,36 @@ func verifyMiddleware(prefix string) mux.MiddlewareFunc {
 			}
 			query := r.URL.Query()
 			sig := query.Get("sig")
-			query.Del("ts")
-			query.Del("sig")
-			data := id
-			if encoded := query.Encode(); encoded != "" {
-				data = data + "?" + encoded
-			}
-			if prefix != "" {
-				data = prefix + data
-			}
+			tsStr := query.Get("ts")
+			nonce := query.Get("nonce")
+
 			cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-			if cd.ImageSignKey == "" || sign.Verify(data, sig, cd.ImageSignKey, sign.WithOutNonce()) != nil {
+
+			var err error
+			if tsStr != "" || nonce != "" {
+				var opts []sign.SignOption
+				if tsStr != "" {
+					ts, _ := strconv.ParseInt(tsStr, 10, 64)
+					opts = append(opts, sign.WithExpiry(time.Unix(ts, 0)))
+				}
+				if nonce != "" {
+					opts = append(opts, sign.WithNonce(nonce))
+				}
+				err = sign.Verify(r.URL.Path, sig, cd.ImageSignKey, opts...)
+			} else {
+				query.Del("ts")
+				query.Del("sig")
+				data := id
+				if encoded := query.Encode(); encoded != "" {
+					data = data + "?" + encoded
+				}
+				if prefix != "" {
+					data = prefix + data
+				}
+				err = sign.Verify(data, sig, cd.ImageSignKey, sign.WithOutNonce())
+			}
+
+			if cd.ImageSignKey == "" || err != nil {
 				w.WriteHeader(http.StatusForbidden)
 				handlers.RenderErrorPage(w, r, fmt.Errorf("forbidden"))
 				return

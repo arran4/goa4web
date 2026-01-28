@@ -152,6 +152,11 @@ type QuerierStub struct {
 	SystemListVerifiedEmailsByUserIDCalls  []int32
 	SystemListVerifiedEmailsByUserIDFn     func(context.Context, int32) ([]*UserEmail, error)
 
+	SystemListWritingCategoriesCalls   []SystemListWritingCategoriesParams
+	SystemListWritingCategoriesReturns []*WritingCategory
+	SystemListWritingCategoriesErr     error
+	SystemListWritingCategoriesFn      func(context.Context, SystemListWritingCategoriesParams) ([]*WritingCategory, error)
+
 	GetLoginRoleForUserReturns int32
 	GetLoginRoleForUserErr     error
 	GetLoginRoleForUserCalls   []int32
@@ -380,6 +385,11 @@ type QuerierStub struct {
 	ListGrantsReturns []*Grant
 	ListGrantsErr     error
 	ListGrantsFn      func(context.Context) ([]*Grant, error)
+
+	ListWritingCategoriesForListerCalls   []ListWritingCategoriesForListerParams
+	ListWritingCategoriesForListerReturns []*WritingCategory
+	ListWritingCategoriesForListerErr     error
+	ListWritingCategoriesForListerFn      func(ListWritingCategoriesForListerParams) ([]*WritingCategory, error)
 
 	ListWritersForListerCalls   []ListWritersForListerParams
 	ListWritersForListerReturns []*ListWritersForListerRow
@@ -897,6 +907,19 @@ func (s *QuerierStub) ListGrants(ctx context.Context) ([]*Grant, error) {
 	return ret, err
 }
 
+func (s *QuerierStub) ListWritingCategoriesForLister(ctx context.Context, arg ListWritingCategoriesForListerParams) ([]*WritingCategory, error) {
+	s.mu.Lock()
+	s.ListWritingCategoriesForListerCalls = append(s.ListWritingCategoriesForListerCalls, arg)
+	fn := s.ListWritingCategoriesForListerFn
+	ret := s.ListWritingCategoriesForListerReturns
+	err := s.ListWritingCategoriesForListerErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(arg)
+	}
+	return ret, err
+}
+
 func (s *QuerierStub) ListWritersForLister(ctx context.Context, arg ListWritersForListerParams) ([]*ListWritersForListerRow, error) {
 	s.mu.Lock()
 	s.ListWritersForListerCalls = append(s.ListWritersForListerCalls, arg)
@@ -1224,6 +1247,23 @@ func (s *QuerierStub) SystemGetUserByEmail(ctx context.Context, email string) (*
 		return nil, errors.New("SystemGetUserByEmail not stubbed")
 	}
 	return row, nil
+}
+
+func (s *QuerierStub) SystemListWritingCategories(ctx context.Context, arg SystemListWritingCategoriesParams) ([]*WritingCategory, error) {
+	s.mu.Lock()
+	s.SystemListWritingCategoriesCalls = append(s.SystemListWritingCategoriesCalls, arg)
+	fn := s.SystemListWritingCategoriesFn
+	ret := s.SystemListWritingCategoriesReturns
+	err := s.SystemListWritingCategoriesErr
+	if fn == nil && ret == nil && err == nil {
+		ret = s.ListWritingCategoriesForListerReturns
+		err = s.ListWritingCategoriesForListerErr
+	}
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
 }
 
 // SystemGetLastNotificationForRecipientByMessage records the call and returns the configured response.

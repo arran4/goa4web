@@ -17,6 +17,31 @@ func (s *QuerierStub) AdminInsertBannedIp(ctx context.Context, arg AdminInsertBa
 	return err
 }
 
+func (s *QuerierStub) AdminGetImagePost(ctx context.Context, idimagepost int32) (*AdminGetImagePostRow, error) {
+	s.mu.Lock()
+	s.AdminGetImagePostCalls = append(s.AdminGetImagePostCalls, idimagepost)
+	fn := s.AdminGetImagePostFn
+	row := s.AdminGetImagePostRow
+	err := s.AdminGetImagePostErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, idimagepost)
+	}
+	return row, err
+}
+
+func (s *QuerierStub) AdminApproveImagePost(ctx context.Context, idimagepost int32) error {
+	s.mu.Lock()
+	s.AdminApproveImagePostCalls = append(s.AdminApproveImagePostCalls, idimagepost)
+	fn := s.AdminApproveImagePostFn
+	err := s.AdminApproveImagePostErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, idimagepost)
+	}
+	return err
+}
+
 func (s *QuerierStub) InsertPassword(ctx context.Context, arg InsertPasswordParams) error {
 	s.mu.Lock()
 	s.InsertPasswordCalls = append(s.InsertPasswordCalls, arg)

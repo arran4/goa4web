@@ -107,7 +107,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		log.Printf("thread comments: %v", err)
 	}
 	if len(commentRows) > 0 {
-		cd.OpenGraph.Description = a4code.Snip(commentRows[0].Text.String, 128)
+		cd.OpenGraph.Description = a4code.SnipText(commentRows[0].Text.String, 128)
 	}
 
 	// threadRow and topicRow are provided by the RequireThreadAndTopic

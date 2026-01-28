@@ -11,8 +11,7 @@ import (
 
 func TestRedirectBackPageHandlerGETAlt(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "http://example.com/", nil)
-	req, cd, _, cleanup := handlertest.RequestWithCoreData(t, req)
-	defer cleanup()
+	req, cd, _ := handlertest.RequestWithCoreData(t, req)
 	rr := httptest.NewRecorder()
 
 	h := redirectBackPageHandler{BackURL: "/foo", Method: http.MethodGet}

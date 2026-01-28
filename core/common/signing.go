@@ -41,12 +41,13 @@ func (cd *CoreData) SignImageURL(imageRef string, ttl time.Duration) string {
 	// Strip image: or img: prefix if present
 	imageRef = strings.TrimPrefix(strings.TrimPrefix(imageRef, "image:"), "img:")
 
-	path := "/images/image/" + imageRef
+	data := "image:" + imageRef
 	expiry := time.Now().Add(ttl)
 
-	sig := sign.Sign(path, cd.ImageSignKey, sign.WithExpiry(expiry))
+	sig := sign.Sign(data, cd.ImageSignKey, sign.WithExpiry(expiry))
 
 	// Add signature as query param
+	path := "/images/image/" + imageRef
 	fullURL := strings.TrimSuffix(cd.Config.HTTPHostname, "/") + "/" + strings.TrimPrefix(path, "/")
 	signedURL, _ := sign.AddQuerySig(fullURL, sig, sign.WithExpiry(expiry))
 	return signedURL
@@ -54,11 +55,12 @@ func (cd *CoreData) SignImageURL(imageRef string, ttl time.Duration) string {
 
 // SignCacheURL signs a cache URL with the given TTL.
 func (cd *CoreData) SignCacheURL(cacheRef string, ttl time.Duration) string {
-	path := "/images/cache/" + cacheRef
+	data := "cache:" + cacheRef
 	expiry := time.Now().Add(ttl)
 
-	sig := sign.Sign(path, cd.ImageSignKey, sign.WithExpiry(expiry))
+	sig := sign.Sign(data, cd.ImageSignKey, sign.WithExpiry(expiry))
 
+	path := "/images/cache/" + cacheRef
 	fullURL := strings.TrimSuffix(cd.Config.HTTPHostname, "/") + "/" + strings.TrimPrefix(path, "/")
 	signedURL, _ := sign.AddQuerySig(fullURL, sig, sign.WithExpiry(expiry))
 	return signedURL

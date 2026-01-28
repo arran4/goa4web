@@ -56,7 +56,7 @@ func substring(s string, start, end int) string {
 		}
 		// Recognize common container tags; others are treated as non-visible
 		switch name {
-		case "b", "i", "u", "sup", "sub", "quote", "quoteof", "spoiler", "indent", "a":
+		case "b", "i", "u", "sup", "sub", "quote", "quoteof", "spoiler", "indent", "a", "code":
 			tg = tag{name: name, open: full, close: "[" + "/" + name + "]"}
 			isOpen = true
 			return

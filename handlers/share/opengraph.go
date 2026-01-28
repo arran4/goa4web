@@ -36,6 +36,7 @@ type OpenGraphData struct {
 	Description string
 	ImageURL    template.URL
 	ContentURL  template.URL
+	RedirectURL template.URL
 	ImageWidth  int
 	ImageHeight int
 	TwitterSite string
@@ -43,36 +44,8 @@ type OpenGraphData struct {
 
 // RenderOpenGraph renders an OpenGraph preview page with the provided metadata.
 func RenderOpenGraph(w http.ResponseWriter, r *http.Request, data OpenGraphData) error {
-	tmpl, err := template.New("og").Parse(`
-<!DOCTYPE html>
-<html>
-<head>
-	<meta property="og:title" content="{{.Title}}" />
-	<meta property="og:description" content="{{.Description}}" />
-	{{.ImageMeta}}
-	{{.SecureImageMeta}}
-	{{.ImageWidthMeta}}
-	{{.ImageHeightMeta}}
-	{{.URLMeta}}
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="{{.Title}}" />
-	<meta name="twitter:description" content="{{.Description}}" />
-	{{if .TwitterSite}}<meta name="twitter:site" content="{{.TwitterSite}}" />{{end}}
-	{{.TwitterImageMeta}}
-	<meta http-equiv="refresh" content="0;url={{.ContentURL}}" />
-</head>
-<body>
-	<h1>Redirecting...</h1>
-	<p>If you are not redirected automatically, <a href="{{.ContentURL}}">click here</a>.</p>
-</body>
-</html>
-`)
-	if err != nil {
-		return err
-	}
-
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	return tmpl.Execute(w, data)
+	return templates.GetCompiledSiteTemplates(nil).ExecuteTemplate(w, "openGraphPreview.gohtml", data)
 }
 
 func (d OpenGraphData) URLMeta() template.HTML {
@@ -103,13 +76,7 @@ func (d OpenGraphData) TwitterImageMeta() template.HTML {
 // Returns empty string if verification fails.
 func VerifyAndGetPath(r *http.Request, key string) string {
 	// Try extracting from query parameters first
-	tsQuery := r.URL.Query().Get("ts")
-	sigQuery := r.URL.Query().Get("sig")
-	nonceQuery := r.URL.Query().Get("nonce")
-
-	vars := mux.Vars(r)
-
-	if sigQuery != "" {
+	if r.URL.Query().Get("sig") != "" {
 		// Query-based auth
 		_, sig, opts, err := sign.ExtractQuerySig(r.URL.String())
 		if err != nil {
@@ -117,12 +84,12 @@ func VerifyAndGetPath(r *http.Request, key string) string {
 			return ""
 		}
 
-		// Parse to get path + remaining query
-		cleanPath := r.URL.Path
-
+		// Check mux variables for mixed auth (path-based temporal params, query-based signature)
+		vars := mux.Vars(r)
 		tsPath := vars["ts"]
 		noncePath := vars["nonce"]
 
+		cleanPath := r.URL.Path
 		if tsPath != "" {
 			if ts, err := strconv.ParseInt(tsPath, 10, 64); err == nil {
 				opts = append(opts, sign.WithExpiry(time.Unix(ts, 0)))
@@ -134,49 +101,49 @@ func VerifyAndGetPath(r *http.Request, key string) string {
 			cleanPath = strings.Replace(cleanPath, "/nonce/"+noncePath, "", 1)
 		}
 
+		// Re-encode query without signature params for verification data
 		q := r.URL.Query()
 		q.Del("sig")
 		q.Del("nonce")
 		q.Del("ts")
+		q.Del("ets")
+		q.Del("its")
+
+		data := cleanPath
 		if encoded := q.Encode(); encoded != "" {
-			cleanPath += "?" + encoded
+			data += "?" + encoded
 		}
 
-		log.Printf("Verifying query-based sig. Path: %s, Sig: %s, Opts: %v", cleanPath, sig, opts)
+		log.Printf("Verifying query-based sig. Path: %s, Sig: %s, Opts: %v", data, sig, opts)
 
-		if err := sign.Verify(cleanPath, sig, key, opts...); err != nil {
+		if err := sign.Verify(data, sig, key, opts...); err != nil {
 			log.Printf("verify failed: %v", err)
 			return ""
 		}
 
-		return cleanPath
+		return data
 	}
 
 	// Try path-based auth
-	tspath := vars["ts"]
-	sigPath := vars["sign"]
-	if sigPath == "" {
-		sigPath = vars["sig"]
-	}
-	noncePath := vars["nonce"]
-
-	if sigPath != "" || tspath != "" || noncePath != "" {
+	vars := mux.Vars(r)
+	if vars["sign"] != "" || vars["sig"] != "" || vars["ts"] != "" || vars["nonce"] != "" {
 		// Path-based auth
-		q := r.URL.Query()
-		q.Del("sig")
-		q.Del("nonce")
-		q.Del("ts")
-		additionalQuery := q.Encode()
-
 		cleanPath, sig, opts, err := sign.ExtractPathSig(r.URL.Path, vars)
 		if err != nil {
 			log.Printf("extract path sig failed: %v", err)
 			return ""
 		}
 
+		q := r.URL.Query()
+		q.Del("sig")
+		q.Del("nonce")
+		q.Del("ts")
+		q.Del("ets")
+		q.Del("its")
+
 		data := cleanPath
-		if additionalQuery != "" {
-			data += "?" + additionalQuery
+		if encoded := q.Encode(); encoded != "" {
+			data += "?" + encoded
 		}
 
 		log.Printf("Verifying path-based sig. Data: %s, Sig: %s, Opts: %v", data, sig, opts)
@@ -190,8 +157,7 @@ func VerifyAndGetPath(r *http.Request, key string) string {
 	}
 
 	// No sig found
-	log.Printf("No signature found in request. Query params: ts=%s, sig=%s, nonce=%s. Path vars: ts=%s, sig=%s, nonce=%s",
-		tsQuery, sigQuery, nonceQuery, tspath, sigPath, noncePath)
+	log.Printf("No signature found in request. Path: %s, Vars: %v", r.URL.Path, vars)
 	return ""
 }
 

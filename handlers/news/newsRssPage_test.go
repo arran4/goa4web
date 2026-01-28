@@ -2,49 +2,44 @@ package news
 
 import (
 	"context"
+	"database/sql"
 	"encoding/xml"
 	"net/http"
 	"net/http/httptest"
-	"regexp"
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestNewsRssPage(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	q := testhelpers.NewQuerierStub()
+	q.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
+		return 1, nil
 	}
-	defer conn.Close()
+	q.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingReturns = []*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow{
+		{
+			Writername:    sql.NullString{String: "Writer", Valid: true},
+			Writerid:      sql.NullInt32{Int32: 1, Valid: true},
+			Idsitenews:    1,
+			ForumthreadID: 1,
+			LanguageID:    sql.NullInt32{Int32: 1, Valid: true},
+			UsersIdusers:  1,
+			News:          sql.NullString{String: "News", Valid: true},
+			Occurred:      sql.NullTime{Time: time.Now(), Valid: true},
+			Timezone:      sql.NullString{String: "UTC", Valid: true},
+			Comments:      sql.NullInt32{Int32: 0, Valid: true},
+		},
+	}
 
-	q := db.New(conn)
 	req := httptest.NewRequest("GET", "http://example.com/news/rss", nil)
 	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig(), common.WithSiteTitle("Site"))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
-
-	// Mock LatestNews query
-	// GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending
-	mock.ExpectQuery(regexp.QuoteMeta("-- name: GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending :many")).
-		WillReturnRows(sqlmock.NewRows([]string{
-			"writerName", "writerId", "idsiteNews", "forumthread_id", "language_id",
-			"users_idusers", "news", "occurred", "timezone", "Comments",
-		}).
-			AddRow("Writer", 1, 1, 1, 1, 1, "News", time.Now(), "UTC", 0))
-
-	// Mock HasGrant
-	// Permissions() -> returns empty
-	// HasAdminRole -> false
-	// SystemCheckGrant
-	mock.ExpectQuery(regexp.QuoteMeta("-- name: SystemCheckGrant :one")).
-		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
 	w := httptest.NewRecorder()
 	NewsRssPage(w, req)

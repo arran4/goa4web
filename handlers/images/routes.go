@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
+	"net/url"
 	"path"
 	"path/filepath"
 	"time"
@@ -30,19 +31,27 @@ func verifyMiddleware(prefix string) mux.MiddlewareFunc {
 				handlers.RenderErrorPage(w, r, fmt.Errorf("invalid id"))
 				return
 			}
-			query := r.URL.Query()
-			sig := query.Get("sig")
-			query.Del("ts")
-			query.Del("sig")
-			data := id
-			if encoded := query.Encode(); encoded != "" {
-				data = data + "?" + encoded
+
+			cleanURL, sig, opts, err := sign.ExtractQuerySig(r.URL.String())
+			if err != nil || sig == "" {
+				w.WriteHeader(http.StatusForbidden)
+				handlers.RenderErrorPage(w, r, fmt.Errorf("missing or invalid signature"))
+				return
 			}
-			if prefix != "" {
-				data = prefix + data
+
+			u, err := url.Parse(cleanURL)
+			if err != nil {
+				w.WriteHeader(http.StatusForbidden)
+				handlers.RenderErrorPage(w, r, fmt.Errorf("invalid url"))
+				return
+			}
+
+			data := prefix + id
+			if q := u.Query().Encode(); q != "" {
+				data += "?" + q
 			}
 			cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-			if cd.ImageSignKey == "" || sign.Verify(data, sig, cd.ImageSignKey, sign.WithOutNonce()) != nil {
+			if cd.ImageSignKey == "" || sign.Verify(data, sig, cd.ImageSignKey, opts...) != nil {
 				w.WriteHeader(http.StatusForbidden)
 				handlers.RenderErrorPage(w, r, fmt.Errorf("forbidden"))
 				return

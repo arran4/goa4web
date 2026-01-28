@@ -10,3 +10,10 @@ func Snip(s string, l int) string {
 	}
 	return s
 }
+
+func SnipText(s string, l int) string {
+	if root, err := ParseString(s); err == nil {
+		s = ToText(root)
+	}
+	return Snip(s, l)
+}

@@ -1,0 +1,5 @@
+{
+  "URL": "https://example.com/some/link",
+  "RedirectURL": "/goto?u=https%3A%2F%2Fexample.com%2Fsome%2Flink&sig=signature&go=1",
+  "ReloadURL": "/goto?u=https%3A%2F%2Fexample.com%2Fsome%2Flink&sig=signature&reload=1"
+}

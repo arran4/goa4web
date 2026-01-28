@@ -10,6 +10,41 @@
         </footer>
     {{ end }}
     {{ if cd.Marked "bodyEnd" }}
+        <div id="keyboard-shortcuts-overlay" class="shortcuts-overlay hidden">
+            <div class="shortcuts-modal">
+                <div class="shortcuts-header">
+                    <h2>Keyboard Shortcuts</h2>
+                    <button id="close-shortcuts" class="close-button">&times;</button>
+                </div>
+                <div class="shortcuts-tabs">
+                    <button class="tab-btn active" data-tab="global">Global</button>
+                    <button class="tab-btn" data-tab="forum">Forum</button>
+                    <button class="tab-btn" data-tab="editor">Editor</button>
+                </div>
+                <div class="shortcuts-content">
+                    <div id="section-global" class="shortcut-section">
+                        <h3>Global</h3>
+                        <ul>
+                            <li><kbd>Ctrl</kbd> + <kbd>?</kbd> : Show this help</li>
+                            <li><kbd>Alt</kbd> + <kbd>Home</kbd> : Go to Home</li>
+                        </ul>
+                    </div>
+                    <div id="section-forum" class="shortcut-section hidden">
+                        <h3>Forum</h3>
+                        <ul>
+                             <li><kbd>j</kbd> / <kbd>k</kbd> : Next/Prev Comment</li>
+                             <li><kbd>q</kbd> : Quote Selected Text</li>
+                        </ul>
+                    </div>
+                    <div id="section-editor" class="shortcut-section hidden">
+                        <h3>Editor</h3>
+                        <ul>
+                            <li><kbd>Ctrl</kbd> + <kbd>Enter</kbd> : Submit Post</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
         </body>
     {{ end }}
 {{ if cd.Marked "html-end" }}

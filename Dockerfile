@@ -1,5 +1,6 @@
 # Build the goa4web binary and package it into a minimal image.
 FROM golang:1.22-alpine AS build
+RUN apk add --no-cache ca-certificates
 WORKDIR /src
 COPY . .
 RUN go build -tags=ses -o /goa4web ./cmd/goa4web
@@ -9,7 +10,8 @@ RUN addgroup -S goa4web && adduser -S -G goa4web -u 65532 goa4web \
   && mkdir -p /data/imagebbs \
   && chown -R goa4web:goa4web /data
 
-FROM scratch
+FROM alpine:3.20
+RUN apk add --no-cache ca-certificates
 # Install the application into the final image.
 ENV PATH=/usr/local/bin
 ENV AUTO_MIGRATE=false

@@ -9,10 +9,10 @@ func TestInvalidTags(t *testing.T) {
 		input    string
 		expected string
 	}{
-		{"[invalid]", "[invalid]"},
-		{"[invalid text]", "[invalid text]"},
-		{"[invalid [b bold]]", "[invalid <strong> bold</strong>]"},
-		{"[foo=bar]", "[foo=bar]"},
+		{"[invalid]", `<span data-start-pos="0" data-end-pos="0">[invalid]</span>`},
+		{"[invalid text]", `<span data-start-pos="0" data-end-pos="5">[invalid<span data-start-pos="0" data-end-pos="5"> text</span>]</span>`},
+		{"[invalid [b bold]]", `<span data-start-pos="0" data-end-pos="6">[invalid<span data-start-pos="0" data-end-pos="1"> </span><strong data-start-pos="1" data-end-pos="6"><span data-start-pos="1" data-end-pos="6"> bold</span></strong>]</span>`},
+		{"[foo=bar]", `<span data-start-pos="0" data-end-pos="4">[foo<span data-start-pos="0" data-end-pos="4">=bar</span>]</span>`},
 	}
 
 	for _, tc := range tests {

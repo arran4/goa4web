@@ -6,6 +6,7 @@ import (
 	"errors"
 	"sort"
 	"sync"
+	"time"
 )
 
 // FakeSQLResult implements sql.Result for tests.
@@ -38,12 +39,15 @@ type QuerierStub struct {
 	AddContentPrivateLabelErr           error
 	AddContentPrivateLabelCalls         []AddContentPrivateLabelParams
 	AddContentPrivateLabelFn            func(context.Context, AddContentPrivateLabelParams) error
+	AddContentPrivateLabelIgnoreLabels  map[string]bool
 	AddContentPublicLabelErr            error
 	AddContentPublicLabelCalls          []AddContentPublicLabelParams
 	ListContentLabelStatusErr           error
 	ListContentLabelStatusCalls         []ListContentLabelStatusParams
+	ListContentLabelStatusReturns       []*ListContentLabelStatusRow
 	ListContentPublicLabelsErr          error
 	ListContentPublicLabelsCalls        []ListContentPublicLabelsParams
+	ListContentPublicLabelsReturns      []*ListContentPublicLabelsRow
 	ListContentPublicLabelsFn           func(ListContentPublicLabelsParams) ([]*ListContentPublicLabelsRow, error)
 	RemoveContentLabelStatusErr         error
 	RemoveContentLabelStatusCalls       []RemoveContentLabelStatusParams
@@ -67,6 +71,11 @@ type QuerierStub struct {
 	SystemGetUserByEmailCalls []string
 	SystemGetUserByEmailFn    func(context.Context, string) (*SystemGetUserByEmailRow, error)
 
+	SystemGetUserByUsernameRow   *SystemGetUserByUsernameRow
+	SystemGetUserByUsernameErr   error
+	SystemGetUserByUsernameCalls []sql.NullString
+	SystemGetUserByUsernameFn    func(context.Context, sql.NullString) (*SystemGetUserByUsernameRow, error)
+
 	SystemGetLastNotificationForRecipientByMessageRow   *Notification
 	SystemGetLastNotificationForRecipientByMessageErr   error
 	SystemGetLastNotificationForRecipientByMessageCalls []SystemGetLastNotificationForRecipientByMessageParams
@@ -78,6 +87,20 @@ type QuerierStub struct {
 	SystemCreateThreadReturns int64
 	SystemCreateThreadErr     error
 	SystemCreateThreadFn      func(context.Context, int32) (int64, error)
+
+	SystemGetForumTopicByTitleCalls   []sql.NullString
+	SystemGetForumTopicByTitleReturns *Forumtopic
+	SystemGetForumTopicByTitleErr     error
+	SystemGetForumTopicByTitleFn      func(context.Context, sql.NullString) (*Forumtopic, error)
+
+	CreateForumTopicForPosterCalls   []CreateForumTopicForPosterParams
+	CreateForumTopicForPosterReturns int64
+	CreateForumTopicForPosterErr     error
+	CreateForumTopicForPosterFn      func(context.Context, CreateForumTopicForPosterParams) (int64, error)
+
+	SystemAssignWritingThreadIDCalls []SystemAssignWritingThreadIDParams
+	SystemAssignWritingThreadIDErr   error
+	SystemAssignWritingThreadIDFn    func(context.Context, SystemAssignWritingThreadIDParams) error
 
 	SystemInsertDeadLetterCalls int
 
@@ -91,6 +114,15 @@ type QuerierStub struct {
 	AdminListUserEmailsReturns []*UserEmail
 	AdminListUserEmailsErr     error
 	AdminListUserEmailsCalls   []int32
+
+	AdminGetImagePostRow   *AdminGetImagePostRow
+	AdminGetImagePostErr   error
+	AdminGetImagePostCalls []int32
+	AdminGetImagePostFn    func(context.Context, int32) (*AdminGetImagePostRow, error)
+
+	AdminApproveImagePostCalls []int32
+	AdminApproveImagePostErr   error
+	AdminApproveImagePostFn    func(context.Context, int32) error
 
 	AdminUserPostCountsByIDReturns *AdminUserPostCountsByIDRow
 	AdminUserPostCountsByIDErr     error
@@ -117,6 +149,35 @@ type QuerierStub struct {
 	SystemDeletePasswordResetsByUserResult sql.Result
 	SystemDeletePasswordResetsByUserFn     func(context.Context, int32) (sql.Result, error)
 
+	AdminCountPasswordResetsCalls   []AdminCountPasswordResetsParams
+	AdminCountPasswordResetsReturns int64
+	AdminCountPasswordResetsErr     error
+	AdminCountPasswordResetsFn      func(context.Context, AdminCountPasswordResetsParams) (int64, error)
+
+	AdminCountPendingPasswordResetsByUserCalls   int
+	AdminCountPendingPasswordResetsByUserReturns []*AdminCountPendingPasswordResetsByUserRow
+	AdminCountPendingPasswordResetsByUserErr     error
+	AdminCountPendingPasswordResetsByUserFn      func(context.Context) ([]*AdminCountPendingPasswordResetsByUserRow, error)
+
+	AdminGetPasswordResetByIDCalls   []int32
+	AdminGetPasswordResetByIDReturns *PendingPassword
+	AdminGetPasswordResetByIDErr     error
+	AdminGetPasswordResetByIDFn      func(context.Context, int32) (*PendingPassword, error)
+
+	AdminListPasswordResetsCalls   []AdminListPasswordResetsParams
+	AdminListPasswordResetsReturns []*AdminListPasswordResetsRow
+	AdminListPasswordResetsErr     error
+	AdminListPasswordResetsFn      func(context.Context, AdminListPasswordResetsParams) ([]*AdminListPasswordResetsRow, error)
+
+	DeletePendingPasswordCalls []int32
+	DeletePendingPasswordErr   error
+	DeletePendingPasswordFn    func(context.Context, int32) error
+
+	GetPasswordResetByCodeCalls   []GetPasswordResetByCodeParams
+	GetPasswordResetByCodeReturns *PendingPassword
+	GetPasswordResetByCodeErr     error
+	GetPasswordResetByCodeFn      func(context.Context, GetPasswordResetByCodeParams) (*PendingPassword, error)
+
 	AdminPromoteAnnouncementCalls []int32
 	AdminPromoteAnnouncementErr   error
 	AdminPromoteAnnouncementFn    func(context.Context, int32) error
@@ -125,9 +186,21 @@ type QuerierStub struct {
 	AdminDemoteAnnouncementErr   error
 	AdminDemoteAnnouncementFn    func(context.Context, int32) error
 
+	AdminDeleteForumThreadCalls []int32
+	AdminDeleteForumThreadErr   error
+	AdminDeleteForumThreadFn    func(context.Context, int32) error
+
 	AdminCancelBannedIpCalls      []string
 	AdminCancelBannedIpErr        error
 	AdminCancelBannedIpFn         func(context.Context, string) error
+	GetPendingPasswordCalls       []int32
+	GetPendingPasswordReturns     *PendingPassword
+	GetPendingPasswordErr         error
+	GetPendingPasswordFn          func(context.Context, int32) (*PendingPassword, error)
+	GetPendingPasswordByCodeCalls []string
+	GetPendingPasswordByCodeRow   *PendingPassword
+	GetPendingPasswordByCodeErr   error
+	GetPendingPasswordByCodeFn    func(context.Context, string) (*PendingPassword, error)
 	GetPasswordResetByUserCalls   []GetPasswordResetByUserParams
 	GetPasswordResetByUserReturns *PendingPassword
 	GetPasswordResetByUserErr     error
@@ -137,10 +210,31 @@ type QuerierStub struct {
 	CreatePasswordResetForUserErr   error
 	CreatePasswordResetForUserFn    func(context.Context, CreatePasswordResetForUserParams) error
 
+	SystemDeletePasswordResetCalls []int32
+	SystemDeletePasswordResetErr   error
+	SystemDeletePasswordResetFn    func(context.Context, int32) error
+
+	SystemMarkPasswordResetVerifiedCalls []int32
+	SystemMarkPasswordResetVerifiedErr   error
+	SystemMarkPasswordResetVerifiedFn    func(context.Context, int32) error
+
+	SystemPurgePasswordResetsBeforeCalls  []time.Time
+	SystemPurgePasswordResetsBeforeResult sql.Result
+	SystemPurgePasswordResetsBeforeErr    error
+	SystemPurgePasswordResetsBeforeFn     func(context.Context, time.Time) (sql.Result, error)
+
 	AdminInsertRequestQueueCalls   []AdminInsertRequestQueueParams
 	AdminInsertRequestQueueReturns sql.Result
 	AdminInsertRequestQueueErr     error
 	AdminInsertRequestQueueFn      func(context.Context, AdminInsertRequestQueueParams) (sql.Result, error)
+
+	AdminInsertRequestCommentCalls []AdminInsertRequestCommentParams
+	AdminInsertRequestCommentErr   error
+	AdminInsertRequestCommentFn    func(context.Context, AdminInsertRequestCommentParams) error
+
+	InsertAdminUserCommentCalls []InsertAdminUserCommentParams
+	InsertAdminUserCommentErr   error
+	InsertAdminUserCommentFn    func(context.Context, InsertAdminUserCommentParams) error
 
 	SystemGetLoginRow   *SystemGetLoginRow
 	SystemGetLoginErr   error
@@ -151,6 +245,10 @@ type QuerierStub struct {
 	SystemListVerifiedEmailsByUserIDErr    error
 	SystemListVerifiedEmailsByUserIDCalls  []int32
 	SystemListVerifiedEmailsByUserIDFn     func(context.Context, int32) ([]*UserEmail, error)
+
+	SystemRebuildForumTopicMetaByIDCalls []int32
+	SystemRebuildForumTopicMetaByIDErr   error
+	SystemRebuildForumTopicMetaByIDFn    func(context.Context, int32) error
 
 	GetLoginRoleForUserReturns int32
 	GetLoginRoleForUserErr     error
@@ -207,6 +305,9 @@ type QuerierStub struct {
 	InsertSubscriptionParams         []InsertSubscriptionParams
 	DeleteSubscriptionParams         []DeleteSubscriptionForSubscriberParams
 	DeleteSubscriptionErr            error
+	CreateFAQQuestionForWriterCalls  []CreateFAQQuestionForWriterParams
+	CreateFAQQuestionForWriterErr    error
+	CreateFAQQuestionForWriterFn     func(context.Context, CreateFAQQuestionForWriterParams) error
 	InsertFAQQuestionForWriterCalls  []InsertFAQQuestionForWriterParams
 	InsertFAQQuestionForWriterResult sql.Result
 	InsertFAQQuestionForWriterErr    error
@@ -271,6 +372,7 @@ type QuerierStub struct {
 	GetCommentsByThreadIdForUserCalls   []GetCommentsByThreadIdForUserParams
 	GetCommentsByThreadIdForUserReturns []*GetCommentsByThreadIdForUserRow
 	GetCommentsByThreadIdForUserErr     error
+	GetCommentsByThreadIdForUserFn      func(context.Context, GetCommentsByThreadIdForUserParams) ([]*GetCommentsByThreadIdForUserRow, error)
 
 	DeleteThreadsByTopicIDCalls []int32
 	DeleteThreadsByTopicIDErr   error
@@ -280,13 +382,36 @@ type QuerierStub struct {
 	SystemCheckGrantCalls   []SystemCheckGrantParams
 	SystemCheckGrantFn      func(SystemCheckGrantParams) (int32, error)
 
+	GetPublicWritingsCalls   []GetPublicWritingsParams
+	GetPublicWritingsReturns []*Writing
+	GetPublicWritingsErr     error
+	GetPublicWritingsFn      func(context.Context, GetPublicWritingsParams) ([]*Writing, error)
+
 	GetWritingForListerByIDRow   *GetWritingForListerByIDRow
 	GetWritingForListerByIDErr   error
 	GetWritingForListerByIDCalls []GetWritingForListerByIDParams
 
+	GetWritingCategoryByIdCalls []int32
+	GetWritingCategoryByIdRow   *WritingCategory
+	GetWritingCategoryByIdErr   error
+
+	ListWritingCategoriesForListerCalls   []ListWritingCategoriesForListerParams
+	ListWritingCategoriesForListerReturns []*WritingCategory
+	ListWritingCategoriesForListerErr     error
+	ListWritingCategoriesForListerFn      func(ListWritingCategoriesForListerParams) ([]*WritingCategory, error)
+
+	SystemListWritingCategoriesCalls   []SystemListWritingCategoriesParams
+	SystemListWritingCategoriesReturns []*WritingCategory
+	SystemListWritingCategoriesErr     error
+	SystemListWritingCategoriesFn      func(SystemListWritingCategoriesParams) ([]*WritingCategory, error)
+
 	GetBlogEntryForListerByIDRow   *GetBlogEntryForListerByIDRow
 	GetBlogEntryForListerByIDErr   error
 	GetBlogEntryForListerByIDCalls []GetBlogEntryForListerByIDParams
+
+	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow   *GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow
+	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingErr   error
+	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingCalls []int32
 
 	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow   *GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow
 	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserErr   error
@@ -339,6 +464,11 @@ type QuerierStub struct {
 	ListPrivateTopicParticipantsByTopicIDForUserReturns []*ListPrivateTopicParticipantsByTopicIDForUserRow
 	ListPrivateTopicParticipantsByTopicIDForUserErr     error
 
+	ListPrivateTopicsByUserIDCalls   []sql.NullInt32
+	ListPrivateTopicsByUserIDReturns []*ListPrivateTopicsByUserIDRow
+	ListPrivateTopicsByUserIDErr     error
+	ListPrivateTopicsByUserIDFn      func(context.Context, sql.NullInt32) ([]*ListPrivateTopicsByUserIDRow, error)
+
 	AdminListForumTopicGrantsByTopicIDCalls   []sql.NullInt32
 	AdminListForumTopicGrantsByTopicIDReturns []*AdminListForumTopicGrantsByTopicIDRow
 	AdminListForumTopicGrantsByTopicIDErr     error
@@ -381,6 +511,11 @@ type QuerierStub struct {
 	ListGrantsErr     error
 	ListGrantsFn      func(context.Context) ([]*Grant, error)
 
+	ListBloggersForListerCalls   []ListBloggersForListerParams
+	ListBloggersForListerReturns []*ListBloggersForListerRow
+	ListBloggersForListerErr     error
+	ListBloggersForListerFn      func(ListBloggersForListerParams) ([]*ListBloggersForListerRow, error)
+
 	ListWritersForListerCalls   []ListWritersForListerParams
 	ListWritersForListerReturns []*ListWritersForListerRow
 	ListWritersForListerErr     error
@@ -390,6 +525,36 @@ type QuerierStub struct {
 	ListWritersSearchForListerReturns []*ListWritersSearchForListerRow
 	ListWritersSearchForListerErr     error
 	ListWritersSearchForListerFn      func(ListWritersSearchForListerParams) ([]*ListWritersSearchForListerRow, error)
+
+	ListBlogEntriesByAuthorForListerCalls   []ListBlogEntriesByAuthorForListerParams
+	ListBlogEntriesByAuthorForListerReturns []*ListBlogEntriesByAuthorForListerRow
+	ListBlogEntriesByAuthorForListerErr     error
+	ListBlogEntriesByAuthorForListerFn      func(context.Context, ListBlogEntriesByAuthorForListerParams) ([]*ListBlogEntriesByAuthorForListerRow, error)
+
+	ListBlogEntriesByIDsForListerCalls   []ListBlogEntriesByIDsForListerParams
+	ListBlogEntriesByIDsForListerReturns []*ListBlogEntriesByIDsForListerRow
+	ListBlogEntriesByIDsForListerErr     error
+	ListBlogEntriesByIDsForListerFn      func(context.Context, ListBlogEntriesByIDsForListerParams) ([]*ListBlogEntriesByIDsForListerRow, error)
+
+	ListSiteNewsSearchFirstForListerCalls   []ListSiteNewsSearchFirstForListerParams
+	ListSiteNewsSearchFirstForListerReturns []int32
+	ListSiteNewsSearchFirstForListerErr     error
+	ListSiteNewsSearchFirstForListerFn      func(ListSiteNewsSearchFirstForListerParams) ([]int32, error)
+
+	ListSiteNewsSearchNextForListerCalls   []ListSiteNewsSearchNextForListerParams
+	ListSiteNewsSearchNextForListerReturns []int32
+	ListSiteNewsSearchNextForListerErr     error
+	ListSiteNewsSearchNextForListerFn      func(ListSiteNewsSearchNextForListerParams) ([]int32, error)
+
+	GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingCalls   []GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams
+	GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingReturns []*GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
+	GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingErr     error
+	GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingFn      func(context.Context, GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams) ([]*GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error)
+
+	GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountCalls   []GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountParams
+	GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountReturns []*GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountRow
+	GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountErr     error
+	GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountFn      func(GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountParams) ([]*GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountRow, error)
 
 	ListImagePostsByBoardForListerCalls   []ListImagePostsByBoardForListerParams
 	ListImagePostsByBoardForListerReturns []*ListImagePostsByBoardForListerRow
@@ -404,6 +569,11 @@ type QuerierStub struct {
 	UpdateTimezoneForListerCalls []UpdateTimezoneForListerParams
 	UpdateTimezoneForListerErr   error
 	UpdateTimezoneForListerFn    func(context.Context, UpdateTimezoneForListerParams) error
+
+	EnsureExternalLinkCalls   []string
+	EnsureExternalLinkReturns sql.Result
+	EnsureExternalLinkErr     error
+	EnsureExternalLinkFn      func(context.Context, string) (sql.Result, error)
 }
 
 func (s *QuerierStub) ensurePublicLabelSetLocked(item string, itemID int32) map[string]struct{} {
@@ -510,6 +680,9 @@ func (s *QuerierStub) ListContentPublicLabels(ctx context.Context, arg ListConte
 	s.ListContentPublicLabelsCalls = append(s.ListContentPublicLabelsCalls, arg)
 	if s.ListContentPublicLabelsFn != nil {
 		return s.ListContentPublicLabelsFn(arg)
+	}
+	if s.ListContentPublicLabelsReturns != nil && s.ContentPublicLabels == nil {
+		return s.ListContentPublicLabelsReturns, s.ListContentPublicLabelsErr
 	}
 	if s.ListContentPublicLabelsErr != nil {
 		return nil, s.ListContentPublicLabelsErr
@@ -634,6 +807,9 @@ func (s *QuerierStub) ListContentLabelStatus(ctx context.Context, arg ListConten
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.ListContentLabelStatusCalls = append(s.ListContentLabelStatusCalls, arg)
+	if s.ListContentLabelStatusReturns != nil && s.ContentLabelStatus == nil {
+		return s.ListContentLabelStatusReturns, s.ListContentLabelStatusErr
+	}
 	if s.ListContentLabelStatusErr != nil {
 		return nil, s.ListContentLabelStatusErr
 	}
@@ -681,11 +857,12 @@ func (s *QuerierStub) AddContentPrivateLabel(ctx context.Context, arg AddContent
 	s.AddContentPrivateLabelCalls = append(s.AddContentPrivateLabelCalls, arg)
 	fn := s.AddContentPrivateLabelFn
 	err := s.AddContentPrivateLabelErr
+	ignoreErr := s.AddContentPrivateLabelIgnoreLabels != nil && s.AddContentPrivateLabelIgnoreLabels[arg.Label]
 	s.mu.Unlock()
 	if fn != nil {
 		return fn(ctx, arg)
 	}
-	if err != nil {
+	if err != nil && !ignoreErr {
 		return err
 	}
 	s.mu.Lock()
@@ -704,7 +881,7 @@ func (s *QuerierStub) ListContentPrivateLabels(ctx context.Context, arg ListCont
 	if s.ListContentPrivateLabelsFn != nil {
 		return s.ListContentPrivateLabelsFn(arg)
 	}
-	if s.ListContentPrivateLabelsReturns != nil {
+	if s.ListContentPrivateLabelsReturns != nil && s.ContentPrivateLabels == nil {
 		return s.ListContentPrivateLabelsReturns, s.ListContentPrivateLabelsErr
 	}
 
@@ -897,6 +1074,19 @@ func (s *QuerierStub) ListGrants(ctx context.Context) ([]*Grant, error) {
 	return ret, err
 }
 
+func (s *QuerierStub) ListBloggersForLister(ctx context.Context, arg ListBloggersForListerParams) ([]*ListBloggersForListerRow, error) {
+	s.mu.Lock()
+	s.ListBloggersForListerCalls = append(s.ListBloggersForListerCalls, arg)
+	fn := s.ListBloggersForListerFn
+	ret := s.ListBloggersForListerReturns
+	err := s.ListBloggersForListerErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(arg)
+	}
+	return ret, err
+}
+
 func (s *QuerierStub) ListWritersForLister(ctx context.Context, arg ListWritersForListerParams) ([]*ListWritersForListerRow, error) {
 	s.mu.Lock()
 	s.ListWritersForListerCalls = append(s.ListWritersForListerCalls, arg)
@@ -916,6 +1106,58 @@ func (s *QuerierStub) ListWritersSearchForLister(ctx context.Context, arg ListWr
 	fn := s.ListWritersSearchForListerFn
 	ret := s.ListWritersSearchForListerReturns
 	err := s.ListWritersSearchForListerErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) ListSiteNewsSearchFirstForLister(ctx context.Context, arg ListSiteNewsSearchFirstForListerParams) ([]int32, error) {
+	s.mu.Lock()
+	s.ListSiteNewsSearchFirstForListerCalls = append(s.ListSiteNewsSearchFirstForListerCalls, arg)
+	fn := s.ListSiteNewsSearchFirstForListerFn
+	ret := s.ListSiteNewsSearchFirstForListerReturns
+	err := s.ListSiteNewsSearchFirstForListerErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) ListSiteNewsSearchNextForLister(ctx context.Context, arg ListSiteNewsSearchNextForListerParams) ([]int32, error) {
+	s.mu.Lock()
+	s.ListSiteNewsSearchNextForListerCalls = append(s.ListSiteNewsSearchNextForListerCalls, arg)
+	fn := s.ListSiteNewsSearchNextForListerFn
+	ret := s.ListSiteNewsSearchNextForListerReturns
+	err := s.ListSiteNewsSearchNextForListerErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(ctx context.Context, arg GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams) ([]*GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
+	s.mu.Lock()
+	s.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingCalls = append(s.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingCalls, arg)
+	fn := s.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingFn
+	ret := s.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingReturns
+	err := s.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCount(ctx context.Context, arg GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountParams) ([]*GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountRow, error) {
+	s.mu.Lock()
+	s.GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountCalls = append(s.GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountCalls, arg)
+	fn := s.GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountFn
+	ret := s.GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountReturns
+	err := s.GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountErr
 	s.mu.Unlock()
 	if fn != nil {
 		return fn(arg)
@@ -1001,6 +1243,9 @@ func (s *QuerierStub) GetCommentsByThreadIdForUser(ctx context.Context, arg GetC
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.GetCommentsByThreadIdForUserCalls = append(s.GetCommentsByThreadIdForUserCalls, arg)
+	if s.GetCommentsByThreadIdForUserFn != nil {
+		return s.GetCommentsByThreadIdForUserFn(ctx, arg)
+	}
 	return s.GetCommentsByThreadIdForUserReturns, s.GetCommentsByThreadIdForUserErr
 }
 
@@ -1024,6 +1269,20 @@ func (s *QuerierStub) SystemCheckGrant(ctx context.Context, arg SystemCheckGrant
 	return 0, sql.ErrNoRows
 }
 
+// GetPublicWritings records the call and returns the configured response.
+func (s *QuerierStub) GetPublicWritings(ctx context.Context, arg GetPublicWritingsParams) ([]*Writing, error) {
+	s.mu.Lock()
+	s.GetPublicWritingsCalls = append(s.GetPublicWritingsCalls, arg)
+	fn := s.GetPublicWritingsFn
+	ret := s.GetPublicWritingsReturns
+	err := s.GetPublicWritingsErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
 // GetWritingForListerByID records the call and returns the configured response.
 func (s *QuerierStub) GetWritingForListerByID(ctx context.Context, arg GetWritingForListerByIDParams) (*GetWritingForListerByIDRow, error) {
 	s.mu.Lock()
@@ -1040,6 +1299,43 @@ func (s *QuerierStub) GetWritingForListerByID(ctx context.Context, arg GetWritin
 	return row, nil
 }
 
+func (s *QuerierStub) GetWritingCategoryById(ctx context.Context, idwritingcategory int32) (*WritingCategory, error) {
+	s.mu.Lock()
+	s.GetWritingCategoryByIdCalls = append(s.GetWritingCategoryByIdCalls, idwritingcategory)
+	row := s.GetWritingCategoryByIdRow
+	err := s.GetWritingCategoryByIdErr
+	s.mu.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	if row == nil {
+		return nil, errors.New("GetWritingCategoryById not stubbed")
+	}
+	return row, nil
+}
+
+func (s *QuerierStub) ListWritingCategoriesForLister(ctx context.Context, arg ListWritingCategoriesForListerParams) ([]*WritingCategory, error) {
+	s.mu.Lock()
+	s.ListWritingCategoriesForListerCalls = append(s.ListWritingCategoriesForListerCalls, arg)
+	fn := s.ListWritingCategoriesForListerFn
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(arg)
+	}
+	return s.ListWritingCategoriesForListerReturns, s.ListWritingCategoriesForListerErr
+}
+
+func (s *QuerierStub) SystemListWritingCategories(ctx context.Context, arg SystemListWritingCategoriesParams) ([]*WritingCategory, error) {
+	s.mu.Lock()
+	s.SystemListWritingCategoriesCalls = append(s.SystemListWritingCategoriesCalls, arg)
+	fn := s.SystemListWritingCategoriesFn
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(arg)
+	}
+	return s.SystemListWritingCategoriesReturns, s.SystemListWritingCategoriesErr
+}
+
 func (s *QuerierStub) GetBlogEntryForListerByID(ctx context.Context, arg GetBlogEntryForListerByIDParams) (*GetBlogEntryForListerByIDRow, error) {
 	s.mu.Lock()
 	s.GetBlogEntryForListerByIDCalls = append(s.GetBlogEntryForListerByIDCalls, arg)
@@ -1051,6 +1347,18 @@ func (s *QuerierStub) GetBlogEntryForListerByID(ctx context.Context, arg GetBlog
 	}
 	if row == nil {
 		return nil, errors.New("GetBlogEntryForListerByID not stubbed")
+	}
+	return row, nil
+}
+
+func (s *QuerierStub) GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(ctx context.Context, id int32) (*GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow, error) {
+	s.mu.Lock()
+	s.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingCalls = append(s.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingCalls, id)
+	row := s.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow
+	err := s.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingErr
+	s.mu.Unlock()
+	if err != nil {
+		return nil, err
 	}
 	return row, nil
 }
@@ -1188,6 +1496,18 @@ func (s *QuerierStub) ListPrivateTopicParticipantsByTopicIDForUser(ctx context.C
 	return s.ListPrivateTopicParticipantsByTopicIDForUserReturns, s.ListPrivateTopicParticipantsByTopicIDForUserErr
 }
 
+// ListPrivateTopicsByUserID records the call and returns stubbed topics.
+func (s *QuerierStub) ListPrivateTopicsByUserID(ctx context.Context, userID sql.NullInt32) ([]*ListPrivateTopicsByUserIDRow, error) {
+	s.mu.Lock()
+	s.ListPrivateTopicsByUserIDCalls = append(s.ListPrivateTopicsByUserIDCalls, userID)
+	fn := s.ListPrivateTopicsByUserIDFn
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, userID)
+	}
+	return s.ListPrivateTopicsByUserIDReturns, s.ListPrivateTopicsByUserIDErr
+}
+
 // SystemGetUserByID records the call and returns the configured response.
 func (s *QuerierStub) SystemGetUserByID(ctx context.Context, idusers int32) (*SystemGetUserByIDRow, error) {
 	s.mu.Lock()
@@ -1259,6 +1579,50 @@ func (s *QuerierStub) SystemCreateThread(ctx context.Context, forumtopicIdforumt
 		return fn(ctx, forumtopicIdforumtopic)
 	}
 	return ret, err
+}
+
+func (s *QuerierStub) SystemGetForumTopicByTitle(ctx context.Context, title sql.NullString) (*Forumtopic, error) {
+	s.mu.Lock()
+	s.SystemGetForumTopicByTitleCalls = append(s.SystemGetForumTopicByTitleCalls, title)
+	fn := s.SystemGetForumTopicByTitleFn
+	row := s.SystemGetForumTopicByTitleReturns
+	err := s.SystemGetForumTopicByTitleErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, title)
+	}
+	if err != nil {
+		return nil, err
+	}
+	if row == nil {
+		return nil, errors.New("SystemGetForumTopicByTitle not stubbed")
+	}
+	return row, nil
+}
+
+func (s *QuerierStub) CreateForumTopicForPoster(ctx context.Context, arg CreateForumTopicForPosterParams) (int64, error) {
+	s.mu.Lock()
+	s.CreateForumTopicForPosterCalls = append(s.CreateForumTopicForPosterCalls, arg)
+	fn := s.CreateForumTopicForPosterFn
+	ret := s.CreateForumTopicForPosterReturns
+	err := s.CreateForumTopicForPosterErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) SystemAssignWritingThreadID(ctx context.Context, arg SystemAssignWritingThreadIDParams) error {
+	s.mu.Lock()
+	s.SystemAssignWritingThreadIDCalls = append(s.SystemAssignWritingThreadIDCalls, arg)
+	fn := s.SystemAssignWritingThreadIDFn
+	err := s.SystemAssignWritingThreadIDErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
 }
 
 // InsertPendingEmail records the call and returns the configured response.
@@ -1381,6 +1745,25 @@ func (s *QuerierStub) ListSubscribersForPatterns(ctx context.Context, arg ListSu
 	return ret, nil
 }
 
+func (s *QuerierStub) EnsureExternalLink(ctx context.Context, url string) (sql.Result, error) {
+	s.mu.Lock()
+	s.EnsureExternalLinkCalls = append(s.EnsureExternalLinkCalls, url)
+	fn := s.EnsureExternalLinkFn
+	ret := s.EnsureExternalLinkReturns
+	err := s.EnsureExternalLinkErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, url)
+	}
+	if err != nil {
+		return nil, err
+	}
+	if ret == nil {
+		return FakeSQLResult{}, nil
+	}
+	return ret, nil
+}
+
 func (s *QuerierStub) GetPreferenceForLister(ctx context.Context, listerID int32) (*Preference, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -1405,6 +1788,18 @@ func (s *QuerierStub) DeleteSubscriptionForSubscriber(ctx context.Context, arg D
 	defer s.mu.Unlock()
 	s.DeleteSubscriptionParams = append(s.DeleteSubscriptionParams, arg)
 	return s.DeleteSubscriptionErr
+}
+
+func (s *QuerierStub) CreateFAQQuestionForWriter(ctx context.Context, arg CreateFAQQuestionForWriterParams) error {
+	s.mu.Lock()
+	s.CreateFAQQuestionForWriterCalls = append(s.CreateFAQQuestionForWriterCalls, arg)
+	fn := s.CreateFAQQuestionForWriterFn
+	err := s.CreateFAQQuestionForWriterErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
 }
 
 // InsertFAQQuestionForWriter records the call and returns the configured sql.Result.

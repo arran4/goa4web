@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"net/http"
 	"net/http/httptest"
-	"regexp"
 	"strings"
 	"testing"
 
@@ -80,21 +79,16 @@ func TestMinePage_NoBookmarks(t *testing.T) {
 		req.AddCookie(c)
 	}
 
-	req, cd, mock, cleanup := handlertest.RequestWithCoreData(t, req, common.WithSession(sess))
-	defer cleanup()
+	req, cd, stub := handlertest.RequestWithCoreData(t, req, common.WithSession(sess))
 	cd.UserID = 1
 
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT Idbookmarks, list\nFROM bookmarks\nWHERE users_idusers = ?")).
-		WithArgs(int32(1)).WillReturnError(sql.ErrNoRows)
+	stub.GetBookmarksForUserErr = sql.ErrNoRows
 
 	rr := httptest.NewRecorder()
 	MinePage(rr, req)
 
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
-	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
 	}
 	if !strings.Contains(rr.Body.String(), "No bookmarks saved") {
 		t.Fatalf("body=%q", rr.Body.String())

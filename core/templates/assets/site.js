@@ -52,7 +52,152 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+
+    setupKeyboardShortcuts();
 });
+
+function setupKeyboardShortcuts() {
+    const overlay = document.getElementById('keyboard-shortcuts-overlay');
+    const closeBtn = document.getElementById('close-shortcuts');
+    const tabs = document.querySelectorAll('.tab-btn');
+    const sections = document.querySelectorAll('.shortcut-section');
+
+    if (!overlay) return;
+
+    function toggleOverlay() {
+        overlay.classList.toggle('hidden');
+        if (!overlay.classList.contains('hidden')) {
+            let activeTab = 'global';
+            if (document.activeElement && document.activeElement.tagName === 'TEXTAREA') {
+                activeTab = 'editor';
+            } else if (window.location.pathname.includes('/forum') || window.location.pathname.includes('/topic')) {
+                activeTab = 'forum';
+            }
+            switchTab(activeTab);
+        }
+    }
+
+    function switchTab(tabName) {
+        tabs.forEach(t => {
+            if (t.getAttribute('data-tab') === tabName) {
+                t.classList.add('active');
+            } else {
+                t.classList.remove('active');
+            }
+        });
+        sections.forEach(s => {
+            if (s.id === 'section-' + tabName) {
+                s.classList.remove('hidden');
+            } else {
+                s.classList.add('hidden');
+            }
+        });
+    }
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function() {
+            overlay.classList.add('hidden');
+        });
+    }
+
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) {
+            overlay.classList.add('hidden');
+        }
+    });
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            switchTab(this.getAttribute('data-tab'));
+        });
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && (e.key === '?' || e.key === '/')) {
+            e.preventDefault();
+            toggleOverlay();
+            return;
+        }
+
+        if (e.key === 'Escape' && !overlay.classList.contains('hidden')) {
+            overlay.classList.add('hidden');
+            return;
+        }
+
+        if (!overlay.classList.contains('hidden')) return;
+
+        if (e.ctrlKey && e.key === 'Enter') {
+            if (e.target.tagName === 'TEXTAREA') {
+                const form = e.target.closest('form');
+                if (form) {
+                    e.preventDefault();
+                    const submitBtn = form.querySelector('input[type="submit"], button[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.click();
+                    } else {
+                        form.submit();
+                    }
+                }
+            }
+        }
+
+        if (e.altKey && e.key === 'Home') {
+            e.preventDefault();
+            window.location.href = '/';
+        }
+
+        const isTyping = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable;
+        if (!isTyping && !e.ctrlKey && !e.altKey && !e.metaKey) {
+            if (e.key === 'j') {
+                scrollComment(1);
+            } else if (e.key === 'k') {
+                scrollComment(-1);
+            } else if (e.key === 'q') {
+                 const selection = window.getSelection();
+                 if (selection.rangeCount > 0 && !selection.isCollapsed) {
+                     const anchor = selection.anchorNode;
+                     const commentDiv = anchor.nodeType === Node.ELEMENT_NODE ? anchor.closest('.comment') : anchor.parentElement.closest('.comment');
+                     if (commentDiv) {
+                         const commentId = commentDiv.id.replace('comment-', '');
+                         if (commentId) {
+                             e.preventDefault();
+                             quote('selected', commentId);
+                         }
+                     }
+                 }
+            }
+        }
+    });
+}
+
+let currentCommentIndex = -1;
+function scrollComment(direction) {
+    const comments = document.querySelectorAll('.comment');
+    if (comments.length === 0) return;
+
+    if (currentCommentIndex === -1) {
+         for (let i = 0; i < comments.length; i++) {
+             const rect = comments[i].getBoundingClientRect();
+             if (rect.top >= 0) {
+                 currentCommentIndex = i;
+                 break;
+             }
+         }
+         if (currentCommentIndex === -1) currentCommentIndex = 0;
+    } else {
+        currentCommentIndex += direction;
+    }
+
+    if (currentCommentIndex < 0) currentCommentIndex = 0;
+    if (currentCommentIndex >= comments.length) currentCommentIndex = comments.length - 1;
+
+    comments[currentCommentIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    comments.forEach(c => c.style.outline = 'none');
+    comments[currentCommentIndex].style.outline = '2px solid #800000';
+    setTimeout(() => {
+         if (comments[currentCommentIndex]) comments[currentCommentIndex].style.outline = 'none';
+    }, 2000);
+}
 
 function convertMarkdownToA4Code(targetId) {
     const textarea = document.getElementById(targetId);

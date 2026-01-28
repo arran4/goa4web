@@ -42,6 +42,7 @@ type A4code2html struct {
 	ImageURLMapper func(tag, val string) string
 	// UserColorMapper optionally maps a username to a CSS class for styling quotes.
 	UserColorMapper func(username string) string
+	quoteDepth      int
 }
 
 // WithTOC enables or disables table-of-contents generation when passed to New.
@@ -97,6 +98,7 @@ func SanitizeURL(raw string) (string, bool) {
 
 func (c *A4code2html) clear() {
 	c.stack = nil
+	c.quoteDepth = 0
 	c.r = nil
 	c.w = nil
 	c.err = nil
@@ -367,18 +369,22 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 			if a.UserColorMapper != nil {
 				colorClass = " " + a.UserColorMapper(name)
 			}
+			colorClass += fmt.Sprintf(" quote-color-%d", a.quoteDepth%6)
 			if _, err := io.WriteString(w, fmt.Sprintf("<blockquote class=\"a4code-block a4code-quoteof%s\"><div class=\"quote-header\">Quote of %s:</div><div class=\"quote-body\">", colorClass, name)); err != nil {
 				return err
 			}
+			a.quoteDepth++
 			a.stack = append(a.stack, "</div></blockquote>")
 		}
 	case "quote", "q":
 		switch a.CodeType {
 		case CTTableOfContents, CTTagStrip, CTWordsOnly:
 		default:
-			if _, err := io.WriteString(w, "<blockquote class=\"a4code-block a4code-quote\"><div class=\"quote-header\">Quote:</div><div class=\"quote-body\">"); err != nil {
+			colorClass := fmt.Sprintf(" quote-color-%d", a.quoteDepth%6)
+			if _, err := io.WriteString(w, "<blockquote class=\"a4code-block a4code-quote"+colorClass+"\"><div class=\"quote-header\">Quote:</div><div class=\"quote-body\">"); err != nil {
 				return err
 			}
+			a.quoteDepth++
 			a.stack = append(a.stack, "</div></blockquote>")
 		}
 	case "spoiler", "sp":
@@ -434,6 +440,9 @@ func (c *A4code2html) nextcommReader(r *bufio.Reader, w io.Writer) error {
 				c.stack = c.stack[:len(c.stack)-1]
 				if _, err := io.WriteString(w, last); err != nil {
 					return err
+				}
+				if last == "</div></blockquote>" && c.quoteDepth > 0 {
+					c.quoteDepth--
 				}
 			}
 		case '<', '>', '\n', '&':

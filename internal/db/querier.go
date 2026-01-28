@@ -283,6 +283,7 @@ type Querier interface {
 	// This query adds a new entry to the "bookmarks" table for a lister.
 	CreateBookmarksForLister(ctx context.Context, arg CreateBookmarksForListerParams) error
 	CreateCommentInSectionForCommenter(ctx context.Context, arg CreateCommentInSectionForCommenterParams) (int64, error)
+	CreateExternalLink(ctx context.Context, url string) (sql.Result, error)
 	CreateFAQQuestionForWriter(ctx context.Context, arg CreateFAQQuestionForWriterParams) error
 	CreateForumTopicForPoster(ctx context.Context, arg CreateForumTopicForPosterParams) (int64, error)
 	CreateGrant(ctx context.Context, arg CreateGrantParams) error
@@ -305,6 +306,7 @@ type Querier interface {
 	DeleteThreadsByTopicID(ctx context.Context, forumtopicIdforumtopic int32) error
 	DeleteUserEmailForOwner(ctx context.Context, arg DeleteUserEmailForOwnerParams) error
 	DeleteUserLanguagesForUser(ctx context.Context, userID int32) error
+	EnsureExternalLink(ctx context.Context, url string) (sql.Result, error)
 	GetActiveAnnouncementWithNewsForLister(ctx context.Context, arg GetActiveAnnouncementWithNewsForListerParams) (*GetActiveAnnouncementWithNewsForListerRow, error)
 	GetAdministratorUserRole(ctx context.Context, usersIdusers int32) (*UserRole, error)
 	GetAllAnsweredFAQWithFAQCategoriesForUser(ctx context.Context, arg GetAllAnsweredFAQWithFAQCategoriesForUserParams) ([]*GetAllAnsweredFAQWithFAQCategoriesForUserRow, error)
@@ -605,6 +607,7 @@ type Querier interface {
 	UpdateCommentForEditor(ctx context.Context, arg UpdateCommentForEditorParams) error
 	UpdateCustomCssForLister(ctx context.Context, arg UpdateCustomCssForListerParams) error
 	UpdateEmailForumUpdatesForLister(ctx context.Context, arg UpdateEmailForumUpdatesForListerParams) error
+	UpdateExternalLinkMetadata(ctx context.Context, arg UpdateExternalLinkMetadataParams) error
 	UpdateNewsPostForWriter(ctx context.Context, arg UpdateNewsPostForWriterParams) error
 	UpdatePreferenceForLister(ctx context.Context, arg UpdatePreferenceForListerParams) error
 	UpdatePublicProfileEnabledAtForUser(ctx context.Context, arg UpdatePublicProfileEnabledAtForUserParams) error

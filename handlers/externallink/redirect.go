@@ -12,6 +12,8 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/opengraph"
 	"github.com/arran4/goa4web/internal/sign"
 )
 
@@ -29,6 +31,8 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 	sig := r.URL.Query().Get("sig")
 	var linkID int32
 	usedURL := false
+	var existingLink *db.ExternalLink
+
 	switch {
 	case rawURL != "":
 		data := "link:" + rawURL
@@ -41,6 +45,7 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 		if queries := cd.Queries(); queries != nil {
 			if link, err := queries.GetExternalLink(r.Context(), rawURL); err == nil && link != nil {
 				linkID = link.ID
+				existingLink = link
 			} else if err != nil && !errors.Is(err, sql.ErrNoRows) {
 				log.Printf("load external link by url: %v", err)
 			}
@@ -54,11 +59,78 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		linkID = int32(id64)
+		if queries := cd.Queries(); queries != nil {
+			if link, err := queries.GetExternalLinkByID(r.Context(), linkID); err == nil && link != nil {
+				existingLink = link
+				rawURL = link.Url
+			}
+		}
 	default:
 		w.WriteHeader(http.StatusBadRequest)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("invalid link"))
 		return
 	}
+
+	if r.URL.Query().Get("go") != "" {
+		cd.RegisterExternalLinkClick(rawURL)
+		http.Redirect(w, r, rawURL, http.StatusTemporaryRedirect)
+		return
+	}
+
+	// Check if the URL is internal to avoid self-fetching
+	isInternal := false
+	if u, err := url.Parse(rawURL); err == nil {
+		if u.Hostname() == r.Host {
+			isInternal = true
+		}
+		// Also check against configured hostname
+		if cd.Config != nil && cd.Config.HTTPHostname != "" {
+			if confU, err := url.Parse(cd.Config.HTTPHostname); err == nil {
+				if u.Hostname() == confU.Hostname() {
+					isInternal = true
+				}
+			}
+		}
+	}
+
+	needFetch := false
+	if linkID == 0 && usedURL {
+		needFetch = true
+	} else if existingLink != nil && (!existingLink.CardTitle.Valid || !existingLink.CardDescription.Valid) {
+		needFetch = true
+	}
+
+	if needFetch && rawURL != "" && !isInternal {
+		title, desc, img, err := opengraph.Fetch(rawURL, cd.HTTPClient())
+		if err == nil {
+			if linkID == 0 {
+				res, err := cd.Queries().CreateExternalLink(r.Context(), rawURL)
+				if err == nil {
+					id, _ := res.LastInsertId()
+					linkID = int32(id)
+				} else {
+					log.Printf("CreateExternalLink error: %v", err)
+				}
+			}
+			if linkID != 0 {
+				err := cd.Queries().UpdateExternalLinkMetadata(r.Context(), db.UpdateExternalLinkMetadataParams{
+					CardTitle:       sql.NullString{String: title, Valid: title != ""},
+					CardDescription: sql.NullString{String: desc, Valid: desc != ""},
+					CardImage:       sql.NullString{String: img, Valid: img != ""},
+					ID:              linkID,
+				})
+				if err != nil {
+					log.Printf("UpdateExternalLinkMetadata error: %v", err)
+				}
+			}
+		} else {
+			log.Printf("fetchOpenGraph error: %v", err)
+		}
+	} else if isInternal {
+		// Log or handle internal link specifically if needed
+		// For now, we just don't fetch metadata
+	}
+
 	if linkID != 0 {
 		cd.SetCurrentExternalLinkID(linkID)
 	}
@@ -70,11 +142,6 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		rawURL = link.Url
-	}
-	if r.URL.Query().Get("go") != "" {
-		cd.RegisterExternalLinkClick(rawURL)
-		http.Redirect(w, r, rawURL, http.StatusTemporaryRedirect)
-		return
 	}
 
 	type Data struct {
@@ -92,7 +159,7 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		URL:         rawURL,
 		RedirectURL: fmt.Sprintf("/goto?%s=%s&sig=%s&go=1", linkParam, linkValue, sig),
-		ReloadURL:   fmt.Sprintf("/goto?%s=%s&sig=%s&reload=1", linkParam, linkValue, sig),
+		ReloadURL:   fmt.Sprintf("/reload?%s=%s&sig=%s", linkParam, linkValue, sig),
 	}
 	if err := cd.ExecuteSiteTemplate(w, r, "externalLinkPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %v", err)

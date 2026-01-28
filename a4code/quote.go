@@ -71,12 +71,30 @@ func fullQuoteOf(username, text string, trim bool) string {
 	for it < len(text) {
 		switch text[it] {
 		case ']':
+			if nlc != 0 {
+				if out.Len() > 0 {
+					out.WriteByte('\n')
+				}
+				nlc = 0
+			}
 			bc--
 			out.WriteByte(text[it])
 		case '[':
+			if nlc != 0 {
+				if out.Len() > 0 {
+					out.WriteByte('\n')
+				}
+				nlc = 0
+			}
 			bc++
 			out.WriteByte(text[it])
 		case '\\':
+			if nlc != 0 {
+				if out.Len() > 0 {
+					out.WriteByte('\n')
+				}
+				nlc = 0
+			}
 			if it+1 < len(text) {
 				if text[it+1] == '[' || text[it+1] == ']' {
 					out.WriteByte(text[it+1])
@@ -84,8 +102,12 @@ func fullQuoteOf(username, text string, trim bool) string {
 				}
 			}
 		case '\n':
-			if bc == 0 && nlc == 1 {
-				quote.WriteString(quoteOfText(username, out.String(), trim))
+			if bc <= 0 && nlc == 1 {
+				s := out.String()
+				if strings.TrimSpace(s) != "" && !isQuoteOf(s) {
+					quote.WriteString(quoteOfText(username, s, trim))
+					quote.WriteString("\n\n")
+				}
 				out.Reset()
 			}
 			nlc++
@@ -107,8 +129,34 @@ func fullQuoteOf(username, text string, trim bool) string {
 		}
 		it++
 	}
-	quote.WriteString(quoteOfText(username, out.String(), trim))
+	s := out.String()
+	if strings.TrimSpace(s) != "" && !isQuoteOf(s) {
+		quote.WriteString(quoteOfText(username, s, trim))
+	}
 	return quote.String()
+}
+
+func isQuoteOf(s string) bool {
+	s = strings.TrimSpace(s)
+	if !strings.HasPrefix(strings.ToLower(s), "[quoteof") {
+		return false
+	}
+	// Verify it's a single block by balancing brackets
+	bc := 0
+	for i := 0; i < len(s); i++ {
+		switch s[i] {
+		case '[':
+			bc++
+		case ']':
+			bc--
+			if bc == 0 {
+				// If we closed the first tag, it must be the end of the string
+				// (ignoring trailing whitespace is handled by TrimSpace above)
+				return i == len(s)-1
+			}
+		}
+	}
+	return false
 }
 
 func Substring(s string, start, end int) string {

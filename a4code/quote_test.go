@@ -36,7 +36,7 @@ func TestQuote(t *testing.T) {
 func TestQuoteFullParagraphs(t *testing.T) {
 	text := "foo\n\nbar"
 	got := QuoteText("bob", text, WithParagraphQuote())
-	want := "[quoteof \"bob\" foo]\n[quoteof \"bob\" bar]\n"
+	want := "[quoteof \"bob\" foo]\n\n\n[quoteof \"bob\" bar]\n"
 	if got != want {
 		t.Errorf("got %q want %q", got, want)
 	}
@@ -237,6 +237,84 @@ func TestSubstring(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := Substring(tt.s, tt.start, tt.end); got != tt.want {
 				t.Errorf("Substring() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestQuoteRepro(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "FilterNestedQuotes",
+			input: "Para 1\n\n[quoteof \"other\" inner]\n\nPara 2",
+			want:  "[quoteof \"user\" Para 1]\n\n\n[quoteof \"user\" Para 2]\n",
+		},
+		{
+			name:  "TripleLineBreaks",
+			input: "Para 1\n\nPara 2",
+			want:  "[quoteof \"user\" Para 1]\n\n\n[quoteof \"user\" Para 2]\n",
+		},
+		{
+			name:  "ParagraphStartingWithBracket",
+			input: "Para 1\n\n[b]bold[/b]",
+			want:  "[quoteof \"user\" Para 1]\n\n\n[quoteof \"user\" [b]bold[/b]]\n",
+		},
+		{
+			name:  "NotFilterMixedQuotes",
+			input: "[quoteof \"other\" inner] and more",
+			want:  "[quoteof \"user\" [quoteof \"other\" inner] and more]\n",
+		},
+		{
+			name:  "EmptyInput",
+			input: "",
+			want:  "",
+		},
+		{
+			name:  "WhitespaceOnly",
+			input: "   \t   ",
+			want:  "",
+		},
+		{
+			name:  "NewlinesOnly",
+			input: "\n\n\n",
+			want:  "",
+		},
+		{
+			name:  "MixedContentPreQuote",
+			input: "Prefix [quoteof \"other\" inner]",
+			want:  "[quoteof \"user\" Prefix [quoteof \"other\" inner]]\n",
+		},
+		{
+			name:  "MultipleNestedQuotesSameParagraph",
+			input: "[quoteof \"A\" 1] [quoteof \"B\" 2]",
+			want:  "[quoteof \"user\" [quoteof \"A\" 1] [quoteof \"B\" 2]]\n",
+		},
+		{
+			name:  "CaseInsensitiveFilter",
+			input: "[QUOTEOF \"other\" inner]",
+			want:  "",
+		},
+		{
+			name:  "ParagraphStartingWithCloseBracket",
+			input: "]\n\nNext",
+			want:  "[quoteof \"user\" ]]\n\n\n[quoteof \"user\" Next]\n",
+		},
+		{
+			name:  "ParagraphStartingWithBackslash",
+			input: "\\[\n\nNext",
+			want:  "[quoteof \"user\" []\n\n\n[quoteof \"user\" Next]\n",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := QuoteText("user", tt.input, WithParagraphQuote())
+			if got != tt.want {
+				t.Errorf("QuoteText() = %q, want %q", got, tt.want)
 			}
 		})
 	}

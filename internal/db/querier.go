@@ -306,6 +306,7 @@ type Querier interface {
 	DeleteThreadsByTopicID(ctx context.Context, forumtopicIdforumtopic int32) error
 	DeleteUserEmailForOwner(ctx context.Context, arg DeleteUserEmailForOwnerParams) error
 	DeleteUserLanguagesForUser(ctx context.Context, userID int32) error
+	EnsureExternalLink(ctx context.Context, url string) (sql.Result, error)
 	GetActiveAnnouncementWithNewsForLister(ctx context.Context, arg GetActiveAnnouncementWithNewsForListerParams) (*GetActiveAnnouncementWithNewsForListerRow, error)
 	GetAdministratorUserRole(ctx context.Context, usersIdusers int32) (*UserRole, error)
 	GetAllAnsweredFAQWithFAQCategoriesForUser(ctx context.Context, arg GetAllAnsweredFAQWithFAQCategoriesForUserParams) ([]*GetAllAnsweredFAQWithFAQCategoriesForUserRow, error)

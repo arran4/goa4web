@@ -343,19 +343,6 @@ func (s *QuerierStub) SystemGetLogin(ctx context.Context, arg sql.NullString) (*
 	return row, err
 }
 
-func (s *QuerierStub) SystemGetUserByUsername(ctx context.Context, username sql.NullString) (*SystemGetUserByUsernameRow, error) {
-	s.mu.Lock()
-	s.SystemGetUserByUsernameCalls = append(s.SystemGetUserByUsernameCalls, username)
-	fn := s.SystemGetUserByUsernameFn
-	row := s.SystemGetUserByUsernameRow
-	err := s.SystemGetUserByUsernameErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, username)
-	}
-	return row, err
-}
-
 func (s *QuerierStub) SystemListVerifiedEmailsByUserID(ctx context.Context, userID int32) ([]*UserEmail, error) {
 	s.mu.Lock()
 	s.SystemListVerifiedEmailsByUserIDCalls = append(s.SystemListVerifiedEmailsByUserIDCalls, userID)

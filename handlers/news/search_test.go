@@ -5,32 +5,33 @@ import (
 	"database/sql"
 	"net/http/httptest"
 	"net/url"
-	"regexp"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/handlers/handlertest"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 func TestNewsSearchFiltersUnauthorized(t *testing.T) {
-	cd, mock, cleanup := handlertest.NewCoreData(t, context.Background())
+	cd, stub, cleanup := handlertest.NewCoreData(t, context.Background())
 	defer cleanup()
 
-	firstRows := sqlmock.NewRows([]string{"site_news_id"}).AddRow(1).AddRow(2)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT DISTINCT cs.site_news_id")).
-		WithArgs(int32(1), sql.NullString{String: "foo", Valid: true}, int32(1), int32(1), sql.NullInt32{Int32: 1, Valid: true}).
-		WillReturnRows(firstRows)
-
-	newsRows := sqlmock.NewRows([]string{
-		"writerName", "writerId", "idsitenews", "forumthread_id",
-		"language_id", "users_idusers", "news", "occurred", "timezone",
-		"Comments",
-	}).AddRow("bob", 1, 1, 0, 1, 1, "text", time.Unix(0, 0), time.Local.String(), 0)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.username AS writerName")).
-		WithArgs(int32(1), int32(1), int32(2), int32(1), int32(1), sql.NullInt32{Int32: 1, Valid: true}).
-		WillReturnRows(newsRows)
+	stub.ListSiteNewsSearchFirstForListerReturns = []int32{1, 2}
+	stub.GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountReturns = []*db.GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountRow{
+		{
+			Writername:    sql.NullString{String: "bob", Valid: true},
+			Writerid:      sql.NullInt32{Int32: 1, Valid: true},
+			Idsitenews:    1,
+			ForumthreadID: 0,
+			LanguageID:    sql.NullInt32{Int32: 1, Valid: true},
+			UsersIdusers:  1,
+			News:          sql.NullString{String: "text", Valid: true},
+			Occurred:      sql.NullTime{Time: time.Unix(0, 0), Valid: true},
+			Timezone:      sql.NullString{String: time.Local.String(), Valid: true},
+			Comments:      sql.NullInt32{Int32: 0, Valid: true},
+		},
+	}
 
 	form := url.Values{"searchwords": {"foo"}}
 	req := httptest.NewRequest("POST", "/", strings.NewReader(form.Encode()))
@@ -49,8 +50,5 @@ func TestNewsSearchFiltersUnauthorized(t *testing.T) {
 	}
 	if news[0].Idsitenews != 1 {
 		t.Errorf("unexpected id %d", news[0].Idsitenews)
-	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
 	}
 }

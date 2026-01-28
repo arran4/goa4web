@@ -153,3 +153,42 @@ func (s *QuerierStub) GetLoginRoleForUser(ctx context.Context, userID int32) (in
 	}
 	return ret, err
 }
+
+func (s *QuerierStub) ListSiteNewsSearchFirstForLister(ctx context.Context, arg ListSiteNewsSearchFirstForListerParams) ([]int32, error) {
+	s.mu.Lock()
+	s.ListSiteNewsSearchFirstForListerCalls = append(s.ListSiteNewsSearchFirstForListerCalls, arg)
+	fn := s.ListSiteNewsSearchFirstForListerFn
+	ret := s.ListSiteNewsSearchFirstForListerReturns
+	err := s.ListSiteNewsSearchFirstForListerErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) ListSiteNewsSearchNextForLister(ctx context.Context, arg ListSiteNewsSearchNextForListerParams) ([]int32, error) {
+	s.mu.Lock()
+	s.ListSiteNewsSearchNextForListerCalls = append(s.ListSiteNewsSearchNextForListerCalls, arg)
+	fn := s.ListSiteNewsSearchNextForListerFn
+	ret := s.ListSiteNewsSearchNextForListerReturns
+	err := s.ListSiteNewsSearchNextForListerErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCount(ctx context.Context, arg GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountParams) ([]*GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountRow, error) {
+	s.mu.Lock()
+	s.GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountCalls = append(s.GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountCalls, arg)
+	fn := s.GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountFn
+	ret := s.GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountReturns
+	err := s.GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}

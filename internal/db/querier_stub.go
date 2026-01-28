@@ -391,6 +391,21 @@ type QuerierStub struct {
 	ListWritersSearchForListerErr     error
 	ListWritersSearchForListerFn      func(ListWritersSearchForListerParams) ([]*ListWritersSearchForListerRow, error)
 
+	ListSiteNewsSearchFirstForListerCalls   []ListSiteNewsSearchFirstForListerParams
+	ListSiteNewsSearchFirstForListerReturns []int32
+	ListSiteNewsSearchFirstForListerErr     error
+	ListSiteNewsSearchFirstForListerFn      func(context.Context, ListSiteNewsSearchFirstForListerParams) ([]int32, error)
+
+	ListSiteNewsSearchNextForListerCalls   []ListSiteNewsSearchNextForListerParams
+	ListSiteNewsSearchNextForListerReturns []int32
+	ListSiteNewsSearchNextForListerErr     error
+	ListSiteNewsSearchNextForListerFn      func(context.Context, ListSiteNewsSearchNextForListerParams) ([]int32, error)
+
+	GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountCalls   []GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountParams
+	GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountReturns []*GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountRow
+	GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountErr     error
+	GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountFn      func(context.Context, GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountParams) ([]*GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountRow, error)
+
 	ListImagePostsByBoardForListerCalls   []ListImagePostsByBoardForListerParams
 	ListImagePostsByBoardForListerReturns []*ListImagePostsByBoardForListerRow
 	ListImagePostsByBoardForListerErr     error

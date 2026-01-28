@@ -60,7 +60,7 @@ func (n *Notifier) processDigests(ctx context.Context) {
 
 func (n *Notifier) sendDigestToUser(ctx context.Context, user *db.GetUsersForDailyDigestRow) error {
 	// Get unread notifications
-	limit := int32(100)
+	limit := int32(2147483647) // Max Int32
 	notifs, err := n.Queries.ListUnreadNotificationsForLister(ctx, db.ListUnreadNotificationsForListerParams{
 		ListerID: user.UsersIdusers,
 		Limit:    limit,

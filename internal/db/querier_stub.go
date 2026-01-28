@@ -133,6 +133,10 @@ type QuerierStub struct {
 	AdminDemoteAnnouncementErr   error
 	AdminDemoteAnnouncementFn    func(context.Context, int32) error
 
+	AdminDeleteForumThreadCalls []int32
+	AdminDeleteForumThreadErr   error
+	AdminDeleteForumThreadFn    func(context.Context, int32) error
+
 	AdminCancelBannedIpCalls      []string
 	AdminCancelBannedIpErr        error
 	AdminCancelBannedIpFn         func(context.Context, string) error
@@ -159,6 +163,10 @@ type QuerierStub struct {
 	SystemListVerifiedEmailsByUserIDErr    error
 	SystemListVerifiedEmailsByUserIDCalls  []int32
 	SystemListVerifiedEmailsByUserIDFn     func(context.Context, int32) ([]*UserEmail, error)
+
+	SystemRebuildForumTopicMetaByIDCalls []int32
+	SystemRebuildForumTopicMetaByIDErr   error
+	SystemRebuildForumTopicMetaByIDFn    func(context.Context, int32) error
 
 	GetLoginRoleForUserReturns int32
 	GetLoginRoleForUserErr     error

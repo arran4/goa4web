@@ -66,6 +66,18 @@ func (s *QuerierStub) AdminDemoteAnnouncement(ctx context.Context, id int32) err
 	return err
 }
 
+func (s *QuerierStub) AdminDeleteForumThread(ctx context.Context, idforumthread int32) error {
+	s.mu.Lock()
+	s.AdminDeleteForumThreadCalls = append(s.AdminDeleteForumThreadCalls, idforumthread)
+	fn := s.AdminDeleteForumThreadFn
+	err := s.AdminDeleteForumThreadErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, idforumthread)
+	}
+	return err
+}
+
 func (s *QuerierStub) AdminCancelBannedIp(ctx context.Context, ip string) error {
 	s.mu.Lock()
 	s.AdminCancelBannedIpCalls = append(s.AdminCancelBannedIpCalls, ip)
@@ -152,6 +164,18 @@ func (s *QuerierStub) SystemListVerifiedEmailsByUserID(ctx context.Context, user
 		return fn(ctx, userID)
 	}
 	return ret, err
+}
+
+func (s *QuerierStub) SystemRebuildForumTopicMetaByID(ctx context.Context, idforumtopic int32) error {
+	s.mu.Lock()
+	s.SystemRebuildForumTopicMetaByIDCalls = append(s.SystemRebuildForumTopicMetaByIDCalls, idforumtopic)
+	fn := s.SystemRebuildForumTopicMetaByIDFn
+	err := s.SystemRebuildForumTopicMetaByIDErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, idforumtopic)
+	}
+	return err
 }
 
 func (s *QuerierStub) GetLoginRoleForUser(ctx context.Context, userID int32) (int32, error) {

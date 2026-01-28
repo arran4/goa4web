@@ -19,7 +19,6 @@ import (
 
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	intimages "github.com/arran4/goa4web/internal/images"
@@ -109,10 +108,8 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier, cfg *config.Ru
 								hash := fmt.Sprintf("%x", sha1.Sum(body))
 								ext, err := intimages.CleanExtension(path.Ext(imageURL))
 								if err == nil {
-									// Store system image
-									// We need CoreData to call StoreSystemImage
-									cd := common.NewCoreData(ctx, q, cfg)
-									name, err := cd.StoreSystemImage(common.StoreImageParams{
+									// Store system image using the internal package directly
+									name, err := intimages.StoreSystemImage(ctx, q, cfg, intimages.StoreImageParams{
 										ID:         hash,
 										Ext:        ext,
 										Data:       body,

@@ -284,6 +284,20 @@ type QuerierStub struct {
 	GetWritingForListerByIDErr   error
 	GetWritingForListerByIDCalls []GetWritingForListerByIDParams
 
+	GetWritingCategoryByIdCalls []int32
+	GetWritingCategoryByIdRow   *WritingCategory
+	GetWritingCategoryByIdErr   error
+
+	ListWritingCategoriesForListerCalls   []ListWritingCategoriesForListerParams
+	ListWritingCategoriesForListerReturns []*WritingCategory
+	ListWritingCategoriesForListerErr     error
+	ListWritingCategoriesForListerFn      func(ListWritingCategoriesForListerParams) ([]*WritingCategory, error)
+
+	SystemListWritingCategoriesCalls   []SystemListWritingCategoriesParams
+	SystemListWritingCategoriesReturns []*WritingCategory
+	SystemListWritingCategoriesErr     error
+	SystemListWritingCategoriesFn      func(SystemListWritingCategoriesParams) ([]*WritingCategory, error)
+
 	GetBlogEntryForListerByIDRow   *GetBlogEntryForListerByIDRow
 	GetBlogEntryForListerByIDErr   error
 	GetBlogEntryForListerByIDCalls []GetBlogEntryForListerByIDParams
@@ -1038,6 +1052,43 @@ func (s *QuerierStub) GetWritingForListerByID(ctx context.Context, arg GetWritin
 		return nil, errors.New("GetWritingForListerByID not stubbed")
 	}
 	return row, nil
+}
+
+func (s *QuerierStub) GetWritingCategoryById(ctx context.Context, idwritingcategory int32) (*WritingCategory, error) {
+	s.mu.Lock()
+	s.GetWritingCategoryByIdCalls = append(s.GetWritingCategoryByIdCalls, idwritingcategory)
+	row := s.GetWritingCategoryByIdRow
+	err := s.GetWritingCategoryByIdErr
+	s.mu.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	if row == nil {
+		return nil, errors.New("GetWritingCategoryById not stubbed")
+	}
+	return row, nil
+}
+
+func (s *QuerierStub) ListWritingCategoriesForLister(ctx context.Context, arg ListWritingCategoriesForListerParams) ([]*WritingCategory, error) {
+	s.mu.Lock()
+	s.ListWritingCategoriesForListerCalls = append(s.ListWritingCategoriesForListerCalls, arg)
+	fn := s.ListWritingCategoriesForListerFn
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(arg)
+	}
+	return s.ListWritingCategoriesForListerReturns, s.ListWritingCategoriesForListerErr
+}
+
+func (s *QuerierStub) SystemListWritingCategories(ctx context.Context, arg SystemListWritingCategoriesParams) ([]*WritingCategory, error) {
+	s.mu.Lock()
+	s.SystemListWritingCategoriesCalls = append(s.SystemListWritingCategoriesCalls, arg)
+	fn := s.SystemListWritingCategoriesFn
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(arg)
+	}
+	return s.SystemListWritingCategoriesReturns, s.SystemListWritingCategoriesErr
 }
 
 func (s *QuerierStub) GetBlogEntryForListerByID(ctx context.Context, arg GetBlogEntryForListerByIDParams) (*GetBlogEntryForListerByIDRow, error) {

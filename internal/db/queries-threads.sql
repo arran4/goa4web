@@ -77,7 +77,7 @@ WITH role_ids AS (
 SELECT th.*, lu.username AS LastPosterUsername, fcu.idusers AS firstpostuserid
 FROM forumthread th
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
-LEFT JOIN users lu ON lu.idusers = t.lastposter
+LEFT JOIN users lu ON lu.idusers = th.lastposter
 LEFT JOIN comments fc ON th.firstpost = fc.idcomments
 LEFT JOIN users fcu ON fc.users_idusers = fcu.idusers
 WHERE th.idforumthread=sqlc.arg(thread_id)

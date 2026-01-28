@@ -218,6 +218,20 @@ func TestSubstring(t *testing.T) {
 			end:   10,
 			want:  "e[b]llo[/b] wor",
 		},
+		{
+			name:  "Code block",
+			s:     "[code]hello[/code]",
+			start: 0,
+			end:   5,
+			want:  "[code]hello[/code]",
+		},
+		{
+			name:  "Partial code block",
+			s:     "[code]hello[/code]",
+			start: 1,
+			end:   3,
+			want:  "[code]el[/code]",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

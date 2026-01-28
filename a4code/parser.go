@@ -41,16 +41,52 @@ func Stream(r io.Reader, opts ...StreamOption) iter.Seq[Node] {
 	}
 }
 
+type scanner struct {
+	r   *bufio.Reader
+	pos int // raw byte position (unused for AST now, but kept for low level logic if needed)
+}
+
+func (s *scanner) ReadByte() (byte, error) {
+	b, err := s.r.ReadByte()
+	if err == nil {
+		s.pos++
+	}
+	return b, err
+}
+
+func (s *scanner) UnreadByte() error {
+	err := s.r.UnreadByte()
+	if err == nil {
+		s.pos--
+	}
+	return err
+}
+
 func streamImpl(r io.Reader, yield func(Node, int) bool) {
 	br := bufio.NewReader(r)
+	s := &scanner{r: br, pos: 0}
 	var stack []parent
 	var buf bytes.Buffer
 
-	flush := func() bool {
+	// visiblePos tracks the byte offset in the "visible" text (content of Text and Code nodes).
+	// Tags themselves do not advance this counter.
+	visiblePos := 0
+
+	textStart := -1
+
+	flush := func(offset int) bool {
 		if buf.Len() == 0 {
+			textStart = -1
 			return true
 		}
 		t := &Text{Value: buf.String()}
+		// Text node range is current visiblePos to visiblePos + len
+		start := visiblePos
+		end := visiblePos + len(t.Value)
+		t.SetPos(start, end)
+		visiblePos = end
+
+		textStart = -1
 		buf.Reset()
 		if len(stack) > 0 {
 			*stack[len(stack)-1].childrenPtr() = append(*stack[len(stack)-1].childrenPtr(), t)
@@ -59,14 +95,19 @@ func streamImpl(r io.Reader, yield func(Node, int) bool) {
 	}
 
 	for {
-		ch, err := br.ReadByte()
+		ch, err := s.ReadByte()
 		if err != nil {
 			if err == io.EOF {
-				if !flush() {
+				if !flush(0) {
 				}
 				for len(stack) > 0 {
 					n := stack[len(stack)-1]
 					stack = stack[:len(stack)-1]
+					if nNode, ok := n.(Node); ok {
+						nNode.SetPos(nNode.GetPos())
+						start, _ := nNode.GetPos()
+						nNode.SetPos(start, visiblePos)
+					}
 					if len(stack) > 0 {
 						*stack[len(stack)-1].childrenPtr() = append(*stack[len(stack)-1].childrenPtr(), n.(Node))
 					}
@@ -79,21 +120,27 @@ func streamImpl(r io.Reader, yield func(Node, int) bool) {
 		}
 		switch ch {
 		case '[':
-			if !flush() {
+			if !flush(1) {
 				return
 			}
 			var e error
-			stack, e = parseCommand(br, stack, len(stack)+1, yield)
+			// startPos for tag is current visiblePos
+			startPos := visiblePos
+			stack, visiblePos, e = parseCommand(s, stack, len(stack)+1, yield, startPos, visiblePos)
 			if e != nil {
 				return
 			}
 		case ']':
-			if !flush() {
+			if !flush(1) {
 				return
 			}
 			if len(stack) > 0 {
 				n := stack[len(stack)-1]
 				stack = stack[:len(stack)-1]
+				if nNode, ok := n.(Node); ok {
+					start, _ := nNode.GetPos()
+					nNode.SetPos(start, visiblePos)
+				}
 				if len(stack) > 0 {
 					*stack[len(stack)-1].childrenPtr() = append(*stack[len(stack)-1].childrenPtr(), n.(Node))
 				}
@@ -102,7 +149,10 @@ func streamImpl(r io.Reader, yield func(Node, int) bool) {
 				}
 			}
 		case '\\':
-			next, err := br.ReadByte()
+			if textStart == -1 {
+				textStart = s.pos - 1
+			}
+			next, err := s.ReadByte()
 			if err != nil {
 				if err == io.EOF {
 					buf.WriteByte('\\')
@@ -118,6 +168,9 @@ func streamImpl(r io.Reader, yield func(Node, int) bool) {
 				buf.WriteByte(next)
 			}
 		default:
+			if textStart == -1 {
+				textStart = s.pos - 1
+			}
 			buf.WriteByte(ch)
 		}
 	}
@@ -126,7 +179,19 @@ func streamImpl(r io.Reader, yield func(Node, int) bool) {
 // Parse reads markup from r and returns the root node.
 func Parse(r io.Reader) (*Root, error) {
 	nodes := slices.Collect(Stream(r, WithDepth(1)))
-	return &Root{Children: nodes}, nil
+	root := &Root{Children: nodes}
+	// Calculate root range based on children
+	if len(nodes) > 0 {
+		start, _ := nodes[0].GetPos()
+		_, end := nodes[len(nodes)-1].GetPos()
+		// Since we track visiblePos now, start/end are consistent.
+		// If there are gaps (not possible if stream is continuous), this might be weird,
+		// but visiblePos is continuous.
+		root.SetPos(start, end)
+	} else {
+		root.SetPos(0, 0)
+	}
+	return root, nil
 }
 
 // ParseString parses markup from s and returns the root node.
@@ -144,78 +209,115 @@ func ParseNodes(s string) ([]Node, error) {
 	return ParseNodesReader(strings.NewReader(s))
 }
 
-func parseCommand(r *bufio.Reader, stack []parent, depth int, yield func(Node, int) bool) ([]parent, error) {
-	cmd, err := getNext(r, true)
+func parseCommand(s *scanner, stack []parent, depth int, yield func(Node, int) bool, startPos int, visiblePos int) ([]parent, int, error) {
+	cmd, err := getNext(s, true)
 	if err != nil && err != io.EOF {
-		return stack, err
+		return stack, visiblePos, err
 	}
+
+	createNode := func(n Node) {
+		n.SetPos(startPos, 0) // End will be set when popped
+		stack = append(stack, n.(parent))
+	}
+
 	switch strings.ToLower(cmd) {
 	case "*", "b", "bold":
-		stack = append(stack, &Bold{})
+		createNode(&Bold{})
 	case "/", "i", "italic":
-		stack = append(stack, &Italic{})
+		createNode(&Italic{})
 	case "_", "u", "underline":
-		stack = append(stack, &Underline{})
+		createNode(&Underline{})
 	case "^", "p", "power", "sup":
-		stack = append(stack, &Sup{})
+		createNode(&Sup{})
 	case ".", "s", "sub":
-		stack = append(stack, &Sub{})
+		createNode(&Sub{})
 	case "img", "image":
-		skipArgPrefix(r)
-		raw, err := getNext(r, false)
+		skipArgPrefix(s)
+		raw, err := getNext(s, false)
 		if err != nil && err != io.EOF {
-			return stack, err
+			return stack, visiblePos, err
+		}
+		if ch, err := s.ReadByte(); err == nil {
+			if ch != ']' {
+				s.UnreadByte()
+			}
 		}
 		n := &Image{Src: raw}
+		n.SetPos(startPos, visiblePos) // Self-closing, 0-width in visible space
 		if len(stack) > 0 {
 			*stack[len(stack)-1].childrenPtr() = append(*stack[len(stack)-1].childrenPtr(), n)
 		}
 		yield(n, depth)
 	case "a", "link", "url":
-		skipArgPrefix(r)
-		raw, err := getNext(r, false)
+		skipArgPrefix(s)
+		raw, err := getNext(s, false)
 		if err != nil && err != io.EOF {
-			return stack, err
+			return stack, visiblePos, err
 		}
-		stack = append(stack, &Link{Href: raw})
+		n := &Link{Href: raw}
+		createNode(n)
 	case "code":
-		skipArgPrefix(r)
-		raw, err := directOutput(r, "[/code]", "code]")
-		if err != nil {
-			return stack, err
+		skipArgPrefix(s)
+		if ch, err := s.ReadByte(); err == nil {
+			if ch != ']' {
+				s.UnreadByte()
+			}
 		}
-		n := &Code{Value: raw}
+		// directOutput consumes content bytes
+		raw, _, _, err := directOutput(s, "[/code]", "code]")
+		if err != nil {
+			return stack, visiblePos, err
+		}
+		// raw is the content.
+		contentLen := len(raw)
+		innerStart := visiblePos
+		innerEnd := visiblePos + contentLen
+
+		n := &Code{Value: raw, InnerStart: innerStart, InnerEnd: innerEnd}
+		n.SetPos(startPos, innerEnd) // Code node includes content
+
+		visiblePos += contentLen
+
 		if len(stack) > 0 {
 			*stack[len(stack)-1].childrenPtr() = append(*stack[len(stack)-1].childrenPtr(), n)
 		}
 		yield(n, depth)
 	case "quoteof":
-		skipArgPrefix(r)
-		name, err := getNextArg(r)
+		skipArgPrefix(s)
+		name, err := getNextArg(s)
 		if err != nil && err != io.EOF {
-			return stack, err
+			return stack, visiblePos, err
 		}
-		stack = append(stack, &QuoteOf{Name: name})
+		n := &QuoteOf{Name: name}
+		createNode(n)
 	case "quote", "q":
-		stack = append(stack, &Quote{})
+		createNode(&Quote{})
 	case "spoiler", "sp":
-		stack = append(stack, &Spoiler{})
+		createNode(&Spoiler{})
 	case "indent":
-		stack = append(stack, &Indent{})
+		createNode(&Indent{})
 	case "hr":
 		n := &HR{}
+		if ch, err := s.ReadByte(); err == nil {
+			if ch != ']' {
+				s.UnreadByte()
+			}
+		}
+		n.SetPos(startPos, visiblePos)
 		if len(stack) > 0 {
 			*stack[len(stack)-1].childrenPtr() = append(*stack[len(stack)-1].childrenPtr(), n)
 		}
 		yield(n, depth)
 	default:
-		stack = append(stack, &Custom{Tag: cmd})
+		// Custom tag
+		n := &Custom{Tag: cmd}
+		createNode(n)
 	}
-	return stack, nil
+	return stack, visiblePos, nil
 }
 
-func getNextArg(r *bufio.Reader) (string, error) {
-	ch, err := r.ReadByte()
+func getNextArg(s *scanner) (string, error) {
+	ch, err := s.ReadByte()
 	if err != nil {
 		if err == io.EOF {
 			return "", io.EOF
@@ -225,7 +327,7 @@ func getNextArg(r *bufio.Reader) (string, error) {
 	if ch == '"' {
 		var result bytes.Buffer
 		for {
-			ch, err = r.ReadByte()
+			ch, err = s.ReadByte()
 			if err != nil {
 				if err == io.EOF {
 					return result.String(), io.EOF
@@ -236,7 +338,7 @@ func getNextArg(r *bufio.Reader) (string, error) {
 			case '"':
 				return result.String(), nil
 			case '\\':
-				next, err := r.ReadByte()
+				next, err := s.ReadByte()
 				if err != nil {
 					if err == io.EOF {
 						result.WriteByte('\\')
@@ -256,17 +358,17 @@ func getNextArg(r *bufio.Reader) (string, error) {
 			}
 		}
 	} else {
-		if err := r.UnreadByte(); err != nil {
+		if err := s.UnreadByte(); err != nil {
 			return "", err
 		}
-		return getNext(r, false)
+		return getNext(s, false)
 	}
 }
 
-func getNext(r *bufio.Reader, endAtEqual bool) (string, error) {
+func getNext(s *scanner, endAtEqual bool) (string, error) {
 	var result bytes.Buffer
 	for {
-		ch, err := r.ReadByte()
+		ch, err := s.ReadByte()
 		if err != nil {
 			if err == io.EOF {
 				return result.String(), io.EOF
@@ -275,20 +377,20 @@ func getNext(r *bufio.Reader, endAtEqual bool) (string, error) {
 		}
 		switch ch {
 		case '\n', ']', '[', ' ', '\r':
-			if err := r.UnreadByte(); err != nil {
+			if err := s.UnreadByte(); err != nil {
 				return "", err
 			}
 			return result.String(), nil
 		case '=':
 			if endAtEqual {
-				if err := r.UnreadByte(); err != nil {
+				if err := s.UnreadByte(); err != nil {
 					return "", err
 				}
 				return result.String(), nil
 			}
 			result.WriteByte(ch)
 		case '\\':
-			next, err := r.ReadByte()
+			next, err := s.ReadByte()
 			if err != nil {
 				if err == io.EOF {
 					result.WriteByte('\\')
@@ -309,37 +411,39 @@ func getNext(r *bufio.Reader, endAtEqual bool) (string, error) {
 	}
 }
 
-func skipArgPrefix(r *bufio.Reader) {
-	if ch, err := r.ReadByte(); err == nil {
+func skipArgPrefix(s *scanner) {
+	if ch, err := s.ReadByte(); err == nil {
 		if ch != '=' && ch != ' ' {
-			r.UnreadByte()
+			s.UnreadByte()
 		}
 	}
 }
 
-func directOutput(r *bufio.Reader, terminators ...string) (string, error) {
+func directOutput(s *scanner, terminators ...string) (string, int, int, error) {
 	lens := make([]int, len(terminators))
 	for i, t := range terminators {
 		lens[i] = len(t)
 	}
 	var buf bytes.Buffer
+	startPos := s.pos
+
 	for {
-		ch, err := r.ReadByte()
+		ch, err := s.ReadByte()
 		if err != nil {
 			if err == io.EOF {
-				return buf.String(), nil
+				return buf.String(), startPos, s.pos, nil
 			}
-			return "", err
+			return "", 0, 0, err
 		}
 		switch ch {
 		case '\\':
-			next, err := r.ReadByte()
+			next, err := s.ReadByte()
 			if err != nil {
 				if err == io.EOF {
 					buf.WriteByte('\\')
-					return buf.String(), nil
+					return buf.String(), startPos, s.pos, nil
 				}
-				return "", err
+				return "", 0, 0, err
 			}
 			buf.WriteByte(next)
 		default:
@@ -347,7 +451,9 @@ func directOutput(r *bufio.Reader, terminators ...string) (string, error) {
 			for idx, term := range terminators {
 				if buf.Len() >= lens[idx] && strings.EqualFold(term, buf.String()[buf.Len()-lens[idx]:]) {
 					out := buf.Bytes()[:buf.Len()-lens[idx]]
-					return string(out), nil
+					// End position of content is current pos - length of terminator
+					endPos := s.pos - lens[idx]
+					return string(out), startPos, endPos, nil
 				}
 			}
 		}

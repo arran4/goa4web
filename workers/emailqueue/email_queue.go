@@ -76,23 +76,6 @@ func isAdminEmail(ctx context.Context, q db.Querier, cfg *config.RuntimeConfig, 
 	return false
 }
 
-func hasVerificationRecord(ctx context.Context, q db.Querier, addr string) bool {
-	if q == nil {
-		return false
-	}
-	ue, err := q.GetUserEmailByEmail(ctx, addr)
-	if err != nil {
-		return false
-	}
-	if ue.VerifiedAt.Valid {
-		return false
-	}
-	if ue.VerificationExpiresAt.Valid && ue.VerificationExpiresAt.Time.Before(time.Now()) {
-		return false
-	}
-	return ue.LastVerificationCode.Valid
-}
-
 // ResolveQueuedEmailAddress resolves the recipient for a queued email.
 // When the user record is missing or lacks a valid address the admin or direct
 // email logic is applied.
@@ -122,10 +105,7 @@ func ResolveQueuedEmailAddress(ctx context.Context, q db.Querier, cfg *config.Ru
 	}
 
 	if e.DirectEmail {
-		if hasVerificationRecord(ctx, q, addr.Address) {
-			return *addr, nil
-		}
-		return mail.Address{}, fmt.Errorf("no verification record for %s", addr.Address)
+		return *addr, nil
 	}
 
 	if e.ToUserID.Valid {

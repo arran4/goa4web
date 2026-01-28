@@ -67,6 +67,11 @@ type QuerierStub struct {
 	SystemGetUserByEmailCalls []string
 	SystemGetUserByEmailFn    func(context.Context, string) (*SystemGetUserByEmailRow, error)
 
+	GetUserEmailByEmailRow   *UserEmail
+	GetUserEmailByEmailErr   error
+	GetUserEmailByEmailCalls []string
+	GetUserEmailByEmailFn    func(context.Context, string) (*UserEmail, error)
+
 	SystemGetLastNotificationForRecipientByMessageRow   *Notification
 	SystemGetLastNotificationForRecipientByMessageErr   error
 	SystemGetLastNotificationForRecipientByMessageCalls []SystemGetLastNotificationForRecipientByMessageParams
@@ -1036,6 +1041,26 @@ func (s *QuerierStub) GetWritingForListerByID(ctx context.Context, arg GetWritin
 	}
 	if row == nil {
 		return nil, errors.New("GetWritingForListerByID not stubbed")
+	}
+	return row, nil
+}
+
+// GetUserEmailByEmail records the call and returns the configured response.
+func (s *QuerierStub) GetUserEmailByEmail(ctx context.Context, email string) (*UserEmail, error) {
+	s.mu.Lock()
+	s.GetUserEmailByEmailCalls = append(s.GetUserEmailByEmailCalls, email)
+	fn := s.GetUserEmailByEmailFn
+	row := s.GetUserEmailByEmailRow
+	err := s.GetUserEmailByEmailErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, email)
+	}
+	if err != nil {
+		return nil, err
+	}
+	if row == nil {
+		return nil, errors.New("GetUserEmailByEmail not stubbed")
 	}
 	return row, nil
 }

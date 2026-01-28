@@ -14,7 +14,7 @@ ENV AUTO_MIGRATE=false
 COPY --from=runtime /etc/passwd /etc/passwd
 COPY --from=runtime /etc/group /etc/group
 COPY --from=runtime /data /data
-COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=runtime /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 COPY goa4web /usr/local/bin/goa4web
 # Image uploads are stored under /data/imagebbs inside the container.

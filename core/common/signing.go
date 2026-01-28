@@ -8,6 +8,11 @@ import (
 	"github.com/arran4/goa4web/internal/sign/signutil"
 )
 
+const (
+	ImagePrefix = "/images/image/"
+	CachePrefix = "/images/cache/"
+)
+
 // SignShareURL signs a share URL with path-based signature by default.
 // The path will have "/shared" injected after the module name.
 func (cd *CoreData) SignShareURL(path string, opts ...sign.SignOption) (string, error) {
@@ -41,7 +46,7 @@ func (cd *CoreData) SignImageURL(imageRef string, ttl time.Duration) string {
 	// Strip image: or img: prefix if present
 	imageRef = strings.TrimPrefix(strings.TrimPrefix(imageRef, "image:"), "img:")
 
-	path := "/images/image/" + imageRef
+	path := ImagePrefix + imageRef
 	expiry := time.Now().Add(ttl)
 
 	sig := sign.Sign(path, cd.ImageSignKey, sign.WithExpiry(expiry))
@@ -54,7 +59,7 @@ func (cd *CoreData) SignImageURL(imageRef string, ttl time.Duration) string {
 
 // SignCacheURL signs a cache URL with the given TTL.
 func (cd *CoreData) SignCacheURL(cacheRef string, ttl time.Duration) string {
-	path := "/images/cache/" + cacheRef
+	path := CachePrefix + cacheRef
 	expiry := time.Now().Add(ttl)
 
 	sig := sign.Sign(path, cd.ImageSignKey, sign.WithExpiry(expiry))

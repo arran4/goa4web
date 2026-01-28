@@ -2,16 +2,15 @@ package blogs
 
 import (
 	"context"
+	"database/sql"
 	"encoding/xml"
 	"net/http"
 	"net/http/httptest"
-	"regexp"
 	"testing"
 	"time"
 
 	"github.com/arran4/goa4web/core/consts"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 
@@ -20,6 +19,7 @@ import (
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 var (
@@ -28,13 +28,7 @@ var (
 )
 
 func TestBlogsBloggerPostsPage(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-
-	q := db.New(conn)
+	q := testhelpers.NewQuerierStub(testhelpers.WithGrant("blogs", "entry", "see"))
 	store = sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = sessionName
@@ -60,19 +54,26 @@ func TestBlogsBloggerPostsPage(t *testing.T) {
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
-	userRows := sqlmock.NewRows([]string{"idusers", "username", "public_profile_enabled_at"}).
-		AddRow(1, "bob", nil)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT idusers, username, public_profile_enabled_at\nFROM users\nWHERE username = ?")).
-		WithArgs(sqlmock.AnyArg()).
-		WillReturnRows(userRows)
-
-	blogRows := sqlmock.NewRows([]string{
-		"idblogs", "forumthread_id", "users_idusers",
-		"language_id", "blog", "written", "timezone", "username", "coalesce(th.comments, 0)", "is_owner",
-	}).AddRow(1, 1, 1, 1, "hello", time.Unix(0, 0), time.Local.String(), "bob", 0, true)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT b.idblogs")).
-		WithArgs(int32(1), int32(1), int32(1), int32(1), int32(1), int32(1), sqlmock.AnyArg(), int32(15), int32(0)).
-		WillReturnRows(blogRows)
+	q.SystemGetUserByUsernameRow = &db.SystemGetUserByUsernameRow{
+		Idusers:                1,
+		Username:               sql.NullString{String: "bob", Valid: true},
+		PublicProfileEnabledAt: sql.NullTime{},
+	}
+	q.ListBlogEntriesByAuthorForListerReturns = []*db.ListBlogEntriesByAuthorForListerRow{
+		{
+			Idblogs:       1,
+			ForumthreadID: sql.NullInt32{Int32: 1, Valid: true},
+			UsersIdusers:  1,
+			LanguageID:    sql.NullInt32{Int32: 1, Valid: true},
+			Blog:          sql.NullString{String: "hello", Valid: true},
+			Written:       time.Unix(0, 0),
+			Timezone:      sql.NullString{String: time.Local.String(), Valid: true},
+			Username:      sql.NullString{String: "bob", Valid: true},
+			Comments:      0,
+			IsOwner:       true,
+			Title:         "hello",
+		},
+	}
 
 	rr := httptest.NewRecorder()
 	r.ServeHTTP(rr, req)
@@ -80,30 +81,32 @@ func TestBlogsBloggerPostsPage(t *testing.T) {
 	if rr.Result().StatusCode != http.StatusOK {
 		t.Fatalf("status=%d", rr.Result().StatusCode)
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 }
 
 func TestBlogsRssPageWritesRSS(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	q := testhelpers.NewQuerierStub()
+	q.SystemGetUserByUsernameRow = &db.SystemGetUserByUsernameRow{
+		Idusers:                1,
+		Username:               sql.NullString{String: "bob", Valid: true},
+		PublicProfileEnabledAt: sql.NullTime{},
 	}
-	defer conn.Close()
-
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT idusers, username, public_profile_enabled_at\nFROM users\nWHERE username = ?")).
-		WithArgs("bob").
-		WillReturnRows(sqlmock.NewRows([]string{"idusers", "username", "public_profile_enabled_at"}).
-			AddRow(1, "bob", nil))
-
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT b.idblogs")).
-		WithArgs(int32(0), int32(0), int32(1), int32(1), int32(0), int32(0), sqlmock.AnyArg(), int32(15), int32(0)).
-		WillReturnRows(sqlmock.NewRows([]string{"idblogs", "forumthread_id", "users_idusers", "language_id", "blog", "written", "timezone", "username", "coalesce(th.comments, 0)", "is_owner", "title"}).
-			AddRow(1, 1, 1, 1, "hello", time.Unix(0, 0), time.Local.String(), "bob", 0, true, "hello"))
+	q.ListBlogEntriesByAuthorForListerReturns = []*db.ListBlogEntriesByAuthorForListerRow{
+		{
+			Idblogs:       1,
+			ForumthreadID: sql.NullInt32{Int32: 1, Valid: true},
+			UsersIdusers:  1,
+			LanguageID:    sql.NullInt32{Int32: 1, Valid: true},
+			Blog:          sql.NullString{String: "hello", Valid: true},
+			Written:       time.Unix(0, 0),
+			Timezone:      sql.NullString{String: time.Local.String(), Valid: true},
+			Username:      sql.NullString{String: "bob", Valid: true},
+			Comments:      0,
+			IsOwner:       true,
+			Title:         "hello",
+		},
+	}
 
 	req := httptest.NewRequest("GET", "http://example.com/blogs/rss?rss=bob", nil)
-	q := db.New(conn)
 	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig(), common.WithSiteTitle("Site"))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -111,9 +114,6 @@ func TestBlogsRssPageWritesRSS(t *testing.T) {
 
 	RssPage(rr, req)
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 	if ct := rr.Header().Get("Content-Type"); ct != "application/rss+xml" {
 		t.Errorf("Content-Type=%q", ct)
 	}

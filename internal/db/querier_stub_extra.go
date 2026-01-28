@@ -128,6 +128,19 @@ func (s *QuerierStub) SystemGetLogin(ctx context.Context, arg sql.NullString) (*
 	return row, err
 }
 
+func (s *QuerierStub) SystemGetUserByUsername(ctx context.Context, username sql.NullString) (*SystemGetUserByUsernameRow, error) {
+	s.mu.Lock()
+	s.SystemGetUserByUsernameCalls = append(s.SystemGetUserByUsernameCalls, username)
+	fn := s.SystemGetUserByUsernameFn
+	row := s.SystemGetUserByUsernameRow
+	err := s.SystemGetUserByUsernameErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, username)
+	}
+	return row, err
+}
+
 func (s *QuerierStub) SystemListVerifiedEmailsByUserID(ctx context.Context, userID int32) ([]*UserEmail, error) {
 	s.mu.Lock()
 	s.SystemListVerifiedEmailsByUserIDCalls = append(s.SystemListVerifiedEmailsByUserIDCalls, userID)
@@ -150,6 +163,32 @@ func (s *QuerierStub) GetLoginRoleForUser(ctx context.Context, userID int32) (in
 	s.mu.Unlock()
 	if fn != nil {
 		return fn(ctx, userID)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) ListBlogEntriesByAuthorForLister(ctx context.Context, arg ListBlogEntriesByAuthorForListerParams) ([]*ListBlogEntriesByAuthorForListerRow, error) {
+	s.mu.Lock()
+	s.ListBlogEntriesByAuthorForListerCalls = append(s.ListBlogEntriesByAuthorForListerCalls, arg)
+	fn := s.ListBlogEntriesByAuthorForListerFn
+	ret := s.ListBlogEntriesByAuthorForListerReturns
+	err := s.ListBlogEntriesByAuthorForListerErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) ListBlogEntriesByIDsForLister(ctx context.Context, arg ListBlogEntriesByIDsForListerParams) ([]*ListBlogEntriesByIDsForListerRow, error) {
+	s.mu.Lock()
+	s.ListBlogEntriesByIDsForListerCalls = append(s.ListBlogEntriesByIDsForListerCalls, arg)
+	fn := s.ListBlogEntriesByIDsForListerFn
+	ret := s.ListBlogEntriesByIDsForListerReturns
+	err := s.ListBlogEntriesByIDsForListerErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
 	}
 	return ret, err
 }

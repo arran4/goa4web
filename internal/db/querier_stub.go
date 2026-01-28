@@ -67,6 +67,11 @@ type QuerierStub struct {
 	SystemGetUserByEmailCalls []string
 	SystemGetUserByEmailFn    func(context.Context, string) (*SystemGetUserByEmailRow, error)
 
+	SystemGetUserByUsernameRow   *SystemGetUserByUsernameRow
+	SystemGetUserByUsernameErr   error
+	SystemGetUserByUsernameCalls []sql.NullString
+	SystemGetUserByUsernameFn    func(context.Context, sql.NullString) (*SystemGetUserByUsernameRow, error)
+
 	SystemGetLastNotificationForRecipientByMessageRow   *Notification
 	SystemGetLastNotificationForRecipientByMessageErr   error
 	SystemGetLastNotificationForRecipientByMessageCalls []SystemGetLastNotificationForRecipientByMessageParams
@@ -390,6 +395,16 @@ type QuerierStub struct {
 	ListWritersSearchForListerReturns []*ListWritersSearchForListerRow
 	ListWritersSearchForListerErr     error
 	ListWritersSearchForListerFn      func(ListWritersSearchForListerParams) ([]*ListWritersSearchForListerRow, error)
+
+	ListBlogEntriesByAuthorForListerCalls   []ListBlogEntriesByAuthorForListerParams
+	ListBlogEntriesByAuthorForListerReturns []*ListBlogEntriesByAuthorForListerRow
+	ListBlogEntriesByAuthorForListerErr     error
+	ListBlogEntriesByAuthorForListerFn      func(context.Context, ListBlogEntriesByAuthorForListerParams) ([]*ListBlogEntriesByAuthorForListerRow, error)
+
+	ListBlogEntriesByIDsForListerCalls   []ListBlogEntriesByIDsForListerParams
+	ListBlogEntriesByIDsForListerReturns []*ListBlogEntriesByIDsForListerRow
+	ListBlogEntriesByIDsForListerErr     error
+	ListBlogEntriesByIDsForListerFn      func(context.Context, ListBlogEntriesByIDsForListerParams) ([]*ListBlogEntriesByIDsForListerRow, error)
 
 	ListImagePostsByBoardForListerCalls   []ListImagePostsByBoardForListerParams
 	ListImagePostsByBoardForListerReturns []*ListImagePostsByBoardForListerRow

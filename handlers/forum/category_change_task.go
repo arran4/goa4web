@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/handlers/forum/forumcommon"
 	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -9,7 +10,7 @@ import (
 // CategoryChangeTask updates a forum category name.
 type CategoryChangeTask struct{ tasks.TaskString }
 
-var categoryChangeTask = &CategoryChangeTask{TaskString: TaskForumCategoryChange}
+var categoryChangeTask = &CategoryChangeTask{TaskString: forumcommon.TaskForumCategoryChange}
 
 const (
 	EmailTemplateAdminNotificationForumCategoryChange notif.EmailTemplateName = "adminNotificationForumCategoryChangeEmail"

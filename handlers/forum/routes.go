@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/handlers/forum/forumcommon"
 	"net/http"
 
 	"github.com/arran4/goa4web/handlers/forum/comments"
@@ -23,7 +24,7 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Reg
 	h := New()
 	fr.HandleFunc("/forum.js", h.serveJS).Methods("GET")
 	fr.HandleFunc("/forum.css", h.serveCSS).Methods("GET")
-	fr.Use(handlers.IndexMiddleware(CustomForumIndex), handlers.SectionMiddleware("forum"))
+	fr.Use(handlers.IndexMiddleware(forumcommon.CustomForumIndex), handlers.SectionMiddleware("forum"))
 	fr.HandleFunc("/topic/{topic}.rss", TopicRssPage).Methods("GET")
 	fr.HandleFunc("/topic/{topic}.rss/u/{username}", TopicRssPage).Methods("GET")
 	fr.HandleFunc("/topic/{topic}.atom", TopicAtomPage).Methods("GET")

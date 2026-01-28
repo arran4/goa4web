@@ -1,7 +1,8 @@
-package forum
+package forumcommon
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 
@@ -19,4 +20,14 @@ func BasePathMiddleware(base string) mux.MiddlewareFunc {
 			next.ServeHTTP(w, r)
 		})
 	}
+}
+
+func forumBasePath(cd *common.CoreData, r *http.Request) string {
+	if cd != nil && cd.ForumBasePath != "" {
+		return cd.ForumBasePath
+	}
+	if r != nil && strings.HasPrefix(r.URL.Path, "/private") {
+		return "/private"
+	}
+	return "/forum"
 }

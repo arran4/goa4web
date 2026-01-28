@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/handlers/forum/forumcommon"
 	"bytes"
 	"context"
 	"database/sql"
@@ -377,8 +378,8 @@ func TestForumAutoSubscribeTasks(t *testing.T) {
 	if err != nil {
 		t.Fatalf("reply AutoSubscribePath error: %v", err)
 	}
-	if actionName != string(TaskReply) {
-		t.Fatalf("expected action name %q, got %q", TaskReply, actionName)
+	if actionName != string(forumcommon.TaskReply) {
+		t.Fatalf("expected action name %q, got %q", forumcommon.TaskReply, actionName)
 	}
 	if path != "/forum/topic/88/thread/77" {
 		t.Fatalf("expected reply auto-subscribe path /forum/topic/88/thread/77, got %q", path)
@@ -398,8 +399,8 @@ func TestForumAutoSubscribeTasks(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create thread AutoSubscribePath error: %v", err)
 	}
-	if actionName != string(TaskCreateThread) {
-		t.Fatalf("expected action name %q, got %q", TaskCreateThread, actionName)
+	if actionName != string(forumcommon.TaskCreateThread) {
+		t.Fatalf("expected action name %q, got %q", forumcommon.TaskCreateThread, actionName)
 	}
 	if path != "/forum/topic/44/thread/55" {
 		t.Fatalf("expected create thread auto-subscribe path /forum/topic/44/thread/55, got %q", path)

@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/handlers/forum/forumcommon"
 	"fmt"
 	"net/http"
 
@@ -13,7 +14,7 @@ import (
 // topicThreadReplyCancelTask cancels replying to a thread.
 type topicThreadReplyCancelTask struct{ tasks.TaskString }
 
-var topicThreadReplyCancel = &topicThreadReplyCancelTask{TaskString: TaskCancel}
+var topicThreadReplyCancel = &topicThreadReplyCancelTask{TaskString: forumcommon.TaskCancel}
 
 // TopicThreadReplyCancelHandler cancels replying to a thread. Exported for reuse.
 var TopicThreadReplyCancelHandler = topicThreadReplyCancel

@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/handlers/forum/forumcommon"
 	"fmt"
 	"log"
 	"net/http"
@@ -16,7 +17,7 @@ import (
 // topicThreadCommentEditActionTask updates a comment and refreshes thread metadata.
 type topicThreadCommentEditActionTask struct{ tasks.TaskString }
 
-var topicThreadCommentEditAction = &topicThreadCommentEditActionTask{TaskString: TaskEditReply}
+var topicThreadCommentEditAction = &topicThreadCommentEditActionTask{TaskString: forumcommon.TaskEditReply}
 
 // TopicThreadCommentEditActionHandler updates a comment. Exported for reuse.
 var TopicThreadCommentEditActionHandler = topicThreadCommentEditAction

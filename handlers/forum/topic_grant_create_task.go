@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/handlers/forum/forumcommon"
 	"database/sql"
 	"fmt"
 	"log"
@@ -17,7 +18,7 @@ import (
 // TopicGrantCreateTask creates a new grant for a forum topic.
 type TopicGrantCreateTask struct{ tasks.TaskString }
 
-var topicGrantCreateTask = &TopicGrantCreateTask{TaskString: TaskTopicGrantCreate}
+var topicGrantCreateTask = &TopicGrantCreateTask{TaskString: forumcommon.TaskTopicGrantCreate}
 
 var _ tasks.Task = (*TopicGrantCreateTask)(nil)
 

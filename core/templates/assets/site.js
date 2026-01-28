@@ -239,11 +239,11 @@ function calculateSourceOffset(node, offset) {
     }
     // Fallback: try to find nearest ancestor with data-start-pos
     let current = node;
-    while (current && current.nodeType !== Node.ELEMENT_NODE) {
+    while (current) {
+        if (current.nodeType === Node.ELEMENT_NODE && current.hasAttribute('data-start-pos')) {
+             return parseInt(current.getAttribute('data-start-pos'), 10);
+        }
         current = current.parentNode;
-    }
-    if (current && current.hasAttribute('data-start-pos')) {
-         return parseInt(current.getAttribute('data-start-pos'), 10);
     }
     return -1;
 }

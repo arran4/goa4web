@@ -43,7 +43,7 @@ func Stream(r io.Reader, opts ...StreamOption) iter.Seq[Node] {
 
 type scanner struct {
 	r   *bufio.Reader
-	pos int
+	pos int // raw byte position (unused for AST now, but kept for low level logic if needed)
 }
 
 func (s *scanner) ReadByte() (byte, error) {
@@ -67,6 +67,11 @@ func streamImpl(r io.Reader, yield func(Node, int) bool) {
 	s := &scanner{r: br, pos: 0}
 	var stack []parent
 	var buf bytes.Buffer
+
+	// visiblePos tracks the byte offset in the "visible" text (content of Text and Code nodes).
+	// Tags themselves do not advance this counter.
+	visiblePos := 0
+
 	textStart := -1
 
 	flush := func(offset int) bool {
@@ -75,7 +80,12 @@ func streamImpl(r io.Reader, yield func(Node, int) bool) {
 			return true
 		}
 		t := &Text{Value: buf.String()}
-		t.SetPos(textStart, s.pos-offset)
+		// Text node range is current visiblePos to visiblePos + len
+		start := visiblePos
+		end := visiblePos + len(t.Value)
+		t.SetPos(start, end)
+		visiblePos = end
+
 		textStart = -1
 		buf.Reset()
 		if len(stack) > 0 {
@@ -95,11 +105,8 @@ func streamImpl(r io.Reader, yield func(Node, int) bool) {
 					stack = stack[:len(stack)-1]
 					if nNode, ok := n.(Node); ok {
 						nNode.SetPos(nNode.GetPos())
-						// End position is end of stream if not closed properly
-						// But strictly, if popped here, it means implicit close at EOF.
-						// We can set End to s.pos.
 						start, _ := nNode.GetPos()
-						nNode.SetPos(start, s.pos)
+						nNode.SetPos(start, visiblePos)
 					}
 					if len(stack) > 0 {
 						*stack[len(stack)-1].childrenPtr() = append(*stack[len(stack)-1].childrenPtr(), n.(Node))
@@ -117,8 +124,9 @@ func streamImpl(r io.Reader, yield func(Node, int) bool) {
 				return
 			}
 			var e error
-			startPos := s.pos - 1
-			stack, e = parseCommand(s, stack, len(stack)+1, yield, startPos)
+			// startPos for tag is current visiblePos
+			startPos := visiblePos
+			stack, visiblePos, e = parseCommand(s, stack, len(stack)+1, yield, startPos, visiblePos)
 			if e != nil {
 				return
 			}
@@ -131,7 +139,7 @@ func streamImpl(r io.Reader, yield func(Node, int) bool) {
 				stack = stack[:len(stack)-1]
 				if nNode, ok := n.(Node); ok {
 					start, _ := nNode.GetPos()
-					nNode.SetPos(start, s.pos) // Include ']' in range
+					nNode.SetPos(start, visiblePos)
 				}
 				if len(stack) > 0 {
 					*stack[len(stack)-1].childrenPtr() = append(*stack[len(stack)-1].childrenPtr(), n.(Node))
@@ -171,12 +179,18 @@ func streamImpl(r io.Reader, yield func(Node, int) bool) {
 // Parse reads markup from r and returns the root node.
 func Parse(r io.Reader) (*Root, error) {
 	nodes := slices.Collect(Stream(r, WithDepth(1)))
-	// Root node doesn't really have a single pos if constructed from stream of nodes
-	// unless we wrap the whole stream. Here we just return list of children.
-	// But Root struct has fields.
 	root := &Root{Children: nodes}
-	// We can set root pos if we want, but usually it's implicit 0 to EOF.
-	// We don't have access to total length here easily unless we track it.
+	// Calculate root range based on children
+	if len(nodes) > 0 {
+		start, _ := nodes[0].GetPos()
+		_, end := nodes[len(nodes)-1].GetPos()
+		// Since we track visiblePos now, start/end are consistent.
+		// If there are gaps (not possible if stream is continuous), this might be weird,
+		// but visiblePos is continuous.
+		root.SetPos(start, end)
+	} else {
+		root.SetPos(0, 0)
+	}
 	return root, nil
 }
 
@@ -195,10 +209,10 @@ func ParseNodes(s string) ([]Node, error) {
 	return ParseNodesReader(strings.NewReader(s))
 }
 
-func parseCommand(s *scanner, stack []parent, depth int, yield func(Node, int) bool, startPos int) ([]parent, error) {
+func parseCommand(s *scanner, stack []parent, depth int, yield func(Node, int) bool, startPos int, visiblePos int) ([]parent, int, error) {
 	cmd, err := getNext(s, true)
 	if err != nil && err != io.EOF {
-		return stack, err
+		return stack, visiblePos, err
 	}
 
 	createNode := func(n Node) {
@@ -221,7 +235,7 @@ func parseCommand(s *scanner, stack []parent, depth int, yield func(Node, int) b
 		skipArgPrefix(s)
 		raw, err := getNext(s, false)
 		if err != nil && err != io.EOF {
-			return stack, err
+			return stack, visiblePos, err
 		}
 		if ch, err := s.ReadByte(); err == nil {
 			if ch != ']' {
@@ -229,7 +243,7 @@ func parseCommand(s *scanner, stack []parent, depth int, yield func(Node, int) b
 			}
 		}
 		n := &Image{Src: raw}
-		n.SetPos(startPos, s.pos) // Self-closing (conceptually)
+		n.SetPos(startPos, visiblePos) // Self-closing, 0-width in visible space
 		if len(stack) > 0 {
 			*stack[len(stack)-1].childrenPtr() = append(*stack[len(stack)-1].childrenPtr(), n)
 		}
@@ -238,18 +252,32 @@ func parseCommand(s *scanner, stack []parent, depth int, yield func(Node, int) b
 		skipArgPrefix(s)
 		raw, err := getNext(s, false)
 		if err != nil && err != io.EOF {
-			return stack, err
+			return stack, visiblePos, err
 		}
 		n := &Link{Href: raw}
 		createNode(n)
 	case "code":
 		skipArgPrefix(s)
-		raw, innerStart, innerEnd, err := directOutput(s, "[/code]", "code]")
-		if err != nil {
-			return stack, err
+		if ch, err := s.ReadByte(); err == nil {
+			if ch != ']' {
+				s.UnreadByte()
+			}
 		}
+		// directOutput consumes content bytes
+		raw, _, _, err := directOutput(s, "[/code]", "code]")
+		if err != nil {
+			return stack, visiblePos, err
+		}
+		// raw is the content.
+		contentLen := len(raw)
+		innerStart := visiblePos
+		innerEnd := visiblePos + contentLen
+
 		n := &Code{Value: raw, InnerStart: innerStart, InnerEnd: innerEnd}
-		n.SetPos(startPos, s.pos)
+		n.SetPos(startPos, innerEnd) // Code node includes content
+
+		visiblePos += contentLen
+
 		if len(stack) > 0 {
 			*stack[len(stack)-1].childrenPtr() = append(*stack[len(stack)-1].childrenPtr(), n)
 		}
@@ -258,7 +286,7 @@ func parseCommand(s *scanner, stack []parent, depth int, yield func(Node, int) b
 		skipArgPrefix(s)
 		name, err := getNextArg(s)
 		if err != nil && err != io.EOF {
-			return stack, err
+			return stack, visiblePos, err
 		}
 		n := &QuoteOf{Name: name}
 		createNode(n)
@@ -275,7 +303,7 @@ func parseCommand(s *scanner, stack []parent, depth int, yield func(Node, int) b
 				s.UnreadByte()
 			}
 		}
-		n.SetPos(startPos, s.pos) // Self-closing? But HR is typically [hr] so yes.
+		n.SetPos(startPos, visiblePos)
 		if len(stack) > 0 {
 			*stack[len(stack)-1].childrenPtr() = append(*stack[len(stack)-1].childrenPtr(), n)
 		}
@@ -285,7 +313,7 @@ func parseCommand(s *scanner, stack []parent, depth int, yield func(Node, int) b
 		n := &Custom{Tag: cmd}
 		createNode(n)
 	}
-	return stack, nil
+	return stack, visiblePos, nil
 }
 
 func getNextArg(s *scanner) (string, error) {

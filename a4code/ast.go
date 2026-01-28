@@ -356,13 +356,6 @@ func (l *Link) html(w io.Writer) {
 		}
 		io.WriteString(w, "</a>")
 	} else {
-		// If unsafe, it renders as safe text? Or just content?
-		// Original: io.WriteString(w, safe) then children.
-		// If it's just text, maybe wrap in span?
-		// But Link usually implies a tag.
-		// If safe is just the text representation of href (escaped),
-		// and we render children.
-		// Let's wrap in span to preserve metadata.
 		fmt.Fprintf(w, `<span data-start-pos="%d" data-end-pos="%d">`, l.Start, l.End)
 		io.WriteString(w, safe)
 		for _, c := range l.Children {

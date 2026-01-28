@@ -9,10 +9,10 @@ func TestInvalidTags(t *testing.T) {
 		input    string
 		expected string
 	}{
-		{"[invalid]", `<span data-start-pos="0" data-end-pos="9">[invalid]</span>`},
-		{"[invalid text]", `<span data-start-pos="0" data-end-pos="14">[invalid<span data-start-pos="8" data-end-pos="13"> text</span>]</span>`},
-		{"[invalid [b bold]]", `<span data-start-pos="0" data-end-pos="18">[invalid<span data-start-pos="8" data-end-pos="9"> </span><strong data-start-pos="9" data-end-pos="17"><span data-start-pos="11" data-end-pos="16"> bold</span></strong>]</span>`},
-		{"[foo=bar]", `<span data-start-pos="0" data-end-pos="9">[foo<span data-start-pos="4" data-end-pos="8">=bar</span>]</span>`},
+		{"[invalid]", `<span data-start-pos="0" data-end-pos="0">[invalid]</span>`},
+		{"[invalid text]", `<span data-start-pos="0" data-end-pos="5">[invalid<span data-start-pos="0" data-end-pos="5"> text</span>]</span>`},
+		{"[invalid [b bold]]", `<span data-start-pos="0" data-end-pos="6">[invalid<span data-start-pos="0" data-end-pos="1"> </span><strong data-start-pos="1" data-end-pos="6"><span data-start-pos="1" data-end-pos="6"> bold</span></strong>]</span>`},
+		{"[foo=bar]", `<span data-start-pos="0" data-end-pos="4">[foo<span data-start-pos="0" data-end-pos="4">=bar</span>]</span>`},
 	}
 
 	for _, tc := range tests {

@@ -12,14 +12,14 @@ func TestParseToHTML(t *testing.T) {
 		t.Fatalf("parse error: %v", err)
 	}
 	got := ToHTML(ast)
-	// [b (0-2)
-	//  Bold (2-8)
-	// [i (8-10)
-	//  Italic (10-17)
-	// ] (17-18) end italic
-	// ] (18-19) end bold
-	//  plain (19-25)
-	want := `<strong data-start-pos="0" data-end-pos="19"><span data-start-pos="2" data-end-pos="8"> Bold </span><i data-start-pos="8" data-end-pos="18"><span data-start-pos="10" data-end-pos="17"> Italic</span></i></strong><span data-start-pos="19" data-end-pos="25"> plain</span>`
+	// [b (vis 0)
+	//  Bold (space + Bold + space = 6). vis 0-6.
+	// [i (vis 6)
+	//  Italic (space + Italic = 7). vis 6-13.
+	// ] (vis 13)
+	// ] (vis 13)
+	//  plain (space + plain = 6). vis 13-19.
+	want := `<strong data-start-pos="0" data-end-pos="13"><span data-start-pos="0" data-end-pos="6"> Bold </span><i data-start-pos="6" data-end-pos="13"><span data-start-pos="6" data-end-pos="13"> Italic</span></i></strong><span data-start-pos="13" data-end-pos="19"> plain</span>`
 	if got != want {
 		t.Errorf("got %q want %q", got, want)
 	}
@@ -32,8 +32,8 @@ func TestParseImage(t *testing.T) {
 		t.Fatalf("parse error: %v", err)
 	}
 	got := ToHTML(ast)
-	// [img=image.jpg] len 15
-	want := `<img src="image.jpg" data-start-pos="0" data-end-pos="15" />`
+	// [img] is 0-width in visible space.
+	want := `<img src="image.jpg" data-start-pos="0" data-end-pos="0" />`
 	if got != want {
 		t.Errorf("got %q want %q", got, want)
 	}
@@ -65,9 +65,9 @@ func TestParseNodes(t *testing.T) {
 	}
 	root := &Root{Children: nodes}
 	got := ToHTML(root)
-	// [b foo] (0-7)
-	// [i bar] (7-14)
-	want := `<strong data-start-pos="0" data-end-pos="7"><span data-start-pos="2" data-end-pos="6"> foo</span></strong><i data-start-pos="7" data-end-pos="14"><span data-start-pos="9" data-end-pos="13"> bar</span></i>`
+	// [b foo] -> " foo" (4)
+	// [i bar] -> " bar" (4)
+	want := `<strong data-start-pos="0" data-end-pos="4"><span data-start-pos="0" data-end-pos="4"> foo</span></strong><i data-start-pos="4" data-end-pos="8"><span data-start-pos="4" data-end-pos="8"> bar</span></i>`
 	if got != want {
 		t.Errorf("got %q want %q", got, want)
 	}
@@ -75,20 +75,15 @@ func TestParseNodes(t *testing.T) {
 
 func TestOffsets(t *testing.T) {
 	// [code]foo[/code]
-	// [ (0-1)
-	// code (1-5)
-	// ] (5-6) included in content due to parseCommand behavior
-	// foo (6-9)
-	// [/code] (9-16)
-	// Code node: 0-16. Inner: 5-9.
+	// vis 0-3.
+	// Inner content: foo.
 	input := "[code]foo[/code]"
 	ast, err := Parse(strings.NewReader(input))
 	if err != nil {
 		t.Fatalf("parse error: %v", err)
 	}
 	got := ToHTML(ast)
-	// Expect ]foo as content because skipArgPrefix does not consume ]
-	want := `<pre class="a4code-block a4code-code" data-start-pos="0" data-end-pos="16"><span data-start-pos="5" data-end-pos="9">]foo</span></pre>`
+	want := `<pre class="a4code-block a4code-code" data-start-pos="0" data-end-pos="3"><span data-start-pos="0" data-end-pos="3">foo</span></pre>`
 	if got != want {
 		t.Errorf("got %q want %q", got, want)
 	}

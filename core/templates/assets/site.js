@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
+    foldLongQuotes(document);
+
     document.body.addEventListener('click', function(e) {
         if (e.target && e.target.classList.contains('quote-link')) {
             e.preventDefault();
@@ -107,6 +109,7 @@ function previewA4Code(targetId, previewUrl, containerId) {
     })
     .then(html => {
         previewContent.innerHTML = html;
+        foldLongQuotes(previewContent);
         previewContainer.classList.remove('hidden');
     })
     .catch(error => {
@@ -252,4 +255,38 @@ function insertQuote(text) {
 
     reply.focus();
     reply.scrollIntoView();
+}
+
+function foldLongQuotes(container) {
+    if (!container) return;
+    const quotes = container.querySelectorAll('.quote-body');
+    quotes.forEach(quote => {
+        // Skip if already processed
+        if (quote.nextElementSibling && quote.nextElementSibling.classList.contains('folded-toggle')) {
+            return;
+        }
+
+        if (quote.scrollHeight > 250) {
+            quote.classList.add('collapsed');
+
+            const toggle = document.createElement('a');
+            toggle.className = 'folded-toggle';
+            toggle.innerText = 'Expand quote';
+            toggle.href = '#';
+            toggle.onclick = function(e) {
+                e.preventDefault();
+                quote.classList.toggle('collapsed');
+                if (quote.classList.contains('collapsed')) {
+                    toggle.innerText = 'Expand quote';
+                } else {
+                    toggle.innerText = 'Collapse quote';
+                }
+            };
+
+            // Insert after the quote body
+            if (quote.parentNode) {
+                quote.parentNode.insertBefore(toggle, quote.nextSibling);
+            }
+        }
+    });
 }

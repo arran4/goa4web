@@ -13,8 +13,7 @@ import (
 
 func TestRenderErrorPageNotFoundOmitsInternalError(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/missing", nil)
-	req, cd, _, cleanup := handlertest.RequestWithCoreData(t, req)
-	defer cleanup()
+	req, cd, _ := handlertest.RequestWithCoreData(t, req)
 
 	data := struct {
 		*common.CoreData

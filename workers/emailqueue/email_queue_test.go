@@ -83,8 +83,8 @@ func TestResolveQueuedEmailAddress_DirectEmail_UnverifiedUser_Success(t *testing
 	q.GetUserEmailByEmailFn = func(ctx context.Context, email string) (*db.UserEmail, error) {
 		if email == emailAddr {
 			return &db.UserEmail{
-				VerifiedAt:           sql.NullTime{Valid: false},
-				LastVerificationCode: sql.NullString{String: "code", Valid: true},
+				VerifiedAt:            sql.NullTime{Valid: false},
+				LastVerificationCode:  sql.NullString{String: "code", Valid: true},
 				VerificationExpiresAt: sql.NullTime{Time: time.Now().Add(time.Hour), Valid: true},
 			}, nil
 		}

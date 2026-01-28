@@ -76,7 +76,7 @@ type QuerierStub struct {
 	GetUserEmailByEmailCalls []string
 	GetUserEmailByEmailFn    func(context.Context, string) (*UserEmail, error)
 
-  SystemGetUserByUsernameRow   *SystemGetUserByUsernameRow
+	SystemGetUserByUsernameRow   *SystemGetUserByUsernameRow
 	SystemGetUserByUsernameErr   error
 	SystemGetUserByUsernameCalls []sql.NullString
 	SystemGetUserByUsernameFn    func(context.Context, sql.NullString) (*SystemGetUserByUsernameRow, error)
@@ -1315,12 +1315,13 @@ func (s *QuerierStub) GetUserEmailByEmail(ctx context.Context, email string) (*U
 	if fn != nil {
 		return fn(ctx, email)
 	}
-  	if err != nil {
+	if err != nil {
 		return nil, err
 	}
 	if row == nil {
-    return nil, errors.New("GetUserEmailByEmail not stubbed")
-  }
+		return nil, errors.New("GetUserEmailByEmail not stubbed")
+	}
+	return row, nil
 }
 func (s *QuerierStub) GetWritingCategoryById(ctx context.Context, idwritingcategory int32) (*WritingCategory, error) {
 	s.mu.Lock()

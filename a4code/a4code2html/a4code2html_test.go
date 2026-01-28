@@ -329,7 +329,7 @@ func TestExternalLinkCard(t *testing.T) {
 		{
 			name:  "Consecutive Block Links",
 			input: "[link http://example.com/card]\n[link http://example.com/card]\n",
-			want:  "<div class=\"external-link-card\"><a href=\"http://example.com/card\" target=\"_blank\" class=\"external-link-card-inner\"><img src=\"http://example.com/image.jpg\" class=\"external-link-image\" /><div class=\"external-link-content\"><div class=\"external-link-title\">Example Title</div><div class=\"external-link-description\">Example Description</div></div></a></div>" +
+			want: "<div class=\"external-link-card\"><a href=\"http://example.com/card\" target=\"_blank\" class=\"external-link-card-inner\"><img src=\"http://example.com/image.jpg\" class=\"external-link-image\" /><div class=\"external-link-content\"><div class=\"external-link-title\">Example Title</div><div class=\"external-link-description\">Example Description</div></div></a></div>" +
 				"<div class=\"external-link-card\"><a href=\"http://example.com/card\" target=\"_blank\" class=\"external-link-card-inner\"><img src=\"http://example.com/image.jpg\" class=\"external-link-image\" /><div class=\"external-link-content\"><div class=\"external-link-title\">Example Title</div><div class=\"external-link-description\">Example Description</div></div></a></div>",
 		},
 	}

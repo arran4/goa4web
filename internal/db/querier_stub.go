@@ -92,6 +92,15 @@ type QuerierStub struct {
 	AdminListUserEmailsErr     error
 	AdminListUserEmailsCalls   []int32
 
+	AdminGetImagePostRow   *AdminGetImagePostRow
+	AdminGetImagePostErr   error
+	AdminGetImagePostCalls []int32
+	AdminGetImagePostFn    func(context.Context, int32) (*AdminGetImagePostRow, error)
+
+	AdminApproveImagePostCalls []int32
+	AdminApproveImagePostErr   error
+	AdminApproveImagePostFn    func(context.Context, int32) error
+
 	AdminUserPostCountsByIDReturns *AdminUserPostCountsByIDRow
 	AdminUserPostCountsByIDErr     error
 	AdminUserPostCountsByIDCalls   []int32

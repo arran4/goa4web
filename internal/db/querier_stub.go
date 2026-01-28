@@ -142,10 +142,23 @@ type QuerierStub struct {
 	AdminInsertRequestQueueErr     error
 	AdminInsertRequestQueueFn      func(context.Context, AdminInsertRequestQueueParams) (sql.Result, error)
 
+	AdminInsertRequestCommentCalls []AdminInsertRequestCommentParams
+	AdminInsertRequestCommentErr   error
+	AdminInsertRequestCommentFn    func(context.Context, AdminInsertRequestCommentParams) error
+
+	InsertAdminUserCommentCalls []InsertAdminUserCommentParams
+	InsertAdminUserCommentErr   error
+	InsertAdminUserCommentFn    func(context.Context, InsertAdminUserCommentParams) error
+
 	SystemGetLoginRow   *SystemGetLoginRow
 	SystemGetLoginErr   error
 	SystemGetLoginCalls []sql.NullString
 	SystemGetLoginFn    func(context.Context, sql.NullString) (*SystemGetLoginRow, error)
+
+	SystemGetUserByUsernameRow   *SystemGetUserByUsernameRow
+	SystemGetUserByUsernameErr   error
+	SystemGetUserByUsernameCalls []sql.NullString
+	SystemGetUserByUsernameFn    func(context.Context, sql.NullString) (*SystemGetUserByUsernameRow, error)
 
 	SystemListVerifiedEmailsByUserIDReturn []*UserEmail
 	SystemListVerifiedEmailsByUserIDErr    error

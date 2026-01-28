@@ -78,6 +78,18 @@ func (s *QuerierStub) AdminCancelBannedIp(ctx context.Context, ip string) error 
 	return err
 }
 
+func (s *QuerierStub) InsertAdminUserComment(ctx context.Context, arg InsertAdminUserCommentParams) error {
+	s.mu.Lock()
+	s.InsertAdminUserCommentCalls = append(s.InsertAdminUserCommentCalls, arg)
+	fn := s.InsertAdminUserCommentFn
+	err := s.InsertAdminUserCommentErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
+}
+
 func (s *QuerierStub) SystemListPendingEmails(ctx context.Context, arg SystemListPendingEmailsParams) ([]*SystemListPendingEmailsRow, error) {
 	s.mu.Lock()
 	s.SystemListPendingEmailsCalls = append(s.SystemListPendingEmailsCalls, arg)
@@ -128,6 +140,19 @@ func (s *QuerierStub) SystemGetLogin(ctx context.Context, arg sql.NullString) (*
 	return row, err
 }
 
+func (s *QuerierStub) SystemGetUserByUsername(ctx context.Context, arg sql.NullString) (*SystemGetUserByUsernameRow, error) {
+	s.mu.Lock()
+	s.SystemGetUserByUsernameCalls = append(s.SystemGetUserByUsernameCalls, arg)
+	fn := s.SystemGetUserByUsernameFn
+	row := s.SystemGetUserByUsernameRow
+	err := s.SystemGetUserByUsernameErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return row, err
+}
+
 func (s *QuerierStub) SystemListVerifiedEmailsByUserID(ctx context.Context, userID int32) ([]*UserEmail, error) {
 	s.mu.Lock()
 	s.SystemListVerifiedEmailsByUserIDCalls = append(s.SystemListVerifiedEmailsByUserIDCalls, userID)
@@ -152,4 +177,16 @@ func (s *QuerierStub) GetLoginRoleForUser(ctx context.Context, userID int32) (in
 		return fn(ctx, userID)
 	}
 	return ret, err
+}
+
+func (s *QuerierStub) AdminInsertRequestComment(ctx context.Context, arg AdminInsertRequestCommentParams) error {
+	s.mu.Lock()
+	s.AdminInsertRequestCommentCalls = append(s.AdminInsertRequestCommentCalls, arg)
+	fn := s.AdminInsertRequestCommentFn
+	err := s.AdminInsertRequestCommentErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
 }

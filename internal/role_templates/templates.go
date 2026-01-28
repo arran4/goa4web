@@ -54,6 +54,7 @@ var Templates = map[string]TemplateDef{
 					{Section: "news", Item: "post", Action: "view"},
 					{Section: "faq", Item: "", Action: "search"},
 					{Section: "faq", Item: "question/answer", Action: "see"},
+					{Section: "images", Item: "upload", Action: "post"},
 				},
 			},
 			{
@@ -107,6 +108,7 @@ var Templates = map[string]TemplateDef{
 					// FAQ reader
 					{Section: "faq", Item: "", Action: "search"},
 					{Section: "faq", Item: "question/answer", Action: "see"},
+					{Section: "images", Item: "upload", Action: "post"},
 				},
 			},
 			{

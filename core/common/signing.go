@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	ImagePrefix = "/images/image/"
-	CachePrefix = "/images/cache/"
+	ImageURI = "/images/image/"
+	CacheURI = "/images/cache/"
 )
 
 // SignShareURL signs a share URL with path-based signature by default.
@@ -46,26 +46,21 @@ func (cd *CoreData) SignImageURL(imageRef string, ttl time.Duration) string {
 	// Strip image: or img: prefix if present
 	imageRef = strings.TrimPrefix(strings.TrimPrefix(imageRef, "image:"), "img:")
 
-	path := ImagePrefix + imageRef
+	path := ImageURI + imageRef
 	expiry := time.Now().Add(ttl)
 
-	sig := sign.Sign(path, cd.ImageSignKey, sign.WithExpiry(expiry))
-
-	// Add signature as query param
-	fullURL := strings.TrimSuffix(cd.Config.HTTPHostname, "/") + "/" + strings.TrimPrefix(path, "/")
-	signedURL, _ := sign.AddQuerySig(fullURL, sig, sign.WithExpiry(expiry))
+	fullURL := strings.TrimSuffix(cd.Config.HTTPHostname, "/") + path
+	signedURL, _ := signutil.SignAndAddQuery(fullURL, path, cd.ImageSignKey, sign.WithExpiry(expiry))
 	return signedURL
 }
 
 // SignCacheURL signs a cache URL with the given TTL.
 func (cd *CoreData) SignCacheURL(cacheRef string, ttl time.Duration) string {
-	path := CachePrefix + cacheRef
+	path := CacheURI + cacheRef
 	expiry := time.Now().Add(ttl)
 
-	sig := sign.Sign(path, cd.ImageSignKey, sign.WithExpiry(expiry))
-
-	fullURL := strings.TrimSuffix(cd.Config.HTTPHostname, "/") + "/" + strings.TrimPrefix(path, "/")
-	signedURL, _ := sign.AddQuerySig(fullURL, sig, sign.WithExpiry(expiry))
+	fullURL := strings.TrimSuffix(cd.Config.HTTPHostname, "/") + path
+	signedURL, _ := signutil.SignAndAddQuery(fullURL, path, cd.ImageSignKey, sign.WithExpiry(expiry))
 	return signedURL
 }
 

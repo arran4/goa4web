@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
-    "net/url"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -27,14 +27,14 @@ func TestForumReplyRedirect(t *testing.T) {
 	replierUID := int32(1)
 	topicID := int32(5)
 	threadID := int32(42)
-    commentID := int64(999)
+	commentID := int64(999)
 
 	qs := testhelpers.NewQuerierStub()
 	qs.SystemGetUserByIDFn = func(ctx context.Context, idusers int32) (*db.SystemGetUserByIDRow, error) {
-        return &db.SystemGetUserByIDRow{
-            Idusers:  replierUID,
-            Username: sql.NullString{String: "replier", Valid: true},
-        }, nil
+		return &db.SystemGetUserByIDRow{
+			Idusers:  replierUID,
+			Username: sql.NullString{String: "replier", Valid: true},
+		}, nil
 	}
 	qs.CreateCommentInSectionForCommenterFn = func(ctx context.Context, arg db.CreateCommentInSectionForCommenterParams) (int64, error) {
 		return commentID, nil
@@ -57,29 +57,28 @@ func TestForumReplyRedirect(t *testing.T) {
 		return &db.GetForumTopicByIdForUserRow{
 			Idforumtopic: topicID,
 			Title:        sql.NullString{String: "Test Topic", Valid: true},
-            Handler:      "forum",
+			Handler:      "forum",
 		}, nil
 	}
 
-    // We mock GetCommentsByThreadIdForUser to return 6 comments (5 existing + 1 new)
-    // This will be used when we fix the code.
-    qs.GetCommentsByThreadIdForUserFn = func(ctx context.Context, arg db.GetCommentsByThreadIdForUserParams) ([]*db.GetCommentsByThreadIdForUserRow, error) {
-        comments := make([]*db.GetCommentsByThreadIdForUserRow, 6)
-        for i := 0; i < 6; i++ {
-            comments[i] = &db.GetCommentsByThreadIdForUserRow{
-                Idcomments: int32(100 + i), // Arbitrary IDs
-            }
-        }
-        // Ensure one matches the new ID just in case
-        comments[5].Idcomments = int32(commentID)
-        return comments, nil
-    }
+	// We mock GetCommentsByThreadIdForUser to return 6 comments (5 existing + 1 new)
+	// This will be used when we fix the code.
+	qs.GetCommentsByThreadIdForUserFn = func(ctx context.Context, arg db.GetCommentsByThreadIdForUserParams) ([]*db.GetCommentsByThreadIdForUserRow, error) {
+		comments := make([]*db.GetCommentsByThreadIdForUserRow, 6)
+		for i := 0; i < 6; i++ {
+			comments[i] = &db.GetCommentsByThreadIdForUserRow{
+				Idcomments: int32(100 + i), // Arbitrary IDs
+			}
+		}
+		// Ensure one matches the new ID just in case
+		comments[5].Idcomments = int32(commentID)
+		return comments, nil
+	}
 
-    // Also mock permissions check used by thread loading
-    qs.GetPermissionsByUserIDFn = func(id int32) ([]*db.GetPermissionsByUserIDRow, error) {
-        return []*db.GetPermissionsByUserIDRow{}, nil
-    }
-
+	// Also mock permissions check used by thread loading
+	qs.GetPermissionsByUserIDFn = func(id int32) ([]*db.GetPermissionsByUserIDRow, error) {
+		return []*db.GetPermissionsByUserIDRow{}, nil
+	}
 
 	cfg := config.NewRuntimeConfig()
 
@@ -117,16 +116,16 @@ func TestForumReplyRedirect(t *testing.T) {
 	req = mux.SetURLVars(req, map[string]string{"topic": "5", "thread": "42"})
 
 	rr := httptest.NewRecorder()
-    result := task.Action(rr, req)
+	result := task.Action(rr, req)
 
-    redirect, ok := result.(handlers.RedirectHandler)
-    if !ok {
-        t.Fatalf("Expected RedirectHandler, got %T", result)
-    }
+	redirect, ok := result.(handlers.RedirectHandler)
+	if !ok {
+		t.Fatalf("Expected RedirectHandler, got %T", result)
+	}
 
-    // Expectation: currently it redirects to #c6 (index)
-    expectedUrl := "/forum/topic/5/thread/42#c6"
-    if string(redirect) != expectedUrl {
-        t.Errorf("Expected redirect to %q, got %q", expectedUrl, string(redirect))
-    }
+	// Expectation: currently it redirects to #c6 (index)
+	expectedUrl := "/forum/topic/5/thread/42#c6"
+	if string(redirect) != expectedUrl {
+		t.Errorf("Expected redirect to %q, got %q", expectedUrl, string(redirect))
+	}
 }

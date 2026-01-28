@@ -15,6 +15,7 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	intimages "github.com/arran4/goa4web/internal/images"
+	"github.com/arran4/goa4web/internal/opengraph"
 	"github.com/arran4/goa4web/internal/sign"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
@@ -62,7 +63,7 @@ func (ReloadExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) any
 		return fmt.Errorf("no url provided")
 	}
 
-	title, desc, imgURL, err := fetchOpenGraph(rawURL, cd.HTTPClient())
+	title, desc, imgURL, err := opengraph.Fetch(rawURL, cd.HTTPClient())
 	if err != nil {
 		return fmt.Errorf("fetch error: %w", err)
 	}

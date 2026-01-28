@@ -36,7 +36,7 @@ func TestQuote(t *testing.T) {
 func TestQuoteFullParagraphs(t *testing.T) {
 	text := "foo\n\nbar"
 	got := QuoteText("bob", text, WithParagraphQuote())
-	want := "[quoteof \"bob\" foo]\n[quoteof \"bob\" bar]\n"
+	want := "[quoteof \"bob\" foo]\n\n\n[quoteof \"bob\" bar]\n"
 	if got != want {
 		t.Errorf("got %q want %q", got, want)
 	}
@@ -226,4 +226,57 @@ func TestSubstring(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestQuoteRepro(t *testing.T) {
+	// Case 1: Filter out quotes of quotes
+	t.Run("FilterNestedQuotes", func(t *testing.T) {
+		input := "Para 1\n\n[quoteof \"other\" inner]\n\nPara 2"
+		got := QuoteText("user", input, WithParagraphQuote())
+
+		// Expected:
+		// [quoteof "user" Para 1]
+		// \n\n\n (triple line break added after Para 1)
+		// (Inner quote filtered out)
+		// [quoteof "user" Para 2]
+		// \n
+
+		want := "[quoteof \"user\" Para 1]\n\n\n[quoteof \"user\" Para 2]\n"
+		if got != want {
+			t.Errorf("Got:\n%q\nWant:\n%q", got, want)
+		}
+	})
+
+	// Case 2: Triple line breaks
+	t.Run("TripleLineBreaks", func(t *testing.T) {
+		input := "Para 1\n\nPara 2"
+		got := QuoteText("user", input, WithParagraphQuote())
+		want := "[quoteof \"user\" Para 1]\n\n\n[quoteof \"user\" Para 2]\n"
+		if got != want {
+			t.Errorf("Got:\n%q\nWant:\n%q", got, want)
+		}
+	})
+
+	// Case 3: Bug fix for starting bracket
+	t.Run("ParagraphStartingWithBracket", func(t *testing.T) {
+		input := "Para 1\n\n[b]bold[/b]"
+		got := QuoteText("user", input, WithParagraphQuote())
+		// Before fix: ...[quoteof "user" [\nbold...]
+		// After fix: ...[quoteof "user" [b]bold[/b]]
+
+		want := "[quoteof \"user\" Para 1]\n\n\n[quoteof \"user\" [b]bold[/b]]\n"
+		if got != want {
+			t.Errorf("Got:\n%q\nWant:\n%q", got, want)
+		}
+	})
+
+	// Case 4: Not filtering if mixed content
+	t.Run("NotFilterMixedQuotes", func(t *testing.T) {
+		input := "[quoteof \"other\" inner] and more"
+		got := QuoteText("user", input, WithParagraphQuote())
+		want := "[quoteof \"user\" [quoteof \"other\" inner] and more]\n"
+		if got != want {
+			t.Errorf("Got:\n%q\nWant:\n%q", got, want)
+		}
+	})
 }

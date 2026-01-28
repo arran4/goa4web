@@ -32,3 +32,8 @@ WHERE id = ?;
 -- name: CreateExternalLink :execresult
 INSERT INTO external_links (url, clicks)
 VALUES (?, 0);
+
+-- name: EnsureExternalLink :execresult
+INSERT INTO external_links (url, clicks)
+VALUES (?, 0)
+ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id);

@@ -76,7 +76,9 @@ func isAdminEmail(ctx context.Context, q db.Querier, cfg *config.RuntimeConfig, 
 	return false
 }
 
-func hasVerificationRecord(ctx context.Context, q db.Querier, addr string) bool {
+// canSendToAddress checks if the email address is valid for sending.
+// It returns true if the user is verified OR if the user is unverified but has a valid verification code (verification email).
+func canSendToAddress(ctx context.Context, q db.Querier, addr string) bool {
 	if q == nil {
 		return false
 	}
@@ -85,7 +87,7 @@ func hasVerificationRecord(ctx context.Context, q db.Querier, addr string) bool 
 		return false
 	}
 	if ue.VerifiedAt.Valid {
-		return false
+		return true
 	}
 	if ue.VerificationExpiresAt.Valid && ue.VerificationExpiresAt.Time.Before(time.Now()) {
 		return false
@@ -122,7 +124,7 @@ func ResolveQueuedEmailAddress(ctx context.Context, q db.Querier, cfg *config.Ru
 	}
 
 	if e.DirectEmail {
-		if hasVerificationRecord(ctx, q, addr.Address) {
+		if canSendToAddress(ctx, q, addr.Address) {
 			return *addr, nil
 		}
 		return mail.Address{}, fmt.Errorf("no verification record for %s", addr.Address)

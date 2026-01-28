@@ -133,12 +133,15 @@ func (ReloadExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) any
 		}
 
 		if cachedImgName != "" {
-			// Update cache if field exists in a future migration or manually exec
-			// _, err := cd.DB().ExecContext(r.Context(), "UPDATE external_links SET card_image_cache = ? WHERE id = ?", cachedImgName, lid)
-			// if err != nil {
-			// 	// non-fatal, just log
-			// 	fmt.Printf("failed to update cache: %v\n", err)
-			// }
+			// Update cache
+			err := cd.Queries().UpdateExternalLinkImageCache(r.Context(), db.UpdateExternalLinkImageCacheParams{
+				CardImageCache: sql.NullString{String: cachedImgName, Valid: true},
+				ID:             lid,
+			})
+			if err != nil {
+				// non-fatal, just log
+				fmt.Printf("failed to update cache: %v\n", err)
+			}
 		}
 	}
 

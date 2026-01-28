@@ -29,6 +29,11 @@ UPDATE external_links
 SET card_title = ?, card_description = ?, card_image = ?, updated_at = CURRENT_TIMESTAMP
 WHERE id = ?;
 
+-- name: UpdateExternalLinkImageCache :exec
+UPDATE external_links
+SET card_image_cache = ?, updated_at = CURRENT_TIMESTAMP
+WHERE id = ?;
+
 -- name: CreateExternalLink :execresult
 INSERT INTO external_links (url, clicks)
 VALUES (?, 0);

@@ -164,6 +164,22 @@ func (q *Queries) SystemRegisterExternalLinkClick(ctx context.Context, url strin
 	return err
 }
 
+const updateExternalLinkImageCache = `-- name: UpdateExternalLinkImageCache :exec
+UPDATE external_links
+SET card_image_cache = ?, updated_at = CURRENT_TIMESTAMP
+WHERE id = ?
+`
+
+type UpdateExternalLinkImageCacheParams struct {
+	CardImageCache sql.NullString
+	ID             int32
+}
+
+func (q *Queries) UpdateExternalLinkImageCache(ctx context.Context, arg UpdateExternalLinkImageCacheParams) error {
+	_, err := q.db.ExecContext(ctx, updateExternalLinkImageCache, arg.CardImageCache, arg.ID)
+	return err
+}
+
 const updateExternalLinkMetadata = `-- name: UpdateExternalLinkMetadata :exec
 UPDATE external_links
 SET card_title = ?, card_description = ?, card_image = ?, updated_at = CURRENT_TIMESTAMP

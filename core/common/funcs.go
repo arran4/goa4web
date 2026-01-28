@@ -270,5 +270,8 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 			err := t.ExecuteTemplate(&buf, name, data)
 			return template.HTML(buf.String()), err
 		},
+		"signCacheURL": func(ref string) string {
+			return cd.SignCacheURL(ref, 24*time.Hour)
+		},
 	}
 }

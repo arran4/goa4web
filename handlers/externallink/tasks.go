@@ -119,22 +119,11 @@ func (ReloadExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) any
 			CardTitle:       sql.NullString{String: title, Valid: title != ""},
 			CardDescription: sql.NullString{String: desc, Valid: desc != ""},
 			CardImage:       sql.NullString{String: imgURL, Valid: imgURL != ""},
-			// We need a field for CardImageCache? Assuming one exists or we reuse CardImage?
-			// The template uses CardImageCache.
-			// Let's check db schema or assume it exists based on template usage.
-			ID: lid,
+			CardImageCache:  sql.NullString{String: cachedImgName, Valid: cachedImgName != ""},
+			ID:              lid,
 		})
 		if err != nil {
 			return fmt.Errorf("update error: %w", err)
-		}
-
-		if cachedImgName != "" {
-			// Update cache if field exists in a future migration or manually exec
-			// _, err := cd.DB().ExecContext(r.Context(), "UPDATE external_links SET card_image_cache = ? WHERE id = ?", cachedImgName, lid)
-			// if err != nil {
-			// 	// non-fatal, just log
-			// 	fmt.Printf("failed to update cache: %v\n", err)
-			// }
 		}
 	}
 

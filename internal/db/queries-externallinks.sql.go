@@ -166,7 +166,7 @@ func (q *Queries) SystemRegisterExternalLinkClick(ctx context.Context, url strin
 
 const updateExternalLinkMetadata = `-- name: UpdateExternalLinkMetadata :exec
 UPDATE external_links
-SET card_title = ?, card_description = ?, card_image = ?, updated_at = CURRENT_TIMESTAMP
+SET card_title = ?, card_description = ?, card_image = ?, card_image_cache = ?, updated_at = CURRENT_TIMESTAMP
 WHERE id = ?
 `
 
@@ -174,6 +174,7 @@ type UpdateExternalLinkMetadataParams struct {
 	CardTitle       sql.NullString
 	CardDescription sql.NullString
 	CardImage       sql.NullString
+	CardImageCache  sql.NullString
 	ID              int32
 }
 
@@ -182,6 +183,7 @@ func (q *Queries) UpdateExternalLinkMetadata(ctx context.Context, arg UpdateExte
 		arg.CardTitle,
 		arg.CardDescription,
 		arg.CardImage,
+		arg.CardImageCache,
 		arg.ID,
 	)
 	return err

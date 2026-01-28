@@ -134,3 +134,15 @@ func (cd *CoreData) MapLinkURL(tag, val string) string {
 
 	return cd.SignLinkURL(val)
 }
+
+type ImageSigner struct {
+	cd *CoreData
+}
+
+func (s *ImageSigner) SignedCacheURL(cacheRef string) string {
+	return s.cd.SignCacheURL(cacheRef, 24*time.Hour)
+}
+
+func (cd *CoreData) ImageSigner() *ImageSigner {
+	return &ImageSigner{cd: cd}
+}

@@ -26,7 +26,7 @@ DELETE FROM external_links WHERE url = ?;
 
 -- name: UpdateExternalLinkMetadata :exec
 UPDATE external_links
-SET card_title = ?, card_description = ?, card_image = ?, updated_at = CURRENT_TIMESTAMP
+SET card_title = ?, card_description = ?, card_image = ?, card_image_cache = ?, updated_at = CURRENT_TIMESTAMP
 WHERE id = ?;
 
 -- name: CreateExternalLink :execresult

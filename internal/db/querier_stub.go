@@ -38,12 +38,15 @@ type QuerierStub struct {
 	AddContentPrivateLabelErr           error
 	AddContentPrivateLabelCalls         []AddContentPrivateLabelParams
 	AddContentPrivateLabelFn            func(context.Context, AddContentPrivateLabelParams) error
+	AddContentPrivateLabelIgnoreLabels  map[string]bool
 	AddContentPublicLabelErr            error
 	AddContentPublicLabelCalls          []AddContentPublicLabelParams
 	ListContentLabelStatusErr           error
 	ListContentLabelStatusCalls         []ListContentLabelStatusParams
+	ListContentLabelStatusReturns       []*ListContentLabelStatusRow
 	ListContentPublicLabelsErr          error
 	ListContentPublicLabelsCalls        []ListContentPublicLabelsParams
+	ListContentPublicLabelsReturns      []*ListContentPublicLabelsRow
 	ListContentPublicLabelsFn           func(ListContentPublicLabelsParams) ([]*ListContentPublicLabelsRow, error)
 	RemoveContentLabelStatusErr         error
 	RemoveContentLabelStatusCalls       []RemoveContentLabelStatusParams
@@ -344,6 +347,11 @@ type QuerierStub struct {
 	ListPrivateTopicParticipantsByTopicIDForUserReturns []*ListPrivateTopicParticipantsByTopicIDForUserRow
 	ListPrivateTopicParticipantsByTopicIDForUserErr     error
 
+	ListPrivateTopicsByUserIDCalls   []sql.NullInt32
+	ListPrivateTopicsByUserIDReturns []*ListPrivateTopicsByUserIDRow
+	ListPrivateTopicsByUserIDErr     error
+	ListPrivateTopicsByUserIDFn      func(context.Context, sql.NullInt32) ([]*ListPrivateTopicsByUserIDRow, error)
+
 	AdminListForumTopicGrantsByTopicIDCalls   []sql.NullInt32
 	AdminListForumTopicGrantsByTopicIDReturns []*AdminListForumTopicGrantsByTopicIDRow
 	AdminListForumTopicGrantsByTopicIDErr     error
@@ -386,6 +394,11 @@ type QuerierStub struct {
 	ListGrantsErr     error
 	ListGrantsFn      func(context.Context) ([]*Grant, error)
 
+	ListBloggersForListerCalls   []ListBloggersForListerParams
+	ListBloggersForListerReturns []*ListBloggersForListerRow
+	ListBloggersForListerErr     error
+	ListBloggersForListerFn      func(ListBloggersForListerParams) ([]*ListBloggersForListerRow, error)
+
 	ListWritersForListerCalls   []ListWritersForListerParams
 	ListWritersForListerReturns []*ListWritersForListerRow
 	ListWritersForListerErr     error
@@ -405,6 +418,21 @@ type QuerierStub struct {
 	ListBlogEntriesByIDsForListerReturns []*ListBlogEntriesByIDsForListerRow
 	ListBlogEntriesByIDsForListerErr     error
 	ListBlogEntriesByIDsForListerFn      func(context.Context, ListBlogEntriesByIDsForListerParams) ([]*ListBlogEntriesByIDsForListerRow, error)
+  
+	ListSiteNewsSearchFirstForListerCalls   []ListSiteNewsSearchFirstForListerParams
+	ListSiteNewsSearchFirstForListerReturns []int32
+	ListSiteNewsSearchFirstForListerErr     error
+	ListSiteNewsSearchFirstForListerFn      func(ListSiteNewsSearchFirstForListerParams) ([]int32, error)
+
+	ListSiteNewsSearchNextForListerCalls   []ListSiteNewsSearchNextForListerParams
+	ListSiteNewsSearchNextForListerReturns []int32
+	ListSiteNewsSearchNextForListerErr     error
+	ListSiteNewsSearchNextForListerFn      func(ListSiteNewsSearchNextForListerParams) ([]int32, error)
+
+	GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountCalls   []GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountParams
+	GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountReturns []*GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountRow
+	GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountErr     error
+	GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountFn      func(GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountParams) ([]*GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountRow, error)
 
 	ListImagePostsByBoardForListerCalls   []ListImagePostsByBoardForListerParams
 	ListImagePostsByBoardForListerReturns []*ListImagePostsByBoardForListerRow
@@ -525,6 +553,9 @@ func (s *QuerierStub) ListContentPublicLabels(ctx context.Context, arg ListConte
 	s.ListContentPublicLabelsCalls = append(s.ListContentPublicLabelsCalls, arg)
 	if s.ListContentPublicLabelsFn != nil {
 		return s.ListContentPublicLabelsFn(arg)
+	}
+	if s.ListContentPublicLabelsReturns != nil && s.ContentPublicLabels == nil {
+		return s.ListContentPublicLabelsReturns, s.ListContentPublicLabelsErr
 	}
 	if s.ListContentPublicLabelsErr != nil {
 		return nil, s.ListContentPublicLabelsErr
@@ -649,6 +680,9 @@ func (s *QuerierStub) ListContentLabelStatus(ctx context.Context, arg ListConten
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.ListContentLabelStatusCalls = append(s.ListContentLabelStatusCalls, arg)
+	if s.ListContentLabelStatusReturns != nil && s.ContentLabelStatus == nil {
+		return s.ListContentLabelStatusReturns, s.ListContentLabelStatusErr
+	}
 	if s.ListContentLabelStatusErr != nil {
 		return nil, s.ListContentLabelStatusErr
 	}
@@ -696,11 +730,12 @@ func (s *QuerierStub) AddContentPrivateLabel(ctx context.Context, arg AddContent
 	s.AddContentPrivateLabelCalls = append(s.AddContentPrivateLabelCalls, arg)
 	fn := s.AddContentPrivateLabelFn
 	err := s.AddContentPrivateLabelErr
+	ignoreErr := s.AddContentPrivateLabelIgnoreLabels != nil && s.AddContentPrivateLabelIgnoreLabels[arg.Label]
 	s.mu.Unlock()
 	if fn != nil {
 		return fn(ctx, arg)
 	}
-	if err != nil {
+	if err != nil && !ignoreErr {
 		return err
 	}
 	s.mu.Lock()
@@ -719,7 +754,7 @@ func (s *QuerierStub) ListContentPrivateLabels(ctx context.Context, arg ListCont
 	if s.ListContentPrivateLabelsFn != nil {
 		return s.ListContentPrivateLabelsFn(arg)
 	}
-	if s.ListContentPrivateLabelsReturns != nil {
+	if s.ListContentPrivateLabelsReturns != nil && s.ContentPrivateLabels == nil {
 		return s.ListContentPrivateLabelsReturns, s.ListContentPrivateLabelsErr
 	}
 
@@ -912,6 +947,19 @@ func (s *QuerierStub) ListGrants(ctx context.Context) ([]*Grant, error) {
 	return ret, err
 }
 
+func (s *QuerierStub) ListBloggersForLister(ctx context.Context, arg ListBloggersForListerParams) ([]*ListBloggersForListerRow, error) {
+	s.mu.Lock()
+	s.ListBloggersForListerCalls = append(s.ListBloggersForListerCalls, arg)
+	fn := s.ListBloggersForListerFn
+	ret := s.ListBloggersForListerReturns
+	err := s.ListBloggersForListerErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(arg)
+	}
+	return ret, err
+}
+
 func (s *QuerierStub) ListWritersForLister(ctx context.Context, arg ListWritersForListerParams) ([]*ListWritersForListerRow, error) {
 	s.mu.Lock()
 	s.ListWritersForListerCalls = append(s.ListWritersForListerCalls, arg)
@@ -931,6 +979,45 @@ func (s *QuerierStub) ListWritersSearchForLister(ctx context.Context, arg ListWr
 	fn := s.ListWritersSearchForListerFn
 	ret := s.ListWritersSearchForListerReturns
 	err := s.ListWritersSearchForListerErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) ListSiteNewsSearchFirstForLister(ctx context.Context, arg ListSiteNewsSearchFirstForListerParams) ([]int32, error) {
+	s.mu.Lock()
+	s.ListSiteNewsSearchFirstForListerCalls = append(s.ListSiteNewsSearchFirstForListerCalls, arg)
+	fn := s.ListSiteNewsSearchFirstForListerFn
+	ret := s.ListSiteNewsSearchFirstForListerReturns
+	err := s.ListSiteNewsSearchFirstForListerErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) ListSiteNewsSearchNextForLister(ctx context.Context, arg ListSiteNewsSearchNextForListerParams) ([]int32, error) {
+	s.mu.Lock()
+	s.ListSiteNewsSearchNextForListerCalls = append(s.ListSiteNewsSearchNextForListerCalls, arg)
+	fn := s.ListSiteNewsSearchNextForListerFn
+	ret := s.ListSiteNewsSearchNextForListerReturns
+	err := s.ListSiteNewsSearchNextForListerErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCount(ctx context.Context, arg GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountParams) ([]*GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountRow, error) {
+	s.mu.Lock()
+	s.GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountCalls = append(s.GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountCalls, arg)
+	fn := s.GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountFn
+	ret := s.GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountReturns
+	err := s.GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountErr
 	s.mu.Unlock()
 	if fn != nil {
 		return fn(arg)
@@ -1201,6 +1288,18 @@ func (s *QuerierStub) ListPrivateTopicParticipantsByTopicIDForUser(ctx context.C
 		return fn(ctx, arg)
 	}
 	return s.ListPrivateTopicParticipantsByTopicIDForUserReturns, s.ListPrivateTopicParticipantsByTopicIDForUserErr
+}
+
+// ListPrivateTopicsByUserID records the call and returns stubbed topics.
+func (s *QuerierStub) ListPrivateTopicsByUserID(ctx context.Context, userID sql.NullInt32) ([]*ListPrivateTopicsByUserIDRow, error) {
+	s.mu.Lock()
+	s.ListPrivateTopicsByUserIDCalls = append(s.ListPrivateTopicsByUserIDCalls, userID)
+	fn := s.ListPrivateTopicsByUserIDFn
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, userID)
+	}
+	return s.ListPrivateTopicsByUserIDReturns, s.ListPrivateTopicsByUserIDErr
 }
 
 // SystemGetUserByID records the call and returns the configured response.

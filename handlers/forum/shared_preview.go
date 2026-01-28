@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/arran4/goa4web/a4code"
@@ -61,7 +62,7 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 	ogTitle := topic.Title.String
 	ogDescription := ""
 	if len(comments) > 0 {
-		ogDescription = a4code.Snip(comments[0].Text.String, 128)
+		ogDescription = a4code.SnipText(comments[0].Text.String, 128)
 	}
 
 	renderPublicSharedPreview(w, r, cd, cd.ShareSignKey, ogTitle, ogDescription)
@@ -111,11 +112,17 @@ func renderPublicSharedPreview(w http.ResponseWriter, r *http.Request, cd *commo
 	usePathAuth := vars["ts"] != "" || vars["nonce"] != ""
 
 	imageURL, _ := share.MakeImageURL(cd.AbsoluteURL(), title, desc, cd.ShareSignKey, usePathAuth)
+
+	// If the user is viewing this, they are likely a guest (or the caller logic didn't redirect them).
+	// We want to redirect guests to login, then back to here.
+	redirectURL := "/login?return_url=" + url.QueryEscape(r.URL.RequestURI())
+
 	ogData := share.OpenGraphData{
 		Title:       title,
 		Description: desc,
 		ImageURL:    template.URL(imageURL),
 		ContentURL:  template.URL(cd.AbsoluteURL(r.URL.RequestURI())),
+		RedirectURL: template.URL(redirectURL),
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,

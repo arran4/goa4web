@@ -36,6 +36,7 @@ type OpenGraphData struct {
 	Description string
 	ImageURL    template.URL
 	ContentURL  template.URL
+	RedirectURL template.URL
 	ImageWidth  int
 	ImageHeight int
 	TwitterSite string
@@ -43,36 +44,8 @@ type OpenGraphData struct {
 
 // RenderOpenGraph renders an OpenGraph preview page with the provided metadata.
 func RenderOpenGraph(w http.ResponseWriter, r *http.Request, data OpenGraphData) error {
-	tmpl, err := template.New("og").Parse(`
-<!DOCTYPE html>
-<html>
-<head>
-	<meta property="og:title" content="{{.Title}}" />
-	<meta property="og:description" content="{{.Description}}" />
-	{{.ImageMeta}}
-	{{.SecureImageMeta}}
-	{{.ImageWidthMeta}}
-	{{.ImageHeightMeta}}
-	{{.URLMeta}}
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="{{.Title}}" />
-	<meta name="twitter:description" content="{{.Description}}" />
-	{{if .TwitterSite}}<meta name="twitter:site" content="{{.TwitterSite}}" />{{end}}
-	{{.TwitterImageMeta}}
-	<meta http-equiv="refresh" content="0;url={{.ContentURL}}" />
-</head>
-<body>
-	<h1>Redirecting...</h1>
-	<p>If you are not redirected automatically, <a href="{{.ContentURL}}">click here</a>.</p>
-</body>
-</html>
-`)
-	if err != nil {
-		return err
-	}
-
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	return tmpl.Execute(w, data)
+	return templates.GetCompiledSiteTemplates(nil).ExecuteTemplate(w, "openGraphPreview.gohtml", data)
 }
 
 func (d OpenGraphData) URLMeta() template.HTML {

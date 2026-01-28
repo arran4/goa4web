@@ -989,3 +989,10 @@ tr.unsupported td {
 /* 5: Grey */
 .quote-color-5 .quote-header { background-color: #D3D3D3; }
 .quote-color-5 .quote-body   { background-color: #F5F5F5; }
+
+/* Collapsed quote style */
+.quote-body.collapsed {
+    max-height: 250px;
+    overflow: hidden;
+    position: relative;
+}

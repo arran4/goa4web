@@ -68,7 +68,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		cd.PageTitle = fmt.Sprintf("Writing %d%s", writing.Idwriting, dateSuffix)
 	}
 
-	desc := a4code.Snip(writing.Abstract.String, 128)
+	desc := a4code.SnipText(writing.Abstract.String, 128)
 	imgURL, err := share.MakeImageURL(cd.AbsoluteURL(), cd.PageTitle, desc, cd.ShareSignKey, false)
 	if err != nil {
 		log.Printf("Error making image URL: %v", err)
@@ -76,7 +76,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       cd.PageTitle,
-		Description: a4code.Snip(writing.Abstract.String, 128),
+		Description: a4code.SnipText(writing.Abstract.String, 128),
 		Image:       imgURL,
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,

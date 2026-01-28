@@ -3,16 +3,17 @@ package common_test
 import (
 	"context"
 	"database/sql"
-	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http/httptest"
 	"strconv"
 	"testing"
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestCoreDataLatestNewsLazy(t *testing.T) {
@@ -248,17 +249,11 @@ func TestCoreDataLatestWritingsLazy(t *testing.T) {
 
 func TestBloggersLazy(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
 
-	queries := db.New(conn)
-	rows := sqlmock.NewRows([]string{"username", "count"}).AddRow("bob", 2)
-	mock.ExpectQuery("SELECT u.username").
-		WithArgs(int32(1), int32(1), int32(1), sqlmock.AnyArg(), int32(16), int32(0)).
-		WillReturnRows(rows)
+	queries := testhelpers.NewQuerierStub()
+	queries.ListBloggersForListerReturns = []*db.ListBloggersForListerRow{
+		{Username: sql.NullString{String: "bob", Valid: true}, Count: 2},
+	}
 
 	req := httptest.NewRequest("GET", "/", nil)
 	ctx := req.Context()
@@ -274,8 +269,8 @@ func TestBloggersLazy(t *testing.T) {
 		t.Fatalf("Bloggers second call: %v", err)
 	}
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	if len(queries.ListBloggersForListerCalls) != 1 {
+		t.Fatalf("expected ListBloggersForLister call, got %d", len(queries.ListBloggersForListerCalls))
 	}
 }
 

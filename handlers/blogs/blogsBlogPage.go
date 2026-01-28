@@ -51,11 +51,11 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 		cd.PageTitle = fmt.Sprintf("Blog %d%s", blog.Idblogs, dateSuffix)
 	}
 
-	desc := a4code.Snip(blog.Blog.String, 128)
+	desc := a4code.SnipText(blog.Blog.String, 128)
 	imageURL, _ := share.MakeImageURL(cd.AbsoluteURL(""), cd.PageTitle, desc, cd.ShareSignKey, false)
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       cd.PageTitle,
-		Description: a4code.Snip(blog.Blog.String, 128),
+		Description: a4code.SnipText(blog.Blog.String, 128),
 		Image:       imageURL,
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,

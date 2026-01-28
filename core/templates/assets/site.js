@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
+    foldLongQuotes(document);
+
     document.body.addEventListener('click', function(e) {
         if (e.target && e.target.classList.contains('quote-link')) {
             e.preventDefault();
@@ -107,6 +109,7 @@ function previewA4Code(targetId, previewUrl, containerId) {
     })
     .then(html => {
         previewContent.innerHTML = html;
+        foldLongQuotes(previewContent);
         previewContainer.classList.remove('hidden');
     })
     .catch(error => {
@@ -130,12 +133,14 @@ function quoteInNewThread(commentId, topicId, event) {
         const commentContainer = document.getElementById('comment-' + commentId);
 
         if (commentContainer && commentContainer.contains(range.commonAncestorContainer)) {
-            // Calculate absolute offsets relative to the comment container
-            const start = calculateOffset(commentContainer, range.startContainer, range.startOffset);
-            const end = calculateOffset(commentContainer, range.endContainer, range.endOffset);
+            // Calculate absolute offsets based on data attributes
+            const start = calculateSourceOffset(range.startContainer, range.startOffset);
+            const end = calculateSourceOffset(range.endContainer, range.endOffset);
 
-            // Construct URL for selected text
-            url = basePath + '/topic/' + topicId + '/thread/new?quote_comment_id=' + commentId + '&quote_type=selected&quote_start=' + start + '&quote_end=' + end;
+            if (start !== -1 && end !== -1) {
+                // Construct URL for selected text
+                url = basePath + '/topic/' + topicId + '/thread/new?quote_comment_id=' + commentId + '&quote_type=selected&quote_start=' + start + '&quote_end=' + end;
+            }
         }
     }
 
@@ -162,22 +167,30 @@ function quote(type, commentId) {
             const commentContainer = document.getElementById('comment-' + commentId);
 
             if (commentContainer && commentContainer.contains(range.commonAncestorContainer)) {
-                // Calculate absolute offsets relative to the comment container
-                const start = calculateOffset(commentContainer, range.startContainer, range.startOffset);
-                const end = calculateOffset(commentContainer, range.endContainer, range.endOffset);
+                // Calculate absolute offsets based on data attributes
+                const start = calculateSourceOffset(range.startContainer, range.startOffset);
+                const end = calculateSourceOffset(range.endContainer, range.endOffset);
 
-                // Construct URL
-                let url = '/api/forum/quote/' + commentId + '?type=selected&start=' + start + '&end=' + end;
+                if (start !== -1 && end !== -1) {
+                    // Construct URL
+                    let url = '/api/forum/quote/' + commentId + '?type=selected&start=' + start + '&end=' + end;
 
-                fetch(url)
-                    .then(response => response.json())
-                    .then(data => {
-                        insertQuote(data.text);
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('An error occurred while quoting the comment.');
-                    });
+                    fetch(url)
+                        .then(response => response.json())
+                        .then(data => {
+                            let reply = document.getElementById('reply');
+                            reply.value += data.text;
+                            reply.focus();
+                            reply.scrollIntoView();
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('An error occurred while quoting the comment.');
+                        });
+                } else {
+                    console.error("Could not calculate source offset");
+                    alert("Please select text within the comment you are quoting.");
+                }
             } else {
                  console.error("Selection is not inside the expected comment container");
                  alert("Please select text within the comment you are quoting.");
@@ -196,12 +209,43 @@ function quote(type, commentId) {
     }
 }
 
-// Helper to calculate absolute character offset of (node, offset) relative to root
-function calculateOffset(root, node, offset) {
-    const range = document.createRange();
-    range.setStart(root, 0);
-    range.setEnd(node, offset);
-    return range.toString().length;
+// Helper to calculate absolute source offset based on data attributes
+function calculateSourceOffset(node, offset) {
+    if (node.nodeType === Node.TEXT_NODE) {
+        // Look for parent with data-start-pos
+        const parent = node.parentElement;
+        if (parent && parent.hasAttribute('data-start-pos')) {
+            const baseStart = parseInt(parent.getAttribute('data-start-pos'), 10);
+            const textContent = node.textContent;
+            const prefix = textContent.substring(0, offset);
+            const byteLen = new TextEncoder().encode(prefix).length;
+            return baseStart + byteLen;
+        }
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+        // If offset points to a child, try to find start pos of that child
+        if (offset < node.childNodes.length) {
+            const child = node.childNodes[offset];
+            if (child.nodeType === Node.ELEMENT_NODE && child.hasAttribute('data-start-pos')) {
+                return parseInt(child.getAttribute('data-start-pos'), 10);
+            } else if (child.nodeType === Node.TEXT_NODE) {
+                 return calculateSourceOffset(child, 0);
+            }
+        } else {
+             // Offset at end.
+             if (node.hasAttribute('data-end-pos')) {
+                 return parseInt(node.getAttribute('data-end-pos'), 10);
+             }
+        }
+    }
+    // Fallback: try to find nearest ancestor with data-start-pos
+    let current = node;
+    while (current) {
+        if (current.nodeType === Node.ELEMENT_NODE && current.hasAttribute('data-start-pos')) {
+             return parseInt(current.getAttribute('data-start-pos'), 10);
+        }
+        current = current.parentNode;
+    }
+    return -1;
 }
 
 function share(link, module, button) {
@@ -252,4 +296,38 @@ function insertQuote(text) {
 
     reply.focus();
     reply.scrollIntoView();
+}
+
+function foldLongQuotes(container) {
+    if (!container) return;
+    const quotes = container.querySelectorAll('.quote-body');
+    quotes.forEach(quote => {
+        // Skip if already processed
+        if (quote.nextElementSibling && quote.nextElementSibling.classList.contains('folded-toggle')) {
+            return;
+        }
+
+        if (quote.scrollHeight > 250) {
+            quote.classList.add('collapsed');
+
+            const toggle = document.createElement('a');
+            toggle.className = 'folded-toggle';
+            toggle.innerText = 'Expand quote';
+            toggle.href = '#';
+            toggle.onclick = function(e) {
+                e.preventDefault();
+                quote.classList.toggle('collapsed');
+                if (quote.classList.contains('collapsed')) {
+                    toggle.innerText = 'Expand quote';
+                } else {
+                    toggle.innerText = 'Collapse quote';
+                }
+            };
+
+            // Insert after the quote body
+            if (quote.parentNode) {
+                quote.parentNode.insertBefore(toggle, quote.nextSibling);
+            }
+        }
+    });
 }

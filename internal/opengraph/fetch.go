@@ -12,6 +12,30 @@ import (
 	"golang.org/x/net/html"
 )
 
+// NewSafeClient returns an http.Client configured to block internal IP addresses.
+func NewSafeClient() *http.Client {
+	return &http.Client{
+		Timeout: 2 * time.Second,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			if len(via) >= 10 {
+				return errors.New("stopped after 10 redirects")
+			}
+			// Re-check IP on redirect
+			h := req.URL.Hostname()
+			ips, err := net.LookupIP(h)
+			if err != nil {
+				return err
+			}
+			for _, ip := range ips {
+				if ip.IsPrivate() || ip.IsLoopback() || ip.IsUnspecified() {
+					return fmt.Errorf("blocked internal ip on redirect: %s", ip)
+				}
+			}
+			return nil
+		},
+	}
+}
+
 func Fetch(urlStr string, client *http.Client) (title, desc, image string, err error) {
 	if client == nil {
 		u, err := url.Parse(urlStr)
@@ -31,26 +55,7 @@ func Fetch(urlStr string, client *http.Client) (title, desc, image string, err e
 			}
 		}
 
-		client = &http.Client{
-			Timeout: 5 * time.Second,
-			CheckRedirect: func(req *http.Request, via []*http.Request) error {
-				if len(via) >= 10 {
-					return errors.New("stopped after 10 redirects")
-				}
-				// Re-check IP on redirect
-				h := req.URL.Hostname()
-				ips, err := net.LookupIP(h)
-				if err != nil {
-					return err
-				}
-				for _, ip := range ips {
-					if ip.IsPrivate() || ip.IsLoopback() || ip.IsUnspecified() {
-						return fmt.Errorf("blocked internal ip on redirect: %s", ip)
-					}
-				}
-				return nil
-			},
-		}
+		client = NewSafeClient()
 	}
 	resp, err := client.Get(urlStr)
 	if err != nil {

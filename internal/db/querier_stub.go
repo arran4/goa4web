@@ -88,6 +88,20 @@ type QuerierStub struct {
 	SystemCreateThreadErr     error
 	SystemCreateThreadFn      func(context.Context, int32) (int64, error)
 
+	SystemGetForumTopicByTitleCalls   []sql.NullString
+	SystemGetForumTopicByTitleReturns *Forumtopic
+	SystemGetForumTopicByTitleErr     error
+	SystemGetForumTopicByTitleFn      func(context.Context, sql.NullString) (*Forumtopic, error)
+
+	CreateForumTopicForPosterCalls   []CreateForumTopicForPosterParams
+	CreateForumTopicForPosterReturns int64
+	CreateForumTopicForPosterErr     error
+	CreateForumTopicForPosterFn      func(context.Context, CreateForumTopicForPosterParams) (int64, error)
+
+	SystemAssignWritingThreadIDCalls []SystemAssignWritingThreadIDParams
+	SystemAssignWritingThreadIDErr   error
+	SystemAssignWritingThreadIDFn    func(context.Context, SystemAssignWritingThreadIDParams) error
+
 	SystemInsertDeadLetterCalls int
 
 	InsertPendingEmailErr   error
@@ -1468,6 +1482,50 @@ func (s *QuerierStub) SystemCreateThread(ctx context.Context, forumtopicIdforumt
 		return fn(ctx, forumtopicIdforumtopic)
 	}
 	return ret, err
+}
+
+func (s *QuerierStub) SystemGetForumTopicByTitle(ctx context.Context, title sql.NullString) (*Forumtopic, error) {
+	s.mu.Lock()
+	s.SystemGetForumTopicByTitleCalls = append(s.SystemGetForumTopicByTitleCalls, title)
+	fn := s.SystemGetForumTopicByTitleFn
+	row := s.SystemGetForumTopicByTitleReturns
+	err := s.SystemGetForumTopicByTitleErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, title)
+	}
+	if err != nil {
+		return nil, err
+	}
+	if row == nil {
+		return nil, errors.New("SystemGetForumTopicByTitle not stubbed")
+	}
+	return row, nil
+}
+
+func (s *QuerierStub) CreateForumTopicForPoster(ctx context.Context, arg CreateForumTopicForPosterParams) (int64, error) {
+	s.mu.Lock()
+	s.CreateForumTopicForPosterCalls = append(s.CreateForumTopicForPosterCalls, arg)
+	fn := s.CreateForumTopicForPosterFn
+	ret := s.CreateForumTopicForPosterReturns
+	err := s.CreateForumTopicForPosterErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) SystemAssignWritingThreadID(ctx context.Context, arg SystemAssignWritingThreadIDParams) error {
+	s.mu.Lock()
+	s.SystemAssignWritingThreadIDCalls = append(s.SystemAssignWritingThreadIDCalls, arg)
+	fn := s.SystemAssignWritingThreadIDFn
+	err := s.SystemAssignWritingThreadIDErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
 }
 
 // InsertPendingEmail records the call and returns the configured response.

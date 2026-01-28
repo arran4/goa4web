@@ -2,6 +2,7 @@ package writings
 
 import (
 	"context"
+	"database/sql"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -9,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
@@ -17,6 +17,7 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/lazy"
 	notif "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/testhelpers"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 )
@@ -29,39 +30,30 @@ func TestReplyTaskAutoSubscribe(t *testing.T) {
 }
 
 func TestReplyMarksWritingUnread(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-
-	q := db.New(conn)
+	q := testhelpers.NewQuerierStub(testhelpers.WithGrant("writing", "article", "reply"))
 	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
 	cd.UserID = 2
 
 	now := time.Now()
 	writingID := int32(1)
 	threadID := int32(3)
+	topicID := int32(4)
 
-	_, _ = cd.WritingByID(writingID, lazy.Set(&db.GetWritingForListerByIDRow{Idwriting: writingID, ForumthreadID: threadID}))
+	q.GetWritingForListerByIDRow = &db.GetWritingForListerByIDRow{Idwriting: writingID, ForumthreadID: threadID}
+	q.SystemGetForumTopicByTitleReturns = &db.Forumtopic{
+		Idforumtopic: topicID,
+		Title:        sql.NullString{String: common.WritingTopicName, Valid: true},
+		Lastaddition: sql.NullTime{Time: now, Valid: true},
+		Handler:      "writing",
+	}
+	q.GetForumTopicByIdReturns = q.SystemGetForumTopicByTitleReturns
+	q.CreateCommentInSectionForCommenterResult = 5
+	q.ClearUnreadContentPrivateLabelExceptUserFn = func(context.Context, db.ClearUnreadContentPrivateLabelExceptUserParams) error {
+		return nil
+	}
+
+	_, _ = cd.WritingByID(writingID, lazy.Set(q.GetWritingForListerByIDRow))
 	cd.SetCurrentWriting(writingID)
-
-	mock.ExpectQuery("(?s).*SELECT 1 FROM grants.*").
-		WithArgs(cd.UserID, "writing", sqlmock.AnyArg(), "reply", sqlmock.AnyArg(), sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
-
-	mock.ExpectQuery("SELECT idforumtopic").
-		WithArgs(sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_id", "title", "description", "threads", "comments", "lastaddition", "handler"}).
-			AddRow(1, 0, 0, 1, common.WritingTopicName, "desc", 0, 0, now, "writing"))
-
-	mock.ExpectExec("INSERT INTO comments").
-		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), threadID, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), "writing", sqlmock.AnyArg(), writingID, sqlmock.AnyArg(), sqlmock.AnyArg()).
-		WillReturnResult(sqlmock.NewResult(5, 1))
-
-	mock.ExpectExec("DELETE FROM content_private_labels").
-		WithArgs("writing", writingID, cd.UserID).
-		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	form := url.Values{}
 	form.Set("replytext", "hi")
@@ -78,7 +70,10 @@ func TestReplyMarksWritingUnread(t *testing.T) {
 	rr := httptest.NewRecorder()
 	replyTask.Action(rr, req)
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	if len(q.CreateCommentInSectionForCommenterCalls) != 1 {
+		t.Fatalf("expected 1 comment insert, got %d", len(q.CreateCommentInSectionForCommenterCalls))
+	}
+	if got := q.CreateCommentInSectionForCommenterCalls[0]; got.ForumthreadID != threadID || got.ItemID.Int32 != writingID {
+		t.Fatalf("unexpected comment insert call: %+v", got)
 	}
 }

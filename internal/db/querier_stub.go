@@ -381,6 +381,11 @@ type QuerierStub struct {
 	SystemCheckGrantCalls   []SystemCheckGrantParams
 	SystemCheckGrantFn      func(SystemCheckGrantParams) (int32, error)
 
+	GetPublicWritingsCalls   []GetPublicWritingsParams
+	GetPublicWritingsReturns []*Writing
+	GetPublicWritingsErr     error
+	GetPublicWritingsFn      func(context.Context, GetPublicWritingsParams) ([]*Writing, error)
+
 	GetWritingForListerByIDRow   *GetWritingForListerByIDRow
 	GetWritingForListerByIDErr   error
 	GetWritingForListerByIDCalls []GetWritingForListerByIDParams
@@ -529,7 +534,7 @@ type QuerierStub struct {
 	ListBlogEntriesByIDsForListerReturns []*ListBlogEntriesByIDsForListerRow
 	ListBlogEntriesByIDsForListerErr     error
 	ListBlogEntriesByIDsForListerFn      func(context.Context, ListBlogEntriesByIDsForListerParams) ([]*ListBlogEntriesByIDsForListerRow, error)
-  
+
 	ListSiteNewsSearchFirstForListerCalls   []ListSiteNewsSearchFirstForListerParams
 	ListSiteNewsSearchFirstForListerReturns []int32
 	ListSiteNewsSearchFirstForListerErr     error
@@ -1235,6 +1240,20 @@ func (s *QuerierStub) SystemCheckGrant(ctx context.Context, arg SystemCheckGrant
 		return ret, nil
 	}
 	return 0, sql.ErrNoRows
+}
+
+// GetPublicWritings records the call and returns the configured response.
+func (s *QuerierStub) GetPublicWritings(ctx context.Context, arg GetPublicWritingsParams) ([]*Writing, error) {
+	s.mu.Lock()
+	s.GetPublicWritingsCalls = append(s.GetPublicWritingsCalls, arg)
+	fn := s.GetPublicWritingsFn
+	ret := s.GetPublicWritingsReturns
+	err := s.GetPublicWritingsErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
 }
 
 // GetWritingForListerByID records the call and returns the configured response.

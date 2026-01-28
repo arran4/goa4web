@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -20,7 +21,43 @@ import (
 )
 
 func fetchOpenGraph(urlStr string) (title, desc, image string, err error) {
-	client := &http.Client{Timeout: 5 * time.Second}
+	u, err := url.Parse(urlStr)
+	if err != nil {
+		return "", "", "", err
+	}
+
+	host := u.Hostname()
+	ips, err := net.LookupIP(host)
+	if err != nil {
+		return "", "", "", err
+	}
+
+	for _, ip := range ips {
+		if ip.IsPrivate() || ip.IsLoopback() || ip.IsUnspecified() {
+			return "", "", "", fmt.Errorf("blocked internal ip: %s", ip)
+		}
+	}
+
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			if len(via) >= 10 {
+				return errors.New("stopped after 10 redirects")
+			}
+			// Re-check IP on redirect
+			h := req.URL.Hostname()
+			ips, err := net.LookupIP(h)
+			if err != nil {
+				return err
+			}
+			for _, ip := range ips {
+				if ip.IsPrivate() || ip.IsLoopback() || ip.IsUnspecified() {
+					return fmt.Errorf("blocked internal ip on redirect: %s", ip)
+				}
+			}
+			return nil
+		},
+	}
 	resp, err := client.Get(urlStr)
 	if err != nil {
 		return "", "", "", err
@@ -135,6 +172,22 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check if the URL is internal to avoid self-fetching
+	isInternal := false
+	if u, err := url.Parse(rawURL); err == nil {
+		if u.Hostname() == r.Host {
+			isInternal = true
+		}
+		// Also check against configured hostname
+		if cd.Config != nil && cd.Config.HTTPHostname != "" {
+			if confU, err := url.Parse(cd.Config.HTTPHostname); err == nil {
+				if u.Hostname() == confU.Hostname() {
+					isInternal = true
+				}
+			}
+		}
+	}
+
 	needFetch := false
 	if r.URL.Query().Get("reload") == "1" {
 		needFetch = true
@@ -144,7 +197,7 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 		needFetch = true
 	}
 
-	if needFetch && rawURL != "" {
+	if needFetch && rawURL != "" && !isInternal {
 		title, desc, img, err := fetchOpenGraph(rawURL)
 		if err == nil {
 			if linkID == 0 {
@@ -170,6 +223,9 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			log.Printf("fetchOpenGraph error: %v", err)
 		}
+	} else if isInternal {
+		// Log or handle internal link specifically if needed
+		// For now, we just don't fetch metadata
 	}
 
 	if linkID != 0 {

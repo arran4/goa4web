@@ -6,6 +6,7 @@ import (
 	"errors"
 	"sort"
 	"sync"
+	"time"
 )
 
 // FakeSQLResult implements sql.Result for tests.
@@ -67,6 +68,11 @@ type QuerierStub struct {
 	SystemGetUserByEmailCalls []string
 	SystemGetUserByEmailFn    func(context.Context, string) (*SystemGetUserByEmailRow, error)
 
+	SystemGetUserByUsernameRow   *SystemGetUserByUsernameRow
+	SystemGetUserByUsernameErr   error
+	SystemGetUserByUsernameCalls []sql.NullString
+	SystemGetUserByUsernameFn    func(context.Context, sql.NullString) (*SystemGetUserByUsernameRow, error)
+
 	SystemGetLastNotificationForRecipientByMessageRow   *Notification
 	SystemGetLastNotificationForRecipientByMessageErr   error
 	SystemGetLastNotificationForRecipientByMessageCalls []SystemGetLastNotificationForRecipientByMessageParams
@@ -117,6 +123,35 @@ type QuerierStub struct {
 	SystemDeletePasswordResetsByUserResult sql.Result
 	SystemDeletePasswordResetsByUserFn     func(context.Context, int32) (sql.Result, error)
 
+	AdminCountPasswordResetsCalls   []AdminCountPasswordResetsParams
+	AdminCountPasswordResetsReturns int64
+	AdminCountPasswordResetsErr     error
+	AdminCountPasswordResetsFn      func(context.Context, AdminCountPasswordResetsParams) (int64, error)
+
+	AdminCountPendingPasswordResetsByUserCalls   int
+	AdminCountPendingPasswordResetsByUserReturns []*AdminCountPendingPasswordResetsByUserRow
+	AdminCountPendingPasswordResetsByUserErr     error
+	AdminCountPendingPasswordResetsByUserFn      func(context.Context) ([]*AdminCountPendingPasswordResetsByUserRow, error)
+
+	AdminGetPasswordResetByIDCalls   []int32
+	AdminGetPasswordResetByIDReturns *PendingPassword
+	AdminGetPasswordResetByIDErr     error
+	AdminGetPasswordResetByIDFn      func(context.Context, int32) (*PendingPassword, error)
+
+	AdminListPasswordResetsCalls   []AdminListPasswordResetsParams
+	AdminListPasswordResetsReturns []*AdminListPasswordResetsRow
+	AdminListPasswordResetsErr     error
+	AdminListPasswordResetsFn      func(context.Context, AdminListPasswordResetsParams) ([]*AdminListPasswordResetsRow, error)
+
+	DeletePendingPasswordCalls []int32
+	DeletePendingPasswordErr   error
+	DeletePendingPasswordFn    func(context.Context, int32) error
+
+	GetPasswordResetByCodeCalls   []GetPasswordResetByCodeParams
+	GetPasswordResetByCodeReturns *PendingPassword
+	GetPasswordResetByCodeErr     error
+	GetPasswordResetByCodeFn      func(context.Context, GetPasswordResetByCodeParams) (*PendingPassword, error)
+
 	AdminPromoteAnnouncementCalls []int32
 	AdminPromoteAnnouncementErr   error
 	AdminPromoteAnnouncementFn    func(context.Context, int32) error
@@ -128,6 +163,14 @@ type QuerierStub struct {
 	AdminCancelBannedIpCalls      []string
 	AdminCancelBannedIpErr        error
 	AdminCancelBannedIpFn         func(context.Context, string) error
+	GetPendingPasswordCalls       []int32
+	GetPendingPasswordReturns     *PendingPassword
+	GetPendingPasswordErr         error
+	GetPendingPasswordFn          func(context.Context, int32) (*PendingPassword, error)
+	GetPendingPasswordByCodeCalls []string
+	GetPendingPasswordByCodeRow   *PendingPassword
+	GetPendingPasswordByCodeErr   error
+	GetPendingPasswordByCodeFn    func(context.Context, string) (*PendingPassword, error)
 	GetPasswordResetByUserCalls   []GetPasswordResetByUserParams
 	GetPasswordResetByUserReturns *PendingPassword
 	GetPasswordResetByUserErr     error
@@ -137,10 +180,31 @@ type QuerierStub struct {
 	CreatePasswordResetForUserErr   error
 	CreatePasswordResetForUserFn    func(context.Context, CreatePasswordResetForUserParams) error
 
+	SystemDeletePasswordResetCalls []int32
+	SystemDeletePasswordResetErr   error
+	SystemDeletePasswordResetFn    func(context.Context, int32) error
+
+	SystemMarkPasswordResetVerifiedCalls []int32
+	SystemMarkPasswordResetVerifiedErr   error
+	SystemMarkPasswordResetVerifiedFn    func(context.Context, int32) error
+
+	SystemPurgePasswordResetsBeforeCalls  []time.Time
+	SystemPurgePasswordResetsBeforeResult sql.Result
+	SystemPurgePasswordResetsBeforeErr    error
+	SystemPurgePasswordResetsBeforeFn     func(context.Context, time.Time) (sql.Result, error)
+
 	AdminInsertRequestQueueCalls   []AdminInsertRequestQueueParams
 	AdminInsertRequestQueueReturns sql.Result
 	AdminInsertRequestQueueErr     error
 	AdminInsertRequestQueueFn      func(context.Context, AdminInsertRequestQueueParams) (sql.Result, error)
+
+	AdminInsertRequestCommentCalls []AdminInsertRequestCommentParams
+	AdminInsertRequestCommentErr   error
+	AdminInsertRequestCommentFn    func(context.Context, AdminInsertRequestCommentParams) error
+
+	InsertAdminUserCommentCalls []InsertAdminUserCommentParams
+	InsertAdminUserCommentErr   error
+	InsertAdminUserCommentFn    func(context.Context, InsertAdminUserCommentParams) error
 
 	SystemGetLoginRow   *SystemGetLoginRow
 	SystemGetLoginErr   error

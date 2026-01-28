@@ -271,7 +271,7 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 			return template.HTML(buf.String()), err
 		},
 		"signCacheURL": func(ref string) string {
-			return cd.SignCacheURL(ref, 24*time.Hour)
+			return cd.MapImageURL("img", ref)
 		},
 	}
 }

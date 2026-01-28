@@ -1,20 +1,15 @@
 package externallink
 
 import (
-	"bytes"
-	"crypto/sha1"
 	"database/sql"
 	"fmt"
-	"image"
-	"io"
+	"log"
 	"net/http"
-	"path"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
-	intimages "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/opengraph"
 	"github.com/arran4/goa4web/internal/sign"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -70,35 +65,10 @@ func (ReloadExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) any
 
 	var cachedImgName string
 	if imgURL != "" {
-		// Download and cache image
-		client := cd.HTTPClient()
-		if client == nil {
-			client = opengraph.NewSafeClient()
-		}
-		resp, err := client.Get(imgURL)
-		if err == nil {
-			defer resp.Body.Close()
-			body, _ := io.ReadAll(resp.Body)
-			if len(body) > 0 {
-				im, _, err := image.Decode(bytes.NewReader(body))
-				if err == nil {
-					hash := fmt.Sprintf("%x", sha1.Sum(body))
-					ext, err := intimages.CleanExtension(path.Ext(imgURL))
-					if err == nil {
-						// Store system image
-						name, err := cd.StoreSystemImage(common.StoreImageParams{
-							ID:         hash,
-							Ext:        ext,
-							Data:       body,
-							Image:      im,
-							UploaderID: 0, // System
-						})
-						if err == nil {
-							cachedImgName = "image:" + name
-						}
-					}
-				}
-			}
+		var err error
+		cachedImgName, err = DownloadAndCacheImage(cd, imgURL)
+		if err != nil {
+			log.Printf("failed to cache image: %v", err)
 		}
 	}
 
@@ -140,7 +110,7 @@ func (ReloadExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) any
 			})
 			if err != nil {
 				// non-fatal, just log
-				fmt.Printf("failed to update cache: %v\n", err)
+				log.Printf("failed to update cache: %v", err)
 			}
 		}
 	}

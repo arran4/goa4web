@@ -490,6 +490,7 @@ type Querier interface {
 	RemoveContentLabelStatus(ctx context.Context, arg RemoveContentLabelStatusParams) error
 	RemoveContentPrivateLabel(ctx context.Context, arg RemoveContentPrivateLabelParams) error
 	RemoveContentPublicLabel(ctx context.Context, arg RemoveContentPublicLabelParams) error
+	SearchGrants(ctx context.Context, arg SearchGrantsParams) ([]*SearchGrantsRow, error)
 	SetNotificationPriorityForLister(ctx context.Context, arg SetNotificationPriorityForListerParams) error
 	SetNotificationReadForLister(ctx context.Context, arg SetNotificationReadForListerParams) error
 	SetNotificationUnreadForLister(ctx context.Context, arg SetNotificationUnreadForListerParams) error

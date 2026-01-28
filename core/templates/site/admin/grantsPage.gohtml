@@ -1,7 +1,46 @@
 {{ template "head" $ }}
 <p><a href="/admin/grant/add">Add grant</a></p>
+
+<form method="GET" action="/admin/grants">
+    <div class="row">
+        <div class="col-md-2">
+            <input type="text" name="user" class="form-control" placeholder="User" value="{{ .Filter.Username }}">
+        </div>
+        <div class="col-md-2">
+            <input type="text" name="role" class="form-control" placeholder="Role" value="{{ .Filter.RoleName }}">
+        </div>
+        <div class="col-md-2">
+            <input type="text" name="section" class="form-control" placeholder="Section" value="{{ .Filter.Section }}">
+        </div>
+        <div class="col-md-2">
+            <input type="text" name="item" class="form-control" placeholder="Item" value="{{ .Filter.Item }}">
+        </div>
+        <div class="col-md-2">
+            <input type="text" name="item_id" class="form-control" placeholder="Item ID" value="{{ .Filter.ItemID }}">
+        </div>
+        <div class="col-md-1">
+            <select name="active" class="form-control">
+                <option value="">Status</option>
+                <option value="true" {{ if eq .Filter.Active "true" }}selected{{ end }}>Active</option>
+                <option value="false" {{ if eq .Filter.Active "false" }}selected{{ end }}>Inactive</option>
+            </select>
+        </div>
+        <div class="col-md-1">
+            <button type="submit" class="btn btn-primary">Filter</button>
+        </div>
+    </div>
+</form>
+<br/>
+
 <table class="table table-bordered">
-    <tr><th>User</th><th>Role</th><th>Section</th><th>Item</th><th>Item ID</th><th>Actions</th></tr>
+    <tr>
+        <th><a href="?sort=user&dir={{ if eq .Filter.Sort "user" }}{{ if eq .Filter.Dir "asc" }}desc{{ else }}asc{{ end }}{{ else }}asc{{ end }}&user={{ .Filter.Username }}&role={{ .Filter.RoleName }}&section={{ .Filter.Section }}&item={{ .Filter.Item }}&item_id={{ .Filter.ItemID }}&active={{ .Filter.Active }}">User</a></th>
+        <th><a href="?sort=role&dir={{ if eq .Filter.Sort "role" }}{{ if eq .Filter.Dir "asc" }}desc{{ else }}asc{{ end }}{{ else }}asc{{ end }}&user={{ .Filter.Username }}&role={{ .Filter.RoleName }}&section={{ .Filter.Section }}&item={{ .Filter.Item }}&item_id={{ .Filter.ItemID }}&active={{ .Filter.Active }}">Role</a></th>
+        <th><a href="?sort=section&dir={{ if eq .Filter.Sort "section" }}{{ if eq .Filter.Dir "asc" }}desc{{ else }}asc{{ end }}{{ else }}asc{{ end }}&user={{ .Filter.Username }}&role={{ .Filter.RoleName }}&section={{ .Filter.Section }}&item={{ .Filter.Item }}&item_id={{ .Filter.ItemID }}&active={{ .Filter.Active }}">Section</a></th>
+        <th><a href="?sort=item&dir={{ if eq .Filter.Sort "item" }}{{ if eq .Filter.Dir "asc" }}desc{{ else }}asc{{ end }}{{ else }}asc{{ end }}&user={{ .Filter.Username }}&role={{ .Filter.RoleName }}&section={{ .Filter.Section }}&item={{ .Filter.Item }}&item_id={{ .Filter.ItemID }}&active={{ .Filter.Active }}">Item</a></th>
+        <th><a href="?sort=item_id&dir={{ if eq .Filter.Sort "item_id" }}{{ if eq .Filter.Dir "asc" }}desc{{ else }}asc{{ end }}{{ else }}asc{{ end }}&user={{ .Filter.Username }}&role={{ .Filter.RoleName }}&section={{ .Filter.Section }}&item={{ .Filter.Item }}&item_id={{ .Filter.ItemID }}&active={{ .Filter.Active }}">Item ID</a></th>
+        <th>Actions</th>
+    </tr>
     {{- range .Grants }}
     <tr>
         <td>{{ if .Grant.UserID.Valid }}<a href="/admin/user/{{ .Grant.UserID.Int32 }}">{{ .UserName }} ({{ .Grant.UserID.Int32 }})</a>{{ else if not .Grant.RoleID.Valid }}<a href="/admin/grants/anyone">{{ .UserName }}</a>{{ end }}</td>

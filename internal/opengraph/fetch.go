@@ -12,22 +12,24 @@ import (
 	"golang.org/x/net/html"
 )
 
-func Fetch(urlStr string, client *http.Client) (title, desc, image string, err error) {
+// Get performs a HTTP GET request. If client is nil, it constructs a safe client
+// that blocks access to private and loopback IP addresses to prevent SSRF.
+func Get(urlStr string, client *http.Client) (*http.Response, error) {
 	if client == nil {
 		u, err := url.Parse(urlStr)
 		if err != nil {
-			return "", "", "", err
+			return nil, err
 		}
 
 		host := u.Hostname()
 		ips, err := net.LookupIP(host)
 		if err != nil {
-			return "", "", "", err
+			return nil, err
 		}
 
 		for _, ip := range ips {
 			if ip.IsPrivate() || ip.IsLoopback() || ip.IsUnspecified() {
-				return "", "", "", fmt.Errorf("blocked internal ip: %s", ip)
+				return nil, fmt.Errorf("blocked internal ip: %s", ip)
 			}
 		}
 
@@ -52,7 +54,11 @@ func Fetch(urlStr string, client *http.Client) (title, desc, image string, err e
 			},
 		}
 	}
-	resp, err := client.Get(urlStr)
+	return client.Get(urlStr)
+}
+
+func Fetch(urlStr string, client *http.Client) (title, desc, image string, err error) {
+	resp, err := Get(urlStr, client)
 	if err != nil {
 		return "", "", "", err
 	}

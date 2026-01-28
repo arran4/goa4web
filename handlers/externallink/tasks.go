@@ -71,7 +71,7 @@ func (ReloadExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) any
 	var cachedImgName string
 	if imgURL != "" {
 		// Download and cache image
-		resp, err := cd.HTTPClient().Get(imgURL)
+		resp, err := opengraph.Get(imgURL, cd.HTTPClient())
 		if err == nil {
 			defer resp.Body.Close()
 			body, _ := io.ReadAll(resp.Body)

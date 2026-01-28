@@ -153,3 +153,41 @@ func (s *QuerierStub) GetLoginRoleForUser(ctx context.Context, userID int32) (in
 	}
 	return ret, err
 }
+
+func (s *QuerierStub) ListWritingCategoriesForLister(ctx context.Context, arg ListWritingCategoriesForListerParams) ([]*WritingCategory, error) {
+	s.mu.Lock()
+	s.ListWritingCategoriesForListerCalls = append(s.ListWritingCategoriesForListerCalls, arg)
+	fn := s.ListWritingCategoriesForListerFn
+	ret := s.ListWritingCategoriesForListerReturns
+	err := s.ListWritingCategoriesForListerErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) SystemListWritingCategories(ctx context.Context, arg SystemListWritingCategoriesParams) ([]*WritingCategory, error) {
+	s.mu.Lock()
+	s.SystemListWritingCategoriesCalls = append(s.SystemListWritingCategoriesCalls, arg)
+	fn := s.SystemListWritingCategoriesFn
+	ret := s.SystemListWritingCategoriesReturns
+	err := s.SystemListWritingCategoriesErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) AdminUpdateWritingCategory(ctx context.Context, arg AdminUpdateWritingCategoryParams) error {
+	s.mu.Lock()
+	s.AdminUpdateWritingCategoryCalls = append(s.AdminUpdateWritingCategoryCalls, arg)
+	fn := s.AdminUpdateWritingCategoryFn
+	err := s.AdminUpdateWritingCategoryErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
+}

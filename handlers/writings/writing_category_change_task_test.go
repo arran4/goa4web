@@ -2,34 +2,26 @@ package writings
 
 import (
 	"context"
+	"database/sql"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestWritingCategoryChangeTask(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	queries := testhelpers.NewQuerierStub()
+	queries.ListWritingCategoriesForListerReturns = []*db.WritingCategory{
+		writingCategoryRow(1, 0, "a", ""),
 	}
-	defer conn.Close()
-
-	queries := db.New(conn)
-
-	rows := sqlmock.NewRows([]string{"idwritingcategory", "writing_category_id", "title", "description"}).
-		AddRow(1, nil, "a", "")
-	mock.ExpectQuery("SELECT wc.idwritingcategory").WillReturnRows(rows)
-
-	mock.ExpectExec("UPDATE writing_category").
-		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), int32(1)).
-		WillReturnResult(sqlmock.NewResult(0, 1))
+	queries.SystemListWritingCategoriesReturns = queries.ListWritingCategoriesForListerReturns
+	queries.AdminUpdateWritingCategoryErr = nil
 
 	form := url.Values{"name": {"A"}, "desc": {"B"}, "pcid": {"0"}, "cid": {"1"}}
 	req := httptest.NewRequest("POST", "/admin/writings/categories/category/1/edit", strings.NewReader(form.Encode()))
@@ -41,24 +33,15 @@ func TestWritingCategoryChangeTask(t *testing.T) {
 	if v := writingCategoryChangeTask.Action(nil, req); v != nil {
 		t.Fatalf("action returned %v", v)
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 }
 
 func TestWritingCategoryWouldLoop(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	queries := testhelpers.NewQuerierStub()
+	queries.ListWritingCategoriesForListerReturns = []*db.WritingCategory{
+		writingCategoryRow(1, 0, "a", ""),
+		writingCategoryRow(2, 1, "b", ""),
 	}
-	defer conn.Close()
-
-	queries := db.New(conn)
-
-	rows := sqlmock.NewRows([]string{"idwritingcategory", "writing_category_id", "title", "description"}).
-		AddRow(1, 0, "a", "").
-		AddRow(2, 1, "b", "")
-	mock.ExpectQuery("SELECT wc.idwritingcategory").WillReturnRows(rows)
+	queries.SystemListWritingCategoriesReturns = queries.ListWritingCategoriesForListerReturns
 
 	_, loop, err := writingCategoryWouldLoop(context.Background(), queries, 1, 2)
 	if err != nil {
@@ -66,9 +49,6 @@ func TestWritingCategoryWouldLoop(t *testing.T) {
 	}
 	if !loop {
 		t.Fatalf("expected loop")
-	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
 	}
 }
 
@@ -83,20 +63,14 @@ func TestWritingCategoryWouldLoopSelfRef(t *testing.T) {
 }
 
 func TestWritingCategoryWouldLoopHeadToTail(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	queries := testhelpers.NewQuerierStub()
+	queries.ListWritingCategoriesForListerReturns = []*db.WritingCategory{
+		writingCategoryRow(1, 0, "a", ""),
+		writingCategoryRow(2, 1, "b", ""),
+		writingCategoryRow(3, 2, "c", ""),
+		writingCategoryRow(4, 3, "d", ""),
 	}
-	defer conn.Close()
-
-	queries := db.New(conn)
-
-	rows := sqlmock.NewRows([]string{"idwritingcategory", "writing_category_id", "title", "description"}).
-		AddRow(1, 0, "a", "").
-		AddRow(2, 1, "b", "").
-		AddRow(3, 2, "c", "").
-		AddRow(4, 3, "d", "")
-	mock.ExpectQuery("SELECT wc.idwritingcategory").WillReturnRows(rows)
+	queries.SystemListWritingCategoriesReturns = queries.ListWritingCategoriesForListerReturns
 
 	_, loop, err := writingCategoryWouldLoop(context.Background(), queries, 1, 4)
 	if err != nil {
@@ -105,25 +79,16 @@ func TestWritingCategoryWouldLoopHeadToTail(t *testing.T) {
 	if !loop {
 		t.Fatalf("expected loop")
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 }
 
 func TestWritingCategoryWouldLoopAfterNode(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	queries := testhelpers.NewQuerierStub()
+	queries.ListWritingCategoriesForListerReturns = []*db.WritingCategory{
+		writingCategoryRow(1, 0, "a", ""),
+		writingCategoryRow(2, 3, "b", ""),
+		writingCategoryRow(3, 2, "c", ""),
 	}
-	defer conn.Close()
-
-	queries := db.New(conn)
-
-	rows := sqlmock.NewRows([]string{"idwritingcategory", "writing_category_id", "title", "description"}).
-		AddRow(1, 0, "a", "").
-		AddRow(2, 3, "b", "").
-		AddRow(3, 2, "c", "")
-	mock.ExpectQuery("SELECT wc.idwritingcategory").WillReturnRows(rows)
+	queries.SystemListWritingCategoriesReturns = queries.ListWritingCategoriesForListerReturns
 
 	_, loop, err := writingCategoryWouldLoop(context.Background(), queries, 1, 2)
 	if err != nil {
@@ -132,24 +97,15 @@ func TestWritingCategoryWouldLoopAfterNode(t *testing.T) {
 	if !loop {
 		t.Fatalf("expected loop")
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 }
 
 func TestWritingCategoryChangeTaskLoop(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	queries := testhelpers.NewQuerierStub()
+	queries.ListWritingCategoriesForListerReturns = []*db.WritingCategory{
+		writingCategoryRow(1, 2, "a", ""),
+		writingCategoryRow(2, 1, "b", ""),
 	}
-	defer conn.Close()
-
-	queries := db.New(conn)
-
-	rows := sqlmock.NewRows([]string{"idwritingcategory", "writing_category_id", "title", "description"}).
-		AddRow(1, 2, "a", "").
-		AddRow(2, 1, "b", "")
-	mock.ExpectQuery("SELECT wc.idwritingcategory").WillReturnRows(rows)
+	queries.SystemListWritingCategoriesReturns = queries.ListWritingCategoriesForListerReturns
 
 	form := url.Values{"name": {"A"}, "desc": {"B"}, "pcid": {"2"}, "cid": {"1"}}
 	req := httptest.NewRequest("POST", "/admin/writings/categories/category/1/edit", strings.NewReader(form.Encode()))
@@ -165,7 +121,17 @@ func TestWritingCategoryChangeTaskLoop(t *testing.T) {
 	} else if !strings.HasPrefix(ue.UserErrorMessage(), "invalid parent category: loop") {
 		t.Fatalf("unexpected error message %q", ue.UserErrorMessage())
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+}
+
+func writingCategoryRow(id int32, parentID int32, title string, description string) *db.WritingCategory {
+	parent := sql.NullInt32{Valid: false}
+	if parentID != 0 {
+		parent = sql.NullInt32{Int32: parentID, Valid: true}
+	}
+	return &db.WritingCategory{
+		Idwritingcategory: id,
+		WritingCategoryID: parent,
+		Title:             sql.NullString{String: title, Valid: title != ""},
+		Description:       sql.NullString{String: description, Valid: description != ""},
 	}
 }

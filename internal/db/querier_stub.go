@@ -188,6 +188,20 @@ type QuerierStub struct {
 	ListSubscriptionsByUserErr     error
 	ListSubscriptionsByUserCalls   []int32
 
+	ListWritingCategoriesForListerReturns []*WritingCategory
+	ListWritingCategoriesForListerErr     error
+	ListWritingCategoriesForListerCalls   []ListWritingCategoriesForListerParams
+	ListWritingCategoriesForListerFn      func(context.Context, ListWritingCategoriesForListerParams) ([]*WritingCategory, error)
+
+	SystemListWritingCategoriesReturns []*WritingCategory
+	SystemListWritingCategoriesErr     error
+	SystemListWritingCategoriesCalls   []SystemListWritingCategoriesParams
+	SystemListWritingCategoriesFn      func(context.Context, SystemListWritingCategoriesParams) ([]*WritingCategory, error)
+
+	AdminUpdateWritingCategoryCalls []AdminUpdateWritingCategoryParams
+	AdminUpdateWritingCategoryErr   error
+	AdminUpdateWritingCategoryFn    func(context.Context, AdminUpdateWritingCategoryParams) error
+
 	SystemGetTemplateOverrideReturns string
 	SystemGetTemplateOverrideErr     error
 	SystemGetTemplateOverrideCalls   []string

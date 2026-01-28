@@ -9,7 +9,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	forumhandlers "github.com/arran4/goa4web/handlers/forum"
+	"github.com/arran4/goa4web/handlers/forumcommon"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 )
@@ -25,8 +25,8 @@ func (t *MarkReadTask) Matcher() mux.MatcherFunc {
 }
 
 var (
-	setLabelsTask = &SetLabelsTask{TaskString: forumhandlers.TaskSetLabels}
-	markReadTask  = &MarkReadTask{TaskString: forumhandlers.TaskMarkThreadRead}
+	setLabelsTask = &SetLabelsTask{TaskString: forumcommon.TaskSetLabels}
+	markReadTask  = &MarkReadTask{TaskString: forumcommon.TaskMarkThreadRead}
 )
 
 var (

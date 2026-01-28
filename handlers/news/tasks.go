@@ -1,7 +1,7 @@
 package news
 
 import (
-	forumhandlers "github.com/arran4/goa4web/handlers/forum"
+	"github.com/arran4/goa4web/handlers/forumcommon"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -27,5 +27,5 @@ const (
 	TaskUserDisallow = "User Disallow"
 
 	// TaskMarkRead marks a news item as read for the current user.
-	TaskMarkRead tasks.TaskString = forumhandlers.TaskMarkThreadRead
+	TaskMarkRead tasks.TaskString = forumcommon.TaskMarkThreadRead
 )

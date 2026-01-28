@@ -9,7 +9,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	forumhandlers "github.com/arran4/goa4web/handlers/forum"
+	"github.com/arran4/goa4web/handlers/forumcommon"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 )
@@ -17,7 +17,7 @@ import (
 // SetLabelsTask replaces private labels on a blog post.
 type SetLabelsTask struct{ tasks.TaskString }
 
-var setLabelsTask = &SetLabelsTask{TaskString: forumhandlers.TaskSetLabels}
+var setLabelsTask = &SetLabelsTask{TaskString: forumcommon.TaskSetLabels}
 
 var _ tasks.Task = (*SetLabelsTask)(nil)
 

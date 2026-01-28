@@ -229,54 +229,79 @@ func TestSubstring(t *testing.T) {
 }
 
 func TestQuoteRepro(t *testing.T) {
-	// Case 1: Filter out quotes of quotes
-	t.Run("FilterNestedQuotes", func(t *testing.T) {
-		input := "Para 1\n\n[quoteof \"other\" inner]\n\nPara 2"
-		got := QuoteText("user", input, WithParagraphQuote())
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "FilterNestedQuotes",
+			input: "Para 1\n\n[quoteof \"other\" inner]\n\nPara 2",
+			want:  "[quoteof \"user\" Para 1]\n\n\n[quoteof \"user\" Para 2]\n",
+		},
+		{
+			name:  "TripleLineBreaks",
+			input: "Para 1\n\nPara 2",
+			want:  "[quoteof \"user\" Para 1]\n\n\n[quoteof \"user\" Para 2]\n",
+		},
+		{
+			name:  "ParagraphStartingWithBracket",
+			input: "Para 1\n\n[b]bold[/b]",
+			want:  "[quoteof \"user\" Para 1]\n\n\n[quoteof \"user\" [b]bold[/b]]\n",
+		},
+		{
+			name:  "NotFilterMixedQuotes",
+			input: "[quoteof \"other\" inner] and more",
+			want:  "[quoteof \"user\" [quoteof \"other\" inner] and more]\n",
+		},
+		{
+			name:  "EmptyInput",
+			input: "",
+			want:  "",
+		},
+		{
+			name:  "WhitespaceOnly",
+			input: "   \t   ",
+			want:  "",
+		},
+		{
+			name:  "NewlinesOnly",
+			input: "\n\n\n",
+			want:  "",
+		},
+		{
+			name:  "MixedContentPreQuote",
+			input: "Prefix [quoteof \"other\" inner]",
+			want:  "[quoteof \"user\" Prefix [quoteof \"other\" inner]]\n",
+		},
+		{
+			name:  "MultipleNestedQuotesSameParagraph",
+			input: "[quoteof \"A\" 1] [quoteof \"B\" 2]",
+			want:  "[quoteof \"user\" [quoteof \"A\" 1] [quoteof \"B\" 2]]\n",
+		},
+		{
+			name:  "CaseInsensitiveFilter",
+			input: "[QUOTEOF \"other\" inner]",
+			want:  "",
+		},
+		{
+			name:  "ParagraphStartingWithCloseBracket",
+			input: "]\n\nNext",
+			want:  "[quoteof \"user\" ]]\n\n\n[quoteof \"user\" Next]\n",
+		},
+		{
+			name:  "ParagraphStartingWithBackslash",
+			input: "\\[\n\nNext",
+			want:  "[quoteof \"user\" []\n\n\n[quoteof \"user\" Next]\n",
+		},
+	}
 
-		// Expected:
-		// [quoteof "user" Para 1]
-		// \n\n\n (triple line break added after Para 1)
-		// (Inner quote filtered out)
-		// [quoteof "user" Para 2]
-		// \n
-
-		want := "[quoteof \"user\" Para 1]\n\n\n[quoteof \"user\" Para 2]\n"
-		if got != want {
-			t.Errorf("Got:\n%q\nWant:\n%q", got, want)
-		}
-	})
-
-	// Case 2: Triple line breaks
-	t.Run("TripleLineBreaks", func(t *testing.T) {
-		input := "Para 1\n\nPara 2"
-		got := QuoteText("user", input, WithParagraphQuote())
-		want := "[quoteof \"user\" Para 1]\n\n\n[quoteof \"user\" Para 2]\n"
-		if got != want {
-			t.Errorf("Got:\n%q\nWant:\n%q", got, want)
-		}
-	})
-
-	// Case 3: Bug fix for starting bracket
-	t.Run("ParagraphStartingWithBracket", func(t *testing.T) {
-		input := "Para 1\n\n[b]bold[/b]"
-		got := QuoteText("user", input, WithParagraphQuote())
-		// Before fix: ...[quoteof "user" [\nbold...]
-		// After fix: ...[quoteof "user" [b]bold[/b]]
-
-		want := "[quoteof \"user\" Para 1]\n\n\n[quoteof \"user\" [b]bold[/b]]\n"
-		if got != want {
-			t.Errorf("Got:\n%q\nWant:\n%q", got, want)
-		}
-	})
-
-	// Case 4: Not filtering if mixed content
-	t.Run("NotFilterMixedQuotes", func(t *testing.T) {
-		input := "[quoteof \"other\" inner] and more"
-		got := QuoteText("user", input, WithParagraphQuote())
-		want := "[quoteof \"user\" [quoteof \"other\" inner] and more]\n"
-		if got != want {
-			t.Errorf("Got:\n%q\nWant:\n%q", got, want)
-		}
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := QuoteText("user", tt.input, WithParagraphQuote())
+			if got != tt.want {
+				t.Errorf("QuoteText() = %q, want %q", got, tt.want)
+			}
+		})
+	}
 }

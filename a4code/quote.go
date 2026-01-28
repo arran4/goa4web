@@ -102,9 +102,9 @@ func fullQuoteOf(username, text string, trim bool) string {
 				}
 			}
 		case '\n':
-			if bc == 0 && nlc == 1 {
+			if bc <= 0 && nlc == 1 {
 				s := out.String()
-				if !isQuoteOf(s) {
+				if strings.TrimSpace(s) != "" && !isQuoteOf(s) {
 					quote.WriteString(quoteOfText(username, s, trim))
 					quote.WriteString("\n\n")
 				}
@@ -130,7 +130,7 @@ func fullQuoteOf(username, text string, trim bool) string {
 		it++
 	}
 	s := out.String()
-	if !isQuoteOf(s) {
+	if strings.TrimSpace(s) != "" && !isQuoteOf(s) {
 		quote.WriteString(quoteOfText(username, s, trim))
 	}
 	return quote.String()
@@ -138,8 +138,25 @@ func fullQuoteOf(username, text string, trim bool) string {
 
 func isQuoteOf(s string) bool {
 	s = strings.TrimSpace(s)
-	lower := strings.ToLower(s)
-	return strings.HasPrefix(lower, "[quoteof") && strings.HasSuffix(lower, "]")
+	if !strings.HasPrefix(strings.ToLower(s), "[quoteof") {
+		return false
+	}
+	// Verify it's a single block by balancing brackets
+	bc := 0
+	for i := 0; i < len(s); i++ {
+		switch s[i] {
+		case '[':
+			bc++
+		case ']':
+			bc--
+			if bc == 0 {
+				// If we closed the first tag, it must be the end of the string
+				// (ignoring trailing whitespace is handled by TrimSpace above)
+				return i == len(s)-1
+			}
+		}
+	}
+	return false
 }
 
 func Substring(s string, start, end int) string {

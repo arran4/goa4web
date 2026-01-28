@@ -316,6 +316,10 @@ type QuerierStub struct {
 	GetBlogEntryForListerByIDErr   error
 	GetBlogEntryForListerByIDCalls []GetBlogEntryForListerByIDParams
 
+	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow   *GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow
+	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingErr   error
+	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingCalls []int32
+
 	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow   *GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow
 	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserErr   error
 	GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserCalls []GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams
@@ -1173,6 +1177,18 @@ func (s *QuerierStub) GetBlogEntryForListerByID(ctx context.Context, arg GetBlog
 	}
 	if row == nil {
 		return nil, errors.New("GetBlogEntryForListerByID not stubbed")
+	}
+	return row, nil
+}
+
+func (s *QuerierStub) GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(ctx context.Context, id int32) (*GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow, error) {
+	s.mu.Lock()
+	s.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingCalls = append(s.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingCalls, id)
+	row := s.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow
+	err := s.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingErr
+	s.mu.Unlock()
+	if err != nil {
+		return nil, err
 	}
 	return row, nil
 }

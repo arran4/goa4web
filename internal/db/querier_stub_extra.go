@@ -29,6 +29,18 @@ func (s *QuerierStub) InsertPassword(ctx context.Context, arg InsertPasswordPara
 	return err
 }
 
+func (s *QuerierStub) InsertUserEmail(ctx context.Context, arg InsertUserEmailParams) error {
+	s.mu.Lock()
+	s.InsertUserEmailCalls = append(s.InsertUserEmailCalls, arg)
+	fn := s.InsertUserEmailFn
+	err := s.InsertUserEmailErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
+}
+
 func (s *QuerierStub) SystemDeletePasswordResetsByUser(ctx context.Context, userID int32) (sql.Result, error) {
 	s.mu.Lock()
 	s.SystemDeletePasswordResetsByUserCalls = append(s.SystemDeletePasswordResetsByUserCalls, userID)

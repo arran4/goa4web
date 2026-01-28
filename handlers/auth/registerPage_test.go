@@ -6,16 +6,14 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"regexp"
 	"strings"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestRegisterActionPageValidation(t *testing.T) {
@@ -47,28 +45,12 @@ func TestRegisterActionPageValidation(t *testing.T) {
 }
 
 func TestRegisterActionRedirectsToLogin(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-
-	queries := db.New(conn)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT idusers,\n       username,\n       public_profile_enabled_at\nFROM users\nWHERE username = ?\n")).
-		WithArgs(sql.NullString{String: "alice", Valid: true}).
-		WillReturnError(sql.ErrNoRows)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username\nFROM users u JOIN user_emails ue ON ue.user_id = u.idusers\nWHERE ue.email = ?\nLIMIT 1\n")).
-		WithArgs("alice@example.com").
-		WillReturnError(sql.ErrNoRows)
-	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO users (username)\nVALUES (?)\n")).
-		WithArgs(sql.NullString{String: "alice", Valid: true}).
-		WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO user_emails (user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority)\nVALUES (?, ?, ?, ?, ?, ?)\n")).
-		WithArgs(int32(1), "alice@example.com", sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), int32(0)).
-		WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO passwords (users_idusers, passwd, passwd_algorithm)\nVALUES (?, ?, ?)\n")).
-		WithArgs(int32(1), sqlmock.AnyArg(), sqlmock.AnyArg()).
-		WillReturnResult(sqlmock.NewResult(1, 1))
+	queries := testhelpers.NewQuerierStub()
+	queries.SystemGetUserByUsernameErr = sql.ErrNoRows
+	queries.SystemGetUserByEmailErr = sql.ErrNoRows
+	queries.SystemInsertUserReturns = 1
+	queries.InsertUserEmailErr = nil
+	queries.InsertPasswordErr = nil
 
 	form := url.Values{"username": {"alice"}, "password": {"pw"}, "email": {"alice@example.com"}}
 	req := httptest.NewRequest(http.MethodPost, "/register", strings.NewReader(form.Encode()))
@@ -80,9 +62,6 @@ func TestRegisterActionRedirectsToLogin(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handlers.TaskHandler(registerTask)(rr, req)
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
 	}

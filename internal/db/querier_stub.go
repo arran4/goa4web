@@ -62,6 +62,11 @@ type QuerierStub struct {
 	SystemGetUserByIDErr   error
 	SystemGetUserByIDCalls []int32
 
+	SystemGetUserByUsernameRow   *SystemGetUserByUsernameRow
+	SystemGetUserByUsernameErr   error
+	SystemGetUserByUsernameCalls []sql.NullString
+	SystemGetUserByUsernameFn    func(context.Context, sql.NullString) (*SystemGetUserByUsernameRow, error)
+
 	SystemGetUserByEmailRow   *SystemGetUserByEmailRow
 	SystemGetUserByEmailErr   error
 	SystemGetUserByEmailCalls []string
@@ -78,6 +83,11 @@ type QuerierStub struct {
 	SystemCreateThreadReturns int64
 	SystemCreateThreadErr     error
 	SystemCreateThreadFn      func(context.Context, int32) (int64, error)
+
+	SystemInsertUserCalls   []sql.NullString
+	SystemInsertUserReturns int64
+	SystemInsertUserErr     error
+	SystemInsertUserFn      func(context.Context, sql.NullString) (int64, error)
 
 	SystemInsertDeadLetterCalls int
 
@@ -111,6 +121,10 @@ type QuerierStub struct {
 	InsertPasswordCalls []InsertPasswordParams
 	InsertPasswordErr   error
 	InsertPasswordFn    func(context.Context, InsertPasswordParams) error
+
+	InsertUserEmailCalls []InsertUserEmailParams
+	InsertUserEmailErr   error
+	InsertUserEmailFn    func(context.Context, InsertUserEmailParams) error
 
 	SystemDeletePasswordResetsByUserCalls  []int32
 	SystemDeletePasswordResetsByUserErr    error
@@ -1206,6 +1220,26 @@ func (s *QuerierStub) SystemGetUserByID(ctx context.Context, idusers int32) (*Sy
 	return s.SystemGetUserByIDRow, nil
 }
 
+// SystemGetUserByUsername records the call and returns the configured response.
+func (s *QuerierStub) SystemGetUserByUsername(ctx context.Context, username sql.NullString) (*SystemGetUserByUsernameRow, error) {
+	s.mu.Lock()
+	s.SystemGetUserByUsernameCalls = append(s.SystemGetUserByUsernameCalls, username)
+	fn := s.SystemGetUserByUsernameFn
+	row := s.SystemGetUserByUsernameRow
+	err := s.SystemGetUserByUsernameErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, username)
+	}
+	if err != nil {
+		return nil, err
+	}
+	if row == nil {
+		return nil, errors.New("SystemGetUserByUsername not stubbed")
+	}
+	return row, nil
+}
+
 // SystemGetUserByEmail records the call and returns the configured response.
 func (s *QuerierStub) SystemGetUserByEmail(ctx context.Context, email string) (*SystemGetUserByEmailRow, error) {
 	s.mu.Lock()
@@ -1257,6 +1291,20 @@ func (s *QuerierStub) SystemCreateThread(ctx context.Context, forumtopicIdforumt
 	s.mu.Unlock()
 	if fn != nil {
 		return fn(ctx, forumtopicIdforumtopic)
+	}
+	return ret, err
+}
+
+// SystemInsertUser records the call and returns the configured response.
+func (s *QuerierStub) SystemInsertUser(ctx context.Context, username sql.NullString) (int64, error) {
+	s.mu.Lock()
+	s.SystemInsertUserCalls = append(s.SystemInsertUserCalls, username)
+	fn := s.SystemInsertUserFn
+	ret := s.SystemInsertUserReturns
+	err := s.SystemInsertUserErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, username)
 	}
 	return ret, err
 }

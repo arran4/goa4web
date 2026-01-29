@@ -1,4 +1,4 @@
-package forum
+package forumcommon
 
 import (
 	"fmt"
@@ -107,7 +107,7 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 		}
 		if cd.UserID != 0 {
 			if tid, err := strconv.Atoi(topicID); err == nil {
-				if subscribedToTopic(cd, int32(tid)) {
+				if SubscribedToTopic(cd, int32(tid)) {
 					items = append(items,
 						common.IndexItem{
 							Name:   "Unsubscribe From Topic",
@@ -159,14 +159,4 @@ func markThreadReadLink(base, threadID, redirect string) string {
 		link = fmt.Sprintf("%s&redirect=%s", link, url.QueryEscape(redirect))
 	}
 	return link
-}
-
-func forumBasePath(cd *common.CoreData, r *http.Request) string {
-	if cd != nil && cd.ForumBasePath != "" {
-		return cd.ForumBasePath
-	}
-	if r != nil && strings.HasPrefix(r.URL.Path, "/private") {
-		return "/private"
-	}
-	return "/forum"
 }

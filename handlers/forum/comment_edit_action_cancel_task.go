@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/handlers/forum/forumcommon"
 	"fmt"
 	"net/http"
 
@@ -13,7 +14,7 @@ import (
 // topicThreadCommentEditActionCancelTask aborts editing a comment.
 type topicThreadCommentEditActionCancelTask struct{ tasks.TaskString }
 
-var topicThreadCommentEditActionCancel = &topicThreadCommentEditActionCancelTask{TaskString: TaskCancel}
+var topicThreadCommentEditActionCancel = &topicThreadCommentEditActionCancelTask{TaskString: forumcommon.TaskCancel}
 
 // TopicThreadCommentEditActionCancelHandler aborts editing a comment. Exported for reuse.
 var TopicThreadCommentEditActionCancelHandler = topicThreadCommentEditActionCancel

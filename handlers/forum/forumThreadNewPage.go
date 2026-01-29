@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/handlers/forum/forumcommon"
 	"database/sql"
 	"fmt"
 	"log"
@@ -30,7 +31,7 @@ import (
 type CreateThreadTask struct{ tasks.TaskString }
 
 var (
-	createThreadTask = &CreateThreadTask{TaskString: TaskCreateThread}
+	createThreadTask = &CreateThreadTask{TaskString: forumcommon.TaskCreateThread}
 
 	// CreateThreadTaskHandler handles creating threads and is exported for reuse.
 	CreateThreadTaskHandler = createThreadTask
@@ -92,9 +93,9 @@ func (CreateThreadTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, strin
 		if idx := strings.Index(evt.Path, "/topic/"); idx > 0 {
 			base = evt.Path[:idx]
 		}
-		return string(TaskCreateThread), fmt.Sprintf("%s/topic/%d/thread/%d", base, data.TopicID, data.ThreadID), nil
+		return string(forumcommon.TaskCreateThread), fmt.Sprintf("%s/topic/%d/thread/%d", base, data.TopicID, data.ThreadID), nil
 	}
-	return string(TaskCreateThread), evt.Path, nil
+	return string(forumcommon.TaskCreateThread), evt.Path, nil
 }
 
 func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {

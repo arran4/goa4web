@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/handlers/forum/forumcommon"
 	"context"
 	"database/sql"
 	"fmt"
@@ -131,7 +132,7 @@ func TestCreateThreadNotificationLink(t *testing.T) {
 	form := url.Values{
 		"replytext": {"First post content"},
 		"language":  {"1"},
-		"task":      {string(TaskCreateThread)},
+		"task":      {string(forumcommon.TaskCreateThread)},
 	}
 	req := httptest.NewRequest(http.MethodPost, "http://example.com"+creationPagePath, strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")

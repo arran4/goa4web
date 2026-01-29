@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/handlers/forum/forumcommon"
 	"database/sql"
 	"fmt"
 	"net/http"
@@ -18,7 +19,7 @@ import (
 // TopicGrantUpdateTask updates role grants for a forum topic action.
 type TopicGrantUpdateTask struct{ tasks.TaskString }
 
-var topicGrantUpdateTask = &TopicGrantUpdateTask{TaskString: TaskTopicGrantUpdate}
+var topicGrantUpdateTask = &TopicGrantUpdateTask{TaskString: forumcommon.TaskTopicGrantUpdate}
 
 var _ tasks.Task = (*TopicGrantUpdateTask)(nil)
 

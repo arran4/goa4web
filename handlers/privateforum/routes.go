@@ -9,6 +9,7 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	forumhandlers "github.com/arran4/goa4web/handlers/forum"
 	forumcomments "github.com/arran4/goa4web/handlers/forum/comments"
+	"github.com/arran4/goa4web/handlers/forum/forumcommon"
 	navpkg "github.com/arran4/goa4web/internal/navigation"
 	"github.com/arran4/goa4web/internal/router"
 )
@@ -18,7 +19,7 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Reg
 	navReg.RegisterIndexLinkWithViewPermission("Private", "/private", SectionWeight, "privateforum", "topic")
 	pr := r.PathPrefix("/private").Subrouter()
 	pr.NotFoundHandler = http.HandlerFunc(handlers.RenderNotFoundOrLogin)
-	pr.Use(handlers.IndexMiddleware(CustomIndex), handlers.SectionMiddleware("privateforum"), forumhandlers.BasePathMiddleware("/private"))
+	pr.Use(handlers.IndexMiddleware(CustomIndex), handlers.SectionMiddleware("privateforum"), forumcommon.BasePathMiddleware("/private"))
 	pr.HandleFunc("", PrivateForumPage).Methods(http.MethodGet)
 	pr.HandleFunc("/preview", handlers.PreviewPage).Methods("POST")
 	// Dedicated page to start a private group discussion

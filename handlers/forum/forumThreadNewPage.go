@@ -298,6 +298,11 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 		evt.Path = endUrl
 	}
 
+	subjectPrefix := "Forum"
+	if topic.Handler == "private" {
+		subjectPrefix = "Private Forum"
+	}
+
 	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
 		ThreadID:         int32(threadId),
 		TopicID:          int32(topicId),
@@ -313,6 +318,7 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 		MarkThreadRead:   true,
 		AdditionalData: map[string]any{
 			"ThreadOpenerPreview": a4code.SnipTextWords(text, 10),
+			"SubjectPrefix":       subjectPrefix,
 		},
 	}); err != nil {
 		log.Printf("thread create side effects: %v", err)

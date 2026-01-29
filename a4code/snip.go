@@ -23,7 +23,7 @@ func SnipWords(s string, count int) string {
 	if len(words) > count {
 		return strings.Join(words[:count], " ") + "..."
 	}
-	return s
+	return strings.Join(words, " ")
 }
 
 func SnipTextWords(s string, count int) string {

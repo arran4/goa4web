@@ -160,6 +160,12 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		data["ThreadOpenerPreview"] = a4code.SnipTextWords(firstPost.Text.String, 10)
 	}
 
+	subjectPrefix := "Forum"
+	if topicRow.Handler == "private" {
+		subjectPrefix = "Private Forum"
+	}
+	data["SubjectPrefix"] = subjectPrefix
+
 	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
 		ThreadID:             threadRow.Idforumthread,
 		TopicID:              topicRow.Idforumtopic,

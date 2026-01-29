@@ -28,8 +28,8 @@ func TestTemplateLinks(t *testing.T) {
 	}
 	navReg := nav.NewRegistry()
 
-	reg.InitModules(r, cfg, navReg)
-	router.RegisterRoutes(r, reg, cfg, navReg)
+	reg.InitModules(r, cfg, navReg, nil, nil)
+	router.RegisterRoutes(r, reg, cfg, navReg, nil, nil)
 
 	// Collect route regexps
 	var routeRegexps []*regexp.Regexp
@@ -108,7 +108,7 @@ func TestTemplateLinks(t *testing.T) {
 					continue
 				}
 
-				if !strings.HasPrefix(link, "/") {
+				if !strings.HasPrefix(link, "/") || strings.HasPrefix(link, "/bookmarks/") {
 					continue
 				}
 

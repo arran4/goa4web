@@ -1,9 +1,11 @@
 package router
 
 import (
+	"database/sql"
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
@@ -12,14 +14,14 @@ import (
 )
 
 // RegisterRoutes sets up all application routes on r.
-func RegisterRoutes(r *mux.Router, reg *Registry, cfg *config.RuntimeConfig, navReg *nav.Registry) {
+func RegisterRoutes(r *mux.Router, reg *Registry, cfg *config.RuntimeConfig, navReg *nav.Registry, db *sql.DB, store sessions.Store) {
 	r.HandleFunc("/robots.txt", handlers.RobotsTXT(cfg)).Methods("GET")
 	r.HandleFunc("/main.css", handlers.MainCSS(cfg)).Methods("GET")
 	r.HandleFunc("/favicon.svg", handlers.Favicon(cfg)).Methods("GET")
 	r.HandleFunc("/static/site.js", handlers.SiteJS(cfg)).Methods("GET")
 	r.HandleFunc("/static/a4code.js", handlers.A4CodeJS(cfg)).Methods("GET")
 
-	reg.InitModules(r, cfg, navReg)
+	reg.InitModules(r, cfg, navReg, db, store)
 
 }
 

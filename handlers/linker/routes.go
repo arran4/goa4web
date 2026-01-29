@@ -1,8 +1,12 @@
 package linker
 
 import (
-	"github.com/arran4/goa4web/handlers/forum/comments"
+	"database/sql"
 	"net/http"
+
+	"github.com/arran4/goa4web/handlers/forum/comments"
+
+	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/handlers"
 	"github.com/gorilla/mux"
@@ -15,7 +19,7 @@ import (
 var legacyRedirectsEnabled = true
 
 // RegisterRoutes attaches the public linker endpoints to r.
-func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
+func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry, _ *sql.DB, _ sessions.Store) {
 	navReg.RegisterIndexLinkWithViewPermission("Linker", "/linker", SectionWeight, "linker", "category")
 	navReg.RegisterAdminControlCenter("Linker", "Linker", "/admin/linker", SectionWeight)
 	lr := r.PathPrefix("/linker").Subrouter()

@@ -1,9 +1,12 @@
 package auth
 
 import (
+	"database/sql"
+
 	"github.com/arran4/goa4web/handlers"
 	. "github.com/arran4/gorillamuxlogic"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/config"
 	nav "github.com/arran4/goa4web/internal/navigation"
@@ -11,7 +14,7 @@ import (
 )
 
 // RegisterRoutes attaches the login and registration endpoints to r.
-func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, _ *nav.Registry) {
+func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, _ *nav.Registry, _ *sql.DB, _ sessions.Store) {
 	rr := r.PathPrefix("/register").Subrouter()
 	rr.Use(handlers.IndexMiddleware(CustomIndex))
 	rr.HandleFunc("", registerTask.Page).Methods("GET").MatcherFunc(Not(handlers.RequiresAnAccount()))

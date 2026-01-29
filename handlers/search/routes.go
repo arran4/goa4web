@@ -1,8 +1,11 @@
 package search
 
 import (
+	"database/sql"
+
 	"github.com/arran4/goa4web/handlers"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/config"
 	navpkg "github.com/arran4/goa4web/internal/navigation"
@@ -10,7 +13,7 @@ import (
 )
 
 // RegisterRoutes attaches the search endpoints to r.
-func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
+func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry, _ *sql.DB, _ sessions.Store) {
 	navReg.RegisterIndexLink("Search", "/search", SectionWeight)
 	navReg.RegisterAdminControlCenter("Search", "Search", "/admin/search", SectionWeight)
 	sr := r.PathPrefix("/search").Subrouter()

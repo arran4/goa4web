@@ -1,15 +1,18 @@
 package websocket
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
-	corecommon "github.com/arran4/goa4web/core/common"
 	"log"
 	"net/http"
 	"net/url"
 	"strings"
 
+	corecommon "github.com/arran4/goa4web/core/common"
+
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 	"github.com/gorilla/websocket"
 
 	"github.com/arran4/goa4web/config"
@@ -206,7 +209,7 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 }
 
 // registerRoutes attaches the websocket handler to r.
-func (m *Module) registerRoutes(r *mux.Router, cfg *config.RuntimeConfig, _ *navigation.Registry) {
+func (m *Module) registerRoutes(r *mux.Router, cfg *config.RuntimeConfig, _ *navigation.Registry, _ *sql.DB, _ sessions.Store) {
 	h := NewNotificationsHandler(m.Bus, cfg)
 	r.Handle("/ws/notifications", h).Methods(http.MethodGet)
 	r.HandleFunc("/websocket/notifications.js", NotificationsJS(cfg)).Methods(http.MethodGet)

@@ -1,8 +1,11 @@
 package faq
 
 import (
-	"github.com/gorilla/mux"
+	"database/sql"
 	"net/http"
+
+	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
@@ -17,7 +20,7 @@ func noTask() mux.MatcherFunc {
 }
 
 // RegisterRoutes attaches the public FAQ endpoints to the router.
-func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
+func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry, _ *sql.DB, _ sessions.Store) {
 	navReg.RegisterIndexLinkWithViewPermission("Help", "/faq", SectionWeight, "faq", "question/answer")
 	navReg.RegisterAdminControlCenter("Help", "Help Questions", "/admin/faq/questions", SectionWeight)
 	navReg.RegisterAdminControlCenter("Help", "Help Categories", "/admin/faq/categories", SectionWeight+2)

@@ -13,7 +13,7 @@ import (
 func TestEditRouteRegistered(t *testing.T) {
 	r := mux.NewRouter()
 	navReg := navpkg.NewRegistry()
-	RegisterRoutes(r, config.NewRuntimeConfig(), navReg)
+	RegisterRoutes(r, config.NewRuntimeConfig(), navReg, nil, nil)
 
 	found := false
 	_ = r.Walk(func(route *mux.Route, _ *mux.Router, _ []*mux.Route) error {

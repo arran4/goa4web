@@ -11,7 +11,7 @@ import (
 )
 
 const getPreferenceForLister = `-- name: GetPreferenceForLister :one
-SELECT idpreferences, language_id, users_idusers, emailforumupdates, page_size, auto_subscribe_replies, timezone, custom_css
+SELECT idpreferences, language_id, users_idusers, emailforumupdates, page_size, auto_subscribe_replies, timezone, custom_css, daily_digest_hour, daily_digest_mark_read, last_digest_sent_at
 FROM preferences
 WHERE users_idusers = ?
 `
@@ -28,8 +28,57 @@ func (q *Queries) GetPreferenceForLister(ctx context.Context, listerID int32) (*
 		&i.AutoSubscribeReplies,
 		&i.Timezone,
 		&i.CustomCss,
+		&i.DailyDigestHour,
+		&i.DailyDigestMarkRead,
+		&i.LastDigestSentAt,
 	)
 	return &i, err
+}
+
+const getUsersForDailyDigest = `-- name: GetUsersForDailyDigest :many
+SELECT p.users_idusers, ue.email, p.daily_digest_mark_read
+FROM preferences p
+JOIN user_emails ue ON ue.id = (
+    SELECT id FROM user_emails ue2
+    WHERE ue2.user_id = p.users_idusers AND ue2.verified_at IS NOT NULL
+    ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1
+)
+WHERE p.daily_digest_hour = ?
+  AND (p.last_digest_sent_at IS NULL OR p.last_digest_sent_at < ?)
+`
+
+type GetUsersForDailyDigestParams struct {
+	Hour   sql.NullInt32
+	Cutoff sql.NullTime
+}
+
+type GetUsersForDailyDigestRow struct {
+	UsersIdusers        int32
+	Email               string
+	DailyDigestMarkRead bool
+}
+
+func (q *Queries) GetUsersForDailyDigest(ctx context.Context, arg GetUsersForDailyDigestParams) ([]*GetUsersForDailyDigestRow, error) {
+	rows, err := q.db.QueryContext(ctx, getUsersForDailyDigest, arg.Hour, arg.Cutoff)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetUsersForDailyDigestRow
+	for rows.Next() {
+		var i GetUsersForDailyDigestRow
+		if err := rows.Scan(&i.UsersIdusers, &i.Email, &i.DailyDigestMarkRead); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const insertEmailPreferenceForLister = `-- name: InsertEmailPreferenceForLister :exec
@@ -115,6 +164,40 @@ type UpdateEmailForumUpdatesForListerParams struct {
 
 func (q *Queries) UpdateEmailForumUpdatesForLister(ctx context.Context, arg UpdateEmailForumUpdatesForListerParams) error {
 	_, err := q.db.ExecContext(ctx, updateEmailForumUpdatesForLister, arg.EmailForumUpdates, arg.ListerID)
+	return err
+}
+
+const updateLastDigestSentAt = `-- name: UpdateLastDigestSentAt :exec
+UPDATE preferences
+SET last_digest_sent_at = ?
+WHERE users_idusers = ?
+`
+
+type UpdateLastDigestSentAtParams struct {
+	SentAt   sql.NullTime
+	ListerID int32
+}
+
+func (q *Queries) UpdateLastDigestSentAt(ctx context.Context, arg UpdateLastDigestSentAtParams) error {
+	_, err := q.db.ExecContext(ctx, updateLastDigestSentAt, arg.SentAt, arg.ListerID)
+	return err
+}
+
+const updateNotificationDigestPreferences = `-- name: UpdateNotificationDigestPreferences :exec
+UPDATE preferences
+SET daily_digest_hour = ?,
+    daily_digest_mark_read = ?
+WHERE users_idusers = ?
+`
+
+type UpdateNotificationDigestPreferencesParams struct {
+	DailyDigestHour     sql.NullInt32
+	DailyDigestMarkRead bool
+	ListerID            int32
+}
+
+func (q *Queries) UpdateNotificationDigestPreferences(ctx context.Context, arg UpdateNotificationDigestPreferencesParams) error {
+	_, err := q.db.ExecContext(ctx, updateNotificationDigestPreferences, arg.DailyDigestHour, arg.DailyDigestMarkRead, arg.ListerID)
 	return err
 }
 

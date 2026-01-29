@@ -48,4 +48,7 @@ const (
 
 	// TaskUserEmailVerification verifies a user's email address.
 	TaskUserEmailVerification tasks.TaskString = "Email Verification"
+
+	// TaskSaveDigest saves notification digest settings.
+	TaskSaveDigest tasks.TaskString = "SaveDigest"
 )

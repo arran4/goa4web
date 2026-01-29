@@ -37,6 +37,12 @@ UPDATE notifications
 SET read_at = NOW()
 WHERE id = sqlc.arg(id) AND users_idusers = sqlc.arg(lister_id);
 
+-- name: SetNotificationsReadForListerBatch :exec
+UPDATE notifications
+SET read_at = NOW()
+WHERE users_idusers = sqlc.arg(lister_id)
+  AND id IN (sqlc.slice('ids'));
+
 -- name: SetNotificationUnreadForLister :exec
 UPDATE notifications
 SET read_at = NULL

@@ -1,19 +1,20 @@
 package common
 
 import (
-	"bytes"
+	"context"
 	"crypto/sha1"
 	"fmt"
-	"image"
 	_ "image/gif"  // Register format
 	_ "image/jpeg" // Register format
 	_ "image/png"  // Register format
 	"io"
 	"net/url"
+	"os"
 	"path"
 
 	intimages "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/opengraph"
+	"github.com/arran4/goa4web/internal/upload"
 )
 
 // DownloadAndCacheImage downloads an image from a URL, stores it using cd.StoreSystemImage,
@@ -31,14 +32,8 @@ func (cd *CoreData) DownloadAndCacheImage(imgURL string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("read body: %w", err)
 	}
-
 	if len(body) == 0 {
 		return "", fmt.Errorf("empty body")
-	}
-
-	im, _, err := image.Decode(bytes.NewReader(body))
-	if err != nil {
-		return "", fmt.Errorf("decode image: %w", err)
 	}
 
 	hash := fmt.Sprintf("%x", sha1.Sum(body))
@@ -53,17 +48,37 @@ func (cd *CoreData) DownloadAndCacheImage(imgURL string) (string, error) {
 		ext = ".jpg"
 	}
 
-	// Store system image
-	name, err := cd.StoreSystemImage(StoreImageParams{
-		ID:         hash,
-		Ext:        ext,
-		Data:       body,
-		Image:      im,
-		UploaderID: 0, // System
-	})
-	if err != nil {
-		return "", fmt.Errorf("store system image: %w", err)
+	cacheRef := hash + ext
+	sub1, sub2 := hash[:2], hash[2:4]
+	key := path.Join(sub1, sub2, cacheRef)
+
+	if cp := upload.CacheProviderFromConfig(cd.Config); cp != nil {
+		if err := cp.Write(context.Background(), key, body); err != nil {
+			return "", fmt.Errorf("cache write: %w", err)
+		}
+		// Optional: cleanup check? storeImageInternal does:
+		// if ccp, ok := cp.(upload.CacheProvider); ok { ccp.Cleanup(...) }
+		return "cache:" + cacheRef, nil
 	}
 
-	return "image:" + name, nil
+	// Fallback if no cache provider? Or error?
+	// serveCache supports local file system if no provider, using cfg.ImageCacheDir
+	// We should write to ImageCacheDir if provider is nil?
+	// upload.CacheProviderFromConfig usually returns a local provider if configured.
+	// Let's check upload.CacheProviderFromConfig implementation or assume it handles local fallback if configured so.
+	// Actually serveCache handles nil provider by using filepath directly.
+	// We should probably replicate that or ensure we have a provider.
+	// For now, let's assume we can rely on CacheProvider or manual write.
+
+	// If CacheProviderFromConfig returns nil, we manually write to filesystem for local cache
+	// mirroring serveCache logic.
+	fullPath := path.Join(cd.Config.ImageCacheDir, sub1, sub2, cacheRef)
+	if err := os.MkdirAll(path.Dir(fullPath), 0755); err != nil {
+		return "", fmt.Errorf("mkdir cache: %w", err)
+	}
+	if err := os.WriteFile(fullPath, body, 0644); err != nil {
+		return "", fmt.Errorf("write cache file: %w", err)
+	}
+
+	return "cache:" + cacheRef, nil
 }

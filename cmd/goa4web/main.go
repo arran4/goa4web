@@ -415,7 +415,8 @@ func (r *rootCmd) Run() error {
 		c, err := parseFilesCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("rootCmd.Run: files: %w", err)
-    }
+		}
+		return c.Run()
 	case "imagebbs":
 		c, err := parseImagebbsCmd(r, args[1:])
 		if err != nil {
@@ -438,12 +439,6 @@ func (r *rootCmd) Run() error {
 		c, err := parseCommentCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("rootCmd.Run: comment: %w", err)
-		}
-		return c.Run()
-	case "requests":
-		c, err := parseRequestsCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: requests: %w", err)
 		}
 		return c.Run()
 	case "audit":

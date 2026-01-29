@@ -41,7 +41,8 @@ func (c *requestsCmd) Run() error {
 		cmd, err := parseRequestsViewCmd(c, args[1:])
 		if err != nil {
 			return fmt.Errorf("view: %w", err)
-    }
+		}
+		return cmd.Run()
 	case "accept":
 		cmd, err := parseRequestsAcceptCmd(c, args[1:])
 		if err != nil {

@@ -1,10 +1,14 @@
 Usage:
   {{.Prog}} user roles
+  {{.Prog}} user roles sync --template <name> [--dry-run]
 
 Description:
   list usernames with their assigned roles
+  sync user role assignments to match a role template
 
 Examples:
   {{.Prog}} user roles
+  {{.Prog}} user roles sync --template default
+  {{.Prog}} user roles sync --template default --dry-run
 
 {{template "flag_groups_section" .FlagGroups}}

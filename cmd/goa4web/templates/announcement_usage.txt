@@ -1,0 +1,16 @@
+Usage:
+  {{.Prog}} announcement <command> [<args>]
+
+Manage site announcements tied to news posts.
+
+Commands:
+  list     list announcements
+  add      promote a news post to an announcement
+  delete   delete an announcement
+
+Examples:
+  {{.Prog}} announcement list
+  {{.Prog}} announcement add -news-id 42
+  {{.Prog}} announcement delete -id 5
+
+{{template "flag_groups_section" .FlagGroups}}

@@ -13,5 +13,6 @@ func RegisterTasks() []tasks.NamedTask {
 		editQuestionTask,
 		deleteQuestionTask,
 		createQuestionTask,
+		createTemplateTask,
 	}
 }

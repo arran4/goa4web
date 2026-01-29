@@ -28,6 +28,38 @@ func (q *grantsPageQueries) ListGrants(context.Context) ([]*db.Grant, error) {
 	return q.grants, nil
 }
 
+func (q *grantsPageQueries) SearchGrants(context.Context, db.SearchGrantsParams) ([]*db.SearchGrantsRow, error) {
+	var rows []*db.SearchGrantsRow
+	for _, g := range q.grants {
+		username := sql.NullString{}
+		if g.UserID.Valid && g.UserID.Int32 == q.userID {
+			username = q.user.Username
+		}
+		roleName := sql.NullString{}
+		if g.RoleID.Valid && g.RoleID.Int32 == q.roleID {
+			roleName = sql.NullString{String: q.role.Name, Valid: true}
+		}
+		rows = append(rows, &db.SearchGrantsRow{
+			ID:        g.ID,
+			CreatedAt: g.CreatedAt,
+			UpdatedAt: g.UpdatedAt,
+			UserID:    g.UserID,
+			RoleID:    g.RoleID,
+			Section:   g.Section,
+			Item:      g.Item,
+			RuleType:  g.RuleType,
+			ItemID:    g.ItemID,
+			ItemRule:  g.ItemRule,
+			Action:    g.Action,
+			Extra:     g.Extra,
+			Active:    g.Active,
+			Username:  username,
+			RoleName:  roleName,
+		})
+	}
+	return rows, nil
+}
+
 func (q *grantsPageQueries) SystemGetUserByID(_ context.Context, id int32) (*db.SystemGetUserByIDRow, error) {
 	if id != q.userID {
 		return nil, fmt.Errorf("unexpected user id: %d", id)

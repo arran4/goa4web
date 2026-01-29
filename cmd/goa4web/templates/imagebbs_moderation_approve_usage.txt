@@ -1,0 +1,12 @@
+Usage:
+  {{.Prog}} imagebbs moderation approve <id>
+  {{.Prog}} imagebbs moderation approve --id <id>
+
+Description:
+  Approve a single ImageBBS post by ID.
+
+Examples:
+  {{.Prog}} imagebbs moderation approve 42
+  {{.Prog}} imagebbs moderation approve --id 42
+
+{{template "flag_groups_section" .FlagGroups}}

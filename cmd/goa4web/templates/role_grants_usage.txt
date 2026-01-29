@@ -1,0 +1,8 @@
+Usage: {{.Prog}} role grants <subcommand> [flags]
+
+Subcommands:
+  export  Exports role grant groups in JSON or CSV.
+
+Examples:
+  # Export grant groups for the "moderator" role in JSON
+  {{.Prog}} role grants export -role moderator -format json

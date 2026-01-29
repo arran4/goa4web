@@ -2,9 +2,17 @@ Usage:
   {{.Prog}} notifications <command> [<args>]
 
 Commands:
+  list     list notifications with optional filters
+  mark     mark notifications read/unread
   tasks    list task template usage
+  send    send a site notification
+  tasks   list task template usage
 
 Examples:
+  {{.Prog}} notifications list --unread --user 42
+  {{.Prog}} notifications list --category forum --json
+  {{.Prog}} notifications mark --unread 101 102
   {{.Prog}} notifications tasks
+  {{.Prog}} notifications send -message "Maintenance soon" -role user
 
 {{template "flag_groups_section" .FlagGroups}}

@@ -1,20 +1,16 @@
 package externallink
 
 import (
-	"bytes"
-	"crypto/sha1"
 	"database/sql"
 	"fmt"
-	"image"
-	"io"
+	"log"
 	"net/http"
-	"path"
+	"net/url"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
-	intimages "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/opengraph"
 	"github.com/arran4/goa4web/internal/sign"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -70,31 +66,10 @@ func (ReloadExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) any
 
 	var cachedImgName string
 	if imgURL != "" {
-		// Download and cache image
-		resp, err := cd.HTTPClient().Get(imgURL)
-		if err == nil {
-			defer resp.Body.Close()
-			body, _ := io.ReadAll(resp.Body)
-			if len(body) > 0 {
-				im, _, err := image.Decode(bytes.NewReader(body))
-				if err == nil {
-					hash := fmt.Sprintf("%x", sha1.Sum(body))
-					ext, err := intimages.CleanExtension(path.Ext(imgURL))
-					if err == nil {
-						// Store system image
-						name, err := cd.StoreSystemImage(common.StoreImageParams{
-							ID:         hash,
-							Ext:        ext,
-							Data:       body,
-							Image:      im,
-							UploaderID: 0, // System
-						})
-						if err == nil {
-							cachedImgName = "image:" + name
-						}
-					}
-				}
-			}
+		var err error
+		cachedImgName, err = DownloadAndCacheImage(cd, imgURL)
+		if err != nil {
+			log.Printf("failed to cache image: %v", err)
 		}
 	}
 
@@ -129,16 +104,26 @@ func (ReloadExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) any
 		}
 
 		if cachedImgName != "" {
-			// Update cache if field exists in a future migration or manually exec
-			// _, err := cd.DB().ExecContext(r.Context(), "UPDATE external_links SET card_image_cache = ? WHERE id = ?", cachedImgName, lid)
-			// if err != nil {
-			// 	// non-fatal, just log
-			// 	fmt.Printf("failed to update cache: %v\n", err)
-			// }
+			// Update cache
+			err := cd.Queries().UpdateExternalLinkImageCache(r.Context(), db.UpdateExternalLinkImageCacheParams{
+				CardImageCache: sql.NullString{String: cachedImgName, Valid: true},
+				ID:             lid,
+			})
+			if err != nil {
+				// non-fatal, just log
+				log.Printf("failed to update cache: %v", err)
+			}
 		}
 	}
 
-	return handlers.TextByteWriter([]byte("Reloaded"))
+	linkParam := "id"
+	linkValue := id
+	if u != "" {
+		linkParam = "u"
+		linkValue = url.QueryEscape(u)
+	}
+
+	return handlers.RedirectHandler(fmt.Sprintf("/goto?%s=%s&sig=%s", linkParam, linkValue, sig))
 }
 
 func (t *ReloadExternalLinkTask) Matcher() func(*http.Request, *mux.RouteMatch) bool {

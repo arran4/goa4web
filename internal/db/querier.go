@@ -23,6 +23,7 @@ type Querier interface {
 	// Queries for user deactivation and restoration
 	AdminArchiveUser(ctx context.Context, idusers int32) error
 	AdminArchiveWriting(ctx context.Context, arg AdminArchiveWritingParams) error
+	AdminAuditLogActionSummary(ctx context.Context, arg AdminAuditLogActionSummaryParams) ([]*AdminAuditLogActionSummaryRow, error)
 	AdminCancelBannedIp(ctx context.Context, ipNet string) error
 	AdminClearExternalLinkCache(ctx context.Context, arg AdminClearExternalLinkCacheParams) error
 	// This query selects all words from the "searchwordlist" table and prints them.
@@ -494,6 +495,7 @@ type Querier interface {
 	RemoveContentLabelStatus(ctx context.Context, arg RemoveContentLabelStatusParams) error
 	RemoveContentPrivateLabel(ctx context.Context, arg RemoveContentPrivateLabelParams) error
 	RemoveContentPublicLabel(ctx context.Context, arg RemoveContentPublicLabelParams) error
+	SearchGrants(ctx context.Context, arg SearchGrantsParams) ([]*SearchGrantsRow, error)
 	SetNotificationPriorityForLister(ctx context.Context, arg SetNotificationPriorityForListerParams) error
 	SetNotificationReadForLister(ctx context.Context, arg SetNotificationReadForListerParams) error
 	SetNotificationUnreadForLister(ctx context.Context, arg SetNotificationUnreadForListerParams) error
@@ -612,6 +614,7 @@ type Querier interface {
 	UpdateCustomCssForLister(ctx context.Context, arg UpdateCustomCssForListerParams) error
 	UpdateDraft(ctx context.Context, arg UpdateDraftParams) error
 	UpdateEmailForumUpdatesForLister(ctx context.Context, arg UpdateEmailForumUpdatesForListerParams) error
+	UpdateExternalLinkImageCache(ctx context.Context, arg UpdateExternalLinkImageCacheParams) error
 	UpdateExternalLinkMetadata(ctx context.Context, arg UpdateExternalLinkMetadataParams) error
 	UpdateNewsPostForWriter(ctx context.Context, arg UpdateNewsPostForWriterParams) error
 	UpdatePreferenceForLister(ctx context.Context, arg UpdatePreferenceForListerParams) error

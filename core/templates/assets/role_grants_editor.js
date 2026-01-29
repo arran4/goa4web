@@ -1,6 +1,14 @@
 document.addEventListener('DOMContentLoaded', function() {
     const globalBtn = document.getElementById('commit-all');
+    const previewOnly = globalBtn && globalBtn.dataset.preview === 'true';
     function updateGlobalBtn() {
+        if (!globalBtn) {
+            return;
+        }
+        if (previewOnly) {
+            globalBtn.classList.add('hidden');
+            return;
+        }
         if (document.querySelectorAll('.pill.moved').length > 0) {
             globalBtn.classList.remove('hidden');
         } else {
@@ -8,6 +16,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     function prepareForm(form) {
+        if (form.dataset.preview === 'true') {
+            return;
+        }
         const row = form.closest('tr');
         const have = row.querySelector('.have');
         const disabled = row.querySelector('.disabled');
@@ -21,8 +32,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const avail = row.querySelector('.available');
         const disabled = row.querySelector('.disabled');
         const form = row.querySelector('.commit-form');
+        if (!form) {
+            return;
+        }
         const btn = form.querySelector('input[type="submit"]');
+        const previewForm = form.dataset.preview === 'true';
         function updateBtn() {
+            if (previewForm) {
+                btn.classList.add('hidden');
+                updateGlobalBtn();
+                return;
+            }
             if (row.querySelectorAll('.pill.moved').length > 0) {
                 btn.classList.remove('hidden');
             } else {
@@ -61,11 +81,22 @@ document.addEventListener('DOMContentLoaded', function() {
             col.addEventListener('dragover', function(e) { e.preventDefault(); });
             col.addEventListener('drop', dropHandler);
         });
-        form.addEventListener('submit', function() {
+        form.addEventListener('submit', function(e) {
+            if (previewForm) {
+                e.preventDefault();
+                return;
+            }
             prepareForm(form);
         });
     });
-    globalBtn.addEventListener('click', function() {
+    if (!globalBtn) {
+        return;
+    }
+    globalBtn.addEventListener('click', function(e) {
+        if (previewOnly) {
+            e.preventDefault();
+            return;
+        }
         const forms = Array.from(document.querySelectorAll('.commit-form')).filter(f => !f.querySelector('input[type="submit"]').classList.contains('hidden'));
         Promise.all(forms.map(f => {
             prepareForm(f);

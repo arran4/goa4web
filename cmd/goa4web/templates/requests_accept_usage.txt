@@ -1,0 +1,17 @@
+Usage:
+  {{.Prog}} requests accept -id <request-id> [flags]
+
+Accept a pending request. This updates the request status and logs an
+automatic comment, with an optional additional comment.
+
+Flags:
+  -id       Request ID.
+  -comment  Optional comment to attach to the request.
+  -json     Output results as machine-readable JSON.
+
+Examples:
+  {{.Prog}} requests accept -id 42
+  {{.Prog}} requests accept -id 42 -comment "Approved by CLI"
+  {{.Prog}} requests accept -id 42 -json
+
+{{template "flag_groups_section" .FlagGroups}}

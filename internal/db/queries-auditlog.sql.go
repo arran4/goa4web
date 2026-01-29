@@ -11,20 +11,84 @@ import (
 	"time"
 )
 
+const adminAuditLogActionSummary = `-- name: AdminAuditLogActionSummary :many
+SELECT a.action, COUNT(*) AS total
+FROM audit_log a
+LEFT JOIN users u ON a.users_idusers = u.idusers
+WHERE u.username LIKE ?
+  AND a.action LIKE ?
+  AND a.path LIKE ?
+  AND (? IS NULL OR a.created_at >= ?)
+  AND (? IS NULL OR a.created_at <= ?)
+GROUP BY a.action
+ORDER BY total DESC, a.action ASC
+`
+
+type AdminAuditLogActionSummaryParams struct {
+	Username  sql.NullString
+	Action    string
+	Section   string
+	StartTime sql.NullTime
+	EndTime   sql.NullTime
+}
+
+type AdminAuditLogActionSummaryRow struct {
+	Action string
+	Total  int64
+}
+
+func (q *Queries) AdminAuditLogActionSummary(ctx context.Context, arg AdminAuditLogActionSummaryParams) ([]*AdminAuditLogActionSummaryRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminAuditLogActionSummary,
+		arg.Username,
+		arg.Action,
+		arg.Section,
+		arg.StartTime,
+		arg.StartTime,
+		arg.EndTime,
+		arg.EndTime,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminAuditLogActionSummaryRow
+	for rows.Next() {
+		var i AdminAuditLogActionSummaryRow
+		if err := rows.Scan(&i.Action, &i.Total); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const adminListAuditLogs = `-- name: AdminListAuditLogs :many
 SELECT a.id, a.users_idusers, a.action, a.path, a.details, a.data, a.created_at, u.username
 FROM audit_log a
 LEFT JOIN users u ON a.users_idusers = u.idusers
-WHERE u.username LIKE ? AND a.action LIKE ?
+WHERE u.username LIKE ?
+  AND a.action LIKE ?
+  AND a.path LIKE ?
+  AND (? IS NULL OR a.created_at >= ?)
+  AND (? IS NULL OR a.created_at <= ?)
 ORDER BY a.id DESC
 LIMIT ? OFFSET ?
 `
 
 type AdminListAuditLogsParams struct {
-	Username sql.NullString
-	Action   string
-	Limit    int32
-	Offset   int32
+	Username  sql.NullString
+	Action    string
+	Section   string
+	StartTime sql.NullTime
+	EndTime   sql.NullTime
+	Limit     int32
+	Offset    int32
 }
 
 type AdminListAuditLogsRow struct {
@@ -42,6 +106,11 @@ func (q *Queries) AdminListAuditLogs(ctx context.Context, arg AdminListAuditLogs
 	rows, err := q.db.QueryContext(ctx, adminListAuditLogs,
 		arg.Username,
 		arg.Action,
+		arg.Section,
+		arg.StartTime,
+		arg.StartTime,
+		arg.EndTime,
+		arg.EndTime,
 		arg.Limit,
 		arg.Offset,
 	)

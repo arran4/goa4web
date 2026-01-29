@@ -1,0 +1,41 @@
+{{ template "head" $ }}
+[<a href="/admin">Admin</a>]<br />
+<h1>Subscription Templates</h1>
+{{- if cd.CurrentError }}
+<p class="text-error">{{ cd.CurrentError }}</p>
+{{- end }}
+
+{{ with .Templates }}
+<table class="table table-bordered">
+<tr><th>Template</th><th>Parsed Patterns (method + pattern)</th><th>Apply Template to Role</th></tr>
+{{- range . }}
+<tr>
+    <td>{{ .Name }}</td>
+    <td>
+        {{- if .Patterns }}
+        <pre>{{- range .Patterns }}{{ .Method }} {{ .Pattern }}
+{{- end }}</pre>
+        {{- else }}
+        <em>No patterns found.</em>
+        {{- end }}
+    </td>
+    <td>
+        <form method="post">
+            {{ csrfField }}
+            <input type="hidden" name="template" value="{{ .Name }}">
+            <select name="role">
+                <option value="">Select role</option>
+                {{- range $.Roles }}
+                <option value="{{ .Name }}">{{ .Name }}</option>
+                {{- end }}
+            </select>
+            <input type="submit" name="task" value="Apply Template">
+        </form>
+    </td>
+</tr>
+{{- end }}
+</table>
+{{ else }}
+<p>No templates found.</p>
+{{ end }}
+{{ template "tail" $ }}

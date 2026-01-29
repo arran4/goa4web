@@ -1,0 +1,10 @@
+Usage:
+  {{.Prog}} announcement list [flags]
+
+List announcements and their related news posts.
+
+Examples:
+  {{.Prog}} announcement list
+  {{.Prog}} announcement list -json
+
+{{template "flag_groups_section" .FlagGroups}}

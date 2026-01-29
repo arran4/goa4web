@@ -3,13 +3,11 @@
 {{ $link := (cd).SelectedExternalLink }}
 {{ if $link }}
     <div style="border: 1px solid #ccc; padding: 10px; margin: 10px 0; max-width: 600px;">
-        {{ if and $link.CardImageCache.Valid cd.ImageSigner }}
-            <img src="{{cd.ImageSigner.SignedCacheURL $link.CardImageCache.String}}" alt="preview" style="max-width: 100%;"><br>
-        {{ else if $link.CardImage.Valid }}
-            <img src="{{$link.CardImage.String}}" alt="preview" style="max-width: 100%;"><br>
+        {{ if $link.CardImageCache.Valid }}
+            <img src="{{signCacheURL $link.CardImageCache.String}}" alt="preview" style="max-width: 100%;"><br>
         {{ end }}
-        {{ if and $link.FaviconCache.Valid cd.ImageSigner }}
-            <img src="{{cd.ImageSigner.SignedCacheURL $link.FaviconCache.String}}" alt="icon">
+        {{ if $link.FaviconCache.Valid }}
+            <img src="{{signCacheURL $link.FaviconCache.String}}" alt="icon">
         {{ end }}
         {{ if $link.CardTitle.Valid }}<p><strong>{{$link.CardTitle.String}}</strong></p>{{ end }}
         {{ if $link.CardDescription.Valid }}<p>{{$link.CardDescription.String}}</p>{{ end }}

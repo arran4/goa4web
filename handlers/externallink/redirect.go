@@ -135,6 +135,16 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 		cd.SetCurrentExternalLinkID(linkID)
 	}
 	link := cd.SelectedExternalLink()
+	if link != nil && link.CardImage.Valid && !link.CardImageCache.Valid {
+		cached, err := DownloadAndCacheImage(cd, link.CardImage.String)
+		if err == nil {
+			_ = cd.Queries().UpdateExternalLinkImageCache(r.Context(), db.UpdateExternalLinkImageCacheParams{
+				CardImageCache: sql.NullString{String: cached, Valid: true},
+				ID:             link.ID,
+			})
+			link.CardImageCache = sql.NullString{String: cached, Valid: true}
+		}
+	}
 	if rawURL == "" {
 		if link == nil {
 			w.WriteHeader(http.StatusBadRequest)

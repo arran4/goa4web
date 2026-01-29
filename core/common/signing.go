@@ -1,6 +1,7 @@
 package common
 
 import (
+	"net/url"
 	"strings"
 	"time"
 
@@ -72,7 +73,7 @@ func (cd *CoreData) SignLinkURL(externalURL string) string {
 	sig := sign.Sign(data, cd.LinkSignKey, sign.WithOutNonce())
 
 	// Return /goto?u={url}&sig={sig}
-	return strings.TrimSuffix(cd.Config.HTTPHostname, "/") + "/goto?u=" + externalURL + "&sig=" + sig
+	return strings.TrimSuffix(cd.Config.HTTPHostname, "/") + "/goto?u=" + url.QueryEscape(externalURL) + "&sig=" + sig
 }
 
 // SignFeedURL signs a feed URL for authenticated access.

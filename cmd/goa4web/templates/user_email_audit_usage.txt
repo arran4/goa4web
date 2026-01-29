@@ -1,0 +1,27 @@
+Usage:
+  {{.Prog}} user email audit -user-id <id> [flags]
+  {{.Prog}} user email audit -username <name> [flags]
+
+Lists email addresses for a user with verification state and last verification
+send timestamps. Use filters to match admin UI views and output formats for
+automation.
+
+Flags:
+  -user-id int       User ID to audit emails for
+  -username string   Username to audit emails for
+  -verified          Only include verified emails
+  -unverified        Only include unverified emails
+  -primary           Only include primary emails (highest priority)
+  -format string     Output format: table, csv, json (default "table")
+
+Examples:
+  # Audit all emails for user ID 3
+  {{.Prog}} user email audit -user-id 3
+
+  # Audit only unverified emails for user "bob" as CSV
+  {{.Prog}} user email audit -username bob -unverified -format csv
+
+  # Audit primary verified emails for user ID 3 as JSON
+  {{.Prog}} user email audit -user-id 3 -verified -primary -format json
+
+{{template "flag_groups_section" .FlagGroups}}

@@ -2,17 +2,69 @@ package externallink
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/sign"
 )
+
+type mockTransport struct {
+	RoundTripFunc func(req *http.Request) (*http.Response, error)
+}
+
+func (m *mockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	return m.RoundTripFunc(req)
+}
+
+type mockResult struct {
+	lastInsertId int64
+	rowsAffected int64
+}
+
+func (m *mockResult) LastInsertId() (int64, error) {
+	return m.lastInsertId, nil
+}
+func (m *mockResult) RowsAffected() (int64, error) {
+	return m.rowsAffected, nil
+}
+
+type mockQuerier struct {
+	db.Querier
+}
+
+func (q *mockQuerier) GetExternalLink(ctx context.Context, url string) (*db.ExternalLink, error) {
+	return nil, sql.ErrNoRows
+}
+
+func (q *mockQuerier) GetExternalLinkByID(ctx context.Context, id int32) (*db.ExternalLink, error) {
+	return &db.ExternalLink{
+		ID:        id,
+		Url:       "https://external.com/reload",
+		CardTitle: sql.NullString{String: "Test Title", Valid: true},
+	}, nil
+}
+
+func (q *mockQuerier) CreateExternalLink(ctx context.Context, url string) (sql.Result, error) {
+	return &mockResult{lastInsertId: 123}, nil
+}
+
+func (q *mockQuerier) UpdateExternalLinkMetadata(ctx context.Context, arg db.UpdateExternalLinkMetadataParams) error {
+	return nil
+}
+
+func (q *mockQuerier) UpdateExternalLinkImageCache(ctx context.Context, arg db.UpdateExternalLinkImageCacheParams) error {
+	return nil
+}
 
 func TestRedirectHandlerSignedURLParam(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
@@ -57,5 +109,49 @@ func TestRedirectHandlerSignedURLParamWithQuery(t *testing.T) {
 	}
 	if got := res.Header.Get("Location"); got != link {
 		t.Fatalf("expected redirect to %s, got %s", link, got)
+	}
+}
+
+func TestRedirectHandlerReload(t *testing.T) {
+	cfg := config.NewRuntimeConfig()
+	key := "k"
+	link := "https://external.com/reload"
+	sig := sign.Sign("link:"+link, key)
+
+	fetchCalled := false
+	client := &http.Client{
+		Transport: &mockTransport{
+			RoundTripFunc: func(req *http.Request) (*http.Response, error) {
+				fetchCalled = true
+				return &http.Response{
+					StatusCode: 200,
+					Body:       io.NopCloser(strings.NewReader(`<html><head><meta property="og:title" content="Test Title"/></head><body></body></html>`)),
+					Header:     make(http.Header),
+				}, nil
+			},
+		},
+	}
+
+	querier := &mockQuerier{}
+
+	// reload=1 should trigger fetch
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/goto?u=%s&sig=%s&reload=1", url.QueryEscape(link), sig), nil)
+	cd := common.NewCoreData(context.Background(), querier, cfg, func(cd *common.CoreData) {
+		cd.LinkSignKey = key
+	}, common.WithHTTPClient(client))
+
+	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
+	rec := httptest.NewRecorder()
+
+	RedirectHandler(rec, req)
+
+	if !fetchCalled {
+		t.Error("Expected fetch to be called when reload=1 is present")
+	}
+
+	res := rec.Result()
+	// Should render page (200), not redirect (307)
+	if res.StatusCode != http.StatusOK {
+		t.Errorf("expected status %d, got %d", http.StatusOK, res.StatusCode)
 	}
 }

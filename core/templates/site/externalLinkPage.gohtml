@@ -18,8 +18,6 @@
     <button onclick="history.back()">No</button>
 </p>
 <p>
-    <form action="{{$.ReloadURL}}" method="post">
-        <button type="submit">(re)load from social media card</button>
-    </form>
+    <button onclick="window.location.href='{{$.ReloadURL}}'">(re)load from social media card</button>
 </p>
 {{ template "tail" $ }}

@@ -133,12 +133,22 @@ func NewQuerierStub(options ...StubOption) *db.QuerierStub {
 
 	stub := &db.QuerierStub{
 		GetPermissionsByUserIDReturns:   builder.cfg.Permissions,
+		ListContentLabelStatusReturns:   []*db.ListContentLabelStatusRow{},
+		ListContentPublicLabelsReturns:  []*db.ListContentPublicLabelsRow{},
 		ListContentPrivateLabelsReturns: builder.cfg.PrivateLabels,
 		ListSubscriptionsByUserReturns:  builder.cfg.Subscriptions,
+		AddContentPrivateLabelIgnoreLabels: map[string]bool{
+			"new":    true,
+			"unread": true,
+		},
 	}
 
 	if stub.GetPermissionsByUserIDReturns == nil {
 		stub.GetPermissionsByUserIDReturns = []*db.GetPermissionsByUserIDRow{}
+	}
+
+	if stub.ListContentPrivateLabelsReturns == nil {
+		stub.ListContentPrivateLabelsReturns = []*db.ListContentPrivateLabelsRow{}
 	}
 
 	if builder.hasGrantReturn {

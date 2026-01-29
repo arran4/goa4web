@@ -40,6 +40,9 @@ const (
 	// TaskApprove approves an item in moderation queues.
 	TaskApprove tasks.TaskString = "Approve"
 
+	// TaskApplySubscriptionTemplate applies a subscription template to a role.
+	TaskApplySubscriptionTemplate tasks.TaskString = "Apply Template"
+
 	// TaskAccept accepts a queued request.
 	TaskAccept tasks.TaskString = "Accept"
 
@@ -224,6 +227,9 @@ const (
 	// TaskResend attempts to send queued emails immediately.
 	TaskResend tasks.TaskString = "Resend"
 
+	// TaskResendFilteredQueue retries all filtered queued emails.
+	TaskResendFilteredQueue tasks.TaskString = "Retry all filtered"
+
 	// TaskRetry queues a previously sent email for another attempt.
 	TaskRetry tasks.TaskString = "Retry"
 
@@ -248,6 +254,9 @@ const (
 	// TaskUpdate updates an existing item.
 	TaskUpdate tasks.TaskString = "Update"
 
+	// TaskBulkImport applies a bulk import action.
+	TaskBulkImport tasks.TaskString = "Bulk import"
+
 	// TaskUpdateTopicRestriction updates an existing topic restriction.
 	TaskUpdateTopicRestriction tasks.TaskString = "Update topic restriction"
 
@@ -262,6 +271,9 @@ const (
 
 	// TaskBulkDelete removes multiple queued items at once.
 	TaskBulkDelete tasks.TaskString = "Bulk Delete"
+
+	// TaskDeleteFilteredQueue deletes all filtered queued emails.
+	TaskDeleteFilteredQueue tasks.TaskString = "Delete all filtered"
 
 	// TaskUpdateWriting updates an existing writing.
 	TaskUpdateWriting tasks.TaskString = "Update writing"
@@ -319,6 +331,9 @@ const (
 
 	// TaskRoleGrantUpdate updates grants for a role.
 	TaskRoleGrantUpdate tasks.TaskString = "Update grants"
+
+	// TaskApplyRoleTemplate applies a role template.
+	TaskApplyRoleTemplate tasks.TaskString = "Apply role template"
 
 	// TaskGrantUpdateActive updates a grant's active state.
 	TaskGrantUpdateActive tasks.TaskString = "Update grant"

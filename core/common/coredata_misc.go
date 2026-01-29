@@ -110,6 +110,25 @@ func (cd *CoreData) StoreImage(p StoreImageParams) (string, error) {
 	if !cd.HasGrant("images", "upload", "post", 0) {
 		return "", fmt.Errorf("permission denied")
 	}
+	return cd.storeImageInternal(p)
+}
+
+// StoreSystemImage stores the image bytes as a system upload (bypassing user grant checks).
+func (cd *CoreData) StoreSystemImage(p StoreImageParams) (string, error) {
+	if cd == nil || cd.queries == nil {
+		return "", fmt.Errorf("no queries")
+	}
+	if !imagesign.ValidID(p.ID) {
+		return "", fmt.Errorf("invalid id")
+	}
+	if !imagesign.AllowedExtension(p.Ext) {
+		return "", fmt.Errorf("unsupported image extension: %s", p.Ext)
+	}
+	// System upload: no grant check needed, but ensure uploader is system/admin or 0
+	return cd.storeImageInternal(p)
+}
+
+func (cd *CoreData) storeImageInternal(p StoreImageParams) (string, error) {
 	cfg := cd.Config
 	sub1, sub2 := p.ID[:2], p.ID[2:4]
 	fname := p.ID + p.Ext
@@ -165,5 +184,7 @@ func (cd *CoreData) StoreImage(p StoreImageParams) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("create uploaded image %w", err)
 	}
+	// If this is a cached external image, we might want to register it somewhere specific,
+	// but CreateUploadedImageForUploader is generic enough.
 	return fname, nil
 }

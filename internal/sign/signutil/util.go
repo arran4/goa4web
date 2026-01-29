@@ -143,8 +143,14 @@ func GetSignedData(r *http.Request, key string) (*SignedData, error) {
 		}
 
 		data := cleanPath
-		if u.RawQuery != "" {
-			data += "?" + u.RawQuery
+		q := u.Query()
+		q.Del("sig")
+		q.Del("nonce")
+		q.Del("ts")
+		q.Del("ets")
+		q.Del("its")
+		if encoded := q.Encode(); encoded != "" {
+			data += "?" + encoded
 		}
 
 		if err := sign.Verify(data, sig, key, opts...); err != nil {
@@ -174,6 +180,8 @@ func GetSignedData(r *http.Request, key string) (*SignedData, error) {
 		q.Del("sig")
 		q.Del("nonce")
 		q.Del("ts")
+		q.Del("ets")
+		q.Del("its")
 		if encoded := q.Encode(); encoded != "" {
 			data += "?" + encoded
 		}

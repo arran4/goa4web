@@ -88,6 +88,25 @@ func (q *Queries) AdminListExternalLinks(ctx context.Context, arg AdminListExter
 	return items, nil
 }
 
+const createExternalLink = `-- name: CreateExternalLink :execresult
+INSERT INTO external_links (url, clicks)
+VALUES (?, 0)
+`
+
+func (q *Queries) CreateExternalLink(ctx context.Context, url string) (sql.Result, error) {
+	return q.db.ExecContext(ctx, createExternalLink, url)
+}
+
+const ensureExternalLink = `-- name: EnsureExternalLink :execresult
+INSERT INTO external_links (url, clicks)
+VALUES (?, 0)
+ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)
+`
+
+func (q *Queries) EnsureExternalLink(ctx context.Context, url string) (sql.Result, error) {
+	return q.db.ExecContext(ctx, ensureExternalLink, url)
+}
+
 const getExternalLink = `-- name: GetExternalLink :one
 SELECT id, url, clicks, created_at, updated_at, updated_by, card_title, card_description, card_image, card_image_cache, favicon_cache FROM external_links WHERE url = ? LIMIT 1
 `
@@ -142,5 +161,44 @@ ON DUPLICATE KEY UPDATE clicks = clicks + 1
 
 func (q *Queries) SystemRegisterExternalLinkClick(ctx context.Context, url string) error {
 	_, err := q.db.ExecContext(ctx, systemRegisterExternalLinkClick, url)
+	return err
+}
+
+const updateExternalLinkImageCache = `-- name: UpdateExternalLinkImageCache :exec
+UPDATE external_links
+SET card_image_cache = ?, updated_at = CURRENT_TIMESTAMP
+WHERE id = ?
+`
+
+type UpdateExternalLinkImageCacheParams struct {
+	CardImageCache sql.NullString
+	ID             int32
+}
+
+func (q *Queries) UpdateExternalLinkImageCache(ctx context.Context, arg UpdateExternalLinkImageCacheParams) error {
+	_, err := q.db.ExecContext(ctx, updateExternalLinkImageCache, arg.CardImageCache, arg.ID)
+	return err
+}
+
+const updateExternalLinkMetadata = `-- name: UpdateExternalLinkMetadata :exec
+UPDATE external_links
+SET card_title = ?, card_description = ?, card_image = ?, updated_at = CURRENT_TIMESTAMP
+WHERE id = ?
+`
+
+type UpdateExternalLinkMetadataParams struct {
+	CardTitle       sql.NullString
+	CardDescription sql.NullString
+	CardImage       sql.NullString
+	ID              int32
+}
+
+func (q *Queries) UpdateExternalLinkMetadata(ctx context.Context, arg UpdateExternalLinkMetadataParams) error {
+	_, err := q.db.ExecContext(ctx, updateExternalLinkMetadata,
+		arg.CardTitle,
+		arg.CardDescription,
+		arg.CardImage,
+		arg.ID,
+	)
 	return err
 }

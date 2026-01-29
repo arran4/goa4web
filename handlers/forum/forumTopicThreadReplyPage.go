@@ -9,6 +9,7 @@ import (
 
 	"github.com/arran4/goa4web/core/consts"
 
+	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
@@ -144,7 +145,26 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	endUrl := fmt.Sprintf("%s/topic/%d/thread/%d#c%d", base, topicRow.Idforumtopic, threadRow.Idforumthread, cid)
+	anchor := fmt.Sprintf("c%d", cid)
+	comments, err := cd.ThreadComments(threadRow.Idforumthread)
+	if err != nil {
+		log.Printf("Error fetching comments to determine index: %s", err)
+	} else if len(comments) > 0 {
+		anchor = fmt.Sprintf("c%d", len(comments))
+	}
+
+	endUrl := fmt.Sprintf("%s/topic/%d/thread/%d#%s", base, topicRow.Idforumtopic, threadRow.Idforumthread, anchor)
+
+	data := map[string]any{}
+	if firstPost, err := cd.CommentByID(threadRow.Firstpost); err == nil && firstPost != nil && firstPost.Text.Valid {
+		data["ThreadOpenerPreview"] = a4code.SnipTextWords(firstPost.Text.String, 10)
+	}
+
+	subjectPrefix := "Forum"
+	if topicRow.Handler == "private" {
+		subjectPrefix = "Private Forum"
+	}
+	data["SubjectPrefix"] = subjectPrefix
 
 	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
 		ThreadID:             threadRow.Idforumthread,
@@ -159,6 +179,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		MarkThreadRead:       true,
 		IncludePostCount:     true,
 		IncludeSearch:        true,
+		AdditionalData:       data,
 	}); err != nil {
 		log.Printf("thread reply side effects: %v", err)
 	}

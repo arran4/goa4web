@@ -17,6 +17,7 @@ import (
 	"github.com/arran4/goa4web/workers/auditworker"
 	"github.com/arran4/goa4web/workers/backgroundtaskworker"
 	"github.com/arran4/goa4web/workers/emailqueue"
+	"github.com/arran4/goa4web/workers/externallinkworker"
 	"github.com/arran4/goa4web/workers/logworker"
 	"github.com/arran4/goa4web/workers/postcountworker"
 	"github.com/arran4/goa4web/workers/searchworker"
@@ -84,4 +85,6 @@ func Start(ctx context.Context, sdb *sql.DB, provider email.Provider, dlqProvide
 	safeGo(func() { backgroundtaskworker.Worker(ctx, bus, db.New(sdb)) })
 	log.Printf("Starting post count worker")
 	safeGo(func() { postcountworker.Worker(ctx, bus, db.New(sdb)) })
+	log.Printf("Starting external link worker")
+	safeGo(func() { externallinkworker.Worker(ctx, bus, db.New(sdb), cfg) })
 }

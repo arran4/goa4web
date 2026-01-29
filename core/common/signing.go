@@ -1,9 +1,11 @@
 package common
 
 import (
+	"net/url"
 	"strings"
 	"time"
 
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/sign"
 	"github.com/arran4/goa4web/internal/sign/signutil"
 )
@@ -41,26 +43,23 @@ func (cd *CoreData) SignImageURL(imageRef string, ttl time.Duration) string {
 	// Strip image: or img: prefix if present
 	imageRef = strings.TrimPrefix(strings.TrimPrefix(imageRef, "image:"), "img:")
 
-	path := "/images/image/" + imageRef
+	data := consts.ImageSigningPrefix + imageRef
 	expiry := time.Now().Add(ttl)
 
-	sig := sign.Sign(path, cd.ImageSignKey, sign.WithExpiry(expiry))
-
-	// Add signature as query param
-	fullURL := strings.TrimSuffix(cd.Config.HTTPHostname, "/") + "/" + strings.TrimPrefix(path, "/")
-	signedURL, _ := sign.AddQuerySig(fullURL, sig, sign.WithExpiry(expiry))
+	path := "/images/image/" + imageRef
+	fullURL := strings.TrimSuffix(cd.Config.HTTPHostname, "/") + path
+	signedURL, _ := signutil.SignAndAddQuery(fullURL, data, cd.ImageSignKey, sign.WithExpiry(expiry))
 	return signedURL
 }
 
 // SignCacheURL signs a cache URL with the given TTL.
 func (cd *CoreData) SignCacheURL(cacheRef string, ttl time.Duration) string {
-	path := "/images/cache/" + cacheRef
+	data := consts.CacheSigningPrefix + cacheRef
 	expiry := time.Now().Add(ttl)
 
-	sig := sign.Sign(path, cd.ImageSignKey, sign.WithExpiry(expiry))
-
-	fullURL := strings.TrimSuffix(cd.Config.HTTPHostname, "/") + "/" + strings.TrimPrefix(path, "/")
-	signedURL, _ := sign.AddQuerySig(fullURL, sig, sign.WithExpiry(expiry))
+	path := "/images/cache/" + cacheRef
+	fullURL := strings.TrimSuffix(cd.Config.HTTPHostname, "/") + path
+	signedURL, _ := signutil.SignAndAddQuery(fullURL, data, cd.ImageSignKey, sign.WithExpiry(expiry))
 	return signedURL
 }
 
@@ -70,7 +69,7 @@ func (cd *CoreData) SignLinkURL(externalURL string) string {
 	sig := sign.Sign(data, cd.LinkSignKey, sign.WithOutNonce())
 
 	// Return /goto?u={url}&sig={sig}
-	return strings.TrimSuffix(cd.Config.HTTPHostname, "/") + "/goto?u=" + externalURL + "&sig=" + sig
+	return strings.TrimSuffix(cd.Config.HTTPHostname, "/") + "/goto?u=" + url.QueryEscape(externalURL) + "&sig=" + sig
 }
 
 // SignFeedURL signs a feed URL for authenticated access.

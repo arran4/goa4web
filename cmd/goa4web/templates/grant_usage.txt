@@ -4,6 +4,7 @@ Usage:
 Commands:
   add               create a grant rule
   delete            delete a grant rule
+  export            export grant definitions as JSON
   list              list grant rules
   list-available    list all available grant rules
 

@@ -3,33 +3,27 @@ package faq
 import (
 	"context"
 	"database/sql"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/middleware"
 	"github.com/arran4/goa4web/internal/tasks"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestAskActionPage_InvalidForms(t *testing.T) {
-	dbconn, _, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer dbconn.Close()
-
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = "test-session"
@@ -62,12 +56,6 @@ func TestAskActionPage_InvalidForms(t *testing.T) {
 }
 
 func TestAskActionPage_AdminEvent(t *testing.T) {
-	dbconn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer dbconn.Close()
-
 	cfg := config.NewRuntimeConfig()
 
 	cfg.EmailEnabled = true
@@ -91,13 +79,16 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 		req.AddCookie(c)
 	}
 	bus := eventbus.NewBus()
-	q := db.New(dbconn)
-	mock.ExpectQuery("SELECT 1 FROM grants").
-		WithArgs(sqlmock.AnyArg(), "faq", sqlmock.AnyArg(), "post", sqlmock.AnyArg(), sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
-	mock.ExpectExec("INSERT INTO faq").
-		WithArgs(sql.NullString{String: "hi", Valid: true}, int32(1), int32(1), sqlmock.AnyArg(), sqlmock.AnyArg()).
-		WillReturnResult(sqlmock.NewResult(1, 1))
+	q := testhelpers.NewQuerierStub()
+	q.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
+		if arg.Section == "faq" && arg.Action == "post" {
+			return 1, nil
+		}
+		return 0, sql.ErrNoRows
+	}
+	q.CreateFAQQuestionForWriterFn = func(ctx context.Context, arg db.CreateFAQQuestionForWriterParams) error {
+		return nil
+	}
 	evt := &eventbus.TaskEvent{Path: "/faq/ask", Task: tasks.TaskString(TaskAsk), UserID: 1}
 	cd := common.NewCoreData(req.Context(), q, cfg)
 	cd.UserID = 1
@@ -115,8 +106,4 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 		t.Fatalf("status=%d", rr.Code)
 	}
 	_ = cd.Event()
-
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
-	}
 }

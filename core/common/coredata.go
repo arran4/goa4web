@@ -142,6 +142,8 @@ type CoreData struct {
 	// routerModules tracks enabled router modules.
 	routerModules map[string]struct{}
 
+	httpClient *http.Client
+
 	session      *sessions.Session
 	sessionProxy SessionManager
 
@@ -292,12 +294,12 @@ func (cd *CoreData) AbsoluteURL(ops ...any) string {
 		switch v := op.(type) {
 		case string:
 			// Handle fragments and queries manually to prevent JoinPath from escaping them
-			if idx := strings.IndexByte(v, '#'); idx >= 0 {
-				u.Fragment = v[idx+1:]
-				v = v[:idx]
+			if before, after, found := strings.Cut(v, "#"); found {
+				u.Fragment = after
+				v = before
 			}
-			if idx := strings.IndexByte(v, '?'); idx >= 0 {
-				q, err := url.ParseQuery(v[idx+1:])
+			if before, after, found := strings.Cut(v, "?"); found {
+				q, err := url.ParseQuery(after)
 				if err == nil {
 					query := u.Query()
 					for k, vals := range q {
@@ -307,7 +309,7 @@ func (cd *CoreData) AbsoluteURL(ops ...any) string {
 					}
 					u.RawQuery = query.Encode()
 				}
-				v = v[:idx]
+				v = before
 			}
 			if v != "" {
 				// url.JoinPath cleans paths and handles slashes, but escapes special chars.
@@ -1176,6 +1178,11 @@ func (cd *CoreData) EmailProvider() MailProvider {
 		log.Printf("load email provider: %v", err)
 	}
 	return p
+}
+
+// HTTPClient returns the configured HTTP client.
+func (cd *CoreData) HTTPClient() *http.Client {
+	return cd.httpClient
 }
 
 // Event returns the event associated with the request, if any.
@@ -2701,6 +2708,11 @@ type CoreOption func(*CoreData)
 // WithImageURLMapper sets the a4code image mapper option.
 func WithImageURLMapper(fn func(tag, val string) string) CoreOption {
 	return func(cd *CoreData) { cd.a4codeMapper = fn }
+}
+
+// WithHTTPClient sets the HTTP client used for external requests.
+func WithHTTPClient(client *http.Client) CoreOption {
+	return func(cd *CoreData) { cd.httpClient = client }
 }
 
 // WithSession stores the gorilla session on the CoreData object and

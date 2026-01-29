@@ -30,6 +30,14 @@ const (
 	CTWordsOnly
 )
 
+type LinkMetadata struct {
+	Title       string
+	Description string
+	ImageURL    string
+}
+
+type LinkMetadataProvider func(url string) *LinkMetadata
+
 type A4code2html struct {
 	r        *bufio.Reader
 	w        io.Writer
@@ -42,6 +50,10 @@ type A4code2html struct {
 	ImageURLMapper func(tag, val string) string
 	// UserColorMapper optionally maps a username to a CSS class for styling quotes.
 	UserColorMapper func(username string) string
+	quoteDepth      int
+	// MetadataProvider optionally provides metadata for external links.
+	MetadataProvider LinkMetadataProvider
+	atLineStart      bool
 }
 
 // WithTOC enables or disables table-of-contents generation when passed to New.
@@ -53,8 +65,9 @@ type WithTOC bool
 // configure the input or output streams.
 func New(opts ...interface{}) *A4code2html {
 	c := &A4code2html{
-		CodeType: CTHTML,
-		w:        new(bytes.Buffer),
+		CodeType:    CTHTML,
+		w:           new(bytes.Buffer),
+		atLineStart: true,
 	}
 	for _, o := range opts {
 		switch v := o.(type) {
@@ -64,6 +77,8 @@ func New(opts ...interface{}) *A4code2html {
 			c.ImageURLMapper = v
 		case func(string) string:
 			c.UserColorMapper = v
+		case LinkMetadataProvider:
+			c.MetadataProvider = v
 		case WithTOC:
 			c.makeTC = bool(v)
 		case *bufio.Reader:
@@ -97,9 +112,11 @@ func SanitizeURL(raw string) (string, bool) {
 
 func (c *A4code2html) clear() {
 	c.stack = nil
+	c.quoteDepth = 0
 	c.r = nil
 	c.w = nil
 	c.err = nil
+	c.atLineStart = true
 }
 
 // SetInput assigns the text to be processed.
@@ -231,7 +248,37 @@ func (c *A4code2html) directOutputReader(r *bufio.Reader, w io.Writer, terminato
 	}
 }
 
+func (a *A4code2html) peekBlockLink(r *bufio.Reader) (bool, bool) {
+	// Returns (isBlock, isImmediateClose)
+	limit := 4096
+	p, err := r.Peek(limit)
+
+	for i, b := range p {
+		if b == ']' {
+			// Check what follows
+			if i+1 >= len(p) {
+				if err == io.EOF {
+					return true, i == 0
+				}
+				return false, false
+			}
+			next := p[i+1]
+			if next == '\n' || next == '\r' {
+				return true, i == 0
+			}
+			return false, false
+		}
+		if b == '\n' || b == '\r' {
+			return false, false
+		}
+	}
+	return false, false
+}
+
 func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
+	wasAtLineStart := a.atLineStart
+	a.atLineStart = false
+
 	cmd, err := a.getNextReader(r, true)
 	if err != nil && err != io.EOF {
 		return err
@@ -325,15 +372,78 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 			}
 			safe, ok := SanitizeURL(raw)
 			if ok {
-				if _, err := io.WriteString(w, "<a href=\""+safe+"\" target=\"_BLANK\">"); err != nil {
-					return err
+				var meta *LinkMetadata
+				if a.MetadataProvider != nil {
+					meta = a.MetadataProvider(raw)
 				}
-				if p, err := r.Peek(1); err == nil && len(p) > 0 && p[0] == ']' {
-					if _, err := io.WriteString(w, html.EscapeString(original)); err != nil {
+
+				isBlock := false
+				isImmediateClose := false
+				if wasAtLineStart && a.MetadataProvider != nil {
+					isBlock, isImmediateClose = a.peekBlockLink(r)
+				}
+
+				if isBlock && meta != nil {
+					// Render Card
+					imageHTML := ""
+					if meta.ImageURL != "" {
+						safeImg, imgOk := SanitizeURL(meta.ImageURL)
+						if imgOk {
+							imageHTML = fmt.Sprintf("<img src=\"%s\" class=\"external-link-image\" />", safeImg)
+						}
+					}
+
+					if isImmediateClose {
+						// Complex Card: Title and Description from Metadata
+						// Consume ] and newline
+						r.ReadByte() // ]
+						r.ReadByte() // \n
+
+						a.atLineStart = true
+
+						// Determine Title and Description
+						title := meta.Title
+						if title == "" {
+							title = original // Fallback
+						}
+						description := meta.Description
+
+						if _, err := io.WriteString(w, fmt.Sprintf(
+							"<div class=\"external-link-card\"><a href=\"%s\" target=\"_blank\" class=\"external-link-card-inner\">%s<div class=\"external-link-content\"><div class=\"external-link-title\">%s</div><div class=\"external-link-description\">%s</div></div></a></div>",
+							safe, imageHTML, html.EscapeString(title), html.EscapeString(description))); err != nil {
+							return err
+						}
+					} else {
+						// Simple Card: Title from user provided text (consumed later)
+						if _, err := io.WriteString(w, fmt.Sprintf(
+							"<div class=\"external-link-card\"><a href=\"%s\" target=\"_blank\" class=\"external-link-card-inner\">%s<div class=\"external-link-content\"><div class=\"external-link-title\">",
+							safe, imageHTML)); err != nil {
+							return err
+						}
+						a.stack = append(a.stack, "</div></div></a></div>")
+					}
+				} else {
+					// Inline Link
+					if _, err := io.WriteString(w, "<a href=\""+safe+"\" target=\"_blank\">"); err != nil {
 						return err
 					}
+
+					p, err := r.Peek(1)
+					if err == nil && len(p) > 0 && p[0] == ']' {
+						// Case [link url]
+						// Inject title if available
+						if meta != nil && meta.Title != "" {
+							if _, err := io.WriteString(w, html.EscapeString(meta.Title)); err != nil {
+								return err
+							}
+						} else {
+							if _, err := io.WriteString(w, html.EscapeString(original)); err != nil {
+								return err
+							}
+						}
+					}
+					a.stack = append(a.stack, "</a>")
 				}
-				a.stack = append(a.stack, "</a>")
 			} else {
 				if _, err := io.WriteString(w, safe); err != nil {
 					return err
@@ -367,18 +477,22 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 			if a.UserColorMapper != nil {
 				colorClass = " " + a.UserColorMapper(name)
 			}
+			colorClass += fmt.Sprintf(" quote-color-%d", a.quoteDepth%6)
 			if _, err := io.WriteString(w, fmt.Sprintf("<blockquote class=\"a4code-block a4code-quoteof%s\"><div class=\"quote-header\">Quote of %s:</div><div class=\"quote-body\">", colorClass, name)); err != nil {
 				return err
 			}
+			a.quoteDepth++
 			a.stack = append(a.stack, "</div></blockquote>")
 		}
 	case "quote", "q":
 		switch a.CodeType {
 		case CTTableOfContents, CTTagStrip, CTWordsOnly:
 		default:
-			if _, err := io.WriteString(w, "<blockquote class=\"a4code-block a4code-quote\"><div class=\"quote-header\">Quote:</div><div class=\"quote-body\">"); err != nil {
+			colorClass := fmt.Sprintf(" quote-color-%d", a.quoteDepth%6)
+			if _, err := io.WriteString(w, "<blockquote class=\"a4code-block a4code-quote"+colorClass+"\"><div class=\"quote-header\">Quote:</div><div class=\"quote-body\">"); err != nil {
 				return err
 			}
+			a.quoteDepth++
 			a.stack = append(a.stack, "</div></blockquote>")
 		}
 	case "spoiler", "sp":
@@ -435,11 +549,21 @@ func (c *A4code2html) nextcommReader(r *bufio.Reader, w io.Writer) error {
 				if _, err := io.WriteString(w, last); err != nil {
 					return err
 				}
+				if last == "</div></blockquote>" && c.quoteDepth > 0 {
+					c.quoteDepth--
+				}
 			}
-		case '<', '>', '\n', '&':
+			c.atLineStart = false
+		case '<', '>', '&':
 			if _, err := io.WriteString(w, c.Escape(ch)); err != nil {
 				return err
 			}
+			c.atLineStart = false
+		case '\n':
+			if _, err := io.WriteString(w, c.Escape(ch)); err != nil {
+				return err
+			}
+			c.atLineStart = true
 		case '\\':
 			next, err := r.ReadByte()
 			if err != nil {
@@ -459,10 +583,12 @@ func (c *A4code2html) nextcommReader(r *bufio.Reader, w io.Writer) error {
 			if _, err := w.Write([]byte{next}); err != nil {
 				return err
 			}
+			c.atLineStart = false
 		default:
 			if _, err := w.Write([]byte{ch}); err != nil {
 				return err
 			}
+			c.atLineStart = false
 		}
 	}
 }

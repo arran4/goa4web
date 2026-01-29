@@ -8,12 +8,10 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 
@@ -104,22 +102,6 @@ func newCommentsPageRequest(t *testing.T, queries db.Querier, roles []string, us
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	return w, req, cd
-}
-
-func expectGrantCheck(mock sqlmock.Sqlmock, viewerID, itemID int32, action string, err error) {
-	expect := mock.ExpectQuery(regexp.QuoteMeta("SELECT 1 FROM grants g")).WithArgs(
-		viewerID,
-		"linker",
-		sql.NullString{String: "link", Valid: true},
-		action,
-		sql.NullInt32{Int32: itemID, Valid: true},
-		sql.NullInt32{Int32: viewerID, Valid: viewerID != 0},
-	)
-	if err != nil {
-		expect.WillReturnError(err)
-		return
-	}
-	expect.WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 }
 
 func writeTempCommentsTemplate(t *testing.T, content string) string {

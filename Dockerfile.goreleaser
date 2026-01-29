@@ -6,8 +6,8 @@ FROM alpine:3.20 AS runtime
 RUN addgroup -S goa4web && adduser -S -G goa4web -u 65532 goa4web \
   && mkdir -p /data/imagebbs \
   && chown -R goa4web:goa4web /data
-
-FROM scratch
+FROM alpine:3.20
+RUN apk add --no-cache ca-certificates
 # Install the application into the final image.
 ENV PATH=/usr/local/bin
 ENV AUTO_MIGRATE=false

@@ -1,0 +1,10 @@
+Usage:
+  {{.Prog}} announcement add [flags]
+
+Promote a news post to a site announcement.
+
+Examples:
+  {{.Prog}} announcement add -news-id 42
+  {{.Prog}} announcement add -news-id 42 -json
+
+{{template "flag_groups_section" .FlagGroups}}

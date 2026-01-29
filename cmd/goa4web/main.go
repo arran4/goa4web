@@ -40,6 +40,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 var (
@@ -97,6 +98,7 @@ type rootCmd struct {
 	ConfigFile       string
 	ConfigFileValues map[string]string
 	db               *sql.DB
+	querier          db.Querier
 	Verbosity        int
 	tasksReg         *tasks.Registry
 	dbReg            *dbdrivers.Registry
@@ -117,6 +119,17 @@ func (r *rootCmd) DB() (*sql.DB, error) {
 	}
 	r.db = dbPool
 	return r.db, nil
+}
+
+func (r *rootCmd) Querier() (db.Querier, error) {
+	if r.querier != nil {
+		return r.querier, nil
+	}
+	conn, err := r.DB()
+	if err != nil {
+		return nil, fmt.Errorf("rootCmd.Querier: %w", err)
+	}
+	return db.New(conn), nil
 }
 
 func (r *rootCmd) InitDB(cfg *config.RuntimeConfig) (*sql.DB, error) {
@@ -296,6 +309,12 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("rootCmd.Run: email: %w", err)
 		}
 		return c.Run()
+	case "requests":
+		c, err := parseRequestsCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("rootCmd.Run: requests: %w", err)
+		}
+		return c.Run()
 	case "db":
 		c, err := parseDbCmd(r, args[1:])
 		if err != nil {
@@ -350,6 +369,12 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("rootCmd.Run: news: %w", err)
 		}
 		return cmd.Run()
+	case "announcement":
+		cmd, err := parseAnnouncementCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("rootCmd.Run: announcement: %w", err)
+		}
+		return cmd.Run()
 	case "jmap":
 		cmd, err := parseJmapCmd(r, args[1:])
 		if err != nil {
@@ -384,6 +409,18 @@ func (r *rootCmd) Run() error {
 		c, err := parseImagesCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("rootCmd.Run: images: %w", err)
+		}
+		return c.Run()
+	case "files":
+		c, err := parseFilesCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("rootCmd.Run: files: %w", err)
+		}
+		return c.Run()
+	case "imagebbs":
+		c, err := parseImagebbsCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("rootCmd.Run: imagebbs: %w", err)
 		}
 		return c.Run()
 	case "links":
@@ -426,6 +463,12 @@ func (r *rootCmd) Run() error {
 		c, err := parseLangCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("rootCmd.Run: lang: %w", err)
+		}
+		return c.Run()
+	case "maintenance":
+		c, err := parseMaintenanceCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("rootCmd.Run: maintenance: %w", err)
 		}
 		return c.Run()
 	case "server":

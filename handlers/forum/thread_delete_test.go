@@ -4,29 +4,26 @@ import (
 	"context"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestThreadDelete(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-
-	q := db.New(conn)
-	mock.ExpectExec("AdminDeleteForumThread").
-		WithArgs(int32(1)).
-		WillReturnResult(sqlmock.NewResult(0, 0))
-	mock.ExpectExec("SystemRebuildForumTopicMetaByID").
-		WithArgs(int32(2)).
-		WillReturnResult(sqlmock.NewResult(0, 0))
+	q := testhelpers.NewQuerierStub()
 
 	if err := ThreadDelete(context.Background(), q, 1, 2); err != nil {
 		t.Fatalf("ThreadDelete: %v", err)
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("expectations: %v", err)
+
+	if len(q.AdminDeleteForumThreadCalls) != 1 {
+		t.Fatalf("expected 1 AdminDeleteForumThread call, got %d", len(q.AdminDeleteForumThreadCalls))
+	}
+	if got := q.AdminDeleteForumThreadCalls[0]; got != 1 {
+		t.Fatalf("expected thread id 1, got %d", got)
+	}
+	if len(q.SystemRebuildForumTopicMetaByIDCalls) != 1 {
+		t.Fatalf("expected 1 SystemRebuildForumTopicMetaByID call, got %d", len(q.SystemRebuildForumTopicMetaByIDCalls))
+	}
+	if got := q.SystemRebuildForumTopicMetaByIDCalls[0]; got != 2 {
+		t.Fatalf("expected topic id 2, got %d", got)
 	}
 }

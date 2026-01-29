@@ -1,0 +1,8 @@
+Usage:
+  {{.Prog}} notifications mark [flags] <id> [<id>...]
+
+Examples:
+  {{.Prog}} notifications mark 101
+  {{.Prog}} notifications mark --unread 101 102 --json
+
+{{template "flag_groups_section" .FlagGroups}}

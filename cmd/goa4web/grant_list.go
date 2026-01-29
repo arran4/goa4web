@@ -42,9 +42,9 @@ func parseGrantListCmd(parent *grantCmd, args []string) (*grantListCmd, error) {
 }
 
 func (c *grantListCmd) Run() error {
-	conn, err := c.rootCmd.DB()
+	q, err := c.rootCmd.Querier()
 	if err != nil {
-		return fmt.Errorf("database: %w", err)
+		return fmt.Errorf("querier: %w", err)
 	}
 
 	if c.uid != 0 {
@@ -93,7 +93,6 @@ func (c *grantListCmd) Run() error {
 	}
 
 	ctx := context.Background()
-	q := db.New(conn)
 	rows, err := q.ListGrantsExtended(ctx, params)
 	if err != nil {
 		return fmt.Errorf("list grants: %w", err)

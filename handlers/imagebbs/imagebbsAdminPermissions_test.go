@@ -5,30 +5,28 @@ import (
 	"database/sql"
 	"net/http"
 	"net/http/httptest"
-	"regexp"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestRequireImagebbsGrantWithBoard(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	allow := true
+	queries := testhelpers.NewQuerierStub()
+	queries.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
+		if allow {
+			return 1, nil
+		}
+		return 0, sql.ErrNoRows
 	}
-	defer conn.Close()
-	cd := common.NewCoreData(context.Background(), db.New(conn), config.NewRuntimeConfig())
+	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
 	cd.UserID = 99
-
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT 1 FROM grants g")).
-		WithArgs(cd.UserID, "imagebbs", sql.NullString{String: "board", Valid: true}, imagebbsApproveAction, sql.NullInt32{Int32: 7, Valid: true}, sql.NullInt32{Int32: cd.UserID, Valid: true}).
-		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
 	req := httptest.NewRequest("GET", "/admin/imagebbs/board/7", nil)
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
@@ -37,27 +35,37 @@ func TestRequireImagebbsGrantWithBoard(t *testing.T) {
 	if !requireImagebbsGrant(imagebbsApproveAction)(req, &mux.RouteMatch{}) {
 		t.Fatalf("expected matcher to allow request with grant")
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	if len(queries.SystemCheckGrantCalls) != 1 {
+		t.Fatalf("expected one grant check, got %d", len(queries.SystemCheckGrantCalls))
+	}
+	want := db.SystemCheckGrantParams{
+		ViewerID: cd.UserID,
+		Section:  "imagebbs",
+		Item:     sql.NullString{String: "board", Valid: true},
+		Action:   imagebbsApproveAction,
+		ItemID:   sql.NullInt32{Int32: 7, Valid: true},
+		UserID:   sql.NullInt32{Int32: cd.UserID, Valid: true},
+	}
+	if got := queries.SystemCheckGrantCalls[0]; got != want {
+		t.Fatalf("expected grant call %#v, got %#v", want, got)
 	}
 }
 
 func TestRequireImagebbsGrantWithPost(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	allow := true
+	queries := testhelpers.NewQuerierStub()
+	queries.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
+		if allow {
+			return 1, nil
+		}
+		return 0, sql.ErrNoRows
 	}
-	defer conn.Close()
-	cd := common.NewCoreData(context.Background(), db.New(conn), config.NewRuntimeConfig())
+	queries.AdminGetImagePostRow = &db.AdminGetImagePostRow{
+		Idimagepost:            5,
+		ImageboardIdimageboard: sql.NullInt32{Int32: 3, Valid: true},
+	}
+	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
 	cd.UserID = 42
-
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT i.idimagepost")).
-		WithArgs(int32(5)).
-		WillReturnRows(sqlmock.NewRows([]string{"idimagepost", "forumthread_id", "users_idusers", "imageboard_idimageboard", "posted", "timezone", "description", "thumbnail", "fullimage", "file_size", "approved", "deleted_at", "last_index", "username", "comments"}).
-			AddRow(5, 0, 0, sql.NullInt32{Int32: 3, Valid: true}, nil, nil, nil, nil, nil, 0, false, nil, nil, nil, nil))
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT 1 FROM grants g")).
-		WithArgs(cd.UserID, "imagebbs", sql.NullString{String: "board", Valid: true}, imagebbsApproveAction, sql.NullInt32{Int32: 3, Valid: true}, sql.NullInt32{Int32: cd.UserID, Valid: true}).
-		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
 	req := httptest.NewRequest("GET", "/admin/imagebbs/approve/5", nil)
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
@@ -66,27 +74,43 @@ func TestRequireImagebbsGrantWithPost(t *testing.T) {
 	if !requireImagebbsGrant(imagebbsApproveAction)(req, &mux.RouteMatch{}) {
 		t.Fatalf("expected matcher to allow request with post-derived grant")
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	if len(queries.AdminGetImagePostCalls) != 1 {
+		t.Fatalf("expected one image post lookup, got %d", len(queries.AdminGetImagePostCalls))
+	}
+	if got := queries.AdminGetImagePostCalls[0]; got != 5 {
+		t.Fatalf("expected image post lookup for 5, got %d", got)
+	}
+	if len(queries.SystemCheckGrantCalls) != 1 {
+		t.Fatalf("expected one grant check, got %d", len(queries.SystemCheckGrantCalls))
+	}
+	want := db.SystemCheckGrantParams{
+		ViewerID: cd.UserID,
+		Section:  "imagebbs",
+		Item:     sql.NullString{String: "board", Valid: true},
+		Action:   imagebbsApproveAction,
+		ItemID:   sql.NullInt32{Int32: 3, Valid: true},
+		UserID:   sql.NullInt32{Int32: cd.UserID, Valid: true},
+	}
+	if got := queries.SystemCheckGrantCalls[0]; got != want {
+		t.Fatalf("expected grant call %#v, got %#v", want, got)
 	}
 }
 
 func TestApprovePostTaskDeniesWithoutGrant(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	allow := false
+	queries := testhelpers.NewQuerierStub()
+	queries.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
+		if allow {
+			return 1, nil
+		}
+		return 0, sql.ErrNoRows
 	}
-	defer conn.Close()
-	cd := common.NewCoreData(context.Background(), db.New(conn), config.NewRuntimeConfig())
+	queries.AdminGetImagePostRow = &db.AdminGetImagePostRow{
+		Idimagepost:            12,
+		ImageboardIdimageboard: sql.NullInt32{Int32: 9, Valid: true},
+	}
+	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
 	cd.UserID = 77
-
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT i.idimagepost")).
-		WithArgs(int32(12)).
-		WillReturnRows(sqlmock.NewRows([]string{"idimagepost", "forumthread_id", "users_idusers", "imageboard_idimageboard", "posted", "timezone", "description", "thumbnail", "fullimage", "file_size", "approved", "deleted_at", "last_index", "username", "comments"}).
-			AddRow(12, 0, 0, sql.NullInt32{Int32: 9, Valid: true}, nil, nil, nil, nil, nil, 0, false, nil, nil, nil, nil))
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT 1 FROM grants g")).
-		WithArgs(cd.UserID, "imagebbs", sql.NullString{String: "board", Valid: true}, imagebbsApproveAction, sql.NullInt32{Int32: 9, Valid: true}, sql.NullInt32{Int32: cd.UserID, Valid: true}).
-		WillReturnError(sql.ErrNoRows)
 
 	req := httptest.NewRequest("POST", "/admin/imagebbs/approve/12", nil)
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
@@ -95,30 +119,29 @@ func TestApprovePostTaskDeniesWithoutGrant(t *testing.T) {
 	if _, ok := approvePostTask.Action(httptest.NewRecorder(), req).(http.HandlerFunc); !ok {
 		t.Fatalf("expected forbidden handler when grant is missing")
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	if len(queries.AdminApproveImagePostCalls) != 0 {
+		t.Fatalf("expected no approval calls, got %d", len(queries.AdminApproveImagePostCalls))
 	}
 }
 
 func TestApprovePostTaskAllowsWithGrant(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
+	allow := true
+	queries := testhelpers.NewQuerierStub()
+	queries.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
+		if allow {
+			return 1, nil
+		}
+		return 0, sql.ErrNoRows
 	}
-	defer conn.Close()
-	cd := common.NewCoreData(context.Background(), db.New(conn), config.NewRuntimeConfig())
+	queries.AdminGetImagePostRow = &db.AdminGetImagePostRow{
+		Idimagepost:            4,
+		ImageboardIdimageboard: sql.NullInt32{Int32: 2, Valid: true},
+	}
+	queries.AdminApproveImagePostFn = func(context.Context, int32) error {
+		return nil
+	}
+	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
 	cd.UserID = 15
-
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT i.idimagepost")).
-		WithArgs(int32(4)).
-		WillReturnRows(sqlmock.NewRows([]string{"idimagepost", "forumthread_id", "users_idusers", "imageboard_idimageboard", "posted", "timezone", "description", "thumbnail", "fullimage", "file_size", "approved", "deleted_at", "last_index", "username", "comments"}).
-			AddRow(4, 0, 0, sql.NullInt32{Int32: 2, Valid: true}, nil, nil, nil, nil, nil, 0, false, nil, nil, nil, nil))
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT 1 FROM grants g")).
-		WithArgs(cd.UserID, "imagebbs", sql.NullString{String: "board", Valid: true}, imagebbsApproveAction, sql.NullInt32{Int32: 2, Valid: true}, sql.NullInt32{Int32: cd.UserID, Valid: true}).
-		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
-	mock.ExpectExec(regexp.QuoteMeta("UPDATE imagepost SET approved")).
-		WithArgs(int32(4)).
-		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	req := httptest.NewRequest("POST", "/admin/imagebbs/approve/4", nil)
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
@@ -127,7 +150,10 @@ func TestApprovePostTaskAllowsWithGrant(t *testing.T) {
 	if result := approvePostTask.Action(httptest.NewRecorder(), req); result != nil {
 		t.Fatalf("unexpected result %v", result)
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations: %v", err)
+	if len(queries.AdminApproveImagePostCalls) != 1 {
+		t.Fatalf("expected one approval call, got %d", len(queries.AdminApproveImagePostCalls))
+	}
+	if got := queries.AdminApproveImagePostCalls[0]; got != 4 {
+		t.Fatalf("expected approval call for 4, got %d", got)
 	}
 }

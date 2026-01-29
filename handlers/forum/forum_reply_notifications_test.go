@@ -105,6 +105,7 @@ func TestForumReply(t *testing.T) {
 	}
 	qs.GetCommentByIdForUserRow = &db.GetCommentByIdForUserRow{
 		Idcomments: 999,
+		Text:       sql.NullString{String: "Original thread content", Valid: true},
 	}
 	qs.GetThreadBySectionThreadIDForReplierFn = func(ctx context.Context, arg db.GetThreadBySectionThreadIDForReplierParams) (*db.Forumthread, error) {
 		return &db.Forumthread{
@@ -118,6 +119,7 @@ func TestForumReply(t *testing.T) {
 			ForumtopicIdforumtopic: topicID,
 			Lastposterusername:     sql.NullString{String: "replier", Valid: true},
 			Comments:               sql.NullInt32{Int32: 1, Valid: true},
+			Firstpost:              1,
 		}, nil
 	}
 	qs.GetForumTopicByIdForUserFn = func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
@@ -216,14 +218,20 @@ func TestForumReply(t *testing.T) {
 	}
 
 	notificationsByRecipient := make(map[int32][]string)
+	notificationsLinksByRecipient := make(map[int32][]string)
 	for _, call := range qs.SystemCreateNotificationCalls {
 		notificationsByRecipient[call.RecipientID] = append(notificationsByRecipient[call.RecipientID], call.Message.String)
+		notificationsLinksByRecipient[call.RecipientID] = append(notificationsLinksByRecipient[call.RecipientID], call.Link.String)
 	}
 
-	findNotification := func(recipient int32, expected string) bool {
-		for _, msg := range notificationsByRecipient[recipient] {
-			if msg == expected {
-				return true
+	findNotification := func(recipient int32, expectedMsg string, expectedLink string) bool {
+		msgs := notificationsByRecipient[recipient]
+		links := notificationsLinksByRecipient[recipient]
+		for i, msg := range msgs {
+			if msg == expectedMsg {
+				if expectedLink == "" || links[i] == expectedLink {
+					return true
+				}
 			}
 		}
 		return false
@@ -232,16 +240,17 @@ func TestForumReply(t *testing.T) {
 	t.Run("internal notifications", func(t *testing.T) {
 		t.Helper()
 		expectedSubscriberNotif := "New reply in \"Test Topic\" by replier\n"
-		if !findNotification(subscriberUID, expectedSubscriberNotif) {
-			t.Fatalf("expected subscriber notification %q, got %q", expectedSubscriberNotif, notificationsByRecipient[subscriberUID])
+		expectedLink := "http://example.com/forum/topic/5/thread/42#c999"
+		if !findNotification(subscriberUID, expectedSubscriberNotif, expectedLink) {
+			t.Fatalf("expected subscriber notification %q with link %q, got %q with links %q", expectedSubscriberNotif, expectedLink, notificationsByRecipient[subscriberUID], notificationsLinksByRecipient[subscriberUID])
 		}
 
 		expectedAdminNotif := "User replier replied to a forum thread.\nThis is a test message with a link https://example.com and enough words to trigger the truncation of twenty words limit...\n"
-		if !findNotification(adminUID, expectedAdminNotif) {
+		if !findNotification(adminUID, expectedAdminNotif, "") {
 			t.Fatalf("expected admin notification %q, got %q", expectedAdminNotif, notificationsByRecipient[adminUID])
 		}
 
-		if !findNotification(missingEmailUID, expectedSubscriberNotif) {
+		if !findNotification(missingEmailUID, expectedSubscriberNotif, expectedLink) {
 			t.Fatalf("expected missing email subscriber to receive internal notification %q, got %q", expectedSubscriberNotif, notificationsByRecipient[missingEmailUID])
 		}
 	})
@@ -249,7 +258,7 @@ func TestForumReply(t *testing.T) {
 	t.Run("missing email notifications", func(t *testing.T) {
 		t.Helper()
 		expected := "missing email address"
-		if !findNotification(missingEmailUID, expected) {
+		if !findNotification(missingEmailUID, expected, "") {
 			t.Fatalf("expected missing email notification %q, got %q", expected, notificationsByRecipient[missingEmailUID])
 		}
 	})
@@ -279,7 +288,7 @@ func TestForumReply(t *testing.T) {
 		if subscriberEmail == nil {
 			t.Fatal("subscriber email not found")
 		}
-		if subscriberEmail.Header.Get("Subject") != "[goa4web] New forum reply" {
+		if subscriberEmail.Header.Get("Subject") != "[goa4web] Forum: Test Topic - Original thread content" {
 			t.Errorf("subscriber email subject mismatch: %s", subscriberEmail.Header.Get("Subject"))
 		}
 		subBody := getEmailBody(t, subscriberEmail)
@@ -291,7 +300,7 @@ func TestForumReply(t *testing.T) {
 		if adminEmail == nil {
 			t.Fatal("admin email not found")
 		}
-		if adminEmail.Header.Get("Subject") != "[goa4web Admin] Forum reply posted" {
+		if adminEmail.Header.Get("Subject") != "[goa4web Admin] Forum: Test Topic - Original thread content" {
 			t.Errorf("admin email subject mismatch: %s", adminEmail.Header.Get("Subject"))
 		}
 		adminBody := getEmailBody(t, adminEmail)

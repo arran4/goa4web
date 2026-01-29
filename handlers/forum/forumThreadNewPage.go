@@ -242,6 +242,16 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("make thread %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
+	if err := r.ParseForm(); err != nil {
+		log.Printf("ParseForm error: %v", err)
+	}
+	if err := cd.SetThreadPublicLabels(int32(threadId), r.PostForm["public"]); err != nil {
+		log.Printf("set public labels: %v", err)
+	}
+	if err := cd.SetThreadPrivateLabels(int32(threadId), r.PostForm["private"]); err != nil {
+		log.Printf("set private labels: %v", err)
+	}
+
 	var topicTitle, author string
 	var topic *db.GetForumTopicByIdForUserRow
 	if trow, err := queries.GetForumTopicByIdForUser(r.Context(), db.GetForumTopicByIdForUserParams{ViewerID: uid, Idforumtopic: int32(topicId), ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0}}); err == nil {
@@ -298,6 +308,11 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 		evt.Path = endUrl
 	}
 
+	subjectPrefix := "Forum"
+	if topic.Handler == "private" {
+		subjectPrefix = "Private Forum"
+	}
+
 	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
 		ThreadID:         int32(threadId),
 		TopicID:          int32(topicId),
@@ -311,6 +326,10 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 		IncludePostCount: true,
 		IncludeSearch:    true,
 		MarkThreadRead:   true,
+		AdditionalData: map[string]any{
+			"ThreadOpenerPreview": a4code.SnipTextWords(text, 10),
+			"SubjectPrefix":       subjectPrefix,
+		},
 	}); err != nil {
 		log.Printf("thread create side effects: %v", err)
 	}

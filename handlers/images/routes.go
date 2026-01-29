@@ -40,6 +40,14 @@ func verifyMiddleware(prefix string) mux.MiddlewareFunc {
 			cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
 			var err error
+			var data string
+			// We always sign/verify the "image:ID" or "cache:ID" form (plus query params if legacy)
+			// But for new signatures (with ts/nonce), we just sign "image:ID" (no query params embedded in data usually)
+			// Wait, the legacy "data" construction included query params:
+			// data = prefix + id + "?" + encoded
+			// But the new SignImageURL logic is: sign(prefix + id, ...)
+			// So if we have ts/nonce, we should verify prefix+id.
+
 			if tsStr != "" || nonce != "" {
 				var opts []sign.SignOption
 				if tsStr != "" {
@@ -49,11 +57,13 @@ func verifyMiddleware(prefix string) mux.MiddlewareFunc {
 				if nonce != "" {
 					opts = append(opts, sign.WithNonce(nonce))
 				}
-				err = sign.Verify(r.URL.Path, sig, cd.ImageSignKey, opts...)
+				// Verify "image:ID" or "cache:ID"
+				data = prefix + id
+				err = sign.Verify(data, sig, cd.ImageSignKey, opts...)
 			} else {
 				query.Del("ts")
 				query.Del("sig")
-				data := id
+				data = id
 				if encoded := query.Encode(); encoded != "" {
 					data = data + "?" + encoded
 				}

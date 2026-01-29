@@ -192,14 +192,25 @@ LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers
 LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers
 LEFT JOIN roles r ON ur.role_id = r.id
 WHERE pe.sent_at IS NULL
+  AND (? IS NULL
+    OR (? = 'pending' AND pe.error_count = 0)
+    OR (? = 'failed' AND pe.error_count > 0))
+  AND (? IS NULL
+    OR (? = 'direct' AND pe.direct_email = 1)
+    OR (? = 'user' AND pe.direct_email = 0 AND pe.to_user_id IS NOT NULL AND pe.to_user_id <> 0)
+    OR (? = 'userless' AND pe.direct_email = 0 AND (pe.to_user_id IS NULL OR pe.to_user_id = 0)))
+  AND (? IS NULL OR pe.created_at <= ?)
   AND (? IS NULL OR p.language_id = ?)
   AND (? IS NULL OR r.name = ?)
 ORDER BY pe.id
 `
 
 type AdminListUnsentPendingEmailsParams struct {
-	LanguageID sql.NullInt32
-	RoleName   string
+	Status        interface{}
+	Provider      interface{}
+	CreatedBefore sql.NullTime
+	LanguageID    sql.NullInt32
+	RoleName      string
 }
 
 type AdminListUnsentPendingEmailsRow struct {
@@ -214,6 +225,15 @@ type AdminListUnsentPendingEmailsRow struct {
 // admin task
 func (q *Queries) AdminListUnsentPendingEmails(ctx context.Context, arg AdminListUnsentPendingEmailsParams) ([]*AdminListUnsentPendingEmailsRow, error) {
 	rows, err := q.db.QueryContext(ctx, adminListUnsentPendingEmails,
+		arg.Status,
+		arg.Status,
+		arg.Status,
+		arg.Provider,
+		arg.Provider,
+		arg.Provider,
+		arg.Provider,
+		arg.CreatedBefore,
+		arg.CreatedBefore,
 		arg.LanguageID,
 		arg.LanguageID,
 		arg.RoleName,

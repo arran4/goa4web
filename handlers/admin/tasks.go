@@ -227,6 +227,9 @@ const (
 	// TaskResend attempts to send queued emails immediately.
 	TaskResend tasks.TaskString = "Resend"
 
+	// TaskResendFilteredQueue retries all filtered queued emails.
+	TaskResendFilteredQueue tasks.TaskString = "Retry all filtered"
+
 	// TaskRetry queues a previously sent email for another attempt.
 	TaskRetry tasks.TaskString = "Retry"
 
@@ -268,6 +271,9 @@ const (
 
 	// TaskBulkDelete removes multiple queued items at once.
 	TaskBulkDelete tasks.TaskString = "Bulk Delete"
+
+	// TaskDeleteFilteredQueue deletes all filtered queued emails.
+	TaskDeleteFilteredQueue tasks.TaskString = "Delete all filtered"
 
 	// TaskUpdateWriting updates an existing writing.
 	TaskUpdateWriting tasks.TaskString = "Update writing"

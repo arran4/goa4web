@@ -251,6 +251,9 @@ const (
 	// TaskUpdate updates an existing item.
 	TaskUpdate tasks.TaskString = "Update"
 
+	// TaskBulkImport applies a bulk import action.
+	TaskBulkImport tasks.TaskString = "Bulk import"
+
 	// TaskUpdateTopicRestriction updates an existing topic restriction.
 	TaskUpdateTopicRestriction tasks.TaskString = "Update topic restriction"
 

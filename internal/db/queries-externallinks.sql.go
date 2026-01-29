@@ -164,6 +164,15 @@ func (q *Queries) SystemRegisterExternalLinkClick(ctx context.Context, url strin
 	return err
 }
 
+const touchExternalLink = `-- name: TouchExternalLink :exec
+UPDATE external_links SET updated_at = CURRENT_TIMESTAMP WHERE id = ?
+`
+
+func (q *Queries) TouchExternalLink(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, touchExternalLink, id)
+	return err
+}
+
 const updateExternalLinkImageCache = `-- name: UpdateExternalLinkImageCache :exec
 UPDATE external_links
 SET card_image_cache = ?, updated_at = CURRENT_TIMESTAMP

@@ -299,7 +299,7 @@ func TestExternalLinkCard(t *testing.T) {
 		{
 			name:  "Inline with metadata (Title injection)",
 			input: "See [link http://example.com/card]",
-			want:  "See <a href=\"http://example.com/card\" target=\"_blank\">Example Title</a>",
+			want:  "See <a href=\"http://example.com/card\" target=\"_blank\" title=\"Example Description\">Example Title</a>",
 		},
 		{
 			name:  "Inline without metadata",
@@ -309,7 +309,7 @@ func TestExternalLinkCard(t *testing.T) {
 		{
 			name:  "Inline with explicit title (ignore metadata title)",
 			input: "See [link http://example.com/card Explicit]",
-			want:  "See <a href=\"http://example.com/card\" target=\"_blank\"> Explicit</a>",
+			want:  "See <a href=\"http://example.com/card\" target=\"_blank\" title=\"Example Title - Example Description\"> Explicit</a>",
 		},
 		{
 			name:  "Block link [link url] with metadata (Complex Card)",
@@ -322,9 +322,9 @@ func TestExternalLinkCard(t *testing.T) {
 			want:  "<a href=\"http://example.com/none\" target=\"_blank\">http://example.com/none</a><br />\n",
 		},
 		{
-			name:  "Block link [link url Title] with metadata -> Simple Card",
+			name:  "Block link [link url Title] with metadata -> Inline with Tooltip",
 			input: "[link http://example.com/simple Simple!]\n",
-			want:  "<div class=\"external-link-card\"><a href=\"http://example.com/simple\" target=\"_blank\" class=\"external-link-card-inner\"><img src=\"http://example.com/image.jpg\" class=\"external-link-image\" /><div class=\"external-link-content\"><div class=\"external-link-title\"> Simple!</div></div></a></div><br />\n",
+			want:  "<a href=\"http://example.com/simple\" target=\"_blank\" title=\"Simple Title - Simple Description\"> Simple!</a><br />\n",
 		},
 		{
 			name:  "Consecutive Block Links",

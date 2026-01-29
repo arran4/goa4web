@@ -42,3 +42,6 @@ VALUES (?, 0);
 INSERT INTO external_links (url, clicks)
 VALUES (?, 0)
 ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id);
+
+-- name: TouchExternalLink :exec
+UPDATE external_links SET updated_at = CURRENT_TIMESTAMP WHERE id = ?;

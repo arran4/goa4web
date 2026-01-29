@@ -595,6 +595,7 @@ type Querier interface {
 	SystemRebuildForumTopicMetaByID(ctx context.Context, idforumtopic int32) error
 	SystemRegisterExternalLinkClick(ctx context.Context, url string) error
 	SystemSetBlogLastIndex(ctx context.Context, id int32) error
+	TouchExternalLink(ctx context.Context, id int32) error
 	SystemSetCommentLastIndex(ctx context.Context, idcomments int32) error
 	SystemSetForumTopicHandlerByID(ctx context.Context, arg SystemSetForumTopicHandlerByIDParams) error
 	SystemSetImagePostLastIndex(ctx context.Context, idimagepost int32) error

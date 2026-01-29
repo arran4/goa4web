@@ -2,6 +2,8 @@ package common
 
 import (
 	"bytes"
+	"database/sql"
+	"errors"
 	"fmt"
 	"html/template"
 	"io"
@@ -17,6 +19,7 @@ import (
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/internal/eventbus"
 	csrfmiddleware "github.com/arran4/goa4web/internal/middleware/csrf"
 )
 
@@ -107,6 +110,30 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 					return nil
 				}
 				link, err := cd.Queries().GetExternalLink(r.Context(), u)
+
+				shouldFetch := false
+				if err != nil {
+					if errors.Is(err, sql.ErrNoRows) {
+						if _, err := cd.Queries().EnsureExternalLink(r.Context(), u); err == nil {
+							shouldFetch = true
+						}
+					}
+				} else {
+					if !link.CardTitle.Valid || link.CardTitle.String == "" {
+						if time.Since(link.UpdatedAt) > 24*time.Hour {
+							_ = cd.Queries().TouchExternalLink(r.Context(), link.ID)
+							shouldFetch = true
+						}
+					}
+				}
+
+				if shouldFetch && cd.Bus() != nil {
+					cd.Bus().Publish(eventbus.TaskEvent{
+						Data:    map[string]any{"Body": "[link " + u + "]"},
+						Outcome: eventbus.TaskOutcomeSuccess,
+					})
+				}
+
 				if err != nil {
 					return nil
 				}

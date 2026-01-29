@@ -383,7 +383,7 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 					isBlock, isImmediateClose = a.peekBlockLink(r)
 				}
 
-				if isBlock && meta != nil {
+				if isBlock && isImmediateClose && meta != nil {
 					// Render Card
 					imageHTML := ""
 					if meta.ImageURL != "" {
@@ -393,53 +393,74 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 						}
 					}
 
-					if isImmediateClose {
-						// Complex Card: Title and Description from Metadata
-						// Consume ] and newline
-						r.ReadByte() // ]
-						r.ReadByte() // \n
+					// Consume ] and newline
+					r.ReadByte() // ]
+					r.ReadByte() // \n
 
-						a.atLineStart = true
+					a.atLineStart = true
 
-						// Determine Title and Description
-						title := meta.Title
-						if title == "" {
-							title = original // Fallback
-						}
-						description := meta.Description
+					// Determine Title and Description
+					title := meta.Title
+					if title == "" {
+						title = original // Fallback
+					}
+					description := meta.Description
 
-						if _, err := io.WriteString(w, fmt.Sprintf(
-							"<div class=\"external-link-card\"><a href=\"%s\" target=\"_blank\" class=\"external-link-card-inner\">%s<div class=\"external-link-content\"><div class=\"external-link-title\">%s</div><div class=\"external-link-description\">%s</div></div></a></div>",
-							safe, imageHTML, html.EscapeString(title), html.EscapeString(description))); err != nil {
-							return err
-						}
-					} else {
-						// Simple Card: Title from user provided text (consumed later)
-						if _, err := io.WriteString(w, fmt.Sprintf(
-							"<div class=\"external-link-card\"><a href=\"%s\" target=\"_blank\" class=\"external-link-card-inner\">%s<div class=\"external-link-content\"><div class=\"external-link-title\">",
-							safe, imageHTML)); err != nil {
-							return err
-						}
-						a.stack = append(a.stack, "</div></div></a></div>")
+					if _, err := io.WriteString(w, fmt.Sprintf(
+						"<div class=\"external-link-card\"><a href=\"%s\" target=\"_blank\" class=\"external-link-card-inner\">%s<div class=\"external-link-content\"><div class=\"external-link-title\">%s</div><div class=\"external-link-description\">%s</div></div></a></div>",
+						safe, imageHTML, html.EscapeString(title), html.EscapeString(description))); err != nil {
+						return err
 					}
 				} else {
 					// Inline Link
-					if _, err := io.WriteString(w, "<a href=\""+safe+"\" target=\"_blank\">"); err != nil {
+					p, _ := r.Peek(1)
+					isNoUserTitle := len(p) > 0 && p[0] == ']'
+
+					titleAttr := ""
+					if meta != nil {
+						if !isNoUserTitle {
+							if meta.Title != "" {
+								titleAttr = meta.Title
+							}
+							if meta.Description != "" {
+								if titleAttr != "" {
+									titleAttr += " - "
+								}
+								titleAttr += meta.Description
+							}
+						} else {
+							titleAttr = meta.Description
+						}
+					}
+
+					if _, err := io.WriteString(w, "<a href=\""+safe+"\" target=\"_blank\""); err != nil {
+						return err
+					}
+					if titleAttr != "" {
+						if _, err := io.WriteString(w, " title=\""+html.EscapeString(titleAttr)+"\""); err != nil {
+							return err
+						}
+					}
+					if _, err := io.WriteString(w, ">"); err != nil {
 						return err
 					}
 
-					p, err := r.Peek(1)
-					if err == nil && len(p) > 0 && p[0] == ']' {
+					if isNoUserTitle {
 						// Case [link url]
 						// Inject title if available
-						if meta != nil && meta.Title != "" {
-							if _, err := io.WriteString(w, html.EscapeString(meta.Title)); err != nil {
-								return err
+						linkText := original
+						if meta != nil {
+							if meta.Title != "" {
+								linkText = meta.Title
+							} else if meta.Description != "" {
+								linkText = meta.Description
+								if len(linkText) > 100 {
+									linkText = linkText[:97] + "..."
+								}
 							}
-						} else {
-							if _, err := io.WriteString(w, html.EscapeString(original)); err != nil {
-								return err
-							}
+						}
+						if _, err := io.WriteString(w, html.EscapeString(linkText)); err != nil {
+							return err
 						}
 					}
 					a.stack = append(a.stack, "</a>")

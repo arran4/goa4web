@@ -284,6 +284,7 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 	customQueries, _ := queries.(db.CustomQueries)
 	cd := common.NewCoreData(r.Context(), queries, s.Config,
 		common.WithImageSignKey(s.ImageSignKey),
+		common.WithBus(s.Bus),
 		common.WithCustomQueries(customQueries),
 		common.WithLinkSignKey(s.LinkSignKey),
 		common.WithShareSignKey(s.ShareSignKey),

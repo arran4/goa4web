@@ -1,0 +1,14 @@
+Usage:
+  {{.Prog}} user subscriptions <command> [<args>]
+
+Commands:
+  list        list subscription patterns for a user
+
+Examples:
+  # List subscriptions for user ID 42
+  {{.Prog}} user subscriptions list -user-id 42
+
+  # List email subscriptions for user "alice"
+  {{.Prog}} user subscriptions list -username alice -method email
+
+{{template "flag_groups_section" .FlagGroups}}

@@ -1,0 +1,14 @@
+Usage:
+  {{.Prog}} files list [flags]
+
+Flags:
+  --path <path>         Path under the image upload directory to list.
+  --older-than <dur>    Only include files older than this duration (e.g. 168h).
+  --json                Output machine-readable JSON.
+
+Examples:
+  {{.Prog}} files list
+  {{.Prog}} files list --path 12/34
+  {{.Prog}} files list --older-than 72h --json
+
+{{template "flag_groups_section" .FlagGroups}}

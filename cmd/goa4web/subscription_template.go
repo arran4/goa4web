@@ -4,9 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/arran4/goa4web/internal/db"
+	subscriptiontemplates "github.com/arran4/goa4web/internal/subscription_templates"
 )
 
 // subscriptionTemplateCmd implements the "subscription template" subcommand.
@@ -112,7 +112,7 @@ func (c *subscriptionTemplateLoadCmd) Run() error {
 		if err != nil {
 			// If file not found locally, try embedded (treating c.file as a name/path)
 			var embedErr error
-			content, embedErr = getEmbeddedTemplate(c.file)
+			content, embedErr = subscriptiontemplates.GetEmbeddedTemplate(c.file)
 			if embedErr != nil {
 				// Return original error if both fail
 				return fmt.Errorf("read file %s: %w (also failed embedded: %v)", c.file, err, embedErr)
@@ -122,10 +122,10 @@ func (c *subscriptionTemplateLoadCmd) Run() error {
 		// Try to load by name from embedded templates
 		// First try exact name match with the archetype name
 		var err error
-		content, err = getEmbeddedTemplate(c.name)
+		content, err = subscriptiontemplates.GetEmbeddedTemplate(c.name)
 		if err != nil {
 			// Try with default_ prefix if simple name fails (common pattern)
-			content, err = getEmbeddedTemplate("default_" + c.name)
+			content, err = subscriptiontemplates.GetEmbeddedTemplate("default_" + c.name)
 			if err != nil {
 				return fmt.Errorf("embedded template for %q not found (use --file to specify explicit path)", c.name)
 			}
@@ -135,7 +135,7 @@ func (c *subscriptionTemplateLoadCmd) Run() error {
 	}
 
 	// Parse lines
-	lines := splitLines(string(content))
+	patterns := subscriptiontemplates.ParseTemplatePatterns(string(content))
 
 	tx, err := sdb.BeginTx(ctx, nil)
 	if err != nil {
@@ -152,32 +152,14 @@ func (c *subscriptionTemplateLoadCmd) Run() error {
 		return fmt.Errorf("clean existing archetypes: %w", err)
 	}
 
-	for _, line := range lines {
-		if line == "" || line[0] == '#' {
-			continue
-		}
-
-		method := "internal"
-		pattern := line
-
-		// Check if line starts with a method prefix (e.g. "email " or "internal ")
-		// or if we should parse generic "method pattern" format.
-		parts := strings.SplitN(line, " ", 2)
-		if len(parts) == 2 {
-			m := strings.ToLower(parts[0])
-			if m == "email" || m == "internal" {
-				method = m
-				pattern = parts[1]
-			}
-		}
-
+	for _, entry := range patterns {
 		if err := qtx.CreateSubscriptionArchetype(ctx, db.CreateSubscriptionArchetypeParams{
 			RoleID:        role.ID,
 			ArchetypeName: c.name,
-			Pattern:       pattern,
-			Method:        method,
+			Pattern:       entry.Pattern,
+			Method:        entry.Method,
 		}); err != nil {
-			return fmt.Errorf("insert pattern %s: %w", line, err)
+			return fmt.Errorf("insert pattern %s %s: %w", entry.Method, entry.Pattern, err)
 		}
 	}
 
@@ -185,7 +167,7 @@ func (c *subscriptionTemplateLoadCmd) Run() error {
 		return err
 	}
 
-	fmt.Printf("Loaded archetype %s for role %s with %d patterns.\n", c.name, c.role, len(lines))
+	fmt.Printf("Loaded archetype %s for role %s with %d patterns.\n", c.name, c.role, len(patterns))
 	return nil
 }
 
@@ -246,20 +228,3 @@ func (c *subscriptionTemplateListCmd) FlagGroups() []flagGroup {
 }
 
 var _ usageData = (*subscriptionTemplateListCmd)(nil)
-
-func splitLines(s string) []string {
-	var lines []string
-	var line string
-	for _, r := range s {
-		if r == '\n' {
-			lines = append(lines, line)
-			line = ""
-		} else {
-			line += string(r)
-		}
-	}
-	if line != "" {
-		lines = append(lines, line)
-	}
-	return lines
-}

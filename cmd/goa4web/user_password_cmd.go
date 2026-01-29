@@ -70,6 +70,12 @@ func (c *userPasswordCmd) Run() error {
 			return fmt.Errorf("approve: %w", err)
 		}
 		return cmd.Run()
+	case "list":
+		cmd, err := parseUserPasswordListCmd(c, c.args[1:])
+		if err != nil {
+			return fmt.Errorf("list: %w", err)
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown password command %q", c.args[0])

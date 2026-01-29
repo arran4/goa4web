@@ -13,19 +13,6 @@ import (
 	"github.com/arran4/goa4web/internal/faq_templates"
 )
 
-// Helper to parse the template format
-func parseTemplateContent(content string) (string, string, error) {
-	// Normalize CRLF to LF
-	content = strings.ReplaceAll(content, "\r\n", "\n")
-	parts := strings.SplitN(content, "\n===\n", 2)
-	if len(parts) != 2 {
-		return "", "", fmt.Errorf("invalid template format: missing '===' separator")
-	}
-	question := strings.TrimSpace(parts[0])
-	answer := strings.TrimSpace(parts[1])
-	return question, answer, nil
-}
-
 type faqAddFromTemplateCmd struct {
 	*faqCmd
 	categoryID int
@@ -56,7 +43,7 @@ func (c *faqAddFromTemplateCmd) Run() error {
 		return fmt.Errorf("template %q not found: %w", templateName, err)
 	}
 
-	question, answer, err := parseTemplateContent(content)
+	question, answer, err := faq_templates.ParseTemplateContent(content)
 	if err != nil {
 		return err
 	}
@@ -196,7 +183,7 @@ func (c *faqUpdateCmd) Run() error {
 		}
 	}
 
-	question, answer, err := parseTemplateContent(string(content))
+	question, answer, err := faq_templates.ParseTemplateContent(string(content))
 	if err != nil {
 		return err
 	}
@@ -385,7 +372,7 @@ func (c *faqCreateCmd) Run() error {
 		}
 	}
 
-	question, answer, err := parseTemplateContent(string(content))
+	question, answer, err := faq_templates.ParseTemplateContent(string(content))
 	if err != nil {
 		return err
 	}

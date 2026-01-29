@@ -141,6 +141,21 @@ type QuerierStub struct {
 	ListGrantsByUserIDErr     error
 	ListGrantsByUserIDCalls   []sql.NullInt32
 
+	AdminListGrantsByRoleIDReturns []*Grant
+	AdminListGrantsByRoleIDErr     error
+	AdminListGrantsByRoleIDCalls   []sql.NullInt32
+	AdminListGrantsByRoleIDFn      func(context.Context, sql.NullInt32) ([]*Grant, error)
+
+	GetRoleByNameReturns *Role
+	GetRoleByNameErr     error
+	GetRoleByNameCalls   []string
+	GetRoleByNameFn      func(context.Context, string) (*Role, error)
+
+	SystemListLanguagesReturns []*Language
+	SystemListLanguagesErr     error
+	SystemListLanguagesCalls   int
+	SystemListLanguagesFn      func(context.Context) ([]*Language, error)
+
 	AdminInsertBannedIpCalls []AdminInsertBannedIpParams
 	AdminInsertBannedIpErr   error
 	AdminInsertBannedIpFn    func(context.Context, AdminInsertBannedIpParams) error
@@ -1071,6 +1086,32 @@ func (s *QuerierStub) AdminListRoles(ctx context.Context) ([]*Role, error) {
 	return ret, err
 }
 
+func (s *QuerierStub) GetRoleByName(ctx context.Context, name string) (*Role, error) {
+	s.mu.Lock()
+	s.GetRoleByNameCalls = append(s.GetRoleByNameCalls, name)
+	fn := s.GetRoleByNameFn
+	ret := s.GetRoleByNameReturns
+	err := s.GetRoleByNameErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, name)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) SystemListLanguages(ctx context.Context) ([]*Language, error) {
+	s.mu.Lock()
+	s.SystemListLanguagesCalls++
+	fn := s.SystemListLanguagesFn
+	ret := s.SystemListLanguagesReturns
+	err := s.SystemListLanguagesErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx)
+	}
+	return ret, err
+}
+
 func (s *QuerierStub) ListGrants(ctx context.Context) ([]*Grant, error) {
 	s.mu.Lock()
 	s.ListGrantsCalls++
@@ -1696,6 +1737,16 @@ func (s *QuerierStub) ListGrantsByUserID(ctx context.Context, userID sql.NullInt
 	defer s.mu.Unlock()
 	s.ListGrantsByUserIDCalls = append(s.ListGrantsByUserIDCalls, userID)
 	return s.ListGrantsByUserIDReturns, s.ListGrantsByUserIDErr
+}
+
+func (s *QuerierStub) AdminListGrantsByRoleID(ctx context.Context, roleID sql.NullInt32) ([]*Grant, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.AdminListGrantsByRoleIDCalls = append(s.AdminListGrantsByRoleIDCalls, roleID)
+	if s.AdminListGrantsByRoleIDFn != nil {
+		return s.AdminListGrantsByRoleIDFn(ctx, roleID)
+	}
+	return s.AdminListGrantsByRoleIDReturns, s.AdminListGrantsByRoleIDErr
 }
 
 func (s *QuerierStub) ListGrantsExtended(ctx context.Context, arg ListGrantsExtendedParams) ([]*ListGrantsExtendedRow, error) {

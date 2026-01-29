@@ -2,6 +2,8 @@ package main
 
 import (
 	"database/sql"
+	"encoding/csv"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"text/tabwriter"
@@ -52,6 +54,8 @@ func (c *userEmailCmd) Run() error {
 		return c.runAdd(args[1:])
 	case "delete":
 		return c.runDelete(args[1:])
+	case "audit":
+		return c.runAudit(args[1:])
 	case "update":
 		return c.runUpdate(args[1:])
 	case "verify":
@@ -126,6 +130,154 @@ func (c *userEmailCmd) runList(args []string) error {
 		fmt.Fprintf(w, "%d\t%d\t%s\t%s\t%d\n", e.ID, e.UserID, e.Email, verified, e.NotificationPriority)
 	}
 	w.Flush()
+	return nil
+}
+
+type userEmailAuditRecord struct {
+	ID                   int32  `json:"id"`
+	UserID               int32  `json:"user_id"`
+	Email                string `json:"email"`
+	Verified             bool   `json:"verified"`
+	VerifiedAt           string `json:"verified_at,omitempty"`
+	LastVerificationSent string `json:"last_verification_sent_at,omitempty"`
+	NotificationPriority int32  `json:"notification_priority"`
+	Primary              bool   `json:"primary"`
+}
+
+func (c *userEmailCmd) runAudit(args []string) error {
+	fs := newFlagSet("audit")
+	usage := &userEmailSubcmdUsage{userEmailCmd: c, fs: fs}
+	fs.Usage = func() {
+		_ = executeUsage(fs.Output(), "user_email_audit_usage.txt", usage)
+	}
+	userID := fs.Int("user-id", 0, "User ID to audit emails for")
+	username := fs.String("username", "", "Username to audit emails for")
+	filterVerified := fs.Bool("verified", false, "Only include verified emails")
+	filterUnverified := fs.Bool("unverified", false, "Only include unverified emails")
+	filterPrimary := fs.Bool("primary", false, "Only include primary emails (highest priority)")
+	format := fs.String("format", "table", "Output format: table, csv, json")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+
+	cfg, err := c.loadConfig()
+	if err != nil {
+		return err
+	}
+	d, err := c.rootCmd.InitDB(cfg)
+	if err != nil {
+		return err
+	}
+	defer d.Close()
+	queries := db.New(d)
+
+	uid, err := resolveUserID(c.rootCmd.Context(), queries, *userID, *username)
+	if err != nil {
+		return err
+	}
+
+	emails, err := queries.AdminListUserEmails(c.rootCmd.Context(), uid)
+	if err != nil {
+		return fmt.Errorf("list user emails: %w", err)
+	}
+
+	var maxPriority int32
+	for i, email := range emails {
+		if i == 0 || email.NotificationPriority > maxPriority {
+			maxPriority = email.NotificationPriority
+		}
+	}
+
+	expiryHours := cfg.EmailVerificationExpiryHours
+	filtered := make([]*db.UserEmail, 0, len(emails))
+	applyVerificationFilter := !(*filterVerified && *filterUnverified)
+	for _, email := range emails {
+		isVerified := email.VerifiedAt.Valid
+		if applyVerificationFilter {
+			if *filterVerified && !isVerified {
+				continue
+			}
+			if *filterUnverified && isVerified {
+				continue
+			}
+		}
+		if *filterPrimary && email.NotificationPriority != maxPriority {
+			continue
+		}
+		filtered = append(filtered, email)
+	}
+
+	records := make([]userEmailAuditRecord, 0, len(filtered))
+	for _, email := range filtered {
+		record := userEmailAuditRecord{
+			ID:                   email.ID,
+			UserID:               email.UserID,
+			Email:                email.Email,
+			Verified:             email.VerifiedAt.Valid,
+			NotificationPriority: email.NotificationPriority,
+			Primary:              email.NotificationPriority == maxPriority,
+		}
+		if email.VerifiedAt.Valid {
+			record.VerifiedAt = email.VerifiedAt.Time.Format(time.RFC3339)
+		}
+		if email.VerificationExpiresAt.Valid && expiryHours > 0 {
+			sentAt := email.VerificationExpiresAt.Time.Add(-time.Duration(expiryHours) * time.Hour)
+			record.LastVerificationSent = sentAt.Format(time.RFC3339)
+		}
+		records = append(records, record)
+	}
+
+	switch *format {
+	case "json":
+		b, err := json.MarshalIndent(records, "", "  ")
+		if err != nil {
+			return fmt.Errorf("marshal audit json: %w", err)
+		}
+		fmt.Fprintln(fs.Output(), string(b))
+	case "csv":
+		writer := csv.NewWriter(fs.Output())
+		if err := writer.Write([]string{"id", "user_id", "email", "verified", "verified_at", "last_verification_sent_at", "notification_priority", "primary"}); err != nil {
+			return fmt.Errorf("write csv header: %w", err)
+		}
+		for _, record := range records {
+			row := []string{
+				fmt.Sprintf("%d", record.ID),
+				fmt.Sprintf("%d", record.UserID),
+				record.Email,
+				fmt.Sprintf("%t", record.Verified),
+				record.VerifiedAt,
+				record.LastVerificationSent,
+				fmt.Sprintf("%d", record.NotificationPriority),
+				fmt.Sprintf("%t", record.Primary),
+			}
+			if err := writer.Write(row); err != nil {
+				return fmt.Errorf("write csv row: %w", err)
+			}
+		}
+		writer.Flush()
+		if err := writer.Error(); err != nil {
+			return fmt.Errorf("flush csv: %w", err)
+		}
+	case "table":
+		w := tabwriter.NewWriter(fs.Output(), 0, 0, 2, ' ', 0)
+		fmt.Fprintln(w, "ID\tUserID\tEmail\tVerified\tVerifiedAt\tLastSentAt\tPriority\tPrimary")
+		for _, record := range records {
+			fmt.Fprintf(w, "%d\t%d\t%s\t%t\t%s\t%s\t%d\t%t\n",
+				record.ID,
+				record.UserID,
+				record.Email,
+				record.Verified,
+				record.VerifiedAt,
+				record.LastVerificationSent,
+				record.NotificationPriority,
+				record.Primary,
+			)
+		}
+		w.Flush()
+	default:
+		return fmt.Errorf("invalid -format %q", *format)
+	}
+
 	return nil
 }
 

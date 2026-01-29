@@ -50,6 +50,12 @@ func (c *notificationsCmd) Run() error {
 			return fmt.Errorf("tasks: %w", err)
 		}
 		return cmd.Run()
+	case "send":
+		cmd, err := parseNotificationsSendCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("send: %w", err)
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown notifications command %q", args[0])

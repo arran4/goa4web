@@ -18,14 +18,13 @@ services:
       DB_DRIVER: mysql
       DB_CONN: root:changeme@tcp(db:3306)/goa4web?parseTime=true
       AUTO_MIGRATE: "true"
-      IMAGE_UPLOAD_DIR: /data/imagebbs
     volumes:
-      - app-images:/data/imagebbs
       - app-data:/var/lib/goa4web
+      - app-cache:/var/cache/goa4web
     depends_on:
       - db
 
 volumes:
   db-data:
   app-data:
-  app-images:
+  app-cache:

@@ -3,10 +3,12 @@ package images
 import (
 	"bytes"
 	"fmt"
+	"image"
 	"net/http"
 	"net/url"
 	"path"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -104,6 +106,28 @@ func serveCache(w http.ResponseWriter, r *http.Request) {
 	if p := upload.CacheProviderFromConfig(cfg); p != nil {
 		data, err := p.Read(r.Context(), key)
 		if err != nil {
+			// Try to regenerate
+			if strings.Contains(id, "_thumb.") {
+				origID := strings.Replace(id, "_thumb.", ".", 1)
+				origKey := path.Join(sub1, sub2, origID)
+				if up := upload.ProviderFromConfig(cfg); up != nil {
+					origBytes, err := up.Read(r.Context(), origKey)
+					if err == nil {
+						img, _, err := image.Decode(bytes.NewReader(origBytes))
+						if err == nil {
+							ext := filepath.Ext(id)
+							thumbBytes, err := intimages.GenerateThumbnail(img, ext)
+							if err == nil {
+								if err := p.Write(r.Context(), key, thumbBytes); err == nil {
+									data = thumbBytes
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		if data == nil {
 			http.NotFound(w, r)
 			return
 		}

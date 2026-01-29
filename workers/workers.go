@@ -75,5 +75,5 @@ func Start(ctx context.Context, sdb *sql.DB, provider email.Provider, dlqProvide
 	log.Printf("Starting post count worker")
 	safeGo(func() { postcountworker.Worker(ctx, bus, db.New(sdb)) })
 	log.Printf("Starting external link worker")
-	safeGo(func() { externallinkworker.Worker(ctx, bus, db.New(sdb)) })
+	safeGo(func() { externallinkworker.Worker(ctx, bus, db.New(sdb), cfg) })
 }

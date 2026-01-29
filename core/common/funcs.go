@@ -110,10 +110,14 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 				if err != nil {
 					return nil
 				}
+				img := link.CardImage.String
+				if link.CardImageCache.Valid && link.CardImageCache.String != "" {
+					img = cd.MapImageURL("img", link.CardImageCache.String)
+				}
 				return &a4code2html.LinkMetadata{
 					Title:       link.CardTitle.String,
 					Description: link.CardDescription.String,
-					ImageURL:    link.CardImage.String,
+					ImageURL:    img,
 				}
 			}
 			c := a4code2html.New(mapper, getColor, a4code2html.LinkMetadataProvider(provider))

@@ -1,4 +1,4 @@
-package externallink
+package common
 
 import (
 	"bytes"
@@ -9,18 +9,16 @@ import (
 	_ "image/jpeg" // Register format
 	_ "image/png"  // Register format
 	"io"
+	"net/url"
 	"path"
 
-	"net/url"
-
-	"github.com/arran4/goa4web/core/common"
 	intimages "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/opengraph"
 )
 
 // DownloadAndCacheImage downloads an image from a URL, stores it using cd.StoreSystemImage,
 // and returns the stored image name (cache key) prefixed with "image:".
-func DownloadAndCacheImage(cd *common.CoreData, imgURL string) (string, error) {
+func (cd *CoreData) DownloadAndCacheImage(imgURL string) (string, error) {
 	client := opengraph.NewSafeClient() // Always use a safe client for external URLs
 
 	resp, err := client.Get(imgURL)
@@ -56,7 +54,7 @@ func DownloadAndCacheImage(cd *common.CoreData, imgURL string) (string, error) {
 	}
 
 	// Store system image
-	name, err := cd.StoreSystemImage(common.StoreImageParams{
+	name, err := cd.StoreSystemImage(StoreImageParams{
 		ID:         hash,
 		Ext:        ext,
 		Data:       body,

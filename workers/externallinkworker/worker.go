@@ -7,13 +7,15 @@ import (
 	"log"
 
 	"github.com/arran4/goa4web/a4code"
+	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/opengraph"
 )
 
 // Worker listens for new content and fetches metadata for external links.
-func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier) {
+func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier, cfg *config.RuntimeConfig) {
 	if bus == nil || q == nil {
 		return
 	}
@@ -76,6 +78,17 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier) {
 					return nil
 				}
 
+				var cachedImage string
+				if image != "" {
+					cd := common.NewCoreData(ctx, q, cfg)
+					cached, err := cd.DownloadAndCacheImage(image)
+					if err != nil {
+						log.Printf("DownloadAndCacheImage %s: %v", image, err)
+					} else {
+						cachedImage = cached
+					}
+				}
+
 				if err := q.UpdateExternalLinkMetadata(ctx, db.UpdateExternalLinkMetadataParams{
 					CardTitle:       sql.NullString{String: title, Valid: title != ""},
 					CardDescription: sql.NullString{String: desc, Valid: desc != ""},
@@ -83,6 +96,15 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier) {
 					ID:              int32(id),
 				}); err != nil {
 					log.Printf("UpdateExternalLinkMetadata %d: %v", id, err)
+				}
+
+				if cachedImage != "" {
+					if err := q.UpdateExternalLinkImageCache(ctx, db.UpdateExternalLinkImageCacheParams{
+						CardImageCache: sql.NullString{String: cachedImage, Valid: true},
+						ID:             int32(id),
+					}); err != nil {
+						log.Printf("UpdateExternalLinkImageCache %d: %v", id, err)
+					}
 				}
 
 				return nil

@@ -2,19 +2,19 @@ package common
 
 import (
 	"context"
+	"github.com/arran4/goa4web/config"
 	"testing"
-    "github.com/arran4/goa4web/config"
 )
 
 func TestAbsoluteURL(t *testing.T) {
 	cd := &CoreData{
-        ctx: context.Background(),
-        Config: &config.RuntimeConfig{
-            HTTPHostname: "http://example.com",
-        },
-    }
-    // Mock lazy value for absoluteURLBase
-    cd.absoluteURLBase.Set("http://example.com")
+		ctx: context.Background(),
+		Config: &config.RuntimeConfig{
+			HTTPHostname: "http://example.com",
+		},
+	}
+	// Mock lazy value for absoluteURLBase
+	cd.absoluteURLBase.Set("http://example.com")
 
 	tests := []struct {
 		name     string
@@ -41,11 +41,11 @@ func TestAbsoluteURL(t *testing.T) {
 			ops:      []any{"/foo/bar?q=1#baz"},
 			expected: "http://example.com/foo/bar?q=1#baz",
 		},
-        {
-            name: "Forum reply style",
-            ops: []any{"/forum/topic/1/thread/1#c9"},
-            expected: "http://example.com/forum/topic/1/thread/1#c9",
-        },
+		{
+			name:     "Forum reply style",
+			ops:      []any{"/forum/topic/1/thread/1#c9"},
+			expected: "http://example.com/forum/topic/1/thread/1#c9",
+		},
 	}
 
 	for _, tt := range tests {

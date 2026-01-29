@@ -128,6 +128,10 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 		op(o)
 	}
 
+	if (cfg.ImageSignSecret != "" || cfg.ImageSignSecretFile != "") && o.ImageSignSecret == "" {
+		return nil, fmt.Errorf("image signing is required but no image signing secret was configured")
+	}
+
 	adminhandlers.StartTime = time.Now()
 
 	store := o.Store

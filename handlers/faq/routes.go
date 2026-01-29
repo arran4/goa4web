@@ -20,6 +20,7 @@ func noTask() mux.MatcherFunc {
 func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
 	navReg.RegisterIndexLinkWithViewPermission("Help", "/faq", SectionWeight, "faq", "question/answer")
 	navReg.RegisterAdminControlCenter("Help", "Help Questions", "/admin/faq/questions", SectionWeight)
+	navReg.RegisterAdminControlCenter("Help", "FAQ Templates", "/admin/faq/templates", SectionWeight+1)
 	navReg.RegisterAdminControlCenter("Help", "Help Categories", "/admin/faq/categories", SectionWeight+2)
 	faqr := r.PathPrefix("/faq").Subrouter()
 	faqr.Use(handlers.IndexMiddleware(CustomFAQIndex))
@@ -48,6 +49,8 @@ func RegisterAdminRoutes(ar *mux.Router) {
 	farq.HandleFunc("/question/create", AdminCreateQuestionPage).Methods("GET")
 	farq.HandleFunc("/question/{id:[0-9]+}/edit", AdminEditQuestionPage).Methods("GET")
 	farq.HandleFunc("/revisions/{id:[0-9]+}", AdminRevisionHistoryPage).Methods("GET")
+	farq.HandleFunc("/templates", AdminTemplatesPage).Methods("GET")
+	farq.HandleFunc("/templates", handlers.TaskHandler(createTemplateTask)).Methods("POST").MatcherFunc(createTemplateTask.Matcher())
 }
 
 // Register registers the faq router module.

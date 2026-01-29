@@ -18,6 +18,7 @@ import (
 type ConfiguredTask interface {
 	tasks.Task
 	tasks.TaskMatcher
+	tasks.Name
 }
 
 // subscribeTopicTask subscribes a user to new threads within a topic.

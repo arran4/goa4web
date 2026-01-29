@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/handlers/forum/forumcommon"
 	"github.com/arran4/goa4web/internal/tasks"
 	"testing"
 
@@ -31,7 +32,7 @@ func TestPagesExist(t *testing.T) {
 		ForumAdminTopicsPageTmpl,
 		ForumAdminTopicDeletePageTmpl,
 		ForumThreadNewPageTmpl,
-		RedirectBackPageTmpl,
+		forumcommon.RedirectBackPageTmpl,
 		ForumCreateTopicPageTmpl,
 	}
 

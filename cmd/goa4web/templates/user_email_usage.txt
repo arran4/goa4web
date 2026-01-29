@@ -8,6 +8,7 @@ Subcommands:
   list     List all email addresses for a user.
   add      Add a new email address to a user's account.
   delete   Delete an email address from a user's account.
+  audit    Audit email addresses with verification metadata.
   update   Update an existing email address.
   verify   Mark an email address as verified.
   unverify Mark an email address as unverified.
@@ -21,6 +22,9 @@ Examples:
 
   # Delete the email address with ID 5
   {{.Prog}} user email delete -id 5
+
+  # Audit all emails for user ID 3 as JSON
+  {{.Prog}} user email audit -user-id 3 -format json
 
   # Update the email address with ID 5 to be verified
   {{.Prog}} user email update -id 5 -verified true

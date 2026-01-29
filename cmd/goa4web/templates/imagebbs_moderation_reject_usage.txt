@@ -1,0 +1,12 @@
+Usage:
+  {{.Prog}} imagebbs moderation reject <id>
+  {{.Prog}} imagebbs moderation reject --id <id>
+
+Description:
+  Reject (delete) a single ImageBBS post by ID.
+
+Examples:
+  {{.Prog}} imagebbs moderation reject 42
+  {{.Prog}} imagebbs moderation reject --id 42
+
+{{template "flag_groups_section" .FlagGroups}}

@@ -75,9 +75,6 @@ func (n *Notifier) sendDigestToUser(ctx context.Context, user *db.GetUsersForDai
 	et := NewEmailTemplates("digest")
 
 	baseURL := n.Config.HTTPHostname
-	if baseURL == "" {
-		baseURL = "https://legacy.arran.net.au"
-	}
 	baseURL = strings.TrimRight(baseURL, "/")
 
 	data := struct {

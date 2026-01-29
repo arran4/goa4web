@@ -31,11 +31,15 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Reg
 	pr.HandleFunc("/topic/{topic}", TopicPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	pr.HandleFunc("/api/user-exists", UserExistsAPI).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount())
 
+	privateForum := forumcommon.New("privateforum", "/private")
+	subscribeTask := privateForum.SubscribeTopicTask()
+	unsubscribeTask := privateForum.UnsubscribeTopicTask()
+
 	// Provide GET confirmation pages for subscribe/unsubscribe (mirrors public forum)
-	pr.HandleFunc("/topic/{topic}/subscribe", forumhandlers.SubscribeTopicPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
-	pr.HandleFunc("/topic/{topic}/unsubscribe", forumhandlers.UnsubscribeTopicPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
-	pr.HandleFunc("/topic/{topic}/subscribe", handlers.TaskHandler(forumhandlers.SubscribeTopicTaskHandler)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.SubscribeTopicTaskHandler.Matcher())
-	pr.HandleFunc("/topic/{topic}/unsubscribe", handlers.TaskHandler(forumhandlers.UnsubscribeTopicTaskHandler)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.UnsubscribeTopicTaskHandler.Matcher())
+	pr.HandleFunc("/topic/{topic}/subscribe", privateForum.SubscribeTopicPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	pr.HandleFunc("/topic/{topic}/unsubscribe", privateForum.UnsubscribeTopicPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	pr.HandleFunc("/topic/{topic}/subscribe", handlers.TaskHandler(subscribeTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(subscribeTask.Matcher())
+	pr.HandleFunc("/topic/{topic}/unsubscribe", handlers.TaskHandler(unsubscribeTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(unsubscribeTask.Matcher())
 
 	pr.HandleFunc("/thread/{thread}/labels", handlers.TaskHandler(forumhandlers.MarkThreadReadTaskHandler)).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	pr.HandleFunc("/thread/{thread}/labels", handlers.TaskHandler(forumhandlers.SetLabelsTaskHandler)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.SetLabelsTaskHandler.Matcher())

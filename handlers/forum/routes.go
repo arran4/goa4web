@@ -33,11 +33,17 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Reg
 	fr.HandleFunc("/category/{category}", Page).Methods("GET")
 	fr.HandleFunc("/categories/category/{category}", Page).Methods("GET")
 	fr.HandleFunc("/topic/{topic}", TopicsPage).Methods("GET")
+
+	commonForum := forumcommon.New("forum", "/forum")
+	subscribeTask := commonForum.SubscribeTopicTask()
+	unsubscribeTask := commonForum.UnsubscribeTopicTask()
+
 	// Confirmation pages for subscribe/unsubscribe (GET), posting to task endpoints (POST)
-	fr.HandleFunc("/topic/{topic}/subscribe", SubscribeTopicPage).Methods("GET")
-	fr.HandleFunc("/topic/{topic}/unsubscribe", UnsubscribeTopicPage).Methods("GET")
-	fr.HandleFunc("/topic/{topic}/subscribe", handlers.TaskHandler(subscribeTopicTaskAction)).Methods("POST").MatcherFunc(subscribeTopicTaskAction.Matcher())
-	fr.HandleFunc("/topic/{topic}/unsubscribe", handlers.TaskHandler(unsubscribeTopicTaskAction)).Methods("POST").MatcherFunc(unsubscribeTopicTaskAction.Matcher())
+	fr.HandleFunc("/topic/{topic}/subscribe", commonForum.SubscribeTopicPage).Methods("GET")
+	fr.HandleFunc("/topic/{topic}/unsubscribe", commonForum.UnsubscribeTopicPage).Methods("GET")
+	fr.HandleFunc("/topic/{topic}/subscribe", handlers.TaskHandler(subscribeTask)).Methods("POST").MatcherFunc(subscribeTask.Matcher())
+	fr.HandleFunc("/topic/{topic}/unsubscribe", handlers.TaskHandler(unsubscribeTask)).Methods("POST").MatcherFunc(unsubscribeTask.Matcher())
+
 	fr.HandleFunc("/topic_labels.js", handlers.TopicLabelsJS(cfg)).Methods(http.MethodGet)
 	fr.HandleFunc("/thread/{thread}/labels", handlers.TaskHandler(markThreadReadTask)).Methods(http.MethodGet)
 	fr.HandleFunc("/thread/{thread}/labels", handlers.TaskHandler(setLabelsTask)).Methods("POST").MatcherFunc(setLabelsTask.Matcher())

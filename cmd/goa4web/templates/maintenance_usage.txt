@@ -1,0 +1,17 @@
+Usage:
+  {{.Prog}} maintenance <command> [<args>]
+
+The maintenance command runs one-off operational tasks that mirror the admin
+maintenance actions.
+
+Commands:
+  forum-topic-convert-private  Convert public forum topics to the private handler.
+
+Examples:
+  # Convert a single forum topic to private
+  {{.Prog}} maintenance forum-topic-convert-private 42
+
+  # Convert multiple forum topics to private
+  {{.Prog}} maintenance forum-topic-convert-private 42 84 126
+
+{{template "flag_groups_section" .FlagGroups}}

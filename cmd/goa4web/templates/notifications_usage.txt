@@ -2,9 +2,11 @@ Usage:
   {{.Prog}} notifications <command> [<args>]
 
 Commands:
-  tasks    list task template usage
+  send    send a site notification
+  tasks   list task template usage
 
 Examples:
   {{.Prog}} notifications tasks
+  {{.Prog}} notifications send -message "Maintenance soon" -role user
 
 {{template "flag_groups_section" .FlagGroups}}

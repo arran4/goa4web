@@ -363,6 +363,12 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("rootCmd.Run: news: %w", err)
 		}
 		return cmd.Run()
+	case "announcement":
+		cmd, err := parseAnnouncementCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("rootCmd.Run: announcement: %w", err)
+		}
+		return cmd.Run()
 	case "jmap":
 		cmd, err := parseJmapCmd(r, args[1:])
 		if err != nil {

@@ -287,7 +287,7 @@ func (cd *CoreData) SaveNotificationDigestPreferences(userID int32, hour *int, m
 	if err != nil {
 		if err == sql.ErrNoRows {
 			if err := cd.queries.InsertEmailPreferenceForLister(cd.ctx, db.InsertEmailPreferenceForListerParams{
-				ListerID:             userID,
+				ListerID: userID,
 			}); err != nil {
 				return err
 			}

@@ -78,6 +78,11 @@ func buildGrantGroups(ctx context.Context, cd *common.CoreData, roleID int32) ([
 	return buildGrantGroupsFromGrants(ctx, cd, grants)
 }
 
+// BuildGrantGroups loads grants for a role and organises them for export.
+func BuildGrantGroups(ctx context.Context, cd *common.CoreData, roleID int32) ([]GrantGroup, error) {
+	return buildGrantGroups(ctx, cd, roleID)
+}
+
 // buildGrantGroupsForUser loads grants for a user and organises them for the grants editor.
 func buildGrantGroupsForUser(ctx context.Context, cd *common.CoreData, userID int32) ([]GrantGroup, error) {
 	queries := cd.Queries()

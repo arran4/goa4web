@@ -67,7 +67,7 @@ func (ReloadExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) any
 	var cachedImgName string
 	if imgURL != "" {
 		var err error
-		cachedImgName, err = DownloadAndCacheImage(cd, imgURL)
+		cachedImgName, err = cd.DownloadAndCacheImage(imgURL)
 		if err != nil {
 			log.Printf("failed to cache image: %v", err)
 		}

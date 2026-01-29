@@ -15,6 +15,9 @@ import (
 	navpkg "github.com/arran4/goa4web/internal/navigation"
 )
 
+// SectionWeight defines the order in the navigation menu.
+const SectionWeight = 50
+
 // RegisterRoutes attaches the public bookmarks endpoints to r.
 func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Registry) {
 	navReg.RegisterIndexLink("Bookmarks", "/bookmarks", SectionWeight)

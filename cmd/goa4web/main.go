@@ -411,6 +411,11 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("rootCmd.Run: images: %w", err)
 		}
 		return c.Run()
+	case "files":
+		c, err := parseFilesCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("rootCmd.Run: files: %w", err)
+    }
 	case "imagebbs":
 		c, err := parseImagebbsCmd(r, args[1:])
 		if err != nil {

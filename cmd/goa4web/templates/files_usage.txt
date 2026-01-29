@@ -1,0 +1,14 @@
+Usage:
+  {{.Prog}} files <command> [<args>]
+
+Commands:
+  list   List image board uploads with optional filters.
+  purge  Delete image board uploads with optional filters.
+
+Examples:
+  {{.Prog}} files list
+  {{.Prog}} files list --older-than 168h
+  {{.Prog}} files purge --older-than 720h --dry-run
+  {{.Prog}} files purge --path 12/34 --older-than 720h
+
+{{template "flag_groups_section" .FlagGroups}}

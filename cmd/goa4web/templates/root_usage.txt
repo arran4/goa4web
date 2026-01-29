@@ -35,6 +35,8 @@ Commands:
           accessing the application.
   audit   Show recent audit log entries. This provides a log of all actions
           performed in the application.
+  files   Manage uploaded image files. This includes listing and purging
+          image board uploads.
   db      Manage the database. This includes creating, migrating, and seeding
           the database.
   lang    Manage languages. This allows you to add and manage different

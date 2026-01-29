@@ -1,0 +1,17 @@
+Usage:
+  {{.Prog}} requests reject -id <request-id> [flags]
+
+Reject a pending request. This updates the request status and logs an
+automatic comment, with an optional additional comment.
+
+Flags:
+  -id       Request ID.
+  -comment  Optional comment to attach to the request.
+  -json     Output results as machine-readable JSON.
+
+Examples:
+  {{.Prog}} requests reject -id 42
+  {{.Prog}} requests reject -id 42 -comment "Insufficient evidence"
+  {{.Prog}} requests reject -id 42 -json
+
+{{template "flag_groups_section" .FlagGroups}}

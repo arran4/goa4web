@@ -309,6 +309,12 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("rootCmd.Run: email: %w", err)
 		}
 		return c.Run()
+	case "requests":
+		c, err := parseRequestsCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("rootCmd.Run: requests: %w", err)
+		}
+		return c.Run()
 	case "db":
 		c, err := parseDbCmd(r, args[1:])
 		if err != nil {

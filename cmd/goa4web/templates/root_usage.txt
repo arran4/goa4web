@@ -35,6 +35,7 @@ Commands:
           written content.
   ipban   Manage IP bans. This allows you to block specific IP addresses from
           accessing the application.
+  imagebbs Manage ImageBBS moderation tasks.
   audit   Show recent audit log entries. This provides a log of all actions
           performed in the application.
   notifications Manage site notifications and task templates.

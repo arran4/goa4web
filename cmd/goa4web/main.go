@@ -470,6 +470,12 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("rootCmd.Run: lang: %w", err)
 		}
 		return c.Run()
+	case "maintenance":
+		c, err := parseMaintenanceCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("rootCmd.Run: maintenance: %w", err)
+		}
+		return c.Run()
 	case "server":
 		c, err := parseServerCmd(r, args[1:])
 		if err != nil {

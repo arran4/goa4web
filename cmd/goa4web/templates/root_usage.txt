@@ -47,6 +47,7 @@ Commands:
           the database.
   lang    Manage languages. This allows you to add and manage different
           languages for the application.
+  maintenance Run one-off maintenance tasks that mirror admin actions.
   server  Manage the running server. This provides commands for interacting
           with the live server.
   password Manage pending password resets. This is used for managing password

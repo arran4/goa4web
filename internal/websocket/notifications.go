@@ -76,7 +76,7 @@ func parseHosts(s string) []string {
 
 func NewNotificationsHandler(bus *eventbus.Bus, cfg *config.RuntimeConfig) *NotificationsHandler {
 	h := &NotificationsHandler{Bus: bus, Config: cfg}
-	cfgHosts := parseHosts(cfg.HTTPHostname)
+	cfgHosts := parseHosts(cfg.BaseURL)
 	upgrader := websocket.Upgrader{}
 	upgrader.CheckOrigin = func(r *http.Request) bool {
 		origin := r.Header.Get("Origin")

@@ -84,8 +84,8 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 			isInternal = true
 		}
 		// Also check against configured hostname
-		if cd.Config != nil && cd.Config.HTTPHostname != "" {
-			if confU, err := url.Parse(cd.Config.HTTPHostname); err == nil {
+		if cd.Config != nil && cd.Config.BaseURL != "" {
+			if confU, err := url.Parse(cd.Config.BaseURL); err == nil {
 				if u.Hostname() == confU.Hostname() {
 					isInternal = true
 				}

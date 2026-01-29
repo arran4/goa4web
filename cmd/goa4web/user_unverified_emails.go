@@ -221,8 +221,8 @@ func (c *userUnverifiedEmailsCmd) runResend(args []string) error {
 
 		path := "/usr/email/verify?code=" + code
 		page := "http://localhost" + path
-		if cfg.HTTPHostname != "" {
-			page = cfg.HTTPHostname + path // Ensure HTTPHostname has no trailing slash or handle it
+		if cfg.BaseURL != "" {
+			page = cfg.BaseURL + path // Ensure HTTPHostname has no trailing slash or handle it
 		}
 
 		user, err := queries.SystemGetUserByID(c.rootCmd.Context(), ue.UserID)

@@ -270,7 +270,7 @@ type CoreData struct {
 func (cd *CoreData) AbsoluteURL(ops ...any) string {
 	base, err := cd.absoluteURLBase.Load(func() (string, error) {
 		if cd.Config != nil {
-			return cd.Config.HTTPHostname, nil
+			return cd.Config.BaseURL, nil
 		}
 		return "", nil
 	})

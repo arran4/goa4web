@@ -74,7 +74,7 @@ func (n *Notifier) sendDigestToUser(ctx context.Context, user *db.GetUsersForDai
 
 	et := NewEmailTemplates("digest")
 
-	baseURL := n.Config.HTTPHostname
+	baseURL := n.Config.BaseURL
 	baseURL = strings.TrimRight(baseURL, "/")
 
 	data := struct {

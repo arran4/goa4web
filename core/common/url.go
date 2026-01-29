@@ -34,7 +34,7 @@ func (cd *CoreData) SanitizeBackURL(r *http.Request, raw string) string {
 		allowed[strings.ToLower(r.Host)] = struct{}{}
 	}
 	if cd != nil {
-		hosts := strings.Fields(cd.Config.HTTPHostname)
+		hosts := strings.Fields(cd.Config.BaseURL)
 		for _, h := range hosts {
 			h = strings.TrimSpace(h)
 			if h == "" {

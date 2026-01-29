@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -30,8 +31,18 @@ type RuntimeConfig struct {
 	EmailLogVerbosity int
 	LogFlags          int
 
-	HTTPListen   string
+	HTTPListen string
+
+	// BaseURL is the resolved base URL (internal use).
+	BaseURL string
+
+	// HTTPHostname is the input from --hostname/HOSTNAME.
 	HTTPHostname string
+	// ExternalURL is the input from --external-url/EXTERNAL_URL.
+	ExternalURL string
+	// Host is the input from --host/HOST.
+	Host string
+
 	// HSTSHeaderValue defines the Strict-Transport-Security header value.
 	HSTSHeaderValue string
 
@@ -384,10 +395,21 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 		cfg.DBConn = fmt.Sprintf("%stcp(%s:%s)/%s?parseTime=true", auth, host, port, dbname)
 	}
 
-	if cfg.HTTPHostname == "" {
-		cfg.HTTPHostname = "http://localhost:8080"
+	if cfg.ExternalURL != "" {
+		cfg.BaseURL = cfg.ExternalURL
+	} else if cfg.HTTPHostname != "" {
+		cfg.BaseURL = cfg.HTTPHostname
+	} else if cfg.Host != "" {
+		cfg.BaseURL = "http://" + cfg.Host
 	}
-	cfg.HTTPHostname = strings.TrimSuffix(cfg.HTTPHostname, "/")
+
+	if cfg.BaseURL == "" {
+		cfg.BaseURL = "http://localhost:8080"
+	} else if u, err := url.Parse(cfg.BaseURL); err == nil && u.Scheme == "" {
+		cfg.BaseURL = "http://" + cfg.BaseURL
+	}
+
+	cfg.BaseURL = strings.TrimSuffix(cfg.BaseURL, "/")
 	if cfg.PageSizeMin > cfg.PageSizeMax {
 		cfg.PageSizeMin = cfg.PageSizeMax
 	}

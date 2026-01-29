@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
-	"net/url"
 	"path"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -32,26 +32,42 @@ func verifyMiddleware(prefix string) mux.MiddlewareFunc {
 				return
 			}
 
-			cleanURL, sig, opts, err := sign.ExtractQuerySig(r.URL.String())
-			if err != nil || sig == "" {
-				w.WriteHeader(http.StatusForbidden)
-				handlers.RenderErrorPage(w, r, fmt.Errorf("missing or invalid signature"))
-				return
-			}
+			query := r.URL.Query()
+			sig := query.Get("sig")
+			tsStr := query.Get("ts")
+			nonce := query.Get("nonce")
 
-			u, err := url.Parse(cleanURL)
-			if err != nil {
-				w.WriteHeader(http.StatusForbidden)
-				handlers.RenderErrorPage(w, r, fmt.Errorf("invalid url"))
-				return
-			}
-
-			data := prefix + id
-			if q := u.Query().Encode(); q != "" {
-				data += "?" + q
-			}
 			cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-			if cd.ImageSignKey == "" || sign.Verify(data, sig, cd.ImageSignKey, opts...) != nil {
+
+			var err error
+			var data string
+
+			if tsStr != "" || nonce != "" {
+				var opts []sign.SignOption
+				if tsStr != "" {
+					ts, _ := strconv.ParseInt(tsStr, 10, 64)
+					opts = append(opts, sign.WithExpiry(time.Unix(ts, 0)))
+				}
+				if nonce != "" {
+					opts = append(opts, sign.WithNonce(nonce))
+				}
+				// Verify "image:ID" or "cache:ID"
+				data = prefix + id
+				err = sign.Verify(data, sig, cd.ImageSignKey, opts...)
+			} else {
+				query.Del("ts")
+				query.Del("sig")
+				data = id
+				if encoded := query.Encode(); encoded != "" {
+					data = data + "?" + encoded
+				}
+				if prefix != "" {
+					data = prefix + data
+				}
+				err = sign.Verify(data, sig, cd.ImageSignKey, sign.WithOutNonce())
+			}
+
+			if cd.ImageSignKey == "" || err != nil {
 				w.WriteHeader(http.StatusForbidden)
 				handlers.RenderErrorPage(w, r, fmt.Errorf("forbidden"))
 				return

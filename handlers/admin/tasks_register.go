@@ -9,6 +9,8 @@ func (h *Handlers) RegisterTasks() []tasks.NamedTask {
 		deleteAnnouncementTask,
 		resendQueueTask,
 		deleteQueueTask,
+		bulkResendQueueTask,
+		bulkDeleteQueueTask,
 		resendSentEmailTask,
 		retrySentEmailTask,
 		saveTemplateTask,

@@ -71,6 +71,7 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Reg
 
 	api := r.PathPrefix("/api/forum").Subrouter()
 	api.HandleFunc("/quote/{commentid}", QuoteApi).Methods("GET")
+	api.HandleFunc("/thread/{thread}/drafts", handlers.TaskHandler(draftsTask)).Methods("GET", "POST", "DELETE").MatcherFunc(draftsTask.Matcher())
 	api.HandleFunc("/share", share.ShareLink).Methods("GET")
 }
 

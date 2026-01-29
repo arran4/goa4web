@@ -1,7 +1,10 @@
 package writings
 
 import (
+	"database/sql"
 	"net/http"
+
+	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/handlers/forum/comments"
 	"github.com/gorilla/mux"
@@ -17,7 +20,7 @@ import (
 var legacyRedirectsEnabled = true
 
 // RegisterRoutes attaches the public writings endpoints to r.
-func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
+func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry, _ *sql.DB, _ sessions.Store) {
 	navReg.RegisterIndexLinkWithViewPermission("Writings", "/writings", SectionWeight, "writing", "category")
 	navReg.RegisterAdminControlCenter("Writings", "Writings", "/admin/writings", SectionWeight)
 	wr := r.PathPrefix("/writings").Subrouter()

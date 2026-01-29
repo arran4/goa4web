@@ -1,7 +1,10 @@
 package forum
 
 import (
+	"database/sql"
 	"net/http"
+
+	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/handlers/forum/comments"
 	"github.com/gorilla/mux"
@@ -15,7 +18,7 @@ import (
 )
 
 // RegisterRoutes attaches the public forum endpoints to r.
-func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Registry) {
+func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Registry, _ *sql.DB, _ sessions.Store) {
 	navReg.RegisterIndexLinkWithViewPermission("Forum", "/forum", SectionWeight, "forum", "category")
 	navReg.RegisterAdminControlCenter("Forum", "Forum", "/admin/forum", SectionWeight)
 	fr := r.PathPrefix("/forum").Subrouter()

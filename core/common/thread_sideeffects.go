@@ -108,7 +108,8 @@ func (cd *CoreData) HandleThreadUpdated(ctx context.Context, event ThreadUpdated
 		if event.ThreadID != 0 {
 			evt.Data["ThreadID"] = event.ThreadID
 		}
-		if _, ok := evt.Data["URL"]; !ok {
+		url, ok := evt.Data["URL"]
+		if !ok || url == nil || url == "" {
 			switch {
 			case event.CommentURL != "":
 				evt.Data["URL"] = event.CommentURL

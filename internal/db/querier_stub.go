@@ -274,6 +274,11 @@ type QuerierStub struct {
 	ListGrantsExtendedCalls   []ListGrantsExtendedParams
 	ListGrantsExtendedFn      func(context.Context, ListGrantsExtendedParams) ([]*ListGrantsExtendedRow, error)
 
+	SearchGrantsReturns []*SearchGrantsRow
+	SearchGrantsErr     error
+	SearchGrantsCalls   []SearchGrantsParams
+	SearchGrantsFn      func(context.Context, SearchGrantsParams) ([]*SearchGrantsRow, error)
+
 	AdminDeletePendingEmailCalls []int32
 	AdminDeletePendingEmailErr   error
 	AdminDeletePendingEmailFn    func(context.Context, int32) error
@@ -1701,6 +1706,16 @@ func (s *QuerierStub) ListGrantsExtended(ctx context.Context, arg ListGrantsExte
 		return s.ListGrantsExtendedFn(ctx, arg)
 	}
 	return s.ListGrantsExtendedReturns, s.ListGrantsExtendedErr
+}
+
+func (s *QuerierStub) SearchGrants(ctx context.Context, arg SearchGrantsParams) ([]*SearchGrantsRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.SearchGrantsCalls = append(s.SearchGrantsCalls, arg)
+	if s.SearchGrantsFn != nil {
+		return s.SearchGrantsFn(ctx, arg)
+	}
+	return s.SearchGrantsReturns, s.SearchGrantsErr
 }
 
 func (s *QuerierStub) ListAdminUserComments(ctx context.Context, userID int32) ([]*AdminUserComment, error) {

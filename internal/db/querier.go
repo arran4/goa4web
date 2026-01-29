@@ -611,9 +611,9 @@ type Querier interface {
 	UpdateCommentForEditor(ctx context.Context, arg UpdateCommentForEditorParams) error
 	UpdateCustomCssForLister(ctx context.Context, arg UpdateCustomCssForListerParams) error
 	UpdateEmailForumUpdatesForLister(ctx context.Context, arg UpdateEmailForumUpdatesForListerParams) error
-	UpdateLastDigestSentAt(ctx context.Context, arg UpdateLastDigestSentAtParams) error
 	UpdateExternalLinkImageCache(ctx context.Context, arg UpdateExternalLinkImageCacheParams) error
 	UpdateExternalLinkMetadata(ctx context.Context, arg UpdateExternalLinkMetadataParams) error
+	UpdateLastDigestSentAt(ctx context.Context, arg UpdateLastDigestSentAtParams) error
 	UpdateNewsPostForWriter(ctx context.Context, arg UpdateNewsPostForWriterParams) error
 	UpdateNotificationDigestPreferences(ctx context.Context, arg UpdateNotificationDigestPreferencesParams) error
 	UpdatePreferenceForLister(ctx context.Context, arg UpdatePreferenceForListerParams) error

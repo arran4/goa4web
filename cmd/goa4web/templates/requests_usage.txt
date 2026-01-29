@@ -17,5 +17,19 @@ Examples:
 
   # View a request by ID
   {{.Prog}} requests view 42
+Manage the admin request queue.
+
+Commands:
+  list     List requests in the queue.
+  accept   Accept a request.
+  reject   Reject a request.
+  comment  Add a comment to a request.
+
+Examples:
+  {{.Prog}} requests list
+  {{.Prog}} requests list -status archived
+  {{.Prog}} requests accept -id 42
+  {{.Prog}} requests reject -id 42 -comment "Missing verification"
+  {{.Prog}} requests comment -id 42 -comment "Please provide more details"
 
 {{template "flag_groups_section" .FlagGroups}}

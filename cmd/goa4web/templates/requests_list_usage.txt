@@ -14,5 +14,18 @@ Examples:
 
   # List archived requests starting at offset 40
   {{.Prog}} requests list --status archived --offset 40 --page-size 20
+List requests in the admin request queue. By default, only pending requests
+are shown. Use -status archived to view historical requests.
+
+Flags:
+  -status  Filter by request status (pending, archived, accepted, rejected, query).
+  -type    Filter by request change table.
+  -json    Output results as machine-readable JSON.
+
+Examples:
+  {{.Prog}} requests list
+  {{.Prog}} requests list -status archived
+  {{.Prog}} requests list -status accepted -json
+  {{.Prog}} requests list -type user_emails
 
 {{template "flag_groups_section" .FlagGroups}}

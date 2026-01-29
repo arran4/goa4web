@@ -1,0 +1,14 @@
+Usage:
+  {{.Prog}} user comment <command> [<args>]
+
+Commands:
+  add         add an admin comment to a user
+
+Examples:
+  {{.Prog}} user comment add -id 3 -comment "needs review" -admin-id 1 --internal
+  {{.Prog}} user comment add -username alice -comment "public note" -admin-username admin --visibility public --json
+
+Notes:
+  Adding a comment requires an admin identity unless --as-admin is provided.
+
+{{template "flag_groups_section" .FlagGroups}}

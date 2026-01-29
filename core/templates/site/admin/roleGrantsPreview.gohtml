@@ -1,0 +1,38 @@
+<table class="table table-bordered role-template-grants">
+    <tr><th>Section</th><th>Item</th><th>Item ID</th><th>Info</th><th>Has</th><th>Disabled</th><th>Can Have</th><th>Commit</th></tr>
+    {{- range .GrantGroups }}
+        <tr data-section="{{ .Section }}" data-item="{{ .Item }}" data-itemid="{{ if .ItemID.Valid }}{{ .ItemID.Int32 }}{{ end }}"{{ if .Unsupported }} class="unsupported"{{ end }}>
+            <td>{{ .Section }}</td>
+            <td>{{ .Item }}</td>
+            <td>{{ if .ItemID.Valid }}{{ if .Link }}<a href="{{ .Link }}">{{ .ItemID.Int32 }}</a>{{ else }}{{ .ItemID.Int32 }}{{ end }}{{ end }}</td>
+            <td>{{ .Info }}</td>
+            <td class="have">
+                {{- range .Have }}
+                    <span class="pill{{ if .Unsupported }} unsupported{{ end }}" draggable="true" data-default="have">{{ .Name }}</span>
+                {{- end }}
+            </td>
+            <td class="disabled">
+                {{- range .Disabled }}
+                    <span class="pill{{ if .Unsupported }} unsupported{{ end }}" draggable="true" data-default="disabled">{{ .Name }}</span>
+                {{- end }}
+            </td>
+            <td class="available">
+                {{- range .Available }}
+                    <span class="pill" draggable="true" data-default="available">{{ . }}</span>
+                {{- end }}
+            </td>
+            <td>
+                <form method="post" action="/admin/roles/templates" class="commit-form" data-preview="true">
+                    {{ csrfField }}
+                    <input type="hidden" name="task" value="Apply role template">
+                    <input type="hidden" name="section" value="{{ .Section }}">
+                    <input type="hidden" name="item" value="{{ .Item }}">
+                    <input type="hidden" name="item_id" value="{{ if .ItemID.Valid }}{{ .ItemID.Int32 }}{{ end }}">
+                    <input type="hidden" name="actions" value="">
+                    <input type="hidden" name="disabled_actions" value="">
+                    <input type="submit" value="Commit" class="hidden">
+                </form>
+            </td>
+        </tr>
+    {{- end }}
+</table>

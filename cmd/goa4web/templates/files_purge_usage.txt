@@ -1,0 +1,14 @@
+Usage:
+  {{.Prog}} files purge [flags]
+
+Flags:
+  --path <path>         Path under the image upload directory to purge.
+  --older-than <dur>    Only purge files older than this duration (e.g. 168h).
+  --dry-run             Preview deletions without removing files.
+  --json                Output machine-readable JSON.
+
+Examples:
+  {{.Prog}} files purge --older-than 720h --dry-run
+  {{.Prog}} files purge --path 12/34 --older-than 720h
+
+{{template "flag_groups_section" .FlagGroups}}

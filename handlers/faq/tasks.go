@@ -30,4 +30,7 @@ const (
 
 	// TaskCreate indicates creation of an object.
 	TaskCreate = "Create"
+
+	// TaskCreateFromTemplate creates an FAQ entry from a template.
+	TaskCreateFromTemplate = "Create from Template"
 )

@@ -67,6 +67,17 @@ func (c *helpCmd) showHelp(args []string) error {
 			}
 		}
 		return nil
+	case "requests":
+		cmd, err := parseRequestsCmd(c.rootCmd, append(args[1:], "-h"))
+		if err != nil && err != flag.ErrHelp {
+			return fmt.Errorf("requests: %w", err)
+		}
+		if err == nil {
+			if err := cmd.Run(); err != nil {
+				return err
+			}
+		}
+		return nil
 	case "db":
 		cmd, err := parseDbCmd(c.rootCmd, append(args[1:], "-h"))
 		if err != nil && err != flag.ErrHelp {
@@ -133,6 +144,17 @@ func (c *helpCmd) showHelp(args []string) error {
 			}
 		}
 		return nil
+	case "announcement":
+		cmd, err := parseAnnouncementCmd(c.rootCmd, append(args[1:], "-h"))
+		if err != nil && err != flag.ErrHelp {
+			return fmt.Errorf("announcement: %w", err)
+		}
+		if err == nil {
+			if err := cmd.Run(); err != nil {
+				return err
+			}
+		}
+		return nil
 	case "faq":
 		cmd, err := parseFaqCmd(c.rootCmd, append(args[1:], "-h"))
 		if err != nil && err != flag.ErrHelp {
@@ -166,6 +188,17 @@ func (c *helpCmd) showHelp(args []string) error {
 			}
 		}
 		return nil
+	case "files":
+		cmd, err := parseFilesCmd(c.rootCmd, append(args[1:], "-h"))
+		if err != nil && err != flag.ErrHelp {
+			return fmt.Errorf("files: %w", err)
+		}
+		if err == nil {
+			if err := cmd.Run(); err != nil {
+				return err
+			}
+		}
+		return nil
 	case "comment", "comments":
 		cmd, err := parseCommentCmd(c.rootCmd, append(args[1:], "-h"))
 		if err != nil && err != flag.ErrHelp {
@@ -181,6 +214,17 @@ func (c *helpCmd) showHelp(args []string) error {
 		cmd, err := parseAuditCmd(c.rootCmd, append(args[1:], "-h"))
 		if err != nil && err != flag.ErrHelp {
 			return fmt.Errorf("audit: %w", err)
+		}
+		if err == nil {
+			if err := cmd.Run(); err != nil {
+				return err
+			}
+		}
+		return nil
+	case "notifications":
+		cmd, err := parseNotificationsCmd(c.rootCmd, append(args[1:], "-h"))
+		if err != nil && err != flag.ErrHelp {
+			return fmt.Errorf("notifications: %w", err)
 		}
 		if err == nil {
 			if err := cmd.Run(); err != nil {

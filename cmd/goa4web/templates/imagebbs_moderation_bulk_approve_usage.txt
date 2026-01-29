@@ -1,0 +1,15 @@
+Usage:
+  {{.Prog}} imagebbs moderation bulk-approve <id> [<id>...]
+  {{.Prog}} imagebbs moderation bulk-approve --from-file <path>
+  {{.Prog}} imagebbs moderation bulk-approve --from-file -
+
+Description:
+  Approve multiple ImageBBS posts by ID. IDs can be provided as positional
+  arguments or read from a file (one per line or comma-separated).
+
+Examples:
+  {{.Prog}} imagebbs moderation bulk-approve 10 11 12
+  {{.Prog}} imagebbs moderation bulk-approve --from-file pending_ids.txt
+  cat pending_ids.txt | {{.Prog}} imagebbs moderation bulk-approve --from-file -
+
+{{template "flag_groups_section" .FlagGroups}}

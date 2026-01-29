@@ -1,0 +1,18 @@
+Usage:
+  {{.Prog}} imagebbs moderation <command> [<args>]
+
+Description:
+  Moderate ImageBBS posts.
+
+Commands:
+  approve       Approve a single image post.
+  reject        Reject (delete) a single image post.
+  bulk-approve  Approve multiple image posts.
+
+Examples:
+  {{.Prog}} imagebbs moderation approve 42
+  {{.Prog}} imagebbs moderation reject --id 42
+  {{.Prog}} imagebbs moderation bulk-approve 10 11 12
+  {{.Prog}} imagebbs moderation bulk-approve --from-file pending_ids.txt
+
+{{template "flag_groups_section" .FlagGroups}}

@@ -20,6 +20,14 @@ LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers
 LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers
 LEFT JOIN roles r ON ur.role_id = r.id
 WHERE pe.sent_at IS NULL
+  AND (sqlc.narg(status) IS NULL
+    OR (sqlc.narg(status) = 'pending' AND pe.error_count = 0)
+    OR (sqlc.narg(status) = 'failed' AND pe.error_count > 0))
+  AND (sqlc.narg(provider) IS NULL
+    OR (sqlc.narg(provider) = 'direct' AND pe.direct_email = 1)
+    OR (sqlc.narg(provider) = 'user' AND pe.direct_email = 0 AND pe.to_user_id IS NOT NULL AND pe.to_user_id <> 0)
+    OR (sqlc.narg(provider) = 'userless' AND pe.direct_email = 0 AND (pe.to_user_id IS NULL OR pe.to_user_id = 0)))
+  AND (sqlc.narg(created_before) IS NULL OR pe.created_at <= sqlc.narg(created_before))
   AND (sqlc.narg(language_id) IS NULL OR p.language_id = sqlc.narg(language_id))
   AND (sqlc.arg(role_name) IS NULL OR r.name = sqlc.arg(role_name))
 ORDER BY pe.id;

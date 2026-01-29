@@ -1,7 +1,17 @@
 {{ template "head" $ }}
 <h2>External Links</h2>
+<form method="get">
+    Search: <input name="q" value="{{ .Query }}">
+    <input type="submit" value="Filter">
+    <a href="/admin/external-links">Clear</a>
+</form>
+{{ if .ResultSummary }}
+    <p><strong>Bulk action:</strong> {{ .ResultSummary }}</p>
+{{ end }}
 <form method="post">
     {{ csrfField }}
+    <input type="hidden" name="q" value="{{ .Query }}">
+    <label><input type="checkbox" id="select-all-links"> Select all</label>
 <table class="table table-bordered">
     <tr><th>Select</th><th>ID</th><th>URL</th><th>Clicks</th><th>Created</th><th>Updated</th><th>Card Title</th><th>Card Description</th><th>Card Image Cache</th><th>Favicon Cache</th></tr>
     {{- range .Links }}
@@ -22,4 +32,11 @@
 <input type="submit" name="task" value="Update">
 <input type="submit" name="task" value="Delete">
 </form>
+<script>
+    document.getElementById('select-all-links').addEventListener('change', function (event) {
+        document.querySelectorAll('input[name="id"]').forEach(function (checkbox) {
+            checkbox.checked = event.target.checked
+        })
+    })
+</script>
 {{ template "tail" $ }}

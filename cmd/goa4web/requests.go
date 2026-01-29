@@ -41,6 +41,23 @@ func (c *requestsCmd) Run() error {
 		cmd, err := parseRequestsViewCmd(c, args[1:])
 		if err != nil {
 			return fmt.Errorf("view: %w", err)
+    }
+	case "accept":
+		cmd, err := parseRequestsAcceptCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("accept: %w", err)
+		}
+		return cmd.Run()
+	case "reject":
+		cmd, err := parseRequestsRejectCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("reject: %w", err)
+		}
+		return cmd.Run()
+	case "comment":
+		cmd, err := parseRequestsCommentCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("comment: %w", err)
 		}
 		return cmd.Run()
 	default:
@@ -49,6 +66,7 @@ func (c *requestsCmd) Run() error {
 	}
 }
 
+// Usage prints command usage information with examples.
 func (c *requestsCmd) Usage() {
 	executeUsage(c.fs.Output(), "requests_usage.txt", c)
 }

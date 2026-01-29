@@ -23,6 +23,7 @@ type Querier interface {
 	// Queries for user deactivation and restoration
 	AdminArchiveUser(ctx context.Context, idusers int32) error
 	AdminArchiveWriting(ctx context.Context, arg AdminArchiveWritingParams) error
+	AdminAuditLogActionSummary(ctx context.Context, arg AdminAuditLogActionSummaryParams) ([]*AdminAuditLogActionSummaryRow, error)
 	AdminCancelBannedIp(ctx context.Context, ipNet string) error
 	AdminClearExternalLinkCache(ctx context.Context, arg AdminClearExternalLinkCacheParams) error
 	// This query selects all words from the "searchwordlist" table and prints them.

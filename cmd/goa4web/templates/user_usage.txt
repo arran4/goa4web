@@ -21,6 +21,7 @@ Commands:
   activate    Reactivate a previously deactivated user account.
   approve     Approve a user account that is pending approval.
   reject      Reject a pending user account, with an optional reason.
+  comment     Add an administrative comment for a user.
   comments    Manage administrative comments for a user.
   roles       List the roles assigned to a specific user.
   rename      Rename a user account, updating the username.
@@ -28,6 +29,7 @@ Commands:
   password    Manage a user's password.
   email       Manage a user's email addresses.
   unverified-emails List all unverified email addresses.
+  subscriptions List a user's subscriptions.
 
 Examples:
   # Add a new user named "bob" with the password "secret"
@@ -47,6 +49,9 @@ Examples:
 
   # List all administrative comments for user with ID 3
   {{.Prog}} user comments list -id 3
+
+  # Add an administrative comment for user with ID 3
+  {{.Prog}} user comment add -id 3 -comment "needs review" -admin-id 1 --internal
 
   # List all roles assigned to the current user
   {{.Prog}} user roles

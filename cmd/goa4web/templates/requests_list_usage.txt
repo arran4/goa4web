@@ -1,0 +1,18 @@
+Usage:
+  {{.Prog}} requests list [flags]
+
+List admin requests from the queue. Results are returned as JSON.
+
+Flags:
+  --status      Filter by status (pending or archived).
+  --offset      Pagination offset (matches admin UI pagination semantics).
+  --page-size   Page size (0 uses the configured default).
+
+Examples:
+  # List pending requests (default)
+  {{.Prog}} requests list
+
+  # List archived requests starting at offset 40
+  {{.Prog}} requests list --status archived --offset 40 --page-size 20
+
+{{template "flag_groups_section" .FlagGroups}}

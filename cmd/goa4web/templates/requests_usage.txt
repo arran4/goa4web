@@ -1,0 +1,21 @@
+Usage:
+  {{.Prog}} requests <command> [<args>]
+
+The requests command manages administrative request queue entries used by the
+admin UI. Output is JSON for automation and external tooling.
+
+Commands:
+  list   List requests by status with pagination options.
+  view   View a single request by ID.
+
+Examples:
+  # List pending requests (JSON output)
+  {{.Prog}} requests list --status pending
+
+  # List archived requests with pagination
+  {{.Prog}} requests list --status archived --offset 20 --page-size 20
+
+  # View a request by ID
+  {{.Prog}} requests view 42
+
+{{template "flag_groups_section" .FlagGroups}}

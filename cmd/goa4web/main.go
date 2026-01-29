@@ -417,6 +417,12 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("rootCmd.Run: comment: %w", err)
 		}
 		return c.Run()
+	case "requests":
+		c, err := parseRequestsCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("rootCmd.Run: requests: %w", err)
+		}
+		return c.Run()
 	case "audit":
 		c, err := parseAuditCmd(r, args[1:])
 		if err != nil {

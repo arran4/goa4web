@@ -41,12 +41,6 @@ func verifyMiddleware(prefix string) mux.MiddlewareFunc {
 
 			var err error
 			var data string
-			// We always sign/verify the "image:ID" or "cache:ID" form (plus query params if legacy)
-			// But for new signatures (with ts/nonce), we just sign "image:ID" (no query params embedded in data usually)
-			// Wait, the legacy "data" construction included query params:
-			// data = prefix + id + "?" + encoded
-			// But the new SignImageURL logic is: sign(prefix + id, ...)
-			// So if we have ts/nonce, we should verify prefix+id.
 
 			if tsStr != "" || nonce != "" {
 				var opts []sign.SignOption

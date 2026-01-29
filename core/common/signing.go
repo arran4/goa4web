@@ -42,7 +42,7 @@ func (cd *CoreData) SignImageURL(imageRef string, ttl time.Duration) string {
 	// Strip image: or img: prefix if present
 	imageRef = strings.TrimPrefix(strings.TrimPrefix(imageRef, "image:"), "img:")
 
-	data := consts.ImagePrefix + imageRef
+	data := consts.ImageSigningPrefix + imageRef
 	expiry := time.Now().Add(ttl)
 
 	path := "/images/image/" + imageRef
@@ -53,7 +53,7 @@ func (cd *CoreData) SignImageURL(imageRef string, ttl time.Duration) string {
 
 // SignCacheURL signs a cache URL with the given TTL.
 func (cd *CoreData) SignCacheURL(cacheRef string, ttl time.Duration) string {
-	data := consts.CachePrefix + cacheRef
+	data := consts.CacheSigningPrefix + cacheRef
 	expiry := time.Now().Add(ttl)
 
 	path := "/images/cache/" + cacheRef

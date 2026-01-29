@@ -288,7 +288,7 @@ func TestForumReply(t *testing.T) {
 		if subscriberEmail == nil {
 			t.Fatal("subscriber email not found")
 		}
-		if subscriberEmail.Header.Get("Subject") != "[goa4web] Test Topic - Original thread content" {
+		if subscriberEmail.Header.Get("Subject") != "[goa4web] Forum: Test Topic - Original thread content" {
 			t.Errorf("subscriber email subject mismatch: %s", subscriberEmail.Header.Get("Subject"))
 		}
 		subBody := getEmailBody(t, subscriberEmail)
@@ -300,7 +300,7 @@ func TestForumReply(t *testing.T) {
 		if adminEmail == nil {
 			t.Fatal("admin email not found")
 		}
-		if adminEmail.Header.Get("Subject") != "[goa4web Admin] Test Topic - Original thread content" {
+		if adminEmail.Header.Get("Subject") != "[goa4web Admin] Forum: Test Topic - Original thread content" {
 			t.Errorf("admin email subject mismatch: %s", adminEmail.Header.Get("Subject"))
 		}
 		adminBody := getEmailBody(t, adminEmail)

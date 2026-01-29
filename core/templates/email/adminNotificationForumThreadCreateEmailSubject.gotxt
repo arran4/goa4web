@@ -1,1 +1,1 @@
-[{{.SubjectPrefix}}] {{.Item.TopicTitle}} - {{.Item.ThreadOpenerPreview}}
+[{{.SubjectPrefix}}] Forum: {{.Item.TopicTitle}} - {{.Item.ThreadOpenerPreview}}

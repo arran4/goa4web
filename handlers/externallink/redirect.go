@@ -125,6 +125,16 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 				if err != nil {
 					log.Printf("UpdateExternalLinkMetadata error: %v", err)
 				}
+				if img != "" {
+					if cached, err := DownloadAndCacheImage(cd, img); err == nil {
+						_ = cd.Queries().UpdateExternalLinkImageCache(r.Context(), db.UpdateExternalLinkImageCacheParams{
+							CardImageCache: sql.NullString{String: cached, Valid: true},
+							ID:             linkID,
+						})
+					} else {
+						log.Printf("DownloadAndCacheImage error: %v", err)
+					}
+				}
 			}
 		} else {
 			log.Printf("fetchOpenGraph error: %v", err)

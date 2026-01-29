@@ -34,8 +34,7 @@ func TestCoreData_PrivateForumTopics_LabelsBug(t *testing.T) {
 	}
 
 	// Setup ListContentPublicLabels to return a "Misapplied" label for item="thread" and itemID=1
-	// Even though we fixed the code, the mock setup for this remains to ensure we are NOT calling it anymore
-	// or ignoring it.
+	// This ensures we are not calling it or using it.
 	q.ListContentPublicLabelsReturns = []*db.ListContentPublicLabelsRow{
 		{
 			Item:   "thread",
@@ -44,8 +43,27 @@ func TestCoreData_PrivateForumTopics_LabelsBug(t *testing.T) {
 		},
 	}
 
-	// Stub GetPrivateTopicReadStatus to return no unread/new
-	q.GetPrivateTopicReadStatusReturns = &db.GetPrivateTopicReadStatusRow{HasUnread: false, HasNew: false}
+	// Stub GetPrivateTopicThreadsAndLabels to return a simple thread with no special labels (so Read and NotNew effectively if we assume default... wait)
+	// Default:
+	// Unread: If "unread" label missing -> Unread.
+	// New: If "new" label missing -> New.
+	// But we want to test "Bug Fix", i.e. no random labels.
+	// If we return empty list, no labels.
+	// If we return a thread with "unread" inverted=true and "new" inverted=true, we should have NO labels.
+	q.GetPrivateTopicThreadsAndLabelsReturns = []*db.GetPrivateTopicThreadsAndLabelsRow{
+		{
+			Idforumthread: 100,
+			AuthorID:      2, // Other user
+			Label:         sql.NullString{String: "unread", Valid: true},
+			Invert:        sql.NullBool{Bool: true, Valid: true},
+		},
+		{
+			Idforumthread: 100,
+			AuthorID:      2,
+			Label:         sql.NullString{String: "new", Valid: true},
+			Invert:        sql.NullBool{Bool: true, Valid: true},
+		},
+	}
 
 	topics, err := cd.PrivateForumTopics()
 	if err != nil {
@@ -94,8 +112,16 @@ func TestCoreData_PrivateForumTopics_UnreadNew(t *testing.T) {
 		{Idusers: 2, Username: sql.NullString{String: "participant1", Valid: true}},
 	}
 
-	// Stub GetPrivateTopicReadStatus to return HasUnread=true, HasNew=true
-	q.GetPrivateTopicReadStatusReturns = &db.GetPrivateTopicReadStatusRow{HasUnread: true, HasNew: true}
+	// Stub GetPrivateTopicThreadsAndLabels
+	// Thread 101: Author=2 (other). No labels. -> Should be Unread and New.
+	q.GetPrivateTopicThreadsAndLabelsReturns = []*db.GetPrivateTopicThreadsAndLabelsRow{
+		{
+			Idforumthread: 101,
+			AuthorID:      2,
+			Label:         sql.NullString{Valid: false}, // No labels
+			Invert:        sql.NullBool{Valid: false},
+		},
+	}
 
 	topics, err := cd.PrivateForumTopics()
 	if err != nil {
@@ -122,5 +148,40 @@ func TestCoreData_PrivateForumTopics_UnreadNew(t *testing.T) {
 	}
 	if !foundNew {
 		t.Errorf("Expected 'new' label, but not found.")
+	}
+}
+
+func TestCoreData_PrivateForumTopics_OwnThreadNotNew(t *testing.T) {
+	q := testhelpers.NewQuerierStub(testhelpers.WithGrant("privateforum", "topic", "see"))
+	cd := NewTestCoreData(t, q)
+	cd.UserID = 1
+
+	q.ListPrivateTopicsByUserIDReturns = []*db.ListPrivateTopicsByUserIDRow{
+		{
+			Idforumtopic: 1,
+			Handler:      "private",
+		},
+	}
+	q.ListPrivateTopicParticipantsByTopicIDForUserReturns = []*db.ListPrivateTopicParticipantsByTopicIDForUserRow{}
+
+	// Thread 102: Author=1 (Me). No labels. -> Should be Unread (if not read) but NOT New (because I wrote it).
+	q.GetPrivateTopicThreadsAndLabelsReturns = []*db.GetPrivateTopicThreadsAndLabelsRow{
+		{
+			Idforumthread: 102,
+			AuthorID:      1, // Me
+			Label:         sql.NullString{Valid: false},
+			Invert:        sql.NullBool{Valid: false},
+		},
+	}
+
+	topics, _ := cd.PrivateForumTopics()
+	foundNew := false
+	for _, l := range topics[0].Labels {
+		if l.Name == "new" {
+			foundNew = true
+		}
+	}
+	if foundNew {
+		t.Errorf("Did not expect 'new' label for own thread.")
 	}
 }

@@ -485,10 +485,10 @@ type QuerierStub struct {
 	GetThreadLastPosterAndPermsReturns *GetThreadLastPosterAndPermsRow
 	GetThreadLastPosterAndPermsErr     error
 
-	GetPrivateTopicReadStatusCalls   []GetPrivateTopicReadStatusParams
-	GetPrivateTopicReadStatusReturns *GetPrivateTopicReadStatusRow
-	GetPrivateTopicReadStatusErr     error
-	GetPrivateTopicReadStatusFn      func(context.Context, GetPrivateTopicReadStatusParams) (*GetPrivateTopicReadStatusRow, error)
+	GetPrivateTopicThreadsAndLabelsCalls   []GetPrivateTopicThreadsAndLabelsParams
+	GetPrivateTopicThreadsAndLabelsReturns []*GetPrivateTopicThreadsAndLabelsRow
+	GetPrivateTopicThreadsAndLabelsErr     error
+	GetPrivateTopicThreadsAndLabelsFn      func(context.Context, GetPrivateTopicThreadsAndLabelsParams) ([]*GetPrivateTopicThreadsAndLabelsRow, error)
 
 	ListPrivateTopicParticipantsByTopicIDForUserCalls   []ListPrivateTopicParticipantsByTopicIDForUserParams
 	ListPrivateTopicParticipantsByTopicIDForUserReturns []*ListPrivateTopicParticipantsByTopicIDForUserRow
@@ -2020,12 +2020,12 @@ func (q *QuerierStub) UpdateExternalLinkImageCache(ctx context.Context, arg Upda
 	return nil
 }
 
-func (s *QuerierStub) GetPrivateTopicReadStatus(ctx context.Context, arg GetPrivateTopicReadStatusParams) (*GetPrivateTopicReadStatusRow, error) {
+func (s *QuerierStub) GetPrivateTopicThreadsAndLabels(ctx context.Context, arg GetPrivateTopicThreadsAndLabelsParams) ([]*GetPrivateTopicThreadsAndLabelsRow, error) {
 	s.mu.Lock()
-	s.GetPrivateTopicReadStatusCalls = append(s.GetPrivateTopicReadStatusCalls, arg)
-	fn := s.GetPrivateTopicReadStatusFn
-	ret := s.GetPrivateTopicReadStatusReturns
-	err := s.GetPrivateTopicReadStatusErr
+	s.GetPrivateTopicThreadsAndLabelsCalls = append(s.GetPrivateTopicThreadsAndLabelsCalls, arg)
+	fn := s.GetPrivateTopicThreadsAndLabelsFn
+	ret := s.GetPrivateTopicThreadsAndLabelsReturns
+	err := s.GetPrivateTopicThreadsAndLabelsErr
 	s.mu.Unlock()
 	if fn != nil {
 		return fn(ctx, arg)

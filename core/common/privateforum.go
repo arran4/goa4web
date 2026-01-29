@@ -55,19 +55,71 @@ func (cd *CoreData) PrivateForumTopics() ([]*PrivateTopic, error) {
 				title = fmt.Sprintf("%s (%s)", title, t.Title.String)
 			}
 			var labels []templates.TopicLabel
-			if status, err := cd.queries.GetPrivateTopicReadStatus(cd.ctx, db.GetPrivateTopicReadStatusParams{
+
+			rows, err := cd.queries.GetPrivateTopicThreadsAndLabels(cd.ctx, db.GetPrivateTopicThreadsAndLabelsParams{
 				TopicID: t.Idforumtopic,
 				UserID:  cd.UserID,
-			}); err == nil && status != nil {
-				if status.HasUnread {
+			})
+			if err != nil {
+				log.Printf("get topic threads and labels: %v", err)
+			} else {
+				type threadStatus struct {
+					AuthorID int32
+					Labels   map[string]bool
+				}
+				threads := make(map[int32]*threadStatus)
+				for _, r := range rows {
+					ts, ok := threads[r.Idforumthread]
+					if !ok {
+						ts = &threadStatus{
+							AuthorID: r.AuthorID,
+							Labels:   make(map[string]bool),
+						}
+						threads[r.Idforumthread] = ts
+					}
+					if r.Label.Valid {
+						ts.Labels[r.Label.String] = r.Invert.Bool
+					}
+				}
+
+				hasUnread := false
+				hasNew := false
+
+				for _, ts := range threads {
+					// Check Unread: Exists unless explicitly marked read (invert=true)
+					isRead := false
+					if invert, ok := ts.Labels["unread"]; ok && invert {
+						isRead = true
+					}
+					if !isRead {
+						hasUnread = true
+					}
+
+					// Check New: Exists unless explicitly marked not new (invert=true) OR author is current user
+					isNew := true
+					if ts.AuthorID == cd.UserID {
+						isNew = false
+					} else if invert, ok := ts.Labels["new"]; ok && invert {
+						isNew = false
+					}
+
+					if isNew {
+						hasNew = true
+					}
+
+					if hasUnread && hasNew {
+						break
+					}
+				}
+
+				if hasUnread {
 					labels = append(labels, templates.TopicLabel{Name: "unread", Type: "private"})
 				}
-				if status.HasNew {
+				if hasNew {
 					labels = append(labels, templates.TopicLabel{Name: "new", Type: "private"})
 				}
-			} else {
-				log.Printf("get topic read status: %v", err)
 			}
+
 			pts = append(pts, &PrivateTopic{ListPrivateTopicsByUserIDRow: t, DisplayTitle: title, Labels: labels})
 		}
 		return pts, nil

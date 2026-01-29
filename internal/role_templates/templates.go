@@ -1,11 +1,15 @@
-package main
+package role_templates
 
+import "sort"
+
+// TemplateDef describes a named template of roles and grants.
 type TemplateDef struct {
 	Name        string
 	Description string
 	Roles       []RoleDef
 }
 
+// RoleDef describes a role definition within a template.
 type RoleDef struct {
 	Name        string
 	CanLogin    bool
@@ -14,6 +18,7 @@ type RoleDef struct {
 	Grants      []GrantDef
 }
 
+// GrantDef describes a single grant definition in a role template.
 type GrantDef struct {
 	Section string
 	Item    string // can be empty
@@ -21,7 +26,8 @@ type GrantDef struct {
 	ItemID  int32 // 0 for global/any
 }
 
-var roleTemplates = map[string]TemplateDef{
+// Templates lists the available role templates by name.
+var Templates = map[string]TemplateDef{
 	"default": {
 		Name:        "default",
 		Description: "Basic setup with minimal news access.",
@@ -213,4 +219,14 @@ var roleTemplates = map[string]TemplateDef{
 			},
 		},
 	},
+}
+
+// SortedTemplateNames returns the template keys in sorted order.
+func SortedTemplateNames() []string {
+	names := make([]string, 0, len(Templates))
+	for name := range Templates {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
 }

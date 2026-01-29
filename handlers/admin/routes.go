@@ -28,6 +28,7 @@ import (
 func (h *Handlers) RegisterRoutes(ar *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Registry) {
 	ar.Use(handlers.SectionMiddleware("admin"))
 	navReg.RegisterAdminControlCenter("Core", "Roles", "/admin/roles", 25)
+	navReg.RegisterAdminControlCenter("Core", "Role Templates", "/admin/roles/templates", 26)
 	navReg.RegisterAdminControlCenter("Core", "Grants", "/admin/grants", 27)
 	navReg.RegisterAdminControlCenter("Core", "Available Grants", "/admin/grants/available", 28)
 	navReg.RegisterAdminControlCenter("Core", "Once Off & Maintenance", "/admin/maintenance", 29)
@@ -54,6 +55,8 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, cfg *config.RuntimeConfig, nav
 	ar.HandleFunc("/", AdminPage).Methods("GET")
 	ar.HandleFunc("/role-grants-editor.js", handlers.RoleGrantsEditorJS(cfg)).Methods(http.MethodGet, http.MethodHead, http.MethodOptions)
 	ar.HandleFunc("/roles", AdminRolesPage).Methods("GET")
+	ar.HandleFunc("/roles/templates", AdminRoleTemplatesPage).Methods("GET")
+	ar.HandleFunc("/roles/templates", handlers.TaskHandler(roleTemplateApplyTask)).Methods("POST").MatcherFunc(roleTemplateApplyTask.Matcher())
 	ar.HandleFunc("/roles", handlers.TaskHandler(rolePublicProfileTask)).Methods("POST").MatcherFunc(rolePublicProfileTask.Matcher())
 	ar.HandleFunc("/external-links", AdminExternalLinksPage).Methods("GET")
 	ar.HandleFunc("/external-links", handlers.TaskHandler(refreshExternalLinkTask)).Methods("POST").MatcherFunc(refreshExternalLinkTask.Matcher())

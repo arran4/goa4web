@@ -7,8 +7,10 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"path/filepath"
 	"strings"
 
+	"github.com/arran4/goa4web"
 	"github.com/go-sql-driver/mysql"
 )
 
@@ -398,18 +400,10 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 		cfg.PageSizeDefault = cfg.PageSizeMax
 	}
 	if cfg.ImageUploadDir == "" {
-		if os.Getenv(EnvDocker) != "" || os.Getenv("HOME") == "" {
-			cfg.ImageUploadDir = "/var/lib/goa4web/images"
-		} else {
-			cfg.ImageUploadDir = "uploads/images"
-		}
+		cfg.ImageUploadDir = filepath.Join(defaultDataDir(), "images")
 	}
 	if cfg.ImageCacheDir == "" {
-		if os.Getenv(EnvDocker) != "" || os.Getenv("HOME") == "" {
-			cfg.ImageCacheDir = "/var/cache/goa4web/thumbnails"
-		} else {
-			cfg.ImageCacheDir = "uploads/cache"
-		}
+		cfg.ImageCacheDir = defaultCacheDir()
 	}
 	if cfg.ImageMaxBytes == 0 {
 		cfg.ImageMaxBytes = 50 * 1024 * 1024
@@ -445,4 +439,34 @@ func UpdatePaginationConfig(cfg *RuntimeConfig, min, max, def int) {
 
 func splitHostPort(addr string) (string, string, error) {
 	return net.SplitHostPort(addr)
+}
+
+func defaultDataDir() string {
+	if os.Getenv(EnvDocker) != "" || os.Getenv("HOME") == "" {
+		return "/var/lib/goa4web"
+	}
+	if goa4web.Version == "dev" {
+		return ".data"
+	}
+	if xdg := os.Getenv("XDG_DATA_HOME"); xdg != "" {
+		return filepath.Join(xdg, "goa4web")
+	}
+	home, _ := os.UserHomeDir()
+	return filepath.Join(home, ".local", "share", "goa4web")
+}
+
+func defaultCacheDir() string {
+	if os.Getenv(EnvDocker) != "" || os.Getenv("HOME") == "" {
+		return "/var/cache/goa4web/thumbnails"
+	}
+	if goa4web.Version == "dev" {
+		return ".data/cache"
+	}
+	if xdg := os.Getenv("XDG_CACHE_HOME"); xdg != "" {
+		return filepath.Join(xdg, "goa4web")
+	}
+	if dir, err := os.UserCacheDir(); err == nil {
+		return filepath.Join(dir, "goa4web")
+	}
+	return ".data/cache"
 }

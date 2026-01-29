@@ -1,0 +1,8 @@
+Usage:
+  {{.Prog}} notifications list [<args>]
+
+Examples:
+  {{.Prog}} notifications list --user 42 --unread
+  {{.Prog}} notifications list --category forum --limit 100 --json
+
+{{template "flag_groups_section" .FlagGroups}}

@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-// requestsCmd handles admin request queue operations.
+// requestsCmd handles request queue management subcommands.
 type requestsCmd struct {
 	*rootCmd
 	fs *flag.FlagSet
@@ -37,6 +37,11 @@ func (c *requestsCmd) Run() error {
 			return fmt.Errorf("list: %w", err)
 		}
 		return cmd.Run()
+	case "view":
+		cmd, err := parseRequestsViewCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("view: %w", err)
+    }
 	case "accept":
 		cmd, err := parseRequestsAcceptCmd(c, args[1:])
 		if err != nil {

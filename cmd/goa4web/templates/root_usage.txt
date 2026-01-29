@@ -35,6 +35,8 @@ Commands:
           written content.
   ipban   Manage IP bans. This allows you to block specific IP addresses from
           accessing the application.
+  requests Manage admin requests. This is used for listing and inspecting
+          administrative requests.
   imagebbs Manage ImageBBS moderation tasks.
   audit   Show recent audit log entries. This provides a log of all actions
           performed in the application.
@@ -72,6 +74,7 @@ Examples:
   {{.Prog}} writing tree
   {{.Prog}} faq tree
   {{.Prog}} ipban list
+  {{.Prog}} requests list --status pending
   {{.Prog}} db migrate
   {{.Prog}} db seed
   {{.Prog}} lang list

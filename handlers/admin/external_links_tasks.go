@@ -4,7 +4,9 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -31,11 +33,18 @@ func (RefreshExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) an
 	}
 	queries := cd.Queries()
 	uid := sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0}
+	successCount, failureCount := 0, 0
 	for _, idStr := range r.Form["id"] {
-		id, _ := strconv.Atoi(idStr)
-		if err := queries.AdminClearExternalLinkCache(r.Context(), db.AdminClearExternalLinkCacheParams{UpdatedBy: uid, ID: int32(id)}); err != nil {
-			return fmt.Errorf("clear external link cache fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+		id, err := strconv.Atoi(strings.TrimSpace(idStr))
+		if err != nil {
+			failureCount++
+			continue
 		}
+		if err := queries.AdminClearExternalLinkCache(r.Context(), db.AdminClearExternalLinkCacheParams{UpdatedBy: uid, ID: int32(id)}); err != nil {
+			failureCount++
+			continue
+		}
+		successCount++
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
@@ -43,14 +52,22 @@ func (RefreshExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) an
 			evt.Data["RefreshedID"] = appendID(evt.Data["RefreshedID"], id)
 		}
 	}
-	return nil
+	if evt := cd.Event(); evt != nil {
+		if evt.Data == nil {
+			evt.Data = map[string]any{}
+		}
+		evt.Data["RefreshSuccessCount"] = successCount
+		evt.Data["RefreshFailureCount"] = failureCount
+	}
+	return handlers.RedirectHandler(externalLinksTaskRedirect(r, externalLinksActionRefresh, successCount, failureCount))
 }
 
 func (RefreshExternalLinkTask) AuditRecord(data map[string]any) string {
+	successCount, failureCount := auditCounts(data, "RefreshSuccessCount", "RefreshFailureCount")
 	if ids, ok := data["RefreshedID"].(string); ok {
-		return "refreshed external links " + ids
+		return fmt.Sprintf("refreshed external links %s (success %d, failed %d)", ids, successCount, failureCount)
 	}
-	return "refreshed external links"
+	return fmt.Sprintf("refreshed external links (success %d, failed %d)", successCount, failureCount)
 }
 
 // DeleteExternalLinkTask removes external link entries.
@@ -70,11 +87,18 @@ func (DeleteExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) any
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	queries := cd.Queries()
+	successCount, failureCount := 0, 0
 	for _, idStr := range r.Form["id"] {
-		id, _ := strconv.Atoi(idStr)
-		if err := queries.AdminDeleteExternalLink(r.Context(), int32(id)); err != nil {
-			return fmt.Errorf("delete external link fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+		id, err := strconv.Atoi(strings.TrimSpace(idStr))
+		if err != nil {
+			failureCount++
+			continue
 		}
+		if err := queries.AdminDeleteExternalLink(r.Context(), int32(id)); err != nil {
+			failureCount++
+			continue
+		}
+		successCount++
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
@@ -82,12 +106,40 @@ func (DeleteExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) any
 			evt.Data["DeletedID"] = appendID(evt.Data["DeletedID"], id)
 		}
 	}
-	return nil
+	if evt := cd.Event(); evt != nil {
+		if evt.Data == nil {
+			evt.Data = map[string]any{}
+		}
+		evt.Data["DeleteSuccessCount"] = successCount
+		evt.Data["DeleteFailureCount"] = failureCount
+	}
+	return handlers.RedirectHandler(externalLinksTaskRedirect(r, externalLinksActionDelete, successCount, failureCount))
 }
 
 func (DeleteExternalLinkTask) AuditRecord(data map[string]any) string {
+	successCount, failureCount := auditCounts(data, "DeleteSuccessCount", "DeleteFailureCount")
 	if ids, ok := data["DeletedID"].(string); ok {
-		return "deleted external links " + ids
+		return fmt.Sprintf("deleted external links %s (success %d, failed %d)", ids, successCount, failureCount)
 	}
-	return "deleted external links"
+	return fmt.Sprintf("deleted external links (success %d, failed %d)", successCount, failureCount)
+}
+
+func externalLinksTaskRedirect(r *http.Request, action string, successCount, failureCount int) string {
+	values := url.Values{}
+	if filter := strings.TrimSpace(r.FormValue(externalLinksFilterQueryParam)); filter != "" {
+		values.Set(externalLinksFilterQueryParam, filter)
+	}
+	values.Set(externalLinksActionQueryParam, action)
+	values.Set(externalLinksSuccessQueryParam, strconv.Itoa(successCount))
+	values.Set(externalLinksFailureQueryParam, strconv.Itoa(failureCount))
+	return r.URL.Path + "?" + values.Encode()
+}
+
+func auditCounts(data map[string]any, successKey, failureKey string) (int, int) {
+	if data == nil {
+		return 0, 0
+	}
+	successCount, _ := data[successKey].(int)
+	failureCount, _ := data[failureKey].(int)
+	return successCount, failureCount
 }

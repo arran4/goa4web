@@ -48,6 +48,8 @@ Commands:
           reset requests.
   email   Manage emails. This includes sending and managing email
           notifications.
+  requests Manage admin request queue actions such as listing, accepting,
+          rejecting, and commenting on requests.
   config  Manage configuration. This allows you to view and modify the
           application's configuration.
   test    Run manual tests. This is used for running specific tests that are
@@ -59,6 +61,7 @@ Examples:
   {{.Prog}} perm list
   {{.Prog}} role users
   {{.Prog}} config reload
+  {{.Prog}} requests list -status pending
   {{.Prog}} help config
   {{.Prog}} board list
   {{.Prog}} blog read 1

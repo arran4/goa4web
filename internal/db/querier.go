@@ -392,6 +392,7 @@ type Querier interface {
 	GetPermissionsByUserID(ctx context.Context, usersIdusers int32) ([]*GetPermissionsByUserIDRow, error)
 	GetPermissionsWithUsers(ctx context.Context, arg GetPermissionsWithUsersParams) ([]*GetPermissionsWithUsersRow, error)
 	GetPreferenceForLister(ctx context.Context, listerID int32) (*Preference, error)
+	GetPrivateTopicReadStatus(ctx context.Context, arg GetPrivateTopicReadStatusParams) (*GetPrivateTopicReadStatusRow, error)
 	GetPublicProfileRoleForUser(ctx context.Context, usersIdusers int32) (int32, error)
 	GetPublicWritings(ctx context.Context, arg GetPublicWritingsParams) ([]*Writing, error)
 	GetRoleByName(ctx context.Context, name string) (*Role, error)

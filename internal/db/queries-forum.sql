@@ -474,3 +474,24 @@ LEFT JOIN users u ON u.idusers = g.user_id
 WHERE (g.item = 'topic')
   AND g.item_id = sqlc.arg(topic_id)
   AND g.active = 1;
+
+-- name: GetPrivateTopicReadStatus :one
+SELECT
+    (EXISTS (
+        SELECT 1
+        FROM forumthread th
+        WHERE th.forumtopic_idforumtopic = sqlc.arg(topic_id)
+          AND NOT EXISTS (
+              SELECT 1 FROM content_private_labels cpl
+              WHERE cpl.item = 'thread' AND cpl.item_id = th.idforumthread AND cpl.user_id = sqlc.arg(user_id) AND cpl.label = 'unread' AND cpl.invert = 1
+          )
+    )) AS has_unread,
+    (EXISTS (
+        SELECT 1
+        FROM forumthread th
+        WHERE th.forumtopic_idforumtopic = sqlc.arg(topic_id)
+          AND NOT EXISTS (
+              SELECT 1 FROM content_private_labels cpl
+              WHERE cpl.item = 'thread' AND cpl.item_id = th.idforumthread AND cpl.user_id = sqlc.arg(user_id) AND cpl.label = 'new' AND cpl.invert = 1
+          )
+    )) AS has_new;

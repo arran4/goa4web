@@ -485,6 +485,11 @@ type QuerierStub struct {
 	GetThreadLastPosterAndPermsReturns *GetThreadLastPosterAndPermsRow
 	GetThreadLastPosterAndPermsErr     error
 
+	GetPrivateTopicReadStatusCalls   []GetPrivateTopicReadStatusParams
+	GetPrivateTopicReadStatusReturns *GetPrivateTopicReadStatusRow
+	GetPrivateTopicReadStatusErr     error
+	GetPrivateTopicReadStatusFn      func(context.Context, GetPrivateTopicReadStatusParams) (*GetPrivateTopicReadStatusRow, error)
+
 	ListPrivateTopicParticipantsByTopicIDForUserCalls   []ListPrivateTopicParticipantsByTopicIDForUserParams
 	ListPrivateTopicParticipantsByTopicIDForUserReturns []*ListPrivateTopicParticipantsByTopicIDForUserRow
 	ListPrivateTopicParticipantsByTopicIDForUserErr     error
@@ -2013,4 +2018,17 @@ func (s *QuerierStub) AdminInsertRequestQueue(ctx context.Context, arg AdminInse
 }
 func (q *QuerierStub) UpdateExternalLinkImageCache(ctx context.Context, arg UpdateExternalLinkImageCacheParams) error {
 	return nil
+}
+
+func (s *QuerierStub) GetPrivateTopicReadStatus(ctx context.Context, arg GetPrivateTopicReadStatusParams) (*GetPrivateTopicReadStatusRow, error) {
+	s.mu.Lock()
+	s.GetPrivateTopicReadStatusCalls = append(s.GetPrivateTopicReadStatusCalls, arg)
+	fn := s.GetPrivateTopicReadStatusFn
+	ret := s.GetPrivateTopicReadStatusReturns
+	err := s.GetPrivateTopicReadStatusErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
 }

@@ -1234,6 +1234,50 @@ func (q *Queries) GetForumTopicsForUser(ctx context.Context, arg GetForumTopicsF
 	return items, nil
 }
 
+const getPrivateTopicReadStatus = `-- name: GetPrivateTopicReadStatus :one
+SELECT
+    (EXISTS (
+        SELECT 1
+        FROM forumthread th
+        WHERE th.forumtopic_idforumtopic = ?
+          AND NOT EXISTS (
+              SELECT 1 FROM content_private_labels cpl
+              WHERE cpl.item = 'thread' AND cpl.item_id = th.idforumthread AND cpl.user_id = ? AND cpl.label = 'unread' AND cpl.invert = 1
+          )
+    )) AS has_unread,
+    (EXISTS (
+        SELECT 1
+        FROM forumthread th
+        WHERE th.forumtopic_idforumtopic = ?
+          AND NOT EXISTS (
+              SELECT 1 FROM content_private_labels cpl
+              WHERE cpl.item = 'thread' AND cpl.item_id = th.idforumthread AND cpl.user_id = ? AND cpl.label = 'new' AND cpl.invert = 1
+          )
+    )) AS has_new
+`
+
+type GetPrivateTopicReadStatusParams struct {
+	TopicID int32
+	UserID  int32
+}
+
+type GetPrivateTopicReadStatusRow struct {
+	HasUnread bool
+	HasNew    bool
+}
+
+func (q *Queries) GetPrivateTopicReadStatus(ctx context.Context, arg GetPrivateTopicReadStatusParams) (*GetPrivateTopicReadStatusRow, error) {
+	row := q.db.QueryRowContext(ctx, getPrivateTopicReadStatus,
+		arg.TopicID,
+		arg.UserID,
+		arg.TopicID,
+		arg.UserID,
+	)
+	var i GetPrivateTopicReadStatusRow
+	err := row.Scan(&i.HasUnread, &i.HasNew)
+	return &i, err
+}
+
 const listForumcategoryPath = `-- name: ListForumcategoryPath :many
 WITH RECURSIVE category_path AS (
     SELECT f.idforumcategory, f.forumcategory_idforumcategory AS parent_id, f.title, 0 AS depth

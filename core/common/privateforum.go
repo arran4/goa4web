@@ -55,12 +55,18 @@ func (cd *CoreData) PrivateForumTopics() ([]*PrivateTopic, error) {
 				title = fmt.Sprintf("%s (%s)", title, t.Title.String)
 			}
 			var labels []templates.TopicLabel
-			if pub, _, err := cd.ThreadPublicLabels(t.Idforumtopic); err == nil {
-				for _, l := range pub {
-					labels = append(labels, templates.TopicLabel{Name: l, Type: "public"})
+			if status, err := cd.queries.GetPrivateTopicReadStatus(cd.ctx, db.GetPrivateTopicReadStatusParams{
+				TopicID: t.Idforumtopic,
+				UserID:  cd.UserID,
+			}); err == nil && status != nil {
+				if status.HasUnread {
+					labels = append(labels, templates.TopicLabel{Name: "unread", Type: "private"})
+				}
+				if status.HasNew {
+					labels = append(labels, templates.TopicLabel{Name: "new", Type: "private"})
 				}
 			} else {
-				log.Printf("list public labels: %v", err)
+				log.Printf("get topic read status: %v", err)
 			}
 			pts = append(pts, &PrivateTopic{ListPrivateTopicsByUserIDRow: t, DisplayTitle: title, Labels: labels})
 		}

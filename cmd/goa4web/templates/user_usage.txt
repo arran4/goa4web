@@ -28,6 +28,7 @@ Commands:
   password    Manage a user's password.
   email       Manage a user's email addresses.
   unverified-emails List all unverified email addresses.
+  subscriptions List a user's subscriptions.
 
 Examples:
   # Add a new user named "bob" with the password "secret"

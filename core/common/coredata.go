@@ -33,10 +33,12 @@ import (
 	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/lazy"
 	"github.com/arran4/goa4web/internal/tasks"
+	bm "github.com/arran4/gobookmarks/core"
 )
 
 // Ensure SessionProxy implements SessionManager.
 var _ SessionManager = (*db.SessionProxy)(nil)
+var _ bm.Core = (*CoreData)(nil)
 
 // IndexItem represents a navigation item linking to site sections.
 type IndexItem struct {
@@ -119,6 +121,7 @@ type CoreData struct {
 
 	IndexItems        []IndexItem
 	absoluteURLBase   lazy.Value[string]  // cached base URL for absolute links
+	DB                *sql.DB             // raw database connection
 	dbRegistry        *dbdrivers.Registry // database driver registry
 	emailRegistry     *email.Registry
 	mapMu             sync.Mutex
@@ -2917,6 +2920,11 @@ func NewCoreData(ctx context.Context, q db.Querier, cfg *config.RuntimeConfig, o
 // WithEmailProvider sets the email provider used by CoreData.
 func WithEmailProvider(p MailProvider) CoreOption {
 	return func(cd *CoreData) { cd.emailProvider.Set(p) }
+}
+
+// WithDB sets the DB used by CoreData.
+func WithDB(db *sql.DB) CoreOption {
+	return func(cd *CoreData) { cd.DB = db }
 }
 
 // ContainsItem returns true if items includes an entry with the given name.

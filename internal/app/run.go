@@ -184,7 +184,7 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 	r := mux.NewRouter()
 
 	navReg := nav.NewRegistry()
-	routerpkg.RegisterRoutes(r, o.RouterReg, cfg, navReg, o.DB, store)
+	routerpkg.RegisterRoutes(r, o.RouterReg, cfg, navReg)
 	srv := server.New(
 		server.WithStore(store),
 		server.WithDB(o.DB),

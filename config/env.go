@@ -199,4 +199,37 @@ const (
 	EnvOGImageRpgTheme = "OG_IMAGE_RPG_THEME"
 	// EnvTwitterSite sets the Twitter site handle.
 	EnvTwitterSite = "TWITTER_SITE"
+
+	// EnvDevMode toggles development mode features.
+	EnvDevMode = "DEV_MODE"
+
+	// EnvGithubClientID is the client ID for the GitHub provider.
+	EnvGithubClientID = "GITHUB_CLIENT_ID"
+	// EnvGithubSecret is the client secret for the GitHub provider.
+	EnvGithubSecret = "GITHUB_SECRET"
+	// EnvGithubServer is the server URL for the GitHub provider.
+	EnvGithubServer = "GITHUB_SERVER"
+	// EnvGitlabClientID is the client ID for the GitLab provider.
+	EnvGitlabClientID = "GITLAB_CLIENT_ID"
+	// EnvGitlabSecret is the client secret for the GitLab provider.
+	EnvGitlabSecret = "GITLAB_SECRET"
+	// EnvGitlabServer is the server URL for the GitLab provider.
+	EnvGitlabServer = "GITLAB_SERVER"
+
+	// EnvBookmarksTitle sets the application title for the bookmarks section.
+	EnvBookmarksTitle = "BOOKMARKS_TITLE"
+	// EnvBookmarksCssColumns toggles CSS columns layout.
+	EnvBookmarksCssColumns = "BOOKMARKS_CSS_COLUMNS"
+	// EnvBookmarksNoFooter toggles the display of the footer.
+	EnvBookmarksNoFooter = "BOOKMARKS_NO_FOOTER"
+	// EnvBookmarksLocalGitPath sets the path for the local git provider.
+	EnvBookmarksLocalGitPath = "BOOKMARKS_LOCAL_GIT_PATH"
+	// EnvBookmarksCommitsPerPage sets the number of commits to display per page.
+	EnvBookmarksCommitsPerPage = "BOOKMARKS_COMMITS_PER_PAGE"
+	// EnvBookmarksFaviconCacheDir sets the directory for favicon caching.
+	EnvBookmarksFaviconCacheDir = "BOOKMARKS_FAVICON_CACHE_DIR"
+	// EnvBookmarksFaviconCacheSize sets the max size of the favicon cache.
+	EnvBookmarksFaviconCacheSize = "BOOKMARKS_FAVICON_CACHE_SIZE"
+	// EnvBookmarksFaviconMaxCacheCount sets the max item count of the favicon cache.
+	EnvBookmarksFaviconMaxCacheCount = "BOOKMARKS_FAVICON_MAX_CACHE_COUNT"
 )

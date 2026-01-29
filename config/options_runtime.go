@@ -90,6 +90,17 @@ var StringOptions = []StringOption{
 	{"og-image-fg-color", EnvOGImageFgColor, "The foreground color for the Open Graph image.", "#3C424E", nil, "", func(c *RuntimeConfig) *string { return &c.OGImageFgColor }},
 	{"og-image-bg-color", EnvOGImageBgColor, "The background color for the Open Graph image.", "#282C34", nil, "", func(c *RuntimeConfig) *string { return &c.OGImageBgColor }},
 	{"twitter-site", EnvTwitterSite, "The Twitter handle for the site (e.g. @mysite).", "", nil, "", func(c *RuntimeConfig) *string { return &c.TwitterSite }},
+
+	{"github-client-id", EnvGithubClientID, "Client ID for GitHub provider.", "", nil, "", func(c *RuntimeConfig) *string { return &c.GithubClientID }},
+	{"github-secret", EnvGithubSecret, "Client Secret for GitHub provider.", "", nil, "", func(c *RuntimeConfig) *string { return &c.GithubSecret }},
+	{"github-server", EnvGithubServer, "Server URL for GitHub provider and Enterprise.", "", nil, "", func(c *RuntimeConfig) *string { return &c.GithubServer }},
+	{"gitlab-client-id", EnvGitlabClientID, "Client ID for GitLab provider.", "", nil, "", func(c *RuntimeConfig) *string { return &c.GitlabClientID }},
+	{"gitlab-secret", EnvGitlabSecret, "Client Secret for GitLab provider.", "", nil, "", func(c *RuntimeConfig) *string { return &c.GitlabSecret }},
+	{"gitlab-server", EnvGitlabServer, "Server URL for GitLab provider.", "", nil, "", func(c *RuntimeConfig) *string { return &c.GitlabServer }},
+
+	{"bookmarks-title", EnvBookmarksTitle, "Title for the bookmarks section.", "", nil, "", func(c *RuntimeConfig) *string { return &c.BookmarksTitle }},
+	{"bookmarks-local-git-path", EnvBookmarksLocalGitPath, "Path for the local git provider.", "", nil, "", func(c *RuntimeConfig) *string { return &c.BookmarksLocalGitPath }},
+	{"bookmarks-favicon-cache-dir", EnvBookmarksFaviconCacheDir, "Directory for favicon caching.", "", nil, "", func(c *RuntimeConfig) *string { return &c.BookmarksFaviconCacheDir }},
 }
 
 // IntOptions lists the integer runtime options shared by flag parsing and configuration generation.
@@ -110,6 +121,10 @@ var IntOptions = []IntOption{
 	{"stats-start-year", EnvStatsStartYear, "The start year for usage statistics.", 2005, "", func(c *RuntimeConfig) *int { return &c.StatsStartYear }},
 	{"og-image-width", EnvOGImageWidth, "The width of the generated Open Graph image.", 1200, "", func(c *RuntimeConfig) *int { return &c.OGImageWidth }},
 	{"og-image-height", EnvOGImageHeight, "The height of the generated Open Graph image.", 630, "", func(c *RuntimeConfig) *int { return &c.OGImageHeight }},
+
+	{"bookmarks-commits-per-page", EnvBookmarksCommitsPerPage, "Number of commits to display per page.", 100, "", func(c *RuntimeConfig) *int { return &c.BookmarksCommitsPerPage }},
+	{"bookmarks-favicon-cache-size", EnvBookmarksFaviconCacheSize, "Max size of the favicon cache in bytes.", 20971520, "", func(c *RuntimeConfig) *int { return &c.BookmarksFaviconCacheSize }},
+	{"bookmarks-favicon-max-cache-count", EnvBookmarksFaviconMaxCacheCount, "Max item count of the favicon cache.", 1000, "", func(c *RuntimeConfig) *int { return &c.BookmarksFaviconMaxCacheCount }},
 }
 
 // BoolOptions lists the boolean runtime options shared by flag parsing and configuration generation.
@@ -124,4 +139,8 @@ var BoolOptions = []BoolOption{
 	{"admin-notify", EnvAdminNotify, "Enable or disable email notifications for administrators.", true, "", func(c *RuntimeConfig) *bool { return &c.AdminNotify }},
 	{"auto-migrate", EnvAutoMigrate, "Run database migrations on startup.", false, "", func(c *RuntimeConfig) *bool { return &c.AutoMigrate }},
 	{"create-dirs", EnvCreateDirs, "Enable or disable the automatic creation of missing directories.", false, "", func(c *RuntimeConfig) *bool { return &c.CreateDirs }},
+	{"dev-mode", EnvDevMode, "Enable development mode features.", false, "", func(c *RuntimeConfig) *bool { return &c.DevMode }},
+
+	{"bookmarks-css-columns", EnvBookmarksCssColumns, "Toggle CSS columns layout.", false, "", func(c *RuntimeConfig) *bool { return &c.BookmarksCssColumns }},
+	{"bookmarks-no-footer", EnvBookmarksNoFooter, "Toggle display of footer.", false, "", func(c *RuntimeConfig) *bool { return &c.BookmarksNoFooter }},
 }

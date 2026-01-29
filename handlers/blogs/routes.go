@@ -1,10 +1,7 @@
 package blogs
 
 import (
-	"database/sql"
 	"net/http"
-
-	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/handlers/forum/comments"
 	"github.com/gorilla/mux"
@@ -18,7 +15,7 @@ import (
 )
 
 // RegisterRoutes attaches the public blog endpoints to r.
-func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry, _ *sql.DB, _ sessions.Store) {
+func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
 	navReg.RegisterIndexLinkWithViewPermission("Blogs", "/blogs", SectionWeight, "blogs", "entry")
 	navReg.RegisterAdminControlCenter("Blogs", "Blogs", "/admin/blogs", SectionWeight)
 	br := r.PathPrefix("/blogs").Subrouter()

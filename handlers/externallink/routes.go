@@ -1,10 +1,7 @@
 package externallink
 
 import (
-	"database/sql"
-
 	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
@@ -13,7 +10,7 @@ import (
 )
 
 // RegisterRoutes attaches the external link redirect endpoint to r.
-func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, _ *nav.Registry, _ *sql.DB, _ sessions.Store) {
+func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, _ *nav.Registry) {
 	r.HandleFunc("/goto", RedirectHandler).Methods("GET")
 	r.HandleFunc("/reload", handlers.TaskHandler(reloadExternalLinkTask)).Methods("POST")
 }

@@ -12,7 +12,7 @@ import (
 // TestCategoryRoute verifies that the public category route exists.
 func TestCategoryRoute(t *testing.T) {
 	r := mux.NewRouter()
-	RegisterRoutes(r, &config.RuntimeConfig{}, navpkg.NewRegistry(), nil, nil)
+	RegisterRoutes(r, &config.RuntimeConfig{}, navpkg.NewRegistry())
 	req := httptest.NewRequest("GET", "/forum/category/1", nil)
 	m := &mux.RouteMatch{}
 	if !r.Match(req, m) || m.Handler == nil {

@@ -12,6 +12,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
+
 	"github.com/arran4/goa4web/internal/app"
 )
 
@@ -74,6 +75,12 @@ func (c *serveCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("admin api secret: %w", err)
 	}
+
+	db, err := c.rootCmd.DB()
+	if err != nil {
+		return fmt.Errorf("rootCmd.DB: %w", err)
+	}
+
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	srv, err := app.NewServer(ctx, cfg, c.rootCmd.adminHandlers,
@@ -81,7 +88,8 @@ func (c *serveCmd) Run() error {
 		app.WithImageSignSecret(signKey),
 		app.WithLinkSignSecret(linkKey),
 		app.WithShareSignSecret(shareKey),
-		app.WithDBRegistry(c.rootCmd.dbReg),
+		// app.WithDBRegistry(c.rootCmd.dbReg), // DB is already initialized above, need to pass it
+		app.WithDB(db), // Use the DB we initialized
 		app.WithEmailRegistry(c.rootCmd.emailReg),
 		app.WithDLQRegistry(c.rootCmd.dlqReg),
 		app.WithTasksRegistry(c.rootCmd.tasksReg),

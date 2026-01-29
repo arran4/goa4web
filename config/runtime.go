@@ -158,6 +158,37 @@ type RuntimeConfig struct {
 	OGImageRpgTheme bool
 	// TwitterSite is the Twitter handle for the site.
 	TwitterSite string
+	// DevMode enables development features.
+	DevMode bool
+	// GithubClientID is the client ID for the GitHub provider.
+	GithubClientID string
+	// GithubSecret is the client secret for the GitHub provider.
+	GithubSecret string
+	// GithubServer is the server URL for the GitHub provider.
+	GithubServer string
+	// GitlabClientID is the client ID for the GitLab provider.
+	GitlabClientID string
+	// GitlabSecret is the client secret for the GitLab provider.
+	GitlabSecret string
+	// GitlabServer is the server URL for the GitLab provider.
+	GitlabServer string
+
+	// BookmarksTitle is the application title for the bookmarks section.
+	BookmarksTitle string
+	// BookmarksCssColumns toggles CSS columns layout.
+	BookmarksCssColumns bool
+	// BookmarksNoFooter toggles the display of the footer.
+	BookmarksNoFooter bool
+	// BookmarksLocalGitPath is the path for the local git provider.
+	BookmarksLocalGitPath string
+	// BookmarksCommitsPerPage is the number of commits to display per page.
+	BookmarksCommitsPerPage int
+	// BookmarksFaviconCacheDir is the directory for favicon caching.
+	BookmarksFaviconCacheDir string
+	// BookmarksFaviconCacheSize is the max size of the favicon cache.
+	BookmarksFaviconCacheSize int
+	// BookmarksFaviconMaxCacheCount is the max item count of the favicon cache.
+	BookmarksFaviconMaxCacheCount int
 }
 
 // Option configures RuntimeConfig values.

@@ -19,7 +19,7 @@ import (
 func TestPrivateLabelRoutes(t *testing.T) {
 	r := mux.NewRouter()
 	nav := navpkg.NewRegistry()
-	RegisterRoutes(r, config.NewRuntimeConfig(), nav, nil, nil)
+	RegisterRoutes(r, config.NewRuntimeConfig(), nav)
 
 	t.Run("uses redirect parameter", func(t *testing.T) {
 		cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())

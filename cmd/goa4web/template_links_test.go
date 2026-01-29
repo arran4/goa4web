@@ -28,8 +28,8 @@ func TestTemplateLinks(t *testing.T) {
 	}
 	navReg := nav.NewRegistry()
 
-	reg.InitModules(r, cfg, navReg, nil, nil)
-	router.RegisterRoutes(r, reg, cfg, navReg, nil, nil)
+	reg.InitModules(r, cfg, navReg)
+	router.RegisterRoutes(r, reg, cfg, navReg)
 
 	// Collect route regexps
 	var routeRegexps []*regexp.Regexp

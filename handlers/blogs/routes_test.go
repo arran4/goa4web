@@ -12,7 +12,7 @@ import (
 func TestRegisterRoutesRegistersAdminLink(t *testing.T) {
 	r := mux.NewRouter()
 	navReg := navpkg.NewRegistry()
-	RegisterRoutes(r, config.NewRuntimeConfig(), navReg, nil, nil)
+	RegisterRoutes(r, config.NewRuntimeConfig(), navReg)
 	links := navReg.AdminLinks()
 	for _, l := range links {
 		if l.Name == "Blogs" {

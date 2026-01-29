@@ -2,7 +2,6 @@ package images
 
 import (
 	"bytes"
-	"database/sql"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -11,7 +10,6 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
@@ -64,7 +62,7 @@ func verifyMiddleware(prefix string) mux.MiddlewareFunc {
 }
 
 // RegisterRoutes attaches the image endpoints to r.
-func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, _ *nav.Registry, _ *sql.DB, _ sessions.Store) {
+func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, _ *nav.Registry) {
 	ir := r.PathPrefix("/images").Subrouter()
 	ir.Use(handlers.IndexMiddleware(CustomIndex))
 	ir.HandleFunc("/upload/image", handlers.TaskHandler(uploadImageTask)).

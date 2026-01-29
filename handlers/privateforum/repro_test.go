@@ -23,7 +23,7 @@ func TestPrivateRoute(t *testing.T) {
 	navReg := navpkg.NewRegistry()
 	cfg := &config.RuntimeConfig{}
 
-	RegisterRoutes(r, cfg, navReg, nil, nil)
+	RegisterRoutes(r, cfg, navReg)
 	_ = reg
 
 	tests := []struct {

@@ -63,7 +63,7 @@ func TestNotificationsJSRoute(t *testing.T) {
 	mod.Register(reg)
 	r := mux.NewRouter()
 	navReg := nav.NewRegistry()
-	routerpkg.RegisterRoutes(r, reg, &config.RuntimeConfig{}, navReg, nil, nil)
+	routerpkg.RegisterRoutes(r, reg, &config.RuntimeConfig{}, navReg)
 
 	req := httptest.NewRequest("GET", "http://example.com/websocket/notifications.js", nil)
 	rec := httptest.NewRecorder()

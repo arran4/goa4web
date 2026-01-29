@@ -22,7 +22,7 @@ func TestPreviewRoute(t *testing.T) {
 	navReg := navpkg.NewRegistry()
 	cfg := &config.RuntimeConfig{}
 
-	RegisterRoutes(r, cfg, navReg, nil, nil)
+	RegisterRoutes(r, cfg, navReg)
 
 	// Middleware to inject CoreData
 	mw := func(next http.Handler) http.Handler {

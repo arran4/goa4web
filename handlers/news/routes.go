@@ -1,10 +1,7 @@
 package news
 
 import (
-	"database/sql"
 	"net/http"
-
-	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/handlers/forum/comments"
 
@@ -19,7 +16,7 @@ import (
 )
 
 // RegisterRoutes attaches the public news endpoints to r.
-func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry, _ *sql.DB, _ sessions.Store) {
+func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
 	navReg.RegisterIndexLinkWithViewPermission("News", "/", SectionWeight, "news", "post")
 	navReg.RegisterAdminControlCenter("News", "News", "/admin/news", SectionWeight)
 	r.Use(handlers.IndexMiddleware(CustomNewsIndex), handlers.SectionMiddleware("news"))

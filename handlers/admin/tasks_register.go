@@ -27,6 +27,7 @@ func (h *Handlers) RegisterTasks() []tasks.NamedTask {
 		deleteUserSubscriptionTask,
 		addIPBanTask,
 		deleteIPBanTask,
+		ipBanBulkTask,
 		acceptRequestTask,
 		rejectRequestTask,
 		queryRequestTask,

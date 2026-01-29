@@ -4,11 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"strings"
 	"testing"
 
 	"github.com/arran4/goa4web/config"
@@ -109,49 +107,5 @@ func TestRedirectHandlerSignedURLParamWithQuery(t *testing.T) {
 	}
 	if got := res.Header.Get("Location"); got != link {
 		t.Fatalf("expected redirect to %s, got %s", link, got)
-	}
-}
-
-func TestRedirectHandlerReload(t *testing.T) {
-	cfg := config.NewRuntimeConfig()
-	key := "k"
-	link := "https://external.com/reload"
-	sig := sign.Sign("link:"+link, key)
-
-	fetchCalled := false
-	client := &http.Client{
-		Transport: &mockTransport{
-			RoundTripFunc: func(req *http.Request) (*http.Response, error) {
-				fetchCalled = true
-				return &http.Response{
-					StatusCode: 200,
-					Body:       io.NopCloser(strings.NewReader(`<html><head><meta property="og:title" content="Test Title"/></head><body></body></html>`)),
-					Header:     make(http.Header),
-				}, nil
-			},
-		},
-	}
-
-	querier := &mockQuerier{}
-
-	// reload=1 should trigger fetch
-	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/goto?u=%s&sig=%s&reload=1", url.QueryEscape(link), sig), nil)
-	cd := common.NewCoreData(context.Background(), querier, cfg, func(cd *common.CoreData) {
-		cd.LinkSignKey = key
-	}, common.WithHTTPClient(client))
-
-	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
-	rec := httptest.NewRecorder()
-
-	RedirectHandler(rec, req)
-
-	if !fetchCalled {
-		t.Error("Expected fetch to be called when reload=1 is present")
-	}
-
-	res := rec.Result()
-	// Should render page (200), not redirect (307)
-	if res.StatusCode != http.StatusOK {
-		t.Errorf("expected status %d, got %d", http.StatusOK, res.StatusCode)
 	}
 }

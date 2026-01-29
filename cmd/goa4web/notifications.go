@@ -32,6 +32,18 @@ func (c *notificationsCmd) Run() error {
 		return err
 	}
 	switch args[0] {
+	case "list":
+		cmd, err := parseNotificationsListCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("list: %w", err)
+		}
+		return cmd.Run()
+	case "mark":
+		cmd, err := parseNotificationsMarkCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("mark: %w", err)
+		}
+		return cmd.Run()
 	case "tasks":
 		cmd, err := parseNotificationsTasksCmd(c, args[1:])
 		if err != nil {

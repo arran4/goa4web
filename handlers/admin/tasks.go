@@ -40,6 +40,9 @@ const (
 	// TaskApprove approves an item in moderation queues.
 	TaskApprove tasks.TaskString = "Approve"
 
+	// TaskApplySubscriptionTemplate applies a subscription template to a role.
+	TaskApplySubscriptionTemplate tasks.TaskString = "Apply Template"
+
 	// TaskAccept accepts a queued request.
 	TaskAccept tasks.TaskString = "Accept"
 

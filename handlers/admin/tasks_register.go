@@ -25,6 +25,7 @@ func (h *Handlers) RegisterTasks() []tasks.NamedTask {
 		addUserSubscriptionTask,
 		updateUserSubscriptionTask,
 		deleteUserSubscriptionTask,
+		h.NewApplySubscriptionTemplateTask(),
 		addIPBanTask,
 		deleteIPBanTask,
 		acceptRequestTask,

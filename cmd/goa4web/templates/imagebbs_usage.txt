@@ -1,0 +1,14 @@
+Usage:
+  {{.Prog}} imagebbs <command> [<args>]
+
+Description:
+  Manage ImageBBS administrative tasks.
+
+Commands:
+  moderation  Moderate ImageBBS posts (approve/reject).
+
+Examples:
+  {{.Prog}} imagebbs moderation approve 42
+  {{.Prog}} imagebbs moderation bulk-approve --from-file pending_ids.txt
+
+{{template "flag_groups_section" .FlagGroups}}

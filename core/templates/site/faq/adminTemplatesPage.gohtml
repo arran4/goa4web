@@ -1,0 +1,81 @@
+{{ template "head" $ }}
+
+<h4>FAQ Templates</h4>
+
+{{ if .CreatedFAQID }}
+<p>Created FAQ <a href="{{ .CreatedFAQURL }}">#{{ .CreatedFAQID }}</a>.</p>
+{{ end }}
+
+{{ if .Templates }}
+<div>
+    <h5>Available Templates</h5>
+    <ul>
+        {{- range .Templates }}
+        <li>
+            {{- if eq $.SelectedTemplate . -}}
+                <strong>{{ . }}</strong>
+            {{- else -}}
+                <a href="/admin/faq/templates?template={{ . }}">{{ . }}</a>
+            {{- end -}}
+        </li>
+        {{- end }}
+    </ul>
+</div>
+
+<div>
+    <h5>Template Preview</h5>
+    <p><strong>Question</strong></p>
+    <div class="preview-box">{{ .Question | a4code2html }}</div>
+    <p><strong>Answer</strong></p>
+    <div class="preview-box">{{ .Answer | a4code2html }}</div>
+</div>
+
+<div>
+    <h5>Create FAQ from template</h5>
+    <form method="post" action="/admin/faq/templates">
+        {{ csrfField }}
+        <input type="hidden" name="template" value="{{ .SelectedTemplate }}">
+        <label for="category">Category</label>
+        <select id="category" name="category">
+            <option value="0">Hidden</option>
+            {{- range .Categories }}
+            <option value="{{ .ID }}" {{ if eq $.SelectedCategoryID .ID }}selected{{ end }}>{{ .Name.String }}</option>
+            {{- end }}
+        </select>
+        <label for="language">Language</label>
+        <select id="language" name="language">
+            {{- range .Languages }}
+            <option value="{{ .ID }}" {{ if eq $.SelectedLanguageID .ID }}selected{{ end }}>{{ .Name }}</option>
+            {{- end }}
+        </select>
+        <label for="author">Author</label>
+        <select id="author" name="author">
+            {{- range .Authors }}
+            <option value="{{ .Idusers }}" {{ if eq $.SelectedAuthorID .Idusers }}selected{{ end }}>
+                {{- if .Username.Valid -}}
+                    {{ .Username.String }}
+                {{- else -}}
+                    User {{ .Idusers }}
+                {{- end -}}
+            </option>
+            {{- end }}
+        </select>
+        <button type="submit" name="task" value="Create from Template">Create FAQ from template</button>
+    </form>
+</div>
+
+<div>
+    <h5>Preview as public FAQ</h5>
+    <section class="faq-section">
+        <h2>Section: Template Preview</h2>
+        <div class="faq-item">
+            <h3 class="faq-question">Q: {{ .Question | a4code2html }}</h3>
+            <div class="faq-answer">A: {{ .Answer | a4code2html }}</div>
+        </div>
+    </section>
+</div>
+{{ else }}
+<p>No FAQ templates are available.</p>
+{{ end }}
+
+{{ template "tail" $ }}

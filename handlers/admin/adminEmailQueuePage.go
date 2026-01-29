@@ -24,23 +24,34 @@ func AdminEmailQueuePage(w http.ResponseWriter, r *http.Request) {
 		Subject string
 	}
 	type Data struct {
-		Emails []EmailItem
+		Emails        []EmailItem
+		Filters       EmailQueueFilters
+		FilteredCount int
+		LangID        int
+		Role          string
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Email Queue"
-	data := Data{}
+	filters := emailQueueFiltersFromValues(r.URL.Query())
+	data := Data{Filters: filters}
 	queries := cd.Queries()
 	langID, _ := strconv.Atoi(r.URL.Query().Get("lang"))
 	role := r.URL.Query().Get("role")
+	data.LangID = langID
+	data.Role = role
 	rows, err := queries.AdminListUnsentPendingEmails(r.Context(), db.AdminListUnsentPendingEmailsParams{
-		LanguageID: sql.NullInt32{Int32: int32(langID), Valid: langID != 0},
-		RoleName:   role,
+		LanguageID:    sql.NullInt32{Int32: int32(langID), Valid: langID != 0},
+		RoleName:      role,
+		Status:        filters.StatusParam(),
+		Provider:      filters.ProviderParam(),
+		CreatedBefore: filters.CreatedBefore,
 	})
 	if err != nil {
 		log.Printf("list pending emails: %v", err)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
+	data.FilteredCount = len(rows)
 	ids := make([]int32, 0, len(rows))
 	for _, e := range rows {
 		if e.ToUserID.Valid {

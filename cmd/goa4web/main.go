@@ -309,6 +309,12 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("rootCmd.Run: email: %w", err)
 		}
 		return c.Run()
+	case "requests":
+		c, err := parseRequestsCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("rootCmd.Run: requests: %w", err)
+		}
+		return c.Run()
 	case "db":
 		c, err := parseDbCmd(r, args[1:])
 		if err != nil {
@@ -363,6 +369,12 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("rootCmd.Run: news: %w", err)
 		}
 		return cmd.Run()
+	case "announcement":
+		cmd, err := parseAnnouncementCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("rootCmd.Run: announcement: %w", err)
+		}
+		return cmd.Run()
 	case "jmap":
 		cmd, err := parseJmapCmd(r, args[1:])
 		if err != nil {
@@ -403,6 +415,11 @@ func (r *rootCmd) Run() error {
 		c, err := parseFilesCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("rootCmd.Run: files: %w", err)
+    }
+	case "imagebbs":
+		c, err := parseImagebbsCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("rootCmd.Run: imagebbs: %w", err)
 		}
 		return c.Run()
 	case "links":

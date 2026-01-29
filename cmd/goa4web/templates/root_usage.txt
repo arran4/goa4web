@@ -23,6 +23,8 @@ Commands:
           blog posts.
   news    Manage news posts. This is used for creating and managing news
           articles.
+  announcement Manage announcements. This includes listing, adding, and
+          deleting announcements tied to news posts.
   faq     Manage frequently asked questions. This allows you to create and
           update a list of FAQs.
   forum   Manage forum topics and threads. This includes maintenance tasks for
@@ -33,10 +35,12 @@ Commands:
           written content.
   ipban   Manage IP bans. This allows you to block specific IP addresses from
           accessing the application.
+  imagebbs Manage ImageBBS moderation tasks.
   audit   Show recent audit log entries. This provides a log of all actions
           performed in the application.
   files   Manage uploaded image files. This includes listing and purging
           image board uploads.
+  notifications Manage site notifications and task templates.
   db      Manage the database. This includes creating, migrating, and seeding
           the database.
   lang    Manage languages. This allows you to add and manage different
@@ -47,6 +51,8 @@ Commands:
           reset requests.
   email   Manage emails. This includes sending and managing email
           notifications.
+  requests Manage admin request queue actions such as listing, accepting,
+          rejecting, and commenting on requests.
   config  Manage configuration. This allows you to view and modify the
           application's configuration.
   test    Run manual tests. This is used for running specific tests that are
@@ -58,6 +64,7 @@ Examples:
   {{.Prog}} perm list
   {{.Prog}} role users
   {{.Prog}} config reload
+  {{.Prog}} requests list -status pending
   {{.Prog}} help config
   {{.Prog}} board list
   {{.Prog}} blog read 1

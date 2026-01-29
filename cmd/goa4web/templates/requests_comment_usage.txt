@@ -1,0 +1,15 @@
+Usage:
+  {{.Prog}} requests comment -id <request-id> -comment <text> [flags]
+
+Add a comment to a request without changing its status.
+
+Flags:
+  -id       Request ID.
+  -comment  Comment text.
+  -json     Output results as machine-readable JSON.
+
+Examples:
+  {{.Prog}} requests comment -id 42 -comment "Waiting on verification"
+  {{.Prog}} requests comment -id 42 -comment "Need more info" -json
+
+{{template "flag_groups_section" .FlagGroups}}

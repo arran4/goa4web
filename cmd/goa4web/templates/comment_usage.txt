@@ -9,3 +9,13 @@ Usage examples:
   {{.Prog}} comment deactivate -id 1
   {{.Prog}} comment activate -id 1
   {{.Prog}} comment list-deactivated
+  {{.Prog}} comment list-deactivated -type news -from 2024-01-01 -to 2024-01-31
+  {{.Prog}} comment list-deactivated -format json -limit 100
+
+List-deactivated flags:
+  -limit   max results (default: 20)
+  -offset  result offset (default: 0)
+  -type    filter by content type (news, blog, forum)
+  -from    filter deactivated after (YYYY-MM-DD or RFC3339)
+  -to      filter deactivated before (YYYY-MM-DD or RFC3339)
+  -format  output format (table, json)

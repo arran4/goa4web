@@ -1,0 +1,221 @@
+{{ template "head" $ }}
+<style>
+    .role-templates-layout {
+        display: grid;
+        gap: 1.5rem;
+    }
+    .role-templates-card {
+        border: 1px solid #000;
+        padding: 1rem;
+        background: #f6f2ea;
+    }
+    .role-templates-table tr.active-row {
+        background: #fff7d6;
+    }
+    .role-template-summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .role-template-summary-item {
+        border: 1px solid #000;
+        padding: 0.5rem 0.75rem;
+        background: #fff;
+        min-width: 160px;
+    }
+    .role-template-badge {
+        display: inline-block;
+        padding: 0.15rem 0.5rem;
+        border: 1px solid #000;
+        background: #fff;
+        margin-right: 0.5rem;
+        font-size: 0.9em;
+    }
+    .role-template-diff-table td ul {
+        margin: 0.25rem 0;
+        padding-left: 1.25rem;
+    }
+    .role-template-actions {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+    }
+    .role-template-modal::backdrop {
+        background: rgba(0, 0, 0, 0.4);
+    }
+    .role-template-modal {
+        border: 1px solid #000;
+        padding: 1.5rem;
+        max-width: 520px;
+        width: 90%;
+    }
+    .role-template-modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+</style>
+
+<div class="role-templates-layout">
+    <section class="role-templates-card">
+        <h2>Role Templates</h2>
+        <p>Select a template to review role definitions, diffs, and preview grants.</p>
+        <table class="table table-bordered role-templates-table">
+            <tr><th>Name</th><th>Description</th><th>Actions</th></tr>
+            {{- range .Templates }}
+            <tr{{ if .Active }} class="active-row"{{ end }}>
+                <td>{{ .Name }}</td>
+                <td>{{ .Description }}</td>
+                <td><a href="/admin/roles/templates?name={{ .Name }}">View details</a></td>
+            </tr>
+            {{- end }}
+        </table>
+    </section>
+
+    {{- if .Selected }}
+    <section class="role-templates-card">
+        <div class="role-template-actions">
+            <div>
+                <h3>Template: {{ .Selected.Template.Name }}</h3>
+                <p>{{ .Selected.Template.Description }}</p>
+            </div>
+            <button type="button" class="apply-template-btn"
+                    data-template="{{ .Selected.Template.Name }}"
+                    data-new-roles="{{ .Selected.Summary.NewRoles }}"
+                    data-updated-roles="{{ .Selected.Summary.UpdatedRoles }}"
+                    data-matching-roles="{{ .Selected.Summary.MatchingRoles }}"
+                    data-grants-added="{{ .Selected.Summary.GrantsAdded }}"
+                    data-grants-removed="{{ .Selected.Summary.GrantsRemoved }}">
+                Apply Template
+            </button>
+        </div>
+
+        <div class="role-template-summary">
+            <div class="role-template-summary-item">
+                <strong>New roles</strong><br>
+                {{ .Selected.Summary.NewRoles }}
+            </div>
+            <div class="role-template-summary-item">
+                <strong>Updated roles</strong><br>
+                {{ .Selected.Summary.UpdatedRoles }}
+            </div>
+            <div class="role-template-summary-item">
+                <strong>Matching roles</strong><br>
+                {{ .Selected.Summary.MatchingRoles }}
+            </div>
+            <div class="role-template-summary-item">
+                <strong>Grant changes</strong><br>
+                +{{ .Selected.Summary.GrantsAdded }} / -{{ .Selected.Summary.GrantsRemoved }}
+            </div>
+        </div>
+    </section>
+
+    <section class="role-templates-card">
+        <h3>Diff View</h3>
+        <table class="table table-bordered role-template-diff-table">
+            <tr><th>Role</th><th>Status</th><th>Property changes</th><th>Grant changes</th></tr>
+            {{- range .Selected.Diffs }}
+            <tr>
+                <td>{{ .Name }}</td>
+                <td>{{ if eq .Status "new" }}<span class="role-template-badge">New</span>{{ else }}Existing{{ end }}</td>
+                <td>
+                    {{- if .PropertyChanges }}
+                        <ul>
+                        {{- range .PropertyChanges }}
+                            <li>{{ . }}</li>
+                        {{- end }}
+                        </ul>
+                    {{- else }}
+                        No changes
+                    {{- end }}
+                </td>
+                <td>
+                    {{- if or .GrantsAdded .GrantsRemoved }}
+                        <ul>
+                            {{- range .GrantsAdded }}
+                                <li>+ {{ . }}</li>
+                            {{- end }}
+                            {{- range .GrantsRemoved }}
+                                <li>- {{ . }}</li>
+                            {{- end }}
+                        </ul>
+                    {{- else }}
+                        No changes
+                    {{- end }}
+                </td>
+            </tr>
+            {{- end }}
+        </table>
+    </section>
+
+    <section class="role-templates-card">
+        <h3>Template Grant Preview</h3>
+        <p>Drag actions between columns to explore grant combinations. This preview does not apply changes.</p>
+        {{- range .Selected.RolePreviews }}
+            <details>
+                <summary>
+                    <span class="role-template-badge">{{ .Role.Name }}</span>
+                    {{ .Role.Description }}
+                    (Login: {{ if .Role.CanLogin }}yes{{ else }}no{{ end }}, Admin: {{ if .Role.IsAdmin }}yes{{ else }}no{{ end }})
+                </summary>
+                {{ template "admin/roleGrantsPreview.gohtml" . }}
+            </details>
+        {{- end }}
+    </section>
+
+    <dialog id="apply-template-modal" class="role-template-modal">
+        <form method="post" action="/admin/roles/templates">
+            {{ csrfField }}
+            <input type="hidden" name="task" value="Apply role template">
+            <input type="hidden" name="name" id="apply-template-name">
+            <h3 id="apply-template-title">Apply Template</h3>
+            <p>This will overwrite existing roles and grants to match the template.</p>
+            <ul>
+                <li><strong>New roles:</strong> <span id="apply-template-new-roles"></span></li>
+                <li><strong>Updated roles:</strong> <span id="apply-template-updated-roles"></span></li>
+                <li><strong>Matching roles:</strong> <span id="apply-template-matching-roles"></span></li>
+                <li><strong>Grant changes:</strong> +<span id="apply-template-grants-added"></span> / -<span id="apply-template-grants-removed"></span></li>
+            </ul>
+            <div class="role-template-modal-actions">
+                <button type="button" id="apply-template-cancel">Cancel</button>
+                <button type="submit">Apply Template</button>
+            </div>
+        </form>
+    </dialog>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const modal = document.getElementById('apply-template-modal');
+            const nameInput = document.getElementById('apply-template-name');
+            const title = document.getElementById('apply-template-title');
+            const cancelBtn = document.getElementById('apply-template-cancel');
+            const fields = {
+                newRoles: document.getElementById('apply-template-new-roles'),
+                updatedRoles: document.getElementById('apply-template-updated-roles'),
+                matchingRoles: document.getElementById('apply-template-matching-roles'),
+                grantsAdded: document.getElementById('apply-template-grants-added'),
+                grantsRemoved: document.getElementById('apply-template-grants-removed')
+            };
+            document.querySelectorAll('.apply-template-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    const name = btn.dataset.template;
+                    nameInput.value = name;
+                    title.textContent = 'Apply template "' + name + '"';
+                    fields.newRoles.textContent = btn.dataset.newRoles;
+                    fields.updatedRoles.textContent = btn.dataset.updatedRoles;
+                    fields.matchingRoles.textContent = btn.dataset.matchingRoles;
+                    fields.grantsAdded.textContent = btn.dataset.grantsAdded;
+                    fields.grantsRemoved.textContent = btn.dataset.grantsRemoved;
+                    modal.showModal();
+                });
+            });
+            cancelBtn.addEventListener('click', function () {
+                modal.close();
+            });
+        });
+    </script>
+    <script src="{{ assetHash "/admin/role-grants-editor.js" }}"></script>
+    {{- end }}
+</div>
+{{ template "tail" $ }}

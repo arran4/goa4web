@@ -8,6 +8,7 @@ Subcommands:
   users   Lists the users in a role.
   list    Lists embedded role identifiers or human-friendly role names.
   inspect Inspects a role, showing its metadata, users, and grants.
+  grants  Exports grants for a role in JSON or CSV.
 
 Examples:
   # Load the "content-writer" role from its seed script
@@ -34,3 +35,6 @@ Examples:
 
   # Inspect the "user" role to see its permissions and users
   {{.Prog}} role inspect -role user
+
+  # Export grants for the "user" role in JSON
+  {{.Prog}} role grants export -role user -format json

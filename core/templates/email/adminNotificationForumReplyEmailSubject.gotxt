@@ -1,1 +1,1 @@
-[{{.SubjectPrefix}}] Forum reply posted
+[{{.SubjectPrefix}}] {{.Item.TopicTitle}} - {{.Item.ThreadOpenerPreview}}

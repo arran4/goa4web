@@ -311,6 +311,9 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 		IncludePostCount: true,
 		IncludeSearch:    true,
 		MarkThreadRead:   true,
+		AdditionalData: map[string]any{
+			"ThreadOpenerPreview": a4code.SnipTextWords(text, 10),
+		},
 	}); err != nil {
 		log.Printf("thread create side effects: %v", err)
 	}

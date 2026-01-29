@@ -1,1 +1,1 @@
-[{{.SubjectPrefix}}] New forum thread created
+[{{.SubjectPrefix}}] {{.Item.TopicTitle}} - {{.Item.ThreadOpenerPreview}}

@@ -105,6 +105,7 @@ func TestForumReply(t *testing.T) {
 	}
 	qs.GetCommentByIdForUserRow = &db.GetCommentByIdForUserRow{
 		Idcomments: 999,
+		Text:       sql.NullString{String: "Original thread content", Valid: true},
 	}
 	qs.GetThreadBySectionThreadIDForReplierFn = func(ctx context.Context, arg db.GetThreadBySectionThreadIDForReplierParams) (*db.Forumthread, error) {
 		return &db.Forumthread{
@@ -118,6 +119,7 @@ func TestForumReply(t *testing.T) {
 			ForumtopicIdforumtopic: topicID,
 			Lastposterusername:     sql.NullString{String: "replier", Valid: true},
 			Comments:               sql.NullInt32{Int32: 1, Valid: true},
+			Firstpost:              1,
 		}, nil
 	}
 	qs.GetForumTopicByIdForUserFn = func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
@@ -286,7 +288,7 @@ func TestForumReply(t *testing.T) {
 		if subscriberEmail == nil {
 			t.Fatal("subscriber email not found")
 		}
-		if subscriberEmail.Header.Get("Subject") != "[goa4web] New forum reply" {
+		if subscriberEmail.Header.Get("Subject") != "[goa4web] Test Topic - Original thread content" {
 			t.Errorf("subscriber email subject mismatch: %s", subscriberEmail.Header.Get("Subject"))
 		}
 		subBody := getEmailBody(t, subscriberEmail)
@@ -298,7 +300,7 @@ func TestForumReply(t *testing.T) {
 		if adminEmail == nil {
 			t.Fatal("admin email not found")
 		}
-		if adminEmail.Header.Get("Subject") != "[goa4web Admin] Forum reply posted" {
+		if adminEmail.Header.Get("Subject") != "[goa4web Admin] Test Topic - Original thread content" {
 			t.Errorf("admin email subject mismatch: %s", adminEmail.Header.Get("Subject"))
 		}
 		adminBody := getEmailBody(t, adminEmail)

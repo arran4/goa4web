@@ -398,14 +398,14 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 		cfg.PageSizeDefault = cfg.PageSizeMax
 	}
 	if cfg.ImageUploadDir == "" {
-		if os.Getenv(EnvDocker) != "" {
+		if os.Getenv(EnvDocker) != "" || os.Getenv("HOME") == "" {
 			cfg.ImageUploadDir = "/var/lib/goa4web/images"
 		} else {
 			cfg.ImageUploadDir = "uploads/images"
 		}
 	}
 	if cfg.ImageCacheDir == "" {
-		if os.Getenv(EnvDocker) != "" {
+		if os.Getenv(EnvDocker) != "" || os.Getenv("HOME") == "" {
 			cfg.ImageCacheDir = "/var/cache/goa4web/thumbnails"
 		} else {
 			cfg.ImageCacheDir = "uploads/cache"

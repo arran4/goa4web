@@ -7,6 +7,10 @@ Commands:
 
 Examples:
   {{.Prog}} user comments list -id 3
-  {{.Prog}} user comments add -id 3 -comment "needs review"
+  {{.Prog}} user comments add -id 3 -comment "needs review" -admin-id 1 --internal
+  {{.Prog}} user comments add -username alice -comment "public note" -admin-username admin --visibility public --json
+
+Notes:
+  Adding a comment requires an admin identity unless --as-admin is provided.
 
 {{template "flag_groups_section" .FlagGroups}}

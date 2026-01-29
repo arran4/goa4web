@@ -23,6 +23,8 @@ Commands:
           blog posts.
   news    Manage news posts. This is used for creating and managing news
           articles.
+  announcement Manage announcements. This includes listing, adding, and
+          deleting announcements tied to news posts.
   faq     Manage frequently asked questions. This allows you to create and
           update a list of FAQs.
   forum   Manage forum topics and threads. This includes maintenance tasks for
@@ -35,6 +37,7 @@ Commands:
           accessing the application.
   audit   Show recent audit log entries. This provides a log of all actions
           performed in the application.
+  notifications Manage site notifications and task templates.
   db      Manage the database. This includes creating, migrating, and seeding
           the database.
   lang    Manage languages. This allows you to add and manage different

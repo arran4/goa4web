@@ -1,0 +1,10 @@
+Usage:
+  {{.Prog}} announcement delete [flags]
+
+Delete one or more site announcements.
+
+Examples:
+  {{.Prog}} announcement delete -id 5
+  {{.Prog}} announcement delete -ids 5,6,7 -json
+
+{{template "flag_groups_section" .FlagGroups}}

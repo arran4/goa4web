@@ -32,7 +32,7 @@
                     <input type="text" class="label-input" data-type="public" placeholder="Add public label"/>
                     <input type="text" class="label-input" data-type="private" placeholder="Add private label"/>
                 </div>
-                <script src="{{ assetHash "/topic_labels.js" }}"></script>
+                <script src="{{ assetHash (printf "%s/topic_labels.js" .BasePath) }}"></script>
                 <input type="submit" name="task" value="Create Thread">
                 <button type="button" class="preview-a4code" data-target="reply" data-preview-url="{{.BasePath}}/preview">Preview</button>
                 <input type="submit" name="task" formaction="cancel" value="Cancel">

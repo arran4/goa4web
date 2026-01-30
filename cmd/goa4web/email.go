@@ -49,6 +49,12 @@ func (c *emailCmd) Run() error {
 			return fmt.Errorf("test: %w", err)
 		}
 		return cmd.Run()
+	case "template":
+		cmd, err := parseEmailTemplateCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("template: %w", err)
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown email command %q", args[0])

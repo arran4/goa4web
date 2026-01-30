@@ -9,6 +9,7 @@ Commands:
   send     Send a test email.
   queue    Manage the queue of emails waiting to be sent.
   test     Send a test email to check the email configuration.
+  template Inspect and update email templates.
 
 Examples:
   # Send a test email
@@ -19,5 +20,8 @@ Examples:
 
   # View the email log
   {{.Prog}} email log
+
+  # Render the email template list
+  {{.Prog}} email template get
 
 {{template "flag_groups_section" .FlagGroups}}

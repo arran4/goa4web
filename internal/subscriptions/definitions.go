@@ -76,7 +76,7 @@ var Definitions = []Definition{
 	{
 		Name:        "Private Topic Created",
 		Description: "Notify when a new private topic is created",
-		Pattern:     "private topic create:/private/*",
+		Pattern:     "private topic create:/private*",
 	},
 	{
 		Name:        "New Threads (Private Topic)",
@@ -142,6 +142,13 @@ var Definitions = []Definition{
 		Name:        "Reply to Link",
 		Description: "Notify when a reply is posted to a link",
 		Pattern:     "reply:/linker/*",
+	},
+
+	// Legacy
+	{
+		Name:        "Write Reply (Legacy)",
+		Description: "Notify when a reply is written (Legacy)",
+		Pattern:     "write reply:/forum/topic/{topicid}/thread/{threadid}/*",
 	},
 
 	// FAQ

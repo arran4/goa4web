@@ -67,3 +67,42 @@ func TestGetUserSubscriptions_KnownPattern(t *testing.T) {
 		t.Errorf("Expected to find group with pattern 'create thread:/forum/topic/*'")
 	}
 }
+
+func TestGetUserSubscriptions_ReportedIssues(t *testing.T) {
+	dbSubs := []*db.ListSubscriptionsByUserRow{
+		{
+			ID:      1,
+			Pattern: "private topic create:/private",
+			Method:  "email",
+		},
+		{
+			ID:      2,
+			Pattern: "write reply:/forum/topic/12/thread/12/*",
+			Method:  "email",
+		},
+	}
+
+	groups := GetUserSubscriptions(dbSubs)
+
+	expectedMap := map[string]string{
+		"private topic create:/private":           "Private Topic Created",
+		"write reply:/forum/topic/12/thread/12/*": "Write Reply (Legacy)",
+	}
+
+	for _, g := range groups {
+		for _, inst := range g.Instances {
+			if expectedName, ok := expectedMap[inst.Original]; ok {
+				if g.Definition.Name != expectedName {
+					t.Errorf("For pattern '%s', expected definition name '%s', got '%s'", inst.Original, expectedName, g.Definition.Name)
+				}
+				delete(expectedMap, inst.Original)
+			}
+		}
+	}
+
+	if len(expectedMap) > 0 {
+		for k, v := range expectedMap {
+			t.Errorf("Pattern '%s' (expected '%s') was not found in any group", k, v)
+		}
+	}
+}

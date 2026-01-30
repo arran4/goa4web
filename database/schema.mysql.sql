@@ -64,6 +64,7 @@ CREATE TABLE `faq` (
   `answer` mediumtext DEFAULT NULL,
   `question` mediumtext DEFAULT NULL,
   `priority` INT NOT NULL DEFAULT 0,
+  `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `Table_21_FKIndex1` (`author_id`),
   KEY `Table_21_FKIndex2` (`language_id`),
@@ -75,6 +76,7 @@ CREATE TABLE `faq_categories` (
   `parent_category_id` int(10) DEFAULT NULL,
   `language_id` int(10) DEFAULT NULL,
   `name` tinytext DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
 );
 
@@ -742,5 +744,5 @@ CREATE TABLE `role_subscription_archetypes` (
 );
 
 -- Set the schema version to the latest migration.
-INSERT INTO `schema_version` (`version`) VALUES (80)
+INSERT INTO `schema_version` (`version`) VALUES (81)
 ON DUPLICATE KEY UPDATE version = VALUES(version);

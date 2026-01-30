@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"path"
 	"path/filepath"
-	"strings"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"

@@ -1,0 +1,273 @@
+{{ template "head" $ }}
+<h2>Link Signing Tools</h2>
+<p class="muted">Generate and verify signed links for the external link redirector. All output is handled locally in your browser and history is stored per-session.</p>
+
+<style>
+    .links-tools-grid { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+    .links-tools-card { background: #fff; border: 1px solid #e2e5ec; border-radius: 12px; padding: 1.25rem; box-shadow: 0 4px 16px rgba(17, 24, 39, 0.06); }
+    .links-tools-card h3 { margin-top: 0; }
+    .links-tools-field { display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 0.9rem; }
+    .links-tools-field label { font-weight: 600; }
+    .links-tools-field input[type="text"], .links-tools-field textarea { border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.55rem 0.7rem; font-family: inherit; }
+    .links-tools-field textarea { min-height: 4.5rem; resize: vertical; }
+    .links-tools-row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+    .links-tools-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
+    .links-tools-btn { background: #111827; color: #fff; border: none; border-radius: 8px; padding: 0.55rem 0.9rem; cursor: pointer; }
+    .links-tools-btn.secondary { background: #334155; }
+    .links-tools-btn.ghost { background: transparent; color: #111827; border: 1px solid #cbd5e1; }
+    .links-tools-badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 0.25rem 0.75rem; font-size: 0.85rem; background: #e2e8f0; }
+    .links-tools-badge.ok { background: #dcfce7; color: #166534; }
+    .links-tools-badge.warn { background: #fee2e2; color: #991b1b; }
+    .links-tools-help { font-size: 0.85rem; color: #475569; }
+    .links-tools-error { color: #b91c1c; font-weight: 600; }
+    .links-tools-history { list-style: none; padding-left: 0; margin: 0; display: grid; gap: 0.6rem; }
+    .links-tools-history li { border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.6rem 0.75rem; display: flex; flex-direction: column; gap: 0.25rem; }
+    .links-tools-history small { color: #64748b; }
+    .links-tools-copy-row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+    .links-tools-meta { display: grid; gap: 0.35rem; margin-top: 0.4rem; }
+    .links-tools-meta span { font-family: monospace; font-size: 0.85rem; }
+    .links-tools-status { font-size: 0.85rem; }
+</style>
+
+<div class="links-tools-grid">
+    <section class="links-tools-card">
+        <h3>Sign a link</h3>
+        <p class="links-tools-help">Signs the URL using the same algorithm as the CLI. Generated links target <code>/goto</code> on the configured hostname.</p>
+        {{ if .SignError }}<p class="links-tools-error">{{ .SignError }}</p>{{ end }}
+        <form method="post" id="sign-form" data-signed-url="{{ .SignOutputURL }}" data-signed-sig="{{ .SignOutputSig }}" data-signed-ts="{{ .SignOutputTS }}">
+            {{ csrfField }}
+            <input type="hidden" name="action" value="sign">
+            <div class="links-tools-field">
+                <label for="sign-url">Destination URL</label>
+                <input type="text" id="sign-url" name="sign_url" value="{{ .SignURL }}" placeholder="https://example.com/path?ref=admin">
+                <span class="links-tools-status" id="sign-url-status"></span>
+            </div>
+            <div class="links-tools-field">
+                <label for="sign-duration">Expiry duration</label>
+                <div class="links-tools-row">
+                    <input type="text" id="sign-duration" name="sign_duration" value="{{ .SignDuration }}" placeholder="24h">
+                    <label><input type="checkbox" id="sign-no-expiry" name="sign_no_expiry" {{ if .SignNoExpiry }}checked{{ end }}> No expiry</label>
+                </div>
+                <span class="links-tools-status" id="sign-duration-status"></span>
+            </div>
+            <div class="links-tools-actions">
+                <button class="links-tools-btn" type="submit">Sign URL</button>
+                <button class="links-tools-btn ghost" type="reset" id="sign-reset">Reset</button>
+            </div>
+            <div class="links-tools-meta">
+                <div class="links-tools-field">
+                    <label for="sign-output-url">Signed URL</label>
+                    <textarea id="sign-output-url" readonly>{{ .SignOutputURL }}</textarea>
+                    <div class="links-tools-copy-row">
+                        <button class="links-tools-btn secondary" type="button" data-copy="#sign-output-url">Copy URL</button>
+                        <button class="links-tools-btn ghost" type="button" data-use-signature>Use in Verify</button>
+                    </div>
+                </div>
+                <div class="links-tools-field">
+                    <label for="sign-output-sig">Signature</label>
+                    <input type="text" id="sign-output-sig" readonly value="{{ .SignOutputSig }}">
+                    <div class="links-tools-copy-row">
+                        <button class="links-tools-btn secondary" type="button" data-copy="#sign-output-sig">Copy signature</button>
+                    </div>
+                </div>
+                <div class="links-tools-field">
+                    <label for="sign-output-ts">Timestamp</label>
+                    <input type="text" id="sign-output-ts" readonly value="{{ .SignOutputTS }}">
+                    <div class="links-tools-copy-row">
+                        <button class="links-tools-btn secondary" type="button" data-copy="#sign-output-ts">Copy timestamp</button>
+                    </div>
+                    <span class="links-tools-help">Empty when "No expiry" is selected.</span>
+                </div>
+            </div>
+        </form>
+    </section>
+
+    <section class="links-tools-card">
+        <h3>Verify a link</h3>
+        <p class="links-tools-help">Verify a signature against the raw URL and optional timestamp.</p>
+        {{ if .VerifyError }}<p class="links-tools-error">{{ .VerifyError }}</p>{{ end }}
+        <form method="post" id="verify-form">
+            {{ csrfField }}
+            <input type="hidden" name="action" value="verify">
+            <div class="links-tools-field">
+                <label for="verify-url">URL to verify</label>
+                <input type="text" id="verify-url" name="verify_url" value="{{ .VerifyURL }}" placeholder="https://example.com/path?ref=admin">
+                <span class="links-tools-status" id="verify-url-status"></span>
+            </div>
+            <div class="links-tools-field">
+                <label for="verify-sig">Signature</label>
+                <input type="text" id="verify-sig" name="verify_sig" value="{{ .VerifySig }}" placeholder="hex signature">
+                <span class="links-tools-status" id="verify-sig-status"></span>
+            </div>
+            <div class="links-tools-field">
+                <label for="verify-ts">Timestamp (optional)</label>
+                <input type="text" id="verify-ts" name="verify_ts" value="{{ .VerifyTS }}" placeholder="unix timestamp">
+                <span class="links-tools-status" id="verify-ts-status"></span>
+            </div>
+            <div class="links-tools-actions">
+                <button class="links-tools-btn" type="submit">Verify Signature</button>
+                <button class="links-tools-btn ghost" type="reset" id="verify-reset">Reset</button>
+                {{ if .VerifyResult }}
+                <span class="links-tools-badge {{ if eq .VerifyResult "valid" }}ok{{ else }}warn{{ end }}">{{ .VerifyResult }}</span>
+                {{ end }}
+            </div>
+        </form>
+    </section>
+
+    <section class="links-tools-card">
+        <h3>Recent signed URLs</h3>
+        <p class="links-tools-help">Stored only in your browser session.</p>
+        <ul class="links-tools-history" id="signed-history"></ul>
+        <div class="links-tools-actions">
+            <button class="links-tools-btn ghost" type="button" id="history-clear">Clear history</button>
+        </div>
+    </section>
+</div>
+
+<script>
+    (function () {
+        const historyKey = "admin-links-tools-history"
+        const historyList = document.getElementById("signed-history")
+        const signForm = document.getElementById("sign-form")
+        const signUrl = document.getElementById("sign-url")
+        const signDuration = document.getElementById("sign-duration")
+        const signNoExpiry = document.getElementById("sign-no-expiry")
+        const verifyUrl = document.getElementById("verify-url")
+        const verifySig = document.getElementById("verify-sig")
+        const verifyTs = document.getElementById("verify-ts")
+
+        const statusMap = {
+            signUrl: document.getElementById("sign-url-status"),
+            signDuration: document.getElementById("sign-duration-status"),
+            verifyUrl: document.getElementById("verify-url-status"),
+            verifySig: document.getElementById("verify-sig-status"),
+            verifyTs: document.getElementById("verify-ts-status"),
+        }
+
+        const setStatus = (el, text, ok) => {
+            if (!el) return
+            el.textContent = text
+            el.classList.toggle("links-tools-badge", true)
+            el.classList.toggle("ok", ok)
+            el.classList.toggle("warn", !ok)
+        }
+
+        const isURLLike = (value) => {
+            if (!value) return false
+            if (value.startsWith("/")) return true
+            try {
+                const parsed = new URL(value)
+                return parsed.protocol === "http:" || parsed.protocol === "https:"
+            } catch (e) {
+                return false
+            }
+        }
+
+        const isDurationLike = (value) => {
+            if (!value) return false
+            return /^[0-9]+(ns|us|µs|ms|s|m|h)$/.test(value.trim())
+        }
+
+        const validate = () => {
+            setStatus(statusMap.signUrl, isURLLike(signUrl.value) ? "URL looks good" : "Enter a valid URL or path", isURLLike(signUrl.value))
+            const durationValid = signNoExpiry.checked || isDurationLike(signDuration.value)
+            setStatus(statusMap.signDuration, durationValid ? "Duration looks good" : "Use Go-style duration (e.g. 24h)", durationValid)
+            setStatus(statusMap.verifyUrl, isURLLike(verifyUrl.value) ? "URL looks good" : "Enter a valid URL or path", isURLLike(verifyUrl.value))
+            setStatus(statusMap.verifySig, verifySig.value.length >= 10 ? "Signature looks valid" : "Signature should be a hex string", verifySig.value.length >= 10)
+            setStatus(statusMap.verifyTs, !verifyTs.value || /^[0-9]+$/.test(verifyTs.value) ? "Timestamp ok" : "Timestamp should be a unix integer", !verifyTs.value || /^[0-9]+$/.test(verifyTs.value))
+        }
+
+        const loadHistory = () => {
+            try {
+                const raw = sessionStorage.getItem(historyKey)
+                return raw ? JSON.parse(raw) : []
+            } catch (e) {
+                return []
+            }
+        }
+
+        const saveHistory = (items) => {
+            sessionStorage.setItem(historyKey, JSON.stringify(items))
+        }
+
+        const renderHistory = (items) => {
+            historyList.innerHTML = ""
+            if (!items.length) {
+                historyList.innerHTML = "<li><small>No signed URLs yet.</small></li>"
+                return
+            }
+            items.forEach((item) => {
+                const li = document.createElement("li")
+                li.innerHTML = `<strong>${item.url}</strong><small>Signed ${item.signedAt}</small>`
+                const copyRow = document.createElement("div")
+                copyRow.className = "links-tools-copy-row"
+                const copyBtn = document.createElement("button")
+                copyBtn.type = "button"
+                copyBtn.className = "links-tools-btn ghost"
+                copyBtn.textContent = "Copy"
+                copyBtn.addEventListener("click", () => copyToClipboard(item.url, copyBtn))
+                copyRow.appendChild(copyBtn)
+                li.appendChild(copyRow)
+                historyList.appendChild(li)
+            })
+        }
+
+        const copyToClipboard = (value, button) => {
+            if (!value) return
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(value).then(() => {
+                    if (button) button.textContent = "Copied!"
+                    setTimeout(() => { if (button) button.textContent = "Copy" }, 1500)
+                })
+            } else {
+                const temp = document.createElement("textarea")
+                temp.value = value
+                document.body.appendChild(temp)
+                temp.select()
+                document.execCommand("copy")
+                document.body.removeChild(temp)
+            }
+        }
+
+        document.querySelectorAll("[data-copy]").forEach((btn) => {
+            btn.addEventListener("click", () => {
+                const target = document.querySelector(btn.getAttribute("data-copy"))
+                copyToClipboard(target ? target.value : "", btn)
+            })
+        })
+
+        const useSignatureBtn = document.querySelector("[data-use-signature]")
+        if (useSignatureBtn) {
+            useSignatureBtn.addEventListener("click", () => {
+                verifyUrl.value = signForm.dataset.signedUrl || ""
+                verifySig.value = signForm.dataset.signedSig || ""
+                verifyTs.value = signForm.dataset.signedTs || ""
+                validate()
+            })
+        }
+
+        const signedURL = signForm.dataset.signedUrl
+        if (signedURL) {
+            const history = loadHistory()
+            const now = new Date().toLocaleString()
+            const next = [{ url: signedURL, signedAt: now }, ...history.filter(item => item.url !== signedURL)].slice(0, 6)
+            saveHistory(next)
+        }
+
+        renderHistory(loadHistory())
+        validate()
+
+        signUrl.addEventListener("input", validate)
+        signDuration.addEventListener("input", validate)
+        signNoExpiry.addEventListener("change", validate)
+        verifyUrl.addEventListener("input", validate)
+        verifySig.addEventListener("input", validate)
+        verifyTs.addEventListener("input", validate)
+
+        document.getElementById("history-clear").addEventListener("click", () => {
+            saveHistory([])
+            renderHistory([])
+        })
+    })()
+</script>
+{{ template "tail" $ }}

@@ -8,7 +8,7 @@ interface for interacting with the live server process.
 Commands:
   shutdown  Gracefully stop the running server, with options for specifying a
             timeout and shutdown mode.
-  status    Check the status of the running server.
+  stats     Print server runtime statistics in table or JSON format.
 
 Examples:
   # Gracefully shut down the server with a 5-second timeout
@@ -17,7 +17,7 @@ Examples:
   # Shut down only the REST API component of the server
   {{.Prog}} server shutdown --mode rest
 
-  # Check the status of the server
-  {{.Prog}} server status
+  # Print server statistics as JSON
+  {{.Prog}} server stats --format json
 
 {{template "flag_groups_section" .FlagGroups}}

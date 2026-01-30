@@ -3,11 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"time"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	"github.com/arran4/goa4web/internal/sign"
+	"github.com/arran4/goa4web/internal/sign/signutil"
 )
 
 // shareSignCmd implements "share sign".
@@ -42,16 +41,7 @@ func (c *shareSignCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("share sign secret: %w", err)
 	}
-	var ops []sign.SignOption
-	if !c.NoExpiry {
-		d, err := time.ParseDuration(c.Duration)
-		if err != nil {
-			return fmt.Errorf("parse duration: %w", err)
-		}
-		ops = append(ops, sign.WithExpiry(time.Now().Add(d)))
-	}
-	sig := sign.Sign(c.url, key, ops...)
-	signed, err := sign.AddPathSig(c.url, sig, ops...)
+	signed, err := signutil.SignSharePath(c.url, key, c.Duration, c.NoExpiry)
 	if err != nil {
 		return fmt.Errorf("sign url: %w", err)
 	}

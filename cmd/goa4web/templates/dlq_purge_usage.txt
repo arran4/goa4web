@@ -1,0 +1,12 @@
+Usage:
+  {{.Prog}} dlq purge [flags]
+
+Flags:
+  --before  purge entries before this date (YYYY-MM-DD)
+  --json    machine-readable JSON output
+
+Examples:
+  {{.Prog}} dlq purge --before 2024-01-01
+  {{.Prog}} dlq purge --json
+
+{{template "flag_groups_section" .FlagGroups}}

@@ -1,0 +1,15 @@
+Usage:
+  {{.Prog}} usage stats [flags]
+
+The usage stats command reports activity counts across forum, writing,
+linker, imageboard, and user content. Monthly sections can be limited to
+specific reporting windows using --since and --until.
+
+Examples:
+  # Show a table of all usage stats
+  {{.Prog}} usage stats
+
+  # Show JSON output for a specific reporting window
+  {{.Prog}} usage stats --format json --since 2024-01-01 --until 2024-06-30
+
+{{template "flag_groups_section" .FlagGroups}}

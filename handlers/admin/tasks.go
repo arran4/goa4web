@@ -251,6 +251,12 @@ const (
 	// TaskPurgeRead removes old read notifications.
 	TaskPurgeRead tasks.TaskString = "Purge read"
 
+	// TaskClearExpiredPasswordResets removes expired or verified password resets.
+	TaskClearExpiredPasswordResets tasks.TaskString = "Clear expired password resets"
+
+	// TaskClearUserPasswordResets removes password reset requests for a user.
+	TaskClearUserPasswordResets tasks.TaskString = "Clear user password resets"
+
 	// TaskUpdate updates an existing item.
 	TaskUpdate tasks.TaskString = "Update"
 

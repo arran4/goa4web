@@ -91,7 +91,11 @@ func (c *userPasswordListCmd) Run() error {
 		return err
 	}
 
-	count, err := queries.AdminCountPasswordResets(ctx, db.AdminCountPasswordResetsParams{Status: statusFilter})
+	count, err := queries.AdminCountPasswordResets(ctx, db.AdminCountPasswordResetsParams{
+		Status:        statusFilter,
+		UserID:        sql.NullInt32{},
+		CreatedBefore: sql.NullTime{},
+	})
 	if err != nil {
 		return fmt.Errorf("count password resets: %w", err)
 	}
@@ -105,9 +109,11 @@ func (c *userPasswordListCmd) Run() error {
 	}
 
 	rows, err := queries.AdminListPasswordResets(ctx, db.AdminListPasswordResetsParams{
-		Status: statusFilter,
-		Limit:  int32(limit),
-		Offset: 0,
+		Status:        statusFilter,
+		UserID:        sql.NullInt32{},
+		CreatedBefore: sql.NullTime{},
+		Limit:         int32(limit),
+		Offset:        0,
 	})
 	if err != nil {
 		return fmt.Errorf("list password resets: %w", err)

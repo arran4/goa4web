@@ -94,6 +94,8 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, cfg *config.RuntimeConfig, nav
 	ar.HandleFunc("/request/{request}/accept", handlers.TaskHandler(acceptRequestTask)).Methods("POST").MatcherFunc(acceptRequestTask.Matcher())
 	ar.HandleFunc("/request/{request}/reject", handlers.TaskHandler(rejectRequestTask)).Methods("POST").MatcherFunc(rejectRequestTask.Matcher())
 	ar.HandleFunc("/request/{request}/query", handlers.TaskHandler(queryRequestTask)).Methods("POST").MatcherFunc(queryRequestTask.Matcher())
+	ar.HandleFunc("/password_resets", handlers.TaskHandler(clearExpiredPasswordResetsTask)).Methods("POST").MatcherFunc(clearExpiredPasswordResetsTask.Matcher())
+	ar.HandleFunc("/password_resets", handlers.TaskHandler(clearUserPasswordResetsTask)).Methods("POST").MatcherFunc(clearUserPasswordResetsTask.Matcher())
 	ar.HandleFunc("/password_resets", adminPasswordResetListPage).Methods("GET", "POST")
 	ar.HandleFunc("/user", adminUserListPage).Methods("GET")
 	ar.HandleFunc("/user/{user}", adminUserProfilePage).Methods("GET")

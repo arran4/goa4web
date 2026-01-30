@@ -422,10 +422,10 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 		cfg.PageSizeDefault = cfg.PageSizeMax
 	}
 	if cfg.ImageUploadDir == "" {
-		cfg.ImageUploadDir = filepath.Join(defaultDataDir(), "images")
+		cfg.ImageUploadDir = filepath.Join(DefaultDataDir(), "images")
 	}
 	if cfg.ImageCacheDir == "" {
-		cfg.ImageCacheDir = defaultCacheDir()
+		cfg.ImageCacheDir = DefaultCacheDir()
 	}
 	if cfg.ImageMaxBytes == 0 {
 		cfg.ImageMaxBytes = 50 * 1024 * 1024

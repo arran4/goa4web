@@ -54,6 +54,7 @@ Commands:
           reset requests.
   email   Manage emails. This includes sending and managing email
           notifications.
+  dlq     Manage dead letter queue entries.
   requests Manage admin request queue actions such as listing, accepting,
           rejecting, and commenting on requests.
   config  Manage configuration. This allows you to view and modify the

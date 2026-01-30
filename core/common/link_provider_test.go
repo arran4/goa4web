@@ -94,10 +94,10 @@ func TestRenderLink_RoutesThroughGoto(t *testing.T) {
 				assert.NotContains(t, full, tt.wantNotContains)
 			}
 
-            // Also check that it is properly signed if it contains goto
-            if strings.Contains(full, "/goto?") {
-                assert.Contains(t, full, "&sig=")
-            }
+			// Also check that it is properly signed if it contains goto
+			if strings.Contains(full, "/goto?") {
+				assert.Contains(t, full, "&sig=")
+			}
 		})
 	}
 }

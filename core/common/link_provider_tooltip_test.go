@@ -58,7 +58,7 @@ func TestRenderLink_Tooltips(t *testing.T) {
 			name:             "Inline + No User Title + Data",
 			rawURL:           "http://example.com/data",
 			isBlock:          false,
-			isImmediateClose: true, // No user title
+			isImmediateClose: true,                        // No user title
 			wantTitleAttr:    "DB Title - DB Description", // Changed expectation: should show full details in tooltip
 			wantText:         "DB Title",
 		},

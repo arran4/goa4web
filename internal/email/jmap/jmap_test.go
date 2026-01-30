@@ -121,7 +121,7 @@ func TestResolveJMAPSettings(t *testing.T) {
 		EmailJMAPDiscoveryRetries: 1,
 		EmailJMAPEndpointOverride: "https://override.com/api",
 	}
-	acc, id, ep, err = resolveJMAPSettings(context.Background(), httpClient, overrideCfg, server.URL)
+	_, _, ep, err = resolveJMAPSettings(context.Background(), httpClient, overrideCfg, server.URL)
 	if err != nil {
 		t.Fatalf("Expected no error with override, got %v", err)
 	}

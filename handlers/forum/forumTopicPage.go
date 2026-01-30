@@ -105,7 +105,6 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 			displayTitle = strings.Join(names, ", ")
 		}
 	}
-	cd.PageTitle = fmt.Sprintf("Forum - %s", displayTitle)
 	data.Topic = &ForumtopicPlus{
 		Idforumtopic:                 topicRow.Idforumtopic,
 		Lastposter:                   topicRow.Lastposter,
@@ -133,6 +132,19 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 			data.Category = category
 		}
 	}
+
+	var titleParts []string
+	titleParts = append(titleParts, displayTitle)
+
+	if topicRow.Handler != "private" {
+		if data.Category != nil && data.Category.Title.Valid {
+			titleParts = append(titleParts, data.Category.Title.String)
+		}
+		titleParts = append(titleParts, "Forum")
+	} else {
+		titleParts = append(titleParts, "Private Forum")
+	}
+	cd.PageTitle = strings.Join(titleParts, " - ")
 
 	threadRows, err := cd.ForumThreads(int32(topicId))
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {

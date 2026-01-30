@@ -66,6 +66,15 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
+
+	if _, ok := core.GetSessionOrFail(w, r); !ok {
+		return
+	}
+	commentRows, err := cd.SelectedThreadComments()
+	if err != nil {
+		log.Printf("thread comments: %v", err)
+	}
+
 	displayTitle := topicRow.Title.String
 	if topicRow.Handler == "private" && cd.Queries() != nil {
 		parts, err := cd.Queries().ListPrivateTopicParticipantsByTopicIDForUser(r.Context(), db.ListPrivateTopicParticipantsByTopicIDForUserParams{
@@ -85,7 +94,24 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 			displayTitle = strings.Join(names, ", ")
 		}
 	}
-	cd.PageTitle = fmt.Sprintf("Forum - %s", displayTitle)
+
+	var titleParts []string
+	if len(commentRows) > 0 && offset == 0 {
+		if prefix := a4code.SnipTextWords(commentRows[0].Text.String, 5); prefix != "" {
+			titleParts = append(titleParts, prefix)
+		}
+	}
+	titleParts = append(titleParts, displayTitle)
+
+	if topicRow.Handler != "private" {
+		if cat, err := cd.ForumCategory(topicRow.ForumcategoryIdforumcategory); err == nil && cat != nil && cat.Title.Valid {
+			titleParts = append(titleParts, cat.Title.String)
+		}
+		titleParts = append(titleParts, "Forum")
+	} else {
+		titleParts = append(titleParts, "Private Forum")
+	}
+	cd.PageTitle = strings.Join(titleParts, " - ")
 
 	imageURL, _ := share.MakeImageURL(cd.AbsoluteURL(), displayTitle, "A discussion on our forum.", cd.ShareSignKey, false)
 	cd.OpenGraph = &common.OpenGraph{
@@ -99,13 +125,6 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		Type:        "article",
 	}
 
-	if _, ok := core.GetSessionOrFail(w, r); !ok {
-		return
-	}
-	commentRows, err := cd.SelectedThreadComments()
-	if err != nil {
-		log.Printf("thread comments: %v", err)
-	}
 	if len(commentRows) > 0 {
 		cd.OpenGraph.Description = a4code.SnipText(commentRows[0].Text.String, 128)
 	}

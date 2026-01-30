@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"regexp"
 	"strconv"
 
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/gorilla/mux"
 
+	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/common"
 
 	"github.com/arran4/goa4web/handlers"
@@ -248,16 +250,33 @@ func userNotificationOpenPage(w http.ResponseWriter, r *http.Request) {
 	if n.Link.Valid {
 		redirectURL = n.Link.String
 	}
+
+	replyPreview := ""
+	if redirectURL != "" {
+		if re := regexp.MustCompile(`#c(\d+)$`); re.MatchString(redirectURL) {
+			matches := re.FindStringSubmatch(redirectURL)
+			if len(matches) > 1 {
+				if cid, err := strconv.Atoi(matches[1]); err == nil {
+					if cmt, err := cd.CommentByID(int32(cid)); err == nil && cmt != nil && cmt.Text.Valid {
+						replyPreview = a4code.SnipTextWords(cmt.Text.String, 20)
+					}
+				}
+			}
+		}
+	}
+
 	data := struct {
 		Request      *http.Request
 		Notification *db.Notification
 		RedirectURL  string
 		TaskName     string
+		ReplyPreview string
 	}{
 		Request:      r,
 		Notification: n,
 		RedirectURL:  redirectURL,
 		TaskName:     string(TaskDismiss),
+		ReplyPreview: replyPreview,
 	}
 	UserNotificationOpenPage.Handle(w, r, data)
 }

@@ -2,6 +2,7 @@ package a4code2html
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/google/go-cmp/cmp"
 	"io"
 	"testing"
@@ -272,23 +273,79 @@ func TestHrTag(t *testing.T) {
 	}
 }
 
+// legacyTestLinkProvider implements LinkProvider to simulate the old MetadataProvider logic for tests
+type legacyTestLinkProvider struct {
+	metadata map[string]struct {
+		Title       string
+		Description string
+		ImageURL    string
+	}
+}
+
+func (p *legacyTestLinkProvider) RenderLink(url string, isBlock bool, isImmediateClose bool) (string, string, bool) {
+	safe, ok := SanitizeURL(url)
+	if !ok {
+		return url, "", false
+	}
+	meta, hasMeta := p.metadata[url]
+	if isBlock && hasMeta {
+		// Render Card
+		imageHTML := ""
+		if meta.ImageURL != "" {
+			safeImg, imgOk := SanitizeURL(meta.ImageURL)
+			if imgOk {
+				imageHTML = fmt.Sprintf("<img src=\"%s\" class=\"external-link-image\" />", safeImg)
+			}
+		}
+
+		if isImmediateClose {
+			// Complex Card: Title and Description from Metadata
+			return fmt.Sprintf(
+				"<div class=\"external-link-card\"><a href=\"%s\" target=\"_blank\" class=\"external-link-card-inner\">%s<div class=\"external-link-content\"><div class=\"external-link-title\">%s</div><div class=\"external-link-description\">%s</div></div></a></div>",
+				safe, imageHTML, meta.Title, meta.Description), "", true
+		} else {
+			// Simple Card: Title from user provided text (consumed later)
+			return fmt.Sprintf(
+				"<div class=\"external-link-card\"><a href=\"%s\" target=\"_blank\" class=\"external-link-card-inner\">%s<div class=\"external-link-content\"><div class=\"external-link-title\">",
+				safe, imageHTML), "</div></div></a></div>", false
+		}
+	}
+
+	// Inline Link or Block fallback (no metadata)
+	if isImmediateClose {
+		text := url
+		if hasMeta && meta.Title != "" {
+			text = meta.Title
+		}
+		// Return consumeImmediate=false so the parser handles the closing ] and subsequent newline
+		return fmt.Sprintf("<a href=\"%s\" target=\"_blank\">%s", safe, text), "</a>", false
+	}
+
+	return fmt.Sprintf("<a href=\"%s\" target=\"_blank\">", safe), "</a>", false
+}
+
+func (p *legacyTestLinkProvider) MapImageURL(tag, val string) string {
+	return val
+}
+
 func TestExternalLinkCard(t *testing.T) {
-	provider := func(u string) *LinkMetadata {
-		if u == "http://example.com/card" {
-			return &LinkMetadata{
+	provider := &legacyTestLinkProvider{
+		metadata: map[string]struct {
+			Title       string
+			Description string
+			ImageURL    string
+		}{
+			"http://example.com/card": {
 				Title:       "Example Title",
 				Description: "Example Description",
 				ImageURL:    "http://example.com/image.jpg",
-			}
-		}
-		if u == "http://example.com/simple" {
-			return &LinkMetadata{
+			},
+			"http://example.com/simple": {
 				Title:       "Simple Title",
 				Description: "Simple Description",
 				ImageURL:    "http://example.com/image.jpg",
-			}
-		}
-		return nil
+			},
+		},
 	}
 
 	tests := []struct {
@@ -336,7 +393,7 @@ func TestExternalLinkCard(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := New(LinkMetadataProvider(provider))
+			c := New(LinkProvider(provider))
 			c.SetInput(tt.input)
 			gotBytes, _ := io.ReadAll(c.Process())
 			got := string(gotBytes)
@@ -344,5 +401,49 @@ func TestExternalLinkCard(t *testing.T) {
 				t.Errorf("%s: diff\n%s", tt.name, diff)
 			}
 		})
+	}
+}
+
+type mockProvider struct{}
+
+func (m *mockProvider) RenderLink(url string, isBlock bool, isImmediateClose bool) (string, string, bool) {
+	if url == "http://custom.com" {
+		return "<custom-link>", "", true
+	}
+	if isBlock {
+		return "<block-link>", "</block-link>", false
+	}
+	return "<inline-link>", "</inline-link>", false
+}
+
+func (m *mockProvider) MapImageURL(tag, val string) string {
+	return "mapped:" + val
+}
+
+func TestLinkProvider(t *testing.T) {
+	c := New(&mockProvider{})
+
+	// Case 1: Custom handling (consumed immediate)
+	c.SetInput("[link http://custom.com]")
+	got, _ := io.ReadAll(c.Process())
+	want := "<custom-link>"
+	if string(got) != want {
+		t.Errorf("got %q want %q", string(got), want)
+	}
+
+	// Case 2: Block link
+	c.SetInput("[link http://other.com]\n")
+	got, _ = io.ReadAll(c.Process())
+	want = "<block-link></block-link><br />\n"
+	if string(got) != want {
+		t.Errorf("got %q want %q", string(got), want)
+	}
+
+	// Case 3: Image mapping
+	c.SetInput("[img foo.jpg]")
+	got, _ = io.ReadAll(c.Process())
+	want = "<img class=\"a4code-image\" src=\"mapped:foo.jpg\" />"
+	if string(got) != want {
+		t.Errorf("got %q want %q", string(got), want)
 	}
 }

@@ -87,6 +87,7 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, cfg *config.RuntimeConfig, nav
 	ar.HandleFunc("/email/queue", AdminEmailQueuePage).Methods("GET")
 	ar.HandleFunc("/email/failed", AdminFailedEmailsPage).Methods("GET")
 	ar.HandleFunc("/email/sent", AdminSentEmailsPage).Methods("GET")
+	ar.HandleFunc("/email/failed", handlers.TaskHandler(resendQueueTask)).Methods("POST").MatcherFunc(resendQueueTask.Matcher())
 	ar.HandleFunc("/email/sent", handlers.TaskHandler(resendSentEmailTask)).Methods("POST").MatcherFunc(resendSentEmailTask.Matcher())
 	ar.HandleFunc("/email/sent", handlers.TaskHandler(retrySentEmailTask)).Methods("POST").MatcherFunc(retrySentEmailTask.Matcher())
 	ar.HandleFunc("/email/test", h.AdminEmailTestPage).Methods("GET", "POST")

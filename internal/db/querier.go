@@ -158,6 +158,8 @@ type Querier interface {
 	AdminListExternalLinks(ctx context.Context, arg AdminListExternalLinksParams) ([]*ExternalLink, error)
 	AdminListFAQCategories(ctx context.Context) ([]*FaqCategory, error)
 	// admin task
+	AdminListFailedEmailIDs(ctx context.Context, arg AdminListFailedEmailIDsParams) ([]int32, error)
+	// admin task
 	AdminListFailedEmails(ctx context.Context, arg AdminListFailedEmailsParams) ([]*AdminListFailedEmailsRow, error)
 	AdminListForumCategoriesWithCounts(ctx context.Context, arg AdminListForumCategoriesWithCountsParams) ([]*AdminListForumCategoriesWithCountsRow, error)
 	AdminListForumThreadGrantsByThreadID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListForumThreadGrantsByThreadIDRow, error)
@@ -194,6 +196,8 @@ type Querier interface {
 	AdminListRoles(ctx context.Context) ([]*Role, error)
 	// admin task
 	AdminListRolesWithUsers(ctx context.Context) ([]*AdminListRolesWithUsersRow, error)
+	// admin task
+	AdminListSentEmailIDs(ctx context.Context, arg AdminListSentEmailIDsParams) ([]int32, error)
 	// admin task
 	AdminListSentEmails(ctx context.Context, arg AdminListSentEmailsParams) ([]*AdminListSentEmailsRow, error)
 	AdminListSessions(ctx context.Context) ([]*AdminListSessionsRow, error)

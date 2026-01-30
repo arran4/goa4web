@@ -449,10 +449,13 @@ docker run -p 8080:8080 \
 **Note**: The example above assumes a MySQL database is accessible from the container. `host.docker.internal` is used to reach the host machine on some Docker installations. For a self-contained setup including a database, see the Docker Compose section.
 
 Setting `GOA4WEB_DOCKER=1` tells the application to store generated secret files
-such as `session_secret` under `/var/lib/goa4web`. Mount this directory as a
-volume to keep the secrets across container restarts. The container runs as the
-unprivileged `goa4web` user (UID 65532), so ensure any mounted directories such
-as `/data` or `/var/lib/goa4web` are writable by that UID on the host.
+such as `session_secret` under `/var/lib/goa4web`, and sets default storage paths
+to `/var/lib/goa4web/images` (uploads) and `/var/cache/goa4web/thumbnails` (cache).
+Mount `/var/lib/goa4web` as a volume to persist secrets and images across container restarts.
+The container runs as the unprivileged `goa4web` user (UID 65532), so ensure any mounted directories
+are writable by that UID on the host.
+
+Existing users who wish to preserve their custom paths can explicitly set `IMAGE_UPLOAD_DIR` and `IMAGE_CACHE_DIR`.
 
 ### Docker Compose
 
@@ -479,17 +482,16 @@ services:
       DB_DRIVER: mysql
       DB_CONN: root:changeme@tcp(db:3306)/goa4web?parseTime=true
       AUTO_MIGRATE: "true"
-      IMAGE_UPLOAD_DIR: /data/imagebbs
     volumes:
-      - app-images:/data/imagebbs
       - app-data:/var/lib/goa4web
+      - app-cache:/var/cache/goa4web
     depends_on:
       - db
 
 volumes:
   db-data:
   app-data:
-  app-images:
+  app-cache:
 ```
 
 Save the file as `docker-compose.yaml` and run:

@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -420,10 +421,10 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 		cfg.PageSizeDefault = cfg.PageSizeMax
 	}
 	if cfg.ImageUploadDir == "" {
-		cfg.ImageUploadDir = "uploads/images"
+		cfg.ImageUploadDir = filepath.Join(defaultDataDir(), "images")
 	}
 	if cfg.ImageCacheDir == "" {
-		cfg.ImageCacheDir = "uploads/cache"
+		cfg.ImageCacheDir = defaultCacheDir()
 	}
 	if cfg.ImageMaxBytes == 0 {
 		cfg.ImageMaxBytes = 50 * 1024 * 1024

@@ -3069,7 +3069,7 @@ func (cd *CoreData) validateImagePathsForUser(userID int32, paths []string) erro
 	}
 	for _, p := range paths {
 		if _, ok := found[p]; !ok {
-			return fmt.Errorf("image not in gallery")
+			return fmt.Errorf("image '%s' not in gallery", p)
 		}
 	}
 	return nil
@@ -3091,6 +3091,11 @@ func (cd *CoreData) validateImagePathsForThread(userID, threadID int32, paths []
 		return nil
 	}
 	if threadID == 0 {
+		for _, p := range paths {
+			if _, ok := found[p]; !ok {
+				return fmt.Errorf("image '%s' not in gallery", p)
+			}
+		}
 		return fmt.Errorf("image not in gallery")
 	}
 	threadFound, err := cd.listThreadImagePathSet(threadID, lookupPaths)
@@ -3104,7 +3109,7 @@ func (cd *CoreData) validateImagePathsForThread(userID, threadID int32, paths []
 		if _, ok := threadFound[p]; ok {
 			continue
 		}
-		return fmt.Errorf("image not in gallery")
+		return fmt.Errorf("image '%s' not in gallery", p)
 	}
 	return nil
 }
@@ -3152,7 +3157,7 @@ func imagePathsFromA4Code(root *a4code.Root) ([]string, error) {
 	for ref := range refs {
 		pathVal, err := imageRefToPath(ref)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("[img %s]: %w", ref, err)
 		}
 		paths = append(paths, pathVal)
 	}
@@ -3246,7 +3251,7 @@ func imageRefToPath(ref string) (string, error) {
 	case strings.HasPrefix(ref, "/imagebbs/images/"):
 		return ref, nil
 	default:
-		return "", fmt.Errorf("image reference not in gallery")
+		return "", fmt.Errorf("image reference '%s' not in gallery", ref)
 	}
 }
 

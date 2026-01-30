@@ -22,7 +22,7 @@
                 {{ .Firstposttext.String | a4code2html }}<br>
             </div>
             <div class="thread-meta">
-                Lastposter: <span class="poster-name last">{{ .Lastposterusername.String }}</span>
+                Lastposter: <span class="poster-name last">{{ if ne .Lastposter cd.UserID }}<strong>{{ .Lastposterusername.String }}</strong>{{ else }}{{ .Lastposterusername.String }}{{ end }}</span>
                 At <span class="post-time last">{{ cd.LocalTime .Lastaddition.Time }}</span>
                 [<a href="{{$base}}/topic/{{.ForumtopicIdforumtopic}}/thread/{{ .Idforumthread }}">
                     {{- .Comments.Int32 }} comments.</a>]{{" "}}

@@ -52,6 +52,16 @@
         </label>
         <input type="submit" value="Save Settings">
     </form>
+    <form method="post" action="/usr/notifications" style="display:inline;">
+        {{ csrfField }}
+        <input type="hidden" name="task" value="SendDigestPreview">
+        <input type="submit" value="Send Preview Now">
+    </form>
+    <form method="post" action="/usr/notifications" style="display:inline;">
+        {{ csrfField }}
+        <input type="hidden" name="task" value="SendDigestNow">
+        <input type="submit" value="Send Now">
+    </form>
 </fieldset>
 {{ if cd.FeedsEnabled }}
     <p>Feeds: <a href="{{ cd.RSSFeedURL }}">RSS</a> | <a href="{{ cd.AtomFeedURL }}">Atom</a></p>

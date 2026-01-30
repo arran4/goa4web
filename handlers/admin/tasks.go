@@ -78,6 +78,12 @@ const (
 	// TaskDeactivate moves an item to the deactivated store.
 	TaskDeactivate tasks.TaskString = "Deactivate"
 
+	// TaskDBBackup creates and downloads a database backup.
+	TaskDBBackup tasks.TaskString = "Database backup"
+
+	// TaskDBRestore restores the database from a backup.
+	TaskDBRestore tasks.TaskString = "Database restore"
+
 	// TaskActivate restores a previously deactivated item.
 	TaskActivate tasks.TaskString = "Activate"
 

@@ -6,8 +6,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -18,9 +16,10 @@ import (
 
 	"github.com/arran4/goa4web/handlers"
 
-	"github.com/arran4/goa4web/internal/dlq"
 	dirdlq "github.com/arran4/goa4web/internal/dlq/dir"
 	filedlq "github.com/arran4/goa4web/internal/dlq/file"
+
+	"github.com/arran4/goa4web/internal/dlq"
 )
 
 // DeleteDLQTask deletes entries from the dead letter queue.
@@ -180,27 +179,26 @@ func (DeleteDLQTask) Action(w http.ResponseWriter, r *http.Request) any {
 			if idStr == "" {
 				continue
 			}
-			if provider == "dir" {
-				if cd.Config.DLQFile != "" {
-					safeName := filepath.Base(idStr)
-					path := filepath.Join(cd.Config.DLQFile, safeName)
-					if err := os.Remove(path); err != nil {
-						log.Printf("failed to remove dlq file %s: %v", path, err)
-					}
-				}
-				continue
+			if provider == "" && cd.Config.DLQProvider == "db" {
+				provider = "db" // default fallback
 			}
-			if provider == "db" || provider == "" {
-				id, _ := strconv.Atoi(idStr)
-				if err := queries.SystemDeleteDeadLetter(r.Context(), int32(id)); err != nil {
-					return fmt.Errorf("delete error %w", handlers.ErrRedirectOnSamePageHandler(err))
-				}
-				if evt := cd.Event(); evt != nil {
-					if evt.Data == nil {
-						evt.Data = map[string]any{}
+			// Use registry to create the provider instance
+			cfg := *cd.Config
+			cfg.DLQProvider = provider
+			inst := cd.DLQReg.ProviderFromConfig(&cfg, queries)
+			if m, ok := inst.(dlq.Manageable); ok {
+				if err := m.Delete(r.Context(), idStr); err != nil {
+					log.Printf("dlq delete failed: %v", err)
+				} else {
+					if evt := cd.Event(); evt != nil {
+						if evt.Data == nil {
+							evt.Data = map[string]any{}
+						}
+						evt.Data["DeletedErrorID"] = appendIDAny(evt.Data["DeletedErrorID"], idStr)
 					}
-					evt.Data["DeletedErrorID"] = appendID(evt.Data["DeletedErrorID"], id)
 				}
+			} else {
+				log.Printf("dlq provider %s is not manageable or unknown", provider)
 			}
 		}
 	case string(TaskPurge):
@@ -247,6 +245,9 @@ func (ReEnlistDLQTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	provider := r.PostFormValue("provider")
+	if provider == "" && cd.Config.DLQProvider == "db" {
+		provider = "db"
+	}
 
 	for _, idStr := range r.Form["id"] {
 		if idStr == "" {
@@ -254,35 +255,17 @@ func (ReEnlistDLQTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 		var msgContent string
 
-		switch provider {
-		case "dir":
-			if cd.Config.DLQFile != "" {
-				safeName := filepath.Base(idStr)
-				path := filepath.Join(cd.Config.DLQFile, safeName)
-				data, err := os.ReadFile(path)
-				if err != nil {
-					return fmt.Errorf("read file error: %w", err)
-				}
-				msgContent = strings.TrimSpace(string(data))
-			}
-		case "db", "":
-			id, _ := strconv.Atoi(idStr)
-			// Poor man's Get
-			rows, err := cd.Queries().SystemListDeadLetters(r.Context(), 1000)
+		cfg := *cd.Config
+		cfg.DLQProvider = provider
+		inst := cd.DLQReg.ProviderFromConfig(&cfg, cd.Queries())
+		if m, ok := inst.(dlq.Manageable); ok {
+			var err error
+			msgContent, err = m.Get(r.Context(), idStr)
 			if err != nil {
-				return fmt.Errorf("list dead letters: %w", err)
+				return fmt.Errorf("get message %s error: %w", idStr, err)
 			}
-			for _, row := range rows {
-				if row.ID == int32(id) {
-					msgContent = row.Message
-					break
-				}
-			}
-			if msgContent == "" {
-				return fmt.Errorf("dead letter not found")
-			}
-		default:
-			return fmt.Errorf("unsupported provider")
+		} else {
+			return fmt.Errorf("dlq provider %s is not manageable", provider)
 		}
 
 		var dlqMsg dlq.Message
@@ -325,4 +308,15 @@ func (ReEnlistDLQTask) Action(w http.ResponseWriter, r *http.Request) any {
 // AuditRecord summarises dead letters being re-enlisted.
 func (ReEnlistDLQTask) AuditRecord(data map[string]any) string {
 	return "re-enlisted dead letter"
+}
+
+func appendIDAny(current any, newID string) string {
+	var s string
+	if current != nil {
+		s = fmt.Sprint(current)
+	}
+	if s != "" {
+		s += ", "
+	}
+	return s + newID
 }

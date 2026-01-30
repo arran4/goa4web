@@ -31,6 +31,30 @@ func (d *DLQ) Record(_ context.Context, message string) error {
 	return os.WriteFile(path, []byte(message+"\n"), 0o644)
 }
 
+// Get reads the message content for the given ID.
+func (d *DLQ) Get(_ context.Context, id string) (string, error) {
+	if d.Dir == "" {
+		return "", os.ErrNotExist
+	}
+	safeName := filepath.Base(id)
+	path := filepath.Join(d.Dir, safeName)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(data)), nil
+}
+
+// Delete removes the message file for the given ID.
+func (d *DLQ) Delete(_ context.Context, id string) error {
+	if d.Dir == "" {
+		return nil
+	}
+	safeName := filepath.Base(id)
+	path := filepath.Join(d.Dir, safeName)
+	return os.Remove(path)
+}
+
 // Register registers the directory provider.
 func Register(r *dlq.Registry) {
 	r.RegisterProvider("dir", func(cfg *config.RuntimeConfig, _ db.Querier) dlq.DLQ {

@@ -28,6 +28,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dbdrivers"
+	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
 	imagesign "github.com/arran4/goa4web/internal/images"
@@ -109,6 +110,7 @@ type CoreData struct {
 	AutoRefresh       string
 	Config            *config.RuntimeConfig
 	CustomIndexItems  []IndexItem
+	DLQReg            *dlq.Registry
 	FeedsEnabled      bool
 
 	// Signing keys for various URL types
@@ -2814,6 +2816,11 @@ func WithFeedSignKey(key string) CoreOption {
 // WithTasksRegistry registers the task registry on CoreData.
 func WithTasksRegistry(r *tasks.Registry) CoreOption {
 	return func(cd *CoreData) { cd.TasksReg = r }
+}
+
+// WithDLQRegistry registers the DLQ registry on CoreData.
+func WithDLQRegistry(r *dlq.Registry) CoreOption {
+	return func(cd *CoreData) { cd.DLQReg = r }
 }
 
 // WithDBRegistry sets the database driver registry for CoreData.

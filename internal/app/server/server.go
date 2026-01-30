@@ -295,6 +295,7 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 		common.WithSessionManager(sm),
 		common.WithNavRegistry(s.Nav),
 		common.WithTasksRegistry(s.TasksReg),
+		common.WithDLQRegistry(s.DLQReg),
 		common.WithDBRegistry(s.DBReg),
 		common.WithEmailRegistry(s.EmailReg),
 		common.WithRouterModules(modules),

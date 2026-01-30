@@ -502,6 +502,12 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("rootCmd.Run: config: %w", err)
 		}
 		return c.Run()
+	case "page-size":
+		c, err := parsePageSizeCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("rootCmd.Run: page-size: %w", err)
+		}
+		return c.Run()
 	case "templates":
 		c, err := parseTemplatesCmd(r, args[1:])
 		if err != nil {

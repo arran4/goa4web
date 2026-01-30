@@ -495,6 +495,11 @@ type QuerierStub struct {
 	GetPrivateTopicThreadsAndLabelsErr     error
 	GetPrivateTopicThreadsAndLabelsFn      func(context.Context, GetPrivateTopicThreadsAndLabelsParams) ([]*GetPrivateTopicThreadsAndLabelsRow, error)
 
+	ListBlogEntriesForListerCalls   []ListBlogEntriesForListerParams
+	ListBlogEntriesForListerReturns []*ListBlogEntriesForListerRow
+	ListBlogEntriesForListerErr     error
+	ListBlogEntriesForListerFn      func(ListBlogEntriesForListerParams) ([]*ListBlogEntriesForListerRow, error)
+
 	ListPrivateTopicParticipantsByTopicIDForUserCalls   []ListPrivateTopicParticipantsByTopicIDForUserParams
 	ListPrivateTopicParticipantsByTopicIDForUserReturns []*ListPrivateTopicParticipantsByTopicIDForUserRow
 	ListPrivateTopicParticipantsByTopicIDForUserErr     error
@@ -1028,6 +1033,19 @@ func (s *QuerierStub) AdminCreateForumCategory(ctx context.Context, arg AdminCre
 	s.mu.Unlock()
 	if fn != nil {
 		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) ListBlogEntriesForLister(ctx context.Context, arg ListBlogEntriesForListerParams) ([]*ListBlogEntriesForListerRow, error) {
+	s.mu.Lock()
+	s.ListBlogEntriesForListerCalls = append(s.ListBlogEntriesForListerCalls, arg)
+	fn := s.ListBlogEntriesForListerFn
+	ret := s.ListBlogEntriesForListerReturns
+	err := s.ListBlogEntriesForListerErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(arg)
 	}
 	return ret, err
 }

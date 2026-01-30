@@ -4,6 +4,7 @@
 <form method="post" action="/usr/subscriptions/update">
     {{ csrfField }}
     {{ range .Groups }}
+    {{ $group := . }}
     <div class="subscription-group">
         <h3>{{ .Name }}</h3>
         <p>{{ .Description }}</p>
@@ -15,6 +16,10 @@
                     <th>Target</th>
                     <th>Internal</th>
                     <th>Email</th>
+                    {{ if .SupportsAutoSubscribe }}
+                    <th>Auto-subscribe Internal</th>
+                    <th>Auto-subscribe Email</th>
+                    {{ end }}
                 </tr>
             </thead>
             <tbody>
@@ -27,7 +32,12 @@
                         {{/* Display parameters nicely */}}
                         {{ if .Parameters }}
                             {{ range .Parameters }}
-                                {{ .Key }}: {{ if .Resolved }}{{ .Resolved }}{{ else }}{{ .Value }}{{ end }}
+                                {{ .Key }}:
+                                {{ if .Link }}
+                                    <a href="{{ .Link }}">{{ if .Resolved }}{{ .Resolved }}{{ else }}{{ .Value }}{{ end }}</a>
+                                {{ else }}
+                                    {{ if .Resolved }}{{ .Resolved }}{{ else }}{{ .Value }}{{ end }}
+                                {{ end }}
                             {{ end }}
                         {{ else }}
                             All
@@ -41,6 +51,16 @@
                         <input type="checkbox" name="subs" value="{{ $pattern }}|email" {{ if .HasMethod "email" }}checked{{ end }}>
                         <input type="hidden" name="presented_subs" value="{{ $pattern }}|email">
                     </td>
+                    {{ if $group.SupportsAutoSubscribe }}
+                    <td>
+                        <input type="checkbox" name="subs" value="{{ $pattern }}|autosub_internal" {{ if .HasMethod "autosub_internal" }}checked{{ end }}>
+                        <input type="hidden" name="presented_subs" value="{{ $pattern }}|autosub_internal">
+                    </td>
+                    <td>
+                        <input type="checkbox" name="subs" value="{{ $pattern }}|autosub_email" {{ if .HasMethod "autosub_email" }}checked{{ end }}>
+                        <input type="hidden" name="presented_subs" value="{{ $pattern }}|autosub_email">
+                    </td>
+                    {{ end }}
                 </tr>
                 {{ end }}
             </tbody>

@@ -325,7 +325,7 @@ func TestForumPageHandlers(t *testing.T) {
 			return &db.GetForumTopicByIdForUserRow{
 				Idforumtopic:                 1,
 				ForumcategoryIdforumcategory: 1,
-				Title:                        sql.NullString{String: "Topic: old is now Private chat with: Bob", Valid: true},
+				Title:                        sql.NullString{String: "Private chat with Bob", Valid: true},
 				Handler:                      "private",
 				Lastaddition:                 sql.NullTime{Time: time.Now(), Valid: true},
 			}, nil
@@ -354,14 +354,15 @@ func TestForumPageHandlers(t *testing.T) {
 		TopicsPage(w, req)
 
 		body := w.Body.String()
-		if strings.Contains(body, "is now Private chat with") {
+		if strings.Contains(body, "Private chat with") {
 			t.Fatalf("unexpected conversion message in output: %q", body)
 		}
 		if strings.Contains(body, "Category:") {
 			t.Fatalf("unexpected category heading: %q", body)
 		}
-		if !strings.Contains(body, "Topic: Bob") {
-			t.Fatalf("expected participant names (Bob, as Alice is viewer), got %q", body)
+		// Expect both Alice and Bob in the title (order may vary)
+		if !strings.Contains(body, "Alice") || !strings.Contains(body, "Bob") {
+			t.Fatalf("expected participant names (Alice, Bob), got %q", body)
 		}
 	})
 

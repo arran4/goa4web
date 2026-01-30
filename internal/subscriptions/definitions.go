@@ -78,6 +78,16 @@ var Definitions = []Definition{
 		Description: "Notify when a new private topic is created",
 		Pattern:     "private topic create:/private/*",
 	},
+	{
+		Name:        "New Threads (Private Topic)",
+		Description: "Notify when a new thread is created in this private topic",
+		Pattern:     "create thread:/private/topic/{topicid}*",
+	},
+	{
+		Name:        "Replies (Private Thread)",
+		Description: "Notify when a reply is posted in this private thread",
+		Pattern:     "reply:/private/topic/{topicid}/thread/{threadid}*",
+	},
 
 	// News
 	{

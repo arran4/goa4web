@@ -92,7 +92,7 @@ func (CreateThreadTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, strin
 		if idx := strings.Index(evt.Path, "/topic/"); idx > 0 {
 			base = evt.Path[:idx]
 		}
-		return string(TaskCreateThread), fmt.Sprintf("%s/topic/%d/thread/%d", base, data.TopicID, data.ThreadID), nil
+		return string(TaskReply), fmt.Sprintf("%s/topic/%d/thread/%d", base, data.TopicID, data.ThreadID), nil
 	}
 	return string(TaskCreateThread), evt.Path, nil
 }

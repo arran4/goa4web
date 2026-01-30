@@ -24,6 +24,7 @@
             </div>
             <div class="form-group">
                 <label for="description-field">Description</label>
+                {{ template "a4codeControls" dict "TargetID" "description-field" }}
                 <textarea name="description" id="description-field" placeholder="Description">{{ .FormData.Description }}</textarea>
             </div>
             <div class="form-actions">

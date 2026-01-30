@@ -25,6 +25,7 @@
             <span class="section-title">New Thread:</span><br>
             <form method="post" action="">
                 {{ csrfField }}
+                {{ template "a4codeControls" dict "TargetID" "reply" }}
                 <textarea id="reply" name="replytext" cols="40" rows="20">{{ .QuoteText }}</textarea><br>
                 {{ template "languageCombobox" }}
                 <div class="label-editor">

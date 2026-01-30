@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"html"
+	"strings"
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
 )
@@ -33,6 +34,11 @@ func (p *Goa4WebLinkProvider) RenderLink(rawURL string, isBlock bool, isImmediat
 		return html.EscapeString(rawURL), "", false
 	}
 
+	targetURL := safe
+	if strings.HasPrefix(rawURL, "http://") || strings.HasPrefix(rawURL, "https://") {
+		targetURL = p.cd.SignLinkURL(rawURL)
+	}
+
 	var title, description, imageURL string
 	var hasData bool
 
@@ -53,7 +59,7 @@ func (p *Goa4WebLinkProvider) RenderLink(rawURL string, isBlock bool, isImmediat
 
 	// Inline + Title + Without data -> No change
 	if !isBlock && hasUserTitle && !hasData {
-		return fmt.Sprintf(`<a href="%s" target="_blank" rel="noopener noreferrer">`, safe), "</a>", false
+		return fmt.Sprintf(`<a href="%s" target="_blank" rel="noopener noreferrer">`, targetURL), "</a>", false
 	}
 
 	// Inline + Title + With data -> Title & Description added as alt text
@@ -62,12 +68,12 @@ func (p *Goa4WebLinkProvider) RenderLink(rawURL string, isBlock bool, isImmediat
 		if description != "" {
 			altText += " - " + description
 		}
-		return fmt.Sprintf(`<a href="%s" target="_blank" rel="noopener noreferrer" title="%s">`, safe, html.EscapeString(altText)), "</a>", false
+		return fmt.Sprintf(`<a href="%s" target="_blank" rel="noopener noreferrer" title="%s">`, targetURL, html.EscapeString(altText)), "</a>", false
 	}
 
 	// Inline + No title + Without data -> URL as link text
 	if !isBlock && !hasUserTitle && !hasData {
-		return fmt.Sprintf(`<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>`, safe, html.EscapeString(rawURL)), "", true
+		return fmt.Sprintf(`<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>`, targetURL, html.EscapeString(rawURL)), "", true
 	}
 
 	// Inline + No title + With data -> Title/Description as text
@@ -84,12 +90,12 @@ func (p *Goa4WebLinkProvider) RenderLink(rawURL string, isBlock bool, isImmediat
 			linkText = rawURL
 		}
 		altText := description
-		return fmt.Sprintf(`<a href="%s" target="_blank" rel="noopener noreferrer" title="%s">%s</a>`, safe, html.EscapeString(altText), html.EscapeString(linkText)), "", true
+		return fmt.Sprintf(`<a href="%s" target="_blank" rel="noopener noreferrer" title="%s">%s</a>`, targetURL, html.EscapeString(altText), html.EscapeString(linkText)), "", true
 	}
 
 	// Online + Title + Without data -> No change
 	if isBlock && hasUserTitle && !hasData {
-		return fmt.Sprintf(`<a href="%s" target="_blank" rel="noopener noreferrer">`, safe), "</a>", false
+		return fmt.Sprintf(`<a href="%s" target="_blank" rel="noopener noreferrer">`, targetURL), "</a>", false
 	}
 
 	// Online + Title + With data -> Title & Description added as alt text
@@ -98,12 +104,12 @@ func (p *Goa4WebLinkProvider) RenderLink(rawURL string, isBlock bool, isImmediat
 		if description != "" {
 			altText += " - " + description
 		}
-		return fmt.Sprintf(`<a href="%s" target="_blank" rel="noopener noreferrer" title="%s">`, safe, html.EscapeString(altText)), "</a>", false
+		return fmt.Sprintf(`<a href="%s" target="_blank" rel="noopener noreferrer" title="%s">`, targetURL, html.EscapeString(altText)), "</a>", false
 	}
 
 	// Online + No title + Without data -> URL as link text
 	if isBlock && !hasUserTitle && !hasData {
-		return fmt.Sprintf(`<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>`, safe, html.EscapeString(rawURL)), "", true
+		return fmt.Sprintf(`<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>`, targetURL, html.EscapeString(rawURL)), "", true
 	}
 
 	// Online + No title + With data -> Link Card

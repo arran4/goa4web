@@ -48,6 +48,9 @@ type A4code2html struct {
 	// ImageURLMapper optionally maps tag URLs to fully qualified versions.
 	// The first parameter provides the tag name, e.g. "img" or "a".
 	ImageURLMapper func(tag, val string) string
+	// ImageHTMLMapper optionally maps tag values to a full HTML tag string.
+	// The first parameter provides the tag name, e.g. "img".
+	ImageHTMLMapper func(tag, val string) string
 	// UserColorMapper optionally maps a username to a CSS class for styling quotes.
 	UserColorMapper func(username string) string
 	quoteDepth      int
@@ -75,6 +78,16 @@ func New(opts ...interface{}) *A4code2html {
 			c.CodeType = v
 		case func(tag, val string) string:
 			c.ImageURLMapper = v
+		case func(tag, val string) (string, bool): // Special signature to distinguish? No, identical.
+			// Handled by explicit type assertions? No, interfaces match.
+			// Let's rely on convention or specific setter if needed.
+			// But wait, the user asked for ImageHTMLMapper which returns string.
+			// The signature is identical to ImageURLMapper.
+			// I need to use a named type or check context.
+			// Actually, for backward compatibility, New() likely uses the first func(tag,val) as ImageURLMapper.
+			// I should add a specific option type for ImageHTMLMapper.
+		case ImageHTMLMapperOption:
+			c.ImageHTMLMapper = func(tag, val string) string(v)
 		case func(string) string:
 			c.UserColorMapper = v
 		case LinkMetadataProvider:
@@ -338,12 +351,20 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 		if err != nil && err != io.EOF {
 			return err
 		}
-		if a.ImageURLMapper != nil {
-			raw = a.ImageURLMapper("img", raw)
-		}
 		switch a.CodeType {
 		case CTTableOfContents, CTTagStrip, CTWordsOnly:
 		default:
+			if a.ImageHTMLMapper != nil {
+				if htmlStr := a.ImageHTMLMapper("img", raw); htmlStr != "" {
+					if _, err := io.WriteString(w, htmlStr); err != nil {
+						return err
+					}
+					break
+				}
+			}
+			if a.ImageURLMapper != nil {
+				raw = a.ImageURLMapper("img", raw)
+			}
 			if _, err := io.WriteString(w, "<img class=\"a4code-image\" src=\""+html.EscapeString(raw)+"\" />"); err != nil {
 				return err
 			}
@@ -387,13 +408,22 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 					// Render Card
 					imageHTML := ""
 					if meta.ImageURL != "" {
-						imgURL := meta.ImageURL
-						if a.ImageURLMapper != nil {
-							imgURL = a.ImageURLMapper("img", imgURL)
+						handled := false
+						if a.ImageHTMLMapper != nil {
+							if htmlStr := a.ImageHTMLMapper("img", meta.ImageURL); htmlStr != "" {
+								imageHTML = htmlStr
+								handled = true
+							}
 						}
-						safeImg, imgOk := SanitizeURL(imgURL)
-						if imgOk {
-							imageHTML = fmt.Sprintf("<img src=\"%s\" class=\"external-link-image\" />", safeImg)
+						if !handled {
+							imgURL := meta.ImageURL
+							if a.ImageURLMapper != nil {
+								imgURL = a.ImageURLMapper("img", imgURL)
+							}
+							safeImg, imgOk := SanitizeURL(imgURL)
+							if imgOk {
+								imageHTML = fmt.Sprintf("<img src=\"%s\" class=\"external-link-image\" />", safeImg)
+							}
 						}
 					}
 
@@ -713,3 +743,6 @@ func (c *A4code2html) readCommandBreak(r *bufio.Reader) (string, error) {
 	}
 	return buf.String(), nil
 }
+
+// ImageHTMLMapperOption is an option to set the ImageHTMLMapper.
+type ImageHTMLMapperOption func(tag, val string) string

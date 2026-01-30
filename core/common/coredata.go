@@ -578,6 +578,7 @@ func (cd *CoreData) BlogList() ([]*db.ListBlogEntriesForListerRow, error) {
 			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 			Limit:    int32(cd.PageSize()),
 			Offset:   int32(cd.blogListOffset),
+			IsAdmin:  cd.IsAdmin(),
 		})
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
@@ -608,6 +609,7 @@ func (cd *CoreData) BlogListForSelectedAuthor() ([]*db.ListBlogEntriesByAuthorFo
 			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 			Limit:    15,
 			Offset:   int32(cd.currentOffset),
+			IsAdmin:  cd.IsAdmin(),
 		})
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {

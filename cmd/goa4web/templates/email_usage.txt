@@ -8,6 +8,7 @@ primary interface for all email-related administrative tasks.
 Commands:
   send     Send a test email.
   queue    Manage the queue of emails waiting to be sent.
+  sent     Inspect and retry sent emails.
   test     Send a test email to check the email configuration.
 
 Examples:
@@ -19,5 +20,8 @@ Examples:
 
   # View the email log
   {{.Prog}} email log
+
+  # List sent emails
+  {{.Prog}} email sent list
 
 {{template "flag_groups_section" .FlagGroups}}

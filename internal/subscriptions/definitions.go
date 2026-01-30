@@ -12,6 +12,8 @@ type Definition struct {
 	Description string
 	Pattern     string
 	IsAdminOnly bool
+	HideIfNone  bool
+	UpgradeTo   string
 }
 
 // Parameter represents a single parameter in a subscription pattern.
@@ -26,6 +28,7 @@ type SubscriptionInstance struct {
 	Parameters []Parameter // List of extracted parameters
 	Methods    []string    // e.g. ["internal", "email"]
 	Original   string      // Original DB pattern string
+	UpgradeTo  string      // If set, this subscription can be upgraded to this pattern
 }
 
 // HasMethod checks if the instance has the given method.
@@ -149,6 +152,8 @@ var Definitions = []Definition{
 		Name:        "Write Reply (Legacy)",
 		Description: "Notify when a reply is written (Legacy)",
 		Pattern:     "write reply:/forum/topic/{topicid}/thread/{threadid}/*",
+		HideIfNone:  true,
+		UpgradeTo:   "reply:/forum/topic/{topicid}/thread/{threadid}/*",
 	},
 
 	// FAQ
@@ -285,6 +290,14 @@ func GetUserSubscriptions(dbSubs []*db.ListSubscriptionsByUserRow) []*Subscripti
 				Parameters: paramList,
 				Methods:    []string{},
 				Original:   sub.Pattern,
+			}
+			if def.UpgradeTo != "" {
+				// Replace parameters in UpgradeTo pattern
+				upgradePattern := def.UpgradeTo
+				for _, p := range instance.Parameters {
+					upgradePattern = strings.ReplaceAll(upgradePattern, "{"+p.Key+"}", p.Value)
+				}
+				instance.UpgradeTo = upgradePattern
 			}
 			group.Instances = append(group.Instances, instance)
 		}

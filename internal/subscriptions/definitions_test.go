@@ -106,3 +106,38 @@ func TestGetUserSubscriptions_ReportedIssues(t *testing.T) {
 		}
 	}
 }
+
+func TestGetUserSubscriptions_LegacyUpgrade(t *testing.T) {
+	dbSubs := []*db.ListSubscriptionsByUserRow{
+		{
+			ID:      1,
+			Pattern: "write reply:/forum/topic/123/thread/456/*",
+			Method:  "email",
+		},
+	}
+
+	groups := GetUserSubscriptions(dbSubs)
+
+	found := false
+	for _, g := range groups {
+		if g.Definition.Name == "Write Reply (Legacy)" {
+			found = true
+			if !g.Definition.HideIfNone {
+				t.Errorf("Expected Write Reply (Legacy) to be hidden if none")
+			}
+			if len(g.Instances) != 1 {
+				t.Errorf("Expected 1 instance, got %d", len(g.Instances))
+			} else {
+				inst := g.Instances[0]
+				expectedUpgrade := "reply:/forum/topic/123/thread/456/*"
+				if inst.UpgradeTo != expectedUpgrade {
+					t.Errorf("Expected UpgradeTo '%s', got '%s'", expectedUpgrade, inst.UpgradeTo)
+				}
+			}
+		}
+	}
+
+	if !found {
+		t.Errorf("Expected to find 'Write Reply (Legacy)' group")
+	}
+}

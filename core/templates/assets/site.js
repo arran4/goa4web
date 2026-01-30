@@ -59,10 +59,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.error('Failed to copy text: ', err);
                 });
             }
-        } else if (e.target && e.target.classList.contains('a4code-btn')) {
+        } else if (e.target && e.target.closest('.a4code-btn')) {
             e.preventDefault();
-            const tag = e.target.getAttribute('data-tag');
-            const targetId = e.target.getAttribute('data-target');
+            const btn = e.target.closest('.a4code-btn');
+            const tag = btn.getAttribute('data-tag');
+            const targetId = btn.getAttribute('data-target');
             insertA4CodeTag(targetId, tag);
         }
     });
@@ -98,9 +99,9 @@ function insertA4CodeTag(targetId, tag) {
             return; // Cancelled
         }
     } else if (tag === 'quote') {
-        replacement = `[quote]\n${selectedText}\n[/quote]`;
+        replacement = `[quote ${selectedText}]`;
     } else if (tag === 'code') {
-        replacement = `[code]\n${selectedText}\n[/code]`;
+        replacement = `[code]${selectedText}[/code]`;
     }
 
     textarea.setRangeText(replacement, start, end, 'select');

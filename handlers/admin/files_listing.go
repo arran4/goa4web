@@ -53,7 +53,13 @@ func BuildImageFilesListing(ctx context.Context, queries db.Querier, uploadDir s
 	}
 
 	info, err := os.Stat(abs)
-	if err != nil || !info.IsDir() {
+	if err != nil {
+		if os.IsNotExist(err) && cleaned == "/" {
+			return ImageFilesListing{Path: cleaned}, nil
+		}
+		return ImageFilesListing{}, notFoundError{}
+	}
+	if !info.IsDir() {
 		return ImageFilesListing{}, notFoundError{}
 	}
 

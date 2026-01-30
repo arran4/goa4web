@@ -75,6 +75,15 @@ const (
 	// TaskDelete removes an existing item.
 	TaskDelete tasks.TaskString = "Delete"
 
+	// TaskImageCacheList refreshes the image cache list.
+	TaskImageCacheList tasks.TaskString = "List cache"
+
+	// TaskImageCachePrune prunes the image cache to the configured max size.
+	TaskImageCachePrune tasks.TaskString = "Prune cache"
+
+	// TaskImageCacheDelete deletes selected image cache entries.
+	TaskImageCacheDelete tasks.TaskString = "Delete cache"
+
 	// TaskDeactivate moves an item to the deactivated store.
 	TaskDeactivate tasks.TaskString = "Deactivate"
 

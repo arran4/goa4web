@@ -114,11 +114,6 @@ func (cd *CoreData) HandleThreadUpdated(ctx context.Context, event ThreadUpdated
 			evt.Data["URL"] = event.PostURL
 		} else if event.ThreadURL != "" {
 			evt.Data["URL"] = event.ThreadURL
-		} else {
-			url, ok := evt.Data["URL"]
-			if !ok || url == nil || url == "" {
-				// Fallback if URL is missing and no specific URL provided
-			}
 		}
 		if event.CommentURL != "" {
 			evt.Data["CommentURL"] = event.CommentURL

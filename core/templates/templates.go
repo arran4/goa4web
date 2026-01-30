@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"sync"
 	ttemplate "text/template"
 	"time"
@@ -244,6 +245,12 @@ func GetCompiledSiteTemplates(funcs htemplate.FuncMap, opts ...Option) *htemplat
 
 func GetCompiledNotificationTemplates(funcs ttemplate.FuncMap, opts ...Option) *ttemplate.Template {
 	cfg := newCfg(opts...)
+	if funcs == nil {
+		funcs = ttemplate.FuncMap{}
+	}
+	if _, ok := funcs["lower"]; !ok {
+		funcs["lower"] = strings.ToLower
+	}
 	return ttemplate.Must(ttemplate.New("").Funcs(funcs).ParseFS(getFS("notifications", cfg), "*.gotxt"))
 }
 

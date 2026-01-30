@@ -3,8 +3,16 @@
     <h3>Notification</h3>
     <p><strong>Date:</strong> {{ cd.FormatLocalTime .Notification.CreatedAt }}</p>
     <p>{{ .Notification.Message.String }}</p>
+
     {{ if .ReplyPreview }}
-    <p><strong>Reply:</strong><br>{{ .ReplyPreview }}</p>
+    <div class="notification-preview">
+        <div class="preview-header">
+            Reply Preview
+        </div>
+        <div class="preview-content">
+            {{ .ReplyPreview }}
+        </div>
+    </div>
     {{ end }}
 
     {{ if .RedirectURL }}

@@ -38,6 +38,12 @@ func (c *serverCmd) Run() error {
 			return fmt.Errorf("shutdown: %w", err)
 		}
 		return cmd.Run()
+	case "stats":
+		cmd, err := parseServerStatsCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("stats: %w", err)
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown server command %q", args[0])

@@ -1,0 +1,14 @@
+Usage:
+  {{.Prog}} email sent <command> [<args>]
+
+Commands:
+  list    list sent emails
+  retry   retry a previously sent email
+
+Examples:
+  {{.Prog}} email sent list --recipient user@example.com --provider direct
+  {{.Prog}} email sent list --from 2024-01-01T00:00:00Z --to 2024-01-31T23:59:59Z
+  {{.Prog}} email sent retry --id 42
+  {{.Prog}} email sent retry --ids 42,43,44
+
+{{template "flag_groups_section" .FlagGroups}}

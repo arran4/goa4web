@@ -1,0 +1,51 @@
+{{ template "head" $ }}
+<p>Configuration values resolved at runtime.</p>
+<p>Config file: {{ .ConfigFile }}</p>
+<label for="config-filter">Filter configuration keys</label>
+<input id="config-filter" type="search" placeholder="Search by env or flag name" aria-label="Filter configuration keys">
+<table class="table table-bordered" id="config-explain-table">
+    <tr>
+        <th>Env</th>
+        <th>Flag</th>
+        <th>Value</th>
+        <th>Source</th>
+        <th>Breakdown</th>
+    </tr>
+    {{- range .Options }}
+        <tr data-search="{{ .Env }} {{ .Name }}">
+            <td>{{ .Env }}</td>
+            <td>{{ .Name }}</td>
+            <td>{{ .FinalValue }}</td>
+            <td>{{ .SourceLabel }}</td>
+            <td>
+                {{- range .Sources }}
+                    <span title="{{ .Detail }}{{ if .Value }} (value: {{ .Value }}){{ end }}">{{ .Label }}{{ if .Active }}*{{ end }}</span>
+                {{- end }}
+            </td>
+        </tr>
+    {{- end }}
+</table>
+<p><small>* Active source</small></p>
+<script>
+    (function () {
+        var input = document.getElementById('config-filter');
+        var table = document.getElementById('config-explain-table');
+        if (!input || !table) {
+            return;
+        }
+        var rows = Array.prototype.slice.call(table.querySelectorAll('tr[data-search]'));
+        var filterRows = function () {
+            var query = input.value.toLowerCase();
+            rows.forEach(function (row) {
+                var haystack = row.getAttribute('data-search');
+                if (!haystack) {
+                    row.style.display = '';
+                    return;
+                }
+                row.style.display = haystack.toLowerCase().indexOf(query) === -1 ? 'none' : '';
+            });
+        };
+        input.addEventListener('input', filterRows);
+    })();
+</script>
+{{ template "tail" $ }}

@@ -47,14 +47,19 @@ type SubscriptionGroup struct {
 var Definitions = []Definition{
 	// Forum
 	{
+		Name:        "New Threads (Specific Topic)",
+		Description: "Notify when a new thread is created in this topic",
+		Pattern:     "create thread:/forum/topic/{topicid}*",
+	},
+	{
 		Name:        "New Threads (All)",
 		Description: "Notify when a new thread is created in any topic",
 		Pattern:     "create thread:/forum/topic/*",
 	},
 	{
-		Name:        "New Threads (Specific Topic)",
-		Description: "Notify when a new thread is created in this topic",
-		Pattern:     "create thread:/forum/topic/{topicid}/*",
+		Name:        "Replies (Specific Thread)",
+		Description: "Notify when a reply is posted in this thread",
+		Pattern:     "reply:/forum/topic/{topicid}/thread/{threadid}*",
 	},
 	{
 		Name:        "Replies (All)",
@@ -62,14 +67,9 @@ var Definitions = []Definition{
 		Pattern:     "reply:/forum/topic/*/thread/*",
 	},
 	{
-		Name:        "Replies (Specific Thread)",
-		Description: "Notify when a reply is posted in this thread",
-		Pattern:     "reply:/forum/topic/{topicid}/thread/{threadid}/*",
-	},
-	{
 		Name:        "Edit Reply",
 		Description: "Notify when a reply is edited",
-		Pattern:     "edit reply:/forum/topic/*/thread/*",
+		Pattern:     "edit reply:/forum/topic/*/thread*",
 	},
 
 	// Private Forum
@@ -339,9 +339,9 @@ func matchPattern(template, pattern string) (map[string]string, bool) {
 	regexStr = strings.ReplaceAll(regexStr, "\\{", "{")
 	regexStr = strings.ReplaceAll(regexStr, "\\}", "}")
 
-	// Replace {name} with (?P<name>[^/]+)
+	// Replace {name} with (?P<name>[^/*]+)
 	paramRegex := regexp.MustCompile(`\{([a-zA-Z0-9]+)\}`)
-	regexStr = paramRegex.ReplaceAllString(regexStr, `(?P<$1>[^/]+)`)
+	regexStr = paramRegex.ReplaceAllString(regexStr, `(?P<$1>[^/*]+)`)
 
 	// Handle standard wildcard *
 	// Replace \* with .*

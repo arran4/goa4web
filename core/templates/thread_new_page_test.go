@@ -36,8 +36,8 @@ func TestThreadNewPageJS(t *testing.T) {
 				Location: "UTC",
 			}
 		},
-		"add": func(a, b int) int { return a + b },
-		"now": func() time.Time { return time.Now() },
+		"add":   func(a, b int) int { return a + b },
+		"now":   func() time.Time { return time.Now() },
 		"since": func(t1, t2 time.Time) string { return "" },
 		"dict": func(values ...any) (map[string]any, error) {
 			if len(values)%2 != 0 {
@@ -94,8 +94,8 @@ func TestThreadNewPageJS(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			data := struct {
-				BasePath string
-				Topic    struct{ Idforumtopic int32 }
+				BasePath  string
+				Topic     struct{ Idforumtopic int32 }
 				QuoteText string
 			}{
 				BasePath: tt.basePath,

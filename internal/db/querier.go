@@ -345,6 +345,7 @@ type Querier interface {
 	GetCommentsBySectionThreadIdForUser(ctx context.Context, arg GetCommentsBySectionThreadIdForUserParams) ([]*GetCommentsBySectionThreadIdForUserRow, error)
 	GetCommentsByThreadIdForUser(ctx context.Context, arg GetCommentsByThreadIdForUserParams) ([]*GetCommentsByThreadIdForUserRow, error)
 	GetContentReadMarker(ctx context.Context, arg GetContentReadMarkerParams) (*GetContentReadMarkerRow, error)
+	GetDigestTimezones(ctx context.Context) ([]sql.NullString, error)
 	GetExternalLink(ctx context.Context, url string) (*ExternalLink, error)
 	GetExternalLinkByID(ctx context.Context, id int32) (*ExternalLink, error)
 	GetFAQAnsweredQuestions(ctx context.Context, arg GetFAQAnsweredQuestionsParams) ([]*GetFAQAnsweredQuestionsRow, error)
@@ -422,6 +423,8 @@ type Querier interface {
 	//   username (string)
 	GetUserRoles(ctx context.Context) ([]*GetUserRolesRow, error)
 	GetUsersForDailyDigest(ctx context.Context, arg GetUsersForDailyDigestParams) ([]*GetUsersForDailyDigestRow, error)
+	GetUsersForDailyDigestByTimezone(ctx context.Context, arg GetUsersForDailyDigestByTimezoneParams) ([]*GetUsersForDailyDigestByTimezoneRow, error)
+	GetUsersForDailyDigestNoTimezone(ctx context.Context, arg GetUsersForDailyDigestNoTimezoneParams) ([]*GetUsersForDailyDigestNoTimezoneRow, error)
 	// Fetch verified (active) email addresses ordered by notification priority.
 	GetVerifiedUserEmails(ctx context.Context) ([]*GetVerifiedUserEmailsRow, error)
 	GetWritingCategoryById(ctx context.Context, idwritingcategory int32) (*WritingCategory, error)

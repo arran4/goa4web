@@ -1,25 +1,4 @@
 {{ template "head" $ }}
-<fieldset>
-    <legend>Daily Notification Digest</legend>
-    <form method="post" action="/usr/notifications">
-        {{ csrfField }}
-        <input type="hidden" name="task" value="SaveDigest">
-        <label>
-            Hour of day (UTC):
-            <select name="daily_digest_hour">
-                <option value="-1" {{ if not .DigestEnabled }}selected{{ end }}>Disabled</option>
-                {{ range $i := seq 0 23 }}
-                <option value="{{ $i }}" {{ if and $.DigestEnabled (eq $.DigestHour $i) }}selected{{ end }}>{{ printf "%02d:00" $i }}</option>
-                {{ end }}
-            </select>
-        </label>
-        <label>
-            <input type="checkbox" name="daily_digest_mark_read" {{ if .DigestMarkRead }}checked{{ end }}>
-            Mark notifications as read when digest is sent
-        </label>
-        <input type="submit" value="Save Settings">
-    </form>
-</fieldset>
 <form method="post" action="/usr/notifications/dismiss" id="notifications-form">
     {{ csrfField }}
     <input type="hidden" name="task" value="Dismiss">
@@ -29,6 +8,7 @@
         <input type="submit" value="Dismiss Selected">
     </div>
     <div id="notifications-list">
+    {{ if .Request }}
     {{ range cd.Notifications .Request }}
         <div class="notification" id="notif-{{ .ID }}" data-notification-id="{{ .ID }}">
             <label>
@@ -40,8 +20,39 @@
     {{ else }}
         <div id="notifications-empty">No notifications</div>
     {{ end }}
+    {{ else }}
+        <div id="notifications-empty">No notifications</div>
+    {{ end }}
     </div>
 </form>
+<fieldset>
+    <legend>Daily Notification Digest</legend>
+    <form method="post" action="/usr/notifications">
+        {{ csrfField }}
+        <input type="hidden" name="task" value="SaveDigest">
+        <label>
+            Hour of day:
+            <select name="daily_digest_hour">
+                <option value="-1" {{ if not .DigestEnabled }}selected{{ end }}>Disabled</option>
+                {{ range $i := seq 0 23 }}
+                <option value="{{ $i }}" {{ if and $.DigestEnabled (eq $.DigestHour $i) }}selected{{ end }}>{{ printf "%02d:00" $i }}</option>
+                {{ end }}
+            </select>
+        </label>
+        <p class="help-text">
+            {{ if .Timezone }}
+                Based on your timezone: {{ .Timezone }} (Current time: {{ .CurrentTime }}).
+            {{ else }}
+                Based on UTC (Current time: {{ .CurrentTime }}). Set your timezone in <a href="/usr/timezone">settings</a>.
+            {{ end }}
+        </p>
+        <label>
+            <input type="checkbox" name="daily_digest_mark_read" {{ if .DigestMarkRead }}checked{{ end }}>
+            Mark notifications as read when digest is sent
+        </label>
+        <input type="submit" value="Save Settings">
+    </form>
+</fieldset>
 {{ if cd.FeedsEnabled }}
     <p>Feeds: <a href="{{ cd.RSSFeedURL }}">RSS</a> | <a href="{{ cd.AtomFeedURL }}">Atom</a></p>
 {{ end }}

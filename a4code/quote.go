@@ -104,7 +104,7 @@ func fullQuoteOf(username, text string, trim bool) string {
 		case '\n':
 			if bc <= 0 && nlc == 1 {
 				s := out.String()
-				if strings.TrimSpace(s) != "" && !isQuoteOf(s) {
+				if strings.TrimSpace(s) != "" && !isQuoteOfQuote(s) {
 					quote.WriteString(quoteOfText(username, s, trim))
 					quote.WriteString("\n\n")
 				}
@@ -130,13 +130,44 @@ func fullQuoteOf(username, text string, trim bool) string {
 		it++
 	}
 	s := out.String()
-	if strings.TrimSpace(s) != "" && !isQuoteOf(s) {
+	if strings.TrimSpace(s) != "" && !isQuoteOfQuote(s) {
 		quote.WriteString(quoteOfText(username, s, trim))
 	}
 	return quote.String()
 }
 
-func isQuoteOf(s string) bool {
+func isQuoteOfQuote(s string) bool {
+	s = strings.TrimSpace(s)
+	if !isQuoteBlock(s) {
+		return false
+	}
+	root, err := ParseString(s)
+	if err != nil || len(root.Children) != 1 {
+		return false
+	}
+	q, ok := root.Children[0].(*QuoteOf)
+	if !ok {
+		return false
+	}
+	hasQuote := false
+	hasContent := false
+	for _, child := range q.Children {
+		switch n := child.(type) {
+		case *QuoteOf:
+			hasQuote = true
+		case *Text:
+			if strings.TrimSpace(n.Value) != "" {
+				hasContent = true
+			}
+		default:
+			// Image, Code, etc.
+			hasContent = true
+		}
+	}
+	return hasQuote && !hasContent
+}
+
+func isQuoteBlock(s string) bool {
 	s = strings.TrimSpace(s)
 	if !strings.HasPrefix(strings.ToLower(s), "[quoteof") {
 		return false
@@ -157,6 +188,10 @@ func isQuoteOf(s string) bool {
 		}
 	}
 	return false
+}
+
+func isQuoteOf(s string) bool {
+	return isQuoteBlock(s)
 }
 
 func Substring(s string, start, end int) string {

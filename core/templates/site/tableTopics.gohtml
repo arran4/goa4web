@@ -27,7 +27,7 @@
                 {{ $description := topicDescriptionOrDefault .Description.String }}<em>{{ $description | a4code2html }}</em>
                 {{- if .Labels }}<br>{{ template "topicLabels" .Labels }}{{ end }}
             </div>
-                <div class="last-reply">{{ cd.LocalTime .Lastaddition.Time }}<br>{{ .Lastposterusername.String }}</div>
+                <div class="last-reply">{{ cd.LocalTime .Lastaddition.Time }}<br>{{ if ne .Lastposter cd.UserID }}<strong>{{ .Lastposterusername.String }}</strong>{{ else }}{{ .Lastposterusername.String }}{{ end }}</div>
                 <div class="threads-replies">{{ .Threads.Int32 }}<br>{{ .Comments.Int32 }}</div>
             </li>
         {{ else }}

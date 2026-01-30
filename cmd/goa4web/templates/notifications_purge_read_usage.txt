@@ -1,0 +1,8 @@
+Usage:
+  {{.Prog}} notifications purge-read [<args>]
+
+Examples:
+  {{.Prog}} notifications purge-read
+  {{.Prog}} notifications purge-read --user 42 --json
+
+{{template "flag_groups_section" .FlagGroups}}

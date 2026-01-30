@@ -31,7 +31,9 @@ func TestAdminTemplatesExist(t *testing.T) {
 		AdminUsageStatsPageTmpl,
 		AdminUserBlogsPageTmpl,
 		AdminMaintenancePageTmpl,
+		AdminDBStatusPageTmpl,
 		AdminSiteSettingsPageTmpl,
+		AdminConfigExplainPageTmpl,
 		AdminPageSizePageTmpl,
 		AdminEmailQueuePageTmpl,
 		AdminDeactivatedCommentsPageTmpl,
@@ -54,6 +56,7 @@ func TestAdminTemplatesExist(t *testing.T) {
 		AdminDLQPageTmpl,
 		AdminUserSubscriptionsPageTmpl,
 		AdminExternalLinksPageTmpl,
+		AdminLinksToolsPageTmpl,
 		AdminUserForumPageTmpl,
 		AdminUserImagebbsPageTmpl,
 		RunTaskPageTmpl, // Common template used in multiple places

@@ -40,10 +40,13 @@ func (h *Handlers) RegisterTasks() []tasks.NamedTask {
 		restoreCommentTask,
 		userForcePasswordChangeTask,
 		userSendResetEmailTask,
+		h.NewDBSeedTask(),
 		roleGrantCreateTask,
 		roleGrantDeleteTask,
 		userGrantCreateTask,
 		applyLinkRemapTask,
+		dbBackupTask,
+		dbRestoreTask,
 		h.NewServerShutdownTask(),
 	}
 }

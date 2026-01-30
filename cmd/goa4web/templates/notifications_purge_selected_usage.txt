@@ -1,0 +1,8 @@
+Usage:
+  {{.Prog}} notifications purge-selected <id> [<id> ...] [<args>]
+
+Examples:
+  {{.Prog}} notifications purge-selected 101 102
+  {{.Prog}} notifications purge-selected 101 102 --user 42 --json
+
+{{template "flag_groups_section" .FlagGroups}}

@@ -1,0 +1,13 @@
+Usage:
+  {{.Prog}} email failed <command> [<args>]
+
+Commands:
+  list     list failed emails
+  resend   resend failed emails
+
+Examples:
+  {{.Prog}} email failed list -limit 25 -offset 0
+  {{.Prog}} email failed list -provider direct
+  {{.Prog}} email failed resend -id 12 -id 15
+
+{{template "flag_groups_section" .FlagGroups}}

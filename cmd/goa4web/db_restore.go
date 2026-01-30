@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+
+	"github.com/arran4/goa4web/internal/dbops"
 )
 
 // dbRestoreCmd implements "db restore".
@@ -39,7 +41,7 @@ func (c *dbRestoreCmd) Run() error {
 	}
 	cfg := c.rootCmd.cfg
 	c.rootCmd.Verbosef("restoring from %s", c.File)
-	if err := c.rootCmd.dbReg.Restore(cfg.DBDriver, cfg.DBConn, c.File); err != nil {
+	if err := dbops.RestoreDatabase(c.rootCmd.dbReg, cfg, c.File); err != nil {
 		return err
 	}
 	c.rootCmd.Infof("database restored from %s", c.File)

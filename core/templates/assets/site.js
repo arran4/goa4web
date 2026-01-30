@@ -50,6 +50,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 }
             }
+        } else if (e.target && e.target.classList.contains('copy-config-command')) {
+            e.preventDefault();
+            const command = e.target.getAttribute('data-copy');
+            if (command) {
+                navigator.clipboard.writeText(command).then(() => {
+                }).catch(err => {
+                    console.error('Failed to copy text: ', err);
+                });
+            }
         }
     });
 

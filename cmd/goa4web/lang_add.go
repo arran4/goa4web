@@ -46,3 +46,13 @@ func (c *langAddCmd) Run() error {
 	c.rootCmd.Infof("added language %s (%s)", c.Name, c.Code)
 	return nil
 }
+
+func (c *langAddCmd) Usage() {
+	executeUsage(c.fs.Output(), "lang_add_usage.txt", c)
+}
+
+func (c *langAddCmd) FlagGroups() []flagGroup {
+	return append(c.langCmd.FlagGroups(), flagGroup{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)})
+}
+
+var _ usageData = (*langAddCmd)(nil)

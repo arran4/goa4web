@@ -1,0 +1,8 @@
+Usage:
+  {{.Prog}} lang update -id <id> -name <name>
+
+Flags:
+  -id int        language id
+  -name string   new name
+
+{{template "flag_groups_section" .FlagGroups}}

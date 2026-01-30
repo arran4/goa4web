@@ -21,6 +21,7 @@ import (
 	"github.com/arran4/goa4web/handlers/writings"
 	navpkg "github.com/arran4/goa4web/internal/navigation"
 	"github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 // RegisterRoutes attaches the admin endpoints to ar. The router is expected to
@@ -103,6 +104,7 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, cfg *config.RuntimeConfig, nav
 	ar.HandleFunc("/notifications", handlers.TaskHandler(purgeReadNotificationsTask)).Methods("POST").MatcherFunc(purgeReadNotificationsTask.Matcher())
 	ar.HandleFunc("/notifications", handlers.TaskHandler(sendNotificationTask)).Methods("POST").MatcherFunc(sendNotificationTask.Matcher())
 	ar.HandleFunc("/subscriptions/templates", AdminSubscriptionTemplatesPage).Methods("GET")
+	ar.HandleFunc("/subscriptions/templates", AdminSubscriptionTemplatesPage).Methods("POST").MatcherFunc(tasks.HasNoTask())
 	applySubscriptionTemplateTask := h.NewApplySubscriptionTemplateTask()
 	ar.HandleFunc("/subscriptions/templates", handlers.TaskHandler(applySubscriptionTemplateTask)).Methods("POST").MatcherFunc(applySubscriptionTemplateTask.Matcher())
 	ar.HandleFunc("/requests", AdminRequestQueuePage).Methods("GET")

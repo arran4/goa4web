@@ -154,6 +154,30 @@ var Definitions = []Definition{
 		IsAdminOnly: true,
 	},
 	{
+		Name:        "Admin: User Role Granted",
+		Description: "Notify when a role is granted to a user",
+		Pattern:     "user allow:/*",
+		IsAdminOnly: true,
+	},
+	{
+		Name:        "Admin: User Role Revoked",
+		Description: "Notify when a role is revoked from a user",
+		Pattern:     "user disallow:/*",
+		IsAdminOnly: true,
+	},
+	{
+		Name:        "Admin: Category Deleted",
+		Description: "Notify when a category is deleted",
+		Pattern:     "delete category:/*",
+		IsAdminOnly: true,
+	},
+	{
+		Name:        "Admin: New Image Board Post",
+		Description: "Notify when a new image is uploaded",
+		Pattern:     "upload image:/*",
+		IsAdminOnly: true,
+	},
+	{
 		Name:        "User Registration",
 		Description: "Notify when a new user registers",
 		Pattern:     "register:/auth/register",

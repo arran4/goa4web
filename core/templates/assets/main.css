@@ -1038,7 +1038,7 @@ tr.unsupported td {
 .a4code-code-wrapper {
     border: 1px solid #000;
     margin: 0.5em auto;
-    width: 90%;
+    width: 98%;
 }
 
 .code-header,
@@ -1058,6 +1058,8 @@ tr.unsupported td {
     /* Reset a4code-block margin since wrapper handles it */
     width: auto;
     background-color: #E0FFFF; /* Light Cyan default for code body */
+    white-space: pre-wrap;
+    word-wrap: break-word;
 }
 
 /* Default Quote Style (Green) */

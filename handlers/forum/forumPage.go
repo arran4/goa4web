@@ -98,10 +98,11 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	categoryTree := NewCategoryTree(categoryRows, topicRows)
-
-	if !data.Admin {
-		categoryTree.PruneEmpty()
+	var categoryTree *CategoryTree
+	if data.Admin {
+		categoryTree = NewCategoryTreeUnpruned(categoryRows, topicRows)
+	} else {
+		categoryTree = NewCategoryTree(categoryRows, topicRows)
 	}
 
 	if categoryId == 0 {

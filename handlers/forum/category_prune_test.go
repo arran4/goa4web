@@ -17,7 +17,6 @@ func TestCategoryTreePruneEmpty(t *testing.T) {
 		{Idforumtopic: 10, ForumcategoryIdforumcategory: 3},
 	}
 	ct := NewCategoryTree(cats, topics)
-	ct.PruneEmpty()
 	if _, ok := ct.CategoryLookup[4]; ok {
 		t.Fatalf("category 4 should be pruned")
 	}

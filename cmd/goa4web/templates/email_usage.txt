@@ -9,6 +9,7 @@ Commands:
   failed   Manage failed emails.
   send     Send a test email.
   queue    Manage the queue of emails waiting to be sent.
+  sent     Inspect and retry sent emails.
   test     Send a test email to check the email configuration.
 
 Examples:
@@ -20,5 +21,8 @@ Examples:
 
   # List failed emails
   {{.Prog}} email failed list
+
+  # List sent emails
+  {{.Prog}} email sent list
 
 {{template "flag_groups_section" .FlagGroups}}

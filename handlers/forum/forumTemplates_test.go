@@ -12,8 +12,11 @@ import (
 
 func checkEmailTemplates(t *testing.T, et *notif.EmailTemplates) {
 	t.Helper()
-	htmlTmpls := templates.GetCompiledEmailHtmlTemplates(map[string]any{})
-	textTmpls := templates.GetCompiledEmailTextTemplates(map[string]any{})
+	funcs := map[string]any{
+		"truncateWords": func(i int, s string) string { return s },
+	}
+	htmlTmpls := templates.GetCompiledEmailHtmlTemplates(funcs)
+	textTmpls := templates.GetCompiledEmailTextTemplates(funcs)
 	if htmlTmpls.Lookup(et.HTML) == nil {
 		t.Errorf("missing html template %s", et.HTML)
 	}

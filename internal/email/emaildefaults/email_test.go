@@ -107,7 +107,7 @@ func TestInsertPendingEmail(t *testing.T) {
 	}
 }
 
-func TestProcessPendingEmailNilProviderDLQ(t *testing.T) {
+func TestProcessPendingEmailNilProviderPauses(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
 	cfg.EmailEnabled = true
 
@@ -117,26 +117,14 @@ func TestProcessPendingEmailNilProviderDLQ(t *testing.T) {
 	}
 	defer conn.Close()
 	q := db.New(conn)
-	rows := sqlmock.NewRows([]string{"id", "to_user_id", "body", "error_count", "direct_email"}).AddRow(1, 2, "b", 4, false)
-	mock.ExpectQuery("SELECT id, to_user_id, body, error_count, direct_email").WillReturnRows(rows)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username, u.public_profile_enabled_at FROM users u LEFT JOIN user_emails ue ON ue.id = ( SELECT id FROM user_emails ue2 WHERE ue2.user_id = u.idusers AND ue2.verified_at IS NOT NULL ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1 ) WHERE u.idusers = ?")).
-		WithArgs(int32(2)).
-		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(2, "a@test", "a", nil))
-	mock.ExpectExec(regexp.QuoteMeta("UPDATE pending_emails SET error_count = error_count + 1 WHERE id = ?")).WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectQuery("SELECT error_count FROM pending_emails WHERE id = ?").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"error_count"}).AddRow(5))
-	mock.ExpectExec(regexp.QuoteMeta("UPDATE pending_emails SET sent_at = NOW() WHERE id = ?")).WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
 
 	dlqRec := &mockdlq.Provider{}
-	if !emailqueue.ProcessPendingEmail(context.Background(), q, nil, dlqRec, cfg) {
-		t.Fatal("no email processed")
+	if emailqueue.ProcessPendingEmail(context.Background(), q, nil, dlqRec, cfg) {
+		t.Fatal("expected no email processed (paused)")
 	}
 
-	if len(dlqRec.Records) != 1 {
+	if len(dlqRec.Records) != 0 {
 		t.Fatalf("dlq records=%d", len(dlqRec.Records))
-	}
-	msg := dlqRec.Records[0].Message
-	if !strings.Contains(msg, "b") || !strings.Contains(msg, "no provider configured") {
-		t.Fatalf("unexpected dlq message: %s", msg)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)

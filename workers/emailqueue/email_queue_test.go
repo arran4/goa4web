@@ -11,6 +11,30 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
+func TestProcessPendingEmail_NilProvider_DoesNotProcess(t *testing.T) {
+	q := &db.QuerierStub{}
+	cfg := &config.RuntimeConfig{
+		EmailEnabled: true,
+	}
+
+	listCalled := false
+	q.SystemListPendingEmailsFn = func(ctx context.Context, arg db.SystemListPendingEmailsParams) ([]*db.SystemListPendingEmailsRow, error) {
+		listCalled = true
+		return []*db.SystemListPendingEmailsRow{}, nil
+	}
+
+	// Call with nil provider
+	result := ProcessPendingEmail(context.Background(), q, nil, nil, cfg)
+
+	if result {
+		t.Error("Expected ProcessPendingEmail to return false when provider is nil")
+	}
+
+	if listCalled {
+		t.Error("Expected SystemListPendingEmails NOT to be called when provider is nil")
+	}
+}
+
 func TestResolveQueuedEmailAddress_DirectEmail_VerifiedUser_Success(t *testing.T) {
 	q := &db.QuerierStub{}
 	cfg := &config.RuntimeConfig{}

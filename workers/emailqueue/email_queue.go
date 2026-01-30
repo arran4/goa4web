@@ -144,6 +144,9 @@ func ProcessPendingEmail(ctx context.Context, q db.Querier, provider email.Provi
 	if !cfg.EmailEnabled {
 		return false
 	}
+	if provider == nil {
+		return false
+	}
 	emails, err := q.SystemListPendingEmails(ctx, db.SystemListPendingEmailsParams{Limit: 1, Offset: 0})
 	if err != nil {
 		log.Printf("fetch queue: %v", err)
@@ -160,23 +163,6 @@ func ProcessPendingEmail(ctx context.Context, q db.Querier, provider email.Provi
 			log.Printf("increment email error: %v", err)
 		}
 		return false
-	}
-	if provider == nil {
-		log.Printf("email provider not configured: cannot send email %d to %s", e.ID, addr.Address)
-		if err := q.SystemIncrementPendingEmailError(ctx, e.ID); err != nil {
-			log.Printf("increment email error: %v", err)
-		}
-		count, _ := q.GetPendingEmailErrorCount(ctx, e.ID)
-		if count > 4 {
-			if dlqProvider != nil {
-				msg := fmt.Sprintf("email %d to %s failed: no provider configured\n%s", e.ID, addr.Address, e.Body)
-				_ = dlqProvider.Record(ctx, msg)
-			}
-			if err := q.SystemMarkPendingEmailSent(ctx, e.ID); err != nil {
-				log.Printf("mark sent: %v", err)
-			}
-		}
-		return true
 	}
 	if err := provider.Send(ctx, addr, []byte(e.Body)); err != nil {
 		log.Printf("send queued mail: %v", err)

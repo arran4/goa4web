@@ -160,5 +160,14 @@ func getPrivateTopicTitle(ctx context.Context, queries db.Querier, topic *db.For
 		}
 	}
 	sort.Strings(names)
-	return fmt.Sprintf("Private forum with %s", strings.Join(names, " & ")), nil
+	n := len(names)
+	if n == 0 {
+		return "Private forum", nil
+	}
+	if n == 1 {
+		return fmt.Sprintf("Private forum with %s", names[0]), nil
+	}
+	last := names[n-1]
+	rest := names[:n-1]
+	return fmt.Sprintf("Private forum with %s & %s", strings.Join(rest, ", "), last), nil
 }

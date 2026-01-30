@@ -1,0 +1,49 @@
+{{ template "head" $ }}
+    <div>[<a href="/admin">Admin:</a> <a href="/admin/images/cache">(This page/Refresh)</a>]</div>
+    <p>
+        Total cache size: <strong>{{ .TotalSize }}</strong> bytes
+        {{- if .HasMax }} (max {{ .MaxSize }} bytes){{ else }} (no limit configured){{ end }}
+    </p>
+    <form method="post" id="image-cache-form">
+        {{ csrfField }}
+        <div style="margin-bottom: 1em;">
+            <button type="submit" name="task" value="{{ .TaskList }}">Refresh list</button>
+            <button type="submit" name="task" value="{{ .TaskPrune }}" {{ if not .CanPrune }}disabled{{ end }}>Prune to max size</button>
+            {{- if not .CanPrune }}
+            <span style="margin-left: 0.5em;">Prune requires a cache provider and a max size.</span>
+            {{- end }}
+        </div>
+        <table class="table table-bordered">
+            <tr>
+                <th><input type="checkbox" id="select-all-cache"></th>
+                <th>File ID</th>
+                <th>Size (bytes)</th>
+            </tr>
+            {{- range .Entries }}
+            <tr>
+                <td><input type="checkbox" name="id" value="{{ .ID }}"></td>
+                <td>{{ .ID }}</td>
+                <td>{{ .Size }}</td>
+            </tr>
+            {{- else }}
+            <tr>
+                <td colspan="3">No cached images found.</td>
+            </tr>
+            {{- end }}
+        </table>
+        <button type="submit" name="task" value="{{ .TaskDelete }}">Delete selected</button>
+    </form>
+    <script>
+(() => {
+    const selectAll = document.getElementById("select-all-cache");
+    if (!selectAll) {
+        return;
+    }
+    selectAll.addEventListener("change", () => {
+        document.querySelectorAll("#image-cache-form input[type='checkbox'][name='id']").forEach((input) => {
+            input.checked = selectAll.checked;
+        });
+    });
+})();
+    </script>
+{{ template "tail" $ }}

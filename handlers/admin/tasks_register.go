@@ -44,6 +44,9 @@ func (h *Handlers) RegisterTasks() []tasks.NamedTask {
 		roleGrantDeleteTask,
 		userGrantCreateTask,
 		applyLinkRemapTask,
+		imageCacheListTask,
+		imageCachePruneTask,
+		imageCacheDeleteTask,
 		h.NewServerShutdownTask(),
 	}
 }

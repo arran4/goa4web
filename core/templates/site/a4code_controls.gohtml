@@ -1,0 +1,10 @@
+{{ define "a4codeControls" }}
+<div class="a4code-controls">
+    <button type="button" class="a4code-btn" data-tag="b" data-target="{{ .TargetID }}">Bold</button>
+    <button type="button" class="a4code-btn" data-tag="i" data-target="{{ .TargetID }}">Italic</button>
+    <button type="button" class="a4code-btn" data-tag="a" data-target="{{ .TargetID }}">Link</button>
+    <button type="button" class="a4code-btn" data-tag="img" data-target="{{ .TargetID }}">Image</button>
+    <button type="button" class="a4code-btn" data-tag="quote" data-target="{{ .TargetID }}">Quote</button>
+    <button type="button" class="a4code-btn" data-tag="code" data-target="{{ .TargetID }}">Code</button>
+</div>
+{{ end }}

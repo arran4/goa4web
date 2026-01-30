@@ -28,6 +28,7 @@
                 {{ with $.BasePath }}{{ $base = . }}{{ end }}
                 <form method="post" action="{{$base}}/topic/{{$.Topic.Idforumtopic}}/thread/{{$.Thread.Idforumthread}}/reply">
                     {{ csrfField }}
+                    {{ template "a4codeControls" dict "TargetID" "reply" }}
                     <textarea id="reply" name="replytext" cols="40" rows="20">{{$.Text}}</textarea><br>
                     {{ template "languageCombobox" }}
                     <input type="submit" name="task" value="Reply">

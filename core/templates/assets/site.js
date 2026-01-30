@@ -59,11 +59,52 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.error('Failed to copy text: ', err);
                 });
             }
+        } else if (e.target && e.target.classList.contains('a4code-btn')) {
+            e.preventDefault();
+            const tag = e.target.getAttribute('data-tag');
+            const targetId = e.target.getAttribute('data-target');
+            insertA4CodeTag(targetId, tag);
         }
     });
 
     setupKeyboardShortcuts();
 });
+
+function insertA4CodeTag(targetId, tag) {
+    const textarea = document.getElementById(targetId);
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textarea.value.substring(start, end);
+    let replacement = '';
+
+    if (tag === 'b') {
+        replacement = `[b ${selectedText}]`;
+    } else if (tag === 'i') {
+        replacement = `[i ${selectedText}]`;
+    } else if (tag === 'a') {
+        const url = prompt("Enter URL:", "https://");
+        if (url) {
+            replacement = `[a ${url} ${selectedText}]`;
+        } else {
+            return; // Cancelled
+        }
+    } else if (tag === 'img') {
+        const url = prompt("Enter Image URL:", "https://");
+        if (url) {
+            replacement = `[img ${url}]`;
+        } else {
+            return; // Cancelled
+        }
+    } else if (tag === 'quote') {
+        replacement = `[quote]\n${selectedText}\n[/quote]`;
+    } else if (tag === 'code') {
+        replacement = `[code]\n${selectedText}\n[/code]`;
+    }
+
+    textarea.setRangeText(replacement, start, end, 'select');
+}
 
 function setupKeyboardShortcuts() {
     const overlay = document.getElementById('keyboard-shortcuts-overlay');

@@ -332,7 +332,7 @@ func TestSanitizeBackURL(t *testing.T) {
 	req.Host = "example.com"
 	cfg := config.NewRuntimeConfig()
 	cfg.LoginAttemptThreshold = 10
-	cfg.HTTPHostname = ""
+	cfg.BaseURL = ""
 	cd := common.NewCoreData(req.Context(), db.New(nil), cfg)
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -347,7 +347,7 @@ func TestSanitizeBackURL(t *testing.T) {
 		t.Fatalf("evil got %q", got)
 	}
 
-	cfg.HTTPHostname = "https://example.com"
+	cfg.BaseURL = "https://example.com"
 	cd = common.NewCoreData(req.Context(), db.New(nil), cfg)
 	ctx = context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)

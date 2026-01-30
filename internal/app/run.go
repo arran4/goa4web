@@ -233,7 +233,7 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 		middleware.SecurityHeadersMiddleware,
 	).Wrap(r)
 	if cfg.CSRFEnabled {
-		handler = csrfmw.NewCSRFMiddleware(o.SessionSecret, cfg.HTTPHostname, goa4web.Version)(handler)
+		handler = csrfmw.NewCSRFMiddleware(o.SessionSecret, cfg.BaseURL, goa4web.Version)(handler)
 	}
 
 	srv.Router = handler

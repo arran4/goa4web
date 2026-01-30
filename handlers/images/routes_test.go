@@ -99,7 +99,7 @@ func TestVerifyMiddlewareUnauthorized(t *testing.T) {
 func TestVerifyMiddlewareAllowsQuerySignedImage(t *testing.T) {
 	called := false
 	cfg := config.NewRuntimeConfig()
-	cfg.HTTPHostname = "http://localhost"
+	cfg.BaseURL = "http://localhost"
 	key := "k"
 	signedURL := "http://localhost/images/image/abcd.png?size=small&sig=" + sign.Sign("image:abcd.png?size=small", key, sign.WithOutNonce())
 	parsed, err := url.Parse(signedURL)
@@ -128,7 +128,7 @@ func TestSignImageURL_EndToEnd(t *testing.T) {
 	// Setup Router
 	r := mux.NewRouter()
 	cfg := config.NewRuntimeConfig()
-	cfg.HTTPHostname = "http://localhost"
+	cfg.BaseURL = "http://localhost"
 	// Create a dummy image directory or mock the serving part?
 	// For this test, we only care about middleware passing (200 OK or 404 NotFound if file missing, but not 403 Forbidden).
 	// But serveImage will try to serve file.

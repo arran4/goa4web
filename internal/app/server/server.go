@@ -272,8 +272,8 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 	}
 
 	base := "http://" + r.Host
-	if s.Config.HTTPHostname != "" {
-		base = strings.TrimRight(s.Config.HTTPHostname, "/")
+	if s.Config.BaseURL != "" {
+		base = strings.TrimRight(s.Config.BaseURL, "/")
 	}
 	provider, providerErr := s.getEmailProvider()
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))

@@ -104,8 +104,8 @@ func (t AdminAddEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	path := "/usr/email/verify?code=" + code
 	cfg := cd.Config
 	page := "http://" + r.Host + path
-	if cfg.HTTPHostname != "" {
-		page = strings.TrimRight(cfg.HTTPHostname, "/") + path
+	if cfg.BaseURL != "" {
+		page = strings.TrimRight(cfg.BaseURL, "/") + path
 	}
 	evt := cd.Event()
 	if evt != nil {
@@ -326,8 +326,8 @@ func (t AdminResendVerificationEmailTask) Action(w http.ResponseWriter, r *http.
 	path := "/usr/email/verify?code=" + code
 	cfg := cd.Config
 	page := "http://" + r.Host + path
-	if cfg.HTTPHostname != "" {
-		page = strings.TrimRight(cfg.HTTPHostname, "/") + path
+	if cfg.BaseURL != "" {
+		page = strings.TrimRight(cfg.BaseURL, "/") + path
 	}
 	evt := cd.Event()
 	if evt != nil {

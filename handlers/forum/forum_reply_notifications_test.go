@@ -163,7 +163,7 @@ func TestForumReply(t *testing.T) {
 	cfg.AdminNotify = true
 	cfg.EmailEnabled = true
 	cfg.EmailFrom = "noreply@example.com"
-	cfg.HTTPHostname = "http://example.com"
+	cfg.BaseURL = "http://example.com"
 
 	mockProvider := &MockEmailProvider{}
 	n := notifications.New(

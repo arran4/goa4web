@@ -46,8 +46,8 @@ func (TestTemplateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	base := "http://" + r.Host
-	if cd.Config.HTTPHostname != "" {
-		base = strings.TrimRight(cd.Config.HTTPHostname, "/")
+	if cd.Config.BaseURL != "" {
+		base = strings.TrimRight(cd.Config.BaseURL, "/")
 	}
 	pageURL := base + r.URL.Path
 
@@ -57,8 +57,8 @@ func (TestTemplateTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("parse template fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	unsub := "/usr/subscriptions"
-	if cd.Config.HTTPHostname != "" {
-		unsub = strings.TrimRight(cd.Config.HTTPHostname, "/") + unsub
+	if cd.Config.BaseURL != "" {
+		unsub = strings.TrimRight(cd.Config.BaseURL, "/") + unsub
 	}
 	content := struct{ To, From, Subject, URL, Action, Path, Time, UnsubscribeUrl string }{
 		To:             (&mail.Address{Name: urow.Username.String, Address: urow.Email.String}).String(),

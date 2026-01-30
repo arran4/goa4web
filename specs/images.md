@@ -12,7 +12,7 @@ Functions in `pkg/images/sign.go` produce signed URLs:
 - `SignedCacheURL` does the same for cache entries.
 - `SignedURLTTL` and `SignedCacheURLTTL` accept a custom `time.Duration` specifying how long the link should remain valid.
 
-All helpers append `ts` and `sig` query parameters to the host configured in `HTTPHostname`. Signatures use HMAC‑SHA256 and expire after the supplied duration.
+All helpers append `ts` and `sig` query parameters to the host configured in `BaseURL`. Signatures use HMAC‑SHA256 and expire after the supplied duration.
 
 ## Verification
 

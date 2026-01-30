@@ -74,6 +74,18 @@ func (c *roleCmd) Run() error {
 			return fmt.Errorf("inspect: %w", err)
 		}
 		return cmd.Run()
+	case "grants":
+		cmd, err := parseRoleGrantsCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("grants: %w", err)
+		}
+		return cmd.Run()
+	case "public-profile":
+		cmd, err := parseRolePublicProfileCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("public-profile: %w", err)
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown role command %q", args[0])

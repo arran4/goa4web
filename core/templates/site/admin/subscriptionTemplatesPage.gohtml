@@ -1,0 +1,90 @@
+{{ template "head" $ }}
+[<a href="/admin">Admin</a>]<br />
+<h1>Subscription Templates</h1>
+{{- if cd.CurrentError }}
+<p class="text-error">{{ cd.CurrentError }}</p>
+{{- end }}
+
+<h2>Upload Template</h2>
+<form method="post" enctype="multipart/form-data">
+    {{ csrfField }}
+    <div>
+        <label>
+            Template file
+            <input type="file" name="template_file">
+        </label>
+        {{- with index .Upload.Errors "template_file" }}
+        <div class="text-error">{{ . }}</div>
+        {{- end }}
+    </div>
+    <div>
+        <label>
+            Template name
+            <input type="text" name="template_name" value="{{ .Upload.TemplateName }}">
+        </label>
+        {{- with index .Upload.Errors "template_name" }}
+        <div class="text-error">{{ . }}</div>
+        {{- end }}
+    </div>
+    <div>
+        <label>
+            Apply to role
+            <select name="role">
+                <option value="">Select role</option>
+                {{- range .Roles }}
+                <option value="{{ .Name }}">{{ .Name }}</option>
+                {{- end }}
+            </select>
+        </label>
+    </div>
+    {{- if .Upload.Content }}
+    <textarea name="template_content" hidden>{{ .Upload.Content }}</textarea>
+    {{- end }}
+    <button type="submit" name="preview" value="1">Preview</button>
+    <button type="submit" name="task" value="Apply Template">Apply Template</button>
+    {{- with index .Upload.Errors "template_content" }}
+    <div class="text-error">{{ . }}</div>
+    {{- end }}
+</form>
+
+{{- if .Upload.Patterns }}
+<h2>Uploaded Template Preview</h2>
+<p><strong>Template:</strong> {{ .Upload.TemplateName }}</p>
+<pre>{{- range .Upload.Patterns }}{{ .Method }} {{ .Pattern }}
+{{- end }}</pre>
+{{- end }}
+
+{{ with .Templates }}
+<table class="table table-bordered">
+<tr><th>Template</th><th>Parsed Patterns (method + pattern)</th><th>Apply Template to Role</th></tr>
+{{- range . }}
+<tr>
+    <td>{{ .Name }}</td>
+    <td>
+        {{- if .Patterns }}
+        <pre>{{- range .Patterns }}{{ .Method }} {{ .Pattern }}
+{{- end }}</pre>
+        {{- else }}
+        <em>No patterns found.</em>
+        {{- end }}
+    </td>
+    <td>
+        <form method="post">
+            {{ csrfField }}
+            <input type="hidden" name="template" value="{{ .Name }}">
+            <select name="role">
+                <option value="">Select role</option>
+                {{- range $.Roles }}
+                <option value="{{ .Name }}">{{ .Name }}</option>
+                {{- end }}
+            </select>
+            <input type="submit" name="task" value="Apply Template">
+        </form>
+    </td>
+</tr>
+{{- end }}
+</table>
+{{ else }}
+<p>No templates found.</p>
+{{ end }}
+{{ template "tail" $ }}

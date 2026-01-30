@@ -84,8 +84,8 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 			isInternal = true
 		}
 		// Also check against configured hostname
-		if cd.Config != nil && cd.Config.HTTPHostname != "" {
-			if confU, err := url.Parse(cd.Config.HTTPHostname); err == nil {
+		if cd.Config != nil && cd.Config.BaseURL != "" {
+			if confU, err := url.Parse(cd.Config.BaseURL); err == nil {
 				if u.Hostname() == confU.Hostname() {
 					isInternal = true
 				}
@@ -136,7 +136,7 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	link := cd.SelectedExternalLink()
 	if link != nil && link.CardImage.Valid && !link.CardImageCache.Valid {
-		cached, err := DownloadAndCacheImage(cd, link.CardImage.String)
+		cached, err := cd.DownloadAndCacheImage(link.CardImage.String)
 		if err == nil {
 			_ = cd.Queries().UpdateExternalLinkImageCache(r.Context(), db.UpdateExternalLinkImageCacheParams{
 				CardImageCache: sql.NullString{String: cached, Valid: true},
@@ -169,7 +169,7 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		URL:         rawURL,
 		RedirectURL: fmt.Sprintf("/goto?%s=%s&sig=%s&go=1", linkParam, linkValue, sig),
-		ReloadURL:   fmt.Sprintf("/reload?%s=%s&sig=%s", linkParam, linkValue, sig),
+		ReloadURL:   fmt.Sprintf("/goto?%s=%s&sig=%s", linkParam, linkValue, sig),
 	}
 	if err := cd.ExecuteSiteTemplate(w, r, "externalLinkPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %v", err)

@@ -82,8 +82,8 @@ func (n *Notifier) RenderEmailFromTemplates(ctx context.Context, emailAddr strin
 	}
 
 	unsub := "/usr/subscriptions"
-	if n.Config.HTTPHostname != "" {
-		unsub = strings.TrimRight(n.Config.HTTPHostname, "/") + unsub
+	if n.Config.BaseURL != "" {
+		unsub = strings.TrimRight(n.Config.BaseURL, "/") + unsub
 	}
 
 	signOff := n.Config.EmailSignOff

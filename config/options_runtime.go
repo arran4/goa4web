@@ -43,6 +43,8 @@ var StringOptions = []StringOption{
 	{"db-name", EnvDBName, "Database name.", "", nil, "", func(c *RuntimeConfig) *string { return &c.DBName }},
 	{"listen", EnvListen, "The address and port for the HTTP server to listen on.", ":8080", nil, "", func(c *RuntimeConfig) *string { return &c.HTTPListen }},
 	{"hostname", EnvHostname, "The base URL of the server, used for generating absolute links.", "", nil, "", func(c *RuntimeConfig) *string { return &c.HTTPHostname }},
+	{"external-url", EnvExternalURL, "The base URL of the server (URI only).", "", nil, "", func(c *RuntimeConfig) *string { return &c.ExternalURL }},
+	{"host", EnvHost, "The hostname of the server.", "", nil, "", func(c *RuntimeConfig) *string { return &c.Host }},
 	{"hsts-header", EnvHSTSHeader, "The value for the Strict-Transport-Security header.", "max-age=63072000; includeSubDomains", nil, "", func(c *RuntimeConfig) *string { return &c.HSTSHeaderValue }},
 	{"email-provider", EnvEmailProvider, "The email provider to use. Supported providers are 'smtp', 'ses', 'jmap', and 'log'.", "", nil, "", func(c *RuntimeConfig) *string { return &c.EmailProvider }},
 	{"smtp-host", EnvSMTPHost, "The hostname of the SMTP server.", "", nil, "", func(c *RuntimeConfig) *string { return &c.EmailSMTPHost }},

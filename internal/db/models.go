@@ -431,6 +431,9 @@ type Preference struct {
 	AutoSubscribeReplies bool
 	Timezone             sql.NullString
 	CustomCss            sql.NullString
+	DailyDigestHour      sql.NullInt32
+	DailyDigestMarkRead  bool
+	LastDigestSentAt     sql.NullTime
 }
 
 type Role struct {

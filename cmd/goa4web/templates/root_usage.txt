@@ -9,6 +9,7 @@ components.
 
 Commands:
   help    Show help for a command.
+  usage   Report usage statistics and summaries.
   serve   Run the web server. This is the primary command for running the
           application.
   user    Manage users. This includes adding, removing, and modifying user
@@ -23,6 +24,8 @@ Commands:
           blog posts.
   news    Manage news posts. This is used for creating and managing news
           articles.
+  announcement Manage announcements. This includes listing, adding, and
+          deleting announcements tied to news posts.
   faq     Manage frequently asked questions. This allows you to create and
           update a list of FAQs.
   forum   Manage forum topics and threads. This includes maintenance tasks for
@@ -33,29 +36,43 @@ Commands:
           written content.
   ipban   Manage IP bans. This allows you to block specific IP addresses from
           accessing the application.
+  requests Manage admin requests. This is used for listing and inspecting
+          administrative requests.
+  imagebbs Manage ImageBBS moderation tasks.
   audit   Show recent audit log entries. This provides a log of all actions
           performed in the application.
+  files   Manage uploaded image files. This includes listing and purging
+          image board uploads.
+  notifications Manage site notifications and task templates.
   db      Manage the database. This includes creating, migrating, and seeding
           the database.
   lang    Manage languages. This allows you to add and manage different
           languages for the application.
+  maintenance Run one-off maintenance tasks that mirror admin actions.
   server  Manage the running server. This provides commands for interacting
           with the live server.
   password Manage pending password resets. This is used for managing password
           reset requests.
   email   Manage emails. This includes sending and managing email
           notifications.
+  dlq     Manage dead letter queue entries.
+  requests Manage admin request queue actions such as listing, accepting,
+          rejecting, and commenting on requests.
   config  Manage configuration. This allows you to view and modify the
           application's configuration.
+  page-size Manage pagination settings. This includes viewing and updating the
+          page size bounds.
   test    Run manual tests. This is used for running specific tests that are
           not part of the automated test suite.
 
 Examples:
   {{.Prog}} serve
+  {{.Prog}} usage stats --format json --since 2024-01-01 --until 2024-06-30
   {{.Prog}} user add -username alice -password secret
   {{.Prog}} perm list
   {{.Prog}} role users
   {{.Prog}} config reload
+  {{.Prog}} requests list -status pending
   {{.Prog}} help config
   {{.Prog}} board list
   {{.Prog}} blog read 1
@@ -63,6 +80,7 @@ Examples:
   {{.Prog}} writing tree
   {{.Prog}} faq tree
   {{.Prog}} ipban list
+  {{.Prog}} requests list --status pending
   {{.Prog}} db migrate
   {{.Prog}} db seed
   {{.Prog}} lang list

@@ -27,7 +27,7 @@ func TestHTTPConfigPrecedence(t *testing.T) {
 		config.WithGetenv(func(k string) string { return env[k] }),
 	)
 
-	if cfg.HTTPListen != ":3" || cfg.HTTPHostname != "http://cli" {
+	if cfg.HTTPListen != ":3" || cfg.BaseURL != "http://cli" {
 		t.Fatalf("merged %#v", cfg)
 	}
 }
@@ -57,7 +57,42 @@ func TestHTTPHostnameWithTrailingSlash(t *testing.T) {
 		config.WithFileValues(vals),
 		config.WithGetenv(func(string) string { return "" }),
 	)
-	if cfg.HTTPHostname != "http://example.com" {
-		t.Fatalf("want http://example.com got %q", cfg.HTTPHostname)
+	if cfg.BaseURL != "http://example.com" {
+		t.Fatalf("want http://example.com got %q", cfg.BaseURL)
+	}
+}
+
+func TestBaseURLPrecedence(t *testing.T) {
+	// 1. ExternalURL takes precedence
+	cfg := config.NewRuntimeConfig(
+		config.WithFileValues(map[string]string{
+			config.EnvExternalURL: "http://external",
+			config.EnvHostname:    "http://hostname",
+			config.EnvHost:        "host",
+		}),
+	)
+	if cfg.BaseURL != "http://external" {
+		t.Errorf("expected ExternalURL precedence, got %q", cfg.BaseURL)
+	}
+
+	// 2. HTTPHostname takes precedence over Host
+	cfg = config.NewRuntimeConfig(
+		config.WithFileValues(map[string]string{
+			config.EnvHostname: "http://hostname",
+			config.EnvHost:     "host",
+		}),
+	)
+	if cfg.BaseURL != "http://hostname" {
+		t.Errorf("expected HTTPHostname precedence, got %q", cfg.BaseURL)
+	}
+
+	// 3. Host is used if others missing
+	cfg = config.NewRuntimeConfig(
+		config.WithFileValues(map[string]string{
+			config.EnvHost: "host",
+		}),
+	)
+	if cfg.BaseURL != "http://host" {
+		t.Errorf("expected Host usage, got %q", cfg.BaseURL)
 	}
 }

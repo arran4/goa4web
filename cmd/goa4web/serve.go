@@ -41,17 +41,21 @@ func (c *serveCmd) Run() error {
 
 	c.rootCmd.Infof("Starting Goa4Web v%s (commit: %s; build date: %s)", version, commit, date)
 	listenMsg := fmt.Sprintf("Listening on: %s", cfg.HTTPListen)
-	if cfg.HTTPHostname != "" {
-		// switching dest url with hostname and populating hostname from parsed url
-		if u, err := url.Parse(cfg.HTTPHostname); err == nil && u.Host != "" {
-			if u.Scheme != "" {
-				c.rootCmd.Infof("WARNING: HTTPHostname configuration is a URL (scheme: %s), expected a hostname. Using extracted host: %s", u.Scheme, u.Host)
-			}
-			listenMsg += fmt.Sprintf(" (Hostname: %s)", u.Host)
-		} else {
-			listenMsg += fmt.Sprintf(" (Hostname: %s)", cfg.HTTPHostname)
+	if cfg.ExternalURL != "" {
+		if u, err := url.Parse(cfg.ExternalURL); err != nil || u.Scheme == "" {
+			c.rootCmd.Infof("WARNING: ExternalURL configuration is not a valid URL (scheme required). Got: %s", cfg.ExternalURL)
+		}
+	} else if cfg.HTTPHostname != "" {
+		if u, err := url.Parse(cfg.HTTPHostname); err == nil && u.Scheme == "" {
+			c.rootCmd.Infof("WARNING: HTTPHostname configuration is a hostname, preferred a URI. Got: %s", cfg.HTTPHostname)
+		}
+	} else if cfg.Host != "" {
+		if u, err := url.Parse(cfg.Host); err == nil && u.Scheme != "" {
+			c.rootCmd.Infof("WARNING: Host configuration is a URI, preferred a hostname. Got: %s", cfg.Host)
 		}
 	}
+
+	listenMsg += fmt.Sprintf(" (Base URL: %s)", cfg.BaseURL)
 	c.rootCmd.Infof("%s", listenMsg)
 
 	secret, err := config.LoadOrCreateSessionSecret(core.OSFS{}, cfg.SessionSecret, cfg.SessionSecretFile)

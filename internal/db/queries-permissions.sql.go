@@ -600,6 +600,100 @@ func (q *Queries) ListUsersWithRoles(ctx context.Context) ([]*ListUsersWithRoles
 	return items, nil
 }
 
+const searchGrants = `-- name: SearchGrants :many
+SELECT g.id, g.created_at, g.updated_at, g.user_id, g.role_id, g.section, g.item, g.rule_type, g.item_id, g.item_rule, g.action, g.extra, g.active, u.username, r.name as role_name
+FROM grants g
+LEFT JOIN users u ON g.user_id = u.idusers
+LEFT JOIN roles r ON g.role_id = r.id
+WHERE
+    (? IS NULL OR g.section = ?)
+AND (? IS NULL OR g.item = ?)
+AND (? IS NULL OR g.item_id = ?)
+AND (? IS NULL OR g.active = ?)
+AND (? IS NULL OR u.username LIKE ?)
+AND (? IS NULL OR r.name LIKE ?)
+ORDER BY g.id
+`
+
+type SearchGrantsParams struct {
+	Section  sql.NullString
+	Item     sql.NullString
+	ItemID   sql.NullInt32
+	Active   sql.NullBool
+	Username sql.NullString
+	RoleName sql.NullString
+}
+
+type SearchGrantsRow struct {
+	ID        int32
+	CreatedAt sql.NullTime
+	UpdatedAt sql.NullTime
+	UserID    sql.NullInt32
+	RoleID    sql.NullInt32
+	Section   string
+	Item      sql.NullString
+	RuleType  string
+	ItemID    sql.NullInt32
+	ItemRule  sql.NullString
+	Action    string
+	Extra     sql.NullString
+	Active    bool
+	Username  sql.NullString
+	RoleName  sql.NullString
+}
+
+func (q *Queries) SearchGrants(ctx context.Context, arg SearchGrantsParams) ([]*SearchGrantsRow, error) {
+	rows, err := q.db.QueryContext(ctx, searchGrants,
+		arg.Section,
+		arg.Section,
+		arg.Item,
+		arg.Item,
+		arg.ItemID,
+		arg.ItemID,
+		arg.Active,
+		arg.Active,
+		arg.Username,
+		arg.Username,
+		arg.RoleName,
+		arg.RoleName,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*SearchGrantsRow
+	for rows.Next() {
+		var i SearchGrantsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.UserID,
+			&i.RoleID,
+			&i.Section,
+			&i.Item,
+			&i.RuleType,
+			&i.ItemID,
+			&i.ItemRule,
+			&i.Action,
+			&i.Extra,
+			&i.Active,
+			&i.Username,
+			&i.RoleName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const systemCheckGrant = `-- name: SystemCheckGrant :one
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?

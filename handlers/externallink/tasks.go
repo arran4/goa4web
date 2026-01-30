@@ -49,9 +49,14 @@ func (ReloadExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) any
 
 	rawURL := u
 	if id != "" {
-		// existing logic to get URL from ID if necessary
-		// For now assuming if id provided, we fetch from DB first
-		// TODO: Implement full lookup if id provided
+		// If ID is provided, we should look it up to get the URL
+		lid := int32(0)
+		fmt.Sscan(id, &lid)
+		if lid != 0 {
+			if l, err := cd.Queries().GetExternalLinkByID(r.Context(), lid); err == nil {
+				rawURL = l.Url
+			}
+		}
 	}
 
 	if rawURL == "" {
@@ -66,15 +71,13 @@ func (ReloadExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) any
 	var cachedImgName string
 	if imgURL != "" {
 		var err error
-		cachedImgName, err = DownloadAndCacheImage(cd, imgURL)
+		cachedImgName, err = cd.DownloadAndCacheImage(imgURL)
 		if err != nil {
 			log.Printf("failed to cache image: %v", err)
 		}
 	}
 
 	// Update DB
-	// We need to implement lookup or create logic similar to RedirectHandler
-	// For brevity, let's assume we create/update based on URL
 	res, err := cd.Queries().CreateExternalLink(r.Context(), rawURL)
 	var lid int32
 	if err == nil {
@@ -93,10 +96,7 @@ func (ReloadExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) any
 			CardTitle:       sql.NullString{String: title, Valid: title != ""},
 			CardDescription: sql.NullString{String: desc, Valid: desc != ""},
 			CardImage:       sql.NullString{String: imgURL, Valid: imgURL != ""},
-			// We need a field for CardImageCache? Assuming one exists or we reuse CardImage?
-			// The template uses CardImageCache.
-			// Let's check db schema or assume it exists based on template usage.
-			ID: lid,
+			ID:              lid,
 		})
 		if err != nil {
 			return fmt.Errorf("update error: %w", err)
@@ -115,13 +115,15 @@ func (ReloadExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) any
 		}
 	}
 
-	return handlers.TextByteWriter([]byte("Reloaded"))
+	// Return redirect to the current URL
+	// We reconstruct the URL from params to be safe, or just use RequestURI?
+	// RequestURI includes the path and query.
+	// Since we are POSTing to /goto?u=... , RequestURI is exactly what we want to GET.
+	return handlers.RedirectHandler(r.RequestURI)
 }
 
 func (t *ReloadExternalLinkTask) Matcher() func(*http.Request, *mux.RouteMatch) bool {
 	return func(r *http.Request, rm *mux.RouteMatch) bool {
-		// No special matcher needed beyond route registration,
-		// but tasks usually share a matcher.
 		return true
 	}
 }

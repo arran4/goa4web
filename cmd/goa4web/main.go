@@ -285,10 +285,23 @@ func (r *rootCmd) Run() error {
 		return fmt.Errorf("no command provided")
 	}
 	switch args[0] {
-	case "help", "usage":
+	case "help":
 		c, err := parseHelpCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("rootCmd.Run: help: %w", err)
+		}
+		return c.Run()
+	case "usage":
+		if len(args) > 1 {
+			c, err := parseUsageCmd(r, args[1:])
+			if err != nil {
+				return fmt.Errorf("rootCmd.Run: usage: %w", err)
+			}
+			return c.Run()
+		}
+		c, err := parseHelpCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("rootCmd.Run: usage: %w", err)
 		}
 		return c.Run()
 	case "serve":
@@ -307,6 +320,18 @@ func (r *rootCmd) Run() error {
 		c, err := parseEmailCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("rootCmd.Run: email: %w", err)
+		}
+		return c.Run()
+	case "dlq":
+		c, err := parseDlqCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("rootCmd.Run: dlq: %w", err)
+		}
+		return c.Run()
+	case "requests":
+		c, err := parseRequestsCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("rootCmd.Run: requests: %w", err)
 		}
 		return c.Run()
 	case "db":
@@ -363,6 +388,12 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("rootCmd.Run: news: %w", err)
 		}
 		return cmd.Run()
+	case "announcement":
+		cmd, err := parseAnnouncementCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("rootCmd.Run: announcement: %w", err)
+		}
+		return cmd.Run()
 	case "jmap":
 		cmd, err := parseJmapCmd(r, args[1:])
 		if err != nil {
@@ -397,6 +428,18 @@ func (r *rootCmd) Run() error {
 		c, err := parseImagesCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("rootCmd.Run: images: %w", err)
+		}
+		return c.Run()
+	case "files":
+		c, err := parseFilesCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("rootCmd.Run: files: %w", err)
+		}
+		return c.Run()
+	case "imagebbs":
+		c, err := parseImagebbsCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("rootCmd.Run: imagebbs: %w", err)
 		}
 		return c.Run()
 	case "links":
@@ -441,6 +484,12 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("rootCmd.Run: lang: %w", err)
 		}
 		return c.Run()
+	case "maintenance":
+		c, err := parseMaintenanceCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("rootCmd.Run: maintenance: %w", err)
+		}
+		return c.Run()
 	case "server":
 		c, err := parseServerCmd(r, args[1:])
 		if err != nil {
@@ -451,6 +500,12 @@ func (r *rootCmd) Run() error {
 		c, err := parseConfigCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("rootCmd.Run: config: %w", err)
+		}
+		return c.Run()
+	case "page-size":
+		c, err := parsePageSizeCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("rootCmd.Run: page-size: %w", err)
 		}
 		return c.Run()
 	case "templates":

@@ -46,7 +46,7 @@ func TestSecurityHeadersMiddlewareHTTP(t *testing.T) {
 }
 
 func TestSecurityHeadersMiddlewareHTTPS(t *testing.T) {
-	cfg := config.RuntimeConfig{HTTPHostname: "https://example.com"}
+	cfg := config.RuntimeConfig{HTTPHostname: "https://example.com", BaseURL: "https://example.com"}
 	cd, stub := newCoreData(t, cfg)
 
 	req := httptest.NewRequest("GET", "http://example.com/", nil)

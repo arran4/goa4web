@@ -1,5 +1,7 @@
 {{ template "head" $ }}
 <div>[<a href="/admin">Admin:</a> <a href="/admin/ipbans">(This page/Refresh)</a>]</div>
+{{ if .Error }}<p class="text-error">{{ .Error }}</p>{{ end }}
+{{ if .Notice }}<p><strong>{{ .Notice }}</strong></p>{{ end }}
 <form method="post">
     {{ csrfField }}
     IP: <input type="text" name="ip">
@@ -24,4 +26,220 @@
 </table>
 <input type="submit" name="task" value="Delete">
 </form>
+<hr>
+<h3>Bulk CSV tools</h3>
+<p><a href="{{ .ExportURL }}">Download current bans (CSV)</a></p>
+<form method="post" id="ipban-bulk-form">
+    {{ csrfField }}
+    <input type="hidden" name="csv" id="ipban-csv">
+    <div id="ipban-dropzone" style="border: 2px dashed #999; padding: 1rem; cursor: pointer;">
+        <strong>Drop CSV here</strong> or click to select a file.
+        <input type="file" id="ipban-csv-file" accept=".csv,text/csv" style="display: none;">
+    </div>
+    <p>
+        <label for="ipban-csv-text"><strong>CSV content</strong></label><br>
+        <textarea id="ipban-csv-text" rows="6" style="width: 100%;" placeholder="Paste CSV here"></textarea>
+    </p>
+    <p>
+        <label><input type="checkbox" name="dry_run" value="1" id="ipban-dry-run"> Dry run (validate only)</label>
+    </p>
+    <input type="submit" name="task" value="Bulk import">
+</form>
+<h4>Preview</h4>
+<div id="ipban-csv-errors" class="text-error"></div>
+<table class="table table-bordered" id="ipban-csv-preview">
+    <thead>
+    <tr><th>Action</th><th>IP</th><th>Reason</th><th>Expires</th><th>ID</th></tr>
+    </thead>
+    <tbody></tbody>
+</table>
+<p><strong>Expected columns:</strong> action, ip, reason, expires, id (header optional).</p>
+<pre>{{ .ImportTemplate }}</pre>
+<script>
+(function () {
+    const dropzone = document.getElementById("ipban-dropzone");
+    const fileInput = document.getElementById("ipban-csv-file");
+    const textArea = document.getElementById("ipban-csv-text");
+    const hiddenInput = document.getElementById("ipban-csv");
+    const errorsEl = document.getElementById("ipban-csv-errors");
+    const previewBody = document.querySelector("#ipban-csv-preview tbody");
+    const form = document.getElementById("ipban-bulk-form");
+    if (!dropzone || !fileInput || !textArea || !hiddenInput || !errorsEl || !previewBody || !form) {
+        return;
+    }
+
+    function parseCSV(text) {
+        const rows = [];
+        let row = [];
+        let current = "";
+        let inQuotes = false;
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            if (char === '"' && text[i + 1] === '"') {
+                current += '"';
+                i++;
+                continue;
+            }
+            if (char === '"') {
+                inQuotes = !inQuotes;
+                continue;
+            }
+            if (char === "," && !inQuotes) {
+                row.push(current);
+                current = "";
+                continue;
+            }
+            if ((char === "\n" || char === "\r") && !inQuotes) {
+                if (char === "\r" && text[i + 1] === "\n") {
+                    i++;
+                }
+                row.push(current);
+                if (row.length > 1 || row[0] !== "") {
+                    rows.push(row);
+                }
+                row = [];
+                current = "";
+                continue;
+            }
+            current += char;
+        }
+        row.push(current);
+        if (row.length > 1 || row[0] !== "") {
+            rows.push(row);
+        }
+        return rows;
+    }
+
+    function normalizeHeader(row) {
+        const map = {};
+        row.forEach((cell, idx) => {
+            const key = cell.trim().toLowerCase();
+            if (key === "action") map.action = idx;
+            if (key === "ip" || key === "ip_net" || key === "cidr") map.ip = idx;
+            if (key === "reason" || key === "ban_reason") map.reason = idx;
+            if (key === "expires" || key === "expires_at") map.expires = idx;
+            if (key === "id" || key === "ban_id") map.id = idx;
+        });
+        return Object.keys(map).length ? map : null;
+    }
+
+    function columnValue(row, header, key, fallback) {
+        const index = header ? header[key] : fallback;
+        if (index === undefined || index < 0 || index >= row.length) {
+            return "";
+        }
+        return row[index].trim();
+    }
+
+    function validateRows(rows) {
+        const errors = [];
+        const preview = [];
+        let header = null;
+        let startIndex = 0;
+        if (rows.length) {
+            header = normalizeHeader(rows[0]);
+            if (header) {
+                startIndex = 1;
+            }
+        }
+        for (let i = startIndex; i < rows.length; i++) {
+            const row = rows[i];
+            const action = columnValue(row, header, "action", 0).toLowerCase();
+            const ip = columnValue(row, header, "ip", 1);
+            const reason = columnValue(row, header, "reason", 2);
+            const expires = columnValue(row, header, "expires", 3);
+            const id = columnValue(row, header, "id", 4);
+            const line = i + 1;
+            if (!action) {
+                errors.push(`row ${line}: action required`);
+                continue;
+            }
+            if (!["add", "delete", "update"].includes(action)) {
+                errors.push(`row ${line}: invalid action "${action}"`);
+                continue;
+            }
+            if (["add", "delete"].includes(action) && !ip) {
+                errors.push(`row ${line}: ip required`);
+                continue;
+            }
+            if (action === "update" && !id) {
+                errors.push(`row ${line}: id required for update`);
+                continue;
+            }
+            if (expires && !/^\d{4}-\d{2}-\d{2}$/.test(expires)) {
+                errors.push(`row ${line}: expires must be YYYY-MM-DD`);
+                continue;
+            }
+            preview.push({ action, ip, reason, expires, id });
+        }
+        return { errors, preview };
+    }
+
+    function renderPreview(preview) {
+        previewBody.innerHTML = "";
+        preview.slice(0, 20).forEach((row) => {
+            const tr = document.createElement("tr");
+            ["action", "ip", "reason", "expires", "id"].forEach((key) => {
+                const td = document.createElement("td");
+                td.textContent = row[key] || "";
+                tr.appendChild(td);
+            });
+            previewBody.appendChild(tr);
+        });
+        if (preview.length > 20) {
+            const tr = document.createElement("tr");
+            const td = document.createElement("td");
+            td.colSpan = 5;
+            td.textContent = `Showing first 20 of ${preview.length} rows.`;
+            tr.appendChild(td);
+            previewBody.appendChild(tr);
+        }
+    }
+
+    function updatePreview(text) {
+        hiddenInput.value = text;
+        const rows = parseCSV(text);
+        const result = validateRows(rows);
+        errorsEl.textContent = result.errors.length ? result.errors.join("; ") : "";
+        renderPreview(result.preview);
+    }
+
+    dropzone.addEventListener("click", () => fileInput.click());
+    dropzone.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        dropzone.style.borderColor = "#333";
+    });
+    dropzone.addEventListener("dragleave", () => {
+        dropzone.style.borderColor = "#999";
+    });
+    dropzone.addEventListener("drop", (event) => {
+        event.preventDefault();
+        dropzone.style.borderColor = "#999";
+        if (event.dataTransfer && event.dataTransfer.files.length) {
+            fileInput.files = event.dataTransfer.files;
+            const file = event.dataTransfer.files[0];
+            const reader = new FileReader();
+            reader.onload = () => {
+                textArea.value = reader.result || "";
+                updatePreview(textArea.value);
+            };
+            reader.readAsText(file);
+        }
+    });
+    fileInput.addEventListener("change", () => {
+        if (!fileInput.files.length) {
+            return;
+        }
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.onload = () => {
+            textArea.value = reader.result || "";
+            updatePreview(textArea.value);
+        };
+        reader.readAsText(file);
+    });
+    textArea.addEventListener("input", () => updatePreview(textArea.value));
+    form.addEventListener("submit", () => updatePreview(textArea.value));
+})();
+</script>
 {{ template "tail" $ }}

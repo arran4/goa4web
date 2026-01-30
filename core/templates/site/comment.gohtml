@@ -6,7 +6,7 @@
     <div class="comment">
         <aside class="author">
             <div class="avatar"></div>
-            <div class="username">{{ $cmt.Posterusername.String }}</div>
+            <div class="username">{{ if ne $cmt.UsersIdusers cd.UserID }}<strong>{{ $cmt.Posterusername.String }}</strong>{{ else }}{{ $cmt.Posterusername.String }}{{ end }}</div>
             <div class="meta">
                 <div class="comment-id"><a class="comment-id" href="#c{{ $num }}">#{{ $num }}</a></div>
                 <div class="date">{{ (cd.LocalTimeIn $cmt.Written.Time $cmt.Timezone.String).Format "2006-01-02" }}</div>

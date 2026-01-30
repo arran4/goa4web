@@ -8,6 +8,7 @@ used to create the database schema and to seed the database with initial data.
 Arguments:
   seed.sql           - Show the contents of the seed.sql file.
   schema.mysql.sql   - Show the contents of the schema.mysql.sql file.
+  schema-version     - Show the current schema version from the database.
 
 Examples:
   # Show the contents of the seed.sql file
@@ -15,3 +16,6 @@ Examples:
 
   # Show the contents of the schema.mysql.sql file
   {{.Prog}} db show schema.mysql.sql
+
+  # Show the current schema version
+  {{.Prog}} db show schema-version

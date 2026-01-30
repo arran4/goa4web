@@ -91,6 +91,10 @@ const (
 	EnvListen = "LISTEN"
 	// EnvHostname is the base URL advertised by the HTTP server.
 	EnvHostname = "HOSTNAME"
+	// EnvExternalURL is the base URL advertised by the HTTP server (preferred).
+	EnvExternalURL = "EXTERNAL_URL"
+	// EnvHost is the hostname advertised by the HTTP server.
+	EnvHost = "HOST"
 	// EnvTimezone sets the default site timezone used when users have not
 	// configured their own.
 	EnvTimezone = "TIMEZONE"

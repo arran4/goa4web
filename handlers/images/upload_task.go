@@ -78,7 +78,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 			return handlers.TextByteWriter([]byte(cd.ImageURLMapper("img", signed)))
 		}
 		// Construct URL manually to avoid forced signing by the mapper.
-		host := strings.TrimSuffix(cd.Config.HTTPHostname, "/")
+		host := strings.TrimSuffix(cd.Config.BaseURL, "/")
 		urlStr := fmt.Sprintf("%s/images/image/%s", host, fname)
 		if cd.ImageSignKey != "" && r.FormValue("signed") == "true" {
 			// We can use SignedRef but that returns "image:ID?..." which we then need to map to URL?

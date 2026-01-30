@@ -306,6 +306,9 @@ func GetRoleGrantsEditorJSData(opts ...Option) []byte {
 	return readFile("assets/role_grants_editor.js", opts...)
 }
 
+// GetGrantAddJSData returns the JavaScript powering the admin grant add page.
+func GetGrantAddJSData(opts ...Option) []byte { return readFile("assets/grant_add.js", opts...) }
+
 // GetPrivateForumJSData returns the JavaScript for private forum pages.
 func GetPrivateForumJSData(opts ...Option) []byte {
 	return readFile("assets/private_forum.js", opts...)

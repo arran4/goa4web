@@ -1,0 +1,21 @@
+Usage:
+  {{.Prog}} page-size <command> [<args>]
+
+Manage pagination settings for the application. Updates are written to the
+configured config file when a value is provided.
+
+Commands:
+  show  Display the active pagination limits.
+  set   Update pagination limits.
+
+Examples:
+  # Display the current page size values
+  {{.Prog}} page-size show
+
+  # Update the minimum and maximum page sizes
+  {{.Prog}} page-size set -min 5 -max 50
+
+  # Update the default page size only
+  {{.Prog}} page-size set -default 20
+
+{{template "flag_groups_section" .FlagGroups}}

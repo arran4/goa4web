@@ -96,7 +96,7 @@ func getResetURL(
 	}
 
 	sig := sign.Sign(data, key, opts...)
-	base, err := url.Parse(cfg.HTTPHostname)
+	base, err := url.Parse(cfg.BaseURL)
 	if err != nil {
 		return "", "", 0, fmt.Errorf("failed to parse hostname: %w", err)
 	}

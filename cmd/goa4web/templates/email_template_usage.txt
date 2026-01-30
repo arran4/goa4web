@@ -1,0 +1,24 @@
+Usage:
+  {{.Prog}} email template <command> [<args>]
+
+Manage email templates and preview the update email template output.
+
+Commands:
+  get     Render the email template admin page (list or editor).
+  set     Update a template override in the database.
+  test    Queue a preview email for the update email template.
+
+Examples:
+  # Render the template list to stdout
+  {{.Prog}} email template get
+
+  # Render a specific template editor
+  {{.Prog}} email template get --name updateEmail
+
+  # Save a template override from a file
+  {{.Prog}} email template set --name updateEmail --file ./template.txt
+
+  # Preview the update email template queue operation without writing
+  {{.Prog}} email template test --user-id 42 --dry-run
+
+{{template "flag_groups_section" .FlagGroups}}

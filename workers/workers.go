@@ -53,6 +53,17 @@ func Start(ctx context.Context, sdb *sql.DB, provider email.Provider, dlqProvide
 		)
 		n.NotificationPurgeWorker(ctx, time.Hour)
 	})
+	log.Printf("Starting notification digest worker")
+	safeGo(func() {
+		n := notifications.New(
+			notifications.WithQueries(db.New(sdb)),
+			notifications.WithCustomQueries(db.New(sdb)),
+			notifications.WithEmailProvider(provider),
+			notifications.WithBus(bus),
+			notifications.WithConfig(cfg),
+		)
+		n.NotificationDigestWorker(ctx, 30*time.Minute)
+	})
 	log.Printf("Starting event bus logger worker")
 	safeGo(func() { logworker.Worker(ctx, bus) })
 	log.Printf("Starting audit worker")
@@ -75,5 +86,5 @@ func Start(ctx context.Context, sdb *sql.DB, provider email.Provider, dlqProvide
 	log.Printf("Starting post count worker")
 	safeGo(func() { postcountworker.Worker(ctx, bus, db.New(sdb)) })
 	log.Printf("Starting external link worker")
-	safeGo(func() { externallinkworker.Worker(ctx, bus, db.New(sdb)) })
+	safeGo(func() { externallinkworker.Worker(ctx, bus, db.New(sdb), cfg) })
 }

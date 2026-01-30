@@ -1,0 +1,9 @@
+Usage:
+  {{.Prog}} requests view <id>
+
+View a single admin request by ID. Output is JSON.
+
+Examples:
+  {{.Prog}} requests view 42
+
+{{template "flag_groups_section" .FlagGroups}}

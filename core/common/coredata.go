@@ -270,7 +270,7 @@ type CoreData struct {
 func (cd *CoreData) AbsoluteURL(ops ...any) string {
 	base, err := cd.absoluteURLBase.Load(func() (string, error) {
 		if cd.Config != nil {
-			return cd.Config.HTTPHostname, nil
+			return cd.Config.BaseURL, nil
 		}
 		return "", nil
 	})
@@ -294,12 +294,12 @@ func (cd *CoreData) AbsoluteURL(ops ...any) string {
 		switch v := op.(type) {
 		case string:
 			// Handle fragments and queries manually to prevent JoinPath from escaping them
-			if idx := strings.IndexByte(v, '#'); idx >= 0 {
-				u.Fragment = v[idx+1:]
-				v = v[:idx]
+			if before, after, found := strings.Cut(v, "#"); found {
+				u.Fragment = after
+				v = before
 			}
-			if idx := strings.IndexByte(v, '?'); idx >= 0 {
-				q, err := url.ParseQuery(v[idx+1:])
+			if before, after, found := strings.Cut(v, "?"); found {
+				q, err := url.ParseQuery(after)
 				if err == nil {
 					query := u.Query()
 					for k, vals := range q {
@@ -309,7 +309,7 @@ func (cd *CoreData) AbsoluteURL(ops ...any) string {
 					}
 					u.RawQuery = query.Encode()
 				}
-				v = v[:idx]
+				v = before
 			}
 			if v != "" {
 				// url.JoinPath cleans paths and handles slashes, but escapes special chars.

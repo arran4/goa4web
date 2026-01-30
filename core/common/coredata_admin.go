@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"log"
+	"time"
 
 	"github.com/arran4/goa4web/internal/db"
 )
@@ -61,7 +62,7 @@ func (cd *CoreData) AdminCommentsByUser(userID int32) ([]*db.AdminGetAllComments
 }
 
 // AdminListPasswordResets lists password reset requests.
-func (cd *CoreData) AdminListPasswordResets(status *string, limit, offset int32) ([]*db.AdminListPasswordResetsRow, int64, error) {
+func (cd *CoreData) AdminListPasswordResets(status *string, userID *int32, createdBefore *time.Time, limit, offset int32) ([]*db.AdminListPasswordResetsRow, int64, error) {
 	if cd.queries == nil {
 		return nil, 0, nil
 	}
@@ -69,15 +70,29 @@ func (cd *CoreData) AdminListPasswordResets(status *string, limit, offset int32)
 	if status != nil {
 		s = sql.NullString{String: *status, Valid: true}
 	}
+	var userIDValue sql.NullInt32
+	if userID != nil {
+		userIDValue = sql.NullInt32{Int32: *userID, Valid: true}
+	}
+	var createdBeforeValue sql.NullTime
+	if createdBefore != nil {
+		createdBeforeValue = sql.NullTime{Time: *createdBefore, Valid: true}
+	}
 	rows, err := cd.queries.AdminListPasswordResets(cd.ctx, db.AdminListPasswordResetsParams{
-		Status: s,
-		Limit:  limit,
-		Offset: offset,
+		Status:        s,
+		UserID:        userIDValue,
+		CreatedBefore: createdBeforeValue,
+		Limit:         limit,
+		Offset:        offset,
 	})
 	if err != nil {
 		return nil, 0, err
 	}
-	count, err := cd.queries.AdminCountPasswordResets(cd.ctx, db.AdminCountPasswordResetsParams{Status: s})
+	count, err := cd.queries.AdminCountPasswordResets(cd.ctx, db.AdminCountPasswordResetsParams{
+		Status:        s,
+		UserID:        userIDValue,
+		CreatedBefore: createdBeforeValue,
+	})
 	if err != nil {
 		return nil, 0, err
 	}

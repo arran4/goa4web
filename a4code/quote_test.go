@@ -249,8 +249,13 @@ func TestQuoteRepro(t *testing.T) {
 		want  string
 	}{
 		{
-			name:  "FilterNestedQuotes",
+			name:  "AllowSingleLevelQuote",
 			input: "Para 1\n\n[quoteof \"other\" inner]\n\nPara 2",
+			want:  "[quoteof \"user\" Para 1]\n\n\n[quoteof \"user\" [quoteof \"other\" inner]]\n\n\n[quoteof \"user\" Para 2]\n",
+		},
+		{
+			name:  "FilterDeeplyNestedQuote",
+			input: "Para 1\n\n[quoteof \"other\" [quoteof \"inner\" content]]\n\nPara 2",
 			want:  "[quoteof \"user\" Para 1]\n\n\n[quoteof \"user\" Para 2]\n",
 		},
 		{
@@ -296,7 +301,7 @@ func TestQuoteRepro(t *testing.T) {
 		{
 			name:  "CaseInsensitiveFilter",
 			input: "[QUOTEOF \"other\" inner]",
-			want:  "",
+			want:  "[quoteof \"user\" [QUOTEOF \"other\" inner]]\n",
 		},
 		{
 			name:  "ParagraphStartingWithCloseBracket",

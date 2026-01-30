@@ -1,0 +1,19 @@
+Usage:
+  {{.Prog}} notifications send [flags]
+
+Send a site notification to users, a role, or specific usernames.
+
+Examples:
+  # Send a message to all users
+  {{.Prog}} notifications send -message "Maintenance soon"
+
+  # Send a message to a role
+  {{.Prog}} notifications send -message "Admins only" -role administrator
+
+  # Send a message to specific users
+  {{.Prog}} notifications send -message "Hello" -users alice,bob
+
+  # Output JSON for automation
+  {{.Prog}} notifications send -message "Maintenance soon" -json
+
+{{template "flag_groups_section" .FlagGroups}}

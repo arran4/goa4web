@@ -1,0 +1,33 @@
+{{ template "head" $ }}
+[<a href="/admin">Admin</a>]<br />
+
+<h1>Template Export</h1>
+<form method="post" action="/admin/templates/export">
+    {{ csrfField }}
+    <input type="hidden" name="task" value="Export Templates" />
+    <fieldset>
+        <legend>Template set</legend>
+        <label>
+            <input type="radio" name="set" value="site" {{ if eq .SelectedSet "site" }}checked{{ end }} />
+            Site templates
+        </label>
+        <label>
+            <input type="radio" name="set" value="email" {{ if eq .SelectedSet "email" }}checked{{ end }} />
+            Email templates
+        </label>
+    </fieldset>
+    <fieldset>
+        <legend>Archive format</legend>
+        <label>
+            <input type="radio" name="format" value="zip" {{ if eq .SelectedFormat "zip" }}checked{{ end }} />
+            Zip
+        </label>
+        <label>
+            <input type="radio" name="format" value="tar" {{ if eq .SelectedFormat "tar" }}checked{{ end }} />
+            Tar
+        </label>
+    </fieldset>
+    <button type="submit" class="btn btn-primary">Download</button>
+</form>
+
+{{ template "tail" $ }}

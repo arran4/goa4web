@@ -1,0 +1,18 @@
+{{ template "head" $ }}
+<h2>Database Restore</h2>
+<p>Upload a SQL backup file to restore the database. This replaces existing data and cannot be undone.</p>
+<form method="post" enctype="multipart/form-data">
+    {{ csrfField }}
+    <div>
+        <label for="restore-file">Backup file</label>
+        <input id="restore-file" name="backup" type="file" accept=".sql">
+    </div>
+    <div>
+        <label>
+            <input type="checkbox" name="confirm" value="yes">
+            I understand this will overwrite the current database data.
+        </label>
+    </div>
+    <button type="submit" name="task" value="{{ .TaskName }}">Restore database</button>
+</form>
+{{ template "tail" $ }}

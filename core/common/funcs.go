@@ -2,6 +2,7 @@ package common
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
@@ -98,6 +99,14 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 			}
 			return m
 		},
+		"toJSON": func(v any) template.JS {
+			payload, err := json.Marshal(v)
+			if err != nil {
+				log.Printf("json marshal: %v", err)
+				return template.JS("null")
+			}
+			return template.JS(payload)
+		},
 		"highlightSearch": func(s string) template.HTML {
 			return HighlightSearchTerms(s, cd.SearchWords())
 		},
@@ -110,10 +119,14 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 				if err != nil {
 					return nil
 				}
+				img := link.CardImage.String
+				if link.CardImageCache.Valid && link.CardImageCache.String != "" {
+					img = cd.MapImageURL("img", link.CardImageCache.String)
+				}
 				return &a4code2html.LinkMetadata{
 					Title:       link.CardTitle.String,
 					Description: link.CardDescription.String,
-					ImageURL:    link.CardImage.String,
+					ImageURL:    img,
 				}
 			}
 			c := a4code2html.New(mapper, getColor, a4code2html.LinkMetadataProvider(provider))

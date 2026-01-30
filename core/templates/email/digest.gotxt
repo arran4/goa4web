@@ -1,0 +1,9 @@
+Here is your daily digest of unread notifications:
+
+{{ range .Notifications }}
+* {{ .Message.String }} ({{ .CreatedAt.Format "2006-01-02 15:04" }})
+  {{ if .Link.Valid }}{{ $.BaseURL }}{{ .Link.String }}{{ end }}
+{{ end }}
+
+You have {{ len .Notifications }} unread notifications.
+Visit {{ .BaseURL }}/usr/notifications to view them all.

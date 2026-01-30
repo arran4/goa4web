@@ -57,7 +57,7 @@ func (c *linksSignCmd) Run() error {
 	}
 
 	sig := sign.Sign(data, key, opts...)
-	signedURL, _ := sign.AddQuerySig(cfg.HTTPHostname+"/goto?u="+c.url, sig, opts...)
+	signedURL, _ := sign.AddQuerySig(cfg.BaseURL+"/goto?u="+c.url, sig, opts...)
 	fmt.Println(signedURL)
 	return nil
 }

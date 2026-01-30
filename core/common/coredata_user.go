@@ -271,3 +271,34 @@ func (cd *CoreData) DisallowPermission(id int32) error {
 	}
 	return cd.queries.AdminDeleteUserRole(cd.ctx, id)
 }
+
+// SaveNotificationDigestPreferences updates notification digest settings for the user.
+func (cd *CoreData) SaveNotificationDigestPreferences(userID int32, hour *int, markRead bool) error {
+	if cd == nil || cd.queries == nil {
+		return nil
+	}
+	var sqlHour sql.NullInt32
+	if hour != nil {
+		sqlHour = sql.NullInt32{Int32: int32(*hour), Valid: true}
+	} else {
+		sqlHour = sql.NullInt32{Valid: false}
+	}
+	_, err := cd.queries.GetPreferenceForLister(cd.ctx, userID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			if err := cd.queries.InsertEmailPreferenceForLister(cd.ctx, db.InsertEmailPreferenceForListerParams{
+				ListerID: userID,
+			}); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	}
+
+	return cd.queries.UpdateNotificationDigestPreferences(cd.ctx, db.UpdateNotificationDigestPreferencesParams{
+		DailyDigestHour:     sqlHour,
+		DailyDigestMarkRead: markRead,
+		ListerID:            userID,
+	})
+}

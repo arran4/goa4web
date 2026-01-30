@@ -40,6 +40,9 @@ const (
 	// TaskApprove approves an item in moderation queues.
 	TaskApprove tasks.TaskString = "Approve"
 
+	// TaskApplySubscriptionTemplate applies a subscription template to a role.
+	TaskApplySubscriptionTemplate tasks.TaskString = "Apply Template"
+
 	// TaskAccept accepts a queued request.
 	TaskAccept tasks.TaskString = "Accept"
 
@@ -72,8 +75,23 @@ const (
 	// TaskDelete removes an existing item.
 	TaskDelete tasks.TaskString = "Delete"
 
+	// TaskImageCacheList refreshes the image cache list.
+	TaskImageCacheList tasks.TaskString = "List cache"
+
+	// TaskImageCachePrune prunes the image cache to the configured max size.
+	TaskImageCachePrune tasks.TaskString = "Prune cache"
+
+	// TaskImageCacheDelete deletes selected image cache entries.
+	TaskImageCacheDelete tasks.TaskString = "Delete cache"
+
 	// TaskDeactivate moves an item to the deactivated store.
 	TaskDeactivate tasks.TaskString = "Deactivate"
+
+	// TaskDBBackup creates and downloads a database backup.
+	TaskDBBackup tasks.TaskString = "Database backup"
+
+	// TaskDBRestore restores the database from a backup.
+	TaskDBRestore tasks.TaskString = "Database restore"
 
 	// TaskActivate restores a previously deactivated item.
 	TaskActivate tasks.TaskString = "Activate"
@@ -95,6 +113,9 @@ const (
 
 	// TaskEditReply edits a comment or reply.
 	TaskEditReply tasks.TaskString = "Edit Reply"
+
+	// TaskExportTemplates exports embedded templates.
+	TaskExportTemplates tasks.TaskString = "Export Templates"
 
 	// TaskForumCategoryChange updates the name of a forum category.
 	TaskForumCategoryChange tasks.TaskString = "Forum category change"
@@ -224,6 +245,9 @@ const (
 	// TaskResend attempts to send queued emails immediately.
 	TaskResend tasks.TaskString = "Resend"
 
+	// TaskResendFilteredQueue retries all filtered queued emails.
+	TaskResendFilteredQueue tasks.TaskString = "Retry all filtered"
+
 	// TaskRetry queues a previously sent email for another attempt.
 	TaskRetry tasks.TaskString = "Retry"
 
@@ -245,8 +269,17 @@ const (
 	// TaskPurgeRead removes old read notifications.
 	TaskPurgeRead tasks.TaskString = "Purge read"
 
+	// TaskClearExpiredPasswordResets removes expired or verified password resets.
+	TaskClearExpiredPasswordResets tasks.TaskString = "Clear expired password resets"
+
+	// TaskClearUserPasswordResets removes password reset requests for a user.
+	TaskClearUserPasswordResets tasks.TaskString = "Clear user password resets"
+
 	// TaskUpdate updates an existing item.
 	TaskUpdate tasks.TaskString = "Update"
+
+	// TaskBulkImport applies a bulk import action.
+	TaskBulkImport tasks.TaskString = "Bulk import"
 
 	// TaskUpdateTopicRestriction updates an existing topic restriction.
 	TaskUpdateTopicRestriction tasks.TaskString = "Update topic restriction"
@@ -262,6 +295,9 @@ const (
 
 	// TaskBulkDelete removes multiple queued items at once.
 	TaskBulkDelete tasks.TaskString = "Bulk Delete"
+
+	// TaskDeleteFilteredQueue deletes all filtered queued emails.
+	TaskDeleteFilteredQueue tasks.TaskString = "Delete all filtered"
 
 	// TaskUpdateWriting updates an existing writing.
 	TaskUpdateWriting tasks.TaskString = "Update writing"
@@ -314,11 +350,17 @@ const (
 	// TaskRoleGrantCreate adds a grant to a role.
 	TaskRoleGrantCreate tasks.TaskString = "Create grant"
 
+	// TaskGrantBulkCreate adds grants to multiple users or roles at once.
+	TaskGrantBulkCreate tasks.TaskString = "Create grants"
+
 	// TaskRoleGrantDelete removes a grant from a role.
 	TaskRoleGrantDelete tasks.TaskString = "Delete grant"
 
 	// TaskRoleGrantUpdate updates grants for a role.
 	TaskRoleGrantUpdate tasks.TaskString = "Update grants"
+
+	// TaskApplyRoleTemplate applies a role template.
+	TaskApplyRoleTemplate tasks.TaskString = "Apply role template"
 
 	// TaskGrantUpdateActive updates a grant's active state.
 	TaskGrantUpdateActive tasks.TaskString = "Update grant"

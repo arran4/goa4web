@@ -1,88 +1,71 @@
 {{ template "head" $ }}
-<h2>Add Grant</h2>
-{{ if or (eq .Subject "") (and (ne .Subject "anyone") (eq .ID 0)) }}
-<form method="get">
-    <label>Subject:
-        <select name="subject">
-            <option value="user"{{ if or (eq .Subject "user") (eq .Subject "") }} selected{{ end }}>User</option>
-            <option value="role"{{ if eq .Subject "role" }} selected{{ end }}>Role</option>
-            <option value="anyone"{{ if eq .Subject "anyone" }} selected{{ end }}>Anyone</option>
-        </select>
-    </label>
-    {{ if or (eq .Subject "user") (eq .Subject "") }}
-    <label>User:
-        <input list="userOptions" name="id">
-        <datalist id="userOptions">
-            {{ range .Users }}
-            {{ if .Username.Valid }}<option value="{{ .Idusers }}">{{ .Username.String }}</option>{{ end }}
-            {{ end }}
-        </datalist>
-    </label>
-    {{ else if eq .Subject "role" }}
-    <label>Role:
-        <input list="roleOptions" name="id">
-        <datalist id="roleOptions">
-            {{ range .Roles }}
-            <option value="{{ .ID }}">{{ .Name }}</option>
-            {{ end }}
-        </datalist>
-    </label>
-    {{ end }}
-    <input type="submit" value="Next">
-</form>
-{{ else if eq .Section "" }}
-<form method="get">
-    <input type="hidden" name="subject" value="{{ .Subject }}">
-    <input type="hidden" name="id" value="{{ .ID }}">
-    <label>Section:
-        <select name="section">
-            {{ range .Sections }}
-            <option value="{{ . }}">{{ . }}</option>
-            {{ end }}
-        </select>
-    </label>
-    <input type="submit" value="Next">
-</form>
-{{ else }}
-<form method="get">
-    <input type="hidden" name="subject" value="{{ .Subject }}">
-    <input type="hidden" name="id" value="{{ .ID }}">
-    <input type="hidden" name="section" value="{{ .Section }}">
-    <label>Item:
-        <select name="item">
-            {{ range .Items }}
-            <option value="{{ . }}"{{ if eq $.Item . }} selected{{ end }}>{{ . }}</option>
-            {{ end }}
-        </select>
-    </label>
-    <input type="submit" value="Change">
-</form>
-<form method="post" action="/admin/{{ if eq .Subject "anyone" }}grant{{ else }}{{ .Subject }}/{{ .ID }}/grant{{ end }}">
+<h2>Add Grants</h2>
+<p>This is a single-page workflow: pick subjects on the left, then build grant rows on the right. Use the drag-and-drop pills to move actions into the selected column for each row.</p>
+<form method="post" action="/admin/grant/bulk" id="grant-add-form">
     {{ csrfField }}
-    <input type="hidden" name="task" value="Create grant">
-    <input type="hidden" name="section" value="{{ .Section }}">
-    <input type="hidden" name="item" value="{{ .Item }}">
-    <label>Item ({{ .Item }}):
-        {{ if .ItemOptions }}
-        <input list="itemOptions" name="item_id"{{ if .RequireItemID }} required{{ end }}>
-        <datalist id="itemOptions">
-            {{ if not .RequireItemID }}<option value="">All</option>{{ end }}
-            {{ range .ItemOptions }}
-            <option value="{{ .ID }}">{{ .Label }}</option>
-            {{ end }}
-        </datalist>
-        {{ else }}
-        <input type="text" name="item_id"{{ if .RequireItemID }} required{{ end }}>
-        {{ end }}
-    </label>
-    <fieldset>
-        <legend>Actions</legend>
-        {{ range .Actions }}
-        <label><input type="checkbox" name="action" value="{{ . }}"> {{ . }}</label><br>
-        {{ end }}
-    </fieldset>
-    <input type="submit" value="Add">
+    <input type="hidden" name="task" value="Create grants">
+    <div class="grant-add-grid">
+        <section class="grant-add-subjects">
+            <h3><span class="grant-step">Step 1</span> Subjects</h3>
+            <div class="grant-add-controls">
+                <label>Search subjects:
+                    <input type="search" id="grant-subject-search" placeholder="Name, ID, role, or verified email">
+                </label>
+                <label>Jump to user IDs:
+                    <input type="text" id="grant-user-ids" placeholder="e.g. 12, 44, 105">
+                </label>
+                <label>Jump to role IDs:
+                    <input type="text" id="grant-role-ids" placeholder="e.g. 1, 3">
+                </label>
+                <label class="grant-add-anyone">
+                    <input type="checkbox" name="anyone" value="1"> Anyone (public access)
+                </label>
+                <button type="button" id="grant-clear-search" class="button">Clear filters</button>
+            </div>
+            <div class="grant-add-summary">
+                <span id="grant-selected-count">0</span> subjects selected.
+            </div>
+            <div class="grant-add-columns">
+                <div class="grant-add-column">
+                    <h4>Users</h4>
+                    <div class="grant-add-scroll" id="grant-user-list">
+                        {{ range .Users }}
+                        <label class="grant-subject" data-search="{{ if .Username.Valid }}{{ .Username.String }}{{ end }} {{ .ID }} {{ range .Emails }}{{ . }} {{ end }} {{ range .Roles }}{{ . }} {{ end }}">
+                            <input type="checkbox" name="user_id" value="{{ .ID }}">
+                            <span class="subject-name">{{ if .Username.Valid }}{{ .Username.String }}{{ else }}User {{ .ID }}{{ end }}</span>
+                            <span class="subject-meta">ID {{ .ID }}{{ if .Emails }} • {{ range .Emails }}{{ . }} {{ end }}{{ end }}{{ if .Roles }} • Roles: {{ range .Roles }}{{ . }} {{ end }}{{ end }}</span>
+                        </label>
+                        {{ end }}
+                    </div>
+                </div>
+                <div class="grant-add-column">
+                    <h4>Roles</h4>
+                    <div class="grant-add-scroll" id="grant-role-list">
+                        {{ range .Roles }}
+                        <label class="grant-subject" data-search="{{ .Name }} {{ .ID }}">
+                            <input type="checkbox" name="role_id" value="{{ .ID }}">
+                            <span class="subject-name">{{ .Name }}</span>
+                            <span class="subject-meta">Role ID {{ .ID }}</span>
+                        </label>
+                        {{ end }}
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section class="grant-add-grants">
+            <h3><span class="grant-step">Step 2</span> Grant rows</h3>
+            <p class="grant-hint">Choose section + item, then drag actions from Available into Selected. Add additional rows to batch multiple grants in one submission.</p>
+            <div id="grant-rows"></div>
+            <button type="button" id="grant-add-row" class="button">Add grant row</button>
+        </section>
+    </div>
+    <div class="grant-add-actions">
+        <input type="submit" value="Create grants">
+        <a href="/admin/grants">Back to grants</a>
+    </div>
 </form>
-{{ end }}
-<p><a href="/admin/grants">Back to grants</a></p>
+<script>
+window.grantAddData = {{ toJSON (dict "actions" .GrantActions "items" .GrantItemLookup) }};
+</script>
+<script src="{{ assetHash "/admin/grant-add.js" }}"></script>
 {{ template "tail" $ }}

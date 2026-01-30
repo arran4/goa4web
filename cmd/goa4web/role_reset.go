@@ -1,15 +1,14 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"flag"
 	"fmt"
 	"log"
-	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/roles"
 )
 
 // roleResetCmd implements the "role reset" subcommand.
@@ -56,29 +55,11 @@ func (c *roleResetCmd) Run() error {
 		return fmt.Errorf("failed to delete grants: %w", err)
 	}
 
-	var data []byte
-	if c.file != "" {
-		p := c.file
-		if !strings.HasSuffix(strings.ToLower(p), ".sql") {
-			p = p + ".sql"
-		}
-		abs, _ := filepath.Abs(p)
-		log.Printf("Loading role %q from file %s", c.role, abs)
-		b, err := os.ReadFile(p)
-		if err != nil {
-			return fmt.Errorf("failed to read role file: %w", err)
-		}
-		data = b
-	} else {
-		log.Printf("Loading role %q from embedded roles", c.role)
-		b, err := readEmbeddedRole(c.role)
-		if err != nil {
-			return fmt.Errorf("failed to read embedded role %q: %w", c.role, err)
-		}
-		data = b
+	data, err := roles.ReadRoleSQL(c.role, c.file)
+	if err != nil {
+		return err
 	}
-
-	if err := runStatements(sdb, strings.NewReader(string(data))); err != nil {
+	if err := roles.ApplyRoleSQL(context.Background(), c.role, data, sdb); err != nil {
 		return fmt.Errorf("failed to apply role: %w", err)
 	}
 

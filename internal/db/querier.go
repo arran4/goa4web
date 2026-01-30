@@ -23,6 +23,7 @@ type Querier interface {
 	// Queries for user deactivation and restoration
 	AdminArchiveUser(ctx context.Context, idusers int32) error
 	AdminArchiveWriting(ctx context.Context, arg AdminArchiveWritingParams) error
+	AdminAuditLogActionSummary(ctx context.Context, arg AdminAuditLogActionSummaryParams) ([]*AdminAuditLogActionSummaryRow, error)
 	AdminCancelBannedIp(ctx context.Context, ipNet string) error
 	AdminClearExternalLinkCache(ctx context.Context, arg AdminClearExternalLinkCacheParams) error
 	// This query selects all words from the "searchwordlist" table and prints them.
@@ -157,6 +158,8 @@ type Querier interface {
 	AdminListExternalLinks(ctx context.Context, arg AdminListExternalLinksParams) ([]*ExternalLink, error)
 	AdminListFAQCategories(ctx context.Context) ([]*FaqCategory, error)
 	// admin task
+	AdminListFailedEmailIDs(ctx context.Context, arg AdminListFailedEmailIDsParams) ([]int32, error)
+	// admin task
 	AdminListFailedEmails(ctx context.Context, arg AdminListFailedEmailsParams) ([]*AdminListFailedEmailsRow, error)
 	AdminListForumCategoriesWithCounts(ctx context.Context, arg AdminListForumCategoriesWithCountsParams) ([]*AdminListForumCategoriesWithCountsRow, error)
 	AdminListForumThreadGrantsByThreadID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListForumThreadGrantsByThreadIDRow, error)
@@ -193,6 +196,8 @@ type Querier interface {
 	AdminListRoles(ctx context.Context) ([]*Role, error)
 	// admin task
 	AdminListRolesWithUsers(ctx context.Context) ([]*AdminListRolesWithUsersRow, error)
+	// admin task
+	AdminListSentEmailIDs(ctx context.Context, arg AdminListSentEmailIDsParams) ([]int32, error)
 	// admin task
 	AdminListSentEmails(ctx context.Context, arg AdminListSentEmailsParams) ([]*AdminListSentEmailsRow, error)
 	AdminListSessions(ctx context.Context) ([]*AdminListSessionsRow, error)
@@ -415,6 +420,7 @@ type Querier interface {
 	//   role (string)
 	//   username (string)
 	GetUserRoles(ctx context.Context) ([]*GetUserRolesRow, error)
+	GetUsersForDailyDigest(ctx context.Context, arg GetUsersForDailyDigestParams) ([]*GetUsersForDailyDigestRow, error)
 	// Fetch verified (active) email addresses ordered by notification priority.
 	GetVerifiedUserEmails(ctx context.Context) ([]*GetVerifiedUserEmailsRow, error)
 	GetWritingCategoryById(ctx context.Context, idwritingcategory int32) (*WritingCategory, error)
@@ -490,9 +496,11 @@ type Querier interface {
 	RemoveContentLabelStatus(ctx context.Context, arg RemoveContentLabelStatusParams) error
 	RemoveContentPrivateLabel(ctx context.Context, arg RemoveContentPrivateLabelParams) error
 	RemoveContentPublicLabel(ctx context.Context, arg RemoveContentPublicLabelParams) error
+	SearchGrants(ctx context.Context, arg SearchGrantsParams) ([]*SearchGrantsRow, error)
 	SetNotificationPriorityForLister(ctx context.Context, arg SetNotificationPriorityForListerParams) error
 	SetNotificationReadForLister(ctx context.Context, arg SetNotificationReadForListerParams) error
 	SetNotificationUnreadForLister(ctx context.Context, arg SetNotificationUnreadForListerParams) error
+	SetNotificationsReadForListerBatch(ctx context.Context, arg SetNotificationsReadForListerBatchParams) error
 	SetVerificationCodeForLister(ctx context.Context, arg SetVerificationCodeForListerParams) error
 	SystemAddToBlogsSearch(ctx context.Context, arg SystemAddToBlogsSearchParams) error
 	SystemAddToForumCommentSearch(ctx context.Context, arg SystemAddToForumCommentSearchParams) error
@@ -609,7 +617,9 @@ type Querier interface {
 	UpdateEmailForumUpdatesForLister(ctx context.Context, arg UpdateEmailForumUpdatesForListerParams) error
 	UpdateExternalLinkImageCache(ctx context.Context, arg UpdateExternalLinkImageCacheParams) error
 	UpdateExternalLinkMetadata(ctx context.Context, arg UpdateExternalLinkMetadataParams) error
+	UpdateLastDigestSentAt(ctx context.Context, arg UpdateLastDigestSentAtParams) error
 	UpdateNewsPostForWriter(ctx context.Context, arg UpdateNewsPostForWriterParams) error
+	UpdateNotificationDigestPreferences(ctx context.Context, arg UpdateNotificationDigestPreferencesParams) error
 	UpdatePreferenceForLister(ctx context.Context, arg UpdatePreferenceForListerParams) error
 	UpdatePublicProfileEnabledAtForUser(ctx context.Context, arg UpdatePublicProfileEnabledAtForUserParams) error
 	UpdateSubscriptionByIDForSubscriber(ctx context.Context, arg UpdateSubscriptionByIDForSubscriberParams) error

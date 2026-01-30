@@ -1,1 +1,1 @@
-[{{.SubjectPrefix}}] New forum reply
+[{{.SubjectPrefix}}] {{.Item.SubjectPrefix}}: {{.Item.TopicTitle}} - {{.Item.ThreadOpenerPreview}}

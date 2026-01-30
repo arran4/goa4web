@@ -168,3 +168,17 @@ SELECT ue.user_id, ue.email
 FROM user_emails ue
 WHERE ue.verified_at IS NOT NULL
 ORDER BY ue.user_id, ue.notification_priority DESC, ue.id;
+
+-- name: SearchGrants :many
+SELECT g.*, u.username, r.name as role_name
+FROM grants g
+LEFT JOIN users u ON g.user_id = u.idusers
+LEFT JOIN roles r ON g.role_id = r.id
+WHERE
+    (sqlc.narg('section') IS NULL OR g.section = sqlc.narg('section'))
+AND (sqlc.narg('item') IS NULL OR g.item = sqlc.narg('item'))
+AND (sqlc.narg('item_id') IS NULL OR g.item_id = sqlc.narg('item_id'))
+AND (sqlc.narg('active') IS NULL OR g.active = sqlc.narg('active'))
+AND (sqlc.narg('username') IS NULL OR u.username LIKE sqlc.narg('username'))
+AND (sqlc.narg('role_name') IS NULL OR r.name LIKE sqlc.narg('role_name'))
+ORDER BY g.id;

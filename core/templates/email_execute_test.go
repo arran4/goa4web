@@ -18,6 +18,8 @@ type emailData struct {
 	SignOffHTML    htemplate.HTML
 	Item           interface{}
 	Recipient      interface{}
+	Notifications  []interface{}
+	BaseURL        string
 }
 
 func sampleEmailData() emailData {
@@ -59,6 +61,7 @@ func sampleEmailData() emailData {
 	}
 	return emailData{
 		URL:            "https://example.com",
+		BaseURL:        "https://example.com",
 		SubjectPrefix:  "prefix",
 		UnsubscribeUrl: "https://example.com/unsubscribe",
 		SignOff:        "signoff",
@@ -66,6 +69,13 @@ func sampleEmailData() emailData {
 		Item:           item,
 		Recipient: map[string]interface{}{
 			"Username": map[string]interface{}{"String": "recipient"},
+		},
+		Notifications: []interface{}{
+			map[string]interface{}{
+				"Link":      map[string]interface{}{"Valid": true, "String": "/link"},
+				"Message":   map[string]interface{}{"String": "message"},
+				"CreatedAt": time.Now(),
+			},
 		},
 	}
 }

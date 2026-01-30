@@ -49,6 +49,52 @@ func (q *Queries) AdminGetPendingEmailByID(ctx context.Context, id int32) (*Admi
 	return &i, err
 }
 
+const adminListFailedEmailIDs = `-- name: AdminListFailedEmailIDs :many
+SELECT pe.id
+FROM pending_emails pe
+LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers
+LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers
+LEFT JOIN roles r ON ur.role_id = r.id
+WHERE pe.sent_at IS NULL AND pe.error_count > 0
+  AND (? IS NULL OR p.language_id = ?)
+  AND (? IS NULL OR r.name = ?)
+ORDER BY pe.id
+`
+
+type AdminListFailedEmailIDsParams struct {
+	LanguageID sql.NullInt32
+	RoleName   string
+}
+
+// admin task
+func (q *Queries) AdminListFailedEmailIDs(ctx context.Context, arg AdminListFailedEmailIDsParams) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx, adminListFailedEmailIDs,
+		arg.LanguageID,
+		arg.LanguageID,
+		arg.RoleName,
+		arg.RoleName,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var id int32
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const adminListFailedEmails = `-- name: AdminListFailedEmails :many
 SELECT pe.id, pe.to_user_id, pe.body, pe.error_count, pe.created_at, pe.direct_email
 FROM pending_emails pe
@@ -106,6 +152,52 @@ func (q *Queries) AdminListFailedEmails(ctx context.Context, arg AdminListFailed
 			return nil, err
 		}
 		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminListSentEmailIDs = `-- name: AdminListSentEmailIDs :many
+SELECT pe.id
+FROM pending_emails pe
+LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers
+LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers
+LEFT JOIN roles r ON ur.role_id = r.id
+WHERE pe.sent_at IS NOT NULL
+  AND (? IS NULL OR p.language_id = ?)
+  AND (? IS NULL OR r.name = ?)
+ORDER BY pe.sent_at DESC
+`
+
+type AdminListSentEmailIDsParams struct {
+	LanguageID sql.NullInt32
+	RoleName   string
+}
+
+// admin task
+func (q *Queries) AdminListSentEmailIDs(ctx context.Context, arg AdminListSentEmailIDsParams) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx, adminListSentEmailIDs,
+		arg.LanguageID,
+		arg.LanguageID,
+		arg.RoleName,
+		arg.RoleName,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var id int32
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -192,14 +284,25 @@ LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers
 LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers
 LEFT JOIN roles r ON ur.role_id = r.id
 WHERE pe.sent_at IS NULL
+  AND (? IS NULL
+    OR (? = 'pending' AND pe.error_count = 0)
+    OR (? = 'failed' AND pe.error_count > 0))
+  AND (? IS NULL
+    OR (? = 'direct' AND pe.direct_email = 1)
+    OR (? = 'user' AND pe.direct_email = 0 AND pe.to_user_id IS NOT NULL AND pe.to_user_id <> 0)
+    OR (? = 'userless' AND pe.direct_email = 0 AND (pe.to_user_id IS NULL OR pe.to_user_id = 0)))
+  AND (? IS NULL OR pe.created_at <= ?)
   AND (? IS NULL OR p.language_id = ?)
   AND (? IS NULL OR r.name = ?)
 ORDER BY pe.id
 `
 
 type AdminListUnsentPendingEmailsParams struct {
-	LanguageID sql.NullInt32
-	RoleName   string
+	Status        interface{}
+	Provider      interface{}
+	CreatedBefore sql.NullTime
+	LanguageID    sql.NullInt32
+	RoleName      string
 }
 
 type AdminListUnsentPendingEmailsRow struct {
@@ -214,6 +317,15 @@ type AdminListUnsentPendingEmailsRow struct {
 // admin task
 func (q *Queries) AdminListUnsentPendingEmails(ctx context.Context, arg AdminListUnsentPendingEmailsParams) ([]*AdminListUnsentPendingEmailsRow, error) {
 	rows, err := q.db.QueryContext(ctx, adminListUnsentPendingEmails,
+		arg.Status,
+		arg.Status,
+		arg.Status,
+		arg.Provider,
+		arg.Provider,
+		arg.Provider,
+		arg.Provider,
+		arg.CreatedBefore,
+		arg.CreatedBefore,
 		arg.LanguageID,
 		arg.LanguageID,
 		arg.RoleName,

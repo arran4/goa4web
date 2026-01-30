@@ -141,6 +141,21 @@ type QuerierStub struct {
 	ListGrantsByUserIDErr     error
 	ListGrantsByUserIDCalls   []sql.NullInt32
 
+	AdminListGrantsByRoleIDReturns []*Grant
+	AdminListGrantsByRoleIDErr     error
+	AdminListGrantsByRoleIDCalls   []sql.NullInt32
+	AdminListGrantsByRoleIDFn      func(context.Context, sql.NullInt32) ([]*Grant, error)
+
+	GetRoleByNameReturns *Role
+	GetRoleByNameErr     error
+	GetRoleByNameCalls   []string
+	GetRoleByNameFn      func(context.Context, string) (*Role, error)
+
+	SystemListLanguagesReturns []*Language
+	SystemListLanguagesErr     error
+	SystemListLanguagesCalls   int
+	SystemListLanguagesFn      func(context.Context) ([]*Language, error)
+
 	AdminInsertBannedIpCalls []AdminInsertBannedIpParams
 	AdminInsertBannedIpErr   error
 	AdminInsertBannedIpFn    func(context.Context, AdminInsertBannedIpParams) error
@@ -273,6 +288,11 @@ type QuerierStub struct {
 	ListGrantsExtendedErr     error
 	ListGrantsExtendedCalls   []ListGrantsExtendedParams
 	ListGrantsExtendedFn      func(context.Context, ListGrantsExtendedParams) ([]*ListGrantsExtendedRow, error)
+
+	SearchGrantsReturns []*SearchGrantsRow
+	SearchGrantsErr     error
+	SearchGrantsCalls   []SearchGrantsParams
+	SearchGrantsFn      func(context.Context, SearchGrantsParams) ([]*SearchGrantsRow, error)
 
 	AdminDeletePendingEmailCalls []int32
 	AdminDeletePendingEmailErr   error
@@ -1066,6 +1086,32 @@ func (s *QuerierStub) AdminListRoles(ctx context.Context) ([]*Role, error) {
 	return ret, err
 }
 
+func (s *QuerierStub) GetRoleByName(ctx context.Context, name string) (*Role, error) {
+	s.mu.Lock()
+	s.GetRoleByNameCalls = append(s.GetRoleByNameCalls, name)
+	fn := s.GetRoleByNameFn
+	ret := s.GetRoleByNameReturns
+	err := s.GetRoleByNameErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, name)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) SystemListLanguages(ctx context.Context) ([]*Language, error) {
+	s.mu.Lock()
+	s.SystemListLanguagesCalls++
+	fn := s.SystemListLanguagesFn
+	ret := s.SystemListLanguagesReturns
+	err := s.SystemListLanguagesErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx)
+	}
+	return ret, err
+}
+
 func (s *QuerierStub) ListGrants(ctx context.Context) ([]*Grant, error) {
 	s.mu.Lock()
 	s.ListGrantsCalls++
@@ -1693,6 +1739,16 @@ func (s *QuerierStub) ListGrantsByUserID(ctx context.Context, userID sql.NullInt
 	return s.ListGrantsByUserIDReturns, s.ListGrantsByUserIDErr
 }
 
+func (s *QuerierStub) AdminListGrantsByRoleID(ctx context.Context, roleID sql.NullInt32) ([]*Grant, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.AdminListGrantsByRoleIDCalls = append(s.AdminListGrantsByRoleIDCalls, roleID)
+	if s.AdminListGrantsByRoleIDFn != nil {
+		return s.AdminListGrantsByRoleIDFn(ctx, roleID)
+	}
+	return s.AdminListGrantsByRoleIDReturns, s.AdminListGrantsByRoleIDErr
+}
+
 func (s *QuerierStub) ListGrantsExtended(ctx context.Context, arg ListGrantsExtendedParams) ([]*ListGrantsExtendedRow, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -1701,6 +1757,16 @@ func (s *QuerierStub) ListGrantsExtended(ctx context.Context, arg ListGrantsExte
 		return s.ListGrantsExtendedFn(ctx, arg)
 	}
 	return s.ListGrantsExtendedReturns, s.ListGrantsExtendedErr
+}
+
+func (s *QuerierStub) SearchGrants(ctx context.Context, arg SearchGrantsParams) ([]*SearchGrantsRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.SearchGrantsCalls = append(s.SearchGrantsCalls, arg)
+	if s.SearchGrantsFn != nil {
+		return s.SearchGrantsFn(ctx, arg)
+	}
+	return s.SearchGrantsReturns, s.SearchGrantsErr
 }
 
 func (s *QuerierStub) ListAdminUserComments(ctx context.Context, userID int32) ([]*AdminUserComment, error) {

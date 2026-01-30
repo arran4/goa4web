@@ -1,0 +1,24 @@
+Usage:
+  {{.Prog}} user subscriptions list [flags]
+
+The subscriptions list command outputs a user's subscription patterns. It can
+filter by method or pattern prefix and emit CSV/JSON for verification.
+
+You can customize the output with the following flags:
+  -user-id        User ID to list subscriptions for.
+  -username       Username to list subscriptions for.
+  -method         Filter by subscription method (email/internal).
+  -pattern-prefix Filter by pattern prefix.
+  -format         Output format (csv/json).
+
+Examples:
+  # List subscriptions as CSV (default)
+  {{.Prog}} user subscriptions list -user-id 42
+
+  # List subscriptions as JSON for "alice"
+  {{.Prog}} user subscriptions list -username alice -format json
+
+  # Filter for internal reply subscriptions
+  {{.Prog}} user subscriptions list -user-id 42 -method internal -pattern-prefix reply:/
+
+{{template "flag_groups_section" .FlagGroups}}

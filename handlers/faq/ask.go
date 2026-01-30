@@ -115,8 +115,8 @@ func (AskTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	cfg := cd.Config
 	page := "http://" + r.Host + path
-	if cfg.HTTPHostname != "" {
-		page = strings.TrimRight(cfg.HTTPHostname, "/") + path
+	if cfg.BaseURL != "" {
+		page = strings.TrimRight(cfg.BaseURL, "/") + path
 	}
 	evt.Data["URL"] = page
 	evt.Data["Question"] = text

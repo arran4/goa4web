@@ -55,6 +55,12 @@ func (c *grantCmd) Run() error {
 			return fmt.Errorf("list-available: %w", err)
 		}
 		return cmd.Run()
+	case "export":
+		cmd := newGrantExportCmd()
+		if err := cmd.Init(args[1:]); err != nil {
+			return fmt.Errorf("export: %w", err)
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown grant command %q", args[0])

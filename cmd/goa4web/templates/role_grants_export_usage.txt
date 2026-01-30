@@ -1,0 +1,12 @@
+Usage: {{.Prog}} role grants export -role <role-name> [-format json|csv]
+
+Flags:
+  -role    The role name to export.
+  -format  Output format. Options: json or csv (default: json).
+
+Examples:
+  # Export grants for the "user" role in JSON
+  {{.Prog}} role grants export -role user -format json
+
+  # Export grants for the "moderator" role in CSV
+  {{.Prog}} role grants export -role moderator -format csv

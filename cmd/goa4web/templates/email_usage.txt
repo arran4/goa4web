@@ -6,6 +6,7 @@ emails, managing the email queue, and viewing the email log. This is the
 primary interface for all email-related administrative tasks.
 
 Commands:
+  failed   Manage failed emails.
   send     Send a test email.
   queue    Manage the queue of emails waiting to be sent.
   test     Send a test email to check the email configuration.
@@ -17,7 +18,7 @@ Examples:
   # List all emails in the queue
   {{.Prog}} email queue list
 
-  # View the email log
-  {{.Prog}} email log
+  # List failed emails
+  {{.Prog}} email failed list
 
 {{template "flag_groups_section" .FlagGroups}}

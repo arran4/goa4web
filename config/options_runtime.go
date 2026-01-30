@@ -98,6 +98,7 @@ var StringOptions = []StringOption{
 var IntOptions = []IntOption{
 	{"db-log-verbosity", EnvDBLogVerbosity, "The verbosity level for database logging. 0 = off, 1 = errors, 2 = warnings, 3 = info, 4 = debug.", 0, "", func(c *RuntimeConfig) *int { return &c.DBLogVerbosity }},
 	{"email-log-verbosity", EnvEmailLogVerbosity, "The verbosity level for email logging. 0 = off, 1 = errors, 2 = warnings, 3 = info, 4 = debug.", 0, "", func(c *RuntimeConfig) *int { return &c.EmailLogVerbosity }},
+	{"jmap-discovery-retries", EnvJMAPDiscoveryRetries, "The number of retries for JMAP session discovery.", 5, "", func(c *RuntimeConfig) *int { return &c.EmailJMAPDiscoveryRetries }},
 	{"log-flags", EnvLogFlags, "The flags for request logging.", 0, "", func(c *RuntimeConfig) *int { return &c.LogFlags }},
 	{"page-size-min", EnvPageSizeMin, "The minimum allowed page size for paginated results.", 5, "", func(c *RuntimeConfig) *int { return &c.PageSizeMin }},
 	{"page-size-max", EnvPageSizeMax, "The maximum allowed page size for paginated results.", 50, "", func(c *RuntimeConfig) *int { return &c.PageSizeMax }},

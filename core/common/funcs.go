@@ -111,25 +111,8 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 			return HighlightSearchTerms(s, cd.SearchWords())
 		},
 		"a4code2html": func(s string) template.HTML {
-			provider := func(u string) *a4code2html.LinkMetadata {
-				if cd.Queries() == nil {
-					return nil
-				}
-				link, err := cd.Queries().GetExternalLink(r.Context(), u)
-				if err != nil {
-					return nil
-				}
-				img := link.CardImage.String
-				if link.CardImageCache.Valid && link.CardImageCache.String != "" {
-					img = cd.MapImageURL("img", link.CardImageCache.String)
-				}
-				return &a4code2html.LinkMetadata{
-					Title:       link.CardTitle.String,
-					Description: link.CardDescription.String,
-					ImageURL:    img,
-				}
-			}
-			c := a4code2html.New(mapper, getColor, a4code2html.LinkMetadataProvider(provider))
+			provider := NewGoa4WebLinkProvider(cd, r.Context())
+			c := a4code2html.New(mapper, getColor, provider)
 			c.CodeType = a4code2html.CTHTML
 			c.SetInput(s)
 			out, err := io.ReadAll(c.Process())

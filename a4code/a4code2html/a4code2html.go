@@ -38,6 +38,12 @@ type LinkMetadata struct {
 
 type LinkMetadataProvider func(url string) *LinkMetadata
 
+// LinkProvider provides HTML rendering for links and maps image URLs.
+type LinkProvider interface {
+	RenderLink(url string, isBlock bool, isImmediateClose bool) (htmlOpen string, htmlClose string, consumeImmediate bool)
+	MapImageURL(tag, val string) string
+}
+
 type A4code2html struct {
 	r        *bufio.Reader
 	w        io.Writer
@@ -53,7 +59,9 @@ type A4code2html struct {
 	quoteDepth      int
 	// MetadataProvider optionally provides metadata for external links.
 	MetadataProvider LinkMetadataProvider
-	atLineStart      bool
+	// Provider optionally provides custom rendering for links.
+	Provider    LinkProvider
+	atLineStart bool
 }
 
 // WithTOC enables or disables table-of-contents generation when passed to New.
@@ -79,6 +87,8 @@ func New(opts ...interface{}) *A4code2html {
 			c.UserColorMapper = v
 		case LinkMetadataProvider:
 			c.MetadataProvider = v
+		case LinkProvider:
+			c.Provider = v
 		case WithTOC:
 			c.makeTC = bool(v)
 		case *bufio.Reader:
@@ -338,7 +348,9 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 		if err != nil && err != io.EOF {
 			return err
 		}
-		if a.ImageURLMapper != nil {
+		if a.Provider != nil {
+			raw = a.Provider.MapImageURL("img", raw)
+		} else if a.ImageURLMapper != nil {
 			raw = a.ImageURLMapper("img", raw)
 		}
 		switch a.CodeType {
@@ -366,6 +378,36 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 			if err != nil && err != io.EOF {
 				return err
 			}
+
+			if a.Provider != nil {
+				isBlock := false
+				isImmediateClose := false
+				if wasAtLineStart {
+					isBlock, isImmediateClose = a.peekBlockLink(r)
+				}
+				if !isBlock {
+					p, err := r.Peek(1)
+					if err == nil && len(p) > 0 && p[0] == ']' {
+						isImmediateClose = true
+					}
+				}
+				htmlOpen, htmlClose, consumeImmediate := a.Provider.RenderLink(raw, isBlock, isImmediateClose)
+				if _, err := io.WriteString(w, htmlOpen); err != nil {
+					return err
+				}
+				if consumeImmediate {
+					// Consume ] and potentially \n
+					r.ReadByte() // ]
+					if isBlock {
+						r.ReadByte() // \n
+						a.atLineStart = true
+					}
+				} else {
+					a.stack = append(a.stack, htmlClose)
+				}
+				return nil
+			}
+
 			original := raw
 			if a.ImageURLMapper != nil {
 				raw = a.ImageURLMapper("a", raw)

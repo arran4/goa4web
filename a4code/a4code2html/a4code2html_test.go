@@ -346,3 +346,47 @@ func TestExternalLinkCard(t *testing.T) {
 		})
 	}
 }
+
+type mockProvider struct{}
+
+func (m *mockProvider) RenderLink(url string, isBlock bool, isImmediateClose bool) (string, string, bool) {
+	if url == "http://custom.com" {
+		return "<custom-link>", "", true
+	}
+	if isBlock {
+		return "<block-link>", "</block-link>", false
+	}
+	return "<inline-link>", "</inline-link>", false
+}
+
+func (m *mockProvider) MapImageURL(tag, val string) string {
+	return "mapped:" + val
+}
+
+func TestLinkProvider(t *testing.T) {
+	c := New(&mockProvider{})
+
+	// Case 1: Custom handling (consumed immediate)
+	c.SetInput("[link http://custom.com]")
+	got, _ := io.ReadAll(c.Process())
+	want := "<custom-link>"
+	if string(got) != want {
+		t.Errorf("got %q want %q", string(got), want)
+	}
+
+	// Case 2: Block link
+	c.SetInput("[link http://other.com]\n")
+	got, _ = io.ReadAll(c.Process())
+	want = "<block-link></block-link><br />\n"
+	if string(got) != want {
+		t.Errorf("got %q want %q", string(got), want)
+	}
+
+	// Case 3: Image mapping
+	c.SetInput("[img foo.jpg]")
+	got, _ = io.ReadAll(c.Process())
+	want = "<img class=\"a4code-image\" src=\"mapped:foo.jpg\" />"
+	if string(got) != want {
+		t.Errorf("got %q want %q", string(got), want)
+	}
+}

@@ -1,12 +1,11 @@
 package main
 
 import (
-	"database/sql"
 	"flag"
 	"fmt"
-	"log"
 
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/roles"
 )
 
 // roleApplyCmd implements the "role apply" subcommand.
@@ -41,61 +40,7 @@ func (c *roleApplyCmd) Run() error {
 	defer closeDB(sdb)
 
 	q := db.New(sdb)
-	ctx := c.rootCmd.ctx
-
-	srcRole, err := q.GetRoleByName(ctx, c.srcRole)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			// Try to find and auto-load the role from embedded resources
-			log.Printf("Role %q not found in database. Searching embedded roles...", c.srcRole)
-			fileName, findErr := findEmbeddedRoleByName(c.srcRole)
-			if findErr != nil {
-				return fmt.Errorf("failed to get source role by name: %w (and failed to find embedded role: %v)", err, findErr)
-			}
-			log.Printf("Found embedded role file %q for role %q. Attempting to load...", fileName, c.srcRole)
-			if loadErr := loadRole(sdb, fileName, ""); loadErr != nil {
-				return fmt.Errorf("failed to load embedded role %q: %w", fileName, loadErr)
-			}
-			// Retry fetching the role
-			srcRole, err = q.GetRoleByName(ctx, c.srcRole)
-			if err != nil {
-				return fmt.Errorf("failed to get source role by name after loading: %w", err)
-			}
-		} else {
-			return fmt.Errorf("failed to get source role by name: %w", err)
-		}
-	}
-
-	destRole, err := q.GetRoleByName(ctx, c.destRole)
-	if err != nil {
-		return fmt.Errorf("failed to get destination role by name: %w", err)
-	}
-
-	grants, err := q.GetGrantsByRoleID(ctx, sql.NullInt32{Int32: srcRole.ID, Valid: true})
-	if err != nil {
-		return fmt.Errorf("failed to get grants for source role: %w", err)
-	}
-
-	log.Printf("Applying %d grants from %q to %q", len(grants), c.srcRole, c.destRole)
-	for _, grant := range grants {
-		params := db.CreateGrantParams{
-			RoleID:   sql.NullInt32{Int32: destRole.ID, Valid: true},
-			Section:  grant.Section,
-			Item:     grant.Item,
-			RuleType: grant.RuleType,
-			ItemID:   grant.ItemID,
-			ItemRule: grant.ItemRule,
-			Action:   grant.Action,
-			Extra:    grant.Extra,
-			Active:   grant.Active,
-		}
-		if err := q.CreateGrant(ctx, params); err != nil {
-			return fmt.Errorf("failed to create grant: %w", err)
-		}
-	}
-
-	log.Printf("Successfully applied grants from %q to %q.", c.srcRole, c.destRole)
-	return nil
+	return roles.ApplyRoleGrants(c.rootCmd.ctx, sdb, q, c.srcRole, c.destRole)
 }
 
 func (c *roleApplyCmd) Usage() {

@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
 	"strings"
 
 	"github.com/arran4/goa4web/database"
+	"github.com/arran4/goa4web/internal/sqlutil"
 )
 
 // dbSetupCmd implements "db setup".
@@ -55,12 +57,12 @@ func (c *dbSetupCmd) Run() error {
 	}
 
 	log.Println("Applying schema...")
-	if err := runStatements(sdb, strings.NewReader(string(database.SchemaMySQL))); err != nil {
+	if err := sqlutil.RunStatements(context.Background(), sdb, strings.NewReader(string(database.SchemaMySQL))); err != nil {
 		return fmt.Errorf("failed to apply schema: %w", err)
 	}
 
 	log.Println("Applying seed data...")
-	if err := runStatements(sdb, strings.NewReader(string(database.SeedSQL))); err != nil {
+	if err := sqlutil.RunStatements(context.Background(), sdb, strings.NewReader(string(database.SeedSQL))); err != nil {
 		return fmt.Errorf("failed to apply seed data: %w", err)
 	}
 

@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+
+	"github.com/arran4/goa4web/internal/roles"
 )
 
 // roleLoadCmd implements the "role load" subcommand.
@@ -36,7 +38,7 @@ func (c *roleLoadCmd) Run() error {
 	}
 	defer closeDB(sdb)
 
-	return loadRole(sdb, c.role, c.file)
+	return roles.LoadRole(c.rootCmd.ctx, c.role, c.file, sdb)
 }
 
 func (c *roleLoadCmd) Usage() {

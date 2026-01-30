@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+
+	"github.com/arran4/goa4web/internal/roles"
 )
 
 // roleListCmd implements the "role list" subcommand.
@@ -87,11 +89,11 @@ func parseRoleListSQLCmd(parent *roleListCmd, args []string) (*roleListSQLCmd, e
 }
 
 func (c *roleListSQLCmd) Run() error {
-	roles, err := listEmbeddedRoles()
+	embeddedRoles, err := roles.ListEmbeddedRoles()
 	if err != nil {
 		return err
 	}
-	for _, r := range roles {
+	for _, r := range embeddedRoles {
 		fmt.Fprintln(c.fs.Output(), r)
 	}
 	return nil
@@ -121,7 +123,7 @@ func parseRoleListNamesCmd(parent *roleListCmd, args []string) (*roleListNamesCm
 }
 
 func (c *roleListNamesCmd) Run() error {
-	names, err := listEmbeddedRoleNames()
+	names, err := roles.ListEmbeddedRoleNames()
 	if err != nil {
 		return err
 	}

@@ -29,9 +29,39 @@ func (ResendSentEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	for _, idStr := range r.Form["id"] {
-		id, _ := strconv.Atoi(idStr)
-		e, err := queries.AdminGetPendingEmailByID(r.Context(), int32(id))
+	selection := r.Form.Get("selection")
+	scope := "ids"
+	var ids []int32
+	if selection == "filtered" {
+		scope = "filtered"
+		langID, role := emailFiltersFromRequest(r)
+		rows, err := queries.AdminListSentEmailIDs(r.Context(), db.AdminListSentEmailIDsParams{
+			LanguageID: langID,
+			RoleName:   role,
+		})
+		if err != nil {
+			return fmt.Errorf("list sent email ids fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+		}
+		for _, id := range rows {
+			ids = append(ids, id)
+		}
+		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+			if evt := cd.Event(); evt != nil {
+				if evt.Data == nil {
+					evt.Data = map[string]any{}
+				}
+				evt.Data["SentEmailCount"] = len(ids)
+				evt.Data["SentEmailFilter"] = emailFilterSummary("", langID, role)
+			}
+		}
+	} else {
+		for _, idStr := range r.Form["id"] {
+			id, _ := strconv.Atoi(idStr)
+			ids = append(ids, int32(id))
+		}
+	}
+	for _, id := range ids {
+		e, err := queries.AdminGetPendingEmailByID(r.Context(), id)
 		if err != nil {
 			return fmt.Errorf("get email fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
@@ -44,20 +74,29 @@ func (ResendSentEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 				return fmt.Errorf("send email fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 			}
 		}
-		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-			if evt := cd.Event(); evt != nil {
-				if evt.Data == nil {
-					evt.Data = map[string]any{}
+		if selection != "filtered" {
+			if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+				if evt := cd.Event(); evt != nil {
+					if evt.Data == nil {
+						evt.Data = map[string]any{}
+					}
+					evt.Data["SentEmailID"] = appendID(evt.Data["SentEmailID"], int(id))
 				}
-				evt.Data["SentEmailID"] = appendID(evt.Data["SentEmailID"], id)
 			}
 		}
 	}
-	return nil
+	return buildEmailTaskRedirect(r, "resent", scope, ids)
 }
 
 // AuditRecord summarises sent emails being resent.
 func (ResendSentEmailTask) AuditRecord(data map[string]any) string {
+	if count, ok := data["SentEmailCount"]; ok {
+		summary := "resent sent emails (" + fmt.Sprint(count) + ")"
+		if filter, ok := data["SentEmailFilter"].(string); ok && filter != "" {
+			summary += " " + filter
+		}
+		return summary
+	}
 	if ids, ok := data["SentEmailID"].(string); ok {
 		return "resent sent emails " + ids
 	}

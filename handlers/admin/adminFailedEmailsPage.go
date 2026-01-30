@@ -25,8 +25,9 @@ func AdminFailedEmailsPage(w http.ResponseWriter, r *http.Request) {
 		Subject string
 	}
 	type Data struct {
-		Emails   []EmailItem
-		PageSize int
+		Emails     []EmailItem
+		PageSize   int
+		StatusByID map[int32]string
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -71,7 +72,9 @@ func AdminFailedEmailsPage(w http.ResponseWriter, r *http.Request) {
 		rows = rows[:pageSize]
 	}
 
+	rowIDs := make([]int32, 0, len(rows))
 	for _, e := range rows {
+		rowIDs = append(rowIDs, e.ID)
 		emailStr := ""
 		if e.ToUserID.Valid && !e.DirectEmail {
 			if u, ok := users[e.ToUserID.Int32]; ok && u.Email.Valid && u.Email.String != "" {
@@ -95,6 +98,7 @@ func AdminFailedEmailsPage(w http.ResponseWriter, r *http.Request) {
 		}
 		data.Emails = append(data.Emails, EmailItem{e, emailStr, subj})
 	}
+	data.StatusByID = buildEmailStatusMap(r, rowIDs)
 
 	params := url.Values{}
 	if role != "" {

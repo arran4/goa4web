@@ -53,6 +53,18 @@ WHERE pe.sent_at IS NOT NULL
 ORDER BY pe.sent_at DESC
 LIMIT ? OFFSET ?;
 
+-- name: AdminListSentEmailIDs :many
+-- admin task
+SELECT pe.id
+FROM pending_emails pe
+LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers
+LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers
+LEFT JOIN roles r ON ur.role_id = r.id
+WHERE pe.sent_at IS NOT NULL
+  AND (sqlc.narg(language_id) IS NULL OR p.language_id = sqlc.narg(language_id))
+  AND (sqlc.arg(role_name) IS NULL OR r.name = sqlc.arg(role_name))
+ORDER BY pe.sent_at DESC;
+
 -- name: AdminListFailedEmails :many
 -- admin task
 SELECT pe.id, pe.to_user_id, pe.body, pe.error_count, pe.created_at, pe.direct_email
@@ -65,3 +77,15 @@ WHERE pe.sent_at IS NULL AND pe.error_count > 0
   AND (sqlc.arg(role_name) IS NULL OR r.name = sqlc.arg(role_name))
 ORDER BY pe.id
 LIMIT ? OFFSET ?;
+
+-- name: AdminListFailedEmailIDs :many
+-- admin task
+SELECT pe.id
+FROM pending_emails pe
+LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers
+LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers
+LEFT JOIN roles r ON ur.role_id = r.id
+WHERE pe.sent_at IS NULL AND pe.error_count > 0
+  AND (sqlc.narg(language_id) IS NULL OR p.language_id = sqlc.narg(language_id))
+  AND (sqlc.arg(role_name) IS NULL OR r.name = sqlc.arg(role_name))
+ORDER BY pe.id;

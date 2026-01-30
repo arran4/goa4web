@@ -3,6 +3,23 @@
 
 <form method="post" action="/usr/subscriptions/update">
     {{ csrfField }}
+
+    <div style="margin-bottom: 20px; padding: 10px; border: 1px solid #ccc;">
+        <strong>Global Controls:</strong>
+        <span style="margin-left: 20px;">
+            Internal:
+            <button type="button" onclick="selectSubs(this, 'internal', 'all')">All</button>
+            <button type="button" onclick="selectSubs(this, 'internal', 'none')">None</button>
+            <button type="button" onclick="selectSubs(this, 'internal', 'invert')">Invert</button>
+        </span>
+        <span style="margin-left: 20px;">
+            Email:
+            <button type="button" onclick="selectSubs(this, 'email', 'all')">All</button>
+            <button type="button" onclick="selectSubs(this, 'email', 'none')">None</button>
+            <button type="button" onclick="selectSubs(this, 'email', 'invert')">Invert</button>
+        </span>
+    </div>
+
     {{ range .Groups }}
     <div class="subscription-group">
         <h3>{{ .Name }}</h3>
@@ -77,7 +94,12 @@
     function selectSubs(btn, type, action) {
         // Find the closest table
         const table = btn.closest('table');
-        const inputs = table.querySelectorAll('input[type="checkbox"]');
+        let inputs;
+        if (table) {
+            inputs = table.querySelectorAll('input[type="checkbox"]');
+        } else {
+            inputs = document.querySelectorAll('input[name="subs"]');
+        }
 
         inputs.forEach(input => {
             // value is "pattern|type"

@@ -387,7 +387,11 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 					// Render Card
 					imageHTML := ""
 					if meta.ImageURL != "" {
-						safeImg, imgOk := SanitizeURL(meta.ImageURL)
+						imgURL := meta.ImageURL
+						if a.ImageURLMapper != nil {
+							imgURL = a.ImageURLMapper("img", imgURL)
+						}
+						safeImg, imgOk := SanitizeURL(imgURL)
 						if imgOk {
 							imageHTML = fmt.Sprintf("<img src=\"%s\" class=\"external-link-image\" />", safeImg)
 						}

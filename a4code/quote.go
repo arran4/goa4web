@@ -14,6 +14,10 @@ type quoteOptions struct {
 	Full bool
 	// Trim removes leading and trailing whitespace from quoted text.
 	Trim bool
+	// RestrictedQuoteDepth is the depth at which quotes are removed.
+	RestrictedQuoteDepth *int
+	// TruncatedQuoteDepth is the depth at which quote content is removed.
+	TruncatedQuoteDepth *int
 }
 
 // WithParagraphQuote enables paragraph aware quoting.
@@ -21,6 +25,16 @@ func WithParagraphQuote() QuoteOption { return func(o *quoteOptions) { o.Full = 
 
 // WithTrimSpace removes surrounding whitespace from the quoted text.
 func WithTrimSpace() QuoteOption { return func(o *quoteOptions) { o.Trim = true } }
+
+// WithRestrictedQuoteDepth sets the depth at which quotes are removed.
+func WithRestrictedQuoteDepth(depth int) QuoteOption {
+	return func(o *quoteOptions) { o.RestrictedQuoteDepth = &depth }
+}
+
+// WithTruncatedQuoteDepth sets the depth at which quote content is removed.
+func WithTruncatedQuoteDepth(depth int) QuoteOption {
+	return func(o *quoteOptions) { o.TruncatedQuoteDepth = &depth }
+}
 
 // WithFullQuote is a backward-compatible alias for paragraph-aware quoting.
 // Deprecated: use WithParagraphQuote instead.
@@ -34,7 +48,7 @@ func QuoteText(username, text string, opts ...QuoteOption) string {
 		opt(&o)
 	}
 	if o.Full {
-		return fullQuoteOf(username, text, o.Trim)
+		return fullQuoteOf(username, text, o)
 	}
 	return quoteOfText(username, text, o.Trim)
 }
@@ -61,8 +75,8 @@ func escapeUsername(u string) string {
 	return b.String()
 }
 
-func fullQuoteOf(username, text string, trim bool) string {
-	if trim {
+func fullQuoteOf(username, text string, opts quoteOptions) string {
+	if opts.Trim {
 		text = strings.TrimSpace(text)
 	}
 	var out bytes.Buffer
@@ -104,8 +118,8 @@ func fullQuoteOf(username, text string, trim bool) string {
 		case '\n':
 			if bc <= 0 && nlc == 1 {
 				s := out.String()
-				if strings.TrimSpace(s) != "" && !isQuoteOfQuote(s) {
-					quote.WriteString(quoteOfText(username, s, trim))
+				if processed, include := processQuoteBlock(s, opts); include {
+					quote.WriteString(quoteOfText(username, processed, opts.Trim))
 					quote.WriteString("\n\n\n")
 				}
 				out.Reset()
@@ -130,41 +144,124 @@ func fullQuoteOf(username, text string, trim bool) string {
 		it++
 	}
 	s := out.String()
-	if strings.TrimSpace(s) != "" && !isQuoteOfQuote(s) {
-		quote.WriteString(quoteOfText(username, s, trim))
+	if processed, include := processQuoteBlock(s, opts); include {
+		quote.WriteString(quoteOfText(username, processed, opts.Trim))
 	}
 	return quote.String()
 }
 
-func isQuoteOfQuote(s string) bool {
-	s = strings.TrimSpace(s)
-	if !isQuoteBlock(s) {
-		return false
+func processQuoteBlock(s string, opts quoteOptions) (string, bool) {
+	sTrim := strings.TrimSpace(s)
+	if sTrim == "" {
+		return "", false
 	}
-	root, err := ParseString(s)
+
+	if !isQuoteBlock(sTrim) {
+		return s, true
+	}
+
+	root, err := ParseString(sTrim)
 	if err != nil || len(root.Children) != 1 {
-		return false
+		return s, true
 	}
 	q, ok := root.Children[0].(*QuoteOf)
 	if !ok {
+		return s, true
+	}
+
+	// Logic for RestrictedQuoteDepth
+	if opts.RestrictedQuoteDepth != nil {
+		if isPureQuote(q) {
+			depth := getPureQuoteDepth(q)
+			if depth > *opts.RestrictedQuoteDepth {
+				return "", false
+			}
+		}
+	} else {
+		// Default behavior: filter if it is a pure quote block (matching original isQuoteOfQuote)
+		if isPureQuote(q) {
+			return "", false
+		}
+	}
+
+	// Logic for TruncatedQuoteDepth
+	if opts.TruncatedQuoteDepth != nil {
+		truncateQuotes(root, 0, *opts.TruncatedQuoteDepth)
+		return nodeToString(root), true
+	}
+
+	return s, true
+}
+
+func isPureQuote(node Node) bool {
+	children := nodeChildren(node)
+	if len(children) == 0 {
 		return false
 	}
+
 	hasQuote := false
-	hasContent := false
-	for _, child := range q.Children {
-		switch n := child.(type) {
+	for _, child := range children {
+		switch child.(type) {
 		case *QuoteOf:
 			hasQuote = true
 		case *Text:
-			if strings.TrimSpace(n.Value) != "" {
-				hasContent = true
+			// Check for non-empty text
+			if t, ok := child.(*Text); ok && strings.TrimSpace(t.Value) != "" {
+				return false
 			}
 		default:
-			// Image, Code, etc.
-			hasContent = true
+			return false // Images, code, etc count as content
 		}
 	}
-	return hasQuote && !hasContent
+	return hasQuote
+}
+
+func getPureQuoteDepth(node Node) int {
+	max := 0
+	for _, child := range nodeChildren(node) {
+		if q, ok := child.(*QuoteOf); ok {
+			d := 1
+			if isPureQuote(q) {
+				d += getPureQuoteDepth(q)
+			}
+			if d > max {
+				max = d
+			}
+		}
+	}
+	return max
+}
+
+func nodeChildren(n Node) []Node {
+	switch v := n.(type) {
+	case *Root:
+		return v.Children
+	case *QuoteOf:
+		return v.Children
+	default:
+		return nil
+	}
+}
+
+func truncateQuotes(node Node, currentDepth int, limit int) {
+	children := nodeChildren(node)
+	for _, child := range children {
+		if q, ok := child.(*QuoteOf); ok {
+			childDepth := currentDepth + 1
+			if childDepth > limit {
+				q.Children = nil
+			} else {
+				truncateQuotes(q, childDepth, limit)
+			}
+		}
+	}
+}
+
+// Need a helper to write AST back to string.
+func nodeToString(n Node) string {
+	var b bytes.Buffer
+	n.a4code(&b)
+	return b.String()
 }
 
 func isQuoteBlock(s string) bool {

@@ -89,7 +89,7 @@ func (q *Queries) AdminGetFAQByID(ctx context.Context, id int32) (*Faq, error) {
 }
 
 const adminGetFAQCategories = `-- name: AdminGetFAQCategories :many
-SELECT id, parent_category_id, language_id, name
+SELECT id, parent_category_id, language_id, name, deleted_at
 FROM faq_categories
 WHERE deleted_at IS NULL
 `
@@ -108,6 +108,7 @@ func (q *Queries) AdminGetFAQCategories(ctx context.Context) ([]*FaqCategory, er
 			&i.ParentCategoryID,
 			&i.LanguageID,
 			&i.Name,
+			&i.DeletedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -168,7 +169,7 @@ func (q *Queries) AdminGetFAQCategoriesWithQuestionCount(ctx context.Context) ([
 }
 
 const adminGetFAQCategory = `-- name: AdminGetFAQCategory :one
-SELECT id, parent_category_id, language_id, name FROM faq_categories WHERE id = ?
+SELECT id, parent_category_id, language_id, name, deleted_at FROM faq_categories WHERE id = ?
 `
 
 func (q *Queries) AdminGetFAQCategory(ctx context.Context, id int32) (*FaqCategory, error) {
@@ -179,6 +180,7 @@ func (q *Queries) AdminGetFAQCategory(ctx context.Context, id int32) (*FaqCatego
 		&i.ParentCategoryID,
 		&i.LanguageID,
 		&i.Name,
+		&i.DeletedAt,
 	)
 	return &i, err
 }
@@ -330,7 +332,7 @@ func (q *Queries) AdminGetFAQUnansweredQuestions(ctx context.Context) ([]*Faq, e
 }
 
 const adminListFAQCategories = `-- name: AdminListFAQCategories :many
-SELECT id, parent_category_id, language_id, name
+SELECT id, parent_category_id, language_id, name, deleted_at
 FROM faq_categories
 WHERE deleted_at IS NULL
 ORDER BY parent_category_id, id
@@ -350,6 +352,7 @@ func (q *Queries) AdminListFAQCategories(ctx context.Context) ([]*FaqCategory, e
 			&i.ParentCategoryID,
 			&i.LanguageID,
 			&i.Name,
+			&i.DeletedAt,
 		); err != nil {
 			return nil, err
 		}

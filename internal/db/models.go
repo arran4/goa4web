@@ -244,6 +244,7 @@ type FaqCategory struct {
 	ParentCategoryID sql.NullInt32
 	LanguageID       sql.NullInt32
 	Name             sql.NullString
+	DeletedAt        sql.NullTime
 }
 
 type FaqRevision struct {

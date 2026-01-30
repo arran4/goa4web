@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/gorilla/mux"
@@ -81,11 +82,17 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	pref, _ := cd.UserSettings(cd.UserID)
 	var digestHour *int32
 	var digestMarkRead bool
+	var timezone string
+	var currentTime string
+
 	if pref != nil {
 		if pref.DailyDigestHour.Valid {
 			digestHour = &pref.DailyDigestHour.Int32
 		}
 		digestMarkRead = pref.DailyDigestMarkRead
+		if pref.Timezone.Valid {
+			timezone = pref.Timezone.String
+		}
 	}
 
 	dHour := -1
@@ -95,16 +102,32 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		dEnabled = true
 	}
 
+	now := time.Now().UTC()
+	if timezone != "" {
+		if loc, err := time.LoadLocation(timezone); err == nil {
+			now = now.In(loc)
+			currentTime = now.Format("15:04 MST")
+		} else {
+			currentTime = now.Format("15:04 MST")
+		}
+	} else {
+		currentTime = now.Format("15:04 MST")
+	}
+
 	data := struct {
 		Request        *http.Request
 		DigestHour     int
 		DigestEnabled  bool
 		DigestMarkRead bool
+		Timezone       string
+		CurrentTime    string
 	}{
 		Request:        r,
 		DigestHour:     dHour,
 		DigestEnabled:  dEnabled,
 		DigestMarkRead: digestMarkRead,
+		Timezone:       timezone,
+		CurrentTime:    currentTime,
 	}
 	UserNotificationsPage.Handle(w, r, data)
 }

@@ -10,6 +10,37 @@ import (
 	"database/sql"
 )
 
+const getDigestTimezones = `-- name: GetDigestTimezones :many
+SELECT DISTINCT timezone
+FROM preferences
+WHERE daily_digest_hour IS NOT NULL
+  AND timezone IS NOT NULL
+  AND timezone != ''
+`
+
+func (q *Queries) GetDigestTimezones(ctx context.Context) ([]sql.NullString, error) {
+	rows, err := q.db.QueryContext(ctx, getDigestTimezones)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []sql.NullString
+	for rows.Next() {
+		var timezone sql.NullString
+		if err := rows.Scan(&timezone); err != nil {
+			return nil, err
+		}
+		items = append(items, timezone)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getPreferenceForLister = `-- name: GetPreferenceForLister :one
 SELECT idpreferences, language_id, users_idusers, emailforumupdates, page_size, auto_subscribe_replies, timezone, custom_css, daily_digest_hour, daily_digest_mark_read, last_digest_sent_at
 FROM preferences
@@ -67,6 +98,101 @@ func (q *Queries) GetUsersForDailyDigest(ctx context.Context, arg GetUsersForDai
 	var items []*GetUsersForDailyDigestRow
 	for rows.Next() {
 		var i GetUsersForDailyDigestRow
+		if err := rows.Scan(&i.UsersIdusers, &i.Email, &i.DailyDigestMarkRead); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUsersForDailyDigestByTimezone = `-- name: GetUsersForDailyDigestByTimezone :many
+SELECT p.users_idusers, ue.email, p.daily_digest_mark_read
+FROM preferences p
+JOIN user_emails ue ON ue.id = (
+    SELECT id FROM user_emails ue2
+    WHERE ue2.user_id = p.users_idusers AND ue2.verified_at IS NOT NULL
+    ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1
+)
+WHERE p.daily_digest_hour = ?
+  AND p.timezone = ?
+  AND (p.last_digest_sent_at IS NULL OR p.last_digest_sent_at < ?)
+`
+
+type GetUsersForDailyDigestByTimezoneParams struct {
+	Hour     sql.NullInt32
+	Timezone sql.NullString
+	Cutoff   sql.NullTime
+}
+
+type GetUsersForDailyDigestByTimezoneRow struct {
+	UsersIdusers        int32
+	Email               string
+	DailyDigestMarkRead bool
+}
+
+func (q *Queries) GetUsersForDailyDigestByTimezone(ctx context.Context, arg GetUsersForDailyDigestByTimezoneParams) ([]*GetUsersForDailyDigestByTimezoneRow, error) {
+	rows, err := q.db.QueryContext(ctx, getUsersForDailyDigestByTimezone, arg.Hour, arg.Timezone, arg.Cutoff)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetUsersForDailyDigestByTimezoneRow
+	for rows.Next() {
+		var i GetUsersForDailyDigestByTimezoneRow
+		if err := rows.Scan(&i.UsersIdusers, &i.Email, &i.DailyDigestMarkRead); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUsersForDailyDigestNoTimezone = `-- name: GetUsersForDailyDigestNoTimezone :many
+SELECT p.users_idusers, ue.email, p.daily_digest_mark_read
+FROM preferences p
+JOIN user_emails ue ON ue.id = (
+    SELECT id FROM user_emails ue2
+    WHERE ue2.user_id = p.users_idusers AND ue2.verified_at IS NOT NULL
+    ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1
+)
+WHERE p.daily_digest_hour = ?
+  AND (p.timezone IS NULL OR p.timezone = '')
+  AND (p.last_digest_sent_at IS NULL OR p.last_digest_sent_at < ?)
+`
+
+type GetUsersForDailyDigestNoTimezoneParams struct {
+	Hour   sql.NullInt32
+	Cutoff sql.NullTime
+}
+
+type GetUsersForDailyDigestNoTimezoneRow struct {
+	UsersIdusers        int32
+	Email               string
+	DailyDigestMarkRead bool
+}
+
+func (q *Queries) GetUsersForDailyDigestNoTimezone(ctx context.Context, arg GetUsersForDailyDigestNoTimezoneParams) ([]*GetUsersForDailyDigestNoTimezoneRow, error) {
+	rows, err := q.db.QueryContext(ctx, getUsersForDailyDigestNoTimezone, arg.Hour, arg.Cutoff)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetUsersForDailyDigestNoTimezoneRow
+	for rows.Next() {
+		var i GetUsersForDailyDigestNoTimezoneRow
 		if err := rows.Scan(&i.UsersIdusers, &i.Email, &i.DailyDigestMarkRead); err != nil {
 			return nil, err
 		}

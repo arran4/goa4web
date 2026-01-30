@@ -11,6 +11,7 @@ Commands:
   queue    Manage the queue of emails waiting to be sent.
   sent     Inspect and retry sent emails.
   test     Send a test email to check the email configuration.
+  template Inspect and update email templates.
 
 Examples:
   # Send a test email
@@ -24,5 +25,8 @@ Examples:
 
   # List sent emails
   {{.Prog}} email sent list
+
+  # Render the email template list
+  {{.Prog}} email template get
 
 {{template "flag_groups_section" .FlagGroups}}

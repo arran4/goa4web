@@ -98,6 +98,7 @@ CREATE TABLE `forumcategory` (
   `language_id` int(10) DEFAULT NULL,
   `title` tinytext DEFAULT NULL,
   `description` mediumtext DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`idforumcategory`),
   KEY `forumcategory_FKIndex1` (`forumcategory_idforumcategory`),
   KEY `forumcategory_FKIndex2` (`language_id`)

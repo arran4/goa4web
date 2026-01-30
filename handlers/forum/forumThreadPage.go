@@ -116,6 +116,22 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	commentId, _ := strconv.Atoi(r.URL.Query().Get("comment"))
 	data.Comments = commentRows
 
+	if r.Method == http.MethodPost {
+		if err := r.ParseForm(); err == nil {
+			if val := r.PostFormValue("replytext"); val != "" {
+				data.Text = val
+			}
+			if val := r.PostFormValue("text"); val != "" && commentId != 0 {
+				for _, c := range data.Comments {
+					if c.Idcomments == int32(commentId) {
+						c.Text.String = val
+						c.Text.Valid = true
+					}
+				}
+			}
+		}
+	}
+
 	data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
 		return cmt.IsOwner
 	}

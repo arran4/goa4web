@@ -58,6 +58,8 @@ Commands:
           rejecting, and commenting on requests.
   config  Manage configuration. This allows you to view and modify the
           application's configuration.
+  page-size Manage pagination settings. This includes viewing and updating the
+          page size bounds.
   test    Run manual tests. This is used for running specific tests that are
           not part of the automated test suite.
 

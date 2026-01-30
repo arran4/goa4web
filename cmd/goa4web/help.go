@@ -282,6 +282,17 @@ func (c *helpCmd) showHelp(args []string) error {
 			}
 		}
 		return nil
+	case "page-size":
+		cmd, err := parsePageSizeCmd(c.rootCmd, append(args[1:], "-h"))
+		if err != nil && err != flag.ErrHelp {
+			return fmt.Errorf("page-size: %w", err)
+		}
+		if err == nil {
+			if err := cmd.Run(); err != nil {
+				return err
+			}
+		}
+		return nil
 	case "subscription":
 		cmd, err := parseSubscriptionCmd(c.rootCmd, append(args[1:], "-h"))
 		if err != nil && err != flag.ErrHelp {

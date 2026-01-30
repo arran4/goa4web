@@ -83,7 +83,7 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	var digestHour *int32
 	var digestMarkRead bool
 	var timezone string
-	currentTime := "UTC"
+	var currentTime string
 
 	if pref != nil {
 		if pref.DailyDigestHour.Valid {

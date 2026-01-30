@@ -2,10 +2,13 @@ package a4code2html
 
 import (
 	"bytes"
-	"github.com/google/go-cmp/cmp"
 	"io"
 	"testing"
+
+	"github.com/arran4/goa4web/a4code"
+	"github.com/google/go-cmp/cmp"
 )
+
 
 func TestA4code2html_Process(t *testing.T) {
 	tests := []struct {
@@ -273,16 +276,16 @@ func TestHrTag(t *testing.T) {
 }
 
 func TestExternalLinkCard(t *testing.T) {
-	provider := func(u string) *LinkMetadata {
+	provider := func(u string) *a4code.LinkMetadata {
 		if u == "http://example.com/card" {
-			return &LinkMetadata{
+			return &a4code.LinkMetadata{
 				Title:       "Example Title",
 				Description: "Example Description",
 				ImageURL:    "http://example.com/image.jpg",
 			}
 		}
 		if u == "http://example.com/simple" {
-			return &LinkMetadata{
+			return &a4code.LinkMetadata{
 				Title:       "Simple Title",
 				Description: "Simple Description",
 				ImageURL:    "http://example.com/image.jpg",
@@ -336,7 +339,7 @@ func TestExternalLinkCard(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := New(LinkMetadataProvider(provider))
+			c := New(a4code.LinkMetadataProvider(provider))
 			c.SetInput(tt.input)
 			gotBytes, _ := io.ReadAll(c.Process())
 			got := string(gotBytes)

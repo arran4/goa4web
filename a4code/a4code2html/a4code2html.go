@@ -11,6 +11,8 @@ import (
 	"log"
 	"net/url"
 	"strings"
+
+	"github.com/arran4/goa4web/a4code"
 )
 
 // CodeType defines the output mode for A4code2html.
@@ -30,14 +32,6 @@ const (
 	CTWordsOnly
 )
 
-type LinkMetadata struct {
-	Title       string
-	Description string
-	ImageURL    string
-}
-
-type LinkMetadataProvider func(url string) *LinkMetadata
-
 type A4code2html struct {
 	r        *bufio.Reader
 	w        io.Writer
@@ -55,7 +49,7 @@ type A4code2html struct {
 	UserColorMapper func(username string) string
 	quoteDepth      int
 	// MetadataProvider optionally provides metadata for external links.
-	MetadataProvider LinkMetadataProvider
+	MetadataProvider a4code.LinkMetadataProvider
 	atLineStart      bool
 }
 
@@ -90,7 +84,7 @@ func New(opts ...interface{}) *A4code2html {
 			c.ImageHTMLMapper = func(tag, val string) string(v)
 		case func(string) string:
 			c.UserColorMapper = v
-		case LinkMetadataProvider:
+		case a4code.LinkMetadataProvider:
 			c.MetadataProvider = v
 		case WithTOC:
 			c.makeTC = bool(v)
@@ -393,7 +387,7 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 			}
 			safe, ok := SanitizeURL(raw)
 			if ok {
-				var meta *LinkMetadata
+				var meta *a4code.LinkMetadata
 				if a.MetadataProvider != nil {
 					meta = a.MetadataProvider(raw)
 				}

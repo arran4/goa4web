@@ -16,6 +16,7 @@ import (
 
 	"github.com/arran4/goa4web"
 
+	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/core/templates"
@@ -105,7 +106,7 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 			return HighlightSearchTerms(s, cd.SearchWords())
 		},
 		"a4code2html": func(s string) template.HTML {
-			provider := func(u string) *a4code2html.LinkMetadata {
+			provider := func(u string) *a4code.LinkMetadata {
 				if cd.Queries() == nil {
 					return nil
 				}
@@ -141,13 +142,13 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 				if link.CardImageCache.Valid && link.CardImageCache.String != "" {
 					img = cd.MapImageURL("img", link.CardImageCache.String)
 				}
-				return &a4code2html.LinkMetadata{
+				return &a4code.LinkMetadata{
 					Title:       link.CardTitle.String,
 					Description: link.CardDescription.String,
 					ImageURL:    img,
 				}
 			}
-			c := a4code2html.New(mapper, getColor, a4code2html.LinkMetadataProvider(provider))
+			c := a4code2html.New(mapper, getColor, a4code.LinkMetadataProvider(provider))
 			c.CodeType = a4code2html.CTHTML
 			c.SetInput(s)
 			out, err := io.ReadAll(c.Process())

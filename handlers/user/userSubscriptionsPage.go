@@ -26,7 +26,7 @@ func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 
 	var filteredGroups []*subscriptions.SubscriptionGroup
 	for _, g := range groups {
-		if g.Definition.IsAdminOnly && !cd.IsAdminMode() {
+		if g.Definition.IsAdminOnly && !cd.IsAdmin() {
 			continue
 		}
 		// Also ensure default instance for param-less definitions

@@ -8,10 +8,11 @@ import (
 )
 
 type Definition struct {
-	Name        string
-	Description string
-	Pattern     string
-	IsAdminOnly bool
+	Name                  string
+	Description           string
+	Pattern               string
+	IsAdminOnly           bool
+	SupportsAutoSubscribe bool
 }
 
 // Parameter represents a single parameter in a subscription pattern.
@@ -19,6 +20,7 @@ type Parameter struct {
 	Key      string // e.g. "topicid"
 	Value    string // e.g. "1"
 	Resolved string // e.g. "General Discussion"
+	Link     string // e.g. "/forum/topic/1"
 }
 
 // SubscriptionInstance represents a concrete subscription (e.g. to Topic #1).
@@ -79,9 +81,10 @@ var Definitions = []Definition{
 		Pattern:     "private topic create:/private/*",
 	},
 	{
-		Name:        "New Threads (Private Topic)",
-		Description: "Notify when a new thread is created in this private topic",
-		Pattern:     "create thread:/private/topic/{topicid}*",
+		Name:                  "New Threads (Private Topic)",
+		Description:           "Notify when a new thread is created in this private topic",
+		Pattern:               "create thread:/private/topic/{topicid}*",
+		SupportsAutoSubscribe: true,
 	},
 	{
 		Name:        "Replies (Private Thread)",

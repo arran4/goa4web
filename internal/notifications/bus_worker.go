@@ -355,6 +355,40 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 		}
 	}
 
+	if asp, ok := evt.Task.(AutoSubscribeProvider); ok {
+		newTaskName, newPath, err := asp.AutoSubscribePath(evt)
+		if err == nil {
+			// Find who is subscribed to the current event with "autosub_*"
+			autoInternalSubs, err := collectSubscribers(ctx, n.Queries, patterns, "autosub_internal")
+			if err != nil {
+				log.Printf("collect auto internal subs: %v", err)
+			}
+			autoEmailSubs, err := collectSubscribers(ctx, n.Queries, patterns, "autosub_email")
+			if err != nil {
+				log.Printf("collect auto email subs: %v", err)
+			}
+
+			// We need to build the new pattern for the target subscription
+			newPatterns := buildPatterns(tasks.TaskString(newTaskName), newPath)
+			if len(newPatterns) > 0 {
+				newPattern := newPatterns[0]
+
+				for id := range autoInternalSubs {
+					if id == evt.UserID {
+						continue
+					}
+					ensureSubscription(ctx, n.Queries, id, newPattern, "internal")
+				}
+				for id := range autoEmailSubs {
+					if id == evt.UserID {
+						continue
+					}
+					ensureSubscription(ctx, n.Queries, id, newPattern, "email")
+				}
+			}
+		}
+	}
+
 	return nil
 }
 

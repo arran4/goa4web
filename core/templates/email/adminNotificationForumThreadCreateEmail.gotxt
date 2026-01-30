@@ -1,4 +1,4 @@
-User {{.Item.Username}} created a new forum thread.
+User {{.Item.Username}} created a new {{if eq .Item.SubjectPrefix "Private Forum"}}private {{end}}forum thread in {{.Item.TopicTitle}}: {{.Item.ThreadOpenerPreview}}
 
 View thread: {{.Item.ThreadURL}}
 

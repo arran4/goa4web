@@ -1,4 +1,4 @@
-<p>User {{.Item.Username}} created a new forum thread.</p>
+<p>User {{.Item.Username}} created a new {{if eq .Item.SubjectPrefix "Private Forum"}}private {{end}}forum thread in {{.Item.TopicTitle}}: {{.Item.ThreadOpenerPreview}}</p>
 
 <p><a href="{{.Item.ThreadURL}}">View thread</a></p>
 <p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>

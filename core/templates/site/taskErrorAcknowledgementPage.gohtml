@@ -3,6 +3,6 @@
 <p class="text-error">{{ $.Error }}</p>
 {{- end }}
 {{- if $.BackURL }}
-<a href="{{ $.BackURL }}">Return to editing</a>
+<button onclick="history.back()">Return to editing</button>
 {{- end }}
 {{ template "tail" $ }}

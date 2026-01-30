@@ -1,14 +1,12 @@
 package forum
 
 import (
-	"database/sql"
 	"fmt"
 	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"sort"
 	"strconv"
-	"strings"
 
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/consts"
@@ -67,23 +65,8 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		return
 	}
 	displayTitle := topicRow.Title.String
-	if topicRow.Handler == "private" && cd.Queries() != nil {
-		parts, err := cd.Queries().ListPrivateTopicParticipantsByTopicIDForUser(r.Context(), db.ListPrivateTopicParticipantsByTopicIDForUserParams{
-			TopicID:  sql.NullInt32{Int32: topicRow.Idforumtopic, Valid: true},
-			ViewerID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-		})
-		if err != nil {
-			log.Printf("list private participants: %v", err)
-		}
-		var names []string
-		for _, p := range parts {
-			if p.Idusers != cd.UserID {
-				names = append(names, p.Username.String)
-			}
-		}
-		if len(names) > 0 {
-			displayTitle = strings.Join(names, ", ")
-		}
+	if topicRow.Handler == "private" {
+		displayTitle = cd.GetPrivateTopicDisplayTitle(topicRow.Idforumtopic, displayTitle)
 	}
 	cd.PageTitle = fmt.Sprintf("Forum - %s", displayTitle)
 

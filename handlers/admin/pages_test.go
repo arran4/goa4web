@@ -31,6 +31,7 @@ func TestAdminTemplatesExist(t *testing.T) {
 		AdminUserBlogsPageTmpl,
 		AdminMaintenancePageTmpl,
 		AdminSiteSettingsPageTmpl,
+		AdminConfigExplainPageTmpl,
 		AdminPageSizePageTmpl,
 		AdminEmailQueuePageTmpl,
 		AdminDeactivatedCommentsPageTmpl,

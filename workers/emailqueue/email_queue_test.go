@@ -11,27 +11,64 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
-func TestProcessPendingEmail_NilProvider_DoesNotProcess(t *testing.T) {
+func TestProcessPendingEmail_NilProvider_IncrementsErrorCount(t *testing.T) {
 	q := &db.QuerierStub{}
 	cfg := &config.RuntimeConfig{
 		EmailEnabled: true,
 	}
 
+	emailAddr := "verified@example.com"
+	e := &db.SystemListPendingEmailsRow{
+		ID:          1,
+		ToUserID:    sql.NullInt32{Valid: false},
+		Body:        fmt.Sprintf("To: %s\r\nSubject: Test\r\n\r\nBody", emailAddr),
+		DirectEmail: true,
+	}
+
 	listCalled := false
 	q.SystemListPendingEmailsFn = func(ctx context.Context, arg db.SystemListPendingEmailsParams) ([]*db.SystemListPendingEmailsRow, error) {
 		listCalled = true
-		return []*db.SystemListPendingEmailsRow{}, nil
+		return []*db.SystemListPendingEmailsRow{e}, nil
+	}
+
+	q.GetUserEmailByEmailFn = func(ctx context.Context, email string) (*db.UserEmail, error) {
+		return &db.UserEmail{
+			VerifiedAt: sql.NullTime{Time: time.Now(), Valid: true},
+		}, nil
+	}
+
+	incrementCalled := false
+	q.SystemIncrementPendingEmailErrorFn = func(ctx context.Context, id int32) error {
+		if id != e.ID {
+			t.Errorf("Expected increment for ID %d, got %d", e.ID, id)
+		}
+		incrementCalled = true
+		return nil
+	}
+
+	markSentCalled := false
+	q.SystemMarkPendingEmailSentFn = func(ctx context.Context, id int32) error {
+		markSentCalled = true
+		return nil
 	}
 
 	// Call with nil provider
 	result := ProcessPendingEmail(context.Background(), q, nil, nil, cfg)
 
-	if result {
-		t.Error("Expected ProcessPendingEmail to return false when provider is nil")
+	if !result {
+		t.Error("Expected ProcessPendingEmail to return true (work done/waiting) when provider is nil")
 	}
 
-	if listCalled {
-		t.Error("Expected SystemListPendingEmails NOT to be called when provider is nil")
+	if !listCalled {
+		t.Error("Expected SystemListPendingEmails to be called")
+	}
+
+	if !incrementCalled {
+		t.Error("Expected SystemIncrementPendingEmailError to be called")
+	}
+
+	if markSentCalled {
+		t.Error("Expected SystemMarkPendingEmailSent NOT to be called")
 	}
 }
 

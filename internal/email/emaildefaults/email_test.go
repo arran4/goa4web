@@ -107,7 +107,7 @@ func TestInsertPendingEmail(t *testing.T) {
 	}
 }
 
-func TestProcessPendingEmailNilProviderPauses(t *testing.T) {
+func TestProcessPendingEmailNilProviderRetriesForever(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
 	cfg.EmailEnabled = true
 
@@ -117,10 +117,17 @@ func TestProcessPendingEmailNilProviderPauses(t *testing.T) {
 	}
 	defer conn.Close()
 	q := db.New(conn)
+	rows := sqlmock.NewRows([]string{"id", "to_user_id", "body", "error_count", "direct_email"}).AddRow(1, 2, "b", 100, false)
+	mock.ExpectQuery("SELECT id, to_user_id, body, error_count, direct_email").WillReturnRows(rows)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username, u.public_profile_enabled_at FROM users u LEFT JOIN user_emails ue ON ue.id = ( SELECT id FROM user_emails ue2 WHERE ue2.user_id = u.idusers AND ue2.verified_at IS NOT NULL ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1 ) WHERE u.idusers = ?")).
+		WithArgs(int32(2)).
+		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(2, "a@test", "a", nil))
+	// Should increment error count, but NOT DLQ/Sent even though error_count > 4
+	mock.ExpectExec(regexp.QuoteMeta("UPDATE pending_emails SET error_count = error_count + 1 WHERE id = ?")).WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
 
 	dlqRec := &mockdlq.Provider{}
-	if emailqueue.ProcessPendingEmail(context.Background(), q, nil, dlqRec, cfg) {
-		t.Fatal("expected no email processed (paused)")
+	if !emailqueue.ProcessPendingEmail(context.Background(), q, nil, dlqRec, cfg) {
+		t.Fatal("expected work done (true)")
 	}
 
 	if len(dlqRec.Records) != 0 {

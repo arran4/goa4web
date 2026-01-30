@@ -284,6 +284,15 @@ type QuerierStub struct {
 	SystemMarkPendingEmailSentErr   error
 	SystemMarkPendingEmailSentFn    func(context.Context, int32) error
 
+	SystemIncrementPendingEmailErrorCalls []int32
+	SystemIncrementPendingEmailErrorErr   error
+	SystemIncrementPendingEmailErrorFn    func(context.Context, int32) error
+
+	GetPendingEmailErrorCountCalls   []int32
+	GetPendingEmailErrorCountReturns int32
+	GetPendingEmailErrorCountErr     error
+	GetPendingEmailErrorCountFn      func(context.Context, int32) (int32, error)
+
 	ListGrantsExtendedReturns []*ListGrantsExtendedRow
 	ListGrantsExtendedErr     error
 	ListGrantsExtendedCalls   []ListGrantsExtendedParams

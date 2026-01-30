@@ -1,0 +1,6 @@
+-- body.gohtml --
+<p>Image search index rebuild completed.</p>
+-- body.gotxt --
+Image search index rebuild completed.
+-- subject.gotxt --
+[{{.SubjectPrefix}}] Image search rebuilt

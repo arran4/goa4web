@@ -1,6 +1,7 @@
 package templates
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"embed"
 	"encoding/hex"
@@ -10,6 +11,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"sync"
 	ttemplate "text/template"
 	"time"
@@ -19,7 +21,7 @@ import (
 
 // embeddedFS contains site templates, notification templates, email templates and static assets.
 //
-//go:embed site/*.gohtml site/*/*.gohtml notifications/*.gotxt email/*.gohtml email/*.gotxt assets/*
+//go:embed site/*.gohtml site/*/*.gohtml notifications/*.gotxt email/*.txtar assets/*
 var embeddedFS embed.FS
 
 var (
@@ -263,7 +265,45 @@ func GetCompiledEmailHtmlTemplates(funcs htemplate.FuncMap, opts ...Option) *hte
 			return t.Format(consts.DisplayDateTimeFormat)
 		}
 	}
-	return htemplate.Must(htemplate.New("").Funcs(funcs).ParseFS(getFS("email", cfg), "*.gohtml"))
+
+	fsys := getFS("email", cfg)
+	root := htemplate.New("root").Funcs(funcs)
+
+	err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+
+		ext := filepath.Ext(path)
+		if ext == ".gohtml" {
+			b, err := fs.ReadFile(fsys, path)
+			if err != nil {
+				return err
+			}
+			_, err = root.New(path).Parse(string(b))
+			return err
+		} else if ext == ".txtar" {
+			b, err := fs.ReadFile(fsys, path)
+			if err != nil {
+				return err
+			}
+			files := parseTxtar(b)
+			if content, ok := files["body.gohtml"]; ok {
+				// Register as <basename>.gohtml
+				name := strings.TrimSuffix(path, ".txtar") + ".gohtml"
+				_, err = root.New(name).Parse(string(content))
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		panic(err)
+	}
+	return root
 }
 
 func GetCompiledEmailTextTemplates(funcs ttemplate.FuncMap, opts ...Option) *ttemplate.Template {
@@ -282,7 +322,53 @@ func GetCompiledEmailTextTemplates(funcs ttemplate.FuncMap, opts ...Option) *tte
 			return t.Format(consts.DisplayDateTimeFormat)
 		}
 	}
-	return ttemplate.Must(ttemplate.New("").Funcs(funcs).ParseFS(getFS("email", cfg), "*.gotxt"))
+
+	fsys := getFS("email", cfg)
+	root := ttemplate.New("root").Funcs(funcs)
+
+	err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+
+		ext := filepath.Ext(path)
+		if ext == ".gotxt" {
+			b, err := fs.ReadFile(fsys, path)
+			if err != nil {
+				return err
+			}
+			_, err = root.New(path).Parse(string(b))
+			return err
+		} else if ext == ".txtar" {
+			b, err := fs.ReadFile(fsys, path)
+			if err != nil {
+				return err
+			}
+			files := parseTxtar(b)
+			baseName := strings.TrimSuffix(path, ".txtar")
+
+			if content, ok := files["body.gotxt"]; ok {
+				name := baseName + ".gotxt"
+				if _, err := root.New(name).Parse(string(content)); err != nil {
+					return err
+				}
+			}
+			if content, ok := files["subject.gotxt"]; ok {
+				name := baseName + "Subject.gotxt"
+				if _, err := root.New(name).Parse(string(content)); err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		panic(err)
+	}
+	return root
 }
 
 func GetMainCSSData(opts ...Option) []byte { return readFile("assets/main.css", opts...) }
@@ -367,6 +453,31 @@ func EmailTemplateExists(name string, opts ...Option) bool {
 	if _, err := fs.Stat(fsys, name); err == nil {
 		return true
 	}
+
+	// Check .txtar
+	var base string
+	var inner string
+	if strings.HasSuffix(name, ".gohtml") {
+		base = strings.TrimSuffix(name, ".gohtml")
+		inner = "body.gohtml"
+	} else if strings.HasSuffix(name, ".gotxt") {
+		if strings.HasSuffix(name, "Subject.gotxt") {
+			base = strings.TrimSuffix(name, "Subject.gotxt")
+			inner = "subject.gotxt"
+		} else {
+			base = strings.TrimSuffix(name, ".gotxt")
+			inner = "body.gotxt"
+		}
+	}
+
+	if base != "" {
+		if b, err := fs.ReadFile(fsys, base+".txtar"); err == nil {
+			files := parseTxtar(b)
+			_, ok := files[inner]
+			return ok
+		}
+	}
+
 	return false
 }
 
@@ -385,4 +496,37 @@ func NotificationTemplateExists(name string, opts ...Option) bool {
 // exists in any of the template sources (site, email, notifications).
 func AnyTemplateExists(name string, opts ...Option) bool {
 	return TemplateExists(name, opts...) || EmailTemplateExists(name, opts...) || NotificationTemplateExists(name, opts...)
+}
+
+func parseTxtar(data []byte) map[string][]byte {
+	files := make(map[string][]byte)
+	lines := bytes.Split(data, []byte("\n"))
+	var currentFile string
+	var currentContent []byte
+	inContent := false
+
+	for _, line := range lines {
+		// Check for marker
+		lineTrimmed := bytes.TrimRight(line, "\r")
+		if bytes.HasPrefix(lineTrimmed, []byte("-- ")) && bytes.HasSuffix(lineTrimmed, []byte(" --")) {
+			if inContent {
+				// Store previous file
+				files[currentFile] = currentContent
+			}
+			currentFile = string(lineTrimmed[3 : len(lineTrimmed)-3])
+			currentContent = nil
+			inContent = true
+			continue
+		}
+		if inContent {
+			if len(currentContent) > 0 {
+				currentContent = append(currentContent, '\n')
+			}
+			currentContent = append(currentContent, line...)
+		}
+	}
+	if inContent {
+		files[currentFile] = currentContent
+	}
+	return files
 }

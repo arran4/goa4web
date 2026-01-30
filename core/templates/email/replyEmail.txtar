@@ -1,0 +1,31 @@
+-- body.gohtml --
+<!DOCTYPE html>
+<html>
+<body>
+<p>Hi {{.Item.Thread.Lastposterusername.String}},</p>
+<p>A new reply was posted in "{{.Item.TopicTitle}}" (thread #{{.Item.ThreadID}}) on {{ formatLocalTime (localTime .Item.Time) }}.</p>
+<p>There are now {{.Item.Thread.Comments.Int32}} comments in the discussion.</p>
+<p>Read it <a href="{{.URL}}">here</a>.</p>
+<p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
+{{- if .SignOff}}
+<p>{{.SignOffHTML}}</p>
+{{- end}}
+</body>
+</html>
+-- body.gotxt --
+Hi {{.Item.Thread.Lastposterusername.String}},
+
+A new reply was posted in "{{.Item.TopicTitle}}" (thread #{{.Item.ThreadID}}) on {{ formatLocalTime (localTime .Item.Time) }}.
+There are now {{.Item.Thread.Comments.Int32}} comments in the discussion.
+
+View it here:
+{{.URL}}
+
+
+Manage notifications: {{.UnsubscribeUrl}}
+
+{{- if .SignOff}}
+{{.SignOff}}
+{{- end}}
+-- subject.gotxt --
+[{{.SubjectPrefix}}] New reply in {{.Item.TopicTitle}}

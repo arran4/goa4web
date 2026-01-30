@@ -1,0 +1,13 @@
+-- body.gohtml --
+<p>User {{.Item.Username}} created a new forum thread.</p>
+
+<p><a href="{{.Item.ThreadURL}}">View thread</a></p>
+<p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
+-- body.gotxt --
+User {{.Item.Username}} created a new forum thread.
+
+View thread: {{.Item.ThreadURL}}
+
+Manage notifications: {{.UnsubscribeUrl}}
+-- subject.gotxt --
+[{{.SubjectPrefix}}] {{.Item.SubjectPrefix}}: {{.Item.TopicTitle}} - {{.Item.ThreadOpenerPreview}}

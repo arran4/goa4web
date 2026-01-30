@@ -1,4 +1,0 @@
-User {{.Item.Username}} deleted a forum category.
-
-
-Manage notifications: {{.UnsubscribeUrl}}

@@ -1,4 +1,0 @@
-User {{.Item.Username}} deleted a forum thread.
-
-
-Manage notifications: {{.UnsubscribeUrl}}

@@ -1,6 +1,0 @@
-Moderator {{.Item.Moderator}} rejected the link "{{.Item.Title}}".
-
-View link:
-{{.Item.LinkURL}}
-
-Manage notifications: {{.Item.UnsubURL}}

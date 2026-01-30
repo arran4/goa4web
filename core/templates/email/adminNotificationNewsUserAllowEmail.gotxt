@@ -1,7 +1,0 @@
-User {{.Item.Username}} was granted news permissions.
-
-Permissions:
-{{.Item.UserPermissionsURL}}
-
-Manage notifications: {{.UnsubscribeUrl}}
-

@@ -1,0 +1,16 @@
+-- body.gohtml --
+<p>User {{.Item.Username}} replied to a news post.</p>
+
+<p><a href="{{.Item.PostURL}}">View post</a></p>
+<p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
+
+-- body.gotxt --
+User {{.Item.Username}} replied to a news post.
+
+View post:
+{{.Item.PostURL}}
+
+Manage notifications: {{.UnsubscribeUrl}}
+
+-- subject.gotxt --
+[{{.SubjectPrefix}}] News comment posted

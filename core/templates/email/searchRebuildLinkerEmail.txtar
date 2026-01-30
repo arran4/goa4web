@@ -1,0 +1,6 @@
+-- body.gohtml --
+<p>Linker search index rebuild completed.</p>
+-- body.gotxt --
+Linker search index rebuild completed.
+-- subject.gotxt --
+[{{.SubjectPrefix}}] Linker search rebuilt

@@ -1,0 +1,16 @@
+-- body.gohtml --
+<p>User {{.Item.Username}} canceled editing a blog comment.</p>
+
+
+<p><a href="{{.Item.CommentURL}}">View comment</a></p>
+<p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
+-- body.gotxt --
+User {{.Item.Username}} canceled editing a blog comment.
+
+View comment:
+{{.Item.CommentURL}}
+
+Manage notifications: {{.UnsubscribeUrl}}
+
+-- subject.gotxt --
+[{{.SubjectPrefix}}] Blog comment edit canceled

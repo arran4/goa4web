@@ -1,0 +1,10 @@
+-- body.gohtml --
+<p>Announcement updated by {{.Item.Username}}.</p>
+<p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
+-- body.gotxt --
+Announcement updated by {{.Item.Username}}.
+
+
+Manage notifications: {{.UnsubscribeUrl}}
+-- subject.gotxt --
+[{{.SubjectPrefix}}] Announcement update

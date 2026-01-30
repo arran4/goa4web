@@ -1,0 +1,6 @@
+-- body.gohtml --
+<p>Blog search index rebuild completed.</p>
+-- body.gotxt --
+Blog search index rebuild completed.
+-- subject.gotxt --
+[{{.SubjectPrefix}}] Blog search rebuilt

@@ -1,0 +1,6 @@
+-- body.gohtml --
+<p>Comments search index rebuild completed.</p>
+-- body.gotxt --
+Comments search index rebuild completed.
+-- subject.gotxt --
+[{{.SubjectPrefix}}] Comments search rebuilt

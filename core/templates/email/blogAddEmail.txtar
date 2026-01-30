@@ -1,0 +1,16 @@
+-- body.gohtml --
+<p>Hi {{.Item.Username}},</p>
+<p>Your blog post has been created successfully.</p>
+
+<p><a href="{{.Item.PostURL}}">View post</a></p>
+<p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
+-- body.gotxt --
+Hi {{.Item.Username}},
+Your blog post has been created successfully.
+
+View post:
+{{.Item.PostURL}}
+
+Manage notifications: {{.UnsubscribeUrl}}
+-- subject.gotxt --
+[{{.SubjectPrefix}}] Blog post created

@@ -1,0 +1,6 @@
+-- body.gohtml --
+<p>Writing search index rebuild completed.</p>
+-- body.gotxt --
+Writing search index rebuild completed.
+-- subject.gotxt --
+[{{.SubjectPrefix}}] Writing search rebuilt

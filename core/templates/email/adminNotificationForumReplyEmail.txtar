@@ -1,0 +1,15 @@
+-- body.gohtml --
+<p>User {{.Item.Username}} replied to a forum thread.</p>
+
+<p><a href="{{.Item.CommentURL}}">View comment</a></p>
+<p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
+-- body.gotxt --
+User {{.Item.Username}} replied to a forum thread.
+{{.Item.Body}}
+
+View comment:
+{{.Item.CommentURL}}
+
+Manage notifications: {{.UnsubscribeUrl}}
+-- subject.gotxt --
+[{{.SubjectPrefix}}] {{.Item.SubjectPrefix}}: {{.Item.TopicTitle}} - {{.Item.ThreadOpenerPreview}}

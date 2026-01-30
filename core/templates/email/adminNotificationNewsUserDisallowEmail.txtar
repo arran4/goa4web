@@ -1,0 +1,16 @@
+-- body.gohtml --
+<p>User {{.Item.Username}} had news permissions revoked.</p>
+
+<p><a href="{{.Item.UserPermissionsURL}}">Permissions</a></p>
+<p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
+
+-- body.gotxt --
+User {{.Item.Username}} had news permissions revoked.
+
+Permissions:
+{{.Item.UserPermissionsURL}}
+
+Manage notifications: {{.UnsubscribeUrl}}
+
+-- subject.gotxt --
+[{{.SubjectPrefix}}] User revoked news permissions

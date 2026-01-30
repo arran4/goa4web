@@ -1,7 +1,0 @@
-Hi {{.Item.Username}},
-Your reply has been posted.
-
-View comment:
-{{.Item.CommentURL}}
-
-Manage notifications: {{.UnsubscribeUrl}}

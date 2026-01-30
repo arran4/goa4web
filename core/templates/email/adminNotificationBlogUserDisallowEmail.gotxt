@@ -1,7 +1,0 @@
-User {{.Item.Username}} revoked blog permissions.
-
-Blog section:
-{{.Item.BlogURL}}
-
-Manage notifications: {{.UnsubscribeUrl}}
-

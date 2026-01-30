@@ -1,0 +1,9 @@
+-- body.gohtml --
+<p>Image board {{.Item.Title}} updated.</p>
+<p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
+-- body.gotxt --
+Image board "{{.Item.Title}}" updated.
+
+Manage notifications: {{.UnsubscribeUrl}}
+-- subject.gotxt --
+[{{.SubjectPrefix}}] Image board updated

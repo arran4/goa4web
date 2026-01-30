@@ -83,7 +83,13 @@ func (p *Goa4WebLinkProvider) RenderLink(rawURL string, isBlock bool, isImmediat
 		if linkText == "" {
 			linkText = rawURL
 		}
-		altText := description
+		altText := title
+		if description != "" {
+			if altText != "" {
+				altText += " - "
+			}
+			altText += description
+		}
 		return fmt.Sprintf(`<a href="%s" target="_blank" rel="noopener noreferrer" title="%s">%s</a>`, safe, html.EscapeString(altText), html.EscapeString(linkText)), "", true
 	}
 

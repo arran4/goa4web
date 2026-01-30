@@ -190,6 +190,8 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, cfg *config.RuntimeConfig, nav
 	ar.HandleFunc("/images/cache", handlers.TaskHandler(imageCacheListTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(imageCacheListTask.Matcher())
 	ar.HandleFunc("/images/cache", handlers.TaskHandler(imageCachePruneTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(imageCachePruneTask.Matcher())
 	ar.HandleFunc("/images/cache", handlers.TaskHandler(imageCacheDeleteTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(imageCacheDeleteTask.Matcher())
+	ar.HandleFunc("/images/cache/{id}", AdminImageCacheDetailsPage).Methods("GET").MatcherFunc(handlers.RequiredAccess("administrator"))
+	ar.HandleFunc("/images/cache/{id}", handlers.TaskHandler(imageCacheRefreshTask)).Methods("POST").MatcherFunc(handlers.RequiredAccess("administrator")).MatcherFunc(imageCacheRefreshTask.Matcher())
 	ar.HandleFunc("/share/tools", AdminShareToolsPage).Methods("GET", "POST")
 	ar.HandleFunc("/stats", h.AdminServerStatsPage).Methods("GET")
 	ar.HandleFunc("/usage", AdminUsageStatsPage).Methods("GET")

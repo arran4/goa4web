@@ -42,6 +42,34 @@ func (q *Queries) AdminDeleteExternalLinkByURL(ctx context.Context, url string) 
 	return err
 }
 
+const adminGetExternalLinkByCacheID = `-- name: AdminGetExternalLinkByCacheID :one
+SELECT id, url, clicks, created_at, updated_at, updated_by, card_title, card_description, card_image, card_image_cache, favicon_cache FROM external_links WHERE card_image_cache = ? OR favicon_cache = ? LIMIT 1
+`
+
+type AdminGetExternalLinkByCacheIDParams struct {
+	CardImageCache sql.NullString
+	FaviconCache   sql.NullString
+}
+
+func (q *Queries) AdminGetExternalLinkByCacheID(ctx context.Context, arg AdminGetExternalLinkByCacheIDParams) (*ExternalLink, error) {
+	row := q.db.QueryRowContext(ctx, adminGetExternalLinkByCacheID, arg.CardImageCache, arg.FaviconCache)
+	var i ExternalLink
+	err := row.Scan(
+		&i.ID,
+		&i.Url,
+		&i.Clicks,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.UpdatedBy,
+		&i.CardTitle,
+		&i.CardDescription,
+		&i.CardImage,
+		&i.CardImageCache,
+		&i.FaviconCache,
+	)
+	return &i, err
+}
+
 const adminListExternalLinks = `-- name: AdminListExternalLinks :many
 SELECT id, url, clicks, created_at, updated_at, updated_by, card_title, card_description, card_image, card_image_cache, favicon_cache FROM external_links
 ORDER BY created_at DESC

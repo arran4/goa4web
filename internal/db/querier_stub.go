@@ -125,6 +125,11 @@ type QuerierStub struct {
 	AdminGetImagePostCalls []int32
 	AdminGetImagePostFn    func(context.Context, int32) (*AdminGetImagePostRow, error)
 
+	AdminGetExternalLinkByCacheIDCalls   []AdminGetExternalLinkByCacheIDParams
+	AdminGetExternalLinkByCacheIDReturns *ExternalLink
+	AdminGetExternalLinkByCacheIDErr     error
+	AdminGetExternalLinkByCacheIDFn      func(context.Context, AdminGetExternalLinkByCacheIDParams) (*ExternalLink, error)
+
 	AdminApproveImagePostCalls []int32
 	AdminApproveImagePostErr   error
 	AdminApproveImagePostFn    func(context.Context, int32) error
@@ -1673,6 +1678,19 @@ func (s *QuerierStub) SystemGetForumTopicByTitle(ctx context.Context, title sql.
 		return nil, errors.New("SystemGetForumTopicByTitle not stubbed")
 	}
 	return row, nil
+}
+
+func (s *QuerierStub) AdminGetExternalLinkByCacheID(ctx context.Context, arg AdminGetExternalLinkByCacheIDParams) (*ExternalLink, error) {
+	s.mu.Lock()
+	s.AdminGetExternalLinkByCacheIDCalls = append(s.AdminGetExternalLinkByCacheIDCalls, arg)
+	fn := s.AdminGetExternalLinkByCacheIDFn
+	ret := s.AdminGetExternalLinkByCacheIDReturns
+	err := s.AdminGetExternalLinkByCacheIDErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
 }
 
 func (s *QuerierStub) CreateForumTopicForPoster(ctx context.Context, arg CreateForumTopicForPosterParams) (int64, error) {

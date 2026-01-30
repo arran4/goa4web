@@ -1,0 +1,81 @@
+{{ template "head" $ }}
+<h2>Role SQL Loader</h2>
+<p>Upload a role SQL file (or paste SQL) to preview and apply role grants.</p>
+
+{{- if .Errors }}
+    <div class="alert alert-danger">
+        <strong>Errors</strong>
+        <ul>
+            {{- range .Errors }}
+                <li>{{ . }}</li>
+            {{- end }}
+        </ul>
+    </div>
+{{- end }}
+
+{{- if .Applied }}
+    <div class="alert alert-success">Role SQL applied successfully.</div>
+{{- end }}
+
+<form method="post" enctype="multipart/form-data">
+    {{ csrfField }}
+    <div class="form-group">
+        <label for="role-name">Role name</label>
+        <input id="role-name" type="text" name="role" value="{{ .RoleName }}" class="form-control" required>
+    </div>
+    <div class="form-group">
+        <label for="role-file">Role SQL file</label>
+        <input id="role-file" type="file" name="role_sql" accept=".sql,text/plain" class="form-control">
+    </div>
+    <div class="form-group">
+        <label for="role-sql">Or paste SQL</label>
+        <textarea id="role-sql" name="sql" rows="10" class="form-control">{{ .SQL }}</textarea>
+    </div>
+    <div class="form-group">
+        <button type="submit" name="preview" value="1" class="btn btn-secondary">Preview</button>
+        <button type="submit" name="apply" value="1" class="btn btn-primary">Apply</button>
+    </div>
+</form>
+
+{{- if .ParsedRoleName }}
+    <p><strong>SQL role name:</strong> {{ .ParsedRoleName }}</p>
+{{- end }}
+
+{{- if .ExistingRole }}
+    <p><strong>Existing role:</strong> {{ .ExistingRole.Name }} (ID {{ .ExistingRole.ID }})</p>
+{{- else if .RoleName }}
+    <p><strong>Existing role:</strong> none found for {{ .RoleName }}</p>
+{{- end }}
+
+{{- if or .GrantsAdded .GrantsRemoved }}
+    <h3>Grant Diff Preview</h3>
+    <div class="row">
+        <div class="col">
+            <h4>Grants Added</h4>
+            {{- if .GrantsAdded }}
+                <ul>
+                    {{- range .GrantsAdded }}<li>{{ . }}</li>{{- end }}
+                </ul>
+            {{- else }}
+                <p>None.</p>
+            {{- end }}
+        </div>
+        <div class="col">
+            <h4>Grants Removed</h4>
+            {{- if .GrantsRemoved }}
+                <ul>
+                    {{- range .GrantsRemoved }}<li>{{ . }}</li>{{- end }}
+                </ul>
+            {{- else }}
+                <p>None.</p>
+            {{- end }}
+        </div>
+    </div>
+{{- end }}
+
+{{- if .GrantGroups }}
+    <h3>Grant Preview</h3>
+    {{ template "admin/roleGrantsPreview.gohtml" . }}
+{{- end }}
+
+{{ template "tail" $ }}

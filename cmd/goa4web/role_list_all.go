@@ -8,6 +8,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/roles"
 )
 
 type roleListAllCmd struct {
@@ -43,14 +44,14 @@ func (c *roleListAllCmd) Run() error {
 	}
 
 	// 2. Get Embedded Roles
-	embeddedFiles, err := listEmbeddedRoles()
+	embeddedFiles, err := roles.ListEmbeddedRoles()
 	if err != nil {
 		return fmt.Errorf("listing embedded roles: %w", err)
 	}
 
 	embeddedRolesMap := make(map[string]string) // filename -> role name inside
 	for _, filename := range embeddedFiles {
-		name, err := readEmbeddedRoleName(filename)
+		name, err := roles.ReadEmbeddedRoleName(filename)
 		if err != nil {
 			// Log error but continue? Or fail? failing seems strict but consistent.
 			// Let's just note it as error

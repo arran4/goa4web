@@ -23,6 +23,7 @@ func TestProcessPendingEmail_NilProvider_IncrementsErrorCount(t *testing.T) {
 		ToUserID:    sql.NullInt32{Valid: false},
 		Body:        fmt.Sprintf("To: %s\r\nSubject: Test\r\n\r\nBody", emailAddr),
 		DirectEmail: true,
+		CreatedAt:   time.Now(),
 	}
 
 	listCalled := false

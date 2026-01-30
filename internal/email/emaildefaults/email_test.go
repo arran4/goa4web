@@ -8,6 +8,7 @@ import (
 	"net/mail"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/arran4/goa4web/workers/emailqueue"
 
@@ -117,8 +118,8 @@ func TestProcessPendingEmailNilProviderRetriesForever(t *testing.T) {
 	}
 	defer conn.Close()
 	q := db.New(conn)
-	rows := sqlmock.NewRows([]string{"id", "to_user_id", "body", "error_count", "direct_email"}).AddRow(1, 2, "b", 100, false)
-	mock.ExpectQuery("SELECT id, to_user_id, body, error_count, direct_email").WillReturnRows(rows)
+	rows := sqlmock.NewRows([]string{"id", "to_user_id", "body", "error_count", "direct_email", "created_at"}).AddRow(1, 2, "b", 100, false, time.Now())
+	mock.ExpectQuery("SELECT id, to_user_id, body, error_count, direct_email, created_at").WillReturnRows(rows)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username, u.public_profile_enabled_at FROM users u LEFT JOIN user_emails ue ON ue.id = ( SELECT id FROM user_emails ue2 WHERE ue2.user_id = u.idusers AND ue2.verified_at IS NOT NULL ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1 ) WHERE u.idusers = ?")).
 		WithArgs(int32(2)).
 		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(2, "a@test", "a", nil))
@@ -148,8 +149,8 @@ func TestEmailQueueWorker(t *testing.T) {
 	}
 	defer conn.Close()
 	q := db.New(conn)
-	rows := sqlmock.NewRows([]string{"id", "to_user_id", "body", "error_count", "direct_email"}).AddRow(1, 2, "b", 0, false)
-	mock.ExpectQuery("SELECT id, to_user_id, body, error_count, direct_email").WillReturnRows(rows)
+	rows := sqlmock.NewRows([]string{"id", "to_user_id", "body", "error_count", "direct_email", "created_at"}).AddRow(1, 2, "b", 0, false, time.Now())
+	mock.ExpectQuery("SELECT id, to_user_id, body, error_count, direct_email, created_at").WillReturnRows(rows)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username, u.public_profile_enabled_at FROM users u LEFT JOIN user_emails ue ON ue.id = ( SELECT id FROM user_emails ue2 WHERE ue2.user_id = u.idusers AND ue2.verified_at IS NOT NULL ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1 ) WHERE u.idusers = ?")).
 		WithArgs(int32(2)).
 		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(2, "e", "bob", nil))
@@ -188,13 +189,12 @@ func TestProcessPendingEmailDLQ(t *testing.T) {
 	}
 	defer conn.Close()
 	q := db.New(conn)
-	rows := sqlmock.NewRows([]string{"id", "to_user_id", "body", "error_count", "direct_email"}).AddRow(1, 2, "b", 4, false)
-	mock.ExpectQuery("SELECT id, to_user_id, body, error_count, direct_email").WillReturnRows(rows)
+	rows := sqlmock.NewRows([]string{"id", "to_user_id", "body", "error_count", "direct_email", "created_at"}).AddRow(1, 2, "b", 4, false, time.Now().Add(-100*24*time.Hour))
+	mock.ExpectQuery("SELECT id, to_user_id, body, error_count, direct_email, created_at").WillReturnRows(rows)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username, u.public_profile_enabled_at FROM users u LEFT JOIN user_emails ue ON ue.id = ( SELECT id FROM user_emails ue2 WHERE ue2.user_id = u.idusers AND ue2.verified_at IS NOT NULL ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1 ) WHERE u.idusers = ?")).
 		WithArgs(int32(2)).
 		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).AddRow(2, "a@test", "a", nil))
 	mock.ExpectExec(regexp.QuoteMeta("UPDATE pending_emails SET error_count = error_count + 1 WHERE id = ?")).WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectQuery("SELECT error_count FROM pending_emails WHERE id = ?").WithArgs(int32(1)).WillReturnRows(sqlmock.NewRows([]string{"error_count"}).AddRow(5))
 	mock.ExpectExec(regexp.QuoteMeta("UPDATE pending_emails SET sent_at = NOW() WHERE id = ?")).WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(1, 1))
 
 	p := errProvider{}

@@ -239,7 +239,7 @@ func TestForumReply(t *testing.T) {
 
 	t.Run("internal notifications", func(t *testing.T) {
 		t.Helper()
-		expectedSubscriberNotif := "New reply in \"Test Topic\" by replier\n"
+		expectedSubscriberNotif := "replier replied to Test Topic: This is a test message with a link [a https://example.com] and enough words to trigger the truncation of twenty words..."
 		expectedLink := "http://example.com/forum/topic/5/thread/42#c999"
 		if !findNotification(subscriberUID, expectedSubscriberNotif, expectedLink) {
 			t.Fatalf("expected subscriber notification %q with link %q, got %q with links %q", expectedSubscriberNotif, expectedLink, notificationsByRecipient[subscriberUID], notificationsLinksByRecipient[subscriberUID])
@@ -288,11 +288,11 @@ func TestForumReply(t *testing.T) {
 		if subscriberEmail == nil {
 			t.Fatal("subscriber email not found")
 		}
-		if subscriberEmail.Header.Get("Subject") != "[goa4web] Forum: Test Topic - Original thread content" {
+		if subscriberEmail.Header.Get("Subject") != "[goa4web] Reply in Test Topic - Original thread content" {
 			t.Errorf("subscriber email subject mismatch: %s", subscriberEmail.Header.Get("Subject"))
 		}
 		subBody := getEmailBody(t, subscriberEmail)
-		expectedSubBody := "Hi replier,\nYour reply has been posted.\n\nView comment:\nhttp://example.com/forum/topic/5/thread/42#c999\n\nManage notifications: http://example.com/usr/subscriptions"
+		expectedSubBody := "Hi subscriber,\n\nreplier posted a reply in Test Topic:\n\nThis is a test message with a link [a https://example.com] and enough words to trigger the truncation of twenty words limit plus more.\n\nView comment:\nhttp://example.com/forum/topic/5/thread/42#c999\n\nManage notifications: http://example.com/usr/subscriptions"
 		if subBody != expectedSubBody {
 			t.Errorf("subscriber email body mismatch: %q, want %q", subBody, expectedSubBody)
 		}

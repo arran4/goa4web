@@ -1,1 +1,1 @@
-New thread "{{if .Item}}{{.Item.TopicTitle}}{{else}}{{.Path}}{{end}}" by {{if .Item}}{{.Item.Author}}{{end}}
+New thread in {{.Item.TopicTitle}} by {{.Item.Author}}: {{.Item.ThreadOpenerPreview}}

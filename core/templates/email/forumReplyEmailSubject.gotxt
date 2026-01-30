@@ -1,1 +1,1 @@
-[{{.SubjectPrefix}}] {{.Item.SubjectPrefix}}: {{.Item.TopicTitle}} - {{.Item.ThreadOpenerPreview}}
+[{{.SubjectPrefix}}] Reply in {{.Item.TopicTitle}} - {{.Item.ThreadOpenerPreview}}

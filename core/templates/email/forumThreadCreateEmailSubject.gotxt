@@ -1,1 +1,1 @@
-[{{.SubjectPrefix}}] {{.Item.SubjectPrefix}}: {{.Item.TopicTitle}} - {{.Item.ThreadOpenerPreview}}
+[{{.SubjectPrefix}}] New Thread in {{.Item.TopicTitle}} - {{.Item.ThreadOpenerPreview}}

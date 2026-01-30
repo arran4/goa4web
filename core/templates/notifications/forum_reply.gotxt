@@ -1,3 +1,1 @@
-{{.Item.Username}} replied to a forum thread: {{.Item.TopicTitle}}
-
-{{.Item.Body}}
+{{.Item.Username}} replied to {{.Item.TopicTitle}}: {{ truncateWords 20 .Item.Body }}

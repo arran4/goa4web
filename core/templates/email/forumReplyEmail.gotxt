@@ -1,5 +1,8 @@
-Hi {{.Item.Username}},
-Your reply has been posted.
+Hi {{.Recipient.Username.String}},
+
+{{.Item.Username}} posted a reply in {{.Item.TopicTitle}}:
+
+{{ truncateWords 50 .Item.Body }}
 
 View comment:
 {{.Item.CommentURL}}

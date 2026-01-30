@@ -1,48 +1,60 @@
 {{ template "head" $ }}
 <h2>Your Subscriptions</h2>
 
-{{ range .Groups }}
-<div class="subscription-group">
-    <h3>{{ .Name }}</h3>
-    <p>{{ .Description }}</p>
+<form method="post" action="/usr/subscriptions/update">
+    {{ csrfField }}
+    {{ range .Groups }}
+    <div class="subscription-group">
+        <h3>{{ .Name }}</h3>
+        <p>{{ .Description }}</p>
 
-    {{ if .Instances }}
-    <table>
-        <thead>
-            <tr>
-                <th>Target</th>
-                <th>Internal</th>
-                <th>Email</th>
-            </tr>
-        </thead>
-        <tbody>
-            {{ range .Instances }}
-            <tr>
-                <td>
-                    {{/* Display parameters nicely */}}
-                    {{ if .Parameters }}
-                        {{ range .Parameters }}
-                            {{ .Key }}: {{ if .Resolved }}{{ .Resolved }}{{ else }}{{ .Value }}{{ end }}
+        {{ if .Instances }}
+        <table>
+            <thead>
+                <tr>
+                    <th>Target</th>
+                    <th>Internal</th>
+                    <th>Email</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{ $defPattern := .Pattern }}
+                {{ range .Instances }}
+                {{ $pattern := .Original }}
+                {{ if eq $pattern "" }}{{ $pattern = $defPattern }}{{ end }}
+                <tr>
+                    <td>
+                        {{/* Display parameters nicely */}}
+                        {{ if .Parameters }}
+                            {{ range .Parameters }}
+                                {{ .Key }}: {{ if .Resolved }}{{ .Resolved }}{{ else }}{{ .Value }}{{ end }}
+                            {{ end }}
+                        {{ else }}
+                            All
                         {{ end }}
-                    {{ else }}
-                        All
-                    {{ end }}
-                </td>
-                <td>
-                    <input type="checkbox" disabled {{ if .HasMethod "internal" }}checked{{ end }}>
-                </td>
-                <td>
-                    <input type="checkbox" disabled {{ if .HasMethod "email" }}checked{{ end }}>
-                </td>
-            </tr>
-            {{ end }}
-        </tbody>
-    </table>
-    {{ else }}
-    <p>No subscriptions.</p>
+                    </td>
+                    <td>
+                        <input type="checkbox" name="subs" value="{{ $pattern }}|internal" {{ if .HasMethod "internal" }}checked{{ end }}>
+                        <input type="hidden" name="presented_subs" value="{{ $pattern }}|internal">
+                    </td>
+                    <td>
+                        <input type="checkbox" name="subs" value="{{ $pattern }}|email" {{ if .HasMethod "email" }}checked{{ end }}>
+                        <input type="hidden" name="presented_subs" value="{{ $pattern }}|email">
+                    </td>
+                </tr>
+                {{ end }}
+            </tbody>
+        </table>
+        {{ else }}
+        <p>No subscriptions.</p>
+        {{ end }}
+    </div>
     {{ end }}
-</div>
-{{ end }}
+
+    <p>
+        <input type="submit" value="Update Subscriptions" class="button">
+    </p>
+</form>
 
 <p>
     <a href="/usr/subscriptions/add" class="button">Add Subscription</a>

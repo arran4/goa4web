@@ -79,11 +79,37 @@ var Definitions = []Definition{
 		Pattern:     "private topic create:/private/*",
 	},
 
+	// Blog
+	{
+		Name:        "New Blog Post",
+		Description: "Notify when a new blog post is created",
+		Pattern:     "post:/blog/*",
+	},
+
+	// Writing
+	{
+		Name:        "New Article",
+		Description: "Notify when a new article is created",
+		Pattern:     "post:/writing/*",
+	},
+
+	// Image Board
+	{
+		Name:        "New Image Post",
+		Description: "Notify when a new image post is created",
+		Pattern:     "post:/image/*",
+	},
+
 	// News
 	{
 		Name:        "New News Post",
 		Description: "Notify when a new news post is created",
 		Pattern:     "new post:/news/*",
+	},
+	{
+		Name:        "New News Post (Legacy)",
+		Description: "Notify when a new news post is created",
+		Pattern:     "post:/news/*",
 	},
 	{
 		Name:        "Reply to News",

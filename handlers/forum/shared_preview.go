@@ -1,18 +1,23 @@
 package forum
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"net/url"
+	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/handlers/share"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/mux"
 )
 
@@ -60,6 +65,10 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ogTitle := topic.Title.String
+	if t, err := getPrivateTopicTitle(r.Context(), queries, topic); err == nil {
+		ogTitle = t
+	}
+
 	ogDescription := ""
 	if len(comments) > 0 {
 		ogDescription = a4code.SnipText(comments[0].Text.String, 128)
@@ -96,6 +105,9 @@ func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ogTitle := topic.Title.String
+	if t, err := getPrivateTopicTitle(r.Context(), queries, topic); err == nil {
+		ogTitle = t
+	}
 	ogDescription := topic.Description.String
 
 	renderPublicSharedPreview(w, r, cd, cd.ShareSignKey, ogTitle, ogDescription)
@@ -131,4 +143,22 @@ func renderPublicSharedPreview(w http.ResponseWriter, r *http.Request, cd *commo
 	if err := share.RenderOpenGraph(w, r, ogData); err != nil {
 		handlers.RenderErrorPage(w, r, err)
 	}
+}
+
+func getPrivateTopicTitle(ctx context.Context, queries db.Querier, topic *db.Forumtopic) (string, error) {
+	if topic.ForumcategoryIdforumcategory != common.PrivateForumCategoryID {
+		return topic.Title.String, nil
+	}
+	parts, err := queries.AdminListPrivateTopicParticipantsByTopicID(ctx, sql.NullInt32{Int32: topic.Idforumtopic, Valid: true})
+	if err != nil {
+		return "", err
+	}
+	var names []string
+	for _, part := range parts {
+		if part.Username.Valid {
+			names = append(names, part.Username.String)
+		}
+	}
+	sort.Strings(names)
+	return fmt.Sprintf("Private forum with %s", strings.Join(names, " & ")), nil
 }

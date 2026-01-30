@@ -109,6 +109,15 @@ type QuerierStub struct {
 
 	SystemInsertDeadLetterCalls int
 
+	SystemGetDeadLetterCalls    []int32
+	SystemGetDeadLetterReturns  *DeadLetter
+	SystemGetDeadLetterErr      error
+	SystemGetDeadLetterFn       func(context.Context, int32) (*DeadLetter, error)
+
+	SystemUpdateDeadLetterCalls []SystemUpdateDeadLetterParams
+	SystemUpdateDeadLetterErr   error
+	SystemUpdateDeadLetterFn    func(context.Context, SystemUpdateDeadLetterParams) error
+
 	InsertPendingEmailErr   error
 	InsertPendingEmailCalls []InsertPendingEmailParams
 
@@ -1025,6 +1034,31 @@ func (s *QuerierStub) AdminCreateForumCategory(ctx context.Context, arg AdminCre
 		return fn(ctx, arg)
 	}
 	return ret, err
+}
+
+func (s *QuerierStub) SystemGetDeadLetter(ctx context.Context, id int32) (*DeadLetter, error) {
+	s.mu.Lock()
+	s.SystemGetDeadLetterCalls = append(s.SystemGetDeadLetterCalls, id)
+	fn := s.SystemGetDeadLetterFn
+	ret := s.SystemGetDeadLetterReturns
+	err := s.SystemGetDeadLetterErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, id)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) SystemUpdateDeadLetter(ctx context.Context, arg SystemUpdateDeadLetterParams) error {
+	s.mu.Lock()
+	s.SystemUpdateDeadLetterCalls = append(s.SystemUpdateDeadLetterCalls, arg)
+	fn := s.SystemUpdateDeadLetterFn
+	err := s.SystemUpdateDeadLetterErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
 }
 
 func (s *QuerierStub) AdminUpdateForumCategory(ctx context.Context, arg AdminUpdateForumCategoryParams) error {

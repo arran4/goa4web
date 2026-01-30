@@ -57,6 +57,18 @@ func RoleGrantsEditorJS(cfg *config.RuntimeConfig) http.HandlerFunc {
 	}
 }
 
+// GrantAddJS serves the JavaScript for the admin grant add page.
+func GrantAddJS(cfg *config.RuntimeConfig) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var opts []templates.Option
+		if cfg != nil && cfg.TemplatesDir != "" {
+			opts = append(opts, templates.WithDir(cfg.TemplatesDir))
+		}
+		w.Header().Set("Content-Type", "application/javascript")
+		http.ServeContent(w, r, "grant_add.js", time.Time{}, bytes.NewReader(templates.GetGrantAddJSData(opts...)))
+	}
+}
+
 // PrivateForumJS serves the JavaScript for the private forum pages.
 func PrivateForumJS(cfg *config.RuntimeConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

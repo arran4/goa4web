@@ -2,6 +2,7 @@ package common
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
@@ -97,6 +98,14 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 				m[k] = values[i+1]
 			}
 			return m
+		},
+		"toJSON": func(v any) template.JS {
+			payload, err := json.Marshal(v)
+			if err != nil {
+				log.Printf("json marshal: %v", err)
+				return template.JS("null")
+			}
+			return template.JS(payload)
 		},
 		"highlightSearch": func(s string) template.HTML {
 			return HighlightSearchTerms(s, cd.SearchWords())

@@ -45,3 +45,13 @@ func (c *langUpdateCmd) Run() error {
 	}
 	return nil
 }
+
+func (c *langUpdateCmd) Usage() {
+	executeUsage(c.fs.Output(), "lang_update_usage.txt", c)
+}
+
+func (c *langUpdateCmd) FlagGroups() []flagGroup {
+	return append(c.langCmd.FlagGroups(), flagGroup{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)})
+}
+
+var _ usageData = (*langUpdateCmd)(nil)

@@ -288,6 +288,7 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 		common.WithLinkSignKey(s.LinkSignKey),
 		common.WithShareSignKey(s.ShareSignKey),
 		common.WithFeedSignKey(s.FeedSignKey),
+		common.WithEventBus(s.Bus),
 		common.WithSession(session),
 		common.WithEmailProvider(provider),
 		common.WithAbsoluteURLBase(base),

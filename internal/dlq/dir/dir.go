@@ -42,6 +42,7 @@ func Register(r *dlq.Registry) {
 type Record struct {
 	Name    string
 	Message string
+	Size    int64
 }
 
 // List reads up to limit records from dir sorted by filename descending.
@@ -60,7 +61,11 @@ func List(dir string, limit int) ([]Record, error) {
 		if err != nil {
 			continue
 		}
-		recs = append(recs, Record{Name: e.Name(), Message: strings.TrimSpace(string(data))})
+		size := int64(len(data))
+		if info, err := e.Info(); err == nil {
+			size = info.Size()
+		}
+		recs = append(recs, Record{Name: e.Name(), Message: strings.TrimSpace(string(data)), Size: size})
 		if limit > 0 && len(recs) >= limit {
 			break
 		}

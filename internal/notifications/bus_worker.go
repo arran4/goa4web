@@ -95,7 +95,7 @@ func (n *Notifier) ProcessEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 		if et, send := tp.AdminEmailTemplate(evt); send {
 			if err := n.notifyAdmins(ctx, et, tp.AdminInternalNotificationTemplate(evt), evt.Data, evt.Path); err != nil {
 				errW := fmt.Errorf("AdminEmailTemplateProvider: %w", err)
-				if dlqErr := n.dlqRecordAndNotify(ctx, q, fmt.Sprintf("admin notify: %v", errW)); dlqErr != nil {
+				if dlqErr := n.dlqRecordAndNotify(ctx, q, fmt.Sprintf("admin notify: %v", errW), &evt); dlqErr != nil {
 					return dlqErr
 				}
 				return errW
@@ -106,7 +106,7 @@ func (n *Notifier) ProcessEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 	if tp, ok := evt.Task.(SelfNotificationTemplateProvider); ok {
 		if err := n.notifySelf(ctx, evt, tp); err != nil {
 			errW := fmt.Errorf("SelfNotificationTemplateProvider: %w", err)
-			if dlqErr := n.dlqRecordAndNotify(ctx, q, fmt.Sprintf("deliver self to %d: %v", evt.UserID, errW)); dlqErr != nil {
+			if dlqErr := n.dlqRecordAndNotify(ctx, q, fmt.Sprintf("deliver self to %d: %v", evt.UserID, errW), &evt); dlqErr != nil {
 				return dlqErr
 			}
 			return errW
@@ -117,7 +117,7 @@ func (n *Notifier) ProcessEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 	if tp, ok := evt.Task.(DirectEmailNotificationTemplateProvider); ok {
 		if err := n.notifyDirectEmail(ctx, evt, tp); err != nil {
 			errW := fmt.Errorf("DirectEmailNotificationTemplateProvider: %w", err)
-			if dlqErr := n.dlqRecordAndNotify(ctx, q, fmt.Sprintf("direct email notify: %v", errW)); dlqErr != nil {
+			if dlqErr := n.dlqRecordAndNotify(ctx, q, fmt.Sprintf("direct email notify: %v", errW), &evt); dlqErr != nil {
 				return dlqErr
 			}
 			return errW
@@ -128,7 +128,7 @@ func (n *Notifier) ProcessEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 	if tp, ok := evt.Task.(TargetUsersNotificationProvider); ok {
 		if err := n.notifyTargetUsers(ctx, evt, tp); err != nil {
 			errW := fmt.Errorf("TargetUsersNotificationProvider: %w", err)
-			if dlqErr := n.dlqRecordAndNotify(ctx, q, fmt.Sprintf("notify target users: %v", errW)); dlqErr != nil {
+			if dlqErr := n.dlqRecordAndNotify(ctx, q, fmt.Sprintf("notify target users: %v", errW), &evt); dlqErr != nil {
 				return dlqErr
 			}
 			return errW
@@ -139,7 +139,7 @@ func (n *Notifier) ProcessEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 	if tp, ok := evt.Task.(SubscribersNotificationTemplateProvider); ok {
 		if err := n.notifySubscribers(ctx, evt, tp); err != nil {
 			errW := fmt.Errorf("SubscribersNotificationTemplateProvider: %w", err)
-			if dlqErr := n.dlqRecordAndNotify(ctx, q, fmt.Sprintf("notify subscribers: %v", errW)); dlqErr != nil {
+			if dlqErr := n.dlqRecordAndNotify(ctx, q, fmt.Sprintf("notify subscribers: %v", errW), &evt); dlqErr != nil {
 				return dlqErr
 			}
 			return errW

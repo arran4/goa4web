@@ -1,10 +1,12 @@
 package admin
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -16,7 +18,7 @@ import (
 
 	"github.com/arran4/goa4web/handlers"
 
-	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/dlq"
 	dirdlq "github.com/arran4/goa4web/internal/dlq/dir"
 	filedlq "github.com/arran4/goa4web/internal/dlq/file"
 )
@@ -26,22 +28,40 @@ type DeleteDLQTask struct{ tasks.TaskString }
 
 var deleteDLQTask = &DeleteDLQTask{TaskString: TaskDelete}
 
+// ReEnlistDLQTask re-enlists a failed task from the DLQ.
+type ReEnlistDLQTask struct{ tasks.TaskString }
+
+var reEnlistDLQTask = &ReEnlistDLQTask{TaskString: "reenlist"}
+
 // compile-time interface check so DeleteDLQTask is usable as a generic task.
 var _ tasks.Task = (*DeleteDLQTask)(nil)
 var _ tasks.AuditableTask = (*DeleteDLQTask)(nil)
 
+var _ tasks.Task = (*ReEnlistDLQTask)(nil)
+var _ tasks.AuditableTask = (*ReEnlistDLQTask)(nil)
+
 func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Dead Letter Queue"
+
+	type DisplayError struct {
+		ID      any
+		Message string
+		Time    time.Time
+		Size    int64
+		Parsed  *dlq.Message
+		Raw     string
+	}
+
 	data := struct {
-		Errors     []*db.DeadLetter
-		FileErrors []filedlq.Record
+		Errors     []*DisplayError
+		FileErrors []*DisplayError
 		FileErr    string
 		FilePath   string
 		FileSize   int64
 		FileMod    string
 		FileTail   []string
-		DirErrors  []dirdlq.Record
+		DirErrors  []*DisplayError
 		DirErr     string
 		DirPath    string
 		DirCount   int
@@ -53,6 +73,17 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 		Providers: cd.Config.DLQProvider,
 	}
 
+	parse := func(msg string) *dlq.Message {
+		if !strings.HasPrefix(msg, "{") {
+			return nil
+		}
+		var m dlq.Message
+		if err := json.Unmarshal([]byte(msg), &m); err != nil {
+			return nil
+		}
+		return &m
+	}
+
 	names := strings.Split(cd.Config.DLQProvider, ",")
 	for i, n := range names {
 		names[i] = strings.TrimSpace(strings.ToLower(n))
@@ -62,7 +93,15 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 		switch n {
 		case "db":
 			if rows, err := queries.SystemListDeadLetters(r.Context(), 100); err == nil {
-				data.Errors = rows
+				for _, r := range rows {
+					data.Errors = append(data.Errors, &DisplayError{
+						ID:      r.ID,
+						Message: r.Message,
+						Time:    r.CreatedAt,
+						Raw:     r.Message,
+						Parsed:  parse(r.Message),
+					})
+				}
 			} else {
 				log.Printf("list dead letters: %v", err)
 			}
@@ -84,7 +123,15 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 				data.FileTail = lines
 			}
 			if recs, err := filedlq.List(cd.Config.DLQFile, 100); err == nil {
-				data.FileErrors = recs
+				for _, r := range recs {
+					data.FileErrors = append(data.FileErrors, &DisplayError{
+						ID:      "",
+						Time:    r.Time,
+						Message: r.Message,
+						Raw:     r.Message,
+						Parsed:  parse(r.Message),
+					})
+				}
 			} else {
 				log.Printf("read dlq file: %v", err)
 				data.FileErr = err.Error()
@@ -98,7 +145,15 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			if recs, err := dirdlq.List(cd.Config.DLQFile, 100); err == nil {
-				data.DirErrors = recs
+				for _, r := range recs {
+					data.DirErrors = append(data.DirErrors, &DisplayError{
+						ID:      r.Name,
+						Message: r.Message,
+						Size:    r.Size,
+						Raw:     r.Message,
+						Parsed:  parse(r.Message),
+					})
+				}
 			} else {
 				log.Printf("read dlq dir: %v", err)
 				data.DirErr = err.Error()
@@ -112,21 +167,34 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 const AdminDLQPageTmpl tasks.Template = "admin/dlqPage.gohtml"
 
 func (DeleteDLQTask) Action(w http.ResponseWriter, r *http.Request) any {
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	queries := cd.Queries()
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
+	provider := r.PostFormValue("provider")
+
 	switch r.PostFormValue("task") {
 	case string(TaskDelete):
 		for _, idStr := range r.Form["id"] {
 			if idStr == "" {
 				continue
 			}
-			id, _ := strconv.Atoi(idStr)
-			if err := queries.SystemDeleteDeadLetter(r.Context(), int32(id)); err != nil {
-				return fmt.Errorf("delete error %w", handlers.ErrRedirectOnSamePageHandler(err))
+			if provider == "dir" {
+				if cd.Config.DLQFile != "" {
+					safeName := filepath.Base(idStr)
+					path := filepath.Join(cd.Config.DLQFile, safeName)
+					if err := os.Remove(path); err != nil {
+						log.Printf("failed to remove dlq file %s: %v", path, err)
+					}
+				}
+				continue
 			}
-			if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+			if provider == "db" || provider == "" {
+				id, _ := strconv.Atoi(idStr)
+				if err := queries.SystemDeleteDeadLetter(r.Context(), int32(id)); err != nil {
+					return fmt.Errorf("delete error %w", handlers.ErrRedirectOnSamePageHandler(err))
+				}
 				if evt := cd.Event(); evt != nil {
 					if evt.Data == nil {
 						evt.Data = map[string]any{}
@@ -143,10 +211,14 @@ func (DeleteDLQTask) Action(w http.ResponseWriter, r *http.Request) any {
 				t = tt
 			}
 		}
-		if err := queries.SystemPurgeDeadLettersBefore(r.Context(), t); err != nil {
-			return fmt.Errorf("purge errors %w", handlers.ErrRedirectOnSamePageHandler(err))
+		if provider == "dir" {
+			// Not implemented safely yet
+			return nil
 		}
-		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+		if provider == "db" || provider == "" {
+			if err := queries.SystemPurgeDeadLettersBefore(r.Context(), t); err != nil {
+				return fmt.Errorf("purge errors %w", handlers.ErrRedirectOnSamePageHandler(err))
+			}
 			if evt := cd.Event(); evt != nil {
 				if evt.Data == nil {
 					evt.Data = map[string]any{}
@@ -167,4 +239,90 @@ func (DeleteDLQTask) AuditRecord(data map[string]any) string {
 		return "purged dead letters before " + before
 	}
 	return "modified dead letter queue"
+}
+
+func (ReEnlistDLQTask) Action(w http.ResponseWriter, r *http.Request) any {
+	if err := r.ParseForm(); err != nil {
+		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	provider := r.PostFormValue("provider")
+
+	for _, idStr := range r.Form["id"] {
+		if idStr == "" {
+			continue
+		}
+		var msgContent string
+
+		switch provider {
+		case "dir":
+			if cd.Config.DLQFile != "" {
+				safeName := filepath.Base(idStr)
+				path := filepath.Join(cd.Config.DLQFile, safeName)
+				data, err := os.ReadFile(path)
+				if err != nil {
+					return fmt.Errorf("read file error: %w", err)
+				}
+				msgContent = strings.TrimSpace(string(data))
+			}
+		case "db", "":
+			id, _ := strconv.Atoi(idStr)
+			// Poor man's Get
+			rows, err := cd.Queries().SystemListDeadLetters(r.Context(), 1000)
+			if err != nil {
+				return fmt.Errorf("list dead letters: %w", err)
+			}
+			for _, row := range rows {
+				if row.ID == int32(id) {
+					msgContent = row.Message
+					break
+				}
+			}
+			if msgContent == "" {
+				return fmt.Errorf("dead letter not found")
+			}
+		default:
+			return fmt.Errorf("unsupported provider")
+		}
+
+		var dlqMsg dlq.Message
+		if err := json.Unmarshal([]byte(msgContent), &dlqMsg); err != nil {
+			return fmt.Errorf("parse message json: %w", err)
+		}
+
+		if dlqMsg.Event == nil {
+			return fmt.Errorf("no event in message")
+		}
+		evt := *dlqMsg.Event
+
+		// Find Task
+		if dlqMsg.TaskName != "" && cd.TasksReg != nil {
+			found := false
+			for _, t := range cd.TasksReg.Registered() {
+				if t.Name() == dlqMsg.TaskName {
+					if tt, ok := t.(tasks.Task); ok {
+						evt.Task = tt
+						found = true
+					}
+					break
+				}
+			}
+			if !found {
+				evt.Task = tasks.TaskString(dlqMsg.TaskName)
+			}
+		} else if dlqMsg.TaskName != "" {
+			evt.Task = tasks.TaskString(dlqMsg.TaskName)
+		}
+
+		if err := cd.Publish(evt); err != nil {
+			return fmt.Errorf("publish event: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// AuditRecord summarises dead letters being re-enlisted.
+func (ReEnlistDLQTask) AuditRecord(data map[string]any) string {
+	return "re-enlisted dead letter"
 }

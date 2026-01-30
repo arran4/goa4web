@@ -176,6 +176,7 @@ type CoreData struct {
 	blogListByAuthorRows             lazy.Value[[]*db.ListBlogEntriesByAuthorForListerRow]
 	blogListUID                      int32
 	bookmarks                        lazy.Value[*db.GetBookmarksForUserRow]
+	bus                              *eventbus.Bus
 	currentBlogID                    int32
 	currentBoardID                   int32
 	currentCommentID                 int32
@@ -1187,6 +1188,14 @@ func (cd *CoreData) HTTPClient() *http.Client {
 
 // Event returns the event associated with the request, if any.
 func (cd *CoreData) Event() *eventbus.TaskEvent { return cd.event }
+
+// Publish publishes an event to the event bus.
+func (cd *CoreData) Publish(msg eventbus.Message) error {
+	if cd.bus == nil {
+		return fmt.Errorf("event bus not available")
+	}
+	return cd.bus.Publish(msg)
+}
 
 // ExecuteSiteTemplate renders the named site template using cd's helper
 // functions. It wraps templates.GetCompiledSiteTemplates(cd.Funcs(r)).
@@ -2733,6 +2742,9 @@ func WithSessionManager(sm SessionManager) CoreOption {
 
 // WithEvent links an event to the CoreData object.
 func WithEvent(evt *eventbus.TaskEvent) CoreOption { return func(cd *CoreData) { cd.event = evt } }
+
+// WithEventBus sets the event bus on the CoreData object.
+func WithEventBus(b *eventbus.Bus) CoreOption { return func(cd *CoreData) { cd.bus = b } }
 
 // WithAbsoluteURLBase sets the base URL used to build absolute links.
 func WithAbsoluteURLBase(base string) CoreOption {

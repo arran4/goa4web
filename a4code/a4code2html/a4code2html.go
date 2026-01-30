@@ -30,14 +30,6 @@ const (
 	CTWordsOnly
 )
 
-type LinkMetadata struct {
-	Title       string
-	Description string
-	ImageURL    string
-}
-
-type LinkMetadataProvider func(url string) *LinkMetadata
-
 // LinkProvider provides HTML rendering for links and maps image URLs.
 type LinkProvider interface {
 	RenderLink(url string, isBlock bool, isImmediateClose bool) (htmlOpen string, htmlClose string, consumeImmediate bool)
@@ -57,8 +49,6 @@ type A4code2html struct {
 	// UserColorMapper optionally maps a username to a CSS class for styling quotes.
 	UserColorMapper func(username string) string
 	quoteDepth      int
-	// MetadataProvider optionally provides metadata for external links.
-	MetadataProvider LinkMetadataProvider
 	// Provider optionally provides custom rendering for links.
 	Provider    LinkProvider
 	atLineStart bool
@@ -85,8 +75,6 @@ func New(opts ...interface{}) *A4code2html {
 			c.ImageURLMapper = v
 		case func(string) string:
 			c.UserColorMapper = v
-		case LinkMetadataProvider:
-			c.MetadataProvider = v
 		case LinkProvider:
 			c.Provider = v
 		case WithTOC:
@@ -414,78 +402,20 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 			}
 			safe, ok := SanitizeURL(raw)
 			if ok {
-				var meta *LinkMetadata
-				if a.MetadataProvider != nil {
-					meta = a.MetadataProvider(raw)
+				// Inline Link
+				if _, err := io.WriteString(w, "<a href=\""+safe+"\" target=\"_blank\">"); err != nil {
+					return err
 				}
 
-				isBlock := false
-				isImmediateClose := false
-				if wasAtLineStart && a.MetadataProvider != nil {
-					isBlock, isImmediateClose = a.peekBlockLink(r)
-				}
-
-				if isBlock && meta != nil {
-					// Render Card
-					imageHTML := ""
-					if meta.ImageURL != "" {
-						safeImg, imgOk := SanitizeURL(meta.ImageURL)
-						if imgOk {
-							imageHTML = fmt.Sprintf("<img src=\"%s\" class=\"external-link-image\" />", safeImg)
-						}
-					}
-
-					if isImmediateClose {
-						// Complex Card: Title and Description from Metadata
-						// Consume ] and newline
-						r.ReadByte() // ]
-						r.ReadByte() // \n
-
-						a.atLineStart = true
-
-						// Determine Title and Description
-						title := meta.Title
-						if title == "" {
-							title = original // Fallback
-						}
-						description := meta.Description
-
-						if _, err := io.WriteString(w, fmt.Sprintf(
-							"<div class=\"external-link-card\"><a href=\"%s\" target=\"_blank\" class=\"external-link-card-inner\">%s<div class=\"external-link-content\"><div class=\"external-link-title\">%s</div><div class=\"external-link-description\">%s</div></div></a></div>",
-							safe, imageHTML, html.EscapeString(title), html.EscapeString(description))); err != nil {
-							return err
-						}
-					} else {
-						// Simple Card: Title from user provided text (consumed later)
-						if _, err := io.WriteString(w, fmt.Sprintf(
-							"<div class=\"external-link-card\"><a href=\"%s\" target=\"_blank\" class=\"external-link-card-inner\">%s<div class=\"external-link-content\"><div class=\"external-link-title\">",
-							safe, imageHTML)); err != nil {
-							return err
-						}
-						a.stack = append(a.stack, "</div></div></a></div>")
-					}
-				} else {
-					// Inline Link
-					if _, err := io.WriteString(w, "<a href=\""+safe+"\" target=\"_blank\">"); err != nil {
+				p, err := r.Peek(1)
+				if err == nil && len(p) > 0 && p[0] == ']' {
+					// Case [link url]
+					// Default legacy behavior without metadata provider: just print original
+					if _, err := io.WriteString(w, html.EscapeString(original)); err != nil {
 						return err
 					}
-
-					p, err := r.Peek(1)
-					if err == nil && len(p) > 0 && p[0] == ']' {
-						// Case [link url]
-						// Inject title if available
-						if meta != nil && meta.Title != "" {
-							if _, err := io.WriteString(w, html.EscapeString(meta.Title)); err != nil {
-								return err
-							}
-						} else {
-							if _, err := io.WriteString(w, html.EscapeString(original)); err != nil {
-								return err
-							}
-						}
-					}
-					a.stack = append(a.stack, "</a>")
 				}
+				a.stack = append(a.stack, "</a>")
 			} else {
 				if _, err := io.WriteString(w, safe); err != nil {
 					return err

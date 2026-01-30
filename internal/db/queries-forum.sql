@@ -474,3 +474,13 @@ LEFT JOIN users u ON u.idusers = g.user_id
 WHERE (g.item = 'topic')
   AND g.item_id = sqlc.arg(topic_id)
   AND g.active = 1;
+
+-- name: GetPrivateTopicThreadsAndLabels :many
+SELECT th.idforumthread, c.users_idusers AS author_id, cpl.label, cpl.invert
+FROM forumthread th
+JOIN comments c ON th.firstpost = c.idcomments
+LEFT JOIN content_private_labels cpl
+    ON cpl.item = 'thread'
+    AND cpl.item_id = th.idforumthread
+    AND cpl.user_id = sqlc.arg(user_id)
+WHERE th.forumtopic_idforumtopic = sqlc.arg(topic_id);

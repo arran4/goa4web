@@ -1234,6 +1234,57 @@ func (q *Queries) GetForumTopicsForUser(ctx context.Context, arg GetForumTopicsF
 	return items, nil
 }
 
+const getPrivateTopicThreadsAndLabels = `-- name: GetPrivateTopicThreadsAndLabels :many
+SELECT th.idforumthread, c.users_idusers AS author_id, cpl.label, cpl.invert
+FROM forumthread th
+JOIN comments c ON th.firstpost = c.idcomments
+LEFT JOIN content_private_labels cpl
+    ON cpl.item = 'thread'
+    AND cpl.item_id = th.idforumthread
+    AND cpl.user_id = ?
+WHERE th.forumtopic_idforumtopic = ?
+`
+
+type GetPrivateTopicThreadsAndLabelsParams struct {
+	UserID  int32
+	TopicID int32
+}
+
+type GetPrivateTopicThreadsAndLabelsRow struct {
+	Idforumthread int32
+	AuthorID      int32
+	Label         sql.NullString
+	Invert        sql.NullBool
+}
+
+func (q *Queries) GetPrivateTopicThreadsAndLabels(ctx context.Context, arg GetPrivateTopicThreadsAndLabelsParams) ([]*GetPrivateTopicThreadsAndLabelsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getPrivateTopicThreadsAndLabels, arg.UserID, arg.TopicID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetPrivateTopicThreadsAndLabelsRow
+	for rows.Next() {
+		var i GetPrivateTopicThreadsAndLabelsRow
+		if err := rows.Scan(
+			&i.Idforumthread,
+			&i.AuthorID,
+			&i.Label,
+			&i.Invert,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listForumcategoryPath = `-- name: ListForumcategoryPath :many
 WITH RECURSIVE category_path AS (
     SELECT f.idforumcategory, f.forumcategory_idforumcategory AS parent_id, f.title, 0 AS depth

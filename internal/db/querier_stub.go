@@ -485,6 +485,11 @@ type QuerierStub struct {
 	GetThreadLastPosterAndPermsReturns *GetThreadLastPosterAndPermsRow
 	GetThreadLastPosterAndPermsErr     error
 
+	GetPrivateTopicThreadsAndLabelsCalls   []GetPrivateTopicThreadsAndLabelsParams
+	GetPrivateTopicThreadsAndLabelsReturns []*GetPrivateTopicThreadsAndLabelsRow
+	GetPrivateTopicThreadsAndLabelsErr     error
+	GetPrivateTopicThreadsAndLabelsFn      func(context.Context, GetPrivateTopicThreadsAndLabelsParams) ([]*GetPrivateTopicThreadsAndLabelsRow, error)
+
 	ListPrivateTopicParticipantsByTopicIDForUserCalls   []ListPrivateTopicParticipantsByTopicIDForUserParams
 	ListPrivateTopicParticipantsByTopicIDForUserReturns []*ListPrivateTopicParticipantsByTopicIDForUserRow
 	ListPrivateTopicParticipantsByTopicIDForUserErr     error
@@ -2013,4 +2018,17 @@ func (s *QuerierStub) AdminInsertRequestQueue(ctx context.Context, arg AdminInse
 }
 func (q *QuerierStub) UpdateExternalLinkImageCache(ctx context.Context, arg UpdateExternalLinkImageCacheParams) error {
 	return nil
+}
+
+func (s *QuerierStub) GetPrivateTopicThreadsAndLabels(ctx context.Context, arg GetPrivateTopicThreadsAndLabelsParams) ([]*GetPrivateTopicThreadsAndLabelsRow, error) {
+	s.mu.Lock()
+	s.GetPrivateTopicThreadsAndLabelsCalls = append(s.GetPrivateTopicThreadsAndLabelsCalls, arg)
+	fn := s.GetPrivateTopicThreadsAndLabelsFn
+	ret := s.GetPrivateTopicThreadsAndLabelsReturns
+	err := s.GetPrivateTopicThreadsAndLabelsErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
 }

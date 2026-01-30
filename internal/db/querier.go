@@ -34,7 +34,11 @@ type Querier interface {
 	AdminCountLinksByCategory(ctx context.Context, categoryID sql.NullInt32) (int64, error)
 	AdminCountPasswordResets(ctx context.Context, arg AdminCountPasswordResetsParams) (int64, error)
 	AdminCountPendingPasswordResetsByUser(ctx context.Context) ([]*AdminCountPendingPasswordResetsByUserRow, error)
+	// admin task
+	AdminCountSentEmails(ctx context.Context, arg AdminCountSentEmailsParams) (int64, error)
 	AdminCountThreadsByBoard(ctx context.Context, imageboardIdimageboard sql.NullInt32) (int64, error)
+	// admin task
+	AdminCountUnsentPendingEmails(ctx context.Context, arg AdminCountUnsentPendingEmailsParams) (int64, error)
 	AdminCountWordList(ctx context.Context) (int64, error)
 	AdminCountWordListByPrefix(ctx context.Context, prefix interface{}) (int64, error)
 	AdminCreateFAQ(ctx context.Context, arg AdminCreateFAQParams) (sql.Result, error)

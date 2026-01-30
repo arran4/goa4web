@@ -400,10 +400,31 @@ func TestForumAutoSubscribeTasks(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create thread AutoSubscribePath error: %v", err)
 	}
-	if actionName != string(TaskCreateThread) {
-		t.Fatalf("expected action name %q, got %q", TaskCreateThread, actionName)
+	if actionName != string(TaskReply) {
+		t.Fatalf("expected action name %q, got %q", TaskReply, actionName)
 	}
 	if path != "/forum/topic/44/thread/55" {
 		t.Fatalf("expected create thread auto-subscribe path /forum/topic/44/thread/55, got %q", path)
+	}
+
+	privateThreadEvt := eventbus.TaskEvent{
+		Data: map[string]any{
+			postcountworker.EventKey: postcountworker.UpdateEventData{
+				ThreadID:  64,
+				TopicID:   20,
+				CommentID: 100,
+			},
+		},
+		Path: "/private/topic/20/thread/64",
+	}
+	actionName, path, err = createThreadTask.AutoSubscribePath(privateThreadEvt)
+	if err != nil {
+		t.Fatalf("private create thread AutoSubscribePath error: %v", err)
+	}
+	if actionName != string(TaskReply) {
+		t.Fatalf("expected action name %q, got %q", TaskReply, actionName)
+	}
+	if path != "/private/topic/20/thread/64" {
+		t.Fatalf("expected private create thread auto-subscribe path /private/topic/20/thread/64, got %q", path)
 	}
 }

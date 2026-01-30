@@ -1,7 +1,0 @@
-Hi {{.Item.Username}},
-Your image post has been approved.
-
-View post:
-{{.Item.PostURL}}
-
-Manage notifications: {{.UnsubscribeUrl}}

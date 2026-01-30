@@ -10,7 +10,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 )
 
-//go:embed notifications/*.gotxt email/*.gotxt
+//go:embed notifications/*.gotxt
 var textTemplates embed.FS
 
 func TestParseGoTxtTemplates(t *testing.T) {

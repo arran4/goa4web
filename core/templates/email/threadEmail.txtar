@@ -1,0 +1,28 @@
+-- body.gohtml --
+<!DOCTYPE html>
+<html>
+<body>
+<p>Hello,</p>
+<p>A new thread "{{.Item.TopicTitle}}" was started at {{.Item.Path}}.</p>
+<p>You can view it <a href="{{.URL}}">here</a>.</p>
+<p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
+{{- if .SignOff}}
+<p>{{.SignOffHTML}}</p>
+{{- end}}
+</body>
+</html>
+-- body.gotxt --
+Hello,
+
+A new thread "{{.Item.TopicTitle}}" was started at {{.Item.Path}}.
+
+View it here:
+{{.URL}}
+
+
+Manage notifications: {{.UnsubscribeUrl}}
+{{- if .SignOff}}
+{{.SignOff}}
+{{- end}}
+-- subject.gotxt --
+[{{.SubjectPrefix}}] New thread "{{.Item.TopicTitle}}"

@@ -1,0 +1,13 @@
+-- body.gohtml --
+<p>User {{.Item.Username}} deleted language {{.Item.LanguageName}} (ID {{.Item.LanguageID}}).</p>
+
+<p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
+
+-- body.gotxt --
+User {{.Item.Username}} deleted language {{.Item.LanguageName}} (ID {{.Item.LanguageID}}).
+
+
+Manage notifications: {{.UnsubscribeUrl}}
+
+-- subject.gotxt --
+[{{.SubjectPrefix}}] Language deleted

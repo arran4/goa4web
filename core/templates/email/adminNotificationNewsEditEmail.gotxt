@@ -1,7 +1,0 @@
-News post edited by {{.Item.Username}}.
-
-View post:
-{{.Item.PostURL}}
-
-Manage notifications: {{.UnsubscribeUrl}}
-

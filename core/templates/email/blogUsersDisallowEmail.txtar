@@ -1,0 +1,18 @@
+-- body.gohtml --
+<p>Hi {{.Item.Username}},</p>
+<p>Multiple users had blog permissions revoked.</p>
+
+
+<p><a href="{{.Item.BlogURL}}">Blog section</a></p>
+<p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
+-- body.gotxt --
+Hi {{.Item.Username}},
+Multiple users had blog permissions revoked.
+
+Blog section:
+{{.Item.BlogURL}}
+
+Manage notifications: {{.UnsubscribeUrl}}
+
+-- subject.gotxt --
+[{{.SubjectPrefix}}] Blog permissions revoked

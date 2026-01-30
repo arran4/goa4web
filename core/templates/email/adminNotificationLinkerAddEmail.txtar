@@ -1,0 +1,14 @@
+-- body.gohtml --
+<p>User {{.Item.Username}} added a new link.</p>
+
+<p><a href="{{.Item.LinkURL}}">View link</a></p>
+<p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
+-- body.gotxt --
+User {{.Item.Username}} added a new link.
+
+View link:
+{{.Item.LinkURL}}
+
+Manage notifications: {{.UnsubscribeUrl}}
+-- subject.gotxt --
+[{{.SubjectPrefix}}] Link added

@@ -1,8 +1,0 @@
-User {{.Item.Username}} requested an email association.
-Email: {{.Item.Email}}
-Reason: {{.Item.Reason}}
-
-User page:
-{{.Item.UserURL}}
-
-Manage notifications: {{.UnsubscribeUrl}}

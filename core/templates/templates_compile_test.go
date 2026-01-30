@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-//go:embed site/*.gohtml site/*/*.gohtml email/*.gohtml
+//go:embed site/*.gohtml site/*/*.gohtml
 var testTemplates embed.FS
 
 func TestCompileGoHTML(t *testing.T) {
@@ -22,7 +22,7 @@ func TestCompileGoHTML(t *testing.T) {
 	funcs["localTime"] = func(t time.Time) time.Time { return t }
 	funcs["assetHash"] = func(s string) string { return s }
 	template.Must(template.New("").Funcs(funcs).ParseFS(testTemplates,
-		"site/*.gohtml", "site/*/*.gohtml", "email/*.gohtml"))
+		"site/*.gohtml", "site/*/*.gohtml"))
 }
 
 func TestParseEachTemplate(t *testing.T) {

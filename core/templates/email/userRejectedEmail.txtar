@@ -1,0 +1,20 @@
+-- body.gohtml --
+<!DOCTYPE html>
+<html><body>
+<p>Hello,</p>
+<p>Your account request was rejected.</p>
+<p>{{.Item.Reason}}</p>
+{{- if .SignOff}}
+<p>{{.SignOffHTML}}</p>
+{{- end}}
+</body></html>
+-- body.gotxt --
+Hello,
+
+Your account request was rejected.
+Reason: {{.Item.Reason}}
+{{- if .SignOff}}
+{{.SignOff}}
+{{- end}}
+-- subject.gotxt --
+[{{.SubjectPrefix}}] Account rejected

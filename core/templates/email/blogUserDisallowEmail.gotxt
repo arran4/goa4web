@@ -1,8 +1,0 @@
-Hi {{.Item.Username}},
-Your blog permissions were revoked.
-
-Blog section:
-{{.Item.BlogURL}}
-
-Manage notifications: {{.UnsubscribeUrl}}
-

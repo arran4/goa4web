@@ -1,7 +1,0 @@
-User {{.Item.Username}} canceled editing a blog comment.
-
-View comment:
-{{.Item.CommentURL}}
-
-Manage notifications: {{.UnsubscribeUrl}}
-

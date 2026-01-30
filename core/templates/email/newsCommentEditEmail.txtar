@@ -1,0 +1,18 @@
+-- body.gohtml --
+<p>Hi {{.Item.Username}},</p>
+<p>Your comment has been updated.</p>
+
+<p><a href="{{.Item.CommentURL}}">View comment</a></p>
+<p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
+
+-- body.gotxt --
+Hi {{.Item.Username}},
+Your comment has been updated.
+
+View comment:
+{{.Item.CommentURL}}
+
+Manage notifications: {{.UnsubscribeUrl}}
+
+-- subject.gotxt --
+[{{.SubjectPrefix}}] Comment updated

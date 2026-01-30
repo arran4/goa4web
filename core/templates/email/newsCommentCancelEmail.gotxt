@@ -1,8 +1,0 @@
-Hi {{.Item.Username}},
-Your comment edit was cancelled.
-
-View comment:
-{{.Item.CommentURL}}
-
-Manage notifications: {{.UnsubscribeUrl}}
-

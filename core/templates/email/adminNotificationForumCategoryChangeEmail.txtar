@@ -1,0 +1,10 @@
+-- body.gohtml --
+<p>User {{.Item.Username}} renamed a forum category.</p>
+<p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
+-- body.gotxt --
+User {{.Item.Username}} renamed a forum category.
+
+
+Manage notifications: {{.UnsubscribeUrl}}
+-- subject.gotxt --
+[{{.SubjectPrefix}}] Forum category renamed

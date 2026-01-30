@@ -1,5 +1,0 @@
-Hi {{.Item.Username}},
-Your news permissions have been updated.
-
-
-Manage notifications: {{.UnsubscribeUrl}}

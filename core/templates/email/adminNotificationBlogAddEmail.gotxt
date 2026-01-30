@@ -1,6 +1,0 @@
-User {{.Item.Username}} added a new blog post.
-
-View post:
-{{.Item.PostURL}}
-
-Manage notifications: {{.UnsubscribeUrl}}

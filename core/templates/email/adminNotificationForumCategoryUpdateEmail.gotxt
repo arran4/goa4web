@@ -1,3 +1,0 @@
-Administrator {{.Item.Username}} updated the forum category: {{.Item.Name}}.
-
-Manage notifications: {{.UnsubscribeUrl}}

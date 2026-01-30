@@ -15,14 +15,14 @@
     {{- range .Threads }}
         <div class="thread" data-last-reply-time="{{ .Lastaddition.Time.Unix }}" data-creation-time="{{ .Firstpostwritten.Time.Unix }}" data-comments="{{ .Comments.Int32 }}">
             <div class="thread-meta thread-header">
-                First poster: <span class="poster-name first">{{ .Firstpostusername.String }}</span>
+                First poster: <span class="poster-name first" {{ if ne .Firstpostuserid.Int32 cd.UserID }}style="font-weight: bold;"{{ end }}>{{ .Firstpostusername.String }}</span>
                 At <span class="post-time first">{{ cd.LocalTime .Firstpostwritten.Time }}</span>
             </div>
             <div class="thread-content foldable">
                 {{ .Firstposttext.String | a4code2html }}<br>
             </div>
             <div class="thread-meta">
-                Lastposter: <span class="poster-name last">{{ if ne .Lastposter cd.UserID }}<strong>{{ .Lastposterusername.String }}</strong>{{ else }}{{ .Lastposterusername.String }}{{ end }}</span>
+                Lastposter: <span class="poster-name last" {{ if ne .Lastposterid.Int32 cd.UserID }}style="font-weight: bold;"{{ end }}>{{ .Lastposterusername.String }}</span>
                 At <span class="post-time last">{{ cd.LocalTime .Lastaddition.Time }}</span>
                 [<a href="{{$base}}/topic/{{.ForumtopicIdforumtopic}}/thread/{{ .Idforumthread }}">
                     {{- .Comments.Int32 }} comments.</a>]{{" "}}

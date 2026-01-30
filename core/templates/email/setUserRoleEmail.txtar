@@ -1,0 +1,12 @@
+-- body.gohtml --
+<p>Hi {{.Item.Username}},</p>
+<p>You have been assigned the "{{.Item.Role}}" role.</p>
+<p><a href="{{.Item.UnsubURL}}">Manage notifications</a></p>
+-- body.gotxt --
+Hi {{.Item.Username}},
+You have been assigned the "{{.Item.Role}}" role.
+
+
+Manage notifications: {{.Item.UnsubURL}}
+-- subject.gotxt --
+[{{.SubjectPrefix}}] Role assigned

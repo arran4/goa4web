@@ -1,0 +1,12 @@
+-- body.gohtml --
+<p>Hi {{.Item.Username}},</p>
+<p>Your FAQ question has been answered.</p>
+<p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
+-- body.gotxt --
+Hi {{.Item.Username}},
+Your FAQ question has been answered.
+
+
+Manage notifications: {{.UnsubscribeUrl}}
+-- subject.gotxt --
+[{{.SubjectPrefix}}] FAQ answered

@@ -1,0 +1,9 @@
+-- body.gohtml --
+<p>Moderator {{.Item.Moderator}} removed ban for {{.Item.IP}}.</p>
+<p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
+-- body.gotxt --
+Moderator {{.Item.Moderator}} removed ban for {{.Item.IP}}.
+
+Manage notifications: {{.UnsubscribeUrl}}
+-- subject.gotxt --
+[{{.SubjectPrefix}}] IP ban removed

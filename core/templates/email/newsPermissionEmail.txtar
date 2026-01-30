@@ -1,0 +1,12 @@
+-- body.gohtml --
+<p>Hi {{.Item.Username}},</p>
+<p>Your news permissions have been updated.</p>
+<p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
+-- body.gotxt --
+Hi {{.Item.Username}},
+Your news permissions have been updated.
+
+
+Manage notifications: {{.UnsubscribeUrl}}
+-- subject.gotxt --
+[{{.SubjectPrefix}}] News permissions updated

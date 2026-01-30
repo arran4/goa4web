@@ -1,0 +1,13 @@
+-- body.gohtml --
+<p>User {{.Item.Username}} created a new image board.</p>
+<p><a href="{{.Item.BoardURL}}">View board</a></p>
+<p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
+-- body.gotxt --
+User {{.Item.Username}} created a new image board.
+
+Board link:
+{{.Item.BoardURL}}
+
+Manage notifications: {{.UnsubscribeUrl}}
+-- subject.gotxt --
+[{{.SubjectPrefix}}] New image board created

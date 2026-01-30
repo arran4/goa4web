@@ -1,0 +1,27 @@
+-- body.gohtml --
+<!DOCTYPE html>
+<html>
+<body>
+<p>Hello,</p>
+<p>{{.Item.Action}} occurred at <a href="{{.URL}}">{{.URL}}</a> on {{ formatLocalTime (localTime .Item.Time) }}.</p>
+<p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
+{{- if .SignOff}}
+<p>{{.SignOffHTML}}</p>
+{{- end}}
+</body>
+</html>
+-- body.gotxt --
+Hello,
+
+{{.Item.Action}} occurred at {{.URL}} on {{ formatLocalTime (localTime .Item.Time) }}.
+
+{{if .URL}}View details here:
+{{.URL}}
+{{end}}
+
+Manage notifications: {{.UnsubscribeUrl}}
+{{- if .SignOff}}
+{{.SignOff}}
+{{- end}}
+-- subject.gotxt --
+[{{.SubjectPrefix}}] {{.Item.Action}}

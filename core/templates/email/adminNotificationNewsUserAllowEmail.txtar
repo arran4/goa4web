@@ -1,0 +1,16 @@
+-- body.gohtml --
+<p>User {{.Item.Username}} was granted news permissions.</p>
+
+<p><a href="{{.Item.UserPermissionsURL}}">Permissions</a></p>
+<p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
+
+-- body.gotxt --
+User {{.Item.Username}} was granted news permissions.
+
+Permissions:
+{{.Item.UserPermissionsURL}}
+
+Manage notifications: {{.UnsubscribeUrl}}
+
+-- subject.gotxt --
+[{{.SubjectPrefix}}] User granted news permissions

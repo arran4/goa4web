@@ -1,4 +1,0 @@
-Moderator {{.Item.Moderator}} banned {{.Item.IP}}.
-{{- if .Item.Reason}} Reason: {{.Item.Reason}}{{- end}}
-
-Manage notifications: {{.UnsubscribeUrl}}

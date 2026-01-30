@@ -1,0 +1,10 @@
+-- body.gohtml --
+<p>User {{.Item.Username}} revoked the {{.Item.Permission}} permission.</p>
+<p><a href="{{.Item.UnsubURL}}">Manage notifications</a></p>
+-- body.gotxt --
+User {{.Item.Username}} revoked the {{.Item.Permission}} permission.
+
+
+Manage notifications: {{.Item.UnsubURL}}
+-- subject.gotxt --
+[{{.SubjectPrefix}}] Permission revoked

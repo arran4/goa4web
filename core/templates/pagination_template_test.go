@@ -19,7 +19,7 @@ func TestPaginationTemplateWithoutPageSize(t *testing.T) {
 	funcs["localTime"] = func(t time.Time) time.Time { return t }
 	funcs["assetHash"] = func(s string) string { return s }
 	tmpl := template.Must(template.New("").Funcs(funcs).ParseFS(testTemplates,
-		"site/*.gohtml", "site/*/*.gohtml", "email/*.gohtml"))
+		"site/*.gohtml", "site/*/*.gohtml"))
 	var buf bytes.Buffer
 	if err := tmpl.ExecuteTemplate(&buf, "tail", cd); err != nil {
 		t.Fatalf("execute tail template: %v", err)

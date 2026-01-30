@@ -1,0 +1,17 @@
+-- body.gohtml --
+<p>User {{.Item.Username}} requested an email association.</p>
+<p>Email: {{.Item.Email}}</p>
+<p>Reason: {{.Item.Reason}}</p>
+<p><a href="{{.Item.UserURL}}">User page</a></p>
+<p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
+-- body.gotxt --
+User {{.Item.Username}} requested an email association.
+Email: {{.Item.Email}}
+Reason: {{.Item.Reason}}
+
+User page:
+{{.Item.UserURL}}
+
+Manage notifications: {{.UnsubscribeUrl}}
+-- subject.gotxt --
+[{{.SubjectPrefix}}] User Email Association Requested

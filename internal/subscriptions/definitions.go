@@ -89,11 +89,37 @@ var Definitions = []Definition{
 		Pattern:     "reply:/private/topic/{topicid}/thread/{threadid}*",
 	},
 
+	// Blog
+	{
+		Name:        "New Blog Post",
+		Description: "Notify when a new blog post is created",
+		Pattern:     "post:/blog/*",
+	},
+
+	// Writing
+	{
+		Name:        "New Article",
+		Description: "Notify when a new article is created",
+		Pattern:     "post:/writing/*",
+	},
+
+	// Image Board
+	{
+		Name:        "New Image Post",
+		Description: "Notify when a new image post is created",
+		Pattern:     "post:/image/*",
+	},
+
 	// News
 	{
 		Name:        "New News Post",
 		Description: "Notify when a new news post is created",
 		Pattern:     "new post:/news/*",
+	},
+	{
+		Name:        "New News Post (Legacy)",
+		Description: "Notify when a new news post is created",
+		Pattern:     "post:/news/*",
 	},
 	{
 		Name:        "Reply to News",
@@ -135,6 +161,30 @@ var Definitions = []Definition{
 		Name:        "Admin Notifications",
 		Description: "Receive general admin notifications",
 		Pattern:     "notify:/admin/*",
+		IsAdminOnly: true,
+	},
+	{
+		Name:        "Admin: User Role Granted",
+		Description: "Notify when a role is granted to a user",
+		Pattern:     "user allow:/*",
+		IsAdminOnly: true,
+	},
+	{
+		Name:        "Admin: User Role Revoked",
+		Description: "Notify when a role is revoked from a user",
+		Pattern:     "user disallow:/*",
+		IsAdminOnly: true,
+	},
+	{
+		Name:        "Admin: Category Deleted",
+		Description: "Notify when a category is deleted",
+		Pattern:     "delete category:/*",
+		IsAdminOnly: true,
+	},
+	{
+		Name:        "Admin: New Image Board Post",
+		Description: "Notify when a new image is uploaded",
+		Pattern:     "upload image:/*",
 		IsAdminOnly: true,
 	},
 	{

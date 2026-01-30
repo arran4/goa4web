@@ -83,23 +83,56 @@ func (UpdateSubscriptionsTask) Action(w http.ResponseWriter, r *http.Request) an
 	for _, s := range existing {
 		have[s.Pattern+"|"+s.Method] = true
 	}
-	methods := []string{"internal", "email"}
-	for _, opt := range userSubscriptionOptions {
-		for _, m := range methods {
-			key := opt.Path + "_" + m
-			want := r.PostFormValue(key) != ""
-			hkey := opt.Pattern + "|" + m
-			if want && !have[hkey] {
-				if err := queries.InsertSubscription(r.Context(), db.InsertSubscriptionParams{UsersIdusers: uid, Pattern: opt.Pattern, Method: m}); err != nil {
+
+	// New generic logic based on presented_subs
+	presented := r.PostForm["presented_subs"]
+	if len(presented) > 0 {
+		wanted := make(map[string]bool)
+		for _, s := range r.PostForm["subs"] {
+			wanted[s] = true
+		}
+
+		for _, p := range presented {
+			parts := strings.Split(p, "|")
+			if len(parts) != 2 {
+				continue
+			}
+			pattern, method := parts[0], parts[1]
+
+			want := wanted[p]
+			has := have[p]
+
+			if want && !has {
+				if err := queries.InsertSubscription(r.Context(), db.InsertSubscriptionParams{UsersIdusers: uid, Pattern: pattern, Method: method}); err != nil {
 					log.Printf("insert sub: %v", err)
 					return fmt.Errorf("insert subscription fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 				}
-			} else if !want && have[hkey] {
-				// Only delete if it matches one of the options in userSubscriptionOptions
-				// This prevents deleting custom subscriptions added via the "Add" form
-				if err := queries.DeleteSubscriptionForSubscriber(r.Context(), db.DeleteSubscriptionForSubscriberParams{SubscriberID: uid, Pattern: opt.Pattern, Method: m}); err != nil {
+			} else if !want && has {
+				if err := queries.DeleteSubscriptionForSubscriber(r.Context(), db.DeleteSubscriptionForSubscriberParams{SubscriberID: uid, Pattern: pattern, Method: method}); err != nil {
 					log.Printf("delete sub: %v", err)
 					return fmt.Errorf("delete subscription fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+				}
+			}
+		}
+	} else {
+		methods := []string{"internal", "email"}
+		for _, opt := range userSubscriptionOptions {
+			for _, m := range methods {
+				key := opt.Path + "_" + m
+				want := r.PostFormValue(key) != ""
+				hkey := opt.Pattern + "|" + m
+				if want && !have[hkey] {
+					if err := queries.InsertSubscription(r.Context(), db.InsertSubscriptionParams{UsersIdusers: uid, Pattern: opt.Pattern, Method: m}); err != nil {
+						log.Printf("insert sub: %v", err)
+						return fmt.Errorf("insert subscription fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+					}
+				} else if !want && have[hkey] {
+					// Only delete if it matches one of the options in userSubscriptionOptions
+					// This prevents deleting custom subscriptions added via the "Add" form
+					if err := queries.DeleteSubscriptionForSubscriber(r.Context(), db.DeleteSubscriptionForSubscriberParams{SubscriberID: uid, Pattern: opt.Pattern, Method: m}); err != nil {
+						log.Printf("delete sub: %v", err)
+						return fmt.Errorf("delete subscription fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+					}
 				}
 			}
 		}

@@ -11,7 +11,7 @@ import (
 	"github.com/arran4/goa4web/config"
 )
 
-func TestGetJMAPEndpoint(t *testing.T) {
+func TestGetJMAPDiscoveryEndpoint(t *testing.T) {
 	tests := []struct {
 		name          string
 		override      string
@@ -21,9 +21,15 @@ func TestGetJMAPEndpoint(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name:     "Override Precedence",
+			name:     "Discovery Precedence",
 			override: "https://override.com/jmap",
 			endpoint: "https://default.com/jmap",
+			expected: "https://default.com/jmap",
+		},
+		{
+			name:     "Override Fallback",
+			override: "https://override.com/jmap",
+			endpoint: "",
 			expected: "https://override.com/jmap",
 		},
 		{
@@ -44,7 +50,7 @@ func TestGetJMAPEndpoint(t *testing.T) {
 				EmailJMAPEndpoint:         tt.endpoint,
 				EmailJMAPEndpointOverride: tt.override,
 			}
-			ep, err := getJMAPEndpoint(cfg)
+			ep, err := getJMAPDiscoveryEndpoint(cfg)
 			if tt.expectError {
 				if err == nil {
 					t.Errorf("Expected an error, but got none")
@@ -106,6 +112,21 @@ func TestResolveJMAPSettings(t *testing.T) {
 	}
 	if ep != fmt.Sprintf("%s/jmap", server.URL) {
 		t.Errorf("Expected endpoint '%s/jmap', got '%s'", server.URL, ep)
+	}
+
+	// Test override
+	overrideCfg := &config.RuntimeConfig{
+		EmailJMAPUser:             "user",
+		EmailJMAPPass:             "pass",
+		EmailJMAPDiscoveryRetries: 1,
+		EmailJMAPEndpointOverride: "https://override.com/api",
+	}
+	acc, id, ep, err = resolveJMAPSettings(context.Background(), httpClient, overrideCfg, server.URL)
+	if err != nil {
+		t.Fatalf("Expected no error with override, got %v", err)
+	}
+	if ep != "https://override.com/api" {
+		t.Errorf("Expected override endpoint 'https://override.com/api', got '%s'", ep)
 	}
 }
 
@@ -199,5 +220,21 @@ func TestProviderFromConfig(t *testing.T) {
 	}
 	if p.GetIdentity() != "manual_id" {
 		t.Errorf("Expected identity ID 'manual_id', got '%s'", p.GetIdentity())
+	}
+
+	// Test case 3: Successful provider creation with manual config AND override
+	cfg = &config.RuntimeConfig{
+		EmailJMAPEndpoint:         server.URL,
+		EmailJMAPAccount:          "manual_acc",
+		EmailJMAPIdentity:         "manual_id",
+		EmailJMAPEndpointOverride: "https://override.com/api",
+	}
+	provider, err = providerFromConfig(cfg)
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+	p = provider.(*Provider)
+	if p.GetEndpoint() != "https://override.com/api" {
+		t.Errorf("Expected override endpoint 'https://override.com/api', got '%s'", p.GetEndpoint())
 	}
 }

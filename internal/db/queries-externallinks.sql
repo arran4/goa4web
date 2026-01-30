@@ -42,3 +42,6 @@ VALUES (?, 0);
 INSERT INTO external_links (url, clicks)
 VALUES (?, 0)
 ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id);
+
+-- name: AdminGetExternalLinkByCacheID :one
+SELECT * FROM external_links WHERE card_image_cache = ? OR favicon_cache = ? LIMIT 1;

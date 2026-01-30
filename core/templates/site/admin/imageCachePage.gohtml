@@ -22,7 +22,7 @@
             {{- range .Entries }}
             <tr>
                 <td><input type="checkbox" name="id" value="{{ .ID }}"></td>
-                <td>{{ .ID }}</td>
+                <td><a href="/admin/images/cache/{{ .ID }}">{{ .ID }}</a></td>
                 <td>{{ .Size }}</td>
             </tr>
             {{- else }}

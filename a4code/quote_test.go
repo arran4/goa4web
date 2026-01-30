@@ -36,7 +36,7 @@ func TestQuote(t *testing.T) {
 func TestQuoteFullParagraphs(t *testing.T) {
 	text := "foo\n\nbar"
 	got := QuoteText("bob", text, WithParagraphQuote())
-	want := "[quoteof \"bob\" foo]\n\n\n[quoteof \"bob\" bar]\n"
+	want := "[quoteof \"bob\" foo]\n\n\n\n[quoteof \"bob\" bar]\n"
 	if got != want {
 		t.Errorf("got %q want %q", got, want)
 	}
@@ -251,22 +251,22 @@ func TestQuoteRepro(t *testing.T) {
 		{
 			name:  "AllowSingleLevelQuote",
 			input: "Para 1\n\n[quoteof \"other\" inner]\n\nPara 2",
-			want:  "[quoteof \"user\" Para 1]\n\n\n[quoteof \"user\" [quoteof \"other\" inner]]\n\n\n[quoteof \"user\" Para 2]\n",
+			want:  "[quoteof \"user\" Para 1]\n\n\n\n[quoteof \"user\" [quoteof \"other\" inner]]\n\n\n\n[quoteof \"user\" Para 2]\n",
 		},
 		{
 			name:  "FilterDeeplyNestedQuote",
 			input: "Para 1\n\n[quoteof \"other\" [quoteof \"inner\" content]]\n\nPara 2",
-			want:  "[quoteof \"user\" Para 1]\n\n\n[quoteof \"user\" Para 2]\n",
+			want:  "[quoteof \"user\" Para 1]\n\n\n\n[quoteof \"user\" Para 2]\n",
 		},
 		{
 			name:  "TripleLineBreaks",
 			input: "Para 1\n\nPara 2",
-			want:  "[quoteof \"user\" Para 1]\n\n\n[quoteof \"user\" Para 2]\n",
+			want:  "[quoteof \"user\" Para 1]\n\n\n\n[quoteof \"user\" Para 2]\n",
 		},
 		{
 			name:  "ParagraphStartingWithBracket",
 			input: "Para 1\n\n[b]bold[/b]",
-			want:  "[quoteof \"user\" Para 1]\n\n\n[quoteof \"user\" [b]bold[/b]]\n",
+			want:  "[quoteof \"user\" Para 1]\n\n\n\n[quoteof \"user\" [b]bold[/b]]\n",
 		},
 		{
 			name:  "NotFilterMixedQuotes",
@@ -306,12 +306,17 @@ func TestQuoteRepro(t *testing.T) {
 		{
 			name:  "ParagraphStartingWithCloseBracket",
 			input: "]\n\nNext",
-			want:  "[quoteof \"user\" ]]\n\n\n[quoteof \"user\" Next]\n",
+			want:  "[quoteof \"user\" ]]\n\n\n\n[quoteof \"user\" Next]\n",
 		},
 		{
 			name:  "ParagraphStartingWithBackslash",
 			input: "\\[\n\nNext",
-			want:  "[quoteof \"user\" []\n\n\n[quoteof \"user\" Next]\n",
+			want:  "[quoteof \"user\" []\n\n\n\n[quoteof \"user\" Next]\n",
+		},
+		{
+			name:  "UserExampleNestedQuote",
+			input: "Para 1\n\n[quoteof \"M\" [quoteof \"a\" asdf]]\n\nPara 2",
+			want:  "[quoteof \"user\" Para 1]\n\n\n\n[quoteof \"user\" Para 2]\n",
 		},
 	}
 

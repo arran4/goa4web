@@ -106,7 +106,7 @@ func fullQuoteOf(username, text string, trim bool) string {
 				s := out.String()
 				if strings.TrimSpace(s) != "" && !isQuoteOfQuote(s) {
 					quote.WriteString(quoteOfText(username, s, trim))
-					quote.WriteString("\n\n")
+					quote.WriteString("\n\n\n")
 				}
 				out.Reset()
 			}

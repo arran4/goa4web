@@ -181,10 +181,10 @@ func (j *Provider) TestConfig(ctx context.Context) error {
 	return nil
 }
 
-func getJMAPEndpoint(cfg *config.RuntimeConfig) (string, error) {
-	ep := strings.TrimSpace(cfg.EmailJMAPEndpointOverride)
+func getJMAPDiscoveryEndpoint(cfg *config.RuntimeConfig) (string, error) {
+	ep := strings.TrimSpace(cfg.EmailJMAPEndpoint)
 	if ep == "" {
-		ep = strings.TrimSpace(cfg.EmailJMAPEndpoint)
+		ep = strings.TrimSpace(cfg.EmailJMAPEndpointOverride)
 	}
 	if ep == "" {
 		return "", fmt.Errorf("email disabled: %s or %s not set", config.EnvJMAPEndpoint, config.EnvJMAPEndpointOverride)
@@ -230,10 +230,14 @@ func resolveJMAPSettings(ctx context.Context, client *http.Client, cfg *config.R
 	identityID = SelectIdentityID(session)
 	endpoint = initialEndpoint
 
+	if session.APIURL != "" {
+		endpoint = session.APIURL
+	}
+
 	// If no override was provided, the discovered API URL is authoritative.
 	// If an override was used, 'endpoint' is already set to it and we stick with it.
-	if strings.TrimSpace(cfg.EmailJMAPEndpointOverride) == "" && session.APIURL != "" {
-		endpoint = session.APIURL
+	if override := strings.TrimSpace(cfg.EmailJMAPEndpointOverride); override != "" {
+		endpoint = override
 	}
 
 	if identityID == "" && accountID != "" {
@@ -246,7 +250,7 @@ func resolveJMAPSettings(ctx context.Context, client *http.Client, cfg *config.R
 }
 
 func providerFromConfig(cfg *config.RuntimeConfig) (email.Provider, error) {
-	ep, err := getJMAPEndpoint(cfg)
+	ep, err := getJMAPDiscoveryEndpoint(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -268,6 +272,8 @@ func providerFromConfig(cfg *config.RuntimeConfig) (email.Provider, error) {
 			id = discoveredId
 		}
 		ep = discoveredEp
+	} else if override := strings.TrimSpace(cfg.EmailJMAPEndpointOverride); override != "" {
+		ep = override
 	}
 
 	if acc == "" || id == "" {

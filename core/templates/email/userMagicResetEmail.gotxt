@@ -1,6 +1,0 @@
-Hi {{.Item.Username}},
-You requested a password reset. Click the link below to set a new password:
-
-{{.Item.ResetURL}}
-
-This link is valid for 24 hours.

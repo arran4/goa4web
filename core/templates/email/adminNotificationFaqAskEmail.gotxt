@@ -1,6 +1,0 @@
-New FAQ question submitted.
-
-{{.Item.Question}}
-Review it: {{.URL}}
-
-Manage notifications: {{.UnsubscribeUrl}}

@@ -1,4 +1,0 @@
-User {{.Item.Username}} revoked the {{.Item.Permission}} permission.
-
-
-Manage notifications: {{.Item.UnsubURL}}

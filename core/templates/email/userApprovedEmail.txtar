@@ -1,0 +1,19 @@
+-- body.gohtml --
+<!DOCTYPE html>
+<html><body>
+<p>Hello,</p>
+<p>Your account has been approved. You may now <a href="{{.URL}}">log in</a>.</p>
+{{- if .SignOff}}
+<p>{{.SignOffHTML}}</p>
+{{- end}}
+</body></html>
+-- body.gotxt --
+Hello,
+
+Your account has been approved.
+
+{{- if .SignOff}}
+{{.SignOff}}
+{{- end}}
+-- subject.gotxt --
+[{{.SubjectPrefix}}] Account approved

@@ -1,0 +1,13 @@
+-- body.gohtml --
+<p>Moderator {{.Item.Moderator}} banned {{.Item.IP}}.</p>
+{{- if .Item.Reason}}
+<p>Reason: {{.Item.Reason}}</p>
+{{- end}}
+<p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
+-- body.gotxt --
+Moderator {{.Item.Moderator}} banned {{.Item.IP}}.
+{{- if .Item.Reason}} Reason: {{.Item.Reason}}{{- end}}
+
+Manage notifications: {{.UnsubscribeUrl}}
+-- subject.gotxt --
+[{{.SubjectPrefix}}] IP banned

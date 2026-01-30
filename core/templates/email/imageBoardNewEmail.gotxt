@@ -1,6 +1,0 @@
-A new image board "{{.Item.Title.String}}" has been created.
-
-Board link:
-{{.Item.BoardURL}}
-
-Manage notifications: {{.UnsubscribeUrl}}

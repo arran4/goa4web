@@ -1,5 +1,0 @@
-Hi {{.Item.Username}},
-The "{{.Item.Role}}" role has been removed from your account.
-
-
-Manage notifications: {{.Item.UnsubURL}}

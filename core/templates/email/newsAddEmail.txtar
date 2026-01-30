@@ -1,0 +1,18 @@
+-- body.gohtml --
+<p>Hi {{.Item.Username}},</p>
+<p>Your news post has been created.</p>
+
+<p><a href="{{.Item.PostURL}}">View post</a></p>
+<p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
+
+-- body.gotxt --
+Hi {{.Item.Username}},
+Your news post has been created.
+
+View post:
+{{.Item.PostURL}}
+
+Manage notifications: {{.UnsubscribeUrl}}
+
+-- subject.gotxt --
+[{{.SubjectPrefix}}] News post created

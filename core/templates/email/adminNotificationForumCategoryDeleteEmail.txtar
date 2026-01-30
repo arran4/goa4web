@@ -1,0 +1,9 @@
+-- body.gohtml --
+<p>Administrator {{.Item.Username}} deleted the forum category: <strong>{{.Item.Name}}</strong>.</p>
+<p>Manage notifications: <a href="{{.UnsubscribeUrl}}">{{.UnsubscribeUrl}}</a></p>
+-- body.gotxt --
+Administrator {{.Item.Username}} deleted the forum category: {{.Item.Name}}.
+
+Manage notifications: {{.UnsubscribeUrl}}
+-- subject.gotxt --
+[goa4web] Admin: Forum Category Deleted: {{.Item.Name}}

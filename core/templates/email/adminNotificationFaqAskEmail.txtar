@@ -1,0 +1,14 @@
+-- body.gohtml --
+<p>New FAQ question submitted.</p>
+<p>{{.Item.Question}}</p>
+<p><a href="{{.URL}}">Review it</a></p>
+<p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
+-- body.gotxt --
+New FAQ question submitted.
+
+{{.Item.Question}}
+Review it: {{.URL}}
+
+Manage notifications: {{.UnsubscribeUrl}}
+-- subject.gotxt --
+[{{.SubjectPrefix}}] New FAQ question

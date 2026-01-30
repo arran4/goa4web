@@ -1,5 +1,0 @@
-Hi {{.Item.Username}},
-Your FAQ question has been answered.
-
-
-Manage notifications: {{.UnsubscribeUrl}}

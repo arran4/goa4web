@@ -1,7 +1,0 @@
-Hello,
-
-Your account has been approved.
-
-{{- if .SignOff}}
-{{.SignOff}}
-{{- end}}

@@ -1,0 +1,12 @@
+-- body.gohtml --
+<p>Hi {{.Item.Username}},</p>
+<p>Your role has been updated to "{{.Item.Role}}".</p>
+<p><a href="{{.Item.UnsubURL}}">Manage notifications</a></p>
+-- body.gotxt --
+Hi {{.Item.Username}},
+Your role has been updated to "{{.Item.Role}}".
+
+
+Manage notifications: {{.Item.UnsubURL}}
+-- subject.gotxt --
+[{{.SubjectPrefix}}] Role updated

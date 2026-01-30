@@ -1,0 +1,11 @@
+-- body.gohtml --
+<p>Multiple background tasks have failed.</p>
+<p>Latest error: {{.Item.Message}}</p>
+<p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
+-- body.gotxt --
+Multiple background tasks have failed.
+Latest error: {{.Item.Message}}
+
+Manage notifications: {{.UnsubscribeUrl}}
+-- subject.gotxt --
+[{{.SubjectPrefix}}] Multiple task failures

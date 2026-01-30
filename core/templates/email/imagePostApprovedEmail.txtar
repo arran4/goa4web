@@ -1,0 +1,16 @@
+-- body.gohtml --
+<p>Hi {{.Item.Username}},</p>
+<p>Your image post has been approved.</p>
+
+<p><a href="{{.Item.PostURL}}">View post</a></p>
+<p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
+-- body.gotxt --
+Hi {{.Item.Username}},
+Your image post has been approved.
+
+View post:
+{{.Item.PostURL}}
+
+Manage notifications: {{.UnsubscribeUrl}}
+-- subject.gotxt --
+[{{.SubjectPrefix}}] Image post approved

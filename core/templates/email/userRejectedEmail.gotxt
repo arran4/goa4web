@@ -1,7 +1,0 @@
-Hello,
-
-Your account request was rejected.
-Reason: {{.Item.Reason}}
-{{- if .SignOff}}
-{{.SignOff}}
-{{- end}}

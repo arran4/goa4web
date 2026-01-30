@@ -1,0 +1,6 @@
+-- body.gohtml --
+<p>News search index rebuild completed.</p>
+-- body.gotxt --
+News search index rebuild completed.
+-- subject.gotxt --
+[{{.SubjectPrefix}}] News search rebuilt

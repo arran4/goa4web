@@ -1,0 +1,13 @@
+-- body.gohtml --
+<p>User {{.Item.Username}} renamed language {{.Item.LanguageID}} to {{.Item.LanguageName}}.</p>
+
+<p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
+
+-- body.gotxt --
+User {{.Item.Username}} renamed language {{.Item.LanguageID}} to {{.Item.LanguageName}}.
+
+
+Manage notifications: {{.UnsubscribeUrl}}
+
+-- subject.gotxt --
+[{{.SubjectPrefix}}] Language renamed

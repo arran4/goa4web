@@ -1,0 +1,12 @@
+-- body.gohtml --
+<p>Writing {{.Item.Title}} was updated.</p>
+<p><a href="{{.Item.PostURL}}">View article</a></p>
+<p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
+-- body.gotxt --
+Writing "{{.Item.Title}}" was updated.
+View article:
+{{.Item.PostURL}}
+
+Manage notifications: {{.UnsubscribeUrl}}
+-- subject.gotxt --
+[{{.SubjectPrefix}}] Writing updated

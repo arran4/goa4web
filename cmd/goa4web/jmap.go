@@ -134,7 +134,10 @@ func (c *jmapCmd) runTest() error {
 	}
 
 	provider := jmap.NewProvider(ep, cfg.EmailJMAPUser, cfg.EmailJMAPPass, acc, id, cfg.EmailFrom, httpClient)
-
+	jmapProvider, ok := provider.(*jmap.Provider)
+	if !ok {
+		return fmt.Errorf("internal error: failed to assert JMAP provider type")
+	}
 	fmt.Printf("JMAP Provider Configured:\nEndpoint: %s\nUser: %s\nAccountID: %s\nIdentityID: %s\n", ep, cfg.EmailJMAPUser, acc, id)
 
 	targetEmail := cfg.EmailJMAPUser // Send to self
@@ -144,7 +147,7 @@ func (c *jmapCmd) runTest() error {
 	msg := fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s", cfg.EmailFrom, targetEmail, subject, body)
 
 	fmt.Printf("Sending email to %s with subject %q...\n", targetEmail, subject)
-	err := provider.Send(context.Background(), mail.Address{Address: targetEmail}, []byte(msg))
+	err := jmapProvider.Send(context.Background(), mail.Address{Address: targetEmail}, []byte(msg))
 	if err != nil {
 		return fmt.Errorf("failed to send email: %w", err)
 	}
@@ -153,7 +156,7 @@ func (c *jmapCmd) runTest() error {
 	fmt.Println("Waiting for email to arrive...")
 	// Poll for email
 	ctx := context.Background()
-	inboxID, err := provider.GetInboxID(ctx)
+	inboxID, err := jmapProvider.GetInboxID(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get inbox ID: %w", err)
 	}
@@ -161,7 +164,7 @@ func (c *jmapCmd) runTest() error {
 
 	for i := 0; i < 10; i++ {
 		fmt.Printf("Attempt %d/10...\n", i+1)
-		msgIDs, err := provider.QueryInbox(ctx, inboxID, 10)
+		msgIDs, err := jmapProvider.QueryInbox(ctx, inboxID, 10)
 		if err != nil {
 			fmt.Printf("Error querying inbox: %v\n", err)
 			time.Sleep(2 * time.Second)
@@ -169,7 +172,7 @@ func (c *jmapCmd) runTest() error {
 		}
 
 		if len(msgIDs) > 0 {
-			emails, err := provider.GetMessages(ctx, msgIDs)
+			emails, err := jmapProvider.GetMessages(ctx, msgIDs)
 			if err != nil {
 				fmt.Printf("Error getting messages: %v\n", err)
 			} else {
@@ -186,9 +189,9 @@ func (c *jmapCmd) runTest() error {
 		}
 
 		// Fallback check: Check ANY message (debug)
-		allIDs, err := provider.GetAllMessages(ctx, 5)
+		allIDs, err := jmapProvider.GetAllMessages(ctx, 5)
 		if err == nil && len(allIDs) > 0 {
-			allEmails, err := provider.GetMessages(ctx, allIDs)
+			allEmails, err := jmapProvider.GetMessages(ctx, allIDs)
 			if err == nil {
 				fmt.Println("Debug: Recent messages in account (ANY mailbox):")
 				for _, e := range allEmails {

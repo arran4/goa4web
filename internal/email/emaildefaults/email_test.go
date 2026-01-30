@@ -216,11 +216,11 @@ func TestGetEmailProviderJMAP(t *testing.T) {
 		EmailJMAPAccount:  "acct",
 		EmailJMAPIdentity: "id",
 	})
-	j, ok := p.(jmapProv.Provider)
+	j, ok := p.(*jmapProv.Provider)
 	if !ok {
 		t.Fatalf("expected JMAPProvider, got %#v", p)
 	}
-	if j.Endpoint != "http://example.com" || j.AccountID != "acct" || j.Identity != "id" {
+	if j.GetEndpoint() != "http://example.com" || j.GetAccountID() != "acct" || j.GetIdentity() != "id" {
 		t.Errorf("unexpected provider values: %#v", j)
 	}
 }

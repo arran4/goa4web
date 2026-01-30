@@ -29,8 +29,8 @@ type Provider struct {
 	Client    *http.Client
 }
 
-func NewProvider(endpoint, username, password, accountID, identity, from string, client *http.Client) Provider {
-	return Provider{
+func NewProvider(endpoint, username, password, accountID, identity, from string, client *http.Client) email.Provider {
+	return &Provider{
 		Endpoint:  endpoint,
 		Username:  username,
 		Password:  password,
@@ -41,7 +41,7 @@ func NewProvider(endpoint, username, password, accountID, identity, from string,
 	}
 }
 
-func (j Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []byte) error {
+func (j *Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []byte) error {
 	var msg bytes.Buffer
 	msg.Write(rawEmailMessage)
 
@@ -162,7 +162,7 @@ func (j Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []b
 	return nil
 }
 
-func (j Provider) TestConfig(ctx context.Context) error {
+func (j *Provider) TestConfig(ctx context.Context) error {
 	fmt.Printf("Performing JMAP discovery for endpoint: %s\n", j.Endpoint)
 	session, err := DiscoverSession(ctx, j.Client, j.Endpoint, j.Username, j.Password)
 	if err != nil {
@@ -181,81 +181,111 @@ func (j Provider) TestConfig(ctx context.Context) error {
 	return nil
 }
 
-func providerFromConfig(cfg *config.RuntimeConfig) (email.Provider, error) {
-	// If an override is provided, use it. Otherwise, use the standard endpoint.
+func getJmapEndpoint(cfg *config.RuntimeConfig) (string, error) {
 	ep := strings.TrimSpace(cfg.EmailJMAPEndpointOverride)
 	if ep == "" {
 		ep = strings.TrimSpace(cfg.EmailJMAPEndpoint)
 	}
 	if ep == "" {
-		return nil, fmt.Errorf("Email disabled: %s or %s not set",
+		return "", fmt.Errorf("email disabled: %s or %s not set",
 			config.EnvJMAPEndpoint, config.EnvJMAPEndpointOverride)
 	}
-	acc := strings.TrimSpace(cfg.EmailJMAPAccount)
-	id := strings.TrimSpace(cfg.EmailJMAPIdentity)
-
-	httpClient := http.DefaultClient
+	return ep, nil
+}
+func createHttpClient(cfg *config.RuntimeConfig) *http.Client {
 	if cfg.EmailJMAPInsecure {
 		tr := http.DefaultTransport.(*http.Transport).Clone()
 		tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-		httpClient = &http.Client{Transport: tr}
+		return &http.Client{Transport: tr}
+	}
+	return http.DefaultClient
+}
+
+type jmapDiscoverSettings struct {
+	acc      string
+	id       string
+	endpoint string
+}
+
+func discoverJmapSettings(cfg *config.RuntimeConfig, httpClient *http.Client, ep string) (*jmapDiscoverSettings, error) {
+	var session *SessionResponse
+	var err error
+	for i := 0; i < 5; i++ {
+		session, err = DiscoverSession(context.Background(), httpClient, ep, cfg.EmailJMAPUser, cfg.EmailJMAPPass)
+		if err == nil {
+			break
+		}
+		fmt.Printf("JMAP discovery attempt %d failed: %v\n", i+1, err)
+		if i < 4 {
+			time.Sleep(2 * time.Second)
+		}
+	}
+	if err != nil {
+		return nil, fmt.Errorf("email disabled: failed to discover JMAP session: %v", err)
 	}
 
-	if acc == "" || id == "" {
-		var session *SessionResponse
-		var err error
-		// Retry JMAP session discovery as it might be flaky on startup (e.g. 500 errors)
-		for i := 0; i < 5; i++ {
-			session, err = DiscoverSession(context.Background(), httpClient, ep, cfg.EmailJMAPUser, cfg.EmailJMAPPass)
-			if err == nil {
-				break
-			}
-			fmt.Printf("JMAP discovery attempt %d failed: %v\n", i+1, err)
-			// Only sleep if we are going to retry
-			if i < 4 {
-				time.Sleep(2 * time.Second)
-			}
+	acc := SelectAccountID(session)
+	id := SelectIdentityID(session)
+
+	if strings.TrimSpace(cfg.EmailJMAPEndpointOverride) == "" && session.APIURL != "" {
+		ep = session.APIURL
+	}
+
+	if id == "" && acc != "" {
+		fetchedID, err := DiscoverIdentityID(context.Background(), httpClient, ep, cfg.EmailJMAPUser, cfg.EmailJMAPPass, acc)
+		if err == nil && fetchedID != "" {
+			id = fetchedID
 		}
+	}
+	return &jmapDiscoverSettings{
+		acc:      acc,
+		id:       id,
+		endpoint: ep,
+	}, nil
+}
+
+func providerFromConfig(cfg *config.RuntimeConfig) (email.Provider, error) {
+	ep, err := getJmapEndpoint(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	httpClient := createHttpClient(cfg)
+
+	acc := strings.TrimSpace(cfg.EmailJMAPAccount)
+	id := strings.TrimSpace(cfg.EmailJMAPIdentity)
+
+	if acc == "" || id == "" {
+		settings, err := discoverJmapSettings(cfg, httpClient, ep)
 		if err != nil {
-			return nil, fmt.Errorf("Email disabled: failed to discover JMAP session: %v", err)
+			return nil, err
 		}
 		if acc == "" {
-			acc = SelectAccountID(session)
+			acc = settings.acc
 		}
 		if id == "" {
-			id = SelectIdentityID(session)
+			id = settings.id
 		}
-
-		// If no override was provided, the discovered API URL is authoritative.
-		// If an override was used, 'ep' is already set to it and we stick with it.
-		if strings.TrimSpace(cfg.EmailJMAPEndpointOverride) == "" && session.APIURL != "" {
-			ep = session.APIURL
-		}
-
-		// The API URL for the next call is our determined endpoint.
-		apiURL := ep
-
-		if id == "" && acc != "" {
-			// Try to fetch identities via API
-			fetchedId, err := DiscoverIdentityID(context.Background(), httpClient, apiURL, cfg.EmailJMAPUser, cfg.EmailJMAPPass, acc)
-			if err == nil && fetchedId != "" {
-				id = fetchedId
-			}
-		}
+		ep = settings.endpoint
 	}
 
 	if acc == "" || id == "" {
-		return nil, fmt.Errorf("Email disabled: %s or %s not set and could not be discovered", config.EnvJMAPAccount, config.EnvJMAPIdentity)
+		return nil, fmt.Errorf("email disabled: %s or %s not set and could not be discovered", config.EnvJMAPAccount, config.EnvJMAPIdentity)
 	}
-	return Provider{
-		Endpoint:  ep,
-		Username:  cfg.EmailJMAPUser,
-		Password:  cfg.EmailJMAPPass,
-		AccountID: acc,
-		Identity:  id,
-		From:      cfg.EmailFrom,
-		Client:    httpClient,
-	}, nil
+
+	return NewProvider(ep, cfg.EmailJMAPUser, cfg.EmailJMAPPass, acc, id, cfg.EmailFrom, httpClient), nil
+}
+
+func (p *Provider) GetAccountID() string {
+	return p.AccountID
+}
+
+func (p *Provider) GetIdentity() string {
+	return p.Identity
+}
+
+func (p *Provider) GetEndpoint() string {
+	return p.Endpoint
 }
 
 // Register registers the JMAP provider.
@@ -449,7 +479,7 @@ type EmailHeader struct {
 	ReceivedAt string `json:"receivedAt"`
 }
 
-func (j Provider) GetInboxID(ctx context.Context) (string, error) {
+func (j *Provider) GetInboxID(ctx context.Context) (string, error) {
 	payload := map[string]interface{}{
 		"using": []string{coreCapabilityURN, mailCapabilityURN},
 		"methodCalls": [][]interface{}{
@@ -466,7 +496,7 @@ func (j Provider) GetInboxID(ctx context.Context) (string, error) {
 	return j.extractIDFromResponse(ctx, payload, "Mailbox/query")
 }
 
-func (j Provider) QueryInbox(ctx context.Context, inboxID string, limit int) ([]string, error) {
+func (j *Provider) QueryInbox(ctx context.Context, inboxID string, limit int) ([]string, error) {
 	payload := map[string]interface{}{
 		"using": []string{coreCapabilityURN, mailCapabilityURN},
 		"methodCalls": [][]interface{}{
@@ -485,7 +515,7 @@ func (j Provider) QueryInbox(ctx context.Context, inboxID string, limit int) ([]
 	return j.extractIDsFromResponse(ctx, payload, "Email/query")
 }
 
-func (j Provider) GetMessages(ctx context.Context, ids []string) ([]EmailHeader, error) {
+func (j *Provider) GetMessages(ctx context.Context, ids []string) ([]EmailHeader, error) {
 	payload := map[string]interface{}{
 		"using": []string{coreCapabilityURN, mailCapabilityURN},
 		"methodCalls": [][]interface{}{
@@ -538,7 +568,7 @@ func (j Provider) GetMessages(ctx context.Context, ids []string) ([]EmailHeader,
 	return nil, nil
 }
 
-func (j Provider) GetAllMessages(ctx context.Context, limit int) ([]string, error) {
+func (j *Provider) GetAllMessages(ctx context.Context, limit int) ([]string, error) {
 	payload := map[string]interface{}{
 		"using": []string{coreCapabilityURN, mailCapabilityURN},
 		"methodCalls": [][]interface{}{
@@ -556,7 +586,7 @@ func (j Provider) GetAllMessages(ctx context.Context, limit int) ([]string, erro
 	return j.extractIDsFromResponse(ctx, payload, "Email/query")
 }
 
-func (j Provider) getBestMailboxID(ctx context.Context) (string, error) {
+func (j *Provider) getBestMailboxID(ctx context.Context) (string, error) {
 	for _, role := range []string{"drafts", "outbox", "sent", "inbox"} {
 		id, err := j.getMailboxIDByRole(ctx, role)
 		if err == nil && id != "" {
@@ -567,7 +597,7 @@ func (j Provider) getBestMailboxID(ctx context.Context) (string, error) {
 	return j.getAnyMailboxID(ctx)
 }
 
-func (j Provider) getMailboxIDByRole(ctx context.Context, role string) (string, error) {
+func (j *Provider) getMailboxIDByRole(ctx context.Context, role string) (string, error) {
 	payload := map[string]interface{}{
 		"using": []string{coreCapabilityURN, mailCapabilityURN},
 		"methodCalls": [][]interface{}{
@@ -585,7 +615,7 @@ func (j Provider) getMailboxIDByRole(ctx context.Context, role string) (string, 
 	return j.extractIDFromResponse(ctx, payload, "Mailbox/query")
 }
 
-func (j Provider) getAnyMailboxID(ctx context.Context) (string, error) {
+func (j *Provider) getAnyMailboxID(ctx context.Context) (string, error) {
 	payload := map[string]interface{}{
 		"using": []string{coreCapabilityURN, mailCapabilityURN},
 		"methodCalls": [][]interface{}{
@@ -602,7 +632,7 @@ func (j Provider) getAnyMailboxID(ctx context.Context) (string, error) {
 	return j.extractIDFromResponse(ctx, payload, "Mailbox/query")
 }
 
-func (j Provider) extractIDFromResponse(ctx context.Context, payload interface{}, methodName string) (string, error) {
+func (j *Provider) extractIDFromResponse(ctx context.Context, payload interface{}, methodName string) (string, error) {
 	ids, err := j.extractIDsFromResponse(ctx, payload, methodName)
 	if err != nil {
 		return "", err
@@ -613,7 +643,7 @@ func (j Provider) extractIDFromResponse(ctx context.Context, payload interface{}
 	return "", nil
 }
 
-func (j Provider) extractIDsFromResponse(ctx context.Context, payload interface{}, methodName string) ([]string, error) {
+func (j *Provider) extractIDsFromResponse(ctx context.Context, payload interface{}, methodName string) ([]string, error) {
 	resp, err := j.doCall(ctx, payload)
 	if err != nil {
 		return nil, err
@@ -647,7 +677,7 @@ func (j Provider) extractIDsFromResponse(ctx context.Context, payload interface{
 	return nil, nil
 }
 
-func (j Provider) doCall(ctx context.Context, payload interface{}) (*http.Response, error) {
+func (j *Provider) doCall(ctx context.Context, payload interface{}) (*http.Response, error) {
 	buf, err := json.Marshal(payload)
 	if err != nil {
 		return nil, err

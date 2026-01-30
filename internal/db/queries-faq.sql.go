@@ -127,7 +127,7 @@ SELECT c.id, c.parent_category_id, c.language_id, c.name, COUNT(f.id) AS Questio
 FROM faq_categories c
 LEFT JOIN faq f ON f.category_id = c.id
 WHERE c.deleted_at IS NULL
-GROUP BY c.id
+GROUP BY c.id, c.parent_category_id, c.language_id, c.name
 `
 
 type AdminGetFAQCategoriesWithQuestionCountRow struct {
@@ -188,7 +188,7 @@ SELECT c.id, c.parent_category_id, c.language_id, c.name, COUNT(f.id) AS Questio
 FROM faq_categories c
 LEFT JOIN faq f ON f.category_id = c.id
 WHERE c.id = ?
-GROUP BY c.id
+GROUP BY c.id, c.parent_category_id, c.language_id, c.name
 `
 
 type AdminGetFAQCategoryWithQuestionCountByIDRow struct {

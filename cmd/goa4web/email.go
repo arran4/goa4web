@@ -31,6 +31,12 @@ func (c *emailCmd) Run() error {
 		return err
 	}
 	switch args[0] {
+	case "failed":
+		cmd, err := parseEmailFailedCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("failed: %w", err)
+		}
+		return cmd.Run()
 	case "queue":
 		cmd, err := parseEmailQueueCmd(c, args[1:])
 		if err != nil {

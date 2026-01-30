@@ -1,0 +1,30 @@
+    {{ template "head" $ }}
+    <h2>Config Export</h2>
+    <p>Generate configuration output in formats that match the CLI tools.</p>
+
+    <form method="GET" action="/admin/config/as-cli" style="margin-bottom: 1.5em;">
+        <fieldset style="border: 1px solid #ddd; padding: 1em; border-radius: 4px;">
+            <legend><strong>Output format</strong></legend>
+            {{ range $format := .Formats }}
+            <div style="margin-bottom: 1em;">
+                <label style="display: block; margin-bottom: 0.4em;">
+                    <input type="radio" name="format" value="{{ $format.ID }}" {{ if eq $.Format $format.ID }}checked{{ end }}>
+                    <strong>{{ $format.Label }}</strong> — {{ $format.Description }}
+                </label>
+                <div style="display: flex; gap: 0.5em; max-width: 560px; align-items: center;">
+                    <input type="text" class="config-command-input" value="{{ $format.Command }}" readonly style="flex: 1; padding: 0.4em;">
+                    <button type="button" class="copy-config-command" data-copy="{{ $format.Command }}">Copy</button>
+                </div>
+            </div>
+            {{ end }}
+            <label style="display: block; margin-bottom: 0.8em;">
+                <input type="checkbox" name="extended" value="on" {{ if .Extended }}checked{{ end }}>
+                Include extended usage (only affects dotenv output)
+            </label>
+            <button type="submit">Update</button>
+        </fieldset>
+    </form>
+
+    <h3>Output</h3>
+    <pre style="white-space: pre-wrap; border: 1px solid #ddd; padding: 1em; border-radius: 4px;">{{ .Output }}</pre>
+    {{ template "tail" $ }}

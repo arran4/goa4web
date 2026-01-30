@@ -63,6 +63,12 @@ func (c *configOptionsCmd) Run() error {
 	return executeUsage(bytes.NewBuffer(nil), "config_options.txt", c)
 }
 
+func defaultMap() map[string]string {
+	def := config.NewRuntimeConfig()
+	m, _ := config.ToEnvMap(def, "")
+	return m
+}
+
 func (c *configOptionsCmd) FlagGroups() []flagGroup {
 	return []flagGroup{{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)}}
 }

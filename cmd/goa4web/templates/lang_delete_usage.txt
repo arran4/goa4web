@@ -1,0 +1,8 @@
+Usage:
+  {{.Prog}} lang delete -id <id> -confirm
+
+Flags:
+  -confirm   confirm deletion
+  -id int    language id
+
+{{template "flag_groups_section" .FlagGroups}}

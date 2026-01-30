@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
-	"sort"
+	"path/filepath"
 	"strings"
 
 	"github.com/arran4/goa4web/handlers"
@@ -22,7 +22,12 @@ type ApplySubscriptionTemplateTask struct {
 var _ tasks.Task = (*ApplySubscriptionTemplateTask)(nil)
 
 func (t *ApplySubscriptionTemplateTask) Action(w http.ResponseWriter, r *http.Request) any {
-	if err := r.ParseForm(); err != nil {
+	contentType := r.Header.Get("Content-Type")
+	if strings.HasPrefix(contentType, "multipart/form-data") {
+		if err := r.ParseMultipartForm(maxSubscriptionTemplateUploadBytes); err != nil {
+			return fmt.Errorf("parse multipart form: %w", handlers.ErrRedirectOnSamePageHandler(err))
+		}
+	} else if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form: %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
@@ -32,36 +37,41 @@ func (t *ApplySubscriptionTemplateTask) Action(w http.ResponseWriter, r *http.Re
 	}
 	templateName := strings.TrimSpace(r.PostFormValue("template"))
 	if templateName == "" {
-		return handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("template is required"))
+		templateName = strings.TrimSpace(r.PostFormValue("template_name"))
 	}
 
-	content, err := subscriptiontemplates.GetEmbeddedTemplate(templateName)
-	if err != nil {
-		return handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("template %q not found", templateName))
-	}
-
-	patterns := subscriptiontemplates.ParseTemplatePatterns(string(content))
-	if len(patterns) == 0 {
-		return handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("template %q has no patterns", templateName))
-	}
-
-	seen := make(map[string]struct{}, len(patterns))
-	dupes := map[string]struct{}{}
-	for _, entry := range patterns {
-		key := entry.Method + "\x00" + entry.Pattern
-		if _, ok := seen[key]; ok {
-			dupes[entry.Method+" "+entry.Pattern] = struct{}{}
-			continue
+	templateContent := strings.TrimSpace(r.PostFormValue("template_content"))
+	var content string
+	switch {
+	case templateContent != "":
+		content = templateContent
+	default:
+		file, header, err := r.FormFile("template_file")
+		if err == nil {
+			content, err = readSubscriptionTemplateFile(file)
+			if err != nil {
+				return handlers.ErrRedirectOnSamePageHandler(err)
+			}
+			if templateName == "" && header != nil {
+				templateName = strings.TrimSuffix(header.Filename, filepath.Ext(header.Filename))
+			}
 		}
-		seen[key] = struct{}{}
-	}
-	if len(dupes) > 0 {
-		entries := make([]string, 0, len(dupes))
-		for entry := range dupes {
-			entries = append(entries, entry)
+		if content == "" {
+			embedded, err := subscriptiontemplates.GetEmbeddedTemplate(templateName)
+			if err != nil {
+				return handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("template %q not found", templateName))
+			}
+			content = string(embedded)
 		}
-		sort.Strings(entries)
-		return handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("duplicate patterns: %s", strings.Join(entries, ", ")))
+	}
+
+	if templateName == "" {
+		return handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("template name is required"))
+	}
+
+	patterns := subscriptiontemplates.ParseTemplatePatterns(content)
+	if err := validateSubscriptionTemplatePatterns(patterns); err != nil {
+		return handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("template %q %s", templateName, err.Error()))
 	}
 
 	if t.DBPool == nil {

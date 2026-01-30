@@ -1,0 +1,15 @@
+Usage:
+  {{.Prog}} dlq <command> [<args>]
+
+Commands:
+  list     list dead letter queue entries
+  delete   delete dead letter queue entries
+  purge    purge dead letter queue entries before a date
+
+Examples:
+  {{.Prog}} dlq list
+  {{.Prog}} dlq list --limit 25
+  {{.Prog}} dlq delete -id 12
+  {{.Prog}} dlq purge --before 2024-01-01
+
+{{template "flag_groups_section" .FlagGroups}}

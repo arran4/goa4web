@@ -40,6 +40,7 @@ func (h *Handlers) RegisterTasks() []tasks.NamedTask {
 		restoreCommentTask,
 		userForcePasswordChangeTask,
 		userSendResetEmailTask,
+		h.NewDBSeedTask(),
 		roleGrantCreateTask,
 		roleGrantDeleteTask,
 		userGrantCreateTask,
@@ -47,6 +48,8 @@ func (h *Handlers) RegisterTasks() []tasks.NamedTask {
 		imageCacheListTask,
 		imageCachePruneTask,
 		imageCacheDeleteTask,
+		dbBackupTask,
+		dbRestoreTask,
 		h.NewServerShutdownTask(),
 	}
 }

@@ -31,6 +31,12 @@ func (c *emailCmd) Run() error {
 		return err
 	}
 	switch args[0] {
+	case "failed":
+		cmd, err := parseEmailFailedCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("failed: %w", err)
+		}
+		return cmd.Run()
 	case "queue":
 		cmd, err := parseEmailQueueCmd(c, args[1:])
 		if err != nil {
@@ -47,6 +53,18 @@ func (c *emailCmd) Run() error {
 		cmd, err := parseEmailTestCmd(c, args[1:])
 		if err != nil {
 			return fmt.Errorf("test: %w", err)
+		}
+		return cmd.Run()
+	case "template":
+		cmd, err := parseEmailTemplateCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("template: %w", err)
+		}
+		return cmd.Run()
+	case "sent":
+		cmd, err := parseEmailSentCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("sent: %w", err)
 		}
 		return cmd.Run()
 	default:

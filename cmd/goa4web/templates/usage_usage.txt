@@ -1,0 +1,13 @@
+Usage:
+  {{.Prog}} usage <command> [<args>]
+
+The usage command provides reporting tools for site activity statistics.
+
+Commands:
+  stats   Report usage statistics, optionally scoped to a reporting window.
+
+Examples:
+  {{.Prog}} usage stats
+  {{.Prog}} usage stats --format json
+
+{{template "flag_groups_section" .FlagGroups}}

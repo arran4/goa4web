@@ -131,7 +131,7 @@ func CheckUploadDir(cfg *config.RuntimeConfig) *common.UserError {
 
 // EnsureSchema creates core tables if they do not exist and inserts a version row.
 func EnsureSchema(ctx context.Context, db *sql.DB) error {
-	version, err := ensureVersionTable(ctx, db)
+	version, err := SchemaVersion(ctx, db)
 	if err != nil {
 		return err
 	}

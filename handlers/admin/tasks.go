@@ -87,6 +87,12 @@ const (
 	// TaskDeactivate moves an item to the deactivated store.
 	TaskDeactivate tasks.TaskString = "Deactivate"
 
+	// TaskDBBackup creates and downloads a database backup.
+	TaskDBBackup tasks.TaskString = "Database backup"
+
+	// TaskDBRestore restores the database from a backup.
+	TaskDBRestore tasks.TaskString = "Database restore"
+
 	// TaskActivate restores a previously deactivated item.
 	TaskActivate tasks.TaskString = "Activate"
 
@@ -107,6 +113,9 @@ const (
 
 	// TaskEditReply edits a comment or reply.
 	TaskEditReply tasks.TaskString = "Edit Reply"
+
+	// TaskExportTemplates exports embedded templates.
+	TaskExportTemplates tasks.TaskString = "Export Templates"
 
 	// TaskForumCategoryChange updates the name of a forum category.
 	TaskForumCategoryChange tasks.TaskString = "Forum category change"

@@ -1,0 +1,8 @@
+Usage:
+  {{.Prog}} lang add -code <code> -name <name>
+
+Flags:
+  -code string   language code
+  -name string   language name
+
+{{template "flag_groups_section" .FlagGroups}}

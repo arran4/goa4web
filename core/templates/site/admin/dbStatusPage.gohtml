@@ -1,0 +1,35 @@
+{{ template "head" $ }}
+<h1>Database Status</h1>
+<table class="table table-bordered">
+    <tr>
+        <th>Current schema version</th>
+        <td>{{ .CurrentVersion }}</td>
+    </tr>
+    <tr>
+        <th>Expected schema version</th>
+        <td>{{ .ExpectedVersion }}</td>
+    </tr>
+    <tr>
+        <th>Status</th>
+        <td>{{ if .VersionMatches }}Up to date{{ else }}Mismatch{{ end }}</td>
+    </tr>
+</table>
+{{ if not .VersionMatches }}
+<p>Run database migrations to align the schema version with the expected value.</p>
+{{ end }}
+<h2>Seed Data</h2>
+{{ if .SeedAllowed }}
+<form method="post" action="/admin/db/status" onsubmit="return confirm('Apply seed data to the database?');">
+    <input type="hidden" name="task" value="{{ .SeedTask }}">
+    <label>
+        <input type="checkbox" name="confirm" value="yes" required>
+        I understand this will apply seed data to the database.
+    </label>
+    <div>
+        <input type="submit" value="Apply Seed Data">
+    </div>
+</form>
+{{ else }}
+<p>Seeding is not available for this deployment.</p>
+{{ end }}
+{{ template "tail" $ }}

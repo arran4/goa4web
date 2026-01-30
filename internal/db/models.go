@@ -237,6 +237,7 @@ type Faq struct {
 	Answer     sql.NullString
 	Question   sql.NullString
 	Priority   int32
+	DeletedAt  sql.NullTime
 }
 
 type FaqCategory struct {
@@ -244,6 +245,7 @@ type FaqCategory struct {
 	ParentCategoryID sql.NullInt32
 	LanguageID       sql.NullInt32
 	Name             sql.NullString
+	DeletedAt        sql.NullTime
 }
 
 type FaqRevision struct {
@@ -262,6 +264,7 @@ type Forumcategory struct {
 	LanguageID                   sql.NullInt32
 	Title                        sql.NullString
 	Description                  sql.NullString
+	DeletedAt                    sql.NullTime
 }
 
 type Forumthread struct {
@@ -272,6 +275,7 @@ type Forumthread struct {
 	Comments               sql.NullInt32
 	Lastaddition           sql.NullTime
 	Locked                 sql.NullBool
+	DeletedAt              sql.NullTime
 }
 
 type Forumtopic struct {
@@ -285,6 +289,7 @@ type Forumtopic struct {
 	Comments                     sql.NullInt32
 	Lastaddition                 sql.NullTime
 	Handler                      string
+	DeletedAt                    sql.NullTime
 }
 
 type Grant struct {
@@ -491,6 +496,7 @@ type SiteNews struct {
 	Occurred      sql.NullTime
 	Timezone      sql.NullString
 	LastIndex     sql.NullTime
+	DeletedAt     sql.NullTime
 }
 
 type SiteNewsSearch struct {

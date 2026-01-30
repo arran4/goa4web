@@ -44,6 +44,18 @@ func (c *notificationsCmd) Run() error {
 			return fmt.Errorf("mark: %w", err)
 		}
 		return cmd.Run()
+	case "purge-read":
+		cmd, err := parseNotificationsPurgeReadCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("purge-read: %w", err)
+		}
+		return cmd.Run()
+	case "purge-selected":
+		cmd, err := parseNotificationsPurgeSelectedCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("purge-selected: %w", err)
+		}
+		return cmd.Run()
 	case "tasks":
 		cmd, err := parseNotificationsTasksCmd(c, args[1:])
 		if err != nil {

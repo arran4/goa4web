@@ -285,10 +285,23 @@ func (r *rootCmd) Run() error {
 		return fmt.Errorf("no command provided")
 	}
 	switch args[0] {
-	case "help", "usage":
+	case "help":
 		c, err := parseHelpCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("rootCmd.Run: help: %w", err)
+		}
+		return c.Run()
+	case "usage":
+		if len(args) > 1 {
+			c, err := parseUsageCmd(r, args[1:])
+			if err != nil {
+				return fmt.Errorf("rootCmd.Run: usage: %w", err)
+			}
+			return c.Run()
+		}
+		c, err := parseHelpCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("rootCmd.Run: usage: %w", err)
 		}
 		return c.Run()
 	case "serve":
@@ -307,6 +320,12 @@ func (r *rootCmd) Run() error {
 		c, err := parseEmailCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("rootCmd.Run: email: %w", err)
+		}
+		return c.Run()
+	case "dlq":
+		c, err := parseDlqCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("rootCmd.Run: dlq: %w", err)
 		}
 		return c.Run()
 	case "requests":

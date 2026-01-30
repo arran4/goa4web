@@ -1,13 +1,10 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
-	"sort"
-	"strings"
 
-	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/internal/configformat"
 )
 
 // configAsCmd implements "config as-*" commands.
@@ -19,131 +16,49 @@ type configAsCmd struct {
 
 func parseConfigAsCmd(parent *configCmd, name string, args []string) (*configAsCmd, error) {
 	c := &configAsCmd{configCmd: parent}
-	c.fs = newFlagSet(name)
-	c.fs.BoolVar(&c.extended, "extended", false, "include extended usage")
-	if err := c.fs.Parse(args); err != nil {
+	fs := newFlagSet(name)
+	opts, err := configformat.ParseAsFlags(fs, args)
+	if err != nil {
 		return nil, err
 	}
+	c.fs = fs
+	c.extended = opts.Extended
 
 	return c, nil
 }
 
-func defaultMap() map[string]string {
-	def := config.NewRuntimeConfig()
-	m, _ := config.ToEnvMap(def, "")
-	return m
-}
-
 func (c *configAsCmd) asEnvFile() error {
-	current, err := config.ToEnvMap(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	out, err := configformat.FormatAsEnvFile(c.rootCmd.cfg, c.rootCmd.ConfigFile, c.rootCmd.dbReg, configformat.AsOptions{Extended: c.extended})
 	if err != nil {
-		return fmt.Errorf("env map: %w", err)
+		return err
 	}
-	def := defaultMap()
-	keys := make([]string, 0, len(current))
-	for k := range current {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	usage := config.UsageMap()
-	ext := config.ExtendedUsageMap(c.rootCmd.dbReg)
-	ex := config.ExamplesMap()
-	for _, k := range keys {
-		u := usage[k]
-		d := def[k]
-		line := "# "
-		if u != "" {
-			line += fmt.Sprintf("%s (default: %s)", u, d)
-		} else {
-			line += fmt.Sprintf("default: %s", d)
-		}
-		if xs := ex[k]; len(xs) > 0 {
-			line += fmt.Sprintf(" (examples: %s)", strings.Join(xs, ", "))
-		}
-		fmt.Println(line)
-		if c.extended {
-			if e := ext[k]; e != "" {
-				for _, line := range strings.Split(strings.TrimSuffix(e, "\n"), "\n") {
-					fmt.Printf("# %s\n", line)
-				}
-			}
-		}
-		fmt.Printf("%s=%s\n", k, current[k])
-	}
+	fmt.Print(out)
 	return nil
 }
 
 func (c *configAsCmd) asEnv() error {
-	current, err := config.ToEnvMap(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	out, err := configformat.FormatAsEnv(c.rootCmd.cfg, c.rootCmd.ConfigFile, c.rootCmd.dbReg, configformat.AsOptions{Extended: c.extended})
 	if err != nil {
-		return fmt.Errorf("env map: %w", err)
+		return err
 	}
-	def := defaultMap()
-	keys := make([]string, 0, len(current))
-	for k := range current {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	usage := config.UsageMap()
-	ext := config.ExtendedUsageMap(c.rootCmd.dbReg)
-	ex := config.ExamplesMap()
-	for _, k := range keys {
-		u := usage[k]
-		d := def[k]
-		line := "# "
-		if u != "" {
-			line += fmt.Sprintf("%s (default: %s)", u, d)
-		} else {
-			line += fmt.Sprintf("default: %s", d)
-		}
-		if xs := ex[k]; len(xs) > 0 {
-			line += fmt.Sprintf(" (examples: %s)", strings.Join(xs, ", "))
-		}
-		fmt.Println(line)
-		if c.extended {
-			if e := ext[k]; e != "" {
-				for _, line := range strings.Split(strings.TrimSuffix(e, "\n"), "\n") {
-					fmt.Printf("# %s\n", line)
-				}
-			}
-		}
-		fmt.Printf("export %s=%s\n", k, current[k])
-	}
+	fmt.Print(out)
 	return nil
 }
 
 func (c *configAsCmd) asJSON() error {
-	m, err := config.ToEnvMap(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	out, err := configformat.FormatAsJSON(c.rootCmd.cfg, c.rootCmd.ConfigFile)
 	if err != nil {
-		return fmt.Errorf("env map: %w", err)
+		return err
 	}
-	b, err := json.MarshalIndent(m, "", "  ")
-	if err != nil {
-		return fmt.Errorf("marshal: %w", err)
-	}
-	fmt.Println(string(b))
+	fmt.Print(out)
 	return nil
 }
 
 func (c *configAsCmd) asCLI() error {
-	current, err := config.ToEnvMap(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	out, err := configformat.FormatAsCLI(c.rootCmd.cfg, c.rootCmd.ConfigFile)
 	if err != nil {
-		return fmt.Errorf("env map: %w", err)
+		return err
 	}
-	def := defaultMap()
-	var parts []string
-	nameMap := config.NameMap()
-	for env, val := range current {
-		if def[env] == val {
-			continue
-		}
-		n := nameMap[env]
-		if n == "" {
-			continue
-		}
-		parts = append(parts, fmt.Sprintf("--%s=%s", n, val))
-	}
-	sort.Strings(parts)
-	fmt.Println(strings.Join(parts, " "))
+	fmt.Print(out)
 	return nil
 }

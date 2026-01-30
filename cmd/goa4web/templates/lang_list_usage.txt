@@ -1,0 +1,4 @@
+Usage:
+  {{.Prog}} lang list
+
+{{template "flag_groups_section" .FlagGroups}}

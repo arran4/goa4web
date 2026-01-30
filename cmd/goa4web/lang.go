@@ -49,6 +49,12 @@ func (c *langCmd) Run() error {
 			return fmt.Errorf("update: %w", err)
 		}
 		return cmd.Run()
+	case "delete":
+		cmd, err := parseLangDeleteCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("delete: %w", err)
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown lang command %q", args[0])

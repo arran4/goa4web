@@ -314,6 +314,9 @@ const (
 	// TaskRoleGrantCreate adds a grant to a role.
 	TaskRoleGrantCreate tasks.TaskString = "Create grant"
 
+	// TaskGrantBulkCreate adds grants to multiple users or roles at once.
+	TaskGrantBulkCreate tasks.TaskString = "Create grants"
+
 	// TaskRoleGrantDelete removes a grant from a role.
 	TaskRoleGrantDelete tasks.TaskString = "Delete grant"
 

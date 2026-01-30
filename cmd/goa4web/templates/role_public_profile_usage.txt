@@ -1,0 +1,11 @@
+Usage: {{.Prog}} role public-profile <subcommand> [flags]
+
+Subcommands:
+  set  Enables or disables public profile access for a role.
+
+Examples:
+  # Enable public profiles for the "user" role
+  {{.Prog}} role public-profile set -role user -enabled
+
+  # Disable public profiles for the "user" role
+  {{.Prog}} role public-profile set -role user -enabled=false

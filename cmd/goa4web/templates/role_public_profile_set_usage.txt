@@ -1,0 +1,12 @@
+Usage: {{.Prog}} role public-profile set -role <role-name> -enabled[=true|false]
+
+Flags:
+  -role     The role name to update.
+  -enabled  Whether to enable public profiles for the role.
+
+Examples:
+  # Enable public profiles for the "user" role
+  {{.Prog}} role public-profile set -role user -enabled
+
+  # Disable public profiles for the "moderator" role
+  {{.Prog}} role public-profile set -role moderator -enabled=false

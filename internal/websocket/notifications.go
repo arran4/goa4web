@@ -3,11 +3,12 @@ package websocket
 import (
 	"encoding/json"
 	"fmt"
-	corecommon "github.com/arran4/goa4web/core/common"
 	"log"
 	"net/http"
 	"net/url"
 	"strings"
+
+	corecommon "github.com/arran4/goa4web/core/common"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"

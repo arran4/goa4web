@@ -20,7 +20,6 @@ func RegisterRoutes(r *mux.Router, reg *Registry, cfg *config.RuntimeConfig, nav
 	r.HandleFunc("/static/a4code.js", handlers.A4CodeJS(cfg)).Methods("GET")
 
 	reg.InitModules(r, cfg, navReg)
-
 }
 
 // RoleCheckerMiddleware ensures the user has one of the supplied roles.

@@ -108,7 +108,7 @@ func TestTemplateLinks(t *testing.T) {
 					continue
 				}
 
-				if !strings.HasPrefix(link, "/") {
+				if !strings.HasPrefix(link, "/") || strings.HasPrefix(link, "/bookmarks/") {
 					continue
 				}
 

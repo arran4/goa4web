@@ -1,8 +1,9 @@
 package linker
 
 import (
-	"github.com/arran4/goa4web/handlers/forum/comments"
 	"net/http"
+
+	"github.com/arran4/goa4web/handlers/forum/comments"
 
 	"github.com/arran4/goa4web/handlers"
 	"github.com/gorilla/mux"

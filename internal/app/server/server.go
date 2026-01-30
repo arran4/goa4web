@@ -290,6 +290,7 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 		common.WithFeedSignKey(s.FeedSignKey),
 		common.WithSession(session),
 		common.WithEmailProvider(provider),
+		common.WithDB(s.DB),
 		common.WithAbsoluteURLBase(base),
 		common.WithSessionManager(sm),
 		common.WithNavRegistry(s.Nav),

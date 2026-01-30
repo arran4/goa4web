@@ -1,0 +1,14 @@
+Usage:
+  {{.Prog}} dlq list [flags]
+
+Flags:
+  --offset  number of entries to skip per provider
+  --limit   max entries to return per provider
+  --json    machine-readable JSON output
+
+Examples:
+  {{.Prog}} dlq list
+  {{.Prog}} dlq list --offset 50 --limit 25
+  {{.Prog}} dlq list --json
+
+{{template "flag_groups_section" .FlagGroups}}

@@ -1,0 +1,13 @@
+Usage:
+  {{.Prog}} dlq delete [flags]
+
+Flags:
+  --id    dead letter ID to delete
+  --ids   comma-separated list of dead letter IDs to delete
+  --json  machine-readable JSON output
+
+Examples:
+  {{.Prog}} dlq delete --id 42
+  {{.Prog}} dlq delete --ids 3,4,5 --json
+
+{{template "flag_groups_section" .FlagGroups}}

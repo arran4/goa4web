@@ -1,0 +1,18 @@
+{{ template "head" $ }}
+<h2>Database Backup</h2>
+<p>Download a full SQL backup of the database. Store the file securely and verify it before restoring.</p>
+<form method="post">
+    {{ csrfField }}
+    <div>
+        <label for="backup-filename">Filename</label>
+        <input id="backup-filename" name="filename" value="{{ .FileName }}">
+    </div>
+    <div>
+        <label>
+            <input type="checkbox" name="confirm" value="yes">
+            I understand this will download a full database backup and should be handled securely.
+        </label>
+    </div>
+    <button type="submit" name="task" value="{{ .TaskName }}">Create backup and download</button>
+</form>
+{{ template "tail" $ }}

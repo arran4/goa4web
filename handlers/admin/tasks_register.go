@@ -44,6 +44,8 @@ func (h *Handlers) RegisterTasks() []tasks.NamedTask {
 		roleGrantDeleteTask,
 		userGrantCreateTask,
 		applyLinkRemapTask,
+		dbBackupTask,
+		dbRestoreTask,
 		h.NewServerShutdownTask(),
 	}
 }

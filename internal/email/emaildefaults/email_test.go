@@ -5,10 +5,13 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-	"github.com/arran4/goa4web/workers/emailqueue"
 	"net/mail"
 	"regexp"
 	"testing"
+
+	"github.com/arran4/goa4web/workers/emailqueue"
+
+	"strings"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
@@ -20,7 +23,6 @@ import (
 	logProv "github.com/arran4/goa4web/internal/email/log"
 	mockemail "github.com/arran4/goa4web/internal/email/mock"
 	smtpProv "github.com/arran4/goa4web/internal/email/smtp"
-	"strings"
 )
 
 func newRegistry() *email.Registry {
@@ -252,7 +254,7 @@ func TestGetEmailProviderJMAP(t *testing.T) {
 		EmailJMAPAccount:  "acct",
 		EmailJMAPIdentity: "id",
 	})
-	j, ok := p.(jmapProv.Provider)
+	j, ok := p.(*jmapProv.Provider)
 	if !ok {
 		t.Fatalf("expected JMAPProvider, got %#v", p)
 	}

@@ -28,6 +28,16 @@ func (p *Goa4WebLinkProvider) MapImageURL(tag, val string) string {
 	return val
 }
 
+func buildTooltip(title, description string) string {
+	if title != "" && description != "" {
+		return title + " - " + description
+	}
+	if title != "" {
+		return title
+	}
+	return description
+}
+
 func (p *Goa4WebLinkProvider) RenderLink(rawURL string, isBlock bool, isImmediateClose bool) (string, string, bool) {
 	safe, ok := a4code2html.SanitizeURL(rawURL)
 	if !ok {
@@ -64,10 +74,7 @@ func (p *Goa4WebLinkProvider) RenderLink(rawURL string, isBlock bool, isImmediat
 
 	// Inline + Title + With data -> Title & Description added as alt text
 	if !isBlock && hasUserTitle && hasData {
-		altText := title
-		if description != "" {
-			altText += " - " + description
-		}
+		altText := buildTooltip(title, description)
 		return fmt.Sprintf(`<a href="%s" target="_blank" rel="noopener noreferrer" title="%s">`, targetURL, html.EscapeString(altText)), "</a>", false
 	}
 
@@ -89,7 +96,7 @@ func (p *Goa4WebLinkProvider) RenderLink(rawURL string, isBlock bool, isImmediat
 		if linkText == "" {
 			linkText = rawURL
 		}
-		altText := description
+		altText := buildTooltip(title, description)
 		return fmt.Sprintf(`<a href="%s" target="_blank" rel="noopener noreferrer" title="%s">%s</a>`, targetURL, html.EscapeString(altText), html.EscapeString(linkText)), "", true
 	}
 
@@ -100,10 +107,7 @@ func (p *Goa4WebLinkProvider) RenderLink(rawURL string, isBlock bool, isImmediat
 
 	// Online + Title + With data -> Title & Description added as alt text
 	if isBlock && hasUserTitle && hasData {
-		altText := title
-		if description != "" {
-			altText += " - " + description
-		}
+		altText := buildTooltip(title, description)
 		return fmt.Sprintf(`<a href="%s" target="_blank" rel="noopener noreferrer" title="%s">`, targetURL, html.EscapeString(altText)), "</a>", false
 	}
 

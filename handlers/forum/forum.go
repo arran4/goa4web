@@ -63,7 +63,6 @@ func NewCategoryTree(categoryRows []*db.Forumcategory, topicRows []*ForumtopicPl
 		}
 		parent.Categories = children
 	}
-	categoryTree.PruneEmpty()
 	return categoryTree
 }
 

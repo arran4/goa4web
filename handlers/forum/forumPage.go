@@ -100,6 +100,10 @@ func Page(w http.ResponseWriter, r *http.Request) {
 
 	categoryTree := NewCategoryTree(categoryRows, topicRows)
 
+	if !data.Admin {
+		categoryTree.PruneEmpty()
+	}
+
 	if categoryId == 0 {
 		data.Categories = categoryTree.CategoryChildrenLookup[int32(categoryId)]
 	} else if cat, ok := categoryTree.CategoryLookup[int32(categoryId)]; ok && cat != nil {

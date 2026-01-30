@@ -123,6 +123,7 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 
 	if topicRow.Handler != "private" {
 		categoryTree := NewCategoryTree(categoryRows, []*ForumtopicPlus{data.Topic})
+		categoryTree.PruneEmpty()
 		if category, ok := categoryTree.CategoryLookup[topicRow.ForumcategoryIdforumcategory]; ok {
 			category.Topics = []*ForumtopicPlus{
 				data.Topic,

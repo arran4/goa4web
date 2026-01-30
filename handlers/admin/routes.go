@@ -50,6 +50,7 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, cfg *config.RuntimeConfig, nav
 	navReg.RegisterAdminControlCenter("Core", "Site Settings", "/admin/settings", 150)
 	navReg.RegisterAdminControlCenter("Core", "Pagination", "/admin/page-size", 152)
 	navReg.RegisterAdminControlCenter("Core", "Files", "/admin/files", 153)
+	navReg.RegisterAdminControlCenter("Core", "Share Tools", "/admin/share/tools", 155)
 	navReg.RegisterAdminControlCenter("Core", "Usage Stats", "/admin/usage", 160)
 
 	ar.HandleFunc("", AdminPage).Methods("GET")
@@ -156,6 +157,7 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, cfg *config.RuntimeConfig, nav
 	ar.HandleFunc("/settings", h.AdminSiteSettingsPage).Methods("GET", "POST")
 	ar.HandleFunc("/page-size", AdminPageSizePage).Methods("GET", "POST")
 	ar.HandleFunc("/files", AdminFilesPage).Methods("GET").MatcherFunc(handlers.RequiredAccess("administrator"))
+	ar.HandleFunc("/share/tools", AdminShareToolsPage).Methods("GET", "POST")
 	ar.HandleFunc("/stats", h.AdminServerStatsPage).Methods("GET")
 	ar.HandleFunc("/usage", AdminUsageStatsPage).Methods("GET")
 

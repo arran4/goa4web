@@ -25,21 +25,28 @@ func (cd *CoreData) GetPrivateTopicDisplayTitle(topicID int32, originalTitle str
 		return originalTitle
 	}
 
-	parts, err := cd.queries.ListPrivateTopicParticipantsByTopicIDForUser(cd.ctx, db.ListPrivateTopicParticipantsByTopicIDForUserParams{
-		TopicID:  sql.NullInt32{Int32: topicID, Valid: true},
-		ViewerID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-	})
+	parts, err := cd.queries.AdminListPrivateTopicParticipantsByTopicID(cd.ctx, sql.NullInt32{Int32: topicID, Valid: true})
 	if err != nil {
 		log.Printf("list private participants: %v", err)
 		return originalTitle
 	}
 
 	var names []string
+	var allNames []string
 	for _, p := range parts {
-		names = append(names, p.Username.String)
+		if p.Username.Valid {
+			allNames = append(allNames, p.Username.String)
+			if cd.UserID == 0 || p.Idusers != cd.UserID {
+				names = append(names, p.Username.String)
+			}
+		}
 	}
 	if len(names) == 0 {
-		return originalTitle
+		if len(allNames) > 0 {
+			names = allNames
+		} else {
+			return originalTitle
+		}
 	}
 	return strings.Join(names, ", ")
 }

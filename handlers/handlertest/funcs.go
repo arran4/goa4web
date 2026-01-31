@@ -18,5 +18,6 @@ func GetTemplateFuncs() map[string]any {
 			}
 			return s
 		},
+		"lower": strings.ToLower,
 	}
 }

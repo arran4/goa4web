@@ -92,8 +92,8 @@ func TestGetUserSubscriptions_ReportedIssues(t *testing.T) {
 	for _, g := range groups {
 		for _, inst := range g.Instances {
 			if expectedName, ok := expectedMap[inst.Original]; ok {
-				if g.Definition.Name != expectedName {
-					t.Errorf("For pattern '%s', expected definition name '%s', got '%s'", inst.Original, expectedName, g.Definition.Name)
+				if g.Name != expectedName {
+					t.Errorf("For pattern '%s', expected definition name '%s', got '%s'", inst.Original, expectedName, g.Name)
 				}
 				delete(expectedMap, inst.Original)
 			}
@@ -120,7 +120,7 @@ func TestGetUserSubscriptions_LegacyUpgrade(t *testing.T) {
 
 	found := false
 	for _, g := range groups {
-		if g.Definition.Name == "Write Reply (Legacy)" {
+		if g.Name == "Write Reply (Legacy)" {
 			found = true
 			if !g.Definition.HideIfNone {
 				t.Errorf("Expected Write Reply (Legacy) to be hidden if none")

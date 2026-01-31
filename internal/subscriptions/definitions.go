@@ -14,6 +14,7 @@ type Definition struct {
 	IsAdminOnly bool
 	HideIfNone  bool
 	UpgradeTo   string
+	Legacy      bool
 }
 
 // Parameter represents a single parameter in a subscription pattern.
@@ -44,6 +45,7 @@ func (si *SubscriptionInstance) HasMethod(method string) bool {
 // SubscriptionGroup groups instances by their definition.
 type SubscriptionGroup struct {
 	*Definition
+	Name      string
 	Instances []*SubscriptionInstance
 }
 
@@ -149,11 +151,12 @@ var Definitions = []Definition{
 
 	// Legacy
 	{
-		Name:        "Write Reply (Legacy)",
+		Name:        "Write Reply",
 		Description: "Notify when a reply is written (Legacy)",
 		Pattern:     "write reply:/forum/topic/{topicid}/thread/{threadid}/*",
 		HideIfNone:  true,
 		UpgradeTo:   "reply:/forum/topic/{topicid}/thread/{threadid}/*",
+		Legacy:      true,
 	},
 
 	// FAQ
@@ -245,8 +248,13 @@ func GetUserSubscriptions(dbSubs []*db.ListSubscriptionsByUserRow) []*Subscripti
 	// Initialize groups for all definitions
 	for i := range Definitions {
 		def := &Definitions[i]
+		name := def.Name
+		if def.Legacy {
+			name += " (Legacy)"
+		}
 		groups[def.Pattern] = &SubscriptionGroup{
 			Definition: def,
+			Name:       name,
 			Instances:  []*SubscriptionInstance{},
 		}
 	}
@@ -263,6 +271,7 @@ func GetUserSubscriptions(dbSubs []*db.ListSubscriptionsByUserRow) []*Subscripti
 						Name:    "Unknown: " + sub.Pattern,
 						Pattern: sub.Pattern,
 					},
+					Name:      "Unknown: " + sub.Pattern,
 					Instances: []*SubscriptionInstance{},
 				}
 			}

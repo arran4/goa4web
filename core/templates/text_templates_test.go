@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 )
 
@@ -14,16 +15,7 @@ import (
 var textTemplates embed.FS
 
 func TestParseGoTxtTemplates(t *testing.T) {
-	funcs := map[string]any{
-		"a4code2string": func(s string) string { return s },
-		"truncateWords": func(i int, s string) string {
-			words := strings.Fields(s)
-			if len(words) > i {
-				return strings.Join(words[:i], " ") + "..."
-			}
-			return s
-		},
-	}
+	funcs := common.GetTemplateFuncs()
 	emailTemplates := templates.GetCompiledEmailTextTemplates(funcs)
 	notificationTemplates := templates.GetCompiledNotificationTemplates(funcs)
 
@@ -58,16 +50,7 @@ func TestParseGoTxtTemplates(t *testing.T) {
 }
 
 func TestAnnouncementTemplatesExist(t *testing.T) {
-	funcs := map[string]any{
-		"a4code2string": func(s string) string { return s },
-		"truncateWords": func(i int, s string) string {
-			words := strings.Fields(s)
-			if len(words) > i {
-				return strings.Join(words[:i], " ") + "..."
-			}
-			return s
-		},
-	}
+	funcs := common.GetTemplateFuncs()
 	nt := templates.GetCompiledNotificationTemplates(funcs)
 	if nt.Lookup("announcement.gotxt") == nil {
 		t.Fatalf("missing announcement notification template")
@@ -83,10 +66,7 @@ func TestAnnouncementTemplatesExist(t *testing.T) {
 }
 
 func TestAllEmailTemplatesComplete(t *testing.T) {
-	funcs := map[string]any{
-		"a4code2string": func(s string) string { return s },
-		"truncateWords": func(i int, s string) string { return s },
-	}
+	funcs := common.GetTemplateFuncs()
 	htmlT := templates.GetCompiledEmailHtmlTemplates(funcs)
 	textT := templates.GetCompiledEmailTextTemplates(funcs)
 

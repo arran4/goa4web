@@ -18,6 +18,7 @@ import (
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/internal/eventbus"
 	csrfmiddleware "github.com/arran4/goa4web/internal/middleware/csrf"
 )
 
@@ -30,7 +31,33 @@ const (
 
 // Funcs returns template helpers configured with cd's ImageURLMapper.
 func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
-	mapper := cd.ImageURLMapper
+	return GetTemplateFuncs(cd, r)
+}
+
+// GetTemplateFuncs returns a map of template functions.
+// It accepts optional arguments: *CoreData, *http.Request, eventbus.TaskEvent.
+func GetTemplateFuncs(opts ...any) template.FuncMap {
+	var cd *CoreData
+	var r *http.Request
+	var evt *eventbus.TaskEvent
+
+	for _, opt := range opts {
+		switch v := opt.(type) {
+		case *CoreData:
+			cd = v
+		case *http.Request:
+			r = v
+		case eventbus.TaskEvent:
+			evt = &v
+		case *eventbus.TaskEvent:
+			evt = v
+		}
+	}
+
+	var mapper func(string, string) string
+	if cd != nil {
+		mapper = cd.ImageURLMapper
+	}
 
 	// Color assignment state for quotes
 	assignedColors := make(map[string]int)
@@ -81,49 +108,7 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 		return fmt.Sprintf("quote-color-%d", best)
 	}
 
-	return map[string]any{
-		"cd":        func() *CoreData { return cd },
-		"now":       func() time.Time { return time.Now().In(cd.Location()) },
-		"localTime": cd.LocalTime,
-		"formatLocalTime": func(t time.Time) string {
-			return cd.FormatLocalTime(t)
-		},
-		"csrfField": func() template.HTML { return csrfmiddleware.TemplateField(r) },
-		"csrfToken": func() string { return csrfmiddleware.Token(r) },
-		"version":   func() string { return goa4web.Version },
-		"dict": func(values ...any) map[string]any {
-			m := make(map[string]any)
-			for i := 0; i+1 < len(values); i += 2 {
-				k, _ := values[i].(string)
-				m[k] = values[i+1]
-			}
-			return m
-		},
-		"toJSON": func(v any) template.JS {
-			payload, err := json.Marshal(v)
-			if err != nil {
-				log.Printf("json marshal: %v", err)
-				return template.JS("null")
-			}
-			return template.JS(payload)
-		},
-		"highlightSearch": func(s string) template.HTML {
-			return HighlightSearchTerms(s, cd.SearchWords())
-		},
-		"a4code2html": func(s string) template.HTML {
-			provider := NewGoa4WebLinkProvider(cd, r.Context())
-			c := a4code2html.New(mapper, getColor, provider)
-			c.CodeType = a4code2html.CTHTML
-			c.SetInput(s)
-			out, err := io.ReadAll(c.Process())
-			if err != nil {
-				log.Printf("read markup: %v", err)
-			}
-			if cerr := c.Error(); cerr != nil {
-				log.Printf("process markup: %v", cerr)
-			}
-			return template.HTML(out)
-		},
+	funcs := map[string]any{
 		"a4code2string": func(s string) string {
 			c := a4code2html.New(mapper)
 			c.CodeType = a4code2html.CTWordsOnly
@@ -193,7 +178,36 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 			}
 			return seq
 		},
-		"timeAgo": func(t time.Time) string {
+		"dict": func(values ...any) map[string]any {
+			m := make(map[string]any)
+			for i := 0; i+1 < len(values); i += 2 {
+				k, _ := values[i].(string)
+				m[k] = values[i+1]
+			}
+			return m
+		},
+		"toJSON": func(v any) template.JS {
+			payload, err := json.Marshal(v)
+			if err != nil {
+				log.Printf("json marshal: %v", err)
+				return template.JS("null")
+			}
+			return template.JS(payload)
+		},
+		"version": func() string { return goa4web.Version },
+	}
+
+	if cd != nil {
+		funcs["cd"] = func() *CoreData { return cd }
+		funcs["now"] = func() time.Time { return time.Now().In(cd.Location()) }
+		funcs["localTime"] = cd.LocalTime
+		funcs["formatLocalTime"] = func(t time.Time) string {
+			return cd.FormatLocalTime(t)
+		}
+		funcs["highlightSearch"] = func(s string) template.HTML {
+			return HighlightSearchTerms(s, cd.SearchWords())
+		}
+		funcs["timeAgo"] = func(t time.Time) string {
 			if t.IsZero() {
 				return ""
 			}
@@ -225,8 +239,8 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 				return fmt.Sprintf("post was %d %s ago", n, unit)
 			}
 			return fmt.Sprintf("post was %d %ss ago", n, unit)
-		},
-		"since": func(prev, curr time.Time) string {
+		}
+		funcs["since"] = func(prev, curr time.Time) string {
 			if prev.IsZero() {
 				return ""
 			}
@@ -244,30 +258,72 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 			default:
 				return fmt.Sprintf("%d days after last comment", int(diff.Hours()/24))
 			}
-		},
-		"addmode": func(u string) string {
-			cd, _ := r.Context().Value(consts.KeyCoreData).(*CoreData)
-			if cd == nil || !cd.AdminMode {
-				return u
+		}
+		funcs["signCacheURL"] = func(ref string) string {
+			return cd.MapImageURL("img", ref)
+		}
+
+		if r != nil {
+			funcs["include"] = func(name string, data any) (template.HTML, error) {
+				var buf bytes.Buffer
+				t := templates.GetCompiledSiteTemplates(cd.Funcs(r))
+				err := t.ExecuteTemplate(&buf, name, data)
+				return template.HTML(buf.String()), err
 			}
-			if parsed, err := url.Parse(u); err == nil {
-				if parsed.Path == "/admin" || strings.HasPrefix(parsed.Path, "/admin/") {
+			funcs["a4code2html"] = func(s string) template.HTML {
+				provider := NewGoa4WebLinkProvider(cd, r.Context())
+				c := a4code2html.New(mapper, getColor, provider)
+				c.CodeType = a4code2html.CTHTML
+				c.SetInput(s)
+				out, err := io.ReadAll(c.Process())
+				if err != nil {
+					log.Printf("read markup: %v", err)
+				}
+				if cerr := c.Error(); cerr != nil {
+					log.Printf("process markup: %v", cerr)
+				}
+				return template.HTML(out)
+			}
+			funcs["addmode"] = func(u string) string {
+				cd, _ := r.Context().Value(consts.KeyCoreData).(*CoreData)
+				if cd == nil || !cd.AdminMode {
 					return u
 				}
+				if parsed, err := url.Parse(u); err == nil {
+					if parsed.Path == "/admin" || strings.HasPrefix(parsed.Path, "/admin/") {
+						return u
+					}
+				}
+				if strings.Contains(u, "?") {
+					return u + "&mode=admin"
+				}
+				return u + "?mode=admin"
 			}
-			if strings.Contains(u, "?") {
-				return u + "&mode=admin"
-			}
-			return u + "?mode=admin"
-		},
-		"include": func(name string, data any) (template.HTML, error) {
-			var buf bytes.Buffer
-			t := templates.GetCompiledSiteTemplates(cd.Funcs(r))
-			err := t.ExecuteTemplate(&buf, name, data)
-			return template.HTML(buf.String()), err
-		},
-		"signCacheURL": func(ref string) string {
-			return cd.MapImageURL("img", ref)
-		},
+		}
+	} else {
+		// Provide basic defaults if CD is missing
+		funcs["a4code2html"] = func(s string) template.HTML {
+			c := a4code2html.New(nil, getColor, nil)
+			c.CodeType = a4code2html.CTHTML
+			c.SetInput(s)
+			out, _ := io.ReadAll(c.Process())
+			return template.HTML(out)
+		}
 	}
+
+	if r != nil {
+		funcs["csrfField"] = func() template.HTML { return csrfmiddleware.TemplateField(r) }
+		funcs["csrfToken"] = func() string { return csrfmiddleware.Token(r) }
+	}
+
+	if evt != nil {
+		funcs["Username"] = func() string {
+			if u, ok := evt.Data["Username"].(string); ok {
+				return u
+			}
+			return "Unknown"
+		}
+	}
+
+	return funcs
 }

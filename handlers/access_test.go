@@ -13,8 +13,8 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 )
 
-func TestVerifyAccess(t *testing.T) {
-	h := VerifyAccess(func(w http.ResponseWriter, r *http.Request) {
+func TestRequireRole(t *testing.T) {
+	h := RequireRole(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}, fmt.Errorf("administrator role required"), "administrator")
 

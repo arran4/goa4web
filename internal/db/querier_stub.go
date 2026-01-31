@@ -253,6 +253,9 @@ type QuerierStub struct {
 	AdminInsertRequestQueueErr     error
 	AdminInsertRequestQueueFn      func(context.Context, AdminInsertRequestQueueParams) (sql.Result, error)
 
+	UpdateExternalLinkMetadataCalls []UpdateExternalLinkMetadataParams
+	UpdateExternalLinkMetadataErr   error
+
 	AdminInsertRequestCommentCalls []AdminInsertRequestCommentParams
 	AdminInsertRequestCommentErr   error
 	AdminInsertRequestCommentFn    func(context.Context, AdminInsertRequestCommentParams) error
@@ -2054,6 +2057,13 @@ func (s *QuerierStub) AdminInsertRequestQueue(ctx context.Context, arg AdminInse
 }
 func (q *QuerierStub) UpdateExternalLinkImageCache(ctx context.Context, arg UpdateExternalLinkImageCacheParams) error {
 	return nil
+}
+
+func (s *QuerierStub) UpdateExternalLinkMetadata(ctx context.Context, arg UpdateExternalLinkMetadataParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.UpdateExternalLinkMetadataCalls = append(s.UpdateExternalLinkMetadataCalls, arg)
+	return s.UpdateExternalLinkMetadataErr
 }
 
 func (s *QuerierStub) GetPrivateTopicThreadsAndLabels(ctx context.Context, arg GetPrivateTopicThreadsAndLabelsParams) ([]*GetPrivateTopicThreadsAndLabelsRow, error) {

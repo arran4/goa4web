@@ -10,7 +10,18 @@ Configured providers: {{ .Providers }}<br />
 <table class="table table-bordered">
 <tr><th>Time</th><th>Message</th></tr>
 {{- range .FileErrors }}
-<tr><td>{{ cd.FormatLocalTime .Time }}</td><td>{{ .Message }}</td></tr>
+<tr>
+    <td>{{ if .Time }}{{ cd.FormatLocalTime .Time }}{{ end }}</td>
+    <td>
+        {{ if .Parsed }}
+            <div><strong>Error:</strong> {{ .Parsed.Error }}</div>
+            {{ if .Parsed.TaskName }}<div><strong>Task:</strong> {{ .Parsed.TaskName }}</div>{{ end }}
+            <details><summary>Raw</summary><pre>{{ .Raw }}</pre></details>
+        {{ else }}
+            {{ .Message }}
+        {{ end }}
+    </td>
+</tr>
 {{- end }}
 </table>
 {{- end }}
@@ -28,12 +39,31 @@ Configured providers: {{ .Providers }}<br />
 
 {{- if .DirErrors }}
 <h2>Directory DLQ</h2>
+<form method="post">
+    {{ csrfField }}
+    <input type="hidden" name="provider" value="dir">
 <table class="table table-bordered">
-<tr><th>Name</th><th>Message</th></tr>
+<tr><th>Select</th><th>Name</th><th>Size</th><th>Message</th></tr>
 {{- range .DirErrors }}
-<tr><td>{{ .Name }}</td><td>{{ .Message }}</td></tr>
+<tr>
+    <td><input type="checkbox" name="id" value="{{ .ID }}"></td>
+    <td>{{ .ID }}</td>
+    <td>{{ .Size }}</td>
+    <td>
+        {{ if .Parsed }}
+            <div><strong>Error:</strong> {{ .Parsed.Error }}</div>
+            {{ if .Parsed.TaskName }}<div><strong>Task:</strong> {{ .Parsed.TaskName }}</div>{{ end }}
+            <details><summary>Raw</summary><pre>{{ .Raw }}</pre></details>
+        {{ else }}
+            {{ .Message }}
+        {{ end }}
+    </td>
+</tr>
 {{- end }}
 </table>
+<input type="submit" name="task" value="Delete">
+<input type="submit" name="task" value="reenlist">
+</form>
 {{- end }}
 {{- if .DirErr }}
 <p>Error reading directory DLQ: {{ .DirErr }}</p>
@@ -43,20 +73,30 @@ Configured providers: {{ .Providers }}<br />
 <h2>Database DLQ</h2>
 <form method="post">
     {{ csrfField }}
+    <input type="hidden" name="provider" value="db">
 <table class="table table-bordered">
 <tr><th>Select</th><th>ID</th><th>Message</th><th>Created</th></tr>
 {{- range .Errors }}
 <tr>
     <td><input type="checkbox" name="id" value="{{ .ID }}"></td>
     <td>{{ .ID }}</td>
-    <td>{{ .Message }}</td>
-    <td>{{ cd.FormatLocalTime .CreatedAt }}</td>
+    <td>
+        {{ if .Parsed }}
+            <div><strong>Error:</strong> {{ .Parsed.Error }}</div>
+            {{ if .Parsed.TaskName }}<div><strong>Task:</strong> {{ .Parsed.TaskName }}</div>{{ end }}
+            <details><summary>Raw</summary><pre>{{ .Raw }}</pre></details>
+        {{ else }}
+            {{ .Message }}
+        {{ end }}
+    </td>
+    <td>{{ cd.FormatLocalTime .Time }}</td>
 </tr>
 {{- end }}
 </table>
 Before: <input type="date" name="before">
 <input type="submit" name="task" value="Delete">
 <input type="submit" name="task" value="Purge">
+<input type="submit" name="task" value="reenlist">
 </form>
 {{- end }}
 {{ template "tail" $ }}

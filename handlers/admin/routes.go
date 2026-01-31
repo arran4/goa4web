@@ -102,6 +102,7 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, cfg *config.RuntimeConfig, nav
 	ar.HandleFunc("/templates/export", handlers.TaskHandler(exportTemplatesTask)).Methods("POST").MatcherFunc(exportTemplatesTask.Matcher())
 	ar.HandleFunc("/dlq", AdminDLQPage).Methods("GET")
 	ar.HandleFunc("/dlq", handlers.TaskHandler(deleteDLQTask)).Methods("POST").MatcherFunc(deleteDLQTask.Matcher())
+	ar.HandleFunc("/dlq", handlers.TaskHandler(reEnlistDLQTask)).Methods("POST").MatcherFunc(reEnlistDLQTask.Matcher())
 	ar.HandleFunc("/notifications", AdminNotificationsPage).Methods("GET")
 	ar.HandleFunc("/notifications", handlers.TaskHandler(markReadTask)).Methods("POST").MatcherFunc(markReadTask.Matcher())
 	ar.HandleFunc("/notifications", handlers.TaskHandler(markUnreadTask)).Methods("POST").MatcherFunc(markUnreadTask.Matcher())

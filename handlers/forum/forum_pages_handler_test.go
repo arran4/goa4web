@@ -60,7 +60,7 @@ func TestForumPageHandlers(t *testing.T) {
 
 		cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
 		r := httptest.NewRequest("GET", "/admin/forum/topics", nil)
-		sess, _ := core.Store.New(r, core.SessionName)
+		sess := testhelpers.Must(core.Store.New(r, core.SessionName))
 		ctx := context.WithValue(r.Context(), core.ContextValues("session"), sess)
 		ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 		r = r.WithContext(ctx)

@@ -232,9 +232,9 @@ func TestCoreDataLatestWritingsLazy(t *testing.T) {
 	common.WithUserRoles([]string{"user"})(cd)
 	cd.UserID = 1
 
-	req := httptest.NewRequest("GET", "/", nil)
+	req := httptest.NewRequest("GET", "/?offset=0", nil)
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
-	offset, _ := strconv.Atoi(req.URL.Query().Get("offset"))
+	offset := testhelpers.Must(strconv.Atoi(req.URL.Query().Get("offset")))
 	if _, err := cd.LatestWritings(common.WithWritingsOffset(int32(offset))); err != nil {
 		t.Fatalf("LatestWritings: %v", err)
 	}

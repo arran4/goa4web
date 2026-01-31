@@ -26,7 +26,7 @@ func TestSubscribeTopicTaskAction(t *testing.T) {
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = "test"
-	sess, _ := store.Get(httptest.NewRequest(http.MethodGet, "http://example.com", nil), core.SessionName)
+	sess := testhelpers.Must(store.Get(httptest.NewRequest(http.MethodGet, "http://example.com", nil), core.SessionName))
 	sess.Values["UID"] = cd.UserID
 
 	ctx := context.WithValue(context.Background(), consts.KeyCoreData, cd)
@@ -69,7 +69,7 @@ func TestUnsubscribeTopicTaskAction(t *testing.T) {
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = "test"
-	sess, _ := store.Get(httptest.NewRequest(http.MethodGet, "http://example.com", nil), core.SessionName)
+	sess := testhelpers.Must(store.Get(httptest.NewRequest(http.MethodGet, "http://example.com", nil), core.SessionName))
 	sess.Values["UID"] = cd.UserID
 
 	ctx := context.WithValue(context.Background(), consts.KeyCoreData, cd)

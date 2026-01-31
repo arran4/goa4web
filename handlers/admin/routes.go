@@ -225,12 +225,12 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, cfg *config.RuntimeConfig, nav
 	// Verify administrator access within the handlers so direct CLI calls
 	// cannot bypass the permission checks.
 	ar.HandleFunc("/reload",
-		handlers.VerifyAccess(h.AdminReloadConfigPage, fmt.Errorf("administrator role required"), "administrator")).
+		handlers.RequireRole(h.AdminReloadConfigPage, fmt.Errorf("administrator role required"), "administrator")).
 		Methods("POST").
 		MatcherFunc(handlers.RequiredAccess("administrator"))
 	sst := h.NewServerShutdownTask()
 	ar.HandleFunc("/shutdown",
-		handlers.VerifyAccess(handlers.TaskHandler(sst), fmt.Errorf("administrator role required"), "administrator")).
+		handlers.RequireRole(handlers.TaskHandler(sst), fmt.Errorf("administrator role required"), "administrator")).
 		Methods("POST").
 		MatcherFunc(handlers.RequiredAccess("administrator")).
 		MatcherFunc(sst.Matcher())

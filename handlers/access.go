@@ -27,10 +27,10 @@ func RenderPermissionDenied(w http.ResponseWriter, r *http.Request) {
 	RenderErrorPage(w, r, WrapForbidden(ErrLoginRequired))
 }
 
-// VerifyAccess wraps h and denies the request if the caller lacks any of
+// RequireRole wraps h and denies the request if the caller lacks any of
 // the provided roles. err is shown on the rendered error page; if err is nil
 // a generic "Forbidden" message is displayed.
-func VerifyAccess(h http.HandlerFunc, err error, roles ...string) http.HandlerFunc {
+func RequireRole(h http.HandlerFunc, err error, roles ...string) http.HandlerFunc {
 	if err == nil {
 		err = ErrForbidden
 	}

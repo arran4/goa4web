@@ -14,7 +14,7 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-func TestVerifyAccess_CacheControl(t *testing.T) {
+func TestRequireRole_CacheControl(t *testing.T) {
 	tests := []struct {
 		name         string
 		roles        []string
@@ -49,7 +49,7 @@ func TestVerifyAccess_CacheControl(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			h := VerifyAccess(func(w http.ResponseWriter, r *http.Request) {
+			h := RequireRole(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 			}, fmt.Errorf("forbidden"), tt.roles...)
 

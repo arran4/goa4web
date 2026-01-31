@@ -14,6 +14,14 @@ func SetNoCacheHeaders(w http.ResponseWriter) {
 	w.Header().Set("Expires", "0")
 }
 
+// NoCache wraps a handler and ensures no-cache headers are set.
+func NoCache(h http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		SetNoCacheHeaders(w)
+		h(w, r)
+	}
+}
+
 func RenderPermissionDenied(w http.ResponseWriter, r *http.Request) {
 	RenderErrorPage(w, r, WrapForbidden(ErrLoginRequired))
 }

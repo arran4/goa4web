@@ -10,6 +10,7 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -32,19 +33,19 @@ func TestAuthPages_CacheControl(t *testing.T) {
 		{
 			name: "Login Page",
 			handler: func(w http.ResponseWriter, r *http.Request) {
-				loginTask.Page(w, r)
+				handlers.NoCache(loginTask.Page)(w, r)
 			},
 		},
 		{
 			name: "Register Page",
 			handler: func(w http.ResponseWriter, r *http.Request) {
-				registerTask.Page(w, r)
+				handlers.NoCache(registerTask.Page)(w, r)
 			},
 		},
 		{
 			name: "Forgot Password Page",
 			handler: func(w http.ResponseWriter, r *http.Request) {
-				forgotPasswordTask.Page(w, r)
+				handlers.NoCache(forgotPasswordTask.Page)(w, r)
 			},
 		},
 	}

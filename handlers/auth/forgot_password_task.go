@@ -153,7 +153,6 @@ func (f ForgotPasswordTask) SelfInternalNotificationTemplate(evt eventbus.TaskEv
 func (ForgotPasswordTask) SelfEmailBroadcast() bool { return true }
 
 func (ForgotPasswordTask) Page(w http.ResponseWriter, r *http.Request) {
-	handlers.SetNoCacheHeaders(w)
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Password Reset"
 	ForgotPasswordPageTmpl.Handle(w, r, struct{}{})

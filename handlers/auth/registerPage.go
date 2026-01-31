@@ -30,7 +30,6 @@ var _ tasks.Task = (*RegisterTask)(nil)
 
 // RegisterPage renders the user registration form.
 func (RegisterTask) Page(w http.ResponseWriter, r *http.Request) {
-	handlers.SetNoCacheHeaders(w)
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Register"
 	RegisterPageTmpl.Handle(w, r, struct{}{})

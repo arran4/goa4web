@@ -7,7 +7,7 @@ import (
 )
 
 // QuoteOption configures behaviour of Quote.
-type QuoteOption func(*quoteOptions)
+type QuoteOption any
 
 type quoteOptions struct {
 	// Full splits the input into paragraphs and quotes each separately.
@@ -20,6 +20,12 @@ type quoteOptions struct {
 	TruncatedQuoteDepth *int
 }
 
+// RestrictedQuoteDepth is the depth at which quotes are removed.
+type RestrictedQuoteDepth int
+
+// TruncatedQuoteDepth is the depth at which quote content is removed.
+type TruncatedQuoteDepth int
+
 // WithParagraphQuote enables paragraph aware quoting.
 func WithParagraphQuote() QuoteOption { return func(o *quoteOptions) { o.Full = true } }
 
@@ -28,12 +34,12 @@ func WithTrimSpace() QuoteOption { return func(o *quoteOptions) { o.Trim = true 
 
 // WithRestrictedQuoteDepth sets the depth at which quotes are removed.
 func WithRestrictedQuoteDepth(depth int) QuoteOption {
-	return func(o *quoteOptions) { o.RestrictedQuoteDepth = &depth }
+	return RestrictedQuoteDepth(depth)
 }
 
 // WithTruncatedQuoteDepth sets the depth at which quote content is removed.
 func WithTruncatedQuoteDepth(depth int) QuoteOption {
-	return func(o *quoteOptions) { o.TruncatedQuoteDepth = &depth }
+	return TruncatedQuoteDepth(depth)
 }
 
 // WithFullQuote is a backward-compatible alias for paragraph-aware quoting.
@@ -45,7 +51,16 @@ func WithFullQuote() QuoteOption { return WithParagraphQuote() }
 func QuoteText(username, text string, opts ...QuoteOption) string {
 	var o quoteOptions
 	for _, opt := range opts {
-		opt(&o)
+		switch v := opt.(type) {
+		case func(*quoteOptions):
+			v(&o)
+		case RestrictedQuoteDepth:
+			val := int(v)
+			o.RestrictedQuoteDepth = &val
+		case TruncatedQuoteDepth:
+			val := int(v)
+			o.TruncatedQuoteDepth = &val
+		}
 	}
 	if o.Full {
 		return fullQuoteOf(username, text, o)

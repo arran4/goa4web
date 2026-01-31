@@ -148,9 +148,13 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 		if backMethod == "" || backMethod == http.MethodGet {
 			return handlers.RefreshDirectHandler{TargetURL: backURL}
 		}
-		vals, err := url.ParseQuery(backData)
-		if err != nil {
-			return fmt.Errorf("parse back data %w", err)
+		var vals url.Values
+		if backData != "" {
+			if dec, err := cd.DecryptData(backData); err == nil {
+				vals, _ = url.ParseQuery(dec)
+			} else {
+				log.Printf("decrypt back data: %v", err)
+			}
 		}
 		return redirectBackPageHandler{BackURL: backURL, Method: backMethod, Values: vals}
 	}

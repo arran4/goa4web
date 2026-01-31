@@ -47,7 +47,12 @@ func RenderErrorPage(w http.ResponseWriter, r *http.Request, err error) {
 		if r.Method == http.MethodPost {
 			_ = r.ParseForm()
 			method = r.Method
-			dataStr = r.Form.Encode()
+			if enc, err := cd.EncryptData(r.Form.Encode()); err == nil {
+				dataStr = enc
+			} else {
+				// Don't expose unencrypted data if encryption fails
+				dataStr = ""
+			}
 		}
 	} else {
 		cd.PageTitle = "Error"

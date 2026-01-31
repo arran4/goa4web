@@ -68,12 +68,15 @@ func TaskHandler(t tasks.Task) func(http.ResponseWriter, *http.Request) {
 }
 
 func loginRedirect(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vals := url.Values{}
 	vals.Set("back", r.URL.RequestURI())
 	if r.Method != http.MethodGet {
 		if err := r.ParseForm(); err == nil {
 			vals.Set("method", r.Method)
-			vals.Set("data", r.Form.Encode())
+			if enc, err := cd.EncryptData(r.Form.Encode()); err == nil {
+				vals.Set("data", enc)
+			}
 		}
 	}
 	http.Redirect(w, r, "/login?"+vals.Encode(), http.StatusTemporaryRedirect)

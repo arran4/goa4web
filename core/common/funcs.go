@@ -147,7 +147,13 @@ func GetTemplateFuncs(opts ...any) template.FuncMap {
 				if r.Method == http.MethodPost {
 					_ = r.ParseForm()
 					q.Set("method", r.Method)
-					q.Set("data", r.Form.Encode())
+					if cd != nil {
+						if enc, err := cd.EncryptData(r.Form.Encode()); err == nil {
+							q.Set("data", enc)
+						} else {
+							log.Printf("failed to encrypt form data: %v", err)
+						}
+					}
 				}
 			}
 

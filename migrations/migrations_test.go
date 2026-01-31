@@ -113,8 +113,9 @@ func TestSchemaVersionUpdated(t *testing.T) {
 	if err == nil {
 		migStr := string(migContent)
 		expectedUpdate := fmt.Sprintf("UPDATE schema_version SET version = %d WHERE version = %d;", maxVersion, maxVersion-1)
-		if !strings.Contains(migStr, expectedUpdate) {
-			t.Errorf("Migration file %s does not contain expected version update:\nExpected substring: %s", migrationFile, expectedUpdate)
+		expectedInsert := fmt.Sprintf("INSERT INTO schema_version (version) VALUES (%d) ON DUPLICATE KEY UPDATE version = VALUES(version);", maxVersion)
+		if !strings.Contains(migStr, expectedUpdate) && !strings.Contains(migStr, expectedInsert) {
+			t.Errorf("Migration file %s does not contain expected version update:\nExpected substring: %s\nOR\n%s", migrationFile, expectedUpdate, expectedInsert)
 		}
 	}
 }

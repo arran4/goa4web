@@ -281,10 +281,10 @@ func TestQuoteDepthOptions(t *testing.T) {
 			want:                 "[quoteof \"user\" [quoteof \"A\" content] and more text]\n",
 		},
 		{
-			name:                 "TruncatedDepth0_TruncateInner",
-			input:                "[quoteof \"A\" content]",
-			truncatedQuoteDepth:  intPtr(0),
-			want:                 "[quoteof \"user\" [quoteof \"A\"]]\n",
+			name:                "TruncatedDepth0_TruncateInner",
+			input:               "[quoteof \"A\" content]",
+			truncatedQuoteDepth: intPtr(0),
+			want:                "[quoteof \"user\" [quoteof \"A\"]]\n",
 		},
 		{
 			name:                 "TruncatedDepth1_TruncateDepth2",
@@ -294,10 +294,10 @@ func TestQuoteDepthOptions(t *testing.T) {
 			want:                 "[quoteof \"user\" [quoteof \"A\" [quoteof \"B\"]]]\n",
 		},
 		{
-			name:                 "TruncatedDepth1_AllowDepth1",
-			input:                "[quoteof \"A\" content]",
-			truncatedQuoteDepth:  intPtr(1),
-			want:                 "[quoteof \"user\" [quoteof \"A\" content]]\n",
+			name:                "TruncatedDepth1_AllowDepth1",
+			input:               "[quoteof \"A\" content]",
+			truncatedQuoteDepth: intPtr(1),
+			want:                "[quoteof \"user\" [quoteof \"A\" content]]\n",
 		},
 		{
 			name:                 "RestrictedAndTruncated_Mix",

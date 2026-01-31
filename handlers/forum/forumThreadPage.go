@@ -6,11 +6,13 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/tasks"
 
+	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
@@ -106,7 +108,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		Type:        "article",
 	}
 
-	commentRows, err := cd.SelectedThreadComments()
+	commentRows, err = cd.SelectedThreadComments()
 	if err != nil {
 		log.Printf("thread comments: %v", err)
 	}

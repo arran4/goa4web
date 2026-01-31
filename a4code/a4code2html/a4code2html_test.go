@@ -3,8 +3,8 @@ package a4code2html
 import (
 	"bytes"
 	"fmt"
-	"github.com/google/go-cmp/cmp"
 	"github.com/arran4/goa4web/internal/testhelpers"
+	"github.com/google/go-cmp/cmp"
 	"io"
 	"testing"
 )

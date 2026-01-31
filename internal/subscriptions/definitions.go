@@ -8,15 +8,14 @@ import (
 )
 
 type Definition struct {
-	Name        string
-	Description string
-	Pattern     string
-	IsAdminOnly bool
-	HideIfNone  bool
-	Upgrade     func(params map[string]string) string
-	Legacy      bool
-  SupportsAutoSubscribe bool
-
+	Name                  string
+	Description           string
+	Pattern               string
+	IsAdminOnly           bool
+	HideIfNone            bool
+	Upgrade               func(params map[string]string) string
+	Legacy                bool
+	SupportsAutoSubscribe bool
 }
 
 // Parameter represents a single parameter in a subscription pattern.

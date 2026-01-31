@@ -3,10 +3,11 @@ package handlers_test
 import (
 	"bytes"
 	"database/sql"
-	"github.com/arran4/goa4web/handlers/forum"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/arran4/goa4web/handlers/forum"
 
 	"html/template"
 
@@ -50,7 +51,7 @@ func TestPageTemplatesRender(t *testing.T) {
 			HasOffset  bool
 			CatId      int32
 		}{&common.CoreData{}, nil, nil, false, 0}},
-		{"forumPage", struct {
+		{"forum/page.gohtml", struct {
 			*common.CoreData
 			Categories []*forum.ForumcategoryPlus
 			Category   *forum.ForumcategoryPlus

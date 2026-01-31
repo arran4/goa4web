@@ -79,9 +79,9 @@ func TestFetch(t *testing.T) {
 				Author:      "",
 			},
 		},
-        {
-            name: "Author Object in JSON-LD",
-            html: `<html>
+		{
+			name: "Author Object in JSON-LD",
+			html: `<html>
                 <script type="application/ld+json">
                 {
                     "@context": "https://schema.org",
@@ -93,13 +93,13 @@ func TestFetch(t *testing.T) {
                 }
                 </script>
             </html>`,
-            wantInfo: Info{
-                Author: "Object Author",
-            },
-        },
-        {
-            name: "Author Array in JSON-LD",
-            html: `<html>
+			wantInfo: Info{
+				Author: "Object Author",
+			},
+		},
+		{
+			name: "Author Array in JSON-LD",
+			html: `<html>
                 <script type="application/ld+json">
                 {
                     "@context": "https://schema.org",
@@ -113,10 +113,10 @@ func TestFetch(t *testing.T) {
                 }
                 </script>
             </html>`,
-            wantInfo: Info{
-                Author: "Array Author",
-            },
-        },
+			wantInfo: Info{
+				Author: "Array Author",
+			},
+		},
 	}
 
 	for _, tt := range tests {

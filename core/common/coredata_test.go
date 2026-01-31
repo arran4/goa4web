@@ -390,8 +390,8 @@ func TestSelectedQuestionFromCategory(t *testing.T) {
 	queries := db.New(conn)
 	cd := common.NewTestCoreData(t, queries)
 
-	row := sqlmock.NewRows([]string{"id", "category_id", "language_id", "author_id", "answer", "question", "priority"}).
-		AddRow(1, 2, 0, 0, sql.NullString{}, sql.NullString{}, 0)
+	row := sqlmock.NewRows([]string{"id", "category_id", "language_id", "author_id", "answer", "question", "priority", "deleted_at"}).
+		AddRow(1, 2, 0, 0, sql.NullString{}, sql.NullString{}, 0, sql.NullTime{})
 	mock.ExpectQuery("SELECT id, category_id").WithArgs(int32(1)).WillReturnRows(row)
 	mock.ExpectExec("UPDATE faq SET deleted_at").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
 
@@ -443,8 +443,8 @@ func TestSelectedThreadCanReply(t *testing.T) {
 	cd.SetCurrentThreadAndTopic(threadID, topicID)
 
 	rows := sqlmock.NewRows([]string{
-		"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked",
-	}).AddRow(threadID, 0, 0, topicID, nil, time.Now(), nil)
+		"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "deleted_at",
+	}).AddRow(threadID, 0, 0, topicID, nil, time.Now(), nil, nil)
 	mock.ExpectQuery("SELECT th.idforumthread").WithArgs(
 		int32(1),
 		threadID,
@@ -481,8 +481,8 @@ func TestSelectedThreadCanReplyPrivateForum(t *testing.T) {
 	cd.SetCurrentThreadAndTopic(threadID, topicID)
 
 	rows := sqlmock.NewRows([]string{
-		"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked",
-	}).AddRow(threadID, 0, 0, topicID, nil, time.Now(), nil)
+		"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "deleted_at",
+	}).AddRow(threadID, 0, 0, topicID, nil, time.Now(), nil, nil)
 	mock.ExpectQuery("SELECT th.idforumthread").WithArgs(
 		int32(1),
 		threadID,

@@ -139,10 +139,10 @@ type QuerierStub struct {
 
 	SystemInsertDeadLetterCalls int
 
-	SystemGetDeadLetterCalls    []int32
-	SystemGetDeadLetterReturns  *DeadLetter
-	SystemGetDeadLetterErr      error
-	SystemGetDeadLetterFn       func(context.Context, int32) (*DeadLetter, error)
+	SystemGetDeadLetterCalls   []int32
+	SystemGetDeadLetterReturns *DeadLetter
+	SystemGetDeadLetterErr     error
+	SystemGetDeadLetterFn      func(context.Context, int32) (*DeadLetter, error)
 
 	SystemUpdateDeadLetterCalls []SystemUpdateDeadLetterParams
 	SystemUpdateDeadLetterErr   error
@@ -1097,7 +1097,7 @@ func (s *QuerierStub) SystemGetDeadLetter(ctx context.Context, id int32) (*DeadL
 	s.mu.Unlock()
 	if fn != nil {
 		return fn(ctx, id)
-  }
+	}
 	return ret, err
 }
 

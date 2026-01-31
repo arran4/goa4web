@@ -84,7 +84,7 @@ func TestAddIPBanTaskEventData(t *testing.T) {
 		return nil
 	}
 
-	sess, _ := store.New(httptest.NewRequest("GET", "/", nil), "test")
+	sess := testhelpers.Must(store.New(httptest.NewRequest("GET", "/", nil), "test"))
 	sess.Values["UID"] = uid
 
 	evt := &eventbus.TaskEvent{
@@ -137,7 +137,7 @@ func TestDeleteIPBanTaskEventData(t *testing.T) {
 		return nil
 	}
 
-	sess, _ := store.New(httptest.NewRequest("GET", "/", nil), "test")
+	sess := testhelpers.Must(store.New(httptest.NewRequest("GET", "/", nil), "test"))
 	sess.Values["UID"] = uid
 
 	evt := &eventbus.TaskEvent{
@@ -189,7 +189,7 @@ func TestAddAnnouncementTaskEventData(t *testing.T) {
 		return nil
 	}
 
-	sess, _ := store.New(httptest.NewRequest("GET", "/", nil), "test")
+	sess := testhelpers.Must(store.New(httptest.NewRequest("GET", "/", nil), "test"))
 	sess.Values["UID"] = uid
 
 	evt := &eventbus.TaskEvent{
@@ -243,7 +243,7 @@ func TestDeleteAnnouncementTaskEventData(t *testing.T) {
 		return nil
 	}
 
-	sess, _ := store.New(httptest.NewRequest("GET", "/", nil), "test")
+	sess := testhelpers.Must(store.New(httptest.NewRequest("GET", "/", nil), "test"))
 	sess.Values["UID"] = uid
 
 	evt := &eventbus.TaskEvent{
@@ -315,7 +315,7 @@ func TestUserPasswordResetTaskEventData(t *testing.T) {
 		return nil
 	}
 
-	sess, _ := store.New(httptest.NewRequest("GET", "/", nil), "test")
+	sess := testhelpers.Must(store.New(httptest.NewRequest("GET", "/", nil), "test"))
 	sess.Values["UID"] = uid
 
 	evt := &eventbus.TaskEvent{
@@ -366,7 +366,7 @@ func TestServerShutdownTaskEventData(t *testing.T) {
 	qs, bus, _, cdlq, store := setupTest(t)
 	uid := int32(1)
 
-	sess, _ := store.New(httptest.NewRequest("GET", "/", nil), "test")
+	sess := testhelpers.Must(store.New(httptest.NewRequest("GET", "/", nil), "test"))
 	sess.Values["UID"] = uid
 
 	evt := &eventbus.TaskEvent{

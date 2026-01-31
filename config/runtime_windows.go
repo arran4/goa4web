@@ -9,7 +9,7 @@ import (
 	"github.com/arran4/goa4web"
 )
 
-func defaultDataDir() string {
+func DefaultDataDir() string {
 	if os.Getenv(EnvDocker) != "" {
 		return "/var/lib/goa4web"
 	}
@@ -26,7 +26,7 @@ func defaultDataDir() string {
 	return ".data"
 }
 
-func defaultCacheDir() string {
+func DefaultCacheDir() string {
 	if os.Getenv(EnvDocker) != "" {
 		return "/var/cache/goa4web/thumbnails"
 	}

@@ -1,16 +1,22 @@
 -- body.gohtml --
-<p>Hi {{.Item.Username}},</p>
-<p>Your reply has been posted.</p>
+<p>Hi {{.Recipient.Username.String}},</p>
+
+<p>{{.Item.Username}} posted a reply in {{.Item.TopicTitle}}:</p>
+
+<p>{{ truncateWords 50 .Item.Body }}</p>
 
 <p><a href="{{.Item.CommentURL}}">View comment</a></p>
 <p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
 -- body.gotxt --
-Hi {{.Item.Username}},
-Your reply has been posted.
+Hi {{.Recipient.Username.String}},
+
+{{.Item.Username}} posted a reply in {{.Item.TopicTitle}}:
+
+{{ truncateWords 50 .Item.Body }}
 
 View comment:
 {{.Item.CommentURL}}
 
 Manage notifications: {{.UnsubscribeUrl}}
 -- subject.gotxt --
-[{{.SubjectPrefix}}] {{.Item.SubjectPrefix}}: {{.Item.TopicTitle}} - {{.Item.ThreadOpenerPreview}}
+[{{.SubjectPrefix}}] Reply in {{.Item.TopicTitle}} - {{.Item.ThreadOpenerPreview}}

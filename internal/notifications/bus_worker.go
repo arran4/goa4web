@@ -93,7 +93,7 @@ func (n *Notifier) ProcessEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 
 	if tp, ok := evt.Task.(AdminEmailTemplateProvider); ok {
 		if et, send := tp.AdminEmailTemplate(evt); send {
-			if err := n.notifyAdmins(ctx, et, tp.AdminInternalNotificationTemplate(evt), evt.Data, evt.Path); err != nil {
+			if err := n.notifyAdmins(ctx, et, tp.AdminInternalNotificationTemplate(evt), evt.Data, evt.Path, evt.UserID); err != nil {
 				errW := fmt.Errorf("AdminEmailTemplateProvider: %w", err)
 				if dlqErr := n.dlqRecordAndNotify(ctx, q, fmt.Sprintf("admin notify: %v", errW)); dlqErr != nil {
 					return dlqErr
@@ -351,6 +351,40 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 		for id := range internalSubs {
 			if err := n.sendInternalNotification(ctx, id, link, string(msg)); err != nil {
 				return fmt.Errorf("deliver internal to %d: %w", id, err)
+			}
+		}
+	}
+
+	if asp, ok := evt.Task.(AutoSubscribeProvider); ok {
+		newTaskName, newPath, err := asp.AutoSubscribePath(evt)
+		if err == nil {
+			// Find who is subscribed to the current event with "autosub_*"
+			autoInternalSubs, err := collectSubscribers(ctx, n.Queries, patterns, "autosub_internal")
+			if err != nil {
+				log.Printf("collect auto internal subs: %v", err)
+			}
+			autoEmailSubs, err := collectSubscribers(ctx, n.Queries, patterns, "autosub_email")
+			if err != nil {
+				log.Printf("collect auto email subs: %v", err)
+			}
+
+			// We need to build the new pattern for the target subscription
+			newPatterns := buildPatterns(tasks.TaskString(newTaskName), newPath)
+			if len(newPatterns) > 0 {
+				newPattern := newPatterns[0]
+
+				for id := range autoInternalSubs {
+					if id == evt.UserID {
+						continue
+					}
+					ensureSubscription(ctx, n.Queries, id, newPattern, "internal")
+				}
+				for id := range autoEmailSubs {
+					if id == evt.UserID {
+						continue
+					}
+					ensureSubscription(ctx, n.Queries, id, newPattern, "email")
+				}
 			}
 		}
 	}

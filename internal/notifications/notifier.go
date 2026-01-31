@@ -97,14 +97,14 @@ func defaultFuncs() map[string]any {
 
 func (n *Notifier) emailTextTemplates() *ttemplate.Template {
 	n.emailTextOnce.Do(func() {
-		n.emailTextTmpls = templates.GetCompiledEmailTextTemplates(map[string]any{}, templates.WithDir(n.Config.TemplatesDir))
+		n.emailTextTmpls = templates.GetCompiledEmailTextTemplates(defaultFuncs(), templates.WithDir(n.Config.TemplatesDir))
 	})
 	return n.emailTextTmpls
 }
 
 func (n *Notifier) emailHTMLTemplates() *htemplate.Template {
 	n.emailHTMLOnce.Do(func() {
-		n.emailHTMLTmpls = templates.GetCompiledEmailHtmlTemplates(map[string]any{}, templates.WithDir(n.Config.TemplatesDir))
+		n.emailHTMLTmpls = templates.GetCompiledEmailHtmlTemplates(defaultFuncs(), templates.WithDir(n.Config.TemplatesDir))
 	})
 	return n.emailHTMLTmpls
 }
@@ -143,10 +143,10 @@ func (n *Notifier) adminEmails(ctx context.Context) []string {
 
 // NotifyAdmins sends a generic update notice to administrator accounts.
 func (n *Notifier) NotifyAdmins(ctx context.Context, et *EmailTemplates, data EmailData) error {
-	return n.notifyAdmins(ctx, et, nil, data, "")
+	return n.notifyAdmins(ctx, et, nil, data, "", 0)
 }
 
-func (n *Notifier) notifyAdmins(ctx context.Context, et *EmailTemplates, nt *string, data interface{}, link string) error {
+func (n *Notifier) notifyAdmins(ctx context.Context, et *EmailTemplates, nt *string, data interface{}, link string, actorID int32) error {
 	if n.Queries == nil {
 		return nil
 	}
@@ -161,6 +161,11 @@ func (n *Notifier) notifyAdmins(ctx context.Context, et *EmailTemplates, nt *str
 		} else {
 			log.Printf("notify admin %s: %v", addr, err)
 		}
+
+		if uid != nil && *uid == actorID {
+			continue
+		}
+
 		if et != nil {
 			if err := n.renderAndQueueEmailFromTemplates(ctx, uid, addr, et, data, WithAdmin()); err != nil {
 				return err

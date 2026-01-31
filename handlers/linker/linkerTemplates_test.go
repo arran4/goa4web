@@ -12,8 +12,8 @@ import (
 
 func requireEmailTemplates(t *testing.T, prefix string) {
 	t.Helper()
-	htmlTmpls := templates.GetCompiledEmailHtmlTemplates(map[string]any{})
-	textTmpls := templates.GetCompiledEmailTextTemplates(map[string]any{})
+	htmlTmpls := templates.GetCompiledEmailHtmlTemplates(handlertest.GetTemplateFuncs())
+	textTmpls := templates.GetCompiledEmailTextTemplates(handlertest.GetTemplateFuncs())
 	if htmlTmpls.Lookup(notif.EmailHTMLTemplateFilenameGenerator(prefix)) == nil {
 		t.Errorf("missing html template %s.gohtml", prefix)
 	}

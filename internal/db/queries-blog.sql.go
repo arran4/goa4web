@@ -230,15 +230,18 @@ AND (
         SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
     )
 )
-AND EXISTS (
-    SELECT 1 FROM grants g
-    WHERE g.section = 'blogs'
-      AND (g.item = 'entry' OR g.item IS NULL)
-      AND g.action = 'see'
-      AND g.active = 1
-      AND (g.item_id = b.idblogs OR g.item_id IS NULL)
-      AND (g.user_id = ? OR g.user_id IS NULL)
-      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+AND (
+    ? = true
+    OR EXISTS (
+        SELECT 1 FROM grants g
+        WHERE g.section = 'blogs'
+          AND (g.item = 'entry' OR g.item IS NULL)
+          AND g.action = 'see'
+          AND g.active = 1
+          AND (g.item_id = b.idblogs OR g.item_id IS NULL)
+          AND (g.user_id = ? OR g.user_id IS NULL)
+          AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+    )
 )
 ORDER BY b.written DESC
 LIMIT ? OFFSET ?
@@ -247,6 +250,7 @@ LIMIT ? OFFSET ?
 type ListBlogEntriesByAuthorForListerParams struct {
 	ListerID int32
 	AuthorID int32
+	IsAdmin  interface{}
 	UserID   sql.NullInt32
 	Limit    int32
 	Offset   int32
@@ -274,6 +278,7 @@ func (q *Queries) ListBlogEntriesByAuthorForLister(ctx context.Context, arg List
 		arg.AuthorID,
 		arg.ListerID,
 		arg.ListerID,
+		arg.IsAdmin,
 		arg.UserID,
 		arg.Limit,
 		arg.Offset,
@@ -416,13 +421,6 @@ WITH role_ids AS (
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_id, b.blog, b.written, b.timezone, u.username, coalesce(th.comments, 0),
        b.users_idusers = ? AS is_owner
 FROM blogs b
-JOIN grants g ON (g.item_id = b.idblogs OR g.item_id IS NULL)
-    AND g.section = 'blogs'
-    AND (g.item = 'entry' OR g.item IS NULL)
-    AND g.action = 'see'
-    AND g.active = 1
-    AND (g.user_id = ? OR g.user_id IS NULL)
-    AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 LEFT JOIN users u ON b.users_idusers=u.idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
 WHERE (
@@ -437,12 +435,26 @@ WHERE (
         SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
     )
 )
+AND (
+    ? = true
+    OR EXISTS (
+        SELECT 1 FROM grants g
+        WHERE g.section = 'blogs'
+          AND (g.item = 'entry' OR g.item IS NULL)
+          AND g.action = 'see'
+          AND g.active = 1
+          AND (g.item_id = b.idblogs OR g.item_id IS NULL)
+          AND (g.user_id = ? OR g.user_id IS NULL)
+          AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+    )
+)
 ORDER BY b.written DESC
 LIMIT ? OFFSET ?
 `
 
 type ListBlogEntriesForListerParams struct {
 	ListerID int32
+	IsAdmin  interface{}
 	UserID   sql.NullInt32
 	Limit    int32
 	Offset   int32
@@ -465,9 +477,10 @@ func (q *Queries) ListBlogEntriesForLister(ctx context.Context, arg ListBlogEntr
 	rows, err := q.db.QueryContext(ctx, listBlogEntriesForLister,
 		arg.ListerID,
 		arg.ListerID,
+		arg.ListerID,
+		arg.ListerID,
+		arg.IsAdmin,
 		arg.UserID,
-		arg.ListerID,
-		arg.ListerID,
 		arg.Limit,
 		arg.Offset,
 	)

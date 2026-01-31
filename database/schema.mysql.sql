@@ -64,6 +64,7 @@ CREATE TABLE `faq` (
   `answer` mediumtext DEFAULT NULL,
   `question` mediumtext DEFAULT NULL,
   `priority` INT NOT NULL DEFAULT 0,
+  `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `Table_21_FKIndex1` (`author_id`),
   KEY `Table_21_FKIndex2` (`language_id`),
@@ -75,6 +76,7 @@ CREATE TABLE `faq_categories` (
   `parent_category_id` int(10) DEFAULT NULL,
   `language_id` int(10) DEFAULT NULL,
   `name` tinytext DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
 );
 
@@ -96,6 +98,7 @@ CREATE TABLE `forumcategory` (
   `language_id` int(10) DEFAULT NULL,
   `title` tinytext DEFAULT NULL,
   `description` mediumtext DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`idforumcategory`),
   KEY `forumcategory_FKIndex1` (`forumcategory_idforumcategory`),
   KEY `forumcategory_FKIndex2` (`language_id`)
@@ -109,6 +112,7 @@ CREATE TABLE `forumthread` (
   `comments` int(10) DEFAULT NULL,
   `lastaddition` datetime DEFAULT NULL,
   `locked` tinyint(1) DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`idforumthread`),
   KEY `forumdiscussions_FKIndex1` (`forumtopic_idforumtopic`),
   KEY `forumthread_FKIndex2` (`lastposter`),
@@ -126,6 +130,7 @@ CREATE TABLE `forumtopic` (
   `comments` int(10) DEFAULT NULL,
   `lastaddition` datetime DEFAULT NULL,
   `handler` varchar(32) NOT NULL DEFAULT '',
+  `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`idforumtopic`),
   KEY `forumtopic_FKIndex1` (`forumcategory_idforumcategory`),
   KEY `forumtopic_FKIndex2` (`lastposter`),
@@ -309,6 +314,7 @@ CREATE TABLE `site_news` (
   `occurred` datetime DEFAULT NULL,
   `timezone` tinytext DEFAULT NULL,
   `last_index` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`idsiteNews`),
   KEY `siteNews_FKIndex1` (`users_idusers`),
   KEY `siteNews_FKIndex2` (`language_id`),
@@ -687,6 +693,9 @@ CREATE TABLE IF NOT EXISTS `external_links` (
   `card_image` tinytext,
   `card_image_cache` tinytext,
   `favicon_cache` tinytext,
+  `card_duration` tinytext,
+  `card_upload_date` tinytext,
+  `card_author` tinytext,
   PRIMARY KEY (`id`),
   UNIQUE KEY `external_links_url_idx` (`url`(255))
 );
@@ -742,5 +751,5 @@ CREATE TABLE `role_subscription_archetypes` (
 );
 
 -- Set the schema version to the latest migration.
-INSERT INTO `schema_version` (`version`) VALUES (80)
+INSERT INTO `schema_version` (`version`) VALUES (81)
 ON DUPLICATE KEY UPDATE version = VALUES(version);

@@ -15,6 +15,8 @@ type Definition struct {
 	HideIfNone  bool
 	Upgrade     func(params map[string]string) string
 	Legacy      bool
+  SupportsAutoSubscribe bool
+
 }
 
 // Parameter represents a single parameter in a subscription pattern.
@@ -22,6 +24,7 @@ type Parameter struct {
 	Key      string // e.g. "topicid"
 	Value    string // e.g. "1"
 	Resolved string // e.g. "General Discussion"
+	Link     string // e.g. "/forum/topic/1"
 }
 
 // SubscriptionInstance represents a concrete subscription (e.g. to Topic #1).
@@ -52,14 +55,19 @@ type SubscriptionGroup struct {
 var Definitions = []Definition{
 	// Forum
 	{
+		Name:        "New Threads (Specific Topic)",
+		Description: "Notify when a new thread is created in this topic",
+		Pattern:     "create thread:/forum/topic/{topicid}*",
+	},
+	{
 		Name:        "New Threads (All)",
 		Description: "Notify when a new thread is created in any topic",
 		Pattern:     "create thread:/forum/topic/*",
 	},
 	{
-		Name:        "New Threads (Specific Topic)",
-		Description: "Notify when a new thread is created in this topic",
-		Pattern:     "create thread:/forum/topic/{topicid}/*",
+		Name:        "Replies (Specific Thread)",
+		Description: "Notify when a reply is posted in this thread",
+		Pattern:     "reply:/forum/topic/{topicid}/thread/{threadid}*",
 	},
 	{
 		Name:        "Replies (All)",
@@ -67,14 +75,9 @@ var Definitions = []Definition{
 		Pattern:     "reply:/forum/topic/*/thread/*",
 	},
 	{
-		Name:        "Replies (Specific Thread)",
-		Description: "Notify when a reply is posted in this thread",
-		Pattern:     "reply:/forum/topic/{topicid}/thread/{threadid}/*",
-	},
-	{
 		Name:        "Edit Reply",
 		Description: "Notify when a reply is edited",
-		Pattern:     "edit reply:/forum/topic/*/thread/*",
+		Pattern:     "edit reply:/forum/topic/*/thread*",
 	},
 
 	// Private Forum
@@ -84,9 +87,10 @@ var Definitions = []Definition{
 		Pattern:     "private topic create:/private*",
 	},
 	{
-		Name:        "New Threads (Private Topic)",
-		Description: "Notify when a new thread is created in this private topic",
-		Pattern:     "create thread:/private/topic/{topicid}*",
+		Name:                  "New Threads (Private Topic)",
+		Description:           "Notify when a new thread is created in this private topic",
+		Pattern:               "create thread:/private/topic/{topicid}*",
+		SupportsAutoSubscribe: true,
 	},
 	{
 		Name:        "Replies (Private Thread)",
@@ -365,9 +369,9 @@ func matchPattern(template, pattern string) (map[string]string, bool) {
 	regexStr = strings.ReplaceAll(regexStr, "\\{", "{")
 	regexStr = strings.ReplaceAll(regexStr, "\\}", "}")
 
-	// Replace {name} with (?P<name>[^/]+)
+	// Replace {name} with (?P<name>[^/*]+)
 	paramRegex := regexp.MustCompile(`\{([a-zA-Z0-9]+)\}`)
-	regexStr = paramRegex.ReplaceAllString(regexStr, `(?P<$1>[^/]+)`)
+	regexStr = paramRegex.ReplaceAllString(regexStr, `(?P<$1>[^/*]+)`)
 
 	// Handle standard wildcard *
 	// Replace \* with .*

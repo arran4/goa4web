@@ -18,3 +18,9 @@ SELECT COUNT(*) FROM dead_letters;
 
 -- name: SystemLatestDeadLetter :one
 SELECT MAX(created_at) FROM dead_letters;
+
+-- name: SystemGetDeadLetter :one
+SELECT id, message, created_at FROM dead_letters WHERE id = ?;
+
+-- name: SystemUpdateDeadLetter :exec
+UPDATE dead_letters SET message = ? WHERE id = ?;

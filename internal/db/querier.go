@@ -34,7 +34,11 @@ type Querier interface {
 	AdminCountLinksByCategory(ctx context.Context, categoryID sql.NullInt32) (int64, error)
 	AdminCountPasswordResets(ctx context.Context, arg AdminCountPasswordResetsParams) (int64, error)
 	AdminCountPendingPasswordResetsByUser(ctx context.Context) ([]*AdminCountPendingPasswordResetsByUserRow, error)
+	// admin task
+	AdminCountSentEmails(ctx context.Context, arg AdminCountSentEmailsParams) (int64, error)
 	AdminCountThreadsByBoard(ctx context.Context, imageboardIdimageboard sql.NullInt32) (int64, error)
+	// admin task
+	AdminCountUnsentPendingEmails(ctx context.Context, arg AdminCountUnsentPendingEmailsParams) (int64, error)
 	AdminCountWordList(ctx context.Context) (int64, error)
 	AdminCountWordListByPrefix(ctx context.Context, prefix interface{}) (int64, error)
 	AdminCreateFAQ(ctx context.Context, arg AdminCreateFAQParams) (sql.Result, error)
@@ -561,6 +565,7 @@ type Querier interface {
 	SystemDeleteWritingSearchByWritingID(ctx context.Context, writingID int32) error
 	SystemGetAllBlogsForIndex(ctx context.Context) ([]*SystemGetAllBlogsForIndexRow, error)
 	SystemGetBlogEntryByID(ctx context.Context, idblogs int32) (*SystemGetBlogEntryByIDRow, error)
+	SystemGetDeadLetter(ctx context.Context, id int32) (*DeadLetter, error)
 	SystemGetFAQQuestions(ctx context.Context) ([]*Faq, error)
 	SystemGetForumTopicByTitle(ctx context.Context, title sql.NullString) (*Forumtopic, error)
 	// SystemGetLanguageIDByName resolves a language ID by name.
@@ -612,6 +617,7 @@ type Querier interface {
 	SystemSetLinkerLastIndex(ctx context.Context, id int32) error
 	SystemSetSiteNewsLastIndex(ctx context.Context, idsitenews int32) error
 	SystemSetWritingLastIndex(ctx context.Context, idwriting int32) error
+	SystemUpdateDeadLetter(ctx context.Context, arg SystemUpdateDeadLetterParams) error
 	SystemUpdateVerificationCode(ctx context.Context, arg SystemUpdateVerificationCodeParams) error
 	UpdateAutoSubscribeRepliesForLister(ctx context.Context, arg UpdateAutoSubscribeRepliesForListerParams) error
 	UpdateBlogEntryForWriter(ctx context.Context, arg UpdateBlogEntryForWriterParams) error

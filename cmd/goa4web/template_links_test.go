@@ -125,7 +125,7 @@ func TestTemplateLinks(t *testing.T) {
 					urlPath = urlPath[:idx]
 				}
 
-				variants := []string{"1", "dummy", "a", "user"}
+				variants := []string{"1", "dummy", "a", "user", "queue"}
 				matched := false
 				for _, v := range variants {
 					normalized := tmplRegex.ReplaceAllString(urlPath, v)

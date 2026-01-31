@@ -47,7 +47,7 @@ func (n *Notifier) processDigests(ctx context.Context) {
 		log.Printf("GetUsersForDailyDigestNoTimezone: %v", err)
 	} else {
 		for _, user := range usersNoTz {
-			if err := n.sendDigestToUser(ctx, user.UsersIdusers, user.Email, user.DailyDigestMarkRead); err != nil {
+			if err := n.SendDigestToUser(ctx, user.UsersIdusers, user.Email, user.DailyDigestMarkRead, false); err != nil {
 				log.Printf("sendDigestToUser (no tz) %d: %v", user.UsersIdusers, err)
 			}
 		}
@@ -83,14 +83,14 @@ func (n *Notifier) processDigests(ctx context.Context) {
 		}
 
 		for _, user := range users {
-			if err := n.sendDigestToUser(ctx, user.UsersIdusers, user.Email, user.DailyDigestMarkRead); err != nil {
+			if err := n.SendDigestToUser(ctx, user.UsersIdusers, user.Email, user.DailyDigestMarkRead, false); err != nil {
 				log.Printf("sendDigestToUser (%s) %d: %v", tzStr, user.UsersIdusers, err)
 			}
 		}
 	}
 }
 
-func (n *Notifier) sendDigestToUser(ctx context.Context, userID int32, email string, markRead bool) error {
+func (n *Notifier) SendDigestToUser(ctx context.Context, userID int32, email string, markRead, preview bool) error {
 	// Get unread notifications
 	limit := int32(2147483647) // Max Int32
 	notifs, err := n.Queries.ListUnreadNotificationsForLister(ctx, db.ListUnreadNotificationsForListerParams{
@@ -122,24 +122,26 @@ func (n *Notifier) sendDigestToUser(ctx context.Context, userID int32, email str
 		return err
 	}
 
-	// Update last sent time
-	if err := n.Queries.UpdateLastDigestSentAt(ctx, db.UpdateLastDigestSentAtParams{
-		SentAt:   sql.NullTime{Time: time.Now().UTC(), Valid: true},
-		ListerID: userID,
-	}); err != nil {
-		log.Printf("UpdateLastDigestSentAt: %v", err)
-	}
-
-	if markRead {
-		ids := make([]int32, len(notifs))
-		for i, n := range notifs {
-			ids[i] = n.ID
-		}
-		if err := n.Queries.SetNotificationsReadForListerBatch(ctx, db.SetNotificationsReadForListerBatchParams{
+	if !preview {
+		// Update last sent time
+		if err := n.Queries.UpdateLastDigestSentAt(ctx, db.UpdateLastDigestSentAtParams{
+			SentAt:   sql.NullTime{Time: time.Now().UTC(), Valid: true},
 			ListerID: userID,
-			Ids:      ids,
 		}); err != nil {
-			log.Printf("Mark read error: %v", err)
+			log.Printf("UpdateLastDigestSentAt: %v", err)
+		}
+
+		if markRead {
+			ids := make([]int32, len(notifs))
+			for i, n := range notifs {
+				ids[i] = n.ID
+			}
+			if err := n.Queries.SetNotificationsReadForListerBatch(ctx, db.SetNotificationsReadForListerBatchParams{
+				ListerID: userID,
+				Ids:      ids,
+			}); err != nil {
+				log.Printf("Mark read error: %v", err)
+			}
 		}
 	}
 	return nil

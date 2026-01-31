@@ -22,9 +22,8 @@ func TestAdminTemplatesExist(t *testing.T) {
 		AdminEmailTemplateListPageTmpl,
 		AdminEmailTemplateEditPageTmpl,
 		AdminTemplateExportPageTmpl,
-		AdminEmailFailedPageTmpl,
+		AdminEmailPageTmpl,
 		AdminNotificationsPageTmpl,
-		AdminEmailSentPageTmpl,
 		AdminServerStatsPageTmpl,
 		AdminRolesPageTmpl,
 		AdminRoleLoadPageTmpl,
@@ -36,7 +35,6 @@ func TestAdminTemplatesExist(t *testing.T) {
 		AdminSiteSettingsPageTmpl,
 		AdminConfigExplainPageTmpl,
 		AdminPageSizePageTmpl,
-		AdminEmailQueuePageTmpl,
 		AdminDeactivatedCommentsPageTmpl,
 		TemplateUserResetPasswordConfirmPage, // Note: This constant name was kept as is in adminUserPasswordReset.go
 		AdminAnnouncementsPageTmpl,

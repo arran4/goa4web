@@ -40,7 +40,7 @@ func TestBlogsBloggerPostsPage(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/blogs/blogger/bob", nil)
 
-	sess, _ := store.Get(req, sessionName)
+	sess := testhelpers.Must(store.Get(req, sessionName))
 	sess.Values["UID"] = int32(1)
 	w := httptest.NewRecorder()
 	sess.Save(req, w)

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"log"
+	"time"
 
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/config"
@@ -72,7 +73,14 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier, cfg *config.Ru
 					return nil // Already has title
 				}
 
-				info, err := opengraph.Fetch(url, nil)
+				var info *opengraph.Info
+				for i := 0; i < 3; i++ {
+					info, err = opengraph.Fetch(url, nil)
+					if err == nil {
+						break
+					}
+					time.Sleep(time.Duration(i+1) * 2 * time.Second)
+				}
 				if err != nil {
 					log.Printf("opengraph.Fetch %s: %v", url, err)
 					return nil

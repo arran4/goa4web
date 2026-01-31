@@ -2,14 +2,15 @@ package admin
 
 import (
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/internal/tasks"
-
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 // DeleteQueueTask removes queued emails without sending.
@@ -26,8 +27,48 @@ func (DeleteQueueTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	for _, idStr := range r.Form["id"] {
-		id, _ := strconv.Atoi(idStr)
+
+	var ids []int32
+	if r.Form.Get("selection") == "filtered" {
+		filters := emailFiltersFromRequest(r)
+		if strings.Contains(r.URL.Path, "/failed") {
+			rows, err := queries.AdminListFailedEmailIDs(r.Context(), db.AdminListFailedEmailIDsParams{
+				LanguageID:    filters.LangIDParam(),
+				RoleName:      filters.Role,
+				Provider:      filters.ProviderParam(),
+				CreatedBefore: filters.CreatedBefore,
+			})
+			if err != nil {
+				return fmt.Errorf("list failed emails fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+			}
+			for _, id := range rows {
+				ids = append(ids, id)
+			}
+		} else {
+			rows, err := queries.AdminListUnsentPendingEmails(r.Context(), db.AdminListUnsentPendingEmailsParams{
+				LanguageID:    filters.LangIDParam(),
+				RoleName:      filters.Role,
+				Status:        filters.StatusParam(),
+				Provider:      filters.ProviderParam(),
+				CreatedBefore: filters.CreatedBefore,
+				Limit:         2147483647,
+				Offset:        0,
+			})
+			if err != nil {
+				return fmt.Errorf("list pending emails fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+			}
+			for _, row := range rows {
+				ids = append(ids, row.ID)
+			}
+		}
+	} else {
+		for _, idStr := range r.Form["id"] {
+			id, _ := strconv.Atoi(idStr)
+			ids = append(ids, int32(id))
+		}
+	}
+
+	for _, id := range ids {
 		if err := queries.AdminDeletePendingEmail(r.Context(), int32(id)); err != nil {
 			return fmt.Errorf("delete email fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
@@ -36,7 +77,7 @@ func (DeleteQueueTask) Action(w http.ResponseWriter, r *http.Request) any {
 				if evt.Data == nil {
 					evt.Data = map[string]any{}
 				}
-				evt.Data["DeletedEmailID"] = appendID(evt.Data["DeletedEmailID"], id)
+				evt.Data["DeletedEmailID"] = appendID(evt.Data["DeletedEmailID"], int(id))
 			}
 		}
 	}

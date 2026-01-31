@@ -51,4 +51,10 @@ const (
 
 	// TaskSaveDigest saves notification digest settings.
 	TaskSaveDigest tasks.TaskString = "SaveDigest"
+
+	// TaskSendDigestNow sends the notification digest immediately.
+	TaskSendDigestNow tasks.TaskString = "SendDigestNow"
+
+	// TaskSendDigestPreview sends a preview of the notification digest.
+	TaskSendDigestPreview tasks.TaskString = "SendDigestPreview"
 )

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 )
 
@@ -14,17 +15,8 @@ import (
 var textTemplates embed.FS
 
 func TestParseGoTxtTemplates(t *testing.T) {
-	funcs := map[string]any{
-		"a4code2string": func(s string) string { return s },
-		"truncateWords": func(i int, s string) string {
-			words := strings.Fields(s)
-			if len(words) > i {
-				return strings.Join(words[:i], " ") + "..."
-			}
-			return s
-		},
-	}
-	emailTemplates := templates.GetCompiledEmailTextTemplates(nil)
+	funcs := common.GetTemplateFuncs()
+	emailTemplates := templates.GetCompiledEmailTextTemplates(funcs)
 	notificationTemplates := templates.GetCompiledNotificationTemplates(funcs)
 
 	err := fs.WalkDir(textTemplates, ".", func(path string, d fs.DirEntry, err error) error {
@@ -58,33 +50,25 @@ func TestParseGoTxtTemplates(t *testing.T) {
 }
 
 func TestAnnouncementTemplatesExist(t *testing.T) {
-	funcs := map[string]any{
-		"a4code2string": func(s string) string { return s },
-		"truncateWords": func(i int, s string) string {
-			words := strings.Fields(s)
-			if len(words) > i {
-				return strings.Join(words[:i], " ") + "..."
-			}
-			return s
-		},
-	}
+	funcs := common.GetTemplateFuncs()
 	nt := templates.GetCompiledNotificationTemplates(funcs)
 	if nt.Lookup("announcement.gotxt") == nil {
 		t.Fatalf("missing announcement notification template")
 	}
-	et := templates.GetCompiledEmailHtmlTemplates(nil)
+	et := templates.GetCompiledEmailHtmlTemplates(funcs)
 	if et.Lookup("announcementEmail.gohtml") == nil {
 		t.Fatalf("missing announcement email html template")
 	}
-	tt := templates.GetCompiledEmailTextTemplates(nil)
+	tt := templates.GetCompiledEmailTextTemplates(funcs)
 	if tt.Lookup("announcementEmail.gotxt") == nil {
 		t.Fatalf("missing announcement email text template")
 	}
 }
 
 func TestAllEmailTemplatesComplete(t *testing.T) {
-	htmlT := templates.GetCompiledEmailHtmlTemplates(nil)
-	textT := templates.GetCompiledEmailTextTemplates(nil)
+	funcs := common.GetTemplateFuncs()
+	htmlT := templates.GetCompiledEmailHtmlTemplates(funcs)
+	textT := templates.GetCompiledEmailTextTemplates(funcs)
 
 	type trio struct{ html, text, subj bool }
 	m := map[string]*trio{}

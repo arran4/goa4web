@@ -3,54 +3,64 @@ package admin
 import (
 	"database/sql"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
 
 const (
-	// emailQueueStatusPending filters unsent emails without errors.
-	emailQueueStatusPending = "pending"
-	// emailQueueStatusFailed filters unsent emails with errors.
-	emailQueueStatusFailed = "failed"
-	// emailQueueProviderDirect filters direct emails.
-	emailQueueProviderDirect = "direct"
-	// emailQueueProviderUser filters emails tied to user accounts.
-	emailQueueProviderUser = "user"
-	// emailQueueProviderUserless filters queued emails without users.
-	emailQueueProviderUserless = "userless"
-	// emailQueueAgeDay filters emails older than 24 hours.
-	emailQueueAgeDay = "24h"
-	// emailQueueAgeWeek filters emails older than 7 days.
-	emailQueueAgeWeek = "7d"
-	// emailQueueAgeMonth filters emails older than 30 days.
-	emailQueueAgeMonth = "30d"
+	// emailFilterStatusPending filters unsent emails without errors.
+	emailFilterStatusPending = "pending"
+	// emailFilterStatusFailed filters unsent emails with errors.
+	emailFilterStatusFailed = "failed"
+	// emailFilterProviderDirect filters direct emails.
+	emailFilterProviderDirect = "direct"
+	// emailFilterProviderUser filters emails tied to user accounts.
+	emailFilterProviderUser = "user"
+	// emailFilterProviderUserless filters queued emails without users.
+	emailFilterProviderUserless = "userless"
+	// emailFilterAgeDay filters emails older than 24 hours.
+	emailFilterAgeDay = "24h"
+	// emailFilterAgeWeek filters emails older than 7 days.
+	emailFilterAgeWeek = "7d"
+	// emailFilterAgeMonth filters emails older than 30 days.
+	emailFilterAgeMonth = "30d"
 )
 
-// EmailQueueFilters captures filter values for the queue view.
-type EmailQueueFilters struct {
+// EmailFilters captures filter values for the email views.
+type EmailFilters struct {
 	Status        string
 	Provider      string
 	Age           string
 	CreatedBefore sql.NullTime
+	LangID        int
+	Role          string
 }
 
-func emailQueueFiltersFromValues(values url.Values) EmailQueueFilters {
-	filters := EmailQueueFilters{}
-	status := normalizeEmailQueueFilter(values.Get("status"), []string{emailQueueStatusPending, emailQueueStatusFailed})
-	provider := normalizeEmailQueueFilter(values.Get("provider"), []string{emailQueueProviderDirect, emailQueueProviderUser, emailQueueProviderUserless})
-	age := normalizeEmailQueueFilter(values.Get("age"), []string{emailQueueAgeDay, emailQueueAgeWeek, emailQueueAgeMonth})
+func emailFiltersFromValues(values url.Values) EmailFilters {
+	filters := EmailFilters{}
+	status := normalizeEmailFilter(values.Get("status"), []string{emailFilterStatusPending, emailFilterStatusFailed})
+	provider := normalizeEmailFilter(values.Get("provider"), []string{emailFilterProviderDirect, emailFilterProviderUser, emailFilterProviderUserless})
+	age := normalizeEmailFilter(values.Get("age"), []string{emailFilterAgeDay, emailFilterAgeWeek, emailFilterAgeMonth})
+
 	filters.Status = status
 	filters.Provider = provider
 	filters.Age = age
+
 	if age != "" {
-		if d, ok := emailQueueAgeDuration(age); ok {
+		if d, ok := emailFilterAgeDuration(age); ok {
 			filters.CreatedBefore = sql.NullTime{Time: time.Now().Add(-d), Valid: true}
 		}
 	}
+
+	langID, _ := strconv.Atoi(values.Get("lang"))
+	filters.LangID = langID
+	filters.Role = values.Get("role")
+
 	return filters
 }
 
-func normalizeEmailQueueFilter(value string, allowed []string) string {
+func normalizeEmailFilter(value string, allowed []string) string {
 	value = strings.TrimSpace(strings.ToLower(value))
 	for _, allowedValue := range allowed {
 		if value == allowedValue {
@@ -60,30 +70,34 @@ func normalizeEmailQueueFilter(value string, allowed []string) string {
 	return ""
 }
 
-func emailQueueAgeDuration(age string) (time.Duration, bool) {
+func emailFilterAgeDuration(age string) (time.Duration, bool) {
 	switch age {
-	case emailQueueAgeDay:
+	case emailFilterAgeDay:
 		return 24 * time.Hour, true
-	case emailQueueAgeWeek:
+	case emailFilterAgeWeek:
 		return 7 * 24 * time.Hour, true
-	case emailQueueAgeMonth:
+	case emailFilterAgeMonth:
 		return 30 * 24 * time.Hour, true
 	default:
 		return 0, false
 	}
 }
 
-func (f EmailQueueFilters) StatusParam() sql.NullString {
+func (f EmailFilters) StatusParam() sql.NullString {
 	return sql.NullString{String: f.Status, Valid: f.Status != ""}
 }
 
-func (f EmailQueueFilters) ProviderParam() sql.NullString {
+func (f EmailFilters) ProviderParam() sql.NullString {
 	return sql.NullString{String: f.Provider, Valid: f.Provider != ""}
 }
 
+func (f EmailFilters) LangIDParam() sql.NullInt32 {
+	return sql.NullInt32{Int32: int32(f.LangID), Valid: f.LangID != 0}
+}
+
 // AuditSummary returns a summary of filters for audit logs.
-func (f EmailQueueFilters) AuditSummary() string {
-	parts := make([]string, 0, 3)
+func (f EmailFilters) AuditSummary() string {
+	parts := make([]string, 0, 5)
 	if f.Status != "" {
 		parts = append(parts, "status="+f.Status)
 	}
@@ -92,6 +106,12 @@ func (f EmailQueueFilters) AuditSummary() string {
 	}
 	if f.Age != "" {
 		parts = append(parts, "age="+f.Age)
+	}
+	if f.LangID != 0 {
+		parts = append(parts, "lang="+strconv.Itoa(f.LangID))
+	}
+	if f.Role != "" {
+		parts = append(parts, "role="+f.Role)
 	}
 	if len(parts) == 0 {
 		return "no filters"

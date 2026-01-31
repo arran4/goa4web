@@ -197,7 +197,7 @@ func TestBlogReply(t *testing.T) {
 		}
 	}
 
-	expectedSubscriberNotif := fmt.Sprintf("New reply in %q by replier\n", BloggerTopicName)
+	expectedSubscriberNotif := fmt.Sprintf(" replied to %s: Hello Blog", BloggerTopicName)
 	if subscriberNotif != expectedSubscriberNotif {
 		t.Errorf("expected subscriber notif %q, got %q", expectedSubscriberNotif, subscriberNotif)
 	}

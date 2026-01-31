@@ -6,13 +6,14 @@ import (
 	"github.com/arran4/goa4web/internal/eventbus"
 
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/handlers/handlertest"
 	notif "github.com/arran4/goa4web/internal/notifications"
 )
 
 func checkIPBanEmailTemplates(t *testing.T, et *notif.EmailTemplates) {
 	t.Helper()
-	htmlTmpls := templates.GetCompiledEmailHtmlTemplates(map[string]any{})
-	textTmpls := templates.GetCompiledEmailTextTemplates(map[string]any{})
+	htmlTmpls := templates.GetCompiledEmailHtmlTemplates(handlertest.GetTemplateFuncs())
+	textTmpls := templates.GetCompiledEmailTextTemplates(handlertest.GetTemplateFuncs())
 	if htmlTmpls.Lookup(et.HTML) == nil {
 		t.Errorf("missing html template %s", et.HTML)
 	}

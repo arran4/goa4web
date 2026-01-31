@@ -12,8 +12,8 @@ import (
 
 func requireEmailTemplates(t *testing.T, et *notif.EmailTemplates) {
 	t.Helper()
-	htmlTmpls := templates.GetCompiledEmailHtmlTemplates(map[string]any{})
-	textTmpls := templates.GetCompiledEmailTextTemplates(map[string]any{})
+	htmlTmpls := templates.GetCompiledEmailHtmlTemplates(handlertest.GetTemplateFuncs())
+	textTmpls := templates.GetCompiledEmailTextTemplates(handlertest.GetTemplateFuncs())
 	if htmlTmpls.Lookup(et.HTML) == nil {
 		t.Errorf("missing html template %s", et.HTML)
 	}

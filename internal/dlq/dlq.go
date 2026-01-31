@@ -13,6 +13,13 @@ type DLQ interface {
 	Record(ctx context.Context, message string) error
 }
 
+// Manageable extends DLQ with management operations.
+type Manageable interface {
+	DLQ
+	Get(ctx context.Context, id string) (string, error)
+	Delete(ctx context.Context, id string) error
+}
+
 // LogDLQ writes messages to the application log.
 type LogDLQ struct{}
 

@@ -28,6 +28,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dbdrivers"
+	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
 	imagesign "github.com/arran4/goa4web/internal/images"
@@ -109,6 +110,7 @@ type CoreData struct {
 	AutoRefresh       string
 	Config            *config.RuntimeConfig
 	CustomIndexItems  []IndexItem
+	DLQReg            *dlq.Registry
 	FeedsEnabled      bool
 
 	// Signing keys for various URL types
@@ -176,6 +178,7 @@ type CoreData struct {
 	blogListByAuthorRows             lazy.Value[[]*db.ListBlogEntriesByAuthorForListerRow]
 	blogListUID                      int32
 	bookmarks                        lazy.Value[*db.GetBookmarksForUserRow]
+	bus                              *eventbus.Bus
 	currentBlogID                    int32
 	currentBoardID                   int32
 	currentCommentID                 int32
@@ -1189,6 +1192,14 @@ func (cd *CoreData) HTTPClient() *http.Client {
 
 // Event returns the event associated with the request, if any.
 func (cd *CoreData) Event() *eventbus.TaskEvent { return cd.event }
+
+// Publish publishes an event to the event bus.
+func (cd *CoreData) Publish(msg eventbus.Message) error {
+	if cd.bus == nil {
+		return fmt.Errorf("event bus not available")
+	}
+	return cd.bus.Publish(msg)
+}
 
 // ExecuteSiteTemplate renders the named site template using cd's helper
 // functions. It wraps templates.GetCompiledSiteTemplates(cd.Funcs(r)).
@@ -2736,6 +2747,9 @@ func WithSessionManager(sm SessionManager) CoreOption {
 // WithEvent links an event to the CoreData object.
 func WithEvent(evt *eventbus.TaskEvent) CoreOption { return func(cd *CoreData) { cd.event = evt } }
 
+// WithEventBus sets the event bus on the CoreData object.
+func WithEventBus(b *eventbus.Bus) CoreOption { return func(cd *CoreData) { cd.bus = b } }
+
 // WithAbsoluteURLBase sets the base URL used to build absolute links.
 func WithAbsoluteURLBase(base string) CoreOption {
 	return func(cd *CoreData) { cd.absoluteURLBase.Set(strings.TrimRight(base, "/")) }
@@ -2804,6 +2818,11 @@ func WithFeedSignKey(key string) CoreOption {
 // WithTasksRegistry registers the task registry on CoreData.
 func WithTasksRegistry(r *tasks.Registry) CoreOption {
 	return func(cd *CoreData) { cd.TasksReg = r }
+}
+
+// WithDLQRegistry registers the DLQ registry on CoreData.
+func WithDLQRegistry(r *dlq.Registry) CoreOption {
+	return func(cd *CoreData) { cd.DLQReg = r }
 }
 
 // WithDBRegistry sets the database driver registry for CoreData.

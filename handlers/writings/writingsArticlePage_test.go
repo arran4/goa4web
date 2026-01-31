@@ -34,7 +34,7 @@ func TestArticleReplyActionPage_UsesWritingParam(t *testing.T) {
 	req = mux.SetURLVars(req, map[string]string{"writing": "1"})
 
 	w := httptest.NewRecorder()
-	sess, _ := store.Get(req, core.SessionName)
+	sess := testhelpers.Must(store.Get(req, core.SessionName))
 	sess.Values["UID"] = int32(1)
 	sess.Save(req, w)
 	for _, c := range w.Result().Cookies() {

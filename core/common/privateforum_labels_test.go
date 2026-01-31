@@ -65,10 +65,7 @@ func TestCoreData_PrivateForumTopics_LabelsBug(t *testing.T) {
 		},
 	}
 
-	topics, err := cd.PrivateForumTopics()
-	if err != nil {
-		t.Fatalf("PrivateForumTopics() error = %v", err)
-	}
+	topics := testhelpers.Must(cd.PrivateForumTopics())
 
 	if len(topics) != 1 {
 		t.Fatalf("expected 1 topic, got %d", len(topics))
@@ -123,10 +120,7 @@ func TestCoreData_PrivateForumTopics_UnreadNew(t *testing.T) {
 		},
 	}
 
-	topics, err := cd.PrivateForumTopics()
-	if err != nil {
-		t.Fatalf("PrivateForumTopics() error = %v", err)
-	}
+	topics := testhelpers.Must(cd.PrivateForumTopics())
 
 	if len(topics) != 1 {
 		t.Fatalf("expected 1 topic, got %d", len(topics))
@@ -174,7 +168,7 @@ func TestCoreData_PrivateForumTopics_OwnThreadNotNew(t *testing.T) {
 		},
 	}
 
-	topics, _ := cd.PrivateForumTopics()
+	topics := testhelpers.Must(cd.PrivateForumTopics())
 	foundNew := false
 	for _, l := range topics[0].Labels {
 		if l.Name == "new" {

@@ -23,6 +23,7 @@ import (
 	logProv "github.com/arran4/goa4web/internal/email/log"
 	mockemail "github.com/arran4/goa4web/internal/email/mock"
 	smtpProv "github.com/arran4/goa4web/internal/email/smtp"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func newRegistry() *email.Registry {
@@ -37,7 +38,7 @@ func newRegistry() *email.Registry {
 func TestGetEmailProviderLog(t *testing.T) {
 	cfg := config.RuntimeConfig{EmailProvider: "log"}
 	reg := newRegistry()
-	p, _ := reg.ProviderFromConfig(&cfg)
+	p := testhelpers.Must(reg.ProviderFromConfig(&cfg))
 	if _, ok := p.(logProv.Provider); !ok {
 		t.Errorf("expected LogProvider, got %#v", p)
 	}
@@ -222,13 +223,13 @@ func TestProcessPendingEmailDLQ(t *testing.T) {
 
 func TestGetEmailProviderSMTP(t *testing.T) {
 	reg := newRegistry()
-	p, _ := reg.ProviderFromConfig(&config.RuntimeConfig{
+	p := testhelpers.Must(reg.ProviderFromConfig(&config.RuntimeConfig{
 		EmailProvider:     "smtp",
 		EmailSMTPHost:     "localhost",
 		EmailSMTPPort:     "25",
 		EmailFrom:         "from@example.com",
 		EmailSMTPStartTLS: true,
-	})
+	}))
 	s, ok := p.(smtpProv.Provider)
 	if !ok {
 		t.Fatalf("expected SMTPProvider, got %#v", p)
@@ -240,7 +241,7 @@ func TestGetEmailProviderSMTP(t *testing.T) {
 
 func TestGetEmailProviderLocal(t *testing.T) {
 	reg := newRegistry()
-	p, _ := reg.ProviderFromConfig(&config.RuntimeConfig{EmailProvider: "local"})
+	p := testhelpers.Must(reg.ProviderFromConfig(&config.RuntimeConfig{EmailProvider: "local"}))
 	if _, ok := p.(localProv.Provider); !ok {
 		t.Fatalf("expected LocalProvider")
 	}
@@ -248,12 +249,12 @@ func TestGetEmailProviderLocal(t *testing.T) {
 
 func TestGetEmailProviderJMAP(t *testing.T) {
 	reg := newRegistry()
-	p, _ := reg.ProviderFromConfig(&config.RuntimeConfig{
+	p := testhelpers.Must(reg.ProviderFromConfig(&config.RuntimeConfig{
 		EmailProvider:     "jmap",
 		EmailJMAPEndpoint: "http://example.com",
 		EmailJMAPAccount:  "acct",
 		EmailJMAPIdentity: "id",
-	})
+	}))
 	j, ok := p.(*jmapProv.Provider)
 	if !ok {
 		t.Fatalf("expected JMAPProvider, got %#v", p)
@@ -270,7 +271,7 @@ func TestProviderRegistry(t *testing.T) {
 		called = true
 		return logProv.Provider{}, nil
 	})
-	p, _ := reg.ProviderFromConfig(&config.RuntimeConfig{EmailProvider: "testprov"})
+	p := testhelpers.Must(reg.ProviderFromConfig(&config.RuntimeConfig{EmailProvider: "testprov"}))
 	if !called {
 		t.Fatal("factory not called")
 	}

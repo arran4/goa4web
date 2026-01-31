@@ -69,7 +69,7 @@ func TestPrivateRoute(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req, _ := http.NewRequest("GET", tt.path, nil)
+			req := testhelpers.Must(http.NewRequest("GET", tt.path, nil))
 			rr := httptest.NewRecorder()
 
 			stub := testhelpers.NewQuerierStub(testhelpers.WithGrantResult(tt.grantReturns == 1))

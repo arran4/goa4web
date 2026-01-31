@@ -7,13 +7,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/arran4/goa4web/internal/testhelpers"
 	"github.com/gorilla/sessions"
 )
 
 func TestRedirectToLogin(t *testing.T) {
 	store := sessions.NewCookieStore([]byte("test"))
 	req := httptest.NewRequest(http.MethodGet, "/path", nil)
-	sess, _ := store.New(req, "sess")
+	sess := testhelpers.Must(store.New(req, "sess"))
 	rr := httptest.NewRecorder()
 	code := RedirectToLogin(rr, req, sess)
 	if code != http.StatusSeeOther {
@@ -54,7 +55,7 @@ func TestRedirectToLoginPreservesPostData(t *testing.T) {
 	form := url.Values{"a": {"1"}, "b": {"2"}}
 	req := httptest.NewRequest(http.MethodPost, "/submit?foo=1", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	sess, _ := store.New(req, "sess")
+	sess := testhelpers.Must(store.New(req, "sess"))
 	rr := httptest.NewRecorder()
 	RedirectToLogin(rr, req, sess)
 

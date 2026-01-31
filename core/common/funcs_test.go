@@ -3,36 +3,124 @@ package common_test
 import (
 	"context"
 	"database/sql"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 )
 
-func TestTemplateFuncsFirstline(t *testing.T) {
-	r := httptest.NewRequest("GET", "/", nil)
-	cd := &common.CoreData{}
-	funcs := cd.Funcs(r)
-	first := funcs["firstline"].(func(string) string)
-	if got := first("a\nb\n"); got != "a" {
-		t.Errorf("firstline=%q", got)
+func TestFirstLine(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+		want string
+	}{
+		{"Single line", "a", "a"},
+		{"Multi line", "a\nb\n", "a"},
+		{"Empty", "", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := common.FirstLine(tt.in); got != tt.want {
+				t.Errorf("FirstLine(%q) = %q, want %q", tt.in, got, tt.want)
+			}
+		})
 	}
 }
 
-func TestTemplateFuncsLeft(t *testing.T) {
-	r := httptest.NewRequest("GET", "/", nil)
-	cd := &common.CoreData{}
-	funcs := cd.Funcs(r)
-	left := funcs["left"].(func(int, string) string)
-	if got := left(3, "hello"); got != "hel" {
-		t.Errorf("left short=%q", got)
+func TestLeft(t *testing.T) {
+	tests := []struct {
+		name string
+		i    int
+		s    string
+		want string
+	}{
+		{"Short string", 3, "hello", "hel"},
+		{"Long length", 10, "hi", "hi"},
+		{"Empty string", 5, "", ""},
+		{"Zero length", 0, "hello", ""},
 	}
-	if got := left(10, "hi"); got != "hi" {
-		t.Errorf("left long=%q", got)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := common.Left(tt.i, tt.s); got != tt.want {
+				t.Errorf("Left(%d, %q) = %q, want %q", tt.i, tt.s, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestTruncateWords(t *testing.T) {
+	tests := []struct {
+		name string
+		i    int
+		s    string
+		want string
+	}{
+		{"No truncation needed", 5, "one two three", "one two three"},
+		{"Truncation needed", 2, "one two three", "one two..."},
+		{"Exact length", 3, "one two three", "one two three"},
+		{"Empty string", 5, "", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := common.TruncateWords(tt.i, tt.s); got != tt.want {
+				t.Errorf("TruncateWords(%d, %q) = %q, want %q", tt.i, tt.s, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestToInt32(t *testing.T) {
+	tests := []struct {
+		name string
+		in   any
+		want int32
+	}{
+		{"int", int(10), 10},
+		{"int32", int32(20), 20},
+		{"int64", int64(30), 30},
+		{"string", "40", 40},
+		{"string invalid", "abc", 0},
+		{"float64 (unsupported default)", 50.5, 0},
+		{"nil", nil, 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := common.ToInt32(tt.in); got != tt.want {
+				t.Errorf("ToInt32(%v) = %v, want %v", tt.in, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSeq(t *testing.T) {
+	tests := []struct {
+		name  string
+		start int
+		end   int
+		want  []int
+	}{
+		{"Ascending", 1, 3, []int{1, 2, 3}},
+		{"Single", 5, 5, []int{5}},
+		{"Descending (empty)", 3, 1, nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := common.Seq(tt.start, tt.end)
+			if len(got) != len(tt.want) {
+				t.Errorf("Seq(%d, %d) len = %d, want %d", tt.start, tt.end, len(got), len(tt.want))
+			}
+			for i := range got {
+				if got[i] != tt.want[i] {
+					t.Errorf("Seq(%d, %d)[%d] = %d, want %d", tt.start, tt.end, i, got[i], tt.want[i])
+				}
+			}
+		})
 	}
 }
 
@@ -119,19 +207,8 @@ func TestAddmodeSkipsAdminLinks(t *testing.T) {
 	}
 }
 
-func TestTemplateFuncsTimeAgo(t *testing.T) {
-	req := httptest.NewRequest("GET", "/", nil)
-	cd := &common.CoreData{}
-	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
-	req = req.WithContext(ctx)
-
-	funcs := cd.Funcs(req)
-	timeAgo := funcs["timeAgo"].(func(time.Time) string)
-
-	// Since timeAgo uses time.Now() internally, we must ensure we don't hit race conditions with boundaries.
-	// We add a small buffer to ensure we stay within the expected unit range.
+func TestTimeAgo(t *testing.T) {
 	now := time.Now()
-
 	tests := []struct {
 		d    time.Duration
 		want string
@@ -147,9 +224,10 @@ func TestTemplateFuncsTimeAgo(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		got := timeAgo(now.Add(-tt.d))
+		// Use newly exported TimeAgo with explicit 'now'
+		got := common.TimeAgo(now.Add(-tt.d), now)
 		if got != tt.want {
-			t.Errorf("timeAgo(-%v) = %q, want %q", tt.d, got, tt.want)
+			t.Errorf("TimeAgo(-%v) = %q, want %q", tt.d, got, tt.want)
 		}
 	}
 }

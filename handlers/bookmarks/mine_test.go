@@ -13,6 +13,7 @@ import (
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers/handlertest"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestParseColumns(t *testing.T) {
@@ -71,7 +72,7 @@ func TestMinePage_NoBookmarks(t *testing.T) {
 	core.Store = store
 	core.SessionName = "test-session"
 
-	sess, _ := store.Get(req, core.SessionName)
+	sess := testhelpers.Must(store.Get(req, core.SessionName))
 	sess.Values["UID"] = int32(1)
 	w := httptest.NewRecorder()
 	sess.Save(req, w)

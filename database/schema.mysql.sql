@@ -688,6 +688,9 @@ CREATE TABLE IF NOT EXISTS `external_links` (
   `card_image` tinytext,
   `card_image_cache` tinytext,
   `favicon_cache` tinytext,
+  `card_duration` tinytext,
+  `card_upload_date` tinytext,
+  `card_author` tinytext,
   PRIMARY KEY (`id`),
   UNIQUE KEY `external_links_url_idx` (`url`(255))
 );
@@ -743,5 +746,5 @@ CREATE TABLE `role_subscription_archetypes` (
 );
 
 -- Set the schema version to the latest migration.
-INSERT INTO `schema_version` (`version`) VALUES (80)
+INSERT INTO `schema_version` (`version`) VALUES (81)
 ON DUPLICATE KEY UPDATE version = VALUES(version);

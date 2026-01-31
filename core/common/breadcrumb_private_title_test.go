@@ -17,7 +17,7 @@ func TestPrivateForumBreadcrumbUsesDisplayTitle(t *testing.T) {
 	defer conn.Close()
 
 	topicRows := sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_id", "title", "description", "threads", "comments", "lastaddition", "handler", "LastPosterUsername"}).
-		AddRow(1, 0, 0, nil, sql.NullString{String: "Hidden", Valid: true}, sql.NullString{}, sql.NullInt32{}, sql.NullInt32{}, sql.NullTime{}, "private", sql.NullString{})
+		AddRow(1, 0, 0, nil, sql.NullString{String: "Private chat with Hidden", Valid: true}, sql.NullString{}, sql.NullInt32{}, sql.NullInt32{}, sql.NullTime{}, "private", sql.NullString{})
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT t.idforumtopic")).
 		WithArgs(int32(1), int32(1), int32(1), int32(1), sql.NullInt32{Int32: 1, Valid: true}).
 		WillReturnRows(topicRows)

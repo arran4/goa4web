@@ -12,6 +12,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 var (
@@ -142,7 +143,7 @@ func TestCSRFRotatesAfterAuthentication(t *testing.T) {
 		w.Header().Set("X-Token", Token(r))
 	}).Methods(http.MethodGet)
 	r.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
-		session, _ := core.GetSession(r)
+		session := testhelpers.Must(core.GetSession(r))
 		session.Values["UID"] = int32(42)
 		if err := session.Save(r, w); err != nil {
 			t.Fatalf("save session: %v", err)

@@ -42,8 +42,39 @@ func (q *Queries) AdminDeleteExternalLinkByURL(ctx context.Context, url string) 
 	return err
 }
 
+const adminGetExternalLinkByCacheID = `-- name: AdminGetExternalLinkByCacheID :one
+SELECT id, url, clicks, created_at, updated_at, updated_by, card_title, card_description, card_image, card_image_cache, favicon_cache, card_duration, card_upload_date, card_author FROM external_links WHERE card_image_cache = ? OR favicon_cache = ? LIMIT 1
+`
+
+type AdminGetExternalLinkByCacheIDParams struct {
+	CardImageCache sql.NullString
+	FaviconCache   sql.NullString
+}
+
+func (q *Queries) AdminGetExternalLinkByCacheID(ctx context.Context, arg AdminGetExternalLinkByCacheIDParams) (*ExternalLink, error) {
+	row := q.db.QueryRowContext(ctx, adminGetExternalLinkByCacheID, arg.CardImageCache, arg.FaviconCache)
+	var i ExternalLink
+	err := row.Scan(
+		&i.ID,
+		&i.Url,
+		&i.Clicks,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.UpdatedBy,
+		&i.CardTitle,
+		&i.CardDescription,
+		&i.CardImage,
+		&i.CardImageCache,
+		&i.FaviconCache,
+		&i.CardDuration,
+		&i.CardUploadDate,
+		&i.CardAuthor,
+	)
+	return &i, err
+}
+
 const adminListExternalLinks = `-- name: AdminListExternalLinks :many
-SELECT id, url, clicks, created_at, updated_at, updated_by, card_title, card_description, card_image, card_image_cache, favicon_cache FROM external_links
+SELECT id, url, clicks, created_at, updated_at, updated_by, card_title, card_description, card_image, card_image_cache, favicon_cache, card_duration, card_upload_date, card_author FROM external_links
 ORDER BY created_at DESC
 LIMIT ? OFFSET ?
 `
@@ -74,6 +105,9 @@ func (q *Queries) AdminListExternalLinks(ctx context.Context, arg AdminListExter
 			&i.CardImage,
 			&i.CardImageCache,
 			&i.FaviconCache,
+			&i.CardDuration,
+			&i.CardUploadDate,
+			&i.CardAuthor,
 		); err != nil {
 			return nil, err
 		}
@@ -108,7 +142,7 @@ func (q *Queries) EnsureExternalLink(ctx context.Context, url string) (sql.Resul
 }
 
 const getExternalLink = `-- name: GetExternalLink :one
-SELECT id, url, clicks, created_at, updated_at, updated_by, card_title, card_description, card_image, card_image_cache, favicon_cache FROM external_links WHERE url = ? LIMIT 1
+SELECT id, url, clicks, created_at, updated_at, updated_by, card_title, card_description, card_image, card_image_cache, favicon_cache, card_duration, card_upload_date, card_author FROM external_links WHERE url = ? LIMIT 1
 `
 
 func (q *Queries) GetExternalLink(ctx context.Context, url string) (*ExternalLink, error) {
@@ -126,12 +160,15 @@ func (q *Queries) GetExternalLink(ctx context.Context, url string) (*ExternalLin
 		&i.CardImage,
 		&i.CardImageCache,
 		&i.FaviconCache,
+		&i.CardDuration,
+		&i.CardUploadDate,
+		&i.CardAuthor,
 	)
 	return &i, err
 }
 
 const getExternalLinkByID = `-- name: GetExternalLinkByID :one
-SELECT id, url, clicks, created_at, updated_at, updated_by, card_title, card_description, card_image, card_image_cache, favicon_cache FROM external_links WHERE id = ? LIMIT 1
+SELECT id, url, clicks, created_at, updated_at, updated_by, card_title, card_description, card_image, card_image_cache, favicon_cache, card_duration, card_upload_date, card_author FROM external_links WHERE id = ? LIMIT 1
 `
 
 func (q *Queries) GetExternalLinkByID(ctx context.Context, id int32) (*ExternalLink, error) {
@@ -149,6 +186,9 @@ func (q *Queries) GetExternalLinkByID(ctx context.Context, id int32) (*ExternalL
 		&i.CardImage,
 		&i.CardImageCache,
 		&i.FaviconCache,
+		&i.CardDuration,
+		&i.CardUploadDate,
+		&i.CardAuthor,
 	)
 	return &i, err
 }
@@ -182,7 +222,7 @@ func (q *Queries) UpdateExternalLinkImageCache(ctx context.Context, arg UpdateEx
 
 const updateExternalLinkMetadata = `-- name: UpdateExternalLinkMetadata :exec
 UPDATE external_links
-SET card_title = ?, card_description = ?, card_image = ?, updated_at = CURRENT_TIMESTAMP
+SET card_title = ?, card_description = ?, card_image = ?, card_duration = ?, card_upload_date = ?, card_author = ?, updated_at = CURRENT_TIMESTAMP
 WHERE id = ?
 `
 
@@ -190,6 +230,9 @@ type UpdateExternalLinkMetadataParams struct {
 	CardTitle       sql.NullString
 	CardDescription sql.NullString
 	CardImage       sql.NullString
+	CardDuration    sql.NullString
+	CardUploadDate  sql.NullString
+	CardAuthor      sql.NullString
 	ID              int32
 }
 
@@ -198,6 +241,9 @@ func (q *Queries) UpdateExternalLinkMetadata(ctx context.Context, arg UpdateExte
 		arg.CardTitle,
 		arg.CardDescription,
 		arg.CardImage,
+		arg.CardDuration,
+		arg.CardUploadDate,
+		arg.CardAuthor,
 		arg.ID,
 	)
 	return err

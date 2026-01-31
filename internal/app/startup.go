@@ -6,7 +6,10 @@ import (
 	"fmt"
 	dbstart2 "github.com/arran4/goa4web/internal/app/dbstart"
 	"os"
+	"path/filepath"
+	"strings"
 
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dbdrivers"
 
 	"github.com/arran4/goa4web/config"
@@ -24,6 +27,10 @@ func PerformChecks(cfg *config.RuntimeConfig, reg *dbdrivers.Registry) (*sql.DB,
 		return nil, fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
 	}
 	if ue := CheckUploadTarget(cfg); ue != nil {
+		dbPool.Close()
+		return nil, fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
+	}
+	if ue := CheckMediaFiles(cfg, dbPool); ue != nil {
 		dbPool.Close()
 		return nil, fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
 	}
@@ -51,5 +58,80 @@ func CheckUploadTarget(cfg *config.RuntimeConfig) *common.UserError {
 			return &common.UserError{Err: err, ErrorMessage: "image cache directory invalid"}
 		}
 	}
+	return nil
+}
+
+// CheckMediaFiles verifies that the most recent media files exist on disk.
+func CheckMediaFiles(cfg *config.RuntimeConfig, dbPool *sql.DB) *common.UserError {
+	q := db.New(dbPool)
+	ctx := context.Background()
+
+	var missing []string
+
+	// Check uploaded images
+	if cfg.ImageUploadDir != "" {
+		imgs, err := q.AdminListUploadedImages(ctx, db.AdminListUploadedImagesParams{
+			Limit:  5,
+			Offset: 0,
+		})
+		if err == nil {
+			for _, img := range imgs {
+				if !img.Path.Valid {
+					continue
+				}
+				p := filepath.Join(cfg.ImageUploadDir, img.Path.String)
+				if _, err := os.Stat(p); os.IsNotExist(err) {
+					missing = append(missing, fmt.Sprintf("Uploaded image missing: %s", p))
+				}
+			}
+		}
+	}
+
+	// Check cached images
+	if cfg.ImageCacheDir != "" {
+		links, err := q.AdminListExternalLinks(ctx, db.AdminListExternalLinksParams{
+			Limit:  5,
+			Offset: 0,
+		})
+		if err == nil {
+			for _, link := range links {
+				if link.CardImageCache.Valid {
+					id := strings.TrimPrefix(link.CardImageCache.String, "cache:")
+					if len(id) >= 4 {
+						sub1, sub2 := id[:2], id[2:4]
+						p := filepath.Join(cfg.ImageCacheDir, sub1, sub2, id)
+						if _, err := os.Stat(p); os.IsNotExist(err) {
+							fmt.Printf("Warning: Cached card image missing: %s\n", p)
+						}
+					}
+				}
+				if link.FaviconCache.Valid {
+					id := strings.TrimPrefix(link.FaviconCache.String, "cache:")
+					if len(id) >= 4 {
+						sub1, sub2 := id[:2], id[2:4]
+						p := filepath.Join(cfg.ImageCacheDir, sub1, sub2, id)
+						if _, err := os.Stat(p); os.IsNotExist(err) {
+							fmt.Printf("Warning: Cached favicon missing: %s\n", p)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if len(missing) > 0 {
+		msg := fmt.Sprintf("Found %d missing media files (checking recent 5 uploaded and cached):\n%s\n\n", len(missing), strings.Join(missing, "\n"))
+		msg += fmt.Sprintf("Configured Image Upload Dir: %s\n", cfg.ImageUploadDir)
+		msg += fmt.Sprintf("Configured Image Cache Dir: %s\n", cfg.ImageCacheDir)
+		msg += fmt.Sprintf("Default Image Upload Dir: %s\n", filepath.Join(config.DefaultDataDir(), "images"))
+		msg += fmt.Sprintf("Default Image Cache Dir: %s\n", config.DefaultCacheDir())
+		msg += "Please check if your configuration points to the correct directory."
+
+		return &common.UserError{
+			Err:          fmt.Errorf("missing media files"),
+			ErrorMessage: msg,
+		}
+	}
+
 	return nil
 }

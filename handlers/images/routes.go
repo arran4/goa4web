@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image"
 	"net/http"
+	"os"
 	"path"
 	"path/filepath"
 	"strconv"
@@ -16,6 +17,7 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
 	intimages "github.com/arran4/goa4web/internal/images"
 	nav "github.com/arran4/goa4web/internal/navigation"
@@ -105,6 +107,15 @@ func serveImage(w http.ResponseWriter, r *http.Request) {
 	cfg := cd.Config
 	sub1, sub2 := id[:2], id[2:4]
 	full := filepath.Join(cfg.ImageUploadDir, sub1, sub2, id)
+	if _, err := os.Stat(full); os.IsNotExist(err) {
+		var opts []templates.Option
+		if cfg != nil && cfg.TemplatesDir != "" {
+			opts = append(opts, templates.WithDir(cfg.TemplatesDir))
+		}
+		w.Header().Set("Content-Type", "image/svg+xml")
+		http.ServeContent(w, r, "missing_image.svg", time.Time{}, bytes.NewReader(templates.GetMissingImageData(opts...)))
+		return
+	}
 	http.ServeFile(w, r, full)
 }
 

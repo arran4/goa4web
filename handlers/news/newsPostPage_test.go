@@ -17,6 +17,7 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestNewsPostNewActionPage_InvalidForms(t *testing.T) {
@@ -32,7 +33,7 @@ func TestNewsPostNewActionPage_InvalidForms(t *testing.T) {
 	for _, form := range cases {
 		req := httptest.NewRequest("POST", "/news", strings.NewReader(form.Encode()))
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		sess, _ := store.Get(req, core.SessionName)
+		sess := testhelpers.Must(store.Get(req, core.SessionName))
 		sess.Values["UID"] = int32(1)
 		w := httptest.NewRecorder()
 		sess.Save(req, w)
@@ -71,7 +72,7 @@ func TestNewsPostEditActionPage_InvalidForms(t *testing.T) {
 		req := httptest.NewRequest("POST", "/news/1", strings.NewReader(form.Encode()))
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		req = mux.SetURLVars(req, map[string]string{"post": "1"})
-		sess, _ := store.Get(req, core.SessionName)
+		sess := testhelpers.Must(store.Get(req, core.SessionName))
 		sess.Values["UID"] = int32(1)
 		w := httptest.NewRecorder()
 		sess.Save(req, w)

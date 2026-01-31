@@ -4,13 +4,14 @@ import (
 	"testing"
 
 	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/handlers/handlertest"
 	"github.com/arran4/goa4web/internal/notifications"
 )
 
 func requireEmailTemplates(t *testing.T, prefix string) {
 	t.Helper()
-	htmlTmpls := templates.GetCompiledEmailHtmlTemplates(map[string]any{})
-	textTmpls := templates.GetCompiledEmailTextTemplates(map[string]any{})
+	htmlTmpls := templates.GetCompiledEmailHtmlTemplates(handlertest.GetTemplateFuncs())
+	textTmpls := templates.GetCompiledEmailTextTemplates(handlertest.GetTemplateFuncs())
 	if htmlTmpls.Lookup(notifications.EmailHTMLTemplateFilenameGenerator(prefix)) == nil {
 		t.Errorf("missing html template %s.gohtml", prefix)
 	}

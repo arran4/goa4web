@@ -72,27 +72,30 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier, cfg *config.Ru
 					return nil // Already has title
 				}
 
-				title, desc, image, err := opengraph.Fetch(url, nil)
+				info, err := opengraph.Fetch(url, nil)
 				if err != nil {
 					log.Printf("opengraph.Fetch %s: %v", url, err)
 					return nil
 				}
 
 				var cachedImage string
-				if image != "" {
+				if info.Image != "" {
 					cd := common.NewCoreData(ctx, q, cfg)
-					cached, err := cd.DownloadAndCacheImage(image)
+					cached, err := cd.DownloadAndCacheImage(info.Image)
 					if err != nil {
-						log.Printf("DownloadAndCacheImage %s: %v", image, err)
+						log.Printf("DownloadAndCacheImage %s: %v", info.Image, err)
 					} else {
 						cachedImage = cached
 					}
 				}
 
 				if err := q.UpdateExternalLinkMetadata(ctx, db.UpdateExternalLinkMetadataParams{
-					CardTitle:       sql.NullString{String: title, Valid: title != ""},
-					CardDescription: sql.NullString{String: desc, Valid: desc != ""},
-					CardImage:       sql.NullString{String: image, Valid: image != ""},
+					CardTitle:       sql.NullString{String: info.Title, Valid: info.Title != ""},
+					CardDescription: sql.NullString{String: info.Description, Valid: info.Description != ""},
+					CardImage:       sql.NullString{String: info.Image, Valid: info.Image != ""},
+					CardDuration:    sql.NullString{String: info.Duration, Valid: info.Duration != ""},
+					CardUploadDate:  sql.NullString{String: info.UploadDate, Valid: info.UploadDate != ""},
+					CardAuthor:      sql.NullString{String: info.Author, Valid: info.Author != ""},
 					ID:              int32(id),
 				}); err != nil {
 					log.Printf("UpdateExternalLinkMetadata %d: %v", id, err)

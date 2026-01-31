@@ -19,6 +19,7 @@ import (
 	"github.com/arran4/goa4web/internal/email"
 	logProv "github.com/arran4/goa4web/internal/email/log"
 	notif "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 type emailTemplateQueries struct {
@@ -110,7 +111,7 @@ func TestAdminEmailTemplateTestAction_NoProvider(t *testing.T) {
 
 	req := httptest.NewRequest("POST", "/admin/email/template", nil)
 	reg := newEmailReg()
-	p, _ := reg.ProviderFromConfig(cfg)
+	p := testhelpers.Must(reg.ProviderFromConfig(cfg))
 	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithEmailProvider(p))
 	cd.UserID = 1
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
@@ -143,7 +144,7 @@ func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
 
 	req := httptest.NewRequest("POST", "/admin/email/template", nil)
 	reg := newEmailReg()
-	p, _ := reg.ProviderFromConfig(cfg)
+	p := testhelpers.Must(reg.ProviderFromConfig(cfg))
 	cd := common.NewCoreData(req.Context(), queries, cfg, common.WithEmailProvider(p))
 	cd.UserID = 1
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)

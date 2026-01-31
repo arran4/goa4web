@@ -106,4 +106,15 @@ func TestSchemaVersionUpdated(t *testing.T) {
 	if !strings.Contains(schemaStr, expected) {
 		t.Errorf("Schema file %s does not contain expected version update:\nExpected substring: %s\nEnsure you have updated the schema_version insert in database/schema.mysql.sql", schemaPath, expected)
 	}
+
+	// Verify that the migration file itself updates the version
+	migrationFile := filepath.Join(".", fmt.Sprintf("%04d.mysql.sql", maxVersion))
+	migContent, err := os.ReadFile(migrationFile)
+	if err == nil {
+		migStr := string(migContent)
+		expectedUpdate := fmt.Sprintf("UPDATE schema_version SET version = %d WHERE version = %d;", maxVersion, maxVersion-1)
+		if !strings.Contains(migStr, expectedUpdate) {
+			t.Errorf("Migration file %s does not contain expected version update:\nExpected substring: %s", migrationFile, expectedUpdate)
+		}
+	}
 }

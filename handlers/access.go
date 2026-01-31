@@ -23,6 +23,7 @@ func NoCache(h http.HandlerFunc) http.HandlerFunc {
 }
 
 func RenderPermissionDenied(w http.ResponseWriter, r *http.Request) {
+	SetNoCacheHeaders(w)
 	RenderErrorPage(w, r, WrapForbidden(ErrLoginRequired))
 }
 
@@ -56,6 +57,7 @@ func VerifyAccess(h http.HandlerFunc, err error, roles ...string) http.HandlerFu
 // RenderNotFoundOrLogin renders the 404 page if the user is logged in,
 // otherwise it renders the permission denied (login) page.
 func RenderNotFoundOrLogin(w http.ResponseWriter, r *http.Request) {
+	SetNoCacheHeaders(w)
 	cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if cd != nil && cd.UserID != 0 {
 		RenderErrorPage(w, r, ErrNotFound)

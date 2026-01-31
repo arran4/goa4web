@@ -11,6 +11,7 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 func TestVerifyAccess_CacheControl(t *testing.T) {
@@ -93,4 +94,41 @@ func TestSetNoCacheHeaders(t *testing.T) {
 	if got := rr.Header().Get("Expires"); got != "0" {
 		t.Errorf("Expires = %q; want 0", got)
 	}
+}
+
+func TestErrorHandlers_CacheControl(t *testing.T) {
+	// Mock tasks.Handle to avoid template execution errors
+	originalHandle := tasks.Handle
+	defer func() { tasks.Handle = originalHandle }()
+	tasks.Handle = func(w http.ResponseWriter, r *http.Request, p tasks.Template, data any) error {
+		return nil
+	}
+
+	t.Run("RenderPermissionDenied", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/", nil)
+		cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
+		req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
+		rr := httptest.NewRecorder()
+
+		RenderPermissionDenied(rr, req)
+
+		cc := rr.Header().Get("Cache-Control")
+		if !strings.Contains(cc, "no-cache") {
+			t.Errorf("expected Cache-Control: no-cache, got %q", cc)
+		}
+	})
+
+	t.Run("RenderNotFoundOrLogin", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/", nil)
+		cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
+		req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
+		rr := httptest.NewRecorder()
+
+		RenderNotFoundOrLogin(rr, req)
+
+		cc := rr.Header().Get("Cache-Control")
+		if !strings.Contains(cc, "no-cache") {
+			t.Errorf("expected Cache-Control: no-cache, got %q", cc)
+		}
+	})
 }

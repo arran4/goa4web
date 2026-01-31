@@ -120,7 +120,7 @@ func CheckMediaFiles(cfg *config.RuntimeConfig, dbPool *sql.DB) *common.UserErro
 	}
 
 	if len(missing) > 0 {
-		msg := fmt.Sprintf("Found %d missing media files (checking recent 5 uploaded and cached):\n%s\n\n", len(missing), strings.Join(missing, "\n"))
+		msg := fmt.Sprintf("Found %d missing media files (checking recent 5 uploaded):\n%s\n\n", len(missing), strings.Join(missing, "\n"))
 		msg += fmt.Sprintf("Configured Image Upload Dir: %s\n", cfg.ImageUploadDir)
 		msg += fmt.Sprintf("Configured Image Cache Dir: %s\n", cfg.ImageCacheDir)
 		msg += fmt.Sprintf("Default Image Upload Dir: %s\n", filepath.Join(config.DefaultDataDir(), "images"))

@@ -30,9 +30,6 @@ import (
 	"golang.org/x/image/draw"
 )
 
-// ImagebbsUploadPrefix isolates image board uploads from other stored files.
-const ImagebbsUploadPrefix = "imagebbs"
-
 // UploadImageTask handles uploading an image to a board.
 type UploadImageTask struct{ tasks.TaskString }
 
@@ -123,7 +120,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	fname := shaHex + ext
 	if p := upload.ProviderFromConfig(cd.Config); p != nil {
-		if err := p.Write(r.Context(), path.Join(ImagebbsUploadPrefix, sub1, sub2, fname), data); err != nil {
+		if err := p.Write(r.Context(), path.Join(sub1, sub2, fname), data); err != nil {
 			return fmt.Errorf("upload write fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		src := img.Bounds()
@@ -148,7 +145,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 			return fmt.Errorf("encode thumb fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		thumbName := shaHex + "_thumb" + ext
-		if err := p.Write(r.Context(), path.Join(ImagebbsUploadPrefix, sub1, sub2, thumbName), buf.Bytes()); err != nil {
+		if err := p.Write(r.Context(), path.Join(sub1, sub2, thumbName), buf.Bytes()); err != nil {
 			return fmt.Errorf("thumb write fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}

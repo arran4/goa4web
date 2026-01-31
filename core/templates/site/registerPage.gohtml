@@ -5,6 +5,9 @@
 Register:<br>
 <form method="post">
         {{ csrfField }}
+        {{- if .Back }}<input type="hidden" name="back" value="{{ .Back }}">{{- end }}
+        {{- if .Method }}<input type="hidden" name="method" value="{{ .Method }}">{{- end }}
+        {{- if .Data }}<input type="hidden" name="data" value="{{ .Data }}">{{- end }}
     Username: <input name="username"><br>
     Password: <input name="password" type="password"><br>
     Email Address: <input name="email"><br>

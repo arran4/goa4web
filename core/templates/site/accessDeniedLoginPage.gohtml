@@ -6,6 +6,12 @@
         {{- if .BackURL }}
         <input type="hidden" name="back" value="{{ .BackURL }}">
         {{- end }}
+        {{- if .Method }}
+        <input type="hidden" name="method" value="{{ .Method }}">
+        {{- end }}
+        {{- if .Data }}
+        <input type="hidden" name="data" value="{{ .Data }}">
+        {{- end }}
         Username: <input name="username"><br>
         Password: <input name="password" type="password"><br>
         <input type="submit" name="task" value="Login">

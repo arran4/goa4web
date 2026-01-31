@@ -36,6 +36,7 @@ func RenderErrorPage(w http.ResponseWriter, r *http.Request, err error) {
 
 	templateName := TaskErrorAcknowledgementPageTmpl
 	backURL := r.Referer()
+	var method, dataStr string
 	if status == http.StatusNotFound {
 		cd.PageTitle = "Not Found"
 		templateName = NotFoundPageTmpl
@@ -43,6 +44,11 @@ func RenderErrorPage(w http.ResponseWriter, r *http.Request, err error) {
 		cd.PageTitle = "Login Required"
 		templateName = AccessDeniedLoginPageTmpl
 		backURL = r.RequestURI
+		if r.Method == http.MethodPost {
+			_ = r.ParseForm()
+			method = r.Method
+			dataStr = r.Form.Encode()
+		}
 	} else {
 		cd.PageTitle = "Error"
 	}
@@ -55,10 +61,14 @@ func RenderErrorPage(w http.ResponseWriter, r *http.Request, err error) {
 		*common.CoreData
 		Error   string
 		BackURL string
+		Method  string
+		Data    string
 	}{
 		CoreData: cd,
 		Error:    errorMessage,
 		BackURL:  backURL,
+		Method:   method,
+		Data:     dataStr,
 	}
 	w.WriteHeader(status)
 

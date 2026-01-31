@@ -96,15 +96,23 @@ func CheckMediaFiles(cfg *config.RuntimeConfig, dbPool *sql.DB) *common.UserErro
 		if err == nil {
 			for _, link := range links {
 				if link.CardImageCache.Valid {
-					p := filepath.Join(cfg.ImageCacheDir, link.CardImageCache.String)
-					if _, err := os.Stat(p); os.IsNotExist(err) {
-						missing = append(missing, fmt.Sprintf("Cached card image missing: %s", p))
+					id := strings.TrimPrefix(link.CardImageCache.String, "cache:")
+					if len(id) >= 4 {
+						sub1, sub2 := id[:2], id[2:4]
+						p := filepath.Join(cfg.ImageCacheDir, sub1, sub2, id)
+						if _, err := os.Stat(p); os.IsNotExist(err) {
+							fmt.Printf("Warning: Cached card image missing: %s\n", p)
+						}
 					}
 				}
 				if link.FaviconCache.Valid {
-					p := filepath.Join(cfg.ImageCacheDir, link.FaviconCache.String)
-					if _, err := os.Stat(p); os.IsNotExist(err) {
-						missing = append(missing, fmt.Sprintf("Cached favicon missing: %s", p))
+					id := strings.TrimPrefix(link.FaviconCache.String, "cache:")
+					if len(id) >= 4 {
+						sub1, sub2 := id[:2], id[2:4]
+						p := filepath.Join(cfg.ImageCacheDir, sub1, sub2, id)
+						if _, err := os.Stat(p); os.IsNotExist(err) {
+							fmt.Printf("Warning: Cached favicon missing: %s\n", p)
+						}
 					}
 				}
 			}

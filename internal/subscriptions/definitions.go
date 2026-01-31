@@ -13,7 +13,7 @@ type Definition struct {
 	Pattern     string
 	IsAdminOnly bool
 	HideIfNone  bool
-	UpgradeTo   string
+	Upgrade     func(params map[string]string) string
 	Legacy      bool
 }
 
@@ -155,8 +155,10 @@ var Definitions = []Definition{
 		Description: "Notify when a reply is written (Legacy)",
 		Pattern:     "write reply:/forum/topic/{topicid}/thread/{threadid}/*",
 		HideIfNone:  true,
-		UpgradeTo:   "reply:/forum/topic/{topicid}/thread/{threadid}/*",
-		Legacy:      true,
+		Upgrade: func(params map[string]string) string {
+			return "reply:/forum/topic/" + params["topicid"] + "/thread/" + params["threadid"] + "/*"
+		},
+		Legacy: true,
 	},
 
 	// FAQ
@@ -300,13 +302,8 @@ func GetUserSubscriptions(dbSubs []*db.ListSubscriptionsByUserRow) []*Subscripti
 				Methods:    []string{},
 				Original:   sub.Pattern,
 			}
-			if def.UpgradeTo != "" {
-				// Replace parameters in UpgradeTo pattern
-				upgradePattern := def.UpgradeTo
-				for _, p := range instance.Parameters {
-					upgradePattern = strings.ReplaceAll(upgradePattern, "{"+p.Key+"}", p.Value)
-				}
-				instance.UpgradeTo = upgradePattern
+			if def.Upgrade != nil {
+				instance.UpgradeTo = def.Upgrade(params)
 			}
 			group.Instances = append(group.Instances, instance)
 		}

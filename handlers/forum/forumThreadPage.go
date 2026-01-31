@@ -16,8 +16,6 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/handlers/share"
 	"github.com/arran4/goa4web/internal/db"
-
-	"github.com/arran4/goa4web/core"
 )
 
 func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath string) {
@@ -82,9 +80,6 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		Type:        "article",
 	}
 
-	if _, ok := core.GetSessionOrFail(w, r); !ok {
-		return
-	}
 	commentRows, err := cd.SelectedThreadComments()
 	if err != nil {
 		log.Printf("thread comments: %v", err)

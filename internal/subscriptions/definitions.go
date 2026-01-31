@@ -8,11 +8,15 @@ import (
 )
 
 type Definition struct {
-	Name                  string
-	Description           string
-	Pattern               string
-	IsAdminOnly           bool
-	SupportsAutoSubscribe bool
+	Name        string
+	Description string
+	Pattern     string
+	IsAdminOnly bool
+	HideIfNone  bool
+	Upgrade     func(params map[string]string) string
+	Legacy      bool
+  SupportsAutoSubscribe bool
+
 }
 
 // Parameter represents a single parameter in a subscription pattern.
@@ -28,6 +32,7 @@ type SubscriptionInstance struct {
 	Parameters []Parameter // List of extracted parameters
 	Methods    []string    // e.g. ["internal", "email"]
 	Original   string      // Original DB pattern string
+	UpgradeTo  string      // If set, this subscription can be upgraded to this pattern
 }
 
 // HasMethod checks if the instance has the given method.
@@ -43,6 +48,7 @@ func (si *SubscriptionInstance) HasMethod(method string) bool {
 // SubscriptionGroup groups instances by their definition.
 type SubscriptionGroup struct {
 	*Definition
+	Name      string
 	Instances []*SubscriptionInstance
 }
 
@@ -78,7 +84,7 @@ var Definitions = []Definition{
 	{
 		Name:        "Private Topic Created",
 		Description: "Notify when a new private topic is created",
-		Pattern:     "private topic create:/private/*",
+		Pattern:     "private topic create:/private*",
 	},
 	{
 		Name:                  "New Threads (Private Topic)",
@@ -145,6 +151,18 @@ var Definitions = []Definition{
 		Name:        "Reply to Link",
 		Description: "Notify when a reply is posted to a link",
 		Pattern:     "reply:/linker/*",
+	},
+
+	// Legacy
+	{
+		Name:        "Write Reply",
+		Description: "Notify when a reply is written (Legacy)",
+		Pattern:     "write reply:/forum/topic/{topicid}/thread/{threadid}/*",
+		HideIfNone:  true,
+		Upgrade: func(params map[string]string) string {
+			return "reply:/forum/topic/" + params["topicid"] + "/thread/" + params["threadid"] + "/*"
+		},
+		Legacy: true,
 	},
 
 	// FAQ
@@ -236,8 +254,13 @@ func GetUserSubscriptions(dbSubs []*db.ListSubscriptionsByUserRow) []*Subscripti
 	// Initialize groups for all definitions
 	for i := range Definitions {
 		def := &Definitions[i]
+		name := def.Name
+		if def.Legacy {
+			name += " (Legacy)"
+		}
 		groups[def.Pattern] = &SubscriptionGroup{
 			Definition: def,
+			Name:       name,
 			Instances:  []*SubscriptionInstance{},
 		}
 	}
@@ -254,6 +277,7 @@ func GetUserSubscriptions(dbSubs []*db.ListSubscriptionsByUserRow) []*Subscripti
 						Name:    "Unknown: " + sub.Pattern,
 						Pattern: sub.Pattern,
 					},
+					Name:      "Unknown: " + sub.Pattern,
 					Instances: []*SubscriptionInstance{},
 				}
 			}
@@ -281,6 +305,9 @@ func GetUserSubscriptions(dbSubs []*db.ListSubscriptionsByUserRow) []*Subscripti
 				Parameters: paramList,
 				Methods:    []string{},
 				Original:   sub.Pattern,
+			}
+			if def.Upgrade != nil {
+				instance.UpgradeTo = def.Upgrade(params)
 			}
 			group.Instances = append(group.Instances, instance)
 		}

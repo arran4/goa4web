@@ -125,7 +125,7 @@ func (q *Queries) AdminGetFAQCategories(ctx context.Context) ([]*FaqCategory, er
 }
 
 const adminGetFAQCategoriesWithQuestionCount = `-- name: AdminGetFAQCategoriesWithQuestionCount :many
-SELECT c.id, c.parent_category_id, c.language_id, c.name, c.deleted_at, COUNT(f.id) AS QuestionCount
+SELECT c.id, c.parent_category_id, c.language_id, c.name, COUNT(f.id) AS QuestionCount
 FROM faq_categories c
 LEFT JOIN faq f ON f.category_id = c.id
 WHERE c.deleted_at IS NULL
@@ -137,7 +137,6 @@ type AdminGetFAQCategoriesWithQuestionCountRow struct {
 	ParentCategoryID sql.NullInt32
 	LanguageID       sql.NullInt32
 	Name             sql.NullString
-	DeletedAt        sql.NullTime
 	Questioncount    int64
 }
 
@@ -155,7 +154,6 @@ func (q *Queries) AdminGetFAQCategoriesWithQuestionCount(ctx context.Context) ([
 			&i.ParentCategoryID,
 			&i.LanguageID,
 			&i.Name,
-			&i.DeletedAt,
 			&i.Questioncount,
 		); err != nil {
 			return nil, err
@@ -189,7 +187,7 @@ func (q *Queries) AdminGetFAQCategory(ctx context.Context, id int32) (*FaqCatego
 }
 
 const adminGetFAQCategoryWithQuestionCountByID = `-- name: AdminGetFAQCategoryWithQuestionCountByID :one
-SELECT c.id, c.parent_category_id, c.language_id, c.name, c.deleted_at, COUNT(f.id) AS QuestionCount
+SELECT c.id, c.parent_category_id, c.language_id, c.name, COUNT(f.id) AS QuestionCount
 FROM faq_categories c
 LEFT JOIN faq f ON f.category_id = c.id
 WHERE c.id = ?
@@ -201,7 +199,6 @@ type AdminGetFAQCategoryWithQuestionCountByIDRow struct {
 	ParentCategoryID sql.NullInt32
 	LanguageID       sql.NullInt32
 	Name             sql.NullString
-	DeletedAt        sql.NullTime
 	Questioncount    int64
 }
 
@@ -213,7 +210,6 @@ func (q *Queries) AdminGetFAQCategoryWithQuestionCountByID(ctx context.Context, 
 		&i.ParentCategoryID,
 		&i.LanguageID,
 		&i.Name,
-		&i.DeletedAt,
 		&i.Questioncount,
 	)
 	return &i, err

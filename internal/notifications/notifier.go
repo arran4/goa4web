@@ -92,6 +92,7 @@ func defaultFuncs() map[string]any {
 			}
 			return s
 		},
+		"lower": strings.ToLower,
 	}
 }
 

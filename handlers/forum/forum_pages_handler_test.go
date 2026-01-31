@@ -403,7 +403,8 @@ func TestForumPageHandlers(t *testing.T) {
 
 		req := httptest.NewRequest("GET", "/private/topic/1/thread/1", nil)
 		req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "1"})
-		ctx := context.WithValue(req.Context(), core.ContextValues("session"), "bad")
+		sess, _ := core.Store.New(req, core.SessionName)
+		ctx := context.WithValue(req.Context(), core.ContextValues("session"), sess)
 
 		cfg := config.NewRuntimeConfig()
 		cd := common.NewCoreData(ctx, queries, cfg)
@@ -516,4 +517,139 @@ func (f *forumTopicPageQuerierFake) ListContentPrivateLabels(_ context.Context, 
 		})
 	}
 	return rows, nil
+}
+
+func TestThreadPageTitle(t *testing.T) {
+	t.Run("Happy Path", func(t *testing.T) {
+		// Setup
+		queries := testhelpers.NewQuerierStub()
+		queries.GetThreadLastPosterAndPermsReturns = &db.GetThreadLastPosterAndPermsRow{
+			Idforumthread:          1,
+			Firstpost:              1,
+			Lastposter:             1,
+			ForumtopicIdforumtopic: 1,
+			Comments:               sql.NullInt32{},
+			Lastaddition:           sql.NullTime{},
+			Locked:                 sql.NullBool{},
+		}
+		queries.GetForumTopicByIdForUserReturns = &db.GetForumTopicByIdForUserRow{
+			Idforumtopic:                 1,
+			ForumcategoryIdforumcategory: 1,
+			Title:                        sql.NullString{String: "My Topic", Valid: true},
+			Description:                  sql.NullString{},
+			Threads:                      sql.NullInt32{},
+			Comments:                     sql.NullInt32{},
+			Lastaddition:                 sql.NullTime{},
+			Handler:                      "",
+		}
+		queries.GetForumCategoryByIdReturns = &db.Forumcategory{
+			Idforumcategory: 1,
+			Title:           sql.NullString{String: "My Category", Valid: true},
+		}
+		queries.GetCommentsByThreadIdForUserReturns = []*db.GetCommentsByThreadIdForUserRow{
+			{
+				Idcomments:    1,
+				ForumthreadID: 1,
+				Text:          sql.NullString{String: "This is the first post of the thread.", Valid: true},
+			},
+		}
+		queries.ListContentPublicLabelsFn = func(arg db.ListContentPublicLabelsParams) ([]*db.ListContentPublicLabelsRow, error) {
+			return []*db.ListContentPublicLabelsRow{}, nil
+		}
+		queries.ListContentPrivateLabelsFn = func(arg db.ListContentPrivateLabelsParams) ([]*db.ListContentPrivateLabelsRow, error) {
+			return []*db.ListContentPrivateLabelsRow{}, nil
+		}
+
+		origStore := core.Store
+		origName := core.SessionName
+		core.Store = sessions.NewCookieStore([]byte("test"))
+		core.SessionName = "test-session"
+		defer func() {
+			core.Store = origStore
+			core.SessionName = origName
+		}()
+
+		req := httptest.NewRequest("GET", "/forum/topic/1/thread/1", nil)
+		req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "1"})
+		sess, _ := core.Store.New(req, core.SessionName)
+		ctx := context.WithValue(req.Context(), core.ContextValues("session"), sess)
+
+		cfg := config.NewRuntimeConfig()
+		cd := common.NewCoreData(ctx, queries, cfg)
+		cd.ShareSignKey = "secret"
+		cd.SetCurrentSection("forum")
+		ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
+		req = req.WithContext(ctx)
+
+		// Page execution
+		rr := httptest.NewRecorder()
+		ThreadPageWithBasePath(rr, req, "/forum")
+
+		// Head data test
+		expectedSnippet := "This is the first post..."
+		expectedTitle := fmt.Sprintf("%s - %s - %s - Forum", expectedSnippet, "My Topic", "My Category")
+		if cd.PageTitle != expectedTitle {
+			t.Errorf("expected page title %q, got %q", expectedTitle, cd.PageTitle)
+		}
+	})
+}
+
+func TestTopicPageTitle(t *testing.T) {
+	t.Run("Happy Path", func(t *testing.T) {
+		// Setup
+		queries := testhelpers.NewQuerierStub()
+		queries.GetForumTopicByIdForUserReturns = &db.GetForumTopicByIdForUserRow{
+			Idforumtopic:                 1,
+			ForumcategoryIdforumcategory: 1,
+			Title:                        sql.NullString{String: "My Topic", Valid: true},
+			Description:                  sql.NullString{},
+			Threads:                      sql.NullInt32{},
+			Comments:                     sql.NullInt32{},
+			Lastaddition:                 sql.NullTime{},
+			Handler:                      "",
+		}
+		queries.GetAllForumCategoriesReturns = []*db.Forumcategory{
+			{
+				Idforumcategory: 1,
+				Title:           sql.NullString{String: "My Category", Valid: true},
+			},
+		}
+		queries.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextFn = func(ctx context.Context, arg db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams) ([]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow, error) {
+			return []*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow{}, nil
+		}
+		queries.ListContentPublicLabelsFn = func(arg db.ListContentPublicLabelsParams) ([]*db.ListContentPublicLabelsRow, error) {
+			return []*db.ListContentPublicLabelsRow{}, nil
+		}
+
+		origStore := core.Store
+		origName := core.SessionName
+		core.Store = sessions.NewCookieStore([]byte("test"))
+		core.SessionName = "test-session"
+		defer func() {
+			core.Store = origStore
+			core.SessionName = origName
+		}()
+
+		req := httptest.NewRequest("GET", "/forum/topic/1", nil)
+		req = mux.SetURLVars(req, map[string]string{"topic": "1"})
+		sess, _ := core.Store.New(req, core.SessionName)
+		ctx := context.WithValue(req.Context(), core.ContextValues("session"), sess)
+
+		cfg := config.NewRuntimeConfig()
+		cd := common.NewCoreData(ctx, queries, cfg)
+		cd.ShareSignKey = "secret"
+		cd.SetCurrentSection("forum")
+		ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
+		req = req.WithContext(ctx)
+
+		// Page execution
+		rr := httptest.NewRecorder()
+		TopicsPageWithBasePath(rr, req, "/forum")
+
+		// Head data test
+		expectedTitle := "My Topic - My Category - Forum"
+		if cd.PageTitle != expectedTitle {
+			t.Errorf("expected page title %q, got %q", expectedTitle, cd.PageTitle)
+		}
+	})
 }

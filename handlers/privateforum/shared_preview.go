@@ -67,7 +67,7 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ogTitle := topic.Title.String
+	ogTitle := cd.GetPrivateTopicDisplayTitle(topic.Idforumtopic, topic.Title.String)
 	ogDescription := ""
 	if len(comments) > 0 {
 		ogDescription = a4code.SnipText(comments[0].Text.String, 128)
@@ -109,7 +109,7 @@ func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ogTitle := topic.Title.String
+	ogTitle := cd.GetPrivateTopicDisplayTitle(topic.Idforumtopic, topic.Title.String)
 	ogDescription := topic.Description.String
 
 	renderSharedPreview(w, r, cd, ogTitle, ogDescription, fmt.Sprintf("/private/topic/%d", topicID))

@@ -26,7 +26,7 @@ func TestPrivateForumBreadcrumbUsesDisplayTitle(t *testing.T) {
 		AddRow(2, sql.NullString{String: "Alice", Valid: true}).
 		AddRow(3, sql.NullString{String: "Bob", Valid: true})
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, u.username")).
-		WithArgs(sql.NullInt32{Int32: 1, Valid: true}, sql.NullInt32{Int32: 1, Valid: true}).
+		WithArgs(sql.NullInt32{Int32: 1, Valid: true}).
 		WillReturnRows(participantRows)
 
 	queries := db.New(conn)

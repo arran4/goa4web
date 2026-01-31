@@ -1,13 +1,11 @@
 package forum
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
 	"sort"
 	"strconv"
-	"strings"
 
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/consts"
@@ -76,23 +74,8 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	}
 
 	displayTitle := topicRow.Title.String
-	if topicRow.Handler == "private" && cd.Queries() != nil {
-		parts, err := cd.Queries().ListPrivateTopicParticipantsByTopicIDForUser(r.Context(), db.ListPrivateTopicParticipantsByTopicIDForUserParams{
-			TopicID:  sql.NullInt32{Int32: topicRow.Idforumtopic, Valid: true},
-			ViewerID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-		})
-		if err != nil {
-			log.Printf("list private participants: %v", err)
-		}
-		var names []string
-		for _, p := range parts {
-			if p.Idusers != cd.UserID {
-				names = append(names, p.Username.String)
-			}
-		}
-		if len(names) > 0 {
-			displayTitle = strings.Join(names, ", ")
-		}
+	if topicRow.Handler == "private" {
+		displayTitle = cd.GetPrivateTopicDisplayTitle(topicRow.Idforumtopic, displayTitle)
 	}
 
 	var titleParts []string
@@ -134,6 +117,22 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 
 	commentId, _ := strconv.Atoi(r.URL.Query().Get("comment"))
 	data.Comments = commentRows
+
+	if r.Method == http.MethodPost {
+		if err := r.ParseForm(); err == nil {
+			if val := r.PostFormValue("replytext"); val != "" {
+				data.Text = val
+			}
+			if val := r.PostFormValue("text"); val != "" && commentId != 0 {
+				for _, c := range data.Comments {
+					if c.Idcomments == int32(commentId) {
+						c.Text.String = val
+						c.Text.Valid = true
+					}
+				}
+			}
+		}
+	}
 
 	data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
 		return cmt.IsOwner

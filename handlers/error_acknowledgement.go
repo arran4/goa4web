@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"net/url"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -12,6 +13,7 @@ func TaskErrorAcknowledgementPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		Error   string
 		BackURL string
+		Form    url.Values
 	}
 	cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if cd != nil {
@@ -23,6 +25,10 @@ func TaskErrorAcknowledgementPage(w http.ResponseWriter, r *http.Request) {
 	}
 	if data.Error == "" {
 		data.Error = r.PostFormValue("error")
+	}
+	if r.Method == http.MethodPost {
+		_ = r.ParseForm()
+		data.Form = r.PostForm
 	}
 	TaskErrorAcknowledgementPageTmpl.Handle(w, r, data)
 }

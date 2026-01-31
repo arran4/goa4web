@@ -84,6 +84,9 @@ const (
 	// TaskImageCacheDelete deletes selected image cache entries.
 	TaskImageCacheDelete tasks.TaskString = "Delete cache"
 
+	// TaskImageCacheRefresh refreshes a specific cache entry.
+	TaskImageCacheRefresh tasks.TaskString = "Refresh cache"
+
 	// TaskDeactivate moves an item to the deactivated store.
 	TaskDeactivate tasks.TaskString = "Deactivate"
 

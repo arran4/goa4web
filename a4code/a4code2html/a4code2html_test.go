@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/google/go-cmp/cmp"
+	"github.com/arran4/goa4web/internal/testhelpers"
 	"io"
 	"testing"
 )
@@ -24,7 +25,7 @@ func TestA4code2html_Process(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c := New()
 			c.SetInput(tt.input)
-			gotBytes, _ := io.ReadAll(c.Process())
+			gotBytes := testhelpers.Must(io.ReadAll(c.Process()))
 			got := string(gotBytes)
 			if diff := cmp.Diff(got, tt.want); diff != "" {
 				t.Errorf("preprocessBookmarks() = diff\n%s", diff)
@@ -69,7 +70,7 @@ func TestProcessSpecialCommands(t *testing.T) {
 	for _, tt := range tests {
 		c := New()
 		c.SetInput("[" + tt.cmd + " text]")
-		got, _ := io.ReadAll(c.Process())
+		got := testhelpers.Must(io.ReadAll(c.Process()))
 		if string(got) != tt.want {
 			t.Fatalf("cmd %q got %q", tt.cmd, got)
 		}
@@ -79,7 +80,7 @@ func TestProcessSpecialCommands(t *testing.T) {
 func TestProcessEscapedSpecialChars(t *testing.T) {
 	c := New()
 	c.SetInput("start \\* mid \\/ end \\_")
-	got, _ := io.ReadAll(c.Process())
+	got := testhelpers.Must(io.ReadAll(c.Process()))
 	if string(got) != "start * mid / end _" {
 		t.Fatalf("got %q", string(got))
 	}
@@ -88,7 +89,7 @@ func TestProcessEscapedSpecialChars(t *testing.T) {
 func TestA4code2htmlComplex(t *testing.T) {
 	c := New()
 	c.SetInput("[b Bold [i Italic]] plain [link http://x example]")
-	got, _ := io.ReadAll(c.Process())
+	got := testhelpers.Must(io.ReadAll(c.Process()))
 	want := "<strong>Bold <i>Italic</i></strong> plain <a href=\"http://x\" target=\"_blank\"> example</a>"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)
@@ -98,7 +99,7 @@ func TestA4code2htmlComplex(t *testing.T) {
 func TestA4code2htmlUnclosed(t *testing.T) {
 	c := New()
 	c.SetInput("[b bold")
-	got, _ := io.ReadAll(c.Process())
+	got := testhelpers.Must(io.ReadAll(c.Process()))
 	want := "<strong>bold</strong>"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)
@@ -108,7 +109,7 @@ func TestA4code2htmlUnclosed(t *testing.T) {
 func TestA4code2htmlBadURL(t *testing.T) {
 	c := New()
 	c.SetInput("[link javascript:alert(1) example]")
-	got, _ := io.ReadAll(c.Process())
+	got := testhelpers.Must(io.ReadAll(c.Process()))
 	want := "javascript:alert(1) example"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)
@@ -118,7 +119,7 @@ func TestA4code2htmlBadURL(t *testing.T) {
 func TestSpoiler(t *testing.T) {
 	c := New()
 	c.SetInput("[Spoiler secret]")
-	got, _ := io.ReadAll(c.Process())
+	got := testhelpers.Must(io.ReadAll(c.Process()))
 	want := "<span class=\"spoiler\">secret</span>"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)
@@ -128,7 +129,7 @@ func TestSpoiler(t *testing.T) {
 func TestCodeSlashClose(t *testing.T) {
 	c := New()
 	c.SetInput("[code]foo[/code]")
-	got, _ := io.ReadAll(c.Process())
+	got := testhelpers.Must(io.ReadAll(c.Process()))
 	want := "<div class=\"a4code-block a4code-code-wrapper\"><div class=\"code-header\">Code</div><pre class=\"a4code-code-body\">]foo</pre></div>"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)
@@ -138,7 +139,7 @@ func TestCodeSlashClose(t *testing.T) {
 func TestQuoteMarkup(t *testing.T) {
 	c := New()
 	c.SetInput("[quote hi]")
-	got, _ := io.ReadAll(c.Process())
+	got := testhelpers.Must(io.ReadAll(c.Process()))
 	want := "<blockquote class=\"a4code-block a4code-quote quote-color-0\"><div class=\"quote-header\">Quote:</div><div class=\"quote-body\">hi</div></blockquote>"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)
@@ -148,7 +149,7 @@ func TestQuoteMarkup(t *testing.T) {
 func TestQuoteOfMarkup(t *testing.T) {
 	c := New()
 	c.SetInput("[quoteof bob hi]")
-	got, _ := io.ReadAll(c.Process())
+	got := testhelpers.Must(io.ReadAll(c.Process()))
 	want := "<blockquote class=\"a4code-block a4code-quoteof quote-color-0\"><div class=\"quote-header\">Quote of bob:</div><div class=\"quote-body\"> hi</div></blockquote>"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)
@@ -161,7 +162,7 @@ func TestQuoteOfColorMapping(t *testing.T) {
 	}
 	c := New(colorMap)
 	c.SetInput("[quoteof bob hi]")
-	got, _ := io.ReadAll(c.Process())
+	got := testhelpers.Must(io.ReadAll(c.Process()))
 	want := "<blockquote class=\"a4code-block a4code-quoteof mapped-color quote-color-0\"><div class=\"quote-header\">Quote of bob:</div><div class=\"quote-body\"> hi</div></blockquote>"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)
@@ -171,7 +172,7 @@ func TestQuoteOfColorMapping(t *testing.T) {
 func TestNestedQuotes(t *testing.T) {
 	c := New()
 	c.SetInput("[quote 0 [quote 1 [quote 2]]]")
-	got, _ := io.ReadAll(c.Process())
+	got := testhelpers.Must(io.ReadAll(c.Process()))
 	want := "<blockquote class=\"a4code-block a4code-quote quote-color-0\"><div class=\"quote-header\">Quote:</div><div class=\"quote-body\">0 <blockquote class=\"a4code-block a4code-quote quote-color-1\"><div class=\"quote-header\">Quote:</div><div class=\"quote-body\">1 <blockquote class=\"a4code-block a4code-quote quote-color-2\"><div class=\"quote-header\">Quote:</div><div class=\"quote-body\">2</div></blockquote></div></blockquote></div></blockquote>"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)
@@ -181,7 +182,7 @@ func TestNestedQuotes(t *testing.T) {
 func TestIndentMarkup(t *testing.T) {
 	c := New()
 	c.SetInput("[indent hi]")
-	got, _ := io.ReadAll(c.Process())
+	got := testhelpers.Must(io.ReadAll(c.Process()))
 	want := "<div class=\"a4code-block a4code-indent\"><div>hi</div></div>"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)
@@ -232,7 +233,7 @@ func TestImageURLMapper(t *testing.T) {
 	}
 	c := New(mapper)
 	c.SetInput("[img=image:abc]")
-	got, _ := io.ReadAll(c.Process())
+	got := testhelpers.Must(io.ReadAll(c.Process()))
 	want := "<img class=\"a4code-image\" src=\"map:img:image:abc\" />"
 	if string(got) != want {
 		t.Fatalf("img map got %q want %q", got, want)
@@ -242,7 +243,7 @@ func TestImageURLMapper(t *testing.T) {
 func TestImageClass(t *testing.T) {
 	c := New()
 	c.SetInput("[img http://example.com/foo.jpg]")
-	got, _ := io.ReadAll(c.Process())
+	got := testhelpers.Must(io.ReadAll(c.Process()))
 	want := "<img class=\"a4code-image\" src=\"http://example.com/foo.jpg\" />"
 	if string(got) != want {
 		t.Fatalf("img got %q want %q", got, want)
@@ -265,7 +266,7 @@ func TestHrTag(t *testing.T) {
 			c := New()
 			c.CodeType = tt.codeType
 			c.SetInput("[hr]\n")
-			got, _ := io.ReadAll(c.Process())
+			got := testhelpers.Must(io.ReadAll(c.Process()))
 			if string(got) != tt.want {
 				t.Errorf("got %q want %q", string(got), tt.want)
 			}
@@ -395,7 +396,7 @@ func TestExternalLinkCard(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c := New(LinkProvider(provider))
 			c.SetInput(tt.input)
-			gotBytes, _ := io.ReadAll(c.Process())
+			gotBytes := testhelpers.Must(io.ReadAll(c.Process()))
 			got := string(gotBytes)
 			if diff := cmp.Diff(got, tt.want); diff != "" {
 				t.Errorf("%s: diff\n%s", tt.name, diff)
@@ -425,7 +426,7 @@ func TestLinkProvider(t *testing.T) {
 
 	// Case 1: Custom handling (consumed immediate)
 	c.SetInput("[link http://custom.com]")
-	got, _ := io.ReadAll(c.Process())
+	got := testhelpers.Must(io.ReadAll(c.Process()))
 	want := "<custom-link>"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)
@@ -433,7 +434,7 @@ func TestLinkProvider(t *testing.T) {
 
 	// Case 2: Block link
 	c.SetInput("[link http://other.com]\n")
-	got, _ = io.ReadAll(c.Process())
+	got = testhelpers.Must(io.ReadAll(c.Process()))
 	want = "<block-link></block-link><br />\n"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)
@@ -441,7 +442,7 @@ func TestLinkProvider(t *testing.T) {
 
 	// Case 3: Image mapping
 	c.SetInput("[img foo.jpg]")
-	got, _ = io.ReadAll(c.Process())
+	got = testhelpers.Must(io.ReadAll(c.Process()))
 	want = "<img class=\"a4code-image\" src=\"mapped:foo.jpg\" />"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)

@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/arran4/goa4web/handlers/imagebbs"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -45,7 +44,7 @@ type ImageFilesListing struct {
 
 // BuildImageFilesListing returns a directory listing of stored image files.
 func BuildImageFilesListing(ctx context.Context, queries db.Querier, uploadDir string, reqPath string, signKey string, sign func(id string, ttl time.Duration) string, ttl time.Duration) (ImageFilesListing, error) {
-	base := filepath.Join(uploadDir, imagebbs.ImagebbsUploadPrefix)
+	base := uploadDir
 	cleaned := filepath.Clean("/" + reqPath)
 	abs := filepath.Join(base, cleaned)
 	if rel, err := filepath.Rel(base, abs); err != nil || rel == ".." || strings.HasPrefix(rel, "..") {

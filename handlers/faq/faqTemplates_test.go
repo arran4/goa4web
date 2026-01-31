@@ -13,8 +13,8 @@ import (
 
 func requireEmailTemplates(t *testing.T, et *notif.EmailTemplates) {
 	t.Helper()
-	htmlTmpls := templates.GetCompiledEmailHtmlTemplates(map[string]any{})
-	textTmpls := templates.GetCompiledEmailTextTemplates(map[string]any{})
+	htmlTmpls := templates.GetCompiledEmailHtmlTemplates(handlertest.GetTemplateFuncs())
+	textTmpls := templates.GetCompiledEmailTextTemplates(handlertest.GetTemplateFuncs())
 	if htmlTmpls.Lookup(et.HTML) == nil {
 		t.Errorf("missing html template %s", et.HTML)
 	}
@@ -47,8 +47,8 @@ func TestAskTaskTemplatesCompile(t *testing.T) {
 func TestAdminNotificationFaqAskEmailIncludesLink(t *testing.T) {
 	url := "http://example.com/admin/faq/questions"
 	data := notif.EmailData{URL: url, Item: map[string]any{"Question": "test?"}}
-	textTmpls := templates.GetCompiledEmailTextTemplates(map[string]any{})
-	htmlTmpls := templates.GetCompiledEmailHtmlTemplates(map[string]any{})
+	textTmpls := templates.GetCompiledEmailTextTemplates(handlertest.GetTemplateFuncs())
+	htmlTmpls := templates.GetCompiledEmailHtmlTemplates(handlertest.GetTemplateFuncs())
 
 	var sb strings.Builder
 	if err := textTmpls.ExecuteTemplate(&sb, "adminNotificationFaqAskEmail.gotxt", data); err != nil {

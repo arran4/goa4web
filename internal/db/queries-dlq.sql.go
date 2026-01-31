@@ -30,6 +30,17 @@ func (q *Queries) SystemDeleteDeadLetter(ctx context.Context, id int32) error {
 	return err
 }
 
+const systemGetDeadLetter = `-- name: SystemGetDeadLetter :one
+SELECT id, message, created_at FROM dead_letters WHERE id = ?
+`
+
+func (q *Queries) SystemGetDeadLetter(ctx context.Context, id int32) (*DeadLetter, error) {
+	row := q.db.QueryRowContext(ctx, systemGetDeadLetter, id)
+	var i DeadLetter
+	err := row.Scan(&i.ID, &i.Message, &i.CreatedAt)
+	return &i, err
+}
+
 const systemInsertDeadLetter = `-- name: SystemInsertDeadLetter :exec
 INSERT INTO dead_letters (message) VALUES (?)
 `
@@ -86,5 +97,19 @@ DELETE FROM dead_letters WHERE created_at < ?
 
 func (q *Queries) SystemPurgeDeadLettersBefore(ctx context.Context, createdAt time.Time) error {
 	_, err := q.db.ExecContext(ctx, systemPurgeDeadLettersBefore, createdAt)
+	return err
+}
+
+const systemUpdateDeadLetter = `-- name: SystemUpdateDeadLetter :exec
+UPDATE dead_letters SET message = ? WHERE id = ?
+`
+
+type SystemUpdateDeadLetterParams struct {
+	Message string
+	ID      int32
+}
+
+func (q *Queries) SystemUpdateDeadLetter(ctx context.Context, arg SystemUpdateDeadLetterParams) error {
+	_, err := q.db.ExecContext(ctx, systemUpdateDeadLetter, arg.Message, arg.ID)
 	return err
 }

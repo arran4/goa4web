@@ -2,7 +2,6 @@ package imagebbs
 
 import (
 	"net/http"
-	"path/filepath"
 
 	"github.com/gorilla/mux"
 
@@ -24,7 +23,7 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Reg
 	ibr.HandleFunc("/u/{username}/rss", RssPage).Methods("GET")
 	ibr.HandleFunc("/atom", AtomPage).Methods("GET")
 	ibr.HandleFunc("/u/{username}/atom", AtomPage).Methods("GET")
-	bbsDir := filepath.Join(cfg.ImageUploadDir, ImagebbsUploadPrefix)
+	bbsDir := cfg.ImageUploadDir
 	ibr.PathPrefix("/images/").Handler(http.StripPrefix("/imagebbs/images/", http.FileServer(http.Dir(bbsDir))))
 	ibr.HandleFunc("/board/{boardno:[0-9]+}.rss", BoardRssPage).Methods("GET")
 	ibr.HandleFunc("/board/{boardno:[0-9]+}.atom", BoardAtomPage).Methods("GET")

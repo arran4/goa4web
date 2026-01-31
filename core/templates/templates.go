@@ -379,6 +379,9 @@ func GetFaviconData(opts ...Option) []byte { return readFile("assets/favicon.svg
 // GetFaviconPNG returns the site's favicon image as PNG.
 func GetFaviconPNG(opts ...Option) []byte { return readFile("assets/favicon.png", opts...) }
 
+// GetMissingImageData returns the missing image placeholder.
+func GetMissingImageData(opts ...Option) []byte { return readFile("assets/missing_image.svg", opts...) }
+
 // GetPasteImageJSData returns the JavaScript that enables image pasting.
 func GetPasteImageJSData(opts ...Option) []byte { return readFile("assets/pasteimg.js", opts...) }
 

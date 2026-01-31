@@ -39,6 +39,7 @@ SQL query files are compiled using `sqlc`. Do not manually edit the generated `*
 Avoid using the `overrides` section in `sqlc.yaml`; prefer Go type aliases if a different struct name is required.
 
 All database schema changes must include a new migration script in the `migrations/` directory (for example `0002.mysql.sql`, `0003.mysql.sql`). Never modify existing migration files as that would break deployments running older versions. Every migration must also update the `schema_version` table so deployments can track the current schema state. Bump the `ExpectedSchemaVersion` constant in `handlers/constants.go` whenever a new migration is added so tests stay in sync.
+Updates to `database/schema.mysql.sql` must *always* be accompanied by a corresponding migration file in `migrations/`. This ensures that the schema definition remains in sync with the applied migrations.
 
 Errors in critical functions like `main()` or `run()` must be logged or wrapped using `fmt.Errorf` with context. Prefer doing both when errors propagate.
 

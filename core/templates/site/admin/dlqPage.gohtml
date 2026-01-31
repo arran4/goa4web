@@ -5,6 +5,21 @@ Configured providers: {{ .Providers }}<br />
 {{- if .DirPath }}Directory: {{ .DirPath }} ({{ .DirCount }} files{{- if .DirMod }}, updated {{ .DirMod }}{{- end }})<br />{{- end }}
 {{- if .DBCount }}Database entries: {{ .DBCount }}{{- if .DBLatest }} (latest {{ .DBLatest }}){{- end }}<br />{{- end }}
 
+{{- if .EditError }}
+<h2>Edit Dead Letter {{ .EditError.ID }}</h2>
+<form method="post">
+    {{ csrfField }}
+    <input type="hidden" name="id" value="{{ .EditError.ID }}">
+    <div class="form-group">
+        <label>Message</label>
+        <textarea name="message" class="form-control" rows="10" style="width: 100%">{{ .EditError.Message }}</textarea>
+    </div>
+    <input type="submit" name="task" value="Update" class="btn btn-primary">
+    <a href="/admin/dlq" class="btn btn-default">Cancel</a>
+</form>
+<hr />
+{{- end }}
+
 {{- if .FileErrors }}
 <h2>File DLQ</h2>
 <table class="table table-bordered">
@@ -44,13 +59,14 @@ Configured providers: {{ .Providers }}<br />
 <form method="post">
     {{ csrfField }}
 <table class="table table-bordered">
-<tr><th>Select</th><th>ID</th><th>Message</th><th>Created</th></tr>
+<tr><th>Select</th><th>ID</th><th>Message</th><th>Created</th><th>Actions</th></tr>
 {{- range .Errors }}
 <tr>
     <td><input type="checkbox" name="id" value="{{ .ID }}"></td>
     <td>{{ .ID }}</td>
     <td>{{ .Message }}</td>
     <td>{{ cd.FormatLocalTime .CreatedAt }}</td>
+    <td><a href="?edit={{ .ID }}">Edit</a></td>
 </tr>
 {{- end }}
 </table>

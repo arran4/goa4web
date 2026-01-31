@@ -25,6 +25,8 @@ import (
 type DeleteDLQTask struct{ tasks.TaskString }
 
 var deleteDLQTask = &DeleteDLQTask{TaskString: TaskDelete}
+var updateDLQTask = &DeleteDLQTask{TaskString: TaskUpdate}
+var purgeDLQTask = &DeleteDLQTask{TaskString: TaskPurge}
 
 // compile-time interface check so DeleteDLQTask is usable as a generic task.
 var _ tasks.Task = (*DeleteDLQTask)(nil)
@@ -35,6 +37,7 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 	cd.PageTitle = "Dead Letter Queue"
 	data := struct {
 		Errors     []*db.DeadLetter
+		EditError  *db.DeadLetter
 		FileErrors []filedlq.Record
 		FileErr    string
 		FilePath   string
@@ -72,6 +75,15 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 			if lt, err := queries.SystemLatestDeadLetter(r.Context()); err == nil {
 				if t, ok := lt.(time.Time); ok {
 					data.DBLatest = t.Format(time.RFC3339)
+				}
+			}
+			if editIDStr := r.URL.Query().Get("edit"); editIDStr != "" {
+				if id, err := strconv.Atoi(editIDStr); err == nil {
+					if errStr, err := queries.SystemGetDeadLetter(r.Context(), int32(id)); err == nil {
+						data.EditError = errStr
+					} else {
+						log.Printf("get dead letter: %v", err)
+					}
 				}
 			}
 		case "file":
@@ -154,6 +166,26 @@ func (DeleteDLQTask) Action(w http.ResponseWriter, r *http.Request) any {
 				evt.Data["PurgeBefore"] = t.Format(time.RFC3339)
 			}
 		}
+	case string(TaskUpdate):
+		idStr := r.PostFormValue("id")
+		message := r.PostFormValue("message")
+		if idStr != "" {
+			id, _ := strconv.Atoi(idStr)
+			if err := queries.SystemUpdateDeadLetter(r.Context(), db.SystemUpdateDeadLetterParams{
+				ID:      int32(id),
+				Message: message,
+			}); err != nil {
+				return fmt.Errorf("update error %w", handlers.ErrRedirectOnSamePageHandler(err))
+			}
+			if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+				if evt := cd.Event(); evt != nil {
+					if evt.Data == nil {
+						evt.Data = map[string]any{}
+					}
+					evt.Data["UpdatedErrorID"] = id
+				}
+			}
+		}
 	}
 	return nil
 }
@@ -165,6 +197,9 @@ func (DeleteDLQTask) AuditRecord(data map[string]any) string {
 	}
 	if before, ok := data["PurgeBefore"].(string); ok && before != "" {
 		return "purged dead letters before " + before
+	}
+	if id, ok := data["UpdatedErrorID"].(int); ok {
+		return fmt.Sprintf("updated dead letter %d", id)
 	}
 	return "modified dead letter queue"
 }

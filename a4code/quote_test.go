@@ -36,7 +36,7 @@ func TestQuote(t *testing.T) {
 func TestQuoteFullParagraphs(t *testing.T) {
 	text := "foo\n\nbar"
 	got := QuoteText("bob", text, WithParagraphQuote())
-	want := "[quoteof \"bob\" foo]\n\n\n[quoteof \"bob\" bar]\n"
+	want := "[quoteof \"bob\" foo]\n\n\n\n[quoteof \"bob\" bar]\n"
 	if got != want {
 		t.Errorf("got %q want %q", got, want)
 	}
@@ -242,6 +242,95 @@ func TestSubstring(t *testing.T) {
 	}
 }
 
+func TestQuoteDepthOptions(t *testing.T) {
+	tests := []struct {
+		name                 string
+		input                string
+		restrictedQuoteDepth *int
+		truncatedQuoteDepth  *int
+		want                 string
+	}{
+		{
+			name:                 "RestrictedDepth0_FilterNested",
+			input:                "[quoteof \"A\" [quoteof \"B\" content]]",
+			restrictedQuoteDepth: intPtr(0),
+			want:                 "",
+		},
+		{
+			name:                 "RestrictedDepth0_AllowDepth0",
+			input:                "[quoteof \"A\" content]",
+			restrictedQuoteDepth: intPtr(0),
+			want:                 "[quoteof \"user\" [quoteof \"A\" content]]\n",
+		},
+		{
+			name:                 "RestrictedDepth1_AllowDepth1",
+			input:                "[quoteof \"A\" [quoteof \"B\" content]]",
+			restrictedQuoteDepth: intPtr(1),
+			want:                 "[quoteof \"user\" [quoteof \"A\" [quoteof \"B\" content]]]\n",
+		},
+		{
+			name:                 "RestrictedDepth1_FilterDepth2",
+			input:                "[quoteof \"A\" [quoteof \"B\" [quoteof \"C\" content]]]",
+			restrictedQuoteDepth: intPtr(1),
+			want:                 "",
+		},
+		{
+			name:                 "RestrictedDepth0_PureQuoteCheck_TextAllowed",
+			input:                "[quoteof \"A\" content] and more text",
+			restrictedQuoteDepth: intPtr(0),
+			want:                 "[quoteof \"user\" [quoteof \"A\" content] and more text]\n",
+		},
+		{
+			name:                 "TruncatedDepth0_TruncateInner",
+			input:                "[quoteof \"A\" content]",
+			truncatedQuoteDepth:  intPtr(0),
+			want:                 "[quoteof \"user\" [quoteof \"A\"]]\n",
+		},
+		{
+			name:                 "TruncatedDepth1_TruncateDepth2",
+			input:                "[quoteof \"A\" [quoteof \"B\" content]]",
+			truncatedQuoteDepth:  intPtr(1),
+			restrictedQuoteDepth: intPtr(2),
+			want:                 "[quoteof \"user\" [quoteof \"A\" [quoteof \"B\"]]]\n",
+		},
+		{
+			name:                 "TruncatedDepth1_AllowDepth1",
+			input:                "[quoteof \"A\" content]",
+			truncatedQuoteDepth:  intPtr(1),
+			want:                 "[quoteof \"user\" [quoteof \"A\" content]]\n",
+		},
+		{
+			name:                 "RestrictedAndTruncated_Mix",
+			input:                "[quoteof \"A\" [quoteof \"B\" [quoteof \"C\" content]]]",
+			restrictedQuoteDepth: intPtr(2),
+			truncatedQuoteDepth:  intPtr(1),
+			want:                 "[quoteof \"user\" [quoteof \"A\" [quoteof \"B\"]]]\n",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var opts []QuoteOption
+			opts = append(opts, WithParagraphQuote())
+			if tt.restrictedQuoteDepth != nil {
+				opts = append(opts, WithRestrictedQuoteDepth(*tt.restrictedQuoteDepth))
+			}
+			if tt.truncatedQuoteDepth != nil {
+				opts = append(opts, WithTruncatedQuoteDepth(*tt.truncatedQuoteDepth))
+			}
+
+			got := QuoteText("user", tt.input, opts...)
+			if got != tt.want {
+				t.Errorf("QuoteText() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func intPtr(i int) *int {
+	return &i
+}
+
 func TestQuoteRepro(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -251,22 +340,22 @@ func TestQuoteRepro(t *testing.T) {
 		{
 			name:  "AllowSingleLevelQuote",
 			input: "Para 1\n\n[quoteof \"other\" inner]\n\nPara 2",
-			want:  "[quoteof \"user\" Para 1]\n\n\n[quoteof \"user\" [quoteof \"other\" inner]]\n\n\n[quoteof \"user\" Para 2]\n",
+			want:  "[quoteof \"user\" Para 1]\n\n\n\n[quoteof \"user\" [quoteof \"other\" inner]]\n\n\n\n[quoteof \"user\" Para 2]\n",
 		},
 		{
 			name:  "FilterDeeplyNestedQuote",
 			input: "Para 1\n\n[quoteof \"other\" [quoteof \"inner\" content]]\n\nPara 2",
-			want:  "[quoteof \"user\" Para 1]\n\n\n[quoteof \"user\" Para 2]\n",
+			want:  "[quoteof \"user\" Para 1]\n\n\n\n[quoteof \"user\" Para 2]\n",
 		},
 		{
 			name:  "TripleLineBreaks",
 			input: "Para 1\n\nPara 2",
-			want:  "[quoteof \"user\" Para 1]\n\n\n[quoteof \"user\" Para 2]\n",
+			want:  "[quoteof \"user\" Para 1]\n\n\n\n[quoteof \"user\" Para 2]\n",
 		},
 		{
 			name:  "ParagraphStartingWithBracket",
 			input: "Para 1\n\n[b]bold[/b]",
-			want:  "[quoteof \"user\" Para 1]\n\n\n[quoteof \"user\" [b]bold[/b]]\n",
+			want:  "[quoteof \"user\" Para 1]\n\n\n\n[quoteof \"user\" [b]bold[/b]]\n",
 		},
 		{
 			name:  "NotFilterMixedQuotes",
@@ -306,12 +395,17 @@ func TestQuoteRepro(t *testing.T) {
 		{
 			name:  "ParagraphStartingWithCloseBracket",
 			input: "]\n\nNext",
-			want:  "[quoteof \"user\" ]]\n\n\n[quoteof \"user\" Next]\n",
+			want:  "[quoteof \"user\" ]]\n\n\n\n[quoteof \"user\" Next]\n",
 		},
 		{
 			name:  "ParagraphStartingWithBackslash",
 			input: "\\[\n\nNext",
-			want:  "[quoteof \"user\" []\n\n\n[quoteof \"user\" Next]\n",
+			want:  "[quoteof \"user\" []\n\n\n\n[quoteof \"user\" Next]\n",
+		},
+		{
+			name:  "UserExampleNestedQuote",
+			input: "Para 1\n\n[quoteof \"M\" [quoteof \"a\" asdf]]\n\nPara 2",
+			want:  "[quoteof \"user\" Para 1]\n\n\n\n[quoteof \"user\" Para 2]\n",
 		},
 	}
 

@@ -162,8 +162,8 @@ type monthlyUsageCounter interface {
 	monthlyCounts(ctx context.Context, table, column string, startYear int32) (map[[2]int32]int64, error)
 }
 
-func (q *Queries) userMonthlyCounts(ctx context.Context, table, column string, startYear int32) (map[string]map[[2]int32]int64, map[string]int32, error) {
-	query := fmt.Sprintf("SELECT u.idusers, u.username, YEAR(%s), MONTH(%s), COUNT(*) FROM %s t JOIN users u ON t.users_idusers = u.idusers WHERE YEAR(%s) >= ? GROUP BY u.idusers, YEAR(%s), MONTH(%s)", column, column, table, column, column, column)
+func (q *Queries) userMonthlyCounts(ctx context.Context, table, column, userIdColumn string, startYear int32) (map[string]map[[2]int32]int64, map[string]int32, error) {
+	query := fmt.Sprintf("SELECT u.idusers, u.username, YEAR(%s), MONTH(%s), COUNT(*) FROM %s t JOIN users u ON t.%s = u.idusers WHERE YEAR(%s) >= ? GROUP BY u.idusers, YEAR(%s), MONTH(%s)", column, column, table, userIdColumn, column, column, column)
 	rows, err := q.db.QueryContext(ctx, query, startYear)
 	if err != nil {
 		return nil, nil, err
@@ -244,22 +244,23 @@ func (q *Queries) MonthlyUsageCounts(ctx context.Context, startYear int32) ([]*M
 
 func (q *Queries) UserMonthlyUsageCounts(ctx context.Context, startYear int32) ([]*UserMonthlyUsageRow, error) {
 	types := []struct {
-		table  string
-		column string
-		set    func(*UserMonthlyUsageRow, int64)
+		table        string
+		column       string
+		userIdColumn string
+		set          func(*UserMonthlyUsageRow, int64)
 	}{
-		{"blogs", "written", func(r *UserMonthlyUsageRow, n int64) { r.Blogs = n }},
-		{"site_news", "occurred", func(r *UserMonthlyUsageRow, n int64) { r.News = n }},
-		{"comments", "written", func(r *UserMonthlyUsageRow, n int64) { r.Comments = n }},
-		{"imagepost", "posted", func(r *UserMonthlyUsageRow, n int64) { r.Images = n }},
-		{"linker", "listed", func(r *UserMonthlyUsageRow, n int64) { r.Links = n }},
-		{"writing", "published", func(r *UserMonthlyUsageRow, n int64) { r.Writings = n }},
+		{"blogs", "written", "users_idusers", func(r *UserMonthlyUsageRow, n int64) { r.Blogs = n }},
+		{"site_news", "occurred", "users_idusers", func(r *UserMonthlyUsageRow, n int64) { r.News = n }},
+		{"comments", "written", "users_idusers", func(r *UserMonthlyUsageRow, n int64) { r.Comments = n }},
+		{"imagepost", "posted", "users_idusers", func(r *UserMonthlyUsageRow, n int64) { r.Images = n }},
+		{"linker", "listed", "author_id", func(r *UserMonthlyUsageRow, n int64) { r.Links = n }},
+		{"writing", "published", "users_idusers", func(r *UserMonthlyUsageRow, n int64) { r.Writings = n }},
 	}
 
 	data := make(map[string]map[[2]int32]*UserMonthlyUsageRow)
 	ids := make(map[string]int32)
 	for _, t := range types {
-		counts, gotIds, err := q.userMonthlyCounts(ctx, t.table, t.column, startYear)
+		counts, gotIds, err := q.userMonthlyCounts(ctx, t.table, t.column, t.userIdColumn, startYear)
 		if err != nil {
 			return nil, err
 		}

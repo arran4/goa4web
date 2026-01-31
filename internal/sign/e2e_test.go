@@ -12,6 +12,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers/share"
 	"github.com/arran4/goa4web/internal/sign"
+	"github.com/arran4/goa4web/internal/testhelpers"
 	"github.com/gorilla/mux"
 )
 
@@ -32,7 +33,7 @@ func TestSigningE2E(t *testing.T) {
 			t.Fatalf("SignShareURL failed: %v", err)
 		}
 
-		u, _ := url.Parse(signedURL)
+		u := testhelpers.Must(url.Parse(signedURL))
 		req := httptest.NewRequest("GET", u.String(), nil)
 		// Extract signature parts from path
 		parts := strings.Split(u.Path, "/")
@@ -54,7 +55,7 @@ func TestSigningE2E(t *testing.T) {
 		ttl := 1 * time.Hour
 		signedURL := cd.SignImageURL(imageID, ttl)
 
-		u, _ := url.Parse(signedURL)
+		u := testhelpers.Must(url.Parse(signedURL))
 
 		_, sig, opts, err := sign.ExtractQuerySig(u.String())
 		if err != nil || sig == "" {
@@ -72,7 +73,7 @@ func TestSigningE2E(t *testing.T) {
 		now := time.Now().Truncate(time.Second)
 		sig := sign.Sign(data, "key", sign.WithIssuedAt(now))
 
-		u, _ := sign.AddQuerySig("https://example.com", sig, sign.WithIssuedAt(now))
+		u := testhelpers.Must(sign.AddQuerySig("https://example.com", sig, sign.WithIssuedAt(now)))
 
 		_, extSig, opts, err := sign.ExtractQuerySig(u)
 		if err != nil {
@@ -89,7 +90,7 @@ func TestSigningE2E(t *testing.T) {
 		future := time.Now().Add(1 * time.Hour).Truncate(time.Second)
 		sig := sign.Sign(data, "key", sign.WithAbsoluteExpiry(future))
 
-		u, _ := sign.AddQuerySig("https://example.com", sig, sign.WithAbsoluteExpiry(future))
+		u := testhelpers.Must(sign.AddQuerySig("https://example.com", sig, sign.WithAbsoluteExpiry(future)))
 
 		_, extSig, opts, err := sign.ExtractQuerySig(u)
 		if err != nil {

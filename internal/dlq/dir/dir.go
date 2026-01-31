@@ -2,10 +2,12 @@ package dir
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/db"
@@ -26,9 +28,18 @@ func (d *DLQ) Record(_ context.Context, message string) error {
 	if err := os.MkdirAll(d.Dir, 0o755); err != nil {
 		return err
 	}
-	name := ksuid.New().String() + ".txt"
+	id := ksuid.New()
+	name := id.String() + ".txt"
 	path := filepath.Join(d.Dir, name)
-	return os.WriteFile(path, []byte(message+"\n"), 0o644)
+
+	now := time.Now()
+	// RFC 5322 format
+	header := fmt.Sprintf("Date: %s\nMessage-ID: <%s@dlq.local>\n\n",
+		now.Format(time.RFC1123Z),
+		id.String(),
+	)
+
+	return os.WriteFile(path, []byte(header+message+"\n"), 0o644)
 }
 
 // Register registers the directory provider.
@@ -60,7 +71,18 @@ func List(dir string, limit int) ([]Record, error) {
 		if err != nil {
 			continue
 		}
-		recs = append(recs, Record{Name: e.Name(), Message: strings.TrimSpace(string(data))})
+
+		content := string(data)
+		// Check for RFC 5322 headers
+		parts := strings.SplitN(content, "\n\n", 2)
+		var msg string
+		if len(parts) == 2 && (strings.Contains(parts[0], "Date: ") || strings.Contains(parts[0], "Message-ID: ")) {
+			msg = parts[1]
+		} else {
+			msg = content
+		}
+
+		recs = append(recs, Record{Name: e.Name(), Message: strings.TrimSpace(msg)})
 		if limit > 0 && len(recs) >= limit {
 			break
 		}

@@ -9,7 +9,7 @@ import (
 	"github.com/arran4/goa4web"
 )
 
-func defaultDataDir() string {
+func DefaultDataDir() string {
 	// Check for Docker environment or running as root (likely a system service)
 	if os.Getenv(EnvDocker) != "" || os.Geteuid() == 0 {
 		return "/var/lib/goa4web"
@@ -24,7 +24,7 @@ func defaultDataDir() string {
 	return filepath.Join(home, ".local", "share", "goa4web")
 }
 
-func defaultCacheDir() string {
+func DefaultCacheDir() string {
 	// Check for Docker environment or running as root (likely a system service)
 	if os.Getenv(EnvDocker) != "" || os.Geteuid() == 0 {
 		return "/var/cache/goa4web/thumbnails"

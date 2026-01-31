@@ -135,6 +135,7 @@ func EnsureSchema(ctx context.Context, db *sql.DB) error {
 	if err != nil {
 		return err
 	}
+	log.Printf("Current schema version: %d", version)
 	if version != handlers.ExpectedSchemaVersion {
 		msg := RenderSchemaMismatch(version, handlers.ExpectedSchemaVersion)
 		return fmt.Errorf("%s", msg)

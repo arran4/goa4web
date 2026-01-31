@@ -112,6 +112,7 @@ CREATE TABLE `forumthread` (
   `comments` int(10) DEFAULT NULL,
   `lastaddition` datetime DEFAULT NULL,
   `locked` tinyint(1) DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`idforumthread`),
   KEY `forumdiscussions_FKIndex1` (`forumtopic_idforumtopic`),
   KEY `forumthread_FKIndex2` (`lastposter`),
@@ -129,6 +130,7 @@ CREATE TABLE `forumtopic` (
   `comments` int(10) DEFAULT NULL,
   `lastaddition` datetime DEFAULT NULL,
   `handler` varchar(32) NOT NULL DEFAULT '',
+  `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`idforumtopic`),
   KEY `forumtopic_FKIndex1` (`forumcategory_idforumcategory`),
   KEY `forumtopic_FKIndex2` (`lastposter`),
@@ -312,6 +314,7 @@ CREATE TABLE `site_news` (
   `occurred` datetime DEFAULT NULL,
   `timezone` tinytext DEFAULT NULL,
   `last_index` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`idsiteNews`),
   KEY `siteNews_FKIndex1` (`users_idusers`),
   KEY `siteNews_FKIndex2` (`language_id`),
@@ -690,6 +693,9 @@ CREATE TABLE IF NOT EXISTS `external_links` (
   `card_image` tinytext,
   `card_image_cache` tinytext,
   `favicon_cache` tinytext,
+  `card_duration` tinytext,
+  `card_upload_date` tinytext,
+  `card_author` tinytext,
   PRIMARY KEY (`id`),
   UNIQUE KEY `external_links_url_idx` (`url`(255))
 );

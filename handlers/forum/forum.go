@@ -37,6 +37,12 @@ type CategoryTree struct {
 }
 
 func NewCategoryTree(categoryRows []*db.Forumcategory, topicRows []*ForumtopicPlus) *CategoryTree {
+	categoryTree := NewCategoryTreeUnpruned(categoryRows, topicRows)
+	categoryTree.PruneEmpty()
+	return categoryTree
+}
+
+func NewCategoryTreeUnpruned(categoryRows []*db.Forumcategory, topicRows []*ForumtopicPlus) *CategoryTree {
 	categoryTree := new(CategoryTree)
 	categoryTree.CategoryChildrenLookup = map[int32][]*ForumcategoryPlus{}
 	categoryTree.CategoryLookup = map[int32]*ForumcategoryPlus{}
@@ -63,7 +69,6 @@ func NewCategoryTree(categoryRows []*db.Forumcategory, topicRows []*ForumtopicPl
 		}
 		parent.Categories = children
 	}
-	categoryTree.PruneEmpty()
 	return categoryTree
 }
 

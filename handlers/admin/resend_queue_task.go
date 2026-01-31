@@ -36,13 +36,15 @@ func (ResendQueueTask) Action(w http.ResponseWriter, r *http.Request) any {
 	var emails []*db.AdminGetPendingEmailByIDRow
 	if selection == "filtered" {
 		scope = "filtered"
-		langID, role := emailFiltersFromRequest(r)
+		filters := emailFiltersFromRequest(r)
 		filterPrefix := ""
 		if strings.Contains(r.URL.Path, "/failed") {
 			filterPrefix = "failed"
 			rows, err := queries.AdminListFailedEmailIDs(r.Context(), db.AdminListFailedEmailIDsParams{
-				LanguageID: langID,
-				RoleName:   role,
+				LanguageID:    filters.LangIDParam(),
+				RoleName:      filters.Role,
+				Provider:      filters.ProviderParam(),
+				CreatedBefore: filters.CreatedBefore,
 			})
 			if err != nil {
 				return fmt.Errorf("list failed email ids fail %w", handlers.ErrRedirectOnSamePageHandler(err))
@@ -52,8 +54,13 @@ func (ResendQueueTask) Action(w http.ResponseWriter, r *http.Request) any {
 			}
 		} else {
 			rows, err := queries.AdminListUnsentPendingEmails(r.Context(), db.AdminListUnsentPendingEmailsParams{
-				LanguageID: langID,
-				RoleName:   role,
+				LanguageID:    filters.LangIDParam(),
+				RoleName:      filters.Role,
+				Status:        filters.StatusParam(),
+				Provider:      filters.ProviderParam(),
+				CreatedBefore: filters.CreatedBefore,
+				Limit:         2147483647,
+				Offset:        0,
 			})
 			if err != nil {
 				return fmt.Errorf("list pending emails fail %w", handlers.ErrRedirectOnSamePageHandler(err))
@@ -75,7 +82,7 @@ func (ResendQueueTask) Action(w http.ResponseWriter, r *http.Request) any {
 					evt.Data = map[string]any{}
 				}
 				evt.Data["QueuedEmailCount"] = len(ids)
-				evt.Data["QueuedEmailFilter"] = emailFilterSummary(filterPrefix, langID, role)
+				evt.Data["QueuedEmailFilter"] = emailFilterSummary(filterPrefix, filters)
 			}
 		}
 	} else {

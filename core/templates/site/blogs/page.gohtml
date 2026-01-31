@@ -1,5 +1,4 @@
-{{ define "blogsPage" }}
-    {{ template "head" $ }}
+{{ template "head" $ }}
     {{ $rows := "" }}
     {{ if cd.CurrentProfileUserID }}
         {{ $rows = cd.BlogListForSelectedAuthor }}
@@ -39,4 +38,3 @@
         {{ end }}
     </section><br>
     {{ template "tail" $ }}
-{{ end }}

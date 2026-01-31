@@ -98,7 +98,12 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	categoryTree := NewCategoryTree(categoryRows, topicRows)
+	var categoryTree *CategoryTree
+	if data.Admin {
+		categoryTree = NewCategoryTreeUnpruned(categoryRows, topicRows)
+	} else {
+		categoryTree = NewCategoryTree(categoryRows, topicRows)
+	}
 
 	if categoryId == 0 {
 		data.Categories = categoryTree.CategoryChildrenLookup[int32(categoryId)]

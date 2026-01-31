@@ -11,7 +11,6 @@ import (
 	"time"
 
 	adminhandlers "github.com/arran4/goa4web/handlers/admin"
-	"github.com/arran4/goa4web/handlers/imagebbs"
 )
 
 // filesPurgeCmd implements "files purge".
@@ -80,7 +79,7 @@ func (c *filesPurgeCmd) Run() error {
 		},
 	}
 
-	base := filepath.Join(c.rootCmd.cfg.ImageUploadDir, imagebbs.ImagebbsUploadPrefix)
+	base := c.rootCmd.cfg.ImageUploadDir
 	for _, entry := range filtered {
 		result := filesPurgeEntry{
 			Path: entry.Path,

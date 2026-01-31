@@ -24,8 +24,8 @@ func TestReplyTemplatesExist(t *testing.T) {
 			return s
 		},
 	}
-	html := templates.GetCompiledEmailHtmlTemplates(map[string]any{})
-	text := templates.GetCompiledEmailTextTemplates(map[string]any{})
+	html := templates.GetCompiledEmailHtmlTemplates(funcs)
+	text := templates.GetCompiledEmailTextTemplates(funcs)
 	nt := templates.GetCompiledNotificationTemplates(funcs)
 	et, _ := task.SubscribedEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess})
 	if html.Lookup(et.HTML) == nil {

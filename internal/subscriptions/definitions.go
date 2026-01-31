@@ -12,6 +12,11 @@ type Definition struct {
 	Description string
 	Pattern     string
 	IsAdminOnly bool
+	HideIfNone  bool
+	Upgrade     func(params map[string]string) string
+	Legacy      bool
+  SupportsAutoSubscribe bool
+
 }
 
 // Parameter represents a single parameter in a subscription pattern.
@@ -19,6 +24,7 @@ type Parameter struct {
 	Key      string // e.g. "topicid"
 	Value    string // e.g. "1"
 	Resolved string // e.g. "General Discussion"
+	Link     string // e.g. "/forum/topic/1"
 }
 
 // SubscriptionInstance represents a concrete subscription (e.g. to Topic #1).
@@ -26,6 +32,7 @@ type SubscriptionInstance struct {
 	Parameters []Parameter // List of extracted parameters
 	Methods    []string    // e.g. ["internal", "email"]
 	Original   string      // Original DB pattern string
+	UpgradeTo  string      // If set, this subscription can be upgraded to this pattern
 }
 
 // HasMethod checks if the instance has the given method.
@@ -41,20 +48,26 @@ func (si *SubscriptionInstance) HasMethod(method string) bool {
 // SubscriptionGroup groups instances by their definition.
 type SubscriptionGroup struct {
 	*Definition
+	Name      string
 	Instances []*SubscriptionInstance
 }
 
 var Definitions = []Definition{
 	// Forum
 	{
+		Name:        "New Threads (Specific Topic)",
+		Description: "Notify when a new thread is created in this topic",
+		Pattern:     "create thread:/forum/topic/{topicid}*",
+	},
+	{
 		Name:        "New Threads (All)",
 		Description: "Notify when a new thread is created in any topic",
 		Pattern:     "create thread:/forum/topic/*",
 	},
 	{
-		Name:        "New Threads (Specific Topic)",
-		Description: "Notify when a new thread is created in this topic",
-		Pattern:     "create thread:/forum/topic/{topicid}/*",
+		Name:        "Replies (Specific Thread)",
+		Description: "Notify when a reply is posted in this thread",
+		Pattern:     "reply:/forum/topic/{topicid}/thread/{threadid}*",
 	},
 	{
 		Name:        "Replies (All)",
@@ -62,26 +75,22 @@ var Definitions = []Definition{
 		Pattern:     "reply:/forum/topic/*/thread/*",
 	},
 	{
-		Name:        "Replies (Specific Thread)",
-		Description: "Notify when a reply is posted in this thread",
-		Pattern:     "reply:/forum/topic/{topicid}/thread/{threadid}/*",
-	},
-	{
 		Name:        "Edit Reply",
 		Description: "Notify when a reply is edited",
-		Pattern:     "edit reply:/forum/topic/*/thread/*",
+		Pattern:     "edit reply:/forum/topic/*/thread*",
 	},
 
 	// Private Forum
 	{
 		Name:        "Private Topic Created",
 		Description: "Notify when a new private topic is created",
-		Pattern:     "private topic create:/private/*",
+		Pattern:     "private topic create:/private*",
 	},
 	{
-		Name:        "New Threads (Private Topic)",
-		Description: "Notify when a new thread is created in this private topic",
-		Pattern:     "create thread:/private/topic/{topicid}*",
+		Name:                  "New Threads (Private Topic)",
+		Description:           "Notify when a new thread is created in this private topic",
+		Pattern:               "create thread:/private/topic/{topicid}*",
+		SupportsAutoSubscribe: true,
 	},
 	{
 		Name:        "Replies (Private Thread)",
@@ -142,6 +151,18 @@ var Definitions = []Definition{
 		Name:        "Reply to Link",
 		Description: "Notify when a reply is posted to a link",
 		Pattern:     "reply:/linker/*",
+	},
+
+	// Legacy
+	{
+		Name:        "Write Reply",
+		Description: "Notify when a reply is written (Legacy)",
+		Pattern:     "write reply:/forum/topic/{topicid}/thread/{threadid}/*",
+		HideIfNone:  true,
+		Upgrade: func(params map[string]string) string {
+			return "reply:/forum/topic/" + params["topicid"] + "/thread/" + params["threadid"] + "/*"
+		},
+		Legacy: true,
 	},
 
 	// FAQ
@@ -233,8 +254,13 @@ func GetUserSubscriptions(dbSubs []*db.ListSubscriptionsByUserRow) []*Subscripti
 	// Initialize groups for all definitions
 	for i := range Definitions {
 		def := &Definitions[i]
+		name := def.Name
+		if def.Legacy {
+			name += " (Legacy)"
+		}
 		groups[def.Pattern] = &SubscriptionGroup{
 			Definition: def,
+			Name:       name,
 			Instances:  []*SubscriptionInstance{},
 		}
 	}
@@ -251,6 +277,7 @@ func GetUserSubscriptions(dbSubs []*db.ListSubscriptionsByUserRow) []*Subscripti
 						Name:    "Unknown: " + sub.Pattern,
 						Pattern: sub.Pattern,
 					},
+					Name:      "Unknown: " + sub.Pattern,
 					Instances: []*SubscriptionInstance{},
 				}
 			}
@@ -278,6 +305,9 @@ func GetUserSubscriptions(dbSubs []*db.ListSubscriptionsByUserRow) []*Subscripti
 				Parameters: paramList,
 				Methods:    []string{},
 				Original:   sub.Pattern,
+			}
+			if def.Upgrade != nil {
+				instance.UpgradeTo = def.Upgrade(params)
 			}
 			group.Instances = append(group.Instances, instance)
 		}
@@ -339,9 +369,9 @@ func matchPattern(template, pattern string) (map[string]string, bool) {
 	regexStr = strings.ReplaceAll(regexStr, "\\{", "{")
 	regexStr = strings.ReplaceAll(regexStr, "\\}", "}")
 
-	// Replace {name} with (?P<name>[^/]+)
+	// Replace {name} with (?P<name>[^/*]+)
 	paramRegex := regexp.MustCompile(`\{([a-zA-Z0-9]+)\}`)
-	regexStr = paramRegex.ReplaceAllString(regexStr, `(?P<$1>[^/]+)`)
+	regexStr = paramRegex.ReplaceAllString(regexStr, `(?P<$1>[^/*]+)`)
 
 	// Handle standard wildcard *
 	// Replace \* with .*

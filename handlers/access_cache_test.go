@@ -81,9 +81,9 @@ func TestVerifyAccess_CacheControl(t *testing.T) {
 	}
 }
 
-func TestSetNoCacheHeaders(t *testing.T) {
+func TestDisableCaching(t *testing.T) {
 	rr := httptest.NewRecorder()
-	SetNoCacheHeaders(rr)
+	DisableCaching(rr)
 
 	if got := rr.Header().Get("Cache-Control"); got != "no-cache, no-store, must-revalidate" {
 		t.Errorf("Cache-Control = %q; want no-cache, no-store, must-revalidate", got)

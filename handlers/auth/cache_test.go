@@ -33,19 +33,19 @@ func TestAuthPages_CacheControl(t *testing.T) {
 		{
 			name: "Login Page",
 			handler: func(w http.ResponseWriter, r *http.Request) {
-				handlers.NoCache(loginTask.Page)(w, r)
+				handlers.WithNoCache(loginTask.Page)(w, r)
 			},
 		},
 		{
 			name: "Register Page",
 			handler: func(w http.ResponseWriter, r *http.Request) {
-				handlers.NoCache(registerTask.Page)(w, r)
+				handlers.WithNoCache(registerTask.Page)(w, r)
 			},
 		},
 		{
 			name: "Forgot Password Page",
 			handler: func(w http.ResponseWriter, r *http.Request) {
-				handlers.NoCache(forgotPasswordTask.Page)(w, r)
+				handlers.WithNoCache(forgotPasswordTask.Page)(w, r)
 			},
 		},
 	}

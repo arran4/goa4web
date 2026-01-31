@@ -542,8 +542,8 @@ func TestThreadPageTitle(t *testing.T) {
 			Handler:                      "",
 		}
 		queries.GetForumCategoryByIdReturns = &db.Forumcategory{
-			Idforumcategory:              1,
-			Title:                        sql.NullString{String: "My Category", Valid: true},
+			Idforumcategory: 1,
+			Title:           sql.NullString{String: "My Category", Valid: true},
 		}
 		queries.GetCommentsByThreadIdForUserReturns = []*db.GetCommentsByThreadIdForUserRow{
 			{
@@ -609,8 +609,8 @@ func TestTopicPageTitle(t *testing.T) {
 		}
 		queries.GetAllForumCategoriesReturns = []*db.Forumcategory{
 			{
-				Idforumcategory:              1,
-				Title:                        sql.NullString{String: "My Category", Valid: true},
+				Idforumcategory: 1,
+				Title:           sql.NullString{String: "My Category", Valid: true},
 			},
 		}
 		queries.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextFn = func(ctx context.Context, arg db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams) ([]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow, error) {

@@ -3,7 +3,6 @@ package forum
 import (
 	"database/sql"
 	"fmt"
-	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"sort"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"

@@ -742,5 +742,5 @@ CREATE TABLE `role_subscription_archetypes` (
 );
 
 -- Set the schema version to the latest migration.
-INSERT INTO `schema_version` (`version`) VALUES (80)
+INSERT INTO `schema_version` (`version`) VALUES (81)
 ON DUPLICATE KEY UPDATE version = VALUES(version);

@@ -158,7 +158,7 @@ func TestWritingReply(t *testing.T) {
 	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = "test"
-	sess, _ := store.Get(httptest.NewRequest(http.MethodGet, "http://example.com", nil), core.SessionName)
+	sess := testhelpers.Must(store.Get(httptest.NewRequest(http.MethodGet, "http://example.com", nil), core.SessionName))
 	sess.Values["UID"] = replierUID
 
 	evt := &eventbus.TaskEvent{
@@ -198,7 +198,7 @@ func TestWritingReply(t *testing.T) {
 		}
 	}
 
-	expectedSubscriberNotif := fmt.Sprintf("New reply in %q by replier\n", WritingTopicName)
+	expectedSubscriberNotif := fmt.Sprintf(" replied to %s: Hello Writing", WritingTopicName)
 	if subscriberNotif != expectedSubscriberNotif {
 		t.Errorf("expected subscriber notif %q, got %q", expectedSubscriberNotif, subscriberNotif)
 	}

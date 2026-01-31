@@ -31,10 +31,12 @@ func (RetrySentEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	var ids []int32
 	if selection == "filtered" {
 		scope = "filtered"
-		langID, role := emailFiltersFromRequest(r)
+		filters := emailFiltersFromRequest(r)
 		rows, err := queries.AdminListSentEmailIDs(r.Context(), db.AdminListSentEmailIDsParams{
-			LanguageID: langID,
-			RoleName:   role,
+			LanguageID:    filters.LangIDParam(),
+			RoleName:      filters.Role,
+			Provider:      filters.ProviderParam(),
+			CreatedBefore: filters.CreatedBefore,
 		})
 		if err != nil {
 			return fmt.Errorf("list sent email ids fail %w", handlers.ErrRedirectOnSamePageHandler(err))
@@ -48,7 +50,7 @@ func (RetrySentEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 					evt.Data = map[string]any{}
 				}
 				evt.Data["RetryEmailCount"] = len(ids)
-				evt.Data["RetryEmailFilter"] = emailFilterSummary("", langID, role)
+				evt.Data["RetryEmailFilter"] = emailFilterSummary("", filters)
 			}
 		}
 	} else {

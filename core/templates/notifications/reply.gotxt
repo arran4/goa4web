@@ -1,1 +1,1 @@
-New reply in "{{if .Item}}{{.Item.TopicTitle}}{{else}}{{.Path}}{{end}}" by {{if .Item}}{{.Item.Thread.Lastposterusername.String}}{{end}}
+{{.Item.Username}} replied to {{.Item.TopicTitle}}: {{ truncateWords 20 .Item.Body }}

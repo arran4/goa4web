@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"path"
+	"strings"
 	"testing"
 
 	"github.com/arran4/goa4web/config"
@@ -80,6 +81,20 @@ func TestCreateCommentValidatesGalleryImages(t *testing.T) {
 		}
 		if len(queries.CreateCommentInSectionForCommenterCalls) != 0 {
 			t.Fatalf("expected no comment creation, got %d calls", len(queries.CreateCommentInSectionForCommenterCalls))
+		}
+	})
+
+	t.Run("rejects invalid image ref", func(t *testing.T) {
+		queries := testhelpers.NewQuerierStub()
+		cd := NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
+		invalidText := "[img invalid]"
+		_, err := cd.CreateCommentInSectionForCommenter("forum", "topic", 1, 1, 9, 1, invalidText)
+		if err == nil {
+			t.Fatal("expected error for invalid image ref")
+		}
+		// Expect the error to contain the invalid reference
+		if !strings.Contains(err.Error(), "invalid") {
+			t.Errorf("error %q should contain 'invalid'", err)
 		}
 	})
 }

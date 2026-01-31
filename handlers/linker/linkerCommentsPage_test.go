@@ -59,7 +59,7 @@ func TestCommentsPageAllowsGlobalViewGrant(t *testing.T) {
 	req := httptest.NewRequest("GET", "/linker/comments/1", nil)
 	req = mux.SetURLVars(req, map[string]string{"link": "1"})
 	w := httptest.NewRecorder()
-	sess, _ := store.Get(req, core.SessionName)
+	sess := testhelpers.Must(store.Get(req, core.SessionName))
 	sess.Values["UID"] = int32(2)
 	sess.Save(req, w)
 	for _, c := range w.Result().Cookies() {
@@ -90,7 +90,7 @@ func newCommentsPageRequest(t *testing.T, queries db.Querier, roles []string, us
 	req := httptest.NewRequest("GET", "/linker/comments/1", nil)
 	req = mux.SetURLVars(req, map[string]string{"link": "1"})
 	w := httptest.NewRecorder()
-	sess, _ := store.Get(req, core.SessionName)
+	sess := testhelpers.Must(store.Get(req, core.SessionName))
 	sess.Values["UID"] = userID
 	sess.Save(req, w)
 	for _, c := range w.Result().Cookies() {

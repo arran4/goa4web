@@ -70,27 +70,12 @@ type MockQuerier struct {
 
 // getEmailFuncs returns template functions for email rendering with event data.
 func getEmailFuncs(evt eventbus.TaskEvent) map[string]any {
-	// Provide basic template functions that might be needed
-	return map[string]any{
-		"Username": func() string {
-			if u, ok := evt.Data["Username"].(string); ok {
-				return u
-			}
-			return "Unknown"
-		},
-	}
+	return common.GetTemplateFuncs(evt)
 }
 
 // getNotificationFuncs returns template functions for notification rendering.
 func getNotificationFuncs(evt eventbus.TaskEvent) map[string]any {
-	return map[string]any{
-		"Username": func() string {
-			if u, ok := evt.Data["Username"].(string); ok {
-				return u
-			}
-			return "Unknown"
-		},
-	}
+	return common.GetTemplateFuncs(evt)
 }
 
 // TestNotificationTemplates validates all notification templates for a set of tasks.

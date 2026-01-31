@@ -1,6 +1,9 @@
 package migrations
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -30,7 +33,7 @@ func TestMigrationFileNaming(t *testing.T) {
 			continue
 		}
 		name := entry.Name()
-		if name == "embed.go" {
+		if name == "embed.go" || strings.HasSuffix(name, "_test.go") {
 			continue
 		}
 
@@ -64,6 +67,54 @@ func TestMigrationFileNaming(t *testing.T) {
 					}
 				}
 			}
+		}
+	}
+}
+
+func TestSchemaVersionUpdated(t *testing.T) {
+	entries, err := FS.ReadDir(".")
+	if err != nil {
+		t.Fatalf("Failed to read migrations directory: %v", err)
+	}
+
+	var maxVersion int
+	for _, entry := range entries {
+		name := entry.Name()
+		if len(name) >= 4 {
+			if version, err := strconv.Atoi(name[:4]); err == nil {
+				if version > maxVersion {
+					maxVersion = version
+				}
+			}
+		}
+	}
+
+	if maxVersion == 0 {
+		t.Skip("No migrations found")
+	}
+
+	schemaPath := filepath.Join("..", "database", "schema.mysql.sql")
+	content, err := os.ReadFile(schemaPath)
+	if err != nil {
+		t.Fatalf("Failed to read schema file at %s: %v", schemaPath, err)
+	}
+
+	schemaStr := string(content)
+	// We expect the line: INSERT INTO `schema_version` (`version`) VALUES (81)
+	// Allow for some whitespace variation
+	expected := fmt.Sprintf("INSERT INTO `schema_version` (`version`) VALUES (%d)", maxVersion)
+	if !strings.Contains(schemaStr, expected) {
+		t.Errorf("Schema file %s does not contain expected version update:\nExpected substring: %s\nEnsure you have updated the schema_version insert in database/schema.mysql.sql", schemaPath, expected)
+	}
+
+	// Verify that the migration file itself updates the version
+	migrationFile := filepath.Join(".", fmt.Sprintf("%04d.mysql.sql", maxVersion))
+	migContent, err := os.ReadFile(migrationFile)
+	if err == nil {
+		migStr := string(migContent)
+		expectedUpdate := fmt.Sprintf("UPDATE schema_version SET version = %d WHERE version = %d;", maxVersion, maxVersion-1)
+		if !strings.Contains(migStr, expectedUpdate) {
+			t.Errorf("Migration file %s does not contain expected version update:\nExpected substring: %s", migrationFile, expectedUpdate)
 		}
 	}
 }

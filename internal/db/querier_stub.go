@@ -28,6 +28,36 @@ type QuerierStub struct {
 	Querier
 	mu sync.Mutex
 
+	AdminCountSentEmailsCalls   []AdminCountSentEmailsParams
+	AdminCountSentEmailsReturns int64
+	AdminCountSentEmailsErr     error
+	AdminCountSentEmailsFn      func(context.Context, AdminCountSentEmailsParams) (int64, error)
+
+	AdminCountUnsentPendingEmailsCalls   []AdminCountUnsentPendingEmailsParams
+	AdminCountUnsentPendingEmailsReturns int64
+	AdminCountUnsentPendingEmailsErr     error
+	AdminCountUnsentPendingEmailsFn      func(context.Context, AdminCountUnsentPendingEmailsParams) (int64, error)
+
+	AdminListUnsentPendingEmailsCalls   []AdminListUnsentPendingEmailsParams
+	AdminListUnsentPendingEmailsReturns []*AdminListUnsentPendingEmailsRow
+	AdminListUnsentPendingEmailsErr     error
+	AdminListUnsentPendingEmailsFn      func(context.Context, AdminListUnsentPendingEmailsParams) ([]*AdminListUnsentPendingEmailsRow, error)
+
+	AdminListSentEmailsCalls   []AdminListSentEmailsParams
+	AdminListSentEmailsReturns []*AdminListSentEmailsRow
+	AdminListSentEmailsErr     error
+	AdminListSentEmailsFn      func(context.Context, AdminListSentEmailsParams) ([]*AdminListSentEmailsRow, error)
+
+	AdminListSentEmailIDsCalls   []AdminListSentEmailIDsParams
+	AdminListSentEmailIDsReturns []int32
+	AdminListSentEmailIDsErr     error
+	AdminListSentEmailIDsFn      func(context.Context, AdminListSentEmailIDsParams) ([]int32, error)
+
+	AdminListFailedEmailIDsCalls   []AdminListFailedEmailIDsParams
+	AdminListFailedEmailIDsReturns []int32
+	AdminListFailedEmailIDsErr     error
+	AdminListFailedEmailIDsFn      func(context.Context, AdminListFailedEmailIDsParams) ([]int32, error)
+
 	ListActiveBansReturns               []*BannedIp
 	ListActiveBansErr                   error
 	ListActiveBansCalls                 int
@@ -124,6 +154,11 @@ type QuerierStub struct {
 	AdminGetImagePostErr   error
 	AdminGetImagePostCalls []int32
 	AdminGetImagePostFn    func(context.Context, int32) (*AdminGetImagePostRow, error)
+
+	AdminGetExternalLinkByCacheIDCalls   []AdminGetExternalLinkByCacheIDParams
+	AdminGetExternalLinkByCacheIDReturns *ExternalLink
+	AdminGetExternalLinkByCacheIDErr     error
+	AdminGetExternalLinkByCacheIDFn      func(context.Context, AdminGetExternalLinkByCacheIDParams) (*ExternalLink, error)
 
 	AdminApproveImagePostCalls []int32
 	AdminApproveImagePostErr   error
@@ -248,6 +283,9 @@ type QuerierStub struct {
 	AdminInsertRequestQueueErr     error
 	AdminInsertRequestQueueFn      func(context.Context, AdminInsertRequestQueueParams) (sql.Result, error)
 
+	UpdateExternalLinkMetadataCalls []UpdateExternalLinkMetadataParams
+	UpdateExternalLinkMetadataErr   error
+
 	AdminInsertRequestCommentCalls []AdminInsertRequestCommentParams
 	AdminInsertRequestCommentErr   error
 	AdminInsertRequestCommentFn    func(context.Context, AdminInsertRequestCommentParams) error
@@ -283,6 +321,15 @@ type QuerierStub struct {
 	SystemMarkPendingEmailSentCalls []int32
 	SystemMarkPendingEmailSentErr   error
 	SystemMarkPendingEmailSentFn    func(context.Context, int32) error
+
+	SystemIncrementPendingEmailErrorCalls []int32
+	SystemIncrementPendingEmailErrorErr   error
+	SystemIncrementPendingEmailErrorFn    func(context.Context, int32) error
+
+	GetPendingEmailErrorCountCalls   []int32
+	GetPendingEmailErrorCountReturns int32
+	GetPendingEmailErrorCountErr     error
+	GetPendingEmailErrorCountFn      func(context.Context, int32) (int32, error)
 
 	ListGrantsExtendedReturns []*ListGrantsExtendedRow
 	ListGrantsExtendedErr     error
@@ -489,6 +536,11 @@ type QuerierStub struct {
 	GetPrivateTopicThreadsAndLabelsReturns []*GetPrivateTopicThreadsAndLabelsRow
 	GetPrivateTopicThreadsAndLabelsErr     error
 	GetPrivateTopicThreadsAndLabelsFn      func(context.Context, GetPrivateTopicThreadsAndLabelsParams) ([]*GetPrivateTopicThreadsAndLabelsRow, error)
+
+	ListBlogEntriesForListerCalls   []ListBlogEntriesForListerParams
+	ListBlogEntriesForListerReturns []*ListBlogEntriesForListerRow
+	ListBlogEntriesForListerErr     error
+	ListBlogEntriesForListerFn      func(ListBlogEntriesForListerParams) ([]*ListBlogEntriesForListerRow, error)
 
 	ListPrivateTopicParticipantsByTopicIDForUserCalls   []ListPrivateTopicParticipantsByTopicIDForUserParams
 	ListPrivateTopicParticipantsByTopicIDForUserReturns []*ListPrivateTopicParticipantsByTopicIDForUserRow
@@ -1023,6 +1075,19 @@ func (s *QuerierStub) AdminCreateForumCategory(ctx context.Context, arg AdminCre
 	s.mu.Unlock()
 	if fn != nil {
 		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) ListBlogEntriesForLister(ctx context.Context, arg ListBlogEntriesForListerParams) ([]*ListBlogEntriesForListerRow, error) {
+	s.mu.Lock()
+	s.ListBlogEntriesForListerCalls = append(s.ListBlogEntriesForListerCalls, arg)
+	fn := s.ListBlogEntriesForListerFn
+	ret := s.ListBlogEntriesForListerReturns
+	err := s.ListBlogEntriesForListerErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(arg)
 	}
 	return ret, err
 }
@@ -1675,6 +1740,19 @@ func (s *QuerierStub) SystemGetForumTopicByTitle(ctx context.Context, title sql.
 	return row, nil
 }
 
+func (s *QuerierStub) AdminGetExternalLinkByCacheID(ctx context.Context, arg AdminGetExternalLinkByCacheIDParams) (*ExternalLink, error) {
+	s.mu.Lock()
+	s.AdminGetExternalLinkByCacheIDCalls = append(s.AdminGetExternalLinkByCacheIDCalls, arg)
+	fn := s.AdminGetExternalLinkByCacheIDFn
+	ret := s.AdminGetExternalLinkByCacheIDReturns
+	err := s.AdminGetExternalLinkByCacheIDErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
 func (s *QuerierStub) CreateForumTopicForPoster(ctx context.Context, arg CreateForumTopicForPosterParams) (int64, error) {
 	s.mu.Lock()
 	s.CreateForumTopicForPosterCalls = append(s.CreateForumTopicForPosterCalls, arg)
@@ -2020,12 +2098,97 @@ func (q *QuerierStub) UpdateExternalLinkImageCache(ctx context.Context, arg Upda
 	return nil
 }
 
+func (s *QuerierStub) UpdateExternalLinkMetadata(ctx context.Context, arg UpdateExternalLinkMetadataParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.UpdateExternalLinkMetadataCalls = append(s.UpdateExternalLinkMetadataCalls, arg)
+	return s.UpdateExternalLinkMetadataErr
+}
+
 func (s *QuerierStub) GetPrivateTopicThreadsAndLabels(ctx context.Context, arg GetPrivateTopicThreadsAndLabelsParams) ([]*GetPrivateTopicThreadsAndLabelsRow, error) {
 	s.mu.Lock()
 	s.GetPrivateTopicThreadsAndLabelsCalls = append(s.GetPrivateTopicThreadsAndLabelsCalls, arg)
 	fn := s.GetPrivateTopicThreadsAndLabelsFn
 	ret := s.GetPrivateTopicThreadsAndLabelsReturns
 	err := s.GetPrivateTopicThreadsAndLabelsErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) AdminCountSentEmails(ctx context.Context, arg AdminCountSentEmailsParams) (int64, error) {
+	s.mu.Lock()
+	s.AdminCountSentEmailsCalls = append(s.AdminCountSentEmailsCalls, arg)
+	fn := s.AdminCountSentEmailsFn
+	ret := s.AdminCountSentEmailsReturns
+	err := s.AdminCountSentEmailsErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) AdminCountUnsentPendingEmails(ctx context.Context, arg AdminCountUnsentPendingEmailsParams) (int64, error) {
+	s.mu.Lock()
+	s.AdminCountUnsentPendingEmailsCalls = append(s.AdminCountUnsentPendingEmailsCalls, arg)
+	fn := s.AdminCountUnsentPendingEmailsFn
+	ret := s.AdminCountUnsentPendingEmailsReturns
+	err := s.AdminCountUnsentPendingEmailsErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) AdminListUnsentPendingEmails(ctx context.Context, arg AdminListUnsentPendingEmailsParams) ([]*AdminListUnsentPendingEmailsRow, error) {
+	s.mu.Lock()
+	s.AdminListUnsentPendingEmailsCalls = append(s.AdminListUnsentPendingEmailsCalls, arg)
+	fn := s.AdminListUnsentPendingEmailsFn
+	ret := s.AdminListUnsentPendingEmailsReturns
+	err := s.AdminListUnsentPendingEmailsErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) AdminListSentEmails(ctx context.Context, arg AdminListSentEmailsParams) ([]*AdminListSentEmailsRow, error) {
+	s.mu.Lock()
+	s.AdminListSentEmailsCalls = append(s.AdminListSentEmailsCalls, arg)
+	fn := s.AdminListSentEmailsFn
+	ret := s.AdminListSentEmailsReturns
+	err := s.AdminListSentEmailsErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) AdminListSentEmailIDs(ctx context.Context, arg AdminListSentEmailIDsParams) ([]int32, error) {
+	s.mu.Lock()
+	s.AdminListSentEmailIDsCalls = append(s.AdminListSentEmailIDsCalls, arg)
+	fn := s.AdminListSentEmailIDsFn
+	ret := s.AdminListSentEmailIDsReturns
+	err := s.AdminListSentEmailIDsErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) AdminListFailedEmailIDs(ctx context.Context, arg AdminListFailedEmailIDsParams) ([]int32, error) {
+	s.mu.Lock()
+	s.AdminListFailedEmailIDsCalls = append(s.AdminListFailedEmailIDsCalls, arg)
+	fn := s.AdminListFailedEmailIDsFn
+	ret := s.AdminListFailedEmailIDsReturns
+	err := s.AdminListFailedEmailIDsErr
 	s.mu.Unlock()
 	if fn != nil {
 		return fn(ctx, arg)

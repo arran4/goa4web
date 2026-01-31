@@ -51,7 +51,7 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID int3
 	title := p.Title
 	description := p.Description
 	if title == "" {
-		title = fmt.Sprintf("Private chat with %s", strings.Join(usernames, ", "))
+		title = fmt.Sprintf("%s%s", PrivateTopicDefaultTitlePrefix, strings.Join(usernames, ", "))
 		if description == "" {
 			description = title
 		}

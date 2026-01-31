@@ -63,15 +63,15 @@ func (ReloadExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) any
 		return fmt.Errorf("no url provided")
 	}
 
-	title, desc, imgURL, err := opengraph.Fetch(rawURL, cd.HTTPClient())
+	info, err := opengraph.Fetch(rawURL, cd.HTTPClient())
 	if err != nil {
 		return fmt.Errorf("fetch error: %w", err)
 	}
 
 	var cachedImgName string
-	if imgURL != "" {
+	if info.Image != "" {
 		var err error
-		cachedImgName, err = cd.DownloadAndCacheImage(imgURL)
+		cachedImgName, err = cd.DownloadAndCacheImage(info.Image)
 		if err != nil {
 			log.Printf("failed to cache image: %v", err)
 		}
@@ -93,9 +93,12 @@ func (ReloadExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) any
 
 	if lid != 0 {
 		err := cd.Queries().UpdateExternalLinkMetadata(r.Context(), db.UpdateExternalLinkMetadataParams{
-			CardTitle:       sql.NullString{String: title, Valid: title != ""},
-			CardDescription: sql.NullString{String: desc, Valid: desc != ""},
-			CardImage:       sql.NullString{String: imgURL, Valid: imgURL != ""},
+			CardTitle:       sql.NullString{String: info.Title, Valid: info.Title != ""},
+			CardDescription: sql.NullString{String: info.Description, Valid: info.Description != ""},
+			CardImage:       sql.NullString{String: info.Image, Valid: info.Image != ""},
+			CardDuration:    sql.NullString{String: info.Duration, Valid: info.Duration != ""},
+			CardUploadDate:  sql.NullString{String: info.UploadDate, Valid: info.UploadDate != ""},
+			CardAuthor:      sql.NullString{String: info.Author, Valid: info.Author != ""},
 			ID:              lid,
 		})
 		if err != nil {

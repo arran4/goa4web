@@ -1,3 +1,7 @@
+ALTER TABLE external_links ADD COLUMN IF NOT EXISTS card_duration TINYTEXT;
+ALTER TABLE external_links ADD COLUMN IF NOT EXISTS card_upload_date TINYTEXT;
+ALTER TABLE external_links ADD COLUMN IF NOT EXISTS card_author TINYTEXT;
+ALTER TABLE faq_categories ADD COLUMN IF NOT EXISTS deleted_at DATETIME DEFAULT NULL;
 ALTER TABLE faq_categories ADD COLUMN IF NOT EXISTS deleted_at DATETIME DEFAULT NULL;
 ALTER TABLE faq ADD COLUMN IF NOT EXISTS deleted_at DATETIME DEFAULT NULL;
 ALTER TABLE forumcategory ADD COLUMN IF NOT EXISTS deleted_at DATETIME DEFAULT NULL;
@@ -6,4 +10,8 @@ ALTER TABLE forumtopic ADD COLUMN IF NOT EXISTS deleted_at DATETIME DEFAULT NULL
 ALTER TABLE forumthread ADD COLUMN IF NOT EXISTS deleted_at DATETIME DEFAULT NULL;
 ALTER TABLE imageboard ADD COLUMN IF NOT EXISTS deleted_at DATETIME DEFAULT NULL;
 
-UPDATE schema_version SET version = 81 WHERE version = 80;
+UPDATE uploaded_images SET path = TRIM(LEADING '/' FROM path);
+UPDATE uploaded_images SET path = TRIM(LEADING 'uploads' FROM path);
+UPDATE uploaded_images SET path = TRIM(LEADING '/' FROM path);
+
+INSERT INTO schema_version (version) VALUES (81) ON DUPLICATE KEY UPDATE version = VALUES(version);

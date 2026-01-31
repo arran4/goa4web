@@ -1,0 +1,189 @@
+{{ template "head" $ }}
+<div style="margin-bottom: 1em;">
+    <strong>View:</strong>
+    {{ if eq .Mode "queue" }}Queue{{ else }}<a href="/admin/email/queue">Queue</a>{{ end }} |
+    {{ if eq .Mode "failed" }}Failed{{ else }}<a href="/admin/email/failed">Failed</a>{{ end }} |
+    {{ if eq .Mode "sent" }}Sent{{ else }}<a href="/admin/email/sent">Sent</a>{{ end }}
+</div>
+
+<form method="get">
+    <fieldset>
+        <legend>Filters</legend>
+        {{- if .Filters.LangID }}
+        <input type="hidden" name="lang" value="{{ .Filters.LangID }}">
+        {{- end }}
+        {{- if .Filters.Role }}
+        <input type="hidden" name="role" value="{{ .Filters.Role }}">
+        {{- end }}
+
+        {{ if eq .Mode "queue" }}
+        <label>Status
+            <select name="status">
+                <option value="" {{ if eq .Filters.Status "" }}selected{{ end }}>All</option>
+                <option value="pending" {{ if eq .Filters.Status "pending" }}selected{{ end }}>Pending</option>
+                <option value="failed" {{ if eq .Filters.Status "failed" }}selected{{ end }}>Failed</option>
+            </select>
+        </label>
+        {{ end }}
+
+        <label>Provider
+            <select name="provider">
+                <option value="" {{ if eq .Filters.Provider "" }}selected{{ end }}>All</option>
+                <option value="direct" {{ if eq .Filters.Provider "direct" }}selected{{ end }}>Direct</option>
+                <option value="user" {{ if eq .Filters.Provider "user" }}selected{{ end }}>User</option>
+                <option value="userless" {{ if eq .Filters.Provider "userless" }}selected{{ end }}>Userless</option>
+            </select>
+        </label>
+
+        <label>Age
+            <select name="age">
+                <option value="" {{ if eq .Filters.Age "" }}selected{{ end }}>Any</option>
+                <option value="24h" {{ if eq .Filters.Age "24h" }}selected{{ end }}>Older than 24 hours</option>
+                <option value="7d" {{ if eq .Filters.Age "7d" }}selected{{ end }}>Older than 7 days</option>
+                <option value="30d" {{ if eq .Filters.Age "30d" }}selected{{ end }}>Older than 30 days</option>
+            </select>
+        </label>
+
+        <button type="submit">Apply filters</button>
+        <a href="/admin/email/{{ .Mode }}">Reset</a>
+    </fieldset>
+</form>
+
+<form method="post" id="email-form">
+    {{ csrfField }}
+    <!-- Pass filters to task -->
+    <input type="hidden" name="status" value="{{ .Filters.Status }}">
+    <input type="hidden" name="provider" value="{{ .Filters.Provider }}">
+    <input type="hidden" name="age" value="{{ .Filters.Age }}">
+    {{- if .Filters.LangID }}
+    <input type="hidden" name="lang" value="{{ .Filters.LangID }}">
+    {{- end }}
+    {{- if .Filters.Role }}
+    <input type="hidden" name="role" value="{{ .Filters.Role }}">
+    {{- end }}
+
+    <input type="hidden" name="selection" value="ids">
+
+    <div style="margin: 1em 0;">
+        <p><strong>{{ .FilteredCount }}</strong> email{{ if ne .FilteredCount 1 }}s{{ end }} found.</p>
+        <div>
+            <button type="button" data-select-all-page>Select all on page</button>
+            <button type="button" data-select-all-filtered>Select all filtered ({{ .FilteredCount }})</button>
+            <button type="button" data-clear-selection>Clear selection</button>
+            <span data-selection-note>Selection: manual</span>
+        </div>
+    </div>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Select</th>
+                <th>ID</th>
+                <th>To</th>
+                <th>Subject</th>
+                {{ if eq .Mode "sent" }}<th>Sent</th>{{ else }}<th>Created</th>{{ end }}
+                {{ if ne .Mode "sent" }}<th>Errors</th>{{ end }}
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{- range .Emails }}
+            <tr>
+                <td><input type="checkbox" name="id" value="{{ .ID }}"></td>
+                <td>{{ .ID }}</td>
+                <td>{{ .EmailStr }}</td>
+                <td>{{ .Subject }}</td>
+                <td>
+                    {{ if eq $.Mode "sent" }}
+                        {{ if .SentAt.Valid }}{{ cd.FormatLocalTime .SentAt.Time }}{{ end }}
+                    {{ else }}
+                        {{ cd.FormatLocalTime .CreatedAt }}
+                    {{ end }}
+                </td>
+                {{ if ne $.Mode "sent" }}<td>{{ .ErrorCount }}</td>{{ end }}
+                <td>{{ with index $.StatusByID .ID }}{{ . }}{{ else }}-{{ end }}</td>
+            </tr>
+            {{- end }}
+        </tbody>
+    </table>
+
+    <div style="margin-top: 1em;">
+        {{ if ne .Mode "sent" }}
+            <button type="submit" name="task" value="Resend">Resend Selected</button>
+            <button type="submit" name="task" value="Delete">Delete Selected</button>
+        {{ else }}
+            <button type="submit" name="task" value="Resend">Resend (Copy)</button>
+            <button type="submit" name="task" value="Retry">Retry (Re-queue)</button>
+        {{ end }}
+    </div>
+</form>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('email-form');
+        if (!form) {
+            return;
+        }
+        const selectionInput = form.querySelector('input[name="selection"]');
+        const note = form.querySelector('[data-selection-note]');
+        const checkboxes = form.querySelectorAll('input[type="checkbox"][name="id"]');
+
+        const updateNote = function(mode) {
+            if (!note) return;
+            if (mode === 'filtered') {
+                note.textContent = 'Selection: all filtered results';
+                return;
+            }
+            note.textContent = 'Selection: manual';
+        };
+
+        const setAll = function(checked) {
+            checkboxes.forEach(function(box) {
+                box.checked = checked;
+            });
+        };
+
+        const setMode = function(mode) {
+            if (selectionInput) {
+                selectionInput.value = mode;
+            }
+            updateNote(mode);
+        };
+
+        const selectAllPage = form.querySelector('[data-select-all-page]');
+        if (selectAllPage) {
+            selectAllPage.addEventListener('click', function() {
+                setAll(true);
+                setMode('ids');
+            });
+        }
+
+        const selectAllFiltered = form.querySelector('[data-select-all-filtered]');
+        if (selectAllFiltered) {
+            selectAllFiltered.addEventListener('click', function() {
+                setAll(true);
+                setMode('filtered');
+            });
+        }
+
+        const clearSelection = form.querySelector('[data-clear-selection]');
+        if (clearSelection) {
+            clearSelection.addEventListener('click', function() {
+                setAll(false);
+                setMode('ids');
+            });
+        }
+
+        checkboxes.forEach(function(box) {
+            box.addEventListener('change', function() {
+                // If unchecking manually while in filtered mode, switch to ids mode (manual)
+                if (!box.checked && selectionInput && selectionInput.value === 'filtered') {
+                    setMode('ids');
+                }
+            });
+        });
+
+        updateNote(selectionInput ? selectionInput.value : 'ids');
+    });
+</script>
+{{ template "tail" $ }}

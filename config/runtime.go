@@ -171,6 +171,13 @@ type RuntimeConfig struct {
 	OGImageRpgTheme bool
 	// TwitterSite is the Twitter handle for the site.
 	TwitterSite string
+
+	// StartupMediaCheckSample sets the number of items to check.
+	StartupMediaCheckSample int
+	// StartupMediaCheckThresholdPercent sets the percentage of missing items allowed before failure.
+	StartupMediaCheckThresholdPercent int
+	// SkipStartupMediaCheck skips the startup media check entirely.
+	SkipStartupMediaCheck bool
 }
 
 // Option configures RuntimeConfig values.

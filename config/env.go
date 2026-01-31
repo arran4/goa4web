@@ -205,4 +205,11 @@ const (
 	EnvOGImageRpgTheme = "OG_IMAGE_RPG_THEME"
 	// EnvTwitterSite sets the Twitter site handle.
 	EnvTwitterSite = "TWITTER_SITE"
+
+	// EnvStartupMediaCheckSample sets the number of items to check.
+	EnvStartupMediaCheckSample = "STARTUP_MEDIA_CHECK_SAMPLE"
+	// EnvStartupMediaCheckThresholdPercent sets the percentage of missing items allowed before failure.
+	EnvStartupMediaCheckThresholdPercent = "STARTUP_MEDIA_CHECK_THRESHOLD_PERCENT"
+	// EnvSkipStartupMediaCheck skips the startup media check entirely.
+	EnvSkipStartupMediaCheck = "SKIP_STARTUP_MEDIA_CHECK"
 )

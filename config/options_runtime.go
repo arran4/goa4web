@@ -113,6 +113,8 @@ var IntOptions = []IntOption{
 	{"stats-start-year", EnvStatsStartYear, "The start year for usage statistics.", 2005, "", func(c *RuntimeConfig) *int { return &c.StatsStartYear }},
 	{"og-image-width", EnvOGImageWidth, "The width of the generated Open Graph image.", 1200, "", func(c *RuntimeConfig) *int { return &c.OGImageWidth }},
 	{"og-image-height", EnvOGImageHeight, "The height of the generated Open Graph image.", 630, "", func(c *RuntimeConfig) *int { return &c.OGImageHeight }},
+	{"startup-media-check-sample", EnvStartupMediaCheckSample, "The number of items to check for existence during startup.", 5, "", func(c *RuntimeConfig) *int { return &c.StartupMediaCheckSample }},
+	{"startup-media-check-threshold-percent", EnvStartupMediaCheckThresholdPercent, "The percentage of missing items allowed before startup failure.", 50, "", func(c *RuntimeConfig) *int { return &c.StartupMediaCheckThresholdPercent }},
 }
 
 // BoolOptions lists the boolean runtime options shared by flag parsing and configuration generation.
@@ -127,4 +129,5 @@ var BoolOptions = []BoolOption{
 	{"admin-notify", EnvAdminNotify, "Enable or disable email notifications for administrators.", true, "", func(c *RuntimeConfig) *bool { return &c.AdminNotify }},
 	{"auto-migrate", EnvAutoMigrate, "Run database migrations on startup.", false, "", func(c *RuntimeConfig) *bool { return &c.AutoMigrate }},
 	{"create-dirs", EnvCreateDirs, "Enable or disable the automatic creation of missing directories.", false, "", func(c *RuntimeConfig) *bool { return &c.CreateDirs }},
+	{"skip-startup-media-check", EnvSkipStartupMediaCheck, "Skip the startup media check entirely.", false, "", func(c *RuntimeConfig) *bool { return &c.SkipStartupMediaCheck }},
 }

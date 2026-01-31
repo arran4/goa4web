@@ -4,10 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	dbstart2 "github.com/arran4/goa4web/internal/app/dbstart"
 	"os"
 	"path/filepath"
 	"strings"
+
+	dbstart2 "github.com/arran4/goa4web/internal/app/dbstart"
 
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dbdrivers"
@@ -62,7 +63,22 @@ func CheckUploadTarget(cfg *config.RuntimeConfig) *common.UserError {
 }
 
 // CheckMediaFiles verifies that the most recent media files exist on disk.
+// CheckMediaFiles verifies that the most recent media files exist on disk.
 func CheckMediaFiles(cfg *config.RuntimeConfig, dbPool *sql.DB) *common.UserError {
+	if cfg.SkipStartupMediaCheck {
+		return nil
+	}
+
+	sampleSize := cfg.StartupMediaCheckSample
+	if sampleSize <= 0 {
+		sampleSize = 5
+	}
+	thresholdPercent := cfg.StartupMediaCheckThresholdPercent
+	if thresholdPercent < 0 {
+		thresholdPercent = 0
+	}
+	maxAllowedMissing := int(float64(sampleSize) * (float64(thresholdPercent) / 100.0))
+
 	q := db.New(dbPool)
 	ctx := context.Background()
 
@@ -71,7 +87,7 @@ func CheckMediaFiles(cfg *config.RuntimeConfig, dbPool *sql.DB) *common.UserErro
 	// Check uploaded images
 	if cfg.ImageUploadDir != "" {
 		imgs, err := q.AdminListUploadedImages(ctx, db.AdminListUploadedImagesParams{
-			Limit:  5,
+			Limit:  int32(sampleSize),
 			Offset: 0,
 		})
 		if err == nil {
@@ -90,7 +106,7 @@ func CheckMediaFiles(cfg *config.RuntimeConfig, dbPool *sql.DB) *common.UserErro
 	// Check cached images
 	if cfg.ImageCacheDir != "" {
 		links, err := q.AdminListExternalLinks(ctx, db.AdminListExternalLinksParams{
-			Limit:  5,
+			Limit:  int32(sampleSize),
 			Offset: 0,
 		})
 		if err == nil {
@@ -120,17 +136,21 @@ func CheckMediaFiles(cfg *config.RuntimeConfig, dbPool *sql.DB) *common.UserErro
 	}
 
 	if len(missing) > 0 {
-		msg := fmt.Sprintf("Found %d missing media files (checking recent 5 uploaded):\n%s\n\n", len(missing), strings.Join(missing, "\n"))
+		msg := fmt.Sprintf("Found %d missing media files (checking recent %d uploaded):\n%s\n\n", len(missing), sampleSize, strings.Join(missing, "\n"))
 		msg += fmt.Sprintf("Configured Image Upload Dir: %s\n", cfg.ImageUploadDir)
 		msg += fmt.Sprintf("Configured Image Cache Dir: %s\n", cfg.ImageCacheDir)
 		msg += fmt.Sprintf("Default Image Upload Dir: %s\n", filepath.Join(config.DefaultDataDir(), "images"))
 		msg += fmt.Sprintf("Default Image Cache Dir: %s\n", config.DefaultCacheDir())
 		msg += "Please check if your configuration points to the correct directory."
 
-		return &common.UserError{
-			Err:          fmt.Errorf("missing media files"),
-			ErrorMessage: msg,
+		if len(missing) > maxAllowedMissing {
+			return &common.UserError{
+				Err:          fmt.Errorf("missing media files exceeds threshold (%d%%)", thresholdPercent),
+				ErrorMessage: msg,
+			}
 		}
+		// Warn but allow startup
+		fmt.Printf("WARNING: %s\nContinuing startup as missing count (%d) is within threshold (%d).\n", msg, len(missing), maxAllowedMissing)
 	}
 
 	return nil
